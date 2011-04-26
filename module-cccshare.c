@@ -528,6 +528,7 @@ struct cc_card *create_card2(struct s_reader *rdr, int32_t j, uint16_t caid, uin
     	card->grp = rdr->grp;
     	card->rdr_reshare = rdr->cc_reshare; //copy reshare because reader could go offline
 	}
+	else card->rdr_reshare = reshare;
     return card;
 }
 

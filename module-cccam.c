@@ -1160,7 +1160,6 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	}	
 
 	if (card) {
-		card->time = time((time_t) 0);
 		uint8_t ecmbuf[255+13];
 		memset(ecmbuf, 0, 255+13);
 
@@ -1866,6 +1865,9 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 		struct cc_card *card = read_card(data, buf[1]==MSG_NEW_CARD_SIDINFO);
 		card->origin_reader = rdr;
 		card->origin_id = card->id;
+		card->grp = rdr->grp;
+		card->card_type = CT_REMOTECARD;
+		card->rdr_reshare = rdr->cc_reshare;
 
 		//Check if this card is from us:
 		LL_ITER *it = ll_iter_create(card->remote_nodes);
@@ -1902,7 +1904,6 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			}
 			ll_iter_release(it);
 
-			card->time = time((time_t) 0);
 			if (!old_card) {
 			    card->card_type = CT_REMOTECARD;
 				card->hop++; //inkrementing hop

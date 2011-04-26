@@ -18,8 +18,10 @@
 static void _destroy(LLIST *l)
 {
     if (!l) return;
-    pthread_mutex_destroy(&l->lock);
-    add_garbage(l);
+    if (!l->flag++) {
+	    pthread_mutex_destroy(&l->lock);
+	    add_garbage(l);
+	}
 }
 
 LLIST *ll_create()
@@ -27,6 +29,18 @@ LLIST *ll_create()
     LLIST *l = calloc(1, sizeof(LLIST));
     pthread_mutex_init(&l->lock, NULL);
     return l;
+}
+
+void ll_lock(LLIST *l)
+{
+	if (l && !l->flag)
+		pthread_mutex_lock(&l->lock);
+}
+
+void ll_unlock(LLIST *l)
+{
+	if (l && !l->flag)
+		pthread_mutex_unlock(&l->lock);
 }
 
 void ll_destroy(LLIST *l)
@@ -65,7 +79,7 @@ static void ll_clear_int(LLIST *l, int clear_data)
 {
     if (!l) return;
 
-    pthread_mutex_lock(&l->lock);
+    ll_lock(l);
     LL_ITER *it = ll_iter_create(l);
     while (ll_iter_next_nolock(it)) {
     	if (it->cur && !it->cur->flag++) {
@@ -77,7 +91,7 @@ static void ll_clear_int(LLIST *l, int clear_data)
     ll_iter_release(it);
     l->count = 0;
     l->initial = 0;
-    pthread_mutex_unlock(&l->lock);
+    ll_unlock(l);
 }
 
 void ll_clear(LLIST *l)
@@ -115,9 +129,9 @@ LL_NODE* ll_append_nolock(LLIST *l, void *obj)
 LL_NODE* ll_append(LLIST *l, void *obj)
 {
     if (l && obj) {
-        pthread_mutex_lock(&l->lock);
+        ll_lock(l);
         LL_NODE *n = ll_append_nolock(l, obj);
-        pthread_mutex_unlock(&l->lock);
+        ll_unlock(l);
         return n;
     }
     return NULL;
@@ -128,13 +142,13 @@ LL_NODE *ll_prepend(LLIST *l, void *obj)
     if (l && obj) {
         LL_NODE *new = calloc(1, sizeof(LL_NODE));
 
-        pthread_mutex_lock(&l->lock);
+        ll_lock(l);
         new->obj = obj;
         new->nxt = l->initial;
 
         l->initial = new;
         l->count++;
-        pthread_mutex_unlock(&l->lock);
+        ll_unlock(l);
 
         return new;
     }
@@ -177,9 +191,9 @@ void ll_iter_release(LL_ITER *it)
 void *ll_iter_next(LL_ITER *it)
 {
     if (it && it->l) {
-    	pthread_mutex_lock(&it->l->lock);
+		ll_lock(it->l);
     	void *res = ll_iter_next_nolock(it);
-		pthread_mutex_unlock(&it->l->lock);
+		ll_unlock(it->l);
 		return res;
     }
     return NULL;
@@ -188,14 +202,14 @@ void *ll_iter_next(LL_ITER *it)
 void *ll_iter_move(LL_ITER *it, int32_t offset)
 {
     if (it && it->l) {
-    	pthread_mutex_lock(&it->l->lock);
+    	ll_lock(it->l);
     	int32_t i;
     	void *res = NULL;
     	for (i=0; i<offset; i++) {
     		res = ll_iter_next_nolock(it);
     		if (!res) break;
 		}
-		pthread_mutex_unlock(&it->l->lock);
+		ll_unlock(it->l);
 		return res;
     }
     return NULL;
@@ -204,7 +218,7 @@ void *ll_iter_move(LL_ITER *it, int32_t offset)
 void *ll_iter_peek(LL_ITER *it, int32_t offset)
 {
 	if (it && it->l) {
-		pthread_mutex_lock(&it->l->lock);
+		ll_lock(it->l);
 	    LL_NODE *n = it->cur;
 	    int32_t i;
 
@@ -214,7 +228,7 @@ void *ll_iter_peek(LL_ITER *it, int32_t offset)
 			else 
 				break;
 		}
-		pthread_mutex_unlock(&it->l->lock);
+		ll_unlock(it->l);
 	    
 		if (!n)
 			return NULL;
@@ -234,7 +248,7 @@ void ll_iter_reset(LL_ITER *it)
 void ll_iter_insert(LL_ITER *it, void *obj)
 {
     if (it && obj) {
-	   	pthread_mutex_lock(&it->l->lock);
+	   	ll_lock(it->l);
         if (!it->cur || !it->cur->nxt)
             ll_append_nolock(it->l, obj);
         else {
@@ -246,7 +260,7 @@ void ll_iter_insert(LL_ITER *it, void *obj)
 
             it->l->count++;
         }
-        pthread_mutex_unlock(&it->l->lock);
+        ll_unlock(it->l);
     }
 }
 
@@ -254,7 +268,7 @@ void *ll_iter_remove(LL_ITER *it)
 {
    	void *obj = NULL;
     if (it) {
-    	pthread_mutex_lock(&it->l->lock);
+    	ll_lock(it->l);
         LL_NODE *del = it->cur;
         if (del && !del->flag++) { //preventing duplicate free because of multiple threads
             obj = del->obj;
@@ -273,7 +287,7 @@ void *ll_iter_remove(LL_ITER *it)
 
             add_garbage(del);
         }
-        pthread_mutex_unlock(&it->l->lock);
+        ll_unlock(it->l);
     }
 
     return obj;
@@ -283,7 +297,7 @@ int ll_iter_move_first(LL_ITER *it)
 {
 	int moved = 0;
     if (it) {
-    	pthread_mutex_lock(&it->l->lock);
+    	ll_lock(it->l);
         LL_NODE *move = it->cur;
         if (move && !move->flag++) { //preventing duplicate free because of multiple threads
             LL_NODE *prv = it->prv;
@@ -299,7 +313,7 @@ int ll_iter_move_first(LL_ITER *it)
 			
 			ll_iter_reset(it);
         }
-        pthread_mutex_unlock(&it->l->lock);
+        ll_unlock(it->l);
     }
     return moved;
 }

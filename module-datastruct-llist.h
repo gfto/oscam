@@ -19,6 +19,7 @@ struct llist {
     LL_NODE *initial;
     int32_t count;
     pthread_mutex_t lock;
+    int32_t flag;
 };
 
 typedef struct lliter LL_ITER;
