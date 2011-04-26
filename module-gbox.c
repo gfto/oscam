@@ -22,7 +22,7 @@ enum {
 
 struct gbox_card {
   uint16_t peer_id;
-  uint16_t provid;
+  uint32_t provid;
   int32_t slot;
   int32_t dist;
   int32_t lvl;
@@ -76,15 +76,17 @@ static void gbox_calc_checkcode(struct gbox_data *gbox)
 {
   memcpy(gbox->checkcode, "\x15\x30\x2\x4\x19\x19\x66", 7);	/* no local cards */
 
+  int32_t slot = 0;
+
   // for all local cards do:
   /*
     gbox->checkcode[0] ^= provid << 24;
     gbox->checkcode[1] ^= provid << 16;
     gbox->checkcode[2] ^= provid << 8;
     gbox->checkcode[3] ^= provid & 0xff;
-    gbox->checkcode[4] ^= slot;  // reader number
-    gbox->checkcode[5] ^= gbox->id << 8;
-    gbox->checkcode[6] ^= gbox->id & 0xff;
+    gbox->checkcode[4] = slot++;
+    gbox->checkcode[5] = gbox->peer.id > 8;
+    gbox->checkcode[6] = gbox->peer.id & 0xff;
   */
 }
 
@@ -294,7 +296,7 @@ static void gbox_expire_hello(struct s_client *cli)
   gettimeofday(&tv, NULL);
   ts.tv_sec = tv.tv_sec;
   ts.tv_nsec = tv.tv_usec * 1000;
-  ts.tv_sec += 30;
+  ts.tv_sec += 5;
 
   sem_wait(&sem);
   if (sem_timedwait(&sem, &ts) == -1) {
@@ -363,12 +365,12 @@ static void gbox_send_boxinfo(struct s_client *cli)
   struct gbox_data *gbox = cli->gbox;
 
   int32_t len;
-  uchar buf[4096];
+  uchar buf[256];
 
   int32_t hostname_len = strnlen(cfg.gbox_hostname, sizeof(cfg.gbox_hostname) - 1);
 
-  buf[0] = 0xA0;
-  buf[1] = 0xA1;
+  buf[0] = MSG_BOXINFO >> 8;
+  buf[1] = MSG_BOXINFO & 0xff;
   memcpy(buf + 2, gbox->peer.key, 4);
   memcpy(buf + 6, gbox->key, 4);
   buf[10] = gbox->peer.ver;
@@ -377,7 +379,7 @@ static void gbox_send_boxinfo(struct s_client *cli)
 
   len = 12 + hostname_len;
 
-  gbox_send(cli, buf, len);
+  // TODO fix this! gbox_send(cli, buf, len);
 }
 
 static void gbox_send_hello(struct s_client *cli)
@@ -410,7 +412,7 @@ static void gbox_send_hello(struct s_client *cli)
 
   cs_ddump_mask(D_READER, buf, len, "send hello (len=%d):", len);
 
-  gbox_compress(gbox, buf, len, &len);	// TODO: remove _re
+  gbox_compress(gbox, buf, len, &len);
 
   cs_ddump_mask(D_READER, buf, len, "send hello, compressed (len=%d):", len);
 
@@ -490,6 +492,8 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
         int32_t ncards_in_msg = 0;
 
         if (seqno != exp_seq) return -1;
+
+        int32_t orig_card_count = ll_count(gbox->peer.cards);
 
         if (seqno == 0) {
           exp_seq++;
@@ -579,6 +583,9 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
         if (!ll_count(gbox->peer.cards))
         	  cli->reader->tcp_connected = 1;
 
+        if (orig_card_count != ll_count(gbox->peer.cards))
+          gbox->hello_expired = 1;
+
         if (final) {
           if (gbox->hello_expired) {
             gbox->hello_expired = 0;
@@ -590,6 +597,9 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
           gbox_send_boxinfo(cli);
         }
       }
+      break;
+    case MSG_BOXINFO:
+      gbox_send_hello(cli);
       break;
     case MSG_CW:
     	memcpy(gbox->cws, data + 14, 16);
@@ -727,7 +737,7 @@ static int32_t gbox_client_init(struct s_client *cli)
 
   gbox->hello_expired = 1;
 
-  gbox_send_hello(cli);
+  //gbox_send_hello(cli);
 
   return 0;
 }
