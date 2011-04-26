@@ -2150,7 +2150,7 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
   ert=&cl->ecmtask[er->cpti];
   if (ert->rc<E_99) {
 	//cs_debug_mask(D_TRACE, "chk_dcw: already done rc=%d %s", er->rc, er->selected_reader->label);
-	send_reader_stat(er->selected_reader, ert, (er->rc <= E_RDR_NOTFOUND)?E_NOTFOUND:E_FOUND);
+	send_reader_stat(er->selected_reader, er, (er->rc <= E_RDR_NOTFOUND)?E_NOTFOUND:E_FOUND);
 	return; // already done
   }
   if( (er->caid!=ert->caid && er->ocaid!=ert->ocaid) || memcmp(er->ecmd5, ert->ecmd5, sizeof(er->ecmd5)) ) {
@@ -2179,7 +2179,7 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 				ert->selected_reader=NULL;
 				ert=NULL;
 		}
-		//at this point32_t ert is only not NULL when it has no matching readers...
+		//at this point, ert is only not NULL when it has no matching readers...
 		if (ert) {
 				ert->rc=E_NOTFOUND; //so we set the return code
 				store_cw_in_cache(ert, er->selected_reader->grp, E_NOTFOUND);
@@ -2187,8 +2187,24 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 		else send_reader_stat(er->selected_reader, er, E_NOTFOUND);
 	}
 	if (ert) {
+		//betatunnel:
+		//got a 17xx answer for a 18xx betatunnel request:
+		if (ert->beta_ptr_to_nagra) {
+			ECM_REQUEST *ecm_nagra = ert->beta_ptr_to_nagra;
+			if (ert->rc == E_FOUND && ecm_nagra->rc >= E_99) {
+				ecm_nagra->rc = ert->rc;
+				ecm_nagra->rcEx = ert->rcEx;
+				ecm_nagra->selected_reader = ert->selected_reader;
+				memcpy(ecm_nagra->msglog, ert->msglog, sizeof(ert->msglog));
+				memcpy(ecm_nagra->cw, ert->cw, sizeof(ert->cw));
+				store_cw_in_cache(ecm_nagra, ecm_nagra->selected_reader->grp, ecm_nagra->rc);
+				send_dcw(cl, ecm_nagra);
+				distribute_ecm(ecm_nagra, ert->selected_reader->grp);
+			}
+			return;
+		}
+		
 		send_dcw(cl, ert);
-
 		distribute_ecm(er, ert->selected_reader->grp);
     }
 	return;
@@ -2284,7 +2300,7 @@ void guess_irdeto(ECM_REQUEST *er)
 }
 #endif
 
-static void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto)
+void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto)
 {
 	static uchar headerN3[10] = {0xc7, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x87, 0x12};
 	static uchar headerN2[10] = {0xc9, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x48, 0x12};

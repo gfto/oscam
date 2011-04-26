@@ -240,6 +240,8 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 	tpl_addVar(vars, TPLADD, "LBNOPROVIDERFORCAID", value);
 	free_mk_t(value);
 
+	if (cfg.lb_auto_betatunnel) tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNEL", "selected");
+
 	return tpl_getTpl(vars, "CONFIGLOADBALANCER");
 }
 

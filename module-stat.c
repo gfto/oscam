@@ -357,15 +357,16 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	else if (rc == 4) { //not found
 		//CCcam card can't decode, 0x28=NOK1, 0x29=NOK2
 		//CCcam loop detection = E2_CCCAM_LOOP
-		if (er->rcEx != E2_CCCAM_NOK1 && er->rcEx != E2_CCCAM_NOK2 && er->rcEx != E2_CCCAM_LOOP) {
-			stat->rc = rc;
-			stat->fail_factor++;
-			stat->last_received = ctime;
+		if (er->rcEx == E2_CCCAM_NOK1 || er->rcEx == E2_CCCAM_NOK2 || er->rcEx == E2_CCCAM_LOOP)
+			return;
+			
+		stat->rc = rc;
+		stat->fail_factor++;
+		stat->last_received = ctime;
 		
-			//reduce ecm_count step by step
-			if (!cfg.lb_reopen_mode)
-				stat->ecm_count /= 10;
-		}
+		//reduce ecm_count step by step
+		if (!cfg.lb_reopen_mode)
+			stat->ecm_count /= 10;
 	}
 	else if (rc == 5) { //timeout
 		//catch suddenly occuring timeouts and block reader:
@@ -505,6 +506,15 @@ static int32_t get_reopen_seconds(READER_STAT *stat)
 		return (stat->fail_factor+1) * cfg.lb_reopen_seconds;
 }
 
+ushort get_betatunnel_caid_to(ushort caid) 
+{
+	if (caid == 0x1801) return 0x1722;
+	if (caid == 0x1833) return 0x1702;
+	if (caid == 0x1834) return 0x1722;
+	if (caid == 0x1835) return 0x1722;
+	if (caid == 0x1838) return 0x1722;
+	return 0;
+}
 /**	
  * Gets best reader for caid/prid/srvid/ecmlen.
  * Best reader is evaluated by lowest avg time but only if ecm_count > cfg.lb_min_ecmcount (5)
@@ -536,7 +546,63 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					return 1;
 			}
 	}
-	
+
+	uint32_t prid = get_prid(er->caid, er->prid);
+
+	//auto-betatunnel: The trick is: "let the loadbalancer decide"!
+	if (cfg.lb_auto_betatunnel && er->caid >> 8 == 0x18) { //nagra 
+		ushort caid_to = get_betatunnel_caid_to(er->caid);
+		if (caid_to) {
+			int needs_stats = 0;
+			
+			int32_t time_nagra = 0;
+			int32_t time_beta = 0;
+			
+			READER_STAT *stat_nagra;
+			READER_STAT *stat_beta;
+			
+			//What is faster? nagra or beta?
+			it = ll_iter_create(er->matching_rdr);
+			while ((rdr=ll_iter_next(it)) && !needs_stats) {
+				stat_nagra = get_stat(rdr, er->caid, prid, er->srvid, er->l);
+				stat_beta = get_stat(rdr, caid_to, prid, er->srvid, er->l+10);
+				
+				if (stat_nagra && stat_nagra->rc == 0 && (!time_nagra || stat_nagra->time_avg < time_nagra))
+					time_nagra = stat_nagra->time_avg;
+				if (stat_beta && stat_beta->rc == 0 && (!time_beta || stat_beta->time_avg < time_beta))
+					time_beta = stat_beta->time_avg;
+				
+				if (!stat_nagra || !stat_beta)
+					needs_stats = 1; //Uncomplete reader evaluation, we need more stats!
+			}
+			ll_iter_release(it);
+			
+			//if we needs stats, we send 2 ecm requests: 18xx and 17xx:
+			if (needs_stats) {
+				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X needs more statistics...", er->caid, caid_to);
+				ECM_REQUEST *er_beta = get_ecmtask();
+				er_beta->ocaid = caid_to;
+				er_beta->caid = er->caid;
+				er_beta->prid = prid;
+				er_beta->srvid = er->srvid;
+				memcpy(er_beta->ecm, er->ecm, sizeof(er->ecm));
+				er_beta->l = er->l;
+				er_beta->client = er->client;
+				er_beta->beta_ptr_to_nagra = er;
+				convert_to_beta(er->client, er_beta, caid_to);
+				er_beta->btun = 0;
+				get_cw(er->client, er_beta);
+			}
+			else if (time_beta && time_beta < time_nagra) {
+				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X selected beta: n%dms>b%dms", er->caid, caid_to, time_nagra, time_beta);
+				convert_to_beta(er->client, er, caid_to);
+			}
+			else {
+				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X selected nagra: n%dms<b%dms", er->caid, caid_to, time_nagra, time_beta);
+			}
+			// else nagra is faster or no beta, so continue unmodified
+		}
+	}
  		
 	LLIST * result = ll_create();
 	LLIST * selected = ll_create();
@@ -547,7 +613,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	int32_t current = -1;
 	READER_STAT *stat = NULL;
 	int32_t retrylimit = get_retrylimit(er);
-	uint32_t prid = get_prid(er->caid, er->prid);
 	
 	int32_t nlocal_readers = 0;
 	int32_t nbest_readers = get_nbest_readers(er);

@@ -539,7 +539,7 @@ void chk_t_global(const char *token, char *value)
 	}
 
 	if (!strcmp(token, "readerautoloadbalance") || !strcmp(token, "lb_mode")) {
-		cfg.lb_mode = strToIntVal(value, 0);
+		cfg.lb_mode = strToIntVal(value, DEFAULT_LB_MODE);
 		return;
 	}
 
@@ -625,6 +625,11 @@ void chk_t_global(const char *token, char *value)
 	
 	if (!strcmp(token, "lb_max_readers")) {
 		cfg.lb_max_readers = strToIntVal(value, 0);
+		return;
+	}
+
+	if (!strcmp(token, "lb_auto_betatunnel")) {
+		cfg.lb_auto_betatunnel = strToIntVal(value, DEFAULT_LB_AUTO_BETATUNNEL);
 		return;
 	}
 
@@ -1433,6 +1438,19 @@ int32_t init_config()
 	cfg.cc_keep_connected = 1;
 	cfg.cc_reshare = 10;
 #endif
+
+	//loadbalancer defaults:
+	cfg.lb_mode = DEFAULT_LB_MODE;
+    cfg.lb_nbest_readers = DEFAULT_NBEST;
+    cfg.lb_nfb_readers = DEFAULT_NFB;
+    cfg.lb_min_ecmcount = DEFAULT_MIN_ECM_COUNT;
+    cfg.lb_max_ecmcount = DEFAULT_MAX_ECM_COUNT;
+    cfg.lb_reopen_seconds = DEFAULT_REOPEN_SECONDS;
+    cfg.lb_retrylimit = DEFAULT_RETRYLIMIT;
+    cfg.lb_stat_cleanup = DEFAULT_LB_STAT_CLEANUP;
+    cfg.lb_auto_betatunnel = DEFAULT_LB_AUTO_BETATUNNEL;
+    //end loadbalancer defaults
+                                                                                    	
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_conf);
 	if (!(fp = fopen(token, "r"))) {
 		fprintf(stderr, "Cannot open config file '%s' (errno=%d %s)\n", token, errno, strerror(errno));
@@ -1858,7 +1876,7 @@ int32_t write_config()
 	if (cfg.dropdups || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "dropdups", "%d\n", cfg.dropdups);
 
-	if (cfg.lb_mode || cfg.http_full_cfg)
+	if (cfg.lb_mode != DEFAULT_LB_MODE || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_mode", "%d\n", cfg.lb_mode);
 	if (cfg.lb_save || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_save", "%d\n", cfg.lb_save);
@@ -1901,6 +1919,8 @@ int32_t write_config()
 		fprintf_conf(f, CONFVARWIDTH, "lb_reopen_mode", "%d\n", cfg.lb_reopen_mode);
 	if (cfg.lb_max_readers || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_max_readers", "%d\n", cfg.lb_max_readers);
+	if (cfg.lb_auto_betatunnel != DEFAULT_LB_AUTO_BETATUNNEL || cfg.http_full_cfg)
+		fprintf_conf(f, CONFVARWIDTH, "lb_auto_betatunnel", "%d\n", cfg.lb_auto_betatunnel);
 
 	if (cfg.resolve_gethostbyname || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "resolvegethostbyname", "%d\n", cfg.resolve_gethostbyname);

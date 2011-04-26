@@ -282,10 +282,12 @@ extern char *RDR_CD_TXT[];
 #define DEFAULT_NBEST 1
 #define DEFAULT_NFB 1
 #define DEFAULT_RETRYLIMIT 800
+#define DEFAULT_LB_MODE 1
 #define DEFAULT_LB_STAT_CLEANUP 336
 #define DEFAULT_LB_USE_LOCKING 0
 #define DEFAULT_LB_REOPEN_MODE 0
 #define DEFAULT_UPDATEINTERVAL 240
+#define DEFAULT_LB_AUTO_BETATUNNEL 1
 
 enum {E1_GLOBAL=0, E1_USER, E1_READER, E1_SERVER, E1_LSERVER};
 enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE,
@@ -584,7 +586,7 @@ typedef struct ecm_request_t
   int32_t		btun; // mark er as betatunneled
   int32_t		reader_avail; //count of available readers
   int32_t           reader_count; //count of contacted readers
-
+  struct ecm_request_t	*beta_ptr_to_nagra; //if auto-betatunnel, beta ecm points to the original nagra ecm
 #ifdef CS_WITH_DOUBLECHECK
   int32_t		checked;
   uchar		cw_checked[16];
@@ -1174,6 +1176,7 @@ struct s_config
 	int32_t lb_use_locking; //use a mutex lock while searching for readers (get_cw())
 	int32_t lb_reopen_mode; //reopen readers mode
 	int32_t lb_max_readers; //limit the amount of readers during learning
+	int32_t lb_auto_betatunnel; //automatic selection of betatunnel convertion based on learned data
 	
 	int32_t             resolve_gethostbyname;
 
@@ -1384,6 +1387,7 @@ extern int32_t read_from_pipe(int, uchar **, int);
 extern int32_t write_ecm_answer(struct s_reader *, ECM_REQUEST *);
 extern void log_emm_request(struct s_reader *);
 extern uint32_t chk_provid(uchar *, uint16_t);
+extern void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto);
 #ifdef IRDETO_GUESSING
 extern void guess_irdeto(ECM_REQUEST *);
 #endif
