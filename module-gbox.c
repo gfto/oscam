@@ -54,6 +54,7 @@ struct gbox_data {
   pthread_mutex_t lock;
   uchar buf[1024];
   sem_t sem;
+  LLIST *local_cards;
 };
 
 static const uchar sbox[] = {
@@ -79,15 +80,18 @@ static void gbox_calc_checkcode(struct gbox_data *gbox)
   int32_t slot = 0;
 
   // for all local cards do:
-  /*
-    gbox->checkcode[0] ^= provid << 24;
-    gbox->checkcode[1] ^= provid << 16;
-    gbox->checkcode[2] ^= provid << 8;
-    gbox->checkcode[3] ^= provid & 0xff;
-    gbox->checkcode[4] = slot++;
+  LL_ITER *it = ll_iter_create(gbox->local_cards);
+  struct gbox_card *card;
+  while ((card = ll_iter_next(it))) {
+    gbox->checkcode[0] ^= card->provid << 24;
+    gbox->checkcode[1] ^= card->provid << 16;
+    gbox->checkcode[2] ^= card->provid << 8;
+    gbox->checkcode[3] ^= card->provid & 0xff;
+    gbox->checkcode[4] = ++slot;
     gbox->checkcode[5] = gbox->peer.id > 8;
     gbox->checkcode[6] = gbox->peer.id & 0xff;
-  */
+  }
+  ll_iter_release(it);
 }
 
 uint32_t ecm_getcrc(ECM_REQUEST *er, int32_t ecmlen)
