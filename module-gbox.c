@@ -68,56 +68,6 @@ static const uchar sbox[] = {
   0x4d, 0x41, 0x0c, 0x5e, 0xde, 0xe4, 0x90, 0xae
 };
 
-static int32_t gbox_decode_cmd(uchar *buf)
-{
-  return buf[0] << 8 | buf[1];
-}
-
-static void gbox_calc_checkcode(struct gbox_data *gbox)
-{
-  memcpy(gbox->checkcode, "\x15\x30\x2\x4\x19\x19\x66", 7);	/* no local cards */
-
-  int32_t slot = 0;
-
-  // for all local cards do:
-  LL_ITER *it = ll_iter_create(gbox->local_cards);
-  struct gbox_card *card;
-  while ((card = ll_iter_next(it))) {
-    gbox->checkcode[0] ^= card->provid << 24;
-    gbox->checkcode[1] ^= card->provid << 16;
-    gbox->checkcode[2] ^= card->provid << 8;
-    gbox->checkcode[3] ^= card->provid & 0xff;
-    gbox->checkcode[4] = ++slot;
-    gbox->checkcode[5] = gbox->peer.id > 8;
-    gbox->checkcode[6] = gbox->peer.id & 0xff;
-  }
-  ll_iter_release(it);
-}
-
-uint32_t ecm_getcrc(ECM_REQUEST *er, int32_t ecmlen)
-{
-
-  uint8_t checksum[4];
-  int32_t counter;
-
-  uchar ecm[0xFF];
-  memcpy(ecm, er->ecm, er->l);
-
-  checksum[3]= ecm[0];
-  checksum[2]= ecm[1];
-  checksum[1]= ecm[2];
-  checksum[0]= ecm[3];
-
-  for (counter=1; counter< (ecmlen/4) - 4; counter++) {
-    checksum[3] ^=ecm[counter*4];
-    checksum[2] ^=ecm[counter*4+1];
-    checksum[1] ^=ecm[counter*4+2];
-    checksum[0] ^=ecm[counter*4+3];
-  }
-
-  return checksum[3] << 24 | checksum[2]<<16 | checksum[1]<<8 | checksum[0];
-}
-
 #pragma GCC diagnostic ignored "-Wunused-parameter" 
 static void gbox_encrypt_stage1(uchar *buf, int32_t l, uchar *key)
 {
@@ -270,6 +220,56 @@ static void gbox_decompress(struct gbox_data *gbox, uchar *buf, int32_t *unpacke
   *unpacked_len += 12;
 }
 
+static int32_t gbox_decode_cmd(uchar *buf)
+{
+  return buf[0] << 8 | buf[1];
+}
+
+static void gbox_calc_checkcode(struct gbox_data *gbox)
+{
+  memcpy(gbox->checkcode, "\x15\x30\x2\x4\x19\x19\x66", 7); /* no local cards */
+
+  int32_t slot = 0;
+
+  // for all local cards do:
+  LL_ITER *it = ll_iter_create(gbox->local_cards);
+  struct gbox_card *card;
+  while ((card = ll_iter_next(it))) {
+    gbox->checkcode[0] ^= card->provid >> 24;
+    gbox->checkcode[1] ^= card->provid >> 16;
+    gbox->checkcode[2] ^= card->provid >> 8;
+    gbox->checkcode[3] ^= card->provid & 0xff;
+    gbox->checkcode[4] = ++slot;
+    gbox->checkcode[5] = gbox->peer.id >> 8;
+    gbox->checkcode[6] = gbox->peer.id & 0xff;
+  }
+  ll_iter_release(it);
+}
+
+uint32_t ecm_getcrc(ECM_REQUEST *er, int32_t ecmlen)
+{
+
+  uint8_t checksum[4];
+  int32_t counter;
+
+  uchar ecm[0xFF];
+  memcpy(ecm, er->ecm, er->l);
+
+  checksum[3]= ecm[0];
+  checksum[2]= ecm[1];
+  checksum[1]= ecm[2];
+  checksum[0]= ecm[3];
+
+  for (counter=1; counter< (ecmlen/4) - 4; counter++) {
+    checksum[3] ^=ecm[counter*4];
+    checksum[2] ^=ecm[counter*4+1];
+    checksum[1] ^=ecm[counter*4+2];
+    checksum[0] ^=ecm[counter*4+3];
+  }
+
+  return checksum[3] << 24 | checksum[2]<<16 | checksum[1]<<8 | checksum[0];
+}
+
 /*
 static void gbox_handle_gsms(uint16_t peerid, char *gsms)
 {
@@ -390,29 +390,54 @@ static void gbox_send_hello(struct s_client *cli)
 {
   struct gbox_data *gbox = cli->gbox;
 
+  // TODO build local card list
+  if (!gbox->local_cards)
+    gbox->local_cards = ll_create();
+  else
+    ll_clear_data(gbox->local_cards);
+
   int32_t len;
   uchar buf[4096];
 
   int32_t hostname_len = strnlen(cfg.gbox_hostname, sizeof(cfg.gbox_hostname) - 1);
 
-  len = 22 + hostname_len;
+  len = 22 + hostname_len + ll_count(gbox->local_cards) * 9;
 
   memset(buf, 0, sizeof(buf));
-
-  gbox_calc_checkcode(gbox);
 
   buf[0] = MSG_HELLO >> 8;
   buf[1] = MSG_HELLO & 0xff;
   memcpy(buf + 2, gbox->peer.key, 4);
   memcpy(buf + 6, gbox->key, 4);
-  buf[10] = gbox->peer.hello_count;
-  buf[11] = 0x80;    // todo this needs adjusting if local card support is added
+  buf[10] = 1;
+  buf[11] = 0x80;    // TODO this needs adjusting to allow for packet splitting
 
-  memcpy(buf + 12, gbox->checkcode, 7);
-  buf[19] = 0x73;
-  buf[20] = 0x10;
-  memcpy(buf + 21, cfg.gbox_hostname, hostname_len);
-  buf[21 + hostname_len] = hostname_len;
+  uchar *ptr = buf + 11;
+
+  int8_t slot = 0;
+  LL_ITER *it = ll_iter_create(gbox->local_cards);
+  struct gbox_card *card;
+  while ((card = ll_iter_next(it))) {
+    card->slot = ++slot;
+    *(++ptr) = card->provid >> 24;
+    *(++ptr) = card->provid >> 16;
+    *(++ptr) = card->provid >> 8;
+    *(++ptr) = card->provid & 0xff;
+    *(++ptr) = 1;
+    *(++ptr) = card->slot;
+    *(++ptr) = 0x41;  // TODO card->lvl << 4 | card->dist & 0xf
+    *(++ptr) = gbox->id >> 8;
+    *(++ptr) = gbox->id & 0xff;
+  }
+  ll_iter_release(it);
+
+  gbox_calc_checkcode(gbox);
+  memcpy(++ptr, gbox->checkcode, 7);
+  ptr += 7;
+  *ptr = 0x73;
+  *(++ptr) = 0x10;
+  memcpy(++ptr, cfg.gbox_hostname, hostname_len);
+  *(ptr + hostname_len) = hostname_len;
 
   cs_ddump_mask(D_READER, buf, len, "send hello (len=%d):", len);
 
@@ -489,6 +514,9 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
 
         gbox_decompress(gbox, data, &payload_len);
         cs_ddump_mask(D_READER, data, payload_len, "gbox: decompressed data (%d bytes):", payload_len);
+
+        if (!data[10])
+          gbox->hello_expired = 1;
 
         int32_t seqno = data[11] & 0x7f;
         int32_t final = data[11] & 0x80;
@@ -741,7 +769,7 @@ static int32_t gbox_client_init(struct s_client *cli)
 
   gbox->hello_expired = 1;
 
-  //gbox_send_hello(cli);
+  gbox_send_hello(cli);
 
   return 0;
 }
