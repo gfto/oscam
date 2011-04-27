@@ -84,7 +84,7 @@ DESCRIPTIONS
        logport = 0|port
 	  camd 3.x reader logport, camd 3.x UDP must be activated, only works if there's no camd 3.x cascading, 0 = disabled, default=0
 
-       caid = <CAID>[&<mask>][:<CAID>][,<CAID>[&<mask>][:<CAID>]]...
+       caid = <CAID>[&<mask>][:<target CAID>][,<CAID>[&<mask>][:target <CAID>]]...
 	  define and mapping of CAIDs for reader, default:all CAIDs with mask FFFF
 
 	  example: caid = 0100

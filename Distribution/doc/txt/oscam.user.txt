@@ -47,7 +47,7 @@ DESCRIPTIONS
 	  255  =  OSCam  client  only:	stopping requests until next zap, 255 = camd 3.x only: stopping requests until restart of camd 3.x client,
 	  default:0
 
-       caid = <CAID>[&<mask>][:<CAID>][,<CAID>[&<mask>][:<CAID>]]...
+       caid = <CAID>[&<mask>][:<target CAID>][,<CAID>[&<mask>][:<target CAID>]]...
 	  limit and mapping of CAIDs, default:all CAIDs with mask FFFF
 
 	  example: caid = 0100
