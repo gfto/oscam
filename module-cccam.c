@@ -1468,6 +1468,13 @@ void cc_free_cardlist(LLIST *card_list, int32_t destroy_list) {
 void cc_free(struct s_client *cl) {
 	struct cc_data *cc = cl->cc;
 	if (!cc) return;
+	
+	cc->mode = CCCAM_MODE_SHUTDOWN;
+	
+	while (pthread_mutex_trylock(&cc->lockcmd)) cs_sleepms(110);
+	pthread_mutex_trylock(&cc->ecm_busy);
+	pthread_mutex_trylock(&cc->cards_busy);
+	
 	cl->cc=NULL;
 	
 	cs_debug_mask(D_TRACE, "exit cccam1/3");
@@ -1477,17 +1484,14 @@ void cc_free(struct s_client *cl) {
 		free_extended_ecm_idx(cc);
 	ll_destroy_data(cc->extended_ecm_idx);
 
-	if (!pthread_mutex_trylock(&cc->lockcmd))
-		pthread_mutex_unlock(&cc->lockcmd);
+	pthread_mutex_unlock(&cc->lockcmd);
 	pthread_mutex_destroy(&cc->lockcmd);
 
 	cs_debug_mask(D_TRACE, "exit cccam2/3");
-	if (!pthread_mutex_trylock(&cc->ecm_busy))
-		pthread_mutex_unlock(&cc->ecm_busy);
+	pthread_mutex_unlock(&cc->ecm_busy);
 	pthread_mutex_destroy(&cc->ecm_busy);
 
-	if (!pthread_mutex_trylock(&cc->cards_busy))
-		pthread_mutex_unlock(&cc->cards_busy);
+	pthread_mutex_unlock(&cc->cards_busy);
 	pthread_mutex_destroy(&cc->cards_busy);
 	
 	add_garbage(cc->prefix);
@@ -2661,6 +2665,8 @@ int32_t cc_srv_connect(struct s_client *cl) {
 		data[12 + i] = (data[i] + data[4 + i] + data[8 + i]) & 0xff;
 	}
 
+	cs_debug_mask(D_TRACE, "send ccc checksum");
+	
 	send(cl->udp_fd, data, 16, 0);
 
 	cc_xor(data); // XOR init bytes with 'CCcam'
@@ -2675,6 +2681,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	cc_init_crypt(&cc->block[DECRYPT], data, 16);
 	cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 
+	cs_debug_mask(D_TRACE, "receive ccc checksum");
 	if ((i = cc_recv_to(cl, buf, 20)) == 20) {
 		//cs_ddump_mask(D_CLIENT, buf, 20, "cccam: recv:");
 		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
@@ -2699,6 +2706,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 		//cs_ddump_mask(D_CLIENT, buf, 20, "cccam: username '%s':", usr);
 	} else 
 		return -2;
+	cs_debug_mask(D_TRACE, "ccc username received %s", usr);
 
 	cl->crypted = 1;
 
@@ -2707,6 +2715,8 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	//receive password-CCCam encrypted Hash:
 	if (cc_recv_to(cl, buf, 6) != 6)
 		return -2;
+	
+	cs_debug_mask(D_TRACE, "ccc passwdhash received %s", usr);
 	
 	account = cfg.account;
 	struct cc_crypt_block *save_block = cs_malloc(&save_block, sizeof(struct cc_crypt_block), QUITERROR);
@@ -2758,6 +2768,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 			return -3; 
 	}
 	
+	cs_debug_mask(D_TRACE, "ccc user authenticated %s", usr);
 
 	if (!cc->prefix) {
 		cc->prefix = cs_malloc(&cc->prefix, strlen(cl->account->usr)+20, QUITERROR);
@@ -2793,6 +2804,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	// send cli data ack
 	cc_cmd_send(cl, NULL, 0, MSG_CLI_DATA);
 
+    cs_debug_mask(D_TRACE, "ccc send srv_data %s", usr);
 	if (cc_send_srv_data(cl) < 0)
 		return -1;
 
@@ -2805,12 +2817,14 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	i = process_input(mbuf, sizeof(mbuf), 1);
 	if (i<=0 && i != -9)
 		return 0; //disconnected
-	
+		
 	if (cc->cccam220)
 		cs_debug_mask(D_CLIENT, "%s extended sid mode activated", getprefix());
 	else
 		cs_debug_mask(D_CLIENT, "%s 2.1.x compatibility mode", getprefix());
 
+	cs_debug_mask(D_TRACE, "ccc send cards %s", usr);
+ 
 	if (!cc_srv_report_cards(cl))
 		return -1;
 	cs_ftime(&cc->ecm_time);
@@ -2820,6 +2834,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	cc->mode = CCCAM_MODE_NORMAL;
 	//some clients, e.g. mgcamd, does not support keepalive. So if not answered, keep connection
 	// check for client timeout, if timeout occurs try to send keepalive
+	cs_debug_mask(D_TRACE, "ccc connected and waiting for data %s", usr);
 	while (cl->pfd && cl->udp_fd && cc->mode == CCCAM_MODE_NORMAL && !cl->dup)
 	{
 		i = process_input(mbuf, sizeof(mbuf), 10);
@@ -2836,6 +2851,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 		
 		//new timeout check:
 		if (time(NULL)-timeout > (time_t)cfg.cmaxidle) {
+			cs_debug_mask(D_TRACE, "ccc idle %s", usr);
 			//cs_debug_mask(D_TRACE, "client timeout user %s idle=%d client max idle=%d", usr, cmi, cfg.cmaxidle);
 			if (cfg.cc_keep_connected || cl->account->ncd_keepalive) {
 				if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)

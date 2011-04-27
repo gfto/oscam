@@ -32,12 +32,16 @@ void add_garbage(void *data) {
           free(data);
           return;
         }
-				int32_t bucket = (uintptr_t)data/16 % HASH_BUCKETS;
-        pthread_mutex_lock(&garbage_lock[bucket]);
+		
+		int32_t bucket = (uintptr_t)data/16 % HASH_BUCKETS;
+        while (pthread_mutex_lock(&garbage_lock[bucket])) {
+        	cs_debug_mask(D_TRACE, "trylock add_garbage wait");	
+        	cs_sleepms(50);
+        }
         
         struct cs_garbage *garbagecheck = garbage_first[bucket];
-        while(garbagecheck){
-        	if(garbagecheck->data == data){     			
+        while(garbagecheck) {
+        	if(garbagecheck->data == data) {
       			cs_log("Found a try to add garbage twice. Not adding the element to garbage list...");
       			#ifdef WITH_DEBUG
       			cs_log("Current garbage addition: %s, line %d.", file, line);
@@ -49,7 +53,8 @@ void add_garbage(void *data) {
         	}
         	garbagecheck = garbagecheck->next;
         }
-				if(garbagecheck == NULL){
+		
+		if (garbagecheck == NULL) {
 	        struct cs_garbage *garbage = malloc(sizeof(struct cs_garbage));
 	        garbage->time = time(NULL);
 	        garbage->data = data;
@@ -59,7 +64,7 @@ void add_garbage(void *data) {
 	        garbage->line = line;
 	        #endif
 	        garbage_first[bucket] = garbage;
-	      }
+	    }
 
         pthread_mutex_unlock(&garbage_lock[bucket]);
 }
@@ -72,8 +77,10 @@ void garbage_collector() {
         while (garbage_collector_active) {
                 
                 for(i = 0; i < HASH_BUCKETS; ++i){
-	                pthread_mutex_lock(&garbage_lock[i]);
-	              
+	                while (pthread_mutex_trylock(&garbage_lock[i])) {
+	                	cs_debug_mask(D_TRACE, "trylock garbage_collector wait");
+	                	cs_sleepms(50);
+	                }
 	                now = time(NULL);
 	
 	                prev = NULL;

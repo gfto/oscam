@@ -33,8 +33,10 @@ LLIST *ll_create()
 
 void ll_lock(LLIST *l)
 {
-	if (l && !l->flag)
-		pthread_mutex_lock(&l->lock);
+	while (l && !l->flag && pthread_mutex_trylock(&l->lock)) {
+		cs_debug_mask(D_TRACE, "trylock ll_lock wait");
+		cs_sleepms(50);
+	}
 }
 
 void ll_unlock(LLIST *l)

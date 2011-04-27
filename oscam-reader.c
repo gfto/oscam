@@ -134,7 +134,10 @@ int32_t hostResolve(struct s_reader *rdr)
    int32_t result = 0;
    struct s_client *cl = rdr->client;
    
-   pthread_mutex_lock(&gethostbyname_lock);
+   while (pthread_mutex_trylock(&gethostbyname_lock)) {
+     cs_debug_mask(D_TRACE, "trylock hostResolve wait");
+     cs_sleepms(50);
+   }
    
    in_addr_t last_ip = cl->ip;
    

@@ -2619,7 +2619,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
     //Use locking - now default=FALSE, activate on problems!
 	int32_t locked;
-	if (cfg.lb_mode && cfg.lb_use_locking) {
+	if (cfg.lb_mode && cfg.lb_use_locking && !er->beta_ptr_to_nagra) {
 			pthread_mutex_lock(&get_cw_lock);
 			locked=1;
 	}
