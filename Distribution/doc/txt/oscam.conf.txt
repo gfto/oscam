@@ -442,6 +442,12 @@ DESCRIPTIONS
 	   2 = aggregation based on CAIDs: all SCs with the same CAIDs
 	       will be merged, provider (maximum 32) will be merged, too
 
+       updateinterval = seconds
+	  interval to provide share list update to CCcam clients, default:240:
+
+	    0 = updates based on server updates
+	   -1 = disable
+
        keepconnected = 0|1
 	  set CCcam keepalive modus:
 
