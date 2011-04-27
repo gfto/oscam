@@ -53,6 +53,8 @@ DESCRIPTIONS
 	  example: caid = 0100
 		   caid = 0200&ffee:0300
 		   caid = 0400&ff00:0500,0600
+		   caid = 0702,0722
+		   caid = 0702&ffdf (shortcut for the example above)
 
        au = label of reader[,label of reader]...|1
 	  AU setting, default:none:

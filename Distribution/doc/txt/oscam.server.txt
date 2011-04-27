@@ -90,6 +90,8 @@ DESCRIPTIONS
 	  example: caid = 0100
 		   caid = 0200&ffee:0300
 		   caid = 0400&ff00:0500,0600
+		   caid = 0702,0722
+		   caid = 0702&ffdf (shortcut for the example above)
 
        audisabled = 0|1
 	  1 = exclude reader from auto AU, default:0
