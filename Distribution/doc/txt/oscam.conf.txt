@@ -191,7 +191,8 @@ DESCRIPTIONS
 	   limit = restrict loadbalancer readers to limit
 
        lb_auto_betatunnel = 0|1
-	  1 = enable automatic Betacrypt tunneling in loadbalancing mode, default:1
+	  1  =	enable automatic Betacrypt tunneling detection for CAIDs 1801, 1833, 1834, 1835 and 1838 for loadbalancing, Betacrypt defintion in
+	  oscam.user with betatunnel will be prefered, default:1
 
    The [monitor] section
        port = 0|port
@@ -429,7 +430,7 @@ DESCRIPTIONS
 	   1 = use reshare setting of reader or user
 
        stealth = 0|1
-	  1  =	behaviour  like the original CCcam: no activate partner detection and extended OSCam-CCcam protocol, prevent other OSCam to detect
+	  1 = behaviour like the original CCcam: no activate partner detection and extended OSCam-CCcam protocol, prevent other  OSCam	to  detect
 	  the server as OSCam server, default:0
 
        minimizecards = mode
@@ -632,12 +633,12 @@ MONITOR
 WEB INTERFACE
        ·  template system
 
-	  The web interface allows you to create your own template. For developing your own template request the orignal template  with  the  non-
+	  The  web  interface  allows you to create your own template. For developing your own template request the orignal template with the non-
 	  linked page savetemplates.html. Store your own template in the directory specified by httptpl.
 
        ·  known issues
 
-	  Login  is  not  possible  by	now with the Safari browser because of incorrect stale flag handling. Increasing the AUTHNONCEVALIDSECS in
+	  Login is not possible by now with the Safari browser because of incorrect stale flag	handling.  Increasing  the  AUTHNONCEVALIDSECS	in
 	  oscam-http.h would be a workaround, but also a small security risk.
 
 CACHING
@@ -691,7 +692,7 @@ EXAMPLES
 	password     = mypassword
 
 SEE ALSO
-       list_smargo(1), oscam(1), oscam.ac(5), oscam.cert(5),  oscam.dvbapi(5),	oscam.guess(5),  oscam.ird(5),	oscam.provid(5),  oscam.server(5),
+       list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cert(5),  oscam.dvbapi(5),  oscam.guess(5), oscam.ird(5), oscam.provid(5), oscam.server(5),
        oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
 
 
