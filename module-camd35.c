@@ -82,11 +82,28 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
       }
       else
       {
-        if (!client->udp_fd) return(-9);
-        rs = recv(client->udp_fd, buf, l, 0);
-      }
-      if (rs < 24) rc = -1;
-      break;
+		if (!client->udp_fd) return(-9);
+		if (!client->is_udp) {
+			size_t len = recv(client->udp_fd, buf, l, MSG_PEEK);
+			switch (len) {
+				case -1: break;
+				case 332:
+				case 184:
+					l=36;	break;
+				case 348:
+				case 200:
+					l=52;	break;
+				case 296:
+					l=148;	break;
+				default:
+					l=len;
+					break;
+			}
+		}
+		rs = recv(client->udp_fd, buf, l, 0);
+	}
+	if (rs < 24) rc = -1;
+	break;
     case 1:
       memcpy(recrc, buf, 4);
       memmove(buf, buf+4, rs-=4);
@@ -234,10 +251,8 @@ static void camd35_request_emm(ECM_REQUEST *er)
 		mbuf[20] = mbuf[39] = mbuf[40] = mbuf[47] = mbuf[49] = 1;
 
 	memcpy(mbuf + 10, mbuf + 20, 2);
-	cs_sleepms(500);
 	camd35_send(mbuf);		// send with data-len 111 for camd3 > 3.890
 	mbuf[1]++;
-	cs_sleepms(500);
 	camd35_send(mbuf);		// send with data-len 112 for camd3 < 3.890
 }
 
