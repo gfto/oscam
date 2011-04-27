@@ -225,6 +225,12 @@ static int32_t gbox_decode_cmd(uchar *buf)
   return buf[0] << 8 | buf[1];
 }
 
+void gbox_code_cmd(uchar *buf, int16_t cmd)
+{
+  buf[0] = cmd >> 8;
+  buf[1] = cmd & 0xff;
+}
+
 static void gbox_calc_checkcode(struct gbox_data *gbox)
 {
   memcpy(gbox->checkcode, "\x15\x30\x2\x4\x19\x19\x66", 7); /* no local cards */
@@ -373,8 +379,7 @@ static void gbox_send_boxinfo(struct s_client *cli)
 
   int32_t hostname_len = strnlen(cfg.gbox_hostname, sizeof(cfg.gbox_hostname) - 1);
 
-  buf[0] = MSG_BOXINFO >> 8;
-  buf[1] = MSG_BOXINFO & 0xff;
+  gbox_code_cmd(buf, MSG_BOXINFO);
   memcpy(buf + 2, gbox->peer.key, 4);
   memcpy(buf + 6, gbox->key, 4);
   buf[10] = gbox->peer.ver;
@@ -405,8 +410,7 @@ static void gbox_send_hello(struct s_client *cli)
 
   memset(buf, 0, sizeof(buf));
 
-  buf[0] = MSG_HELLO >> 8;
-  buf[1] = MSG_HELLO & 0xff;
+  gbox_code_cmd(buf, MSG_HELLO);
   memcpy(buf + 2, gbox->peer.key, 4);
   memcpy(buf + 6, gbox->key, 4);
   buf[10] = 1;
@@ -826,8 +830,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *buf)
 
   memset(send_buf, 0, sizeof(send_buf));
 
-  send_buf[0] = MSG_ECM >> 8;
-  send_buf[1] = MSG_ECM & 0xff;
+  gbox_code_cmd(send_buf, MSG_ECM);
   memcpy(send_buf + 2, gbox->peer.key, 4);
   memcpy(send_buf + 6, gbox->key, 4);
   send_buf[10] = er->pid >> 8;
