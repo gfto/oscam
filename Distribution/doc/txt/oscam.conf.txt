@@ -191,7 +191,7 @@ DESCRIPTIONS
 	   limit = restrict loadbalancer readers to limit
 
        lb_auto_betatunnel = 0|1
-	  1  =	enable automatic Betacrypt tunneling detection for CAIDs 1801, 1833, 1834, 1835 and 1838 for loadbalancing, Betacrypt defintion in
+	  1  =	enable	automatic  Betacrypt  tunneling  detection  for CAIDs 1801, 1833, 1834, and 1835 for loadbalancing, Betacrypt defintion in
 	  oscam.user with betatunnel will be prefered, default:1
 
    The [monitor] section
