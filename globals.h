@@ -389,6 +389,7 @@ typedef struct s_caidtab
 
 typedef struct s_tuntab
 {
+  uint16_t n;
   uint16_t bt_caidfrom[CS_MAXTUNTAB];
   uint16_t bt_caidto[CS_MAXTUNTAB];
   uint16_t bt_srvid[CS_MAXTUNTAB];

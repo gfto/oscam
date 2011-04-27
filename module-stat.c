@@ -509,6 +509,7 @@ static int32_t get_reopen_seconds(READER_STAT *stat)
 ushort get_betatunnel_caid_to(ushort caid) 
 {
 	if (caid == 0x1801) return 0x1722;
+	if (caid == 0x1831) return 0x1722;
 	if (caid == 0x1833) return 0x1702;
 	if (caid == 0x1834) return 0x1722;
 	if (caid == 0x1835) return 0x1722;

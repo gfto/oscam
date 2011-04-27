@@ -2192,12 +2192,13 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 		//got a 17xx answer for a 18xx betatunnel request:
 		if (ert->beta_ptr_to_nagra) {
 			ECM_REQUEST *ecm_nagra = ert->beta_ptr_to_nagra;
-			if (ert->rc == E_FOUND && ecm_nagra->rc >= E_99) {
+			if (ert->rc < E_NOTFOUND && ecm_nagra->rc >= E_99) {
 				ecm_nagra->rc = ert->rc;
 				ecm_nagra->rcEx = ert->rcEx;
 				ecm_nagra->selected_reader = ert->selected_reader;
 				memcpy(ecm_nagra->msglog, ert->msglog, sizeof(ert->msglog));
 				memcpy(ecm_nagra->cw, ert->cw, sizeof(ert->cw));
+				ll_remove(ecm_nagra->matching_rdr, ecm_nagra->selected_reader);
 				store_cw_in_cache(ecm_nagra, ecm_nagra->selected_reader->grp, ecm_nagra->rc);
 				send_dcw(cl, ecm_nagra);
 				distribute_ecm(ecm_nagra, ert->selected_reader->grp);
@@ -2344,40 +2345,21 @@ void cs_betatunnel(ECM_REQUEST *er)
 	int32_t n;
 	struct s_client *cl = cur_client();
 	uint32_t mask_all = 0xFFFF;
-//	static uchar nagra0[6] = {0x80, 0x30, 0x86, 0x07, 0x84, 0x00};
-//	static uchar nagra1[6] = {0x81, 0x30, 0x86, 0x07, 0x84, 0x00};
 	
 	TUNTAB *ttab;
 	ttab = &cl->ttab;
 
-	for (n = 0; (n < CS_MAXTUNTAB); n++) {
+	if (er->caid>>8 == 0x18)
+		cs_ddump_mask(D_TRACE, er->ecm, 13, "betatunnel? ecmlen=%d", er->l);
+
+	for (n = 0; n<ttab->n; n++) {
 		if ((er->caid==ttab->bt_caidfrom[n]) && ((er->srvid==ttab->bt_srvid[n]) || (ttab->bt_srvid[n])==mask_all)) {
-			
-			//if (!memcmp(er->ecm, nagra0, 6) || !memcmp(er->ecm, nagra1, 6)) { //No nagra header?
-				convert_to_beta(cl, er, ttab->bt_caidto[n]);
-			//}
-			//else
-			//	cs_debug_mask(D_TRACE, "No nagra header, betatunnel wrong configured? From: 0x%X to BetaCrypt: 0x%X for service id:0x%X",
-			//		ttab->bt_caidfrom[n], ttab->bt_caidto[n], ttab->bt_srvid[n]);
+	
+			convert_to_beta(cl, er, ttab->bt_caidto[n]);
 			
 			return;
 		}
 	}
-
-	cs_ddump_mask(D_TRACE, er->ecm, 12, "betatunnel? ecmlen=%d", er->l);
-		
-	//if (cl->account->betatunnel_auto)
-	//{
-	//	if (!memcmp(er->ecm, nagra0, 6) || !memcmp(er->ecm, nagra1, 6)) //nagra header
-	//	{
-	//		if (er->caid == 0x1833) { 
-	//			convert_to_beta(cl, er, 0x1702);
-	//		}
-	//		else if (er->caid == 0x1834) {
-	//			convert_to_beta(cl, er, 0x1722);
-	//		}
-	//	}		
-	//}
 }
 
 static void guess_cardsystem(ECM_REQUEST *er)
@@ -2652,7 +2634,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		 *because newcamd ECM will fail
 		 *if ECM is converted before
 		 */
-		if (&client->ttab)
+		if (client->ttab.n)
 			cs_betatunnel(er);
 
 		// ignore ecm ...

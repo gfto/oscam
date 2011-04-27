@@ -687,22 +687,12 @@ void clear_ptab(struct s_ptab *ptab){
 
 /* Clears given caidtab */
 void clear_caidtab(struct s_caidtab *ctab){
-	int32_t i;
-	for (i = 0; i < CS_MAXCAIDTAB; i++) {
-		ctab->caid[i] = 0;
-		ctab->mask[i] = 0;
-		ctab->cmap[i] = 0;
-	}
+	memset(ctab, 0, sizeof(struct s_caidtab));
 }
 
 /* Clears given tuntab */
 void clear_tuntab(struct s_tuntab *ttab){
-	int32_t i;
-	for (i = 0; i < CS_MAXTUNTAB; i++) {
-		ttab->bt_caidfrom[i] = 0;
-		ttab->bt_caidto[i] = 0;
-		ttab->bt_srvid[i] = 0;
-	}
+	memset(ttab, 0, sizeof(struct s_tuntab));
 }
 
 /* Copies a file from srcfile to destfile. If an error occured before writing, -1 is returned, else -2. On success, 0 is returned.*/

@@ -208,6 +208,7 @@ void chk_tuntab(char *tunasc, TUNTAB *ttab)
 			ttab->bt_caidfrom[i] = bt_caidfrom;
 			ttab->bt_caidto[i] = bt_caidto;
 			ttab->bt_srvid[i++] = bt_srvid;
+			ttab->n = i;
 		}
 	}
 }
@@ -4285,18 +4286,16 @@ char *mk_t_caidtab(CAIDTAB *ctab){
  * Creates a string ready to write as a token into config or WebIf for TunTabs. You must free the returned value through free_mk_t().
  */
 char *mk_t_tuntab(TUNTAB *ttab){
-	int32_t i = 0, needed = 1, pos = 0;
-	while(ttab->bt_caidfrom[i]){
+	int32_t i, needed = 1, pos = 0;
+	for (i=0; i<ttab->n; i++) {
 		if(ttab->bt_srvid[i]) needed += 10;
 		else needed += 5;
 		if(ttab->bt_caidto[i]) needed += 5;
-		++i;
 	}
 	char *value;
 	if(needed == 1 || !cs_malloc(&value, needed * sizeof(char), -1)) return "";
 	char *saveptr = value;
-	i = 0;
-	while(ttab->bt_caidfrom[i]) {
+	for (i=0; i<ttab->n; i++) {
 		if(i == 0) {
 			snprintf(value + pos, needed-(value-saveptr), "%04X", ttab->bt_caidfrom[i]);
 			pos += 4;
@@ -4312,7 +4311,6 @@ char *mk_t_tuntab(TUNTAB *ttab){
 			snprintf(value + pos, needed-(value-saveptr), ":%04X", ttab->bt_caidto[i]);
 			pos += 5;
 		}
-		++i;
 	}
 	value[pos] = '\0';
 	return value;

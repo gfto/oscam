@@ -45,7 +45,8 @@ static void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uc
   for (i=0; i<CS_MAXPENDING; i++)
   {
   	ecm = &cl->ecmtask[i];
-    if ((ecm->rc>=10) &&
+    if ((ecm->rc>=10) && 
+    	ecm->caid == cl->ecmtask[idx].caid &&
         (!memcmp(ecm->ecmd5, cl->ecmtask[idx].ecmd5, CS_ECMSTORESIZE)))
     {
       if (rc)
@@ -428,6 +429,7 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
     if (n<0 && (ecm->rc<10))   // free slot found
       n=i;
     if ((ecm->rc>=10) &&      // ecm already pending
+    	er->caid == ecm->caid &&
         (!memcmp(er->ecmd5, ecm->ecmd5, CS_ECMSTORESIZE)) &&
         (er->level<=ecm->level))    // ... this level at least
       sflag=0;
