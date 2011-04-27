@@ -345,10 +345,11 @@ char *username(struct s_client * client)
 			return "root";
 	}
 
-	if(client->account)
+	struct s_auth *acc = client->account;
+	if(acc)
 	{
-		if (client->account->usr[0])
-			return(client->account->usr);
+		if (acc->usr[0])
+			return(acc->usr);
 		else
 			return("anonymous");
 	}
