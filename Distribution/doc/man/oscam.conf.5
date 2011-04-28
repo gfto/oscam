@@ -217,6 +217,14 @@ set count of best readers for loadbalancing, default:1
 set count of fallback readers for loadbalancing, default:1
 .RE
 .PP
+\fBlb_reopen_mode\fP = \fB0\fP|\fB1\fP
+.RS 3n
+loadbalancing reopen readers mode:
+
+ \fB0\fP = standard late reopening of blocker readers (default)
+ \fB1\fP = fast reopening of blocker readers
+.RE
+.PP
 \fBlb_nbest_percaid\fP = \fBCAID1:count1[,CAID2:count2]...\fP
 .RS 3n
 set count of best readers per CAIDs for loadbalancing, default:none

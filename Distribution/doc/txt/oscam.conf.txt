@@ -154,6 +154,12 @@ DESCRIPTIONS
        lb_nfb_readers = counts
 	  set count of fallback readers for loadbalancing, default:1
 
+       lb_reopen_mode = 0|1
+	  loadbalancing reopen readers mode:
+
+	   0 = standard late reopening of blocker readers (default)
+	   1 = fast reopening of blocker readers
+
        lb_nbest_percaid = CAID1:count1[,CAID2:count2]...
 	  set count of best readers per CAIDs for loadbalancing, default:none
 
