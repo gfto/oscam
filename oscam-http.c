@@ -2405,10 +2405,11 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 											rcc->num_reshare2,
 											rcc->num_resharex);
 
-									tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" class=\"tooltip\">%s%s</A>",
-											urlencode(vars, cl->reader->label),
-											tpl_getVar(vars, "TMP"),
-											tpl_getVar(vars, "TMPSPAN"));
+									tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" class=\"tooltip%s\">%s%s</A>",
+																urlencode(vars, cl->reader->label),
+																rcc->num_reshare0 > 0 ? "1": "",
+																tpl_getVar(vars, "TMP"),
+																tpl_getVar(vars, "TMPSPAN"));
 								}
 							}
 						}
