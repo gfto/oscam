@@ -818,7 +818,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		it = ll_iter_create(er->matching_rdr);
 		while ((rdr=ll_iter_next(it))) {
         		stat = get_stat(rdr, er->caid, prid, er->srvid, er->l);
-        		if (stat && stat->ecm_count>0) {
+        		if (stat && stat->ecm_count>0 && stat->last_received+get_reopen_seconds(stat) < current_time) {
         			if (!ll_contains(result, rdr) && nreaders) {
         				ll_append(result, rdr);
         				nreaders--;
@@ -845,7 +845,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			stat = get_stat(rdr, er->caid, prid, er->srvid, er->l); 
 
 			if (stat && stat->rc != 0) { //retrylimit reached:
-				if (stat->last_received+get_reopen_seconds(stat) < current_time) { //Retrying reader every (900/conf) seconds
+				if (cfg.lb_reopen_mode || stat->last_received+get_reopen_seconds(stat) < current_time) { //Retrying reader every (900/conf) seconds
 					stat->last_received = current_time;
 					nreaders += ll_remove(result, rdr);
 					ll_prepend(result, rdr);

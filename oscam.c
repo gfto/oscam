@@ -1792,14 +1792,13 @@ void logCWtoFile(ECM_REQUEST *er)
 /**
  * distributes found ecm-request to all clients with rc=99
  **/
-void distribute_ecm(ECM_REQUEST *er, uint64_t grp)
+void distribute_ecm(ECM_REQUEST *er, uint64_t grp, int32_t rc)
 {
   struct s_client *cl;
   ECM_REQUEST *ecm;
   int32_t n, i, pending;
-
-  if (er->rc == E_RDR_FOUND) //found converted to cache...
-    er->rc = E_CACHE2; //cache
+  
+  er->rc = rc;
 
   for (cl=first_client->next; cl ; cl=cl->next) {
     if (cl->fd_m2c && cl->typ=='c' && cl->ecmtask && (cl->grp&grp)) {
@@ -1810,9 +1809,7 @@ void distribute_ecm(ECM_REQUEST *er, uint64_t grp)
         ecm = &cl->ecmtask[i];
         if (ecm->rc >= E_99) {
         	pending++;
-        	if (ecm->ecmcacheptr == er->ecmcacheptr) { //
-        		 //||
-        		//((ecm->caid==er->caid || ecm->ocaid==er->ocaid) && !memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE)))) {
+        	if (ecm->ecmcacheptr == er->ecmcacheptr) { 
         		er->cpti = ecm->cpti;
         		//cs_log("distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
         		write_ecm_request(cl->fd_m2c, er);
@@ -2204,7 +2201,7 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 					ll_remove(ecm_nagra->matching_rdr, ecm_nagra->selected_reader);
 					store_cw_in_cache(ecm_nagra, ecm_nagra->selected_reader->grp, ecm_nagra->rc);
 					send_dcw(cl, ecm_nagra);
-					distribute_ecm(ecm_nagra, ert->selected_reader->grp);
+					distribute_ecm(ecm_nagra, ert->selected_reader->grp, ert->rc);
 				}
 				return; //do not send it to the client, he hasn't requested that, its from the lb
 			}
@@ -2220,7 +2217,7 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 		}
 		
 		send_dcw(cl, ert);
-		distribute_ecm(er, ert->selected_reader->grp);
+		distribute_ecm(er, ert->selected_reader->grp, (ert->rc<E_NOTFOUND)?E_CACHE2:ert->rc);
     }
 	return;
 }

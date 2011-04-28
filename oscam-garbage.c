@@ -34,7 +34,7 @@ void add_garbage(void *data) {
         }
 		
 		int32_t bucket = (uintptr_t)data/16 % HASH_BUCKETS;
-        while (pthread_mutex_lock(&garbage_lock[bucket])) {
+        while (pthread_mutex_trylock(&garbage_lock[bucket])) {
         	cs_debug_mask(D_TRACE, "trylock add_garbage wait");	
         	cs_sleepms(50);
         }

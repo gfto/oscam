@@ -1046,7 +1046,7 @@ void share_updater()
 				}
 				else
 				{
-						if (cfg.cc_update_interval <= 0)
+						if (cfg.cc_update_interval <= 10)
 								cfg.cc_update_interval = DEFAULT_UPDATEINTERVAL;
 						cs_sleepms(cfg.cc_update_interval*1000);
 				}
