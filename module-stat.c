@@ -387,7 +387,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 			stat->ecm_count /= 10;
 		
 		//add timeout to stat:
-		if (ecm_time<=0)
+		if (ecm_time<=0 || ecm_time > (int)cfg.ctimeout)
 			ecm_time = cfg.ctimeout;
 		stat->time_idx++;
 		if (stat->time_idx >= LB_MAX_STAT_TIME)
@@ -587,7 +587,8 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				memcpy(er_beta->ecm, er->ecm, sizeof(er->ecm));
 				er_beta->l = er->l;
 				er_beta->client = er->client;
-				er_beta->beta_ptr_to_nagra = er;
+				er_beta->beta_ptr_to_nagra = er; 
+				er->beta_ptr_to_nagra = er_beta; //link back
 				convert_to_beta(er->client, er_beta, caid_to);
 				er_beta->btun = 0;
 				get_cw(er->client, er_beta);
@@ -605,6 +606,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
  		
 	LLIST * result = ll_create();
 	LLIST * selected = ll_create();
+	LLIST * timeout_services = ll_create();
 	
 	struct timeb new_nulltime;
 	memset(&new_nulltime, 0, sizeof(new_nulltime));
@@ -693,7 +695,8 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					nlocal_readers++; //Prefer local readers!
 
 				if (stat->rc >= 5)
-					nbest_readers++; //just add another reader if best reader is nonresponding but has services
+					ll_prepend(timeout_services, rdr);
+					//just add another reader if best reader is nonresponding but has services
 					
 				switch (cfg.lb_mode) {
 					default:
@@ -780,21 +783,24 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		best->value = 0;
 			
 		if (nlocal_readers) {//primary readers, local
-			nlocal_readers--;
+			if (!ll_contains(timeout_services, best_rdri))
+				nlocal_readers--;
 			ll_append(result, best_rdri);
 			nreaders--;
 			//OLDEST_READER:
 			cs_ftime(&best_rdri->lb_last);
 		}
 		else if (nbest_readers) {//primary readers, other
-			nbest_readers--;
+			if (!ll_contains(timeout_services, best_rdri))
+				nbest_readers--;
 			ll_append(result, best_rdri);
 			nreaders--;
 			//OLDEST_READER:
 			cs_ftime(&best_rdri->lb_last);
 		}
 		else if (nfb_readers) { //fallbacks:
-			nfb_readers--;
+			if (!ll_contains(timeout_services, best_rdri))
+				nfb_readers--;
 			LL_NODE *node = ll_append(result, best_rdri);
 			if (!fallback)
 				fallback = node;
@@ -804,6 +810,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	}
 	ll_iter_release(it);
 	ll_destroy_data(selected);
+	ll_destroy(timeout_services);
 	
 	if (!n) //no best reader found? reopen if we have ecm_count>0
 	{

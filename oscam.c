@@ -2189,21 +2189,34 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 	}
 	if (ert) {
 		//betatunnel:
-		//got a 17xx answer for a 18xx betatunnel request:
+		
 		if (ert->beta_ptr_to_nagra) {
-			ECM_REQUEST *ecm_nagra = ert->beta_ptr_to_nagra;
-			if (ert->rc < E_NOTFOUND && ecm_nagra->rc >= E_99) {
-				ecm_nagra->rc = ert->rc;
-				ecm_nagra->rcEx = ert->rcEx;
-				ecm_nagra->selected_reader = ert->selected_reader;
-				memcpy(ecm_nagra->msglog, ert->msglog, sizeof(ert->msglog));
-				memcpy(ecm_nagra->cw, ert->cw, sizeof(ert->cw));
-				ll_remove(ecm_nagra->matching_rdr, ecm_nagra->selected_reader);
-				store_cw_in_cache(ecm_nagra, ecm_nagra->selected_reader->grp, ecm_nagra->rc);
-				send_dcw(cl, ecm_nagra);
-				distribute_ecm(ecm_nagra, ert->selected_reader->grp);
+			if (ert->caid >> 8==0x17) { //got a 17xx answer for a 18xx betatunnel request:
+				// this request is created by the lb, betatunnel 17xx for testing:
+				ECM_REQUEST *ecm_nagra = ert->beta_ptr_to_nagra; //18xx
+				if (ert->rc < E_NOTFOUND && ecm_nagra->rc >= E_99) { //found 17xx
+					//replace the orignal request with that:
+					ecm_nagra->rc = ert->rc;
+					ecm_nagra->rcEx = ert->rcEx;
+					ecm_nagra->selected_reader = ert->selected_reader;
+					memcpy(ecm_nagra->msglog, ert->msglog, sizeof(ert->msglog));
+					memcpy(ecm_nagra->cw, ert->cw, sizeof(ert->cw));
+					ll_remove(ecm_nagra->matching_rdr, ecm_nagra->selected_reader);
+					store_cw_in_cache(ecm_nagra, ecm_nagra->selected_reader->grp, ecm_nagra->rc);
+					send_dcw(cl, ecm_nagra);
+					distribute_ecm(ecm_nagra, ert->selected_reader->grp);
+				}
+				return; //do not send it to the client, he hasn't requested that, its from the lb
 			}
-			return;
+			else 
+			{
+				ECM_REQUEST *ecm_beta = ert->beta_ptr_to_nagra; //17xx
+				if (ert->rc >= E_NOTFOUND && ecm_beta->rc >= E_99) { // this is the original 18xx request
+					//if 18xx can't answered, wait for 17xx answer
+					ert->rc = E_99;
+					return;
+				}
+			}
 		}
 		
 		send_dcw(cl, ert);
