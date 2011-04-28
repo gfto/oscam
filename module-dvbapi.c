@@ -1428,15 +1428,21 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 	if (pausecam)
 		return;
 
-	struct s_dvbapi_priority *lentry = dvbapi_check_prio_match(demux_id, demux[demux_id].demux_fd[filter_num].pidindex, 'l');
-	if (lentry) {
-		if (lentry->delay == len && lentry->force < 6) {
-			cs_debug_mask(D_DVBAPI, "skip ecm with len %d (%04X)", len, len);
-			lentry->force++;
+	struct s_dvbapi_priority *p;
+	for (p = dvbapi_priority; p != NULL; p = p->next) {
+		if (p->type != 'l')		continue;
+
+		if (p->caid 	&& p->caid 	!= curpid->CAID)	continue;
+		if (p->provid && p->provid 	!= curpid->PROVID)	continue;
+		if (p->ecmpid	&& p->ecmpid 	!= curpid->ECM_PID)	continue;
+		if (p->srvid	&& p->srvid 	!= demux[demux_id].program_number)	continue;
+
+		if (p->delay == len && p->force < 6) {
+			p->force++;
 			return;
 		}
-		if (lentry->delay != len)
-			lentry->force=0;
+		if (p->force >= 6)
+			p->force=0;
 	}
 
 	if (demux[demux_id].demux_fd[filter_num].type==TYPE_ECM) {
@@ -1554,10 +1560,10 @@ void * dvbapi_main_local(void *cli) {
 	struct s_client * client = (struct s_client *) cli;
 	client->thread=pthread_self();
 	pthread_setspecific(getclient, cli);
-	#ifndef NO_PTHREAD_CLEANUP_PUSH
+#ifndef NO_PTHREAD_CLEANUP_PUSH
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	pthread_cleanup_push(cleanup_thread, (void *) client);
-	#endif
+#endif
 
 	dvbapi_client=cli;
 
@@ -1739,11 +1745,11 @@ void * dvbapi_main_local(void *cli) {
 			}
 		}
 	}
-	#ifndef NO_PTHREAD_CLEANUP_PUSH
+#ifndef NO_PTHREAD_CLEANUP_PUSH
 	pthread_cleanup_pop(1);
-	#else
+#else
 	cs_exit(0);
-	#endif
+#endif
 	return NULL;
 }
 
