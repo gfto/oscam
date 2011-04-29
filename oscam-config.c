@@ -3114,7 +3114,7 @@ int32_t init_srvid()
 			// check if string is in cache
 			len2 = strlen(ptr1);
 			pos = 0;
-			for(j = 0; j < len2; ++j) pos += (uint32_t)ptr1[j];
+			for(j = 0; j < len2; ++j) pos += (uint8_t)ptr1[j];
 			pos = pos%1024;
 			for(j = 0; j < used[pos]; ++j){
 				if (!strcmp(stringcache[pos][j], ptr1)){
@@ -3147,7 +3147,7 @@ int32_t init_srvid()
 				tmp = *ptrs[i];
 				len2 = strlen(tmp);
 				pos = 0;
-				for(j = 0; j < len2; ++j) pos += (uint32_t)tmp[j];
+				for(j = 0; j < len2; ++j) pos += (uint8_t)tmp[j];
 				pos = pos%1024;
 				if(used[pos] >= allocated[pos]){
 					if(allocated[pos] == 0) cs_malloc(&stringcache[pos], 16 * sizeof(char*), SIGINT);
