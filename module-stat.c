@@ -33,10 +33,13 @@ void init_stat()
 		cfg.lb_stat_cleanup = DEFAULT_LB_STAT_CLEANUP;
 }
 
+#define LINESIZE 1024
+
 void load_stat_from_file()
 {
 	stat_load_save = 0;
 	char buf[256];
+	char *line;
 	char *fname;
 	FILE *file;
 	if (!cfg.lb_savepath || !cfg.lb_savepath[0]) {
@@ -53,20 +56,53 @@ void load_stat_from_file()
 		return;
 	}
 	cs_debug_mask(D_TRACE, "loadbalancer: load statistics from %s", fname);
-	
+
+	struct timeb ts, te;
+    cs_ftime(&ts);
+         	
 	struct s_reader *rdr = NULL;
-	READER_STAT *stat, *dup;
+	READER_STAT *stat, *dup=NULL;
+	line = cs_malloc(&line, LINESIZE, 0);
 		
 	int32_t i=1;
 	int32_t count=0;
-	do
+	int32_t type=0;
+	char *ptr;
+	
+	while (fgets(line, LINESIZE, file))
 	{
+		if (!line[0] || line[0] == '#' || line[0] == ';')
+			continue;
+		
 		stat = malloc(sizeof(READER_STAT));
 		memset(stat, 0, sizeof(READER_STAT));
-		i = fscanf(file, "%s rc %d caid %04hX prid %06X srvid %04hX time avg %dms ecms %d last %ld fail %d len %02hX\n",
-			buf, &stat->rc, &stat->caid, &stat->prid, &stat->srvid, 
-			&stat->time_avg, &stat->ecm_count, &stat->last_received, &stat->fail_factor, &stat->ecmlen);
-			
+
+		//get type by evaluating first line:
+		if (type==0) {
+			if (strstr(line, " rc ")) type = 2;
+			else type = 1;
+		}	
+		
+		if (type==1) { //New format - faster parsing:
+			for (i = 0, ptr = strtok(line, ","); ptr ; ptr = strtok(NULL, ","), i++) {
+				switch(i) {
+					case 0: strncpy(buf, ptr, sizeof(buf)-1); break;
+					case 1: stat->rc = atoi(ptr); break;
+					case 2: stat->caid = a2i(ptr, 4); break;
+					case 3: stat->prid = a2i(ptr, 6); break;
+					case 4: stat->srvid = a2i(ptr, 4); break;
+					case 5: stat->time_avg = atoi(ptr); break;
+					case 6: stat->ecm_count = atoi(ptr); break;
+					case 7: stat->last_received = atol(ptr); break;
+					case 8: stat->fail_factor = atoi(ptr); break;
+					case 9: stat->ecmlen = a2i(ptr, 2); break;
+				}				
+			}
+		} else { //Old format - keep for compatibility:
+			i = sscanf(line, "%s rc %d caid %04hX prid %06X srvid %04hX time avg %dms ecms %d last %ld fail %d len %02hX\n",
+				buf, &stat->rc, &stat->caid, &stat->prid, &stat->srvid, 
+				&stat->time_avg, &stat->ecm_count, &stat->last_received, &stat->fail_factor, &stat->ecmlen);
+		}
 		
 		if (i > 5) {
 			if (rdr == NULL || strcmp(buf, rdr->label) != 0) {
@@ -84,11 +120,12 @@ void load_stat_from_file()
 					rdr->lb_stat = ll_create();
 					
 				//Duplicate check:
-				dup = get_stat(rdr, stat->caid, stat->prid, stat->srvid, stat->ecmlen);
+				if (cs_dblevel == 0xFF)
+					dup = get_stat(rdr, stat->caid, stat->prid, stat->srvid, stat->ecmlen);
+					
 				if (dup)
 					free(stat); //already loaded
 				else {
-				
 					ll_append(rdr->lb_stat, stat);
 					count++;
 				}
@@ -99,16 +136,19 @@ void load_stat_from_file()
 				free(stat);
 			}
 		}
-		else if (i!=EOF && i>0)
+		else 
 		{
-			cs_debug_mask(D_TRACE, "loadbalancer: statistics ERROR  %s rc=%d i=%d", buf, stat->rc, i);
+			cs_debug_mask(D_TRACE, "loadbalancer: statistics ERROR: %s rc=%d i=%d", buf, stat->rc, i);
 			free(stat);
 		}
-		else
-			free(stat);
-	} while(i!=EOF && i>0);
+	} 
 	fclose(file);
-	cs_debug_mask(D_TRACE, "loadbalancer: statistic loaded %d records", count);
+	free(line);
+
+    cs_ftime(&te);
+	int32_t time = 1000*(te.time-ts.time)+te.millitm-ts.millitm;
+
+	cs_debug_mask(D_TRACE, "loadbalancer: statistics loaded %d records in %dms", count, time);
 }
 
 static uint32_t get_prid(uint16_t caid, uint32_t prid)
@@ -225,7 +265,12 @@ void save_stat_to_file_thread()
 		cs_log("can't write to file %s", fname);
 		return;
 	}
-
+	
+	struct timeb ts, te;
+    cs_ftime(&ts);
+         
+	time_t cleanup_time = time(NULL) - (cfg.lb_stat_cleanup*60*60);
+         	
 	int32_t count=0;
 	struct s_reader *rdr;
 	LL_ITER *itr = ll_iter_create(configured_readers);
@@ -235,8 +280,19 @@ void save_stat_to_file_thread()
 			LL_ITER *it = ll_iter_create(rdr->lb_stat);
 			READER_STAT *stat;
 			while ((stat = ll_iter_next(it))) {
+			
+				if (stat->last_received < cleanup_time) { //cleanup old stats
+					ll_iter_remove_data(it);
+					continue;
+				}
 				
-				fprintf(file, "%s rc %d caid %04hX prid %06X srvid %04hX time avg %dms ecms %d last %ld fail %d len %02hX\n",
+				//Old version, too slow to parse:
+				//fprintf(file, "%s rc %d caid %04hX prid %06X srvid %04hX time avg %dms ecms %d last %ld fail %d len %02hX\n",
+				//	rdr->label, stat->rc, stat->caid, stat->prid, 
+				//	stat->srvid, stat->time_avg, stat->ecm_count, stat->last_received, stat->fail_factor, stat->ecmlen);
+				
+				//New version:
+				fprintf(file, "%s,%d,%04hX,%06X,%04hX,%d,%d,%ld,%d,%02hX\n",
 					rdr->label, stat->rc, stat->caid, stat->prid, 
 					stat->srvid, stat->time_avg, stat->ecm_count, stat->last_received, stat->fail_factor, stat->ecmlen);
 				count++;
@@ -247,7 +303,12 @@ void save_stat_to_file_thread()
 	ll_iter_release(itr);
 	
 	fclose(file);
-	cs_log("loadbalancer: statistic saved %d records to %s", count, fname);
+
+    cs_ftime(&te);
+	int32_t time = 1000*(te.time-ts.time)+te.millitm-ts.millitm;
+
+
+	cs_log("loadbalancer: statistic saved %d records to %s in %dms", count, fname, time);
 }
 
 void save_stat_to_file(int32_t thread)
@@ -398,16 +459,16 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	else
 	{
 		if (rc >= 0)
-			cs_debug_mask(D_TRACE, "loadbalancer: not handled stat for reader %s: rc %d %04hX&%06lX/%04hX/%02hX time %dms usagelevel %d",
-				rdr->label, rc, er->caid, prid, er->srvid, er->l, ecm_time, rdr->lb_usagelevel);
+			cs_debug_mask(D_TRACE, "loadbalancer: not handled stat for reader %s: rc %d %04hX&%06lX/%04hX/%02hX time %dms fail %d",
+				rdr->label, rc, er->caid, prid, er->srvid, er->l, ecm_time, stat->fail_factor);
 	
 		return;
 	}
 	
 	housekeeping_stat(0);
 		
-	cs_debug_mask(D_TRACE, "loadbalancer: adding stat for reader %s: rc %d %04hX&%06lX/%04hX/%02hX time %dms usagelevel %d",
-				rdr->label, rc, er->caid, prid, er->srvid, er->l, ecm_time, rdr->lb_usagelevel);
+	cs_debug_mask(D_TRACE, "loadbalancer: adding stat for reader %s: rc %d %04hX&%06lX/%04hX/%02hX time %dms fail %d",
+				rdr->label, rc, er->caid, prid, er->srvid, er->l, ecm_time, stat->fail_factor);
 	
 	if (cfg.lb_save) {
 		stat_load_save++;
@@ -850,7 +911,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					nreaders += ll_remove(result, rdr);
 					ll_prepend(result, rdr);
 					nreaders--;
-					cs_debug_mask(D_TRACE, "loadbalancer: retrying reader %s", rdr->label);
+					cs_debug_mask(D_TRACE, "loadbalancer: retrying reader %s (fail %d)", rdr->label, stat->fail_factor);
 				}
 			}
 		}
