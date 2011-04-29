@@ -10,7 +10,8 @@ SYNOPSIS
 
 DESCRIPTIONS
        P: CAID:[provider ID]:[service ID]:[ECM PID] [continue]
-	   set priority, continue = 1: proceed with priority, recommended for pay-per-view services, default:none
+	   set priority, continue = 1: proceed with priority, recommended for
+	   pay-per-view services, default:none
 
        I: CAID:[provider ID]:[service ID]:[ECM PID]
 	   set ignore
@@ -20,6 +21,9 @@ DESCRIPTIONS
 
        M: CAID,[provider ID]:[service ID]:[ECM PID] CAID:[provider ID]
 	   mapping
+
+       L: CAID,[provider ID]:[service ID]:[ECM PID] length
+	   set ECM length in decimal
 
 ANNONTATIONS
        Please use Unix text file format only.
@@ -35,6 +39,7 @@ EXAMPLES
 	D: 0600 200	     # wait 200 ms before writing CW for CAID 0600
 	I: :654321	     # ignore provider ID 654321 for every service
 	I: 0		     # ignore every CAID that was not handled before
+	L: 0700 96	     # ECM length for CAID 0700 to 96 (decimal)
 
 SEE ALSO
        list_smargo(1),	  oscam(1),    oscam.ac(5),    oscam.cert(5),	 oscam.conf(5),   oscam.guess(5),   oscam.ird(5),
