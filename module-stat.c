@@ -65,9 +65,11 @@ void load_stat_from_file()
 	line = cs_malloc(&line, LINESIZE, 0);
 		
 	int32_t i=1;
+	int32_t valid=0;
 	int32_t count=0;
 	int32_t type=0;
 	char *ptr;
+	char *split[10];
 	
 	while (fgets(line, LINESIZE, file))
 	{
@@ -84,27 +86,29 @@ void load_stat_from_file()
 		}	
 		
 		if (type==1) { //New format - faster parsing:
-			for (i = 0, ptr = strtok(line, ","); ptr ; ptr = strtok(NULL, ","), i++) {
-				switch(i) {
-					case 0: strncpy(buf, ptr, sizeof(buf)-1); break;
-					case 1: stat->rc = atoi(ptr); break;
-					case 2: stat->caid = a2i(ptr, 4); break;
-					case 3: stat->prid = a2i(ptr, 6); break;
-					case 4: stat->srvid = a2i(ptr, 4); break;
-					case 5: stat->time_avg = atoi(ptr); break;
-					case 6: stat->ecm_count = atoi(ptr); break;
-					case 7: stat->last_received = atol(ptr); break;
-					case 8: stat->fail_factor = atoi(ptr); break;
-					case 9: stat->ecmlen = a2i(ptr, 2); break;
-				}				
+			for (i = 0, ptr = strtok(line, ","); ptr && i<10 ; ptr = strtok(NULL, ","), i++)
+				split[i] = ptr;
+			valid = (i==10);
+			if (valid) {
+				strncpy(buf, split[0], sizeof(buf)-1);
+				stat->rc = atoi(split[1]);
+				stat->caid = a2i(split[2], 4);
+				stat->prid = a2i(split[3], 6);
+				stat->srvid = a2i(split[4], 4);
+				stat->time_avg = atoi(split[5]);
+				stat->ecm_count = atoi(split[6]);
+				stat->last_received = atol(split[7]);
+				stat->fail_factor = atoi(split[8]);
+				stat->ecmlen = a2i(split[9], 2);
 			}
 		} else { //Old format - keep for compatibility:
 			i = sscanf(line, "%s rc %d caid %04hX prid %06X srvid %04hX time avg %dms ecms %d last %ld fail %d len %02hX\n",
 				buf, &stat->rc, &stat->caid, &stat->prid, &stat->srvid, 
 				&stat->time_avg, &stat->ecm_count, &stat->last_received, &stat->fail_factor, &stat->ecmlen);
+			valid = i>5;
 		}
 		
-		if (i > 5) {
+		if (valid) {
 			if (rdr == NULL || strcmp(buf, rdr->label) != 0) {
 				LL_ITER *itr = ll_iter_create(configured_readers);
 				while ((rdr=ll_iter_next(itr))) {
@@ -120,7 +124,7 @@ void load_stat_from_file()
 					rdr->lb_stat = ll_create();
 					
 				//Duplicate check:
-				if (cs_dblevel == 0xFF)
+				if (cs_dblevel == 0xFF) //Only with full debug for faster reading...
 					dup = get_stat(rdr, stat->caid, stat->prid, stat->srvid, stat->ecmlen);
 					
 				if (dup)
