@@ -390,6 +390,9 @@ int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card) {
         		int32_t j;
         		int32_t ok = !cl->sidtabok && !cl->sidtabno; //default valid if no positive services and no negative services
         		if (!ok) {
+        				if (!cl->sidtabok) // no positive services, so ok by default if no negative found
+        						ok=1;
+        						
 		        		for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
         						if (ptr == card->sidtab) {
 										if (cl->account->sidtabno&((SIDTABBITS)1<<j))
