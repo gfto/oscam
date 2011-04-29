@@ -167,6 +167,7 @@ struct cc_data {
 	IDEA_KEY_SCHEDULE cmd0c_IDEA_dkey;
 
 	uint8_t receive_buffer[CC_MAXMSGSIZE];
+	uint8_t send_buffer[CC_MAXMSGSIZE];
 	
 	LLIST *cards; // cards list
 
