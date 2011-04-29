@@ -33,10 +33,12 @@ static void switch_log(char* file, FILE **f, int32_t (*pfinit)(void))
 			char prev_log[strlen(file) + 6];
 			snprintf(prev_log, sizeof(prev_log), "%s-prev", file);
 			if ( pthread_mutex_trylock(&switching_log) == 0) { //I got the lock so I am the first thread detecting a switchlog is needed
-				fprintf(*f, "switch log file\n");
-				fflush(*f);
-				fclose(*f);
+				FILE *tmp = *f;
 				*f = (FILE *)0;
+				fprintf(tmp, "switch log file\n");
+				cs_sleepms(1);
+				fflush(tmp);
+				fclose(tmp);
 				rc = rename(file, prev_log);
 				if( rc!=0 ) {
 					fprintf(stderr, "rename(%s, %s) failed (errno=%d %s)\n", file, prev_log, errno, strerror(errno));
