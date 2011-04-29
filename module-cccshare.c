@@ -349,10 +349,12 @@ int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card) {
                 return 0;
 
         //Check reshare
-        int32_t usr_ignorereshare = cl->account->cccignorereshare;
-        if (usr_ignorereshare == -1) usr_ignorereshare = cfg.cc_ignore_reshare;
-        if (!cfg.cc_ignore_reshare && !usr_ignorereshare && !card->reshare)
+        if (card->card_type == CT_REMOTECARD) {
+        	int32_t usr_ignorereshare = cl->account->cccignorereshare;
+        	if (usr_ignorereshare == -1) usr_ignorereshare = cfg.cc_ignore_reshare;
+        	if (!cfg.cc_ignore_reshare && !usr_ignorereshare && !card->reshare)
         		return 0;
+		}
         		
 		//Check account maxhops:
 		if (cl->account->cccmaxhops < card->hop)
