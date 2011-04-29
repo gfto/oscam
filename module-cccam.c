@@ -531,7 +531,7 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
 
 	int32_t n;
-	uint8_t netbuf[len + 4];
+	uint8_t *netbuf = cs_malloc(&netbuf, len + 4, 0);
 	struct cc_data *cc = cl->cc;
 
 	while (pthread_mutex_trylock(&cc->lockcmd)) { //We need this because cc_cmd_send is called from cccshare
@@ -539,8 +539,6 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 		cs_sleepms(50);
 	}
 	
-	memset(netbuf, 0, len + 4);
-
 	if (cmd == MSG_NO_HEADER) {
 		memcpy(netbuf, buf, len);
 	} else {
@@ -562,7 +560,9 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 		rdr->last_s = time(NULL);
 
 	pthread_mutex_unlock(&cc->lockcmd);
-		
+
+	free(netbuf);
+			
 	if (n != len) {
 		if (rdr)
 			cc_cli_close(cl, TRUE);
@@ -613,8 +613,7 @@ int32_t cc_send_cli_data(struct s_client *cl) {
 
 	memcpy(cc->node_id, cc_node_id, sizeof(cc_node_id));
 
-	uint8_t buf[size];
-	memset(buf, 0, size);
+	uint8_t *buf = cs_malloc(&buf, size, 0);
 
 	memcpy(buf, rdr->r_usr, sizeof(rdr->r_usr));
 	memcpy(buf + 20, cc->node_id, 8);
@@ -627,6 +626,8 @@ int32_t cc_send_cli_data(struct s_client *cl) {
 
 	i = cc_cmd_send(cl, buf, size, MSG_CLI_DATA);
 
+	free(buf);
+	
 	return i;
 }
 
@@ -1169,8 +1170,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	}	
 
 	if (card) {
-		uint8_t ecmbuf[255+13];
-		memset(ecmbuf, 0, 255+13);
+		uint8_t *ecmbuf = cs_malloc(&ecmbuf, cur_er->l+13, 0);
 
 		// build ecm message
 		ecmbuf[0] = card->caid >> 8;
@@ -1207,6 +1207,8 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 				cur_er->idx);
 		cc_cmd_send(cl, ecmbuf, cur_er->l + 13, MSG_CW_ECM); // send ecm
 
+		free(ecmbuf);
+		
 		//For EMM
 		set_au_data(cl, rdr, card, cur_er);
 		pthread_mutex_unlock(&cc->cards_busy);
@@ -1749,7 +1751,6 @@ static void chk_peer_node_for_oscam(struct cc_data *cc)
 
 int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
-	uint8_t token[256];
 	int32_t ret = buf[1];
 	struct cc_data *cc = cl->cc;
 
@@ -1798,6 +1799,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			chk_peer_node_for_oscam(cc);
 			//Trick: when discovered partner is an Oscam Client, then we send him our version string:
 			if (cc->is_oscam_cccam) {
+				uint8_t token[256];
 				snprintf((char *)token, sizeof(token),
 						"PARTNER: OSCam v%s, build #%s (%s) [EXT,SID]", CS_VERSION,
 						CS_SVN_VERSION, CS_OSTYPE);
@@ -1991,6 +1993,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 						strcat(param, "]");
 					}
 
+					uchar token[256];
 					snprintf((char *)token, sizeof(token),
 						"PARTNER: OSCam v%s, build #%s (%s)%s",
 						CS_VERSION, CS_SVN_VERSION, CS_OSTYPE, param);
@@ -2629,12 +2632,10 @@ int32_t check_cccam_compat(struct cc_data *cc) {
 
 int32_t cc_srv_connect(struct s_client *cl) {
 	int32_t i, wait_for_keepalive;
-	uint8_t buf[CC_MAXMSGSIZE];
 	uint8_t data[16];
 	char usr[21], pwd[65];
 	struct s_auth *account;
 	struct cc_data *cc = cl->cc;
-	uchar mbuf[1024];
 
 	memset(usr, 0, sizeof(usr));
 	memset(pwd, 0, sizeof(pwd));
@@ -2649,6 +2650,8 @@ int32_t cc_srv_connect(struct s_client *cl) {
 
 		cc_init_cc(cc);
 	}
+	uint8_t *buf = cc->send_buffer;
+	
 	cc->mode = CCCAM_MODE_NOTINIT;
 	cc->server_ecm_pending = 0;
 	cc->extended_mode = 0;
@@ -2690,7 +2693,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 		return -1;
 
 	// receive username
-	memset(buf, 0, sizeof(buf));
+	memset(buf, 0, CC_MAXMSGSIZE);
 	if ((i = cc_recv_to(cl, buf, 20)) == 20) {
 		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 
@@ -2787,8 +2790,8 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	send(cl->pfd, buf, 20, 0);
 
 	// recv cli data
-	memset(buf, 0, sizeof(buf));
-	i = cc_msg_recv(cl, buf, sizeof(buf));
+	memset(buf, 0, CC_MAXMSGSIZE);
+	i = cc_msg_recv(cl, buf, CC_MAXMSGSIZE);
 	if (i < 0)
 		return -1;
 	cs_ddump_mask(D_CLIENT, buf, i, "cccam: cli data:");
@@ -2814,7 +2817,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	
 	//Wait for Partner detection (NOK1 with data) before reporting cards
 	//When Partner is detected, cccam220=1 is set. then we can report extended card data
-	i = process_input(mbuf, sizeof(mbuf), 1);
+	i = process_input(buf, CC_MAXMSGSIZE, 1);
 	if (i<=0 && i != -9)
 		return 0; //disconnected
 		
@@ -2837,7 +2840,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	cs_debug_mask(D_TRACE, "ccc connected and waiting for data %s", usr);
 	while (cl->pfd && cl->udp_fd && cc->mode == CCCAM_MODE_NORMAL && !cl->dup)
 	{
-		i = process_input(mbuf, sizeof(mbuf), 10);
+		i = process_input(buf, CC_MAXMSGSIZE, 10);
 		if (i <= 0 && i != -9)
 			break; //Disconnected by client		
 			
@@ -2899,10 +2902,45 @@ int32_t cc_cli_connect(struct s_client *cl) {
 	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
 	rdr->card_status = CARD_FAILURE;
-	
+
 	if (cc && cc->mode == CCCAM_MODE_SHUTDOWN)
 		return -99;
 
+	if (!cc) {
+		// init internals data struct
+		cc = cs_malloc(&cc, sizeof(struct cc_data), QUITERROR);
+		memset(cc, 0, sizeof(struct cc_data));
+		cc_init_cc(cc);
+		cc->cards = ll_create();
+		cl->cc = cc;
+		cc->pending_emms = ll_create();
+		cc->extended_ecm_idx = ll_create();
+	} else {
+		if (cc->cards) {
+			while (pthread_mutex_trylock(&cc->cards_busy)) {
+				cs_debug_mask(D_TRACE, "%s trylock cc_cli_connect cards waiting", getprefix());
+				cs_sleepms(50);
+			}
+			                                
+			LL_ITER *it = ll_iter_create(cc->cards);
+			struct cc_card *card;
+			while ((card = ll_iter_next(it))) {
+				cc_free_card(card);
+				ll_iter_remove(it);
+			}
+			ll_iter_release(it);
+			pthread_mutex_unlock(&cc->cards_busy);
+		}
+		if (cc->extended_ecm_idx)
+			free_extended_ecm_idx(cc);
+
+		pthread_mutex_trylock(&cc->ecm_busy);
+		pthread_mutex_unlock(&cc->ecm_busy);
+	}
+	if (!cc->prefix)
+		cc->prefix = cs_malloc(&cc->prefix, strlen(cl->reader->label)+20, QUITERROR);
+	snprintf(cc->prefix, strlen(cl->reader->label)+20, "cccam(r) %s: ", cl->reader->label);
+	
 	if (!cl->udp_fd) {
 		cc_cli_init_int(cl); 
 		return -1; // cc_cli_init_int32_t calls cc_cli_connect, so exit here!
@@ -2920,7 +2958,7 @@ int32_t cc_cli_connect(struct s_client *cl) {
 	int32_t handle, n;
 	uint8_t data[20];
 	uint8_t hash[SHA_DIGEST_LENGTH];
-	uint8_t buf[CC_MAXMSGSIZE];
+	uint8_t *buf = cc->send_buffer;
 	char pwd[64];
 
 	// check cred config
@@ -2955,40 +2993,6 @@ int32_t cc_cli_connect(struct s_client *cl) {
 		return -2;
 	}
 
-	if (!cc) {
-		// init internals data struct
-		cc = cs_malloc(&cc, sizeof(struct cc_data), QUITERROR);
-		memset(cc, 0, sizeof(struct cc_data));
-		cc->cards = ll_create();
-		cl->cc = cc;
-		cc->pending_emms = ll_create();
-		cc->extended_ecm_idx = ll_create();
-		cc_init_cc(cc);
-	} else {
-		if (cc->cards) {
-			while (pthread_mutex_trylock(&cc->cards_busy)) {
-				cs_debug_mask(D_TRACE, "%s trylock cc_cli_connect cards waiting", getprefix());
-				cs_sleepms(50);
-			}
-			                                
-			LL_ITER *it = ll_iter_create(cc->cards);
-			struct cc_card *card;
-			while ((card = ll_iter_next(it))) {
-				cc_free_card(card);
-				ll_iter_remove(it);
-			}
-			ll_iter_release(it);
-			pthread_mutex_unlock(&cc->cards_busy);
-		}
-		if (cc->extended_ecm_idx)
-			free_extended_ecm_idx(cc);
-
-		pthread_mutex_trylock(&cc->ecm_busy);
-		pthread_mutex_unlock(&cc->ecm_busy);
-	}
-	if (!cc->prefix)
-		cc->prefix = cs_malloc(&cc->prefix, strlen(cl->reader->label)+20, QUITERROR);
-	snprintf(cc->prefix, strlen(cl->reader->label)+20, "cccam(r) %s: ", cl->reader->label);
 
 	cc->ecm_counter = 0;
 	cc->max_ecms = 0;
@@ -3038,12 +3042,12 @@ int32_t cc_cli_connect(struct s_client *cl) {
 
 	cc_cmd_send(cl, hash, 20, MSG_NO_HEADER); // send crypted hash to server
 
-	memset(buf, 0, sizeof(buf));
+	memset(buf, 0, CC_MAXMSGSIZE);
 	memcpy(buf, rdr->r_usr, strlen(rdr->r_usr));
 	cs_ddump_mask(D_CLIENT, buf, 20, "cccam: username '%s':", buf);
 	cc_cmd_send(cl, buf, 20, MSG_NO_HEADER); // send usr '0' padded -> 20 bytes
 
-	memset(buf, 0, sizeof(buf));
+	memset(buf, 0, CC_MAXMSGSIZE);
 	memset(pwd, 0, sizeof(pwd));
 
 	//cs_debug_mask(D_CLIENT, "cccam: 'CCcam' xor");
