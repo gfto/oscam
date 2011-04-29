@@ -658,7 +658,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				er_beta->btun = 0;
 				get_cw(er->client, er_beta);
 			}
-			else if (time_beta && time_beta < time_nagra) {
+			else if (time_beta && (!time_nagra || time_beta < time_nagra)) {
 				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X selected beta: n%dms>b%dms", er->caid, caid_to, time_nagra, time_beta);
 				convert_to_beta(er->client, er, caid_to);
 			}
