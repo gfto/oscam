@@ -3093,7 +3093,8 @@ int32_t init_srvid()
 	}
 
 	while (fgets(token, sizeof(token), fp)) {
-		int32_t l, j, len=0, len2, pos;
+		int32_t l, j, len=0, len2;
+		uint32_t pos;
 		tmp = trim(token);
 
 		if (tmp[0] == '#') continue;
