@@ -409,7 +409,7 @@ void chk_t_global(const char *token, char *value)
 				}
 			}
 		} else {
-			if(cs_malloc(&(cfg.logfile), strlen(CS_LOGFILE) + 1, SIGINT))
+			if(cs_malloc(&(cfg.logfile), strlen(CS_LOGFILE) + 1, -1))
 				memcpy(cfg.logfile, CS_LOGFILE, strlen(CS_LOGFILE) + 1);
 			else cfg.logtostdout = 1;
 		}
@@ -1476,7 +1476,7 @@ int32_t init_config()
 	fclose(fp);
 
 	if (cfg.logfile == NULL && cfg.logtostdout == 0 && cfg.logtosyslog == 0) {
-		if(cs_malloc(&(cfg.logfile), strlen(CS_LOGFILE) + 1, SIGINT))
+		if(cs_malloc(&(cfg.logfile), strlen(CS_LOGFILE) + 1, -1))
 			memcpy(cfg.logfile, CS_LOGFILE, strlen(CS_LOGFILE) + 1);
 		else cfg.logtostdout = 1;
 	}
@@ -3071,11 +3071,18 @@ int32_t init_provid() {
 
 int32_t init_srvid()
 {
-	int32_t nr;
+	int32_t nr = 0, i;
 	FILE *fp;
-	char *payload;
+	char *payload, *tmp;
 	struct s_srvid *srvid=NULL, *new_cfg_srvid[16], *last_srvid[16];
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_srid);
+	// A cache for strings within srvids. A checksum is calculated which is the start point in the array (some kind of primitive hash algo).
+	// From this point, a sequential search is done. This greatly reduces the amount of string comparisons.
+	char **stringcache[1024];
+	int32_t allocated[1024] = { 0 };
+	int32_t used[1024] = { 0 };
+	struct timeb ts, te;
+  cs_ftime(&ts);
 
 	memset(last_srvid, 0, sizeof(last_srvid));
 	memset(new_cfg_srvid, 0, sizeof(new_cfg_srvid));
@@ -3085,10 +3092,8 @@ int32_t init_srvid()
 		return(0);
 	}
 
-	nr=0;
 	while (fgets(token, sizeof(token), fp)) {
-		int32_t l, i, j, len=0;
-		char *tmp;
+		int32_t l, j, len=0, len2, pos;
 		tmp = trim(token);
 
 		if (tmp[0] == '#') continue;
@@ -3099,18 +3104,21 @@ int32_t init_srvid()
 		if (!cs_malloc(&srvid, sizeof(struct s_srvid), -1)) return(1);
 
 		char tmptxt[128];
-		struct s_srvid *srvptr;
 
 		int32_t offset[4] = { -1, -1, -1, -1 };
 		char *ptr1, *searchptr[4] = { NULL, NULL, NULL, NULL };
 		char **ptrs[4] = { &srvid->prov, &srvid->name, &srvid->type, &srvid->desc };
 
-		for (i = 0, ptr1 = strtok(payload, "|"); ptr1 && (i < 4) ; ptr1 = strtok(NULL, "|"), i++){
-			for (j=0; j<16 && !searchptr[i]; j++) {
-				for (srvptr = new_cfg_srvid[j]; srvptr && !searchptr[i]; srvptr=srvptr->next) {
-					char *srv_ptrs[4] = { srvptr->prov, srvptr->name, srvptr->type, srvptr->desc };
-					if (srv_ptrs[i] && !strcmp(srv_ptrs[i], ptr1))
-						searchptr[i]=srv_ptrs[i];
+		for (i = 0, ptr1 = strtok(payload, "|"); ptr1 && (i < 4) ; ptr1 = strtok(NULL, "|"), ++i){
+			// check if string is in cache
+			len2 = strlen(ptr1);
+			pos = 0;
+			for(j = 0; j < len2; ++j) pos += (uint32_t)ptr1[j];
+			pos = pos%1024;
+			for(j = 0; j < used[pos]; ++j){
+				if (!strcmp(stringcache[pos][j], ptr1)){
+					searchptr[i]=stringcache[pos][j];
+					break;
 				}
 			}
 			if (searchptr[i]) continue;
@@ -3132,8 +3140,22 @@ int32_t init_srvid()
 				*ptrs[i] = searchptr[i];
 				continue;
 			}
-			if (offset[i]>-1)
+			if (offset[i]>-1){
 				*ptrs[i] = tmpptr + offset[i];
+				// store string in stringcache
+				tmp = *ptrs[i];
+				len2 = strlen(tmp);
+				pos = 0;
+				for(j = 0; j < len2; ++j) pos += (uint32_t)tmp[j];
+				pos = pos%1024;
+				if(used[pos] >= allocated[pos]){
+					if(allocated[pos] == 0) cs_malloc(&stringcache[pos], 16 * sizeof(char*), SIGINT);
+					else cs_realloc(&stringcache[pos], (allocated[pos] + 16) * sizeof(char*), SIGINT);
+					allocated[pos] += 16;										
+				}
+				stringcache[pos][used[pos]] = tmp;
+				used[pos] += 1;
+			}
 		}
 
 		char *srvidasc = strchr(token, ':');
@@ -3162,10 +3184,16 @@ int32_t init_srvid()
 
 		last_srvid[srvid->srvid>>12] = srvid;
 	}
+	for(i = 0; i < 1024; ++i){
+		if(allocated[i] > 0) free(stringcache[i]);
+	}
+	
+	cs_ftime(&te);
+	int32_t time = 1000*(te.time-ts.time)+te.millitm-ts.millitm;
 
 	fclose(fp);
 	if (nr > 0) {
-		cs_log("%d service-id's loaded", nr);
+		cs_log("%d service-id's loaded in %dms", nr, time);
 		if (nr > 2000) {
 			cs_log("WARNING: You risk high CPU load and high ECM times with more than 2000 service-id´s!");
 			cs_log("HINT: --> use optimized lists from http://streamboard.gmc.to/wiki/index.php/Srvid");
@@ -3183,7 +3211,6 @@ int32_t init_srvid()
 		cl->last_srvidptr=NULL;
 
 	struct s_srvid *ptr;
-	int8_t i;
 	for (i=0; i<16; i++) {
 		while (last_srvid[i]) { //cleanup old data:
 			ptr = last_srvid[i]->next;

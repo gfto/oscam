@@ -2890,7 +2890,7 @@ char *send_oscam_files(struct templatevars *vars, struct uriparams *params) {
 		writable = 1;
 	}
 #endif
-
+	else targetfile[0] = '\0';
 
 	if (!strstr(targetfile, "/dev/")) {
 
