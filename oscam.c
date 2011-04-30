@@ -2492,6 +2492,27 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	if (er->caid == 0x1702 && er->l == 0x89 && er->ecm[3] == 0x07 && er->ecm[4] == 0x84)
 		er->caid = 0x1833;
 
+	// quick fixD09 false ecmlength ignore
+	if (er->caid == 0x1834 && (
+			er->l == 0x93 ||
+			er->l == 0x78 ||
+			er->l == 0x96 ||
+			er->l == 0x54 ||
+			er->l == 0x64 ||
+			er->l == 0x73 ||
+			er->l == 0x6E ||
+			er->l == 0x92 ||
+			er->l == 0x91))
+		er->rc = E_INVALID;
+
+	// quick fix PlatformaHD false ecmlength ignore
+	if (er->caid == 0x4AE1 && (
+			er->l == 0x29 ||
+			er->l == 0x9C ||
+			er->l == 0x84 ||
+			er->l == 0x88))
+		er->rc = E_INVALID;
+
 	/* END quickfixes */
 
 	if (!er->prid)
