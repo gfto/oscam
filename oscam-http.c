@@ -3177,7 +3177,7 @@ int32_t process_request(FILE *f, struct in_addr in) {
 
 	while (1) {
 		if ((n=webif_read(buf2, sizeof(buf2), f)) <= 0) {
-			cs_debug_mask(D_CLIENT, "webif read error %d", n);
+			cs_debug_mask(D_CLIENT, "webif read error %d (errno=%d %s)", n, errno, strerror(errno));
 #ifdef WITH_SSL
 			if (cfg.http_use_ssl)
 				ERR_print_errors_fp(stderr);
@@ -3443,8 +3443,6 @@ void *serve_process(void *conn){
 #ifndef NO_PTHREAD_CLEANUP_PUSH
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);	
 	pthread_cleanup_push(cleanup_thread, (void *) cl);
-#else
-	clientinit.handler(clientinit.client);
 #endif
 #ifdef WITH_SSL
 	if (cfg.http_use_ssl) {
@@ -3496,6 +3494,9 @@ void http_srv() {
 	pthread_t workthread;
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
+#ifndef TUXBOX
+	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+#endif
 	struct s_client * cl = create_client(first_client->ip);
 	if (cl == NULL) return;
 	cl->thread = pthread_self();
