@@ -325,6 +325,17 @@ void save_stat_to_file(int32_t thread)
 }
 
 /**
+ * fail_factor is multiplied to the reopen_time. This function increases the fail_factor
+ **/
+void inc_fail(READER_STAT *stat)
+{
+	if (stat->fail_factor <= 0)
+		stat->fail_factor = 1;
+	else
+		stat->fail_factor *= 2;
+}
+
+/**
  * Adds caid/prid/srvid/ecmlen to stat-list for reader ridx with time/rc
  */
 void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t rc)
@@ -426,7 +437,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 			return;
 			
 		stat->rc = rc;
-		stat->fail_factor++;
+		inc_fail(stat);
 		stat->last_received = ctime;
 		
 		//reduce ecm_count step by step
@@ -439,11 +450,11 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 						stat->rc == 0 && 
 						stat->ecm_count > 0) {
 				stat->rc = 5;
-				stat->fail_factor++;
+				inc_fail(stat);
 		}
 		else if ((rdr->client->login+(int)(2*cfg.ctimeout/1000)) < ctime && rdr->client->pending < 5) { //reader is longer than 5s connected && not more then 5 pending ecms
 				stat->rc = 5;
-				stat->fail_factor++;
+				inc_fail(stat);
 		}
 				
 		stat->last_received = ctime;
@@ -617,48 +628,44 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	if (cfg.lb_auto_betatunnel && er->caid >> 8 == 0x18) { //nagra 
 		ushort caid_to = get_betatunnel_caid_to(er->caid);
 		if (caid_to) {
-			int needs_stats = 0;
+			int needs_stats_nagra, needs_stats_beta = 0;
 			
 			int32_t time_nagra = 0;
 			int32_t time_beta = 0;
+			int32_t weight;
 			
 			READER_STAT *stat_nagra;
 			READER_STAT *stat_beta;
 			
 			//What is faster? nagra or beta?
 			it = ll_iter_create(er->matching_rdr);
-			while ((rdr=ll_iter_next(it)) && !needs_stats) {
+			while ((rdr=ll_iter_next(it)) && !needs_stats_nagra && !needs_stats_beta) {
+				weight = rdr->lb_weight;
+				if (weight <= 0) weight = 1;
+				
 				stat_nagra = get_stat(rdr, er->caid, prid, er->srvid, er->l);
 				stat_beta = get_stat(rdr, caid_to, prid, er->srvid, er->l+10);
 				
 				if (stat_nagra && stat_nagra->rc == 0 && (!time_nagra || stat_nagra->time_avg < time_nagra))
-					time_nagra = stat_nagra->time_avg;
+					time_nagra = stat_nagra->time_avg/weight;
 				if (stat_beta && stat_beta->rc == 0 && (!time_beta || stat_beta->time_avg < time_beta))
-					time_beta = stat_beta->time_avg;
+					time_beta = stat_beta->time_avg/weight;
 				
-				if (!stat_nagra || !stat_beta)
-					needs_stats = 1; //Uncomplete reader evaluation, we need more stats!
+				//Uncomplete reader evaluation, we need more stats!
+				if (!stat_nagra)
+					needs_stats_nagra = 1;
+				if (!stat_beta)
+					needs_stats_beta = 1;
 			}
 			ll_iter_release(it);
 			
 			//if we needs stats, we send 2 ecm requests: 18xx and 17xx:
-			if (needs_stats) {
+			if (needs_stats_nagra || needs_stats_beta) {
 				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X needs more statistics...", er->caid, caid_to);
-				ECM_REQUEST *er_beta = get_ecmtask();
-				er_beta->ocaid = caid_to;
-				er_beta->caid = er->caid;
-				er_beta->prid = prid;
-				er_beta->srvid = er->srvid;
-				memcpy(er_beta->ecm, er->ecm, sizeof(er->ecm));
-				er_beta->l = er->l;
-				er_beta->client = er->client;
-				er_beta->beta_ptr_to_nagra = er; 
-				er->beta_ptr_to_nagra = er_beta; //link back
-				convert_to_beta(er->client, er_beta, caid_to);
-				er_beta->btun = 0;
-				get_cw(er->client, er_beta);
+				if (needs_stats_beta)				
+					convert_to_beta(er->client, er, caid_to);
 			}
-			else if (time_beta && (!time_nagra || time_beta < time_nagra)) {
+			else if (time_beta && (!time_nagra || time_beta <= time_nagra)) {
 				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X selected beta: n%dms>b%dms", er->caid, caid_to, time_nagra, time_beta);
 				convert_to_beta(er->client, er, caid_to);
 			}
@@ -877,52 +884,54 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	ll_destroy_data(selected);
 	ll_destroy(timeout_services);
 	
-	if (!n) //no best reader found? reopen if we have ecm_count>0
-	{
-		cs_debug_mask(D_TRACE, "loadbalancer: NO MATCHING READER FOUND, reopen last valid:");
-		it = ll_iter_create(er->matching_rdr);
-		while ((rdr=ll_iter_next(it))) {
-        		stat = get_stat(rdr, er->caid, prid, er->srvid, er->l);
-        		if (stat && stat->ecm_count>0 && stat->last_received+get_reopen_seconds(stat) < current_time) {
-        			if (!ll_contains(result, rdr) && nreaders) {
-        				ll_append(result, rdr);
-        				nreaders--;
+	if (ll_count(result) < ll_count(er->matching_rdr)) {
+		if (!n) //no best reader found? reopen if we have ecm_count>0
+		{
+			cs_debug_mask(D_TRACE, "loadbalancer: NO MATCHING READER FOUND, reopen last valid:");
+			it = ll_iter_create(er->matching_rdr);
+			while ((rdr=ll_iter_next(it))) {
+   	     		stat = get_stat(rdr, er->caid, prid, er->srvid, er->l);
+   	     		if (stat && stat->ecm_count>0 && stat->last_received+get_reopen_seconds(stat) < current_time) {
+   	     			if (!ll_contains(result, rdr) && nreaders) {
+   	     				ll_append(result, rdr);
+   	     				nreaders--;
 					}
         			n++;
         			cs_debug_mask(D_TRACE, "loadbalancer: reopened reader %s", rdr->label);
-			}
-		}
-		ll_iter_release(it);
-		cs_debug_mask(D_TRACE, "loadbalancer: reopened %d readers", n);
-	}
-
-	//algo for reopen other reader only if responsetime>retrylimit:
-	int32_t reopen = !best_rdr || (best_time && (best_time > retrylimit));
-	if (reopen) {
-#ifdef WITH_DEBUG 
-		if (best_rdr)
-			cs_debug_mask(D_TRACE, "loadbalancer: reader %s reached retrylimit (%dms), reopening other readers", best_rdr->label, best_time);
-		else
-			cs_debug_mask(D_TRACE, "loadbalancer: no best reader found, reopening other readers");	
-#endif	
-		it = ll_iter_create(er->matching_rdr);
-		while ((rdr=ll_iter_next(it)) && nreaders) {
-			stat = get_stat(rdr, er->caid, prid, er->srvid, er->l); 
-
-			if (stat && stat->rc != 0) { //retrylimit reached:
-				if (cfg.lb_reopen_mode || stat->last_received+get_reopen_seconds(stat) < current_time) { //Retrying reader every (900/conf) seconds
-					stat->last_received = current_time;
-					nreaders += ll_remove(result, rdr);
-					ll_prepend(result, rdr);
-					nreaders--;
-					cs_debug_mask(D_TRACE, "loadbalancer: retrying reader %s (fail %d)", rdr->label, stat->fail_factor);
 				}
 			}
+			ll_iter_release(it);
+			cs_debug_mask(D_TRACE, "loadbalancer: reopened %d readers", n);
 		}
-		ll_iter_release(it);
-	}
 
-        //Setting return values:
+		//algo for reopen other reader only if responsetime>retrylimit:
+		int32_t reopen = !best_rdr || (best_time && (best_time > retrylimit));
+		if (reopen) {
+#ifdef WITH_DEBUG 
+			if (best_rdr)
+				cs_debug_mask(D_TRACE, "loadbalancer: reader %s reached retrylimit (%dms), reopening other readers", best_rdr->label, best_time);
+			else
+				cs_debug_mask(D_TRACE, "loadbalancer: no best reader found, reopening other readers");	
+#endif	
+			it = ll_iter_create(er->matching_rdr);
+			while ((rdr=ll_iter_next(it)) && nreaders) {
+				stat = get_stat(rdr, er->caid, prid, er->srvid, er->l); 
+
+				if (stat && stat->rc != 0) { //retrylimit reached:
+					if (cfg.lb_reopen_mode || stat->last_received+get_reopen_seconds(stat) < current_time) { //Retrying reader every (900/conf) seconds
+						stat->last_received = current_time;
+						nreaders += ll_remove(result, rdr);
+						ll_prepend(result, rdr);
+						nreaders--;
+						cs_debug_mask(D_TRACE, "loadbalancer: retrying reader %s (fail %d)", rdr->label, stat->fail_factor);
+					}
+				}
+			}
+			ll_iter_release(it);
+		}
+	}
+	
+    //Setting return values:
 	ll_destroy(er->matching_rdr);
 	er->matching_rdr = result;
 	er->fallback = fallback;

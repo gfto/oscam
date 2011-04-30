@@ -587,7 +587,6 @@ typedef struct ecm_request_t
   int32_t		btun; // mark er as betatunneled
   int32_t		reader_avail; //count of available readers
   int32_t           reader_count; //count of contacted readers
-  struct ecm_request_t	*beta_ptr_to_nagra; //if auto-betatunnel, beta ecm points to the original nagra ecm
 #ifdef CS_WITH_DOUBLECHECK
   int32_t		checked;
   uchar		cw_checked[16];
