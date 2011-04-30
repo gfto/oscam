@@ -54,7 +54,7 @@ TH.statuscol13 {text-align:center;}\n\
 TH.statuscol14 {text-align:center;}\n\
 TH.statuscol15 {text-align:center;}\n\
 TH.statuscol16 {text-align:center;}\n\
-TD {height:10px; border:0px; font-family: Arial; font-size: 11px; padding:5px; background-color:#EEEEEE; color:black;}\n\
+TD {height:10px; border:0px; font-family: Arial; font-size: 11px; padding:5px; background-color:#EEEEEE; color:black;text-align: left}\n\
 TD.statuscol0 {text-align:center;width:10px;}\n\
 TD.statuscol1 {text-align:center;}\n\
 TD.statuscol2 {text-align:center;}\n\
