@@ -1,4 +1,8 @@
-/* The server string in the http header */
+struct s_connection{
+	int32_t socket;
+	struct sockaddr_in remote;
+};
+
 /* The server string in the http header */
 #define SERVER "webserver/1.0"
 /* The protocol that gets output. Currently only 1.0 is possible as 1.1 requires many features we don't have. */

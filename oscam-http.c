@@ -19,6 +19,7 @@
 extern void restart_cardreader(struct s_reader *rdr, int32_t restart);
 
 static int32_t running = 1;
+pthread_mutex_t http_lock;
 
 #ifdef CS_ANTICASC
 static void kill_ac_client(void)
@@ -2651,7 +2652,7 @@ char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *
 			tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
 			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			tpl_printf(vars, TPLADD, "SECONDS", "%d", SHUTDOWNREFRESH);
-			send_headers(f, 200, "OK", NULL, "text/html", 0);
+			send_headers(f, 200, "OK", NULL, "text/html", 0, 0);
 			webif_write(tpl_getTpl(vars, "SHUTDOWN"), f);
 			cs_log("Shutdown requested by WebIF from %s", inet_ntoa(in));
 		} else {
@@ -2674,7 +2675,7 @@ char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *
 			tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
 			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			tpl_printf(vars, TPLADD, "SECONDS", "%d", 2);
-			send_headers(f, 200, "OK", NULL, "text/html", 0);
+			send_headers(f, 200, "OK", NULL, "text/html", 0, 0);
 			webif_write(tpl_getTpl(vars, "SHUTDOWN"), f);
 			cs_log("Restart requested by WebIF from %s", inet_ntoa(in));
 		} else {
@@ -3078,7 +3079,7 @@ char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *par
 			if(ptr != NULL){
 				int32_t len = b64decode((uchar *)ptr + 7);
 				if(len > 0){
-					send_headers(f, 200, "OK", NULL, header + 5, 1);
+					send_headers(f, 200, "OK", NULL, header + 5, 1, 0);
 					webif_write_raw(ptr + 7, f, len);
 					return "1";
 				}
@@ -3186,7 +3187,7 @@ int32_t process_request(FILE *f, struct in_addr in) {
 	}
 
 	if (!ok) {
-		send_error(f, 403, "Forbidden", NULL, "Access denied.");
+		send_error(f, 403, "Forbidden", NULL, "Access denied.", 0);
 		cs_log("unauthorized access from %s flag %d", inet_ntoa(in), v);
 		return 0;
 	}
@@ -3334,17 +3335,17 @@ int32_t process_request(FILE *f, struct in_addr in) {
 		char temp[sizeof(AUTHREALM) + sizeof(expectednonce) + 100];
 		snprintf(temp, sizeof(temp), "WWW-Authenticate: Digest algorithm=\"MD5\", realm=\"%s\", qop=\"auth\", opaque=\"\", nonce=\"%s\"", AUTHREALM, expectednonce);
 		if(authok == 2) strncat(temp, ", stale=true", sizeof(temp));
-		send_headers(f, 401, "Unauthorized", temp, "text/html", 0);
+		send_headers(f, 401, "Unauthorized", temp, "text/html", 0, 0);
 		free(filebuf);
 		return 0;
 	}
 
 	/*build page*/
 	if(pgidx == 8) {
-		send_headers(f, 200, "OK", NULL, "text/css", 1);
+		send_headers(f, 200, "OK", NULL, "text/css", 1, 0);
 		send_file(f, "CSS");
 	} else if (pgidx == 17) {
-		send_headers(f, 200, "OK", NULL, "text/javascript", 1);
+		send_headers(f, 200, "OK", NULL, "text/javascript", 1, 0);
 		send_file(f, "JS");
 	} else {
 		time_t t;
@@ -3396,7 +3397,9 @@ int32_t process_request(FILE *f, struct in_addr in) {
 			tpl_addVar(vars, TPLAPPEND, "BTNDISABLED", "DISABLED");
 
 		char *result = NULL;
-
+		
+		// WebIf allows modifying many things. Thus, all pages except images/css are excpected to be non-threadsafe! 
+		if(pgidx != 19 && pgidx != 20) pthread_mutex_lock(&http_lock);
 		switch(pgidx) {
 			case 0: result = send_oscam_config(vars, &params, in); break;
 			case 1: result = send_oscam_reader(vars, &params, in); break;
@@ -3421,12 +3424,14 @@ int32_t process_request(FILE *f, struct in_addr in) {
 			case 20: result = send_oscam_image(vars, f, &params, "ICMAI"); break;
 			default: result = send_oscam_status(vars, &params, in, 0); break;
 		}
+		if(pgidx != 19 && pgidx != 20) pthread_mutex_unlock(&http_lock);
+
 		if(result == NULL || !strcmp(result, "0") || strlen(result) == 0) send_error500(f);
 		else if (strcmp(result, "1")) {
 			if (pgidx == 18)
-				send_headers(f, 200, "OK", NULL, "text/xml", 0);
+				send_headers(f, 200, "OK", NULL, "text/xml", 0, 0);
 			else
-				send_headers(f, 200, "OK", NULL, "text/html", 0);
+				send_headers(f, 200, "OK", NULL, "text/html", 0, 0);
 			webif_write(result, f);
 		}
 		tpl_clear(vars);
@@ -3480,13 +3485,83 @@ SSL_CTX *webif_init_ssl() {
 }
 #endif
 
+#pragma GCC diagnostic ignored "-Wempty-body"
+void *serve_process(void *conn){
+	struct s_connection myconn;
+	memcpy(&myconn, conn, sizeof(struct s_connection)); //copy to stack to free init pointer
+	free(conn);
+	struct sockaddr_in remote = myconn.remote;
+	int32_t s = myconn.socket;
+	struct s_client *cl = create_client(remote.sin_addr.s_addr);
+	if (cl == NULL) {
+		close(s);
+		return NULL;
+	}
+	cl->typ = 'hS';
+	cl->thread = pthread_self();
+	pthread_setspecific(getclient, cl);
+#ifndef NO_PTHREAD_CLEANUP_PUSH
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);	
+	pthread_cleanup_push(cleanup_thread, (void *) cl);
+#else
+	clientinit.handler(clientinit.client);
+#endif
+#ifdef WITH_SSL
+	if (cfg.http_use_ssl) {
+		SSL *ssl;
+		ssl = SSL_new(ctx);
+		if(ssl != NULL){
+			if(SSL_set_fd(ssl, s)){
+				if (SSL_accept(ssl) != -1)
+					process_request((FILE *)ssl, remote.sin_addr);
+				else {
+					FILE *f;
+					f = fdopen(s, "r+");
+					if(f != NULL) {
+						send_error(f, 200, "Bad Request", NULL, "This web server is running in SSL mode.", 1);
+						fflush(f);
+						fclose(f);
+					} else cs_log("WebIf: Error opening file descriptor using fdopen() (errno=%d %s)", errno, strerror(errno));
+				}
+			} else cs_log("WebIf: Error calling SSL_set_fd().");
+			SSL_shutdown(ssl);
+			close(s);
+			SSL_free(ssl);
+		} else {
+			close(s);
+			cs_log("WebIf: Error calling SSL_new().");
+		}
+	} else
+#endif
+	{
+		FILE *f;
+		f = fdopen(s, "r+");
+		if(f != NULL) {
+			process_request(f, remote.sin_addr);
+			fflush(f);
+			fclose(f);
+		} else cs_log("WebIf: Error opening file descriptor using fdopen() (errno=%d %s)", errno, strerror(errno));
+		shutdown(s, SHUT_WR);
+		close(s);
+	}
+#ifndef NO_PTHREAD_CLEANUP_PUSH
+	pthread_cleanup_pop(1);
+#else
+	cs_exit(0);
+#endif
+	return NULL;
+}
+
 void http_srv() {
+	pthread_t workthread;
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
 	struct s_client * cl = create_client(first_client->ip);
 	if (cl == NULL) return;
 	cl->thread = pthread_self();
 	pthread_setspecific(getclient, cl);
 	cl->typ = 'h';
-	int32_t sock, reuse = 1;
+	int32_t sock, s, reuse = 1;
 	struct sockaddr_in sin;
 	struct sockaddr_in remote;
 	struct timeval stimeout;
@@ -3504,7 +3579,7 @@ void http_srv() {
 		cs_log("HTTP Server: Setting SO_REUSEADDR via setsockopt failed! (errno=%d %s)", errno, strerror(errno));
 	}
 
-    stimeout.tv_sec = 30;
+    stimeout.tv_sec = 20;
     stimeout.tv_usec = 0;
 
     if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &stimeout, sizeof(stimeout)) < 0) {
@@ -3545,8 +3620,7 @@ void http_srv() {
 #endif
 
 	while (running) {
-		int32_t s;
-
+		struct s_connection *conn;
 		rc = poll(pfd2, 1, 1000);
 
 		if (rc > 0) {
@@ -3554,47 +3628,17 @@ void http_srv() {
 				cs_log("HTTP Server: Error calling accept() (errno=%d %s)", errno, strerror(errno));
 				break;
 			}
-#ifdef WITH_SSL
-			if (cfg.http_use_ssl) {
-				SSL *ssl;
-				ssl = SSL_new(ctx);
-				if(ssl != NULL){
-					if(SSL_set_fd(ssl, s)){
-						if (SSL_accept(ssl) != -1)
-							process_request((FILE *)ssl, remote.sin_addr);
-						else {
-							FILE *f;
-							f = fdopen(s, "r+");
-							if(f != NULL) {
-								// Note: This is quite dirty and only works because webif is not multithreaded!
-								cfg.http_use_ssl=0;
-								send_error(f, 200, "Bad Request", NULL, "This web server is running in SSL mode.");
-								cfg.http_use_ssl=1;
-								fflush(f);
-								fclose(f);
-							} else cs_log("WebIf: Error opening file descriptor using fdopen() (errno=%d %s)", errno, strerror(errno));
-						}
-					} else cs_log("WebIf: Error calling SSL_set_fd().");
-					SSL_shutdown(ssl);
-					close(s);
-					SSL_free(ssl);
-				} else {
-					close(s);
-					cs_log("WebIf: Error calling SSL_new().");
-				}
-			} else
-#endif
-			{
-				FILE *f;
-				f = fdopen(s, "r+");
-				if(f != NULL) {
-					process_request(f, remote.sin_addr);
-					fflush(f);
-					fclose(f);
-				} else cs_log("WebIf: Error opening file descriptor using fdopen() (errno=%d %s)", errno, strerror(errno));
-				shutdown(s, SHUT_WR);
+			if(!cs_malloc(&conn, sizeof(struct s_connection), -1)){
 				close(s);
+				continue;
+			}; 
+			conn->remote = remote;
+			conn->socket = s;
+			if (pthread_create(&workthread, &attr, serve_process, (void *)conn)) {
+				cs_log("ERROR: can't create thread for webif");
 			}
+			else
+				pthread_detach(workthread);
 		}
 	}
 #ifdef WITH_SSL
