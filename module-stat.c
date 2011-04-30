@@ -590,6 +590,14 @@ ushort get_betatunnel_caid_to(ushort caid)
 	if (caid == 0x1835) return 0x1722;
 	return 0;
 }
+
+void convert_to_beta_int(ECM_REQUEST *er, uint16_t caid_to)
+{
+	convert_to_beta(er->client, er, caid_to);
+	// update ecmd5 for store ECM in cache
+	memcpy(er->ecmd5, MD5(er->ecm+13, er->l-13, er->client->dump), CS_ECMSTORESIZE);
+}
+
 /**	
  * Gets best reader for caid/prid/srvid/ecmlen.
  * Best reader is evaluated by lowest avg time but only if ecm_count > cfg.lb_min_ecmcount (5)
@@ -633,6 +641,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			int32_t time_nagra = 0;
 			int32_t time_beta = 0;
 			int32_t weight;
+			int32_t time;
 			
 			READER_STAT *stat_nagra;
 			READER_STAT *stat_beta;
@@ -646,10 +655,17 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				stat_nagra = get_stat(rdr, er->caid, prid, er->srvid, er->l);
 				stat_beta = get_stat(rdr, caid_to, prid, er->srvid, er->l+10);
 				
-				if (stat_nagra && stat_nagra->rc == 0 && (!time_nagra || stat_nagra->time_avg < time_nagra))
-					time_nagra = stat_nagra->time_avg/weight;
-				if (stat_beta && stat_beta->rc == 0 && (!time_beta || stat_beta->time_avg < time_beta))
-					time_beta = stat_beta->time_avg/weight;
+				if (stat_nagra && stat_nagra->rc == 0) {
+					time = stat_nagra->time_avg/weight;
+					if (!time_nagra || time < time_nagra)
+						time_nagra = time;
+				}
+				
+				if (stat_beta && stat_beta->rc == 0) {
+					time = stat_beta->time_avg/weight;
+					if (!time_beta || time < time_beta)
+						time_beta = time;
+				}
 				
 				//Uncomplete reader evaluation, we need more stats!
 				if (!stat_nagra)
@@ -663,11 +679,11 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			if (needs_stats_nagra || needs_stats_beta) {
 				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X needs more statistics...", er->caid, caid_to);
 				if (needs_stats_beta)				
-					convert_to_beta(er->client, er, caid_to);
+					convert_to_beta_int(er, caid_to);
 			}
 			else if (time_beta && (!time_nagra || time_beta <= time_nagra)) {
 				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X selected beta: n%dms>b%dms", er->caid, caid_to, time_nagra, time_beta);
-				convert_to_beta(er->client, er, caid_to);
+				convert_to_beta_int(er, caid_to);
 			}
 			else {
 				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X selected nagra: n%dms<b%dms", er->caid, caid_to, time_nagra, time_beta);
