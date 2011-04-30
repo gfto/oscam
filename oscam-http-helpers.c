@@ -1,6 +1,11 @@
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
 #ifdef WEBIF
+#ifdef WITH_SSL
+#include <openssl/crypto.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#endif
 #include "oscam-http.h"
 
 /* Adds a name->value-mapping or appends to it. You will get a reference back which you may freely
@@ -379,12 +384,6 @@ int32_t check_auth(char *authstring, char *method, char *path, char *expectednon
 	}
 	return authok;
 }
-
-#ifdef WITH_SSL
-#include <openssl/crypto.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#endif
 
 int32_t webif_write_raw(char *buf, FILE* f, int32_t len) {
 	errno=0;
