@@ -2507,6 +2507,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		cs_debug_mask(D_TRACE, "Quickfix D09: ignore caid %04X with length %02X", er->caid, er->l);
 	}
 
+	/*
 	// quick fix PlatformaHD false ecmlength ignore
 	if (er->caid == 0x4AE1 && (
 			er->l == 0x29 ||
@@ -2516,6 +2517,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		er->rc = E_INVALID;
 		cs_debug_mask(D_TRACE, "Quickfix PlatformaHD: ignore caid %04X with length %02X", er->caid, er->l);
 	}
+	*/
 
 	/* END quickfixes */
 
