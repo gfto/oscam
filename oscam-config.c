@@ -2473,6 +2473,11 @@ int32_t write_server()
 				}
 				fprintf(f, "\n");
 			}
+			
+			value = mk_t_ecmwhitelist(rdr->ecmWhitelist);
+			if ((strlen(value) > 0 || cfg.http_full_cfg) && isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "ecmwhitelist", "%s\n", value);
+			free_mk_t(value);
 
 			if (isphysical) {
 				if (rdr->detect&0x80)
@@ -3616,6 +3621,31 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		}
 	}
+	
+	if (!strcmp(token, "ecmwhitelist")) {
+		struct s_ecmWhitelist *tmp, *last = NULL;
+		if(strlen(value) == 0) {
+			for(tmp = rdr->ecmWhitelist; tmp; tmp=tmp->next) add_garbage(tmp);
+			rdr->ecmWhitelist = NULL;
+			return;
+		} else {
+			for (ptr = strtok(value, ","); ptr; ptr = strtok(NULL, ",")) {
+				int16_t g;
+				g = (int16_t)dyn_word_atob(ptr);
+				if (cs_malloc(&tmp, sizeof(struct s_ecmWhitelist), -1)) {
+					tmp->next = NULL;
+					tmp->len = g;
+					if(last == NULL){
+						rdr->ecmWhitelist = tmp;
+					} else {
+						last->next = tmp;
+					}
+					last = tmp;		
+				}
+			}
+			return;
+		}
+	}
 
 	if (!strcmp(token, "detect")) {
 		for (i = 0; RDR_CD_TXT[i]; i++) {
@@ -4134,6 +4164,7 @@ int32_t init_readerdb()
 			rdr->lb_weight = 100;
 			cs_strncpy(rdr->pincode, "none", sizeof(rdr->pincode));
 			rdr->ndsversion = 0;
+			rdr->ecmWhitelist = NULL;
 			for (i=1; i<CS_MAXCAIDTAB; rdr->ctab.mask[i++]=0xffff);
 			continue;
 		}
@@ -4672,6 +4703,26 @@ char *mk_t_logfile(){
 	if(cfg.logfile != NULL){
 		pos += snprintf(value + pos, needed - pos, "%s%s", dot, cfg.logfile);
 	}
+	return value;
+}
+
+/*
+ * Creates a string ready to write as a token into config or WebIf for an iprange. You must free the returned value through free_mk_t().
+ */
+char *mk_t_ecmwhitelist(struct s_ecmWhitelist *whitelist){
+	int32_t needed = 1, pos = 0;
+	struct s_ecmWhitelist *cip;
+	char *value, *dot = "";
+	for (cip = whitelist; cip; cip = cip->next) needed += 3;
+	
+	char tmp[needed];
+
+	for (cip = whitelist; cip; cip = cip->next){
+		pos += snprintf(tmp + pos, needed - pos, "%s%02X", dot, cip->len);
+		dot=",";
+	}
+	if(pos == 0 || !cs_malloc(&value, (pos + 1) * sizeof(char), -1)) return "";
+	memcpy(value, tmp, pos + 1);
 	return value;
 }
 

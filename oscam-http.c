@@ -882,6 +882,10 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 		if(rdr->aes_list) {
 			aes_clear_entries(rdr);
 		}
+		if(rdr->ecmWhitelist){
+			struct s_ecmWhitelist *tmp;
+			for(tmp = rdr->ecmWhitelist; tmp; tmp=tmp->next) add_garbage(tmp);
+		}
 
 		rdr->grp = 0;
 		rdr->auprovid = 0;
@@ -965,6 +969,10 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 	if ( rdr->atr[0])
 		for (i = 0; i < rdr->atrlen/2; i++)
 			tpl_printf(vars, TPLAPPEND, "ATR", "%02X", rdr->atr[i]);
+			
+	value = mk_t_ecmwhitelist(rdr->ecmWhitelist);
+	tpl_printf(vars, TPLADD, "ECMWHITELIST", "%s", value);
+	free_mk_t(value);
 
 	if(rdr->smargopatch)
 		tpl_addVar(vars, TPLADD, "SMARGOPATCHCHECKED", "checked");
@@ -3432,6 +3440,10 @@ void *serve_process(void *conn){
 	free(conn);
 	struct sockaddr_in remote = myconn.remote;
 	int32_t s = myconn.socket;
+#ifdef WITH_SSL
+	SSL_CTX *ctx = myconn.ctx;
+#endif
+
 	struct s_client *cl = create_client(remote.sin_addr.s_addr);
 	if (cl == NULL) {
 		close(s);
@@ -3575,6 +3587,9 @@ void http_srv() {
 			}; 
 			conn->remote = remote;
 			conn->socket = s;
+#ifdef WITH_SSL
+			conn->ctx = ctx;
+#endif
 			if (pthread_create(&workthread, &attr, serve_process, (void *)conn)) {
 				cs_log("ERROR: can't create thread for webif");
 			}

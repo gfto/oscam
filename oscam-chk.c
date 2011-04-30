@@ -447,6 +447,19 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
     //cs_debug_mask(D_TRACE, "chid filter reader %s", rdr->label);    
     return(0);
   }
+  
+  //Checking ecmlength:
+  if (rdr->ecmWhitelist){
+  	struct s_ecmWhitelist *tmp;
+  	int8_t ok = 0;
+  	for(tmp = rdr->ecmWhitelist; tmp; tmp = tmp->next){
+  		if(tmp->len == er->l){
+  			ok = 1;
+  			break;
+  		}
+  	}
+  	if(!ok) return(0);
+  }
  
   //All checks done, reader is matching!
   return(1);

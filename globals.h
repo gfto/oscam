@@ -764,6 +764,12 @@ struct s_CmdTab {
   unsigned char dummy;
   struct s_CmdTabEntry e[1];
 };
+
+struct s_ecmWhitelist {
+	int16_t len;
+	struct s_ecmWhitelist *next;
+};
+
 //ratelimit
 struct ecmrl {
 	uint16_t        srvid;
@@ -861,6 +867,7 @@ struct s_reader  //contains device info, reader info and card info
   FTAB      fchid;
   FTAB      ftab;
   CLASSTAB  cltab;
+  struct    s_ecmWhitelist *ecmWhitelist;
   char      *init_history;
   int32_t       init_history_pos;
   int32_t       brk_pos;
@@ -1504,6 +1511,7 @@ extern char *mk_t_nano(struct s_reader *rdr, uchar flag);
 extern char *mk_t_service( uint64_t sidtabok, uint64_t sidtabno);
 extern char *mk_t_logfile();
 extern char *mk_t_iprange(struct s_ip *range);
+extern char *mk_t_ecmwhitelist(struct s_ecmWhitelist *whitelist);
 extern void free_mk_t(char *value);
 
 //Todo #ifdef CCCAM

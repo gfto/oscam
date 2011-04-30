@@ -1,6 +1,9 @@
 struct s_connection{
 	int32_t socket;
 	struct sockaddr_in remote;
+#ifdef WITH_SSL
+	SSL_CTX *ctx;
+#endif
 };
 
 /* The server string in the http header */
@@ -1025,6 +1028,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 				<TR><TD>##TPLHELPPREFIX##server#blocknano##TPLHELPSUFFIX##Blocknano:</A></TD><TD><input name=\"blocknano\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##BLOCKNANO##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#savenano##TPLHELPSUFFIX##Savenano:</A></TD><TD><input name=\"savenano\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##SAVENANO##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#atr##TPLHELPSUFFIX##ATR:</A></TD><TD><input name=\"atr\" type=\"text\" size=\"100\" maxlength=\"54\" value=\"##ATR##\"></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#ecmwhitelist##TPLHELPSUFFIX##ECM whitelist:</A></TD><TD><input name=\"ecmwhitelist\" type=\"text\" size=\"100\" maxlength=\"100\" value=\"##ECMWHITELIST##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#boxid##TPLHELPSUFFIX##Boxid:</A></TD><TD><input name=\"boxid\" type=\"text\" size=\"15\" maxlength=\"8\" value=\"##BOXID##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#aeskeys##TPLHELPSUFFIX##AES Keys:</A></TD><TD><textarea name=\"aeskeys\" cols=\"98\" rows=\"4\" class=\"bt\" maxlength=\"128\">##AESKEYS##</textarea></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#rsakey##TPLHELPSUFFIX##RSA Key:</A></TD><TD><textarea name=\"rsakey\" cols=\"98\" rows=\"4\" class=\"bt\" maxlength=\"128\">##RSAKEY##</textarea></TD></TR>\n\
