@@ -2603,7 +2603,7 @@ int32_t cc_srv_wakeup_readers(struct s_client *cl) {
 	for (rdr = first_active_reader; rdr; rdr = rdr->next) {
 		if (rdr->typ != R_CCCAM)
 			continue;
-		if (!rdr->fd || rdr->tcp_connected == 2)
+		if (rdr->tcp_connected == 2)
 			continue;
 		if (!(rdr->grp & cl->grp))
 			continue;
@@ -2612,7 +2612,7 @@ int32_t cc_srv_wakeup_readers(struct s_client *cl) {
 		
 		//This wakeups the reader:
 		uchar dummy = 0;
-		write_to_pipe(rdr->fd, PIP_ID_CIN, &dummy, sizeof(dummy));
+		write_to_pipe(cl->fd_m2c, PIP_ID_CIN, &dummy, sizeof(dummy));
 		wakeup++;
 	}
 	return wakeup;

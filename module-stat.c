@@ -460,7 +460,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 		stat->last_received = ctime;
 
 		if (!cfg.lb_reopen_mode)
-			stat->ecm_count /= 10;
+			stat->ecm_count /= 2;
 		
 		//add timeout to stat:
 		if (ecm_time<=0 || ecm_time > (int)cfg.ctimeout)

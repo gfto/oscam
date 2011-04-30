@@ -543,6 +543,8 @@ void cleanup_thread(void *var)
 		if (cl == cl2)
 			prev->next = cl2->next; //remove client from list
 	
+		cs_sleepms(500); //just wait a bit that really really nobody is accessing client data
+		
 		if(cl->typ == 'c' && ph[cl->ctyp].cleanup)
 			ph[cl->ctyp].cleanup(cl);
 	    else if (cl->reader && cl->reader->ph.cleanup)
