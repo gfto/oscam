@@ -723,4 +723,51 @@ struct s_auth *get_account_by_name(char *name) {
 	return NULL;
 }
 
+#ifdef WITH_SSL
+/* Locking functions for SSL multithreading */
+static pthread_mutex_t *lock_cs;
+struct CRYPTO_dynlock_value{
+    pthread_mutex_t mutex;
+};
+
+uintptr_t SSL_id_function(void){
+	return ((uintptr_t) pthread_self());
+}
+
+void SSL_locking_function(int32_t mode, int32_t type, const char *file, int32_t line){
+	if (mode & CRYPTO_LOCK) {
+		pthread_mutex_lock(&lock_cs[type]);
+	} else {
+		pthread_mutex_unlock(&lock_cs[type]);
+	}
+	// just to remove compiler warnings...
+	if(file || line) return;
+}
+
+struct CRYPTO_dynlock_value *SSL_dyn_create_function(const char *file, int line){
+    struct CRYPTO_dynlock_value *value;
+    if(!cs_malloc(&value, sizeof(struct CRYPTO_dynlock_value), -1)) return (NULL);
+    pthread_mutex_init(&value->mutex, NULL);
+    // just to remove compiler warnings...
+		if(file || line) return value;
+    return value;
+}
+
+void SSL_dyn_lock_function(int mode, struct CRYPTO_dynlock_value *l, const char *file, int line){
+	if (mode & CRYPTO_LOCK) {
+		pthread_mutex_lock(&l->mutex);
+	} else {
+		pthread_mutex_unlock(&l->mutex);
+	}
+	// just to remove compiler warnings...
+	if(file || line) return;
+}
+
+void SSL_dyn_destroy_function(struct CRYPTO_dynlock_value *l, const char *file, int line){
+	pthread_mutex_destroy(&l->mutex);
+	free(l);
+	// just to remove compiler warnings...
+	if(file || line) return;
+}
+#endif
 #endif

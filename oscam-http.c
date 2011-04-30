@@ -3397,6 +3397,21 @@ SSL_CTX *webif_init_ssl() {
 	SSL_CTX *ctx;
 
 	static const char *cs_cert="oscam.pem";
+	
+	// set locking callbacks for SSL
+	int32_t i, num = CRYPTO_num_locks();
+	lock_cs = (pthread_mutex_t*) OPENSSL_malloc(num * sizeof(pthread_mutex_t));
+	
+	for (i = 0; i < num; ++i) {
+		pthread_mutex_init(&lock_cs[i], NULL);
+	}
+	/* static lock callbacks */ 
+	CRYPTO_set_id_callback(SSL_id_function);
+	CRYPTO_set_locking_callback(SSL_locking_function);
+	/* dynamic lock callbacks */
+	CRYPTO_set_dynlock_create_callback(SSL_dyn_create_function);
+	CRYPTO_set_dynlock_lock_callback(SSL_dyn_lock_function);
+	CRYPTO_set_dynlock_destroy_callback(SSL_dyn_destroy_function); 
 
 	meth = SSLv23_server_method();
 
@@ -3598,8 +3613,20 @@ void http_srv() {
 		}
 	}
 #ifdef WITH_SSL
-	if (cfg.http_use_ssl)
+	if (cfg.http_use_ssl){
+		int32_t i, num = CRYPTO_num_locks();;
 		SSL_CTX_free(ctx);
+		CRYPTO_set_dynlock_create_callback(NULL);
+		CRYPTO_set_dynlock_lock_callback(NULL);
+		CRYPTO_set_dynlock_destroy_callback(NULL);
+		CRYPTO_set_locking_callback(NULL);
+		CRYPTO_set_id_callback(NULL); 
+		for (i = 0; i < num; ++i) {
+			pthread_mutex_destroy(&lock_cs[i]);
+		}
+		OPENSSL_free(lock_cs);
+		lock_cs = NULL;
+	}
 #endif
 	cs_log("HTTP Server: Shutdown requested.");
 	close(sock);
