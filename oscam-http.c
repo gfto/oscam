@@ -1,4 +1,3 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
 #ifdef WEBIF
 //
@@ -32,33 +31,6 @@ static void kill_ac_client(void)
 		}
 }
 #endif
-
-struct s_reader *get_reader_by_label(char *lbl){
-	struct s_reader *rdr;
-	LL_ITER *itr = ll_iter_create(configured_readers);
-	while((rdr = ll_iter_next(itr)))
-	  if (strcmp(lbl, rdr->label) == 0) break;
-	ll_iter_release(itr);
-	return rdr;
-}
-
-struct s_client *get_client_by_name(char *name) {
-	struct s_client *cl;
-	for (cl = first_client; cl ; cl = cl->next) {
-		if (strcmp(name, cl->account->usr) == 0)
-			return cl;
-	}
-	return NULL;
-}
-
-struct s_auth *get_account_by_name(char *name) {
-	struct s_auth *account;
-	for (account=cfg.account; (account); account=account->next) {
-		if(strcmp(name, account->usr) == 0)
-			return account;
-	}
-	return NULL;
-}
 
 void refresh_oscam(enum refreshtypes refreshtype, struct in_addr in) {
 
@@ -409,7 +381,6 @@ char *send_oscam_config_radegast(struct templatevars *vars, struct uriparams *pa
 }
 
 char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
-
 
 	if (strcmp(getParam(params, "button"), "Refresh global list") == 0) {
 		cs_debug_mask(D_TRACE, "Entitlements: Refresh Shares start");
@@ -3089,37 +3060,6 @@ char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *par
 	return "0";
 }
 
-void webif_parse_request(struct uriparams *params, char *pch) {
-	/* Parse url parameters; parsemode = 1 means parsing next param, parsemode = -1 parsing next
-	 value; pch2 points to the beginning of the currently parsed string, pch is the current position */
-
-	char *pch2;
-	int32_t parsemode = 1;
-
-	pch2=pch;
-	while(pch[0] != '\0') {
-		if((parsemode == 1 && pch[0] == '=') || (parsemode == -1 && pch[0] == '&')) {
-			pch[0] = '\0';
-			urldecode(pch2);
-			if(parsemode == 1) {
-				if(params->paramcount >= MAXGETPARAMS) break;
-				++params->paramcount;
-				params->params[params->paramcount-1] = pch2;
-			} else {
-				params->values[params->paramcount-1] = pch2;
-			}
-			parsemode = -parsemode;
-			pch2 = pch + 1;
-		}
-		++pch;
-	}
-	/* last value wasn't processed in the loop yet... */
-	if(parsemode == -1 && params->paramcount <= MAXGETPARAMS) {
-		urldecode(pch2);
-		params->values[params->paramcount-1] = pch2;
-	}
-}
-
 int32_t process_request(FILE *f, struct in_addr in) {
 
 	cur_client()->last = time((time_t)0); //reset last busy time
@@ -3312,7 +3252,7 @@ int32_t process_request(FILE *f, struct in_addr in) {
 		if (!strcmp(path, pages[i])) pgidx = i;
 	}
 
-	webif_parse_request(&params, pch);
+	parseParams(&params, pch);
 
 	if(strlen(cfg.http_user) == 0 || strlen(cfg.http_pwd) == 0) authok = 1;
 	else calculate_nonce(expectednonce);
@@ -3322,7 +3262,7 @@ int32_t process_request(FILE *f, struct in_addr in) {
 	for (str1=strtok_r(tmp, "\n", &saveptr); str1; str1=strtok_r(NULL, "\n", &saveptr)) {
 		if (strlen(str1)==1) {
 			if (strcmp(method, "POST")==0) {
-				webif_parse_request(&params, str1+2);
+				parseParams(&params, str1+2);
 			}
 			break;
 		}
@@ -3497,7 +3437,7 @@ void *serve_process(void *conn){
 		close(s);
 		return NULL;
 	}
-	cl->typ = 'hS';
+	cl->typ = 'h';
 	cl->thread = pthread_self();
 	pthread_setspecific(getclient, cl);
 #ifndef NO_PTHREAD_CLEANUP_PUSH
@@ -3645,7 +3585,7 @@ void http_srv() {
 	if (cfg.http_use_ssl)
 		SSL_CTX_free(ctx);
 #endif
-	cs_log("HTTP Server: Shutdown requested from %s", inet_ntoa(remote.sin_addr));
+	cs_log("HTTP Server: Shutdown requested.");
 	close(sock);
 	//exit(SIGQUIT);
 }

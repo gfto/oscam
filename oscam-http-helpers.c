@@ -490,14 +490,6 @@ void send_error500(FILE *f){
 	send_error(f, 500, "Internal Server Error", NULL, "The server encountered an internal error that prevented it from fulfilling this request.", 0);
 }
 
-char *getParam(struct uriparams *params, char *name){
-	int32_t i;
-	for(i=(*params).paramcount-1; i>=0; --i){
-		if(strcmp((*params).params[i], name) == 0) return (*params).values[i];
-	}
-	return "";
-}
-
 /* Helper function for urldecode.*/
 int32_t x2i(int32_t i){
 	i=toupper(i);
@@ -661,6 +653,73 @@ char *sec2timeformat(struct templatevars *vars, int32_t seconds) {
 		snprintf(value, 16, "%02dd %02d:%02d:%02d", days, hours, mins, secs);
 
 	return tpl_addTmp(vars, value);
+}
+
+/* Parse url parameters and save them to params array. The pch pointer is increased to the position where parsing stopped. */
+void parseParams(struct uriparams *params, char *pch) {
+	char *pch2;
+	// parsemode = 1 means parsing next param, parsemode = -1 parsing next
+  //value; pch2 points to the beginning of the currently parsed string, pch is the current position
+	int32_t parsemode = 1;
+
+	pch2=pch;
+	while(pch[0] != '\0') {
+		if((parsemode == 1 && pch[0] == '=') || (parsemode == -1 && pch[0] == '&')) {
+			pch[0] = '\0';
+			urldecode(pch2);
+			if(parsemode == 1) {
+				if(params->paramcount >= MAXGETPARAMS) break;
+				++params->paramcount;
+				params->params[params->paramcount-1] = pch2;
+			} else {
+				params->values[params->paramcount-1] = pch2;
+			}
+			parsemode = -parsemode;
+			pch2 = pch + 1;
+		}
+		++pch;
+	}
+	/* last value wasn't processed in the loop yet... */
+	if(parsemode == -1 && params->paramcount <= MAXGETPARAMS) {
+		urldecode(pch2);
+		params->values[params->paramcount-1] = pch2;
+	}
+}
+
+/* Returns the value of the parameter called name or an empty string if it doesn't exist. */
+char *getParam(struct uriparams *params, char *name){
+	int32_t i;
+	for(i=(*params).paramcount-1; i>=0; --i){
+		if(strcmp((*params).params[i], name) == 0) return (*params).values[i];
+	}
+	return "";
+}
+
+struct s_reader *get_reader_by_label(char *lbl){
+	struct s_reader *rdr;
+	LL_ITER *itr = ll_iter_create(configured_readers);
+	while((rdr = ll_iter_next(itr)))
+	  if (strcmp(lbl, rdr->label) == 0) break;
+	ll_iter_release(itr);
+	return rdr;
+}
+
+struct s_client *get_client_by_name(char *name) {
+	struct s_client *cl;
+	for (cl = first_client; cl ; cl = cl->next) {
+		if (strcmp(name, cl->account->usr) == 0)
+			return cl;
+	}
+	return NULL;
+}
+
+struct s_auth *get_account_by_name(char *name) {
+	struct s_auth *account;
+	for (account=cfg.account; (account); account=account->next) {
+		if(strcmp(name, account->usr) == 0)
+			return account;
+	}
+	return NULL;
 }
 
 #endif
