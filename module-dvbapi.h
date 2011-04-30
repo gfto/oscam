@@ -26,7 +26,7 @@
 #define MAX_DEMUX 5
 #endif
 #define MAX_CAID 50
-#define ECM_PIDS 20
+#define ECM_PIDS 30
 #define MAX_FILTER 10
 
 #ifndef FALSE
