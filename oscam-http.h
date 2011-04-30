@@ -297,11 +297,13 @@ JosYm6oCZNJ7VBo1Lq/ue4njjQmEyw2zYcT8EmJlHeJbkNwG1QlAVogOoFSv8lb7sJDbJmgSkBJ+\
 O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
 #define TPLHEADER "\
+<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\
 <HTML>\n\
 <HEAD>\n\
 	<TITLE>OSCAM ##CS_VERSION## build ###CS_SVN_VERSION##</TITLE>\n\
+	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=ISO-8859-1\">\n\
 	<link rel=\"stylesheet\" type=\"text/css\" href=\"site.css\">\n\
-	<link href=\"favicon.ico\" rel=\"icon\" type=\"image/x-icon\"/>\n\
+	<link href=\"favicon.ico\" rel=\"icon\" type=\"image/x-icon\">\n\
 ##REFRESH##\
 	<script type=\"text/javascript\" src=\"oscam.js\"></script>\n\
 </HEAD>\n\
@@ -320,7 +322,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##TPLAPIFOOTER##"
 
 #define TPLFOOTER "\
-	<BR><HR/><BR>\n\
+	<BR><HR><BR>\n\
 	<DIV CLASS=\"footer\">\n\
 		<H4 CLASS=\"footline1\">OSCAM Webinterface developed by Streamboard Team - ##CURDATE## ##CURTIME## | Access from ##CURIP##</H4>\n\
 		<H4 CLASS=\"footline2\">Start: ##STARTDATE## - ##STARTTIME## | UpTime: ##UPTIME## | Process ID: ##PROCESSID##</H4>\n\
@@ -341,15 +343,15 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLMENU "\
 	<TABLE border=0 class=\"menu\">\n\
 		<TR>\n\
-			<TD CLASS=\"menu\"><A HREF=\"status.html\">STATUS</TD>\n\
-			<TD CLASS=\"menu\"><A HREF=\"config.html\">CONFIGURATION</TD>\n\
-			<TD CLASS=\"menu\"><A HREF=\"readers.html\">READERS</TD>\n\
-			<TD CLASS=\"menu\"><A HREF=\"userconfig.html\">USERS</TD>\n\
-			<TD CLASS=\"menu\"><A HREF=\"services.html\">SERVICES</TD>\n\
-			<TD CLASS=\"menu\"><A HREF=\"files.html\">FILES</TD>\n\
-			<TD CLASS=\"menu\"><A HREF=\"failban.html\">FAILBAN</TD>\n\
-			<TD CLASS=\"script\"><A HREF=\"script.html\">SCRIPT</TD>\n\
-			<TD CLASS=\"shutdown\"><A HREF=\"shutdown.html\">SHUTDOWN</TD>\n\
+			<TD CLASS=\"menu\"><A HREF=\"status.html\">STATUS</A></TD>\n\
+			<TD CLASS=\"menu\"><A HREF=\"config.html\">CONFIGURATION</A></TD>\n\
+			<TD CLASS=\"menu\"><A HREF=\"readers.html\">READERS</A></TD>\n\
+			<TD CLASS=\"menu\"><A HREF=\"userconfig.html\">USERS</A></TD>\n\
+			<TD CLASS=\"menu\"><A HREF=\"services.html\">SERVICES</A></TD>\n\
+			<TD CLASS=\"menu\"><A HREF=\"files.html\">FILES</A></TD>\n\
+			<TD CLASS=\"menu\"><A HREF=\"failban.html\">FAILBAN</A></TD>\n\
+			<TD CLASS=\"script\"><A HREF=\"script.html\">SCRIPT</A></TD>\n\
+			<TD CLASS=\"shutdown\"><A HREF=\"shutdown.html\">SHUTDOWN</A></TD>\n\
 		</TR>\n\
 	</TABLE>\n"
 
@@ -357,18 +359,18 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	<BR><BR>\n\
 	<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=global\">Global</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=loadbalancer\">Loadbalancer</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd33\">Camd3.3</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd35\">Camd3.5</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd35tcp\">Camd3.5 TCP</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=newcamd\">Newcamd</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=radegast\">Radegast</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=cccam\">Cccam</TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=global\">Global</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=loadbalancer\">Loadbalancer</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd33\">Camd3.3</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd35\">Camd3.5</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd35tcp\">Camd3.5 TCP</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=newcamd\">Newcamd</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=radegast\">Radegast</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=cccam\">Cccam</A></TD>\n\
 ##TPLCONFIGMENUGBOX##\
 ##TPLCONFIGMENUANTICASC##\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=monitor\">Monitor</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=serial\">Serial</TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=monitor\">Monitor</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=serial\">Serial</A></TD>\n\
 ##TPLCONFIGMENUDVBAPI##\
 		</TR>\n\
 	</TABLE>\n"
@@ -377,17 +379,17 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	<BR><BR>\n\
 	<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=version\">oscam.version</TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=version\">oscam.version</A></TD>\n\
 ##TPLFILEMENUDVBAPI##\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=conf\">oscam.conf</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=user\">oscam.user</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=server\">oscam.server</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=services\">oscam.services</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=srvid\">oscam.srvid</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=provid\">oscam.provid</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=tiers\">oscam.tiers</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=logfile\">logfile</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=userfile\">userfile</TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=conf\">oscam.conf</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=user\">oscam.user</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=server\">oscam.server</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=services\">oscam.services</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=srvid\">oscam.srvid</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=provid\">oscam.provid</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=tiers\">oscam.tiers</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=logfile\">logfile</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=userfile\">userfile</A></TD>\n\
 ##TPLFILEMENUANTICASC##\
 		</TR>\n\
 	</TABLE>"
@@ -399,7 +401,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	<BR><BR>##SDEBUG####SLOG####SCLEAR##<BR>##FILTER##\n\
 	<FORM ACTION=\"files.html\" method=\"post\">\n\
 		<INPUT TYPE=\"hidden\" NAME=\"part\" VALUE=\"##PART##\">\n\
-		<TEXTAREA NAME=\"filecontent\" CLASS=\"editor\">\n\
+		<TEXTAREA NAME=\"filecontent\" CLASS=\"editor\" rows=\"50\" cols=\"200\">\n\
 ##FILECONTENT##\
 		</TEXTAREA><BR>##WRITEPROTECTION##<BR>\n\
 		<INPUT TYPE=\"submit\" NAME=\"action\" VALUE=\"Save\" TITLE=\"Save file\" ##BTNDISABLED##>\n\
@@ -579,9 +581,9 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	<BR>\n\
 	<TABLE CLASS=\"configmenu\">\n\
 		<TR>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?part=adduser\">Add User</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=reinit\">Reinit User DB</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=resetalluserstats\">Reset Userstats</TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?part=adduser\">Add User</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=reinit\">Reinit User DB</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=resetalluserstats\">Reset Userstats</A></TD>\n\
 		</TR>\n\
 	</TABLE><BR>\n\
 	<TABLE CLASS=\"users\">\n\
@@ -608,7 +610,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##USERCONFIGS##\
 ##NEWUSERFORM##\
 	</TABLE><BR>\n\
-	<TH>Totals for the server: </TH>\n\
+	Totals for the server:\n\
 	<TABLE cellpadding=\"10\">\n\
 		<TR>\n\
 			<TH>OK</TH>\n\
@@ -626,7 +628,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD align=\"center\">##TOTAL_CWTOUT##</TD>\n\
 			<TD align=\"center\">##TOTAL_CWCACHE##</TD>\n\
 			<TD align=\"center\">##TOTAL_CWTUN##</TD>\n\
-			<TD align=\"center\"><A HREF=\"userconfig.html?action=resetserverstats\" TITLE=\"reset statistics for server\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICRES\"BORDER=\"0\" ALT=\"Reset Server Stats\"/></A></TD>\n\
+			<TD align=\"center\"><A HREF=\"userconfig.html?action=resetserverstats\" TITLE=\"reset statistics for server\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICRES\"BORDER=\"0\" ALT=\"Reset Server Stats\"></A></TD>\n\
 		</TR>\n\
 	</TABLE><BR>\n\
 ##TPLFOOTER##"
@@ -642,7 +644,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
 #define TPLUSERCONFIGLISTBIT "\
 		<TR class=\"##CLASSNAME##\">\n\
-			<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"/></A></TD>\n\
+			<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
 			<TD><SPAN TITLE=\"##DESCRIPTION##\">##USER##</SPAN></TD>\n\
 			<TD>##STATUS##</TD>\n\
 			<TD>##CLIENTIP##</TD>\n\
@@ -659,9 +661,9 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD align=\"center\">##EMMOK##</TD>\n\
 			<TD align=\"center\">##EMMNOK##</TD>\n\
 			<TD align=\"center\">##CWRATE####CWRATE2##</TD>\n\
-			<TD align=\"center\"><A HREF=\"user_edit.html?user=##USERENC##\" TITLE=\"edit this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit User\"/></A></TD>\n\
-			<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&action=resetstats\" TITLE=\"reset statistics for this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICRES\"BORDER=\"0\" ALT=\"Reset Stats\"/></A></TD>\n\
-			<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&action=delete\" TITLE=\"delete this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\"BORDER=\"0\" ALT=\"Delete User\"/></A></TD>\n\
+			<TD align=\"center\"><A HREF=\"user_edit.html?user=##USERENC##\" TITLE=\"edit this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit User\"></A></TD>\n\
+			<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=resetstats\" TITLE=\"reset statistics for this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICRES\"BORDER=\"0\" ALT=\"Reset Stats\"></A></TD>\n\
+			<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=delete\" TITLE=\"delete this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\"BORDER=\"0\" ALT=\"Delete User\"></A></TD>\n\
 		</TR>\n"
 
 #define TPLUSEREDIT "\
@@ -818,23 +820,23 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
 #define TPLREADERSBIT "\
 			<TR CLASS =\"##READERCLASS##\">\n\
-				<TD align=\"center\"><A HREF=\"readers.html?label=##READERNAMEENC##&action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"/></A></TD>\n\
+				<TD align=\"center\"><A HREF=\"readers.html?label=##READERNAMEENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
 				<TD>##READERNAME##</TD>\n\
 				<TD>##CTYP##</TD>\n\
 				<TD align=\"center\">##EMMERRORUK## / ##EMMERRORG## / ##EMMERRORS## / ##EMMERRORUQ##</TD>\n\
 				<TD align=\"center\">##EMMWRITTENUK## / ##EMMWRITTENG## / ##EMMWRITTENS## / ##EMMWRITTENUQ##</TD>\n\
 				<TD align=\"center\">##EMMSKIPPEDUK## / ##EMMSKIPPEDG## / ##EMMSKIPPEDS## / ##EMMSKIPPEDUQ##</TD>\n\
 				<TD align=\"center\">##EMMBLOCKEDUK## / ##EMMBLOCKEDG## / ##EMMBLOCKEDS## / ##EMMBLOCKEDUQ##</TD>\n\
-				<TD align=\"center\"><A HREF=\"readerconfig.html?label=##READERNAMEENC##\" TITLE=\"Edit this Reader\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit Reader\"/></A></TD>\n\
+				<TD align=\"center\"><A HREF=\"readerconfig.html?label=##READERNAMEENC##\" TITLE=\"Edit this Reader\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit Reader\"></A></TD>\n\
 				<TD align=\"center\">##ENTITLEMENT##</TD>\n\
 				<TD align=\"center\">##READERREFRESH##</TD>\n\
-				<TD align=\"center\"><A HREF=\"readerstats.html?label=##READERNAMEENC##&hide=4\" TITLE=\"Show loadbalancer statistics\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICSTA\" BORDER=\"0\" ALT=\"Loadbalancer statistics\"/></A></TD>\n\
-				<TD align=\"center\"><A HREF=\"readers.html?label=##READERNAMEENC##&action=delete\" TITLE=\"Delete this Reader\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\" BORDER=\"0\" ALT=\"Delete Reader\"/></A></TD>\n\
+				<TD align=\"center\"><A HREF=\"readerstats.html?label=##READERNAMEENC##&amp;hide=4\" TITLE=\"Show loadbalancer statistics\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICSTA\" BORDER=\"0\" ALT=\"Loadbalancer statistics\"></A></TD>\n\
+				<TD align=\"center\"><A HREF=\"readers.html?label=##READERNAMEENC##&amp;action=delete\" TITLE=\"Delete this Reader\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\" BORDER=\"0\" ALT=\"Delete Reader\"></A></TD>\n\
 			</TR>\n"
 
-#define TPLREADERENTITLEBIT "<A HREF=\"entitlements.html?label=##READERNAMEENC##\" TITLE=\"Show Entitlement\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##ENTICO##\" BORDER=\"0\" ALT=\"Show Entitlement\"/></A>"
+#define TPLREADERENTITLEBIT "<A HREF=\"entitlements.html?label=##READERNAMEENC##\" TITLE=\"Show Entitlement\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##ENTICO##\" BORDER=\"0\" ALT=\"Show Entitlement\"></A>"
 
-#define TPLREADERREFRESHBIT "<A HREF=\"readers.html?action=reread&label=##READERNAMEENC##\" TITLE=\"Refresh Entitlement\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##REFRICO##\" BORDER=\"0\" ALT=\"Reset and reload Entitlement\"/></A>"
+#define TPLREADERREFRESHBIT "<A HREF=\"readers.html?action=reread&amp;label=##READERNAMEENC##\" TITLE=\"Refresh Entitlement\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##REFRICO##\" BORDER=\"0\" ALT=\"Reset and reload Entitlement\"></A>"
 
 #define TPLREADERSTATS "\
 ##TPLHEADER##\
@@ -843,9 +845,9 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	<BR><BR>\n\
 	<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##ENCODEDLABEL##&hide=-1\">show all</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##ENCODEDLABEL##&hide=4\">hide 'not found'</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##ENCODEDLABEL##&action=resetstat\">reset statistics</A>\
+			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##ENCODEDLABEL##&amp;hide=-1\">show all</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##ENCODEDLABEL##&amp;hide=4\">hide 'not found'</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##ENCODEDLABEL##&amp;action=resetstat\">reset statistics</A>\
 		</TR>\n\
 	</TABLE>\n\
 	<BR><BR>\n\
@@ -1325,10 +1327,10 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		<input name=\"mgclient\" type=\"hidden\" value=\"0\">\n\
 		<TABLE class=\"config\">\n\
 			<TR><TH COLSPAN=\"2\">Edit Newcamd Config</TH></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#port_5##TPLHELPSUFFIX##Port:</A></TD>     <TD><textarea name=\"port\"      cols=\"120\" rows=\"3\" class=\"bt\">##PORT##</textarea></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#port_5##TPLHELPSUFFIX##Port:</A></TD><TD><textarea name=\"port\" cols=\"120\" rows=\"3\" class=\"bt\">##PORT##</textarea></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#serverip_6##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"serverip\" type=\"text\" size=\"60\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#key_2##TPLHELPSUFFIX##Key:</A></TD><TD><input name=\"key\" type=\"text\" size=\"60\" maxlength=\"28\" value=\"##KEY##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#allowed##TPLHELPSUFFIX##Allowed:</A></TD>     <TD><textarea name=\"allowed\"      cols=\"58\" rows=\"3\" class=\"bt\">##ALLOWED##</textarea></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#allowed##TPLHELPSUFFIX##Allowed:</A></TD><TD><textarea name=\"allowed\" cols=\"58\" rows=\"3\" class=\"bt\">##ALLOWED##</textarea></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#keepalive##TPLHELPSUFFIX##Keepalive:</A></TD><TD><input name=\"keepalive\" type=\"checkbox\" value=\"1\" ##KEEPALIVE##></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#mgclient##TPLHELPSUFFIX##Mgclient:</A></TD><TD><input name=\"mgclient\" type=\"checkbox\" value=\"1\" ##MGCLIENTCHK##></TD></TR>\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
@@ -1584,31 +1586,31 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLMENU##\
 ##MESSAGE##\
 	<BR><BR>\n\
-	<TABLE CLASS=\"stats\">\n\
-		<TR>\n\
-			<TH>Label</TH>\n\
-			<TH colspan=\"3\" align=\"center\">Action</TH>\n\
-		</TR>\n\
+	<FORM action=\"services_edit.html\" method=\"get\"><INPUT TYPE=\"hidden\" NAME=\"action\" VALUE=\"add\">\n\
+		<TABLE CLASS=\"stats\">\n\
+			<TR>\n\
+				<TH>Label</TH>\n\
+				<TH colspan=\"3\" align=\"center\">Action</TH>\n\
+			</TR>\n\
 ##SERVICETABS##\
-		<TR>\n\
-			<FORM action=\"services_edit.html\" method=\"get\"><INPUT TYPE=\"hidden\" NAME=\"action\" VALUE=\"add\">\n\
+			<TR>\n\
 				<TD>New Service:</TD>\n\
 				<TD><input name=\"service\" type=\"text\"></TD>\n\
 				<TD colspan=\"2\" align=\"center\"><input type=\"submit\" value=\"Add\" ##BTNDISABLED##></TD>\n\
-			</FORM>\n\
-		<TR>\n\
-	</TABLE>\n\
+			</TR>\n\
+		</TABLE>\n\
+	</FORM>\n\
 ##TPLFOOTER##"
 
 #define TPLSERVICECONFIGLISTBIT "\
-		<TR>\n\
-			<TD>##LABEL##</TD>\n\
-			<TD width=\"250\" align=\"center\">\n\
+			<TR>\n\
+				<TD>##LABEL##</TD>\n\
+				<TD width=\"250\" align=\"center\">\n\
 ##SIDLIST##\
-			</TD>\n\
-			<TD><A HREF=\"services_edit.html?service=##LABELENC##&action=edit\" TITLE=\"Edit this Service\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit Service\"/></A></TD>\n\
-			<TD><A HREF=\"services.html?service=##LABELENC##&action=delete\" TITLE=\"Delete this Service\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\" BORDER=\"0\" ALT=\"Delete Service\"/></A></TD>\n\
-		</TR>\n"
+				</TD>\n\
+				<TD><A HREF=\"services_edit.html?service=##LABELENC##&amp;action=edit\" TITLE=\"Edit this Service\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit Service\"></A></TD>\n\
+				<TD><A HREF=\"services.html?service=##LABELENC##&amp;action=delete\" TITLE=\"Delete this Service\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\" BORDER=\"0\" ALT=\"Delete Service\"></A></TD>\n\
+			</TR>\n"
 
 #define TPLSERVICECONFIGSIDBIT "				<DIV class=\"##SIDCLASS##\">##SID##</DIV>\n"
 

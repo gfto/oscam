@@ -2020,7 +2020,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 				
 				// set previous Link if needed
 				if (offset >= ENTITLEMENT_PAGE_SIZE) {
-					tpl_printf(vars, TPLAPPEND, "CONTROLS", "<A HREF=\"entitlements.html?offset=%d&globallist=%s&label=%s\"> << PREVIOUS < </A>",
+					tpl_printf(vars, TPLAPPEND, "CONTROLS", "<A HREF=\"entitlements.html?offset=%d&globallist=%s&amp;label=%s\"> << PREVIOUS < </A>",
 							offset - ENTITLEMENT_PAGE_SIZE,
 							getParam(params, "globallist"),
 							getParam(params, "label"));
@@ -2028,7 +2028,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 
 				// set next link if needed
 				if (card) {
-					tpl_printf(vars, TPLAPPEND, "CONTROLS", "<A HREF=\"entitlements.html?offset=%d&globallist=%s&label=%s\"> > NEXT >> </A>",
+					tpl_printf(vars, TPLAPPEND, "CONTROLS", "<A HREF=\"entitlements.html?offset=%d&globallist=%s&amp;label=%s\"> > NEXT >> </A>",
 							offset + ENTITLEMENT_PAGE_SIZE,
 							getParam(params, "globallist"),
 							getParam(params, "label"));
@@ -2242,7 +2242,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 					tpl_printf(vars, TPLADD, "CSIDX", "<A HREF=\"status.html?action=kill&threadid=%ld\" TITLE=\"Kill this client\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICKIL\" ALT=\"Kill\"></A>", cl->thread);
 				}
 				else if((cl->typ == 'p') && !cfg.http_readonly) {
-					tpl_printf(vars, TPLADD, "CSIDX", "<A HREF=\"status.html?action=restart&label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICKIL\" ALT=\"Restart\"></A>", urlencode(vars, cl->reader->label));
+					tpl_printf(vars, TPLADD, "CSIDX", "<A HREF=\"status.html?action=restart&amp;label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICKIL\" ALT=\"Restart\"></A>", urlencode(vars, cl->reader->label));
 				}
 				else {
 					tpl_printf(vars, TPLADD, "CSIDX", "%8X&nbsp;", cl->thread);
@@ -2364,9 +2364,9 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 					{
 						struct s_reader *rdr = cl->reader;
 								if (rdr->lbvalue)
-									tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "<A HREF=\"readerstats.html?label=%s&hide=4\" TITLE=\"Show statistics for this reader/ proxy\">%d</A>", urlencode(vars, rdr->label), rdr->lbvalue);
+									tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "<A HREF=\"readerstats.html?label=%s&amp;hide=4\" TITLE=\"Show statistics for this reader/ proxy\">%d</A>", urlencode(vars, rdr->label), rdr->lbvalue);
 								else
-									tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "<A HREF=\"readerstats.html?label=%s&hide=4\" TITLE=\"Show statistics for this reader/ proxy\">%s</A>", urlencode(vars, rdr->label), "no data");
+									tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "<A HREF=\"readerstats.html?label=%s&amp;hide=4\" TITLE=\"Show statistics for this reader/ proxy\">%s</A>", urlencode(vars, rdr->label), "no data");
 
 								switch(rdr->card_status)
 								{
@@ -2623,7 +2623,7 @@ char *send_oscam_services(struct templatevars *vars, struct uriparams *params, s
 			}
 		} else {
 			tpl_printf(vars, TPLADD, "SIDCLASS","");
-			tpl_printf(vars, TPLADD, "SID","<A HREF=\"services.html?service=%s&action=list\">Show Services</A>", urlencode(vars, sidtab->label));
+			tpl_printf(vars, TPLADD, "SID","<A HREF=\"services.html?service=%s&amp;action=list\">Show Services</A>", urlencode(vars, sidtab->label));
 		}
 		tpl_addVar(vars, TPLADD, "LABELENC", urlencode(vars, sidtab->label));
 		tpl_addVar(vars, TPLADD, "LABEL", xml_encode(vars, sidtab->label));
@@ -2846,11 +2846,11 @@ char *send_oscam_files(struct templatevars *vars, struct uriparams *params) {
 #endif
 
 		if(!cfg.disablelog)
-			tpl_printf(vars, TPLADD, "SLOG", "<BR><A CLASS=\"debugl\" HREF=\"files.html?part=logfile&stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 1, "Stop Log");
+			tpl_printf(vars, TPLADD, "SLOG", "<BR><A CLASS=\"debugl\" HREF=\"files.html?part=logfile&amp;stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 1, "Stop Log");
 		else
-			tpl_printf(vars, TPLADD, "SLOG", "<BR><A CLASS=\"debugl\" HREF=\"files.html?part=logfile&stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 0, "Start Log");
+			tpl_printf(vars, TPLADD, "SLOG", "<BR><A CLASS=\"debugl\" HREF=\"files.html?part=logfile&amp;stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 0, "Start Log");
 
-		tpl_printf(vars, TPLADD, "SCLEAR", "<A CLASS=\"debugl\" HREF=\"files.html?part=logfile&clear=logfile\">%s</A><BR><BR>\n", "Clear Log");
+		tpl_printf(vars, TPLADD, "SCLEAR", "<A CLASS=\"debugl\" HREF=\"files.html?part=logfile&amp;clear=logfile\">%s</A><BR><BR>\n", "Clear Log");
 	}
 	else if (strcmp(getParam(params, "part"), "userfile") == 0) {
 		snprintf(targetfile, 255,"%s", cfg.usrfile);
@@ -2862,11 +2862,11 @@ char *send_oscam_files(struct templatevars *vars, struct uriparams *params) {
 		}
 
 		if(!cfg.disableuserfile)
-			tpl_printf(vars, TPLADD, "SLOG", "<A HREF=\"files.html?part=userfile&stopusrlog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 1, "Stop Log");
+			tpl_printf(vars, TPLADD, "SLOG", "<A HREF=\"files.html?part=userfile&amp;stopusrlog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 1, "Stop Log");
 		else
-			tpl_printf(vars, TPLADD, "SLOG", "<A HREF=\"files.html?part=userfile&stopusrlog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 0, "Start Log");
+			tpl_printf(vars, TPLADD, "SLOG", "<A HREF=\"files.html?part=userfile&amp;stopusrlog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 0, "Start Log");
 
-		tpl_printf(vars, TPLADD, "SCLEAR", "<A HREF=\"files.html?part=userfile&clear=usrfile\">%s</A><BR><BR>\n", "Clear Log");
+		tpl_printf(vars, TPLADD, "SCLEAR", "<A HREF=\"files.html?part=userfile&amp;clear=usrfile\">%s</A><BR><BR>\n", "Clear Log");
 		tpl_addVar(vars, TPLADD, "FILTER", "<FORM ACTION=\"files.html\" method=\"get\">\n");
 		tpl_addVar(vars, TPLAPPEND, "FILTER", "<INPUT name=\"part\" type=\"hidden\" value=\"userfile\">\n");
 		tpl_addVar(vars, TPLAPPEND, "FILTER", "<SELECT name=\"filter\">\n");
