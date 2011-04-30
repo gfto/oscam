@@ -636,7 +636,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	if (cfg.lb_auto_betatunnel && er->caid >> 8 == 0x18) { //nagra 
 		ushort caid_to = get_betatunnel_caid_to(er->caid);
 		if (caid_to) {
-			int needs_stats_nagra, needs_stats_beta = 0;
+			int needs_stats_nagra = 0, needs_stats_beta = 0;
 			
 			int32_t time_nagra = 0;
 			int32_t time_beta = 0;
@@ -656,13 +656,13 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				stat_beta = get_stat(rdr, caid_to, prid, er->srvid, er->l+10);
 				
 				if (stat_nagra && stat_nagra->rc == 0) {
-					time = stat_nagra->time_avg/weight;
+					time = stat_nagra->time_avg*100/weight;
 					if (!time_nagra || time < time_nagra)
 						time_nagra = time;
 				}
 				
 				if (stat_beta && stat_beta->rc == 0) {
-					time = stat_beta->time_avg/weight;
+					time = stat_beta->time_avg*100/weight;
 					if (!time_beta || time < time_beta)
 						time_beta = time;
 				}
@@ -682,11 +682,11 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					convert_to_beta_int(er, caid_to);
 			}
 			else if (time_beta && (!time_nagra || time_beta <= time_nagra)) {
-				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X selected beta: n%dms>b%dms", er->caid, caid_to, time_nagra, time_beta);
+				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X selected beta: n%dms > b%dms", er->caid, caid_to, time_nagra, time_beta);
 				convert_to_beta_int(er, caid_to);
 			}
 			else {
-				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X selected nagra: n%dms<b%dms", er->caid, caid_to, time_nagra, time_beta);
+				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X selected nagra: n%dms < b%dms", er->caid, caid_to, time_nagra, time_beta);
 			}
 			// else nagra is faster or no beta, so continue unmodified
 		}
@@ -702,7 +702,8 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	int32_t current = -1;
 	READER_STAT *stat = NULL;
 	int32_t retrylimit = get_retrylimit(er);
-	
+
+        int32_t new_stats = 0;	
 	int32_t nlocal_readers = 0;
 	int32_t nbest_readers = get_nbest_readers(er);
 	int32_t nfb_readers = cfg.lb_nfb_readers;
@@ -757,6 +758,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				add_stat(rdr, er, 1, -1);
 				ll_append(result, rdr); //no statistics, this reader is active (now) but we need statistics first!
 				nreaders--;
+				new_stats = 1;
 				continue;
 			}
 			
@@ -774,6 +776,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				cs_debug_mask(D_TRACE, "loadbalancer: reader %s needs more statistics", rdr->label);
 				ll_append(result, rdr); //need more statistics!
 				nreaders--;
+				new_stats = 1;
 				continue;
 			}
 			
@@ -900,7 +903,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	ll_destroy_data(selected);
 	ll_destroy(timeout_services);
 	
-	if (ll_count(result) < ll_count(er->matching_rdr)) {
+	if (!new_stats && ll_count(result) < ll_count(er->matching_rdr)) {
 		if (!n) //no best reader found? reopen if we have ecm_count>0
 		{
 			cs_debug_mask(D_TRACE, "loadbalancer: NO MATCHING READER FOUND, reopen last valid:");
