@@ -5,6 +5,10 @@
 #ifdef OS_MACOSX
 #include <net/if_dl.h>
 #include <ifaddrs.h>
+#elif defined OS_SOLARIS
+#include <net/if.h>
+#include <net/if_arp.h>
+#include <sys/sockio.h>
 #else
 #include <net/if.h>
 #endif
@@ -3405,6 +3409,30 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
          }
          freeifaddrs(ifs);
       }
+#elif defined OS_SOLARIS
+			// no mac address specified so use first filled mac
+			int32_t j = 0, sock,niccount;
+			struct ifreq nicnumber[16];
+			struct ifconf ifconf;
+			struct arpreq arpreq;
+			
+			if ((sock=socket(AF_INET,SOCK_DGRAM,0)) > -1){
+				ifconf.ifc_buf = (caddr_t)nicnumber;
+				ifconf.ifc_len = sizeof(nicnumber);
+				if (!ioctl(sock,SIOCGIFCONF,(char*)&ifconf)){
+					niccount = ifconf.ifc_len/(sizeof(struct ifreq));
+					while(j < niccount){
+						memset(&arpreq, 0, sizeof(arpreq));
+						((struct sockaddr_in*)&arpreq.arp_pa)->sin_addr.s_addr = ((struct sockaddr_in*)&nicnumber[j].ifr_addr)->sin_addr.s_addr;
+						if (!(ioctl(sock,SIOCGARP,(char*)&arpreq))){
+							for (i = 0; i < 6; ++i)
+								mac[i] = (unsigned char)arpreq.arp_ha.sa_data[i];
+							if(check_filled(mac, 6) > 0) break;
+						}
+					}
+				}
+				close(sock);
+			}
 #else
       // no mac address specified so use mac of eth0 on local box
       int32_t fd = socket(PF_INET, SOCK_STREAM, 0);
@@ -3418,6 +3446,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
       close(fd);
 #endif
+			cs_debug_mask(D_TRACE, "Determined local mac address for mg-encrypted as %s", cs_hexdump(1, mac, 6));
     }
 
     // decrypt encrypted mgcamd gbox line
