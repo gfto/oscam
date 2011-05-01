@@ -3081,6 +3081,64 @@ char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *par
 	return "0";
 }
 
+int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t forcePlain){
+	int32_t n, bufsize=0;
+	char buf2[1024];
+	struct pollfd pfd2[1];
+
+	while (1) {
+		if(forcePlain)
+			n=read(fileno(f), buf2, sizeof(buf2));
+		else
+			n=webif_read(buf2, sizeof(buf2), f);
+		if (n <= 0) {
+			cs_debug_mask(D_CLIENT, "webif read error %d (errno=%d %s)", n, errno, strerror(errno));
+#ifdef WITH_SSL
+			if (cfg.http_use_ssl && !forcePlain)
+				ERR_print_errors_fp(stderr);
+#endif
+			return -1;
+		}
+		if(!cs_realloc(result, bufsize+n+1, -1)){
+			send_error500(f);
+			return -1;
+		}
+
+		memcpy(*result+bufsize, buf2, n);
+		bufsize+=n;
+
+		//max request size 100kb
+		if (bufsize>102400) {
+			cs_log("error: too much data received from %s", inet_ntoa(in));
+			free(*result);
+			return -1;
+		}
+
+#ifdef WITH_SSL
+		if (cfg.http_use_ssl && !forcePlain) {
+			int32_t len = 0;
+			len = SSL_pending((SSL*)f);
+
+			if (len>0)
+				continue;
+
+			pfd2[0].fd = SSL_get_fd((SSL*)f);
+
+		} else
+#endif
+			pfd2[0].fd = fileno(f);
+
+		pfd2[0].events = (POLLIN | POLLPRI);
+
+		int32_t rc = poll(pfd2, 1, 100);
+		if (rc>0)
+			continue;
+
+		break;
+	}
+	return bufsize;
+}
+
 int32_t process_request(FILE *f, struct in_addr in) {
 
 	cur_client()->last = time((time_t)0); //reset last busy time
@@ -3189,59 +3247,8 @@ int32_t process_request(FILE *f, struct in_addr in) {
 	struct uriparams params;
 	params.paramcount = 0;
 
-	/* First line always includes the GET/POST request */
-	char *saveptr1=NULL;
-	int32_t n, bufsize=0;
-	char *filebuf = NULL;
-	char buf2[1024];
-	struct pollfd pfd2[1];
-
-	while (1) {
-		if ((n=webif_read(buf2, sizeof(buf2), f)) <= 0) {
-			cs_debug_mask(D_CLIENT, "webif read error %d (errno=%d %s)", n, errno, strerror(errno));
-#ifdef WITH_SSL
-			if (cfg.http_use_ssl)
-				ERR_print_errors_fp(stderr);
-#endif
-			return -1;
-		}
-		if(!cs_realloc(&filebuf, bufsize+n+1, -1)){
-			send_error500(f);
-			return -1;
-		}
-
-		memcpy(filebuf+bufsize, buf2, n);
-		bufsize+=n;
-
-		//max request size 100kb
-		if (bufsize>102400) {
-			cs_log("error: too much data received from %s", inet_ntoa(in));
-			free(filebuf);
-			return -1;
-		}
-
-#ifdef WITH_SSL
-		if (cfg.http_use_ssl) {
-			int32_t len = 0;
-			len = SSL_pending((SSL*)f);
-
-			if (len>0)
-				continue;
-
-			pfd2[0].fd = SSL_get_fd((SSL*)f);
-
-		} else
-#endif
-			pfd2[0].fd = fileno(f);
-
-		pfd2[0].events = (POLLIN | POLLPRI);
-
-		int32_t rc = poll(pfd2, 1, 100);
-		if (rc>0)
-			continue;
-
-		break;
-	}
+	char *saveptr1=NULL, *filebuf = NULL;	
+	int32_t bufsize = readRequest(f, in, &filebuf, 0);
 
 	if (!filebuf) {
 		cs_log("error: no data received");
@@ -3426,34 +3433,30 @@ void *serve_process(void *conn){
 #ifdef WITH_SSL
 	if (cfg.http_use_ssl) {
 		if(SSL_set_fd(ssl, s)){
-			int ok = (SSL_accept(ssl) != -1);
-			if (!ok) {
-				int tries = 100;
-				while (!ok && tries--) {
-					int err = SSL_get_error(ssl, -1);
-					if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE)
-						break;
-					else {
-						fd_set fds;
-						FD_ZERO(&fds);
-						FD_SET(s, &fds);
-						int rc=select(s+1, &fds, 0, 0, NULL);
-						if (rc < 0) {
-							if (errno==EINTR) continue;
-							break;
-						}
-						if (FD_ISSET(s, &fds))
-							ok = (SSL_accept(ssl) != -1);
-					}
-				}
-			}
-			if (ok)
+			if (SSL_accept(ssl) != -1)
 				process_request((FILE *)ssl, remote.sin_addr);
 			else {
 				FILE *f;
 				f = fdopen(s, "r+");
 				if(f != NULL) {
-					send_error(f, 200, "Bad Request", NULL, "This web server is running in SSL mode.", 1);
+					char *ptr, *filebuf = NULL, *host = NULL;	
+					int32_t bufsize = readRequest(f, remote.sin_addr, &filebuf, 1);
+				
+					if (filebuf) {			
+						filebuf[bufsize]='\0';
+						host = strstr(filebuf, "Host: ");
+						if(host){
+							host += 6;
+							ptr = strchr(host, '\r');
+							if(ptr) ptr[0] = '\0';
+						}
+					}
+					if(host){
+						char extra[strlen(host) + 20];
+						snprintf(extra, sizeof(extra), "Location: https://%s", host);
+						send_error(f, 301, "Moved Permanently", extra, "This web server is running in SSL mode.", 1);
+					} else
+						send_error(f, 200, "Bad Request", NULL, "This web server is running in SSL mode.", 1);
 					fflush(f);
 					fclose(f);
 				} else cs_log("WebIf: Error opening file descriptor using fdopen() (errno=%d %s)", errno, strerror(errno));
@@ -3604,6 +3607,8 @@ void http_srv() {
 		lock_cs = NULL;
 	}
 #endif
+	pthread_attr_destroy(&attr);
+	pthread_mutex_destroy(&http_lock);
 	cs_log("HTTP Server: Shutdown requested.");
 	close(sock);
 	//exit(SIGQUIT);
