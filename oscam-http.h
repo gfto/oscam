@@ -89,19 +89,19 @@ TR.expired TD {background-color:#ffe2d4;}\n\
 TR.usrcfg_anticasc TD {background-color:#FEF9BF;}\n\
 TR.usrcfg_cccam TD {background-color:#E6FEBF;}\n\
 TR.scanusbsubhead TD {background-color:#fdfbe1;}\n\
-DIV.log {border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:10; font-family:\"Courier New\", monospace; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left; }\n\
-DIV.sidlist {border:1px dotted #AAAAAA; background-color: #fffdf5; padding:2; font-family:\"Courier New\", monospace ; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left;}\n\
+DIV.log {border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:10px; font-family:\"Courier New\", monospace; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left; }\n\
+DIV.sidlist {border:1px dotted #AAAAAA; background-color: #fffdf5; padding:2px; font-family:\"Courier New\", monospace ; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left;}\n\
 TABLE.menu {border-spacing:0px; border:0px; padding:0px; margin-left:auto; margin-right:auto;}\n\
 TABLE.status {border-spacing:1px; border:0px; padding:0px; background-color:white; empty-cells:show;}\n\
 TABLE.config {width:750px;}\n\
 TABLE.invisible TD {border:0px; font-family:Arial; font-size: 12px; padding:5px; background-color:#EEEEEE;}\n\
-TD.menu {font-color:wblack; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;}\n\
-TD.script {font-color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;}\n\
-TD.shutdown {font-color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;}\n\
+TD.menu {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;}\n\
+TD.script {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;}\n\
+TD.shutdown {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;}\n\
 TD.shutdown A:hover {color: red;}\n\
-TD.configmenu {font-color:black; background-color:white; font-family: Arial; font-size:11px; font-weight:bold;}\n\
+TD.configmenu {color:black; background-color:white; font-family: Arial; font-size:11px; font-weight:bold;}\n\
 textarea.bt{font-family: Arial; font-size: 12px;}\n\
-textarea.editor {width:100%; height:450px;border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:10; font-family:\"Courier New\", monospace; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left; }\n\
+textarea.editor {width:100%; height:450px;border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:10px; font-family:\"Courier New\", monospace; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left; }\n\
 input{font-family: Arial; font-size: 12px;}\n\
 A:link {color: #050840;}\n\
 A.debugls:link {color: white;background-color:red;}\n\
