@@ -669,7 +669,7 @@ void cs_exit(int32_t sig)
 
 	// this is very important - do not remove
 	if (cl->typ != 's') {
-		cs_log("thread %8X ended!", pthread_self());
+		if(cl->typ != 'i') cs_log("thread %8X ended!", pthread_self());
 		#ifdef NO_PTHREAD_CLEANUP_PUSH
 		cleanup_thread(cl);
 		#endif
