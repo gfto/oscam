@@ -463,11 +463,13 @@ void send_file(FILE *f, char *filename){
 		FILE *fp;
 		char buffer[1024];
 		int32_t read;
-
+		struct stat st;
+		
+		stat(filename, &st);		
 		if((fp = fopen(filename, "r"))==NULL) return;
+		send_headers(f, 200, "OK", NULL, mimetype, 1, st.st_size, 0);
 		while((read = fread(buffer,sizeof(char), 1023, fp)) > 0) {
-			buffer[read] = '\0';
-			send_headers(f, 200, "OK", NULL, mimetype, 1, strlen(buffer), 0);
+			buffer[read] = '\0';			
 			webif_write(buffer, f);
 		}
 

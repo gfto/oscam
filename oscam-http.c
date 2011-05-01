@@ -3478,6 +3478,7 @@ void http_srv() {
 	struct sockaddr_in sin;
 	struct sockaddr_in remote;
 	struct timeval stimeout;
+	pthread_mutex_init(&http_lock, NULL);
 
 	socklen_t len = sizeof(remote);
 	/* Create random string for nonce value generation */
