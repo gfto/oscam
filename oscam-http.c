@@ -2642,8 +2642,9 @@ char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *
 			tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
 			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			tpl_printf(vars, TPLADD, "SECONDS", "%d", SHUTDOWNREFRESH);
-			send_headers(f, 200, "OK", NULL, "text/html", 0, 0);
-			webif_write(tpl_getTpl(vars, "SHUTDOWN"), f);
+			char *result = tpl_getTpl(vars, "SHUTDOWN");
+			send_headers(f, 200, "OK", NULL, "text/html", 0, strlen(result), 0);
+			webif_write(result, f);
 			cs_log("Shutdown requested by WebIF from %s", inet_ntoa(in));
 		} else {
 			tpl_addVar(vars, TPLADD, "APICONFIRMMESSAGE", "shutdown");
@@ -2665,8 +2666,9 @@ char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *
 			tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
 			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			tpl_printf(vars, TPLADD, "SECONDS", "%d", 2);
-			send_headers(f, 200, "OK", NULL, "text/html", 0, 0);
-			webif_write(tpl_getTpl(vars, "SHUTDOWN"), f);
+			char *result = tpl_getTpl(vars, "SHUTDOWN");
+			send_headers(f, 200, "OK", NULL, "text/html", 0,strlen(result), 0);
+			webif_write(result, f);
 			cs_log("Restart requested by WebIF from %s", inet_ntoa(in));
 		} else {
 			tpl_addVar(vars, TPLADD, "APICONFIRMMESSAGE", "restart");
@@ -3069,7 +3071,7 @@ char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *par
 			if(ptr != NULL){
 				int32_t len = b64decode((uchar *)ptr + 7);
 				if(len > 0){
-					send_headers(f, 200, "OK", NULL, header + 5, 1, 0);
+					send_headers(f, 200, "OK", NULL, header + 5, 1, len, 0);
 					webif_write_raw(ptr + 7, f, len);
 					return "1";
 				}
@@ -3294,17 +3296,15 @@ int32_t process_request(FILE *f, struct in_addr in) {
 		char temp[sizeof(AUTHREALM) + sizeof(expectednonce) + 100];
 		snprintf(temp, sizeof(temp), "WWW-Authenticate: Digest algorithm=\"MD5\", realm=\"%s\", qop=\"auth\", opaque=\"\", nonce=\"%s\"", AUTHREALM, expectednonce);
 		if(authok == 2) strncat(temp, ", stale=true", sizeof(temp));
-		send_headers(f, 401, "Unauthorized", temp, "text/html", 0, 0);
+		send_headers(f, 401, "Unauthorized", temp, "text/html", 0, 0, 0);
 		free(filebuf);
 		return 0;
 	}
 
 	/*build page*/
 	if(pgidx == 8) {
-		send_headers(f, 200, "OK", NULL, "text/css", 1, 0);
 		send_file(f, "CSS");
 	} else if (pgidx == 17) {
-		send_headers(f, 200, "OK", NULL, "text/javascript", 1, 0);
 		send_file(f, "JS");
 	} else {
 		time_t t;
@@ -3388,9 +3388,9 @@ int32_t process_request(FILE *f, struct in_addr in) {
 		if(result == NULL || !strcmp(result, "0") || strlen(result) == 0) send_error500(f);
 		else if (strcmp(result, "1")) {
 			if (pgidx == 18)
-				send_headers(f, 200, "OK", NULL, "text/xml", 0, 0);
+				send_headers(f, 200, "OK", NULL, "text/xml", 0, strlen(result), 0);
 			else
-				send_headers(f, 200, "OK", NULL, "text/html", 0, 0);
+				send_headers(f, 200, "OK", NULL, "text/html", 0, strlen(result), 0);
 			webif_write(result, f);
 		}
 		tpl_clear(vars);

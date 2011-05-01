@@ -409,10 +409,10 @@ int32_t webif_read(char *buf, int32_t num, FILE *f) {
 		return read(fileno(f), buf, num);
 }
 
-void send_headers(FILE *f, int32_t status, char *title, char *extra, char *mime, int32_t cache, int8_t forcePlain){
+void send_headers(FILE *f, int32_t status, char *title, char *extra, char *mime, int32_t cache, int32_t length, int8_t forcePlain){
   time_t now;
   char timebuf[32];
-  char buf[sizeof(PROTOCOL) + sizeof(SERVER) + strlen(title) + (extra == NULL?0:strlen(extra)+2) + (mime == NULL?0:strlen(mime)+2) + 256];
+  char buf[sizeof(PROTOCOL) + sizeof(SERVER) + strlen(title) + (extra == NULL?0:strlen(extra)+2) + (mime == NULL?0:strlen(mime)+2) + 300];
   char *pos = buf;
 	
   pos += snprintf(pos, sizeof(buf)-(pos-buf), "%s %d %s\r\n", PROTOCOL, status, title);
@@ -434,6 +434,7 @@ void send_headers(FILE *f, int32_t status, char *title, char *extra, char *mime,
 	} else {
 		pos += snprintf(pos, sizeof(buf)-(pos-buf),"Cache-Control: public, max-age=7200\r\n");
 	}
+	pos += snprintf(pos, sizeof(buf)-(pos-buf),"Content-Length: %d\r\n", length);
 	pos += snprintf(pos, sizeof(buf)-(pos-buf),"Last-Modified: %s\r\n", timebuf);
 	pos += snprintf(pos, sizeof(buf)-(pos-buf), "Connection: close\r\n");
 	pos += snprintf(pos, sizeof(buf)-(pos-buf),"\r\n");
@@ -446,12 +447,15 @@ void send_headers(FILE *f, int32_t status, char *title, char *extra, char *mime,
  */
 void send_file(FILE *f, char *filename){
 	int32_t fileno = 0;
+	char* mimetype = "";
 
 	if (!strcmp(filename, "CSS")){
 		filename = cfg.http_css;
+		mimetype = "text/css";
 		fileno = 1;
 	} else if (!strcmp(filename, "JS")){
 		filename = cfg.http_jscript;
+		mimetype = "text/javascript";
 		fileno = 2;
 	}
 
@@ -463,22 +467,26 @@ void send_file(FILE *f, char *filename){
 		if((fp = fopen(filename, "r"))==NULL) return;
 		while((read = fread(buffer,sizeof(char), 1023, fp)) > 0) {
 			buffer[read] = '\0';
+			send_headers(f, 200, "OK", NULL, mimetype, 1, strlen(buffer), 0);
 			webif_write(buffer, f);
 		}
 
 		fclose (fp);
 	} else {
-		if (fileno == 1)
+		if (fileno == 1){
+			send_headers(f, 200, "OK", NULL, mimetype, 1, strlen(CSS), 0);
 			webif_write(CSS, f);
-		else if (fileno == 2)
+		} else if (fileno == 2){
+			send_headers(f, 200, "OK", NULL, mimetype, 1, strlen(JSCRIPT), 0);
 			webif_write(JSCRIPT, f);
+		}
 	}
 }
 
 void send_error(FILE *f, int32_t status, char *title, char *extra, char *text, int8_t forcePlain){
 	char buf[(2* strlen(title)) + strlen(text) + 128];
 	char *pos = buf;
-	send_headers(f, status, title, extra, "text/html", 0, forcePlain);
+	send_headers(f, status, title, extra, "text/html", 0, strlen(buf), forcePlain);
 	pos += snprintf(pos, sizeof(buf)-(pos-buf), "<HTML><HEAD><TITLE>%d %s</TITLE></HEAD>\r\n", status, title);
 	pos += snprintf(pos, sizeof(buf)-(pos-buf), "<BODY><H4>%d %s</H4>\r\n", status, title);
 	pos += snprintf(pos, sizeof(buf)-(pos-buf), "%s\r\n", text);
