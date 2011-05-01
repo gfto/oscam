@@ -987,6 +987,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##server#audisabled##TPLHELPSUFFIX##AU disabled:</A></TD><TD><input name=\"audisabled\" type=\"hidden\" value=\"0\"><input name=\"audisabled\" type=\"checkbox\" value=\"1\" ##AUDISABLED##></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#auprovid##TPLHELPSUFFIX##AU Provid:</A></TD><TD><input name=\"auprovid\" type=\"text\" size=\"10\" maxlength=\"6\" value=\"##AUPROVID##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#emmcache##TPLHELPSUFFIX##Emmcache:</A></TD><TD><input name=\"emmcache\" type=\"text\" size=\"10\" maxlength=\"10\" value=\"##EMMCACHE##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#ecmwhitelist##TPLHELPSUFFIX##ECM whitelist:</A></TD><TD><textarea name=\"ecmwhitelist\" cols=\"58\" rows=\"2\" class=\"bt\">##ECMWHITELIST##</textarea></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#blockemm-u##TPLHELPSUFFIX##Blockemm:</A></TD>\n\
 			<TD>\n\
 				<TABLE class=\"invisible\">\n\
@@ -1028,7 +1029,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 				<TR><TD>##TPLHELPPREFIX##server#blocknano##TPLHELPSUFFIX##Blocknano:</A></TD><TD><input name=\"blocknano\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##BLOCKNANO##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#savenano##TPLHELPSUFFIX##Savenano:</A></TD><TD><input name=\"savenano\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##SAVENANO##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#atr##TPLHELPSUFFIX##ATR:</A></TD><TD><input name=\"atr\" type=\"text\" size=\"100\" maxlength=\"54\" value=\"##ATR##\"></TD></TR>\n\
-				<TR><TD>##TPLHELPPREFIX##server#ecmwhitelist##TPLHELPSUFFIX##ECM whitelist:</A></TD><TD><input name=\"ecmwhitelist\" type=\"text\" size=\"100\" maxlength=\"100\" value=\"##ECMWHITELIST##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#boxid##TPLHELPSUFFIX##Boxid:</A></TD><TD><input name=\"boxid\" type=\"text\" size=\"15\" maxlength=\"8\" value=\"##BOXID##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#aeskeys##TPLHELPSUFFIX##AES Keys:</A></TD><TD><textarea name=\"aeskeys\" cols=\"98\" rows=\"4\" class=\"bt\" maxlength=\"128\">##AESKEYS##</textarea></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#rsakey##TPLHELPSUFFIX##RSA Key:</A></TD><TD><textarea name=\"rsakey\" cols=\"98\" rows=\"4\" class=\"bt\" maxlength=\"128\">##RSAKEY##</textarea></TD></TR>\n\

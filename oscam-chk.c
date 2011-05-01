@@ -451,14 +451,20 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   //Checking ecmlength:
   if (rdr->ecmWhitelist){
   	struct s_ecmWhitelist *tmp;
-  	int8_t ok = 0;
+  	struct s_ecmWhitelistLen *tmpLen;
+  	int8_t ok = 0, foundcaid = 0;
   	for(tmp = rdr->ecmWhitelist; tmp; tmp = tmp->next){
-  		if(tmp->len == er->l){
-  			ok = 1;
-  			break;
-  		}
+  		if(tmp->caid == 0 || tmp->caid == er->caid){
+  			foundcaid = 1;
+	  		for(tmpLen = tmp->lengths; tmpLen; tmpLen = tmpLen->next){
+	  			if(tmpLen->len == er->l){
+		  			ok = 1;
+		  			break;
+		  		}
+	  		}
+	  	}  		
   	}
-  	if(!ok) return(0);
+  	if(foundcaid == 1 && ok == 0) return(0);
   }
  
   //All checks done, reader is matching!

@@ -884,7 +884,14 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 		}
 		if(rdr->ecmWhitelist){
 			struct s_ecmWhitelist *tmp;
-			for(tmp = rdr->ecmWhitelist; tmp; tmp=tmp->next) add_garbage(tmp);
+			struct s_ecmWhitelistLen *tmpLen;
+			for(tmp = rdr->ecmWhitelist; tmp; tmp=tmp->next){
+				for(tmpLen = tmp->lengths; tmpLen; tmpLen=tmpLen->next){
+					add_garbage(tmpLen);
+				}
+				add_garbage(tmp);
+			}
+			rdr->ecmWhitelist = NULL;
 		}
 
 		rdr->grp = 0;

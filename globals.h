@@ -766,8 +766,14 @@ struct s_CmdTab {
 };
 
 struct s_ecmWhitelist {
-	int16_t len;
+	int16_t caid;
+	struct s_ecmWhitelistLen *lengths;
 	struct s_ecmWhitelist *next;
+};
+
+struct s_ecmWhitelistLen {
+	int16_t len;
+	struct s_ecmWhitelistLen *next;
 };
 
 //ratelimit

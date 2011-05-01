@@ -2479,7 +2479,7 @@ int32_t write_server()
 			}
 			
 			value = mk_t_ecmwhitelist(rdr->ecmWhitelist);
-			if ((strlen(value) > 0 || cfg.http_full_cfg) && isphysical)
+			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "ecmwhitelist", "%s\n", value);
 			free_mk_t(value);
 
@@ -3310,7 +3310,7 @@ int32_t init_tierid()
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
-	char *ptr;
+	char *ptr, *ptr2;
 	/*
 	 *  case sensitive first
 	 */
@@ -3652,25 +3652,66 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 	
 	if (!strcmp(token, "ecmwhitelist")) {
-		struct s_ecmWhitelist *tmp, *last = NULL;
+		struct s_ecmWhitelist *tmp, *last;
+		struct s_ecmWhitelistLen *tmpLen, *lastLen;
 		if(strlen(value) == 0) {
-			for(tmp = rdr->ecmWhitelist; tmp; tmp=tmp->next) add_garbage(tmp);
+			for(tmp = rdr->ecmWhitelist; tmp; tmp=tmp->next){
+				for(tmpLen = tmp->lengths; tmpLen; tmpLen=tmpLen->next){
+					add_garbage(tmpLen);
+				}
+				add_garbage(tmp);
+			}
 			rdr->ecmWhitelist = NULL;
 			return;
 		} else {
-			for (ptr = strtok(value, ","); ptr; ptr = strtok(NULL, ",")) {
-				int16_t g;
-				g = (int16_t)dyn_word_atob(ptr);
-				if (cs_malloc(&tmp, sizeof(struct s_ecmWhitelist), -1)) {
-					tmp->next = NULL;
-					tmp->len = g;
-					if(last == NULL){
-						rdr->ecmWhitelist = tmp;
-					} else {
-						last->next = tmp;
+			char *saveptr1=NULL, *saveptr2 = NULL;
+			for (ptr = strtok_r(value, ";", &saveptr1); ptr; ptr = strtok_r(NULL, ";", &saveptr1)) {
+				int16_t caid = 0, len;
+				ptr2=strchr(ptr,':');
+				if(ptr2 != NULL){
+					ptr2[0] = '\0';
+					caid = (int16_t)dyn_word_atob(ptr);
+					++ptr2;
+				} else ptr2 = ptr;
+				for (ptr2 = strtok_r(ptr2, ",", &saveptr2); ptr2; ptr2 = strtok_r(NULL, ",", &saveptr2)) {
+					len = (int16_t)dyn_word_atob(ptr2);
+					last = NULL, tmpLen = NULL, lastLen = NULL;
+					for(tmp = rdr->ecmWhitelist; tmp; tmp=tmp->next){
+						last = tmp;
+						if(tmp->caid == caid){
+							for(tmpLen = tmp->lengths; tmpLen; tmpLen=tmpLen->next){
+								lastLen = tmpLen;
+								if(tmpLen->len == len) break;
+							}
+							break;
+						}
 					}
-					last = tmp;		
-				}
+					if(tmp == NULL){
+						if (cs_malloc(&tmp, sizeof(struct s_ecmWhitelist), -1)) {
+							tmp->caid = caid;
+							tmp->lengths = NULL;
+							tmp->next = NULL;
+							if(last == NULL){
+								rdr->ecmWhitelist = tmp;
+							} else {
+								last->next = tmp;
+							}
+						}
+					}
+					if(tmp != NULL){
+						if(tmpLen == NULL){							
+							if (cs_malloc(&tmpLen, sizeof(struct s_ecmWhitelistLen), -1)) {
+								tmpLen->len = len;
+								tmpLen->next = NULL;
+								if(lastLen == NULL){
+									tmp->lengths = tmpLen;
+								} else {
+									lastLen->next = tmpLen;
+								}
+							}
+						}
+					}		
+				}				
 			}
 			return;
 		}
@@ -4741,14 +4782,26 @@ char *mk_t_logfile(){
 char *mk_t_ecmwhitelist(struct s_ecmWhitelist *whitelist){
 	int32_t needed = 1, pos = 0;
 	struct s_ecmWhitelist *cip;
-	char *value, *dot = "";
-	for (cip = whitelist; cip; cip = cip->next) needed += 3;
+	struct s_ecmWhitelistLen *cip2;
+	char *value, *dot = "", *dot2 = "";
+	for (cip = whitelist; cip; cip = cip->next){
+		needed += 7;
+		for (cip2 = cip->lengths; cip2; cip2 = cip2->next) needed +=3;
+	}
 	
 	char tmp[needed];
 
 	for (cip = whitelist; cip; cip = cip->next){
-		pos += snprintf(tmp + pos, needed - pos, "%s%02X", dot, cip->len);
-		dot=",";
+		if(cip->lengths != NULL){
+			if(cip->caid != 0) pos += snprintf(tmp + pos, needed - pos, "%s%04X:", dot, cip->caid);
+			else pos += snprintf(tmp + pos, needed - pos, "%s", dot);
+		}
+		dot2="";
+		for (cip2 = cip->lengths; cip2; cip2 = cip2->next){
+			pos += snprintf(tmp + pos, needed - pos, "%s%02X", dot2, cip2->len);
+			dot2=",";
+		}
+		dot=";";		
 	}
 	if(pos == 0 || !cs_malloc(&value, (pos + 1) * sizeof(char), -1)) return "";
 	memcpy(value, tmp, pos + 1);
