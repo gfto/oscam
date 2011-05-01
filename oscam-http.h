@@ -2,7 +2,7 @@ struct s_connection{
 	int32_t socket;
 	struct sockaddr_in remote;
 #ifdef WITH_SSL
-	SSL_CTX *ctx;
+	SSL *ssl;
 #endif
 };
 

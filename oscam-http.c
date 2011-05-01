@@ -3399,66 +3399,6 @@ int32_t process_request(FILE *f, struct in_addr in) {
 	return 0;
 }
 
-#ifdef WITH_SSL
-SSL_CTX *webif_init_ssl() {
-	SSL_library_init();
-	SSL_load_error_strings();
-
-	SSL_METHOD *meth;
-	SSL_CTX *ctx;
-
-	static const char *cs_cert="oscam.pem";
-	
-	// set locking callbacks for SSL
-	int32_t i, num = CRYPTO_num_locks();
-	lock_cs = (pthread_mutex_t*) OPENSSL_malloc(num * sizeof(pthread_mutex_t));
-	
-	for (i = 0; i < num; ++i) {
-		pthread_mutex_init(&lock_cs[i], NULL);
-	}
-	/* static lock callbacks */ 
-	CRYPTO_set_id_callback(SSL_id_function);
-	CRYPTO_set_locking_callback(SSL_locking_function);
-	/* dynamic lock callbacks */
-	CRYPTO_set_dynlock_create_callback(SSL_dyn_create_function);
-	CRYPTO_set_dynlock_lock_callback(SSL_dyn_lock_function);
-	CRYPTO_set_dynlock_destroy_callback(SSL_dyn_destroy_function); 
-
-	meth = SSLv23_server_method();
-
-	ctx = SSL_CTX_new(meth);
-
-	char path[128];
-
-	if (cfg.http_cert[0]==0)
-		snprintf(path, sizeof(path), "%s%s", cs_confdir, cs_cert);
-	else
-		cs_strncpy(path, cfg.http_cert, sizeof(path));
-
-	if (!ctx) {
-		ERR_print_errors_fp(stderr);
-		return NULL;
-       }
-
-	if (SSL_CTX_use_certificate_file(ctx, path, SSL_FILETYPE_PEM) <= 0) {
-		ERR_print_errors_fp(stderr);
-		return NULL;
-	}
-
-	if (SSL_CTX_use_PrivateKey_file(ctx, path, SSL_FILETYPE_PEM) <= 0) {
-		ERR_print_errors_fp(stderr);
-		return NULL;
-	}
-
-       if (!SSL_CTX_check_private_key(ctx)) {
-		cs_log("SSL: Private key does not match the certificate public key");
-		return NULL;
-	}
-	cs_log("load ssl certificate file %s", path);
-	return ctx;
-}
-#endif
-
 #pragma GCC diagnostic ignored "-Wempty-body"
 void *serve_process(void *conn){
 	struct s_connection myconn;
@@ -3467,7 +3407,7 @@ void *serve_process(void *conn){
 	struct sockaddr_in remote = myconn.remote;
 	int32_t s = myconn.socket;
 #ifdef WITH_SSL
-	SSL_CTX *ctx = myconn.ctx;
+	SSL *ssl = myconn.ssl;
 #endif
 
 	struct s_client *cl = create_client(remote.sin_addr.s_addr);
@@ -3485,29 +3425,22 @@ void *serve_process(void *conn){
 #endif
 #ifdef WITH_SSL
 	if (cfg.http_use_ssl) {
-		SSL *ssl;
-		ssl = SSL_new(ctx);
-		if(ssl != NULL){
-			if(SSL_set_fd(ssl, s)){
-				if (SSL_accept(ssl) != -1)
-					process_request((FILE *)ssl, remote.sin_addr);
-				else {
-					FILE *f;
-					f = fdopen(s, "r+");
-					if(f != NULL) {
-						send_error(f, 200, "Bad Request", NULL, "This web server is running in SSL mode.", 1);
-						fflush(f);
-						fclose(f);
-					} else cs_log("WebIf: Error opening file descriptor using fdopen() (errno=%d %s)", errno, strerror(errno));
-				}
-			} else cs_log("WebIf: Error calling SSL_set_fd().");
-			SSL_shutdown(ssl);
-			close(s);
-			SSL_free(ssl);
-		} else {
-			close(s);
-			cs_log("WebIf: Error calling SSL_new().");
-		}
+		if(SSL_set_fd(ssl, s)){
+			if (SSL_accept(ssl) != -1)
+				process_request((FILE *)ssl, remote.sin_addr);
+			else {
+				FILE *f;
+				f = fdopen(s, "r+");
+				if(f != NULL) {
+					send_error(f, 200, "Bad Request", NULL, "This web server is running in SSL mode.", 1);
+					fflush(f);
+					fclose(f);
+				} else cs_log("WebIf: Error opening file descriptor using fdopen() (errno=%d %s)", errno, strerror(errno));
+			}
+		} else cs_log("WebIf: Error calling SSL_set_fd().");
+		SSL_shutdown(ssl);
+		close(s);
+		SSL_free(ssl);
 	} else
 #endif
 	{
@@ -3593,7 +3526,7 @@ void http_srv() {
 #ifdef WITH_SSL
 	SSL_CTX *ctx = NULL;
 	if (cfg.http_use_ssl)
-		ctx = webif_init_ssl();
+		ctx = SSL_Webif_Init();
 
 	if (ctx==NULL)
 		cfg.http_use_ssl = 0;
@@ -3615,7 +3548,16 @@ void http_srv() {
 			conn->remote = remote;
 			conn->socket = s;
 #ifdef WITH_SSL
-			conn->ctx = ctx;
+			SSL *ssl = NULL;
+			if (cfg.http_use_ssl){
+				ssl = SSL_new(ctx);
+				if(ssl == NULL){
+					close(s);
+					cs_log("WebIf: Error calling SSL_new().");
+					continue;
+				}
+			}
+			conn->ssl = ssl;
 #endif
 			if (pthread_create(&workthread, &attr, serve_process, (void *)conn)) {
 				cs_log("ERROR: can't create thread for webif");

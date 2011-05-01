@@ -730,7 +730,7 @@ struct CRYPTO_dynlock_value{
     pthread_mutex_t mutex;
 };
 
-// function needs explicitly unsigned long to prevent compiler warning, uintptr_t is not valid here 
+/* function really needs unsigned long to prevent compiler warnings... */
 unsigned long SSL_id_function(void){
 	return ((unsigned long) pthread_self());
 }
@@ -745,16 +745,21 @@ void SSL_locking_function(int32_t mode, int32_t type, const char *file, int32_t 
 	if(file || line) return;
 }
 
-struct CRYPTO_dynlock_value *SSL_dyn_create_function(const char *file, int line){
-    struct CRYPTO_dynlock_value *value;
-    if(!cs_malloc(&value, sizeof(struct CRYPTO_dynlock_value), -1)) return (NULL);
-    pthread_mutex_init(&value->mutex, NULL);
+struct CRYPTO_dynlock_value *SSL_dyn_create_function(const char *file, int32_t line){
+    struct CRYPTO_dynlock_value *l;
+    if(!cs_malloc(&l, sizeof(struct CRYPTO_dynlock_value), -1)) return (NULL);
+		if(pthread_mutex_init(&l->mutex, NULL)) {
+			// Initialization of mutex failed.
+			free(l);
+			return (NULL);
+		}
+    pthread_mutex_init(&l->mutex, NULL);
     // just to remove compiler warnings...
-		if(file || line) return value;
-    return value;
+		if(file || line) return l;
+    return l;
 }
 
-void SSL_dyn_lock_function(int mode, struct CRYPTO_dynlock_value *l, const char *file, int line){
+void SSL_dyn_lock_function(int32_t mode, struct CRYPTO_dynlock_value *l, const char *file, int32_t line){
 	if (mode & CRYPTO_LOCK) {
 		pthread_mutex_lock(&l->mutex);
 	} else {
@@ -764,11 +769,79 @@ void SSL_dyn_lock_function(int mode, struct CRYPTO_dynlock_value *l, const char 
 	if(file || line) return;
 }
 
-void SSL_dyn_destroy_function(struct CRYPTO_dynlock_value *l, const char *file, int line){
+void SSL_dyn_destroy_function(struct CRYPTO_dynlock_value *l, const char *file, int32_t line){
 	pthread_mutex_destroy(&l->mutex);
 	free(l);
 	// just to remove compiler warnings...
 	if(file || line) return;
+}
+
+/* Init necessary structures for SSL in WebIf*/
+SSL_CTX *SSL_Webif_Init() {
+	SSL_library_init();
+	SSL_load_error_strings();
+	ERR_load_BIO_strings();
+	ERR_load_SSL_strings();
+
+	SSL_METHOD *meth;
+	SSL_CTX *ctx;
+
+	static const char *cs_cert="oscam.pem";
+	
+	// set locking callbacks for SSL
+	int32_t i, num = CRYPTO_num_locks();
+	lock_cs = (pthread_mutex_t*) OPENSSL_malloc(num * sizeof(pthread_mutex_t));
+	
+	for (i = 0; i < num; ++i) {
+		if(pthread_mutex_init(&lock_cs[i], NULL)){
+			while(--i > 0){
+				pthread_mutex_destroy(&lock_cs[i]);
+				--i;
+			}
+			free(lock_cs);
+			return NULL;
+		};
+	}
+	/* static lock callbacks */ 
+	CRYPTO_set_id_callback(SSL_id_function);
+	CRYPTO_set_locking_callback(SSL_locking_function);
+	/* dynamic lock callbacks */
+	CRYPTO_set_dynlock_create_callback(SSL_dyn_create_function);
+	CRYPTO_set_dynlock_lock_callback(SSL_dyn_lock_function);
+	CRYPTO_set_dynlock_destroy_callback(SSL_dyn_destroy_function); 
+
+	meth = SSLv23_server_method();
+
+	ctx = SSL_CTX_new(meth);
+
+	char path[128];
+
+	if (cfg.http_cert[0]==0)
+		snprintf(path, sizeof(path), "%s%s", cs_confdir, cs_cert);
+	else
+		cs_strncpy(path, cfg.http_cert, sizeof(path));
+
+	if (!ctx) {
+		ERR_print_errors_fp(stderr);
+		return NULL;
+       }
+
+	if (SSL_CTX_use_certificate_file(ctx, path, SSL_FILETYPE_PEM) <= 0) {
+		ERR_print_errors_fp(stderr);
+		return NULL;
+	}
+
+	if (SSL_CTX_use_PrivateKey_file(ctx, path, SSL_FILETYPE_PEM) <= 0) {
+		ERR_print_errors_fp(stderr);
+		return NULL;
+	}
+
+	if (!SSL_CTX_check_private_key(ctx)) {
+		cs_log("SSL: Private key does not match the certificate public key");
+		return NULL;
+	}
+	cs_log("load ssl certificate file %s", path);
+	return ctx;
 }
 #endif
 #endif
