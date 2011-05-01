@@ -730,8 +730,9 @@ struct CRYPTO_dynlock_value{
     pthread_mutex_t mutex;
 };
 
-uintptr_t SSL_id_function(void){
-	return ((uintptr_t) pthread_self());
+// function needs explicitly unsigned long to prevent compiler warning, uintptr_t is not valid here 
+unsigned long SSL_id_function(void){
+	return ((unsigned long) pthread_self());
 }
 
 void SSL_locking_function(int32_t mode, int32_t type, const char *file, int32_t line){
