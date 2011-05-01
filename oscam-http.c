@@ -3426,7 +3426,28 @@ void *serve_process(void *conn){
 #ifdef WITH_SSL
 	if (cfg.http_use_ssl) {
 		if(SSL_set_fd(ssl, s)){
-			if (SSL_accept(ssl) != -1)
+			int ok = (SSL_accept(ssl) != -1);
+			if (!ok) {
+				int tries = 100;
+				while (!ok && tries--) {
+					int err = SSL_get_error(ssl, -1);
+					if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE)
+						break;
+					else {
+						fd_set fds;
+						FD_ZERO(&fds);
+						FD_SET(s, &fds);
+						int rc=select(s+1, &fds, 0, 0, NULL);
+						if (rc < 0) {
+							if (errno==EINTR) continue;
+							break;
+						}
+						if (FD_ISSET(s, &fds))
+							ok = (SSL_accept(ssl) != -1);
+					}
+				}
+			}
+			if (ok)
 				process_request((FILE *)ssl, remote.sin_addr);
 			else {
 				FILE *f;
