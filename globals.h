@@ -767,8 +767,14 @@ struct s_CmdTab {
 
 struct s_ecmWhitelist {
 	int16_t caid;
-	struct s_ecmWhitelistLen *lengths;
+	struct s_ecmWhitelistIdent *idents;
 	struct s_ecmWhitelist *next;
+};
+
+struct s_ecmWhitelistIdent {
+	uint16_t ident;
+	struct s_ecmWhitelistLen *lengths;
+	struct s_ecmWhitelistIdent *next;
 };
 
 struct s_ecmWhitelistLen {
