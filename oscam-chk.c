@@ -482,7 +482,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
 int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid) {
 	int32_t i;
 
-	if (reader->caid != caid) {
+	if (reader->caid != caid || reader->audisabled) {
 		return 0;
 	}
 
