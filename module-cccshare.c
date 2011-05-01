@@ -806,7 +806,6 @@ void update_card_list() {
                             int32_t l;
                             for (l=0;l<ptr->num_provid;l++) {
                                 struct cc_provider *prov = cs_malloc(&prov, sizeof(struct cc_provider), QUITERROR);
-                                memset(prov, 0, sizeof(struct cc_provider));
                                 prov->prov = ptr->provid[l];
                                 ll_append(card->providers, prov);
                             }
@@ -841,7 +840,6 @@ void update_card_list() {
                         int32_t k;
                         for (k = 0; k < rdr->ftab.filts[j].nprids; k++) {
                             struct cc_provider *prov = cs_malloc(&prov, sizeof(struct cc_provider), QUITERROR);
-                            memset(prov, 0, sizeof(struct cc_provider));
                             prov->prov = rdr->ftab.filts[j].prids[k];
 
                             //cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
@@ -899,7 +897,6 @@ void update_card_list() {
 		                for (j = 0; j < rdr->nprov; j++) {
         		            uint32_t prid = get_reader_prid(rdr, j);
                 		    struct cc_provider *prov = cs_malloc(&prov, sizeof(struct cc_provider), QUITERROR);
-		                    memset(prov, 0, sizeof(struct cc_provider));
 		                    prov->prov = prid;
 		                    //cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
 		                    if (!rdr->audisabled) {
@@ -930,7 +927,6 @@ void update_card_list() {
                 for (j = 0; j < rdr->nprov; j++) {
                     uint32_t prid = get_reader_prid(rdr, j);
                     struct cc_provider *prov = cs_malloc(&prov, sizeof(struct cc_provider), QUITERROR);
-                    memset(prov, 0, sizeof(struct cc_provider));
                     prov->prov = prid;
                     //cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
                     if (!rdr->audisabled) {
