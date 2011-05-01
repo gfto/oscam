@@ -55,6 +55,7 @@ TH.statuscol14 {text-align:center;}\n\
 TH.statuscol15 {text-align:center;}\n\
 TH.statuscol16 {text-align:center;}\n\
 TD {height:10px; border:0px; font-family: Arial; font-size: 11px; padding:5px; background-color:#EEEEEE; color:black;text-align: left}\n\
+TD.centered {text-align:center;}\n\
 TD.statuscol0 {text-align:center;width:10px;}\n\
 TD.statuscol1 {text-align:center;}\n\
 TD.statuscol2 {text-align:center;}\n\
@@ -452,8 +453,8 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD>##IPADDRESS##</TD>\
 			<TD>##VIOLATIONDATE##</TD>\
 			<TD>##VIOLATIONCOUNT##</TD>\
-			<TD align=\"center\">##LEFTTIME##</TD>\
-			<TD align=\"center\"><A HREF=\"failban.html?action=delete&intip=##INTIP##\" TITLE=\"Delete Entry\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\" BORDER=\"0\" ALT=\"Delete Entry\"/></A></TD>\n\
+			<TD class=\"centered\">##LEFTTIME##</TD>\
+			<TD class=\"centered\"><A HREF=\"failban.html?action=delete&intip=##INTIP##\" TITLE=\"Delete Entry\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\" BORDER=\"0\" ALT=\"Delete Entry\"/></A></TD>\n\
 		</TR>\n"
 
 #ifdef CS_ANTICASC
@@ -612,7 +613,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TH>EOK</TH>\n\
 			<TH>ENOK</TH>\n\
 			<TH>CW Rate</TH>\n\
-			<TH colspan=\"3\" align=\"center\">Action</TH>\n\
+			<TH colspan=\"3\" class=\"centered\">Action</TH>\n\
 		</TR>\n\
 ##USERCONFIGS##\
 ##NEWUSERFORM##\
@@ -629,13 +630,13 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TH>Action</TH>\n\
 		</TR>\n\
 		<TR>\n\
-			<TD align=\"center\">##TOTAL_CWOK##</TD>\n\
-			<TD align=\"center\">##TOTAL_CWNOK##</TD>\n\
-			<TD align=\"center\">##TOTAL_CWIGN##</TD>\n\
-			<TD align=\"center\">##TOTAL_CWTOUT##</TD>\n\
-			<TD align=\"center\">##TOTAL_CWCACHE##</TD>\n\
-			<TD align=\"center\">##TOTAL_CWTUN##</TD>\n\
-			<TD align=\"center\"><A HREF=\"userconfig.html?action=resetserverstats\" TITLE=\"reset statistics for server\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICRES\"BORDER=\"0\" ALT=\"Reset Server Stats\"></A></TD>\n\
+			<TD class=\"centered\">##TOTAL_CWOK##</TD>\n\
+			<TD class=\"centered\">##TOTAL_CWNOK##</TD>\n\
+			<TD class=\"centered\">##TOTAL_CWIGN##</TD>\n\
+			<TD class=\"centered\">##TOTAL_CWTOUT##</TD>\n\
+			<TD class=\"centered\">##TOTAL_CWCACHE##</TD>\n\
+			<TD class=\"centered\">##TOTAL_CWTUN##</TD>\n\
+			<TD class=\"centered\"><A HREF=\"userconfig.html?action=resetserverstats\" TITLE=\"reset statistics for server\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICRES\"BORDER=\"0\" ALT=\"Reset Server Stats\"></A></TD>\n\
 		</TR>\n\
 	</TABLE><BR>\n\
 ##TPLFOOTER##"
@@ -645,32 +646,32 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 		<FORM action=\"user_edit.html\" method=\"get\">\n\
 		<TD>&nbsp;</TD>\n\
 		<TD colspan=\"6\">New User:&nbsp;&nbsp;<input name=\"user\" type=\"text\">&nbsp;&nbsp;&nbsp;<input type=\"submit\" value=\"Add User\" ##BTNDISABLED##></TD>\n\
-		<TD colspan=\"10\" align=\"center\"></TD>\n\
+		<TD colspan=\"10\" class=\"centered\"></TD>\n\
 		</FORM>\n\
 		<TR>\n"
 
 #define TPLUSERCONFIGLISTBIT "\
 		<TR class=\"##CLASSNAME##\">\n\
-			<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
+			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
 			<TD><SPAN TITLE=\"##DESCRIPTION##\">##USER##</SPAN></TD>\n\
 			<TD>##STATUS##</TD>\n\
 			<TD>##CLIENTIP##</TD>\n\
-			<TD align=\"center\"><SPAN TITLE=\"##CLIENTPROTOTITLE##\">##CLIENTPROTO##</SPAN></TD>\n\
+			<TD class=\"centered\"><SPAN TITLE=\"##CLIENTPROTOTITLE##\">##CLIENTPROTO##</SPAN></TD>\n\
 			<TD>##LASTCHANNEL##</TD>\n\
-			<TD align=\"center\">##IDLESECS##</TD>\n\
-			<TD align=\"center\">##CWOK##</TD>\n\
-			<TD align=\"center\">##CWNOK##</TD>\n\
-			<TD align=\"center\">##CWIGN##</TD>\n\
-			<TD align=\"center\">##CWTOUT##</TD>\n\
-			<TD align=\"center\">##CWCACHE##</TD>\n\
-			<TD align=\"center\">##CWTUN##</TD>\n\
-			<TD align=\"center\">##CWLASTRESPONSET##</TD>\n\
-			<TD align=\"center\">##EMMOK##</TD>\n\
-			<TD align=\"center\">##EMMNOK##</TD>\n\
-			<TD align=\"center\">##CWRATE####CWRATE2##</TD>\n\
-			<TD align=\"center\"><A HREF=\"user_edit.html?user=##USERENC##\" TITLE=\"edit this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit User\"></A></TD>\n\
-			<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=resetstats\" TITLE=\"reset statistics for this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICRES\"BORDER=\"0\" ALT=\"Reset Stats\"></A></TD>\n\
-			<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=delete\" TITLE=\"delete this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\"BORDER=\"0\" ALT=\"Delete User\"></A></TD>\n\
+			<TD class=\"centered\">##IDLESECS##</TD>\n\
+			<TD class=\"centered\">##CWOK##</TD>\n\
+			<TD class=\"centered\">##CWNOK##</TD>\n\
+			<TD class=\"centered\">##CWIGN##</TD>\n\
+			<TD class=\"centered\">##CWTOUT##</TD>\n\
+			<TD class=\"centered\">##CWCACHE##</TD>\n\
+			<TD class=\"centered\">##CWTUN##</TD>\n\
+			<TD class=\"centered\">##CWLASTRESPONSET##</TD>\n\
+			<TD class=\"centered\">##EMMOK##</TD>\n\
+			<TD class=\"centered\">##EMMNOK##</TD>\n\
+			<TD class=\"centered\">##CWRATE####CWRATE2##</TD>\n\
+			<TD class=\"centered\"><A HREF=\"user_edit.html?user=##USERENC##\" TITLE=\"edit this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit User\"></A></TD>\n\
+			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=resetstats\" TITLE=\"reset statistics for this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICRES\"BORDER=\"0\" ALT=\"Reset Stats\"></A></TD>\n\
+			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=delete\" TITLE=\"delete this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\"BORDER=\"0\" ALT=\"Delete User\"></A></TD>\n\
 		</TR>\n"
 
 #define TPLUSEREDIT "\
@@ -734,8 +735,8 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TR class=\"usrcfg_cccam\"><TD>##TPLHELPPREFIX##user#cccstealth##TPLHELPSUFFIX##CCC stealth:</A></TD><TD><SELECT NAME=\"cccstealth\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##CCCSTEALTH##>ON</OPTION></SELECT></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##user#keepalive##TPLHELPSUFFIX##Keepalive:</A></TD><TD><SELECT NAME=\"keepalive\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##KEEPALIVE##>ON</OPTION></SELECT></TD></TR>\n\
 			<TR>\n\
-				<TD align=\"center\"><input type=\"submit\" name=\"action\" value=\"Save\" title=\"Save settings and reload users\" ##BTNDISABLED##></TD>\n\
-				<TD align=\"center\"><input name=\"newuser\" type=\"text\" size=\"20\" maxlength=\"20\" title=\"Enter new username if you want to clone this user\">&nbsp;&nbsp;&nbsp;<input type=\"submit\" name=\"action\" value=\"Save As\" title=\"Save as new user and reload users\" ##BTNDISABLED##></TD>\n\
+				<TD class=\"centered\"><input type=\"submit\" name=\"action\" value=\"Save\" title=\"Save settings and reload users\" ##BTNDISABLED##></TD>\n\
+				<TD class=\"centered\"><input name=\"newuser\" type=\"text\" size=\"20\" maxlength=\"20\" title=\"Enter new username if you want to clone this user\">&nbsp;&nbsp;&nbsp;<input type=\"submit\" name=\"action\" value=\"Save As\" title=\"Save as new user and reload users\" ##BTNDISABLED##></TD>\n\
 			</TR>\n\
 		</TABLE>\n\
 	</form>\n\
@@ -799,9 +800,9 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##READERLIST##\n\
 			<TR>\n\
 				<TD>&nbsp;</TD>\
-				<TD COLSPAN=\"2\" align=\"center\">New Reader</TD>\n\
-				<TD COLSPAN=\"2\" align=\"center\">Label:&nbsp;&nbsp;<input type=\"text\" name=\"label\" value=\"##NEXTREADER##\"></TD>\n\
-				<TD COLSPAN=\"2\" align=\"center\">Protocol:&nbsp;&nbsp;\n\
+				<TD COLSPAN=\"2\" class=\"centered\">New Reader</TD>\n\
+				<TD COLSPAN=\"2\" class=\"centered\">Label:&nbsp;&nbsp;<input type=\"text\" name=\"label\" value=\"##NEXTREADER##\"></TD>\n\
+				<TD COLSPAN=\"2\" class=\"centered\">Protocol:&nbsp;&nbsp;\n\
 					<select name=\"protocol\">\n\
 						<option>mouse</option>\n\
 						<option>mp35</option>\n\
@@ -819,7 +820,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##ADDPROTOCOL##\n\
 					</select>\n\
 				</TD>\n\
-				<TD COLSPAN=\"5\" align=\"center\"><input type=\"submit\" name=\"action\" value=\"Add\" ##BTNDISABLED##></TD>\n\
+				<TD COLSPAN=\"5\" class=\"centered\"><input type=\"submit\" name=\"action\" value=\"Add\" ##BTNDISABLED##></TD>\n\
 			</TR>\n\
 		</TABLE>\n\
 	</form>\n\
@@ -827,18 +828,18 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
 #define TPLREADERSBIT "\
 			<TR CLASS =\"##READERCLASS##\">\n\
-				<TD align=\"center\"><A HREF=\"readers.html?label=##READERNAMEENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
+				<TD class=\"centered\"><A HREF=\"readers.html?label=##READERNAMEENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
 				<TD>##READERNAME##</TD>\n\
 				<TD>##CTYP##</TD>\n\
-				<TD align=\"center\">##EMMERRORUK## / ##EMMERRORG## / ##EMMERRORS## / ##EMMERRORUQ##</TD>\n\
-				<TD align=\"center\">##EMMWRITTENUK## / ##EMMWRITTENG## / ##EMMWRITTENS## / ##EMMWRITTENUQ##</TD>\n\
-				<TD align=\"center\">##EMMSKIPPEDUK## / ##EMMSKIPPEDG## / ##EMMSKIPPEDS## / ##EMMSKIPPEDUQ##</TD>\n\
-				<TD align=\"center\">##EMMBLOCKEDUK## / ##EMMBLOCKEDG## / ##EMMBLOCKEDS## / ##EMMBLOCKEDUQ##</TD>\n\
-				<TD align=\"center\"><A HREF=\"readerconfig.html?label=##READERNAMEENC##\" TITLE=\"Edit this Reader\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit Reader\"></A></TD>\n\
-				<TD align=\"center\">##ENTITLEMENT##</TD>\n\
-				<TD align=\"center\">##READERREFRESH##</TD>\n\
-				<TD align=\"center\"><A HREF=\"readerstats.html?label=##READERNAMEENC##&amp;hide=4\" TITLE=\"Show loadbalancer statistics\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICSTA\" BORDER=\"0\" ALT=\"Loadbalancer statistics\"></A></TD>\n\
-				<TD align=\"center\"><A HREF=\"readers.html?label=##READERNAMEENC##&amp;action=delete\" TITLE=\"Delete this Reader\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\" BORDER=\"0\" ALT=\"Delete Reader\"></A></TD>\n\
+				<TD class=\"centered\">##EMMERRORUK## / ##EMMERRORG## / ##EMMERRORS## / ##EMMERRORUQ##</TD>\n\
+				<TD class=\"centered\">##EMMWRITTENUK## / ##EMMWRITTENG## / ##EMMWRITTENS## / ##EMMWRITTENUQ##</TD>\n\
+				<TD class=\"centered\">##EMMSKIPPEDUK## / ##EMMSKIPPEDG## / ##EMMSKIPPEDS## / ##EMMSKIPPEDUQ##</TD>\n\
+				<TD class=\"centered\">##EMMBLOCKEDUK## / ##EMMBLOCKEDG## / ##EMMBLOCKEDS## / ##EMMBLOCKEDUQ##</TD>\n\
+				<TD class=\"centered\"><A HREF=\"readerconfig.html?label=##READERNAMEENC##\" TITLE=\"Edit this Reader\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit Reader\"></A></TD>\n\
+				<TD class=\"centered\">##ENTITLEMENT##</TD>\n\
+				<TD class=\"centered\">##READERREFRESH##</TD>\n\
+				<TD class=\"centered\"><A HREF=\"readerstats.html?label=##READERNAMEENC##&amp;hide=4\" TITLE=\"Show loadbalancer statistics\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICSTA\" BORDER=\"0\" ALT=\"Loadbalancer statistics\"></A></TD>\n\
+				<TD class=\"centered\"><A HREF=\"readers.html?label=##READERNAMEENC##&amp;action=delete\" TITLE=\"Delete this Reader\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\" BORDER=\"0\" ALT=\"Delete Reader\"></A></TD>\n\
 			</TR>\n"
 
 #define TPLREADERENTITLEBIT "<A HREF=\"entitlements.html?label=##READERNAMEENC##\" TITLE=\"Show Entitlement\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##ENTICO##\" BORDER=\"0\" ALT=\"Show Entitlement\"></A>"
@@ -871,12 +872,12 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLREADERSTATSBIT "\
 		<TR><TD>##CHANNEL##</TD>\
 		<TD>##CHANNELNAME##</TD>\
-		<TD align=\"center\">##ECMLEN##</TD>\
-		<TD align=\"center\">##RC##</TD>\
-		<TD align=\"center\">##TIME##</TD>\
-		<TD align=\"center\">##TIMELAST##</TD>\
-		<TD align=\"center\">##COUNT##</TD>\
-		<TD align=\"center\">##LAST##</TD></TR>\n"
+		<TD class=\"centered\">##ECMLEN##</TD>\
+		<TD class=\"centered\">##RC##</TD>\
+		<TD class=\"centered\">##TIME##</TD>\
+		<TD class=\"centered\">##TIMELAST##</TD>\
+		<TD class=\"centered\">##COUNT##</TD>\
+		<TD class=\"centered\">##LAST##</TD></TR>\n"
 
 #define TPLSCANUSB "\
 ##TPLHEADER##\
@@ -991,12 +992,12 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##server#blockemm-u##TPLHELPSUFFIX##Blockemm:</A></TD>\n\
 			<TD>\n\
 				<TABLE class=\"invisible\">\n\
-					<TR><TD align=\"center\">unknown</TD><TD align=\"center\">unique</TD><TD align=\"center\">shared</TD><TD align=\"center\">global</TD></TR>\n\
+					<TR><TD class=\"centered\">unknown</TD><TD class=\"centered\">unique</TD><TD class=\"centered\">shared</TD><TD class=\"centered\">global</TD></TR>\n\
 					<TR>\n\
-						<TD align=\"center\"><input name=\"blockemm-unknown\" type=\"hidden\" value=\"0\"><input name=\"blockemm-unknown\" type=\"checkbox\" value=\"1\" ##BLOCKEMMUNKNOWNCHK##></TD>\n\
-						<TD align=\"center\"><input name=\"blockemm-u\" type=\"hidden\" value=\"0\"><input name=\"blockemm-u\" type=\"checkbox\" value=\"1\" ##BLOCKEMMUNIQCHK##></TD>\n\
-						<TD align=\"center\"><input name=\"blockemm-s\" type=\"hidden\" value=\"0\"><input name=\"blockemm-s\" type=\"checkbox\" value=\"1\" ##BLOCKEMMSHAREDCHK##></TD>\n\
-						<TD align=\"center\"><input name=\"blockemm-g\" type=\"hidden\" value=\"0\"><input name=\"blockemm-g\" type=\"checkbox\" value=\"1\" ##BLOCKEMMGLOBALCHK##></TD>\n\
+						<TD class=\"centered\"><input name=\"blockemm-unknown\" type=\"hidden\" value=\"0\"><input name=\"blockemm-unknown\" type=\"checkbox\" value=\"1\" ##BLOCKEMMUNKNOWNCHK##></TD>\n\
+						<TD class=\"centered\"><input name=\"blockemm-u\" type=\"hidden\" value=\"0\"><input name=\"blockemm-u\" type=\"checkbox\" value=\"1\" ##BLOCKEMMUNIQCHK##></TD>\n\
+						<TD class=\"centered\"><input name=\"blockemm-s\" type=\"hidden\" value=\"0\"><input name=\"blockemm-s\" type=\"checkbox\" value=\"1\" ##BLOCKEMMSHAREDCHK##></TD>\n\
+						<TD class=\"centered\"><input name=\"blockemm-g\" type=\"hidden\" value=\"0\"><input name=\"blockemm-g\" type=\"checkbox\" value=\"1\" ##BLOCKEMMGLOBALCHK##></TD>\n\
 					</TR>\n\
 				</TABLE>\n\
 			</TD>\n\
@@ -1598,13 +1599,13 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		<TABLE CLASS=\"stats\">\n\
 			<TR>\n\
 				<TH>Label</TH>\n\
-				<TH colspan=\"3\" align=\"center\">Action</TH>\n\
+				<TH colspan=\"3\" class=\"centered\">Action</TH>\n\
 			</TR>\n\
 ##SERVICETABS##\
 			<TR>\n\
 				<TD>New Service:</TD>\n\
 				<TD><input name=\"service\" type=\"text\"></TD>\n\
-				<TD colspan=\"2\" align=\"center\"><input type=\"submit\" value=\"Add\" ##BTNDISABLED##></TD>\n\
+				<TD colspan=\"2\" class=\"centered\"><input type=\"submit\" value=\"Add\" ##BTNDISABLED##></TD>\n\
 			</TR>\n\
 		</TABLE>\n\
 	</FORM>\n\
@@ -1613,7 +1614,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 #define TPLSERVICECONFIGLISTBIT "\
 			<TR>\n\
 				<TD>##LABEL##</TD>\n\
-				<TD width=\"250\" align=\"center\">\n\
+				<TD width=\"250\" class=\"centered\">\n\
 ##SIDLIST##\
 				</TD>\n\
 				<TD><A HREF=\"services_edit.html?service=##LABELENC##&amp;action=edit\" TITLE=\"Edit this Service\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit Service\"></A></TD>\n\
