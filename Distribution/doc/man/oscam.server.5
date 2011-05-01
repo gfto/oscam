@@ -134,11 +134,12 @@ set provider ID to use the right reader for auto AU
 example: auprovid = 123456
 .RE
 .PP
-\fBecmwhitelist\fP = \fBlenght[,length]...\fP
+\fBecmwhitelist\fP = [\fBCAID\fP:]\fBlenght\fP[,\fBlengtht\fP]...[;[\fBCAID\fP:]\fBlenght\fP[,\fBlengtht\fP]...]...
 .RS 3n
-define valid ECM length in hex \fIfor physical reader\fR, default:none
+define valid ECM length per CAID in hex, default:none
 
-example: ecmwhitelist = 10,20,30,0a,0b,0c
+example: ecmwhitelist = 10,20,0a,0b
+         ecmwhitelist = 0100:10,20;0200:0a,4b
 .RE
 .PP
 \fBdetect\fP = \fBCD\fP|\fBDSR\fP|\fBCTS\fP|\fBRING\fP|\fBNONE\fP|\fBgpio[1-7]\fP
