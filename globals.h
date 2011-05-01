@@ -772,7 +772,7 @@ struct s_ecmWhitelist {
 };
 
 struct s_ecmWhitelistIdent {
-	uint16_t ident;
+	uint32_t ident;
 	struct s_ecmWhitelistLen *lengths;
 	struct s_ecmWhitelistIdent *next;
 };
