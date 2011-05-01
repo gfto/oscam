@@ -3411,7 +3411,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
       }
 #elif defined OS_SOLARIS
 			// no mac address specified so use first filled mac
-			int32_t j = 0, sock,niccount;
+			int32_t j, sock, niccount;
 			struct ifreq nicnumber[16];
 			struct ifconf ifconf;
 			struct arpreq arpreq;
@@ -3421,12 +3421,12 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 				ifconf.ifc_len = sizeof(nicnumber);
 				if (!ioctl(sock,SIOCGIFCONF,(char*)&ifconf)){
 					niccount = ifconf.ifc_len/(sizeof(struct ifreq));
-					while(j < niccount){
+					for(i = 0; i < niccount, ++i){
 						memset(&arpreq, 0, sizeof(arpreq));
-						((struct sockaddr_in*)&arpreq.arp_pa)->sin_addr.s_addr = ((struct sockaddr_in*)&nicnumber[j].ifr_addr)->sin_addr.s_addr;
+						((struct sockaddr_in*)&arpreq.arp_pa)->sin_addr.s_addr = ((struct sockaddr_in*)&nicnumber[i].ifr_addr)->sin_addr.s_addr;
 						if (!(ioctl(sock,SIOCGARP,(char*)&arpreq))){
-							for (i = 0; i < 6; ++i)
-								mac[i] = (unsigned char)arpreq.arp_ha.sa_data[i];
+							for (j = 0; j < 6; ++j)
+								mac[j] = (unsigned char)arpreq.arp_ha.sa_data[j];
 							if(check_filled(mac, 6) > 0) break;
 						}
 					}
