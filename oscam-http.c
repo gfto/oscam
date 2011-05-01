@@ -3471,7 +3471,8 @@ void *serve_process(void *conn){
 		close(s);
 		return NULL;
 	}
-	cl->typ = 'h';
+	cl->typ = 'i';
+	cl->wihidden = 1;
 	cl->thread = pthread_self();
 	pthread_setspecific(getclient, cl);
 #ifndef NO_PTHREAD_CLEANUP_PUSH
