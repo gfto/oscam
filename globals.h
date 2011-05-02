@@ -595,6 +595,8 @@ typedef struct ecm_request_t
   struct s_reader *origin_reader;
   void * origin_card; //CCcam preferred card!
   
+  void *src_data;
+
   struct s_ecm *ecmcacheptr; //Pointer to ecm-cw-rc-cache!
 
   char msglog[MSGLOGSIZE];
