@@ -270,10 +270,10 @@ extern char *RDR_CD_TXT[];
 
 // moved from reader-common.h
 #define UNKNOWN        0
-#define NO_CARD        4
 #define CARD_NEED_INIT 1
 #define CARD_INSERTED  2
 #define CARD_FAILURE   3
+#define NO_CARD        4
 
 // moved from stats
 #define DEFAULT_REOPEN_SECONDS 900

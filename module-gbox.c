@@ -405,7 +405,6 @@ static void gbox_send_boxinfo(struct s_client *cli)
 }
 
 /*
- // TODO send on serious error
 static void gbox_send_goodbye(struct s_client *cli)
 {
   struct gbox_data *gbox = cli->gbox;
@@ -419,8 +418,7 @@ static void gbox_send_goodbye(struct s_client *cli)
  cs_debug_mask(D_READER, "gbox: send goodbye:", cs_hexdump(0, buf, 10));
 
  gbox_send(cli, buf, 11);
-}
-*/
+}*/
 
 static void gbox_send_hello(struct s_client *cli)
 {
@@ -431,6 +429,22 @@ static void gbox_send_hello(struct s_client *cli)
     gbox->local_cards = ll_create();
   else
     ll_clear_data(gbox->local_cards);
+
+  // currently this will only work for initialised local cards or single remote cards
+  struct s_client *cl;
+  for (cl=first_client; cl; cl=cl->next) {
+    struct s_reader *rdr = cl->reader;
+    if (rdr) {
+      if (rdr->card_status == CARD_INSERTED) {
+        int i;
+        for (i = 0; i < rdr->nprov; i++) {
+          struct gbox_card *c = calloc(1, sizeof(struct gbox_card));
+          c->provid = rdr->caid << 16 | rdr->prid[i][0] << 8 | rdr->prid[i][1];
+          ll_append(gbox->local_cards, c);
+        }
+      }
+    }
+  }
 
   int32_t len;
   uchar buf[4096];
@@ -743,7 +757,8 @@ static void gbox_send_dcw(struct s_client *cli, ECM_REQUEST *er)
 
   if( er->rc >= E_NOTFOUND ) {
     cs_log("gbox: unable to decode!");
-    //TODO: send something back??
+    //TODO: send something better back??
+    //gbox_send_goodbye(cli);
     return;
   }
 
