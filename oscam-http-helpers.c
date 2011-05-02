@@ -388,7 +388,7 @@ int32_t check_auth(char *authstring, char *method, char *path, char *expectednon
 int32_t webif_write_raw(char *buf, FILE* f, int32_t len) {
 	errno=0;
 #ifdef WITH_SSL
-	if (cfg.http_use_ssl) {
+	if (ssl_active) {
 		return SSL_write((SSL*)f, buf, len);
 	} else
 #endif
@@ -402,7 +402,7 @@ int32_t webif_write(char *buf, FILE* f) {
 int32_t webif_read(char *buf, int32_t num, FILE *f) {
 	errno=0;
 #ifdef WITH_SSL
-	if (cfg.http_use_ssl) {
+	if (ssl_active) {
 		return SSL_read((SSL*)f, buf, num);
 	} else
 #endif

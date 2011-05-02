@@ -3082,19 +3082,24 @@ char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *par
 }
 
 int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t forcePlain){
-	int32_t n, bufsize=0;
+	int32_t n, bufsize=0, errcount = 0;
 	char buf2[1024];
 	struct pollfd pfd2[1];
 
 	while (1) {
+		errno = 0;
 		if(forcePlain)
 			n=read(fileno(f), buf2, sizeof(buf2));
 		else
 			n=webif_read(buf2, sizeof(buf2), f);
 		if (n <= 0) {
+			if ((!ssl_active || forcePlain) && (errno == 0 || errno == EINTR || errno == EAGAIN) && errcount++ < 10){
+				cs_sleepms(1);
+				continue;
+			}
 			cs_debug_mask(D_CLIENT, "webif read error %d (errno=%d %s)", n, errno, strerror(errno));
 #ifdef WITH_SSL
-			if (cfg.http_use_ssl && !forcePlain)
+			if (ssl_active && !forcePlain)
 				ERR_print_errors_fp(stderr);
 #endif
 			return -1;
@@ -3115,7 +3120,7 @@ int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t forcePlain
 		}
 
 #ifdef WITH_SSL
-		if (cfg.http_use_ssl && !forcePlain) {
+		if (ssl_active && !forcePlain) {
 			int32_t len = 0;
 			len = SSL_pending((SSL*)f);
 
@@ -3250,7 +3255,7 @@ int32_t process_request(FILE *f, struct in_addr in) {
 	char *saveptr1=NULL, *filebuf = NULL;	
 	int32_t bufsize = readRequest(f, in, &filebuf, 0);
 
-	if (!filebuf) {
+	if (!filebuf || bufsize < 1) {
 		cs_log("error: no data received");
 		return -1;
 	}
@@ -3431,7 +3436,7 @@ void *serve_process(void *conn){
 	pthread_cleanup_push(cleanup_thread, (void *) cl);
 #endif
 #ifdef WITH_SSL
-	if (cfg.http_use_ssl) {
+	if (ssl_active) {
 		if(SSL_set_fd(ssl, s)){
 			int ok = (SSL_accept(ssl) != -1);
 			if (!ok) {
@@ -3571,11 +3576,12 @@ void http_srv() {
 
 #ifdef WITH_SSL
 	SSL_CTX *ctx = NULL;
-	if (cfg.http_use_ssl)
+	if (cfg.http_use_ssl){
 		ctx = SSL_Webif_Init();
-
-	if (ctx==NULL)
-		cfg.http_use_ssl = 0;
+		if (ctx==NULL)
+			cs_log("SSL could not be initialized. Starting WebIf in plain mode.");
+		else ssl_active = 1;
+	} else ssl_active = 0;
 #endif
 
 	while (running) {
@@ -3595,7 +3601,7 @@ void http_srv() {
 			conn->socket = s;
 #ifdef WITH_SSL
 			SSL *ssl = NULL;
-			if (cfg.http_use_ssl){
+			if (ssl_active){
 				ssl = SSL_new(ctx);
 				if(ssl == NULL){
 					close(s);
@@ -3613,7 +3619,7 @@ void http_srv() {
 		}
 	}
 #ifdef WITH_SSL
-	if (cfg.http_use_ssl){
+	if (ssl_active){
 		int32_t i, num = CRYPTO_num_locks();;
 		SSL_CTX_free(ctx);
 		CRYPTO_set_dynlock_create_callback(NULL);

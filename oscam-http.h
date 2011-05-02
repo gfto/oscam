@@ -6,6 +6,8 @@ struct s_connection{
 #endif
 };
 
+static int32_t ssl_active = 0;
+
 /* The server string in the http header */
 #define SERVER "webserver/1.0"
 /* The protocol that gets output. Currently only 1.0 is possible as 1.1 requires many features we don't have. */
