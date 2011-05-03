@@ -734,6 +734,11 @@ struct s_auth *get_account_by_name(char *name) {
 }
 
 #ifdef WITH_SSL
+pthread_key_t getssl;
+SSL * cur_ssl(void){
+	return (SSL *) pthread_getspecific(getssl);
+}
+
 /* Locking functions for SSL multithreading */
 static pthread_mutex_t *lock_cs;
 struct CRYPTO_dynlock_value{

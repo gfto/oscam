@@ -1,12 +1,15 @@
 struct s_connection{
 	int32_t socket;
-	struct sockaddr_in remote;
+	struct s_client *cl;
+	struct in_addr remote;
 #ifdef WITH_SSL
 	SSL *ssl;
 #endif
 };
 
+#ifdef WITH_SSL
 static int32_t ssl_active = 0;
+#endif
 
 /* The server string in the http header */
 #define SERVER "webserver/1.0"
