@@ -3084,6 +3084,29 @@ char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *par
 	return "0";
 }
 
+int32_t check_request(char *result, int32_t read){
+	if(read < 50) return 0;
+	result[read]='\0';
+	int8_t method;
+	if (strncmp(result, "POST", 4) == 0) method = 1;
+	else method = 0;
+	char *headerEnd = strstr(result, "\r\n\r\n");
+	if(method == 0){
+		if(headerEnd != NULL)
+			return 1;
+	}	else {
+		char *ptr = strstr(result, "Content-Length: ");
+		if(ptr != NULL){
+			ptr += 16;
+			if(ptr < result + read){
+				uint32_t length = atoi(ptr);
+				if(strlen(headerEnd+4) >= length) return 1;
+			}
+		}
+	}
+	return 0;
+}
+
 int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t forcePlain){
 	int32_t n, bufsize=0, errcount = 0, is_ssl = 0;
 	char buf2[1024];
@@ -3153,7 +3176,10 @@ int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t forcePlain
 		int32_t rc = poll(pfd2, 1, 100);
 		if (rc>0)
 			continue;
-
+		else {
+			if(!check_request(*result, bufsize))
+				continue;
+		}
 		break;
 	}
 	return bufsize;
@@ -3272,7 +3298,6 @@ int32_t process_request(FILE *f, struct in_addr in) {
 		return -1;
 	}
 
-	filebuf[bufsize]='\0';
 	char *buf=filebuf;
 
 	if((method = strtok_r(buf, " ", &saveptr1)) != NULL){
