@@ -3173,13 +3173,10 @@ int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t forcePlain
 		pfd2[0].events = (POLLIN | POLLPRI);
 
 		int32_t rc = poll(pfd2, 1, 100);
-		if (rc>0)
+		if (rc>0 || !check_request(*result, bufsize))
 			continue;
-		else {
-			if(!check_request(*result, bufsize))
-				continue;
-		}
-		break;
+		else
+			break;
 	}
 	return bufsize;
 }
@@ -3326,7 +3323,7 @@ int32_t process_request(FILE *f, struct in_addr in) {
 	if(strlen(cfg.http_user) == 0 || strlen(cfg.http_pwd) == 0) authok = 1;
 	else calculate_nonce(expectednonce);
 
-	char *str1, *saveptr=NULL;
+	char *str1, *saveptr=NULL, *authheader = NULL;
 
 	for (str1=strtok_r(tmp, "\n", &saveptr); str1; str1=strtok_r(NULL, "\n", &saveptr)) {
 		if (strlen(str1)==1) {
@@ -3336,18 +3333,28 @@ int32_t process_request(FILE *f, struct in_addr in) {
 			break;
 		}
 		if(authok == 0 && strlen(str1) > 50 && strncmp(str1, "Authorization:", 14) == 0 && strstr(str1, "Digest") != NULL) {
+			if(cs_realloc(&authheader, strlen(str1), -1))
+				cs_strncpy(authheader, str1, strlen(str1) - 1);
 			authok = check_auth(str1, method, path, expectednonce);
 		}
 	}
 
 	if(authok != 1) {
+		if(authok == 2)
+			cs_debug_mask(D_TRACE, "WebIf: Received stale header from %s", cs_inet_ntoa(addr));
+		else if(authheader){
+			cs_debug_mask(D_CLIENT, "WebIf: Received wrong auth header from %s:", cs_inet_ntoa(addr));
+			cs_debug_mask(D_CLIENT, "%s", authheader);
+		} else
+			cs_debug_mask(D_CLIENT, "WebIf: Received no auth header from %s.", cs_inet_ntoa(addr));
 		char temp[sizeof(AUTHREALM) + sizeof(expectednonce) + 100];
 		snprintf(temp, sizeof(temp), "WWW-Authenticate: Digest algorithm=\"MD5\", realm=\"%s\", qop=\"auth\", opaque=\"\", nonce=\"%s\"", AUTHREALM, expectednonce);
 		if(authok == 2) strncat(temp, ", stale=true", sizeof(temp));
 		send_headers(f, 401, "Unauthorized", temp, "text/html", 0, 0, 0);
+		NULLFREE(authheader);
 		free(filebuf);
 		return 0;
-	}
+	} else NULLFREE(authheader);
 
 	/*build page*/
 	if(pgidx == 8) {
