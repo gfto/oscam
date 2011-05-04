@@ -97,6 +97,9 @@ void cs_write_log(char *txt)
 
 int32_t cs_open_logfiles()
 {
+	char *starttext;
+	if(logStarted) starttext = "log switched";
+	else starttext = "started";
 	if (!fp && cfg.logfile != NULL) {	//log to file
 		if ((fp = fopen(cfg.logfile, "a+")) <= (FILE *)0) {
 			fp = (FILE *)0;
@@ -108,14 +111,14 @@ int32_t cs_open_logfiles()
 			line[(sizeof(line)/sizeof(char)) - 1] = '\0';
 			time(&t);
 			if (!cfg.disablelog)
-				fprintf(fp, "\n%s\n>> OSCam <<  cardserver started at %s%s\n", line, ctime(&t), line);
+				fprintf(fp, "\n%s\n>> OSCam <<  cardserver %s at %s%s\n", line, starttext, ctime(&t), line);
 		}
 	}
 	// according to syslog docu: calling closelog is not necessary and calling openlog multiple times is safe
 	// We use openlog to set the default syslog settings so that it's possible to allow switching syslog on and off
 	openlog("oscam", LOG_NDELAY, LOG_DAEMON);
 	
-	cs_log(">> OSCam <<  cardserver started version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_OSTYPE ")");
+	cs_log(">> OSCam <<  cardserver %s, version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_OSTYPE ")", starttext);
 	cs_log_config();
 	return(fp <= (FILE *)0);
 }

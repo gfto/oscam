@@ -1405,6 +1405,7 @@ int32_t init_config()
 	cfg.ulparent = 0;
 	cfg.logfile = NULL;
 	cfg.usrfile = NULL;
+	cfg.max_log_size = 10;
 	cfg.disableuserfile = 1;
 #ifdef CS_LOGHISTORY
 	cfg.loghistorysize = 0;
