@@ -18,6 +18,7 @@
 extern void restart_cardreader(struct s_reader *rdr, int32_t restart);
 
 static int8_t running = 1;
+static pthread_t httpthread;
 pthread_mutex_t http_lock;
 
 #ifdef CS_ANTICASC
@@ -2650,7 +2651,8 @@ char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *
 			tpl_addVar(vars, TPLADD, "APICONFIRMMESSAGE", "shutdown");
 			cs_log("Shutdown requested by XMLApi from %s", cs_inet_ntoa(cur_client()->ip));
 		}
-		running = 0;
+		running = 0;		
+		pthread_kill(httpthread, SIGPIPE);		// send signal to master thread to wake up from accept()
 		cs_exit_oscam();
 
 		if(!apicall)
@@ -2675,6 +2677,7 @@ char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *
 			cs_log("Restart requested by XMLApi from %s", cs_inet_ntoa(cur_client()->ip));
 		}
 		running = 0;
+		pthread_kill(httpthread, SIGPIPE);		// send signal to master thread to wake up from accept()
 		cs_restart_oscam();
 
 		if(!apicall)
@@ -3519,7 +3522,7 @@ void http_srv() {
 	pthread_attr_t attr;
 	struct s_client * cl = create_client(first_client->ip);
 	if (cl == NULL) return;
-	cl->thread = pthread_self();
+	httpthread = cl->thread = pthread_self();
 	pthread_setspecific(getclient, cl);
 	cl->typ = 'h';
 	int32_t sock, s, reuse = 1;
@@ -3585,7 +3588,7 @@ void http_srv() {
 
 	while (running) {
 		if((s = accept(sock, (struct sockaddr *) &remote, &len)) < 0) {
-			if(errno != EAGAIN){
+			if(errno != EAGAIN && errno != EINTR){
 				cs_log("HTTP Server: Error calling accept() (errno=%d %s)", errno, strerror(errno));
 				cs_sleepms(100);
 			} else cs_sleepms(5);
@@ -3633,7 +3636,8 @@ void http_srv() {
 			pthread_attr_destroy(&attr);
 		}
 	}
-
+	// Wait a bit so that we don't close ressources while http threads are active
+	cs_sleepms(300);
 #ifdef WITH_SSL
 	if (ssl_active){
 		int32_t i, num = CRYPTO_num_locks();;
