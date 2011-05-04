@@ -17,7 +17,7 @@
 
 extern void restart_cardreader(struct s_reader *rdr, int32_t restart);
 
-static int32_t running = 1, fdopened = 0;
+static int8_t running = 1;
 pthread_mutex_t http_lock;
 
 #ifdef CS_ANTICASC
@@ -2662,7 +2662,7 @@ char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *
 	else if (strcmp(strtolower(getParam(params, "action")), "restart") == 0) {
 		if(!apicall){
 			tpl_addVar(vars, TPLADD, "STYLESHEET", CSS);
-			tpl_printf(vars, TPLADD, "REFRESHTIME", "2");
+			tpl_addVar(vars, TPLADD, "REFRESHTIME", "5");
 			tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
 			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			tpl_addVar(vars, TPLADD, "SECONDS", "5");
@@ -3462,12 +3462,10 @@ void *serve_process(void *conn){
 				}
 			}
 			if (ok){
-				fdopened = 1;
 				process_request((FILE *)ssl, in);
 			} else {
 				FILE *f;
 				f = fdopen(s, "r+");
-				fdopened = 1;
 				if(f != NULL) {
 					char *ptr, *filebuf = NULL, *host = NULL;	
 					int32_t bufsize = readRequest(f, in, &filebuf, 1);
@@ -3500,7 +3498,6 @@ void *serve_process(void *conn){
 	{
 		FILE *f;
 		f = fdopen(s, "r+");
-		fdopened = 1;
 		if(f != NULL) {
 			process_request(f, in);
 			fflush(f);
@@ -3529,11 +3526,16 @@ void http_srv() {
 	struct sockaddr_in sin;
 	struct sockaddr_in remote;
 	struct timeval stimeout;
-	pthread_mutex_init(&http_lock, NULL);
+	struct s_connection *conn;
 
 	socklen_t len = sizeof(remote);
 	/* Create random string for nonce value generation */
 	create_rand_str(noncekey,32);
+	
+	if(pthread_mutex_init(&http_lock, NULL)){
+		cs_log("HTTP Server: Error creating mutex! (errno=%d %s)", errno, strerror(errno));
+		return;
+	};
 
 	/* Startup server */
 	if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
@@ -3570,10 +3572,6 @@ void http_srv() {
 		return;
 	}
 	cs_log("HTTP Server listening on port %d%s", cfg.http_port, cfg.http_use_ssl ? " (SSL)" : "");
-	struct pollfd pfd2[1];
-	int32_t rc;
-	pfd2[0].fd = sock;
-	pfd2[0].events = (POLLIN | POLLPRI);
 
 #ifdef WITH_SSL
 	SSL_CTX *ctx = NULL;
@@ -3586,14 +3584,13 @@ void http_srv() {
 #endif
 
 	while (running) {
-		struct s_connection *conn;
-		rc = poll(pfd2, 1, 1000);
-
-		if (rc > 0) {
-			if((s = accept(sock, (struct sockaddr *) &remote, &len)) < 0) {
+		if((s = accept(sock, (struct sockaddr *) &remote, &len)) < 0) {
+			if(errno != EAGAIN){
 				cs_log("HTTP Server: Error calling accept() (errno=%d %s)", errno, strerror(errno));
-				break;
-			}
+				cs_sleepms(100);
+			} else cs_sleepms(5);
+			continue;
+		} else {
 			if(!cs_malloc(&conn, sizeof(struct s_connection), -1)){
 				close(s);
 				continue;
@@ -3626,24 +3623,17 @@ void http_srv() {
 #ifndef TUXBOX
 			pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
-			fdopened = 0;
 			if (pthread_create(&workthread, &attr, serve_process, (void *)conn)) {
 				cs_log("ERROR: can't create thread for webif");
 				cleanup_thread(cl);
 				free(conn);
 			}
-			else {
-				pthread_detach(workthread);
-				int8_t i = 0;
-				// Wait until the thread has finished opening the file descriptor
-				while(!fdopened && i < 50){
-					++i;
-					cs_sleepms(2);
-				}				
-			}
+			else
+				pthread_detach(workthread);			
 			pthread_attr_destroy(&attr);
 		}
 	}
+
 #ifdef WITH_SSL
 	if (ssl_active){
 		int32_t i, num = CRYPTO_num_locks();;
