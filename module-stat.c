@@ -450,7 +450,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 						stat->rc == 0 && 
 						stat->ecm_count > 0) {
 				stat->rc = 5;
-				inc_fail(stat);
+				//inc_fail(stat); //do not inc fail factor in this case
 		}
 		else if ((rdr->client->login+(int)(2*cfg.ctimeout/1000)) < ctime && rdr->client->pending < 5) { //reader is longer than 5s connected && not more then 5 pending ecms
 				stat->rc = 5;
@@ -576,10 +576,12 @@ static int32_t get_nbest_readers(ECM_REQUEST *er) {
 
 static int32_t get_reopen_seconds(READER_STAT *stat)
 {
-		int32_t max = (INT_MAX / cfg.lb_reopen_seconds) - 1;
+		int32_t max = (INT_MAX / cfg.lb_reopen_seconds);
 		if (stat->fail_factor > max)
 				stat->fail_factor = max;
-		return (stat->fail_factor+1) * cfg.lb_reopen_seconds;
+		if (!stat->fail_factor)
+			return cfg.lb_reopen_seconds;
+		return stat->fail_factor * cfg.lb_reopen_seconds;
 }
 
 ushort get_betatunnel_caid_to(ushort caid) 
