@@ -3084,17 +3084,16 @@ char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *par
 	return "0";
 }
 
-int32_t check_request(char *result, int32_t read){
+int8_t check_request(char *result, int32_t read){
 	if(read < 50) return 0;
 	result[read]='\0';
 	int8_t method;
 	if (strncmp(result, "POST", 4) == 0) method = 1;
 	else method = 0;
 	char *headerEnd = strstr(result, "\r\n\r\n");
-	if(method == 0){
-		if(headerEnd != NULL)
-			return 1;
-	}	else {
+	if(headerEnd == NULL) return 0;
+	else if(method == 0) return 1;
+	else {
 		char *ptr = strstr(result, "Content-Length: ");
 		if(ptr != NULL){
 			ptr += 16;
