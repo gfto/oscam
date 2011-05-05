@@ -70,7 +70,7 @@
 /*
  * Valid values are  1 (fastest/largest) to 3 (smallest/slowest).
  */
-#define MD5_SIZE_OVER_SPEED 3
+#define MD5_SIZE_OVER_SPEED 1
 
 /**********************************************************************/
 
@@ -192,6 +192,7 @@ static void __md5_Init (struct MD5Context *context)
 	context->state[1] = 0xefcdab89;
 	context->state[2] = 0x98badcfe;
 	context->state[3] = 0x10325476;
+	memset(context->buffer, 0, sizeof(context->buffer));
 }
 
 /* 
@@ -540,9 +541,8 @@ static void __md5_to64( char *s, unsigned long v, int n)
 
 char * __md5_crypt( const char *pw, const char *salt, char *passwd )
 {
-	/* Static stuff */
-	static const char *sp, *ep;
-	static char *p;
+	const char *sp, *ep;
+	char *p;
 
 	unsigned char	final[17];	/* final[16] exists only to aid in looping */
 	int sl,pl,i,__md5__magic_len,pw_len;

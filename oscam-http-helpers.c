@@ -333,8 +333,9 @@ int32_t check_auth(char *authstring, char *method, char *path, char *expectednon
 	char *expectedPassword = cfg.http_pwd;
 	char *pch = authstring + 22;
 	char *pch2;
-	
-	pch = strtok (pch,",");
+	char *save=NULL;
+
+	pch = strtok_r (pch,",",&save);
 	while (pch != NULL){
 		pch2 = pch;
 	  while(pch2[0] == ' ' && pch2[0] != '\0') ++pch2;
@@ -351,7 +352,7 @@ int32_t check_auth(char *authstring, char *method, char *path, char *expectednon
 	  } else if (strncmp(pch2, "username", 8) == 0){
 	  	username=parse_auth_value(pch2);
 	  }
-	  pch = strtok (NULL, ",");
+	  pch = strtok_r (NULL, ",",&save);
 	}
 
 	if(strncmp(uri, path, strlen(path)) == 0) uriok = 1;

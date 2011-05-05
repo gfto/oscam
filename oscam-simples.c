@@ -626,7 +626,7 @@ char to_hex(char code){
 void char_to_hex(const unsigned char* p_array, uint32_t p_array_len, unsigned char *result) {
 	result[p_array_len*2] = '\0';
 	const unsigned char* p_end = p_array + p_array_len;
-	size_t pos=0;
+	uint32_t pos=0;
 	const unsigned char* p;
 	for( p = p_array; p != p_end; p++, pos+=2 ) {
 		result[pos] = to_hex(*p >> 4);

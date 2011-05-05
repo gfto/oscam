@@ -3333,8 +3333,8 @@ int32_t process_request(FILE *f, struct in_addr in) {
 			break;
 		}
 		if(authok == 0 && strlen(str1) > 50 && strncmp(str1, "Authorization:", 14) == 0 && strstr(str1, "Digest") != NULL) {
-			if(cs_realloc(&authheader, strlen(str1), -1))
-				cs_strncpy(authheader, str1, strlen(str1) - 1);
+			if(cs_realloc(&authheader, strlen(str1) + 1, -1))
+				cs_strncpy(authheader, str1, strlen(str1));
 			authok = check_auth(str1, method, path, expectednonce);
 		}
 	}
