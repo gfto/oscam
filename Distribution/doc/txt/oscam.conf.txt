@@ -107,7 +107,7 @@ DESCRIPTIONS
 	  timeout for serial reader, default:1500
 
        maxlogsize = kbytes
-	  max log file size, default:10
+	  max log file size, 0 = unlimited, default:10
 
        waitforcards = 0|1
 	  1 = wait for local SCs on startup before opening network ports, default:1
