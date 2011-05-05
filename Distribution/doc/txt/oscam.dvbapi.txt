@@ -22,6 +22,10 @@ DESCRIPTIONS
        M: CAID[:][provider ID][:][service ID][:][ECM PID] target CAID[:][target provider ID]
 	   mapping
 
+       S: device
+	   set DVB API device name (detached by pmt_mode in oscam.conf,
+	   obsolete)
+
        L: CAID[:][provider ID][:][service ID][:][ECM PID] length
 	   set ECM length in decimal
 
