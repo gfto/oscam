@@ -179,20 +179,27 @@ static void swap_lb (const unsigned char *buff, int32_t len)
 
 inline void __xxor(unsigned char *data, int32_t len, const unsigned char *v1, const unsigned char *v2)
 {
-  switch(len) { // looks ugly, but the compiler can optimize it very well ;)
+  uint32_t i;
+  switch(len) { // looks ugly but the cpu don't crash!
     case 16:
-      *((uint32_t *)data+3) = *((uint32_t *)v1+3) ^ *((uint32_t *)v2+3);
-      *((uint32_t *)data+2) = *((uint32_t *)v1+2) ^ *((uint32_t *)v2+2);
+      for(i = 8; i < 16; ++i ) {
+        data[i] = v1[i] ^ v2[i];
+      }
     case 8:
-      *((uint32_t *)data+1) = *((uint32_t *)v1+1) ^ *((uint32_t *)v2+1);
+      for(i = 4; i < 8; ++i) {
+        data[i] = v1[i] ^ v2[i];
+      }
     case 4:
-      *((uint32_t *)data+0) = *((uint32_t *)v1+0) ^ *((uint32_t *)v2+0);
+      for(i = 0; i < 4; ++i ) {
+        data[i] = v1[i] ^ v2[i];
+      }
       break;
     default:
       while(len--) *data++ = *v1++ ^ *v2++;
       break;
     }
 }
+
 
 void cCamCryptVG_SetSeed(struct s_reader * reader)
 {
@@ -260,18 +267,19 @@ static void cCamCryptVG_Process_D0(struct s_reader * reader, const unsigned char
       memcpy(reader->cardkeys[0],data,sizeof(reader->cardkeys[0]));
       break;
     case 0xbc:
-      {
+    {
       swap_lb (data, 64);
-      uint16_t *idata=(uint16_t *)data;
       const uint16_t *key1=(const uint16_t *)reader->cardkeys[1];
       uint16_t key2[32];
       memcpy(key2,reader->cardkeys[2],sizeof(key2));
       int32_t count2;
+      uint16_t iidata[32];
       for(count2=0; count2<32; count2++) {
         uint32_t rem=0, div=key1[count2];
         int32_t i;
+        memcpy( (unsigned char*)&iidata, data, 64 );
         for(i=31; i>=0; i--) {
-          uint32_t x=idata[i] | (rem<<16);
+          uint32_t x=iidata[i] | (rem<<16);
           rem=(x%div)&0xffff;
           }
         uint32_t carry=1, t=val_by2on3(div) | 1;
@@ -284,13 +292,14 @@ static void cCamCryptVG_Process_D0(struct s_reader * reader, const unsigned char
         }
       uint16_t idatacount=0;
       int32_t i;
-      for(i=31; i>=0; i--) cCamCryptVG_LongMult(idata,&idatacount,key1[i],key2[i]);
+      for(i=31; i>=0; i--) cCamCryptVG_LongMult(iidata,&idatacount,key1[i],key2[i]);
+      memcpy( data, iidata, 64 );
       swap_lb (data, 64);
       unsigned char stateD1[16];
       cCamCryptVG_Reorder16A(stateD1,data);
       cAES_SetKey(reader,stateD1);
       break;
-      }
+    }
   }
 }
 
