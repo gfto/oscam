@@ -2616,169 +2616,169 @@ void write_versionfile() {
 	  time_t now = time((time_t)0);
 	  struct tm st;
 	  localtime_r(&now, &st);
-	  fprintf(fp, "Uxstarttime:    %d\n", (int)now);
+	  fprintf(fp, "Unix starttime: %d\n", (int)now);
 	  fprintf(fp, "Starttime:      %02d.%02d.%02d", st.tm_mday, st.tm_mon+1, st.tm_year%100);
 	  fprintf(fp, " %02d:%02d:%02d\n", st.tm_hour, st.tm_min, st.tm_sec);
 	  fprintf(fp, "Version:        %s  Rev. %s\n", CS_VERSION, CS_SVN_VERSION);
-	  fprintf(fp, "Maxpid:         UNLIMITED\n\n\n");
+	  fprintf(fp, "Max PID:        unlimited\n\n\n");
 	  fprintf(fp, "Active modules:\n");
 
 #ifdef WEBIF
-	  fprintf(fp, "Webif support:             yes\n");
+	  fprintf(fp, "Web interface support:      yes\n");
 #else
-	  fprintf(fp, "Webif support:             no\n");
+	  fprintf(fp, "Web interface support:      no\n");
 #endif
 #ifdef WITH_SSL
-	  fprintf(fp, "OpenSSL support:           yes\n");
+	  fprintf(fp, "OpenSSL support:            yes\n");
 #else
-	  fprintf(fp, "OpenSSL support:           no\n");
+	  fprintf(fp, "OpenSSL support:            no\n");
 #endif
 #ifdef HAVE_DVBAPI
-	  fprintf(fp, "Dvbapi support:            yes\n");
+	  fprintf(fp, "DVB API support             yes\n");
 #ifdef WITH_STAPI
-	  fprintf(fp, "Dvbapi with stapi support: yes\n");
+	  fprintf(fp, "DVB API with STAPI support: yes\n");
 #else
-	  fprintf(fp, "Dvbapi with stapi support: no\n");
+	  fprintf(fp, "DVB API with STAPI support: no\n");
 #endif
 #else
-	  fprintf(fp, "Dvbapi support:            no\n");
+	  fprintf(fp, "DVB API support             no\n");
 #endif
 #ifdef CS_ANTICASC
-	  fprintf(fp, "Anticasc support:          yes\n");
+	  fprintf(fp, "Anti-cascading support:     yes\n");
 #else
-	  fprintf(fp, "Anticasc support:          no\n");
+	  fprintf(fp, "Anti-cascading support:     no\n");
 #endif
 #ifdef CS_WITH_DOUBLECHECK
-	  fprintf(fp, "ECM doublecheck:           yes\n");
+	  fprintf(fp, "ECM doublecheck:            yes\n");
 #else
-	  fprintf(fp, "ECM doublecheck:           no\n");
+	  fprintf(fp, "ECM doublecheck:            no\n");
 #endif
 #ifdef IRDETO_GUESSING
-	  fprintf(fp, "Irdeto guessing:           yes\n");
+	  fprintf(fp, "Irdeto guessing:            yes\n");
 #else
-	  fprintf(fp, "Irdeto guessing:           no\n");
+	  fprintf(fp, "Irdeto guessing:            no\n");
 #endif
 #ifdef WITH_DEBUG
-	  fprintf(fp, "Debug:                     yes\n");
+	  fprintf(fp, "Debug mode:                 yes\n");
 #else
-	  fprintf(fp, "Debug:                     no\n");
+	  fprintf(fp, "Debug mode:                 no\n");
 #endif
 #ifdef CS_LED
-	  fprintf(fp, "LED support:               yes\n");
+	  fprintf(fp, "LED support:                yes\n");
 #else
-	  fprintf(fp, "LED support:               no\n");
+	  fprintf(fp, "LED support:                no\n");
 #endif
 #ifdef QBOXHD_LED
-	  fprintf(fp, "Qboxhd-LED support:        yes\n");
+	  fprintf(fp, "Q-Box HD LED support:       yes\n");
 #else
-	  fprintf(fp, "Qboxhd-LED support:        no\n");
+	  fprintf(fp, "Q-Box HD LED support:       no\n");
 #endif
 #ifdef CS_LOGHISTORY
-	  fprintf(fp, "Log history:               yes\n");
+	  fprintf(fp, "Log history:                yes\n");
 #else
-	  fprintf(fp, "Log history:               no\n");
+	  fprintf(fp, "Log history:                no\n");
 #endif
 #ifdef MODULE_MONITOR
-	  fprintf(fp, "Monitor:                   yes\n");
+	  fprintf(fp, "Monitor:                    yes\n");
 #else
-	  fprintf(fp, "Monitor:                   no\n");
+	  fprintf(fp, "Monitor:                    no\n");
 #endif
 #ifdef MODULE_CAMD33
-	  fprintf(fp, "Camd33:                    yes\n");
+	  fprintf(fp, "camd 3.3x:                  yes\n");
 #else
-	  fprintf(fp, "Camd33:                    no\n");
+	  fprintf(fp, "camd 3.3x:                  no\n");
 #endif
 #ifdef MODULE_CAMD35
-	  fprintf(fp, "Camd35 UDP:                yes\n");
+	  fprintf(fp, "camd 3.5 UDP:               yes\n");
 #else
-	  fprintf(fp, "Camd35 UDP:                no\n");
+	  fprintf(fp, "camd 3.5 UDP:               no\n");
 #endif
 #ifdef MODULE_CAMD35_TCP
-	  fprintf(fp, "Camd35 TCP:                yes\n");
+	  fprintf(fp, "camd 3.5 TCP:               yes\n");
 #else
-	  fprintf(fp, "Camd35 TCP:                no\n");
+	  fprintf(fp, "camd 3.5 TCP:               no\n");
 #endif
 #ifdef MODULE_NEWCAMD
-	  fprintf(fp, "Newcamd:                   yes\n");
+	  fprintf(fp, "newcamd:                    yes\n");
 #else
-	  fprintf(fp, "Newcamd:                   no\n");
+	  fprintf(fp, "newcamd:                    no\n");
 #endif
 #ifdef MODULE_CCCAM
-	  fprintf(fp, "Cccam:                     yes\n");
+	  fprintf(fp, "CCcam:                      yes\n");
 #else
-	  fprintf(fp, "Cccam:                     no\n");
+	  fprintf(fp, "CCcam:                      no\n");
 #endif
 #ifdef MODULE_GBOX
-	  fprintf(fp, "Gbox:                      yes\n");
+	  fprintf(fp, "gbox:                       yes\n");
 #else
-	  fprintf(fp, "Gbox:                      no\n");
+	  fprintf(fp, "gbox:                       no\n");
 #endif
 #ifdef MODULE_RADEGAST
-	  fprintf(fp, "Radegast:                  yes\n");
+	  fprintf(fp, "radegast:                   yes\n");
 #else
-	  fprintf(fp, "Radegast:                  no\n");
+	  fprintf(fp, "radegast:                   no\n");
 #endif
 #ifdef MODULE_SERIAL
-	  fprintf(fp, "Serial:                    yes\n");
+	  fprintf(fp, "serial:                     yes\n");
 #else
-	  fprintf(fp, "Serial:                    no\n");
+	  fprintf(fp, "serial:                     no\n");
 #endif
 #ifdef MODULE_CONSTCW
-	  fprintf(fp, "ConstCW:                   yes\n");
+	  fprintf(fp, "constant CW:                yes\n");
 #else
-	  fprintf(fp, "ConstCW:                   no\n");
+	  fprintf(fp, "constant CW:                no\n");
 #endif
 #ifdef WITH_CARDREADER
-	  fprintf(fp, "Cardreader:                yes\n");
+	  fprintf(fp, "Cardreader:                 yes\n");
 
 	#ifdef READER_NAGRA
-	  fprintf(fp, "Nagra:                     yes\n");
+	  fprintf(fp, "Nagra:                      yes\n");
 	#else
-	  fprintf(fp, "Nagra:                     no\n");
+	  fprintf(fp, "Nagra:                      no\n");
 	#endif
 	#ifdef READER_IRDETO
-	  fprintf(fp, "Irdeto:                    yes\n");
+	  fprintf(fp, "Irdeto:                     yes\n");
 	#else
-	  fprintf(fp, "Irdeto:                    no\n");
+	  fprintf(fp, "Irdeto:                     no\n");
 	#endif
 	#ifdef READER_CONAX
-	  fprintf(fp, "Conax:                     yes\n");
+	  fprintf(fp, "Conax:                      yes\n");
 	#else
-	  fprintf(fp, "Conax:                     no\n");
+	  fprintf(fp, "Conax:                      no\n");
 	#endif
 	#ifdef READER_CRYPTOWORKS
-	  fprintf(fp, "Cryptoworks:               yes\n");
+	  fprintf(fp, "Cryptoworks:                yes\n");
 	#else
-	  fprintf(fp, "Cryptoworks:               no\n");
+	  fprintf(fp, "Cryptoworks:                no\n");
 	#endif
 	#ifdef READER_SECA
-	  fprintf(fp, "Seca:                      yes\n");
+	  fprintf(fp, "Seca:                       yes\n");
 	#else
-	  fprintf(fp, "Seca:                      no\n");
+	  fprintf(fp, "Seca:                       no\n");
 	#endif
 	#ifdef READER_VIACCESS
-	  fprintf(fp, "Viaccess:                  yes\n");
+	  fprintf(fp, "Viaccess:                   yes\n");
 	#else
-	  fprintf(fp, "Viaccess:                  no\n");
+	  fprintf(fp, "Viaccess:                   no\n");
 	#endif
 	#ifdef READER_VIDEOGUARD
-	  fprintf(fp, "Videoguard:                yes\n");
+	  fprintf(fp, "NDS Videoguard:             yes\n");
 	#else
-	  fprintf(fp, "Videoguard:                no\n");
+	  fprintf(fp, "NDS Videoguard:             no\n");
 	#endif
 	#ifdef READER_DRE
-	  fprintf(fp, "Dre:                       yes\n");
+	  fprintf(fp, "DRE Crypt:                  yes\n");
 	#else
-	  fprintf(fp, "Dre:                       no\n");
+	  fprintf(fp, "DRE Crypt:                  no\n");
 	#endif
 
 	#ifdef READER_TONGFANG
-	  fprintf(fp, "Tongfang:                  yes\n");
+	  fprintf(fp, "TONGFANG:                   yes\n");
 	#else
-	  fprintf(fp, "Tongfang:                  no\n");
+	  fprintf(fp, "TONGFANG:                   no\n");
 	#endif
 #else
-	  fprintf(fp, "Cardreader:                no\n");
+	  fprintf(fp, "Cardreader:                 no\n");
 #endif
 
 	  fclose(fp);
