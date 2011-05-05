@@ -31,6 +31,7 @@ int32_t cs_dblevel=0;   // Debug Level (TODO !!)
 #ifdef WEBIF
 int32_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)restart fork, restart by webif, 2=like=1, but also restart on segfaults
 #endif
+int32_t cs_capture_SEGV=0; 
 char  cs_tmpdir[200]={0x00};
 pthread_mutex_t gethostbyname_lock;
 pthread_mutex_t get_cw_lock;
@@ -624,9 +625,11 @@ void cs_exit(int32_t sig)
 	}
 
   if (sig && (sig!=SIGQUIT))
-    cs_log("exit with signal %d", sig);
+    cs_log("thread %8X exit with signal %d", pthread_self(), sig);
 
   struct s_client *cl = cur_client();
+  if (!cl)
+  	return;
 
   switch(cl->typ)
   {
@@ -863,6 +866,10 @@ static void init_signal()
 		set_signal_handler(SIGUSR1, 1, cs_debug_level);
 		set_signal_handler(SIGUSR2, 1, cs_card_info);
 		set_signal_handler(SIGCONT, 1, SIG_IGN);
+		
+		if (cs_capture_SEGV)
+			set_signal_handler(SIGSEGV, 1, cs_exit);
+			
 		cs_log("signal handling initialized (type=%s)",
 #ifdef CS_SIGBSD
 		"bsd"
@@ -3410,7 +3417,7 @@ if (pthread_key_create(&getclient, NULL)) {
 	0
   };
 
-  while ((i=getopt(argc, argv, "gbc:t:d:r:hm:x"))!=EOF)
+  while ((i=getopt(argc, argv, "gbsc:t:d:r:hm:x"))!=EOF)
   {
 	  switch(i) {
 	  	  case 'g':
@@ -3419,6 +3426,9 @@ if (pthread_key_create(&getclient, NULL)) {
 		  case 'b':
 			  bg=1;
 			  break;
+		  case 's':
+		      cs_capture_SEGV=1;
+		      break;
 		  case 'c':
 			  cs_strncpy(cs_confdir, optarg, sizeof(cs_confdir));
 			  break;
