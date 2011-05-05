@@ -1,4 +1,4 @@
-#include <string.h>
+
 #include <stdlib.h>
 #include "globals.h"
 #include "module-cccam.h"
@@ -331,7 +331,7 @@ void cc_cli_close(struct s_client *cl, int32_t call_conclose) {
 
 struct cc_extended_ecm_idx *add_extended_ecm_idx(struct s_client *cl,
 		uint8_t send_idx, uint16_t ecm_idx, struct cc_card *card,
-		struct cc_srvid srvid) {
+		struct cc_srvid srvid, int8_t free_card) {
 	struct cc_data *cc = cl->cc;
 	struct cc_extended_ecm_idx *eei =
 			cs_malloc(&eei, sizeof(struct cc_extended_ecm_idx), QUITERROR);
@@ -339,6 +339,7 @@ struct cc_extended_ecm_idx *add_extended_ecm_idx(struct s_client *cl,
 	eei->ecm_idx = ecm_idx;
 	eei->card = card;
 	eei->srvid = srvid;
+	eei->free_card = free_card;
 	ll_append(cc->extended_ecm_idx, eei);
 	//cs_debug_mask(D_TRACE, "%s add extended ecm-idx: %d:%d", getprefix(), send_idx, ecm_idx);
 	return eei;
@@ -401,6 +402,8 @@ void free_extended_ecm_idx_by_card(struct s_client *cl, struct cc_card *card) {
 	while ((eei = ll_iter_next(it))) {
 		if (eei->card == card) {
 			cc_reset_pending(cl, eei->ecm_idx);
+			if (eei->free_card)
+				free(eei->card);
 			ll_iter_remove_data(it);
 		}
 	}
@@ -411,6 +414,8 @@ void free_extended_ecm_idx(struct cc_data *cc) {
 	struct cc_extended_ecm_idx *eei;
 	LL_ITER *it = ll_iter_create(cc->extended_ecm_idx);
 	while ((eei = ll_iter_next(it)))
+		if (eei->free_card)
+			free(eei->card);
 		ll_iter_remove_data(it);
 	ll_iter_release(it);
 }
@@ -1197,7 +1202,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			send_idx = cc->g_flag;
 		}
 
-		add_extended_ecm_idx(cl, send_idx, cur_er->idx, card, cur_srvid);
+		add_extended_ecm_idx(cl, send_idx, cur_er->idx, card, cur_srvid, 0);
 
 		rdr->cc_currenthops = card->hop;
 
@@ -2158,7 +2163,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				srvid.sid = er->srvid;
 				srvid.ecmlen = er->l;
 				add_extended_ecm_idx(cl, cc->extended_mode ? cc->g_flag : 1,
-						er->idx, server_card, srvid);
+						er->idx, server_card, srvid, 1);
 
 				get_cw(cl, er);
 
@@ -2529,7 +2534,7 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 		cc_cmd_send(cl, buf, 16, MSG_CW_ECM);
 		if (!cc->extended_mode)
 			cc_crypt(&cc->block[ENCRYPT], buf, 16, ENCRYPT); // additional crypto step
-		free(eei->card);
+		
 	} else { //NOT found:
 		//cs_debug_mask(D_TRACE, "%s send cw: NOK cpti: %d", getprefix(),
 		//		er->cpti);
@@ -2549,7 +2554,10 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 		cc_cmd_send(cl, NULL, 0, nok);
 	}
 	cc->server_ecm_pending--;
-	free(eei);
+	if (eei) {
+		free(eei->card);
+		free(eei);
+	}
 }
 
 int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {

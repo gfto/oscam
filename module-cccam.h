@@ -137,6 +137,7 @@ struct cc_extended_ecm_idx {
 	uint16_t ecm_idx;
 	struct cc_card *card;
 	struct cc_srvid srvid;
+	uint8_t free_card;
 } EXTENDED_ECM_IDX;
 
 struct cc_data {
