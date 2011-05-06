@@ -1760,6 +1760,8 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
 	int32_t ret = buf[1];
 	struct cc_data *cc = cl->cc;
+	if (!cc || cc->mode == CCCAM_MODE_SHUTDOWN)
+		return -1;
 
 	cs_debug_mask(cl->typ=='c'?D_CLIENT:D_READER, "%s parse_msg=%d", getprefix(), buf[1]);
 
@@ -1781,6 +1783,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				cs_sleepms(50);
 			}
 			cc_free_cardlist(cc->cards, FALSE);
+			free_extended_ecm_idx(cc); 
 			cc->last_emm_card = NULL;
 			cc->num_hop1 = 0;
 			cc->num_hop2 = 0;
