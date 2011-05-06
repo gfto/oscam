@@ -251,7 +251,7 @@ static void usage()
   fprintf(stderr, "\n\n");
   fprintf(stderr, "oscam [-b] [-s] [-c <config dir>] [-t <tmp dir>] [-d <level>] [-r <level>] [-h]");
   fprintf(stderr, "\n\n\t-b         : start in background\n");
-  fprintf(stderr, "\t-s         : capture SEGFAULTS\n");
+  fprintf(stderr, "\t-s         : capture segmentation faults\n");
   fprintf(stderr, "\t-c <dir>   : read configuration from <dir>\n");
   fprintf(stderr, "\t             default = %s\n", CS_CONFDIR);
   fprintf(stderr, "\t-t <dir>   : tmp dir <dir>\n");
