@@ -19,6 +19,8 @@ static void _destroy(LLIST *l)
 {
     if (!l) return;
     if (!l->flag++) {
+    	pthread_mutex_trylock(&l->lock);
+    	pthread_mutex_unlock(&l->lock);
 	    pthread_mutex_destroy(&l->lock);
 	    add_garbage(l);
 	}
@@ -26,7 +28,7 @@ static void _destroy(LLIST *l)
 
 LLIST *ll_create()
 {
-    LLIST *l = calloc(1, sizeof(LLIST));
+    LLIST *l = cs_malloc(&l, sizeof(LLIST), 0);
     pthread_mutex_init(&l->lock, NULL);
     return l;
 }

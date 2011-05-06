@@ -263,7 +263,7 @@ void add_sid_block(struct s_client *cl __attribute__((unused)), struct cc_card *
 		return;
 
 	struct cc_srvid *srvid = cs_malloc(&srvid, sizeof(struct cc_srvid), QUITERROR);
-	*srvid = *srvid_blocked;
+	memcpy(srvid, srvid_blocked, sizeof(struct cc_srvid));
 	ll_append(card->badsids, srvid);
 	cs_debug_mask(D_READER, "%s added sid block %04X(%d) for card %08x",
 			getprefix(), srvid_blocked->sid, srvid_blocked->ecmlen,
@@ -469,10 +469,11 @@ int32_t cc_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen) {
 	if (handle <= 0 || maxlen < 4)
 		return -1;
 
-	while (pthread_mutex_trylock(&cc->lockcmd)) {
+	while (cl->cc && cc->mode != CCCAM_MODE_SHUTDOWN && pthread_mutex_trylock(&cc->lockcmd)) {
 		cs_debug_mask(D_TRACE, "%s trylock recv waiting", getprefix());
 		cs_sleepms(50);
 	}
+	if (!cl->cc || cc->mode == CCCAM_MODE_SHUTDOWN) return -1;
 
 	len = recv(handle, buf, 4, MSG_WAITALL);
 	if (rdr)
@@ -539,10 +540,11 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 	uint8_t *netbuf = cs_malloc(&netbuf, len + 4, 0);
 	struct cc_data *cc = cl->cc;
 
-	while (pthread_mutex_trylock(&cc->lockcmd)) { //We need this because cc_cmd_send is called from cccshare
+	while (cl->cc && cc->mode != CCCAM_MODE_SHUTDOWN && pthread_mutex_trylock(&cc->lockcmd)) { //We need this because cc_cmd_send is called from cccshare
 		cs_debug_mask(D_TRACE, "%s trylock send waiting", getprefix());
 		cs_sleepms(50);
 	}
+	if (!cl->cc || cc->mode == CCCAM_MODE_SHUTDOWN) return -1;
 	
 	if (cmd == MSG_NO_HEADER) {
 		memcpy(netbuf, buf, len);
@@ -1478,11 +1480,11 @@ void cc_free(struct s_client *cl) {
 	
 	cc->mode = CCCAM_MODE_SHUTDOWN;
 	
+	cl->cc=NULL;
+	
 	while (pthread_mutex_trylock(&cc->lockcmd)) cs_sleepms(110);
 	pthread_mutex_trylock(&cc->ecm_busy);
 	pthread_mutex_trylock(&cc->cards_busy);
-	
-	cl->cc=NULL;
 	
 	cs_debug_mask(D_TRACE, "exit cccam1/3");
 	cc_free_cardlist(cc->cards, TRUE);
