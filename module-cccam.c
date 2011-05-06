@@ -1204,7 +1204,14 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			send_idx = cc->g_flag;
 		}
 
-		add_extended_ecm_idx(cl, send_idx, cur_er->idx, card, cur_srvid, 0);
+		struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cl, send_idx, FALSE);
+		if (eei) {
+			eei->ecm_idx = cur_er->idx;
+		    eei->card = card;
+		    eei->srvid = cur_srvid;
+		}
+		else
+			add_extended_ecm_idx(cl, send_idx, cur_er->idx, card, cur_srvid, 0);
 
 		rdr->cc_currenthops = card->hop;
 
@@ -2934,14 +2941,8 @@ int32_t cc_cli_connect(struct s_client *cl) {
 				cs_debug_mask(D_TRACE, "%s trylock cc_cli_connect cards waiting", getprefix());
 				cs_sleepms(50);
 			}
-			                                
-			LL_ITER *it = ll_iter_create(cc->cards);
-			struct cc_card *card;
-			while ((card = ll_iter_next(it))) {
-				cc_free_card(card);
-				ll_iter_remove(it);
-			}
-			ll_iter_release(it);
+			                
+			cc_free_cardlist(cc->cards, FALSE);
 			pthread_mutex_unlock(&cc->cards_busy);
 		}
 		if (cc->extended_ecm_idx)
