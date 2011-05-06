@@ -31,7 +31,7 @@ int32_t cs_dblevel=0;   // Debug Level (TODO !!)
 #ifdef WEBIF
 int32_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)restart fork, restart by webif, 2=like=1, but also restart on segfaults
 #endif
-int32_t cs_capture_SEGV=0; 
+int32_t cs_capture_SEGV=0;
 char  cs_tmpdir[200]={0x00};
 pthread_mutex_t gethostbyname_lock;
 pthread_mutex_t get_cw_lock;
@@ -249,8 +249,9 @@ static void usage()
   fprintf(stderr, "tongfang ");
 #endif
   fprintf(stderr, "\n\n");
-  fprintf(stderr, "oscam [-b] [-c <config dir>] [-t <tmp dir>] [-d <level>] [-r <level>] [-h]");
+  fprintf(stderr, "oscam [-b] [-s] [-c <config dir>] [-t <tmp dir>] [-d <level>] [-r <level>] [-h]");
   fprintf(stderr, "\n\n\t-b         : start in background\n");
+  fprintf(stderr, "\t-s         : capture SEGFAULTS\n");
   fprintf(stderr, "\t-c <dir>   : read configuration from <dir>\n");
   fprintf(stderr, "\t             default = %s\n", CS_CONFDIR);
   fprintf(stderr, "\t-t <dir>   : tmp dir <dir>\n");
@@ -535,7 +536,7 @@ void cleanup_thread(void *var)
 	struct s_client *cl = var;
 	if(cl && !cl->cleaned){ //cleaned=0
 		cl->cleaned++; //cleaned=1
-		
+
 		//kill_thread also removes this client, so here just to get sure client is removed:
 		struct s_client *prev, *cl2;
 		for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
@@ -543,9 +544,9 @@ void cleanup_thread(void *var)
 				break;
 		if (cl == cl2)
 			prev->next = cl2->next; //remove client from list
-	
+
 		cs_sleepms(500); //just wait a bit that really really nobody is accessing client data
-		
+
 		if(cl->typ == 'c' && ph[cl->ctyp].cleanup)
 			ph[cl->ctyp].cleanup(cl);
 	    else if (cl->reader && cl->reader->ph.cleanup)
@@ -556,11 +557,11 @@ void cleanup_thread(void *var)
 	    cl->last_srvid = 0xFFFF;
 	    cs_statistics(cl);
 	  }
-	
+
 		if(cl->pfd)		nullclose(&cl->pfd); //Closing Network socket
 		if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
 		if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
-	
+
 		if(cl->typ == 'r' && cl->reader){
 			// Maybe we also need a "nullclose" mechanism here...
 			ICC_Async_Close(cl->reader);
@@ -585,9 +586,9 @@ static void cs_cleanup()
 		save_stat_to_file(0);
 		cfg.lb_save = 0; //this is for avoiding duplicate saves
 	}
-	
+
 	done_share();
-	
+
 	//cleanup clients:
 	struct s_client *cl;
 	for (cl=first_client->next; cl; cl=cl->next) {
@@ -597,7 +598,7 @@ static void cs_cleanup()
 			kill_thread(cl);
 		}
 	}
-	
+
 	//cleanup readers:
 	struct s_reader *rdr;
 	for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
@@ -605,7 +606,7 @@ static void cs_cleanup()
 		kill_thread(rdr->client);
 	}
 	first_active_reader = NULL;
-	
+
 	init_free_userdb(cfg.account);
 	cfg.account = NULL;
 	init_free_sidtab();
@@ -724,14 +725,14 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 					// newcamd module doesn't like ident reloading
 					if(!cl->ncd_server)
 						cl->ftab = account->ftab;   // Ident
-	
+
 					cl->sidtabok = account->sidtabok;   // services
 					cl->sidtabno = account->sidtabno;   // services
 					cl->failban = account->failban;
-	
+
 					memcpy(&cl->ctab, &account->ctab, sizeof(cl->ctab));
 					memcpy(&cl->ttab, &account->ttab, sizeof(cl->ttab));
-	
+
 					int32_t i;
 					for(i = 0; i < CS_ECM_RINGBUFFER_MAX; i++)
 						cl->cwlastresptimes[i] = 0;
@@ -866,10 +867,10 @@ static void init_signal()
 		set_signal_handler(SIGUSR1, 1, cs_debug_level);
 		set_signal_handler(SIGUSR2, 1, cs_card_info);
 		set_signal_handler(SIGCONT, 1, SIG_IGN);
-		
+
 		if (cs_capture_SEGV)
 			set_signal_handler(SIGSEGV, 1, cs_exit);
-			
+
 		cs_log("signal handling initialized (type=%s)",
 #ifdef CS_SIGBSD
 		"bsd"
@@ -925,7 +926,7 @@ static void init_check(){
 		for(month = 0; month < 12; ++month){
 			if(!strncmp(ptr, months[month], 3)) break;
 		}
-		if(month > 11) month = 0;		
+		if(month > 11) month = 0;
 		memset(&timeinfo, 0, sizeof(timeinfo));
 		timeinfo.tm_mday = day;
 		timeinfo.tm_mon = month;
@@ -1112,11 +1113,11 @@ int32_t cs_user_resolve(struct s_auth *account)
 	return result;
 }
 
-#pragma GCC diagnostic ignored "-Wempty-body" 
+#pragma GCC diagnostic ignored "-Wempty-body"
 void *clientthread_init(void * init){
 	struct s_clientinit clientinit;
 	memcpy(&clientinit, init, sizeof(struct s_clientinit)); //copy to stack to free init pointer
-	free(init);	
+	free(init);
 	#ifndef NO_PTHREAD_CLEANUP_PUSH
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	pthread_setspecific(getclient, clientinit.client);
@@ -1129,7 +1130,7 @@ void *clientthread_init(void * init){
 	#endif
 	return NULL;
 }
-#pragma GCC diagnostic warning "-Wempty-body" 
+#pragma GCC diagnostic warning "-Wempty-body"
 
 void start_thread(void * startroutine, char * nameroutine) {
 	pthread_t temp;
@@ -1186,7 +1187,7 @@ static void kill_thread_int(struct s_client *cl) { //cs_exit is used to let thre
 
 void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill itself, this routine is for a thread to kill other thread
 	pthread_mutex_lock(&system_lock);
-	kill_thread_int(cl);	
+	kill_thread_int(cl);
 	pthread_mutex_unlock(&system_lock);
 }
 #ifdef CS_ANTICASC
@@ -1234,7 +1235,7 @@ static void add_reader_to_active(struct s_reader *rdr) {
 static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 
 	if (restart) {
-		//remove from list:	
+		//remove from list:
 		remove_reader_from_active(rdr);
 	}
 
@@ -1286,7 +1287,7 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
         /* pcsc doesn't like this either; segfaults on x86, x86_64 */
 		pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
-	
+
 		if (pthread_create(&cl->thread, &attr, start_cardreader, (void *)rdr)) {
 			cs_log("ERROR: can't create thread for %s", rdr->label);
 			cleanup_thread(cl);
@@ -1295,7 +1296,7 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 		else
 			pthread_detach(cl->thread);
 		pthread_attr_destroy(&attr);
-		
+
 		if (restart) {
 			//add to list
 			add_reader_to_active(rdr);
@@ -1370,7 +1371,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 					cs_add_violation(ip);
 				}
 				if (cfg.dropdups)
-					cs_disconnect_client(client);	
+					cs_disconnect_client(client);
 				break;
 			}
 
@@ -1453,7 +1454,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 				client->cltab = account->cltab;  // CLASS filter
 				client->fchid = account->fchid;  // CHID filter
 				client->sidtabok= account->sidtabok;   // services
-				client->sidtabno= account->sidtabno;   // services	
+				client->sidtabno= account->sidtabno;   // services
 				memcpy(&client->ttab, &account->ttab, sizeof(client->ttab));
 #ifdef CS_ANTICASC
 				ac_init_client(client, account);
@@ -1750,14 +1751,14 @@ void logCWtoFile(ECM_REQUEST *er)
 	* search service name for that id and change characters
 	* causing problems in file name
 	*/
-	
+
 	char *name=get_servicename(cur_client(), er->srvid, er->caid);
 	cs_strncpy(srvname, name, sizeof(srvname));
 
 	srvname[sizeof(srvname)-1] = 0;
 	for (i = 0; srvname[i]; i++)
 		if (srvname[i] == ' ') srvname[i] = '_';
-	
+
 	/* calc log file name */
 	time(&t);
 	localtime_r(&t, &timeinfo);
@@ -1806,7 +1807,7 @@ void distribute_ecm(ECM_REQUEST *er, uint64_t grp, int32_t rc)
   struct s_client *cl;
   ECM_REQUEST *ecm;
   int32_t n, i, pending;
-  
+
   er->rc = rc;
 
   for (cl=first_client->next; cl ; cl=cl->next) {
@@ -1818,7 +1819,7 @@ void distribute_ecm(ECM_REQUEST *er, uint64_t grp, int32_t rc)
         ecm = &cl->ecmtask[i];
         if (ecm->rc >= E_99) {
         	pending++;
-        	if (ecm->ecmcacheptr == er->ecmcacheptr) { 
+        	if (ecm->ecmcacheptr == er->ecmcacheptr) {
         		er->cpti = ecm->cpti;
         		//cs_log("distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
         		write_ecm_request(cl->fd_m2c, er);
@@ -1991,13 +1992,13 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		lc^=*lp;
 
 		snprintf(uname,sizeof(uname)-1, "%s", username(client));
-		
+
 	if (er->rc == E_FOUND||er->rc == E_CACHE1||er->rc == E_CACHE2)
 		checkCW(er);
-		
+
 	struct s_reader *er_reader = er->selected_reader; //responding reader
 	if (!er_reader) er_reader = ll_has_elements(er->matching_rdr); //no reader? use first reader
-		
+
 	if (er_reader)
 	{
 			// add marker to reader if ECM_REQUEST was betatunneled
@@ -2233,7 +2234,7 @@ uint32_t chk_provid(uchar *ecm, uint16_t caid) {
 				}
 			}
 			break;
-		
+
 		default:
 			for (i=0;i<CS_MAXCAIDTAB;i++) {
             	uint16_t tcaid = cfg.lb_noproviderforcaid.caid[i];
@@ -2322,7 +2323,7 @@ void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto)
 	cl->cwtun++;
 	cl->account->cwtun++;
 	first_client->cwtun++;
-	
+
 	cs_debug_mask(D_TRACE, "ECM converted from: 0x%X to BetaCrypt: 0x%X for service id:0x%X",
 					caidfrom, caidto, er->srvid);
 }
@@ -2333,7 +2334,7 @@ void cs_betatunnel(ECM_REQUEST *er)
 	int32_t n;
 	struct s_client *cl = cur_client();
 	uint32_t mask_all = 0xFFFF;
-	
+
 	TUNTAB *ttab;
 	ttab = &cl->ttab;
 
@@ -2342,9 +2343,9 @@ void cs_betatunnel(ECM_REQUEST *er)
 
 	for (n = 0; n<ttab->n; n++) {
 		if ((er->caid==ttab->bt_caidfrom[n]) && ((er->srvid==ttab->bt_srvid[n]) || (ttab->bt_srvid[n])==mask_all)) {
-	
+
 			convert_to_beta(cl, er, ttab->bt_caidto[n]);
-			
+
 			return;
 		}
 	}
@@ -3172,10 +3173,10 @@ int32_t accept_connection(int32_t i, int32_t j) {
 #ifndef TUXBOX
 				pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
-				//We need memory here, because when on stack and we leave the function, stack is overwritten, 
+				//We need memory here, because when on stack and we leave the function, stack is overwritten,
 				//but assigned to the thread
 				//So alloc memory for the init data and free them in clientthread_init:
-				struct s_clientinit *init = cs_malloc(&init, sizeof(struct s_clientinit), 0); 
+				struct s_clientinit *init = cs_malloc(&init, sizeof(struct s_clientinit), 0);
 				init->handler = ph[i].s_handler;
 				init->client = cl;
 				if (pthread_create(&cl->thread, &attr, clientthread_init, (void*) init)) {
@@ -3223,12 +3224,12 @@ int32_t accept_connection(int32_t i, int32_t j) {
 			pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
 
-			//We need memory here, because when on stack and we leave the function, stack is overwritten, 
+			//We need memory here, because when on stack and we leave the function, stack is overwritten,
 			//but assigned to the thread
 			//So alloc memory for the init data and free them in clientthread_init:
 			struct s_clientinit *init = cs_malloc(&init, sizeof(struct s_clientinit), 0);
 			init->handler = ph[i].s_handler;
-			init->client = cl;			
+			init->client = cl;
 			if (pthread_create(&cl->thread, &attr, clientthread_init, (void*) init)) {
 				cs_log("ERROR: can't create thread for TCP client from %s", inet_ntoa(*(struct in_addr *)&cad.sin_addr.s_addr));
 				cleanup_thread(cl);
