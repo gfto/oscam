@@ -33,12 +33,14 @@ LLIST *ll_create()
     return l;
 }
 
-void ll_lock(LLIST *l)
+int ll_lock(LLIST *l)
 {
-	while (l && !l->flag && pthread_mutex_trylock(&l->lock)) {
+	int res = 1;
+	while (l && !l->flag && (res=pthread_mutex_trylock(&l->lock))) {
 		cs_debug_mask(D_TRACE, "trylock ll_lock wait");
 		cs_sleepms(50);
 	}
+	return !res;
 }
 
 void ll_unlock(LLIST *l)
@@ -83,7 +85,8 @@ static void ll_clear_int(LLIST *l, int clear_data)
 {
     if (!l) return;
 
-    ll_lock(l);
+    if (!ll_lock(l)) return;
+    
     LL_ITER *it = ll_iter_create(l);
     while (ll_iter_next_nolock(it)) {
     	if (it->cur && !it->cur->flag++) {
@@ -133,7 +136,8 @@ LL_NODE* ll_append_nolock(LLIST *l, void *obj)
 LL_NODE* ll_append(LLIST *l, void *obj)
 {
     if (l && obj) {
-        ll_lock(l);
+        if (!ll_lock(l)) return NULL;
+        
         LL_NODE *n = ll_append_nolock(l, obj);
         ll_unlock(l);
         return n;
@@ -144,9 +148,10 @@ LL_NODE* ll_append(LLIST *l, void *obj)
 LL_NODE *ll_prepend(LLIST *l, void *obj)
 {
     if (l && obj) {
+        if (!ll_lock(l)) return NULL;
+        
         LL_NODE *new = calloc(1, sizeof(LL_NODE));
 
-        ll_lock(l);
         new->obj = obj;
         new->nxt = l->initial;
 
@@ -195,7 +200,7 @@ void ll_iter_release(LL_ITER *it)
 void *ll_iter_next(LL_ITER *it)
 {
     if (it && it->l) {
-		ll_lock(it->l);
+		if (!ll_lock(it->l)) return NULL;
     	void *res = ll_iter_next_nolock(it);
 		ll_unlock(it->l);
 		return res;
@@ -206,7 +211,7 @@ void *ll_iter_next(LL_ITER *it)
 void *ll_iter_move(LL_ITER *it, int32_t offset)
 {
     if (it && it->l) {
-    	ll_lock(it->l);
+    	if (!ll_lock(it->l)) return NULL;
     	int32_t i;
     	void *res = NULL;
     	for (i=0; i<offset; i++) {
@@ -222,7 +227,8 @@ void *ll_iter_move(LL_ITER *it, int32_t offset)
 void *ll_iter_peek(LL_ITER *it, int32_t offset)
 {
 	if (it && it->l) {
-		ll_lock(it->l);
+		if (!ll_lock(it->l)) return NULL;
+		
 	    LL_NODE *n = it->cur;
 	    int32_t i;
 
@@ -252,7 +258,8 @@ void ll_iter_reset(LL_ITER *it)
 void ll_iter_insert(LL_ITER *it, void *obj)
 {
     if (it && obj) {
-	   	ll_lock(it->l);
+	   	if (!ll_lock(it->l)) return;
+	   	
         if (!it->cur || !it->cur->nxt)
             ll_append_nolock(it->l, obj);
         else {
@@ -272,7 +279,7 @@ void *ll_iter_remove(LL_ITER *it)
 {
    	void *obj = NULL;
     if (it) {
-    	ll_lock(it->l);
+    	if (!ll_lock(it->l)) return NULL;
         LL_NODE *del = it->cur;
         if (del && !del->flag++) { //preventing duplicate free because of multiple threads
             obj = del->obj;
@@ -301,7 +308,8 @@ int ll_iter_move_first(LL_ITER *it)
 {
 	int moved = 0;
     if (it) {
-    	ll_lock(it->l);
+    	if (!ll_lock(it->l)) return moved;
+    	
         LL_NODE *move = it->cur;
         if (move && !move->flag++) { //preventing duplicate free because of multiple threads
             LL_NODE *prv = it->prv;

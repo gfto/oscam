@@ -312,7 +312,7 @@ int32_t cc_clear_reported_carddata(LLIST *reported_carddatas, LLIST *except,
                         ll_iter_release(it2);
                 }
 
-                if (!card2) { //check result of ll_iter_remove, because another thread could removed it
+                if (!card2 && ll_iter_remove(it)) { //check result of ll_iter_remove, because another thread could removed it
                         if (send_removed)
                         		send_remove_card_to_clients(card);
                         cc_free_card(card);
