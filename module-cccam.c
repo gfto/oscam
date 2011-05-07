@@ -421,24 +421,21 @@ void free_extended_ecm_idx(struct cc_data *cc) {
 }
 
 int32_t cc_recv_to(struct s_client *cl, uint8_t *buf, int32_t len) {
-	fd_set fds;
-	struct timeval timeout;
 	int32_t rc;
+	struct pollfd pfd;
+
+	while (1) {
+		pfd.fd = cl->udp_fd;
+		pfd.events = POLLIN | POLLPRI;
+
+		rc = poll(&pfd, 1, 2000);
 	
-	timeout.tv_sec = 2;
-	timeout.tv_usec = 0;
-	 
-	while (1) {       
-		FD_ZERO(&fds);
-		FD_SET(cl->udp_fd, &fds);
-	
-		rc=select(cl->udp_fd+1, &fds, 0, 0, &timeout);
-		if (rc<0) {
+		if (rc < 0) {
 			if (errno==EINTR) continue;
 			return(-1); //error!!
 		}
 	                                                                 
-		if(FD_ISSET(cl->udp_fd,&fds))
+		if (rc == 1)
 			break;
 		return (-2); //timeout!!
 	}	

@@ -517,40 +517,6 @@ void cs_sleepus(uint32_t usec)
 	nanosleep (&req_ts, NULL);
 }
 
-int32_t bytes_available(int32_t fd)
-{
-   fd_set rfds;
-   fd_set erfds;
-   int32_t select_ret;
-   int32_t in_fd;
-
-   in_fd=fd;
-   
-   FD_ZERO(&rfds);
-   FD_SET(in_fd, &rfds);
-   
-   FD_ZERO(&erfds);
-   FD_SET(in_fd, &erfds);
-   
-   select_ret = select(in_fd+1, &rfds, NULL, &erfds, NULL);
-   if (select_ret==-1)
-   {
-     cs_log("ERROR reading from fd %d select_ret=%i (errno=%d %s)",in_fd, select_ret, errno, strerror(errno));
-     return 0;
-   }
-      
-   if (FD_ISSET(in_fd, &erfds))
-   {
-    cs_log("ERROR reading from fd %d select_ret=%i (errno=%d %s)",in_fd, select_ret, errno, strerror(errno));
-    return 0;
-   }
-   if (FD_ISSET(in_fd,&rfds))
-     return 1;
-   else
-     return 0;
-}
-
-
 #ifdef OS_CYGWIN32
 #include <windows.h>
 void cs_setpriority(int32_t prio)

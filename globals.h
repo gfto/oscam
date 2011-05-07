@@ -1314,7 +1314,6 @@ extern int32_t boundary(int, int);
 extern void cs_ftime(struct timeb *);
 extern void cs_sleepms(uint32_t);
 extern void cs_sleepus(uint32_t);
-extern int32_t bytes_available(int);
 extern void cs_setpriority(int);
 extern struct s_auth *find_user(char *);
 extern int32_t check_filled(uchar *value, int32_t length);

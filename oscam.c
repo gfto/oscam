@@ -1689,16 +1689,12 @@ int32_t read_from_pipe(int32_t fd, uchar **data, int32_t redir)
 	*data=(uchar *)0;
 	rc=PIP_ID_NUL;
 
-	if (bytes_available(fd)) {
-		if (read(fd, buf, sizeof(buf))==sizeof(buf)) {
-			memcpy(&hdr, buf+3, sizeof(void*));
-		} else {
-			cs_log("WARNING: pipe header to small !");
-			return PIP_ID_ERR;
-		}
+
+	if (read(fd, buf, sizeof(buf))==sizeof(buf)) {
+		memcpy(&hdr, buf+3, sizeof(void*));
 	} else {
-		cs_log("!bytes_available(fd)");
-		return PIP_ID_NUL;
+		cs_log("WARNING: pipe header to small !");
+		return PIP_ID_ERR;
 	}
 
 	uchar id[4];
@@ -1869,29 +1865,6 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 
   return res;
 }
-
-  /*
-static int32_t cs_read_timer(int32_t fd, uchar *buf, int32_t l, int32_t msec)
-{
-  struct timeval tv;
-  fd_set fds;
-  int32_t rc;
-
-  if (!fd) return(-1);
-  tv.tv_sec = msec / 1000;
-  tv.tv_usec = (msec % 1000) * 1000;
-  FD_ZERO(&fds);
-  FD_SET(cur_client()->pfd, &fds);
-
-  select(fd+1, &fds, 0, 0, &tv);
-
-  rc=0;
-  if (FD_ISSET(cur_client()->pfd, &fds))
-    if (!(rc=read(fd, buf, l)))
-      rc=-1;
-
-  return(rc);
-}*/
 
 ECM_REQUEST *get_ecmtask()
 {
@@ -2984,44 +2957,50 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 
 int32_t process_input(uchar *buf, int32_t l, int32_t timeout)
 {
-	int32_t rc;
-	fd_set fds;
+	int32_t rc, i, pfdcount;
 	struct timeb tp;
-
+	struct pollfd pfd[2];
 	struct s_client *cl = cur_client();
 
 	cs_ftime(&tp);
 	tp.time+=timeout;
 
 	while (1) {
-		FD_ZERO(&fds);
+		pfdcount = 0;
+		if (cl->pfd) {
+			pfd[pfdcount].fd = cl->pfd;
+			pfd[pfdcount++].events = POLLIN | POLLPRI;
+		}
 
-		if (cl->pfd)
-			FD_SET(cl->pfd, &fds);
+		if (cl->fd_m2c_c) {
+			pfd[pfdcount].fd = cl->fd_m2c_c;
+			pfd[pfdcount++].events = POLLIN | POLLPRI;
+		}
 
-		FD_SET(cl->fd_m2c_c, &fds);
+		chk_pending(tp);
+		int32_t p_rc = poll(pfd, pfdcount, timeout*1000);
 
-		rc=select(((cl->pfd > cl->fd_m2c_c) ? cl->pfd : cl->fd_m2c_c)+1, &fds, 0, 0, chk_pending(tp));
-		if (rc<0) {
+		if (p_rc < 0) {
 			if (errno==EINTR) continue;
 			else return(0);
 		}
 
-		if (FD_ISSET(cl->fd_m2c_c, &fds)) { // read from pipe
-			if (process_client_pipe(cl, buf, l)==PIP_ID_UDP) {
-				rc=ph[cl->ctyp].recv(cl, buf, l);
-				break;
-			}
-		}
-
-		if (cl->pfd && FD_ISSET(cl->pfd, &fds)) { // read from client
-			rc=ph[cl->ctyp].recv(cl, buf, l);
-			break;
-		}
-
-		if (tp.time<=time((time_t *)0)) { // client maxidle reached
+		if (p_rc == 0) { // client maxidle reached
 			rc=(-9);
 			break;
+		}
+
+		for (i=0;i<pfdcount && p_rc > 0;i++) {
+			if (!(pfd[i].revents & (POLLIN | POLLPRI)))
+				continue;
+
+			if (pfd[i].fd == cl->fd_m2c_c) {
+				if (process_client_pipe(cl, buf, l)==PIP_ID_UDP)
+					return ph[cl->ctyp].recv(cl, buf, l);
+			}
+
+			if (pfd[i].fd == cl->pfd)
+				return ph[cl->ctyp].recv(cl, buf, l);
 		}
 	}
 	return(rc);
