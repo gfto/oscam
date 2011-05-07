@@ -705,7 +705,7 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 				if (!strcmp(cl->account->usr, account->usr))
 					break;
 
-			if (!account->disabled && (account && cl->pcrc == crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), cur_client()->dump), 16))) {
+			if (account && !account->disabled && cl->pcrc == crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), cur_client()->dump), 16)) {
 				cl->account = account;
 				if(cl->typ == 'c'){
 					cl->grp	= account->grp;
