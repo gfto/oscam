@@ -1636,7 +1636,7 @@ extern void module_oscam_ser(struct s_module *);
 extern void module_cccam(struct s_module *);
 extern void module_gbox(struct s_module *);
 extern void module_constcw(struct s_module *);
-extern struct timeval *chk_pending(struct timeb tp_ctimeout);
+extern int32_t chk_pending(int32_t timeout);
 #ifdef HAVE_DVBAPI
 extern void module_dvbapi(struct s_module *);
 #endif

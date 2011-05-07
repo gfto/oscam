@@ -2836,7 +2836,7 @@ int32_t comp_timeb(struct timeb *tpa, struct timeb *tpb)
   return(0);
 }
 
-struct timeval *chk_pending(struct timeb tp_ctimeout)
+int32_t chk_pending(int32_t timeout)
 {
 	int32_t i, pending=0;
 	uint32_t td;
@@ -2844,7 +2844,9 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 
 	ECM_REQUEST *er;
 	cs_ftime(&tpn);
-	tpe=tp_ctimeout;    // latest delay -> disconnect
+
+	tpe=tpn;
+	tpe.time+=timeout;
 
 	struct s_client *cl = cur_client();
 
@@ -2948,22 +2950,18 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 	}
 
 	td=(tpe.time-tpn.time)*1000+(tpe.millitm-tpn.millitm)+5;
-	cl->tv.tv_sec = td/1000;
-	cl->tv.tv_usec = (td%1000)*1000;
-	//cs_log("delay %d.%06d", tv.tv_sec, tv.tv_usec);
 	cl->pending=pending;
-	return(&cl->tv);
+
+	return td;
 }
 
 int32_t process_input(uchar *buf, int32_t l, int32_t timeout)
 {
 	int32_t rc, i, pfdcount;
-	struct timeb tp;
 	struct pollfd pfd[2];
 	struct s_client *cl = cur_client();
 
-	cs_ftime(&tp);
-	tp.time+=timeout;
+	time_t starttime = time(NULL);
 
 	while (1) {
 		pfdcount = 0;
@@ -2977,15 +2975,14 @@ int32_t process_input(uchar *buf, int32_t l, int32_t timeout)
 			pfd[pfdcount++].events = POLLIN | POLLPRI;
 		}
 
-		chk_pending(tp);
-		int32_t p_rc = poll(pfd, pfdcount, timeout*1000);
+		int32_t p_rc = poll(pfd, pfdcount, chk_pending(timeout));
 
 		if (p_rc < 0) {
 			if (errno==EINTR) continue;
 			else return(0);
 		}
 
-		if (p_rc == 0) { // client maxidle reached
+		if (p_rc == 0 && (starttime+timeout) < time(NULL)) { // client maxidle reached
 			rc=(-9);
 			break;
 		}
