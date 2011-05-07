@@ -16,7 +16,7 @@ const char *cmd0c_mode_name[] = { "NONE", "RC6", "RC4", "CC_CRYPT", "AES", "IDEA
 
 static uint8_t cc_node_id[8];
 
-#define getprefix() ((struct cc_data *)(cl->cc))->prefix
+#define getprefix() (!cl?"":(!cl->cc?"":(((struct cc_data *)(cl->cc))->prefix)))
 
 void cc_init_crypt(struct cc_crypt_block *block, uint8_t *key, int32_t len) {
 	int32_t i = 0;
@@ -2655,21 +2655,18 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	uint8_t data[16];
 	char usr[21], pwd[65];
 	struct s_auth *account;
-	struct cc_data *cc = cl->cc;
+	struct cc_data *cc;
 
 	memset(usr, 0, sizeof(usr));
 	memset(pwd, 0, sizeof(pwd));
 
-	//SS: Use last cc data for faster reconnects:
-	if (!cc) {
-		// init internals data struct
-		cc = cs_malloc(&cc, sizeof(struct cc_data), QUITERROR);
-		cl->cc = cc;
-		memset(cl->cc, 0, sizeof(struct cc_data));
-		cc->extended_ecm_idx = ll_create();
+	// init internals data struct
+	cc = cs_malloc(&cc, sizeof(struct cc_data), QUITERROR);
+	cl->cc = cc;
+	memset(cl->cc, 0, sizeof(struct cc_data));
+	cc->extended_ecm_idx = ll_create();
 
-		cc_init_cc(cc);
-	}
+	cc_init_cc(cc);
 	uint8_t *buf = cc->send_buffer;
 	
 	cc->mode = CCCAM_MODE_NOTINIT;
@@ -2793,11 +2790,8 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	
 	cs_debug_mask(D_TRACE, "ccc user authenticated %s", usr);
 
-	if (!cc->prefix) {
-		cc->prefix = cs_malloc(&cc->prefix, strlen(cl->account->usr)+20, QUITERROR);
-		snprintf(cc->prefix, strlen(cl->account->usr)+20, "cccam(s) %s: ", cl->account->usr);
-	}
-	
+	cc->prefix = cs_malloc(&cc->prefix, strlen(cl->account->usr)+20, QUITERROR);
+	snprintf(cc->prefix, strlen(cl->account->usr)+20, "cccam(s) %s: ", cl->account->usr);
 
 	//Starting readers to get cards:
 	cc_srv_wakeup_readers(cl);

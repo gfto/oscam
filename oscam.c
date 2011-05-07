@@ -1118,16 +1118,16 @@ void *clientthread_init(void * init){
 	struct s_clientinit clientinit;
 	memcpy(&clientinit, init, sizeof(struct s_clientinit)); //copy to stack to free init pointer
 	free(init);
-	#ifndef NO_PTHREAD_CLEANUP_PUSH
+#ifndef NO_PTHREAD_CLEANUP_PUSH
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	pthread_setspecific(getclient, clientinit.client);
 	pthread_cleanup_push(cleanup_thread, (void *) clientinit.client);
 	clientinit.handler(clientinit.client);
 	pthread_cleanup_pop(1);
-	#else
+#else
 	clientinit.handler(clientinit.client);
 	cs_exit(0);
-	#endif
+#endif
 	return NULL;
 }
 #pragma GCC diagnostic warning "-Wempty-body"
