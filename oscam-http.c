@@ -105,12 +105,12 @@ char *send_oscam_config_global(struct templatevars *vars, struct uriparams *para
 
 	if (cfg.cwlogdir != NULL) 		tpl_addVar(vars, TPLADD, "CWLOGDIR", cfg.cwlogdir);
 	if (cfg.saveinithistory == 1)	tpl_addVar(vars, TPLADD, "SAVEINITHISTORYCHECKED", "selected");
-	tpl_printf(vars, TPLADD, "LOGHISTORYSIZE", "%d", cfg.loghistorysize);
+	tpl_printf(vars, TPLADD, "LOGHISTORYSIZE", "%u", cfg.loghistorysize);
 
-	tpl_printf(vars, TPLADD, "CLIENTTIMEOUT", "%ld", cfg.ctimeout);
-	tpl_printf(vars, TPLADD, "FALLBACKTIMEOUT", "%ld", cfg.ftimeout);
-	tpl_printf(vars, TPLADD, "CLIENTMAXIDLE", "%d", cfg.cmaxidle);
-	tpl_printf(vars, TPLADD, "CACHEDELAY", "%ld", cfg.delay);
+	tpl_printf(vars, TPLADD, "CLIENTTIMEOUT", "%u", cfg.ctimeout);
+	tpl_printf(vars, TPLADD, "FALLBACKTIMEOUT", "%u", cfg.ftimeout);
+	tpl_printf(vars, TPLADD, "CLIENTMAXIDLE", "%u", cfg.cmaxidle);
+	tpl_printf(vars, TPLADD, "CACHEDELAY", "%u", cfg.delay);
 
 	tpl_printf(vars, TPLADD, "SLEEP", "%d", cfg.tosleep);
 	if (cfg.ulparent == 1) tpl_addVar(vars, TPLADD, "UNLOCKPARENTALCHECKED", "selected");
@@ -1552,7 +1552,7 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 		tpl_addVar(vars, TPLADD, "SUPPRESSCMD08", "selected");
 
 	//Sleepsend
-	tpl_printf(vars, TPLADD, "SLEEPSEND", "%d", account->c35_sleepsend);
+	tpl_printf(vars, TPLADD, "SLEEPSEND", "%u", account->c35_sleepsend);
 
 	//Keepalive
 	if (account->ncd_keepalive)

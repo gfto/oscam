@@ -647,7 +647,7 @@ static int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
 static int32_t reader_listen(struct s_reader * reader, int32_t fd1, int32_t fd2)
 {
-	int32_t i, tcp_toflag, use_tv=(!(reader->typ & R_IS_CASCADING));
+	int32_t i, tcp_toflag;
 	int32_t is_tcp=(reader->ph.type==MOD_CONN_TCP);
 
 	tcp_toflag=(fd2 && is_tcp && reader->tcp_ito && reader->tcp_connected);

@@ -66,8 +66,16 @@ static const char *cctag[]={"global", "monitor", "camd33", "camd35", "newcamd", 
 /* Returns the default value if string length is zero, otherwise atoi is called*/
 int32_t strToIntVal(char *value, int32_t defaultvalue){
 	if (strlen(value) == 0) return defaultvalue;
-	int32_t i = atoi(value);
+	int32_t i = strtol(value, NULL, 10);
 	if (i < 0) return defaultvalue;
+	else return i;
+}
+
+/* Returns the default value if string length is zero, otherwise strtoul is called*/
+uint32_t strToUIntVal(char *value, uint32_t defaultvalue){
+	if (strlen(value) == 0) return defaultvalue;
+	uint32_t i = strtoul(value, NULL, 10);
+	if (errno != 0) return defaultvalue;
 	else return i;
 }
 
@@ -377,7 +385,7 @@ void chk_t_global(const char *token, char *value)
 	}
 
 	if (!strcmp(token, "loghistorysize")) {
-		uint32_t newsize = strToIntVal(value, 4096);
+		uint32_t newsize = strToUIntVal(value, 4096);
 		if (newsize < 1024) {
 			fprintf(stderr, "WARNING: loghistorysize is too small, adjusted to 1024\n");
 			newsize = 1024;
@@ -444,24 +452,24 @@ void chk_t_global(const char *token, char *value)
 	}
 
 	if (!strcmp(token, "clienttimeout")) {
-		cfg.ctimeout = strToIntVal(value, CS_CLIENT_TIMEOUT);
+		cfg.ctimeout = strToUIntVal(value, CS_CLIENT_TIMEOUT);
 		if (cfg.ctimeout < 100) cfg.ctimeout *= 1000;
 		return;
 	}
 
 	if (!strcmp(token, "fallbacktimeout")) {
-		cfg.ftimeout = strToIntVal(value, (CS_CLIENT_TIMEOUT / 2));
+		cfg.ftimeout = strToUIntVal(value, (CS_CLIENT_TIMEOUT / 2));
 		if (cfg.ftimeout < 100) cfg.ftimeout *= 1000;
 		return;
 	}
 
 	if (!strcmp(token, "clientmaxidle")) {
-		cfg.cmaxidle = strToIntVal(value, CS_CLIENT_MAXIDLE);
+		cfg.cmaxidle = strToUIntVal(value, CS_CLIENT_MAXIDLE);
 		return;
 	}
 
 	if (!strcmp(token, "cachedelay")) {
-		cfg.delay = strToIntVal(value, CS_DELAY);
+		cfg.delay = strToUIntVal(value, CS_DELAY);
 		return;
 	}
 
@@ -499,9 +507,9 @@ void chk_t_global(const char *token, char *value)
 
 	if (!strcmp(token, "serialreadertimeout")) {
 		if (cfg.srtimeout < 100)
-			cfg.srtimeout = atoi(value) * 1000;
+			cfg.srtimeout = strtoul(value, NULL, 10) * 1000;
 		else
-			cfg.srtimeout = atoi(value);
+			cfg.srtimeout = strtoul(value, NULL, 10);
 		if (cfg.srtimeout <= 0)
 			cfg.srtimeout = 1500;
 		return;
@@ -1491,15 +1499,15 @@ int32_t init_config()
 	cs_init_statistics();
 	if (cfg.ftimeout >= cfg.ctimeout) {
 		cfg.ftimeout = cfg.ctimeout - 100;
-		cs_log("WARNING: fallbacktimeout adjusted to %lu ms (must be smaller than clienttimeout (%lu ms))", cfg.ftimeout, cfg.ctimeout);
+		cs_log("WARNING: fallbacktimeout adjusted to %u ms (must be smaller than clienttimeout (%u ms))", cfg.ftimeout, cfg.ctimeout);
 	}
 	if(cfg.ftimeout < cfg.srtimeout) {
 		cfg.ftimeout = cfg.srtimeout + 100;
-		cs_log("WARNING: fallbacktimeout adjusted to %lu ms (must be greater than serialreadertimeout (%lu ms))", cfg.ftimeout, cfg.srtimeout);
+		cs_log("WARNING: fallbacktimeout adjusted to %u ms (must be greater than serialreadertimeout (%u ms))", cfg.ftimeout, cfg.srtimeout);
 	}
 	if(cfg.ctimeout < cfg.srtimeout) {
 		cfg.ctimeout = cfg.srtimeout + 100;
-		cs_log("WARNING: clienttimeout adjusted to %lu ms (must be greater than serialreadertimeout (%lu ms))", cfg.ctimeout, cfg.srtimeout);
+		cs_log("WARNING: clienttimeout adjusted to %u ms (must be greater than serialreadertimeout (%u ms))", cfg.ctimeout, cfg.srtimeout);
 	}
 #ifdef CS_ANTICASC
 	if( cfg.ac_denysamples+1 > cfg.ac_samples ) {
@@ -1557,9 +1565,10 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 	}
 
 	if (!strcmp(token, "sleepsend")) {
-		account->c35_sleepsend = strToIntVal(value, 0);
-		if (account->c35_sleepsend > 0xFF)
+		uint32_t tmp = strToUIntVal(value, 0);
+		if (tmp > 0xFF)
 			account->c35_sleepsend = 0xFF;
+		else account->c35_sleepsend = tmp;
 		return;
 	}
 
@@ -1838,21 +1847,21 @@ int32_t write_config()
 	if ((cfg.usrfile && cfg.disableuserfile == 0) || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "disableuserfile", "%d\n", cfg.usrfile?cfg.disableuserfile:1);
 	if ((cfg.loghistorysize != 4096) || cfg.http_full_cfg)
-		fprintf_conf(f, CONFVARWIDTH, "loghistorysize", "%d\n", cfg.loghistorysize);
+		fprintf_conf(f, CONFVARWIDTH, "loghistorysize", "%u\n", cfg.loghistorysize);
 	if (cfg.usrfileflag || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "usrfileflag", "%d\n", cfg.usrfileflag);
 	if (cfg.ctimeout != CS_CLIENT_TIMEOUT || cfg.http_full_cfg)
-		fprintf_conf(f, CONFVARWIDTH, "clienttimeout", "%ld\n", cfg.ctimeout);
+		fprintf_conf(f, CONFVARWIDTH, "clienttimeout", "%u\n", cfg.ctimeout);
 	if ((cfg.ftimeout && cfg.ftimeout != (CS_CLIENT_TIMEOUT /2)) || cfg.http_full_cfg)
-		fprintf_conf(f, CONFVARWIDTH, "fallbacktimeout", "%ld\n", cfg.ftimeout);
+		fprintf_conf(f, CONFVARWIDTH, "fallbacktimeout", "%u\n", cfg.ftimeout);
 	if (cfg.cmaxidle != CS_CLIENT_MAXIDLE || cfg.http_full_cfg)
-		fprintf_conf(f, CONFVARWIDTH, "clientmaxidle", "%d\n", cfg.cmaxidle);
+		fprintf_conf(f, CONFVARWIDTH, "clientmaxidle", "%u\n", cfg.cmaxidle);
 	if (cfg.failbantime || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "failbantime", "%d\n", cfg.failbantime);
 	if (cfg.failbancount || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "failbancount", "%d\n", cfg.failbancount);
 	if (cfg.delay != CS_DELAY || cfg.http_full_cfg)
-		fprintf_conf(f, CONFVARWIDTH, "cachedelay", "%ld\n", cfg.delay); //deprecated
+		fprintf_conf(f, CONFVARWIDTH, "cachedelay", "%u\n", cfg.delay); //deprecated
 	if (cfg.bindwait != CS_BIND_TIMEOUT || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "bindwait", "%d\n", cfg.bindwait);
 	if (cfg.netprio || cfg.http_full_cfg)
@@ -1864,7 +1873,7 @@ int32_t write_config()
 	if (cfg.nice != 99 || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "nice", "%d\n", cfg.nice);
 	if (cfg.srtimeout != 1500 || cfg.http_full_cfg)
-		fprintf_conf(f, CONFVARWIDTH, "serialreadertimeout", "%d\n", cfg.srtimeout);
+		fprintf_conf(f, CONFVARWIDTH, "serialreadertimeout", "%u\n", cfg.srtimeout);
 	if (cfg.c35_suppresscmd08 || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "suppresscmd08", "%d\n", cfg.c35_suppresscmd08);
 	if (cfg.max_log_size != 10 || cfg.http_full_cfg)
@@ -2318,7 +2327,7 @@ int32_t write_userdb(struct s_auth *authptr)
 			fprintf_conf(f, CONFVARWIDTH, "cccstealth", "%d\n", account->cccstealth);
 
 		if (account->c35_sleepsend || cfg.http_full_cfg)
-			fprintf_conf(f, CONFVARWIDTH, "sleepsend", "%d\n", account->c35_sleepsend);
+			fprintf_conf(f, CONFVARWIDTH, "sleepsend", "%u\n", account->c35_sleepsend);
 
 		if (account->failban || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "failban", "%d\n", account->failban);

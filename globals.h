@@ -479,10 +479,10 @@ struct emm_packet_t ;
 
 struct s_module
 {
-  int32_t  active;
-  int32_t  multi;
-  int32_t  type;
-  int32_t  watchdog;
+  int8_t  active;
+  int8_t  multi;
+  int8_t  type;
+  int8_t  watchdog;
   char desc[16];
   char *logtxt;
   //int32_t  s_port;
@@ -491,7 +491,7 @@ struct s_module
   int32_t  (*recv)(struct s_client *, uchar *, int32_t);
   void (*send_dcw)(struct s_client*, struct ecm_request_t *);
   void (*cleanup)(struct s_client*);
-  int32_t  c_multi;
+  int8_t  c_multi;
   int32_t  (*c_recv_chk)(struct s_client*, uchar *, int32_t *, uchar *, int32_t);
   int32_t  (*c_init)(struct s_client*);
   int32_t  (*c_send_ecm)(struct s_client *, struct ecm_request_t *, uchar *);
@@ -513,7 +513,7 @@ struct s_ATR ;
 
 struct s_cardreader
 {
-	int32_t	active;
+	int8_t	active;
 	char	desc[16];
 	int32_t	(*reader_init)(struct s_reader*);
 	int32_t	(*get_status)(struct s_reader*, int*);
@@ -527,16 +527,16 @@ struct s_cardreader
 	int32_t	(*set_baudrate)(struct s_reader*, uint32_t baud); //set only for readers which need baudrate setting and timings need to be guarded by OSCam
 	int32_t	typ; //fixme: workaround, remove when all old code is converted
 
-	int32_t	max_clock_speed; // 1 for reader->typ > R_MOUSE
-	int32_t	need_inverse; //0 = reader does inversing; 1 = inversing done by oscam
+	int8_t	max_clock_speed; // 1 for reader->typ > R_MOUSE
+	int8_t	need_inverse; //0 = reader does inversing; 1 = inversing done by oscam
 	//io_serial config
-	int32_t	flush;
-	int32_t	read_written; // 1 = written bytes has to read from device
+	int8_t	flush;
+	int8_t	read_written; // 1 = written bytes has to read from device
 };
 
 struct s_cardsystem
 {
-	int32_t active;
+	int8_t active;
 	char *desc;
 	int32_t  (*card_init)();
 	int32_t  (*card_info)();
@@ -625,16 +625,16 @@ struct s_client
   time_t	lastecm;
   time_t	expirationdate;
   int32_t		allowedtimeframe[2];
-  int32_t		c35_suppresscmd08;
-  int32_t		c35_sleepsend;
-  int32_t		ncd_keepalive;
-  int32_t		disabled;
+  int8_t		c35_suppresscmd08;
+  uint8_t		c35_sleepsend;
+  int8_t		ncd_keepalive;
+  int8_t		disabled;
   uint64_t	grp;
-  int32_t		crypted;
-  int32_t		dup;
+  int8_t		crypted;
+  int8_t		dup;
   LLIST	*aureader_list;
-  int32_t		autoau;
-  int32_t		monlvl;
+  int8_t		autoau;
+  int8_t		monlvl;
   CAIDTAB	ctab;
   TUNTAB	ttab;
   SIDTABBITS	sidtabok; // positiv services
@@ -666,7 +666,7 @@ struct s_client
   int32_t		emmnok;	     // count EMM nok
   int32_t		pending;     // number of ECMs pending
 #ifdef WEBIF
-  int32_t		wihidden;	// hidden in webinterface status
+  int8_t		wihidden;	// hidden in webinterface status
   char      lastreader[64]; // last cw got from this reader
 #endif
   uchar		ucrc[4];    // needed by monitor and used by camd35
@@ -710,13 +710,13 @@ struct s_client
 
   //camd35
   uchar upwd[64];
-  int32_t is_udp;
-  int32_t stopped;
+  int8_t is_udp;
+  int8_t stopped;
   int32_t lastcaid;
   int32_t lastsrvid;
   int32_t lastpid;
   time_t emm_last;
-  int32_t disable_counter;
+  int8_t disable_counter;
   uchar lastserial[8];
 
   //cccam
@@ -731,14 +731,14 @@ struct s_client
   
   //an iterator to be used across OSCam; threadspecific
   LL_ITER it;
-  int32_t itused;
+  int8_t itused;
 
   //oscam.c
   struct timeval tv;
 
   //failban value set bitwise - compared with BAN_
   int32_t failban;
-  int32_t cleaned;
+  int8_t cleaned;
   struct s_client *next; //make client a linked list
 };
 
@@ -794,11 +794,11 @@ struct ecmrl {
 struct s_reader  //contains device info, reader info and card info
 {
   uint32_t		auprovid; // AU only for this provid
-  int32_t		audisabled; // exclude reader from auto AU
-  int32_t		smargopatch;
+  int8_t		audisabled; // exclude reader from auto AU
+  int8_t		smargopatch;
   struct s_client * client; //pointer to 'r'client this reader is running in
-  int32_t       enable;
-  int32_t       available; //Schlocke: New flag for loadbalancing. Only reader if reader supports ph.c_available function
+  int8_t       enable;
+  int8_t       available; //Schlocke: New flag for loadbalancing. Only reader if reader supports ph.c_available function
   int32_t       fd_error;
   int32_t       fd;
   uint64_t    grp;
@@ -814,7 +814,7 @@ struct s_reader  //contains device info, reader info and card info
   uint32_t stsmart_handle; //device handle for stsmart driver
 #endif
   char      pcsc_name[128];
-  int32_t       pcsc_has_card;
+  int8_t       pcsc_has_card;
   int32_t       detect;
   int32_t       mhz;      //actual clock rate of reader in 10khz steps
   int32_t	    cardmhz;	    //standard clock speed your card should have in 10khz steps; normally 357 but for Irdeto cards 600
@@ -822,15 +822,14 @@ struct s_reader  //contains device info, reader info and card info
   char      r_usr[64];
   char      r_pwd[64];
   char      l_pwd[64];
-  int32_t       r_crypted;
   int32_t       l_port;
   int32_t       log_port;
   CAIDTAB   ctab;
   uint32_t     boxid;
-  int32_t       nagra_read; // read nagra ncmed records: 0 disabled (default), 1 read all records, 2 read valid records only
+  int8_t       nagra_read; // read nagra ncmed records: 0 disabled (default), 1 read all records, 2 read valid records only
   uchar	    nagra_boxkey[16]; //n3 boxkey 8byte  or tiger idea key 16byte
   char      country_code[3]; // irdeto country code.
-  int32_t       force_irdeto;
+  int8_t       force_irdeto;
   uchar     rsa_mod[120]; //rsa modulus for nagra cards.
   uchar     atr[64];
   int32_t		atrlen;
@@ -852,14 +851,14 @@ struct s_reader  //contains device info, reader info and card info
   int32_t       logemm;
   int32_t       cachemm;
   int32_t       rewritemm;
-  int32_t       card_status;
-  int32_t       deprecated; //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
+  int8_t       card_status;
+  int8_t       deprecated; //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
   struct    s_module ph;
   struct    s_cardreader crdr;
   struct    s_cardsystem csystem;
   uchar     ncd_key[16];
   uchar     ncd_skey[16];
-  int32_t       ncd_disable_server_filt;
+  int8_t       ncd_disable_server_filt;
   uint16_t    ncd_msgid;
   int32_t       ncd_proto;
   char      cc_version[7];  // cccam version
@@ -867,9 +866,9 @@ struct s_reader  //contains device info, reader info and card info
   int32_t       cc_maxhop;      // cccam max distance
   int32_t       cc_mindown;     // cccam min downhops
   int32_t       cc_currenthops; // number of hops for CCCam
-  int32_t       cc_want_emu; //Schlocke: Client want to have EMUs, 0 - NO; 1 - YES
+  int8_t       cc_want_emu; //Schlocke: Client want to have EMUs, 0 - NO; 1 - YES
   uint32_t    cc_id;
-  int32_t       cc_keepalive;
+  int8_t       cc_keepalive;
   uchar     tcp_connected;
   int32_t       tcp_ito;      // inactivity timeout
   int32_t       tcp_rto;      // reconnect timeout
@@ -921,14 +920,14 @@ struct s_reader  //contains device info, reader info and card info
 	////variables from reader-dre.c
 	unsigned char provider;
 	////variables from reader-nagra.c
-        IDEA_KEY_SCHEDULE ksSession;
- 	int32_t is_pure_nagra;
- 	int32_t is_tiger;
- 	int32_t is_n3_na;
- 	int32_t has_dt08;
- 	int32_t swapCW;
-        uint8_t ExpiryDate[2];
-        uint8_t ActivationDate[2];
+ 	IDEA_KEY_SCHEDULE ksSession;
+ 	int8_t is_pure_nagra;
+ 	int8_t is_tiger;
+ 	int8_t is_n3_na;
+ 	int8_t has_dt08;
+ 	int8_t swapCW;
+ 	uint8_t ExpiryDate[2];
+ 	uint8_t ActivationDate[2];
  	unsigned char rom[15];
  	unsigned char plainDT08RSA[64];
  	unsigned char IdeaCamKey[16];
@@ -952,22 +951,22 @@ struct s_reader  //contains device info, reader info and card info
 	LLIST *lb_stat; //loadbalancer reader statistics
 	// multi AES linked list
 	AES_ENTRY *aes_list;
-        // variables from reader-videoguard*
-        int32_t ndsversion; // 0 auto (default), 1 NDS1, 12 NDS1+, 2 NDS2
-        const char * card_desc;
-        int32_t  card_baseyear;
-        int32_t  card_tierstart;
-        int32_t  card_system_version;
-        struct s_CmdTab *cmd_table;
-        uint16_t cardkeys[3][32];
-        unsigned char stateD3A[16];
-        AES_KEY       ekey;
-        AES_KEY       astrokey;
+ 	// variables from reader-videoguard*
+ 	int8_t ndsversion; // 0 auto (default), 1 NDS1, 12 NDS1+, 2 NDS2
+ 	const char * card_desc;
+ 	int32_t  card_baseyear;
+ 	int32_t  card_tierstart;
+ 	int32_t  card_system_version;
+ 	struct s_CmdTab *cmd_table;
+ 	uint16_t cardkeys[3][32];
+ 	unsigned char stateD3A[16];
+ 	AES_KEY       ekey;
+ 	AES_KEY       astrokey;
 	//ratelimit
 	int32_t ratelimitecm;
 	int32_t ratelimitseconds;
 	struct ecmrl    rlecmh[MAXECMRATELIMIT];
-	int32_t fix_9993;
+	int8_t fix_9993;
 	struct s_reader *next;
 };
 
@@ -990,10 +989,10 @@ struct s_auth
 #ifdef WEBIF
   char     description[64];
 #endif
-  int32_t      uniq;
+  int8_t      uniq;
   LLIST    *aureader_list;
-  int32_t      autoau;
-  int32_t      monlvl;
+  int8_t      autoau;
+  int8_t      monlvl;
   uint64_t   grp;
   int32_t      tosleep;
   CAIDTAB  ctab;
@@ -1013,14 +1012,14 @@ struct s_auth
   time_t    expirationdate;
   time_t    firstlogin;
   int32_t		allowedtimeframe[2];
-  int32_t       c35_suppresscmd08;
-  int32_t       c35_sleepsend;
-  int32_t       ncd_keepalive;
+  int8_t       c35_suppresscmd08;
+  uint8_t       c35_sleepsend;
+  int8_t       ncd_keepalive;
   int32_t       cccmaxhops;
   int32_t       cccreshare;
-  int32_t       cccignorereshare;
-  int32_t		cccstealth;
-  int32_t       disabled;
+  int8_t       cccignorereshare;
+  int8_t		cccstealth;
+  int8_t       disabled;
   int32_t 		failban;
   
   int32_t		cwfound;
@@ -1092,9 +1091,9 @@ struct s_config
 	uint8_t	logtostdout;
 	uint8_t 	logtosyslog;
 	uint32_t	loghistorysize;
-	int32_t		disablelog;
-	int32_t		disableuserfile;
-	int32_t		usrfileflag;
+	int8_t		disablelog;
+	int8_t		disableuserfile;
+	int8_t		usrfileflag;
 	struct s_auth 	*account;
 	struct s_srvid 	*srvid[16];
         struct s_tierid *tierid;
@@ -1117,16 +1116,16 @@ struct s_config
 	char		http_tpl[128];
 	char		http_script[128];
 	int32_t			http_refresh;
-	int32_t			http_hide_idle_clients;
+	int8_t			http_hide_idle_clients;
 	struct s_ip *http_allowed;
-	int32_t			http_readonly;
+	int8_t			http_readonly;
 	in_addr_t	http_dynip;
 	uchar		http_dyndns[64];
-	int32_t			http_use_ssl;
+	int8_t			http_use_ssl;
 	char		http_cert[128];
 	char		http_help_lang[3];
 #endif
-	int32_t			http_full_cfg;
+	int8_t			http_full_cfg;
 	int32_t			failbantime;
 	int32_t			failbancount;
 	LLIST 		*v_list; //failban list
@@ -1138,16 +1137,16 @@ struct s_config
 	struct s_ip 	*c33_plain;
 	int32_t		c35_port;
 	in_addr_t	c35_srvip;
-	int32_t		c35_suppresscmd08;
-	int32_t		c35_tcp_suppresscmd08;
-	int32_t		c35_udp_suppresscmd08;
+	int8_t		c35_suppresscmd08;
+	int8_t		c35_tcp_suppresscmd08;
+	int8_t		c35_udp_suppresscmd08;
 	PTAB		c35_tcp_ptab;
 	in_addr_t	c35_tcp_srvip;
 	PTAB		ncd_ptab;
 	in_addr_t	ncd_srvip;
 	uchar		ncd_key[16];
 	int32_t		ncd_keepalive;
-	int32_t		ncd_mgclient;
+	int8_t		ncd_mgclient;
 	struct s_ip 	*ncd_allowed;
 	PTAB		cc_ptab;
 	int32_t		rad_port;
@@ -1160,7 +1159,7 @@ struct s_config
 	char		cc_version[7];
 	int32_t             cc_minimize_cards;
 	int32_t             cc_keep_connected;
-	int32_t		cc_stealth;
+	int8_t		cc_stealth;
 	int32_t		cc_reshare_services;
 	int32_t     cc_forward_origin_card;
 	char	gbox_hostname[128];
@@ -1172,12 +1171,12 @@ struct s_config
 	char		ser_device[512];
 	uint32_t		srtimeout;  // SerialReaderTimeount in millisec
 	int32_t		max_log_size;
-	int32_t		waitforcards;
+	int8_t		waitforcards;
 	int32_t		waitforcards_extra_delay;
-	int32_t		preferlocalcards;
-	int32_t		saveinithistory;
+	int8_t		preferlocalcards;
+	int8_t		saveinithistory;
 	int32_t     reader_restart_seconds; //schlocke: reader restart auf x seconds, disable = 0
-	int32_t		dropdups; //drop duplicate logins
+	int8_t		dropdups; //drop duplicate logins
 
 
 //Loadbalancer-Config:
@@ -1199,10 +1198,10 @@ struct s_config
 	int32_t lb_max_readers; //limit the amount of readers during learning
 	int32_t lb_auto_betatunnel; //automatic selection of betatunnel convertion based on learned data
 	
-	int32_t             resolve_gethostbyname;
+	int32_t resolve_gethostbyname;
 
 #ifdef CS_WITH_DOUBLECHECK
-        int32_t             double_check; //schlocke: Double checks each ecm+dcw from two (or more) readers
+	int8_t double_check; //schlocke: Double checks each ecm+dcw from two (or more) readers
 #endif
 
 #ifdef IRDETO_GUESSING
@@ -1210,12 +1209,12 @@ struct s_config
 #endif
 
 #ifdef HAVE_DVBAPI
-	int32_t		dvbapi_enabled;
-	int32_t		dvbapi_au;
+	int8_t		dvbapi_enabled;
+	int8_t		dvbapi_au;
 	char		dvbapi_usr[64];
-	int32_t		dvbapi_boxtype;
-	int32_t		dvbapi_pmtmode;
-	int32_t		dvbapi_requestmode;
+	int8_t		dvbapi_boxtype;
+	int8_t		dvbapi_pmtmode;
+	int8_t		dvbapi_requestmode;
 	SIDTABBITS    dvbapi_sidtabok;	// positiv services
 	SIDTABBITS    dvbapi_sidtabno;	// negative services
 #endif
@@ -1233,7 +1232,7 @@ struct s_config
 #endif
 
 #ifdef QBOXHD_LED
-    int32_t disableqboxhdled; // disable qboxhd led , default = 0
+    int8_t disableqboxhdled; // disable qboxhd led , default = 0
 #endif
 };
 
