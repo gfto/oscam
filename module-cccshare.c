@@ -58,6 +58,14 @@ void add_good_bad_sids(struct s_sidtab *ptr, SIDTABBITS sidtabno, struct cc_card
         }
 }
 
+int32_t can_use_ext(struct cc_card *card) {
+	if (card->sidtab)
+		return (card->sidtab->num_srvid>0);
+	else
+		return ll_count(card->goodsids);
+	return 0;
+}
+
 int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32_t add_own, int32_t ext, int32_t au_allowed, struct s_client *cl) {
     memset(buf, 0, CC_MAXMSGSIZE);
     buf[0] = card->id >> 24;
@@ -189,7 +197,7 @@ int32_t send_card_to_clients(struct cc_card *card, struct s_client *one_client) 
         for (cl = one_client?one_client:first_client; cl; cl=one_client?NULL:cl->next) {
                 struct cc_data *cc = cl->cc;
                 if (cl->typ=='c' && cc && ((one_client && cc->mode != CCCAM_MODE_SHUTDOWN) || (ph[cl->ctyp].num == R_CCCAM && cc->mode == CCCAM_MODE_NORMAL))) { //CCCam-Client!
-                		int32_t is_ext = cc->cccam220;
+                		int32_t is_ext = cc->cccam220 && can_use_ext(card);
                 		int32_t msg = is_ext?MSG_NEW_CARD_SIDINFO:MSG_NEW_CARD;
                         if (card_valid_for_client(cl, card)) {
 								int32_t usr_reshare = cl->account->cccreshare;
