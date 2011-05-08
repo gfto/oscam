@@ -1550,10 +1550,11 @@ int32_t check_extended_mode(struct s_client *cl, char *msg) {
 	//
 
 	struct cc_data *cc = cl->cc;
+	char *saveptr1 = NULL;
 	int32_t has_param = 0;
-	char *p = strtok(msg, "[");
+	char *p = strtok_r(msg, "[", &saveptr1);
 	while (p) {
-		p = strtok(NULL, ",]");
+		p = strtok_r(NULL, ",]", &saveptr1);
 		if (p && strncmp(p, "EXT", 3) == 0) {
 			cc->extended_mode = 1;
 			cs_debug_mask(D_CLIENT, "%s extended ECM mode", getprefix());

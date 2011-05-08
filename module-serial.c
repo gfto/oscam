@@ -194,9 +194,9 @@ static int32_t oscam_ser_parse_url(char *url, struct s_serial_client *serialdata
   dummy=baud ? baud : dev;
   if( (para=strchr(dummy, '?')) )
   {
-    char *ptr1, *ptr2;
+    char *ptr1, *ptr2, *saveptr1 = NULL;
     *para++='\0';
-    for (ptr1=strtok(para, "&"); ptr1; ptr1=strtok(NULL, "&"))
+    for (ptr1=strtok_r(para, "&", &saveptr1); ptr1; ptr1=strtok_r(NULL, "&", &saveptr1))
     {
       if (!(ptr2=strchr(ptr1, '='))) continue;
       *ptr2++='\0';

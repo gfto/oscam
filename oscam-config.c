@@ -107,7 +107,7 @@ static void show_sidtab(struct s_sidtab *sidtab)
 void chk_iprange(char *value, struct s_ip **base)
 {
 	int32_t i = 0;
-	char *ptr1, *ptr2;
+	char *ptr1, *ptr2, *saveptr1 = NULL;
 	struct s_ip *lip, *cip;
 
 	for (cip=lip=*base; cip; cip=cip->next)
@@ -118,7 +118,7 @@ void chk_iprange(char *value, struct s_ip **base)
 	else
 		*base = cip;
 
-	for (ptr1=strtok(value, ","); ptr1; ptr1=strtok(NULL, ",")) {
+	for (ptr1=strtok_r(value, ",", &saveptr1); ptr1; ptr1=strtok_r(NULL, ",", &saveptr1)) {
 			if (i == 0)
 				++i;
 		else {
@@ -140,9 +140,9 @@ void chk_iprange(char *value, struct s_ip **base)
 void chk_caidtab(char *caidasc, CAIDTAB *ctab)
 {
 	int32_t i;
-	char *ptr1, *ptr2, *ptr3;
+	char *ptr1, *ptr2, *ptr3, *saveptr1 = NULL;
 
-	for (i = 0, ptr1 = strtok(caidasc, ","); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok(NULL, ",")) {
+	for (i = 0, ptr1 = strtok_r(caidasc, ",", &saveptr1); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1)) {
 		uint32_t caid, mask, cmap;
 		if( (ptr3 = strchr(trim(ptr1), ':')) )
 			*ptr3++ = '\0';
@@ -165,11 +165,11 @@ void chk_caidtab(char *caidasc, CAIDTAB *ctab)
 void chk_caidvaluetab(char *lbrlt, CAIDVALUETAB *tab, int minvalue)
 {
 		int32_t i;
-		char *ptr1, *ptr2;
+		char *ptr1, *ptr2, *saveptr1 = NULL;
 
 		memset(tab, 0, sizeof(CAIDVALUETAB));
 
-		for (i = 0, ptr1 = strtok(lbrlt, ","); (i < CS_MAX_CAIDVALUETAB) && (ptr1); ptr1 = strtok(NULL, ",")) {
+		for (i = 0, ptr1 = strtok_r(lbrlt, ",", &saveptr1); (i < CS_MAX_CAIDVALUETAB) && (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1)) {
 				int32_t caid, value;
 
 				if( (ptr2 = strchr(trim(ptr1), ':')) )
@@ -202,9 +202,9 @@ char *mk_t_caidvaluetab(CAIDVALUETAB *tab)
 void chk_tuntab(char *tunasc, TUNTAB *ttab)
 {
 	int32_t i;
-	char *ptr1, *ptr2, *ptr3;
+	char *ptr1, *ptr2, *ptr3, *saveptr1 = NULL;
 
-	for (i = 0, ptr1 = strtok(tunasc, ","); (i < CS_MAXTUNTAB) && (ptr1); ptr1 = strtok(NULL, ",")) {
+	for (i = 0, ptr1 = strtok_r(tunasc, ",", &saveptr1); (i < CS_MAXTUNTAB) && (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1)) {
 		uint32_t bt_caidfrom, bt_caidto, bt_srvid;
 		if( (ptr3 = strchr(trim(ptr1), ':')) )
 			*ptr3++ = '\0';
@@ -228,10 +228,10 @@ void chk_tuntab(char *tunasc, TUNTAB *ttab)
 void chk_services(char *labels, SIDTABBITS *sidok, SIDTABBITS *sidno)
 {
 	int32_t i;
-	char *ptr;
+	char *ptr, *saveptr1 = NULL;
 	SIDTAB *sidtab;
 	*sidok = *sidno = 0;
-	for (ptr=strtok(labels, ","); ptr; ptr=strtok(NULL, ",")) {
+	for (ptr=strtok_r(labels, ",", &saveptr1); ptr; ptr=strtok_r(NULL, ",", &saveptr1)) {
 		for (trim(ptr), i = 0, sidtab = cfg.sidtab; sidtab; sidtab = sidtab->next, i++) {
 			if (!strcmp(sidtab->label, ptr)) *sidok|=((SIDTABBITS)1<<i);
 			if ((ptr[0]=='!') && (!strcmp(sidtab->label, ptr+1))) *sidno|=((SIDTABBITS)1<<i);
@@ -242,11 +242,11 @@ void chk_services(char *labels, SIDTABBITS *sidok, SIDTABBITS *sidno)
 void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *D_USE(zType), const char *D_USE(zName), const char *zFiltName)
 {
 	int32_t i, j;
-	char *ptr1, *ptr2, *ptr3;
+	char *ptr1, *ptr2, *ptr3, *saveptr1 = NULL;
 	char *ptr[CS_MAXFILTERS] = {0};
 
 	memset(ftab, 0, sizeof(FTAB));
-	for( i = 0, ptr1 = strtok(zFilterAsc, ";"); (i < CS_MAXFILTERS) && (ptr1); ptr1 = strtok(NULL, ";"), i++ ) {
+	for( i = 0, ptr1 = strtok_r(zFilterAsc, ";", &saveptr1); (i < CS_MAXFILTERS) && (ptr1); ptr1 = strtok_r(NULL, ";", &saveptr1), i++ ) {
 		ptr[i] = ptr1;
 		if( (ptr2 = strchr(trim(ptr1), ':')) ) {
 			*ptr2++ ='\0';
@@ -265,7 +265,7 @@ void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *D_USE(zType), const char
 	}
 	for( i = 0; i < ftab->nfilts; i++ ) {
 		cs_debug_mask(D_CLIENT, "CAID #%d: %04X", i, ftab->filts[i].caid);
-		for( j = 0, ptr3 = strtok(ptr[i], ","); (j < CS_MAXPROV) && (ptr3); ptr3 = strtok(NULL, ","), j++ ) {
+		for( j = 0, ptr3 = strtok_r(ptr[i], ",", &saveptr1); (j < CS_MAXPROV) && (ptr3); ptr3 = strtok_r(NULL, ",", &saveptr1), j++ ) {
 			ftab->filts[i].prids[j] = a2i(ptr3,6);
 			ftab->filts[i].nprids++;
 			cs_debug_mask(D_CLIENT, "%s #%d: %06X", zFiltName, j, ftab->filts[i].prids[j]);
@@ -276,8 +276,8 @@ void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *D_USE(zType), const char
 void chk_cltab(char *classasc, CLASSTAB *clstab)
 {
 	int32_t i;
-	char *ptr1;
-	for( i = 0, ptr1 = strtok(classasc, ","); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok(NULL, ",") ) {
+	char *ptr1, *saveptr1 = NULL;
+	for( i = 0, ptr1 = strtok_r(classasc, ",", &saveptr1); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1) ) {
 		ptr1 = trim(ptr1);
 		if( ptr1[0] == '!' )
 			clstab->bclass[clstab->bn++] = (uchar)a2i(ptr1+1, 2);
@@ -289,12 +289,12 @@ void chk_cltab(char *classasc, CLASSTAB *clstab)
 void chk_port_tab(char *portasc, PTAB *ptab)
 {
 	int32_t i, j, nfilts, ifilt, iport;
-	char *ptr1, *ptr2, *ptr3;
+	char *ptr1, *ptr2, *ptr3, *saveptr1 = NULL;
 	char *ptr[CS_MAXPORTS] = {0};
 	int32_t  port[CS_MAXPORTS] = {0};
 	int32_t previous_nports = ptab->nports;
 
-	for (nfilts = i = previous_nports, ptr1 = strtok(portasc, ";"); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok(NULL, ";"), i++) {
+	for (nfilts = i = previous_nports, ptr1 = strtok_r(portasc, ";", &saveptr1); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok_r(NULL, ";", &saveptr1), i++) {
 		ptr[i] = ptr1;
 		if( (ptr2=strchr(trim(ptr1), '@')) ) {
 			*ptr2++ ='\0';
@@ -326,7 +326,7 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 	for (i=previous_nports; i<nfilts; i++) {
 		if( port[i] != 0 )
 			iport = i;
-		for (j = 0, ptr3 = strtok(ptr[i], ","); (j < CS_MAXPROV) && (ptr3); ptr3 = strtok(NULL, ","), j++) {
+		for (j = 0, ptr3 = strtok_r(ptr[i], ",", &saveptr1); (j < CS_MAXPROV) && (ptr3); ptr3 = strtok_r(NULL, ",", &saveptr1), j++) {
 			if( (ptr2=strchr(trim(ptr3), ':')) ) {
 				*ptr2++='\0';
 				ptab->ports[iport].ftab.nfilts++;
@@ -344,11 +344,11 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 void chk_cccam_ports(char *value)
 {
 	int32_t i;
-	char *ptr;
+	char *ptr, *saveptr1 = NULL;
 
 	memset(cfg.cc_port, 0, sizeof(cfg.cc_port));
 
-	for (i=0, ptr=strtok(value, ","); ptr && i<CS_MAXPORTS; ptr=strtok(NULL, ",")) {
+	for (i=0, ptr=strtok_r(value, ",", &saveptr1); ptr && i<CS_MAXPORTS; ptr=strtok_r(NULL, ",", &saveptr1)) {
 		cfg.cc_port[i] = atoi(ptr);
 		if (cfg.cc_port[i]) i++;
 	}
@@ -358,14 +358,15 @@ void chk_cccam_ports(char *value)
 static void chk_srvip(char *value, in_addr_t *ip)
 {
 	int32_t i;
-	char *ptr;
-	for (i=0, ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
+	char *ptr, *saveptr1 = NULL;
+	for (i=0, ptr=strtok_r(value, ",", &saveptr1); ptr; ptr=strtok_r(NULL, ",", &saveptr1))
 		if (i<8) ip[i++] = inet_addr(ptr);
 }
 #endif
 
 void chk_t_global(const char *token, char *value)
 {
+	char *saveptr1 = NULL;
 
 #ifdef QBOXHD_LED
 	if (!strcmp(token, "disableqboxhdled")) {
@@ -410,7 +411,7 @@ void chk_t_global(const char *token, char *value)
 		NULLFREE(cfg.logfile);
 		if (strlen(value) > 0) {
 			char *pch;
-			for(pch = strtok(value, ";"); pch != NULL; pch = strtok(NULL, ";")){
+			for(pch = strtok_r(value, ";", &saveptr1); pch != NULL; pch = strtok_r(NULL, ";", &saveptr1)){
 				pch=trim(pch);
 				if(!strcmp(pch, "stdout")) cfg.logtostdout = 1;
 				else if(!strcmp(pch, "syslog")) cfg.logtosyslog = 1;
@@ -1521,7 +1522,7 @@ int32_t init_config()
 void chk_account(const char *token, char *value, struct s_auth *account)
 {
 	int32_t i;
-	char *ptr1;
+	char *ptr1, *saveptr1 = NULL;
 
 	if (!strcmp(token, "user")) {
 		cs_strncpy(account->usr, value, sizeof(account->usr));
@@ -1652,7 +1653,7 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		LL_ITER *itr = ll_iter_create(configured_readers);
 		ll_clear(account->aureader_list);
 
-		for (pch = strtok(value, ","); pch != NULL; pch = strtok(NULL, ",")) {
+		for (pch = strtok_r(value, ",", &saveptr1); pch != NULL; pch = strtok_r(NULL, ",", &saveptr1)) {
 			ll_iter_reset(itr);
 			while ((rdr = ll_iter_next(itr))) {
 				if (((rdr->label[0]) && (!strcmp(rdr->label, pch))) || account->autoau) {
@@ -1667,7 +1668,7 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 
 	if (!strcmp(token, "group")) {
 		account->grp = 0;
-		for (ptr1=strtok(value, ","); ptr1; ptr1=strtok(NULL, ",")) {
+		for (ptr1=strtok_r(value, ",", &saveptr1); ptr1; ptr1=strtok_r(NULL, ",", &saveptr1)) {
 			int32_t g;
 			g = atoi(ptr1);
 			if ((g>0) && (g < 65)) account->grp|=(((uint64_t)1)<<(g-1));
@@ -1702,7 +1703,7 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		}
 		struct tm cstime;
 		memset(&cstime,0,sizeof(cstime));
-		for (i=0, ptr1=strtok(value, "-/"); (i<3)&&(ptr1); ptr1=strtok(NULL, "-/"), i++) {
+		for (i=0, ptr1=strtok_r(value, "-/", &saveptr1); (i<3)&&(ptr1); ptr1=strtok_r(NULL, "-/", &saveptr1), i++) {
 			switch(i) {
 				case 0: cstime.tm_year=atoi(ptr1)-1900; break;
 				case 1: cstime.tm_mon =atoi(ptr1)-1;    break;
@@ -1809,7 +1810,7 @@ int32_t write_config()
 {
 	int32_t i;
 	FILE *f;
-	char *value;
+	char *value, *saveptr1 = NULL;
 	char tmpfile[256];
 	char destfile[256];
 	char bakfile[256];
@@ -2058,10 +2059,8 @@ int32_t write_config()
 		char *ptr;
 		char delimiter[2]; delimiter[0] = 1; delimiter[1] = '\0';
 
-		ptr = strtok(sdevice, delimiter);
-		while(ptr != NULL) {
+		for(ptr = strtok_r(sdevice, delimiter, &saveptr1); ptr != NULL; ptr = strtok_r(NULL, delimiter, &saveptr1)) {
 			fprintf_conf(f, CONFVARWIDTH, "device", "%s\n", ptr);
-			ptr = strtok(NULL, delimiter);
 		}
 		fprintf(f,"\n");
 	}
@@ -2903,14 +2902,14 @@ void free_sidtab(struct s_sidtab *ptr)
 static void chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int32_t what)
 {
   int32_t i, b;
-  char *ptr;
+  char *ptr, *saveptr1 = NULL;
   uint16_t *slist=(uint16_t *) 0;
   uint32_t *llist=(uint32_t *) 0;
   uint32_t caid;
   char buf[strlen(value) + 1];
   cs_strncpy(buf, value, sizeof(buf));
   b=(what==1) ? sizeof(uint32_t) : sizeof(uint16_t);
-  for (i=0, ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
+  for (i=0, ptr=strtok_r(value, ",", &saveptr1); ptr; ptr=strtok_r(NULL, ",", &saveptr1))
   {
     caid=a2i(ptr, b);
     if (!errno) i++;
@@ -2922,7 +2921,7 @@ static void chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int32_t what)
   	if(!cs_malloc(&llist, i*sizeof(uint32_t), -1)) return;
   }
   cs_strncpy(value, buf, sizeof(buf));
-  for (i=0, ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
+  for (i=0, ptr=strtok_r(value, ",", &saveptr1); ptr; ptr=strtok_r(NULL, ",", &saveptr1))
   {
     caid=a2i(ptr, b);
     if (errno) continue;
@@ -3026,7 +3025,7 @@ int32_t init_sidtab() {
 int32_t init_provid() {
 	int32_t nr;
 	FILE *fp;
-	char *payload;
+	char *payload, *saveptr1 = NULL;
 	static struct s_provid *provid=(struct s_provid *)0;
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_provid);
 
@@ -3058,7 +3057,7 @@ int32_t init_provid() {
 
 		int32_t i;
 		char *ptr1;
-		for (i = 0, ptr1 = strtok(payload, "|"); ptr1; ptr1 = strtok(NULL, "|"), i++){
+		for (i = 0, ptr1 = strtok_r(payload, "|", &saveptr1); ptr1; ptr1 = strtok_r(NULL, "|", &saveptr1), i++){
 			switch(i){
 			case 0:
 				cs_strncpy(provid->prov, trim(ptr1), sizeof(provid->prov));
@@ -3092,7 +3091,7 @@ int32_t init_srvid()
 {
 	int32_t nr = 0, i;
 	FILE *fp;
-	char *payload, *tmp;
+	char *payload, *tmp, *saveptr1 = NULL;
 	struct s_srvid *srvid=NULL, *new_cfg_srvid[16], *last_srvid[16];
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_srid);
 	// A cache for strings within srvids. A checksum is calculated which is the start point in the array (some kind of primitive hash algo).
@@ -3129,7 +3128,7 @@ int32_t init_srvid()
 		char *ptr1, *searchptr[4] = { NULL, NULL, NULL, NULL };
 		char **ptrs[4] = { &srvid->prov, &srvid->name, &srvid->type, &srvid->desc };
 
-		for (i = 0, ptr1 = strtok(payload, "|"); ptr1 && (i < 4) ; ptr1 = strtok(NULL, "|"), ++i){
+		for (i = 0, ptr1 = strtok_r(payload, "|", &saveptr1); ptr1 && (i < 4) ; ptr1 = strtok_r(NULL, "|", &saveptr1), ++i){
 			// check if string is in cache
 			len2 = strlen(ptr1);
 			pos = 0;
@@ -3190,7 +3189,7 @@ int32_t init_srvid()
 		}
 
 		srvid->ncaid = 0;
-		for (i = 0, ptr1 = strtok(token, ","); (ptr1) && (i < 10) ; ptr1 = strtok(NULL, ","), i++){
+		for (i = 0, ptr1 = strtok_r(token, ",", &saveptr1); (ptr1) && (i < 10) ; ptr1 = strtok_r(NULL, ",", &saveptr1), i++){
 			srvid->caid[i] = dyn_word_atob(ptr1);
 			srvid->ncaid = i+1;
 			//cs_debug_mask(D_CLIENT, "ld caid: %04X srvid: %04X Prov: %s Chan: %s",srvid->caid[i],srvid->srvid,srvid->prov,srvid->name);
@@ -3247,7 +3246,7 @@ int32_t init_tierid()
 {
 	int32_t nr;
 	FILE *fp;
-	char *payload;
+	char *payload, *saveptr1 = NULL;
 	static struct s_tierid *tierid=NULL, *new_cfg_tierid=NULL;
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_trid);
 
@@ -3279,7 +3278,7 @@ int32_t init_tierid()
 		memset(tierid, 0, sizeof(struct s_tierid));
 
 		int32_t i;
-		char *ptr1 = strtok(payload, "|");
+		char *ptr1 = strtok_r(payload, "|", &saveptr1);
 		if (ptr1)
 			cs_strncpy(tierid->name, trim(ptr1), sizeof(tierid->name));
 
@@ -3289,7 +3288,7 @@ int32_t init_tierid()
 		//printf("tierid %s - %d\n",tieridasc,tierid->tierid );
 
 		tierid->ncaid = 0;
-		for (i = 0, ptr1 = strtok(token, ","); (ptr1) && (i < 10) ; ptr1 = strtok(NULL, ","), i++){
+		for (i = 0, ptr1 = strtok_r(token, ",", &saveptr1); (ptr1) && (i < 10) ; ptr1 = strtok_r(NULL, ",", &saveptr1), i++){
 			tierid->caid[i] = dyn_word_atob(ptr1);
 			tierid->ncaid = i+1;
 			// cs_log("ld caid: %04X tierid: %04X name: %s",tierid->caid[i],tierid->tierid,tierid->name);
@@ -3320,12 +3319,12 @@ int32_t init_tierid()
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
-	char *ptr, *ptr2, *ptr3;
+	char *ptr, *ptr2, *ptr3, *saveptr1 = NULL;
 	/*
 	 *  case sensitive first
 	 */
 	if (!strcmp(token, "device")) {
-		for (i = 0, ptr = strtok(value, ","); (i < 3) && (ptr); ptr = strtok(NULL, ","), i++) {
+		for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 3) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
 			trim(ptr);
 			switch(i) {
 				case 0:
@@ -3384,7 +3383,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
     memset(&key, 0, 16);
     memset(&mac, 0, 6);
 
-    for (i = 0, ptr = strtok(value, ","); (i < 2) && (ptr); ptr = strtok(NULL, ","), i++) {
+    for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 2) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
       trim(ptr);
       switch(i) {
         case 0:
@@ -3469,7 +3468,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
       AES_decrypt(buf + i,buf + i, &aeskey);
 
     // parse d-line
-    for (i = 0, ptr = strtok((char *)buf, " {"); (i < 5) && (ptr); ptr = strtok(NULL, " {"), i++) {
+    for (i = 0, ptr = strtok_r((char *)buf, " {", &saveptr1); (i < 5) && (ptr); ptr = strtok_r(NULL, " {", &saveptr1), i++) {
       trim(ptr);
       switch(i) {
         case 1:    // hostname
@@ -3494,7 +3493,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	//legacy parameter containing account=user,pass
 	if (!strcmp(token, "account")) {
 		if (strstr(value, ",")) {
-			for (i = 0, ptr = strtok(value, ","); (i < 2) && (ptr); ptr = strtok(NULL, ","), i++) {
+			for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 2) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
 				trim(ptr);
 				switch(i) {
 					case 0:
@@ -3912,7 +3911,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			rdr->grp = 0;
 			return;
 		} else {
-			for (ptr = strtok(value, ","); ptr; ptr = strtok(NULL, ",")) {
+			for (ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1)) {
 				int32_t g;
 				g = atoi(ptr);
 				if ((g>0) && (g<65)) {
@@ -3930,7 +3929,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			rdr->logemm = 0;
 			return;
 		} else {
-			for (i = 0, ptr = strtok(value, ","); (i < 3) && (ptr); ptr = strtok(NULL, ","), i++) {
+			for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 3) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
 				switch(i)
 				{
 					case 0:
@@ -3965,7 +3964,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			if (!strcmp(value,"all")) {
 				rdr->b_nano = 0xFFFF;
 			} else {
-				for (ptr = strtok(value, ","); ptr; ptr = strtok(NULL, ",")) {
+				for (ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1)) {
 					i = (byte_atob(ptr) % 0x80);
 					if (i >= 0 && i <= 16)
 						rdr->b_nano |= (1 << i);
@@ -3981,7 +3980,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			if (!strcmp(value,"all")) {
 				rdr->s_nano = 0xFFFF;
 			} else {
-				for (ptr = strtok(value, ","); ptr; ptr = strtok(NULL, ",")) {
+				for (ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1)) {
 					i = (byte_atob(ptr) % 0x80);
 					if (i >= 0 && i <= 16)
 						rdr->s_nano |= (1 << i);
@@ -4152,7 +4151,7 @@ int32_t init_irdeto_guess_tab()
   int32_t i, j, skip;
   int32_t b47;
   FILE *fp;
-  char token[128], *ptr;
+  char token[128], *ptr, *saveptr1 = NULL;
   char zSid[5];
   uchar b3;
   uint16_t caid, sid;
@@ -4169,7 +4168,7 @@ int32_t init_irdeto_guess_tab()
   while (fgets(token, sizeof(token), fp))
   {
     if( strlen(token)<20 ) continue;
-    for( i=b3=b47=caid=sid=skip=0, ptr=strtok(token, ":"); (i<4)&&(ptr); ptr=strtok(NULL, ":"), i++ )
+    for( i=b3=b47=caid=sid=skip=0, ptr=strtok_r(token, ":", &saveptr1); (i<4)&&(ptr); ptr=strtok_r(NULL, ":", &saveptr1), i++ )
     {
       trim(ptr);
       if( *ptr==';' || *ptr=='#' || *ptr=='-' ) {
@@ -4315,7 +4314,7 @@ void init_ac()
 {
   int32_t nr;
   FILE *fp;
-  //char *value;
+  char *saveptr1 = NULL;
 
   snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_ac);
   if (!(fp=fopen(token, "r")))
@@ -4340,7 +4339,7 @@ void init_ac()
     provid=0;
     skip=0;
     ptr1=0;
-    for( i=0, ptr=strtok(token, "="); (i<2)&&(ptr); ptr=strtok(NULL, "="), i++ )
+    for( i=0, ptr=strtok_r(token, "=", &saveptr1); (i<2)&&(ptr); ptr=strtok_r(NULL, "=", &saveptr1), i++ )
     {
       trim(ptr);
       if( *ptr==';' || *ptr=='#' || *ptr=='-' ) {
@@ -4360,7 +4359,7 @@ void init_ac()
 
     if( !skip )
     {
-      for( i=0, ptr=strtok(ptr1, ":"); (i<4)&&(ptr); ptr=strtok(NULL, ":"), i++ )
+      for( i=0, ptr=strtok_r(ptr1, ":", &saveptr1); (i<4)&&(ptr); ptr=strtok_r(NULL, ":", &saveptr1), i++ )
       {
         trim(ptr);
         switch( i )

@@ -38,6 +38,7 @@
 #ifndef OS_MACOSX
 #define strcpy(a,b) UNSAFE_STRCPY_USE_CS_STRNCPY_INSTEAD()
 #define sprintf(a,...) UNSAFE_SPRINTF_USE_SNPRINTF_INSTEAD()
+#define strtok(a,b,c) UNSAFE_STRTOK_USE_STRTOK_R_INSTEAD()
 #endif
 
 #ifndef CS_GLOBALS

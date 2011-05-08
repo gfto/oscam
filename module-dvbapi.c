@@ -1220,10 +1220,10 @@ int32_t dvbapi_init_listenfd() {
 }
 
 void dvbapi_chk_caidtab(char *caidasc, char type) {
-	char *ptr1, *ptr3;
+	char *ptr1, *ptr3, *saveptr1 = NULL;
 	int32_t i;
 
-	for (i=0, ptr1=strtok(caidasc, ","); (ptr1); ptr1=strtok(NULL, ",")) {
+	for (i=0, ptr1=strtok_r(caidasc, ",", &saveptr1); (ptr1); ptr1=strtok_r(NULL, ",", , &saveptr1)) {
 		uint32_t caid, prov;
 		if( (ptr3=strchr(trim(ptr1), ':')) )
 			*ptr3++='\0';

@@ -550,6 +550,7 @@ char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *par
 
 char *send_oscam_config_serial(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
+	char *saveptr1 = NULL;
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		//cfg.ser_device[0]='\0';
 		memset(cfg.ser_device, 0, sizeof(cfg.ser_device));
@@ -571,11 +572,9 @@ char *send_oscam_config_serial(struct templatevars *vars, struct uriparams *para
 		cs_strncpy(sdevice, cfg.ser_device, sizeof(sdevice));
 		char *ptr;
 		char delimiter[2]; delimiter[0] = 1; delimiter[1] = '\0';
-		ptr = strtok(sdevice, delimiter);
-		while(ptr != NULL) {
+		for(ptr = strtok_r(sdevice, delimiter, &saveptr1); ptr; ptr = strtok_r(NULL, delimiter, &saveptr1)){
 			tpl_printf(vars, TPLADD, "SERIALDEVICE", "%s", ptr);
 			tpl_addVar(vars, TPLAPPEND, "DEVICES", tpl_getTpl(vars, "CONFIGSERIALDEVICEBIT"));
-			ptr = strtok(NULL, delimiter);
 		}
 	}
 
@@ -1212,9 +1211,6 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 }
 
 char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
-
-	tpl_printf(vars, TPLADD, "CALLINGIP", "%s", cs_inet_ntoa(GET_IP()));
-
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 	if(!rdr) return "0";
 
@@ -1817,7 +1813,6 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
 
 	//just to stop the guys open tedious tickets for warnings related to unused variables xD
-	tpl_printf(vars, TPLADD, "CALLINGIP", "%s", cs_inet_ntoa(GET_IP()));
 	tpl_printf(vars, TPLADD, "ISAPICALL", "%d", apicall);
 	//**************
 
@@ -2058,10 +2053,10 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 			rdr = get_reader_by_label(reader_);
 
 			if (rdr->init_history) {
-				char *ptr, *ptr1 = NULL;
-				for (ptr=strtok_r(rdr->init_history, "\n", &ptr1); ptr; ptr=strtok_r(NULL, "\n", &ptr1)) {
+				char *ptr, *saveptr1 = NULL;
+				for (ptr=strtok_r(rdr->init_history, "\n", &saveptr1); ptr; ptr=strtok_r(NULL, "\n", &saveptr1)) {
 					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "%s<BR />", ptr);
-					ptr1[-1]='\n';
+					saveptr1[-1]='\n';
 				}
 			}
 
@@ -3335,15 +3330,17 @@ int32_t process_request(FILE *f, struct in_addr in) {
 			break;
 		}
 		if(authok == 0 && strlen(str1) > 50 && strncmp(str1, "Authorization:", 14) == 0 && strstr(str1, "Digest") != NULL) {
-			if(cs_realloc(&authheader, strlen(str1) + 1, -1))
-				cs_strncpy(authheader, str1, strlen(str1));
+			if (cs_dblevel & D_CLIENT){
+				if(cs_realloc(&authheader, strlen(str1) + 1, -1))
+					cs_strncpy(authheader, str1, strlen(str1));
+			}
 			authok = check_auth(str1, method, path, expectednonce);
 		}
 	}
 
 	if(authok != 1) {
 		if(authok == 2)
-			cs_debug_mask(D_TRACE, "WebIf: Received stale header from %s", cs_inet_ntoa(addr));
+			cs_debug_mask(D_TRACE, "WebIf: Received stale header from %s.", cs_inet_ntoa(addr));
 		else if(authheader){
 			cs_debug_mask(D_CLIENT, "WebIf: Received wrong auth header from %s:", cs_inet_ntoa(addr));
 			cs_debug_mask(D_CLIENT, "%s", authheader);

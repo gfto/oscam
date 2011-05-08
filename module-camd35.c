@@ -667,6 +667,7 @@ static int32_t camd35_recv_log(uint16_t *caid, uint32_t *provid, uint16_t *srvid
 {
   int32_t i;
   uchar buf[512], *ptr, *ptr2;
+  char *saveptr1 = NULL;
   uint16_t idx=0;
   if (!logfd) return(-1);
   if ((i=recv(logfd, buf, sizeof(buf), 0))<=0) return(-1);
@@ -678,7 +679,7 @@ static int32_t camd35_recv_log(uint16_t *caid, uint32_t *provid, uint16_t *srvid
   if (!(ptr2=(uchar *)strchr((char *)ptr, ' '))) return(-1);	// corrupt
   *ptr2=0;
 
-  for (i=0, ptr2=(uchar *)strtok((char *)ptr, ":"); ptr2; i++, ptr2=(uchar *)strtok(NULL, ":"))
+  for (i=0, ptr2=(uchar *)strtok_r((char *)ptr, ":", &saveptr1); ptr2; i++, ptr2=(uchar *)strtok_r(NULL, ":", &saveptr1))
   {
     trim((char *)ptr2);
     switch(i)

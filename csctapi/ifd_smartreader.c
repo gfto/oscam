@@ -95,13 +95,11 @@ int32_t SR_Init (struct s_reader *reader)
     uint8_t out_endpoint;
     int32_t ret;
     char device[128];
-    char *busname;
-    char *devname;
-    char *search = ":";
+    char *busname, *devname, *search = ":", *saveptr1 = NULL;
     // split the device name from the reader conf into devname and busname
     memcpy(device,reader->device,128);
-    busname=strtok(device,search);
-    devname=strtok(NULL,search);
+    busname=strtok_r(device,search, &saveptr1);
+    devname=strtok_r(NULL,search, &saveptr1);
     if(!busname || !devname) {
         cs_log("Wrong device format (%s), it should be Device=bus:dev",reader->device);
         return ERROR;
