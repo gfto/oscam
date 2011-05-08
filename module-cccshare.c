@@ -802,7 +802,8 @@ void update_card_list() {
             if (reshare == -1) reshare = cfg.cc_reshare;
             
             //Reader-Services:
-            if ((cfg.cc_reshare_services==1||cfg.cc_reshare_services==2||!rdr->caid) && cfg.sidtab && (rdr->sidtabno || rdr->sidtabok)) {
+            if ((cfg.cc_reshare_services==1||cfg.cc_reshare_services==2||!rdr->caid) && 
+            		cfg.sidtab && (rdr->sidtabno || rdr->sidtabok)) {
                 struct s_sidtab *ptr;
                 for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
                     if (!(rdr->sidtabno&((SIDTABBITS)1<<j)) && (!rdr->sidtabok || rdr->sidtabok&((SIDTABBITS)1<<j))) {
@@ -822,9 +823,6 @@ void update_card_list() {
                             	if (!rdr->audisabled)
 									cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, card->caid);
                         
-	                            //CCcam 2.2.x proto can transfer good and bad sids:
-	                            add_good_bad_sids(ptr, rdr->sidtabno, card);
-
 	                            add_card_to_serverlist(server_cards, card);
 	                    	    flt=1;
 							}
@@ -1026,12 +1024,12 @@ int32_t cc_srv_report_cards(struct s_client *cl) {
 	struct cc_data *cc = cl->cc;
 	LL_ITER *it = ll_iter_create(reported_carddatas);
 	struct cc_card *card;
-	while ((card = ll_iter_next(it)) && cc->mode != CCCAM_MODE_SHUTDOWN) {
+	while (cl->cc && cc->mode != CCCAM_MODE_SHUTDOWN && (card = ll_iter_next(it))) {
 		send_card_to_clients(card, cl);
 	}
 	ll_iter_release(it);
 
-	return cc->mode != CCCAM_MODE_SHUTDOWN;
+	return cl->cc && cc->mode != CCCAM_MODE_SHUTDOWN;
 }
 
 void refresh_shares()
