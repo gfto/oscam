@@ -347,16 +347,20 @@ char *username(struct s_client * client)
 			return "root";
 	}
 
-	struct s_auth *acc = client->account;
-	if(acc)
-	{
-		if (acc->usr[0])
-			return(acc->usr);
+	if (client->typ == 'c' || client->typ == 'm') {
+		struct s_auth *acc = client->account;
+		if(acc)
+		{
+			if (acc->usr[0])
+				return(acc->usr);
+			else
+				return("anonymous");
+		}
 		else
-			return("anonymous");
-	}
-	else
-	{
+		{
+			return("NULL");
+		}
+	} else {
 		return("NULL");
 	}
 }
@@ -746,8 +750,12 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 				if (ph[cl->ctyp].type & MOD_CONN_NET) {
 					cs_debug_mask(D_TRACE, "client '%s', thread=%8X not found in db (or password changed)", cl->account->usr, cl->thread);
 					kill_thread(cl);
+				} else {
+					cl->account = first_client->account;
 				}
 			}
+		} else {
+			cl->account = NULL;
 		}
 }
 
