@@ -395,7 +395,6 @@ EXAMPLES
 	   group      = 5
 	   caid       = 0300,0400,0500
 	   cccversion = 1.2.3
-	   cccbuild   = 4567
 
        ·  PCSC reader
 
