@@ -7,6 +7,8 @@ struct s_connection{
 #endif
 };
 
+#define GET_IP() *(in_addr_t *)pthread_getspecific(getip)
+
 #ifdef WITH_SSL
 static int32_t ssl_active = 0;
 #endif

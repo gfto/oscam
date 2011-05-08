@@ -803,6 +803,10 @@ SSL_CTX *SSL_Webif_Init() {
 	SSL_CTX *ctx;
 
 	static const char *cs_cert="oscam.pem";
+
+	if (pthread_key_create(&getssl, NULL)) {
+		cs_log("Could not create getssl");
+	}
 	
 	// set locking callbacks for SSL
 	int32_t i, num = CRYPTO_num_locks();
