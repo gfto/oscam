@@ -218,10 +218,12 @@ int32_t network_tcp_connection_open()
 			if (getsockopt(sd, SOL_SOCKET, SO_ERROR, &r, (socklen_t*)&l) == 0) {
 				if (r == 0) {
 					fcntl(sd, F_SETFL, fl);
+					clear_block_delay(rdr);
 					return sd; //now we are connected
 				}
 			}
 		}
+		errno = ETIMEDOUT;
 	}
 	//else we are not connected - or already connected:
 	else if (errno == EISCONN) {
