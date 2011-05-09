@@ -3066,13 +3066,13 @@ char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *par
 	  		disktpl = 1;		
 				stat(path, &st);
 				if(st.st_mtime < modifiedheader){
-					send_headers(f, 304, "Not Modified", NULL, NULL, 1, 0, NULL, 0);
+					send_header304(f);
 					return "1";
 				}
 	  	}
   	}
   	if(disktpl == 0 && first_client->login < modifiedheader){
-			send_headers(f, 304, "Not Modified", NULL, NULL, 1, 0, NULL, 0);
+			send_header304(f);
 			return "1";
 		}
 		char *header = strstr(tpl_getTpl(vars, wanted), "data:");
@@ -3085,8 +3085,8 @@ char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *par
 			if(ptr != NULL){
 				int32_t len = b64decode((uchar *)ptr + 7);
 				if(len > 0){
-					if((uint32_t)crc32(0L, (uchar *)ptr + 7, strlen(ptr + 7)) == etagheader){
-						send_headers(f, 304, "Not Modified", NULL, NULL, 1, strlen(ptr + 7), ptr + 7, 0);
+					if((uint32_t)crc32(0L, (uchar *)ptr + 7, len) == etagheader){
+						send_header304(f);
 					} else {
 						send_headers(f, 200, "OK", NULL, header + 5, 1, len, ptr + 7, 0);
 						webif_write_raw(ptr + 7, f, len);

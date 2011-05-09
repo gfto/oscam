@@ -468,7 +468,6 @@ int32_t webif_read(char *buf, int32_t num, FILE *f) {
 		return read(fileno(f), buf, num);
 }
 
-
 void send_headers(FILE *f, int32_t status, char *title, char *extra, char *mime, int32_t cache, int32_t length, char *content, int8_t forcePlain){
   time_t now;
   char timebuf[32];
@@ -511,17 +510,21 @@ void send_headers(FILE *f, int32_t status, char *title, char *extra, char *mime,
 void send_error(FILE *f, int32_t status, char *title, char *extra, char *text, int8_t forcePlain){
 	char buf[(2* strlen(title)) + strlen(text) + 128];
 	char *pos = buf;
-	send_headers(f, status, title, extra, "text/html", 0, strlen(buf), NULL, forcePlain);
 	pos += snprintf(pos, sizeof(buf)-(pos-buf), "<HTML><HEAD><TITLE>%d %s</TITLE></HEAD>\r\n", status, title);
 	pos += snprintf(pos, sizeof(buf)-(pos-buf), "<BODY><H4>%d %s</H4>\r\n", status, title);
 	pos += snprintf(pos, sizeof(buf)-(pos-buf), "%s\r\n", text);
 	pos += snprintf(pos, sizeof(buf)-(pos-buf), "</BODY></HTML>\r\n");
+	send_headers(f, status, title, extra, "text/html", 0, strlen(buf), NULL, forcePlain);
 	if(forcePlain == 1) fwrite(buf, 1, strlen(buf), f);
 	else webif_write(buf, f);
 }
 
 void send_error500(FILE *f){
 	send_error(f, 500, "Internal Server Error", NULL, "The server encountered an internal error that prevented it from fulfilling this request.", 0);
+}
+
+void send_header304(FILE *f){
+	send_headers(f, 304, "Not Modified", NULL, NULL, 1, 0, NULL, 0);
 }
 
 /*
@@ -550,6 +553,10 @@ void send_file(FILE *f, char *filename, time_t modifiedheader, uint32_t etaghead
 		
 		stat(filename, &st);
 		moddate = st.st_mtime;
+		if(moddate < modifiedheader){
+			send_header304(f);
+			return;
+		}
 		if((fp = fopen(filename, "r"))==NULL) return;
 		if(!cs_malloc(&result, st.st_size + 1, -1)){
 			send_error500(f);
@@ -574,7 +581,7 @@ void send_file(FILE *f, char *filename, time_t modifiedheader, uint32_t etaghead
 		}
 	}
 	if(moddate < modifiedheader || (uint32_t)crc32(0L, (uchar *)result, strlen(result)) == etagheader){
-		send_headers(f, 304, "Not Modified", NULL, NULL, 1, strlen(result), result, 0);
+		send_header304(f);
 	} else {
 		send_headers(f, 200, "OK", NULL, mimetype, 1, strlen(result), result, 0);
 		webif_write(result, f);
