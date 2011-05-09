@@ -1,4 +1,4 @@
-oscam.user(5)															     oscam.user(5)
+oscam.user(5)											  oscam.user(5)
 
 
 
@@ -6,7 +6,8 @@ NAME
        oscam.user - user configuration file for OSCam
 
 SYNOPSIS
-       The user configuration file for OSCam contains user definitions. [account] sections in oscam.user are recurring (more than one account).
+       The  user  configuration  file for OSCam contains user definitions. [account] sections in oscam.user are
+       recurring (more than one account).
 
 DESCRIPTIONS
    The [account] section
@@ -23,7 +24,8 @@ DESCRIPTIONS
 	  host from which user connection is allowed
 
        betatunnel = <CAID>.<ServiceID>:<target CAID>[,<CAID>.<ServiceID>: <target CAID>]...
-	  define Betacrypt tunneling (max. see CS_MAXTUNTAB in globals.h).  The ServiceID can also be used for wildcarded CAIDs.
+	  define Betacrypt tunneling (max. see CS_MAXTUNTAB in globals.h).  The ServiceID can also be used  for
+	  wildcarded CAIDs.
 
 	   example: betatunnel = 0100.0001:0200,0300.0004:0500
 		    betatunnel = 0600.FFFF:0700
@@ -44,8 +46,8 @@ DESCRIPTIONS
 	  time waiting for inactive user, default:none
 
        sleepsend = 0|255
-	  255  =  OSCam  client  only:	stopping requests until next zap, 255 = camd 3.x only: stopping requests until restart of camd 3.x client,
-	  default:0
+	  255  =  OSCam  client  only: stopping requests until next zap, 255 = camd 3.x only: stopping requests
+	  until restart of camd 3.x client, default:0
 
        caid = <CAID>[&<mask>][:<target CAID>][,<CAID>[&<mask>][:<target CAID>]]...
 	  limit and mapping of CAIDs, default:all CAIDs with mask FFFF
@@ -71,15 +73,15 @@ DESCRIPTIONS
 	  user [de]assingment to service group, default:none
 
        ident = <CAID>:<ident>[,<ident>,...][;<CAID>:<ident>[,<ident>,...]]...
-	  user assingment to idents, default:none
+	  user assingment to SC specific idents, default:none
 
        class = [!]class[,[!]class]...
-	  user [de]assingment to classes, default=none
+	  user [de]assingment to SC specific classes, default=none
 
 	   example: class = 01,02,!03,!04
 
        chid = <CAID>:<ChID>[,<CAID>:<ChID>]...
-	  user assingment to Irdeto ChID, default:none
+	  user assingment to SC specific ChIDs, default:none
 
        monlevel = 0|1|2|3|4
 	  monitor level:
@@ -169,9 +171,9 @@ EXAMPLES
 	uniq	   = 1
 
 SEE ALSO
-       list_smargo(1), oscam(1),  oscam.ac(5),	oscam.cert(5),	oscam.conf(5),	oscam.dvbapi(5),  oscam.guess(5),  oscam.ird(5),  oscam.provid(5),
-       oscam.server(5), oscam.services(5), oscam.tiers(5), oscam.srvid(5)
+       list_smargo(1), oscam(1), oscam.ac(5), oscam.cert(5),  oscam.conf(5),  oscam.dvbapi(5),	oscam.guess(5),
+       oscam.ird(5), oscam.provid(5), oscam.server(5), oscam.services(5), oscam.tiers(5), oscam.srvid(5)
 
 
 
-																     oscam.user(5)
+												  oscam.user(5)

@@ -194,7 +194,7 @@ reader protocol, \fIrequired\fR:
 .PP
 \fBident\fP = \fB<CAID>:<ident>[,ident]...[;<CAID>:<ident>[,ident]...]...\fP
 .RS 3n
-define CAID and ident for reader
+define CAID and SC specific ident for reader
 
 example: ident = 0100:123456,234567;0200:345678,456789
 .RE
@@ -206,7 +206,7 @@ define provider ID for reader
 .PP
 \fBclass\fP = \fB[!]class[,[!]class]...\fP
 .RS 3n
-define class in hex for reader
+define SC specific class in hex for reader
 
 example: class = 01,02,!1b,!2b
 .RE
@@ -345,7 +345,7 @@ pincode for Conax and Cryptoworks SCs
 .PP
 \fBchid\fP = \fBCAID:ChID\fP
 .RS 3n
-define Irdeto ChID for reader
+define SC specific ChIDs for reader
 
 example: chid = 0100:12
 .RE
