@@ -1525,6 +1525,7 @@ extern char *mk_t_service( uint64_t sidtabok, uint64_t sidtabno);
 extern char *mk_t_logfile();
 extern char *mk_t_iprange(struct s_ip *range);
 extern char *mk_t_ecmwhitelist(struct s_ecmWhitelist *whitelist);
+extern char *mk_t_cltab(CLASSTAB *clstab);
 extern void free_mk_t(char *value);
 
 //Todo #ifdef CCCAM

@@ -406,7 +406,7 @@ char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams *param
 	}
 
 	char *value = mk_t_cccam_port();
-	tpl_printf(vars, TPLAPPEND, "PORT", "%s", value);
+	tpl_addVar(vars, TPLAPPEND, "PORT", value);
 	free_mk_t(value);
 	
 	tpl_printf(vars, TPLADD, "RESHARE", "%d", cfg.cc_reshare);
@@ -536,7 +536,7 @@ char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *par
 	tpl_addVar(vars, TPLADD, "HTTPALLOW", value);
 	free_mk_t(value);
 
-	tpl_printf(vars, TPLADD, "HTTPDYNDNS", "%s", cfg.http_dyndns);
+	tpl_addVar(vars, TPLADD, "HTTPDYNDNS", (char*)cfg.http_dyndns);
 
 	//Monlevel selector
 	tpl_printf(vars, TPLADD, "TMP", "MONSELECTED%d", cfg.mon_level);
@@ -573,12 +573,12 @@ char *send_oscam_config_serial(struct templatevars *vars, struct uriparams *para
 		char *ptr;
 		char delimiter[2]; delimiter[0] = 1; delimiter[1] = '\0';
 		for(ptr = strtok_r(sdevice, delimiter, &saveptr1); ptr; ptr = strtok_r(NULL, delimiter, &saveptr1)){
-			tpl_printf(vars, TPLADD, "SERIALDEVICE", "%s", ptr);
+			tpl_addVar(vars, TPLADD, "SERIALDEVICE", ptr);
 			tpl_addVar(vars, TPLAPPEND, "DEVICES", tpl_getTpl(vars, "CONFIGSERIALDEVICEBIT"));
 		}
 	}
 
-	tpl_printf(vars, TPLADD, "SERIALDEVICE", "%s", "");
+	tpl_addVar(vars, TPLADD, "SERIALDEVICE", "");
 	tpl_addVar(vars, TPLAPPEND, "DEVICES", tpl_getTpl(vars, "CONFIGSERIALDEVICEBIT"));
 
 	return tpl_getTpl(vars, "CONFIGSERIAL");
@@ -931,8 +931,8 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 	if(rdr->enable)
 		tpl_addVar(vars, TPLADD, "ENABLED", "checked");
 
-	tpl_printf(vars, TPLADD, "ACCOUNT",  "%s", rdr->r_usr);
-	tpl_printf(vars, TPLADD, "PASSWORD",  "%s", rdr->r_pwd);
+	tpl_addVar(vars, TPLADD, "ACCOUNT", rdr->r_usr);
+	tpl_addVar(vars, TPLADD, "PASSWORD", rdr->r_pwd);
 
 	for (i=0; i<14; i++)
 		tpl_printf(vars, TPLAPPEND, "NCD_KEY", "%02X", rdr->ncd_key[i]);
@@ -984,7 +984,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 			tpl_printf(vars, TPLAPPEND, "ATR", "%02X", rdr->atr[i]);
 			
 	value = mk_t_ecmwhitelist(rdr->ecmWhitelist);
-	tpl_printf(vars, TPLADD, "ECMWHITELIST", "%s", value);
+	tpl_addVar(vars, TPLADD, "ECMWHITELIST", value);
 	free_mk_t(value);
 
 	if(rdr->smargopatch)
@@ -993,12 +993,12 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 	if (rdr->detect&0x80)
 		tpl_printf(vars, TPLADD, "DETECT", "!%s", RDR_CD_TXT[rdr->detect&0x7f]);
 	else
-		tpl_printf(vars, TPLADD, "DETECT", "%s", RDR_CD_TXT[rdr->detect&0x7f]);
+		tpl_addVar(vars, TPLADD, "DETECT", RDR_CD_TXT[rdr->detect&0x7f]);
 
 	tpl_printf(vars, TPLADD, "MHZ", "%d", rdr->mhz);
 	tpl_printf(vars, TPLADD, "CARDMHZ", "%d", rdr->cardmhz);
 
-	tpl_printf(vars, TPLADD, "DEVICE", "%s", rdr->device);
+	tpl_addVar(vars, TPLADD, "DEVICE", rdr->device);
 	if(rdr->r_port)
 		tpl_printf(vars, TPLAPPEND, "DEVICE", ",%d", rdr->r_port);
 	if(rdr->l_port) {
@@ -1010,7 +1010,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 
 	//group
 	value = mk_t_group(rdr->grp);
-	tpl_printf(vars, TPLADD, "GRP", "%s", value);
+	tpl_addVar(vars, TPLADD, "GRP", value);
 	free_mk_t(value);
 
 	if(rdr->lb_weight)
@@ -1044,26 +1044,18 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 
 	//ident
 	value = mk_t_ftab(&rdr->ftab);
-	tpl_printf(vars, TPLADD, "IDENTS", "%s", value);
+	tpl_addVar(vars, TPLADD, "IDENTS", value);
 	free_mk_t(value);
 
 	//CHID
 	value = mk_t_ftab(&rdr->fchid);
-	tpl_printf(vars, TPLADD, "CHIDS", "%s", value);
+	tpl_addVar(vars, TPLADD, "CHIDS", value);
 	free_mk_t(value);
 
 	//class
-	CLASSTAB *clstab = &rdr->cltab;
-	char *dot="";
-	for(i = 0; i < clstab->an; ++i) {
-		tpl_printf(vars, TPLAPPEND, "CLASS", "%s%02x", dot, (int)clstab->aclass[i]);
-		dot=",";
-	}
-
-	for(i = 0; i < clstab->bn; ++i) {
-		tpl_printf(vars, TPLADD, "CLASS", "%s!%02x", dot, (int)clstab->bclass[i]);
-		dot=",";
-	}
+	value = mk_t_cltab(&rdr->cltab);
+	tpl_addVar(vars, TPLADD, "CLASS", value);
+	free_mk_t(value);
 
 	if (rdr->show_cls)
 		tpl_printf(vars, TPLADD, "SHOWCLS", "%d", rdr->show_cls);
@@ -1222,10 +1214,10 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 	}
 
 	if (!apicall){
-		tpl_printf(vars, TPLADD, "LABEL", "%s", rdr->label);
-		tpl_printf(vars, TPLADD, "ENCODEDLABEL", "%s", urlencode(vars, rdr->label));
+		tpl_addVar(vars, TPLADD, "LABEL", rdr->label);
+		tpl_addVar(vars, TPLADD, "ENCODEDLABEL", urlencode(vars, rdr->label));
 	} else {
-		tpl_printf(vars, TPLADD, "READERNAME", "%s", rdr->label);
+		tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
 	}
 
 	char *stxt[]={"found", "cache1", "cache2", "emu",
@@ -1239,7 +1231,7 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 
 		for (i=0; i<4; i++) {
 			tpl_addVar(vars, TPLADD, "EMMRESULT", "error");
-			tpl_printf(vars, TPLADD, "EMMTYPE", "%s", ttxt[i]);
+			tpl_addVar(vars, TPLADD, "EMMTYPE", ttxt[i]);
 			tpl_printf(vars, TPLADD, "EMMCOUNT", "%d", rdr->emmerror[i]);
 			tpl_addVar(vars, TPLAPPEND, "EMMSTATS", tpl_getTpl(vars, "APIREADERSTATSEMMBIT"));
 			emmcount += rdr->emmerror[i];
@@ -1248,7 +1240,7 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 		emmcount = 0;
 		for (i=0; i<4; i++) {
 			tpl_addVar(vars, TPLADD, "EMMRESULT", "written");
-			tpl_printf(vars, TPLADD, "EMMTYPE", "%s", ttxt[i]);
+			tpl_addVar(vars, TPLADD, "EMMTYPE", ttxt[i]);
 			tpl_printf(vars, TPLADD, "EMMCOUNT", "%d", rdr->emmwritten[i]);
 			tpl_addVar(vars, TPLAPPEND, "EMMSTATS", tpl_getTpl(vars, "APIREADERSTATSEMMBIT"));
 			emmcount += rdr->emmwritten[i];
@@ -1257,7 +1249,7 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 		emmcount = 0;
 		for (i=0; i<4; i++) {
 			tpl_addVar(vars, TPLADD, "EMMRESULT", "skipped");
-			tpl_printf(vars, TPLADD, "EMMTYPE", "%s", ttxt[i]);
+			tpl_addVar(vars, TPLADD, "EMMTYPE", ttxt[i]);
 			tpl_printf(vars, TPLADD, "EMMCOUNT", "%d", rdr->emmskipped[i]);
 			tpl_addVar(vars, TPLAPPEND, "EMMSTATS", tpl_getTpl(vars, "APIREADERSTATSEMMBIT"));
 			emmcount += rdr->emmskipped[i];
@@ -1266,7 +1258,7 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 		emmcount = 0;
 		for (i=0; i<4; i++) {
 			tpl_addVar(vars, TPLADD, "EMMRESULT", "blocked");
-			tpl_printf(vars, TPLADD, "EMMTYPE", "%s", ttxt[i]);
+			tpl_addVar(vars, TPLADD, "EMMTYPE", ttxt[i]);
 			tpl_printf(vars, TPLADD, "EMMCOUNT", "%d", rdr->emmblocked[i]);
 			tpl_addVar(vars, TPLAPPEND, "EMMSTATS", tpl_getTpl(vars, "APIREADERSTATSEMMBIT"));
 			emmcount += rdr->emmblocked[i];
@@ -1294,9 +1286,9 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 				ecmcount += stat->ecm_count;
 				if (!apicall) {
 					tpl_printf(vars, TPLADD, "CHANNEL", "%04X:%06lX:%04X", stat->caid, stat->prid, stat->srvid);
-					tpl_printf(vars, TPLADD, "CHANNELNAME","%s", xml_encode(vars, get_servicename(cur_client(), stat->srvid, stat->caid)));
+					tpl_addVar(vars, TPLADD, "CHANNELNAME", xml_encode(vars, get_servicename(cur_client(), stat->srvid, stat->caid)));
 					tpl_printf(vars, TPLADD, "ECMLEN","%04hX", stat->ecmlen);
-					tpl_printf(vars, TPLADD, "RC", "%s", stxt[stat->rc]);
+					tpl_addVar(vars, TPLADD, "RC", stxt[stat->rc]);
 					tpl_printf(vars, TPLADD, "TIME", "%dms", stat->time_avg);
 					if (stat->time_stat[stat->time_idx])
 						tpl_printf(vars, TPLADD, "TIMELAST", "%dms", stat->time_stat[stat->time_idx]);
@@ -1319,7 +1311,7 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 					tpl_printf(vars, TPLADD, "ECMTIME", "%d", stat->time_avg);
 					tpl_printf(vars, TPLADD, "ECMTIMELAST", "%d", stat->time_stat[stat->time_idx]);
 					tpl_printf(vars, TPLADD, "ECMRC", "%d", stat->rc);
-					tpl_printf(vars, TPLADD, "ECMRCS", "%s", stxt[stat->rc]);
+					tpl_addVar(vars, TPLADD, "ECMRCS", stxt[stat->rc]);
 					if(stat->last_received) {
 						char tbuffer [30];
 						strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &lt);
@@ -1532,12 +1524,17 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 
 	//ident
 	value = mk_t_ftab(&account->ftab);
-	tpl_printf(vars, TPLADD, "IDENTS", "%s", value);
+	tpl_addVar(vars, TPLADD, "IDENTS", value);
 	free_mk_t(value);
 
 	//CHID
 	value = mk_t_ftab(&account->fchid);
-	tpl_printf(vars, TPLADD, "CHIDS", "%s", value);
+	tpl_addVar(vars, TPLADD, "CHIDS",  value);
+	free_mk_t(value);
+	
+	//class
+	value = mk_t_cltab(&account->cltab);
+	tpl_addVar(vars, TPLADD, "CLASS", value);
 	free_mk_t(value);
 
 	//Betatunnel
@@ -2282,7 +2279,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, int
 				} else {
 					char tbuffer [30];
 					strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &lt);
-					tpl_printf(vars, TPLADD, "CLIENTLOGINDATE", "%s", tbuffer);
+					tpl_addVar(vars, TPLADD, "CLIENTLOGINDATE", tbuffer);
 					tpl_printf(vars, TPLADD, "CLIENTLOGINSECS", "%d", lsec);
 				}
 
@@ -2460,7 +2457,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, int
 				if (p_txt[0]) tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "\t\t<span class=\"%s\">%s\t\t</span><br>\n", p_usr, p_txt);
 			} else {
 				if (strcmp(getParam(params, "appendlog"), "1") == 0)
-					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "%s", p_txt);
+					tpl_addVar(vars, TPLAPPEND, "LOGHISTORY", p_txt);
 			}
 		}
 	} else {
@@ -2722,7 +2719,7 @@ char *send_oscam_scanusb(struct templatevars *vars) {
 	fp = popen("lsusb -v | egrep '^Bus|^ *iSerial|^ *iProduct'", "r");
 	if (fp == NULL) {
 		tpl_addVar(vars, TPLADD, "USBENTRY", "Failed to run lusb");
-		tpl_printf(vars, TPLADD, "USBENTRY", "%s", path);
+		tpl_addVar(vars, TPLADD, "USBENTRY", path);
 		tpl_addVar(vars, TPLAPPEND, "USBBIT", tpl_getTpl(vars, "SCANUSBBIT"));
 		err = 1;
 	}
@@ -2731,7 +2728,7 @@ char *send_oscam_scanusb(struct templatevars *vars) {
 		while (fgets(path, sizeof(path)-1, fp) != NULL) {
 			tpl_addVar(vars, TPLADD, "USBENTRYCLASS", "");
 			if (strstr(path,"Bus ")) {
-				tpl_printf(vars, TPLADD, "USBENTRY", "%s", path);
+				tpl_addVar(vars, TPLADD, "USBENTRY", path);
 				tpl_addVar(vars, TPLADD, "USBENTRYCLASS", "CLASS=\"scanusbsubhead\"");
 			} else {
 				tpl_printf(vars, TPLADD, "USBENTRY", "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%s", path);
@@ -2917,10 +2914,10 @@ char *send_oscam_files(struct templatevars *vars, struct uriparams *params) {
 			if((fp = fopen(targetfile,"r")) == NULL) return "0";
 			while (fgets(buffer, sizeof(buffer), fp) != NULL)
 				if (!strcmp(getParam(params, "filter"), "all"))
-					tpl_printf(vars, TPLAPPEND, "FILECONTENT", "%s", buffer);
+					tpl_addVar(vars, TPLAPPEND, "FILECONTENT", buffer);
 				else
 					if(strstr(buffer,getParam(params, "filter")))
-						tpl_printf(vars, TPLAPPEND, "FILECONTENT", "%s", buffer);
+						tpl_addVar(vars, TPLAPPEND, "FILECONTENT", buffer);
 			fclose (fp);
 		} else {
 			tpl_addVar(vars, TPLAPPEND, "FILECONTENT", "File does not exist or no file selected!");
@@ -2970,7 +2967,7 @@ char *send_oscam_failban(struct templatevars *vars, struct uriparams *params) {
 
 	while ((v_ban_entry=ll_iter_next(itr))) {
 
-		tpl_printf(vars, TPLADD, "IPADDRESS", "%s", cs_inet_ntoa(v_ban_entry->v_ip));
+		tpl_addVar(vars, TPLADD, "IPADDRESS", cs_inet_ntoa(v_ban_entry->v_ip));
 
 		struct tm st ;
 		localtime_r(&v_ban_entry->v_time, &st);
@@ -3393,7 +3390,7 @@ int32_t process_request(FILE *f, struct in_addr in) {
 		if (pgidx == 18) {
 			char tbuffer [30];
 			strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &st);
-			tpl_printf(vars, TPLADD, "APISTARTTIME", "%s", tbuffer);
+			tpl_addVar(vars, TPLADD, "APISTARTTIME", tbuffer);
 			tpl_printf(vars, TPLADD, "APIUPTIME", "%u", now - first_client->login);
 			tpl_printf(vars, TPLADD, "APIREADONLY", "%d", cfg.http_readonly);
 		}
@@ -3405,7 +3402,7 @@ int32_t process_request(FILE *f, struct in_addr in) {
 			tpl_addVar(vars, TPLADD, "LANGUAGE", "en");
 
 		tpl_addVar(vars, TPLADD, "UPTIME", sec2timeformat(vars, (now - first_client->login)));
-		tpl_printf(vars, TPLADD, "CURIP", "%s", cs_inet_ntoa(addr));
+		tpl_addVar(vars, TPLADD, "CURIP", cs_inet_ntoa(addr));
 		if(cfg.http_readonly)
 			tpl_addVar(vars, TPLAPPEND, "BTNDISABLED", "DISABLED");
 
