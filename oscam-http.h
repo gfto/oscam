@@ -1233,6 +1233,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 						<OPTION value=\"1\" ##RESHAREMODE1##>1 - reshare cards+services</OPTION>\n\
 						<OPTION value=\"2\" ##RESHAREMODE2##>2 - reshare reader-services</OPTION>\n\
 						<OPTION value=\"3\" ##RESHAREMODE3##>3 - reshare user-services</OPTION>\n\
+						<OPTION value=\"4\" ##RESHAREMODE4##>4 - reshare only received cards</OPTION>\n\
 					</SELECT>\n\
 				</TD>\n\
 			</TR>\n\

@@ -745,11 +745,11 @@ int32_t report_card(struct cc_card *card, LLIST *new_reported_carddatas)
  * Server:
  * Reports all caid/providers to the connected clients
  * returns 1=ok, 0=error
- *
- * cfg.cc_reshare_services=0 CCCAM reader reshares only received cards
- *                         =1 CCCAM reader reshares received cards + defined services
- *                         =2 CCCAM reader reshares only defined reader-services as virtual cards
- *                         =3 CCCAM reader reshares only defined user-services as virtual cards
+ * cfg.cc_reshare_services 	=0 CCCAM reader reshares only received cards + defined reader services
+ *				=1 CCCAM reader reshares received cards + defined services
+ *				=2 CCCAM reader reshares only defined reader-services as virtual cards
+ *				=3 CCCAM reader reshares only defined user-services as virtual cards
+ *				=4 CCCAM reader reshares only received cards
  */
 void update_card_list() {
     int32_t j, flt;
@@ -806,7 +806,7 @@ void update_card_list() {
             if (reshare == -1) reshare = cfg.cc_reshare;
             
             //Reader-Services:
-            if ((cfg.cc_reshare_services==1||cfg.cc_reshare_services==2||(!rdr->caid && rdr->typ != R_CCCAM)) && 
+            if ((cfg.cc_reshare_services==1||cfg.cc_reshare_services==2||(!rdr->caid && rdr->typ != R_CCCAM && cfg.cc_reshare_services!=4 )) && 
             		cfg.sidtab && (rdr->sidtabno || rdr->sidtabok)) {
                 struct s_sidtab *ptr;
                 for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
@@ -954,7 +954,7 @@ void update_card_list() {
                     cc_free_card(card);
             }
 
-            if (rdr->typ == R_CCCAM && cfg.cc_reshare_services<2 && rdr->card_status != CARD_FAILURE) {
+            if (rdr->typ == R_CCCAM && (cfg.cc_reshare_services<2 || cfg.cc_reshare_services==4) && rdr->card_status != CARD_FAILURE) {
 
                 cs_debug_mask(D_TRACE, "asking reader %s for cards...", rdr->label);
 
