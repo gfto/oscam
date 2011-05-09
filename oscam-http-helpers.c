@@ -312,6 +312,66 @@ char *parse_auth_value(char *value){
 	return pch;
 }
 
+/* Parses the date out of a "If-Modified-Since"-header. Note that the original string is modified. */
+time_t parse_modifiedsince(char * value){
+	int32_t day = -1, month = -1, year = -1, hour = -1, minutes = -1, seconds = -1;
+	char months[12][4] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+	char *str, *saveptr1 = NULL;
+	time_t modifiedheader = 0;
+	value += 18;
+	// Parse over weekday at beginning...
+	while(value[0] == ' ' && value[0] != '\0') ++value;
+	while(value[0] != ' ' && value[0] != '\0') ++value;
+	// According to http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.3.1 three different timeformats are allowed so we need a bit logic to parse all of them...
+	if(value[0] != '\0'){
+		++value;
+		for(month = 0; month < 12; ++month){
+			if(strstr(value, months[month])) break;
+		}
+		if(month > 11) month = -1;
+		for (str=strtok_r(value, " ", &saveptr1); str; str=strtok_r(NULL, " ", &saveptr1)){
+			switch(strlen(str)){
+				case 1:
+				case 2:
+					day = atoi(str);
+					break;
+				
+				case 4:
+					if(str[0] != 'G')
+						year = atoi(str);
+					break;
+					
+				case 8:
+					if(str[2] == ':' && str[5] == ':'){
+						hour = atoi(str);
+						minutes = atoi(str + 3);
+						seconds = atoi(str + 6);
+					}
+					break;
+					
+				case 9:
+					if(str[2] == '-' && str[6] == '-'){
+						day = atoi(str);
+						year = atoi(str + 6) + 2000;
+					}
+					break;
+			}
+		}
+		if(day > 0 && day < 32 && month > 0 && year > 0 && year < 9999 && hour > -1 && hour < 24 && minutes > -1 && minutes < 60 && seconds > -1 && seconds < 60){
+			struct tm timeinfo;
+			memset(&timeinfo, 0, sizeof(timeinfo));
+			timeinfo.tm_mday = day;
+			timeinfo.tm_mon = month;
+			timeinfo.tm_year = year - 1900;
+			timeinfo.tm_hour = hour;
+			timeinfo.tm_min = minutes;
+			timeinfo.tm_sec = seconds;
+			modifiedheader = timegm(&timeinfo);
+		}
+	}	
+	return modifiedheader;
+}
+
 /* Calculates the currently valid nonce value and copies it to result. Please note that result needs to be at least (MD5_DIGEST_LENGTH * 2) + 1 large. */
 void calculate_nonce(char *result){
   char noncetmp[128];
@@ -429,12 +489,12 @@ void send_headers(FILE *f, int32_t status, char *title, char *extra, char *mime,
 
 	if(!cache){
 		pos += snprintf(pos, sizeof(buf)-(pos-buf),"Cache-Control: no-store, no-cache, must-revalidate\r\n");
-		pos += snprintf(pos, sizeof(buf)-(pos-buf),"Expires: Sat, 26 Jul 1997 05:00:00 GMT\r\n");
+		pos += snprintf(pos, sizeof(buf)-(pos-buf),"Expires: Sat, 10 Jan 2000 05:00:00 GMT\r\n");
 	} else {
 		pos += snprintf(pos, sizeof(buf)-(pos-buf),"Cache-Control: public, max-age=7200\r\n");
 	}
 	pos += snprintf(pos, sizeof(buf)-(pos-buf),"Content-Length: %d\r\n", length);
-	pos += snprintf(pos, sizeof(buf)-(pos-buf),"Last-Modified: %s\r\n", timebuf);
+	if(status != 304) pos += snprintf(pos, sizeof(buf)-(pos-buf),"Last-Modified: %s\r\n", timebuf);
 	pos += snprintf(pos, sizeof(buf)-(pos-buf), "Connection: close\r\n");
 	pos += snprintf(pos, sizeof(buf)-(pos-buf),"\r\n");
 	if(forcePlain == 1) fwrite(buf, 1, strlen(buf), f);
@@ -444,7 +504,7 @@ void send_headers(FILE *f, int32_t status, char *title, char *extra, char *mime,
 /*
  * function for sending files.
  */
-void send_file(FILE *f, char *filename){
+void send_file(FILE *f, char *filename, time_t modifiedheader){
 	int32_t fileno = 0;
 	char* mimetype = "";
 
@@ -464,7 +524,11 @@ void send_file(FILE *f, char *filename){
 		int32_t read;
 		struct stat st;
 		
-		stat(filename, &st);		
+		stat(filename, &st);
+		if(st.st_mtime < modifiedheader){
+			send_headers(f, 304, "Not Modified", NULL, NULL, 1, 0, 0);
+			return;
+		}
 		if((fp = fopen(filename, "r"))==NULL) return;
 		send_headers(f, 200, "OK", NULL, mimetype, 1, st.st_size, 0);
 		while((read = fread(buffer,sizeof(char), 1023, fp)) > 0) {
@@ -474,6 +538,10 @@ void send_file(FILE *f, char *filename){
 
 		fclose (fp);
 	} else {
+		if((fileno == 1 || fileno == 2) && first_client->login < modifiedheader){
+			send_headers(f, 304, "Not Modified", NULL, NULL, 1, 0, 0);
+			return;
+		}
 		if (fileno == 1){
 			send_headers(f, 200, "OK", NULL, mimetype, 1, strlen(CSS), 0);
 			webif_write(CSS, f);

@@ -3053,11 +3053,28 @@ char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *param
 	}
 }
 
-char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *params, char *image) {
+char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *params, char *image, time_t modifiedheader) {
 	char *wanted;
+	int8_t disktpl = 0;
 	if(image == NULL) wanted = getParam(params, "i");
 	else wanted = image;
 	if(strlen(wanted) > 3 && wanted[0] == 'I' && wanted[1] == 'C'){
+		if(strlen(cfg.http_tpl) > 0){
+	  	char path[255];
+	  	if(strlen(tpl_getTplPath(wanted, cfg.http_tpl, path, 255)) > 0 && file_exists(path)){
+	  		struct stat st;
+	  		disktpl = 1;		
+				stat(path, &st);
+				if(st.st_mtime < modifiedheader){
+					send_headers(f, 304, "Not Modified", NULL, NULL, 1, 0, 0);
+					return "1";
+				}
+	  	}
+  	}
+  	if(disktpl == 0 && first_client->login < modifiedheader){
+			send_headers(f, 304, "Not Modified", NULL, NULL, 1, 0, 0);
+			return "1";
+		}
 		char *header = strstr(tpl_getTpl(vars, wanted), "data:");
 		if(header != NULL){
 			char *ptr = header + 5;
@@ -3247,8 +3264,8 @@ int32_t process_request(FILE *f, struct in_addr in) {
 	int32_t authok = 0;
 	char expectednonce[(MD5_DIGEST_LENGTH * 2) + 1];
 
-	char *method, *path, *protocol;
-	char *pch, *tmp;
+	char *method, *path, *protocol, *etag, *str1, *saveptr1=NULL, *authheader = NULL, *filebuf = NULL;
+	char *pch, *tmp, *buf;
 	/* List of possible pages */
 	char *pages[]= {
 		"/config.html",
@@ -3274,21 +3291,19 @@ int32_t process_request(FILE *f, struct in_addr in) {
 		"/favicon.ico"};
 
 	int32_t pagescnt = sizeof(pages)/sizeof(char *); // Calculate the amount of items in array
-
-	int32_t pgidx = -1;
-	int32_t i;
+	int32_t i, bufsize, len, pgidx = -1, keepalive = -1;
 	struct uriparams params;
 	params.paramcount = 0;
-
-	char *saveptr1=NULL, *filebuf = NULL;	
-	int32_t bufsize = readRequest(f, in, &filebuf, 0);
+	time_t modifiedheader = 0;
+	
+	bufsize = readRequest(f, in, &filebuf, 0);
 
 	if (!filebuf || bufsize < 1) {
 		cs_debug_mask(D_CLIENT, "WebIf: No data received from client %s. Closing connection.", cs_inet_ntoa(addr));
 		return -1;
 	}
 
-	char *buf=filebuf;
+	buf=filebuf;
 
 	if((method = strtok_r(buf, " ", &saveptr1)) != NULL){
 		if((path = strtok_r(NULL, " ", &saveptr1)) != NULL){
@@ -3317,21 +3332,33 @@ int32_t process_request(FILE *f, struct in_addr in) {
 	if(strlen(cfg.http_user) == 0 || strlen(cfg.http_pwd) == 0) authok = 1;
 	else calculate_nonce(expectednonce);
 
-	char *str1, *saveptr=NULL, *authheader = NULL;
-
-	for (str1=strtok_r(tmp, "\n", &saveptr); str1; str1=strtok_r(NULL, "\n", &saveptr)) {
-		if (strlen(str1)==1) {
+	for (str1=strtok_r(tmp, "\n", &saveptr1); str1; str1=strtok_r(NULL, "\n", &saveptr1)) {
+		len = strlen(str1);
+		if(str1[len - 1] == '\r'){
+			str1[len - 1] = '\0';
+			--len;
+		}
+		if (len==0) {
 			if (strcmp(method, "POST")==0) {
 				parseParams(&params, str1+2);
 			}
 			break;
 		}
-		if(authok == 0 && strlen(str1) > 50 && strncmp(str1, "Authorization:", 14) == 0 && strstr(str1, "Digest") != NULL) {
+		if(authok == 0 && len > 50 && strncmp(str1, "Authorization:", 14) == 0 && strstr(str1, "Digest") != NULL) {
 			if (cs_dblevel & D_CLIENT){
-				if(cs_realloc(&authheader, strlen(str1) + 1, -1))
-					cs_strncpy(authheader, str1, strlen(str1));
+				if(cs_realloc(&authheader, len + 1, -1))
+					cs_strncpy(authheader, str1, len);
 			}
 			authok = check_auth(str1, method, path, expectednonce);
+		} else if (len > 40 && strncmp(str1, "If-Modified-Since:", 18) == 0){
+			modifiedheader = parse_modifiedsince(str1);
+		} else if (len > 10 && strncmp(str1, "ETag:", 5) == 0){
+			for(pch = str1 + 5; pch[0] != '"' && pch[0] != '\0'; ++pch)
+			etag = pch;
+			for(; pch[0] != '"' && pch[0] != '\0'; ++pch)
+			pch[0] = '\0';
+		} else if (len > 12 && strncmp(str1, "Keep-Alive:", 11) == 0){
+			keepalive = atoi(str1 + 11);
 		}
 	}
 
@@ -3354,9 +3381,9 @@ int32_t process_request(FILE *f, struct in_addr in) {
 
 	/*build page*/
 	if(pgidx == 8) {
-		send_file(f, "CSS");
+		send_file(f, "CSS", modifiedheader);
 	} else if (pgidx == 17) {
-		send_file(f, "JS");
+		send_file(f, "JS", modifiedheader);
 	} else {
 		time_t t;
 		struct templatevars *vars = tpl_create();
@@ -3430,8 +3457,8 @@ int32_t process_request(FILE *f, struct in_addr in) {
 			case 16: result = send_oscam_failban(vars, &params); break;
 			//case  17: js file
 			case 18: result = send_oscam_api(vars, f, &params); break;
-			case 19: result = send_oscam_image(vars, f, &params, NULL); break;
-			case 20: result = send_oscam_image(vars, f, &params, "ICMAI"); break;
+			case 19: result = send_oscam_image(vars, f, &params, NULL, modifiedheader); break;
+			case 20: result = send_oscam_image(vars, f, &params, "ICMAI", modifiedheader); break;
 			default: result = send_oscam_status(vars, &params, 0); break;
 		}
 		if(pgidx != 19 && pgidx != 20) pthread_mutex_unlock(&http_lock);
