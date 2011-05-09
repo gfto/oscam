@@ -806,7 +806,7 @@ void update_card_list() {
             if (reshare == -1) reshare = cfg.cc_reshare;
             
             //Reader-Services:
-            if ((cfg.cc_reshare_services==1||cfg.cc_reshare_services==2||!rdr->caid) && 
+            if ((cfg.cc_reshare_services==1||cfg.cc_reshare_services==2||(!rdr->caid && rdr->typ != R_CCCAM)) && 
             		cfg.sidtab && (rdr->sidtabno || rdr->sidtabok)) {
                 struct s_sidtab *ptr;
                 for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
