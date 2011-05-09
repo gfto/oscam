@@ -674,9 +674,9 @@ void cs_exit(int32_t sig)
 	// this is very important - do not remove
 	if (cl->typ != 's') {
 		if(cl->typ != 'i') cs_log("thread %8X ended!", pthread_self());
-		#ifdef NO_PTHREAD_CLEANUP_PUSH
+#ifdef NO_PTHREAD_CLEANUP_PUSH
 		cleanup_thread(cl);
-		#endif
+#endif
 		//Restore signals before exiting thread
 		set_signal_handler(SIGPIPE , 0, cs_sigpipe);
 		set_signal_handler(SIGHUP  , 1, cs_reload_config);
@@ -1181,9 +1181,12 @@ static void kill_thread_int(struct s_client *cl) { //cs_exit is used to let thre
 		++cnt;
 	}
 	if(!exit_oscam && cl && !cl->cleaned){
-		cs_log("A thread didn't cleanup itself. Forcing cleanup for type %c (%s,%s)", cl->typ, cl->reader?cl->reader->label : cl->account?cl->account->usr?cl->account->usr: "" : "", cl->ip ? cs_inet_ntoa(cl->ip) : "");
-		cleanup_thread(cl);
+		cs_log("A thread didn't cleanup itself for type %c (%s,%s)", cl->typ, cl->reader?cl->reader->label : cl->account?cl->account->usr?cl->account->usr: "" : "", cl->ip ? cs_inet_ntoa(cl->ip) : "");
+		//Schlocke: Sometimes on high load a cleanup could take up to 10seconds! so if this took so long, double cleanups causes segfaults!
+		//So only log it, but do NOT call cleanup_thread() !!
+		//cleanup_thread(cl);
 	}
+		
 #else
 	cs_sleepms(50);
 	cleanup_thread(cl);
