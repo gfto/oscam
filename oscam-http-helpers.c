@@ -352,7 +352,7 @@ time_t parse_modifiedsince(char * value){
 				case 9:
 					if(str[2] == '-' && str[6] == '-'){
 						day = atoi(str);
-						year = atoi(str + 6) + 2000;
+						year = atoi(str + 7) + 2000;
 					}
 					break;
 			}
@@ -468,10 +468,11 @@ int32_t webif_read(char *buf, int32_t num, FILE *f) {
 		return read(fileno(f), buf, num);
 }
 
-void send_headers(FILE *f, int32_t status, char *title, char *extra, char *mime, int32_t cache, int32_t length, int8_t forcePlain){
+
+void send_headers(FILE *f, int32_t status, char *title, char *extra, char *mime, int32_t cache, int32_t length, char *content, int8_t forcePlain){
   time_t now;
   char timebuf[32];
-  char buf[sizeof(PROTOCOL) + sizeof(SERVER) + strlen(title) + (extra == NULL?0:strlen(extra)+2) + (mime == NULL?0:strlen(mime)+2) + 300];
+  char buf[sizeof(PROTOCOL) + sizeof(SERVER) + strlen(title) + (extra == NULL?0:strlen(extra)+2) + (mime == NULL?0:strlen(mime)+2) + 350];
   char *pos = buf;
 	
   pos += snprintf(pos, sizeof(buf)-(pos-buf), "%s %d %s\r\n", PROTOCOL, status, title);
@@ -487,26 +488,49 @@ void send_headers(FILE *f, int32_t status, char *title, char *extra, char *mime,
 	if (mime)
 		pos += snprintf(pos, sizeof(buf)-(pos-buf),"Content-Type: %s\r\n", mime);
 
-	if(!cache){
-		pos += snprintf(pos, sizeof(buf)-(pos-buf),"Cache-Control: no-store, no-cache, must-revalidate\r\n");
-		pos += snprintf(pos, sizeof(buf)-(pos-buf),"Expires: Sat, 10 Jan 2000 05:00:00 GMT\r\n");
-	} else {
-		pos += snprintf(pos, sizeof(buf)-(pos-buf),"Cache-Control: public, max-age=7200\r\n");
+	if(status != 304){
+		if(!cache){
+			pos += snprintf(pos, sizeof(buf)-(pos-buf),"Cache-Control: no-store, no-cache, must-revalidate\r\n");
+			pos += snprintf(pos, sizeof(buf)-(pos-buf),"Expires: Sat, 10 Jan 2000 05:00:00 GMT\r\n");
+		} else {
+			pos += snprintf(pos, sizeof(buf)-(pos-buf),"Cache-Control: public, max-age=7200\r\n");
+		}
+		pos += snprintf(pos, sizeof(buf)-(pos-buf),"Content-Length: %d\r\n", length);
+		pos += snprintf(pos, sizeof(buf)-(pos-buf),"Last-Modified: %s\r\n", timebuf);
+		if(content){
+			pos += snprintf(pos, sizeof(buf)-(pos-buf),"ETag: \"%u\"\r\n", (uint32_t)crc32(0L, (uchar *)content, strlen(content)));
+		}
 	}
-	pos += snprintf(pos, sizeof(buf)-(pos-buf),"Content-Length: %d\r\n", length);
-	if(status != 304) pos += snprintf(pos, sizeof(buf)-(pos-buf),"Last-Modified: %s\r\n", timebuf);
 	pos += snprintf(pos, sizeof(buf)-(pos-buf), "Connection: close\r\n");
 	pos += snprintf(pos, sizeof(buf)-(pos-buf),"\r\n");
 	if(forcePlain == 1) fwrite(buf, 1, strlen(buf), f);
 	else webif_write(buf, f);
 }
 
+
+void send_error(FILE *f, int32_t status, char *title, char *extra, char *text, int8_t forcePlain){
+	char buf[(2* strlen(title)) + strlen(text) + 128];
+	char *pos = buf;
+	send_headers(f, status, title, extra, "text/html", 0, strlen(buf), NULL, forcePlain);
+	pos += snprintf(pos, sizeof(buf)-(pos-buf), "<HTML><HEAD><TITLE>%d %s</TITLE></HEAD>\r\n", status, title);
+	pos += snprintf(pos, sizeof(buf)-(pos-buf), "<BODY><H4>%d %s</H4>\r\n", status, title);
+	pos += snprintf(pos, sizeof(buf)-(pos-buf), "%s\r\n", text);
+	pos += snprintf(pos, sizeof(buf)-(pos-buf), "</BODY></HTML>\r\n");
+	if(forcePlain == 1) fwrite(buf, 1, strlen(buf), f);
+	else webif_write(buf, f);
+}
+
+void send_error500(FILE *f){
+	send_error(f, 500, "Internal Server Error", NULL, "The server encountered an internal error that prevented it from fulfilling this request.", 0);
+}
+
 /*
  * function for sending files.
  */
-void send_file(FILE *f, char *filename, time_t modifiedheader){
+void send_file(FILE *f, char *filename, time_t modifiedheader, uint32_t etagheader){
 	int32_t fileno = 0;
-	char* mimetype = "";
+	char* mimetype = "", *result = "";
+	time_t moddate;
 
 	if (!strcmp(filename, "CSS")){
 		filename = cfg.http_css;
@@ -520,52 +544,41 @@ void send_file(FILE *f, char *filename, time_t modifiedheader){
 
 	if(strlen(filename) > 0 && file_exists(filename) == 1){
 		FILE *fp;
-		char buffer[1024];
+		char buffer[1024], *pos;
 		int32_t read;
 		struct stat st;
 		
 		stat(filename, &st);
-		if(st.st_mtime < modifiedheader){
-			send_headers(f, 304, "Not Modified", NULL, NULL, 1, 0, 0);
-			return;
-		}
+		moddate = st.st_mtime;
 		if((fp = fopen(filename, "r"))==NULL) return;
-		send_headers(f, 200, "OK", NULL, mimetype, 1, st.st_size, 0);
-		while((read = fread(buffer,sizeof(char), 1023, fp)) > 0) {
-			buffer[read] = '\0';			
-			webif_write(buffer, f);
-		}
-
-		fclose (fp);
-	} else {
-		if((fileno == 1 || fileno == 2) && first_client->login < modifiedheader){
-			send_headers(f, 304, "Not Modified", NULL, NULL, 1, 0, 0);
+		if(!cs_malloc(&result, st.st_size + 1, -1)){
+			send_error500(f);
+			fclose(fp);
 			return;
 		}
+		result[0] = '\0';
+		pos = result;
+		while((read = fread(buffer,sizeof(char), 1023, fp)) > 0) {
+			buffer[read] = '\0';
+			if(pos + read > result + st.st_size) break;		//nasty, file has grown while reading	
+			memcpy(&pos, buffer, read);
+			pos += read;	
+		}		
+		fclose(fp);
+	} else {
+		moddate = first_client->login;
 		if (fileno == 1){
-			send_headers(f, 200, "OK", NULL, mimetype, 1, strlen(CSS), 0);
-			webif_write(CSS, f);
+			result = CSS;
 		} else if (fileno == 2){
-			send_headers(f, 200, "OK", NULL, mimetype, 1, strlen(JSCRIPT), 0);
-			webif_write(JSCRIPT, f);
+			result = JSCRIPT;
 		}
 	}
-}
-
-void send_error(FILE *f, int32_t status, char *title, char *extra, char *text, int8_t forcePlain){
-	char buf[(2* strlen(title)) + strlen(text) + 128];
-	char *pos = buf;
-	send_headers(f, status, title, extra, "text/html", 0, strlen(buf), forcePlain);
-	pos += snprintf(pos, sizeof(buf)-(pos-buf), "<HTML><HEAD><TITLE>%d %s</TITLE></HEAD>\r\n", status, title);
-	pos += snprintf(pos, sizeof(buf)-(pos-buf), "<BODY><H4>%d %s</H4>\r\n", status, title);
-	pos += snprintf(pos, sizeof(buf)-(pos-buf), "%s\r\n", text);
-	pos += snprintf(pos, sizeof(buf)-(pos-buf), "</BODY></HTML>\r\n");
-	if(forcePlain == 1) fwrite(buf, 1, strlen(buf), f);
-	else webif_write(buf, f);
-}
-
-void send_error500(FILE *f){
-	send_error(f, 500, "Internal Server Error", NULL, "The server encountered an internal error that prevented it from fulfilling this request.", 0);
+	if(moddate < modifiedheader || (uint32_t)crc32(0L, (uchar *)result, strlen(result)) == etagheader){
+		send_headers(f, 304, "Not Modified", NULL, NULL, 1, strlen(result), result, 0);
+	} else {
+		send_headers(f, 200, "OK", NULL, mimetype, 1, strlen(result), result, 0);
+		webif_write(result, f);
+	}
 }
 
 /* Helper function for urldecode.*/

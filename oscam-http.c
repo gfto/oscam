@@ -2638,7 +2638,7 @@ char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *
 			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			tpl_printf(vars, TPLADD, "SECONDS", "%d", SHUTDOWNREFRESH);
 			char *result = tpl_getTpl(vars, "SHUTDOWN");
-			send_headers(f, 200, "OK", NULL, "text/html", 0, strlen(result), 0);
+			send_headers(f, 200, "OK", NULL, "text/html", 0, strlen(result), NULL, 0);
 			webif_write(result, f);
 			cs_log("Shutdown requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
 		} else {
@@ -2663,7 +2663,7 @@ char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *
 			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			tpl_addVar(vars, TPLADD, "SECONDS", "5");
 			char *result = tpl_getTpl(vars, "SHUTDOWN");
-			send_headers(f, 200, "OK", NULL, "text/html", 0,strlen(result), 0);
+			send_headers(f, 200, "OK", NULL, "text/html", 0,strlen(result), NULL, 0);
 			webif_write(result, f);
 			cs_log("Restart requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
 		} else {
@@ -3053,7 +3053,7 @@ char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *param
 	}
 }
 
-char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *params, char *image, time_t modifiedheader) {
+char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *params, char *image, time_t modifiedheader, uint32_t etagheader) {
 	char *wanted;
 	int8_t disktpl = 0;
 	if(image == NULL) wanted = getParam(params, "i");
@@ -3066,13 +3066,13 @@ char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *par
 	  		disktpl = 1;		
 				stat(path, &st);
 				if(st.st_mtime < modifiedheader){
-					send_headers(f, 304, "Not Modified", NULL, NULL, 1, 0, 0);
+					send_headers(f, 304, "Not Modified", NULL, NULL, 1, 0, NULL, 0);
 					return "1";
 				}
 	  	}
   	}
   	if(disktpl == 0 && first_client->login < modifiedheader){
-			send_headers(f, 304, "Not Modified", NULL, NULL, 1, 0, 0);
+			send_headers(f, 304, "Not Modified", NULL, NULL, 1, 0, NULL, 0);
 			return "1";
 		}
 		char *header = strstr(tpl_getTpl(vars, wanted), "data:");
@@ -3085,8 +3085,12 @@ char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *par
 			if(ptr != NULL){
 				int32_t len = b64decode((uchar *)ptr + 7);
 				if(len > 0){
-					send_headers(f, 200, "OK", NULL, header + 5, 1, len, 0);
-					webif_write_raw(ptr + 7, f, len);
+					if((uint32_t)crc32(0L, (uchar *)ptr + 7, strlen(ptr + 7)) == etagheader){
+						send_headers(f, 304, "Not Modified", NULL, NULL, 1, strlen(ptr + 7), ptr + 7, 0);
+					} else {
+						send_headers(f, 200, "OK", NULL, header + 5, 1, len, ptr + 7, 0);
+						webif_write_raw(ptr + 7, f, len);
+					}
 					return "1";
 				}
 			}
@@ -3264,7 +3268,7 @@ int32_t process_request(FILE *f, struct in_addr in) {
 	int32_t authok = 0;
 	char expectednonce[(MD5_DIGEST_LENGTH * 2) + 1];
 
-	char *method, *path, *protocol, *etag, *str1, *saveptr1=NULL, *authheader = NULL, *filebuf = NULL;
+	char *method, *path, *protocol, *str1, *saveptr1=NULL, *authheader = NULL, *filebuf = NULL;
 	char *pch, *tmp, *buf;
 	/* List of possible pages */
 	char *pages[]= {
@@ -3292,6 +3296,7 @@ int32_t process_request(FILE *f, struct in_addr in) {
 
 	int32_t pagescnt = sizeof(pages)/sizeof(char *); // Calculate the amount of items in array
 	int32_t i, bufsize, len, pgidx = -1, keepalive = -1;
+	uint32_t etagheader = 0;
 	struct uriparams params;
 	params.paramcount = 0;
 	time_t modifiedheader = 0;
@@ -3352,11 +3357,9 @@ int32_t process_request(FILE *f, struct in_addr in) {
 			authok = check_auth(str1, method, path, expectednonce);
 		} else if (len > 40 && strncmp(str1, "If-Modified-Since:", 18) == 0){
 			modifiedheader = parse_modifiedsince(str1);
-		} else if (len > 10 && strncmp(str1, "ETag:", 5) == 0){
-			for(pch = str1 + 5; pch[0] != '"' && pch[0] != '\0'; ++pch)
-			etag = pch;
-			for(; pch[0] != '"' && pch[0] != '\0'; ++pch)
-			pch[0] = '\0';
+		} else if (len > 20 && strncmp(str1, "If-None-Match:", 14) == 0){
+			for(pch = str1 + 14; pch[0] != '"' && pch[0] != '\0'; ++pch);
+			if(strlen(pch) > 5) etagheader = (uint32_t)strtoul(++pch, NULL, 10);
 		} else if (len > 12 && strncmp(str1, "Keep-Alive:", 11) == 0){
 			keepalive = atoi(str1 + 11);
 		}
@@ -3373,7 +3376,7 @@ int32_t process_request(FILE *f, struct in_addr in) {
 		char temp[sizeof(AUTHREALM) + sizeof(expectednonce) + 100];
 		snprintf(temp, sizeof(temp), "WWW-Authenticate: Digest algorithm=\"MD5\", realm=\"%s\", qop=\"auth\", opaque=\"\", nonce=\"%s\"", AUTHREALM, expectednonce);
 		if(authok == 2) strncat(temp, ", stale=true", sizeof(temp));
-		send_headers(f, 401, "Unauthorized", temp, "text/html", 0, 0, 0);
+		send_headers(f, 401, "Unauthorized", temp, "text/html", 0, 0, NULL, 0);
 		NULLFREE(authheader);
 		free(filebuf);
 		return 0;
@@ -3381,9 +3384,9 @@ int32_t process_request(FILE *f, struct in_addr in) {
 
 	/*build page*/
 	if(pgidx == 8) {
-		send_file(f, "CSS", modifiedheader);
+		send_file(f, "CSS", modifiedheader, etagheader);
 	} else if (pgidx == 17) {
-		send_file(f, "JS", modifiedheader);
+		send_file(f, "JS", modifiedheader, etagheader);
 	} else {
 		time_t t;
 		struct templatevars *vars = tpl_create();
@@ -3457,18 +3460,19 @@ int32_t process_request(FILE *f, struct in_addr in) {
 			case 16: result = send_oscam_failban(vars, &params); break;
 			//case  17: js file
 			case 18: result = send_oscam_api(vars, f, &params); break;
-			case 19: result = send_oscam_image(vars, f, &params, NULL, modifiedheader); break;
-			case 20: result = send_oscam_image(vars, f, &params, "ICMAI", modifiedheader); break;
+			case 19: result = send_oscam_image(vars, f, &params, NULL, modifiedheader, etagheader); break;
+			case 20: result = send_oscam_image(vars, f, &params, "ICMAI", modifiedheader, etagheader); break;
 			default: result = send_oscam_status(vars, &params, 0); break;
 		}
 		if(pgidx != 19 && pgidx != 20) pthread_mutex_unlock(&http_lock);
 
 		if(result == NULL || !strcmp(result, "0") || strlen(result) == 0) send_error500(f);
 		else if (strcmp(result, "1")) {
+			//it doesn't make sense to check for modified etagheader here as standard template has timestamp in output and so site changes on every request
 			if (pgidx == 18)
-				send_headers(f, 200, "OK", NULL, "text/xml", 0, strlen(result), 0);
+				send_headers(f, 200, "OK", NULL, "text/xml", 0, strlen(result), NULL, 0);
 			else
-				send_headers(f, 200, "OK", NULL, "text/html", 0, strlen(result), 0);
+				send_headers(f, 200, "OK", NULL, "text/html", 0, strlen(result), NULL, 0);
 			webif_write(result, f);
 		}
 		tpl_clear(vars);
