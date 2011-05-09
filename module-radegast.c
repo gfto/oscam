@@ -220,8 +220,7 @@ int32_t radegast_cli_init(struct s_client *cl)
 {
   *cl = *cl; //prevent compiler warning
   struct sockaddr_in loc_sa;
-  struct protoent *ptrp;
-  int32_t p_proto, handle;
+  int32_t handle;
 
   cur_client()->pfd=0;
   if (cur_client()->reader->r_port<=0)
@@ -229,10 +228,6 @@ int32_t radegast_cli_init(struct s_client *cl)
     cs_log("radegast: invalid port %d for server %s", cur_client()->reader->r_port, cur_client()->reader->device);
     return(1);
   }
-  if( (ptrp=getprotobyname("tcp")) )
-    p_proto=ptrp->p_proto;
-  else
-    p_proto=6;
 
   cur_client()->ip=0;
   memset((char *)&loc_sa,0,sizeof(loc_sa));
@@ -245,7 +240,7 @@ int32_t radegast_cli_init(struct s_client *cl)
     loc_sa.sin_addr.s_addr = INADDR_ANY;
   loc_sa.sin_port = htons(cur_client()->reader->l_port);
 
-  if ((cur_client()->udp_fd=socket(PF_INET, SOCK_STREAM, p_proto))<0)
+  if ((cur_client()->udp_fd=socket(PF_INET, SOCK_STREAM, IPPROTO_TCP))<0)
   {
     cs_log("radegast: Socket creation failed (errno=%d %s)", errno, strerror(errno));
     cs_exit(1);

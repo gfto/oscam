@@ -838,7 +838,8 @@ uchar fast_rnd() {
 }
 
 void init_rnd() {
-	 seed = (uint32_t) time((time_t*)0);
+	srand((uint32_t)time((time_t *)NULL));
+	seed = (uint32_t) time((time_t*)0);
 }
 
 int32_t hexserialset(struct s_reader *rdr)

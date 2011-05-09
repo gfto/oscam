@@ -387,8 +387,6 @@ static void casc_set_account()
 int32_t camd35_client_init(struct s_client *client)
 {
   struct sockaddr_in loc_sa;
-  struct protoent *ptrp;
-  int32_t p_proto;//, sock_type;
   char ptxt[16];
 
   client->pfd=0;
@@ -398,10 +396,6 @@ int32_t camd35_client_init(struct s_client *client)
     return(1);
   }
   client->is_udp=(client->reader->typ==R_CAMD35);
-  if( (ptrp=getprotobyname(client->is_udp ? "udp" : "tcp")) )
-    p_proto=ptrp->p_proto;
-  else
-    p_proto=(client->is_udp) ? 17 : 6;	// use defaults on error
 
   client->ip=0;
   memset((char *)&loc_sa,0,sizeof(loc_sa));
@@ -414,7 +408,7 @@ int32_t camd35_client_init(struct s_client *client)
     loc_sa.sin_addr.s_addr = INADDR_ANY;
   loc_sa.sin_port = htons(client->reader->l_port);
 
-  if ((client->udp_fd=socket(PF_INET, client->is_udp ? SOCK_DGRAM : SOCK_STREAM, p_proto))<0)
+  if ((client->udp_fd=socket(PF_INET, client->is_udp ? SOCK_DGRAM : SOCK_STREAM, client->is_udp ? IPPROTO_UDP : IPPROTO_TCP))<0)
   {
     cs_log("Socket creation failed (errno=%d %s)", errno, strerror(errno));
     cs_exit(1);
@@ -457,8 +451,6 @@ int32_t camd35_client_init(struct s_client *client)
 int32_t camd35_client_init_log()
 {
   struct sockaddr_in loc_sa;
-  struct protoent *ptrp;
-  int32_t p_proto;
   struct s_client *cl = cur_client();
 
   if (cl->reader->log_port<=0)
@@ -467,18 +459,12 @@ int32_t camd35_client_init_log()
     return(1);
   }
 
-  ptrp=getprotobyname("udp");
-  if (ptrp)
-    p_proto=ptrp->p_proto;
-  else
-    p_proto=17;	// use defaults on error
-
   memset((char *)&loc_sa,0,sizeof(loc_sa));
   loc_sa.sin_family = AF_INET;
   loc_sa.sin_addr.s_addr = INADDR_ANY;
   loc_sa.sin_port = htons(cl->reader->log_port);
 
-  if ((logfd=socket(PF_INET, SOCK_DGRAM, p_proto))<0)
+  if ((logfd=socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP))<0)
   {
     cs_log("Socket creation failed (errno=%d %s)", errno, strerror(errno));
     return(1);

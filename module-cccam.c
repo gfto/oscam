@@ -3114,9 +3114,6 @@ int32_t cc_cli_init_int(struct s_client *cl) {
 	if (rdr->tcp_connected)
 		return 1;
 
-	struct protoent *ptrp;
-	int32_t p_proto;
-
 	if (cl->pfd) {
 		close(cl->pfd);
 		if (cl->pfd == cl->udp_fd)
@@ -3134,11 +3131,6 @@ int32_t cc_cli_init_int(struct s_client *cl) {
 				rdr->device);
 		return 1;
 	}
-	if ((ptrp = getprotobyname("tcp")))
-		p_proto = ptrp->p_proto;
-	else
-		p_proto = 6;
-
 	//		cl->ip = 0;
 	//		memset((char *) &loc_sa, 0, sizeof(loc_sa));
 	//		loc_sa.sin_family = AF_INET;
@@ -3151,7 +3143,7 @@ int32_t cc_cli_init_int(struct s_client *cl) {
 	//		loc_sa.sin_port = htons(rdr->l_port);
 
 		
-	if ((cl->udp_fd = socket(PF_INET, SOCK_STREAM, p_proto)) <= 0) {
+	if ((cl->udp_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) <= 0) {
 		cs_log("%s Socket creation failed (socket=%d, errno=%d %s)", rdr->label,
 				cl->udp_fd, errno, strerror(errno));
 		return 1;

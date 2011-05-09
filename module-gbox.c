@@ -844,25 +844,15 @@ static int32_t gbox_client_init(struct s_client *cli)
   gbox->type = 0x32;
 
   struct sockaddr_in loc_sa;
-  struct protoent *ptrp;
-  int32_t p_proto;
-
   cli->pfd=0;
-
   cli->is_udp = 1;
-
-	if ((ptrp=getprotobyname("udp")))
-		p_proto=ptrp->p_proto;
-	else
-		p_proto=(cli->is_udp) ? 17 : 6;
-
 	cli->ip=0;
 	memset((char *)&loc_sa,0,sizeof(loc_sa));
 	loc_sa.sin_family = AF_INET;
   loc_sa.sin_addr.s_addr = INADDR_ANY;
   loc_sa.sin_port = htons(cfg.gbox_port);
 
-  if ((cli->udp_fd=socket(PF_INET, SOCK_DGRAM, p_proto))<0)
+  if ((cli->udp_fd=socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP))<0)
    {
         cs_log("socket creation failed (errno=%d %s)", errno, strerror(errno));
         cs_exit(1);

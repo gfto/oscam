@@ -1091,8 +1091,6 @@ static void * newcamd_server(void *cli)
 int32_t newcamd_client_init(struct s_client *client)
 {
   struct sockaddr_in loc_sa;
-  struct protoent *ptrp;
-  int32_t p_proto;
   char ptxt[16];
 
   client->pfd=0;
@@ -1101,10 +1099,6 @@ int32_t newcamd_client_init(struct s_client *client)
     cs_log("invalid port %d for server %s", client->reader->r_port, client->reader->device);
     return(1);
   }
-  if( (ptrp=getprotobyname("tcp")) )
-    p_proto=ptrp->p_proto;
-  else
-    p_proto=6;
 
   client->ip=0;
   memset((char *)&loc_sa,0,sizeof(loc_sa));
@@ -1117,7 +1111,7 @@ int32_t newcamd_client_init(struct s_client *client)
     loc_sa.sin_addr.s_addr = INADDR_ANY;
   loc_sa.sin_port = htons(client->reader->l_port);
 
-  if ((client->udp_fd=socket(PF_INET, SOCK_STREAM, p_proto))<0)
+  if ((client->udp_fd=socket(PF_INET, SOCK_STREAM, IPPROTO_TCP))<0)
   {
     cs_log("Socket creation failed (errno=%d %s)", errno, strerror(errno));
     cs_exit(1);
