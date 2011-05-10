@@ -98,6 +98,7 @@ struct cc_card {
 	struct s_sidtab *sidtab; //pointer to sidtab entry if card_type = CT_CARD_BY_SERVICE
 	uint64_t grp;
 	uint8_t rdr_reshare;
+	SIDTABBITS sidtabno;
 };
 
 struct cc_auto_blocked {
