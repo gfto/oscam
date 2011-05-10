@@ -119,7 +119,7 @@ int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32
 		        //bad sids:
 		        int32_t n;
 		        for (n=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,n++) {
-						if (cl->sidtabno&((SIDTABBITS)1<<n)) {
+						if (cl->sidtabno&((SIDTABBITS)1<<n) || card->sidtabno&((SIDTABBITS)1<<n)) {
                 				int32_t m;
                 				int32_t ok_caid = FALSE;
                 				for (m=0;m<ptr->num_caid;m++) { //search bad sids for this caid:
@@ -542,6 +542,7 @@ struct cc_card *create_card2(struct s_reader *rdr, int32_t j, uint16_t caid, uin
     if (rdr) {
     	card->grp = rdr->grp;
     	card->rdr_reshare = rdr->cc_reshare; //copy reshare because reader could go offline
+    	card->sidtabno = rdr->sidtabno;
 	}
 	else card->rdr_reshare = reshare;
     return card;
