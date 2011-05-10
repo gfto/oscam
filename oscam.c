@@ -276,7 +276,7 @@ static void usage()
   fprintf(stderr, "\t-r <level> : restart level\n");
   fprintf(stderr, "\t               0 = disabled, restart request sets exit status 99\n");
   fprintf(stderr, "\t               1 = restart activated, web interface can restart oscam (default)\n");
-  fprintf(stderr, "\t               2 = like 1, but also restart on SEGFAULTS\n");
+  fprintf(stderr, "\t               2 = like 1, but also restart on segmentation faults\n");
 #endif
   fprintf(stderr, "\t-h         : show this help\n");
   fprintf(stderr, "\n");
@@ -890,7 +890,7 @@ static void init_first_client()
 	// get username OScam is running under
 	struct passwd pwd;
 	char buf[256];
-	struct passwd *pwdbuf; 
+	struct passwd *pwdbuf;
 	if ((getpwuid_r(getuid(), &pwd, buf, sizeof(buf), &pwdbuf)) == 0){
 		if(cs_malloc(&processUsername, strlen(pwd.pw_name) + 1, -1))
 			cs_strncpy(processUsername, pwd.pw_name, strlen(pwd.pw_name) + 1);
@@ -3467,7 +3467,7 @@ if (pthread_key_create(&getclient, NULL)) {
   init_config();
   init_check();
   init_stat();
-  
+
   for (i=0; mod_def[i]; i++)  // must be later BEFORE init_config()
   {
     memset(&ph[i], 0, sizeof(struct s_module));

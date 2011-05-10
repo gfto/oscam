@@ -75,7 +75,7 @@ OPTIONS
 
 	     0 = disabled, restart request sets exit status to 99
 	     1 = restart activated, web interface can restart oscam (default)
-	     2 = like 1, but also restart on SEGFAULTS
+	     2 = like 1, but also restart on segmentation faults
 
 SIGNALS
        SIGHUP
