@@ -616,7 +616,7 @@ int32_t equal_providers(struct cc_card *card1, struct cc_card *card2) {
 /**
  * Adds a new card to a cardlist.
  */
-int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
+int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_card) {
 
     int32_t modified = 0;
     LL_ITER *it = ll_iter_create(cardlist);
@@ -637,18 +637,23 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
                 if (nnew <= CS_MAXPROV)
                     break;
             }
-        if (!card2) {
-            card2 = create_card(card);
-            card2->hop = 0;
-            ll_clear_data(card2->badsids);
-            ll_iter_insert(it, card2);
+        if (!card2) { //Not found->add it:
+        	if (free_card) { //Use this card
+        		free_card = FALSE;
+        		ll_iter_insert(it, card);
+			} else {
+            	card2 = create_card(card); //Copy card
+            	card2->hop = 0;
+            	ll_clear_data(card2->badsids);
+			    ll_iter_insert(it, card2);
+			    add_card_providers(card2, card, 0); //merge all providers
+			}
             modified = 1;
 
-        }
-        else card_dup_count++;
-
-        add_card_providers(card2, card, 0); //merge all providers
-
+        } else { //found, merge providers:
+        	 card_dup_count++;
+        	 add_card_providers(card2, card, 0); //merge all providers
+		}
     }
 
     //Removed duplicate cards, keeping card with lower hop:
@@ -667,14 +672,21 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
             card_dup_count++;
         }
 
-        if (!card2) {
-            card2 = create_card(card);
-            ll_clear_data(card2->badsids);
-            ll_iter_insert(it, card2);
-            add_card_providers(card2, card, 1);
+        if (!card2) { //Not found->add it:
+        	if (free_card) { //use this card
+        		free_card = FALSE;
+        		ll_iter_insert(it, card);
+			} else { 
+            	card2 = create_card(card); //copy card
+            	ll_clear_data(card2->badsids);
+            	ll_iter_insert(it, card2);
+            	add_card_providers(card2, card, 1);
+			}
             modified = 1;
-        }
-        else card_dup_count++;
+        } else { //found, merge providers:
+        	card_dup_count++;
+        	add_card_providers(card2, card, 1);
+		}
 
     }
     //like cccam:
@@ -684,21 +696,31 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
             if (same_card(card, card2))
                 break;
         }
-        if (card2 && card2->hop > card->hop) {
+        if (card2 && card2->hop > card->hop) { //same card, if hop greater drop card
             cc_free_card(card2);
             ll_iter_remove(it);
             card2 = NULL;
             card_dup_count++;
         }
-        if (!card2) {
-            card2 = create_card(card);
-            ll_iter_insert(it, card2);
-            add_card_providers(card2, card, 1);
+        if (!card2) { //Not found, add it:
+        	if (free_card) {
+        		free_card = FALSE;
+        		ll_iter_insert(it, card);
+        	} else {
+            	card2 = create_card(card);
+            	ll_iter_insert(it, card2);
+            	add_card_providers(card2, card, 1);
+			}
             modified = 1;
-        }
-        else card_dup_count++;
+        } else { //Found, everything is same (including providers)
+        	card_dup_count++;
+		}
     }
     ll_iter_release(it);
+    
+    if (free_card)
+    	cc_free_card(card);
+    	
     return modified;
 }
 
@@ -778,7 +800,7 @@ void update_card_list() {
                         ll_append(card->providers, prov);
                     }
 
-                    add_card_to_serverlist(server_cards, card);
+                    add_card_to_serverlist(server_cards, card, TRUE);
                 }
                 flt=1;
         }
@@ -827,7 +849,7 @@ void update_card_list() {
                             	if (!rdr->audisabled)
 									cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, card->caid);
                         
-	                            add_card_to_serverlist(server_cards, card);
+	                            add_card_to_serverlist(server_cards, card, TRUE);
 	                    	    flt=1;
 							}
 						}
@@ -865,7 +887,7 @@ void update_card_list() {
                             ll_append(card->providers, prov);
                         }
 
-						add_card_to_serverlist(server_cards, card);
+						add_card_to_serverlist(server_cards, card, TRUE);
                         flt = 1;
                     }
                 }
@@ -885,7 +907,7 @@ void update_card_list() {
                         if (!rdr->audisabled)
                             cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, lcaid);
 
-                        add_card_to_serverlist(server_cards, card);
+                        add_card_to_serverlist(server_cards, card, TRUE);
                         flt = 1;
                     }
                 }
@@ -894,64 +916,59 @@ void update_card_list() {
             if ((rdr->typ != R_CCCAM) && rdr->ctab.caid[0] && !flt) {
                 //cs_log("tcp_connected: %d card_status: %d ", rdr->tcp_connected, rdr->card_status);
                 int32_t c;
-                for (c=0;c<CS_MAXCAIDTAB;c++) 
-                {
+   		        if (rdr->tcp_connected || rdr->card_status == CARD_INSERTED) {
+	                for (c=0;c<CS_MAXCAIDTAB;c++) 
+	                {
 						uint16_t caid = rdr->ctab.caid[c];
-						if (!caid) continue;
+						if (!caid) break;
 						
 						struct cc_card *card = create_card2(rdr, c, caid, 0, reshare);
-        		        card->card_type = CT_CARD_BY_CAID;
-                
-        		        if (!rdr->audisabled)
-        		        		cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, caid);
-		                for (j = 0; j < rdr->nprov; j++) {
-        		            uint32_t prid = get_reader_prid(rdr, j);
+						card->card_type = CT_CARD_BY_CAID;
+	                
+	    		        if (!rdr->audisabled)
+	    		        		cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, caid);
+			            for (j = 0; j < rdr->nprov; j++) {
+	        	         uint32_t prid = get_reader_prid(rdr, j);
                 		    struct cc_provider *prov = cs_malloc(&prov, sizeof(struct cc_provider), QUITERROR);
 		                    prov->prov = prid;
 		                    //cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
-		                    if (!rdr->audisabled) {
-		                        //Setting SA (Shared Addresses):
-		                        cc_SA_oscam2cccam(rdr->sa[j], prov->sa);
-		                    }
-		                    ll_append(card->providers, prov);
+			                if (!rdr->audisabled) {
+			                    //Setting SA (Shared Addresses):
+			                    cc_SA_oscam2cccam(rdr->sa[j], prov->sa);
+			                }
+			            	ll_append(card->providers, prov);
 		                    //cs_log("Main CCcam card report provider: %02X%02X%02X%02X", buf[21+(j*7)], buf[22+(j*7)], buf[23+(j*7)], buf[24+(j*7)]);
 		                }
-        		        if (rdr->tcp_connected || rdr->card_status == CARD_INSERTED) {
-		                    add_card_to_serverlist(server_cards, card);
-		                }
-		                else
-		                    cc_free_card(card);
-		                flt = 1;
+						add_card_to_serverlist(server_cards, card, TRUE);
+						flt = 1;
+					}
 				}
             }
 
 
             if ((rdr->typ != R_CCCAM) && rdr->caid && !flt) {
                 //cs_log("tcp_connected: %d card_status: %d ", rdr->tcp_connected, rdr->card_status);
-                uint16_t caid = rdr->caid;
-                struct cc_card *card = create_card2(rdr, 1, caid, 0, reshare);
-                card->card_type = CT_CARD_BY_CAID;
-                
-                if (!rdr->audisabled)
-                    cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, caid);
-                for (j = 0; j < rdr->nprov; j++) {
-                    uint32_t prid = get_reader_prid(rdr, j);
-                    struct cc_provider *prov = cs_malloc(&prov, sizeof(struct cc_provider), QUITERROR);
-                    prov->prov = prid;
-                    //cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
-                    if (!rdr->audisabled) {
-                        //Setting SA (Shared Addresses):
-                        cc_SA_oscam2cccam(rdr->sa[j], prov->sa);
-                    }
-                    ll_append(card->providers, prov);
-                    //cs_log("Main CCcam card report provider: %02X%02X%02X%02X", buf[21+(j*7)], buf[22+(j*7)], buf[23+(j*7)], buf[24+(j*7)]);
-                }
                 if (rdr->tcp_connected || rdr->card_status == CARD_INSERTED) {
-
-                    add_card_to_serverlist(server_cards, card);
-                }
-                else
-                    cc_free_card(card);
+                	uint16_t caid = rdr->caid;
+                	struct cc_card *card = create_card2(rdr, 1, caid, 0, reshare);
+                	card->card_type = CT_CARD_BY_CAID;
+                
+	                if (!rdr->audisabled)
+	                    cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, caid);
+	                for (j = 0; j < rdr->nprov; j++) {
+	                    uint32_t prid = get_reader_prid(rdr, j);
+	                    struct cc_provider *prov = cs_malloc(&prov, sizeof(struct cc_provider), QUITERROR);
+	                    prov->prov = prid;
+	                    //cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
+	                    if (!rdr->audisabled) {
+	                        //Setting SA (Shared Addresses):
+	                        cc_SA_oscam2cccam(rdr->sa[j], prov->sa);
+	                    }
+	                    ll_append(card->providers, prov);
+	                    //cs_log("Main CCcam card report provider: %02X%02X%02X%02X", buf[21+(j*7)], buf[22+(j*7)], buf[23+(j*7)], buf[24+(j*7)]);
+	                }
+                    add_card_to_serverlist(server_cards, card, TRUE);
+				}
             }
 
             if (rdr->typ == R_CCCAM && (cfg.cc_reshare_services<2 || cfg.cc_reshare_services==4) && rdr->card_status != CARD_FAILURE) {
@@ -988,7 +1005,7 @@ void update_card_list() {
                             ll_iter_release(it2);
 
                             if (!ignore) { //Filtered by service
-                            	add_card_to_serverlist(server_cards, card);
+                            	add_card_to_serverlist(server_cards, card, FALSE);
                                 count++;
 							}
 						}
@@ -997,7 +1014,7 @@ void update_card_list() {
                     pthread_mutex_unlock(&rcc->cards_busy);
                 }
                 else
-                		cs_debug_mask(D_TRACE, "reader %s not active! (mode=%d)", rdr->label, rcc?rcc->mode:-1);
+                	cs_debug_mask(D_TRACE, "reader %s not active! (mode=%d)", rdr->label, rcc?rcc->mode:-1);
                 cs_debug_mask(D_TRACE, "got %d cards from %s", count, rdr->label);
             }
         }
