@@ -497,7 +497,8 @@ void send_headers(FILE *f, int32_t status, char *title, char *extra, char *mime,
 		pos += snprintf(pos, sizeof(buf)-(pos-buf),"Content-Length: %d\r\n", length);
 		pos += snprintf(pos, sizeof(buf)-(pos-buf),"Last-Modified: %s\r\n", timebuf);
 		if(content){
-			pos += snprintf(pos, sizeof(buf)-(pos-buf),"ETag: \"%u\"\r\n", (uint32_t)crc32(0L, (uchar *)content, strlen(content)));
+			uint32_t checksum = (uint32_t)crc32(0L, (uchar *)content, strlen(content));
+			pos += snprintf(pos, sizeof(buf)-(pos-buf),"ETag: \"%u\"\r\n", checksum==0?1:checksum);
 		}
 	}
 	pos += snprintf(pos, sizeof(buf)-(pos-buf), "Connection: close\r\n");
@@ -549,14 +550,9 @@ void send_file(FILE *f, char *filename, time_t modifiedheader, uint32_t etaghead
 		FILE *fp;
 		char buffer[1024], *pos;
 		int32_t read;
-		struct stat st;
-		
+		struct stat st;		
 		stat(filename, &st);
 		moddate = st.st_mtime;
-		if(moddate < modifiedheader){
-			send_header304(f);
-			return;
-		}
 		if((fp = fopen(filename, "r"))==NULL) return;
 		if(!cs_malloc(&result, st.st_size + 1, -1)){
 			send_error500(f);
@@ -568,7 +564,7 @@ void send_file(FILE *f, char *filename, time_t modifiedheader, uint32_t etaghead
 		while((read = fread(buffer,sizeof(char), 1023, fp)) > 0) {
 			buffer[read] = '\0';
 			if(pos + read > result + st.st_size) break;		//nasty, file has grown while reading	
-			memcpy(&pos, buffer, read);
+			memcpy(pos, buffer, read);
 			pos += read;	
 		}		
 		fclose(fp);
@@ -580,7 +576,7 @@ void send_file(FILE *f, char *filename, time_t modifiedheader, uint32_t etaghead
 			result = JSCRIPT;
 		}
 	}
-	if(moddate < modifiedheader || (uint32_t)crc32(0L, (uchar *)result, strlen(result)) == etagheader){
+	if((etagheader == 0 && moddate < modifiedheader) || (uint32_t)crc32(0L, (uchar *)result, strlen(result)) == etagheader){
 		send_header304(f);
 	} else {
 		send_headers(f, 200, "OK", NULL, mimetype, 1, strlen(result), result, 0);

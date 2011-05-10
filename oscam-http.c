@@ -3055,25 +3055,27 @@ char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *param
 
 char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *params, char *image, time_t modifiedheader, uint32_t etagheader) {
 	char *wanted;
-	int8_t disktpl = 0;
 	if(image == NULL) wanted = getParam(params, "i");
 	else wanted = image;
 	if(strlen(wanted) > 3 && wanted[0] == 'I' && wanted[1] == 'C'){
-		if(strlen(cfg.http_tpl) > 0){
-	  	char path[255];
-	  	if(strlen(tpl_getTplPath(wanted, cfg.http_tpl, path, 255)) > 0 && file_exists(path)){
-	  		struct stat st;
-	  		disktpl = 1;		
-				stat(path, &st);
-				if(st.st_mtime < modifiedheader){
-					send_header304(f);
-					return "1";
-				}
+		if(etagheader == 0){
+			int8_t disktpl = 0;
+			if(strlen(cfg.http_tpl) > 0){
+		  	char path[255];
+		  	if(strlen(tpl_getTplPath(wanted, cfg.http_tpl, path, 255)) > 0 && file_exists(path)){
+		  		struct stat st;
+		  		disktpl = 1;		
+					stat(path, &st);
+					if(st.st_mtime < modifiedheader){
+						send_header304(f);
+						return "1";
+					}
+		  	}
 	  	}
-  	}
-  	if(disktpl == 0 && first_client->login < modifiedheader){
-			send_header304(f);
-			return "1";
+	  	if(disktpl == 0 && first_client->login < modifiedheader){
+				send_header304(f);
+				return "1";
+			}
 		}
 		char *header = strstr(tpl_getTpl(vars, wanted), "data:");
 		if(header != NULL){
