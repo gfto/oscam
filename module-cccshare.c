@@ -647,14 +647,14 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
             	card2 = create_card(card); //Copy card
             	card2->hop = 0;
 			    ll_iter_insert(it, card2);
-			    add_card_providers(card2, card, 0); //merge all providers
+			    add_card_providers(card2, card, 1); //copy providers to new card. Copy remote nodes to new card
 			}
             modified = 1;
 
         } else { //found, merge providers:
 			card_dup_count++;
         	add_card_providers(card2, card, 0); //merge all providers
-        	ll_clear_data(card2->remote_nodes);
+        	ll_clear_data(card2->remote_nodes); //clear remote nodes
            	if (!card2->sidtab)
            		ll_clear_data(card2->badsids);
 		}
@@ -683,10 +683,10 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
 			} else { 
             	card2 = create_card(card); //copy card
             	ll_iter_insert(it, card2);
-            	add_card_providers(card2, card, 0);
+            	add_card_providers(card2, card, 1); //copy providers to new card. Copy remote nodes to new card
 			}
             modified = 1;
-        } else { //found, merge providers:
+        } else { //found, merge cards (providers are same!)
         	card_dup_count++;
         	add_card_providers(card2, card, 0);
            	if (!card2->sidtab)
@@ -714,7 +714,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
         	} else {
             	card2 = create_card(card);
             	ll_iter_insert(it, card2);
-            	add_card_providers(card2, card, 0);
+            	add_card_providers(card2, card, 1);
 			}
             modified = 1;
         } else { //Found, everything is same (including providers)
