@@ -645,7 +645,8 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
 			} else {
             	card2 = create_card(card); //Copy card
             	card2->hop = 0;
-            	ll_clear_data(card2->badsids);
+            	if (!card->sidtab)
+            		ll_clear_data(card2->badsids);
 			    ll_iter_insert(it, card2);
 			    add_card_providers(card2, card, 0); //merge all providers
 			}
@@ -679,7 +680,8 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
         		ll_iter_insert(it, card);
 			} else { 
             	card2 = create_card(card); //copy card
-            	ll_clear_data(card2->badsids);
+            	if (!card->sidtab)
+            		ll_clear_data(card2->badsids);
             	ll_iter_insert(it, card2);
             	add_card_providers(card2, card, 1);
 			}
