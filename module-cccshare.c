@@ -853,6 +853,8 @@ void update_card_list() {
 	                            add_card_to_serverlist(server_cards, card, TRUE);
 	                    	    flt=1;
 							}
+							else 
+								cc_free_card(card);
 						}
                     }
                 }
