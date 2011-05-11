@@ -192,9 +192,9 @@ seconds beetween restarts, 0 = disable reader restart, default:5
 .RS 3n
 loadbalancing mode:
 
- \fB0\fP = loadbalance disabled, ECMs go to all readers
+ \fB0\fP = loadbalance disabled, ECMs go to all readers (default)
  \fB1\fP = fastest reader first, after 5 ECMs the reader with the fastest 
-     response time will be selected (default)
+     response time will be selected
  \fB2\fP = oldest reader first, reader with the longest no answer
  \fB3\fP = lowest usage level, the usage level will be calculated by the 
      sum of 5 ECMS response times, the higher a reader is busy, the 
