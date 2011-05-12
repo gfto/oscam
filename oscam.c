@@ -36,6 +36,7 @@ char  cs_tmpdir[200]={0x00};
 pthread_mutex_t gethostbyname_lock;
 pthread_mutex_t get_cw_lock;
 pthread_mutex_t system_lock;
+pthread_mutex_t clientlist_lock;
 pthread_key_t getclient;
 
 //Cache for  ecms, cws and rcs:
@@ -538,11 +539,13 @@ void cleanup_thread(void *var)
 
 		//kill_thread also removes this client, so here just to get sure client is removed:
 		struct s_client *prev, *cl2;
+		pthread_mutex_lock(&clientlist_lock);
 		for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
 			if (cl == cl2)
 				break;
 		if (cl == cl2)
 			prev->next = cl2->next; //remove client from list
+		pthread_mutex_unlock(&clientlist_lock);
 
 		cs_sleepms(500); //just wait a bit that really really nobody is accessing client data
 
@@ -810,8 +813,10 @@ struct s_client * create_client(in_addr_t ip) {
 
         //Now add new client to the list:
 		struct s_client *last;
+		pthread_mutex_lock(&clientlist_lock);
 		for (last=first_client; last->next != NULL; last=last->next); //ends with cl on last client
 		last->next = cl;
+		pthread_mutex_unlock(&clientlist_lock);
 	} else {
 		cs_log("max connections reached (out of memory) -> reject client %s", cs_inet_ntoa(ip));
 		return NULL;
@@ -924,6 +929,7 @@ static void init_first_client()
   pthread_mutex_init(&gethostbyname_lock, NULL);
   pthread_mutex_init(&get_cw_lock, NULL);
   pthread_mutex_init(&system_lock, NULL);
+  pthread_mutex_init(&clientlist_lock, NULL);
 
 #ifdef COOL
   coolapi_open_all();
