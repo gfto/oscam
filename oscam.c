@@ -73,16 +73,16 @@ int32_t cs_check_v(uint32_t ip, int32_t add) {
 			cfg.v_list = ll_create();
 
 		time_t now = time((time_t)0);
-		LL_ITER *itr = ll_iter_create(cfg.v_list);
+		LL_ITER itr = ll_iter_create(cfg.v_list);
 		V_BAN *v_ban_entry;
 		int32_t ftime = cfg.failbantime*60;
 
 		//run over all banned entries to do housekeeping:
-		while ((v_ban_entry=ll_iter_next(itr))) {
+		while ((v_ban_entry=ll_iter_next(&itr))) {
 
 			// housekeeping:
 			if ((now - v_ban_entry->v_time) >= ftime) { // entry out of time->remove
-				ll_iter_remove_data(itr);
+				ll_iter_remove_data(&itr);
 				continue;
                         }
 
@@ -111,11 +111,10 @@ int32_t cs_check_v(uint32_t ip, int32_t add) {
         		v_ban_entry->v_time = time((time_t *)0);
 	        	v_ban_entry->v_ip = ip;
 
-        		ll_iter_insert(itr, v_ban_entry);
+        		ll_iter_insert(&itr, v_ban_entry);
 
         		cs_debug_mask(D_TRACE, "failban: ban ip %s with timestamp %d", cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_time);
                 }
-		ll_iter_release(itr);
 	}
 	return result;
 }
@@ -803,7 +802,6 @@ struct s_client * create_client(in_addr_t ip) {
 		cl->fd_m2c = fdp[1]; //store client read fd
 		cl->ip=ip;
 		cl->account = first_client->account;
-		cl->itused = 0;
 
 		//master part
 		cl->stat=1;
@@ -911,7 +909,6 @@ static void init_first_client()
   first_client->login=time((time_t *)0);
   first_client->ip=cs_inet_addr("127.0.0.1");
   first_client->typ='s';
-  first_client->itused = 0;
   first_client->thread=pthread_self();
   struct s_auth *null_account;
   if(!cs_malloc(&null_account, sizeof(struct s_auth), -1)){
@@ -1522,10 +1519,10 @@ static int32_t check_and_store_ecmcache(ECM_REQUEST *er, uint64_t grp)
 	time_t now = time(NULL);
 	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
 	struct s_ecm *ecmc;
-	LL_ITER *it = ll_iter_create(ecmcache);
-	while ((ecmc=ll_iter_next(it))) {
+	LL_ITER it = ll_iter_create(ecmcache);
+	while ((ecmc=ll_iter_next(&it))) {
 		if (ecmc->time < timeout) {
-			ll_iter_remove_data(it);
+			ll_iter_remove_data(&it);
 			continue;
 		}
 
@@ -1538,7 +1535,6 @@ static int32_t check_and_store_ecmcache(ECM_REQUEST *er, uint64_t grp)
 		if (memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
 			continue;
 
-		ll_iter_release(it);
 		//cs_debug_mask(D_TRACE, "cachehit! (ecm)");
 		memcpy(er->cw, ecmc->cw, 16);
 		er->selected_reader = ecmc->reader;
@@ -1547,7 +1543,6 @@ static int32_t check_and_store_ecmcache(ECM_REQUEST *er, uint64_t grp)
 		er->ecmcacheptr = ecmc;
 		return ecmc->rc;
 	}
-	ll_iter_release(it);
 
 	//Add cache entry:
 	ecmc = cs_malloc(&ecmc, sizeof(struct s_ecm), 0);
@@ -1576,10 +1571,10 @@ static int32_t check_cwcache1(ECM_REQUEST *er, uint64_t grp)
 	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
 	struct s_ecm *ecmc;
 
-    LL_ITER *it = ll_iter_create(ecmcache);
-    while ((ecmc=ll_iter_next(it))) {
+    LL_ITER it = ll_iter_create(ecmcache);
+    while ((ecmc=ll_iter_next(&it))) {
         if (ecmc->time < timeout) {
-			ll_iter_remove_data(it);
+			ll_iter_remove_data(&it);
 			continue;
 		}
 
@@ -1597,11 +1592,9 @@ static int32_t check_cwcache1(ECM_REQUEST *er, uint64_t grp)
 
 		memcpy(er->cw, ecmc->cw, 16);
 		er->selected_reader = ecmc->reader;
-		ll_iter_release(it);
 		//cs_debug_mask(D_TRACE, "cachehit!");
 		return 1;
 	}
-	ll_iter_release(it);
 	return 0;
 }
 
@@ -2705,8 +2698,8 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 	struct s_reader *aureader = NULL;
 	cs_ddump_mask(D_EMM, ep->emm, ep->l, "emm:");
 
-	LL_ITER *itr = ll_iter_create(client->aureader_list);
-	while ((aureader = ll_iter_next(itr))) {
+	LL_ITER itr = ll_iter_create(client->aureader_list);
+	while ((aureader = ll_iter_next(&itr))) {
 		if (!aureader->enable)
 			continue;
 
@@ -2834,7 +2827,6 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		cs_debug_mask(D_EMM, "emm is being sent to reader %s.", aureader->label);
 		write_to_pipe(aureader->fd, PIP_ID_EMM, (uchar *) ep, sizeof(EMM_PACKET));
 	}
-	ll_iter_release(itr);
 }
 
 int32_t comp_timeb(struct timeb *tpa, struct timeb *tpb)

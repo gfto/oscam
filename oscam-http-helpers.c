@@ -793,10 +793,9 @@ char *getParam(struct uriparams *params, char *name){
 
 struct s_reader *get_reader_by_label(char *lbl){
 	struct s_reader *rdr;
-	LL_ITER *itr = ll_iter_create(configured_readers);
-	while((rdr = ll_iter_next(itr)))
+	LL_ITER itr = ll_iter_create(configured_readers);
+	while((rdr = ll_iter_next(&itr)))
 	  if (strcmp(lbl, rdr->label) == 0) break;
-	ll_iter_release(itr);
 	return rdr;
 }
 

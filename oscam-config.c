@@ -1651,19 +1651,17 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		if(value && value[0] == '1') {
 			account->autoau = 1;
 		}
-		LL_ITER *itr = ll_iter_create(configured_readers);
+		LL_ITER itr = ll_iter_create(configured_readers);
 		ll_clear(account->aureader_list);
 
 		for (pch = strtok_r(value, ",", &saveptr1); pch != NULL; pch = strtok_r(NULL, ",", &saveptr1)) {
-			ll_iter_reset(itr);
-			while ((rdr = ll_iter_next(itr))) {
+			ll_iter_reset(&itr);
+			while ((rdr = ll_iter_next(&itr))) {
 				if (((rdr->label[0]) && (!strcmp(rdr->label, pch))) || account->autoau) {
 					ll_append(account->aureader_list, rdr);
 				}
 			}
 		}
-
-		ll_iter_release(itr);
 		return;
 	}
 
@@ -2377,8 +2375,8 @@ int32_t write_server()
 	fprintf(f,"# Read more: http://streamboard.gmc.to/oscam/browser/trunk/Distribution/doc/txt/oscam.server.txt\n\n");
 
 	struct s_reader *rdr;
-	LL_ITER *itr = ll_iter_create(configured_readers);
-	while((rdr = ll_iter_next(itr))) {
+	LL_ITER itr = ll_iter_create(configured_readers);
+	while((rdr = ll_iter_next(&itr))) {
 		if ( rdr->label[0]) {
 			int32_t isphysical = (rdr->typ & R_IS_NETWORK)?0:1;
 			char *ctyp = reader_get_type_desc(rdr, 0);
@@ -2617,7 +2615,6 @@ int32_t write_server()
 			fprintf(f, "\n\n");
 		}
 	}
-	ll_iter_release(itr);
 	fclose(f);
 
 	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
@@ -4292,9 +4289,9 @@ int32_t init_readerdb()
 		*value++ ='\0';
 		chk_reader(trim(strtolower(token)), trim(value), rdr);
 	}
-	LL_ITER *itr = ll_iter_create(configured_readers);
+	LL_ITER itr = ll_iter_create(configured_readers);
 	struct s_reader *cur=NULL;
-	while((rdr = ll_iter_next(itr))) { //build active readers list
+	while((rdr = ll_iter_next(&itr))) { //build active readers list
 		int32_t i;
 		if (rdr->device[0] && (rdr->typ & R_IS_CASCADING)) {
 			for (i=0; i<CS_MAX_MOD; i++) {
@@ -4316,8 +4313,6 @@ int32_t init_readerdb()
 			}
 		}
 	}
-	ll_iter_release(itr);
-
 	fclose(fp);
 	return(0);
 }
@@ -4730,12 +4725,11 @@ char *mk_t_aureader(struct s_auth *account){
 	value[0] = '\0';
 
 	struct s_reader *rdr;
-	LL_ITER *itr = ll_iter_create(account->aureader_list);
-	while ((rdr = ll_iter_next(itr))) {
+	LL_ITER itr = ll_iter_create(account->aureader_list);
+	while ((rdr = ll_iter_next(&itr))) {
 		pos += snprintf(value + pos, 256-pos, "%s%s", dot, rdr->label);
 		dot = ",";
 	}
-	ll_iter_release(itr);
 
 	return value;
 }

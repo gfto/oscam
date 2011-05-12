@@ -761,12 +761,12 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params) {
 		}
 	}
 
-	LL_ITER *itr = ll_iter_create(configured_readers);
-	for (i = 0, rdr = ll_iter_next(itr); rdr && rdr->label[0]; rdr = ll_iter_next(itr), i++);
+	LL_ITER itr = ll_iter_create(configured_readers);
+	for (i = 0, rdr = ll_iter_next(&itr); rdr && rdr->label[0]; rdr = ll_iter_next(&itr), i++);
 	tpl_printf(vars, TPLADD, "NEXTREADER", "Reader-%d", i); //Next Readername
 
-	ll_iter_reset(itr); //going to iterate all configured readers
-	while ((rdr = ll_iter_next(itr))) {
+	ll_iter_reset(&itr); //going to iterate all configured readers
+	while ((rdr = ll_iter_next(&itr))) {
 
 		if(rdr->label[0] && rdr->typ) {
 
@@ -827,7 +827,6 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params) {
 			tpl_addVar(vars, TPLAPPEND, "READERLIST", tpl_getTpl(vars, "READERSBIT"));
 		}
 	}
-	ll_iter_release(itr);
 
 #ifdef HAVE_PCSC
 	tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>pcsc</option>\n");
@@ -1276,8 +1275,8 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 
 	if (rdr->lb_stat) {
 
-		LL_ITER *it = ll_iter_create(rdr->lb_stat);
-		READER_STAT *stat = ll_iter_next(it);
+		LL_ITER it = ll_iter_create(rdr->lb_stat);
+		READER_STAT *stat = ll_iter_next(&it);
 		while (stat) {
 
 			if (!(stat->rc == rc2hide)) {
@@ -1338,11 +1337,9 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 				}
 			}
 
-		stat = ll_iter_next(it);
+		stat = ll_iter_next(&it);
 		rowcount++;
 		}
-
-		ll_iter_release(it);
 
 	} else {
 		tpl_addVar(vars, TPLAPPEND, "READERSTATSROW","<TR><TD colspan=\"6\"> No statistics found </TD></TR>");
@@ -1864,27 +1861,26 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 				uint8_t serbuf[8];
 
                 // sort cards by hop
-                LL_ITER *it;
+                LL_ITER it;
                 int32_t i;
                 for (i = 0; i < ll_count(cards); i++) {
                     it  = ll_iter_create(cards);
-                    while ((card = ll_iter_next(it))) {
-                        if (it->cur->nxt) {
-							struct cc_card *card2 = ll_iter_peek(it, 1);
+                    while ((card = ll_iter_next(&it))) {
+                        if (it.cur->nxt) {
+							struct cc_card *card2 = ll_iter_peek(&it, 1);
 							if (card->caid > card2->caid ||
                         		(card->caid==card2->caid && card->hop > card2->hop)) {
-                        		it->cur->obj = it->cur->nxt->obj;
-                        		it->cur->nxt->obj = card;
+                        		it.cur->obj = it.cur->nxt->obj;
+                        		it.cur->nxt->obj = card;
                         	}
                         }
                     }
-                    ll_iter_release(it);
                 }
 
                 it = ll_iter_create(cards);
                 int32_t offset2 = offset+1;
                 int32_t count = 0;
-                while ((card = ll_iter_move(it, offset2))) {
+                while ((card = ll_iter_move(&it, offset2))) {
                 	offset2 = 1;
                 	if (count == ENTITLEMENT_PAGE_SIZE)
                 		break;
@@ -1908,22 +1904,20 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 					}
    					if (!apicall) {
 								int32_t n;
-								LL_ITER *its = ll_iter_create(card->goodsids);
+								LL_ITER its = ll_iter_create(card->goodsids);
 								struct cc_srvid *srv;
 								n=0;
 								tpl_printf(vars, TPLADD, "SERVICESGOOD", "");
-								while ((srv=ll_iter_next(its))) {
+								while ((srv=ll_iter_next(&its))) {
 										tpl_printf(vars, TPLAPPEND, "SERVICESGOOD", "%04X%s", srv->sid, ++n%10==0?"<BR>\n":" ");
 								}
-								ll_iter_release(its);
 
 								its = ll_iter_create(card->badsids);
 								n=0;
 								tpl_printf(vars, TPLADD, "SERVICESBAD", "");
-								while ((srv=ll_iter_next(its))) {
+								while ((srv=ll_iter_next(&its))) {
 										tpl_printf(vars, TPLAPPEND, "SERVICESBAD", "%04X%s", srv->sid, ++n%10==0?"<BR>\n":" ");
 								}
-								ll_iter_release(its);
 					}
 
 					struct s_cardsystem *cs = get_cardsystem_by_caid(card->caid);
@@ -1938,7 +1932,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 					tpl_printf(vars, TPLADD, "UPHOPS", "%d", card->hop);
 					tpl_printf(vars, TPLADD, "MAXDOWN", "%d", card->reshare);
 
-					LL_ITER *pit = ll_iter_create(card->providers);
+					LL_ITER pit = ll_iter_create(card->providers);
 					struct cc_provider *prov;
 
 					providercount = 0;
@@ -1948,7 +1942,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 					else
 						tpl_addVar(vars, TPLADD, "PROVIDERLIST", "");
 
-					while ((prov = ll_iter_next(pit))) {
+					while ((prov = ll_iter_next(&pit))) {
 						provider = xml_encode(vars, get_provider(card->caid, prov->prov));
 
 						if (!apicall) {
@@ -1972,15 +1966,14 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 						tpl_printf(vars, TPLADD, "APITOTALPROVIDERS", "%d", providercount);
 					}
 
-					ll_iter_release(pit);
-					LL_ITER *nit = ll_iter_create(card->remote_nodes);
+					LL_ITER nit = ll_iter_create(card->remote_nodes);
 					uint8_t *node;
 
 					nodecount = 0;
 					if (!apicall) tpl_addVar(vars, TPLADD, "NODES", "");
 					else tpl_addVar(vars, TPLADD, "NODELIST", "");
 
-					while ((node = ll_iter_next(nit))) {
+					while ((node = ll_iter_next(&nit))) {
 
 						if (!apicall) {
 							tpl_printf(vars, TPLAPPEND, "NODES", "%02X%02X%02X%02X%02X%02X%02X%02X<BR>\n",
@@ -1993,8 +1986,6 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 						nodecount++;
 						tpl_printf(vars, TPLADD, "APITOTALNODES", "%d", nodecount);
 					}
-
-					ll_iter_release(nit);
 
 					if (!apicall)
 						tpl_addVar(vars, TPLAPPEND, "CCCAMSTATSENTRY", tpl_getTpl(vars, "ENTITLEMENTCCCAMENTRYBIT"));
@@ -2019,8 +2010,6 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 							getParam(params, "globallist"),
 							getParam(params, "label"));
 				}
-
-				ll_iter_release(it);
 
 				if (!apicall) {
 					tpl_printf(vars, TPLADD, "TOTALS", "card count=%d", cardcount);
@@ -2205,12 +2194,11 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, int
 							tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", "<span>");
 							if (cl->typ == 'c'){
 								struct s_reader *rdr;
-								LL_ITER *itr = ll_iter_create(cl->aureader_list);
-								while ((rdr = ll_iter_next(itr))) {
+								LL_ITER itr = ll_iter_create(cl->aureader_list);
+								while ((rdr = ll_iter_next(&itr))) {
 									if(rdr->audisabled) tpl_printf(vars, TPLAPPEND, "CLIENTCAUHTTP", "(%s)<br>", rdr->label);
 									else tpl_printf(vars, TPLAPPEND, "CLIENTCAUHTTP", "%s<br>", rdr->label);
 								}
-								ll_iter_release(itr);
 							} else tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", cl->reader->label);
 							tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", "</span></a>");
 						}
@@ -2939,33 +2927,33 @@ char *send_oscam_files(struct templatevars *vars, struct uriparams *params) {
 char *send_oscam_failban(struct templatevars *vars, struct uriparams *params) {
 
 	uint32_t ip2delete = 0;
-	LL_ITER *itr = ll_iter_create(cfg.v_list);
+	LL_ITER itr = ll_iter_create(cfg.v_list);
 	V_BAN *v_ban_entry;
 
 	if (strcmp(getParam(params, "action"), "delete") == 0) {
 
 		if(strcmp(getParam(params, "intip"), "all") == 0){
 			// clear whole list
-			while ((v_ban_entry=ll_iter_next(itr))) {
-				ll_iter_remove_data(itr);
+			while ((v_ban_entry=ll_iter_next(&itr))) {
+				ll_iter_remove_data(&itr);
 			}
 
 		} else {
 			//we have a single IP
 			sscanf(getParam(params, "intip"), "%u", &ip2delete);
-			while ((v_ban_entry=ll_iter_next(itr))) {
+			while ((v_ban_entry=ll_iter_next(&itr))) {
 				if (v_ban_entry->v_ip == ip2delete) {
-					ll_iter_remove_data(itr);
+					ll_iter_remove_data(&itr);
 					break;
 				}
 			}
 		}
 	}
-	ll_iter_reset(itr);
+	ll_iter_reset(&itr);
 
 	time_t now = time((time_t)0);
 
-	while ((v_ban_entry=ll_iter_next(itr))) {
+	while ((v_ban_entry=ll_iter_next(&itr))) {
 
 		tpl_addVar(vars, TPLADD, "IPADDRESS", cs_inet_ntoa(v_ban_entry->v_ip));
 
@@ -2982,8 +2970,6 @@ char *send_oscam_failban(struct templatevars *vars, struct uriparams *params) {
 		tpl_printf(vars, TPLADD, "INTIP", "%u", v_ban_entry->v_ip);
 		tpl_addVar(vars, TPLAPPEND, "FAILBANROW", tpl_getTpl(vars, "FAILBANBIT"));
 	}
-	ll_iter_release(itr);
-
 	return tpl_getTpl(vars, "FAILBAN");
 }
 

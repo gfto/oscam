@@ -251,9 +251,9 @@ static void gbox_calc_checkcode(struct gbox_data *gbox)
   int32_t slot = 0;
 
   // for all local cards do:
-  LL_ITER *it = ll_iter_create(gbox->local_cards);
+  LL_ITER it = ll_iter_create(gbox->local_cards);
   struct gbox_card *card;
-  while ((card = ll_iter_next(it))) {
+  while ((card = ll_iter_next(&it))) {
     gbox->checkcode[0] ^= card->provid >> 24;
     gbox->checkcode[1] ^= card->provid >> 16;
     gbox->checkcode[2] ^= card->provid >> 8;
@@ -262,7 +262,6 @@ static void gbox_calc_checkcode(struct gbox_data *gbox)
     gbox->checkcode[5] = gbox->peer.id >> 8;
     gbox->checkcode[6] = gbox->peer.id & 0xff;
   }
-  ll_iter_release(it);
 }
 
 uint32_t gbox_get_ecmchecksum(ECM_REQUEST *er)
@@ -464,9 +463,9 @@ static void gbox_send_hello(struct s_client *cli)
   uchar *ptr = buf + 11;
 
   int8_t slot = 0;
-  LL_ITER *it = ll_iter_create(gbox->local_cards);
+  LL_ITER it = ll_iter_create(gbox->local_cards);
   struct gbox_card *card;
-  while ((card = ll_iter_next(it))) {
+  while ((card = ll_iter_next(&it))) {
     card->slot = ++slot;
     *(++ptr) = card->provid >> 24;
     *(++ptr) = card->provid >> 16;
@@ -478,7 +477,6 @@ static void gbox_send_hello(struct s_client *cli)
     *(++ptr) = gbox->id >> 8;
     *(++ptr) = gbox->id & 0xff;
   }
-  ll_iter_release(it);
 
   gbox_calc_checkcode(gbox);
   memcpy(++ptr, gbox->checkcode, 7);
@@ -975,9 +973,9 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *buf)
   *(++ptr) = er->prid;
   ptr++;
 
-  LL_ITER *it = ll_iter_create(gbox->peer.cards);
+  LL_ITER it = ll_iter_create(gbox->peer.cards);
   struct gbox_card *card;
-  while ((card = ll_iter_next(it))) {
+  while ((card = ll_iter_next(&it))) {
     //if (card->caid == er->caid && card->provid == er->prid) {
     if (card->provid >> 24 == er->caid >> 8 && (card->provid & 0xffffff) == er->prid) {
       *(++ptr) = card->peer_id >> 8;
@@ -986,7 +984,6 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *buf)
       send_buf[16]++;
     }
   }
-  ll_iter_release(it);
 
   if (!send_buf[16]) {
 		er->rc = E_RDR_NOTFOUND;

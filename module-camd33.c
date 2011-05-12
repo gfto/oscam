@@ -34,12 +34,11 @@ static void camd33_request_emm()
 	struct s_reader *aureader = NULL, *rdr = NULL;
 
 	//TODO: just take the first reader in list
-	LL_ITER *itr = ll_iter_create(cur_client()->aureader_list);
-	while ((rdr = ll_iter_next(itr))) {
+	LL_ITER itr = ll_iter_create(cur_client()->aureader_list);
+	while ((rdr = ll_iter_next(&itr))) {
 		aureader=rdr;
 		break;
 	}
-	ll_iter_release(itr);
 
 	if (!aureader) return;
 

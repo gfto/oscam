@@ -37,8 +37,7 @@ void ll_clear_data(LLIST *l);   // same as ll_clear_data() but frees up obj allo
 LL_NODE *ll_append(LLIST *l, void *obj);                // append obj to llist
 LL_NODE *ll_prepend(LLIST *l, void *obj);               // prepend obj to llist
 
-LL_ITER *ll_iter_create(LLIST *l);              // return ptr to iterator obj
-void ll_iter_release(LL_ITER *it);              // free up the iterator obj
+LL_ITER ll_iter_create(LLIST *l);              // return ptr to iterator obj
 void *ll_iter_next(LL_ITER *it);                // iterate to and return next llnode obj, returns NULL at end
 void *ll_iter_peek(LL_ITER *it, int32_t offset);    // return obj at offset from iterator but do not iterate
 void ll_iter_reset(LL_ITER *it);                // reset itrerator to first llnode

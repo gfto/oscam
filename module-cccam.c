@@ -234,26 +234,24 @@ int32_t sid_eq(struct cc_srvid *srvid1, struct cc_srvid *srvid2) {
 }
 
 int32_t is_sid_blocked(struct cc_card *card, struct cc_srvid *srvid_blocked) {
-	LL_ITER *it = ll_iter_create(card->badsids);
+	LL_ITER it = ll_iter_create(card->badsids);
 	struct cc_srvid *srvid;
-	while ((srvid = ll_iter_next(it))) {
+	while ((srvid = ll_iter_next(&it))) {
 		if (sid_eq(srvid, srvid_blocked)) {
 			break;
 		}
 	}
-	ll_iter_release(it);
 	return (srvid != 0);
 }
 
 int32_t is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
-	LL_ITER *it = ll_iter_create(card->goodsids);
+	LL_ITER it = ll_iter_create(card->goodsids);
 	struct cc_srvid *srvid;
-	while ((srvid = ll_iter_next(it))) {
+	while ((srvid = ll_iter_next(&it))) {
 		if (sid_eq(srvid, srvid_good)) {
 			break;
 		}
 	}
-	ll_iter_release(it);
 	return (srvid != 0);
 }
 
@@ -271,21 +269,19 @@ void add_sid_block(struct s_client *cl __attribute__((unused)), struct cc_card *
 }
 
 void remove_sid_block(struct cc_card *card, struct cc_srvid *srvid_blocked) {
-	LL_ITER *it = ll_iter_create(card->badsids);
+	LL_ITER it = ll_iter_create(card->badsids);
 	struct cc_srvid *srvid;
-	while ((srvid = ll_iter_next(it)))
+	while ((srvid = ll_iter_next(&it)))
 		if (sid_eq(srvid, srvid_blocked))
-			ll_iter_remove_data(it);
-	ll_iter_release(it);
+			ll_iter_remove_data(&it);
 }
 
 void remove_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
-	LL_ITER *it = ll_iter_create(card->goodsids);
+	LL_ITER it = ll_iter_create(card->goodsids);
 	struct cc_srvid *srvid;
-	while ((srvid = ll_iter_next(it)))
+	while ((srvid = ll_iter_next(&it)))
 		if (sid_eq(srvid, srvid_good))
-			ll_iter_remove_data(it);
-	ll_iter_release(it);
+			ll_iter_remove_data(&it);
 }
 
 void add_good_sid(struct s_client *cl __attribute__((unused)), struct cc_card *card,
@@ -349,18 +345,16 @@ struct cc_extended_ecm_idx *get_extended_ecm_idx(struct s_client *cl,
 		uint8_t send_idx, int32_t remove) {
 	struct cc_data *cc = cl->cc;
 	struct cc_extended_ecm_idx *eei;
-	LL_ITER *it = ll_iter_create(cc->extended_ecm_idx);
-	while ((eei = ll_iter_next(it))) {
+	LL_ITER it = ll_iter_create(cc->extended_ecm_idx);
+	while ((eei = ll_iter_next(&it))) {
 		if (eei->send_idx == send_idx) {
 			if (remove)
-				ll_iter_remove(it);
+				ll_iter_remove(&it);
 			//cs_debug_mask(D_TRACE, "%s get by send-idx: %d FOUND: %d",
 			//		getprefix(), send_idx, eei->ecm_idx);
-			ll_iter_release(it);
 			return eei;
 		}
 	}
-	ll_iter_release(it);
 	cs_debug_mask(cl->typ=='c'?D_CLIENT:D_READER, "%s get by send-idx: %d NOT FOUND", getprefix(),
 			send_idx);
 	return NULL;
@@ -370,18 +364,16 @@ struct cc_extended_ecm_idx *get_extended_ecm_idx_by_idx(struct s_client *cl,
 		uint16_t ecm_idx, int32_t remove) {
 	struct cc_data *cc = cl->cc;
 	struct cc_extended_ecm_idx *eei;
-	LL_ITER *it = ll_iter_create(cc->extended_ecm_idx);
-	while ((eei = ll_iter_next(it))) {
+	LL_ITER it = ll_iter_create(cc->extended_ecm_idx);
+	while ((eei = ll_iter_next(&it))) {
 		if (eei->ecm_idx == ecm_idx) {
 			if (remove)
-				ll_iter_remove(it);
+				ll_iter_remove(&it);
 			//cs_debug_mask(D_TRACE, "%s get by ecm-idx: %d FOUND: %d",
 			//		getprefix(), ecm_idx, eei->send_idx);
-			ll_iter_release(it);
 			return eei;
 		}
 	}
-	ll_iter_release(it);
 	cs_debug_mask(cl->typ=='c'?D_CLIENT:D_READER, "%s get by ecm-idx: %d NOT FOUND", getprefix(),
 			ecm_idx);
 	return NULL;
@@ -398,26 +390,25 @@ void cc_reset_pending(struct s_client *cl, int32_t ecm_idx) {
 void free_extended_ecm_idx_by_card(struct s_client *cl, struct cc_card *card) {
 	struct cc_data *cc = cl->cc;
 	struct cc_extended_ecm_idx *eei;
-	LL_ITER *it = ll_iter_create(cc->extended_ecm_idx);
-	while ((eei = ll_iter_next(it))) {
+	LL_ITER it = ll_iter_create(cc->extended_ecm_idx);
+	while ((eei = ll_iter_next(&it))) {
 		if (eei->card == card) {
 			cc_reset_pending(cl, eei->ecm_idx);
 			if (eei->free_card)
 				free(eei->card);
-			ll_iter_remove_data(it);
+			ll_iter_remove_data(&it);
 		}
 	}
-	ll_iter_release(it);
 }
 
 void free_extended_ecm_idx(struct cc_data *cc) {
 	struct cc_extended_ecm_idx *eei;
-	LL_ITER *it = ll_iter_create(cc->extended_ecm_idx);
-	while ((eei = ll_iter_next(it)))
+	LL_ITER it = ll_iter_create(cc->extended_ecm_idx);
+	while ((eei = ll_iter_next(&it))) {
 		if (eei->free_card)
 			free(eei->card);
-		ll_iter_remove_data(it);
-	ll_iter_release(it);
+		ll_iter_remove_data(&it);
+	}
 }
 
 int32_t cc_recv_to(struct s_client *cl, uint8_t *buf, int32_t len) {
@@ -960,10 +951,10 @@ void set_au_data(struct s_client *cl, struct s_reader *rdr, struct cc_card *card
 					rdr->hexserial, 8));
 
 	rdr->nprov = 0;
-	LL_ITER *it2 = ll_iter_create(card->providers);
+	LL_ITER it2 = ll_iter_create(card->providers);
 	struct cc_provider *provider;
 	int32_t p = 0;
-	while ((provider = ll_iter_next(it2))) {
+	while ((provider = ll_iter_next(&it2))) {
 		if (!cur_er || provider->prov == cur_er->prid || !provider->prov || !cur_er->prid) {
 			rdr->prid[p][0] = provider->prov >> 24;
 			rdr->prid[p][1] = provider->prov >> 16;
@@ -980,7 +971,6 @@ void set_au_data(struct s_client *cl, struct s_reader *rdr, struct cc_card *card
 			if (p >= CS_MAXPROV) break;
 		}
 	}
-	ll_iter_release(it2);
 	
 	if (!rdr->nprov) { //No Providers? Add null-provider:
 		memset(rdr->prid[0], 0, sizeof(rdr->prid[0]));
@@ -1031,7 +1021,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	int32_t n, h = -1;
 	struct cc_data *cc = cl->cc;
 	struct cc_card *card = NULL;
-	LL_ITER *it;
+	LL_ITER it;
 	ECM_REQUEST *cur_er;
 	struct timeb cur_time;
 	cs_ftime(&cur_time);
@@ -1123,19 +1113,18 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	if (cfg.cc_forward_origin_card && cur_er->origin_reader == rdr && cur_er->origin_card) {
 		it = ll_iter_create(cc->cards);
 		struct cc_card *ncard;
-		while ((ncard = ll_iter_next(it))) {
+		while ((ncard = ll_iter_next(&it))) {
 				if (ncard == cur_er->origin_card) { //Search the origin card
 						card = ncard; //found it, use it!
 						break;
 				}
 		}
-		ll_iter_release(it);
 	}
 	
 	if (!card) {
 		it = ll_iter_create(cc->cards);
 		struct cc_card *ncard, *xcard = NULL;
-		while ((ncard = ll_iter_next(it))) {
+		while ((ncard = ll_iter_next(&it))) {
 			if (ncard->caid == cur_er->caid) { // caid matches
 				if (is_sid_blocked(ncard, &cur_srvid))
 					continue;
@@ -1153,9 +1142,9 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 					
 				}
 				else { //card has providers
-					LL_ITER *it2 = ll_iter_create(ncard->providers);
+					LL_ITER it2 = ll_iter_create(ncard->providers);
 					struct cc_provider *provider;
-					while ((provider = ll_iter_next(it2))) {
+					while ((provider = ll_iter_next(&it2))) {
 						if (provider->prov	== cur_er->prid) { // provid matches
 							if (h < 0 || ncard->hop < h || (ncard->hop == h
 									&& cc_UA_valid(ncard->hexserial))) {
@@ -1165,11 +1154,9 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 							}
 						}
 					}
-					ll_iter_release(it2);
 				}
 			}
 		}
-		ll_iter_release(it);
 		if (!card) 
 				card = xcard; //18xx: if request has no provider and we have no card, we try this card
 	}	
@@ -1246,17 +1233,15 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			
 			//reopen all blocked sids for this srvid:
 			it = ll_iter_create(cc->cards);
-			while ((card = ll_iter_next(it))) {
+			while ((card = ll_iter_next(&it))) {
 				if (card->caid == cur_er->caid) { // caid matches
-					LL_ITER *it2 = ll_iter_create(card->badsids);
+					LL_ITER it2 = ll_iter_create(card->badsids);
 					struct cc_srvid *srvid;
-					while ((srvid = ll_iter_next(it2)))
+					while ((srvid = ll_iter_next(&it2)))
 						if (srvid->ecmlen > 0 && sid_eq(srvid, &cur_srvid)) //ecmlen==0: From remote peer, so do not remove
-							ll_iter_remove_data(it2);
-					ll_iter_release(it2);
+							ll_iter_remove_data(&it2);
 				}
 			}
-			ll_iter_release(it);
 		}
 	}
 	pthread_mutex_unlock(&cc->cards_busy);
@@ -1303,13 +1288,12 @@ int32_t cc_send_pending_emms(struct s_client *cl) {
 	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
 
-	LL_ITER *it = ll_iter_create(cc->pending_emms);
+	LL_ITER it = ll_iter_create(cc->pending_emms);
 	uint8_t *emmbuf;
 	int32_t size = 0;
-	if ((emmbuf = ll_iter_next(it))) {
+	if ((emmbuf = ll_iter_next(&it))) {
 		if (!cc->extended_mode) {
 			if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) { //Unlock by NOK or ECM ACK
-				ll_iter_release(it);
 				return 0; //send later with cc_send_ecm
 			}
 			rdr->available = 0;
@@ -1324,9 +1308,8 @@ int32_t cc_send_pending_emms(struct s_client *cl) {
 
 		cc_cmd_send(cl, emmbuf, size, MSG_EMM_ACK); // send emm
 
-		ll_iter_remove_data(it);
+		ll_iter_remove_data(&it);
 	}
-	ll_iter_release(it);
 
 	return size;
 }
@@ -1338,13 +1321,12 @@ int32_t cc_send_pending_emms(struct s_client *cl) {
 struct cc_card *get_card_by_hexserial(struct s_client *cl, uint8_t *hexserial,
 		uint16_t caid) {
 	struct cc_data *cc = cl->cc;
-	LL_ITER *it = ll_iter_create(cc->cards);
+	LL_ITER it = ll_iter_create(cc->cards);
 	struct cc_card *card;
-	while ((card = ll_iter_next(it)))
+	while ((card = ll_iter_next(&it)))
 		if (card->caid == caid && memcmp(card->hexserial, hexserial, 8) == 0) { //found it!
 			break;
 		}
-	ll_iter_release(it);
 	return card;
 }
 
@@ -1451,26 +1433,24 @@ void cc_free_card(struct cc_card *card) {
 struct cc_card *cc_get_card_by_id(uint32_t card_id, LLIST *cards) {
 	if (!cards)
 		return NULL;
-	LL_ITER *it = ll_iter_create(cards);
+	LL_ITER it = ll_iter_create(cards);
 	struct cc_card *card;
-	while ((card=ll_iter_next(it))) {
+	while ((card=ll_iter_next(&it))) {
 		if (card->id==card_id) {
 			break;
 		}
 	}
-	ll_iter_release(it);
 	return card;
 }
 
 void cc_free_cardlist(LLIST *card_list, int32_t destroy_list) {
 	if (card_list) {
-		LL_ITER *it = ll_iter_create(card_list);
+		LL_ITER it = ll_iter_create(card_list);
 		struct cc_card *card;
-		while ((card = ll_iter_next(it))) {
+		while ((card = ll_iter_next(&it))) {
 			cc_free_card(card);
-			ll_iter_remove(it);
+			ll_iter_remove(&it);
 		}
-		ll_iter_release(it);
 		if (destroy_list)
 			ll_destroy_data(card_list);
 	}
@@ -1675,13 +1655,13 @@ struct cc_card *read_card(uint8_t *buf, int32_t ext) {
 void cc_card_removed(struct s_client *cl, uint32_t shareid) {
 	struct cc_data *cc = cl->cc;
 	struct cc_card *card;
-	LL_ITER *it = ll_iter_create(cc->cards);
+	LL_ITER it = ll_iter_create(cc->cards);
 
-	while ((card = ll_iter_next(it))) {
+	while ((card = ll_iter_next(&it))) {
 		if (card->id == shareid) {// && card->sub_id == b2i (3, buf + 9)) {
 			//cs_debug_mask(D_CLIENT, "cccam: card %08x removed, caid %04X, count %d",
 			//		card->id, card->caid, ll_count(cc->cards));
-			ll_iter_remove(it);
+			ll_iter_remove(&it);
 			if (cc->last_emm_card == card) {
 				cc->last_emm_card = NULL;
 				cs_debug_mask(D_READER, "%s current card %08x removed!",
@@ -1703,22 +1683,20 @@ void cc_card_removed(struct s_client *cl, uint32_t shareid) {
 			//break;
 		}
 	}
-	ll_iter_release(it);
 }
 
 void move_card_to_end(struct s_client * cl, struct cc_card *card_to_move) {
 
 	struct cc_data *cc = cl->cc;
 
-	LL_ITER *it = ll_iter_create(cc->cards);
+	LL_ITER it = ll_iter_create(cc->cards);
 	struct cc_card *card;
-	while ((card = ll_iter_next(it))) {
+	while ((card = ll_iter_next(&it))) {
 		if (card == card_to_move) {
-			ll_iter_remove(it);
+			ll_iter_remove(&it);
 			break;
 		}
 	}
-	ll_iter_release(it);
 	if (card) {
 		cs_debug_mask(D_READER, "%s CMD05: Moving card %08X to the end...", getprefix(), card_to_move->id);
 		free_extended_ecm_idx_by_card(cl, card);
@@ -1914,9 +1892,9 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 		card->rdr_reshare = rdr->cc_reshare;
 
 		//Check if this card is from us:
-		LL_ITER *it = ll_iter_create(card->remote_nodes);
+		LL_ITER it = ll_iter_create(card->remote_nodes);
 		uint8_t *node_id;
-		while ((node_id = ll_iter_next(it))) {
+		while ((node_id = ll_iter_next(&it))) {
 			if (memcmp(node_id, cc_node_id, sizeof(cc_node_id)) == 0) { //this card is from us!
 				cs_debug_mask(D_READER, "filtered card because of recursive nodeid: id=%08X, caid=%04X", card->id, card->caid);
 				cc_free_card(card);
@@ -1924,7 +1902,6 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				break;
 			}
 		}
-		ll_iter_release(it);
 		
 		//Check Ident filter:
 		if (card) {
@@ -1938,7 +1915,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			//Check if we already have this card:
 			it = ll_iter_create(cc->cards);
 			struct cc_card *old_card;
-			while ((old_card = ll_iter_next(it))) {
+			while ((old_card = ll_iter_next(&it))) {
 				if (old_card->id == card->id || //we aready have this card, delete it
 						same_card(old_card, card)) {
 					cc_free_card(card);
@@ -1946,7 +1923,6 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 					break;
 				}
 			}
-			ll_iter_release(it);
 
 			if (!old_card) {
 			    card->card_type = CT_REMOTECARD;
@@ -2115,15 +2091,14 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 
 				if (cfg.cc_forward_origin_card) { //search my shares for this card:
 						cs_debug_mask(D_TRACE, "%s forward card: %04X:%04x search share %d", getprefix(), er->caid, er->srvid, server_card->id);
-						LL_ITER *itr = ll_iter_create(get_and_lock_sharelist());
+						LL_ITER itr = ll_iter_create(get_and_lock_sharelist());
 						struct cc_card *card;
 						struct cc_card *rcard = NULL;
-						while ((card=ll_iter_next(itr))) {
+						while ((card=ll_iter_next(&itr))) {
 								if (card->id == server_card->id) { //found it
 										break;
 								}
 						}
-						ll_iter_release(itr);
 						cs_debug_mask(D_TRACE, "%s forward card: share %d found: %d", getprefix(), server_card->id, card?1:0);
 						
 						struct s_reader *ordr = NULL;
@@ -2141,11 +2116,10 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 										struct cc_data *rcc = ordr->client->cc;
 										
 										itr = ll_iter_create(rcc->cards);
-										while ((rcard=ll_iter_next(itr))) {
+										while ((rcard=ll_iter_next(&itr))) {
 												if (rcard->id == card->origin_id) //found it!
 														break;
 										}
-										ll_iter_release(itr);
 									}
 									else
 										rcard = card;

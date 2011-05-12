@@ -677,8 +677,8 @@ static void newcamd_auth_client(in_addr_t ip, uint8_t *deskey)
     }
 
   if (ok) {
-    LL_ITER *itr = ll_iter_create(cl->aureader_list);
-    while ((rdr = ll_iter_next(itr))) {
+    LL_ITER itr = ll_iter_create(cl->aureader_list);
+    while ((rdr = ll_iter_next(&itr))) {
       int32_t n;
       for (n=0;n<cfg.ncd_ptab.ports[cl->port_idx].ftab.filts[0].nprids;n++) {
         if (emm_reader_match(rdr, cfg.ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid, cfg.ncd_ptab.ports[cl->port_idx].ftab.filts[0].prids[n])) {
@@ -689,7 +689,6 @@ static void newcamd_auth_client(in_addr_t ip, uint8_t *deskey)
       if (aureader)
         break;
     }
-    ll_iter_release(itr);
 
     if (aureader) {
       cs_log("AU enabled for user %s on reader %s", usr, aureader->label);

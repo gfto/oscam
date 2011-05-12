@@ -87,9 +87,9 @@ int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32
     int32_t ofs = ext?23:21;
 
     //write providers:
-    LL_ITER *it = ll_iter_create(card->providers);
+    LL_ITER it = ll_iter_create(card->providers);
     struct cc_provider *prov;
-    while ((prov = ll_iter_next(it))) {
+    while ((prov = ll_iter_next(&it))) {
         uint32_t prid = prov->prov;
         buf[ofs+0] = prid >> 16;
         buf[ofs+1] = prid >> 8;
@@ -99,7 +99,6 @@ int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32
         buf[20]++;
         ofs+=7;
     }
-    ll_iter_release(it);
 
     //write sids only if cccam 2.2.x:
     if (ext) {
@@ -144,7 +143,7 @@ int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32
 		        //assigned sids:
 		        it = ll_iter_create(card->goodsids);
 		        struct cc_srvid *srvid;
-		        while ((srvid = ll_iter_next(it))) {
+		        while ((srvid = ll_iter_next(&it))) {
 		            buf[ofs+0] = srvid->sid >> 8;
 		            buf[ofs+1] = srvid->sid & 0xFF;
 		            ofs+=2;
@@ -152,11 +151,10 @@ int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32
 		            if (buf[21] >= 200)
 		                break;
 		        }
-		        ll_iter_release(it);
 		
 		        //reject sids:
 		        it = ll_iter_create(card->badsids);
-		        while ((srvid = ll_iter_next(it))) {
+		        while ((srvid = ll_iter_next(&it))) {
 		            buf[ofs+0] = srvid->sid >> 8;
 		            buf[ofs+1] = srvid->sid & 0xFF;
 		            ofs+=2;
@@ -164,7 +162,6 @@ int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32
 		            if (buf[22] >= 200)
 		                break;
 		        }
-		        ll_iter_release(it);
 		}
     }
 
@@ -173,12 +170,11 @@ int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32
     ofs++;
     it = ll_iter_create(card->remote_nodes);
     uint8_t *remote_node;
-    while ((remote_node = ll_iter_next(it))) {
+    while ((remote_node = ll_iter_next(&it))) {
         memcpy(buf+ofs, remote_node, 8);
         ofs+=8;
         buf[nremote_ofs]++;
     }
-    ll_iter_release(it);
     if (add_own) {
         memcpy(buf+ofs, cc->node_id, 8);
         ofs+=8;
@@ -284,19 +280,17 @@ int32_t chk_ident(FTAB *ftab, struct cc_card *card) {
                         return 1;
 
 
-                    LL_ITER *it = ll_iter_create(card->providers);
+                    LL_ITER it = ll_iter_create(card->providers);
                     struct cc_provider *prov;
 
-                    while ((prov = ll_iter_next(it))) {
+                    while ((prov = ll_iter_next(&it))) {
                         for (k = 0; k < nprids; k++) {
                             uint32_t prid = ftab->filts[j].prids[k];
                             if (prid == prov->prov) { //Provider matches
-                                ll_iter_release(it);
                                 return 1;
                             }
                         }
                     }
-                    ll_iter_release(it);
                 }
             }
         }
@@ -307,27 +301,25 @@ int32_t chk_ident(FTAB *ftab, struct cc_card *card) {
 int32_t cc_clear_reported_carddata(LLIST *reported_carddatas, LLIST *except,
                 int32_t send_removed) {
         int32_t i=0;
-        LL_ITER *it = ll_iter_create(reported_carddatas);
+        LL_ITER it = ll_iter_create(reported_carddatas);
         struct cc_card *card;
-        while ((card = ll_iter_next(it))) {
+        while ((card = ll_iter_next(&it))) {
                 struct cc_card *card2 = NULL;
                 if (except) {
-                        LL_ITER *it2 = ll_iter_create(except);
-                        while ((card2 = ll_iter_next(it2))) {
+                        LL_ITER it2 = ll_iter_create(except);
+                        while ((card2 = ll_iter_next(&it2))) {
                                 if (card == card2)
                                         break;
                         }
-                        ll_iter_release(it2);
                 }
 
-                if (!card2 && ll_iter_remove(it)) { //check result of ll_iter_remove, because another thread could removed it
+                if (!card2 && ll_iter_remove(&it)) { //check result of ll_iter_remove, because another thread could removed it
                         if (send_removed)
                         		send_remove_card_to_clients(card);
                         cc_free_card(card);
                         i++;
                 }
         }
-        ll_iter_release(it);
         return i;
 }
 
@@ -367,30 +359,27 @@ int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card) {
 				return 0;
 
 		//Check remote node id, if card is from there, ignore it!
-        LL_ITER *it = ll_iter_create(card->remote_nodes);
+        LL_ITER it = ll_iter_create(card->remote_nodes);
 		uint8_t * node;
 		struct cc_data *cc = cl->cc;
-        while ((node=ll_iter_next(it))) {
+        while ((node=ll_iter_next(&it))) {
         		if (!memcmp(node, cc->peer_node_id, 8)) {
-        				ll_iter_release(it);
         				return 0;
 				}
 		}
-		ll_iter_release(it);
 
         //Check Services:
         if (ll_count(card->providers)) {
         	it = ll_iter_create(card->providers);
         	struct cc_provider *prov;
         	int found=0;
-        	while ((prov = ll_iter_next(it))) {
+        	while ((prov = ll_iter_next(&it))) {
         		uint32_t prid = prov->prov;
                 if (chk_srvid_by_caid_prov(cl, card->caid, prid)) {
                 	found = 1;
                 	break;
 				}
 			}
-			ll_iter_release(it);
 			if (!found) return 0;
 		}
 		
@@ -439,24 +428,22 @@ uint32_t get_reader_prid(struct s_reader *rdr, int32_t j) {
 //}
 
 void copy_sids(LLIST *dst, LLIST *src) {
-    LL_ITER *it_src = ll_iter_create(src);
-    LL_ITER *it_dst = ll_iter_create(dst);
+    LL_ITER it_src = ll_iter_create(src);
+    LL_ITER it_dst = ll_iter_create(dst);
     struct cc_srvid *srvid_src;
     struct cc_srvid *srvid_dst;
-    while ((srvid_src=ll_iter_next(it_src))) {
-        ll_iter_reset(it_dst);
-        while ((srvid_dst=ll_iter_next(it_dst))) {
+    while ((srvid_src=ll_iter_next(&it_src))) {
+        ll_iter_reset(&it_dst);
+        while ((srvid_dst=ll_iter_next(&it_dst))) {
             if (sid_eq(srvid_src, srvid_dst))
                 break;
         }
         if (!srvid_dst) {
             srvid_dst = cs_malloc(&srvid_dst, sizeof(struct cc_srvid), QUITERROR);
             memcpy(srvid_dst, srvid_src, sizeof(struct cc_srvid));
-            ll_iter_insert(it_dst, srvid_dst);
+            ll_iter_insert(&it_dst, srvid_dst);
         }
     }
-    ll_iter_release(it_dst);
-    ll_iter_release(it_src);
 }
 
 
@@ -466,25 +453,23 @@ int32_t add_card_providers(struct cc_card *dest_card, struct cc_card *card,
 
     //1. Copy nonexisting providers, ignore double:
     struct cc_provider *prov_info;
-    LL_ITER *it_src = ll_iter_create(card->providers);
-    LL_ITER *it_dst = ll_iter_create(dest_card->providers);
+    LL_ITER it_src = ll_iter_create(card->providers);
+    LL_ITER it_dst = ll_iter_create(dest_card->providers);
 
     struct cc_provider *provider;
-    while ((provider = ll_iter_next(it_src))) {
-        ll_iter_reset(it_dst);
-        while ((prov_info = ll_iter_next(it_dst))) {
+    while ((provider = ll_iter_next(&it_src))) {
+        ll_iter_reset(&it_dst);
+        while ((prov_info = ll_iter_next(&it_dst))) {
             if (prov_info->prov == provider->prov)
                 break;
         }
         if (!prov_info) {
             struct cc_provider *prov_new = cs_malloc(&prov_new, sizeof(struct cc_provider), QUITERROR);
             memcpy(prov_new, provider, sizeof(struct cc_provider));
-            ll_iter_insert(it_dst, prov_new);
+            ll_iter_insert(&it_dst, prov_new);
             modified = 1;
         }
     }
-    ll_iter_release(it_dst);
-    ll_iter_release(it_src);
 
     if (copy_remote_nodes) {
         //2. Copy nonexisting remote_nodes, ignoring existing:
@@ -492,21 +477,19 @@ int32_t add_card_providers(struct cc_card *dest_card, struct cc_card *card,
         it_dst = ll_iter_create(dest_card->remote_nodes);
         uint8_t *remote_node;
         uint8_t *remote_node2;
-        while ((remote_node = ll_iter_next(it_src))) {
-            ll_iter_reset(it_dst);
-            while ((remote_node2 = ll_iter_next(it_dst))) {
+        while ((remote_node = ll_iter_next(&it_src))) {
+            ll_iter_reset(&it_dst);
+            while ((remote_node2 = ll_iter_next(&it_dst))) {
                 if (memcmp(remote_node, remote_node2, 8) == 0)
                     break;
             }
             if (!remote_node2) {
                 uint8_t* remote_node_new = cs_malloc(&remote_node_new, 8, QUITERROR);
                 memcpy(remote_node_new, remote_node, 8);
-                ll_iter_insert(it_dst, remote_node_new);
+                ll_iter_insert(&it_dst, remote_node_new);
                 modified = 1;
             }
         }
-        ll_iter_release(it_dst);
-        ll_iter_release(it_src);
     }
     return modified;
 }
@@ -556,15 +539,15 @@ int32_t num_same_providers(struct cc_card *card1, struct cc_card *card2) {
 
     int32_t found=0;
 
-    LL_ITER *it1 = ll_iter_create(card1->providers);
-    LL_ITER *it2 = ll_iter_create(card2->providers);
+    LL_ITER it1 = ll_iter_create(card1->providers);
+    LL_ITER it2 = ll_iter_create(card2->providers);
 
     struct cc_provider *prov1, *prov2;
 
-    while ((prov1=ll_iter_next(it1))) {
+    while ((prov1=ll_iter_next(&it1))) {
 
-        ll_iter_reset(it2);
-        while ((prov2=ll_iter_next(it2))) {
+        ll_iter_reset(&it2);
+        while ((prov2=ll_iter_next(&it2))) {
             if (prov1->prov==prov2->prov) {
                 found++;
                 break;
@@ -572,10 +555,6 @@ int32_t num_same_providers(struct cc_card *card1, struct cc_card *card2) {
 
         }
     }
-
-    ll_iter_release(it2);
-    ll_iter_release(it1);
-
     return found;
 }
 
@@ -590,15 +569,15 @@ int32_t equal_providers(struct cc_card *card1, struct cc_card *card2) {
     if (ll_count(card1->providers) == 0)
        return 1;
 
-    LL_ITER *it1 = ll_iter_create(card1->providers);
-    LL_ITER *it2 = ll_iter_create(card2->providers);
+    LL_ITER it1 = ll_iter_create(card1->providers);
+    LL_ITER it2 = ll_iter_create(card2->providers);
 
     struct cc_provider *prov1, *prov2;
 
-    while ((prov1=ll_iter_next(it1))) {
+    while ((prov1=ll_iter_next(&it1))) {
 
-        ll_iter_reset(it2);
-        while ((prov2=ll_iter_next(it2))) {
+        ll_iter_reset(&it2);
+        while ((prov2=ll_iter_next(&it2))) {
             if (prov1->prov==prov2->prov) {
                 break;
             }
@@ -606,10 +585,6 @@ int32_t equal_providers(struct cc_card *card1, struct cc_card *card2) {
         }
         if (!prov2) break;
     }
-
-    ll_iter_release(it2);
-    ll_iter_release(it1);
-
     return (prov1 == NULL);
 }
 
@@ -620,12 +595,12 @@ int32_t equal_providers(struct cc_card *card1, struct cc_card *card2) {
 int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_card) {
 
     int32_t modified = 0;
-    LL_ITER *it = ll_iter_create(cardlist);
+    LL_ITER it = ll_iter_create(cardlist);
     struct cc_card *card2;
 
     //Minimize all, transmit just CAID, merge providers:
     if (cfg.cc_minimize_cards == MINIMIZE_CAID && !cfg.cc_forward_origin_card) {
-        while ((card2 = ll_iter_next(it))) {
+        while ((card2 = ll_iter_next(&it))) {
         	//compare caid, hexserial, cardtype and sidtab (if any):
             if (same_card2(card, card2)) {
                 //Merge cards only if resulting providercount is smaller than CS_MAXPROV
@@ -642,11 +617,11 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
         if (!card2) { //Not found->add it:
         	if (free_card) { //Use this card
         		free_card = FALSE;
-        		ll_iter_insert(it, card);
+        		ll_iter_insert(&it, card);
 			} else {
             	card2 = create_card(card); //Copy card
             	card2->hop = 0;
-			    ll_iter_insert(it, card2);
+			    ll_iter_insert(&it, card2);
 			    add_card_providers(card2, card, 1); //copy providers to new card. Copy remote nodes to new card
 			}
             modified = 1;
@@ -662,7 +637,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
 
     //Removed duplicate cards, keeping card with lower hop:
     else if (cfg.cc_minimize_cards == MINIMIZE_HOPS && !cfg.cc_forward_origin_card) {
-        while ((card2 = ll_iter_next(it))) {
+        while ((card2 = ll_iter_next(&it))) {
         	//compare caid, hexserial, cardtype, sidtab (if any), providers:
             if (same_card2(card, card2) && equal_providers(card, card2)) {
                 break;
@@ -670,7 +645,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
         }
 
         if (card2 && card2->hop > card->hop) { //hop is smaller, drop old card
-            ll_iter_remove(it);
+            ll_iter_remove(&it);
             cc_free_card(card2);
             card2 = NULL;
             card_dup_count++;
@@ -679,10 +654,10 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
         if (!card2) { //Not found->add it:
         	if (free_card) { //use this card
         		free_card = FALSE;
-        		ll_iter_insert(it, card);
+        		ll_iter_insert(&it, card);
 			} else { 
             	card2 = create_card(card); //copy card
-            	ll_iter_insert(it, card2);
+            	ll_iter_insert(&it, card2);
             	add_card_providers(card2, card, 1); //copy providers to new card. Copy remote nodes to new card
 			}
             modified = 1;
@@ -696,13 +671,13 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
     }
     //like cccam:
     else { //just remove duplicate cards (same ids)
-        while ((card2 = ll_iter_next(it))) {
+        while ((card2 = ll_iter_next(&it))) {
         	//compare remote_id, first_node, caid, hexserial, cardtype, sidtab (if any), providers:
             if (same_card(card, card2))
                 break;
         }
         if (card2 && card2->hop > card->hop) { //same card, if hop greater drop card
-            ll_iter_remove(it);
+            ll_iter_remove(&it);
             cc_free_card(card2);
             card2 = NULL;
             card_dup_count++;
@@ -710,10 +685,10 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
         if (!card2) { //Not found, add it:
         	if (free_card) {
         		free_card = FALSE;
-        		ll_iter_insert(it, card);
+        		ll_iter_insert(&it, card);
         	} else {
             	card2 = create_card(card);
-            	ll_iter_insert(it, card2);
+            	ll_iter_insert(&it, card2);
             	add_card_providers(card2, card, 1);
 			}
             modified = 1;
@@ -721,7 +696,6 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
         	card_dup_count++;
 		}
     }
-    ll_iter_release(it);
     
     if (free_card)
     	cc_free_card(card);
@@ -731,18 +705,16 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
 
 int32_t find_reported_card(struct cc_card *card1)
 {
-    LL_ITER *it = ll_iter_create(reported_carddatas);
+    LL_ITER it = ll_iter_create(reported_carddatas);
     struct cc_card *card2;
-    while ((card2 = ll_iter_next(it))) {
+    while ((card2 = ll_iter_next(&it))) {
         if (same_card(card1, card2)) {
             card1->id = card2->id; //Set old id !!
             cc_free_card(card2);
-            ll_iter_remove(it);
-            ll_iter_release(it);
+            ll_iter_remove(&it);
             return 1; //Old card and new card are equal!
         }
     }
-    ll_iter_release(it);
     return 0; //Card not found
 }
 
@@ -995,21 +967,20 @@ void update_card_list() {
 				}
 				
 				if (!notlocked) {
-              		LL_ITER *it = ll_iter_create(rcc->cards);
-                    while ((card = ll_iter_next(it))) {
+              		LL_ITER it = ll_iter_create(rcc->cards);
+                    while ((card = ll_iter_next(&it))) {
                     	if (chk_ctab(card->caid, &rdr->ctab)) {
                         	int32_t ignore = 0;
 
-                            LL_ITER *it2 = ll_iter_create(card->providers);
+                            LL_ITER it2 = ll_iter_create(card->providers);
                             struct cc_provider *prov;
-                            while ((prov = ll_iter_next(it2))) {
+                            while ((prov = ll_iter_next(&it2))) {
                     			uint32_t prid = prov->prov;
                                 if (!chk_srvid_by_caid_prov(rdr->client, card->caid, prid)) {
                                 	ignore = 1;
                                     break;
 								}
 							}
-                            ll_iter_release(it2);
 
                             if (!ignore) { //Filtered by service
                             	add_card_to_serverlist(server_cards, card, FALSE);
@@ -1017,7 +988,6 @@ void update_card_list() {
 							}
 						}
 					}
-                    ll_iter_release(it);
                     pthread_mutex_unlock(&rcc->cards_busy);
                 }
                 else
@@ -1029,15 +999,14 @@ void update_card_list() {
 
     //report reshare cards:
     //cs_debug_mask(D_TRACE, "%s reporting %d cards", getprefix(), ll_count(server_cards));
-    LL_ITER *it = ll_iter_create(server_cards);
+    LL_ITER it = ll_iter_create(server_cards);
     struct cc_card *card;
-    while ((card = ll_iter_next(it))) {
+    while ((card = ll_iter_next(&it))) {
             //cs_debug_mask(D_TRACE, "%s card %d caid %04X hop %d", getprefix(), card->id, card->caid, card->hop);
 
             report_card(card, new_reported_carddatas);
-            ll_iter_remove(it);
+            ll_iter_remove(&it);
     }
-    ll_iter_release(it);
     cc_free_cardlist(server_cards, TRUE);
 
     //remove unsed, remaining cards:
@@ -1050,12 +1019,11 @@ void update_card_list() {
 
 int32_t cc_srv_report_cards(struct s_client *cl) {
 	struct cc_data *cc = cl->cc;
-	LL_ITER *it = ll_iter_create(reported_carddatas);
+	LL_ITER it = ll_iter_create(reported_carddatas);
 	struct cc_card *card;
-	while (cl->cc && cc->mode != CCCAM_MODE_SHUTDOWN && (card = ll_iter_next(it))) {
+	while (cl->cc && cc->mode != CCCAM_MODE_SHUTDOWN && (card = ll_iter_next(&it))) {
 		send_card_to_clients(card, cl);
 	}
-	ll_iter_release(it);
 
 	return cl->cc && cc->mode != CCCAM_MODE_SHUTDOWN;
 }

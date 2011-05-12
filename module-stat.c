@@ -110,13 +110,12 @@ void load_stat_from_file()
 		
 		if (valid) {
 			if (rdr == NULL || strcmp(buf, rdr->label) != 0) {
-				LL_ITER *itr = ll_iter_create(configured_readers);
-				while ((rdr=ll_iter_next(itr))) {
+				LL_ITER itr = ll_iter_create(configured_readers);
+				while ((rdr=ll_iter_next(&itr))) {
 					if (strcmp(rdr->label, buf) == 0) {
 						break;
 					}
 				}
-				ll_iter_release(itr);
 			}
 			
 			if (rdr != NULL && strcmp(buf, rdr->label) == 0) {
@@ -184,10 +183,10 @@ READER_STAT *get_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16
 
 	prid = get_prid(caid, prid);
 	
-	LL_ITER *it = ll_iter_create(rdr->lb_stat);
+	LL_ITER it = ll_iter_create(rdr->lb_stat);
 	READER_STAT *stat = NULL;
 	int32_t i = 0;
-	while ((stat = ll_iter_next(it))) {
+	while ((stat = ll_iter_next(&it))) {
 		i++;
 		if (stat->caid==caid && stat->prid==prid && stat->srvid==srvid) {
 			if (stat->ecmlen == ecmlen)
@@ -201,8 +200,7 @@ READER_STAT *get_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16
 	
 	//Move stat to list start for faster access:
 	if (i > 10 && stat)
-		ll_iter_move_first(it);
-	ll_iter_release(it);
+		ll_iter_move_first(&it);
 	
 	return stat;
 }
@@ -216,17 +214,16 @@ int32_t remove_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16_t
 		return 0;
 
 	int32_t c = 0;
-	LL_ITER *it = ll_iter_create(rdr->lb_stat);
+	LL_ITER it = ll_iter_create(rdr->lb_stat);
 	READER_STAT *stat;
-	while ((stat = ll_iter_next(it))) {
+	while ((stat = ll_iter_next(&it))) {
 		if (stat->caid==caid && stat->prid==prid && stat->srvid==srvid) {
 			if (!stat->ecmlen || stat->ecmlen == ecmlen) {
-				ll_iter_remove_data(it);
+				ll_iter_remove_data(&it);
 				c++;
 			}
 		}
 	}
-	ll_iter_release(it);
 	return c;
 }
 
@@ -277,16 +274,16 @@ void save_stat_to_file_thread()
          	
 	int32_t count=0;
 	struct s_reader *rdr;
-	LL_ITER *itr = ll_iter_create(configured_readers);
-	while ((rdr=ll_iter_next(itr))) {
+	LL_ITER itr = ll_iter_create(configured_readers);
+	while ((rdr=ll_iter_next(&itr))) {
 		
 		if (rdr->lb_stat) {
-			LL_ITER *it = ll_iter_create(rdr->lb_stat);
+			LL_ITER it = ll_iter_create(rdr->lb_stat);
 			READER_STAT *stat;
-			while ((stat = ll_iter_next(it))) {
+			while ((stat = ll_iter_next(&it))) {
 			
 				if (stat->last_received < cleanup_time) { //cleanup old stats
-					ll_iter_remove_data(it);
+					ll_iter_remove_data(&it);
 					continue;
 				}
 				
@@ -301,10 +298,8 @@ void save_stat_to_file_thread()
 					stat->srvid, stat->time_avg, stat->ecm_count, stat->last_received, stat->fail_factor, stat->ecmlen);
 				count++;
 			}
-			ll_iter_release(it);
 		}
 	}
-	ll_iter_release(itr);
 	
 	fclose(file);
 
@@ -392,17 +387,16 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 		
 		//If answering reader is a fallback reader, decrement answer time by fallback timeout:
 		struct s_reader *r;
-		LL_ITER *it = ll_iter_create(er->matching_rdr);
+		LL_ITER it = ll_iter_create(er->matching_rdr);
 		int is_fallback = 0;
-		while ((r=ll_iter_next(it))) {
-			if (it->cur == er->fallback) is_fallback = 1;
+		while ((r=ll_iter_next(&it))) {
+			if (it.cur == er->fallback) is_fallback = 1;
 			if (r == rdr) {
 				if (is_fallback && (uint32_t)ecm_time >= cfg.ftimeout)
 					ecm_time -= cfg.ftimeout;
 				break;
 			}
 		}
-		ll_iter_release(it);
 		
 		//FASTEST READER:
 		stat->time_idx++;
@@ -613,7 +607,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	if (!cfg.lb_mode || cfg.lb_mode==LB_LOG_ONLY)
 		return 0;
 
-	LL_ITER *it;
+	LL_ITER it;
 	struct s_reader *rdr;
 
 	//preferred card forwarding (CCcam client):
@@ -622,7 +616,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			struct cc_card *card = er->origin_card;
 			
 			it = ll_iter_create(er->matching_rdr);
-			while ((rdr=ll_iter_next(it))) {
+			while ((rdr=ll_iter_next(&it))) {
 					if (card->origin_reader == rdr)
 							break;				
 			}
@@ -652,7 +646,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			
 			//What is faster? nagra or beta?
 			it = ll_iter_create(er->matching_rdr);
-			while ((rdr=ll_iter_next(it)) && !needs_stats_nagra && !needs_stats_beta) {
+			while ((rdr=ll_iter_next(&it)) && !needs_stats_nagra && !needs_stats_beta) {
 				weight = rdr->lb_weight;
 				if (weight <= 0) weight = 1;
 				
@@ -677,7 +671,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				if (!stat_beta)
 					needs_stats_beta = 1;
 			}
-			ll_iter_release(it);
 			
 			//if we needs stats, we send 2 ecm requests: 18xx and 17xx:
 			if (needs_stats_nagra || needs_stats_beta) {
@@ -720,7 +713,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		int32_t size = 1;
 		int32_t nr = 0;
 		it = ll_iter_create(er->matching_rdr);
-		while ((rdr=ll_iter_next(it))) {
+		while ((rdr=ll_iter_next(&it))) {
 			if (nr > 5) {
 				size+=20;
 				break;
@@ -728,12 +721,12 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			size += strlen(rdr->label)+1;
 			nr++;
 		}
-		ll_iter_reset(it);
+		ll_iter_reset(&it);
 		char *rdrs = cs_malloc(&rdrs, size, 1);
 		char *rptr = rdrs;
 		*rptr = 0;
 		nr = 0;
-		while ((rdr=ll_iter_next(it))) {
+		while ((rdr=ll_iter_next(&it))) {
 			if (nr > 5) {
 				snprintf(rptr, size, "...(%d more)", ll_count(er->matching_rdr)-nr);
 				break;
@@ -742,7 +735,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			rptr = strend(rptr);
 			nr++;
 		}
-		ll_iter_release(it);
 	
 		cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X&%06X/%04X/%02hX: n=%d valid readers: %s", 
 			username(er->client), er->caid, prid, er->srvid, er->l, ll_count(er->matching_rdr), rdrs);
@@ -752,7 +744,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 #endif	
 
 	it = ll_iter_create(er->matching_rdr);
-	while ((rdr=ll_iter_next(it)) && nreaders) {
+	while ((rdr=ll_iter_next(&it)) && nreaders) {
 	
 			int32_t weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
 				
@@ -837,7 +829,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				ll_append(selected, crt_cur(rdr, current, stat->time_avg));
 		}
 	}
-	ll_iter_release(it);
 
 	if (nlocal_readers > nbest_readers) { //if we have local readers, we prefer them!
 		nlocal_readers = nbest_readers;
@@ -858,8 +849,8 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	while (nreaders) {
 		struct stat_value *best = NULL;
 
-		ll_iter_reset(it);
-		while ((stv=ll_iter_next(it))) {
+		ll_iter_reset(&it);
+		while ((stv=ll_iter_next(&it))) {
 			if (nlocal_readers && (stv->rdr->typ & R_IS_NETWORK))
 				continue;
 						
@@ -903,7 +894,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		else
 			break;
 	}
-	ll_iter_release(it);
 	ll_destroy_data(selected);
 	ll_destroy(timeout_services);
 	
@@ -912,7 +902,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		{
 			cs_debug_mask(D_TRACE, "loadbalancer: NO MATCHING READER FOUND, reopen last valid:");
 			it = ll_iter_create(er->matching_rdr);
-			while ((rdr=ll_iter_next(it))) {
+			while ((rdr=ll_iter_next(&it))) {
    	     		stat = get_stat(rdr, er->caid, prid, er->srvid, er->l);
    	     		if (stat && stat->ecm_count>0 && stat->last_received+get_reopen_seconds(stat) < current_time) {
    	     			if (!ll_contains(result, rdr) && nreaders) {
@@ -923,7 +913,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
         			cs_debug_mask(D_TRACE, "loadbalancer: reopened reader %s", rdr->label);
 				}
 			}
-			ll_iter_release(it);
 			cs_debug_mask(D_TRACE, "loadbalancer: reopened %d readers", n);
 		}
 
@@ -937,7 +926,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				cs_debug_mask(D_TRACE, "loadbalancer: no best reader found, reopening other readers");	
 #endif	
 			it = ll_iter_create(er->matching_rdr);
-			while ((rdr=ll_iter_next(it)) && nreaders) {
+			while ((rdr=ll_iter_next(&it)) && nreaders) {
 				stat = get_stat(rdr, er->caid, prid, er->srvid, er->l); 
 
 				if (stat && stat->rc != 0) { //retrylimit reached:
@@ -950,7 +939,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					}
 				}
 			}
-			ll_iter_release(it);
 		}
 	}
 	
@@ -968,7 +956,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		int32_t size = 3;
 		int32_t nr = 0;
 		it = ll_iter_create(result);
-		while ((rdr=ll_iter_next(it))) {
+		while ((rdr=ll_iter_next(&it))) {
 			if (nr > 5) { 
 				size+=20;
 				break;
@@ -976,13 +964,13 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			size += strlen(rdr->label)+1;
 			nr++;
 		}
-		ll_iter_reset(it);
+		ll_iter_reset(&it);
 		char *rdrs = cs_malloc(&rdrs, size, 1);
 		char *rptr = rdrs;
 		*rptr = 0;
 		nr = 0;
-		while ((rdr=ll_iter_next(it))) {
-			if (fallback && it->cur == fallback) {
+		while ((rdr=ll_iter_next(&it))) {
+			if (fallback && it.cur == fallback) {
 				snprintf(rptr, size, "[");
 				rptr = strend(rptr);
 			}
@@ -1000,7 +988,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			rptr--;
 			*rptr=']';
 		}
-		ll_iter_release(it);
 	
 		cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X&%06X/%04X:%02hX: n=%d selected readers: %s", 
 			username(er->client), er->caid, prid, er->srvid, er->l, ll_count(result), rdrs);
@@ -1027,11 +1014,10 @@ void clear_reader_stat(struct s_reader *rdr)
 void clear_all_stat()
 {
 	struct s_reader *rdr;
-	LL_ITER *itr = ll_iter_create(configured_readers);
-	while ((rdr = ll_iter_next(itr))) { 
+	LL_ITER itr = ll_iter_create(configured_readers);
+	while ((rdr = ll_iter_next(&itr))) { 
 		clear_reader_stat(rdr);
 	}
-	ll_iter_release(itr);
 }
 
 void housekeeping_stat_thread()
@@ -1039,23 +1025,20 @@ void housekeeping_stat_thread()
 	time_t cleanup_time = time(NULL) - (cfg.lb_stat_cleanup*60*60);
 	int32_t cleaned = 0;
 	struct s_reader *rdr;
-    LL_ITER *itr = ll_iter_create(configured_readers);
-    while ((rdr = ll_iter_next(itr))) {
+    LL_ITER itr = ll_iter_create(configured_readers);
+    while ((rdr = ll_iter_next(&itr))) {
 		if (rdr->lb_stat) {
-			LL_ITER *it = ll_iter_create(rdr->lb_stat);
+			LL_ITER it = ll_iter_create(rdr->lb_stat);
 			READER_STAT *stat;
-			while ((stat=ll_iter_next(it))) {
+			while ((stat=ll_iter_next(&it))) {
 				
 				if (stat->last_received < cleanup_time) {
-					ll_iter_remove_data(it);
+					ll_iter_remove_data(&it);
 					cleaned++;
 				}
 			}
-			
-			ll_iter_release(it);
 		}
 	}
-	ll_iter_release(itr);
 	cs_debug_mask(D_TRACE, "loadbalancer cleanup: removed %d entries", cleaned);
 }
 

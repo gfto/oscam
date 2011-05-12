@@ -171,14 +171,13 @@ static void camd35_request_emm(ECM_REQUEST *er)
 		aureader = er->selected_reader;
 
 	if (!aureader) {
-		LL_ITER *itr = ll_iter_create(cl->aureader_list);
-		while ((rdr = ll_iter_next(itr))) {
+		LL_ITER itr = ll_iter_create(cl->aureader_list);
+		while ((rdr = ll_iter_next(&itr))) {
 			if (emm_reader_match(rdr, er->caid, er->prid)) {
 				aureader=rdr;
 				break;
 			}
 		}
-		ll_iter_release(itr);
 	}
 
 	if (!aureader)

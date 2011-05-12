@@ -87,15 +87,14 @@ static void ll_clear_int(LLIST *l, int clear_data)
 
     if (!ll_lock(l)) return;
     
-    LL_ITER *it = ll_iter_create(l);
-    while (ll_iter_next_nolock(it)) {
-    	if (it->cur && !it->cur->flag++) {
+    LL_ITER it = ll_iter_create(l);
+    while (ll_iter_next_nolock(&it)) {
+    	if (it.cur && !it.cur->flag++) {
     		if (clear_data)
-    			add_garbage(it->cur->obj);
-    		add_garbage(it->cur);
+    			add_garbage(it.cur->obj);
+    		add_garbage(it.cur);
 		}
     }
-    ll_iter_release(it);
     l->count = 0;
     l->initial = 0;
     ll_unlock(l);
@@ -165,37 +164,14 @@ LL_NODE *ll_prepend(LLIST *l, void *obj)
     return NULL;
 }
 
-LL_ITER *ll_iter_create(LLIST *l)
+LL_ITER ll_iter_create(LLIST *l)
 {
-    if (!l) return NULL;
-    LL_ITER *it;
-		struct s_client *cl = cur_client();
-    if(cl && !cl->itused){
-    	it = &(cl->it);
-    	it->prv = NULL;
-      it->cur = NULL;
-    	cl->itused = 1;
-    } else
-    	if(!cs_malloc(&it, sizeof(LL_ITER), -1)) return NULL;
-    it->l = l;
+    LL_ITER it;
+    memset(&it, 0, sizeof(it));
+    it.l = l;
     return it;
 }
 
-LL_ITER *ll_iter_create_s(LLIST *l, LL_ITER *it)
-{
-    if (!l) return NULL;
-    it->l = l;
-    return it;
-}
-
-void ll_iter_release(LL_ITER *it)
-{	
-	struct s_client *cl = cur_client();
-  if(cl && cl->itused && it == &(cl->it)){
-  	cl->itused = 0;
-  // We don't need add_garbage here as iterators aren't shared across threads
-  } else free(it);
-}
 
 void *ll_iter_next(LL_ITER *it)
 {
@@ -354,63 +330,56 @@ int32_t ll_contains(LLIST *l, void *obj)
 {
     if (!l || !obj)
       return 0;
-    LL_ITER *it = ll_iter_create(l);
+    LL_ITER it = ll_iter_create(l);
     void *data;
-    while ((data=ll_iter_next(it))) {
+    while ((data=ll_iter_next(&it))) {
       if (data==obj)
         break;
     }
-    ll_iter_release(it);
     return (data==obj);
 }
 
 int32_t ll_remove(LLIST *l, void *obj)
 {
 	int n = 0;
-    LL_ITER *it = ll_iter_create(l);
+    LL_ITER it = ll_iter_create(l);
     void *data;
-    while ((data=ll_iter_next(it))) {
+    while ((data=ll_iter_next(&it))) {
       	if (data==obj) {
-        	ll_iter_remove(it);
+        	ll_iter_remove(&it);
         	n++;
         }
     }
-    ll_iter_release(it);
     return n;
 }
 
 void ll_remove_data(LLIST *l, void *obj)
 {
-    LL_ITER *it = ll_iter_create(l);
+    LL_ITER it = ll_iter_create(l);
     void *data;
-    while ((data=ll_iter_next(it))) {
+    while ((data=ll_iter_next(&it))) {
       if (data==obj)
-        ll_iter_remove_data(it);
+        ll_iter_remove_data(&it);
     }
-    ll_iter_release(it);
 }
 
 // removes all elements from l where elements are in elements_to_remove 
 int32_t ll_remove_all(LLIST *l, LLIST *elements_to_remove)
 {
 		int32_t count = 0;
-		LL_ITER *it1 = ll_iter_create(l);
-		LL_ITER *it2 = ll_iter_create(elements_to_remove);
+		LL_ITER it1 = ll_iter_create(l);
+		LL_ITER it2 = ll_iter_create(elements_to_remove);
 		
 		void *data1, *data2;
-		while ((data1=ll_iter_next(it1))) {
-				ll_iter_reset(it2);
-				while ((data2=ll_iter_next(it2))) {
+		while ((data1=ll_iter_next(&it1))) {
+				ll_iter_reset(&it2);
+				while ((data2=ll_iter_next(&it2))) {
 						if (data1 == data2) {
-								ll_iter_remove(it1);
 								count++;
 								break;
 						}
 				}
 		}
 
-		ll_iter_release(it2);
-		ll_iter_release(it1);
-		
 		return count;
 }
