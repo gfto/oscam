@@ -21,7 +21,7 @@ static int8_t running = 1;
 static pthread_t httpthread;
 pthread_mutex_t http_lock;
 
-pthread_key_t getip;
+pthread_key_t getip, getkeepalive;
 
 #ifdef CS_ANTICASC
 static void kill_ac_client(void)
@@ -2617,8 +2617,9 @@ char *send_oscam_savetpls(struct templatevars *vars) {
 	return tpl_getTpl(vars, "SAVETEMPLATES");
 }
 
-char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *params, int32_t apicall) {
+char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *params, int32_t apicall, int8_t *keepalive) {
 	if (strcmp(strtolower(getParam(params, "action")), "shutdown") == 0) {
+		*keepalive = 0;
 		if(!apicall){
 			tpl_addVar(vars, TPLADD, "STYLESHEET", CSS);
 			tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", SHUTDOWNREFRESH);
@@ -2633,7 +2634,7 @@ char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *
 			tpl_addVar(vars, TPLADD, "APICONFIRMMESSAGE", "shutdown");
 			cs_log("Shutdown requested by XMLApi from %s", cs_inet_ntoa(GET_IP()));
 		}
-		running = 0;		
+		running = 0;
 		pthread_kill(httpthread, SIGPIPE);		// send signal to master thread to wake up from accept()
 		cs_exit_oscam();
 
@@ -2644,6 +2645,7 @@ char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *
 
 	}
 	else if (strcmp(strtolower(getParam(params, "action")), "restart") == 0) {
+		*keepalive = 0;
 		if(!apicall){
 			tpl_addVar(vars, TPLADD, "STYLESHEET", CSS);
 			tpl_addVar(vars, TPLADD, "REFRESHTIME", "5");
@@ -2659,6 +2661,7 @@ char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *
 			cs_log("Restart requested by XMLApi from %s", cs_inet_ntoa(GET_IP()));
 		}
 		running = 0;
+		*keepalive = 0;
 		pthread_kill(httpthread, SIGPIPE);		// send signal to master thread to wake up from accept()
 		cs_restart_oscam();
 
@@ -2973,7 +2976,7 @@ char *send_oscam_failban(struct templatevars *vars, struct uriparams *params) {
 	return tpl_getTpl(vars, "FAILBAN");
 }
 
-char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *params) {
+char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *params, int8_t *keepalive) {
 	if (strcmp(getParam(params, "part"), "status") == 0) {
 		return send_oscam_status(vars, params, 1);
 	}
@@ -3022,7 +3025,7 @@ char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *param
 		if ((strcmp(strtolower(getParam(params, "action")), "restart") == 0) ||
 				(strcmp(strtolower(getParam(params, "action")), "shutdown") == 0)){
 			if(!cfg.http_readonly) {
-				return send_oscam_shutdown(vars, f, params, 1);
+				return send_oscam_shutdown(vars, f, params, 1, keepalive);
 			} else {
 				tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "webif readonly mode");
 				return tpl_getTpl(vars, "APIERROR");
@@ -3186,286 +3189,299 @@ int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t forcePlain
 
 int32_t process_request(FILE *f, struct in_addr in) {	
 	int32_t ok=0,v=cv();
+	int8_t keepalive = 0;
+	pthread_setspecific(getkeepalive, &keepalive);
 	in_addr_t addr = GET_IP();
-
-	ok = check_ip(cfg.http_allowed, addr) ? v : 0;
-
-	if (!ok && cfg.http_dyndns[0]) {
-		cs_debug_mask(D_TRACE, "WebIf: IP not found in allowed range - test dyndns");
-
-		if(cfg.http_dynip && cfg.http_dynip == addr) {
-			ok = v;
-			cs_debug_mask(D_TRACE, "WebIf: dyndns address previously resolved and ok");
-
-		} else {
-
-			if (cfg.resolve_gethostbyname) {
-				cs_debug_mask(D_TRACE, "WebIf: try resolving IP with 'gethostbyname'");
-				pthread_mutex_lock(&gethostbyname_lock);
-				struct hostent *rht;
-				struct sockaddr_in udp_sa;
-
-				rht = gethostbyname((const char *) cfg.http_dyndns);
-				if (rht) {
-					memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
-					cfg.http_dynip = udp_sa.sin_addr.s_addr;
-					cs_debug_mask(D_TRACE, "WebIf: dynip resolved %s access from %s",
-							cs_inet_ntoa(cfg.http_dynip),
-							cs_inet_ntoa(addr));
-					if (cfg.http_dynip == addr)
-						ok = v;
-				} else {
-					cs_log("can't resolve %s", cfg.http_dyndns); }
-				pthread_mutex_unlock(&gethostbyname_lock);
-
-			} else {
-				cs_debug_mask(D_TRACE, "WebIf: try resolving IP with 'getaddrinfo'");
-				struct addrinfo hints, *res = NULL;
-				memset(&hints, 0, sizeof(hints));
-				hints.ai_socktype = SOCK_STREAM;
-				hints.ai_family = AF_INET;
-				hints.ai_protocol = IPPROTO_TCP;
-
-				int32_t err = getaddrinfo((const char*)cfg.http_dyndns, NULL, &hints, &res);
-				if (err != 0 || !res || !res->ai_addr) {
-					cs_log("can't resolve %s, error: %s", cfg.http_dyndns, err ? gai_strerror(err) : "unknown");
-				}
-				else {
-					cfg.http_dynip = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
-					cs_debug_mask(D_TRACE, "WebIf: dynip resolved %s access from %s",
-							cs_inet_ntoa(cfg.http_dynip),
-							cs_inet_ntoa(addr));
-					if (cfg.http_dynip == addr)
-						ok = v;
-				}
-				if (res) freeaddrinfo(res);
-
-			}
-		}
-	} else {
-		if (cfg.http_dyndns[0])
-			cs_debug_mask(D_TRACE, "WebIf: IP found in allowed range - bypass dyndns");
-	}
-
-	if (!ok) {
-		send_error(f, 403, "Forbidden", NULL, "Access denied.", 0);
-		cs_log("unauthorized access from %s flag %d", cs_inet_ntoa(addr), v);
-		return 0;
-	}
-
-	int32_t authok = 0;
-	char expectednonce[(MD5_DIGEST_LENGTH * 2) + 1];
-
-	char *method, *path, *protocol, *str1, *saveptr1=NULL, *authheader = NULL, *filebuf = NULL;
-	char *pch, *tmp, *buf;
-	/* List of possible pages */
-	char *pages[]= {
-		"/config.html",
-		"/readers.html",
-		"/entitlements.html",
-		"/status.html",
-		"/userconfig.html",
-		"/readerconfig.html",
-		"/services.html",
-		"/user_edit.html",
-		"/site.css",
-		"/services_edit.html",
-		"/savetemplates.html",
-		"/shutdown.html",
-		"/script.html",
-		"/scanusb.html",
-		"/files.html",
-		"/readerstats.html",
-		"/failban.html",
-		"/oscam.js",
-		"/oscamapi.html",
-		"/image",
-		"/favicon.ico"};
-
-	int32_t pagescnt = sizeof(pages)/sizeof(char *); // Calculate the amount of items in array
-	int32_t i, bufsize, len, pgidx = -1, keepalive = -1;
-	uint32_t etagheader = 0;
-	struct uriparams params;
-	params.paramcount = 0;
-	time_t modifiedheader = 0;
 	
-	bufsize = readRequest(f, in, &filebuf, 0);
-
-	if (!filebuf || bufsize < 1) {
-		cs_debug_mask(D_CLIENT, "WebIf: No data received from client %s. Closing connection.", cs_inet_ntoa(addr));
-		return -1;
-	}
-
-	buf=filebuf;
-
-	if((method = strtok_r(buf, " ", &saveptr1)) != NULL){
-		if((path = strtok_r(NULL, " ", &saveptr1)) != NULL){
-			if((protocol = strtok_r(NULL, "\r", &saveptr1)) == NULL){
-				return -1;
+	do {
+		if(keepalive) fflush(f);
+		ok = check_ip(cfg.http_allowed, addr) ? v : 0;
+	
+		if (!ok && cfg.http_dyndns[0]) {
+			cs_debug_mask(D_TRACE, "WebIf: IP not found in allowed range - test dyndns");
+	
+			if(cfg.http_dynip && cfg.http_dynip == addr) {
+				ok = v;
+				cs_debug_mask(D_TRACE, "WebIf: dyndns address previously resolved and ok");
+	
+			} else {
+	
+				if (cfg.resolve_gethostbyname) {
+					cs_debug_mask(D_TRACE, "WebIf: try resolving IP with 'gethostbyname'");
+					pthread_mutex_lock(&gethostbyname_lock);
+					struct hostent *rht;
+					struct sockaddr_in udp_sa;
+	
+					rht = gethostbyname((const char *) cfg.http_dyndns);
+					if (rht) {
+						memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
+						cfg.http_dynip = udp_sa.sin_addr.s_addr;
+						cs_debug_mask(D_TRACE, "WebIf: dynip resolved %s access from %s",
+								cs_inet_ntoa(cfg.http_dynip),
+								cs_inet_ntoa(addr));
+						if (cfg.http_dynip == addr)
+							ok = v;
+					} else {
+						cs_log("can't resolve %s", cfg.http_dyndns); }
+					pthread_mutex_unlock(&gethostbyname_lock);
+	
+				} else {
+					cs_debug_mask(D_TRACE, "WebIf: try resolving IP with 'getaddrinfo'");
+					struct addrinfo hints, *res = NULL;
+					memset(&hints, 0, sizeof(hints));
+					hints.ai_socktype = SOCK_STREAM;
+					hints.ai_family = AF_INET;
+					hints.ai_protocol = IPPROTO_TCP;
+	
+					int32_t err = getaddrinfo((const char*)cfg.http_dyndns, NULL, &hints, &res);
+					if (err != 0 || !res || !res->ai_addr) {
+						cs_log("can't resolve %s, error: %s", cfg.http_dyndns, err ? gai_strerror(err) : "unknown");
+					}
+					else {
+						cfg.http_dynip = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
+						cs_debug_mask(D_TRACE, "WebIf: dynip resolved %s access from %s",
+								cs_inet_ntoa(cfg.http_dynip),
+								cs_inet_ntoa(addr));
+						if (cfg.http_dynip == addr)
+							ok = v;
+					}
+					if (res) freeaddrinfo(res);
+	
+				}
 			}
-		} else return -1;
-	} else return -1;
-	tmp=protocol+strlen(protocol)+2;
-
-	pch=path;
-	/* advance pointer to beginning of query string */
-	while(pch[0] != '?' && pch[0] != '\0') ++pch;
-	if(pch[0] == '?') {
-		pch[0] = '\0';
-		++pch;
-	}
-
-	/* Map page to our static page definitions */
-	for (i=0; i<pagescnt; i++) {
-		if (!strcmp(path, pages[i])) pgidx = i;
-	}
-
-	parseParams(&params, pch);
-
-	if(strlen(cfg.http_user) == 0 || strlen(cfg.http_pwd) == 0) authok = 1;
-	else calculate_nonce(expectednonce);
-
-	for (str1=strtok_r(tmp, "\n", &saveptr1); str1; str1=strtok_r(NULL, "\n", &saveptr1)) {
-		len = strlen(str1);
-		if(str1[len - 1] == '\r'){
-			str1[len - 1] = '\0';
-			--len;
+		} else {
+			if (cfg.http_dyndns[0])
+				cs_debug_mask(D_TRACE, "WebIf: IP found in allowed range - bypass dyndns");
 		}
-		if (len==0) {
-			if (strcmp(method, "POST")==0) {
-				parseParams(&params, str1+2);
-			}
-			break;
-		}
-		if(authok == 0 && len > 50 && strncmp(str1, "Authorization:", 14) == 0 && strstr(str1, "Digest") != NULL) {
-			if (cs_dblevel & D_CLIENT){
-				if(cs_realloc(&authheader, len + 1, -1))
-					cs_strncpy(authheader, str1, len);
-			}
-			authok = check_auth(str1, method, path, expectednonce);
-		} else if (len > 40 && strncmp(str1, "If-Modified-Since:", 18) == 0){
-			modifiedheader = parse_modifiedsince(str1);
-		} else if (len > 20 && strncmp(str1, "If-None-Match:", 14) == 0){
-			for(pch = str1 + 14; pch[0] != '"' && pch[0] != '\0'; ++pch);
-			if(strlen(pch) > 5) etagheader = (uint32_t)strtoul(++pch, NULL, 10);
-		} else if (len > 12 && strncmp(str1, "Keep-Alive:", 11) == 0){
-			keepalive = atoi(str1 + 11);
-		}
-	}
-
-	if(authok != 1) {
-		if(authok == 2)
-			cs_debug_mask(D_TRACE, "WebIf: Received stale header from %s.", cs_inet_ntoa(addr));
-		else if(authheader){
-			cs_debug_mask(D_CLIENT, "WebIf: Received wrong auth header from %s:", cs_inet_ntoa(addr));
-			cs_debug_mask(D_CLIENT, "%s", authheader);
-		} else
-			cs_debug_mask(D_CLIENT, "WebIf: Received no auth header from %s.", cs_inet_ntoa(addr));
-		char temp[sizeof(AUTHREALM) + sizeof(expectednonce) + 100];
-		snprintf(temp, sizeof(temp), "WWW-Authenticate: Digest algorithm=\"MD5\", realm=\"%s\", qop=\"auth\", opaque=\"\", nonce=\"%s\"", AUTHREALM, expectednonce);
-		if(authok == 2) strncat(temp, ", stale=true", sizeof(temp));
-		send_headers(f, 401, "Unauthorized", temp, "text/html", 0, 0, NULL, 0);
-		NULLFREE(authheader);
-		free(filebuf);
-		return 0;
-	} else NULLFREE(authheader);
-
-	/*build page*/
-	if(pgidx == 8) {
-		send_file(f, "CSS", modifiedheader, etagheader);
-	} else if (pgidx == 17) {
-		send_file(f, "JS", modifiedheader, etagheader);
-	} else {
-		time_t t;
-		struct templatevars *vars = tpl_create();
-		if(vars == NULL){
-			send_error500(f);
-			free(filebuf);
+	
+		if (!ok) {
+			send_error(f, 403, "Forbidden", NULL, "Access denied.", 0);
+			cs_log("unauthorized access from %s flag %d", cs_inet_ntoa(addr), v);
 			return 0;
 		}
-		struct tm lt, st;
-		time(&t);
-
-		localtime_r(&t, &lt);
-
-		tpl_addVar(vars, TPLADD, "CS_VERSION", CS_VERSION);
-		tpl_addVar(vars, TPLADD, "CS_SVN_VERSION", CS_SVN_VERSION);
-		if(cfg.http_refresh > 0 && (pgidx == 3 || pgidx == -1)) {
-			tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg.http_refresh);
-			tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
-			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
-		}
-
-		tpl_printf(vars, TPLADD, "CURDATE", "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year%100);
-		tpl_printf(vars, TPLADD, "CURTIME", "%02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
-		localtime_r(&first_client->login, &st);
-		tpl_printf(vars, TPLADD, "STARTDATE", "%02d.%02d.%02d", st.tm_mday, st.tm_mon+1, st.tm_year%100);
-		tpl_printf(vars, TPLADD, "STARTTIME", "%02d:%02d:%02d", st.tm_hour, st.tm_min, st.tm_sec);
-		tpl_printf(vars, TPLADD, "PROCESSID", "%d", server_pid);
-
-		time_t now = time((time_t)0);
-		// XMLAPI
-		if (pgidx == 18) {
-			char tbuffer [30];
-			strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &st);
-			tpl_addVar(vars, TPLADD, "APISTARTTIME", tbuffer);
-			tpl_printf(vars, TPLADD, "APIUPTIME", "%u", now - first_client->login);
-			tpl_printf(vars, TPLADD, "APIREADONLY", "%d", cfg.http_readonly);
-		}
-
-		// language code in helplink
-		if (cfg.http_help_lang[0])
-			tpl_addVar(vars, TPLADD, "LANGUAGE", cfg.http_help_lang);
-		else
-			tpl_addVar(vars, TPLADD, "LANGUAGE", "en");
-
-		tpl_addVar(vars, TPLADD, "UPTIME", sec2timeformat(vars, (now - first_client->login)));
-		tpl_addVar(vars, TPLADD, "CURIP", cs_inet_ntoa(addr));
-		if(cfg.http_readonly)
-			tpl_addVar(vars, TPLAPPEND, "BTNDISABLED", "DISABLED");
-
-		char *result = NULL;
+	
+		int32_t authok = 0;
+		char expectednonce[(MD5_DIGEST_LENGTH * 2) + 1];
+	
+		char *method, *path, *protocol, *str1, *saveptr1=NULL, *authheader = NULL, *filebuf = NULL;
+		char *pch, *tmp, *buf;
+		/* List of possible pages */
+		char *pages[]= {
+			"/config.html",
+			"/readers.html",
+			"/entitlements.html",
+			"/status.html",
+			"/userconfig.html",
+			"/readerconfig.html",
+			"/services.html",
+			"/user_edit.html",
+			"/site.css",
+			"/services_edit.html",
+			"/savetemplates.html",
+			"/shutdown.html",
+			"/script.html",
+			"/scanusb.html",
+			"/files.html",
+			"/readerstats.html",
+			"/failban.html",
+			"/oscam.js",
+			"/oscamapi.html",
+			"/image",
+			"/favicon.ico"};
+	
+		int32_t pagescnt = sizeof(pages)/sizeof(char *); // Calculate the amount of items in array
+		int32_t i, bufsize, len, pgidx = -1;
+		uint32_t etagheader = 0;
+		struct uriparams params;
+		params.paramcount = 0;
+		time_t modifiedheader = 0;
 		
-		// WebIf allows modifying many things. Thus, all pages except images/css are excpected to be non-threadsafe! 
-		if(pgidx != 19 && pgidx != 20) pthread_mutex_lock(&http_lock);
-		switch(pgidx) {
-			case 0: result = send_oscam_config(vars, &params); break;
-			case 1: result = send_oscam_reader(vars, &params); break;
-			case 2: result = send_oscam_entitlement(vars, &params, 0); break;
-			case 3: result = send_oscam_status(vars, &params, 0); break;
-			case 4: result = send_oscam_user_config(vars, &params, 0); break;
-			case 5: result = send_oscam_reader_config(vars, &params); break;
-			case 6: result = send_oscam_services(vars, &params); break;
-			case 7: result = send_oscam_user_config_edit(vars, &params); break;
-			//case  8: css file
-			case 9: result = send_oscam_services_edit(vars, &params); break;
-			case 10: result = send_oscam_savetpls(vars); break;
-			case 11: result = send_oscam_shutdown(vars, f, &params, 0); break;
-			case 12: result = send_oscam_script(vars); break;
-			case 13: result = send_oscam_scanusb(vars); break;
-			case 14: result = send_oscam_files(vars, &params); break;
-			case 15: result = send_oscam_reader_stats(vars, &params, 0); break;
-			case 16: result = send_oscam_failban(vars, &params); break;
-			//case  17: js file
-			case 18: result = send_oscam_api(vars, f, &params); break;
-			case 19: result = send_oscam_image(vars, f, &params, NULL, modifiedheader, etagheader); break;
-			case 20: result = send_oscam_image(vars, f, &params, "ICMAI", modifiedheader, etagheader); break;
-			default: result = send_oscam_status(vars, &params, 0); break;
+		bufsize = readRequest(f, in, &filebuf, 0);
+	
+		if (!filebuf || bufsize < 1) {
+			if(!keepalive) cs_debug_mask(D_CLIENT, "WebIf: No data received from client %s. Closing connection.", cs_inet_ntoa(addr));
+			return -1;
 		}
-		if(pgidx != 19 && pgidx != 20) pthread_mutex_unlock(&http_lock);
-
-		if(result == NULL || !strcmp(result, "0") || strlen(result) == 0) send_error500(f);
-		else if (strcmp(result, "1")) {
-			//it doesn't make sense to check for modified etagheader here as standard template has timestamp in output and so site changes on every request
-			if (pgidx == 18)
-				send_headers(f, 200, "OK", NULL, "text/xml", 0, strlen(result), NULL, 0);
+	
+		buf=filebuf;
+	
+		if((method = strtok_r(buf, " ", &saveptr1)) != NULL){
+			if((path = strtok_r(NULL, " ", &saveptr1)) != NULL){
+				if((protocol = strtok_r(NULL, "\r", &saveptr1)) == NULL){
+					free(filebuf);
+					return -1;
+				}
+			} else {
+				free(filebuf);
+				return -1;
+			}
+		} else {
+			free(filebuf);
+			return -1;
+		}
+		tmp=protocol+strlen(protocol)+2;
+	
+		pch=path;
+		/* advance pointer to beginning of query string */
+		while(pch[0] != '?' && pch[0] != '\0') ++pch;
+		if(pch[0] == '?') {
+			pch[0] = '\0';
+			++pch;
+		}
+	
+		/* Map page to our static page definitions */
+		for (i=0; i<pagescnt; i++) {
+			if (!strcmp(path, pages[i])) pgidx = i;
+		}
+	
+		parseParams(&params, pch);
+	
+		if(strlen(cfg.http_user) == 0 || strlen(cfg.http_pwd) == 0) authok = 1;
+		else calculate_nonce(expectednonce);
+	
+		for (str1=strtok_r(tmp, "\n", &saveptr1); str1; str1=strtok_r(NULL, "\n", &saveptr1)) {
+			len = strlen(str1);
+			if(str1[len - 1] == '\r'){
+				str1[len - 1] = '\0';
+				--len;
+			}
+			if (len==0) {
+				if (strcmp(method, "POST")==0) {
+					parseParams(&params, str1+2);
+				}
+				break;
+			}
+			if(authok == 0 && len > 50 && cs_strnicmp(str1, "Authorization:", 14) == 0 && strstr(str1, "Digest") != NULL) {
+				if (cs_dblevel & D_CLIENT){
+					if(cs_realloc(&authheader, len + 1, -1))
+						cs_strncpy(authheader, str1, len);
+				}
+				authok = check_auth(str1, method, path, expectednonce);
+			} else if (len > 40 && cs_strnicmp(str1, "If-Modified-Since:", 18) == 0){
+				modifiedheader = parse_modifiedsince(str1);
+			} else if (len > 20 && cs_strnicmp(str1, "If-None-Match:", 14) == 0){
+				for(pch = str1 + 14; pch[0] != '"' && pch[0] != '\0'; ++pch);
+				if(strlen(pch) > 5) etagheader = (uint32_t)strtoul(++pch, NULL, 10);
+			} else if (len > 12 && cs_strnicmp(str1, "Connection: Keep-Alive", 22) == 0 && strcmp(method, "POST")){
+				keepalive = 1;
+			}
+		}
+	
+		if(authok != 1) {
+			if(authok == 2)
+				cs_debug_mask(D_TRACE, "WebIf: Received stale header from %s.", cs_inet_ntoa(addr));
+			else if(authheader){
+				cs_debug_mask(D_CLIENT, "WebIf: Received wrong auth header from %s:", cs_inet_ntoa(addr));
+				cs_debug_mask(D_CLIENT, "%s", authheader);
+			} else
+				cs_debug_mask(D_CLIENT, "WebIf: Received no auth header from %s.", cs_inet_ntoa(addr));
+			char temp[sizeof(AUTHREALM) + sizeof(expectednonce) + 100];
+			snprintf(temp, sizeof(temp), "WWW-Authenticate: Digest algorithm=\"MD5\", realm=\"%s\", qop=\"auth\", opaque=\"\", nonce=\"%s\"", AUTHREALM, expectednonce);
+			if(authok == 2) strncat(temp, ", stale=true", sizeof(temp));
+			send_headers(f, 401, "Unauthorized", temp, "text/html", 0, 0, NULL, 0);
+			NULLFREE(authheader);
+			free(filebuf);
+			if(keepalive) continue;
+			else return 0;
+		} else NULLFREE(authheader);
+	
+		/*build page*/
+		if(pgidx == 8) {
+			send_file(f, "CSS", modifiedheader, etagheader);
+		} else if (pgidx == 17) {
+			send_file(f, "JS", modifiedheader, etagheader);
+		} else {
+			time_t t;
+			struct templatevars *vars = tpl_create();
+			if(vars == NULL){
+				send_error500(f);
+				free(filebuf);
+				return 0;
+			}
+			struct tm lt, st;
+			time(&t);
+	
+			localtime_r(&t, &lt);
+	
+			tpl_addVar(vars, TPLADD, "CS_VERSION", CS_VERSION);
+			tpl_addVar(vars, TPLADD, "CS_SVN_VERSION", CS_SVN_VERSION);
+			if(cfg.http_refresh > 0 && (pgidx == 3 || pgidx == -1)) {
+				tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg.http_refresh);
+				tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
+				tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
+			}
+	
+			tpl_printf(vars, TPLADD, "CURDATE", "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year%100);
+			tpl_printf(vars, TPLADD, "CURTIME", "%02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
+			localtime_r(&first_client->login, &st);
+			tpl_printf(vars, TPLADD, "STARTDATE", "%02d.%02d.%02d", st.tm_mday, st.tm_mon+1, st.tm_year%100);
+			tpl_printf(vars, TPLADD, "STARTTIME", "%02d:%02d:%02d", st.tm_hour, st.tm_min, st.tm_sec);
+			tpl_printf(vars, TPLADD, "PROCESSID", "%d", server_pid);
+	
+			time_t now = time((time_t)0);
+			// XMLAPI
+			if (pgidx == 18) {
+				char tbuffer [30];
+				strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &st);
+				tpl_addVar(vars, TPLADD, "APISTARTTIME", tbuffer);
+				tpl_printf(vars, TPLADD, "APIUPTIME", "%u", now - first_client->login);
+				tpl_printf(vars, TPLADD, "APIREADONLY", "%d", cfg.http_readonly);
+			}
+	
+			// language code in helplink
+			if (cfg.http_help_lang[0])
+				tpl_addVar(vars, TPLADD, "LANGUAGE", cfg.http_help_lang);
 			else
-				send_headers(f, 200, "OK", NULL, "text/html", 0, strlen(result), NULL, 0);
-			webif_write(result, f);
+				tpl_addVar(vars, TPLADD, "LANGUAGE", "en");
+	
+			tpl_addVar(vars, TPLADD, "UPTIME", sec2timeformat(vars, (now - first_client->login)));
+			tpl_addVar(vars, TPLADD, "CURIP", cs_inet_ntoa(addr));
+			if(cfg.http_readonly)
+				tpl_addVar(vars, TPLAPPEND, "BTNDISABLED", "DISABLED");
+	
+			char *result = NULL;
+			
+			// WebIf allows modifying many things. Thus, all pages except images/css are excpected to be non-threadsafe! 
+			if(pgidx != 19 && pgidx != 20) pthread_mutex_lock(&http_lock);
+			switch(pgidx) {
+				case 0: result = send_oscam_config(vars, &params); break;
+				case 1: result = send_oscam_reader(vars, &params); break;
+				case 2: result = send_oscam_entitlement(vars, &params, 0); break;
+				case 3: result = send_oscam_status(vars, &params, 0); break;
+				case 4: result = send_oscam_user_config(vars, &params, 0); break;
+				case 5: result = send_oscam_reader_config(vars, &params); break;
+				case 6: result = send_oscam_services(vars, &params); break;
+				case 7: result = send_oscam_user_config_edit(vars, &params); break;
+				//case  8: css file
+				case 9: result = send_oscam_services_edit(vars, &params); break;
+				case 10: result = send_oscam_savetpls(vars); break;
+				case 11: result = send_oscam_shutdown(vars, f, &params, 0, &keepalive); break;
+				case 12: result = send_oscam_script(vars); break;
+				case 13: result = send_oscam_scanusb(vars); break;
+				case 14: result = send_oscam_files(vars, &params); break;
+				case 15: result = send_oscam_reader_stats(vars, &params, 0); break;
+				case 16: result = send_oscam_failban(vars, &params); break;
+				//case  17: js file
+				case 18: result = send_oscam_api(vars, f, &params, &keepalive); break;
+				case 19: result = send_oscam_image(vars, f, &params, NULL, modifiedheader, etagheader); break;
+				case 20: result = send_oscam_image(vars, f, &params, "ICMAI", modifiedheader, etagheader); break;
+				default: result = send_oscam_status(vars, &params, 0); break;
+			}
+			if(pgidx != 19 && pgidx != 20) pthread_mutex_unlock(&http_lock);
+	
+			if(result == NULL || !strcmp(result, "0") || strlen(result) == 0) send_error500(f);
+			else if (strcmp(result, "1")) {
+				//it doesn't make sense to check for modified etagheader here as standard template has timestamp in output and so site changes on every request
+				if (pgidx == 18)
+					send_headers(f, 200, "OK", NULL, "text/xml", 0, strlen(result), NULL, 0);
+				else
+					send_headers(f, 200, "OK", NULL, "text/html", 0, strlen(result), NULL, 0);
+				webif_write(result, f);
+			}
+			tpl_clear(vars);
 		}
-		tpl_clear(vars);
-	}
-	free(filebuf);
+		free(filebuf);
+	} while (keepalive == 1);
 	return 0;
 }
 
@@ -3582,6 +3598,10 @@ void http_srv() {
 
 	if (pthread_key_create(&getip, NULL)) {
 		cs_log("Could not create getip");
+		return;
+	}
+	if (pthread_key_create(&getkeepalive, NULL)) {
+		cs_log("Could not create getkeepalive");
 		return;
 	}
 

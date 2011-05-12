@@ -501,7 +501,10 @@ void send_headers(FILE *f, int32_t status, char *title, char *extra, char *mime,
 			pos += snprintf(pos, sizeof(buf)-(pos-buf),"ETag: \"%u\"\r\n", checksum==0?1:checksum);
 		}
 	}
-	pos += snprintf(pos, sizeof(buf)-(pos-buf), "Connection: close\r\n");
+	if(*(int8_t *)pthread_getspecific(getkeepalive))
+		pos += snprintf(pos, sizeof(buf)-(pos-buf), "Connection: Keep-Alive\r\n");
+	else
+		pos += snprintf(pos, sizeof(buf)-(pos-buf), "Connection: close\r\n");
 	pos += snprintf(pos, sizeof(buf)-(pos-buf),"\r\n");
 	if(forcePlain == 1) fwrite(buf, 1, strlen(buf), f);
 	else webif_write(buf, f);
@@ -580,8 +583,14 @@ void send_file(FILE *f, char *filename, time_t modifiedheader, uint32_t etaghead
 	if((etagheader == 0 && moddate < modifiedheader) || (uint32_t)crc32(0L, (uchar *)result, size) == etagheader){
 		send_header304(f);
 	} else {
-		send_headers(f, 200, "OK", NULL, mimetype, 1, size, result, 0);
-		webif_write(result, f);
+		// We need at least size 1 or keepalive gets problems on some browsers...
+		if(size < 1){
+			send_headers(f, 200, "OK", NULL, mimetype, 1, 1, result, 0);
+			webif_write(" ", f);
+		} else {
+			send_headers(f, 200, "OK", NULL, mimetype, 1, size, result, 0);
+			webif_write(result, f);
+		}
 	}
 	if(allocated) free(result);
 }

@@ -933,6 +933,16 @@ char *get_ncd_client_name(char *client_id)
         return ncd_service_names[max_id_idx+1];
 }
 
+int32_t cs_strnicmp(const char * str1, const char * str2, size_t num){
+	uint32_t i, len1 = strlen(str1), len2 = strlen(str2);
+	int32_t diff;
+	for(i = 0; i < len1 && i < len2 && i < num; ++i){
+		diff = toupper(str1[i]) - toupper(str2[i]);
+		if (diff != 0) return diff;
+	}
+	return 0;
+}
+
 char *strnew(char *str)
 {
   if (!str)
