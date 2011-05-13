@@ -3190,14 +3190,14 @@ int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t forcePlain
 
 int32_t process_request(FILE *f, struct in_addr in) {	
 	int32_t ok=0,v=cv();
-	int8_t keepalive = *(int8_t *)pthread_getspecific(getkeepalive);
+	int8_t *keepalive = (int8_t *)pthread_getspecific(getkeepalive);
 	in_addr_t addr = GET_IP();
 	
 	do {
 #ifdef WITH_SSL
-		if (!ssl_active && keepalive) fflush(f);
+		if (!ssl_active && *keepalive) fflush(f);
 #else
-		if (keepalive) fflush(f);
+		if (*keepalive) fflush(f);
 #endif
 		ok = check_ip(cfg.http_allowed, addr) ? v : 0;
 	
@@ -3303,7 +3303,7 @@ int32_t process_request(FILE *f, struct in_addr in) {
 		bufsize = readRequest(f, in, &filebuf, 0);
 	
 		if (!filebuf || bufsize < 1) {
-			if(!keepalive) cs_debug_mask(D_CLIENT, "WebIf: No data received from client %s. Closing connection.", cs_inet_ntoa(addr));
+			if(!*keepalive) cs_debug_mask(D_CLIENT, "WebIf: No data received from client %s. Closing connection.", cs_inet_ntoa(addr));
 			return -1;
 		}
 	
@@ -3367,7 +3367,7 @@ int32_t process_request(FILE *f, struct in_addr in) {
 				for(pch = str1 + 14; pch[0] != '"' && pch[0] != '\0'; ++pch);
 				if(strlen(pch) > 5) etagheader = (uint32_t)strtoul(++pch, NULL, 10);
 			} else if (len > 12 && cs_strnicmp(str1, "Connection: Keep-Alive", 22) == 0 && strcmp(method, "POST")){
-				keepalive = 1;
+				*keepalive = 1;
 			}
 		}
 	
@@ -3385,7 +3385,7 @@ int32_t process_request(FILE *f, struct in_addr in) {
 			send_headers(f, 401, "Unauthorized", temp, "text/html", 0, 0, NULL, 0);
 			NULLFREE(authheader);
 			free(filebuf);
-			if(keepalive) continue;
+			if(*keepalive) continue;
 			else return 0;
 		} else NULLFREE(authheader);
 	
@@ -3459,14 +3459,14 @@ int32_t process_request(FILE *f, struct in_addr in) {
 				//case  8: css file
 				case 9: result = send_oscam_services_edit(vars, &params); break;
 				case 10: result = send_oscam_savetpls(vars); break;
-				case 11: result = send_oscam_shutdown(vars, f, &params, 0, &keepalive); break;
+				case 11: result = send_oscam_shutdown(vars, f, &params, 0, keepalive); break;
 				case 12: result = send_oscam_script(vars); break;
 				case 13: result = send_oscam_scanusb(vars); break;
 				case 14: result = send_oscam_files(vars, &params); break;
 				case 15: result = send_oscam_reader_stats(vars, &params, 0); break;
 				case 16: result = send_oscam_failban(vars, &params); break;
 				//case  17: js file
-				case 18: result = send_oscam_api(vars, f, &params, &keepalive); break;
+				case 18: result = send_oscam_api(vars, f, &params, keepalive); break;
 				case 19: result = send_oscam_image(vars, f, &params, NULL, modifiedheader, etagheader); break;
 				case 20: result = send_oscam_image(vars, f, &params, "ICMAI", modifiedheader, etagheader); break;
 				default: result = send_oscam_status(vars, &params, 0); break;
@@ -3485,7 +3485,7 @@ int32_t process_request(FILE *f, struct in_addr in) {
 			tpl_clear(vars);
 		}
 		free(filebuf);
-	} while (keepalive == 1);
+	} while (*keepalive == 1);
 	return 0;
 }
 
