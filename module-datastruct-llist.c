@@ -87,13 +87,15 @@ static void ll_clear_int(LLIST *l, int clear_data)
 
     if (!ll_lock(l)) return;
     
-    LL_ITER it = ll_iter_create(l);
-    while (ll_iter_next_nolock(&it)) {
-    	if (it.cur && !it.cur->flag++) {
+    LL_NODE *n=l->initial, *nxt;
+    while (n) {
+    	nxt = n->nxt;
+    	if (n && !n->flag++) {
     		if (clear_data)
-    			add_garbage(it.cur->obj);
-    		add_garbage(it.cur);
+    			add_garbage(n->obj);
+    		add_garbage(n);
 		}
+		n = nxt;
     }
     l->count = 0;
     l->initial = 0;
