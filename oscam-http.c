@@ -1899,8 +1899,9 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 
 					if (cc_UA_valid(card->hexserial)) { //Add UA:
 						cc_UA_cccam2oscam(card->hexserial, serbuf, card->caid);
-						tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_Oscam:%s", cs_hexdump(0, serbuf, 8));
-						tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_CCcam:%s", cs_hexdump(0, card->hexserial, 8));
+						char tmp[20];
+						tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_Oscam:%s", cs_hexdump_buf(0, serbuf, 8, tmp, 20));
+						tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_CCcam:%s", cs_hexdump_buf(0, card->hexserial, 8, tmp, 20));
 					}
    					if (!apicall) {
 								int32_t n;
@@ -3189,12 +3190,15 @@ int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t forcePlain
 
 int32_t process_request(FILE *f, struct in_addr in) {	
 	int32_t ok=0,v=cv();
-	int8_t keepalive = 0;
-	pthread_setspecific(getkeepalive, &keepalive);
+	int8_t keepalive = *(int8_t *)pthread_getspecific(getkeepalive);
 	in_addr_t addr = GET_IP();
 	
 	do {
-		if(keepalive) fflush(f);
+#ifdef WITH_SSL
+		if (!ssl_active && keepalive) fflush(f);
+#else
+		if (keepalive) fflush(f);
+#endif
 		ok = check_ip(cfg.http_allowed, addr) ? v : 0;
 	
 		if (!ok && cfg.http_dyndns[0]) {
@@ -3499,6 +3503,9 @@ void *serve_process(void *conn){
 
 	pthread_setspecific(getip, &in.s_addr);
 	pthread_setspecific(getclient, cl);
+
+	int8_t keepalive = 0;
+	pthread_setspecific(getkeepalive, &keepalive);
 
 #ifdef WITH_SSL
 	if (ssl_active) {

@@ -690,6 +690,9 @@ void cs_exit(int32_t sig)
 	cs_log("cardserver down");
 	cs_close_log();
 
+	if (sig == SIGINT)
+		exit(sig);
+
 	cs_cleanup();
 
 	if (!exit_oscam)

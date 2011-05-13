@@ -347,18 +347,21 @@ int32_t key_atob_l(char *asc, uchar *bin, int32_t l)
 
 char *cs_hexdump(int32_t m, const uchar *buf, int32_t n)
 {
-  //TODO: not threadsafe
-  int32_t i;
-  char *dump = (char *)cur_client()->dump;
+	return cs_hexdump_buf(m, buf, n, (char *)cur_client()->dump, sizeof(cur_client()->dump));
+}
 
-  dump[i=0]='\0';
+char *cs_hexdump_buf(int32_t m, const uchar *buf, int32_t n, char *target, int32_t len)
+{
+  int32_t i = 0;
+
+  target[0]='\0';
   m=(m)?3:2;
-  if (m*n>=(int)sizeof(cur_client()->dump)) n=(sizeof(cur_client()->dump)/m)-1;
+  if (m*n>=len) n=(len/m)-1;
   while (i<n){
-    snprintf(dump+(m*i), sizeof(cur_client()->dump)-(m*i), "%02X%s", *buf++, (m>2)?" ":"");
+    snprintf(target+(m*i), len-(m*i), "%02X%s", *buf++, (m>2)?" ":"");
     ++i;
   }
-  return(dump);
+  return(target);
 }
 
 static int32_t inet_byteorder=0;

@@ -1296,6 +1296,7 @@ extern int32_t dyn_word_atob(char *asc);
 extern int32_t key_atob_l(char *, uchar *, int);
 extern char *key_btoa(char *, uchar *);
 extern char *cs_hexdump(int, const uchar *, int);
+extern char *cs_hexdump_buf(int, const uchar *, int, char *target, int32_t len);
 extern in_addr_t cs_inet_order(in_addr_t);
 extern char *cs_inet_ntoa(in_addr_t);
 extern in_addr_t cs_inet_addr(char *txt);
