@@ -1881,9 +1881,11 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 						if (rdr)
 							tpl_printf(vars, TPLADD, "HOST", "%s:%d", rdr->device, rdr->r_port);
 						tpl_printf(vars, TPLADD, "CAID", "%04X", card->caid);
+						tpl_printf(vars, TPLADD, "CARDTYPE", "%02X", card->card_type);
 					} else {
 						tpl_printf(vars, TPLADD, "APICARDNUMBER", "%d", cardcount);
 						tpl_printf(vars, TPLADD, "APICAID", "%04X", card->caid);
+						tpl_printf(vars, TPLADD, "APICARDTYPE", "%02X", card->card_type);
 					}
 
 					if (cc_UA_valid(card->hexserial)) { //Add UA:
