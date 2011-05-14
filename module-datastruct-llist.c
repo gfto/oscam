@@ -33,9 +33,9 @@ LLIST *ll_create()
     return l;
 }
 
-int ll_lock(LLIST *l)
+int32_t ll_lock(LLIST *l)
 {
-	int res = 1;
+	int32_t res = 1;
 	while (l && !l->flag && (res=pthread_mutex_trylock(&l->lock))) {
 		cs_debug_mask(D_TRACE, "trylock ll_lock wait");
 		cs_sleepms(50);
@@ -81,7 +81,7 @@ void *ll_iter_next_nolock(LL_ITER *it)
     return NULL;
 }
 
-static void ll_clear_int(LLIST *l, int clear_data)
+static void ll_clear_int(LLIST *l, int32_t clear_data)
 {
     if (!l) return;
 
@@ -282,9 +282,9 @@ void *ll_iter_remove(LL_ITER *it)
     return obj;
 }
 
-int ll_iter_move_first(LL_ITER *it) 
+int32_t ll_iter_move_first(LL_ITER *it) 
 {
-	int moved = 0;
+	int32_t moved = 0;
     if (it) {
     	if (!ll_lock(it->l)) return moved;
     	
@@ -343,7 +343,7 @@ int32_t ll_contains(LLIST *l, void *obj)
 
 int32_t ll_remove(LLIST *l, void *obj)
 {
-	int n = 0;
+	int32_t n = 0;
     LL_ITER it = ll_iter_create(l);
     void *data;
     while ((data=ll_iter_next(&it))) {

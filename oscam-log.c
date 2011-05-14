@@ -225,7 +225,7 @@ static void write_to_log(char *txt)
 		}
 
 		char *target_ptr = NULL;
-		int target_len = strlen(usrtxt) + (strlen(log_buf) - 8) + 1;
+		int32_t target_len = strlen(usrtxt) + (strlen(log_buf) - 8) + 1;
 		
 		pthread_mutex_lock(&loghistory_lock);
 		char *lastpos = loghist + (cfg.loghistorysize) - 1;		

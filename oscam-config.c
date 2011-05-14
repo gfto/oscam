@@ -162,7 +162,7 @@ void chk_caidtab(char *caidasc, CAIDTAB *ctab)
 	}
 }
 
-void chk_caidvaluetab(char *lbrlt, CAIDVALUETAB *tab, int minvalue)
+void chk_caidvaluetab(char *lbrlt, CAIDVALUETAB *tab, int32_t minvalue)
 {
 		int32_t i;
 		char *ptr1, *ptr2, *saveptr1 = NULL;

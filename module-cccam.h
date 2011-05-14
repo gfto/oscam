@@ -208,14 +208,14 @@ struct cc_data {
 	LLIST *extended_ecm_idx;
 	
 	//stats:
-	int num_hop1;
-	int num_hop2;
-	int num_hopx;
+	int32_t num_hop1;
+	int32_t num_hop2;
+	int32_t num_hopx;
 
-	int num_reshare0;	
-	int num_reshare1;
-	int num_reshare2;
-	int num_resharex;
+	int32_t num_reshare0;	
+	int32_t num_reshare1;
+	int32_t num_reshare2;
+	int32_t num_resharex;
 };
 
 int32_t cc_cli_init();

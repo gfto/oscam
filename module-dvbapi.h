@@ -262,7 +262,7 @@ static int32_t stapi_open();
 static int32_t stapi_set_filter(int32_t demux_id, uint16_t pid, uchar *filter, uchar *mask, int32_t num, char *pmtfile);
 static int32_t stapi_remove_filter(int32_t demux_id, int32_t num, char *pmtfile);
 static int32_t stapi_set_pid(int32_t demux_id, int32_t num, int32_t index, uint16_t pid, char *pmtfile);
-static int32_t stapi_write_cw(int32_t demux_id, uchar *cw, uint16_t *, int, char *pmtfile);
+static int32_t stapi_write_cw(int32_t demux_id, uchar *cw, uint16_t *, int32_t, char *pmtfile);
 static int32_t stapi_do_set_filter(int32_t demux_id, FILTERTYPE *filter, uint16_t *pids, int32_t pidcount, uchar *filt, uchar *mask, int32_t dev_id);
 static int32_t stapi_do_remove_filter(int32_t demux_id, FILTERTYPE *filter, int32_t dev_id);
 static void *stapi_read_thread(void *);
@@ -295,7 +295,7 @@ uint32_t oscam_stapi_SlotClearPid(uint32_t slot);
 
 void dvbapi_stop_descrambling(int);
 void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, int32_t len);
-int32_t dvbapi_open_device(int, int, int);
+int32_t dvbapi_open_device(int32_t, int32_t, int);
 int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num);
 int32_t dvbapi_stop_filter(int32_t demux_index, int32_t type);
 struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidindex, char type);

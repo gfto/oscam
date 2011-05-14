@@ -372,7 +372,7 @@ int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card) {
         if (ll_count(card->providers)) {
         	it = ll_iter_create(card->providers);
         	struct cc_provider *prov;
-        	int found=0;
+        	int8_t found=0;
         	while ((prov = ll_iter_next(&it))) {
         		uint32_t prid = prov->prov;
                 if (chk_srvid_by_caid_prov(cl, card->caid, prid)) {

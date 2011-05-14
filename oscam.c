@@ -1,6 +1,7 @@
   //FIXME Not checked on threadsafety yet; after checking please remove this line
 #define CS_CORE
 #include "globals.h"
+#include "csctapi/icc_async.h"
 #if defined(AZBOX) && defined(HAVE_DVBAPI)
 #  include "openxcas/openxcas_api.h"
 #endif
@@ -933,6 +934,7 @@ static void init_first_client()
   pthread_mutex_init(&get_cw_lock, NULL);
   pthread_mutex_init(&system_lock, NULL);
   pthread_mutex_init(&clientlist_lock, NULL);
+  pthread_mutex_init(&sc8in1_lock, NULL);
 
 #ifdef COOL
   coolapi_open_all();
@@ -1219,7 +1221,7 @@ void start_anticascader()
   ac_init_stat();
   while(1)
   {
-  	int i;
+  	int32_t i;
   	for( i=0; i<cfg.ac_stime*60; i++ )
   		cs_sleepms(1000); //FIXME this is a cpu-killer!
     ac_do_stat();
@@ -1955,7 +1957,7 @@ void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc)
  **/
 static void checkCW(ECM_REQUEST *er)
 {
-	int i;
+	int8_t i;
 	for (i=0;i<16;i++)
 		if (er->cw[i]) return;
 	er->rc = E_NOTFOUND;

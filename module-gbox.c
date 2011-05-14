@@ -293,7 +293,7 @@ static void gbox_handle_gsms(uint16_t peerid, char *gsms)
 {
 	cs_log("gbox: gsms received from peer %04x: %s", peerid, gsms);
 
-	if (strnlen(cfg.gbox_gsms_path, sizeof(cfg.gbox_gsms_path))) {
+	if (strlen(cfg.gbox_gsms_path)) {
 		FILE *f = fopen(cfg.gbox_gsms_path, "a");
 		if (f) {
 			f//printf(f, "FROM %04X: %s\n", peerid, gsms);
@@ -389,7 +389,7 @@ static void gbox_send_boxinfo(struct s_client *cli)
   int32_t len;
   uchar buf[256];
 
-  int32_t hostname_len = strnlen(cfg.gbox_hostname, sizeof(cfg.gbox_hostname) - 1);
+  int32_t hostname_len = strlen(cfg.gbox_hostname);
 
   gbox_code_cmd(buf, MSG_BOXINFO);
   memcpy(buf + 2, gbox->peer.key, 4);
@@ -435,7 +435,7 @@ static void gbox_send_hello(struct s_client *cli)
     struct s_reader *rdr = cl->reader;
     if (rdr) {
       if (rdr->card_status == CARD_INSERTED) {
-        int i;
+        int32_t i;
         for (i = 0; i < rdr->nprov; i++) {
           struct gbox_card *c = calloc(1, sizeof(struct gbox_card));
           c->provid = rdr->caid << 16 | rdr->prid[i][0] << 8 | rdr->prid[i][1];
@@ -448,7 +448,7 @@ static void gbox_send_hello(struct s_client *cli)
   int32_t len;
   uchar buf[4096];
 
-  int32_t hostname_len = strnlen(cfg.gbox_hostname, sizeof(cfg.gbox_hostname) - 1);
+  int32_t hostname_len = strlen(cfg.gbox_hostname);
 
   len = 22 + hostname_len + ll_count(gbox->local_cards) * 9;
 
@@ -797,12 +797,12 @@ static void gbox_send_dcw(struct s_client *cli, ECM_REQUEST *er)
 
 static int32_t gbox_client_init(struct s_client *cli)
 {
-	if (!strnlen(cfg.gbox_hostname, sizeof(cfg.gbox_hostname) - 1)) {
+	if (!strlen(cfg.gbox_hostname)) {
 		cs_log("gbox: error, no hostname configured in oscam.conf!");
 		return -1;
 	}
 
-	if (strnlen(cfg.gbox_key, sizeof(cfg.gbox_key) - 1) != 8) {
+	if (strlen(cfg.gbox_key) != 8) {
 		cs_log("gbox: error, no/invalid password configured in oscam.conf!");
 		return -1;
 	}

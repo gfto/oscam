@@ -1288,30 +1288,30 @@ extern char *remote_txt(void);
 extern char *trim(char *);
 extern char *strtolower(char *);
 extern int32_t gethexval(char);
-extern int32_t cs_atob(uchar *, char *, int);
-extern uint32_t cs_atoi(char *, int, int);
+extern int32_t cs_atob(uchar *, char *, int32_t);
+extern uint32_t cs_atoi(char *, int32_t, int32_t);
 extern int32_t byte_atob(char *);
 extern int32_t word_atob(char *);
 extern int32_t dyn_word_atob(char *asc);
-extern int32_t key_atob_l(char *, uchar *, int);
+extern int32_t key_atob_l(char *, uchar *, int32_t);
 extern char *key_btoa(char *, uchar *);
-extern char *cs_hexdump(int, const uchar *, int);
-extern char *cs_hexdump_buf(int, const uchar *, int, char *target, int32_t len);
+extern char *cs_hexdump(int32_t, const uchar *, int32_t);
+extern char *cs_hexdump_buf(int32_t, const uchar *, int32_t, char *target, int32_t len);
 extern in_addr_t cs_inet_order(in_addr_t);
 extern char *cs_inet_ntoa(in_addr_t);
 extern in_addr_t cs_inet_addr(char *txt);
-extern uint32_t b2i(int, uchar *);
-extern uint64_t b2ll(int, uchar *);
-extern uchar *i2b(int, uint32_t);
+extern uint32_t b2i(int32_t, uchar *);
+extern uint64_t b2ll(int32_t, uchar *);
+extern uchar *i2b(int32_t, uint32_t);
 extern uchar *i2b_cl(int32_t n, uint32_t i, struct s_client *cl);
 extern uchar *i2b_buf(int32_t n, uint32_t i, uchar *b);
   
-extern uint32_t a2i(char *, int);
-extern int32_t boundary(int, int);
+extern uint32_t a2i(char *, int32_t);
+extern int32_t boundary(int32_t, int32_t);
 extern void cs_ftime(struct timeb *);
 extern void cs_sleepms(uint32_t);
 extern void cs_sleepus(uint32_t);
-extern void cs_setpriority(int);
+extern void cs_setpriority(int32_t);
 extern struct s_auth *find_user(char *);
 extern int32_t check_filled(uchar *value, int32_t length);
 extern void *cs_malloc(void *result, size_t size, int32_t quiterror);
@@ -1400,8 +1400,8 @@ extern struct s_client * create_client(in_addr_t);
 extern int32_t cs_auth_client(struct s_client *, struct s_auth *, const char*);
 extern void cs_disconnect_client(struct s_client *);
 extern int32_t check_cwcache2(ECM_REQUEST *, uint64_t grp);
-extern int32_t write_to_pipe(int, int, uchar *, int);
-extern int32_t read_from_pipe(int, uchar **, int);
+extern int32_t write_to_pipe(int32_t, int32_t, uchar *, int32_t);
+extern int32_t read_from_pipe(int32_t, uchar **, int32_t);
 extern int32_t write_ecm_answer(struct s_reader *, ECM_REQUEST *);
 extern void log_emm_request(struct s_reader *);
 extern uint32_t chk_provid(uchar *, uint16_t);
@@ -1412,10 +1412,10 @@ extern void guess_irdeto(ECM_REQUEST *);
 extern void get_cw(struct s_client *, ECM_REQUEST *);
 extern void do_emm(struct s_client *, EMM_PACKET *);
 extern ECM_REQUEST *get_ecmtask(void);
-extern void request_cw(ECM_REQUEST *, int, int);
+extern void request_cw(ECM_REQUEST *, int32_t, int32_t);
 extern void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc);
 extern int32_t send_dcw(struct s_client *, ECM_REQUEST *);
-extern int32_t process_input(uchar *, int, int);
+extern int32_t process_input(uchar *, int32_t, int32_t);
 extern int32_t has_srvid(struct s_client *cl, ECM_REQUEST *er);
 extern int32_t chk_srvid(struct s_client *, ECM_REQUEST *);
 extern int32_t chk_srvid_match(ECM_REQUEST *, SIDTAB *);
@@ -1450,7 +1450,7 @@ extern void ac_done_stat();
 extern int32_t  ac_init_log();
 extern void ac_do_stat(void);
 extern void ac_init_client(struct s_client *, struct s_auth *);
-extern void ac_chk(struct s_client *,ECM_REQUEST*, int);
+extern void ac_chk(struct s_client *,ECM_REQUEST*, int32_t);
 #endif
 
 // oscam-config
@@ -1537,13 +1537,13 @@ extern int32_t logfd;
 extern int32_t reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int32_t l, uchar *response, uint16_t *response_length);
 extern int32_t card_write(struct s_reader * reader, const uchar *, const uchar *, uchar *, uint16_t *);
 extern int32_t check_sct_len(const unsigned char *data, int32_t off);
-extern void cs_ri_brk(struct s_reader * reader, int);
+extern void cs_ri_brk(struct s_reader * reader, int32_t);
 extern void cs_ri_log(struct s_reader * reader, char *,...);
 extern void * start_cardreader(void *);
 extern void reader_card_info(struct s_reader * reader);
 extern int32_t hostResolve(struct s_reader * reader);
 extern int32_t network_tcp_connection_open();
-extern void network_tcp_connection_close(struct s_client *, int);
+extern void network_tcp_connection_close(struct s_client *, int32_t);
 extern int32_t casc_recv_timer(struct s_reader * reader, uchar *buf, int32_t l, int32_t msec);
 extern void clear_reader_pipe(struct s_reader * reader);
 extern void block_connect(struct s_reader *rdr);
@@ -1557,7 +1557,7 @@ extern void cs_write_log(char *);
 extern void cs_log(const char *,...);
 #ifdef WITH_DEBUG
 extern void cs_debug_mask(uint16_t, const char *,...);
-extern void cs_ddump_mask(uint16_t, const uchar *, int, char *, ...);
+extern void cs_ddump_mask(uint16_t, const uchar *, int32_t, char *, ...);
 #else
 #define nop() asm volatile("nop")
 #define cs_debug(...) nop()
@@ -1567,13 +1567,13 @@ extern void cs_ddump_mask(uint16_t, const uchar *, int, char *, ...);
 #endif
 extern void cs_close_log(void);
 extern int32_t  cs_init_statistics();
-extern void cs_dump(const uchar *, int, char *, ...);
+extern void cs_dump(const uchar *, int32_t, char *, ...);
 
 // oscam-aes
 extern void aes_set_key(char *);
 extern void add_aes_entry(struct s_reader *rdr, uint16_t caid, uint32_t ident, int32_t keyid, uchar *aesKey);
-extern void aes_encrypt_idx(struct s_client *, uchar *, int);
-extern void aes_decrypt(uchar *, int);
+extern void aes_encrypt_idx(struct s_client *, uchar *, int32_t);
+extern void aes_decrypt(uchar *, int32_t);
 extern int32_t aes_decrypt_from_list(AES_ENTRY *list, uint16_t caid, uint32_t provid,int32_t keyid, uchar *buf, int32_t n);
 extern int32_t aes_present(AES_ENTRY *list, uint16_t caid, uint32_t provid,int32_t keyid);
 extern void parse_aes_keys(struct s_reader *rdr,char *value);
@@ -1597,7 +1597,7 @@ extern int32_t get_best_reader(ECM_REQUEST *er);
 extern void clear_reader_stat(struct s_reader *reader);
 extern void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t rc);
 extern void load_stat_from_file();
-extern void save_stat_to_file(int);
+extern void save_stat_to_file(int32_t);
 extern void clear_all_stat();
 extern void housekeeping_stat(int32_t force);
 
@@ -1653,7 +1653,7 @@ extern void add_garbage_debug(void *data, char *file, int32_t line);
 #else
 extern void add_garbage(void *data);
 #endif
-extern void start_garbage_collector(int);
+extern void start_garbage_collector(int32_t);
 extern void stop_garbage_collector();
 
 #endif  // CS_GLOBALS

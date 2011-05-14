@@ -388,7 +388,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 		//If answering reader is a fallback reader, decrement answer time by fallback timeout:
 		struct s_reader *r;
 		LL_ITER it = ll_iter_create(er->matching_rdr);
-		int is_fallback = 0;
+		int8_t is_fallback = 0;
 		while ((r=ll_iter_next(&it))) {
 			if (it.cur == er->fallback) is_fallback = 1;
 			if (r == rdr) {
@@ -634,7 +634,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	if (cfg.lb_auto_betatunnel && er->caid >> 8 == 0x18) { //nagra 
 		ushort caid_to = get_betatunnel_caid_to(er->caid);
 		if (caid_to) {
-			int needs_stats_nagra = 0, needs_stats_beta = 0;
+			int8_t needs_stats_nagra = 0, needs_stats_beta = 0;
 			
 			int32_t time_nagra = 0;
 			int32_t time_beta = 0;

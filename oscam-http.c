@@ -21,7 +21,7 @@ static int8_t running = 1;
 static pthread_t httpthread;
 pthread_mutex_t http_lock;
 
-pthread_key_t getip, getkeepalive;
+pthread_key_t getip;
 
 #ifdef CS_ANTICASC
 static void kill_ac_client(void)
@@ -2662,7 +2662,6 @@ char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *
 			cs_log("Restart requested by XMLApi from %s", cs_inet_ntoa(GET_IP()));
 		}
 		running = 0;
-		*keepalive = 0;
 		pthread_kill(httpthread, SIGPIPE);		// send signal to master thread to wake up from accept()
 		cs_restart_oscam();
 
@@ -3510,11 +3509,11 @@ void *serve_process(void *conn){
 #ifdef WITH_SSL
 	if (ssl_active) {
 		if(SSL_set_fd(ssl, s)){
-			int ok = (SSL_accept(ssl) != -1);
+			int32_t ok = (SSL_accept(ssl) != -1);
 			if (!ok) {
-				int tries = 100;
+				int8_t tries = 100;
 				while (!ok && tries--) {
-					int err = SSL_get_error(ssl, -1);
+					int32_t err = SSL_get_error(ssl, -1);
 					if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE)
 						break;
 					else {
