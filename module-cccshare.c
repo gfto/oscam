@@ -394,9 +394,9 @@ int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card) {
         						
 		        		for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
         						if (ptr == card->sidtab) {
-										if (cl->account->sidtabno&((SIDTABBITS)1<<j))
+										if (cl->sidtabno&((SIDTABBITS)1<<j))
         										return 0;
-										if (cl->account->sidtabok&((SIDTABBITS)1<<j))
+										if (cl->sidtabok&((SIDTABBITS)1<<j))
         										ok = 1;
 										break;
 								}
@@ -1102,6 +1102,33 @@ void share_updater()
 						last_card_check = cur_card_check;
 				}
 		}
+}
+
+int32_t compare_cards_by_hop(struct cc_card **pcard1, struct cc_card **pcard2)
+{
+	struct cc_card *card1 = (*pcard1), *card2 = (*pcard2);
+	
+	int32_t res = card1->hop - card2->hop;
+	if (res) return res;
+	res = card1->caid - card2->caid;
+	if (res) return res;
+	res = card1->reshare - card2->reshare;
+	if (res) return res;
+	res = card1->id - card2->id;
+	return res; 
+}
+
+int32_t compare_cards_by_hop_r(struct cc_card **pcard1, struct cc_card **pcard2)
+{
+	return -compare_cards_by_hop(pcard1, pcard2);
+}
+
+void sort_cards_by_hop(LLIST *cards, int32_t reverse)
+{
+	if (reverse)
+		ll_sort(cards, compare_cards_by_hop_r);
+	else
+		ll_sort(cards, compare_cards_by_hop);
 }
 
 void init_share() {

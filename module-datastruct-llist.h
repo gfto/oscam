@@ -17,6 +17,7 @@ typedef struct llist LLIST;
 struct llist {
 //    void *obj;
     LL_NODE *initial;
+    LL_NODE *last;
     int32_t count;
     pthread_mutex_t lock;
     int32_t flag;
@@ -34,6 +35,7 @@ void ll_destroy_data(LLIST *l); // same as ll_clear_data() but frees up obj allo
 void ll_clear(LLIST *l);        // frees up all llnodes nodes but not data held in obj ptrs
 void ll_clear_data(LLIST *l);   // same as ll_clear_data() but frees up obj allocations as well
 
+void ll_sort(LLIST *l, void *compare); // sorts the list, compare = int func(const T *a, const T *b)
 LL_NODE *ll_append(LLIST *l, void *obj);                // append obj to llist
 LL_NODE *ll_prepend(LLIST *l, void *obj);               // prepend obj to llist
 

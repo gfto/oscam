@@ -1274,7 +1274,10 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 	time_t lastaccess=0;
 
 	if (rdr->lb_stat) {
-
+	
+		// @todo alno: sort by click, 0=ascending, 1=descending (maybe two buttons or reverse on second click)
+		sort_stat(rdr, 0);
+		
 		LL_ITER it = ll_iter_create(rdr->lb_stat);
 		READER_STAT *stat = ll_iter_next(&it);
 		while (stat) {
@@ -1860,24 +1863,10 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 
 				uint8_t serbuf[8];
 
-                // sort cards by hop
-                LL_ITER it;
-                int32_t i;
-                for (i = 0; i < ll_count(cards); i++) {
-                    it  = ll_iter_create(cards);
-                    while ((card = ll_iter_next(&it))) {
-                        if (it.cur->nxt) {
-							struct cc_card *card2 = ll_iter_peek(&it, 1);
-							if (card->caid > card2->caid ||
-                        		(card->caid==card2->caid && card->hop > card2->hop)) {
-                        		it.cur->obj = it.cur->nxt->obj;
-                        		it.cur->nxt->obj = card;
-                        	}
-                        }
-                    }
-                }
-
-                it = ll_iter_create(cards);
+				// @todo alno: sort by click, 0=ascending, 1=descending (maybe two buttons or reverse on second click)
+				sort_cards_by_hop(cards, 0);
+				
+                LL_ITER it = ll_iter_create(cards);
                 int32_t offset2 = offset+1;
                 int32_t count = 0;
                 while ((card = ll_iter_move(&it, offset2))) {

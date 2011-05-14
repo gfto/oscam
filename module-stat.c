@@ -1051,3 +1051,33 @@ void housekeeping_stat(int32_t force)
 	last_housekeeping = now;
 	start_thread((void*)&housekeeping_stat_thread, "housekeeping lb stats");
 }
+
+static int compare_stat(READER_STAT **ps1, READER_STAT **ps2) {
+	READER_STAT *s1 = (*ps1), *s2 = (*ps2);
+	int res = s1->rc - s2->rc;
+	if (res) return res;
+	res = s1->caid - s2->caid;
+	if (res) return res;
+	res = s1->prid - s2->prid;
+	if (res) return res;
+	res = s1->srvid - s2->srvid;
+	if (res) return res;
+	res = s1->ecmlen - s2->ecmlen;
+	if (res) return res;
+	res = s1->last_received - s2->last_received;
+	return res;	
+}
+
+static int compare_stat_r(READER_STAT **ps1, READER_STAT **ps2) {
+	return -compare_stat(ps1, ps2);
+}
+
+void sort_stat(struct s_reader *rdr, int32_t reverse)
+{
+	if (reverse)
+		ll_sort(rdr->lb_stat, compare_stat_r);
+	else
+		ll_sort(rdr->lb_stat, compare_stat);
+}
+
+

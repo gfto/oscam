@@ -1600,6 +1600,7 @@ extern void load_stat_from_file();
 extern void save_stat_to_file(int32_t);
 extern void clear_all_stat();
 extern void housekeeping_stat(int32_t force);
+extern void sort_stat(struct s_reader *rdr, int32_t reverse);
 
 #ifdef HAVE_PCSC
 // reader-pcsc
