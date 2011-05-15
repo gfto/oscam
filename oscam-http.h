@@ -354,7 +354,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	<!--\n\
 	window.onload=setTimeout(function(){window.location.href=\"##REFRESHURL##\"},##REFRESHTIME## * 1000)\n\
 	//-->\n\
-	</script> />\n"
+	</script>\n"
 
 #define TPLHELPPREFIX "<A HREF=\"http://streamboard.gmc.to/wiki/index.php/OSCam/##LANGUAGE##/Config/oscam."
 
