@@ -1181,6 +1181,7 @@ static void kill_thread_int(struct s_client *cl) { //cs_exit is used to let thre
 	if (pthread_equal(thread, pthread_self())) return; //cant kill yourself
 
 	struct s_client *prev, *cl2;
+	pthread_mutex_lock(&clientlist_lock);
 	for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
 		if (cl == cl2)
 			break;
@@ -1188,6 +1189,7 @@ static void kill_thread_int(struct s_client *cl) { //cs_exit is used to let thre
 		cs_log("FATAL ERROR: could not find client to remove from list.");
 	else
 		prev->next = cl2->next; //remove client from list
+	pthread_mutex_unlock(&clientlist_lock);
 
 	pthread_cancel(thread);
 	pthread_join(thread, NULL);
