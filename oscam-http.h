@@ -350,7 +350,11 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLAPIFOOTER "</oscam>"
 
 #define TPLREFRESH "\
-	<meta http-equiv=\"refresh\" content=\"##REFRESHTIME##; URL=##REFRESHURL##\" />\n"
+	<script>\n\
+	<!--\n\
+	window.onload=setTimeout(function(){window.location.href=\"##REFRESHURL##\"},##REFRESHTIME## * 1000)\n\
+	//-->\n\
+	</script> />\n"
 
 #define TPLHELPPREFIX "<A HREF=\"http://streamboard.gmc.to/wiki/index.php/OSCam/##LANGUAGE##/Config/oscam."
 
