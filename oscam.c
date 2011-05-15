@@ -13,6 +13,7 @@ void coolapi_open_all();
 
 extern void cs_statistics(struct s_client * client);
 extern int32_t ICC_Async_Close (struct s_reader *reader);
+static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_addr_t ip);
 
 /*****************************************************************************
         Globals
@@ -38,6 +39,7 @@ pthread_mutex_t gethostbyname_lock;
 pthread_mutex_t get_cw_lock;
 pthread_mutex_t system_lock;
 pthread_mutex_t clientlist_lock;
+pthread_mutex_t fakeuser_lock;
 pthread_key_t getclient;
 
 //Cache for  ecms, cws and rcs:
@@ -676,7 +678,7 @@ void cs_exit(int32_t sig)
 
 	// this is very important - do not remove
 	if (cl->typ != 's') {
-		if(cl->typ != 'i') cs_log("thread %8X ended!", pthread_self());
+		cs_log("thread %8X ended!", pthread_self());
 #ifdef NO_PTHREAD_CLEANUP_PUSH
 		cleanup_thread(cl);
 #endif
@@ -743,7 +745,8 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 					for(i = 0; i < CS_ECM_RINGBUFFER_MAX; i++)
 						cl->cwlastresptimes[i] = 0;
 					cl->cwlastresptimes_last = 0;
-
+					if (account->uniq)
+						cs_fake_client(cl, account->usr, (account->uniq == 1 || account->uniq == 2)?account->uniq+2:account->uniq, cl->ip);
 #ifdef CS_ANTICASC
 					cl->ac_limit	= (account->ac_users * 100 + 80) * cfg.ac_stime;
 #endif
@@ -930,11 +933,17 @@ static void init_first_client()
     exit(1);
   }
 
-  pthread_mutex_init(&gethostbyname_lock, NULL);
-  pthread_mutex_init(&get_cw_lock, NULL);
-  pthread_mutex_init(&system_lock, NULL);
-  pthread_mutex_init(&clientlist_lock, NULL);
-  pthread_mutex_init(&sc8in1_lock, NULL);
+	int8_t ok = 1;
+  if(pthread_mutex_init(&gethostbyname_lock, NULL)) ok = 0;
+  if(pthread_mutex_init(&get_cw_lock, NULL)) ok = 0;
+  if(pthread_mutex_init(&system_lock, NULL)) ok = 0;
+  if(pthread_mutex_init(&clientlist_lock, NULL)) ok = 0;
+  if(pthread_mutex_init(&fakeuser_lock, NULL)) ok = 0;
+  if(pthread_mutex_init(&sc8in1_lock, NULL)) ok = 0;
+  if(!ok){
+  	fprintf(stderr, "Could not init locks, exiting...");
+    exit(1);
+  }
 
 #ifdef COOL
   coolapi_open_all();
@@ -1359,9 +1368,12 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
      */
 
 	struct s_client *cl;
+	struct s_auth *account;
+	pthread_mutex_lock(&fakeuser_lock);
 	for (cl=first_client->next; cl ; cl=cl->next)
 	{
-		if (cl != client && (cl->typ == 'c') && !cl->dup && !strcmp(cl->account->usr, usr)
+		account = cl->account;
+		if (cl != client && (cl->typ == 'c') && !cl->dup && account && !strcmp(account->usr, usr)
 		   && (uniq < 5) && ((uniq % 2) || (cl->ip != ip)))
 		{
 		        char buf[20];
@@ -1388,14 +1400,15 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 				if (client->failban & BAN_DUPLICATE) {
 					cs_add_violation(ip);
 				}
-				if (cfg.dropdups)
+				if (cfg.dropdups){
+					pthread_mutex_unlock(&fakeuser_lock);		// we need to unlock here as cs_disconnect_client kills the current thread!
 					cs_disconnect_client(client);
+				}
 				break;
 			}
-
 		}
 	}
-
+	pthread_mutex_unlock(&fakeuser_lock);
 }
 
 int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const char *e_txt)
@@ -1443,6 +1456,8 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 			}
 		}
 
+		client->monlvl=account->monlvl;
+		client->account = account;
 		if (!rc)
 		{
 			client->dup=0;
@@ -1479,8 +1494,6 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 #endif
 			}
 		}
-		client->monlvl=account->monlvl;
-		client->account = account;
 	case -1:            // anonymous grant access
 		if (rc)
 			t_grant=t_reject;
