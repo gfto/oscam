@@ -738,9 +738,12 @@ void dvbapi_read_priority() {
 		uint32_t delay=0, force=0, mapcaid=0, mapprovid=0;
 		switch (type) {
 			case 'd':
-			case 'l':
 				sscanf(str1+64, "%4d", &delay);
 				entry->delay=delay;
+				break;
+			case 'l':
+				entry->delay = dyn_word_atob(str1+64);
+				if (entry->delay == -1) entry->delay = 0;
 				break;
 			case 'p':
 				sscanf(str1+64, "%1d", &force);
