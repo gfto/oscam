@@ -814,6 +814,8 @@ struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidi
 		if (p->ecmpid	&& p->ecmpid 	!= ecmpid->ECM_PID)	continue;
 		if (p->srvid	&& p->srvid 	!= demux[demux_id].program_number)			continue;
 
+		if (p->type == 'i' && p->chid) continue;
+
 		return p;
 	}
 	return NULL;
@@ -832,6 +834,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 	if (dvbapi_priority) {
 		struct s_dvbapi_priority *p;
 		for (p=dvbapi_priority, i=0; p != NULL; p=p->next, i++) {
+			if (p->type != 'p' && p->type != 'i') continue;
 			for (n=0; n<demux[demux_index].ECMpidcount; n++) {
 				if (demux[demux_index].ECMpids[n].status != 0) continue;
 
@@ -844,6 +847,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 					demux[demux_index].ECMpids[n].status = new_status++;
 					cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X (position: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].status);
 				} else if (p->type=='i') {
+					if (p->chid) continue;
 					demux[demux_index].ECMpids[n].status = -1;
 					cs_debug_mask(D_DVBAPI, "[IGNORE PID %d] %04X:%06X (file)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID);
 				}
@@ -928,13 +932,6 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 void dvbapi_try_next_caid(int32_t demux_id) {
 	int32_t num=-1, n, j;
 
-	if (demux[demux_id].ECMpids[demux[demux_id].curindex].irdeto_curchid+1 < demux[demux_id].ECMpids[demux[demux_id].curindex].irdeto_numchids) {
-		demux[demux_id].ECMpids[demux[demux_id].curindex].irdeto_curchid++;
-		demux[demux_id].ECMpids[demux[demux_id].curindex].table=0;
-		cs_log("trying irdeto chid index: %d", demux[demux_id].ECMpids[demux[demux_id].curindex].irdeto_curchid);
-		return;
-	}
-
 	if (demux[demux_id].tries > 2) {
 		cs_log("can't decode channel");
 		dvbapi_stop_filter(demux_id, TYPE_ECM);
@@ -969,6 +966,8 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 		for (n=0; n<demux[demux_id].ECMpidcount; n++) {
 			demux[demux_id].ECMpids[n].checked=0;
 			demux[demux_id].ECMpids[n].irdeto_curchid=0;
+			demux[demux_id].ECMpids[n].irdeto_chids=0;
+			demux[demux_id].ECMpids[n].irdeto_cycle=0;
 			demux[demux_id].ECMpids[n].table=0;
 		}
 		dvbapi_try_next_caid(demux_id);
@@ -1030,7 +1029,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			demux[demux_id].STREAMpidcount=0;
 			demux[demux_id].ECMpidcount=0;
 			demux[demux_id].EMMpidcount=0;
-			ca_pmt_list_management = 0x01;
+			ca_pmt_list_management = 0x03;
 #else
 			if (ca_pmt_list_management == 0x05) {
 				demux_id = i;
@@ -1423,6 +1422,7 @@ void *dvbapi_event_thread(void *cli) {
 
 void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, int32_t len) {
 	struct s_ecmpids *curpid = &demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex];
+	uint16_t chid = 0;
 
 #ifdef COOL
 	cs_debug_mask(D_DVBAPI, "dvbapi_process_input: demux %d filter %d len %d buffer %x curtable %x curindex %d\n", demux_id, filter_num, len, buffer[0], curpid->table, demux[demux_id].curindex);
@@ -1465,6 +1465,10 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 				cs_log("Found %d IRDETO ECM CHIDs", buffer[5]+1);
 				curpid->irdeto_numchids = buffer[5]+1;
 				curpid->irdeto_curchid = 0;
+				curpid->irdeto_cycle = 0;
+				curpid->irdeto_chids = 0;
+				if (demux[demux_id].demux_fd[filter_num].count && (demux[demux_id].demux_fd[filter_num].count < (curpid->irdeto_numchids * 3)))
+					demux[demux_id].demux_fd[filter_num].count = curpid->irdeto_numchids * 3;
 			}
 
 			if (buffer[4] != curpid->irdeto_curchid) {
@@ -1473,25 +1477,65 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 			}
 
 			if (demux[demux_id].pidindex==-1) {
-				int32_t chid = (buffer[6] << 8) | buffer[7];
-				curpid->irdeto_chid = chid;
+				chid = (buffer[6] << 8) | buffer[7];
+				int8_t i = 0, found = 0;
 
-				struct s_dvbapi_priority *chidentry_priority = dvbapi_check_prio_match(demux_id, demux[demux_id].demux_fd[filter_num].pidindex, 'p');
-				struct s_dvbapi_priority *chidentry_ignore = dvbapi_check_prio_match(demux_id, demux[demux_id].demux_fd[filter_num].pidindex, 'i');
-
-				if ((chidentry_priority && chidentry_priority->chid && chidentry_priority->chid != chid) || (chidentry_ignore && chidentry_ignore->chid && chidentry_ignore->chid == chid)) {
-					if (curpid->irdeto_curchid+1 < curpid->irdeto_numchids) {
-						curpid->irdeto_curchid++;
-						curpid->table=0;
-						cs_log("trying irdeto chid index: %d", curpid->irdeto_curchid);
-					} else {
-						if (cfg.dvbapi_requestmode == 0)
-							dvbapi_try_next_caid(demux_id);
-						else
-							dvbapi_stop_filternum(demux_id, filter_num);
-					}
+				if (curpid->irdeto_chids & (1<<curpid->irdeto_curchid)) {
+					curpid->irdeto_curchid++;
 					return;
 				}
+
+				for (p=dvbapi_priority, i=0; p != NULL && curpid->irdeto_cycle > -1; p = p->next) {
+					if (p->type != 'p' && p->type != 'i') continue;
+
+					if (!p->chid) continue;
+
+					if (p->caid 	&& p->caid 	!= curpid->CAID)	continue;
+					if (p->provid && p->provid 	!= curpid->PROVID)	continue;
+					if (p->ecmpid	&& p->ecmpid 	!= curpid->ECM_PID)	continue;
+					if (p->srvid	&& p->srvid 	!= demux[demux_id].program_number)	continue;
+
+					if (p->type == 'i' && p->chid == chid) {
+						curpid->irdeto_chids |= (1<<curpid->irdeto_curchid);
+						curpid->irdeto_curchid++;
+						return;
+					} else if (p->type == 'i')
+						continue;
+	
+					if (i++ != curpid->irdeto_cycle)
+						continue;
+
+					if (p->chid == chid) {
+						found=1;
+						break;
+					} else {
+						curpid->irdeto_curchid++;
+						if (curpid->irdeto_curchid+1 >= curpid->irdeto_numchids) {
+							curpid->irdeto_cycle++;
+							curpid->irdeto_curchid = 0;
+						}
+						return;
+					}
+				}
+
+				if (!found && curpid->irdeto_cycle > -1) {
+					curpid->irdeto_cycle = -1;
+					curpid->irdeto_curchid = 0;
+					return;
+				}
+
+				if (curpid->irdeto_curchid+1 >= curpid->irdeto_numchids) {
+					curpid->irdeto_cycle = 0;
+					curpid->irdeto_curchid = 0;
+					curpid->irdeto_chids = 0;
+					if (cfg.dvbapi_requestmode == 0)
+						dvbapi_try_next_caid(demux_id);
+					else
+						dvbapi_stop_filternum(demux_id, filter_num);			
+					return;
+				}
+
+				curpid->irdeto_chids |= (1<<curpid->irdeto_curchid);
 			}
 		}
 
@@ -1534,7 +1578,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		er->l=len;
 		memcpy(er->ecm, buffer, er->l);
 
-		cs_debug_mask(D_DVBAPI, "request cw for caid %04X provid %06X srvid %04X pid %04X chid %04X", er->caid, er->prid, er->srvid, er->pid, curpid->irdeto_chid);
+		cs_debug_mask(D_DVBAPI, "request cw for caid %04X provid %06X srvid %04X pid %04X chid %04X", er->caid, er->prid, er->srvid, er->pid, chid);
 		get_cw(dvbapi_client, er);
 	}
 
@@ -1847,7 +1891,16 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			}
 
 			if (er->rc >= E_NOTFOUND) {
+				demux[i].tries++;
 				cs_debug_mask(D_DVBAPI, "cw not found");
+
+				struct s_dvbapi_priority *forceentry=dvbapi_check_prio_match(i, demux[i].curindex, 'p');
+				if (!forceentry && demux[i].tries>3) {
+					demux[i].tries = 0;
+					demux[i].curindex = 0;
+					demux[i].pidindex = -1;
+					dvbapi_try_next_caid(i);
+				}
 				return;
 			}
 

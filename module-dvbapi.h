@@ -53,13 +53,14 @@ struct s_ecmpids
 	uint32_t PROVID;
 	uint16_t ECM_PID;
 	uint16_t EMM_PID;
-	int32_t irdeto_numchids;
-	int32_t irdeto_curchid;
-	int32_t irdeto_chid;
-	int32_t checked;
-	int32_t status;
+	int8_t irdeto_numchids;
+	int8_t irdeto_curchid;
+	int32_t irdeto_chids;
+	int32_t irdeto_cycle;
+	int8_t checked;
+	int8_t status;
 	unsigned char table;
-	int32_t index;
+	int8_t index;
 	uint32_t streams;
 };
 
@@ -113,24 +114,24 @@ struct STDEVICE dev_list[PTINUM];
 
 typedef struct demux_s
 {
-	int32_t demux_index;
+	int8_t demux_index;
 	FILTERTYPE demux_fd[MAX_FILTER];
 	int32_t ca_mask;
-	int32_t adapter_index;
+	int8_t adapter_index;
 	int32_t socket_fd;
-	int32_t ECMpidcount;
+	int8_t ECMpidcount;
 	struct s_ecmpids ECMpids[ECM_PIDS];
-	int32_t EMMpidcount;
+	int8_t EMMpidcount;
 	struct s_emmpids EMMpids[ECM_PIDS];
-	int32_t STREAMpidcount;
+	int8_t STREAMpidcount;
 	uint16_t STREAMpids[ECM_PIDS];
-	int32_t pidindex;
-	int32_t curindex;
-	int32_t tries;
-	int32_t max_status;
+	int16_t pidindex;
+	int16_t curindex;
+	int8_t tries;
+	int8_t max_status;
 	uint16_t program_number;
 	unsigned char lastcw[2][8];
-	int32_t emm_filter;
+	int8_t emm_filter;
 	uchar hexserial[8];
 	struct s_reader *rdr;
 	char pmt_file[30];
@@ -152,12 +153,12 @@ struct s_dvbapi_priority
 	uint16_t ecmpid;
 	uint16_t mapcaid;
 	uint32_t mapprovid;
-	int32_t delay;
-	int32_t force;
+	int16_t delay;
+	int8_t force;
 #ifdef WITH_STAPI
 	char devname[30];
 	char pmtfile[30];
-	int32_t disablefilter;
+	int8_t disablefilter;
 #endif
 	struct s_dvbapi_priority *next;
 };
