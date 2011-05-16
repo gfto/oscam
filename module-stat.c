@@ -1,3 +1,6 @@
+#include "globals.h"
+
+#ifdef WITH_LB
 #include "module-stat.h"
 #include "module-cccam.h"
 
@@ -610,6 +613,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	LL_ITER it;
 	struct s_reader *rdr;
 
+#ifdef MODULE_CCCAM
 	//preferred card forwarding (CCcam client):
 	if (cfg.cc_forward_origin_card && er->origin_card) {
 	
@@ -627,6 +631,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					return 1;
 			}
 	}
+#endif
 
 	uint32_t prid = get_prid(er->caid, er->prid);
 
@@ -1080,4 +1085,4 @@ void sort_stat(struct s_reader *rdr, int32_t reverse)
 		ll_sort(rdr->lb_stat, compare_stat);
 }
 
-
+#endif

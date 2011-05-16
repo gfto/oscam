@@ -1,6 +1,8 @@
+#include "globals.h"
+
+#ifdef MODULE_CCCAM
 
 #include <stdlib.h>
-#include "globals.h"
 #include "module-cccam.h"
 #include <time.h>
 #include "reader-common.h"
@@ -691,7 +693,9 @@ int32_t cc_get_nxt_ecm(struct s_client *cl) {
 				/ 1000) + 1) && (er->rc >= 10)) // drop timeouts
 		{
 			er->rc = 0;
+#ifdef WITH_LB
 			send_reader_stat(cl->reader, er, E_TIMEOUT);
+#endif
 		}
 
 		else if (er->rc >= 10 && er->rc != 101) { // stil active and waiting
@@ -3292,3 +3296,4 @@ void module_cccam(struct s_module *ph) {
 	if (cfg.cc_port)
 			init_share();		
 }
+#endif

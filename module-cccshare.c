@@ -1,4 +1,6 @@
 #include "globals.h"
+
+#ifdef MODULE_CCCAM
 #include "module-cccam.h"
 #include "reader-common.h"
 #include "module-cccshare.h"
@@ -1189,3 +1191,4 @@ void done_share() {
 				//pthread_mutex_destroy(&cc_shares_lock);
 		}
 }
+#endif

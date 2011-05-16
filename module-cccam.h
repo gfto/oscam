@@ -7,9 +7,11 @@
 #ifndef MODULECCCAM_H_
 #define MODULECCCAM_H_
 
-#include "module-datastruct-llist.h"
 #include "globals.h"
 
+#ifdef MODULE_CCCAM
+
+#include "module-datastruct-llist.h"
 #include "cscrypt/rc6.h"
 #include "cscrypt/idea.h"
 
@@ -238,4 +240,5 @@ void cc_UA_oscam2cccam(uint8_t *in, uint8_t *out, uint16_t caid);
 void cc_SA_oscam2cccam(uint8_t *in, uint8_t *out);
 void cc_free_cardlist(LLIST *card_list, int32_t destroy_list);
 
+#endif
 #endif /* MODULECCCAM_H_ */

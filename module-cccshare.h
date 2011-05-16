@@ -1,3 +1,5 @@
+#include "globals.h"
+#ifdef MODULE_CCCAM
 /*
 * module-cccshare.h
 *
@@ -6,11 +8,9 @@
 */
 #ifndef MODULECCCSHARE_H_
 #define MODULECCCSHARE_H_
-     
-     
+    
 #include <string.h>
 #include <stdlib.h>
-#include "globals.h"
 #include "module-cccam.h"
 #include <time.h>
 #include "reader-common.h"
@@ -41,3 +41,4 @@ int32_t cc_srv_report_cards(struct s_client *cl);
 
 void sort_cards_by_hop(LLIST *cards, int32_t reverse);
 #endif /* MODULECCCSHARE_H_ */
+#endif

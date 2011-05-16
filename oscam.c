@@ -578,7 +578,9 @@ void cleanup_thread(void *var)
 		cleanup_ecmtasks(cl);
 		add_garbage(cl->emmcache);
 		add_garbage(cl->req);
+#ifdef MODULE_CCCAM
 		add_garbage(cl->cc);
+#endif
 		add_garbage(cl->serialdata);
 		cl->cleaned++;//cleaned=2
 		add_garbage(cl);
@@ -587,12 +589,16 @@ void cleanup_thread(void *var)
 
 static void cs_cleanup()
 {
+#ifdef WITH_LB
 	if (cfg.lb_mode && cfg.lb_save) {
 		save_stat_to_file(0);
 		cfg.lb_save = 0; //this is for avoiding duplicate saves
 	}
+#endif
 
+#ifdef MODULE_CCCAM
 	done_share();
+#endif
 
 	//cleanup clients:
 	struct s_client *cl;
@@ -1350,7 +1356,9 @@ static void init_cardreader() {
 		if (!restart_cardreader_int(rdr, 0))
 			remove_reader_from_active(rdr);
 	}
+#ifdef WITH_LB
 	load_stat_from_file();
+#endif
 	pthread_mutex_unlock(&system_lock);
 }
 
@@ -1953,6 +1961,7 @@ ECM_REQUEST *get_ecmtask()
 	return(er);
 }
 
+#ifdef WITH_LB
 void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc)
 {
 	if (rc>=E_99)
@@ -1965,6 +1974,7 @@ void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc)
 
 	add_stat(rdr, er, time, rc);
 }
+#endif
 
 /**
  * Check for NULL CWs
@@ -2034,7 +2044,9 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	if(!er->rc) cs_switch_led(LED2, LED_BLINK_OFF);
 #endif
 
+#ifdef WITH_LB
 	send_reader_stat(er->selected_reader, er, er->rc);
+#endif
 
 #ifdef WEBIF
 	if (er_reader) {
@@ -2160,7 +2172,9 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
   ert=&cl->ecmtask[er->cpti];
   if (ert->rc<E_99) {
 	//cs_debug_mask(D_TRACE, "chk_dcw: already done rc=%d %s", er->rc, er->selected_reader->label);
+#ifdef WITH_LB
 	send_reader_stat(er->selected_reader, er, (er->rc <= E_RDR_NOTFOUND)?E_NOTFOUND:E_FOUND);
+#endif
 	return; // already done
   }
   if( (er->caid!=ert->caid && er->ocaid!=ert->ocaid) || memcmp(er->ecmd5, ert->ecmd5, sizeof(er->ecmd5)) ) {
@@ -2194,7 +2208,9 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 				ert->rc=E_NOTFOUND; //so we set the return code
 				store_cw_in_cache(ert, er->selected_reader->grp, E_NOTFOUND);
 		}
+#ifdef WITH_LB
 		else send_reader_stat(er->selected_reader, er, E_NOTFOUND);
+#endif
 	}
 	if (ert) {
 		send_dcw(cl, ert);
@@ -2237,19 +2253,21 @@ uint32_t chk_provid(uchar *ecm, uint16_t caid) {
 			}
 			break;
 
+#ifdef WITH_LB
 		default:
 			for (i=0;i<CS_MAXCAIDTAB;i++) {
-            	uint16_t tcaid = cfg.lb_noproviderforcaid.caid[i];
-            	if (!tcaid) break;
-                if (tcaid == caid) {
-                	provid = 0;
-                    break;
-				}
-                if (tcaid < 0x0100 && (caid >> 8) == tcaid) {
-                	provid = 0;
-                    break;
-				}
+                            uint16_t tcaid = cfg.lb_noproviderforcaid.caid[i];
+                            if (!tcaid) break;
+                            if (tcaid == caid) {
+                        	provid = 0;
+                        	break;
+                            }
+                            if (tcaid < 0x0100 && (caid >> 8) == tcaid) {
+                                provid = 0;
+                                break;
+                            }
 			}
+#endif
 	}
 	return(provid);
 }
@@ -2606,6 +2624,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		}
 	}
 
+#ifdef WITH_LB
     //Use locking - now default=FALSE, activate on problems!
 	int32_t locked;
 	if (cfg.lb_mode && cfg.lb_use_locking) {
@@ -2614,7 +2633,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	}
 	else
 			locked=0;
-
+#endif
 
 	//Schlocke: above checks could change er->rc so
 	if (er->rc >= E_UNHANDLED) {
@@ -2660,17 +2679,22 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				else {
 					ll_prepend(er->matching_rdr, rdr);
 				}
+#ifdef WITH_LB
 				if (cfg.lb_mode || !rdr->fallback)
+#else
+                                if (!rdr->fallback)
+#endif
 					er->reader_avail++;
 			}
 		}
 
+#ifdef WITH_LB
 		if (cfg.lb_mode && er->reader_avail) {
 			cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X",
 				username(client), er->caid, er->prid, er->srvid);
 			get_best_reader(er);
 		}
-
+#endif
 		LL_NODE *ptr;
 		for (ptr = er->matching_rdr->initial; ptr && ptr != er->fallback; ptr = ptr->nxt)
 			er->reader_count++;
@@ -2692,8 +2716,10 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				er->rc = check_and_store_ecmcache(er, client->grp);
 	}
 
+#ifdef WITH_LB
 	if (locked)
 		pthread_mutex_unlock(&get_cw_lock);
+#endif
 
 	if (er->rc == E_99)
 			return; //ECM already requested / found in ECM cache
@@ -2949,11 +2975,13 @@ int32_t chk_pending(int32_t timeout)
 				if (er->stage) {
 					er->rc = E_TIMEOUT;
 					er->rcEx = 0;
+#ifdef WITH_LB
 					if (cfg.lb_mode) {
 						LL_NODE *ptr;
 						for (ptr = er->matching_rdr->initial; ptr ; ptr = ptr->nxt)
 							send_reader_stat((struct s_reader *)ptr->obj, er, E_TIMEOUT);
 					}
+#endif
 					store_cw_in_cache(er, cl->grp, E_TIMEOUT);
 					send_dcw(cl, er);
 					continue;
@@ -3484,7 +3512,9 @@ if (pthread_key_create(&getclient, NULL)) {
   init_first_client();
   init_config();
   init_check();
+#ifdef WITH_LB
   init_stat();
+#endif
 
   for (i=0; mod_def[i]; i++)  // must be later BEFORE init_config()
   {

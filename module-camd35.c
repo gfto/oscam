@@ -617,18 +617,14 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 			client->stopped = 2; // server says sleep
 			rdr->card_status = NO_CARD;
 		} else {
+#ifdef WITH_LB
 		        if (!cfg.lb_mode) {
+#endif
 			        client->stopped = 1; // server says invalid
                                 rdr->card_status = CARD_FAILURE;
+#ifdef WITH_LB
                         }
-
-			ECM_REQUEST *er_failed = malloc(sizeof(ECM_REQUEST));
-			memset(er_failed, 0, sizeof(ECM_REQUEST));
-			er_failed->srvid = b2i(2, buf + 8);
-			er_failed->caid = b2i(2, buf + 10);
-			er_failed->prid = b2i(4, buf + 12);
-			add_stat(rdr, er_failed, -1, 4);
-			free(er_failed);
+#endif
 		}
 
 		cs_log("%s CMD08 (%02X - %d) stop request by server (%s)",

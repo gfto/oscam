@@ -593,8 +593,10 @@ typedef struct ecm_request_t
   uchar		cw_checked[16];
 #endif
 
+#ifdef MODULE_CCCAM
   struct s_reader *origin_reader;
   void * origin_card; //CCcam preferred card!
+#endif
   
   void *src_data;
 
@@ -677,8 +679,13 @@ struct s_client
   uint16_t	ncd_msgid;
   char 		ncd_client_id[5];
   uchar		ncd_skey[16];
+
+#ifdef MODULE_CCCAM
   void		*cc;
+#endif
+#ifdef MODULE_GBOX
   void		*gbox;
+#endif
   int32_t		port_idx;    // index in server ptab
   int32_t		ncd_server;  // newcamd server
 #ifdef CS_ANTICASC
@@ -719,10 +726,6 @@ struct s_client
   time_t emm_last;
   int8_t disable_counter;
   uchar lastserial[8];
-
-  //cccam
-  int32_t g_flag;
-  int32_t cc_use_rc4;
 
   //monitor
   int32_t auth;
@@ -858,6 +861,7 @@ struct s_reader  //contains device info, reader info and card info
   int8_t       ncd_disable_server_filt;
   uint16_t    ncd_msgid;
   int32_t       ncd_proto;
+#ifdef MODULE_CCCAM
   char      cc_version[7];  // cccam version
   char      cc_build[7];    // cccam build number
   int32_t       cc_maxhop;      // cccam max distance
@@ -866,6 +870,7 @@ struct s_reader  //contains device info, reader info and card info
   int8_t       cc_want_emu; //Schlocke: Client want to have EMUs, 0 - NO; 1 - YES
   uint32_t    cc_id;
   int8_t       cc_keepalive;
+#endif
   uchar     tcp_connected;
   int32_t       tcp_ito;      // inactivity timeout
   int32_t       tcp_rto;      // reconnect timeout
@@ -939,13 +944,17 @@ struct s_reader  //contains device info, reader info and card info
 	BIGNUM ucpk;
 	////variables from reader-viaccess.c
 	struct geo_cache last_geo;
+#ifdef MODULE_CCCAM
 	int32_t cc_reshare;
+#endif
+#ifdef WITH_LB
 	int32_t lb_weight;     //loadbalance weight factor, if unset, weight=100. The higher the value, the higher the usage-possibility
 	int32_t lb_usagelevel; //usagelevel for loadbalancer
 	int32_t lb_usagelevel_ecmcount;
 	time_t lb_usagelevel_time; //time for counting ecms, this creates usagelevel
 	struct timeb lb_last; //time for oldest reader
 	LLIST *lb_stat; //loadbalancer reader statistics
+#endif
 	// multi AES linked list
 	AES_ENTRY *aes_list;
  	// variables from reader-videoguard*
@@ -1145,9 +1154,10 @@ struct s_config
 	int32_t		ncd_keepalive;
 	int8_t		ncd_mgclient;
 	struct s_ip 	*ncd_allowed;
-	PTAB		cc_ptab;
 	int32_t		rad_port;
 	in_addr_t	rad_srvip;
+#ifdef MODULE_CCCAM
+	PTAB		cc_ptab;
 	int32_t		cc_port[CS_MAXPORTS];
 	int32_t		cc_reshare;
 	int32_t		cc_ignore_reshare;
@@ -1159,6 +1169,7 @@ struct s_config
 	int8_t		cc_stealth;
 	int32_t		cc_reshare_services;
 	int32_t     cc_forward_origin_card;
+#endif
 	char	gbox_hostname[128];
 	char	gbox_key[9];
 	char	gbox_gsms_path[200];
@@ -1177,6 +1188,7 @@ struct s_config
 
 
 //Loadbalancer-Config:
+#ifdef WITH_LB
 	int32_t     lb_mode; //schlocke: reader loadbalancing mode
 	int32_t     lb_save; //schlocke: load/save statistics to file, save every x ecms
 	int32_t		lb_nbest_readers; // count of best readers
@@ -1194,7 +1206,7 @@ struct s_config
 	int32_t lb_reopen_mode; //reopen readers mode
 	int32_t lb_max_readers; //limit the amount of readers during learning
 	int32_t lb_auto_betatunnel; //automatic selection of betatunnel convertion based on learned data
-	
+#endif
 	int32_t resolve_gethostbyname;
 
 #ifdef CS_WITH_DOUBLECHECK
@@ -1485,7 +1497,9 @@ extern void chk_t_newcamd(char *token, char *value);
 extern void chk_t_radegast(char *token, char *value);
 extern void chk_t_serial(char *token, char *value);
 extern void chk_t_gbox(char *token, char *value);
+#ifdef MODULE_CCCAM
 extern void chk_t_cccam(char *token, char *value);
+#endif
 extern void chk_t_global(const char *token, char *value);
 extern void chk_t_monitor(char *token, char *value);
 extern void chk_reader(char *token, char *value, struct s_reader *rdr);
@@ -1591,6 +1605,7 @@ int32_t reader_get_emm_type(EMM_PACKET *ep, struct s_reader * reader);
 struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid);
 extern void reader_device_close(struct s_reader * reader);
 
+#ifdef WITH_LB
 //module-stat
 extern void init_stat();
 extern int32_t get_best_reader(ECM_REQUEST *er);
@@ -1601,6 +1616,7 @@ extern void save_stat_to_file(int32_t);
 extern void clear_all_stat();
 extern void housekeeping_stat(int32_t force);
 extern void sort_stat(struct s_reader *rdr, int32_t reverse);
+#endif
 
 #ifdef HAVE_PCSC
 // reader-pcsc
@@ -1634,7 +1650,9 @@ extern void module_camd33(struct s_module *);
 extern void module_newcamd(struct s_module *);
 extern void module_radegast(struct s_module *);
 extern void module_oscam_ser(struct s_module *);
+#ifdef MODULE_CCCAM
 extern void module_cccam(struct s_module *);
+#endif
 extern void module_gbox(struct s_module *);
 extern void module_constcw(struct s_module *);
 extern int32_t chk_pending(int32_t timeout);

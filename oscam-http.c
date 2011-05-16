@@ -149,6 +149,7 @@ char *send_oscam_config_global(struct templatevars *vars, struct uriparams *para
 	return tpl_getTpl(vars, "CONFIGGLOBAL");
 }
 
+#ifdef WITH_LB
 char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
 
@@ -220,6 +221,7 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 
 	return tpl_getTpl(vars, "CONFIGLOADBALANCER");
 }
+#endif
 
 char *send_oscam_config_camd33(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
@@ -383,6 +385,7 @@ char *send_oscam_config_radegast(struct templatevars *vars, struct uriparams *pa
 	return tpl_getTpl(vars, "CONFIGRADEGAST");
 }
 
+#ifdef MODULE_CCCAM
 char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams *params) {
 
 	if (strcmp(getParam(params, "button"), "Refresh global list") == 0) {
@@ -449,6 +452,7 @@ char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams *param
 
 	return tpl_getTpl(vars, "CONFIGCCCAM");
 }
+#endif
 
 char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
@@ -664,7 +668,9 @@ char *send_oscam_config(struct templatevars *vars, struct uriparams *params) {
 	else if (!strcmp(part,"camd35tcp")) return send_oscam_config_camd35tcp(vars, params);
 	else if (!strcmp(part,"newcamd")) return send_oscam_config_newcamd(vars, params);
 	else if (!strcmp(part,"radegast")) return send_oscam_config_radegast(vars, params);
+#ifdef MODULE_CCCAM
 	else if (!strcmp(part,"cccam")) return send_oscam_config_cccam(vars, params);
+#endif
 #ifdef HAVE_DVBAPI
 	else if (!strcmp(part,"dvbapi")) return send_oscam_config_dvbapi(vars, params);
 #endif
@@ -673,7 +679,9 @@ char *send_oscam_config(struct templatevars *vars, struct uriparams *params) {
 #endif
 	else if (!strcmp(part,"monitor")) return send_oscam_config_monitor(vars, params);
 	else if (!strcmp(part,"serial")) return send_oscam_config_serial(vars, params);
+#ifdef WITH_LB
 	else if (!strcmp(part,"loadbalancer")) return send_oscam_config_loadbalancer(vars, params);
+#endif
 	else return send_oscam_config_global(vars, params);
 }
 
@@ -1012,8 +1020,10 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 	tpl_addVar(vars, TPLADD, "GRP", value);
 	free_mk_t(value);
 
+#ifdef WITH_LB
 	if(rdr->lb_weight)
 		tpl_printf(vars, TPLADD, "LBWEIGHT", "%d", rdr->lb_weight);
+#endif
 
 	//services
 	struct s_sidtab *sidtab = cfg.sidtab;
@@ -1084,6 +1094,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 	if (rdr->deprecated)
 		tpl_addVar(vars, TPLADD, "DEPRECATEDCHCHECKED", "checked");
 
+#ifdef MODULE_CCCAM
 	if (!strcmp(rdr->cc_version, "2.0.11")) {
 		tpl_addVar(vars, TPLADD, "CCCVERSIONSELECTED0", "selected");
 	} else if (!strcmp(rdr->cc_version, "2.1.1")) {
@@ -1099,6 +1110,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 	} else if (!strcmp(rdr->cc_version, "2.2.1")) {
 		tpl_addVar(vars, TPLADD, "CCCVERSIONSELECTED6", "selected");
 	}
+#endif
 
 #ifdef LIBUSB
 	tpl_addVar(vars, TPLADD, "DEVICEEP", tpl_getTpl(vars, "READERCONFIGDEVICEEPBIT"));
@@ -1120,14 +1132,15 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 	tpl_printf(vars, TPLADD, "TMP", "NAGRAREAD%d", rdr->nagra_read);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
+#ifdef MODULE_CCCAM
 	tpl_printf(vars, TPLADD, "CCCMAXHOP", "%d", rdr->cc_maxhop);
 	tpl_printf(vars, TPLADD, "CCCMINDOWN", "%d", rdr->cc_mindown);
 	tpl_printf(vars, TPLADD, "CCCRESHARE", "%d", (rdr->cc_reshare==-1)?cfg.cc_reshare:rdr->cc_reshare);
 	if(rdr->cc_want_emu)
 		tpl_addVar(vars, TPLADD, "CCCWANTEMUCHECKED", "checked");
-
 	if(rdr->cc_keepalive)
 		tpl_addVar(vars, TPLADD, "KEEPALIVECHECKED", "selected");
+#endif
 
 	// Show only parameters which needed for the reader
 	switch (rdr->typ) {
@@ -1182,10 +1195,12 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 				tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGNCD524BIT"));
 			}
 			break;
+#ifdef MODULE_CCCAM
 		case R_CCCAM :
 			tpl_addVar(vars, TPLADD, "PROTOCOL", "cccam");
 			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCCCAMBIT"));
 			break;
+#endif
 #ifdef HAVE_PCSC
 		case R_PCSC :
 			tpl_addVar(vars, TPLADD, "PROTOCOL", "pcsc");
@@ -1201,6 +1216,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 	return tpl_getTpl(vars, "READERCONFIG");
 }
 
+#ifdef WITH_LB
 char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 	if(!rdr) return "0";
@@ -1367,6 +1383,7 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 	else
 		return tpl_getTpl(vars, "APIREADERSTATS");
 }
+#endif
 
 char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *params) {
 	struct s_auth *account, *ptr;
@@ -1559,12 +1576,14 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 #endif
 
+#ifdef MODULE_CCCAM
 	tpl_printf(vars, TPLADD, "CCCMAXHOPS", "%d", account->cccmaxhops);
 	tpl_printf(vars, TPLADD, "CCCRESHARE", "%d", (account->cccreshare==-1)?cfg.cc_reshare:account->cccreshare);
 	if ((account->cccignorereshare==-1)?cfg.cc_ignore_reshare:account->cccignorereshare)
 		tpl_printf(vars, TPLADD, "CCCIGNORERESHARE", "selected");
 	if ((account->cccstealth==-1)?cfg.cc_stealth:account->cccstealth)
 		tpl_printf(vars, TPLADD, "CCCSTEALTH", "selected");
+#endif
 
 	//Failban
 	tpl_printf(vars, TPLADD, "FAILBAN", "%d", account->failban);
@@ -1748,6 +1767,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 
 			if ((strcmp(proto,"newcamd") == 0) && (latestclient->typ == 'c'))
 				tpl_printf(vars, TPLADDONCE, "CLIENTPROTO","%s (%s)", proto, get_ncd_client_name(latestclient->ncd_client_id));
+#ifdef MODULE_CCCAM
 			else if ((strncmp(proto,"cccam", 5) == 0)) {
 				struct cc_data *cc = latestclient->cc;
 				if(cc && cc->remote_version && cc->remote_build) {
@@ -1763,6 +1783,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 					tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
 				}
 			}
+#endif
 			else {
 				tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", proto);
 				tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
@@ -1815,6 +1836,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 
 	/* build entitlements from reader init history */
 	char *reader_ = getParam(params, "label");
+#ifdef MODULE_CCCAM	
 	char *sharelist_ = getParam(params, "globallist");
 	int32_t show_global_list = sharelist_ && sharelist_[0]=='1';
 
@@ -1823,7 +1845,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 	if (show_global_list || (cfg.saveinithistory && strlen(reader_) > 0) || rdr->typ == R_CCCAM) {
 
-		if (show_global_list || (rdr->typ == R_CCCAM && rdr->enable == 1)) {
+		if (show_global_list || (rdr->typ == R_CCCAM && rdr->enable)) {
 
 			if (show_global_list) {
 					tpl_addVar(vars, TPLADD, "READERNAME", "GLOBAL");
@@ -2025,6 +2047,11 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 					pthread_mutex_unlock(lock);
 
 		} else {
+#else
+	if (cfg.saveinithistory && strlen(reader_) > 0) {
+		{
+			struct s_reader *rdr;
+#endif
 			tpl_addVar(vars, TPLADD, "LOGHISTORY", "->");
 			// normal non-cccam reader
 
@@ -2232,6 +2259,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, int
 
 				if ((strcmp(proto,"newcamd") == 0) && (cl->typ == 'c'))
 					tpl_printf(vars, TPLADD, "CLIENTPROTO","%s (%s)", proto, get_ncd_client_name(cl->ncd_client_id));
+#ifdef MODULE_CCCAM
 				else if ((strncmp(proto,"cccam", 5) == 0)) {
 					struct cc_data *cc = cl->cc;
 					if(cc && cc->remote_version && cc->remote_build) {
@@ -2247,6 +2275,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, int
 						tpl_addVar(vars, TPLADD, "CLIENTPROTOTITLE", "");
 					}
 				}
+#endif
 				else {
 					tpl_addVar(vars, TPLADD, "CLIENTPROTO", proto);
 					tpl_addVar(vars, TPLADD, "CLIENTPROTOTITLE", "");
@@ -2351,6 +2380,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, int
 					}
 					tpl_addVar(vars, TPLADD, "CLIENTCON", txt);
 
+#ifdef MODULE_CCCAM
 					if (!apicall) {
 						if((cl->typ == 'r' || cl->typ == 'p') && strncmp(proto,"cccam", 5) == 0){
 							struct cc_data *rcc = cl->cc;
@@ -2380,6 +2410,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, int
 							}
 						}
 					}
+#endif
 				}
 			}
 		}
@@ -2996,8 +3027,8 @@ char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *param
 			tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "no reader selected");
 			return tpl_getTpl(vars, "APIERROR");
 		}
-	}
-	else if (strcmp(getParam(params, "part"), "readerstats") == 0) {
+#ifdef WITH_LB
+	} else if (strcmp(getParam(params, "part"), "readerstats") == 0) {
 		if (strcmp(getParam(params, "label"),"")) {
 			struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 			if (rdr) {
@@ -3012,6 +3043,7 @@ char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *param
 			tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "no reader selected");
 			return tpl_getTpl(vars, "APIERROR");
 		}
+#endif
 	} else if (strcmp(getParam(params, "part"), "shutdown") == 0) {
 		if ((strcmp(strtolower(getParam(params, "action")), "restart") == 0) ||
 				(strcmp(strtolower(getParam(params, "action")), "shutdown") == 0)){
@@ -3453,7 +3485,9 @@ int32_t process_request(FILE *f, struct in_addr in) {
 				case 12: result = send_oscam_script(vars); break;
 				case 13: result = send_oscam_scanusb(vars); break;
 				case 14: result = send_oscam_files(vars, &params); break;
+#ifdef WITH_LB
 				case 15: result = send_oscam_reader_stats(vars, &params, 0); break;
+#endif
 				case 16: result = send_oscam_failban(vars, &params); break;
 				//case  17: js file
 				case 18: result = send_oscam_api(vars, f, &params, keepalive); break;

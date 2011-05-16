@@ -52,7 +52,9 @@ typedef enum cs_proto_type
 	TAG_CS357X,		// camd 3.5x UDP
 	TAG_CS378X,		// camd 3.5x TCP
 	TAG_GBOX,		// gbox
+#ifdef MODULE_CCCAM
 	TAG_CCCAM,		// cccam
+#endif
 	TAG_CONSTCW,		// constcw
 	TAG_DVBAPI,		// dvbapi
 	TAG_WEBIF,		// webif
@@ -60,7 +62,11 @@ typedef enum cs_proto_type
 } cs_proto_type_t;
 
 static const char *cctag[]={"global", "monitor", "camd33", "camd35", "newcamd", "radegast", "serial",
-		      "cs357x", "cs378x", "gbox", "cccam", "constcw", "dvbapi", "webif", "anticasc", NULL};
+		      "cs357x", "cs378x", "gbox", 
+#ifdef MODULE_CCCAM
+		      "cccam", 
+#endif
+		      "constcw", "dvbapi", "webif", "anticasc", NULL};
 
 
 /* Returns the default value if string length is zero, otherwise atoi is called*/
@@ -342,6 +348,7 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 	}
 }
 
+#ifdef MODULE_CCCAM
 void chk_cccam_ports(char *value)
 {
 	int32_t i;
@@ -354,6 +361,7 @@ void chk_cccam_ports(char *value)
 		if (cfg.cc_port[i]) i++;
 	}
 }
+#endif
 
 #ifdef NOTUSED
 static void chk_srvip(char *value, in_addr_t *ip)
@@ -553,6 +561,7 @@ void chk_t_global(const char *token, char *value)
 		return;
 	}
 
+#ifdef WITH_LB
 	if (!strcmp(token, "readerautoloadbalance") || !strcmp(token, "lb_mode")) {
 		cfg.lb_mode = strToIntVal(value, DEFAULT_LB_MODE);
 		return;
@@ -647,6 +656,7 @@ void chk_t_global(const char *token, char *value)
 		cfg.lb_auto_betatunnel = strToIntVal(value, DEFAULT_LB_AUTO_BETATUNNEL);
 		return;
 	}
+#endif
 
 	if (!strcmp(token, "resolvegethostbyname")) {
 		cfg.resolve_gethostbyname = strToIntVal(value, 0);
@@ -1062,6 +1072,7 @@ void chk_t_newcamd(char *token, char *value)
 		fprintf(stderr, "Warning: keyword '%s' in newcamd section not recognized\n", token);
 }
 
+#ifdef MODULE_CCCAM
 void chk_t_cccam(char *token, char *value)
 {
 	if (!strcmp(token, "port")) {
@@ -1130,6 +1141,7 @@ void chk_t_cccam(char *token, char *value)
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in cccam section not recognized\n",token);
 }
+#endif
 
 void chk_t_radegast(char *token, char *value)
 {
@@ -1289,7 +1301,9 @@ static void chk_token(char *token, char *value, int32_t tag)
 		case TAG_RADEGAST: chk_t_radegast(token, value); break;
 		case TAG_SERIAL  : chk_t_serial(token, value); break;
 		case TAG_CS378X  : chk_t_camd35_tcp(token, value); break;
+#ifdef MODULE_CCCAM
 		case TAG_CCCAM   : chk_t_cccam(token, value); break;
+#endif
 		case TAG_GBOX    : chk_t_gbox(token, value); break;
 
 #ifdef HAVE_DVBAPI
@@ -1455,6 +1469,7 @@ int32_t init_config()
 	cfg.cc_reshare = 10;
 #endif
 
+#ifdef WITH_LB
 	//loadbalancer defaults:
 	cfg.lb_mode = DEFAULT_LB_MODE;
     cfg.lb_nbest_readers = DEFAULT_NBEST;
@@ -1466,7 +1481,8 @@ int32_t init_config()
     cfg.lb_stat_cleanup = DEFAULT_LB_STAT_CLEANUP;
     cfg.lb_auto_betatunnel = DEFAULT_LB_AUTO_BETATUNNEL;
     //end loadbalancer defaults
-                                                                                    	
+#endif
+                                                                      	
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_conf);
 	if (!(fp = fopen(token, "r"))) {
 		fprintf(stderr, "Cannot open config file '%s' (errno=%d %s)\n", token, errno, strerror(errno));
@@ -1599,6 +1615,7 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		return;
 	}
 
+#ifdef MODULE_CCCAM
 	if (!strcmp(token, "cccmaxhops")) {
 		account->cccmaxhops = strToIntVal(value, 10);
 		return;
@@ -1624,6 +1641,7 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 			account->cccstealth = -1;
 		return;
 	}
+#endif
 
 	if (!strcmp(token, "keepalive")) {
 		account->ncd_keepalive = strToIntVal(value, 1);
@@ -1891,6 +1909,7 @@ int32_t write_config()
 	if (cfg.dropdups || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "dropdups", "%d\n", cfg.dropdups);
 
+#ifdef WITH_LB
 	if (cfg.lb_mode != DEFAULT_LB_MODE || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_mode", "%d\n", cfg.lb_mode);
 	if (cfg.lb_save || cfg.http_full_cfg)
@@ -1936,6 +1955,7 @@ int32_t write_config()
 		fprintf_conf(f, CONFVARWIDTH, "lb_max_readers", "%d\n", cfg.lb_max_readers);
 	if (cfg.lb_auto_betatunnel != DEFAULT_LB_AUTO_BETATUNNEL || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_auto_betatunnel", "%d\n", cfg.lb_auto_betatunnel);
+#endif
 
 	if (cfg.resolve_gethostbyname || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "resolvegethostbyname", "%d\n", cfg.resolve_gethostbyname);
@@ -2073,6 +2093,7 @@ int32_t write_config()
 		fprintf(f,"\n");
 	}
 
+#ifdef MODULE_CCCAM
 	/*cccam*/
 	if ( cfg.cc_port[0] > 0) {
 		fprintf(f,"[cccam]\n");
@@ -2100,6 +2121,7 @@ int32_t write_config()
 			fprintf_conf(f, CONFVARWIDTH, "reshare_mode", "%d\n", cfg.cc_reshare_services);
 		fprintf(f,"\n");
 	}
+#endif
 
 #ifdef HAVE_DVBAPI
 	/*dvb-api*/
@@ -2319,6 +2341,7 @@ int32_t write_userdb(struct s_auth *authptr)
 		if ((account->c35_suppresscmd08 != cfg.c35_suppresscmd08) || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "suppresscmd08", "%d\n", account->c35_suppresscmd08);
 
+#ifdef MODULE_CCCAM
 		if (account->cccmaxhops != 10 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "cccmaxhops", "%d\n", account->cccmaxhops);
 
@@ -2330,6 +2353,7 @@ int32_t write_userdb(struct s_auth *authptr)
 
 		if ((account->cccstealth != cfg.cc_stealth && account->cccstealth != -1 ) || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "cccstealth", "%d\n", account->cccstealth);
+#endif
 
 		if (account->c35_sleepsend || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "sleepsend", "%u\n", account->c35_sleepsend);
@@ -2559,8 +2583,10 @@ int32_t write_server()
 			if ((rdr->blockemm & EMM_GLOBAL) || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "blockemm-g", "%d\n", (rdr->blockemm & EMM_GLOBAL) ? 1: 0);
 
+#ifdef WITH_LB
 			if (rdr->lb_weight != 100 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "lb_weight", "%d\n", rdr->lb_weight);
+#endif
 
 			//savenano
 			value = mk_t_nano(rdr, 0x02);
@@ -2574,6 +2600,7 @@ int32_t write_server()
 				fprintf_conf(f, CONFVARWIDTH, "blocknano", "%s\n", value);
 			free_mk_t(value);
 
+#ifdef MODULE_CCCAM
 			if (rdr->typ == R_CCCAM) {
 				if (rdr->cc_version[0] || cfg.http_full_cfg)
 					fprintf_conf(f, CONFVARWIDTH, "cccversion", "%s\n", rdr->cc_version);
@@ -2593,6 +2620,7 @@ int32_t write_server()
 				if ((rdr->cc_reshare != cfg.cc_reshare && rdr->cc_reshare != -1) || cfg.http_full_cfg)
 					fprintf_conf(f, CONFVARWIDTH, "cccreshare", "%d\n", rdr->cc_reshare);
 			}
+#endif
 
 			if ((rdr->deprecated || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "deprecated", "%d\n", rdr->deprecated);
@@ -4036,6 +4064,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
+#ifdef WITH_LB
 	if (!strcmp(token, "lb_weight")) {
 		if(strlen(value) == 0) {
 			rdr->lb_weight = 100;
@@ -4047,7 +4076,9 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		}
 	}
+#endif
 
+#ifdef MODULE_CCCAM
 	if (!strcmp(token, "cccversion")) {
 		// cccam version
 		if (strlen(value) > sizeof(rdr->cc_version) - 1) {
@@ -4081,15 +4112,16 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "deprecated")) {
-		rdr->deprecated  = strToIntVal(value, 0);
-		return;
-	}
-
 	if (!strcmp(token, "ccchopsaway") || !strcmp(token, "cccreshar")  || !strcmp(token, "cccreshare")) {
 		rdr->cc_reshare = atoi(value);
 		if (rdr->cc_reshare == cfg.cc_reshare)
 			rdr->cc_reshare = -1;
+		return;
+	}
+#endif
+
+	if (!strcmp(token, "deprecated")) {
+		rdr->deprecated  = strToIntVal(value, 0);
 		return;
 	}
 
@@ -4271,10 +4303,14 @@ int32_t init_readerdb()
 			rdr->cardmhz = 357;
 			rdr->deprecated = 0;
 			rdr->force_irdeto = 0;
+#ifdef MODULE_CCCAM
 			rdr->cc_reshare = -1;
 			rdr->cc_maxhop = 10;
 			rdr->cc_mindown = 0;
+#endif
+#ifdef WITH_LB
 			rdr->lb_weight = 100;
+#endif
 			cs_strncpy(rdr->pincode, "none", sizeof(rdr->pincode));
 			rdr->ndsversion = 0;
 			rdr->ecmWhitelist = NULL;
@@ -4584,6 +4620,7 @@ char *mk_t_camd35tcp_port(){
 	return value;
 }
 
+#ifdef MODULE_CCCAM
 /*
  * Creates a string ready to write as a token into config or WebIf for the cccam tcp ports. You must free the returned value through free_mk_t().
  */
@@ -4601,6 +4638,7 @@ char *mk_t_cccam_port(){
 	}
 	return value;
 }
+#endif
 
 
 /*

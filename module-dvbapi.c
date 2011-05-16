@@ -1945,7 +1945,9 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				else
 					fprintf(ecmtxt, "from: local\n");
 				fprintf(ecmtxt, "protocol: %s\n", er->selected_reader->ph.desc);
+#ifdef MODULE_CCCAM
 				fprintf(ecmtxt, "hops: %d\n", er->selected_reader->cc_currenthops);
+#endif
 				fprintf(ecmtxt, "ecm time: %.3f\n", (float) client->cwlastresptime/1000);
 				fprintf(ecmtxt, "cw0: %s\n", cs_hexdump(1,demux[i].lastcw[0],8));
 				fprintf(ecmtxt, "cw1: %s\n", cs_hexdump(1,demux[i].lastcw[1],8));
