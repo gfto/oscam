@@ -154,17 +154,17 @@ static void usage()
   fprintf(stderr, "\tThis program is distributed under GPL.\n");
   fprintf(stderr, "\tinbuilt add-ons: ");
 #ifdef WEBIF
-  fprintf(stderr, "webinterface ");
+  fprintf(stderr, "webif ");
 #endif
 #ifdef MODULE_MONITOR
   fprintf(stderr, "monitor ");
 #endif
 #ifdef WITH_SSL
-  fprintf(stderr, "openssl ");
+  fprintf(stderr, "ssl ");
 #endif
 #ifdef HAVE_DVBAPI
 #ifdef WITH_STAPI
-  fprintf(stderr, "dvbapi-with-stapi ");
+  fprintf(stderr, "dvbapi_stapi ");
 #else
   fprintf(stderr, "dvbapi ");
 #endif
@@ -179,13 +179,13 @@ static void usage()
   fprintf(stderr, "debug ");
 #endif
 #ifdef CS_LED
-  fprintf(stderr, "led-trigger ");
+  fprintf(stderr, "led ");
 #endif
 #ifdef CS_WITH_DOUBLECHECK
   fprintf(stderr, "doublecheck ");
 #endif
 #ifdef QBOXHD_LED
-  fprintf(stderr, "qboxhd-led-trigger ");
+  fprintf(stderr, "qboxhd-led ");
 #endif
 #ifdef CS_LOGHISTORY
   fprintf(stderr, "loghistory ");
@@ -197,17 +197,17 @@ static void usage()
   fprintf(stderr, "pcsc ");
 #endif
 #ifdef WITH_LB
-  fprintf(stderr, "loadbalancer ");
+  fprintf(stderr, "loadbalancing ");
 #endif
   fprintf(stderr, "\n\tinbuilt protocols: ");
 #ifdef MODULE_CAMD33
   fprintf(stderr, "camd33 ");
 #endif
 #ifdef MODULE_CAMD35
-  fprintf(stderr, "camd35-udp ");
+  fprintf(stderr, "camd35_udp ");
 #endif
 #ifdef MODULE_CAMD35_TCP
-  fprintf(stderr, "camd35-tcp ");
+  fprintf(stderr, "camd35_tcp ");
 #endif
 #ifdef MODULE_NEWCAMD
   fprintf(stderr, "newcamd ");
