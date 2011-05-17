@@ -658,9 +658,12 @@ static int32_t reader_listen(struct s_reader * reader, int32_t fd1, int32_t fd2)
 
 	tcp_toflag=(fd2 && is_tcp && reader->tcp_ito && reader->tcp_connected);
 
-	int32_t timeout = 500;
+	int32_t timeout;
 	if (tcp_toflag)
-		timeout = reader->tcp_ito*60*1000; 
+		timeout = reader->tcp_ito*60*1000;
+	else
+		timeout = (is_tcp&&!reader->tcp_connected)?cfg.reader_restart_seconds*1000:500;
+	
 
 	struct pollfd pfd[3];
 

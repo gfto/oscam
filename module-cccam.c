@@ -1557,6 +1557,10 @@ void cc_idle() {
 	struct s_client *cl = cur_client();
 	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
+	
+	if (rdr && rdr->cc_keepalive && !rdr->tcp_connected)
+		cc_cli_connect(cl);
+		
 	if (!rdr || !rdr->tcp_connected || !cl || !cc)
 		return;
 
@@ -3169,22 +3173,22 @@ int32_t cc_cli_init(struct s_client *cl) {
 		
 		cc_cli_connect(cl); //connect to remote server
 		
-		while (!reader->tcp_connected && reader->cc_keepalive && cfg.reader_restart_seconds > 0) {
-
-			if ((cc && cc->mode == CCCAM_MODE_SHUTDOWN))
-				return -1;
-				
-			if (!reader->tcp_connected) {
-				cc_cli_close(cl, FALSE);
-				res = cc_cli_init_int(cl);
-				if (res)
-					return res;
-			}
-			cs_debug_mask(D_READER, "%s restarting reader in %d seconds", reader->label, cfg.reader_restart_seconds);
-			cs_sleepms(cfg.reader_restart_seconds*1000);
-			cs_debug_mask(D_READER, "%s restarting reader...", reader->label);
-			cc_cli_connect(cl);
-		}
+//		while (!reader->tcp_connected && reader->cc_keepalive && cfg.reader_restart_seconds > 0) {
+//
+//			if ((cc && cc->mode == CCCAM_MODE_SHUTDOWN))
+//				return -1;
+//				
+//			if (!reader->tcp_connected) {
+//				cc_cli_close(cl, FALSE);
+//				res = cc_cli_init_int(cl);
+//				if (res)
+//					return res;
+//			}
+//			cs_debug_mask(D_READER, "%s restarting reader in %d seconds", reader->label, cfg.reader_restart_seconds);
+//			cs_sleepms(cfg.reader_restart_seconds*1000);
+//			cs_debug_mask(D_READER, "%s restarting reader...", reader->label);
+//			cc_cli_connect(cl);
+//		}
 	}
 	return res;
 }
