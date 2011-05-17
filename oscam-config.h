@@ -39,6 +39,10 @@
 //#define CS_WITH_DOUBLECHECK
 #endif
 
+#ifndef WITH_LB
+#define WITH_LB
+#endif
+
 //
 // MODULES
 //
@@ -153,8 +157,8 @@
 #  if !defined(COOL) && !defined(SCI_DEV)
 #    define SCI_DEV 1
 #  endif
-#  ifndef HAVE_DVBAPI 
-#    define HAVE_DVBAPI 
+#  ifndef HAVE_DVBAPI
+#    define HAVE_DVBAPI
 #  endif
 #endif
 
