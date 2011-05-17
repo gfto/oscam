@@ -73,7 +73,7 @@ menu_addons() {
 		CS_LOGHISTORY		"Log history"		$(check_test "CS_LOGHISTORY") \
 		MODULE_MONITOR		"Monitor"			$(check_test "MODULE_MONITOR") \
 		WITH_SSL			"OpenSSL support"	$(check_test "WITH_SSL") \
-		WITH_LB			"Loadbalancer"	$(check_test "WITH_LB") \
+		WITH_LB				"Loadbalancing"		$(check_test "WITH_LB") \
 		2> ${tempfile}
 
 	opt=${?}

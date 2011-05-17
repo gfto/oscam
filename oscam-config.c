@@ -2675,9 +2675,9 @@ void write_versionfile() {
 	  fprintf(fp, "Web interface support:      no\n");
 #endif
 #ifdef WITH_SSL
-	  fprintf(fp, "OpenSSL support:            yes\n");
+	  fprintf(fp, "SSL support:                yes\n");
 #else
-	  fprintf(fp, "OpenSSL support:            no\n");
+	  fprintf(fp, "SSL support:                no\n");
 #endif
 #ifdef HAVE_DVBAPI
 	  fprintf(fp, "DVB API support             yes\n");
@@ -2730,9 +2730,9 @@ void write_versionfile() {
 	  fprintf(fp, "Monitor:                    no\n");
 #endif
 #ifdef WITH_LB
-	  fprintf(fp, "Loadbalancer:               yes\n");
+	  fprintf(fp, "Loadbalancing support:      yes\n");
 #else
-	  fprintf(fp, "Loadbalancer:               no\n");
+	  fprintf(fp, "Loadbalancing support:      no\n");
 #endif
 #ifdef MODULE_CAMD33
 	  fprintf(fp, "camd 3.3x:                  yes\n");
