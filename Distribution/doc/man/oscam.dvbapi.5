@@ -34,7 +34,7 @@ DVBAPI settings
 .PP
 \fBL\fP: \fBCAID\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP \fBlength\fP
 .RS 3n
- set ECM length in decimal
+ set ECM length in hexadecimal
 .RE
 .RE
 .SH ANNONTATIONS
@@ -59,6 +59,6 @@ DVBAPI settings
 
  I: 0                 # ignore every CAID that was not handled before
 
- L: 0700 96           # ECM length for CAID 0700 to 96 (decimal)
+ L: 0700 8e           # ECM length for CAID 0700 to 96 (hexadecimal)
 .SH "SEE ALSO"
 \fBlist_smargo\fR(1), \fBoscam\fR(1), \fBoscam.ac\fR(5), \fBoscam.cert\fR(5), \fBoscam.conf\fR(5), \fBoscam.guess\fR(5), \fBoscam.ird\fR(5), \fBoscam.provid\fR(5), \fBoscam.server\fR(5), \fBoscam.services\fR(5), \fBoscam.user\fR(5)

@@ -1,4 +1,4 @@
-oscam.dvbapi(5) 																			  oscam.dvbapi(5)
+oscam.dvbapi(5) 											  oscam.dvbapi(5)
 
 
 
@@ -27,7 +27,7 @@ DESCRIPTIONS
 	   obsolete)
 
        L: CAID[:][provider ID][:][service ID][:][ECM PID] length
-	   set ECM length in decimal
+	   set ECM length in hexadecimal
 
 ANNONTATIONS
        Please use Unix text file format only.
@@ -52,11 +52,12 @@ EXAMPLES
 
 	I: 0		     # ignore every CAID that was not handled before
 
-	L: 0700 96	     # ECM length for CAID 0700 to 96 (decimal)
+	L: 0700 8e	     # ECM length for CAID 0700 to 96 (hexadecimal)
 
 SEE ALSO
-       list_smargo(1), oscam(1), oscam.ac(5), oscam.cert(5), oscam.conf(5), oscam.guess(5), oscam.ird(5), oscam.provid(5), oscam.server(5), oscam.services(5), oscam.user(5)
+       list_smargo(1),	  oscam(1),    oscam.ac(5),    oscam.cert(5),	 oscam.conf(5),   oscam.guess(5),   oscam.ird(5),
+       oscam.provid(5), oscam.server(5), oscam.services(5), oscam.user(5)
 
 
 
-																					  oscam.dvbapi(5)
+													  oscam.dvbapi(5)
