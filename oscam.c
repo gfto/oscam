@@ -196,6 +196,9 @@ static void usage()
 #ifdef HAVE_PCSC
   fprintf(stderr, "pcsc ");
 #endif
+#ifdef WITH_LB
+  fprintf(stderr, "loadbalancer ");
+#endif
   fprintf(stderr, "\n\tinbuilt protocols: ");
 #ifdef MODULE_CAMD33
   fprintf(stderr, "camd33 ");
@@ -1211,7 +1214,7 @@ static void kill_thread_int(struct s_client *cl) { //cs_exit is used to let thre
 		//So only log it, but do NOT call cleanup_thread() !!
 		//cleanup_thread(cl);
 	}
-		
+
 #else
 	cs_sleepms(50);
 	cleanup_thread(cl);

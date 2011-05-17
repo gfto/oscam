@@ -62,9 +62,9 @@ typedef enum cs_proto_type
 } cs_proto_type_t;
 
 static const char *cctag[]={"global", "monitor", "camd33", "camd35", "newcamd", "radegast", "serial",
-		      "cs357x", "cs378x", "gbox", 
+		      "cs357x", "cs378x", "gbox",
 #ifdef MODULE_CCCAM
-		      "cccam", 
+		      "cccam",
 #endif
 		      "constcw", "dvbapi", "webif", "anticasc", NULL};
 
@@ -646,7 +646,7 @@ void chk_t_global(const char *token, char *value)
 		cfg.lb_reopen_mode = strToIntVal(value, DEFAULT_LB_REOPEN_MODE);
 		return;
 	}
-	
+
 	if (!strcmp(token, "lb_max_readers")) {
 		cfg.lb_max_readers = strToIntVal(value, 0);
 		return;
@@ -1482,7 +1482,7 @@ int32_t init_config()
     cfg.lb_auto_betatunnel = DEFAULT_LB_AUTO_BETATUNNEL;
     //end loadbalancer defaults
 #endif
-                                                                      	
+
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_conf);
 	if (!(fp = fopen(token, "r"))) {
 		fprintf(stderr, "Cannot open config file '%s' (errno=%d %s)\n", token, errno, strerror(errno));
@@ -1973,7 +1973,7 @@ int32_t write_config()
 		if (cfg.mon_port != 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg.mon_port);
 		if (cfg.mon_srvip != 0 || cfg.http_full_cfg)
-			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.mon_srvip));		
+			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.mon_srvip));
 		value = mk_t_iprange(cfg.mon_allowed);
 		if(strlen(value) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "nocrypt", "%s\n", value);
@@ -2002,7 +2002,7 @@ int32_t write_config()
 			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.ncd_srvip));
 		fprintf_conf(f, CONFVARWIDTH, "key", "");
 		for (i = 0; i < 14; i++) fprintf(f,"%02X", cfg.ncd_key[i]);
-		fprintf(f,"\n");		
+		fprintf(f,"\n");
 		value = mk_t_iprange(cfg.ncd_allowed);
 		if(strlen(value) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "allowed", "%s\n", value);
@@ -2100,7 +2100,7 @@ int32_t write_config()
 		value = mk_t_cccam_port();
 		fprintf_conf(f, CONFVARWIDTH, "port", "%s\n", value);
 		free_mk_t(value);
-		
+
 		if(cfg.cc_reshare != 10 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "reshare", "%d\n", cfg.cc_reshare);
 		if(cfg.cc_ignore_reshare != 0 || cfg.http_full_cfg)
@@ -2330,14 +2330,14 @@ int32_t write_userdb(struct s_auth *authptr)
 			fprintf_conf(f, CONFVARWIDTH, "chid", "%s\n", value);
 			free_mk_t(value);
 		}
-		
+
 		//class
 		if ((account->cltab.bn > 0 || account->cltab.an > 0) || cfg.http_full_cfg) {
 			value = mk_t_cltab(&account->cltab);
 			fprintf_conf(f, CONFVARWIDTH, "class", "%s\n", value);
 			free_mk_t(value);
 		}
-		
+
 		if ((account->c35_suppresscmd08 != cfg.c35_suppresscmd08) || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "suppresscmd08", "%d\n", account->c35_suppresscmd08);
 
@@ -2502,7 +2502,7 @@ int32_t write_server()
 			if ((rdr->force_irdeto || cfg.http_full_cfg) && isphysical) {
 				fprintf_conf(f, CONFVARWIDTH, "force_irdeto", "%d\n", rdr->force_irdeto);
 			}
-			
+
 			len = check_filled(rdr->nagra_boxkey, 8);
 			if ((len > 0 || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "boxkey", "%s\n", len>0?cs_hexdump(0, rdr->nagra_boxkey, 8):"");
@@ -2516,7 +2516,7 @@ int32_t write_server()
 				}
 				fprintf(f, "\n");
 			}
-			
+
 			value = mk_t_ecmwhitelist(rdr->ecmWhitelist);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "ecmwhitelist", "%s\n", value);
@@ -2549,7 +2549,7 @@ int32_t write_server()
 			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "chid", "%s\n", value);
 			free_mk_t(value);
-			
+
 			value = mk_t_cltab(&rdr->cltab);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "class", "%s\n", value);
@@ -2728,6 +2728,11 @@ void write_versionfile() {
 	  fprintf(fp, "Monitor:                    yes\n");
 #else
 	  fprintf(fp, "Monitor:                    no\n");
+#endif
+#ifdef WITH_LB
+	  fprintf(fp, "Loadbalancer:               yes\n");
+#else
+	  fprintf(fp, "Loadbalancer:               no\n");
 #endif
 #ifdef MODULE_CAMD33
 	  fprintf(fp, "camd 3.3x:                  yes\n");
@@ -2915,11 +2920,11 @@ struct s_auth *init_userdb()
 	}
 
 	fclose(fp);
-	
+
 	for(account = authptr; account; account = account->next){
 		if(account->expirationdate && account->expirationdate < time(NULL))
 			++expired;
-	
+
 		if(account->disabled)
 			++disabled;
 	}
@@ -3208,7 +3213,7 @@ int32_t init_srvid()
 				if(used[pos] >= allocated[pos]){
 					if(allocated[pos] == 0) cs_malloc(&stringcache[pos], 16 * sizeof(char*), SIGINT);
 					else cs_realloc(&stringcache[pos], (allocated[pos] + 16) * sizeof(char*), SIGINT);
-					allocated[pos] += 16;										
+					allocated[pos] += 16;
 				}
 				stringcache[pos][used[pos]] = tmp;
 				used[pos] += 1;
@@ -3244,7 +3249,7 @@ int32_t init_srvid()
 	for(i = 0; i < 1024; ++i){
 		if(allocated[i] > 0) free(stringcache[i]);
 	}
-	
+
 	cs_ftime(&te);
 	int32_t time = 1000*(te.time-ts.time)+te.millitm-ts.millitm;
 
@@ -3462,7 +3467,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			struct ifreq nicnumber[16];
 			struct ifconf ifconf;
 			struct arpreq arpreq;
-			
+
 			if ((sock=socket(AF_INET,SOCK_DGRAM,0)) > -1){
 				ifconf.ifc_buf = (caddr_t)nicnumber;
 				ifconf.ifc_len = sizeof(nicnumber);
@@ -3697,7 +3702,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		}
 	}
-	
+
 	if (!strcmp(token, "ecmwhitelist")) {
 		struct s_ecmWhitelist *tmp, *last;
 		struct s_ecmWhitelistIdent *tmpIdent, *lastIdent;
@@ -3727,7 +3732,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 						++ptr3;
 						ident = (uint32_t)a2i(ptr3, 6);
 					}
-					caid = (int16_t)dyn_word_atob(ptr);				
+					caid = (int16_t)dyn_word_atob(ptr);
 				} else ptr2 = ptr;
 				for (ptr2 = strtok_r(ptr2, ",", &saveptr2); ptr2; ptr2 = strtok_r(NULL, ",", &saveptr2)) {
 					len = (int16_t)dyn_word_atob(ptr2);
@@ -3759,7 +3764,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 							}
 						}
 					}
-					if(tmp != NULL && tmpIdent == NULL){						
+					if(tmp != NULL && tmpIdent == NULL){
 						if (cs_malloc(&tmpIdent, sizeof(struct s_ecmWhitelistIdent), -1)) {
 							tmpIdent->ident = ident;
 							tmpIdent->lengths = NULL;
@@ -3771,7 +3776,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 							}
 						}
 					}
-					if(tmp != NULL && tmpIdent != NULL && tmpLen == NULL){						
+					if(tmp != NULL && tmpIdent != NULL && tmpLen == NULL){
 						if (cs_malloc(&tmpLen, sizeof(struct s_ecmWhitelistLen), -1)) {
 							tmpLen->len = len;
 							tmpLen->next = NULL;
@@ -4632,7 +4637,7 @@ char *mk_t_cccam_port(){
 	char *dot = "";
 	for(i = 0; i < CS_MAXPORTS; i++) {
 		if (!cfg.cc_port[i]) break;
-		
+
 		pos += snprintf(value + pos, needed-pos, "%s%d", dot, cfg.cc_port[i]);
 		dot=",";
 	}
@@ -4797,7 +4802,7 @@ char *mk_t_nano(struct s_reader *rdr, uchar flag){
 		if(needed == 0 || !cs_malloc(&value, (needed * 3 * sizeof(char)) + 1, -1)) return "";
 		value[0] = '\0';
 		for (i=0; i<16; i++) {
-			if ((1 << i) & nano) 
+			if ((1 << i) & nano)
 				pos += snprintf(value + pos, (needed*3)+1-pos, "%s%02x", pos ? "," : "", (i+0x80));
 		}
 	}
@@ -4870,7 +4875,7 @@ char *mk_t_ecmwhitelist(struct s_ecmWhitelist *whitelist){
 			for (cip3 = cip2->lengths; cip3; cip3 = cip3->next) needed +=3;
 		}
 	}
-	
+
 	char tmp[needed];
 
 	for (cip = whitelist; cip; cip = cip->next){
@@ -4889,7 +4894,7 @@ char *mk_t_ecmwhitelist(struct s_ecmWhitelist *whitelist){
 				dot2=",";
 			}
 			dot=";";
-		}			
+		}
 	}
 	if(pos == 0 || !cs_malloc(&value, (pos + 1) * sizeof(char), -1)) return "";
 	memcpy(value, tmp, pos + 1);
@@ -4904,7 +4909,7 @@ char *mk_t_iprange(struct s_ip *range){
 	char *value, *dot = "";
 	int32_t needed = 1, pos = 0;
 	for (cip = range; cip; cip = cip->next) needed += 32;
-	
+
 	char tmp[needed];
 
 	for (cip = range; cip; cip = cip->next){
@@ -4925,7 +4930,7 @@ char *mk_t_cltab(CLASSTAB *clstab){
 	int32_t i, needed = 1, pos = 0;
 	for(i = 0; i < clstab->an; ++i) needed += 3;
 	for(i = 0; i < clstab->bn; ++i) needed += 4;
-	
+
 	char tmp[needed];
 
 	for(i = 0; i < clstab->an; ++i) {
@@ -4936,7 +4941,7 @@ char *mk_t_cltab(CLASSTAB *clstab){
 		pos += snprintf(tmp + pos, needed - pos, "%s!%02x", dot, (int32_t)clstab->bclass[i]);
 		dot=",";
 	}
-	
+
 	if(pos == 0 || !cs_malloc(&value, (pos + 1) * sizeof(char), -1)) return "";
 	memcpy(value, tmp, pos + 1);
 	return value;
