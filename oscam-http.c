@@ -1218,6 +1218,14 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 			break;
 
 	}
+
+#ifdef MODULE_CCCAM
+	if(rdr->typ != R_CCCAM){
+		tpl_printf(vars, TPLAPPEND, "CCCHOP", "%d", rdr->cc_hop);
+		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGHOPBIT"));
+	}
+#endif
+
 	return tpl_getTpl(vars, "READERCONFIG");
 }
 

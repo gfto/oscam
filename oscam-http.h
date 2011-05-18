@@ -1083,6 +1083,8 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 				</SELECT>\n"
 #endif
 
+#define TPLREADERCONFIGHOPBIT "\
+			<TR><TD>##TPLHELPPREFIX##server#ccchop##TPLHELPSUFFIX##CCC Hop:</A></TD><TD><input name=\"ccchop\" type=\"text\" size=\"2\" maxlength=\"1\" value=\"##CCCHOP##\"></TD></TR>\n"
 #define TPLREADERCONFIGCAMD35BIT "\
 			<TR><TD>##TPLHELPPREFIX##server#user##TPLHELPSUFFIX##User:</A></TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#password##TPLHELPSUFFIX##Password:</A></TD><TD><input name=\"password\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PASSWORD##\"></TD></TR>\n\
@@ -1741,6 +1743,7 @@ char *tpl[]={
 	"READERCONFIGSIDOKBIT",
 	"READERCONFIGSIDNOBIT",
 	"READERCONFIGSTDHWREADERBIT",
+	"READERCONFIGHOPBIT",
 	"READERCONFIGCAMD35BIT",
 	"READERCONFIGCS378XBIT",
 	"READERCONFIGRADEGASTBIT",
@@ -1854,6 +1857,7 @@ char *tplmap[]={
 	TPLREADERCONFIGSIDOKBIT,
 	TPLREADERCONFIGSIDNOBIT,
 	TPLREADERCONFIGSTDHWREADERBIT,
+	TPLREADERCONFIGHOPBIT,
 	TPLREADERCONFIGCAMD35BIT,
 	TPLREADERCONFIGCS378XBIT,
 	TPLREADERCONFIGRADEGASTBIT,
