@@ -645,14 +645,9 @@ int32_t cc_send_srv_data(struct s_client *cl) {
 	int32_t stealth = cl->account->cccstealth;
 	if (stealth == -1)
 		stealth = cfg.cc_stealth;
-	if (stealth)
-	{
-		int32_t i;
-		for (i=0;i<8;i++)
-			buf[i] = fast_rnd();
-	}
-	else
-		memcpy(buf, cc->node_id, 8);
+	memcpy(buf, cc->node_id, 8);
+	if (stealth) buf[7]++;
+		
 	char cc_build[7];
 	cc_check_version((char *) cfg.cc_version, cc_build);
 	memcpy(buf + 8, cfg.cc_version, sizeof(cfg.cc_version)); // cccam version (ascii)
@@ -3244,6 +3239,43 @@ void cc_cleanup(struct s_client *cl) {
 	cc_free(cl);
 }
 
+void cc_update_nodeid()
+{
+	//Partner Detection:
+	init_rnd();
+	uint16_t sum = 0x1234; //This is our checksum 
+	int32_t i;
+	for (i = 0; i < 4; i++) {
+		cc_node_id[i] = fast_rnd();
+		sum += cc_node_id[i];
+	}
+	
+	// Partner ID:
+	cc_node_id[4] = 0x10; // (Oscam 0x10, vPlugServer 0x11, Hadu 0x12,...)
+	sum += cc_node_id[4];
+					
+	// generate checksum for Partner ID:
+	cc_node_id[5] = 0xAA;
+	for (i = 0; i < 5; i++) {
+      cc_node_id[5] ^= cc_node_id[i];
+    }
+    sum += cc_node_id[5];		
+    
+	cc_node_id[6] = sum >> 8;
+	cc_node_id[7] = sum & 0xff;
+	
+	int valid = 0;
+	if (cfg.cc_use_fixed_nodeid) {
+		for (i=0;i<8;i++)
+			if (cfg.cc_fixed_nodeid[i])
+				valid = 1;
+	}
+	if (valid)
+		memcpy(cc_node_id, cfg.cc_fixed_nodeid, 8);
+	else
+		memcpy(cfg.cc_fixed_nodeid, cc_node_id, 8);
+}
+
 void module_cccam(struct s_module *ph) {
 	cs_strncpy(ph->desc, "cccam", sizeof(ph->desc));
 	ph->type = MOD_CONN_TCP;
@@ -3275,28 +3307,8 @@ void module_cccam(struct s_module *ph) {
 	ph->ptab = &ptab;
 	ph->num = R_CCCAM;
 
-	//Partner Detection:
-	init_rnd();
-	uint16_t sum = 0x1234; //This is our checksum 
-	for (i = 0; i < 4; i++) {
-		cc_node_id[i] = fast_rnd();
-		sum += cc_node_id[i];
-	}
+	cc_update_nodeid();
 	
-	// Partner ID:
-	cc_node_id[4] = 0x10; // (Oscam 0x10, vPlugServer 0x11, Hadu 0x12,...)
-	sum += cc_node_id[4];
-					
-	// generate checksum for Partner ID:
-	cc_node_id[5] = 0xAA;
-	for (i = 0; i < 5; i++) {
-      cc_node_id[5] ^= cc_node_id[i];
-    }
-    sum += cc_node_id[5];		
-    
-	cc_node_id[6] = sum >> 8;
-	cc_node_id[7] = sum & 0xff;
-
 	if (cfg.cc_port)
 			init_share();		
 }

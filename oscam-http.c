@@ -406,6 +406,7 @@ char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams *param
 		}
 		if(write_config()==0) refresh_oscam(REFR_SERVER);
 		else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
+		cc_update_nodeid();
 	}
 
 	char *value = mk_t_cccam_port();
@@ -433,6 +434,10 @@ char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams *param
 	tpl_printf(vars, TPLADD, "UPDATEINTERVAL", "%d", cfg.cc_update_interval);
 	if (cfg.cc_stealth)
 		tpl_printf(vars, TPLADD, "STEALTH", "selected");
+		
+	tpl_printf(vars, TPLADD, "NODEID", "%02X%02X%02X%02X%02X%02X%02X%02X",
+		cfg.cc_fixed_nodeid[0], cfg.cc_fixed_nodeid[1], cfg.cc_fixed_nodeid[2], cfg.cc_fixed_nodeid[3],
+	    cfg.cc_fixed_nodeid[4], cfg.cc_fixed_nodeid[5], cfg.cc_fixed_nodeid[6], cfg.cc_fixed_nodeid[7]);
 
 	tpl_printf(vars, TPLADD, "TMP", "MINIMIZECARDSELECTED%d", cfg.cc_minimize_cards);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");

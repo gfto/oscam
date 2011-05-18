@@ -239,6 +239,7 @@ int32_t same_card2(struct cc_card *card1, struct cc_card *card2);
 void cc_UA_oscam2cccam(uint8_t *in, uint8_t *out, uint16_t caid);
 void cc_SA_oscam2cccam(uint8_t *in, uint8_t *out);
 void cc_free_cardlist(LLIST *card_list, int32_t destroy_list);
+void cc_update_nodeid();
 
 #endif
 #endif /* MODULECCCAM_H_ */

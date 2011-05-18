@@ -1158,17 +1158,19 @@ struct s_config
 	in_addr_t	rad_srvip;
 #ifdef MODULE_CCCAM
 	PTAB		cc_ptab;
-	int32_t		cc_port[CS_MAXPORTS];
-	int32_t		cc_reshare;
-	int32_t		cc_ignore_reshare;
+	int16_t		cc_port[CS_MAXPORTS];
+	int8_t		cc_reshare;
+	int8_t		cc_ignore_reshare;
 	int32_t		cc_update_interval;
 	in_addr_t	cc_srvip;
 	char		cc_version[7];
-	int32_t             cc_minimize_cards;
-	int32_t             cc_keep_connected;
+	int8_t		cc_minimize_cards;
+	int8_t		cc_keep_connected;
 	int8_t		cc_stealth;
-	int32_t		cc_reshare_services;
-	int32_t     cc_forward_origin_card;
+	int8_t		cc_reshare_services;
+	int8_t      cc_forward_origin_card;
+	int8_t		cc_use_fixed_nodeid;
+	uint8_t		cc_fixed_nodeid[7];
 #endif
 	char	gbox_hostname[128];
 	char	gbox_key[9];
