@@ -864,12 +864,13 @@ struct s_reader  //contains device info, reader info and card info
 #ifdef MODULE_CCCAM
   char      cc_version[7];  // cccam version
   char      cc_build[7];    // cccam build number
-  int32_t       cc_maxhop;      // cccam max distance
-  int32_t       cc_mindown;     // cccam min downhops
-  int32_t       cc_currenthops; // number of hops for CCCam
+  int8_t       cc_maxhop;      // cccam max distance
+  int8_t       cc_mindown;     // cccam min downhops
+  int8_t       cc_currenthops; // number of hops for CCCam
   int8_t       cc_want_emu; //Schlocke: Client want to have EMUs, 0 - NO; 1 - YES
   uint32_t    cc_id;
   int8_t       cc_keepalive;
+  int8_t		cc_hop; //For non-cccam reader: hop for virtual cards
 #endif
   uchar     tcp_connected;
   int32_t       tcp_ito;      // inactivity timeout
@@ -1170,7 +1171,7 @@ struct s_config
 	int8_t		cc_reshare_services;
 	int8_t      cc_forward_origin_card;
 	int8_t		cc_use_fixed_nodeid;
-	uint8_t		cc_fixed_nodeid[7];
+	uint8_t		cc_fixed_nodeid[8];
 #endif
 	char	gbox_hostname[128];
 	char	gbox_key[9];

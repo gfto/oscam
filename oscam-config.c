@@ -2636,6 +2636,8 @@ int32_t write_server()
 				if ((rdr->cc_reshare != cfg.cc_reshare && rdr->cc_reshare != -1) || cfg.http_full_cfg)
 					fprintf_conf(f, CONFVARWIDTH, "cccreshare", "%d\n", rdr->cc_reshare);
 			}
+			else if (rdr->cc_hop > 0 || cfg.http_full_cfg)
+				fprintf_conf(f, CONFVARWIDTH, "ccchop", "%d\n", rdr->cc_hop);
 #endif
 
 			if ((rdr->deprecated || cfg.http_full_cfg) && isphysical)
@@ -4137,6 +4139,11 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		rdr->cc_reshare = atoi(value);
 		if (rdr->cc_reshare == cfg.cc_reshare)
 			rdr->cc_reshare = -1;
+		return;
+	}
+	
+	if (!strcmp(token, "ccchop")) {
+		rdr->cc_hop = strToIntVal(value, 0);
 		return;
 	}
 #endif

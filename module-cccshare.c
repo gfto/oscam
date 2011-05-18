@@ -538,18 +538,18 @@ struct cc_card *create_card(struct cc_card *card) {
     return card2;
 }
 
-struct cc_card *create_card2(struct s_reader *rdr, int32_t j, uint16_t caid, uint8_t hop, uint8_t reshare) {
+struct cc_card *create_card2(struct s_reader *rdr, int32_t j, uint16_t caid, uint8_t reshare) {
 
     struct cc_card *card = create_card(NULL);
     card->remote_id = (rdr?(rdr->cc_id << 16):0x7F7F8000)|j;
     card->caid = caid;
-    card->hop = hop;
     card->reshare = reshare;
     card->origin_reader = rdr;
     if (rdr) {
     	card->grp = rdr->grp;
     	card->rdr_reshare = rdr->cc_reshare; //copy reshare because reader could go offline
     	card->sidtabno = rdr->sidtabno;
+    	card->hop = rdr->cc_hop;
 	}
 	else card->rdr_reshare = reshare;
     return card;
@@ -790,7 +790,7 @@ void update_card_list() {
         for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
                 int32_t k;
                 for (k=0;k<ptr->num_caid;k++) {
-                    struct cc_card *card = create_card2(NULL, (j<<8)|k, ptr->caid[k], 0, cfg.cc_reshare);
+                    struct cc_card *card = create_card2(NULL, (j<<8)|k, ptr->caid[k], cfg.cc_reshare);
                     card->card_type = CT_CARD_BY_SERVICE_USER;
                     card->sidtab = ptr;
                     int32_t l;
@@ -836,7 +836,7 @@ void update_card_list() {
                     if (!(rdr->sidtabno&((SIDTABBITS)1<<j)) && (!rdr->sidtabok || rdr->sidtabok&((SIDTABBITS)1<<j))) {
                         int32_t k;
                         for (k=0;k<ptr->num_caid;k++) {
-                            struct cc_card *card = create_card2(rdr, (j<<8)|k, ptr->caid[k], 0, reshare);
+                            struct cc_card *card = create_card2(rdr, (j<<8)|k, ptr->caid[k], reshare);
                             card->card_type = CT_CARD_BY_SERVICE_READER;
                             card->sidtab = ptr;
                             int32_t l;
@@ -865,7 +865,7 @@ void update_card_list() {
                 for (j = 0; j < CS_MAXFILTERS; j++) {
                     if (rdr->ftab.filts[j].caid) {
                         uint16_t caid = rdr->ftab.filts[j].caid;
-                        struct cc_card *card = create_card2(rdr, j, caid, 0, reshare);
+                        struct cc_card *card = create_card2(rdr, j, caid, reshare);
                         card->card_type = CT_LOCALCARD;
                         
                         //Setting UA: (Unique Address):
@@ -906,7 +906,7 @@ void update_card_list() {
                         lcaid = rdr->ctab.cmap[j];
 
                     if (lcaid && (lcaid != 0xFFFF)) {
-                        struct cc_card *card = create_card2(rdr, j, lcaid, 0, reshare);
+                        struct cc_card *card = create_card2(rdr, j, lcaid, reshare);
                         card->card_type = CT_CARD_BY_CAID;
                         if (!rdr->audisabled)
                             cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, lcaid);
@@ -927,7 +927,7 @@ void update_card_list() {
 						uint16_t caid = rdr->ctab.caid[c];
 						if (!caid) break;
 						
-						struct cc_card *card = create_card2(rdr, c, caid, 0, reshare);
+						struct cc_card *card = create_card2(rdr, c, caid, reshare);
 						card->card_type = CT_CARD_BY_CAID;
 	                
 	    		        if (!rdr->audisabled)
@@ -956,7 +956,7 @@ void update_card_list() {
                 //cs_log("tcp_connected: %d card_status: %d ", rdr->tcp_connected, rdr->card_status);
                 if (rdr->tcp_connected || rdr->card_status == CARD_INSERTED) {
                 	uint16_t caid = rdr->caid;
-                	struct cc_card *card = create_card2(rdr, 1, caid, 0, reshare);
+                	struct cc_card *card = create_card2(rdr, 1, caid, reshare);
                 	card->card_type = CT_CARD_BY_CAID;
                 
 	                if (!rdr->audisabled)

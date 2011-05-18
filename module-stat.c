@@ -152,9 +152,11 @@ void load_stat_from_file()
 	free(line);
 
     cs_ftime(&te);
+#ifdef WITH_DEBUG
 	int32_t time = 1000*(te.time-ts.time)+te.millitm-ts.millitm;
 
 	cs_debug_mask(D_TRACE, "loadbalancer: statistics loaded %d records in %dms", count, time);
+#endif
 }
 
 static uint32_t get_prid(uint16_t caid, uint32_t prid)
