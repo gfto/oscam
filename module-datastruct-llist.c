@@ -348,17 +348,17 @@ int32_t ll_contains(LLIST *l, void *obj)
     return (data==obj);
 }
 
-int32_t ll_contains_data(LLIST *l, void *obj, uint32_t size)
+void *ll_contains_data(LLIST *l, void *obj, uint32_t size)
 {
     if (!l || !obj)
-      return 0;
+      return NULL;
     LL_ITER it = ll_iter_create(l);
     void *data;
     while ((data=ll_iter_next(&it))) {
       if (!memcmp(data,obj,size))
         break;
     }
-    return (!data);
+    return data;
 }
 
 int32_t ll_remove(LLIST *l, void *obj)
