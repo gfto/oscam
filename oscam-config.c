@@ -1091,6 +1091,18 @@ void chk_t_cccam(char *token, char *value)
 		return;
 	}
 
+	if (!strcmp(token, "nodeid")) {
+		int i, valid=0;
+		memset(cfg.cc_fixed_nodeid, 0, 8);
+		for (i=0;i<8 && value[i] != 0;i++) {
+			cfg.cc_fixed_nodeid[i] = gethexval(value[i*2]) << 4 | gethexval(value[i*2+1]);
+			if (cfg.cc_fixed_nodeid[i])
+				valid=1;
+		}
+		cfg.cc_use_fixed_nodeid = valid && i == 8;
+		return;
+	}
+
 	if (!strcmp(token, "reshare_mode")) {
 		cfg.cc_reshare_services = strToIntVal(value, 0);
 		return;
@@ -2117,6 +2129,10 @@ int32_t write_config()
 			fprintf_conf(f, CONFVARWIDTH, "keepconnected", "%d\n", cfg.cc_keep_connected);
 		if(cfg.cc_stealth != 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "stealth", "%d\n", cfg.cc_stealth);
+		if(cfg.cc_use_fixed_nodeid || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "nodeid", "%02X%02X%02X%02X%02X%02X%02X%02X", 
+				cfg.cc_fixed_nodeid[0], cfg.cc_fixed_nodeid[1], cfg.cc_fixed_nodeid[2], cfg.cc_fixed_nodeid[3], 
+				cfg.cc_fixed_nodeid[4], cfg.cc_fixed_nodeid[5], cfg.cc_fixed_nodeid[6], cfg.cc_fixed_nodeid[7]);
 		if(cfg.cc_reshare_services != 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "reshare_mode", "%d\n", cfg.cc_reshare_services);
 		fprintf(f,"\n");
