@@ -2494,6 +2494,11 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	if (er->caid == 0x1702 && er->l == 0x89 && er->ecm[3] == 0x07 && er->ecm[4] == 0x84)
 		er->caid = 0x1833;
 
+	//Ariva quickfix
+	if (er->caid == 0x0960) er->caid=0x0963;
+	if (er->caid > 0x18FF && er->prid > 0x00FFFF) er->prid=0;
+	if ((er->caid == 0x1830 || er->caid == 0x1843) && (er->prid > 0x00FFFF)) er->prid= 0x03411;
+			
 	if (!er->prid)
 		er->prid = chk_provid(er->ecm, er->caid);
 
