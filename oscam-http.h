@@ -380,7 +380,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=global\">Global</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=loadbalancer\">Loadbalancer</A></TD>\n\
+##TPLCONFIGMENULB##\
 			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd33\">Camd3.3</A></TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd35\">Camd3.5</A></TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd35tcp\">Camd3.5 TCP</A></TD>\n\
@@ -477,6 +477,10 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #ifdef HAVE_DVBAPI
 #define TPLCONFIGMENUDVBAPI "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=dvbapi\">DVB-Api</A></TD>\n"
 #define TPLFILEMENUDVBAPI "			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=dvbapi\">oscam.dvbapi</A></TD>\n"
+#endif
+
+#ifdef WITH_LB
+#define TPLCONFIGMENULB "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=loadbalancer\">Loadbalancer</A></TD>\n"
 #endif
 
 #define TPLSTATUS "\
@@ -1435,6 +1439,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#double_check##TPLHELPSUFFIX##ECM Doublecheck:</A></TD><TD><SELECT NAME=\"double_check\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##DCHECKCSELECTED##>YES</OPTION></SELECT></TD></TR>\n"
 #endif
 
+#ifdef WITH_LB
 #define TPLCONFIGLOADBALANCER "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1489,6 +1494,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
+#endif
 
 #define TPLCONFIGCAMD33 "\
 ##TPLHEADER##\
@@ -1766,7 +1772,6 @@ char *tpl[]={
 	"CONFIGRADEGAST",
 	"CONFIGNEWCAMD",
 	"CONFIGGLOBAL",
-	"CONFIGLOADBALANCER",
 	"CONFIGCAMD33",
 	"CONFIGCAMD35",
 	"CONFIGCAMD35TCP",
@@ -1798,6 +1803,10 @@ char *tpl[]={
 #endif
 #ifdef WITH_DEBUG
 	,"DEBUGSELECT"
+#endif
+#ifdef WITH_LB
+	,"CONFIGMENULB"
+	,"CONFIGLOADBALANCER"
 #endif
 	,"ICMAI"
 	,"ICSTA"
@@ -1880,7 +1889,6 @@ char *tplmap[]={
 	TPLCONFIGRADEGAST,
 	TPLCONFIGNEWCAMD,
 	TPLCONFIGGLOBAL,
-	TPLCONFIGLOADBALANCER,
 	TPLCONFIGCAMD33,
 	TPLCONFIGCAMD35,
 	TPLCONFIGCAMD35TCP,
@@ -1912,6 +1920,10 @@ char *tplmap[]={
 #endif
 #ifdef WITH_DEBUG
 	,TPLDEBUGSELECT
+#endif
+#ifdef WITH_LB
+	,TPLCONFIGMENULB
+	,TPLCONFIGLOADBALANCER
 #endif
 	,ICMAI
 	,ICSTA
