@@ -1159,7 +1159,7 @@ struct s_config
 	in_addr_t	rad_srvip;
 #ifdef MODULE_CCCAM
 	PTAB		cc_ptab;
-	int16_t		cc_port[CS_MAXPORTS];
+	uint16_t	cc_port[CS_MAXPORTS];
 	int8_t		cc_reshare;
 	int8_t		cc_ignore_reshare;
 	int32_t		cc_update_interval;
