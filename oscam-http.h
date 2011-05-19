@@ -381,16 +381,16 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 		<TR>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=global\">Global</A></TD>\n\
 ##TPLCONFIGMENULB##\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd33\">Camd3.3</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd35\">Camd3.5</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd35tcp\">Camd3.5 TCP</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=newcamd\">Newcamd</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=radegast\">Radegast</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=cccam\">Cccam</A></TD>\n\
+##TPLCONFIGMENUCAMD33##\
+##TPLCONFIGMENUCAMD35##\
+##TPLCONFIGMENUCAMD35TCP##\
+##TPLCONFIGMENUNEWCAMD##\
+##TPLCONFIGMENURADEGAST##\
+##TPLCONFIGMENUCCCAM##\
 ##TPLCONFIGMENUGBOX##\
 ##TPLCONFIGMENUANTICASC##\
 			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=monitor\">Monitor</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=serial\">Serial</A></TD>\n\
+##TPLCONFIGMENUSERIAL##\
 ##TPLCONFIGMENUDVBAPI##\
 		</TR>\n\
 	</TABLE>\n"
@@ -481,6 +481,34 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
 #ifdef WITH_LB
 #define TPLCONFIGMENULB "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=loadbalancer\">Loadbalancer</A></TD>\n"
+#endif
+
+#ifdef MODULE_CAMD33
+#define TPLCONFIGMENUCAMD33 "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd33\">Camd3.3</A></TD>\n"
+#endif
+
+#ifdef MODULE_CAMD35
+#define TPLCONFIGMENUCAMD35 "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd35\">Camd3.5</A></TD>\n"
+#endif
+
+#ifdef MODULE_CAMD35_TCP
+#define TPLCONFIGMENUCAMD35TCP "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd35tcp\">Camd3.5 TCP</A></TD>\n"
+#endif
+
+#ifdef MODULE_CCCAM
+#define TPLCONFIGMENUCCCAM "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=cccam\">CCcam</A></TD>\n"
+#endif
+
+#ifdef MODULE_NEWCAMD
+#define TPLCONFIGMENUNEWCAMD "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=newcamd\">Newcamd</A></TD>\n"
+#endif
+
+#ifdef MODULE_RADEGAST
+#define TPLCONFIGMENURADEGAST "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=radegast\">Radegast</A></TD>\n"
+#endif
+
+#ifdef MODULE_SERIAL
+#define TPLCONFIGMENUSERIAL "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=serial\">Serial</A></TD>\n"
 #endif
 
 #define TPLSTATUS "\
@@ -1197,6 +1225,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLFOOTER##"
 #endif
 
+#ifdef MODULE_CCCAM
 #define TPLCONFIGCCCAM "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1269,6 +1298,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		</TR>\n\
 	</TABLE>\n\
 ##TPLFOOTER##"
+#endif
 
 #define TPLCONFIGMONITOR "\
 ##TPLHEADER##\
@@ -1325,6 +1355,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	</form>\n\
 ##TPLFOOTER##"
 
+#ifdef MODULE_RADEGAST
 #define TPLCONFIGRADEGAST "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1344,7 +1375,9 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
+#endif
 
+#ifdef MODULE_NEWCAMD
 #define TPLCONFIGNEWCAMD "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1368,6 +1401,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
+#endif
 
 #define TPLCONFIGGLOBAL "\
 ##TPLHEADER##\
@@ -1496,6 +1530,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLFOOTER##"
 #endif
 
+#ifdef MODULE_CAMD33
 #define TPLCONFIGCAMD33 "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1516,7 +1551,9 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
+#endif
 
+#ifdef MODULE_CAMD35
 #define TPLCONFIGCAMD35 "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1536,7 +1573,9 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
+#endif
 
+#ifdef MODULE_CAMD35_TCP
 #define TPLCONFIGCAMD35TCP "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1556,7 +1595,9 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
+#endif
 
+#ifdef MODULE_SERIAL
 #define TPLCONFIGSERIAL "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1574,6 +1615,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	</form>\n\
 	<BR><BR>\n\
 ##TPLFOOTER##"
+#endif
 
 #define TPLCONFIGSERIALDEVICEBIT "\
 			<TR><TD>##TPLHELPPREFIX##conf#device##TPLHELPSUFFIX##Device:</A></TD><TD><input name=\"device\" type=\"text\" size=\"50\" maxlength=\"100\" value=\"##SERIALDEVICE##\"></TD></TR>\n"
@@ -1767,15 +1809,8 @@ char *tpl[]={
 	"FAILBAN",
 	"FAILBANBIT",
 	"CONFIGGBOX",
-	"CONFIGCCCAM",
 	"CONFIGMONITOR",
-	"CONFIGRADEGAST",
-	"CONFIGNEWCAMD",
 	"CONFIGGLOBAL",
-	"CONFIGCAMD33",
-	"CONFIGCAMD35",
-	"CONFIGCAMD35TCP",
-	"CONFIGSERIAL",
 	"CONFIGSERIALDEVICEBIT",
 	"SERVICECONFIGLIST",
 	"SERVICECONFIGLISTBIT",
@@ -1807,6 +1842,34 @@ char *tpl[]={
 #ifdef WITH_LB
 	,"CONFIGMENULB"
 	,"CONFIGLOADBALANCER"
+#endif
+#ifdef MODULE_CAMD33
+	,"CONFIGCAMD33"
+	,"CONFIGMENUCAMD33"
+#endif
+#ifdef MODULE_CAMD35
+	,"CONFIGCAMD35"
+	,"CONFIGMENUCAMD35"
+#endif
+#ifdef MODULE_CCCAM
+	,"CONFIGCCCAM"
+	,"CONFIGMENUCCCAM"
+#endif
+#ifdef MODULE_NEWCAMD
+	,"CONFIGNEWCAMD"
+	,"CONFIGMENUNEWCAMD"
+#endif
+#ifdef MODULE_RADEGAST
+	,"CONFIGRADEGAST"
+	,"CONFIGMENURADEGAST"
+#endif
+#ifdef MODULE_CAMD35_TCP
+	,"CONFIGCAMD35TCP"
+	,"CONFIGMENUCAMD35TCP"
+#endif
+#ifdef MODULE_SERIAL
+	,"CONFIGSERIAL"
+	,"CONFIGMENUSERIAL"
 #endif
 	,"ICMAI"
 	,"ICSTA"
@@ -1884,15 +1947,8 @@ char *tplmap[]={
 	TPLFAILBAN,
 	TPLFAILBANBIT,
 	TPLCONFIGGBOX,
-	TPLCONFIGCCCAM,
 	TPLCONFIGMONITOR,
-	TPLCONFIGRADEGAST,
-	TPLCONFIGNEWCAMD,
 	TPLCONFIGGLOBAL,
-	TPLCONFIGCAMD33,
-	TPLCONFIGCAMD35,
-	TPLCONFIGCAMD35TCP,
-	TPLCONFIGSERIAL,
 	TPLCONFIGSERIALDEVICEBIT,
 	TPLSERVICECONFIGLIST,
 	TPLSERVICECONFIGLISTBIT,
@@ -1924,6 +1980,34 @@ char *tplmap[]={
 #ifdef WITH_LB
 	,TPLCONFIGMENULB
 	,TPLCONFIGLOADBALANCER
+#endif
+#ifdef MODULE_CAMD33
+	,TPLCONFIGCAMD33
+	,TPLCONFIGMENUCAMD33
+#endif
+#ifdef MODULE_CAMD35
+	,TPLCONFIGCAMD35
+	,TPLCONFIGMENUCAMD35
+#endif
+#ifdef MODULE_CCCAM
+	,TPLCONFIGCCCAM
+	,TPLCONFIGMENUCCCAM
+#endif
+#ifdef MODULE_NEWCAMD
+	,TPLCONFIGNEWCAMD
+	,TPLCONFIGMENUNEWCAMD
+#endif
+#ifdef MODULE_RADEGAST
+	,TPLCONFIGRADEGAST
+	,TPLCONFIGMENURADEGAST
+#endif
+#ifdef MODULE_CAMD35_TCP
+	,TPLCONFIGCAMD35TCP
+	,TPLCONFIGMENUCAMD35TCP
+#endif
+#ifdef MODULE_SERIAL
+	,TPLCONFIGSERIAL
+	,TPLCONFIGMENUSERIAL
 #endif
 	,ICMAI
 	,ICSTA
