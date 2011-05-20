@@ -1,4 +1,4 @@
-oscam(1)																  oscam(1)
+oscam(1)													 oscam(1)
 
 
 
@@ -14,23 +14,23 @@ DESCRIPTIONS
 
        ·  camd 3.3x
 
-       ·  camd 3.5x
+       ·  camd 3.5x UDP and TCP
 
-       ·  newcamd with AU support, cascading/remote server ECM support
+       ·  newcamd with cascading/remote server ECM support
 
        ·  radegast
 
        ·  serial (HSIC, SSSP, BOMBA, DSR 9500)
 
-       ·  camd 3.57x with AU support, cascading/remote server ECM support
+       ·  camd 3.57x with cascading/remote server ECM support
 
-       ·  camd 3.78x with AU support, cascading/remote server ECM support
+       ·  camd 3.78x with cascading/remote server ECM support
 
-       ·  gbox with AU support, cascading/remote server ECM support
+       ·  gbox with cascading/remote server ECM support
 
-       ·  CCcam with AU support, cascading/remote server ECM support
+       ·  CCcam with cascading/remote server ECM support
 
-       ·  DVB API with AU, multi tuner and PIP support
+       ·  DVB API with multi tuner and PIP support
 
        OSCam works on the following plattforms:
 
@@ -45,8 +45,8 @@ OPTIONS
 	  starts in background, writing oscam.version with starttime and version info in temporary directory
 
        -c <directory>
-	  read configuration from <directory>, default:see CS_CONFDIR in globals.h, while starting OSCam prints warnings on invalid keywords, com‐
-	  ment lines start with # character.
+	  read	configuration from <directory>, default:see CS_CONFDIR in globals.h, while starting OSCam prints warnings
+	  on invalid keywords, comment lines start with # character.
 
        -d <level>
 	  debug level mask:
@@ -79,8 +79,8 @@ OPTIONS
 
 SIGNALS
        SIGHUP
-	  reinit user db, TIERs, services, clients and anti-cascading, for newcamd connections: after reloading the ident, please restart  newcamd
-	  client
+	  reinit user db, TIERs, services, clients and anti-cascading,	for  newcamd  connections:  after  reloading  the
+	  ident, please restart newcamd client
 
        SIGUSR1
 	  shift debug level to next level (see debug level mask above)
@@ -89,9 +89,9 @@ SIGNALS
 	  get reader SC info
 
 SEE ALSO
-       list_smargo(1), oscam.ac(5), oscam.cert(5), oscam.conf(5), oscam.dvbapi(5), oscam.guess(5), oscam.ird(5), oscam.provid(5), oscam.server(5),
-       oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
+       list_smargo(1),	 oscam.ac(5),	oscam.cert(5),	 oscam.conf(5),  oscam.dvbapi(5),  oscam.guess(5),  oscam.ird(5),
+       oscam.provid(5), oscam.server(5), oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
 
 
 
-																	  oscam(1)
+														 oscam(1)
