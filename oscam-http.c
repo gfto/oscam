@@ -747,6 +747,8 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params) {
 			if (rdr) {
 				inactivate_reader(rdr);
 				ll_remove(configured_readers, rdr);
+				
+				free_reader(rdr);
 
 				if(write_server()==0) refresh_oscam(REFR_READERS);
 				else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");

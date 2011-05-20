@@ -1473,6 +1473,7 @@ extern int32_t  init_config(void);
 extern int32_t  init_free_userdb(struct s_auth *auth);
 extern struct s_auth *init_userdb();
 extern int32_t  init_readerdb(void);
+extern void free_reader(struct s_reader *rdr);
 extern int32_t  init_sidtab(void);
 extern void free_sidtab(struct s_sidtab *sidtab);
 extern void init_free_sidtab();

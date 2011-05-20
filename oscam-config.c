@@ -192,8 +192,12 @@ void chk_caidvaluetab(char *lbrlt, CAIDVALUETAB *tab, int32_t minvalue)
 		}
 }
 
+/*
+ * Creates a string ready to write as a token into config or WebIf. You must free the returned value through free_mk_t().
+ */
 char *mk_t_caidvaluetab(CAIDVALUETAB *tab)
 {
+		if (!tab->n) return "";
 		int32_t i, size = 2 + tab->n * (4 + 1 + 5 + 1); //caid + ":" + time + ","
 		char *buf = cs_malloc(&buf, size, SIGINT);
 		char *ptr = buf;
@@ -4292,6 +4296,35 @@ int32_t init_irdeto_guess_tab()
   return(0);
 }
 #endif
+
+/**
+ * frees a reader
+ **/
+void free_reader(struct s_reader *rdr)
+{
+	NULLFREE(rdr->emmfile);
+	
+	struct s_ecmWhitelist *tmp;
+	struct s_ecmWhitelistIdent *tmpIdent;
+	struct s_ecmWhitelistLen *tmpLen;
+	for(tmp = rdr->ecmWhitelist; tmp; tmp=tmp->next){
+		for(tmpIdent = tmp->idents; tmpIdent; tmpIdent=tmpIdent->next){
+			for(tmpLen = tmpIdent->lengths; tmpLen; tmpLen=tmpLen->next){
+				add_garbage(tmpLen);
+			}
+			add_garbage(tmpIdent);
+		}
+		add_garbage(tmp);
+	}
+	rdr->ecmWhitelist = NULL;
+	
+	clear_ftab(&rdr->ftab);
+
+#ifdef WITH_LB
+	ll_destroy_data(rdr->lb_stat);
+#endif	
+	add_garbage(rdr);
+}
 
 int32_t init_readerdb()
 {
