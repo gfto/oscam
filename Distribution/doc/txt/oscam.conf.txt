@@ -453,7 +453,8 @@ DESCRIPTIONS
 	       will be merged, provider (maximum 32) will be merged, too
 
        updateinterval = seconds
-	  interval to provide share list update to CCcam clients, default:240
+	  interval  to	provide  share	list  update  to  CCcam  clients, values <= 10 are invalid and will be set to 30,
+	  default:240
 
        keepconnected = 0|1
 	  set CCcam keepalive modus:
@@ -462,7 +463,7 @@ DESCRIPTIONS
 	    1 = keep client connected (default)
 
        forward_origin_card = 0|1
-	  1  =	forward  ECM  request  to  reader holding this card, loadbalancer, fallback and caching will be disabled,
+	  1 = forward ECM request to reader holding this card, loadbalancer,  fallback	and  caching  will  be	disabled,
 	  default:0
 
        nodeid = ID
@@ -484,7 +485,7 @@ DESCRIPTIONS
        enabled = 0|1
 	  1 = DVB API enabled, default:0
 
-	  Create file /tmp/.pauseoscam to pause DVB API, e.g. if STB goes into standby and OSCam  remains  as  SC  server
+	  Create  file	/tmp/.pauseoscam  to  pause DVB API, e.g. if STB goes into standby and OSCam remains as SC server
 	  only.
 
        user = username
@@ -614,7 +615,7 @@ MONITOR
 
        ·  reload
 
-	  reinit  user db, clients and anti-cascading, for newcamd connections: after reloading the ident, please restart
+	  reinit user db, clients and anti-cascading, for newcamd connections: after reloading the ident, please  restart
 	  newcamd client
 
 
@@ -654,13 +655,13 @@ MONITOR
 WEB INTERFACE
        ·  template system
 
-	  The web interface allows you to create your own template. For developing your own template request the  orignal
-	  template  with  the  non-linked  page savetemplates.html. Store your own template in the directory specified by
+	  The  web interface allows you to create your own template. For developing your own template request the orignal
+	  template with the non-linked page savetemplates.html. Store your own template in  the  directory  specified  by
 	  httptpl.
 
        ·  known issues
 
-	  Login is not possible by now with the Safari browser because of incorrect stale flag handling.  Increasing  the
+	  Login  is  not possible by now with the Safari browser because of incorrect stale flag handling. Increasing the
 	  AUTHNONCEVALIDSECS in oscam-http.h would be a workaround, but also a small security risk.
 
 CACHING
@@ -719,7 +720,7 @@ EXAMPLES
 	password     = mypassword
 
 SEE ALSO
-       list_smargo(1),	  oscam(1),    oscam.ac(5),   oscam.cert(5),   oscam.dvbapi(5),   oscam.guess(5),   oscam.ird(5),
+       list_smargo(1),	 oscam(1),   oscam.ac(5),   oscam.cert(5),   oscam.dvbapi(5),	 oscam.guess(5),    oscam.ird(5),
        oscam.provid(5), oscam.server(5), oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
 
 

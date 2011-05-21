@@ -646,7 +646,7 @@ mode how to provide CCcam servers to CCcam clients:
 .PP
 \fBupdateinterval\fP = \fBseconds\fP
 .RS 3n
-interval to provide share list update to CCcam clients, default:240
+interval to provide share list update to CCcam clients, values <= 10 are invalid and will be set to 30, default:240
 .RE
 .PP
 \fBkeepconnected\fP = \fB0\fP|\fB1\fP
