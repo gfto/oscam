@@ -542,7 +542,7 @@ int32_t do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigne
     memcpy(rxbuff+5+len,cta_res+len,2);
     }
   else {
-    if(!write_cmd_vg(ins2,(uchar *)txbuff) || !status_ok(cta_res)) return -2;
+    if(!write_cmd_vg(ins2,txbuff) || !status_ok(cta_res)) return -2;
     memcpy(rxbuff,ins2,5);
     memcpy(rxbuff+5,txbuff,len);
     memcpy(rxbuff+5+len,cta_res,2);
@@ -772,23 +772,10 @@ xx xx xx xx xx xx xx xx xx xx xx xx xx xx xx
 			return TRUE;
 
 		case VG_EMMTYPE_U:
-			cs_debug_mask(D_EMM, "EMM: UNIQUE");
-			ep->type=UNIQUE;
-			if (ep->emm[1] == 0) // detected UNIQUE EMM from cccam (there is no serial)
-				return TRUE;
-
-			for (i = 1;i <= serial_count;i++) {
-				if (!memcmp (rdr->hexserial + 2, ep->emm + (serial_len * i), serial_len)) {
-					memcpy(ep->hexserial, ep->emm + (serial_len * i), serial_len);
-					return TRUE;
-				}
-			}
-			return FALSE; // if UNIQUE but no serial match return FALSE
-
 		case VG_EMMTYPE_S:
-			cs_debug_mask(D_EMM, "EMM: SHARED");
-			ep->type=SHARED;
-			if (ep->emm[1] == 0) // detected SHARED EMM from cccam (there is no serial)
+			cs_debug_mask(D_EMM, "EMM: %s", (emmtype == VG_EMMTYPE_U) ? "UNIQUE" : "SHARED");
+			ep->type=emmtype;
+			if (ep->emm[1] == 0) // detected UNIQUE EMM from cccam (there is no serial)
 				return TRUE;
 
 			for (i = 0; i < serial_count; i++) {
@@ -797,8 +784,7 @@ xx xx xx xx xx xx xx xx xx xx xx xx xx xx xx
 					return TRUE;
 				}
 			}
-
-			return FALSE; // if SHARED but no serial match return FALSE
+			return FALSE; // if UNIQUE or SHARED but no serial match return FALSE
 
 		default:
 			//remote emm without serial
@@ -889,52 +875,40 @@ int32_t videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned cha
 void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
 	int32_t idx = 2;
+	int32_t n;
 
 	filter[0]=0xFF;
 	filter[1]=0;
 
-	filter[idx++]=EMM_UNIQUE;
-	filter[idx++]=0;
-	filter[idx+0]    = 0x82;
-	filter[idx+0+16] = 0xFF;
-	filter[idx+1]    = 0x40;
-	filter[idx+1+16] = 0xC0;
-	memcpy(filter+idx+2, rdr->hexserial+2, 4);
-	memset(filter+idx+2+16, 0xFF, 4);
-	idx +=32;
-
-	filter[idx++]=EMM_UNIQUE;
-	filter[idx++]=0;
-	filter[idx+0]    = 0x82;
-	filter[idx+0+16] = 0xFF;
-	filter[idx+1]    = 0x40;
-	filter[idx+1+16] = 0xC0;
-	memcpy(filter+idx+6, rdr->hexserial+2, 4);
-	memset(filter+idx+6+16, 0xFF, 4);
-	idx +=32;
-
-	filter[idx++]=EMM_UNIQUE;
-	filter[idx++]=0;
-	filter[idx+0]    = 0x82;
-	filter[idx+0+16] = 0xFF;
-	filter[idx+1]    = 0x40;
-	filter[idx+1+16] = 0xC0;
-	memcpy(filter+idx+10, rdr->hexserial+2, 4);
-	memset(filter+idx+10+16, 0xFF, 4);
-	idx +=32;
-	filter[1] += 3;
+	for (n = 0; n < 3; ++n)
+	{
+		filter[idx++]=EMM_UNIQUE;
+		filter[idx++]=0;
+		filter[idx+0]    = 0x82;
+		filter[idx+0+16] = 0xFF;
+		filter[idx+1]    = 0x40;
+		filter[idx+1+16] = 0xC0;
+		memcpy(filter+idx+2+4*n, rdr->hexserial+2, 4);
+		memset(filter+idx+2+4*n+16, 0xFF, 4);
+		idx +=32;
+		filter[1]++;
+	}
 	// fourth serial position does not fit within the 16bytes demux filter
 
-	filter[idx++]=EMM_SHARED;
-	filter[idx++]=0;
-	filter[idx+0]    = 0x82;
-	filter[idx+0+16] = 0xFF;
-	filter[idx+1]    = 0x80;
-	filter[idx+1+16] = 0xC0;
-	memcpy(filter+idx+2, rdr->hexserial+2, 3);
-	memset(filter+idx+2+16, 0xFF, 3);
-	filter[1]++;
-	idx += 32;
+	for (n = 0; n < 3; ++n)
+	{
+		filter[idx++]=EMM_SHARED;
+		filter[idx++]=0;
+		filter[idx+0]    = 0x82;
+		filter[idx+0+16] = 0xFF;
+		filter[idx+1]    = 0x80;
+		filter[idx+1+16] = 0xC0;
+		memcpy(filter+idx+2+4*n, rdr->hexserial+2, 3);
+		memset(filter+idx+2+4*n+16, 0xFF, 3);
+		idx +=32;
+		filter[1]++;
+	}
+	// fourth serial position does not fit within the 16bytes demux filter
 
 	filter[idx++]=EMM_GLOBAL;
 	filter[idx++]=0;
