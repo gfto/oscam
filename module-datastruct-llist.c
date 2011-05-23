@@ -423,7 +423,7 @@ void ll_sort(LLIST *l, void *compare)
 		n=n->nxt;
 	}
 	
-	cs_log("sort: count %d size %d", l->count, sizeof(p[0]));
+	cs_debug_mask(D_TRACE, "sort: count %d size %d", l->count, sizeof(p[0]));
 	
 	qsort(p, l->count, sizeof(p[0]), compare);
 	

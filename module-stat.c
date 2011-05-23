@@ -340,7 +340,7 @@ void inc_fail(READER_STAT *stat)
  */
 void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t rc)
 {
-	if (!rdr || !er || !cfg.lb_mode)
+	if (!rdr || !er || !cfg.lb_mode || !rdr->client)
 		return;
 		
 	uint32_t prid = get_prid(er->caid, er->prid);

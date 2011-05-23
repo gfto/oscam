@@ -1718,14 +1718,13 @@ int32_t write_to_pipe(int32_t fd, int32_t id, uchar *data, int32_t n)
  * read all kind of data from pipe specified by fd
  * special-flag redir: if set AND data is ECM: this will redirected to appr. client
  */
-int32_t read_from_pipe(int32_t fd, uchar **data, int32_t redir)
+int32_t read_from_pipe(int32_t fd, uchar **data)
 {
 	int32_t rc;
 	intptr_t hdr=0;
 	uchar buf[3+sizeof(void*)];
 	memset(buf, 0, sizeof(buf));
 
-	redir=redir;
 	*data=(uchar *)0;
 	rc=PIP_ID_NUL;
 
@@ -1737,9 +1736,9 @@ int32_t read_from_pipe(int32_t fd, uchar **data, int32_t redir)
 		return PIP_ID_ERR;
 	}
 
-	uchar id[4];
-	memcpy(id, buf, 3);
-	id[3]='\0';
+	//uchar id[4];
+	//memcpy(id, buf, 3);
+	//id[3]='\0';
 
 	//cs_debug_mask(D_TRACE, "read from pipe %d (%s) thread: %8X", fd, id, (uint32_t)pthread_self());
 
@@ -3082,7 +3081,7 @@ static void process_master_pipe(int32_t mfdr)
   int32_t n;
   uchar *ptr;
 
-  switch(n=read_from_pipe(mfdr, &ptr, 1))
+  switch(n=read_from_pipe(mfdr, &ptr))
   {
     case PIP_ID_KCL: //Kill all clients
     	restart_clients();
@@ -3101,7 +3100,7 @@ static void process_master_pipe(int32_t mfdr)
 int32_t process_client_pipe(struct s_client *cl, uchar *buf, int32_t l) {
 	uchar *ptr;
 	uint16_t n;
-	int32_t pipeCmd = read_from_pipe(cl->fd_m2c_c, &ptr, 0);
+	int32_t pipeCmd = read_from_pipe(cl->fd_m2c_c, &ptr);
 
 	switch(pipeCmd) {
 		case PIP_ID_ECM:

@@ -750,7 +750,7 @@ void clear_reader_pipe(struct s_reader * reader)
 	int32_t pipeCmd;
 	while (reader && reader->client && reader->client->fd_m2c_c)
 	{
-		pipeCmd = read_from_pipe(reader->client->fd_m2c_c, &ptr, 0);
+		pipeCmd = read_from_pipe(reader->client->fd_m2c_c, &ptr);
 		if (ptr) free(ptr);
 		if (pipeCmd==PIP_ID_ERR || pipeCmd==PIP_ID_NUL)
 			break;
@@ -760,7 +760,7 @@ void clear_reader_pipe(struct s_reader * reader)
 static void reader_do_pipe(struct s_reader * reader)
 {
   uchar *ptr;
-  int32_t pipeCmd = read_from_pipe(reader->client->fd_m2c_c, &ptr, 0);
+  int32_t pipeCmd = read_from_pipe(reader->client->fd_m2c_c, &ptr);
 
   switch(pipeCmd)
   {
