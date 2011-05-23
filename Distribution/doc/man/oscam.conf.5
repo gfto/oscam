@@ -523,19 +523,19 @@ Each CAID requires a separate port. If you don't specify a DES key for a port, t
 .PP
 \fBserverip\fP = \fBIP address\fP
 .RS 3n
-bind service to specified IP address, default:all
+bind newcamd service to specified IP address, default:all
 .RE
 .PP
 \fBallowed\fP = \fBIP address\fP|\fBIP address range\fP[,\fBIP address\fP|\fBIP address range]\fP...
 .RS 3n
-client connections allowed from, default:none
+newcamd client connections allowed from, default:none
 
  example: allowed = 127.0.0.1,192.168.0.0-192.168.255.255
 .RE
 .PP
 \fBkeepalive\fP = \fB0\fP|\fB1\fP
 .RS 3n
-0 = disable keepalive, default:1
+0 = disable newcamd keepalive modus, default:1
 .RE
 .SS "The [radegast] section"
 .PP

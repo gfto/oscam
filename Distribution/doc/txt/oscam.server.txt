@@ -101,7 +101,7 @@ DESCRIPTIONS
 
 	  example: auprovid = 123456
 
-       ecmwhitelist = [CAID[@ident]:]lenght[,lengtht]...[;[CAID[@ident]:]lenght[,lengtht]...]...
+       ecmwhitelist = [CAID[@ident]:]length[,length]...[;[CAID[@ident]:]length[,length]...]...
 	  define valid ECM length per CAID and ident in hex, default:none,ident=000000
 
 	  example: ecmwhitelist = 10,20,0a,0b
