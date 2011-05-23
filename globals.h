@@ -1094,6 +1094,7 @@ struct s_config
 	in_addr_t	srvip;
 	char		*usrfile;
 	char		*cwlogdir;
+	char		*emmlogdir;
 	char		*logfile;
 	uint8_t	logtostdout;
 	uint8_t 	logtosyslog;

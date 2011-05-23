@@ -2817,7 +2817,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			localtime_r (&rawtime, &timeinfo);	/* to access LOCAL date/time info */
 			char buf[80];
 			strftime (buf, 80, "%Y/%m/%d %H:%M:%S", &timeinfo);
-			snprintf (token, sizeof(token), "%s%s_emm.log", cs_confdir, aureader->label);
+			snprintf (token, sizeof(token), "%s%s_emm.log", cfg.emmlogdir?cfg.emmlogdir:cs_confdir, aureader->label);
 			int32_t emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
 
 			if (!(fp = fopen (token, "a"))) {
