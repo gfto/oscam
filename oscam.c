@@ -673,6 +673,9 @@ void cs_exit(int32_t sig)
     qboxhd_led_blink(QBOXHD_LED_COLOR_BLUE,QBOXHD_LED_BLINK_FAST);
     qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_FAST);
 #endif
+#ifdef LCDSUPPORT
+    end_lcd_thread();
+#endif
 
 #ifndef OS_CYGWIN32
 	snprintf(targetfile, 255, "%s%s", get_tmp_dir(), "/oscam.version");
@@ -3600,6 +3603,10 @@ if (pthread_key_create(&getclient, NULL)) {
     cs_log("http disabled");
   else
     start_thread((void *) &http_srv, "http");
+#endif
+
+#ifdef LCDSUPPORT
+  start_lcd_thread();
 #endif
 
 	init_cardreader();

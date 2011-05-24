@@ -34,6 +34,8 @@
 //for reader-nagra variables in s_reader:
 #include "cscrypt/idea.h"
 
+//#define LCDSUPPORT
+
 // Prevent use of unsafe functions (doesn't work for MacOSX)
 #ifndef OS_MACOSX
 #define strcpy(a,b) UNSAFE_STRCPY_USE_CS_STRNCPY_INSTEAD()
@@ -1679,5 +1681,11 @@ extern void add_garbage(void *data);
 #endif
 extern void start_garbage_collector(int32_t);
 extern void stop_garbage_collector();
+
+#ifdef LCDSUPPORT
+// oscam-lcd
+extern void start_lcd_thread();
+extern void end_lcd_thread();
+#endif
 
 #endif  // CS_GLOBALS
