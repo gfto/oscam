@@ -255,7 +255,7 @@ int32_t coolapi_close_device(int32_t fd);
 int32_t coolapi_write_cw(int32_t mask, uint16_t *STREAMpids, int32_t count, ca_descr_t * ca_descr);
 int32_t coolapi_set_pid (int32_t demux_id, int32_t num, int32_t index, int32_t pid);
 void coolapi_close_all();
-void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t index);
+static void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t index);
 #endif
 
 #ifdef WITH_STAPI

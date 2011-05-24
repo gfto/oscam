@@ -1474,13 +1474,18 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 					demux[demux_id].demux_fd[filter_num].count = curpid->irdeto_numchids * 3;
 			}
 
+			if (curpid->irdeto_curchid+1 > curpid->irdeto_numchids) {
+				curpid->irdeto_cycle++;
+				curpid->irdeto_curchid = 0;
+			}
+
 			if (buffer[4] != curpid->irdeto_curchid) {
 				//wait for the correct chid
 				return;
 			}
 
+			chid = (buffer[6] << 8) | buffer[7];
 			if (demux[demux_id].pidindex==-1) {
-				chid = (buffer[6] << 8) | buffer[7];
 				int8_t i = 0, found = 0;
 
 				if (curpid->irdeto_chids & (1<<curpid->irdeto_curchid)) {
@@ -1513,10 +1518,6 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 						break;
 					} else {
 						curpid->irdeto_curchid++;
-						if (curpid->irdeto_curchid+1 >= curpid->irdeto_numchids) {
-							curpid->irdeto_cycle++;
-							curpid->irdeto_curchid = 0;
-						}
 						return;
 					}
 				}
@@ -1527,19 +1528,10 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 					return;
 				}
 
-				if (curpid->irdeto_curchid+1 >= curpid->irdeto_numchids) {
-					curpid->irdeto_cycle = 0;
-					curpid->irdeto_curchid = 0;
-					curpid->irdeto_chids = 0;
-					if (cfg.dvbapi_requestmode == 0)
-						dvbapi_try_next_caid(demux_id);
-					else
-						dvbapi_stop_filternum(demux_id, filter_num);			
+				if (curpid->irdeto_curchid+1 > curpid->irdeto_numchids)
 					return;
-				}
-
-				curpid->irdeto_chids |= (1<<curpid->irdeto_curchid);
 			}
+			curpid->irdeto_chids |= (1<<curpid->irdeto_curchid);
 		}
 
 		if (curpid->table == buffer[0])
@@ -1606,7 +1598,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 }
 
 #pragma GCC diagnostic ignored "-Wempty-body"
-void * dvbapi_main_local(void *cli) {
+static void * dvbapi_main_local(void *cli) {
 	struct s_client * client = (struct s_client *) cli;
 	client->thread=pthread_self();
 	pthread_setspecific(getclient, cli);
@@ -1799,7 +1791,7 @@ void * dvbapi_main_local(void *cli) {
 	return NULL;
 }
 
-void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t index) {
+static void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t index) {
 	int32_t n;
 	unsigned char nullcw[8];
 	memset(nullcw, 0, 8);
@@ -1835,7 +1827,7 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t index) {
 	}
 }
 
-void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er) 
+static void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er) 
 {
 #ifdef AZBOX
 	azbox_send_dcw(client, er);
@@ -1868,41 +1860,39 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				dvbapi_start_descrambling(i);
 			}
 
-			if (er->rc >= E_NOTFOUND && demux[i].pidindex==-1) {
-				if (demux[i].ECMpids[j].irdeto_curchid+1 < demux[i].ECMpids[j].irdeto_numchids) {
+			if (er->rc >= E_NOTFOUND) {
+				if ((er->caid >> 8) == 0x06 && demux[i].ECMpids[j].irdeto_chids < (((0xFFFF<<(demux[i].ECMpids[j].irdeto_numchids)) ^ 0xFFFF) & 0xFFFF)) {
 					demux[i].ECMpids[j].irdeto_curchid++;
 					demux[i].ECMpids[j].table=0;
 					cs_log("trying irdeto chid index: %d", demux[i].ECMpids[j].irdeto_curchid);
 					return;
 				}
+				demux[i].ECMpids[j].irdeto_chids = 0;
+				demux[i].ECMpids[j].irdeto_curchid = 0;
+				demux[i].ECMpids[j].irdeto_cycle = 0;
 
-				if (cfg.dvbapi_requestmode == 1)
-					return;
-
-				struct s_dvbapi_priority *forceentry=dvbapi_check_prio_match(i, demux[i].curindex, 'p');
-				if (forceentry) {
-					if (forceentry->force>0)
-						dvbapi_start_descrambling(i);
-					else {
-						dvbapi_try_next_caid(i);
+				if (demux[i].pidindex==-1) {
+					if (cfg.dvbapi_requestmode == 1)
 						return;
+
+					struct s_dvbapi_priority *forceentry=dvbapi_check_prio_match(i, demux[i].curindex, 'p');
+					if (forceentry) {
+						if (forceentry->force>0)
+							dvbapi_start_descrambling(i);
+						else
+							dvbapi_try_next_caid(i);
+					} else {
+						dvbapi_try_next_caid(i);
 					}
 				} else {
-					dvbapi_try_next_caid(i);
-					return;
-				}
-			}
-
-			if (er->rc >= E_NOTFOUND) {
-				demux[i].tries++;
-				cs_debug_mask(D_DVBAPI, "cw not found");
-
-				struct s_dvbapi_priority *forceentry=dvbapi_check_prio_match(i, demux[i].curindex, 'p');
-				if (!forceentry && demux[i].tries>3) {
-					demux[i].tries = 0;
-					demux[i].curindex = 0;
-					demux[i].pidindex = -1;
-					dvbapi_try_next_caid(i);
+					demux[i].tries++;
+					struct s_dvbapi_priority *forceentry=dvbapi_check_prio_match(i, demux[i].curindex, 'p');
+					if (!forceentry && demux[i].tries>3) {
+						demux[i].tries = 0;
+						demux[i].curindex = 0;
+						demux[i].pidindex = -1;
+						dvbapi_try_next_caid(i);
+					}
 				}
 				return;
 			}
@@ -1937,7 +1927,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 			FILE *ecmtxt;
 			ecmtxt = fopen(ECMINFO_FILE, "w"); 
-			if(ecmtxt != NULL) { 
+			if(ecmtxt != NULL && er->selected_reader) { 
 				fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\nprov: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
 				fprintf(ecmtxt, "reader: %s\n", er->selected_reader->label);
 				if (er->selected_reader->typ & R_IS_CASCADING)
