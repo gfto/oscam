@@ -58,7 +58,10 @@ DESCRIPTIONS
 	    1 = each zapping of a client will be logged in usrfile
 
        cwlogdir = path
-	  directory for CW logging, default:none
+	  directory for CW logging, default:config dir
+
+       emmlogdir = path
+	  directory for EMM logging, default:config dir
 
        clienttimeout = milli-seconds|seconds
 	  value (clienttimeout in seconds < 100, else milli-seconds) for client process to wait for key, default:5
