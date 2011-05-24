@@ -14,11 +14,11 @@
 #include <dirent.h>
 #include "module-stat.h"
 
-int running;
+int8_t running;
 
 void refresh_lcd_file() {
 
-	int cnt = 0, idx = 0, count_r = 0, count_p = 0, count_u = 0;
+	int16_t cnt = 0, idx = 0, count_r = 0, count_p = 0, count_u = 0;
 	char targetfile[256];
 	snprintf(targetfile, sizeof(targetfile),"%s%s", get_tmp_dir(), "/oscam.lcd");
 
@@ -47,14 +47,18 @@ void refresh_lcd_file() {
 			}
 
 			idx = 0;
-			int i;
+			int16_t i;
 			struct s_client *cl;
 			for ( i=0, cl=first_client; cl ; cl=cl->next, i++) {
 				if (cl->typ=='c'){
 					count_u++;
-					fprintf(fpsave,"user%d: %s - %04X:%04X [%d]\n",
-							idx, cl->account->usr, cl->last_caid,
-							cl->last_srvid, cl->cwlastresptime);
+					get_servicename(cl, cl->last_srvid, cl->last_caid);
+					fprintf(fpsave,"user%d: %s - %s:%s [%d]\n",
+							idx,
+							cl->account->usr,
+							cl->last_srvidptr && cl->last_srvidptr->prov ? cl->last_srvidptr->prov : "",
+							cl->last_srvidptr && cl->last_srvidptr->name ? cl->last_srvidptr->name : "",
+							cl->cwlastresptime);
 
 
 					idx++;
