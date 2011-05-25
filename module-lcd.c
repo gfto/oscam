@@ -54,7 +54,9 @@ void refresh_lcd_file() {
 
 				if (cl->typ=='c' || cl->typ=='r' || cl->typ=='p'){
 
-					if (cl->typ == 'c'){
+					seconds = now - cl->lastecm;
+
+					if (cl->typ == 'c' && seconds < 10){
 						type = "user";
 						idx = count_u;
 						label = cl->account->usr;
@@ -81,17 +83,19 @@ void refresh_lcd_file() {
 					}
 
 					if (cl->typ == 'c'){
-						get_servicename(cl, cl->last_srvid, cl->last_caid);
-						fprintf(fpsave,"%s%d: %-10s %s:%s [%d]\n",
-								type,
-								idx,
-								label,
-								cl->last_srvidptr && cl->last_srvidptr->prov ? cl->last_srvidptr->prov : "",
-								cl->last_srvidptr && cl->last_srvidptr->name ? cl->last_srvidptr->name : "",
-								cl->cwlastresptime);
+						if(seconds < 10){
+							get_servicename(cl, cl->last_srvid, cl->last_caid);
+							fprintf(fpsave,"%s%d: %-10s %s:%s [%d]\n",
+									type,
+									idx,
+									label,
+									cl->last_srvidptr && cl->last_srvidptr->prov ? cl->last_srvidptr->prov : "",
+									cl->last_srvidptr && cl->last_srvidptr->name ? cl->last_srvidptr->name : "",
+									cl->cwlastresptime);
+						}
 					} else {
 
-						seconds = now - cl->login;
+
 						secs = seconds % 60;
 						if (seconds > 60) {
 							fullmins = seconds / 60;
