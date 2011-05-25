@@ -645,8 +645,9 @@ int32_t cc_send_srv_data(struct s_client *cl) {
 	int32_t stealth = cl->account->cccstealth;
 	if (stealth == -1)
 		stealth = cfg.cc_stealth;
+	if (stealth) cc->node_id[7]++;
+	
 	memcpy(buf, cc->node_id, 8);
-	if (stealth) buf[7]++;
 		
 	char cc_build[7];
 	cc_check_version((char *) cfg.cc_version, cc_build);
