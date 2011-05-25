@@ -199,6 +199,9 @@ static void usage()
 #ifdef WITH_LB
   fprintf(stderr, "loadbalancing ");
 #endif
+#ifdef LCDSUPPORT
+  fprintf(stderr, "lcd ");
+#endif
   fprintf(stderr, "\n\tinbuilt protocols: ");
 #ifdef MODULE_CAMD33
   fprintf(stderr, "camd33 ");
@@ -2498,7 +2501,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	//Ariva quickfix (invalid nagra provider)
 	if (((er->caid & 0xFF00) == 0x1800) && er->prid > 0x00FFFF) er->prid=0;
-			
+
 	if (!er->prid)
 		er->prid = chk_provid(er->ecm, er->caid);
 

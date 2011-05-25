@@ -459,7 +459,7 @@ void chk_t_global(const char *token, char *value)
 		}
 		return;
 	}
-	
+
 	if (!strcmp(token, "emmlogdir")) {
 		NULLFREE(cfg.emmlogdir);
 		if (strlen(value) > 0) {
@@ -2146,8 +2146,8 @@ int32_t write_config()
 		if(cfg.cc_stealth != 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "stealth", "%d\n", cfg.cc_stealth);
 		if(cfg.cc_use_fixed_nodeid || cfg.http_full_cfg)
-			fprintf_conf(f, CONFVARWIDTH, "nodeid", "%02X%02X%02X%02X%02X%02X%02X%02X\n", 
-				cfg.cc_fixed_nodeid[0], cfg.cc_fixed_nodeid[1], cfg.cc_fixed_nodeid[2], cfg.cc_fixed_nodeid[3], 
+			fprintf_conf(f, CONFVARWIDTH, "nodeid", "%02X%02X%02X%02X%02X%02X%02X%02X\n",
+				cfg.cc_fixed_nodeid[0], cfg.cc_fixed_nodeid[1], cfg.cc_fixed_nodeid[2], cfg.cc_fixed_nodeid[3],
 				cfg.cc_fixed_nodeid[4], cfg.cc_fixed_nodeid[5], cfg.cc_fixed_nodeid[6], cfg.cc_fixed_nodeid[7]);
 		if(cfg.cc_reshare_services != 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "reshare_mode", "%d\n", cfg.cc_reshare_services);
@@ -2767,6 +2767,11 @@ void write_versionfile() {
 	  fprintf(fp, "Loadbalancing support:      yes\n");
 #else
 	  fprintf(fp, "Loadbalancing support:      no\n");
+#endif
+#ifdef LCDSUPPORT
+	  fprintf(fp, "LCD support:                yes\n");
+#else
+	  fprintf(fp, "LCD support:                no\n");
 #endif
 #ifdef MODULE_CAMD33
 	  fprintf(fp, "camd 3.3x:                  yes\n");
@@ -4157,7 +4162,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			rdr->cc_reshare = -1;
 		return;
 	}
-	
+
 	if (!strcmp(token, "ccchop")) {
 		rdr->cc_hop = strToIntVal(value, 0);
 		return;
@@ -4315,7 +4320,7 @@ int32_t init_irdeto_guess_tab()
 void free_reader(struct s_reader *rdr)
 {
 	NULLFREE(rdr->emmfile);
-	
+
 	struct s_ecmWhitelist *tmp;
 	struct s_ecmWhitelistIdent *tmpIdent;
 	struct s_ecmWhitelistLen *tmpLen;
@@ -4329,12 +4334,12 @@ void free_reader(struct s_reader *rdr)
 		add_garbage(tmp);
 	}
 	rdr->ecmWhitelist = NULL;
-	
+
 	clear_ftab(&rdr->ftab);
 
 #ifdef WITH_LB
 	ll_destroy_data(rdr->lb_stat);
-#endif	
+#endif
 	add_garbage(rdr);
 }
 

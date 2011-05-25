@@ -43,6 +43,10 @@
 #define WITH_LB
 #endif
 
+#ifndef LCDSUPPORT
+#define LCDSUPPORT
+#endif
+
 //
 // MODULES
 //

@@ -34,8 +34,6 @@
 //for reader-nagra variables in s_reader:
 #include "cscrypt/idea.h"
 
-//#define LCDSUPPORT
-
 // Prevent use of unsafe functions (doesn't work for MacOSX)
 #ifndef OS_MACOSX
 #define strcpy(a,b) UNSAFE_STRCPY_USE_CS_STRNCPY_INSTEAD()
@@ -294,7 +292,7 @@ extern char *RDR_CD_TXT[];
 
 enum {E1_GLOBAL=0, E1_USER, E1_READER, E1_SERVER, E1_LSERVER};
 enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE,
-      E2_EA_LEN, E2_F0_LEN, E2_OFFLINE, E2_SID, 
+      E2_EA_LEN, E2_F0_LEN, E2_OFFLINE, E2_SID,
       E2_CCCAM_NOCARD=0x27, E2_CCCAM_NOK1=0x28, E2_CCCAM_NOK2=0x29, E2_CCCAM_LOOP=0x30};
 
 pid_t server_pid; //alno: PID of server - set while startup
@@ -599,7 +597,7 @@ typedef struct ecm_request_t
   struct s_reader *origin_reader;
   void * origin_card; //CCcam preferred card!
 #endif
-  
+
   void *src_data;
 
   struct s_ecm *ecmcacheptr; //Pointer to ecm-cw-rc-cache!
@@ -706,7 +704,7 @@ struct s_client
   struct s_emm *emmcache;
 
   pthread_t thread;
-  
+
   struct s_serial_client *serialdata;
 
   //reader common
@@ -734,7 +732,7 @@ struct s_client
 
   //cs_hexdump buffer
   uchar dump[520];
-  
+
   //oscam.c
   struct timeval tv;
 
@@ -1030,7 +1028,7 @@ struct s_auth
   int8_t		cccstealth;
   int8_t       disabled;
   int32_t 		failban;
-  
+
   int32_t		cwfound;
   int32_t		cwcache;
   int32_t		cwnot;
@@ -1039,7 +1037,7 @@ struct s_auth
   int32_t		cwtout;
   int32_t		emmok;
   int32_t		emmnok;
-                                                                                                                             
+
   struct   s_auth *next;
 };
 
@@ -1203,7 +1201,7 @@ struct s_config
 	int32_t     lb_max_ecmcount; // maximum ecm count before reseting lbvalues
 	int32_t     lb_reopen_seconds; //time between retrying failed readers/caids/prov/srv
 	int32_t	lb_retrylimit; //reopen only happens if reader response time > retrylimit
-	CAIDVALUETAB lb_retrylimittab; 
+	CAIDVALUETAB lb_retrylimittab;
 	CAIDVALUETAB lb_nbest_readers_tab; //like nbest_readers, but for special caids
 	CAIDTAB lb_noproviderforcaid; //do not store loadbalancer stats with providers for this caid
 	char	*lb_savepath; //path where the stat file is save. Empty=default=/tmp/.oscam/stat
@@ -1323,7 +1321,7 @@ extern uint64_t b2ll(int32_t, uchar *);
 extern uchar *i2b(int32_t, uint32_t);
 extern uchar *i2b_cl(int32_t n, uint32_t i, struct s_client *cl);
 extern uchar *i2b_buf(int32_t n, uint32_t i, uchar *b);
-  
+
 extern uint32_t a2i(char *, int32_t);
 extern int32_t boundary(int32_t, int32_t);
 extern void cs_ftime(struct timeb *);
@@ -1404,7 +1402,7 @@ extern int32_t cs_get_restartmode();
 extern void clear_account_stats(struct s_auth *account);
 extern void clear_all_account_stats();
 extern void clear_system_stats();
-                              
+
 #endif
 extern void start_thread(void * startroutine, char * nameroutine);
 extern void cs_reload_config();
@@ -1569,7 +1567,7 @@ extern int32_t casc_recv_timer(struct s_reader * reader, uchar *buf, int32_t l, 
 extern void clear_reader_pipe(struct s_reader * reader);
 extern void block_connect(struct s_reader *rdr);
 extern int32_t is_connect_blocked(struct s_reader *rdr);
-            
+
 // oscam-log
 extern int32_t  cs_init_log();
 extern void cs_reinit_loghist(uint32_t size);
