@@ -44,7 +44,7 @@
 #endif
 
 #ifndef LCDSUPPORT
-#define LCDSUPPORT
+//#define LCDSUPPORT
 #endif
 
 //
