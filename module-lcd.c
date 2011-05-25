@@ -25,7 +25,7 @@ void refresh_lcd_file() {
 	int32_t seconds = 0, secs = 0, fullmins = 0, mins = 0, fullhours = 0, hours = 0,	days = 0;
 
 	while(running) {
-
+		time_t now = time((time_t)0);
 		int16_t cnt = 0, idx = 0, count_r = 0, count_p = 0, count_u = 0;
 		FILE *fpsave;
 
@@ -71,22 +71,59 @@ void refresh_lcd_file() {
 						count_p++;
 					}
 
-					get_servicename(cl, cl->last_srvid, cl->last_caid);
-					fprintf(fpsave,"%s%d: %s - %s:%s [%d] %s\n",
-							type,
-							idx,
-							label,
-							cl->last_srvidptr && cl->last_srvidptr->prov ? cl->last_srvidptr->prov : "",
-							cl->last_srvidptr && cl->last_srvidptr->name ? cl->last_srvidptr->name : "",
-							cl->cwlastresptime,
-							status);
+					if (cl->typ == 'c'){
+						get_servicename(cl, cl->last_srvid, cl->last_caid);
+						fprintf(fpsave,"%s%d: %-10s %s:%s [%d] %s\n",
+								type,
+								idx,
+								label,
+								cl->last_srvidptr && cl->last_srvidptr->prov ? cl->last_srvidptr->prov : "",
+										cl->last_srvidptr && cl->last_srvidptr->name ? cl->last_srvidptr->name : "",
+												cl->cwlastresptime,
+												status);
+					} else {
+
+						seconds = now - cl->lastecm;
+						secs = seconds % 60;
+						if (seconds > 60) {
+							fullmins = seconds / 60;
+							mins = fullmins % 60;
+							if(fullmins > 60) {
+								fullhours = fullmins / 60;
+								hours = fullhours % 24;
+								days = fullhours / 24;
+							}
+						}
+
+						int16_t written = 0, skipped = 0, blocked = 0, error = 0;
+
+						for (i=0; i<4; i++) {
+							error += cl->reader->emmerror[i];
+							blocked += cl->reader->emmblocked[i];
+							skipped += cl->reader->emmskipped[i];
+							written += cl->reader->emmwritten[i];
+						}
+
+						fprintf(fpsave,"%s%d: %-10s   %02d:%02d:%02d  %d/%d/%d/%d \n",
+								type,
+								idx,
+								label,
+								hours,
+								mins,
+								secs,
+								written,
+								skipped,
+								blocked,
+								error);
+
+					}
 
 				}
 
 
 			}
 
-			time_t now = time((time_t)0);
+
 			seconds = now - first_client->login;
 			secs = seconds % 60;
 			if (seconds > 60) {
@@ -108,6 +145,8 @@ void refresh_lcd_file() {
 			fprintf(fpsave,"status3: proxies: %d\n", count_p);
 			fprintf(fpsave,"status4: reader: %d\n", count_r);
 			fprintf(fpsave,"status5: user: %d\n", count_u);
+			fprintf(fpsave,"status6: totals: %d/%d/%d/%d/%d/%d\n", first_client->cwfound, first_client->cwnot, first_client->cwignored, first_client->cwtout, first_client->cwcache, first_client->cwtun);
+			fprintf(fpsave,"status7: uptime: %d\n", seconds);
 
 			fclose(fpsave);
 		}
