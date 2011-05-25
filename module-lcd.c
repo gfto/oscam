@@ -69,7 +69,7 @@ void refresh_lcd_file() {
 						idx = count_r;
 						label = cl->reader->label;
 						if (cl->reader->card_status == CARD_INSERTED)
-							status = "CONNECTED";
+							status = "CARDOK";
 						count_r++;
 					}
 
@@ -78,7 +78,7 @@ void refresh_lcd_file() {
 						idx = count_p;
 						label = cl->reader->label;
 						if (cl->reader->card_status == CARD_INSERTED)
-							status = "CARDOK";
+							status = "CONNECTED";
 						count_p++;
 					}
 
