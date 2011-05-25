@@ -42,6 +42,13 @@ void refresh_lcd_file() {
 				type = "---";
 				label = "+++";
 				status = "OFFLINE";
+				seconds = 0;
+				secs = 0;
+				fullmins = 0;
+				mins = 0;
+				fullhours = 0;
+				hours = 0;
+				days = 0;
 
 				if (cl->typ=='c' || cl->typ=='r' || cl->typ=='p'){
 
@@ -71,16 +78,15 @@ void refresh_lcd_file() {
 						count_p++;
 					}
 
-					if (cl->typ == 'c'){
+					if (cl->typ == 'c' && (now - cl->lastecm) < 10 && cl->cwlastresptime > 0){
 						get_servicename(cl, cl->last_srvid, cl->last_caid);
-						fprintf(fpsave,"%s%d: %-10s %s:%s [%d] %s\n",
+						fprintf(fpsave,"%s%d: %-10s %s:%s [%d]\n",
 								type,
 								idx,
 								label,
 								cl->last_srvidptr && cl->last_srvidptr->prov ? cl->last_srvidptr->prov : "",
-										cl->last_srvidptr && cl->last_srvidptr->name ? cl->last_srvidptr->name : "",
-												cl->cwlastresptime,
-												status);
+								cl->last_srvidptr && cl->last_srvidptr->name ? cl->last_srvidptr->name : "",
+								cl->cwlastresptime);
 					} else {
 
 						seconds = now - cl->lastecm;
@@ -104,7 +110,7 @@ void refresh_lcd_file() {
 							written += cl->reader->emmwritten[i];
 						}
 
-						fprintf(fpsave,"%s%d: %-10s   %02d:%02d:%02d  %d/%d/%d/%d \n",
+						fprintf(fpsave,"%s%d: %-10s %02d:%02d:%02d  %d/%d/%d/%d \n",
 								type,
 								idx,
 								label,
