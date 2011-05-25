@@ -80,7 +80,7 @@ void refresh_lcd_file() {
 						count_p++;
 					}
 
-					if (cl->typ == 'c' && (now - cl->lastecm) < 10 && cl->cwlastresptime > 0){
+					if (cl->typ == 'c'){
 						get_servicename(cl, cl->last_srvid, cl->last_caid);
 						fprintf(fpsave,"%s%d: %-10s %s:%s [%d]\n",
 								type,
