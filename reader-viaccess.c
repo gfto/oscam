@@ -553,6 +553,13 @@ static int32_t viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial, ep->emm + 3, 3);
 			cs_debug_mask(D_EMM, "VIACCESS EMM: SHARED");
+
+			//check for provider as serial (cccam only?)
+			int8_t i;
+			for (i=0;i<rdr->nprov;i++) {
+				if (!memcmp(&rdr->prid[i][1], ep->hexserial, 3))
+					return TRUE;
+			}
 			return(!memcmp(&rdr->sa[0][0], ep->hexserial, 3));
 
 		default:
