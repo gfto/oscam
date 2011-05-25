@@ -23,9 +23,10 @@ void refresh_lcd_file() {
 	snprintf(targetfile, sizeof(targetfile),"%s%s", get_tmp_dir(), "/oscam.lcd");
 
 	int32_t seconds = 0, secs = 0, fullmins = 0, mins = 0, fullhours = 0, hours = 0,	days = 0;
+	time_t now = time((time_t)0);
 
 	while(running) {
-		time_t now = time((time_t)0);
+		now = time((time_t)0);
 		int16_t cnt = 0, idx = 0, count_r = 0, count_p = 0, count_u = 0;
 		FILE *fpsave;
 
@@ -33,9 +34,9 @@ void refresh_lcd_file() {
 
 			idx = 0;
 			int16_t i;
-			char *type = "---";
-			char *label = "+++";
-			char *status = "xxx";
+			char *type;
+			char *label;
+			char *status;
 
 			struct s_client *cl;
 			for ( i=0, cl=first_client; cl ; cl=cl->next, i++) {
@@ -49,6 +50,7 @@ void refresh_lcd_file() {
 				fullhours = 0;
 				hours = 0;
 				days = 0;
+
 
 				if (cl->typ=='c' || cl->typ=='r' || cl->typ=='p'){
 
@@ -89,7 +91,7 @@ void refresh_lcd_file() {
 								cl->cwlastresptime);
 					} else {
 
-						seconds = now - cl->lastecm;
+						seconds = now - cl->login;
 						secs = seconds % 60;
 						if (seconds > 60) {
 							fullmins = seconds / 60;
@@ -110,7 +112,7 @@ void refresh_lcd_file() {
 							written += cl->reader->emmwritten[i];
 						}
 
-						fprintf(fpsave,"%s%d: %-10s %02d:%02d:%02d  %d/%d/%d/%d \n",
+						fprintf(fpsave,"%s%d: %-10s %02d:%02d:%02d  %d/%d/%d/%d %s\n",
 								type,
 								idx,
 								label,
@@ -120,7 +122,8 @@ void refresh_lcd_file() {
 								written,
 								skipped,
 								blocked,
-								error);
+								error,
+								status);
 
 					}
 
@@ -129,16 +132,25 @@ void refresh_lcd_file() {
 
 			}
 
+			seconds = 0;
+			secs = 0;
+			fullmins = 0;
+			mins = 0;
+			fullhours = 0;
+			hours = 0;
+			days = 0;
 
-			seconds = now - first_client->login;
-			secs = seconds % 60;
-			if (seconds > 60) {
-				fullmins = seconds / 60;
-				mins = fullmins % 60;
-				if(fullmins > 60) {
-					fullhours = fullmins / 60;
-					hours = fullhours % 24;
-					days = fullhours / 24;
+			if (now > first_client->login){
+				seconds = now - first_client->login;
+				secs = seconds % 60;
+				if (seconds > 60) {
+					fullmins = seconds / 60;
+					mins = fullmins % 60;
+					if(fullmins > 60) {
+						fullhours = fullmins / 60;
+						hours = fullhours % 24;
+						days = fullhours / 24;
+					}
 				}
 			}
 
