@@ -74,7 +74,7 @@ menu_addons() {
 		MODULE_MONITOR		"Monitor"			$(check_test "MODULE_MONITOR") \
 		WITH_SSL			"OpenSSL support"	$(check_test "WITH_SSL") \
 		WITH_LB				"Loadbalancing"		$(check_test "WITH_LB") \
-		LCDSUPPORT			"LCD support"		$(check_test "WITH_LB") \
+		LCDSUPPORT			"LCD support"		$(check_test "LCDSUPPORT") \
 		2> ${tempfile}
 
 	opt=${?}
