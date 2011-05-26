@@ -988,7 +988,7 @@ void * init_oscam_ser(int32_t ctyp)
 		pthread_cond_init(&cond,NULL);
 		bcopy_end = 0;
 	}
-	while( (p=strrchr(sdevice, 1)) )
+	while( (p=strrchr(sdevice, ';')) )
 	{
 		*p = 0;
 		if (!(p + 1) || (!(p + 1)[0])) return NULL;

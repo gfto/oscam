@@ -171,17 +171,11 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 	}
 
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
-
-		memset(cfg.ser_device, 0, sizeof(cfg.ser_device));
-		memset(&cfg.lb_retrylimittab, 0, sizeof(CAIDVALUETAB));
-		memset(&cfg.lb_nbest_readers_tab, 0, sizeof(CAIDVALUETAB));
-		memset(&cfg.lb_noproviderforcaid, 0, sizeof(CAIDTAB));
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 				//tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
 				//we use the same function as used for parsing the config tokens
-				if((*params).values[i][0])
-					chk_t_global((*params).params[i], (*params).values[i]);
+				chk_t_global((*params).params[i], (*params).values[i]);
 			}
 		}
 		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration Loadbalancer done.</B><BR><BR>");
@@ -231,9 +225,6 @@ char *send_oscam_config_camd33(struct templatevars *vars, struct uriparams *para
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 				tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
-				if (strcmp((*params).params[i], "nocrypt") == 0) {
-					clear_sip(&cfg.c33_plain);
-				}
 				//we use the same function as used for parsing the config tokens
 				chk_t_camd33((*params).params[i], (*params).values[i]);
 			}
@@ -287,7 +278,6 @@ char *send_oscam_config_camd35(struct templatevars *vars, struct uriparams *para
 char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
 	if ((strcmp(getParam(params, "action"),"execute") == 0) && (getParam(params, "port"))[0]) {
-		clear_ptab(&cfg.c35_tcp_ptab); /*clear Porttab*/
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 				tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
@@ -318,14 +308,10 @@ char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uriparams *p
 char *send_oscam_config_newcamd(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
-		clear_ptab(&cfg.ncd_ptab); /*clear Porttab*/
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 				tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
 				//we use the same function as used for parsing the config tokens
-				if (strcmp((*params).params[i], "allowed") == 0) {
-					clear_sip(&cfg.ncd_allowed);
-				}
 				chk_t_newcamd((*params).params[i], (*params).values[i]);
 			}
 		}
@@ -363,9 +349,6 @@ char *send_oscam_config_radegast(struct templatevars *vars, struct uriparams *pa
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 				tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
-				if (strcmp((*params).params[i], "allowed") == 0) {
-					clear_sip(&cfg.rad_allowed);
-				}
 				//we use the same function as used for parsing the config tokens
 				chk_t_radegast((*params).params[i], (*params).values[i]);
 			}
@@ -463,11 +446,6 @@ char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams *param
 char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
-
-		//cleanup
-		clear_sip(&cfg.mon_allowed);
-		clear_sip(&cfg.http_allowed);
-
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 				tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
@@ -562,14 +540,11 @@ char *send_oscam_config_serial(struct templatevars *vars, struct uriparams *para
 	int32_t i;
 	char *saveptr1 = NULL;
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
-		//cfg.ser_device[0]='\0';
-		memset(cfg.ser_device, 0, sizeof(cfg.ser_device));
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 				tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
 				//we use the same function as used for parsing the config tokens
-				if((*params).values[i][0])
-					chk_t_serial((*params).params[i], (*params).values[i]);
+				chk_t_serial((*params).params[i], (*params).values[i]);
 			}
 		}
 		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration Serial done. You should restart Oscam now.</B><BR><BR>");
@@ -868,9 +843,9 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 		struct s_reader *newrdr;
 		if(!cs_malloc(&newrdr,sizeof(struct s_reader), -1)) return "0";
 		memset(newrdr, 0, sizeof(struct s_reader));
-		ll_append(configured_readers, newrdr);
 		newrdr->next = NULL; // terminate list
 		newrdr->enable = 0; // do not start the reader because must configured before
+		ll_append(configured_readers, newrdr);
 		cs_strncpy(newrdr->pincode, "none", sizeof(newrdr->pincode));
 		for (i = 1; i < CS_MAXCAIDTAB; newrdr->ctab.mask[i++] = 0xffff);
 		for (i = 0; i < (*params).paramcount; ++i) {
@@ -893,30 +868,6 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 			inactivate_reader(rdr); //Stop reader before reinitialization
 		char servicelabels[1024]="";
 
-		clear_caidtab(&rdr->ctab);
-		clear_ftab(&rdr->ftab);
-		clear_ftab(&rdr->fchid);
-		if(rdr->aes_list) {
-			aes_clear_entries(rdr);
-		}
-		if(rdr->ecmWhitelist){
-			struct s_ecmWhitelist *tmp;
-			struct s_ecmWhitelistIdent *tmpIdent;
-			struct s_ecmWhitelistLen *tmpLen;
-			for(tmp = rdr->ecmWhitelist; tmp; tmp=tmp->next){
-				for(tmpIdent = tmp->idents; tmpIdent; tmpIdent=tmpIdent->next){
-					for(tmpLen = tmpIdent->lengths; tmpLen; tmpLen=tmpLen->next){
-						add_garbage(tmpLen);
-					}
-					add_garbage(tmpIdent);
-				}				
-				add_garbage(tmp);
-			}
-			rdr->ecmWhitelist = NULL;
-		}
-
-		rdr->grp = 0;
-		rdr->auprovid = 0;
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "reader")) && (strcmp((*params).params[i], "action"))) {
 				if (!strcmp((*params).params[i], "services"))
@@ -1450,21 +1401,9 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 
 	if((strcmp(getParam(params, "action"), "Save") == 0) || (strcmp(getParam(params, "action"), "Save As") == 0)) {
 		char servicelabels[1024]="";
-		//clear group
-		account->grp = 0;
-		//clear caidtab before it re-readed by chk_t
-		clear_caidtab(&account->ctab);
-		//clear Betatunnel before it re-readed by chk_t
-		clear_tuntab(&account->ttab);
-		//clear ident before it re-readed by chk_t
-		clear_ftab(&account->ftab);
-		//clear CHID before it re-readed by chk_t
-		clear_ftab(&account->fchid);
 
 		for(i=0;i<(*params).paramcount;i++) {
 			if ((strcmp((*params).params[i], "action")) && (strcmp((*params).params[i], "user")) && (strcmp((*params).params[i], "newuser"))) {
-				if (!strcmp((*params).params[i], "expdate"))
-					account->expirationdate=(time_t)NULL;
 				if (!strcmp((*params).params[i], "services"))
 					snprintf(servicelabels + strlen(servicelabels), sizeof(servicelabels) - strlen(servicelabels), "%s,", (*params).values[i]);
 				else

@@ -114,15 +114,10 @@ void chk_iprange(char *value, struct s_ip **base)
 {
 	int32_t i = 0;
 	char *ptr1, *ptr2, *saveptr1 = NULL;
-	struct s_ip *lip, *cip;
+	struct s_ip *fip, *lip, *cip;
 
-	for (cip=lip=*base; cip; cip=cip->next)
-		lip = cip;
 	cs_malloc(&cip, sizeof(struct s_ip), SIGINT);
-	if (*base)
-		lip->next = cip;
-	else
-		*base = cip;
+	fip = cip;
 
 	for (ptr1=strtok_r(value, ",", &saveptr1); ptr1; ptr1=strtok_r(NULL, ",", &saveptr1)) {
 			if (i == 0)
@@ -141,12 +136,17 @@ void chk_iprange(char *value, struct s_ip **base)
 		}
 		lip = cip;
 	}
+	lip = *base;
+	*base = fip;
+	clear_sip(&lip);
 }
 
 void chk_caidtab(char *caidasc, CAIDTAB *ctab)
 {
 	int32_t i;
 	char *ptr1, *ptr2, *ptr3, *saveptr1 = NULL;
+	CAIDTAB newctab;
+	memset(&newctab, 0, sizeof(CAIDTAB));
 
 	for (i = 0, ptr1 = strtok_r(caidasc, ",", &saveptr1); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1)) {
 		uint32_t caid, mask, cmap;
@@ -161,19 +161,20 @@ void chk_caidtab(char *caidasc, CAIDTAB *ctab)
 			ptr2 = "";
 
 		if (((caid = a2i(ptr1, 2)) | (mask = a2i(ptr2,-2)) | (cmap = a2i(ptr3, 2))) < 0x10000) {
-			ctab->caid[i] = caid;
-			ctab->mask[i] = mask;
-			ctab->cmap[i++] = cmap;
+			newctab.caid[i] = caid;
+			newctab.mask[i] = mask;
+			newctab.cmap[i++] = cmap;
 		}
 	}
+	memcpy(ctab, &newctab, sizeof(CAIDTAB));
 }
 
 void chk_caidvaluetab(char *lbrlt, CAIDVALUETAB *tab, int32_t minvalue)
 {
 		int32_t i;
 		char *ptr1, *ptr2, *saveptr1 = NULL;
-
-		memset(tab, 0, sizeof(CAIDVALUETAB));
+		CAIDVALUETAB newtab;
+		memset(&newtab, 0, sizeof(CAIDVALUETAB));
 
 		for (i = 0, ptr1 = strtok_r(lbrlt, ",", &saveptr1); (i < CS_MAX_CAIDVALUETAB) && (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1)) {
 				int32_t caid, value;
@@ -184,12 +185,13 @@ void chk_caidvaluetab(char *lbrlt, CAIDVALUETAB *tab, int32_t minvalue)
 						ptr2 = "";
 
 				if (((caid = a2i(ptr1, 2)) < 0xFFFF) | ((value = atoi(ptr2)) < 10000)) {
-						tab->caid[i] = caid;
+						newtab.caid[i] = caid;
 						if (value < minvalue) value = minvalue;
-						tab->value[i] = value;
-						tab->n = ++i;
+						newtab.value[i] = value;
+						newtab.n = ++i;
 				}
 		}
+		memcpy(tab, &newtab, sizeof(CAIDVALUETAB));
 }
 
 /*
@@ -213,6 +215,8 @@ void chk_tuntab(char *tunasc, TUNTAB *ttab)
 {
 	int32_t i;
 	char *ptr1, *ptr2, *ptr3, *saveptr1 = NULL;
+	TUNTAB newttab;
+	memset(&newttab, 0 , sizeof(TUNTAB));
 
 	for (i = 0, ptr1 = strtok_r(tunasc, ",", &saveptr1); (i < CS_MAXTUNTAB) && (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1)) {
 		uint32_t bt_caidfrom, bt_caidto, bt_srvid;
@@ -227,12 +231,13 @@ void chk_tuntab(char *tunasc, TUNTAB *ttab)
 			ptr2 = "";
 
 		if ((bt_caidfrom = a2i(ptr1, 2)) | (bt_srvid = a2i(ptr2,-2)) | (bt_caidto = a2i(ptr3, 2))) {
-			ttab->bt_caidfrom[i] = bt_caidfrom;
-			ttab->bt_caidto[i] = bt_caidto;
-			ttab->bt_srvid[i++] = bt_srvid;
-			ttab->n = i;
+			newttab.bt_caidfrom[i] = bt_caidfrom;
+			newttab.bt_caidto[i] = bt_caidto;
+			newttab.bt_srvid[i++] = bt_srvid;
+			newttab.n = i;
 		}
 	}
+	memcpy(ttab, &newttab, sizeof(TUNTAB));
 }
 
 void chk_services(char *labels, SIDTABBITS *sidok, SIDTABBITS *sidno)
@@ -240,13 +245,16 @@ void chk_services(char *labels, SIDTABBITS *sidok, SIDTABBITS *sidno)
 	int32_t i;
 	char *ptr, *saveptr1 = NULL;
 	SIDTAB *sidtab;
-	*sidok = *sidno = 0;
+	SIDTABBITS newsidok, newsidno;
+	newsidok = newsidno = 0;
 	for (ptr=strtok_r(labels, ",", &saveptr1); ptr; ptr=strtok_r(NULL, ",", &saveptr1)) {
 		for (trim(ptr), i = 0, sidtab = cfg.sidtab; sidtab; sidtab = sidtab->next, i++) {
-			if (!strcmp(sidtab->label, ptr)) *sidok|=((SIDTABBITS)1<<i);
-			if ((ptr[0]=='!') && (!strcmp(sidtab->label, ptr+1))) *sidno|=((SIDTABBITS)1<<i);
+			if (!strcmp(sidtab->label, ptr)) newsidok|=((SIDTABBITS)1<<i);
+			if ((ptr[0]=='!') && (!strcmp(sidtab->label, ptr+1))) newsidno|=((SIDTABBITS)1<<i);
 		}
 	}
+	*sidok = newsidok;
+	*sidno = newsidno;
 }
 
 void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *D_USE(zType), const char *D_USE(zName), const char *zFiltName)
@@ -254,102 +262,109 @@ void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *D_USE(zType), const char
 	int32_t i, j;
 	char *ptr1, *ptr2, *ptr3, *saveptr1 = NULL;
 	char *ptr[CS_MAXFILTERS] = {0};
-
-	memset(ftab, 0, sizeof(FTAB));
+	FTAB newftab;
+	memset(&newftab, 0, sizeof(FTAB));
+	
 	for( i = 0, ptr1 = strtok_r(zFilterAsc, ";", &saveptr1); (i < CS_MAXFILTERS) && (ptr1); ptr1 = strtok_r(NULL, ";", &saveptr1), i++ ) {
 		ptr[i] = ptr1;
 		if( (ptr2 = strchr(trim(ptr1), ':')) ) {
 			*ptr2++ ='\0';
-			ftab->filts[i].caid = (uint16_t)a2i(ptr1, 4);
+			newftab.filts[i].caid = (uint16_t)a2i(ptr1, 4);
 			ptr[i] = ptr2;
 		}
 		else if (zFiltName && zFiltName[0] == 'c') {
 			cs_log("PANIC: CAID field not found in CHID parameter!");
 			cs_exit(1);
 		}
-		ftab->nfilts++;
+		newftab.nfilts++;
 	}
 
-	if( ftab->nfilts ) {
+	if( newftab.nfilts ) {
 	    cs_debug_mask(D_CLIENT, "%s '%s' %s filter(s):", zType, zName, zFiltName);
 	}
-	for( i = 0; i < ftab->nfilts; i++ ) {
-		cs_debug_mask(D_CLIENT, "CAID #%d: %04X", i, ftab->filts[i].caid);
+	for( i = 0; i < newftab.nfilts; i++ ) {
+		cs_debug_mask(D_CLIENT, "CAID #%d: %04X", i, newftab.filts[i].caid);
 		for( j = 0, ptr3 = strtok_r(ptr[i], ",", &saveptr1); (j < CS_MAXPROV) && (ptr3); ptr3 = strtok_r(NULL, ",", &saveptr1), j++ ) {
-			ftab->filts[i].prids[j] = a2i(ptr3,6);
-			ftab->filts[i].nprids++;
-			cs_debug_mask(D_CLIENT, "%s #%d: %06X", zFiltName, j, ftab->filts[i].prids[j]);
+			newftab.filts[i].prids[j] = a2i(ptr3,6);
+			newftab.filts[i].nprids++;
+			cs_debug_mask(D_CLIENT, "%s #%d: %06X", zFiltName, j, newftab.filts[i].prids[j]);
 		}
 	}
+	memcpy(ftab, &newftab, sizeof(FTAB));
 }
 
 void chk_cltab(char *classasc, CLASSTAB *clstab)
 {
 	int32_t i;
 	char *ptr1, *saveptr1 = NULL;
-	clstab->an = clstab->bn = 0;
+	CLASSTAB newclstab;
+	memset(&newclstab, 0, sizeof(newclstab));
+	newclstab.an = newclstab.bn = 0;
 	for( i = 0, ptr1 = strtok_r(classasc, ",", &saveptr1); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1) ) {
 		ptr1 = trim(ptr1);
 		if( ptr1[0] == '!' )
-			clstab->bclass[clstab->bn++] = (uchar)a2i(ptr1+1, 2);
+			newclstab.bclass[clstab->bn++] = (uchar)a2i(ptr1+1, 2);
 		else
-			clstab->aclass[clstab->an++] = (uchar)a2i(ptr1, 2);
+			newclstab.aclass[clstab->an++] = (uchar)a2i(ptr1, 2);
 	}
+	memcpy(clstab, &newclstab, sizeof(CLASSTAB));
 }
 
 void chk_port_tab(char *portasc, PTAB *ptab)
 {
 	int32_t i, j, nfilts, ifilt, iport;
+	PTAB newptab;
 	char *ptr1, *ptr2, *ptr3, *saveptr1 = NULL;
 	char *ptr[CS_MAXPORTS] = {0};
-	int32_t  port[CS_MAXPORTS] = {0};
-	int32_t previous_nports = ptab->nports;
+	int32_t port[CS_MAXPORTS] = {0};
+	memset(&newptab, 0, sizeof(newptab));
 
-	for (nfilts = i = previous_nports, ptr1 = strtok_r(portasc, ";", &saveptr1); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok_r(NULL, ";", &saveptr1), i++) {
+	for (nfilts = i = 0, ptr1 = strtok_r(portasc, ";", &saveptr1); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok_r(NULL, ";", &saveptr1), i++) {
 		ptr[i] = ptr1;
 		if( (ptr2=strchr(trim(ptr1), '@')) ) {
 			*ptr2++ ='\0';
-			ptab->ports[i].s_port = atoi(ptr1);
+			newptab.ports[i].s_port = atoi(ptr1);
 
 			//checking for des key for port
-			ptab->ports[i].ncd_key_is_set = 0;   //default to 0
+			newptab.ports[i].ncd_key_is_set = 0;   //default to 0
 			if( (ptr3=strchr(trim(ptr1), '{')) ) {
 				*ptr3++='\0';
-				if (key_atob_l(ptr3, ptab->ports[i].ncd_key, 28))
+				if (key_atob_l(ptr3, newptab.ports[i].ncd_key, 28))
 					fprintf(stderr, "newcamd: error in DES Key for port %s -> ignored\n", ptr1);
 				else
-					ptab->ports[i].ncd_key_is_set = 1;
+					newptab.ports[i].ncd_key_is_set = 1;
 			}
 
 			ptr[i] = ptr2;
-			port[i] = ptab->ports[i].s_port;
-			ptab->nports++;
+			port[i] = newptab.ports[i].s_port;
+			newptab.nports++;
 		}
 		nfilts++;
 	}
 
-	if( nfilts == 1 && strlen(portasc) < 6 && ptab->ports[0].s_port == 0 ) {
-		ptab->ports[0].s_port = atoi(portasc);
-		ptab->nports = 1;
+	if( nfilts == 1 && strlen(portasc) < 6 && newptab.ports[0].s_port == 0 ) {
+		newptab.ports[0].s_port = atoi(portasc);
+		newptab.nports = 1;
 	}
 
-	iport = ifilt = previous_nports;
-	for (i=previous_nports; i<nfilts; i++) {
+	iport = ifilt = 0;
+	for (i=0; i<nfilts; i++) {
 		if( port[i] != 0 )
 			iport = i;
 		for (j = 0, ptr3 = strtok_r(ptr[i], ",", &saveptr1); (j < CS_MAXPROV) && (ptr3); ptr3 = strtok_r(NULL, ",", &saveptr1), j++) {
 			if( (ptr2=strchr(trim(ptr3), ':')) ) {
 				*ptr2++='\0';
-				ptab->ports[iport].ftab.nfilts++;
-				ifilt = ptab->ports[iport].ftab.nfilts-1;
-				ptab->ports[iport].ftab.filts[ifilt].caid = (uint16_t)a2i(ptr3, 4);
-				ptab->ports[iport].ftab.filts[ifilt].prids[j] = a2i(ptr2, 6);
+				newptab.ports[iport].ftab.nfilts++;
+				ifilt = newptab.ports[iport].ftab.nfilts-1;
+				newptab.ports[iport].ftab.filts[ifilt].caid = (uint16_t)a2i(ptr3, 4);
+				newptab.ports[iport].ftab.filts[ifilt].prids[j] = a2i(ptr2, 6);
 			} else {
-				ptab->ports[iport].ftab.filts[ifilt].prids[j] = a2i(ptr3, 6);
+				newptab.ports[iport].ftab.filts[ifilt].prids[j] = a2i(ptr3, 6);
 			}
-			ptab->ports[iport].ftab.filts[ifilt].nprids++;
+			newptab.ports[iport].ftab.filts[ifilt].nprids++;
 		}
 	}
+	memcpy(ptab, &newptab, sizeof(PTAB));
 }
 
 #ifdef MODULE_CCCAM
@@ -357,13 +372,14 @@ void chk_cccam_ports(char *value)
 {
 	int32_t i;
 	char *ptr, *saveptr1 = NULL;
-
-	memset(cfg.cc_port, 0, sizeof(cfg.cc_port));
+	uint16_t newcc_port[CS_MAXPORTS];
+	memset(newcc_port, 0, sizeof(newcc_port));
 
 	for (i=0, ptr=strtok_r(value, ",", &saveptr1); ptr && i<CS_MAXPORTS; ptr=strtok_r(NULL, ",", &saveptr1)) {
-		cfg.cc_port[i] = atoi(ptr);
-		if (cfg.cc_port[i]) i++;
+		newcc_port[i] = atoi(ptr);
+		if (newcc_port[i]) i++;
 	}
+	memcpy(cfg.cc_port, newcc_port, sizeof(cfg.cc_port));
 }
 #endif
 
@@ -943,6 +959,7 @@ void chk_t_camd33(char *token, char *value)
 
 	if (!strcmp(token, "nocrypt")) {
 		if(strlen(value) == 0) {
+			clear_sip(&cfg.c33_plain);
 			return;
 		} else {
 			chk_iprange(value, &cfg.c33_plain);
@@ -1207,11 +1224,7 @@ void chk_t_radegast(char *token, char *value)
 void chk_t_serial(char *token, char *value)
 {
 	if (!strcmp(token, "device")) {
-		int32_t l;
-		l = strlen(cfg.ser_device);
-		if (l)
-			cfg.ser_device[l++]=1;  // use ctrl-a as delimiter
-		cs_strncpy(cfg.ser_device+l, value, sizeof(cfg.ser_device)-l);
+		cs_strncpy(cfg.ser_device, value, sizeof(cfg.ser_device));
 		return;
 	}
 	if (token[0] != '#')
@@ -3989,19 +4002,15 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "group")) {
-		if(strlen(value) == 0) {
-			rdr->grp = 0;
-			return;
-		} else {
-			for (ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1)) {
-				int32_t g;
-				g = atoi(ptr);
-				if ((g>0) && (g<65)) {
-					rdr->grp |= (((uint64_t)1)<<(g-1));
-				}
+		rdr->grp = 0;
+		for (ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1)) {
+			int32_t g;
+			g = atoi(ptr);
+			if ((g>0) && (g<65)) {
+				rdr->grp |= (((uint64_t)1)<<(g-1));
 			}
-			return;
 		}
+		return;
 	}
 
 	if (!strcmp(token, "emmcache")) {

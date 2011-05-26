@@ -1590,13 +1590,11 @@ extern void cs_dump(const uchar *, int32_t, char *, ...);
 
 // oscam-aes
 extern void aes_set_key(char *);
-extern void add_aes_entry(struct s_reader *rdr, uint16_t caid, uint32_t ident, int32_t keyid, uchar *aesKey);
 extern void aes_encrypt_idx(struct s_client *, uchar *, int32_t);
 extern void aes_decrypt(uchar *, int32_t);
 extern int32_t aes_decrypt_from_list(AES_ENTRY *list, uint16_t caid, uint32_t provid,int32_t keyid, uchar *buf, int32_t n);
 extern int32_t aes_present(AES_ENTRY *list, uint16_t caid, uint32_t provid,int32_t keyid);
 extern void parse_aes_keys(struct s_reader *rdr,char *value);
-extern void aes_clear_entries(struct s_reader *rdr);
 
 #define aes_encrypt(b, n) aes_encrypt_idx(cur_client(), b, n)
 

@@ -23,12 +23,12 @@ void aes_encrypt_idx(struct s_client *cl, uchar *buf, int32_t n)
     AES_encrypt(buf+i, buf+i, &cl->aeskey);
 }
 
-void add_aes_entry(struct s_reader *rdr, uint16_t caid, uint32_t ident, int32_t keyid, uchar *aesKey)
+/* Creates an AES_ENTRY and adds it to the given linked list. */
+void add_aes_entry(AES_ENTRY **list, uint16_t caid, uint32_t ident, int32_t keyid, uchar *aesKey)
 {
-    AES_ENTRY *new_entry;
-    AES_ENTRY *next,*current;
+    AES_ENTRY *new_entry, *next,*current;
 
-    // create de AES key entry for the linked list
+    // create the AES key entry for the linked list
     if(!cs_malloc(&new_entry, sizeof(AES_ENTRY), -1)) return;
 
     memcpy(new_entry->plainkey, aesKey, 16);
@@ -46,26 +46,27 @@ void add_aes_entry(struct s_reader *rdr, uint16_t caid, uint32_t ident, int32_t 
     new_entry->next=NULL;
 
     //if list is empty, new_entry is the new head
-    if(!rdr->aes_list) {
-        rdr->aes_list=new_entry;
+    if(!*list) {
+        *list=new_entry;
         return;
     }
 
-    //happend it to the list
-    current=rdr->aes_list;
+    //append it to the list
+    current=*list;
     next=current->next;
     while(next) {
         current=next;
         next=current->next;
-        }
+    }
 
     current->next=new_entry;
 
 }
 
-void parse_aes_entry(struct s_reader *rdr,char *value) {
-    uint16_t caid;
-    uint16_t dummy;
+/* Parses a single AES_KEYS entry and assigns it to the given list.
+   The expected format for value is caid1@ident1:key0,key1 */
+void parse_aes_entry(AES_ENTRY **list, char *label, char *value) {
+    uint16_t caid, dummy;
     uint32_t ident;
     int32_t len;
     char *tmp;
@@ -78,7 +79,7 @@ void parse_aes_entry(struct s_reader *rdr,char *value) {
     tmp=strtok_r(NULL,":",&save);
     ident=a2i(tmp,3);
     
-    // now we need to split the key ane add the entry to the reader.
+    // now we need to split the key and add the entry to the reader.
     nb_keys=0;
     key_id=0;
     while((tmp=strtok_r(NULL,",",&save))) {
@@ -104,23 +105,39 @@ void parse_aes_entry(struct s_reader *rdr,char *value) {
         else
             key_atob_l(tmp,aes_key,32);
         // now add the key to the reader... TBD
-        add_aes_entry(rdr,caid,ident,key_id,aes_key);
+        add_aes_entry(list,caid,ident,key_id,aes_key);
         key_id++;
     }
     
-    cs_log("%d AES key(s) added on reader %s for %04x:%06x", nb_keys, rdr->label, caid, ident);
+    cs_log("%d AES key(s) added on reader %s for %04x:%06x", nb_keys, label, caid, ident);
 }
 
-void parse_aes_keys(struct s_reader *rdr,char *value)
-{
-    // value format is caid1@ident1:key0,key1;caid2@indent2:key0,key1
-    char *entry;
-    char *save=NULL;
-    
-    rdr->aes_list=NULL;
-    for (entry=strtok_r(value, ";",&save); entry; entry=strtok_r(NULL, ";",&save)) {
-        parse_aes_entry(rdr,entry);
+/* Clears all entries from an AES list*/
+void aes_clear_entries(AES_ENTRY **list){
+    AES_ENTRY *current, *next;
+
+    current=NULL;
+    next=*list;
+    while(next) {
+        current=next;
+        next=current->next;
+        add_garbage(current);
     }
+    *list=NULL;
+}
+
+/* Parses multiple AES_KEYS entrys in a reader section and assigns them to the reader.
+   The expected format for value is caid1@ident1:key0,key1;caid2@ident2:key0,key1 */
+void parse_aes_keys(struct s_reader *rdr, char *value){
+   char *entry;
+    char *save=NULL;
+    AES_ENTRY *newlist = NULL, *savelist = rdr->aes_list;
+
+    for (entry=strtok_r(value, ";",&save); entry; entry=strtok_r(NULL, ";",&save)) {
+        parse_aes_entry(&newlist, rdr->label, entry);
+    }
+    rdr->aes_list = newlist;
+    aes_clear_entries(&savelist);    
     
     /*
     AES_ENTRY *current;
@@ -191,22 +208,6 @@ int32_t aes_present(AES_ENTRY *list, uint16_t caid, uint32_t provid,int32_t keyi
     return ok;
 }
 
-void aes_clear_entries(struct s_reader *rdr)
-{
-
-    AES_ENTRY *current;
-    AES_ENTRY *next;
-
-    current=NULL;
-    next=rdr->aes_list;
-    while(next) {
-        current=next;
-        next=current->next;
-        free(current);
-    }
-    rdr->aes_list=NULL;
-}
-
 char *remote_txt(void)
 {
   if (cur_client()->typ == 'c')
@@ -238,13 +239,7 @@ char *txt;
   return(txt);
 }
 
-char *strtolower(char *txt)
-{
-  char *p;
-  for (p=txt; *p; p++)
-    if (isupper((uchar)*p)) *p=tolower((uchar)*p);
-  return(txt);
-}
+
 
 int32_t gethexval(char c)
 {
@@ -625,10 +620,9 @@ int32_t file_exists(const char * filename){
 
 /* Clears the s_ip structure provided. The pointer will be set to NULL so everything is cleared.*/
 void clear_sip(struct s_ip **sip){
-	struct s_ip *cip = *sip, *lip;
-	for (*sip = NULL; cip != NULL; cip = lip){
-		lip = cip->next;
-		free(cip);
+	struct s_ip *cip = *sip;
+	for (*sip = NULL; cip != NULL; cip = cip->next){
+		add_garbage(cip);
 	}
 }
 
@@ -646,12 +640,12 @@ void clear_ftab(struct s_ftab *ftab){
 
 /* Clears the s_ptab struct provided by setting nfilts and nprids to zero. */
 void clear_ptab(struct s_ptab *ptab){
-	int32_t i;
-	for (i = 0; i < ptab->nports; i++) {
+	int32_t i = ptab->nports;
+	ptab->nports = 0;
+	for (; i >= 0; --i) {
 		ptab->ports[i].ftab.nfilts = 0;
 		ptab->ports[i].ftab.filts[0].nprids = 0;
-	}
-	ptab->nports = 0;
+	}	
 }
 
 /* Clears given caidtab */
@@ -754,6 +748,36 @@ void cs_strncpy(char * destination, const char * source, size_t num){
 	destination[l] = '\0';
 }
 
+/* This function is similar to strncpy but is case insensitive when comparing. */
+int32_t cs_strnicmp(const char * str1, const char * str2, size_t num){
+	uint32_t i, len1 = strlen(str1), len2 = strlen(str2);
+	int32_t diff;
+	for(i = 0; i < len1 && i < len2 && i < num; ++i){
+		diff = toupper(str1[i]) - toupper(str2[i]);
+		if (diff != 0) return diff;
+	}
+	return 0;
+}
+
+/* Converts the string txt to it's lower case representation. */
+char *strtolower(char *txt){
+  char *p;
+  for (p=txt; *p; p++)
+    if (isupper((uchar)*p)) *p=tolower((uchar)*p);
+  return(txt);
+}
+
+/* Allocates a new empty string and copies str into it. You need to free() the result. */
+char *strnew(char *str){
+  if (!str)
+    return NULL;
+    
+  char *newstr = cs_malloc(&newstr, strlen(str)+1, 1);
+  cs_strncpy(newstr, str, strlen(str)+1);
+  
+  return newstr;
+}
+
 char *get_servicename(struct s_client *cl, int32_t srvid, int32_t caid){
 	int32_t i;
 	struct s_srvid *this;
@@ -832,6 +856,8 @@ void make_non_blocking(int32_t fd) {
 
 uint32_t seed;
 
+/* A fast random number generator. Depends on initialization of seed from init_rnd(). 
+   Only use this if you don't need good random numbers (so don't use in security critical situations). */
 uchar fast_rnd() {
 	uint32_t offset = 12923;
 	uint32_t multiplier = 4079;
@@ -840,6 +866,7 @@ uchar fast_rnd() {
 	return (uchar) (seed % 0xFF);
 }
 
+/* Initializes the random number generator and the seed for the fast_rnd() function. */
 void init_rnd() {
 	srand((uint32_t)time((time_t *)NULL));
 	seed = (uint32_t) time((time_t*)0);
@@ -940,26 +967,6 @@ char *get_ncd_client_name(char *client_id)
         return ncd_service_names[max_id_idx+1];
 }
 
-int32_t cs_strnicmp(const char * str1, const char * str2, size_t num){
-	uint32_t i, len1 = strlen(str1), len2 = strlen(str2);
-	int32_t diff;
-	for(i = 0; i < len1 && i < len2 && i < num; ++i){
-		diff = toupper(str1[i]) - toupper(str2[i]);
-		if (diff != 0) return diff;
-	}
-	return 0;
-}
-
-char *strnew(char *str)
-{
-  if (!str)
-    return NULL;
-    
-  char *newstr = cs_malloc(&newstr, strlen(str)+1, 1);
-  cs_strncpy(newstr, str, strlen(str)+1);
-  
-  return newstr;
-}
 
 void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid)
 {
