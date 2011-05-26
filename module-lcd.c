@@ -63,8 +63,8 @@ void refresh_lcd_file() {
 			// Statuslines end
 
 			// Readertable head
-			fprintf(fpsave,"Typ | Label      | Idle            | w | s | b | e | Status\n");
-			fprintf(fpsave,"----+------------+-----------------+---+---+---+---+--------\n");
+			fprintf(fpsave,"Typ| Label      | Idle         | w | s | b | e | St\n");
+			fprintf(fpsave,"---+------------+--------------+---+---+---+---+----\n");
 
 			struct s_client *cl;
 
@@ -74,7 +74,7 @@ void refresh_lcd_file() {
 				if (cl->typ=='r' || cl->typ=='p'){
 					type = "";
 					label = "";
-					status = "OFFLINE";
+					status = "OFF";
 					secs = 0; fullmins = 0; mins = 0; fullhours = 0; hours = 0; days = 0;
 
 					seconds = now - cl->last;
@@ -84,7 +84,7 @@ void refresh_lcd_file() {
 						idx = count_r;
 						label = cl->reader->label;
 						if (cl->reader->card_status == CARD_INSERTED)
-							status = "CARDOK";
+							status = "OK";
 						count_r++;
 					}
 
@@ -93,7 +93,7 @@ void refresh_lcd_file() {
 						idx = count_p;
 						label = cl->reader->label;
 						if (cl->reader->card_status == CARD_INSERTED)
-							status = "CONNECTED";
+							status = "CON";
 						count_p++;
 					}
 
@@ -119,11 +119,11 @@ void refresh_lcd_file() {
 					}
 
 					if(days == 0) {
-						fprintf(fpsave,"%s%d  | %-10.10s |        %02d:%02d:%02d |% 3d|% 3d|% 3d|% 3d| %s\n",
+						fprintf(fpsave,"%s%d | %-10.10s |     %02d:%02d:%02d |% 3d|% 3d|% 3d|% 3d| %s\n",
 								type, idx, label, hours, mins,
 								secs, written, skipped, blocked, error, status);
 					} else {
-						fprintf(fpsave,"%s%d  | %-10.10s |% 5dd %02d:%02d:%02d |% 3d|% 3d|% 3d|% 3d| %s\n",
+						fprintf(fpsave,"%s%d | %-10.10s |% 2dd %02d:%02d:%02d |% 3d|% 3d|% 3d|% 3d| %s\n",
 								type, idx, label, days, hours, mins,
 								secs, written, skipped, blocked, error, status);
 					}
@@ -131,16 +131,16 @@ void refresh_lcd_file() {
 				}
 			}
 
-			fprintf(fpsave,"----+------------+-----------------+---+---+---+---+--------\n");
+			fprintf(fpsave,"---+------------+--------------+---+---+---+--++----\n");
 			// Reader/Proxy table end
 
 
 			// Usertable start
-			fprintf(fpsave,"Typ | Label      | Provider : Channel              | Time\n");
-			fprintf(fpsave,"----+------------+---------------------------------+--------\n");
+			fprintf(fpsave,"Typ| Label      | Channel                     | Time\n");
+			fprintf(fpsave,"---+------------+-----------------------------+-----\n");
 
-			/* Testclient
-			fprintf(fpsave,"%s%d  | %-10.10s | %-10.10s:%-20.20s | % 4dms\n",
+			//Testclient
+			fprintf(fpsave,"%s%d | %-10.10s | %-10.10s:%-17.17s| % 4d\n",
 					"U",
 					1,
 					"test",
@@ -148,7 +148,7 @@ void refresh_lcd_file() {
 					"Discovery Channel",
 					568);
 
-			*/
+
 
 			for ( i=0, cl=first_client; cl ; cl=cl->next, i++) {
 
@@ -161,7 +161,7 @@ void refresh_lcd_file() {
 					count_u++;
 
 					get_servicename(cl, cl->last_srvid, cl->last_caid);
-					fprintf(fpsave,"%s%d  | %-10.10s | %-10.10s:%-20.20s | % 4dms\n",
+					fprintf(fpsave,"%s%d | %-10.10s | %-10.10s:%-17.17s| % 4d\n",
 							type,
 							idx,
 							label,
@@ -171,7 +171,7 @@ void refresh_lcd_file() {
 
 				}
 			}
-			fprintf(fpsave,"----+------------+---------------------------------+--------\n");
+			fprintf(fpsave,"---+------------+-----------------------------+-----\n");
 			// Usertable end
 			fclose(fpsave);
 		}
