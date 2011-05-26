@@ -117,7 +117,8 @@ void ll_clear_data(LLIST *l)
 LL_NODE* ll_append_nolock(LLIST *l, void *obj)
 {
     if (l && obj) {
-        LL_NODE *new = calloc(1, sizeof(LL_NODE));
+        LL_NODE *new;
+        if(!cs_malloc(&new,sizeof(LL_NODE), -1)) return NULL;
         new->obj = obj;
         
         if (l->last)
@@ -150,7 +151,8 @@ LL_NODE *ll_prepend(LLIST *l, void *obj)
     if (l && obj) {
         if (!ll_lock(l)) return NULL;
         
-        LL_NODE *new = calloc(1, sizeof(LL_NODE));
+        LL_NODE *new;
+        if(!cs_malloc(&new,sizeof(LL_NODE), -1)) return NULL;
 
         new->obj = obj;
         new->nxt = l->initial;
@@ -242,7 +244,8 @@ void ll_iter_insert(LL_ITER *it, void *obj)
         if (!it->cur || !it->cur->nxt)
             ll_append_nolock(it->l, obj);
         else {
-            LL_NODE *n = calloc(1, sizeof(LL_NODE));
+            LL_NODE *n;
+            if(!cs_malloc(&n,sizeof(LL_NODE), -1)) return;
 
             n->obj = obj;
             n->nxt = it->cur->nxt;

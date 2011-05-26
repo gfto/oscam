@@ -971,14 +971,8 @@ static void * newcamd_server(void *cli)
   pthread_setspecific(getclient, cli);
   uchar mbuf[1024];
 
-  client->req=(uchar *)malloc(CS_MAXPENDING*REQ_SIZE);
-  if (!client->req)
-  {
-    cs_log("Cannot allocate memory (errno=%d %s)", errno, strerror(errno));
-    cs_exit(1);
-  }
-
-  memset(client->req, 0, CS_MAXPENDING*REQ_SIZE);
+  cs_malloc(&client->req,CS_MAXPENDING*REQ_SIZE, 1);
+  
   client->ncd_server = 1;
   cs_log("client connected to %d port", cfg.ncd_ptab.ports[client->port_idx].s_port);
 

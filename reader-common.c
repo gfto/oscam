@@ -142,7 +142,10 @@ static void do_emm_from_file(struct s_reader * reader)
       cs_log ("ERROR: Cannot open EMM file '%s' (errno=%d %s)\n", token, errno, strerror(errno));
     else {
       EMM_PACKET *eptmp;
-      eptmp = malloc (sizeof(EMM_PACKET));
+      if(!cs_malloc(&eptmp,sizeof(EMM_PACKET), -1)){
+      	fclose (fp);
+      	return;
+      }
       result = fread (eptmp, sizeof(EMM_PACKET), 1, fp);      
       fclose (fp);
    

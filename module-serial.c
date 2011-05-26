@@ -947,8 +947,9 @@ static void * oscam_ser_fork(void *pthreadparam)
   cl->ctyp = pparam->ctyp;
   cl->account=first_client->account;
 
-  if(!cl->serialdata)
-    cl->serialdata = malloc(sizeof(struct s_serial_client));
+  if(!cl->serialdata){
+  	if(!cs_malloc(&cl->serialdata,sizeof(struct s_serial_client), -1)) return NULL;
+  }
   oscam_init_serialdata(cl->serialdata);  
   oscam_copy_serialdata(cl->serialdata, &pparam->serialdata);
   cs_log("serial: initialized (%s@%s)", cl->serialdata->oscam_ser_proto>P_MAX ? 
@@ -1012,8 +1013,9 @@ void * init_oscam_ser(int32_t ctyp)
 
 static int32_t oscam_ser_client_init(struct s_client *client)
 {
-  if(!client->serialdata)
-    client->serialdata = malloc(sizeof(struct s_serial_client));
+  if(!client->serialdata){
+  	if(!cs_malloc(&client->serialdata,sizeof(struct s_serial_client), -1)) return 1;
+  }
   oscam_init_serialdata(client->serialdata);
   
   if ((!client->reader->device[0])) cs_exit(1);

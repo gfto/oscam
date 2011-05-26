@@ -79,8 +79,7 @@ void load_stat_from_file()
 		if (!line[0] || line[0] == '#' || line[0] == ';')
 			continue;
 		
-		stat = malloc(sizeof(READER_STAT));
-		memset(stat, 0, sizeof(READER_STAT));
+		if(!cs_malloc(&stat,sizeof(READER_STAT), -1)) continue;
 
 		//get type by evaluating first line:
 		if (type==0) {
@@ -347,14 +346,14 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	
 	READER_STAT *stat = get_stat(rdr, er->caid, prid, er->srvid, er->l);
 	if (!stat) {
-		stat = malloc(sizeof(READER_STAT));
-		memset(stat, 0, sizeof(READER_STAT));
-		stat->caid = er->caid;
-		stat->prid = prid;
-		stat->srvid = er->srvid;
-		stat->ecmlen = er->l;
-		stat->time_avg = UNDEF_AVG_TIME; //dummy placeholder
-		ll_append(rdr->lb_stat, stat);
+		if(cs_malloc(&stat,sizeof(READER_STAT), -1)){
+			stat->caid = er->caid;
+			stat->prid = prid;
+			stat->srvid = er->srvid;
+			stat->ecmlen = er->l;
+			stat->time_avg = UNDEF_AVG_TIME; //dummy placeholder
+			ll_append(rdr->lb_stat, stat);
+		}
 	}
 
 	//inc ecm_count if found, drop to 0 if not found:
@@ -543,7 +542,8 @@ struct stat_value {
 };
 
 static struct stat_value *crt_cur(struct s_reader *rdr, int32_t value, int32_t time) {
-	struct stat_value *v = malloc(sizeof(struct stat_value));
+	struct stat_value *v;
+	cs_malloc(&v,sizeof(struct stat_value), 1);
 	v->rdr = rdr;
 	v->value = value;
 	v->time = time;

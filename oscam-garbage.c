@@ -55,15 +55,17 @@ void add_garbage(void *data) {
         }
 		
 		if (garbagecheck == NULL) {
-	        struct cs_garbage *garbage = malloc(sizeof(struct cs_garbage));
-	        garbage->time = time(NULL);
-	        garbage->data = data;
-	        garbage->next = garbage_first[bucket];
-	        #ifdef WITH_DEBUG
-	        garbage->file = file;
-	        garbage->line = line;
-	        #endif
-	        garbage_first[bucket] = garbage;
+	        struct cs_garbage *garbage;
+	        if(cs_malloc(&garbage,sizeof(struct cs_garbage), -1)){
+		        garbage->time = time(NULL);
+		        garbage->data = data;
+		        garbage->next = garbage_first[bucket];
+		        #ifdef WITH_DEBUG
+		        garbage->file = file;
+		        garbage->line = line;
+		        #endif
+		        garbage_first[bucket] = garbage;
+		      }
 	    }
 
         pthread_mutex_unlock(&garbage_lock[bucket]);

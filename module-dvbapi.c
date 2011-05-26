@@ -697,8 +697,11 @@ void dvbapi_read_priority() {
 		if (ret<1 || (type != 'p' && type != 'i' && type != 'm' && type != 'd' && type != 's' && type != 'l'))
 			continue;
 
-		struct s_dvbapi_priority *entry = malloc(sizeof(struct s_dvbapi_priority));
-		memset(entry, 0, sizeof(struct s_dvbapi_priority));
+		struct s_dvbapi_priority *entry;
+		if(!cs_malloc(&entry,sizeof(struct s_dvbapi_priority), -1)){
+			fclose(fp);
+			return;
+		}
 
 		entry->type=type;
 		entry->next=NULL;
@@ -762,7 +765,8 @@ void dvbapi_read_priority() {
 			for (i=0;i<16;i++)
 			for (this = cfg.srvid[i]; this; this = this->next) {
 				if (strcmp(this->prov, c_srvid+1)==0) {
-					struct s_dvbapi_priority *entry2 = malloc(sizeof(struct s_dvbapi_priority));
+					struct s_dvbapi_priority *entry2;
+					if(!cs_malloc(&entry2,sizeof(struct s_dvbapi_priority), -1)) continue;
 					memcpy(entry2, entry, sizeof(struct s_dvbapi_priority));
 
 					entry2->srvid=this->srvid;
@@ -1233,8 +1237,8 @@ void dvbapi_chk_caidtab(char *caidasc, char type) {
 			ptr3="";
 
 		if (((caid=a2i(ptr1, 2))|(prov=a2i(ptr3, 3)))) {
-			struct s_dvbapi_priority *entry = malloc(sizeof(struct s_dvbapi_priority));
-			memset(entry, 0, sizeof(struct s_dvbapi_priority));
+			struct s_dvbapi_priority *entry;
+			if(!cs_malloc(&entry,sizeof(struct s_dvbapi_priority), -1)) return;
 			entry->caid=caid;
 
 			if (type=='d') {
@@ -2082,7 +2086,8 @@ static int32_t stapi_open() {
 		if (dev_list[i].SessionHandle==0)
 			continue;
 
-		struct read_thread_param *para=malloc(sizeof(struct read_thread_param));
+		struct read_thread_param *para;
+		if(!cs_malloc(&para,sizeof(struct read_thread_param), -1)) return FALSE;
 		para->id=i;
 		para->cli=cur_client();
 
@@ -2635,7 +2640,7 @@ void * azbox_main(void *cli) {
 					cs_debug_mask(D_DVBAPI, "openxcas: msg: OPENXCAS_START_PMT_ECM");
 
 					 // parse pmt
-					uchar *dest = malloc(msg.buf_len + 7 - 12 - 4);
+					uchar dest[msg.buf_len + 7 - 12 - 4];
 
 					memcpy(dest, "\x00\xFF\xFF\x00\x00\x13\x00", 7);
 
@@ -2646,7 +2651,6 @@ void * azbox_main(void *cli) {
 					memcpy(dest + 7, msg.buf + 12, msg.buf_len - 12 - 4);
 
 					dvbapi_parse_capmt(dest, 7 + msg.buf_len - 12 - 4, -1, NULL);
-					free(dest);
 
 					unsigned char mask[12];
 					unsigned char comp[12];

@@ -1828,7 +1828,7 @@ int32_t write_services()
 		return(1);
 	}
 	fprintf(f,"# oscam.services generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
-	fprintf(f,"# Read more: http://streamboard.gmc.to/oscam/browser/trunk/Distribution/doc/txt/oscam.services.txt\n\n");
+	fprintf(f,"# Read more: http://streamboard.gmc.to/svn/oscam/trunk/Distribution/doc/txt/oscam.services.txt\n\n");
 
 	while(sidtab != NULL){
 		ptr = sidtab->label;
@@ -1880,7 +1880,7 @@ int32_t write_config()
 		return(1);
 	}
 	fprintf(f,"# oscam.conf generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
-	fprintf(f,"# Read more: http://streamboard.gmc.to/oscam/browser/trunk/Distribution/doc/txt/oscam.conf.txt\n\n");
+	fprintf(f,"# Read more: http://streamboard.gmc.to/svn/oscam/trunk/Distribution/doc/txt/oscam.conf.txt\n\n");
 
 	/*global settings*/
 	fprintf(f,"[global]\n");
@@ -2276,7 +2276,7 @@ int32_t write_userdb(struct s_auth *authptr)
     return(1);
   }
   fprintf(f,"# oscam.user generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
-  fprintf(f,"# Read more: http://streamboard.gmc.to/oscam/browser/trunk/Distribution/doc/txt/oscam.user.txt\n\n");
+  fprintf(f,"# Read more: http://streamboard.gmc.to/svn/oscam/trunk/Distribution/doc/txt/oscam.user.txt\n\n");
 
   //each account
 	for (account=authptr; (account) ; account=account->next){
@@ -2441,7 +2441,7 @@ int32_t write_server()
 		return(1);
 	}
 	fprintf(f,"# oscam.server generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
-	fprintf(f,"# Read more: http://streamboard.gmc.to/oscam/browser/trunk/Distribution/doc/txt/oscam.server.txt\n\n");
+	fprintf(f,"# Read more: http://streamboard.gmc.to/svn/oscam/trunk/Distribution/doc/txt/oscam.server.txt\n\n");
 
 	struct s_reader *rdr;
 	LL_ITER itr = ll_iter_create(configured_readers);
@@ -3483,7 +3483,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
       switch(i) {
         case 0:
           len = strlen(ptr) / 2 + (16 - (strlen(ptr) / 2) % 16);
-          buf = calloc(1, len);
+          if(!cs_malloc(&buf,len, -1)) return;
           key_atob_l(ptr, buf, strlen(ptr));
           cs_log("enc %d: %s", len, ptr);
           break;

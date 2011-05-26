@@ -847,21 +847,9 @@ void * start_cardreader(void * rdr)
   }
 
 #endif
-  client->emmcache=(struct s_emm *)malloc(CS_EMMCACHESIZE*(sizeof(struct s_emm)));
-  if (!client->emmcache)
-  {
-    cs_log("Cannot allocate memory (errno=%d %s)", errno, strerror(errno));
-    cs_exit(1);
-  }
-  memset(client->emmcache, 0, CS_EMMCACHESIZE*(sizeof(struct s_emm)));
-
-  client->ecmtask=(ECM_REQUEST *)malloc(CS_MAXPENDING*(sizeof(ECM_REQUEST)));
-  if (!client->ecmtask)
-  {
-    cs_log("Cannot allocate memory (errno=%d %s)", errno, strerror(errno));
-    cs_exit(1);
-  }
-  memset(client->ecmtask, 0, CS_MAXPENDING*(sizeof(ECM_REQUEST)));
+	cs_malloc(&client->emmcache,CS_EMMCACHESIZE*(sizeof(struct s_emm)), 1);
+	cs_malloc(&client->ecmtask,CS_MAXPENDING*(sizeof(ECM_REQUEST)), 1);
+  
   reader_main(reader);
   #ifndef NO_PTHREAD_CLEANUP_PUSH
   pthread_cleanup_pop(1);

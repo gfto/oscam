@@ -109,16 +109,15 @@ int32_t cs_check_v(uint32_t ip, int32_t add) {
 			}
 		}
 		if (add && !result) {
-  		        v_ban_entry = malloc(sizeof(V_BAN));
-  		        memset(v_ban_entry, 0, sizeof(V_BAN));
-
+        if(cs_malloc(&v_ban_entry,sizeof(V_BAN), -1)){
         		v_ban_entry->v_time = time((time_t *)0);
 	        	v_ban_entry->v_ip = ip;
 
         		ll_iter_insert(&itr, v_ban_entry);
 
         		cs_debug_mask(D_TRACE, "failban: ban ip %s with timestamp %d", cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_time);
-                }
+        }
+     }
 	}
 	return result;
 }
@@ -1704,7 +1703,8 @@ int32_t write_to_pipe(int32_t fd, int32_t id, uchar *data, int32_t n)
 	// copy data to allocated memory
 	// needed for compatibility
 	// need to be freed after read_from_pipe
-	void *d = malloc(n);
+	void *d;
+	if(!cs_malloc(&d, n, -1)) return -1;
 	memcpy(d, data, n);
 
 	if ((id<0) || (id>PIP_ID_MAX))
@@ -1920,27 +1920,20 @@ ECM_REQUEST *get_ecmtask()
 	if (!cl->ecmtask)
 	{
 		n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
-		if( (cl->ecmtask=(ECM_REQUEST *)malloc(n*sizeof(ECM_REQUEST))) )
-			memset(cl->ecmtask, 0, n*sizeof(ECM_REQUEST));
+		if(!cs_malloc(&cl->ecmtask,n*sizeof(ECM_REQUEST), -1)) return NULL;
 	}
 
 	n=(-1);
-	if (!cl->ecmtask)
+	if (ph[cl->ctyp].multi)
 	{
-		cs_log("Cannot allocate memory (errno=%d %s)", errno, strerror(errno));
-		n=(-2);
+		for (i=0; (n<0) && (i<CS_MAXPENDING); i++)
+			if (cl->ecmtask[i].rc<E_99)
+				er=&cl->ecmtask[n=i];
+			else
+				pending++;
 	}
 	else
-		if (ph[cl->ctyp].multi)
-		{
-			for (i=0; (n<0) && (i<CS_MAXPENDING); i++)
-				if (cl->ecmtask[i].rc<E_99)
-					er=&cl->ecmtask[n=i];
-				else
-					pending++;
-		}
-		else
-			er=&cl->ecmtask[n=0];
+		er=&cl->ecmtask[n=0];
 
 	if (n<0)
 		cs_log("WARNING: ecm pending table overflow !");

@@ -473,8 +473,8 @@ int32_t status_ok(const unsigned char *status)
 }
 
 void memorize_cmd_table (struct s_reader * reader, const unsigned char *mem, int32_t size){
-  reader->cmd_table=(struct s_CmdTab *)malloc(sizeof(unsigned char) * size);
-  memcpy(reader->cmd_table,mem,size);
+  if(cs_malloc(&reader->cmd_table,sizeof(unsigned char) * size, -1))
+  	memcpy(reader->cmd_table,mem,size);
 }
 
 int32_t cmd_table_get_info(struct s_reader * reader, const unsigned char *cmd, unsigned char *rlen, unsigned char *rmode)
