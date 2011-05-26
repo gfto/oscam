@@ -52,14 +52,14 @@ void refresh_lcd_file() {
 				}
 			}
 
-			fprintf(fpsave,"status0: Version: %s\n", CS_VERSION);
-			fprintf(fpsave,"status1: Revision: %s\n", CS_SVN_VERSION);
+			fprintf(fpsave,"Version: %s\n", CS_VERSION);
+			fprintf(fpsave,"Revision: %s\n", CS_SVN_VERSION);
 			if(days == 0)
-				fprintf(fpsave, "status2: up: %02d:%02d:%02d\n", hours, mins, secs);
+				fprintf(fpsave, "up: %02d:%02d:%02d\n", hours, mins, secs);
 			else
-				fprintf(fpsave, "status2: up: %02dd %02d:%02d:%02d\n", days, hours, mins, secs);
-			fprintf(fpsave,"status3: totals: %d/%d/%d/%d/%d/%d\n", first_client->cwfound, first_client->cwnot, first_client->cwignored, first_client->cwtout, first_client->cwcache, first_client->cwtun);
-			fprintf(fpsave,"status4: uptime: %d\n", seconds);
+				fprintf(fpsave, "up: %02dd %02d:%02d:%02d\n", days, hours, mins, secs);
+			fprintf(fpsave,"totals: %d/%d/%d/%d/%d/%d\n", first_client->cwfound, first_client->cwnot, first_client->cwignored, first_client->cwtout, first_client->cwcache, first_client->cwtun);
+			fprintf(fpsave,"uptime: %d\n", seconds);
 			// Statuslines end
 
 			// Readertable head
