@@ -139,6 +139,7 @@ void refresh_lcd_file() {
 			fprintf(fpsave,"Typ| Label      | Channel                     | Time\n");
 			fprintf(fpsave,"---+------------+-----------------------------+-----\n");
 
+			/*
 			//Testclient
 			fprintf(fpsave,"%s%d | %-10.10s | %-10.10s:%-17.17s| % 4d\n",
 					"U",
@@ -148,7 +149,7 @@ void refresh_lcd_file() {
 					"Discovery Channel",
 					568);
 
-
+			*/
 
 			for ( i=0, cl=first_client; cl ; cl=cl->next, i++) {
 
