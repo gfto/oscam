@@ -88,7 +88,7 @@ static void oscam_ser_disconnect(void);
 
 static void oscam_wait_ser_fork(void)
 {
-    pthread_mutex_lock(&mutex);
+    cs_lock(&mutex);
     do {
             if (bcopy_end) {
               bcopy_end = 0;
@@ -97,7 +97,7 @@ static void oscam_wait_ser_fork(void)
             else
                 pthread_cond_wait(&cond, &mutex);
     } while (1);
-    pthread_mutex_unlock(&mutex);
+    cs_unlock(&mutex);
 }
 
 static int32_t oscam_ser_alpha_convert(uchar *buf, int32_t l)
@@ -955,9 +955,9 @@ static void * oscam_ser_fork(void *pthreadparam)
   cs_log("serial: initialized (%s@%s)", cl->serialdata->oscam_ser_proto>P_MAX ? 
          "auto" : proto_txt[cl->serialdata->oscam_ser_proto], cl->serialdata->oscam_ser_device);
 
-  pthread_mutex_lock(&mutex);
+  cs_lock(&mutex);
   bcopy_end = 1;
-  pthread_mutex_unlock(&mutex);
+  cs_unlock(&mutex);
   pthread_cond_signal(&cond);
 
   while(1)

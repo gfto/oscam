@@ -590,7 +590,7 @@ static int32_t videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   if (reader->fix_9993 && reader->caid == 0x919 && tbuff[1] == 0x7F)
   {
      tbuff[1] = 0x47; tbuff[2] = 0x08;
-     memcpy(tbuff+11, tbuff+13, new_len-11);
+     memmove(tbuff+11, tbuff+13, new_len-11);
      new_len -= 2;
   }
   ins40[4]=new_len;

@@ -2,6 +2,9 @@
 #define CS_CORE
 #include "globals.h"
 #include "csctapi/icc_async.h"
+#ifdef MODULE_CCCAM
+#include "module-cccam.h"
+#endif
 #if defined(AZBOX) && defined(HAVE_DVBAPI)
 #  include "openxcas/openxcas_api.h"
 #endif
@@ -544,16 +547,23 @@ void cleanup_thread(void *var)
 	struct s_client *cl = var;
 	if(cl && !cl->cleaned){ //cleaned=0
 		cl->cleaned++; //cleaned=1
+		
+#ifdef MODULE_CCCAM
+		if(cl->typ == 'c'){
+			struct cc_data *cc = cl->cc;
+			if (cc) cc->mode = CCCAM_MODE_SHUTDOWN;
+		}
+#endif
 
 		//kill_thread also removes this client, so here just to get sure client is removed:
 		struct s_client *prev, *cl2;
-		pthread_mutex_lock(&clientlist_lock);
+		cs_lock(&clientlist_lock);
 		for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
 			if (cl == cl2)
 				break;
 		if (cl == cl2)
 			prev->next = cl2->next; //remove client from list
-		pthread_mutex_unlock(&clientlist_lock);
+		cs_unlock(&clientlist_lock);
 
 		cs_sleepms(500); //just wait a bit that really really nobody is accessing client data
 
@@ -589,6 +599,9 @@ void cleanup_thread(void *var)
 		add_garbage(cl->serialdata);
 		cl->cleaned++;//cleaned=2
 		add_garbage(cl);
+#ifndef NO_PTHREAD_CLEANUP_PUSH
+		cs_cleanlocks();
+#endif
 	}
 }
 
@@ -829,15 +842,18 @@ struct s_client * create_client(in_addr_t ip) {
 
 		//master part
 		cl->stat=1;
+		cl->mutexstore = NULL;
+		cl->mutexstore_alloc = 0;
+  	cl->mutexstore_used = 0;
 
 		cl->login=cl->last=time((time_t *)0);
 
         //Now add new client to the list:
 		struct s_client *last;
-		pthread_mutex_lock(&clientlist_lock);
+		cs_lock(&clientlist_lock);
 		for (last=first_client; last->next != NULL; last=last->next); //ends with cl on last client
 		last->next = cl;
-		pthread_mutex_unlock(&clientlist_lock);
+		cs_unlock(&clientlist_lock);
 	} else {
 		cs_log("max connections reached (out of memory) -> reject client %s", cs_inet_ntoa(ip));
 		return NULL;
@@ -1111,7 +1127,7 @@ int32_t cs_user_resolve(struct s_auth *account)
 	int32_t result=0;
 	if (account->dyndns[0])
 	{
-		pthread_mutex_lock(&gethostbyname_lock);
+		cs_lock(&gethostbyname_lock);
 		in_addr_t lastip = account->dynip;
 		//Resolve with gethostbyname:
 		if (cfg.resolve_gethostbyname) {
@@ -1144,7 +1160,7 @@ int32_t cs_user_resolve(struct s_auth *account)
 		if (lastip != account->dynip)  {
 			cs_log("%s: resolved ip=%s", (char*)account->dyndns, cs_inet_ntoa(account->dynip));
 		}
-		pthread_mutex_unlock(&gethostbyname_lock);
+		cs_unlock(&gethostbyname_lock);
 	}
 	if (!result)
 		account->dynip=0;
@@ -1177,7 +1193,7 @@ void start_thread(void * startroutine, char * nameroutine) {
 #ifndef TUXBOX
 	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
-	pthread_mutex_lock(&system_lock);
+	cs_lock(&system_lock);
 	if (pthread_create(&temp, &attr, startroutine, NULL))
 		cs_log("ERROR: can't create %s thread", nameroutine);
 	else {
@@ -1185,7 +1201,7 @@ void start_thread(void * startroutine, char * nameroutine) {
 		pthread_detach(temp);
 	}
 	pthread_attr_destroy(&attr);
-	pthread_mutex_unlock(&system_lock);
+	cs_unlock(&system_lock);
 }
 
 static void kill_thread_int(struct s_client *cl) { //cs_exit is used to let thread kill itself, this routine is for a thread to kill other thread
@@ -1195,7 +1211,7 @@ static void kill_thread_int(struct s_client *cl) { //cs_exit is used to let thre
 	if (pthread_equal(thread, pthread_self())) return; //cant kill yourself
 
 	struct s_client *prev, *cl2;
-	pthread_mutex_lock(&clientlist_lock);
+	cs_lock(&clientlist_lock);
 	for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
 		if (cl == cl2)
 			break;
@@ -1203,7 +1219,7 @@ static void kill_thread_int(struct s_client *cl) { //cs_exit is used to let thre
 		cs_log("FATAL ERROR: could not find client to remove from list.");
 	else
 		prev->next = cl2->next; //remove client from list
-	pthread_mutex_unlock(&clientlist_lock);
+	cs_unlock(&clientlist_lock);
 
 	pthread_cancel(thread);
 	pthread_join(thread, NULL);
@@ -1229,9 +1245,9 @@ static void kill_thread_int(struct s_client *cl) { //cs_exit is used to let thre
 }
 
 void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill itself, this routine is for a thread to kill other thread
-	pthread_mutex_lock(&system_lock);
+	cs_lock(&system_lock);
 	kill_thread_int(cl);
-	pthread_mutex_unlock(&system_lock);
+	cs_unlock(&system_lock);
 }
 #ifdef CS_ANTICASC
 void start_anticascader()
@@ -1350,15 +1366,15 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 }
 
 int32_t restart_cardreader(struct s_reader *rdr, int32_t restart) {
-	pthread_mutex_lock(&system_lock);
+	cs_lock(&system_lock);
 	int32_t result = restart_cardreader_int(rdr, restart);
-	pthread_mutex_unlock(&system_lock);
+	cs_unlock(&system_lock);
 	return result;
 }
 
 static void init_cardreader() {
 
-	pthread_mutex_lock(&system_lock);
+	cs_lock(&system_lock);
 	struct s_reader *rdr;
 	for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 		if (!restart_cardreader_int(rdr, 0))
@@ -1367,7 +1383,7 @@ static void init_cardreader() {
 #ifdef WITH_LB
 	load_stat_from_file();
 #endif
-	pthread_mutex_unlock(&system_lock);
+	cs_unlock(&system_lock);
 }
 
 static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_addr_t ip)
@@ -1387,7 +1403,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 
 	struct s_client *cl;
 	struct s_auth *account;
-	pthread_mutex_lock(&fakeuser_lock);
+	cs_lock(&fakeuser_lock);
 	for (cl=first_client->next; cl ; cl=cl->next)
 	{
 		account = cl->account;
@@ -1419,14 +1435,14 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 					cs_add_violation(ip);
 				}
 				if (cfg.dropdups){
-					pthread_mutex_unlock(&fakeuser_lock);		// we need to unlock here as cs_disconnect_client kills the current thread!
+					cs_unlock(&fakeuser_lock);		// we need to unlock here as cs_disconnect_client kills the current thread!
 					cs_disconnect_client(client);
 				}
 				break;
 			}
 		}
 	}
-	pthread_mutex_unlock(&fakeuser_lock);
+	cs_unlock(&fakeuser_lock);
 }
 
 int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const char *e_txt)
@@ -2632,7 +2648,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
     //Use locking - now default=FALSE, activate on problems!
 	int32_t locked;
 	if (cfg.lb_mode && cfg.lb_use_locking) {
-			pthread_mutex_lock(&get_cw_lock);
+			cs_lock(&get_cw_lock);
 			locked=1;
 	}
 	else
@@ -2722,7 +2738,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 #ifdef WITH_LB
 	if (locked)
-		pthread_mutex_unlock(&get_cw_lock);
+		cs_unlock(&get_cw_lock);
 #endif
 
 	if (er->rc == E_99)

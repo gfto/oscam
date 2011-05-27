@@ -1832,7 +1832,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 					if (rcc && rcc->cards) {
 							cards = rcc->cards;
 							lock = &rcc->cards_busy;
-							pthread_mutex_lock(lock);
+							cs_lock(lock);
 					}
 			}
 
@@ -1999,7 +1999,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 			if (show_global_list)
 					unlock_sharelist();
 			else if (lock)
-					pthread_mutex_unlock(lock);
+					cs_unlock(lock);
 
 		} else {
 #else
@@ -3189,7 +3189,7 @@ int32_t process_request(FILE *f, struct in_addr in) {
 	
 				if (cfg.resolve_gethostbyname) {
 					cs_debug_mask(D_TRACE, "WebIf: try resolving IP with 'gethostbyname'");
-					pthread_mutex_lock(&gethostbyname_lock);
+					cs_lock(&gethostbyname_lock);
 					struct hostent *rht;
 					struct sockaddr_in udp_sa;
 	
@@ -3204,7 +3204,7 @@ int32_t process_request(FILE *f, struct in_addr in) {
 							ok = v;
 					} else {
 						cs_log("can't resolve %s", cfg.http_dyndns); }
-					pthread_mutex_unlock(&gethostbyname_lock);
+					cs_unlock(&gethostbyname_lock);
 	
 				} else {
 					cs_debug_mask(D_TRACE, "WebIf: try resolving IP with 'getaddrinfo'");
@@ -3423,7 +3423,7 @@ int32_t process_request(FILE *f, struct in_addr in) {
 			char *result = NULL;
 			
 			// WebIf allows modifying many things. Thus, all pages except images/css are excpected to be non-threadsafe! 
-			if(pgidx != 19 && pgidx != 20) pthread_mutex_lock(&http_lock);
+			if(pgidx != 19 && pgidx != 20) cs_lock(&http_lock);
 			switch(pgidx) {
 				case 0: result = send_oscam_config(vars, &params); break;
 				case 1: result = send_oscam_reader(vars, &params); break;
@@ -3450,7 +3450,7 @@ int32_t process_request(FILE *f, struct in_addr in) {
 				case 20: result = send_oscam_image(vars, f, &params, "ICMAI", modifiedheader, etagheader); break;
 				default: result = send_oscam_status(vars, &params, 0); break;
 			}
-			if(pgidx != 19 && pgidx != 20) pthread_mutex_unlock(&http_lock);
+			if(pgidx != 19 && pgidx != 20) cs_unlock(&http_lock);
 	
 			if(result == NULL || !strcmp(result, "0") || strlen(result) == 0) send_error500(f);
 			else if (strcmp(result, "1")) {

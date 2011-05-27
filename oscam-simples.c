@@ -1009,3 +1009,108 @@ void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid)
   else
     memcpy(dest, source, 6);
 }
+
+/* Internal function of cs_lock and cs_trylock to prepare adding an entry to the list. Do not call this externally. */
+struct s_client* cs_preparelock(struct s_client *cl, pthread_mutex_t *mutex){
+	if(cl){
+		// WebIf doesn't have real clients...
+		if(cl->typ == 'h') return NULL;
+		if(cl->mutexstore_alloc <= cl->mutexstore_used){
+			void *ret;
+			if(cl->mutexstore_alloc == 0)
+				ret = cs_malloc(&cl->mutexstore, 8 * sizeof(pthread_mutex_t *), -1);
+			else
+				ret = cs_realloc(&cl->mutexstore, (cl->mutexstore_used + 8) * sizeof(pthread_mutex_t *), -1);
+			if(ret != NULL){
+				cl->mutexstore_alloc = cl->mutexstore_used + 8;		
+				cl->mutexstore[cl->mutexstore_used] = mutex;
+			} else {
+				cl->mutexstore_alloc = 0;
+				cl->mutexstore_used = 0;
+			}
+		} else {
+			cl->mutexstore[cl->mutexstore_used] = mutex;			
+		}
+	}
+	return cl;
+}
+
+/* Replacement for pthread_mutex_lock which waits a maximum of about 3 seconds.
+   Locks are saved to the client structure so that they can get cleaned up if the thread was interrupted while holding a lock. */
+int32_t cs_lock(pthread_mutex_t *mutex){
+	int32_t result, oldtype, cnt = 0;
+	/* Make sure that we won't get interrupted while getting the lock */
+	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldtype);
+	struct s_client *cl = cs_preparelock(cur_client(), mutex);
+	do{
+		result = pthread_mutex_trylock(mutex);
+		++cnt;
+		cs_sleepms(100);
+	} while (result == EBUSY && cnt < 30);
+	if(result == 0 && cl)
+		cl->mutexstore_used++;
+	pthread_setcancelstate(oldtype, NULL);
+	pthread_testcancel();
+	if(result == EBUSY){
+		cs_log("A log couldn't be obtained within 3 seconds. Possibly a deadlock happened.");
+	}
+	return result;
+}
+
+/* Encapsulates pthread_mutex_trylock. If a lock is gained it is saved to the client structure so that it can get cleaned up if the thread was interrupted while holding a lock. */
+int32_t cs_trylock(pthread_mutex_t *mutex){
+	int32_t result, oldtype;
+	/* Make sure that we won't get interrupted while getting the lock */
+	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldtype);
+	struct s_client *cl = cs_preparelock(cur_client(), mutex);	
+	if((result=pthread_mutex_trylock(mutex)) == 0 && cl)
+		cl->mutexstore_used++;
+	pthread_setcanceltype(oldtype, NULL);
+	pthread_testcancel();
+	return result;
+}
+
+/* Encapsulates pthread_mutex_unlock and removes the given mutex from the client structure
+  If the given lock was not previously locked by the current thread, nothing is done. */
+int32_t cs_unlock(pthread_mutex_t *mutex){
+	struct s_client *cl = cur_client();	
+	if(cl && cl->typ != 'h'){
+		uint16_t i;
+		/* new mutexes get appended to the end so it should be more efficient to search from end to beginning */
+		for(i = cl->mutexstore_used; i > 0; --i){
+			if(cl->mutexstore[i - 1] == mutex){
+				int32_t result, oldtype;
+				/* Make sure that we won't get interrupted while returning the lock */
+				pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldtype);
+				if(i < cl->mutexstore_used){
+					// Move mutex to last position to prepare removal
+					do {
+						cl->mutexstore[i - 1] = cl->mutexstore[i];
+						++i;
+					} while (i < cl->mutexstore_used);
+					cl->mutexstore[cl->mutexstore_used - 1] = mutex;
+				}				
+				if((result=pthread_mutex_unlock(mutex)) == 0)
+					cl->mutexstore_used--;
+				pthread_setcanceltype(oldtype, NULL);
+				pthread_testcancel();
+				return result;
+			}
+		}
+		return EINVAL;
+	}	else return pthread_mutex_unlock(mutex);
+}
+
+/* Releases all locks still held by the current client. */
+void cs_cleanlocks(){
+	struct s_client *cl = cur_client();
+	if(cl && cl->mutexstore_alloc > 0){
+		uint16_t i;
+		for(i = 0; i < cl->mutexstore_used; ++i){
+			pthread_mutex_unlock(cl->mutexstore[i]);
+		}
+		cl->mutexstore_used = 0;
+		cl->mutexstore_alloc = 0;
+		free(cl->mutexstore);
+	}
+}

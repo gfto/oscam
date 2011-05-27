@@ -16,13 +16,13 @@ static pthread_t share_updater_thread = 0;
 
 LLIST *get_and_lock_sharelist()
 {
-		//pthread_mutex_lock(&cc_shares_lock);
+		//cs_lock(&cc_shares_lock);
 		return reported_carddatas;
 }
 
 void unlock_sharelist()
 {
-		//pthread_mutex_unlock(&cc_shares_lock);
+		//cs_unlock(&cc_shares_lock);
 }
 
 void add_good_bad_sids(struct s_sidtab *ptr, SIDTABBITS sidtabno, struct cc_card *card) {
@@ -991,7 +991,7 @@ void update_card_list() {
                 int32_t count = 0;
                 int32_t notlocked = 1;
                 while (rcc && rcc->cards && rcc->mode == CCCAM_MODE_NORMAL &&
-                    (notlocked=pthread_mutex_trylock(&rcc->cards_busy))) {
+                    (notlocked=cs_trylock(&rcc->cards_busy))) {
                     cs_debug_mask(D_TRACE, "trylock asking reader %s cards", rdr->label);
                     cs_sleepms(50);
 				}
@@ -1018,7 +1018,7 @@ void update_card_list() {
 							}
 						}
 					}
-                    pthread_mutex_unlock(&rcc->cards_busy);
+                    cs_unlock(&rcc->cards_busy);
                 }
                 else
                 	cs_debug_mask(D_TRACE, "reader %s not active! (mode=%d)", rdr->label, rcc?rcc->mode:-1);
@@ -1060,9 +1060,9 @@ int32_t cc_srv_report_cards(struct s_client *cl) {
 
 void refresh_shares()
 {
-		//pthread_mutex_lock(&cc_shares_lock);
+		//cs_lock(&cc_shares_lock);
 		update_card_list();
-		//pthread_mutex_unlock(&cc_shares_lock);
+		//cs_unlock(&cc_shares_lock);
 }
 
 #define DEFAULT_INTERVAL 30
@@ -1189,7 +1189,7 @@ void done_share() {
 				share_updater_thread = 0;
 				
 				cc_free_reported_carddata(reported_carddatas, NULL, 0);
-				//pthread_mutex_unlock(&cc_shares_lock);
+				//cs_unlock(&cc_shares_lock);
 				//pthread_mutex_destroy(&cc_shares_lock);
 		}
 }

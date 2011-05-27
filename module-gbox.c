@@ -522,13 +522,13 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
   sem_post(&gbox->sem);
   gbox->peer.online = 1;
 
-  pthread_mutex_lock(&gbox->lock);
+  cs_lock(&gbox->lock);
 
   uint32_t r_addr_len = 0;
   struct sockaddr_in r_addr;
   if ((n = recvfrom(cli->udp_fd, data, sizeof(gbox->buf), 0, (struct sockaddr *)&r_addr, &r_addr_len)) < 8) {
 	  cs_log("gbox: invalid recvfrom!!!");
-    	pthread_mutex_unlock(&gbox->lock);
+    	cs_unlock(&gbox->lock);
     	return -1;
   }
 
@@ -548,7 +548,7 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
 
 		  cs_add_violation((uint)cli->ip);
 
-		  pthread_mutex_unlock(&gbox->lock);
+		  cs_unlock(&gbox->lock);
 		  return -1;
 	  }
   } else {
@@ -556,7 +556,7 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
 
     cs_add_violation((uint)cli->ip);
 
-    pthread_mutex_unlock(&gbox->lock);
+    cs_unlock(&gbox->lock);
 	  return -1;
   }
 
@@ -630,7 +630,7 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
 
           NULLFREE(gbox->peer.hostname);
           if(!cs_malloc(&gbox->peer.hostname,hostname_len + 1, -1)){
-          	pthread_mutex_unlock(&gbox->lock);
+          	cs_unlock(&gbox->lock);
           	return -1;
           }
           memcpy(gbox->peer.hostname, data + payload_len - 1 - hostname_len, hostname_len);
@@ -728,7 +728,7 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
 
       struct gbox_ecm_info *ei;
       if(!cs_malloc(&ei,sizeof(struct gbox_ecm_info), -1)){
-      	pthread_mutex_unlock(&gbox->lock);
+      	cs_unlock(&gbox->lock);
       	return -1;
       }
       er->src_data = ei;
@@ -764,7 +764,7 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
     default:
       cs_ddump_mask(D_READER, data, n, "gbox: unknown data received (%d bytes):", n);
   }
-  pthread_mutex_unlock(&gbox->lock);
+  cs_unlock(&gbox->lock);
 
   return 0;
 }

@@ -32,7 +32,7 @@ static void switch_log(char* file, FILE **f, int32_t (*pfinit)(void))
 			int32_t rc;
 			char prev_log[strlen(file) + 6];
 			snprintf(prev_log, sizeof(prev_log), "%s-prev", file);
-			if ( pthread_mutex_trylock(&switching_log) == 0) { //I got the lock so I am the first thread detecting a switchlog is needed
+			if ( cs_trylock(&switching_log) == 0) { //I got the lock so I am the first thread detecting a switchlog is needed
 				FILE *tmp = *f;
 				*f = (FILE *)0;
 				fprintf(tmp, "switch log file\n");
@@ -50,8 +50,8 @@ static void switch_log(char* file, FILE **f, int32_t (*pfinit)(void))
 					}
 			}
 			else //I am not the first to detect a switchlog is needed, so I need to wait for the first thread to complete
-				pthread_mutex_lock(&switching_log); //wait on 1st thread
-			pthread_mutex_unlock(&switching_log); //release after processing or after waiting
+				cs_lock(&switching_log); //wait on 1st thread
+			cs_unlock(&switching_log); //release after processing or after waiting
 		}
 	}
 }
@@ -142,7 +142,7 @@ void cs_reinit_loghist(uint32_t size)
 	char *tmp, *tmp2;
 	if(size != cfg.loghistorysize){
 		if(cs_malloc(&tmp, size, -1)){
-			pthread_mutex_lock(&loghistory_lock);
+			cs_lock(&loghistory_lock);
 			tmp2 = loghist;
 			// On shrinking, the log is not copied and the order is reversed
 			if(size < cfg.loghistorysize){
@@ -159,7 +159,7 @@ void cs_reinit_loghist(uint32_t size)
 				cs_sleepms(20);	// Monitor or webif may be currently outputting the loghistory but don't use locking so we sleep a bit...
 				cfg.loghistorysize = size;						
 			}
-			pthread_mutex_unlock(&loghistory_lock);
+			cs_unlock(&loghistory_lock);
 			if(tmp2 != NULL) add_garbage(tmp2);			
 		}
 	}
@@ -227,7 +227,7 @@ static void write_to_log(char *txt)
 		char *target_ptr = NULL;
 		int32_t target_len = strlen(usrtxt) + (strlen(log_buf) - 8) + 1;
 		
-		pthread_mutex_lock(&loghistory_lock);
+		cs_lock(&loghistory_lock);
 		char *lastpos = loghist + (cfg.loghistorysize) - 1;		
 		if (!loghistptr)
 			loghistptr = loghist;
@@ -242,7 +242,7 @@ static void write_to_log(char *txt)
 			loghistptr=loghistptr + target_len + 1;
 			*loghistptr='\0';
 		}
-		pthread_mutex_unlock(&loghistory_lock);
+		cs_unlock(&loghistory_lock);
 
 		snprintf(target_ptr, target_len + 1, "%s\t%s", usrtxt, log_buf + 8);
 	}

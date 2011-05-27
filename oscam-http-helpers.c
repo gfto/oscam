@@ -848,9 +848,9 @@ unsigned long SSL_id_function(void){
 
 void SSL_locking_function(int32_t mode, int32_t type, const char *file, int32_t line){
 	if (mode & CRYPTO_LOCK) {
-		pthread_mutex_lock(&lock_cs[type]);
+		cs_lock(&lock_cs[type]);
 	} else {
-		pthread_mutex_unlock(&lock_cs[type]);
+		cs_unlock(&lock_cs[type]);
 	}
 	// just to remove compiler warnings...
 	if(file || line) return;
@@ -872,9 +872,9 @@ struct CRYPTO_dynlock_value *SSL_dyn_create_function(const char *file, int32_t l
 
 void SSL_dyn_lock_function(int32_t mode, struct CRYPTO_dynlock_value *l, const char *file, int32_t line){
 	if (mode & CRYPTO_LOCK) {
-		pthread_mutex_lock(&l->mutex);
+		cs_lock(&l->mutex);
 	} else {
-		pthread_mutex_unlock(&l->mutex);
+		cs_unlock(&l->mutex);
 	}
 	// just to remove compiler warnings...
 	if(file || line) return;

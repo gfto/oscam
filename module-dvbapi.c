@@ -1278,14 +1278,14 @@ void event_handler(int32_t signal) {
 	if (dvbapi_client != cur_client()) return;
 
 	signal=signal; //avoid compiler warnings
-	pthread_mutex_lock(&event_handler_lock);
+	cs_lock(&event_handler_lock);
 
 	int32_t standby_fd = open(STANDBY_FILE, O_RDONLY);
 	pausecam = (standby_fd > 0) ? 1 : 0;
 	if (standby_fd) close(standby_fd);
 
 	if (cfg.dvbapi_boxtype==BOXTYPE_IPBOX || cfg.dvbapi_pmtmode == 1) {
-		pthread_mutex_unlock(&event_handler_lock);
+		cs_unlock(&event_handler_lock);
 		return;
 	}
 
@@ -1314,14 +1314,14 @@ void event_handler(int32_t signal) {
 	}
 
 	if (disable_pmt_files) {
-	   	pthread_mutex_unlock(&event_handler_lock);
+	   	cs_unlock(&event_handler_lock);
 		return;
 	}
 
 	dirp = opendir(TMPDIR);
 	if (!dirp) {
 		cs_log("opendir failed (errno=%d %s)", errno, strerror(errno));
-		pthread_mutex_unlock(&event_handler_lock);
+		cs_unlock(&event_handler_lock);
 		return;
 	}
 
@@ -1376,7 +1376,7 @@ void event_handler(int32_t signal) {
 		for(j2=0,j1=0;j2<len;j2+=2,j1++) {
 			if (sscanf((char*)mbuf+j2, "%02X", dest+j1) != 1) {
 				cs_log("error parsing QboxHD pmt.tmp, data not valid in position %d",j2);
-				pthread_mutex_unlock(&event_handler_lock);
+				cs_unlock(&event_handler_lock);
 				return;
 			}
 		}
@@ -1412,7 +1412,7 @@ void event_handler(int32_t signal) {
 		}
 	}
 	closedir(dirp);
-	pthread_mutex_unlock(&event_handler_lock);
+	cs_unlock(&event_handler_lock);
 }
 
 void *dvbapi_event_thread(void *cli) {
@@ -1974,7 +1974,7 @@ static void * dvbapi_handler(int32_t ctyp) {
 static void stapi_off() {
 	int32_t i;
 
-	pthread_mutex_lock(&filter_lock);
+	cs_lock(&filter_lock);
 
 	disable_pmt_files=1;
 	stapi_on=0;
@@ -1991,7 +1991,7 @@ static void stapi_off() {
 		}
 	}
 
-	pthread_mutex_unlock(&filter_lock);
+	cs_unlock(&filter_lock);
 	sleep(2);
 	return;
 }
@@ -2323,7 +2323,7 @@ static void *stapi_read_thread(void *sparam) {
 		if (DataSize<=0)
 			continue;
 
-		pthread_mutex_lock(&filter_lock);
+		cs_lock(&filter_lock);
 		for(k=0;k<NumFilterMatches;k++) {
 			for (i=0;i<MAX_DEMUX;i++) {
 				for (j=0;j<MAX_FILTER;j++) {
@@ -2336,7 +2336,7 @@ static void *stapi_read_thread(void *sparam) {
 				}	
 			}
 		}
-		pthread_mutex_unlock(&filter_lock);	
+		cs_unlock(&filter_lock);	
 	}
 	pthread_cleanup_pop(0);
 }

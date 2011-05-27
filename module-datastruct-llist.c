@@ -19,7 +19,7 @@ static void _destroy(LLIST *l)
 {
     if (!l) return;
     if (!l->flag++) {
-    	pthread_mutex_trylock(&l->lock);
+    	pthread_mutex_lock(&l->lock);
     	pthread_mutex_unlock(&l->lock);
 	    pthread_mutex_destroy(&l->lock);
 	    add_garbage(l);
@@ -36,7 +36,7 @@ LLIST *ll_create()
 int32_t ll_lock(LLIST *l)
 {
 	int32_t res = 1;
-	while (l && !l->flag && (res=pthread_mutex_trylock(&l->lock))) {
+	while (l && !l->flag && (res=cs_trylock(&l->lock))) {
 		cs_debug_mask(D_TRACE, "trylock ll_lock wait");
 		cs_sleepms(50);
 	}
@@ -45,7 +45,7 @@ int32_t ll_lock(LLIST *l)
 
 void ll_unlock(LLIST *l)
 {
-	if (l && !l->flag)
+	if (l)
 		pthread_mutex_unlock(&l->lock);
 }
 

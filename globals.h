@@ -704,6 +704,9 @@ struct s_client
   struct s_emm *emmcache;
 
   pthread_t thread;
+  pthread_mutex_t **mutexstore;
+  uint16_t mutexstore_alloc;
+  uint16_t mutexstore_used;
 
   struct s_serial_client *serialdata;
 
@@ -1362,6 +1365,10 @@ extern char *strnew(char *str);
 extern void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid);
 extern void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid);
 extern int32_t check_ip(struct s_ip *ip, in_addr_t n);
+extern int32_t cs_lock(pthread_mutex_t *mutex);
+extern int32_t cs_trylock(pthread_mutex_t *mutex);
+extern int32_t cs_unlock(pthread_mutex_t *mutex);
+extern void cs_cleanlocks();
 
 extern pthread_key_t getclient;
 extern struct s_client * cur_client(void);
