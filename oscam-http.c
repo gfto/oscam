@@ -84,7 +84,7 @@ char *send_oscam_config_global(struct templatevars *vars, struct uriparams *para
 			}
 		}
 		if(cfg.usrfile == NULL) cfg.disableuserfile = 1;
-		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration Global done. You should restart Oscam now.</B><BR><BR>");
+		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration Global done. You should restart OSCam now.</B><BR><BR>");
 		if(write_config()==0) refresh_oscam(REFR_SERVER);
 		else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
@@ -229,7 +229,7 @@ char *send_oscam_config_camd33(struct templatevars *vars, struct uriparams *para
 				chk_t_camd33((*params).params[i], (*params).values[i]);
 			}
 		}
-		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration camd33 done. You should restart Oscam now.</B><BR><BR>");
+		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration camd33 done. You should restart OSCam now.</B><BR><BR>");
 		if(write_config()==0) refresh_oscam(REFR_SERVER);
 		else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
@@ -258,7 +258,7 @@ char *send_oscam_config_camd35(struct templatevars *vars, struct uriparams *para
 				chk_t_camd35((*params).params[i], (*params).values[i]);
 			}
 		}
-		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration camd35 done. You should restart Oscam now.</B><BR><BR>");
+		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration camd35 done. You should restart OSCam now.</B><BR><BR>");
 		if(write_config()==0) refresh_oscam(REFR_SERVER);
 		else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
@@ -285,7 +285,7 @@ char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uriparams *p
 				chk_t_camd35_tcp((*params).params[i], (*params).values[i]);
 			}
 		}
-		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration camd35 TCP done. You should restart Oscam now.</B><BR><BR>");
+		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration camd35 TCP done. You should restart OSCam now.</B><BR><BR>");
 		if(write_config()==0) refresh_oscam(REFR_SERVER);
 		else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
@@ -315,7 +315,7 @@ char *send_oscam_config_newcamd(struct templatevars *vars, struct uriparams *par
 				chk_t_newcamd((*params).params[i], (*params).values[i]);
 			}
 		}
-		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration Newcamd done. You should restart Oscam now.</B><BR><BR>");
+		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration Newcamd done. You should restart OSCam now.</B><BR><BR>");
 		if(write_config()==0) refresh_oscam(REFR_SERVER);
 		else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
@@ -353,7 +353,7 @@ char *send_oscam_config_radegast(struct templatevars *vars, struct uriparams *pa
 				chk_t_radegast((*params).params[i], (*params).values[i]);
 			}
 		}
-		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration Radegast done. You should restart Oscam now.</B><BR><BR>");
+		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration Radegast done. You should restart OSCam now.</B><BR><BR>");
 		if(write_config()==0) refresh_oscam(REFR_SERVER);
 		else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
@@ -458,7 +458,7 @@ char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *par
 				}
 			}
 		}
-		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration Monitor done. You should restart Oscam now.</B><BR><BR>");
+		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration Monitor done. You should restart OSCam now.</B><BR><BR>");
 		if(write_config()==0) refresh_oscam(REFR_SERVER);
 		else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
@@ -547,7 +547,7 @@ char *send_oscam_config_serial(struct templatevars *vars, struct uriparams *para
 				chk_t_serial((*params).params[i], (*params).values[i]);
 			}
 		}
-		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration Serial done. You should restart Oscam now.</B><BR><BR>");
+		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration Serial done. You should restart OSCam now.</B><BR><BR>");
 		if(write_config()==0) refresh_oscam(REFR_SERVER);
 		else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
@@ -580,7 +580,7 @@ char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparams *para
 				chk_t_dvbapi((*params).params[i], (*params).values[i]);
 			}
 		}
-		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration DVB Api done. You should restart Oscam now.</B><BR><BR>");
+		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration DVB Api done. You should restart OSCam now.</B><BR><BR>");
 		if(write_config()==0) refresh_oscam(REFR_SERVER);
 		else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
@@ -622,7 +622,7 @@ char *send_oscam_config_anticasc(struct templatevars *vars, struct uriparams *pa
 				chk_t_ac((*params).params[i], (*params).values[i]);
 			}
 		}
-		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration Anticascading done. You should restart Oscam now.</B><BR><BR>");
+		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration Anticascading done. You should restart OSCam now.</B><BR><BR>");
 		refresh_oscam(REFR_ANTICASC);
 		if(write_config()==0) refresh_oscam(REFR_SERVER);
 		else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
