@@ -303,9 +303,9 @@ void chk_cltab(char *classasc, CLASSTAB *clstab)
 	for( i = 0, ptr1 = strtok_r(classasc, ",", &saveptr1); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1) ) {
 		ptr1 = trim(ptr1);
 		if( ptr1[0] == '!' )
-			newclstab.bclass[clstab->bn++] = (uchar)a2i(ptr1+1, 2);
+			newclstab.bclass[newclstab.bn++] = (uchar)a2i(ptr1+1, 2);
 		else
-			newclstab.aclass[clstab->an++] = (uchar)a2i(ptr1, 2);
+			newclstab.aclass[newclstab.an++] = (uchar)a2i(ptr1, 2);
 	}
 	memcpy(clstab, &newclstab, sizeof(CLASSTAB));
 }
