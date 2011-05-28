@@ -641,6 +641,8 @@ void clear_ptab(struct s_ptab *ptab){
 /* Clears given caidtab */
 void clear_caidtab(struct s_caidtab *ctab){
 	memset(ctab, 0, sizeof(struct s_caidtab));
+	int32_t i;
+	for (i = 1; i < CS_MAXCAIDTAB; ctab->mask[i++] = 0xffff);
 }
 
 /* Clears given tuntab */

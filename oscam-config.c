@@ -152,6 +152,7 @@ void chk_caidtab(char *caidasc, CAIDTAB *ctab)
 	char *ptr1, *ptr2, *ptr3, *saveptr1 = NULL;
 	CAIDTAB newctab;
 	memset(&newctab, 0, sizeof(CAIDTAB));
+	for (i = 1; i < CS_MAXCAIDTAB; newctab.mask[i++] = 0xffff);
 
 	for (i = 0, ptr1 = strtok_r(caidasc, ",", &saveptr1); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1)) {
 		uint32_t caid, mask, cmap;
@@ -4440,7 +4441,6 @@ int32_t init_readerdb()
 					rdr = newreader;
 				}
 			}
-			memset(rdr, 0, sizeof(struct s_reader));
 			rdr->enable = 1;
 			rdr->tcp_rto = 30;
 			rdr->show_cls = 10;
