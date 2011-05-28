@@ -1250,6 +1250,13 @@ struct s_config
 #ifdef QBOXHD_LED
     int8_t disableqboxhdled; // disable qboxhd led , default = 0
 #endif
+
+#ifdef LCDSUPPORT
+    char		*lcd_output_path;
+    int32_t		lcd_hide_idle;
+    int32_t		lcd_write_intervall;
+#endif
+
 };
 
 struct s_clientinit

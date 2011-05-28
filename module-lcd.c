@@ -22,7 +22,11 @@ void refresh_lcd_file() {
 
 	char targetfile[256];
 	char channame[32];
-	snprintf(targetfile, sizeof(targetfile),"%s%s", get_tmp_dir(), "/oscam.lcd");
+
+	if(cfg.lcd_output_path == NULL)
+		snprintf(targetfile, sizeof(targetfile),"%s%s", get_tmp_dir(), "/oscam.lcd");
+	else
+		snprintf(targetfile, sizeof(targetfile),"%s%s", cfg.lcd_output_path, "/oscam.lcd");
 
 	int8_t iscccam = 0;
 	int32_t seconds = 0, secs = 0, fullmins = 0, mins = 0, fullhours = 0, hours = 0,	days = 0;
@@ -76,7 +80,7 @@ void refresh_lcd_file() {
 			// Reader/Proxy table start
 			for ( i=0, cl=first_client; cl ; cl=cl->next, i++) {
 
-				if (cl->typ=='r' || cl->typ=='p'){
+				if ((cl->typ=='r' || cl->typ=='p') && ((now - cl->last) > 20 || !cfg.lcd_hide_idle)){
 					type = "";
 					label = "";
 					status = "OFF";
@@ -215,7 +219,7 @@ void refresh_lcd_file() {
 		}
 
 		idx = 0;
-		cs_sleepms(10000);
+		cs_sleepms(cfg.lcd_write_intervall * 1000);
 		cnt++;
 	}
 

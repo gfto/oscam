@@ -43,11 +43,11 @@ static char token[4096];
 typedef enum cs_proto_type
 {
 	TAG_GLOBAL,		// must be first !
-	TAG_MONITOR,		// monitor
+	TAG_MONITOR,	// monitor
 	TAG_CAMD33,		// camd 3.3x
 	TAG_CAMD35,		// camd 3.5x UDP
-	TAG_NEWCAMD,		// newcamd
-	TAG_RADEGAST,		// radegast
+	TAG_NEWCAMD,	// newcamd
+	TAG_RADEGAST,	// radegast
 	TAG_SERIAL,		// serial (static)
 	TAG_CS357X,		// camd 3.5x UDP
 	TAG_CS378X,		// camd 3.5x TCP
@@ -58,7 +58,10 @@ typedef enum cs_proto_type
 	TAG_CONSTCW,		// constcw
 	TAG_DVBAPI,		// dvbapi
 	TAG_WEBIF,		// webif
-	TAG_ANTICASC		// anti-cascading
+	TAG_ANTICASC	// anti-cascading
+#ifdef LCDSUPPORT
+	,TAG_LCD		// LCD
+#endif
 } cs_proto_type_t;
 
 static const char *cctag[]={"global", "monitor", "camd33", "camd35", "newcamd", "radegast", "serial",
@@ -66,7 +69,11 @@ static const char *cctag[]={"global", "monitor", "camd33", "camd35", "newcamd", 
 #ifdef MODULE_CCCAM
 		      "cccam",
 #endif
-		      "constcw", "dvbapi", "webif", "anticasc", NULL};
+		      "constcw", "dvbapi", "webif", "anticasc",
+#ifdef LCDSUPPORT
+		      "lcd",
+#endif
+		      NULL};
 
 
 /* Returns the default value if string length is zero, otherwise atoi is called*/
@@ -1327,6 +1334,36 @@ void chk_t_dvbapi(char *token, char *value)
 }
 #endif
 
+#ifdef LCDSUPPORT
+void chk_t_lcd(char *token, char *value)
+{
+
+	if (!strcmp(token, "lcd_outputpath")) {
+		NULLFREE(cfg.lcd_output_path);
+		if (strlen(value) > 0) {
+			if(!cs_malloc(&(cfg.lcd_output_path), strlen(value) + 1, -1)) return;
+			memcpy(cfg.lcd_output_path, value, strlen(value) + 1);
+		}
+		return;
+	}
+
+	if (!strcmp(token, "lcd_hideidle")) {
+		cfg.lcd_hide_idle = strToIntVal(value, 0);
+		return;
+	}
+
+	if (!strcmp(token, "lcd_writeintervall")) {
+		cfg.lcd_write_intervall = strToIntVal(value, 10);
+		if (cfg.lcd_write_intervall < 5)
+			cfg.lcd_write_intervall = 5;
+		return;
+	}
+
+	if (token[0] != '#')
+		fprintf(stderr, "Warning: keyword '%s' in lcd section not recognized\n",token);
+}
+#endif
+
 static void chk_token(char *token, char *value, int32_t tag)
 {
 	switch(tag) {
@@ -1362,6 +1399,12 @@ static void chk_token(char *token, char *value, int32_t tag)
 		case TAG_ANTICASC: chk_t_ac(token, value); break;
 #else
 		case TAG_ANTICASC: fprintf(stderr, "OSCam compiled without Anticascading support. Parameter %s ignored\n", token); break;
+#endif
+
+#ifdef LCDSUPPORT
+		case TAG_LCD: chk_t_lcd(token, value); break;
+#else
+		case TAG_LCD: fprintf(stderr, "OSCam compiled without LCD support. Parameter %s ignored\n", token); break;
 #endif
 
 	}
@@ -1520,6 +1563,11 @@ int32_t init_config()
     cfg.lb_stat_cleanup = DEFAULT_LB_STAT_CLEANUP;
     cfg.lb_auto_betatunnel = DEFAULT_LB_AUTO_BETATUNNEL;
     //end loadbalancer defaults
+#endif
+
+#ifdef LCDSUPPORT
+    cfg.lcd_hide_idle = 0;
+    cfg.lcd_write_intervall = 10;
 #endif
 
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_conf);
@@ -2251,6 +2299,18 @@ int32_t write_config()
 			fprintf_conf(f, CONFVARWIDTH, "fakedelay", "%d\n", cfg.ac_fakedelay);
 		fputc((int)'\n', f);
 	}
+#endif
+
+#ifdef LCDSUPPORT
+	fprintf(f,"[lcd]\n");
+	if(cfg.lcd_output_path != NULL) {
+		if(strlen(cfg.lcd_output_path) > 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "lcd_outputpath", "%s\n", cfg.lcd_output_path);
+	}
+	if(cfg.lcd_hide_idle != 0 || cfg.http_full_cfg)
+		fprintf_conf(f, CONFVARWIDTH, "lcd_hideidle", "%d\n", cfg.lcd_hide_idle);
+	if(cfg.lcd_write_intervall != 10 || cfg.http_full_cfg)
+		fprintf_conf(f, CONFVARWIDTH, "lcd_writeintervall", "%d\n", cfg.lcd_write_intervall);
 #endif
 
 	fclose(f);
