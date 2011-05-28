@@ -141,7 +141,7 @@ static int32_t seca_card_init(struct s_reader * reader, ATR newatr)
   return OK;
 }
 
-static int32_t get_prov_index(struct s_reader * rdr, char *provid)	//returns provider id or -1 if not found
+static int32_t get_prov_index(struct s_reader * rdr, uint8_t *provid)	//returns provider id or -1 if not found
 {
   int32_t prov;
   for (prov=0; prov<rdr->nprov; prov++) //search for provider index
@@ -157,15 +157,17 @@ static int32_t seca_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   unsigned char ins3c[] = { 0xc1,0x3c,0x00,0x00,0x00 }; // coding cw
   unsigned char ins3a[] = { 0xc1,0x3a,0x00,0x00,0x10 }; // decoding cw
   int32_t i;
-  i=get_prov_index(reader, (char *) er->ecm+3);
-  if ((i == -1) || (reader->availkeys[i][0] == 0)) //if provider not found or expired
-  {
-      if( i == -1 )
-        snprintf( er->msglog, MSGLOGSIZE, "provider not found" );
-      else
-        snprintf( er->msglog, MSGLOGSIZE, "provider expired" );
 
-  	return ERROR;
+  if ((i = get_prov_index(reader, er->ecm+3)) == -1) // if provider not found
+  {
+     snprintf( er->msglog, MSGLOGSIZE, "provider not found" );
+     return ERROR;
+  }
+
+  if ((er->ecm[7] & 0x0F) != 0x0E && reader->availkeys[i][0] == 0) // if expired and not using OP Key 0E
+  {
+     snprintf( er->msglog, MSGLOGSIZE, "provider expired" );
+     return ERROR;
   }
 
   ins3c[2]=i;
@@ -190,7 +192,7 @@ static int32_t seca_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
       break;
     }
     if (ret)
-      snprintf( er->msglog, MSGLOGSIZE, "%s ins3c card response: %02x %02x", reader->label, cta_res[0] , cta_res[1] );
+      snprintf( er->msglog, MSGLOGSIZE, "%s ins3c card res: %02x %02x", reader->label, cta_res[0] , cta_res[1] );
     try++;
   } while ((try < 3) && (ret));
   if (ret)
@@ -219,7 +221,7 @@ static int32_t seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //return
 			ep->type = SHARED;
 			memset(ep->hexserial,0,8);
 			memcpy(ep->hexserial, ep->emm + 5, 3); //dont include custom byte; this way the network also knows SA
-			i=get_prov_index(rdr, (char *) ep->emm+3);
+			i=get_prov_index(rdr, ep->emm+3);
 			cs_debug_mask(D_EMM, "SECA EMM: SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 3)); 
 			if (i== -1) //provider not found on this card
 				return FALSE; //do not pass this EMM
@@ -295,7 +297,7 @@ static int32_t seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   unsigned char ins40[] = { 0xc1,0x40,0x00,0x00,0x00 };
   int32_t i,ins40data_offset;
   int32_t emm_length = ((ep->emm[1] & 0x0f) << 8) + ep->emm[2];
-  char *prov_id_ptr;
+  uint8_t *prov_id_ptr;
 
   cs_ddump_mask (D_EMM, ep->emm, emm_length + 3, "EMM:");
   switch (ep->type) {
@@ -303,14 +305,14 @@ static int32_t seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 			ins40[3]=ep->emm[9];
 			ins40[4]= emm_length - 0x07;
 			ins40data_offset = 10;
-			prov_id_ptr = (char *)ep->emm+3;
+			prov_id_ptr = ep->emm+3;
 			break;
 
 		case UNIQUE:	
 			ins40[3]=ep->emm[12];
 			ins40[4]= emm_length - 0x0A;
 			ins40data_offset = 13;
-			prov_id_ptr = (char *)ep->emm+9;
+			prov_id_ptr = ep->emm+9;
 			break;
 
 		default:
