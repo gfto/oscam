@@ -745,7 +745,7 @@ static int32_t monitor_process_request(char *req)
 			case  2:	monitor_logsend(arg); break;	// log
 			case  3:	monitor_process_info(); break;	// status
 			case  4:	if (cur_cl->monlvl > 3) cs_exit(SIGQUIT); break;	// shutdown
-			case  5:	if (cur_cl->monlvl > 2) cs_reinit_clients(cfg.account); break;	// reload
+			case  5:	if (cur_cl->monlvl > 2) cs_accounts_chk(); break;	// reload
 			case  6:	monitor_process_details(arg); break;	// details
 			case  7:	monitor_send_details_version(); break;	// version
 			case  8:	if (cur_cl->monlvl > 3) monitor_set_debuglevel(arg); break;	// debuglevel

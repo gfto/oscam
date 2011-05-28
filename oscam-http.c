@@ -58,7 +58,7 @@ void refresh_oscam(enum refreshtypes refreshtype) {
 		case REFR_SERVICES:
 		cs_log("Refresh Services requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
 		//init_sidtab();
-		cs_reinit_clients(cfg.account);
+		cs_accounts_chk();
 		break;
 
 #ifdef CS_ANTICASC
