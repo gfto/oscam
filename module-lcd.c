@@ -13,6 +13,8 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include "module-stat.h"
+#include "module-cccam.h"
+#include "module-cccshare.h"
 
 int8_t running;
 
@@ -22,8 +24,10 @@ void refresh_lcd_file() {
 	char channame[32];
 	snprintf(targetfile, sizeof(targetfile),"%s%s", get_tmp_dir(), "/oscam.lcd");
 
+	int8_t iscccam = 0;
 	int32_t seconds = 0, secs = 0, fullmins = 0, mins = 0, fullhours = 0, hours = 0,	days = 0;
 	time_t now = time((time_t)0);
+
 
 	while(running) {
 		now = time((time_t)0);
@@ -91,10 +95,15 @@ void refresh_lcd_file() {
 
 					else if (cl->typ == 'p'){
 						type = "P";
+						iscccam = 0;
 						idx = count_p;
 						label = cl->reader->label;
+						if ((strncmp(monitor_get_proto(cl), "cccam", 5) == 0))
+							iscccam = 1;
+
 						if (cl->reader->card_status == CARD_INSERTED)
 							status = "CON";
+
 						count_p++;
 					}
 
@@ -112,31 +121,50 @@ void refresh_lcd_file() {
 
 					int16_t written = 0, skipped = 0, blocked = 0, error = 0;
 
-					for (i=0; i<4; i++) {
-						error += cl->reader->emmerror[i];
-						blocked += cl->reader->emmblocked[i];
-						skipped += cl->reader->emmskipped[i];
-						written += cl->reader->emmwritten[i];
+					char *emmtext;
+					if(cs_malloc(&emmtext, 16 * sizeof(char), -1)){
+						if(cl->typ == 'r' || !iscccam ){
+							for (i=0; i<4; i++) {
+								error += cl->reader->emmerror[i];
+								blocked += cl->reader->emmblocked[i];
+								skipped += cl->reader->emmskipped[i];
+								written += cl->reader->emmwritten[i];
+							}
+							snprintf(emmtext, 16, "%3d|%3d|%3d|%3d",
+									written > 999? 999 : written,
+									skipped > 999? 999 : skipped,
+									blocked > 999? 999 : blocked,
+									error > 999? 999 : error);
+
+						} else if(cl->typ == 'p' && iscccam ){
+							struct cc_data *rcc = cl->cc;
+							if(rcc){
+								LLIST *cards = rcc->cards;
+								if (cards) {
+									int32_t cnt = ll_count(cards);
+									int32_t locals = rcc->num_hop1;
+									snprintf(emmtext, 16, " %3d/%3d card%s", locals, cnt, (cnt > 1)? "s ": "  ");
+								}
+							} else {
+								snprintf(emmtext, 16, "   No cards    ");
+							}
+
+						} else {
+							snprintf(emmtext, 16, "               ");
+						}
+
 					}
 
 					if(days == 0) {
-						fprintf(fpsave,"%s%d | %-10.10s |     %02d:%02d:%02d |%3d|%3d|%3d|%3d| %s\n",
+						fprintf(fpsave,"%s%d | %-10.10s |     %02d:%02d:%02d |%s| %s\n",
 								type, idx, label, hours, mins,
-								secs,
-								written > 999? 999 : written,
-								skipped > 999? 999 : skipped,
-								blocked > 999? 999 : blocked,
-								error > 999? 999 : error, status);
+								secs, emmtext, status);
 					} else {
-						fprintf(fpsave,"%s%d | %-10.10s |% 2dd %02d:%02d:%02d |%3d|%3d|%3d|%3d| %s\n",
+						fprintf(fpsave,"%s%d | %-10.10s |% 2dd %02d:%02d:%02d |%s| %s\n",
 								type, idx, label, days, hours, mins,
-								secs,
-								written > 999? 999 : written,
-								skipped > 999? 999 : skipped,
-								blocked > 999? 999 : blocked,
-								error > 999? 999 : error, status);
+								secs, emmtext, status);
 					}
-
+					free(emmtext);
 				}
 			}
 
