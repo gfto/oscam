@@ -3701,7 +3701,6 @@ void http_srv() {
 		lock_cs = NULL;
 	}
 #endif
-	pthread_attr_destroy(&attr);
 	pthread_mutex_destroy(&http_lock);
 	cs_log("HTTP Server: Shutdown requested.");
 	close(sock);

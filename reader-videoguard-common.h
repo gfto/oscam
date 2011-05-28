@@ -31,7 +31,7 @@ extern void cAES_SetKey(struct s_reader * reader, const unsigned char *key);
 
 extern void __xxor(unsigned char *data, int32_t len, const unsigned char *v1, const unsigned char *v2);
 #define xor16(v1,v2,d) __xxor((d),16,(v1),(v2))
-#define val_by2on3(x)  ((0xaaab*(x))>>16) //fixed point32_t *2/3
+#define val_by2on3(x)  ((0xaaab*(x))>>16) //fixed point *2/3
 
 extern void cCamCryptVG_SetSeed(struct s_reader * reader);
 extern void cCamCryptVG_GetCamKey(struct s_reader * reader, unsigned char *buff);
