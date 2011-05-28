@@ -119,13 +119,21 @@ void refresh_lcd_file() {
 					}
 
 					if(days == 0) {
-						fprintf(fpsave,"%s%d | %-10.10s |     %02d:%02d:%02d |% 3d|% 3d|% 3d|% 3d| %s\n",
+						fprintf(fpsave,"%s%d | %-10.10s |     %02d:%02d:%02d |%3d|%3d|%3d|%3d| %s\n",
 								type, idx, label, hours, mins,
-								secs, written, skipped, blocked, error, status);
+								secs,
+								written > 999? 999 : written,
+								skipped > 999? 999 : skipped,
+								blocked > 999? 999 : blocked,
+								error > 999? 999 : error, status);
 					} else {
-						fprintf(fpsave,"%s%d | %-10.10s |% 2dd %02d:%02d:%02d |% 3d|% 3d|% 3d|% 3d| %s\n",
+						fprintf(fpsave,"%s%d | %-10.10s |% 2dd %02d:%02d:%02d |%3d|%3d|%3d|%3d| %s\n",
 								type, idx, label, days, hours, mins,
-								secs, written, skipped, blocked, error, status);
+								secs,
+								written > 999? 999 : written,
+								skipped > 999? 999 : skipped,
+								blocked > 999? 999 : blocked,
+								error > 999? 999 : error, status);
 					}
 
 				}
