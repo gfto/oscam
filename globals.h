@@ -139,13 +139,12 @@
 #ifndef PTHREAD_STACK_MIN
 #define PTHREAD_STACK_MIN 64000
 #endif
+#define PTHREAD_STACK_SIZE PTHREAD_STACK_MIN+32768
 
 #ifdef  CS_EMBEDDED
 #define CS_MAXPENDING   16
-#define PTHREAD_STACK_SIZE PTHREAD_STACK_MIN+8000
 #else
 #define CS_MAXPENDING   32
-#define PTHREAD_STACK_SIZE PTHREAD_STACK_MIN+10000
 #endif
 
 #define CS_EMMCACHESIZE  64 //nr of EMMs that each client will cache; cache is per client, so memory-expensive...

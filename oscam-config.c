@@ -318,38 +318,38 @@ void chk_cltab(char *classasc, CLASSTAB *clstab)
 void chk_port_tab(char *portasc, PTAB *ptab)
 {
 	int32_t i, j, nfilts, ifilt, iport;
-	PTAB newptab;
+	PTAB *newptab;
 	char *ptr1, *ptr2, *ptr3, *saveptr1 = NULL;
 	char *ptr[CS_MAXPORTS] = {0};
 	int32_t port[CS_MAXPORTS] = {0};
-	memset(&newptab, 0, sizeof(newptab));
+	if(!cs_malloc(&newptab, sizeof(PTAB), -1)) return;
 
-	for (nfilts = i = 0, ptr1 = strtok_r(portasc, ";", &saveptr1); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok_r(NULL, ";", &saveptr1), i++) {
+	for (nfilts = i = 0, ptr1 = strtok_r(portasc, ";", &saveptr1); (i < CS_MAXPORTS) && (ptr1); ptr1 = strtok_r(NULL, ";", &saveptr1), i++) {
 		ptr[i] = ptr1;
 		if( (ptr2=strchr(trim(ptr1), '@')) ) {
 			*ptr2++ ='\0';
-			newptab.ports[i].s_port = atoi(ptr1);
+			newptab->ports[i].s_port = atoi(ptr1);
 
 			//checking for des key for port
-			newptab.ports[i].ncd_key_is_set = 0;   //default to 0
+			newptab->ports[i].ncd_key_is_set = 0;   //default to 0
 			if( (ptr3=strchr(trim(ptr1), '{')) ) {
 				*ptr3++='\0';
-				if (key_atob_l(ptr3, newptab.ports[i].ncd_key, 28))
+				if (key_atob_l(ptr3, newptab->ports[i].ncd_key, 28))
 					fprintf(stderr, "newcamd: error in DES Key for port %s -> ignored\n", ptr1);
 				else
-					newptab.ports[i].ncd_key_is_set = 1;
+					newptab->ports[i].ncd_key_is_set = 1;
 			}
 
 			ptr[i] = ptr2;
-			port[i] = newptab.ports[i].s_port;
-			newptab.nports++;
+			port[i] = newptab->ports[i].s_port;
+			newptab->nports++;
 		}
 		nfilts++;
 	}
 
-	if( nfilts == 1 && strlen(portasc) < 6 && newptab.ports[0].s_port == 0 ) {
-		newptab.ports[0].s_port = atoi(portasc);
-		newptab.nports = 1;
+	if( nfilts == 1 && strlen(portasc) < 6 && newptab->ports[0].s_port == 0 ) {
+		newptab->ports[0].s_port = atoi(portasc);
+		newptab->nports = 1;
 	}
 
 	iport = ifilt = 0;
@@ -359,17 +359,18 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 		for (j = 0, ptr3 = strtok_r(ptr[i], ",", &saveptr1); (j < CS_MAXPROV) && (ptr3); ptr3 = strtok_r(NULL, ",", &saveptr1), j++) {
 			if( (ptr2=strchr(trim(ptr3), ':')) ) {
 				*ptr2++='\0';
-				newptab.ports[iport].ftab.nfilts++;
-				ifilt = newptab.ports[iport].ftab.nfilts-1;
-				newptab.ports[iport].ftab.filts[ifilt].caid = (uint16_t)a2i(ptr3, 4);
-				newptab.ports[iport].ftab.filts[ifilt].prids[j] = a2i(ptr2, 6);
+				newptab->ports[iport].ftab.nfilts++;
+				ifilt = newptab->ports[iport].ftab.nfilts-1;
+				newptab->ports[iport].ftab.filts[ifilt].caid = (uint16_t)a2i(ptr3, 4);
+				newptab->ports[iport].ftab.filts[ifilt].prids[j] = a2i(ptr2, 6);
 			} else {
-				newptab.ports[iport].ftab.filts[ifilt].prids[j] = a2i(ptr3, 6);
+				newptab->ports[iport].ftab.filts[ifilt].prids[j] = a2i(ptr3, 6);
 			}
-			newptab.ports[iport].ftab.filts[ifilt].nprids++;
+			newptab->ports[iport].ftab.filts[ifilt].nprids++;
 		}
 	}
-	memcpy(ptab, &newptab, sizeof(PTAB));
+	memcpy(ptab, newptab, sizeof(PTAB));
+	free(newptab);
 }
 
 #ifdef MODULE_CCCAM
