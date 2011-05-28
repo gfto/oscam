@@ -46,7 +46,7 @@ static void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data)
 {
   int32_t i, ecmi, ecm_header_count;
   unsigned char buffer[0x80];
-  unsigned char md5_digest[0x10];
+  unsigned char md5tmp[MD5_DIGEST_LENGTH];
   static const uint16_t Hash3[] = {0x0123,0x4567,0x89AB,0xCDEF,0xF861,0xCB52};
   static const unsigned char Hash4[] = {0x0B,0x04,0x07,0x08,0x05,0x09,0x0B,0x0A,0x07,0x02,0x0A,0x05,0x04,0x08,0x0D,0x0F};
   static const uint16_t NdTabB001[0x15][0x20] = {
@@ -207,8 +207,8 @@ static void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data)
           memset(buffer, 0, sizeof(buffer));
           memcpy(buffer, cw, 8);
           memcpy(buffer + 8, &ecm_header_data[ecmi + 3], ecm_header_data[ecmi] - 2);
-          MD5(buffer, 8 + ecm_header_data[ecmi] - 2, md5_digest);
-          memcpy(cw, md5_digest, 8);
+          MD5(buffer, 8 + ecm_header_data[ecmi] - 2, md5tmp);
+          memcpy(cw, md5tmp, 8);
           cs_ddump_mask(D_READER, cw, 8, "[videoguard2-reader] Postprocessed Case 3 DW:");
           break;
         }
@@ -274,13 +274,13 @@ static void vg2_read_tiers(struct s_reader * reader)
     if(cta_res[2]==0 && cta_res[3]==0 && stopemptytier) return;
     if(cta_res[2]!=0 || cta_res[3]!=0) {
       int32_t y,m,d,H,M,S;
+      char tiername[83];
       rev_date_calc(&cta_res[4],&y,&m,&d,&H,&M,&S,reader->card_baseyear);
-      uint16_t tier_id = (cta_res[2] << 8) | cta_res[3];
-      char *tier_name = get_tiername(tier_id, reader->caid);
+      uint16_t tier_id = (cta_res[2] << 8) | cta_res[3];      
       if(!stopemptytier){
         cs_debug_mask(D_READER, "tier: %04x, tier-number: 0x%02x",tier_id,i);
       }
-      cs_ri_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s",tier_id,y,m,d,H,M,S,tier_name);
+      cs_ri_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s",tier_id,y,m,d,H,M,S,get_tiername(tier_id, reader->caid, tiername));
     }
   }
 }
@@ -577,11 +577,12 @@ static int32_t videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
   //log tiers
   int32_t k;
+  char tiername[83];
   for (k = posECMpart2+1; k < lenECMpart2+posECMpart2+1-4; k++){
     if (er->ecm[k] == 0x03 && er->ecm[k+3] == 0x80) {
       uint16_t vtier_id = (er->ecm[k+1] << 8) | er->ecm[k+2];
-      char *vtier_name = get_tiername(vtier_id, reader->caid);
-      cs_log("valid tier: %04x %s",vtier_id,vtier_name);
+      get_tiername(vtier_id, reader->caid, tiername);
+      cs_log("valid tier: %04x %s",vtier_id, tiername);
     }
   }
 */

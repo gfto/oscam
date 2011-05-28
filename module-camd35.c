@@ -49,17 +49,18 @@ static int32_t camd35_auth_client(uchar *ucrc)
   uint32_t crc;
   struct s_auth *account;
   struct s_client *cl = cur_client();
+  unsigned char md5tmp[MD5_DIGEST_LENGTH];
 
   if (cl->upwd[0])
     return(memcmp(cl->ucrc, ucrc, 4) ? 1 : 0);
   cl->crypted=1;
   crc=(((ucrc[0]<<24) | (ucrc[1]<<16) | (ucrc[2]<<8) | ucrc[3]) & 0xffffffffL);
   for (account=cfg.account; (account) && (!cl->upwd[0]); account=account->next)
-    if (crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), cl->dump), 16))
+    if (crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), md5tmp), MD5_DIGEST_LENGTH))
     {
       memcpy(cl->ucrc, ucrc, 4);
       cs_strncpy((char *)cl->upwd, account->pwd, sizeof(cl->upwd));
-      aes_set_key((char *) MD5(cl->upwd, strlen((char *)cl->upwd), cl->dump));
+      aes_set_key((char *) MD5(cl->upwd, strlen((char *)cl->upwd), md5tmp));
       rc=cs_auth_client(cl, account, NULL);
     }
   return(rc);
@@ -370,10 +371,11 @@ static void * camd35_server(void *cli)
 
 static void casc_set_account()
 {
+	unsigned char md5tmp[MD5_DIGEST_LENGTH];
   struct s_client *cl = cur_client();
   cs_strncpy((char *)cl->upwd, cl->reader->r_pwd, sizeof(cl->upwd));
-  memcpy(cl->ucrc, i2b(4, crc32(0L, MD5((unsigned char *)cl->reader->r_usr, strlen(cl->reader->r_usr), cl->dump), 16)), 4);
-  aes_set_key((char *)MD5(cl->upwd, strlen((char *)cl->upwd), cl->dump));
+  memcpy(cl->ucrc, i2b(4, crc32(0L, MD5((unsigned char *)cl->reader->r_usr, strlen(cl->reader->r_usr), md5tmp), 16)), 4);
+  aes_set_key((char *)MD5(cl->upwd, strlen((char *)cl->upwd), md5tmp));
   cl->crypted=1;
 }
 

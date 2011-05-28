@@ -19,6 +19,7 @@ int8_t running;
 void refresh_lcd_file() {
 
 	char targetfile[256];
+	char channame[32];
 	snprintf(targetfile, sizeof(targetfile),"%s%s", get_tmp_dir(), "/oscam.lcd");
 
 	int32_t seconds = 0, secs = 0, fullmins = 0, mins = 0, fullhours = 0, hours = 0,	days = 0;
@@ -169,7 +170,7 @@ void refresh_lcd_file() {
 					label = cl->account->usr;
 					count_u++;
 
-					get_servicename(cl, cl->last_srvid, cl->last_caid);
+					get_servicename(cl, cl->last_srvid, cl->last_caid, channame);
 					fprintf(fpsave,"%s%d | %-10.10s | %-10.10s:%-17.17s| % 4d\n",
 							type,
 							idx,

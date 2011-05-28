@@ -1254,7 +1254,7 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 
 	int32_t rowcount = 0;
 	uint64_t ecmcount = 0;
-	time_t lastaccess=0;
+	time_t lastaccess = 0;
 
 	if (rdr->lb_stat) {
 	
@@ -1263,6 +1263,7 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 		
 		LL_ITER it = ll_iter_create(rdr->lb_stat);
 		READER_STAT *stat = ll_iter_next(&it);
+		char channame[32];
 		while (stat) {
 
 			if (!(stat->rc == rc2hide)) {
@@ -1271,7 +1272,7 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 				ecmcount += stat->ecm_count;
 				if (!apicall) {
 					tpl_printf(vars, TPLADD, "CHANNEL", "%04X:%06lX:%04X", stat->caid, stat->prid, stat->srvid);
-					tpl_addVar(vars, TPLADD, "CHANNELNAME", xml_encode(vars, get_servicename(cur_client(), stat->srvid, stat->caid)));
+					tpl_addVar(vars, TPLADD, "CHANNELNAME", xml_encode(vars, get_servicename(cur_client(), stat->srvid, stat->caid, channame)));
 					tpl_printf(vars, TPLADD, "ECMLEN","%04hX", stat->ecmlen);
 					tpl_addVar(vars, TPLADD, "RC", stxt[stat->rc]);
 					tpl_printf(vars, TPLADD, "TIME", "%dms", stat->time_avg);
@@ -1292,7 +1293,7 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 					tpl_printf(vars, TPLADD, "ECMPROVID", "%06lX", stat->prid);
 					tpl_printf(vars, TPLADD, "ECMSRVID", "%04X", stat->srvid);
 					tpl_printf(vars, TPLADD, "ECMLEN", "%04hX", stat->ecmlen);
-					tpl_addVar(vars, TPLADD, "ECMCHANNELNAME", xml_encode(vars, get_servicename(cur_client(), stat->srvid, stat->caid)));
+					tpl_addVar(vars, TPLADD, "ECMCHANNELNAME", xml_encode(vars, get_servicename(cur_client(), stat->srvid, stat->caid, channame)));
 					tpl_printf(vars, TPLADD, "ECMTIME", "%d", stat->time_avg);
 					tpl_printf(vars, TPLADD, "ECMTIMELAST", "%d", stat->time_stat[stat->time_idx]);
 					tpl_printf(vars, TPLADD, "ECMRC", "%d", stat->rc);
@@ -1684,10 +1685,11 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 			cwrate /= (account->cwfound + account->cwnot + account->cwcache);
 		}
 		if(latestclient != NULL) {
+			char channame[32];
 			status = "<b>connected</b>";
 			classname = "connected";
 			proto = monitor_get_proto(latestclient);
-			lastchan = xml_encode(vars, get_servicename(latestclient, latestclient->last_srvid, latestclient->last_caid));
+			lastchan = xml_encode(vars, get_servicename(latestclient, latestclient->last_srvid, latestclient->last_caid, channame));
 			lastresponsetm = latestclient->cwlastresptime;
 			tpl_addVar(vars, TPLADDONCE, "CLIENTIP", cs_inet_ntoa(latestclient->ip));
 		}
@@ -1839,6 +1841,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 			if (cards) {
 
 				uint8_t serbuf[8];
+				char provname[83];
 
 				// @todo alno: sort by click, 0=ascending, 1=descending (maybe two buttons or reverse on second click)
 				sort_cards_by_hop(cards, 0);
@@ -1912,7 +1915,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 						tpl_addVar(vars, TPLADD, "PROVIDERLIST", "");
 
 					while ((prov = ll_iter_next(&pit))) {
-						provider = xml_encode(vars, get_provider(card->caid, prov->prov));
+						provider = xml_encode(vars, get_provider(card->caid, prov->prov, provname));
 
 						if (!apicall) {
 							if (prov->sa[0] || prov->sa[1] || prov->sa[2] || prov->sa[3]) {
@@ -2280,8 +2283,10 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, int
 						}
 					}
 
-					if(!cfg.mon_appendchaninfo)
-						get_servicename(cl, cl->last_srvid, cl->last_caid);
+					if(!cfg.mon_appendchaninfo){
+						char channame[32];
+						get_servicename(cl, cl->last_srvid, cl->last_caid, channame);
+					}
 
 					tpl_printf(vars, TPLADD, "CLIENTSRVPROVIDER","%s%s", cl->last_srvidptr && cl->last_srvidptr->prov ? xml_encode(vars, cl->last_srvidptr->prov) : "", cl->last_srvidptr && cl->last_srvidptr->prov ? ": " : "");
 					tpl_addVar(vars, TPLADD, "CLIENTSRVNAME", cl->last_srvidptr && cl->last_srvidptr->name ? xml_encode(vars, cl->last_srvidptr->name) : "");
@@ -2533,6 +2538,7 @@ char *send_oscam_services_edit(struct templatevars *vars, struct uriparams *para
 char *send_oscam_services(struct templatevars *vars, struct uriparams *params) {
 	struct s_sidtab *sidtab, *sidtab2;
 	char *service = getParam(params, "service");
+	char channame[32];
 	int32_t i, found = 0;
 
 	if (strcmp(getParam(params, "action"), "delete") == 0) {
@@ -2571,7 +2577,7 @@ char *send_oscam_services(struct templatevars *vars, struct uriparams *params) {
 			tpl_printf(vars, TPLADD, "SIDCLASS","sidlist");
 			tpl_printf(vars, TPLAPPEND, "SID", "<div style=\"float:right;background-color:red;color:white\"><A HREF=\"services.html\" style=\"color:white;text-decoration:none\">X</A></div>");
 			for (i=0; i<sidtab->num_srvid; i++) {
-				tpl_printf(vars, TPLAPPEND, "SID", "%04X : %s<BR>", sidtab->srvid[i], xml_encode(vars, get_servicename(cur_client(), sidtab->srvid[i], sidtab->caid[0])));
+				tpl_printf(vars, TPLAPPEND, "SID", "%04X : %s<BR>", sidtab->srvid[i], xml_encode(vars, get_servicename(cur_client(), sidtab->srvid[i], sidtab->caid[0], channame)));
 			}
 		} else {
 			tpl_printf(vars, TPLADD, "SIDCLASS","");

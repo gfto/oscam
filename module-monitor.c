@@ -48,6 +48,7 @@ static int32_t secmon_auth_client(uchar *ucrc)
 	uint32_t crc;
 	struct s_auth *account;
 	struct s_client *cur_cl = cur_client();
+	unsigned char md5tmp[MD5_DIGEST_LENGTH];
 	
 	if (cur_cl->auth)
 	{
@@ -60,10 +61,10 @@ static int32_t secmon_auth_client(uchar *ucrc)
 	crc=(ucrc[0]<<24) | (ucrc[1]<<16) | (ucrc[2]<<8) | ucrc[3];
 	for (account=cfg.account; (account) && (!cur_cl->auth); account=account->next)
 		if ((account->monlvl) &&
-				(crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), cur_cl->dump), 16)))
+				(crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), md5tmp), MD5_DIGEST_LENGTH)))
 		{
 			memcpy(cur_cl->ucrc, ucrc, 4);
-			aes_set_key((char *)MD5((unsigned char *)account->pwd, strlen(account->pwd), cur_cl->dump));
+			aes_set_key((char *)MD5((unsigned char *)account->pwd, strlen(account->pwd), md5tmp));
 			if (cs_auth_client(cur_cl, account, NULL))
 				cs_exit(0);
 			cur_cl->auth=1;
@@ -224,8 +225,8 @@ static void monitor_send_info(char *txt, int32_t last)
 	btxt[0]=0;
 }
 
-static char *monitor_client_info(char id, struct s_client *cl){
-	static char sbuf[256];
+static char *monitor_client_info(char id, struct s_client *cl, char *sbuf){
+	char channame[32];
 	sbuf[0] = '\0';
 
 	if (cl){
@@ -287,11 +288,11 @@ static char *monitor_client_info(char id, struct s_client *cl){
 			snprintf(ldate, sizeof(ldate), "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year % 100);
 			int32_t cnr=get_threadnum(cl);
 			snprintf(ltime, sizeof(ldate), "%02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
-			snprintf(sbuf, sizeof(sbuf), "[%c--CCC]%8X|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d\n",
+			snprintf(sbuf, 256, "[%c--CCC]%8X|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d\n",
 					id, (uint32_t)cl->thread, cl->typ, cnr, usr, cau, cl->crypted,
 					cs_inet_ntoa(cl->ip), cl->port, monitor_get_proto(cl),
 					ldate, ltime, lsec, cl->last_caid, cl->last_srvid,
-					get_servicename(cl, cl->last_srvid, cl->last_caid), isec, con,
+					get_servicename(cl, cl->last_srvid, cl->last_caid, channame), isec, con,
                                         cl->cwfound, cl->cwnot, cl->cwcache, cl->cwignored,
                                         cl->cwtout, cl->emmok, cl->emmnok, lrt);
 		}
@@ -301,6 +302,7 @@ static char *monitor_client_info(char id, struct s_client *cl){
 
 static void monitor_process_info(){
 	time_t now = time((time_t)0);
+	char sbuf[256];
 
 	struct s_client *cl, *cur_cl = cur_client();
 	
@@ -314,7 +316,7 @@ static void monitor_process_info(){
 							((cl->typ != 'c') && (cl->typ != 'm')))
 						continue;
 			}
-			monitor_send_info(monitor_client_info('I', cl), 0);
+			monitor_send_info(monitor_client_info('I', cl, sbuf), 0);
 		}
 	}
 	monitor_send_info(NULL, 1);
@@ -437,13 +439,13 @@ static void monitor_process_details(char *arg){
 			monitor_process_details_master(sbuf, (uint32_t)(cl->thread));
 			break;
 		case 'c': case 'm':
-			monitor_send_details(monitor_client_info(1, cl), (uint32_t)(cl->thread));
+			monitor_send_details(monitor_client_info(1, cl, sbuf), (uint32_t)(cl->thread));
 			break;
 		case 'r':
 			monitor_process_details_reader(cl);//with client->typ='r' client->ridx is always filled and valid, so no need checking
 			break;
 		case 'p':
-			monitor_send_details(monitor_client_info(1, cl), (uint32_t)(cl->thread));
+			monitor_send_details(monitor_client_info(1, cl, sbuf), (uint32_t)(cl->thread));
 			break;
 		}
 	}

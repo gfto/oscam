@@ -462,8 +462,9 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 static int32_t reader_store_emm(uchar *emm, uchar type)
 {
   int32_t rc;
+  unsigned char md5tmp[MD5_DIGEST_LENGTH];
   struct s_client *cl = cur_client();
-  memcpy(cl->emmcache[cl->rotate].emmd5, MD5(emm, emm[2], cl->dump), CS_EMMSTORESIZE);
+  memcpy(cl->emmcache[cl->rotate].emmd5, MD5(emm, emm[2], md5tmp), CS_EMMSTORESIZE);
   cl->emmcache[cl->rotate].type=type;
   cl->emmcache[cl->rotate].count=1;
 //  cs_debug_mask(D_READER, "EMM stored (index %d)", rotate);
@@ -562,6 +563,7 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 static int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   int32_t i, no, rc, ecs;
+  unsigned char md5tmp[MD5_DIGEST_LENGTH];
   char *rtxt[] = { "error", (reader->typ & R_IS_CASCADING) ? "sent" : "written", "skipped", "blocked" };
   char *typedesc[]= { "unknown", "unique", "shared", "global" };
   struct timeb tps, tpe;
@@ -569,11 +571,11 @@ static int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
   cs_ftime(&tps);
 
-	MD5(ep->emm, ep->emm[2], cl->dump);
+	MD5(ep->emm, ep->emm[2], md5tmp);
 
 	no=0;
 	for (i=ecs=0; (i<CS_EMMCACHESIZE) && (!ecs); i++) {
-       	if (!memcmp(cl->emmcache[i].emmd5, cl->dump, CS_EMMSTORESIZE)) {
+       	if (!memcmp(cl->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE)) {
 			if (reader->cachemm)
 				ecs=(reader->rewritemm > cl->emmcache[i].count) ? 1 : 2;
 			else

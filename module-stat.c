@@ -596,9 +596,10 @@ ushort get_betatunnel_caid_to(ushort caid)
 
 void convert_to_beta_int(ECM_REQUEST *er, uint16_t caid_to)
 {
+	unsigned char md5tmp[MD5_DIGEST_LENGTH];
 	convert_to_beta(er->client, er, caid_to);
 	// update ecmd5 for store ECM in cache
-	memcpy(er->ecmd5, MD5(er->ecm+13, er->l-13, er->client->dump), CS_ECMSTORESIZE);
+	memcpy(er->ecmd5, MD5(er->ecm+13, er->l-13, md5tmp), CS_ECMSTORESIZE);
 }
 
 /**	

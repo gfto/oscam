@@ -78,8 +78,8 @@ static void read_tiers(struct s_reader *reader)
     int32_t y, m, d, H, M, S;
     rev_date_calc(&cta_res[4], &y, &m, &d, &H, &M, &S, reader->card_baseyear);
     uint16_t tier_id = (cta_res[2] << 8) | cta_res[3];
-    char *tier_name = get_tiername(tier_id, reader->caid);
-    cs_ri_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s", tier_id, y, m, d, H, M, S, tier_name);
+    char tiername[83];
+    cs_ri_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s", tier_id, y, m, d, H, M, S, get_tiername(tier_id, reader->caid, tiername));
   }
 }
 

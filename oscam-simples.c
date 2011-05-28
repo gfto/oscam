@@ -778,74 +778,72 @@ char *strnew(char *str){
   return newstr;
 }
 
-char *get_servicename(struct s_client *cl, int32_t srvid, int32_t caid){
+/* Gets the servicename. Make sure that buf is at least 32 bytes large. */
+char *get_servicename(struct s_client *cl, int32_t srvid, int32_t caid, char *buf){
 	int32_t i;
 	struct s_srvid *this;
-	char *name = (char*)cl->dump;
-	name[0] = 0;
+	buf[0] = '\0';
 
-	if (!srvid) {
-		name[0]='\0';
-		return(name);
-	}
+	if (!srvid)
+		return(buf);
 
 	if (cl && cl->last_srvidptr && cl->last_srvidptr->srvid==srvid)
 		for (i=0; i < cl->last_srvidptr->ncaid; i++)
 			if (cl->last_srvidptr->caid[i] == caid) 
-				cs_strncpy(name, cl->last_srvidptr->name, 32);
+				cs_strncpy(buf, cl->last_srvidptr->name, 32);
 
-	for (this = cfg.srvid[srvid>>12]; this && (!name[0]); this = this->next)
+	for (this = cfg.srvid[srvid>>12]; this && (!buf[0]); this = this->next)
 		if (this->srvid == srvid)
 			for (i=0; i<this->ncaid; i++)
 				if (this->caid[i] == caid && this->name) {
-					cs_strncpy(name, this->name, 32);
+					cs_strncpy(buf, this->name, 32);
 					cl->last_srvidptr = this;
 				}
 
-	if (!name[0]) {
-		snprintf(name, sizeof(cl->dump), "%04X:%04X unknown", caid, srvid);
+	if (!buf[0]) {
+		snprintf(buf, 32, "%04X:%04X unknown", caid, srvid);
 		cl->last_srvidptr = NULL;
 	}
-	return(name);
+	return(buf);
 }
 
-char *get_tiername(int32_t tierid, int32_t caid){
+/* Gets the tier name. Make sure that buf is at least 83 bytes long. */
+char *get_tiername(int32_t tierid, int32_t caid, char *buf){
 	int32_t i;
 	struct s_tierid *this = cfg.tierid;
-	static char name[83];
 
-	for (name[0] = 0; this && (!name[0]); this = this->next)
+	for (buf[0] = 0; this && (!buf[0]); this = this->next)
 		if (this->tierid == tierid)
 			for (i=0; i<this->ncaid; i++)
 				if (this->caid[i] == caid)
-					cs_strncpy(name, this->name, 32);
+					cs_strncpy(buf, this->name, 32);
 
 	//if (!name[0]) sprintf(name, "%04X:%04X unknown", caid, tierid);
-	if (!tierid) name[0] = '\0';
-	return(name);
+	if (!tierid) buf[0] = '\0';
+	return(buf);
 }
 
-char *get_provider(int32_t caid, uint32_t provid){
+/* Gets the provider name. Make sure that buf is at least 83 bytes long. */
+char *get_provider(int32_t caid, uint32_t provid, char *buf){
 	struct s_provid *this = cfg.provid;
-	static char name[83];
 
-	for (name[0] = 0; this && (!name[0]); this = this->next) {
+	for (buf[0] = 0; this && (!buf[0]); this = this->next) {
 		if (this->caid == caid && this->provid == provid) {
-			snprintf(name, 83, "%s", this->prov);
+			snprintf(buf, 83, "%s", this->prov);
 			if (this->sat[0]) {
-				strcat(name, " / ");
-				strcat(name, this->sat);
+				strcat(buf, " / ");
+				strcat(buf, this->sat);
 			}
 			if (this->lang[0]) {
-				strcat(name, " / ");
-				strcat(name, this->lang);
+				strcat(buf, " / ");
+				strcat(buf, this->lang);
 			}
 		}
 	}
 
-	if (!name[0]) snprintf(name, 83, "%04X:%06X unknown", caid, provid);
-	if (!caid) name[0] = '\0';
-	return(name);
+	if (!buf[0]) snprintf(buf, 83, "%04X:%06X unknown", caid, provid);
+	if (!caid) buf[0] = '\0';
+	return(buf);
 }
 
 void make_non_blocking(int32_t fd) {

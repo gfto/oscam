@@ -379,9 +379,11 @@ void cs_statistics(struct s_client * client)
 		else
 			cwps=0;
 
-		char *channel ="";
+		char channame[32];
 		if(cfg.mon_appendchaninfo)
-			channel = get_servicename(client, client->last_srvid,client->last_caid);
+			get_servicename(client, client->last_srvid,client->last_caid, channame);
+		else
+			channame[0] = '\0';
 
 		int32_t lsec;
 		if ((client->last_caid == 0xFFFF) && (client->last_srvid == 0xFFFF))
@@ -423,7 +425,7 @@ void cs_statistics(struct s_client * client)
 				ph[client->ctyp].desc,
 				client->last_caid,
 				client->last_srvid,
-				channel);
+				channame);
 
 		cs_write_log(buf);
 	}

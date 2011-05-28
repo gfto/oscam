@@ -567,7 +567,7 @@ void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data)
 {
   int32_t i, ecmi, ecm_header_count;
   unsigned char buffer[0x80];
-  unsigned char md5_digest[0x10];
+  unsigned char md5tmp[MD5_DIGEST_LENGTH];
   static const uint16_t Hash3[] = {0x0123,0x4567,0x89AB,0xCDEF,0xF861,0xCB52};
   static const unsigned char Hash4[] = {0x0B,0x04,0x07,0x08,0x05,0x09,0x0B,0x0A,0x07,0x02,0x0A,0x05,0x04,0x08,0x0D,0x0F};
   static const uint16_t NdTabB001[0x15][0x20] = {
@@ -728,8 +728,8 @@ void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data)
           memset(buffer, 0, sizeof(buffer));
           memcpy(buffer, cw, 8);
           memcpy(buffer + 8, &ecm_header_data[ecmi + 3], ecm_header_data[ecmi] - 2);
-          MD5(buffer, 8 + ecm_header_data[ecmi] - 2, md5_digest);
-          memcpy(cw, md5_digest, 8);
+          MD5(buffer, 8 + ecm_header_data[ecmi] - 2, md5tmp);
+          memcpy(cw, md5tmp, 8);
           cs_ddump_mask(D_READER, cw, 8, "Postprocessed Case 3 DW:");
           break;
         }

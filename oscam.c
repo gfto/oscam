@@ -732,6 +732,7 @@ void cs_exit(int32_t sig)
 void cs_reinit_clients(struct s_auth *new_accounts)
 {
 	struct s_auth *account;
+	unsigned char md5tmp[MD5_DIGEST_LENGTH];
 
 	struct s_client *cl;
 	for (cl=first_client->next; cl ; cl=cl->next)
@@ -740,7 +741,7 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 				if (!strcmp(cl->account->usr, account->usr))
 					break;
 
-			if (account && !account->disabled && cl->pcrc == crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), cur_client()->dump), 16)) {
+			if (account && !account->disabled && cl->pcrc == crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), md5tmp), MD5_DIGEST_LENGTH)) {
 				cl->account = account;
 				if(cl->typ == 'c'){
 					cl->grp	= account->grp;
@@ -1448,6 +1449,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const char *e_txt)
 {
 	int32_t rc=0;
+	unsigned char md5tmp[MD5_DIGEST_LENGTH];
 	char buf[32];
 	char *t_crypt="encrypted";
 	char *t_plain="plain";
@@ -1496,7 +1498,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 		{
 			client->dup=0;
 			if (client->typ=='c' || client->typ=='m')
-				client->pcrc = crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), client->dump), 16);
+				client->pcrc = crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), md5tmp), MD5_DIGEST_LENGTH);
 			if (client->typ=='c')
 			{
 				client->last_caid = 0xFFFE;
@@ -1809,10 +1811,8 @@ void logCWtoFile(ECM_REQUEST *er)
 	* causing problems in file name
 	*/
 
-	char *name=get_servicename(cur_client(), er->srvid, er->caid);
-	cs_strncpy(srvname, name, sizeof(srvname));
+	get_servicename(cur_client(), er->srvid, er->caid, srvname);
 
-	srvname[sizeof(srvname)-1] = 0;
 	for (i = 0; srvname[i]; i++)
 		if (srvname[i] == ' ') srvname[i] = '_';
 
@@ -2015,6 +2015,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	char sby[32]="", sreason[32]="", schaninfo[32]="";
 	char erEx[32]="";
 	char uname[38]="";
+	char channame[32];
 	struct timeb tpe;
 	uint16_t lc, *lp;
 	for (lp=(uint16_t *)er->ecm+(er->l>>2), lc=0; lp>=(uint16_t *)er->ecm; lp--)
@@ -2042,7 +2043,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 				stxtEx[er->rcEx&0xf]);
 
 	if(cfg.mon_appendchaninfo)
-		snprintf(schaninfo, sizeof(schaninfo)-1, " - %s", get_servicename(client, er->srvid, er->caid));
+		snprintf(schaninfo, sizeof(schaninfo)-1, " - %s", get_servicename(client, er->srvid, er->caid, channame));
 
 	if(er->msglog[0])
 		snprintf(sreason, sizeof(sreason)-1, " (%s)", er->msglog);
@@ -2670,9 +2671,9 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		// ... and betacrypt header for cache md5 calculation
 		if ((er->caid >> 8) == 0x17)
 			offset = 13;
-
+		unsigned char md5tmp[MD5_DIGEST_LENGTH];
 		// store ECM in cache
-		memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, client->dump), CS_ECMSTORESIZE);
+		memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, md5tmp), CS_ECMSTORESIZE);
 
 		// cache1
 		//cache check now done by check_and_store_ecmcache() !!

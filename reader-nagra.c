@@ -819,7 +819,7 @@ static int32_t nagra2_card_info(struct s_reader * reader)
                  qsort(records, num_records, sizeof(ncmed_rec), reccmp2);
 
               int32_t  euro=0;
-              char *tier_name = NULL;
+              char tiername[83];
               time_t rawtime;
               struct tm timeinfo;
               time ( &rawtime );
@@ -831,26 +831,24 @@ static int32_t nagra2_card_info(struct s_reader * reader)
                  switch (records[i].type)
                  {
                     case 0x00:
-                    case 0x01:  
-                       tier_name = get_tiername(records[i].value, reader->caid);
+                    case 0x01: 
                        if( (reader->nagra_read == 2) && (reccmp(records[i].date2,currdate) >= 0) )
                          cs_ri_log(reader, "Tier : %04X, expiry date: %s %s",
-                                   records[i].value, records[i].date2, tier_name);
+                                   records[i].value, records[i].date2, get_tiername(records[i].value, reader->caid, tiername));
                        else if(reader->nagra_read == 1)
                        {
                          euro = (records[i].price / 100);
                          cs_ri_log(reader, "Activation     : ( %04X ) from %s to %s  (%3d euro) %s",
-                                   records[i].value, records[i].date1, records[i].date2, euro, tier_name);
+                                   records[i].value, records[i].date1, records[i].date2, euro, get_tiername(records[i].value, reader->caid, tiername));
                        }
                        break;
                  
                     case 0x20:
                     case 0x21:
                        if( (reader->nagra_read == 2) && (reccmp(records[i].date2,currdate) >= 0) )
-                       {
-                         tier_name = get_tiername(records[i].value, reader->caid);
+                       {                         
                          cs_ri_log(reader, "Tier : %04X, expiry date: %s %s",
-                                   records[i].value, records[i].date2, tier_name);
+                                   records[i].value, records[i].date2, get_tiername(records[i].value, reader->caid, tiername));
                        }
                        break;
                  }
@@ -883,9 +881,8 @@ static int32_t nagra2_card_info(struct s_reader * reader)
                        {
                          euro = records[i].price / 100;
                          credit -= euro;
-                         tier_name = get_tiername(records[i].value, reader->caid);
                          cs_ri_log(reader, "Subscription   : ( %04X ) from %s to %s  (%3d euro) %s",
-                                   records[i].value, records[i].date1, records[i].date2, euro, tier_name);
+                                   records[i].value, records[i].date1, records[i].date2, euro, get_tiername(records[i].value, reader->caid, tiername));
                        }
                        break;
 
