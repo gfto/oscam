@@ -422,8 +422,22 @@ write config:
 .RS 3n
 set right language for wiki entry point, default:en
 .RE
-.SS "The [camd33] section"
+.SS "The [lcd] section"
+\fBlcd_outputpath\fP = \fBpath\fP
+.RS 3n
+path for LCD output, default:/tmp
+.RE
 .PP
+\fBlcd_hideidle\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = hide reader in LCD output if reader idle > 20 seconds, default:0
+.RE
+.PP
+\fBlcd_writeintervall\fP = \fBseconds\fP
+.RS 3n
+LCD refresh interval (minimum 5), default:10
+.RE
+.SS "The [camd33] section"
 \fBport\fP = \fB0\fP|\fBport\fP
 .RS 3n
 TCP port for camd 3.3x clients, 0 = disabled, default:0
