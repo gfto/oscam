@@ -1035,25 +1035,16 @@ struct s_client* cs_preparelock(struct s_client *cl, pthread_mutex_t *mutex){
 	return cl;
 }
 
-/* Replacement for pthread_mutex_lock which waits a maximum of about 3 seconds.
-   Locks are saved to the client structure so that they can get cleaned up if the thread was interrupted while holding a lock. */
+/* Replacement for pthread_mutex_lock. Locks are saved to the client structure so that they can get cleaned up if the thread was interrupted while holding a lock. */
 int32_t cs_lock(pthread_mutex_t *mutex){
-	int32_t result, oldtype, cnt = 0;
+	int32_t result, oldtype;
 	/* Make sure that we won't get interrupted while getting the lock */
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldtype);
-	struct s_client *cl = cs_preparelock(cur_client(), mutex);
-	do{
-		result = pthread_mutex_trylock(mutex);
-		++cnt;
-		cs_sleepms(100);
-	} while (result == EBUSY && cnt < 30);
-	if(result == 0 && cl)
+	struct s_client *cl = cs_preparelock(cur_client(), mutex);	
+	if((result = pthread_mutex_lock(mutex)) == 0 && cl)
 		cl->mutexstore_used++;
 	pthread_setcancelstate(oldtype, NULL);
 	pthread_testcancel();
-	if(result == EBUSY){
-		cs_log("A log couldn't be obtained within 3 seconds. Possibly a deadlock happened.");
-	}
 	return result;
 }
 
@@ -1062,9 +1053,11 @@ int32_t cs_trylock(pthread_mutex_t *mutex){
 	int32_t result, oldtype;
 	/* Make sure that we won't get interrupted while getting the lock */
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldtype);
-	struct s_client *cl = cs_preparelock(cur_client(), mutex);	
-	if((result=pthread_mutex_trylock(mutex)) == 0 && cl)
-		cl->mutexstore_used++;
+	if((result=pthread_mutex_trylock(mutex)) == 0){
+		struct s_client *cl = cs_preparelock(cur_client(), mutex);	
+		if(cl)
+			cl->mutexstore_used++;
+	}
 	pthread_setcanceltype(oldtype, NULL);
 	pthread_testcancel();
 	return result;
@@ -1089,7 +1082,7 @@ int32_t cs_unlock(pthread_mutex_t *mutex){
 						++i;
 					} while (i < cl->mutexstore_used);
 					cl->mutexstore[cl->mutexstore_used - 1] = mutex;
-				}				
+				}	
 				if((result=pthread_mutex_unlock(mutex)) == 0)
 					cl->mutexstore_used--;
 				pthread_setcanceltype(oldtype, NULL);
