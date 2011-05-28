@@ -648,7 +648,7 @@ static void oscam_ser_send_dcw(struct s_client *client, ECM_REQUEST *er)
           mbuf[0]=0xF1;
           mbuf[1]=0;
           mbuf[2]=2;
-          memcpy(mbuf+3, i2b(2, er->pid), 2);
+          i2b_buf(2, er->pid, mbuf + 3);
           oscam_ser_send(client, mbuf, 5);
           serialdata->sssp_fix=1;
         }
@@ -1031,10 +1031,10 @@ static int32_t oscam_ser_send_ecm(struct s_client *client, ECM_REQUEST *er, ucha
     case P_HSIC:
       memset(buf, 0, 12);
       buf[0]=2;
-      memcpy(buf+ 1, i2b(2, er->caid ), 2);
-      memcpy(buf+ 3, i2b(3, er->prid ), 3);
-      memcpy(buf+ 6, i2b(2, er->pid  ), 2);
-      memcpy(buf+10, i2b(2, er->srvid), 2);
+      i2b_buf(2, er->caid, buf + 1);
+      i2b_buf(3, er->prid, buf + 3);
+      i2b_buf(2, er->pid, buf + 6);
+      i2b_buf(2, er->srvid, buf + 10);
       memcpy(buf+12, er->ecm, er->l);
       oscam_ser_send(client, buf, 12+er->l);
       break;
@@ -1057,8 +1057,8 @@ static int32_t oscam_ser_send_ecm(struct s_client *client, ECM_REQUEST *er, ucha
       break;
     case P_ALPHA:
       buf[0]=0x80;
-      memcpy(buf+1, i2b(2, 2+er->l), 2);
-      memcpy(buf+3, i2b(2, er->caid), 2);
+      i2b_buf(2, 2+er->l, buf + 1);
+      i2b_buf(2, er->caid, buf + 3);
       memcpy(buf+5, er->ecm, er->l);
       oscam_ser_send(client, buf, oscam_ser_alpha_convert(buf, 5+er->l));
       break;

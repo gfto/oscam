@@ -525,7 +525,7 @@ static int32_t viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 
 	if (ep->emm[3] == 0x90 && ep->emm[4] == 0x03) {
 		provid = ep->emm[5] << 16 | ep->emm[6] << 8 | (ep->emm[7] & 0xFE);
-		memcpy(ep->provid, i2b(4, provid), 4);
+		i2b_buf(4, provid, ep->provid);
 	}
 
 	switch (ep->emm[0]) {

@@ -426,16 +426,6 @@ uint64_t b2ll(int32_t n, uchar *b)
   return(k);
 }
 
-uchar *i2b(int32_t n, uint32_t i)
-{
-  return i2b_buf(n, i, cur_client()->dump);
-}
-
-uchar *i2b_cl(int32_t n, uint32_t i, struct s_client *cl)
-{
-  return i2b_buf(n, i, cl->dump);
-}
-
 uchar *i2b_buf(int32_t n, uint32_t i, uchar *b)
 {
   switch(n)

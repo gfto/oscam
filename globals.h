@@ -1321,8 +1321,6 @@ extern char *cs_inet_ntoa(in_addr_t);
 extern in_addr_t cs_inet_addr(char *txt);
 extern uint32_t b2i(int32_t, uchar *);
 extern uint64_t b2ll(int32_t, uchar *);
-extern uchar *i2b(int32_t, uint32_t);
-extern uchar *i2b_cl(int32_t n, uint32_t i, struct s_client *cl);
 extern uchar *i2b_buf(int32_t n, uint32_t i, uchar *b);
 
 extern uint32_t a2i(char *, int32_t);

@@ -633,8 +633,8 @@ void dvbapi_process_emm (int32_t demux_index, int32_t filter_num, unsigned char 
 
 	memset(&epg, 0, sizeof(epg));
 
-	memcpy(epg.caid, i2b(2, caid), 2);
-	memcpy(epg.provid, i2b(4, provider), 4);
+	i2b_buf(2, caid, epg.caid);
+	i2b_buf(4, provider, epg.provid);
 
 	epg.l=len;
 	memcpy(epg.emm, buffer, epg.l);

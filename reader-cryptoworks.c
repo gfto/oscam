@@ -384,7 +384,7 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				memset(ep->hexserial, 0, 8);
 				memcpy(ep->hexserial, ep->emm + 5, 5);
 				cs_strncpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, 5), sizeof(dumprdrserial));
-				memcpy(ep->provid, i2b(4, cryptoworks_get_emm_provid(ep->emm+12, ep->l-12)), 4);
+				i2b_buf(4, cryptoworks_get_emm_provid(ep->emm+12, ep->l-12), ep->provid);
 				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: UNIQUE, ep = %s rdr = %s", 
 					      cs_hexdump(1, ep->hexserial, 5), dumprdrserial);
 				return (!memcmp(ep->emm + 5, rdr->hexserial, 5)); // check for serial
@@ -396,7 +396,7 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				memset(ep->hexserial, 0, 8);
 				memcpy(ep->hexserial, ep->emm + 5, 4);
 				cs_strncpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, 4), sizeof(dumprdrserial));
-				memcpy(ep->provid, i2b(4, cryptoworks_get_emm_provid(ep->emm+12, ep->l-12)), 4);
+				i2b_buf(4, cryptoworks_get_emm_provid(ep->emm+12, ep->l-12), ep->provid);
 				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: SHARED, ep = %s rdr = %s", 
 					      cs_hexdump(1, ep->hexserial, 4), dumprdrserial);
 				return (!memcmp(ep->emm + 5, rdr->hexserial, 4)); // check for SA
@@ -407,7 +407,7 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 			   && ep->emm[6]==0x01 && ep->emm[8]==0x85) {
 				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: SHARED (Header)");
 				ep->type = SHARED;
-				memcpy(ep->provid, i2b(4, cryptoworks_get_emm_provid(ep->emm+8, ep->l-8)), 4);
+				i2b_buf(4, cryptoworks_get_emm_provid(ep->emm+8, ep->l-8), ep->provid);
 				return FALSE;
 			}
 			break;
@@ -416,7 +416,7 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
   	 		if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[8]==0x83 && ep->emm[9]==0x01) {
 				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: GLOBAL");
 				ep->type = GLOBAL;
-				memcpy(ep->provid, i2b(4, cryptoworks_get_emm_provid(ep->emm+8, ep->l-8)), 4);
+				i2b_buf(4, cryptoworks_get_emm_provid(ep->emm+8, ep->l-8), ep->provid);
 				return TRUE;
 			}
 			break;
@@ -426,13 +426,13 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 
 			switch(ep->emm[4]) {
 				case 0x44:
-					memcpy(ep->provid, i2b(4, cryptoworks_get_emm_provid(ep->emm+8, ep->l-8)), 4);
+					i2b_buf(4, cryptoworks_get_emm_provid(ep->emm+8, ep->l-8), ep->provid);
 					ep->type = GLOBAL; break;
 				case 0x48:
-					memcpy(ep->provid, i2b(4, cryptoworks_get_emm_provid(ep->emm+12, ep->l-12)), 4);
+					i2b_buf(4, cryptoworks_get_emm_provid(ep->emm+12, ep->l-12), ep->provid);
 					ep->type = SHARED; break;		
 				case 0x42:
-					memcpy(ep->provid, i2b(4, cryptoworks_get_emm_provid(ep->emm+12, ep->l-12)), 4);
+					i2b_buf(4, cryptoworks_get_emm_provid(ep->emm+12, ep->l-12), ep->provid);
 					ep->type = UNIQUE; break;
 			}
 			return TRUE;

@@ -24,7 +24,7 @@ static int32_t camd35_send(uchar *buf)
 	memcpy(rbuf, cl->ucrc, 4);
 	memcpy(sbuf, buf, l);
 	memset(sbuf + l, 0xff, 15);	// set unused space to 0xff for newer camd3's
-	memcpy(sbuf + 4, i2b(4, crc32(0L, sbuf+20, sbuf[1])), 4);
+	i2b_buf(4, crc32(0L, sbuf+20, sbuf[1]), sbuf + 4);
 	l = boundary(4, l);
 	cs_ddump_mask(D_CLIENT, sbuf, l, "send %d bytes to %s", l, remote_txt());
 	aes_encrypt(sbuf, l);
@@ -204,19 +204,19 @@ static void camd35_request_emm(ECM_REQUEST *er)
 
 	memset(mbuf, 0, sizeof(mbuf));
 	mbuf[2] = mbuf[3] = 0xff;			// must not be zero
-	memcpy(mbuf + 8, i2b(2, er->srvid), 2);
+	i2b_buf(2, er->srvid, mbuf + 8);
 
 	//override request provid with auprovid if set in CMD05
 	if(aureader->auprovid) {
 		if(aureader->auprovid != er->prid)
-			memcpy(mbuf + 12, i2b(4, aureader->auprovid), 4);
+			i2b_buf(4, aureader->auprovid, mbuf + 12);
 		else
-			memcpy(mbuf + 12, i2b(4, er->prid), 4);
+			i2b_buf(4, er->prid, mbuf + 12);
 	} else {
-		memcpy(mbuf + 12, i2b(4, er->prid), 4);
+		i2b_buf(4, er->prid, mbuf + 12);
 	}
 
-	memcpy(mbuf + 16, i2b(2, er->pid), 2);
+	i2b_buf(2, er->pid, mbuf + 16);
 	mbuf[0] = 5;
 	mbuf[1] = 111;
 	if (aureader->caid)
@@ -374,7 +374,7 @@ static void casc_set_account()
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
   struct s_client *cl = cur_client();
   cs_strncpy((char *)cl->upwd, cl->reader->r_pwd, sizeof(cl->upwd));
-  memcpy(cl->ucrc, i2b(4, crc32(0L, MD5((unsigned char *)cl->reader->r_usr, strlen(cl->reader->r_usr), md5tmp), 16)), 4);
+  i2b_buf(4, crc32(0L, MD5((unsigned char *)cl->reader->r_usr, strlen(cl->reader->r_usr), md5tmp), 16), cl->ucrc);
   aes_set_key((char *)MD5(cl->upwd, strlen((char *)cl->upwd), md5tmp));
   cl->crypted=1;
 }
@@ -528,15 +528,15 @@ static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *
 	memset(buf, 0, 20);
 	memset(buf + 20, 0xff, er->l+15);
 	buf[1]=er->l;
-	memcpy(buf + 8, i2b(2, er->srvid), 2);
-	memcpy(buf + 10, i2b(2, er->caid ), 2);
-	memcpy(buf + 12, i2b(4, er->prid ), 4);
-	//  memcpy(buf+16, i2b(2, er->pid  ), 2);
+	i2b_buf(2, er->srvid, buf + 8);
+	i2b_buf(2, er->caid, buf + 10);
+	i2b_buf(4, er->prid, buf + 12);
+	//  i2b_buf(2, er->pid,, buf + 16);
 	//  memcpy(buf+16, &er->idx , 2);
-	memcpy(buf + 16, i2b(2, er->idx ), 2);
+	i2b_buf(2, er->idx, buf + 16);
 	buf[18] = 0xff;
 	buf[19] = 0xff;
-	memcpy(buf + 20, er->ecm  , er->l);
+	memcpy(buf + 20, er->ecm, er->l);
 	return((camd35_send(buf) < 1) ? (-1) : 0);
 }
 
