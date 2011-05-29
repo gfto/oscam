@@ -21,12 +21,16 @@ int8_t running;
 void refresh_lcd_file() {
 
 	char targetfile[256];
+	char tmpfile[256];
 	char channame[32];
 
-	if(cfg.lcd_output_path == NULL)
+	if(cfg.lcd_output_path == NULL){
 		snprintf(targetfile, sizeof(targetfile),"%s%s", get_tmp_dir(), "/oscam.lcd");
-	else
+		snprintf(tmpfile, sizeof(tmpfile), "%s%s.tmp", get_tmp_dir(), "/oscam.lcd");
+	} else {
 		snprintf(targetfile, sizeof(targetfile),"%s%s", cfg.lcd_output_path, "/oscam.lcd");
+		snprintf(tmpfile, sizeof(tmpfile), "%s%s.tmp", cfg.lcd_output_path, "/oscam.lcd");
+	}
 
 	int8_t iscccam = 0;
 	int32_t seconds = 0, secs = 0, fullmins = 0, mins = 0, fullhours = 0, hours = 0,	days = 0;
@@ -38,7 +42,7 @@ void refresh_lcd_file() {
 		int16_t cnt = 0, idx = 0, count_r = 0, count_p = 0, count_u = 0;
 		FILE *fpsave;
 
-		if((fpsave = fopen(targetfile,"w"))){
+		if((fpsave = fopen(tmpfile, "w"))){
 
 			idx = 0;
 			int16_t i;
@@ -221,6 +225,12 @@ void refresh_lcd_file() {
 		idx = 0;
 		cs_sleepms(cfg.lcd_write_intervall * 1000);
 		cnt++;
+
+		if(file_copy(tmpfile, targetfile) < 0){
+			cs_log("An error occured while writing oscam.lcd file %s.", targetfile);
+			if(remove(tmpfile) < 0)
+				cs_log("Error removing temp oscam.lcd file %s (errno=%d %s)!", tmpfile, errno, strerror(errno));
+		}
 	}
 
 }
