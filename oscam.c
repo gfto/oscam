@@ -2865,7 +2865,7 @@ int32_t chk_pending(struct s_reader *rdr, int32_t timeout)
 #ifdef WITH_LB
 					if (cfg.lb_mode) {
 						LL_NODE *ptr;
-						for (ptr = er->matching_rdr->initial; ptr ; ptr = ptr->nxt)
+						for (ptr = er->matching_rdr?er->matching_rdr->initial:NULL; ptr ; ptr = ptr->nxt)
 							send_reader_stat((struct s_reader *)ptr->obj, er, E_TIMEOUT);
 					}
 #endif
@@ -3005,9 +3005,8 @@ void * work_thread(void *ptr) {
 		return NULL;
 	}
 
-	if (!cl->init_done) {
-		if (data->action < 20)
-			reader_init(reader);
+	if (!cl->init_done && data->action < 20) {
+		reader_init(reader);
 
 		cl->init_done=1;
 	}
@@ -3051,6 +3050,10 @@ void * work_thread(void *ptr) {
 				break;
 			case ACTION_CLIENT_ECM_ANSWER:
 				chk_dcw(cl, data->ptr);
+				break;
+			case ACTION_CLIENT_TCP_INIT:
+				ph[cl->ctyp].s_handler(cl, mbuf, n);
+				cl->init_done=1;
 				break;
 		}
 	}
@@ -3267,6 +3270,8 @@ int32_t accept_connection(int32_t i, int32_t j) {
 			cl->pfd=pfd3;
 			cl->port=ntohs(cad.sin_port);
 			cl->typ='c';
+			
+			 add_job(cl, ACTION_CLIENT_TCP_INIT, NULL, 0);
 		}
 	}
 	return 0;

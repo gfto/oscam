@@ -376,6 +376,7 @@ extern void qboxhd_led_blink(int32_t color, int32_t duration);
 #define ACTION_CLIENT_UDP		22
 #define ACTION_CLIENT_TCP		23
 #define ACTION_CLIENT_ECM_ANSWER	24
+#define ACTION_CLIENT_TCP_INIT	25
 
 //checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything
 #define NULLFREE(X) {if (X) {void *tmpX=X; X=NULL; free(tmpX); }}

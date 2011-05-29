@@ -2626,7 +2626,7 @@ int32_t check_cccam_compat(struct cc_data *cc) {
 	return res;
 }
 
-int32_t cc_srv_connect(struct s_client *cl, uchar *mbuf, int len) {
+int32_t cc_srv_connect(struct s_client *cl) {
 	int32_t i;
 	uint8_t data[16];
 	char usr[21], pwd[65];
@@ -2679,10 +2679,9 @@ int32_t cc_srv_connect(struct s_client *cl, uchar *mbuf, int len) {
 
 	cs_debug_mask(D_TRACE, "receive ccc checksum");
 	
-	//if ((i = cc_recv_to(cl, buf, 20)) == 20) {
-	if (len == 20) {
+	if ((i = cc_recv_to(cl, buf, 20)) == 20) {
 		//cs_ddump_mask(D_CLIENT, buf, 20, "cccam: recv:");
-		cc_crypt(&cc->block[DECRYPT], mbuf, 20, DECRYPT);
+		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 		//cs_ddump_mask(D_CLIENT, buf, 20, "cccam: hash:");
 	} else
 		return -1;
@@ -2833,15 +2832,12 @@ int32_t cc_srv_connect(struct s_client *cl, uchar *mbuf, int len) {
 
 void * cc_srv_init(struct s_client *cl, uchar *mbuf, int len) {
 	if (!cl->init_done) {
-		cl->thread = pthread_self();
-		pthread_setspecific(getclient, cl);
-
 		if (cl->ip)
 			cs_debug_mask(D_CLIENT, "cccam: new connection from %s", cs_inet_ntoa(cl->ip));
                 
 		cl->pfd = cl->udp_fd;
 		int32_t ret;
-		if ((ret=cc_srv_connect(cl, mbuf, len)) < 0) {
+		if ((ret=cc_srv_connect(cl)) < 0) {
 			if (errno != 0)
 				cs_debug_mask(D_CLIENT, "cccam: failed errno: %d (%s)", errno, strerror(errno));
 			else
