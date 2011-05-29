@@ -1529,6 +1529,10 @@ void dvbapi_read_priority();
 extern void chk_t_webif(char *token, char *value);
 #endif
 
+#ifdef LCDSUPPORT
+extern void chk_t_lcd(char *token, char *value);
+#endif
+
 extern void cs_accounts_chk(void);
 extern void chk_account(const char *token, char *value, struct s_auth *account);
 extern void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab);
