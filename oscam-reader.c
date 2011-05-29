@@ -671,6 +671,7 @@ void reader_do_idle(struct s_reader * reader)
 			int time_diff=0;
 			cs_debug_mask(D_READER, "%s inactive_timeout (%d), close connection (fd=%d)", reader->ph.desc, time_diff, reader->client->pfd);
 			network_tcp_connection_close(reader->client, reader->client->pfd);
+			reader->init_done=0;
 		}
 	}
 }

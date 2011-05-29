@@ -370,7 +370,7 @@ extern void qboxhd_led_blink(int32_t color, int32_t duration);
 #define ACTION_READER_ECM_REQUEST	5
 #define ACTION_READER_EMM		6
 #define ACTION_READER_CARDINFO	7
-
+#define ACTION_READER_INIT		8
 
 #define ACTION_CLIENT_TCP_CONNECT	21
 #define ACTION_CLIENT_UDP		22
