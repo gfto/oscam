@@ -3005,6 +3005,17 @@ void * work_thread(void *ptr) {
 		return NULL;
 	}
 
+	if (cl->kill) {
+		cs_log("client killed");
+
+		if (data->ptr)
+			free(data->ptr);
+
+		free(ptr);
+		cleanup_thread(cl);
+		pthread_exit(NULL);
+	}
+
 	if (!cl->init_done && data->action < 20) {
 		reader_init(reader);
 
@@ -3053,6 +3064,11 @@ void * work_thread(void *ptr) {
 				break;
 			case ACTION_CLIENT_TCP_INIT:
 				ph[cl->ctyp].s_handler(cl, mbuf, n);
+				cl->init_done=1;
+				break;
+			case ACTION_CLIENT_INIT:
+				if (ph[cl->ctyp].s_init)
+					ph[cl->ctyp].s_init(cl);
 				cl->init_done=1;
 				break;
 		}
@@ -3135,9 +3151,17 @@ void * client_check(void) {
 	struct pollfd pfd[256];
 
 	while (1) {
+
+		
 		pfdcount = 0;
 		for (cl=first_client->next; cl ; cl=cl->next) {
-			if (cl->init_done && cl->pfd && cl->typ=='c') {
+			if (cl->init_done && !cl->kill && cl->pfd && cl->typ=='c') {
+				if (cl->last && cfg.cmaxidle && (time(0) - cl->last) > (time_t)cfg.cmaxidle) {
+					cl->kill=1;
+					add_job(cl, ACTION_CLIENT_KILL, NULL, 0);
+					continue;
+				}
+
 				if (cl->pfd && !cl->thread_active) {
 					pfd[pfdcount].fd = cl->pfd;
 					pfd[pfdcount++].events = POLLIN | POLLPRI;
@@ -3242,6 +3266,7 @@ int32_t accept_connection(int32_t i, int32_t j) {
 
 				cl->port=ntohs(cad.sin_port);
 				cl->typ='c';
+				add_job(cl, ACTION_CLIENT_INIT, NULL, 0);
 			}
 			add_job(cl, ACTION_CLIENT_UDP, buf, n+3);
 		}

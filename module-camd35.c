@@ -329,14 +329,16 @@ static void camd35_process_emm(uchar *buf)
 	do_emm(cur_client(), &epg);
 }
 
-static void * camd35_server(struct s_client * client, uchar *mbuf, int n)
-{
+static void camd35_server_init(struct s_client * client) {
 	if (!client->req) {
 		cs_malloc(&client->req,CS_MAXPENDING*REQ_SIZE, 1);
 	}
 
 	client->is_udp = (ph[client->ctyp].type == MOD_CONN_UDP);
+}
 
+static void * camd35_server(struct s_client * client, uchar *mbuf, int n)
+{
 	switch(mbuf[0]) {
 		case  0:	// ECM
 		case  3:	// ECM (cascading)
@@ -676,6 +678,7 @@ void module_camd35(struct s_module *ph)
   ph->watchdog=1;
   ph->s_ip=cfg.c35_srvip;
   ph->s_handler=camd35_server;
+  ph->s_init=camd35_server_init;
   ph->recv=camd35_recv;
   ph->send_dcw=camd35_send_dcw;
   ph->c_multi=1;
@@ -699,6 +702,7 @@ void module_camd35_tcp(struct s_module *ph)
     ph->ptab->nports=1; // show disabled in log
   ph->s_ip=cfg.c35_tcp_srvip;
   ph->s_handler=camd35_server;
+  ph->s_init=camd35_server_init;
   ph->recv=camd35_recv;
   ph->send_dcw=camd35_send_dcw;
   ph->c_multi=1;

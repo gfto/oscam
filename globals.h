@@ -377,6 +377,8 @@ extern void qboxhd_led_blink(int32_t color, int32_t duration);
 #define ACTION_CLIENT_TCP		23
 #define ACTION_CLIENT_ECM_ANSWER	24
 #define ACTION_CLIENT_TCP_INIT	25
+#define ACTION_CLIENT_KILL		26
+#define ACTION_CLIENT_INIT		27
 
 //checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything
 #define NULLFREE(X) {if (X) {void *tmpX=X; X=NULL; free(tmpX); }}
@@ -504,6 +506,7 @@ struct s_module
   //int32_t  s_port;
   in_addr_t s_ip;
   void *(*s_handler)(struct s_client *, uchar *, int);
+  void (*s_init)(struct s_client *);
   int32_t  (*recv)(struct s_client *, uchar *, int32_t);
   void (*send_dcw)(struct s_client*, struct ecm_request_t *);
   void (*cleanup)(struct s_client*);
@@ -637,6 +640,7 @@ struct s_client
   int8_t       init_done;
   pthread_mutex_t thread_lock;
   int8_t	thread_active;
+  int8_t	kill;
 LLIST *joblist;
   in_addr_t	ip;
   in_port_t	port;
