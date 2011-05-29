@@ -226,11 +226,11 @@ void refresh_lcd_file() {
 		cs_sleepms(cfg.lcd_write_intervall * 1000);
 		cnt++;
 
-		if(file_copy(tmpfile, targetfile) < 0){
+		if(file_copy(tmpfile, targetfile) < 0)
 			cs_log("An error occured while writing oscam.lcd file %s.", targetfile);
-			if(remove(tmpfile) < 0)
-				cs_log("Error removing temp oscam.lcd file %s (errno=%d %s)!", tmpfile, errno, strerror(errno));
-		}
+
+		if(remove(tmpfile) < 0)
+			cs_log("Error removing temp oscam.lcd file %s (errno=%d %s)!", tmpfile, errno, strerror(errno));
 	}
 
 }
