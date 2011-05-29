@@ -80,7 +80,7 @@ void refresh_lcd_file() {
 			// Reader/Proxy table start
 			for ( i=0, cl=first_client; cl ; cl=cl->next, i++) {
 
-				if ((cl->typ=='r' || cl->typ=='p') && ((now - cl->last) > 20 || !cfg.lcd_hide_idle)){
+				if ((cl->typ=='r' || cl->typ=='p') && ((now - cl->last) < 20 || !cfg.lcd_hide_idle)){
 					type = "";
 					label = "";
 					status = "OFF";
