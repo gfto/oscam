@@ -2626,8 +2626,8 @@ int32_t check_cccam_compat(struct cc_data *cc) {
 	return res;
 }
 
-int32_t cc_srv_connect(struct s_client *cl) {
-	int32_t i, wait_for_keepalive;
+int32_t cc_srv_connect(struct s_client *cl, uchar *mbuf, int len) {
+	int32_t i;
 	uint8_t data[16];
 	char usr[21], pwd[65];
 	struct s_auth *account;
@@ -2678,9 +2678,11 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 
 	cs_debug_mask(D_TRACE, "receive ccc checksum");
-	if ((i = cc_recv_to(cl, buf, 20)) == 20) {
+	
+	//if ((i = cc_recv_to(cl, buf, 20)) == 20) {
+	if (len == 20) {
 		//cs_ddump_mask(D_CLIENT, buf, 20, "cccam: recv:");
-		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
+		cc_crypt(&cc->block[DECRYPT], mbuf, 20, DECRYPT);
 		//cs_ddump_mask(D_CLIENT, buf, 20, "cccam: hash:");
 	} else
 		return -1;
@@ -2822,69 +2824,34 @@ int32_t cc_srv_connect(struct s_client *cl) {
 		return -1;
 	cs_ftime(&cc->ecm_time);
 
-	time_t timeout = time(NULL);
-	wait_for_keepalive = 100;
 	cc->mode = CCCAM_MODE_NORMAL;
 	//some clients, e.g. mgcamd, does not support keepalive. So if not answered, keep connection
 	// check for client timeout, if timeout occurs try to send keepalive
 	cs_debug_mask(D_TRACE, "ccc connected and waiting for data %s", usr);
-	while (cl->pfd && cl->udp_fd && cc->mode == CCCAM_MODE_NORMAL && !cl->dup)
-	{
-		i = process_input(buf, CC_MAXMSGSIZE, 10);
-		if (i <= 0 && i != -9)
-			break; //Disconnected by client		
-			
-		//data is parsed!
-		if (i == MSG_CW_ECM)
-			timeout = time(NULL);
-		else if (i == MSG_KEEPALIVE) {
-			wait_for_keepalive = 0;
-			timeout = time(NULL);
-		}
-		
-		//new timeout check:
-		if (time(NULL)-timeout > (time_t)cfg.cmaxidle) {
-			cs_debug_mask(D_TRACE, "ccc idle %s", usr);
-			//cs_debug_mask(D_TRACE, "client timeout user %s idle=%d client max idle=%d", usr, cmi, cfg.cmaxidle);
-			if (cfg.cc_keep_connected || cl->account->ncd_keepalive) {
-				if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
-					break;
-				if (wait_for_keepalive<3 || wait_for_keepalive == 100) {
-					cs_debug_mask(D_CLIENT, "cccam: keepalive");
-       			    cc->answer_on_keepalive = time(NULL);
-       			    wait_for_keepalive++;
-				}
-				else if (wait_for_keepalive<100) break;
-				timeout = time(NULL);
-			} else {
-				cs_debug_mask(D_CLIENT, "%s keepalive after maxidle is reached",
-					getprefix());
-				break; //Disconnect client
-			}
-		}
-	}
-	cc->mode = CCCAM_MODE_SHUTDOWN;
 	return 0;
 }
 
 void * cc_srv_init(struct s_client *cl, uchar *mbuf, int len) {
-	cl->thread = pthread_self();
-	pthread_setspecific(getclient, cl);
+	if (!cl->init_done) {
+		cl->thread = pthread_self();
+		pthread_setspecific(getclient, cl);
 
-    if (cl->ip)
-		cs_debug_mask(D_CLIENT, "cccam: new connection from %s", cs_inet_ntoa(cl->ip));
+		if (cl->ip)
+			cs_debug_mask(D_CLIENT, "cccam: new connection from %s", cs_inet_ntoa(cl->ip));
                 
-	cl->pfd = cl->udp_fd;
-	int32_t ret;
-	if ((ret=cc_srv_connect(cl)) < 0) {
-		if (errno != 0)
-			cs_debug_mask(D_CLIENT, "cccam: failed errno: %d (%s)", errno, strerror(errno));
+		cl->pfd = cl->udp_fd;
+		int32_t ret;
+		if ((ret=cc_srv_connect(cl, mbuf, len)) < 0) {
+			if (errno != 0)
+				cs_debug_mask(D_CLIENT, "cccam: failed errno: %d (%s)", errno, strerror(errno));
+			else
+				cs_debug_mask(D_CLIENT, "cccam: failed ret: %d", ret);
+			if (ret == -2)
+				cs_add_violation((uint)cl->ip);
+		}
 		else
-			cs_debug_mask(D_CLIENT, "cccam: failed ret: %d", ret);
-		if (ret == -2)
-			cs_add_violation((uint)cl->ip);
+			cl->init_done = TRUE;
 	}
-
 	return NULL; //suppress compiler warning
 }
 

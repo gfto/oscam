@@ -2325,7 +2325,7 @@ void request_cw(ECM_REQUEST *er, int32_t flag, int32_t reader_types)
 	}
 
 	LL_NODE *ptr;
-	for (ptr = er->matching_rdr->initial; ptr; ptr = ptr->nxt) {
+	for (ptr = er->matching_rdr?er->matching_rdr->initial:NULL; ptr; ptr = ptr->nxt) {
 	        if (!flag && ptr == er->fallback)
 	          break;
 
@@ -2822,7 +2822,7 @@ int32_t chk_pending(struct s_reader *rdr, int32_t timeout)
 			if (!er->stage && er->rc >= E_UNHANDLED) {
 
 				LL_NODE *ptr;
-				for (ptr = er->matching_rdr->initial; ptr && ptr != er->fallback; ptr = ptr->nxt)
+				for (ptr = er->matching_rdr?er->matching_rdr->initial:NULL; ptr && ptr != er->fallback; ptr = ptr->nxt)
 					if (!cfg.preferlocalcards ||
 								(cfg.preferlocalcards && !er->locals_done && (!(((struct s_reader*)ptr->obj)->typ & R_IS_NETWORK))) ||
 								(cfg.preferlocalcards && er->locals_done && (((struct s_reader*)ptr->obj)->typ & R_IS_NETWORK)))
