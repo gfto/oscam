@@ -9,7 +9,7 @@ struct cs_garbage {
         void * data;
         #ifdef WITH_DEBUG
         char *file;
-        int32_t line;
+        uint16_t line;
         #endif
         struct cs_garbage *next;
 };
@@ -21,7 +21,7 @@ int32_t garbage_collector_active = 0;
 int32_t garbage_debug = 0;
 
 #ifdef WITH_DEBUG
-void add_garbage_debug(void *data, char *file, int32_t line) {
+void add_garbage_debug(void *data, char *file, uint16_t line) {
 #else
 void add_garbage(void *data) {
 #endif
