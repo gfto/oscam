@@ -2608,8 +2608,7 @@ int32_t cc_srv_wakeup_readers(struct s_client *cl) {
 			continue;
 		
 		//This wakeups the reader:
-		uchar dummy = 0;
-		write_to_pipe(rdr->fd, PIP_ID_CIN, &dummy, sizeof(dummy));
+		add_job(rdr->client, ACTION_READER_CARDINFO, NULL, 0);
 		wakeup++;
 	}
 	return wakeup;
@@ -2868,7 +2867,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	return 0;
 }
 
-void * cc_srv_init(struct s_client *cl) {
+void * cc_srv_init(struct s_client *cl, uchar *mbuf, int len) {
 	cl->thread = pthread_self();
 	pthread_setspecific(getclient, cl);
 
@@ -2885,7 +2884,7 @@ void * cc_srv_init(struct s_client *cl) {
 		if (ret == -2)
 			cs_add_violation((uint)cl->ip);
 	}
-	cs_disconnect_client(cl);
+
 	return NULL; //suppress compiler warning
 }
 

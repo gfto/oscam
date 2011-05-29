@@ -43,7 +43,7 @@
 
 #ifndef CS_GLOBALS
 #define CS_GLOBALS
-#define CS_VERSION    "1.00-unstable_svn"
+#define CS_VERSION    "1.00-dynamic_svn"
 #ifndef CS_SVN_VERSION
 #	define CS_SVN_VERSION "test"
 #endif
@@ -362,6 +362,21 @@ extern void qboxhd_led_blink(int32_t color, int32_t duration);
 #define BAN_SLEEPING 4			//failban mask for sleeping user
 #define BAN_DUPLICATE 8			//failban mask for duplicate user
 
+
+#define ACTION_READER_IDLE		1
+#define ACTION_READER_REMOTE	2
+#define ACTION_READER_REMOTELOG	3
+#define ACTION_READER_RESET		4
+#define ACTION_READER_ECM_REQUEST	5
+#define ACTION_READER_EMM		6
+#define ACTION_READER_CARDINFO	7
+
+
+#define ACTION_CLIENT_TCP_CONNECT	21
+#define ACTION_CLIENT_UDP		22
+#define ACTION_CLIENT_TCP		23
+#define ACTION_CLIENT_ECM_ANSWER	24
+
 //checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything
 #define NULLFREE(X) {if (X) {void *tmpX=X; X=NULL; free(tmpX); }}
 
@@ -487,7 +502,7 @@ struct s_module
   char *logtxt;
   //int32_t  s_port;
   in_addr_t s_ip;
-  void *(*s_handler)();
+  void *(*s_handler)(struct s_client *, uchar *, int);
   int32_t  (*recv)(struct s_client *, uchar *, int32_t);
   void (*send_dcw)(struct s_client*, struct ecm_request_t *);
   void (*cleanup)(struct s_client*);
@@ -618,6 +633,10 @@ struct s_acasc {
 
 struct s_client
 {
+  int8_t       init_done;
+  pthread_mutex_t thread_lock;
+  int8_t	thread_active;
+LLIST *joblist;
   in_addr_t	ip;
   in_port_t	port;
   time_t	login;
@@ -650,8 +669,6 @@ struct s_client
   int32_t		tosleep;
   struct s_auth *account;
   int32_t		udp_fd;
-  int32_t		fd_m2c; //master writes to this fd
-  int32_t		fd_m2c_c; //client reads from this fd
   struct	sockaddr_in udp_sa;
   int32_t		log;
   int32_t		logcounter;
@@ -802,7 +819,6 @@ struct s_reader  //contains device info, reader info and card info
   int8_t       enable;
   int8_t       available; //Schlocke: New flag for loadbalancing. Only reader if reader supports ph.c_available function
   int32_t       fd_error;
-  int32_t       fd;
   uint64_t    grp;
   int32_t       fallback;
   int32_t       typ;
@@ -1263,6 +1279,14 @@ struct s_clientinit
 	struct s_client * client;
 };
 
+struct s_data {
+	int action;
+	struct s_reader *rdr;
+	struct s_client *cl;
+	void *ptr;
+	uint16_t len;
+};
+
 //Loadbalance constants:
 #define LB_NONE 0
 #define LB_FASTEST_READER_FIRST 1
@@ -1415,6 +1439,10 @@ extern void clear_system_stats();
 
 #endif
 extern void start_thread(void * startroutine, char * nameroutine);
+extern void add_job(struct s_client *cl, int8_t action, void *ptr, int len);
+extern void reader_init(struct s_reader *);
+extern void reader_nullcard(struct s_reader * reader);
+extern int reader_reset(struct s_reader * reader);
 extern void cs_reload_config();
 extern int32_t recv_from_udpipe(uchar *);
 extern char* username(struct s_client *);
@@ -1668,7 +1696,7 @@ extern void module_cccam(struct s_module *);
 #endif
 extern void module_gbox(struct s_module *);
 extern void module_constcw(struct s_module *);
-extern int32_t chk_pending(int32_t timeout);
+extern int32_t chk_pending(struct s_reader *rdr, int32_t timeout);
 #ifdef HAVE_DVBAPI
 extern void module_dvbapi(struct s_module *);
 #endif

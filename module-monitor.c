@@ -140,7 +140,8 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 			// cs_log("DO >>>> copy-back");
 			memcpy(bbuf, buf+bsize, bpos=n-bsize);
 			n=bsize;
-			write_to_pipe(client->fd_m2c, PIP_ID_UDP, (uchar*)&nbuf, sizeof(nbuf));
+			//write_to_pipe(client->fd_m2c, PIP_ID_UDP, (uchar*)&nbuf, sizeof(nbuf));
+			add_job(client, ACTION_CLIENT_UDP, &nbuf, sizeof(nbuf));
 		}
 		else if (n<bsize)
 		{
@@ -166,7 +167,8 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 		{
 			memcpy(bbuf, p+1, bpos);
 			n=p-buf;
-			write_to_pipe(client->fd_m2c, PIP_ID_UDP, (uchar*)&nbuf, sizeof(nbuf));
+			//write_to_pipe(client->fd_m2c, PIP_ID_UDP, (uchar*)&nbuf, sizeof(nbuf));
+			add_job(client, ACTION_CLIENT_UDP, &nbuf, sizeof(nbuf));
 		}
 	}
 	buf[n]='\0';
@@ -767,16 +769,10 @@ static int32_t monitor_process_request(char *req)
 	return(rc);
 }
 
-static void * monitor_server(void *cli){
-	int32_t n;
-	uchar mbuf[1024];
-
-	struct s_client * client = (struct s_client *) cli;
-	client->thread=pthread_self();
-	pthread_setspecific(getclient, cli);
+static void * monitor_server(struct s_client * client, uchar *mbuf, int n) {
 	client->typ='m';
-	while (((n = process_input(mbuf, sizeof(mbuf), cfg.cmaxidle)) >= 0) && monitor_process_request((char *)mbuf));
-	cs_disconnect_client(cli);
+	monitor_process_request((char *)mbuf);
+	
 	return NULL;
 }
 

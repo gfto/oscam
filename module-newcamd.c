@@ -963,118 +963,103 @@ static void newcamd_process_emm(uchar *buf)
                        cl->ncd_skey, COMMTYPE_SERVER, 0, NULL);
 }
 
-static void * newcamd_server(void *cli)
-{
-  int32_t rc;
-  struct s_client * client = (struct s_client *) cli;
-  client->thread=pthread_self();
-  pthread_setspecific(getclient, cli);
-  uchar mbuf[1024];
 
-  cs_malloc(&client->req,CS_MAXPENDING*REQ_SIZE, 1);
+static void newcamd_server_init(struct s_client *client) {
+
+	cs_malloc(&client->req,CS_MAXPENDING*REQ_SIZE, 1);
   
-  client->ncd_server = 1;
-  cs_log("client connected to %d port", cfg.ncd_ptab.ports[client->port_idx].s_port);
+	client->ncd_server = 1;
+	cs_log("client connected to %d port", cfg.ncd_ptab.ports[client->port_idx].s_port);
 
-  if (cfg.ncd_ptab.ports[client->port_idx].ncd_key_is_set) {
-      //port has a des key specified
-      newcamd_auth_client(client->ip, cfg.ncd_ptab.ports[client->port_idx].ncd_key);
-  } else {
-      //default global des key
-      newcamd_auth_client(client->ip, cfg.ncd_key);
-  }
+	if (cfg.ncd_ptab.ports[client->port_idx].ncd_key_is_set) {
+		//port has a des key specified
+		newcamd_auth_client(client->ip, cfg.ncd_ptab.ports[client->port_idx].ncd_key);
+	} else {
+		//default global des key
+		newcamd_auth_client(client->ip, cfg.ncd_key);
+	}
 
-  // report all cards if using extended mg proto
-  if (cfg.ncd_mgclient) {
-    cs_debug_mask(D_CLIENT, "newcamd: extended: report all available cards");
-    int32_t j, k;
-    uint8_t buf[512];
-    custom_data_t *cd = malloc(sizeof(struct custom_data));
-    memset(cd, 0, sizeof(struct custom_data));
-    memset(buf, 0, sizeof(buf));
+	// report all cards if using extended mg proto
+	if (cfg.ncd_mgclient) {
+		cs_debug_mask(D_CLIENT, "newcamd: extended: report all available cards");
+		int32_t j, k;
+		uint8_t buf[512];
+		custom_data_t *cd = malloc(sizeof(struct custom_data));
+		memset(cd, 0, sizeof(struct custom_data));
+		memset(buf, 0, sizeof(buf));
 
-    buf[0] = MSG_SERVER_2_CLIENT_ADDCARD;
+		buf[0] = MSG_SERVER_2_CLIENT_ADDCARD;
+		struct s_reader *rdr;
+		for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
+			int32_t flt = 0;
+			if (!(rdr->grp & client->grp)) continue; //test - skip unaccesible readers
+			if (rdr->ftab.filts) {
+				for (j=0; j<CS_MAXFILTERS; j++) {
+					if (rdr->ftab.filts[j].caid) {
+						cd->caid = rdr->ftab.filts[j].caid;
+						for (k=0; k<rdr->ftab.filts[j].nprids; k++) {
+							cd->provid = rdr->ftab.filts[j].prids[k];
+							cs_debug_mask(D_CLIENT, "newcamd: extended: report card");
+							network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3, client->ncd_skey, COMMTYPE_SERVER, 0, cd);
+							flt = 1;
+						}
+					}
+				}
+			}
 
-    struct s_reader *rdr;
-    for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
-      int32_t flt = 0;
-      if (!(rdr->grp & client->grp)) continue; //test - skip unaccesible readers
-      if (rdr->ftab.filts) {
-        for (j=0; j<CS_MAXFILTERS; j++) {
-          if (rdr->ftab.filts[j].caid) {
-            cd->caid = rdr->ftab.filts[j].caid;
-            for (k=0; k<rdr->ftab.filts[j].nprids; k++) {
-              cd->provid = rdr->ftab.filts[j].prids[k];
-              cs_debug_mask(D_CLIENT, "newcamd: extended: report card");
+			if (rdr->caid && !flt) {
+				if ((rdr->tcp_connected || rdr->card_status == CARD_INSERTED)) {
+					cd->caid = rdr->caid;
+					for (j=0; j<rdr->nprov; j++) {
+						cd->provid = (rdr->prid[j][1]) << 16 | (rdr->prid[j][2] << 8) | rdr->prid[j][3];
+						cs_debug_mask(D_CLIENT, "newcamd: extended: report card");
+						network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3, client->ncd_skey, COMMTYPE_SERVER, 0, cd);
+					}
+				}
+			}
+		}
+		free(cd);
+	}
 
-              network_message_send(client->udp_fd,
-              &client->ncd_msgid, buf, 3,
-              client->ncd_skey, COMMTYPE_SERVER, 0, cd);
+}
 
-              flt = 1;
-            }
-          }
-        }
-      }
+static void * newcamd_server(struct s_client *client, uchar *mbuf, int rc)
+{
+	if (!client->req) {
+		newcamd_server_init(client);
+	}
 
-      if (rdr->caid && !flt) {
-        if ((rdr->tcp_connected || rdr->card_status == CARD_INSERTED)) {
-          cd->caid = rdr->caid;
-          for (j=0; j<rdr->nprov; j++) {
-            cd->provid = (rdr->prid[j][1]) << 16 | (rdr->prid[j][2] << 8) | rdr->prid[j][3];
-                      cs_debug_mask(D_CLIENT, "newcamd: extended: report card");
-                      network_message_send(client->udp_fd,
-            &client->ncd_msgid, buf, 3,
-            client->ncd_skey, COMMTYPE_SERVER, 0, cd);
-          }
-        }
-      }
-    }
-  free(cd);
-  }
+	// check for clienttimeout, if timeout occurs try to send keepalive / wait for answer
+	// befor client was disconnected. If keepalive was disabled, exit after clienttimeout
+	
+	if (rc>0) {
+		switch(mbuf[2]) {
+			case 0x80:
+			case 0x81:
+				newcamd_process_ecm(mbuf);
+				break;
 
-  // check for clienttimeout, if timeout occurs try to send keepalive / wait for answer
-  // befor client was disconnected. If keepalive was disabled, exit after clienttimeout
-  rc=-9;
-  while(rc==-9)
-  {
-    if (!client->pfd) break;
-    // process_input returns -9 on clienttimeout
-    while ((rc=process_input(mbuf, sizeof(mbuf), cfg.cmaxidle))>0)
-    {
-      switch(mbuf[2])
-      {
-        case 0x80:
-        case 0x81:
-          newcamd_process_ecm(mbuf);
-          break;
+			case MSG_KEEPALIVE:
+				newcamd_reply_ka();
+				break;
 
-        case MSG_KEEPALIVE:
-          newcamd_reply_ka();
-          break;
+			default:
+				if(mbuf[2]>0x81 && mbuf[2]<0x90)
+					newcamd_process_emm(mbuf+2);
+				else {
+					cs_debug_mask(D_CLIENT, "unknown newcamd command! (%d)", mbuf[2]);
+				}
+		}
+	}
 
-        default:
-          if(mbuf[2]>0x81 && mbuf[2]<0x90)
-            newcamd_process_emm(mbuf+2);
-          else
-          {
-            cs_debug_mask(D_CLIENT, "unknown newcamd command! (%d)", mbuf[2]);
-          }
-      }
-    }
+	if(rc==-9) {
+		if (client->ncd_keepalive)
+			newcamd_reply_ka();
+		else
+			rc=0;
+	}
 
-    if(rc==-9)
-    {
-      if (client->ncd_keepalive)
-        newcamd_reply_ka();
-      else
-        rc=0;
-    }
-  }
-
-  NULLFREE(client->req);
-  cs_disconnect_client(client);
-  return NULL;
+	return NULL;
 }
 
 /*

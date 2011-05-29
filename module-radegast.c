@@ -149,29 +149,23 @@ static void radegast_process_unknown(uchar *buf)
   cs_log("unknown request %02X, len=%d", buf[0], buf[1]);
 }
 
-static void * radegast_server(void *cli)
+static void * radegast_server(struct s_client * client, uchar *mbuf, int n)
 {
-  int32_t n;
-  uchar mbuf[1024];
 
-	struct s_client * client = (struct s_client *) cli;
-  client->thread=pthread_self();
-  pthread_setspecific(getclient, cli);
+	if (!client->init_done) {
+		radegast_auth_client(cur_client()->ip);
+		client->init_done=1;
+	}
 
-  radegast_auth_client(cur_client()->ip);
-  while ((n=get_request(mbuf))>0)
-  {
-    switch(mbuf[0])
-    {
-      case 1:
-        radegast_process_ecm(mbuf+2, mbuf[1]);
-        break;
-      default:
-        radegast_process_unknown(mbuf);
-    }
-  }
-  cs_disconnect_client(client);
-  return NULL;
+	switch(mbuf[0]) {
+		case 1:
+			radegast_process_ecm(mbuf+2, mbuf[1]);
+			break;
+		default:
+			radegast_process_unknown(mbuf);
+	}
+
+	return NULL;
 }
 
 static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *UNUSED(buf))

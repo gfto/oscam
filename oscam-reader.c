@@ -286,7 +286,7 @@ void network_tcp_connection_close(struct s_client *cl, int32_t fd)
   }
 }
 
-static void casc_do_sock_log(struct s_reader * reader)
+void casc_do_sock_log(struct s_reader * reader)
 {
   int32_t i, idx;
   uint16_t caid, srvid;
@@ -311,7 +311,7 @@ static void casc_do_sock_log(struct s_reader * reader)
   }
 }
 
-static void casc_do_sock(struct s_reader * reader, int32_t w)
+void casc_do_sock(struct s_reader * reader, int32_t w)
 {
   int32_t i, n, idx, rc, j;
   uchar buf[1024];
@@ -473,7 +473,7 @@ static int32_t reader_store_emm(uchar *emm, uchar type)
   return(rc);
 }
 
-static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
+void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   //cs_log("hallo idx:%d rc:%d caid:%04X",er->idx,er->rc,er->caid);
   if (er->rc<=E_STOPPED)
@@ -560,7 +560,7 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 #endif
 }
 
-static int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
+int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   int32_t i, no, rc, ecs;
   unsigned char md5tmp[MD5_DIGEST_LENGTH];
@@ -653,90 +653,6 @@ static int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   return(rc);
 }
 
-static int32_t reader_listen(struct s_reader * reader, int32_t fd1, int32_t fd2)
-{
-	int32_t i, tcp_toflag;
-	int32_t is_tcp=(reader->ph.type==MOD_CONN_TCP);
-
-	tcp_toflag=(fd2 && is_tcp && reader->tcp_ito && reader->tcp_connected);
-
-	int32_t timeout;
-	if (tcp_toflag)
-		timeout = reader->tcp_ito*60*1000;
-	else
-		timeout = (is_tcp&&!reader->tcp_connected)?cfg.reader_restart_seconds*1000:500;
-	
-
-	struct pollfd pfd[3];
-
-	int32_t pfdcount = 0;
-	if (fd1) {
-		pfd[pfdcount].fd = fd1;
-		pfd[pfdcount++].events = POLLIN | POLLPRI;
-	}
-	if (fd2) {
-		pfd[pfdcount].fd = fd2;
-		pfd[pfdcount++].events = POLLIN | POLLPRI;
-	}
-	if (logfd) {
-		pfd[pfdcount].fd = logfd;
-		pfd[pfdcount++].events = POLLIN | POLLPRI;
-	}
-
-	int32_t rc = poll(pfd, pfdcount, timeout);
-
-	if (rc>0) {
-		for (i=0; i<pfdcount; i++) {
-			if (!(pfd[i].revents & (POLLIN | POLLPRI)))
-				continue;
-
-			if (pfd[i].fd == logfd) {
-				cs_debug_mask(D_READER, "select: log-socket ist set");
-				return(3);
-			}
-
-			if (pfd[i].fd == fd2) {
-				cs_debug_mask(D_READER, "select: socket is set");
-				return(2);
-			}
-
-			if (pfd[i].fd == fd1) {
-				if (tcp_toflag) {
-					time_t now;
-					int32_t time_diff;
-					time(&now);
-					time_diff = abs(now-reader->last_s);
-					if (time_diff>(reader->tcp_ito*60)) {
-						if (reader->ph.c_idle)
-							reader_do_idle(reader);
-						else {
-							cs_debug_mask(D_READER, "%s inactive_timeout (%d), close connection (fd=%d)", reader->ph.desc, time_diff, fd2);
-							network_tcp_connection_close(reader->client, fd2);
-						}
-					}
-				}
-				cs_debug_mask(D_READER, "select: pipe is set");
-				return(1);
-			}
-		}
-	}
-
-	if (tcp_toflag) {
-		if (reader->ph.c_idle)
-			reader_do_idle(reader);
-		else {
-			cs_debug_mask(D_READER, "%s inactive_timeout (%d), close connection (fd=%d)", reader->ph.desc, timeout/1000, fd2);
-			network_tcp_connection_close(reader->client, fd2);
-		}
-		return(0);
-	}
-
-#ifdef WITH_CARDREADER
-	if (!(reader->typ & R_IS_CASCADING)) reader_checkhealth(reader);
-#endif
-	return(0);
-}
-
 void reader_do_card_info(struct s_reader * reader)
 {
 #ifdef WITH_CARDREADER
@@ -746,119 +662,51 @@ void reader_do_card_info(struct s_reader * reader)
       	reader->ph.c_card_info();
 }
 
-void clear_reader_pipe(struct s_reader * reader)
-{
-	uchar *ptr;
-	int32_t pipeCmd;
-	while (reader && reader->client && reader->client->fd_m2c_c)
-	{
-		pipeCmd = read_from_pipe(reader->client->fd_m2c_c, &ptr);
-		if (ptr) free(ptr);
-		if (pipeCmd==PIP_ID_ERR || pipeCmd==PIP_ID_NUL)
-			break;
-	}
-}
-
-static void reader_do_pipe(struct s_reader * reader)
-{
-  uchar *ptr;
-  int32_t pipeCmd = read_from_pipe(reader->client->fd_m2c_c, &ptr);
-
-  switch(pipeCmd)
-  {
-    case PIP_ID_ECM:
-      reader_get_ecm(reader, (ECM_REQUEST *)ptr);
-      break;
-    case PIP_ID_EMM:
-      reader_do_emm(reader, (EMM_PACKET *)ptr);
-      break;
-    case PIP_ID_CIN: 
-      reader_do_card_info(reader);
-      break;
-    case PIP_ID_ERR:
-      cs_exit(1);
-      break;
-    default:
-       cs_log("unhandled pipe message %d (reader %s)", pipeCmd, reader->label);
-       break;
-  }
-  if (ptr) free(ptr);
-}
-
 void reader_do_idle(struct s_reader * reader)
 {
-  if (reader->ph.c_idle) 
-    reader->ph.c_idle();
-}
-
-static void reader_main(struct s_reader * reader)
-{
-  while (1)
-  {
-    switch(reader_listen(reader, reader->client->fd_m2c_c, reader->client->pfd))
-    {
-      case 0: reader_do_idle(reader); break;
-      case 1: reader_do_pipe(reader)  ; break;
-      case 2: casc_do_sock(reader, 0)   ; break;
-      case 3: casc_do_sock_log(reader); break;
-    }
-  }
-}
-
-#pragma GCC diagnostic ignored "-Wempty-body" 
-void * start_cardreader(void * rdr)
-{
-	struct s_reader * reader = (struct s_reader *) rdr;
-	struct s_client * client = reader->client;
-	#ifndef NO_PTHREAD_CLEANUP_PUSH
-	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-	pthread_cleanup_push(cleanup_thread, (void *)client);
-	#endif
-	
-	client->thread=pthread_self();
-	pthread_setspecific(getclient, client);
-
-  if (reader->typ & R_IS_CASCADING)
-  {
-    client->typ='p';
-    client->port=reader->r_port;
-    cs_log("proxy thread started  (thread=%8X, label=%s, server=%s)",pthread_self(), reader->label, reader->device);
-    
-    if (!(reader->ph.c_init)) {
-      cs_log("FATAL: %s-protocol not supporting cascading", reader->ph.desc);
-      cs_sleepms(1000);
-      cs_exit(1);
-    }
-    
-	if (reader->ph.c_init(client)) {
-		//proxy reader start failed
-		cs_exit(1);
+	if (reader->ph.c_idle)
+		reader->ph.c_idle();
+	else {
+		if (reader->client && reader->client->pfd) {
+			int time_diff=0;
+			cs_debug_mask(D_READER, "%s inactive_timeout (%d), close connection (fd=%d)", reader->ph.desc, time_diff, reader->client->pfd);
+			network_tcp_connection_close(reader->client, reader->client->pfd);
+		}
 	}
-    
-    if ((reader->log_port) && (reader->ph.c_init_log))
-      reader->ph.c_init_log();
-  }
-#ifdef WITH_CARDREADER
-  else
-  {
-    client->ip=cs_inet_addr("127.0.0.1");
-    cs_log("reader thread started (thread=%8X, label=%s, device=%s, detect=%s%s, mhz=%d, cardmhz=%d)", pthread_self(), reader->label,
-        reader->device, reader->detect&0x80 ? "!" : "",RDR_CD_TXT[reader->detect&0x7f], reader->mhz,reader->cardmhz);
-   	while (reader_device_init(reader)==2)
-     	cs_sleepms(60000); // wait 60 secs and try again
-  }
+}
 
+void reader_init(struct s_reader *reader) {
+	struct s_client *client = reader->client;
+
+	if (reader->typ & R_IS_CASCADING) {
+		client->typ='p';
+		client->port=reader->r_port;
+		cs_log("proxy thread started  (thread=%8X, label=%s, server=%s)",pthread_self(), reader->label, reader->device);
+
+		if (!(reader->ph.c_init)) {
+			cs_log("FATAL: %s-protocol not supporting cascading", reader->ph.desc);
+			cs_sleepms(1000);
+			cs_exit(1);
+		}
+
+		if (reader->ph.c_init(client)) {
+			//proxy reader start failed
+			cs_exit(1);
+		}
+
+		if ((reader->log_port) && (reader->ph.c_init_log))
+			reader->ph.c_init_log();
+	}
+#ifdef WITH_CARDREADER
+	else {
+		client->ip=cs_inet_addr("127.0.0.1");
+		cs_log("reader thread started (thread=%8X, label=%s, device=%s, detect=%s%s, mhz=%d, cardmhz=%d)", pthread_self(), reader->label,
+			reader->device, reader->detect&0x80 ? "!" : "",RDR_CD_TXT[reader->detect&0x7f], reader->mhz,reader->cardmhz);
+		while (reader_device_init(reader)==2)
+			cs_sleepms(60000); // wait 60 secs and try again
+	}
 #endif
+
 	cs_malloc(&client->emmcache,CS_EMMCACHESIZE*(sizeof(struct s_emm)), 1);
 	cs_malloc(&client->ecmtask,CS_MAXPENDING*(sizeof(ECM_REQUEST)), 1);
-  
-  reader_main(reader);
-  #ifndef NO_PTHREAD_CLEANUP_PUSH
-  pthread_cleanup_pop(1);
-  #else
-  cs_exit(0);
-  #endif
-	return NULL; //dummy to prevent compiler error
 }
-#pragma GCC diagnostic warning "-Wempty-body"
-

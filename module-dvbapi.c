@@ -1676,18 +1676,13 @@ static void * dvbapi_main_local(void *cli) {
 		pthread_detach(event_thread);
 	}
 
-	pfd2[0].fd = client->fd_m2c_c;
-	pfd2[0].events = (POLLIN | POLLPRI);
-	type[0]=0;
 
-	pfd2[1].fd = listenfd;
-	pfd2[1].events = (POLLIN | POLLPRI);
-	type[1]=1;
+	pfd2[0].fd = listenfd;
+	pfd2[0].events = (POLLIN | POLLPRI);
+	type[0]=1;
 
 	while (1) {
-		pfdcount = (listenfd > -1) ? 2 : 1;
-
-		chk_pending(500);
+		pfdcount = (listenfd > -1) ? 1 : 0;
 
 		for (i=0;i<MAX_DEMUX;i++) {
 			for (g=0;g<MAX_FILTER;g++) {
@@ -1736,16 +1731,8 @@ static void * dvbapi_main_local(void *cli) {
 					close(pfd2[i].fd);
 					continue;
 				}
-				if (pfd2[i].fd==client->fd_m2c_c) {
-					cs_exit(0);
-				}
 			}
 			if (pfd2[i].revents & (POLLIN | POLLPRI)) {
-				if (pfd2[i].fd==client->fd_m2c_c) {
-					process_client_pipe(client, NULL, 0);
-					continue;
-				}
-
 				if (type[i]==1) {
 					if (pfd2[i].fd==listenfd) {
 						connfd = accept(listenfd, (struct sockaddr *)&servaddr, (socklen_t *)&clilen);
@@ -1953,12 +1940,11 @@ static void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	}
 }
 
-static void * dvbapi_handler(int32_t ctyp) {
+static void * dvbapi_handler(struct s_client * cl, uchar *mbuf, int len) {
 	//cs_log("dvbapi loaded fd=%d", idx);
 	if (cfg.dvbapi_enabled == 1) {
-		struct s_client * cl = create_client(0);
 		cl->typ='c';
-		cl->ctyp=ctyp;
+		//cl->ctyp=ctyp;
 #ifdef AZBOX
 		pthread_create(&cl->thread, NULL, azbox_main, (void*) cl);
 #else
@@ -2525,9 +2511,6 @@ void azbox_openxcas_ecm_callback(int32_t stream_id, uint32_t seq, int32_t cipher
 	cs_ftime(&tp);
 	tp.time+=500;
 
-	struct pollfd pfd;
-	pfd.fd = dvbapi_client->fd_m2c_c;
-	pfd.events = POLLIN | POLLPRI;
 /*
 	while(1) {
 		chk_pending(tp);
@@ -2575,7 +2558,6 @@ void azbox_openxcas_ex_callback(int32_t stream_id, uint32_t seq, int32_t idx, ui
 	else
 		cs_debug_mask(D_DVBAPI, "openxcas: ex filter stopped");
 
-	chk_pending(500);
 	process_client_pipe(dvbapi_client, NULL, 0);
 
 	unsigned char mask[12];
@@ -2616,8 +2598,6 @@ void * azbox_main(void *cli) {
 	int32_t ret;
 	while ((ret = openxcas_get_message(&msg, 0)) >= 0) {
 		cs_sleepms(10);
-
-		chk_pending(500);
 
 		if (ret) {
 			openxcas_stream_id = msg.stream_id;

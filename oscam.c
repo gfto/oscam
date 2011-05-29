@@ -579,8 +579,6 @@ void cleanup_thread(void *var)
 	  }
 
 		if(cl->pfd)		nullclose(&cl->pfd); //Closing Network socket
-		if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
-		if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
 
 		if(cl->typ == 'r' && cl->reader){
 			// Maybe we also need a "nullclose" mechanism here...
@@ -814,30 +812,17 @@ void cs_debug_level()
 
 void cs_card_info()
 {
-  uchar dummy[1]={0x00};
 	struct s_client *cl;
 	for (cl=first_client->next; cl ; cl=cl->next)
-    if( cl->typ=='r' && cl->fd_m2c )
-      write_to_pipe(cl->fd_m2c, PIP_ID_CIN, dummy, 1);
-      //kill(client[i].pid, SIGUSR2);
+		if( cl->typ=='r' && cl->reader )
+			add_job(cl, ACTION_READER_CARDINFO, NULL, 0);
 }
 
 struct s_client * create_client(in_addr_t ip) {
 	struct s_client *cl;
 
 	if(cs_malloc(&cl, sizeof(struct s_client), -1)){
-		int32_t fdp[2];
-		if (pipe(fdp)) {
-			cs_log("Cannot create pipe (errno=%d: %s)", errno, strerror(errno));
-			free(cl);
-			return NULL;
-		}
 		//client part
-
-		//make_non_blocking(fdp[0]);
-		//make_non_blocking(fdp[1]);
-		cl->fd_m2c_c = fdp[0]; //store client read fd
-		cl->fd_m2c = fdp[1]; //store client read fd
 		cl->ip=ip;
 		cl->account = first_client->account;
 
@@ -845,11 +830,13 @@ struct s_client * create_client(in_addr_t ip) {
 		cl->stat=1;
 		cl->mutexstore = NULL;
 		cl->mutexstore_alloc = 0;
-  	cl->mutexstore_used = 0;
+  		cl->mutexstore_used = 0;
+
+		pthread_mutex_init(&cl->thread_lock, NULL);
 
 		cl->login=cl->last=time((time_t *)0);
 
-        //Now add new client to the list:
+		//Now add new client to the list:
 		struct s_client *last;
 		cs_lock(&clientlist_lock);
 		for (last=first_client; last->next != NULL; last=last->next); //ends with cl on last client
@@ -1329,8 +1316,6 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 		struct s_client * cl = create_client(first_client->ip);
 		if (cl == NULL) return 0;
 
-
-		rdr->fd=cl->fd_m2c;
 		cl->reader=rdr;
 		cs_log("creating thread for device %s", rdr->device);
 
@@ -1341,21 +1326,8 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 
 		cl->typ='r';
 		//client[i].ctyp=99;
-		pthread_attr_t attr;
-		pthread_attr_init(&attr);
-#if !defined(TUXBOX) && !defined(HAVE_PCSC)
-        /* pcsc doesn't like this either; segfaults on x86, x86_64 */
-		pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
-#endif
 
-		if (pthread_create(&cl->thread, &attr, start_cardreader, (void *)rdr)) {
-			cs_log("ERROR: can't create thread for %s", rdr->label);
-			cleanup_thread(cl);
-			restart = 0;
-		}
-		else
-			pthread_detach(cl->thread);
-		pthread_attr_destroy(&attr);
+		add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
 
 		if (restart) {
 			//add to list
@@ -1691,102 +1663,12 @@ static void store_cw_in_cache(ECM_REQUEST *er, uint64_t grp, int32_t rc)
 }
 
 /*
-// only for debug
-static struct s_client * get_thread_by_pipefd(int32_t fd)
-{
-	struct s_client *cl;
-	for (cl=first_client->next; cl ; cl=cl->next)
-		if (fd==cl->fd_m2c || fd==cl->fd_m2c_c)
-			return cl;
-	return first_client; //master process
-}
-*/
-
-/*
- * write_to_pipe():
- * write all kind of data to pipe specified by fd
- */
-int32_t write_to_pipe(int32_t fd, int32_t id, uchar *data, int32_t n)
-{
-	if (!fd) {
-		cs_log("write_to_pipe: fd==0 id: %d", id);
-		return -1;
-	}
-
-	//cs_debug_mask(D_TRACE, "write to pipe %d (%s) thread: %8X to %8X", fd, PIP_ID_TXT[id], pthread_self(), get_thread_by_pipefd(fd)->thread);
-
-	uchar buf[3+sizeof(void*)];
-
-	// fixme
-	// copy data to allocated memory
-	// needed for compatibility
-	// need to be freed after read_from_pipe
-	void *d;
-	if(!cs_malloc(&d, n, -1)) return -1;
-	memcpy(d, data, n);
-
-	if ((id<0) || (id>PIP_ID_MAX))
-		return(PIP_ID_ERR);
-
-	memcpy(buf, PIP_ID_TXT[id], 3);
-	memcpy(buf+3, &d, sizeof(void*));
-
-	n=3+sizeof(void*);
-
-	return(write(fd, buf, n));
-}
-
-
-/*
- * read_from_pipe():
- * read all kind of data from pipe specified by fd
- * special-flag redir: if set AND data is ECM: this will redirected to appr. client
- */
-int32_t read_from_pipe(int32_t fd, uchar **data)
-{
-	int32_t rc;
-	intptr_t hdr=0;
-	uchar buf[3+sizeof(void*)];
-	memset(buf, 0, sizeof(buf));
-
-	*data=(uchar *)0;
-	rc=PIP_ID_NUL;
-
-
-	if (read(fd, buf, sizeof(buf))==sizeof(buf)) {
-		memcpy(&hdr, buf+3, sizeof(void*));
-	} else {
-		cs_log("WARNING: pipe header to small !");
-		return PIP_ID_ERR;
-	}
-
-	//uchar id[4];
-	//memcpy(id, buf, 3);
-	//id[3]='\0';
-
-	//cs_debug_mask(D_TRACE, "read from pipe %d (%s) thread: %8X", fd, id, (uint32_t)pthread_self());
-
-	int32_t l;
-	for (l=0; (rc<0) && (PIP_ID_TXT[l]); l++)
-		if (!memcmp(buf, PIP_ID_TXT[l], 3))
-			rc=l;
-
-	if (rc<0) {
-		cs_log("WARNING: pipe garbage from pipe %i", fd);
-		return PIP_ID_ERR;
-	}
-
-	*data = (void*)hdr;
-
-	return(rc);
-}
-
-/*
  * write_ecm_request():
  */
-static int32_t write_ecm_request(int32_t fd, ECM_REQUEST *er)
+static int32_t write_ecm_request(struct s_reader *rdr, ECM_REQUEST *er)
 {
-  return(write_to_pipe(fd, PIP_ID_ECM, (uchar *) er, sizeof(ECM_REQUEST)));
+	add_job(rdr->client, ACTION_READER_ECM_REQUEST, (void*)er, sizeof(ECM_REQUEST));
+	return 1;
 }
 
 /*
@@ -1868,7 +1750,7 @@ void distribute_ecm(ECM_REQUEST *er, uint64_t grp, int32_t rc)
   er->rc = rc;
 
   for (cl=first_client->next; cl ; cl=cl->next) {
-    if (cl->fd_m2c && cl->typ=='c' && cl->ecmtask && (cl->grp&grp)) {
+    if (cl->typ=='c' && cl->ecmtask && (cl->grp&grp)) {
 
       n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
       pending=0;
@@ -1879,8 +1761,8 @@ void distribute_ecm(ECM_REQUEST *er, uint64_t grp, int32_t rc)
         	if (ecm->ecmcacheptr == er->ecmcacheptr) {
         		er->cpti = ecm->cpti;
         		//cs_log("distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
-        		write_ecm_request(cl->fd_m2c, er);
-			}
+			add_job(cl, ACTION_CLIENT_ECM_ANSWER, er, sizeof(ECM_REQUEST));
+		}
         }
         //else if (ecm->rc == E_99)
         //  cs_log("NO-distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
@@ -1893,38 +1775,35 @@ void distribute_ecm(ECM_REQUEST *er, uint64_t grp, int32_t rc)
 
 int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 {
-  int32_t i;
-  uchar c;
-  for (i=0; i<16; i+=4)
-  {
-    c=((er->cw[i]+er->cw[i+1]+er->cw[i+2]) & 0xff);
-    if (er->cw[i+3]!=c)
-    {
-      cs_debug_mask(D_TRACE, "notice: changed dcw checksum byte cw[%i] from %02x to %02x", i+3, er->cw[i+3],c);
-      er->cw[i+3]=c;
-    }
-  }
+	int32_t i;
+	uchar c;
+	for (i=0; i<16; i+=4) {
+		c=((er->cw[i]+er->cw[i+1]+er->cw[i+2]) & 0xff);
+		if (er->cw[i+3]!=c) {
+			cs_debug_mask(D_TRACE, "notice: changed dcw checksum byte cw[%i] from %02x to %02x", i+3, er->cw[i+3],c);
+			er->cw[i+3]=c;
+		}
+	}
 
-  er->selected_reader=reader;
-//cs_log("answer from reader %d (rc=%d)", er->selected_reader, er->rc);
-  er->caid=er->ocaid;
+	er->selected_reader=reader;
+	//cs_log("answer from reader %d (rc=%d)", er->selected_reader, er->rc);
+	er->caid=er->ocaid;
 
-  if (er->rc==E_RDR_FOUND) {
+	if (er->rc==E_RDR_FOUND) {
+		store_cw_in_cache(er, reader->grp, E_FOUND);
 
-	store_cw_in_cache(er, reader->grp, E_FOUND);
+		/* CWL logging only if cwlogdir is set in config */
+		if (cfg.cwlogdir != NULL)
+			logCWtoFile(er);
+	}
 
-    /* CWL logging only if cwlogdir is set in config */
-    if (cfg.cwlogdir != NULL)
-      logCWtoFile(er);
-  }
+	int32_t res=1;
+	if( er->client ) {
+		//We got an ECM (or nok). Now we should check for another clients waiting for it:
+		add_job(er->client, ACTION_CLIENT_ECM_ANSWER, er, sizeof(ECM_REQUEST));
+	}
 
-  int32_t res=0;
-  if( er->client && er->client->fd_m2c ) {
-    //Wie got an ECM (or nok). Now we should check for another clients waiting for it:
-    res = write_ecm_request(er->client->fd_m2c, er);
-  }
-
-  return res;
+	return res;
 }
 
 ECM_REQUEST *get_ecmtask()
@@ -2021,7 +1900,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	for (lp=(uint16_t *)er->ecm+(er->l>>2), lc=0; lp>=(uint16_t *)er->ecm; lp--)
 		lc^=*lp;
 
-		snprintf(uname,sizeof(uname)-1, "%s", username(client));
+	snprintf(uname,sizeof(uname)-1, "%s", username(client));
 
 	if (er->rc == E_FOUND||er->rc == E_CACHE1||er->rc == E_CACHE2)
 		checkCW(er);
@@ -2458,23 +2337,10 @@ void request_cw(ECM_REQUEST *er, int32_t flag, int32_t reader_types)
 		//1 = only local cards
 		//2 = only network
 		if ((reader_types == 0) || ((reader_types == 1) && (!(rdr->typ & R_IS_NETWORK))) || ((reader_types == 2) && (rdr->typ & R_IS_NETWORK))) {
-			cs_debug_mask(D_TRACE, "request_cw%i to reader %s fd=%d ecm=%04X", reader_types+1, rdr->label, rdr->fd, lc);
-			status = write_ecm_request(rdr->fd, er);
+			cs_debug_mask(D_TRACE, "request_cw%i to reader %s fd=%d ecm=%04X", reader_types+1, rdr->label, 0, lc);
+			status = write_ecm_request(rdr, er);
 		}
-		if (status == -1) {
-			cs_log("request_cw() failed on reader %s errno=%d, %s", rdr->label, errno, strerror(errno));
-			if (rdr->fd) {
-				rdr->fd_error++;
-				if (rdr->fd_error > 5) {
-					rdr->fd_error = 0;
-					cs_log("Restarting reader %s", rdr->label);
-					restart_cardreader(rdr, 1); //Schlocke: This restarts the reader!
-				}
-			}
-		}
-		else
-			rdr->fd_error = 0;
-  }
+	}
 }
 
 void get_cw(struct s_client * client, ECM_REQUEST *er)
@@ -2898,7 +2764,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 
 		ep->client = cur_client();
 		cs_debug_mask(D_EMM, "emm is being sent to reader %s.", aureader->label);
-		write_to_pipe(aureader->fd, PIP_ID_EMM, (uchar *) ep, sizeof(EMM_PACKET));
+		add_job(aureader->client, ACTION_READER_EMM, ep, sizeof(EMM_PACKET));
 	}
 }
 
@@ -2911,7 +2777,7 @@ int32_t comp_timeb(struct timeb *tpa, struct timeb *tpb)
   return(0);
 }
 
-int32_t chk_pending(int32_t timeout)
+int32_t chk_pending(struct s_reader *rdr, int32_t timeout)
 {
 	int32_t i, pending=0;
 	uint32_t td;
@@ -2923,14 +2789,15 @@ int32_t chk_pending(int32_t timeout)
 	tpe=tpn;
 	tpe.time+=timeout;
 
-	struct s_client *cl = cur_client();
+	struct s_client *cl = rdr->client;
+
+	if (!cl || !cl->ecmtask)
+		return 0;
 
 	if (cl->ecmtask)
 		i=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
 	else
 		i=0;
-
-	//cs_log("num pend=%d", i);
 
 	for (--i; i>=0; i--) {
 
@@ -2943,10 +2810,9 @@ int32_t chk_pending(int32_t timeout)
 			if (check_cwcache2(er, cl->grp)) {
 					//cs_log("found lost entry in cache! %s %04X&%06X/%04X", username(cl), er->caid, er->prid, er->srvid);
 					er->rc = E_CACHE2;
-					send_dcw(cl, er);
+					add_job(cl, ACTION_CLIENT_ECM_ANSWER, er, sizeof(ECM_REQUEST));
 					continue;
 			}
-
 
 			tpc=er->tps;
 			uint32_t tt;
@@ -3004,7 +2870,7 @@ int32_t chk_pending(int32_t timeout)
 					}
 #endif
 					store_cw_in_cache(er, cl->grp, E_TIMEOUT);
-					send_dcw(cl, er);
+					add_job(cl, ACTION_CLIENT_ECM_ANSWER, er, sizeof(ECM_REQUEST));
 					continue;
 				} else {
 					er->stage++;
@@ -3047,12 +2913,7 @@ int32_t process_input(uchar *buf, int32_t l, int32_t timeout)
 			pfd[pfdcount++].events = POLLIN | POLLPRI;
 		}
 
-		if (cl->fd_m2c_c) {
-			pfd[pfdcount].fd = cl->fd_m2c_c;
-			pfd[pfdcount++].events = POLLIN | POLLPRI;
-		}
-
-		int32_t p_rc = poll(pfd, pfdcount, chk_pending(timeout));
+		int32_t p_rc = poll(pfd, pfdcount, 0);
 
 		if (p_rc < 0) {
 			if (errno==EINTR) continue;
@@ -3068,78 +2929,11 @@ int32_t process_input(uchar *buf, int32_t l, int32_t timeout)
 			if (!(pfd[i].revents & (POLLIN | POLLPRI)))
 				continue;
 
-			if (pfd[i].fd == cl->fd_m2c_c) {
-				if (process_client_pipe(cl, buf, l)==PIP_ID_UDP)
-					return ph[cl->ctyp].recv(cl, buf, l);
-			}
-
 			if (pfd[i].fd == cl->pfd)
 				return ph[cl->ctyp].recv(cl, buf, l);
 		}
 	}
 	return(rc);
-}
-
-static void restart_clients()
-{
-	cs_log("restarting clients");
-	struct s_client *cl;
-	for (cl=first_client->next; cl ; cl=cl->next)
-		if (cl->typ=='c' && ph[cl->ctyp].type & MOD_CONN_NET) {
-			kill_thread(cl);
-			cs_log("killing client c %8X", (uintptr_t)(cl->thread));
-		}
-}
-
-
-static void process_master_pipe(int32_t mfdr)
-{
-  int32_t n;
-  uchar *ptr;
-
-  switch(n=read_from_pipe(mfdr, &ptr))
-  {
-    case PIP_ID_KCL: //Kill all clients
-    	restart_clients();
-    	break;
-    case PIP_ID_ERR:
-        cs_exit(1); //better than reading from dead pipe!
-        break;
-    default:
-       cs_log("unhandled pipe message %d (master pipe)", n);
-       break;
-  }
-  if (ptr) free(ptr);
-}
-
-
-int32_t process_client_pipe(struct s_client *cl, uchar *buf, int32_t l) {
-	uchar *ptr;
-	uint16_t n;
-	int32_t pipeCmd = read_from_pipe(cl->fd_m2c_c, &ptr);
-
-	switch(pipeCmd) {
-		case PIP_ID_ECM:
-			chk_dcw(cl, (ECM_REQUEST *)ptr);
-			break;
-		case PIP_ID_UDP:
-			if (ptr[0]!='U') {
-				cs_log("INTERNAL PIPE-ERROR");
-			}
-			memcpy(&n, ptr+1, 2);
-			if (n+3<=l) {
-				memcpy(buf, ptr, n+3);
-			}
-			break;
-		case PIP_ID_ERR:
-			cs_exit(1);
-			break;
-		default:
-			cs_log("unhandled pipe message %d (client %s)", pipeCmd, cl->account->usr);
-			break;
-	}
-	if (ptr) free(ptr);
-	return pipeCmd;
 }
 
 void cs_log_config()
@@ -3186,11 +2980,239 @@ void cs_waitforcardinit()
 	}
 }
 
+extern void reader_init(struct s_reader *reader);
+extern void reader_do_idle(struct s_reader * reader);
+extern int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep);
+extern void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er);
+extern void casc_do_sock(struct s_reader * reader, int32_t w);
+extern void casc_do_sock_log(struct s_reader * reader);
+extern void reader_do_card_info(struct s_reader * reader);
+
+void * work_thread(void *ptr) {
+	struct s_data *data = (struct s_data *) ptr;
+	struct s_client *cl = data->cl;
+	struct s_reader *reader = cl->reader;
+
+	pthread_setspecific(getclient, cl);
+	cl->thread=pthread_self();
+
+	uchar mbuf[1024];
+	int n=0, rc=0;
+	struct pollfd pfd[1];
+
+	if (data->action < 20 && !reader) {
+		free(ptr);
+		return NULL;
+	}
+
+	if (!cl->init_done) {
+		if (data->action < 20)
+			reader_init(reader);
+
+		cl->init_done=1;
+	}
+
+	if (data->action) {
+		switch(data->action) {
+			case ACTION_READER_IDLE:
+				reader_do_idle(reader);
+				break;
+			case ACTION_READER_REMOTE:
+				casc_do_sock(reader, 0);
+				break;
+			case ACTION_READER_REMOTELOG:
+				casc_do_sock_log(reader);
+ 				break;
+			case ACTION_READER_RESET:
+		 		reader_reset(reader);
+ 				break;
+			case ACTION_READER_ECM_REQUEST:
+				reader_get_ecm(reader, data->ptr);
+				break;
+			case ACTION_READER_EMM:
+				reader_do_emm(reader, data->ptr);
+				break;
+			case ACTION_READER_CARDINFO:
+				reader_do_card_info(reader);
+				break;
+
+			case ACTION_CLIENT_UDP:
+				n = ph[cl->ctyp].recv(cl, data->ptr, data->len);
+				ph[cl->ctyp].s_handler(cl, data->ptr, n);
+				break;
+			case ACTION_CLIENT_TCP:
+				pfd[0].fd = cl->pfd;
+				pfd[0].events = POLLIN | POLLPRI;
+				rc = poll(pfd, 1, 0);
+				if (rc>0) {
+					n = ph[cl->ctyp].recv(cl, mbuf, 1024);
+					ph[cl->ctyp].s_handler(cl, mbuf, n);
+				}
+				break;
+			case ACTION_CLIENT_ECM_ANSWER:
+				chk_dcw(cl, data->ptr);
+				break;
+		}
+	}
+
+	if (data->ptr)
+		free(data->ptr);
+
+	free(ptr);
+
+	pthread_mutex_lock(&cl->thread_lock);
+
+	if (cl->joblist) {
+		if (ll_count(cl->joblist)>0) {
+			cs_debug_mask(D_TRACE, "start next job");
+			LL_ITER itr = ll_iter_create(cl->joblist);
+			struct s_data *newdata = ll_iter_next(&itr);
+			ll_iter_remove(&itr);
+			pthread_mutex_unlock(&cl->thread_lock);
+			work_thread(newdata);
+			return NULL;
+		}
+	}
+
+	cl->thread_active=0;
+	pthread_mutex_unlock(&cl->thread_lock);
+
+	cs_debug_mask(D_TRACE, "ending thread");
+
+	pthread_exit(NULL);
+}
+
+void add_job(struct s_client *cl, int8_t action, void *ptr, int len) {
+	struct s_data *data = cs_malloc(&data, sizeof(struct s_data), -1);
+	data->action=action;
+	data->ptr=ptr;
+	data->cl=cl;
+
+	if (ptr && len > 0) {
+		data->ptr=cs_malloc(&data->ptr, len, -1);
+		memcpy(data->ptr, ptr, len);
+	}
+
+	pthread_mutex_lock(&cl->thread_lock);
+	if (cl->thread_active) {
+		if (!cl->joblist)
+			cl->joblist = ll_create();
+
+		ll_append(cl->joblist, data);
+		cs_debug_mask(D_TRACE, "add %s job action %d", action > 20 ? "client" : "reader", action);
+		pthread_mutex_unlock(&cl->thread_lock);
+		return;
+	}
+
+
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+#if !defined(TUXBOX) && !defined(HAVE_PCSC)
+	/* pcsc doesn't like this either; segfaults on x86, x86_64 */
+	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+#endif
+
+	cs_debug_mask(D_TRACE, "start %s thread action %d", action > 20 ? "client" : "reader", action);
+
+	if (pthread_create(&cl->thread, NULL, work_thread, (void *)data)) {
+		cs_log("ERROR: can't create thread for %s", action > 20 ? "client" : "reader");
+	} else
+		pthread_detach(cl->thread);
+
+	pthread_attr_destroy(&attr);
+
+	cl->thread_active = 1;
+	pthread_mutex_unlock(&cl->thread_lock);
+}
+
+
+void * client_check(void) {
+	int rc, pfdcount = 0;
+	struct s_client *cl;
+	struct pollfd pfd[256];
+
+	while (1) {
+		pfdcount = 0;
+		for (cl=first_client->next; cl ; cl=cl->next) {
+			if (cl->init_done && cl->pfd && cl->typ=='c') {
+				if (cl->pfd && !cl->thread_active) {
+					pfd[pfdcount].fd = cl->pfd;
+					pfd[pfdcount++].events = POLLIN | POLLPRI;
+				}
+			}
+		}
+
+		rc = poll(pfd, pfdcount, 250);
+
+		for (cl=first_client->next; cl ; cl=cl->next) {
+			if (cl->init_done && cl->pfd && cl->typ=='c') {
+				int i;
+				for (i=0;i<pfdcount;i++) {
+					if (cl->pfd && pfd[i].fd == cl->pfd && (pfd[i].revents & (POLLIN | POLLPRI))) {
+						add_job(cl, ACTION_CLIENT_TCP, NULL, 0);
+					}
+				}
+			}
+		}
+	}
+}
+
+void * reader_check(void) {
+	int rc, pfdcount = 0;
+	struct s_reader *rdr;
+	struct pollfd pfd[256];
+
+	while (1) {
+		pfdcount = 0;
+		for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
+			if (rdr->client && rdr->client->init_done) {
+				if (rdr->client->pfd && !rdr->client->thread_active) {
+					pfd[pfdcount].fd = rdr->client->pfd;
+					pfd[pfdcount++].events = POLLIN | POLLPRI;
+				}
+			}
+		}
+
+		rc = poll(pfd, pfdcount, 250);
+
+		for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
+#ifdef WITH_CARDREADER
+			if (!(rdr->typ & R_IS_CASCADING)) reader_checkhealth(rdr);
+#endif
+			if (rdr->client && rdr->client->init_done) {
+				// reader do idle
+				int tcp_toflag=(rdr->client->pfd && (rdr->ph.type==MOD_CONN_TCP) && rdr->tcp_ito && rdr->tcp_connected);
+
+				if (tcp_toflag && rdr->typ & R_IS_CASCADING) {
+					time_t now;
+					int32_t time_diff;
+					time(&now);
+					time_diff = abs(now - rdr->last_s);
+
+					if (time_diff>(rdr->tcp_ito*60)) {
+						add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
+					}
+				}
+
+				int i;
+				for (i=0;i<pfdcount;i++) {
+					// message from remote
+					if (rdr->client->pfd && pfd[i].fd == rdr->client->pfd && (pfd[i].revents & (POLLIN | POLLPRI))) {
+						add_job(rdr->client, ACTION_READER_REMOTE, NULL, 0);
+					}
+				}
+			}
+			if (rdr->client && rdr->client->ecmtask && !rdr->client->thread_active)
+				chk_pending(rdr, cfg.cmaxidle);
+		}
+	}
+}
+
 int32_t accept_connection(int32_t i, int32_t j) {
 	struct   sockaddr_in cad;
 	int32_t scad,n;
 	scad = sizeof(cad);
-	uchar    buf[2048];
+	uchar    buf[1024];
 
 	if (ph[i].type==MOD_CONN_UDP) {
 
@@ -3206,7 +3228,6 @@ int32_t accept_connection(int32_t i, int32_t j) {
 			if (!cl) {
 				if (cs_check_violation((uint32_t)cad.sin_addr.s_addr))
 					return 0;
-				//printf("IP: %s - %d\n", inet_ntoa(*(struct in_addr *)&cad.sin_addr.s_addr), cad.sin_addr.s_addr);
 
 				cl = create_client(cad.sin_addr.s_addr);
 				if (!cl) return 0;
@@ -3218,34 +3239,10 @@ int32_t accept_connection(int32_t i, int32_t j) {
 
 				cl->port=ntohs(cad.sin_port);
 				cl->typ='c';
-
-				write_to_pipe(cl->fd_m2c, PIP_ID_UDP, (uchar*)&buf, n+3);
-
-				pthread_attr_t attr;
-				pthread_attr_init(&attr);
-#ifndef TUXBOX
-				pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
-#endif
-				//We need memory here, because when on stack and we leave the function, stack is overwritten,
-				//but assigned to the thread
-				//So alloc memory for the init data and free them in clientthread_init:
-				struct s_clientinit *init = cs_malloc(&init, sizeof(struct s_clientinit), 0);
-				init->handler = ph[i].s_handler;
-				init->client = cl;
-				if (pthread_create(&cl->thread, &attr, clientthread_init, (void*) init)) {
-					cs_log("ERROR: can't create thread for UDP client from %s", inet_ntoa(*(struct in_addr *)&cad.sin_addr.s_addr));
-					cleanup_thread(cl);
-					free(init);
-				}
-				else
-					pthread_detach(cl->thread);
-				pthread_attr_destroy(&attr);
-			} else {
-				write_to_pipe(cl->fd_m2c, PIP_ID_UDP, (uchar*)&buf, n+3);
 			}
+			add_job(cl, ACTION_CLIENT_UDP, buf, n+3);
 		}
 	} else { //TCP
-
 		int32_t pfd3;
 		if ((pfd3=accept(ph[i].ptab->ports[j].fd, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
 
@@ -3270,27 +3267,6 @@ int32_t accept_connection(int32_t i, int32_t j) {
 			cl->pfd=pfd3;
 			cl->port=ntohs(cad.sin_port);
 			cl->typ='c';
-
-			pthread_attr_t attr;
-			pthread_attr_init(&attr);
-#ifndef TUXBOX
-			pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
-#endif
-
-			//We need memory here, because when on stack and we leave the function, stack is overwritten,
-			//but assigned to the thread
-			//So alloc memory for the init data and free them in clientthread_init:
-			struct s_clientinit *init = cs_malloc(&init, sizeof(struct s_clientinit), 0);
-			init->handler = ph[i].s_handler;
-			init->client = cl;
-			if (pthread_create(&cl->thread, &attr, clientthread_init, (void*) init)) {
-				cs_log("ERROR: can't create thread for TCP client from %s", inet_ntoa(*(struct in_addr *)&cad.sin_addr.s_addr));
-				cleanup_thread(cl);
-				free(init);
-			}
-			else
-				pthread_detach(cl->thread);
-			pthread_attr_destroy(&attr);
 		}
 	}
 	return 0;
@@ -3381,10 +3357,7 @@ if (pthread_key_create(&getclient, NULL)) {
   int32_t      i, j;
   int32_t      bg=0;
   int32_t      gbdb=0;
-  int32_t      gfd; //nph,
-  int32_t      fdp[2];
-  int32_t      mfdr=0;     // Master FD (read)
-  int32_t      fd_c2m=0;
+
 
   void (*mod_def[])(struct s_module *)=
   {
@@ -3571,19 +3544,6 @@ if (pthread_key_create(&getclient, NULL)) {
   init_irdeto_guess_tab();
 #endif
 
-
-  if (pipe(fdp))
-  {
-    cs_log("Cannot create pipe (errno=%d: %s)", errno, strerror(errno));
-    cs_exit(1);
-  }
-  mfdr=fdp[0];
-  fd_c2m=fdp[1];
-  gfd=mfdr+1;
-
-  first_client->fd_m2c=fd_c2m;
-  first_client->fd_m2c_c=mfdr;
-
   write_versionfile();
   server_pid = getpid();
 
@@ -3604,22 +3564,20 @@ if (pthread_key_create(&getclient, NULL)) {
       for(j=0; j<ph[i].ptab->nports; j++)
       {
         start_listener(&ph[i], j);
-        if( ph[i].ptab->ports[j].fd+1>gfd )
-          gfd=ph[i].ptab->ports[j].fd+1;
       }
 
 	//set time for server to now to avoid 0 in monitor/webif
 	first_client->last=time((time_t *)0);
 
 #ifdef WEBIF
-  if(cfg.http_port == 0)
-    cs_log("http disabled");
-  else
-    start_thread((void *) &http_srv, "http");
+	if(cfg.http_port == 0)
+		cs_log("http disabled");
+	else
+		start_thread((void *) &http_srv, "http");
 #endif
-
+	start_thread((void *) &reader_check, "reader check"); 
 #ifdef LCDSUPPORT
-  start_lcd_thread();
+	start_lcd_thread();
 #endif
 
 	init_cardreader();
@@ -3653,10 +3611,14 @@ if (pthread_key_create(&getclient, NULL)) {
 
 	for (i=0; i<CS_MAX_MOD; i++)
 		if (ph[i].type & MOD_CONN_SERIAL)   // for now: oscam_ser only
-			if (ph[i].s_handler)
-				ph[i].s_handler(i);
+			if (ph[i].s_handler) {
+				struct s_client * cl = create_client(0);
+				cl->ctyp = i;
+				ph[i].s_handler(cl, NULL, 0);
+			}
 
-	//cs_close_log();
+	start_thread((void *) &client_check, "client check"); 
+
 	while (!exit_oscam) {
 		fd_set fds;
 
@@ -3668,14 +3630,14 @@ if (pthread_key_create(&getclient, NULL)) {
 
                         //Wait for incoming data
 			FD_ZERO(&fds);
-			FD_SET(mfdr, &fds);
+			//FD_SET(mfdr, &fds);
 			for (i=0; i<CS_MAX_MOD; i++)
 				if ( (ph[i].type & MOD_CONN_NET) && ph[i].ptab )
 					for (j=0; j<ph[i].ptab->nports; j++)
 						if (ph[i].ptab->ports[j].fd)
 							FD_SET(ph[i].ptab->ports[j].fd, &fds);
 			errno=0;
-			select(gfd, &fds, 0, 0, &timeout);
+			select(1024, &fds, 0, 0, &timeout);
 		} while (errno==EINTR && !exit_oscam); //if timeout accurs and exit_oscam is set, we break the loop
 
 		if (exit_oscam)
@@ -3683,9 +3645,6 @@ if (pthread_key_create(&getclient, NULL)) {
 
 		first_client->last=time((time_t *)0);
 
-		if (FD_ISSET(mfdr, &fds)) {
-			process_master_pipe(mfdr);
-		}
 		for (i=0; i<CS_MAX_MOD; i++) {
 			if( (ph[i].type & MOD_CONN_NET) && ph[i].ptab ) {
 				for( j=0; j<ph[i].ptab->nports; j++ ) {

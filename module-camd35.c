@@ -329,40 +329,28 @@ static void camd35_process_emm(uchar *buf)
 	do_emm(cur_client(), &epg);
 }
 
-static void * camd35_server(void *cli)
+static void * camd35_server(struct s_client * client, uchar *mbuf, int n)
 {
-  int32_t n;
-  uchar mbuf[1024];
+	if (!client->req) {
+		cs_malloc(&client->req,CS_MAXPENDING*REQ_SIZE, 1);
+	}
 
-	struct s_client * client = (struct s_client *) cli;
-  client->thread=pthread_self();
-  pthread_setspecific(getclient, cli);
+	client->is_udp = (ph[client->ctyp].type == MOD_CONN_UDP);
 
-	cs_malloc(&client->req,CS_MAXPENDING*REQ_SIZE, 1);
+	switch(mbuf[0]) {
+		case  0:	// ECM
+		case  3:	// ECM (cascading)
+			camd35_process_ecm(mbuf);
+			break;
+		case  6:	// EMM
+		case 19:  // EMM
+			camd35_process_emm(mbuf);
+			break;
+		default:
+			cs_log("unknown camd35 command! (%d)", mbuf[0]);
+	}
 
-  client->is_udp = (ph[client->ctyp].type == MOD_CONN_UDP);
-
-  while ((n=process_input(mbuf, sizeof(mbuf), cfg.cmaxidle))>0)
-  {
-    switch(mbuf[0])
-    {
-      case  0:	// ECM
-      case  3:	// ECM (cascading)
-        camd35_process_ecm(mbuf);
-        break;
-      case  6:	// EMM
-      case 19:  // EMM
-        camd35_process_emm(mbuf);
-        break;
-      default:
-        cs_log("unknown camd35 command! (%d)", mbuf[0]);
-    }
-  }
-
-  NULLFREE(client->req);
-
-  cs_disconnect_client(client);
-  return NULL; //to prevent compiler message
+	return NULL; //to prevent compiler message
 }
 
 /*

@@ -974,13 +974,13 @@ static void * oscam_ser_fork(void *pthreadparam)
   return NULL;
 }
 
-void * init_oscam_ser(int32_t ctyp)
+void * init_oscam_ser(struct s_client *cl, uchar *mbuf, int len)
 {
 	char sdevice[512];
   	struct s_thread_param param;
   	oscam_init_serialdata(&param.serialdata);
 	cs_strncpy(sdevice, cfg.ser_device, sizeof(sdevice));
-	param.ctyp=ctyp;
+	param.ctyp=cl->typ;
 	char *p;
 	pthread_t temp;
 	char cltype = 'c'; //now auto should work
