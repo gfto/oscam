@@ -453,7 +453,13 @@ char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *par
 				//we use the same function as used for parsing the config tokens
 				if (strstr((*params).params[i], "http")) {
 					chk_t_webif((*params).params[i], (*params).values[i]);
-				} else {
+				}
+#ifdef LCDSUPPORT
+				else if (strstr((*params).params[i], "lcd")) {
+					chk_t_lcd((*params).params[i], (*params).values[i]);
+				}
+#endif
+				else {
 					chk_t_monitor((*params).params[i], (*params).values[i]);
 				}
 			}
@@ -532,6 +538,14 @@ char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *par
 
 	if (cfg.http_full_cfg)
 		tpl_addVar(vars, TPLADD, "HTTPSAVEFULLSELECT", "selected");
+
+#ifdef LCDSUPPORT
+	if (cfg.lcd_output_path != NULL)
+		tpl_addVar(vars, TPLADD, "LCDOUTPUTPATH", cfg.lcd_output_path);
+	if (cfg.lcd_hide_idle)
+		tpl_addVar(vars, TPLADD, "LCDHIDEIDLE", "selected");
+	tpl_printf(vars, TPLADD, "LCDREFRESHINTERVAL", "%d", cfg.lcd_write_intervall);
+#endif
 
 	return tpl_getTpl(vars, "CONFIGMONITOR");
 }

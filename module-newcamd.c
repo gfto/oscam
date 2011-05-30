@@ -1023,43 +1023,41 @@ static void newcamd_server_init(struct s_client *client) {
 
 }
 
-static void * newcamd_server(struct s_client *client, uchar *mbuf, int rc)
+static void * newcamd_server(struct s_client *client, uchar *mbuf, int len)
 {
-	if (!client->req) {
-		newcamd_server_init(client);
-	}
-
 	// check for clienttimeout, if timeout occurs try to send keepalive / wait for answer
 	// befor client was disconnected. If keepalive was disabled, exit after clienttimeout
-	
-	if (rc>0) {
-		switch(mbuf[2]) {
-			case 0x80:
-			case 0x81:
-				newcamd_process_ecm(mbuf);
-				break;
 
-			case MSG_KEEPALIVE:
-				newcamd_reply_ka();
-				break;
+	if (len<3)
+		return NULL;
 
-			default:
-				if(mbuf[2]>0x81 && mbuf[2]<0x90)
-					newcamd_process_emm(mbuf+2);
-				else {
-					cs_debug_mask(D_CLIENT, "unknown newcamd command! (%d)", mbuf[2]);
-				}
-		}
-	}
+	switch(mbuf[2]) {
+		case 0x80:
+		case 0x81:
+			newcamd_process_ecm(mbuf);
+			break;
 
-	if(rc==-9) {
-		if (client->ncd_keepalive)
+		case MSG_KEEPALIVE:
 			newcamd_reply_ka();
-		else
-			rc=0;
+			break;
+
+		default:
+			if(mbuf[2]>0x81 && mbuf[2]<0x90)
+				newcamd_process_emm(mbuf+2);
+			else {
+				cs_debug_mask(D_CLIENT, "unknown newcamd command! (%d)", mbuf[2]);
+			}
 	}
 
 	return NULL;
+}
+
+void newcamd_idle() {
+	struct s_client *client = cur_client();
+	if (client->ncd_keepalive)
+		newcamd_reply_ka();
+	else
+		cs_exit(0);
 }
 
 /*
@@ -1205,6 +1203,7 @@ void module_newcamd(struct s_module *ph)
   ph->multi=1;
   ph->s_ip=cfg.ncd_srvip;
   ph->s_handler=newcamd_server;
+  ph->s_init=newcamd_server_init;
   ph->recv=newcamd_recv;
   ph->send_dcw=newcamd_send_dcw;
   ph->ptab=&cfg.ncd_ptab;
@@ -1215,5 +1214,6 @@ void module_newcamd(struct s_module *ph)
   ph->c_recv_chk=newcamd_recv_chk;
   ph->c_send_ecm=newcamd_send_ecm;
   ph->c_send_emm=newcamd_send_emm;
+  ph->c_idle = newcamd_idle;
   ph->num=R_NEWCAMD;
 }

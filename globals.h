@@ -376,9 +376,8 @@ extern void qboxhd_led_blink(int32_t color, int32_t duration);
 #define ACTION_CLIENT_UDP		22
 #define ACTION_CLIENT_TCP		23
 #define ACTION_CLIENT_ECM_ANSWER	24
-#define ACTION_CLIENT_TCP_INIT	25
-#define ACTION_CLIENT_KILL		26
-#define ACTION_CLIENT_INIT		27
+#define ACTION_CLIENT_KILL		25
+#define ACTION_CLIENT_INIT		26
 
 //checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything
 #define NULLFREE(X) {if (X) {void *tmpX=X; X=NULL; free(tmpX); }}
@@ -1562,6 +1561,10 @@ void dvbapi_read_priority();
 extern void chk_t_webif(char *token, char *value);
 #endif
 
+#ifdef LCDSUPPORT
+extern void chk_t_lcd(char *token, char *value);
+#endif
+
 extern void cs_accounts_chk(void);
 extern void chk_account(const char *token, char *value, struct s_auth *account);
 extern void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab);
@@ -1713,7 +1716,7 @@ extern void http_srv();
 
 // oscam-garbage
 #ifdef WITH_DEBUG
-extern void add_garbage_debug(void *data, char *file, int32_t line);
+extern void add_garbage_debug(void *data, char *file, uint16_t line);
 #define add_garbage(x)	add_garbage_debug(x,__FILE__, __LINE__)
 #else
 extern void add_garbage(void *data);

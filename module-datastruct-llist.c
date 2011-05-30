@@ -18,12 +18,18 @@
 static void _destroy(LLIST *l)
 {
 	if (!l) return;
-	int32_t oldtype;
+	int32_t oldtype, res, i = 0;
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldtype);    	
-	if (!l->flag++) {    	
-		pthread_mutex_lock(&l->lock);
-		pthread_mutex_unlock(&l->lock);
-		pthread_mutex_destroy(&l->lock);
+	if (!l->flag++) {
+		/* FIXME: Because of unknown reasons we sometimes get a deadlock here if we use pthread_mutex_lock. So only wait up to about 500ms... */  	
+		while(i < 25 && (res = pthread_mutex_trylock(&l->lock)) == EBUSY){			
+			cs_sleepms(20);
+			++i;
+		}
+		if(res == 0)
+			pthread_mutex_unlock(&l->lock);
+		if(res != EINVAL && res != EFAULT)
+			pthread_mutex_destroy(&l->lock);
 		add_garbage(l);
 	}
 	pthread_setcancelstate(oldtype, NULL);

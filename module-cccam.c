@@ -2830,7 +2830,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	return 0;
 }
 
-void * cc_srv_init(struct s_client *cl, uchar *mbuf, int len) {
+void cc_srv_init2(struct s_client *cl) {
 	if (!cl->init_done) {
 		if (cl->ip)
 			cs_debug_mask(D_CLIENT, "cccam: new connection from %s", cs_inet_ntoa(cl->ip));
@@ -2848,7 +2848,12 @@ void * cc_srv_init(struct s_client *cl, uchar *mbuf, int len) {
 		else
 			cl->init_done = TRUE;
 	}
-	return NULL; //suppress compiler warning
+	return;
+}
+
+void * cc_srv_init(struct s_client *cl, uchar *mbuf, int len) {
+	cc_srv_init2(cl);
+	return NULL;
 }
 
 int32_t cc_cli_connect(struct s_client *cl) {
@@ -3255,6 +3260,7 @@ void module_cccam(struct s_module *ph) {
 	ph->c_send_emm = cc_send_emm;
 	ph->s_ip = cfg.cc_srvip;
 	ph->s_handler = cc_srv_init;
+	ph->s_init = cc_srv_init2;
 	ph->send_dcw = cc_send_dcw;
 	ph->c_available = cc_available;
 	ph->c_card_info = cc_card_info;

@@ -588,6 +588,10 @@ void cleanup_thread(void *var)
 			cl->reader->client = NULL;
 			cl->reader = NULL;
 	    }
+
+
+		ll_destroy(cl->joblist);
+
 		cleanup_ecmtasks(cl);
 		add_garbage(cl->emmcache);
 		add_garbage(cl->req);
@@ -597,9 +601,8 @@ void cleanup_thread(void *var)
 		add_garbage(cl->serialdata);
 		cl->cleaned++;//cleaned=2
 		add_garbage(cl);
-#ifndef NO_PTHREAD_CLEANUP_PUSH
+
 		cs_cleanlocks();
-#endif
 	}
 }
 
@@ -704,9 +707,9 @@ void cs_exit(int32_t sig)
 	// this is very important - do not remove
 	if (cl->typ != 's') {
 		cs_log("thread %8X ended!", pthread_self());
-#ifdef NO_PTHREAD_CLEANUP_PUSH
+
 		cleanup_thread(cl);
-#endif
+
 		//Restore signals before exiting thread
 		set_signal_handler(SIGPIPE , 0, cs_sigpipe);
 		set_signal_handler(SIGHUP  , 1, cs_reload_config);
@@ -1155,25 +1158,6 @@ int32_t cs_user_resolve(struct s_auth *account)
 	return result;
 }
 
-#pragma GCC diagnostic ignored "-Wempty-body"
-void *clientthread_init(void * init){
-	struct s_clientinit clientinit;
-	memcpy(&clientinit, init, sizeof(struct s_clientinit)); //copy to stack to free init pointer
-	free(init);
-#ifndef NO_PTHREAD_CLEANUP_PUSH
-	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-	pthread_setspecific(getclient, clientinit.client);
-	pthread_cleanup_push(cleanup_thread, (void *) clientinit.client);
-	clientinit.handler(clientinit.client);
-	pthread_cleanup_pop(1);
-#else
-	clientinit.handler(clientinit.client);
-	cs_exit(0);
-#endif
-	return NULL;
-}
-#pragma GCC diagnostic warning "-Wempty-body"
-
 void start_thread(void * startroutine, char * nameroutine) {
 	pthread_t temp;
 	pthread_attr_t attr;
@@ -1192,51 +1176,11 @@ void start_thread(void * startroutine, char * nameroutine) {
 	cs_unlock(&system_lock);
 }
 
-static void kill_thread_int(struct s_client *cl) { //cs_exit is used to let thread kill itself, this routine is for a thread to kill other thread
-
-	if (!cl) return;
-	pthread_t thread = cl->thread;
-	if (pthread_equal(thread, pthread_self())) return; //cant kill yourself
-
-	struct s_client *prev, *cl2;
-	cs_lock(&clientlist_lock);
-	for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
-		if (cl == cl2)
-			break;
-	if (cl != cl2)
-		cs_log("FATAL ERROR: could not find client to remove from list.");
-	else
-		prev->next = cl2->next; //remove client from list
-	cs_unlock(&clientlist_lock);
-
-	pthread_cancel(thread);
-	pthread_join(thread, NULL);
-#ifndef NO_PTHREAD_CLEANUP_PUSH
-	int32_t cnt = 0;
-	while(cnt < 10 && cl && cl->cleaned < 2){
-		cs_sleepms(50);
-		++cnt;
-	}
-	if(!exit_oscam && cl && !cl->cleaned){
-		cs_log("A thread didn't cleanup itself for type %c (%s,%s)", cl->typ, cl->reader?cl->reader->label : cl->account?cl->account->usr?cl->account->usr: "" : "", cl->ip ? cs_inet_ntoa(cl->ip) : "");
-		//Schlocke: Sometimes on high load a cleanup could take up to 10seconds! so if this took so long, double cleanups causes segfaults!
-		//So only log it, but do NOT call cleanup_thread() !!
-		//cleanup_thread(cl);
-	}
-
-#else
-	cs_sleepms(50);
-	cleanup_thread(cl);
-#endif
-	cs_log("thread %8X killed!", thread);
-	return;
-}
-
 void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill itself, this routine is for a thread to kill other thread
-	cs_lock(&system_lock);
-	kill_thread_int(cl);
-	cs_unlock(&system_lock);
+	cl->kill=1;
+	add_job(cl, ACTION_CLIENT_KILL, NULL, 0);
 }
+
 #ifdef CS_ANTICASC
 void start_anticascader()
 {
@@ -1288,7 +1232,7 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 
 	if (restart) //kill old thread
 		if (rdr->client) {
-			kill_thread_int(rdr->client);
+			kill_thread(rdr->client);
 			rdr->client = NULL;
 		}
 
@@ -3012,14 +2956,8 @@ void * work_thread(void *ptr) {
 			free(data->ptr);
 
 		free(ptr);
-		cleanup_thread(cl);
+		cs_exit(0);
 		pthread_exit(NULL);
-	}
-
-	if (!cl->init_done && data->action < 20) {
-		reader_init(reader);
-
-		cl->init_done=1;
 	}
 
 	if (data->action) {
@@ -3045,6 +2983,11 @@ void * work_thread(void *ptr) {
 			case ACTION_READER_CARDINFO:
 				reader_do_card_info(reader);
 				break;
+			case ACTION_READER_INIT:
+				if (!cl->init_done)
+					reader_init(reader);
+				cl->init_done=1;
+				break;
 
 			case ACTION_CLIENT_UDP:
 				n = ph[cl->ctyp].recv(cl, data->ptr, data->len);
@@ -3061,10 +3004,6 @@ void * work_thread(void *ptr) {
 				break;
 			case ACTION_CLIENT_ECM_ANSWER:
 				chk_dcw(cl, data->ptr);
-				break;
-			case ACTION_CLIENT_TCP_INIT:
-				ph[cl->ctyp].s_handler(cl, mbuf, n);
-				cl->init_done=1;
 				break;
 			case ACTION_CLIENT_INIT:
 				if (ph[cl->ctyp].s_init)
@@ -3133,7 +3072,7 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int len) {
 
 	cs_debug_mask(D_TRACE, "start %s thread action %d", action > 20 ? "client" : "reader", action);
 
-	if (pthread_create(&cl->thread, NULL, work_thread, (void *)data)) {
+	if (pthread_create(&cl->thread, &attr, work_thread, (void *)data)) {
 		cs_log("ERROR: can't create thread for %s", action > 20 ? "client" : "reader");
 	} else
 		pthread_detach(cl->thread);
@@ -3164,7 +3103,7 @@ void * client_check(void) {
 
 				if (cl->pfd && !cl->thread_active) {
 					pfd[pfdcount].fd = cl->pfd;
-					pfd[pfdcount++].events = POLLIN | POLLPRI;
+					pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
 				}
 			}
 		}
@@ -3175,6 +3114,10 @@ void * client_check(void) {
 			if (cl->init_done && cl->pfd && cl->typ=='c') {
 				int i;
 				for (i=0;i<pfdcount;i++) {
+					if (cl->pfd && pfd[i].fd == cl->pfd && (pfd[i].revents & POLLHUP)) {
+						add_job(cl, ACTION_CLIENT_KILL, NULL, 0);
+						continue;
+					}
 					if (cl->pfd && pfd[i].fd == cl->pfd && (pfd[i].revents & (POLLIN | POLLPRI))) {
 						add_job(cl, ACTION_CLIENT_TCP, NULL, 0);
 					}
@@ -3195,7 +3138,7 @@ void * reader_check(void) {
 			if (rdr->client && rdr->client->init_done) {
 				if (rdr->client->pfd && !rdr->client->thread_active) {
 					pfd[pfdcount].fd = rdr->client->pfd;
-					pfd[pfdcount++].events = POLLIN | POLLPRI;
+					pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
 				}
 			}
 		}
@@ -3204,7 +3147,7 @@ void * reader_check(void) {
 
 		for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 #ifdef WITH_CARDREADER
-			if (!(rdr->typ & R_IS_CASCADING)) reader_checkhealth(rdr);
+			if (rdr->handle && !(rdr->typ & R_IS_CASCADING)) reader_checkhealth(rdr);
 #endif
 			if (rdr->client && rdr->client->init_done) {
 				// reader do idle
@@ -3223,6 +3166,9 @@ void * reader_check(void) {
 
 				int i;
 				for (i=0;i<pfdcount;i++) {
+					if (rdr->client->pfd && pfd[i].fd == rdr->client->pfd && (pfd[i].revents & POLLHUP)) {
+						rdr->client->init_done=0;
+					}
 					// message from remote
 					if (rdr->client->pfd && pfd[i].fd == rdr->client->pfd && (pfd[i].revents & (POLLIN | POLLPRI))) {
 						add_job(rdr->client, ACTION_READER_REMOTE, NULL, 0);
@@ -3296,7 +3242,7 @@ int32_t accept_connection(int32_t i, int32_t j) {
 			cl->port=ntohs(cad.sin_port);
 			cl->typ='c';
 			
-			 add_job(cl, ACTION_CLIENT_TCP_INIT, NULL, 0);
+			 add_job(cl, ACTION_CLIENT_INIT, NULL, 0);
 		}
 	}
 	return 0;

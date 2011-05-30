@@ -1069,7 +1069,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 
 #define TPLREADERCONFIGSTDHWREADERBIT "\
 				<TR><TD>##TPLHELPPREFIX##server#mhz##TPLHELPSUFFIX##Mhz:</A></TD><TD><input name=\"mhz\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MHZ##\"></TD></TR>\n\
-				<TR><TD>##TPLHELPPREFIX##server#cardmzh##TPLHELPSUFFIX##Cardmhz:</A></TD><TD><input name=\"cardmhz\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CARDMHZ##\"></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#cardmhz##TPLHELPSUFFIX##Cardmhz:</A></TD><TD><input name=\"cardmhz\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CARDMHZ##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#pincode##TPLHELPSUFFIX##Pincode:</A></TD><TD><input name=\"pincode\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PINCODE##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#detect##TPLHELPSUFFIX##Detect:</A></TD><TD><input name=\"detect\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##DETECT##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#readnano##TPLHELPSUFFIX##Readnano:</A></TD><TD><input name=\"readnano\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##EMMFILE##\"></TD></TR>\n\
@@ -1350,10 +1350,20 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#httpallowed##TPLHELPSUFFIX##Http allowed:</A></TD><TD><input name=\"httpallowed\" type=\"text\" size=\"50\" maxlength=\"200\" value=\"##HTTPALLOW##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#httpdyndns##TPLHELPSUFFIX##Http dyndns:</A></TD><TD><input name=\"httpdyndns\" type=\"text\" size=\"50\" maxlength=\"200\" value=\"##HTTPDYNDNS##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#httpsavefullcfg##TPLHELPSUFFIX##Http save full config:</A></TD><TD><SELECT NAME=\"httpsavefullcfg\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##HTTPSAVEFULLSELECT##>YES</OPTION></SELECT></TD></TR>\n\
+##TPLLCDOPTIONS##\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
+
+#ifdef LCDSUPPORT
+#define TPLLCDOPTIONS "\
+			<TR><TH COLSPAN=\"2\">LCD Config</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#lcd_outputpath##TPLHELPSUFFIX##LCD Output Path:</A></TD><TD><input name=\"lcd_outputpath\" type=\"text\" size=\"50\" maxlength=\"200\" value=\"##LCDOUTPUTPATH##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#lcd_writeintervall##TPLHELPSUFFIX##LCD Write Interval:</A></TD><TD><input name=\"lcd_writeintervall\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##LCDOUTPUTPATH##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#lcd_hideidle##TPLHELPSUFFIX##LCD Hide idle Readers:</A></TD><TD><SELECT NAME=\"lcd_hideidle\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##LCDHIDEIDLE##>YES</OPTION></SELECT></TD></TR>\n"
+
+#endif
 
 #ifdef MODULE_RADEGAST
 #define TPLCONFIGRADEGAST "\
@@ -1872,6 +1882,9 @@ char *tpl[]={
 	,"CONFIGSERIAL"
 	,"CONFIGMENUSERIAL"
 #endif
+#ifdef LCDSUPPORT
+	,"LCDOPTIONS"
+#endif
 	,"ICMAI"
 	,"ICSTA"
 	,"ICDEL"
@@ -2009,6 +2022,9 @@ char *tplmap[]={
 #ifdef MODULE_SERIAL
 	,TPLCONFIGSERIAL
 	,TPLCONFIGMENUSERIAL
+#endif
+#ifdef LCDSUPPORT
+	,TPLLCDOPTIONS
 #endif
 	,ICMAI
 	,ICSTA
