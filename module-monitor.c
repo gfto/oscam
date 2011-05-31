@@ -243,9 +243,7 @@ static char *monitor_client_info(char id, struct s_client *cl, char *sbuf){
 		{
 			lsec = now - cl->login;
 			isec = now - cl->last;
-			usr = cl->account->usr;
-			if ((cl->typ == 'r') || (cl->typ == 'p'))
-				usr = cl->reader->label;
+			usr = username(cl);
 			if (cl->dup)
 				con = 2;
 			else

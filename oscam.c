@@ -349,7 +349,7 @@ char *username(struct s_client * client)
 	if (!client)
 		return "NULL";
 
-	if (client->typ == 's' || client->typ == 'h')
+	if (client->typ == 's' || client->typ == 'h' || client->typ == 'a')
 	{
 		return processUsername?processUsername:"NULL";
 	}
@@ -359,17 +359,20 @@ char *username(struct s_client * client)
 		if(acc)
 		{
 			if (acc->usr[0])
-				return(acc->usr);
+				return acc->usr;
 			else
-				return("anonymous");
+				return "anonymous";
 		}
 		else
 		{
-			return("NULL");
+			return "NULL";
 		}
-	} else {
-		return("NULL");
+	} else if (client->typ == 'r' || client->typ == 'p'){
+		struct s_reader *rdr = client->reader;
+		if(rdr)
+			return rdr->label;
 	}
+	return "NULL";
 }
 
 static struct s_client * idx_from_ip(in_addr_t ip, in_port_t port)
