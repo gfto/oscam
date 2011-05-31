@@ -42,6 +42,8 @@ static void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uc
   ECM_REQUEST *ecm;
   struct s_client *cl = reader->client;
   
+  if(!cl) return;
+  
   for (i=0; i<CS_MAXPENDING; i++)
   {
   	ecm = &cl->ecmtask[i];
@@ -79,7 +81,7 @@ int32_t casc_recv_timer(struct s_reader * reader, uchar *buf, int32_t l, int32_t
 	int32_t rc;
 	struct s_client *cl = reader->client;
 
-	if (!cl->pfd) return(-1);
+	if (!cl || !cl->pfd) return(-1);
   
 	if (!reader->ph.recv) {
 		cs_log("reader %s: unsupported protocol!", reader->label);
@@ -105,6 +107,8 @@ int32_t hostResolve(struct s_reader *rdr)
 {
    int32_t result = 0;
    struct s_client *cl = rdr->client;
+   
+   if(!cl) return 0;
    
    while (cs_trylock(&gethostbyname_lock)) {
      cs_debug_mask(D_TRACE, "trylock hostResolve wait");
@@ -292,6 +296,8 @@ static void casc_do_sock_log(struct s_reader * reader)
   uint16_t caid, srvid;
   uint32_t provid;
   struct s_client *cl = reader->client;
+  
+  if(!cl) return;
 
   idx=reader->ph.c_recv_log(&caid, &provid, &srvid);
   cl->last=time((time_t)0);
@@ -316,7 +322,9 @@ static void casc_do_sock(struct s_reader * reader, int32_t w)
   int32_t i, n, idx, rc, j;
   uchar buf[1024];
   uchar dcw[16];
-  struct s_client *cl = reader->client; 
+  struct s_client *cl = reader->client;
+  
+  if(!cl) return;
 
   if ((n=casc_recv_timer(reader, buf, sizeof(buf), w))<=0)
   {
@@ -356,6 +364,7 @@ static void casc_get_dcw(struct s_reader * reader, int32_t n)
   int32_t w;
   struct timeb tps, tpe;
   struct s_client *cl = reader->client;
+  if(!cl) return;
   tpe=cl->ecmtask[n].tps;
   //tpe.millitm+=1500;    // TODO: timeout of 1500 should be config
 
@@ -380,6 +389,8 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
   int32_t rc, n, i, sflag, pending=0;
   time_t t;//, tls;
   struct s_client *cl = reader->client;
+  
+  if(!cl) return -1;
   
   uchar buf[512];
 
@@ -501,6 +512,7 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   if (reader->typ & R_IS_CASCADING)
   {
     struct s_client *cl = reader->client;
+    if(!cl) return;
     cl->last_srvid=er->srvid;
     cl->last_caid=er->caid;
     casc_process_ecm(reader, er);
@@ -568,6 +580,8 @@ static int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   char *typedesc[]= { "unknown", "unique", "shared", "global" };
   struct timeb tps, tpe;
   struct s_client *cl = reader->client;
+  
+  if(!cl) return 0;
 
   cs_ftime(&tps);
 
@@ -809,7 +823,8 @@ static void reader_main(struct s_reader * reader)
 void * start_cardreader(void * rdr)
 {
 	struct s_reader * reader = (struct s_reader *) rdr;
-	struct s_client * client = reader->client;
+	struct s_client * client = reader->client;	
+	if(!client) cs_exit(1);
 	#ifndef NO_PTHREAD_CLEANUP_PUSH
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	pthread_cleanup_push(cleanup_thread, (void *)client);

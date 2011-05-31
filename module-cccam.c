@@ -3197,6 +3197,7 @@ int32_t cc_available(struct s_reader *rdr, int32_t checktype) {
 	if (!rdr || !rdr->client) return 0;
 	
 	struct s_client *cl = rdr->client;
+	if(!cl) return 0;
 	//cs_debug_mask(D_TRACE, "checking reader %s availibility", rdr->label);
 	if (!cl->cc || rdr->tcp_connected != 2 || rdr->card_status != CARD_INSERTED) {
 		//Two cases: 
