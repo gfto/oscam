@@ -894,7 +894,6 @@ SSL_CTX *SSL_Webif_Init() {
 	ERR_load_BIO_strings();
 	ERR_load_SSL_strings();
 
-	SSL_METHOD *meth;
 	SSL_CTX *ctx;
 
 	static const char *cs_cert="oscam.pem";
@@ -925,9 +924,7 @@ SSL_CTX *SSL_Webif_Init() {
 	CRYPTO_set_dynlock_lock_callback(SSL_dyn_lock_function);
 	CRYPTO_set_dynlock_destroy_callback(SSL_dyn_destroy_function); 
 
-	meth = SSLv23_server_method();
-
-	ctx = SSL_CTX_new(meth);
+	ctx = SSL_CTX_new(SSLv23_server_method());
 
 	char path[128];
 

@@ -918,6 +918,9 @@ char *monitor_get_proto(struct s_client *cl)
 		case 'h'	: ctyp = "http"; break;
 		case 'p'	:
 		case 'r'	: ctyp = reader_get_type_desc(cl->reader, 1); break;
+#ifdef CS_ANTICASC
+		case 'a'	: ctyp = "anticascader"; break;
+#endif
 #ifdef MODULE_CCCAM
 		case 'c'	:
 			if (cl->cc && ((struct cc_data *)cl->cc)->extended_mode) {
