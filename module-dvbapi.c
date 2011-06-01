@@ -2641,7 +2641,8 @@ void * azbox_main(void *cli) {
 					cs_debug_mask(D_DVBAPI, "openxcas: msg: OPENXCAS_START_PMT_ECM");
 
 					 // parse pmt
-					uchar dest[msg.buf_len + 7 - 12 - 4];
+					uchar *dest;
+					if(!cs_malloc(&dest, msg.buf_len + 7 - 12 - 4, -1)) break;
 
 					memcpy(dest, "\x00\xFF\xFF\x00\x00\x13\x00", 7);
 
@@ -2652,6 +2653,7 @@ void * azbox_main(void *cli) {
 					memcpy(dest + 7, msg.buf + 12, msg.buf_len - 12 - 4);
 
 					dvbapi_parse_capmt(dest, 7 + msg.buf_len - 12 - 4, -1, NULL);
+					free(dest);
 
 					unsigned char mask[12];
 					unsigned char comp[12];
