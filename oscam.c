@@ -1126,49 +1126,15 @@ static int32_t start_listener(struct s_module *ph, int32_t port_idx)
 
 int32_t cs_user_resolve(struct s_auth *account)
 {
-	struct hostent *rht;
-	struct sockaddr_in udp_sa;
-	int32_t result=0;
-	if (account->dyndns[0])
-	{
+	if (account->dyndns[0]){
 		in_addr_t lastip = account->dynip;
-		//Resolve with gethostbyname:
-		if (cfg.resolve_gethostbyname) {
-			cs_lock(&gethostbyname_lock);
-			rht = gethostbyname((char*)account->dyndns);
-			if (!rht)
-				cs_log("can't resolve %s", account->dyndns);
-			else {
-				memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
-				account->dynip=udp_sa.sin_addr.s_addr;
-				result=1;
-			}
-			cs_unlock(&gethostbyname_lock);
-		}
-		else { //Resolve with getaddrinfo:
-			struct addrinfo hints, *res = NULL;
-			memset(&hints, 0, sizeof(hints));
-			hints.ai_socktype = SOCK_STREAM;
-			hints.ai_family = AF_INET;
-			hints.ai_protocol = IPPROTO_TCP;
-
-			int32_t err = getaddrinfo((const char*)account->dyndns, NULL, &hints, &res);
-			if (err != 0 || !res || !res->ai_addr) {
-				cs_log("can't resolve %s, error: %s", account->dyndns, err ? gai_strerror(err) : "unknown");
-			}
-			else {
-				account->dynip=((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
-				result=1;
-			}
-			if (res) freeaddrinfo(res);
-		}
+		account->dynip = cs_getIPfromHost((char*)account->dyndns);
+		
 		if (lastip != account->dynip)  {
 			cs_log("%s: resolved ip=%s", (char*)account->dyndns, cs_inet_ntoa(account->dynip));
 		}
-	}
-	if (!result)
-		account->dynip=0;
-	return result;
+	} else account->dynip=0;
+	return account->dynip?1:0;
 }
 
 #pragma GCC diagnostic ignored "-Wempty-body"

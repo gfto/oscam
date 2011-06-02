@@ -102,62 +102,20 @@ int32_t casc_recv_timer(struct s_reader * reader, uchar *buf, int32_t l, int32_t
 	return(rc);
 }
 
-// according to documentation getaddrinfo() is thread safe
-int32_t hostResolve(struct s_reader *rdr)
-{
-   int32_t result = 0;
+int32_t hostResolve(struct s_reader *rdr){
    struct s_client *cl = rdr->client;
    
    if(!cl) return 0;
-   
+    
    in_addr_t last_ip = cl->ip;
+   cl->ip = cs_getIPfromHost(rdr->device);
+   cl->udp_sa.sin_addr.s_addr = cl->ip;
    
-   if (cfg.resolve_gethostbyname) { //Resolve with gethostbyname:
-
-     while (cs_trylock(&gethostbyname_lock)) {
-	   cs_debug_mask(D_TRACE, "trylock hostResolve wait");
-       cs_sleepms(50);
-     }
-   
-     struct hostent *rht = gethostbyname(rdr->device);
-     if (!rht) {
-       cs_log("can't resolve %s", rdr->device);
-       result = 0;
-     } else {
-       memcpy(&cl->udp_sa.sin_addr, rht->h_addr, sizeof(cl->udp_sa.sin_addr));
-       cl->ip=cl->udp_sa.sin_addr.s_addr;
-       result = 1;
-     }
-     
-     pthread_mutex_unlock(&gethostbyname_lock);
-   }
-   else { //Resolve with getaddrinfo:
-     struct addrinfo hints, *res = NULL;
-     memset(&hints, 0, sizeof(hints));
-     hints.ai_socktype = SOCK_STREAM;
-     hints.ai_family = cl->udp_sa.sin_family;
-     hints.ai_protocol = IPPROTO_TCP;
-
-     int32_t err = getaddrinfo(rdr->device, NULL, &hints, &res);
-     if (err != 0 || !res || !res->ai_addr) {
-       cs_log("can't resolve %s, error: %s", rdr->device, err ? gai_strerror(err) : "unknown");
-       result = 0;
-     } else {
-       cl->udp_sa.sin_addr.s_addr = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
-       cl->ip = cl->udp_sa.sin_addr.s_addr;
-       result = 1;
-     }
-     if (res) freeaddrinfo(res);
-   }
-
-   if (!result) {
-     cl->udp_sa.sin_addr.s_addr = 0;
-     cl->ip = 0;
-   } else if (cl->ip != last_ip) {
+   if (cl->ip != last_ip) {
      cs_log("%s: resolved ip=%s", rdr->device, cs_inet_ntoa(cl->ip));
    }
 
-   return result;
+   return cl->ip?1:0;
 }
 
 void clear_block_delay(struct s_reader *rdr) {

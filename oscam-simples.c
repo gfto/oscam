@@ -1004,22 +1004,51 @@ void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid)
 }
 
 /* Internal function of cs_lock and cs_trylock to prepare adding an entry to the list. Do not call this externally. */
+#ifdef WITH_MUTEXDEBUG
+struct s_client* cs_preparelock(struct s_client *cl, pthread_mutex_t *mutex, char *file, uint16_t line){
+#else
 struct s_client* cs_preparelock(struct s_client *cl, pthread_mutex_t *mutex){
+#endif
 	if(cl){
 		// WebIf doesn't have real clients...
 		if(cl->typ == 'h') return NULL;
 		if(cl->mutexstore_alloc <= cl->mutexstore_used){
 			void *ret;
-			if(cl->mutexstore_alloc == 0)
+#ifdef WITH_MUTEXDEBUG
+			void *ret2, *ret3;
+#endif
+			if(cl->mutexstore_alloc == 0){
 				ret = cs_malloc(&cl->mutexstore, 8 * sizeof(pthread_mutex_t *), -1);
-			else
+#ifdef WITH_MUTEXDEBUG
+				ret2 = cs_malloc(&cl->mutexstore_file, 8 * sizeof(char *), -1);
+				ret3 = cs_malloc(&cl->mutexstore_line, 8 * sizeof(uint16_t *), -1);
+#endif
+			} else {
 				ret = cs_realloc(&cl->mutexstore, (cl->mutexstore_used + 8) * sizeof(pthread_mutex_t *), -1);
+#ifdef WITH_MUTEXDEBUG
+				ret2 = cs_realloc(&cl->mutexstore_file, (cl->mutexstore_used + 8) * sizeof(char *), -1);
+				ret3 = cs_realloc(&cl->mutexstore_line, (cl->mutexstore_used + 8) * sizeof(uint16_t *), -1);
+#endif
+			}
+#ifdef WITH_MUTEXDEBUG
+			if(ret != NULL && ret2 != NULL && ret3 != NULL){
+#else
 			if(ret != NULL){
+#endif
 				cl->mutexstore_alloc = cl->mutexstore_used + 8;		
 				cl->mutexstore[cl->mutexstore_used] = mutex;
+#ifdef WITH_MUTEXDEBUG
+				cl->mutexstore_file[cl->mutexstore_used] = file;
+				cl->mutexstore_line[cl->mutexstore_used] = line;
+#endif
 			} else {
 				cl->mutexstore_alloc = 0;
 				cl->mutexstore_used = 0;
+#ifdef WITH_MUTEXDEBUG
+				NULLFREE(cl->mutexstore);
+				NULLFREE(cl->mutexstore_file);
+				NULLFREE(cl->mutexstore_line);
+#endif
 			}
 		} else {
 			cl->mutexstore[cl->mutexstore_used] = mutex;			
@@ -1029,25 +1058,52 @@ struct s_client* cs_preparelock(struct s_client *cl, pthread_mutex_t *mutex){
 }
 
 /* Replacement for pthread_mutex_lock. Locks are saved to the client structure so that they can get cleaned up if the thread was interrupted while holding a lock. */
+#ifdef WITH_MUTEXDEBUG
+int32_t cs_lock_debug(pthread_mutex_t *mutex, char *file, uint16_t line){
+#else
 int32_t cs_lock(pthread_mutex_t *mutex){
+#endif
 	int32_t result, oldtype;
 	/* Make sure that we won't get interrupted while getting the lock */
-	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldtype);
-	struct s_client *cl = cs_preparelock(cur_client(), mutex);	
-	if((result = pthread_mutex_lock(mutex)) == 0 && cl)
+	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &oldtype);
+#ifdef WITH_MUTEXDEBUG
+	uint16_t i = 0;
+	struct s_client *cl = cs_preparelock(cur_client(), mutex, file, line);
+	while((result = pthread_mutex_trylock(mutex)) == EBUSY && i < 1000){
+		pthread_testcancel();
+		cs_sleepms(5);
+		++i;
+	}
+	if(result == 0 && cl)
 		cl->mutexstore_used++;
-	pthread_setcancelstate(oldtype, NULL);
+	else if(result == EBUSY){
+		cs_log("Couldn't obtain lock within 5s in: %s, line %u.", file, line);
+#else
+	struct s_client *cl = cs_preparelock(cur_client(), mutex);
+	if((result = pthread_mutex_lock(mutex)) == 0 && cl){
+		cl->mutexstore_used++;
+#endif
+	}
+	pthread_setcanceltype(oldtype, NULL);
 	pthread_testcancel();
 	return result;
 }
 
 /* Encapsulates pthread_mutex_trylock. If a lock is gained it is saved to the client structure so that it can get cleaned up if the thread was interrupted while holding a lock. */
+#ifdef WITH_MUTEXDEBUG
+int32_t cs_trylock_debug(pthread_mutex_t *mutex, char *file, uint16_t line){
+#else
 int32_t cs_trylock(pthread_mutex_t *mutex){
+#endif
 	int32_t result, oldtype;
 	/* Make sure that we won't get interrupted while getting the lock */
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldtype);
 	if((result=pthread_mutex_trylock(mutex)) == 0){
-		struct s_client *cl = cs_preparelock(cur_client(), mutex);	
+#ifdef WITH_MUTEXDEBUG
+		struct s_client *cl = cs_preparelock(cur_client(), mutex, file, line);
+#else
+		struct s_client *cl = cs_preparelock(cur_client(), mutex);
+#endif
 		if(cl)
 			cl->mutexstore_used++;
 	}
@@ -1058,7 +1114,11 @@ int32_t cs_trylock(pthread_mutex_t *mutex){
 
 /* Encapsulates pthread_mutex_unlock and removes the given mutex from the client structure
   If the given lock was not previously locked by the current thread, nothing is done. */
+#ifdef WITH_MUTEXDEBUG
+int32_t cs_unlock_debug(pthread_mutex_t *mutex, char *file, uint16_t line){
+#else
 int32_t cs_unlock(pthread_mutex_t *mutex){
+#endif
 	struct s_client *cl = cur_client();	
 	if(cl && cl->typ != 'h'){
 		uint16_t i;
@@ -1083,6 +1143,9 @@ int32_t cs_unlock(pthread_mutex_t *mutex){
 				return result;
 			}
 		}
+#ifdef WITH_MUTEXDEBUG
+		cs_log("Couldn't find mutex to unlock from: %s, %u", file, line);
+#endif
 		return EINVAL;
 	}	else return pthread_mutex_unlock(mutex);
 }
@@ -1091,12 +1154,46 @@ int32_t cs_unlock(pthread_mutex_t *mutex){
 void cs_cleanlocks(){
 	struct s_client *cl = cur_client();
 	if(cl && cl->mutexstore_alloc > 0){
-		uint16_t i;
+		uint16_t i;		
 		for(i = 0; i < cl->mutexstore_used; ++i){
 			pthread_mutex_unlock(cl->mutexstore[i]);
+#ifdef WITH_MUTEXDEBUG
+			cs_log("Cleaned up lock from: %s, line %u.", cl->mutexstore_file[i], cl->mutexstore_line[i]);
+#endif
 		}
 		cl->mutexstore_used = 0;
 		cl->mutexstore_alloc = 0;
 		free(cl->mutexstore);
 	}
+}
+
+/* Returns the ip from the given hostname. If gethostbyname is configured in the config file, a lock 
+   will be held until the ip has been resolved. */
+uint32_t cs_getIPfromHost(const char *hostname){
+	uint32_t result = 0;
+	//Resolve with gethostbyname:
+	if (cfg.resolve_gethostbyname) {
+		cs_lock(&gethostbyname_lock);
+		struct hostent *rht = gethostbyname(hostname);
+		if (!rht)
+			cs_log("can't resolve %s", hostname);
+		else
+			result=((struct in_addr*)rht->h_addr)->s_addr;
+		cs_unlock(&gethostbyname_lock);
+	}	else { //Resolve with getaddrinfo:
+		struct addrinfo hints, *res = NULL;
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_family = AF_INET;
+		hints.ai_protocol = IPPROTO_TCP;
+
+		int32_t err = getaddrinfo(hostname, NULL, &hints, &res);
+		if (err != 0 || !res || !res->ai_addr) {
+			cs_log("can't resolve %s, error: %s", hostname, err ? gai_strerror(err) : "unknown");
+		} else {
+			result=((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
+		}
+		if (res) freeaddrinfo(res);
+	}
+	return result;
 }

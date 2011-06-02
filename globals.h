@@ -704,8 +704,14 @@ struct s_client
 
   pthread_t thread;
   pthread_mutex_t **mutexstore;
+  char **mutexFile;
+  char **mutexLine;
   uint16_t mutexstore_alloc;
   uint16_t mutexstore_used;
+#ifdef WITH_MUTEXDEBUG
+	char **mutexstore_file;
+	uint16_t *mutexstore_line;
+#endif
 
   struct s_serial_client *serialdata;
 
@@ -1368,10 +1374,20 @@ extern char *strnew(char *str);
 extern void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid);
 extern void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid);
 extern int32_t check_ip(struct s_ip *ip, in_addr_t n);
+#ifdef WITH_MUTEXDEBUG
+extern int32_t cs_lock_debug(pthread_mutex_t *mutex, char *file, uint16_t line);
+extern int32_t cs_trylock_debug(pthread_mutex_t *mutex, char *file, uint16_t line);
+extern int32_t cs_unlock_debug(pthread_mutex_t *mutex, char *file, uint16_t line);
+#define cs_lock(x) cs_lock_debug(x,__FILE__, __LINE__)
+#define cs_trylock(x) cs_trylock_debug(x,__FILE__, __LINE__)
+#define cs_unlock(x) cs_unlock_debug(x,__FILE__, __LINE__)
+#else
 extern int32_t cs_lock(pthread_mutex_t *mutex);
 extern int32_t cs_trylock(pthread_mutex_t *mutex);
 extern int32_t cs_unlock(pthread_mutex_t *mutex);
+#endif
 extern void cs_cleanlocks();
+extern uint32_t cs_getIPfromHost(const char *hostname);
 
 extern pthread_key_t getclient;
 extern struct s_client * cur_client(void);
