@@ -536,6 +536,8 @@ struct cc_card *create_card(struct cc_card *card) {
         copy_sids(card2->badsids, card->badsids);
         card2->id = 0;
     }
+    else
+    	set_card_timeout(card2);
 
     return card2;
 }
@@ -614,7 +616,6 @@ int32_t equal_providers(struct cc_card *card1, struct cc_card *card2) {
     return (prov1 == NULL);
 }
 
-
 /**
  * Adds a new card to a cardlist.
  */
@@ -640,6 +641,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
                     break;
             }
 		}
+		
         if (!card2) { //Not found->add it:
         	if (free_card) { //Use this card
         		free_card = FALSE;
@@ -669,7 +671,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
                 break;
             }
         }
-
+        
         if (card2 && card2->hop > card->hop) { //hop is smaller, drop old card
             ll_iter_remove(&it);
             cc_free_card(card2);
@@ -702,6 +704,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
             if (same_card(card, card2))
                 break;
         }
+        
         if (card2 && card2->hop > card->hop) { //same card, if hop greater drop card
             ll_iter_remove(&it);
             cc_free_card(card2);
@@ -729,12 +732,20 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
     return modified;
 }
 
+int32_t card_timed_out(struct cc_card *card)
+{
+    int32_t res = (card->timeout < time(NULL)); //card is older than 1h?
+    if (res)
+		cs_debug_mask(D_TRACE, "card %08X timed out! refresh forced", card->id?card->id:card->origin_id);
+    return res;
+}
+            
 int32_t find_reported_card(struct cc_card *card1)
 {
     LL_ITER it = ll_iter_create(reported_carddatas);
     struct cc_card *card2;
     while ((card2 = ll_iter_next(&it))) {
-        if (same_card(card1, card2)) {
+        if (same_card(card1, card2) && !card_timed_out(card2)) {
             card1->id = card2->id; //Set old id !!
             cc_free_card(card2);
             ll_iter_remove(&it);
