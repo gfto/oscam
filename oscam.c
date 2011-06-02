@@ -1131,10 +1131,10 @@ int32_t cs_user_resolve(struct s_auth *account)
 	int32_t result=0;
 	if (account->dyndns[0])
 	{
-		cs_lock(&gethostbyname_lock);
 		in_addr_t lastip = account->dynip;
 		//Resolve with gethostbyname:
 		if (cfg.resolve_gethostbyname) {
+			cs_lock(&gethostbyname_lock);
 			rht = gethostbyname((char*)account->dyndns);
 			if (!rht)
 				cs_log("can't resolve %s", account->dyndns);
@@ -1143,6 +1143,7 @@ int32_t cs_user_resolve(struct s_auth *account)
 				account->dynip=udp_sa.sin_addr.s_addr;
 				result=1;
 			}
+			cs_unlock(&gethostbyname_lock);
 		}
 		else { //Resolve with getaddrinfo:
 			struct addrinfo hints, *res = NULL;
@@ -1164,7 +1165,6 @@ int32_t cs_user_resolve(struct s_auth *account)
 		if (lastip != account->dynip)  {
 			cs_log("%s: resolved ip=%s", (char*)account->dyndns, cs_inet_ntoa(account->dynip));
 		}
-		cs_unlock(&gethostbyname_lock);
 	}
 	if (!result)
 		account->dynip=0;

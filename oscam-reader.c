@@ -110,14 +110,15 @@ int32_t hostResolve(struct s_reader *rdr)
    
    if(!cl) return 0;
    
-   while (cs_trylock(&gethostbyname_lock)) {
-     cs_debug_mask(D_TRACE, "trylock hostResolve wait");
-     cs_sleepms(50);
-   }
-   
    in_addr_t last_ip = cl->ip;
    
    if (cfg.resolve_gethostbyname) { //Resolve with gethostbyname:
+
+     while (cs_trylock(&gethostbyname_lock)) {
+	   cs_debug_mask(D_TRACE, "trylock hostResolve wait");
+       cs_sleepms(50);
+     }
+   
      struct hostent *rht = gethostbyname(rdr->device);
      if (!rht) {
        cs_log("can't resolve %s", rdr->device);
@@ -127,6 +128,8 @@ int32_t hostResolve(struct s_reader *rdr)
        cl->ip=cl->udp_sa.sin_addr.s_addr;
        result = 1;
      }
+     
+     pthread_mutex_unlock(&gethostbyname_lock);
    }
    else { //Resolve with getaddrinfo:
      struct addrinfo hints, *res = NULL;
@@ -153,8 +156,6 @@ int32_t hostResolve(struct s_reader *rdr)
    } else if (cl->ip != last_ip) {
      cs_log("%s: resolved ip=%s", rdr->device, cs_inet_ntoa(cl->ip));
    }
-
-   pthread_mutex_unlock(&gethostbyname_lock);
 
    return result;
 }
