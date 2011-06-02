@@ -704,8 +704,6 @@ struct s_client
 
   pthread_t thread;
   pthread_mutex_t **mutexstore;
-  char **mutexFile;
-  char **mutexLine;
   uint16_t mutexstore_alloc;
   uint16_t mutexstore_used;
 #ifdef WITH_MUTEXDEBUG
