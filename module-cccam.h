@@ -102,6 +102,7 @@ struct cc_card {
 	uint8_t rdr_reshare;
 	SIDTABBITS sidtabno;
 	time_t timeout;
+	uint8_t is_ext;
 };
 
 typedef enum {

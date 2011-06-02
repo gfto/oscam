@@ -1597,6 +1597,8 @@ struct cc_card *read_card(uint8_t *buf, int32_t ext) {
 	card->caid = b2i(2, buf + 8);
 	card->hop = buf[10];
 	card->reshare = buf[11];
+	card->is_ext = ext;
+	card->card_type = CT_REMOTECARD;
 	set_card_timeout(card);
 	memcpy(card->hexserial, buf + 12, 8); //HEXSERIAL!!
 
@@ -1900,7 +1902,6 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 		card->origin_reader = rdr;
 		card->origin_id = card->id;
 		card->grp = rdr->grp;
-		card->card_type = CT_REMOTECARD;
 		card->rdr_reshare = rdr->cc_reshare;
 
 		//Check if this card is from us:

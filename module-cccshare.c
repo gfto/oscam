@@ -85,10 +85,13 @@ void add_good_bad_sids_by_rdr(struct s_reader *rdr, struct cc_card *card) {
 
 
 int32_t can_use_ext(struct cc_card *card) {
+	if (card->card_type == CT_REMOTECARD)
+		return card->is_ext;
+		
 	if (card->sidtab)
 		return (card->sidtab->num_srvid>0);
 	else
-		return ll_count(card->goodsids);
+		return ll_count(card->goodsids) && ll_count(card->badsids);
 	return 0;
 }
 
@@ -137,7 +140,7 @@ int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32
 		            buf[ofs+1] = ptr->srvid[l] & 0xFF;
 		            ofs+=2;
 		            buf[21]++; //nassign
-		            if (buf[21] >= 200)
+		            if (buf[21] >= 240)
 		                break;
 				}
 
@@ -159,12 +162,15 @@ int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32
                         						buf[ofs+1] = ptr->srvid[l] & 0xFF;
                         						ofs+=2;
                         						buf[22]++; //nreject
-                        						if (buf[22] >= 200)
+                        						if (buf[22] >= 240)
 														break;
 		                                }
         		                }
 						}
+						if (buf[22] >= 240)
+							break;
 				}
+				
     	} else {
 		        //assigned sids:
 		        it = ll_iter_create(card->goodsids);
@@ -846,7 +852,7 @@ void update_card_list() {
             		cfg.sidtab && (rdr->sidtabno || rdr->sidtabok)) {
                 struct s_sidtab *ptr;
                 for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
-                    if (!(rdr->sidtabno&((SIDTABBITS)1<<j)) && (!rdr->sidtabok || rdr->sidtabok&((SIDTABBITS)1<<j))) {
+                    if (!(rdr->sidtabno&((SIDTABBITS)1<<j)) && (rdr->sidtabok&((SIDTABBITS)1<<j))) {
                         int32_t k;
                         for (k=0;k<ptr->num_caid;k++) {
                             struct cc_card *card = create_card2(rdr, (j<<8)|k, ptr->caid[k], reshare);
