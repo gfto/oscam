@@ -1467,9 +1467,10 @@ void cc_free(struct s_client *cl) {
 	
 	cl->cc=NULL;
 	
-	while (cs_trylock(&cc->lockcmd)) cs_sleepms(110);
-	cs_lock(&cc->ecm_busy);
-	cs_lock(&cc->cards_busy);
+	int i = 10;
+	while (cs_trylock(&cc->lockcmd) && i--) cs_sleepms(110);
+	cs_trylock(&cc->ecm_busy);
+	cs_trylock(&cc->cards_busy);
 	
 	cs_debug_mask(D_TRACE, "exit cccam1/3");
 	cc_free_cardlist(cc->cards, TRUE);
