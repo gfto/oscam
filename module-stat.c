@@ -456,23 +456,22 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	}
 	else if (rc == 5) { //timeout
 		stat = get_add_stat(rdr, er, prid);
+		
 		//catch suddenly occuring timeouts and block reader:
 		if ((int)(ctime-stat->last_received) < (int)(5*cfg.ctimeout) && 
-						stat->rc == 0 && 
-						stat->ecm_count > 0) {
-				stat->rc = 5;
+				stat->rc == 0 && stat->ecm_count == 0) {
+			stat->rc = 5;
 				//inc_fail(stat); //do not inc fail factor in this case
 		}
-		else if ((rdr->client->login+(int)(2*cfg.ctimeout/1000)) < ctime && rdr->client->pending < 5) { //reader is longer than 5s connected && not more then 5 pending ecms
-				stat->rc = 5;
-				inc_fail(stat);
+		//reader is longer than 5s connected && not more then 5 pending ecms:
+		else if ((rdr->client->login+(int)(2*cfg.ctimeout/1000)) < ctime && rdr->client->pending < 5 &&  
+				stat->rc == 0 && stat->ecm_count == 0) {
+			stat->rc = 5;
+			inc_fail(stat);
 		}
 				
 		stat->last_received = ctime;
 
-		if (!cfg.lb_reopen_mode)
-			stat->ecm_count /= 2;
-		
 		//add timeout to stat:
 		if (ecm_time<=0 || ecm_time > (int)cfg.ctimeout)
 			ecm_time = cfg.ctimeout;
