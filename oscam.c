@@ -42,6 +42,7 @@ pthread_mutex_t gethostbyname_lock;
 pthread_mutex_t get_cw_lock;
 pthread_mutex_t system_lock;
 pthread_mutex_t clientlist_lock;
+pthread_mutex_t readerlist_lock;
 pthread_mutex_t fakeuser_lock;
 pthread_key_t getclient;
 
@@ -972,6 +973,7 @@ static void init_first_client()
   if(pthread_mutex_init(&get_cw_lock, NULL)) ok = 0;
   if(pthread_mutex_init(&system_lock, NULL)) ok = 0;
   if(pthread_mutex_init(&clientlist_lock, NULL)) ok = 0;
+  if(pthread_mutex_init(&readerlist_lock, NULL)) ok = 0;
   if(pthread_mutex_init(&fakeuser_lock, NULL)) ok = 0;
   if(pthread_mutex_init(&sc8in1_lock, NULL)) ok = 0;
   if(!ok){
@@ -1240,25 +1242,29 @@ void start_anticascader()
 }
 #endif
 
-static void remove_reader_from_active(struct s_reader *rdr) {
-  struct s_reader *rdr2, *prv = NULL;
-  for (rdr2=first_active_reader; rdr2 ; rdr2=rdr2->next) {
-    if (rdr2==rdr) {
-	  if (prv) prv->next = rdr2->next;
-	  else first_active_reader = rdr2->next;
-	  break;
+void remove_reader_from_active(struct s_reader *rdr) {
+	struct s_reader *rdr2, *prv = NULL;
+	cs_lock(&readerlist_lock);
+	for (rdr2=first_active_reader; rdr2 ; rdr2=rdr2->next) {
+		if (rdr2==rdr) {
+			if (prv) prv->next = rdr2->next;
+			else first_active_reader = rdr2->next;
+			break;
+		}
+		prv = rdr2;
 	}
-	prv = rdr2;
-  }
+	cs_unlock(&readerlist_lock);
 }
 
-static void add_reader_to_active(struct s_reader *rdr) {
-  struct s_reader *rdr2;
-  rdr->next = NULL;
-  if (first_active_reader) {
-    for (rdr2=first_active_reader; rdr2->next ; rdr2=rdr2->next) ; //search last element
-	rdr2->next = rdr;
-  } else first_active_reader = rdr;
+void add_reader_to_active(struct s_reader *rdr) {
+	struct s_reader *rdr2;
+	rdr->next = NULL;
+	cs_lock(&readerlist_lock);
+	if (first_active_reader) {
+		for (rdr2=first_active_reader; rdr2->next ; rdr2=rdr2->next) ; //search last element
+		rdr2->next = rdr;
+	} else first_active_reader = rdr;
+	cs_unlock(&readerlist_lock);
 }
 
 static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {

@@ -1097,7 +1097,7 @@ int32_t cs_trylock(pthread_mutex_t *mutex){
 #endif
 	int32_t result, oldtype;
 	/* Make sure that we won't get interrupted while getting the lock */
-	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldtype);
+	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &oldtype);
 	if((result=pthread_mutex_trylock(mutex)) == 0){
 #ifdef WITH_MUTEXDEBUG
 		struct s_client *cl = cs_preparelock(cur_client(), mutex, file, line);
@@ -1127,7 +1127,7 @@ int32_t cs_unlock(pthread_mutex_t *mutex){
 			if(cl->mutexstore[i - 1] == mutex){
 				int32_t result, oldtype;
 				/* Make sure that we won't get interrupted while returning the lock */
-				pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldtype);
+				pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &oldtype);
 				if(i < cl->mutexstore_used){
 					// Move mutex to last position to prepare removal
 					do {

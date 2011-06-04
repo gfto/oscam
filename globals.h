@@ -1476,6 +1476,8 @@ extern void nullclose(int32_t *fd);
 extern void *clientthread_init(void * init);
 extern void cleanup_thread(void *var);
 extern void kill_thread(struct s_client *cl);
+extern void remove_reader_from_active(struct s_reader *rdr);
+extern void add_reader_to_active(struct s_reader *rdr);
 extern int32_t get_threadnum(struct s_client *client);
 extern void cs_add_violation(uint32_t ip);
 

@@ -682,14 +682,7 @@ char *send_oscam_config(struct templatevars *vars, struct uriparams *params) {
 
 void inactivate_reader(struct s_reader *rdr)
 {
-	if (rdr == first_active_reader)
-		first_active_reader = first_active_reader->next;
-	else {
-		struct s_reader *rdr2, *prev;
-		for (prev=first_active_reader, rdr2=first_active_reader->next; prev->next && rdr != rdr2 ; prev=prev->next, rdr2=rdr2->next); //find reader in active reader list, will not be found if first in list
-		if (rdr2 == rdr) //found
-			prev->next = rdr2->next; //remove from active reader list
-	}
+	remove_reader_from_active(rdr);
 	if (rdr->client)
 		kill_thread(rdr->client);
 }
@@ -704,16 +697,9 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params) {
 		} else {
 			rdr = get_reader_by_label(getParam(params, "label"));
 			if (rdr) {
-				struct s_reader *rdr2;
 				if (strcmp(getParam(params, "action"), "enable") == 0) {
 					if (!rdr->enable) {
-						rdr->next = NULL; //terminate active reader list
-						if (!first_active_reader) {
-							first_active_reader = rdr;
-						} else {
-							for (rdr2 = first_active_reader; rdr2->next ; rdr2 = rdr2->next); //find last reader in active reader list
-							rdr2->next = rdr; //add
-						}
+						add_reader_to_active(rdr);
 						rdr->enable = 1;
 						restart_cardreader(rdr, 1);
 					}
