@@ -1,4 +1,5 @@
 #include "globals.h"
+#include "reader-common.h"
 
 int32_t logfd=0;
 
@@ -519,6 +520,10 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   struct timeb tps, tpe;
   cs_ftime(&tps);
   er->rc=reader_ecm(reader, er);
+  if(er->rc == ERROR){
+  	char buf[32];
+  	cs_log("Error processing ecm for caid %04X, srvid %04X (servicename: %s) on reader %s.", er->caid, er->srvid, get_servicename(reader->client, er->srvid, er->caid, buf), reader->label);  	
+  }
   cs_ftime(&tpe);
   if (cs_dblevel) {
 	uint16_t lc, *lp;

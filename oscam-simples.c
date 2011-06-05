@@ -781,15 +781,18 @@ char *get_servicename(struct s_client *cl, int32_t srvid, int32_t caid, char *bu
 
 	if (cl && cl->last_srvidptr && cl->last_srvidptr->srvid==srvid)
 		for (i=0; i < cl->last_srvidptr->ncaid; i++)
-			if (cl->last_srvidptr->caid[i] == caid) 
+			if (cl->last_srvidptr->caid[i] == caid && cl->last_srvidptr->name){
 				cs_strncpy(buf, cl->last_srvidptr->name, 32);
+				return(buf);
+			}
 
 	for (this = cfg.srvid[srvid>>12]; this && (!buf[0]); this = this->next)
 		if (this->srvid == srvid)
-			for (i=0; i<this->ncaid; i++)
+			for (i=0; i < this->ncaid; i++)
 				if (this->caid[i] == caid && this->name) {
 					cs_strncpy(buf, this->name, 32);
 					cl->last_srvidptr = this;
+					return(buf);
 				}
 
 	if (!buf[0]) {
