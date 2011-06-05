@@ -84,6 +84,7 @@ char *send_oscam_config_global(struct templatevars *vars, struct uriparams *para
 			}
 		}
 		if(cfg.usrfile == NULL) cfg.disableuserfile = 1;
+		if(cfg.mailfile == NULL) cfg.disablemail = 1;
 		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration Global done. You should restart OSCam now.</B><BR><BR>");
 		if(write_config()==0) refresh_oscam(REFR_SERVER);
 		else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
@@ -98,6 +99,8 @@ char *send_oscam_config_global(struct templatevars *vars, struct uriparams *para
 	if (cfg.usrfile != NULL) tpl_addVar(vars, TPLADD, "USERFILE", cfg.usrfile);
 	if (cfg.disableuserfile == 1) tpl_addVar(vars, TPLADD, "DISABLEUSERFILECHECKED", "selected");
 	if(cfg.usrfileflag == 1) tpl_addVar(vars, TPLADD, "USERFILEFLAGCHECKED", "selected");
+	if (cfg.mailfile != NULL) tpl_addVar(vars, TPLADD, "MAILFILE", cfg.mailfile);
+	if (cfg.disablemail == 1) tpl_addVar(vars, TPLADD, "DISABLEMAILCHECKED", "selected");
 
 	char *value = mk_t_logfile();
 	tpl_addVar(vars, TPLADD, "LOGFILE", value);

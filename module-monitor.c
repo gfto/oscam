@@ -373,6 +373,10 @@ static void monitor_process_details_master(char *buf, uint32_t pid){
         }
 	snprintf(buf, 256, "LogFile=%s", cfg.logfile);
 	monitor_send_details(buf, pid);
+	if( cfg.mailfile ) {
+	        snprintf(buf, 256, "MailFile=%s", cfg.mailfile);
+	        monitor_send_details(buf, pid);
+        }
 	if( cfg.usrfile ) {
 	        snprintf(buf, 256, "UsrFile=%s", cfg.usrfile);
 	        monitor_send_details(buf, pid);

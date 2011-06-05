@@ -10,6 +10,22 @@
 #define VG_EMMTYPE_U 1
 #define VG_EMMTYPE_S 2
 
+typedef struct mailmsg_s
+{
+   uint16_t caid;
+   uint32_t serial;
+   uint16_t date;
+   uint16_t id;
+   uint8_t nsubs;
+   uint16_t len;
+   uint8_t mask;
+   uint8_t written;
+   char *message;
+   char *subject;
+} MAILMSG;
+
+LLIST *vg_msgs = 0;
+
 void set_known_card_info(struct s_reader * reader, const unsigned char * atr, const uint32_t *atr_size)
 {
   /* Set to sensible default values */
@@ -846,6 +862,11 @@ int32_t videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned cha
          ++offs;
       if (ep->emm[offs] == 0x02 || ep->emm[offs] == 0x03 || ep->emm[offs] == 0x07)
       {
+         if (ep->emm[offs] == 0x03 && (position == ua_position || vdrsc_fix))
+         {
+            videoguard_mail_msg(reader, &ep->emm[offs+2]);
+            return OK;
+         }
          offs += ep->emm[offs+1] + 2;
          if (!(offs < ep->l))
             return rc;
@@ -920,5 +941,128 @@ void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	idx += 32;
 
 	return;
+}
+
+static MAILMSG *find_msg(uint16_t caid, uint32_t serial, uint16_t date, uint16_t msg_id)
+{
+   MAILMSG *msg;
+   LL_ITER it = ll_iter_create(vg_msgs);
+   while ((msg = (MAILMSG *)ll_iter_next(&it)))
+   {
+      if (msg->caid == caid && msg->serial == serial && msg->date == date && msg->id == msg_id)
+         return msg;
+   }
+   return 0;
+}
+
+static void write_msg(MAILMSG *msg, uint32_t baseyear)
+{
+   FILE *fp = fopen(cfg.mailfile, "a");
+   if (fp == 0)
+   {
+      cs_log("Cannot open mailfile %s", cfg.mailfile);
+      return;
+   }
+
+   uint16_t i;
+   for (i = 0; i < msg->len - 1; ++i)
+   {
+      if (msg->message[i] == 0x00 && msg->message[i+1] == 0x32)
+      {
+         msg->subject = &msg->message[i+3];
+         break;
+      }
+   }
+   int year = (msg->date >> 8) / 12 + baseyear;
+   int mon = (msg->date >> 8) % 12 + 1;
+   int day = msg->date & 0x1f;
+
+   fprintf(fp, "%04X:%08X:%02d/%02d/%04d:%04X:\"%s\":\"%s\"\n", msg->caid, msg->serial, day, mon, year,
+                                                                msg->id, msg->subject, msg->message);
+   fclose(fp);
+   free(msg->message);
+   msg->message = msg->subject = 0;
+   msg->written = 1;
+}
+
+static void msgs_init(uint32_t baseyear)
+{
+   vg_msgs = ll_create();
+   FILE *fp = fopen(cfg.mailfile, "r");
+   if (fp == 0)
+      return;
+   int year, mon, day;
+   char buffer[2048];
+   while (fgets(buffer, sizeof(buffer), fp))
+   {
+      MAILMSG *msg;
+      if (cs_malloc(&msg, sizeof(MAILMSG), -1) == 0)
+      {
+         fclose(fp);
+         return;
+      }
+      sscanf(buffer, "%04hX:%08X:%02d/%02d/%04d:%04hX", &msg->caid, &msg->serial, &day, &mon, &year, &msg->id);
+      year -= baseyear;
+      msg->date = ((year * 12) + mon - 1) << 8 | day;
+      msg->message = msg->subject = 0;
+      msg->written = 1;
+      ll_append(vg_msgs, msg);
+   }
+   fclose(fp);
+}
+
+void videoguard_mail_msg(struct s_reader *rdr, uint8_t *data)
+{
+   if (cfg.disablemail)
+      return;
+
+   if (vg_msgs == 0)
+      msgs_init(rdr->card_baseyear);
+
+   if (data[0] != 0xFF || data[1] != 0xFF)
+      return;
+
+   uint16_t msg_id = (data[2] << 8) | data[3];
+   uint8_t index = data[4] & 0x0F;
+   int msg_size = data[5] * 10 + 2;
+   uint16_t date = (data[9] << 8) | data[10];
+   int submsg_len = data[12] - 2;
+   uint16_t submsg_idx = (data[13] << 8) | data[14];
+   uint32_t serial = (rdr->hexserial[2]<<24) | (rdr->hexserial[3]<<16) | (rdr->hexserial[4]<<8) | rdr->hexserial[5];
+
+   MAILMSG *msg = find_msg(rdr->caid, serial, date, msg_id);
+
+   if (msg == 0)
+   {
+      if (cs_malloc(&msg, sizeof(MAILMSG), -1) == 0)
+         return;
+      msg->caid = rdr->caid;
+      msg->serial = serial;
+      msg->date = date;
+      msg->id = msg_id;
+      msg->nsubs = (data[4] & 0xF0) >> 4;
+      msg->mask = 1 << index;
+      msg->written = 0;
+      msg->len = submsg_len;
+      if (cs_malloc(&msg->message, msg_size, -1) == 0)
+      {
+         free(msg);
+         return;
+      }
+      memset(msg->message, 0, msg_size);
+      memcpy(&msg->message[submsg_idx], &data[15], submsg_len);
+      msg->subject = 0;
+      ll_append(vg_msgs, msg);
+   }
+   else
+   {
+      if (msg->written == 1 || msg->mask & (1 << index))
+         return;
+      msg->mask |= 1 << index;
+      msg->len += submsg_len;
+      memcpy(&msg->message[submsg_idx], &data[15], submsg_len);
+   }
+   if (msg->mask == (1 << msg->nsubs) - 1)
+      write_msg(msg, rdr->card_baseyear);
 }
 

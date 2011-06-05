@@ -1102,10 +1102,12 @@ struct s_config
 	char		*cwlogdir;
 	char		*emmlogdir;
 	char		*logfile;
+	char		*mailfile;
 	uint8_t	logtostdout;
 	uint8_t 	logtosyslog;
 	uint32_t	loghistorysize;
 	int8_t		disablelog;
+	int8_t		disablemail;
 	int8_t		disableuserfile;
 	int8_t		usrfileflag;
 	struct s_auth 	*account;

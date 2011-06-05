@@ -1449,6 +1449,12 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 					<SELECT NAME=\"usrfileflag\"><OPTION VALUE=\"0\">0 - just join/leave</OPTION><OPTION VALUE=\"1\" ##USERFILEFLAGCHECKED##>1 - each zap</OPTION></SELECT>\n\
 				</TD>\n\
 			</TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#disablemail##TPLHELPSUFFIX##Mail file:</A></TD>\n\
+				<TD>\n\
+					<input name=\"mailfile\" type=\"text\" size=\"30\" maxlength=\"128\" value=\"##MAILFILE##\">&nbsp;\n\
+					<SELECT NAME=\"disablemail\"><OPTION VALUE=\"0\">0 - enabled</OPTION><OPTION VALUE=\"1\" ##DISABLEMAILCHECKED##>1 - disabled</OPTION></SELECT>&nbsp;\n\
+				</TD>\n\
+			</TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#logfile##TPLHELPSUFFIX##Log file / max size:</A></TD>\n\
 				<TD>\n\
 					<input name=\"logfile\" type=\"text\" size=\"30\" maxlength=\"128\" value=\"##LOGFILE##\">&nbsp;\n\
