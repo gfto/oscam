@@ -421,9 +421,8 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	<BR><BR>##SDEBUG####SLOG####SCLEAR##<BR>##FILTER##\n\
 	<FORM ACTION=\"files.html\" method=\"post\">\n\
 		<INPUT TYPE=\"hidden\" NAME=\"part\" VALUE=\"##PART##\">\n\
-		<TEXTAREA NAME=\"filecontent\" CLASS=\"editor\" rows=\"50\" cols=\"200\">\n\
-##FILECONTENT##\
-		</TEXTAREA><BR>##WRITEPROTECTION##<BR>\n\
+		<TEXTAREA NAME=\"filecontent\" CLASS=\"editor\" rows=\"50\" cols=\"200\">##FILECONTENT##</TEXTAREA>\n\
+		<BR>##WRITEPROTECTION##<BR>\n\
 		<INPUT TYPE=\"submit\" NAME=\"action\" VALUE=\"Save\" TITLE=\"Save file\" ##BTNDISABLED##>\n\
 	</FORM>\n\
 ##TPLFOOTER##"
