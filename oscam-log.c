@@ -347,6 +347,99 @@ void cs_ddump_mask(uint16_t mask, const uchar *buf, int32_t n, char *fmt, ...)
 	}
 }
 #endif
+
+void log_emm_request(struct s_reader *rdr){
+	cs_log("%s emm-request sent (reader=%s, caid=%04X, auprovid=%06lX)",
+			username(cur_client()), rdr->label, rdr->caid,
+			rdr->auprovid ? rdr->auprovid : b2i(4, rdr->prid[0]));
+}
+
+/*
+ * This function writes the current CW from ECM struct to a cwl file.
+ * The filename is re-calculated and file re-opened every time.
+ * This will consume a bit cpu time, but nothing has to be stored between
+ * each call. If not file exists, a header is prepended
+ */
+void logCWtoFile(ECM_REQUEST *er){
+	FILE *pfCWL;
+	char srvname[128];
+	/* %s / %s   _I  %04X  _  %s  .cwl  */
+	char buf[256 + sizeof(srvname)];
+	char date[7];
+	unsigned char  i, parity, writeheader = 0;
+	time_t t;
+	struct tm timeinfo;
+
+	/*
+	* search service name for that id and change characters
+	* causing problems in file name
+	*/
+
+	get_servicename(cur_client(), er->srvid, er->caid, srvname);
+
+	for (i = 0; srvname[i]; i++)
+		if (srvname[i] == ' ') srvname[i] = '_';
+
+	/* calc log file name */
+	time(&t);
+	localtime_r(&t, &timeinfo);
+	strftime(date, sizeof(date), "%Y%m%d", &timeinfo);
+	snprintf(buf, sizeof(buf), "%s/%s_I%04X_%s.cwl", cfg.cwlogdir, date, er->srvid, srvname);
+
+	/* open failed, assuming file does not exist, yet */
+	if((pfCWL = fopen(buf, "r")) == NULL) {
+		writeheader = 1;
+	} else {
+	/* we need to close the file if it was opened correctly */
+		fclose(pfCWL);
+	}
+
+	if ((pfCWL = fopen(buf, "a+")) == NULL) {
+		/* maybe this fails because the subdir does not exist. Is there a common function to create it?
+			for the moment do not print32_t to log on every ecm
+			cs_log(""error opening cw logfile for writing: %s (errno=%d %s)", buf, errno, strerror(errno)); */
+		return;
+	}
+	if (writeheader) {
+		/* no global macro for cardserver name :( */
+		fprintf(pfCWL, "# OSCam cardserver v%s - http://streamboard.gmc.to/oscam/\n", CS_VERSION);
+		fprintf(pfCWL, "# control word log file for use with tsdec offline decrypter\n");
+		strftime(buf, sizeof(buf),"DATE %Y-%m-%d, TIME %H:%M:%S, TZ %Z\n", &timeinfo);
+		fprintf(pfCWL, "# %s", buf);
+		fprintf(pfCWL, "# CAID 0x%04X, SID 0x%04X, SERVICE \"%s\"\n", er->caid, er->srvid, srvname);
+	}
+
+	parity = er->ecm[0]&1;
+	fprintf(pfCWL, "%d ", parity);
+	for (i = parity * 8; i < 8 + parity * 8; i++)
+		fprintf(pfCWL, "%02X ", er->cw[i]);
+	/* better use incoming time er->tps rather than current time? */
+	strftime(buf,sizeof(buf),"%H:%M:%S\n", &timeinfo);
+	fprintf(pfCWL, "# %s", buf);
+	fflush(pfCWL);
+	fclose(pfCWL);
+}
+
+void cs_log_config()
+{
+  uchar buf[20];
+
+  if (cfg.nice!=99)
+    snprintf((char *)buf, sizeof(buf), ", nice=%d", cfg.nice);
+  else
+    buf[0]='\0';
+  cs_log("version=%s, build #%s, system=%s-%s-%s%s", CS_VERSION, CS_SVN_VERSION, CS_OS_CPU, CS_OS_HW, CS_OS_SYS, buf);
+  cs_log("client max. idle=%d sec, debug level=%d", cfg.cmaxidle, cs_dblevel);
+
+  if( cfg.max_log_size )
+    snprintf((char *)buf, sizeof(buf), "%d Kb", cfg.max_log_size);
+  else
+    cs_strncpy((char *)buf, "unlimited", sizeof(buf));
+  cs_log("max. logsize=%s, loghistorysize=%d bytes", buf, cfg.loghistorysize);
+  cs_log("client timeout=%lu ms, fallback timeout=%lu ms, cache delay=%d ms",
+         cfg.ctimeout, cfg.ftimeout, cfg.delay);
+}
+
 int32_t cs_init_statistics(void) 
 {
 	if ((!fps) && (cfg.usrfile != NULL))

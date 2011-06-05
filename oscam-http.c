@@ -13,7 +13,6 @@
 #include "oscam-http-helpers.c"
 #include "module-cccam.h"
 #include "module-cccshare.h"
-#include "module-stat.h"
 
 extern void restart_cardreader(struct s_reader *rdr, int32_t restart);
 

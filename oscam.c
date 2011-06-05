@@ -14,8 +14,6 @@ void coolapi_close_all();
 void coolapi_open_all();
 #endif
 
-extern void cs_statistics(struct s_client * client);
-extern int32_t ICC_Async_Close (struct s_reader *reader);
 static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_addr_t ip);
 
 /*****************************************************************************
@@ -32,11 +30,11 @@ LLIST * configured_readers = NULL; //list of all (configured) readers
 
 uint16_t  len4caid[256];    // table for guessing caid (by len)
 char  cs_confdir[128]=CS_CONFDIR;
-int32_t cs_dblevel=0;   // Debug Level (TODO !!)
+int32_t cs_dblevel=0;   // Debug Level
 #ifdef WEBIF
-int32_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)restart fork, restart by webif, 2=like=1, but also restart on segfaults
+int8_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)restart fork, restart by webif, 2=like=1, but also restart on segfaults
 #endif
-int32_t cs_capture_SEGV=0;
+int8_t cs_capture_SEGV=0;
 char  cs_tmpdir[200]={0x00};
 pthread_mutex_t gethostbyname_lock;
 pthread_mutex_t get_cw_lock;
@@ -54,24 +52,6 @@ struct  s_config  cfg;
 char    *processUsername = NULL;
 char    *loghist = NULL;     // ptr of log-history
 char    *loghistptr = NULL;
-
-int32_t get_threadnum(struct s_client *client) {
-	struct s_client *cl;
-	int32_t count=0;
-
-	for (cl=first_client->next; cl ; cl=cl->next) {
-		if (cl->typ==client->typ)
-			count++;
-		if(cl==client)
-			return count;
-	}
-	return 0;
-}
-
-struct s_client * cur_client(void)
-{
-	return (struct s_client *) pthread_getspecific(getclient);
-}
 
 int32_t cs_check_v(uint32_t ip, int32_t add) {
         int32_t result = 0;
@@ -148,6 +128,7 @@ void cs_add_lastresponsetime(struct s_client *cl, int32_t ltime){
 *****************************************************************************/
 static const char *logo = "  ___  ____   ___                \n / _ \\/ ___| / __|__ _ _ __ ___  \n| | | \\___ \\| |  / _` | '_ ` _ \\ \n| |_| |___) | |_| (_| | | | | | |\n \\___/|____/ \\___\\__,_|_| |_| |_|\n";
 
+/* Prints usage information and information about the built-in modules. */
 static void usage()
 {
   fprintf(stderr, "%s\n\n", logo);
@@ -345,6 +326,8 @@ int32_t recv_from_udpipe(uchar *buf)
   return n;
 }
 
+/* Returns the username from the client. You will always get a char reference back (no NULLs but it may be string containting "NULL")
+   which you should never modify and not free()! */
 char *username(struct s_client * client)
 {
 	if (!client)
@@ -411,46 +394,6 @@ int32_t chk_bcaid(ECM_REQUEST *er, CAIDTAB *ctab)
     return(0);
   er->caid=caid;
   return(1);
-}
-
-/*
- * void set_signal_handler(int32_t sig, int32_t flags, void (*sighandler)(int))
- * flags: 1 = restart, 2 = don't modify if SIG_IGN, may be combined
- */
-void set_signal_handler(int32_t sig, int32_t flags, void (*sighandler))
-{
-#ifdef CS_SIGBSD
-  if ((signal(sig, sighandler)==SIG_IGN) && (flags & 2))
-  {
-    signal(sig, SIG_IGN);
-    siginterrupt(sig, 0);
-  }
-  else
-    siginterrupt(sig, (flags & 1) ? 0 : 1);
-#else
-  struct sigaction sa;
-  sigaction(sig, (struct sigaction *) 0, &sa);
-  if (!((flags & 2) && (sa.sa_handler==SIG_IGN)))
-  {
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags=(flags & 1) ? SA_RESTART : 0;
-    sa.sa_handler=sighandler;
-    sigaction(sig, &sa, (struct sigaction *) 0);
-  }
-#endif
-}
-
-static void cs_master_alarm()
-{
-  cs_log("PANIC: master deadlock!");
-  fprintf(stderr, "PANIC: master deadlock!");
-  fflush(stderr);
-}
-
-static void cs_sigpipe()
-{
-	if (cs_dblevel & D_ALL_DUMP)
-		cs_log("Got sigpipe signal -> captured");
 }
 
 #ifdef WEBIF
@@ -584,7 +527,7 @@ void cleanup_thread(void *var)
 
 		if(cl->pfd)		nullclose(&cl->pfd); //Closing Network socket
 		if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
-		if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
+		if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing master write fd
 
 		if(cl->typ == 'r' && cl->reader){
 			// Maybe we also need a "nullclose" mechanism here...
@@ -643,6 +586,142 @@ static void cs_cleanup()
 	init_free_userdb(cfg.account);
 	cfg.account = NULL;
 	init_free_sidtab();
+}
+
+/*
+ * flags: 1 = restart, 2 = don't modify if SIG_IGN, may be combined
+ */
+void set_signal_handler(int32_t sig, int32_t flags, void (*sighandler))
+{
+#ifdef CS_SIGBSD
+  if ((signal(sig, sighandler)==SIG_IGN) && (flags & 2))
+  {
+    signal(sig, SIG_IGN);
+    siginterrupt(sig, 0);
+  }
+  else
+    siginterrupt(sig, (flags & 1) ? 0 : 1);
+#else
+  struct sigaction sa;
+  sigaction(sig, (struct sigaction *) 0, &sa);
+  if (!((flags & 2) && (sa.sa_handler==SIG_IGN)))
+  {
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags=(flags & 1) ? SA_RESTART : 0;
+    sa.sa_handler=sighandler;
+    sigaction(sig, &sa, (struct sigaction *) 0);
+  }
+#endif
+}
+
+static void cs_master_alarm()
+{
+  cs_log("PANIC: master deadlock!");
+  fprintf(stderr, "PANIC: master deadlock!");
+  fflush(stderr);
+}
+
+static void cs_sigpipe()
+{
+	if (cs_dblevel & D_ALL_DUMP)
+		cs_log("Got sigpipe signal -> captured");
+}
+
+/* Switch debuglevel forward one step (called when receiving SIGUSR1). */
+void cs_debug_level(){	
+	switch (cs_dblevel) {
+		case 0:
+			cs_dblevel = 1;
+			break;
+		case 128:
+			cs_dblevel = 255;
+			break;
+		case 255:
+			cs_dblevel = 0;
+			break;
+		default:
+			cs_dblevel <<= 1;
+	}
+
+	cs_log("debug_level=%d", cs_dblevel);
+}
+
+void cs_card_info()
+{
+  uchar dummy[1]={0x00};
+	struct s_client *cl;
+	for (cl=first_client->next; cl ; cl=cl->next)
+    if( cl->typ=='r' && cl->fd_m2c )
+      write_to_pipe(cl->fd_m2c, PIP_ID_CIN, dummy, 1);
+      //kill(client[i].pid, SIGUSR2);
+}
+
+/**
+ * called by signal SIGHUP
+ *
+ * reloads configs:
+ *  - useraccounts (oscam.user)
+ *  - services ids (oscam.srvid)
+ *  - tier ids     (oscam.tiers)
+ *  Also clears anticascading stats.
+ **/
+void cs_reload_config()
+{
+		cs_accounts_chk();
+		init_srvid();
+		init_tierid();
+		#ifdef CS_ANTICASC
+		ac_init_stat();
+		#endif
+}
+
+/* Sets signal handlers to ignore for early startup of OSCam because for example log 
+   could cause SIGPIPE errors and the normal signal handlers can't be used at this point. */
+static void init_signal_pre()
+{
+		set_signal_handler(SIGPIPE , 1, SIG_IGN);
+		set_signal_handler(SIGWINCH, 1, SIG_IGN);
+		set_signal_handler(SIGALRM , 1, SIG_IGN);
+		set_signal_handler(SIGHUP  , 1, SIG_IGN);
+}
+
+/* Sets the signal handlers.*/
+static void init_signal()
+{
+		set_signal_handler(SIGINT, 3, cs_exit);
+		//set_signal_handler(SIGKILL, 3, cs_exit);
+#ifdef OS_MACOSX
+		set_signal_handler(SIGEMT, 3, cs_exit);
+#else
+		//set_signal_handler(SIGPOLL, 3, cs_exit);
+#endif
+		//set_signal_handler(SIGPROF, 3, cs_exit);
+		set_signal_handler(SIGTERM, 3, cs_exit);
+		//set_signal_handler(SIGVTALRM, 3, cs_exit);
+
+		set_signal_handler(SIGWINCH, 1, SIG_IGN);
+		//  set_signal_handler(SIGPIPE , 0, SIG_IGN);
+		set_signal_handler(SIGPIPE , 0, cs_sigpipe);
+		//  set_signal_handler(SIGALRM , 0, cs_alarm);
+		set_signal_handler(SIGALRM , 0, cs_master_alarm);
+		// set_signal_handler(SIGCHLD , 1, cs_child_chk);
+		set_signal_handler(SIGHUP  , 1, cs_reload_config);
+		//set_signal_handler(SIGHUP , 1, cs_sighup);
+		set_signal_handler(SIGUSR1, 1, cs_debug_level);
+		set_signal_handler(SIGUSR2, 1, cs_card_info);
+		set_signal_handler(SIGCONT, 1, SIG_IGN);
+
+		if (cs_capture_SEGV)
+			set_signal_handler(SIGSEGV, 1, cs_exit);
+
+		cs_log("signal handling initialized (type=%s)",
+#ifdef CS_SIGBSD
+		"bsd"
+#else
+		"sysv"
+#endif
+		);
+	return;
 }
 
 void cs_exit(int32_t sig)
@@ -796,35 +875,6 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 		}
 }
 
-void cs_debug_level()
-{
-	//switch debuglevel forward one step if not set from outside
-	switch (cs_dblevel) {
-		case 0:
-			cs_dblevel = 1;
-			break;
-		case 128:
-			cs_dblevel = 255;
-			break;
-		case 255:
-			cs_dblevel = 0;
-			break;
-		default:
-			cs_dblevel <<= 1;
-	}
-
-	cs_log("%sdebug_level=%d", "all", cs_dblevel);
-}
-
-void cs_card_info()
-{
-  uchar dummy[1]={0x00};
-	struct s_client *cl;
-	for (cl=first_client->next; cl ; cl=cl->next)
-    if( cl->typ=='r' && cl->fd_m2c )
-      write_to_pipe(cl->fd_m2c, PIP_ID_CIN, dummy, 1);
-      //kill(client[i].pid, SIGUSR2);
-}
 
 struct s_client * create_client(in_addr_t ip) {
 	struct s_client *cl;
@@ -841,7 +891,7 @@ struct s_client * create_client(in_addr_t ip) {
 		//make_non_blocking(fdp[0]);
 		//make_non_blocking(fdp[1]);
 		cl->fd_m2c_c = fdp[0]; //store client read fd
-		cl->fd_m2c = fdp[1]; //store client read fd
+		cl->fd_m2c = fdp[1]; //store master write fd
 		cl->ip=ip;
 		cl->account = first_client->account;
 
@@ -866,70 +916,8 @@ struct s_client * create_client(in_addr_t ip) {
 	return(cl);
 }
 
-/**
- * called by signal SIGHUB
- *
- * reloads configs:
- *  - useraccounts (oscom.user)
- *  - services ids (oscam.srvid)
- *  - tier ids     (oscam.tiers)
- **/
-void cs_reload_config()
-{
-		cs_accounts_chk();
-		init_srvid();
-		init_tierid();
-		#ifdef CS_ANTICASC
-		ac_init_stat();
-		#endif
-}
 
-static void init_signal_pre()
-{
-		set_signal_handler(SIGPIPE , 1, SIG_IGN);
-		set_signal_handler(SIGWINCH, 1, SIG_IGN);
-		set_signal_handler(SIGALRM , 1, SIG_IGN);
-		set_signal_handler(SIGHUP  , 1, SIG_IGN);
-}
-
-static void init_signal()
-{
-		set_signal_handler(SIGINT, 3, cs_exit);
-		//set_signal_handler(SIGKILL, 3, cs_exit);
-#ifdef OS_MACOSX
-		set_signal_handler(SIGEMT, 3, cs_exit);
-#else
-		//set_signal_handler(SIGPOLL, 3, cs_exit);
-#endif
-		//set_signal_handler(SIGPROF, 3, cs_exit);
-		set_signal_handler(SIGTERM, 3, cs_exit);
-		//set_signal_handler(SIGVTALRM, 3, cs_exit);
-
-		set_signal_handler(SIGWINCH, 1, SIG_IGN);
-		//  set_signal_handler(SIGPIPE , 0, SIG_IGN);
-		set_signal_handler(SIGPIPE , 0, cs_sigpipe);
-		//  set_signal_handler(SIGALRM , 0, cs_alarm);
-		set_signal_handler(SIGALRM , 0, cs_master_alarm);
-		// set_signal_handler(SIGCHLD , 1, cs_child_chk);
-		set_signal_handler(SIGHUP  , 1, cs_reload_config);
-		//set_signal_handler(SIGHUP , 1, cs_sighup);
-		set_signal_handler(SIGUSR1, 1, cs_debug_level);
-		set_signal_handler(SIGUSR2, 1, cs_card_info);
-		set_signal_handler(SIGCONT, 1, SIG_IGN);
-
-		if (cs_capture_SEGV)
-			set_signal_handler(SIGSEGV, 1, cs_exit);
-
-		cs_log("signal handling initialized (type=%s)",
-#ifdef CS_SIGBSD
-		"bsd"
-#else
-		"sysv"
-#endif
-		);
-	return;
-}
-
+/* Creates the master client of OSCam and inits some global variables/mutexes. */
 static void init_first_client()
 {
 	// get username OScam is running under
@@ -986,6 +974,7 @@ static void init_first_client()
 #endif
 }
 
+/* Checks if the date of the system is correct and waits if necessary. */
 static void init_check(){
 	char *ptr = __DATE__;
 	int32_t month, year = atoi(ptr + strlen(ptr) - 4), day = atoi(ptr + 4);
@@ -1126,8 +1115,9 @@ static int32_t start_listener(struct s_module *ph, int32_t port_idx)
   return(ph->ptab->ports[port_idx].fd);
 }
 
-int32_t cs_user_resolve(struct s_auth *account)
-{
+/* Resolves the ip of the hostname of the specified account and saves it in account->dynip.
+   If the hostname is not configured, the ip is set to 0. */
+void cs_user_resolve(struct s_auth *account){
 	if (account->dyndns[0]){
 		in_addr_t lastip = account->dynip;
 		account->dynip = cs_getIPfromHost((char*)account->dyndns);
@@ -1136,7 +1126,6 @@ int32_t cs_user_resolve(struct s_auth *account)
 			cs_log("%s: resolved ip=%s", (char*)account->dyndns, cs_inet_ntoa(account->dynip));
 		}
 	} else account->dynip=0;
-	return account->dynip?1:0;
 }
 
 #pragma GCC diagnostic ignored "-Wempty-body"
@@ -1158,6 +1147,7 @@ void *clientthread_init(void * init){
 }
 #pragma GCC diagnostic warning "-Wempty-body"
 
+/* Starts a thread named nameroutine with the start function startroutine. */
 void start_thread(void * startroutine, char * nameroutine) {
 	pthread_t temp;
 	pthread_attr_t attr;
@@ -1176,7 +1166,9 @@ void start_thread(void * startroutine, char * nameroutine) {
 	cs_unlock(&system_lock);
 }
 
-static void kill_thread_int(struct s_client *cl) { //cs_exit is used to let thread kill itself, this routine is for a thread to kill other thread
+/* Allows to kill another thread specified through the client cl without locking.
+  If the own thread has to be cancelled, cs_exit or cs_disconnect_client has to be used. */
+static void kill_thread_int(struct s_client *cl) {
 
 	if (!cl) return;
 	pthread_t thread = cl->thread;
@@ -1216,32 +1208,15 @@ static void kill_thread_int(struct s_client *cl) { //cs_exit is used to let thre
 	return;
 }
 
-void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill itself, this routine is for a thread to kill other thread
+/* Allows to kill another thread specified through the client cl with locking.
+  If the own thread has to be cancelled, cs_exit or cs_disconnect_client has to be used. */
+void kill_thread(struct s_client *cl) {
 	cs_lock(&system_lock);
 	kill_thread_int(cl);
 	cs_unlock(&system_lock);
 }
-#ifdef CS_ANTICASC
-void start_anticascader()
-{
-  struct s_client * cl = create_client(first_client->ip);
-  if (cl == NULL) return;
-  cl->thread = pthread_self();
-  pthread_setspecific(getclient, cl);
-  cl->typ = 'a';
 
-  //set_signal_handler(SIGHUP, 1, ac_init_stat);
-  ac_init_stat();
-  while(1)
-  {
-  	int32_t i;
-  	for( i=0; i<cfg.ac_stime*60; i++ )
-  		cs_sleepms(1000); //FIXME this is a cpu-killer!
-    ac_do_stat();
-  }
-}
-#endif
-
+/* Removes a reader from the list of active readers so that no ecms can be requested anymore. */
 void remove_reader_from_active(struct s_reader *rdr) {
 	struct s_reader *rdr2, *prv = NULL;
 	cs_lock(&readerlist_lock);
@@ -1256,6 +1231,7 @@ void remove_reader_from_active(struct s_reader *rdr) {
 	cs_unlock(&readerlist_lock);
 }
 
+/* Adds a reader to the list of active readers so that it can serve ecms. */
 void add_reader_to_active(struct s_reader *rdr) {
 	struct s_reader *rdr2;
 	rdr->next = NULL;
@@ -1267,6 +1243,8 @@ void add_reader_to_active(struct s_reader *rdr) {
 	cs_unlock(&readerlist_lock);
 }
 
+/* Starts or restarts a cardreader without locking. If restart=1, the existing thread is killed before restarting,
+   if restart=0 the cardreader is only started. */
 static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 
 	if (restart) {
@@ -1341,6 +1319,8 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 	return 0;
 }
 
+/* Starts or restarts a cardreader with locking. If restart=1, the existing thread is killed before restarting,
+   if restart=0 the cardreader is only started. */
 int32_t restart_cardreader(struct s_reader *rdr, int32_t restart) {
 	cs_lock(&system_lock);
 	int32_t result = restart_cardreader_int(rdr, restart);
@@ -1764,73 +1744,6 @@ static int32_t write_ecm_request(int32_t fd, ECM_REQUEST *er)
   return(write_to_pipe(fd, PIP_ID_ECM, (uchar *) er, sizeof(ECM_REQUEST)));
 }
 
-/*
- * This function writes the current CW from ECM struct to a cwl file.
- * The filename is re-calculated and file re-opened every time.
- * This will consume a bit cpu time, but nothing has to be stored between
- * each call. If not file exists, a header is prepended
- */
-void logCWtoFile(ECM_REQUEST *er)
-{
-	FILE *pfCWL;
-	char srvname[128];
-	/* %s / %s   _I  %04X  _  %s  .cwl  */
-	char buf[256 + sizeof(srvname)];
-	char date[7];
-	unsigned char  i, parity, writeheader = 0;
-	time_t t;
-	struct tm timeinfo;
-
-	/*
-	* search service name for that id and change characters
-	* causing problems in file name
-	*/
-
-	get_servicename(cur_client(), er->srvid, er->caid, srvname);
-
-	for (i = 0; srvname[i]; i++)
-		if (srvname[i] == ' ') srvname[i] = '_';
-
-	/* calc log file name */
-	time(&t);
-	localtime_r(&t, &timeinfo);
-	strftime(date, sizeof(date), "%Y%m%d", &timeinfo);
-	snprintf(buf, sizeof(buf), "%s/%s_I%04X_%s.cwl", cfg.cwlogdir, date, er->srvid, srvname);
-
-	/* open failed, assuming file does not exist, yet */
-	if((pfCWL = fopen(buf, "r")) == NULL) {
-		writeheader = 1;
-	} else {
-	/* we need to close the file if it was opened correctly */
-		fclose(pfCWL);
-	}
-
-	if ((pfCWL = fopen(buf, "a+")) == NULL) {
-		/* maybe this fails because the subdir does not exist. Is there a common function to create it?
-			for the moment do not print32_t to log on every ecm
-			cs_log(""error opening cw logfile for writing: %s (errno=%d %s)", buf, errno, strerror(errno)); */
-		return;
-	}
-	if (writeheader) {
-		/* no global macro for cardserver name :( */
-		fprintf(pfCWL, "# OSCam cardserver v%s - http://streamboard.gmc.to/oscam/\n", CS_VERSION_X);
-		fprintf(pfCWL, "# control word log file for use with tsdec offline decrypter\n");
-		strftime(buf, sizeof(buf),"DATE %Y-%m-%d, TIME %H:%M:%S, TZ %Z\n", &timeinfo);
-		fprintf(pfCWL, "# %s", buf);
-		fprintf(pfCWL, "# CAID 0x%04X, SID 0x%04X, SERVICE \"%s\"\n", er->caid, er->srvid, srvname);
-	}
-
-	parity = er->ecm[0]&1;
-	fprintf(pfCWL, "%d ", parity);
-	for (i = parity * 8; i < 8 + parity * 8; i++)
-		fprintf(pfCWL, "%02X ", er->cw[i]);
-	/* better use incoming time er->tps rather than current time? */
-	strftime(buf,sizeof(buf),"%H:%M:%S\n", &timeinfo);
-	fprintf(pfCWL, "# %s", buf);
-	fflush(pfCWL);
-	fclose(pfCWL);
-}
-
 /**
  * distributes found ecm-request to all clients with rc=99
  **/
@@ -1895,7 +1808,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 
   int32_t res=0;
   if( er->client && er->client->fd_m2c ) {
-    //Wie got an ECM (or nok). Now we should check for another clients waiting for it:
+    //We got an ECM (or nok). Now we should check for another clients waiting for it:
     res = write_ecm_request(er->client->fd_m2c, er);
   }
 
@@ -2732,13 +2645,6 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	request_cw(er, 0, cfg.preferlocalcards ? 1 : 0);
 }
 
-void log_emm_request(struct s_reader *rdr)
-{
-	cs_log("%s emm-request sent (reader=%s, caid=%04X, auprovid=%06lX)",
-			username(cur_client()), rdr->label, rdr->caid,
-			rdr->auprovid ? rdr->auprovid : b2i(4, rdr->prid[0]));
-}
-
 void do_emm(struct s_client * client, EMM_PACKET *ep)
 {
 	char *typtext[]={"unknown", "unique", "shared", "global"};
@@ -2875,15 +2781,6 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		cs_debug_mask(D_EMM, "emm is being sent to reader %s.", aureader->label);
 		write_to_pipe(aureader->fd, PIP_ID_EMM, (uchar *) ep, sizeof(EMM_PACKET));
 	}
-}
-
-int32_t comp_timeb(struct timeb *tpa, struct timeb *tpb)
-{
-  if (tpa->time>tpb->time) return(1);
-  if (tpa->time<tpb->time) return(-1);
-  if (tpa->millitm>tpb->millitm) return(1);
-  if (tpa->millitm<tpb->millitm) return(-1);
-  return(0);
 }
 
 int32_t chk_pending(int32_t timeout)
@@ -3117,26 +3014,6 @@ int32_t process_client_pipe(struct s_client *cl, uchar *buf, int32_t l) {
 	return pipeCmd;
 }
 
-void cs_log_config()
-{
-  uchar buf[20];
-
-  if (cfg.nice!=99)
-    snprintf((char *)buf, sizeof(buf), ", nice=%d", cfg.nice);
-  else
-    buf[0]='\0';
-  cs_log("version=%s, build #%s, system=%s-%s-%s%s", CS_VERSION_X, CS_SVN_VERSION, CS_OS_CPU, CS_OS_HW, CS_OS_SYS, buf);
-  cs_log("client max. idle=%d sec, debug level=%d", cfg.cmaxidle, cs_dblevel);
-
-  if( cfg.max_log_size )
-    snprintf((char *)buf, sizeof(buf), "%d Kb", cfg.max_log_size);
-  else
-    cs_strncpy((char *)buf, "unlimited", sizeof(buf));
-  cs_log("max. logsize=%s, loghistorysize=%d bytes", buf, cfg.loghistorysize);
-  cs_log("client timeout=%lu ms, fallback timeout=%lu ms, cache delay=%d ms",
-         cfg.ctimeout, cfg.ftimeout, cfg.delay);
-}
-
 void cs_waitforcardinit()
 {
 	if (cfg.waitforcards)
@@ -3269,37 +3146,6 @@ int32_t accept_connection(int32_t i, int32_t j) {
 		}
 	}
 	return 0;
-}
-
-/**
- * get tmp dir
-  **/
-char * get_tmp_dir()
-{
-  if (cs_tmpdir[0])
-    return cs_tmpdir;
-
-#ifdef OS_CYGWIN32
-  char *d = getenv("TMPDIR");
-  if (!d || !d[0])
-    d = getenv("TMP");
-  if (!d || !d[0])
-    d = getenv("TEMP");
-  if (!d || !d[0])
-    getcwd(cs_tmpdir, sizeof(cs_tmpdir)-1);
-
-  cs_strncpy(cs_tmpdir, d, sizeof(cs_tmpdir));
-  char *p = cs_tmpdir;
-  while(*p) p++;
-  p--;
-  if (*p != '/' && *p != '\\')
-    strcat(cs_tmpdir, "/");
-  strcat(cs_tmpdir, "_oscam");
-#else
-  cs_strncpy(cs_tmpdir, "/tmp/.oscam", sizeof(cs_tmpdir));
-#endif
-  mkdir(cs_tmpdir, S_IRWXU);
-  return cs_tmpdir;
 }
 
 #ifdef WEBIF

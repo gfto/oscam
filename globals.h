@@ -1,4 +1,3 @@
-#define _GNU_SOURCE //prevents "implicit" warning for asprintf
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -18,7 +17,6 @@
 #include <limits.h>
 #include <pwd.h>
 #include <netinet/tcp.h>
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -26,7 +24,6 @@
 #include <string.h>
 #include <signal.h>
 #include <errno.h>
-
 #include <pthread.h>
 
 #include "module-datastruct-llist.h"
@@ -34,47 +31,7 @@
 //for reader-nagra variables in s_reader:
 #include "cscrypt/idea.h"
 
-// Prevent use of unsafe functions (doesn't work for MacOSX)
-#ifndef OS_MACOSX
-#define strcpy(a,b) UNSAFE_STRCPY_USE_CS_STRNCPY_INSTEAD()
-#define sprintf(a,...) UNSAFE_SPRINTF_USE_SNPRINTF_INSTEAD()
-#define strtok(a,b,c) UNSAFE_STRTOK_USE_STRTOK_R_INSTEAD()
-#endif
-
-#ifndef CS_GLOBALS
-#define CS_GLOBALS
-#define CS_VERSION    "1.00-unstable_svn"
-#ifndef CS_SVN_VERSION
-#	define CS_SVN_VERSION "test"
-#endif
-
 #include "oscam-config.h"
-
-#ifdef UNUSED
-#elif defined(__GNUC__)
-# define UNUSED(x) UNUSED_ ## x __attribute__((unused))
-#elif defined(__LCLINT__)
-# define UNUSED(x) /*@unused@*/ x
-#else
-# define UNUSED(x) x
-#endif
-
-#ifdef WITH_DEBUG
-# define call(arg) \
-	if (arg) { \
-		cs_debug_mask(D_TRACE, "ERROR, function call %s returns error.",#arg); \
-	}
-# define D_USE(x) x
-#else
-# define call(arg) arg
-# if defined(__GNUC__)
-#  define D_USE(x) D_USE_ ## x __attribute__((unused))
-# elif defined(__LCLINT__)
-#  define D_USE(x) /*@debug use only@*/ x
-# else
-#  define D_USE(x) x
-# endif
-#endif
 
 #ifndef USE_CMAKE
 #  include "oscam-ostype.h"
@@ -107,11 +64,54 @@
 #include "csctapi/smartreader_types.h"
 #endif
 
-// DM500 and Dbox2 have toolchains which don't match their plattform. Therefore pthread_cleanup_push can't be used (binaries compile but only work on DM 7020)
-#if defined(TUXBOX) && defined(PPC)
-#define NO_PTHREAD_CLEANUP_PUSH
+/* ===========================
+ *         macros
+ * =========================== */
+// Prevent use of unsafe functions (doesn't work for MacOSX)
+#ifndef OS_MACOSX
+#define strcpy(a,b) UNSAFE_STRCPY_USE_CS_STRNCPY_INSTEAD()
+#define sprintf(a,...) UNSAFE_SPRINTF_USE_SNPRINTF_INSTEAD()
+#define strtok(a,b,c) UNSAFE_STRTOK_USE_STRTOK_R_INSTEAD()
 #endif
 
+#ifdef UNUSED
+#elif defined(__GNUC__)
+# define UNUSED(x) UNUSED_ ## x __attribute__((unused))
+#elif defined(__LCLINT__)
+# define UNUSED(x) /*@unused@*/ x
+#else
+# define UNUSED(x) x
+#endif
+
+#ifdef WITH_DEBUG
+# define call(arg) \
+	if (arg) { \
+		cs_debug_mask(D_TRACE, "ERROR, function call %s returns error.",#arg); \
+	}
+# define D_USE(x) x
+#else
+# define call(arg) arg
+# if defined(__GNUC__)
+#  define D_USE(x) D_USE_ ## x __attribute__((unused))
+# elif defined(__LCLINT__)
+#  define D_USE(x) /*@debug use only@*/ x
+# else
+#  define D_USE(x) x
+# endif
+#endif
+
+//checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything
+#define NULLFREE(X) {if (X) {void *tmpX=X; X=NULL; free(tmpX); }}
+
+/* ===========================
+ *         constants
+ * =========================== */
+#ifndef CS_GLOBALS
+#define CS_GLOBALS
+#define CS_VERSION    "1.00-unstable_svn"
+#ifndef CS_SVN_VERSION
+#	define CS_SVN_VERSION "test"
+#endif
 #ifndef CS_CONFDIR
 #define CS_CONFDIR    "/usr/local/etc"
 #endif
@@ -147,6 +147,7 @@
 #endif
 
 #define CS_EMMCACHESIZE  64 //nr of EMMs that each client will cache; cache is per client, so memory-expensive...
+#define MSGLOGSIZE 64	//size of string buffer for a ecm to return messages
 
 #define D_TRACE     1 // Generate very detailed error/trace messages per routine
 #define D_ATR       2 // Debug ATR parsing, dump of ecm, cw
@@ -216,7 +217,6 @@
 #define MOD_CARDSYSTEM  16
 #define MOD_ADDON       32
 
-
 #ifdef HAVE_DVBAPI
 #define BOXTYPE_DREAMBOX	1
 #define BOXTYPE_DUCKBOX	2
@@ -237,6 +237,12 @@ extern const char *boxdesc[];
 #define EMM_GLOBAL 4
 #define EMM_UNKNOWN 8
 
+//EMM types:
+#define UNKNOWN 0
+#define UNIQUE	1
+#define SHARED	2
+#define GLOBAL	3
+
 #ifdef CS_CORE
 char *PIP_ID_TXT[] = { "ECM", "EMM", "CIN", "KCL", "UDP", NULL  };
 char *RDR_CD_TXT[] = { "cd", "dsr", "cts", "ring", "none",
@@ -255,8 +261,6 @@ extern char *RDR_CD_TXT[];
 #define PIP_ID_KCL    3  // Schlocke: Kill all Clients (no param)
 #define PIP_ID_UDP    4
 #define PIP_ID_MAX    PIP_ID_UDP
-
-
 #define PIP_ID_ERR    (-1)
 #define PIP_ID_DIR    (-2)
 #define PIP_ID_NUL    (-3)
@@ -293,9 +297,6 @@ enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE,
       E2_EA_LEN, E2_F0_LEN, E2_OFFLINE, E2_SID,
       E2_CCCAM_NOCARD=0x27, E2_CCCAM_NOK1=0x28, E2_CCCAM_NOK2=0x29, E2_CCCAM_LOOP=0x30};
 
-pid_t server_pid; //alno: PID of server - set while startup
-
-// constants
 #define CTA_RES_LEN 512
 
 #ifdef CS_LED
@@ -312,19 +313,6 @@ extern void cs_switch_led(int32_t led, int32_t action);
 #endif
 
 #ifdef QBOXHD_LED
-typedef struct {
-	uint16_t H;  // range 0-359
-	unsigned char S;   // range 0-99
-	unsigned char V;   // range 0-99
-} qboxhd_led_color_struct;
-typedef struct {
-	unsigned char red;  // first 5 bit used (&0x1F)
-	unsigned char green; // first 5 bit used (&0x1F)
-	unsigned char blue; // first 5 bit used (&0x1F)
-} qboxhdmini_led_color_struct;
-
-extern void qboxhd_led_blink(int32_t color, int32_t duration);
-
 #define QBOXHD_LED_DEVICE               "/dev/sw0"
 #define QBOXHD_SET_LED_ALL_PANEL_COLOR	_IO(0xBC, 13)    // payload = 3byte [H][S][V]
 #define QBOXHD_LED_COLOR_RED        359  // only H value, S and V values are always == 99
@@ -361,9 +349,14 @@ extern void qboxhd_led_blink(int32_t color, int32_t duration);
 #define BAN_SLEEPING 4			//failban mask for sleeping user
 #define BAN_DUPLICATE 8			//failban mask for duplicate user
 
-//checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything
-#define NULLFREE(X) {if (X) {void *tmpX=X; X=NULL; free(tmpX); }}
+#define AVAIL_CHECK_CONNECTED 0
+#define AVAIL_CHECK_LOADBALANCE 1
 
+#define LB_MAX_STAT_TIME 10
+
+/* ===========================
+ *      global structures
+ * =========================== */
 typedef struct s_caidvaluetab
 {
   uint16_t n;
@@ -469,9 +462,6 @@ typedef struct v_ban {
 	time_t v_time;
 } V_BAN;
 
-#define AVAIL_CHECK_CONNECTED 0
-#define AVAIL_CHECK_LOADBALANCE 1
-
 struct s_client ;
 struct ecm_request_t ;
 struct emm_packet_t ;
@@ -557,13 +547,11 @@ struct s_irdeto_quess
 };
 #endif
 
-#define MSGLOGSIZE 64
 typedef struct ecm_request_t
 {
   uchar         ecm[256];
   uchar         cw[16];
   uchar         ecmd5[CS_ECMSTORESIZE];
-//  uchar         l;
   int16_t         l;
   uint16_t        caid;
   uint16_t        ocaid; //original caid, used for betatunneling
@@ -1111,7 +1099,7 @@ struct s_config
 	int8_t		usrfileflag;
 	struct s_auth 	*account;
 	struct s_srvid 	*srvid[16];
-        struct s_tierid *tierid;
+	struct s_tierid *tierid;
 	//Todo #ifdef CCCAM
 	struct s_provid *provid;
 	struct s_sidtab *sidtab;
@@ -1268,15 +1256,6 @@ struct s_clientinit
 	struct s_client * client;
 };
 
-//Loadbalance constants:
-#define LB_NONE 0
-#define LB_FASTEST_READER_FIRST 1
-#define LB_OLDEST_READER_FIRST 2
-#define LB_LOWEST_USAGELEVEL 3
-#define LB_LOG_ONLY 10
-
-#define LB_MAX_STAT_TIME 10
-
 typedef struct reader_stat_t
 {
   int32_t           rc;
@@ -1306,413 +1285,47 @@ typedef struct emm_packet_t
   struct s_client *client;
 } EMM_PACKET;
 
-//EMM types:
-#define UNKNOWN 0
-#define UNIQUE	1
-#define SHARED	2
-#define GLOBAL	3
-
-// oscam-simples
-extern char *remote_txt(void);
-extern char *trim(char *);
-extern char *strtolower(char *);
-extern int32_t gethexval(char);
-extern int32_t cs_atob(uchar *, char *, int32_t);
-extern uint32_t cs_atoi(char *, int32_t, int32_t);
-extern int32_t byte_atob(char *);
-extern int32_t word_atob(char *);
-extern int32_t dyn_word_atob(char *asc);
-extern int32_t key_atob_l(char *, uchar *, int32_t);
-extern char *key_btoa(char *, uchar *);
-extern char *cs_hexdump(int32_t, const uchar *, int32_t);
-extern char *cs_hexdump_buf(int32_t, const uchar *, int32_t, char *target, int32_t len);
-extern in_addr_t cs_inet_order(in_addr_t);
-extern char *cs_inet_ntoa(in_addr_t);
-extern in_addr_t cs_inet_addr(char *txt);
-extern uint32_t b2i(int32_t, uchar *);
-extern uint64_t b2ll(int32_t, uchar *);
-extern uchar *i2b_buf(int32_t n, uint32_t i, uchar *b);
-
-extern uint32_t a2i(char *, int32_t);
-extern int32_t boundary(int32_t, int32_t);
-extern void cs_ftime(struct timeb *);
-extern void cs_sleepms(uint32_t);
-extern void cs_sleepus(uint32_t);
-extern void cs_setpriority(int32_t);
-extern struct s_auth *find_user(char *);
-extern int32_t check_filled(uchar *value, int32_t length);
-extern void *cs_malloc(void *result, size_t size, int32_t quiterror);
-extern void *cs_realloc(void *result, size_t size, int32_t quiterror);
-#ifdef WEBIF
-extern char to_hex(char code);
-extern void char_to_hex(const unsigned char* p_array, uint32_t p_array_len, unsigned char *result);
-extern void create_rand_str(char *dst, int32_t size);
+#ifdef QBOXHD_LED
+typedef struct {
+	uint16_t H;  // range 0-359
+	unsigned char S;   // range 0-99
+	unsigned char V;   // range 0-99
+} qboxhd_led_color_struct;
+typedef struct {
+	unsigned char red;  // first 5 bit used (&0x1F)
+	unsigned char green; // first 5 bit used (&0x1F)
+	unsigned char blue; // first 5 bit used (&0x1F)
+} qboxhdmini_led_color_struct;
 #endif
-extern int32_t file_exists(const char * filename);
-extern void clear_sip(struct s_ip **sip);
-extern void clear_ptab(struct s_ptab *ptab);
-extern void clear_ftab(struct s_ftab *ftab);
-void clear_caidtab(struct s_caidtab *ctab);
-void clear_tuntab(struct s_tuntab *ttab);
-extern int32_t file_copy(char *srcfile, char *destfile);
-extern int32_t safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, int32_t forceBakOverWrite);
-extern void fprintf_conf(FILE *f, int32_t varnameWidth, const char *varname, const char *fmtstring, ...);
-extern void cs_strncpy(char * destination, const char * source, size_t num);
-extern char *get_servicename(struct s_client *cl, int32_t srvid, int32_t caid, char *buf);
-extern char *get_tiername(int32_t tierid, int32_t caid, char *buf);
-extern char *get_provider(int32_t caid, uint32_t provid, char *buf);
-extern void make_non_blocking(int32_t fd);
-extern uchar fast_rnd(void);
-extern void init_rnd(void);
-extern int32_t hexserialset(struct s_reader *rdr);
-extern char *monitor_get_proto(struct s_client *);
-extern char *reader_get_type_desc(struct s_reader * rdr, int32_t extended);
-extern char *get_ncd_client_name(char *client_id);
-extern int32_t cs_strnicmp(const char * str1, const char * str2, size_t num);
-extern char *strnew(char *str);
-extern void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid);
-extern void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid);
-extern int32_t check_ip(struct s_ip *ip, in_addr_t n);
-#ifdef WITH_MUTEXDEBUG
-extern int32_t cs_lock_debug(pthread_mutex_t *mutex, char *file, uint16_t line);
-extern int32_t cs_trylock_debug(pthread_mutex_t *mutex, char *file, uint16_t line);
-extern int32_t cs_unlock_debug(pthread_mutex_t *mutex, char *file, uint16_t line);
-#define cs_lock(x) cs_lock_debug(x,__FILE__, __LINE__)
-#define cs_trylock(x) cs_trylock_debug(x,__FILE__, __LINE__)
-#define cs_unlock(x) cs_unlock_debug(x,__FILE__, __LINE__)
-#else
-extern int32_t cs_lock(pthread_mutex_t *mutex);
-extern int32_t cs_trylock(pthread_mutex_t *mutex);
-extern int32_t cs_unlock(pthread_mutex_t *mutex);
-#endif
-extern void cs_cleanlocks();
-extern uint32_t cs_getIPfromHost(const char *hostname);
 
+
+/* ===========================
+ *      global variables
+ * =========================== */
+extern char cs_tmpdir[200];
 extern pthread_key_t getclient;
-extern struct s_client * cur_client(void);
 extern struct s_client *first_client;
 extern struct s_reader *first_active_reader; //points to list of _active_ readers (enable = 1, deleted = 0)
 extern LLIST *configured_readers;
-
-// oscam variables
-
 extern int32_t cs_dblevel;
-
 extern uint16_t len4caid[256];
-
-extern struct card_struct *Cards;
-//extern struct idstore_struct *idstore;
-extern uint32_t *IgnoreList;
-
 extern struct s_config cfg;
 extern char cs_confdir[];
 extern char *loghist, *loghistptr;
 extern struct s_module ph[CS_MAX_MOD];
 extern struct s_cardsystem cardsystem[CS_MAX_MOD];
 extern struct s_cardreader cardreader[CS_MAX_MOD];
-//extern ECM_REQUEST *ecmtask;
+extern pthread_mutex_t gethostbyname_lock;
+
+pid_t server_pid; // PID of server - set while startup
 
 #ifdef CS_ANTICASC
 extern FILE *fpa;
 #endif
-extern pthread_mutex_t gethostbyname_lock;
 
-// oscam
-#ifdef WEBIF
-extern void cs_exit_oscam();
-extern void cs_restart_oscam();
-extern int32_t cs_get_restartmode();
-
-//reset stats for webif:
-extern void clear_account_stats(struct s_auth *account);
-extern void clear_all_account_stats();
-extern void clear_system_stats();
-
-#endif
-extern void start_thread(void * startroutine, char * nameroutine);
-extern void cs_reload_config();
-extern int32_t recv_from_udpipe(uchar *);
-extern char* username(struct s_client *);
-extern struct s_client * get_client_by_tid(uint32_t);
-extern int32_t chk_bcaid(ECM_REQUEST *, CAIDTAB *);
-extern void cs_exit(int32_t sig);
-extern int32_t comp_timeb(struct timeb *tpa, struct timeb *tpb);
-extern struct s_client * create_client(in_addr_t);
-extern int32_t cs_auth_client(struct s_client *, struct s_auth *, const char*);
-extern void cs_disconnect_client(struct s_client *);
-extern int32_t check_cwcache2(ECM_REQUEST *, uint64_t grp);
-extern int32_t write_to_pipe(int32_t, int32_t, uchar *, int32_t);
-extern int32_t read_from_pipe(int32_t, uchar **);
-extern int32_t write_ecm_answer(struct s_reader *, ECM_REQUEST *);
-extern void log_emm_request(struct s_reader *);
-extern uint32_t chk_provid(uchar *, uint16_t);
-extern void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto);
-#ifdef IRDETO_GUESSING
-extern void guess_irdeto(ECM_REQUEST *);
-#endif
-extern void get_cw(struct s_client *, ECM_REQUEST *);
-extern void do_emm(struct s_client *, EMM_PACKET *);
-extern ECM_REQUEST *get_ecmtask(void);
-extern void request_cw(ECM_REQUEST *, int32_t, int32_t);
-extern void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc);
-extern int32_t send_dcw(struct s_client *, ECM_REQUEST *);
-extern int32_t process_input(uchar *, int32_t, int32_t);
-extern int32_t has_srvid(struct s_client *cl, ECM_REQUEST *er);
-extern int32_t chk_srvid(struct s_client *, ECM_REQUEST *);
-extern int32_t chk_srvid_match(ECM_REQUEST *, SIDTAB *);
-extern int32_t chk_sfilter(ECM_REQUEST *, PTAB*);
-extern int32_t chk_ufilters(ECM_REQUEST *);
-extern int32_t chk_rsfilter(struct s_reader * reader, ECM_REQUEST *);
-extern int32_t matching_reader(ECM_REQUEST *, struct s_reader *);
-extern int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid);
-extern void set_signal_handler(int32_t , int32_t , void (*));
-extern void cs_log_config(void);
-extern void cs_waitforcardinit(void);
-extern void cs_reinit_clients(struct s_auth *new_accounts);
-extern int32_t process_client_pipe(struct s_client *cl, uchar *buf, int32_t l);
-extern void update_reader_config(uchar *ptr);
-extern int32_t chk_ctab(uint16_t caid, CAIDTAB *ctab);
-extern int32_t chk_srvid_by_caid_prov(struct s_client *, uint16_t caid, uint32_t provid);
-extern void nullclose(int32_t *fd);
-extern void *clientthread_init(void * init);
-extern void cleanup_thread(void *var);
-extern void kill_thread(struct s_client *cl);
-extern void remove_reader_from_active(struct s_reader *rdr);
-extern void add_reader_to_active(struct s_reader *rdr);
-extern int32_t get_threadnum(struct s_client *client);
-extern void cs_add_violation(uint32_t ip);
-
-extern void cs_card_info(void);
-extern void cs_debug_level(void);
-
-#ifdef CS_ANTICASC
-extern void init_ac(void);
-extern void ac_init_stat();
-extern void ac_clear();
-extern void ac_done_stat();
-extern int32_t  ac_init_log();
-extern void ac_do_stat(void);
-extern void ac_init_client(struct s_client *, struct s_auth *);
-extern void ac_chk(struct s_client *,ECM_REQUEST*, int32_t);
-#endif
-
-// oscam-config
-extern int32_t  init_config(void);
-extern int32_t  init_free_userdb(struct s_auth *auth);
-extern struct s_auth *init_userdb();
-extern int32_t  init_readerdb(void);
-extern void free_reader(struct s_reader *rdr);
-extern int32_t  init_sidtab(void);
-extern void free_sidtab(struct s_sidtab *sidtab);
-extern void init_free_sidtab();
-extern int32_t  init_srvid(void);
-extern int32_t  init_tierid(void);
-extern int32_t  search_boxkey(uint16_t, char *);
-extern void init_len4caid(void);
-#ifdef IRDETO_GUESSING
-extern int32_t  init_irdeto_guess_tab(void);
-#endif
-extern void chk_caidtab(char *caidasc, CAIDTAB *ctab);
-extern void chk_tuntab(char *tunasc, TUNTAB *ttab);
-extern void chk_services(char *labels, SIDTABBITS *sidok, SIDTABBITS *sidno);
-extern void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName, const char *zFiltName);
-extern void chk_cltab(char *classasc, CLASSTAB *clstab);
-extern void chk_iprange(char *value, struct s_ip **base);
-extern void chk_port_tab(char *portasc, PTAB *ptab);
-#ifdef CS_ANTICASC
-extern void chk_t_ac(char *token, char *value);
-#endif
-extern void chk_t_camd33(char *token, char *value);
-extern void chk_t_camd35(char *token, char *value);
-extern void chk_t_camd35_tcp(char *token, char *value);
-extern void chk_t_newcamd(char *token, char *value);
-extern void chk_t_radegast(char *token, char *value);
-extern void chk_t_serial(char *token, char *value);
-extern void chk_t_gbox(char *token, char *value);
-#ifdef MODULE_CCCAM
-extern void chk_t_cccam(char *token, char *value);
-#endif
-extern void chk_t_global(const char *token, char *value);
-extern void chk_t_monitor(char *token, char *value);
-extern void chk_reader(char *token, char *value, struct s_reader *rdr);
-
-#ifdef HAVE_DVBAPI
-extern void chk_t_dvbapi(char *token, char *value);
-void dvbapi_chk_caidtab(char *caidasc, char type);
-void dvbapi_read_priority();
-#endif
-
-#ifdef WEBIF
-extern void chk_t_webif(char *token, char *value);
-#endif
-
-#ifdef LCDSUPPORT
-extern void chk_t_lcd(char *token, char *value);
-#endif
-
-extern void cs_accounts_chk(void);
-extern void chk_account(const char *token, char *value, struct s_auth *account);
-extern void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab);
-extern int32_t write_services();
-extern int32_t write_userdb(struct s_auth *authptr);
-extern int32_t write_config();
-extern int32_t write_server();
-extern void write_versionfile();
-extern char *mk_t_caidtab(CAIDTAB *ctab);
-extern char *mk_t_caidvaluetab(CAIDVALUETAB *tab);
-extern char *mk_t_tuntab(TUNTAB *ttab);
-extern char *mk_t_group(uint64_t grp);
-extern char *mk_t_ftab(FTAB *ftab);
-extern char *mk_t_camd35tcp_port();
-extern char *mk_t_cccam_port();
-extern char *mk_t_aeskeys(struct s_reader *rdr);
-extern char *mk_t_newcamd_port();
-extern char *mk_t_aureader(struct s_auth *account);
-extern char *mk_t_nano(struct s_reader *rdr, uchar flag);
-extern char *mk_t_service( uint64_t sidtabok, uint64_t sidtabno);
-extern char *mk_t_logfile();
-extern char *mk_t_iprange(struct s_ip *range);
-extern char *mk_t_ecmwhitelist(struct s_ecmWhitelist *whitelist);
-extern char *mk_t_cltab(CLASSTAB *clstab);
-extern void free_mk_t(char *value);
-
-//Todo #ifdef CCCAM
-extern int32_t init_provid();
-extern char * get_tmp_dir();
-extern void init_share();
-extern void done_share();
-
-// oscam-reader
-extern int32_t logfd;
-extern int32_t reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int32_t l, uchar *response, uint16_t *response_length);
-extern int32_t card_write(struct s_reader * reader, const uchar *, const uchar *, uchar *, uint16_t *);
-extern int32_t check_sct_len(const unsigned char *data, int32_t off);
-extern void cs_ri_brk(struct s_reader * reader, int32_t);
-extern void cs_ri_log(struct s_reader * reader, char *,...);
-extern void * start_cardreader(void *);
-extern void reader_card_info(struct s_reader * reader);
-extern int32_t hostResolve(struct s_reader * reader);
-extern int32_t network_tcp_connection_open();
-extern void network_tcp_connection_close(struct s_client *, int32_t);
-extern int32_t casc_recv_timer(struct s_reader * reader, uchar *buf, int32_t l, int32_t msec);
-extern void clear_reader_pipe(struct s_reader * reader);
-extern void block_connect(struct s_reader *rdr);
-extern int32_t is_connect_blocked(struct s_reader *rdr);
-
-// oscam-log
-extern int32_t  cs_init_log();
-extern void cs_reinit_loghist(uint32_t size);
-extern int32_t cs_open_logfiles();
-extern void cs_write_log(char *);
-extern void cs_log(const char *,...);
-#ifdef WITH_DEBUG
-extern void cs_debug_mask(uint16_t, const char *,...);
-extern void cs_ddump_mask(uint16_t, const uchar *, int32_t, char *, ...);
-#else
-#define nop() asm volatile("nop")
-#define cs_debug(...) nop()
-#define cs_debug_mask(...) nop()
-#define cs_ddump(...) nop()
-#define cs_ddump_mask(...) nop()
-#endif
-extern void cs_close_log(void);
-extern int32_t  cs_init_statistics();
-extern void cs_dump(const uchar *, int32_t, char *, ...);
-
-// oscam-aes
-extern void aes_set_key(char *);
-extern void aes_encrypt_idx(struct s_client *, uchar *, int32_t);
-extern void aes_decrypt(uchar *, int32_t);
-extern int32_t aes_decrypt_from_list(AES_ENTRY *list, uint16_t caid, uint32_t provid,int32_t keyid, uchar *buf, int32_t n);
-extern int32_t aes_present(AES_ENTRY *list, uint16_t caid, uint32_t provid,int32_t keyid);
-extern void parse_aes_keys(struct s_reader *rdr,char *value);
-
-#define aes_encrypt(b, n) aes_encrypt_idx(cur_client(), b, n)
-
-// reader-common
-extern int32_t reader_device_init(struct s_reader * reader);
-extern int32_t reader_checkhealth(struct s_reader * reader);
-extern void reader_post_process(struct s_reader * reader);
-extern int32_t reader_ecm(struct s_reader * reader, ECM_REQUEST *);
-extern int32_t reader_emm(struct s_reader * reader, EMM_PACKET *);
-int32_t reader_get_emm_type(EMM_PACKET *ep, struct s_reader * reader);
-struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid);
-extern void reader_device_close(struct s_reader * reader);
-
-#ifdef WITH_LB
-//module-stat
-extern void init_stat();
-extern int32_t get_best_reader(ECM_REQUEST *er);
-extern void clear_reader_stat(struct s_reader *reader);
-extern void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t rc);
-extern void load_stat_from_file();
-extern void save_stat_to_file(int32_t);
-extern void clear_all_stat();
-extern void housekeeping_stat(int32_t force);
-extern void sort_stat(struct s_reader *rdr, int32_t reverse);
-#endif
-
-#ifdef HAVE_PCSC
-// reader-pcsc
-extern void pcsc_close(struct s_reader *pcsc_reader);
-#endif
-
-void reader_nagra();
-void reader_irdeto();
-void reader_cryptoworks();
-void reader_viaccess();
-void reader_conax();
-void reader_seca();
-void reader_videoguard1();
-void reader_videoguard2();
-void reader_videoguard12();
-void reader_dre();
-void reader_tongfang();
-
-void cardreader_mouse(struct s_cardreader *crdr);
-void cardreader_smargo(struct s_cardreader *crdr);
-#ifdef WITH_STAPI
-void cardreader_stapi(struct s_cardreader *crdr);
-#endif
-
-// protocol modules
-extern int32_t  monitor_send_idx(struct s_client *, char *);
-extern void module_monitor(struct s_module *);
-extern void module_camd35(struct s_module *);
-extern void module_camd35_tcp(struct s_module *);
-extern void module_camd33(struct s_module *);
-extern void module_newcamd(struct s_module *);
-extern void module_radegast(struct s_module *);
-extern void module_oscam_ser(struct s_module *);
-#ifdef MODULE_CCCAM
-extern void module_cccam(struct s_module *);
-#endif
-extern void module_gbox(struct s_module *);
-extern void module_constcw(struct s_module *);
-extern int32_t chk_pending(int32_t timeout);
-#ifdef HAVE_DVBAPI
-extern void module_dvbapi(struct s_module *);
-#endif
-
-#ifdef WEBIF
-// oscam-http
-extern void http_srv();
-#endif
-
-// oscam-garbage
-#ifdef WITH_DEBUG
-extern void add_garbage_debug(void *data, char *file, uint16_t line);
-#define add_garbage(x)	add_garbage_debug(x,__FILE__, __LINE__)
-#else
-extern void add_garbage(void *data);
-#endif
-extern void start_garbage_collector(int32_t);
-extern void stop_garbage_collector();
-
-#ifdef LCDSUPPORT
-// oscam-lcd
-extern void start_lcd_thread();
-extern void end_lcd_thread();
-#endif
+/* ===========================
+ *      global functions
+ * =========================== */
+#include "global-functions.h"
 
 #endif  // CS_GLOBALS

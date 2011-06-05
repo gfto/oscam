@@ -1,7 +1,6 @@
 #include "globals.h"
 
 #ifdef WITH_LB
-#include "module-stat.h"
 #include "module-cccam.h"
 
 #define UNDEF_AVG_TIME 80000
@@ -9,6 +8,12 @@
 
 #define LB_REOPEN_MODE_STANDARD 0
 #define LB_REOPEN_MODE_FAST 1
+
+#define LB_NONE 0
+#define LB_FASTEST_READER_FIRST 1
+#define LB_OLDEST_READER_FIRST 2
+#define LB_LOWEST_USAGELEVEL 3
+#define LB_LOG_ONLY 10
 
 static int32_t stat_load_save;
 static struct timeb nulltime;

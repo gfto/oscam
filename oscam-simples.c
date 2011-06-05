@@ -3,6 +3,53 @@
 #include "globals.h"
 #include "module-cccam.h"
 
+/* Gets the client associated to the calling thread. */
+struct s_client *cur_client(void){
+	return (struct s_client *) pthread_getspecific(getclient);
+}
+
+/* Gets the unique thread number from the client. Used in monitor and newcamd. */
+int32_t get_threadnum(struct s_client *client) {
+	struct s_client *cl;
+	int32_t count=0;
+
+	for (cl=first_client->next; cl ; cl=cl->next) {
+		if (cl->typ==client->typ)
+			count++;
+		if(cl==client)
+			return count;
+	}
+	return 0;
+}
+
+/* Gets the tmp dir */
+char *get_tmp_dir(){
+  if (cs_tmpdir[0])
+    return cs_tmpdir;
+
+#ifdef OS_CYGWIN32
+  char *d = getenv("TMPDIR");
+  if (!d || !d[0])
+    d = getenv("TMP");
+  if (!d || !d[0])
+    d = getenv("TEMP");
+  if (!d || !d[0])
+    getcwd(cs_tmpdir, sizeof(cs_tmpdir)-1);
+
+  cs_strncpy(cs_tmpdir, d, sizeof(cs_tmpdir));
+  char *p = cs_tmpdir;
+  while(*p) p++;
+  p--;
+  if (*p != '/' && *p != '\\')
+    strcat(cs_tmpdir, "/");
+  strcat(cs_tmpdir, "_oscam");
+#else
+  cs_strncpy(cs_tmpdir, "/tmp/.oscam", sizeof(cs_tmpdir));
+#endif
+  mkdir(cs_tmpdir, S_IRWXU);
+  return cs_tmpdir;
+}
+
 void aes_set_key(char *key)
 {
   AES_set_decrypt_key((const unsigned char *)key, 128, &cur_client()->aeskey_decrypt);
@@ -247,6 +294,15 @@ int32_t gethexval(char c)
   if ((c>='A') && (c<='F')) return(c-'A'+10);
   if ((c>='a') && (c<='f')) return(c-'a'+10);
   return(-1);
+}
+
+int32_t comp_timeb(struct timeb *tpa, struct timeb *tpb)
+{
+  if (tpa->time>tpb->time) return(1);
+  if (tpa->time<tpb->time) return(-1);
+  if (tpa->millitm>tpb->millitm) return(1);
+  if (tpa->millitm<tpb->millitm) return(-1);
+  return(0);
 }
 
 int32_t cs_atob(uchar *buf, char *asc, int32_t n)
