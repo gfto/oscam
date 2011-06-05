@@ -280,7 +280,7 @@ void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *D_USE(zType), const char
 		}
 		else if (zFiltName && zFiltName[0] == 'c') {
 			cs_log("PANIC: CAID field not found in CHID parameter!");
-			cs_exit(1);
+			return;
 		}
 		newftab.nfilts++;
 	}
@@ -1000,7 +1000,9 @@ void chk_t_camd33(char *token, char *value)
 		}
 		if (key_atob_l(value, cfg.c33_key, 32)) {
 			fprintf(stderr, "Configuration camd3.3x: Error in Key\n");
-			exit(1);
+			cfg.c33_crypted = 0;
+			memset(cfg.c33_key, 0, sizeof(cfg.c33_key));
+			return;
 		}
 		cfg.c33_crypted=1;
 		return;
@@ -1100,11 +1102,13 @@ void chk_t_newcamd(char *token, char *value)
 	}
 
 	if (!strcmp(token, "key")) {
-		if(strlen(value) == 0)
+		if(strlen(value) == 0){
+			memset(cfg.ncd_key, 0, sizeof(cfg.ncd_key));
 			return;
+		}
 		if (key_atob_l(value, cfg.ncd_key, 28)) {
 			fprintf(stderr, "Configuration newcamd: Error in Key\n");
-			exit(1);
+			memset(cfg.ncd_key, 0, sizeof(cfg.ncd_key));
 		}
 		return;
 	}
@@ -1171,12 +1175,11 @@ void chk_t_cccam(char *token, char *value)
 
 	// cccam version
 	if (!strcmp(token, "version")) {
+		memset(cfg.cc_version, 0, sizeof(cfg.cc_version));
 		if (strlen(value) > sizeof(cfg.cc_version) - 1) {
 			fprintf(stderr, "cccam config: version too long\n");
-			exit(1);
-		}
-		memset(cfg.cc_version, 0, sizeof(cfg.cc_version));
-		strncpy((char*)cfg.cc_version, value, sizeof(cfg.cc_version) - 1);
+		} else
+			cs_strncpy((char*)cfg.cc_version, value, sizeof(cfg.cc_version));
 		return;
 	}
 	// cccam: Update cards interval
@@ -3536,6 +3539,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		} else if (key_atob_l(value, rdr->ncd_key, 28)) {
 			fprintf(stderr, "Configuration newcamd: Error in Key\n");
+			memset(rdr->ncd_key, 0, sizeof(rdr->ncd_key));
 		}
 		return;
 	}
@@ -3800,7 +3804,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		} else {
 			if (key_atob_l(value, rdr->rsa_mod, len)) {
 				fprintf(stderr, "Configuration reader: Error in rsakey\n");
-				exit(1);
+				memset(rdr->rsa_mod, 0, sizeof(rdr->rsa_mod));
 			}
 			return;
 		}
@@ -3813,7 +3817,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		} else {
 			if (key_atob_l(value, rdr->nagra_boxkey, 16)) {
 				fprintf(stderr, "Configuration reader: Error in boxkey\n");
-				exit(1);
+				memset(rdr->nagra_boxkey, 0, sizeof(rdr->nagra_boxkey));
 			}
 			return;
 		}
@@ -4215,12 +4219,11 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 #ifdef MODULE_CCCAM
 	if (!strcmp(token, "cccversion")) {
 		// cccam version
-		if (strlen(value) > sizeof(rdr->cc_version) - 1) {
-			fprintf(stderr, "cccam config: version too long\n");
-			exit(1);
-		}
 		memset(rdr->cc_version, 0, sizeof(rdr->cc_version));
-		cs_strncpy(rdr->cc_version, value, sizeof(rdr->cc_version));
+		if (strlen(value) > sizeof(rdr->cc_version) - 1) {
+			fprintf(stderr, "cccam config: version too long.\n");
+		}	else	
+			cs_strncpy(rdr->cc_version, value, sizeof(rdr->cc_version));
 		return;
 	}
 

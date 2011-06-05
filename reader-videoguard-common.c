@@ -973,9 +973,9 @@ static void write_msg(MAILMSG *msg, uint32_t baseyear)
          break;
       }
    }
-   int year = (msg->date >> 8) / 12 + baseyear;
-   int mon = (msg->date >> 8) % 12 + 1;
-   int day = msg->date & 0x1f;
+   int32_t year = (msg->date >> 8) / 12 + baseyear;
+   int32_t mon = (msg->date >> 8) % 12 + 1;
+   int32_t day = msg->date & 0x1f;
 
    fprintf(fp, "%04X:%08X:%02d/%02d/%04d:%04X:\"%s\":\"%s\"\n", msg->caid, msg->serial, day, mon, year,
                                                                 msg->id, msg->subject, msg->message);
@@ -991,7 +991,7 @@ static void msgs_init(uint32_t baseyear)
    FILE *fp = fopen(cfg.mailfile, "r");
    if (fp == 0)
       return;
-   int year, mon, day;
+   int32_t year, mon, day;
    char buffer[2048];
    while (fgets(buffer, sizeof(buffer), fp))
    {
@@ -1024,9 +1024,9 @@ void videoguard_mail_msg(struct s_reader *rdr, uint8_t *data)
 
    uint16_t msg_id = (data[2] << 8) | data[3];
    uint8_t index = data[4] & 0x0F;
-   int msg_size = data[5] * 10 + 2;
+   int32_t msg_size = data[5] * 10 + 2;
    uint16_t date = (data[9] << 8) | data[10];
-   int submsg_len = data[12] - 2;
+   int32_t submsg_len = data[12] - 2;
    uint16_t submsg_idx = (data[13] << 8) | data[14];
    uint32_t serial = (rdr->hexserial[2]<<24) | (rdr->hexserial[3]<<16) | (rdr->hexserial[4]<<8) | rdr->hexserial[5];
 
