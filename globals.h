@@ -63,7 +63,6 @@
 # define call(arg) \
 	if (arg) { \
 		cs_debug_mask(D_TRACE, "ERROR, function call %s returns error.",#arg); \
-		return ERROR; \
 	}
 # define D_USE(x) x
 #else
