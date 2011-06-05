@@ -98,7 +98,7 @@ static int32_t conax_send_pin(struct s_reader * reader)
   memcpy(insPIN+8,reader->pincode,4);
 
   write_cmd(insPIN, insPIN+5);
-  cs_ri_log(reader, "sending pincode to card");
+  cs_debug_mask(D_READER, "Sent pincode to card.");
 
   return OK;
 }
