@@ -1,3 +1,4 @@
+#define _GNU_SOURCE //prevents "implicit" warning for asprintf
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
