@@ -12,7 +12,6 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include "global-functions.h"
 
 #ifdef MODULE_CCCAM
 #include "module-cccam.h"

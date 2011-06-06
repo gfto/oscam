@@ -1,4 +1,4 @@
-#define _GNU_SOURCE //prevents "implicit" warning for asprintf
+#define _GNU_SOURCE //needed for PTHREAD_MUTEX_RECURSIVE on some plattforms and maybe other things; do not remove
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>

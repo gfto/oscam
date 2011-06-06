@@ -2607,6 +2607,8 @@ void cc_init_cc(struct cc_data *cc) {
 int32_t cc_srv_wakeup_readers(struct s_client *cl) {
 	int32_t wakeup = 0;
 	struct s_reader *rdr;
+	struct s_client *client;
+	struct cc_data *cc;
 	for (rdr = first_active_reader; rdr; rdr = rdr->next) {
 		if (rdr->typ != R_CCCAM)
 			continue;
@@ -2615,6 +2617,10 @@ int32_t cc_srv_wakeup_readers(struct s_client *cl) {
 		if (!(rdr->grp & cl->grp))
 			continue;
 		if (rdr->cc_keepalive) //if reader has keepalive but is NOT connected, reader can't connect. so don't ask him
+			continue;
+		if((client = rdr->client) == NULL || (cc = client->cc) == NULL || cc->mode == CCCAM_MODE_SHUTDOWN)	//reader is in shutdown
+			continue;
+		if(is_connect_blocked(rdr))	//reader cannot be waked up currently because its blocked
 			continue;
 		
 		//This wakeups the reader:
@@ -2938,7 +2944,7 @@ int32_t cc_cli_connect(struct s_client *cl) {
 	
 	if (!cl->udp_fd) {
 		cc_cli_init_int(cl); 
-		return -1; // cc_cli_init_int32_t calls cc_cli_connect, so exit here!
+		return -1; // cc_cli_init_int calls cc_cli_connect, so exit here!
 	}
 		
 	if (is_connect_blocked(rdr)) {
