@@ -895,9 +895,8 @@ static int32_t gbox_client_init(struct s_client *cli)
 
   memset((char *)&cli->udp_sa, 0, sizeof(cli->udp_sa));
 
-  struct hostent *hp;
-  hp = gethostbyname(rdr->device);
-  memcpy((char *)&cli->udp_sa.sin_addr, (char *)hp->h_addr, hp->h_length);
+  if (!hostResolve(rdr))
+  	return 1;
 
   cli->udp_sa.sin_family=AF_INET;
   cli->udp_sa.sin_port=htons((uint16_t)rdr->r_port);

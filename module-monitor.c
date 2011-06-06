@@ -245,9 +245,7 @@ static char *monitor_client_info(char id, struct s_client *cl, char *sbuf){
 		{
 			lsec = now - cl->login;
 			isec = now - cl->last;
-			usr = cl->account->usr;
-			if ((cl->typ == 'r') || (cl->typ == 'p'))
-				usr = cl->reader->label;
+			usr = username(cl);
 			if (cl->dup)
 				con = 2;
 			else
@@ -377,6 +375,10 @@ static void monitor_process_details_master(char *buf, uint32_t pid){
         }
 	snprintf(buf, 256, "LogFile=%s", cfg.logfile);
 	monitor_send_details(buf, pid);
+	if( cfg.mailfile ) {
+	        snprintf(buf, 256, "MailFile=%s", cfg.mailfile);
+	        monitor_send_details(buf, pid);
+        }
 	if( cfg.usrfile ) {
 	        snprintf(buf, 256, "UsrFile=%s", cfg.usrfile);
 	        monitor_send_details(buf, pid);

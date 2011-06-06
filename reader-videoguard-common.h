@@ -48,6 +48,7 @@ extern void set_known_card_info(struct s_reader * reader, const unsigned char *a
 int32_t videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr);
 void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter);
 int32_t videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned char CLA, void (*read_tiers)(), int32_t (*docmd)());
+void videoguard_mail_msg(struct s_reader *rdr, uint8_t *data);
 
 #endif // __NDS_COMMON__
 

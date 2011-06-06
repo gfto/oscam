@@ -280,7 +280,7 @@ void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *D_USE(zType), const char
 		}
 		else if (zFiltName && zFiltName[0] == 'c') {
 			cs_log("PANIC: CAID field not found in CHID parameter!");
-			cs_exit(1);
+			return;
 		}
 		newftab.nfilts++;
 	}
@@ -421,6 +421,11 @@ void chk_t_global(const char *token, char *value)
 		return;
 	}
 
+	if (!strcmp(token, "disablemail")) {
+		cfg.disablemail = strToIntVal(value, 1);
+		return;
+	}
+
 	if (!strcmp(token, "loghistorysize")) {
 		uint32_t newsize = strToUIntVal(value, 4096);
 		if (newsize < 1024) {
@@ -471,6 +476,15 @@ void chk_t_global(const char *token, char *value)
 			if(!cs_malloc(&(cfg.usrfile), strlen(value) + 1, -1)) return;
 			memcpy(cfg.usrfile, value, strlen(value) + 1);
 		} else cfg.disableuserfile = 1;
+		return;
+	}
+
+	if (!strcmp(token, "mailfile")) {
+		NULLFREE(cfg.mailfile);
+		if (strlen(value) > 0) {
+			if(!cs_malloc(&(cfg.mailfile), strlen(value) + 1, -1)) return;
+			memcpy(cfg.mailfile, value, strlen(value) + 1);
+		} else cfg.disablemail = 1;
 		return;
 	}
 
@@ -986,7 +1000,9 @@ void chk_t_camd33(char *token, char *value)
 		}
 		if (key_atob_l(value, cfg.c33_key, 32)) {
 			fprintf(stderr, "Configuration camd3.3x: Error in Key\n");
-			exit(1);
+			cfg.c33_crypted = 0;
+			memset(cfg.c33_key, 0, sizeof(cfg.c33_key));
+			return;
 		}
 		cfg.c33_crypted=1;
 		return;
@@ -1086,11 +1102,13 @@ void chk_t_newcamd(char *token, char *value)
 	}
 
 	if (!strcmp(token, "key")) {
-		if(strlen(value) == 0)
+		if(strlen(value) == 0){
+			memset(cfg.ncd_key, 0, sizeof(cfg.ncd_key));
 			return;
+		}
 		if (key_atob_l(value, cfg.ncd_key, 28)) {
 			fprintf(stderr, "Configuration newcamd: Error in Key\n");
-			exit(1);
+			memset(cfg.ncd_key, 0, sizeof(cfg.ncd_key));
 		}
 		return;
 	}
@@ -1157,12 +1175,11 @@ void chk_t_cccam(char *token, char *value)
 
 	// cccam version
 	if (!strcmp(token, "version")) {
+		memset(cfg.cc_version, 0, sizeof(cfg.cc_version));
 		if (strlen(value) > sizeof(cfg.cc_version) - 1) {
 			fprintf(stderr, "cccam config: version too long\n");
-			exit(1);
-		}
-		memset(cfg.cc_version, 0, sizeof(cfg.cc_version));
-		strncpy((char*)cfg.cc_version, value, sizeof(cfg.cc_version) - 1);
+		} else
+			cs_strncpy((char*)cfg.cc_version, value, sizeof(cfg.cc_version));
 		return;
 	}
 	// cccam: Update cards interval
@@ -1510,8 +1527,10 @@ int32_t init_config()
 	cfg.ulparent = 0;
 	cfg.logfile = NULL;
 	cfg.usrfile = NULL;
+	cfg.mailfile = NULL;
 	cfg.max_log_size = 10;
 	cfg.disableuserfile = 1;
+	cfg.disablemail = 1;
 #ifdef CS_LOGHISTORY
 	cfg.loghistorysize = 0;
 	cs_reinit_loghist(4096);
@@ -1599,6 +1618,7 @@ int32_t init_config()
 		else cfg.logtostdout = 1;
 	}
 	if(cfg.usrfile == NULL) cfg.disableuserfile = 1;
+	if(cfg.mailfile == NULL) cfg.disablemail = 1;
 
 	cs_init_log();
 	cs_init_statistics();
@@ -1936,6 +1956,8 @@ int32_t write_config()
 		fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.srvip));
 	if (cfg.usrfile != NULL || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "usrfile", "%s\n", cfg.usrfile?cfg.usrfile:"");
+	if (cfg.mailfile != NULL || cfg.http_full_cfg)
+		fprintf_conf(f, CONFVARWIDTH, "mailfile", "%s\n", cfg.mailfile?cfg.mailfile:"");
 	if (cfg.logfile != NULL || cfg.logtostdout == 1 || cfg.logtosyslog == 1 || cfg.http_full_cfg){
 		value = mk_t_logfile();
 		fprintf_conf(f, CONFVARWIDTH, "logfile", "%s\n", value);
@@ -1953,6 +1975,8 @@ int32_t write_config()
 		fprintf_conf(f, CONFVARWIDTH, "disablelog", "%d\n", cfg.disablelog);
 	if ((cfg.usrfile && cfg.disableuserfile == 0) || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "disableuserfile", "%d\n", cfg.usrfile?cfg.disableuserfile:1);
+	if ((cfg.mailfile && cfg.disablemail == 0) || cfg.http_full_cfg)
+		fprintf_conf(f, CONFVARWIDTH, "disablemail", "%d\n", cfg.mailfile?cfg.disablemail:1);
 	if ((cfg.loghistorysize != 4096) || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "loghistorysize", "%u\n", cfg.loghistorysize);
 	if (cfg.usrfileflag || cfg.http_full_cfg)
@@ -3515,6 +3539,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		} else if (key_atob_l(value, rdr->ncd_key, 28)) {
 			fprintf(stderr, "Configuration newcamd: Error in Key\n");
+			memset(rdr->ncd_key, 0, sizeof(rdr->ncd_key));
 		}
 		return;
 	}
@@ -3779,7 +3804,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		} else {
 			if (key_atob_l(value, rdr->rsa_mod, len)) {
 				fprintf(stderr, "Configuration reader: Error in rsakey\n");
-				exit(1);
+				memset(rdr->rsa_mod, 0, sizeof(rdr->rsa_mod));
 			}
 			return;
 		}
@@ -3792,7 +3817,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		} else {
 			if (key_atob_l(value, rdr->nagra_boxkey, 16)) {
 				fprintf(stderr, "Configuration reader: Error in boxkey\n");
-				exit(1);
+				memset(rdr->nagra_boxkey, 0, sizeof(rdr->nagra_boxkey));
 			}
 			return;
 		}
@@ -4194,12 +4219,11 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 #ifdef MODULE_CCCAM
 	if (!strcmp(token, "cccversion")) {
 		// cccam version
-		if (strlen(value) > sizeof(rdr->cc_version) - 1) {
-			fprintf(stderr, "cccam config: version too long\n");
-			exit(1);
-		}
 		memset(rdr->cc_version, 0, sizeof(rdr->cc_version));
-		cs_strncpy(rdr->cc_version, value, sizeof(rdr->cc_version));
+		if (strlen(value) > sizeof(rdr->cc_version) - 1) {
+			fprintf(stderr, "cccam config: version too long.\n");
+		}	else	
+			cs_strncpy(rdr->cc_version, value, sizeof(rdr->cc_version));
 		return;
 	}
 

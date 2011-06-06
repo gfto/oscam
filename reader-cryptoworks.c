@@ -129,8 +129,8 @@ int32_t cryptoworks_send_pin(struct s_reader * reader)
 	  memcpy(insPIN+5,reader->pincode,4);
 	
 	  write_cmd(insPIN, insPIN+5);
-	  cs_ri_log (reader, "sending pincode to card");  
-	  if((cta_res[0]==0x98)&&(cta_res[1]==0x04)) cs_ri_log (reader, "bad pincode");
+	  cs_debug_mask(D_READER, "Sent pincode to card.");  
+	  if((cta_res[0]==0x98)&&(cta_res[1]==0x04)) cs_log("bad pincode on reader %s", reader->label);
 	  	 
 	  return OK;
   }

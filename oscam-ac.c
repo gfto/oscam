@@ -111,6 +111,24 @@ void ac_do_stat()
   }
 }
 
+/* Starts the anticascader thread. */
+void start_anticascader(){
+  struct s_client * cl = create_client(first_client->ip);
+  if (cl == NULL) return;
+  cl->thread = pthread_self();
+  pthread_setspecific(getclient, cl);
+  cl->typ = 'a';
+
+  ac_init_stat();
+  while(1)
+  {
+  	int32_t i;
+  	for( i=0; i<cfg.ac_stime*60; i++ )
+  		cs_sleepms(1000); //FIXME this is a cpu-killer!
+    ac_do_stat();
+  }
+}
+
 void ac_init_client(struct s_client *client, struct s_auth *account)
 {
   client->ac_limit = 0;

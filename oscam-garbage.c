@@ -36,7 +36,7 @@ void add_garbage(void *data) {
 		int32_t bucket = (uintptr_t)data/16 % HASH_BUCKETS;
         while (cs_trylock(&garbage_lock[bucket])) {
         	cs_debug_mask(D_TRACE, "trylock add_garbage wait");	
-        	cs_sleepms(50);
+        	cs_sleepms(fast_rnd());
         }
         
         struct cs_garbage *garbagecheck = garbage_first[bucket];
@@ -79,7 +79,7 @@ void garbage_collector() {
                 for(i = 0; i < HASH_BUCKETS; ++i){
 	                while (cs_trylock(&garbage_lock[i])) {
 	                	cs_debug_mask(D_TRACE, "trylock garbage_collector wait");
-	                	cs_sleepms(50);
+	                	cs_sleepms(fast_rnd());
 	                }
 	                now = time(NULL);
 	

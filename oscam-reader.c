@@ -1,4 +1,5 @@
 #include "globals.h"
+#include "reader-common.h"
 
 int32_t logfd=0;
 
@@ -42,6 +43,8 @@ static void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uc
   ECM_REQUEST *ecm;
   struct s_client *cl = reader->client;
   
+  if(!cl) return;
+  
   for (i=0; i<CS_MAXPENDING; i++)
   {
   	ecm = &cl->ecmtask[i];
@@ -79,7 +82,7 @@ int32_t casc_recv_timer(struct s_reader * reader, uchar *buf, int32_t l, int32_t
 	int32_t rc;
 	struct s_client *cl = reader->client;
 
-	if (!cl->pfd) return(-1);
+	if (!cl || !cl->pfd) return(-1);
   
 	if (!reader->ph.recv) {
 		cs_log("reader %s: unsupported protocol!", reader->label);
@@ -100,59 +103,20 @@ int32_t casc_recv_timer(struct s_reader * reader, uchar *buf, int32_t l, int32_t
 	return(rc);
 }
 
-// according to documentation getaddrinfo() is thread safe
-int32_t hostResolve(struct s_reader *rdr)
-{
-   int32_t result = 0;
+int32_t hostResolve(struct s_reader *rdr){
    struct s_client *cl = rdr->client;
    
-   while (cs_trylock(&gethostbyname_lock)) {
-     cs_debug_mask(D_TRACE, "trylock hostResolve wait");
-     cs_sleepms(50);
-   }
-   
+   if(!cl) return 0;
+    
    in_addr_t last_ip = cl->ip;
+   cl->ip = cs_getIPfromHost(rdr->device);
+   cl->udp_sa.sin_addr.s_addr = cl->ip;
    
-   if (cfg.resolve_gethostbyname) { //Resolve with gethostbyname:
-     struct hostent *rht = gethostbyname(rdr->device);
-     if (!rht) {
-       cs_log("can't resolve %s", rdr->device);
-       result = 0;
-     } else {
-       memcpy(&cl->udp_sa.sin_addr, rht->h_addr, sizeof(cl->udp_sa.sin_addr));
-       cl->ip=cl->udp_sa.sin_addr.s_addr;
-       result = 1;
-     }
-   }
-   else { //Resolve with getaddrinfo:
-     struct addrinfo hints, *res = NULL;
-     memset(&hints, 0, sizeof(hints));
-     hints.ai_socktype = SOCK_STREAM;
-     hints.ai_family = cl->udp_sa.sin_family;
-     hints.ai_protocol = IPPROTO_TCP;
-
-     int32_t err = getaddrinfo(rdr->device, NULL, &hints, &res);
-     if (err != 0 || !res || !res->ai_addr) {
-       cs_log("can't resolve %s, error: %s", rdr->device, err ? gai_strerror(err) : "unknown");
-       result = 0;
-     } else {
-       cl->udp_sa.sin_addr.s_addr = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
-       cl->ip = cl->udp_sa.sin_addr.s_addr;
-       result = 1;
-     }
-     if (res) freeaddrinfo(res);
-   }
-
-   if (!result) {
-     cl->udp_sa.sin_addr.s_addr = 0;
-     cl->ip = 0;
-   } else if (cl->ip != last_ip) {
+   if (cl->ip != last_ip) {
      cs_log("%s: resolved ip=%s", rdr->device, cs_inet_ntoa(cl->ip));
    }
 
-   pthread_mutex_unlock(&gethostbyname_lock);
-
-   return result;
+   return cl->ip?1:0;
 }
 
 void clear_block_delay(struct s_reader *rdr) {
@@ -292,6 +256,8 @@ void casc_do_sock_log(struct s_reader * reader)
   uint16_t caid, srvid;
   uint32_t provid;
   struct s_client *cl = reader->client;
+  
+  if(!cl) return;
 
   idx=reader->ph.c_recv_log(&caid, &provid, &srvid);
   cl->last=time((time_t)0);
@@ -316,7 +282,9 @@ void casc_do_sock(struct s_reader * reader, int32_t w)
   int32_t i, n, idx, rc, j;
   uchar buf[1024];
   uchar dcw[16];
-  struct s_client *cl = reader->client; 
+  struct s_client *cl = reader->client;
+  
+  if(!cl) return;
 
   if ((n=casc_recv_timer(reader, buf, sizeof(buf), w))<=0)
   {
@@ -356,6 +324,7 @@ static void casc_get_dcw(struct s_reader * reader, int32_t n)
   int32_t w;
   struct timeb tps, tpe;
   struct s_client *cl = reader->client;
+  if(!cl) return;
   tpe=cl->ecmtask[n].tps;
   //tpe.millitm+=1500;    // TODO: timeout of 1500 should be config
 
@@ -380,6 +349,8 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
   int32_t rc, n, i, sflag, pending=0;
   time_t t;//, tls;
   struct s_client *cl = reader->client;
+  
+  if(!cl) return -1;
   
   uchar buf[512];
 
@@ -501,6 +472,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   if (reader->typ & R_IS_CASCADING)
   {
     struct s_client *cl = reader->client;
+    if(!cl) return;
     cl->last_srvid=er->srvid;
     cl->last_caid=er->caid;
     casc_process_ecm(reader, er);
@@ -548,6 +520,10 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   struct timeb tps, tpe;
   cs_ftime(&tps);
   er->rc=reader_ecm(reader, er);
+  if(er->rc == ERROR){
+  	char buf[32];
+  	cs_log("Error processing ecm for caid %04X, srvid %04X (servicename: %s) on reader %s.", er->caid, er->srvid, get_servicename(reader->client, er->srvid, er->caid, buf), reader->label);  	
+  }
   cs_ftime(&tpe);
   if (cs_dblevel) {
 	uint16_t lc, *lp;
@@ -568,6 +544,8 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   char *typedesc[]= { "unknown", "unique", "shared", "global" };
   struct timeb tps, tpe;
   struct s_client *cl = reader->client;
+  
+  if(!cl) return 0;
 
   cs_ftime(&tps);
 

@@ -1,7 +1,6 @@
 #include "globals.h"
 
 #ifdef WITH_LB
-#include "module-stat.h"
 #include "module-cccam.h"
 
 #define UNDEF_AVG_TIME 80000
@@ -9,6 +8,12 @@
 
 #define LB_REOPEN_MODE_STANDARD 0
 #define LB_REOPEN_MODE_FAST 1
+
+#define LB_NONE 0
+#define LB_FASTEST_READER_FIRST 1
+#define LB_OLDEST_READER_FIRST 2
+#define LB_LOWEST_USAGELEVEL 3
+#define LB_LOG_ONLY 10
 
 static int32_t stat_load_save;
 static struct timeb nulltime;
@@ -334,16 +339,8 @@ void inc_fail(READER_STAT *stat)
 		stat->fail_factor *= 2;
 }
 
-/**
- * Adds caid/prid/srvid/ecmlen to stat-list for reader ridx with time/rc
- */
-void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t rc)
+READER_STAT *get_add_stat(struct s_reader *rdr, ECM_REQUEST *er, uint32_t prid)
 {
-	if (!rdr || !er || !cfg.lb_mode || !rdr->client)
-		return;
-		
-	uint32_t prid = get_prid(er->caid, er->prid);
-	
 	READER_STAT *stat = get_stat(rdr, er->caid, prid, er->srvid, er->l);
 	if (!stat) {
 		if(cs_malloc(&stat,sizeof(READER_STAT), -1)){
@@ -356,6 +353,24 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 		}
 	}
 
+	if (stat->ecm_count < 0)
+		stat->ecm_count=0;
+		
+	return stat;
+}
+
+/**
+ * Adds caid/prid/srvid/ecmlen to stat-list for reader ridx with time/rc
+ */
+void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t rc)
+{
+	if (!rdr || !er || !cfg.lb_mode || !rdr->client)
+		return;
+		
+	uint32_t prid = get_prid(er->caid, er->prid);
+	
+	READER_STAT *stat;
+	
 	//inc ecm_count if found, drop to 0 if not found:
 	// rc codes:
 	// 0 = found       +
@@ -378,12 +393,10 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	//        - = causes loadbalancer to block this reader for this caid/prov/sid
 	//        -2 = causes loadbalancer to block if happens too often
 	
-	if (stat->ecm_count < 0)
-		stat->ecm_count=0;
-		
 	time_t ctime = time(NULL);
 	
 	if (rc == 0) { //found
+		stat = get_add_stat(rdr, er, prid);
 		stat->rc = 0;
 		stat->ecm_count++;
 		stat->last_received = ctime;
@@ -426,9 +439,11 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	}
 	else if (rc == 1 || rc == 2) { //cache
 		//no increase of statistics here, cachetime is not real time
+		stat = get_add_stat(rdr, er, prid);
 		stat->last_received = ctime;
 	}
 	else if (rc == 4) { //not found
+		stat = get_add_stat(rdr, er, prid);
 		//CCcam card can't decode, 0x28=NOK1, 0x29=NOK2
 		//CCcam loop detection = E2_CCCAM_LOOP
 		if (er->rcEx == E2_CCCAM_NOK1 || er->rcEx == E2_CCCAM_NOK2 || er->rcEx == E2_CCCAM_LOOP) {
@@ -445,23 +460,23 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 			stat->ecm_count /= 10;
 	}
 	else if (rc == 5) { //timeout
+		stat = get_add_stat(rdr, er, prid);
+		
 		//catch suddenly occuring timeouts and block reader:
 		if ((int)(ctime-stat->last_received) < (int)(5*cfg.ctimeout) && 
-						stat->rc == 0 && 
-						stat->ecm_count > 0) {
-				stat->rc = 5;
+				stat->rc == 0 && stat->ecm_count == 0) {
+			stat->rc = 5;
 				//inc_fail(stat); //do not inc fail factor in this case
 		}
-		else if ((rdr->client->login+(int)(2*cfg.ctimeout/1000)) < ctime && rdr->client->pending < 5) { //reader is longer than 5s connected && not more then 5 pending ecms
-				stat->rc = 5;
-				inc_fail(stat);
+		//reader is longer than 5s connected && not more then 5 pending ecms:
+		else if ((rdr->client->login+(int)(2*cfg.ctimeout/1000)) < ctime && rdr->client->pending < 5 &&  
+				stat->rc == 0 && stat->ecm_count == 0) {
+			stat->rc = 5;
+			inc_fail(stat);
 		}
 				
 		stat->last_received = ctime;
 
-		if (!cfg.lb_reopen_mode)
-			stat->ecm_count /= 2;
-		
 		//add timeout to stat:
 		if (ecm_time<=0 || ecm_time > (int)cfg.ctimeout)
 			ecm_time = cfg.ctimeout;
@@ -474,8 +489,8 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	else
 	{
 		if (rc >= 0)
-			cs_debug_mask(D_TRACE, "loadbalancer: not handled stat for reader %s: rc %d %04hX&%06lX/%04hX/%02hX time %dms fail %d",
-				rdr->label, rc, er->caid, prid, er->srvid, er->l, ecm_time, stat->fail_factor);
+			cs_debug_mask(D_TRACE, "loadbalancer: not handled stat for reader %s: rc %d %04hX&%06lX/%04hX/%02hX time %dms",
+				rdr->label, rc, er->caid, prid, er->srvid, er->l, ecm_time);
 	
 		return;
 	}

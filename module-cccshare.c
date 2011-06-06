@@ -85,10 +85,13 @@ void add_good_bad_sids_by_rdr(struct s_reader *rdr, struct cc_card *card) {
 
 
 int32_t can_use_ext(struct cc_card *card) {
+	if (card->card_type == CT_REMOTECARD)
+		return card->is_ext;
+		
 	if (card->sidtab)
 		return (card->sidtab->num_srvid>0);
 	else
-		return ll_count(card->goodsids);
+		return ll_count(card->goodsids) && ll_count(card->badsids);
 	return 0;
 }
 
@@ -137,7 +140,7 @@ int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32
 		            buf[ofs+1] = ptr->srvid[l] & 0xFF;
 		            ofs+=2;
 		            buf[21]++; //nassign
-		            if (buf[21] >= 200)
+		            if (buf[21] >= 240)
 		                break;
 				}
 
@@ -159,12 +162,15 @@ int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32
                         						buf[ofs+1] = ptr->srvid[l] & 0xFF;
                         						ofs+=2;
                         						buf[22]++; //nreject
-                        						if (buf[22] >= 200)
+                        						if (buf[22] >= 240)
 														break;
 		                                }
         		                }
 						}
+						if (buf[22] >= 240)
+							break;
 				}
+				
     	} else {
 		        //assigned sids:
 		        it = ll_iter_create(card->goodsids);
@@ -536,6 +542,8 @@ struct cc_card *create_card(struct cc_card *card) {
         copy_sids(card2->badsids, card->badsids);
         card2->id = 0;
     }
+    else
+    	set_card_timeout(card2);
 
     return card2;
 }
@@ -614,7 +622,6 @@ int32_t equal_providers(struct cc_card *card1, struct cc_card *card2) {
     return (prov1 == NULL);
 }
 
-
 /**
  * Adds a new card to a cardlist.
  */
@@ -640,6 +647,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
                     break;
             }
 		}
+		
         if (!card2) { //Not found->add it:
         	if (free_card) { //Use this card
         		free_card = FALSE;
@@ -669,7 +677,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
                 break;
             }
         }
-
+        
         if (card2 && card2->hop > card->hop) { //hop is smaller, drop old card
             ll_iter_remove(&it);
             cc_free_card(card2);
@@ -702,6 +710,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
             if (same_card(card, card2))
                 break;
         }
+        
         if (card2 && card2->hop > card->hop) { //same card, if hop greater drop card
             ll_iter_remove(&it);
             cc_free_card(card2);
@@ -729,12 +738,20 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
     return modified;
 }
 
+int32_t card_timed_out(struct cc_card *card)
+{
+    int32_t res = (card->card_type != CT_REMOTECARD) && (card->timeout < time(NULL)); //local card is older than 1h?
+    if (res)
+		cs_debug_mask(D_TRACE, "card %08X timed out! refresh forced", card->id?card->id:card->origin_id);
+    return res;
+}
+            
 int32_t find_reported_card(struct cc_card *card1)
 {
     LL_ITER it = ll_iter_create(reported_carddatas);
     struct cc_card *card2;
     while ((card2 = ll_iter_next(&it))) {
-        if (same_card(card1, card2)) {
+        if (same_card(card1, card2) && !card_timed_out(card2)) {
             card1->id = card2->id; //Set old id !!
             cc_free_card(card2);
             ll_iter_remove(&it);
@@ -835,7 +852,7 @@ void update_card_list() {
             		cfg.sidtab && (rdr->sidtabno || rdr->sidtabok)) {
                 struct s_sidtab *ptr;
                 for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
-                    if (!(rdr->sidtabno&((SIDTABBITS)1<<j)) && (!rdr->sidtabok || rdr->sidtabok&((SIDTABBITS)1<<j))) {
+                    if (!(rdr->sidtabno&((SIDTABBITS)1<<j)) && (rdr->sidtabok&((SIDTABBITS)1<<j))) {
                         int32_t k;
                         for (k=0;k<ptr->num_caid;k++) {
                             struct cc_card *card = create_card2(rdr, (j<<8)|k, ptr->caid[k], reshare);

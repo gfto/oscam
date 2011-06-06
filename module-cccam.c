@@ -461,7 +461,7 @@ int32_t cc_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen) {
 
 	while (cl->cc && cc->mode != CCCAM_MODE_SHUTDOWN && cs_trylock(&cc->lockcmd)) {
 		cs_debug_mask(D_TRACE, "%s trylock recv waiting", getprefix());
-		cs_sleepms(50);
+		cs_sleepms(fast_rnd());
 	}
 	if (!cl->cc || cc->mode == CCCAM_MODE_SHUTDOWN) return -1;
 
@@ -532,7 +532,7 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 
 	while (cl->cc && cc->mode != CCCAM_MODE_SHUTDOWN && cs_trylock(&cc->lockcmd)) { //We need this because cc_cmd_send is called from cccshare
 		cs_debug_mask(D_TRACE, "%s trylock send waiting", getprefix());
-		cs_sleepms(50);
+		cs_sleepms(fast_rnd());
 	}
 	if (!cl->cc || cc->mode == CCCAM_MODE_SHUTDOWN) return -1;
 	
@@ -1107,7 +1107,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 	while (cs_trylock(&cc->cards_busy)) {
 		cs_debug_mask(D_TRACE, "%s trylock send_ecm cards waiting", getprefix());
-		cs_sleepms(50);
+		cs_sleepms(fast_rnd());
 	}
 	//forward_origin:
 	if (cfg.cc_forward_origin_card && cur_er->origin_reader == rdr && cur_er->origin_card) {
@@ -1359,7 +1359,7 @@ int32_t cc_send_emm(EMM_PACKET *ep) {
 	//Last used card is first card of current_cards:
 	while (cs_trylock(&cc->cards_busy)) {
 		cs_debug_mask(D_TRACE, "trylock send_emm cards waiting", getprefix());
-		cs_sleepms(50);
+		cs_sleepms(fast_rnd());
 	}
 
 	struct cc_card *emm_card = cc->last_emm_card;
@@ -1467,9 +1467,10 @@ void cc_free(struct s_client *cl) {
 	
 	cl->cc=NULL;
 	
-	while (cs_trylock(&cc->lockcmd)) cs_sleepms(110);
-	cs_lock(&cc->ecm_busy);
-	cs_lock(&cc->cards_busy);
+	int i = 10;
+	while (cs_trylock(&cc->lockcmd) && i--) cs_sleepms(110);
+	cs_trylock(&cc->ecm_busy);
+	cs_trylock(&cc->cards_busy);
 	
 	cs_debug_mask(D_TRACE, "exit cccam1/3");
 	cc_free_cardlist(cc->cards, TRUE);
@@ -1575,6 +1576,13 @@ void cc_idle() {
 	}
 }
 
+#define TIMEOUT_SECONDS 3600
+
+void set_card_timeout(struct cc_card *card)
+{
+	card->timeout = time(NULL)+TIMEOUT_SECONDS+(fast_rnd()-128)*2;
+}
+
 struct cc_card *read_card(uint8_t *buf, int32_t ext) {
 	struct cc_card *card = cs_malloc(&card, sizeof(struct cc_card), QUITERROR);
 	memset(card, 0, sizeof(struct cc_card));
@@ -1590,6 +1598,9 @@ struct cc_card *read_card(uint8_t *buf, int32_t ext) {
 	card->caid = b2i(2, buf + 8);
 	card->hop = buf[10];
 	card->reshare = buf[11];
+	card->is_ext = ext;
+	card->card_type = CT_REMOTECARD;
+	set_card_timeout(card);
 	memcpy(card->hexserial, buf + 12, 8); //HEXSERIAL!!
 
 	//cs_debug_mask(D_CLIENT, "cccam: card %08x added, caid %04X, hop %d, key %s, count %d",
@@ -1768,7 +1779,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 		if (l == 0x48) { //72 bytes: normal server data
 			while (cs_trylock(&cc->cards_busy)) {
 				cs_debug_mask(D_TRACE, "%s trylock MSG_SRV_DATA cards waiting", getprefix());
-				cs_sleepms(50);
+				cs_sleepms(fast_rnd());
 			}
 			cc_free_cardlist(cc->cards, FALSE);
 			free_extended_ecm_idx(cc); 
@@ -1885,14 +1896,13 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 
 		while (cs_trylock(&cc->cards_busy)) {
 			cs_debug_mask(D_TRACE, "%s trylock MSG_NEW_CARD cards waiting", getprefix());
-			cs_sleepms(50);
+			cs_sleepms(fast_rnd());
 		}
 
 		struct cc_card *card = read_card(data, buf[1]==MSG_NEW_CARD_SIDINFO);
 		card->origin_reader = rdr;
 		card->origin_id = card->id;
 		card->grp = rdr->grp;
-		card->card_type = CT_REMOTECARD;
 		card->rdr_reshare = rdr->cc_reshare;
 
 		//Check if this card is from us:
@@ -1954,7 +1964,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 	case MSG_CARD_REMOVED: {
 		while (cs_trylock(&cc->cards_busy)) {
 			cs_debug_mask(D_TRACE, "%s trylock MSG_CARD_REMOVED cards waiting", getprefix());
-			cs_sleepms(50);
+			cs_sleepms(fast_rnd());
 		}
 		cc_card_removed(cl, b2i(4, buf + 4));
 		cs_unlock(&cc->cards_busy);
@@ -2009,7 +2019,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 
 		while (cs_trylock(&cc->cards_busy)) {
 			cs_debug_mask(D_TRACE, "%s trylock MSG_CW_NOK cards waiting", getprefix());
-            cs_sleepms(50);
+            cs_sleepms(fast_rnd());
 		}
 
    		struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cl,
@@ -2164,7 +2174,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 		} else { //READER:
 			while (cs_trylock(&cc->cards_busy)) {
             	cs_debug_mask(D_TRACE, "%s trylock MSG_CW_ECM cards waiting", getprefix());
-				cs_sleepms(50);
+				cs_sleepms(fast_rnd());
             }
     		cc->recv_ecmtask = -1;
 			struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cl,
@@ -2877,7 +2887,7 @@ int32_t cc_cli_connect(struct s_client *cl) {
 		if (cc->cards) {
 			while (cs_trylock(&cc->cards_busy)) {
 				cs_debug_mask(D_TRACE, "%s trylock cc_cli_connect cards waiting", getprefix());
-				cs_sleepms(50);
+				cs_sleepms(fast_rnd());
 			}
 			                
 			cc_free_cardlist(cc->cards, FALSE);
@@ -3164,6 +3174,7 @@ int32_t cc_available(struct s_reader *rdr, int32_t checktype) {
 	if (!rdr || !rdr->client) return 0;
 	
 	struct s_client *cl = rdr->client;
+	if(!cl) return 0;
 	//cs_debug_mask(D_TRACE, "checking reader %s availibility", rdr->label);
 	if (!cl->cc || rdr->tcp_connected != 2 || rdr->card_status != CARD_INSERTED) {
 		//Two cases: 

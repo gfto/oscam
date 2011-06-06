@@ -623,6 +623,10 @@ static int32_t viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   // static const unsigned char insc8Data[] = { 0x00,0x00 }; // data for read extended status
 
   int32_t emmdatastart=7;
+
+	if (ep->emm[1] == 0x01) // emm from cccam
+		emmdatastart=10;
+
   if (ep->type == UNIQUE) emmdatastart++;
   int32_t emmLen=SCT_LEN(ep->emm)-emmdatastart;
   int32_t rc=0;

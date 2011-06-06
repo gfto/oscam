@@ -101,19 +101,8 @@ struct cc_card {
 	uint64_t grp;
 	uint8_t rdr_reshare;
 	SIDTABBITS sidtabno;
-};
-
-struct cc_auto_blocked {
-	uint16_t caid;
-	uint32_t prov;
-	struct cc_srvid srvid;
-	time_t time;
-};
-
-struct cc_current_card {
-	struct cc_card *card;
-	uint32_t prov;
-	struct cc_srvid srvid;
+	time_t timeout;
+	uint8_t is_ext;
 };
 
 typedef enum {
@@ -240,6 +229,7 @@ void cc_UA_oscam2cccam(uint8_t *in, uint8_t *out, uint16_t caid);
 void cc_SA_oscam2cccam(uint8_t *in, uint8_t *out);
 void cc_free_cardlist(LLIST *card_list, int32_t destroy_list);
 void cc_update_nodeid();
+void set_card_timeout(struct cc_card *card);
 
 #endif
 #endif /* MODULECCCAM_H_ */

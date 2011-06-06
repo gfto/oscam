@@ -12,9 +12,12 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include "module-stat.h"
+#include "global-functions.h"
+
+#ifdef MODULE_CCCAM
 #include "module-cccam.h"
 #include "module-cccshare.h"
+#endif
 
 int8_t running;
 
@@ -144,7 +147,9 @@ void refresh_lcd_file() {
 									blocked > 999? 999 : blocked,
 									error > 999? 999 : error);
 
-						} else if(cl->typ == 'p' && iscccam ){
+						}
+#ifdef MODULE_CCCAM
+						else if(cl->typ == 'p' && iscccam ){
 							struct cc_data *rcc = cl->cc;
 							if(rcc){
 								LLIST *cards = rcc->cards;
@@ -156,8 +161,9 @@ void refresh_lcd_file() {
 							} else {
 								snprintf(emmtext, 16, "   No cards    ");
 							}
-
-						} else {
+						}
+#endif
+						else {
 							snprintf(emmtext, 16, "               ");
 						}
 
@@ -229,8 +235,6 @@ void refresh_lcd_file() {
 		if(file_copy(tmpfile, targetfile) < 0)
 			cs_log("An error occured while writing oscam.lcd file %s.", targetfile);
 
-		if(remove(tmpfile) < 0)
-			cs_log("Error removing temp oscam.lcd file %s (errno=%d %s)!", tmpfile, errno, strerror(errno));
 	}
 
 }
