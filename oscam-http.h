@@ -109,7 +109,7 @@ TD.shutdown {color:black; background-color:white; font-family: Arial; font-size:
 TD.shutdown A:hover {color: red;}\n\
 TD.configmenu {color:black; background-color:white; font-family: Arial; font-size:11px; font-weight:bold;}\n\
 textarea.bt{font-family: Arial; font-size: 12px;}\n\
-textarea.editor {width:100%; height:450px;border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:10px; font-family:\"Courier New\", monospace; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left; }\n\
+textarea.editor {width:99%; height:450px;border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:10px; font-family:\"Courier New\", monospace; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left; }\n\
 input{font-family: Arial; font-size: 12px;}\n\
 A:link {color: #050840;}\n\
 A.debugls:link {color: white;background-color:red;}\n\
