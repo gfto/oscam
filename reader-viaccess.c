@@ -622,10 +622,20 @@ static int32_t viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   static const unsigned char insc8[] = { 0xca,0xc8,0x00,0x00,0x02 }; // read extended status
   // static const unsigned char insc8Data[] = { 0x00,0x00 }; // data for read extended status
 
-  int32_t emmdatastart=7;
+	int32_t emmdatastart=7;
 
-	if (ep->emm[1] == 0x01) // emm from cccam
+	if (ep->emm[1] == 0x01) { // emm from cccam
 		emmdatastart=10;
+		ep->emm[1] = 0x70; // (& 0x0f) of this byte is length, so 0x01 would increase the length by 256
+		ep->emm[2] -= 3; // last 3 bytes are garbage
+		if (ep->type == SHARED) {
+			// build missing 0x90 nano from provider at serial position
+			memcpy(ep->emm+7, ep->emm+3, 3);
+			ep->emm[5] = 0x90;
+			ep->emm[6] = 0x03;
+			emmdatastart = 5;
+		}
+	}
 
   if (ep->type == UNIQUE) emmdatastart++;
   int32_t emmLen=SCT_LEN(ep->emm)-emmdatastart;
