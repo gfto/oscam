@@ -3831,11 +3831,13 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
 
 	if ((!strcmp(token, "atr"))) {
-		memset(rdr->atr, 0, 128);
+		memset(rdr->atr, 0, sizeof(rdr->atr));
 		rdr->atrlen = strlen(value);
 		if(rdr->atrlen == 0) {
 			return;
 		} else {
+			if(rdr->atrlen > (int32_t)sizeof(rdr->atr) * 2)
+				rdr->atrlen = (int32_t)sizeof(rdr->atr) * 2;
 			key_atob_l(value, rdr->atr, rdr->atrlen);
 			return;
 		}
