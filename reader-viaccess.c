@@ -633,6 +633,7 @@ static int32_t viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 			memcpy(ep->emm+7, ep->emm+3, 3);
 			ep->emm[5] = 0x90;
 			ep->emm[6] = 0x03;
+			ep->emm[9] |= 0x01;
 			emmdatastart = 5;
 		}
 	}
@@ -724,8 +725,6 @@ static int32_t viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
       nano92Data = emmParsed;
     } else if (emmParsed[0]==0xF0 && emmParsed[1]==0x08) {
       nanoF0Data = emmParsed;
-    } else if (emmParsed[0]==0x1D && emmParsed[0]==0x01 && emmParsed[0]==0x01) {
-      /* from cccam... skip it... */
     } else {
       /* other nanos */
       show_subs(reader, emmParsed);
