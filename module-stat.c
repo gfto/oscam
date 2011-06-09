@@ -393,6 +393,9 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	//        - = causes loadbalancer to block this reader for this caid/prov/sid
 	//        -2 = causes loadbalancer to block if happens too often
 	
+	if (rc == 4 && ecm_time >= cfg.ctimeout) //Map "not found" to "timeout" if ecm_time>client time out
+		rc = 5;
+
 	time_t ctime = time(NULL);
 	
 	if (rc == 0) { //found
