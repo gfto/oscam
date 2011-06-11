@@ -525,9 +525,31 @@ void cleanup_thread(void *var)
 	    cs_statistics(cl);
 	  }
 
-		if(cl->pfd)		nullclose(&cl->pfd); //Closing Network socket
-		if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
-		if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing master write fd
+		if(cl->pfd) nullclose(&cl->pfd); //Closing Network socket
+		int32_t rc, fd_m2c = cl->fd_m2c, fd_m2c_c = cl->fd_m2c_c;
+		if(fd_m2c_c){
+			cl->fd_m2c_c = 0;
+			cl->fd_m2c = 0;
+			cs_sleepms(5);		// make sure no other thread is currently writing...
+			struct pollfd pfd2[1];
+			pfd2[0].fd = fd_m2c_c;
+			pfd2[0].events = (POLLIN | POLLPRI);
+			uchar *ptr;
+			while ((rc = poll(pfd2, 1, 5)) != 0){
+				if(rc == -1){
+					if(errno == EINTR)
+						continue;
+					else
+						break;
+				}
+				int32_t pipeCmd = read_from_pipe(fd_m2c_c, &ptr);
+				if (ptr) free(ptr);
+				if (pipeCmd==PIP_ID_ERR || pipeCmd==PIP_ID_NUL)
+					break;
+			}
+		}
+		if(fd_m2c) close(fd_m2c);	//Closing client read fd
+		if(fd_m2c_c) close(fd_m2c_c);	//Closing master write fd
 
 		if(cl->typ == 'r' && cl->reader){
 			// Maybe we also need a "nullclose" mechanism here...
@@ -1940,10 +1962,13 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	client->cwlastresptime = 1000 * (tpe.time-er->tps.time) + tpe.millitm-er->tps.millitm;
 	cs_add_lastresponsetime(client, client->cwlastresptime); // add to ringbuffer
 
-	if (er_reader && er_reader->client){
-		er_reader->client->cwlastresptime = client->cwlastresptime;
-		cs_add_lastresponsetime(er_reader->client, client->cwlastresptime);
-		er_reader->client->last_srvidptr=client->last_srvidptr;
+	if (er_reader){
+		struct s_client *er_cl = er_reader->client;
+		if(er_cl){
+			er_cl->cwlastresptime = client->cwlastresptime;
+			cs_add_lastresponsetime(er_cl, client->cwlastresptime);
+			er_cl->last_srvidptr=client->last_srvidptr;
+		}
 	}
 
 #ifdef CS_LED

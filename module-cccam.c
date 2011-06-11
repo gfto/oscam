@@ -2126,13 +2126,16 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 									cs_debug_mask(D_TRACE, "%s origin reader not found!", getprefix());
 								else {
 									cs_debug_mask(D_TRACE, "%s forward card: share %d origin reader %s origin id %d", getprefix(), card->id, ordr->label, card->origin_id);
-									if (card->origin_id && ordr && ordr->client && ordr->client->cc) { //only if we have a origin from a cccam reader
+									struct s_client *cl = ordr->client;
+									if (card->origin_id && cl && cl->cc) { //only if we have a origin from a cccam reader
 										struct cc_data *rcc = ordr->client->cc;
 										
-										itr = ll_iter_create(rcc->cards);
-										while ((rcard=ll_iter_next(&itr))) {
-												if (rcard->id == card->origin_id) //found it!
-														break;
+										if(rcc){
+											itr = ll_iter_create(rcc->cards);
+											while ((rcard=ll_iter_next(&itr))) {
+													if (rcard->id == card->origin_id) //found it!
+															break;
+											}
 										}
 									}
 									else
