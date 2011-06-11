@@ -548,8 +548,8 @@ void cleanup_thread(void *var)
 					break;
 			}
 		}
-		if(fd_m2c) close(fd_m2c);	//Closing client read fd
-		if(fd_m2c_c) close(fd_m2c_c);	//Closing master write fd
+		if(fd_m2c) close(fd_m2c);	//Closing master write fd
+		if(fd_m2c_c) close(fd_m2c_c);	//Closing client read fd
 
 		if(cl->typ == 'r' && cl->reader){
 			// Maybe we also need a "nullclose" mechanism here...
