@@ -783,10 +783,8 @@ void * start_cardreader(void * rdr)
 	struct s_reader * reader = (struct s_reader *) rdr;
 	struct s_client * client = reader->client;	
 	if(!client) cs_exit(1);
-	#ifndef NO_PTHREAD_CLEANUP_PUSH
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	pthread_cleanup_push(cleanup_thread, (void *)client);
-	#endif
 	
 	client->thread=pthread_self();
 	pthread_setspecific(getclient, client);
@@ -826,11 +824,7 @@ void * start_cardreader(void * rdr)
 	cs_malloc(&client->ecmtask,CS_MAXPENDING*(sizeof(ECM_REQUEST)), 1);
   
   reader_main(reader);
-  #ifndef NO_PTHREAD_CLEANUP_PUSH
   pthread_cleanup_pop(1);
-  #else
-  cs_exit(0);
-  #endif
 	return NULL; //dummy to prevent compiler error
 }
 #pragma GCC diagnostic warning "-Wempty-body"

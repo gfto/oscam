@@ -568,9 +568,7 @@ void cleanup_thread(void *var)
 		add_garbage(cl->serialdata);
 		cl->cleaned++;//cleaned=2
 		add_garbage(cl);
-#ifndef NO_PTHREAD_CLEANUP_PUSH
 		cs_cleanlocks();
-#endif
 	}
 }
 
@@ -811,9 +809,6 @@ void cs_exit(int32_t sig)
 	// this is very important - do not remove
 	if (cl->typ != 's') {
 		cs_log("thread %8X ended!", pthread_self());
-#ifdef NO_PTHREAD_CLEANUP_PUSH
-		cleanup_thread(cl);
-#endif
 		//Restore signals before exiting thread
 		set_signal_handler(SIGPIPE , 0, cs_sigpipe);
 		set_signal_handler(SIGHUP  , 1, cs_reload_config);
@@ -1155,16 +1150,11 @@ void *clientthread_init(void * init){
 	struct s_clientinit clientinit;
 	memcpy(&clientinit, init, sizeof(struct s_clientinit)); //copy to stack to free init pointer
 	free(init);
-#ifndef NO_PTHREAD_CLEANUP_PUSH
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	pthread_setspecific(getclient, clientinit.client);
 	pthread_cleanup_push(cleanup_thread, (void *) clientinit.client);
 	clientinit.handler(clientinit.client);
 	pthread_cleanup_pop(1);
-#else
-	clientinit.handler(clientinit.client);
-	cs_exit(0);
-#endif
 	return NULL;
 }
 #pragma GCC diagnostic warning "-Wempty-body"
@@ -1209,7 +1199,6 @@ static void kill_thread_int(struct s_client *cl) {
 
 	pthread_cancel(thread);
 	pthread_join(thread, NULL);
-#ifndef NO_PTHREAD_CLEANUP_PUSH
 	int32_t cnt = 0;
 	while(cnt < 10 && cl && cl->cleaned < 2){
 		cs_sleepms(50);
@@ -1222,10 +1211,6 @@ static void kill_thread_int(struct s_client *cl) {
 		//cleanup_thread(cl);
 	}
 
-#else
-	cs_sleepms(50);
-	cleanup_thread(cl);
-#endif
 	cs_log("thread %8X killed!", thread);
 	return;
 }
