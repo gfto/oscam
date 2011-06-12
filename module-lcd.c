@@ -173,7 +173,7 @@ void refresh_lcd_file() {
 								type, idx, label, hours, mins,
 								secs, emmtext, status);
 					} else {
-						fprintf(fpsave,"%s%d | %-10.10s |% 2dd %02d:%02d:%02d |%s| %s\n",
+						fprintf(fpsave,"%s%d | %-10.10s |% 3dd %02d:%02d:%02d |%s| %s\n",
 								type, idx, label, days, hours, mins,
 								secs, emmtext, status);
 					}
