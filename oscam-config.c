@@ -4985,7 +4985,7 @@ char *mk_t_service( uint64_t sidtabok, uint64_t sidtabno){
 	char *dot;
 	char *value;
 	struct s_sidtab *sidtab = cfg.sidtab;
-	if(!sidtab || !sidtabok || !sidtabno || !cs_malloc(&value, 1024, -1)) return "";
+	if(!sidtab || (!sidtabok && !sidtabno) || !cs_malloc(&value, 1024, -1)) return "";
 	value[0] = '\0';
 
 	for (i=pos=0,dot=""; sidtab; sidtab=sidtab->next,i++){
