@@ -1318,7 +1318,7 @@ extern struct s_cardsystem cardsystem[CS_MAX_MOD];
 extern struct s_cardreader cardreader[CS_MAX_MOD];
 extern pthread_mutex_t gethostbyname_lock;
 
-pid_t server_pid; // PID of server - set while startup
+extern pid_t server_pid; // PID of server - set while startup
 
 #ifdef CS_ANTICASC
 extern FILE *fpa;

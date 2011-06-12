@@ -36,6 +36,7 @@ int8_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)rest
 #endif
 int8_t cs_capture_SEGV=0;
 char  cs_tmpdir[200]={0x00};
+pid_t server_pid=0;
 pthread_mutex_t gethostbyname_lock;
 pthread_mutex_t get_cw_lock;
 pthread_mutex_t system_lock;

@@ -25,7 +25,11 @@ int32_t ca_fd[8];
 struct s_dvbapi_priority *dvbapi_priority=NULL;
 struct s_client *dvbapi_client=NULL;
 
+#ifdef WITH_STAPI
 int32_t stapi_on	= 0;
+pthread_mutex_t filter_lock;
+struct STDEVICE dev_list[PTINUM];
+#endif
 
 int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uchar *filt, uchar *mask, int32_t timeout, int32_t pidindex, int32_t count, int32_t type) {
 #ifdef AZBOX
@@ -102,17 +106,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uchar *fi
 	return ret;
 }
 
-int32_t dvbapi_check_array(uint16_t *array, int32_t len, uint16_t match) {
-	int32_t i;
-	for (i=0; i<len; i++) {
-		if (array[i]==match) {
-			return i;
-		}
-	}
-	return -1;
-}
-
-int32_t dvbapi_detect_api() {
+static int32_t dvbapi_detect_api() {
 #ifdef COOL
 	selected_api=COOLAPI;
 	selected_box = 5;
@@ -181,7 +175,7 @@ int32_t dvbapi_detect_api() {
 	return 1;
 }
 
-int32_t dvbapi_read_device(int32_t dmx_fd, unsigned char *buf, int32_t length) 
+static int32_t dvbapi_read_device(int32_t dmx_fd, unsigned char *buf, int32_t length) 
 {
 	int32_t len, rc;
 	struct pollfd pfd[1];
