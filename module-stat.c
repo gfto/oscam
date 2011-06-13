@@ -364,7 +364,10 @@ READER_STAT *get_add_stat(struct s_reader *rdr, ECM_REQUEST *er, uint32_t prid)
  */
 void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t rc)
 {
-	if (!rdr || !er || !cfg.lb_mode || !rdr->client)
+	if (!rdr || !er || !cfg.lb_mode)
+		return;
+	struct s_client *cl = rdr->client;
+	if (!cl)
 		return;
 		
 	uint32_t prid = get_prid(er->caid, er->prid);
@@ -393,6 +396,9 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	//        - = causes loadbalancer to block this reader for this caid/prov/sid
 	//        -2 = causes loadbalancer to block if happens too often
 	
+	if (rc == 4 && (uint32_t)ecm_time >= cfg.ctimeout) //Map "not found" to "timeout" if ecm_time>client time out
+		rc = 5;
+
 	time_t ctime = time(NULL);
 	
 	if (rc == 0) { //found
@@ -469,7 +475,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 				//inc_fail(stat); //do not inc fail factor in this case
 		}
 		//reader is longer than 5s connected && not more then 5 pending ecms:
-		else if ((rdr->client->login+(int)(2*cfg.ctimeout/1000)) < ctime && rdr->client->pending < 5 &&  
+		else if ((cl->login+(int)(2*cfg.ctimeout/1000)) < ctime && cl->pending < 5 &&  
 				stat->rc == 0 && stat->ecm_count == 0) {
 			stat->rc = 5;
 			inc_fail(stat);
@@ -768,6 +774,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 
 	it = ll_iter_create(er->matching_rdr);
 	while ((rdr=ll_iter_next(&it)) && nreaders) {
+			struct s_client *cl = rdr->client;
 	
 			int32_t weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
 				
@@ -844,8 +851,8 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					current=current*2;
 				}
 				
-				if (rdr->client->pending)
-					current=current*rdr->client->pending;
+				if (cl && cl->pending)
+					current=current*cl->pending;
 					
 				if (current < 1)
 					current=1;

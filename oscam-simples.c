@@ -955,13 +955,12 @@ char *reader_get_type_desc(struct s_reader * rdr, int32_t extended __attribute__
 
 #ifdef MODULE_CCCAM
 	else if (rdr->typ == R_CCCAM) {
-		if (rdr->client) {
-			if (rdr->client && rdr->client->cc && ((struct cc_data *)rdr->client->cc)->extended_mode)
+		desc = netw_ext_prot[0];
+		struct s_client *cl = rdr->client;
+		if (cl) {
+			struct cc_data *cc = cl->cc;
+			if (cc && cc->extended_mode)
 				desc = netw_ext_prot[extended];
-			else
-				desc = netw_ext_prot[0];
-		} else {
-			desc = netw_ext_prot[0];
 		}
 	}
 #endif

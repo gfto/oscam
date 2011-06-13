@@ -1570,14 +1570,16 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 				account = cfg.account;
 				if(strcmp(account->usr, user) == 0) {
 					cfg.account = account->next;
-					free(account);
+					ll_clear(account->aureader_list);
+					add_garbage(account);
 					found = 1;
 				} else if (account->next != NULL) {
 					do {
 						if(strcmp(account->next->usr, user) == 0) {
 							account2 = account->next;
 							account->next = account2->next;
-							free(account2);
+							ll_clear(account2->aureader_list);
+							add_garbage(account2);
 							found = 1;
 							break;
 						}
@@ -2160,7 +2162,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, int
 
 				// no AU reader == 0 / AU ok == 1 / Last EMM > aulow == -1
 				if(cl->typ == 'c' || cl->typ == 'p' || cl->typ == 'r'){
-					if ((cl->typ == 'c' && !cl->aureader_list) || ((cl->typ == 'p' || cl->typ == 'r') && cl->reader->audisabled)) cau = 0;
+					if ((cl->typ == 'c' && ll_count(cl->aureader_list) == 0) || ((cl->typ == 'p' || cl->typ == 'r') && cl->reader->audisabled)) cau = 0;
 					else if ((now-cl->lastemm)/60 > cfg.mon_aulow) cau = -1;
 					else cau = 1;
 

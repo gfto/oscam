@@ -22,25 +22,25 @@ extern void module_dvbapi(struct s_module *);
 /* ===========================
  *       card support
  * =========================== */
-void reader_nagra();
-void reader_irdeto();
-void reader_cryptoworks();
-void reader_viaccess();
-void reader_conax();
-void reader_seca();
-void reader_videoguard1();
-void reader_videoguard2();
-void reader_videoguard12();
-void reader_dre();
-void reader_tongfang();
+extern void reader_nagra(struct s_cardsystem *);
+extern void reader_irdeto(struct s_cardsystem *);
+extern void reader_cryptoworks(struct s_cardsystem *);
+extern void reader_viaccess(struct s_cardsystem *);
+extern void reader_conax(struct s_cardsystem *);
+extern void reader_seca(struct s_cardsystem *);
+extern void reader_videoguard1(struct s_cardsystem *);
+extern void reader_videoguard2(struct s_cardsystem *);
+extern void reader_videoguard12(struct s_cardsystem *);
+extern void reader_dre(struct s_cardsystem *);
+extern void reader_tongfang(struct s_cardsystem *);
 
 /* ===========================
  *         cardreaders
  * =========================== */
-void cardreader_mouse(struct s_cardreader *crdr);
-void cardreader_smargo(struct s_cardreader *crdr);
+extern void cardreader_mouse(struct s_cardreader *crdr);
+extern void cardreader_smargo(struct s_cardreader *crdr);
 #ifdef WITH_STAPI
-void cardreader_stapi(struct s_cardreader *crdr);
+extern void cardreader_stapi(struct s_cardreader *crdr);
 #endif
 #ifdef HAVE_PCSC
 extern void pcsc_close(struct s_reader *pcsc_reader);
@@ -179,8 +179,8 @@ extern void chk_reader(char *token, char *value, struct s_reader *rdr);
 
 #ifdef HAVE_DVBAPI
 extern void chk_t_dvbapi(char *token, char *value);
-void dvbapi_chk_caidtab(char *caidasc, char type);
-void dvbapi_read_priority();
+extern void dvbapi_chk_caidtab(char *caidasc, char type);
+extern void dvbapi_read_priority(void);
 #endif
 
 #ifdef WEBIF
@@ -408,6 +408,6 @@ extern int32_t reader_checkhealth(struct s_reader * reader);
 extern void reader_post_process(struct s_reader * reader);
 extern int32_t reader_ecm(struct s_reader * reader, ECM_REQUEST *);
 extern int32_t reader_emm(struct s_reader * reader, EMM_PACKET *);
-int32_t reader_get_emm_type(EMM_PACKET *ep, struct s_reader * reader);
-struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid);
+extern int32_t reader_get_emm_type(EMM_PACKET *ep, struct s_reader * reader);
+extern struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid);
 extern void reader_device_close(struct s_reader * reader);

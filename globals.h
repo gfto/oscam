@@ -1,4 +1,4 @@
-#define _GNU_SOURCE //prevents "implicit" warning for asprintf
+#define _GNU_SOURCE //needed for PTHREAD_MUTEX_RECURSIVE on some plattforms and maybe other things; do not remove
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -1345,7 +1345,7 @@ extern struct s_cardsystem cardsystem[CS_MAX_MOD];
 extern struct s_cardreader cardreader[CS_MAX_MOD];
 extern pthread_mutex_t gethostbyname_lock;
 
-pid_t server_pid; // PID of server - set while startup
+extern pid_t server_pid; // PID of server - set while startup
 
 #ifdef CS_ANTICASC
 extern FILE *fpa;

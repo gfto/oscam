@@ -106,10 +106,6 @@ struct read_thread_param
 #define PROCDIR	"/proc/stpti4_core/"
 #define PTINUM 10
 #define SLOTNUM 20
-
-pthread_mutex_t filter_lock;
-
-struct STDEVICE dev_list[PTINUM];
 #endif
 
 typedef struct demux_s

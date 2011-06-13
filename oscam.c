@@ -36,6 +36,7 @@ int8_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)rest
 #endif
 int8_t cs_capture_SEGV=0;
 char  cs_tmpdir[200]={0x00};
+pid_t server_pid=0;
 pthread_mutex_t gethostbyname_lock;
 pthread_mutex_t get_cw_lock;
 pthread_mutex_t system_lock;
@@ -525,7 +526,7 @@ void cleanup_thread(void *var)
 	    cs_statistics(cl);
 	  }
 
-		if(cl->pfd)		nullclose(&cl->pfd); //Closing Network socket
+		if(cl->pfd)	nullclose(&cl->pfd); //Closing Network socket
 
 		if(cl->typ == 'r' && cl->reader){
 			// Maybe we also need a "nullclose" mechanism here...
@@ -1759,10 +1760,13 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	client->cwlastresptime = 1000 * (tpe.time-er->tps.time) + tpe.millitm-er->tps.millitm;
 	cs_add_lastresponsetime(client, client->cwlastresptime); // add to ringbuffer
 
-	if (er_reader && er_reader->client){
-		er_reader->client->cwlastresptime = client->cwlastresptime;
-		cs_add_lastresponsetime(er_reader->client, client->cwlastresptime);
-		er_reader->client->last_srvidptr=client->last_srvidptr;
+	if (er_reader){
+		struct s_client *er_cl = er_reader->client;
+		if(er_cl){
+			er_cl->cwlastresptime = client->cwlastresptime;
+			cs_add_lastresponsetime(er_cl, client->cwlastresptime);
+			er_cl->last_srvidptr=client->last_srvidptr;
+		}
 	}
 
 #ifdef CS_LED
@@ -2963,6 +2967,7 @@ void * client_check(void) {
 				int i;
 				for (i=0;i<pfdcount;i++) {
 					if (cl->pfd && pfd[i].fd == cl->pfd && (pfd[i].revents & POLLHUP)) {
+						cl->kill=1;
 						add_job(cl, ACTION_CLIENT_KILL, NULL, 0);
 						continue;
 					}
@@ -3016,6 +3021,7 @@ void * reader_check(void) {
 				for (i=0;i<pfdcount;i++) {
 					if (rdr->client->pfd && pfd[i].fd == rdr->client->pfd && (pfd[i].revents & POLLHUP)) {
 						rdr->client->init_done=0;
+						nullclose(&rdr->client->pfd);
 					}
 					// message from remote
 					if (rdr->client->pfd && pfd[i].fd == rdr->client->pfd && (pfd[i].revents & (POLLIN | POLLPRI))) {
@@ -3090,7 +3096,7 @@ int32_t accept_connection(int32_t i, int32_t j) {
 			cl->port=ntohs(cad.sin_port);
 			cl->typ='c';
 			
-			 add_job(cl, ACTION_CLIENT_INIT, NULL, 0);
+			add_job(cl, ACTION_CLIENT_INIT, NULL, 0);
 		}
 	}
 	return 0;

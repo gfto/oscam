@@ -25,7 +25,11 @@ int32_t ca_fd[8];
 struct s_dvbapi_priority *dvbapi_priority=NULL;
 struct s_client *dvbapi_client=NULL;
 
+#ifdef WITH_STAPI
 int32_t stapi_on	= 0;
+pthread_mutex_t filter_lock;
+struct STDEVICE dev_list[PTINUM];
+#endif
 
 int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uchar *filt, uchar *mask, int32_t timeout, int32_t pidindex, int32_t count, int32_t type) {
 #ifdef AZBOX
@@ -102,17 +106,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uchar *fi
 	return ret;
 }
 
-int32_t dvbapi_check_array(uint16_t *array, int32_t len, uint16_t match) {
-	int32_t i;
-	for (i=0; i<len; i++) {
-		if (array[i]==match) {
-			return i;
-		}
-	}
-	return -1;
-}
-
-int32_t dvbapi_detect_api() {
+static int32_t dvbapi_detect_api() {
 #ifdef COOL
 	selected_api=COOLAPI;
 	selected_box = 5;
@@ -181,7 +175,7 @@ int32_t dvbapi_detect_api() {
 	return 1;
 }
 
-int32_t dvbapi_read_device(int32_t dmx_fd, unsigned char *buf, int32_t length) 
+static int32_t dvbapi_read_device(int32_t dmx_fd, unsigned char *buf, int32_t length) 
 {
 	int32_t len, rc;
 	struct pollfd pfd[1];
@@ -1279,14 +1273,16 @@ void event_handler(int32_t signal) {
 	if (dvbapi_client != cur_client()) return;
 
 	signal=signal; //avoid compiler warnings
-	cs_lock(&event_handler_lock);
+
+	if (pthread_mutex_trylock(&event_handler_lock) == EBUSY)
+		return;
 
 	int32_t standby_fd = open(STANDBY_FILE, O_RDONLY);
 	pausecam = (standby_fd > 0) ? 1 : 0;
 	if (standby_fd) close(standby_fd);
 
 	if (cfg.dvbapi_boxtype==BOXTYPE_IPBOX || cfg.dvbapi_pmtmode == 1) {
-		cs_unlock(&event_handler_lock);
+		pthread_mutex_unlock(&event_handler_lock);
 		return;
 	}
 
@@ -1315,14 +1311,14 @@ void event_handler(int32_t signal) {
 	}
 
 	if (disable_pmt_files) {
-	   	cs_unlock(&event_handler_lock);
+	   	pthread_mutex_unlock(&event_handler_lock);
 		return;
 	}
 
 	dirp = opendir(TMPDIR);
 	if (!dirp) {
 		cs_log("opendir failed (errno=%d %s)", errno, strerror(errno));
-		cs_unlock(&event_handler_lock);
+		pthread_mutex_unlock(&event_handler_lock);
 		return;
 	}
 
@@ -1377,7 +1373,7 @@ void event_handler(int32_t signal) {
 		for(j2=0,j1=0;j2<len;j2+=2,j1++) {
 			if (sscanf((char*)mbuf+j2, "%02X", dest+j1) != 1) {
 				cs_log("error parsing QboxHD pmt.tmp, data not valid in position %d",j2);
-				cs_unlock(&event_handler_lock);
+				pthread_mutex_unlock(&event_handler_lock);
 				return;
 			}
 		}
@@ -1413,7 +1409,7 @@ void event_handler(int32_t signal) {
 		}
 	}
 	closedir(dirp);
-	cs_unlock(&event_handler_lock);
+	pthread_mutex_unlock(&event_handler_lock);
 }
 
 void *dvbapi_event_thread(void *cli) {
@@ -1607,10 +1603,8 @@ static void * dvbapi_main_local(void *cli) {
 	struct s_client * client = (struct s_client *) cli;
 	client->thread=pthread_self();
 	pthread_setspecific(getclient, cli);
-#ifndef NO_PTHREAD_CLEANUP_PUSH
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	pthread_cleanup_push(cleanup_thread, (void *) client);
-#endif
 
 	dvbapi_client=cli;
 
@@ -1652,17 +1646,14 @@ static void * dvbapi_main_local(void *cli) {
 		}
 	}
 
+	pthread_mutex_init(&event_handler_lock, NULL);
+
 	if (cfg.dvbapi_pmtmode != 4 && cfg.dvbapi_pmtmode != 5) {
 		struct sigaction signal_action;
 		signal_action.sa_handler = event_handler;
 		sigemptyset(&signal_action.sa_mask);
 		signal_action.sa_flags = SA_RESTART;
 		sigaction(SIGRTMIN + 1, &signal_action, NULL);
-
-		pthread_mutexattr_t attr;
-		pthread_mutexattr_init(&attr);
-		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-		pthread_mutex_init(&event_handler_lock, &attr);
 
 		dir_fd = open(TMPDIR, O_RDONLY);
 		if (dir_fd >= 0) {
@@ -1775,11 +1766,7 @@ static void * dvbapi_main_local(void *cli) {
 			}
 		}
 	}
-#ifndef NO_PTHREAD_CLEANUP_PUSH
 	pthread_cleanup_pop(1);
-#else
-	cs_exit(0);
-#endif
 	return NULL;
 }
 
@@ -1961,7 +1948,9 @@ static void * dvbapi_handler(struct s_client * cl, uchar *mbuf, int len) {
 static void stapi_off() {
 	int32_t i;
 
-	cs_lock(&filter_lock);
+	pthread_mutex_lock(&filter_lock);
+
+	cs_log("stapi shutdown");
 
 	disable_pmt_files=1;
 	stapi_on=0;
@@ -1978,7 +1967,7 @@ static void stapi_off() {
 		}
 	}
 
-	cs_unlock(&filter_lock);
+	pthread_mutex_unlock(&filter_lock);
 	sleep(2);
 	return;
 }
@@ -2270,6 +2259,7 @@ static void *stapi_read_thread(void *sparam) {
 			case 0: // NO_ERROR:
 				break;
 			case 852042: // ERROR_SIGNAL_ABORTED
+				cs_log("Caught abort signal");
 				pthread_exit(NULL);
 				break;
 			case 11: // ERROR_TIMEOUT:
@@ -2310,7 +2300,7 @@ static void *stapi_read_thread(void *sparam) {
 		if (DataSize<=0)
 			continue;
 
-		cs_lock(&filter_lock);
+		pthread_mutex_lock(&filter_lock); // don't use cs_lock() here; multiple threads using same s_client struct
 		for(k=0;k<NumFilterMatches;k++) {
 			for (i=0;i<MAX_DEMUX;i++) {
 				for (j=0;j<MAX_FILTER;j++) {
@@ -2323,7 +2313,7 @@ static void *stapi_read_thread(void *sparam) {
 				}	
 			}
 		}
-		cs_unlock(&filter_lock);	
+		pthread_mutex_unlock(&filter_lock);
 	}
 	pthread_cleanup_pop(0);
 }
@@ -2580,10 +2570,8 @@ void * azbox_main(void *cli) {
 	client->thread=pthread_self();
 	pthread_setspecific(getclient, cli);
 	dvbapi_client=cli;
-	#ifndef NO_PTHREAD_CLEANUP_PUSH
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	pthread_cleanup_push(cleanup_thread, (void *) client);
-	#endif
 
 	struct s_auth *account;
 	int32_t ok=0;
@@ -2692,11 +2680,7 @@ void * azbox_main(void *cli) {
 		}
 	}
 	cs_log("openxcas: invalid message");
-	#ifndef NO_PTHREAD_CLEANUP_PUSH
 	pthread_cleanup_pop(1);
-	#else
-	cs_exit(0);
-	#endif
 	return NULL;
 }
 

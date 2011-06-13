@@ -1764,20 +1764,21 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		// set default values for usage during runtime from Webif
 		account->autoau = 0;
 
-		// exit if invalid or no value
-		if ((strlen(value) == 0) || (value[0] == '0'))
-			return;
-
-		struct s_reader *rdr;
-		char *pch;
 		if (!account->aureader_list)
 			account->aureader_list = ll_create();
 
 		if(value && value[0] == '1') {
 			account->autoau = 1;
 		}
-		LL_ITER itr = ll_iter_create(configured_readers);
 		ll_clear(account->aureader_list);
+		
+		// exit if invalid or no value
+		if ((strlen(value) == 0) || (value[0] == '0'))
+			return;
+			
+		LL_ITER itr = ll_iter_create(configured_readers);		
+		struct s_reader *rdr;
+		char *pch;
 
 		for (pch = strtok_r(value, ",", &saveptr1); pch != NULL; pch = strtok_r(NULL, ",", &saveptr1)) {
 			ll_iter_reset(&itr);
@@ -3830,11 +3831,13 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
 
 	if ((!strcmp(token, "atr"))) {
-		memset(rdr->atr, 0, 128);
+		memset(rdr->atr, 0, sizeof(rdr->atr));
 		rdr->atrlen = strlen(value);
 		if(rdr->atrlen == 0) {
 			return;
 		} else {
+			if(rdr->atrlen > (int32_t)sizeof(rdr->atr) * 2)
+				rdr->atrlen = (int32_t)sizeof(rdr->atr) * 2;
 			key_atob_l(value, rdr->atr, rdr->atrlen);
 			return;
 		}
@@ -4982,7 +4985,7 @@ char *mk_t_service( uint64_t sidtabok, uint64_t sidtabno){
 	char *dot;
 	char *value;
 	struct s_sidtab *sidtab = cfg.sidtab;
-	if(!sidtab || !cs_malloc(&value, 1024, -1)) return "";
+	if(!sidtab || (!sidtabok && !sidtabno) || !cs_malloc(&value, 1024, -1)) return "";
 	value[0] = '\0';
 
 	for (i=pos=0,dot=""; sidtab; sidtab=sidtab->next,i++){

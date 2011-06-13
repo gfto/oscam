@@ -2126,13 +2126,16 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 									cs_debug_mask(D_TRACE, "%s origin reader not found!", getprefix());
 								else {
 									cs_debug_mask(D_TRACE, "%s forward card: share %d origin reader %s origin id %d", getprefix(), card->id, ordr->label, card->origin_id);
-									if (card->origin_id && ordr && ordr->client && ordr->client->cc) { //only if we have a origin from a cccam reader
+									struct s_client *cl = ordr->client;
+									if (card->origin_id && cl && cl->cc) { //only if we have a origin from a cccam reader
 										struct cc_data *rcc = ordr->client->cc;
 										
-										itr = ll_iter_create(rcc->cards);
-										while ((rcard=ll_iter_next(&itr))) {
-												if (rcard->id == card->origin_id) //found it!
-														break;
+										if(rcc){
+											itr = ll_iter_create(rcc->cards);
+											while ((rcard=ll_iter_next(&itr))) {
+													if (rcard->id == card->origin_id) //found it!
+															break;
+											}
 										}
 									}
 									else
@@ -2607,6 +2610,8 @@ void cc_init_cc(struct cc_data *cc) {
 int32_t cc_srv_wakeup_readers(struct s_client *cl) {
 	int32_t wakeup = 0;
 	struct s_reader *rdr;
+	struct s_client *client;
+	struct cc_data *cc;
 	for (rdr = first_active_reader; rdr; rdr = rdr->next) {
 		if (rdr->typ != R_CCCAM)
 			continue;
@@ -2615,6 +2620,10 @@ int32_t cc_srv_wakeup_readers(struct s_client *cl) {
 		if (!(rdr->grp & cl->grp))
 			continue;
 		if (rdr->cc_keepalive) //if reader has keepalive but is NOT connected, reader can't connect. so don't ask him
+			continue;
+		if((client = rdr->client) == NULL || (cc = client->cc) == NULL || cc->mode == CCCAM_MODE_SHUTDOWN)	//reader is in shutdown
+			continue;
+		if(is_connect_blocked(rdr))	//reader cannot be waked up currently because its blocked
 			continue;
 		
 		//This wakeups the reader:
@@ -2905,7 +2914,7 @@ int32_t cc_cli_connect(struct s_client *cl) {
 	
 	if (!cl->udp_fd) {
 		cc_cli_init_int(cl); 
-		return -1; // cc_cli_init_int32_t calls cc_cli_connect, so exit here!
+		return -1; // cc_cli_init_int calls cc_cli_connect, so exit here!
 	}
 		
 	if (is_connect_blocked(rdr)) {
