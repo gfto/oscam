@@ -2935,16 +2935,121 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int len) {
 	pthread_mutex_unlock(&cl->thread_lock);
 }
 
+int32_t accept_connection(int32_t i, int32_t j);
 
 void * client_check(void) {
 	int rc, pfdcount = 0;
 	struct s_client *cl;
-	struct pollfd pfd[256];
+	struct s_reader *rdr;
+	struct pollfd pfd[1024];
+	struct s_client *cl_list[1024];
+	int i,k,j;
+
+	while (!exit_oscam) {
+		pfdcount = 0;
+
+		for (cl=first_client->next; cl ; cl=cl->next) {
+			if (cl->init_done && !cl->kill && cl->pfd && cl->typ=='c') {
+				if (cl->pfd && !cl->thread_active) {				
+					cl_list[pfdcount] = cl;
+					pfd[pfdcount].fd = cl->pfd;
+					pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
+				}
+			}
+		}
+
+		//reader
+		for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
+			if (rdr->client && rdr->client->init_done) {
+				if (rdr->client->pfd && !rdr->client->thread_active) {
+					cl_list[pfdcount] = rdr->client;
+					pfd[pfdcount].fd = rdr->client->pfd;
+					pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
+				}
+			}
+		}
+
+		//server
+		for (k=0; k<CS_MAX_MOD; k++) {
+			if ( (ph[k].type & MOD_CONN_NET) && ph[k].ptab ) {
+				for (j=0; j<ph[k].ptab->nports; j++) {
+					if (ph[k].ptab->ports[j].fd) {
+						cl_list[pfdcount] = NULL;
+						pfd[pfdcount].fd = ph[k].ptab->ports[j].fd;
+						pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
+
+					}
+				}
+			}
+		}
+
+		rc = poll(pfd, pfdcount, 500);
+
+		if (rc<1)
+			continue;
+
+		for (i=0; i<pfdcount; i++) {
+			//clients
+			cl = cl_list[i];
+
+			//clients
+			// message on an open tcp connection
+			if (cl && cl->init_done && cl->pfd && (cl->typ == 'c' || cl->typ == 'm')) {
+				if (pfd[i].fd == cl->pfd && (pfd[i].revents & POLLHUP)) {
+					//client disconnects
+					cl->kill=1;
+					add_job(cl, ACTION_CLIENT_KILL, NULL, 0);
+					continue;
+				}
+				if (pfd[i].fd == cl->pfd && (pfd[i].revents & (POLLIN | POLLPRI))) {
+					add_job(cl, ACTION_CLIENT_TCP, NULL, 0);
+				}
+			}
+
+
+			//reader
+			// either an ecm answer, a keepalive or connection closed from a proxy
+			// physical reader ('r') should never send data without request
+			rdr = NULL;
+			if (cl && cl->typ == 'p')
+				rdr = cl->reader;
+
+			if (rdr && rdr->client && rdr->client->init_done) {
+				if (rdr->client->pfd && pfd[i].fd == rdr->client->pfd && (pfd[i].revents & POLLHUP)) {
+					// connection closed, just mark as not initialized but don't kill proxy
+					rdr->client->init_done=0;
+				}
+				if (rdr->client->pfd && pfd[i].fd == rdr->client->pfd && (pfd[i].revents & (POLLIN | POLLPRI))) {
+					add_job(rdr->client, ACTION_READER_REMOTE, NULL, 0);
+				}
+			}
+
+
+			//server sockets
+			// new connection on a tcp listen socket or new message on udp listen socket
+			if (!cl && pfd[i].revents & (POLLIN | POLLPRI)) {
+				for (k=0; k<CS_MAX_MOD; k++) {
+					if( (ph[k].type & MOD_CONN_NET) && ph[k].ptab ) {
+						for ( j=0; j<ph[k].ptab->nports; j++ ) {
+							if ( ph[k].ptab->ports[j].fd && pfd[i].fd == ph[k].ptab->ports[j].fd ) {
+								accept_connection(k,j);
+							}
+						}
+					}
+				} // if (ph[i].type & MOD_CONN_NET)
+			}
+		}
+		first_client->last=time((time_t *)0);
+	}
+	return NULL;
+}
+
+void * reader_check(void) {
+	struct s_reader *rdr;
+	struct s_client *cl;
 
 	while (1) {
-
-		
-		pfdcount = 0;
+		//check clients for exceeding cmaxidle by checking cl->last
 		for (cl=first_client->next; cl ; cl=cl->next) {
 			if (cl->init_done && !cl->kill && cl->pfd && cl->typ=='c') {
 				if (cl->last && cfg.cmaxidle && (time(0) - cl->last) > (time_t)cfg.cmaxidle) {
@@ -2952,86 +3057,37 @@ void * client_check(void) {
 					add_job(cl, ACTION_CLIENT_KILL, NULL, 0);
 					continue;
 				}
-
-				if (cl->pfd && !cl->thread_active) {
-					pfd[pfdcount].fd = cl->pfd;
-					pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
-				}
 			}
 		}
-
-		rc = poll(pfd, pfdcount, 250);
-
-		for (cl=first_client->next; cl ; cl=cl->next) {
-			if (cl->init_done && cl->pfd && cl->typ=='c') {
-				int i;
-				for (i=0;i<pfdcount;i++) {
-					if (cl->pfd && pfd[i].fd == cl->pfd && (pfd[i].revents & POLLHUP)) {
-						cl->kill=1;
-						add_job(cl, ACTION_CLIENT_KILL, NULL, 0);
-						continue;
-					}
-					if (cl->pfd && pfd[i].fd == cl->pfd && (pfd[i].revents & (POLLIN | POLLPRI))) {
-						add_job(cl, ACTION_CLIENT_TCP, NULL, 0);
-					}
-				}
-			}
-		}
-	}
-}
-
-void * reader_check(void) {
-	int rc, pfdcount = 0;
-	struct s_reader *rdr;
-	struct pollfd pfd[256];
-
-	while (1) {
-		pfdcount = 0;
-		for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
-			if (rdr->client && rdr->client->init_done) {
-				if (rdr->client->pfd && !rdr->client->thread_active) {
-					pfd[pfdcount].fd = rdr->client->pfd;
-					pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
-				}
-			}
-		}
-
-		rc = poll(pfd, pfdcount, 250);
 
 		for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 #ifdef WITH_CARDREADER
-			if (rdr->handle && !(rdr->typ & R_IS_CASCADING)) reader_checkhealth(rdr);
+			//check for card inserted or card removed on pysical reader
+			if (rdr->handle > 0 && !(rdr->typ & R_IS_CASCADING))
+				reader_checkhealth(rdr);
 #endif
-			if (rdr->client && rdr->client->init_done) {
-				// reader do idle
-				int tcp_toflag=(rdr->client->pfd && (rdr->ph.type==MOD_CONN_TCP) && rdr->tcp_ito && rdr->tcp_connected);
 
-				if (tcp_toflag && rdr->typ & R_IS_CASCADING) {
-					time_t now;
-					int32_t time_diff;
-					time(&now);
-					time_diff = abs(now - rdr->last_s);
+			//execute reader do idle on proxy reader after a certain time (rdr->tcp_ito = inactivitytimeout)
+			//disconnect when no keepalive available
+			int tcp_toflag=(rdr->client && rdr->client->pfd && (rdr->ph.type==MOD_CONN_TCP) && rdr->tcp_ito && rdr->tcp_connected);
 
-					if (time_diff>(rdr->tcp_ito*60)) {
-						add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
-					}
-				}
+			if (tcp_toflag && rdr->typ & R_IS_CASCADING) {
+				time_t now;
+				int32_t time_diff;
+				time(&now);
+				time_diff = abs(now - rdr->last_s);
 
-				int i;
-				for (i=0;i<pfdcount;i++) {
-					if (rdr->client->pfd && pfd[i].fd == rdr->client->pfd && (pfd[i].revents & POLLHUP)) {
-						rdr->client->init_done=0;
-						nullclose(&rdr->client->pfd);
-					}
-					// message from remote
-					if (rdr->client->pfd && pfd[i].fd == rdr->client->pfd && (pfd[i].revents & (POLLIN | POLLPRI))) {
-						add_job(rdr->client, ACTION_READER_REMOTE, NULL, 0);
-					}
+				if (time_diff>(rdr->tcp_ito*60)) {
+					add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
 				}
 			}
+
+			//check for pending ecm requests (on reader ecmtask) and answer with timeout after ctimeout
 			if (rdr->client && rdr->client->ecmtask && !rdr->client->thread_active)
 				chk_pending(rdr, cfg.cmaxidle);
+
 		}
+		cs_sleepms(1000);
 	}
 }
 
@@ -3416,44 +3472,8 @@ if (pthread_key_create(&getclient, NULL)) {
 				ph[i].s_handler(cl, NULL, 0);
 			}
 
-	start_thread((void *) &client_check, "client check"); 
-
-	while (!exit_oscam) {
-		fd_set fds;
-
-		do {
-		        //timeout value for checking exit_oscam:
-                        struct timeval timeout;
-                        timeout.tv_sec = 1;
-                        timeout.tv_usec = 0;
-
-                        //Wait for incoming data
-			FD_ZERO(&fds);
-			//FD_SET(mfdr, &fds);
-			for (i=0; i<CS_MAX_MOD; i++)
-				if ( (ph[i].type & MOD_CONN_NET) && ph[i].ptab )
-					for (j=0; j<ph[i].ptab->nports; j++)
-						if (ph[i].ptab->ports[j].fd)
-							FD_SET(ph[i].ptab->ports[j].fd, &fds);
-			errno=0;
-			select(1024, &fds, 0, 0, &timeout);
-		} while (errno==EINTR && !exit_oscam); //if timeout accurs and exit_oscam is set, we break the loop
-
-		if (exit_oscam)
-		        break;
-
-		first_client->last=time((time_t *)0);
-
-		for (i=0; i<CS_MAX_MOD; i++) {
-			if( (ph[i].type & MOD_CONN_NET) && ph[i].ptab ) {
-				for( j=0; j<ph[i].ptab->nports; j++ ) {
-					if( ph[i].ptab->ports[j].fd && FD_ISSET(ph[i].ptab->ports[j].fd, &fds) ) {
-						accept_connection(i,j);
-					}
-				}
-			} // if (ph[i].type & MOD_CONN_NET)
-		}
-	}
+	// main loop function
+	client_check();
 
 #if defined(AZBOX) && defined(HAVE_DVBAPI)
   if (openxcas_close() < 0) {

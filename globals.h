@@ -109,7 +109,7 @@
  * =========================== */
 #ifndef CS_GLOBALS
 #define CS_GLOBALS
-#define CS_VERSION    "1.00-unstable_svn"
+#define CS_VERSION    "1.00-dynamic_svn"
 #ifndef CS_SVN_VERSION
 #	define CS_SVN_VERSION "test"
 #endif
