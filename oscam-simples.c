@@ -1231,19 +1231,19 @@ uint32_t cs_getIPfromHost(const char *hostname){
 void setKeepalive(int32_t socket){
 	int32_t flag = 1;
 	// this is not only for a real keepalive but also to detect closed connections so it should not be configurable
-	if(!setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, &flag, sizeof(flag))){
+	if(setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, &flag, sizeof(flag))){
 		cs_log("Setting SO_KEEPALIVE failed, errno=%d, %s", errno, strerror(errno));
 	}
 #if defined(TCP_KEEPIDLE) && defined(TCP_KEEPCNT) && defined(TCP_KEEPINTVL)
 	flag = 30;
-	if(!setsockopt(socket, SOL_TCP, TCP_KEEPIDLE, &flag, sizeof(flag))){	// send a keepalive packet after 30 seconds of inactivity
+	if(setsockopt(socket, SOL_TCP, TCP_KEEPIDLE, &flag, sizeof(flag))){	// send a keepalive packet after 30 seconds of inactivity
 		cs_log("Setting TCP_KEEPIDLE failed, errno=%d, %s", errno, strerror(errno));
 	}
 	flag = 5;
-	if(!setsockopt(socket, SOL_TCP, TCP_KEEPCNT, &flag, sizeof(flag))){		// send up to 5 keepalive packets out, then disconnect if no response
+	if(setsockopt(socket, SOL_TCP, TCP_KEEPCNT, &flag, sizeof(flag))){		// send up to 5 keepalive packets out, then disconnect if no response
 		cs_log("Setting TCP_KEEPCNT failed, errno=%d, %s", errno, strerror(errno));
 	}
-	if(!setsockopt(socket, SOL_TCP, TCP_KEEPINTVL, &flag, sizeof(flag))){;		// send a keepalive packet out every 5 seconds (after the 30 second idle period)
+	if(setsockopt(socket, SOL_TCP, TCP_KEEPINTVL, &flag, sizeof(flag))){;		// send a keepalive packet out every 5 seconds (after the 30 second idle period)
 		cs_log("Setting TCP_KEEPINTVL failed, errno=%d, %s", errno, strerror(errno));
 	}
 #endif
