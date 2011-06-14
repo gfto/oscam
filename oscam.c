@@ -2796,23 +2796,28 @@ void * work_thread(void *ptr) {
 	int n=0, rc=0;
 	struct pollfd pfd[1];
 
-	if (data->action < 20 && !reader) {
-		free(ptr);
-		return NULL;
-	}
+	while (data) {
+		if (data->action < 20 && !reader) {
+			free(data);
+			data = NULL;
+			break;
+		}
 
-	if (cl->kill) {
-		cs_log("client killed");
+		if (cl->kill) {
+			cs_log("client killed");
 
-		if (data->ptr)
-			free(data->ptr);
+			if (data->ptr)
+				free(data->ptr);
 
-		free(ptr);
-		cs_exit(0);
-		pthread_exit(NULL);
-	}
+			free(data);
+			data = NULL;
+			cs_exit(0);
+			pthread_exit(NULL);
+		}
 
-	if (data->action) {
+		if (!data->action)
+			break;
+	
 		switch(data->action) {
 			case ACTION_READER_IDLE:
 				reader_do_idle(reader);
@@ -2851,6 +2856,10 @@ void * work_thread(void *ptr) {
 				rc = poll(pfd, 1, 0);
 				if (rc>0) {
 					n = ph[cl->ctyp].recv(cl, mbuf, 1024);
+					if (n == -1) {
+						cl->kill=1; // kill client on next run
+						continue;
+					}
 					ph[cl->ctyp].s_handler(cl, mbuf, n);
 				}
 				break;
@@ -2863,29 +2872,29 @@ void * work_thread(void *ptr) {
 				cl->init_done=1;
 				break;
 		}
-	}
 
-	if (data->ptr)
-		free(data->ptr);
+		if (data->ptr)
+			free(data->ptr);
 
-	free(ptr);
+		free(data);
+		data = NULL;
 
-	pthread_mutex_lock(&cl->thread_lock);
+		pthread_mutex_lock(&cl->thread_lock);
 
-	if (cl->joblist) {
-		if (ll_count(cl->joblist)>0) {
+		if (cl->joblist && ll_count(cl->joblist)>0) {
 			cs_debug_mask(D_TRACE, "start next job");
 			LL_ITER itr = ll_iter_create(cl->joblist);
-			struct s_data *newdata = ll_iter_next(&itr);
+			data = ll_iter_next(&itr);
 			ll_iter_remove(&itr);
 			pthread_mutex_unlock(&cl->thread_lock);
-			work_thread(newdata);
-			return NULL;
+			continue;
 		}
-	}
 
-	cl->thread_active=0;
-	pthread_mutex_unlock(&cl->thread_lock);
+		cl->thread_active=0;
+		pthread_mutex_unlock(&cl->thread_lock);
+
+		break;
+	}
 
 	cs_debug_mask(D_TRACE, "ending thread");
 
