@@ -761,31 +761,6 @@ int32_t safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, in
 	return(0);
 }
 
-/* Replacement of fprintf which adds necessary whitespace to fill up the varname to a fixed width.
-   If varname is longer than varnameWidth, no whitespace is added*/
-void fprintf_conf(FILE *f, int32_t varnameWidth, const char *varname, const char *fmtstring, ...){
-	int32_t varlen = strlen(varname);
-	int32_t max = (varlen > varnameWidth) ? varlen : varnameWidth;
-	char varnamebuf[max + 3];
-	char *ptr = varnamebuf + varlen;
-	va_list argptr;
-
-	cs_strncpy(varnamebuf, varname, sizeof(varnamebuf));
-	while(varlen < varnameWidth){
-		ptr[0] = ' ';
-		++ptr;
-		++varlen;
-	}
-	cs_strncpy(ptr, "= ", sizeof(varnamebuf)-(ptr-varnamebuf));
-	if (fwrite(varnamebuf, sizeof(char), strlen(varnamebuf), f)){
-		if(strlen(fmtstring) > 0){
-			va_start(argptr, fmtstring);
-			vfprintf(f, fmtstring, argptr);
-			va_end(argptr);
-		}
-	}
-}
-
 /* Ordinary strncpy does not terminate the string if the source is exactly as long or longer as the specified size. This can raise security issues.
    This function is a replacement which makes sure that a \0 is always added. num should be the real size of char array (do not subtract -1). */
 void cs_strncpy(char * destination, const char * source, size_t num){
@@ -895,12 +870,6 @@ char *get_provider(int32_t caid, uint32_t provid, char *buf){
 	if (!buf[0]) snprintf(buf, 83, "%04X:%06X unknown", caid, provid);
 	if (!caid) buf[0] = '\0';
 	return(buf);
-}
-
-void make_non_blocking(int32_t fd) {
-    int32_t fl;
-    fl=fcntl(fd, F_GETFL);
-    fcntl(fd, F_SETFL, fl | O_NONBLOCK | O_NDELAY);
 }
 
 uint32_t seed;
@@ -1129,19 +1098,22 @@ int32_t cs_lock(pthread_mutex_t *mutex){
 	struct s_client *cl = cs_preparelock(cur_client(), mutex, file, line);
 	while((result = pthread_mutex_trylock(mutex)) == EBUSY && i < 1000){
 		pthread_testcancel();
-		cs_sleepms(5);
+		cs_sleepms(fast_rnd()%20);
 		++i;
 	}
 	if(result == 0 && cl)
 		cl->mutexstore_used++;
-	else if(result == EBUSY){
+	else if(result == EBUSY)
 		cs_log("Couldn't obtain lock within 5s in: %s, line %u.", file, line);
 #else
 	struct s_client *cl = cs_preparelock(cur_client(), mutex);
-	if((result = pthread_mutex_lock(mutex)) == 0 && cl){
+	while((result = pthread_mutex_trylock(mutex)) == EBUSY){
+		pthread_testcancel();
+		cs_sleepms(fast_rnd()%5);
+	}
+	if(result == 0 && cl)
 		cl->mutexstore_used++;
 #endif
-	}
 	pthread_setcanceltype(oldtype, NULL);
 	pthread_testcancel();
 	return result;
@@ -1254,4 +1226,25 @@ uint32_t cs_getIPfromHost(const char *hostname){
 		if (res) freeaddrinfo(res);
 	}
 	return result;
+}
+
+void setKeepalive(int32_t socket){
+	int32_t flag = 1;
+	// this is not only for a real keepalive but also to detect closed connections so it should not be configurable
+	if(!setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, &flag, sizeof(flag))){
+		cs_log("Setting SO_KEEPALIVE failed, errno=%d, %s", strerror(errno));
+	}
+#if defined(TCP_KEEPIDLE) && defined(TCP_KEEPCNT) && defined(TCP_KEEPINTVL)
+	flag = 30;
+	if(!setsockopt(socket, SOL_TCP, TCP_KEEPIDLE, &flag, sizeof(flag))){	// send a keepalive packet after 30 seconds of inactivity
+		cs_log("Setting TCP_KEEPIDLE failed, errno=%d, %s", strerror(errno));
+	}
+	flag = 5;
+	if(!setsockopt(socket, SOL_TCP, TCP_KEEPCNT, &flag, sizeof(flag))){		// send up to 5 keepalive packets out, then disconnect if no response
+		cs_log("Setting TCP_KEEPCNT failed, errno=%d, %s", strerror(errno));
+	}
+	if(!setsockopt(socket, SOL_TCP, TCP_KEEPINTVL, &flag, sizeof(flag))){;		// send a keepalive packet out every 5 seconds (after the 30 second idle period)
+		cs_log("Setting TCP_KEEPINTVL failed, errno=%d, %s", strerror(errno));
+	}
+#endif
 }

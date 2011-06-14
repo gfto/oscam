@@ -73,8 +73,8 @@ extern struct s_client * create_client(in_addr_t);
 extern int32_t cs_auth_client(struct s_client *, struct s_auth *, const char*);
 extern void cs_disconnect_client(struct s_client *);
 extern int32_t check_cwcache2(ECM_REQUEST *, uint64_t grp);
-extern int32_t write_to_pipe(int32_t, int32_t, uchar *, int32_t);
-extern int32_t read_from_pipe(int32_t, uchar **);
+extern int32_t write_to_pipe(struct s_client *, int32_t, uchar *, int32_t);
+extern int32_t read_from_pipe(struct s_client *, uchar **);
 extern int32_t write_ecm_answer(struct s_reader *, ECM_REQUEST *);
 extern uint32_t chk_provid(uchar *, uint16_t);
 extern void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto);
@@ -103,7 +103,6 @@ extern int32_t process_client_pipe(struct s_client *cl, uchar *buf, int32_t l);
 extern void update_reader_config(uchar *ptr);
 extern int32_t chk_ctab(uint16_t caid, CAIDTAB *ctab);
 extern int32_t chk_srvid_by_caid_prov(struct s_client *, uint16_t caid, uint32_t provid);
-extern void nullclose(int32_t *fd);
 extern void *clientthread_init(void * init);
 extern void cleanup_thread(void *var);
 extern void kill_thread(struct s_client *cl);
@@ -149,13 +148,6 @@ extern void init_len4caid(void);
 #ifdef IRDETO_GUESSING
 extern int32_t  init_irdeto_guess_tab(void);
 #endif
-extern void chk_caidtab(char *caidasc, CAIDTAB *ctab);
-extern void chk_tuntab(char *tunasc, TUNTAB *ttab);
-extern void chk_services(char *labels, SIDTABBITS *sidok, SIDTABBITS *sidno);
-extern void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName, const char *zFiltName);
-extern void chk_cltab(char *classasc, CLASSTAB *clstab);
-extern void chk_iprange(char *value, struct s_ip **base);
-extern void chk_port_tab(char *portasc, PTAB *ptab);
 #ifdef CS_ANTICASC
 extern void chk_t_ac(char *token, char *value);
 #endif
@@ -338,16 +330,14 @@ extern int32_t file_exists(const char * filename);
 extern void clear_sip(struct s_ip **sip);
 extern void clear_ptab(struct s_ptab *ptab);
 extern void clear_ftab(struct s_ftab *ftab);
-void clear_caidtab(struct s_caidtab *ctab);
-void clear_tuntab(struct s_tuntab *ttab);
+extern void clear_caidtab(struct s_caidtab *ctab);
+extern void clear_tuntab(struct s_tuntab *ttab);
 extern int32_t file_copy(char *srcfile, char *destfile);
 extern int32_t safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, int32_t forceBakOverWrite);
-extern void fprintf_conf(FILE *f, int32_t varnameWidth, const char *varname, const char *fmtstring, ...);
 extern void cs_strncpy(char * destination, const char * source, size_t num);
 extern char *get_servicename(struct s_client *cl, int32_t srvid, int32_t caid, char *buf);
 extern char *get_tiername(int32_t tierid, int32_t caid, char *buf);
 extern char *get_provider(int32_t caid, uint32_t provid, char *buf);
-extern void make_non_blocking(int32_t fd);
 extern uchar fast_rnd(void);
 extern void init_rnd(void);
 extern int32_t hexserialset(struct s_reader *rdr);
@@ -373,6 +363,7 @@ extern int32_t cs_unlock(pthread_mutex_t *mutex);
 #endif
 extern void cs_cleanlocks();
 extern uint32_t cs_getIPfromHost(const char *hostname);
+extern void setKeepalive(int32_t socket);
 
 /* ===========================
  *       module-cccshare

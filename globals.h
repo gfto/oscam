@@ -259,12 +259,10 @@ extern char *RDR_CD_TXT[];
 #define PIP_ID_ECM    0
 #define PIP_ID_EMM    1
 #define PIP_ID_CIN    2  // CARD_INFO
-#define PIP_ID_KCL    3  // Schlocke: Kill all Clients (no param)
-#define PIP_ID_UDP    4
+#define PIP_ID_UDP    3
 #define PIP_ID_MAX    PIP_ID_UDP
 #define PIP_ID_ERR    (-1)
-#define PIP_ID_DIR    (-2)
-#define PIP_ID_NUL    (-3)
+#define PIP_ID_NUL    (-2)
 
 #define cdiff *c_start
 
@@ -640,6 +638,8 @@ struct s_client
   int32_t		udp_fd;
   int32_t		fd_m2c; //master writes to this fd
   int32_t		fd_m2c_c; //client reads from this fd
+  uint16_t	pipecnt;
+  pthread_mutex_t pipelock;
   struct	sockaddr_in udp_sa;
   int32_t		log;
   int32_t		logcounter;

@@ -140,7 +140,7 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 			// cs_log("DO >>>> copy-back");
 			memcpy(bbuf, buf+bsize, bpos=n-bsize);
 			n=bsize;
-			write_to_pipe(client->fd_m2c, PIP_ID_UDP, (uchar*)&nbuf, sizeof(nbuf));
+			write_to_pipe(client, PIP_ID_UDP, (uchar*)&nbuf, sizeof(nbuf));
 		}
 		else if (n<bsize)
 		{
@@ -166,7 +166,7 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 		{
 			memcpy(bbuf, p+1, bpos);
 			n=p-buf;
-			write_to_pipe(client->fd_m2c, PIP_ID_UDP, (uchar*)&nbuf, sizeof(nbuf));
+			write_to_pipe(client, PIP_ID_UDP, (uchar*)&nbuf, sizeof(nbuf));
 		}
 	}
 	buf[n]='\0';

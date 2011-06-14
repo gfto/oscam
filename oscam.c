@@ -466,44 +466,27 @@ void cs_accounts_chk()
 #endif
 }
 
-void nullclose(int32_t *fd)
-{
-	//if closing an already closed pipe, we get a sigpipe signal, and this causes a cs_exit
-	//and this causes a close and this causes a sigpipe...and so on
-	int32_t f = *fd;
-	*fd = 0; //so first null client-fd
-	close(f); //then close fd
-}
-
 static void cleanup_ecmtasks(struct s_client *cl)
 {
-        if (!cl->ecmtask)
-                return;
-
-        int32_t i, n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
-        ECM_REQUEST *ecm;
-        for (i=0; i<n; i++) {
-                ecm = &cl->ecmtask[i];
-                ll_destroy(ecm->matching_rdr); //no need to garbage this
-                ecm->matching_rdr=NULL;
-        }
-        add_garbage(cl->ecmtask);
+	if (!cl->ecmtask)
+		return;
+	
+	int32_t i, n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
+	ECM_REQUEST *ecm;
+	for (i=0; i<n; i++) {
+		ecm = &cl->ecmtask[i];
+		ll_destroy(ecm->matching_rdr); //no need to garbage this
+		ecm->matching_rdr=NULL;
+	}
+	add_garbage(cl->ecmtask);
 }
 
 void cleanup_thread(void *var)
 {
 	struct s_client *cl = var;
 	if(cl && !cl->cleaned){ //cleaned=0
-		cl->cleaned++; //cleaned=1
-		
-#ifdef MODULE_CCCAM
-		if(cl->typ == 'c'){
-			struct cc_data *cc = cl->cc;
-			if (cc) cc->mode = CCCAM_MODE_SHUTDOWN;
-		}
-#endif
-
-		//kill_thread also removes this client, so here just to get sure client is removed:
+		cl->cleaned++; //cleaned=1	
+		// Remove client from client list. kill_thread also removes this client, so here just if client exits itself...
 		struct s_client *prev, *cl2;
 		cs_lock(&clientlist_lock);
 		for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
@@ -512,25 +495,47 @@ void cleanup_thread(void *var)
 		if (cl == cl2)
 			prev->next = cl2->next; //remove client from list
 		cs_unlock(&clientlist_lock);
+		
+		// Clean reader. The cleaned structures should be only used by the reader thread, so we should be save without waiting
+		if (cl->reader){
+			remove_reader_from_active(cl->reader);
+			if(cl->reader->ph.cleanup)
+        cl->reader->ph.cleanup(cl);
+			if(cl->typ == 'r'){
+				ICC_Async_Close(cl->reader);
+			}
+			cl->reader->client = NULL;
+			cl->reader = NULL;
+		}
+		
+		cl->cleaned++; //cleaned=2, beware that kill_thread only waits until this point, so reader cleanup needs to be before!
 
-		cs_sleepms(500); //just wait a bit that really really nobody is accessing client data
-
-		if(cl->typ == 'c' && ph[cl->ctyp].cleanup)
-			ph[cl->ctyp].cleanup(cl);
-	    else if (cl->reader && cl->reader->ph.cleanup)
-	        cl->reader->ph.cleanup(cl);
-	  if(cl->typ == 'c'){
+		// Clean client specific data
+		if(cl->typ == 'c'){
+#ifdef MODULE_CCCAM
+			struct cc_data *cc = cl->cc;
+			if (cc) cc->mode = CCCAM_MODE_SHUTDOWN;
+#endif
 	    cs_statistics(cl);
 	    cl->last_caid = 0xFFFF;
 	    cl->last_srvid = 0xFFFF;
 	    cs_statistics(cl);
-	  }
+	    
+			cs_sleepms(500); //just wait a bit that really really nobody is accessing client data
 
-		if(cl->pfd) nullclose(&cl->pfd); //Closing Network socket
+			if(ph[cl->ctyp].cleanup)
+				ph[cl->ctyp].cleanup(cl);
+		}
+		
+		// Close network socket if not already cleaned by previous cleanup functions
+		if(cl->pfd)
+			close(cl->pfd); 
+			
+		// Clean pipes
 		int32_t rc, fd_m2c = cl->fd_m2c, fd_m2c_c = cl->fd_m2c_c;
 		if(fd_m2c_c){
-			cl->fd_m2c_c = 0;
 			cl->fd_m2c = 0;
+			cl->pipecnt = 50000;
 			cs_sleepms(5);		// make sure no other thread is currently writing...
 			struct pollfd pfd2[1];
 			pfd2[0].fd = fd_m2c_c;
@@ -543,23 +548,17 @@ void cleanup_thread(void *var)
 					else
 						break;
 				}
-				int32_t pipeCmd = read_from_pipe(fd_m2c_c, &ptr);
+				int32_t pipeCmd = read_from_pipe(cl, &ptr);
 				if (ptr) free(ptr);
 				if (pipeCmd==PIP_ID_ERR || pipeCmd==PIP_ID_NUL)
 					break;
 			}
+			cl->fd_m2c_c = 0;
 		}
 		if(fd_m2c) close(fd_m2c);	//Closing master write fd
 		if(fd_m2c_c) close(fd_m2c_c);	//Closing client read fd
 
-		if(cl->typ == 'r' && cl->reader){
-			// Maybe we also need a "nullclose" mechanism here...
-			ICC_Async_Close(cl->reader);
-		}
-		if (cl->reader) {
-			cl->reader->client = NULL;
-			cl->reader = NULL;
-	    }
+		// Clean all remaining structures
 		cleanup_ecmtasks(cl);
 		add_garbage(cl->emmcache);
 		add_garbage(cl->req);
@@ -567,9 +566,9 @@ void cleanup_thread(void *var)
 		add_garbage(cl->cc);
 #endif
 		add_garbage(cl->serialdata);
-		cl->cleaned++;//cleaned=2
-		add_garbage(cl);
+		pthread_mutex_destroy(&cl->pipelock);					
 		cs_cleanlocks();
+		add_garbage(cl);		
 	}
 }
 
@@ -673,7 +672,7 @@ void cs_card_info()
 	struct s_client *cl;
 	for (cl=first_client->next; cl ; cl=cl->next)
     if( cl->typ=='r' && cl->fd_m2c )
-      write_to_pipe(cl->fd_m2c, PIP_ID_CIN, dummy, 1);
+      write_to_pipe(cl, PIP_ID_CIN, dummy, 1);
       //kill(client[i].pid, SIGUSR2);
 }
 
@@ -765,25 +764,12 @@ void cs_exit(int32_t sig)
   if (!cl)
   	return;
 
-  switch(cl->typ)
-  {
-    case 'c':
-    	cs_statistics(cl);
-    	cl->last_caid = 0xFFFF;
-    	cl->last_srvid = 0xFFFF;
-    	cs_statistics(cl);
-    	break;
-
-    case 'm': break;
-    case 'r': break; //reader-cleanup now in cleanup_thread()
-
-    case 'h':
-    case 's':
+  if(cl->typ == 'h' || cl->typ == 's'){
 #ifdef CS_LED
-	cs_switch_led(LED1B, LED_OFF);
-	cs_switch_led(LED2, LED_OFF);
-	cs_switch_led(LED3, LED_OFF);
-	cs_switch_led(LED1A, LED_ON);
+		cs_switch_led(LED1B, LED_OFF);
+		cs_switch_led(LED2, LED_OFF);
+		cs_switch_led(LED3, LED_OFF);
+		cs_switch_led(LED1A, LED_ON);
 #endif
 #ifdef QBOXHD_LED
     qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_FAST);
@@ -797,14 +783,13 @@ void cs_exit(int32_t sig)
 #endif
 
 #ifndef OS_CYGWIN32
-	snprintf(targetfile, 255, "%s%s", get_tmp_dir(), "/oscam.version");
-	if (unlink(targetfile) < 0)
-		cs_log("cannot remove oscam version file %s (errno=%d %s)", targetfile, errno, strerror(errno));
+		snprintf(targetfile, 255, "%s%s", get_tmp_dir(), "/oscam.version");
+		if (unlink(targetfile) < 0)
+			cs_log("cannot remove oscam version file %s (errno=%d %s)", targetfile, errno, strerror(errno));
 #endif
 #ifdef COOL
-	coolapi_close_all();
+		coolapi_close_all();
 #endif
-	break;
   }
 
 	// this is very important - do not remove
@@ -898,16 +883,18 @@ struct s_client * create_client(in_addr_t ip) {
 	struct s_client *cl;
 
 	if(cs_malloc(&cl, sizeof(struct s_client), -1)){
+		if(pthread_mutex_init(&cl->pipelock, NULL)){
+			free(cl);
+			return NULL;
+		} else cl->pipecnt = 0;
 		int32_t fdp[2];
 		if (pipe(fdp)) {
 			cs_log("Cannot create pipe (errno=%d: %s)", errno, strerror(errno));
 			free(cl);
 			return NULL;
 		}
+		
 		//client part
-
-		//make_non_blocking(fdp[0]);
-		//make_non_blocking(fdp[1]);
 		cl->fd_m2c_c = fdp[0]; //store client read fd
 		cl->fd_m2c = fdp[1]; //store master write fd
 		cl->ip=ip;
@@ -1199,9 +1186,8 @@ static void kill_thread_int(struct s_client *cl) {
 	cs_unlock(&clientlist_lock);
 
 	pthread_cancel(thread);
-	pthread_join(thread, NULL);
 	int32_t cnt = 0;
-	while(cnt < 10 && cl && cl->cleaned < 2){
+	while(cnt < 20 && cl && cl->cleaned < 2){
 		cs_sleepms(50);
 		++cnt;
 	}
@@ -1254,17 +1240,13 @@ void add_reader_to_active(struct s_reader *rdr) {
 /* Starts or restarts a cardreader without locking. If restart=1, the existing thread is killed before restarting,
    if restart=0 the cardreader is only started. */
 static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
-
-	if (restart) {
-		//remove from list:
-		remove_reader_from_active(rdr);
-	}
-
-	if (restart) //kill old thread
-		if (rdr->client) {
+	if (restart){
+		remove_reader_from_active(rdr);		//remove from list
+		if (rdr->client) {		//kill old thread
 			kill_thread_int(rdr->client);
 			rdr->client = NULL;
 		}
+	}
 
 	rdr->tcp_connected = 0;
 	rdr->card_status = UNKNOWN;
@@ -1385,8 +1367,11 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 				if (cl->failban & BAN_DUPLICATE) {
 					cs_add_violation(cl->ip);
 				}
-				if (cfg.dropdups)
+				if (cfg.dropdups){
+					cs_unlock(&fakeuser_lock);
 					kill_thread(cl);
+					cs_lock(&fakeuser_lock);
+				}
 			}
 			else
 			{
@@ -1654,29 +1639,21 @@ static void store_cw_in_cache(ECM_REQUEST *er, uint64_t grp, int32_t rc)
 }
 
 /*
-// only for debug
-static struct s_client * get_thread_by_pipefd(int32_t fd)
-{
-	struct s_client *cl;
-	for (cl=first_client->next; cl ; cl=cl->next)
-		if (fd==cl->fd_m2c || fd==cl->fd_m2c_c)
-			return cl;
-	return first_client; //master process
-}
-*/
-
-/*
  * write_to_pipe():
  * write all kind of data to pipe specified by fd
  */
-int32_t write_to_pipe(int32_t fd, int32_t id, uchar *data, int32_t n)
+int32_t write_to_pipe(struct s_client *client, int32_t id, uchar *data, int32_t n)
 {
-	if (!fd) {
-		cs_log("write_to_pipe: fd==0 id: %d", id);
-		return -1;
-	}
+	int32_t rc = PIP_ID_ERR, fd;
+	if (id < 0 || id > PIP_ID_MAX)
+		return rc;
+	if(!client)
+		return rc;
+	fd = client->fd_m2c;
+	if (!fd)
+		return rc;
 
-	//cs_debug_mask(D_TRACE, "write to pipe %d (%s) thread: %8X to %8X", fd, PIP_ID_TXT[id], pthread_self(), get_thread_by_pipefd(fd)->thread);
+	//cs_debug_mask(D_TRACE, "write to pipe %d (%s) thread: %8X to %8X", fd, PIP_ID_TXT[id], pthread_self(), client->thread);
 
 	uchar buf[3+sizeof(void*)];
 
@@ -1688,15 +1665,21 @@ int32_t write_to_pipe(int32_t fd, int32_t id, uchar *data, int32_t n)
 	if(!cs_malloc(&d, n, -1)) return -1;
 	memcpy(d, data, n);
 
-	if ((id<0) || (id>PIP_ID_MAX))
-		return(PIP_ID_ERR);
-
 	memcpy(buf, PIP_ID_TXT[id], 3);
 	memcpy(buf+3, &d, sizeof(void*));
 
 	n=3+sizeof(void*);
 
-	return(write(fd, buf, n));
+	cs_lock(&client->pipelock);
+	if(client->pipecnt < n * 64){		
+		client->pipecnt += n;
+		rc = write(fd, buf, n);
+	} else {
+		cs_debug_mask(D_TRACE, "Pipe command dropped because of possible deadlock/pipe overflow in client %s.", username(client));
+		free(d);
+	}
+	cs_unlock(&client->pipelock);
+	return rc;
 }
 
 
@@ -1705,9 +1688,11 @@ int32_t write_to_pipe(int32_t fd, int32_t id, uchar *data, int32_t n)
  * read all kind of data from pipe specified by fd
  * special-flag redir: if set AND data is ECM: this will redirected to appr. client
  */
-int32_t read_from_pipe(int32_t fd, uchar **data)
+int32_t read_from_pipe(struct s_client *client, uchar **data)
 {
-	int32_t rc;
+	if(!client)
+		return PIP_ID_ERR;
+	int32_t n, rc, fd = client->fd_m2c_c;
 	intptr_t hdr=0;
 	uchar buf[3+sizeof(void*)];
 	memset(buf, 0, sizeof(buf));
@@ -1715,13 +1700,16 @@ int32_t read_from_pipe(int32_t fd, uchar **data)
 	*data=(uchar *)0;
 	rc=PIP_ID_NUL;
 
-
-	if (read(fd, buf, sizeof(buf))==sizeof(buf)) {
+	cs_lock(&client->pipelock);
+	n=read(fd, buf, sizeof(buf));
+	if(client->pipecnt >= n) client->pipecnt -= n;
+	cs_unlock(&client->pipelock);
+	if (n==sizeof(buf)) {
 		memcpy(&hdr, buf+3, sizeof(void*));
 	} else {
 		cs_log("WARNING: pipe header to small !");
 		return PIP_ID_ERR;
-	}
+	}	
 
 	//uchar id[4];
 	//memcpy(id, buf, 3);
@@ -1742,14 +1730,6 @@ int32_t read_from_pipe(int32_t fd, uchar **data)
 	*data = (void*)hdr;
 
 	return(rc);
-}
-
-/*
- * write_ecm_request():
- */
-static int32_t write_ecm_request(int32_t fd, ECM_REQUEST *er)
-{
-  return(write_to_pipe(fd, PIP_ID_ECM, (uchar *) er, sizeof(ECM_REQUEST)));
 }
 
 /**
@@ -1775,7 +1755,7 @@ void distribute_ecm(ECM_REQUEST *er, uint64_t grp, int32_t rc)
         	if (ecm->ecmcacheptr == er->ecmcacheptr) {
         		er->cpti = ecm->cpti;
         		//cs_log("distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
-        		write_ecm_request(cl->fd_m2c, er);
+        		write_to_pipe(cl, PIP_ID_ECM, (uchar *) er, sizeof(ECM_REQUEST));
 			}
         }
         //else if (ecm->rc == E_99)
@@ -1817,7 +1797,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
   int32_t res=0;
   if( er->client && er->client->fd_m2c ) {
     //We got an ECM (or nok). Now we should check for another clients waiting for it:
-    res = write_ecm_request(er->client->fd_m2c, er);
+    res = write_to_pipe(er->client, PIP_ID_ECM, (uchar *) er, sizeof(ECM_REQUEST));
   }
 
   return res;
@@ -2062,7 +2042,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		er->rc = E_FAKE;
 
 	cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s (of %d avail %d)%s%s",
-			uname, er->caid, er->prid, er->srvid, er->l, lc,
+			uname, er->caid, er->prid, er->srvid, er->l, htons(lc),
 			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, er->reader_count, er->reader_avail, schaninfo, sreason);
 
 	cs_ddump_mask (D_ATR, er->cw, 16, "cw:");
@@ -2357,8 +2337,8 @@ void request_cw(ECM_REQUEST *er, int32_t flag, int32_t reader_types)
 		//1 = only local cards
 		//2 = only network
 		if ((reader_types == 0) || ((reader_types == 1) && (!(rdr->typ & R_IS_NETWORK))) || ((reader_types == 2) && (rdr->typ & R_IS_NETWORK))) {
-			cs_debug_mask(D_TRACE, "request_cw%i to reader %s fd=%d ecm=%04X", reader_types+1, rdr->label, rdr->fd, lc);
-			status = write_ecm_request(rdr->fd, er);
+			cs_debug_mask(D_TRACE, "request_cw%i to reader %s fd=%d ecm=%04X", reader_types+1, rdr->label, rdr->fd, htons(lc));
+			status = write_to_pipe(rdr->client, PIP_ID_ECM, (uchar *) er, sizeof(ECM_REQUEST));
 		}
 		if (status == -1) {
 			cs_log("request_cw() failed on reader %s errno=%d, %s", rdr->label, errno, strerror(errno));
@@ -2790,7 +2770,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 
 		ep->client = cur_client();
 		cs_debug_mask(D_EMM, "emm is being sent to reader %s.", aureader->label);
-		write_to_pipe(aureader->fd, PIP_ID_EMM, (uchar *) ep, sizeof(EMM_PACKET));
+		write_to_pipe(aureader->client, PIP_ID_EMM, (uchar *) ep, sizeof(EMM_PACKET));
 	}
 }
 
@@ -2963,43 +2943,10 @@ int32_t process_input(uchar *buf, int32_t l, int32_t timeout)
 	return(rc);
 }
 
-static void restart_clients()
-{
-	cs_log("restarting clients");
-	struct s_client *cl;
-	for (cl=first_client->next; cl ; cl=cl->next)
-		if (cl->typ=='c' && ph[cl->ctyp].type & MOD_CONN_NET) {
-			kill_thread(cl);
-			cs_log("killing client c %8X", (uintptr_t)(cl->thread));
-		}
-}
-
-
-static void process_master_pipe(int32_t mfdr)
-{
-  int32_t n;
-  uchar *ptr;
-
-  switch(n=read_from_pipe(mfdr, &ptr))
-  {
-    case PIP_ID_KCL: //Kill all clients
-    	restart_clients();
-    	break;
-    case PIP_ID_ERR:
-        cs_exit(1); //better than reading from dead pipe!
-        break;
-    default:
-       cs_log("unhandled pipe message %d (master pipe)", n);
-       break;
-  }
-  if (ptr) free(ptr);
-}
-
-
 int32_t process_client_pipe(struct s_client *cl, uchar *buf, int32_t l) {
 	uchar *ptr;
 	uint16_t n;
-	int32_t pipeCmd = read_from_pipe(cl->fd_m2c_c, &ptr);
+	int32_t pipeCmd = read_from_pipe(cl, &ptr);
 
 	switch(pipeCmd) {
 		case PIP_ID_ECM:
@@ -3082,7 +3029,7 @@ int32_t accept_connection(int32_t i, int32_t j) {
 				cl->port=ntohs(cad.sin_port);
 				cl->typ='c';
 
-				write_to_pipe(cl->fd_m2c, PIP_ID_UDP, (uchar*)&buf, n+3);
+				write_to_pipe(cl, PIP_ID_UDP, (uchar*)&buf, n+3);
 
 				pthread_attr_t attr;
 				pthread_attr_init(&attr);
@@ -3104,7 +3051,7 @@ int32_t accept_connection(int32_t i, int32_t j) {
 					pthread_detach(cl->thread);
 				pthread_attr_destroy(&attr);
 			} else {
-				write_to_pipe(cl->fd_m2c, PIP_ID_UDP, (uchar*)&buf, n+3);
+				write_to_pipe(cl, PIP_ID_UDP, (uchar*)&buf, n+3);
 			}
 		}
 	} else { //TCP
@@ -3124,7 +3071,8 @@ int32_t accept_connection(int32_t i, int32_t j) {
 			}
 
 			int32_t flag = 1;
-			setsockopt(pfd3, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+			setsockopt(pfd3, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
+			setKeepalive(pfd3);
 
 			cl->ctyp=i;
 			cl->udp_fd=pfd3;
@@ -3215,8 +3163,6 @@ if (pthread_key_create(&getclient, NULL)) {
   int32_t      gbdb=0;
   int32_t      gfd; //nph,
   int32_t      fdp[2];
-  int32_t      mfdr=0;     // Master FD (read)
-  int32_t      fd_c2m=0;
 
   void (*mod_def[])(struct s_module *)=
   {
@@ -3409,12 +3355,9 @@ if (pthread_key_create(&getclient, NULL)) {
     cs_log("Cannot create pipe (errno=%d: %s)", errno, strerror(errno));
     cs_exit(1);
   }
-  mfdr=fdp[0];
-  fd_c2m=fdp[1];
-  gfd=mfdr+1;
-
-  first_client->fd_m2c=fd_c2m;
-  first_client->fd_m2c_c=mfdr;
+  first_client->fd_m2c=fdp[1];
+  first_client->fd_m2c_c=fdp[0];
+  gfd=fdp[0]+1;
 
   write_versionfile();
   server_pid = getpid();
@@ -3500,7 +3443,6 @@ if (pthread_key_create(&getclient, NULL)) {
 
                         //Wait for incoming data
 			FD_ZERO(&fds);
-			FD_SET(mfdr, &fds);
 			for (i=0; i<CS_MAX_MOD; i++)
 				if ( (ph[i].type & MOD_CONN_NET) && ph[i].ptab )
 					for (j=0; j<ph[i].ptab->nports; j++)
@@ -3515,9 +3457,6 @@ if (pthread_key_create(&getclient, NULL)) {
 
 		first_client->last=time((time_t *)0);
 
-		if (FD_ISSET(mfdr, &fds)) {
-			process_master_pipe(mfdr);
-		}
 		for (i=0; i<CS_MAX_MOD; i++) {
 			if( (ph[i].type & MOD_CONN_NET) && ph[i].ptab ) {
 				for( j=0; j<ph[i].ptab->nports; j++ ) {

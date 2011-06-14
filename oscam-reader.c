@@ -729,30 +729,27 @@ static void reader_do_pipe(struct s_reader * reader)
   uchar *ptr;
   struct s_client *cl = reader->client;
   if(cl){
-	  int32_t fd_m2c_c = cl->fd_m2c_c;
-	  if(fd_m2c_c){
-	  	int32_t pipeCmd = read_from_pipe(fd_m2c_c, &ptr);
-	
-		  switch(pipeCmd)
-		  {
-		    case PIP_ID_ECM:
-		      reader_get_ecm(reader, (ECM_REQUEST *)ptr);
-		      break;
-		    case PIP_ID_EMM:
-		      reader_do_emm(reader, (EMM_PACKET *)ptr);
-		      break;
-		    case PIP_ID_CIN: 
-		      reader_do_card_info(reader);
-		      break;
-		    case PIP_ID_ERR:
-		      cs_exit(1);
-		      break;
-		    default:
-		       cs_log("unhandled pipe message %d (reader %s)", pipeCmd, reader->label);
-		       break;
-		  }
-		  if (ptr) free(ptr);
-		}
+  	int32_t pipeCmd = read_from_pipe(cl, &ptr);
+
+	  switch(pipeCmd)
+	  {
+	    case PIP_ID_ECM:
+	      reader_get_ecm(reader, (ECM_REQUEST *)ptr);
+	      break;
+	    case PIP_ID_EMM:
+	      reader_do_emm(reader, (EMM_PACKET *)ptr);
+	      break;
+	    case PIP_ID_CIN: 
+	      reader_do_card_info(reader);
+	      break;
+	    case PIP_ID_ERR:
+	      cs_exit(1);
+	      break;
+	    default:
+	       cs_log("unhandled pipe message %d (reader %s)", pipeCmd, reader->label);
+	       break;
+	  }
+	  if (ptr) free(ptr);
 	}
 }
 
@@ -767,6 +764,7 @@ static void reader_main(struct s_reader * reader)
   while (1)
   {
   	struct s_client *cl = reader->client;
+  	if(!cl) return;
     switch(reader_listen(reader, cl->fd_m2c_c, cl->pfd))
     {
       case 0: reader_do_idle(reader); break;
