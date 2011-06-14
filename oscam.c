@@ -2928,6 +2928,10 @@ int32_t process_input(uchar *buf, int32_t l, int32_t timeout)
 		}
 
 		for (i=0;i<pfdcount && p_rc > 0;i++) {
+			if (pfd[i].revents & POLLHUP){	// POLLHUP is only valid in revents so it doesn't need to be set above in events
+				rc=(-9);
+				break;
+			}
 			if (!(pfd[i].revents & (POLLIN | POLLPRI)))
 				continue;
 

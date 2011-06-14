@@ -3509,10 +3509,10 @@ static void *serve_process(void *conn){
 					else {
 						struct pollfd pfd;
 						pfd.fd = s;
-						pfd.events = POLLIN;
+						pfd.events = POLLIN | POLLPRI;
 						int32_t rc = poll(&pfd, 1, -1);
 						if (rc < 0) {
-							if (errno==EINTR) continue;
+							if (errno==EINTR || errno==EAGAIN) continue;
 							break;
 						}
 						if (rc == 1)
