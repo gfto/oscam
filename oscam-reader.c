@@ -36,7 +36,7 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 	}
 }
 
-static void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw)
+void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw)
 {
   int32_t i, pending=0;
   time_t t = time(NULL);
@@ -75,32 +75,6 @@ static void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uc
   		pending++;
   }
   cl->pending=pending;
-}
-
-int32_t casc_recv_timer(struct s_reader * reader, uchar *buf, int32_t l, int32_t msec)
-{
-	int32_t rc;
-	struct s_client *cl = reader->client;
-
-	if (!cl || !cl->pfd) return(-1);
-  
-	if (!reader->ph.recv) {
-		cs_log("reader %s: unsupported protocol!", reader->label);
-		return(-1);        
-	}
-
-	struct pollfd pfd;
-	pfd.fd = cl->pfd;
-	pfd.events = POLLIN | POLLPRI;
-
-	int32_t p_rc = poll(&pfd, 1, msec);
-
-	rc=0;
-	if (p_rc == 1)
-		if (!(rc=reader->ph.recv(cl, buf, l)))
-			rc=-1;
-
-	return(rc);
 }
 
 int32_t hostResolve(struct s_reader *rdr){
@@ -169,6 +143,7 @@ int32_t network_tcp_connection_open()
 	int32_t res = connect(sd, (struct sockaddr *)&cl->udp_sa, sizeof(cl->udp_sa));
 	if (res == 0) { 
 		fcntl(sd, F_SETFL, fl); //connect sucessfull, restore blocking mode
+		setKeepalive(sd);
 		clear_block_delay(rdr);
 		return sd;
 	}
@@ -184,6 +159,7 @@ int32_t network_tcp_connection_open()
 			if (getsockopt(sd, SOL_SOCKET, SO_ERROR, &r, (socklen_t*)&l) == 0) {
 				if (r == 0) {
 					fcntl(sd, F_SETFL, fl);
+					setKeepalive(sd);
 					clear_block_delay(rdr);
 					return sd; //now we are connected
 				}
@@ -195,6 +171,7 @@ int32_t network_tcp_connection_open()
 	else if (errno == EISCONN) {
 		cs_log("already connected!");
 		fcntl(sd, F_SETFL, fl);
+		setKeepalive(sd);
 		clear_block_delay(rdr);
 		return sd;
 	}
@@ -277,73 +254,6 @@ void casc_do_sock_log(struct s_reader * reader)
   }
 }
 
-void casc_do_sock(struct s_reader * reader, int32_t w)
-{
-  int32_t i, n, idx, rc, j;
-  uchar buf[1024];
-  uchar dcw[16];
-  struct s_client *cl = reader->client;
-  
-  if(!cl) return;
-
-  if ((n=casc_recv_timer(reader, buf, sizeof(buf), w))<=0)
-  {
-    if (reader->ph.type==MOD_CONN_TCP && reader->typ != R_RADEGAST)
-    {
-      if (reader->ph.c_idle)
-      	reader_do_idle(reader);
-      else {
-        cs_debug_mask(D_READER, "casc_do_sock: closed connection by remote");
-        network_tcp_connection_close(reader->client, cl->udp_fd);
-      }
-      return;
-    }
-  }
-  cl->last=time((time_t)0);
-  idx=reader->ph.c_recv_chk(cl, dcw, &rc, buf, n);
-
-  if (idx<0) return;  // no dcw received
-  reader->last_g=time((time_t*)0); // for reconnect timeout
-//cs_log("casc_do_sock: last_s=%d, last_g=%d", reader->last_s, reader->last_g);
-  if (!idx) idx=cl->last_idx;
-  j=0;
-  for (i=0; i<CS_MAXPENDING; i++)
-  {
-    if (cl->ecmtask[i].idx==idx)
-    {
-	  cl->pending--;
-      casc_check_dcw(reader, i, rc, dcw);
-      j=1;
-      break;
-    }
-  }
-}
-
-static void casc_get_dcw(struct s_reader * reader, int32_t n)
-{
-  int32_t w;
-  struct timeb tps, tpe;
-  struct s_client *cl = reader->client;
-  if(!cl) return;
-  tpe=cl->ecmtask[n].tps;
-  //tpe.millitm+=1500;    // TODO: timeout of 1500 should be config
-
-  tpe.time += cfg.srtimeout/1000;
-  tpe.millitm += cfg.srtimeout%1000;
-  
-  cs_ftime(&tps);
-  while (((w=1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm)>0)
-          && (cl->ecmtask[n].rc>=10))
-  {
-    casc_do_sock(reader, w);
-    cs_ftime(&tps);
-  }
-  if (cl->ecmtask[n].rc>=10)
-    casc_check_dcw(reader, n, 0, cl->ecmtask[n].cw);  // simulate "not found"
-}
-
-
-
 int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   int32_t rc, n, i, sflag, pending=0;
@@ -419,9 +329,6 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
     else
       cl->last_idx = cl->ecmtask[n].idx;
     reader->last_s = t;   // used for inactive_timeout and reconnect_timeout in TCP reader
-
-    if (!reader->ph.c_multi)
-      casc_get_dcw(reader, n);
   }
 
 //cs_log("casc_process_ecm 1: last_s=%d, last_g=%d", reader->last_s, reader->last_g);

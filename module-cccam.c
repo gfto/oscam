@@ -424,13 +424,17 @@ int32_t cc_recv_to(struct s_client *cl, uint8_t *buf, int32_t len) {
 		rc = poll(&pfd, 1, 2000);
 	
 		if (rc < 0) {
-			if (errno==EINTR) continue;
+			if (errno==EINTR || errno==EAGAIN) continue;
 			return(-1); //error!!
 		}
-	                                                                 
-		if (rc == 1)
-			break;
-		return (-2); //timeout!!
+			                                                                 
+		if (rc == 1){
+			if(pfd.revents & POLLHUP)
+				return(-1); //hangup = error!!
+			else
+				break;
+		} else
+			return (-2); //timeout!!
 	}	
 	return recv(cl->udp_fd, buf, len, MSG_WAITALL);
 }

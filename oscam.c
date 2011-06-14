@@ -466,44 +466,27 @@ void cs_accounts_chk()
 #endif
 }
 
-void nullclose(int32_t *fd)
-{
-	//if closing an already closed pipe, we get a sigpipe signal, and this causes a cs_exit
-	//and this causes a close and this causes a sigpipe...and so on
-	int32_t f = *fd;
-	*fd = 0; //so first null client-fd
-	close(f); //then close fd
-}
-
 static void cleanup_ecmtasks(struct s_client *cl)
 {
-        if (!cl->ecmtask)
-                return;
-
-        int32_t i, n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
-        ECM_REQUEST *ecm;
-        for (i=0; i<n; i++) {
-                ecm = &cl->ecmtask[i];
-                ll_destroy(ecm->matching_rdr); //no need to garbage this
-                ecm->matching_rdr=NULL;
-        }
-        add_garbage(cl->ecmtask);
+	if (!cl->ecmtask)
+		return;
+	
+	int32_t i, n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
+	ECM_REQUEST *ecm;
+	for (i=0; i<n; i++) {
+		ecm = &cl->ecmtask[i];
+		ll_destroy(ecm->matching_rdr); //no need to garbage this
+		ecm->matching_rdr=NULL;
+	}
+	add_garbage(cl->ecmtask);
 }
 
 void cleanup_thread(void *var)
 {
 	struct s_client *cl = var;
 	if(cl && !cl->cleaned){ //cleaned=0
-		cl->cleaned++; //cleaned=1
-		
-#ifdef MODULE_CCCAM
-		if(cl->typ == 'c'){
-			struct cc_data *cc = cl->cc;
-			if (cc) cc->mode = CCCAM_MODE_SHUTDOWN;
-		}
-#endif
-
-		//kill_thread also removes this client, so here just to get sure client is removed:
+		cl->cleaned++; //cleaned=1	
+		// Remove client from client list. kill_thread also removes this client, so here just if client exits itself...
 		struct s_client *prev, *cl2;
 		cs_lock(&clientlist_lock);
 		for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
@@ -512,30 +495,43 @@ void cleanup_thread(void *var)
 		if (cl == cl2)
 			prev->next = cl2->next; //remove client from list
 		cs_unlock(&clientlist_lock);
+		
+		// Clean reader. The cleaned structures should be only used by the reader thread, so we should be save without waiting
+		if (cl->reader){
+			remove_reader_from_active(cl->reader);
+			if(cl->reader->ph.cleanup)
+        cl->reader->ph.cleanup(cl);
+			if(cl->typ == 'r'){
+				ICC_Async_Close(cl->reader);
+			}
+			cl->reader->client = NULL;
+			cl->reader = NULL;
+		}
+		
+		cl->cleaned++; //cleaned=2, beware that kill_thread only waits until this point, so reader cleanup needs to be before!
 
-		cs_sleepms(500); //just wait a bit that really really nobody is accessing client data
-
-		if(cl->typ == 'c' && ph[cl->ctyp].cleanup)
-			ph[cl->ctyp].cleanup(cl);
-	    else if (cl->reader && cl->reader->ph.cleanup)
-	        cl->reader->ph.cleanup(cl);
-	  if(cl->typ == 'c'){
+		// Clean client specific data
+		if(cl->typ == 'c'){
+#ifdef MODULE_CCCAM
+			struct cc_data *cc = cl->cc;
+			if (cc) cc->mode = CCCAM_MODE_SHUTDOWN;
+#endif
 	    cs_statistics(cl);
 	    cl->last_caid = 0xFFFF;
 	    cl->last_srvid = 0xFFFF;
 	    cs_statistics(cl);
-	  }
+	    
+			cs_sleepms(500); //just wait a bit that really really nobody is accessing client data
 
-		if(cl->pfd)	nullclose(&cl->pfd); //Closing Network socket
-
-		if(cl->typ == 'r' && cl->reader){
-			// Maybe we also need a "nullclose" mechanism here...
-			ICC_Async_Close(cl->reader);
+			if(ph[cl->ctyp].cleanup)
+				ph[cl->ctyp].cleanup(cl);
 		}
-		if (cl->reader) {
-			cl->reader->client = NULL;
-			cl->reader = NULL;
-	    }
+		
+		// Close network socket if not already cleaned by previous cleanup functions
+		if(cl->pfd)
+			close(cl->pfd); 
+			
+		// Clean all remaining structures
 
 
 		ll_destroy(cl->joblist);
@@ -547,10 +543,10 @@ void cleanup_thread(void *var)
 		add_garbage(cl->cc);
 #endif
 		add_garbage(cl->serialdata);
-		cl->cleaned++;//cleaned=2
-		add_garbage(cl);
+		pthread_mutex_destroy(&cl->pipelock);					
 
 		cs_cleanlocks();
+		add_garbage(cl);		
 	}
 }
 
@@ -744,25 +740,12 @@ void cs_exit(int32_t sig)
   if (!cl)
   	return;
 
-  switch(cl->typ)
-  {
-    case 'c':
-    	cs_statistics(cl);
-    	cl->last_caid = 0xFFFF;
-    	cl->last_srvid = 0xFFFF;
-    	cs_statistics(cl);
-    	break;
-
-    case 'm': break;
-    case 'r': break; //reader-cleanup now in cleanup_thread()
-
-    case 'h':
-    case 's':
+  if(cl->typ == 'h' || cl->typ == 's'){
 #ifdef CS_LED
-	cs_switch_led(LED1B, LED_OFF);
-	cs_switch_led(LED2, LED_OFF);
-	cs_switch_led(LED3, LED_OFF);
-	cs_switch_led(LED1A, LED_ON);
+		cs_switch_led(LED1B, LED_OFF);
+		cs_switch_led(LED2, LED_OFF);
+		cs_switch_led(LED3, LED_OFF);
+		cs_switch_led(LED1A, LED_ON);
 #endif
 #ifdef QBOXHD_LED
     qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_FAST);
@@ -776,14 +759,13 @@ void cs_exit(int32_t sig)
 #endif
 
 #ifndef OS_CYGWIN32
-	snprintf(targetfile, 255, "%s%s", get_tmp_dir(), "/oscam.version");
-	if (unlink(targetfile) < 0)
-		cs_log("cannot remove oscam version file %s (errno=%d %s)", targetfile, errno, strerror(errno));
+		snprintf(targetfile, 255, "%s%s", get_tmp_dir(), "/oscam.version");
+		if (unlink(targetfile) < 0)
+			cs_log("cannot remove oscam version file %s (errno=%d %s)", targetfile, errno, strerror(errno));
 #endif
 #ifdef COOL
-	coolapi_close_all();
+		coolapi_close_all();
 #endif
-	break;
   }
 
 	// this is very important - do not remove
@@ -1174,17 +1156,13 @@ void add_reader_to_active(struct s_reader *rdr) {
 /* Starts or restarts a cardreader without locking. If restart=1, the existing thread is killed before restarting,
    if restart=0 the cardreader is only started. */
 static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
-
-	if (restart) {
-		//remove from list:
-		remove_reader_from_active(rdr);
-	}
-
-	if (restart) //kill old thread
-		if (rdr->client) {
+	if (restart){
+		remove_reader_from_active(rdr);		//remove from list
+		if (rdr->client) {		//kill old thread
 			kill_thread(rdr->client);
 			rdr->client = NULL;
 		}
+	}
 
 	rdr->tcp_connected = 0;
 	rdr->card_status = UNKNOWN;
@@ -1290,8 +1268,11 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 				if (cl->failban & BAN_DUPLICATE) {
 					cs_add_violation(cl->ip);
 				}
-				if (cfg.dropdups)
+				if (cfg.dropdups){
+					cs_unlock(&fakeuser_lock);
 					kill_thread(cl);
+					cs_lock(&fakeuser_lock);
+				}
 			}
 			else
 			{
@@ -1566,6 +1547,7 @@ static int32_t write_ecm_request(struct s_reader *rdr, ECM_REQUEST *er)
 	add_job(rdr->client, ACTION_READER_ECM_REQUEST, (void*)er, sizeof(ECM_REQUEST));
 	return 1;
 }
+
 
 /**
  * distributes found ecm-request to all clients with rc=99
@@ -1874,7 +1856,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		er->rc = E_FAKE;
 
 	cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s (of %d avail %d)%s%s",
-			uname, er->caid, er->prid, er->srvid, er->l, lc,
+			uname, er->caid, er->prid, er->srvid, er->l, htons(lc),
 			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, er->reader_count, er->reader_avail, schaninfo, sreason);
 
 	cs_ddump_mask (D_ATR, er->cw, 16, "cw:");
@@ -2169,7 +2151,7 @@ void request_cw(ECM_REQUEST *er, int32_t flag, int32_t reader_types)
 		//1 = only local cards
 		//2 = only network
 		if ((reader_types == 0) || ((reader_types == 1) && (!(rdr->typ & R_IS_NETWORK))) || ((reader_types == 2) && (rdr->typ & R_IS_NETWORK))) {
-			cs_debug_mask(D_TRACE, "request_cw%i to reader %s fd=%d ecm=%04X", reader_types+1, rdr->label, 0, lc);
+			cs_debug_mask(D_TRACE, "request_cw%i to reader %s fd=%d ecm=%04X", reader_types+1, rdr->label, 0, htons(lc));
 			status = write_ecm_request(rdr, er);
 		}
 	}
@@ -2742,6 +2724,10 @@ int32_t process_input(uchar *buf, int32_t l, int32_t timeout)
 		}
 
 		for (i=0;i<pfdcount && p_rc > 0;i++) {
+			if (pfd[i].revents & POLLHUP){	// POLLHUP is only valid in revents so it doesn't need to be set above in events
+				rc=(-9);
+				break;
+			}
 			if (!(pfd[i].revents & (POLLIN | POLLPRI)))
 				continue;
 
@@ -2780,9 +2766,30 @@ extern void reader_init(struct s_reader *reader);
 extern void reader_do_idle(struct s_reader * reader);
 extern int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep);
 extern void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er);
-extern void casc_do_sock(struct s_reader * reader, int32_t w);
+extern void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw);
 extern void casc_do_sock_log(struct s_reader * reader);
 extern void reader_do_card_info(struct s_reader * reader);
+
+
+int8_t check_fd_for_data(int32_t fd) {
+	int32_t rc;
+	struct pollfd pfd[1];
+
+	pfd[0].fd = fd;
+	pfd[0].events = POLLIN | POLLPRI | POLLHUP;
+	rc = poll(pfd, 1, 0);
+
+	if (rc == -1)
+		cs_log("check_fd_for_data(fd=%d) failed: (errno=%d %s)", fd, errno, strerror(errno));
+
+	if (rc == -1 || rc == 0)
+		return rc;
+
+	if (pfd[0].revents & POLLHUP)
+		return -2;
+
+	return 1;
+}
 
 void * work_thread(void *ptr) {
 	struct s_data *data = (struct s_data *) ptr;
@@ -2793,8 +2800,8 @@ void * work_thread(void *ptr) {
 	cl->thread=pthread_self();
 
 	uchar mbuf[1024];
-	int n=0, rc=0;
-	struct pollfd pfd[1];
+	int n=0, rc=0, i, idx, s;
+	uchar dcw[16];
 
 	while (data) {
 		if (data->action < 20 && !reader) {
@@ -2823,7 +2830,39 @@ void * work_thread(void *ptr) {
 				reader_do_idle(reader);
 				break;
 			case ACTION_READER_REMOTE:
-				casc_do_sock(reader, 0);
+				s = check_fd_for_data(cl->pfd);
+				
+				if (s == 0) // no data, another thread already read from fd?
+					break;
+
+				if (s < 0) {
+					if (reader->ph.type==MOD_CONN_TCP)
+						network_tcp_connection_close(reader->client, cl->udp_fd);
+					break;
+				}
+
+				rc = reader->ph.recv(cl, mbuf, sizeof(mbuf));
+				if (rc <= 0) {
+					if (reader->ph.type==MOD_CONN_TCP)
+						network_tcp_connection_close(reader->client, cl->udp_fd);
+					break;
+				}
+
+				cl->last=time((time_t)0);
+				idx=reader->ph.c_recv_chk(cl, dcw, &rc, mbuf, rc);
+
+				if (idx<0) break;  // no dcw received
+				if (!idx) idx=cl->last_idx;
+
+				reader->last_g=time((time_t*)0); // for reconnect timeout
+
+				for (i=0; i<CS_MAXPENDING; i++) {
+					if (cl->ecmtask[i].idx==idx) {
+						cl->pending--;
+						casc_check_dcw(reader, i, rc, dcw);
+						break;
+					}
+				}
 				break;
 			case ACTION_READER_REMOTELOG:
 				casc_do_sock_log(reader);
@@ -2848,20 +2887,28 @@ void * work_thread(void *ptr) {
 
 			case ACTION_CLIENT_UDP:
 				n = ph[cl->ctyp].recv(cl, data->ptr, data->len);
+				if (n<0) {
+					cl->init_done=0;
+					break;
+				}
 				ph[cl->ctyp].s_handler(cl, data->ptr, n);
 				break;
 			case ACTION_CLIENT_TCP:
-				pfd[0].fd = cl->pfd;
-				pfd[0].events = POLLIN | POLLPRI;
-				rc = poll(pfd, 1, 0);
-				if (rc>0) {
-					n = ph[cl->ctyp].recv(cl, mbuf, 1024);
-					if (n == -1) {
-						cl->kill=1; // kill client on next run
-						continue;
-					}
-					ph[cl->ctyp].s_handler(cl, mbuf, n);
+				s = check_fd_for_data(cl->pfd);
+				if (s == 0) // no data, another thread already read from fd?
+					break;
+				if (s < 0) { // system error or fd wants to be closed
+					cl->kill=1; // kill client on next run
+					continue;
 				}
+
+				n = ph[cl->ctyp].recv(cl, mbuf, sizeof(mbuf));
+				if (n == -1) {
+					cl->kill=1; // kill client on next run
+					continue;
+				}
+				ph[cl->ctyp].s_handler(cl, mbuf, n);
+	
 				break;
 			case ACTION_CLIENT_ECM_ANSWER:
 				chk_dcw(cl, data->ptr);
@@ -3131,6 +3178,7 @@ int32_t accept_connection(int32_t i, int32_t j) {
 
 				cl->port=ntohs(cad.sin_port);
 				cl->typ='c';
+
 				add_job(cl, ACTION_CLIENT_INIT, NULL, 0);
 			}
 			add_job(cl, ACTION_CLIENT_UDP, buf, n+3);
@@ -3151,7 +3199,8 @@ int32_t accept_connection(int32_t i, int32_t j) {
 			}
 
 			int32_t flag = 1;
-			setsockopt(pfd3, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+			setsockopt(pfd3, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
+			setKeepalive(pfd3);
 
 			cl->ctyp=i;
 			cl->udp_fd=pfd3;
@@ -3475,14 +3524,12 @@ if (pthread_key_create(&getclient, NULL)) {
 
 	for (i=0; i<CS_MAX_MOD; i++)
 		if (ph[i].type & MOD_CONN_SERIAL)   // for now: oscam_ser only
-			if (ph[i].s_handler) {
-				struct s_client * cl = create_client(0);
-				cl->ctyp = i;
-				ph[i].s_handler(cl, NULL, 0);
-			}
+			if (ph[i].s_handler)
+				ph[i].s_handler(NULL, NULL, i);
 
 	// main loop function
 	client_check();
+
 
 #if defined(AZBOX) && defined(HAVE_DVBAPI)
   if (openxcas_close() < 0) {

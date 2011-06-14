@@ -184,7 +184,7 @@ char *tpl_getTplPath(const char *name, const char *path, char *result, uint32_t 
 
 /* Returns an unparsed template either from disk or from internal templates.
    Note: You must free() the result after using it and you may get NULL if an error occured!*/
-char *tpl_getUnparsedTpl(const char* name){
+static char *tpl_getUnparsedTpl(const char* name){
   int32_t i;
   int32_t tplcnt = sizeof(tpl)/sizeof(char *);
   int32_t tplmapcnt = sizeof(tplmap)/sizeof(char *);
@@ -599,7 +599,7 @@ void send_file(FILE *f, char *filename, time_t modifiedheader, uint32_t etaghead
 }
 
 /* Helper function for urldecode.*/
-int32_t x2i(int32_t i){
+static int32_t x2i(int32_t i){
 	i=toupper(i);
 	i = i - '0';
 	if(i > 9) i = i - 'A' + '9' + 1;
