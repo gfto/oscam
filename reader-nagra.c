@@ -32,6 +32,22 @@ static time_t tier_date(uint32_t date, char *buf, int32_t l)
   return(ut);
 }
 
+static char *nagra_datetime(uint8_t *ndays, char *result)
+{
+	struct tm tms;
+	memset(&tms, 0, sizeof(tms));
+	int32_t days = (ndays[0] << 8 | ndays[1]);
+	int32_t time = (ndays[2] << 8 | ndays[3]);
+	int32_t year_offset = 0;
+	if (days > 0x41B4) year_offset = 68; // to overcome 32-bit systems limitations
+	tms.tm_year = 92 - year_offset;
+	tms.tm_mday = days + 1;
+	tms.tm_sec = time;
+	mktime(&tms);
+	snprintf(result, 17, "%04d/%02d/%02d %02d:%02d", tms.tm_year + 1900 + year_offset, tms.tm_mon + 1, tms.tm_mday, tms.tm_hour, tms.tm_min);
+	return result;
+}
+
 static int32_t do_cmd(struct s_reader * reader, unsigned char cmd, int32_t ilen, unsigned char res, int32_t rlen, unsigned char *data, unsigned char * cta_res, uint16_t * p_cta_lr)
 {
 	/*
@@ -515,7 +531,7 @@ static void addProvider(struct s_reader * reader, unsigned char * cta_res)
 
 static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigned char * cta_res, uint16_t cta_lr)
 {
-	char ds[16], de[16];
+	char ds[16], de[16], d1[20];
       	uint16_t chid;
 	switch(dt) 
 	{
@@ -542,6 +558,8 @@ static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigne
     				memcpy(reader->irdId,cta_res+14,4);
     				cs_debug_mask(D_READER, "[nagra-reader] type: NAGRA, caid: %04X, IRD ID: %s",reader->caid, cs_hexdump (1,reader->irdId,4));
     				cs_debug_mask(D_READER, "[nagra-reader] ProviderID: %s",cs_hexdump (1,reader->prid[0],4));
+				nagra_datetime(cta_res+24, d1);
+    				cs_debug_mask(D_READER, "[nagra-reader] active to: %s", d1);
     				return OK;
      		}
    		case TIERS:
