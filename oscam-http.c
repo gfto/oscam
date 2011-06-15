@@ -69,6 +69,42 @@ static void refresh_oscam(enum refreshtypes refreshtype) {
 			break;
 	}
 }
+/*
+ * load historical values from ringbuffer and return it in the right order
+ * as string. Value should be freed with free_mk_t()
+ */
+char *get_ecm_historystring(struct s_client *cl){
+
+	if(cl){
+		int32_t k, pos = 0, needed = 1;
+		char *value, *dot = "";
+
+		needed = CS_ECM_RINGBUFFER_MAX * 5; //4 digits + delimiter
+		if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
+
+		if(cl->cwlastresptimes_last == CS_ECM_RINGBUFFER_MAX - 1){
+			for(k = 0; k < CS_ECM_RINGBUFFER_MAX ; k++){
+				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k]);
+				dot=",";
+			}
+		} else {
+			for(k = cl->cwlastresptimes_last + 1; k < CS_ECM_RINGBUFFER_MAX; k++){
+				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k]);
+				dot=",";
+			}
+
+			for(k = 0; k < cl->cwlastresptimes_last + 1 ; k++){
+				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k]);
+				dot=",";
+			}
+		}
+
+		return (value);
+
+	} else {
+		return "";
+	}
+}
 
 static char *send_oscam_config_global(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
@@ -1191,10 +1227,14 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 	if(!rdr) return "0";
 
 	if (strcmp(getParam(params, "action"), "resetstat") == 0) {
-		if(rdr) {
-			clear_reader_stat(rdr);
-			cs_log("Reader %s stats resetted by WebIF from %s", rdr->label, cs_inet_ntoa(GET_IP()));
-		}
+		clear_reader_stat(rdr);
+		cs_log("Reader %s stats resetted by WebIF from %s", rdr->label, cs_inet_ntoa(GET_IP()));
+	}
+
+	if (apicall && (strcmp(getParam(params, "ecmhistory"), "1") == 0)) {
+		char *value = get_ecm_historystring(rdr->client);
+		tpl_printf(vars, TPLADD, "ECMHISTORY", "%s", value);
+		free_mk_t(value);
 	}
 
 	if (!apicall){
@@ -2254,6 +2294,11 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 					tpl_printf(vars, TPLADD, "CLIENTLOGINSECS", "%d", lsec);
 				}
 
+				//load historical values from ringbuffer
+				char *value = get_ecm_historystring(cl);
+				tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIMEHIST", "%s", value);
+				free_mk_t(value);
+
 				if (isec < cfg.mon_hideclient_to || cfg.mon_hideclient_to == 0) {
 
 					if (((cl->typ!='r') || (cl->typ!='p')) && (cl->lastreader[0])) {
@@ -2266,26 +2311,6 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 					tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", cl->last_caid);
 					tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", cl->last_srvid);
 					tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime?cl->cwlastresptime:1);
-
-					int32_t k;
-					char *dot = "";
-
-					if(cl->cwlastresptimes_last == CS_ECM_RINGBUFFER_MAX - 1){
-						for(k = 0; k < CS_ECM_RINGBUFFER_MAX ; k++){
-							tpl_printf(vars, TPLAPPEND, "CLIENTLASTRESPONSETIMEHIST", "%s%d", dot, cl->cwlastresptimes[k]);
-							dot=",";
-						}
-					} else {
-						for(k = cl->cwlastresptimes_last + 1; k < CS_ECM_RINGBUFFER_MAX; k++){
-							tpl_printf(vars, TPLAPPEND, "CLIENTLASTRESPONSETIMEHIST", "%s%d", dot, cl->cwlastresptimes[k]);
-							dot=",";
-						}
-
-						for(k = 0; k < cl->cwlastresptimes_last + 1 ; k++){
-							tpl_printf(vars, TPLAPPEND, "CLIENTLASTRESPONSETIMEHIST", "%s%d", dot, cl->cwlastresptimes[k]);
-							dot=",";
-						}
-					}
 
 					if(!cfg.mon_appendchaninfo){
 						char channame[32];

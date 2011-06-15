@@ -2842,7 +2842,7 @@ void * work_thread(void *ptr) {
 				}
 
 				rc = reader->ph.recv(cl, mbuf, sizeof(mbuf));
-				if (rc <= 0) {
+				if (rc < 0) {
 					if (reader->ph.type==MOD_CONN_TCP)
 						network_tcp_connection_close(reader->client, cl->udp_fd);
 					break;
