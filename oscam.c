@@ -749,7 +749,7 @@ static void init_signal()
 
 void cs_exit(int32_t sig)
 {
-	char targetfile[256];
+
 
 	set_signal_handler(SIGCHLD, 1, SIG_IGN);
 	set_signal_handler(SIGHUP , 1, SIG_IGN);
@@ -786,6 +786,7 @@ void cs_exit(int32_t sig)
 #endif
 
 #ifndef OS_CYGWIN32
+	char targetfile[256];
 		snprintf(targetfile, 255, "%s%s", get_tmp_dir(), "/oscam.version");
 		if (unlink(targetfile) < 0)
 			cs_log("cannot remove oscam version file %s (errno=%d %s)", targetfile, errno, strerror(errno));
