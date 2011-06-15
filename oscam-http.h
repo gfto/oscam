@@ -995,6 +995,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		<ecmstats count=\"##ROWCOUNT##\" totalecm=\"##TOTALECM##\" lastaccess=\"##LASTACCESS##\">\n\
 ##ECMSTATS##\n\
 		</ecmstats>\n\
+		<ecmhistory>##ECMHISTORY##</ecmhistory>\n\
 	</reader>\n\
 ##TPLAPIFOOTER##"
 
