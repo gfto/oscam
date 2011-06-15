@@ -43,6 +43,9 @@ pthread_mutex_t system_lock;
 pthread_mutex_t clientlist_lock;
 pthread_mutex_t readerlist_lock;
 pthread_mutex_t fakeuser_lock;
+#if defined(LIBUSB)
+pthread_mutex_t sr_lock;
+#endif
 pthread_key_t getclient;
 
 //Cache for  ecms, cws and rcs:
@@ -968,6 +971,9 @@ static void init_first_client()
   if(pthread_mutex_init(&clientlist_lock, NULL)) ok = 0;
   if(pthread_mutex_init(&readerlist_lock, NULL)) ok = 0;
   if(pthread_mutex_init(&fakeuser_lock, NULL)) ok = 0;
+#if defined(LIBUSB)
+  if(pthread_mutex_init(&sr_lock, NULL)) ok = 0;
+#endif
   if(pthread_mutex_init(&sc8in1_lock, NULL)) ok = 0;
   if(!ok){
   	fprintf(stderr, "Could not init locks, exiting...");

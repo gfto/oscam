@@ -3141,7 +3141,7 @@ static int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t for
 		else
 			n=webif_read(buf2, sizeof(buf2), f);
 		if (n <= 0) {
-			if ((!is_ssl) && (errno == 0 || errno == EINTR || errno == EAGAIN)){
+			if ((!is_ssl) && (errno == 0 || errno == EINTR)){
 				if(errcount++ < 10){
 					cs_sleepms(5);
 					continue;
