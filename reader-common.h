@@ -8,7 +8,7 @@
 #define OK			1
 #define ERROR 	0
 
-#include "atr.h"
+#include "csctapi/atr.h"
 
 #define write_cmd(cmd, data) \
 { \
