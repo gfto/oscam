@@ -132,6 +132,7 @@ static void do_emm_from_file(struct s_reader * reader)
     //handling emmfile
     char token[256];
     FILE *fp;
+	
     if ((reader->emmfile[0] == '/'))
       snprintf (token, sizeof(token), "%s", reader->emmfile); //pathname included
     else
@@ -145,6 +146,7 @@ static void do_emm_from_file(struct s_reader * reader)
       	fclose (fp);
       	return;
       }
+	  size_t result; 
       result = fread (eptmp, sizeof(EMM_PACKET), 1, fp);      
       fclose (fp);
    
