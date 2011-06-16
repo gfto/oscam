@@ -549,7 +549,9 @@ int32_t do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigne
   if(ins2[0]==0xd3) ins2[4]=len+16;
   len=ins2[4];
 
-
+  unsigned char tmp[264]; 
+  if(rxbuff == NULL) rxbuff=tmp;		// The function may get a NULL pointer but we need a buffer for cCamCryptVG_PostProcess_Decrypt!
+  	
   if(mode>1) {
     if(!write_cmd_vg(ins2,NULL) || !status_ok(cta_res+len)) return -1;
     memcpy(rxbuff,ins2,5);
