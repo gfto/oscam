@@ -274,8 +274,8 @@ char *trim(char *txt)
 			*p2++=*p1++;
 		*p2='\0';
 	}
-	if ((l=strlen(txt))>1)
-		for (p1=txt+l-1; (*p1==' ') || (*p1=='\t') || (*p1=='\n') || (*p1=='\r'); *p1--='\0');
+	if ((l=strlen(txt))>0)
+		for (p1=txt+l-1; ((*p1==' ') || (*p1=='\t') || (*p1=='\n') || (*p1=='\r')) && l>0; *p1--='\0', l--);
 
 	return(txt);
 }
