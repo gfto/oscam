@@ -11,7 +11,7 @@ static int32_t vg1_do_cmd(struct s_reader *reader, const unsigned char *ins, con
   unsigned char len = 0;
   len = ins2[4];
 
-  }
+  
 
   if (txbuff == NULL) {
     if (!write_cmd_vg(ins2, NULL) || !status_ok(cta_res + len)) {
