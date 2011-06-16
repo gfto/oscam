@@ -263,27 +263,21 @@ char *remote_txt(void)
     return("remote server");
 }
 
-char *trim(txt)
-char *txt;
+char *trim(char *txt)
 {
-  register int32_t l;
-  register char *p1, *p2;
+	int32_t l;
+	char *p1, *p2;
 
-  if (*txt==' ')
-  {
-    for (p1=p2=txt;
-        (*p1==' ') || (*p1=='\t') || (*p1=='\n') || (*p1=='\r');
-         p1++);
-    while (*p1)
-      *p2++=*p1++;
-    *p2='\0';
-  }
-  if ((l=strlen(txt))>0)
-    for (p1=txt+l-1;
-        (*p1==' ') || (*p1=='\t') || (*p1=='\n') || (*p1=='\r');
-         *p1--='\0');
+	if (*txt==' ') {
+		for (p1=p2=txt; (*p1==' ') || (*p1=='\t') || (*p1=='\n') || (*p1=='\r'); p1++);
+		while (*p1)
+			*p2++=*p1++;
+		*p2='\0';
+	}
+	if ((l=strlen(txt))>1)
+		for (p1=txt+l-1; (*p1==' ') || (*p1=='\t') || (*p1=='\n') || (*p1=='\r'); *p1--='\0');
 
-  return(txt);
+	return(txt);
 }
 
 
