@@ -592,7 +592,7 @@ static int32_t GetDataType(struct s_reader * reader, unsigned char dt, int32_t l
   		}
     		if((cta_res[2]==0) && (dt != 0x08 && dt != 0x88)) return OK;
     		if(!ParseDataType(reader, dt&0x0F, cta_res, cta_lr)) return ERROR;
-    		if ((dt != 0x08 || dt != 0x88) && (cta_res[11] == 0x49)) return OK; //got dt08 data	
+    		if ((dt != 0x08 && dt != 0x88) && (cta_res[11] == 0x49)) return OK; //got dt08 data	
     		dt|=0x80; // get next item
     	}
   	return OK;
