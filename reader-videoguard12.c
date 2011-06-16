@@ -17,9 +17,6 @@ static int32_t vg12_do_cmd(struct s_reader *reader, const unsigned char *ins, co
   unsigned char len = 0;
   len = ins2[4];
 
-  unsigned char tmp[264];
-  if (!rxbuff) {
-    rxbuff = tmp;
   }
 
   if (txbuff == NULL) {

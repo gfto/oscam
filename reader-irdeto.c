@@ -449,7 +449,7 @@ int32_t irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		crc^=0x01;crc^=0x05;crc^=sc_Acs57Ecm[2];crc^=sc_Acs57Ecm[3];crc^=(sc_Acs57Ecm[4]-1);
 		for(i=6;i<er->ecm[3]-5;i++)
 			crc^=er->ecm[i];
-		memcpy(cta_cmd,sc_Acs57Ecm,6);
+		memcpy(cta_cmd,sc_Acs57Ecm,sizeof(sc_Acs57Ecm));
 		memcpy(cta_cmd+5,er->ecm+6,er->ecm[2]-1); 
 		cta_cmd[er->ecm[2]+2]=crc;
 		irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr);
