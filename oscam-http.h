@@ -1887,7 +1887,7 @@ function plot_data(obj) {\n\
 				plots[i]['name'] = readers[rdx].getElementsByTagName('connection')[0].getAttribute('ip');\n\
 			}\n\
 			plots[i]['ecmtime'] = parseInt( readers[rdx].getElementsByTagName('request')[0].getAttribute('ecmtime') );\n\
-			if (!isNumber(plots[i]['ecmtime'])) plots[i]['ecmtime'] = 0;\n\
+			if (!isNumber(plots[i]['ecmtime'])) plots[i]['ecmtime'] = -1;\n\
 			plots[i]['idle'] = readers[rdx].getElementsByTagName('times')[0].getAttribute('idle');\n\
 			if ( plots[i]['data'].length==max_num_points ) {\n\
 				var ii = 0;\n\
@@ -1909,7 +1909,11 @@ function plot_data(obj) {\n\
 	      newText.appendChild(textNode);\n\
 				document.getElementById('graph').appendChild(newText);\n\
 			}\n\
-			SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':' + plots[i]['ecmtime'] + 'ms';\n\
+			if ( plots[i]['ecmtime']==-1 ) {\
+				SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':';\n\
+			} else {\
+				SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':' + plots[i]['ecmtime'] + 'ms';\n\
+			}\
 			if ( SVGDoc.getElementById('graph_path_'+i) == null ) {\n\
 				var newPath = document.createElementNS(svgNS,'path');\n\
 				newPath.setAttributeNS(null,'id','graph_path_'+i);\n\

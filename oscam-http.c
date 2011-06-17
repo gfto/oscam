@@ -3026,7 +3026,7 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 					tpl_printf(vars, TPLADD, "CLIENTTYPE", "%c", cl->typ);
 					usr=username(cl); 
 					tpl_addVar(vars, TPLADD, "CLIENTUSER", xml_encode(vars, usr));
-					tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime?cl->cwlastresptime:1);
+					tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime?cl->cwlastresptime:-1);
 					isec = now - cl->last; 
 					tpl_printf(vars, TPLADD, "CLIENTIDLESECS", "%d", isec);
 	 				//load historical values from ringbuffer
