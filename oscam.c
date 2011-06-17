@@ -31,6 +31,7 @@ LLIST * configured_readers = NULL; //list of all (configured) readers
 uint16_t  len4caid[256];    // table for guessing caid (by len)
 char  cs_confdir[128]=CS_CONFDIR;
 int32_t cs_dblevel=0;   // Debug Level
+int32_t thread_pipe[2];
 #ifdef WEBIF
 int8_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)restart fork, restart by webif, 2=like=1, but also restart on segfaults
 #endif
@@ -124,7 +125,7 @@ void cs_add_lastresponsetime(struct s_client *cl, int32_t ltime){
 	} else {
 		cl->cwlastresptimes_last++;
 	}
-	cl->cwlastresptimes[cl->cwlastresptimes_last] = ltime;
+	cl->cwlastresptimes[cl->cwlastresptimes_last] = ltime > 9999 ? 9999 : ltime;
 }
 
 /*****************************************************************************
@@ -1531,9 +1532,15 @@ static void store_cw_in_cache(ECM_REQUEST *er, uint64_t grp, int32_t rc)
 	if (cfg.double_check && er->checked < 2)
 		return;
 #endif
-	struct s_ecm *ecm = er->ecmcacheptr;
-	if (!ecm || rc >= ecm->rc) return;
+	// Check if ecm is outdated and ecmcacheptr thus is invalid (freed from ecmcache),
+	// We don't calculate with cfg.ctimeout as this may be changed by WebIf and ECMs older than CS_CACHE_TIMEOUT=60s are useless anyway
+	struct timeb tpe;
+	cs_ftime(&tpe);
+	if(tpe.time - er->tps.time - CS_CACHE_TIMEOUT >= 0) return;
 
+	struct s_ecm *ecm = er->ecmcacheptr;
+	if (!ecm || rc >= ecm->rc) return;	
+ 
 	//cs_log("store ecm from reader %d", er->selected_reader);
 	memcpy(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE);
 	memcpy(ecm->cw, er->cw, 16);
@@ -2945,6 +2952,8 @@ void * work_thread(void *ptr) {
 
 		cl->thread_active=0;
 		pthread_mutex_unlock(&cl->thread_lock);
+		if (thread_pipe[1])
+			write(thread_pipe[1], mbuf, 1); //wakeup client check
 
 		break;
 	}
@@ -3000,15 +3009,23 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int len) {
 int32_t accept_connection(int32_t i, int32_t j);
 
 void * client_check(void) {
-	int rc, pfdcount = 0;
+	int32_t i, k, j, rc, pfdcount = 0;
 	struct s_client *cl;
 	struct s_reader *rdr;
 	struct pollfd pfd[1024];
 	struct s_client *cl_list[1024];
-	int i,k,j;
+	char buf[10];
+
+	if (pipe(thread_pipe) == -1) {
+		printf("cannot create pipe, errno=%d\n", errno);
+		exit(1);
+	}
 
 	while (!exit_oscam) {
 		pfdcount = 0;
+
+		pfd[pfdcount].fd = thread_pipe[0];
+		pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
 
 		for (cl=first_client->next; cl ; cl=cl->next) {
 			if (cl->init_done && !cl->kill && cl->pfd && cl->typ=='c') {
@@ -3045,7 +3062,7 @@ void * client_check(void) {
 			}
 		}
 
-		rc = poll(pfd, pfdcount, 500);
+		rc = poll(pfd, pfdcount, 5000);
 
 		if (rc<1)
 			continue;
@@ -3053,6 +3070,12 @@ void * client_check(void) {
 		for (i=0; i<pfdcount; i++) {
 			//clients
 			cl = cl_list[i];
+
+			if (pfd[i].fd == thread_pipe[0] && (pfd[i].revents & (POLLIN | POLLPRI))) {
+				// a thread ended and cl->pfd should be added to pollfd list again (thread_active==0)
+				read(thread_pipe[0], buf, sizeof(buf));
+				continue;
+			}
 
 			//clients
 			// message on an open tcp connection

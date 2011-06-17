@@ -76,8 +76,11 @@ WINSCARDDATA extern const SCARD_IO_REQUEST
 //      The following services are used to manage user and terminal contexts for
 //      Smart Cards.
 //
-typedef SCARDHANDLE (WINAPI *LPOCNCONNPROCA) (__in SCARDCONTEXT, __in LPSTR, __in LPSTR, __in PVOID);
-typedef SCARDHANDLE (WINAPI *LPOCNCONNPROCW) (__in SCARDCONTEXT, __in LPWSTR, __in LPWSTR, __in PVOID);
+typedef ULONG_PTR SCARDCONTEXT; 
+typedef SCARDCONTEXT *PSCARDCONTEXT, *LPSCARDCONTEXT; 
+	 	 
+typedef ULONG_PTR SCARDHANDLE; 
+typedef SCARDHANDLE *PSCARDHANDLE, *LPSCARDHANDLE;
 
 
 #define SCARD_AUTOALLOCATE (DWORD)(-1)
@@ -843,6 +846,8 @@ SCardSetAttrib(
 #define SCERR_NOCARDNAME        0x4000
 #define SCERR_NOGUIDS           0x8000
 
+typedef SCARDHANDLE (WINAPI *LPOCNCONNPROCA) (__in SCARDCONTEXT, __in LPSTR, __in LPSTR, __in PVOID); 
+typedef SCARDHANDLE (WINAPI *LPOCNCONNPROCW) (__in SCARDCONTEXT, __in LPWSTR, __in LPWSTR, __in PVOID); 
 #ifdef UNICODE
 #define LPOCNCONNPROC  LPOCNCONNPROCW
 #else
