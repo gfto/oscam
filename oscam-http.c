@@ -3103,6 +3103,9 @@ static char *send_oscam_image(struct templatevars *vars, FILE *f, struct uripara
 	return "0";
 }
 
+static char *send_oscam_graph(struct templatevars *vars, struct uriparams *params) {
+	return tpl_getTpl(vars, "GRAPH");
+}
 static int8_t check_request(char *result, int32_t read){
 	if(read < 50) return 0;
 	result[read]='\0';
@@ -3303,7 +3306,8 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 			"/oscam.js",
 			"/oscamapi.html",
 			"/image",
-			"/favicon.ico"};
+			"/favicon.ico",
+			"/graph.svg"};
 	
 		int32_t pagescnt = sizeof(pages)/sizeof(char *); // Calculate the amount of items in array
 		int32_t i, bufsize, len, pgidx = -1;
@@ -3483,6 +3487,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 				case 18: result = send_oscam_api(vars, f, &params, keepalive); break;
 				case 19: result = send_oscam_image(vars, f, &params, NULL, modifiedheader, etagheader); break;
 				case 20: result = send_oscam_image(vars, f, &params, "ICMAI", modifiedheader, etagheader); break;
+				case 21: result = send_oscam_graph(vars, &params); break;
 				default: result = send_oscam_status(vars, &params, 0); break;
 			}
 			if(pgidx != 19 && pgidx != 20) cs_unlock(&http_lock);
@@ -3490,7 +3495,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 			if(result == NULL || !strcmp(result, "0") || strlen(result) == 0) send_error500(f);
 			else if (strcmp(result, "1")) {
 				//it doesn't make sense to check for modified etagheader here as standard template has timestamp in output and so site changes on every request
-				if (pgidx == 18)
+				if (pgidx == 18 || pgidx == 21)
 					send_headers(f, 200, "OK", NULL, "text/xml", 0, strlen(result), NULL, 0);
 				else
 					send_headers(f, 200, "OK", NULL, "text/html", 0, strlen(result), NULL, 0);
