@@ -43,7 +43,7 @@ static void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uc
   ECM_REQUEST *ecm;
   struct s_client *cl = reader->client;
   
-  if(!cl) return;
+
   
   for (i=0; i<CS_MAXPENDING; i++)
   {
@@ -732,7 +732,9 @@ static void reader_do_pipe(struct s_reader * reader)
   uchar *ptr;
   struct s_client *cl = reader->client;
   if(cl){
-  	int32_t pipeCmd = read_from_pipe(cl, &ptr);
+        int32_t fd_m2c_c = cl->fd_m2c_c;
+        if(fd_m2c_c){    
+  	int32_t pipeCmd = read_from_pipe(fd_m2c_c, &ptr); 
 
 	  switch(pipeCmd)
 	  {
@@ -754,6 +756,7 @@ static void reader_do_pipe(struct s_reader * reader)
 	  }
 	  if (ptr) free(ptr);
 	}
+        }
 }
 
 void reader_do_idle(struct s_reader * reader)

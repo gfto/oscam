@@ -551,7 +551,7 @@ void cleanup_thread(void *var)
 					else
 						break;
 				}
-				int32_t pipeCmd = read_from_pipe(cl, &ptr);
+				int32_t pipeCmd = read_from_pipe(cl->fd_m2c_c, &ptr);
 				if (ptr) free(ptr);
 				if (pipeCmd==PIP_ID_ERR || pipeCmd==PIP_ID_NUL)
 					break;
@@ -1695,23 +1695,18 @@ int32_t write_to_pipe(struct s_client *client, int32_t id, uchar *data, int32_t 
  * read all kind of data from pipe specified by fd
  * special-flag redir: if set AND data is ECM: this will redirected to appr. client
  */
-int32_t read_from_pipe(struct s_client *client, uchar **data)
+int32_t read_from_pipe(int32_t fd, uchar **data)
 {
-	if(!client)
-		return PIP_ID_ERR;
-	int32_t n, rc, fd = client->fd_m2c_c;
+int32_t rc; 
+	
 	intptr_t hdr=0;
 	uchar buf[3+sizeof(void*)];
 	memset(buf, 0, sizeof(buf));
 
 	*data=(uchar *)0;
 	rc=PIP_ID_NUL;
+if (read(fd, buf, sizeof(buf))==sizeof(buf)) { 
 
-	cs_lock(&client->pipelock);
-	n=read(fd, buf, sizeof(buf));
-	if(client->pipecnt >= n) client->pipecnt -= n;
-	cs_unlock(&client->pipelock);
-	if (n==sizeof(buf)) {
 		memcpy(&hdr, buf+3, sizeof(void*));
 	} else {
 		cs_log("WARNING: pipe header to small !");
@@ -2956,7 +2951,7 @@ int32_t process_input(uchar *buf, int32_t l, int32_t timeout)
 int32_t process_client_pipe(struct s_client *cl, uchar *buf, int32_t l) {
 	uchar *ptr;
 	uint16_t n;
-	int32_t pipeCmd = read_from_pipe(cl, &ptr);
+	int32_t pipeCmd = read_from_pipe(cl->fd_m2c_c, &ptr);
 
 	switch(pipeCmd) {
 		case PIP_ID_ECM:
