@@ -43,6 +43,9 @@ pthread_mutex_t system_lock;
 pthread_mutex_t clientlist_lock;
 pthread_mutex_t readerlist_lock;
 pthread_mutex_t fakeuser_lock;
+#if defined(LIBUSB)
+pthread_mutex_t sr_lock;
+#endif
 pthread_key_t getclient;
 
 //Cache for  ecms, cws and rcs:
@@ -722,7 +725,7 @@ static void init_signal()
 
 void cs_exit(int32_t sig)
 {
-	char targetfile[256];
+
 
 	set_signal_handler(SIGCHLD, 1, SIG_IGN);
 	set_signal_handler(SIGHUP , 1, SIG_IGN);
@@ -759,6 +762,7 @@ void cs_exit(int32_t sig)
 #endif
 
 #ifndef OS_CYGWIN32
+	char targetfile[256];
 		snprintf(targetfile, 255, "%s%s", get_tmp_dir(), "/oscam.version");
 		if (unlink(targetfile) < 0)
 			cs_log("cannot remove oscam version file %s (errno=%d %s)", targetfile, errno, strerror(errno));
@@ -935,6 +939,9 @@ static void init_first_client()
   if(pthread_mutex_init(&clientlist_lock, NULL)) ok = 0;
   if(pthread_mutex_init(&readerlist_lock, NULL)) ok = 0;
   if(pthread_mutex_init(&fakeuser_lock, NULL)) ok = 0;
+#if defined(LIBUSB)
+  if(pthread_mutex_init(&sr_lock, NULL)) ok = 0;
+#endif
   if(pthread_mutex_init(&sc8in1_lock, NULL)) ok = 0;
   if(!ok){
   	fprintf(stderr, "Could not init locks, exiting...");
@@ -2725,8 +2732,7 @@ int32_t process_input(uchar *buf, int32_t l, int32_t timeout)
 
 		for (i=0;i<pfdcount && p_rc > 0;i++) {
 			if (pfd[i].revents & POLLHUP){	// POLLHUP is only valid in revents so it doesn't need to be set above in events
-				rc=(-9);
-				break;
+				return(0);
 			}
 			if (!(pfd[i].revents & (POLLIN | POLLPRI)))
 				continue;
@@ -3072,8 +3078,9 @@ void * client_check(void) {
 
 			if (rdr && rdr->client && rdr->client->init_done) {
 				if (rdr->client->pfd && pfd[i].fd == rdr->client->pfd && (pfd[i].revents & POLLHUP)) {
-					// connection closed, just mark as not initialized but don't kill proxy
-					rdr->client->init_done=0;
+					// connection closed
+					if (rdr->ph.type==MOD_CONN_TCP)
+						network_tcp_connection_close(rdr->client, rdr->client->udp_fd);
 				}
 				if (rdr->client->pfd && pfd[i].fd == rdr->client->pfd && (pfd[i].revents & (POLLIN | POLLPRI))) {
 					add_job(rdr->client, ACTION_READER_REMOTE, NULL, 0);

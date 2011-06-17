@@ -263,27 +263,21 @@ char *remote_txt(void)
     return("remote server");
 }
 
-char *trim(txt)
-char *txt;
+char *trim(char *txt)
 {
-  register int32_t l;
-  register char *p1, *p2;
+	int32_t l;
+	char *p1, *p2;
 
-  if (*txt==' ')
-  {
-    for (p1=p2=txt;
-        (*p1==' ') || (*p1=='\t') || (*p1=='\n') || (*p1=='\r');
-         p1++);
-    while (*p1)
-      *p2++=*p1++;
-    *p2='\0';
-  }
-  if ((l=strlen(txt))>0)
-    for (p1=txt+l-1;
-        (*p1==' ') || (*p1=='\t') || (*p1=='\n') || (*p1=='\r');
-         *p1--='\0');
+	if (*txt==' ') {
+		for (p1=p2=txt; (*p1==' ') || (*p1=='\t') || (*p1=='\n') || (*p1=='\r'); p1++);
+		while (*p1)
+			*p2++=*p1++;
+		*p2='\0';
+	}
+	if ((l=strlen(txt))>0)
+		for (p1=txt+l-1; ((*p1==' ') || (*p1=='\t') || (*p1=='\n') || (*p1=='\r')) && l>0; *p1--='\0', l--);
 
-  return(txt);
+	return(txt);
 }
 
 
@@ -1098,18 +1092,18 @@ int32_t cs_lock(pthread_mutex_t *mutex){
 	struct s_client *cl = cs_preparelock(cur_client(), mutex, file, line);
 	while((result = pthread_mutex_trylock(mutex)) == EBUSY && i < 1000){
 		pthread_testcancel();
-		cs_sleepms(fast_rnd()%20);
+		cs_sleepms(fast_rnd()%5+3);
 		++i;
 	}
 	if(result == 0 && cl)
 		cl->mutexstore_used++;
 	else if(result == EBUSY)
-		cs_log("Couldn't obtain lock within 5s in: %s, line %u.", file, line);
+		cs_log("Couldn't obtain lock within about 5s in: %s, line %u.", file, line);
 #else
 	struct s_client *cl = cs_preparelock(cur_client(), mutex);
 	while((result = pthread_mutex_trylock(mutex)) == EBUSY){
 		pthread_testcancel();
-		cs_sleepms(fast_rnd()%5);
+		cs_sleepms(fast_rnd()%5+3);
 	}
 	if(result == 0 && cl)
 		cl->mutexstore_used++;

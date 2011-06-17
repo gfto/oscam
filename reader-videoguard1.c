@@ -11,25 +11,26 @@ static int32_t vg1_do_cmd(struct s_reader *reader, const unsigned char *ins, con
   unsigned char len = 0;
   len = ins2[4];
 
-  unsigned char tmp[264];
-  if (!rxbuff) {
-    rxbuff = tmp;
-  }
+  
 
   if (txbuff == NULL) {
     if (!write_cmd_vg(ins2, NULL) || !status_ok(cta_res + len)) {
       return -1;
     }
-    memcpy(rxbuff, ins2, 5);
-    memcpy(rxbuff + 5, cta_res, len);
-    memcpy(rxbuff + 5 + len, cta_res + len, 2);
+    if(rxbuff != NULL){
+	    memcpy(rxbuff, ins2, 5);
+	    memcpy(rxbuff + 5, cta_res, len);
+	    memcpy(rxbuff + 5 + len, cta_res + len, 2);
+	  }
   } else {
     if (!write_cmd_vg(ins2, (uchar *) txbuff) || !status_ok(cta_res)) {
       return -2;
     }
-    memcpy(rxbuff, ins2, 5);
-    memcpy(rxbuff + 5, txbuff, len);
-    memcpy(rxbuff + 5 + len, cta_res, 2);
+    if(rxbuff != NULL){
+	    memcpy(rxbuff, ins2, 5);
+	    memcpy(rxbuff + 5, txbuff, len);
+	    memcpy(rxbuff + 5 + len, cta_res, 2);
+	  }
   }
 
   return len;

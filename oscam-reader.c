@@ -43,7 +43,7 @@ void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw
   ECM_REQUEST *ecm;
   struct s_client *cl = reader->client;
   
-  if(!cl) return;
+if(!cl) return; 
   
   for (i=0; i<CS_MAXPENDING; i++)
   {
@@ -213,16 +213,6 @@ void network_tcp_connection_close(struct s_client *cl, int32_t fd)
 	   cl->ecmtask[i].idx = 0;
 	   cl->ecmtask[i].rc = 0;
 	}
-    }
-
-    if(reader) {
-        reader->ncd_msgid=0;
-        reader->last_s=reader->last_g=0;
-        
-        if (reader->ph.c_init(cl)) {
-            cs_debug_mask(D_READER, "network_tcp_connection_close() exit(1);");
-            cs_exit(1);
-        }
     }
   }
 }
@@ -553,10 +543,8 @@ void reader_do_idle(struct s_reader * reader)
 		reader->ph.c_idle();
 	else {
 		if (reader->client && reader->client->pfd) {
-			int time_diff=0;
-			cs_debug_mask(D_READER, "%s inactive_timeout (%d), close connection (fd=%d)", reader->ph.desc, time_diff, reader->client->pfd);
+			cs_debug_mask(D_READER, "%s inactive_timeout, close connection (fd=%d)", reader->ph.desc, reader->client->pfd);
 			network_tcp_connection_close(reader->client, reader->client->pfd);
-			reader->client->init_done=0;
 		}
 	}
 }

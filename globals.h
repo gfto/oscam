@@ -1344,6 +1344,9 @@ extern struct s_module ph[CS_MAX_MOD];
 extern struct s_cardsystem cardsystem[CS_MAX_MOD];
 extern struct s_cardreader cardreader[CS_MAX_MOD];
 extern pthread_mutex_t gethostbyname_lock;
+#if defined(LIBUSB)
+extern pthread_mutex_t sr_lock;
+#endif
 
 extern pid_t server_pid; // PID of server - set while startup
 

@@ -828,7 +828,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##TPLHEADER##\
 ##TPLMENU##\
 	<BR><BR>\n\
-	<TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD></TR></TABLE><BR>\
+	<TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD><TD CLASS=\"configmenu\"><A HREF=\"graph.svg\">Show Graphs</A></TD></TR></TABLE><BR>\
 	<form action=\"readerconfig.html\" method=\"get\">\n\
 		<TABLE CLASS=\"readers\">\n\
 			<TR>\n\
@@ -1761,6 +1761,197 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	<br><br><b>OSCam execute script: ##SCRIPTNAME## --> Status: ##SCRIPTRESULT## --> Returncode: ##CODE##</b><br>\n\
 ##TPLFOOTER##"
 
+#define TPLGRAPH "\
+<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n\
+<svg xml:space='preserve' xmlns='http://www.w3.org/2000/svg'\n\
+	xmlns:xlink='http://www.w3.org/1999/xlink'\n\
+	width='100%' height='100%'\n\
+	viewBox='0 0 600 300'\n\
+	preserveAspectRatio='none'\n\
+	onload='init(evt)'\n\
+>\n\
+<g id='graph'> \n\
+	<rect id='bg' x1='0' y1='0' width='600' height='300' fill='white' /> \n\
+ 	<text id='error' x='300' y='125' text-anchor='middle' visibility='hidden' fill='red'>Error occured!</text> \n\
+ 	<path id='grid' d='M 2 75 L 600 75 M 2 150 L 600 150 M 2 225 L 600 225' stroke='gray' stroke-opacity='0.5' /> \n\
+  <text id='grid_txt3' x='600' y='223' fill='gray' text-anchor='end'>--</text> \n\
+	<text id='grid_txt2' x='600' y='148' fill='gray' text-anchor='end'>--</text> \n\
+	<text id='grid_txt1' x='600' y='73' fill='gray' text-anchor='end'>--</text> \n\
+</g>\n\
+<script type='text/ecmascript'>\n\
+<![CDATA[\n\
+if (typeof getURL == 'undefined') {\n\
+	getURL = function(url, callback) {\n\
+ 		try {\n\
+			if (typeof callback.operationComplete == 'function') {\n\
+				callback = callback.operationComplete;\n\
+			}\n\
+		} catch (e) {}\n\
+		if (typeof callback != 'function') {\n\
+			throw 'No callback function for getURL';\n\
+		}\n\
+		var http_request = null;\n\
+		if (typeof XMLHttpRequest != 'undefined') {\n\
+			http_request = new XMLHttpRequest();\n\
+		} else if (typeof ActiveXObject != 'undefined') {\n\
+			try {\n\
+				http_request = new ActiveXObject('Msxml2.XMLHTTP');\n\
+			} catch (e) {\n\
+				try {\n\
+					http_request = new ActiveXObject('Microsoft.XMLHTTP');\n\
+				} catch (e) {}\n\
+			}\n\
+		}\n\
+		if (!http_request) {\n\
+			throw 'Both getURL and XMLHttpRequest are undefined';\n\
+		}\n\
+		http_request.onreadystatechange = function() {\n\
+			if (http_request.readyState == 4) {\n\
+				callback( \n\
+					{\n\
+						success : true,\n\
+						content : http_request.responseXML,\n\
+						contentType : http_request.getResponseHeader('Content-Type')\n\
+					}\n\
+				);\n\
+			}\n\
+		}\n\
+		http_request.open('GET', url, true);\n\
+		http_request.send(null);\n\
+	}\n\
+}\n\
+var SVGDoc = null;\n\
+var svgNS = 'http://www.w3.org/2000/svg';\n\
+var max = 0;\n\
+var plots = new Array();\n\
+var Color = new Array();\n\
+Color[0]='blue';\n\
+Color[1]='green';\n\
+Color[2]='Orange';\n\
+Color[3]='brown';\n\
+Color[4]='Fuchsia';\n\
+Color[5]='Red';\n\
+Color[6]='yellow';\n\
+var max_num_points = 120;\n\
+var step = 600 / max_num_points ;\n\
+var fetch_url='';\n\
+function init(evt) {\n\
+	fetch_url=location.search.split('?');\n\
+	fetch_url='oscamapi.html?part=status&' + fetch_url[fetch_url.length-1];\n\
+	SVGDoc = evt.target.ownerDocument;\n\
+	fetch_data();\n\
+	setInterval('fetch_data()', 1000);\n\
+}\n\
+function fetch_data() {\n\
+	if (fetch_url) {\n\
+		getURL(fetch_url, plot_data);\n\
+	} else {\n\
+		handle_error();\n\
+	}\n\
+}\n\
+function plot_data(obj) {\n\
+	if (!obj.success) return handle_error();\n\
+	if (!obj.content) return handle_error();\n\
+	var readers = obj.content.getElementsByTagName('oscam')[0].getElementsByTagName('status')[0].getElementsByTagName('client');\n\
+	i=0;\n\
+	max=0;\n\
+	rdx=0;\n\
+	while (rdx < readers.length) {\n\
+		var type = readers[rdx].getAttribute('type');\n\
+		if ( type=='r' || type=='p' ) {\n\
+			if ( plots[i] == null ) {\n\
+				plots[i] = new Array();\n\
+				plots[i]['data'] = new Array();\n\
+			}\n\
+			plots[i]['name'] = readers[rdx].getAttribute('name');\n\
+			if ( plots[i]['name'].length == 0 ) {\n\
+				plots[i]['name'] = readers[rdx].getElementsByTagName('connection')[0].getAttribute('ip');\n\
+			}\n\
+			plots[i]['ecmtime'] = parseInt( readers[rdx].getElementsByTagName('request')[0].getAttribute('ecmtime') );\n\
+			if (!isNumber(plots[i]['ecmtime'])) plots[i]['ecmtime'] = 0;\n\
+			plots[i]['idle'] = readers[rdx].getElementsByTagName('times')[0].getAttribute('idle');\n\
+			if ( plots[i]['data'].length==max_num_points ) {\n\
+				var ii = 0;\n\
+				while (ii < max_num_points) {\n\
+					plots[i]['data'][ii] = plots[i]['data'][ii+1];\n\
+					ii++;\n\
+				}\n\
+				plots[i]['data'].length--;\n\
+			}\n\
+			plots[i]['data'][plots[i]['data'].length] = plots[i]['ecmtime'];\n\
+			if ( SVGDoc.getElementById('graph_txt_'+i) == null ) {\n\
+				var newText = document.createElementNS(svgNS,'text');\n\
+				newText.setAttributeNS(null,'x',10);\n\
+				newText.setAttributeNS(null,'y',15+(15*i));\n\
+				newText.setAttributeNS(null,'fill',Color[i]);\n\
+				newText.setAttributeNS(null,'id','graph_txt_'+i);\n\
+				var textNode = document.createTextNode(plots[i]['name']);\n\
+	      newText.appendChild(textNode);\n\
+				document.getElementById('graph').appendChild(newText);\n\
+			}\n\
+			SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':' + plots[i]['ecmtime'] + 'ms';\n\
+			if ( SVGDoc.getElementById('graph_path_'+i) == null ) {\n\
+				var newPath = document.createElementNS(svgNS,'path');\n\
+				newPath.setAttributeNS(null,'id','graph_path_'+i);\n\
+				newPath.setAttributeNS(null,'fill','none');\n\
+				newPath.setAttributeNS(null,'stroke',Color[i]);\n\
+				newPath.setAttributeNS(null,'stroke-width','1');\n\
+				newPath.setAttributeNS(null,'stroke-opacity','0.8');\n\
+				document.getElementById('graph').appendChild(newPath);\n\
+			}\n\
+			a=0;\n\
+			var plot = plots[i]['data'];\n\
+			while (a < plot.length) {\n\
+				if (plot[a] > max) max = plot[a];\n\
+				a++;\n\
+			}\n\
+			i++;\n\
+	 	}\n\
+	 	rdx++;\n\
+	}\n\
+	var rmax=makeRoundMax(max);\n\
+ 	var scale = 298 / rmax;\n\
+	i=0;\n\
+	while (i < plots.length) {\n\
+ 		var plot = plots[i]['data'];\n\
+		var path = 'M 0 ' + (298 - (plot[0] * scale));\n\
+		for (b = 1; b < plot.length; b++) {\n\
+			var x = step * b;\n\
+			var y_in = 298 - (plot[b] * scale);\n\
+			path += ' L' + x + ' ' + y_in;\n\
+		}\n\
+ 		SVGDoc.getElementById('graph_path_'+i).setAttributeNS(null, 'd', path);\n\
+		i++;\n\
+	}\n\
+ 	SVGDoc.getElementById('grid_txt1').firstChild.data = 3*rmax/4 + 'ms'\n\
+	SVGDoc.getElementById('grid_txt2').firstChild.data = 2*rmax/4 + 'ms';\n\
+	SVGDoc.getElementById('grid_txt3').firstChild.data = rmax/4 + 'ms';\n\
+	SVGDoc.getElementById('error').setAttributeNS(null, 'visibility', 'hidden');\n\
+}\n\
+function makeRoundMax(max) {\n\
+		rmax = 1000;\n\
+		i = 0;\n\
+		while (max > rmax) {\n\
+			i++;\n\
+			if (i && (i % 4 == 0)) {\n\
+				rmax *= 1.25;\n\
+			} else {\n\
+				rmax *= 2;\n\
+			}\n\
+			if (i == 8) rmax *= 1.000;\n\
+		}\n\
+	return rmax;\n\
+}\n\
+function handle_error() {\n\
+	SVGDoc.getElementById('error').setAttributeNS(null, 'visibility', 'visible');\n\
+}\n\
+function isNumber(a) {\n\
+	return typeof a == 'number' && isFinite(a);\n\
+}\n\
+]]>\
+</script>\
+</svg>"
+
 enum refreshtypes {REFR_ACCOUNTS, REFR_READERS, REFR_SERVER, REFR_ANTICASC, REFR_SERVICES};
 
 char *tpl[]={
@@ -1835,7 +2026,8 @@ char *tpl[]={
 	"SERVICEEDIT",
 	"PRESHUTDOWN",
 	"SHUTDOWN",
-	"SCRIPT"
+	"SCRIPT",
+	"GRAPH"
 #ifdef HAVE_DVBAPI
 	,"CONFIGDVBAPI"
 	,"CONFIGMENUDVBAPI"
@@ -1976,7 +2168,8 @@ char *tplmap[]={
 	TPLSERVICEEDIT,
 	TPLPRESHUTDOWN,
 	TPLSHUTDOWN,
-	TPLSCRIPT
+	TPLSCRIPT,
+	TPLGRAPH
 #ifdef HAVE_DVBAPI
 	,TPLCONFIGDVBAPI
 	,TPLCONFIGMENUDVBAPI
