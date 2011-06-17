@@ -125,7 +125,12 @@ a.tooltip1 {position: relative; text-decoration: none; cursor:default;color:red;
 a.tooltip  span {display: none; z-index:99;}\n\
 a.tooltip1 span {display: none; z-index:99;}\n\
 a:hover span{display: block;position: absolute;top: 2em; left: 1em; margin: 0px;padding: 10px;color: #335500;font-weight: normal;background: #ffffdd;text-align: left;border: 1px solid #666;}\n\
-H4.styleauthor:after {content:\"Eneen\";}"
+H4.styleauthor:after {content:\"Eneen\";}\n\
+rect.graph_bg {fill:white;}\n\
+text.graph_error {text-anchor:middle;fill:red}\n\
+path.graph_grid {stroke:gray;stroke-opacity:0.5}\n\
+text.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}\n\
+"
 
 #define JSCRIPT ""
 
@@ -1762,6 +1767,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLFOOTER##"
 
 #define TPLGRAPH "\
+<?xml-stylesheet type=\"text/css\" href=\"site.css\" ?>\n\
 <svg xml:space='preserve' xmlns='http://www.w3.org/2000/svg'\n\
 	xmlns:xlink='http://www.w3.org/1999/xlink'\n\
 	width='100%' height='100%'\n\
@@ -1770,12 +1776,12 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	onload='init(evt)'\n\
 >\n\
 <g id='graph'> \n\
-	<rect id='bg' x1='0' y1='0' width='600' height='300' fill='white' /> \n\
- 	<text id='error' x='300' y='125' text-anchor='middle' visibility='hidden' fill='red'>Error occured!</text> \n\
- 	<path id='grid' d='M 2 75 L 600 75 M 2 150 L 600 150 M 2 225 L 600 225' stroke='gray' stroke-opacity='0.5' /> \n\
-  <text id='grid_txt3' x='600' y='223' fill='gray' text-anchor='end'>--</text> \n\
-	<text id='grid_txt2' x='600' y='148' fill='gray' text-anchor='end'>--</text> \n\
-	<text id='grid_txt1' x='600' y='73' fill='gray' text-anchor='end'>--</text> \n\
+	<rect id='g' class='graph_bg' x1='0' y1='0' width='600' height='300' /> \n\
+	<text id='graph_error' class='graph_error' x='300' y='125' visibility='hidden'>Error occured!</text> \n\
+	<path id='graph_grid' class='graph_grid' d='M 2 75 L 600 75 M 2 150 L 600 150 M 2 225 L 600 225'/> \n\
+	<text id='graph_grid_txt3' class='graph_grid_txt' x='600' y='223'>-</text> \n\
+	<text id='graph_grid_txt2' class='graph_grid_txt' x='600' y='148'>-</text> \n\
+	<text id='graph_grid_txt1' class='graph_grid_txt' x='600' y='73'>-</text> \n\
 </g>\n\
 <script type='text/ecmascript'>\n\
 <![CDATA[\n\
@@ -1884,9 +1890,10 @@ function plot_data(obj) {\n\
 			if ( SVGDoc.getElementById('graph_txt_'+i) == null ) {\n\
 				var newText = document.createElementNS(svgNS,'text');\n\
 				newText.setAttributeNS(null,'x',10);\n\
-				newText.setAttributeNS(null,'y',15+(15*i));\n\
+				newText.setAttributeNS(null,'y',12+(12*i));\n\
 				newText.setAttributeNS(null,'fill',Color[i]);\n\
 				newText.setAttributeNS(null,'id','graph_txt_'+i);\n\
+				newText.setAttributeNS(null,'style','font-size:12px');\n\
 				var textNode = document.createTextNode(plots[i]['name']);\n\
 	      newText.appendChild(textNode);\n\
 				document.getElementById('graph').appendChild(newText);\n\
@@ -1925,10 +1932,10 @@ function plot_data(obj) {\n\
  		SVGDoc.getElementById('graph_path_'+i).setAttributeNS(null, 'd', path);\n\
 		i++;\n\
 	}\n\
- 	SVGDoc.getElementById('grid_txt1').firstChild.data = 3*rmax/4 + 'ms'\n\
-	SVGDoc.getElementById('grid_txt2').firstChild.data = 2*rmax/4 + 'ms';\n\
-	SVGDoc.getElementById('grid_txt3').firstChild.data = rmax/4 + 'ms';\n\
-	SVGDoc.getElementById('error').setAttributeNS(null, 'visibility', 'hidden');\n\
+ 	SVGDoc.getElementById('graph_grid_txt1').firstChild.data = 3*rmax/4 + 'ms'\n\
+	SVGDoc.getElementById('graph_grid_txt2').firstChild.data = 2*rmax/4 + 'ms';\n\
+	SVGDoc.getElementById('graph_grid_txt3').firstChild.data = rmax/4 + 'ms';\n\
+	SVGDoc.getElementById('graph_error').setAttributeNS(null, 'visibility', 'hidden');\n\
 }\n\
 function makeRoundMax(max) {\n\
 		rmax = 1000;\n\
@@ -1945,7 +1952,7 @@ function makeRoundMax(max) {\n\
 	return rmax;\n\
 }\n\
 function handle_error() {\n\
-	SVGDoc.getElementById('error').setAttributeNS(null, 'visibility', 'visible');\n\
+	SVGDoc.getElementById('graph_error').setAttributeNS(null, 'visibility', 'visible');\n\
 }\n\
 function isNumber(a) {\n\
 	return typeof a == 'number' && isFinite(a);\n\

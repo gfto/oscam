@@ -3021,20 +3021,20 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 		char *usr;
 		struct s_client *cl;
 		for (i=0, cl=first_client; cl ; cl=cl->next, i++) {
-			if ( (cl->typ=='p') || (cl->typ=='r') ) {
-				tpl_printf(vars, TPLADD, "CLIENTTYPE", "%c", cl->typ);
-				usr=username(cl); 
-				tpl_addVar(vars, TPLADD, "CLIENTUSER", xml_encode(vars, usr));
-				tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime?cl->cwlastresptime:1);
-				
-				
-				isec = now - cl->last; 
-				tpl_printf(vars, TPLADD, "CLIENTIDLESECS", "%d", isec);
- 				//load historical values from ringbuffer
-				//char *value = get_ecm_historystring(cl);
-				//tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIMEHIST", "%s", value);
-				//free_mk_t(value);
-				tpl_addVar(vars, TPLAPPEND, "APISTATUSBITS", tpl_getTpl(vars, "APISTATUSBIT"));
+			if (cl->wihidden != 1) {
+				if ( (cl->typ=='p') || (cl->typ=='r') ) {
+					tpl_printf(vars, TPLADD, "CLIENTTYPE", "%c", cl->typ);
+					usr=username(cl); 
+					tpl_addVar(vars, TPLADD, "CLIENTUSER", xml_encode(vars, usr));
+					tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime?cl->cwlastresptime:1);
+					isec = now - cl->last; 
+					tpl_printf(vars, TPLADD, "CLIENTIDLESECS", "%d", isec);
+	 				//load historical values from ringbuffer
+					//char *value = get_ecm_historystring(cl);
+					//tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIMEHIST", "%s", value);
+					//free_mk_t(value);
+					tpl_addVar(vars, TPLAPPEND, "APISTATUSBITS", tpl_getTpl(vars, "APISTATUSBIT"));
+				}
 			}
 		}
 		return tpl_getTpl(vars, "APISTATUS"); 
