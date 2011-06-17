@@ -124,7 +124,7 @@ void cs_add_lastresponsetime(struct s_client *cl, int32_t ltime){
 	} else {
 		cl->cwlastresptimes_last++;
 	}
-	cl->cwlastresptimes[cl->cwlastresptimes_last] = ltime;
+	cl->cwlastresptimes[cl->cwlastresptimes_last] = ltime > 9999 ? 9999 : ltime;
 }
 
 /*****************************************************************************

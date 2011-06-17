@@ -78,22 +78,23 @@ char *get_ecm_historystring(struct s_client *cl){
 	if(cl){
 		int32_t k, pos = 0, needed = 1;
 		char *value, *dot = "";
+		int32_t ptr = cl->cwlastresptimes_last;
 
 		needed = CS_ECM_RINGBUFFER_MAX * 5; //4 digits + delimiter
 		if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
 
-		if(cl->cwlastresptimes_last == CS_ECM_RINGBUFFER_MAX - 1){
+		if(ptr == CS_ECM_RINGBUFFER_MAX - 1){
 			for(k = 0; k < CS_ECM_RINGBUFFER_MAX ; k++){
 				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k]);
 				dot=",";
 			}
 		} else {
-			for(k = cl->cwlastresptimes_last + 1; k < CS_ECM_RINGBUFFER_MAX; k++){
+			for(k = ptr + 1; k < CS_ECM_RINGBUFFER_MAX; k++){
 				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k]);
 				dot=",";
 			}
 
-			for(k = 0; k < cl->cwlastresptimes_last + 1 ; k++){
+			for(k = 0; k < ptr + 1 ; k++){
 				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k]);
 				dot=",";
 			}
