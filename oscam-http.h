@@ -1837,7 +1837,7 @@ var step = 600 / max_num_points ;\n\
 var fetch_url='';\n\
 function init(evt) {\n\
 	fetch_url=location.search.split('?');\n\
-	fetch_url='oscamapi.html?part=status&' + fetch_url[fetch_url.length-1];\n\
+	fetch_url='oscamapi.html?part=ecmhistory&' + fetch_url[fetch_url.length-1];\n\
 	SVGDoc = evt.target.ownerDocument;\n\
 	fetch_data();\n\
 	setInterval('fetch_data()', 1000);\n\

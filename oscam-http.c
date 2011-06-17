@@ -1232,12 +1232,6 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 		cs_log("Reader %s stats resetted by WebIF from %s", rdr->label, cs_inet_ntoa(GET_IP()));
 	}
 
-	if (apicall && (strcmp(getParam(params, "ecmhistory"), "1") == 0)) {
-		char *value = get_ecm_historystring(rdr->client);
-		tpl_printf(vars, TPLADD, "ECMHISTORY", "%s", value);
-		free_mk_t(value);
-	}
-
 	if (!apicall){
 		tpl_addVar(vars, TPLADD, "LABEL", rdr->label);
 		tpl_addVar(vars, TPLADD, "ENCODEDLABEL", urlencode(vars, rdr->label));
@@ -3018,6 +3012,30 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 			tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "no reader selected");
 			return tpl_getTpl(vars, "APIERROR");
 		}
+	} else if (strcmp(getParam(params, "part"), "ecmhistory") == 0) {
+		int32_t i;
+		int32_t isec;
+		time_t now = time((time_t)0); 
+		char *usr;
+		struct s_client *cl;
+		for (i=0, cl=first_client; cl ; cl=cl->next, i++) {
+			if ( (cl->typ=='p') || (cl->typ=='r') ) {
+				tpl_printf(vars, TPLADD, "CLIENTTYPE", "%c", cl->typ);
+				usr=username(cl); 
+				tpl_addVar(vars, TPLADD, "CLIENTUSER", xml_encode(vars, usr));
+				tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime?cl->cwlastresptime:1);
+				
+				
+				isec = now - cl->last; 
+				tpl_printf(vars, TPLADD, "CLIENTIDLESECS", "%d", isec);
+ 				//load historical values from ringbuffer
+				//char *value = get_ecm_historystring(cl);
+				//tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIMEHIST", "%s", value);
+				//free_mk_t(value);
+				tpl_addVar(vars, TPLAPPEND, "APISTATUSBITS", tpl_getTpl(vars, "APISTATUSBIT"));
+			}
+		}
+		return tpl_getTpl(vars, "APISTATUS"); 
 #ifdef WITH_LB
 	} else if (strcmp(getParam(params, "part"), "readerstats") == 0) {
 		if (strcmp(getParam(params, "label"),"")) {
