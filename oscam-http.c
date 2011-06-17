@@ -2428,6 +2428,8 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 
 	if (loghist) {
 		char *t_loghistptr = loghistptr, *ptr1 = NULL;
+		if(loghistptr >= loghist + (cfg.loghistorysize) - 1)
+			t_loghistptr = loghist;
 		int32_t d = 0, l1 = strlen(t_loghistptr+1) + 2;
 		char *lastpos = loghist + (cfg.loghistorysize)-1;
 

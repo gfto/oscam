@@ -492,6 +492,8 @@ static void monitor_logsend(char *flag){
 	int32_t i, d = 0;
 	if (!strcmp(flag, "on") && loghist){
 		char *t_loghistptr = loghistptr, *ptr1 = NULL;
+		if(loghistptr >= loghist + (cfg.loghistorysize) - 1)
+			t_loghistptr = loghist;
 		int32_t l1 = strlen(t_loghistptr+1) + 2;
 		char *lastpos = loghist + (cfg.loghistorysize)-1;
 
