@@ -1762,7 +1762,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLFOOTER##"
 
 #define TPLGRAPH "\
-<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n\
 <svg xml:space='preserve' xmlns='http://www.w3.org/2000/svg'\n\
 	xmlns:xlink='http://www.w3.org/1999/xlink'\n\
 	width='100%' height='100%'\n\
@@ -1831,8 +1830,11 @@ Color[2]='Orange';\n\
 Color[3]='brown';\n\
 Color[4]='Fuchsia';\n\
 Color[5]='Red';\n\
-Color[6]='yellow';\n\
-var max_num_points = 120;\n\
+Color[6]='cyan';\n\
+Color[7]='yellow';\n\
+Color[8]='purple';\n\
+Color[9]='black';\n\
+var max_num_points = 240;\n\
 var step = 600 / max_num_points ;\n\
 var fetch_url='';\n\
 function init(evt) {\n\

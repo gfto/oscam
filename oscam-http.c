@@ -3517,8 +3517,10 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 			if(result == NULL || !strcmp(result, "0") || strlen(result) == 0) send_error500(f);
 			else if (strcmp(result, "1")) {
 				//it doesn't make sense to check for modified etagheader here as standard template has timestamp in output and so site changes on every request
-				if (pgidx == 18 || pgidx == 21)
+				if (pgidx == 18)
 					send_headers(f, 200, "OK", NULL, "text/xml", 0, strlen(result), NULL, 0);
+				else if (pgidx == 21)
+					send_headers(f, 200, "OK", NULL, "image/svg+xml", 0, strlen(result), NULL, 0);
 				else
 					send_headers(f, 200, "OK", NULL, "text/html", 0, strlen(result), NULL, 0);
 				webif_write(result, f);
