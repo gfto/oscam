@@ -114,11 +114,11 @@ void coolapi_read_data(int32_t fd, int32_t len)
 		cs_debug_mask(D_DVBAPI, "handle is NULL!");
 		return;
 	}
-
-	cs_lock(&dmx->mutex);
+	
 	pthread_setspecific(getclient, dvbapi_client);
+	pthread_mutex_lock(&dmx->mutex);	
 	ret = coolapi_read(dmx->fd, buffer, len);
-	cs_unlock(&dmx->mutex);
+	pthread_mutex_unlock(&dmx->mutex);
 	dvbapi_process_input(dmx->demux_id, dmx->filter_num, buffer, len);
 }
 
@@ -167,7 +167,7 @@ int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char 
 	memcpy(filter.filter, flt, 12);
 	memcpy(filter.mask, mask, 12);
 
-	cs_lock(&dmx->mutex);
+	pthread_mutex_lock(&dmx->mutex);
 	if(dmx->filter == NULL) {
 		dmx->filter_attached = false;
 		result = cnxt_dmx_open_filter(dmx->device, &dmx->filter);
@@ -195,7 +195,7 @@ int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char 
 	result = cnxt_dmx_channel_ctrl(dmx->channel, 2, 0);
 	check_error ("cnxt_dmx_channel_ctrl", result);
 	dmx->pid = pid;
-	cs_unlock(&dmx->mutex);
+	pthread_mutex_unlock(&dmx->mutex);
 	return 0;
 }
 
@@ -213,7 +213,7 @@ int32_t coolapi_remove_filter (int32_t fd, int32_t num)
 
         cs_debug_mask(D_DVBAPI, "fd %08x channel %x num %d pid %x opened %s", fd, (int) dmx->channel, num, dmx->pid, dmx->opened ? "yes" : "no");
 
-	cs_lock(&dmx->mutex);
+	pthread_mutex_lock(&dmx->mutex);
 	result = cnxt_dmx_channel_ctrl(dmx->channel, 0, 0);
 	check_error ("cnxt_dmx_channel_ctrl", result);
 
@@ -224,7 +224,7 @@ int32_t coolapi_remove_filter (int32_t fd, int32_t num)
 	check_error ("cnxt_cbuf_flush", result);
 	result = cnxt_cbuf_flush (dmx->buffer2, 0);
 	check_error ("cnxt_cbuf_flush", result);
-	cs_unlock(&dmx->mutex);
+	pthread_mutex_unlock(&dmx->mutex);
 
 	dmx->pid = -1;
 	return 0;
