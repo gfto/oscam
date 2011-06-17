@@ -551,7 +551,7 @@ void cleanup_thread(void *var)
 					else
 						break;
 				}
-				int32_t pipeCmd = read_from_pipe(cl->fd_m2c_c, &ptr);
+				int32_t pipeCmd = read_from_pipe(cl, &ptr);
 				if (ptr) free(ptr);
 				if (pipeCmd==PIP_ID_ERR || pipeCmd==PIP_ID_NUL)
 					break;
@@ -1630,9 +1630,15 @@ static void store_cw_in_cache(ECM_REQUEST *er, uint64_t grp, int32_t rc)
 	if (cfg.double_check && er->checked < 2)
 		return;
 #endif
-	struct s_ecm *ecm = er->ecmcacheptr;
-	if (!ecm || rc >= ecm->rc) return;
+	// Check if ecm is outdated and ecmcacheptr thus is invalid (freed from ecmcache),
+	// We don't calculate with cfg.ctimeout as this may be changed by WebIf and ECMs older than CS_CACHE_TIMEOUT=60s are useless anyway
+	struct timeb tpe;
+	cs_ftime(&tpe);
+	if(tpe.time - er->tps.time - CS_CACHE_TIMEOUT >= 0) return;
 
+	struct s_ecm *ecm = er->ecmcacheptr;
+	if (!ecm || rc >= ecm->rc) return;	
+ 
 	//cs_log("store ecm from reader %d", er->selected_reader);
 	memcpy(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE);
 	memcpy(ecm->cw, er->cw, 16);
@@ -1695,9 +1701,11 @@ int32_t write_to_pipe(struct s_client *client, int32_t id, uchar *data, int32_t 
  * read all kind of data from pipe specified by fd
  * special-flag redir: if set AND data is ECM: this will redirected to appr. client
  */
-int32_t read_from_pipe(int32_t fd, uchar **data)
+int32_t read_from_pipe(struct s_client *client, uchar **data)
 {
-int32_t rc; 
+	if(!client) 
+		return PIP_ID_ERR; 
+	int32_t n, rc, fd = client->fd_m2c_c; 
 	
 	intptr_t hdr=0;
 	uchar buf[3+sizeof(void*)];
@@ -1705,8 +1713,11 @@ int32_t rc;
 
 	*data=(uchar *)0;
 	rc=PIP_ID_NUL;
-if (read(fd, buf, sizeof(buf))==sizeof(buf)) { 
-
+	cs_lock(&client->pipelock); 
+	n=read(fd, buf, sizeof(buf)); 
+	if(client->pipecnt >= n) client->pipecnt -= n; 
+	cs_unlock(&client->pipelock); 
+	if (n==sizeof(buf)) {
 		memcpy(&hdr, buf+3, sizeof(void*));
 	} else {
 		cs_log("WARNING: pipe header to small !");
@@ -2951,7 +2962,7 @@ int32_t process_input(uchar *buf, int32_t l, int32_t timeout)
 int32_t process_client_pipe(struct s_client *cl, uchar *buf, int32_t l) {
 	uchar *ptr;
 	uint16_t n;
-	int32_t pipeCmd = read_from_pipe(cl->fd_m2c_c, &ptr);
+	int32_t pipeCmd = read_from_pipe(cl, &ptr);
 
 	switch(pipeCmd) {
 		case PIP_ID_ECM:
