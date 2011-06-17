@@ -43,7 +43,7 @@ static void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uc
   ECM_REQUEST *ecm;
   struct s_client *cl = reader->client;
   
-
+if(!cl) return; 
   
   for (i=0; i<CS_MAXPENDING; i++)
   {
