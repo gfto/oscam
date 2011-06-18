@@ -1113,6 +1113,7 @@ void share_updater()
 				
 				uint32_t cur_check = 0;
 				uint32_t cur_card_check = 0;
+				card_count = 0;
 				struct s_reader *rdr;
 				for (rdr=first_active_reader; rdr; rdr=rdr->next) {
 						if (rdr->client && rdr->client->cc) { //check cccam-cardlist:
