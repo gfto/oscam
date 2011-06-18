@@ -1735,7 +1735,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		}
 		if(latestactivity > 0){
 			isec = now - latestactivity;
-			chsec = cl->lastswitch ? now - cl->lastswitch : 0;
+			chsec = latestclient->lastswitch ? now - latestclient->lastswitch : 0;
 			if(isec < cfg.mon_hideclient_to) {
 				isactive = 1;
 				status = "<b>online</b>";
