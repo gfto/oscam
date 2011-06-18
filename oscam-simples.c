@@ -50,6 +50,16 @@ char *get_tmp_dir(){
   return cs_tmpdir;
 }
 
+/* Checks if the client still exists or has been cleaned. Returns 1 if it is ok, else 0. */
+int8_t check_client(struct s_client *client){
+	struct s_client *cl2;
+	for (cl2=first_client->next; cl2 != NULL; cl2=cl2->next)
+		if (client == cl2)
+			break;
+	if(cl2 != client || client->cleaned) return 0;
+	else return 1;
+}
+
 void aes_set_key(char *key)
 {
   AES_set_decrypt_key((const unsigned char *)key, 128, &cur_client()->aeskey_decrypt);

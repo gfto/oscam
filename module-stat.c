@@ -409,15 +409,17 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 		stat->fail_factor = 0;
 		
 		//If answering reader is a fallback reader, decrement answer time by fallback timeout:
-		struct s_reader *r;
-		LL_ITER it = ll_iter_create(er->matching_rdr);
-		int8_t is_fallback = 0;
-		while ((r=ll_iter_next(&it))) {
-			if (it.cur == er->fallback) is_fallback = 1;
-			if (r == rdr) {
-				if (is_fallback && (uint32_t)ecm_time >= cfg.ftimeout)
-					ecm_time -= cfg.ftimeout;
-				break;
+		if(er->client && check_client(er->client)){		// if client exited in the meantime, er->matching_rdr has been cleaned up!
+			struct s_reader *r;
+			LL_ITER it = ll_iter_create(er->matching_rdr);
+			int8_t is_fallback = 0;
+			while ((r=ll_iter_next(&it))) {
+				if (it.cur == er->fallback) is_fallback = 1;
+				if (r == rdr) {
+					if (is_fallback && (uint32_t)ecm_time >= cfg.ftimeout)
+						ecm_time -= cfg.ftimeout;
+					break;
+				}
 			}
 		}
 		

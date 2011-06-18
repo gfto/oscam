@@ -1660,7 +1660,7 @@ int32_t write_to_pipe(struct s_client *client, int32_t id, uchar *data, int32_t 
 	int32_t rc = PIP_ID_ERR, fd;
 	if (id < 0 || id > PIP_ID_MAX)
 		return rc;
-	if(!client)
+	if(!client || !check_client(client))
 		return rc;
 	fd = client->fd_m2c;
 	if (!fd)
@@ -1808,7 +1808,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
   }
 
   int32_t res=0;
-  if( er->client && er->client->fd_m2c ) {
+  if(er->client) {
     //We got an ECM (or nok). Now we should check for another clients waiting for it:
     res = write_to_pipe(er->client, PIP_ID_ECM, (uchar *) er, sizeof(ECM_REQUEST));
   }

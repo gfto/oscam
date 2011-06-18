@@ -284,6 +284,7 @@ extern int32_t is_connect_blocked(struct s_reader *rdr);
 extern struct s_client *cur_client(void);
 extern int32_t get_threadnum(struct s_client *client);
 extern char *get_tmp_dir();
+extern int8_t check_client(struct s_client *client);
 extern void aes_set_key(char *);
 extern void aes_encrypt_idx(struct s_client *, uchar *, int32_t);
 extern void aes_decrypt(uchar *, int32_t);
