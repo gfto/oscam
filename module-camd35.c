@@ -11,7 +11,7 @@
 //CMD08 - Stop sending requests to the server for current srvid,prvid,caid
 //CMD44 - MPCS/OScam internal error notification
 
-#define REQ_SIZE	328		// 256 + 20 + 0x34
+#define REQ_SIZE	584		// 512 + 20 + 0x34
 
 static int32_t camd35_send(uchar *buf)
 {
@@ -68,7 +68,7 @@ static int32_t camd35_auth_client(uchar *ucrc)
 
 static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 {
-  int32_t rc, s, rs, n=0;
+  int32_t rc, s, rs, n=0, buflen=0;
   unsigned char recrc[4];
   for (rc=rs=s=0; !rc; s++) switch(s)
   {
@@ -124,7 +124,17 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
       }
       //n=(buf[0]==3) ? n=0x34 : 0; this was original, but statement below seems more logical -- dingo35
       n=(buf[0]==3) ? 0x34 : 0;
-      n=boundary(4, n+20+buf[1]);
+
+      //Fix for ECM request size > 255
+      if(buf[0]==0)
+      {
+        buflen = (((buf[21]&0x0f)<< 8) | buf[22])+3;
+      }
+      else
+      {
+        buflen = buf[1];
+      }
+      n=boundary(4, n+20+buflen);
       if (n<rs)
       {
         cs_debug_mask(D_CLIENT, "ignoring %d bytes of garbage", rs-n);
@@ -133,7 +143,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
         if (n>rs) rc=-3;
       break;
     case 3:
-      if (crc32(0L, buf+20, buf[1])!=b2i(4, buf+4)) rc=-4;
+      if (crc32(0L, buf+20, buflen)!=b2i(4, buf+4)) rc=-4;
       if (!rc) rc=n;
       break;
   }
@@ -308,7 +318,9 @@ static void camd35_process_ecm(uchar *buf)
 	ECM_REQUEST *er;
 	if (!(er = get_ecmtask()))
 		return;
-	er->l = buf[1];
+//	er->l = buf[1];
+	//fix ECM LEN issue
+	er->l =(((buf[21]&0x0f)<< 8) | buf[22])+3;
 	memcpy(cur_client()->req + (er->cpti*REQ_SIZE), buf, 0x34 + 20 + er->l);	// save request
 	er->srvid = b2i(2, buf+ 8);
 	er->caid = b2i(2, buf+10);

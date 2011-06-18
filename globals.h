@@ -548,7 +548,7 @@ struct s_irdeto_quess
 
 typedef struct ecm_request_t
 {
-  uchar         ecm[256];
+  uchar         ecm[512];
   uchar         cw[16];
   uchar         ecmd5[CS_ECMSTORESIZE];
   int16_t         l;
