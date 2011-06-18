@@ -650,6 +650,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TH>Address</TH>\n\
 			<TH>Protocol</TH>\n\
 			<TH>Last Channel</TH>\n\
+			<TH>Time on Channel</TH>\n\
 			<TH>Idle</TH>\n\
 			<TH>OK</TH>\n\
 			<TH>NOK</TH>\n\
@@ -706,6 +707,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD>##CLIENTIP##</TD>\n\
 			<TD class=\"centered\"><SPAN TITLE=\"##CLIENTPROTOTITLE##\">##CLIENTPROTO##</SPAN></TD>\n\
 			<TD>##LASTCHANNEL##</TD>\n\
+			<TD>##CLIENTTIMEONCHANNEL##</TD>\n\
 			<TD class=\"centered\">##IDLESECS##</TD>\n\
 			<TD class=\"centered\">##CWOK##</TD>\n\
 			<TD class=\"centered\">##CWNOK##</TD>\n\

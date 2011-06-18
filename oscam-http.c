@@ -2316,6 +2316,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 					tpl_addVar(vars, TPLADD, "CLIENTSRVNAME", cl->last_srvidptr && cl->last_srvidptr->name ? xml_encode(vars, cl->last_srvidptr->name) : "");
 					tpl_addVar(vars, TPLADD, "CLIENTSRVTYPE", cl->last_srvidptr && cl->last_srvidptr->type ? xml_encode(vars, cl->last_srvidptr->type) : "");
 					tpl_addVar(vars, TPLADD, "CLIENTSRVDESCRIPTION", cl->last_srvidptr && cl->last_srvidptr->desc ? xml_encode(vars, cl->last_srvidptr->desc) : "");
+					tpl_addVar(vars, TPLADD, "CLIENTTIMEONCHANNEL", sec2timeformat(vars, now - cl->lastswitch));
 				} else {
 					tpl_addVar(vars, TPLADD, "CLIENTCAID", "0000");
 					tpl_addVar(vars, TPLADD, "CLIENTSRVID", "0000");
@@ -2324,6 +2325,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 					tpl_addVar(vars, TPLADD, "CLIENTSRVTYPE","");
 					tpl_addVar(vars, TPLADD, "CLIENTSRVDESCRIPTION","");
 					tpl_addVar(vars, TPLADD, "CLIENTLBVALUE","");
+					tpl_addVar(vars, TPLADD, "CLIENTTIMEONCHANNEL", "");
 
 				}
 
