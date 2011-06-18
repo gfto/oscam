@@ -614,7 +614,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
     </totals>\n\
 ##TPLAPIFOOTER##"
 
-#define TPLAPIUSERCONFIGLISTBIT "        <user name=\"##USER##\">\n\
+#define TPLAPIUSERCONFIGLISTBIT "        <user name=\"##USER##\" status=\"##STATUS##\" ip=\"##CLIENTIP##\" protocol=\"##CLIENTPROTO##\">\n\
             <stats>\n\
                 <cwok>##CWOK##</cwok>\n\
                 <cwnok>##CWNOK##</cwnok>\n\
