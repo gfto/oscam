@@ -2101,7 +2101,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			if ((er = get_ecmtask())) {
 				er->caid = b2i(2, buf + 4);
 				er->srvid = b2i(2, buf + 14);
-				er->l = buf[16];
+				er->l =(((buf[18]&0x0f)<< 8) | buf[19])+3;
 				memcpy(er->ecm, buf + 17, er->l);
 				er->prid = b2i(4, buf + 6);
 				cc->server_ecm_pending++;
