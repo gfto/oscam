@@ -3007,7 +3007,8 @@ struct s_auth *init_userdb()
 	//int32_t first=1;
 	FILE *fp;
 	char *value;
-	struct s_auth *account=NULL;
+	struct s_auth *account = NULL;
+	struct s_auth *probe = NULL;
 	char token[MAXLINESIZE];
 
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_user);
@@ -3064,6 +3065,17 @@ struct s_auth *init_userdb()
 			continue;
 
 		*value++ = '\0';
+
+		// check for duplicate useraccounts and make the name unique
+		if (!strcmp(trim(strtolower(token)), "user")) {
+			for(probe = authptr; probe; probe = probe->next){
+				if (!strcmp(probe->usr, trim(value))){
+					fprintf(stderr, "Warning: duplicate account '%s'\n", value);
+					strncat(value, "_x", sizeof(probe->usr) - strlen(value) - 1);
+				}
+			}
+		}
+
 		chk_account(trim(strtolower(token)), trim(value), account);
 	}
 
