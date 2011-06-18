@@ -1066,11 +1066,15 @@ void update_card_list() {
 
 int32_t cc_srv_report_cards(struct s_client *cl) {
 	struct cc_data *cc = cl->cc;
-	LL_ITER it = ll_iter_create(reported_carddatas);
+	int8_t i = 0;
+	LLIST *carddata = reported_carddatas;		// sending carddata sometimes takes longer and the llist may get cleaned while that
+	LL_ITER it = ll_iter_create(carddata);
 	struct cc_card *card;
-	while (cl->cc && cc->mode != CCCAM_MODE_SHUTDOWN && (card = ll_iter_next(&it))) {
-		send_card_to_clients(card, cl);
-	}
+	do{
+		while (cl->cc && cc->mode != CCCAM_MODE_SHUTDOWN && carddata == reported_carddatas && (card = ll_iter_next(&it))) {
+			send_card_to_clients(card, cl);
+		}
+	} while (carddata != reported_carddatas && i++ < 3);
 
 	return cl->cc && cc->mode != CCCAM_MODE_SHUTDOWN;
 }
