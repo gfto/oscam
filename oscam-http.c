@@ -1672,7 +1672,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	/* List accounts*/
 	char *status, *expired, *classname, *lastchan;
 	time_t now = time((time_t)0);
-	int32_t isec = 0;
+	int32_t isec = 0, chsec = 0;
 
 	char *filter = NULL;
 	int32_t clientcount = 0;
@@ -1684,6 +1684,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		//clear for next client
 		status = "offline"; lastchan = "&nbsp;", expired = ""; classname = "offline";
 		isec = 0;
+		chsec = 0;
 
 		if(account->expirationdate && account->expirationdate < time(NULL)) {
 			expired = " (expired)";
@@ -1734,6 +1735,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		}
 		if(latestactivity > 0){
 			isec = now - latestactivity;
+			chsec = now - cl->lastswitch;
 			if(isec < cfg.mon_hideclient_to) {
 				isactive = 1;
 				status = "<b>online</b>";
@@ -1760,6 +1762,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
 			tpl_printf(vars, TPLADDONCE, "CWLASTRESPONSET", "%d", lastresponsetm);
 			tpl_addVar(vars, TPLADDONCE, "IDLESECS", sec2timeformat(vars, isec));
+			tpl_addVar(vars, TPLADDONCE, "CLIENTTIMEONCHANNEL", sec2timeformat(vars, chsec));
 
 			if ((strcmp(proto,"newcamd") == 0) && (latestclient->typ == 'c'))
 				tpl_printf(vars, TPLADDONCE, "CLIENTPROTO","%s (%s)", proto, get_ncd_client_name(latestclient->ncd_client_id));
@@ -2081,7 +2084,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 static char *send_oscam_status(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
 	int32_t i;
 	char *usr;
-	int32_t lsec, isec, con, cau = 0;
+	int32_t lsec, isec, chsec, con, cau = 0;
 	time_t now = time((time_t)0);
 	struct tm lt;
 
@@ -2186,8 +2189,9 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 				}
 
 				shown = 1;
-				lsec=now-cl->login;
-				usr=username(cl);
+				lsec = now - cl->login;
+				chsec = now - cl->lastswitch;
+				usr = username(cl);
 
 				if ((cl->typ=='r') || (cl->typ=='p')) usr=cl->reader->label;
 
@@ -2316,7 +2320,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 					tpl_addVar(vars, TPLADD, "CLIENTSRVNAME", cl->last_srvidptr && cl->last_srvidptr->name ? xml_encode(vars, cl->last_srvidptr->name) : "");
 					tpl_addVar(vars, TPLADD, "CLIENTSRVTYPE", cl->last_srvidptr && cl->last_srvidptr->type ? xml_encode(vars, cl->last_srvidptr->type) : "");
 					tpl_addVar(vars, TPLADD, "CLIENTSRVDESCRIPTION", cl->last_srvidptr && cl->last_srvidptr->desc ? xml_encode(vars, cl->last_srvidptr->desc) : "");
-					tpl_addVar(vars, TPLADD, "CLIENTTIMEONCHANNEL", sec2timeformat(vars, now - cl->lastswitch));
+					tpl_addVar(vars, TPLADD, "CLIENTTIMEONCHANNEL", sec2timeformat(vars, chsec));
 				} else {
 					tpl_addVar(vars, TPLADD, "CLIENTCAID", "0000");
 					tpl_addVar(vars, TPLADD, "CLIENTSRVID", "0000");
