@@ -366,7 +366,7 @@ i386-pc-cygwin:
 		OS_LIBS="-lcrypto -lm" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_CYGWIN32 -DWITH_LIBCRYPTO -DCS_CONFDIR='\".\"' -I /tmp/include -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
+		DS_OPTS="-O2 -DOS_CYGWIN32 -DWITH_LIBCRYPTO -DCS_CONFDIR=${CS_CONFDIR} -I /tmp/include -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
