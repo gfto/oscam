@@ -15,16 +15,19 @@
 
 static int32_t camd35_send(uchar *buf)
 {
-	int32_t l;
+	int32_t l, buflen;
 	unsigned char rbuf[REQ_SIZE+15+4], *sbuf = rbuf + 4;
 	struct s_client *cl = cur_client();
 
 	if (!cl->udp_fd) return(-1);
-	l = 20 + buf[1] + (((buf[0] == 3) || (buf[0] == 4)) ? 0x34 : 0);
+
+	//Fix ECM len > 255
+	buflen = ((buf[0] == 0)? (((buf[21]&0x0f)<< 8) | buf[22])+3 : buf[1]);
+	l = 20 + (((buf[0] == 3) || (buf[0] == 4)) ? 0x34 : 0) + buflen;
 	memcpy(rbuf, cl->ucrc, 4);
 	memcpy(sbuf, buf, l);
 	memset(sbuf + l, 0xff, 15);	// set unused space to 0xff for newer camd3's
-	i2b_buf(4, crc32(0L, sbuf+20, sbuf[1]), sbuf + 4);
+	i2b_buf(4, crc32(0L, sbuf+20, buflen), sbuf + 4);
 	l = boundary(4, l);
 	cs_ddump_mask(D_CLIENT, sbuf, l, "send %d bytes to %s", l, remote_txt());
 	aes_encrypt(sbuf, l);
