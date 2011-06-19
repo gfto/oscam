@@ -1,4 +1,4 @@
-#include "globals.h"
+	#include "globals.h"
 
 #ifdef MODULE_CCCAM
 #include "module-cccam.h"
@@ -7,7 +7,7 @@
 
 static uint32_t cc_share_id = 0x64;
 static LLIST *reported_carddatas;
-static pthread_mutex_t cc_shares_lock;
+static CS_MUTEX_LOCK cc_shares_lock;
 
 static int32_t card_added_count = 0;
 static int32_t card_removed_count = 0;
@@ -16,13 +16,13 @@ static pthread_t share_updater_thread = 0;
 
 LLIST *get_and_lock_sharelist()
 {
-		pthread_mutex_lock(&cc_shares_lock);
+		cs_readlock(&cc_shares_lock);
 		return reported_carddatas;
 }
 
 void unlock_sharelist()
 {
-		pthread_mutex_unlock(&cc_shares_lock);
+		cs_readunlock(&cc_shares_lock);
 }
 
 void add_good_bad_sids(struct s_sidtab *ptr, SIDTABBITS sidtabno, struct cc_card *card) {
@@ -794,7 +794,7 @@ int32_t report_card(struct cc_card *card, LLIST *new_reported_carddatas)
  *				=4 CCCAM reader reshares only received cards
  */
 void update_card_list() {
-	pthread_mutex_lock(&cc_shares_lock);
+	cs_writelock(&cc_shares_lock);
     int32_t j, flt;
 
     LLIST *server_cards = ll_create();
@@ -1060,7 +1060,7 @@ void update_card_list() {
     //remove unsed, remaining cards:
     card_removed_count += cc_free_reported_carddata(reported_carddatas, new_reported_carddatas, TRUE);
     reported_carddatas = new_reported_carddatas;
-    pthread_mutex_unlock(&cc_shares_lock);
+    cs_writeunlock(&cc_shares_lock);
 
 	cs_debug_mask(D_TRACE, "reported/updated +%d/-%d/dup %d of %d cards to sharelist",
        		card_added_count, card_removed_count, card_dup_count, ll_count(reported_carddatas));
@@ -1068,7 +1068,7 @@ void update_card_list() {
 
 int32_t cc_srv_report_cards(struct s_client *cl) {
 
-	pthread_mutex_lock(&cc_shares_lock);
+	cs_readlock(&cc_shares_lock);
 	LLIST *carddata;
 	struct cc_data *cc = cl->cc;
 	struct cc_card *card;
@@ -1077,7 +1077,7 @@ int32_t cc_srv_report_cards(struct s_client *cl) {
 	while (cl->cc && cc->mode != CCCAM_MODE_SHUTDOWN && carddata == reported_carddatas && (card = ll_iter_next(&it))) {
 		send_card_to_clients(card, cl);
 	}
-	pthread_mutex_unlock(&cc_shares_lock);
+	cs_readunlock(&cc_shares_lock);
 	
 	return cl->cc && cc->mode != CCCAM_MODE_SHUTDOWN;
 }
@@ -1190,7 +1190,7 @@ void sort_cards_by_hop(LLIST *cards, int32_t reverse)
 void init_share() {
 
 		reported_carddatas = ll_create();
-		pthread_mutex_init(&cc_shares_lock, NULL);
+		cs_lock_create(&cc_shares_lock, 10, "cc_shares_lock");
 
 		share_updater_thread = 0;
 		pthread_t temp;
@@ -1215,8 +1215,6 @@ void done_share() {
 				share_updater_thread = 0;
 				
 				cc_free_reported_carddata(reported_carddatas, NULL, 0);
-				pthread_mutex_unlock(&cc_shares_lock);
-				pthread_mutex_destroy(&cc_shares_lock);
 		}
 }
 #endif

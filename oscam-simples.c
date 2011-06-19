@@ -1088,6 +1088,142 @@ struct s_client* cs_preparelock(struct s_client *cl, pthread_mutex_t *mutex){
 	return cl;
 }
 
+/**
+ * creates a lock
+ **/
+void cs_lock_create(struct cs_mutexlock *l, int timeout, char *name)
+{
+	memset(l, 0, sizeof(struct cs_mutexlock));
+	l->timeout = timeout;
+	l->name = name;
+	cs_debug_mask(D_TRACE, "lock %s created", name);
+}
+
+/**
+ * sets a writelock
+ * a writelock blocks all readlocks and writelocks
+ * if a readlock or a writelock is already set, we wait until its released
+ **/
+void cs_writelock(struct cs_mutexlock *l)
+{
+	do {
+		while (l->write_lock || l->read_lock) {  //Test for writelock+readlock
+			cs_sleepms(fast_rnd()%50);
+			
+			//timeout locks:
+			time_t t = time(NULL);
+			if (l->timeout && t > l->lastlock+l->timeout) { //10s=timeout lock
+				l->lastlock = t;
+				l->write_lock = 0;
+				l->read_lock = 0;
+				cs_log("writelock %s: timeout!", l->name);
+				break;			
+			}
+			cs_debug_mask(D_TRACE, "writelock %s: retry", l->name);
+		}
+		l->write_lock++; //atom function
+		if (l->write_lock > 1) {
+			l->write_lock--;
+			continue;
+		}
+		l->lastlock = time(NULL);
+		cs_debug_mask(D_TRACE, "writelock %s: got lock", l->name);
+		return;
+		
+	} while (1);
+}
+
+/**
+ * unsets a writelock
+ **/
+void cs_writeunlock(struct cs_mutexlock *l)
+{
+	if (l->write_lock > 0)
+		l->write_lock--;
+	cs_debug_mask(D_TRACE, "writelock %s released", l->name);
+}
+
+/**
+ * sets a readlock
+ * a readlock does NOT block other readlocks, but blocks writelocks
+ * if a writelock is already set, we wait until its realeased
+ **/
+void cs_readlock(struct cs_mutexlock *l)
+{
+	do {
+		while (l->write_lock) { 
+			cs_sleepms(fast_rnd()%50);
+			
+			//timeout locks:
+			time_t t = time(NULL);
+			if (l->timeout && t > l->lastlock+l->timeout) { //10s=timeout lock
+				l->lastlock = t;
+				l->write_lock = 0;
+				l->read_lock = 0;
+				cs_log("readlock %s: timeout!", l->name);
+				break;			
+			}
+			cs_debug_mask(D_TRACE, "readlock %s: retry", l->name);
+		}
+		l->read_lock++; //atom function
+		if (l->write_lock > 0) {
+			l->read_lock--;
+			continue;
+		}
+		l->lastlock = time(NULL);
+		cs_debug_mask(D_TRACE, "readlock %s: got lock", l->name);
+		return;
+		
+	} while (1);
+}
+
+/**
+ * unsets a readlock
+ **/
+void cs_readunlock(struct cs_mutexlock *l)
+{
+	if (l->read_lock > 0)
+		l->read_lock--;
+	cs_debug_mask(D_TRACE, "writelock %s released", l->name);
+}
+
+/**
+ * sets a readlock if not already locked by an writelock
+ * returns 0 in success (like pthread_mutex_trylock())
+ * returns 1 if a writelock is set and the readlock could not set 
+ **/
+int cs_try_readlock(struct cs_mutexlock *l)
+{
+	if (l->write_lock) return 1;
+	l->read_lock++; //atom function
+	if (l->write_lock > 0) { //If a writelock is set during this time, give the readlock back an try again
+		l->read_lock--;
+		return 1;
+	}
+	l->lastlock = time(NULL);
+	cs_debug_mask(D_TRACE, "try_readlock %s: got lock", l->name);
+	return 0;
+}
+
+/**
+ * sets a writelock if not already locked by an writelock
+ * returns 0 in success (like pthread_mutex_trylock())
+ * returns 1 if a writelock is set and the readlock could not set 
+ **/
+int cs_try_writelock(struct cs_mutexlock *l)
+{
+	if (l->write_lock) return 1;
+	l->write_lock++; //atom function
+	if (l->write_lock > 1) { //If a writelock is set during this time, give the readlock back an try again
+		l->write_lock--;
+		return 1;
+	}
+	l->lastlock = time(NULL);
+	cs_debug_mask(D_TRACE, "try_writelock %s: got lock", l->name);
+	return 0;
+}
+
+
 /* Replacement for pthread_mutex_lock. Locks are saved to the client structure so that they can get cleaned up if the thread was interrupted while holding a lock. */
 #ifdef WITH_MUTEXDEBUG
 int32_t cs_lock_debug(pthread_mutex_t *mutex, char *file, uint16_t line){

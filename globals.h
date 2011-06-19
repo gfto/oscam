@@ -1248,8 +1248,23 @@ struct s_config
     int32_t		lcd_hide_idle;
     int32_t		lcd_write_intervall;
 #endif
-
 };
+
+typedef struct cs_mutexlock {
+    int read_lock;
+    int write_lock;
+    time_t lastlock;
+    int timeout;
+    char *name;
+} CS_MUTEX_LOCK;
+
+extern void cs_lock_create(struct cs_mutexlock *l, int timeout, char *name);
+extern void cs_writelock(struct cs_mutexlock *l);
+extern void cs_writeunlock(struct cs_mutexlock *l);
+extern void cs_readlock(struct cs_mutexlock *l);
+extern void cs_readunlock(struct cs_mutexlock *l);
+
+
 
 struct s_clientinit
 {
