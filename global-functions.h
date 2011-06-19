@@ -364,7 +364,7 @@ extern int32_t cs_unlock(pthread_mutex_t *mutex);
 #endif
 extern void cs_cleanlocks();
 extern uint32_t cs_getIPfromHost(const char *hostname);
-extern void setKeepalive(int32_t socket);
+extern void setTCPTimeouts(int32_t socket);
 extern struct s_reader *get_reader_by_label(char *lbl);
 extern struct s_client *get_client_by_name(char *name);
 extern struct s_auth *get_account_by_name(char *name);

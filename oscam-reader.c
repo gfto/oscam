@@ -169,7 +169,7 @@ int32_t network_tcp_connection_open()
 	int32_t res = connect(sd, (struct sockaddr *)&cl->udp_sa, sizeof(cl->udp_sa));
 	if (res == 0) { 
 		fcntl(sd, F_SETFL, fl); //connect sucessfull, restore blocking mode
-		setKeepalive(sd);
+		setTCPTimeouts(sd);
 		clear_block_delay(rdr);
 		return sd;
 	}
@@ -185,7 +185,7 @@ int32_t network_tcp_connection_open()
 			if (getsockopt(sd, SOL_SOCKET, SO_ERROR, &r, (socklen_t*)&l) == 0) {
 				if (r == 0) {
 					fcntl(sd, F_SETFL, fl);
-					setKeepalive(sd);
+					setTCPTimeouts(sd);
 					clear_block_delay(rdr);
 					return sd; //now we are connected
 				}
@@ -197,7 +197,7 @@ int32_t network_tcp_connection_open()
 	else if (errno == EISCONN) {
 		cs_log("already connected!");
 		fcntl(sd, F_SETFL, fl);
-		setKeepalive(sd);
+		setTCPTimeouts(sd);
 		clear_block_delay(rdr);
 		return sd;
 	}

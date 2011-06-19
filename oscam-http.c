@@ -3183,11 +3183,11 @@ static int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t for
 				int32_t errcode = ERR_peek_error();
 				char errstring[128];
 				ERR_error_string_n(errcode, errstring, sizeof(errstring) - 1);
-				cs_debug_mask(D_CLIENT, "WebIf: read error ret=%d (%d%s%s)", n, SSL_get_error(cur_ssl(), n), errcode?" ":"", errcode?errstring:"");
+				cs_debug_mask(D_TRACE, "WebIf: read error ret=%d (%d%s%s)", n, SSL_get_error(cur_ssl(), n), errcode?" ":"", errcode?errstring:"");
 				return -1;
 			}
 #else
-			cs_debug_mask(D_CLIENT, "WebIf: read error ret=%d (errno=%d %s)", n, errno, strerror(errno));
+			cs_debug_mask(D_TRACE, "WebIf: read error ret=%d (errno=%d %s)", n, errno, strerror(errno));
 #endif
 			return -1;
 		}
@@ -3670,17 +3670,6 @@ void http_srv() {
 		cs_log("HTTP Server: Setting SO_REUSEADDR via setsockopt failed! (errno=%d %s)", errno, strerror(errno));
 	}
 
-    stimeout.tv_sec = 20;
-    stimeout.tv_usec = 0;
-
-    if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &stimeout, sizeof(stimeout)) < 0) {
-     		cs_log("HTTP Server: Setting SO_RCVTIMEO via setsockopt failed! (errno=%d %s)", errno, strerror(errno));
-    }
-
-    if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &stimeout, sizeof(stimeout)) < 0) {
-     		cs_log("HTTP Server: Setting SO_SNDTIMEO via setsockopt failed! (errno=%d %s)", errno, strerror(errno));
-    }
-
 	memset(&sin, 0, sizeof sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = INADDR_ANY;
@@ -3719,6 +3708,7 @@ void http_srv() {
 				close(s);
 				continue;
 			}
+			setTCPTimeouts(s);
 			cur_client()->last = time((time_t)0); //reset last busy time
 			conn->cl = cur_client();
 			memcpy(&conn->remote, &remote.sin_addr, sizeof(struct in_addr));

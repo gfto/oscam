@@ -3088,7 +3088,7 @@ int32_t accept_connection(int32_t i, int32_t j) {
 
 			int32_t flag = 1;
 			setsockopt(pfd3, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
-			setKeepalive(pfd3);
+			setTCPTimeouts(pfd3);
 
 			cl->ctyp=i;
 			cl->udp_fd=pfd3;
