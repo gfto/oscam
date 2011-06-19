@@ -346,8 +346,12 @@ int32_t cc_clear_reported_carddata(LLIST *reported_carddatas, LLIST *except,
                 }
 
                 if (!card2 && ll_iter_remove(&it)) { //check result of ll_iter_remove, because another thread could removed it
-                        if (send_removed)
+                        if (send_removed) {
+                        		cs_debug_mask(D_TRACE, "card removed: id %8X remoteid %8X caid %4X hop %d reshare %d originid %8X cardtype %d", 
+									card->id, card->remote_id, card->caid, card->hop, card->reshare, card->origin_id, card->card_type);
+
                         		send_remove_card_to_clients(card);
+						}
                         cc_free_card(card);
                         i++;
                 }
@@ -753,6 +757,7 @@ int32_t find_reported_card(struct cc_card *card1)
     while ((card2 = ll_iter_next(&it))) {
         if (same_card(card1, card2) && !card_timed_out(card2)) {
             card1->id = card2->id; //Set old id !!
+            card1->timeout = card2->timeout;
             cc_free_card(card2);
             ll_iter_remove(&it);
             return 1; //Old card and new card are equal!
@@ -773,7 +778,10 @@ int32_t report_card(struct cc_card *card, LLIST *new_reported_carddatas)
 {
     int32_t res = 0;
     if (!find_reported_card(card)) { //Add new card:
-
+    	
+    	cs_debug_mask(D_TRACE, "card added: id %8X remoteid %8X caid %4X hop %d reshare %d originid %8X cardtype %d", 
+    		card->id, card->remote_id, card->caid, card->hop, card->reshare, card->origin_id, card->card_type);
+    		
         send_card_to_clients(card, NULL);
 
         card_added_count++;
@@ -1007,14 +1015,9 @@ void update_card_list() {
                 struct cc_data *rcc = rc?rc->cc:NULL;
 
                 int32_t count = 0;
-                int32_t notlocked = 1;
-                while (rcc && rcc->cards && rcc->mode == CCCAM_MODE_NORMAL &&
-                    (notlocked=cs_trylock(&rcc->cards_busy))) {
-                    cs_debug_mask(D_TRACE, "trylock asking reader %s cards", rdr->label);
-                    cs_sleepms(50);
-				}
+                if (rcc && rcc->cards && rcc->mode == CCCAM_MODE_NORMAL) {
+                	cs_readlock(&rcc->cards_busy);
 				
-				if (!notlocked) {
               		LL_ITER it = ll_iter_create(rcc->cards);
                     while ((card = ll_iter_next(&it))) {
                     	if (chk_ctab(card->caid, &rdr->ctab)) {
@@ -1036,7 +1039,7 @@ void update_card_list() {
 							}
 						}
 					}
-                    cs_unlock(&rcc->cards_busy);
+                    cs_readunlock(&rcc->cards_busy);
                 }
                 else
                 	cs_debug_mask(D_TRACE, "reader %s not active! (mode=%d)", rdr->label, rcc?rcc->mode:-1);

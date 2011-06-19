@@ -1096,7 +1096,9 @@ void cs_lock_create(struct cs_mutexlock *l, int timeout, char *name)
 	memset(l, 0, sizeof(struct cs_mutexlock));
 	l->timeout = timeout;
 	l->name = name;
+#ifdef WITH_MUTEXDEBUG
 	cs_debug_mask(D_TRACE, "lock %s created", name);
+#endif
 }
 
 /**
@@ -1107,7 +1109,7 @@ void cs_lock_create(struct cs_mutexlock *l, int timeout, char *name)
 void cs_writelock(struct cs_mutexlock *l)
 {
 	do {
-		while (l->write_lock || l->read_lock) {  //Test for writelock+readlock
+		while (l->write_lock) {  //Test for writelock
 			cs_sleepms(fast_rnd()%50);
 			
 			//timeout locks:
@@ -1119,15 +1121,34 @@ void cs_writelock(struct cs_mutexlock *l)
 				cs_log("writelock %s: timeout!", l->name);
 				break;			
 			}
+#ifdef WITH_MUTEXDEBUG
 			cs_debug_mask(D_TRACE, "writelock %s: retry", l->name);
+#endif
 		}
 		l->write_lock++; //atom function
 		if (l->write_lock > 1) {
 			l->write_lock--;
 			continue;
 		}
+		while (l->read_lock) {  //Test for readlock
+			cs_sleepms(fast_rnd()%50);
+			
+			//timeout locks:
+			time_t t = time(NULL);
+			if (l->timeout && t > l->lastlock+l->timeout) { //10s=timeout lock
+				l->lastlock = t;
+				l->read_lock = 0;
+				cs_log("writelock/readlock %s: timeout!", l->name);
+				break;			
+			}
+#ifdef WITH_MUTEXDEBUG
+			cs_debug_mask(D_TRACE, "writelock/readlock %s: retry", l->name);
+#endif
+		}
 		l->lastlock = time(NULL);
+#ifdef WITH_MUTEXDEBUG
 		cs_debug_mask(D_TRACE, "writelock %s: got lock", l->name);
+#endif
 		return;
 		
 	} while (1);
@@ -1140,7 +1161,9 @@ void cs_writeunlock(struct cs_mutexlock *l)
 {
 	if (l->write_lock > 0)
 		l->write_lock--;
-	cs_debug_mask(D_TRACE, "writelock %s released", l->name);
+#ifdef WITH_MUTEXDEBUG
+	cs_debug_mask(D_TRACE, "writelock %s: released", l->name);
+#endif
 }
 
 /**
@@ -1163,7 +1186,7 @@ void cs_readlock(struct cs_mutexlock *l)
 				cs_log("readlock %s: timeout!", l->name);
 				break;			
 			}
-			cs_debug_mask(D_TRACE, "readlock %s: retry", l->name);
+			//cs_debug_mask(D_TRACE, "readlock %s: retry", l->name);
 		}
 		l->read_lock++; //atom function
 		if (l->write_lock > 0) {
@@ -1171,7 +1194,9 @@ void cs_readlock(struct cs_mutexlock *l)
 			continue;
 		}
 		l->lastlock = time(NULL);
+#ifdef WITH_MUTEXDEBUG
 		cs_debug_mask(D_TRACE, "readlock %s: got lock", l->name);
+#endif
 		return;
 		
 	} while (1);
@@ -1184,7 +1209,9 @@ void cs_readunlock(struct cs_mutexlock *l)
 {
 	if (l->read_lock > 0)
 		l->read_lock--;
-	cs_debug_mask(D_TRACE, "writelock %s released", l->name);
+#ifdef WITH_MUTEXDEBUG
+	cs_debug_mask(D_TRACE, "writelock %s: released", l->name);
+#endif
 }
 
 /**
@@ -1201,7 +1228,9 @@ int cs_try_readlock(struct cs_mutexlock *l)
 		return 1;
 	}
 	l->lastlock = time(NULL);
+#ifdef WITH_MUTEXDEBUG
 	cs_debug_mask(D_TRACE, "try_readlock %s: got lock", l->name);
+#endif
 	return 0;
 }
 
@@ -1219,7 +1248,9 @@ int cs_try_writelock(struct cs_mutexlock *l)
 		return 1;
 	}
 	l->lastlock = time(NULL);
+#ifdef WITH_MUTEXDEBUG
 	cs_debug_mask(D_TRACE, "try_writelock %s: got lock", l->name);
+#endif
 	return 0;
 }
 

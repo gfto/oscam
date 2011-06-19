@@ -179,9 +179,9 @@ struct cc_data {
 	int32_t server_ecm_pending;                    //initialized by server
 	uint16_t server_ecm_idx;
 	
-	pthread_mutex_t lockcmd;
-	pthread_mutex_t ecm_busy;
-	pthread_mutex_t cards_busy;
+	struct cs_mutexlock lockcmd;
+	struct cs_mutexlock ecm_busy;
+	struct cs_mutexlock cards_busy;
 	struct timeb ecm_time;
 	time_t answer_on_keepalive;
 	uint8_t last_msg;

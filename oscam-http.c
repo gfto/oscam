@@ -1865,7 +1865,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 			struct cc_card *card;
 
 			LLIST *cards = NULL;
-			pthread_mutex_t *lock = NULL;
+			struct cs_mutexlock *lock = NULL;
 
 			if (show_global_list) {
 					cards = get_and_lock_sharelist();
@@ -1876,7 +1876,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					if (rcc && rcc->cards) {
 							cards = rcc->cards;
 							lock = &rcc->cards_busy;
-							cs_lock(lock);
+							cs_readlock(lock);
 					}
 			}
 
@@ -2044,7 +2044,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 			if (show_global_list)
 					unlock_sharelist();
 			else if (lock)
-					cs_unlock(lock);
+					cs_readunlock(lock);
 
 		} else {
 #else
@@ -3640,7 +3640,6 @@ void http_srv() {
 	int32_t sock, s, reuse = 1;
 	struct sockaddr_in sin;
 	struct sockaddr_in remote;
-	struct timeval stimeout;
 	struct s_connection *conn;
 
 	socklen_t len = sizeof(remote);

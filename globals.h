@@ -1263,6 +1263,8 @@ extern void cs_writelock(struct cs_mutexlock *l);
 extern void cs_writeunlock(struct cs_mutexlock *l);
 extern void cs_readlock(struct cs_mutexlock *l);
 extern void cs_readunlock(struct cs_mutexlock *l);
+extern int cs_try_readlock(struct cs_mutexlock *l);
+extern int cs_try_writelock(struct cs_mutexlock *l);
 
 
 
