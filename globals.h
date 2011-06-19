@@ -356,6 +356,14 @@ extern void cs_switch_led(int32_t led, int32_t action);
 /* ===========================
  *      global structures
  * =========================== */
+typedef struct cs_mutexlock {
+    int read_lock;
+    int write_lock;
+    time_t lastlock;
+    int timeout;
+    char *name;
+} CS_MUTEX_LOCK;
+
 typedef struct s_caidvaluetab
 {
   uint16_t n;
@@ -639,7 +647,7 @@ struct s_client
   int32_t		fd_m2c; //master writes to this fd
   int32_t		fd_m2c_c; //client reads from this fd
   uint16_t	pipecnt;
-  pthread_mutex_t pipelock;
+  CS_MUTEX_LOCK pipelock;
   struct	sockaddr_in udp_sa;
   int32_t		log;
   int32_t		logcounter;
@@ -1250,24 +1258,6 @@ struct s_config
 #endif
 };
 
-typedef struct cs_mutexlock {
-    int read_lock;
-    int write_lock;
-    time_t lastlock;
-    int timeout;
-    char *name;
-} CS_MUTEX_LOCK;
-
-extern void cs_lock_create(struct cs_mutexlock *l, int timeout, char *name);
-extern void cs_writelock(struct cs_mutexlock *l);
-extern void cs_writeunlock(struct cs_mutexlock *l);
-extern void cs_readlock(struct cs_mutexlock *l);
-extern void cs_readunlock(struct cs_mutexlock *l);
-extern int cs_try_readlock(struct cs_mutexlock *l);
-extern int cs_try_writelock(struct cs_mutexlock *l);
-
-
-
 struct s_clientinit
 {
 	void *(*handler)(struct s_client*);
@@ -1333,7 +1323,7 @@ extern char *loghist, *loghistptr;
 extern struct s_module ph[CS_MAX_MOD];
 extern struct s_cardsystem cardsystem[CS_MAX_MOD];
 extern struct s_cardreader cardreader[CS_MAX_MOD];
-extern pthread_mutex_t gethostbyname_lock;
+extern CS_MUTEX_LOCK gethostbyname_lock;
 #if defined(LIBUSB)
 extern pthread_mutex_t sr_lock;
 #endif

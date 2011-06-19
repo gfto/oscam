@@ -37,15 +37,15 @@ int8_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)rest
 int8_t cs_capture_SEGV=0;
 char  cs_tmpdir[200]={0x00};
 pid_t server_pid=0;
-pthread_mutex_t gethostbyname_lock;
-pthread_mutex_t get_cw_lock;
-pthread_mutex_t system_lock;
-pthread_mutex_t clientlist_lock;
-pthread_mutex_t readerlist_lock;
-pthread_mutex_t fakeuser_lock;
 #if defined(LIBUSB)
 pthread_mutex_t sr_lock;
 #endif
+CS_MUTEX_LOCK system_lock;
+CS_MUTEX_LOCK get_cw_lock;
+CS_MUTEX_LOCK gethostbyname_lock;
+CS_MUTEX_LOCK clientlist_lock;
+CS_MUTEX_LOCK readerlist_lock;
+CS_MUTEX_LOCK fakeuser_lock;
 pthread_key_t getclient;
 
 //Cache for  ecms, cws and rcs:
@@ -491,13 +491,13 @@ void cleanup_thread(void *var)
 		cl->cleaned++; //cleaned=1	
 		// Remove client from client list. kill_thread also removes this client, so here just if client exits itself...
 		struct s_client *prev, *cl2;
-		cs_lock(&clientlist_lock);
+		cs_writelock(&clientlist_lock);
 		for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
 			if (cl == cl2)
 				break;
 		if (cl == cl2)
 			prev->next = cl2->next; //remove client from list
-		cs_unlock(&clientlist_lock);
+		cs_writeunlock(&clientlist_lock);
 		
 		// Clean reader. The cleaned structures should be only used by the reader thread, so we should be save without waiting
 		if (cl->reader){
@@ -568,8 +568,7 @@ void cleanup_thread(void *var)
 #ifdef MODULE_CCCAM
 		add_garbage(cl->cc);
 #endif
-		add_garbage(cl->serialdata);
-		pthread_mutex_destroy(&cl->pipelock);					
+		add_garbage(cl->serialdata);			
 		cs_cleanlocks();
 		add_garbage(cl);		
 	}
@@ -887,16 +886,14 @@ struct s_client * create_client(in_addr_t ip) {
 	struct s_client *cl;
 
 	if(cs_malloc(&cl, sizeof(struct s_client), -1)){
-		if(pthread_mutex_init(&cl->pipelock, NULL)){
-			free(cl);
-			return NULL;
-		} else cl->pipecnt = 0;
 		int32_t fdp[2];
 		if (pipe(fdp)) {
 			cs_log("Cannot create pipe (errno=%d: %s)", errno, strerror(errno));
 			free(cl);
 			return NULL;
 		}
+		cs_lock_create(&cl->pipelock, 5, "pipelock");
+		cl->pipecnt = 0;
 		
 		//client part
 		cl->fd_m2c_c = fdp[0]; //store client read fd
@@ -914,10 +911,10 @@ struct s_client * create_client(in_addr_t ip) {
 
         //Now add new client to the list:
 		struct s_client *last;
-		cs_lock(&clientlist_lock);
+		cs_writelock(&clientlist_lock);
 		for (last=first_client; last->next != NULL; last=last->next); //ends with cl on last client
 		last->next = cl;
-		cs_unlock(&clientlist_lock);
+		cs_writeunlock(&clientlist_lock);
 	} else {
 		cs_log("max connections reached (out of memory) -> reject client %s", cs_inet_ntoa(ip));
 		return NULL;
@@ -966,12 +963,6 @@ static void init_first_client()
   }
 
 	int8_t ok = 1;
-  if(pthread_mutex_init(&gethostbyname_lock, NULL)) ok = 0;
-  if(pthread_mutex_init(&get_cw_lock, NULL)) ok = 0;
-  if(pthread_mutex_init(&system_lock, NULL)) ok = 0;
-  if(pthread_mutex_init(&clientlist_lock, NULL)) ok = 0;
-  if(pthread_mutex_init(&readerlist_lock, NULL)) ok = 0;
-  if(pthread_mutex_init(&fakeuser_lock, NULL)) ok = 0;
 #if defined(LIBUSB)
   if(pthread_mutex_init(&sr_lock, NULL)) ok = 0;
 #endif
@@ -980,6 +971,12 @@ static void init_first_client()
   	fprintf(stderr, "Could not init locks, exiting...");
     exit(1);
   }
+  cs_lock_create(&system_lock, 5, "system_lock");
+  cs_lock_create(&get_cw_lock, 5, "get_cw_lock");  
+  cs_lock_create(&gethostbyname_lock, 10, "gethostbyname_lock");
+  cs_lock_create(&clientlist_lock, 5, "clientlist_lock");
+  cs_lock_create(&readerlist_lock, 5, "readerlist_lock");
+  cs_lock_create(&fakeuser_lock, 5, "fakeuser_lock");
 
 #ifdef COOL
   coolapi_open_all();
@@ -1162,7 +1159,7 @@ void start_thread(void * startroutine, char * nameroutine) {
 #ifndef TUXBOX
 	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
-	cs_lock(&system_lock);
+	cs_writelock(&system_lock);
 	if (pthread_create(&temp, &attr, startroutine, NULL))
 		cs_log("ERROR: can't create %s thread", nameroutine);
 	else {
@@ -1170,7 +1167,7 @@ void start_thread(void * startroutine, char * nameroutine) {
 		pthread_detach(temp);
 	}
 	pthread_attr_destroy(&attr);
-	cs_unlock(&system_lock);
+	cs_writeunlock(&system_lock);
 }
 
 /* Allows to kill another thread specified through the client cl without locking.
@@ -1182,7 +1179,7 @@ static void kill_thread_int(struct s_client *cl) {
 	if (pthread_equal(thread, pthread_self())) return; //cant kill yourself
 
 	struct s_client *prev, *cl2;
-	cs_lock(&clientlist_lock);
+	cs_writelock(&clientlist_lock);
 	for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
 		if (cl == cl2)
 			break;
@@ -1190,7 +1187,7 @@ static void kill_thread_int(struct s_client *cl) {
 		cs_log("FATAL ERROR: could not find client to remove from list.");
 	else
 		prev->next = cl2->next; //remove client from list
-	cs_unlock(&clientlist_lock);
+	cs_writeunlock(&clientlist_lock);
 
 	pthread_cancel(thread);
 	int32_t cnt = 0;
@@ -1212,15 +1209,15 @@ static void kill_thread_int(struct s_client *cl) {
 /* Allows to kill another thread specified through the client cl with locking.
   If the own thread has to be cancelled, cs_exit or cs_disconnect_client has to be used. */
 void kill_thread(struct s_client *cl) {
-	cs_lock(&system_lock);
+	cs_writelock(&system_lock);
 	kill_thread_int(cl);
-	cs_unlock(&system_lock);
+	cs_writeunlock(&system_lock);
 }
 
 /* Removes a reader from the list of active readers so that no ecms can be requested anymore. */
 void remove_reader_from_active(struct s_reader *rdr) {
 	struct s_reader *rdr2, *prv = NULL;
-	cs_lock(&readerlist_lock);
+	cs_writelock(&readerlist_lock);
 	for (rdr2=first_active_reader; rdr2 ; rdr2=rdr2->next) {
 		if (rdr2==rdr) {
 			if (prv) prv->next = rdr2->next;
@@ -1229,19 +1226,19 @@ void remove_reader_from_active(struct s_reader *rdr) {
 		}
 		prv = rdr2;
 	}
-	cs_unlock(&readerlist_lock);
+	cs_writeunlock(&readerlist_lock);
 }
 
 /* Adds a reader to the list of active readers so that it can serve ecms. */
 void add_reader_to_active(struct s_reader *rdr) {
 	struct s_reader *rdr2;
 	rdr->next = NULL;
-	cs_lock(&readerlist_lock);
+	cs_writelock(&readerlist_lock);
 	if (first_active_reader) {
 		for (rdr2=first_active_reader; rdr2->next ; rdr2=rdr2->next) ; //search last element
 		rdr2->next = rdr;
 	} else first_active_reader = rdr;
-	cs_unlock(&readerlist_lock);
+	cs_writeunlock(&readerlist_lock);
 }
 
 /* Starts or restarts a cardreader without locking. If restart=1, the existing thread is killed before restarting,
@@ -1319,15 +1316,15 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 /* Starts or restarts a cardreader with locking. If restart=1, the existing thread is killed before restarting,
    if restart=0 the cardreader is only started. */
 int32_t restart_cardreader(struct s_reader *rdr, int32_t restart) {
-	cs_lock(&system_lock);
+	cs_writelock(&system_lock);
 	int32_t result = restart_cardreader_int(rdr, restart);
-	cs_unlock(&system_lock);
+	cs_writeunlock(&system_lock);
 	return result;
 }
 
 static void init_cardreader() {
 
-	cs_lock(&system_lock);
+	cs_writelock(&system_lock);
 	struct s_reader *rdr;
 	for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 		if (!restart_cardreader_int(rdr, 0))
@@ -1336,7 +1333,7 @@ static void init_cardreader() {
 #ifdef WITH_LB
 	load_stat_from_file();
 #endif
-	cs_unlock(&system_lock);
+	cs_writeunlock(&system_lock);
 }
 
 static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_addr_t ip)
@@ -1356,7 +1353,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 
 	struct s_client *cl;
 	struct s_auth *account;
-	cs_lock(&fakeuser_lock);
+	cs_writelock(&fakeuser_lock);
 	for (cl=first_client->next; cl ; cl=cl->next)
 	{
 		account = cl->account;
@@ -1375,9 +1372,9 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 					cs_add_violation(cl->ip);
 				}
 				if (cfg.dropdups){
-					cs_unlock(&fakeuser_lock);
+					cs_writeunlock(&fakeuser_lock);
 					kill_thread(cl);
-					cs_lock(&fakeuser_lock);
+					cs_writelock(&fakeuser_lock);
 				}
 			}
 			else
@@ -1391,14 +1388,14 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 					cs_add_violation(ip);
 				}
 				if (cfg.dropdups){
-					cs_unlock(&fakeuser_lock);		// we need to unlock here as cs_disconnect_client kills the current thread!
+					cs_writeunlock(&fakeuser_lock);		// we need to unlock here as cs_disconnect_client kills the current thread!
 					cs_disconnect_client(client);
 				}
 				break;
 			}
 		}
 	}
-	cs_unlock(&fakeuser_lock);
+	cs_writeunlock(&fakeuser_lock);
 }
 
 int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const char *e_txt)
@@ -1683,7 +1680,7 @@ int32_t write_to_pipe(struct s_client *client, int32_t id, uchar *data, int32_t 
 
 	n=3+sizeof(void*);
 
-	cs_lock(&client->pipelock);
+	cs_writelock(&client->pipelock);
 	if(client->pipecnt < n * 64){		
 		client->pipecnt += n;
 		rc = write(fd, buf, n);
@@ -1691,7 +1688,7 @@ int32_t write_to_pipe(struct s_client *client, int32_t id, uchar *data, int32_t 
 		cs_debug_mask(D_TRACE, "Pipe command dropped because of possible deadlock/pipe overflow in client %s.", username(client));
 		free(d);
 	}
-	cs_unlock(&client->pipelock);
+	cs_writeunlock(&client->pipelock);
 	return rc;
 }
 
@@ -1713,10 +1710,10 @@ int32_t read_from_pipe(struct s_client *client, uchar **data)
 
 	*data=(uchar *)0;
 	rc=PIP_ID_NUL;
-	cs_lock(&client->pipelock); 
+	cs_writelock(&client->pipelock); 
 	n=read(fd, buf, sizeof(buf)); 
 	if(client->pipecnt >= n) client->pipecnt -= n; 
-	cs_unlock(&client->pipelock); 
+	cs_writeunlock(&client->pipelock); 
 	if (n==sizeof(buf)) {
 		memcpy(&hdr, buf+3, sizeof(void*));
 	} else {
@@ -2541,7 +2538,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
     //Use locking - now default=FALSE, activate on problems!
 	int32_t locked;
 	if (cfg.lb_mode && cfg.lb_use_locking) {
-			cs_lock(&get_cw_lock);
+			cs_writelock(&get_cw_lock);
 			locked=1;
 	}
 	else
@@ -2631,7 +2628,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 #ifdef WITH_LB
 	if (locked)
-		cs_unlock(&get_cw_lock);
+		cs_writeunlock(&get_cw_lock);
 #endif
 
 	if (er->rc == E_99)

@@ -350,6 +350,13 @@ extern char *strnew(char *str);
 extern void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid);
 extern void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid);
 extern int32_t check_ip(struct s_ip *ip, in_addr_t n);
+extern void cs_lock_create(struct cs_mutexlock *l, int16_t timeout, char *name);
+extern void cs_writelock(struct cs_mutexlock *l);
+extern void cs_writeunlock(struct cs_mutexlock *l);
+extern void cs_readlock(struct cs_mutexlock *l);
+extern void cs_readunlock(struct cs_mutexlock *l);
+extern int8_t cs_try_readlock(struct cs_mutexlock *l);
+extern int8_t cs_try_writelock(struct cs_mutexlock *l);
 #ifdef WITH_MUTEXDEBUG
 extern int32_t cs_lock_debug(pthread_mutex_t *mutex, char *file, uint16_t line);
 extern int32_t cs_trylock_debug(pthread_mutex_t *mutex, char *file, uint16_t line);

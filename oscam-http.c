@@ -3264,52 +3264,12 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 	
 			if(cfg.http_dynip && cfg.http_dynip == addr) {
 				ok = v;
-				cs_debug_mask(D_TRACE, "WebIf: dyndns address previously resolved and ok");
-	
+				cs_debug_mask(D_TRACE, "WebIf: dyndns address previously resolved and ok");	
 			} else {
-	
-				if (cfg.resolve_gethostbyname) {
-					cs_debug_mask(D_TRACE, "WebIf: try resolving IP with 'gethostbyname'");
-					cs_lock(&gethostbyname_lock);
-					struct hostent *rht;
-					struct sockaddr_in udp_sa;
-	
-					rht = gethostbyname((const char *) cfg.http_dyndns);
-					if (rht) {
-						memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
-						cfg.http_dynip = udp_sa.sin_addr.s_addr;
-						cs_debug_mask(D_TRACE, "WebIf: dynip resolved %s access from %s",
-								cs_inet_ntoa(cfg.http_dynip),
-								cs_inet_ntoa(addr));
-						if (cfg.http_dynip == addr)
-							ok = v;
-					} else {
-						cs_log("can't resolve %s", cfg.http_dyndns); }
-					cs_unlock(&gethostbyname_lock);
-	
-				} else {
-					cs_debug_mask(D_TRACE, "WebIf: try resolving IP with 'getaddrinfo'");
-					struct addrinfo hints, *res = NULL;
-					memset(&hints, 0, sizeof(hints));
-					hints.ai_socktype = SOCK_STREAM;
-					hints.ai_family = AF_INET;
-					hints.ai_protocol = IPPROTO_TCP;
-	
-					int32_t err = getaddrinfo((const char*)cfg.http_dyndns, NULL, &hints, &res);
-					if (err != 0 || !res || !res->ai_addr) {
-						cs_log("can't resolve %s, error: %s", cfg.http_dyndns, err ? gai_strerror(err) : "unknown");
-					}
-					else {
-						cfg.http_dynip = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
-						cs_debug_mask(D_TRACE, "WebIf: dynip resolved %s access from %s",
-								cs_inet_ntoa(cfg.http_dynip),
-								cs_inet_ntoa(addr));
-						if (cfg.http_dynip == addr)
-							ok = v;
-					}
-					if (res) freeaddrinfo(res);
-	
-				}
+				cfg.http_dynip = cs_getIPfromHost((char*)cfg.http_dyndns);
+				cs_debug_mask(D_TRACE, "WebIf: dynip resolved %s access from %s",
+					cs_inet_ntoa(cfg.http_dynip),
+					cs_inet_ntoa(addr));
 			}
 		} else {
 			if (cfg.http_dyndns[0])

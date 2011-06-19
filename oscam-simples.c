@@ -1091,7 +1091,7 @@ struct s_client* cs_preparelock(struct s_client *cl, pthread_mutex_t *mutex){
 /**
  * creates a lock
  **/
-void cs_lock_create(struct cs_mutexlock *l, int timeout, char *name)
+void cs_lock_create(struct cs_mutexlock *l, int16_t timeout, char *name)
 {
 	memset(l, 0, sizeof(struct cs_mutexlock));
 	l->timeout = timeout;
@@ -1114,10 +1114,10 @@ void cs_writelock(struct cs_mutexlock *l)
 			
 			//timeout locks:
 			time_t t = time(NULL);
-			if (l->timeout && t > l->lastlock+l->timeout) { //10s=timeout lock
-				l->lastlock = t;
+			if (l->timeout && t > l->lastlock+l->timeout && l->write_lock) {
 				l->write_lock = 0;
 				l->read_lock = 0;
+				l->lastlock = t;
 				cs_log("writelock %s: timeout!", l->name);
 				break;			
 			}
@@ -1179,10 +1179,10 @@ void cs_readlock(struct cs_mutexlock *l)
 			
 			//timeout locks:
 			time_t t = time(NULL);
-			if (l->timeout && t > l->lastlock+l->timeout) { //10s=timeout lock
-				l->lastlock = t;
+			if (l->timeout && t > l->lastlock+l->timeout && l->write_lock) {
 				l->write_lock = 0;
 				l->read_lock = 0;
+				l->lastlock = t;
 				cs_log("readlock %s: timeout!", l->name);
 				break;			
 			}
@@ -1219,7 +1219,7 @@ void cs_readunlock(struct cs_mutexlock *l)
  * returns 0 in success (like pthread_mutex_trylock())
  * returns 1 if a writelock is set and the readlock could not set 
  **/
-int cs_try_readlock(struct cs_mutexlock *l)
+int8_t cs_try_readlock(struct cs_mutexlock *l)
 {
 	if (l->write_lock) return 1;
 	l->read_lock++; //atom function
@@ -1239,7 +1239,7 @@ int cs_try_readlock(struct cs_mutexlock *l)
  * returns 0 in success (like pthread_mutex_trylock())
  * returns 1 if a writelock is set and the readlock could not set 
  **/
-int cs_try_writelock(struct cs_mutexlock *l)
+int8_t cs_try_writelock(struct cs_mutexlock *l)
 {
 	if (l->write_lock) return 1;
 	l->write_lock++; //atom function
@@ -1374,13 +1374,13 @@ uint32_t cs_getIPfromHost(const char *hostname){
 	uint32_t result = 0;
 	//Resolve with gethostbyname:
 	if (cfg.resolve_gethostbyname) {
-		cs_lock(&gethostbyname_lock);
+		cs_writelock(&gethostbyname_lock);
 		struct hostent *rht = gethostbyname(hostname);
 		if (!rht)
 			cs_log("can't resolve %s", hostname);
 		else
 			result=((struct in_addr*)rht->h_addr)->s_addr;
-		cs_unlock(&gethostbyname_lock);
+		cs_writeunlock(&gethostbyname_lock);
 	}	else { //Resolve with getaddrinfo:
 		struct addrinfo hints, *res = NULL;
 		memset(&hints, 0, sizeof(hints));
