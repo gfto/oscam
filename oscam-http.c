@@ -1351,7 +1351,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 				if (!apicall) {
 					if (stat->rc == 4) {
 						tpl_addVar(vars, TPLAPPEND, "READERSTATSROWNOTFOUND", tpl_getTpl(vars, "READERSTATSBIT"));
-						tpl_addVar(vars, TPLADD, "READERSTATSNFHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"7\">Not found</TD></TR>\n");
+						tpl_addVar(vars, TPLADD, "READERSTATSNFHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"8\">Not found</TD></TR>\n");
 					}
 					else
 						tpl_addVar(vars, TPLAPPEND, "READERSTATSROWFOUND", tpl_getTpl(vars, "READERSTATSBIT"));
@@ -1366,7 +1366,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 		}
 
 	} else {
-		tpl_addVar(vars, TPLAPPEND, "READERSTATSROW","<TR><TD colspan=\"6\"> No statistics found </TD></TR>");
+		tpl_addVar(vars, TPLAPPEND, "READERSTATSROW","<TR><TD colspan=\"8\"> No statistics found </TD></TR>");
 	}
 
 	tpl_printf(vars, TPLADD, "ROWCOUNT", "%d", rowcount);
