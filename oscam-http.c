@@ -2998,6 +2998,21 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 	else if (strcmp(getParam(params, "part"), "userstats") == 0) {
 		return send_oscam_user_config(vars, params, 1);
 	}
+	else if (strcmp(getParam(params, "part"), "readerconfig") == 0) {
+		//Send Errormessage
+		tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "readerconfig not yet avail");
+		return tpl_getTpl(vars, "APIERROR");
+	}
+	else if (strcmp(getParam(params, "part"), "serverconfig") == 0) {
+		//Send Errormessage
+		tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "serverconfig not yet avail");
+		return tpl_getTpl(vars, "APIERROR");
+	}
+	else if (strcmp(getParam(params, "part"), "userconfig") == 0) {
+		//Send Errormessage
+		tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "userconfig not yet avail");
+		return tpl_getTpl(vars, "APIERROR");
+	}
 	else if (strcmp(getParam(params, "part"), "entitlement") == 0) {
 
 		if (strcmp(getParam(params, "label"),"")) {
