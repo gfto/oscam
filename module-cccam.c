@@ -997,8 +997,7 @@ int32_t same_card2(struct cc_card *card1, struct cc_card *card2) {
 	return (card1->caid == card2->caid && 
 		card1->card_type == card2->card_type &&
 		card1->sidtab == card2->sidtab &&
-		card1->grp == card2->grp &&
-		!memcmp(card1->hexserial, card2->hexserial, sizeof(card1->hexserial)));
+		card1->grp == card2->grp);
 }
 
 int32_t same_card(struct cc_card *card1, struct cc_card *card2) {
