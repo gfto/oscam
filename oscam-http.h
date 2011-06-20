@@ -724,6 +724,39 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=delete\" TITLE=\"delete this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\"BORDER=\"0\" ALT=\"Delete User\"></A></TD>\n\
 		</TR>\n"
 
+#define TPLAPIUSEREDIT "##TPLAPIHEADER##\n\
+	<account>\n\
+		<user>##USERNAME##</user>\n\
+		<pwd>##PASSWORD##</pwd>\n\
+		<description>##DESCRIPTION##</description>\n\
+		<disabled>##DISABLEDVALUE##</disabled>\n\
+		<expdate>##EXPDATE##</expdate>\n\
+		<failban>##FAILBAN##</failban>\n\
+		<allowedtimeframe>##ALLOWEDTIMEFRAME##</allowedtimeframe>\n\
+		<group>##GROUPS##</group>\n\
+		<hostname>##DYNDNS##</hostname>\n\
+		<uniq>##UNIQVALUE##</uniq>\n\
+		<sleep>##SLEEP##</sleep>\n\
+		<monlevel>##MONVALUE##</monlevel>\n\
+		<au>##AUREADER##</au>\n\
+		<services>##SERVICES##</services>\n\
+		<caid>##CAIDS##</caid>\n\
+		<ident>##IDENTS##</ident>\n\
+		<chid>##CHIDS##</chid>\n\
+		<class>##CLASS##</class>\n\
+		<betatunnel>##BETATUNNELS##</betatunnel>\n\
+		<suppresscmd08>##SUPPRESSCMD08VALUE##</suppresscmd08>\n\
+		<sleepsend>##SLEEPSEND##</sleepsend>\n\
+		<numusers>##AC_USERS##</numusers>\n\
+		<penalty>##PENALTYVALUE##</penalty>\n\
+		<cccmaxhops>##CCCMAXHOPS##</cccmaxhops>\n\
+		<cccreshare>##CCCRESHARE##</cccreshare>\n\
+		<cccignorereshare>##CCCIGNORERESHARE##</cccignorereshare>\n\
+		<cccstealth>##CCCSTEALTH##</cccstealth>\n\
+		<keepalive>##KEEPALIVEVALUE##</keepalive>\n\
+    </account>\n\
+##TPLAPIFOOTER##"
+
 #define TPLUSEREDIT "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -2032,6 +2065,7 @@ char *tpl[]={
 	"READERCONFIGNCD525BIT",
 	"READERCONFIGNCD524BIT",
 	"READERCONFIGCCCAMBIT",
+	"APIUSEREDIT",
 	"USEREDIT",
 	"USEREDITRDRSELECTED",
 	"USEREDITSIDOKBIT",
@@ -2174,6 +2208,7 @@ char *tplmap[]={
 	TPLREADERCONFIGNCD525BIT,
 	TPLREADERCONFIGNCD524BIT,
 	TPLREADERCONFIGCCCAMBIT,
+	TPLAPIUSEREDIT,
 	TPLUSEREDIT,
 	TPLUSEREDITRDRSELECTED,
 	TPLUSEREDITSIDOKBIT,

@@ -1390,14 +1390,14 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 }
 #endif
 
-static char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *params) {
+static char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
 	struct s_auth *account, *ptr;
 	char user[sizeof(first_client->account->usr)];
 
+	int32_t i;
+
 	if (strcmp(getParam(params, "action"), "Save As") == 0) cs_strncpy(user, getParam(params, "newuser"), sizeof(user)/sizeof(char));
 	else cs_strncpy(user, getParam(params, "user"), sizeof(user)/sizeof(char));
-
-	int32_t i;
 
 	for (account = cfg.account; account != NULL && strcmp(user, account->usr) != 0; account = account->next);
 
@@ -1438,10 +1438,14 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	}
 
 	if((strcmp(getParam(params, "action"), "Save") == 0) || (strcmp(getParam(params, "action"), "Save As") == 0)) {
-		char servicelabels[1024]="";
+		char servicelabels[1024]= "";
 
-		for(i=0;i<(*params).paramcount;i++) {
-			if ((strcmp((*params).params[i], "action")) && (strcmp((*params).params[i], "user")) && (strcmp((*params).params[i], "newuser"))) {
+		for(i = 0; i < (*params).paramcount; i++) {
+			if ((strcmp((*params).params[i], "action")) &&
+					(strcmp((*params).params[i], "user")) &&
+					(strcmp((*params).params[i], "newuser")) &&
+					(strcmp((*params).params[i], "part"))) {
+
 				if (!strcmp((*params).params[i], "services"))
 					snprintf(servicelabels + strlen(servicelabels), sizeof(servicelabels) - strlen(servicelabels), "%s,", (*params).values[i]);
 				else
@@ -1465,8 +1469,12 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	tpl_addVar(vars, TPLADD, "DESCRIPTION", account->description);
 
 	//Disabled
-	if(account->disabled)
-		tpl_addVar(vars, TPLADD, "DISABLEDCHECKED", "selected");
+	if(!apicall) {
+		if(account->disabled)
+			tpl_addVar(vars, TPLADD, "DISABLEDCHECKED", "selected");
+	} else {
+		tpl_printf(vars, TPLADD, "DISABLEDVALUE", "%d", account->disabled);
+	}
 
 	//Expirationdate
 	struct tm timeinfo;
@@ -1492,15 +1500,24 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	tpl_addVar(vars, TPLADD, "DYNDNS", (char *)account->dyndns);
 
 	//Uniq
-	tpl_printf(vars, TPLADD, "TMP", "UNIQSELECTED%d", account->uniq);
-	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+	if(!apicall) {
+		tpl_printf(vars, TPLADD, "TMP", "UNIQSELECTED%d", account->uniq);
+		tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+	} else {
+		tpl_printf(vars, TPLADD, "UNIQVALUE", "%d", account->uniq);
+	}
 
 	//Sleep
 	if(!account->tosleep) tpl_addVar(vars, TPLADD, "SLEEP", "0");
 	else tpl_printf(vars, TPLADD, "SLEEP", "%d", account->tosleep);
+
 	//Monlevel selector
-	tpl_printf(vars, TPLADD, "TMP", "MONSELECTED%d", account->monlvl);
-	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+	if(!apicall) {
+		tpl_printf(vars, TPLADD, "TMP", "MONSELECTED%d", account->monlvl);
+		tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+	} else {
+		tpl_printf(vars, TPLADD, "MONVALUE", "%d", account->monlvl);
+	}
 
 	//Au
 	if (account->autoau == 1)
@@ -1511,20 +1528,27 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 		free_mk_t(value);
 	}
 
-	/* SERVICES */
-	struct s_sidtab *sidtab = cfg.sidtab;
-	//build matrix
-	i=0;
-	while(sidtab != NULL) {
-		tpl_addVar(vars, TPLADD, "SIDLABEL", sidtab->label);
-		if(account->sidtabok&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
-		else tpl_addVar(vars, TPLADD, "CHECKED", "");
-		tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, "USEREDITSIDOKBIT"));
-		if(account->sidtabno&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
-		else tpl_addVar(vars, TPLADD, "CHECKED", "");
-		tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, "USEREDITSIDNOBIT"));
-		sidtab=sidtab->next;
-		i++;
+	if(!apicall) {
+		/* SERVICES */
+		struct s_sidtab *sidtab = cfg.sidtab;
+		//build matrix
+		i=0;
+		while(sidtab != NULL) {
+			tpl_addVar(vars, TPLADD, "SIDLABEL", sidtab->label);
+			if(account->sidtabok&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
+			else tpl_addVar(vars, TPLADD, "CHECKED", "");
+			tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, "USEREDITSIDOKBIT"));
+			if(account->sidtabno&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
+			else tpl_addVar(vars, TPLADD, "CHECKED", "");
+			tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, "USEREDITSIDNOBIT"));
+			sidtab=sidtab->next;
+			i++;
+		}
+	} else {
+		value = mk_t_service((uint64_t)account->sidtabok, (uint64_t)account->sidtabno);
+		if (strlen(value) > 0)
+			tpl_addVar(vars, TPLADD, "SERVICES", value);
+		free_mk_t(value);
 	}
 
 	// CAID
@@ -1553,20 +1577,32 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	free_mk_t(value);
 
 	//SUPPRESSCMD08
-	if (account->c35_suppresscmd08)
-		tpl_addVar(vars, TPLADD, "SUPPRESSCMD08", "selected");
+	if(!apicall){
+		if (account->c35_suppresscmd08)
+			tpl_addVar(vars, TPLADD, "SUPPRESSCMD08", "selected");
+	} else {
+		tpl_printf(vars, TPLADD, "SUPPRESSCMD08VALUE", "%d", account->c35_suppresscmd08);
+	}
 
 	//Sleepsend
 	tpl_printf(vars, TPLADD, "SLEEPSEND", "%u", account->c35_sleepsend);
 
 	//Keepalive
-	if (account->ncd_keepalive)
-		tpl_addVar(vars, TPLADD, "KEEPALIVE", "selected");
+	if(!apicall){
+		if (account->ncd_keepalive)
+			tpl_addVar(vars, TPLADD, "KEEPALIVE", "selected");
+	} else {
+		tpl_printf(vars, TPLADD, "KEEPALIVEVALUE", "%d", account->ncd_keepalive);
+	}
 
 #ifdef CS_ANTICASC
 	tpl_printf(vars, TPLADD, "AC_USERS", "%d", account->ac_users);
-	tpl_printf(vars, TPLADD, "TMP", "PENALTY%d", account->ac_penalty);
-	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+	if(!apicall){
+		tpl_printf(vars, TPLADD, "TMP", "PENALTY%d", account->ac_penalty);
+		tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+	} else {
+		tpl_printf(vars, TPLADD, "PENALTYVALUE", "%d", account->ac_penalty);
+	}
 #endif
 
 #ifdef MODULE_CCCAM
@@ -1581,7 +1617,11 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	//Failban
 	tpl_printf(vars, TPLADD, "FAILBAN", "%d", account->failban);
 
-	return tpl_getTpl(vars, "USEREDIT");
+	if(!apicall)
+		return tpl_getTpl(vars, "USEREDIT");
+	else
+		return tpl_getTpl(vars, "APIUSEREDIT");
+
 }
 
 static char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
@@ -3009,9 +3049,14 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 		return tpl_getTpl(vars, "APIERROR");
 	}
 	else if (strcmp(getParam(params, "part"), "userconfig") == 0) {
-		//Send Errormessage
-		tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "userconfig not yet avail");
-		return tpl_getTpl(vars, "APIERROR");
+		if(((strcmp(getParam(params, "action"), "Save") == 0) ||
+				(strcmp(getParam(params, "action"), "Save As") == 0)) && cfg.http_readonly == 1) {
+			//Send Errormessage
+			tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "API is in readonly mode");
+			return tpl_getTpl(vars, "APIERROR");
+		} else {
+			return send_oscam_user_config_edit(vars, params, 1);
+		}
 	}
 	else if (strcmp(getParam(params, "part"), "entitlement") == 0) {
 
@@ -3474,7 +3519,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 				case 4: result = send_oscam_user_config(vars, &params, 0); break;
 				case 5: result = send_oscam_reader_config(vars, &params); break;
 				case 6: result = send_oscam_services(vars, &params); break;
-				case 7: result = send_oscam_user_config_edit(vars, &params); break;
+				case 7: result = send_oscam_user_config_edit(vars, &params, 0); break;
 				//case  8: css file
 				case 9: result = send_oscam_services_edit(vars, &params); break;
 				case 10: result = send_oscam_savetpls(vars); break;
