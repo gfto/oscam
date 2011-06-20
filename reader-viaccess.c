@@ -297,6 +297,38 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 	nextEcm=ecm88Data;
 
+		//detecte nano E0
+	while (ecm88Len)
+	{
+		// 80 33 nano 80 (ecm) + len (33)
+		if(ecm88Data[0]==0x80) { // nano 80, give ecm len
+			curEcm88len=ecm88Data[1];
+			nextEcm=ecm88Data+curEcm88len+2;
+			ecm88Data += 2;
+			ecm88Len -= 2;
+
+			if (ecm88Data[0]==0x90  && ecm88Data[1]==0x07)
+			{
+				curnumber_ecm =(ecm88Data[6]<<8) | (ecm88Data[7]);
+				//if number_ecm & nano E0 ecm  not suported
+				if ((reader->last_geo.number_ecm == curnumber_ecm )&&(ecm88Data[9] == 0xE0))
+				{
+					cs_log("[viaccess-reader] ECM: Invalid ECM nano E0 Rejecting");
+					return ERROR;
+				}
+			}
+			ecm88Data=nextEcm;
+			ecm88Len-=curEcm88len;
+			continue; //loop to next ecm
+		} else  ecm88Len = 0; //exit while
+	}
+
+	//return original parametre
+	ecm88Data=er->ecm+4; //XXX what is the 4th byte for ??
+	ecm88Len=SCT_LEN(er->ecm)-4;
+	curEcm88len=0;
+	nextEcm=ecm88Data;
+
 	while (ecm88Len && !rc) {
 
 		if(ecm88Data[0] ==0x00 &&  ecm88Data[1] == 0x00) {
@@ -362,11 +394,12 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 				// if we have an ecm number we check it.
 				// we can't assume that if the nano len is 5 or more we have an ecm number
 				// as some card don't support this
-				//force use ecm 00 provider 030B00 & 032940
+				//force use ecm 00 provider 030B00 & 032920 & 032940
 				if( reader->last_geo.number_ecm > 0 ) 
 				{ 
 					if(ecm88Data[2] == 0x03 && ((ecm88Data[3] == 0x0B && ecm88Data[4] == 0x00)||
-						                        (ecm88Data[3] == 0x29 && ecm88Data[4] == 0x40)))
+						                        (ecm88Data[3] == 0x29 && ecm88Data[4] == 0x20)||
+												(ecm88Data[3] == 0x29 && ecm88Data[4] == 0x40)))
 					{
 						if (reader->last_geo.number_ecm == curnumber_ecm && !( ecm88Data[nanoLen-1] == 0x01 )) //ecm 00
 						{
