@@ -891,8 +891,8 @@ void update_card_list() {
             //Filts by Hardware readers:
             if ((rdr->typ != R_CCCAM) && rdr->ftab.filts && !flt) {
                 for (j = 0; j < CS_MAXFILTERS; j++) {
-                    if (rdr->ftab.filts[j].caid) {
-                        uint16_t caid = rdr->ftab.filts[j].caid;
+                	uint16_t caid = rdr->ftab.filts[j].caid;
+                    if (caid) {
                         struct cc_card *card = create_card2(rdr, j, caid, reshare);
                         card->card_type = CT_LOCALCARD;
                         
@@ -1130,9 +1130,14 @@ void share_updater()
 						}
 						cur_check = crc32(cur_check, (uint8_t*)&rdr->tcp_connected, sizeof(rdr->tcp_connected));
 						cur_check = crc32(cur_check, (uint8_t*)&rdr->card_status, sizeof(rdr->card_status));
-						cur_check = crc32(cur_check, (uint8_t*)&rdr->hexserial, 8); //check hexserial
-						//cur_check = crc32(cur_check, (uint8_t*)&rdr->prid, rdr->nprov * sizeof(rdr->prid[0])); //check providers
-						//cur_check = crc32(cur_check, (uint8_t*)&rdr->sa, rdr->nprov * sizeof(rdr->sa[0])); //check provider-SA
+						
+						//Check hexserial/UA changes only on lokal readers:
+						if (!(rdr->typ & R_IS_NETWORK)) {
+							cur_check = crc32(cur_check, (uint8_t*)&rdr->hexserial, 8); //check hexserial
+							cur_check = crc32(cur_check, (uint8_t*)&rdr->prid, rdr->nprov * sizeof(rdr->prid[0])); //check providers
+							cur_check = crc32(cur_check, (uint8_t*)&rdr->sa, rdr->nprov * sizeof(rdr->sa[0])); //check provider-SA
+						}
+						
 						cur_check = crc32(cur_check, (uint8_t*)&rdr->ftab, sizeof(FTAB)); //check reader 
 						cur_check = crc32(cur_check, (uint8_t*)&rdr->ctab, sizeof(CAIDTAB)); //check caidtab
 						cur_check = crc32(cur_check, (uint8_t*)&rdr->fchid, sizeof(FTAB)); //check chids
