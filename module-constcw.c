@@ -15,41 +15,39 @@ int32_t constcw_file_available(void)
 
 int32_t constcw_analyse_file(uint16_t c_caid, uint32_t c_prid, uint16_t c_sid, uchar *dcw)
 {
-    //CAID:PROVIDER:SID:PMT:PID:: XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX
-    
-    FILE *fp;
-    char token[4096];
-    uint32_t caid, provid, sid, pmt, pid;
-    uchar cw[16];
-
-    // FIXME
-    c_prid = c_prid;
-
-    fp=fopen(cur_client()->reader->device, "r");
-    if (!fp) return (0);
-    
-    while (fgets(token, sizeof(token), fp))
-    {
-	if (token[0]=='#') continue;
+	//CAID:PROVIDER:SID:PMT:PID::XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX
 	
-	sscanf(token, "%x:%x:%x:%x:%x::%x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x", &caid, &provid, &sid, &pmt, &pid, 
-		(uint*) &cw[0], (uint*) &cw[1], (uint*) &cw[2],	(uint*) &cw[3],	
-		(uint*) &cw[4], (uint*) &cw[5], (uint*) &cw[6], (uint*) &cw[7], 
-		(uint*) &cw[8], (uint*) &cw[9], (uint*) &cw[10], (uint*) &cw[11], 
-		(uint*) &cw[12], (uint*) &cw[13], (uint*) &cw[14], (uint*) &cw[15]);
-
-	//cs_log("Line found: %s", token);
-	if (c_caid == caid && c_sid == sid)
-	{
-	    cs_log("Entry found: %04X:%06X:%04X %s", caid, provid, sid, cs_hexdump(1, cw, 16));
-	    memcpy(dcw, cw, 16);
-	    fclose(fp);
-	    return 1;
+	FILE *fp;
+	char token[512];
+	uint32_t caid, provid, sid, pmt, pid;
+	int32_t cw[16];
+	
+	// FIXME
+	c_prid = c_prid;
+	
+	fp=fopen(cur_client()->reader->device, "r");
+	if (!fp) return (0);
+	
+	while (fgets(token, sizeof(token), fp)){
+		if (token[0]=='#') continue;
+		
+		sscanf(token, "%x:%x:%x:%x:%x::%x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x", &caid, &provid, &sid, &pmt, &pid, 
+			&cw[0], &cw[1], &cw[2],	&cw[3],	&cw[4], &cw[5], &cw[6], &cw[7], 
+			&cw[8], &cw[9], &cw[10], &cw[11], &cw[12], &cw[13], &cw[14], &cw[15]);
+		
+		//cs_log("Line found: %s", token);
+		if (c_caid == caid && c_sid == sid){
+			fclose(fp);
+			int8_t i;
+			for(i = 0; i < 16; ++i)
+				dcw[i] = (uchar) cw[i];
+			cs_log("Entry found: %04X:%06X:%04X:%04X:%04X::%s", caid, provid, sid, pmt, pid, cs_hexdump(1, dcw, 16));
+			return 1;
+		}
 	}
-    }
-    
-    fclose(fp);
-    return 0;
+	
+	fclose(fp);
+	return 0;
 }
 //************************************************************************************************************************
 //* client/server common functions
