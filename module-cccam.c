@@ -1680,6 +1680,9 @@ void cc_card_removed(struct s_client *cl, uint32_t shareid) {
 			else if (card->reshare == 2) cc->num_reshare2--;
 			else cc->num_resharex--;
 
+			cs_debug_mask(D_TRACE, "%s card removed: id %8X remoteid %8X caid %4X hop %d reshare %d originid %8X cardtype %d",
+				getprefix(), card->id, card->remote_id, card->caid, card->hop, card->reshare, card->origin_id, card->card_type);
+			                                    
 			cc_free_card(card);
 			cc->card_removed_count++;
 			//break;
@@ -1858,8 +1861,8 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 		}
 		cs_debug_mask(D_READER, "%s MSG_SRV_DATA MODE=%s, len=%d", getprefix(),
 				cmd05_mode_name[cc->cmd05_mode], l);
-
 		break;
+		
 	case MSG_NEW_CARD_SIDINFO: 
 	case MSG_NEW_CARD: {
 		uint16_t caid = b2i(2, buf + 12);
@@ -1933,6 +1936,9 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				else if (card->reshare == 1) cc->num_reshare1++;
 				else if (card->reshare == 2) cc->num_reshare2++;
 				else cc->num_resharex++;
+				
+				cs_debug_mask(D_TRACE, "%s card added: id %8X remoteid %8X caid %4X hop %d reshare %d originid %8X cardtype %d",
+					getprefix(), card->id, card->remote_id, card->caid, card->hop, card->reshare, card->origin_id, card->card_type);
 			}
 		}
 

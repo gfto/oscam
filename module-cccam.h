@@ -79,8 +79,10 @@ typedef enum {
 		CT_LOCALCARD = 1,
 		CT_CARD_BY_SERVICE_READER = 2,
 		CT_CARD_BY_SERVICE_USER = 3,
-		CT_CARD_BY_CAID = 4,
-		CT_REMOTECARD = 5
+		CT_CARD_BY_CAID1 = 4,
+		CT_CARD_BY_CAID2 = 5,
+		CT_CARD_BY_CAID3 = 6,
+		CT_REMOTECARD = 10
 } cc_card_type;
 
 struct cc_card {

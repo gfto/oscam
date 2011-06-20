@@ -347,7 +347,7 @@ int32_t cc_clear_reported_carddata(LLIST *reported_carddatas, LLIST *except,
 
                 if (!card2 && ll_iter_remove(&it)) { //check result of ll_iter_remove, because another thread could removed it
                         if (send_removed) {
-                        		cs_debug_mask(D_TRACE, "card removed: id %8X remoteid %8X caid %4X hop %d reshare %d originid %8X cardtype %d", 
+                        		cs_debug_mask(D_TRACE, "s-card removed: id %8X remoteid %8X caid %4X hop %d reshare %d originid %8X cardtype %d", 
 									card->id, card->remote_id, card->caid, card->hop, card->reshare, card->origin_id, card->card_type);
 
                         		send_remove_card_to_clients(card);
@@ -779,7 +779,7 @@ int32_t report_card(struct cc_card *card, LLIST *new_reported_carddatas)
     int32_t res = 0;
     if (!find_reported_card(card)) { //Add new card:
     	
-    	cs_debug_mask(D_TRACE, "card added: id %8X remoteid %8X caid %4X hop %d reshare %d originid %8X cardtype %d", 
+    	cs_debug_mask(D_TRACE, "s-card added: id %8X remoteid %8X caid %4X hop %d reshare %d originid %8X cardtype %d", 
     		card->id, card->remote_id, card->caid, card->hop, card->reshare, card->origin_id, card->card_type);
     		
         send_card_to_clients(card, NULL);
@@ -935,7 +935,7 @@ void update_card_list() {
 
                     if (lcaid && (lcaid != 0xFFFF)) {
                         struct cc_card *card = create_card2(rdr, j, lcaid, reshare);
-                        card->card_type = CT_CARD_BY_CAID;
+                        card->card_type = CT_CARD_BY_CAID1;
                         if (!rdr->audisabled)
                             cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, lcaid);
 
@@ -956,12 +956,12 @@ void update_card_list() {
 						if (!caid) break;
 						
 						struct cc_card *card = create_card2(rdr, c, caid, reshare);
-						card->card_type = CT_CARD_BY_CAID;
+						card->card_type = CT_CARD_BY_CAID2;
 	                
 	    		        if (!rdr->audisabled)
-	    		        		cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, caid);
-			            for (j = 0; j < rdr->nprov; j++) {
-	        	         uint32_t prid = get_reader_prid(rdr, j);
+	    		        	cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, caid);
+						for (j = 0; j < rdr->nprov; j++) {
+	        	        	uint32_t prid = get_reader_prid(rdr, j);
                 		    struct cc_provider *prov = cs_malloc(&prov, sizeof(struct cc_provider), QUITERROR);
 		                    prov->prov = prid;
 		                    //cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
@@ -985,7 +985,7 @@ void update_card_list() {
                 if (rdr->tcp_connected || rdr->card_status == CARD_INSERTED) {
                 	uint16_t caid = rdr->caid;
                 	struct cc_card *card = create_card2(rdr, 1, caid, reshare);
-                	card->card_type = CT_CARD_BY_CAID;
+                	card->card_type = CT_CARD_BY_CAID3;
                 
 	                if (!rdr->audisabled)
 	                    cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, caid);
@@ -1131,8 +1131,8 @@ void share_updater()
 						cur_check = crc32(cur_check, (uint8_t*)&rdr->tcp_connected, sizeof(rdr->tcp_connected));
 						cur_check = crc32(cur_check, (uint8_t*)&rdr->card_status, sizeof(rdr->card_status));
 						cur_check = crc32(cur_check, (uint8_t*)&rdr->hexserial, 8); //check hexserial
-						cur_check = crc32(cur_check, (uint8_t*)&rdr->prid, rdr->nprov * sizeof(rdr->prid[0])); //check providers
-						cur_check = crc32(cur_check, (uint8_t*)&rdr->sa, rdr->nprov * sizeof(rdr->sa[0])); //check provider-SA
+						//cur_check = crc32(cur_check, (uint8_t*)&rdr->prid, rdr->nprov * sizeof(rdr->prid[0])); //check providers
+						//cur_check = crc32(cur_check, (uint8_t*)&rdr->sa, rdr->nprov * sizeof(rdr->sa[0])); //check provider-SA
 						cur_check = crc32(cur_check, (uint8_t*)&rdr->ftab, sizeof(FTAB)); //check reader 
 						cur_check = crc32(cur_check, (uint8_t*)&rdr->ctab, sizeof(CAIDTAB)); //check caidtab
 						cur_check = crc32(cur_check, (uint8_t*)&rdr->fchid, sizeof(FTAB)); //check chids

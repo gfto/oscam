@@ -155,7 +155,7 @@ int32_t network_tcp_connection_open()
 		clear_block_delay(rdr);
 
 	if (is_connect_blocked(rdr)) { //inside of blocking delay, do not connect!
-		cs_log("tcp connect blocking delay asserted for %s", rdr->label);
+		cs_debug_mask(D_TRACE, "tcp connect blocking delay asserted for %s", rdr->label);
 		return -1;
 	}
   
