@@ -755,7 +755,7 @@ int32_t find_reported_card(struct cc_card *card1)
     LL_ITER it = ll_iter_create(reported_carddatas);
     struct cc_card *card2;
     while ((card2 = ll_iter_next(&it))) {
-        if (same_card(card1, card2) && !card_timed_out(card2)) {
+        if (same_card(card1, card2) && card_timed_out(card2)) {
             card1->id = card2->id; //Set old id !!
             card1->timeout = card2->timeout;
             cc_free_card(card2);
