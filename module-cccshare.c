@@ -744,7 +744,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
 
 int32_t card_timed_out(struct cc_card *card)
 {
-    int32_t res = (card->card_type != CT_REMOTECARD) && (card->timeout < time(NULL)); //local card is older than 1h?
+    int32_t res = (card->card_type != CT_REMOTECARD) && (card->timeout > time(NULL)); //local card is older than 1h?
     if (res)
 		cs_debug_mask(D_TRACE, "card %08X timed out! refresh forced", card->id?card->id:card->origin_id);
     return res;
