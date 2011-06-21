@@ -263,7 +263,7 @@ static int32_t videoguard1_do_ecm(struct s_reader *reader, ECM_REQUEST * er)
   int32_t lenECMpart2 = er->ecm[posECMpart2];
   unsigned char tbuff[264];
   unsigned char rbuff[264];
-  memcpy(&tbuff[0], &(er->ecm[posECMpart2 + 1]), lenECMpart2 - 1);
+  memcpy(&tbuff[0], &(er->ecm[posECMpart2 + 1]), lenECMpart2);
   ins40[4] = lenECMpart2;
   int32_t l;
   l = vg1_do_cmd(reader, ins40, tbuff, NULL, cta_res);
