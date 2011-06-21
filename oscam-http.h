@@ -868,7 +868,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##TPLHEADER##\
 ##TPLMENU##\
 	<BR><BR>\n\
-	<TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD><TD CLASS=\"configmenu\"><A HREF=\"graph.svg\">Show Graphs</A></TD></TR></TABLE><BR>\
+	<TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD><TD CLASS=\"configmenu\"><A TARGET=\"_NEW\" HREF=\"graph.svg\">Show Graphs</A></TD></TR></TABLE><BR>\
 	<form action=\"readerconfig.html\" method=\"get\">\n\
 		<TABLE CLASS=\"readers\">\n\
 			<TR>\n\
@@ -1886,15 +1886,17 @@ Color[17]='DarkViolet';\n\
 Color[18]='Gold';\n\
 Color[19]='IndianRed';\n\
 Color[20]='black';\n\
-var max_num_points = 240;\n\
+var max_num_points = 300;\n\
 var step = 600 / max_num_points ;\n\
 var fetch_url='';\n\
+var interval = 1000;\n\
+var activesecs = 30;\n\
 function init(evt) {\n\
 	fetch_url=location.search.split('?');\n\
 	fetch_url='oscamapi.html?part=ecmhistory&' + fetch_url[fetch_url.length-1];\n\
 	SVGDoc = evt.target.ownerDocument;\n\
 	fetch_data();\n\
-	setInterval('fetch_data()', 1000);\n\
+	setInterval('fetch_data()', interval);\n\
 }\n\
 function fetch_data() {\n\
 	if (fetch_url) {\n\
@@ -1912,60 +1914,64 @@ function plot_data(obj) {\n\
 	rdx=0;\n\
 	while (rdx < readers.length) {\n\
 		var type = readers[rdx].getAttribute('type');\n\
-		if ( type=='r' || type=='p' ) {\n\
-			if ( plots[i] == null ) {\n\
-				plots[i] = new Array();\n\
-				plots[i]['data'] = new Array();\n\
+		if ( plots[i] == null ) {\n\
+			plots[i] = new Array();\n\
+			plots[i]['data'] = new Array();\n\
+		}\n\
+		plots[i]['name'] = readers[rdx].getAttribute('name');\n\
+		if ( plots[i]['name'].length == 0 ) {\n\
+			plots[i]['name'] = readers[rdx].getElementsByTagName('connection')[0].getAttribute('ip');\n\
+		}\n\
+		plots[i]['ecmtime'] = parseInt( readers[rdx].getElementsByTagName('request')[0].getAttribute('ecmtime') );\n\
+		plots[i]['idletime'] = parseInt( readers[rdx].getElementsByTagName('times')[0].getAttribute('idle') );\n\
+		if (!isNumber(plots[i]['ecmtime'])) plots[i]['ecmtime'] = -1;\n\
+		if (!isNumber(plots[i]['idletime'])) {\n\
+			plots[i]['ecmtime'] = -1;\n\
+		} else if (plots[i]['idletime']>activesecs) {\n\
+			plots[i]['ecmtime'] = -1;\n\
+		}\n\
+		plots[i]['idle'] = readers[rdx].getElementsByTagName('times')[0].getAttribute('idle');\n\
+		if ( plots[i]['data'].length==max_num_points ) {\n\
+			var ii = 0;\n\
+			while (ii < max_num_points) {\n\
+				plots[i]['data'][ii] = plots[i]['data'][ii+1];\n\
+				ii++;\n\
 			}\n\
-			plots[i]['name'] = readers[rdx].getAttribute('name');\n\
-			if ( plots[i]['name'].length == 0 ) {\n\
-				plots[i]['name'] = readers[rdx].getElementsByTagName('connection')[0].getAttribute('ip');\n\
-			}\n\
-			plots[i]['ecmtime'] = parseInt( readers[rdx].getElementsByTagName('request')[0].getAttribute('ecmtime') );\n\
-			if (!isNumber(plots[i]['ecmtime'])) plots[i]['ecmtime'] = -1;\n\
-			plots[i]['idle'] = readers[rdx].getElementsByTagName('times')[0].getAttribute('idle');\n\
-			if ( plots[i]['data'].length==max_num_points ) {\n\
-				var ii = 0;\n\
-				while (ii < max_num_points) {\n\
-					plots[i]['data'][ii] = plots[i]['data'][ii+1];\n\
-					ii++;\n\
-				}\n\
-				plots[i]['data'].length--;\n\
-			}\n\
-			plots[i]['data'][plots[i]['data'].length] = plots[i]['ecmtime'];\n\
-			if ( SVGDoc.getElementById('graph_txt_'+i) == null ) {\n\
-				var newText = document.createElementNS(svgNS,'text');\n\
-				newText.setAttributeNS(null,'x',10);\n\
-				newText.setAttributeNS(null,'y',12+(12*i));\n\
-				newText.setAttributeNS(null,'fill',Color[i]);\n\
-				newText.setAttributeNS(null,'id','graph_txt_'+i);\n\
-				newText.setAttributeNS(null,'style','font-size:12px');\n\
-				var textNode = document.createTextNode(plots[i]['name']);\n\
-	      newText.appendChild(textNode);\n\
-				document.getElementById('graph').appendChild(newText);\n\
-			}\n\
-			if ( plots[i]['ecmtime']==-1 ) {\
-				SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':';\n\
-			} else {\
-				SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':' + plots[i]['ecmtime'] + 'ms';\n\
-			}\
-			if ( SVGDoc.getElementById('graph_path_'+i) == null ) {\n\
-				var newPath = document.createElementNS(svgNS,'path');\n\
-				newPath.setAttributeNS(null,'id','graph_path_'+i);\n\
-				newPath.setAttributeNS(null,'fill','none');\n\
-				newPath.setAttributeNS(null,'stroke',Color[i]);\n\
-				newPath.setAttributeNS(null,'stroke-width','1');\n\
-				newPath.setAttributeNS(null,'stroke-opacity','0.8');\n\
-				document.getElementById('graph').appendChild(newPath);\n\
-			}\n\
-			a=0;\n\
-			var plot = plots[i]['data'];\n\
-			while (a < plot.length) {\n\
-				if (plot[a] > max) max = plot[a];\n\
-				a++;\n\
-			}\n\
-			i++;\n\
-	 	}\n\
+			plots[i]['data'].length--;\n\
+		}\n\
+		plots[i]['data'][plots[i]['data'].length] = plots[i]['ecmtime'];\n\
+		if ( SVGDoc.getElementById('graph_txt_'+i) == null ) {\n\
+			var newText = document.createElementNS(svgNS,'text');\n\
+			newText.setAttributeNS(null,'x',10);\n\
+			newText.setAttributeNS(null,'y',12+(12*i));\n\
+			newText.setAttributeNS(null,'fill',Color[i]);\n\
+			newText.setAttributeNS(null,'id','graph_txt_'+i);\n\
+			newText.setAttributeNS(null,'style','font-size:12px');\n\
+			var textNode = document.createTextNode(plots[i]['name']);\n\
+      newText.appendChild(textNode);\n\
+			document.getElementById('graph').appendChild(newText);\n\
+		}\n\
+		if ( plots[i]['ecmtime']==-1 ) {\
+			SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':';\n\
+		} else {\
+			SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':' + plots[i]['ecmtime'] + 'ms';\n\
+		}\
+		if ( SVGDoc.getElementById('graph_path_'+i) == null ) {\n\
+			var newPath = document.createElementNS(svgNS,'path');\n\
+			newPath.setAttributeNS(null,'id','graph_path_'+i);\n\
+			newPath.setAttributeNS(null,'fill','none');\n\
+			newPath.setAttributeNS(null,'stroke',Color[i]);\n\
+			newPath.setAttributeNS(null,'stroke-width','1');\n\
+			newPath.setAttributeNS(null,'stroke-opacity','0.8');\n\
+			document.getElementById('graph').appendChild(newPath);\n\
+		}\n\
+		a=0;\n\
+		var plot = plots[i]['data'];\n\
+		while (a < plot.length) {\n\
+			if (plot[a] > max) max = plot[a];\n\
+			a++;\n\
+		}\n\
+		i++;\n\
 	 	rdx++;\n\
 	}\n\
 	var rmax=makeRoundMax(max);\n\
