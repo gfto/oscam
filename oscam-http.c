@@ -933,6 +933,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	rdr = get_reader_by_label(reader_);
 
 	tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
+	tpl_addVar(vars, TPLADD, "DESCRIPTION", rdr->description);
 
 	// enabled
 	if(!apicall) {

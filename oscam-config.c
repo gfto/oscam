@@ -2549,6 +2549,11 @@ int32_t write_server()
 
 			fprintf_conf(f, "label", "%s\n", rdr->label);
 
+#ifdef WEBIF
+			if (rdr->description[0] || cfg.http_full_cfg)
+				fprintf_conf(f, "description", "%s\n", rdr->description);
+#endif
+
 			if (rdr->enable == 0 || cfg.http_full_cfg)
 				fprintf_conf(f, "enable", "%d\n", rdr->enable);
 
@@ -3788,6 +3793,13 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		cs_strncpy(rdr->label, value, sizeof(rdr->label));
 		return;
 	}
+
+#ifdef WEBIF
+	if (!strcmp(token, "description")) {
+		cs_strncpy(rdr->description, value, sizeof(rdr->description));
+		return;
+	}
+#endif
 
 	if (!strcmp(token, "fallback")) {
 		rdr->fallback  = strToIntVal(value, 0);

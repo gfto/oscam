@@ -807,6 +807,9 @@ struct s_reader  //contains device info, reader info and card info
   int32_t       fallback;
   int32_t       typ;
   char      label[64];
+#ifdef WEBIF
+  char     description[64];
+#endif
   char      device[128];
   void      *spec_dev;  //pointer to structure that contains specific device data
   uint16_t    slot;   //in case of multiple slots like sc8in1; first slot = 1
