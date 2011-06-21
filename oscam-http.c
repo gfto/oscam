@@ -1830,7 +1830,6 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			else {
 				tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", proto);
 				tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
-				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMEONCHANNEL", "");
 			}
 		}
 
