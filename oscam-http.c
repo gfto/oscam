@@ -1802,7 +1802,11 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
 			tpl_printf(vars, TPLADDONCE, "CWLASTRESPONSET", "%d", lastresponsetm);
 			tpl_addVar(vars, TPLADDONCE, "IDLESECS", sec2timeformat(vars, isec));
-			tpl_addVar(vars, TPLADDONCE, "CLIENTTIMEONCHANNEL", sec2timeformat(vars, chsec));
+
+			if (isactive > 0)
+				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMEONCHANNEL", sec2timeformat(vars, chsec));
+			else
+				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMEONCHANNEL", "");
 
 			if ((strcmp(proto,"newcamd") == 0) && (latestclient->typ == 'c'))
 				tpl_printf(vars, TPLADDONCE, "CLIENTPROTO","%s (%s)", proto, get_ncd_client_name(latestclient->ncd_client_id));
@@ -1826,6 +1830,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			else {
 				tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", proto);
 				tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
+				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMEONCHANNEL", "");
 			}
 		}
 
