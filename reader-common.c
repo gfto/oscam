@@ -1,5 +1,8 @@
 #include "globals.h"
 #include "reader-common.h"
+#include "csctapi/defines.h" 
+#include "csctapi/atr.h" 
+#include "csctapi/icc_async_exports.h" 
 #ifdef AZBOX
 #include "csctapi/ifd_azbox.h"
 #endif
