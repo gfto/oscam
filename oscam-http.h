@@ -1810,13 +1810,14 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	preserveAspectRatio='none'\n\
 	onload='init(evt)'\n\
 >\n\
-<g id='graph'> \n\
-	<rect id='g' class='graph_bg' x1='0' y1='0' width='600' height='300' /> \n\
-	<text id='graph_error' class='graph_error' x='300' y='125' visibility='hidden'>Error occured!</text> \n\
-	<path id='graph_grid' class='graph_grid' d='M 2 75 L 600 75 M 2 150 L 600 150 M 2 225 L 600 225'/> \n\
-	<text id='graph_grid_txt3' class='graph_grid_txt' x='600' y='223'>-</text> \n\
-	<text id='graph_grid_txt2' class='graph_grid_txt' x='600' y='148'>-</text> \n\
-	<text id='graph_grid_txt1' class='graph_grid_txt' x='600' y='73'>-</text> \n\
+<g id='graph'>\n\
+	<rect id='g' class='graph_bg' x1='0' y1='0' width='600' height='300' />\n\
+	<text id='graph_error' class='graph_error' x='300' y='125' visibility='hidden'>Error occured!</text>\n\
+	<path id='graph_grid' class='graph_grid' d='M 2 75 L 600 75 M 2 150 L 600 150 M 2 225 L 600 225'/>\n\
+	<text id='graph_grid_interval' style='font-size:8px;'  cursor='pointer' class='graph_grid_txt' x='300' y='10'>-</text>\n\
+	<text id='graph_grid_txt3' class='graph_grid_txt' x='600' y='223'>-</text>\n\
+	<text id='graph_grid_txt2' class='graph_grid_txt' x='600' y='148'>-</text>\n\
+	<text id='graph_grid_txt1' class='graph_grid_txt' x='600' y='73'>-</text>\n\
 </g>\n\
 <script type='text/ecmascript'>\n\
 <![CDATA[\n\
@@ -1889,14 +1890,24 @@ Color[20]='black';\n\
 var max_num_points = 300;\n\
 var step = 600 / max_num_points ;\n\
 var fetch_url='';\n\
-var interval = 1000;\n\
+var interval = 3500;\n\
 var activesecs = 30;\n\
+var activeTask = null;\n\
 function init(evt) {\n\
 	fetch_url=location.search.split('?');\n\
 	fetch_url='oscamapi.html?part=ecmhistory&' + fetch_url[fetch_url.length-1];\n\
 	SVGDoc = evt.target.ownerDocument;\n\
+	SVGDoc.getElementById('graph_grid_interval').addEventListener('mousedown', switch_interval, false);\n\
+	switch_interval();\n\
 	fetch_data();\n\
-	setInterval('fetch_data()', interval);\n\
+	activeTask = setInterval('fetch_data()', interval);\n\
+}\n\
+function switch_interval() {\n\
+	interval -= 500;\n\
+	if ( interval<500 ) interval = 10000;\n\
+	SVGDoc.getElementById('graph_grid_interval').firstChild.data = 'Refresh:'+interval+'ms';\n\
+	window.clearInterval(activeTask);\n\
+	activeTask = setInterval('fetch_data()', interval);\n\
 }\n\
 function fetch_data() {\n\
 	if (fetch_url) {\n\
@@ -1917,6 +1928,8 @@ function plot_data(obj) {\n\
 		if ( plots[i] == null ) {\n\
 			plots[i] = new Array();\n\
 			plots[i]['data'] = new Array();\n\
+			plots[i]['ecmmin'] = -1;\n\
+			plots[i]['ecmmax'] = 0;\n\
 		}\n\
 		plots[i]['name'] = readers[rdx].getAttribute('name');\n\
 		if ( plots[i]['name'].length == 0 ) {\n\
@@ -1924,7 +1937,12 @@ function plot_data(obj) {\n\
 		}\n\
 		plots[i]['ecmtime'] = parseInt( readers[rdx].getElementsByTagName('request')[0].getAttribute('ecmtime') );\n\
 		plots[i]['idletime'] = parseInt( readers[rdx].getElementsByTagName('times')[0].getAttribute('idle') );\n\
-		if (!isNumber(plots[i]['ecmtime'])) plots[i]['ecmtime'] = -1;\n\
+		if (!isNumber(plots[i]['ecmtime'])) {\n\
+			plots[i]['ecmtime'] = -1;\n\
+		} else {\n\
+			if ( plots[i]['ecmmax'] < plots[i]['ecmtime'] ) plots[i]['ecmmax'] = plots[i]['ecmtime'] ;\n\
+			if ( ( plots[i]['ecmmin'] > plots[i]['ecmtime']) || (plots[i]['ecmmin'] == -1 ) ) plots[i]['ecmmin'] = plots[i]['ecmtime'] ;\n\
+		}\n\
 		if (!isNumber(plots[i]['idletime'])) {\n\
 			plots[i]['ecmtime'] = -1;\n\
 		} else if (plots[i]['idletime']>activesecs) {\n\
@@ -1942,11 +1960,11 @@ function plot_data(obj) {\n\
 		plots[i]['data'][plots[i]['data'].length] = plots[i]['ecmtime'];\n\
 		if ( SVGDoc.getElementById('graph_txt_'+i) == null ) {\n\
 			var newText = document.createElementNS(svgNS,'text');\n\
-			newText.setAttributeNS(null,'x',10);\n\
-			newText.setAttributeNS(null,'y',12+(12*i));\n\
+			newText.setAttributeNS(null,'x',5);\n\
+			newText.setAttributeNS(null,'y',10+(10*i));\n\
 			newText.setAttributeNS(null,'fill',Color[i]);\n\
 			newText.setAttributeNS(null,'id','graph_txt_'+i);\n\
-			newText.setAttributeNS(null,'style','font-size:12px');\n\
+			newText.setAttributeNS(null,'style','font-size:10px');\n\
 			var textNode = document.createTextNode(plots[i]['name']);\n\
       newText.appendChild(textNode);\n\
 			document.getElementById('graph').appendChild(newText);\n\
@@ -1954,8 +1972,9 @@ function plot_data(obj) {\n\
 		if ( plots[i]['ecmtime']==-1 ) {\
 			SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':';\n\
 		} else {\
-			SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':' + plots[i]['ecmtime'] + 'ms';\n\
+			SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':' + plots[i]['ecmtime'];\n\
 		}\
+		if ( plots[i]['ecmmin'] != -1 ) SVGDoc.getElementById('graph_txt_'+i).firstChild.data += ' (Max:'+plots[i]['ecmmax']+'/Min:'+plots[i]['ecmmin']+')';\n\
 		if ( SVGDoc.getElementById('graph_path_'+i) == null ) {\n\
 			var newPath = document.createElementNS(svgNS,'path');\n\
 			newPath.setAttributeNS(null,'id','graph_path_'+i);\n\
