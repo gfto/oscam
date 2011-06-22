@@ -1056,6 +1056,7 @@ static int32_t oscam_ser_send_ecm(struct s_client *client, ECM_REQUEST *er, ucha
 	          3, er->prid, er->caid, cs_hexdump(0, er->ecm, er->l, tmp, er->l * 2 + 1));
 	        oscam_ser_send(client, buf, (er->l<<1)+15); // 1 + 8 + 4 + l*2 + 2
 	      }
+	      free(tmp);
 	    }
       break;
     case P_ALPHA:
