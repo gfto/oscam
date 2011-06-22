@@ -287,7 +287,7 @@ static int32_t conax_card_info(struct s_reader * reader)
 {
   def_resp;
   int32_t type, i, j, k=0, n=0,l;
-  uint16_t provid;
+  uint16_t provid = 0;
   char provname[32], pdate[32];
   uchar chid[10];
   static const uchar insC6[] = {0xDD, 0xC6, 0x00, 0x00, 0x03, 0x1C, 0x01, 0x00};

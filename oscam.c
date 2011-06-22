@@ -2723,7 +2723,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 
 			if (!(fp = fopen (token, "a"))) {
 				cs_log ("ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
-			} else if(cs_malloc(tmp2, (emm_length + 3)*2 + 1, -1)){
+			} else if(cs_malloc(&tmp2, (emm_length + 3)*2 + 1, -1)){
 				fprintf (fp, "%s   %s   ", buf, cs_hexdump(0, ep->hexserial, 8, tmp, sizeof(tmp)));
 				fprintf (fp, "%s\n", cs_hexdump(0, ep->emm, emm_length + 3, tmp2, (emm_length + 3)*2 + 1));
 				free(tmp2);
