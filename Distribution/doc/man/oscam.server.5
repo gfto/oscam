@@ -93,12 +93,17 @@ reconnect if missing answers (for all TCP based remote readers), default:30
 .PP
 \fBdisableserverfilter\fP = \fB0\fP|\fB1\fP
 .RS 3n
-1 = ignore \fBcaid\fP and \fBident\fP settings of reader due faulty clients, default=0
+1 = ignore \fBcaid\fP and \fBident\fP settings of reader due faulty clients, default:0
 .RE
 .PP
 \fBlabel\fP = \fBname\fP
 .RS 3n
 name for reader, \fIrequired\fR
+.RE
+.PP
+\fBdescription\fP = \fBtext\fP
+.RS 3n
+description of reader, default:none
 .RE
 .PP
 \fBfallback\fP = \fB0\fP|\fB1\fP
