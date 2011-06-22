@@ -1933,12 +1933,29 @@ function plot_data(obj) {\n\
 			plots[i]['data'] = new Array();\n\
 			plots[i]['ecmmin'] = -1;\n\
 			plots[i]['ecmmax'] = 0;\n\
+			plots[i]['last_fetched_timestamp'] = 0;\n\
+			plots[i]['last_valid_ecm_duration '] = -1;\n\
 		}\n\
 		plots[i]['name'] = readers[rdx].getAttribute('name');\n\
-		if ( plots[i]['name'].length == 0 ) {\n\
-			plots[i]['name'] = readers[rdx].getElementsByTagName('connection')[0].getAttribute('ip');\n\
+		var ecmhistory = readers[rdx].getElementsByTagName('request')[0].getAttribute('ecmhistory').split(',');\n\
+		var maxecm = -1;\n\
+		for (var ii = ecmhistory.length-1; ii >= 0; ii--) {\n\
+			var ecm = ecmhistory[ii].split(':');\n\
+			if ( ecm[0]>-1 ) {\n\
+				if ( ecm[1]==0 ) {\n\
+					if ( parseInt( ecm[2] ) > plots[i]['last_fetched_timestamp'] ) {\n\
+						if ( parseInt( ecm[0] ) > maxecm ) maxecm = parseInt( ecm[0] );\n\
+						plots[i]['last_fetched_timestamp'] = parseInt( ecm[2] );\n\
+					}\n\
+				}\n\
+			}\n\
 		}\n\
-		plots[i]['ecmtime'] = parseInt( readers[rdx].getElementsByTagName('request')[0].getAttribute('ecmtime') );\n\
+		if ( maxecm == -1 ) {\n\
+			maxecm = plots[i]['last_valid_ecm_duration '];\n\
+		} else {\n\
+			plots[i]['last_valid_ecm_duration '] = maxecm;\n\
+		}\n\
+		plots[i]['ecmtime'] = maxecm;\n\
 		plots[i]['idletime'] = parseInt( readers[rdx].getElementsByTagName('times')[0].getAttribute('idle') );\n\
 		if (!isNumber(plots[i]['ecmtime'])) {\n\
 			plots[i]['ecmtime'] = -1;\n\

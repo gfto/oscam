@@ -106,7 +106,39 @@ char *get_ecm_historystring(struct s_client *cl){
 		return "";
 	}
 }
+char *get_ecm_fullhistorystring(struct s_client *cl){
 
+	if(cl){
+		int32_t k, pos = 0, needed = 1;
+		char *value, *dot = "";
+		int32_t ptr = cl->cwlastresptimes_last;
+
+		needed = CS_ECM_RINGBUFFER_MAX * 19; //4 digits + : + returncode(2) + : + time(10) + delimiter
+		if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
+
+		if(ptr == CS_ECM_RINGBUFFER_MAX - 1){
+			for(k = 0; k < CS_ECM_RINGBUFFER_MAX ; k++){
+				pos += snprintf(value + pos, needed-pos, "%s%d:%d:%ld", dot, cl->cwlastresptimes[k].duration, cl->cwlastresptimes[k].rc, cl->cwlastresptimes[k].timestamp);
+				dot=",";
+			}
+		} else {
+			for(k = ptr + 1; k < CS_ECM_RINGBUFFER_MAX; k++){
+				pos += snprintf(value + pos, needed-pos, "%s%d:%d:%ld", dot, cl->cwlastresptimes[k].duration, cl->cwlastresptimes[k].rc, cl->cwlastresptimes[k].timestamp);
+				dot=",";
+			}
+
+			for(k = 0; k < ptr + 1 ; k++){
+				pos += snprintf(value + pos, needed-pos, "%s%d:%d:%ld", dot, cl->cwlastresptimes[k].duration, cl->cwlastresptimes[k].rc, cl->cwlastresptimes[k].timestamp);
+				dot=",";
+			}
+		}
+
+		return (value);
+
+	} else {
+		return "";
+	}
+}
 static char *send_oscam_config_global(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
 
@@ -3171,6 +3203,12 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 					tpl_addVar(vars, TPLADD, "CLIENTUSER", xml_encode(vars, usr));
 					tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime?cl->cwlastresptime:-1);
 					tpl_printf(vars, TPLADD, "CLIENTIDLESECS", "%d", isec);
+				
+					//load historical values from ringbuffer
+					char *value = get_ecm_fullhistorystring(cl);
+					tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIMEHIST", "%s", value);
+					free_mk_t(value);
+					
 					tpl_addVar(vars, TPLAPPEND, "APISTATUSBITS", tpl_getTpl(vars, "APISTATUSBIT"));
 				}
 			}
