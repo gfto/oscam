@@ -1562,13 +1562,6 @@ void cc_idle() {
 	}
 }
 
-#define TIMEOUT_SECONDS 3600
-
-void set_card_timeout(struct cc_card *card)
-{
-	card->timeout = time(NULL)+TIMEOUT_SECONDS+(fast_rnd()-128)*2;
-}
-
 struct cc_card *read_card(uint8_t *buf, int32_t ext) {
 	struct cc_card *card = cs_malloc(&card, sizeof(struct cc_card), QUITERROR);
 	memset(card, 0, sizeof(struct cc_card));
@@ -1586,7 +1579,6 @@ struct cc_card *read_card(uint8_t *buf, int32_t ext) {
 	card->reshare = buf[11];
 	card->is_ext = ext;
 	card->card_type = CT_REMOTECARD;
-	set_card_timeout(card);
 	memcpy(card->hexserial, buf + 12, 8); //HEXSERIAL!!
 
 	//cs_debug_mask(D_CLIENT, "cccam: card %08x added, caid %04X, hop %d, key %s, count %d",

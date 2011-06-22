@@ -530,6 +530,13 @@ int32_t add_card_providers(struct cc_card *dest_card, struct cc_card *card,
     return modified;
 }
 
+#define TIMEOUT_SECONDS 3600
+
+void set_card_timeout(struct cc_card *card)
+{
+	card->timeout = time(NULL)+TIMEOUT_SECONDS+(fast_rnd()-128)*2;
+}
+    
 struct cc_card *create_card(struct cc_card *card) {
     struct cc_card *card2 = cs_malloc(&card2, sizeof(struct cc_card), QUITERROR);
     if (card)
@@ -742,20 +749,32 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_c
     return modified;
 }
 
+/**
+ * returns true if timeout-time is reached
+ * only local cards needs to be renewed after 1h. "O" CCCam throws away cards older than 1,2h
+ **/
 int32_t card_timed_out(struct cc_card *card)
 {
-    int32_t res = (card->card_type != CT_REMOTECARD) && (card->timeout > time(NULL)); //local card is older than 1h?
+	//!=CT_REMOTECARD = LOCALCARD (or virtual cards by caid/ident/service)
+	//timeout is set in future, so if current time is bigger, timeout is reached
+    int32_t res = (card->card_type != CT_REMOTECARD) && (card->timeout < time(NULL)); //local card is older than 1h?
     if (res)
 		cs_debug_mask(D_TRACE, "card %08X timed out! refresh forced", card->id?card->id:card->origin_id);
     return res;
 }
             
+/**
+ * returns true if card1 is already reported.
+ * "reported" means, we already have this card1 in our sharelist.
+ * if the card1 is already reported, we throw it away, because we build a new sharelist
+ * so after finding all reported cards, we have a list of reported cards, which aren't used anymore
+ **/
 int32_t find_reported_card(struct cc_card *card1)
 {
     LL_ITER it = ll_iter_create(reported_carddatas);
     struct cc_card *card2;
     while ((card2 = ll_iter_next(&it))) {
-        if (same_card(card1, card2) && card_timed_out(card2)) {
+        if (same_card(card1, card2) && !card_timed_out(card2)) {
             card1->id = card2->id; //Set old id !!
             card1->timeout = card2->timeout;
             cc_free_card(card2);
@@ -774,9 +793,14 @@ void cc_add_reported_carddata(LLIST *reported_carddatas, struct cc_card *card) {
 		ll_append(reported_carddatas, card);
 }       
        
-int32_t report_card(struct cc_card *card, LLIST *new_reported_carddatas)
+/**
+ * adds the card to the list of the new reported carddatas - this is the new sharelist
+ * if this card is not already reported, we send them to the clients
+ * if this card is already reported, find_reported_card throws the "origin" card away
+ * so the "old" sharelist is reduced
+ **/
+void report_card(struct cc_card *card, LLIST *new_reported_carddatas)
 {
-    int32_t res = 0;
     if (!find_reported_card(card)) { //Add new card:
     	
     	cs_debug_mask(D_TRACE, "s-card added: id %8X remoteid %8X caid %4X hop %d reshare %d originid %8X cardtype %d", 
@@ -787,7 +811,6 @@ int32_t report_card(struct cc_card *card, LLIST *new_reported_carddatas)
         card_added_count++;
     }
     cc_add_reported_carddata(new_reported_carddatas, card);
-    return res;
 }
 
 
