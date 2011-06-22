@@ -615,6 +615,14 @@ struct s_acasc {
 };
 #endif
 
+#ifdef WEBIF
+struct s_cwresponse {
+	int32_t duration;
+	time_t timestamp;
+	int32_t rc;
+};
+#endif
+
 struct s_client
 {
   in_addr_t	ip;
@@ -663,12 +671,12 @@ struct s_client
   int32_t		cwignored;   // count ignored  ECMs per client
   int32_t		cwtout;      // count timeouted ECMs per client
   int32_t		cwlastresptime; //last Responsetime (ms)
-  int32_t		cwlastresptimes[CS_ECM_RINGBUFFER_MAX]; //ringbuffer for last 20 times
-  int32_t		cwlastresptimes_last; // ringbuffer pointer
   int32_t		emmok;       // count EMM ok
   int32_t		emmnok;	     // count EMM nok
   int32_t		pending;     // number of ECMs pending
 #ifdef WEBIF
+  struct	s_cwresponse	cwlastresptimes[CS_ECM_RINGBUFFER_MAX]; //ringbuffer for last 20 times
+  int32_t		cwlastresptimes_last; // ringbuffer pointer
   int8_t		wihidden;	// hidden in webinterface status
   char      lastreader[64]; // last cw got from this reader
 #endif

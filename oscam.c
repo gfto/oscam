@@ -117,15 +117,19 @@ void cs_add_violation(uint32_t ip) {
         cs_check_v(ip, 1);
 }
 
-void cs_add_lastresponsetime(struct s_client *cl, int32_t ltime){
+#ifdef WEBIF
+void cs_add_lastresponsetime(struct s_client *cl, int32_t ltime, time_t timestamp, int32_t rc){
 
 	if(cl->cwlastresptimes_last == CS_ECM_RINGBUFFER_MAX - 1){
 		cl->cwlastresptimes_last = 0;
 	} else {
 		cl->cwlastresptimes_last++;
 	}
-	cl->cwlastresptimes[cl->cwlastresptimes_last] = ltime > 9999 ? 9999 : ltime;
+	cl->cwlastresptimes[cl->cwlastresptimes_last].duration = ltime > 9999 ? 9999 : ltime;
+	cl->cwlastresptimes[cl->cwlastresptimes_last].timestamp = timestamp;
+	cl->cwlastresptimes[cl->cwlastresptimes_last].rc = rc;
 }
+#endif
 
 /*****************************************************************************
         Statics
@@ -857,11 +861,15 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 
 					memcpy(&cl->ctab, &account->ctab, sizeof(cl->ctab));
 					memcpy(&cl->ttab, &account->ttab, sizeof(cl->ttab));
-
+#ifdef WEBIF
 					int32_t i;
-					for(i = 0; i < CS_ECM_RINGBUFFER_MAX; i++)
-						cl->cwlastresptimes[i] = 0;
+					for(i = 0; i < CS_ECM_RINGBUFFER_MAX; i++) {
+						cl->cwlastresptimes[i].duration = 0;
+						cl->cwlastresptimes[i].timestamp = time((time_t)0);
+						cl->cwlastresptimes[i].rc = 0;
+					}
 					cl->cwlastresptimes_last = 0;
+#endif
 					if (account->uniq)
 						cs_fake_client(cl, account->usr, (account->uniq == 1 || account->uniq == 2)?account->uniq+2:account->uniq, cl->ip);
 #ifdef CS_ANTICASC
@@ -1936,13 +1944,18 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 
 	cs_ftime(&tpe);
 	client->cwlastresptime = 1000 * (tpe.time-er->tps.time) + tpe.millitm-er->tps.millitm;
-	cs_add_lastresponsetime(client, client->cwlastresptime); // add to ringbuffer
+
+#ifdef WEBIF
+	cs_add_lastresponsetime(client, client->cwlastresptime,time((time_t)0) ,er->rc); // add to ringbuffer
+#endif
 
 	if (er_reader){
 		struct s_client *er_cl = er_reader->client;
 		if(er_cl){
 			er_cl->cwlastresptime = client->cwlastresptime;
-			cs_add_lastresponsetime(er_cl, client->cwlastresptime);
+#ifdef WEBIF
+			cs_add_lastresponsetime(er_cl, client->cwlastresptime,time((time_t)0) ,er->rc);
+#endif
 			er_cl->last_srvidptr=client->last_srvidptr;
 		}
 	}

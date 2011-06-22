@@ -85,17 +85,17 @@ char *get_ecm_historystring(struct s_client *cl){
 
 		if(ptr == CS_ECM_RINGBUFFER_MAX - 1){
 			for(k = 0; k < CS_ECM_RINGBUFFER_MAX ; k++){
-				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k]);
+				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k].duration);
 				dot=",";
 			}
 		} else {
 			for(k = ptr + 1; k < CS_ECM_RINGBUFFER_MAX; k++){
-				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k]);
+				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k].duration);
 				dot=",";
 			}
 
 			for(k = 0; k < ptr + 1 ; k++){
-				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k]);
+				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k].duration);
 				dot=",";
 			}
 		}
