@@ -811,10 +811,10 @@ struct s_reader  //contains device info, reader info and card info
   struct s_client * client; //pointer to 'r'client this reader is running in
   int8_t       enable;
   int8_t       available; //Schlocke: New flag for loadbalancing. Only reader if reader supports ph.c_available function
-  int32_t       fd_error;
+  int8_t       fd_error;
   int32_t       fd;
   uint64_t    grp;
-  int32_t       fallback;
+  int8_t       fallback;
   int32_t       typ;
   char      label[64];
 #ifdef WEBIF
@@ -863,9 +863,9 @@ struct s_reader  //contains device info, reader info and card info
   char      * emmfile;
   char      pincode[5];
   int32_t		ucpk_valid;
-  int32_t       logemm;
-  int32_t       cachemm;
-  int32_t       rewritemm;
+  int8_t       logemm;
+  int8_t       cachemm;
+  int16_t       rewritemm;
   int8_t       card_status;
   int8_t       deprecated; //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
   struct    s_module ph;
