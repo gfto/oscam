@@ -2649,6 +2649,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 void do_emm(struct s_client * client, EMM_PACKET *ep)
 {
 	char *typtext[]={"unknown", "unique", "shared", "global"};
+	char tmp[17];
 
 	struct s_reader *aureader = NULL;
 	cs_ddump_mask(D_EMM, ep->emm, ep->l, "emm:");
@@ -2702,29 +2703,32 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			}
 		}
 
-		cs_debug_mask(D_EMM, "emmtype %s. Reader %s has serial %s.", typtext[ep->type], aureader->label, cs_hexdump(0, aureader->hexserial, 8));
+		cs_debug_mask(D_EMM, "emmtype %s. Reader %s has serial %s.", typtext[ep->type], aureader->label, cs_hexdump(0, aureader->hexserial, 8, tmp, sizeof(tmp)));
 		cs_ddump_mask(D_EMM, ep->hexserial, 8, "emm UA/SA:");
 
 		client->last=time((time_t)0);
 		if ((1<<(ep->emm[0] % 0x80)) & aureader->s_nano) { //should this nano be saved?
 			char token[256];
+			char *tmp2;
 			FILE *fp;
 			time_t rawtime;
 			time (&rawtime);
 			struct tm timeinfo;
 			localtime_r (&rawtime, &timeinfo);	/* to access LOCAL date/time info */
-			char buf[80];
-			strftime (buf, 80, "%Y/%m/%d %H:%M:%S", &timeinfo);
-			snprintf (token, sizeof(token), "%s%s_emm.log", cfg.emmlogdir?cfg.emmlogdir:cs_confdir, aureader->label);
 			int32_t emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
+			char buf[80];
+			strftime (buf, sizeof(buf), "%Y/%m/%d %H:%M:%S", &timeinfo);
+			snprintf (token, sizeof(token), "%s%s_emm.log", cfg.emmlogdir?cfg.emmlogdir:cs_confdir, aureader->label);
+			
 
 			if (!(fp = fopen (token, "a"))) {
 				cs_log ("ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
-			} else {
-				fprintf (fp, "%s   %s   ", buf, cs_hexdump(0, ep->hexserial, 8));
-				fprintf (fp, "%s\n", cs_hexdump(0, ep->emm, emm_length + 3));
+			} else if(cs_malloc(tmp2, (emm_length + 3)*2 + 1, -1)){
+				fprintf (fp, "%s   %s   ", buf, cs_hexdump(0, ep->hexserial, 8, tmp, sizeof(tmp)));
+				fprintf (fp, "%s\n", cs_hexdump(0, ep->emm, emm_length + 3, tmp2, (emm_length + 3)*2 + 1));
+				free(tmp2);
 				fclose (fp);
-				cs_log ("Succesfully added EMM to %s.", token);
+				cs_log ("Successfully added EMM to %s.", token);
 			}
 
 			snprintf (token, sizeof(token), "%s%s_emm.bin", cfg.emmlogdir?cfg.emmlogdir:cs_confdir, aureader->label);
@@ -2732,7 +2736,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 				cs_log ("ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
 			} else {
 				if ((int)fwrite(ep->emm, 1, emm_length+3, fp) == emm_length+3)	{
-					cs_log ("Succesfully added binary EMM to %s.", token);
+					cs_log ("Successfully added binary EMM to %s.", token);
 				} else {
 					cs_log ("ERROR: Cannot write binary EMM to %s (errno=%d: %s)\n", token, errno, strerror(errno));
 				}

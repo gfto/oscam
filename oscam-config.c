@@ -2640,7 +2640,8 @@ int32_t write_server()
 			if (len > 0 && isphysical) {
 				if(len > 64) len = 120;
 				else len = 64;
-				fprintf_conf(f, "rsakey", "%s\n", cs_hexdump(0, rdr->rsa_mod, len));
+				char tmp[len*2+1];
+				fprintf_conf(f, "rsakey", "%s\n", cs_hexdump(0, rdr->rsa_mod, len, tmp, sizeof(tmp)));
 			} else if(cfg.http_full_cfg && isphysical)
 				fprintf_conf(f, "rsakey", "\n");
 
@@ -2649,8 +2650,10 @@ int32_t write_server()
 			}
 
 			len = check_filled(rdr->nagra_boxkey, 8);
-			if ((len > 0 || cfg.http_full_cfg) && isphysical)
-				fprintf_conf(f, "boxkey", "%s\n", len>0?cs_hexdump(0, rdr->nagra_boxkey, 8):"");
+			if ((len > 0 || cfg.http_full_cfg) && isphysical){
+				char tmp[17];
+				fprintf_conf(f, "boxkey", "%s\n", len>0?cs_hexdump(0, rdr->nagra_boxkey, 8, tmp, sizeof(tmp)):"");
+			}
 
 			if ((rdr->atr[0] || cfg.http_full_cfg) && isphysical) {
 				fprintf_conf(f, "atr", "");
@@ -3590,6 +3593,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
   if (!strcmp(token, "mg-encrypted")) {
     uchar key[16];
     uchar mac[6];
+    tmp_dbg(13);
     uchar *buf = NULL;
     int32_t len = 0;
 
@@ -3668,7 +3672,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
       close(fd);
 #endif
-			cs_debug_mask(D_TRACE, "Determined local mac address for mg-encrypted as %s", cs_hexdump(1, mac, 6));
+			cs_debug_mask(D_TRACE, "Determined local mac address for mg-encrypted as %s", cs_hexdump(1, mac, 6, tmp_dbg, sizeof(tmp_dbg)));
     }
 
     // decrypt encrypted mgcamd gbox line

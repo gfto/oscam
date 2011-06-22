@@ -6,22 +6,6 @@
 //static time_t ac_last_chk;
 static uchar  ac_ecmd5[CS_ECMSTORESIZE];
 
-int32_t ac_init_log(void)
-{
-  if( (!fpa)  && (cfg.ac_logfile[0]))
-  {
-    if( (fpa=fopen(cfg.ac_logfile, "a+"))<=(FILE *)0 )
-    {
-      fpa=(FILE *)0;
-      fprintf(stderr, "can't open anti-cascading logfile: %s\n", cfg.ac_logfile);
-    }
-    else
-      cs_log("anti-cascading log initialized");
-  }
-
-  return(fpa<=(FILE *)0);
-}
-
 void ac_clear()
 {
 	struct s_client *client;
@@ -37,17 +21,10 @@ void ac_clear()
 		memset(&account->ac_stat, 0, sizeof(account->ac_stat));
 }
 
-void ac_done_stat()
-{
-}
-
 void ac_init_stat()
 {
   ac_clear();
 
-  if( fpa )
-    fclose(fpa);
-  fpa=(FILE *)0;
   if( ac_init_log() )
     cs_exit(0);
 }

@@ -424,7 +424,7 @@ static void gbox_send_goodbye(struct s_client *cli)
  memcpy(buf + 2, gbox->peer.key, 4);
  memcpy(buf + 6, gbox->key, 4);
 
- cs_debug_mask(D_READER, "gbox: send goodbye:", cs_hexdump(0, buf, 10));
+ cs_debug_mask(D_READER, "gbox: send goodbye:", cs_hexdump(0, buf, 10, tmp, sizeof(tmp)));
 
  gbox_send(cli, buf, 11);
 }*/
@@ -512,6 +512,7 @@ static void gbox_send_hello(struct s_client *cli)
 static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
 {
   struct gbox_data *gbox = cli->gbox;
+  char tmp[33];
 
   if (!gbox)
 	  return -1;
@@ -674,7 +675,7 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
         // write_sahre_info() // TODO
 
         cs_log("gbox: received hello %d%s, %d providers from %s, version=2.%02X, checkcode=%s",
-        		seqno, final ? " (final)" : "", ncards_in_msg, gbox->peer.hostname, gbox->peer.ver, cs_hexdump(0, gbox->peer.checkcode, 7));
+        		seqno, final ? " (final)" : "", ncards_in_msg, gbox->peer.hostname, gbox->peer.ver, cs_hexdump(0, gbox->peer.checkcode, 7, tmp, sizeof(tmp)));
 
         if (!ll_count(gbox->peer.cards))
         	  cli->reader->tcp_connected = 1;
@@ -701,11 +702,11 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
     	memcpy(gbox->cws, data + 14, 16);
 
     	cs_debug_mask(D_READER, "gbox: received cws=%s, peer=%04x, ecm_pid=%d, sid=%d",
-    	    cs_hexdump(0, gbox->cws, 16), data[10] << 8 | data[11], data[6] << 8 | data[7], data[8] << 8 | data[9]);
+    	    cs_hexdump(0, gbox->cws, 16, tmp, sizeof(tmp)), data[10] << 8 | data[11], data[6] << 8 | data[7], data[8] << 8 | data[9]);
     	break;
     case MSG_CHECKCODE:
     	memcpy(gbox->peer.checkcode, data + 10, 7);
-        cs_debug_mask(D_READER, "gbox: received checkcode=%s",  cs_hexdump(0, gbox->peer.checkcode, 7));
+        cs_debug_mask(D_READER, "gbox: received checkcode=%s",  cs_hexdump(0, gbox->peer.checkcode, 7, tmp, sizeof(tmp)));
     	break;
     /*case MSG_GSMS: // TODO
     	//gbox_handle_gsms(peerid, gsms);

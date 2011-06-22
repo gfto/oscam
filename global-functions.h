@@ -120,7 +120,6 @@ extern void init_ac(void);
 extern void ac_init_stat();
 extern void ac_clear();
 extern void ac_done_stat();
-extern int32_t  ac_init_log();
 extern void ac_do_stat(void);
 extern void start_anticascader();
 extern void ac_init_client(struct s_client *, struct s_auth *);
@@ -239,7 +238,9 @@ extern void end_lcd_thread();
 extern int32_t  cs_init_log();
 extern void cs_reinit_loghist(uint32_t size);
 extern int32_t cs_open_logfiles();
-extern void cs_write_log(char *);
+#ifdef CS_ANTICASC
+extern int32_t ac_init_log();
+#endif
 extern void cs_log(const char *,...);
 #ifdef WITH_DEBUG
 extern void cs_debug_mask(uint16_t, const char *,...);
@@ -304,8 +305,7 @@ extern int32_t word_atob(char *);
 extern int32_t dyn_word_atob(char *asc);
 extern int32_t key_atob_l(char *, uchar *, int32_t);
 extern char *key_btoa(char *, uchar *);
-extern char *cs_hexdump(int32_t, const uchar *, int32_t);
-extern char *cs_hexdump_buf(int32_t, const uchar *, int32_t, char *target, int32_t len);
+extern char *cs_hexdump(int32_t, const uchar *, int32_t, char *target, int32_t len);
 extern in_addr_t cs_inet_order(in_addr_t);
 extern char *cs_inet_ntoa(in_addr_t);
 extern in_addr_t cs_inet_addr(char *txt);

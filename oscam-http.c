@@ -2016,8 +2016,8 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					if (cc_UA_valid(card->hexserial)) { //Add UA:
 						cc_UA_cccam2oscam(card->hexserial, serbuf, card->caid);
 						char tmp[20];
-						tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_Oscam:%s", cs_hexdump_buf(0, serbuf, 8, tmp, 20));
-						tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_CCcam:%s", cs_hexdump_buf(0, card->hexserial, 8, tmp, 20));
+						tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_Oscam:%s", cs_hexdump(0, serbuf, 8, tmp, 20));
+						tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_CCcam:%s", cs_hexdump(0, card->hexserial, 8, tmp, 20));
 					}
    					if (!apicall) {
 								int32_t n;
@@ -3313,7 +3313,8 @@ static int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t for
 				return -1;
 			}
 #else
-			cs_debug_mask(D_TRACE, "WebIf: read error ret=%d (errno=%d %s)", n, errno, strerror(errno));
+			if(errno != ECONNRESET)
+				cs_debug_mask(D_TRACE, "WebIf: read error ret=%d (errno=%d %s)", n, errno, strerror(errno));
 #endif
 			return -1;
 		}

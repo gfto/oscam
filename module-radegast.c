@@ -32,8 +32,9 @@ static int32_t radegast_recv(struct s_client *client, uchar *buf, int32_t l)
 static int32_t radegast_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t UNUSED(n))
 {
   if ((buf[0] == 2) && (buf[1] == 0x12)) {
+  	tmp_dbg(33);
     memcpy(dcw, buf+4, 16);
-    cs_debug_mask(D_CLIENT, "radegast: recv chk - %s", cs_hexdump(0, dcw, 16));
+    cs_debug_mask(D_CLIENT, "radegast: recv chk - %s", cs_hexdump(0, dcw, 16, tmp_dbg, sizeof(tmp_dbg)));
     *rc = 1;
     return(client->reader->msg_idx);
   }

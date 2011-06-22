@@ -119,7 +119,7 @@ static int32_t reader_activate_card(struct s_reader * reader, ATR * atr, uint16_
 
   reader->init_history_pos=0;
 
-//  cs_ri_log("ATR: %s", cs_hexdump(1, atr, atr_size));//FIXME
+//  cs_ri_log("ATR: %s", cs_hexdump(1, atr, atr_size, tmp, sizeof(tmp)));//FIXME
   cs_sleepms(1000);
   return(1);
 }

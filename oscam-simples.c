@@ -94,7 +94,7 @@ void add_aes_entry(AES_ENTRY **list, uint16_t caid, uint32_t ident, int32_t keyi
     new_entry->keyid=keyid;
     if(memcmp(aesKey,"\xFF\xFF",2)) {
         AES_set_decrypt_key((const unsigned char *)aesKey, 128, &(new_entry->key));
-        // cs_log("adding key : %s",cs_hexdump(1,aesKey,16));
+        // cs_log("adding key : %s",cs_hexdump(1,aesKey,16, tmp, sizeof(tmp)));
     }
     else {
         memset(&new_entry->key,0,sizeof(AES_KEY));
@@ -400,12 +400,7 @@ int32_t key_atob_l(char *asc, uchar *bin, int32_t l)
   return(rc);
 }
 
-char *cs_hexdump(int32_t m, const uchar *buf, int32_t n)
-{
-	return cs_hexdump_buf(m, buf, n, (char *)cur_client()->dump, sizeof(cur_client()->dump));
-}
-
-char *cs_hexdump_buf(int32_t m, const uchar *buf, int32_t n, char *target, int32_t len)
+char *cs_hexdump(int32_t m, const uchar *buf, int32_t n, char *target, int32_t len)
 {
   int32_t i = 0;
 

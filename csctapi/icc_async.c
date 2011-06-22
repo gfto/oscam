@@ -377,7 +377,8 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 	unsigned char atrarr[ATR_MAX_SIZE];
 	uint32_t atr_size;
 	ATR_GetRaw(atr, atrarr, &atr_size);
-	cs_ri_log(reader, "ATR: %s", cs_hexdump(1, atrarr, atr_size));
+	char tmp[atr_size*3+1];
+	cs_ri_log(reader, "ATR: %s", cs_hexdump(1, atrarr, atr_size, tmp, sizeof(tmp)));
 
 
 	/* Get ICC reader->convention */
@@ -651,6 +652,7 @@ static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecat
 	double d = ATR_DEFAULT_D;
 	double n = ATR_DEFAULT_N;
 	int32_t ret;
+	char tmp[256];
 
 		int32_t numprot = atr->pn;
 		//if there is a trailing TD, this number is one too high
@@ -698,7 +700,7 @@ static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecat
 		for (i = 0; i <= 2; i++)
 			if (OffersT[i])
 				numprottype ++;
-		cs_debug_mask(D_ATR, "%i protocol types detected. Historical bytes: %s",numprottype, cs_hexdump(1,atr->hb,atr->hbn));
+		cs_debug_mask(D_ATR, "%i protocol types detected. Historical bytes: %s",numprottype, cs_hexdump(1,atr->hb,atr->hbn, tmp, sizeof(tmp)));
 
 		ATR_GetParameter (atr, ATR_PARAMETER_N, &(n));
 		ATR_GetProtocolType(atr,1,&(reader->protocol_type)); //get protocol from TD1
@@ -790,11 +792,12 @@ static int32_t PPS_Exchange (struct s_reader * reader, BYTE * params, uint32_t *
 {
 	BYTE confirm[PPS_MAX_LENGTH];
 	uint32_t len_request, len_confirm;
+	char tmp[128];
 	int32_t ret;
 
 	len_request = PPS_GetLength (params);
 	params[len_request - 1] = PPS_GetPCK(params, len_request - 1);
-	cs_debug_mask (D_IFD, "PTS: Sending request: %s", cs_hexdump(1, params, len_request));
+	cs_debug_mask (D_IFD, "PTS: Sending request: %s", cs_hexdump(1, params, len_request, tmp, sizeof(tmp)));
 
 	if (reader->crdr.active && reader->crdr.set_protocol) {
 		ret = reader->crdr.set_protocol(reader, params, length, len_request);
@@ -814,7 +817,7 @@ static int32_t PPS_Exchange (struct s_reader * reader, BYTE * params, uint32_t *
 	len_confirm = PPS_GetLength (confirm);
 	call (ICC_Async_Receive (reader, len_confirm - 2, confirm + 2));
 
-	cs_debug_mask(D_IFD, "PTS: Receiving confirm: %s", cs_hexdump(1, confirm, len_confirm));
+	cs_debug_mask(D_IFD, "PTS: Receiving confirm: %s", cs_hexdump(1, confirm, len_confirm, tmp, sizeof(tmp)));
 	if ((len_request != len_confirm) || (memcmp (params, confirm, len_request)))
 		ret = ERROR;
 	else

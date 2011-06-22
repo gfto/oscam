@@ -104,6 +104,11 @@
 //checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything
 #define NULLFREE(X) {if (X) {void *tmpX=X; X=NULL; free(tmpX); }}
 
+#ifdef WITH_DEBUG
+#define tmp_dbg(X) char tmp_dbg[X]
+#else
+#define tmp_dbg(X)
+#endif
 /* ===========================
  *         constants
  * =========================== */
@@ -732,9 +737,6 @@ struct s_client
   //monitor
   int32_t auth;
 
-  //cs_hexdump buffer
-  uchar dump[520];
-
   //oscam.c
   struct timeval tv;
 
@@ -1333,13 +1335,9 @@ extern pthread_mutex_t sr_lock;
 
 extern pid_t server_pid; // PID of server - set while startup
 
-#ifdef CS_ANTICASC
-extern FILE *fpa;
-#endif
-
 /* ===========================
  *      global functions
  * =========================== */
 #include "global-functions.h"
 
-#endif  // CS_GLOBALS
+#endif
