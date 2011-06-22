@@ -125,7 +125,12 @@ a.tooltip1 {position: relative; text-decoration: none; cursor:default;color:red;
 a.tooltip  span {display: none; z-index:99;}\n\
 a.tooltip1 span {display: none; z-index:99;}\n\
 a:hover span{display: block;position: absolute;top: 2em; left: 1em; margin: 0px;padding: 10px;color: #335500;font-weight: normal;background: #ffffdd;text-align: left;border: 1px solid #666;}\n\
-H4.styleauthor:after {content:\"Eneen\";}"
+H4.styleauthor:after {content:\"Eneen\";}\n\
+rect.graph_bg {fill:white;}\n\
+text.graph_error {text-anchor:middle;fill:red}\n\
+path.graph_grid {stroke:gray;stroke-opacity:0.5}\n\
+text.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}\n\
+"
 
 #define JSCRIPT ""
 
@@ -609,7 +614,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
     </totals>\n\
 ##TPLAPIFOOTER##"
 
-#define TPLAPIUSERCONFIGLISTBIT "        <user name=\"##USER##\">\n\
+#define TPLAPIUSERCONFIGLISTBIT "        <user name=\"##USER##\" status=\"##STATUS##\" ip=\"##CLIENTIP##\" protocol=\"##CLIENTPROTO##\">\n\
             <stats>\n\
                 <cwok>##CWOK##</cwok>\n\
                 <cwnok>##CWNOK##</cwnok>\n\
@@ -645,6 +650,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TH>Address</TH>\n\
 			<TH>Protocol</TH>\n\
 			<TH>Last Channel</TH>\n\
+			<TH>Time on Channel</TH>\n\
 			<TH>Idle</TH>\n\
 			<TH>OK</TH>\n\
 			<TH>NOK</TH>\n\
@@ -697,10 +703,11 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 		<TR class=\"##CLASSNAME##\">\n\
 			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
 			<TD><SPAN TITLE=\"##DESCRIPTION##\">##USER##</SPAN></TD>\n\
-			<TD>##STATUS##</TD>\n\
-			<TD>##CLIENTIP##</TD>\n\
+			<TD class=\"centered\">##STATUS##</TD>\n\
+			<TD class=\"centered\">##CLIENTIP##</TD>\n\
 			<TD class=\"centered\"><SPAN TITLE=\"##CLIENTPROTOTITLE##\">##CLIENTPROTO##</SPAN></TD>\n\
 			<TD>##LASTCHANNEL##</TD>\n\
+			<TD class=\"centered\">##CLIENTTIMEONCHANNEL##</TD>\n\
 			<TD class=\"centered\">##IDLESECS##</TD>\n\
 			<TD class=\"centered\">##CWOK##</TD>\n\
 			<TD class=\"centered\">##CWNOK##</TD>\n\
@@ -716,6 +723,39 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=resetstats\" TITLE=\"reset statistics for this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICRES\"BORDER=\"0\" ALT=\"Reset Stats\"></A></TD>\n\
 			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=delete\" TITLE=\"delete this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\"BORDER=\"0\" ALT=\"Delete User\"></A></TD>\n\
 		</TR>\n"
+
+#define TPLAPIUSEREDIT "##TPLAPIHEADER##\n\
+	<account>\n\
+		<user>##USERNAME##</user>\n\
+		<pwd>##PASSWORD##</pwd>\n\
+		<description>##DESCRIPTION##</description>\n\
+		<disabled>##DISABLEDVALUE##</disabled>\n\
+		<expdate>##EXPDATE##</expdate>\n\
+		<failban>##FAILBAN##</failban>\n\
+		<allowedtimeframe>##ALLOWEDTIMEFRAME##</allowedtimeframe>\n\
+		<group>##GROUPS##</group>\n\
+		<hostname>##DYNDNS##</hostname>\n\
+		<uniq>##UNIQVALUE##</uniq>\n\
+		<sleep>##SLEEP##</sleep>\n\
+		<monlevel>##MONVALUE##</monlevel>\n\
+		<au>##AUREADER##</au>\n\
+		<services>##SERVICES##</services>\n\
+		<caid>##CAIDS##</caid>\n\
+		<ident>##IDENTS##</ident>\n\
+		<chid>##CHIDS##</chid>\n\
+		<class>##CLASS##</class>\n\
+		<betatunnel>##BETATUNNELS##</betatunnel>\n\
+		<suppresscmd08>##SUPPRESSCMD08VALUE##</suppresscmd08>\n\
+		<sleepsend>##SLEEPSEND##</sleepsend>\n\
+		<numusers>##AC_USERS##</numusers>\n\
+		<penalty>##PENALTYVALUE##</penalty>\n\
+		<cccmaxhops>##CCCMAXHOPS##</cccmaxhops>\n\
+		<cccreshare>##CCCRESHARE##</cccreshare>\n\
+		<cccignorereshare>##CCCIGNORERESHARE##</cccignorereshare>\n\
+		<cccstealth>##CCCSTEALTH##</cccstealth>\n\
+		<keepalive>##KEEPALIVEVALUE##</keepalive>\n\
+    </account>\n\
+##TPLAPIFOOTER##"
 
 #define TPLUSEREDIT "\
 ##TPLHEADER##\
@@ -828,7 +868,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##TPLHEADER##\
 ##TPLMENU##\
 	<BR><BR>\n\
-	<TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD><TD CLASS=\"configmenu\"><A HREF=\"graph.svg\">Show Graphs</A></TD></TR></TABLE><BR>\
+	<TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD><TD CLASS=\"configmenu\"><A TARGET=\"_NEW\" HREF=\"graph.svg\">Show Graphs</A></TD></TR></TABLE><BR>\
 	<form action=\"readerconfig.html\" method=\"get\">\n\
 		<TABLE CLASS=\"readers\">\n\
 			<TR>\n\
@@ -1015,6 +1055,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		<TABLE CLASS=\"config\">\n\
 			<TR><TH COLSPAN=\"2\">Edit Reader ##READERNAME##</TH></TR>\n\
 			<TR><TH>&nbsp;</TH><TH>Reader general settings</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#description##TPLHELPSUFFIX##Description:</A></TD><TD><input name=\"description\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##DESCRIPTION##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#enable##TPLHELPSUFFIX##Enable:</A></TD><TD><input name=\"enable\" type=\"hidden\" value=\"0\"><input name=\"enable\" type=\"checkbox\" value=\"1\" ##ENABLED##></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#device##TPLHELPSUFFIX##Device:</A></TD><TD><input name=\"device\" type=\"text\" size=\"63\" maxlength=\"127\" value=\"##DEVICE##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#group##TPLHELPSUFFIX##Group:</A></TD><TD><input name=\"group\" type=\"text\" size=\"20\" maxlength=\"100\" value=\"##GRP##\"></TD></TR>\n\
@@ -1762,7 +1803,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLFOOTER##"
 
 #define TPLGRAPH "\
-<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n\
+<?xml-stylesheet type=\"text/css\" href=\"site.css\" ?>\n\
 <svg xml:space='preserve' xmlns='http://www.w3.org/2000/svg'\n\
 	xmlns:xlink='http://www.w3.org/1999/xlink'\n\
 	width='100%' height='100%'\n\
@@ -1770,13 +1811,14 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	preserveAspectRatio='none'\n\
 	onload='init(evt)'\n\
 >\n\
-<g id='graph'> \n\
-	<rect id='bg' x1='0' y1='0' width='600' height='300' fill='white' /> \n\
- 	<text id='error' x='300' y='125' text-anchor='middle' visibility='hidden' fill='red'>Error occured!</text> \n\
- 	<path id='grid' d='M 2 75 L 600 75 M 2 150 L 600 150 M 2 225 L 600 225' stroke='gray' stroke-opacity='0.5' /> \n\
-  <text id='grid_txt3' x='600' y='223' fill='gray' text-anchor='end'>--</text> \n\
-	<text id='grid_txt2' x='600' y='148' fill='gray' text-anchor='end'>--</text> \n\
-	<text id='grid_txt1' x='600' y='73' fill='gray' text-anchor='end'>--</text> \n\
+<g id='graph'>\n\
+	<rect id='g' class='graph_bg' x1='0' y1='0' width='600' height='300' />\n\
+	<text id='graph_error' class='graph_error' x='300' y='125' visibility='hidden'>Error occured!</text>\n\
+	<path id='graph_grid' class='graph_grid' d='M 2 75 L 600 75 M 2 150 L 600 150 M 2 225 L 600 225'/>\n\
+	<text id='graph_grid_interval' style='font-size:8px;'  cursor='pointer' class='graph_grid_txt' x='300' y='10'>-</text>\n\
+	<text id='graph_grid_txt3' class='graph_grid_txt' x='600' y='223'>-</text>\n\
+	<text id='graph_grid_txt2' class='graph_grid_txt' x='600' y='148'>-</text>\n\
+	<text id='graph_grid_txt1' class='graph_grid_txt' x='600' y='73'>-</text>\n\
 </g>\n\
 <script type='text/ecmascript'>\n\
 <![CDATA[\n\
@@ -1831,16 +1873,42 @@ Color[2]='Orange';\n\
 Color[3]='brown';\n\
 Color[4]='Fuchsia';\n\
 Color[5]='Red';\n\
-Color[6]='yellow';\n\
-var max_num_points = 120;\n\
+Color[6]='cyan';\n\
+Color[7]='yellow';\n\
+Color[8]='purple';\n\
+Color[9]='Turquoise';\n\
+Color[10]='coral';\n\
+Color[11]='Khaki';\n\
+Color[12]='GreenYellow';\n\
+Color[13]='Thistle';\n\
+Color[14]='Tan';\n\
+Color[15]='Silver';\n\
+Color[16]='DarkGreen';\n\
+Color[17]='DarkViolet';\n\
+Color[18]='Gold';\n\
+Color[19]='IndianRed';\n\
+Color[20]='black';\n\
+var max_num_points = 300;\n\
 var step = 600 / max_num_points ;\n\
 var fetch_url='';\n\
+var interval = 3500;\n\
+var activesecs = 30;\n\
+var activeTask = null;\n\
 function init(evt) {\n\
 	fetch_url=location.search.split('?');\n\
 	fetch_url='oscamapi.html?part=ecmhistory&' + fetch_url[fetch_url.length-1];\n\
 	SVGDoc = evt.target.ownerDocument;\n\
+	SVGDoc.getElementById('graph_grid_interval').addEventListener('mousedown', switch_interval, false);\n\
+	switch_interval();\n\
 	fetch_data();\n\
-	setInterval('fetch_data()', 1000);\n\
+	activeTask = setInterval('fetch_data()', interval);\n\
+}\n\
+function switch_interval() {\n\
+	interval -= 500;\n\
+	if ( interval<500 ) interval = 10000;\n\
+	SVGDoc.getElementById('graph_grid_interval').firstChild.data = 'Refresh:'+interval+'ms';\n\
+	window.clearInterval(activeTask);\n\
+	activeTask = setInterval('fetch_data()', interval);\n\
 }\n\
 function fetch_data() {\n\
 	if (fetch_url) {\n\
@@ -1858,55 +1926,72 @@ function plot_data(obj) {\n\
 	rdx=0;\n\
 	while (rdx < readers.length) {\n\
 		var type = readers[rdx].getAttribute('type');\n\
-		if ( type=='r' || type=='p' ) {\n\
-			if ( plots[i] == null ) {\n\
-				plots[i] = new Array();\n\
-				plots[i]['data'] = new Array();\n\
+		if ( plots[i] == null ) {\n\
+			plots[i] = new Array();\n\
+			plots[i]['data'] = new Array();\n\
+			plots[i]['ecmmin'] = -1;\n\
+			plots[i]['ecmmax'] = 0;\n\
+		}\n\
+		plots[i]['name'] = readers[rdx].getAttribute('name');\n\
+		if ( plots[i]['name'].length == 0 ) {\n\
+			plots[i]['name'] = readers[rdx].getElementsByTagName('connection')[0].getAttribute('ip');\n\
+		}\n\
+		plots[i]['ecmtime'] = parseInt( readers[rdx].getElementsByTagName('request')[0].getAttribute('ecmtime') );\n\
+		plots[i]['idletime'] = parseInt( readers[rdx].getElementsByTagName('times')[0].getAttribute('idle') );\n\
+		if (!isNumber(plots[i]['ecmtime'])) {\n\
+			plots[i]['ecmtime'] = -1;\n\
+		} else {\n\
+			if ( plots[i]['ecmmax'] < plots[i]['ecmtime'] ) plots[i]['ecmmax'] = plots[i]['ecmtime'] ;\n\
+			if ( ( plots[i]['ecmmin'] > plots[i]['ecmtime']) || (plots[i]['ecmmin'] == -1 ) ) plots[i]['ecmmin'] = plots[i]['ecmtime'] ;\n\
+		}\n\
+		if (!isNumber(plots[i]['idletime'])) {\n\
+			plots[i]['ecmtime'] = -1;\n\
+		} else if (plots[i]['idletime']>activesecs) {\n\
+			plots[i]['ecmtime'] = -1;\n\
+		}\n\
+		plots[i]['idle'] = readers[rdx].getElementsByTagName('times')[0].getAttribute('idle');\n\
+		if ( plots[i]['data'].length==max_num_points ) {\n\
+			var ii = 0;\n\
+			while (ii < max_num_points) {\n\
+				plots[i]['data'][ii] = plots[i]['data'][ii+1];\n\
+				ii++;\n\
 			}\n\
-			plots[i]['name'] = readers[rdx].getAttribute('name');\n\
-			if ( plots[i]['name'].length == 0 ) {\n\
-				plots[i]['name'] = readers[rdx].getElementsByTagName('connection')[0].getAttribute('ip');\n\
-			}\n\
-			plots[i]['ecmtime'] = parseInt( readers[rdx].getElementsByTagName('request')[0].getAttribute('ecmtime') );\n\
-			if (!isNumber(plots[i]['ecmtime'])) plots[i]['ecmtime'] = 0;\n\
-			plots[i]['idle'] = readers[rdx].getElementsByTagName('times')[0].getAttribute('idle');\n\
-			if ( plots[i]['data'].length==max_num_points ) {\n\
-				var ii = 0;\n\
-				while (ii < max_num_points) {\n\
-					plots[i]['data'][ii] = plots[i]['data'][ii+1];\n\
-					ii++;\n\
-				}\n\
-				plots[i]['data'].length--;\n\
-			}\n\
-			plots[i]['data'][plots[i]['data'].length] = plots[i]['ecmtime'];\n\
-			if ( SVGDoc.getElementById('graph_txt_'+i) == null ) {\n\
-				var newText = document.createElementNS(svgNS,'text');\n\
-				newText.setAttributeNS(null,'x',10);\n\
-				newText.setAttributeNS(null,'y',15+(15*i));\n\
-				newText.setAttributeNS(null,'fill',Color[i]);\n\
-				newText.setAttributeNS(null,'id','graph_txt_'+i);\n\
-				var textNode = document.createTextNode(plots[i]['name']);\n\
-	      newText.appendChild(textNode);\n\
-				document.getElementById('graph').appendChild(newText);\n\
-			}\n\
-			SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':' + plots[i]['ecmtime'] + 'ms';\n\
-			if ( SVGDoc.getElementById('graph_path_'+i) == null ) {\n\
-				var newPath = document.createElementNS(svgNS,'path');\n\
-				newPath.setAttributeNS(null,'id','graph_path_'+i);\n\
-				newPath.setAttributeNS(null,'fill','none');\n\
-				newPath.setAttributeNS(null,'stroke',Color[i]);\n\
-				newPath.setAttributeNS(null,'stroke-width','1');\n\
-				newPath.setAttributeNS(null,'stroke-opacity','0.8');\n\
-				document.getElementById('graph').appendChild(newPath);\n\
-			}\n\
-			a=0;\n\
-			var plot = plots[i]['data'];\n\
-			while (a < plot.length) {\n\
-				if (plot[a] > max) max = plot[a];\n\
-				a++;\n\
-			}\n\
-			i++;\n\
-	 	}\n\
+			plots[i]['data'].length--;\n\
+		}\n\
+		plots[i]['data'][plots[i]['data'].length] = plots[i]['ecmtime'];\n\
+		if ( SVGDoc.getElementById('graph_txt_'+i) == null ) {\n\
+			var newText = document.createElementNS(svgNS,'text');\n\
+			newText.setAttributeNS(null,'x',5);\n\
+			newText.setAttributeNS(null,'y',10+(10*i));\n\
+			newText.setAttributeNS(null,'fill',Color[i]);\n\
+			newText.setAttributeNS(null,'id','graph_txt_'+i);\n\
+			newText.setAttributeNS(null,'style','font-size:10px');\n\
+			var textNode = document.createTextNode(plots[i]['name']);\n\
+      newText.appendChild(textNode);\n\
+			document.getElementById('graph').appendChild(newText);\n\
+		}\n\
+		if ( plots[i]['ecmtime']==-1 ) {\
+			SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':';\n\
+		} else {\
+			SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':' + plots[i]['ecmtime'];\n\
+		}\
+		if ( plots[i]['ecmmin'] != -1 ) SVGDoc.getElementById('graph_txt_'+i).firstChild.data += ' (Max:'+plots[i]['ecmmax']+'/Min:'+plots[i]['ecmmin']+')';\n\
+		if ( SVGDoc.getElementById('graph_path_'+i) == null ) {\n\
+			var newPath = document.createElementNS(svgNS,'path');\n\
+			newPath.setAttributeNS(null,'id','graph_path_'+i);\n\
+			newPath.setAttributeNS(null,'fill','none');\n\
+			newPath.setAttributeNS(null,'stroke',Color[i]);\n\
+			newPath.setAttributeNS(null,'stroke-width','1');\n\
+			newPath.setAttributeNS(null,'stroke-opacity','0.8');\n\
+			document.getElementById('graph').appendChild(newPath);\n\
+		}\n\
+		a=0;\n\
+		var plot = plots[i]['data'];\n\
+		while (a < plot.length) {\n\
+			if (plot[a] > max) max = plot[a];\n\
+			a++;\n\
+		}\n\
+		i++;\n\
 	 	rdx++;\n\
 	}\n\
 	var rmax=makeRoundMax(max);\n\
@@ -1923,10 +2008,10 @@ function plot_data(obj) {\n\
  		SVGDoc.getElementById('graph_path_'+i).setAttributeNS(null, 'd', path);\n\
 		i++;\n\
 	}\n\
- 	SVGDoc.getElementById('grid_txt1').firstChild.data = 3*rmax/4 + 'ms'\n\
-	SVGDoc.getElementById('grid_txt2').firstChild.data = 2*rmax/4 + 'ms';\n\
-	SVGDoc.getElementById('grid_txt3').firstChild.data = rmax/4 + 'ms';\n\
-	SVGDoc.getElementById('error').setAttributeNS(null, 'visibility', 'hidden');\n\
+ 	SVGDoc.getElementById('graph_grid_txt1').firstChild.data = 3*rmax/4 + 'ms'\n\
+	SVGDoc.getElementById('graph_grid_txt2').firstChild.data = 2*rmax/4 + 'ms';\n\
+	SVGDoc.getElementById('graph_grid_txt3').firstChild.data = rmax/4 + 'ms';\n\
+	SVGDoc.getElementById('graph_error').setAttributeNS(null, 'visibility', 'hidden');\n\
 }\n\
 function makeRoundMax(max) {\n\
 		rmax = 1000;\n\
@@ -1943,7 +2028,7 @@ function makeRoundMax(max) {\n\
 	return rmax;\n\
 }\n\
 function handle_error() {\n\
-	SVGDoc.getElementById('error').setAttributeNS(null, 'visibility', 'visible');\n\
+	SVGDoc.getElementById('graph_error').setAttributeNS(null, 'visibility', 'visible');\n\
 }\n\
 function isNumber(a) {\n\
 	return typeof a == 'number' && isFinite(a);\n\
@@ -2006,6 +2091,7 @@ char *tpl[]={
 	"READERCONFIGNCD525BIT",
 	"READERCONFIGNCD524BIT",
 	"READERCONFIGCCCAMBIT",
+	"APIUSEREDIT",
 	"USEREDIT",
 	"USEREDITRDRSELECTED",
 	"USEREDITSIDOKBIT",
@@ -2148,6 +2234,7 @@ char *tplmap[]={
 	TPLREADERCONFIGNCD525BIT,
 	TPLREADERCONFIGNCD524BIT,
 	TPLREADERCONFIGCCCAMBIT,
+	TPLAPIUSEREDIT,
 	TPLUSEREDIT,
 	TPLUSEREDITRDRSELECTED,
 	TPLUSEREDITSIDOKBIT,

@@ -31,22 +31,22 @@ LLIST * configured_readers = NULL; //list of all (configured) readers
 uint16_t  len4caid[256];    // table for guessing caid (by len)
 char  cs_confdir[128]=CS_CONFDIR;
 int32_t cs_dblevel=0;   // Debug Level
-int32_t thread_pipe[2];
+int32_t thread_pipe[2] = {0, 0};
 #ifdef WEBIF
 int8_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)restart fork, restart by webif, 2=like=1, but also restart on segfaults
 #endif
 int8_t cs_capture_SEGV=0;
 char  cs_tmpdir[200]={0x00};
 pid_t server_pid=0;
-pthread_mutex_t gethostbyname_lock;
-pthread_mutex_t get_cw_lock;
-pthread_mutex_t system_lock;
-pthread_mutex_t clientlist_lock;
-pthread_mutex_t readerlist_lock;
-pthread_mutex_t fakeuser_lock;
 #if defined(LIBUSB)
 pthread_mutex_t sr_lock;
 #endif
+CS_MUTEX_LOCK system_lock;
+CS_MUTEX_LOCK get_cw_lock;
+CS_MUTEX_LOCK gethostbyname_lock;
+CS_MUTEX_LOCK clientlist_lock;
+CS_MUTEX_LOCK readerlist_lock;
+CS_MUTEX_LOCK fakeuser_lock;
 pthread_key_t getclient;
 
 //Cache for  ecms, cws and rcs:
@@ -492,13 +492,13 @@ void cleanup_thread(void *var)
 		cl->cleaned++; //cleaned=1	
 		// Remove client from client list. kill_thread also removes this client, so here just if client exits itself...
 		struct s_client *prev, *cl2;
-		cs_lock(&clientlist_lock);
+		cs_writelock(&clientlist_lock);
 		for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
 			if (cl == cl2)
 				break;
 		if (cl == cl2)
 			prev->next = cl2->next; //remove client from list
-		cs_unlock(&clientlist_lock);
+		cs_writeunlock(&clientlist_lock);
 		
 		// Clean reader. The cleaned structures should be only used by the reader thread, so we should be save without waiting
 		if (cl->reader){
@@ -546,8 +546,7 @@ void cleanup_thread(void *var)
 #ifdef MODULE_CCCAM
 		add_garbage(cl->cc);
 #endif
-		add_garbage(cl->serialdata);
-		pthread_mutex_destroy(&cl->pipelock);					
+		add_garbage(cl->serialdata);			
 
 		cs_cleanlocks();
 		add_garbage(cl);		
@@ -882,10 +881,10 @@ struct s_client * create_client(in_addr_t ip) {
 
 		//Now add new client to the list:
 		struct s_client *last;
-		cs_lock(&clientlist_lock);
+		cs_writelock(&clientlist_lock);
 		for (last=first_client; last->next != NULL; last=last->next); //ends with cl on last client
 		last->next = cl;
-		cs_unlock(&clientlist_lock);
+		cs_writeunlock(&clientlist_lock);
 	} else {
 		cs_log("max connections reached (out of memory) -> reject client %s", cs_inet_ntoa(ip));
 		return NULL;
@@ -934,12 +933,6 @@ static void init_first_client()
   }
 
 	int8_t ok = 1;
-  if(pthread_mutex_init(&gethostbyname_lock, NULL)) ok = 0;
-  if(pthread_mutex_init(&get_cw_lock, NULL)) ok = 0;
-  if(pthread_mutex_init(&system_lock, NULL)) ok = 0;
-  if(pthread_mutex_init(&clientlist_lock, NULL)) ok = 0;
-  if(pthread_mutex_init(&readerlist_lock, NULL)) ok = 0;
-  if(pthread_mutex_init(&fakeuser_lock, NULL)) ok = 0;
 #if defined(LIBUSB)
   if(pthread_mutex_init(&sr_lock, NULL)) ok = 0;
 #endif
@@ -948,6 +941,12 @@ static void init_first_client()
   	fprintf(stderr, "Could not init locks, exiting...");
     exit(1);
   }
+  cs_lock_create(&system_lock, 5, "system_lock");
+  cs_lock_create(&get_cw_lock, 5, "get_cw_lock");  
+  cs_lock_create(&gethostbyname_lock, 10, "gethostbyname_lock");
+  cs_lock_create(&clientlist_lock, 5, "clientlist_lock");
+  cs_lock_create(&readerlist_lock, 5, "readerlist_lock");
+  cs_lock_create(&fakeuser_lock, 5, "fakeuser_lock");
 
 #ifdef COOL
   coolapi_open_all();
@@ -1116,7 +1115,7 @@ void start_thread(void * startroutine, char * nameroutine) {
 #ifndef TUXBOX
 	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
-	cs_lock(&system_lock);
+	cs_writelock(&system_lock);
 	if (pthread_create(&temp, &attr, startroutine, NULL))
 		cs_log("ERROR: can't create %s thread", nameroutine);
 	else {
@@ -1124,7 +1123,7 @@ void start_thread(void * startroutine, char * nameroutine) {
 		pthread_detach(temp);
 	}
 	pthread_attr_destroy(&attr);
-	cs_unlock(&system_lock);
+	cs_writeunlock(&system_lock);
 }
 
 /* Allows to kill another thread specified through the client cl with locking.
@@ -1137,7 +1136,7 @@ void kill_thread(struct s_client *cl) {
 /* Removes a reader from the list of active readers so that no ecms can be requested anymore. */
 void remove_reader_from_active(struct s_reader *rdr) {
 	struct s_reader *rdr2, *prv = NULL;
-	cs_lock(&readerlist_lock);
+	cs_writelock(&readerlist_lock);
 	for (rdr2=first_active_reader; rdr2 ; rdr2=rdr2->next) {
 		if (rdr2==rdr) {
 			if (prv) prv->next = rdr2->next;
@@ -1146,19 +1145,19 @@ void remove_reader_from_active(struct s_reader *rdr) {
 		}
 		prv = rdr2;
 	}
-	cs_unlock(&readerlist_lock);
+	cs_writeunlock(&readerlist_lock);
 }
 
 /* Adds a reader to the list of active readers so that it can serve ecms. */
 void add_reader_to_active(struct s_reader *rdr) {
 	struct s_reader *rdr2;
 	rdr->next = NULL;
-	cs_lock(&readerlist_lock);
+	cs_writelock(&readerlist_lock);
 	if (first_active_reader) {
 		for (rdr2=first_active_reader; rdr2->next ; rdr2=rdr2->next) ; //search last element
 		rdr2->next = rdr;
 	} else first_active_reader = rdr;
-	cs_unlock(&readerlist_lock);
+	cs_writeunlock(&readerlist_lock);
 }
 
 /* Starts or restarts a cardreader without locking. If restart=1, the existing thread is killed before restarting,
@@ -1221,15 +1220,15 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 /* Starts or restarts a cardreader with locking. If restart=1, the existing thread is killed before restarting,
    if restart=0 the cardreader is only started. */
 int32_t restart_cardreader(struct s_reader *rdr, int32_t restart) {
-	cs_lock(&system_lock);
+	cs_writelock(&system_lock);
 	int32_t result = restart_cardreader_int(rdr, restart);
-	cs_unlock(&system_lock);
+	cs_writeunlock(&system_lock);
 	return result;
 }
 
 static void init_cardreader() {
 
-	cs_lock(&system_lock);
+	cs_writelock(&system_lock);
 	struct s_reader *rdr;
 	for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 		if (!restart_cardreader_int(rdr, 0))
@@ -1238,7 +1237,7 @@ static void init_cardreader() {
 #ifdef WITH_LB
 	load_stat_from_file();
 #endif
-	cs_unlock(&system_lock);
+	cs_writeunlock(&system_lock);
 }
 
 static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_addr_t ip)
@@ -1258,7 +1257,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 
 	struct s_client *cl;
 	struct s_auth *account;
-	cs_lock(&fakeuser_lock);
+	cs_writelock(&fakeuser_lock);
 	for (cl=first_client->next; cl ; cl=cl->next)
 	{
 		account = cl->account;
@@ -1277,9 +1276,9 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 					cs_add_violation(cl->ip);
 				}
 				if (cfg.dropdups){
-					cs_unlock(&fakeuser_lock);
+					cs_writeunlock(&fakeuser_lock);
 					kill_thread(cl);
-					cs_lock(&fakeuser_lock);
+					cs_writelock(&fakeuser_lock);
 				}
 			}
 			else
@@ -1293,14 +1292,14 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 					cs_add_violation(ip);
 				}
 				if (cfg.dropdups){
-					cs_unlock(&fakeuser_lock);		// we need to unlock here as cs_disconnect_client kills the current thread!
+					cs_writeunlock(&fakeuser_lock);		// we need to unlock here as cs_disconnect_client kills the current thread!
 					cs_disconnect_client(client);
 				}
 				break;
 			}
 		}
 	}
-	cs_unlock(&fakeuser_lock);
+	cs_writeunlock(&fakeuser_lock);
 }
 
 int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const char *e_txt)
@@ -2343,7 +2342,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
     //Use locking - now default=FALSE, activate on problems!
 	int32_t locked;
 	if (cfg.lb_mode && cfg.lb_use_locking) {
-			cs_lock(&get_cw_lock);
+			cs_writelock(&get_cw_lock);
 			locked=1;
 	}
 	else
@@ -2433,7 +2432,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 #ifdef WITH_LB
 	if (locked)
-		cs_unlock(&get_cw_lock);
+		cs_writeunlock(&get_cw_lock);
 #endif
 
 	if (er->rc == E_99)
@@ -3021,11 +3020,11 @@ void * client_check(void) {
 		exit(1);
 	}
 
-	while (!exit_oscam) {
-		pfdcount = 0;
+	pfd[pfdcount].fd = thread_pipe[0];
+	pfd[pfdcount].events = POLLIN | POLLPRI | POLLHUP;
 
-		pfd[pfdcount].fd = thread_pipe[0];
-		pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
+	while (!exit_oscam) {
+		pfdcount = 1;
 
 		for (cl=first_client->next; cl ; cl=cl->next) {
 			if (cl->init_done && !cl->kill && cl->pfd && cl->typ=='c') {
@@ -3147,9 +3146,11 @@ void * reader_check(void) {
 		}
 
 		for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
+			if (!rdr->enable || !rdr->client)
+				continue;
 #ifdef WITH_CARDREADER
 			//check for card inserted or card removed on pysical reader
-			if (rdr->handle > 0 && !(rdr->typ & R_IS_CASCADING))
+			if (rdr->client->init_done && (rdr->handle > 0 || rdr->typ == R_SMART) && !(rdr->typ & R_IS_CASCADING))
 				reader_checkhealth(rdr);
 #endif
 
@@ -3230,7 +3231,7 @@ int32_t accept_connection(int32_t i, int32_t j) {
 
 			int32_t flag = 1;
 			setsockopt(pfd3, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
-			setKeepalive(pfd3);
+			setTCPTimeouts(pfd3);
 
 			cl->ctyp=i;
 			cl->udp_fd=pfd3;

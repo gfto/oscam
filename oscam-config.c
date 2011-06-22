@@ -2549,6 +2549,11 @@ int32_t write_server()
 
 			fprintf_conf(f, "label", "%s\n", rdr->label);
 
+#ifdef WEBIF
+			if (rdr->description[0] || cfg.http_full_cfg)
+				fprintf_conf(f, "description", "%s\n", rdr->description);
+#endif
+
 			if (rdr->enable == 0 || cfg.http_full_cfg)
 				fprintf_conf(f, "enable", "%d\n", rdr->enable);
 
@@ -3007,7 +3012,8 @@ struct s_auth *init_userdb()
 	//int32_t first=1;
 	FILE *fp;
 	char *value;
-	struct s_auth *account=NULL;
+	struct s_auth *account = NULL;
+	struct s_auth *probe = NULL;
 	char token[MAXLINESIZE];
 
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_user);
@@ -3064,6 +3070,17 @@ struct s_auth *init_userdb()
 			continue;
 
 		*value++ = '\0';
+
+		// check for duplicate useraccounts and make the name unique
+		if (!strcmp(trim(strtolower(token)), "user")) {
+			for(probe = authptr; probe; probe = probe->next){
+				if (!strcmp(probe->usr, trim(value))){
+					fprintf(stderr, "Warning: duplicate account '%s'\n", value);
+					strncat(value, "_x", sizeof(probe->usr) - strlen(value) - 1);
+				}
+			}
+		}
+
 		chk_account(trim(strtolower(token)), trim(value), account);
 	}
 
@@ -3776,6 +3793,13 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		cs_strncpy(rdr->label, value, sizeof(rdr->label));
 		return;
 	}
+
+#ifdef WEBIF
+	if (!strcmp(token, "description")) {
+		cs_strncpy(rdr->description, value, sizeof(rdr->description));
+		return;
+	}
+#endif
 
 	if (!strcmp(token, "fallback")) {
 		rdr->fallback  = strToIntVal(value, 0);

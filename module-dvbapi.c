@@ -460,7 +460,7 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len) {
 				}
 				break;
 			case 0x18:
-				emm_provider = (buf[i+1] == 0x07) ? (buf[i+6] << 16 | (buf[i+7] << 8| (buf[i+8]))) : 0;
+				emm_provider = (buf[i+1] == 0x07) ? (buf[i+7] << 8| (buf[i+8])) : 0;
 				cs_debug_mask(D_DVBAPI, "[cat] CAID: %04x\tEMM_PID: %04x\tPROVID: %06X", caid, emm_pid, emm_provider);
 				dvbapi_add_emmpid(demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE|EMM_SHARED|EMM_GLOBAL);
 				break;
@@ -920,7 +920,7 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 				descriptor_ca_provider = buffer[j+14] << 16 | (buffer[j+15] << 8| (buffer[j+16] & 0xF0));
 
 			if (descriptor_ca_system_id >> 8 == 0x18 && descriptor_length == 0x07)
-				descriptor_ca_provider = buffer[j+6] << 16 | (buffer[j+7] << 8| (buffer[j+8]));
+				descriptor_ca_provider = (buffer[j+7] << 8| (buffer[j+8]));
 
 			if (descriptor_ca_system_id >> 8 == 0x4A && descriptor_length == 0x05)
 				descriptor_ca_provider = buffer[j+6];

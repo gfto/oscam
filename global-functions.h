@@ -287,6 +287,7 @@ extern int32_t is_connect_blocked(struct s_reader *rdr);
 extern struct s_client *cur_client(void);
 extern int32_t get_threadnum(struct s_client *client);
 extern char *get_tmp_dir();
+extern int8_t check_client(struct s_client *client);
 extern void aes_set_key(char *);
 extern void aes_encrypt_idx(struct s_client *, uchar *, int32_t);
 extern void aes_decrypt(uchar *, int32_t);
@@ -352,6 +353,13 @@ extern char *strnew(char *str);
 extern void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid);
 extern void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid);
 extern int32_t check_ip(struct s_ip *ip, in_addr_t n);
+extern void cs_lock_create(struct cs_mutexlock *l, int16_t timeout, char *name);
+extern void cs_writelock(struct cs_mutexlock *l);
+extern void cs_writeunlock(struct cs_mutexlock *l);
+extern void cs_readlock(struct cs_mutexlock *l);
+extern void cs_readunlock(struct cs_mutexlock *l);
+extern int8_t cs_try_readlock(struct cs_mutexlock *l);
+extern int8_t cs_try_writelock(struct cs_mutexlock *l);
 #ifdef WITH_MUTEXDEBUG
 extern int32_t cs_lock_debug(pthread_mutex_t *mutex, char *file, uint16_t line);
 extern int32_t cs_trylock_debug(pthread_mutex_t *mutex, char *file, uint16_t line);
@@ -366,7 +374,10 @@ extern int32_t cs_unlock(pthread_mutex_t *mutex);
 #endif
 extern void cs_cleanlocks();
 extern uint32_t cs_getIPfromHost(const char *hostname);
-extern void setKeepalive(int32_t socket);
+extern void setTCPTimeouts(int32_t socket);
+extern struct s_reader *get_reader_by_label(char *lbl);
+extern struct s_client *get_client_by_name(char *name);
+extern struct s_auth *get_account_by_name(char *name);
 
 /* ===========================
  *       module-cccshare

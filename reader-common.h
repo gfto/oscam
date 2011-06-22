@@ -7,9 +7,7 @@
 #define SKIPPED 2
 #define OK			1
 #define ERROR 	0
-
-#include "csctapi/atr.h"
-
+#include "csctapi/atr.h" 
 #define write_cmd(cmd, data) \
 { \
         if (card_write(reader, cmd, data, cta_res, &cta_lr)) return ERROR; \

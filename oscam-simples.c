@@ -50,6 +50,16 @@ char *get_tmp_dir(){
   return cs_tmpdir;
 }
 
+/* Checks if the client still exists or has been cleaned. Returns 1 if it is ok, else 0. */
+int8_t check_client(struct s_client *client){
+	struct s_client *cl2;
+	for (cl2=first_client->next; cl2 != NULL; cl2=cl2->next)
+		if (client == cl2)
+			break;
+	if(cl2 != client || client->cleaned) return 0;
+	else return 1;
+}
+
 void aes_set_key(char *key)
 {
   AES_set_decrypt_key((const unsigned char *)key, 128, &cur_client()->aeskey_decrypt);
@@ -275,7 +285,7 @@ char *trim(char *txt)
 		*p2='\0';
 	}
 	if ((l=strlen(txt))>0)
-		for (p1=txt+l-1; ((*p1==' ') || (*p1=='\t') || (*p1=='\n') || (*p1=='\r')) && l>0; *p1--='\0', l--);
+		for (p1=txt+l-1; l>0 && ((*p1==' ') || (*p1=='\t') || (*p1=='\n') || (*p1=='\r')); *p1--='\0', l--);
 
 	return(txt);
 }
@@ -1078,6 +1088,173 @@ struct s_client* cs_preparelock(struct s_client *cl, pthread_mutex_t *mutex){
 	return cl;
 }
 
+/**
+ * creates a lock
+ **/
+void cs_lock_create(struct cs_mutexlock *l, int16_t timeout, char *name)
+{
+	memset(l, 0, sizeof(struct cs_mutexlock));
+	l->timeout = timeout;
+	l->name = name;
+#ifdef WITH_MUTEXDEBUG
+	cs_debug_mask(D_TRACE, "lock %s created", name);
+#endif
+}
+
+/**
+ * sets a writelock
+ * a writelock blocks all readlocks and writelocks
+ * if a readlock or a writelock is already set, we wait until its released
+ **/
+void cs_writelock(struct cs_mutexlock *l)
+{
+	do {
+		while (l->write_lock) {  //Test for writelock
+			cs_sleepms(fast_rnd()%50);
+			
+			//timeout locks:
+			time_t t = time(NULL);
+			if (l->timeout && t > l->lastlock+l->timeout && l->write_lock) {
+				l->write_lock = 0;
+				l->read_lock = 0;
+				l->lastlock = t;
+				cs_log("writelock %s: timeout!", l->name);
+				break;			
+			}
+#ifdef WITH_MUTEXDEBUG
+			cs_debug_mask(D_TRACE, "writelock %s: retry", l->name);
+#endif
+		}
+		l->write_lock++; //atom function
+		if (l->write_lock > 1) {
+			l->write_lock--;
+			continue;
+		}
+		while (l->read_lock) {  //Test for readlock
+			cs_sleepms(fast_rnd()%50);
+			
+			//timeout locks:
+			time_t t = time(NULL);
+			if (l->timeout && t > l->lastlock+l->timeout) { //10s=timeout lock
+				l->lastlock = t;
+				l->read_lock = 0;
+				cs_log("writelock/readlock %s: timeout!", l->name);
+				break;			
+			}
+#ifdef WITH_MUTEXDEBUG
+			cs_debug_mask(D_TRACE, "writelock/readlock %s: retry", l->name);
+#endif
+		}
+		l->lastlock = time(NULL);
+#ifdef WITH_MUTEXDEBUG
+		cs_debug_mask(D_TRACE, "writelock %s: got lock", l->name);
+#endif
+		return;
+		
+	} while (1);
+}
+
+/**
+ * unsets a writelock
+ **/
+void cs_writeunlock(struct cs_mutexlock *l)
+{
+	if (l->write_lock > 0)
+		l->write_lock--;
+#ifdef WITH_MUTEXDEBUG
+	cs_debug_mask(D_TRACE, "writelock %s: released", l->name);
+#endif
+}
+
+/**
+ * sets a readlock
+ * a readlock does NOT block other readlocks, but blocks writelocks
+ * if a writelock is already set, we wait until its realeased
+ **/
+void cs_readlock(struct cs_mutexlock *l)
+{
+	do {
+		while (l->write_lock) { 
+			cs_sleepms(fast_rnd()%50);
+			
+			//timeout locks:
+			time_t t = time(NULL);
+			if (l->timeout && t > l->lastlock+l->timeout && l->write_lock) {
+				l->write_lock = 0;
+				l->read_lock = 0;
+				l->lastlock = t;
+				cs_log("readlock %s: timeout!", l->name);
+				break;			
+			}
+			//cs_debug_mask(D_TRACE, "readlock %s: retry", l->name);
+		}
+		l->read_lock++; //atom function
+		if (l->write_lock > 0) {
+			l->read_lock--;
+			continue;
+		}
+		l->lastlock = time(NULL);
+#ifdef WITH_MUTEXDEBUG
+		cs_debug_mask(D_TRACE, "readlock %s: got lock", l->name);
+#endif
+		return;
+		
+	} while (1);
+}
+
+/**
+ * unsets a readlock
+ **/
+void cs_readunlock(struct cs_mutexlock *l)
+{
+	if (l->read_lock > 0)
+		l->read_lock--;
+#ifdef WITH_MUTEXDEBUG
+	cs_debug_mask(D_TRACE, "writelock %s: released", l->name);
+#endif
+}
+
+/**
+ * sets a readlock if not already locked by an writelock
+ * returns 0 in success (like pthread_mutex_trylock())
+ * returns 1 if a writelock is set and the readlock could not set 
+ **/
+int8_t cs_try_readlock(struct cs_mutexlock *l)
+{
+	if (l->write_lock) return 1;
+	l->read_lock++; //atom function
+	if (l->write_lock > 0) { //If a writelock is set during this time, give the readlock back an try again
+		l->read_lock--;
+		return 1;
+	}
+	l->lastlock = time(NULL);
+#ifdef WITH_MUTEXDEBUG
+	cs_debug_mask(D_TRACE, "try_readlock %s: got lock", l->name);
+#endif
+	return 0;
+}
+
+/**
+ * sets a writelock if not already locked by an writelock
+ * returns 0 in success (like pthread_mutex_trylock())
+ * returns 1 if a writelock is set and the readlock could not set 
+ **/
+int8_t cs_try_writelock(struct cs_mutexlock *l)
+{
+	if (l->write_lock) return 1;
+	l->write_lock++; //atom function
+	if (l->write_lock > 1) { //If a writelock is set during this time, give the readlock back an try again
+		l->write_lock--;
+		return 1;
+	}
+	l->lastlock = time(NULL);
+#ifdef WITH_MUTEXDEBUG
+	cs_debug_mask(D_TRACE, "try_writelock %s: got lock", l->name);
+#endif
+	return 0;
+}
+
+
 /* Replacement for pthread_mutex_lock. Locks are saved to the client structure so that they can get cleaned up if the thread was interrupted while holding a lock. */
 #ifdef WITH_MUTEXDEBUG
 int32_t cs_lock_debug(pthread_mutex_t *mutex, char *file, uint16_t line){
@@ -1197,13 +1374,13 @@ uint32_t cs_getIPfromHost(const char *hostname){
 	uint32_t result = 0;
 	//Resolve with gethostbyname:
 	if (cfg.resolve_gethostbyname) {
-		cs_lock(&gethostbyname_lock);
+		cs_writelock(&gethostbyname_lock);
 		struct hostent *rht = gethostbyname(hostname);
 		if (!rht)
 			cs_log("can't resolve %s", hostname);
 		else
 			result=((struct in_addr*)rht->h_addr)->s_addr;
-		cs_unlock(&gethostbyname_lock);
+		cs_writeunlock(&gethostbyname_lock);
 	}	else { //Resolve with getaddrinfo:
 		struct addrinfo hints, *res = NULL;
 		memset(&hints, 0, sizeof(hints));
@@ -1222,23 +1399,62 @@ uint32_t cs_getIPfromHost(const char *hostname){
 	return result;
 }
 
-void setKeepalive(int32_t socket){
+void setTCPTimeouts(int32_t socket){
 	int32_t flag = 1;
 	// this is not only for a real keepalive but also to detect closed connections so it should not be configurable
-	if(setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, &flag, sizeof(flag))){
+	if(setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, &flag, sizeof(flag)) && errno != EBADF){
 		cs_log("Setting SO_KEEPALIVE failed, errno=%d, %s", errno, strerror(errno));
 	}
 #if defined(TCP_KEEPIDLE) && defined(TCP_KEEPCNT) && defined(TCP_KEEPINTVL)
-	flag = 30;
-	if(setsockopt(socket, SOL_TCP, TCP_KEEPIDLE, &flag, sizeof(flag))){	// send a keepalive packet after 30 seconds of inactivity
+	flag = 180;
+	if(setsockopt(socket, SOL_TCP, TCP_KEEPIDLE, &flag, sizeof(flag)) && errno != EBADF){	//send first keepalive packet after 3 minutes of last package received (keepalive packets included)
 		cs_log("Setting TCP_KEEPIDLE failed, errno=%d, %s", errno, strerror(errno));
 	}
-	flag = 5;
-	if(setsockopt(socket, SOL_TCP, TCP_KEEPCNT, &flag, sizeof(flag))){		// send up to 5 keepalive packets out, then disconnect if no response
+	flag = 3;
+	if(setsockopt(socket, SOL_TCP, TCP_KEEPCNT, &flag, sizeof(flag)) && errno != EBADF){		//send up to 3 keepalive packets out (in interval TCP_KEEPINTVL), then disconnect if no response
 		cs_log("Setting TCP_KEEPCNT failed, errno=%d, %s", errno, strerror(errno));
 	}
-	if(setsockopt(socket, SOL_TCP, TCP_KEEPINTVL, &flag, sizeof(flag))){;		// send a keepalive packet out every 5 seconds (after the 30 second idle period)
+	flag = 5;
+	if(setsockopt(socket, SOL_TCP, TCP_KEEPINTVL, &flag, sizeof(flag)) && errno != EBADF){;		//send a keepalive packet out every 5 seconds (until answer has been received or TCP_KEEPCNT has been reached)
 		cs_log("Setting TCP_KEEPINTVL failed, errno=%d, %s", errno, strerror(errno));
 	}
 #endif
+	struct timeval tv;
+	tv.tv_sec = 60;
+	tv.tv_usec = 0;
+	if(setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(struct timeval)) && errno != EBADF){;
+		cs_log("Setting SO_SNDTIMEO failed, errno=%d, %s", errno, strerror(errno));
+	}
+	tv.tv_sec = 600;
+	tv.tv_usec = 0;
+	if(setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval)) && errno != EBADF){;
+		cs_log("Setting SO_RCVTIMEO failed, errno=%d, %s", errno, strerror(errno));
+	}
+}
+
+
+struct s_reader *get_reader_by_label(char *lbl){
+	struct s_reader *rdr;
+	LL_ITER itr = ll_iter_create(configured_readers);
+	while((rdr = ll_iter_next(&itr)))
+	  if (strcmp(lbl, rdr->label) == 0) break;
+	return rdr;
+}
+
+struct s_client *get_client_by_name(char *name) {
+	struct s_client *cl;
+	for (cl = first_client; cl ; cl = cl->next) {
+		if (strcmp(name, cl->account->usr) == 0)
+			return cl;
+	}
+	return NULL;
+}
+
+struct s_auth *get_account_by_name(char *name) {
+	struct s_auth *account;
+	for (account=cfg.account; (account); account=account->next) {
+		if(strcmp(name, account->usr) == 0)
+			return account;
+	}
+	return NULL;
 }

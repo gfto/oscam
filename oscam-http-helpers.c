@@ -803,31 +803,6 @@ char *getParam(struct uriparams *params, char *name){
 	return "";
 }
 
-struct s_reader *get_reader_by_label(char *lbl){
-	struct s_reader *rdr;
-	LL_ITER itr = ll_iter_create(configured_readers);
-	while((rdr = ll_iter_next(&itr)))
-	  if (strcmp(lbl, rdr->label) == 0) break;
-	return rdr;
-}
-
-struct s_client *get_client_by_name(char *name) {
-	struct s_client *cl;
-	for (cl = first_client; cl ; cl = cl->next) {
-		if (strcmp(name, cl->account->usr) == 0)
-			return cl;
-	}
-	return NULL;
-}
-
-struct s_auth *get_account_by_name(char *name) {
-	struct s_auth *account;
-	for (account=cfg.account; (account); account=account->next) {
-		if(strcmp(name, account->usr) == 0)
-			return account;
-	}
-	return NULL;
-}
 
 #ifdef WITH_SSL
 pthread_key_t getssl;

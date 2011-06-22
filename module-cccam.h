@@ -79,8 +79,10 @@ typedef enum {
 		CT_LOCALCARD = 1,
 		CT_CARD_BY_SERVICE_READER = 2,
 		CT_CARD_BY_SERVICE_USER = 3,
-		CT_CARD_BY_CAID = 4,
-		CT_REMOTECARD = 5
+		CT_CARD_BY_CAID1 = 4,
+		CT_CARD_BY_CAID2 = 5,
+		CT_CARD_BY_CAID3 = 6,
+		CT_REMOTECARD = 10
 } cc_card_type;
 
 struct cc_card {
@@ -179,9 +181,9 @@ struct cc_data {
 	int32_t server_ecm_pending;                    //initialized by server
 	uint16_t server_ecm_idx;
 	
-	pthread_mutex_t lockcmd;
-	pthread_mutex_t ecm_busy;
-	pthread_mutex_t cards_busy;
+	struct cs_mutexlock lockcmd;
+	struct cs_mutexlock ecm_busy;
+	struct cs_mutexlock cards_busy;
 	struct timeb ecm_time;
 	time_t answer_on_keepalive;
 	uint8_t last_msg;

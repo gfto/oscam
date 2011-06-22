@@ -372,6 +372,14 @@ extern void cs_switch_led(int32_t led, int32_t action);
 /* ===========================
  *      global structures
  * =========================== */
+typedef struct cs_mutexlock {
+    int read_lock;
+    int write_lock;
+    time_t lastlock;
+    int timeout;
+    char *name;
+} CS_MUTEX_LOCK;
+
 typedef struct s_caidvaluetab
 {
   uint16_t n;
@@ -565,7 +573,7 @@ struct s_irdeto_quess
 
 typedef struct ecm_request_t
 {
-  uchar         ecm[256];
+  uchar         ecm[512];
   uchar         cw[16];
   uchar         ecmd5[CS_ECMSTORESIZE];
   int16_t         l;
@@ -659,7 +667,7 @@ LLIST *joblist;
   struct s_auth *account;
   int32_t		udp_fd;
   uint16_t	pipecnt;
-  pthread_mutex_t pipelock;
+  CS_MUTEX_LOCK pipelock;
   struct	sockaddr_in udp_sa;
   int32_t		log;
   int32_t		logcounter;
@@ -818,6 +826,9 @@ struct s_reader  //contains device info, reader info and card info
   int32_t       fallback;
   int32_t       typ;
   char      label[64];
+#ifdef WEBIF
+  char     description[64];
+#endif
   char      device[128];
   void      *spec_dev;  //pointer to structure that contains specific device data
   uint16_t    slot;   //in case of multiple slots like sc8in1; first slot = 1
@@ -1267,7 +1278,6 @@ struct s_config
     int32_t		lcd_hide_idle;
     int32_t		lcd_write_intervall;
 #endif
-
 };
 
 struct s_clientinit
@@ -1343,7 +1353,7 @@ extern char *loghist, *loghistptr;
 extern struct s_module ph[CS_MAX_MOD];
 extern struct s_cardsystem cardsystem[CS_MAX_MOD];
 extern struct s_cardreader cardreader[CS_MAX_MOD];
-extern pthread_mutex_t gethostbyname_lock;
+extern CS_MUTEX_LOCK gethostbyname_lock;
 #if defined(LIBUSB)
 extern pthread_mutex_t sr_lock;
 #endif

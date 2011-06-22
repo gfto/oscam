@@ -4,20 +4,22 @@
 
 static FILE *fp=(FILE *)0;
 static FILE *fps=(FILE *)0;
-static int16_t logStarted = 0;
-
-pthread_mutex_t switching_log;
-pthread_mutex_t loghistory_lock;
-
 #ifdef CS_ANTICASC
 FILE *fpa=(FILE *)0;
 #endif
+static int8_t logStarted = 0;
+
+CS_MUTEX_LOCK log_lock;
+CS_MUTEX_LOCK ac_lock;
+CS_MUTEX_LOCK user_lock;
+CS_MUTEX_LOCK stdout_lock;
+CS_MUTEX_LOCK loghistory_lock;
 
 #define LOG_BUF_SIZE (520+11) // should be aligned with s_client.dump from globals.h
 
 static void switch_log(char* file, FILE **f, int32_t (*pfinit)(void))
 {
-	if( cfg.max_log_size)	//only 1 thread needs to switch the log; even if anticasc, statistics and normal log are running
+	if(cfg.max_log_size)	//only 1 thread needs to switch the log; even if anticasc, statistics and normal log are running
 					//at the same time, it is ok to have the other logs switching 1 entry later
 	{
 		struct stat stlog;
@@ -28,30 +30,23 @@ static void switch_log(char* file, FILE **f, int32_t (*pfinit)(void))
 			return;
 		}
 
-		if( stlog.st_size >= cfg.max_log_size*1024 && *f != NULL) {
+		if(stlog.st_size >= cfg.max_log_size*1024 && *f != NULL) {
 			int32_t rc;
 			char prev_log[strlen(file) + 6];
-			snprintf(prev_log, sizeof(prev_log), "%s-prev", file);
-			if ( cs_trylock(&switching_log) == 0) { //I got the lock so I am the first thread detecting a switchlog is needed
-				FILE *tmp = *f;
-				*f = (FILE *)0;
-				fprintf(tmp, "switch log file\n");
-				cs_sleepms(1);
-				fflush(tmp);
-				fclose(tmp);
-				rc = rename(file, prev_log);
-				if( rc!=0 ) {
-					fprintf(stderr, "rename(%s, %s) failed (errno=%d %s)\n", file, prev_log, errno, strerror(errno));
-				}
-				else
-					if( pfinit()){
-						fprintf(stderr, "Initialisation of log file failed, continuing without logging thread %8X. Log will be output to stdout!", (unsigned int)pthread_self());
-						cfg.logtostdout = 1;
-					}
+			snprintf(prev_log, sizeof(prev_log), "%s-prev", file);			
+			fprintf(*f, "switch log file\n");
+			fflush(*f);
+			fclose(*f);
+			*f = (FILE *)0;
+			rc = rename(file, prev_log);
+			if( rc!=0 ) {
+				fprintf(stderr, "rename(%s, %s) failed (errno=%d %s)\n", file, prev_log, errno, strerror(errno));
 			}
-			else //I am not the first to detect a switchlog is needed, so I need to wait for the first thread to complete
-				cs_lock(&switching_log); //wait on 1st thread
-			cs_unlock(&switching_log); //release after processing or after waiting
+			else
+				if( pfinit()){
+					fprintf(stderr, "Initialisation of log file failed, continuing without logging thread %8X. Log will be output to stdout!", (unsigned int)pthread_self());
+					cfg.logtostdout = 1;
+				}
 		}
 	}
 }
@@ -61,35 +56,43 @@ void cs_write_log(char *txt)
 #ifdef CS_ANTICASC
 	struct s_client *cl = cur_client();
 	if( cl && cl->typ == 'a' && fpa ) {
+		cs_writelock(&ac_lock);
 		switch_log(cfg.ac_logfile, &fpa, ac_init_log);
 		if (fpa) {
 				fputs(txt, fpa);
 				fflush(fpa);
 		}
+		cs_writeunlock(&ac_lock);
 	}
 	else
 #endif
 		// filter out entries with leading 's' and forward to statistics
 		if(txt[0] == 's') {
 			if (fps) {
+				cs_writelock(&user_lock);
 				switch_log(cfg.usrfile, &fps, cs_init_statistics);
 				if (fps) {
 						fputs(txt + 1, fps); // remove the leading 's' and write to file
 						fflush(fps);
 				}
+				cs_writeunlock(&user_lock);
 			}
 		} else {
 			if(!cfg.disablelog){
 				if (fp){
+					cs_writelock(&log_lock);
 					switch_log(cfg.logfile, &fp, cs_open_logfiles);
 					if (fp) {
 							fputs(txt, fp);
 							fflush(fp);
-					}		
+					}
+					cs_writeunlock(&log_lock);	
 				}
 				if(cfg.logtostdout){
+					cs_writelock(&stdout_lock);
 					fputs(txt, stdout);
 					fflush(stdout);
+					cs_writeunlock(&stdout_lock);	
 				}
 			}
 		}
@@ -126,8 +129,11 @@ int32_t cs_open_logfiles()
 int32_t cs_init_log(void)
 {
 	if(logStarted == 0){
-		pthread_mutex_init(&switching_log, NULL);
-		pthread_mutex_init(&loghistory_lock, NULL);
+		cs_lock_create(&log_lock, 5, "log_lock");
+		cs_lock_create(&ac_lock, 5, "ac_lock");
+		cs_lock_create(&user_lock, 5, "user_lock");
+		cs_lock_create(&stdout_lock, 5, "stdout_lock");
+		cs_lock_create(&loghistory_lock, 5, "loghistory_lock");
 	}
 	int32_t rc = cs_open_logfiles();
 	logStarted = 1;
@@ -142,7 +148,7 @@ void cs_reinit_loghist(uint32_t size)
 	char *tmp, *tmp2;
 	if(size != cfg.loghistorysize){
 		if(cs_malloc(&tmp, size, -1)){
-			cs_lock(&loghistory_lock);
+			cs_writelock(&loghistory_lock);
 			tmp2 = loghist;
 			// On shrinking, the log is not copied and the order is reversed
 			if(size < cfg.loghistorysize){
@@ -159,7 +165,7 @@ void cs_reinit_loghist(uint32_t size)
 				cs_sleepms(20);	// Monitor or webif may be currently outputting the loghistory but don't use locking so we sleep a bit...
 				cfg.loghistorysize = size;						
 			}
-			cs_unlock(&loghistory_lock);
+			cs_writeunlock(&loghistory_lock);
 			if(tmp2 != NULL) add_garbage(tmp2);			
 		}
 	}
@@ -227,7 +233,7 @@ static void write_to_log(char *txt)
 		char *target_ptr = NULL;
 		int32_t target_len = strlen(usrtxt) + (strlen(log_buf) - 8) + 1;
 		
-		cs_lock(&loghistory_lock);
+		cs_writelock(&loghistory_lock);
 		char *lastpos = loghist + (cfg.loghistorysize) - 1;		
 		if (!loghistptr)
 			loghistptr = loghist;
@@ -242,7 +248,7 @@ static void write_to_log(char *txt)
 			loghistptr=loghistptr + target_len + 1;
 			*loghistptr='\0';
 		}
-		cs_unlock(&loghistory_lock);
+		cs_writeunlock(&loghistory_lock);
 
 		snprintf(target_ptr, target_len + 1, "%s\t%s", usrtxt, log_buf + 8);
 	}
