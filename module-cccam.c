@@ -1904,8 +1904,8 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			it = ll_iter_create(cc->cards);
 			struct cc_card *old_card;
 			while ((old_card = ll_iter_next(&it))) {
-				if (old_card->id == card->id || //we aready have this card, delete it
-						same_card(old_card, card)) {
+				if (old_card->id == card->id) //we aready have this card, delete it
+				{
 					cc_free_card(card);
 					card = old_card;
 					break;
