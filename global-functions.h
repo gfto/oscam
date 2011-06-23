@@ -14,7 +14,6 @@ extern void module_cccam(struct s_module *);
 #endif
 extern void module_gbox(struct s_module *);
 extern void module_constcw(struct s_module *);
-extern int32_t chk_pending(struct s_reader *rdr, int32_t timeout);
 #ifdef HAVE_DVBAPI
 extern void module_dvbapi(struct s_module *);
 #endif

@@ -2605,7 +2605,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 	}
 }
 
-int32_t chk_pending(struct s_reader *rdr, int32_t timeout)
+static int32_t chk_pending(struct s_client *cl, int32_t timeout)
 {
 	int32_t i, pending=0;
 	uint32_t td;
@@ -2617,8 +2617,6 @@ int32_t chk_pending(struct s_reader *rdr, int32_t timeout)
 	tpe=tpn;
 	tpe.time+=timeout;
 
-	struct s_client *cl = rdr->client;
-
 	if (!cl || !cl->ecmtask)
 		return 0;
 
@@ -2628,7 +2626,6 @@ int32_t chk_pending(struct s_reader *rdr, int32_t timeout)
 		i=0;
 
 	for (--i; i>=0; i--) {
-
 		if (cl->ecmtask[i].rc>=E_99) { // check all pending ecm-requests
 			int32_t act=1;
 			er=&cl->ecmtask[i];
@@ -2648,7 +2645,6 @@ int32_t chk_pending(struct s_reader *rdr, int32_t timeout)
 			tpc.time +=tt / 1000;
 			tpc.millitm += tt % 1000;
 			if (!er->stage && er->rc >= E_UNHANDLED) {
-
 				LL_NODE *ptr;
 				for (ptr = er->matching_rdr?er->matching_rdr->initial:NULL; ptr && ptr != er->fallback; ptr = ptr->nxt)
 					if (!cfg.preferlocalcards ||
@@ -2866,14 +2862,14 @@ void * work_thread(void *ptr) {
 
 				if (s < 0) {
 					if (reader->ph.type==MOD_CONN_TCP)
-						reader->tcp_connected = 0;
+						network_tcp_connection_close(reader);
 					break;
 				}
 
 				rc = reader->ph.recv(cl, mbuf, sizeof(mbuf));
 				if (rc < 0) {
 					if (reader->ph.type==MOD_CONN_TCP)
-						reader->tcp_connected = 0;
+						network_tcp_connection_close(reader);
 					break;
 				}
 
@@ -3161,6 +3157,9 @@ void * reader_check(void) {
 					add_job(cl, ACTION_CLIENT_KILL, NULL, 0);
 					continue;
 				}
+				//check for pending ecm requests (on client ecmtask) and answer with timeout after ctimeout
+				//physical reader do not use ecmtask and proxy reader using casc_process_ecm() and casc_check_dcw() for checking
+				chk_pending(cl, cfg.cmaxidle);
 			}
 		}
 
@@ -3187,11 +3186,6 @@ void * reader_check(void) {
 					add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
 				}
 			}
-
-			//check for pending ecm requests (on reader ecmtask) and answer with timeout after ctimeout
-			if (rdr->client && rdr->client->ecmtask && !rdr->client->thread_active)
-				chk_pending(rdr, cfg.cmaxidle);
-
 		}
 		cs_sleepms(1000);
 	}

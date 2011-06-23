@@ -1028,7 +1028,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 #define TPLAPICCCAMCARDNODEBIT "				<node number=\"##APINODENUMBER##\">##APINODE##</node>\n"
 
 #define TPLAPIREADERSTATS "##TPLAPIHEADER##\
-	<reader label=\"##READERNAME##\">\n\
+	<reader label=\"##READERNAME##\" status=\"##READERSTATUS##\" caid=\"##READERCAID##\">\n\
 		<emmstats totalwritten=\"##TOTALWRITTEN##\" totalskipped=\"##TOTALSKIPPED##\" totalblocked=\"##TOTALBLOCKED##\" totalerror=\"##TOTALERROR##\">\n\
 ##EMMSTATS##\n\
 		</emmstats>\n\

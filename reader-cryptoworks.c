@@ -651,8 +651,8 @@ static uint32_t cryptoworks_get_emm_provid(unsigned char *buffer, int32_t len)
 void dvbapi_sort_nanos(unsigned char *dest, const unsigned char *src, int32_t len);
 
 int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len) {
-	static uchar emm_global[512];		// FIXME
-	static int32_t emm_global_len = 0;	// FIXME
+	static uchar emm_global[512];		// function only called from dvbapi thread, no need to be threadsafe
+	static int32_t emm_global_len = 0;
 	int32_t emm_len = 0;
 
 	// Cryptoworks
@@ -662,22 +662,22 @@ int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len) {
 	//    original EMM-SH and EMM-SB in ascending order.
 	// 
 	if (*len>500) return 0;
-	char tmp[520];
+	char dumpbuf[255];
 	
 	switch (buffer[0]) {
 		case 0x82 : // emm-u
-			cs_debug_mask(D_READER, "cryptoworks unique emm (EMM-U): %s" , cs_hexdump(1, buffer, *len, tmp, sizeof(tmp)));
+			cs_debug_mask(D_READER, "cryptoworks unique emm (EMM-U): %s" , cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
 			break;
 
 		case 0x84: // emm-sh
-			cs_debug_mask(D_READER, "cryptoworks shared emm (EMM-SH): %s" , cs_hexdump(1, buffer, *len, tmp, sizeof(tmp)));
+			cs_debug_mask(D_READER, "cryptoworks shared emm (EMM-SH): %s" , cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
 			if (!memcmp(emm_global, buffer, *len)) return 0;
 			memcpy(emm_global, buffer, *len);
 			emm_global_len=*len;
 			return 0;
 
 		case 0x86: // emm-sb
-			cs_debug_mask(D_READER, "cryptoworks shared emm (EMM-SB): %s" , cs_hexdump(1, buffer, *len, tmp, sizeof(tmp)));
+			cs_debug_mask(D_READER, "cryptoworks shared emm (EMM-SB): %s" , cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
 			if (!emm_global_len) return 0;
 
 			// we keep the first 12 bytes of the 0x84 emm (EMM-SH)
@@ -714,7 +714,7 @@ int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len) {
 
 			emm_global_len=0;
 
-			cs_debug_mask(D_READER, "cryptoworks shared emm (assembled): %s" , cs_hexdump(1, buffer, emm_len+12, tmp, sizeof(tmp)));
+			cs_debug_mask(D_READER, "cryptoworks shared emm (assembled): %s" , cs_hexdump(0, buffer, emm_len+12, dumpbuf, sizeof(dumpbuf)));
 			if(assembled_EMM[11]!=emm_len) { // sanity check
 				// error in emm assembly
 				cs_debug_mask(D_READER, "Error assembling Cryptoworks EMM-S");
@@ -724,7 +724,7 @@ int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len) {
 				
 		case 0x88: // emm-g
 		case 0x89: // emm-g
-			cs_debug_mask(D_READER, "cryptoworks global emm (EMM-G): %s" , cs_hexdump(1, buffer, *len, tmp, sizeof(tmp)));
+			cs_debug_mask(D_READER, "cryptoworks global emm (EMM-G): %s" , cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
 			break;
 	}
 	return 1;

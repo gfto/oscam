@@ -38,43 +38,36 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 
 void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw)
 {
-  int32_t i, pending=0;
-  time_t t = time(NULL);
-  ECM_REQUEST *ecm;
-  struct s_client *cl = reader->client;
-  
-if(!cl) return; 
-  
-  for (i=0; i<CS_MAXPENDING; i++)
-  {
-  	ecm = &cl->ecmtask[i];
-    if ((ecm->rc>=10) && 
-    	ecm->caid == cl->ecmtask[idx].caid &&
-        (!memcmp(ecm->ecmd5, cl->ecmtask[idx].ecmd5, CS_ECMSTORESIZE)))
-    {
-      if (rc)
-      {
-        ecm->rc=(i==idx) ? 1 : 2;
-        memcpy(ecm->cw, cw, 16);
-      }
-      else
-        ecm->rc=0;    
-      write_ecm_answer(reader, ecm);
-      ecm->idx=0;
-    }
+	int32_t i, pending=0;
+	time_t t = time(NULL);
+	ECM_REQUEST *ecm;
+	struct s_client *cl = reader->client;
 
-    if (ecm->rc>=10 && (t-(uint32_t)ecm->tps.time > ((cfg.ctimeout + 500) / 1000) + 1)) // drop timeouts
-	{
-    	ecm->rc=0;
+	if(!cl) return; 
+  
+	for (i=0; i<CS_MAXPENDING; i++) {
+		ecm = &cl->ecmtask[i];
+		if ((ecm->rc>=10) && ecm->caid == cl->ecmtask[idx].caid && (!memcmp(ecm->ecmd5, cl->ecmtask[idx].ecmd5, CS_ECMSTORESIZE))) {
+			if (rc) {
+				ecm->rc=(i==idx) ? 1 : 2;
+				memcpy(ecm->cw, cw, 16);
+			} else
+				ecm->rc=0;
+			write_ecm_answer(reader, ecm);
+			ecm->idx=0;
+		}
+
+		if (ecm->rc>=10 && (t-(uint32_t)ecm->tps.time > ((cfg.ctimeout + 500) / 1000) + 1)) { // drop timeouts
+			ecm->rc=0;
 #ifdef WITH_LB
-        send_reader_stat(reader, ecm, E_TIMEOUT);
+			send_reader_stat(reader, ecm, E_TIMEOUT);
 #endif
-	}
+		}
 
-  	if (ecm->rc >= 10)
-  		pending++;
-  }
-  cl->pending=pending;
+		if (ecm->rc >= 10)
+			pending++;
+	}
+	cl->pending=pending;
 }
 
 int32_t hostResolve(struct s_reader *rdr){
@@ -275,85 +268,72 @@ void casc_do_sock_log(struct s_reader * reader)
 
 int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
-  int32_t rc, n, i, sflag, pending=0;
-  time_t t;//, tls;
-  struct s_client *cl = reader->client;
+	int32_t rc, n, i, sflag, pending=0;
+	time_t t;//, tls;
+	struct s_client *cl = reader->client;
   
-  if(!cl) return -1;
+	if(!cl) return -1;
   
-  uchar buf[512];
+	uchar buf[512];
 
-  t=time((time_t *)0);
-  ECM_REQUEST *ecm;
-  for (n=-1, i=0, sflag=1; i<CS_MAXPENDING; i++)
-  {
-  	ecm = &cl->ecmtask[i];
-    if ((ecm->rc>=10) && (t-(uint32_t)ecm->tps.time > ((cfg.ctimeout + 500) / 1000) + 1)) // drop timeouts
-	{
-    	ecm->rc=0;
+	t=time((time_t *)0);
+	ECM_REQUEST *ecm;
+	for (n=-1, i=0, sflag=1; i<CS_MAXPENDING; i++) {
+		ecm = &cl->ecmtask[i];
+		if ((ecm->rc>=10) && (t-(uint32_t)ecm->tps.time > ((cfg.ctimeout + 500) / 1000) + 1)) { // drop timeouts
+			ecm->rc=0;
 #ifdef WITH_LB
-        send_reader_stat(reader, ecm, E_TIMEOUT);
+			send_reader_stat(reader, ecm, E_TIMEOUT);
 #endif
-	}
-    if (n<0 && (ecm->rc<10))   // free slot found
-      n=i;
-    if ((ecm->rc>=10) &&      // ecm already pending
-    	er->caid == ecm->caid &&
-        (!memcmp(er->ecmd5, ecm->ecmd5, CS_ECMSTORESIZE)) &&
-        (er->level<=ecm->level))    // ... this level at least
-      sflag=0;
+		}
+		if (n<0 && (ecm->rc<10))   // free slot found
+			n=i;
+
+		if ((ecm->rc>=10) &&      // ecm already pending
+		 er->caid == ecm->caid &&
+		 (!memcmp(er->ecmd5, ecm->ecmd5, CS_ECMSTORESIZE)) &&
+		 (er->level<=ecm->level))    // ... this level at least
+			sflag=0;
       
-    if (ecm->rc >=10) 
-    	pending++;
-  }
-  cl->pending=pending;
-  if (n<0)
-  {
-    cs_log("WARNING: ecm pending table overflow !!");
-    return(-2);
-  }
-  memcpy(&cl->ecmtask[n], er, sizeof(ECM_REQUEST));
-  cl->ecmtask[n].matching_rdr = NULL; //This avoids double free of matching_rdr!
-  if( reader->typ == R_NEWCAMD )
-    cl->ecmtask[n].idx=(reader->ncd_msgid==0)?2:reader->ncd_msgid+1;
-  else {
-    if (!cl->idx)
-    		cl->idx = 1;
-    cl->ecmtask[n].idx=cl->idx++;
-  }
-  cl->ecmtask[n].rc=10;
-  cs_debug_mask(D_READER, "---- ecm_task %d, idx %d, sflag=%d, level=%d", 
-           n, cl->ecmtask[n].idx, sflag, er->level);
+		if (ecm->rc >=10) 
+			pending++;
+	}
+	cl->pending=pending;
 
-  if( reader->ph.type==MOD_CONN_TCP && reader->tcp_rto )
-  {
-    int32_t rto = abs(reader->last_s - reader->last_g);
-    if (rto >= (reader->tcp_rto*60))
-    {
-      if (reader->ph.c_idle)
-      	reader_do_idle(reader);
-      else {
-        cs_debug_mask(D_READER, "rto=%d", rto);
-        network_tcp_connection_close(reader);
-      }
-    }
-  }
+	if (n<0) {
+		cs_log("WARNING: ecm pending table overflow !!");
+		return(-2);
+	}
 
-  cs_ddump_mask(D_ATR, er->ecm, er->l, "casc ecm:");
-  rc=0;
-  if (sflag)
-  {
-    if ((rc=reader->ph.c_send_ecm(cl, &cl->ecmtask[n], buf)))
-      casc_check_dcw(reader, n, 0, cl->ecmtask[n].cw);  // simulate "not found"
-    else
-      cl->last_idx = cl->ecmtask[n].idx;
-    reader->last_s = t;   // used for inactive_timeout and reconnect_timeout in TCP reader
-  }
+	memcpy(&cl->ecmtask[n], er, sizeof(ECM_REQUEST));
+	cl->ecmtask[n].matching_rdr = NULL; //This avoids double free of matching_rdr!
+
+	if( reader->typ == R_NEWCAMD )
+		cl->ecmtask[n].idx=(reader->ncd_msgid==0)?2:reader->ncd_msgid+1;
+	else {
+		if (!cl->idx)
+    			cl->idx = 1;
+		cl->ecmtask[n].idx=cl->idx++;
+	}
+
+	cl->ecmtask[n].rc=10;
+	cs_debug_mask(D_READER, "---- ecm_task %d, idx %d, sflag=%d, level=%d", n, cl->ecmtask[n].idx, sflag, er->level);
+
+	cs_ddump_mask(D_ATR, er->ecm, er->l, "casc ecm:");
+	rc=0;
+	if (sflag) {
+		if ((rc=reader->ph.c_send_ecm(cl, &cl->ecmtask[n], buf)))
+			casc_check_dcw(reader, n, 0, cl->ecmtask[n].cw);  // simulate "not found"
+		else
+			cl->last_idx = cl->ecmtask[n].idx;
+		reader->last_s = t;   // used for inactive_timeout and reconnect_timeout in TCP reader
+	}
 
 //cs_log("casc_process_ecm 1: last_s=%d, last_g=%d", reader->last_s, reader->last_g);
 
-  if (cl->idx>0x1ffe) cl->idx=1;
-  return(rc);
+	if (cl->idx>0x1ffe) cl->idx=1;
+
+	return(rc);
 }
 
 static int32_t reader_store_emm(uchar *emm, uchar type)
