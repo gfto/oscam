@@ -1382,6 +1382,26 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 		}
 	}
 
+	if (apicall) {
+		char *txt = "UNDEF";
+		switch(rdr->card_status)
+		{
+		case NO_CARD: txt = "OFF"; break;
+		case UNKNOWN: txt = "UNKNOWN"; break;
+		case CARD_NEED_INIT: txt = "NEEDINIT"; break;
+		case CARD_INSERTED:
+			if (rdr->client->typ=='p')
+				txt = "CONNECTED";
+			else
+				txt = "CARDOK";
+			break;
+		case CARD_FAILURE: txt = "ERROR"; break;
+		default: txt = "UNDEF";
+		}
+		tpl_addVar(vars, TPLADD, "READERSTATUS", txt);
+		tpl_printf(vars, TPLADD, "READERCAID", "%04X", rdr->caid);
+	}
+
 	int32_t rc2hide = (-1);
 	if (strlen(getParam(params, "hide")) > 0)
 			rc2hide = atoi(getParam(params, "hide"));
@@ -2350,15 +2370,19 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 						if (cau == 0) {
 							tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "OFF");
 						} else {
-							if (cau == -1) tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "<a href=\"#\" class=\"tooltip\">ON");
-							else tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "<a href=\"#\" class=\"tooltip\">ACTIVE");
+							if (cau == -1)
+								tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "<a href=\"#\" class=\"tooltip\">ON");
+							else
+								tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "<a href=\"#\" class=\"tooltip\">ACTIVE");
 							tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", "<span>");
 							if (cl->typ == 'c'){
 								struct s_reader *rdr;
 								LL_ITER itr = ll_iter_create(cl->aureader_list);
 								while ((rdr = ll_iter_next(&itr))) {
-									if(rdr->audisabled) tpl_printf(vars, TPLAPPEND, "CLIENTCAUHTTP", "(%s)<br>", rdr->label);
-									else tpl_printf(vars, TPLAPPEND, "CLIENTCAUHTTP", "%s<br>", rdr->label);
+									if(rdr->audisabled)
+										tpl_printf(vars, TPLAPPEND, "CLIENTCAUHTTP", "(%s)<br>", rdr->label);
+									else
+										tpl_printf(vars, TPLAPPEND, "CLIENTCAUHTTP", "%s<br>", rdr->label);
 								}
 							} else tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", cl->reader->label);
 							tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", "</span></a>");
@@ -3466,7 +3490,8 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 			"/oscamapi.html",
 			"/image",
 			"/favicon.ico",
-			"/graph.svg"};
+			"/graph.svg",
+			"/oscamapi.xml"};
 	
 		int32_t pagescnt = sizeof(pages)/sizeof(char *); // Calculate the amount of items in array
 		int32_t i, bufsize, len, pgidx = -1;
@@ -3643,10 +3668,11 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 #endif
 				case 16: result = send_oscam_failban(vars, &params); break;
 				//case  17: js file
-				case 18: result = send_oscam_api(vars, f, &params, keepalive); break;
+				case 18: result = send_oscam_api(vars, f, &params, keepalive); break; //oscamapi.html
 				case 19: result = send_oscam_image(vars, f, &params, NULL, modifiedheader, etagheader); break;
 				case 20: result = send_oscam_image(vars, f, &params, "ICMAI", modifiedheader, etagheader); break;
 				case 21: result = send_oscam_graph(vars); break;
+				case 22: result = send_oscam_api(vars, f, &params, keepalive); break; //oscamapi.xml
 				default: result = send_oscam_status(vars, &params, 0); break;
 			}
 			if(pgidx != 19 && pgidx != 20) cs_unlock(&http_lock);
