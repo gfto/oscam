@@ -133,10 +133,11 @@ static void Signature(unsigned char *sig, const unsigned char *vkey,const unsign
 static int32_t CamStateRequest(struct s_reader * reader)
 {
 	def_resp;
+	tmp_dbg(10);
 	if(do_cmd(reader, 0xC0,0x02,0xB0,0x06,NULL,cta_res,&cta_lr))
 	{
 		memcpy(reader->cam_state,cta_res+3,3);
-		cs_debug_mask(D_READER, "[nagra-reader] Camstate: %s",cs_hexdump (1, reader->cam_state, 3));
+		cs_debug_mask(D_READER, "[nagra-reader] Camstate: %s", cs_hexdump(1, reader->cam_state, 3, tmp_dbg, sizeof(tmp_dbg)));
 	}
 	else
 	{
@@ -169,6 +170,7 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader * reader)
 	unsigned char tmp[104];
 	unsigned char idea_sig[16];
 	unsigned char random[88];
+	char tmp2[17];
 					 
 	if(!do_cmd(reader, 0xd1,0x02,0x51,0xd2,NULL,cta_res,&cta_lr))
 	{
@@ -198,8 +200,8 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader * reader)
 	memcpy(tmp+4, parte_fija+11, 100);
 	memset(idea_sig, 0x37, 16);
 	Signature(sign1, idea_sig, tmp, 104);
-	cs_debug_mask(D_READER, "[nagra-reader] sign1: %s", cs_hexdump (0, sign1, 8));
-	cs_debug_mask(D_READER, "[nagra-reader] sign2: %s", cs_hexdump (0, parte_fija+111, 8));
+	cs_debug_mask(D_READER, "[nagra-reader] sign1: %s", cs_hexdump(0, sign1, 8, tmp2, sizeof(tmp2)));
+	cs_debug_mask(D_READER, "[nagra-reader] sign2: %s", cs_hexdump(0, parte_fija+111, 8, tmp2, sizeof(tmp2)));
 	if (!memcmp (parte_fija+111, sign1, 8)==0)
 	{
 		cs_debug_mask(D_READER, "[nagra-reader] signature check nok");
@@ -245,8 +247,8 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader * reader)
 	reader->caid =(SYSTEM_NAGRA|parte_variable[76]);
 	memcpy(sk,&parte_variable[79],8);                                                                           
 	memcpy(sk+8,&parte_variable[79],8); 
-  	cs_ri_log(reader, "type: NAGRA, caid: %04X, IRD ID: %s",reader->caid, cs_hexdump (1,reader->irdId,4));
-  	cs_ri_log(reader, "ProviderID: %s",cs_hexdump (1,reader->prid[0],4));
+  	cs_ri_log(reader, "type: NAGRA, caid: %04X, IRD ID: %s",reader->caid, cs_hexdump(1,reader->irdId,4, tmp2, sizeof(tmp2)));
+  	cs_ri_log(reader, "ProviderID: %s", cs_hexdump(1,reader->prid[0],4, tmp2, sizeof(tmp2)));
 
 	memset(random, 0, 88);
 	memcpy(random, sk,16);
@@ -430,6 +432,7 @@ static void decryptDT08(struct s_reader * reader, unsigned char * cta_res)
 	unsigned char sign2[8];
 	unsigned char static_dt08[73];
 	unsigned char camid[4];
+	tmp_dbg(13);
 	int32_t i, n;
 	BN_CTX *ctx;
 	BIGNUM *bn_mod, *bn_exp, *bn_data, *bn_res;
@@ -481,7 +484,7 @@ static void decryptDT08(struct s_reader * reader, unsigned char * cta_res)
   	{
   		memcpy(camid, reader->hexserial+2,4);
   	}
-  	cs_debug_mask(D_READER, "[nagra-reader] using camid %s for dt08 calc",cs_hexdump (1,camid,4));
+  	cs_debug_mask(D_READER, "[nagra-reader] using camid %s for dt08 calc", cs_hexdump(1, camid, 4, tmp_dbg, sizeof(tmp_dbg)));
   	
 	// Calculate reader->signature
   	memcpy (reader->signature, static_dt08, 8);
@@ -532,6 +535,7 @@ static void addProvider(struct s_reader * reader, unsigned char * cta_res)
 static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigned char * cta_res, uint16_t cta_lr)
 {
 	char ds[16], de[16], d1[20];
+	tmp_dbg(13);
       	uint16_t chid;
 	switch(dt) 
 	{
@@ -556,8 +560,8 @@ static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigne
  					
 			reader->caid =(SYSTEM_NAGRA|cta_res[11]);
     				memcpy(reader->irdId,cta_res+14,4);
-    				cs_debug_mask(D_READER, "[nagra-reader] type: NAGRA, caid: %04X, IRD ID: %s",reader->caid, cs_hexdump (1,reader->irdId,4));
-    				cs_debug_mask(D_READER, "[nagra-reader] ProviderID: %s",cs_hexdump (1,reader->prid[0],4));
+    				cs_debug_mask(D_READER, "[nagra-reader] type: NAGRA, caid: %04X, IRD ID: %s",reader->caid, cs_hexdump(1, reader->irdId, 4, tmp_dbg, sizeof(tmp_dbg)));
+    				cs_debug_mask(D_READER, "[nagra-reader] ProviderID: %s", cs_hexdump(1, reader->prid[0], 4, tmp_dbg, sizeof(tmp_dbg)));
 				nagra_datetime(cta_res+24, d1);
     				cs_debug_mask(D_READER, "[nagra-reader] active to: %s", d1);
     				return OK;
@@ -602,6 +606,7 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR newatr)
 {
 	get_atr;
 	def_resp;
+	tmp_dbg(13);
 	memset(reader->rom, 0, 15);
 	reader->is_pure_nagra = 0; 
 	reader->is_tiger = 0; 
@@ -662,7 +667,7 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR newatr)
 			return ERROR;
 		}
 		memcpy(reader->hexserial+2, cta_res+2, 4);
-		cs_debug_mask(D_READER, "[nagra-reader] SER:  %s", cs_hexdump (1, reader->hexserial+2, 4));
+		cs_debug_mask(D_READER, "[nagra-reader] SER:  %s", cs_hexdump(1, reader->hexserial+2, 4, tmp_dbg, sizeof(tmp_dbg)));
 		memcpy(reader->sa[0], cta_res+2, 2);
 		
 		if(!GetDataType(reader, DT01,0x0E,MAX_REC)) return ERROR;
@@ -753,15 +758,15 @@ static int32_t reccmp2(const void *r1, const void *r2)
 static int32_t nagra2_card_info(struct s_reader * reader)
 {
 	int32_t i;
-        char currdate[11];
+        char currdate[11], tmp[13];
 	cs_ri_log(reader, "ROM:    %c %c %c %c %c %c %c %c", reader->rom[0], reader->rom[1], reader->rom[2],reader->rom[3], reader->rom[4], reader->rom[5], reader->rom[6], reader->rom[7]);
 	cs_ri_log(reader, "REV:    %c %c %c %c %c %c", reader->rom[9], reader->rom[10], reader->rom[11], reader->rom[12], reader->rom[13], reader->rom[14]);
-	cs_ri_log(reader, "SER:    %s", cs_hexdump (1, reader->hexserial+2, 4));
+	cs_ri_log(reader, "SER:    %s", cs_hexdump(1, reader->hexserial+2, 4, tmp, sizeof(tmp)));
 	cs_ri_log(reader, "CAID:   %04X",reader->caid);
-	cs_ri_log(reader, "Prv.ID: %s(sysid)",cs_hexdump (1,reader->prid[0],4));
+	cs_ri_log(reader, "Prv.ID: %s(sysid)",cs_hexdump(1, reader->prid[0], 4, tmp, sizeof(tmp)));
 	for (i=1; i<reader->nprov; i++)
 	{
-          cs_ri_log(reader, "Prv.ID: %s",cs_hexdump (1,reader->prid[i],4));
+          cs_ri_log(reader, "Prv.ID: %s",cs_hexdump(1, reader->prid[i], 4, tmp, sizeof(tmp)));
 	}
         if(reader->is_tiger)
         {
@@ -799,6 +804,7 @@ static int32_t nagra2_card_info(struct s_reader * reader)
                        if (cta_res[j] == 0x80 && cta_res[j+6] != 0x00)
                        {
                           int32_t val_offs = 0;
+                          char tmp[52];
                           tiger_date(&cta_res[j+6], 0, records[num_records].date2);
 
                           switch (cta_res[j+1])
@@ -818,7 +824,7 @@ static int32_t nagra2_card_info(struct s_reader * reader)
                                 break;
 
                              default:
-                                cs_ri_log(reader, "Unknown record : %s", cs_hexdump(1, &cta_res[j], 17));
+                                cs_ri_log(reader, "Unknown record : %s", cs_hexdump(1, &cta_res[j], 17, tmp, sizeof(tmp)));
                           }
                           if (val_offs > 0)
                           {

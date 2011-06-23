@@ -85,17 +85,17 @@ char *get_ecm_historystring(struct s_client *cl){
 
 		if(ptr == CS_ECM_RINGBUFFER_MAX - 1){
 			for(k = 0; k < CS_ECM_RINGBUFFER_MAX ; k++){
-				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k]);
+				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k].duration);
 				dot=",";
 			}
 		} else {
 			for(k = ptr + 1; k < CS_ECM_RINGBUFFER_MAX; k++){
-				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k]);
+				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k].duration);
 				dot=",";
 			}
 
 			for(k = 0; k < ptr + 1 ; k++){
-				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k]);
+				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k].duration);
 				dot=",";
 			}
 		}
@@ -106,7 +106,39 @@ char *get_ecm_historystring(struct s_client *cl){
 		return "";
 	}
 }
+char *get_ecm_fullhistorystring(struct s_client *cl){
 
+	if(cl){
+		int32_t k, pos = 0, needed = 1;
+		char *value, *dot = "";
+		int32_t ptr = cl->cwlastresptimes_last;
+
+		needed = CS_ECM_RINGBUFFER_MAX * 19; //4 digits + : + returncode(2) + : + time(10) + delimiter
+		if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
+
+		if(ptr == CS_ECM_RINGBUFFER_MAX - 1){
+			for(k = 0; k < CS_ECM_RINGBUFFER_MAX ; k++){
+				pos += snprintf(value + pos, needed-pos, "%s%d:%d:%ld", dot, cl->cwlastresptimes[k].duration, cl->cwlastresptimes[k].rc, cl->cwlastresptimes[k].timestamp);
+				dot=",";
+			}
+		} else {
+			for(k = ptr + 1; k < CS_ECM_RINGBUFFER_MAX; k++){
+				pos += snprintf(value + pos, needed-pos, "%s%d:%d:%ld", dot, cl->cwlastresptimes[k].duration, cl->cwlastresptimes[k].rc, cl->cwlastresptimes[k].timestamp);
+				dot=",";
+			}
+
+			for(k = 0; k < ptr + 1 ; k++){
+				pos += snprintf(value + pos, needed-pos, "%s%d:%d:%ld", dot, cl->cwlastresptimes[k].duration, cl->cwlastresptimes[k].rc, cl->cwlastresptimes[k].timestamp);
+				dot=",";
+			}
+		}
+
+		return (value);
+
+	} else {
+		return "";
+	}
+}
 static char *send_oscam_config_global(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
 
@@ -1046,6 +1078,12 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_printf(vars, TPLADD, "DETECT", "!%s", RDR_CD_TXT[rdr->detect&0x7f]);
 	else
 		tpl_addVar(vars, TPLADD, "DETECT", RDR_CD_TXT[rdr->detect&0x7f]);
+		
+	// Ratelimit
+	if(rdr->ratelimitecm){
+		tpl_printf(vars, TPLADD, "RATELIMITECM", "%d", rdr->ratelimitecm);
+		tpl_printf(vars, TPLADD, "RATELIMITSECONDS", "%d", rdr->ratelimitseconds);
+	}
 
 	// Frequencies
 	tpl_printf(vars, TPLADD, "MHZ", "%d", rdr->mhz);
@@ -2016,8 +2054,8 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					if (cc_UA_valid(card->hexserial)) { //Add UA:
 						cc_UA_cccam2oscam(card->hexserial, serbuf, card->caid);
 						char tmp[20];
-						tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_Oscam:%s", cs_hexdump_buf(0, serbuf, 8, tmp, 20));
-						tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_CCcam:%s", cs_hexdump_buf(0, card->hexserial, 8, tmp, 20));
+						tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_Oscam:%s", cs_hexdump(0, serbuf, 8, tmp, 20));
+						tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_CCcam:%s", cs_hexdump(0, card->hexserial, 8, tmp, 20));
 					}
    					if (!apicall) {
 								int32_t n;
@@ -3165,6 +3203,12 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 					tpl_addVar(vars, TPLADD, "CLIENTUSER", xml_encode(vars, usr));
 					tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime?cl->cwlastresptime:-1);
 					tpl_printf(vars, TPLADD, "CLIENTIDLESECS", "%d", isec);
+				
+					//load historical values from ringbuffer
+					char *value = get_ecm_fullhistorystring(cl);
+					tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIMEHIST", "%s", value);
+					free_mk_t(value);
+					
 					tpl_addVar(vars, TPLAPPEND, "APISTATUSBITS", tpl_getTpl(vars, "APISTATUSBIT"));
 				}
 			}
@@ -3313,7 +3357,8 @@ static int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t for
 				return -1;
 			}
 #else
-			cs_debug_mask(D_TRACE, "WebIf: read error ret=%d (errno=%d %s)", n, errno, strerror(errno));
+			if(errno != ECONNRESET)
+				cs_debug_mask(D_TRACE, "WebIf: read error ret=%d (errno=%d %s)", n, errno, strerror(errno));
 #endif
 			return -1;
 		}

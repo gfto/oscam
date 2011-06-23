@@ -104,6 +104,11 @@
 //checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything
 #define NULLFREE(X) {if (X) {void *tmpX=X; X=NULL; free(tmpX); }}
 
+#ifdef WITH_DEBUG
+#define tmp_dbg(X) char tmp_dbg[X]
+#else
+#define tmp_dbg(X)
+#endif
 /* ===========================
  *         constants
  * =========================== */
@@ -627,6 +632,14 @@ struct s_acasc {
 };
 #endif
 
+#ifdef WEBIF
+struct s_cwresponse {
+	int32_t duration;
+	time_t timestamp;
+	int32_t rc;
+};
+#endif
+
 struct s_client
 {
   int8_t       init_done;
@@ -678,12 +691,12 @@ LLIST *joblist;
   int32_t		cwignored;   // count ignored  ECMs per client
   int32_t		cwtout;      // count timeouted ECMs per client
   int32_t		cwlastresptime; //last Responsetime (ms)
-  int32_t		cwlastresptimes[CS_ECM_RINGBUFFER_MAX]; //ringbuffer for last 20 times
-  int32_t		cwlastresptimes_last; // ringbuffer pointer
   int32_t		emmok;       // count EMM ok
   int32_t		emmnok;	     // count EMM nok
   int32_t		pending;     // number of ECMs pending
 #ifdef WEBIF
+  struct	s_cwresponse	cwlastresptimes[CS_ECM_RINGBUFFER_MAX]; //ringbuffer for last 20 times
+  int32_t		cwlastresptimes_last; // ringbuffer pointer
   int8_t		wihidden;	// hidden in webinterface status
   char      lastreader[64]; // last cw got from this reader
 #endif
@@ -752,9 +765,6 @@ LLIST *joblist;
   //monitor
   int32_t auth;
 
-  //cs_hexdump buffer
-  uchar dump[520];
-
   //oscam.c
   struct timeval tv;
 
@@ -821,9 +831,9 @@ struct s_reader  //contains device info, reader info and card info
   struct s_client * client; //pointer to 'r'client this reader is running in
   int8_t       enable;
   int8_t       available; //Schlocke: New flag for loadbalancing. Only reader if reader supports ph.c_available function
-  int32_t       fd_error;
+  int8_t       fd_error;
   uint64_t    grp;
-  int32_t       fallback;
+  int8_t       fallback;
   int32_t       typ;
   char      label[64];
 #ifdef WEBIF
@@ -872,9 +882,9 @@ struct s_reader  //contains device info, reader info and card info
   char      * emmfile;
   char      pincode[5];
   int32_t		ucpk_valid;
-  int32_t       logemm;
-  int32_t       cachemm;
-  int32_t       rewritemm;
+  int8_t       logemm;
+  int8_t       cachemm;
+  int16_t       rewritemm;
   int8_t       card_status;
   int8_t       deprecated; //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
   struct    s_module ph;
@@ -1360,13 +1370,9 @@ extern pthread_mutex_t sr_lock;
 
 extern pid_t server_pid; // PID of server - set while startup
 
-#ifdef CS_ANTICASC
-extern FILE *fpa;
-#endif
-
 /* ===========================
  *      global functions
  * =========================== */
 #include "global-functions.h"
 
-#endif  // CS_GLOBALS
+#endif

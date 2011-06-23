@@ -126,12 +126,12 @@ static int32_t network_message_receive(int32_t handle, uint16_t *netMsgId, uint8
   cs_debug_mask(D_CLIENT, "nmr(): len=%d, errno=%d", len, (len==-1)?errno:0);
   if (!len) {
     cs_debug_mask(D_CLIENT, "nmr: 1 return 0");
-    network_tcp_connection_close(cl, handle);
+    network_tcp_connection_close(cl->reader);
     return 0;
   }
   if (len != 2) {
     cs_debug_mask(D_CLIENT, "nmr: len!=2");
-    network_tcp_connection_close(cl, handle);
+    network_tcp_connection_close(cl->reader);
     return -1;
   }
   if (((netbuf[0] << 8) | netbuf[1]) > CWS_NETMSGSIZE - 2) {
@@ -275,14 +275,14 @@ static int32_t connect_newcamd_server()
     return -5;
 
   // 1. Connect
-  handle = network_tcp_connection_open();
+  handle = network_tcp_connection_open(cl->reader);
   if(handle < 0) return -1;
   
   // 2. Get init sequence
   cl->reader->ncd_msgid = 0;
   if( read(handle, keymod, sizeof(keymod)) != sizeof(keymod)) {
     cs_log("server does not return 14 bytes");
-    network_tcp_connection_close(cl, handle);
+    network_tcp_connection_close(cl->reader);
     return -2;
   }
   cs_ddump_mask(D_CLIENT, keymod, 14, "server init sequence:");
@@ -306,14 +306,14 @@ static int32_t connect_newcamd_server()
   if( login_answer == MSG_CLIENT_2_SERVER_LOGIN_NAK )
   {
     cs_log("login failed for user '%s'", cl->reader->r_usr);
-    network_tcp_connection_close(cl, handle);
+    network_tcp_connection_close(cl->reader);
     return -3;
   }
   if( login_answer != MSG_CLIENT_2_SERVER_LOGIN_ACK ) 
   {
     cs_log("expected MSG_CLIENT_2_SERVER_LOGIN_ACK (%02X), received %02X", 
              MSG_CLIENT_2_SERVER_LOGIN_ACK, login_answer);
-    network_tcp_connection_close(cl, handle);
+    network_tcp_connection_close(cl->reader);
     return -3;
   }
 
@@ -331,7 +331,7 @@ static int32_t connect_newcamd_server()
   if( bytes_received < 16 || buf[2] != MSG_CARD_DATA ) {
     cs_log("expected MSG_CARD_DATA (%02X), received %02X", 
              MSG_CARD_DATA, buf[2]);
-    network_tcp_connection_close(cl, handle);
+    network_tcp_connection_close(cl->reader);
     return -4;
   }
 
@@ -1066,60 +1066,8 @@ void newcamd_idle() {
 
 int32_t newcamd_client_init(struct s_client *client)
 {
-  struct sockaddr_in loc_sa;
-  char ptxt[16];
 
-  client->pfd=0;
-  if (client->reader->r_port<=0)
-  {
-    cs_log("invalid port %d for server %s", client->reader->r_port, client->reader->device);
-    return(1);
-  }
-
-  client->ip=0;
-  memset((char *)&loc_sa,0,sizeof(loc_sa));
-  loc_sa.sin_family = AF_INET;
-#ifdef LALL
-  if (cfg.serverip[0])
-    loc_sa.sin_addr.s_addr = inet_addr(cfg.serverip);
-  else
-#endif
-    loc_sa.sin_addr.s_addr = INADDR_ANY;
-  loc_sa.sin_port = htons(client->reader->l_port);
-
-  if ((client->udp_fd=socket(PF_INET, SOCK_STREAM, IPPROTO_TCP))<0)
-  {
-    cs_log("Socket creation failed (errno=%d %s)", errno, strerror(errno));
-    cs_exit(1);
-  }
-
-#ifdef SO_PRIORITY
-  if (cfg.netprio)
-    setsockopt(client->udp_fd, SOL_SOCKET, SO_PRIORITY, 
-               (void *)&cfg.netprio, sizeof(uintptr_t));
-#endif
-  if (!client->reader->tcp_ito) { 
-    uint32_t keep_alive = client->reader->tcp_ito?1:0;
-    setsockopt(client->udp_fd, SOL_SOCKET, SO_KEEPALIVE, 
-    (void *)&keep_alive, sizeof(uintptr_t));
-  }
-
-  if (client->reader->l_port>0)
-  {
-    if (bind(client->udp_fd, (struct sockaddr *)&loc_sa, sizeof (loc_sa))<0)
-    {
-      cs_log("bind failed (errno=%d %s)", errno, strerror(errno));
-      close(client->udp_fd);
-      return(1);
-    }
-    snprintf(ptxt, sizeof(ptxt), ", port=%d", client->reader->l_port);
-  }
-  else
-    ptxt[0]='\0';
-
-  memset((char *)&client->udp_sa,0,sizeof(client->udp_sa));
-  client->udp_sa.sin_family = AF_INET;
-  client->udp_sa.sin_port = htons((uint16_t)client->reader->r_port);
+	char ptxt[1] = { "\0" };
 
   client->ncd_proto=client->reader->ncd_proto;
 

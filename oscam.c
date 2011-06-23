@@ -118,15 +118,19 @@ void cs_add_violation(uint32_t ip) {
         cs_check_v(ip, 1);
 }
 
-void cs_add_lastresponsetime(struct s_client *cl, int32_t ltime){
+#ifdef WEBIF
+void cs_add_lastresponsetime(struct s_client *cl, int32_t ltime, time_t timestamp, int32_t rc){
 
 	if(cl->cwlastresptimes_last == CS_ECM_RINGBUFFER_MAX - 1){
 		cl->cwlastresptimes_last = 0;
 	} else {
 		cl->cwlastresptimes_last++;
 	}
-	cl->cwlastresptimes[cl->cwlastresptimes_last] = ltime > 9999 ? 9999 : ltime;
+	cl->cwlastresptimes[cl->cwlastresptimes_last].duration = ltime > 9999 ? 9999 : ltime;
+	cl->cwlastresptimes[cl->cwlastresptimes_last].timestamp = timestamp;
+	cl->cwlastresptimes[cl->cwlastresptimes_last].rc = rc;
 }
+#endif
 
 /*****************************************************************************
         Statics
@@ -837,11 +841,15 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 
 					memcpy(&cl->ctab, &account->ctab, sizeof(cl->ctab));
 					memcpy(&cl->ttab, &account->ttab, sizeof(cl->ttab));
-
+#ifdef WEBIF
 					int32_t i;
-					for(i = 0; i < CS_ECM_RINGBUFFER_MAX; i++)
-						cl->cwlastresptimes[i] = 0;
+					for(i = 0; i < CS_ECM_RINGBUFFER_MAX; i++) {
+						cl->cwlastresptimes[i].duration = 0;
+						cl->cwlastresptimes[i].timestamp = time((time_t)0);
+						cl->cwlastresptimes[i].rc = 0;
+					}
 					cl->cwlastresptimes_last = 0;
+#endif
 					if (account->uniq)
 						cs_fake_client(cl, account->usr, (account->uniq == 1 || account->uniq == 2)?account->uniq+2:account->uniq, cl->ip);
 #ifdef CS_ANTICASC
@@ -1753,13 +1761,18 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 
 	cs_ftime(&tpe);
 	client->cwlastresptime = 1000 * (tpe.time-er->tps.time) + tpe.millitm-er->tps.millitm;
-	cs_add_lastresponsetime(client, client->cwlastresptime); // add to ringbuffer
+
+#ifdef WEBIF
+	cs_add_lastresponsetime(client, client->cwlastresptime,time((time_t)0) ,er->rc); // add to ringbuffer
+#endif
 
 	if (er_reader){
 		struct s_client *er_cl = er_reader->client;
 		if(er_cl){
 			er_cl->cwlastresptime = client->cwlastresptime;
-			cs_add_lastresponsetime(er_cl, client->cwlastresptime);
+#ifdef WEBIF
+			cs_add_lastresponsetime(er_cl, client->cwlastresptime,time((time_t)0) ,er->rc);
+#endif
 			er_cl->last_srvidptr=client->last_srvidptr;
 		}
 	}
@@ -2453,6 +2466,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 void do_emm(struct s_client * client, EMM_PACKET *ep)
 {
 	char *typtext[]={"unknown", "unique", "shared", "global"};
+	char tmp[17];
 
 	struct s_reader *aureader = NULL;
 	cs_ddump_mask(D_EMM, ep->emm, ep->l, "emm:");
@@ -2506,29 +2520,32 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			}
 		}
 
-		cs_debug_mask(D_EMM, "emmtype %s. Reader %s has serial %s.", typtext[ep->type], aureader->label, cs_hexdump(0, aureader->hexserial, 8));
+		cs_debug_mask(D_EMM, "emmtype %s. Reader %s has serial %s.", typtext[ep->type], aureader->label, cs_hexdump(0, aureader->hexserial, 8, tmp, sizeof(tmp)));
 		cs_ddump_mask(D_EMM, ep->hexserial, 8, "emm UA/SA:");
 
 		client->last=time((time_t)0);
 		if ((1<<(ep->emm[0] % 0x80)) & aureader->s_nano) { //should this nano be saved?
 			char token[256];
+			char *tmp2;
 			FILE *fp;
 			time_t rawtime;
 			time (&rawtime);
 			struct tm timeinfo;
 			localtime_r (&rawtime, &timeinfo);	/* to access LOCAL date/time info */
-			char buf[80];
-			strftime (buf, 80, "%Y/%m/%d %H:%M:%S", &timeinfo);
-			snprintf (token, sizeof(token), "%s%s_emm.log", cfg.emmlogdir?cfg.emmlogdir:cs_confdir, aureader->label);
 			int32_t emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
+			char buf[80];
+			strftime (buf, sizeof(buf), "%Y/%m/%d %H:%M:%S", &timeinfo);
+			snprintf (token, sizeof(token), "%s%s_emm.log", cfg.emmlogdir?cfg.emmlogdir:cs_confdir, aureader->label);
+			
 
 			if (!(fp = fopen (token, "a"))) {
 				cs_log ("ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
-			} else {
-				fprintf (fp, "%s   %s   ", buf, cs_hexdump(0, ep->hexserial, 8));
-				fprintf (fp, "%s\n", cs_hexdump(0, ep->emm, emm_length + 3));
+			} else if(cs_malloc(&tmp2, (emm_length + 3)*2 + 1, -1)){
+				fprintf (fp, "%s   %s   ", buf, cs_hexdump(0, ep->hexserial, 8, tmp, sizeof(tmp)));
+				fprintf (fp, "%s\n", cs_hexdump(0, ep->emm, emm_length + 3, tmp2, (emm_length + 3)*2 + 1));
+				free(tmp2);
 				fclose (fp);
-				cs_log ("Succesfully added EMM to %s.", token);
+				cs_log ("Successfully added EMM to %s.", token);
 			}
 
 			snprintf (token, sizeof(token), "%s%s_emm.bin", cfg.emmlogdir?cfg.emmlogdir:cs_confdir, aureader->label);
@@ -2536,7 +2553,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 				cs_log ("ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
 			} else {
 				if ((int)fwrite(ep->emm, 1, emm_length+3, fp) == emm_length+3)	{
-					cs_log ("Succesfully added binary EMM to %s.", token);
+					cs_log ("Successfully added binary EMM to %s.", token);
 				} else {
 					cs_log ("ERROR: Cannot write binary EMM to %s (errno=%d: %s)\n", token, errno, strerror(errno));
 				}
@@ -2849,14 +2866,14 @@ void * work_thread(void *ptr) {
 
 				if (s < 0) {
 					if (reader->ph.type==MOD_CONN_TCP)
-						network_tcp_connection_close(reader->client, cl->udp_fd);
+						reader->tcp_connected = 0;
 					break;
 				}
 
 				rc = reader->ph.recv(cl, mbuf, sizeof(mbuf));
 				if (rc < 0) {
 					if (reader->ph.type==MOD_CONN_TCP)
-						network_tcp_connection_close(reader->client, cl->udp_fd);
+						reader->tcp_connected = 0;
 					break;
 				}
 
@@ -3026,8 +3043,9 @@ void * client_check(void) {
 	while (!exit_oscam) {
 		pfdcount = 1;
 
+		//connected tcp clients
 		for (cl=first_client->next; cl ; cl=cl->next) {
-			if (cl->init_done && !cl->kill && cl->pfd && cl->typ=='c') {
+			if (cl->init_done && !cl->kill && cl->pfd && cl->typ=='c' && !cl->is_udp) {
 				if (cl->pfd && !cl->thread_active) {				
 					cl_list[pfdcount] = cl;
 					pfd[pfdcount].fd = cl->pfd;
@@ -3036,10 +3054,10 @@ void * client_check(void) {
 			}
 		}
 
-		//reader
+		//reader (only connected tcp proxy reader)
 		for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 			if (rdr->client && rdr->client->init_done) {
-				if (rdr->client->pfd && !rdr->client->thread_active) {
+				if (rdr->client->pfd && !rdr->client->thread_active && rdr->tcp_connected) {
 					cl_list[pfdcount] = rdr->client;
 					pfd[pfdcount].fd = rdr->client->pfd;
 					pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
@@ -3047,7 +3065,7 @@ void * client_check(void) {
 			}
 		}
 
-		//server
+		//server (new tcp connections or udp messages)
 		for (k=0; k<CS_MAX_MOD; k++) {
 			if ( (ph[k].type & MOD_CONN_NET) && ph[k].ptab ) {
 				for (j=0; j<ph[k].ptab->nports; j++) {
@@ -3079,7 +3097,7 @@ void * client_check(void) {
 			//clients
 			// message on an open tcp connection
 			if (cl && cl->init_done && cl->pfd && (cl->typ == 'c' || cl->typ == 'm')) {
-				if (pfd[i].fd == cl->pfd && (pfd[i].revents & POLLHUP)) {
+				if (pfd[i].fd == cl->pfd && (pfd[i].revents & (POLLHUP | POLLNVAL))) {
 					//client disconnects
 					cl->kill=1;
 					add_job(cl, ACTION_CLIENT_KILL, NULL, 0);
@@ -3099,10 +3117,11 @@ void * client_check(void) {
 				rdr = cl->reader;
 
 			if (rdr && rdr->client && rdr->client->init_done) {
-				if (rdr->client->pfd && pfd[i].fd == rdr->client->pfd && (pfd[i].revents & POLLHUP)) {
-					// connection closed
-					if (rdr->ph.type==MOD_CONN_TCP)
-						network_tcp_connection_close(rdr->client, rdr->client->udp_fd);
+				if (rdr->client->pfd && pfd[i].fd == rdr->client->pfd && (pfd[i].revents & (POLLHUP | POLLNVAL))) {
+					//connection to remote proxy was closed
+					//oscam should check for rdr->tcp_connected and reconnect on next ecm request sent to the proxy
+					network_tcp_connection_close(rdr);
+					cs_debug_mask(D_READER, "connection to %s closed.", rdr->label);
 				}
 				if (rdr->client->pfd && pfd[i].fd == rdr->client->pfd && (pfd[i].revents & (POLLIN | POLLPRI))) {
 					add_job(rdr->client, ACTION_READER_REMOTE, NULL, 0);

@@ -186,6 +186,7 @@ static int32_t conax_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
 	int32_t i, ok = 0;
+	tmp_dbg(17);
 
 	cs_debug_mask(D_EMM, "Entered conax_get_emm_type ep->emm[2]=%02x", ep->emm[2]);
 
@@ -198,7 +199,7 @@ static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 		ep->type = SHARED;
 		memset(ep->hexserial, 0, 8);
 		memcpy(ep->hexserial, &ep->emm[6], 4);
-		cs_debug_mask(D_EMM, "CONAX EMM: SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8));
+		cs_debug_mask(D_EMM, "CONAX EMM: SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
 		return TRUE;
 	}
 	else {
@@ -206,7 +207,7 @@ static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 			ep->type = UNIQUE;
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial+2, &ep->emm[6], 4);
-			cs_debug_mask(D_EMM, "CONAX EMM: UNIQUE, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8));
+			cs_debug_mask(D_EMM, "CONAX EMM: UNIQUE, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
 			return TRUE;
 		}
 		else {
@@ -286,7 +287,7 @@ static int32_t conax_card_info(struct s_reader * reader)
 {
   def_resp;
   int32_t type, i, j, k=0, n=0,l;
-  uint16_t provid;
+  uint16_t provid = 0;
   char provname[32], pdate[32];
   uchar chid[10];
   static const uchar insC6[] = {0xDD, 0xC6, 0x00, 0x00, 0x03, 0x1C, 0x01, 0x00};

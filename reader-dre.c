@@ -22,6 +22,7 @@ static int32_t dre_command (struct s_reader * reader, const uchar * cmd, int32_t
   uchar reqans[] = { 0x00, 0xC0, 0x00, 0x00, 0x08 };	//after command answer has to be requested, 
   //last byte must be nr. of bytes that card has reported to send
   uchar command[256];
+  char tmp[256];
   int32_t headerlen = sizeof (startcmd);
   startcmd[4] = cmdlen + 3;	//commandlength + type + len + checksum bytes
   memcpy (command, startcmd, headerlen);
@@ -37,7 +38,7 @@ static int32_t dre_command (struct s_reader * reader, const uchar * cmd, int32_t
   reader_cmd2icc (reader, command, cmdlen, cta_res, p_cta_lr);
 
   if ((*p_cta_lr != 2) || (cta_res[0] != OK_RESPONSE)) {
-    cs_log ("[dre-reader] unexpected answer from card: %s", cs_hexdump (0, cta_res, *p_cta_lr));
+    cs_log ("[dre-reader] unexpected answer from card: %s", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
     return ERROR;			//error
   }
 
@@ -51,19 +52,19 @@ static int32_t dre_command (struct s_reader * reader, const uchar * cmd, int32_t
   if ((cta_res[1] == 0x03) && (cta_res[2] == 0xe2)) {
     switch (cta_res[3]) {
     case 0xe1:
-      cs_log ("[dre-reader] checksum error: %s.", cs_hexdump (0, cta_res, *p_cta_lr));
+      cs_log ("[dre-reader] checksum error: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
       break;
     case 0xe2:
-      cs_log ("[dre-reader] wrong provider: %s.", cs_hexdump (0, cta_res, *p_cta_lr));
+      cs_log ("[dre-reader] wrong provider: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
       break;
     case 0xe3:
-      cs_log ("[dre-reader] illegal command: %s.", cs_hexdump (0, cta_res, *p_cta_lr));  
+      cs_log ("[dre-reader] illegal command: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));  
       break;
     case 0xec:
-      cs_log ("[dre-reader] wrong signature: %s.", cs_hexdump (0, cta_res, *p_cta_lr));
+      cs_log ("[dre-reader] wrong signature: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
       break;
     default:
-      cs_debug_mask(D_READER, "[dre-reader] unknown error: %s.", cs_hexdump (0, cta_res, *p_cta_lr));
+      cs_debug_mask(D_READER, "[dre-reader] unknown error: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
       break;
     }
     return ERROR;			//error
@@ -76,7 +77,7 @@ static int32_t dre_command (struct s_reader * reader, const uchar * cmd, int32_t
 
   if (cta_res[length_excl_leader - 1] != checksum) {
     cs_log ("[dre-reader] checksum does not match, expected %02x received %02x:%s", checksum,
-	    cta_res[length_excl_leader - 1], cs_hexdump (0, cta_res, *p_cta_lr));
+	    cta_res[length_excl_leader - 1], cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
     return ERROR;			//error
   }
   return OK;
@@ -97,8 +98,9 @@ static int32_t dre_set_provider_info (struct s_reader * reader)
   cmd59[1] = reader->provider;
   if ((dre_cmd (cmd59))) {	//ask subscription packages, returns error on 0x11 card
     uchar pbm[32];
+    tmp_dbg(65);
     memcpy (pbm, cta_res + 3, cta_lr - 6);
-    cs_debug_mask(D_READER, "[dre-reader] pbm: %s", cs_hexdump (0, pbm, 32));
+    cs_debug_mask(D_READER, "[dre-reader] pbm: %s", cs_hexdump(0, pbm, 32, tmp_dbg, sizeof(tmp_dbg)));
 
     if (pbm[0] == 0xff)
       cs_ri_log (reader, "[dre-reader] no active packages");
@@ -139,6 +141,7 @@ static int32_t dre_card_init (struct s_reader * reader, ATR newatr)
   uchar providers[] = { 0x49, 0x15 };	// get providers
   int32_t i;
 	char *card;
+	char tmp[9];
 
   if ((atr[0] != 0x3b) || (atr[1] != 0x15) || (atr[2] != 0x11) || (atr[3] != 0x12 || atr[4] != 0xca || atr[5] != 0x07))
     return ERROR;
@@ -225,7 +228,7 @@ FE 48 */
 
   //cs_ri_log("[dre-reader] type: DRE Crypt, caid: %04X, serial: %llu, card: v%x",
   cs_ri_log (reader, "[dre-reader] type: DRE Crypt, caid: %04X, serial: %s, dre id: %i%i%i%08i, geocode %i, card: %s v%i.%i",
-	  reader->caid, cs_hexdump (0, reader->hexserial + 2, 4), dre_chksum, reader->provider - 16,
+	  reader->caid, cs_hexdump(0, reader->hexserial + 2, 4, tmp, sizeof(tmp)), dre_chksum, reader->provider - 16,
 	  major_version + 1, low_dre_id, geocode, card, major_version, minor_version);
   cs_ri_log (reader, "[dre-reader] Provider name:%s.", provname);
 
@@ -234,7 +237,7 @@ FE 48 */
   memcpy (reader->sa[0], reader->hexserial + 2, 1);	//copy first byte of unique address also in shared address, because we dont know what it is...
 
   cs_ri_log (reader, "[dre-reader] SA = %02X%02X%02X%02X, UA = %s", reader->sa[0][0], reader->sa[0][1], reader->sa[0][2],
-	  reader->sa[0][3], cs_hexdump (0, reader->hexserial + 2, 4));
+	  reader->sa[0][3], cs_hexdump(0, reader->hexserial + 2, 4, tmp, sizeof(tmp)));
 
   reader->nprov = 1;
 
@@ -282,7 +285,8 @@ void DREover(unsigned char *ECMdata, unsigned char *DW)
 static int32_t dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
 {
   def_resp;
-  if (reader->caid == 0x4ae0) {
+  tmp_dbg(256);
+  if (reader->caid == 0x4ae0) {  	
     uchar ecmcmd41[] = { 0x41,
       0x58, 0x1f, 0x00,		//fixed part, dont change 
       0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,	//0x01 - 0x08: next key
@@ -293,8 +297,8 @@ static int32_t dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
     memcpy (ecmcmd41 + 4, er->ecm + 8, 16);
     ecmcmd41[20] = er->ecm[6];	//keynumber
     ecmcmd41[21] = 0x58 + er->ecm[25];	//package number
-    cs_debug_mask(D_READER, "[dre-reader] unused ECM info front:%s", cs_hexdump (0, er->ecm, 8));
-    cs_debug_mask(D_READER, "[dre-reader] unused ECM info back:%s", cs_hexdump (0, er->ecm + 24, er->ecm[2] + 2 - 24));
+    cs_debug_mask(D_READER, "[dre-reader] unused ECM info front:%s", cs_hexdump(0, er->ecm, 8, tmp_dbg, sizeof(tmp_dbg)));
+    cs_debug_mask(D_READER, "[dre-reader] unused ECM info back:%s", cs_hexdump(0, er->ecm + 24, er->ecm[2] + 2 - 24, tmp_dbg, sizeof(tmp_dbg)));
     if ((dre_cmd (ecmcmd41))) {	//ecm request
       if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
 				return ERROR;		//exit if response is not 90 00
@@ -314,8 +318,8 @@ static int32_t dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
       0x14			//provider
     };
     memcpy (ecmcmd51 + 1, er->ecm + 5, 0x21);
-    cs_debug_mask(D_READER, "[dre-reader] unused ECM info front:%s", cs_hexdump (0, er->ecm, 5));
-    cs_debug_mask(D_READER, "[dre-reader] unused ECM info back:%s", cs_hexdump (0, er->ecm + 37, 4));
+    cs_debug_mask(D_READER, "[dre-reader] unused ECM info front:%s", cs_hexdump(0, er->ecm, 5, tmp_dbg, sizeof(tmp_dbg)));
+    cs_debug_mask(D_READER, "[dre-reader] unused ECM info back:%s", cs_hexdump(0, er->ecm + 37, 4, tmp_dbg, sizeof(tmp_dbg)));
     ecmcmd51[33] = reader->provider;	//no part of sig
     if ((dre_cmd (ecmcmd51))) {	//ecm request
       if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))

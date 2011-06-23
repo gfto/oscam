@@ -282,16 +282,17 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR newatr)
 	cs_ri_log(reader, "detect irdeto card");
 	if(check_filled(reader->rsa_mod, 64) > 0 && (!reader->force_irdeto || reader->acs57)) // we use rsa from config as camkey
 	{
+		tmp_dbg(65);
 		cs_debug_mask(D_READER, "[irdeto-reader] using camkey data from config");
-		cs_debug_mask(D_READER, "[irdeto-reader]      camkey: %s", cs_hexdump (0, reader->nagra_boxkey, 8));
+		cs_debug_mask(D_READER, "[irdeto-reader]      camkey: %s", cs_hexdump(0, reader->nagra_boxkey, 8, tmp_dbg, sizeof(tmp_dbg)));
 		if (reader->acs57==1) {
 			memcpy(&sc_Acs57CamKey[5], reader->rsa_mod, 0x40);
-			cs_debug_mask(D_READER, "[irdeto-reader] camkey-data: %s", cs_hexdump (0, &sc_Acs57CamKey[5], 32));
-			cs_debug_mask(D_READER, "[irdeto-reader] camkey-data: %s", cs_hexdump (0, &sc_Acs57CamKey[37], 32));
+			cs_debug_mask(D_READER, "[irdeto-reader] camkey-data: %s", cs_hexdump(0, &sc_Acs57CamKey[5], 32, tmp_dbg, sizeof(tmp_dbg)));
+			cs_debug_mask(D_READER, "[irdeto-reader] camkey-data: %s", cs_hexdump(0, &sc_Acs57CamKey[37], 32, tmp_dbg, sizeof(tmp_dbg)));
 		} else {
 			memcpy(&sc_GetCamKey383C[5], reader->rsa_mod, 0x40);
-			cs_debug_mask(D_READER, "[irdeto-reader] camkey-data: %s", cs_hexdump (0, &sc_GetCamKey383C[5], 32));
-			cs_debug_mask(D_READER, "[irdeto-reader] camkey-data: %s", cs_hexdump (0, &sc_GetCamKey383C[37], 32));
+			cs_debug_mask(D_READER, "[irdeto-reader] camkey-data: %s", cs_hexdump(0, &sc_GetCamKey383C[5], 32, tmp_dbg, sizeof(tmp_dbg)));
+			cs_debug_mask(D_READER, "[irdeto-reader] camkey-data: %s", cs_hexdump(0, &sc_GetCamKey383C[37], 32, tmp_dbg, sizeof(tmp_dbg)));
 		}
 	} else {
 		if(reader->acs57==1) {
@@ -499,7 +500,7 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 
 	int32_t i, l = (ep->emm[3]&0x07);
 	int32_t base = (ep->emm[3]>>3);
-	char dumprdrserial[l*3];
+	char dumprdrserial[l*3], dumpemmserial[l*3];
 
 	cs_debug_mask(D_EMM, "Entered irdeto_get_emm_type ep->emm[3]=%02x",ep->emm[3]);
 
@@ -516,9 +517,10 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			ep->type = SHARED;
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial, ep->emm + 4, l);
-			cs_strncpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, l), sizeof(dumprdrserial));
+			cs_hexdump(1, rdr->hexserial, l, dumprdrserial, sizeof(dumprdrserial));
+			cs_hexdump(1, ep->hexserial, l, dumpemmserial, sizeof(dumpemmserial));
 			cs_debug_mask(D_EMM, "IRDETO EMM: SHARED l = %d ep = %s rdr = %s base = %02x", l, 
-					cs_hexdump(1, ep->hexserial, l), dumprdrserial, base);
+					dumpemmserial, dumprdrserial, base);
 
 			if (base & 0x10) {
 				// hex addressed
@@ -542,9 +544,10 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			ep->type = UNIQUE;
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial, ep->emm + 4, l);
-			cs_strncpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, l), sizeof(dumprdrserial));
+			cs_hexdump(1, rdr->hexserial, l, dumprdrserial, sizeof(dumprdrserial));
+			cs_hexdump(1, ep->hexserial, l, dumpemmserial, sizeof(dumpemmserial));
 			cs_debug_mask(D_EMM, "IRDETO EMM: UNIQUE l = %d ep = %s rdr = %s", l, 
-					cs_hexdump(1, ep->hexserial, l), dumprdrserial);
+					dumpemmserial, dumprdrserial);
 
 			return (base == rdr->hexserial[3] && !memcmp(ep->emm + 4, rdr->hexserial, l));
 

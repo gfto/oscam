@@ -115,106 +115,135 @@ int32_t is_connect_blocked(struct s_reader *rdr) {
   return (rdr->tcp_block_delay && comp_timeb(&cur_time, &rdr->tcp_block_connect_till) < 0);
 }
                 
-int32_t network_tcp_connection_open()
+int32_t network_tcp_connection_open(struct s_reader *rdr)
 {
-	struct s_client *cl = cur_client();
-	struct s_reader *rdr = cl->reader;
-	cs_log("connecting to %s", rdr->device);
+	if (!rdr) return -1;
+	struct s_client *client = rdr->client;
+	cs_log("connecting to %s:%d", rdr->device, rdr->r_port);
+	struct sockaddr_in loc_sa;
 
-	in_addr_t last_ip = cl->ip;
+	memset((char *)&client->udp_sa, 0, sizeof(client->udp_sa));
+
+	in_addr_t last_ip = client->ip;
 	if (!hostResolve(rdr))
 		return -1;
 
-	if (last_ip != cl->ip) //clean blocking delay on ip change:
+	if (last_ip != client->ip) //clean blocking delay on ip change:
 		clear_block_delay(rdr);
 
 	if (is_connect_blocked(rdr)) { //inside of blocking delay, do not connect!
 		cs_debug_mask(D_TRACE, "tcp connect blocking delay asserted for %s", rdr->label);
 		return -1;
 	}
+
+	client->pfd=0;
+	if (client->reader->r_port<=0) {
+		cs_log("invalid port %d for server %s", client->reader->r_port, client->reader->device);
+		return(1);
+	}
+
+	client->is_udp=(rdr->typ==R_CAMD35);
+
+	client->ip=0;
+	memset((char *)&loc_sa,0,sizeof(loc_sa));
+	loc_sa.sin_family = AF_INET;
+#ifdef LALL
+	if (cfg.serverip[0])
+		loc_sa.sin_addr.s_addr = inet_addr(cfg.serverip);
+	else
+#endif
+		loc_sa.sin_addr.s_addr = INADDR_ANY;
+
+	loc_sa.sin_port = htons(client->reader->l_port);
+
+	if ((client->udp_fd=socket(PF_INET, client->is_udp ? SOCK_DGRAM : SOCK_STREAM, client->is_udp ? IPPROTO_UDP : IPPROTO_TCP))<0) {
+		cs_log("Socket creation failed (errno=%d %s)", errno, strerror(errno));
+		return 1;
+	}
+
+#ifdef SO_PRIORITY
+	if (cfg.netprio)
+		setsockopt(client->udp_fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg.netprio, sizeof(uintptr_t));
+#endif
+
+	int32_t keep_alive = 1;
+	setsockopt(client->udp_fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keep_alive, sizeof(keep_alive));
+
+	if (!client->reader->tcp_ito) { 
+		uint32_t keep_alive = client->reader->tcp_ito?1:0;
+		setsockopt(client->udp_fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keep_alive, sizeof(uintptr_t));
+	}
+
+	if (client->reader->l_port>0) {
+		if (bind(client->udp_fd, (struct sockaddr *)&loc_sa, sizeof (loc_sa))<0) {
+			cs_log("bind failed (errno=%d %s)", errno, strerror(errno));
+			close(client->udp_fd);
+			return 1;
+		}
+	}
+
+	client->udp_sa.sin_family = AF_INET;
+	client->udp_sa.sin_port = htons((uint16_t)client->reader->r_port);
+
+	cs_log("socket open for %s fd=%d", rdr->ph.desc, client->udp_fd);
+
+	if (client->is_udp) {
+		rdr->tcp_connected = 1;
+		return client->udp_fd;
+	}
   
 	//int32_t flag = 1;
 	//setsockopt(cl->udp_fd, IPPROTO_TCP, SO_DEBUG, (char *) &flag, sizeof(int));
 
-	int32_t sd = cl->udp_fd;
-	int32_t fl = fcntl(sd, F_GETFL);
-	fcntl(sd, F_SETFL, O_NONBLOCK); //set to nonblocking mode to avoid "endless" connecting loops and pipe-overflows:
+	int32_t sd = client->udp_fd;
 
-	int32_t res = connect(sd, (struct sockaddr *)&cl->udp_sa, sizeof(cl->udp_sa));
-	if (res == 0) { 
-		fcntl(sd, F_SETFL, fl); //connect sucessfull, restore blocking mode
-		setTCPTimeouts(sd);
-		clear_block_delay(rdr);
-		return sd;
-	}
-
-	if (errno == EINPROGRESS || errno == EALREADY) {
-		struct pollfd pfd;
-		pfd.fd = cl->udp_fd;
-		pfd.events = POLLOUT;
-		int32_t rc = poll(&pfd, 1, 500);
-		if (rc>0) { //if connect is in progress, wait apr. 500ms
-			int32_t r = -1;
-			uint32_t l = sizeof(r);
-			if (getsockopt(sd, SOL_SOCKET, SO_ERROR, &r, (socklen_t*)&l) == 0) {
-				if (r == 0) {
-					fcntl(sd, F_SETFL, fl);
-					setTCPTimeouts(sd);
-					clear_block_delay(rdr);
-					return sd; //now we are connected
-				}
-			}
-		}
-		errno = ETIMEDOUT;
-	}
-	//else we are not connected - or already connected:
-	else if (errno == EISCONN) {
-		cs_log("already connected!");
-		fcntl(sd, F_SETFL, fl);
-		setTCPTimeouts(sd);
-		clear_block_delay(rdr);
-		return sd;
-	}
-
-	cs_log("connect(fd=%d) failed: (errno=%d %s)", sd, errno, strerror(errno));
-
-	fcntl(sd, F_SETFL, fl); //restore blocking mode
-  
-	//connect has failed. Block connect for a while:
-	block_connect(rdr);
+	int32_t res = connect(sd, (struct sockaddr *)&client->udp_sa, sizeof(client->udp_sa));
+	if (res == -1) {
+		cs_log("connect(fd=%d) failed: (errno=%d %s)", sd, errno, strerror(errno));
+		//connect has failed. Block connect for a while:
+		block_connect(rdr);
       
-	return -1; 
+		return -1; 
+	}
+
+	setTCPTimeouts(sd);
+	clear_block_delay(rdr);
+	client->pfd = client->udp_fd;
+	rdr->tcp_connected = 1;
+	cs_log("connect succesfull %s fd=%d", rdr->ph.desc, client->udp_fd);
+	return sd;
 }
 
-void network_tcp_connection_close(struct s_client *cl, int32_t fd)
+void network_tcp_connection_close(struct s_reader *reader)
 {
+	struct s_client *cl = reader->client;
 	if(!cl) return;
-	struct s_reader *reader = cl->reader;
-	cs_debug_mask(D_READER, "tcp_conn_close(): fd=%d, cl->typ == 'c'=%d", fd, cl->typ == 'c');
+	int32_t fd = cl->udp_fd;
+
+	cs_log("tcp_conn_close(): fd=%d, cl->typ == '%c' is_udp %d", fd, cl->typ, cl->is_udp);
+	int32_t i;
+
+	if (!reader || cl->typ != 'p') {
+		//only proxy reader should call this, client connections are closed on thread cleanup
+		cs_log("invalid client tcp_conn_close()");
+		cs_exit(0);
+	}
 
 	if (fd) {
 		close(fd);
-		if (fd == cl->udp_fd)
-			cl->udp_fd = 0;
-		if (fd == cl->pfd)
-			cl->pfd = 0;
+
+		cl->udp_fd = 0;
+		cl->pfd = 0;
 	}
 
+	reader->tcp_connected = 0;
 
-  if (cl->typ != 'c')
-  {
-    int32_t i;
-    //cl->pfd = 0;
-    if(reader)
-        reader->tcp_connected = 0;
-
-    if (cl->ecmtask) {
-	for (i = 0; i < CS_MAXPENDING; i++) {
-	   cl->ecmtask[i].idx = 0;
-	   cl->ecmtask[i].rc = 0;
+	if (cl->ecmtask) {
+		for (i = 0; i < CS_MAXPENDING; i++) {
+			cl->ecmtask[i].idx = 0;
+			cl->ecmtask[i].rc = 0;
+		}
 	}
-    }
-  }
 }
 
 void casc_do_sock_log(struct s_reader * reader)
@@ -305,7 +334,7 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
       	reader_do_idle(reader);
       else {
         cs_debug_mask(D_READER, "rto=%d", rto);
-        network_tcp_connection_close(reader->client, cl->udp_fd);
+        network_tcp_connection_close(reader);
       }
     }
   }
@@ -542,9 +571,9 @@ void reader_do_idle(struct s_reader * reader)
 	if (reader->ph.c_idle)
 		reader->ph.c_idle();
 	else {
-		if (reader->client && reader->client->pfd) {
+		if (reader->client && reader->client->pfd && reader->tcp_connected) {
 			cs_debug_mask(D_READER, "%s inactive_timeout, close connection (fd=%d)", reader->ph.desc, reader->client->pfd);
-			network_tcp_connection_close(reader->client, reader->client->pfd);
+			network_tcp_connection_close(reader);
 		}
 	}
 }

@@ -1113,6 +1113,8 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 				<TR><TD>##TPLHELPPREFIX##server#cardmhz##TPLHELPSUFFIX##Cardmhz:</A></TD><TD><input name=\"cardmhz\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CARDMHZ##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#pincode##TPLHELPSUFFIX##Pincode:</A></TD><TD><input name=\"pincode\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PINCODE##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#detect##TPLHELPSUFFIX##Detect:</A></TD><TD><input name=\"detect\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##DETECT##\"></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#ratelimitecm##TPLHELPSUFFIX##Ratelimit ECM:</A></TD><TD><input name=\"ratelimitecm\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RATELIMITECM##\"></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#ratelimitseconds##TPLHELPSUFFIX##Ratelimit seconds:</A></TD><TD><input name=\"ratelimitseconds\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RATELIMITSECONDS##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#readnano##TPLHELPSUFFIX##Readnano:</A></TD><TD><input name=\"readnano\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##EMMFILE##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#blocknano##TPLHELPSUFFIX##Blocknano:</A></TD><TD><input name=\"blocknano\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##BLOCKNANO##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#savenano##TPLHELPSUFFIX##Savenano:</A></TD><TD><input name=\"savenano\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##SAVENANO##\"></TD></TR>\n\
@@ -1931,12 +1933,29 @@ function plot_data(obj) {\n\
 			plots[i]['data'] = new Array();\n\
 			plots[i]['ecmmin'] = -1;\n\
 			plots[i]['ecmmax'] = 0;\n\
+			plots[i]['last_fetched_timestamp'] = 0;\n\
+			plots[i]['last_valid_ecm_duration '] = -1;\n\
 		}\n\
 		plots[i]['name'] = readers[rdx].getAttribute('name');\n\
-		if ( plots[i]['name'].length == 0 ) {\n\
-			plots[i]['name'] = readers[rdx].getElementsByTagName('connection')[0].getAttribute('ip');\n\
+		var ecmhistory = readers[rdx].getElementsByTagName('request')[0].getAttribute('ecmhistory').split(',');\n\
+		var maxecm = -1;\n\
+		for (var ii = ecmhistory.length-1; ii >= 0; ii--) {\n\
+			var ecm = ecmhistory[ii].split(':');\n\
+			if ( ecm[0]>-1 ) {\n\
+				if ( ecm[1]==0 ) {\n\
+					if ( parseInt( ecm[2] ) > plots[i]['last_fetched_timestamp'] ) {\n\
+						if ( parseInt( ecm[0] ) > maxecm ) maxecm = parseInt( ecm[0] );\n\
+						plots[i]['last_fetched_timestamp'] = parseInt( ecm[2] );\n\
+					}\n\
+				}\n\
+			}\n\
 		}\n\
-		plots[i]['ecmtime'] = parseInt( readers[rdx].getElementsByTagName('request')[0].getAttribute('ecmtime') );\n\
+		if ( maxecm == -1 ) {\n\
+			maxecm = plots[i]['last_valid_ecm_duration '];\n\
+		} else {\n\
+			plots[i]['last_valid_ecm_duration '] = maxecm;\n\
+		}\n\
+		plots[i]['ecmtime'] = maxecm;\n\
 		plots[i]['idletime'] = parseInt( readers[rdx].getElementsByTagName('times')[0].getAttribute('idle') );\n\
 		if (!isNumber(plots[i]['ecmtime'])) {\n\
 			plots[i]['ecmtime'] = -1;\n\

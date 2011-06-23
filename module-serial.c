@@ -1026,6 +1026,7 @@ static int32_t oscam_ser_client_init(struct s_client *client)
 
 static int32_t oscam_ser_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *buf)
 {
+	char *tmp;
   switch(client->serialdata->oscam_ser_proto)
   {
     case P_HSIC:
@@ -1041,19 +1042,22 @@ static int32_t oscam_ser_send_ecm(struct s_client *client, ECM_REQUEST *er, ucha
     case P_BOMBA:
       oscam_ser_send(client, er->ecm, er->l);
       break;
-    case P_DSR95:
-      if( client->serialdata->dsr9500type==P_DSR_WITHSID )
-      {
-        snprintf((char *)buf, 512, "%c%08X%04X%s%04X\n\r",
-          3, er->prid, er->caid, cs_hexdump(0, er->ecm, er->l), er->srvid);
-        oscam_ser_send(client, buf, (er->l<<1)+19); // 1 + 8 + 4 + l*2 + 4 + 2
-      }
-      else
-      {
-        snprintf((char *)buf, 512, "%c%08X%04X%s\n\r",
-          3, er->prid, er->caid, cs_hexdump(0, er->ecm, er->l));
-        oscam_ser_send(client, buf, (er->l<<1)+15); // 1 + 8 + 4 + l*2 + 2
-      }
+    case P_DSR95:    	
+    	if(cs_malloc(&tmp, er->l * 2 + 1, -1)){
+	      if( client->serialdata->dsr9500type==P_DSR_WITHSID )
+	      {
+	        snprintf((char *)buf, 512, "%c%08X%04X%s%04X\n\r",
+	          3, er->prid, er->caid, cs_hexdump(0, er->ecm, er->l, tmp, er->l * 2 + 1), er->srvid);
+	        oscam_ser_send(client, buf, (er->l<<1)+19); // 1 + 8 + 4 + l*2 + 4 + 2
+	      }
+	      else
+	      {
+	        snprintf((char *)buf, 512, "%c%08X%04X%s\n\r",
+	          3, er->prid, er->caid, cs_hexdump(0, er->ecm, er->l, tmp, er->l * 2 + 1));
+	        oscam_ser_send(client, buf, (er->l<<1)+15); // 1 + 8 + 4 + l*2 + 2
+	      }
+	      free(tmp);
+	    }
       break;
     case P_ALPHA:
       buf[0]=0x80;

@@ -11,6 +11,7 @@ static int32_t set_provider_info(struct s_reader * reader, int32_t i)
   time_t t;
   int32_t valid=0;//0=false, 1=true
   char l_name[16+8+1]=", name: ";
+  char tmp[9];
 
   ins12[2]=i;//select provider
   write_cmd(ins12, NULL); // show provider properties
@@ -41,7 +42,7 @@ static int32_t set_provider_info(struct s_reader * reader, int32_t i)
          i+1, valid,l_name, year, month, day);
   memcpy(&reader->sa[i][0], cta_res+18, 4);
   if (valid==1) //if not expired
-    cs_ri_log (reader, "[seca-reader] SA: %s", cs_hexdump(0, cta_res+18, 4));
+    cs_ri_log (reader, "[seca-reader] SA: %s", cs_hexdump(0, cta_res+18, 4, tmp, sizeof(tmp)));
   return OK;
 }
 
@@ -208,13 +209,14 @@ static int32_t seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //return
 {
 	cs_debug_mask(D_EMM, "Entered seca_get_emm_type ep->emm[0]=%i",ep->emm[0]);
 	int32_t i;
+	tmp_dbg(13);
 	switch (ep->emm[0]) {
 		case 0x82:
 			ep->type = UNIQUE;
 			memset(ep->hexserial,0,8);
  			memcpy(ep->hexserial, ep->emm + 3, 6);
-			cs_debug_mask(D_EMM, "SECA EMM: UNIQUE, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 6)); 
-			cs_debug_mask(D_EMM, "SECA EMM: UNIQUE, rdr->hexserial = %s", cs_hexdump(1, rdr->hexserial, 6)); 
+			cs_debug_mask(D_EMM, "SECA EMM: UNIQUE, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 6, tmp_dbg, sizeof(tmp_dbg))); 
+			cs_debug_mask(D_EMM, "SECA EMM: UNIQUE, rdr->hexserial = %s", cs_hexdump(1, rdr->hexserial, 6, tmp_dbg, sizeof(tmp_dbg))); 
  			return (!memcmp (rdr->hexserial, ep->hexserial, 6));
 
 		case 0x84:
@@ -222,10 +224,10 @@ static int32_t seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //return
 			memset(ep->hexserial,0,8);
 			memcpy(ep->hexserial, ep->emm + 5, 3); //dont include custom byte; this way the network also knows SA
 			i=get_prov_index(rdr, ep->emm+3);
-			cs_debug_mask(D_EMM, "SECA EMM: SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 3)); 
+			cs_debug_mask(D_EMM, "SECA EMM: SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 3, tmp_dbg, sizeof(tmp_dbg))); 
 			if (i== -1) //provider not found on this card
 				return FALSE; //do not pass this EMM
-			cs_debug_mask(D_EMM, "SECA EMM: SHARED, rdr->sa[%i] = %s", i, cs_hexdump(1, rdr->sa[i], 3)); 
+			cs_debug_mask(D_EMM, "SECA EMM: SHARED, rdr->sa[%i] = %s", i, cs_hexdump(1, rdr->sa[i], 3, tmp_dbg, sizeof(tmp_dbg))); 
 			return (!memcmp (rdr->sa[i], ep->hexserial, 3));
 
 		// Unknown EMM types, but allready subbmited to dev's
@@ -354,6 +356,7 @@ static int32_t seca_card_info (struct s_reader * reader)
   def_resp;
   static const unsigned char ins34[] = { 0xc1, 0x34, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00 };				//data following is provider Package Bitmap Records
   unsigned char ins32[] = { 0xc1, 0x32, 0x00, 0x00, 0x20 };				// get PBM
+  char tmp[17];
   int32_t prov;
 
   for (prov = 0; prov < reader->nprov; prov++) {
@@ -367,7 +370,7 @@ static int32_t seca_card_info (struct s_reader * reader)
       break;
     case 0x83:
       memcpy (pbm, cta_res + 1, 8);
-      cs_ri_log (reader, "[seca-reader] PBM for provider %i: %s", prov + 1, cs_hexdump (0, pbm, 8));
+      cs_ri_log (reader, "[seca-reader] PBM for provider %i: %s", prov + 1, cs_hexdump(0, pbm, 8, tmp, sizeof(tmp)));
       break;
     default:
       cs_log ("[seca-reader] ERROR: PBM returns unknown byte %02x", cta_res[0]);

@@ -5,7 +5,7 @@
 static FILE *fp=(FILE *)0;
 static FILE *fps=(FILE *)0;
 #ifdef CS_ANTICASC
-FILE *fpa=(FILE *)0;
+static FILE *fpa=(FILE *)0;
 #endif
 static int8_t logStarted = 0;
 
@@ -16,6 +16,8 @@ CS_MUTEX_LOCK stdout_lock;
 CS_MUTEX_LOCK loghistory_lock;
 
 #define LOG_BUF_SIZE (520+11) // should be aligned with s_client.dump from globals.h
+
+static void cs_log_nolock(const char *fmt,...);
 
 static void switch_log(char* file, FILE **f, int32_t (*pfinit)(void))
 {
@@ -51,48 +53,50 @@ static void switch_log(char* file, FILE **f, int32_t (*pfinit)(void))
 	}
 }
 
-void cs_write_log(char *txt)
+static void cs_write_log(char *txt, int8_t lock)
 {
 #ifdef CS_ANTICASC
 	struct s_client *cl = cur_client();
 	if( cl && cl->typ == 'a' && fpa ) {
-		cs_writelock(&ac_lock);
+		if(lock) cs_writelock(&ac_lock);
 		switch_log(cfg.ac_logfile, &fpa, ac_init_log);
 		if (fpa) {
 				fputs(txt, fpa);
 				fflush(fpa);
 		}
-		cs_writeunlock(&ac_lock);
+		if(lock) cs_writeunlock(&ac_lock);
 	}
 	else
 #endif
 		// filter out entries with leading 's' and forward to statistics
 		if(txt[0] == 's') {
 			if (fps) {
-				cs_writelock(&user_lock);
+				if(lock) cs_writelock(&user_lock);
 				switch_log(cfg.usrfile, &fps, cs_init_statistics);
 				if (fps) {
 						fputs(txt + 1, fps); // remove the leading 's' and write to file
 						fflush(fps);
 				}
-				cs_writeunlock(&user_lock);
+				if(lock) cs_writeunlock(&user_lock);
 			}
 		} else {
 			if(!cfg.disablelog){
 				if (fp){
-					cs_writelock(&log_lock);
-					switch_log(cfg.logfile, &fp, cs_open_logfiles);
+					if(lock){
+						cs_writelock(&log_lock);
+						switch_log(cfg.logfile, &fp, cs_open_logfiles);		// only call the switch code if lock = 1 is specified as otherwise we are calling it internally
+					}
 					if (fp) {
 							fputs(txt, fp);
 							fflush(fp);
 					}
-					cs_writeunlock(&log_lock);	
+					if(lock) cs_writeunlock(&log_lock);	
 				}
 				if(cfg.logtostdout){
-					cs_writelock(&stdout_lock);
+					if(lock) cs_writelock(&stdout_lock);
 					fputs(txt, stdout);
 					fflush(stdout);
-					cs_writeunlock(&stdout_lock);	
+					if(lock) cs_writeunlock(&stdout_lock);	
 				}
 			}
 		}
@@ -121,7 +125,7 @@ int32_t cs_open_logfiles()
 	// We use openlog to set the default syslog settings so that it's possible to allow switching syslog on and off
 	openlog("oscam", LOG_NDELAY, LOG_DAEMON);
 	
-	cs_log(">> OSCam <<  cardserver %s, version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_OSTYPE ")", starttext);
+	cs_log_nolock(">> OSCam <<  cardserver %s, version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_OSTYPE ")", starttext);
 	cs_log_config();
 	return(fp <= (FILE *)0);
 }
@@ -139,6 +143,21 @@ int32_t cs_init_log(void)
 	logStarted = 1;
 	return rc;
 }
+
+#ifdef CS_ANTICASC
+int32_t ac_init_log(void){
+  if(!fpa && cfg.ac_logfile[0]){
+    if( (fpa=fopen(cfg.ac_logfile, "a+"))<=(FILE *)0 ){
+      fpa=(FILE *)0;
+      fprintf(stderr, "can't open anti-cascading logfile: %s\n", cfg.ac_logfile);
+    }
+    else
+      cs_log("anti-cascading log initialized");
+  }
+
+  return(fpa<=(FILE *)0);
+}
+#endif
 
 /* 
  This function allows to reinit the in-memory loghistory with a new size.
@@ -181,7 +200,7 @@ static void get_log_header(int32_t m, char *txt)
 		snprintf(txt, LOG_BUF_SIZE, "%8X%-3.3s",(unsigned int) thread, "");
 }
 
-static void write_to_log(char *txt)
+static void write_to_log(char *txt, int8_t lock)
 {
 	//flag = -1 is old behaviour, before implementation of debug_nolf (=debug no line feed)
 	//
@@ -207,7 +226,7 @@ static void write_to_log(char *txt)
 	snprintf(log_buf, sizeof(log_buf),  "[LOG000]%4d/%02d/%02d %2d:%02d:%02d %s\n",
 		lt.tm_year+1900, lt.tm_mon+1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec, txt);
 
-	cs_write_log(log_buf + 8);
+	cs_write_log(log_buf + 8, lock);
 
 	if (loghist) {
 		char *usrtxt = NULL;
@@ -233,7 +252,7 @@ static void write_to_log(char *txt)
 		char *target_ptr = NULL;
 		int32_t target_len = strlen(usrtxt) + (strlen(log_buf) - 8) + 1;
 		
-		cs_writelock(&loghistory_lock);
+		if(lock) cs_writelock(&loghistory_lock);
 		char *lastpos = loghist + (cfg.loghistorysize) - 1;		
 		if (!loghistptr)
 			loghistptr = loghist;
@@ -248,7 +267,7 @@ static void write_to_log(char *txt)
 			loghistptr=loghistptr + target_len + 1;
 			*loghistptr='\0';
 		}
-		cs_writeunlock(&loghistory_lock);
+		if(lock) cs_writeunlock(&loghistory_lock);
 
 		snprintf(target_ptr, target_len + 1, "%s\t%s", usrtxt, log_buf + 8);
 	}
@@ -271,15 +290,24 @@ static void write_to_log(char *txt)
 	}
 }
 
-void cs_log(const char *fmt,...)
-{
+static void cs_log_nolock(const char *fmt,...){
 	char log_txt[LOG_BUF_SIZE];
 	get_log_header(1, log_txt);
 	va_list params;
 	va_start(params, fmt);
 	vsnprintf(log_txt+11, sizeof(log_txt) - 11, fmt, params);
 	va_end(params);
-	write_to_log(log_txt);
+	write_to_log(log_txt, 0);
+}
+
+void cs_log(const char *fmt,...){
+	char log_txt[LOG_BUF_SIZE];
+	get_log_header(1, log_txt);
+	va_list params;
+	va_start(params, fmt);
+	vsnprintf(log_txt+11, sizeof(log_txt) - 11, fmt, params);
+	va_end(params);
+	write_to_log(log_txt, 1);
 }
 
 void cs_close_log(void)
@@ -299,7 +327,7 @@ void cs_debug_mask(uint16_t mask, const char *fmt,...)
 		va_start(params, fmt);
 		vsnprintf(log_txt+11, sizeof(log_txt) - 11, fmt, params);
 		va_end(params);
-		write_to_log(log_txt);
+		write_to_log(log_txt, 1);
 	}
 }
 #endif
@@ -315,15 +343,15 @@ void cs_dump(const uchar *buf, int32_t n, char *fmt, ...)
 		va_start(params, fmt);
 		vsnprintf(log_txt+11, sizeof(log_txt) - 11, fmt, params);
 		va_end(params);
-		write_to_log(log_txt);
+		write_to_log(log_txt, 1);
 		//printf("LOG: %s\n", txt); fflush(stdout);
 	}
 
 	for( i=0; i<n; i+=16 )
 	{
 		get_log_header(0, log_txt);
-		snprintf(log_txt+11, sizeof(log_txt) - 11, "%s", cs_hexdump(1, buf+i, (n-i>16) ? 16 : n-i));
-		write_to_log(log_txt);
+		cs_hexdump(1, buf+i, (n-i>16) ? 16 : n-i, log_txt+11, sizeof(log_txt) - 11);
+		write_to_log(log_txt, 1);
 	}
 }
 #ifdef WITH_DEBUG
@@ -339,7 +367,7 @@ void cs_ddump_mask(uint16_t mask, const uchar *buf, int32_t n, char *fmt, ...)
 		va_start(params, fmt);
 		vsnprintf(log_txt+11, sizeof(log_txt) - 11, fmt, params);
 		va_end(params);
-		write_to_log(log_txt);
+		write_to_log(log_txt, 1);
 		//printf("LOG: %s\n", txt); fflush(stdout);
 	}
 	if (mask & cs_dblevel)
@@ -347,8 +375,8 @@ void cs_ddump_mask(uint16_t mask, const uchar *buf, int32_t n, char *fmt, ...)
 		for (i=0; i<n; i+=16)
 		{
 			get_log_header(0, log_txt);
-			snprintf(log_txt+11, sizeof(log_txt) - 11, "%s", cs_hexdump(1, buf+i, (n-i>16) ? 16 : n-i));
-			write_to_log(log_txt);
+			cs_hexdump(1, buf+i, (n-i>16) ? 16 : n-i, log_txt+11, sizeof(log_txt) - 11);
+			write_to_log(log_txt, 1);
 		}
 	}
 }
@@ -434,15 +462,15 @@ void cs_log_config()
     snprintf((char *)buf, sizeof(buf), ", nice=%d", cfg.nice);
   else
     buf[0]='\0';
-  cs_log("version=%s, build #%s, system=%s-%s-%s%s", CS_VERSION, CS_SVN_VERSION, CS_OS_CPU, CS_OS_HW, CS_OS_SYS, buf);
-  cs_log("client max. idle=%d sec, debug level=%d", cfg.cmaxidle, cs_dblevel);
+  cs_log_nolock("version=%s, build #%s, system=%s-%s-%s%s", CS_VERSION, CS_SVN_VERSION, CS_OS_CPU, CS_OS_HW, CS_OS_SYS, buf);
+  cs_log_nolock("client max. idle=%d sec, debug level=%d", cfg.cmaxidle, cs_dblevel);
 
   if( cfg.max_log_size )
     snprintf((char *)buf, sizeof(buf), "%d Kb", cfg.max_log_size);
   else
     cs_strncpy((char *)buf, "unlimited", sizeof(buf));
-  cs_log("max. logsize=%s, loghistorysize=%d bytes", buf, cfg.loghistorysize);
-  cs_log("client timeout=%lu ms, fallback timeout=%lu ms, cache delay=%d ms",
+  cs_log_nolock("max. logsize=%s, loghistorysize=%d bytes", buf, cfg.loghistorysize);
+  cs_log_nolock("client timeout=%lu ms, fallback timeout=%lu ms, cache delay=%d ms",
          cfg.ctimeout, cfg.ftimeout, cfg.delay);
 }
 
@@ -526,6 +554,6 @@ void cs_statistics(struct s_client * client)
 				client->last_srvid,
 				channame);
 
-		cs_write_log(buf);
+		cs_write_log(buf, 1);
 	}
 }

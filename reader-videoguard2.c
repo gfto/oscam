@@ -510,7 +510,8 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR newatr)
     if (l<0 || !status_ok(cta_res+l)) {
       cs_log("classD0 ins74e: failed to get parental lock settings");
     } else {
-      cs_log("parental lock setting: %s",cs_hexdump(1, cta_res+2, l-2));
+    	char tmp[l>0?l*3:1];
+      cs_log("parental lock setting: %s",cs_hexdump(1, cta_res+2, l-2, tmp, sizeof(tmp)));
     }
   }
 
@@ -528,7 +529,8 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR newatr)
       if (l<0 || !status_ok(cta_res+l)) {
         cs_log("classD0 ins74e: failed to get parental lock settings");
       } else {
-        cs_log("parental lock setting after disabling: %s",cs_hexdump(1, cta_res+2, l-2));
+      	char tmp[l>0?l*3:1];
+        cs_log("parental lock setting after disabling: %s",cs_hexdump(1, cta_res+2, l-2, tmp, sizeof(tmp)));
       }
     }
   }

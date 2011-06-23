@@ -97,6 +97,7 @@ int32_t pcsc_reader_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar
         return ERR_INVALID;
     }
 
+		char tmp[520];
     dwRecvLength = CTA_RES_LEN;
     *cta_lr = 0;
 
@@ -112,13 +113,13 @@ int32_t pcsc_reader_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar
             dwSendLength = l;
         else
             dwSendLength = l-1;
-        cs_debug_mask(D_DEVICE, "sending %d bytes to PCSC : %s", dwSendLength,cs_hexdump(1,buf,l));
+        cs_debug_mask(D_DEVICE, "sending %d bytes to PCSC : %s", dwSendLength,cs_hexdump(1,buf,l, tmp, sizeof(tmp)));
         rv = SCardTransmit((SCARDHANDLE)(pcsc_reader->hCard), SCARD_PCI_T0, (LPCBYTE) buf, dwSendLength, NULL, (LPBYTE) cta_res, (LPDWORD) &dwRecvLength);
         *cta_lr=dwRecvLength;
     }
     else  if(pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T1) {
         dwSendLength = l;
-        cs_debug_mask(D_DEVICE, "sending %d bytes to PCSC : %s", dwSendLength,cs_hexdump(1,buf,l));
+        cs_debug_mask(D_DEVICE, "sending %d bytes to PCSC : %s", dwSendLength,cs_hexdump(1,buf,l, tmp, sizeof(tmp)));
         rv = SCardTransmit((SCARDHANDLE)(pcsc_reader->hCard), SCARD_PCI_T1, (LPCBYTE) buf, dwSendLength, NULL, (LPBYTE) cta_res, (LPDWORD) &dwRecvLength);
         *cta_lr=dwRecvLength;
     }
@@ -127,7 +128,7 @@ int32_t pcsc_reader_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar
         return ERR_INVALID;
     }
 
-     cs_debug_mask(D_DEVICE, "received %d bytes from PCSC with rv=%lx : %s", *cta_lr, rv,cs_hexdump(1,cta_res,*cta_lr));
+     cs_debug_mask(D_DEVICE, "received %d bytes from PCSC with rv=%lx : %s", *cta_lr, rv,cs_hexdump(1,cta_res,*cta_lr, tmp, sizeof(tmp)));
 
      cs_debug_mask(D_DEVICE, "PCSC doapi (%lx ) (T=%d), %d", rv, ( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1), *cta_lr );
 
@@ -145,6 +146,7 @@ int32_t pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, uint16_t *a
     LONG rv;
     DWORD dwState, dwAtrLen, dwReaderLen;
     BYTE pbAtr[64];
+    char tmp[sizeof(pbAtr)*3+1];
     
     cs_debug_mask(D_DEVICE, "PCSC initializing card in (%s)", pcsc_reader->pcsc_name);
     dwAtrLen = sizeof(pbAtr);
@@ -169,7 +171,7 @@ int32_t pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, uint16_t *a
         *atr_size=dwAtrLen;
         pcsc_reader->init_history_pos=0;
 
-        cs_log("%s ATR: %s",pcsc_reader->label, cs_hexdump(1, (uchar *)pbAtr, dwAtrLen));
+        cs_log("%s ATR: %s",pcsc_reader->label, cs_hexdump(1, (uchar *)pbAtr, dwAtrLen, tmp, sizeof(tmp)));
         return(1);
     }
     else {

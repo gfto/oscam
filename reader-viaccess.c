@@ -948,9 +948,10 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 		insac[2]=0xa6; write_cmd(insac, NULL); // request GEO
 		insb8[4]=0x02; write_cmd(insb8, NULL); // read GEO nano + len
 		l=cta_res[1];
+		char tmp[l*3+1];
 		insb8[4]=l; write_cmd(insb8, NULL); // read geo
 		cs_ri_log(reader, "provider: %d, id: %06X%s, sa: %08X, geo: %s",
-			i, l_provid, l_name, l_sa, (l<4) ? "empty" : cs_hexdump(1, cta_res, l));
+			i, l_provid, l_name, l_sa, (l<4) ? "empty" : cs_hexdump(1, cta_res, l, tmp, sizeof(tmp)));
 
 		// read classes subscription
 		insac[2]=0xa9; insac[4]=4;

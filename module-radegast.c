@@ -32,8 +32,9 @@ static int32_t radegast_recv(struct s_client *client, uchar *buf, int32_t l)
 static int32_t radegast_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t UNUSED(n))
 {
   if ((buf[0] == 2) && (buf[1] == 0x12)) {
+  	tmp_dbg(33);
     memcpy(dcw, buf+4, 16);
-    cs_debug_mask(D_CLIENT, "radegast: recv chk - %s", cs_hexdump(0, dcw, 16));
+    cs_debug_mask(D_CLIENT, "radegast: recv chk - %s", cs_hexdump(0, dcw, 16, tmp_dbg, sizeof(tmp_dbg)));
     *rc = 1;
     return(client->reader->msg_idx);
   }
@@ -213,52 +214,12 @@ static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar
 int32_t radegast_cli_init(struct s_client *cl)
 {
   *cl = *cl; //prevent compiler warning
-  struct sockaddr_in loc_sa;
   int32_t handle;
-
-  cur_client()->pfd=0;
-  if (cur_client()->reader->r_port<=0)
-  {
-    cs_log("radegast: invalid port %d for server %s", cur_client()->reader->r_port, cur_client()->reader->device);
-    return(1);
-  }
-
-  cur_client()->ip=0;
-  memset((char *)&loc_sa,0,sizeof(loc_sa));
-  loc_sa.sin_family = AF_INET;
-#ifdef LALL
-  if (cfg.serverip[0])
-    loc_sa.sin_addr.s_addr = inet_addr(cfg.serverip);
-  else
-#endif
-    loc_sa.sin_addr.s_addr = INADDR_ANY;
-  loc_sa.sin_port = htons(cur_client()->reader->l_port);
-
-  if ((cur_client()->udp_fd=socket(PF_INET, SOCK_STREAM, IPPROTO_TCP))<0)
-  {
-    cs_log("radegast: Socket creation failed (errno=%d %s)", errno, strerror(errno));
-    cs_exit(1);
-  }
-
-#ifdef SO_PRIORITY
-  if (cfg.netprio)
-    setsockopt(cur_client()->udp_fd, SOL_SOCKET, SO_PRIORITY,
-               (void *)&cfg.netprio, sizeof(uintptr_t));
-#endif
-  if (!cur_client()->reader->tcp_ito) {
-    uint32_t keep_alive = cur_client()->reader->tcp_ito?1:0;
-    setsockopt(cur_client()->udp_fd, SOL_SOCKET, SO_KEEPALIVE,
-    (void *)&keep_alive, sizeof(uintptr_t));
-  }
-
-  memset((char *)&cur_client()->udp_sa,0,sizeof(cur_client()->udp_sa));
-  cur_client()->udp_sa.sin_family = AF_INET;
-  cur_client()->udp_sa.sin_port = htons((uint16_t)cur_client()->reader->r_port);
 
   cs_log("radegast: proxy %s:%d (fd=%d)",
   cur_client()->reader->device, cur_client()->reader->r_port, cur_client()->udp_fd);
 
-  handle = network_tcp_connection_open();
+  handle = network_tcp_connection_open(cl->reader);
   if(handle < 0) return -1;
 
   cur_client()->reader->tcp_connected = 2;

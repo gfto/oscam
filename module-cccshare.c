@@ -799,14 +799,14 @@ void cc_add_reported_carddata(LLIST *reported_carddatas, struct cc_card *card) {
  * if this card is already reported, find_reported_card throws the "origin" card away
  * so the "old" sharelist is reduced
  **/
-void report_card(struct cc_card *card, LLIST *new_reported_carddatas)
+void report_card(struct cc_card *card, LLIST *new_reported_carddatas, LLIST *new_cards)
 {
     if (!find_reported_card(card)) { //Add new card:
     	
     	cs_debug_mask(D_TRACE, "s-card added: id %8X remoteid %8X caid %4X hop %d reshare %d originid %8X cardtype %d", 
     		card->id, card->remote_id, card->caid, card->hop, card->reshare, card->origin_id, card->card_type);
     		
-        send_card_to_clients(card, NULL);
+        ll_append(new_cards, card);
 
         card_added_count++;
     }
@@ -1071,14 +1071,18 @@ void update_card_list() {
         }
     }
 
+    LLIST *new_cards = ll_create(); //List of new (added) cards
+    
     //report reshare cards:
     //cs_debug_mask(D_TRACE, "%s reporting %d cards", getprefix(), ll_count(server_cards));
     LL_ITER it = ll_iter_create(server_cards);
+    
+    //we compare every card of our new list (server_cards) with the last list.
     struct cc_card *card;
     while ((card = ll_iter_next(&it))) {
             //cs_debug_mask(D_TRACE, "%s card %d caid %04X hop %d", getprefix(), card->id, card->caid, card->hop);
 
-            report_card(card, new_reported_carddatas);
+            report_card(card, new_reported_carddatas, new_cards);
             ll_iter_remove(&it);
     }
     cc_free_cardlist(server_cards, TRUE);
@@ -1086,6 +1090,15 @@ void update_card_list() {
     //remove unsed, remaining cards:
     card_removed_count += cc_free_reported_carddata(reported_carddatas, new_reported_carddatas, TRUE);
     reported_carddatas = new_reported_carddatas;
+    
+    //now send new cards. Always remove first, then add new:
+    it = ll_iter_create(new_cards);
+    while ((card = ll_iter_next(&it))) {
+		send_card_to_clients(card, NULL);
+	}
+	ll_destroy(new_cards);
+
+    
     cs_writeunlock(&cc_shares_lock);
 
 	cs_debug_mask(D_TRACE, "reported/updated +%d/-%d/dup %d of %d cards to sharelist",
