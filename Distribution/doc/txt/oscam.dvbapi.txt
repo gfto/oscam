@@ -1,4 +1,4 @@
-oscam.dvbapi(5) 														   oscam.dvbapi(5)
+oscam.dvbapi(5) 																			  oscam.dvbapi(5)
 
 
 
@@ -9,11 +9,11 @@ SYNOPSIS
        DVBAPI settings
 
 DESCRIPTIONS
-       P: CAID[:][provider ID][:][service ID][:][ECM PID] [continue]
+       P: CAID[:][provider ID][:][service ID][:][ECM PID][:][CHID] [continue]
 	   set priority, continue = 1: proceed with priority, recommended for
 	   pay-per-view services, default:none
 
-       I: CAID[:][provider ID][:][service ID][:][ECM PID]
+       I: CAID[:][provider ID][:][service ID][:][ECM PID][:][CHID]
 	   set ignore
 
        D: CAID[:][provider ID][:][service ID][:][ECM PID] delay
@@ -22,9 +22,8 @@ DESCRIPTIONS
        M: CAID[:][provider ID][:][service ID][:][ECM PID] target CAID[:][target provider ID]
 	   mapping
 
-       S: device
-	   set DVB API device name (detached by pmt_mode in oscam.conf,
-	   obsolete)
+       S: [device] [PMT file name]
+	   set DVB API device name and PMT file name (valid for STAPI only)
 
        L: CAID[:][provider ID][:][service ID][:][ECM PID] length
 	   set ECM length in hexadecimal
@@ -55,9 +54,8 @@ EXAMPLES
 	L: 0700 8e	     # ECM length for CAID 0700 to 8e (hexadecimal)
 
 SEE ALSO
-       list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cert(5),  oscam.conf(5),  oscam.guess(5),  oscam.ird(5),  oscam.provid(5), oscam.server(5),
-       oscam.services(5), oscam.user(5)
+       list_smargo(1), oscam(1), oscam.ac(5), oscam.cert(5), oscam.conf(5), oscam.guess(5), oscam.ird(5), oscam.provid(5), oscam.server(5), oscam.services(5), oscam.user(5)
 
 
 
-																   oscam.dvbapi(5)
+																					  oscam.dvbapi(5)
