@@ -3590,6 +3590,13 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
+#ifdef WEBIF
+	if (!strcmp(token, "description")) {
+		cs_strncpy(rdr->description, value, sizeof(rdr->description));
+		return;
+	}
+#endif
+
   if (!strcmp(token, "mg-encrypted")) {
     uchar key[16];
     uchar mac[6];
@@ -3797,13 +3804,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		cs_strncpy(rdr->label, value, sizeof(rdr->label));
 		return;
 	}
-
-#ifdef WEBIF
-	if (!strcmp(token, "description")) {
-		cs_strncpy(rdr->description, value, sizeof(rdr->description));
-		return;
-	}
-#endif
 
 	if (!strcmp(token, "fallback")) {
 		rdr->fallback  = strToIntVal(value, 0);
