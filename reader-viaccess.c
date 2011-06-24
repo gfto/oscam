@@ -553,8 +553,6 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 			snprintf( er->msglog, MSGLOGSIZE, "AES Decrypt : key id %d not found for CAID %04X , provider %06x", D2KeyID, 0x500, (provid & 0xFFFFF0) );
 	}
 
-	if (!dcw_crc(er->cw))return ERROR;
-
 	return(rc?OK:ERROR);
 }
 
