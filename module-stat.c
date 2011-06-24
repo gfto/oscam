@@ -461,6 +461,11 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 		}
 			
 		stat = get_add_stat(rdr, er, prid);
+		if (stat->rc == 4) { //we have already "not found", so we change the time. In some cases (with services/ident set) the failing reader is selected again:
+			if (ecm_time < 100)
+				ecm_time = 100;
+			stat->time_avg += ecm_time;
+		}
 		stat->rc = rc;
 		inc_fail(stat);
 		stat->last_received = ctime;
