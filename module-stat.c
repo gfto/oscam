@@ -451,14 +451,16 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 		stat->last_received = ctime;
 	}
 	else if (rc == 4) { //not found
-		stat = get_add_stat(rdr, er, prid);
 		//CCcam card can't decode, 0x28=NOK1, 0x29=NOK2
 		//CCcam loop detection = E2_CCCAM_LOOP
 		if (er->rcEx == E2_CCCAM_NOK1 || er->rcEx == E2_CCCAM_NOK2 || er->rcEx == E2_CCCAM_LOOP) {
-			stat->last_received = ctime; //to avoid timeouts
+			stat = get_stat(rdr, er->caid, prid, er->srvid, er->l);
+			if (stat != NULL)
+				stat->last_received = ctime; //to avoid timeouts
 			return;
 		}
 			
+		stat = get_add_stat(rdr, er, prid);
 		stat->rc = rc;
 		inc_fail(stat);
 		stat->last_received = ctime;
