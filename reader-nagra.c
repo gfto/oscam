@@ -534,8 +534,7 @@ static void addProvider(struct s_reader * reader, unsigned char * cta_res)
 
 static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigned char * cta_res, uint16_t cta_lr)
 {
-	char ds[16], de[16], d1[20];
-	tmp_dbg(13);
+	char ds[20], de[16];
       	uint16_t chid;
 	switch(dt) 
 	{
@@ -559,12 +558,12 @@ static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigne
  			reader->nprov+=1;
  					
 			reader->caid =(SYSTEM_NAGRA|cta_res[11]);
-    				memcpy(reader->irdId,cta_res+14,4);
-    				cs_ri_log(reader, "[nagra-reader] type: NAGRA, caid: %04X, IRD ID: %s",reader->caid, cs_hexdump(1, reader->irdId, 4, tmp_dbg, sizeof(tmp_dbg)));
-    				cs_ri_log(reader, "[nagra-reader] ProviderID: %s", cs_hexdump(1, reader->prid[0], 4, tmp_dbg, sizeof(tmp_dbg)));
-				nagra_datetime(cta_res+24, d1);
-    				cs_ri_log(reader, "[nagra-reader] active to: %s", d1);
-    				return OK;
+			memcpy(reader->irdId,cta_res+14,4);
+			cs_ri_log(reader, "[nagra-reader] type: NAGRA, caid: %04X, IRD ID: %s",reader->caid, cs_hexdump(1, reader->irdId, 4, ds, sizeof(ds)));
+			cs_ri_log(reader, "[nagra-reader] ProviderID: %s", cs_hexdump(1, reader->prid[0], 4, ds, sizeof(ds)));
+			nagra_datetime(cta_res+24, ds);
+			cs_ri_log(reader, "[nagra-reader] active to: %s", ds);
+			return OK;
      		}
    		case TIERS:
    			if ((cta_lr>33) && (chid=b2i(2, cta_res+11)))
@@ -575,10 +574,10 @@ static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigne
         			cs_ri_log(reader, "|%04X|%04X    |%s  |%s  |", id,chid, ds, de);
         			addProvider(reader, cta_res); 
         		}
-       		case 0x08:
+       	case 0x08:
      		case 0x88: if (cta_res[11] == 0x49) decryptDT08(reader, cta_res);  			
-       		default:
-       			return OK;
+       	default:
+       		return OK;
    	}
   	return ERROR;
 }
