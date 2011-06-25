@@ -560,10 +560,10 @@ static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigne
  					
 			reader->caid =(SYSTEM_NAGRA|cta_res[11]);
     				memcpy(reader->irdId,cta_res+14,4);
-    				cs_debug_mask(D_READER, "[nagra-reader] type: NAGRA, caid: %04X, IRD ID: %s",reader->caid, cs_hexdump(1, reader->irdId, 4, tmp_dbg, sizeof(tmp_dbg)));
-    				cs_debug_mask(D_READER, "[nagra-reader] ProviderID: %s", cs_hexdump(1, reader->prid[0], 4, tmp_dbg, sizeof(tmp_dbg)));
+    				cs_ri_log(reader, "[nagra-reader] type: NAGRA, caid: %04X, IRD ID: %s",reader->caid, cs_hexdump(1, reader->irdId, 4, tmp_dbg, sizeof(tmp_dbg)));
+    				cs_ri_log(reader, "[nagra-reader] ProviderID: %s", cs_hexdump(1, reader->prid[0], 4, tmp_dbg, sizeof(tmp_dbg)));
 				nagra_datetime(cta_res+24, d1);
-    				cs_debug_mask(D_READER, "[nagra-reader] active to: %s", d1);
+    				cs_ri_log(reader, "[nagra-reader] active to: %s", d1);
     				return OK;
      		}
    		case TIERS:

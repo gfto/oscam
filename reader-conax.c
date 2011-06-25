@@ -285,51 +285,54 @@ static int32_t conax_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
 static int32_t conax_card_info(struct s_reader * reader)
 {
-  def_resp;
-  int32_t type, i, j, k, n=0;
-  uint16_t provid 
-  char provname[32], pdate[32];
-  static const uchar insC6[] = {0xDD, 0xC6, 0x00, 0x00, 0x03, 0x1C, 0x01, 0x00};
-  static const uchar ins26[] = {0xDD, 0x26, 0x00, 0x00, 0x03, 0x1C, 0x01, 0x01};
-  uchar insCA[] = {0xDD, 0xCA, 0x00, 0x00, 0x00};
-  char *txt[] = { "Package", "PPV-Event" };
-  static const uchar *cmd[] = { insC6, ins26 };
+	def_resp;
+	int32_t type, i, j, k=0, n=0, l;
+	uint16_t provid = 0;
+	char provname[32], pdate[32], chid[32];
+	static const uchar insC6[] = {0xDD, 0xC6, 0x00, 0x00, 0x03, 0x1C, 0x01, 0x00};
+	static const uchar ins26[] = {0xDD, 0x26, 0x00, 0x00, 0x03, 0x1C, 0x01, 0x01};
+	uchar insCA[] = {0xDD, 0xCA, 0x00, 0x00, 0x00};
+	char *txt[] = { "Package", "PPV-Event" };
+	static const uchar *cmd[] = { insC6, ins26 };
 
-  for (type=0; type<2; type++)
-  {
-    n=0;
-    write_cmd(cmd[type], cmd[type]+5);
-    while (cta_res[cta_lr-2]==0x98)
-    {
-      insCA[4]=cta_res[cta_lr-1];		// get len
-      write_cmd(insCA, NULL);		// read
-     if ((cta_res[cta_lr-2]==0x90) || (cta_res[cta_lr-2]==0x98))
-      {
-        for (j=0; j<cta_lr-2; j+=cta_res[j+1]+2)
-        {
-          provid=(cta_res[j+2+type]<<8) | cta_res[j+3+type];
-          for (k=0, i=j+4+type; (i<j+cta_res[j+1]) && (k<2); i+=cta_res[i+1]+2)
-          {
-            int32_t l;
-            switch(cta_res[i])
-            {
-              case 0x01: l=(cta_res[i+1]<(sizeof(provname)-1)) ?
-                           cta_res[i+1] : sizeof(provname)-1;
-                         memcpy(provname, cta_res+i+2, l);
-                         provname[l]='\0';
-                         break;
-              case 0x30: chid_date(cta_res+i+2, pdate+(k++<<4), 15);
-                         break;
-            }
-          }
-          cs_ri_log(reader, "%s: %d, id: %04X, date: %s - %s, name: %s",
-                    txt[type], ++n, provid, pdate, pdate+16, trim(provname));
-        }
-      }
-    }
-  }
-  cs_log("[conax-reader] ready for requests");
-  return OK;
+	for (type=0; type<2; type++) {
+		n=0;
+		write_cmd(cmd[type], cmd[type]+5);
+		while (cta_res[cta_lr-2]==0x98) {
+			insCA[4]=cta_res[cta_lr-1];		// get len
+			write_cmd(insCA, NULL);		// read
+			if ((cta_res[cta_lr-2]==0x90) || (cta_res[cta_lr-2]==0x98)) {
+				for (j=0; j<cta_lr-2; j+=cta_res[j+1]+2) {
+					provid=(cta_res[j+2+type]<<8) | cta_res[j+3+type];
+					chid[0] = '\0';
+					for (k=0, i=j+4+type; (i<j+cta_res[j+1]); i+=cta_res[i+1]+2) {
+						switch(cta_res[i]) {
+							case 0x01: 
+								l=(cta_res[i+1]<(sizeof(provname)-1)) ? cta_res[i+1] : sizeof(provname)-1;
+								memcpy(provname, cta_res+i+2, l);
+								provname[l]='\0';
+								break;
+							case 0x30:
+								if (k > 1) {
+									cs_ri_log(reader, "%s: %d, id: %04X%s, date: %s - %s, name: %s", txt[type], ++n, provid, chid, pdate, pdate+16, trim(provname));
+									k = 0;
+									chid[0] = '\0';
+								}
+								chid_date(cta_res+i+2, pdate+(k++<<4), 15);
+								break;
+							case 0x20: // Provider classes
+							case 0x90: // (?) not sure what this is, saw it once in log
+								snprintf(chid, sizeof(chid), ", classes: %02X%02X%02X%02X", cta_res[i+2], cta_res[i+3], cta_res[i+4] ,cta_res[i+5]);
+								break;
+						}
+					}
+					cs_ri_log(reader, "%s: %d, id: %04X%s, date: %s - %s, name: %s", txt[type], ++n, provid, chid, pdate, pdate+16, trim(provname));
+				}
+			}
+		}
+	}
+	cs_log("[conax-reader] ready for requests");
+	return OK;
 }
 
 void reader_conax(struct s_cardsystem *ph) 
