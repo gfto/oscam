@@ -1756,7 +1756,7 @@ static void * dvbapi_main_local(void *cli) {
 					len = read(connfd, mbuf, sizeof(mbuf));
 
 					if (len < 3) {
-						cs_debug_mask(D_DVBAPI, "camd.socket: too int16_t message received");
+						cs_debug_mask(D_DVBAPI, "camd.socket: too small message received");
 						continue;
 					}
 

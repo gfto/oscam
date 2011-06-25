@@ -2353,7 +2353,7 @@ int32_t write_config()
 	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
 }
 
-int32_t write_userdb(struct s_auth *authptr)
+int32_t write_userdb()
 {
 	FILE *f;
 	struct s_auth *account;
@@ -2374,7 +2374,7 @@ int32_t write_userdb(struct s_auth *authptr)
   fprintf(f,"# Read more: http://streamboard.gmc.to/svn/oscam/trunk/Distribution/doc/txt/oscam.user.txt\n\n");
 
   //each account
-	for (account=authptr; (account) ; account=account->next){
+	for (account=cfg.account; (account) ; account=account->next){
 		fprintf(f,"[account]\n");
 		fprintf_conf(f, "user", "%s\n", account->usr);
 		fprintf_conf(f, "pwd", "%s\n", account->pwd);
@@ -3215,7 +3215,6 @@ int32_t init_sidtab() {
         cfg.sidtab=ptr;
       sidtab=ptr;
       nr++;
-      memset(sidtab, 0, sizeof(struct s_sidtab));
       cs_strncpy(sidtab->label, strtolower(token+1), sizeof(sidtab->label));
       continue;
     }
@@ -3266,7 +3265,6 @@ int32_t init_provid() {
 			cfg.provid = ptr;
 
 		provid = ptr;
-		memset(provid, 0, sizeof(struct s_provid));
 
 		int32_t i;
 		char *ptr1;
@@ -3490,7 +3488,6 @@ int32_t init_tierid()
 			new_cfg_tierid = ptr;
 
 		tierid = ptr;
-		memset(tierid, 0, sizeof(struct s_tierid));
 
 		int32_t i;
 		char *ptr1 = strtok_r(payload, "|", &saveptr1);
@@ -4585,6 +4582,8 @@ void init_ac()
             token, errno, strerror(errno));
     return;
   }
+  
+  struct s_cpmap *cur_cpmap, *first_cpmap = NULL, *last_cpmap = NULL;
 
   for(nr=0; fgets(token, sizeof(token), fp);)
   {
@@ -4592,8 +4591,6 @@ void init_ac()
     uint16_t caid, sid, chid, dwtime;
     uint32_t  provid;
     char *ptr, *ptr1;
-    struct s_cpmap *ptr_cpmap;
-    static struct s_cpmap *cpmap=(struct s_cpmap *)0;
 
     if( strlen(token)<4 ) continue;
 
@@ -4644,19 +4641,23 @@ void init_ac()
           break;
         }
       }
-      if (!cs_malloc(&ptr_cpmap, sizeof(struct s_cpmap), -1)) return;
-      if( cpmap )
-        cpmap->next=ptr_cpmap;
+      if (!cs_malloc(&cur_cpmap, sizeof(struct s_cpmap), -1)){
+      	for(cur_cpmap = first_cpmap; cur_cpmap; cur_cpmap = cur_cpmap->next)
+      		free(cur_cpmap);
+      	return;
+      }
+      if(last_cpmap)
+        last_cpmap->next=cur_cpmap;
       else
-        cfg.cpmap=ptr_cpmap;
-      cpmap=ptr_cpmap;
+        first_cpmap=cur_cpmap;
+      last_cpmap=cur_cpmap;
 
-      cpmap->caid   = caid;
-      cpmap->provid = provid;
-      cpmap->sid    = sid;
-      cpmap->chid   = chid;
-      cpmap->dwtime = dwtime;
-      cpmap->next   = 0;
+      cur_cpmap->caid   = caid;
+      cur_cpmap->provid = provid;
+      cur_cpmap->sid    = sid;
+      cur_cpmap->chid   = chid;
+      cur_cpmap->dwtime = dwtime;
+      cur_cpmap->next   = 0;
 
       cs_debug_mask(D_CLIENT, "nr=%d, caid=%04X, provid=%06X, sid=%04X, chid=%04X, dwtime=%d",
                 nr, caid, provid, sid, chid, dwtime);
@@ -4664,6 +4665,11 @@ void init_ac()
     }
   }
   fclose(fp);
+  
+  last_cpmap = cfg.cpmap;
+  cfg.cpmap = first_cpmap;
+  for(cur_cpmap = last_cpmap; cur_cpmap; cur_cpmap = cur_cpmap->next)
+    add_garbage(cur_cpmap);
   //cs_log("%d lengths for caid guessing loaded", nr);
   return;
 }

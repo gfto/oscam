@@ -182,7 +182,7 @@ extern void cs_accounts_chk(void);
 extern void chk_account(const char *token, char *value, struct s_auth *account);
 extern void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab);
 extern int32_t write_services();
-extern int32_t write_userdb(struct s_auth *authptr);
+extern int32_t write_userdb();
 extern int32_t write_config();
 extern int32_t write_server();
 extern void write_versionfile();
