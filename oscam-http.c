@@ -2342,17 +2342,18 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 					if (cfg.http_hide_idle_clients != 1 && cfg.mon_hideclient_to > 0 && (now - cl->lastecm) <= cfg.mon_hideclient_to){
 						user_count_active++;
 						tpl_addVar(vars, TPLADD, "CLIENTTYPE", "a");
-					} else tpl_addVar(vars, TPLADD, "CLIENTTYPE", "c");
-					if(cl->lastecm > cl->login) isec = now - cl->lastecm;
-					else isec = now - cl->login;
+					} else tpl_addVar(vars, TPLADD, "CLIENTTYPE", "c");					
 				} else {
 					if (cl->typ=='r' && cl->reader->card_status==CARD_INSERTED)
 						reader_count_conn++;
 					else if (cl->typ=='p' && (cl->reader->card_status==CARD_INSERTED ||cl->reader->tcp_connected))
 						proxy_count_conn++;
-					tpl_printf(vars, TPLADD, "CLIENTTYPE", "%c", cl->typ);
-					isec = now - cl->last;
+					tpl_printf(vars, TPLADD, "CLIENTTYPE", "%c", cl->typ);					
 				}
+				if(cl->typ == 'c' || cl->typ == 'r' || cl->typ == 'p'){
+					if(cl->lastecm > cl->login) isec = now - cl->lastecm;
+					else isec = now - cl->login;
+				} else isec = now - cl->last;
 
 				shown = 1;
 				lsec = now - cl->login;
@@ -2788,7 +2789,7 @@ static char *send_oscam_services(struct templatevars *vars, struct uriparams *pa
 					}
 					
 					for (cl=first_client->next; cl ; cl=cl->next){
-						if(account = cl->account){
+						if(account == cl->account){
 							cl->sidtabok = account->sidtabok;
 							cl->sidtabno = account->sidtabok;
 						}
