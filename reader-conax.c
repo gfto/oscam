@@ -286,10 +286,9 @@ static int32_t conax_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 static int32_t conax_card_info(struct s_reader * reader)
 {
   def_resp;
-  int32_t type, i, j, k=0, n=0,l;
-  uint16_t provid = 0;
+  int32_t type, i, j, k, n=0;
+  uint16_t provid 
   char provname[32], pdate[32];
-  uchar chid[10];
   static const uchar insC6[] = {0xDD, 0xC6, 0x00, 0x00, 0x03, 0x1C, 0x01, 0x00};
   static const uchar ins26[] = {0xDD, 0x26, 0x00, 0x00, 0x03, 0x1C, 0x01, 0x01};
   uchar insCA[] = {0xDD, 0xCA, 0x00, 0x00, 0x00};
@@ -299,41 +298,32 @@ static int32_t conax_card_info(struct s_reader * reader)
   for (type=0; type<2; type++)
   {
     n=0;
-    j=0;
     write_cmd(cmd[type], cmd[type]+5);
     while (cta_res[cta_lr-2]==0x98)
     {
       insCA[4]=cta_res[cta_lr-1];		// get len
       write_cmd(insCA, NULL);		// read
-      if ((cta_res[cta_lr-2]==0x90) || (cta_res[cta_lr-2]==0x98))
+     if ((cta_res[cta_lr-2]==0x90) || (cta_res[cta_lr-2]==0x98))
       {
-        for (i=0; i<cta_lr-2; i++)
+        for (j=0; j<cta_lr-2; j+=cta_res[j+1]+2)
         {
-          switch(cta_res[j]) // check nano
+          provid=(cta_res[j+2+type]<<8) | cta_res[j+3+type];
+          for (k=0, i=j+4+type; (i<j+cta_res[j+1]) && (k<2); i+=cta_res[i+1]+2)
           {
-            case 0x32: // Provider ID
-                      provid=(cta_res[j+2+type]<<8) | cta_res[j+3+type];
-                      j=j+4;
-                      break;
-            case 0x01: // Provider name
-                      l=(cta_res[j+1]<(sizeof(provname)-1)) ?
-                      cta_res[j+1] : sizeof(provname)-1;
-                      memcpy(provname, cta_res+j+2, l);
-                      provname[l]='\0';
-                      j=j+cta_res[j+1]+2;
-                      break;
-            case 0x30: // Provider date
-                      chid_date(cta_res+j+2, pdate+(k++<<4), 15);
-                      j=j+cta_res[j+1]+2;
-                      break;
-            case 0x20: // Provider classes
-                      memcpy(chid,cta_res+j+2,4);
-                      j=j+cta_res[j+1]+2;
-                      k=0;
-            cs_ri_log(reader, "%s: %d, id: %04X, classes: %02X%02X%02X%02X, date: %s - %s, name: %s",
-                      txt[type], ++n, provid, chid[0],chid[1],chid[2],chid[3],pdate, pdate+16, trim(provname));
-                      break;
+            int32_t l;
+            switch(cta_res[i])
+            {
+              case 0x01: l=(cta_res[i+1]<(sizeof(provname)-1)) ?
+                           cta_res[i+1] : sizeof(provname)-1;
+                         memcpy(provname, cta_res+i+2, l);
+                         provname[l]='\0';
+                         break;
+              case 0x30: chid_date(cta_res+i+2, pdate+(k++<<4), 15);
+                         break;
+            }
           }
+          cs_ri_log(reader, "%s: %d, id: %04X, date: %s - %s, name: %s",
+                    txt[type], ++n, provid, pdate, pdate+16, trim(provname));
         }
       }
     }
