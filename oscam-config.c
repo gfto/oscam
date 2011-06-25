@@ -3179,57 +3179,63 @@ void init_free_sidtab() {
 }
 
 int32_t init_sidtab() {
-  int32_t nr, nro;
-  FILE *fp;
-  char *value;
-  char token[MAXLINESIZE];
-  struct s_sidtab *ptr;
-  struct s_sidtab *sidtab=(struct s_sidtab *)0;
+	int32_t nr, nro, nrr;
+	FILE *fp;
+	char *value;
+	char token[MAXLINESIZE];
+	struct s_sidtab *ptr;
+	struct s_sidtab *sidtab=(struct s_sidtab *)0;
 
-  snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_sidt);
-  if (!(fp=fopen(token, "r")))
-  {
-    cs_log("Cannot open file \"%s\" (errno=%d %s)", token, errno, strerror(errno));
-    return(1);
-  }
-  for (nro=0, ptr=cfg.sidtab; ptr; nro++)
-  {
-    struct s_sidtab *ptr_next;
-    ptr_next=ptr->next;
-    free_sidtab(ptr);
-    ptr=ptr_next;
-  }
-  nr=0;
-  while (fgets(token, sizeof(token), fp))
-  {
-    int32_t l;
-    void *ptr;
-    if ((l=strlen(trim(token)))<3) continue;
-    if ((token[0]=='[') && (token[l-1]==']'))
-    {
-      token[l-1]=0;
-      if (!cs_malloc(&ptr, sizeof(struct s_sidtab), -1)) return(1);
-      if (sidtab)
-        sidtab->next=ptr;
-      else
-        cfg.sidtab=ptr;
-      sidtab=ptr;
-      nr++;
-      cs_strncpy(sidtab->label, strtolower(token+1), sizeof(sidtab->label));
-      continue;
-    }
-    if (!sidtab) continue;
-    if (!(value=strchr(token, '='))) continue;
-    *value++='\0';
-    chk_sidtab(trim(strtolower(token)), trim(strtolower(value)), sidtab);
-  }
-  fclose(fp);
+	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_sidt);
+	if (!(fp=fopen(token, "r")))
+	{
+		cs_log("Cannot open file \"%s\" (errno=%d %s)", token, errno, strerror(errno));
+		return(1);
+	}
+	for (nro=0, ptr=cfg.sidtab; ptr; nro++)
+	{
+		struct s_sidtab *ptr_next;
+		ptr_next=ptr->next;
+		free_sidtab(ptr);
+		ptr=ptr_next;
+	}
+	nr = 0; nrr = 0;
+	while (fgets(token, sizeof(token), fp))
+	{
+		int32_t l;
+		void *ptr;
+		if ((l=strlen(trim(token)))<3) continue;
+		if ((token[0]=='[') && (token[l-1]==']'))
+		{
+			token[l-1]=0;
+			if(nr >= MAX_SIDBITS){
+				fprintf(stderr, "Warning: Service No.%d - '%s' ignored. Max allowed Services %d\n", nr, strtolower(token+1), MAX_SIDBITS);
+				nr++;
+				nrr++;
+			} else {
+				if (!cs_malloc(&ptr, sizeof(struct s_sidtab), -1)) return(1);
+				if (sidtab)
+					sidtab->next=ptr;
+				else
+					cfg.sidtab=ptr;
+				sidtab=ptr;
+				nr++;
+				cs_strncpy(sidtab->label, strtolower(token+1), sizeof(sidtab->label));
+				continue;
+			}
+		}
+		if (!sidtab) continue;
+		if (!(value=strchr(token, '='))) continue;
+		*value++='\0';
+		chk_sidtab(trim(strtolower(token)), trim(strtolower(value)), sidtab);
+	}
+	fclose(fp);
 
 #ifdef DEBUG_SIDTAB
-  show_sidtab(cfg.sidtab);
+	show_sidtab(cfg.sidtab);
 #endif
-  cs_log("services reloaded: %d services freed, %d services loaded", nro, nr);
-  return(0);
+	cs_log("services reloaded: %d services freed, %d services loaded, rejected %d", nro, nr, nrr);
+	return(0);
 }
 
 //Todo #ifdef CCCAM
