@@ -2756,14 +2756,14 @@ static char *send_oscam_services(struct templatevars *vars, struct uriparams *pa
 	struct s_sidtab *sidtab;
 	char *service = getParam(params, "service");
 	char channame[32];
-	int32_t i;	
+	int32_t i, counter = 0;
 
 	if (strcmp(getParam(params, "action"), "delete") == 0) {
 		if(cfg.http_readonly) {
 			tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Sorry, Webif is in readonly mode. No deletion will be made!</b><BR>");
 		} else {
 			struct s_sidtab *sidtab_prev = NULL;
-			int32_t sidtablength = -1, counter = 0;			
+			int32_t sidtablength = -1;
 			sidtab=cfg.sidtab;
 			
 			// Calculate sidtablength before deletion so that updating sidtabs is faster
@@ -2814,6 +2814,7 @@ static char *send_oscam_services(struct templatevars *vars, struct uriparams *pa
 
 	sidtab = cfg.sidtab;
 	// Show List
+	counter = 0;
 	while(sidtab != NULL) {
 		tpl_printf(vars, TPLADD, "SID","");
 		if ((strcmp(getParam(params, "service"), sidtab->label) == 0) && (strcmp(getParam(params, "action"), "list") == 0) ) {
@@ -2832,6 +2833,11 @@ static char *send_oscam_services(struct templatevars *vars, struct uriparams *pa
 
 		tpl_addVar(vars, TPLAPPEND, "SERVICETABS", tpl_getTpl(vars, "SERVICECONFIGLISTBIT"));
 		sidtab=sidtab->next;
+		counter++;
+	}
+	if(counter >= MAX_SIDBITS) {
+		tpl_addVar(vars, TPLADD, "BTNDISABLED", "DISABLED");
+		tpl_addVar(vars, TPLADD, "MESSAGE", "Maximum Number of Services is reached");
 	}
 	return tpl_getTpl(vars, "SERVICECONFIGLIST");
 }
