@@ -134,7 +134,7 @@ text.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}\n\
 
 #define JSCRIPT ""
 
-#define ICMA_ "data:image/x-icon;base64,\
+#define ICMAI "data:image/x-icon;base64,\
 AAABAAEAEBAAAAEACABoBQAAFgAAACgAAAAQAAAAIAAAAAEACAAAAAAAQAEAAAAAAAAAAAAAAAAA\
 AAAAAADw//8A7/D/AODg4ADf8P8A0PD/AM///wDA4P8Az8/PALDw/wCQz/8AsLC/AGDP/wBgz88A\
 YJD/AGCQzwBfr+8AYJCQAC9gzwAvYJAAIADfAC8AzwAvL5AAHw+wAF9QXwAfQGAAEB9vACAgIAAQ\
