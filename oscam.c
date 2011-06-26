@@ -910,7 +910,6 @@ struct s_client * create_client(in_addr_t ip) {
 		cl->account = first_client->account;
 
 		//master part
-		cl->stat=1;
 		cl->mutexstore = NULL;
 		cl->mutexstore_alloc = 0;
   	cl->mutexstore_used = 0;
@@ -1971,11 +1970,11 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 #ifdef WEBIF
 	if (er_reader) {
 		if(er->rc == E_FOUND)
-			snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s", er_reader->label);
+			cs_strncpy(client->lastreader, er_reader->label, sizeof(client->lastreader));
 		else if ((er->rc == E_CACHE1) || (er->rc == E_CACHE2))
 			snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s (cache)", er_reader->label);
 		else
-			snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s", stxt[er->rc]);
+			cs_strncpy(client->lastreader, stxt[er->rc], sizeof(client->lastreader));
 	}
 #endif
 

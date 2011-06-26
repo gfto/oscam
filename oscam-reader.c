@@ -171,6 +171,8 @@ int32_t network_tcp_connection_open()
 		fcntl(sd, F_SETFL, fl); //connect sucessfull, restore blocking mode
 		setTCPTimeouts(sd);
 		clear_block_delay(rdr);
+		cl->last=cl->login=time((time_t)0);
+		cl->last_caid=cl->last_srvid=0;
 		return sd;
 	}
 
@@ -187,6 +189,8 @@ int32_t network_tcp_connection_open()
 					fcntl(sd, F_SETFL, fl);
 					setTCPTimeouts(sd);
 					clear_block_delay(rdr);
+					cl->last=cl->login=time((time_t)0);
+					cl->last_caid=cl->last_srvid=0;
 					return sd; //now we are connected
 				}
 			}
@@ -199,6 +203,8 @@ int32_t network_tcp_connection_open()
 		fcntl(sd, F_SETFL, fl);
 		setTCPTimeouts(sd);
 		clear_block_delay(rdr);
+		cl->last=cl->login=time((time_t)0);
+		cl->last_caid=cl->last_srvid=0;
 		return sd;
 	}
 

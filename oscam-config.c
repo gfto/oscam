@@ -3329,7 +3329,7 @@ int32_t init_srvid()
 	}
 
 	while (fgets(token, sizeof(token), fp)) {
-		int32_t l, j, len=0, len2;
+		int32_t l, j, len=0, len2, srvidtmp;
 		uint32_t pos;
 		tmp = trim(token);
 
@@ -3397,14 +3397,14 @@ int32_t init_srvid()
 
 		char *srvidasc = strchr(token, ':');
 		*srvidasc++ = '\0';
-		srvid->srvid = dyn_word_atob(srvidasc) & 0xFFFF;
+		srvidtmp = dyn_word_atob(srvidasc) & 0xFFFF;
 		//printf("srvid %s - %d\n",srvidasc,srvid->srvid );
 
-		if (srvid->srvid<0) {
+		if (srvidtmp<0) {
 			free(tmpptr);
 			free(srvid);
 			continue;
-		}
+		} else srvid->srvid = srvidtmp;
 
 		srvid->ncaid = 0;
 		for (i = 0, ptr1 = strtok_r(token, ",", &saveptr1); (ptr1) && (i < 10) ; ptr1 = strtok_r(NULL, ",", &saveptr1), i++){

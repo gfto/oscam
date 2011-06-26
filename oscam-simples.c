@@ -801,7 +801,7 @@ char *strnew(char *str){
 }
 
 /* Gets the servicename. Make sure that buf is at least 32 bytes large. */
-char *get_servicename(struct s_client *cl, int32_t srvid, int32_t caid, char *buf){
+char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf){
 	int32_t i;
 	struct s_srvid *this;
 	buf[0] = '\0';
@@ -833,7 +833,7 @@ char *get_servicename(struct s_client *cl, int32_t srvid, int32_t caid, char *bu
 }
 
 /* Gets the tier name. Make sure that buf is at least 83 bytes long. */
-char *get_tiername(int32_t tierid, int32_t caid, char *buf){
+char *get_tiername(uint16_t tierid, uint16_t caid, char *buf){
 	int32_t i;
 	struct s_tierid *this = cfg.tierid;
 
@@ -849,7 +849,7 @@ char *get_tiername(int32_t tierid, int32_t caid, char *buf){
 }
 
 /* Gets the provider name. Make sure that buf is at least 83 bytes long. */
-char *get_provider(int32_t caid, uint32_t provid, char *buf){
+char *get_provider(uint16_t caid, uint32_t provid, char *buf){
 	struct s_provid *this = cfg.provid;
 
 	for (buf[0] = 0; this && (!buf[0]); this = this->next) {

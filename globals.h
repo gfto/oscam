@@ -648,11 +648,10 @@ struct s_client
   TUNTAB	ttab;
   SIDTABBITS	sidtabok; // positiv services
   SIDTABBITS	sidtabno; // negative services
-  int32_t		typ;        // first s_client is type s=starting (master) thread; type r = physical reader, type p = proxy reader both always have 1 s_reader struct allocated; type c = client (user logging in into oscam) type m = monitor type h = http server a = anticascader
-  int32_t		ctyp;
-  int32_t		stat;
-  int32_t		last_srvid;
-  int32_t		last_caid;
+  int8_t		typ;        // first s_client is type s=starting (master) thread; type r = physical reader, type p = proxy reader both always have 1 s_reader struct allocated; type c = client (user logging in into oscam) type m = monitor type h = http server a = anticascader
+  int8_t		ctyp;
+  uint16_t		last_srvid;
+  uint16_t		last_caid;
   struct s_srvid *last_srvidptr;
   int32_t		tosleep;
   struct s_auth *account;
@@ -662,7 +661,7 @@ struct s_client
   uint16_t	pipecnt;
   CS_MUTEX_LOCK pipelock;
   struct	sockaddr_in udp_sa;
-  int32_t		log;
+  int8_t		log;
   int32_t		logcounter;
   int32_t		cwfound;     // count found ECMs per client
   int32_t		cwcache;     // count ECMs from cache1/2 per client
@@ -673,7 +672,7 @@ struct s_client
   int32_t		cwlastresptime; //last Responsetime (ms)
   int32_t		emmok;       // count EMM ok
   int32_t		emmnok;	     // count EMM nok
-  int32_t		pending;     // number of ECMs pending
+  int8_t		pending;     // number of ECMs pending
 #ifdef WEBIF
   struct	s_cwresponse	cwlastresptimes[CS_ECM_RINGBUFFER_MAX]; //ringbuffer for last 20 times
   int32_t		cwlastresptimes_last; // ringbuffer pointer
@@ -704,7 +703,6 @@ struct s_client
   FTAB		ftab;        // user [caid] and ident filter
   CLASSTAB	cltab;
 
-
   int32_t pfd;      // Primary FD, must be closed on exit
   struct s_reader *reader; //points to s_reader when cl->typ='r'
 
@@ -725,25 +723,25 @@ struct s_client
   //reader common
   int32_t last_idx;
   uint16_t idx;
-  int32_t rotate;
+  int8_t rotate;
 
   uchar	*req;
 
-  int32_t       ncd_proto;
+  int8_t ncd_proto;
 
   //camd35
   uchar upwd[64];
   int8_t is_udp;
   int8_t stopped;
-  int32_t lastcaid;
-  int32_t lastsrvid;
+  uint16_t lastcaid;
+  uint16_t lastsrvid;
   int32_t lastpid;
   time_t emm_last;
   int8_t disable_counter;
   uchar lastserial[8];
 
   //monitor
-  int32_t auth;
+  int8_t auth;
 
   //oscam.c
   struct timeval tv;
@@ -780,7 +778,7 @@ struct s_CmdTab {
 };
 
 struct s_ecmWhitelist {
-	int16_t caid;
+	uint16_t caid;
 	struct s_ecmWhitelistIdent *idents;
 	struct s_ecmWhitelist *next;
 };
@@ -875,7 +873,7 @@ struct s_reader  //contains device info, reader info and card info
   uchar     ncd_skey[16];
   int8_t       ncd_disable_server_filt;
   uint16_t    ncd_msgid;
-  int32_t       ncd_proto;
+  int8_t       ncd_proto;
 #ifdef MODULE_CCCAM
   char      cc_version[7];  // cccam version
   char      cc_build[7];    // cccam build number
@@ -887,14 +885,14 @@ struct s_reader  //contains device info, reader info and card info
   int8_t       cc_keepalive;
   int8_t		cc_hop; //For non-cccam reader: hop for virtual cards
 #endif
-  uchar     tcp_connected;
+  int8_t     tcp_connected;
   int32_t       tcp_ito;      // inactivity timeout
   int32_t       tcp_rto;      // reconnect timeout
   struct timeb	tcp_block_connect_till; //time tcp connect ist blocked
   int32_t       tcp_block_delay; //incrementing block time
   time_t    last_g;       // get (if last_s-last_g>tcp_rto - reconnect )
   time_t    last_s;       // send
-  uchar     show_cls;     // number of classes subscription showed on kill -31
+  uint8_t   show_cls;     // number of classes subscription showed on kill -31
   FTAB      fchid;
   FTAB      ftab;
   CLASSTAB  cltab;
@@ -1058,9 +1056,9 @@ struct s_auth
 
 struct s_srvid
 {
-  int32_t     srvid;
-  int32_t     ncaid;
-  int32_t     caid[10];
+  uint16_t   srvid;
+  int8_t     ncaid;
+  uint16_t   caid[10];
   char    *data;
   char    *prov;
   char    *name;
@@ -1071,9 +1069,9 @@ struct s_srvid
 
 struct s_tierid
 {
-  int32_t     tierid;
-  int32_t     ncaid;
-  int32_t     caid[10];
+  uint16_t    tierid;
+  int8_t     ncaid;
+  uint16_t   caid[10];
   char    name[33];
   struct  s_tierid *next;
 };
@@ -1081,7 +1079,7 @@ struct s_tierid
 //Todo #ifdef CCCAM
 struct s_provid
 {
-	int32_t		caid;
+	uint16_t		caid;
 	uint32_t	provid;
 	char	prov[33];
 	char	sat[33];
