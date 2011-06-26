@@ -2454,9 +2454,13 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 				}
 
 				if (!apicall) {
-					tpl_printf(vars, TPLADD, "CLIENTLOGINDATE", "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year%100);
-					tpl_printf(vars, TPLAPPEND, "CLIENTLOGINDATE", " %02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
-					tpl_addVar(vars, TPLADD, "CLIENTLOGINSECS", sec2timeformat(vars, lsec));
+					if((cl->typ != 'p' && cl->typ != 'r') || cl->reader->card_status == CARD_INSERTED){
+						tpl_printf(vars, TPLADD, "CLIENTLOGINDATE", "%02d.%02d.%02d  %02d:%02d:%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year%100, lt.tm_hour, lt.tm_min, lt.tm_sec);
+						tpl_addVar(vars, TPLADD, "CLIENTLOGINSECS", sec2timeformat(vars, lsec));
+					} else {
+						tpl_addVar(vars, TPLADD, "CLIENTLOGINDATE", "");
+						tpl_addVar(vars, TPLADD, "CLIENTLOGINSECS", "");
+					}
 				} else {
 					char tbuffer [30];
 					strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &lt);
