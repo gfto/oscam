@@ -652,15 +652,15 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TH>Last Channel</TH>\n\
 			<TH>Time on Channel</TH>\n\
 			<TH>Idle</TH>\n\
-			<TH>OK</TH>\n\
-			<TH>NOK</TH>\n\
-			<TH>IGN</TH>\n\
-			<TH>TOUT</TH>\n\
-			<TH>CACHE</TH>\n\
-			<TH>TUN</TH>\n\
-			<TH>LTIME</TH>\n\
-			<TH>EOK</TH>\n\
-			<TH>ENOK</TH>\n\
+			<TH TITLE=\"Delivered ECM with status OK\">OK</TH>\n\
+			<TH TITLE=\"Delivered ECM with status not OK\">NOK</TH>\n\
+			<TH TITLE=\"Ignored ECM by filters, part of NOK\">IGN</TH>\n\
+			<TH TITLE=\"Timeout ECM, part of NOK\">TOUT</TH>\n\
+			<TH TITLE=\"Delivered ECM from cache, part of OK\">CACHE</TH>\n\
+			<TH TITLE=\"Delivered ECM from tunneled, part of OK\">TUN</TH>\n\
+			<TH TITLE=\"Last ECM Time\">LTIME</TH>\n\
+			<TH TITLE=\"Valid EMM delivered\">EOK</TH>\n\
+			<TH TITLE=\"Invalid EMM delivered\">ENOK</TH>\n\
 			<TH>CW Rate</TH>\n\
 			<TH colspan=\"3\" class=\"centered\">Action</TH>\n\
 		</TR>\n\
