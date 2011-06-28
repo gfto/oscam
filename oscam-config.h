@@ -19,6 +19,10 @@
 #endif
 #endif
 
+#ifndef WITH_STAPI
+//#define WITH_STAPI
+#endif
+
 #ifndef IRDETO_GUESSING
 #define IRDETO_GUESSING
 #endif
