@@ -299,7 +299,8 @@ extern char *RDR_CD_TXT[];
 enum {E1_GLOBAL=0, E1_USER, E1_READER, E1_SERVER, E1_LSERVER};
 enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE,
       E2_EA_LEN, E2_F0_LEN, E2_OFFLINE, E2_SID,
-      E2_CCCAM_NOCARD=0x27, E2_CCCAM_NOK1=0x28, E2_CCCAM_NOK2=0x29, E2_CCCAM_LOOP=0x30};
+      E2_CCCAM_NOCARD=0x27, E2_CCCAM_NOK1=0x28, E2_CCCAM_NOK2=0x29, E2_CCCAM_LOOP=0x30,
+      E2_WRONG_CHKSUM};
 
 #define CTA_RES_LEN 512
 
@@ -809,6 +810,7 @@ struct s_reader  //contains device info, reader info and card info
   struct s_client * client; //pointer to 'r'client this reader is running in
   int8_t       enable;
   int8_t       available; //Schlocke: New flag for loadbalancing. Only reader if reader supports ph.c_available function
+  int8_t       dropbadcws; //Schlocke: 1=drops cw if checksum is wrong. 0=fix checksum (default)
   int8_t       fd_error;
   int32_t       fd;
   uint64_t    grp;

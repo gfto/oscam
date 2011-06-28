@@ -694,7 +694,7 @@ int32_t cc_get_nxt_ecm(struct s_client *cl) {
 #endif
 		}
 
-		else if (er->rc >= 10 && er->rc != 101) { // stil active and waiting
+		else if (er->rc >= 10 && er->rc <= 100) { // stil active and waiting
 			pending++;
 			if (loop_check(cc->peer_node_id, er->client)) {
 				er->rc = E_RDR_NOTFOUND;
@@ -1078,6 +1078,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		}
 		cs_debug_mask(D_READER, "cccam: ecm trylock: got lock");
 	}
+	int processed_ecms = 0;
 	do {
 	cc->ecm_time = cur_time;
 	rdr->available = cc->extended_mode;
@@ -1209,6 +1210,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		set_au_data(cl, rdr, card, cur_er);
 		cs_readunlock(&cc->cards_busy);
 		
+		processed_ecms++;
 		if (cc->extended_mode)
 				continue; //process next pending ecm!
 		return 0;
@@ -1217,7 +1219,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		//So if the last Message was a MSG_NEW_CARD, this "card receiving" is not already done
 		//if this happens, we do not autoblock it and do not set rc status
 		//So fallback could resolve it
-		if (cc->last_msg != MSG_NEW_CARD && cc->last_msg != MSG_NEW_CARD_SIDINFO && !cc->just_logged_in) {
+		if (cc->last_msg != MSG_NEW_CARD && cc->last_msg != MSG_NEW_CARD_SIDINFO && cc->last_msg != MSG_CARD_REMOVED && !cc->just_logged_in) {
 			cs_debug_mask(D_READER, "%s no suitable card on server", getprefix());
 
 			cur_er->rc = E_RDR_NOTFOUND;
@@ -1239,13 +1241,24 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 							ll_iter_remove_data(&it2);
 				}
 			}
+		} else {
+			//We didn't find a card and the last message was MSG_CARD_REMOVED - so we wait for a new card and process die ecm later
+			cur_er->rc = 102; //mark as waiting
 		}
 	}
 	cs_readunlock(&cc->cards_busy);
 
 	//process next pending ecm!
-	} while (cc->extended_mode);
-
+	} while (cc->extended_mode || processed_ecms == 0);
+	
+	//Now mark all waiting as unprocessed:
+	int i;
+	for (i = 0; i < CS_MAXPENDING; i++) {
+		er = &cl->ecmtask[i];
+		if (er->rc == 102)
+			er->rc = 100;
+	}
+                            
 	if (!cc->extended_mode) {
 		rdr->available = 1;
 		cs_writeunlock(&cc->ecm_busy);

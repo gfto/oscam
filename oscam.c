@@ -1788,13 +1788,20 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 {
   int32_t i;
   uchar c;
+  
   for (i=0; i<16; i+=4)
   {
     c=((er->cw[i]+er->cw[i+1]+er->cw[i+2]) & 0xff);
     if (er->cw[i+3]!=c)
     {
-      cs_debug_mask(D_TRACE, "notice: changed dcw checksum byte cw[%i] from %02x to %02x", i+3, er->cw[i+3],c);
-      er->cw[i+3]=c;
+	  if (reader->dropbadcws) {
+	  	er->rc = E_RDR_NOTFOUND;
+	  	er->rcEx = E2_WRONG_CHKSUM;
+	  	break;
+	  } else {
+        cs_debug_mask(D_TRACE, "notice: changed dcw checksum byte cw[%i] from %02x to %02x", i+3, er->cw[i+3],c);
+        er->cw[i+3]=c;
+	  }
     }
   }
 
