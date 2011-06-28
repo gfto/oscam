@@ -250,6 +250,7 @@ void network_tcp_connection_close(struct s_client *cl, int32_t fd)
     if(reader) {
         reader->ncd_msgid=0;
         reader->last_s=reader->last_g=0;
+        cl->login=time((time_t)0);
         
         if (reader->ph.c_init(cl)) {
             cs_debug_mask(D_READER, "network_tcp_connection_close() exit(1);");

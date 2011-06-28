@@ -745,10 +745,10 @@ char *sec2timeformat(struct templatevars *vars, int32_t seconds) {
 	int32_t secs = 0, fullmins = 0, mins = 0, fullhours = 0, hours = 0,	days = 0;
 
 	secs = seconds % 60;
-	if (seconds > 60) {
+	if (seconds >= 60) {
 		fullmins = seconds / 60;
 		mins = fullmins % 60;
-		if(fullmins > 60) {
+		if(fullmins >= 60) {
 			fullhours = fullmins / 60;
 			hours = fullhours % 24;
 			days = fullhours / 24;

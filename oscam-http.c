@@ -2509,7 +2509,10 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 				}
 
 				if (!apicall) {
-					tpl_addVar(vars, TPLADD, "CLIENTIDLESECS", sec2timeformat(vars, isec));
+					if((cl->typ != 'p' && cl->typ != 'r') || cl->reader->card_status == CARD_INSERTED)
+						tpl_addVar(vars, TPLADD, "CLIENTIDLESECS", sec2timeformat(vars, isec));
+					else
+						tpl_printf(vars, TPLADD, "CLIENTIDLESECS", "<font color=\"red\">%s</font>", sec2timeformat(vars, isec));
 				} else {
 					tpl_printf(vars, TPLADD, "CLIENTIDLESECS", "%d", isec);
 				}

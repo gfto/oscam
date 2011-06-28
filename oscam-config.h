@@ -150,7 +150,6 @@
 #endif
 
 #ifdef OS_FREEBSD
-#  define NO_ENDIAN_H
 #  define NO_FTIME
 #endif
 
