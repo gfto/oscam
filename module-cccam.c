@@ -2959,12 +2959,12 @@ int32_t cc_cli_connect(struct s_client *cl) {
 
 	// get init seed
 	if ((n = cc_recv_to(cl, data, 16)) != 16) {
-		int32_t err = errno;
 		if (n <= 0)
-			cs_log("%s server blocked connection!", rdr->label);
+			cs_log("Didn't get init seed from reader %s (errno=%d %s)", rdr->label, errno, strerror(errno));
 		else
-			cs_log("%s server does not return 16 bytes (n=%d, errno=%d %s)",
-				rdr->label, n, err, strerror(errno));
+			cs_log("%s server returned %d instead of 16 bytes as init seed (errno=%d %s)",
+				rdr->label, n, errno, strerror(errno));
+		cc_cli_close(cl, FALSE);
 		block_connect(rdr);
 		return -2;
 	}
