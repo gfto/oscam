@@ -19,8 +19,10 @@
 #endif
 #endif
 
+#ifdef HAVE_DVBAPI
 #ifndef WITH_STAPI
 //#define WITH_STAPI
+#endif
 #endif
 
 #ifndef IRDETO_GUESSING

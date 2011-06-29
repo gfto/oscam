@@ -62,20 +62,20 @@ print_components() {
 
 menu_addons() {
 	${DIALOG} --checklist "\nChoose add-ons:\n " $height $width $listheight \
-		WEBIF				"Web Interface"		$(check_test "WEBIF") \
-		HAVE_DVBAPI			"DVB API"			$(check_test "HAVE_DVBAPI") \
-		WITH_STAPI			"STAPI"				$(check_test "WITH_STAPI") \
-		IRDETO_GUESSING		"Irdeto guessing"	$(check_test "IRDETO_GUESSING") \
-		CS_ANTICASC			"Anti cascading"	$(check_test "CS_ANTICASC") \
-		WITH_DEBUG			"Debug messages"	$(check_test "WITH_DEBUG") \
-		CS_WITH_DOUBLECHECK	"ECM doublecheck"	$(check_test "CS_WITH_DOUBLECHECK") \
-		CS_LED				"LED"				$(check_test "CS_LED") \
-		QBOXHD_LED			"QboxHD LED"		$(check_test "QBOXHD_LED") \
-		CS_LOGHISTORY		"Log history"		$(check_test "CS_LOGHISTORY") \
-		MODULE_MONITOR		"Monitor"			$(check_test "MODULE_MONITOR") \
-		WITH_SSL			"OpenSSL support"	$(check_test "WITH_SSL") \
-		WITH_LB				"Loadbalancing"		$(check_test "WITH_LB") \
-		LCDSUPPORT			"LCD support"		$(check_test "LCDSUPPORT") \
+		WEBIF				"Web Interface"				$(check_test "WEBIF") \
+		HAVE_DVBAPI			"DVB API"					$(check_test "HAVE_DVBAPI") \
+		WITH_STAPI			"STAPI (DVB API required)"	$(check_test "WITH_STAPI") \
+		IRDETO_GUESSING		"Irdeto guessing"			$(check_test "IRDETO_GUESSING") \
+		CS_ANTICASC			"Anti cascading"			$(check_test "CS_ANTICASC") \
+		WITH_DEBUG			"Debug messages"			$(check_test "WITH_DEBUG") \
+		CS_WITH_DOUBLECHECK	"ECM doublecheck"			$(check_test "CS_WITH_DOUBLECHECK") \
+		CS_LED				"LED"						$(check_test "CS_LED") \
+		QBOXHD_LED			"QboxHD LED"				$(check_test "QBOXHD_LED") \
+		CS_LOGHISTORY		"Log history"				$(check_test "CS_LOGHISTORY") \
+		MODULE_MONITOR		"Monitor"					$(check_test "MODULE_MONITOR") \
+		WITH_SSL			"OpenSSL support"			$(check_test "WITH_SSL") \
+		WITH_LB				"Loadbalancing"				$(check_test "WITH_LB") \
+		LCDSUPPORT			"LCD support"				$(check_test "LCDSUPPORT") \
 		2> ${tempfile}
 
 	opt=${?}
