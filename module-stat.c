@@ -447,8 +447,9 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	}
 	else if (rc == 1 || rc == 2) { //cache
 		//no increase of statistics here, cachetime is not real time
-		stat = get_add_stat(rdr, er, prid);
-		stat->last_received = ctime;
+		stat = get_stat(rdr, er->caid, prid, er->srvid, er->l);
+		if (stat != NULL)
+			stat->last_received = ctime;
 	}
 	else if (rc == 4) { //not found
 		//CCcam card can't decode, 0x28=NOK1, 0x29=NOK2
