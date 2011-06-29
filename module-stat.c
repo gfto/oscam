@@ -450,6 +450,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 		stat = get_stat(rdr, er->caid, prid, er->srvid, er->l);
 		if (stat != NULL)
 			stat->last_received = ctime;
+		return;
 	}
 	else if (rc == 4) { //not found
 		//CCcam card can't decode, 0x28=NOK1, 0x29=NOK2
