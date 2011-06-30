@@ -988,6 +988,30 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 
 	demux[demux_id].ECMpids[num].checked=1;
 
+	//BISS
+	//ecm stream pid is fake, so send out one fake ecm request
+	if ((demux[demux_id].ECMpids[num].CAID >> 8) == 0x26) {
+		ECM_REQUEST *er;
+		if (!(er=get_ecmtask()))
+			return;
+
+		er->srvid = demux[demux_id].program_number;
+		er->caid  = demux[demux_id].ECMpids[num].CAID;
+		er->pid   = demux[demux_id].ECMpids[num].ECM_PID;
+		er->prid  = demux[demux_id].ECMpids[num].PROVID;
+
+		er->l=3;
+		memset(er->ecm, 0, 3);
+
+		cs_debug_mask(D_DVBAPI, "request cw for caid %04X provid %06X srvid %04X pid %04X", er->caid, er->prid, er->srvid, er->pid);
+		get_cw(dvbapi_client, er);
+
+		if (cfg.dvbapi_requestmode == 1)
+			dvbapi_try_next_caid(demux_id);
+
+		return;
+	}
+
 	if (cfg.dvbapi_requestmode == 1) {
 		dvbapi_start_filter(demux_id, num, demux[demux_id].ECMpids[num].ECM_PID, 0x80, 0xF0, 3000, TYPE_ECM, 3); 
 		dvbapi_try_next_caid(demux_id);
