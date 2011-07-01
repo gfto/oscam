@@ -1308,7 +1308,9 @@ int32_t cc_send_pending_emms(struct s_client *cl) {
 			}
 			rdr->available = 0;
 		}
-		size = emmbuf[11] + 12;
+		//Support for emmsize>256 bytes:
+		size = (emmbuf[11] | (emmbuf[2]<<8)) + 12;
+		emmbuf[2] = 0;
 
 		cc->just_logged_in = 0;
 		cs_ftime(&cc->ecm_time);
@@ -1403,7 +1405,7 @@ int32_t cc_send_emm(EMM_PACKET *ep) {
 	// build ecm message
 	emmbuf[0] = ep->caid[0];
 	emmbuf[1] = ep->caid[1];
-	emmbuf[2] = 0;
+	emmbuf[2] = ep->l>>8; //Support for emm len > 256bytes
 	emmbuf[3] = ep->provid[0];
 	emmbuf[4] = ep->provid[1];
 	emmbuf[5] = ep->provid[2];
@@ -1412,7 +1414,7 @@ int32_t cc_send_emm(EMM_PACKET *ep) {
 	emmbuf[8] = emm_card->id >> 16;
 	emmbuf[9] = emm_card->id >> 8;
 	emmbuf[10] = emm_card->id & 0xff;
-	emmbuf[11] = ep->l;
+	emmbuf[11] = ep->l&0xFF;
 	memcpy(emmbuf + 12, ep->emm, ep->l);
 
 	cs_readunlock(&cc->cards_busy);
@@ -2083,7 +2085,8 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			if ((er = get_ecmtask())) {
 				er->caid = b2i(2, buf + 4);
 				er->srvid = b2i(2, buf + 14);
-				er->l =(((buf[18]&0x0f)<< 8) | buf[19])+3;
+				//er->l =(((buf[18]&0x0f)<< 8) | buf[19])+3;
+				er->l = l-17;
 				memcpy(er->ecm, buf + 17, er->l);
 				er->prid = b2i(4, buf + 6);
 				cc->server_ecm_pending++;
@@ -2419,7 +2422,10 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				//emm->hexserial[1] = buf[12];
 				//emm->hexserial[2] = buf[13];
 				//emm->hexserial[3] = buf[14];
-				emm->l = buf[15];
+				if (l <= 0xFF)
+					emm->l = buf[15];
+				else
+					emm->l = l-16;
 				memcpy(emm->emm, buf + 16, emm->l);
 				//emm->type = UNKNOWN;
 				//emm->cidx = cs_idx;
