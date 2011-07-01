@@ -3247,7 +3247,14 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 			tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "API is in readonly mode");
 			return tpl_getTpl(vars, "APIERROR");
 		} else {
-			return send_oscam_user_config_edit(vars, params, 1);
+			struct s_auth *account = get_account_by_name(getParam(params, "user"));
+			if (!account && strcmp(getParam(params, "action"), "Save")) {
+				//Send Errormessage
+				tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "user not exist");
+				return tpl_getTpl(vars, "APIERROR");
+			} else {
+				return send_oscam_user_config_edit(vars, params, 1);
+			}
 		}
 	}
 	else if (strcmp(getParam(params, "part"), "entitlement") == 0) {
