@@ -2238,6 +2238,17 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				}
 			}
 
+			if (rdr->ll_entitlements) {
+				LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
+				S_ENTITLEMENT *item;
+
+				tpl_addVar(vars, TPLAPPEND, "LOGHISTORY", "<BR><BR>New Structure:<BR>");
+				while ((item = ll_iter_next(&itr))) {
+					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "entitlement: caid %04X id %04X %s - %s <BR>",
+							item->caid, item->id, item->start, item->end);
+				}
+			}
+
 			tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
 			tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
 		}
