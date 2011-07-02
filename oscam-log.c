@@ -404,7 +404,7 @@ void logCWtoFile(ECM_REQUEST *er){
 	char srvname[128];
 	/* %s / %s   _I  %04X  _  %s  .cwl  */
 	char buf[256 + sizeof(srvname)];
-	char date[7];
+	char date[9];
 	unsigned char  i, parity, writeheader = 0;
 	time_t t;
 	struct tm timeinfo;
