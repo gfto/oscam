@@ -802,8 +802,19 @@ static int32_t irdeto_card_info(struct s_reader * reader)
             if (chid && chid!=0xFFFF)
             {
               time_t date;
-              chid_date(reader,date=b2i(2, cta_res+k+2), t, 16);
-              chid_date(reader,date+cta_res[k+4], t+16, 16);
+
+              // could add entitlements to list but produces a warning related to date variable
+             /* cs_add_entitlement(reader,
+           						reader->caid,
+           						b2i(3, &reader->prid[i][1]),
+           						chid,
+           						0,
+           						chid_date(reader,date=b2i(2, cta_res+k+2), t, 16),
+           						chid_date(reader,date+cta_res[k+4], t+16, 16));
+			*/
+
+              chid_date(reader,date=b2i(2, cta_res+k+2), t, 16); // if code above is used this is superfluous
+              chid_date(reader,date+cta_res[k+4], t+16, 16);     // if code above is used this is superfluous
               if (first)
               {
                 cs_ri_log(reader, "entitlements for provider: %d, id: %06X", p, b2i(3, &reader->prid[i][1]));
