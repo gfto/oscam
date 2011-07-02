@@ -279,6 +279,7 @@ extern void clear_reader_pipe(struct s_reader * reader);
 extern void block_connect(struct s_reader *rdr);
 extern int32_t is_connect_blocked(struct s_reader *rdr);
 extern void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, uint16_t id, uint16_t class, time_t start, time_t end);
+extern void cs_clear_entitlement(struct s_reader *rdr);
 
 /* ===========================
  *        oscam-simples

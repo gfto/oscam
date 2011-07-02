@@ -36,8 +36,11 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 	}
 }
 
-void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, uint16_t id, uint16_t class, time_t start, time_t end) {
-
+/**
+ * add one entitlement item to entitlements of reader.
+ **/
+void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, uint16_t id, uint16_t class, time_t start, time_t end)
+{
 	if (!rdr->ll_entitlements) rdr->ll_entitlements = ll_create();
 
 	LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
@@ -59,6 +62,17 @@ void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, ui
 		cs_debug_mask(D_TRACE, "entitlement: Add caid %4X id %4X %s - %s ", item->caid, item->id, item->start, item->end);
 	}
 
+}
+
+/**
+ * clears entitlements of reader.
+ **/
+void cs_clear_entitlement(struct s_reader *rdr)
+{
+	if (!rdr->ll_entitlements)
+		return;
+
+	ll_clear_data(rdr->ll_entitlements);
 }
 
 static void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw)
