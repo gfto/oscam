@@ -462,6 +462,16 @@ typedef struct v_ban {					// failban listmember
 	time_t 			v_time;
 } V_BAN;
 
+typedef struct s_entitlement {			// contains entitlement Info
+	uint16_t		id;					// the element ID
+	uint8_t			type;				// enumerator for tier,chid whatever
+	uint16_t		caid;				// the caid of element
+	uint32_t		provid;				// the provid of element
+	uint16_t		class;				// the class needed for some systems
+	time_t			start;				// startdate
+	time_t			end;				// enddate
+} S_ENTITLEMENT;
+
 struct s_client ;
 struct ecm_request_t ;
 struct emm_packet_t ;
@@ -804,6 +814,7 @@ struct s_reader  						//contains device info, reader info and card info
 	int8_t			audisabled; 		// exclude reader from auto AU
 	int8_t			smargopatch;
 	struct s_client *client; 			// pointer to 'r'client this reader is running in
+	LLIST 			*ll_entitlements;	// entitlements
 	int8_t       	enable;
 	int8_t       	available; 			// Schlocke: New flag for loadbalancing. Only reader if reader supports ph.c_available function
 	int8_t       	dropbadcws;			// Schlocke: 1=drops cw if checksum is wrong. 0=fix checksum (default)

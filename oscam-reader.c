@@ -36,6 +36,31 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 	}
 }
 
+void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, uint16_t id, uint16_t class, time_t start, time_t end) {
+
+	if (!rdr->ll_entitlements) rdr->ll_entitlements = ll_create();
+
+	LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
+	S_ENTITLEMENT *item;
+
+	if(cs_malloc(&item,sizeof(S_ENTITLEMENT), -1)){
+
+		// fill item
+		item->caid = caid;
+		item->provid = provid;
+		item->id = id;
+		item->class = class;
+		item->start = start;
+		item->end = end;
+
+		//add item
+		ll_iter_insert(&itr, item);
+
+		cs_debug_mask(D_TRACE, "entitlement: Add caid %4X id %4X %s - %s ", item->caid, item->id, item->start, item->end);
+	}
+
+}
+
 static void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw)
 {
   int32_t i, pending=0;
