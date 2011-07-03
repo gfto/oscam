@@ -11,6 +11,18 @@ static char *chid_date(const uchar *ptr, char *buf, int32_t l)
   return(buf);
 }
 
+/* todo: for discussion
+static time_t chid_date_t(const uchar *ptr, char *buf, int32_t l)
+{
+	struct tm tm;
+	if (buf) {
+		snprintf(buf, l, "%04d/%02d/%02d", 1990+(ptr[1]>>4)+(((ptr[0]>>5)&7)*10), ptr[1]&0xf, ptr[0]&0x1f);
+		strptime(buf, "%Y/%m/%d", &tm);
+	}
+	return(mktime(&tm));
+}
+*/
+
 static int32_t read_record(struct s_reader * reader, const uchar *cmd, const uchar *data, uchar * cta_res)
 {
   uint16_t cta_lr;
