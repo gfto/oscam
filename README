@@ -92,10 +92,10 @@ svn repository:
 svn co http://streamboard.gmc.to/svn/oscam/trunk oscam-svn
 
 mirror svn:
-svn co http://oscam.ump2002.net/svn/oscam/trunk oscam-mirror
+svn co http://oscam.to/svn/oscam/trunk oscam-mirror
 
 Build server for automated builds:
-http://www.ump2002.net/index.php?direction=0&order=mod&directory=OSCam
+http://download.oscam.to/index.php
 
 Configuration wiki:
 http://streamboard.gmc.to/wiki/index.php/OSCam/
@@ -109,7 +109,7 @@ http://streamboard.gmc.to/wbb2/portal.php
 
 Support for international (mainly French and Italian language) users can be 
 found on
-http://oscam.ump2002.net/board/hmportal.php
+http://oscam.to/wbb3/index.php
 
 You may also visit our Trac system for tracking and filing bug reports:
 http://streamboard.gmc.to/oscam
