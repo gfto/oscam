@@ -801,7 +801,7 @@ static int32_t irdeto_card_info(struct s_reader * reader)
 						chid=b2i(2, cta_res+k);
 						if (chid && chid!=0xFFFF)
 						{
-							time_t date;
+							time_t date = time((time_t *)0);
 
 							// todo: add entitlements to list but produces a warning related to date variable
 							cs_add_entitlement(reader,

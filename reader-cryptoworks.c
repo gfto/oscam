@@ -91,6 +91,18 @@ static char *chid_date(uchar *ptr, char *buf, int32_t l)
   return(buf);
 }
 
+// todo: for discussion
+static time_t chid_date_t(uchar *ptr, char *buf, int32_t l)
+{
+	struct tm tm;
+	if (buf) {
+		snprintf(buf, l, "%04d/%02d/%02d", 1990+(ptr[0]>>1), ((ptr[0]&1)<<3)|(ptr[1]>>5), ptr[1]&0x1f);
+		strptime(buf, "%Y/%m/%d", &tm);
+	}
+	return(mktime(&tm));
+}
+
+
 static int32_t select_file(struct s_reader * reader, uchar f1, uchar f2, uchar * cta_res, uint16_t * p_cta_lr)
 {
   uint16_t cta_lr;
@@ -565,66 +577,77 @@ static int32_t cryptoworks_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
 static int32_t cryptoworks_card_info(struct s_reader * reader)
 {
-  def_resp;
+	def_resp;
 	int32_t i;
-  uchar insA21[]= {0xA4, 0xA2, 0x01, 0x00, 0x05, 0x8C, 0x00, 0x00, 0x00, 0x00};
-  uchar insB2[] = {0xA4, 0xB2, 0x00, 0x00, 0x00};
-  char l_name[20+8]=", name: ";
+	uchar insA21[]= {0xA4, 0xA2, 0x01, 0x00, 0x05, 0x8C, 0x00, 0x00, 0x00, 0x00};
+	uchar insB2[] = {0xA4, 0xB2, 0x00, 0x00, 0x00};
+	char l_name[20+8]=", name: ";
 
-  for (i=0; i<reader->nprov; i++)
-  {
-    l_name[8]=0;
-    select_file(reader, 0x1f, reader->prid[i][3], cta_res, &cta_lr);	// select provider
-    select_file(reader, 0x0e, 0x11, cta_res, &cta_lr);		// read provider name
-    if (read_record(reader, 0xD6, cta_res)>=16)
-    {
-      cs_strncpy(l_name+8, (const char *)cta_res+2, sizeof(l_name)-9);
-      l_name[sizeof(l_name)-1]=0;
-      trim(l_name+8);
-    }
-    l_name[0]=(l_name[8]) ? ',' : 0;
-    cs_ri_log (reader, "provider: %d, id: %02X%s", i+1, reader->prid[i][3], l_name);
-    select_file(reader, 0x0f, 0x20, cta_res, &cta_lr);		// select provider class
-    write_cmd(insA21, insA21+5);
-    if (cta_res[0]==0x9f)
-    {
-      insB2[4]=cta_res[1];
-      for(insB2[3]=0; (cta_res[0]!=0x94)||(cta_res[1]!=0x2); insB2[3]=1)
-      {
-        write_cmd(insB2, NULL);		// read chid
-        if (cta_res[0]!=0x94)
-        {
-          char ds[16], de[16];
-          chid_date(cta_res+28, ds, sizeof(ds)-1);
-          chid_date(cta_res+30, de, sizeof(de)-1);
-          cs_ri_log (reader, "chid: %02X%02X, date: %s - %s, name: %s",
-                    cta_res[6], cta_res[7], ds, de, trim((char *) cta_res+10));
-        }
-      }
-    }
+	for (i=0; i<reader->nprov; i++)
+	{
+		l_name[8]=0;
+		select_file(reader, 0x1f, reader->prid[i][3], cta_res, &cta_lr);	// select provider
+		select_file(reader, 0x0e, 0x11, cta_res, &cta_lr);		// read provider name
+		if (read_record(reader, 0xD6, cta_res)>=16)
+		{
+			cs_strncpy(l_name+8, (const char *)cta_res+2, sizeof(l_name)-9);
+			l_name[sizeof(l_name)-1]=0;
+			trim(l_name+8);
+		}
+		l_name[0]=(l_name[8]) ? ',' : 0;
+		cs_ri_log (reader, "provider: %d, id: %02X%s", i+1, reader->prid[i][3], l_name);
+		select_file(reader, 0x0f, 0x20, cta_res, &cta_lr);		// select provider class
+		write_cmd(insA21, insA21+5);
+		if (cta_res[0]==0x9f)
+		{
+			insB2[4]=cta_res[1];
+			for(insB2[3]=0; (cta_res[0]!=0x94)||(cta_res[1]!=0x2); insB2[3]=1)
+			{
+				write_cmd(insB2, NULL);		// read chid
+				if (cta_res[0]!=0x94)
+				{
+					char ds[16], de[16];
 
-    select_file(reader, 0x0f, 0x00, cta_res, &cta_lr);		// select provider channel 
-    write_cmd(insA21, insA21+5);
-    if (cta_res[0]==0x9f)
-    {
-      insB2[4]=cta_res[1];
-      for(insB2[3]=0; (cta_res[0]!=0x94)||(cta_res[1]!=0x2); insB2[3]=1)
-      {
-        write_cmd(insB2, NULL);		// read chid
-        if (cta_res[0]!=0x94)
-        {
-          char ds[16], de[16];
-          chid_date(cta_res+28, ds, sizeof(ds)-1);
-          chid_date(cta_res+30, de, sizeof(de)-1);
-          cta_res[27]=0;
-          cs_ri_log (reader, "chid: %02X%02X, date: %s - %s, name: %s",
-                    cta_res[6], cta_res[7], ds, de, trim((char *)cta_res+10));
-        }
-      }
-    }
-  }
-  cs_log("[cryptoworks-reader] ready for requests");
-  return OK;
+					// todo: add entitlements to list but produces a warning related to date variable
+					cs_add_entitlement(reader,
+							reader->caid,
+							reader->prid[i][3],
+							b2i(2, cta_res + 7),
+							0,
+							chid_date_t(cta_res+28, ds, sizeof(ds)-1),
+							chid_date_t(cta_res+30, de, sizeof(de)-1));
+
+
+					// chid_date(cta_res+28, ds, sizeof(ds)-1);
+					// chid_date(cta_res+30, de, sizeof(de)-1);
+					cs_ri_log (reader, "chid: %02X%02X, date: %s - %s, name: %s",
+							cta_res[6], cta_res[7], ds, de, trim((char *) cta_res+10));
+				}
+			}
+		}
+
+		select_file(reader, 0x0f, 0x00, cta_res, &cta_lr);		// select provider channel
+		write_cmd(insA21, insA21+5);
+		if (cta_res[0]==0x9f)
+		{
+			insB2[4]=cta_res[1];
+			for(insB2[3]=0; (cta_res[0]!=0x94)||(cta_res[1]!=0x2); insB2[3]=1)
+			{
+				write_cmd(insB2, NULL);		// read chid
+				if (cta_res[0]!=0x94)
+				{
+					char ds[16], de[16];
+					chid_date(cta_res+28, ds, sizeof(ds)-1);
+					chid_date(cta_res+30, de, sizeof(de)-1);
+					cta_res[27]=0;
+					cs_ri_log (reader, "chid: %02X%02X, date: %s - %s, name: %s",
+							cta_res[6], cta_res[7], ds, de, trim((char *)cta_res+10));
+				}
+			}
+		}
+	}
+	cs_log("[cryptoworks-reader] ready for requests");
+	return OK;
 }
 
 static uint32_t cryptoworks_get_emm_provid(unsigned char *buffer, int32_t len)
