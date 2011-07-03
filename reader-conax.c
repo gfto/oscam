@@ -343,7 +343,7 @@ static int32_t conax_card_info(struct s_reader * reader)
 													0,
 													start_t,
 													end_t,
-													type++);
+													type + 1);
 
 									k = 0;
 									chid[0] = '\0';
@@ -372,7 +372,7 @@ static int32_t conax_card_info(struct s_reader * reader)
 							0,
 							start_t,
 							end_t,
-							type++);
+							type + 1);
 				}
 			}
 		}
