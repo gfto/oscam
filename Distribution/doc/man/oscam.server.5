@@ -204,8 +204,6 @@ reader protocol, \fIrequired\fR:
 define CAID and SC specific ident for reader
 
 example: ident = 0100:123456,234567;0200:345678,456789
-
-\fIDo not use in load balancing mode with remote readers.\fR
 .RE
 .PP
 \fBprovid\fP = \fBID\fP
@@ -287,6 +285,11 @@ list of EMM-nanos to save (in hex w/o 0x) or all EMM-nanos, only valid for physi
 
  example: savenano = 45,93,7a,ff
           savenano = all
+.RE
+.PP
+\fBdropbadcws\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = reject bad CWs, default:0
 .RE
 .PP
 \fBreadnano\fP = \fB[path]filename\fP
