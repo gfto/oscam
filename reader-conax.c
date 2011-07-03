@@ -327,8 +327,26 @@ static int32_t conax_card_info(struct s_reader * reader)
 							case 0x30:
 								if (k > 1) {
 									cs_ri_log(reader, "%s: %d, id: %04X%s, date: %s - %s, name: %s", txt[type], ++n, provid, chid, pdate, pdate+16, trim(provname));
+
+									struct tm tm;
+									time_t start_t, end_t;
+									strptime(pdate, "%Y/%m/%d", &tm);
+									start_t = mktime(&tm);
+									strptime(pdate + 16, "%Y/%m/%d", &tm);
+									end_t = mktime(&tm);
+
+									// todo: add entitlements to list
+									cs_add_entitlement(reader,
+													reader->caid,
+													b2ll(4, reader->prid[0]),
+													provid,
+													0,
+													start_t,
+													end_t);
+
 									k = 0;
 									chid[0] = '\0';
+
 								}
 								chid_date(cta_res+i+2, pdate+(k++<<4), 15);
 								break;
