@@ -569,8 +569,19 @@ static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigne
    			if ((cta_lr>33) && (chid=b2i(2, cta_res+11)))
       			{
       				int32_t id=(cta_res[7]*256)|cta_res[8];
-        			tier_date(b2i(2, cta_res+20)-0x7f7, ds, 15);
-        			tier_date(b2i(2, cta_res+13)-0x7f7, de, 15);
+
+      				// todo: add entitlements to list
+      				cs_add_entitlement(reader,
+      								reader->caid,
+      								b2i(3, reader->prid[0]),
+      								chid,
+      								0,
+      								tier_date(b2i(2, cta_res+20)-0x7f7, ds, 15),
+      								tier_date(b2i(2, cta_res+13)-0x7f7, de, 15));
+
+
+        			// tier_date(b2i(2, cta_res+20)-0x7f7, ds, 15);
+        			// tier_date(b2i(2, cta_res+13)-0x7f7, de, 15);
         			cs_ri_log(reader, "|%04X|%04X    |%s  |%s  |", id,chid, ds, de);
         			addProvider(reader, cta_res); 
         		}
