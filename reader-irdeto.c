@@ -728,17 +728,17 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
 static int32_t irdeto_card_info(struct s_reader * reader)
 {
-  def_resp;
-  int32_t i, p;
+	def_resp;
+	int32_t i, p;
 
 	uchar	sc_GetChanelIds[] = { 0x02, 0x04, 0x00, 0x00, 0x01, 0x00 };
 	uchar	sc_Acs57Code[]    = { 0xD2, 0x16, 0x00, 0x00, 0x01 ,0x37},
-		sc_Acs57Prid[]    = { 0xD2, 0x08, 0x00, 0x00, 0x02, 0x00,0x00 },
-		sc_Acs57_Cmd[]    = { ACS57GET, 0xFE, 0x00, 0x00, 0x00 };
+			sc_Acs57Prid[]    = { 0xD2, 0x08, 0x00, 0x00, 0x02, 0x00,0x00 },
+			sc_Acs57_Cmd[]    = { ACS57GET, 0xFE, 0x00, 0x00, 0x00 };
 
-  /*
-   * ContryCode2
-   */
+	/*
+	 * ContryCode2
+	 */
 	int32_t acspadd=0;
 	if(reader->acs57==1){
 		acspadd=8;
@@ -750,86 +750,86 @@ static int32_t irdeto_card_info(struct s_reader * reader)
 		reader_chk_cmd(sc_GetCountryCode2, 0);
 	}
 
-  if (((cta_lr>9) && !(cta_res[cta_lr-2]|cta_res[cta_lr-1])) || (reader->acs57==1))
-  {
-    cs_debug_mask(D_READER, "[irdeto-reader] max chids: %d, %d, %d, %d", cta_res[6+acspadd], cta_res[7+acspadd], cta_res[8+acspadd], cta_res[9+acspadd]);
+	if (((cta_lr>9) && !(cta_res[cta_lr-2]|cta_res[cta_lr-1])) || (reader->acs57==1))
+	{
+		cs_debug_mask(D_READER, "[irdeto-reader] max chids: %d, %d, %d, %d", cta_res[6+acspadd], cta_res[7+acspadd], cta_res[8+acspadd], cta_res[9+acspadd]);
 
-    /*
-     * Provider 2
-     */
-    for (i=p=0; i<reader->nprov; i++)
-    {
-      int32_t j, k, chid, first=1;
-      char t[32];
-      if (reader->prid[i][4]!=0xff)
-      {
-        p++;
-        sc_Acs57Prid[3]=i;
-        sc_GetChanelIds[3]=i; // provider at index i
-        j=0;
-        // for (j=0; j<10; j++) => why 10 .. do we know for sure the there are only 10 chids !!! 
-        // shouldn't it me the max chid value we read above ?!
-        while(1) // will exit if cta_lr < 61 .. which is the correct break condition.
-        {
-          if(reader->acs57==1) {
-	  	int32_t crc=63;
-            	sc_Acs57Prid[5]=j;
-            	crc^=0x01;crc^=0x02;crc^=0x04;
-            	crc^=sc_Acs57Prid[2];crc^=sc_Acs57Prid[3];crc^=(sc_Acs57Prid[4]-1);crc^=sc_Acs57Prid[5];
-            	sc_Acs57Prid[6]=crc;
-            	irdeto_do_cmd(reader, sc_Acs57Prid, 0x903C, cta_res, &cta_lr);
-            	int32_t acslength=cta_res[cta_lr-1];
-  	    	if (acslength==0x09) break;
-            	sc_Acs57_Cmd[4]=acslength;
-  	    	reader_chk_cmd(sc_Acs57_Cmd, acslength+2);
-	    	if(cta_res[10]==0xFF) break;
-            	cta_res[cta_lr-3]=0xff;
-            	cta_res[cta_lr-2]=0xff;
-            	cta_res[cta_lr-1]=0xff;
-            	acspadd=8;
-          } else {
-            	sc_GetChanelIds[5]=j; // chid at index j for provider at index i
-            	reader_chk_cmd(sc_GetChanelIds, 0);
-          }
-          // if (cta_lr<61) break; // why 61 (0 to 60 in steps of 6 .. is it 10*6 from the 10 in the for loop ?
-          // what happen if the card only send back.. 9 chids (or less)... we don't see them
-          // so we should check whether or not we have at least 6 bytes (1 chid).
-          if (cta_lr<6) break; 
-          
-          for(k=0+acspadd; k<cta_lr; k+=6)
-          {
-            chid=b2i(2, cta_res+k);
-            if (chid && chid!=0xFFFF)
-            {
-              time_t date;
+		/*
+		 * Provider 2
+		 */
+		for (i=p=0; i<reader->nprov; i++)
+		{
+			int32_t j, k, chid, first=1;
+			char t[32];
+			if (reader->prid[i][4]!=0xff)
+			{
+				p++;
+				sc_Acs57Prid[3]=i;
+				sc_GetChanelIds[3]=i; // provider at index i
+				j=0;
+				// for (j=0; j<10; j++) => why 10 .. do we know for sure the there are only 10 chids !!!
+				// shouldn't it me the max chid value we read above ?!
+				while(1) // will exit if cta_lr < 61 .. which is the correct break condition.
+				{
+					if(reader->acs57==1) {
+						int32_t crc=63;
+						sc_Acs57Prid[5]=j;
+						crc^=0x01;crc^=0x02;crc^=0x04;
+						crc^=sc_Acs57Prid[2];crc^=sc_Acs57Prid[3];crc^=(sc_Acs57Prid[4]-1);crc^=sc_Acs57Prid[5];
+						sc_Acs57Prid[6]=crc;
+						irdeto_do_cmd(reader, sc_Acs57Prid, 0x903C, cta_res, &cta_lr);
+						int32_t acslength=cta_res[cta_lr-1];
+						if (acslength==0x09) break;
+						sc_Acs57_Cmd[4]=acslength;
+						reader_chk_cmd(sc_Acs57_Cmd, acslength+2);
+						if(cta_res[10]==0xFF) break;
+						cta_res[cta_lr-3]=0xff;
+						cta_res[cta_lr-2]=0xff;
+						cta_res[cta_lr-1]=0xff;
+						acspadd=8;
+					} else {
+						sc_GetChanelIds[5]=j; // chid at index j for provider at index i
+						reader_chk_cmd(sc_GetChanelIds, 0);
+					}
+					// if (cta_lr<61) break; // why 61 (0 to 60 in steps of 6 .. is it 10*6 from the 10 in the for loop ?
+					// what happen if the card only send back.. 9 chids (or less)... we don't see them
+					// so we should check whether or not we have at least 6 bytes (1 chid).
+					if (cta_lr<6) break;
 
-              // could add entitlements to list but produces a warning related to date variable
-             /* cs_add_entitlement(reader,
-           						reader->caid,
-           						b2i(3, &reader->prid[i][1]),
-           						chid,
-           						0,
-           						chid_date(reader,date=b2i(2, cta_res+k+2), t, 16),
-           						chid_date(reader,date+cta_res[k+4], t+16, 16));
-			*/
+					for(k=0+acspadd; k<cta_lr; k+=6)
+					{
+						chid=b2i(2, cta_res+k);
+						if (chid && chid!=0xFFFF)
+						{
+							time_t date;
 
-              chid_date(reader,date=b2i(2, cta_res+k+2), t, 16); // if code above is used this is superfluous
-              chid_date(reader,date+cta_res[k+4], t+16, 16);     // if code above is used this is superfluous
-              if (first)
-              {
-                cs_ri_log(reader, "entitlements for provider: %d, id: %06X", p, b2i(3, &reader->prid[i][1]));
-                first=0;
-              }
-              cs_ri_log(reader, "chid: %04X, date: %s - %s", chid, t, t+16);
-            }
-          }
-        j++;
-        }
-      }
-    }
-  }
-  cs_log("[irdeto-reader] ready for requests");
-  return OK;
+							// todo: add entitlements to list but produces a warning related to date variable
+							cs_add_entitlement(reader,
+									reader->caid,
+									b2i(3, &reader->prid[i][1]),
+									chid,
+									0,
+									chid_date(reader, date = b2i(2, cta_res + k + 2), t, 16),
+									chid_date(reader, date + cta_res[k + 4], t + 16, 16));
+
+							//chid_date(reader,date=b2i(2, cta_res+k+2), t, 16); // if code above is used this is superfluous
+							//chid_date(reader,date+cta_res[k+4], t+16, 16);     // if code above is used this is superfluous
+
+							if (first)
+							{
+								cs_ri_log(reader, "entitlements for provider: %d, id: %06X", p, b2i(3, &reader->prid[i][1]));
+								first=0;
+							}
+							cs_ri_log(reader, "chid: %04X, date: %s - %s", chid, t, t+16);
+						}
+					}
+					j++;
+				}
+			}
+		}
+	}
+	cs_log("[irdeto-reader] ready for requests");
+	return OK;
 }
 
 void reader_irdeto(struct s_cardsystem *ph) 
