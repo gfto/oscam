@@ -615,7 +615,8 @@ static int32_t cryptoworks_card_info(struct s_reader * reader)
 							b2i(2, cta_res + 7),
 							0,
 							chid_date_t(cta_res+28, ds, sizeof(ds)-1),
-							chid_date_t(cta_res+30, de, sizeof(de)-1));
+							chid_date_t(cta_res+30, de, sizeof(de)-1),
+							3);
 
 
 					// chid_date(cta_res+28, ds, sizeof(ds)-1);

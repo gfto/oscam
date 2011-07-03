@@ -464,7 +464,8 @@ typedef struct v_ban {					// failban listmember
 
 typedef struct s_entitlement {			// contains entitlement Info
 	uint16_t		id;					// the element ID
-	uint8_t			type;				// enumerator for tier,chid whatever
+	uint32_t		type;				// enumerator for tier,chid whatever
+										// 0="", 1="Package", 2="PPV-Event", 3="chid", 4="tier"
 	uint16_t		caid;				// the caid of element
 	uint32_t		provid;				// the provid of element
 	uint16_t		class;				// the class needed for some systems

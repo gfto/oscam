@@ -577,7 +577,8 @@ static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigne
       								chid,
       								0,
       								tier_date(b2i(2, cta_res+20)-0x7f7, ds, 15),
-      								tier_date(b2i(2, cta_res+13)-0x7f7, de, 15));
+      								tier_date(b2i(2, cta_res+13)-0x7f7, de, 15),
+      								4);
 
 
         			// tier_date(b2i(2, cta_res+20)-0x7f7, ds, 15);

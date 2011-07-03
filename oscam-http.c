@@ -2240,6 +2240,8 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 
 			if (rdr->ll_entitlements) {
 
+				char *typetxt[] = {"", "Package", "PPV-Event", "chid", "tier" };
+
 				struct tm start_t, end_t;
 				LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
 				S_ENTITLEMENT *item;
@@ -2250,7 +2252,9 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					localtime_r(&item->start, &start_t);
 					localtime_r(&item->end, &end_t);
 
-					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "entitlement: caid %04X id %04X ", item->caid, item->id);
+					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "entitlement %s: caid %04X provid %06X id %04X ",
+							typetxt[item->type], item->caid, item->provid, item->id);
+
 					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "%02d.%02d.%02d - %02d.%02d.%02d<BR>\n",
 							start_t.tm_mday, start_t.tm_mon+1, start_t.tm_year%100,
 							end_t.tm_mday, end_t.tm_mon+1, end_t.tm_year%100);

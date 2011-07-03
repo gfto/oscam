@@ -810,7 +810,8 @@ static int32_t irdeto_card_info(struct s_reader * reader)
 									chid,
 									0,
 									chid_date(reader, date = b2i(2, cta_res + k + 2), t, 16),
-									chid_date(reader, date + cta_res[k + 4], t + 16, 16));
+									chid_date(reader, date + cta_res[k + 4], t + 16, 16),
+									3);
 
 							//chid_date(reader,date=b2i(2, cta_res+k+2), t, 16); // if code above is used this is superfluous
 							//chid_date(reader,date+cta_res[k+4], t+16, 16);     // if code above is used this is superfluous
