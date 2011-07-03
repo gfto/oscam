@@ -2252,7 +2252,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					localtime_r(&item->start, &start_t);
 					localtime_r(&item->end, &end_t);
 
-					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "entitlement %s: caid %04X provid %06X id %04X ",
+					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "entitlement %s: caid %04X provid %08X id %04X ",
 							typetxt[item->type], item->caid, item->provid, item->id);
 
 					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "%02d.%02d.%02d - %02d.%02d.%02d<BR>\n",

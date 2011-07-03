@@ -43,6 +43,7 @@ extern int32_t read_cmd_len(struct s_reader * reader, const unsigned char *cmd);
 extern int32_t do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff,
                   unsigned char * cta_res);
 extern void rev_date_calc(const unsigned char *Date, int32_t *year, int32_t *mon, int32_t *day, int32_t *hh, int32_t *mm, int32_t *ss, int32_t base_year);
+extern void rev_date_calc_tm(const unsigned char *Date, struct tm *timeinfo , int32_t base_year);
 extern void set_known_card_info(struct s_reader * reader, const unsigned char *atr, const uint32_t *atr_size);
 
 int32_t videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr);
