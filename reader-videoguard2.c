@@ -278,6 +278,7 @@ static void vg2_read_tiers(struct s_reader * reader)
       rev_date_calc(&cta_res[4],&y,&m,&d,&H,&M,&S,reader->card_baseyear);
       uint16_t tier_id = (cta_res[2] << 8) | cta_res[3];
 
+      /*
       // todo: add entitlements to list. Timeinfo shoulbe usable for cs_ri_log below too.
       struct tm timeinfo;
       rev_date_calc_tm(&cta_res[4], &timeinfo, reader->card_baseyear);
@@ -289,7 +290,7 @@ static void vg2_read_tiers(struct s_reader * reader)
       		0,
       		mktime(&timeinfo),
       		4);
-
+*/
       if(!stopemptytier){
         cs_debug_mask(D_READER, "tier: %04x, tier-number: 0x%02x",tier_id,i);
       }

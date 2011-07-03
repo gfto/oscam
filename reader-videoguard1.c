@@ -73,6 +73,7 @@ static void read_tiers(struct s_reader *reader)
     rev_date_calc(&cta_res[4], &y, &m, &d, &H, &M, &S, reader->card_baseyear);
     uint16_t tier_id = (cta_res[2] << 8) | cta_res[3];
 
+    /*
     // todo: add entitlements to list. Timeinfo should be usable for cs_ri_log below too.
     struct tm timeinfo;
     rev_date_calc_tm(&cta_res[4], &timeinfo, reader->card_baseyear);
@@ -84,6 +85,7 @@ static void read_tiers(struct s_reader *reader)
     		0,
     		mktime(&timeinfo),
     		4);
+    		*/
 
     char tiername[83];
     cs_ri_log(reader, "[videoguard1-reader] tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s", tier_id, y, m, d, H, M, S, get_tiername(tier_id, reader->caid, tiername));
