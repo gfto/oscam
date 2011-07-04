@@ -307,6 +307,7 @@ static int32_t conax_card_info(struct s_reader * reader)
 	char *txt[] = { "Package", "PPV-Event" };
 	static const uchar *cmd[] = { insC6, ins26 };
 	struct tm tm;
+	memset(&tm, 0, sizeof(struct tm));
 	time_t start_t, end_t;
 
 	cs_clear_entitlement(reader); // reset the entitlements
