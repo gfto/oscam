@@ -309,6 +309,8 @@ static int32_t conax_card_info(struct s_reader * reader)
 	struct tm tm;
 	time_t start_t, end_t;
 
+	cs_clear_entitlement(reader); // reset the entitlements
+
 	for (type=0; type<2; type++) {
 		n=0;
 		write_cmd(cmd[type], cmd[type]+5);
@@ -336,14 +338,7 @@ static int32_t conax_card_info(struct s_reader * reader)
 									end_t = mktime(&tm);
 
 									// todo: add entitlements to list
-									cs_add_entitlement(reader,
-													reader->caid,
-													b2ll(4, reader->prid[0]),
-													provid,
-													0,
-													start_t,
-													end_t,
-													type + 1);
+									cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), provid, 0, start_t, end_t, type + 1);
 
 									k = 0;
 									chid[0] = '\0';
@@ -365,14 +360,7 @@ static int32_t conax_card_info(struct s_reader * reader)
 					end_t = mktime(&tm);
 
 					// todo: add entitlements to list
-					cs_add_entitlement(reader,
-							reader->caid,
-							b2ll(4, reader->prid[0]),
-							provid,
-							0,
-							start_t,
-							end_t,
-							type + 1);
+					cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), provid, 0, start_t, end_t, type + 1);
 				}
 			}
 		}

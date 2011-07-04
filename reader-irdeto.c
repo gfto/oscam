@@ -731,6 +731,8 @@ static int32_t irdeto_card_info(struct s_reader * reader)
 	def_resp;
 	int32_t i, p;
 
+	cs_clear_entitlement(reader); // reset the entitlements
+
 	uchar	sc_GetChanelIds[] = { 0x02, 0x04, 0x00, 0x00, 0x01, 0x00 };
 	uchar	sc_Acs57Code[]    = { 0xD2, 0x16, 0x00, 0x00, 0x01 ,0x37},
 			sc_Acs57Prid[]    = { 0xD2, 0x08, 0x00, 0x00, 0x02, 0x00,0x00 },
@@ -807,17 +809,7 @@ static int32_t irdeto_card_info(struct s_reader * reader)
 							end_t = chid_date(reader, date + cta_res[k + 4], t + 16, 16);
 
 							// todo: add entitlements to list but produces a warning related to date variable
-							cs_add_entitlement(reader,
-									reader->caid,
-									b2i(3, &reader->prid[i][1]),
-									chid,
-									0,
-									start_t,
-									end_t,
-									3);
-
-							//chid_date(reader,date=b2i(2, cta_res+k+2), t, 16); // if code above is used this is superfluous
-							//chid_date(reader,date+cta_res[k+4], t+16, 16);     // if code above is used this is superfluous
+							cs_add_entitlement(reader, reader->caid, b2i(3, &reader->prid[i][1]), chid,	0, start_t, end_t, 3);
 
 							if (first)
 							{

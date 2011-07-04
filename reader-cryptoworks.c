@@ -583,6 +583,8 @@ static int32_t cryptoworks_card_info(struct s_reader * reader)
 	uchar insB2[] = {0xA4, 0xB2, 0x00, 0x00, 0x00};
 	char l_name[20+8]=", name: ";
 
+	cs_clear_entitlement(reader); // reset the entitlements
+
 	for (i=0; i<reader->nprov; i++)
 	{
 		l_name[8]=0;
@@ -609,14 +611,8 @@ static int32_t cryptoworks_card_info(struct s_reader * reader)
 					char ds[16], de[16];
 
 					// todo: add entitlements to list but produces a warning related to date variable
-					cs_add_entitlement(reader,
-							reader->caid,
-							reader->prid[i][3],
-							b2i(2, cta_res + 7),
-							0,
-							chid_date_t(cta_res+28, ds, sizeof(ds)-1),
-							chid_date_t(cta_res+30, de, sizeof(de)-1),
-							3);
+					cs_add_entitlement(reader, reader->caid, reader->prid[i][3], b2i(2, cta_res + 7), 0, chid_date_t(cta_res+28, ds, sizeof(ds)-1),
+							chid_date_t(cta_res+30, de, sizeof(de)-1), 3);
 
 
 					// chid_date(cta_res+28, ds, sizeof(ds)-1);
