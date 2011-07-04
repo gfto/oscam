@@ -801,7 +801,10 @@ static int32_t irdeto_card_info(struct s_reader * reader)
 						chid=b2i(2, cta_res+k);
 						if (chid && chid!=0xFFFF)
 						{
-							time_t date;
+							time_t date, start_t, end_t;
+
+							start_t = chid_date(reader, date = b2i(2, cta_res + k + 2), t, 16);
+							end_t = chid_date(reader, date + cta_res[k + 4], t + 16, 16);
 
 							// todo: add entitlements to list but produces a warning related to date variable
 							cs_add_entitlement(reader,
@@ -809,8 +812,8 @@ static int32_t irdeto_card_info(struct s_reader * reader)
 									b2i(3, &reader->prid[i][1]),
 									chid,
 									0,
-									chid_date(reader, date = b2i(2, cta_res + k + 2), t, 16),
-									chid_date(reader, date + cta_res[k + 4], t + 16, 16),
+									start_t,
+									end_t,
 									3);
 
 							//chid_date(reader,date=b2i(2, cta_res+k+2), t, 16); // if code above is used this is superfluous
