@@ -2256,8 +2256,8 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 							typetxt[item->type], item->caid, item->provid, item->id);
 
 					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "%02d.%02d.%02d - %02d.%02d.%02d<BR>\n",
-							start_t.tm_mday, start_t.tm_mon+1, start_t.tm_year%100,
-							end_t.tm_mday, end_t.tm_mon+1, end_t.tm_year%100);
+							start_t.tm_mday, start_t.tm_mon+1, start_t.tm_year,
+							end_t.tm_mday, end_t.tm_mon+1, end_t.tm_year);
 				}
 			}
 

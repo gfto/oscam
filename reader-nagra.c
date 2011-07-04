@@ -573,7 +573,7 @@ static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigne
       				// todo: add entitlements to list
       				cs_add_entitlement(reader,
       								reader->caid,
-      								b2i(3, reader->prid[0]),
+      								b2i(4, reader->prid[0]),
       								chid,
       								0,
       								tier_date(b2i(2, cta_res+20)-0x7f7, ds, 15),
