@@ -627,6 +627,8 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR newatr)
  	memset(reader->irdId, 0xff, 4);
 	memset(reader->hexserial, 0, 8); 
 	
+	cs_clear_entitlement(reader); // reset the entitlements
+
 	if(memcmp(atr+11,"DNASP240",8)==0 || memcmp(atr+11,"DNASP241", 8)==0) {
 		cs_ri_log(reader, "detect nagra 3 NA card");
 		memcpy(reader->rom,atr+11,15);
