@@ -2733,7 +2733,7 @@ int32_t write_server()
 
 			value = mk_t_emmbylen(rdr);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
-				fprintf_conf(f, "blockemmbylen", "%s\n", value);
+				fprintf_conf(f, "blockemm-bylen", "%s\n", value);
 			free_mk_t(value);
 
 #ifdef WITH_LB
@@ -4259,7 +4259,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "blockemmbylen")) {
+	if (!strcmp(token, "blockemm-bylen")) {
 		for (i = 0; i < CS_MAXEMMBLOCKBYLEN; i++)
 			rdr->blockemmbylen[i] = 0;
 		for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < CS_MAXEMMBLOCKBYLEN) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++)
