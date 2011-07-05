@@ -687,7 +687,7 @@ int32_t cc_get_nxt_ecm(struct s_client *cl) {
 #endif
 		}
 
-		else if (er->rc >= 10 && er->rc != 101) { // stil active and waiting
+		else if (er->rc >= 10 && er->rc <= 100) { // stil active and waiting
 			pending++;
 			if (loop_check(cc->peer_node_id, er->client)) {
 				er->rc = E_RDR_NOTFOUND;
@@ -1071,6 +1071,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		}
 		cs_debug_mask(D_READER, "cccam: ecm trylock: got lock");
 	}
+	int processed_ecms = 0;
 	do {
 	cc->ecm_time = cur_time;
 	rdr->available = cc->extended_mode;
@@ -1202,6 +1203,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		set_au_data(cl, rdr, card, cur_er);
 		cs_readunlock(&cc->cards_busy);
 		
+		processed_ecms++;
 		if (cc->extended_mode)
 				continue; //process next pending ecm!
 		return 0;
@@ -1210,7 +1212,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		//So if the last Message was a MSG_NEW_CARD, this "card receiving" is not already done
 		//if this happens, we do not autoblock it and do not set rc status
 		//So fallback could resolve it
-		if (cc->last_msg != MSG_NEW_CARD && cc->last_msg != MSG_NEW_CARD_SIDINFO && !cc->just_logged_in) {
+		if (cc->last_msg != MSG_NEW_CARD && cc->last_msg != MSG_NEW_CARD_SIDINFO && cc->last_msg != MSG_CARD_REMOVED && !cc->just_logged_in) {
 			cs_debug_mask(D_READER, "%s no suitable card on server", getprefix());
 
 			cur_er->rc = E_RDR_NOTFOUND;
@@ -1232,13 +1234,24 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 							ll_iter_remove_data(&it2);
 				}
 			}
+		} else {
+			//We didn't find a card and the last message was MSG_CARD_REMOVED - so we wait for a new card and process die ecm later
+			cur_er->rc = 102; //mark as waiting
 		}
 	}
 	cs_readunlock(&cc->cards_busy);
 
 	//process next pending ecm!
-	} while (cc->extended_mode);
-
+	} while (cc->extended_mode || processed_ecms == 0);
+	
+	//Now mark all waiting as unprocessed:
+	int i;
+	for (i = 0; i < CS_MAXPENDING; i++) {
+		er = &cl->ecmtask[i];
+		if (er->rc == 102)
+			er->rc = 100;
+	}
+                            
 	if (!cc->extended_mode) {
 		rdr->available = 1;
 		cs_writeunlock(&cc->ecm_busy);
@@ -1288,7 +1301,9 @@ int32_t cc_send_pending_emms(struct s_client *cl) {
 			}
 			rdr->available = 0;
 		}
-		size = emmbuf[11] + 12;
+		//Support for emmsize>256 bytes:
+		size = (emmbuf[11] | (emmbuf[2]<<8)) + 12;
+		emmbuf[2] = 0;
 
 		cc->just_logged_in = 0;
 		cs_ftime(&cc->ecm_time);
@@ -1383,7 +1398,7 @@ int32_t cc_send_emm(EMM_PACKET *ep) {
 	// build ecm message
 	emmbuf[0] = ep->caid[0];
 	emmbuf[1] = ep->caid[1];
-	emmbuf[2] = 0;
+	emmbuf[2] = ep->l>>8; //Support for emm len > 256bytes
 	emmbuf[3] = ep->provid[0];
 	emmbuf[4] = ep->provid[1];
 	emmbuf[5] = ep->provid[2];
@@ -1392,7 +1407,7 @@ int32_t cc_send_emm(EMM_PACKET *ep) {
 	emmbuf[8] = emm_card->id >> 16;
 	emmbuf[9] = emm_card->id >> 8;
 	emmbuf[10] = emm_card->id & 0xff;
-	emmbuf[11] = ep->l;
+	emmbuf[11] = ep->l&0xFF;
 	memcpy(emmbuf + 12, ep->emm, ep->l);
 
 	cs_readunlock(&cc->cards_busy);
@@ -2063,7 +2078,8 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			if ((er = get_ecmtask())) {
 				er->caid = b2i(2, buf + 4);
 				er->srvid = b2i(2, buf + 14);
-				er->l =(((buf[18]&0x0f)<< 8) | buf[19])+3;
+				//er->l =(((buf[18]&0x0f)<< 8) | buf[19])+3;
+				er->l = l-17;
 				memcpy(er->ecm, buf + 17, er->l);
 				er->prid = b2i(4, buf + 6);
 				cc->server_ecm_pending++;
@@ -2399,7 +2415,10 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				//emm->hexserial[1] = buf[12];
 				//emm->hexserial[2] = buf[13];
 				//emm->hexserial[3] = buf[14];
-				emm->l = buf[15];
+				if (l <= 0xFF)
+					emm->l = buf[15];
+				else
+					emm->l = l-16;
 				memcpy(emm->emm, buf + 16, emm->l);
 				//emm->type = UNKNOWN;
 				//emm->cidx = cs_idx;
@@ -2901,12 +2920,12 @@ int32_t cc_cli_connect(struct s_client *cl) {
 
 	// get init seed
 	if ((n = cc_recv_to(cl, data, 16)) != 16) {
-		int32_t err = errno;
 		if (n <= 0)
-			cs_log("%s server blocked connection!", rdr->label);
+			cs_log("Didn't get init seed from reader %s (errno=%d %s)", rdr->label, errno, strerror(errno));
 		else
-			cs_log("%s server does not return 16 bytes (n=%d, errno=%d %s)",
-				rdr->label, n, err, strerror(errno));
+			cs_log("%s server returned %d instead of 16 bytes as init seed (errno=%d %s)",
+				rdr->label, n, errno, strerror(errno));
+		cc_cli_close(cl, FALSE);
 		block_connect(rdr);
 		return -2;
 	}

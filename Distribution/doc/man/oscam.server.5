@@ -167,7 +167,7 @@ refer to OVERCLOCKING, default:357
 .PP
 \fBdeprecated\fP = \fB0\fP|\fB1\fP
 .RS 3n
-Frist the SC will be initialized in normal mode. If it fails, the SC will be automatically 
+First the SC will be initialized in normal mode. If it fails, the SC will be automatically 
 reverted to deprecated mode, so that the SC speed will not be changed and the communication 
 will remain on normal ATR speed of 9600 baud.
 
@@ -285,6 +285,11 @@ list of EMM-nanos to save (in hex w/o 0x) or all EMM-nanos, only valid for physi
 
  example: savenano = 45,93,7a,ff
           savenano = all
+.RE
+.PP
+\fBdropbadcws\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = reject bad CWs, default:0
 .RE
 .PP
 \fBreadnano\fP = \fB[path]filename\fP

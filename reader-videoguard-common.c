@@ -580,6 +580,17 @@ void rev_date_calc(const unsigned char *Date, int32_t *year, int32_t *mon, int32
   *ss=(Date[3]-*mm*32)*2;
 }
 
+void rev_date_calc_tm(const unsigned char *Date, struct tm *timeinfo , int32_t base_year)
+{
+	memset(&timeinfo, 0, sizeof(timeinfo));
+	timeinfo->tm_year = (Date[0]/12) + base_year;
+	timeinfo->tm_mon = (Date[0]%12) + 1;
+	timeinfo->tm_mday = Date[1] & 0x1f;
+	timeinfo->tm_hour = Date[2] / 8;
+	timeinfo->tm_min = (0x100 * (Date[2] - timeinfo->tm_hour * 8) + Date[3]) / 32;
+	timeinfo->tm_sec = (Date[3] - timeinfo->tm_min * 32) * 2;
+}
+
 void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data)
 {
   int32_t i, ecmi, ecm_header_count;

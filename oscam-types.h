@@ -13,6 +13,11 @@ typedef unsigned char uchar;
     #define __BYTE_ORDER __DARWIN_BYTE_ORDER 
     #define __BIG_ENDIAN    __DARWIN_BIG_ENDIAN 
     #define __LITTLE_ENDIAN __DARWIN_LITTLE_ENDIAN
+ #elif defined OS_FREEBSD
+    #include <sys/endian.h>
+    #define __BYTE_ORDER _BYTE_ORDER
+    #define __BIG_ENDIAN    _BIG_ENDIAN
+    #define __LITTLE_ENDIAN _LITTLE_ENDIAN
  #else
     #include <endian.h>
     #include <byteswap.h>

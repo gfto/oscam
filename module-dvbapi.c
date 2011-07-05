@@ -460,7 +460,7 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len) {
 				}
 				break;
 			case 0x18:
-				emm_provider = (buf[i+1] == 0x07) ? (buf[i+7] << 8| (buf[i+8])) : 0;
+				emm_provider = (buf[i+1] == 0x07) ? (buf[i+6] << 16 | (buf[i+7] << 8| (buf[i+8]))) : 0;
 				cs_debug_mask(D_DVBAPI, "[cat] CAID: %04x\tEMM_PID: %04x\tPROVID: %06X", caid, emm_pid, emm_provider);
 				dvbapi_add_emmpid(demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE|EMM_SHARED|EMM_GLOBAL);
 				break;
@@ -920,7 +920,7 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 				descriptor_ca_provider = buffer[j+14] << 16 | (buffer[j+15] << 8| (buffer[j+16] & 0xF0));
 
 			if (descriptor_ca_system_id >> 8 == 0x18 && descriptor_length == 0x07)
-				descriptor_ca_provider = (buffer[j+7] << 8| (buffer[j+8]));
+				descriptor_ca_provider = buffer[j+6] << 16 | (buffer[j+7] << 8| (buffer[j+8])); 
 
 			if (descriptor_ca_system_id >> 8 == 0x4A && descriptor_length == 0x05)
 				descriptor_ca_provider = buffer[j+6];
@@ -987,6 +987,30 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 	demux[demux_id].curindex=num;
 
 	demux[demux_id].ECMpids[num].checked=1;
+
+	//BISS
+	//ecm stream pid is fake, so send out one fake ecm request
+	if ((demux[demux_id].ECMpids[num].CAID >> 8) == 0x26) {
+		ECM_REQUEST *er;
+		if (!(er=get_ecmtask()))
+			return;
+
+		er->srvid = demux[demux_id].program_number;
+		er->caid  = demux[demux_id].ECMpids[num].CAID;
+		er->pid   = demux[demux_id].ECMpids[num].ECM_PID;
+		er->prid  = demux[demux_id].ECMpids[num].PROVID;
+
+		er->l=3;
+		memset(er->ecm, 0, 3);
+
+		cs_debug_mask(D_DVBAPI, "request cw for caid %04X provid %06X srvid %04X pid %04X", er->caid, er->prid, er->srvid, er->pid);
+		get_cw(dvbapi_client, er);
+
+		if (cfg.dvbapi_requestmode == 1)
+			dvbapi_try_next_caid(demux_id);
+
+		return;
+	}
 
 	if (cfg.dvbapi_requestmode == 1) {
 		dvbapi_start_filter(demux_id, num, demux[demux_id].ECMpids[num].ECM_PID, 0x80, 0xF0, 3000, TYPE_ECM, 3); 
@@ -1743,7 +1767,7 @@ static void * dvbapi_main_local(void *cli) {
 					len = read(connfd, mbuf, sizeof(mbuf));
 
 					if (len < 3) {
-						cs_debug_mask(D_DVBAPI, "camd.socket: too int16_t message received");
+						cs_debug_mask(D_DVBAPI, "camd.socket: too small message received");
 						continue;
 					}
 
@@ -1907,7 +1931,7 @@ static void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			FILE *ecmtxt;
 			ecmtxt = fopen(ECMINFO_FILE, "w"); 
 			if(ecmtxt != NULL && er->selected_reader) { 
-				char tmp[17];
+				char tmp[34];
 				fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\nprov: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
 				fprintf(ecmtxt, "reader: %s\n", er->selected_reader->label);
 				if (er->selected_reader->typ & R_IS_CASCADING)
@@ -2691,7 +2715,7 @@ void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 
     FILE *ecmtxt;
     if (ecmtxt = fopen(ECMINFO_FILE, "w")) {
-    	char tmp[17];
+    	char tmp[34];
     	if(er->rc <= E_EMU) {
 			fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\nprov: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
 			fprintf(ecmtxt, "reader: %s\n", er->selected_reader->label);

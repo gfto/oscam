@@ -254,19 +254,10 @@ static int32_t viaccess_card_init(struct s_reader * reader, ATR newatr)
 	return OK;
 }
 
-bool check_crc( uchar *data )
-{
-	int32_t valid = 0;
-
-	uchar sum1=data[0] + data[1] + data[2] ;
-	uchar sum2=data[4] + data[5] + data[6] ;
-	uchar sum3=data[8] + data[9] + data[10] ;
-	uchar sum4=data[12] + data[13] + data[14] ;
-
-	if ( ( sum1 == data[3] ) && ( sum2 == data[7] ) && ( sum3 == data[11] )&& ( sum4 == data[15] ) )
-		valid = 1;
-
-	return valid;
+bool dcw_crc(uchar *dw){
+	int i;
+	for(i=0;i<16;i+=4) if(dw[i+3]!=dw[i]+dw[i+1]+dw[i+2])return 0;
+	return 1;
 }
 
 static int32_t viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
@@ -555,7 +546,7 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		}
 	}
 
-	if ( hasD2 && !check_crc(er->cw) && nanoD2 == 2) {
+	if ( hasD2 && !dcw_crc(er->cw) && nanoD2 == 2) {
 		cs_debug_mask(D_READER, "Decoding CW : using AES key id %d for provider %06x",D2KeyID, (provid & 0xFFFFF0));
 		rc=aes_decrypt_from_list(reader->aes_list,0x500, (uint32_t) (provid & 0xFFFFF0), D2KeyID,er->cw, 16);
 		if( rc == 0 )

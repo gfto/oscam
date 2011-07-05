@@ -130,6 +130,8 @@ rect.graph_bg {fill:white;}\n\
 text.graph_error {text-anchor:middle;fill:red}\n\
 path.graph_grid {stroke:gray;stroke-opacity:0.5}\n\
 text.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}\n\
+span.e_valid {background-color:#E6FEBF;}\n\
+span.e_expired {background-color:#fff3e7;}\n\
 "
 
 #define JSCRIPT ""
@@ -593,7 +595,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 		</TR>\n"
 
 
-#define TPLAPISTATUSBIT "      <client type=\"##CLIENTTYPE##\" name=\"##CLIENTUSER##\" protocol=\"##CLIENTPROTO##\" protocolext=\"##CLIENTPROTOTITLE##\" au=\"##CLIENTCAU##\">\n\
+#define TPLAPISTATUSBIT "      <client type=\"##CLIENTTYPE##\" name=\"##CLIENTUSER##\" desc=\"##CLIENTDESCRIPTION##\" protocol=\"##CLIENTPROTO##\" protocolext=\"##CLIENTPROTOTITLE##\" au=\"##CLIENTCAU##\">\n\
          <request caid=\"##CLIENTCAID##\" srvid=\"##CLIENTSRVID##\" ecmtime=\"##CLIENTLASTRESPONSETIME##\" ecmhistory=\"##CLIENTLASTRESPONSETIMEHIST##\" answered=\"##LASTREADER##\">##CLIENTSRVPROVIDER####CLIENTSRVNAME##</request>\n\
          <times login=\"##CLIENTLOGINDATE##\" online=\"##CLIENTLOGINSECS##\" idle=\"##CLIENTIDLESECS##\"></times>\n\
          <connection ip=\"##CLIENTIP##\" port=\"##CLIENTPORT##\">##CLIENTCON##</connection>\n\
@@ -652,15 +654,15 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TH>Last Channel</TH>\n\
 			<TH>Time on Channel</TH>\n\
 			<TH>Idle</TH>\n\
-			<TH>OK</TH>\n\
-			<TH>NOK</TH>\n\
-			<TH>IGN</TH>\n\
-			<TH>TOUT</TH>\n\
-			<TH>CACHE</TH>\n\
-			<TH>TUN</TH>\n\
-			<TH>LTIME</TH>\n\
-			<TH>EOK</TH>\n\
-			<TH>ENOK</TH>\n\
+			<TH TITLE=\"Delivered ECM with status OK\">OK</TH>\n\
+			<TH TITLE=\"Delivered ECM with status not OK\">NOK</TH>\n\
+			<TH TITLE=\"Ignored ECM by filters, part of NOK\">IGN</TH>\n\
+			<TH TITLE=\"Timeout ECM, part of NOK\">TOUT</TH>\n\
+			<TH TITLE=\"Delivered ECM from cache, part of OK\">CACHE</TH>\n\
+			<TH TITLE=\"Delivered ECM from tunneled, part of OK\">TUN</TH>\n\
+			<TH TITLE=\"Last ECM Time\">LTIME</TH>\n\
+			<TH TITLE=\"Valid EMM delivered\">EOK</TH>\n\
+			<TH TITLE=\"Invalid EMM delivered\">ENOK</TH>\n\
 			<TH>CW Rate</TH>\n\
 			<TH colspan=\"3\" class=\"centered\">Action</TH>\n\
 		</TR>\n\
@@ -1088,6 +1090,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 					</TR>\n\
 				</TABLE>\n\
 			</TD>\n\
+			<TR><TD>##TPLHELPPREFIX##server#dropbadcws##TPLHELPSUFFIX##Drop CWs with wrong checksum:</A><input name=\"dropbadcws\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"dropbadcws\" type=\"checkbox\" value=\"1\" ##DROPBADCWSCHECKED##></TD></TR>\n\
 			<TR><TH>&nbsp;</TH><TH>Reader specific settings for protocol ##PROTOCOL##</TH></TR>\n\
 ##READERDEPENDINGCONFIG##\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" name=\"action\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
@@ -2056,7 +2059,7 @@ function isNumber(a) {\n\
 </script>\
 </svg>"
 
-enum refreshtypes {REFR_ACCOUNTS, REFR_READERS, REFR_SERVER, REFR_ANTICASC, REFR_SERVICES};
+enum refreshtypes {REFR_ACCOUNTS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REFR_SERVICES};
 
 char *tpl[]={
 	"HEADER",

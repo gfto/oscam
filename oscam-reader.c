@@ -36,6 +36,47 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 	}
 }
 
+/**
+ * add one entitlement item to entitlements of reader.
+ **/
+void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, uint16_t id, uint16_t class, time_t start, time_t end, uint8_t type)
+{
+	if (!rdr->ll_entitlements) rdr->ll_entitlements = ll_create();
+
+	LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
+	S_ENTITLEMENT *item;
+
+	if(cs_malloc(&item,sizeof(S_ENTITLEMENT), -1)){
+
+		// fill item
+		item->caid = caid;
+		item->provid = provid;
+		item->id = id;
+		item->class = class;
+		item->start = start;
+		item->end = end;
+		item->type = type;
+
+		//add item
+		ll_iter_insert(&itr, item);
+
+		// cs_debug_mask(D_TRACE, "entitlement: Add caid %4X id %4X %s - %s ", item->caid, item->id, item->start, item->end);
+	}
+
+}
+
+/**
+ * clears entitlements of reader.
+ **/
+void cs_clear_entitlement(struct s_reader *rdr)
+{
+	if (!rdr->ll_entitlements)
+		return;
+
+	ll_clear_data(rdr->ll_entitlements);
+}
+
+
 void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw)
 {
 	int32_t i, pending=0;
@@ -96,7 +137,7 @@ void block_connect(struct s_reader *rdr) {
   	rdr->tcp_block_delay = 100; //starting blocking time, 100ms
   rdr->tcp_block_connect_till.time += rdr->tcp_block_delay / 1000;
   rdr->tcp_block_connect_till.millitm += rdr->tcp_block_delay % 1000;
-  rdr->tcp_block_delay *= 2; //increment timeouts
+  rdr->tcp_block_delay *= 4; //increment timeouts
   if (rdr->tcp_block_delay >= 60*1000)
     rdr->tcp_block_delay = 60*1000; //max 1min, todo config
   cs_debug_mask(D_TRACE, "tcp connect blocking delay for %s set to %d", rdr->label, rdr->tcp_block_delay);
@@ -201,6 +242,8 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 
 	setTCPTimeouts(sd);
 	clear_block_delay(rdr);
+	client->last=client->login=time((time_t)0);
+	client->last_caid=client->last_srvid=0;
 	client->pfd = client->udp_fd;
 	rdr->tcp_connected = 1;
 	cs_log("connect succesfull %s fd=%d", rdr->ph.desc, client->udp_fd);
@@ -289,10 +332,9 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		if (n<0 && (ecm->rc<10))   // free slot found
 			n=i;
 
-		if ((ecm->rc>=10) &&      // ecm already pending
-		 er->caid == ecm->caid &&
-		 (!memcmp(er->ecmd5, ecm->ecmd5, CS_ECMSTORESIZE)) &&
-		 (er->level<=ecm->level))    // ... this level at least
+		// ecm already pending
+		// ... this level at least
+		if ((ecm->rc>=10) &&  er->caid == ecm->caid && (!memcmp(er->ecmd5, ecm->ecmd5, CS_ECMSTORESIZE)) && (er->level<=ecm->level))
 			sflag=0;
       
 		if (ecm->rc >=10) 
@@ -352,6 +394,8 @@ static int32_t reader_store_emm(uchar *emm, uchar type)
 
 void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
+	struct s_client *cl = reader->client;
+	if(!cl) return;
   //cs_log("hallo idx:%d rc:%d caid:%04X",er->idx,er->rc,er->caid);
   if (er->rc<=E_STOPPED)
     {
@@ -382,6 +426,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
     cl->last_srvid=er->srvid;
     cl->last_caid=er->caid;
     casc_process_ecm(reader, er);
+    cl->lastecm=time((time_t)0);
     return;
   }
 #ifdef WITH_CARDREADER
@@ -431,6 +476,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   	cs_log("Error processing ecm for caid %04X, srvid %04X (servicename: %s) on reader %s.", er->caid, er->srvid, get_servicename(reader->client, er->srvid, er->caid, buf), reader->label);  	
   }
   cs_ftime(&tpe);
+ 	cl->lastecm=time((time_t)0);
   if (cs_dblevel) {
 	uint16_t lc, *lp;
 	for (lp=(uint16_t *)er->ecm+(er->l>>2), lc=0; lp>=(uint16_t *)er->ecm; lp--)
@@ -589,6 +635,7 @@ void reader_init(struct s_reader *reader) {
 			cs_sleepms(60000); // wait 60 secs and try again
 	}
 #endif
+	client->login=time((time_t)0);
 
 	cs_malloc(&client->emmcache,CS_EMMCACHESIZE*(sizeof(struct s_emm)), 1);
 	cs_malloc(&client->ecmtask,CS_MAXPENDING*(sizeof(ECM_REQUEST)), 1);

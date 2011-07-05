@@ -185,7 +185,7 @@ extern void cs_accounts_chk(void);
 extern void chk_account(const char *token, char *value, struct s_auth *account);
 extern void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab);
 extern int32_t write_services();
-extern int32_t write_userdb(struct s_auth *authptr);
+extern int32_t write_userdb();
 extern int32_t write_config();
 extern int32_t write_server();
 extern void write_versionfile();
@@ -280,6 +280,8 @@ extern void network_tcp_connection_close(struct s_reader *);
 extern void clear_reader_pipe(struct s_reader * reader);
 extern void block_connect(struct s_reader *rdr);
 extern int32_t is_connect_blocked(struct s_reader *rdr);
+void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, uint16_t id, uint16_t class, time_t start, time_t end, uint8_t type);
+extern void cs_clear_entitlement(struct s_reader *rdr);
 
 /* ===========================
  *        oscam-simples
@@ -338,9 +340,9 @@ extern void clear_tuntab(struct s_tuntab *ttab);
 extern int32_t file_copy(char *srcfile, char *destfile);
 extern int32_t safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, int32_t forceBakOverWrite);
 extern void cs_strncpy(char * destination, const char * source, size_t num);
-extern char *get_servicename(struct s_client *cl, int32_t srvid, int32_t caid, char *buf);
-extern char *get_tiername(int32_t tierid, int32_t caid, char *buf);
-extern char *get_provider(int32_t caid, uint32_t provid, char *buf);
+extern char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf);
+extern char *get_tiername(uint16_t tierid, uint16_t caid, char *buf);
+extern char *get_provider(uint16_t caid, uint32_t provid, char *buf);
 extern uchar fast_rnd(void);
 extern void init_rnd(void);
 extern int32_t hexserialset(struct s_reader *rdr);

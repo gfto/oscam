@@ -2,7 +2,7 @@
 
 #include "globals.h"
 
-#ifdef OS_MACOSX
+#if defined OS_MACOSX || defined OS_FREEBSD
 #include <net/if_dl.h>
 #include <ifaddrs.h>
 #elif defined OS_SOLARIS
@@ -2353,7 +2353,7 @@ int32_t write_config()
 	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
 }
 
-int32_t write_userdb(struct s_auth *authptr)
+int32_t write_userdb()
 {
 	FILE *f;
 	struct s_auth *account;
@@ -2374,7 +2374,7 @@ int32_t write_userdb(struct s_auth *authptr)
   fprintf(f,"# Read more: http://streamboard.gmc.to/svn/oscam/trunk/Distribution/doc/txt/oscam.user.txt\n\n");
 
   //each account
-	for (account=authptr; (account) ; account=account->next){
+	for (account=cfg.account; (account) ; account=account->next){
 		fprintf(f,"[account]\n");
 		fprintf_conf(f, "user", "%s\n", account->usr);
 		fprintf_conf(f, "pwd", "%s\n", account->pwd);
@@ -2748,6 +2748,9 @@ int32_t write_server()
 				fprintf_conf(f, "blocknano", "%s\n", value);
 			free_mk_t(value);
 
+			if (rdr->dropbadcws)
+				fprintf_conf(f, "dropbadcws", "%d\n", rdr->dropbadcws);
+				
 #ifdef MODULE_CCCAM
 			if (rdr->typ == R_CCCAM) {
 				if (rdr->cc_version[0] || cfg.http_full_cfg)
@@ -3179,58 +3182,63 @@ void init_free_sidtab() {
 }
 
 int32_t init_sidtab() {
-  int32_t nr, nro;
-  FILE *fp;
-  char *value;
-  char token[MAXLINESIZE];
-  struct s_sidtab *ptr;
-  struct s_sidtab *sidtab=(struct s_sidtab *)0;
+	int32_t nr, nro, nrr;
+	FILE *fp;
+	char *value;
+	char token[MAXLINESIZE];
+	struct s_sidtab *ptr;
+	struct s_sidtab *sidtab=(struct s_sidtab *)0;
 
-  snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_sidt);
-  if (!(fp=fopen(token, "r")))
-  {
-    cs_log("Cannot open file \"%s\" (errno=%d %s)", token, errno, strerror(errno));
-    return(1);
-  }
-  for (nro=0, ptr=cfg.sidtab; ptr; nro++)
-  {
-    struct s_sidtab *ptr_next;
-    ptr_next=ptr->next;
-    free_sidtab(ptr);
-    ptr=ptr_next;
-  }
-  nr=0;
-  while (fgets(token, sizeof(token), fp))
-  {
-    int32_t l;
-    void *ptr;
-    if ((l=strlen(trim(token)))<3) continue;
-    if ((token[0]=='[') && (token[l-1]==']'))
-    {
-      token[l-1]=0;
-      if (!cs_malloc(&ptr, sizeof(struct s_sidtab), -1)) return(1);
-      if (sidtab)
-        sidtab->next=ptr;
-      else
-        cfg.sidtab=ptr;
-      sidtab=ptr;
-      nr++;
-      memset(sidtab, 0, sizeof(struct s_sidtab));
-      cs_strncpy(sidtab->label, strtolower(token+1), sizeof(sidtab->label));
-      continue;
-    }
-    if (!sidtab) continue;
-    if (!(value=strchr(token, '='))) continue;
-    *value++='\0';
-    chk_sidtab(trim(strtolower(token)), trim(strtolower(value)), sidtab);
-  }
-  fclose(fp);
+	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_sidt);
+	if (!(fp=fopen(token, "r")))
+	{
+		cs_log("Cannot open file \"%s\" (errno=%d %s)", token, errno, strerror(errno));
+		return(1);
+	}
+	for (nro=0, ptr=cfg.sidtab; ptr; nro++)
+	{
+		struct s_sidtab *ptr_next;
+		ptr_next=ptr->next;
+		free_sidtab(ptr);
+		ptr=ptr_next;
+	}
+	nr = 0; nrr = 0;
+	while (fgets(token, sizeof(token), fp))
+	{
+		int32_t l;
+		void *ptr;
+		if ((l=strlen(trim(token)))<3) continue;
+		if ((token[0]=='[') && (token[l-1]==']'))
+		{
+			token[l-1]=0;
+			if(nr > MAX_SIDBITS){
+				fprintf(stderr, "Warning: Service No.%d - '%s' ignored. Max allowed Services %d\n", nr, strtolower(token+1), MAX_SIDBITS);
+				nr++;
+				nrr++;
+			} else {
+				if (!cs_malloc(&ptr, sizeof(struct s_sidtab), -1)) return(1);
+				if (sidtab)
+					sidtab->next=ptr;
+				else
+					cfg.sidtab=ptr;
+				sidtab=ptr;
+				nr++;
+				cs_strncpy(sidtab->label, strtolower(token+1), sizeof(sidtab->label));
+				continue;
+			}
+		}
+		if (!sidtab) continue;
+		if (!(value=strchr(token, '='))) continue;
+		*value++='\0';
+		chk_sidtab(trim(strtolower(token)), trim(strtolower(value)), sidtab);
+	}
+	fclose(fp);
 
 #ifdef DEBUG_SIDTAB
-  show_sidtab(cfg.sidtab);
+	show_sidtab(cfg.sidtab);
 #endif
-  cs_log("services reloaded: %d services freed, %d services loaded", nro, nr);
-  return(0);
+	cs_log("services reloaded: %d services freed, %d services loaded, rejected %d", nro, nr, nrr);
+	return(0);
 }
 
 //Todo #ifdef CCCAM
@@ -3266,7 +3274,6 @@ int32_t init_provid() {
 			cfg.provid = ptr;
 
 		provid = ptr;
-		memset(provid, 0, sizeof(struct s_provid));
 
 		int32_t i;
 		char *ptr1;
@@ -3325,7 +3332,7 @@ int32_t init_srvid()
 	}
 
 	while (fgets(token, sizeof(token), fp)) {
-		int32_t l, j, len=0, len2;
+		int32_t l, j, len=0, len2, srvidtmp;
 		uint32_t pos;
 		tmp = trim(token);
 
@@ -3393,14 +3400,14 @@ int32_t init_srvid()
 
 		char *srvidasc = strchr(token, ':');
 		*srvidasc++ = '\0';
-		srvid->srvid = dyn_word_atob(srvidasc) & 0xFFFF;
+		srvidtmp = dyn_word_atob(srvidasc) & 0xFFFF;
 		//printf("srvid %s - %d\n",srvidasc,srvid->srvid );
 
-		if (srvid->srvid<0) {
+		if (srvidtmp<0) {
 			free(tmpptr);
 			free(srvid);
 			continue;
-		}
+		} else srvid->srvid = srvidtmp;
 
 		srvid->ncaid = 0;
 		for (i = 0, ptr1 = strtok_r(token, ",", &saveptr1); (ptr1) && (i < 10) ; ptr1 = strtok_r(NULL, ",", &saveptr1), i++){
@@ -3490,7 +3497,6 @@ int32_t init_tierid()
 			new_cfg_tierid = ptr;
 
 		tierid = ptr;
-		memset(tierid, 0, sizeof(struct s_tierid));
 
 		int32_t i;
 		char *ptr1 = strtok_r(payload, "|", &saveptr1);
@@ -3590,6 +3596,13 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
+#ifdef WEBIF
+	if (!strcmp(token, "description")) {
+		cs_strncpy(rdr->description, value, sizeof(rdr->description));
+		return;
+	}
+#endif
+
   if (!strcmp(token, "mg-encrypted")) {
     uchar key[16];
     uchar mac[6];
@@ -3618,7 +3631,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
     }
 
     if (!memcmp(mac, "\x00\x00\x00\x00\x00\x00", 6)) {
-#ifdef OS_MACOSX
+#if defined OS_MACOSX || defined OS_FREEBSD
       // no mac address specified so use mac of en0 on local box
       struct ifaddrs *ifs, *current;
 
@@ -3797,13 +3810,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		cs_strncpy(rdr->label, value, sizeof(rdr->label));
 		return;
 	}
-
-#ifdef WEBIF
-	if (!strcmp(token, "description")) {
-		cs_strncpy(rdr->description, value, sizeof(rdr->description));
-		return;
-	}
-#endif
 
 	if (!strcmp(token, "fallback")) {
 		rdr->fallback  = strToIntVal(value, 0);
@@ -4371,6 +4377,12 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		}
 	}
+	
+	if (!strcmp(token, "dropbadcws")) {
+		rdr->dropbadcws = strToIntVal(value, 0);
+		return;
+	}
+	
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in reader section not recognized\n",token);
 }
@@ -4585,6 +4597,8 @@ void init_ac()
             token, errno, strerror(errno));
     return;
   }
+  
+  struct s_cpmap *cur_cpmap, *first_cpmap = NULL, *last_cpmap = NULL;
 
   for(nr=0; fgets(token, sizeof(token), fp);)
   {
@@ -4592,8 +4606,6 @@ void init_ac()
     uint16_t caid, sid, chid, dwtime;
     uint32_t  provid;
     char *ptr, *ptr1;
-    struct s_cpmap *ptr_cpmap;
-    static struct s_cpmap *cpmap=(struct s_cpmap *)0;
 
     if( strlen(token)<4 ) continue;
 
@@ -4644,19 +4656,23 @@ void init_ac()
           break;
         }
       }
-      if (!cs_malloc(&ptr_cpmap, sizeof(struct s_cpmap), -1)) return;
-      if( cpmap )
-        cpmap->next=ptr_cpmap;
+      if (!cs_malloc(&cur_cpmap, sizeof(struct s_cpmap), -1)){
+      	for(cur_cpmap = first_cpmap; cur_cpmap; cur_cpmap = cur_cpmap->next)
+      		free(cur_cpmap);
+      	return;
+      }
+      if(last_cpmap)
+        last_cpmap->next=cur_cpmap;
       else
-        cfg.cpmap=ptr_cpmap;
-      cpmap=ptr_cpmap;
+        first_cpmap=cur_cpmap;
+      last_cpmap=cur_cpmap;
 
-      cpmap->caid   = caid;
-      cpmap->provid = provid;
-      cpmap->sid    = sid;
-      cpmap->chid   = chid;
-      cpmap->dwtime = dwtime;
-      cpmap->next   = 0;
+      cur_cpmap->caid   = caid;
+      cur_cpmap->provid = provid;
+      cur_cpmap->sid    = sid;
+      cur_cpmap->chid   = chid;
+      cur_cpmap->dwtime = dwtime;
+      cur_cpmap->next   = 0;
 
       cs_debug_mask(D_CLIENT, "nr=%d, caid=%04X, provid=%06X, sid=%04X, chid=%04X, dwtime=%d",
                 nr, caid, provid, sid, chid, dwtime);
@@ -4664,6 +4680,11 @@ void init_ac()
     }
   }
   fclose(fp);
+  
+  last_cpmap = cfg.cpmap;
+  cfg.cpmap = first_cpmap;
+  for(cur_cpmap = last_cpmap; cur_cpmap; cur_cpmap = cur_cpmap->next)
+    add_garbage(cur_cpmap);
   //cs_log("%d lengths for caid guessing loaded", nr);
   return;
 }

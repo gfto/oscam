@@ -878,7 +878,6 @@ struct s_client * create_client(in_addr_t ip) {
 		cl->account = first_client->account;
 
 		//master part
-		cl->stat=1;
 		cl->mutexstore = NULL;
 		cl->mutexstore_alloc = 0;
   		cl->mutexstore_used = 0;
@@ -1612,8 +1611,14 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 	for (i=0; i<16; i+=4) {
 		c=((er->cw[i]+er->cw[i+1]+er->cw[i+2]) & 0xff);
 		if (er->cw[i+3]!=c) {
-			cs_debug_mask(D_TRACE, "notice: changed dcw checksum byte cw[%i] from %02x to %02x", i+3, er->cw[i+3],c);
-			er->cw[i+3]=c;
+			if (reader->dropbadcws) {
+				er->rc = E_RDR_NOTFOUND;
+				er->rcEx = E2_WRONG_CHKSUM;
+	  			break;
+	  		} else {
+				cs_debug_mask(D_TRACE, "notice: changed dcw checksum byte cw[%i] from %02x to %02x", i+3, er->cw[i+3],c);
+				er->cw[i+3]=c;
+			}
 		}
 	}
 
@@ -1788,11 +1793,11 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 #ifdef WEBIF
 	if (er_reader) {
 		if(er->rc == E_FOUND)
-			snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s", er_reader->label);
+			cs_strncpy(client->lastreader, er_reader->label, sizeof(client->lastreader));
 		else if ((er->rc == E_CACHE1) || (er->rc == E_CACHE2))
 			snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s (cache)", er_reader->label);
 		else
-			snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s", stxt[er->rc]);
+			cs_strncpy(client->lastreader, stxt[er->rc], sizeof(client->lastreader));
 	}
 #endif
 

@@ -127,7 +127,7 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 		int32_t bsize;
 		if (n<21)	// 5+16 is minimum
 		{
-			cs_log("packet to int16_t !");
+			cs_log("packet too small!");
 			return(buf[0]=0);
 		}
 		if (!secmon_auth_client(buf+1))

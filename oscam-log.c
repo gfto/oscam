@@ -146,7 +146,12 @@ int32_t cs_init_log(void)
 
 #ifdef CS_ANTICASC
 int32_t ac_init_log(void){
-  if(!fpa && cfg.ac_logfile[0]){
+	FILE *tmp = fpa;
+	fpa=(FILE *)0;
+	if(tmp)
+    fclose(tmp);
+
+  if(cfg.ac_logfile[0]){
     if( (fpa=fopen(cfg.ac_logfile, "a+"))<=(FILE *)0 ){
       fpa=(FILE *)0;
       fprintf(stderr, "can't open anti-cascading logfile: %s\n", cfg.ac_logfile);
@@ -399,7 +404,7 @@ void logCWtoFile(ECM_REQUEST *er){
 	char srvname[128];
 	/* %s / %s   _I  %04X  _  %s  .cwl  */
 	char buf[256 + sizeof(srvname)];
-	char date[7];
+	char date[9];
 	unsigned char  i, parity, writeheader = 0;
 	time_t t;
 	struct tm timeinfo;

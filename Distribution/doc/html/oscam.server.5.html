@@ -1,0 +1,748 @@
+Content-type: text/html
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of oscam.server</TITLE>
+</HEAD><BODY>
+<H1>oscam.server</H1>
+Section: File Formats (5)<BR><A HREF="#index">Index</A>
+<A HREF="/cgi-bin/man/man2html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+<B>oscam.server</B> - reader configuration file for OSCam
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+The server configuration file for OSCam contains reader parameters. 
+sections in <B>oscam.server</B> are <I>recurring</I> (more than one reader possible).
+At least one [reader] section is <I>required</I>.
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTIONS</H2>
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>The [reader] section</H3>
+
+<P>
+
+<B>device</B> = <B>&lt;device|bus:device|device:slot&gt;</B>|Serial:Reader <B>serial</B>|<B>&lt;ip|hostname&gt;,&lt;port&gt;[,&lt;lport&gt;]</B>|<B>pcsc</B>|&lt;<B>0|1</B>&gt;|<B>constantcw</B>
+<DL COMPACT><DT><DD>
+define local or remote reader 
+<P>
+<BR>&nbsp;<B>device</B>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;device&nbsp;name
+<P>
+<BR>&nbsp;<B>bus:device</B>:&nbsp;&nbsp;bus&nbsp;name&nbsp;and&nbsp;device&nbsp;name&nbsp;of&nbsp;the&nbsp;Smartreader+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(get&nbsp;the&nbsp;names&nbsp;with&nbsp;lsusb&nbsp;'Bus'&nbsp;and&nbsp;'Device')
+<P>
+<BR>&nbsp;<B>device:slot</B>:&nbsp;device&nbsp;name&nbsp;and&nbsp;slot&nbsp;number&nbsp;sc8in1&nbsp;[1-8]
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<I>(only&nbsp;one&nbsp;SC8in1&nbsp;reader&nbsp;supported)</I>
+<P>
+<BR>&nbsp;<B>serial</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;serial&nbsp;number&nbsp;of&nbsp;Smartreader+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(get&nbsp;the&nbsp;serial&nbsp;number&nbsp;while&nbsp;starting&nbsp;OSCam)
+<P>
+<BR>&nbsp;<B>lport</B>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;remapping&nbsp;to&nbsp;local&nbsp;port
+<P>
+<BR>&nbsp;<B>PCSC</B>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;number&nbsp;of&nbsp;PCSC&nbsp;reader,&nbsp;starting&nbsp;with&nbsp;0
+<P>
+<BR>&nbsp;<B>0|1</B>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;Coolstream&nbsp;HD-1&nbsp;STB&nbsp;only:&nbsp;select&nbsp;reader&nbsp;0&nbsp;or&nbsp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reader&nbsp;1
+<P>
+<BR>&nbsp;<B>constantcw</B>:&nbsp;&nbsp;constant&nbsp;CW&nbsp;file&nbsp;name
+<P>
+constant CW file format: CA (4 digits):ID (6 digits):SID (4 digits):PMT PID (4 digits):ECM PID (4 digits)<I>::</I>
+key (16 Bytes seperated by spaces)
+<P>
+example: 1234:123456:1234:1234:1234<I>::</I>00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
+</DL>
+
+<P>
+
+<B>device_out_endpoint</B> = <B>address</B>
+<DL COMPACT><DT><DD>
+set endpoint address for FTDI chips,default:0x82
+<P>
+<BR>&nbsp;<B>0x81</B>:&nbsp;Infinity&nbsp;USB&nbsp;Smart
+<BR>&nbsp;<B>0x82</B>:&nbsp;Smartreader+&nbsp;(default)
+</DL>
+
+<P>
+
+<B>enable</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+0 = deactivate reader, default:1
+</DL>
+
+<P>
+
+<B>key</B> = <B>DES key</B>
+<DL COMPACT><DT><DD>
+key for newcamd remote reader encryption
+</DL>
+
+<P>
+
+<B>account</B> = <B>user,password</B> <I>(delimiter not allowed, obsolete)</I>
+<DL COMPACT><DT><DD>
+user and password for remote reader, overrides password of <B>password</B>, first come first serve
+</DL>
+
+<P>
+
+<B>user</B> = <B>name</B>
+<DL COMPACT><DT><DD>
+user for remote reader, overrides user of <B>account</B>, first come first serve
+</DL>
+
+<P>
+
+<B>password</B> = <B>password</B>
+<DL COMPACT><DT><DD>
+password for remote reader, overrides password of <B>account</B>, first come first serve
+</DL>
+
+<P>
+
+<B>mg-encrypted</B> = D: { <B>&lt;IP|hostname&gt;</B> { <B>&lt;local port&gt;</B> <B>&lt;remote port&gt;</B> { <B>&lt;password&gt;</B> { <B>&lt;level&gt;</B> <B>&lt;level&gt;</B> }}}}[,<B>&lt;local MAC address&gt;</B>]
+<DL COMPACT><DT><DD>
+mgcamd encrypted gbox line, default MAC address = eth0
+</DL>
+
+<P>
+
+<B>services</B> = <B>[!]services[,[!]&lt;services&gt;]...</B>
+<DL COMPACT><DT><DD>
+reader [de]assignment to service group, default=none
+</DL>
+
+<P>
+
+<B>inactivitytimeout</B> = <B>minutes</B>
+<DL COMPACT><DT><DD>
+inactivity timeout (for all TCP based remote readers except CCCam), default:none
+</DL>
+
+<P>
+
+<B>reconnecttimeout</B> = <B>minutes</B>
+<DL COMPACT><DT><DD>
+reconnect if missing answers (for all TCP based remote readers), default:30
+</DL>
+
+<P>
+
+<B>disableserverfilter</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = ignore <B>caid</B> and <B>ident</B> settings of reader due faulty clients, default:0
+</DL>
+
+<P>
+
+<B>label</B> = <B>name</B>
+<DL COMPACT><DT><DD>
+name for reader, <I>required</I>
+</DL>
+
+<P>
+
+<B>description</B> = <B>text</B>
+<DL COMPACT><DT><DD>
+description of reader, default:none
+</DL>
+
+<P>
+
+<B>fallback</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = define reader as fallback, standard and fallback reader must have the same group, default:0
+</DL>
+
+<P>
+
+<B>logport</B> = <B>0</B>|<B>port</B>
+<DL COMPACT><DT><DD>
+camd 3.x reader logport, camd 3.x UDP must be activated, only works if there's no camd 3.x cascading, 0 = disabled, default=0
+</DL>
+
+<P>
+
+<B>caid</B> = <B>&lt;CAID&gt;[&amp;&lt;mask&gt;][:&lt;target CAID&gt;][,&lt;CAID&gt;[&amp;&lt;mask&gt;][:target &lt;CAID&gt;]]...</B>
+<DL COMPACT><DT><DD>
+define and mapping of CAIDs for reader, default:all CAIDs with mask FFFF
+<P>
+example: caid = 0100
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;caid&nbsp;=&nbsp;0200&amp;ffee:0300
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;caid&nbsp;=&nbsp;0400&amp;ff00:0500,0600
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;caid&nbsp;=&nbsp;0702,0722
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;caid&nbsp;=&nbsp;0702&amp;ffdf&nbsp;(shortcut&nbsp;for&nbsp;the&nbsp;example&nbsp;above)
+</DL>
+
+<P>
+
+<B>audisabled</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = exclude reader from auto AU, default:0
+</DL>
+
+<P>
+
+<B>auprovid</B> = <B>provider ID</B>
+<DL COMPACT><DT><DD>
+set provider ID to use the right reader for auto AU
+<P>
+example: auprovid = 123456
+</DL>
+
+<P>
+
+<B>ecmwhitelist</B> = [<B>CAID</B>[@<B>ident</B>]:]<B>length</B>[,<B>length</B>]...[;[<B>CAID</B>[@<B>ident</B>]:]<B>length</B>[,<B>length</B>]...]...
+<DL COMPACT><DT><DD>
+define valid ECM length per CAID and ident in hex, default:none,ident=000000
+<P>
+example: ecmwhitelist = 10,20,0a,0b
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ecmwhitelist&nbsp;=&nbsp;0100:10,20;<A HREF="mailto:0200@123456">0200@123456</A>:0a,4b
+<P>
+<I>In normal operation mode this parameter is not required.</I>
+</DL>
+
+<P>
+
+<B>detect</B> = <B>CD</B>|<B>DSR</B>|<B>CTS</B>|<B>RING</B>|<B>NONE</B>|<B>gpio[1-7]</B>
+<DL COMPACT><DT><DD>
+status detect of card (NONE = no detection), default:CD
+</DL>
+
+<P>
+
+<B>cardmhz</B> = <B>mhz</B>
+<DL COMPACT><DT><DD>
+set standard SC frequency in units of 10 kHz, for Irdeto SC set to 600, refer to OVERCLOCKING, default:357
+</DL>
+
+<P>
+
+<B>mhz</B> = <B>frequency</B>
+<DL COMPACT><DT><DD>
+set reader frequency in units of 10 kHz, if <B>mhz</B> &gt; <B>cardmhz</B> you are in overclocking mode, 
+refer to OVERCLOCKING, default:357 
+</DL>
+
+<P>
+
+<B>deprecated</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+First the SC will be initialized in normal mode. If it fails, the SC will be automatically 
+reverted to deprecated mode, so that the SC speed will not be changed and the communication 
+will remain on normal ATR speed of 9600 baud.
+<P>
+1 = use deprecated SC mode only, default:0
+</DL>
+
+<P>
+
+<B>mode</B> = <B>mode</B>
+<DL COMPACT><DT><DD>
+set card init mode for AzBox reader, default:none
+</DL>
+
+<P>
+
+<B>protocol</B> = <B>reader protocol</B>
+<DL COMPACT><DT><DD>
+reader protocol, <I>required</I>:
+<BR>&nbsp;<B>mouse</B>
+<BR>&nbsp;<B>mp35</B>
+<BR>&nbsp;<B>smartreader</B>
+<BR>&nbsp;<B>internal</B>
+<BR>&nbsp;<B>serial</B>
+<BR>&nbsp;<B>camd35</B>|<B>cs357x</B>
+<BR>&nbsp;<B>cs378x</B>
+<BR>&nbsp;<B>gbox</B>
+<BR>&nbsp;<B>newcamd</B>|<B>newcamd525</B>
+<BR>&nbsp;<B>newcamd524</B>
+<BR>&nbsp;<B>cccam</B>
+<BR>&nbsp;<B>radegast</B>
+<BR>&nbsp;<B>pcsc</B>
+<BR>&nbsp;<B>constcw</B>
+<BR>&nbsp;<B>sc8in1</B>
+</DL>
+
+<P>
+
+<B>ident</B> = <B>&lt;CAID&gt;:&lt;ident&gt;[,ident]...[;&lt;CAID&gt;:&lt;ident&gt;[,ident]...]...</B>
+<DL COMPACT><DT><DD>
+define CAID and SC specific ident for reader
+<P>
+example: ident = 0100:123456,234567;0200:345678,456789
+</DL>
+
+<P>
+
+<B>provid</B> = <B>ID</B>
+<DL COMPACT><DT><DD>
+define provider ID for reader
+</DL>
+
+<P>
+
+<B>class</B> = <B>[!]class[,[!]class]...</B>
+<DL COMPACT><DT><DD>
+define SC specific class in hex for reader
+<P>
+example: class = 01,02,!1b,!2b
+</DL>
+
+<P>
+
+<B>group</B> = <B>groupname</B>
+<DL COMPACT><DT><DD>
+reader assingment to group, <I>required</I>
+</DL>
+
+<P>
+
+<B>emmcache</B> = <B>usecache,rewrite,logging</B>
+<DL COMPACT><DT><DD>
+set EMM cache of local reader:
+<P>
+<BR>&nbsp;<B>usecache</B>&nbsp;=&nbsp;<B>0</B>|<B>1</B>&nbsp;1&nbsp;=&nbsp;enable&nbsp;EMM&nbsp;caching,&nbsp;default:0
+<BR>&nbsp;<B>rewrite</B>&nbsp;&nbsp;=&nbsp;determines&nbsp;how&nbsp;often&nbsp;one&nbsp;and&nbsp;the&nbsp;same&nbsp;EMM&nbsp;is&nbsp;written
+<BR>&nbsp;<B>logging</B>&nbsp;&nbsp;=&nbsp;EMM&nbsp;logging&nbsp;mask:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;EMM&nbsp;logging&nbsp;disabled
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>1</B>&nbsp;=&nbsp;logging&nbsp;EMM&nbsp;errors
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>2</B>&nbsp;=&nbsp;logging&nbsp;written&nbsp;EMMs
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>4</B>&nbsp;=&nbsp;logging&nbsp;skipped&nbsp;EMMs
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>8</B>&nbsp;=&nbsp;logging&nbsp;blocked&nbsp;EMMs
+<P>
+<BR>&nbsp;example:&nbsp;emmcache&nbsp;=&nbsp;1,3,10
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;emmcache&nbsp;=&nbsp;1,2,6
+</DL>
+
+<P>
+
+<B>ratelimitecm</B> = <B>count</B>
+<DL COMPACT><DT><DD>
+number of different SIDs in ECMs allowed for an interval, default:0
+</DL>
+
+<P>
+
+<B>ratelimitseconds</B> = <B>seconds</B>
+<DL COMPACT><DT><DD>
+interval for rate limit, default:0
+</DL>
+
+<P>
+
+<B>blocknano</B> = <B>nano[,nano]...</B>|all
+<DL COMPACT><DT><DD>
+list of EMM-nanos to block (in hex w/o 0x) or all EMM-nanos, only valid for physical readers, default:none
+<P>
+<BR>&nbsp;example:&nbsp;blocknano&nbsp;=&nbsp;45,93,7a,ff
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;blocknano&nbsp;=&nbsp;all
+</DL>
+
+<P>
+
+<B>blockemm-u</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = block unique EMMs, default:0
+</DL>
+
+<P>
+
+<B>blockemm-s</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = block shared EMMs, default:0
+</DL>
+
+<P>
+
+<B>blockemm-g</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = block global EMMs, default:0
+</DL>
+
+<P>
+
+<B>blockemm-unknown</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = block unknown types of EMMs, default:0
+</DL>
+
+<P>
+
+<B>savenano</B> = <B>nano[,nano]....</B>|all
+<DL COMPACT><DT><DD>
+list of EMM-nanos to save (in hex w/o 0x) or all EMM-nanos, only valid for physical readers, default:none
+<P>
+<BR>&nbsp;example:&nbsp;savenano&nbsp;=&nbsp;45,93,7a,ff
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;savenano&nbsp;=&nbsp;all
+</DL>
+
+<P>
+
+<B>dropbadcws</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = reject bad CWs, default:0
+</DL>
+
+<P>
+
+<B>readnano</B> = <B>[path]filename</B>
+<DL COMPACT><DT><DD>
+write file (usually a copy of a file saved by savenano) to your smartcard, if no path is specified, the specified file is searched for in the configuration directory, only valid for physical readers, default:none
+<P>
+<BR>&nbsp;example:&nbsp;readnano&nbsp;=&nbsp;write.emm
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readnano&nbsp;=&nbsp;/var/oscam/write.emm
+</DL>
+
+<P>
+
+<B>lb_weight</B> = <B>weight</B>
+<DL COMPACT><DT><DD>
+the higher the value the higher the probability for reader selection, default:100
+<P>
+<BR>&nbsp;It's&nbsp;an&nbsp;divider&nbsp;for&nbsp;the&nbsp;average&nbsp;responstime.
+</DL>
+
+<P>
+
+<B>cccversion</B> = <B>&lt;main version&gt;.&lt;version&gt;.&lt;sub version&gt;</B>
+<DL COMPACT><DT><DD>
+define CCcam version, default:none
+<P>
+example: cccversion = 1.2.34
+</DL>
+
+<P>
+
+<B>cccmaxhops</B> = <B>hops</B>
+<DL COMPACT><DT><DD>
+define CCcam maximum SC distance hops, default:10
+<P>
+<BR>&nbsp;<B>-1</B>&nbsp;=&nbsp;disabled
+<BR>&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;remote&nbsp;local&nbsp;SCs&nbsp;only
+<BR>&nbsp;&nbsp;<B>1</B>&nbsp;=&nbsp;remote&nbsp;local&nbsp;SCs&nbsp;and&nbsp;+&nbsp;1&nbsp;hop
+<BR>&nbsp;&nbsp;<B>2</B>&nbsp;=&nbsp;remote&nbsp;local&nbsp;SCs&nbsp;and&nbsp;+&nbsp;2&nbsp;hops
+<BR>&nbsp;and&nbsp;so&nbsp;on
+<P>
+After reading this SC hop will be incremented by one.
+</DL>
+
+<P>
+
+<B>ccchop</B> = <B>hop</B>
+<DL COMPACT><DT><DD>
+set hop for non CCCam readers, default:0
+</DL>
+
+<P>
+
+<B>cccreshare</B> = <B>hop</B>
+<DL COMPACT><DT><DD>
+define reader's CCcam reshare hop, default:0
+<P>
+<BR>&nbsp;<B>-1</B>&nbsp;=&nbsp;no&nbsp;resharing
+<BR>&nbsp;&nbsp;<B>x</B>&nbsp;=&nbsp;resharing&nbsp;for&nbsp;direct&nbsp;peer&nbsp;and&nbsp;share&nbsp;level&nbsp;x
+</DL>
+
+<P>
+
+<B>cccwantemu</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = request to provide emu from CCCam server, too, default:0
+</DL>
+
+<P>
+
+<B>ccckeepalive</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = send keepalive messages to keep connection to remote CCCam server up, default:0
+</DL>
+
+<P>
+
+<B>cccmindown</B> = <B>number</B>
+<DL COMPACT><DT><DD>
+filters all readers with hops smaller than number, default:0
+</DL>
+
+<P>
+
+<B>pincode</B> = <B>pincode</B>
+<DL COMPACT><DT><DD>
+pincode for Conax and Cryptoworks SCs, default:none
+</DL>
+
+<P>
+
+<B>chid</B> = <B>CAID:ChID</B>
+<DL COMPACT><DT><DD>
+define SC specific ChIDs for reader, default:none
+<P>
+example: chid = 0100:12
+</DL>
+
+<P>
+
+<B>force_irdeto</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = force Irdeto SC mode even if RSA key is set for Irdeto tunnled Nagravion SC, default:0
+</DL>
+
+<P>
+
+<B>nagra_read</B> = <B>0</B>|<B>1</B>|<B>2</B>
+<DL COMPACT><DT><DD>
+read Nagravison records (on NCMED cards only):
+<P>
+<BR>&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;disabled&nbsp;(default)
+<BR>&nbsp;&nbsp;<B>1</B>&nbsp;=&nbsp;read&nbsp;all&nbsp;records&nbsp;with&nbsp;expired&nbsp;rights
+<BR>&nbsp;&nbsp;<B>2</B>&nbsp;=&nbsp;read&nbsp;records&nbsp;with&nbsp;valid&nbsp;rights&nbsp;only
+</DL>
+
+<P>
+
+<B>rsakey</B> = <B>RSA key</B>
+<DL COMPACT><DT><DD>
+RSA key for Nagravision/Tiger SCs / CAM key data for Irdeto SCs 
+</DL>
+
+<P>
+
+<B>fix9993</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = enable fix for 9993 error with CAID 0919 SCs, default:0
+</DL>
+
+<P>
+
+<B>boxkey</B> = <B>box key</B>
+<DL COMPACT><DT><DD>
+box key for Nagravision SCs / CAM key for Irdeto SCs
+</DL>
+
+<P>
+
+<B>aeskeys</B> = <B>CAID #0</B>@<B>ident</B>:<B>AES key #0 CAID #0</B>[,<B>AES key #1 CAID #0</B>],...[;<B>CAID #1</B>@<B>ident</B>:<B>AES key #0 CAID #1</B>[,<B>AES key #1 CAID #1</B>],...]...
+<DL COMPACT><DT><DD>
+multiple 16 bytes AES keys for Viaccess SCs (the used postprocessing AES key is specified through the D2 nano of the ECM)
+<P>
+special AES keys:
+<P>
+<BR>&nbsp;<B>00</B>&nbsp;=&nbsp;do&nbsp;not&nbsp;return&nbsp;any&nbsp;CW,&nbsp;no&nbsp;AES&nbsp;key&nbsp;specified
+<BR>&nbsp;<B>FF</B>&nbsp;=&nbsp;return&nbsp;CW&nbsp;received&nbsp;from&nbsp;the&nbsp;S,&nbsp;no&nbsp;AES&nbsp;key&nbsp;specified
+<P>
+example: 
+<P>
+<BR>&nbsp;aeskeys&nbsp;=&nbsp;<A HREF="mailto:0500@012345">0500@012345</A>:000102030405060708090a0b0c0d0e0f;<A HREF="mailto:0500@543210">0500@543210</A>:000102030405060708090a0b0c0d0e0f,0,0f0e0d0c0b0a090807060504030201
+</DL>
+
+<P>
+
+<B>showcls</B> = <B>quantity</B>
+<DL COMPACT><DT><DD>
+number of classes subscriptions to show for Viaccess SCs, default=10
+</DL>
+
+<P>
+
+<B>boxid</B> = <B>NDS box ID</B>
+<DL COMPACT><DT><DD>
+NDS receiver box id
+</DL>
+
+<P>
+
+<B>ndsversion</B> = <B>0</B>|<B>1</B>|<B>12</B>|<B>2</B>
+<DL COMPACT><DT><DD>
+set NDS Videoguard version
+<P>
+<BR>&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;autodetection&nbsp;(default)
+<BR>&nbsp;&nbsp;<B>1</B>&nbsp;=&nbsp;NDS&nbsp;Videoguard&nbsp;1
+<BR>&nbsp;<B>12</B>&nbsp;=&nbsp;NDS&nbsp;Videoguard&nbsp;1+
+<BR>&nbsp;&nbsp;<B>2</B>&nbsp;=&nbsp;NDS&nbsp;Videoguard&nbsp;2
+</DL>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>OVERCLOCKING</H2>
+
+<DL COMPACT>
+<DT>&bull;<DD>
+Dreambox and other internal readers
+<P>
+For Dreambox and other internal readers the highest possible clockrate will be 
+auto detected. The <B>mhz</B> parameter lets you override the values chosen by 
+OSCam, if it differs from 357 and 358, but usually you will not set any value 
+for mhz.
+<P>
+For certain Dreamboxes (especially PPC clones) the default mhz parameter leads 
+to slow ECM times and/or &quot;not found&quot; ECMs. By setting <B>mhz</B> to values like 
+200, 300, 400, ... 1600 you can find a value that works for your receiver and 
+your card. The higher the <B>mhz</B> value, the slower the ECM time (strange enough).
+<P>
+If you choose the value too low, your card is not recognized (no ATR or &quot;card 
+not supported&quot;). If you choose the value too high, you get slow ECM times. Our 
+experience is that either no <B>mhz</B> line, or a line <B>mhz</B> = 1000 works 
+best. 
+<DT>&bull;<DD>
+Phoenix / Smartmouse reader
+<P>
+Overclocking does not work with Windows and Mac OS X. 
+Set <B>mhz</B> equivalent to the frequency of the reader. 
+OSCam can not set the frequency of the reader. 
+<DT>&bull;<DD>
+Smargo Smartreader+
+<P>
+Set the reader frequency with the native Smargo Smartreader+ tool (srp_tools). 
+Do not set <B>mhz</B> and <B>cardmhz</B>.
+</DL>
+<P>
+
+OSCam tries to set the baudrate automatically. 
+A standard serial port has limited baudrate settings, so SC overclocking might not work.
+When using a serial reader the best way for overclocking is connecting it to a FTDI based USB to serial port adapter. 
+<P>
+If overclocking does not work, verify the effective baudrate in the logfile. 
+If it deviates too much from the requested baudrate, the SC will not be recognized (no ATR) 
+and the value for <B>mhz</B> should be adjusted again. 
+The higher the baudrate, the more accurate the effective baudrate can be. 
+<A NAME="lbAG">&nbsp;</A>
+<H2>EXAMPLES</H2>
+
+<DL COMPACT>
+<DT>&bull;<DD>
+serial mouse compatible reader
+<BR>&nbsp;
+<BR>&nbsp;[reader]
+<BR>&nbsp;label&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;myserialmousereader
+<BR>&nbsp;detect&nbsp;&nbsp;&nbsp;=&nbsp;cd
+<BR>&nbsp;protocol&nbsp;=&nbsp;mouse
+<BR>&nbsp;device&nbsp;&nbsp;&nbsp;=&nbsp;/dev/ttyS1
+<BR>&nbsp;group&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;1
+<BR>&nbsp;caid&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;0100
+<BR>&nbsp;services&nbsp;=&nbsp;myservice,!thisservice
+<DT>&bull;<DD>
+USB mouse compatible reader
+<BR>&nbsp;
+<BR>&nbsp;[reader]
+<BR>&nbsp;label&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;myusbmousereader
+<BR>&nbsp;detect&nbsp;&nbsp;&nbsp;=&nbsp;cd
+<BR>&nbsp;protocol&nbsp;=&nbsp;mouse
+<BR>&nbsp;device&nbsp;&nbsp;&nbsp;=&nbsp;/dev/ttyUSB0
+<BR>&nbsp;aeskey&nbsp;&nbsp;&nbsp;=&nbsp;0102030405060708090a0b0c0d0e0f10
+<BR>&nbsp;group&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;2
+<BR>&nbsp;caid&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;0200
+<DT>&bull;<DD>
+camd 3.78x reader
+<BR>&nbsp;
+<BR>&nbsp;[reader]
+<BR>&nbsp;label&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;mycamd378xreader
+<BR>&nbsp;protocol&nbsp;=&nbsp;cs378x
+<BR>&nbsp;device&nbsp;&nbsp;&nbsp;=&nbsp;192.168.0.1,1234
+<BR>&nbsp;user&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;user1
+<BR>&nbsp;password&nbsp;=&nbsp;password1
+<BR>&nbsp;group&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;3
+<DT>&bull;<DD>
+newcamd reader
+<BR>&nbsp;
+<BR>&nbsp;[reader]
+<BR>&nbsp;label&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;mynewcamdreader
+<BR>&nbsp;protocol&nbsp;=&nbsp;newcamd
+<BR>&nbsp;key&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;0102030405060708091011121314
+<BR>&nbsp;device&nbsp;&nbsp;&nbsp;=&nbsp;192.168.0.2,2345
+<BR>&nbsp;user&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;user2
+<BR>&nbsp;password&nbsp;=&nbsp;password2
+<BR>&nbsp;group&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;4
+<DT>&bull;<DD>
+CCcam reader
+<BR>&nbsp;
+<BR>&nbsp;[reader]
+<BR>&nbsp;label&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;mycccamreader
+<BR>&nbsp;protocol&nbsp;&nbsp;&nbsp;=&nbsp;cccam
+<BR>&nbsp;device&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;192.168.0.3,3456
+<BR>&nbsp;user&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;user3
+<BR>&nbsp;password&nbsp;&nbsp;&nbsp;=&nbsp;password3
+<BR>&nbsp;group&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;5
+<BR>&nbsp;caid&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;0300,0400,0500
+<BR>&nbsp;cccversion&nbsp;=&nbsp;1.2.3
+<DT>&bull;<DD>
+PCSC reader
+<P>
+<BR>&nbsp;[reader]
+<BR>&nbsp;label&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;mypcscreader
+<BR>&nbsp;protocol&nbsp;=&nbsp;pcsc
+<BR>&nbsp;device&nbsp;&nbsp;&nbsp;=&nbsp;0
+<BR>&nbsp;aeskey&nbsp;&nbsp;&nbsp;=&nbsp;0102030405060708090a0b0c0d0e0f10
+<BR>&nbsp;group&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;6
+<BR>&nbsp;caid&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;0600
+<DT>&bull;<DD>
+Smargo Smartreader+
+<P>
+<BR>&nbsp;[reader]
+<BR>&nbsp;label&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;mysmartreader
+<BR>&nbsp;protocol&nbsp;=&nbsp;smartreader
+<BR>&nbsp;device&nbsp;&nbsp;&nbsp;=&nbsp;001:002
+<BR>&nbsp;aeskey&nbsp;&nbsp;&nbsp;=&nbsp;0102030405060708090a0b0c0d0e0f10
+<BR>&nbsp;group&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;7
+<BR>&nbsp;caid&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;0700
+<DT>&bull;<DD>
+internal reader
+<P>
+<BR>&nbsp;[reader]
+<BR>&nbsp;label&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;myinternalreader
+<BR>&nbsp;protocol&nbsp;=&nbsp;internal
+<BR>&nbsp;device&nbsp;&nbsp;&nbsp;=&nbsp;/dev/sci0
+<BR>&nbsp;group&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;8
+<BR>&nbsp;caid&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;0800
+<DT>&bull;<DD>
+sc8in1 reader
+<P>
+<BR>&nbsp;[reader]
+<BR>&nbsp;label&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;mysc8in1reader
+<BR>&nbsp;protocol&nbsp;=&nbsp;sc8in1
+<BR>&nbsp;device&nbsp;&nbsp;&nbsp;=&nbsp;/dev/ttyUSB0:1
+<BR>&nbsp;group&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;9
+<BR>&nbsp;caid&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;0900
+<DT>&bull;<DD>
+constant CW
+<P>
+<BR>&nbsp;[reader]
+<BR>&nbsp;label&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;myconstantcw
+<BR>&nbsp;protocol&nbsp;=&nbsp;constcw
+<BR>&nbsp;device&nbsp;&nbsp;&nbsp;=&nbsp;/var/keys/constant.cw
+<BR>&nbsp;group&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;10
+<DT>&bull;<DD>
+gbox reader
+<P>
+<BR>&nbsp;[reader]
+<BR>&nbsp;label&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;mygboxreader
+<BR>&nbsp;protocol&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;gbox
+<BR>&nbsp;mg-encrypted&nbsp;=&nbsp;D:&nbsp;{&nbsp;hostname&nbsp;{&nbsp;1234&nbsp;5678&nbsp;{&nbsp;ABCD1234&nbsp;{&nbsp;9&nbsp;9&nbsp;}}}}
+<BR>&nbsp;group&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;11
+<BR>&nbsp;caid&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;1100
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="/cgi-bin/man/man2html?1+list_smargo">list_smargo</A></B>(1), <B><A HREF="/cgi-bin/man/man2html?1+oscam">oscam</A></B>(1), <B><A HREF="/cgi-bin/man/man2html?5+oscam.ac">oscam.ac</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.cert">oscam.cert</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.conf">oscam.conf</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.dvbapi">oscam.dvbapi</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.guess">oscam.guess</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.ird">oscam.ird</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.provid">oscam.provid</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.services">oscam.services</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.srvid">oscam.srvid</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.tiers">oscam.tiers</A></B>(5),
+<B><A HREF="/cgi-bin/man/man2html?5+oscam.user">oscam.user</A></B>(5)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTIONS</A><DD>
+<DL>
+<DT><A HREF="#lbAE">The [reader] section</A><DD>
+</DL>
+<DT><A HREF="#lbAF">OVERCLOCKING</A><DD>
+<DT><A HREF="#lbAG">EXAMPLES</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+</DL>
+<HR>
+</BODY>
+</HTML>

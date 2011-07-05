@@ -197,9 +197,9 @@ per user in \fBoscam.user\fP, default:0
 .PP
 \fBlb_mode\fP = \fBmode\fP
 .RS 3n
-loadbalancing mode:
+load balancing mode:
 
- \fB0\fP = loadbalance disabled, ECMs go to all readers (default)
+ \fB0\fP = load balance disabled, ECMs go to all readers (default)
  \fB1\fP = fastest reader first, after 5 ECMs the reader with the fastest 
      response time will be selected
  \fB2\fP = oldest reader first, reader with the longest no answer
@@ -210,10 +210,10 @@ loadbalancing mode:
 .PP
 \fBlb_save\fP = \fB0\fP|\fBcounts\fP
 .RS 3n
-save autoloadbalance statistics:
+save auto load balance statistics:
 
-      \fB0\fP = saving of autoloadbalance statistics disabled (default)
- \fBcounts\fP = save autoloadbalance statistics every \fBcounts\fP ECMs
+      \fB0\fP = saving of auto load balance statistics disabled (default)
+ \fBcounts\fP = save auto load balance statistics every \fBcounts\fP ECMs
           (minimum 100)
 
 To save CPU power a minimum counts of 100 is recommended.
@@ -221,17 +221,17 @@ To save CPU power a minimum counts of 100 is recommended.
 .PP
 \fBlb_nbest_readers\fP = \fBcounts\fP
 .RS 3n
-set count of best readers for loadbalancing, default:1
+set count of best readers for load balancing, default:1
 .RE
 .PP
 \fBlb_nfb_readers\fP = \fBcounts\fP
 .RS 3n
-set count of fallback readers for loadbalancing, default:1
+set count of fallback readers for load balancing, default:1
 .RE
 .PP
 \fBlb_reopen_mode\fP = \fB0\fP|\fB1\fP
 .RS 3n
-loadbalancing reopen readers mode:
+load balancing reopen readers mode:
 
  \fB0\fP = standard late reopening of blocker readers (default)
  \fB1\fP = fast reopening of blocker readers
@@ -239,65 +239,65 @@ loadbalancing reopen readers mode:
 .PP
 \fBlb_nbest_percaid\fP = \fBCAID1:count1[,CAID2:count2]...\fP
 .RS 3n
-set count of best readers per CAIDs for loadbalancing, default:none
+set count of best readers per CAIDs for load balancing, default:none
 .RE
 .PP
 \fBlb_min_ecmcount\fP = \fBcounts\fP
 .RS 3n
-minimal ECM count to evaluate loadbalancing values, default:5
+minimal ECM count to evaluate load balancing values, default:5
 .RE
 .PP
 \fBlb_max_ecmcount\fP = \fBcounts\fP
 .RS 3n
-maximum ECM count before resetting loadbalancing values, default:500
+maximum ECM count before resetting load balancing values, default:500
 .RE
 .PP
 \fBlb_reopen_seconds\fP = \fBseconds\fP
 .RS 3n
-time between retrying failed loadbalanced readers/CAIDs/providers/services, default:900
+time between retrying failed load balanced readers/CAIDs/providers/services, default:900
 .RE
 .PP
 \fBlb_retrylimit\fP = \fBmilli seconds\fP
 .RS 3n
-retry next loadbalanced reader only if response time is higher then lb_retrylimit, default:800
+retry next load balanced reader only if response time is higher then lb_retrylimit, default:800
 .RE
 .PP
 \fBlb_savepath\fP = \fBfilename\fP
 .RS 3n
-filenanme for saving loadbalancing statistics, default:/tmp/.oscam/stat
+filenanme for saving load balancing statistics, default:/tmp/.oscam/stat
 .RE
 .PP
 \fBlb_stat_cleanup\fP = \fBhour\fP
 .RS 3n
-hours after the loadbalancing statistics will be deleted, default:336
+hours after the load balancing statistics will be deleted, default:336
 .RE
 .PP
 \fBlb_use_locking\fP = \fB0\fP|\fB1\fP
 .RS 3n
-1 = disable parallel and identical loadbalancing ECM requests, default:0
+1 = disable parallel and identical load balancing ECM requests, default:0
 .RE
 .PP
 \fBlb_retrylimits\fP = \fBCAID1:time1[,CAID2:time2]...\fP
 .RS 3n
-loadbalancing retry limit time per CAID, default:none
+load balancing retry limit time per CAID, default:none
 .PP
 .RE
 \fBlb_noproviderforcaid\fP = \fBCAID1[,CAID2]...\fP
 .RS 3n
-ignore provider information for CAIDs to reduce loadbalancing statistic data, default:none
+ignore provider information for CAIDs to reduce load balancing statistic data, default:none
 .PP
 .RE
 \fBlb_max_readers\fP = \fBlimit\fP
 .RS 3n
-restrict the reader count to limit during loadbalancing learning:
+restrict the reader count to limit during load balancing learning:
 
      \fB0\fP = unlimited (default)
- \fBlimit\fP = restrict loadbalancer readers to limit
+ \fBlimit\fP = restrict load balancer readers to limit
 .RE
 .PP
 \fBlb_auto_betatunnel\fP = \fB0\fP|\fB1\fP
 .RS 3n
-1 = enable automatic Betacrypt tunneling detection for CAIDs 1801, 1833, 1834, and 1835 for loadbalancing, Betacrypt defintion in \fBoscam.user\fR with \fBbetatunnel\fR will be prefered, default:1
+1 = enable automatic Betacrypt tunneling detection for CAIDs 1801, 1833, 1834, and 1835 for load balancing, Betacrypt defintion in \fBoscam.user\fR with \fBbetatunnel\fR will be prefered, default:1
 .RE
 .PP
 \fBdisablemail\fP = \fB0\fP|\fB1\fP
@@ -689,7 +689,7 @@ set CCcam keepalive modus:
 \fBforward_origin_card\fP = \fB0\fP|\fB1\fP
 .RS 3
 1 = forward ECM request to reader holding this card, 
-\fIloadbalancer, fallback and caching will be disabled\fR, default:0
+\fIload balancer, fallback and caching will be disabled\fR, default:0
 .RE
 .PP
 \fBnodeid\fP = \fBID\fP
