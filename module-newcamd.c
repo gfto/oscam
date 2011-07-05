@@ -900,7 +900,7 @@ static void newcamd_process_ecm(uchar *buf)
   memcpy(cl->req+(er->cpti*REQ_SIZE), &cl->ncd_msgid, 2);
   cs_debug_mask(D_CLIENT, "ncd_process_ecm: er->cpti=%d, cl_msgid=%d, %02X", er->cpti, 
            cl->ncd_msgid, buf[2]);
-  er->l=(((buf[3]&0x0f)<< 8) | buf[4])+3;
+  er->l=buf[4]+3; 
   er->srvid = (buf[0]<<8)|buf[1];
   er->caid = 0;
   pi = cl->port_idx;
