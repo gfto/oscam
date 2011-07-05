@@ -2245,7 +2245,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 
 			if (rdr->ll_entitlements) {
 
-				char *typetxt[] = {"", "Package", "PPV-Event", "chid", "tier" };
+				char *typetxt[] = {"", "Package", "PPV-Event", "chid", "tier", "class" };
 				time_t now = time((time_t)0);
 
 				struct tm start_t, end_t;
