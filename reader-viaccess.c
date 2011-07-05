@@ -29,7 +29,7 @@ static void parse_via_date(const uchar *buf, struct via_date *vd, int32_t fend)
 	}
 }
 
-void get_via_date(const uchar *b, int32_t l, time_t *start_t, time_t *end_t)
+static void get_via_data(const uchar *b, int32_t l, time_t *start_t, time_t *end_t, uchar *cls)
 {
 	int32_t i, j;
 	struct via_date vd;
@@ -44,9 +44,8 @@ void get_via_date(const uchar *b, int32_t l, time_t *start_t, time_t *end_t)
 		for (i=0; i<8; i++)
 			if (b[j] & (1 << (i&7)))
 			{
-				uchar cls;
 				parse_via_date(b-4, &vd, 1);
-				cls=(l-(j+1))*8+i;
+				*cls=(l-(j+1))*8+i;
 			}
 
 	memset(&tm, 0, sizeof(struct tm));
@@ -61,6 +60,7 @@ void get_via_date(const uchar *b, int32_t l, time_t *start_t, time_t *end_t)
 	*end_t = mktime(&tm);
 
 }
+
 static void show_class(struct s_reader * reader, const char *p, const uchar *b, int32_t l)
 {
 	int32_t i, j;
@@ -929,6 +929,7 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 	static const uchar pin[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04};
 
 	time_t start_t, end_t;
+	uchar via_cls = 0;
 
 	show_cls=reader->show_cls;
 	reader->last_geo.provid  = 0;
@@ -997,8 +998,8 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 				{
 					show_class(reader, NULL, cta_res, cta_lr-2);
 
-					get_via_date(cta_res, cta_lr-2, &start_t, &end_t);
-					cs_add_entitlement(reader, reader->caid, (uint64_t)l_provid, 0, 0, start_t, end_t, 1);
+					get_via_data(cta_res, cta_lr-2, &start_t, &end_t, &via_cls);
+					cs_add_entitlement(reader, reader->caid, (uint64_t)l_provid, (uint16_t)via_cls, (uint16_t)via_cls, start_t, end_t, 5);
 
 					scls++;
 				}
