@@ -202,6 +202,7 @@ extern char *mk_t_logfile();
 extern char *mk_t_iprange(struct s_ip *range);
 extern char *mk_t_ecmwhitelist(struct s_ecmWhitelist *whitelist);
 extern char *mk_t_cltab(CLASSTAB *clstab);
+extern char *mk_t_emmbylen(struct s_reader *rdr);
 extern void free_mk_t(char *value);
 extern int32_t init_provid();
 
@@ -411,3 +412,4 @@ extern int32_t reader_emm(struct s_reader * reader, EMM_PACKET *);
 extern int32_t reader_get_emm_type(EMM_PACKET *ep, struct s_reader * reader);
 extern struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid);
 extern void reader_device_close(struct s_reader * reader);
+extern int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int8_t len);

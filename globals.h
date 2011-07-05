@@ -152,6 +152,8 @@
 #define CS_MAXPENDING   32
 #endif
 
+#define CS_MAXEMMBLOCKBYLEN 10
+
 #define CS_EMMCACHESIZE  64 //nr of EMMs that each client will cache; cache is per client, so memory-expensive...
 #define MSGLOGSIZE 64	//size of string buffer for a ecm to return messages
 
@@ -868,6 +870,7 @@ struct s_reader  						//contains device info, reader info and card info
 	uint16_t  		b_nano;
 	uint16_t  		s_nano;
 	int32_t       	blockemm;
+	int8_t 			blockemmbylen[CS_MAXEMMBLOCKBYLEN];
 	char      		*emmfile;
 	char      		pincode[5];
 	int32_t			ucpk_valid;

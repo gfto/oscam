@@ -1195,6 +1195,11 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "DEPRECATEDVALUE", (rdr->deprecated == 1) ? "1" : "0");
 	}
 
+	value = mk_t_emmbylen(rdr);
+	if (strlen(value) > 0)
+		tpl_addVar(vars, TPLADD, "BLOCKEMMBYLEN", value);
+	free_mk_t(value);
+
 #ifdef MODULE_CCCAM
 	if (!strcmp(rdr->cc_version, "2.0.11")) {
 		tpl_addVar(vars, TPLADD, "CCCVERSIONSELECTED0", "selected");

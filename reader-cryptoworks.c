@@ -81,6 +81,7 @@ static int32_t cw_RSA(unsigned char *out, unsigned char *in, int32_t n, BIGNUM *
   return(rc);
 }
 
+/*
 static char *chid_date(uchar *ptr, char *buf, int32_t l)
 {
   if (buf)
@@ -90,6 +91,7 @@ static char *chid_date(uchar *ptr, char *buf, int32_t l)
   }
   return(buf);
 }
+*/
 
 // todo: for discussion
 static time_t chid_date_t(uchar *ptr, char *buf, int32_t l)

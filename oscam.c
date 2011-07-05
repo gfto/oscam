@@ -2775,6 +2775,9 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 				break;
 		}
 
+		// if not already blocked we check for block by len
+		if (!is_blocked) is_blocked = cs_emmlen_is_blocked( aureader, ep->emm[2] ) ;
+
 		if (is_blocked != 0) {
 #ifdef WEBIF
 			aureader->emmblocked[ep->type]++;

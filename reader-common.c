@@ -390,3 +390,14 @@ int32_t reader_emm(struct s_reader * reader, EMM_PACKET *ep)
   }
   return(rc);
 }
+
+int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int8_t len)
+{
+	int8_t i;
+
+	for( i = 0; i < CS_MAXEMMBLOCKBYLEN; i++ )
+		if(rdr->blockemmbylen[i] == len)
+			return 1;
+
+	return 0;
+}
