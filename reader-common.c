@@ -308,8 +308,10 @@ int32_t reader_checkhealth(struct s_reader * reader)
 	} else {
 		if (reader->card_status == CARD_INSERTED) {
 			reader_nullcard(reader);
-			cur_client()->lastemm = 0;
-			cur_client()->lastecm = 0;
+			if (reader->client) {
+				reader->client->lastemm = 0;
+				reader->client->lastecm = 0;
+			}
 			cs_log("card ejected");
 #ifdef QBOXHD_LED 
  			qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_SLOW);
@@ -332,18 +334,19 @@ void reader_post_process(struct s_reader * reader)
 int32_t reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   int32_t rc=-1;
-  if( (rc=reader_checkhealth(reader)) )
-  {
-      cur_client()->last_srvid=er->srvid;
-      cur_client()->last_caid=er->caid;
-      cur_client()->last=time((time_t)0);
+	if( (rc=reader_checkhealth(reader)) ) {
+		if (reader->client) {
+			reader->client->last_srvid=er->srvid;
+			reader->client->last_caid=er->caid;
+			reader->client->last=time((time_t)0);
+		}
 
-	if (reader->csystem.active && reader->csystem.do_ecm) 
-		rc=reader->csystem.do_ecm(reader, er);
-	else
-		rc=0;
-  }
-  return(rc);
+		if (reader->csystem.active && reader->csystem.do_ecm) 
+			rc=reader->csystem.do_ecm(reader, er);
+		else
+			rc=0;
+	}
+	return(rc);
 }
 
 int32_t reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs from calling reader!
@@ -388,4 +391,15 @@ int32_t reader_emm(struct s_reader * reader, EMM_PACKET *ep)
 		rc=0;
   }
   return(rc);
+}
+
+int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int8_t len)
+{
+	int8_t i;
+
+	for( i = 0; i < CS_MAXEMMBLOCKBYLEN; i++ )
+		if(rdr->blockemmbylen[i] == len)
+			return 1;
+
+	return 0;
 }

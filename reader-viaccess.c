@@ -29,6 +29,38 @@ static void parse_via_date(const uchar *buf, struct via_date *vd, int32_t fend)
 	}
 }
 
+static void get_via_data(const uchar *b, int32_t l, time_t *start_t, time_t *end_t, uchar *cls)
+{
+	int32_t i, j;
+	struct via_date vd;
+	struct tm tm;
+
+	// b -> via date (4 bytes)
+	b+=4;
+	l-=4;
+
+	j=l-1;
+	for (; j>=0; j--)
+		for (i=0; i<8; i++)
+			if (b[j] & (1 << (i&7)))
+			{
+				parse_via_date(b-4, &vd, 1);
+				*cls=(l-(j+1))*8+i;
+			}
+
+	memset(&tm, 0, sizeof(struct tm));
+	tm.tm_year = vd.year_s + 80;	//via year starts in 1980, tm_year starts in 1900
+	tm.tm_mon = vd.month_s - 1;	// january is 0 in tm_mon
+	tm.tm_mday = vd.day_s;
+	*start_t = mktime(&tm);
+
+	tm.tm_year = vd.year_e + 80;
+	tm.tm_mon = vd.month_e - 1;
+	tm.tm_mday = vd.day_e;
+	*end_t = mktime(&tm);
+
+}
+
 static void show_class(struct s_reader * reader, const char *p, const uchar *b, int32_t l)
 {
 	int32_t i, j;
@@ -896,6 +928,9 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 	static const uchar cls[] = { 0x00, 0x21, 0xff, 0x9f};
 	static const uchar pin[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04};
 
+	time_t start_t, end_t;
+	uchar via_cls = 0;
+
 	show_cls=reader->show_cls;
 	reader->last_geo.provid  = 0;
 	reader->last_geo.geo_len = 0;
@@ -962,6 +997,10 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 					(cta_res[cta_lr-1]==0x00 || cta_res[cta_lr-1]==0x08) )
 				{
 					show_class(reader, NULL, cta_res, cta_lr-2);
+
+					get_via_data(cta_res, cta_lr-2, &start_t, &end_t, &via_cls);
+					cs_add_entitlement(reader, reader->caid, (uint64_t)l_provid, (uint16_t)via_cls, (uint16_t)via_cls, start_t, end_t, 5);
+
 					scls++;
 				}
 			}

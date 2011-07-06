@@ -1194,6 +1194,11 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "DEPRECATEDVALUE", (rdr->deprecated == 1) ? "1" : "0");
 	}
 
+	value = mk_t_emmbylen(rdr);
+	if (strlen(value) > 0)
+		tpl_addVar(vars, TPLADD, "BLOCKEMMBYLEN", value);
+	free_mk_t(value);
+
 #ifdef MODULE_CCCAM
 	if (!strcmp(rdr->cc_version, "2.0.11")) {
 		tpl_addVar(vars, TPLADD, "CCCVERSIONSELECTED0", "selected");
@@ -2239,7 +2244,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 
 			if (rdr->ll_entitlements) {
 
-				char *typetxt[] = {"", "Package", "PPV-Event", "chid", "tier" };
+				char *typetxt[] = {"", "Package", "PPV-Event", "chid", "tier", "class" };
 				time_t now = time((time_t)0);
 
 				struct tm start_t, end_t;
@@ -2252,8 +2257,8 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					localtime_r(&item->start, &start_t);
 					localtime_r(&item->end, &end_t);
 
-					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "<SPAN CLASS=\"%s\">entitlement %s: caid %04X provid %06X id %04X ",
-							item->end > now ? "e_valid" : "e_expired" , typetxt[item->type], item->caid, item->provid, item->id);
+					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "<SPAN CLASS=\"%s\">entitlement %s: caid %04X provid %06X id %04X class %02X ",
+							item->end > now ? "e_valid" : "e_expired" , typetxt[item->type], item->caid, item->provid, item->id, item->class);
 
 					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "%02d.%02d.%04d - %02d.%02d.%04d</SPAN><BR>\n",
 							start_t.tm_mday, start_t.tm_mon + 1, start_t.tm_year + 1900,
