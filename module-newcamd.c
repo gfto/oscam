@@ -1038,7 +1038,10 @@ static void * newcamd_server(void *cli)
   rc=-9;
   while(rc==-9)
   {
-    if (!client->pfd) break;
+    if (!client->pfd) {
+    cs_log("duplicate newcamd users!");
+    break;
+    }
     // process_input returns -9 on clienttimeout
     while ((rc=process_input(mbuf, sizeof(mbuf), cfg.cmaxidle))>0)
     {
