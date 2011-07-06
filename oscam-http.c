@@ -2261,9 +2261,14 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "<SPAN CLASS=\"%s\">entitlement %s: caid %04X provid %06X id %04X class %02X ",
 							item->end > now ? "e_valid" : "e_expired" , typetxt[item->type], item->caid, item->provid, item->id, item->class);
 
+					if ( item->start != 0 ){
 					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "%02d.%02d.%04d - %02d.%02d.%04d</SPAN><BR>\n",
 							start_t.tm_mday, start_t.tm_mon + 1, start_t.tm_year + 1900,
 							end_t.tm_mday, end_t.tm_mon + 1, end_t.tm_year + 1900);
+					} else {
+						tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "      n/a      - %02d.%02d.%04d</SPAN><BR>\n",
+							end_t.tm_mday, end_t.tm_mon + 1, end_t.tm_year + 1900);
+					}
 
 					//char tbuffer[30];
 					//strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &start_t);
