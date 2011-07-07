@@ -252,6 +252,8 @@ void newcamd_reply_ka()
 
   cs_debug_mask(D_CLIENT, "send keepalive to client fd=%d", cl->udp_fd);
 
+  cl->reader->last_s = time((time_t *)0);
+
   network_cmd_no_data_send(cl->udp_fd, &cl->ncd_msgid,
     MSG_KEEPALIVE, cl->ncd_skey,COMMTYPE_SERVER);
 }
@@ -1054,10 +1056,18 @@ static void * newcamd_server(struct s_client *client, uchar *mbuf, int len)
 
 void newcamd_idle() {
 	struct s_client *client = cur_client();
-	if (client->ncd_keepalive)
-		newcamd_reply_ka();
-	else
-		cs_exit(0);
+	struct s_reader *rdr = client->reader;
+
+	time_t now;
+	int32_t time_diff;
+	time(&now);
+	time_diff = abs(now - rdr->last_s);
+	if (time_diff>(rdr->tcp_ito*60)) {
+		if (client->ncd_keepalive)
+			newcamd_reply_ka();
+		else
+			network_tcp_connection_close(client->reader);
+	}
 }
 
 /*

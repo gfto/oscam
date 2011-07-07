@@ -597,9 +597,16 @@ void reader_do_idle(struct s_reader * reader)
 	if (reader->ph.c_idle)
 		reader->ph.c_idle();
 	else {
-		if (reader->client && reader->client->pfd && reader->tcp_connected) {
-			cs_debug_mask(D_READER, "%s inactive_timeout, close connection (fd=%d)", reader->ph.desc, reader->client->pfd);
-			network_tcp_connection_close(reader);
+		time_t now;
+		int32_t time_diff;
+		time(&now);
+		time_diff = abs(now - reader->last_s);
+		if (time_diff>(reader->tcp_ito*60)) {
+			if (reader->client && reader->tcp_connected && reader->ph.type==MOD_CONN_TCP) {
+				cs_debug_mask(D_READER, "%s inactive_timeout, close connection (fd=%d)", reader->ph.desc, reader->client->pfd);
+				network_tcp_connection_close(reader);
+			} else
+				reader->last_s = now;
 		}
 	}
 }

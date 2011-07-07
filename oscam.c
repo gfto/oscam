@@ -3155,6 +3155,7 @@ void * client_check(void) {
 void * reader_check(void) {
 	struct s_reader *rdr;
 	struct s_client *cl;
+	int8_t counter = 0;
 
 	while (1) {
 		//check clients for exceeding cmaxidle by checking cl->last
@@ -3179,12 +3180,9 @@ void * reader_check(void) {
 			if (rdr->client->init_done && (rdr->handle > 0 || rdr->typ == R_SMART) && !(rdr->typ & R_IS_CASCADING))
 				reader_checkhealth(rdr);
 #endif
-
 			//execute reader do idle on proxy reader after a certain time (rdr->tcp_ito = inactivitytimeout)
 			//disconnect when no keepalive available
-			int tcp_toflag=(rdr->client && rdr->client->pfd && (rdr->ph.type==MOD_CONN_TCP) && rdr->tcp_ito && rdr->tcp_connected);
-
-			if (tcp_toflag && rdr->typ & R_IS_CASCADING) {
+			if (rdr->tcp_ito && rdr->typ & R_IS_CASCADING && !rdr->client->thread_active) {
 				time_t now;
 				int32_t time_diff;
 				time(&now);
@@ -3194,7 +3192,12 @@ void * reader_check(void) {
 					add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
 				}
 			}
+			if (counter>20 && rdr->typ == R_CCCAM && !rdr->client->thread_active) {
+				add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
+			}
 		}
+		if (counter>20) counter=0;
+		counter++;
 		cs_sleepms(1000);
 	}
 }

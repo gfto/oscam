@@ -1845,6 +1845,9 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 				case 2: cstime.tm_mday=atoi(ptr1);      break;
 			}
 		}
+		cstime.tm_hour=23;
+		cstime.tm_min=59;
+		cstime.tm_sec=59;
 		account->expirationdate=mktime(&cstime);
 		return;
 	}
