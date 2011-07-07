@@ -2258,7 +2258,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					localtime_r(&item->start, &start_t);
 					localtime_r(&item->end, &end_t);
 
-					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "<SPAN CLASS=\"%s\">entitlement %s: caid %04X provid %06X id %04X class %02X ",
+					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "<SPAN CLASS=\"%s\">entitlement %s: caid %04X provid %06X id %04X class %02X valid ",
 							item->end > now ? "e_valid" : "e_expired" , typetxt[item->type], item->caid, item->provid, item->id, item->class);
 
 					if ( item->start != 0 ){
