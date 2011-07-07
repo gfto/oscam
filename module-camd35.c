@@ -699,6 +699,7 @@ void module_camd35(struct s_module *ph)
 
   cs_strncpy(ph->desc, "camd35", sizeof(ph->desc));
   ph->type=MOD_CONN_UDP;
+  ph->listenertype = LIS_CAMD35UDP;
   ph->multi=1;
   ph->watchdog=1;
   ph->s_ip=cfg.c35_srvip;
@@ -719,6 +720,7 @@ void module_camd35_tcp(struct s_module *ph)
 {
   cs_strncpy(ph->desc, "cs378x", sizeof(ph->desc));
   ph->type=MOD_CONN_TCP;
+  ph->listenertype = LIS_CAMD35TCP;
   ph->multi=1;
   ph->watchdog=1;
   ph->ptab=&cfg.c35_tcp_ptab;

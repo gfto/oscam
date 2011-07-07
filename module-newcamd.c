@@ -1219,6 +1219,7 @@ void module_newcamd(struct s_module *ph)
 {
   cs_strncpy(ph->desc, "newcamd", sizeof(ph->desc));
   ph->type=MOD_CONN_TCP;
+  ph->listenertype = LIS_NEWCAMD;
   ph->logtxt = ", crypted";
   ph->multi=1;
   ph->s_ip=cfg.ncd_srvip;
