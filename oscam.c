@@ -952,7 +952,6 @@ static void init_first_client()
     fprintf(stderr, "Could not allocate memory for master client, exiting...");
     exit(1);
   }
-  memset(first_client, 0, sizeof(struct s_auth));
   first_client->next = NULL; //terminate clients list with NULL
   first_client->login=time((time_t *)0);
   first_client->ip=cs_inet_addr("127.0.0.1");
@@ -3365,9 +3364,9 @@ if (pthread_key_create(&getclient, NULL)) {
     cardsystem_def[i](&cardsystem[i]);
   }
 
-  memset(&cardreader, 0, sizeof(struct s_cardsystem) * CS_MAX_MOD);
   for (i=0; cardreader_def[i]; i++)  // must be later BEFORE init_config()
   {
+    memset(&cardreader[i], 0, sizeof(struct s_cardreader));
     cardreader_def[i](&cardreader[i]);
   }
 
