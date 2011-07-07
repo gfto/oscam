@@ -1600,11 +1600,12 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 
 	//Expirationdate
 	struct tm timeinfo;
-	localtime_r (&account->expirationdate, &timeinfo);
+	gmtime_r (&account->expirationdate, &timeinfo);
 	char buf [80];
 	strftime (buf,80,"%Y-%m-%d",&timeinfo);
 	if(strcmp(buf,"1970-01-01")) tpl_addVar(vars, TPLADD, "EXPDATE", buf);
 
+	//Allowed TimeFrame
 	if(account->allowedtimeframe[0] && account->allowedtimeframe[1]) {
 		tpl_printf(vars, TPLADD, "ALLOWEDTIMEFRAME", "%02d:%02d-%02d:%02d",
 				account->allowedtimeframe[0]/60,
