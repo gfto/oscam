@@ -3214,8 +3214,8 @@ void module_cccam(struct s_module *ph) {
 	ph->num = R_CCCAM;
 
 	cc_update_nodeid();
-	
-	if (cfg.cc_port)
-			init_share();		
+
+	if (cfg.cc_port[0])
+		init_share();		
 }
 #endif

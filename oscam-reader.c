@@ -236,7 +236,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 		cs_log("connect(fd=%d) failed: (errno=%d %s)", sd, errno, strerror(errno));
 		//connect has failed. Block connect for a while:
 		block_connect(rdr);
-      
+      		close(client->udp_fd);
 		return -1; 
 	}
 
