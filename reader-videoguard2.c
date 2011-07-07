@@ -259,6 +259,7 @@ static void vg2_read_tiers(struct s_reader * reader)
     stopemptytier = FALSE;
     starttier = 0;
   }
+
   // check to see if specified start tier is blank and if blank, start at 0 and ignore blank tiers
   ins76[2]=starttier;
   l=do_cmd(reader,ins76,NULL,NULL,cta_res);
@@ -267,6 +268,9 @@ static void vg2_read_tiers(struct s_reader * reader)
     stopemptytier = FALSE;
     starttier = 0;
   }
+
+  cs_clear_entitlement(reader); // reset the entitlements
+
   for(i=starttier; i<num; i++) {
     ins76[2]=i;
     l=do_cmd(reader,ins76,NULL,NULL,cta_res);
@@ -278,19 +282,14 @@ static void vg2_read_tiers(struct s_reader * reader)
       rev_date_calc(&cta_res[4],&y,&m,&d,&H,&M,&S,reader->card_baseyear);
       uint16_t tier_id = (cta_res[2] << 8) | cta_res[3];
 
-      /*
-      // todo: add entitlements to list. Timeinfo shoulbe usable for cs_ri_log below too.
+      // add entitlements to list
       struct tm timeinfo;
-      rev_date_calc_tm(&cta_res[4], &timeinfo, reader->card_baseyear);
-      cs_add_entitlement(reader,
-      		reader->caid,
-      		b2ll(4, reader->prid[0]),
-      		tier_id,
-      		0,
-      		0,
-      		mktime(&timeinfo),
-      		4);
-*/
+      memset(&timeinfo, 0, sizeof(struct tm));
+      timeinfo.tm_year = y - 1900; //tm year starts at 1900
+      timeinfo.tm_mon = m - 1; //tm month starts with 0
+      timeinfo.tm_mday = d;
+      cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), tier_id, 0, 0, mktime(&timeinfo), 4);
+
       if(!stopemptytier){
         cs_debug_mask(D_READER, "tier: %04x, tier-number: 0x%02x",tier_id,i);
       }

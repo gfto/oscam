@@ -3159,7 +3159,7 @@ void * reader_check(void) {
 	while (1) {
 		//check clients for exceeding cmaxidle by checking cl->last
 		for (cl=first_client->next; cl ; cl=cl->next) {
-			if (cl->init_done && !cl->kill && cl->pfd && cl->typ=='c') {
+			if (cl->init_done && !cl->kill && cl->typ=='c') {
 				if (cl->last && cfg.cmaxidle && (time(0) - cl->last) > (time_t)cfg.cmaxidle) {
 					cl->kill=1;
 					add_job(cl, ACTION_CLIENT_KILL, NULL, 0);

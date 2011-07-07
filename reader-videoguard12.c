@@ -66,6 +66,8 @@ static void read_tiers(struct s_reader *reader)
   int32_t num = cta_res[1];
   int32_t i;
 
+  cs_clear_entitlement(reader); //reset the entitlements
+
   for (i = 0; i < num; i++) {
     ins76[2] = i;
     l = vg12_do_cmd(reader, ins76, NULL, NULL, cta_res);
@@ -79,19 +81,13 @@ static void read_tiers(struct s_reader *reader)
     rev_date_calc(&cta_res[4], &y, &m, &d, &H, &M, &S, reader->card_baseyear);
     uint16_t tier_id = (cta_res[2] << 8) | cta_res[3];
 
-    /*
-    // todo: add entitlements to list. Timeinfo should be usable for cs_ri_log below too.
+    // add entitlements to list
     struct tm timeinfo;
-    rev_date_calc_tm(&cta_res[4], &timeinfo, reader->card_baseyear);
-    cs_add_entitlement(reader,
-    		reader->caid,
-    		b2ll(4, reader->prid[0]),
-    		tier_id,
-    		0,
-    		0,
-    		mktime(&timeinfo),
-    		4);
-    		*/
+    memset(&timeinfo, 0, sizeof(struct tm));
+    timeinfo.tm_year = y - 1900; //tm year starts with 1900
+    timeinfo.tm_mon = m - 1; //tm month starts with 0
+    timeinfo.tm_mday = d;
+    cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), tier_id, 0, 0, mktime(&timeinfo), 4);
 
     char tiername[83];
     cs_ri_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s", tier_id, y, m, d, H, M, S, get_tiername(tier_id, reader->caid, tiername));
