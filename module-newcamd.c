@@ -360,7 +360,7 @@ static int32_t connect_newcamd_server()
   cl->reader->last_g = cl->reader->last_s = time((time_t *)0);
 
   // Only after connect() on cl->udp_fd (Linux)
-  // cl->pfd=cl->udp_fd;     
+   cl->pfd=cl->udp_fd;     
 
   return 0;
 }
