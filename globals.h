@@ -473,6 +473,7 @@ struct s_emm {
 typedef struct v_ban {					// failban listmember
 	int32_t 		v_count;
 	uint32_t 		v_ip;
+	int32_t			v_port;
 	time_t 			v_time;
 } V_BAN;
 

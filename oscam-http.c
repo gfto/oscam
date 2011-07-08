@@ -3249,7 +3249,7 @@ static char *send_oscam_failban(struct templatevars *vars, struct uriparams *par
 
 	while ((v_ban_entry=ll_iter_next(&itr))) {
 
-		tpl_addVar(vars, TPLADD, "IPADDRESS", cs_inet_ntoa(v_ban_entry->v_ip));
+		tpl_printf(vars, TPLADD, "IPADDRESS", "%s : %d", cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port);
 
 		struct tm st ;
 		localtime_r(&v_ban_entry->v_time, &st);
