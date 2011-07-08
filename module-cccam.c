@@ -3184,6 +3184,7 @@ void cc_update_nodeid()
 void module_cccam(struct s_module *ph) {
 	cs_strncpy(ph->desc, "cccam", sizeof(ph->desc));
 	ph->type = MOD_CONN_TCP;
+	ph->listenertype = LIS_CCCAM;
 	ph->logtxt = ", crypted";
 	ph->watchdog = 1;
 	ph->recv = cc_recv;

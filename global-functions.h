@@ -61,9 +61,16 @@ extern void clear_system_stats();
 extern void qboxhd_led_blink(int32_t color, int32_t duration);
 #endif
 
+extern void reader_do_idle(struct s_reader * reader);
+extern int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep);
+extern void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er);
+extern void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw);
+extern void casc_do_sock_log(struct s_reader * reader);
+extern void reader_do_card_info(struct s_reader * reader);
+
 extern void start_thread(void * startroutine, char * nameroutine);
 extern void add_job(struct s_client *cl, int8_t action, void *ptr, int len);
-extern void reader_init(struct s_reader *);
+extern int32_t reader_init(struct s_reader *);
 extern void reader_nullcard(struct s_reader * reader);
 extern int reader_reset(struct s_reader * reader);
 extern void cs_reload_config();

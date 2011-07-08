@@ -611,39 +611,42 @@ void reader_do_idle(struct s_reader * reader)
 	}
 }
 
-void reader_init(struct s_reader *reader) {
+int32_t reader_init(struct s_reader *reader) {
 	struct s_client *client = reader->client;
 
 	if (reader->typ & R_IS_CASCADING) {
 		client->typ='p';
 		client->port=reader->r_port;
-		cs_log("proxy thread started  (thread=%8X, label=%s, server=%s)",pthread_self(), reader->label, reader->device);
 
 		if (!(reader->ph.c_init)) {
 			cs_log("FATAL: %s-protocol not supporting cascading", reader->ph.desc);
-			cs_sleepms(1000);
-			cs_exit(1);
+			return 0;
 		}
 
 		if (reader->ph.c_init(client)) {
 			//proxy reader start failed
-			cs_exit(1);
+			return 0;
 		}
 
 		if ((reader->log_port) && (reader->ph.c_init_log))
 			reader->ph.c_init_log();
+
+		cs_malloc(&client->emmcache,CS_EMMCACHESIZE*(sizeof(struct s_emm)), 1);
+		cs_malloc(&client->ecmtask,CS_MAXPENDING*(sizeof(ECM_REQUEST)), 1);
+
+		cs_log("proxy %s initialized (server=%s:%d)", reader->label, reader->device, reader->r_port);
 	}
 #ifdef WITH_CARDREADER
 	else {
+		client->typ='r';
 		client->ip=cs_inet_addr("127.0.0.1");
-		cs_log("reader thread started (thread=%8X, label=%s, device=%s, detect=%s%s, mhz=%d, cardmhz=%d)", pthread_self(), reader->label,
-			reader->device, reader->detect&0x80 ? "!" : "",RDR_CD_TXT[reader->detect&0x7f], reader->mhz,reader->cardmhz);
 		while (reader_device_init(reader)==2)
 			cs_sleepms(60000); // wait 60 secs and try again
+		cs_log("reader %s initialized (device=%s, detect=%s%s, mhz=%d, cardmhz=%d)", reader->label, reader->device, reader->detect&0x80 ? "!" : "",RDR_CD_TXT[reader->detect&0x7f], reader->mhz,reader->cardmhz);
 	}
 #endif
 	client->login=time((time_t)0);
+	client->init_done=1;
 
-	cs_malloc(&client->emmcache,CS_EMMCACHESIZE*(sizeof(struct s_emm)), 1);
-	cs_malloc(&client->ecmtask,CS_MAXPENDING*(sizeof(ECM_REQUEST)), 1);
+	return 1;
 }

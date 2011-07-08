@@ -2794,15 +2794,6 @@ void cs_waitforcardinit()
 	}
 }
 
-extern void reader_init(struct s_reader *reader);
-extern void reader_do_idle(struct s_reader * reader);
-extern int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep);
-extern void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er);
-extern void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw);
-extern void casc_do_sock_log(struct s_reader * reader);
-extern void reader_do_card_info(struct s_reader * reader);
-
-
 int8_t check_fd_for_data(int32_t fd) {
 	int32_t rc;
 	struct pollfd pfd[1];
@@ -2914,7 +2905,6 @@ void * work_thread(void *ptr) {
 			case ACTION_READER_INIT:
 				if (!cl->init_done)
 					reader_init(reader);
-				cl->init_done=1;
 				break;
 
 			case ACTION_CLIENT_UDP:
@@ -3176,7 +3166,7 @@ void * reader_check(void) {
 				continue;
 #ifdef WITH_CARDREADER
 			//check for card inserted or card removed on pysical reader
-			if (rdr->client->init_done && (rdr->handle > 0 || rdr->typ == R_SMART) && !(rdr->typ & R_IS_CASCADING))
+			if (rdr->client->init_done && rdr->client->typ == 'r')
 				reader_checkhealth(rdr);
 #endif
 			//execute reader do idle on proxy reader after a certain time (rdr->tcp_ito = inactivitytimeout)
@@ -3189,6 +3179,7 @@ void * reader_check(void) {
 
 				if (time_diff>(rdr->tcp_ito*60)) {
 					add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
+					rdr->last_s = now;
 				}
 			}
 			if (counter>20 && rdr->typ == R_CCCAM && !rdr->client->thread_active) {

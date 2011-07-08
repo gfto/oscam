@@ -937,6 +937,8 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 	reader->last_geo.geo[0]  = 0;
 
 	cs_log("[viaccess-reader] card detected"); 
+	
+	cs_clear_entitlement(reader); //reset the entitlements
 
 	// set pin
 	write_cmd(ins24, pin);

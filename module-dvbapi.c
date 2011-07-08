@@ -2800,6 +2800,7 @@ void module_dvbapi(struct s_module *ph)
 {
 	cs_strncpy(ph->desc, "dvbapi", sizeof(ph->desc));
 	ph->type=MOD_CONN_SERIAL;
+	ph->listenertype = LIS_DVBAPI;
 	ph->multi=1;
 	ph->watchdog=0;
 	ph->s_handler=dvbapi_handler;

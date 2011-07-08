@@ -242,6 +242,7 @@ void module_radegast(struct s_module *ph)
 
   cs_strncpy(ph->desc, "radegast", sizeof(ph->desc));
   ph->type=MOD_CONN_TCP;
+  ph->listenertype = LIS_RADEGAST;
   ph->multi=0;
   ph->watchdog=1;
   ph->s_ip=cfg.rad_srvip;

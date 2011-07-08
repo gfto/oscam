@@ -362,7 +362,7 @@ static int32_t connect_newcamd_server()
   cl->reader->last_g = cl->reader->last_s = time((time_t *)0);
 
   // Only after connect() on cl->udp_fd (Linux)
-  cl->pfd=cl->udp_fd;     
+   cl->pfd=cl->udp_fd;     
 
   return 0;
 }
@@ -1157,6 +1157,7 @@ void module_newcamd(struct s_module *ph)
 {
   cs_strncpy(ph->desc, "newcamd", sizeof(ph->desc));
   ph->type=MOD_CONN_TCP;
+  ph->listenertype = LIS_NEWCAMD;
   ph->logtxt = ", crypted";
   ph->multi=1;
   ph->s_ip=cfg.ncd_srvip;

@@ -2262,12 +2262,12 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 							item->end > now ? "e_valid" : "e_expired" , typetxt[item->type], item->caid, item->provid, item->id, item->class);
 
 					if ( item->start != 0 ){
-					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "%02d.%02d.%04d - %02d.%02d.%04d</SPAN><BR>\n",
-							start_t.tm_mday, start_t.tm_mon + 1, start_t.tm_year + 1900,
-							end_t.tm_mday, end_t.tm_mon + 1, end_t.tm_year + 1900);
+						tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "%02d.%02d.%04d - %02d.%02d.%04d</SPAN><BR>\n",
+								start_t.tm_mday, start_t.tm_mon + 1, start_t.tm_year + 1900,
+								end_t.tm_mday, end_t.tm_mon + 1, end_t.tm_year + 1900);
 					} else {
 						tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "      n/a      - %02d.%02d.%04d</SPAN><BR>\n",
-							end_t.tm_mday, end_t.tm_mon + 1, end_t.tm_year + 1900);
+								end_t.tm_mday, end_t.tm_mon + 1, end_t.tm_year + 1900);
 					}
 
 					//char tbuffer[30];
