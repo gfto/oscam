@@ -1872,46 +1872,30 @@ var SVGDoc = null;\n\
 var svgNS = 'http://www.w3.org/2000/svg';\n\
 var max = 0;\n\
 var plots = new Array();\n\
-var Color = new Array();\n\
-Color[0]='blue';\n\
-Color[1]='green';\n\
-Color[2]='Orange';\n\
-Color[3]='brown';\n\
-Color[4]='Fuchsia';\n\
-Color[5]='Red';\n\
-Color[6]='cyan';\n\
-Color[7]='yellow';\n\
-Color[8]='purple';\n\
-Color[9]='Turquoise';\n\
-Color[10]='coral';\n\
-Color[11]='Khaki';\n\
-Color[12]='GreenYellow';\n\
-Color[13]='Thistle';\n\
-Color[14]='Tan';\n\
-Color[15]='Silver';\n\
-Color[16]='DarkGreen';\n\
-Color[17]='DarkViolet';\n\
-Color[18]='Gold';\n\
-Color[19]='IndianRed';\n\
-Color[20]='black';\n\
-var max_num_points = 300;\n\
-var step = 600 / max_num_points ;\n\
+var Color = new Array('blue','green','orange','brown','fuchsia','red','cyan','yellow','purple','turquoise','coral','khaki','greenyellow','thistle','tan','silver','darkgreen','darkviolet','gold','indianred','blank');\n\
+var max_num_points = 800;\n\
+var step = 800 / max_num_points ;\n\
 var fetch_url='';\n\
 var interval = 3500;\n\
-var activesecs = 30;\n\
+var activesecs = 15;\n\
 var activeTask = null;\n\
 function init(evt) {\n\
 	fetch_url=location.search.split('?');\n\
 	fetch_url='oscamapi.html?part=ecmhistory&' + fetch_url[fetch_url.length-1];\n\
 	SVGDoc = evt.target.ownerDocument;\n\
 	SVGDoc.getElementById('graph_grid_interval').addEventListener('mousedown', switch_interval, false);\n\
-	switch_interval();\n\
 	fetch_data();\n\
-	activeTask = setInterval('fetch_data()', interval);\n\
+	switch_interval();\n\
 }\n\
 function switch_interval() {\n\
-	interval -= 500;\n\
-	if ( interval<500 ) interval = 10000;\n\
+	if (interval<=1000) {\n\
+		interval -= 250;\n\
+	} else if (interval<=5000) {\n\
+		interval -= 500;\n\
+	} else {\n\
+		interval -= 1000;\n\
+	}\n\
+	if ( interval<250 ) interval = 10000;\n\
 	SVGDoc.getElementById('graph_grid_interval').firstChild.data = 'Refresh:'+interval+'ms';\n\
 	window.clearInterval(activeTask);\n\
 	activeTask = setInterval('fetch_data()', interval);\n\
@@ -1938,7 +1922,7 @@ function plot_data(obj) {\n\
 			plots[i]['ecmmin'] = -1;\n\
 			plots[i]['ecmmax'] = 0;\n\
 			plots[i]['last_fetched_timestamp'] = 0;\n\
-			plots[i]['last_valid_ecm_duration '] = -1;\n\
+			plots[i]['last_valid_ecm_duration'] = -1;\n\
 		}\n\
 		plots[i]['name'] = readers[rdx].getAttribute('name');\n\
 		var ecmhistory = readers[rdx].getElementsByTagName('request')[0].getAttribute('ecmhistory').split(',');\n\
@@ -1955,9 +1939,9 @@ function plot_data(obj) {\n\
 			}\n\
 		}\n\
 		if ( maxecm == -1 ) {\n\
-			maxecm = plots[i]['last_valid_ecm_duration '];\n\
+			maxecm = plots[i]['last_valid_ecm_duration'];\n\
 		} else {\n\
-			plots[i]['last_valid_ecm_duration '] = maxecm;\n\
+			plots[i]['last_valid_ecm_duration'] = maxecm;\n\
 		}\n\
 		plots[i]['ecmtime'] = maxecm;\n\
 		plots[i]['idletime'] = parseInt( readers[rdx].getElementsByTagName('times')[0].getAttribute('idle') );\n\
@@ -1984,17 +1968,17 @@ function plot_data(obj) {\n\
 		plots[i]['data'][plots[i]['data'].length] = plots[i]['ecmtime'];\n\
 		if ( SVGDoc.getElementById('graph_txt_'+i) == null ) {\n\
 			var newText = document.createElementNS(svgNS,'text');\n\
-			newText.setAttributeNS(null,'x',5);\n\
-			newText.setAttributeNS(null,'y',10+(10*i));\n\
+			newText.setAttributeNS(null,'x',3);\n\
+			newText.setAttributeNS(null,'y',8+(8*i));\n\
 			newText.setAttributeNS(null,'fill',Color[i]);\n\
 			newText.setAttributeNS(null,'id','graph_txt_'+i);\n\
-			newText.setAttributeNS(null,'style','font-size:10px');\n\
+			newText.setAttributeNS(null,'style','font-size:9px');\n\
 			var textNode = document.createTextNode(plots[i]['name']);\n\
       newText.appendChild(textNode);\n\
 			document.getElementById('graph').appendChild(newText);\n\
 		}\n\
 		if ( plots[i]['ecmtime']==-1 ) {\
-			SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':';\n\
+			SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':idle';\n\
 		} else {\
 			SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':' + plots[i]['ecmtime'];\n\
 		}\
