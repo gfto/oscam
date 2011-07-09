@@ -2844,7 +2844,7 @@ void cc_srv_init2(struct s_client *cl) {
 			else
 				cs_debug_mask(D_CLIENT, "cccam: failed ret: %d", ret);
 			if (ret == -2)
-				cs_add_violation((uint)cl->ip);
+				cs_add_violation((uint)cl->ip, cfg.cc_port[0]);
 		}
 		else
 			cl->init_done = TRUE;

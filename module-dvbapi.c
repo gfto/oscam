@@ -1627,8 +1627,6 @@ static void * dvbapi_main_local(void *cli) {
 	struct s_client * client = (struct s_client *) cli;
 	client->thread=pthread_self();
 	pthread_setspecific(getclient, cli);
-	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-	pthread_cleanup_push(cleanup_thread, (void *) client);
 
 	dvbapi_client=cli;
 
@@ -1790,7 +1788,6 @@ static void * dvbapi_main_local(void *cli) {
 			}
 		}
 	}
-	pthread_cleanup_pop(1);
 	return NULL;
 }
 
@@ -2596,8 +2593,6 @@ void * azbox_main(void *cli) {
 	client->thread=pthread_self();
 	pthread_setspecific(getclient, cli);
 	dvbapi_client=cli;
-	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-	pthread_cleanup_push(cleanup_thread, (void *) client);
 
 	struct s_auth *account;
 	int32_t ok=0;
@@ -2706,7 +2701,6 @@ void * azbox_main(void *cli) {
 		}
 	}
 	cs_log("openxcas: invalid message");
-	pthread_cleanup_pop(1);
 	return NULL;
 }
 

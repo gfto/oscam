@@ -58,8 +58,8 @@ char    *processUsername = NULL;
 char    *loghist = NULL;     // ptr of log-history
 char    *loghistptr = NULL;
 
-int32_t cs_check_v(uint32_t ip, int32_t add) {
-        int32_t result = 0;
+int32_t cs_check_v(uint32_t ip, int32_t port, int32_t add) {
+	int32_t result = 0;
 	if (cfg.failbantime) {
 
 		if (!cfg.v_list)
@@ -77,45 +77,50 @@ int32_t cs_check_v(uint32_t ip, int32_t add) {
 			if ((now - v_ban_entry->v_time) >= ftime) { // entry out of time->remove
 				ll_iter_remove_data(&itr);
 				continue;
-                        }
+			}
 
-			if (ip == v_ban_entry->v_ip) {
-			        result=1;
-			        if (!add) {
-        				if (v_ban_entry->v_count >= cfg.failbancount) {
-        					cs_debug_mask(D_TRACE, "failban: banned ip %s - %ld seconds left",
-	        						cs_inet_ntoa(v_ban_entry->v_ip),ftime - (now - v_ban_entry->v_time));
-			        	} else {
-				        	cs_debug_mask(D_TRACE, "failban: ip %s chance %d of %d",
-					        		cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_count, cfg.failbancount);
-        					v_ban_entry->v_count++;
-	        			}
-                                }
-                                else {
-        				cs_debug_mask(D_TRACE, "failban: banned ip %s - already exist in list", cs_inet_ntoa(v_ban_entry->v_ip));
-                                }
+			if (ip == v_ban_entry->v_ip && port == v_ban_entry->v_port ) {
+				result=1;
+				if (!add) {
+					if (v_ban_entry->v_count >= cfg.failbancount) {
+						cs_debug_mask(D_TRACE, "failban: banned ip %s:%d - %ld seconds left",
+								cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port,
+								ftime - (now - v_ban_entry->v_time));
+					} else {
+						cs_debug_mask(D_TRACE, "failban: ip %s:%d chance %d of %d",
+								cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port,
+								v_ban_entry->v_count, cfg.failbancount);
 
+						v_ban_entry->v_count++;
+					}
+				}
+				else {
+					cs_debug_mask(D_TRACE, "failban: banned ip %s:%d - already exist in list",
+							cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port);
+				}
 			}
 		}
 		if (add && !result) {
-        if(cs_malloc(&v_ban_entry,sizeof(V_BAN), -1)){
-        		v_ban_entry->v_time = time((time_t *)0);
-	        	v_ban_entry->v_ip = ip;
+			if(cs_malloc(&v_ban_entry, sizeof(V_BAN), -1)){
+				v_ban_entry->v_time = time((time_t *)0);
+				v_ban_entry->v_ip = ip;
+				v_ban_entry->v_port = port;
 
-        		ll_iter_insert(&itr, v_ban_entry);
+				ll_iter_insert(&itr, v_ban_entry);
 
-        		cs_debug_mask(D_TRACE, "failban: ban ip %s with timestamp %d", cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_time);
-        }
-     }
+				cs_debug_mask(D_TRACE, "failban: ban ip %s:%d with timestamp %d",
+						cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, v_ban_entry->v_time);
+			}
+		}
 	}
 	return result;
 }
 
-int32_t cs_check_violation(uint32_t ip) {
-        return cs_check_v(ip, 0);
+int32_t cs_check_violation(uint32_t ip, int32_t port) {
+        return cs_check_v(ip, port, 0);
 }
-void cs_add_violation(uint32_t ip) {
-        cs_check_v(ip, 1);
+void cs_add_violation(uint32_t ip, int32_t port) {
+        cs_check_v(ip, port, 1);
 }
 
 #ifdef WEBIF
@@ -1279,7 +1284,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 				cs_log("client(%8X) duplicate user '%s' from %s (prev %s) set to fake (uniq=%d)",
 					cl->thread, usr, cs_inet_ntoa(ip), buf, uniq);
 				if (cl->failban & BAN_DUPLICATE) {
-					cs_add_violation(cl->ip);
+					cs_add_violation(cl->ip, ph[cl->ctyp].ptab->ports[cl->port_idx].s_port);
 				}
 				if (cfg.dropdups){
 					cs_writeunlock(&fakeuser_lock);
@@ -1295,7 +1300,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 				cs_log("client(%8X) duplicate user '%s' from %s (current %s) set to fake (uniq=%d)",
 					pthread_self(), usr, cs_inet_ntoa(cl->ip), buf, uniq);
 				if (client->failban & BAN_DUPLICATE) {
-					cs_add_violation(ip);
+					cs_add_violation(ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
 				}
 				if (cfg.dropdups){
 					cs_writeunlock(&fakeuser_lock);		// we need to unlock here as cs_disconnect_client kills the current thread!
@@ -1321,7 +1326,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 	memset(&client->grp, 0xff, sizeof(uint64_t));
 	//client->grp=0xffffffffffffff;
 	if ((intptr_t)account != 0 && (intptr_t)account != -1 && account->disabled){
-		cs_add_violation((uint32_t)client->ip);
+		cs_add_violation((uint32_t)client->ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
 		cs_log("%s %s-client %s%s (%s%sdisabled account)",
 				client->crypted ? t_crypt : t_plain,
 				ph[client->ctyp].desc,
@@ -1336,7 +1341,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 	{
 	case 0:           // reject access
 		rc=1;
-		cs_add_violation((uint32_t)client->ip);
+		cs_add_violation((uint32_t)client->ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
 		cs_log("%s %s-client %s%s (%s)",
 				client->crypted ? t_crypt : t_plain,
 				ph[client->ctyp].desc,
@@ -1349,7 +1354,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 			if (client->ip != account->dynip)
 				cs_user_resolve(account);
 			if (client->ip != account->dynip) {
-				cs_add_violation((uint32_t)client->ip);
+				cs_add_violation((uint32_t)client->ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
 				rc=2;
 			}
 		}
@@ -2259,7 +2264,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	// user disabled
 	if(client->disabled != 0) {
 		if (client->failban & BAN_DISABLED){
-			cs_add_violation(client->ip);
+			cs_add_violation(client->ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
 			cs_exit(SIGQUIT); // don't know whether this is best way to kill the thread
 		}
 		er->rc = E_DISABLED;
@@ -2283,7 +2288,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		if ((client->tosleep) && (now - client->lastswitch > client->tosleep)) {
 
 			if (client->failban & BAN_SLEEPING) {
-				cs_add_violation(client->ip);
+				cs_add_violation(client->ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
 				cs_exit(SIGQUIT); // todo don't know whether this is best way to kill the thread
 			}
 
@@ -3032,6 +3037,7 @@ void * client_check(void) {
 
 	pfd[pfdcount].fd = thread_pipe[0];
 	pfd[pfdcount].events = POLLIN | POLLPRI | POLLHUP;
+	cl_list[pfdcount] = NULL;
 
 	while (!exit_oscam) {
 		pfdcount = 1;
@@ -3210,7 +3216,7 @@ int32_t accept_connection(int32_t i, int32_t j) {
 			memcpy(buf+1, &rl, 2);
 
 			if (!cl) {
-				if (cs_check_violation((uint32_t)cad.sin_addr.s_addr))
+				if (cs_check_violation((uint32_t)cad.sin_addr.s_addr, ph[i].ptab->ports[j].s_port))
 					return 0;
 
 				cl = create_client(cad.sin_addr.s_addr);
@@ -3232,7 +3238,7 @@ int32_t accept_connection(int32_t i, int32_t j) {
 		int32_t pfd3;
 		if ((pfd3=accept(ph[i].ptab->ports[j].fd, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
 
-			if (cs_check_violation((uint32_t)cad.sin_addr.s_addr)) {
+			if (cs_check_violation((uint32_t)cad.sin_addr.s_addr, ph[i].ptab->ports[j].s_port)) {
 				close(pfd3);
 				return 0;
 			}
