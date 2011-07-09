@@ -642,6 +642,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?part=adduser\">Add User</A></TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=reinit\">Reinit User DB</A></TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=resetalluserstats\">Reset Userstats</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A TARGET=\"_NEW\" HREF=\"graph.svg?type=users\">Show Graphs</A></TD>\n\
 		</TR>\n\
 	</TABLE><BR>\n\
 	<TABLE CLASS=\"users\">\n\
@@ -870,7 +871,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##TPLHEADER##\
 ##TPLMENU##\
 	<BR><BR>\n\
-	<TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD><TD CLASS=\"configmenu\"><A TARGET=\"_NEW\" HREF=\"graph.svg\">Show Graphs</A></TD></TR></TABLE><BR>\
+	<TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD><TD CLASS=\"configmenu\"><A TARGET=\"_NEW\" HREF=\"graph.svg?type=servers\">Show Graphs</A></TD></TR></TABLE><BR>\
 	<form action=\"readerconfig.html\" method=\"get\">\n\
 		<TABLE CLASS=\"readers\">\n\
 			<TR>\n\
@@ -1813,18 +1814,18 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 <svg xml:space='preserve' xmlns='http://www.w3.org/2000/svg'\n\
 	xmlns:xlink='http://www.w3.org/1999/xlink'\n\
 	width='100%' height='100%'\n\
-	viewBox='0 0 600 300'\n\
+	viewBox='0 0 800 300'\n\
 	preserveAspectRatio='none'\n\
 	onload='init(evt)'\n\
 >\n\
 <g id='graph'>\n\
-	<rect id='g' class='graph_bg' x1='0' y1='0' width='600' height='300' />\n\
-	<text id='graph_error' class='graph_error' x='300' y='125' visibility='hidden'>Error occured!</text>\n\
-	<path id='graph_grid' class='graph_grid' d='M 2 75 L 600 75 M 2 150 L 600 150 M 2 225 L 600 225'/>\n\
-	<text id='graph_grid_interval' style='font-size:8px;'  cursor='pointer' class='graph_grid_txt' x='300' y='10'>-</text>\n\
-	<text id='graph_grid_txt3' class='graph_grid_txt' x='600' y='223'>-</text>\n\
-	<text id='graph_grid_txt2' class='graph_grid_txt' x='600' y='148'>-</text>\n\
-	<text id='graph_grid_txt1' class='graph_grid_txt' x='600' y='73'>-</text>\n\
+	<rect id='g' class='graph_bg' x1='0' y1='0' width='800' height='300' />\n\
+	<text id='graph_error' class='graph_error' x='400' y='125' visibility='hidden'>Error occured!</text>\n\
+	<path id='graph_grid' class='graph_grid' d='M 2 75 L 800 75 M 2 150 L 800 150 M 2 225 L 800 225'/>\n\
+	<text id='graph_grid_interval' style='font-size:8px;'  cursor='pointer' class='graph_grid_txt' x='400' y='10'>-</text>\n\
+	<text id='graph_grid_txt3' class='graph_grid_txt' x='800' y='223'>-</text>\n\
+	<text id='graph_grid_txt2' class='graph_grid_txt' x='800' y='148'>-</text>\n\
+	<text id='graph_grid_txt1' class='graph_grid_txt' x='800' y='73'>-</text>\n\
 </g>\n\
 <script type='text/ecmascript'>\n\
 <![CDATA[\n\
@@ -1915,7 +1916,6 @@ function plot_data(obj) {\n\
 	max=0;\n\
 	rdx=0;\n\
 	while (rdx < readers.length) {\n\
-		var type = readers[rdx].getAttribute('type');\n\
 		if ( plots[i] == null ) {\n\
 			plots[i] = new Array();\n\
 			plots[i]['data'] = new Array();\n\
