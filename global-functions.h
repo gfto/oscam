@@ -213,6 +213,7 @@ extern char *mk_t_iprange(struct s_ip *range);
 extern char *mk_t_ecmwhitelist(struct s_ecmWhitelist *whitelist);
 extern char *mk_t_cltab(CLASSTAB *clstab);
 extern char *mk_t_emmbylen(struct s_reader *rdr);
+extern char *mk_t_allowedprotocols(struct s_auth *account);
 extern void free_mk_t(char *value);
 extern int32_t init_provid();
 

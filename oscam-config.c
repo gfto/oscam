@@ -1667,6 +1667,28 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		cs_strncpy(account->pwd, value, sizeof(account->pwd));
 		return;
 	}
+
+	if (!strcmp(token, "allowedprotocols")) {
+		account->allowedprotocols = 0;
+		if(strlen(value) > 3) {
+			char *ptr;
+			for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++){
+				if		(!strcmp(ptr, "camd33"))	account->allowedprotocols |= LIS_CAMD33TCP;
+				else if (!strcmp(ptr, "camd35"))	account->allowedprotocols |= LIS_CAMD35UDP;
+				else if (!strcmp(ptr, "cs357x"))	account->allowedprotocols |= LIS_CAMD35UDP;
+				else if (!strcmp(ptr, "cs378x"))	account->allowedprotocols |= LIS_CAMD35TCP;
+				else if (!strcmp(ptr, "newcamd"))	account->allowedprotocols |= LIS_NEWCAMD;
+				else if (!strcmp(ptr, "cccam"))		account->allowedprotocols |= LIS_CCCAM;
+				else if (!strcmp(ptr, "gbox"))		account->allowedprotocols |= LIS_GBOX;
+				else if (!strcmp(ptr, "radegast"))	account->allowedprotocols |= LIS_RADEGAST;
+				// these have no listener ports so it doesn't make sense
+				else if (!strcmp(ptr, "dvbapi"))	account->allowedprotocols |= LIS_DVBAPI;
+				else if (!strcmp(ptr, "constcw"))	account->allowedprotocols |= LIS_CONSTCW;
+				else if (!strcmp(ptr, "serial"))	account->allowedprotocols |= LIS_SERIAL;
+			}
+		}
+	}
+
 #ifdef WEBIF
 	if (!strcmp(token, "description")) {
 		cs_strncpy(account->description, value, sizeof(account->description));
@@ -2446,6 +2468,13 @@ int32_t write_userdb()
 		if (strlen(value) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, "services", "%s\n", value);
 		free_mk_t(value);
+
+		// allowed protocols
+		if (account->allowedprotocols || cfg.http_full_cfg ){
+			value = mk_t_allowedprotocols(account);
+			fprintf_conf(f, "allowedprotocols", "%s\n", value);
+			free_mk_t(value);
+		}
 
 		//CAID
 		if (account->ctab.caid[0] || cfg.http_full_cfg) {
@@ -5234,6 +5263,32 @@ char *mk_t_emmbylen(struct s_reader *rdr) {
 			pos += snprintf(value + pos, needed, "%s%d", dot, rdr->blockemmbylen[i]);
 			dot = ",";
 		}
+	}
+	return value;
+}
+
+/*
+ * makes string from binary structure
+ */
+char *mk_t_allowedprotocols(struct s_auth *account) {
+
+	if (!account->allowedprotocols)
+		return "";
+
+	int16_t i, tmp = 1, pos = 0, needed = 255, tagcnt;
+	char *tag[] = {"camd33", "camd35", "cs378x", "newcamd", "cccam", "gbox", "radegast", "dvbapi", "constcw", "serial"};
+	char *value, *dot = "";
+
+	if (!cs_malloc(&value, needed, -1))
+		return "";
+
+	tagcnt = sizeof(tag)/sizeof(char *);
+	for (i = 0; i < tagcnt; i++) {
+		if ((account->allowedprotocols & tmp) == tmp) {
+			pos += snprintf(value + pos, needed, "%s%s", dot, tag[i]);
+			dot = ",";
+		}
+		tmp = tmp << 1;
 	}
 	return value;
 }

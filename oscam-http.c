@@ -1618,6 +1618,11 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	tpl_addVar(vars, TPLADD, "GROUPS", value);
 	free_mk_t(value);
 
+	// allowed protocols
+	value = mk_t_allowedprotocols(account);
+	tpl_addVar(vars, TPLADD, "ALLOWEDPROTOCOLS", value);
+	free_mk_t(value);
+
 	//Hostname
 	tpl_addVar(vars, TPLADD, "DYNDNS", (char *)account->dyndns);
 

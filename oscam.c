@@ -1322,7 +1322,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 	char *t_plain="plain";
 	char *t_grant=" granted";
 	char *t_reject=" rejected";
-	char *t_msg[]= { buf, "invalid access", "invalid ip", "unknown reason" };
+	char *t_msg[]= { buf, "invalid access", "invalid ip", "unknown reason", "protocol not allowed" };
 	memset(&client->grp, 0xff, sizeof(uint64_t));
 	//client->grp=0xffffffffffffff;
 	if ((intptr_t)account != 0 && (intptr_t)account != -1 && account->disabled){
@@ -1356,6 +1356,10 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 			if (client->ip != account->dynip) {
 				cs_add_violation((uint32_t)client->ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
 				rc=2;
+			}
+			if (account->allowedprotocols && (account->allowedprotocols & ph[client->ctyp].listenertype) != ph[client->ctyp].listenertype ){
+				cs_add_violation((uint32_t)client->ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
+				rc=4;
 			}
 		}
 

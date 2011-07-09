@@ -1059,6 +1059,7 @@ struct s_auth
 	char			description[64];
 #endif
 	int8_t			uniq;
+	int16_t			allowedprotocols;
 	LLIST			*aureader_list;
 	int8_t			autoau;
 	int8_t			monlvl;
