@@ -3332,7 +3332,7 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 		struct s_client *cl;
 		for (i=0, cl=first_client; cl ; cl=cl->next, i++) {
 			if (cl->wihidden != 1) {
-				isec = now - cl->last;
+				isec = now - cl->lastecm;
 				usr=username(cl); 
 				shown = 0;
 				if (strcmp(getParam(params, "label"),"") == 0) {
