@@ -2991,7 +2991,7 @@ void * check_thread(void) {
 		rc = poll(pfd, 1, next_check ? next_check : -1);
 		cs_ftime(&t_now);
 
-		if (rc>0)
+		if (rc<0)
 			continue;
 
 		if (rc)
