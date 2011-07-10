@@ -1337,6 +1337,21 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 				e_txt ? " " : "");
 		return(1);
 	}
+
+	// check whether client comes in over allowed protocol
+	if ((intptr_t)account->allowedprotocols &&
+			(((intptr_t)account->allowedprotocols & ph[client->ctyp].listenertype) != ph[client->ctyp].listenertype )){
+		cs_add_violation((uint32_t)client->ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
+		cs_log("%s %s-client %s%s (%s%sprotocol not allowed)",
+						client->crypted ? t_crypt : t_plain,
+						ph[client->ctyp].desc,
+						client->ip ? cs_inet_ntoa(client->ip) : "",
+						client->ip ? t_reject : t_reject+1,
+						e_txt ? e_txt : "",
+						e_txt ? " " : "");
+		return(1);
+	}
+
 	client->account=first_client->account;
 	switch((intptr_t)account)
 	{
@@ -1358,12 +1373,6 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 				cs_add_violation((uint32_t)client->ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
 				rc=2;
 			}
-		}
-
-		// check whether client comes in over allowed protocol
-		if (account->allowedprotocols && (account->allowedprotocols & ph[client->ctyp].listenertype) != ph[client->ctyp].listenertype ){
-			cs_add_violation((uint32_t)client->ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
-			rc=4;
 		}
 
 		client->monlvl=account->monlvl;

@@ -1687,6 +1687,7 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 				else if (!strcmp(ptr, "serial"))	account->allowedprotocols |= LIS_SERIAL;
 			}
 		}
+		return;
 	}
 
 #ifdef WEBIF
