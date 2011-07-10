@@ -1942,10 +1942,16 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			tpl_printf(vars, TPLADDONCE, "CWLASTRESPONSET", "%d", lastresponsetm);
 			tpl_addVar(vars, TPLADDONCE, "IDLESECS", sec2timeformat(vars, isec));
 
-			if (isactive > 0)
+			if (isactive > 0) {
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMEONCHANNEL", sec2timeformat(vars, chsec));
-			else
+				if (account->tosleep)
+					tpl_printf(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "Sleeping in %d minutes", account->tosleep - (chsec / 60));
+				else
+					tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "No sleep defined");
+			} else {
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMEONCHANNEL", "");
+				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "");
+			}
 
 			if ((strcmp(proto,"newcamd") == 0) && (latestclient->typ == 'c'))
 				tpl_printf(vars, TPLADDONCE, "CLIENTPROTO","%s (%s)", proto, get_ncd_client_name(latestclient->ncd_client_id));

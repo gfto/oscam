@@ -709,7 +709,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD class=\"centered\">##CLIENTIP##</TD>\n\
 			<TD class=\"centered\"><SPAN TITLE=\"##CLIENTPROTOTITLE##\">##CLIENTPROTO##</SPAN></TD>\n\
 			<TD>##LASTCHANNEL##</TD>\n\
-			<TD class=\"centered\">##CLIENTTIMEONCHANNEL##</TD>\n\
+			<TD class=\"centered\" title=\"##CLIENTTIMETOSLEEP##\">##CLIENTTIMEONCHANNEL##</TD>\n\
 			<TD class=\"centered\">##IDLESECS##</TD>\n\
 			<TD class=\"centered\">##CWOK##</TD>\n\
 			<TD class=\"centered\">##CWNOK##</TD>\n\
