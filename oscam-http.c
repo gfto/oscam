@@ -2256,7 +2256,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 
 			if (rdr->ll_entitlements) {
 
-				char *typetxt[] = {"", "Package", "PPV-Event", "chid", "tier", "class" };
+				char *typetxt[] = {"", "package", "PPV-Event", "chid", "tier", "class", "PBM" };
 				time_t now = time((time_t)0);
 
 				struct tm start_t, end_t;
@@ -2269,7 +2269,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					localtime_r(&item->start, &start_t);
 					localtime_r(&item->end, &end_t);
 
-					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "<SPAN CLASS=\"%s\">entitlement %s: caid %04X provid %06X id %04X class %02X valid ",
+					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "<SPAN CLASS=\"%s\">entitlement %s: caid %04X provid %06X id %016lX class %08X valid ",
 							item->end > now ? "e_valid" : "e_expired" , typetxt[item->type], item->caid, item->provid, item->id, item->class);
 
 					if ( item->start != 0 ){
@@ -2277,7 +2277,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 								start_t.tm_mday, start_t.tm_mon + 1, start_t.tm_year + 1900,
 								end_t.tm_mday, end_t.tm_mon + 1, end_t.tm_year + 1900);
 					} else {
-						tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "      n/a      - %02d.%02d.%04d</SPAN><BR>\n",
+						tpl_printf(vars, TPLAPPEND, "LOGHISTORY", " until %02d.%02d.%04d</SPAN><BR>\n",
 								end_t.tm_mday, end_t.tm_mon + 1, end_t.tm_year + 1900);
 					}
 
@@ -2614,7 +2614,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 						struct s_reader *rdr = cl->reader;
 						if (rdr->ll_entitlements)
 						{
-							char *typetxt[] = {"Id", "Package", "PPV-Event", "Chid", "Tier", "Class" };
+							char *typetxt[] = {"Id", "Package", "PPV-Event", "Chid", "Tier", "Class", "PBM" };
 							LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
 							S_ENTITLEMENT *ent;
 							uint16_t total_ent = 0;
@@ -2629,9 +2629,11 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 								if (ent->end > now)
 								{	active_ent++;
 									localtime_r(&ent->end, &end_t);
-									tpl_printf(vars, TPLAPPEND, "TMPSPAN", "%s:%04X<BR>%04X:%06X<BR>exp:%04d/%02d/%02d<BR><BR>",
-									    typetxt[ent->type],
-									    ent->id, ent->caid, ent->provid, 
+									    tpl_printf(vars, TPLAPPEND, "TMPSPAN", (ent->type == 6)?"%s:%016lX<BR>":"%s:%04lX<BR>", 
+										typetxt[ent->type],
+										ent->id);
+									tpl_printf(vars, TPLAPPEND, "TMPSPAN", "%04X:%06X<BR>exp:%04d/%02d/%02d<BR><BR>",
+									    ent->caid, ent->provid, 
 									    end_t.tm_year + 1900, end_t.tm_mon + 1, end_t.tm_mday);
 								}
 							}

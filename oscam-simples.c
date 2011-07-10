@@ -548,7 +548,9 @@ void cs_sleepms(uint32_t msec)
 	struct timespec req_ts;
 	req_ts.tv_sec = msec/1000;
 	req_ts.tv_nsec = (msec % 1000) * 1000000L;
+	int32_t olderrno = errno;		// Some OS (especially MacOSX) seem to set errno to ETIMEDOUT when sleeping
 	nanosleep (&req_ts, NULL);
+	errno = olderrno;
 }
 
 void cs_sleepus(uint32_t usec)
@@ -557,7 +559,9 @@ void cs_sleepus(uint32_t usec)
 	struct timespec req_ts;
 	req_ts.tv_sec = usec/1000000;
 	req_ts.tv_nsec = (usec % 1000000) * 1000L;
+	int32_t olderrno = errno;		// Some OS (especially MacOSX) seem to set errno to ETIMEDOUT when sleeping
 	nanosleep (&req_ts, NULL);
+	errno = olderrno;
 }
 
 #ifdef OS_CYGWIN32
