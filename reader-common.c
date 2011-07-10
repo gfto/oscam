@@ -400,7 +400,7 @@ int32_t reader_emm(struct s_reader * reader, EMM_PACKET *ep)
   return(rc);
 }
 
-int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int8_t len)
+int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int16_t len)
 {
 	int8_t i;
 

@@ -95,6 +95,8 @@ static int32_t dre_set_provider_info (struct s_reader * reader)
   uchar cmd59[] = { 0x59, 0x14 };	// subscriptions
   uchar cmd5b[] = { 0x5b, 0x00, 0x14 };	//validity dates
 
+  cs_clear_entitlement(reader);
+
   cmd59[1] = reader->provider;
   if ((dre_cmd (cmd59))) {	//ask subscription packages, returns error on 0x11 card
     uchar pbm[32];
@@ -128,6 +130,7 @@ static int32_t dre_set_provider_info (struct s_reader * reader)
 	  int32_t endday = temp.tm_mday;
 	  cs_ri_log (reader, "[dre-reader] active package %i valid from %04i/%02i/%02i to %04i/%02i/%02i", i, startyear, startmonth, startday,
 		  endyear, endmonth, endday);
+	  cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), 0, 0, start, end, 1);
 	}
   }
   return OK;

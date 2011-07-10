@@ -642,6 +642,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?part=adduser\">Add User</A></TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=reinit\">Reinit User DB</A></TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=resetalluserstats\">Reset Userstats</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A TARGET=\"_NEW\" HREF=\"graph.svg?type=users&hidelabels=1\">Show Graphs</A></TD>\n\
 		</TR>\n\
 	</TABLE><BR>\n\
 	<TABLE CLASS=\"users\">\n\
@@ -871,7 +872,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##TPLHEADER##\
 ##TPLMENU##\
 	<BR><BR>\n\
-	<TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD><TD CLASS=\"configmenu\"><A TARGET=\"_NEW\" HREF=\"graph.svg\">Show Graphs</A></TD></TR></TABLE><BR>\
+	<TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD><TD CLASS=\"configmenu\"><A TARGET=\"_NEW\" HREF=\"graph.svg?type=servers\">Show Graphs</A></TD></TR></TABLE><BR>\
 	<form action=\"readerconfig.html\" method=\"get\">\n\
 		<TABLE CLASS=\"readers\">\n\
 			<TR>\n\
@@ -1814,18 +1815,18 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 <svg xml:space='preserve' xmlns='http://www.w3.org/2000/svg'\n\
 	xmlns:xlink='http://www.w3.org/1999/xlink'\n\
 	width='100%' height='100%'\n\
-	viewBox='0 0 600 300'\n\
+	viewBox='0 0 800 300'\n\
 	preserveAspectRatio='none'\n\
 	onload='init(evt)'\n\
 >\n\
 <g id='graph'>\n\
-	<rect id='g' class='graph_bg' x1='0' y1='0' width='600' height='300' />\n\
-	<text id='graph_error' class='graph_error' x='300' y='125' visibility='hidden'>Error occured!</text>\n\
-	<path id='graph_grid' class='graph_grid' d='M 2 75 L 600 75 M 2 150 L 600 150 M 2 225 L 600 225'/>\n\
-	<text id='graph_grid_interval' style='font-size:8px;'  cursor='pointer' class='graph_grid_txt' x='300' y='10'>-</text>\n\
-	<text id='graph_grid_txt3' class='graph_grid_txt' x='600' y='223'>-</text>\n\
-	<text id='graph_grid_txt2' class='graph_grid_txt' x='600' y='148'>-</text>\n\
-	<text id='graph_grid_txt1' class='graph_grid_txt' x='600' y='73'>-</text>\n\
+	<rect id='g' class='graph_bg' x1='0' y1='0' width='800' height='300' />\n\
+	<text id='graph_error' class='graph_error' x='400' y='125' visibility='hidden'>Error occured!</text>\n\
+	<path id='graph_grid' class='graph_grid' d='M 2 75 L 800 75 M 2 150 L 800 150 M 2 225 L 800 225'/>\n\
+	<text id='graph_grid_interval' style='font-size:8px;'  cursor='pointer' class='graph_grid_txt' x='400' y='10'>-</text>\n\
+	<text id='graph_grid_txt3' class='graph_grid_txt' x='800' y='223'>-</text>\n\
+	<text id='graph_grid_txt2' class='graph_grid_txt' x='800' y='148'>-</text>\n\
+	<text id='graph_grid_txt1' class='graph_grid_txt' x='800' y='73'>-</text>\n\
 </g>\n\
 <script type='text/ecmascript'>\n\
 <![CDATA[\n\
@@ -1873,46 +1874,32 @@ var SVGDoc = null;\n\
 var svgNS = 'http://www.w3.org/2000/svg';\n\
 var max = 0;\n\
 var plots = new Array();\n\
-var Color = new Array();\n\
-Color[0]='blue';\n\
-Color[1]='green';\n\
-Color[2]='Orange';\n\
-Color[3]='brown';\n\
-Color[4]='Fuchsia';\n\
-Color[5]='Red';\n\
-Color[6]='cyan';\n\
-Color[7]='yellow';\n\
-Color[8]='purple';\n\
-Color[9]='Turquoise';\n\
-Color[10]='coral';\n\
-Color[11]='Khaki';\n\
-Color[12]='GreenYellow';\n\
-Color[13]='Thistle';\n\
-Color[14]='Tan';\n\
-Color[15]='Silver';\n\
-Color[16]='DarkGreen';\n\
-Color[17]='DarkViolet';\n\
-Color[18]='Gold';\n\
-Color[19]='IndianRed';\n\
-Color[20]='black';\n\
-var max_num_points = 300;\n\
-var step = 600 / max_num_points ;\n\
+var Color = new Array('blue','green','orange','brown','fuchsia','red','cyan','yellow','purple','turquoise','coral','khaki','greenyellow','thistle','tan','silver','darkgreen','darkviolet','gold','indianred','black');\n\
+var max_num_points = 800;\n\
+var step = 800 / max_num_points ;\n\
 var fetch_url='';\n\
 var interval = 3500;\n\
-var activesecs = 30;\n\
+var activesecs = 15;\n\
 var activeTask = null;\n\
+var hideLabels = false;\n\
 function init(evt) {\n\
 	fetch_url=location.search.split('?');\n\
 	fetch_url='oscamapi.html?part=ecmhistory&' + fetch_url[fetch_url.length-1];\n\
+	if ( location.search.indexOf('hidelabels=1') > 0 ) hideLabels = true;\n\
 	SVGDoc = evt.target.ownerDocument;\n\
 	SVGDoc.getElementById('graph_grid_interval').addEventListener('mousedown', switch_interval, false);\n\
-	switch_interval();\n\
 	fetch_data();\n\
-	activeTask = setInterval('fetch_data()', interval);\n\
+	switch_interval();\n\
 }\n\
 function switch_interval() {\n\
-	interval -= 500;\n\
-	if ( interval<500 ) interval = 10000;\n\
+	if (interval<=1000) {\n\
+		interval -= 250;\n\
+	} else if (interval<=5000) {\n\
+		interval -= 500;\n\
+	} else {\n\
+		interval -= 1000;\n\
+	}\n\
+	if ( interval<250 ) interval = 10000;\n\
 	SVGDoc.getElementById('graph_grid_interval').firstChild.data = 'Refresh:'+interval+'ms';\n\
 	window.clearInterval(activeTask);\n\
 	activeTask = setInterval('fetch_data()', interval);\n\
@@ -1924,6 +1911,15 @@ function fetch_data() {\n\
 		handle_error();\n\
 	}\n\
 }\n\
+function showlabel(evt) {\n\
+	var id = evt.target.id.split('_');\n\
+	var obj = SVGDoc.getElementById('graph_txt_'+id[2]);\n\
+	if ( evt.type=='mouseover' ) {\n\
+			obj.setAttributeNS(null,'style','font-size:9px;display:;');\n\
+	} else if ( evt.type=='mouseout' ) {\n\
+		obj.setAttributeNS(null,'style','font-size:9px;display:none;');\n\
+	}\n\
+}\n\
 function plot_data(obj) {\n\
 	if (!obj.success) return handle_error();\n\
 	if (!obj.content) return handle_error();\n\
@@ -1932,14 +1928,13 @@ function plot_data(obj) {\n\
 	max=0;\n\
 	rdx=0;\n\
 	while (rdx < readers.length) {\n\
-		var type = readers[rdx].getAttribute('type');\n\
 		if ( plots[i] == null ) {\n\
 			plots[i] = new Array();\n\
 			plots[i]['data'] = new Array();\n\
 			plots[i]['ecmmin'] = -1;\n\
 			plots[i]['ecmmax'] = 0;\n\
 			plots[i]['last_fetched_timestamp'] = 0;\n\
-			plots[i]['last_valid_ecm_duration '] = -1;\n\
+			plots[i]['last_valid_ecm_duration'] = -1;\n\
 		}\n\
 		plots[i]['name'] = readers[rdx].getAttribute('name');\n\
 		var ecmhistory = readers[rdx].getElementsByTagName('request')[0].getAttribute('ecmhistory').split(',');\n\
@@ -1956,9 +1951,9 @@ function plot_data(obj) {\n\
 			}\n\
 		}\n\
 		if ( maxecm == -1 ) {\n\
-			maxecm = plots[i]['last_valid_ecm_duration '];\n\
+			maxecm = plots[i]['last_valid_ecm_duration'];\n\
 		} else {\n\
-			plots[i]['last_valid_ecm_duration '] = maxecm;\n\
+			plots[i]['last_valid_ecm_duration'] = maxecm;\n\
 		}\n\
 		plots[i]['ecmtime'] = maxecm;\n\
 		plots[i]['idletime'] = parseInt( readers[rdx].getElementsByTagName('times')[0].getAttribute('idle') );\n\
@@ -1985,17 +1980,22 @@ function plot_data(obj) {\n\
 		plots[i]['data'][plots[i]['data'].length] = plots[i]['ecmtime'];\n\
 		if ( SVGDoc.getElementById('graph_txt_'+i) == null ) {\n\
 			var newText = document.createElementNS(svgNS,'text');\n\
-			newText.setAttributeNS(null,'x',5);\n\
-			newText.setAttributeNS(null,'y',10+(10*i));\n\
-			newText.setAttributeNS(null,'fill',Color[i]);\n\
+			newText.setAttributeNS(null,'x',3);\n\
+			newText.setAttributeNS(null,'fill',Color[ i - (parseInt(i/Color.length)*Color.length)]);\n\
 			newText.setAttributeNS(null,'id','graph_txt_'+i);\n\
-			newText.setAttributeNS(null,'style','font-size:10px');\n\
+			if ( hideLabels ) {\n\
+				newText.setAttributeNS(null,'y',8);\n\
+				newText.setAttributeNS(null,'style','font-size:9px;display:none;');\n\
+			} else {\n\
+				newText.setAttributeNS(null,'y',8+(8*i));\n\
+				newText.setAttributeNS(null,'style','font-size:9px');\n\
+			}\n\
 			var textNode = document.createTextNode(plots[i]['name']);\n\
       newText.appendChild(textNode);\n\
 			document.getElementById('graph').appendChild(newText);\n\
 		}\n\
 		if ( plots[i]['ecmtime']==-1 ) {\
-			SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':';\n\
+			SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':idle';\n\
 		} else {\
 			SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':' + plots[i]['ecmtime'];\n\
 		}\
@@ -2004,9 +2004,13 @@ function plot_data(obj) {\n\
 			var newPath = document.createElementNS(svgNS,'path');\n\
 			newPath.setAttributeNS(null,'id','graph_path_'+i);\n\
 			newPath.setAttributeNS(null,'fill','none');\n\
-			newPath.setAttributeNS(null,'stroke',Color[i]);\n\
+			newPath.setAttributeNS(null,'stroke',Color[ i - (parseInt(i/Color.length)*Color.length)]);\n\
 			newPath.setAttributeNS(null,'stroke-width','1');\n\
 			newPath.setAttributeNS(null,'stroke-opacity','0.8');\n\
+			if ( hideLabels ) {\n\
+				newPath.addEventListener('mouseover', showlabel, false);\n\
+				newPath.addEventListener('mouseout', showlabel, false);\n\
+			}\n\
 			document.getElementById('graph').appendChild(newPath);\n\
 		}\n\
 		a=0;\n\

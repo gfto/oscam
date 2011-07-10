@@ -38,4 +38,4 @@ I: :654321           # ignore provider ID 654321 for every CAID and
 
 I: 0                 # ignore every CAID that was not handled before
 
-L: 0700 96           # ECM length for CAID 0700 to 96 (decimal)
+L: 0700 8e           # ECM length for CAID 0700 to 8e (hexadecimal)
