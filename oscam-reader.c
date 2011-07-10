@@ -171,29 +171,19 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 		return -1;
 	}
 
-	client->pfd=0;
 	if (client->reader->r_port<=0) {
 		cs_log("invalid port %d for server %s", client->reader->r_port, client->reader->device);
-		return(1);
+		return -1;
 	}
 
 	client->is_udp=(rdr->typ==R_CAMD35);
 
-	client->ip=0;
-	memset((char *)&loc_sa,0,sizeof(loc_sa));
-	loc_sa.sin_family = AF_INET;
-#ifdef LALL
-	if (cfg.serverip[0])
-		loc_sa.sin_addr.s_addr = inet_addr(cfg.serverip);
-	else
-#endif
-		loc_sa.sin_addr.s_addr = INADDR_ANY;
-
-	loc_sa.sin_port = htons(client->reader->l_port);
+	if (client->udp_fd)
+		cs_log("WARNING: client->udp_fd was not 0");
 
 	if ((client->udp_fd=socket(PF_INET, client->is_udp ? SOCK_DGRAM : SOCK_STREAM, client->is_udp ? IPPROTO_UDP : IPPROTO_TCP))<0) {
 		cs_log("Socket creation failed (errno=%d %s)", errno, strerror(errno));
-		return 1;
+		return -1;
 	}
 
 #ifdef SO_PRIORITY
@@ -210,10 +200,20 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 	}
 
 	if (client->reader->l_port>0) {
+		memset((char *)&loc_sa,0,sizeof(loc_sa));
+		loc_sa.sin_family = AF_INET;
+#ifdef LALL
+		if (cfg.serverip[0])
+			loc_sa.sin_addr.s_addr = inet_addr(cfg.serverip);
+		else
+#endif
+			loc_sa.sin_addr.s_addr = INADDR_ANY;
+
+		loc_sa.sin_port = htons(client->reader->l_port);
 		if (bind(client->udp_fd, (struct sockaddr *)&loc_sa, sizeof (loc_sa))<0) {
 			cs_log("bind failed (errno=%d %s)", errno, strerror(errno));
 			close(client->udp_fd);
-			return 1;
+			return -1;
 		}
 	}
 
