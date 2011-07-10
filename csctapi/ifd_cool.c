@@ -60,7 +60,7 @@ int32_t Cool_GetStatus (struct s_reader *reader, int32_t * in)
 
 int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
 {
-	call (Cool_SetClockrate(reader));
+	call (Cool_SetClockrate(reader, 357));
 
 	//reset card
 	int32_t timeout = 5000; // Timout in ms?
@@ -97,10 +97,9 @@ int32_t Cool_Receive (struct s_reader *reader, BYTE * data, uint32_t size)
 	return OK;
 }	
 
-int32_t Cool_SetClockrate (struct s_reader *reader)
+int32_t Cool_SetClockrate (struct s_reader *reader, int32_t mhz)
 {
 	uint32_t clk;
-	int32_t mhz = reader->mhz;
 	clk = mhz * 10000;
 	call (cnxt_smc_set_clock_freq (specdev()->handle, clk));
 	cs_debug_mask(D_DEVICE, "COOL: Clock succesfully set to %i0 kHz", mhz);

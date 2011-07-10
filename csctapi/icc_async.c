@@ -1078,7 +1078,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 			ETU = F / d;
 		call (Sci_WriteSettings (reader, reader->protocol_type, reader->mhz / 100, ETU, WWT, reader->BWT, reader->CWT, EGT, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
 #elif defined(COOL)
-		call (Cool_SetClockrate(reader));
+		call (Cool_SetClockrate(reader, reader->mhz));
 		call (Cool_WriteSettings (reader, reader->BWT, reader->CWT, EGT, BGT));
 #elif defined(WITH_STAPI)
 		call (STReader_SetClockrate(reader->stsmart_handle));
