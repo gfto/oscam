@@ -105,6 +105,7 @@ int32_t cs_check_v(uint32_t ip, int32_t port, int32_t add) {
 				v_ban_entry->v_time = time((time_t *)0);
 				v_ban_entry->v_ip = ip;
 				v_ban_entry->v_port = port;
+				v_ban_entry->v_count = 1;
 
 				ll_iter_insert(&itr, v_ban_entry);
 
