@@ -15,12 +15,12 @@ static int32_t set_provider_info(struct s_reader * reader, int32_t i)
 
   ins12[2]=i;//select provider
   write_cmd(ins12, NULL); // show provider properties
-  
+
   if ((cta_res[25] != 0x90) || (cta_res[26] != 0x00)) return ERROR;
   reader->prid[i][0]=0;
   reader->prid[i][1]=0;//blanken high byte provider code
   memcpy(&reader->prid[i][2], cta_res, 2);
-  
+
   year = (cta_res[22]>>1) + 1990;
   month = ((cta_res[22]&0x1)<< 3) | (cta_res[23] >>5);
   day = (cta_res[23]&0x1f);
@@ -43,6 +43,16 @@ static int32_t set_provider_info(struct s_reader * reader, int32_t i)
   memcpy(&reader->sa[i][0], cta_res+18, 4);
   if (valid==1) //if not expired
     cs_ri_log (reader, "[seca-reader] SA: %s", cs_hexdump(0, cta_res+18, 4, tmp, sizeof(tmp)));
+
+  // add entitlement to list
+  memset(&lt, 0, sizeof(struct tm));
+  lt.tm_year = year - 1900;
+  lt.tm_mon = month - 1;
+  lt.tm_mday = day;
+  // Add entitlements list
+  //FIXME: id is prov logical number. PBM could be used but is 64 bit and doesn't fit id (uint16). PBM could be added in seca_card_info(...) by iterating the llist
+  cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[i]), 0 , 0, 0, mktime(&lt), 0); 
+
   return OK;
 }
 
@@ -94,6 +104,7 @@ static int32_t seca_card_init(struct s_reader * reader, ATR newatr)
   static const uchar ins16[] = { 0xc1, 0x16, 0x00, 0x00, 0x07 }; // get nr. of prividers
   int32_t i;
 
+  cs_clear_entitlement(reader);
 
   buf[0]=0x00;
   if ((atr[10]!=0x0e) || (atr[11]!=0x6c) || (atr[12]!=0xb6) || (atr[13]!=0xd6)) return ERROR;
@@ -359,11 +370,17 @@ static int32_t seca_card_info (struct s_reader * reader)
   char tmp[17];
   int32_t prov;
 
+  //LL_ITER it = ll_iter_create(reader->ll_entitlements);
+  //S_ENTITLEMENT *ent;
+
   for (prov = 0; prov < reader->nprov; prov++) {
     ins32[2] = prov;
     write_cmd (ins34, ins34 + 5);	//prepare card for pbm request
     write_cmd (ins32, NULL);	//pbm request
     uchar pbm[8];		//TODO should be arrayed per prov
+
+     //ent = ll_iter_next(&it);
+
     switch (cta_res[0]) {
     case 0x04:
       cs_ri_log (reader, "[seca-reader] no PBM for provider %i", prov + 1);
@@ -371,10 +388,17 @@ static int32_t seca_card_info (struct s_reader * reader)
     case 0x83:
       memcpy (pbm, cta_res + 1, 8);
       cs_ri_log (reader, "[seca-reader] PBM for provider %i: %s", prov + 1, cs_hexdump(0, pbm, 8, tmp, sizeof(tmp)));
+
+      //if (ent) {
+      //  ent->id = b2ll(4, pbm); // set 4 LSB of PBM as entitlement id
+      //  ent->type = 6; // new type should be used
+      //}
+
       break;
     default:
       cs_log ("[seca-reader] ERROR: PBM returns unknown byte %02x", cta_res[0]);
     }
+
   }
   return OK;
 }
