@@ -642,7 +642,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?part=adduser\">Add User</A></TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=reinit\">Reinit User DB</A></TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=resetalluserstats\">Reset Userstats</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A TARGET=\"_NEW\" HREF=\"graph.svg?type=users\">Show Graphs</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A TARGET=\"_NEW\" HREF=\"graph.svg?type=users&hidelabels=1\">Show Graphs</A></TD>\n\
 		</TR>\n\
 	</TABLE><BR>\n\
 	<TABLE CLASS=\"users\">\n\
@@ -1880,9 +1880,11 @@ var fetch_url='';\n\
 var interval = 3500;\n\
 var activesecs = 15;\n\
 var activeTask = null;\n\
+var hideLabels = false;\n\
 function init(evt) {\n\
 	fetch_url=location.search.split('?');\n\
 	fetch_url='oscamapi.html?part=ecmhistory&' + fetch_url[fetch_url.length-1];\n\
+	if ( location.search.indexOf('hidelabels=1') > 0 ) hideLabels = true;\n\
 	SVGDoc = evt.target.ownerDocument;\n\
 	SVGDoc.getElementById('graph_grid_interval').addEventListener('mousedown', switch_interval, false);\n\
 	fetch_data();\n\
@@ -1906,6 +1908,15 @@ function fetch_data() {\n\
 		getURL(fetch_url, plot_data);\n\
 	} else {\n\
 		handle_error();\n\
+	}\n\
+}\n\
+function showlabel(evt) {\n\
+	var id = evt.target.id.split('_');\n\
+	var obj = SVGDoc.getElementById('graph_txt_'+id[2]);\n\
+	if ( evt.type=='mouseover' ) {\n\
+			obj.setAttributeNS(null,'style','font-size:9px;display:;');\n\
+	} else if ( evt.type=='mouseout' ) {\n\
+		obj.setAttributeNS(null,'style','font-size:9px;display:none;');\n\
 	}\n\
 }\n\
 function plot_data(obj) {\n\
@@ -1969,10 +1980,15 @@ function plot_data(obj) {\n\
 		if ( SVGDoc.getElementById('graph_txt_'+i) == null ) {\n\
 			var newText = document.createElementNS(svgNS,'text');\n\
 			newText.setAttributeNS(null,'x',3);\n\
-			newText.setAttributeNS(null,'y',8+(8*i));\n\
-			newText.setAttributeNS(null,'fill',Color[i]);\n\
+			newText.setAttributeNS(null,'fill',Color[ i - (parseInt(i/Color.length)*Color.length)]);\n\
 			newText.setAttributeNS(null,'id','graph_txt_'+i);\n\
-			newText.setAttributeNS(null,'style','font-size:9px');\n\
+			if ( hideLabels ) {\n\
+				newText.setAttributeNS(null,'y',8);\n\
+				newText.setAttributeNS(null,'style','font-size:9px;display:none;');\n\
+			} else {\n\
+				newText.setAttributeNS(null,'y',8+(8*i));\n\
+				newText.setAttributeNS(null,'style','font-size:9px');\n\
+			}\n\
 			var textNode = document.createTextNode(plots[i]['name']);\n\
       newText.appendChild(textNode);\n\
 			document.getElementById('graph').appendChild(newText);\n\
@@ -1987,9 +2003,13 @@ function plot_data(obj) {\n\
 			var newPath = document.createElementNS(svgNS,'path');\n\
 			newPath.setAttributeNS(null,'id','graph_path_'+i);\n\
 			newPath.setAttributeNS(null,'fill','none');\n\
-			newPath.setAttributeNS(null,'stroke',Color[i]);\n\
+			newPath.setAttributeNS(null,'stroke',Color[ i - (parseInt(i/Color.length)*Color.length)]);\n\
 			newPath.setAttributeNS(null,'stroke-width','1');\n\
 			newPath.setAttributeNS(null,'stroke-opacity','0.8');\n\
+			if ( hideLabels ) {\n\
+				newPath.addEventListener('mouseover', showlabel, false);\n\
+				newPath.addEventListener('mouseout', showlabel, false);\n\
+			}\n\
 			document.getElementById('graph').appendChild(newPath);\n\
 		}\n\
 		a=0;\n\
