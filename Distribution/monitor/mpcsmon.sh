@@ -1,9 +1,9 @@
 #!/bin/bash
 
-CSHOST="192.168.1.31"
+CSHOST="localhost"
 CSPORT="988"
-USR="user1"
-PWD="password1"
+USR="user"
+PWD="passwd"
 NETCAT="nc"
 DELAY=5
 

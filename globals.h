@@ -385,6 +385,9 @@ extern void cs_switch_led(int32_t led, int32_t action);
 #define ACTION_CLIENT_KILL		25
 #define ACTION_CLIENT_INIT		26
 
+#define CHECK_ECM_FALLBACK		1
+#define CHECK_ECM_TIMEOUT		2
+
 #define AVAIL_CHECK_CONNECTED	0
 #define AVAIL_CHECK_LOADBALANCE	1
 
@@ -1330,6 +1333,14 @@ struct s_data {
 	struct s_client *cl;
 	void *ptr;
 	uint16_t len;
+};
+
+struct s_check {
+	struct s_client *cl;
+	int8_t action;
+	void *ptr;
+	int32_t len;
+	struct timeb t_check;
 };
 
 typedef struct reader_stat_t
