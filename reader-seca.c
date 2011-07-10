@@ -50,8 +50,9 @@ static int32_t set_provider_info(struct s_reader * reader, int32_t i)
   lt.tm_mon = month - 1;
   lt.tm_mday = day;
   // Add entitlements list
-  //FIXME: id is prov logical number. PBM could be used but is 64 bit and doesn't fit id (uint16). PBM could be added in seca_card_info(...) by iterating the llist
-  cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[i]), 0 , 0, 0, mktime(&lt), 0); 
+  // PBM will be added in seca_card_info(...) by iterating the llist
+  if (i) // skip first issuer entry
+    cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[i]), 0 , 0, 0, mktime(&lt), 0); 
 
   return OK;
 }
@@ -370,8 +371,8 @@ static int32_t seca_card_info (struct s_reader * reader)
   char tmp[17];
   int32_t prov;
 
-  //LL_ITER it = ll_iter_create(reader->ll_entitlements);
-  //S_ENTITLEMENT *ent;
+  LL_ITER it = ll_iter_create(reader->ll_entitlements);
+  S_ENTITLEMENT *ent = NULL;
 
   for (prov = 0; prov < reader->nprov; prov++) {
     ins32[2] = prov;
@@ -379,7 +380,7 @@ static int32_t seca_card_info (struct s_reader * reader)
     write_cmd (ins32, NULL);	//pbm request
     uchar pbm[8];		//TODO should be arrayed per prov
 
-     //ent = ll_iter_next(&it);
+     if (prov) ent = ll_iter_next(&it);
 
     switch (cta_res[0]) {
     case 0x04:
@@ -389,10 +390,10 @@ static int32_t seca_card_info (struct s_reader * reader)
       memcpy (pbm, cta_res + 1, 8);
       cs_ri_log (reader, "[seca-reader] PBM for provider %i: %s", prov + 1, cs_hexdump(0, pbm, 8, tmp, sizeof(tmp)));
 
-      //if (ent) {
-      //  ent->id = b2ll(4, pbm); // set 4 LSB of PBM as entitlement id
-      //  ent->type = 6; // new type should be used
-      //}
+      if (ent) {
+        ent->id = b2ll(8, pbm);
+        ent->type = 6; // new type must be used
+      }
 
       break;
     default:

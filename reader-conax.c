@@ -309,6 +309,7 @@ static int32_t conax_card_info(struct s_reader * reader)
 	struct tm tm;
 	memset(&tm, 0, sizeof(struct tm));
 	time_t start_t, end_t;
+	uint32_t cxclass = 0;
 
 	cs_clear_entitlement(reader); // reset the entitlements
 
@@ -338,8 +339,8 @@ static int32_t conax_card_info(struct s_reader * reader)
 									strptime(pdate + 16, "%Y/%m/%d", &tm);
 									end_t = mktime(&tm);
 
-									// todo: add entitlements to list
-									cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), provid, 0, start_t, end_t, type + 1);
+									// add entitlements to list
+									cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), provid, cxclass, start_t, end_t, type + 1);
 
 									k = 0;
 									chid[0] = '\0';
@@ -350,6 +351,7 @@ static int32_t conax_card_info(struct s_reader * reader)
 							case 0x20: // Provider classes
 							case 0x90: // (?) not sure what this is, saw it once in log
 								snprintf(chid, sizeof(chid), ", classes: %02X%02X%02X%02X", cta_res[i+2], cta_res[i+3], cta_res[i+4] ,cta_res[i+5]);
+								cxclass = b2ll(4, &cta_res[i+2]);
 								break;
 						}
 					}
@@ -360,8 +362,8 @@ static int32_t conax_card_info(struct s_reader * reader)
 					strptime(pdate + 16, "%Y/%m/%d", &tm);
 					end_t = mktime(&tm);
 
-					// todo: add entitlements to list
-					cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), provid, 0, start_t, end_t, type + 1);
+					// add entitlements to list
+					cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), provid, cxclass, start_t, end_t, type + 1);
 				}
 			}
 		}
