@@ -135,6 +135,7 @@ void clear_block_delay(struct s_reader *rdr) {
 void block_connect(struct s_reader *rdr) {
   if (!rdr->tcp_block_delay)
   	rdr->tcp_block_delay = 100; //starting blocking time, 100ms
+  cs_ftime(&rdr->tcp_block_connect_till);
   rdr->tcp_block_connect_till.time += rdr->tcp_block_delay / 1000;
   rdr->tcp_block_connect_till.millitm += rdr->tcp_block_delay % 1000;
   rdr->tcp_block_delay *= 4; //increment timeouts

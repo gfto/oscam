@@ -1550,8 +1550,11 @@ void cc_idle() {
 	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
 	
-	if (rdr && rdr->cc_keepalive && !rdr->tcp_connected)
-		cc_cli_connect(cl);
+	if (rdr && rdr->cc_keepalive && !rdr->tcp_connected) {
+		if (cc_cli_connect(cl) != 0) {
+			cs_sleepms(cfg.reader_restart_seconds*1000);
+		}
+	}
 		
 	if (!rdr || !rdr->tcp_connected || !cl || !cc)
 		return;
@@ -2908,6 +2911,7 @@ int32_t cc_cli_connect(struct s_client *cl) {
 	// connect
 	handle = network_tcp_connection_open(rdr);
 	if (handle <= 0) {
+		block_connect(rdr);
 		cs_log("%s network connect error!", rdr->label);
 		return -1;
 	}
