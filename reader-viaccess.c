@@ -287,7 +287,7 @@ static int32_t viaccess_card_init(struct s_reader * reader, ATR newatr)
 }
 
 bool dcw_crc(uchar *dw){
-	int i;
+	int8_t i;
 	for(i=0;i<16;i+=4) if(dw[i+3]!=dw[i]+dw[i+1]+dw[i+2])return 0;
 	return 1;
 }
@@ -320,7 +320,7 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 	nextEcm=ecm88Data;
 
-		//detecte nano E0
+	//looking for nano E0
 	while (ecm88Len)
 	{
 		// 80 33 nano 80 (ecm) + len (33)
@@ -334,7 +334,7 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 			{
 				curnumber_ecm =(ecm88Data[6]<<8) | (ecm88Data[7]);
 				//if number_ecm & nano E0 ecm  not suported
-				if ((reader->last_geo.number_ecm == curnumber_ecm )&&(ecm88Data[9] == 0xE0))
+				if ((reader->last_geo.number_ecm == curnumber_ecm )&&((ecm88Data[9] == 0xE0)&&(ecm88Data[10] == 0x02)))
 				{
 					cs_log("[viaccess-reader] ECM: Invalid ECM nano E0 Rejecting");
 					return ERROR;
@@ -346,7 +346,7 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		} else  ecm88Len = 0; //exit while
 	}
 
-	//return original parametre
+	//reset to beginning of ECM
 	ecm88Data=er->ecm+4; //XXX what is the 4th byte for ??
 	ecm88Len=SCT_LEN(er->ecm)-4;
 	curEcm88len=0;
