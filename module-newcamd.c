@@ -242,20 +242,21 @@ static int32_t network_cmd_no_data_receive(int32_t handle, uint16_t *netMsgId,
 
 void newcamd_reply_ka()
 {
-  struct s_client *cl = cur_client();
+	struct s_client *cl = cur_client();
 
-  if(!cl->udp_fd)
-  {
-    cs_debug_mask(D_CLIENT, "invalid client fd=%d", cl->udp_fd);
-        return;
-  }
+	if (!cl) return;
 
-  cs_debug_mask(D_CLIENT, "send keepalive to client fd=%d", cl->udp_fd);
+	if(!cl->udp_fd) {
+		cs_debug_mask(D_CLIENT, "invalid client fd=%d", cl->udp_fd);
+		return;
+	}
 
-  cl->reader->last_s = time((time_t *)0);
+	cs_debug_mask(D_CLIENT, "send keepalive to client fd=%d", cl->udp_fd);
 
-  network_cmd_no_data_send(cl->udp_fd, &cl->ncd_msgid,
-    MSG_KEEPALIVE, cl->ncd_skey,COMMTYPE_SERVER);
+	if (cl->reader)
+		cl->reader->last_s = time((time_t *)0);
+
+	network_cmd_no_data_send(cl->udp_fd, &cl->ncd_msgid, MSG_KEEPALIVE, cl->ncd_skey,COMMTYPE_SERVER);
 }
 
 static int32_t connect_newcamd_server() 
