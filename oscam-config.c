@@ -76,17 +76,17 @@ static const char *cctag[]={"global", "monitor", "camd33", "camd35", "newcamd", 
 /* Returns the default value if string length is zero, otherwise atoi is called*/
 static int32_t strToIntVal(char *value, int32_t defaultvalue){
 	if (strlen(value) == 0) return defaultvalue;
+	errno = 0; // errno should be set to 0 before calling strtol
 	int32_t i = strtol(value, NULL, 10);
-	if (i < 0) return defaultvalue;
-	else return i;
+	return (errno == 0) ? i : defaultvalue;
 }
 
 /* Returns the default value if string length is zero, otherwise strtoul is called*/
 static uint32_t strToUIntVal(char *value, uint32_t defaultvalue){
 	if (strlen(value) == 0) return defaultvalue;
+	errno = 0; // errno should be set to 0 before calling strtoul
 	uint32_t i = strtoul(value, NULL, 10);
-	if (errno != 0) return defaultvalue;
-	else return i;
+	return (errno == 0) ? i : defaultvalue;
 }
 
  /* Replacement of fprintf which adds necessary whitespace to fill up the varname to a fixed width.
