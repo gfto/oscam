@@ -288,7 +288,7 @@ static int32_t viaccess_card_init(struct s_reader * reader, ATR newatr)
 
 bool dcw_crc(uchar *dw){
 	int8_t i;
-	for(i=0;i<16;i+=4) if(dw[i+3]!=dw[i]+dw[i+1]+dw[i+2])return 0;
+	for(i=0;i<16;i+=4) if(dw[i+3]!=((dw[i]+dw[i+1]+dw[i+2])& 0xFF))return 0;
 	return 1;
 }
 
