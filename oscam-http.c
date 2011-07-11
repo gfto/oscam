@@ -2268,9 +2268,9 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 
 					localtime_r(&item->start, &start_t);
 					localtime_r(&item->end, &end_t);
-
-					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "<SPAN CLASS=\"%s\">entitlement %s: caid %04X provid %06X id %016lX class %08X valid ",
-							item->end > now ? "e_valid" : "e_expired" , typetxt[item->type], item->caid, item->provid, item->id, item->class);
+					// to be able to display correctly on 32bit systems, uint64 has to be split in 2 uint32 values and used as 2 params
+					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "<SPAN CLASS=\"%s\">entitlement %s: caid %04X provid %06X id %08X%08X class %08X valid ",
+							item->end > now ? "e_valid" : "e_expired" , typetxt[item->type], item->caid, item->provid, (uint32_t)(item->id >> 32), (uint32_t)item->id, item->class);
 
 					if ( item->start != 0 ){
 						tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "%02d.%02d.%04d - %02d.%02d.%04d</SPAN><BR>\n",
@@ -2629,9 +2629,16 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 								if (ent->end > now)
 								{	active_ent++;
 									localtime_r(&ent->end, &end_t);
-									    tpl_printf(vars, TPLAPPEND, "TMPSPAN", (ent->type == 6)?"%s:%016lX<BR>":"%s:%04lX<BR>", 
-										typetxt[ent->type],
-										ent->id);
+									tpl_printf(vars, TPLAPPEND, "TMPSPAN", "%s:", 
+										typetxt[ent->type]);
+									// Attention: to be able to display correctly on 32bit systems, uint64 has to be split
+									// in 2 uint32 values and used as 2 params
+									if (ent->type == 6)
+									{
+									    tpl_printf(vars, TPLAPPEND, "TMPSPAN", "%08X", (uint32_t)(ent->id>>32));
+									}
+									tpl_printf(vars, TPLAPPEND, "TMPSPAN", (ent->type == 6)?"%08X<BR>":"%04X<BR>", 
+										(uint32_t)ent->id);
 									tpl_printf(vars, TPLAPPEND, "TMPSPAN", "%04X:%06X<BR>exp:%04d/%02d/%02d<BR><BR>",
 									    ent->caid, ent->provid, 
 									    end_t.tm_year + 1900, end_t.tm_mon + 1, end_t.tm_mday);
