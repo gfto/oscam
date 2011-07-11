@@ -673,12 +673,12 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	Totals for the server:\n\
 	<TABLE cellpadding=\"10\">\n\
 		<TR>\n\
-			<TH>OK</TH>\n\
-			<TH>NOK</TH>\n\
-			<TH>IGN</TH>\n\
-			<TH>TOUT</TH>\n\
-			<TH>CACHE</TH>\n\
-			<TH>TUN</TH>\n\
+			<TH TITLE=\"Delivered ECM with status OK\">OK</TH>\n\
+			<TH TITLE=\"Delivered ECM with status not OK\">NOK</TH>\n\
+			<TH TITLE=\"Ignored ECM by filters, part of NOK\">IGN</TH>\n\
+			<TH TITLE=\"Timeout ECM, part of NOK\">TOUT</TH>\n\
+			<TH TITLE=\"Delivered ECM from cache, part of OK\">CACHE</TH>\n\
+			<TH TITLE=\"Delivered ECM from tunneled, part of OK\">TUN</TH>\n\
 			<TH>Action</TH>\n\
 		</TR>\n\
 		<TR>\n\
