@@ -52,14 +52,14 @@ static void radegast_auth_client(in_addr_t ip)
   if (!ok)
   {
     cs_auth_client(cur_client(), (struct s_auth *)0, NULL);
-    cs_exit(0);
+    cs_disconnect_client(cur_client());
   }
 
   for (ok=0, account=cfg.account; (cfg.rad_usr[0]) && (account) && (!ok); account=account->next)
   {
     ok=(!strcmp(cfg.rad_usr, account->usr));
     if (ok && cs_auth_client(cur_client(), account, NULL))
-      cs_exit(0);
+      cs_disconnect_client(cur_client());
   }
 
   if (!ok)

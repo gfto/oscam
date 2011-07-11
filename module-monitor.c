@@ -2,30 +2,31 @@
 
 #define CS_VERSION_X  CS_VERSION
 
-static void monitor_check_ip()
+static int8_t monitor_check_ip()
 {
 	int32_t ok=0;
 	struct s_client *cur_cl = cur_client();
 	
-	if (cur_cl->auth) return;
+	if (cur_cl->auth) return 0;
 	ok = check_ip(cfg.mon_allowed, cur_cl->ip);
 	if (!ok)
 	{
 		cs_auth_client(cur_cl, (struct s_auth *)0, "invalid ip");
-		cs_exit(0);
+		return -1;
 	}
+	return 0;
 }
 
-static void monitor_auth_client(char *usr, char *pwd)
+static int8_t monitor_auth_client(char *usr, char *pwd)
 {
 	struct s_auth *account;
 	struct s_client *cur_cl = cur_client();
 	
-	if (cur_cl->auth) return;
+	if (cur_cl->auth) return 0;
 	if ((!usr) || (!pwd))
 	{
 		cs_auth_client(cur_cl, (struct s_auth *)0, NULL);
-		cs_exit(0);
+		return -1;
 	}
 	for (account=cfg.account, cur_cl->auth=0; (account) && (!cur_cl->auth);)
 	{
@@ -37,10 +38,11 @@ static void monitor_auth_client(char *usr, char *pwd)
 	if (!cur_cl->auth)
 	{
 		cs_auth_client(cur_cl, (struct s_auth *)0, "invalid account");
-		cs_exit(0);
+		return -1;
 	}
 	if (cs_auth_client(cur_cl, account, NULL))
-		cs_exit(0);
+		return -1;
+	return 0;
 }
 
 static int32_t secmon_auth_client(uchar *ucrc)
@@ -66,13 +68,13 @@ static int32_t secmon_auth_client(uchar *ucrc)
 			memcpy(cur_cl->ucrc, ucrc, 4);
 			aes_set_key((char *)MD5((unsigned char *)account->pwd, strlen(account->pwd), md5tmp));
 			if (cs_auth_client(cur_cl, account, NULL))
-				cs_exit(0);
+				return -1;
 			cur_cl->auth=1;
 		}
 	if (!cur_cl->auth)
 	{
 		cs_auth_client(cur_cl, (struct s_auth *)0, "invalid user");
-		cs_exit(0);
+		return -1;
 	}
 	return(cur_cl->auth);
 }
@@ -110,7 +112,7 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 {
 	int32_t n;
 	uchar nbuf[3] = { 'U', 0, 0 };
-	static int32_t bpos=0;
+	static int32_t bpos=0, res = 0;
 	static uchar *bbuf=NULL;
 	if (!bbuf)
 	{
@@ -130,7 +132,12 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 			cs_log("packet too small!");
 			return(buf[0]=0);
 		}
-		if (!secmon_auth_client(buf+1))
+		res = secmon_auth_client(buf+1);
+		if (res == -1) {
+			cs_disconnect_client(client);
+			return 0;
+		}
+		if (!res)
 			return(buf[0]=0);
 		aes_decrypt(buf+5, 16);
 		bsize=boundary(4, buf[9]+5)+5;
@@ -161,7 +168,10 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 	else
 	{
 		uchar *p;
-		monitor_check_ip();
+		if (monitor_check_ip() == -1) {
+			cs_disconnect_client(client);
+			return 0;
+		}
 		buf[n]='\0';
 		if ((p=(uchar *)strchr((char *)buf, 10)) && (bpos=n-(p-buf)-1))
 		{
@@ -468,12 +478,18 @@ static void monitor_send_login(void){
 
 static void monitor_login(char *usr){
 	char *pwd=NULL;
+	int8_t res = 0;
 	if ((usr) && (pwd=strchr(usr, ' ')))
 		*pwd++=0;
 	if (pwd)
-		monitor_auth_client(trim(usr), trim(pwd));
+		res = monitor_auth_client(trim(usr), trim(pwd));
 	else
-		monitor_auth_client(NULL, NULL);
+		res = monitor_auth_client(NULL, NULL);
+
+	if (res == -1) {
+		cs_disconnect_client(cur_client());
+		return;
+	}
 	monitor_send_login();
 }
 
@@ -752,7 +768,7 @@ static int32_t monitor_process_request(char *req)
 			case  1:	rc=0; break;	// exit
 			case  2:	monitor_logsend(arg); break;	// log
 			case  3:	monitor_process_info(); break;	// status
-			case  4:	if (cur_cl->monlvl > 3) cs_exit(SIGQUIT); break;	// shutdown
+			case  4:	if (cur_cl->monlvl > 3) cs_exit_oscam(); break;	// shutdown
 			case  5:	if (cur_cl->monlvl > 2) cs_accounts_chk(); break;	// reload
 			case  6:	monitor_process_details(arg); break;	// details
 			case  7:	monitor_send_details_version(); break;	// version

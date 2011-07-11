@@ -183,15 +183,17 @@ static void do_emm_from_file(struct s_reader * reader)
 
 void reader_card_info(struct s_reader * reader)
 {
-  if ((reader->card_status == CARD_NEED_INIT) || (reader->card_status == CARD_INSERTED))
-  {
-    cur_client()->last=time((time_t)0);
-    cs_ri_brk(reader, 0);
+	if ((reader->card_status == CARD_NEED_INIT) || (reader->card_status == CARD_INSERTED)) {
 
-	if (reader->csystem.active && reader->csystem.card_info) {
-		reader->csystem.card_info(reader);
+		if (reader->client)
+			reader->client->last=time((time_t)0);
+
+		cs_ri_brk(reader, 0);
+
+		if (reader->csystem.active && reader->csystem.card_info) {
+			reader->csystem.card_info(reader);
+		}
 	}
-  }
 }
 
 static int32_t reader_get_cardsystem(struct s_reader * reader, ATR atr)

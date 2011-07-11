@@ -43,7 +43,7 @@ static int32_t camd35_send(uchar *buf)
 		if (cl->typ == 'p' && cl->reader) {
 			if (status == -1) network_tcp_connection_close(cl->reader);
 		} else if (cl->typ=='c') {
-			if (status == -1) cs_exit(0);
+			if (status == -1) cs_disconnect_client(cl);
 		}
 	}
 	return status;		

@@ -576,7 +576,7 @@ static FILTER mk_user_ftab()
   return filt;
 }
 
-static void newcamd_auth_client(in_addr_t ip, uint8_t *deskey)
+static int8_t newcamd_auth_client(in_addr_t ip, uint8_t *deskey)
 {
     int32_t i, ok, rc;
     uchar *usr = NULL, *pwd = NULL;
@@ -594,7 +594,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8_t *deskey)
     if (!ok)
     {
       cs_auth_client(cl, (struct s_auth *)0, NULL);
-      cs_exit(0);
+      return -1;
     }
 
     // make random 14 bytes
@@ -613,8 +613,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8_t *deskey)
       {
         cs_debug_mask(D_CLIENT, "expected MSG_CLIENT_2_SERVER_LOGIN (%02X), received %02X", 
         MSG_CLIENT_2_SERVER_LOGIN, mbuf[2]);
-        NULLFREE(cl->req);
-        cs_exit(0);
+        return -1;
       }
       usr=mbuf+5;
       pwd=usr+strlen((char *)usr)+1;
@@ -622,8 +621,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8_t *deskey)
     else
     {
       cs_debug_mask(D_CLIENT, "bad client login request");
-      NULLFREE(cl->req);
-      cs_exit(0);
+      return -1;
     }
 
     snprintf(cl->ncd_client_id, sizeof(cl->ncd_client_id), "%02X%02X", mbuf[0], mbuf[1]);
@@ -719,8 +717,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8_t *deskey)
         {
           cs_debug_mask(D_CLIENT, "expected MSG_CARD_DATA_REQ (%02X), received %02X", 
                    MSG_CARD_DATA_REQ, mbuf[2]);
-          NULLFREE(cl->req);
-          cs_exit(0);
+          return -1;
         }
 
   // set userfilter
@@ -847,17 +844,16 @@ static void newcamd_auth_client(in_addr_t ip, uint8_t *deskey)
         if( network_message_send(cl->udp_fd, &cl->ncd_msgid,
             mbuf, len, key, COMMTYPE_SERVER, 0, &cd) <0 )
         {
-          NULLFREE(cl->req);
-          cs_exit(0);
+          return -1;
         }
       }
     }
     else
     {
       cs_auth_client(cl, 0, usr ? "login failure" : "no such user");
-      NULLFREE(cl->req);
-      cs_exit(0);
+      return -1;
     }
+    return 0;
 }
 
 static void newcamd_send_dcw(struct s_client *client, ECM_REQUEST *er)
@@ -968,7 +964,7 @@ static void newcamd_process_emm(uchar *buf)
 
 
 static void newcamd_server_init(struct s_client *client) {
-
+	int8_t res = 0;
 	cs_malloc(&client->req,CS_MAXPENDING*REQ_SIZE, 1);
   
 	client->ncd_server = 1;
@@ -976,10 +972,15 @@ static void newcamd_server_init(struct s_client *client) {
 
 	if (cfg.ncd_ptab.ports[client->port_idx].ncd_key_is_set) {
 		//port has a des key specified
-		newcamd_auth_client(client->ip, cfg.ncd_ptab.ports[client->port_idx].ncd_key);
+		res = newcamd_auth_client(client->ip, cfg.ncd_ptab.ports[client->port_idx].ncd_key);
 	} else {
 		//default global des key
-		newcamd_auth_client(client->ip, cfg.ncd_key);
+		res = newcamd_auth_client(client->ip, cfg.ncd_key);
+	}
+
+	if (res == -1) {
+		cs_disconnect_client(client);
+		return;
 	}
 
 	// report all cards if using extended mg proto

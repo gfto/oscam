@@ -253,18 +253,18 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 
 void network_tcp_connection_close(struct s_reader *reader)
 {
+	if (!reader) {
+		//only proxy reader should call this, client connections are closed on thread cleanup
+		cs_log("WARNING: invalid client tcp_conn_close()");
+		cs_disconnect_client(cur_client());
+	}
+
 	struct s_client *cl = reader->client;
 	if(!cl) return;
 	int32_t fd = cl->udp_fd;
 
 	cs_log("tcp_conn_close(): fd=%d, cl->typ == '%c' is_udp %d", fd, cl->typ, cl->is_udp);
 	int32_t i;
-
-	if (!reader || cl->typ != 'p') {
-		//only proxy reader should call this, client connections are closed on thread cleanup
-		cs_log("invalid client tcp_conn_close()");
-		cs_exit(0);
-	}
 
 	if (fd) {
 		close(fd);
@@ -296,6 +296,11 @@ void casc_do_sock_log(struct s_reader * reader)
   cl->last=time((time_t)0);
   if (idx<0) return;        // no dcw-msg received
 
+  if(!cl->ecmtask) {
+    cs_log("WARNING: casc_do_sock_log: ecmtask not a available");
+    return;
+  }
+
   for (i=0; i<CS_MAXPENDING; i++)
   {
     if (  (cl->ecmtask[i].rc>=10)
@@ -317,6 +322,11 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	struct s_client *cl = reader->client;
   
 	if(!cl) return -1;
+
+	if(!cl->ecmtask) {
+		cs_log("WARNING: casc_process_ecm: ecmtask not a available");
+		return;
+	}
   
 	uchar buf[512];
 

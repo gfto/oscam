@@ -92,7 +92,7 @@ static void camd33_auth_client(uchar *camdbug)
   else
   {
     if (rc<0) cs_auth_client(cur_client(), 0, usr ? "invalid account" : "no user given");
-    cs_exit(0);
+    cs_disconnect_client(cur_client());
   }
 }
 

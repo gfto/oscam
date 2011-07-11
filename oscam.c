@@ -499,69 +499,67 @@ static void cleanup_ecmtasks(struct s_client *cl)
 void cleanup_thread(void *var)
 {
 	struct s_client *cl = var;
-	if(cl && !cl->cleaned){ //cleaned=0
-		cl->cleaned++; //cleaned=1	
-		// Remove client from client list. kill_thread also removes this client, so here just if client exits itself...
-		struct s_client *prev, *cl2;
-		cs_writelock(&clientlist_lock);
-		for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
-			if (cl == cl2)
-				break;
+	if(!cl) return;
+
+	// Remove client from client list. kill_thread also removes this client, so here just if client exits itself...
+	struct s_client *prev, *cl2;
+	cs_writelock(&clientlist_lock);
+	for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
 		if (cl == cl2)
-			prev->next = cl2->next; //remove client from list
-		cs_writeunlock(&clientlist_lock);
+			break;
+	if (cl == cl2)
+		prev->next = cl2->next; //remove client from list
+	cs_writeunlock(&clientlist_lock);
 		
-		// Clean reader. The cleaned structures should be only used by the reader thread, so we should be save without waiting
-		if (cl->reader){
-			remove_reader_from_active(cl->reader);
-			if(cl->reader->ph.cleanup)
-        cl->reader->ph.cleanup(cl);
-			if(cl->typ == 'r'){
-				ICC_Async_Close(cl->reader);
-			}
-			cl->reader->client = NULL;
-			cl->reader = NULL;
-		}
-		
-		cl->cleaned++; //cleaned=2, beware that kill_thread only waits until this point, so reader cleanup needs to be before!
-
-		// Clean client specific data
-		if(cl->typ == 'c'){
-#ifdef MODULE_CCCAM
-			struct cc_data *cc = cl->cc;
-			if (cc) cc->mode = CCCAM_MODE_SHUTDOWN;
-#endif
-	    cs_statistics(cl);
-	    cl->last_caid = 0xFFFF;
-	    cl->last_srvid = 0xFFFF;
-	    cs_statistics(cl);
-	    
-			cs_sleepms(500); //just wait a bit that really really nobody is accessing client data
-
-			if(ph[cl->ctyp].cleanup)
-				ph[cl->ctyp].cleanup(cl);
-		}
-		
-		// Close network socket if not already cleaned by previous cleanup functions
-		if(cl->pfd)
-			close(cl->pfd); 
-			
-		// Clean all remaining structures
-
-
-		ll_destroy(cl->joblist);
-
-		cleanup_ecmtasks(cl);
-		add_garbage(cl->emmcache);
-		add_garbage(cl->req);
-#ifdef MODULE_CCCAM
-		add_garbage(cl->cc);
-#endif
-		add_garbage(cl->serialdata);			
-
-		cs_cleanlocks();
-		add_garbage(cl);		
+	// Clean reader. The cleaned structures should be only used by the reader thread, so we should be save without waiting
+	if (cl->reader){
+		remove_reader_from_active(cl->reader);
+		if(cl->reader->ph.cleanup)
+		cl->reader->ph.cleanup(cl);
+		if (cl->typ == 'r')
+			ICC_Async_Close(cl->reader);
+		if (cl->typ == 'p')
+			network_tcp_connection_close(cl->reader);
+		cl->reader->client = NULL;
+		cl->reader = NULL;
 	}
+
+	// Clean client specific data
+	if(cl->typ == 'c'){
+#ifdef MODULE_CCCAM
+		struct cc_data *cc = cl->cc;
+		if (cc) cc->mode = CCCAM_MODE_SHUTDOWN;
+#endif
+		cs_statistics(cl);
+		cl->last_caid = 0xFFFF;
+		cl->last_srvid = 0xFFFF;
+		cs_statistics(cl);
+	    
+		cs_sleepms(500); //just wait a bit that really really nobody is accessing client data
+
+		if(ph[cl->ctyp].cleanup)
+			ph[cl->ctyp].cleanup(cl);
+	}
+		
+	// Close network socket if not already cleaned by previous cleanup functions
+	if(cl->pfd)
+		close(cl->pfd); 
+			
+	// Clean all remaining structures
+
+
+	ll_destroy(cl->joblist);
+
+	cleanup_ecmtasks(cl);
+	add_garbage(cl->emmcache);
+	add_garbage(cl->req);
+#ifdef MODULE_CCCAM
+	add_garbage(cl->cc);
+#endif
+	add_garbage(cl->serialdata);			
+
+	cs_cleanlocks();
+	add_garbage(cl);
 }
 
 static void cs_cleanup()
@@ -987,7 +985,7 @@ static void init_check(){
 	  	cs_log("The current system time is smaller than the build date (%s). Waiting 5s for time to correct...", ptr);
 	  	cs_sleepms(5000);
 	  	++i;
-	  	if(i > 12){
+	  	if(i > 6){
 	  		cs_log("Waiting was not successful. OSCam will be started but is UNSUPPORTED this way. Do not report any errors with this version.");
 				break;
 	  	}
@@ -2296,7 +2294,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	if(client->disabled != 0) {
 		if (client->failban & BAN_DISABLED){
 			cs_add_violation(client->ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
-			cs_exit(SIGQUIT); // don't know whether this is best way to kill the thread
+			cs_disconnect_client(client);
 		}
 		er->rc = E_DISABLED;
 	}
@@ -2320,7 +2318,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 			if (client->failban & BAN_SLEEPING) {
 				cs_add_violation(client->ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
-				cs_exit(SIGQUIT); // todo don't know whether this is best way to kill the thread
+				cs_disconnect_client(client);
 			}
 
 			if (client->c35_sleepsend != 0) {
@@ -2797,7 +2795,7 @@ void * work_thread(void *ptr) {
 
 			free(data);
 			data = NULL;
-			cs_exit(0);
+			cleanup_thread(cl);
 			pthread_exit(NULL);
 		}
 
