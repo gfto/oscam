@@ -2881,7 +2881,7 @@ void * work_thread(void *ptr) {
 				}
 
 				n = ph[cl->ctyp].recv(cl, mbuf, sizeof(mbuf));
-				if (n == -1) {
+				if (n < 0) {
 					cl->kill=1; // kill client on next run
 					continue;
 				}
