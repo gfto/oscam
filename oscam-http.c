@@ -18,7 +18,7 @@ extern void restart_cardreader(struct s_reader *rdr, int32_t restart);
 
 static int8_t running = 1;
 static pthread_t httpthread;
-pthread_mutex_t http_lock;
+CS_MUTEX_LOCK http_lock;
 
 pthread_key_t getip;
 
@@ -2044,7 +2044,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 			struct cc_card *card;
 
 			LLIST *cards = NULL;
-			struct cs_mutexlock *lock = NULL;
+			CS_MUTEX_LOCK *lock = NULL;
 
 			if (show_global_list) {
 					cards = get_and_lock_sharelist();
@@ -3824,7 +3824,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 			char *result = NULL;
 			
 			// WebIf allows modifying many things. Thus, all pages except images/css are excpected to be non-threadsafe! 
-			if(pgidx != 19 && pgidx != 20) cs_lock(&http_lock);
+			if(pgidx != 19 && pgidx != 20) cs_writelock(&http_lock);
 			switch(pgidx) {
 				case 0: result = send_oscam_config(vars, &params); break;
 				case 1: result = send_oscam_reader(vars, &params); break;
@@ -3853,7 +3853,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 				case 22: result = send_oscam_api(vars, f, &params, keepalive); break; //oscamapi.xml
 				default: result = send_oscam_status(vars, &params, 0); break;
 			}
-			if(pgidx != 19 && pgidx != 20) cs_unlock(&http_lock);
+			if(pgidx != 19 && pgidx != 20) cs_writeunlock(&http_lock);
 	
 			if(result == NULL || !strcmp(result, "0") || strlen(result) == 0) send_error500(f);
 			else if (strcmp(result, "1")) {
@@ -3981,10 +3981,7 @@ void http_srv() {
 	/* Create random string for nonce value generation */
 	create_rand_str(noncekey,32);
 	
-	if(pthread_mutex_init(&http_lock, NULL)){
-		cs_log("HTTP Server: Error creating mutex! (errno=%d %s)", errno, strerror(errno));
-		return;
-	};
+	cs_lock_create(&http_lock, 10, "http_lock");
 
 	if (pthread_key_create(&getip, NULL)) {
 		cs_log("Could not create getip");
@@ -4089,7 +4086,6 @@ void http_srv() {
 		lock_cs = NULL;
 	}
 #endif
-	pthread_mutex_destroy(&http_lock);
 	cs_log("HTTP Server: Shutdown requested.");
 	close(sock);
 	//exit(SIGQUIT);

@@ -353,26 +353,13 @@ extern char *strnew(char *str);
 extern void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid);
 extern void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid);
 extern int32_t check_ip(struct s_ip *ip, in_addr_t n);
-extern void cs_lock_create(struct cs_mutexlock *l, int16_t timeout, char *name);
-extern void cs_writelock(struct cs_mutexlock *l);
-extern void cs_writeunlock(struct cs_mutexlock *l);
-extern void cs_readlock(struct cs_mutexlock *l);
-extern void cs_readunlock(struct cs_mutexlock *l);
-extern int8_t cs_try_readlock(struct cs_mutexlock *l);
-extern int8_t cs_try_writelock(struct cs_mutexlock *l);
-#ifdef WITH_MUTEXDEBUG
-extern int32_t cs_lock_debug(pthread_mutex_t *mutex, char *file, uint16_t line);
-extern int32_t cs_trylock_debug(pthread_mutex_t *mutex, char *file, uint16_t line);
-extern int32_t cs_unlock_debug(pthread_mutex_t *mutex, char *file, uint16_t line);
-#define cs_lock(x) cs_lock_debug(x,__FILE__, __LINE__)
-#define cs_trylock(x) cs_trylock_debug(x,__FILE__, __LINE__)
-#define cs_unlock(x) cs_unlock_debug(x,__FILE__, __LINE__)
-#else
-extern int32_t cs_lock(pthread_mutex_t *mutex);
-extern int32_t cs_trylock(pthread_mutex_t *mutex);
-extern int32_t cs_unlock(pthread_mutex_t *mutex);
-#endif
-extern void cs_cleanlocks();
+extern void cs_lock_create(CS_MUTEX_LOCK *l, int16_t timeout, char *name);
+extern void cs_writelock(CS_MUTEX_LOCK *l);
+extern void cs_writeunlock(CS_MUTEX_LOCK *l);
+extern void cs_readlock(CS_MUTEX_LOCK *l);
+extern void cs_readunlock(CS_MUTEX_LOCK *l);
+extern int8_t cs_try_readlock(CS_MUTEX_LOCK *l);
+extern int8_t cs_try_writelock(CS_MUTEX_LOCK *l);
 extern uint32_t cs_getIPfromHost(const char *hostname);
 extern void setTCPTimeouts(int32_t socket);
 extern struct s_reader *get_reader_by_label(char *lbl);

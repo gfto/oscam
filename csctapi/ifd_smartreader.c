@@ -109,13 +109,13 @@ int32_t SR_Init (struct s_reader *reader)
         cs_log("Couldn't allocate memory for Device=%s config",reader->device);
         return ERROR;
     }
-    cs_lock(&sr_lock);
+    cs_writelock(&sr_lock);
     cs_debug_mask (D_DEVICE, "IO:SR: Looking for device %s on bus %s",devname,busname);
 
     if(!init_count) {
      ret = libusb_init(NULL);
      if (ret < 0) {
-        cs_unlock(&sr_lock);
+        cs_writeunlock(&sr_lock);
         cs_log("Libusb init error : %d",ret);
         return ret;
      }
@@ -134,7 +134,7 @@ int32_t SR_Init (struct s_reader *reader)
 
     reader->sr_config->usb_dev=find_smartreader(busname,devname,out_endpoint);
     if(!reader->sr_config->usb_dev){
-        cs_unlock(&sr_lock);
+        cs_writeunlock(&sr_lock);
         return ERROR;
     }
 
@@ -148,7 +148,7 @@ int32_t SR_Init (struct s_reader *reader)
     cs_debug_mask (D_DEVICE, "IO:SR: Opening smartreader device %s on bus %s",devname,busname);
 
     if ((ret=smartreader_usb_open_dev(reader))) {
-        cs_unlock(&sr_lock);
+        cs_writeunlock(&sr_lock);
         cs_log("unable to open smartreader device %s in bus %s (ret=%d)\n", devname,busname,ret);
         return ERROR;
     }
@@ -167,7 +167,7 @@ int32_t SR_Init (struct s_reader *reader)
     //Disable flow control
     ret=smartreader_setflowctrl(reader, 0);
     
-    cs_unlock(&sr_lock);
+    cs_writeunlock(&sr_lock);
 
     // start the reading thread
     reader->sr_config->g_read_buffer_size = 0;
@@ -450,7 +450,7 @@ int32_t SR_SetParity (struct s_reader *reader, uint16_t  parity)
 int32_t SR_Close (struct s_reader *reader)
 {
   if (!reader->sr_config) return OK;
-  cs_lock(&sr_lock);
+  cs_writelock(&sr_lock);
   cs_debug_mask(D_DEVICE, "IO:SR: Closing smartreader\n");
 
     reader->sr_config->running=FALSE;
@@ -465,7 +465,7 @@ int32_t SR_Close (struct s_reader *reader)
     init_count--;
     if (!init_count)
     		libusb_exit(NULL);
-    cs_unlock(&sr_lock);
+    cs_writeunlock(&sr_lock);
     free(reader->sr_config);
     reader->sr_config = NULL;
     return OK;

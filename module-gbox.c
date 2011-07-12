@@ -52,7 +52,7 @@ struct gbox_data {
   int32_t hello_initial;
   uchar cws[16];
   struct gbox_peer peer;
-  pthread_mutex_t lock;
+  CS_MUTEX_LOCK lock;
   uchar buf[1024];
   sem_t sem;
   LLIST *local_cards;
@@ -523,13 +523,13 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
   sem_post(&gbox->sem);
   gbox->peer.online = 1;
 
-  cs_lock(&gbox->lock);
+  cs_writelock(&gbox->lock);
 
   uint32_t r_addr_len = 0;
   struct sockaddr_in r_addr;
   if ((n = recvfrom(cli->udp_fd, data, sizeof(gbox->buf), 0, (struct sockaddr *)&r_addr, &r_addr_len)) < 8) {
 	  cs_log("gbox: invalid recvfrom!!!");
-    	cs_unlock(&gbox->lock);
+    	cs_writeunlock(&gbox->lock);
     	return -1;
   }
 
@@ -549,7 +549,7 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
 
 		  cs_add_violation((uint)cli->ip, cfg.gbox_port);
 
-		  cs_unlock(&gbox->lock);
+		  cs_writeunlock(&gbox->lock);
 		  return -1;
 	  }
   } else {
@@ -557,7 +557,7 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
 
     cs_add_violation((uint)cli->ip, cfg.gbox_port);
 
-    cs_unlock(&gbox->lock);
+    cs_writeunlock(&gbox->lock);
 	  return -1;
   }
 
@@ -631,7 +631,7 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
 
           NULLFREE(gbox->peer.hostname);
           if(!cs_malloc(&gbox->peer.hostname,hostname_len + 1, -1)){
-          	cs_unlock(&gbox->lock);
+          	cs_writeunlock(&gbox->lock);
           	return -1;
           }
           memcpy(gbox->peer.hostname, data + payload_len - 1 - hostname_len, hostname_len);
@@ -729,7 +729,7 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
 
       struct gbox_ecm_info *ei;
       if(!cs_malloc(&ei,sizeof(struct gbox_ecm_info), -1)){
-      	cs_unlock(&gbox->lock);
+      	cs_writeunlock(&gbox->lock);
       	return -1;
       }
       er->src_data = ei;
@@ -765,7 +765,7 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
     default:
       cs_ddump_mask(D_READER, data, n, "gbox: unknown data received (%d bytes):", n);
   }
-  cs_unlock(&gbox->lock);
+  cs_writeunlock(&gbox->lock);
 
   return 0;
 }
@@ -907,7 +907,7 @@ static int32_t gbox_client_init(struct s_client *cli)
 
     cli->pfd=cli->udp_fd;
 
-  pthread_mutex_init(&gbox->lock, NULL);
+  cs_lock_create(&gbox->lock, 5, "gbox_lock");
 
   gbox->hello_expired = 1;
   gbox->hello_initial = 1;
