@@ -34,6 +34,7 @@ static void get_via_data(const uchar *b, int32_t l, time_t *start_t, time_t *end
 	int32_t i, j;
 	struct via_date vd;
 	struct tm tm;
+	memset(&vd, 0, sizeof(struct via_date));
 
 	// b -> via date (4 bytes)
 	b+=4;

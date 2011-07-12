@@ -234,7 +234,7 @@ static int32_t smart_read(S_READER *reader, unsigned char* buff, uint32_t  size,
             memmove(reader->sr_config->g_read_buffer, reader->sr_config->g_read_buffer + ret, reader->sr_config->g_read_buffer_size);
 
         total_read += ret;
-        cs_unlock(&reader->sr_config->g_read_mutex);
+        pthread_mutex_unlock(&reader->sr_config->g_read_mutex);
 
         gettimeofday(&now, NULL);
         timersub(&now, &start, &dif);
@@ -1269,9 +1269,9 @@ void smart_flush(S_READER *reader)
 {
     smartreader_usb_purge_buffers(reader);
 
-    cs_lock(&reader->sr_config->g_read_mutex);
+    pthread_mutex_lock(&reader->sr_config->g_read_mutex);
     reader->sr_config->g_read_buffer_size = 0;
-    cs_unlock(&reader->sr_config->g_read_mutex);
+    pthread_mutex_unlock(&reader->sr_config->g_read_mutex);
 }
 
 static int32_t smartreader_set_latency_timer(S_READER *reader, uint16_t  latency)
@@ -1310,7 +1310,7 @@ static void read_callback(struct libusb_transfer *transfer){
 
     if(transfer->status == LIBUSB_TRANSFER_COMPLETED) {
         if(transfer->actual_length > 2) {  //FTDI always sends modem status bytes as first 2 chars with the 232BM
-            cs_lock(&reader->sr_config->g_read_mutex);
+            pthread_mutex_lock(&reader->sr_config->g_read_mutex);
 
             if(reader->sr_config->g_read_buffer_size == sizeof(reader->sr_config->g_read_buffer)) {
                 cs_log("IO:SR: buffer full\n");
@@ -1320,7 +1320,7 @@ static void read_callback(struct libusb_transfer *transfer){
                 if(ret!=0)
                     cs_log("IO:SR: submit async transfer failed with error %d\n",ret);
                 pthread_cond_signal(&reader->sr_config->g_read_cond);
-                cs_unlock(&reader->sr_config->g_read_mutex);
+                pthread_mutex_unlock(&reader->sr_config->g_read_mutex);
                 return;
             }
             reader->sr_config->modem_status = transfer->buffer[0];
@@ -1330,13 +1330,13 @@ static void read_callback(struct libusb_transfer *transfer){
             reader->sr_config->g_read_buffer_size += copy_size;
 
             pthread_cond_signal(&reader->sr_config->g_read_cond);
-            cs_unlock(&reader->sr_config->g_read_mutex);
+            pthread_mutex_unlock(&reader->sr_config->g_read_mutex);
         }
         else {
             if(transfer->actual_length==2) {
-                cs_lock(&reader->sr_config->g_read_mutex);
+                pthread_mutex_lock(&reader->sr_config->g_read_mutex);
                 reader->sr_config->modem_status=transfer->buffer[0];
-                cs_unlock(&reader->sr_config->g_read_mutex);
+                pthread_mutex_unlock(&reader->sr_config->g_read_mutex);
             }
         }
 
@@ -1380,7 +1380,7 @@ static void* ReaderThread(void *p)
         if(ret!=0)
             cs_log("libusb_handle_events returned with %d\n",ret);
 
-        cs_lock(&reader->sr_config->g_usb_mutex);
+        pthread_mutex_lock(&reader->sr_config->g_usb_mutex);
 
         if(!reader->sr_config->poll) {
             struct timeval start = {0};
@@ -1392,7 +1392,7 @@ static void* ReaderThread(void *p)
 
             pthread_cond_timedwait(&reader->sr_config->g_usb_cond, &reader->sr_config->g_usb_mutex, &timeout);
         }
-        cs_unlock(&reader->sr_config->g_usb_mutex);
+        pthread_mutex_unlock(&reader->sr_config->g_usb_mutex);
     }
 
     pthread_exit(NULL);
@@ -1400,11 +1400,11 @@ static void* ReaderThread(void *p)
 
 static void smart_fastpoll(S_READER *reader, int32_t on)
 {
-    cs_lock(&reader->sr_config->g_usb_mutex);
+    pthread_mutex_lock(&reader->sr_config->g_usb_mutex);
     //printf("poll stat: %d\n", on);
     reader->sr_config->poll = on;
     pthread_cond_signal(&reader->sr_config->g_usb_cond);
-    cs_unlock(&reader->sr_config->g_usb_mutex);
+    pthread_mutex_unlock(&reader->sr_config->g_usb_mutex);
 }
 
 #endif // HAVE_LIBUSB
