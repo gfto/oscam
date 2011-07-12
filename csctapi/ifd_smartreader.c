@@ -191,9 +191,9 @@ int32_t SR_GetStatus (struct s_reader *reader, int32_t * in)
   int32_t state;
 
     smart_fastpoll(reader, TRUE);
-    cs_lock(&reader->sr_config->g_read_mutex);
+    pthread_mutex_lock(&reader->sr_config->g_read_mutex);
     state =(reader->sr_config->modem_status & 0x80) == 0x80 ? 0 : 2;
-    cs_unlock(&reader->sr_config->g_read_mutex);
+    pthread_mutex_unlock(&reader->sr_config->g_read_mutex);
     smart_fastpoll(reader, FALSE);
 
   //state = 0 no card, 1 = not ready, 2 = ready
@@ -217,7 +217,7 @@ static int32_t smart_read(S_READER *reader, unsigned char* buff, uint32_t  size,
     timeout.tv_nsec = start.tv_usec * 1000;
 
     while(total_read < size && dif.tv_sec < timeout_sec) {
-        cs_lock(&reader->sr_config->g_read_mutex);
+        pthread_mutex_lock(&reader->sr_config->g_read_mutex);
 
         while (reader->sr_config->g_read_buffer_size == 0 && dif.tv_sec < timeout_sec)
         {

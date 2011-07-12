@@ -847,9 +847,9 @@ struct CRYPTO_dynlock_value *SSL_dyn_create_function(const char *file, int32_t l
 
 void SSL_dyn_lock_function(int32_t mode, struct CRYPTO_dynlock_value *l, const char *file, int32_t line){
 	if (mode & CRYPTO_LOCK) {
-		cs_lock(&l->mutex);
+		cs_writelock(&l->mutex);
 	} else {
-		cs_unlock(&l->mutex);
+		cs_writeunlock(&l->mutex);
 	}
 	// just to remove compiler warnings...
 	if(file || line) return;
