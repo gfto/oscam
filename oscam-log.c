@@ -17,8 +17,6 @@ CS_MUTEX_LOCK loghistory_lock;
 
 #define LOG_BUF_SIZE 512
 
-static void cs_log_nolock(const char *fmt,...);
-
 static void switch_log(char* file, FILE **f, int32_t (*pfinit)(void))
 {
 	if(cfg.max_log_size)	//only 1 thread needs to switch the log; even if anticasc, statistics and normal log are running
@@ -195,60 +193,49 @@ void cs_reinit_loghist(uint32_t size)
 	}
 }
 
-static int32_t get_log_header_old(int32_t m, char *txt)
-{
-	struct s_client *cl = cur_client();	
-	pthread_t thread = cl?cl->thread:0;
-	if(m)
-		return snprintf(txt, LOG_BUF_SIZE, "%8X %c ",(unsigned int) thread, cl?cl->typ:' ');
-	else
-		return snprintf(txt, LOG_BUF_SIZE, "%8X%-3.3s-> ",(unsigned int) thread, "");
-}
-
 static int32_t get_log_header(int32_t m, char *txt)
 {
 	struct s_client *cl = cur_client();
+	time_t t;
+	struct tm lt;
+	int32_t pos;
 
+	time(&t);
+	localtime_r(&t, &lt);
+
+	pos = snprintf(txt, LOG_BUF_SIZE,  "[LOG000]%4d/%02d/%02d %2d:%02d:%02d ", lt.tm_year+1900, lt.tm_mon+1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec);
+
+	if(m)
+		return pos + snprintf(txt+pos, LOG_BUF_SIZE-pos, "%8X %c ",(unsigned int) cl, cl?cl->typ:' ');
+	else
+		return pos + snprintf(txt+pos, LOG_BUF_SIZE-pos, "%8X%-3.3s ",(unsigned int) cl, "");
+
+/*
 	if (cl && cl->reader && (cl->typ == 'r' || cl->typ == 'p')) {
-		return snprintf(txt, LOG_BUF_SIZE, "%c|%10s| ",cl?cl->typ:' ', cl->reader->label);
+		return snprintf(txt+pos, LOG_BUF_SIZE-pos, "%c|%10s| %s",cl?cl->typ:' ', cl->reader->label, m ? "" : "-> ") + pos;
 	} else if (cl && (cl->typ == 'c' || cl->typ == 'm')) {
-		return snprintf(txt, LOG_BUF_SIZE, "%c|%10s| ",cl?cl->typ:' ', username(cl));
+		return snprintf(txt+pos, LOG_BUF_SIZE-pos, "%c|%10s| %s",cl?cl->typ:' ', username(cl), m ? "" : "-> ") + pos;
 	} else	{
-		if (m)
-			return snprintf(txt, LOG_BUF_SIZE, "%c|          | ", cl?cl->typ:' ');
-		else
-			return snprintf(txt, LOG_BUF_SIZE, "%c|          | -> ", cl?cl->typ:' ');
-
+		return snprintf(txt+pos, LOG_BUF_SIZE-pos, "%c|          | %s", cl?cl->typ:' ', m ? "" : "-> ") + pos;
 	}
+*/
 }
 
 static void write_to_log(char *txt, int8_t lock)
 {
-	//flag = -1 is old behaviour, before implementation of debug_nolf (=debug no line feed)
-	//
-	time_t t;
-	struct tm lt;
 	char sbuf[16];
-	char log_buf[700];
 	struct s_client *cur_cl = cur_client();
-
-	//  get_log_header(flag, sbuf);
-	//  memcpy(txt, sbuf, 11);
 
 #ifdef CS_ANTICASC
 	if (cfg.logtosyslog && cur_cl && cur_cl->typ != 'a') // system-logfile
 #else
 	if (cfg.logtosyslog) // system-logfile
 #endif
-		syslog(LOG_INFO, "%s", txt);
+		syslog(LOG_INFO, "%s", txt+24);
 
-	time(&t);
-	localtime_r(&t, &lt);
+	strcat(txt, "\n");
 
-	snprintf(log_buf, sizeof(log_buf),  "[LOG000]%4d/%02d/%02d %2d:%02d:%02d %s\n",
-		lt.tm_year+1900, lt.tm_mon+1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec, txt);
-
-	cs_write_log(log_buf + 8, lock);
+	cs_write_log(txt + 8, lock);
 
 	if (loghist) {
 		char *usrtxt = NULL;
@@ -272,7 +259,7 @@ static void write_to_log(char *txt, int8_t lock)
 		}
 
 		char *target_ptr = NULL;
-		int32_t target_len = strlen(usrtxt) + (strlen(log_buf) - 8) + 1;
+		int32_t target_len = strlen(usrtxt) + (strlen(txt) - 8) + 1;
 		
 		if(lock) cs_writelock(&loghistory_lock);
 		char *lastpos = loghist + (cfg.loghistorysize) - 1;		
@@ -291,7 +278,7 @@ static void write_to_log(char *txt, int8_t lock)
 		}
 		if(lock) cs_writeunlock(&loghistory_lock);
 
-		snprintf(target_ptr, target_len + 1, "%s\t%s", usrtxt, log_buf + 8);
+		snprintf(target_ptr, target_len + 1, "%s\t%s", usrtxt, txt + 8);
 	}
 
 	struct s_client *cl;
@@ -306,58 +293,35 @@ static void write_to_log(char *txt, int8_t lock)
 			}
 			snprintf(sbuf, sizeof(sbuf), "%03d", cl->logcounter);
 			cl->logcounter = (cl->logcounter+1) % 1000;
-			memcpy(log_buf + 4, sbuf, 3);
-			monitor_send_idx(cl, log_buf);
+			memcpy(txt + 4, sbuf, 3);
+			monitor_send_idx(cl, txt);
 		}
 	}
 }
 
-static void cs_debug_mask_int(const char *fmt, uint16_t mask, int lock, va_list params)
+__attribute__ ((noinline)) void cs_log_int(uint16_t mask, int8_t lock, const uchar *buf, int32_t n, const char *fmt, ...)
 {
-	char log_txt[LOG_BUF_SIZE];
-	int32_t len = 0;
-	if (cs_dblevel & mask || (!mask))
-	{
-		len = get_log_header(1, log_txt);
-		vsnprintf(log_txt + len, sizeof(log_txt) - len, fmt, params);
-		write_to_log(log_txt, lock);
-	}
-}
-
-static void cs_ddump_mask_int(uint16_t mask, const uchar *buf, int32_t n, char *fmt, va_list params)
-{
+	va_list params;
 
 	char log_txt[LOG_BUF_SIZE];
 	int32_t i, len = 0;
 	if (((mask & cs_dblevel) || !mask) && (fmt))
 	{
+		va_start(params, fmt);
 		len = get_log_header(1, log_txt);
 		vsnprintf(log_txt + len, sizeof(log_txt) - len, fmt, params);
-		write_to_log(log_txt, 1);
+		write_to_log(log_txt, lock);
+		va_end(params);
 	}
-	if (mask & cs_dblevel || !mask)
+	if (buf && (mask & cs_dblevel || !mask))
 	{
 		for (i=0; i<n; i+=16)
 		{
 			len = get_log_header(0, log_txt);
 			cs_hexdump(1, buf+i, (n-i>16) ? 16 : n-i, log_txt + len, sizeof(log_txt) - len);
-			write_to_log(log_txt, 1);
+			write_to_log(log_txt, lock);
 		}
 	}
-}
-
-static void cs_log_nolock(const char *fmt,...){
-	va_list params;
-	va_start(params, fmt);
-	cs_debug_mask_int(fmt, 0, 0, params);
-	va_end(params);
-}
-
-void cs_log(const char *fmt,...){
-	va_list params;
-	va_start(params, fmt);
-	cs_debug_mask_int(fmt, 0, 1, params);
-	va_end(params);
 }
 
 void cs_close_log(void)
@@ -366,35 +330,6 @@ void cs_close_log(void)
 	fclose(fp);
 	fp=(FILE *)0;
 }
-
-#ifdef WITH_DEBUG
-void cs_debug_mask(uint16_t mask, const char *fmt,...)
-{
-	va_list params;
-	va_start(params, fmt);
-	cs_debug_mask_int(fmt, mask, 1, params);
-	va_end(params);
-}
-#endif
-
-void cs_dump(const uchar *buf, int32_t n, char *fmt, ...)
-{
-	va_list params;
-	va_start(params, fmt);
-	cs_ddump_mask_int(0, buf, n, fmt, params);
-	va_end(params);
-
-}
-
-#ifdef WITH_DEBUG
-void cs_ddump_mask(uint16_t mask, const uchar *buf, int32_t n, char *fmt, ...)
-{
-	va_list params;
-	va_start(params, fmt);
-	cs_ddump_mask_int(mask, buf, n, fmt, params);
-	va_end(params);
-}
-#endif
 
 void log_emm_request(struct s_reader *rdr){
 	cs_log("%s emm-request sent (reader=%s, caid=%04X, auprovid=%06lX)",

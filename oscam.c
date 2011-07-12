@@ -1091,18 +1091,26 @@ static int32_t start_listener(struct s_module *ph, int32_t port_idx)
       return(ph->ptab->ports[port_idx].fd=0);
     }
 
-  cs_log("%s: initialized (fd=%d, port=%d%s%s%s)",
+	cs_log("%s: initialized (fd=%d, port=%d%s%s%s)",
          ph->desc, ph->ptab->ports[port_idx].fd,
          ph->ptab->ports[port_idx].s_port,
          ptxt[0], ptxt[1], ph->logtxt ? ph->logtxt : "");
 
-  for( i=0; i<ph->ptab->ports[port_idx].ftab.nfilts; i++ ) {
-    int32_t j;
-    cs_log("CAID: %04X", ph->ptab->ports[port_idx].ftab.filts[i].caid );
-    for( j=0; j<ph->ptab->ports[port_idx].ftab.filts[i].nprids; j++ )
-      cs_log("provid #%d: %06X", j, ph->ptab->ports[port_idx].ftab.filts[i].prids[j]);
-  }
-  return(ph->ptab->ports[port_idx].fd);
+	for( i=0; i<ph->ptab->ports[port_idx].ftab.nfilts; i++ ) {
+		int32_t j, pos=0;
+		char buf[120];
+		pos += snprintf(buf, sizeof(buf), "-> CAID: %04X PROVID: ", ph->ptab->ports[port_idx].ftab.filts[i].caid );
+		
+		for( j=0; j<ph->ptab->ports[port_idx].ftab.filts[i].nprids; j++ )
+			pos += snprintf(buf+pos, sizeof(buf)-pos, "%06X, ", ph->ptab->ports[port_idx].ftab.filts[i].prids[j]);
+
+		if(pos>2 && j>0)
+			buf[pos-2] = '\0';
+
+		cs_log(buf);
+	}
+
+	return(ph->ptab->ports[port_idx].fd);
 }
 
 /* Resolves the ip of the hostname of the specified account and saves it in account->dynip.
@@ -2734,11 +2742,14 @@ void cs_waitforcardinit()
 		do {
 			card_init_done = 1;
 			struct s_reader *rdr;
-			for (rdr=first_active_reader; rdr ; rdr=rdr->next)
-				if (((rdr->typ & R_IS_CASCADING) == 0) && (rdr->card_status == CARD_NEED_INIT || rdr->card_status == UNKNOWN)) {
+			LL_ITER itr = ll_iter_create(configured_readers);
+			while((rdr = ll_iter_next(&itr))) {
+				if (rdr->enable && (!(rdr->typ & R_IS_CASCADING)) && (rdr->card_status == CARD_NEED_INIT || rdr->card_status == UNKNOWN)) {
 					card_init_done = 0;
 					break;
 				}
+			}
+
 			if (!card_init_done)
 				cs_sleepms(300); // wait a little bit
 			//alarm(cfg.cmaxidle + cfg.ctimeout / 1000 + 1);
@@ -2747,6 +2758,15 @@ void cs_waitforcardinit()
 			cs_sleepms(cfg.waitforcards_extra_delay);
 		cs_log("init for all local cards done");
 	}
+}
+
+static int8_t is_valid_client(struct s_client *client) {
+	struct s_client *cl;
+	for (cl=first_client; cl ; cl=cl->next) {
+		if (cl==client)
+			return 1;
+	}
+	return 0;
 }
 
 int8_t check_fd_for_data(int32_t fd) {
@@ -2786,6 +2806,16 @@ void * work_thread(void *ptr) {
 			free(data);
 			data = NULL;
 			break;
+		}
+
+		if (!cl || !is_valid_client(cl)) {
+			if (data->ptr)
+				free(data->ptr);
+
+			free(data);
+			data = NULL;
+			return NULL;
+
 		}
 
 		if (cl->kill) {
@@ -3018,6 +3048,11 @@ void * check_thread(void) {
 			time_to_check = ((t1->t_check.time - t_now.time) * 1000) + (t1->t_check.millitm - t_now.millitm);
 			if (time_to_check <= 0) {
 				//TODO: we should check here if cl and t1->ptr is still a valid pointer to avoid segfaults
+				if (!t1->cl || !is_valid_client(t1->cl)) {
+					ll_iter_remove(&itr);
+					add_garbage(t1);
+					continue;
+				}
 				switch(t1->action) {
 					case CHECK_ECM_TIMEOUT:
 						er = t1->ptr;
@@ -3033,7 +3068,7 @@ void * check_thread(void) {
 								send_reader_stat((struct s_reader *)ptr->obj, er, E_TIMEOUT);
 						}
 #endif
-						if (er->client) {
+						if (er->client && is_valid_client(er->client)) {
 							store_cw_in_cache(er, er->client->grp, E_TIMEOUT);
 							add_job(er->client, ACTION_CLIENT_ECM_ANSWER, er, sizeof(ECM_REQUEST));
 						}
@@ -3127,6 +3162,8 @@ void * client_check(void) {
 		for (i=0; i<pfdcount; i++) {
 			//clients
 			cl = cl_list[i];
+			if (cl && !is_valid_client(cl))
+				continue;
 
 			if (pfd[i].fd == thread_pipe[0] && (pfd[i].revents & (POLLIN | POLLPRI))) {
 				// a thread ended and cl->pfd should be added to pollfd list again (thread_active==0)

@@ -255,10 +255,16 @@ extern int32_t cs_open_logfiles();
 #ifdef CS_ANTICASC
 extern int32_t ac_init_log();
 #endif
-extern void cs_log(const char *,...);
+
+extern void cs_log_int(uint16_t mask, int8_t lock, const uchar *buf, int32_t n, const char *fmt, ...);
+
+#define cs_log(args...)				cs_log_int(0, 1, NULL, 0, ##args)
+#define cs_log_nolock(args...)			cs_log_int(0, 0, NULL, 0, ##args)
+#define cs_dump(buf, n, args...)			cs_log_int(0, 1, buf, n, ##args)
+
 #ifdef WITH_DEBUG
-extern void cs_debug_mask(uint16_t, const char *,...);
-extern void cs_ddump_mask(uint16_t, const uchar *, int32_t, char *, ...);
+#define cs_debug_mask(mask, args...)		cs_log_int(mask, 1, NULL, 0, ##args)
+#define cs_ddump_mask(mask, buf, n, args...)	cs_log_int(mask, 1, buf, n, ##args)
 #else
 #define nop() asm volatile("nop")
 #define cs_debug(...) nop()
@@ -272,7 +278,6 @@ extern void cs_log_config(void);
 extern void cs_close_log(void);
 extern int32_t cs_init_statistics();
 extern void cs_statistics(struct s_client * client);
-extern void cs_dump(const uchar *, int32_t, char *, ...);
 
 /* ===========================
  *        oscam-reader

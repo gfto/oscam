@@ -3,10 +3,12 @@
 #include "reader-videoguard-common.h"
 
 // Redefine logging funtion to include reader name
-#define cs_log(x...)  cs_log("[videoguard12-reader] "x)
+#undef cs_log
+#define cs_log(x...)  cs_log_int(0, 1, NULL, 0, "[videoguard12-reader] "x)
 #define cs_ri_log(x,y...)  cs_ri_log(x,"[videoguard12-reader] "y)
 #ifdef WITH_DEBUG
-  #define cs_debug_mask(x,y...) cs_debug_mask(x, "[videoguard12-reader] "y)
+  #undef cs_debug_mask
+  #define cs_debug_mask(x,y...) cs_log_int(x, 1, NULL, 0, "[videoguard12-reader] "y)
 #endif
 
 static int32_t vg12_do_cmd(struct s_reader *reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff, unsigned char *cta_res)
