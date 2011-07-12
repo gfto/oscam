@@ -377,6 +377,7 @@ extern void cs_switch_led(int32_t led, int32_t action);
 #define ACTION_READER_EMM		6
 #define ACTION_READER_CARDINFO	7
 #define ACTION_READER_INIT		8
+#define ACTION_READER_RESTART	9
 
 #define ACTION_CLIENT_TCP_CONNECT	21
 #define ACTION_CLIENT_UDP		22

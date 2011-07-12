@@ -758,7 +758,6 @@ static char *send_oscam_config(struct templatevars *vars, struct uriparams *para
 
 static void inactivate_reader(struct s_reader *rdr)
 {
-	remove_reader_from_active(rdr);
 	if (rdr->client)
 		kill_thread(rdr->client);
 }
@@ -775,7 +774,6 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 			if (rdr) {
 				if (strcmp(getParam(params, "action"), "enable") == 0) {
 					if (!rdr->enable) {
-						add_reader_to_active(rdr);
 						rdr->enable = 1;
 						restart_cardreader(rdr, 1);
 					}
@@ -937,8 +935,8 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	} else if(strcmp(getParam(params, "action"), "Save") == 0) {
 
 		rdr = get_reader_by_label(getParam(params, "label"));
-		if (rdr->typ & R_IS_NETWORK)
-			inactivate_reader(rdr); //Stop reader before reinitialization
+		//if (rdr->typ & R_IS_NETWORK)
+		//	inactivate_reader(rdr); //Stop reader before reinitialization
 		char servicelabels[1024]="";
 
 		for(i = 0; i < (*params).paramcount; ++i) {
@@ -954,7 +952,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		chk_reader("services", servicelabels, rdr);
 
 		if (rdr->typ & R_IS_NETWORK)
-			restart_cardreader(rdr, 1); //physical readers make trouble if re-started
+			add_job(rdr->client, ACTION_READER_RESTART, NULL, 0); //physical readers make trouble if re-started
 
 		if(write_server()!=0)
 			tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
@@ -2319,8 +2317,8 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 
 	if (strcmp(getParam(params, "action"), "restart") == 0) {
 		struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
-		if(rdr)	{
-			restart_cardreader(rdr, 1);
+		if(rdr) {
+			add_job(rdr->client, ACTION_READER_RESTART, NULL, 0);
 			cs_log("Reader %s restarted by WebIF from %s", rdr->label, cs_inet_ntoa(GET_IP()));
 		}
 	}

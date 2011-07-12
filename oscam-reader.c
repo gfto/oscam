@@ -257,6 +257,7 @@ void network_tcp_connection_close(struct s_reader *reader)
 		//only proxy reader should call this, client connections are closed on thread cleanup
 		cs_log("WARNING: invalid client tcp_conn_close()");
 		cs_disconnect_client(cur_client());
+		return;
 	}
 
 	struct s_client *cl = reader->client;
@@ -325,7 +326,7 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 	if(!cl->ecmtask) {
 		cs_log("WARNING: casc_process_ecm: ecmtask not a available");
-		return;
+		return -1;
 	}
   
 	uchar buf[512];

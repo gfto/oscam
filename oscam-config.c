@@ -4603,7 +4603,6 @@ int32_t init_readerdb()
 		chk_reader(trim(strtolower(token)), trim(value), rdr);
 	}
 	LL_ITER itr = ll_iter_create(configured_readers);
-	struct s_reader *cur=NULL;
 	while((rdr = ll_iter_next(&itr))) { //build active readers list
 		int32_t i;
 		if (rdr->device[0] && (rdr->typ & R_IS_CASCADING)) {
@@ -4612,17 +4611,6 @@ int32_t init_readerdb()
 					rdr->ph=ph[i];
 					rdr->ph.active=1;
 				}
-			}
-		}
-
-		if (rdr->enable) {
-			if (!first_active_reader) {
-				first_active_reader = rdr; //init list
-				cur = rdr;
-			}
-			else {
-				cur->next = rdr; //add to end of list
-				cur = rdr; //advance list
 			}
 		}
 	}

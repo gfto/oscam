@@ -1219,10 +1219,6 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 
 		add_job(rdr->client, ACTION_READER_INIT, NULL, 0);
 
-		if (restart) {
-			//add to list
-			add_reader_to_active(rdr);
-		}
 		return 1;
 	}
 	return 0;
@@ -1241,10 +1237,15 @@ static void init_cardreader() {
 
 	cs_writelock(&system_lock);
 	struct s_reader *rdr;
-	for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
-		if (!restart_cardreader_int(rdr, 0))
-			remove_reader_from_active(rdr);
+
+	LL_ITER itr = ll_iter_create(configured_readers);
+	while((rdr = ll_iter_next(&itr))) {
+		if (rdr->enable) {
+			restart_cardreader_int(rdr, 0);
+		}
 	}
+
+
 #ifdef WITH_LB
 	load_stat_from_file();
 #endif
@@ -2857,8 +2858,22 @@ void * work_thread(void *ptr) {
 				reader_do_card_info(reader);
 				break;
 			case ACTION_READER_INIT:
-				if (!cl->init_done)
+				if (!cl->init_done) {
 					reader_init(reader);
+					add_reader_to_active(reader);
+				}
+				break;
+			case ACTION_READER_RESTART:
+				cleanup_thread(cl); //should close connections
+				restart_cardreader(reader, 0);
+				//original cl struct was destroyed by restart reader, so we exit here
+				//init is done by a new thread
+				if (data->ptr)
+					free(data->ptr);
+
+				free(data);
+				data = NULL;
+				return NULL;
 				break;
 
 			case ACTION_CLIENT_UDP:
@@ -3619,13 +3634,13 @@ if (pthread_key_create(&getclient, NULL)) {
 	return exit_oscam;
 }
 
-#ifdef WEBIF
 void cs_exit_oscam()
 {
   exit_oscam=1;
   cs_log("exit oscam requested");
 }
 
+#ifdef WEBIF
 void cs_restart_oscam()
 {
   exit_oscam=99;
