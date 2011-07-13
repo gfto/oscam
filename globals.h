@@ -27,8 +27,6 @@
 #include <errno.h>
 #include <pthread.h>
 
-#include "module-datastruct-llist.h"
-
 //for reader-nagra variables in s_reader:
 #include "cscrypt/idea.h"
 
@@ -405,6 +403,8 @@ typedef struct cs_mutexlock {
 	char			*name;
 } CS_MUTEX_LOCK;
 
+#include "module-datastruct-llist.h"
+
 typedef struct s_caidvaluetab {
 	uint16_t		n;
 	uint16_t		caid[CS_MAX_CAIDVALUETAB];
@@ -763,15 +763,7 @@ struct s_client {
 	struct s_emm	*emmcache;
 
 	pthread_t		thread;
-	pthread_mutex_t	**mutexstore;
-	uint16_t		mutexstore_alloc;
-	uint16_t		mutexstore_used;
-
-#ifdef WITH_MUTEXDEBUG
-	char			**mutexstore_file;
-	uint16_t		*mutexstore_line;
-#endif
-
+	
 	struct s_serial_client	*serialdata;
 
 	//reader common
@@ -1405,7 +1397,7 @@ extern struct s_cardsystem cardsystem[CS_MAX_MOD];
 extern struct s_cardreader cardreader[CS_MAX_MOD];
 extern CS_MUTEX_LOCK gethostbyname_lock;
 #if defined(LIBUSB)
-extern pthread_mutex_t sr_lock;
+extern CS_MUTEX_LOCK sr_lock;
 #endif
 
 extern pid_t server_pid;							// PID of server - set while startup

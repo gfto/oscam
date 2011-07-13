@@ -134,7 +134,8 @@ span.e_valid {background-color:#E6FEBF;}\n\
 span.e_expired {background-color:#fff3e7;}\n\
 "
 
-#define JSCRIPT ""
+// minimized and optimized JS based on http://en.hasheminezhad.com/scrollsaver to retain scroll position.
+#define JSCRIPT "function addUnloadHandler(){var a,e;if(window.attachEvent){a=window.attachEvent;e='on';}else{a=window.addEventListener;e='';}a(e+'load',function(){loadScroll();if(typeof Sys!='undefined' && typeof Sys.WebForms!='undefined')Sys.WebForms.PageRequestManager.getInstance().add_endRequest(loadScroll);},false);}function loadScroll(){var c=document.cookie.split(';');for(var i=0;i<c.length;i++){var p=c[i].split('=');if(p[0]=='scrollPosition'){p=unescape(p[1]).split('/');for(var j=0;j<p.length;j++){var e=p[j].split(',');try{if(e[0]=='window'){window.scrollTo(e[1],e[2]);}}catch(ex){}}return;}}}function saveScroll(){var s='scrollPosition=';var l,t;if(window.pageXOffset!==undefined){l=window.pageXOffset;t=window.pageYOffset;}else if(document.documentElement&&document.documentElement.scrollLeft!==undefined){l=document.documentElement.scrollLeft;t=document.documentElement.scrollTop;}else{l=document.body.scrollLeft;t=document.body.scrollTop;}if(l||t){s+='window,'+l+','+t+'/';}document.cookie=s+';';}"
 
 #define ICMAI "data:image/x-icon;base64,\
 AAABAAEAEBAAAAEACABoBQAAFgAAACgAAAAQAAAAIAAAAAEACAAAAAAAQAEAAAAAAAAAAAAAAAAA\
@@ -327,10 +328,10 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=ISO-8859-1\">\n\
 	<link rel=\"stylesheet\" type=\"text/css\" href=\"site.css\">\n\
 	<link href=\"favicon.ico\" rel=\"icon\" type=\"image/x-icon\">\n\
-##REFRESH##\
 	<script type=\"text/javascript\" src=\"oscam.js\"></script>\n\
+##REFRESH##\
 </HEAD>\n\
-<BODY ##ONLOADSCRIPT##>\n\
+<BODY>\n\
 	<DIV CLASS=\"header\"><H2 CLASS=\"headline1\">OSCAM ##CS_VERSION## build ###CS_SVN_VERSION##</H2></DIV>\n"
 
 #define TPLAPIHEADER "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
@@ -359,7 +360,8 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLREFRESH "\
 	<script>\n\
 	<!--\n\
-	window.onload=setTimeout(function(){window.location.href=\"##REFRESHURL##\"},##REFRESHTIME## * 1000)\n\
+	addUnloadHandler();\n\
+	window.onload=setTimeout(function(){saveScroll();window.location.href=\"##REFRESHURL##\";},##REFRESHTIME## * 1000)\n\
 	//-->\n\
 	</script>\n"
 
@@ -673,12 +675,12 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	Totals for the server:\n\
 	<TABLE cellpadding=\"10\">\n\
 		<TR>\n\
-			<TH>OK</TH>\n\
-			<TH>NOK</TH>\n\
-			<TH>IGN</TH>\n\
-			<TH>TOUT</TH>\n\
-			<TH>CACHE</TH>\n\
-			<TH>TUN</TH>\n\
+			<TH TITLE=\"Delivered ECM with status OK\">OK</TH>\n\
+			<TH TITLE=\"Delivered ECM with status not OK\">NOK</TH>\n\
+			<TH TITLE=\"Ignored ECM by filters, part of NOK\">IGN</TH>\n\
+			<TH TITLE=\"Timeout ECM, part of NOK\">TOUT</TH>\n\
+			<TH TITLE=\"Delivered ECM from cache, part of OK\">CACHE</TH>\n\
+			<TH TITLE=\"Delivered ECM from tunneled, part of OK\">TUN</TH>\n\
 			<TH>Action</TH>\n\
 		</TR>\n\
 		<TR>\n\
@@ -1792,6 +1794,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 <HEAD>\n\
 	<TITLE>OSCAM ##CS_VERSION## build ###CS_SVN_VERSION##</TITLE>\n\
 	<link href=\"favicon.ico\" rel=\"icon\" type=\"image/x-icon\"/>\
+	<script type=\"text/javascript\" src=\"oscam.js\"></script>\n\
 ##REFRESH##\
 	<style type=\"text/css\">\n\
 ##STYLESHEET##\n\

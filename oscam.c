@@ -39,7 +39,7 @@ int8_t cs_capture_SEGV=0;
 char  cs_tmpdir[200]={0x00};
 pid_t server_pid=0;
 #if defined(LIBUSB)
-pthread_mutex_t sr_lock;
+CS_MUTEX_LOCK sr_lock;
 #endif
 CS_MUTEX_LOCK system_lock;
 CS_MUTEX_LOCK get_cw_lock;
@@ -556,9 +556,7 @@ void cleanup_thread(void *var)
 #ifdef MODULE_CCCAM
 	add_garbage(cl->cc);
 #endif
-	add_garbage(cl->serialdata);			
-
-	cs_cleanlocks();
+	add_garbage(cl->serialdata);
 	add_garbage(cl);
 }
 
@@ -883,10 +881,6 @@ struct s_client * create_client(in_addr_t ip) {
 		cl->account = first_client->account;
 
 		//master part
-		cl->mutexstore = NULL;
-		cl->mutexstore_alloc = 0;
-  		cl->mutexstore_used = 0;
-
 		pthread_mutex_init(&cl->thread_lock, NULL);
 
 		cl->login=cl->last=time((time_t *)0);
@@ -943,15 +937,10 @@ static void init_first_client()
     exit(1);
   }
 
-	int8_t ok = 1;
 #if defined(LIBUSB)
-  if(pthread_mutex_init(&sr_lock, NULL)) ok = 0;
+  cs_lock_create(&sr_lock, 10, "sr_lock");
 #endif
-  if(pthread_mutex_init(&sc8in1_lock, NULL)) ok = 0;
-  if(!ok){
-  	fprintf(stderr, "Could not init locks, exiting...");
-    exit(1);
-  }
+  cs_lock_create(&sc8in1_lock, 10, "sc8in1_lock");
   cs_lock_create(&system_lock, 5, "system_lock");
   cs_lock_create(&get_cw_lock, 5, "get_cw_lock");  
   cs_lock_create(&gethostbyname_lock, 10, "gethostbyname_lock");

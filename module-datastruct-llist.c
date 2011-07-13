@@ -17,38 +17,26 @@
 */
 static void _destroy(LLIST *l)
 {
-	if (!l) return;
-	int32_t oldtype, res, i = 0;
-	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldtype);    	
+	if (!l) return;  	
 	if (!l->flag++) {
-		/* FIXME: Because of unknown reasons we sometimes get a deadlock here if we use pthread_mutex_lock. So only wait up to about 500ms... */  	
-		while(i < 25 && (res = pthread_mutex_trylock(&l->lock)) == EBUSY){			
-			cs_sleepms(20);
-			++i;
-		}
-		if(res == 0)
-			pthread_mutex_unlock(&l->lock);
-		if(res != EINVAL && res != EFAULT)
-			pthread_mutex_destroy(&l->lock);
+		cs_writelock(&l->lock);
 		add_garbage(l);
 	}
-	pthread_setcancelstate(oldtype, NULL);
-	pthread_testcancel();
 }
 
 LLIST *ll_create()
 {
     LLIST *l = cs_malloc(&l, sizeof(LLIST), 0);
-    pthread_mutex_init(&l->lock, NULL);
+    cs_lock_create(&l->lock, 5, "ll_lock");
     return l;
 }
 
 int32_t ll_lock(LLIST *l)
 {
 	int32_t res = 1;
-	while (l && !l->flag && (res=cs_trylock(&l->lock))) {
+	while (l && !l->flag && (res=cs_try_writelock(&l->lock))) {
 		cs_debug_mask(D_TRACE, "trylock ll_lock wait");
-		cs_sleepms(50);
+		cs_sleepms(fast_rnd()%5 + 1);
 	}
 	return !res;
 }
@@ -56,7 +44,7 @@ int32_t ll_lock(LLIST *l)
 void ll_unlock(LLIST *l)
 {
 	if (l)
-		cs_unlock(&l->lock);
+		cs_writeunlock(&l->lock);
 }
 
 void ll_destroy(LLIST *l)

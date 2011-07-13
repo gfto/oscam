@@ -15,7 +15,7 @@ struct cs_garbage {
 };
 
 struct cs_garbage *garbage_first[HASH_BUCKETS];
-pthread_mutex_t garbage_lock[HASH_BUCKETS];
+CS_MUTEX_LOCK garbage_lock[HASH_BUCKETS];
 pthread_t garbage_thread;
 int32_t garbage_collector_active = 0;
 int32_t garbage_debug = 0;
@@ -34,7 +34,7 @@ void add_garbage(void *data) {
         }
 		
 		int32_t bucket = (uintptr_t)data/16 % HASH_BUCKETS;
-        cs_lock(&garbage_lock[bucket]);
+        cs_writelock(&garbage_lock[bucket]);
         
         struct cs_garbage *garbagecheck = garbage_first[bucket];
         while(garbagecheck) {
@@ -63,21 +63,18 @@ void add_garbage(void *data) {
 	        garbage_first[bucket] = garbage;
 	    }
 
-        cs_unlock(&garbage_lock[bucket]);
+        cs_writeunlock(&garbage_lock[bucket]);
 }
 
 void garbage_collector() {
         time_t now;
-        int32_t i;
+        int8_t i;
         struct cs_garbage *garbage, *next, *prev;
         
         while (garbage_collector_active) {
                 
                 for(i = 0; i < HASH_BUCKETS; ++i){
-	                while (pthread_mutex_trylock(&garbage_lock[i])) {
-	                	cs_debug_mask(D_TRACE, "trylock garbage_collector wait");
-	                	cs_sleepms(fast_rnd());
-	                }
+	                cs_writelock(&garbage_lock[i]);
 	                now = time(NULL);
 	
 	                prev = NULL;
@@ -97,7 +94,7 @@ void garbage_collector() {
 	                                prev = garbage;
 	                        garbage = next;
 	                }
-	                pthread_mutex_unlock(&garbage_lock[i]);
+	                cs_writeunlock(&garbage_lock[i]);
 	              }
                 cs_sleepms(1000);
         }
@@ -107,9 +104,9 @@ void garbage_collector() {
 void start_garbage_collector(int32_t debug) {
 
 	garbage_debug = debug;
-	int32_t i;
+	int8_t i;
 	for(i = 0; i < HASH_BUCKETS; ++i){
-		pthread_mutex_init(&garbage_lock[i], NULL);
+		cs_lock_create(&garbage_lock[i], 5, "garbage_lock");
 
 		garbage_first[i] = NULL;
 	}
@@ -128,25 +125,23 @@ void start_garbage_collector(int32_t debug) {
 
 void stop_garbage_collector()
 {
-        if (garbage_collector_active) {
-                int32_t i;
-                
-                garbage_collector_active = 0;
-                for(i = 0; i < HASH_BUCKETS; ++i)
-                	pthread_mutex_lock(&garbage_lock[i]);
-                
-                pthread_cancel(garbage_thread);
-                cs_sleepms(100);
-                
-                for(i = 0; i < HASH_BUCKETS; ++i){
-	                while (garbage_first[i]) {
-	                  struct cs_garbage *next = garbage_first[i]->next;
-	                  free(garbage_first[i]->data);
-	                  free(garbage_first[i]);
-	                  garbage_first[i] = next;
-	                }
-                	pthread_mutex_unlock(&garbage_lock[i]);
-                	pthread_mutex_destroy(&garbage_lock[i]);
-                }
-        }
+	if (garbage_collector_active) {
+		int8_t i;
+		
+		garbage_collector_active = 0;
+		for(i = 0; i < HASH_BUCKETS; ++i)
+			cs_writelock(&garbage_lock[i]);
+		
+		pthread_cancel(garbage_thread);
+		cs_sleepms(100);
+		
+		for(i = 0; i < HASH_BUCKETS; ++i){
+			while (garbage_first[i]) {
+				struct cs_garbage *next = garbage_first[i]->next;
+				free(garbage_first[i]->data);
+				free(garbage_first[i]);
+				garbage_first[i] = next;
+			}
+		}
+	}
 }

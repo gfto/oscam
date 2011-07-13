@@ -558,9 +558,9 @@ add_definitions ("-D'CS_SVN_VERSION=\"${OSCAM_SVN_REVISION}\"'")
 
 # some optimisations
 if (OSCamOperatingSystem MATCHES "Mac OS X")
-    add_definitions ("-O2 -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk")
-    set (CMAKE_C_FLAGS_DEBUG "-O0 -g -m32")
-    set (CMAKE_CXX_FLAGS_DEBUG "-O0 -g -m32")
+    add_definitions ("-O3 -Winline -Wall -Wextra -m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk")
+    set (CMAKE_C_FLAGS_DEBUG "-O0 -ggdb")
+    set (CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb")
 elseif (OSCAM_SYSTEM_NAME MATCHES "NSLU2")
     add_definitions ("-O2 -Winline -Wall")
 elseif (OSCAM_SYSTEM_NAME MATCHES "WRT350NV2")

@@ -12,4 +12,4 @@ Distribution/oscam-*
 *.swp
 
 # build directories
-build_*
+/build*/

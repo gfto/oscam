@@ -181,9 +181,9 @@ struct cc_data {
 	int32_t server_ecm_pending;                    //initialized by server
 	uint16_t server_ecm_idx;
 	
-	struct cs_mutexlock lockcmd;
-	struct cs_mutexlock ecm_busy;
-	struct cs_mutexlock cards_busy;
+	CS_MUTEX_LOCK lockcmd;
+	CS_MUTEX_LOCK ecm_busy;
+	CS_MUTEX_LOCK cards_busy;
 	struct timeb ecm_time;
 	time_t answer_on_keepalive;
 	uint8_t last_msg;

@@ -322,7 +322,7 @@ endif (OSCamOperatingSystem MATCHES "Linux")
 
 # some optimisations
 if (OSCamOperatingSystem MATCHES "Mac OS X")
-add_definitions ("-O2 -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -m32")
+add_definitions ("-O3 -Winline -Wall -Wextra -m32")
 else (OSCamOperatingSystem MATCHES "Mac OS X")
 add_definitions ("-O2 -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer")
 endif (OSCamOperatingSystem MATCHES "Mac OS X")

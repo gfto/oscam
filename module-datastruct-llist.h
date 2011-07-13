@@ -19,7 +19,7 @@ struct llist {
     LL_NODE *initial;
     LL_NODE *last;
     int32_t count;
-    pthread_mutex_t lock;
+    CS_MUTEX_LOCK lock;
     int32_t flag;
 };
 

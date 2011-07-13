@@ -59,7 +59,7 @@
 #define LOCK_SC8IN1 \
 { \
 	if (reader->typ == R_SC8in1) { \
-		cs_lock(&sc8in1_lock); \
+		cs_writelock(&sc8in1_lock); \
 		cs_debug_mask(D_ATR, "SC8in1: locked for access of slot %i", reader->slot); \
 		Sc8in1_Selectslot(reader, reader->slot); \
 	} \
@@ -68,8 +68,8 @@
 #define UNLOCK_SC8IN1 \
 {	\
 	if (reader->typ == R_SC8in1) { \
+		cs_writeunlock(&sc8in1_lock); \
 		cs_debug_mask(D_ATR, "SC8in1: unlocked for access of slot %i", reader->slot); \
-		cs_unlock(&sc8in1_lock); \
 	} \
 }
 
@@ -103,9 +103,9 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 
 	switch(reader->typ) {
 		case R_SC8in1:
-			cs_lock(&sc8in1_lock);
+			cs_writelock(&sc8in1_lock);
 			if (reader->handle != 0) {//this reader is already initialized
-				cs_unlock(&sc8in1_lock);
+				cs_writeunlock(&sc8in1_lock);
 				return OK;
 			}
 
@@ -122,7 +122,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 			if (reader->handle < 0) {
 				cs_log("ERROR opening device %s",reader->device);
-				cs_unlock(&sc8in1_lock);
+				cs_writeunlock(&sc8in1_lock);
 				return ERROR;
 			}
 
@@ -223,7 +223,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 
 	if (reader->typ == R_SC8in1) {
 		call(Sc8in1_Init(reader));
-		cs_unlock(&sc8in1_lock);
+		cs_writeunlock(&sc8in1_lock);
 	}
 
  cs_debug_mask (D_IFD, "IFD: Device %s succesfully opened\n", reader->device);
@@ -262,9 +262,9 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 			break;
 #endif
 		case R_SC8in1:
-			cs_lock(&sc8in1_lock);
+			cs_writelock(&sc8in1_lock);
 			call (Sc8in1_GetStatus(reader, &in));
-			cs_unlock(&sc8in1_lock);
+			cs_writeunlock(&sc8in1_lock);
 			break;
 		case R_MP35:
 		case R_MOUSE:

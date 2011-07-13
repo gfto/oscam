@@ -1033,66 +1033,12 @@ void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid)
     memcpy(dest, source, 6);
 }
 
-/* Internal function of cs_lock and cs_trylock to prepare adding an entry to the list. Do not call this externally. */
-#ifdef WITH_MUTEXDEBUG
-struct s_client* cs_preparelock(struct s_client *cl, pthread_mutex_t *mutex, char *file, uint16_t line){
-#else
-struct s_client* cs_preparelock(struct s_client *cl, pthread_mutex_t *mutex){
-#endif
-	if(cl){
-		// WebIf doesn't have real clients...
-		if(cl->typ == 'h') return NULL;
-		if(cl->mutexstore_alloc <= cl->mutexstore_used){
-			void *ret;
-#ifdef WITH_MUTEXDEBUG
-			void *ret2, *ret3;
-#endif
-			if(cl->mutexstore_alloc == 0){
-				ret = cs_malloc(&cl->mutexstore, 8 * sizeof(pthread_mutex_t *), -1);
-#ifdef WITH_MUTEXDEBUG
-				ret2 = cs_malloc(&cl->mutexstore_file, 8 * sizeof(char *), -1);
-				ret3 = cs_malloc(&cl->mutexstore_line, 8 * sizeof(uint16_t *), -1);
-#endif
-			} else {
-				ret = cs_realloc(&cl->mutexstore, (cl->mutexstore_used + 8) * sizeof(pthread_mutex_t *), -1);
-#ifdef WITH_MUTEXDEBUG
-				ret2 = cs_realloc(&cl->mutexstore_file, (cl->mutexstore_used + 8) * sizeof(char *), -1);
-				ret3 = cs_realloc(&cl->mutexstore_line, (cl->mutexstore_used + 8) * sizeof(uint16_t *), -1);
-#endif
-			}
-#ifdef WITH_MUTEXDEBUG
-			if(ret != NULL && ret2 != NULL && ret3 != NULL){
-#else
-			if(ret != NULL){
-#endif
-				cl->mutexstore_alloc = cl->mutexstore_used + 8;		
-				cl->mutexstore[cl->mutexstore_used] = mutex;
-#ifdef WITH_MUTEXDEBUG
-				cl->mutexstore_file[cl->mutexstore_used] = file;
-				cl->mutexstore_line[cl->mutexstore_used] = line;
-#endif
-			} else {
-				cl->mutexstore_alloc = 0;
-				cl->mutexstore_used = 0;
-#ifdef WITH_MUTEXDEBUG
-				NULLFREE(cl->mutexstore);
-				NULLFREE(cl->mutexstore_file);
-				NULLFREE(cl->mutexstore_line);
-#endif
-			}
-		} else {
-			cl->mutexstore[cl->mutexstore_used] = mutex;			
-		}
-	}
-	return cl;
-}
-
 /**
  * creates a lock
  **/
-void cs_lock_create(struct cs_mutexlock *l, int16_t timeout, char *name)
+void cs_lock_create(CS_MUTEX_LOCK *l, int16_t timeout, char *name)
 {
-	memset(l, 0, sizeof(struct cs_mutexlock));
+	memset(l, 0, sizeof(CS_MUTEX_LOCK));
 	l->timeout = timeout;
 	l->name = name;
 #ifdef WITH_MUTEXDEBUG
@@ -1105,11 +1051,11 @@ void cs_lock_create(struct cs_mutexlock *l, int16_t timeout, char *name)
  * a writelock blocks all readlocks and writelocks
  * if a readlock or a writelock is already set, we wait until its released
  **/
-void cs_writelock(struct cs_mutexlock *l)
+void cs_writelock(CS_MUTEX_LOCK *l)
 {
 	do {
 		while (l->write_lock) {  //Test for writelock
-			cs_sleepms(fast_rnd()%50);
+			cs_sleepms(fast_rnd()%5 + 1);
 			
 			//timeout locks:
 			time_t t = time(NULL);
@@ -1130,7 +1076,7 @@ void cs_writelock(struct cs_mutexlock *l)
 			continue;
 		}
 		while (l->read_lock) {  //Test for readlock
-			cs_sleepms(fast_rnd()%50);
+			cs_sleepms(fast_rnd()%5 + 1);
 			
 			//timeout locks:
 			time_t t = time(NULL);
@@ -1156,7 +1102,7 @@ void cs_writelock(struct cs_mutexlock *l)
 /**
  * unsets a writelock
  **/
-void cs_writeunlock(struct cs_mutexlock *l)
+void cs_writeunlock(CS_MUTEX_LOCK *l)
 {
 	if (l->write_lock > 0)
 		l->write_lock--;
@@ -1170,11 +1116,11 @@ void cs_writeunlock(struct cs_mutexlock *l)
  * a readlock does NOT block other readlocks, but blocks writelocks
  * if a writelock is already set, we wait until its realeased
  **/
-void cs_readlock(struct cs_mutexlock *l)
+void cs_readlock(CS_MUTEX_LOCK *l)
 {
 	do {
 		while (l->write_lock) { 
-			cs_sleepms(fast_rnd()%50);
+			cs_sleepms(fast_rnd()%5 + 1);
 			
 			//timeout locks:
 			time_t t = time(NULL);
@@ -1204,7 +1150,7 @@ void cs_readlock(struct cs_mutexlock *l)
 /**
  * unsets a readlock
  **/
-void cs_readunlock(struct cs_mutexlock *l)
+void cs_readunlock(CS_MUTEX_LOCK *l)
 {
 	if (l->read_lock > 0)
 		l->read_lock--;
@@ -1218,7 +1164,7 @@ void cs_readunlock(struct cs_mutexlock *l)
  * returns 0 in success (like pthread_mutex_trylock())
  * returns 1 if a writelock is set and the readlock could not set 
  **/
-int8_t cs_try_readlock(struct cs_mutexlock *l)
+int8_t cs_try_readlock(CS_MUTEX_LOCK *l)
 {
 	if (l->write_lock) return 1;
 	l->read_lock++; //atom function
@@ -1238,7 +1184,7 @@ int8_t cs_try_readlock(struct cs_mutexlock *l)
  * returns 0 in success (like pthread_mutex_trylock())
  * returns 1 if a writelock is set and the readlock could not set 
  **/
-int8_t cs_try_writelock(struct cs_mutexlock *l)
+int8_t cs_try_writelock(CS_MUTEX_LOCK *l)
 {
 	if (l->write_lock) return 1;
 	l->write_lock++; //atom function
@@ -1251,120 +1197,6 @@ int8_t cs_try_writelock(struct cs_mutexlock *l)
 	cs_debug_mask(D_TRACE, "try_writelock %s: got lock", l->name);
 #endif
 	return 0;
-}
-
-
-/* Replacement for pthread_mutex_lock. Locks are saved to the client structure so that they can get cleaned up if the thread was interrupted while holding a lock. */
-#ifdef WITH_MUTEXDEBUG
-int32_t cs_lock_debug(pthread_mutex_t *mutex, char *file, uint16_t line){
-#else
-int32_t cs_lock(pthread_mutex_t *mutex){
-#endif
-	int32_t result, oldtype;
-	/* Make sure that we won't get interrupted while getting the lock */
-	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &oldtype);
-#ifdef WITH_MUTEXDEBUG
-	uint16_t i = 0;
-	struct s_client *cl = cs_preparelock(cur_client(), mutex, file, line);
-	while((result = pthread_mutex_trylock(mutex)) == EBUSY && i < 1000){
-		pthread_testcancel();
-		cs_sleepms(fast_rnd()%5+3);
-		++i;
-	}
-	if(result == 0 && cl)
-		cl->mutexstore_used++;
-	else if(result == EBUSY)
-		cs_log("Couldn't obtain lock within about 5s in: %s, line %u.", file, line);
-#else
-	struct s_client *cl = cs_preparelock(cur_client(), mutex);
-	while((result = pthread_mutex_trylock(mutex)) == EBUSY){
-		pthread_testcancel();
-		cs_sleepms(fast_rnd()%5+3);
-	}
-	if(result == 0 && cl)
-		cl->mutexstore_used++;
-#endif
-	pthread_setcanceltype(oldtype, NULL);
-	pthread_testcancel();
-	return result;
-}
-
-/* Encapsulates pthread_mutex_trylock. If a lock is gained it is saved to the client structure so that it can get cleaned up if the thread was interrupted while holding a lock. */
-#ifdef WITH_MUTEXDEBUG
-int32_t cs_trylock_debug(pthread_mutex_t *mutex, char *file, uint16_t line){
-#else
-int32_t cs_trylock(pthread_mutex_t *mutex){
-#endif
-	int32_t result, oldtype;
-	/* Make sure that we won't get interrupted while getting the lock */
-	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &oldtype);
-	if((result=pthread_mutex_trylock(mutex)) == 0){
-#ifdef WITH_MUTEXDEBUG
-		struct s_client *cl = cs_preparelock(cur_client(), mutex, file, line);
-#else
-		struct s_client *cl = cs_preparelock(cur_client(), mutex);
-#endif
-		if(cl)
-			cl->mutexstore_used++;
-	}
-	pthread_setcanceltype(oldtype, NULL);
-	pthread_testcancel();
-	return result;
-}
-
-/* Encapsulates pthread_mutex_unlock and removes the given mutex from the client structure
-  If the given lock was not previously locked by the current thread, nothing is done. */
-#ifdef WITH_MUTEXDEBUG
-int32_t cs_unlock_debug(pthread_mutex_t *mutex, char *file, uint16_t line){
-#else
-int32_t cs_unlock(pthread_mutex_t *mutex){
-#endif
-	struct s_client *cl = cur_client();	
-	if(cl && cl->typ != 'h'){
-		uint16_t i;
-		/* new mutexes get appended to the end so it should be more efficient to search from end to beginning */
-		for(i = cl->mutexstore_used; i > 0; --i){
-			if(cl->mutexstore[i - 1] == mutex){
-				int32_t result, oldtype;
-				/* Make sure that we won't get interrupted while returning the lock */
-				pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &oldtype);
-				if(i < cl->mutexstore_used){
-					// Move mutex to last position to prepare removal
-					do {
-						cl->mutexstore[i - 1] = cl->mutexstore[i];
-						++i;
-					} while (i < cl->mutexstore_used);
-					cl->mutexstore[cl->mutexstore_used - 1] = mutex;
-				}	
-				if((result=pthread_mutex_unlock(mutex)) == 0)
-					cl->mutexstore_used--;
-				pthread_setcanceltype(oldtype, NULL);
-				pthread_testcancel();
-				return result;
-			}
-		}
-#ifdef WITH_MUTEXDEBUG
-		cs_log("Couldn't find mutex to unlock from: %s, %u", file, line);
-#endif
-		return EINVAL;
-	}	else return pthread_mutex_unlock(mutex);
-}
-
-/* Releases all locks still held by the current client. */
-void cs_cleanlocks(){
-	struct s_client *cl = cur_client();
-	if(cl && cl->mutexstore_alloc > 0){
-		uint16_t i;		
-		for(i = 0; i < cl->mutexstore_used; ++i){
-			pthread_mutex_unlock(cl->mutexstore[i]);
-#ifdef WITH_MUTEXDEBUG
-			cs_log("Cleaned up lock from: %s, line %u.", cl->mutexstore_file[i], cl->mutexstore_line[i]);
-#endif
-		}
-		cl->mutexstore_used = 0;
-		cl->mutexstore_alloc = 0;
-		free(cl->mutexstore);
-	}
 }
 
 /* Returns the ip from the given hostname. If gethostbyname is configured in the config file, a lock 

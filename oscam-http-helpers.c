@@ -811,7 +811,7 @@ SSL * cur_ssl(void){
 }
 
 /* Locking functions for SSL multithreading */
-static pthread_mutex_t *lock_cs;
+static CS_MUTEX_LOCK *lock_cs;
 struct CRYPTO_dynlock_value{
     pthread_mutex_t mutex;
 };
@@ -823,9 +823,9 @@ unsigned long SSL_id_function(void){
 
 void SSL_locking_function(int32_t mode, int32_t type, const char *file, int32_t line){
 	if (mode & CRYPTO_LOCK) {
-		cs_lock(&lock_cs[type]);
+		cs_writelock(&lock_cs[type]);
 	} else {
-		cs_unlock(&lock_cs[type]);
+		cs_writeunlock(&lock_cs[type]);
 	}
 	// just to remove compiler warnings...
 	if(file || line) return;
@@ -847,9 +847,9 @@ struct CRYPTO_dynlock_value *SSL_dyn_create_function(const char *file, int32_t l
 
 void SSL_dyn_lock_function(int32_t mode, struct CRYPTO_dynlock_value *l, const char *file, int32_t line){
 	if (mode & CRYPTO_LOCK) {
-		cs_lock(&l->mutex);
+		cs_writelock(&l->mutex);
 	} else {
-		cs_unlock(&l->mutex);
+		cs_writeunlock(&l->mutex);
 	}
 	// just to remove compiler warnings...
 	if(file || line) return;
@@ -879,17 +879,10 @@ SSL_CTX *SSL_Webif_Init() {
 	
 	// set locking callbacks for SSL
 	int32_t i, num = CRYPTO_num_locks();
-	lock_cs = (pthread_mutex_t*) OPENSSL_malloc(num * sizeof(pthread_mutex_t));
+	lock_cs = (pthread_mutex_t*) OPENSSL_malloc(num * sizeof(CS_MUTEX_LOCK));
 	
 	for (i = 0; i < num; ++i) {
-		if(pthread_mutex_init(&lock_cs[i], NULL)){
-			while(--i > 0){
-				pthread_mutex_destroy(&lock_cs[i]);
-				--i;
-			}
-			free(lock_cs);
-			return NULL;
-		};
+		cs_lock_create(&lock_cs[i], 10, "ssl_lock_cs");
 	}
 	/* static lock callbacks */ 
 	CRYPTO_set_id_callback(SSL_id_function);

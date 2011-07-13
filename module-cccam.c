@@ -2764,12 +2764,15 @@ int32_t cc_srv_connect(struct s_client *cl) {
 		cs_log("account '%s' disabled, blocking+disconnect!", usr);
 		return -2;
 	}
-	if (account->cccmaxhops<0) {
-			cs_log("account '%s' has cccmaxhops<0, cccam can't handle this, disconnect!", usr);
+	if (account->cccmaxhops < -1) {
+			cs_log("account '%s' has cccmaxhops < -1, cccam can't handle this, disconnect!", usr);
 			return -3; 
 	}
-	
+
 	cs_debug_mask(D_TRACE, "ccc user authenticated %s", usr);
+
+	if (account->cccmaxhops == -1)
+		cs_log("account '%s' has cccmaxhops = -1: user will not see any card!", usr);
 
 	cc->prefix = cs_malloc(&cc->prefix, strlen(cl->account->usr)+20, QUITERROR);
 	snprintf(cc->prefix, strlen(cl->account->usr)+20, "cccam(s) %s: ", cl->account->usr);
