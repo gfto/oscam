@@ -255,11 +255,11 @@ cross-powerpc-tuxbox-linux:
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
-		DS_CC=/hdd2/tuxbox-cvs/root/cdk/bin/powerpc-tuxbox-linux-gnu-gcc \
-		DS_AR=/hdd2/tuxbox-cvs/root/cdk/bin/powerpc-tuxbox-linux-gnu-ar \
-		DS_LD=/hdd2/tuxbox-cvs/root/cdk/bin/powerpc-tuxbox-linux-gnu-ld \
-		DS_RL=/hdd2/tuxbox-cvs/root/cdk/bin/powerpc-tuxbox-linux-gnu-ranlib \
-		DS_ST=/hdd2/tuxbox-cvs/root/cdk/bin/powerpc-tuxbox-linux-gnu-strip
+		DS_CC=powerpc-tuxbox-linux-gnu-gcc \
+		DS_AR=powerpc-tuxbox-linux-gnu-ar \
+		DS_LD=powerpc-tuxbox-linux-gnu-ld \
+		DS_RL=powerpc-tuxbox-linux-gnu-ranlib \
+		DS_ST=powerpc-tuxbox-linux-gnu-strip
 
 cross-powerpc-tuxbox-linux-uclibc:
 	@-$(MAKE) --no-print-directory \
