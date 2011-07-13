@@ -2599,7 +2599,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 					}
 					tpl_addVar(vars, TPLADD, "CLIENTCON", txt);
 
-					if (cl->typ == 'r') //reader
+					if ((cl->typ == 'r') && (!apicall))//reader
 					{ 
 						struct s_reader *rdr = cl->reader;
 						if (rdr->ll_entitlements)
@@ -2617,7 +2617,9 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 							{
 								total_ent++;
 								if (ent->end > now)
-								{	active_ent++;
+								{	
+									if (active_ent) tpl_printf(vars, TPLAPPEND, "TMPSPAN", "<BR><BR>");
+									active_ent++;
 									localtime_r(&ent->end, &end_t);
 									tpl_printf(vars, TPLAPPEND, "TMPSPAN", "%s:", 
 										typetxt[ent->type]);
@@ -2629,7 +2631,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 									}
 									tpl_printf(vars, TPLAPPEND, "TMPSPAN", (ent->type == 6)?"%08X<BR>":"%04X<BR>", 
 										(uint32_t)ent->id);
-									tpl_printf(vars, TPLAPPEND, "TMPSPAN", "%04X:%06X<BR>exp:%04d/%02d/%02d<BR><BR>",
+									tpl_printf(vars, TPLAPPEND, "TMPSPAN", "%04X:%06X<BR>exp:%04d/%02d/%02d",
 									    ent->caid, ent->provid, 
 									    end_t.tm_year + 1900, end_t.tm_mon + 1, end_t.tm_mday);
 								}
