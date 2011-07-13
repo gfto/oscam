@@ -1347,7 +1347,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 	}
 
 	// check whether client comes in over allowed protocol
-	if (account && (intptr_t)account->allowedprotocols &&
+	if ((intptr_t)account != 0 && (intptr_t)account != -1 && (intptr_t)account->allowedprotocols &&
 			(((intptr_t)account->allowedprotocols & ph[client->ctyp].listenertype) != ph[client->ctyp].listenertype )){
 		cs_add_violation((uint32_t)client->ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
 		cs_log("%s %s-client %s%s (%s%sprotocol not allowed)",
