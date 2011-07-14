@@ -132,7 +132,7 @@ path.graph_grid {stroke:gray;stroke-opacity:0.5}\n\
 text.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}\n\
 span.e_valid {background-color:#E6FEBF;}\n\
 span.e_expired {background-color:#fff3e7;}\n\
-span.global_conf {color: blue; font-weight: bold; font-size: 12px; font-family: Arial; cursor: default; padding: 4px;}\n\
+span.global_conf {color: blue; font-size: 12px; font-family: Arial; cursor: default; padding: 4px;}\n\
 "
 
 // minimized and optimized JS based on http://en.hasheminezhad.com/scrollsaver to retain scroll position.
@@ -859,7 +859,14 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TR class=\"usrcfg_cccam\"><TD>##TPLHELPPREFIX##user#cccreshare##TPLHELPSUFFIX##CCC Reshare:</A></TD><TD><input name=\"cccreshare\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCRESHARE##\">\
 				&nbsp;Global CCCam Reshare:<SPAN CLASS=\"global_conf\" TITLE=\"This value is used if CCC Reshare = -1\"><A HREF=\"config.html?part=cccam\">##RESHARE##</A></SPAN></TD></TR>\n\
 			<TR class=\"usrcfg_cccam\"><TD>##TPLHELPPREFIX##user#cccignorereshare##TPLHELPSUFFIX##CCC Ignore reshare:</A></TD><TD><SELECT NAME=\"cccignorereshare\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##CCCIGNORERESHARE##>ON</OPTION></SELECT></TD></TR>\n\
-			<TR class=\"usrcfg_cccam\"><TD>##TPLHELPPREFIX##user#cccstealth##TPLHELPSUFFIX##CCC stealth:</A></TD><TD><SELECT NAME=\"cccstealth\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##CCCSTEALTH##>ON</OPTION></SELECT></TD></TR>\n"
+			<TR class=\"usrcfg_cccam\"><TD>##TPLHELPPREFIX##user#cccstealth##TPLHELPSUFFIX##CCC stealth:</A></TD><TD>\
+			<SELECT NAME=\"cccstealth\">\
+				<OPTION VALUE=\"-1\" ##CCCSTEALTHSELECTED-1##>GLOBAL: Use Global CCcam Stealth value</OPTION>\
+				<OPTION VALUE=\"0\"  ##CCCSTEALTHSELECTED0## >ENABLE: Use extended OSCam<->CCcam Protocol</OPTION>\
+				<OPTION VALUE=\"1\"  ##CCCSTEALTHSELECTED1## >DISABLE: Behaviour like the original CCcam Protocol</OPTION>\
+			</SELECT>\
+			&nbsp;Global CCcam Stealth value:<SPAN CLASS=\"global_conf\"><A HREF=\"config.html?part=cccam\">##STEALTH##</A></SPAN>\
+			</TD></TR>\n"
 #endif
 
 #define TPLSIDTAB "\
@@ -1298,7 +1305,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#reshare##TPLHELPSUFFIX##Reshare:</A></TD><TD><input name=\"reshare\" type=\"text\" size=\"2\" maxlength=\"1\" value=\"##RESHARE##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#ignorereshare##TPLHELPSUFFIX##Ignore reshare:</A></TD><TD><SELECT NAME=\"ignorereshare\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##IGNORERESHARE##>ON</OPTION></SELECT></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#forward_origin_card##TPLHELPSUFFIX##Forward origin card:</A></TD><TD><SELECT NAME=\"forward_origin_card\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##FORWARDORIGINCARD##>ON</OPTION></SELECT></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#stealth##TPLHELPSUFFIX##Stealth mode:</A></TD><TD><SELECT NAME=\"stealth\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##STEALTH##>ON</OPTION></SELECT></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#stealth##TPLHELPSUFFIX##Stealth mode:</A></TD><TD><SELECT NAME=\"stealth\"><OPTION VALUE=\"0\">DISABLE</OPTION><OPTION VALUE=\"1\" ##STEALTH##>ENABLE</OPTION></SELECT></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#nodeid##TPLHELPSUFFIX##Node Id:</A></TD><TD><input name=\"nodeid\" type=\"text\" size=\"16\" maxlength=\"16\" value=\"##NODEID##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#keepconnected##TPLHELPSUFFIX##Keep clients connected:</A></TD><TD><SELECT NAME=\"keepconnected\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##KEEPCONNECTED##>ON</OPTION></SELECT></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#version##TPLHELPSUFFIX##Version:</A></TD>\n\

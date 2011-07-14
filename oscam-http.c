@@ -1734,8 +1734,13 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	tpl_printf(vars, TPLADD, "RESHARE",    "%d", cfg.cc_reshare);
 	if ((account->cccignorereshare==-1)?cfg.cc_ignore_reshare:account->cccignorereshare)
 		tpl_printf(vars, TPLADD, "CCCIGNORERESHARE", "selected");
-	if ((account->cccstealth==-1)?cfg.cc_stealth:account->cccstealth)
-		tpl_printf(vars, TPLADD, "CCCSTEALTH", "selected");
+
+	//CCcam Stealth Mode
+	tpl_printf(vars, TPLADD, "TMP", "CCCSTEALTHSELECTED%d", account->cccstealth);
+	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+
+	tpl_printf(vars, TPLADD, "STEALTH", "%s", cfg.cc_stealth ? "enable" : "disable");
+
 #endif
 
 	//Failban
