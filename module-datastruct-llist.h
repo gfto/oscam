@@ -52,7 +52,7 @@ int32_t ll_count(LLIST *l);                 // return number of items in list
 void *ll_has_elements(LLIST *l);        // returns first obj if has one
 
 int32_t ll_contains(LLIST *l, void *obj);
-int32_t ll_contains_data(LLIST *l, void *obj, uint32_t size); 
+void *ll_contains_data(LLIST *l, void *obj, uint32_t size); 
 int32_t ll_remove(LLIST *l, void *obj);
 void ll_remove_data(LLIST *l, void *obj);
 int32_t ll_remove_all(LLIST *l, LLIST *elements_to_remove); // removes all elements from l where elements are in elements_to_remove
