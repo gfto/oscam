@@ -1740,8 +1740,6 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 
 	if (!strcmp(token, "cccreshare")) {
 		account->cccreshare = strToIntVal(value, -1);
-		if (account->cccreshare == cfg.cc_reshare)
-			account->cccreshare = -1;
 		return;
 	}
 
@@ -2489,7 +2487,7 @@ int32_t write_userdb()
 		if (account->cccmaxhops != 10 || cfg.http_full_cfg)
 			fprintf_conf(f, "cccmaxhops", "%d\n", account->cccmaxhops);
 
-		if ((account->cccreshare != cfg.cc_reshare && account->cccreshare != -1) || cfg.http_full_cfg)
+		if ((account->cccreshare != -1) || cfg.http_full_cfg)
 			fprintf_conf(f, "cccreshare", "%d\n", account->cccreshare);
 
 		if ((account->cccignorereshare != cfg.cc_ignore_reshare && account->cccignorereshare != -1) || cfg.http_full_cfg)

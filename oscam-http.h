@@ -132,6 +132,7 @@ path.graph_grid {stroke:gray;stroke-opacity:0.5}\n\
 text.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}\n\
 span.e_valid {background-color:#E6FEBF;}\n\
 span.e_expired {background-color:#fff3e7;}\n\
+span.global_conf {color: blue; font-weight: bold; font-size: 12px; font-family: Arial; cursor: default; padding: 4px;}\n\
 "
 
 // minimized and optimized JS based on http://en.hasheminezhad.com/scrollsaver to retain scroll position.
@@ -818,10 +819,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TR><TD>##TPLHELPPREFIX##user#suppresscmd08##TPLHELPSUFFIX##Suppresscmd08:</A></TD><TD><SELECT NAME=\"suppresscmd08\"><OPTION VALUE=\"0\">CMD08 active</OPTION><OPTION VALUE=\"1\" ##SUPPRESSCMD08##>CMD08 suppressed</OPTION></SELECT></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##user#sleepsend##TPLHELPSUFFIX##Sleepsend:</A></TD><TD><input name=\"sleepsend\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##SLEEPSEND##\"> 0 or 255</TD></TR>\n\
 ##TPLUSEREDITANTICASC##\
-			<TR class=\"usrcfg_cccam\"><TD>##TPLHELPPREFIX##user#cccmaxhops##TPLHELPSUFFIX##CCC Maxhops:</A></TD><TD><input name=\"cccmaxhops\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCMAXHOPS##\"></TD></TR>\n\
-			<TR class=\"usrcfg_cccam\"><TD>##TPLHELPPREFIX##user#cccreshare##TPLHELPSUFFIX##CCC Reshare:</A></TD><TD><input name=\"cccreshare\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCRESHARE##\"></TD></TR>\n\
-			<TR class=\"usrcfg_cccam\"><TD>##TPLHELPPREFIX##user#cccignorereshare##TPLHELPSUFFIX##CCC Ignore reshare:</A></TD><TD><SELECT NAME=\"cccignorereshare\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##CCCIGNORERESHARE##>ON</OPTION></SELECT></TD></TR>\n\
-			<TR class=\"usrcfg_cccam\"><TD>##TPLHELPPREFIX##user#cccstealth##TPLHELPSUFFIX##CCC stealth:</A></TD><TD><SELECT NAME=\"cccstealth\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##CCCSTEALTH##>ON</OPTION></SELECT></TD></TR>\n\
+##TPLUSEREDITCCCAM##\
 			<TR><TD>##TPLHELPPREFIX##user#keepalive##TPLHELPSUFFIX##Keepalive:</A></TD><TD><SELECT NAME=\"keepalive\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##KEEPALIVE##>ON</OPTION></SELECT></TD></TR>\n\
 			<TR>\n\
 				<TD class=\"centered\"><input type=\"submit\" name=\"action\" value=\"Save\" title=\"Save settings and reload users\" ##BTNDISABLED##></TD>\n\
@@ -853,6 +851,15 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 					<option value=\"3\" ##PENALTY3##>3 - Fake DW delayed</option>\n\
 				</select>\n\
 			</TD></TR>\n"
+#endif
+
+#ifdef MODULE_CCCAM
+# define TPLUSEREDITCCCAM "\
+			<TR class=\"usrcfg_cccam\"><TD>##TPLHELPPREFIX##user#cccmaxhops##TPLHELPSUFFIX##CCC Maxhops:</A></TD><TD><input name=\"cccmaxhops\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCMAXHOPS##\"></TD></TR>\n\
+			<TR class=\"usrcfg_cccam\"><TD>##TPLHELPPREFIX##user#cccreshare##TPLHELPSUFFIX##CCC Reshare:</A></TD><TD><input name=\"cccreshare\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCRESHARE##\">\
+				&nbsp;Global CCCam Reshare:<SPAN CLASS=\"global_conf\" TITLE=\"This value is used if CCC Reshare = -1\"><A HREF=\"config.html?part=cccam\">##RESHARE##</A></SPAN></TD></TR>\n\
+			<TR class=\"usrcfg_cccam\"><TD>##TPLHELPPREFIX##user#cccignorereshare##TPLHELPSUFFIX##CCC Ignore reshare:</A></TD><TD><SELECT NAME=\"cccignorereshare\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##CCCIGNORERESHARE##>ON</OPTION></SELECT></TD></TR>\n\
+			<TR class=\"usrcfg_cccam\"><TD>##TPLHELPPREFIX##user#cccstealth##TPLHELPSUFFIX##CCC stealth:</A></TD><TD><SELECT NAME=\"cccstealth\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##CCCSTEALTH##>ON</OPTION></SELECT></TD></TR>\n"
 #endif
 
 #define TPLSIDTAB "\
@@ -2177,6 +2184,7 @@ char *tpl[]={
 	,"CONFIGMENUCAMD35"
 #endif
 #ifdef MODULE_CCCAM
+	,"USEREDITCCCAM"
 	,"CONFIGCCCAM"
 	,"CONFIGMENUCCCAM"
 #endif
@@ -2320,6 +2328,7 @@ char *tplmap[]={
 	,TPLCONFIGMENUCAMD35
 #endif
 #ifdef MODULE_CCCAM
+	,TPLUSEREDITCCCAM
 	,TPLCONFIGCCCAM
 	,TPLCONFIGMENUCCCAM
 #endif
