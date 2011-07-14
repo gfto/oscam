@@ -75,7 +75,7 @@ i386-pc-linux:
 		DS_AR=ar \
 		DS_LD=ld \
 		DS_RL=ranlib \
-		DS_ST=strip2
+		DS_ST=strip
 
 i386-pc-linux-debug:
 	@-$(MAKE) --no-print-directory \
@@ -109,7 +109,7 @@ i386-pc-linux-libusb:
 		DS_AR=ar \
 		DS_LD=ld \
 		DS_RL=ranlib \
-		DS_ST=strip2
+		DS_ST=strip
 
 ######################################################################
 #

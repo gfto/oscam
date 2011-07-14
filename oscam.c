@@ -2961,6 +2961,12 @@ void * work_thread(void *ptr) {
 }
 
 void add_job(struct s_client *cl, int8_t action, void *ptr, int len) {
+
+	if (!cl) {
+		cs_log("WARNING: add_job failed.");
+		return;
+	}
+
 	struct s_data *data = cs_malloc(&data, sizeof(struct s_data), -1);
 	data->action=action;
 	data->ptr=ptr;
