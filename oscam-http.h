@@ -41,7 +41,7 @@ static int32_t ssl_active = 0;
 #define CSS "\
 body {background-color: white; font-family: Arial; font-size: 11px; text-align:center}\n\
 p {color: white; }\n\
-h2 {color: #F7F7F7; font-family: Arial; font-size: 50px; line-height: 50px; text-align:center; margin-top:0px; margin-bottom:0px}\n\
+h2 {color: #F5F5F5; font-family: Arial; font-size: 32px; line-height: 32px; text-align:center; margin-top:0px; margin-bottom:0px}\n\
 h4 {color: #AAAAAA; font-family: Arial; font-size: 12px; line-height: 9px; text-align:center}\n\
 TABLE {border-spacing:1px; border:0px; padding:0px; margin-left:auto; margin-right:auto;}\n\
 TH {height:10px; border:0px; font-family: Arial; font-size: 11px; padding:5px; background-color:#CCCCCC; color:black;}\n\
@@ -107,10 +107,13 @@ TD.menu {color:black; background-color:white; font-family: Arial; font-size:14px
 TD.script {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;}\n\
 TD.shutdown {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;}\n\
 TD.shutdown A:hover {color: red;}\n\
+TABLE.configmenu {line-height: 16px;}\n\
 TD.configmenu {color:black; background-color:white; font-family: Arial; font-size:11px; font-weight:bold;}\n\
+DIV.debugmenu {line-height: 20px;}\n\
+DIV.logmenu {line-height: 20px;}\n\
+DIV.filterform {margin: 10px;}\n\
 textarea.bt{font-family: Arial; font-size: 12px;}\n\
-textarea.editor {width:99%; height:450px;border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:10px; font-family:\"Courier New\", monospace; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left; }\n\
-input{font-family: Arial; font-size: 12px;}\n\
+textarea.editor {width:99%; height:508px; border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:8px 10px; font-family:\"Courier New\", monospace; color:black; font-size: 11px; word-wrap:break-word; text-align:left;}\n\
 A:link {color: #050840;}\n\
 A.debugls:link {color: white;background-color:red;}\n\
 A.debugls:visited {color: white;background-color:red;}\n\
@@ -386,7 +389,6 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	</TABLE>\n"
 
 #define TPLCONFIGMENU "\
-	<BR><BR>\n\
 	<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=global\">Global</A></TD>\n\
@@ -399,14 +401,13 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##TPLCONFIGMENUCCCAM##\
 ##TPLCONFIGMENUGBOX##\
 ##TPLCONFIGMENUANTICASC##\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=monitor\">Monitor</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=monitor\">Monitor/WebIf</A></TD>\n\
 ##TPLCONFIGMENUSERIAL##\
 ##TPLCONFIGMENUDVBAPI##\
 		</TR>\n\
 	</TABLE>\n"
 
 #define TPLFILEMENU "\
-	<BR><BR>\n\
 	<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=version\">oscam.version</A></TD>\n\
@@ -428,7 +429,9 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLFILEMENU##\n\
-	<BR><BR>##SDEBUG####SLOG####SCLEAR##<BR>##FILTER##\n\
+	<DIV CLASS=\"debugmenu\">##SDEBUG##</DIV>\
+	<DIV CLASS=\"logmenu\">##LOGMENU##</DIV>\
+	<DIV CLASS=\"filterform\">##FILTERFORM##</DIV>\
 	<FORM ACTION=\"files.html\" method=\"post\">\n\
 		<INPUT TYPE=\"hidden\" NAME=\"part\" VALUE=\"##PART##\">\n\
 		<TEXTAREA NAME=\"filecontent\" CLASS=\"editor\" rows=\"50\" cols=\"200\">##FILECONTENT##</TEXTAREA>\n\
@@ -455,13 +458,11 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLFAILBAN "\
 ##TPLHEADER##\
 ##TPLMENU##\
-	<BR><BR>\n\
 		<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"failban.html?action=delete&intip=all\">Clear all</TD>\n\
 		</TR>\n\
 	</TABLE>\
-	<BR><BR>\n\
 	<TABLE CLASS=\"stats\">\n\
 		<TR><TH colspan=\"5\">List of banned IP Addresses</TH></TR>\n\
 		<TR><TH>IP Address</TH><TH>Violation date</TH><TH>Violation count</TH><TH>left ban time</TH><TH>Action</TH></TR>\n\
@@ -523,7 +524,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLSTATUS "\
 ##TPLHEADER##\
 ##TPLMENU##\
-	<BR><BR>\n\
+<DIV CLASS=\"filterform\">\n\
 	<form action=\"status.html\" method=\"get\">\n\
 		<select name=\"hideidle\">\n\
 			<option value=\"0\" ##HIDEIDLECLIENTSSELECTED0##>Show idle clients</option>\n\
@@ -532,6 +533,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 		</select>\n\
 		<input type=\"submit\" value=\"Update\">\n\
 	</form>\n\
+</DIV>\n\
 	<TABLE WIDTH=\"100%\" class=\"status\">\n\
 		<TR>\n\
 			<TH class=\"statuscol0\">hide</TH>\n\
@@ -639,7 +641,6 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##TPLHEADER##\
 ##TPLMENU##\
 ##MESSAGE##\
-	<BR>\n\
 	<TABLE CLASS=\"configmenu\">\n\
 		<TR>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?part=adduser\">Add User</A></TD>\n\
@@ -647,7 +648,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=resetalluserstats\">Reset Userstats</A></TD>\n\
 			<TD CLASS=\"configmenu\"><A TARGET=\"_NEW\" HREF=\"graph.svg?type=users&hidelabels=1\">Show Graphs</A></TD>\n\
 		</TR>\n\
-	</TABLE><BR>\n\
+	</TABLE>\n\
 	<TABLE CLASS=\"users\">\n\
 		<TR>\n\
 			<TH>Lock</TH>\n\
@@ -771,7 +772,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	<form action=\"user_edit.html\" method=\"get\">\n\
 		<input name=\"user\" type=\"hidden\" value=\"##USERNAME##\">\n\
 		<TABLE CLASS=\"config\">\n\
-			<TR><TH>&nbsp;</TH> <TH>Edit User ##USERNAME##</TH></TR>\n\
+			<TR><TH COLSPAN=\"2\">Edit User ##USERNAME##</TH></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##user#pwd##TPLHELPSUFFIX##Password:</A></TD><TD><input name=\"pwd\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##PASSWORD##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##user#description##TPLHELPSUFFIX##Description:</A></TD><TD><input name=\"description\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##DESCRIPTION##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##user#disabled##TPLHELPSUFFIX##Disabled:</A></TD><TD><SELECT NAME=\"disabled\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##DISABLEDCHECKED##>YES</OPTION></SELECT></TD></TR>\n\
@@ -886,8 +887,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLREADERS "\
 ##TPLHEADER##\
 ##TPLMENU##\
-	<BR><BR>\n\
-	<TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD><TD CLASS=\"configmenu\"><A TARGET=\"_NEW\" HREF=\"graph.svg?type=servers\">Show Graphs</A></TD></TR></TABLE><BR>\
+	<TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD><TD CLASS=\"configmenu\"><A TARGET=\"_NEW\" HREF=\"graph.svg?type=servers\">Show Graphs</A></TD></TR></TABLE>\n\
 	<form action=\"readerconfig.html\" method=\"get\">\n\
 		<TABLE CLASS=\"readers\">\n\
 			<TR>\n\
@@ -953,7 +953,6 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##TPLHEADER##\
 ##TPLMENU##\
 	<DIV CLASS=\"message\">##MESSAGE##</DIV>\
-	<BR><BR>\n\
 	<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##ENCODEDLABEL##&amp;hide=-1\">show all</A></TD>\n\
@@ -961,7 +960,6 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##ENCODEDLABEL##&amp;action=resetstat\">reset statistics</A>\
 		</TR>\n\
 	</TABLE>\n\
-	<BR><BR>\n\
 	<TABLE CLASS=\"stats\">\n\
 	<TR><TH colspan=\"8\"> Loadbalance statistics for reader ##LABEL##</TH></TR>\n\
 	<TR><TH>Channel</TH><TH>Channelname</TH><TH>ECM Length</TH><TH>Result</TH><TH>Avg-Time</TH><TH>Last-Time</TH><TH>Count</TH><TH>Last checked/ found</TH></TR>\n\
@@ -1236,7 +1234,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-	<BR><BR>\n\
 	<DIV CLASS=\"message\">##MESSAGE##</DIV>\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"gbox\">\n\
@@ -1259,7 +1256,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-	<BR><BR>\n\
 ##MESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"anticasc\">\n\
@@ -1294,7 +1290,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-	<BR><BR>\n\
 ##MESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"cccam\">\n\
@@ -1368,7 +1363,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-	<BR><BR>\n\
 ##MESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"monitor\">\n\
@@ -1434,7 +1428,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-	<BR><BR>\n\
 ##MESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"radegast\">\n\
@@ -1456,7 +1449,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-	<BR><BR>\n\
 ##MESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"newcamd\">\n\
@@ -1481,7 +1473,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-	<BR><BR>\n\
 ##MESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"global\">\n\
@@ -1559,7 +1550,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-	<BR><BR>\n\
 ##MESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"loadbalancer\">\n\
@@ -1616,7 +1606,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-	<BR><BR>\n\
 ##MESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"camd33\">\n\
@@ -1639,7 +1628,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-	<BR><BR>\n\
 ##MESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"camd35\">\n\
@@ -1661,7 +1649,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-	<BR><BR>\n\
 ##MESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"camd35tcp\">\n\
@@ -1683,7 +1670,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-	<BR><BR>\n\
 ##MESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"serial\">\n\
@@ -1706,7 +1692,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-<BR><BR>\n\
 ##MESSAGE##\
 <form action=\"config.html\" method=\"get\">\n\
 	<input name=\"part\" type=\"hidden\" value=\"dvbapi\">\n\
@@ -1741,7 +1726,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##MESSAGE##\
-	<BR><BR>\n\
 	<FORM action=\"services_edit.html\" method=\"get\"><INPUT TYPE=\"hidden\" NAME=\"action\" VALUE=\"add\">\n\
 		<TABLE CLASS=\"stats\">\n\
 			<TR>\n\

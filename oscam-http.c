@@ -3174,11 +3174,12 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 #endif
 
 		if(!cfg.disablelog)
-			tpl_printf(vars, TPLADD, "SLOG", "<BR><A CLASS=\"debugl\" HREF=\"files.html?part=logfile&amp;stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 1, "Stop Log");
+			tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?part=logfile&amp;stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 1, "Stop Log");
 		else
-			tpl_printf(vars, TPLADD, "SLOG", "<BR><A CLASS=\"debugl\" HREF=\"files.html?part=logfile&amp;stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 0, "Start Log");
+			tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?part=logfile&amp;stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 0, "Start Log");
 
-		tpl_printf(vars, TPLADD, "SCLEAR", "<A CLASS=\"debugl\" HREF=\"files.html?part=logfile&amp;clear=logfile\">%s</A><BR><BR>\n", "Clear Log");
+		tpl_addVar(vars, TPLAPPEND, "LOGMENU", "<A HREF=\"files.html?part=logfile&amp;clear=logfile\">Clear Log</A>");
+
 	}
 	else if (strcmp(getParam(params, "part"), "userfile") == 0) {
 		snprintf(targetfile, 255,"%s", cfg.usrfile);
@@ -3190,21 +3191,22 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 		}
 
 		if(!cfg.disableuserfile)
-			tpl_printf(vars, TPLADD, "SLOG", "<A HREF=\"files.html?part=userfile&amp;stopusrlog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 1, "Stop Log");
+			tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?part=userfile&amp;stopusrlog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 1, "Stop Log");
 		else
-			tpl_printf(vars, TPLADD, "SLOG", "<A HREF=\"files.html?part=userfile&amp;stopusrlog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 0, "Start Log");
+			tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?part=userfile&amp;stopusrlog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 0, "Start Log");
 
-		tpl_printf(vars, TPLADD, "SCLEAR", "<A HREF=\"files.html?part=userfile&amp;clear=usrfile\">%s</A><BR><BR>\n", "Clear Log");
-		tpl_addVar(vars, TPLADD, "FILTER", "<FORM ACTION=\"files.html\" method=\"get\">\n");
-		tpl_addVar(vars, TPLAPPEND, "FILTER", "<INPUT name=\"part\" type=\"hidden\" value=\"userfile\">\n");
-		tpl_addVar(vars, TPLAPPEND, "FILTER", "<SELECT name=\"filter\">\n");
-		tpl_printf(vars, TPLAPPEND, "FILTER", "<OPTION value=\"%s\">%s</OPTION>\n", "all", "all");
+		tpl_addVar(vars, TPLAPPEND, "LOGMENU", "<A HREF=\"files.html?part=userfile&amp;clear=usrfile\">Clear Log</A>");
+
+		tpl_addVar(vars, TPLADD,    "FILTERFORM", "<FORM ACTION=\"files.html\" method=\"get\">\n");
+		tpl_addVar(vars, TPLAPPEND, "FILTERFORM", "<INPUT name=\"part\" type=\"hidden\" value=\"userfile\">\n");
+		tpl_addVar(vars, TPLAPPEND, "FILTERFORM", "<SELECT name=\"filter\">\n");
+		tpl_printf(vars, TPLAPPEND, "FILTERFORM", "<OPTION value=\"%s\">%s</OPTION>\n", "all", "all");
 
 		struct s_auth *account;
 		for (account = cfg.account; (account); account = account->next) {
-			tpl_printf(vars, TPLAPPEND, "FILTER", "<OPTION value=\"%s\" %s>%s</OPTION>\n", account->usr, strcmp(getParam(params, "filter"), account->usr) ? "":"selected", account->usr);
+			tpl_printf(vars, TPLAPPEND, "FILTERFORM", "<OPTION value=\"%s\" %s>%s</OPTION>\n", account->usr, strcmp(getParam(params, "filter"), account->usr) ? "":"selected", account->usr);
 		}
-		tpl_addVar(vars, TPLAPPEND, "FILTER", "</SELECT><input type=\"submit\" name=\"action\" value=\"Filter\" title=\"Filter for a specific user\"></FORM>\n");
+		tpl_addVar(vars, TPLAPPEND, "FILTERFORM", "</SELECT><input type=\"submit\" name=\"action\" value=\"Filter\" title=\"Filter for a specific user\"></FORM>");
 
 	}
 #ifdef CS_ANTICASC
