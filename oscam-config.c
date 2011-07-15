@@ -4882,15 +4882,23 @@ char *mk_t_camd35tcp_port(){
 	char *saveptr = value;
 	char *dot1 = "", *dot2;
 	for(i = 0; i < cfg.c35_tcp_ptab.nports; ++i) {
-		pos += snprintf(value + pos, needed-(value-saveptr), "%s%d@%04X", dot1, cfg.c35_tcp_ptab.ports[i].s_port, cfg.c35_tcp_ptab.ports[i].ftab.filts[0].caid);
-		if (cfg.c35_tcp_ptab.ports[i].ftab.filts[0].nprids > 1) {
-			dot2 = ":";
-			for (j = 0; j < cfg.c35_tcp_ptab.ports[i].ftab.filts[0].nprids; ++j) {
-				pos += snprintf(value + pos, needed-(value-saveptr), "%s%X", dot2, cfg.c35_tcp_ptab.ports[i].ftab.filts[0].prids[j]);
-				dot2 = ",";
+
+		if (cfg.c35_tcp_ptab.ports[i].ftab.filts[0].caid){
+			pos += snprintf(value + pos, needed-(value-saveptr), "%s%d@%04X", dot1,
+					cfg.c35_tcp_ptab.ports[i].s_port,
+					cfg.c35_tcp_ptab.ports[i].ftab.filts[0].caid);
+
+			if (cfg.c35_tcp_ptab.ports[i].ftab.filts[0].nprids > 1) {
+				dot2 = ":";
+				for (j = 0; j < cfg.c35_tcp_ptab.ports[i].ftab.filts[0].nprids; ++j) {
+					pos += snprintf(value + pos, needed-(value-saveptr), "%s%X", dot2, cfg.c35_tcp_ptab.ports[i].ftab.filts[0].prids[j]);
+					dot2 = ",";
+				}
 			}
+			dot1=";";
+		} else {
+			pos += snprintf(value + pos, needed-(value-saveptr), "%d", cfg.c35_tcp_ptab.ports[i].s_port);
 		}
-		dot1=";";
 	}
 	return value;
 }
