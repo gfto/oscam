@@ -4,7 +4,7 @@ file (GLOB algo_srcs "*.c")
 file (GLOB algo_hdrs "*.h")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  add_definitions ("-O3 -Winline -Werror -s -m32")
+  add_definitions ("-Winline -Werror -s -m32")
   set (CMAKE_C_FLAGS_DEBUG "-O0 -ggdb")
   set (CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb")
 else (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
