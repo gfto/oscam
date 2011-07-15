@@ -2487,6 +2487,17 @@ static int32_t stapi_write_cw(int32_t demux_id, uchar *cw, uint16_t *STREAMpids,
 
 	return TRUE;
 }
+#undef cs_log
+void cs_log(const char *fmt, ...) {
+	va_list params;
+	char log_txt[512];
+
+	va_start(params, fmt);
+	vsnprintf(log_txt, sizeof(log_txt), fmt, params);
+	va_end(params);
+
+	cs_log_int(0, 1, NULL, 0, log_txt);
+}
 #endif //WITH_STAPI
 
 
