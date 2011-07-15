@@ -2779,7 +2779,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 		cs_log("account '%s' has cccmaxhops = -1: user will not see any card!", usr);
 
 	cc->prefix = cs_malloc(&cc->prefix, strlen(cl->account->usr)+20, QUITERROR);
-	snprintf(cc->prefix, strlen(cl->account->usr)+20, "cccam(s) %s: ", cl->account->usr);
+	snprintf(cc->prefix, strlen(cl->account->usr)+20, "cccam(s) %s:", cl->account->usr);
 
 	//Starting readers to get cards:
 	cc_srv_wakeup_readers(cl);
@@ -2924,7 +2924,7 @@ int32_t cc_cli_connect(struct s_client *cl) {
 	}
 	if (!cc->prefix)
 		cc->prefix = cs_malloc(&cc->prefix, strlen(cl->reader->label)+20, QUITERROR);
-	snprintf(cc->prefix, strlen(cl->reader->label)+20, "cccam(r) %s: ", cl->reader->label);
+	snprintf(cc->prefix, strlen(cl->reader->label)+20, "cccam(r) %s:", cl->reader->label);
 	
 	if (!cl->udp_fd) {
 		cc_cli_init_int(cl); 
