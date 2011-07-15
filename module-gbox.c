@@ -208,7 +208,7 @@ static void gbox_compress(struct gbox_data *gbox, uchar *buf, int32_t unpacked_l
 
   lzo_init();
 
-  lzo_voidp wrkmem;
+  lzo_voidp wrkmem = NULL;
   if(!cs_malloc(&tmp2,unpacked_len * 0x1000, -1)){
  		free(tmp);
  		free(tmp2);
