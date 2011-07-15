@@ -2610,7 +2610,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 						struct s_reader *rdr = cl->reader;
 						if (rdr->ll_entitlements)
 						{
-							char *typetxt[] = {"Id", "Package", "PPV-Event", "Chid", "Tier", "Class", "PBM" };
+							//char *typetxt[] = {"Id", "Package", "PPV-Event", "Chid", "Tier", "Class", "PBM" };
 							LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
 							S_ENTITLEMENT *ent;
 							uint16_t total_ent = 0;
@@ -2627,6 +2627,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 									if (active_ent) tpl_printf(vars, TPLAPPEND, "TMPSPAN", "<BR><BR>");
 									active_ent++;
 									localtime_r(&ent->end, &end_t);
+									/*
 									tpl_printf(vars, TPLAPPEND, "TMPSPAN", "%s:", 
 										typetxt[ent->type]);
 									// Attention: to be able to display correctly on 32bit systems, uint64 has to be split
@@ -2637,6 +2638,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 									}
 									tpl_printf(vars, TPLAPPEND, "TMPSPAN", (ent->type == 6)?"%08X<BR>":"%04X<BR>", 
 										(uint32_t)ent->id);
+									*/
 									tpl_printf(vars, TPLAPPEND, "TMPSPAN", "%04X:%06X<BR>exp:%04d/%02d/%02d",
 									    ent->caid, ent->provid, 
 									    end_t.tm_year + 1900, end_t.tm_mon + 1, end_t.tm_mday);
