@@ -655,7 +655,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?part=adduser\">Add User</A></TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=reinit\">Reinit User DB</A></TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=resetalluserstats\">Reset Userstats</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A TARGET=\"_NEW\" HREF=\"graph.svg?type=users&hidelabels=1\">Show Graphs</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A TARGET=\"_blank\" HREF=\"graph.svg?type=users&hidelabels=1\">Show Graphs</A></TD>\n\
 		</TR>\n\
 	</TABLE>\n\
 	<TABLE CLASS=\"users\">\n\
@@ -896,7 +896,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLREADERS "\
 ##TPLHEADER##\
 ##TPLMENU##\
-	<TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD><TD CLASS=\"configmenu\"><A TARGET=\"_NEW\" HREF=\"graph.svg?type=servers\">Show Graphs</A></TD></TR></TABLE>\n\
+	<TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD><TD CLASS=\"configmenu\"><A TARGET=\"_blank\" HREF=\"graph.svg?type=servers\">Show Graphs</A></TD></TR></TABLE>\n\
 	<form action=\"readerconfig.html\" method=\"get\">\n\
 		<TABLE CLASS=\"readers\">\n\
 			<TR>\n\
