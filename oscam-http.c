@@ -2644,16 +2644,35 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 									    end_t.tm_year + 1900, end_t.tm_mon + 1, end_t.tm_mday);
 								}
 							}
+							
+							if (((total_ent) && (active_ent == 0)) || (total_ent == 0))
+							{
+								tpl_printf(vars, TPLAPPEND, "TMPSPAN", "No active entitlements found");
+							}
+							
 							tpl_printf(vars, TPLAPPEND, "TMPSPAN", "</SPAN>");
 							
-							tpl_printf(vars, TPLADD, "TMP", "(%d of %d entitlements)", active_ent, total_ent);
-							
+							if (active_ent)
+							{
+								tpl_printf(vars, TPLADD, "TMP", "(%d entitlement%s)", active_ent, (active_ent != 1)?"s":"");
+							}
+							else
+							{
+								tpl_printf(vars, TPLADD, "TMP", "(no entitlements)");
+								
+							}
 							
 							tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" class=\"tooltip%s\">%s%s</A>",
-														urlencode(vars, cl->reader->label),
-														active_ent > 0 ? "1": "",
-														tpl_getVar(vars, "TMP"),
-														active_ent > 0 ? tpl_getVar(vars, "TMPSPAN") : "");
+													urlencode(vars, cl->reader->label),
+													active_ent > 0 ? "": "1",
+													tpl_getVar(vars, "TMP"),
+													tpl_getVar(vars, "TMPSPAN"));
+						}
+						else
+						{
+							tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" class=\"tooltip\">(no entitlements)"
+												    "<SPAN>No active entitlements found</SPAN></A>",
+													urlencode(vars, cl->reader->label));
 						}
 					}
 
