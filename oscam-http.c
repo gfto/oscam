@@ -3278,11 +3278,12 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 	return tpl_getTpl(vars, "FILE");
 }
 
-static char *send_oscam_failban(struct templatevars *vars, struct uriparams *params) {
+static char *send_oscam_failban(struct templatevars *vars, struct uriparams *params, int8_t apicall) {
 
 	uint32_t ip2delete = 0;
 	LL_ITER itr = ll_iter_create(cfg.v_list);
 	V_BAN *v_ban_entry;
+	//int8_t apicall = 0; //remove before flight
 
 	if (strcmp(getParam(params, "action"), "delete") == 0) {
 
@@ -3313,18 +3314,35 @@ static char *send_oscam_failban(struct templatevars *vars, struct uriparams *par
 
 		struct tm st ;
 		localtime_r(&v_ban_entry->v_time, &st);
-
-		tpl_printf(vars, TPLADD, "VIOLATIONDATE", "%02d.%02d.%02d %02d:%02d:%02d",
-				st.tm_mday, st.tm_mon+1,
-				st.tm_year%100, st.tm_hour,
-				st.tm_min, st.tm_sec);
+		if (!apicall) {
+			tpl_printf(vars, TPLADD, "VIOLATIONDATE", "%02d.%02d.%02d %02d:%02d:%02d",
+					st.tm_mday, st.tm_mon+1,
+					st.tm_year%100, st.tm_hour,
+					st.tm_min, st.tm_sec);
+		} else {
+			char tbuffer [30];
+			strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &st);
+			tpl_addVar(vars, TPLADD, "VIOLATIONDATE", tbuffer);
+		}
 
 		tpl_printf(vars, TPLADD, "VIOLATIONCOUNT", "%d", v_ban_entry->v_count);
-		tpl_addVar(vars, TPLADD, "LEFTTIME", sec2timeformat(vars, (cfg.failbantime * 60) - (now - v_ban_entry->v_time)));
+
+		if (!apicall)
+			tpl_addVar(vars, TPLADD, "LEFTTIME", sec2timeformat(vars, (cfg.failbantime * 60) - (now - v_ban_entry->v_time)));
+		else
+			tpl_printf(vars, TPLADD, "LEFTTIME", "%d", (cfg.failbantime * 60) - (now - v_ban_entry->v_time));
+
 		tpl_printf(vars, TPLADD, "INTIP", "%u", v_ban_entry->v_ip);
-		tpl_addVar(vars, TPLAPPEND, "FAILBANROW", tpl_getTpl(vars, "FAILBANBIT"));
+
+		if (!apicall)
+			tpl_addVar(vars, TPLAPPEND, "FAILBANROW", tpl_getTpl(vars, "FAILBANBIT"));
+		else
+			tpl_addVar(vars, TPLAPPEND, "APIFAILBANROW", tpl_getTpl(vars, "APIFAILBANBIT"));
 	}
-	return tpl_getTpl(vars, "FAILBAN");
+	if (!apicall)
+		return tpl_getTpl(vars, "FAILBAN");
+	else
+		return tpl_getTpl(vars, "APIFAILBAN");
 }
 
 static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *params, int8_t *keepalive) {
@@ -3333,6 +3351,9 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 	}
 	else if (strcmp(getParam(params, "part"), "userstats") == 0) {
 		return send_oscam_user_config(vars, params, 1);
+	}
+	else if (strcmp(getParam(params, "part"), "failban") == 0) {
+		return send_oscam_failban(vars, params, 1);
 	}
 	else if (strcmp(getParam(params, "part"), "readerconfig") == 0) {
 		//Send Errormessage
@@ -3856,7 +3877,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 #ifdef WITH_LB
 				case 15: result = send_oscam_reader_stats(vars, &params, 0); break;
 #endif
-				case 16: result = send_oscam_failban(vars, &params); break;
+				case 16: result = send_oscam_failban(vars, &params, 0); break;
 				//case  17: js file
 				case 18: result = send_oscam_api(vars, f, &params, keepalive); break; //oscamapi.html
 				case 19: result = send_oscam_image(vars, f, &params, NULL, modifiedheader, etagheader); break;

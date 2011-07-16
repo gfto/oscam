@@ -470,6 +470,12 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	</TABLE><BR>\n\
 ##TPLFOOTER##"
 
+#define TPLAPIFAILBAN "##TPLAPIHEADER##\n\
+	<failbanlist>\n\
+##APIFAILBANROW##\
+	</failbanlist>\n\
+##TPLAPIFOOTER##"
+
 #define TPLFAILBANBIT "\
 		<TR>\n\
 			<TD>##IPADDRESS##</TD>\
@@ -478,6 +484,9 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD class=\"centered\">##LEFTTIME##</TD>\
 			<TD class=\"centered\"><A HREF=\"failban.html?action=delete&intip=##INTIP##\" TITLE=\"Delete Entry\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\" BORDER=\"0\" ALT=\"Delete Entry\"/></A></TD>\n\
 		</TR>\n"
+
+#define TPLAPIFAILBANBIT "\
+		<ip ipinteger=\"##INTIP##\" count=\"##VIOLATIONCOUNT##\" date=\"##VIOLATIONDATE##\" secondsleft=\"\">##IPADDRESS##</ip>\n"
 
 #ifdef CS_ANTICASC
 #define TPLCONFIGMENUANTICASC "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=anticasc\">Anticascading</A></TD>\n"
@@ -2129,7 +2138,9 @@ char *tpl[]={
 	"FILEMENU",
 	"FILE",
 	"FAILBAN",
+	"APIFAILBAN",
 	"FAILBANBIT",
+	"APIFAILBANBIT",
 	"CONFIGGBOX",
 	"CONFIGMONITOR",
 	"CONFIGGLOBAL",
@@ -2273,7 +2284,9 @@ char *tplmap[]={
 	TPLFILEMENU,
 	TPLFILE,
 	TPLFAILBAN,
+	TPLAPIFAILBAN,
 	TPLFAILBANBIT,
+	TPLAPIFAILBANBIT,
 	TPLCONFIGGBOX,
 	TPLCONFIGMONITOR,
 	TPLCONFIGGLOBAL,
