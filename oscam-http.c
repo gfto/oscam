@@ -4133,16 +4133,12 @@ void http_srv() {
 	cs_sleepms(300);
 #ifdef WITH_SSL
 	if (ssl_active){
-		int32_t i, num = CRYPTO_num_locks();;
 		SSL_CTX_free(ctx);
 		CRYPTO_set_dynlock_create_callback(NULL);
 		CRYPTO_set_dynlock_lock_callback(NULL);
 		CRYPTO_set_dynlock_destroy_callback(NULL);
 		CRYPTO_set_locking_callback(NULL);
 		CRYPTO_set_id_callback(NULL); 
-		for (i = 0; i < num; ++i) {
-			pthread_mutex_destroy(&lock_cs[i]);
-		}
 		OPENSSL_free(lock_cs);
 		lock_cs = NULL;
 	}
