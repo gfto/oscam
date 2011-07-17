@@ -722,6 +722,7 @@ struct s_client {
 
 #ifdef CS_ANTICASC
 	uint16_t		ac_limit;
+	int8_t          ac_penalty;
 	struct s_acasc_shm acasc;
 #endif
 
@@ -1043,7 +1044,7 @@ struct s_auth
 	TUNTAB			ttab;
 #ifdef CS_ANTICASC
 	int32_t			ac_users;						// 0 - unlimited
-	uchar			ac_penalty;						// 0 - log, >0 - fake dw
+	int8_t			ac_penalty;						// 0 - log, >0 - fake dw
 	struct s_acasc	ac_stat;
 #endif
 	in_addr_t		dynip;
@@ -1269,7 +1270,7 @@ struct s_config
 	int32_t		ac_users;							// num of users for account (0 - default)
 	int32_t		ac_stime;							// time to collect AC statistics (3 min - default)
 	int32_t		ac_samples;							// qty of samples
-	int32_t		ac_penalty;							// 0 - write to log
+	int8_t		ac_penalty;							// 0 - write to log
 	int32_t		ac_fakedelay;						// 100-1000 ms
 	int32_t		ac_denysamples;
 	char		ac_logfile[128];

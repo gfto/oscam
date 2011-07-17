@@ -1720,9 +1720,18 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 
 #ifdef CS_ANTICASC
 	tpl_printf(vars, TPLADD, "AC_USERS", "%d", account->ac_users);
+	tpl_printf(vars, TPLADD, "CFGNUMUSERS", "%d", cfg.ac_users);
 	if(!apicall){
 		tpl_printf(vars, TPLADD, "TMP", "PENALTY%d", account->ac_penalty);
 		tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+		char *tmp = NULL;
+		switch(cfg.ac_penalty) {
+			case 0: tmp = "(0) Only write to log"; break;
+			case 1: tmp = "(1) Fake DW delayed"; break;
+			case 2: tmp = "(2) Ban"; break;
+			case 3: tmp = "(3) Real DW delayed"; break;
+		}
+		tpl_printf(vars, TPLADD, "CFGPENALTY", "%s", tmp);
 	} else {
 		tpl_printf(vars, TPLADD, "PENALTYVALUE", "%d", account->ac_penalty);
 	}

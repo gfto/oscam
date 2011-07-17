@@ -851,15 +851,20 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
 #ifdef CS_ANTICASC
 # define TPLUSEREDITANTICASC "\
-			<TR class=\"cfg_anticasc\"><TD>##TPLHELPPREFIX##user#numusers##TPLHELPSUFFIX##Anticascading numusers:</A></TD><TD><input name=\"numusers\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##AC_USERS##\"></TD></TR>\n\
+			<TR class=\"cfg_anticasc\"><TD>##TPLHELPPREFIX##user#numusers##TPLHELPSUFFIX##Anticascading numusers:</A></TD>\
+				<TD><input name=\"numusers\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##AC_USERS##\">\
+				&nbsp;Global Numuser value:<SPAN CLASS=\"global_conf\" TITLE=\"This value is used if Anticascading numusers = -1\"><A HREF=\"config.html?part=anticasc\">##CFGNUMUSERS##</A></SPAN></TD>\
+			</TR>\n\
 			<TR class=\"cfg_anticasc\"><TD>##TPLHELPPREFIX##user#penalty##TPLHELPSUFFIX##Anticascading penalty:</A></TD>\
 			<TD>\
 			<select name=\"penalty\">\n\
-					<option value=\"0\" ##PENALTY0##>0 - Only write to log</option>\n\
-					<option value=\"1\" ##PENALTY1##>1 - Fake DW</option>\n\
-					<option value=\"2\" ##PENALTY2##>2 - Ban</option>\n\
-					<option value=\"3\" ##PENALTY3##>3 - Fake DW delayed</option>\n\
+					<option value=\"-1\" ##PENALTY-1##>-1 - Use global penalty level</option>\n\
+					<option value=\"0\" ##PENALTY0##>&nbsp;0 - Only write to log</option>\n\
+					<option value=\"1\" ##PENALTY1##>&nbsp;1 - Fake DW</option>\n\
+					<option value=\"2\" ##PENALTY2##>&nbsp;2 - Ban</option>\n\
+					<option value=\"3\" ##PENALTY3##>&nbsp;3 - Fake DW delayed</option>\n\
 				</select>\n\
+				&nbsp;Global Penalty level:<SPAN CLASS=\"global_conf\"><A HREF=\"config.html?part=anticasc\" TITLE=\"This value is used if Anticascading penalty = -1\">##CFGPENALTY##</A></SPAN>\n\
 			</TD></TR>\n"
 #endif
 
