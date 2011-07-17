@@ -114,11 +114,12 @@ DESCRIPTIONS
 	  anti-cascading: user per account, 0 = anti-cascading disabled, default:0
 
        penalty = 0|1|2
-	  level of penalty:
+	  level of penalty, default: level of oscam.conf:
 
-	   0 = only logging (default)
+	   0 = only logging
 	   1 = send fake CWs
 	   2 = disbable user temporary
+	   3 = send delayed CWs
 
        failban = 0|2|4
 	  mask for IP based blocking:
