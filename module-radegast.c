@@ -52,14 +52,14 @@ static void radegast_auth_client(in_addr_t ip)
   if (!ok)
   {
     cs_auth_client(cur_client(), (struct s_auth *)0, NULL);
-    cs_exit(0);
+    cs_disconnect_client(cur_client());
   }
 
   for (ok=0, account=cfg.account; (cfg.rad_usr[0]) && (account) && (!ok); account=account->next)
   {
     ok=(!strcmp(cfg.rad_usr, account->usr));
     if (ok && cs_auth_client(cur_client(), account, NULL))
-      cs_exit(0);
+      cs_disconnect_client(cur_client());
   }
 
   if (!ok)
@@ -150,29 +150,23 @@ static void radegast_process_unknown(uchar *buf)
   cs_log("unknown request %02X, len=%d", buf[0], buf[1]);
 }
 
-static void * radegast_server(void *cli)
+static void * radegast_server(struct s_client * client, uchar *mbuf, int n)
 {
-  int32_t n;
-  uchar mbuf[1024];
 
-	struct s_client * client = (struct s_client *) cli;
-  client->thread=pthread_self();
-  pthread_setspecific(getclient, cli);
+	if (!client->init_done) {
+		radegast_auth_client(cur_client()->ip);
+		client->init_done=1;
+	}
 
-  radegast_auth_client(cur_client()->ip);
-  while ((n=get_request(mbuf))>0)
-  {
-    switch(mbuf[0])
-    {
-      case 1:
-        radegast_process_ecm(mbuf+2, mbuf[1]);
-        break;
-      default:
-        radegast_process_unknown(mbuf);
-    }
-  }
-  cs_disconnect_client(client);
-  return NULL;
+	switch(mbuf[0]) {
+		case 1:
+			radegast_process_ecm(mbuf+2, mbuf[1]);
+			break;
+		default:
+			radegast_process_unknown(mbuf);
+	}
+
+	return NULL;
 }
 
 static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *UNUSED(buf))
@@ -220,52 +214,12 @@ static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar
 int32_t radegast_cli_init(struct s_client *cl)
 {
   *cl = *cl; //prevent compiler warning
-  struct sockaddr_in loc_sa;
   int32_t handle;
-
-  cur_client()->pfd=0;
-  if (cur_client()->reader->r_port<=0)
-  {
-    cs_log("radegast: invalid port %d for server %s", cur_client()->reader->r_port, cur_client()->reader->device);
-    return(1);
-  }
-
-  cur_client()->ip=0;
-  memset((char *)&loc_sa,0,sizeof(loc_sa));
-  loc_sa.sin_family = AF_INET;
-#ifdef LALL
-  if (cfg.serverip[0])
-    loc_sa.sin_addr.s_addr = inet_addr(cfg.serverip);
-  else
-#endif
-    loc_sa.sin_addr.s_addr = INADDR_ANY;
-  loc_sa.sin_port = htons(cur_client()->reader->l_port);
-
-  if ((cur_client()->udp_fd=socket(PF_INET, SOCK_STREAM, IPPROTO_TCP))<0)
-  {
-    cs_log("radegast: Socket creation failed (errno=%d %s)", errno, strerror(errno));
-    cs_exit(1);
-  }
-
-#ifdef SO_PRIORITY
-  if (cfg.netprio)
-    setsockopt(cur_client()->udp_fd, SOL_SOCKET, SO_PRIORITY,
-               (void *)&cfg.netprio, sizeof(uintptr_t));
-#endif
-  if (!cur_client()->reader->tcp_ito) {
-    uint32_t keep_alive = cur_client()->reader->tcp_ito?1:0;
-    setsockopt(cur_client()->udp_fd, SOL_SOCKET, SO_KEEPALIVE,
-    (void *)&keep_alive, sizeof(uintptr_t));
-  }
-
-  memset((char *)&cur_client()->udp_sa,0,sizeof(cur_client()->udp_sa));
-  cur_client()->udp_sa.sin_family = AF_INET;
-  cur_client()->udp_sa.sin_port = htons((uint16_t)cur_client()->reader->r_port);
 
   cs_log("radegast: proxy %s:%d (fd=%d)",
   cur_client()->reader->device, cur_client()->reader->r_port, cur_client()->udp_fd);
 
-  handle = network_tcp_connection_open();
+  handle = network_tcp_connection_open(cl->reader);
   if(handle < 0) return -1;
 
   cur_client()->reader->tcp_connected = 2;

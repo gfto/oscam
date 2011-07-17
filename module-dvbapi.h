@@ -297,16 +297,12 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num);
 int32_t dvbapi_stop_filter(int32_t demux_index, int32_t type);
 struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidindex, char type);
 
-#ifdef WITH_STAPI
-	#define cs_log(x...)	cs_log("stapi: "x)
-	#ifdef WITH_DEBUG
-		#define cs_debug_mask(x,y...)	cs_debug_mask(x,"stapi: "y)
-	#endif
-#else
-	#define cs_log(x...)	cs_log("dvbapi: "x)
-	#ifdef WITH_DEBUG
-		#define cs_debug_mask(x,y...)	cs_debug_mask(x,"dvbapi: "y)
-	#endif
+
+#undef cs_log
+#define cs_log(txt, x...)	cs_log_int(0, 1, NULL, 0, "dvbapi: "txt, ##x)
+#ifdef WITH_DEBUG
+	#undef cs_debug_mask
+	#define cs_debug_mask(x,txt,y...)	cs_log_int(x, 1, NULL, 0, "dvbapi: "txt, ##y)
 #endif
 
 #endif // MODULEDVBAPI_H_

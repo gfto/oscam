@@ -974,13 +974,13 @@ static void * oscam_ser_fork(void *pthreadparam)
   return NULL;
 }
 
-void * init_oscam_ser(int32_t ctyp)
+void * init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int len)
 {
 	char sdevice[512];
   	struct s_thread_param param;
   	oscam_init_serialdata(&param.serialdata);
 	cs_strncpy(sdevice, cfg.ser_device, sizeof(sdevice));
-	param.ctyp=ctyp;
+	param.ctyp=len;
 	char *p;
 	pthread_t temp;
 	char cltype = 'c'; //now auto should work
@@ -1018,8 +1018,8 @@ static int32_t oscam_ser_client_init(struct s_client *client)
   }
   oscam_init_serialdata(client->serialdata);
   
-  if ((!client->reader->device[0])) cs_exit(1);
-  if (!oscam_ser_parse_url(client->reader->device, client->serialdata, NULL)) cs_exit(1);
+  if ((!client->reader->device[0])) cs_disconnect_client(client);
+  if (!oscam_ser_parse_url(client->reader->device, client->serialdata, NULL)) cs_disconnect_client(client);
   client->pfd=init_oscam_ser_device(client->serialdata->oscam_ser_device, client->serialdata->oscam_ser_baud);
   return((client->pfd>0) ? 0 : 1);
 }

@@ -723,7 +723,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD class=\"centered\">##CLIENTIP##</TD>\n\
 			<TD class=\"centered\"><SPAN TITLE=\"##CLIENTPROTOTITLE##\">##CLIENTPROTO##</SPAN></TD>\n\
 			<TD>##LASTCHANNEL##</TD>\n\
-			<TD class=\"centered\">##CLIENTTIMEONCHANNEL##</TD>\n\
+			<TD class=\"centered\" title=\"##CLIENTTIMETOSLEEP##\">##CLIENTTIMEONCHANNEL##</TD>\n\
 			<TD class=\"centered\">##IDLESECS##</TD>\n\
 			<TD class=\"centered\">##CWOK##</TD>\n\
 			<TD class=\"centered\">##CWNOK##</TD>\n\
@@ -788,6 +788,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TR><TD>##TPLHELPPREFIX##user#expdate##TPLHELPSUFFIX##Exp. Date:</A></TD><TD><input name=\"expdate\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##EXPDATE##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##user#failban##TPLHELPSUFFIX##Failban:</A></TD><TD><input name=\"failban\" type=\"text\" size=\"2\" maxlength=\"1\" value=\"##FAILBAN##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##user#allowedtimeframe##TPLHELPSUFFIX##Allowed Timeframe:</A></TD><TD><input name=\"allowedtimeframe\" type=\"text\" size=\"15\" maxlength=\"11\" value=\"##ALLOWEDTIMEFRAME##\">&nbsp;(hh:mm-hh:mm)</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##user#allowedprotocols##TPLHELPSUFFIX##Allowed Protocols:</A></TD><TD><input name=\"allowedprotocols\" type=\"text\" size=\"63\" maxlength=\"60\" value=\"##ALLOWEDPROTOCOLS##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##user#group##TPLHELPSUFFIX##Group:</A></TD><TD><input name=\"group\" type=\"text\" size=\"20\" maxlength=\"100\" value=\"##GROUPS##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##user#hostname##TPLHELPSUFFIX##Hostname:</A></TD><TD><input name=\"hostname\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##DYNDNS##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##user#uniq##TPLHELPSUFFIX##Uniq:</A></TD>\n\

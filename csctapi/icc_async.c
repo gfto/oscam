@@ -177,7 +177,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 #endif
 		case R_INTERNAL:
 #if defined(COOL)
-			return Cool_Init(reader->device);
+			return Cool_Init(reader);
 #elif defined(AZBOX)
 			return Azbox_Init(reader);
 #elif defined(SCI_DEV)
@@ -281,7 +281,7 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 #if defined(SCI_DEV)
 			call (Sci_GetStatus(reader, &in));
 #elif defined(COOL)
-			call (Cool_GetStatus(&in));
+			call (Cool_GetStatus(reader, &in));
 #elif defined(WITH_STAPI)
 			call (STReader_GetStatus(reader->stsmart_handle, &in));
 #elif defined(AZBOX)
@@ -345,7 +345,7 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 				call (Sci_Activate(reader));
 				call (Sci_Reset(reader, atr));
 #elif defined(COOL)
-				call (Cool_Reset(atr));
+				call (Cool_Reset(reader, atr));
 #elif defined(WITH_STAPI)
 				call (STReader_Reset(reader->stsmart_handle, atr));
 #elif defined(AZBOX)
@@ -507,7 +507,7 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, BYTE * data)
 #endif
 		case R_INTERNAL:
 #if defined(COOL)
-			call (Cool_Transmit(sent, size));
+			call (Cool_Transmit(reader, sent, size));
 #elif defined(AZBOX)
 			call (Azbox_Transmit(reader, sent, size));
 #elif defined(SCI_DEV)
@@ -555,7 +555,7 @@ int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, BYTE * data)
 #endif
 		case R_INTERNAL:
 #if defined(COOL)
-			call (Cool_Receive(data, size));
+			call (Cool_Receive(reader, data, size));
 #elif defined(AZBOX)
 			call (Azbox_Receive(reader, data, size));
 #elif defined(SCI_DEV)
@@ -609,7 +609,7 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 #elif defined(WITH_STAPI)
 			call(STReader_Close(reader->stsmart_handle));
 #elif defined(COOL)
-			call (Cool_Close());
+			call (Cool_Close(reader));
 #endif
 			break;
 #ifdef HAVE_PCSC
@@ -1080,8 +1080,8 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 			ETU = F / d;
 		call (Sci_WriteSettings (reader, reader->protocol_type, reader->mhz / 100, ETU, WWT, reader->BWT, reader->CWT, EGT, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
 #elif defined(COOL)
-		call (Cool_SetClockrate(reader->mhz));
-		call (Cool_WriteSettings (reader->BWT, reader->CWT, EGT, BGT));
+		call (Cool_SetClockrate(reader, reader->mhz));
+		call (Cool_WriteSettings (reader, reader->BWT, reader->CWT, EGT, BGT));
 #elif defined(WITH_STAPI)
 		call (STReader_SetClockrate(reader->stsmart_handle));
 #endif //COOL

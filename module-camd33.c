@@ -92,7 +92,7 @@ static void camd33_auth_client(uchar *camdbug)
   else
   {
     if (rc<0) cs_auth_client(cur_client(), 0, usr ? "invalid account" : "no user given");
-    cs_exit(0);
+    cs_disconnect_client(cur_client());
   }
 }
 
@@ -181,36 +181,27 @@ static void camd33_process_emm(uchar *buf, int32_t l)
   do_emm(cur_client(), &epg);
 }
 
-static void * camd33_server(void* cli)
+static void * camd33_server(struct s_client * client, uchar *mbuf, int n)
 {
-  int32_t n;
-  uchar mbuf[1024];
-  uchar camdbug[256];
+	uchar camdbug[256];
 
-  struct s_client * client = (struct s_client *) cli;
-  client->thread=pthread_self();
-  pthread_setspecific(getclient, cli);
+	if (!client->req) {
+		cs_malloc(&client->req,CS_MAXPENDING*REQ_SIZE, 1);
+		camd33_auth_client(camdbug);
+	}
 
-  cs_malloc(&client->req,CS_MAXPENDING*REQ_SIZE, 1);
+	switch(mbuf[0]) {
+		case 2:
+			camd33_process_ecm(mbuf, n);
+			break;
+		case 3:
+			camd33_process_emm(mbuf, n);
+			break;
+		default:
+			cs_debug_mask(D_CLIENT, "unknown command !");
+	}
 
-  camd33_auth_client(camdbug);
-
-  while ((n=get_request(mbuf, sizeof(mbuf), camdbug))>0)
-  {
-    switch(mbuf[0])
-    {
-      case 2:
-        camd33_process_ecm(mbuf, n);
-        break;
-      case 3:
-        camd33_process_emm(mbuf, n);
-        break;
-      default:
-        cs_debug_mask(D_CLIENT, "unknown command !");
-    }
-  }
-  cs_disconnect_client(client);
-  return NULL;
+	return NULL;
 }
 
 void module_camd33(struct s_module *ph)

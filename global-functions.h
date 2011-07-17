@@ -14,7 +14,6 @@ extern void module_cccam(struct s_module *);
 #endif
 extern void module_gbox(struct s_module *);
 extern void module_constcw(struct s_module *);
-extern int32_t chk_pending(int32_t timeout);
 #ifdef HAVE_DVBAPI
 extern void module_dvbapi(struct s_module *);
 #endif
@@ -49,8 +48,8 @@ extern void pcsc_close(struct s_reader *pcsc_reader);
 /* ===========================
  *           oscam
  * =========================== */
-#ifdef WEBIF
 extern void cs_exit_oscam();
+#ifdef WEBIF
 extern void cs_restart_oscam();
 extern int32_t cs_get_restartmode();
 extern void clear_account_stats(struct s_auth *account);
@@ -62,7 +61,20 @@ extern void clear_system_stats();
 extern void qboxhd_led_blink(int32_t color, int32_t duration);
 #endif
 
+extern void reader_do_idle(struct s_reader * reader);
+extern int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep);
+extern void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er);
+extern void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw);
+extern void casc_do_sock_log(struct s_reader * reader);
+extern void reader_do_card_info(struct s_reader * reader);
+
+extern int32_t accept_connection(int32_t i, int32_t j);
 extern void start_thread(void * startroutine, char * nameroutine);
+extern void add_job(struct s_client *cl, int8_t action, void *ptr, int len);
+extern void add_check(struct s_client *client, int8_t action, void *ptr, int32_t size, int32_t ms_delay);
+extern int32_t reader_init(struct s_reader *);
+extern void reader_nullcard(struct s_reader * reader);
+extern int reader_reset(struct s_reader * reader);
 extern void cs_reload_config();
 extern int32_t recv_from_udpipe(uchar *);
 extern char* username(struct s_client *);
@@ -203,6 +215,7 @@ extern char *mk_t_iprange(struct s_ip *range);
 extern char *mk_t_ecmwhitelist(struct s_ecmWhitelist *whitelist);
 extern char *mk_t_cltab(CLASSTAB *clstab);
 extern char *mk_t_emmbylen(struct s_reader *rdr);
+extern char *mk_t_allowedprotocols(struct s_auth *account);
 extern void free_mk_t(char *value);
 extern int32_t init_provid();
 
@@ -242,10 +255,16 @@ extern int32_t cs_open_logfiles();
 #ifdef CS_ANTICASC
 extern int32_t ac_init_log();
 #endif
-extern void cs_log(const char *,...);
+
+extern void cs_log_int(uint16_t mask, int8_t lock, const uchar *buf, int32_t n, const char *fmt, ...);
+
+#define cs_log(args...)				cs_log_int(0, 1, NULL, 0, ##args)
+#define cs_log_nolock(args...)			cs_log_int(0, 0, NULL, 0, ##args)
+#define cs_dump(buf, n, args...)			cs_log_int(0, 1, buf, n, ##args)
+
 #ifdef WITH_DEBUG
-extern void cs_debug_mask(uint16_t, const char *,...);
-extern void cs_ddump_mask(uint16_t, const uchar *, int32_t, char *, ...);
+#define cs_debug_mask(mask, args...)		cs_log_int(mask, 1, NULL, 0, ##args)
+#define cs_ddump_mask(mask, buf, n, args...)	cs_log_int(mask, 1, buf, n, ##args)
 #else
 #define nop() asm volatile("nop")
 #define cs_debug(...) nop()
@@ -259,7 +278,6 @@ extern void cs_log_config(void);
 extern void cs_close_log(void);
 extern int32_t cs_init_statistics();
 extern void cs_statistics(struct s_client * client);
-extern void cs_dump(const uchar *, int32_t, char *, ...);
 
 /* ===========================
  *        oscam-reader
@@ -273,9 +291,8 @@ extern void cs_ri_log(struct s_reader * reader, char *,...);
 extern void * start_cardreader(void *);
 extern void reader_card_info(struct s_reader * reader);
 extern int32_t hostResolve(struct s_reader * reader);
-extern int32_t network_tcp_connection_open();
-extern void network_tcp_connection_close(struct s_client *, int32_t);
-extern int32_t casc_recv_timer(struct s_reader * reader, uchar *buf, int32_t l, int32_t msec);
+extern int32_t network_tcp_connection_open(struct s_reader *);
+extern void network_tcp_connection_close(struct s_reader *);
 extern void clear_reader_pipe(struct s_reader * reader);
 extern void block_connect(struct s_reader *rdr);
 extern int32_t is_connect_blocked(struct s_reader *rdr);

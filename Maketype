@@ -103,7 +103,9 @@ endif
 
 $(EXEFILE1):	oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(LIBFILE4) $(GENERAL)
 		$(CC) $(LDFLAGS) oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(LIBFILE4) $(LIBUSB) $(LIBPCSC) $(LIBRT) -o "$@" $(LIBS)
+ifdef DS_ST
 		$(STRIP) $@
+endif
 
 $(EXEFILE2):	utils/list_smargo.c
 		$(CC) $(LDFLAGS) utils/list_smargo.c $(LIBUSB) $(LIBRT) -o "$@" $(LIBS)

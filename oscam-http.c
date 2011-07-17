@@ -299,7 +299,7 @@ static char *send_oscam_config_camd33(struct templatevars *vars, struct uriparam
 	if (strcmp(getParam(params, "action"), "execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-				tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
+				//tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
 				//we use the same function as used for parsing the config tokens
 				chk_t_camd33((*params).params[i], (*params).values[i]);
 			}
@@ -328,7 +328,7 @@ static char *send_oscam_config_camd35(struct templatevars *vars, struct uriparam
 	if ((strcmp(getParam(params, "action"),"execute") == 0) && (getParam(params, "port"))[0]) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-				tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
+				//tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
 				//we use the same function as used for parsing the config tokens
 				chk_t_camd35((*params).params[i], (*params).values[i]);
 			}
@@ -355,7 +355,7 @@ static char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uripa
 	if ((strcmp(getParam(params, "action"),"execute") == 0) && (getParam(params, "port"))[0]) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-				tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
+				//tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
 				//we use the same function as used for parsing the config tokens
 				chk_t_camd35_tcp((*params).params[i], (*params).values[i]);
 			}
@@ -385,7 +385,7 @@ static char *send_oscam_config_newcamd(struct templatevars *vars, struct uripara
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-				tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
+				//tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
 				//we use the same function as used for parsing the config tokens
 				chk_t_newcamd((*params).params[i], (*params).values[i]);
 			}
@@ -423,7 +423,7 @@ static char *send_oscam_config_radegast(struct templatevars *vars, struct uripar
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-				tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
+				//tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
 				//we use the same function as used for parsing the config tokens
 				chk_t_radegast((*params).params[i], (*params).values[i]);
 			}
@@ -458,7 +458,7 @@ static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-				tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
+				//tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
 				//we use the same function as used for parsing the config tokens
 				chk_t_cccam((*params).params[i], (*params).values[i]);
 			}
@@ -524,8 +524,7 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-				tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
-
+				//tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
 				//we use the same function as used for parsing the config tokens
 				if (strstr((*params).params[i], "http")) {
 					chk_t_webif((*params).params[i], (*params).values[i]);
@@ -632,7 +631,7 @@ static char *send_oscam_config_serial(struct templatevars *vars, struct uriparam
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-				tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
+				//tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
 				//we use the same function as used for parsing the config tokens
 				chk_t_serial((*params).params[i], (*params).values[i]);
 			}
@@ -665,7 +664,7 @@ static char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparam
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-				tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
+				//tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
 				//we use the same function as used for parsing the config tokens
 				chk_t_dvbapi((*params).params[i], (*params).values[i]);
 			}
@@ -707,7 +706,7 @@ static char *send_oscam_config_anticasc(struct templatevars *vars, struct uripar
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-				tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
+				//tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
 				//we use the same function as used for parsing the config tokens
 				chk_t_ac((*params).params[i], (*params).values[i]);
 			}
@@ -758,7 +757,6 @@ static char *send_oscam_config(struct templatevars *vars, struct uriparams *para
 
 static void inactivate_reader(struct s_reader *rdr)
 {
-	remove_reader_from_active(rdr);
 	if (rdr->client)
 		kill_thread(rdr->client);
 }
@@ -775,7 +773,6 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 			if (rdr) {
 				if (strcmp(getParam(params, "action"), "enable") == 0) {
 					if (!rdr->enable) {
-						add_reader_to_active(rdr);
 						rdr->enable = 1;
 						restart_cardreader(rdr, 1);
 					}
@@ -820,8 +817,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 			}
 
 			if(rdr->enable == 1 && rdr->client && rdr->client->typ == 'r') {
-				uchar dummy[1]={0x00};
-				write_to_pipe(rdr->client, PIP_ID_CIN, dummy, 1);
+				add_job(rdr->client, ACTION_READER_CARDINFO, NULL, 0);
 			}
 		}
 	}
@@ -938,8 +934,8 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	} else if(strcmp(getParam(params, "action"), "Save") == 0) {
 
 		rdr = get_reader_by_label(getParam(params, "label"));
-		if (rdr->typ & R_IS_NETWORK)
-			inactivate_reader(rdr); //Stop reader before reinitialization
+		//if (rdr->typ & R_IS_NETWORK)
+		//	inactivate_reader(rdr); //Stop reader before reinitialization
 		char servicelabels[1024]="";
 
 		for(i = 0; i < (*params).paramcount; ++i) {
@@ -954,8 +950,12 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		}
 		chk_reader("services", servicelabels, rdr);
 
-		if (rdr->typ & R_IS_NETWORK)
-			restart_cardreader(rdr, 1); //physical readers make trouble if re-started
+		if (rdr->typ & R_IS_NETWORK) { //physical readers make trouble if re-started
+			if (rdr->client)
+				add_job(rdr->client, ACTION_READER_RESTART, NULL, 0);
+			else
+				restart_cardreader(rdr, 0);
+		}
 
 		if(write_server()!=0)
 			tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
@@ -1619,6 +1619,11 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	tpl_addVar(vars, TPLADD, "GROUPS", value);
 	free_mk_t(value);
 
+	// allowed protocols
+	value = mk_t_allowedprotocols(account);
+	tpl_addVar(vars, TPLADD, "ALLOWEDPROTOCOLS", value);
+	free_mk_t(value);
+
 	//Hostname
 	tpl_addVar(vars, TPLADD, "DYNDNS", (char *)account->dyndns);
 
@@ -1953,10 +1958,16 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			tpl_printf(vars, TPLADDONCE, "CWLASTRESPONSET", "%d", lastresponsetm);
 			tpl_addVar(vars, TPLADDONCE, "IDLESECS", sec2timeformat(vars, isec));
 
-			if (isactive > 0)
+			if (isactive > 0) {
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMEONCHANNEL", sec2timeformat(vars, chsec));
-			else
+				if (account->tosleep)
+					tpl_printf(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "Sleeping in %d minutes", account->tosleep - (chsec / 60));
+				else
+					tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "No sleep defined");
+			} else {
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMEONCHANNEL", "");
+				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "");
+			}
 
 			if ((strcmp(proto,"newcamd") == 0) && (latestclient->typ == 'c'))
 				tpl_printf(vars, TPLADDONCE, "CLIENTPROTO","%s (%s)", proto, get_ncd_client_name(latestclient->ncd_client_id));
@@ -2324,8 +2335,8 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 
 	if (strcmp(getParam(params, "action"), "restart") == 0) {
 		struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
-		if(rdr)	{
-			restart_cardreader(rdr, 1);
+		if(rdr) {
+			add_job(rdr->client, ACTION_READER_RESTART, NULL, 0);
 			cs_log("Reader %s restarted by WebIF from %s", rdr->label, cs_inet_ntoa(GET_IP()));
 		}
 	}

@@ -874,7 +874,7 @@ static int32_t gbox_client_init(struct s_client *cli)
   if ((cli->udp_fd=socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP))<0)
    {
         cs_log("socket creation failed (errno=%d %s)", errno, strerror(errno));
-        cs_exit(1);
+        cs_disconnect_client(cli);
   }
 
   int32_t opt = 1;

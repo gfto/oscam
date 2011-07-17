@@ -315,14 +315,7 @@ void cc_cli_close(struct s_client *cl, int32_t call_conclose) {
 	rdr->ncd_msgid = 0;
 	rdr->last_s = rdr->last_g = 0;
 
-	if (cc->mode == CCCAM_MODE_NORMAL && call_conclose) 
-		network_tcp_connection_close(cl, cl->udp_fd); 
-	else {
-		if (cl->udp_fd)
-			close(cl->udp_fd);
-		cl->udp_fd = 0;
-		cl->pfd = 0;
-	}
+	network_tcp_connection_close(rdr); 
 	
 	cc->just_logged_in = 0;
 }
@@ -1557,8 +1550,11 @@ void cc_idle() {
 	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
 	
-	if (rdr && rdr->cc_keepalive && !rdr->tcp_connected)
-		cc_cli_connect(cl);
+	if (rdr && rdr->cc_keepalive && !rdr->tcp_connected) {
+		if (cc_cli_connect(cl) != 0) {
+			cs_sleepms(cfg.reader_restart_seconds*1000);
+		}
+	}
 		
 	if (!rdr || !rdr->tcp_connected || !cl || !cc)
 		return;
@@ -1574,7 +1570,7 @@ void cc_idle() {
 	{
 		int32_t rto = abs(rdr->last_s - rdr->last_g);
 		if (rto >= (rdr->tcp_rto*60))
-			network_tcp_connection_close(cl, cl->udp_fd);
+			network_tcp_connection_close(rdr);
 	}
 }
 
@@ -2629,8 +2625,7 @@ int32_t cc_srv_wakeup_readers(struct s_client *cl) {
 			continue;
 		
 		//This wakeups the reader:
-		uchar dummy = 0;
-		write_to_pipe(client, PIP_ID_CIN, &dummy, sizeof(dummy));
+		add_job(rdr->client, ACTION_READER_CARDINFO, NULL, 0);
 		wakeup++;
 	}
 	return wakeup;
@@ -2649,7 +2644,7 @@ int32_t check_cccam_compat(struct cc_data *cc) {
 }
 
 int32_t cc_srv_connect(struct s_client *cl) {
-	int32_t i, wait_for_keepalive;
+	int32_t i;
 	uint8_t data[16];
 	char usr[21], pwd[65]; tmp_dbg(17);
 	struct s_auth *account;
@@ -2700,6 +2695,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 
 	cs_debug_mask(D_TRACE, "receive ccc checksum");
+	
 	if ((i = cc_recv_to(cl, buf, 20)) == 20) {
 		//cs_ddump_mask(D_CLIENT, buf, 20, "cccam: recv:");
 		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
@@ -2847,70 +2843,37 @@ int32_t cc_srv_connect(struct s_client *cl) {
 		return -1;
 	cs_ftime(&cc->ecm_time);
 
-	time_t timeout = time(NULL);
-	wait_for_keepalive = 100;
 	cc->mode = CCCAM_MODE_NORMAL;
 	//some clients, e.g. mgcamd, does not support keepalive. So if not answered, keep connection
 	// check for client timeout, if timeout occurs try to send keepalive
 	cs_debug_mask(D_TRACE, "ccc connected and waiting for data %s", usr);
-	while (cl->pfd && cl->udp_fd && cc->mode == CCCAM_MODE_NORMAL && !cl->dup)
-	{
-		i = process_input(buf, CC_MAXMSGSIZE, 10);
-		if (i <= 0 && i != -9)
-			break; //Disconnected by client		
-			
-		//data is parsed!
-		if (i == MSG_CW_ECM)
-			timeout = time(NULL);
-		else if (i == MSG_KEEPALIVE) {
-			wait_for_keepalive = 0;
-			timeout = time(NULL);
-		}
-		
-		//new timeout check:
-		if (time(NULL)-timeout > (time_t)cfg.cmaxidle) {
-			cs_debug_mask(D_TRACE, "ccc idle %s", usr);
-			//cs_debug_mask(D_TRACE, "client timeout user %s idle=%d client max idle=%d", usr, cmi, cfg.cmaxidle);
-			if (cfg.cc_keep_connected || cl->account->ncd_keepalive) {
-				if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
-					break;
-				if (wait_for_keepalive<3 || wait_for_keepalive == 100) {
-					cs_debug_mask(D_CLIENT, "cccam: keepalive");
-       			    cc->answer_on_keepalive = time(NULL);
-       			    wait_for_keepalive++;
-				}
-				else if (wait_for_keepalive<100) break;
-				timeout = time(NULL);
-			} else {
-				cs_debug_mask(D_CLIENT, "%s keepalive after maxidle is reached",
-					getprefix());
-				break; //Disconnect client
-			}
-		}
-	}
-	cc->mode = CCCAM_MODE_SHUTDOWN;
 	return 0;
 }
 
-void * cc_srv_init(struct s_client *cl) {
-	cl->thread = pthread_self();
-	pthread_setspecific(getclient, cl);
-
-    if (cl->ip)
-		cs_debug_mask(D_CLIENT, "cccam: new connection from %s", cs_inet_ntoa(cl->ip));
+void cc_srv_init2(struct s_client *cl) {
+	if (!cl->init_done) {
+		if (cl->ip)
+			cs_debug_mask(D_CLIENT, "cccam: new connection from %s", cs_inet_ntoa(cl->ip));
                 
-	cl->pfd = cl->udp_fd;
-	int32_t ret;
-	if ((ret=cc_srv_connect(cl)) < 0) {
-		if (errno != 0)
-			cs_debug_mask(D_CLIENT, "cccam: failed errno: %d (%s)", errno, strerror(errno));
+		cl->pfd = cl->udp_fd;
+		int32_t ret;
+		if ((ret=cc_srv_connect(cl)) < 0) {
+			if (errno != 0)
+				cs_debug_mask(D_CLIENT, "cccam: failed errno: %d (%s)", errno, strerror(errno));
+			else
+				cs_debug_mask(D_CLIENT, "cccam: failed ret: %d", ret);
+			if (ret == -2)
+				cs_add_violation((uint)cl->ip, cfg.cc_port[0]);
+		}
 		else
-			cs_debug_mask(D_CLIENT, "cccam: failed ret: %d", ret);
-		if (ret == -2)
-			cs_add_violation((uint)cl->ip, cfg.cc_port[0]);
+			cl->init_done = TRUE;
 	}
-	cs_disconnect_client(cl);
-	return NULL; //suppress compiler warning
+	return;
+}
+
+void * cc_srv_init(struct s_client *cl, uchar *UNUSED(mbuf), int UNUSED(len)) {
+	cc_srv_init2(cl);
+	return NULL;
 }
 
 int32_t cc_cli_connect(struct s_client *cl) {
@@ -2938,11 +2901,6 @@ int32_t cc_cli_connect(struct s_client *cl) {
 	if (!cc->prefix)
 		cc->prefix = cs_malloc(&cc->prefix, strlen(cl->reader->label)+20, QUITERROR);
 	snprintf(cc->prefix, strlen(cl->reader->label)+20, "cccam(r) %s:", cl->reader->label);
-	
-	if (!cl->udp_fd) {
-		cc_cli_init_int(cl); 
-		return -1; // cc_cli_init_int calls cc_cli_connect, so exit here!
-	}
 		
 	if (is_connect_blocked(rdr)) {
 		struct timeb cur_time;
@@ -2967,8 +2925,9 @@ int32_t cc_cli_connect(struct s_client *cl) {
 	}
 
 	// connect
-	handle = network_tcp_connection_open();
+	handle = network_tcp_connection_open(rdr);
 	if (handle <= 0) {
+		block_connect(rdr);
 		cs_log("%s network connect error!", rdr->label);
 		return -1;
 	}
@@ -3105,59 +3064,10 @@ int32_t cc_cli_init_int(struct s_client *cl) {
 	struct s_reader *rdr = cl->reader;
 	if (rdr->tcp_connected)
 		return 1;
-
-	if (cl->pfd) {
-		close(cl->pfd);
-		if (cl->pfd == cl->udp_fd)
-			cl->udp_fd = 0;
-		cl->pfd = 0;
-	}
-
-	if (cl->udp_fd) {
-		close(cl->udp_fd);
-		cl->udp_fd = 0;
-	}
-
-	if (rdr->r_port <= 0) {
-		cs_log("%s invalid port %d for server %s", rdr->label, rdr->r_port,
-				rdr->device);
-		return 1;
-	}
-	//		cl->ip = 0;
-	//		memset((char *) &loc_sa, 0, sizeof(loc_sa));
-	//		loc_sa.sin_family = AF_INET;
-	//#ifdef LALL
-	//		if (cfg.serverip[0])
-	//		loc_sa.sin_addr.s_addr = inet_addr(cfg.serverip);
-	//		else
-	//#endif
-	//		loc_sa.sin_addr.s_addr = INADDR_ANY;
-	//		loc_sa.sin_port = htons(rdr->l_port);
-
-		
-	if ((cl->udp_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) <= 0) {
-		cs_log("%s Socket creation failed (socket=%d, errno=%d %s)", rdr->label,
-				cl->udp_fd, errno, strerror(errno));
-		return 1;
-	}
-	//cs_log("%s 1 socket created: cs_idx=%d, fd=%d errno=%d", getprefix(), cs_idx, cl->udp_fd, errno);
-
-#ifdef SO_PRIORITY
-	if (cfg.netprio)
-		setsockopt(cl->udp_fd, SOL_SOCKET, SO_PRIORITY,
-			(void *)&cfg.netprio, sizeof(uintptr_t));
-#endif
-    int32_t keep_alive = 1;
-    setsockopt(cl->udp_fd, SOL_SOCKET, SO_KEEPALIVE,
-		(void *)&keep_alive, sizeof(keep_alive));
                 	
 	rdr->tcp_ito = 1; //60sec...This now invokes ph_idle()
 	if (rdr->cc_maxhop < 0)
 		rdr->cc_maxhop = 10;
-
-	memset((char *) &cl->udp_sa, 0, sizeof(cl->udp_sa));
-	cl->udp_sa.sin_family = AF_INET;
-	cl->udp_sa.sin_port = htons((uint16_t) rdr->r_port);
 
 	if (rdr->tcp_rto <= 2)
 		rdr->tcp_rto = 2; // timeout to 120s
@@ -3309,6 +3219,7 @@ void module_cccam(struct s_module *ph) {
 	ph->c_send_emm = cc_send_emm;
 	ph->s_ip = cfg.cc_srvip;
 	ph->s_handler = cc_srv_init;
+	ph->s_init = cc_srv_init2;
 	ph->send_dcw = cc_send_dcw;
 	ph->c_available = cc_available;
 	ph->c_card_info = cc_card_info;

@@ -3,10 +3,12 @@
 #include "reader-videoguard-common.h"
 
 // Redefine logging funtion to include reader name
-#define cs_log(x...)  cs_log("[videoguard2-reader] "x)
+#undef cs_log
+#define cs_log(x...)  cs_log_int(0, 1, NULL, 0, "[videoguard2-reader] "x)
 #define cs_ri_log(x,y...)  cs_ri_log(x,"[videoguard2-reader] "y)
 #ifdef WITH_DEBUG
-  #define cs_debug_mask(x,y...) cs_debug_mask(x, "[videoguard2-reader] "y)
+  #undef cs_debug_mask
+  #define cs_debug_mask(x,y...) cs_log_int(x, 1, NULL, 0, "[videoguard2-reader] "y)
 #endif
 
 static void dimeno_PostProcess_Decrypt(struct s_reader * reader, unsigned char *rxbuff, unsigned char *cw)

@@ -8,6 +8,7 @@ CS_CONFDIR = '\"/usr/local/etc\"'
 export VER
 
 linux:	i386-pc-linux
+debug: i386-pc-linux-debug
 linux-pcsc:	i386-pc-linux-pcsc
 freebsd:	i386-pc-freebsd
 tuxbox:	cross-powerpc-tuxbox-linux

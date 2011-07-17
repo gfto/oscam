@@ -406,7 +406,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   //Checking connected & group valid:
   struct s_client *cur_cl = cur_client();
   
-  if (!((rdr->fd) && (rdr->grp&cur_cl->grp)))
+  if (!((rdr->grp&cur_cl->grp)))
     return(0);
 
   //Schlocke reader-defined function, reader-self-check: 

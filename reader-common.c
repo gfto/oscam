@@ -37,7 +37,7 @@ static int32_t reader_device_type(struct s_reader * reader)
 }
 #endif
 
-static void reader_nullcard(struct s_reader * reader)
+void reader_nullcard(struct s_reader * reader)
 {
   reader->csystem.active=0;
   memset(reader->hexserial, 0   , sizeof(reader->hexserial));
@@ -83,7 +83,6 @@ int32_t check_sct_len(const uchar *data, int32_t off)
 	return(l);
 }
 
-
 static int32_t reader_card_inserted(struct s_reader * reader)
 {
 #ifndef USE_GPIO
@@ -93,6 +92,13 @@ static int32_t reader_card_inserted(struct s_reader * reader)
 	int32_t card;
 	if (ICC_Async_GetStatus (reader, &card)) {
 		cs_log("Error getting status of terminal.");
+
+		reader->fd_error++;
+		if (reader->fd_error>5 && reader->client) {
+			reader->client->init_done = 0;
+			cs_log("WARNING: reader %s was disabled because of too many errors", reader->label);
+		}
+ 
 		return 0; //corresponds with no card inside!!
 	}
 	return (card);
@@ -100,8 +106,9 @@ static int32_t reader_card_inserted(struct s_reader * reader)
 
 static int32_t reader_activate_card(struct s_reader * reader, ATR * atr, uint16_t deprecated)
 {
-  int32_t i,ret;
-	if (!reader_card_inserted(reader))
+	int32_t i,ret;
+
+	if (reader->card_status != CARD_NEED_INIT)
 		return 0;
 
   /* Activate card */
@@ -176,15 +183,17 @@ static void do_emm_from_file(struct s_reader * reader)
 
 void reader_card_info(struct s_reader * reader)
 {
-  if ((reader->card_status == CARD_NEED_INIT) || (reader->card_status == CARD_INSERTED))
-  {
-    cur_client()->last=time((time_t)0);
-    cs_ri_brk(reader, 0);
+	if ((reader->card_status == CARD_NEED_INIT) || (reader->card_status == CARD_INSERTED)) {
 
-	if (reader->csystem.active && reader->csystem.card_info) {
-		reader->csystem.card_info(reader);
+		if (reader->client)
+			reader->client->last=time((time_t)0);
+
+		cs_ri_brk(reader, 0);
+
+		if (reader->csystem.active && reader->csystem.card_info) {
+			reader->csystem.card_info(reader);
+		}
 	}
-  }
 }
 
 static int32_t reader_get_cardsystem(struct s_reader * reader, ATR atr)
@@ -224,7 +233,7 @@ static int32_t reader_get_cardsystem(struct s_reader * reader, ATR atr)
 	return(reader->csystem.active);
 }
 
-static int32_t reader_reset(struct s_reader * reader)
+int32_t reader_reset(struct s_reader * reader)
 {
   reader_nullcard(reader);
   ATR atr;
@@ -259,6 +268,22 @@ static int32_t reader_reset(struct s_reader * reader)
 #ifdef AZBOX
   }
 #endif
+
+ if (!ret) 
+      {
+        reader->card_status = CARD_FAILURE;
+        cs_log("card initializing error");
+#ifdef QBOXHD_LED 
+        qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_MEDIUM);
+#endif
+      }
+      else
+      {
+        reader_card_info(reader);
+        reader->card_status = CARD_INSERTED;
+        do_emm_from_file(reader);
+      }
+
 	return(ret);
 }
 
@@ -279,46 +304,31 @@ int32_t reader_device_init(struct s_reader * reader)
 
 int32_t reader_checkhealth(struct s_reader * reader)
 {
-  if (reader_card_inserted(reader))
-  {
-    if (reader->card_status == NO_CARD || reader->card_status == UNKNOWN)
-    {
-      cs_log("%s card detected", reader->label);
+	if (reader_card_inserted(reader)) {
+		if (reader->card_status == NO_CARD || reader->card_status == UNKNOWN) {
+			cs_log("%s card detected", reader->label);
 #ifdef QBOXHD_LED
-      qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_SLOW);
+			qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_SLOW);
 #endif
-      reader->card_status = CARD_NEED_INIT;
-      if (!reader_reset(reader)) 
-      {
-        reader->card_status = CARD_FAILURE;
-        cs_log("card initializing error");
+			reader->card_status = CARD_NEED_INIT;
+			//reader_reset(reader);
+			add_job(reader->client, ACTION_READER_RESET, NULL, 0);
+		}
+	} else {
+		if (reader->card_status == CARD_INSERTED) {
+			reader_nullcard(reader);
+			if (reader->client) {
+				reader->client->lastemm = 0;
+				reader->client->lastecm = 0;
+			}
+			cs_log("card ejected");
 #ifdef QBOXHD_LED 
-        qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_MEDIUM);
+ 			qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_SLOW);
 #endif
-      }
-      else
-      {
-        reader_card_info(reader);
-        reader->card_status = CARD_INSERTED;
-        do_emm_from_file(reader);
-      }
-    }
-  }
-  else
-  {
-    if (reader->card_status == CARD_INSERTED)
-    {
-      reader_nullcard(reader);
-      cur_client()->lastemm = 0;
-      cur_client()->lastecm = 0;
-      cs_log("card ejected");
-#ifdef QBOXHD_LED 
-      qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_SLOW);
-#endif
-    }
-    reader->card_status = NO_CARD;
-  }
-  return reader->card_status == CARD_INSERTED;
+		}
+		reader->card_status = NO_CARD;
+	}
+	return reader->card_status == CARD_INSERTED;
 }
 
 void reader_post_process(struct s_reader * reader)
@@ -333,18 +343,19 @@ void reader_post_process(struct s_reader * reader)
 int32_t reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   int32_t rc=-1;
-  if( (rc=reader_checkhealth(reader)) )
-  {
-      cur_client()->last_srvid=er->srvid;
-      cur_client()->last_caid=er->caid;
-      cur_client()->last=time((time_t)0);
+	if( (rc=reader_checkhealth(reader)) ) {
+		if (reader->client) {
+			reader->client->last_srvid=er->srvid;
+			reader->client->last_caid=er->caid;
+			reader->client->last=time((time_t)0);
+		}
 
-	if (reader->csystem.active && reader->csystem.do_ecm) 
-		rc=reader->csystem.do_ecm(reader, er);
-	else
-		rc=0;
-  }
-  return(rc);
+		if (reader->csystem.active && reader->csystem.do_ecm) 
+			rc=reader->csystem.do_ecm(reader, er);
+		else
+			rc=0;
+	}
+	return(rc);
 }
 
 int32_t reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs from calling reader!

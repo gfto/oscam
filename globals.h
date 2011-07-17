@@ -86,6 +86,7 @@
 # define call(arg) \
 	if (arg) { \
 		cs_debug_mask(D_TRACE, "ERROR, function call %s returns error.",#arg); \
+		return ERROR; \
 	}
 # define D_USE(x) x
 #else
@@ -366,6 +367,26 @@ extern void cs_switch_led(int32_t led, int32_t action);
 #define BAN_SLEEPING	4			// failban mask for sleeping user
 #define BAN_DUPLICATE	8			// failban mask for duplicate user
 
+#define ACTION_READER_IDLE		1
+#define ACTION_READER_REMOTE	2
+#define ACTION_READER_REMOTELOG	3
+#define ACTION_READER_RESET		4
+#define ACTION_READER_ECM_REQUEST	5
+#define ACTION_READER_EMM		6
+#define ACTION_READER_CARDINFO	7
+#define ACTION_READER_INIT		8
+#define ACTION_READER_RESTART	9
+
+#define ACTION_CLIENT_TCP_CONNECT	21
+#define ACTION_CLIENT_UDP		22
+#define ACTION_CLIENT_TCP		23
+#define ACTION_CLIENT_ECM_ANSWER	24
+#define ACTION_CLIENT_KILL		25
+#define ACTION_CLIENT_INIT		26
+
+#define CHECK_ECM_FALLBACK		1
+#define CHECK_ECM_TIMEOUT		2
+
 #define AVAIL_CHECK_CONNECTED	0
 #define AVAIL_CHECK_LOADBALANCE	1
 
@@ -502,8 +523,9 @@ struct s_module {
 	char 			*logtxt;
 	//int32_t  		s_port;
 	in_addr_t		s_ip;
-	void 			*(*s_handler)();
-	int32_t			(*recv)(struct s_client *, uchar *, int32_t);
+	void			*(*s_handler)(struct s_client *, uchar *, int);
+	void			(*s_init)(struct s_client *);
+	int32_t		(*recv)(struct s_client *, uchar *, int32_t);
 	void			(*send_dcw)(struct s_client*, struct ecm_request_t *);
 	void			(*cleanup)(struct s_client*);
 	int8_t			c_multi;
@@ -645,6 +667,11 @@ struct s_cwresponse {
 #endif
 
 struct s_client {
+	int8_t			init_done;
+	pthread_mutex_t	thread_lock;
+	int8_t			thread_active;
+	int8_t			kill;
+	LLIST			*joblist;
 	in_addr_t		ip;
 	in_port_t		port;
 	time_t			login;
@@ -829,7 +856,6 @@ struct s_reader  									//contains device info, reader info and card info
 	int8_t			available;						// Schlocke: New flag for loadbalancing. Only reader if reader supports ph.c_available function
 	int8_t			dropbadcws;						// Schlocke: 1=drops cw if checksum is wrong. 0=fix checksum (default)
 	int8_t			fd_error;
-	int32_t			fd;
 	uint64_t		grp;
 	int8_t			fallback;
 	int32_t			typ;
@@ -1030,6 +1056,7 @@ struct s_auth
 	char			description[64];
 #endif
 	int8_t			uniq;
+	int16_t			allowedprotocols;
 	LLIST			*aureader_list;
 	int8_t			autoau;
 	int8_t			monlvl;
@@ -1292,6 +1319,22 @@ struct s_clientinit
 {
 	void *(*handler)(struct s_client*);
 	struct s_client * client;
+};
+
+struct s_data {
+	int action;
+	struct s_reader *rdr;
+	struct s_client *cl;
+	void *ptr;
+	uint16_t len;
+};
+
+struct s_check {
+	struct s_client *cl;
+	int8_t action;
+	void *ptr;
+	int32_t len;
+	struct timeb t_check;
 };
 
 typedef struct reader_stat_t
