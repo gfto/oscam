@@ -146,7 +146,10 @@ static int32_t dre_card_init (struct s_reader * reader, ATR newatr)
 	char *card;
 	char tmp[9];
 
-  if ((atr[0] != 0x3b) || (atr[1] != 0x15) || (atr[2] != 0x11) || (atr[3] != 0x12 || atr[4] != 0xca || atr[5] != 0x07))
+  if ((atr[0] != 0x3b) || (atr[1] != 0x15) || (atr[2] != 0x11) || (atr[3] != 0x12) || (
+		((atr[4] != 0xca) || (atr[5] != 0x07)) &&
+		((atr[4] != 0x01) || (atr[5] != 0x01))
+	))
     return ERROR;
 
   reader->provider = atr[6];
