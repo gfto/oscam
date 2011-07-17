@@ -257,13 +257,16 @@ int32_t is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
 	return (srvid != 0);
 }
 
+#define BLOCKING_SECONDS 60
+
 void add_sid_block(struct s_client *cl __attribute__((unused)), struct cc_card *card,
 		struct cc_srvid *srvid_blocked) {
 	if (is_sid_blocked(card, srvid_blocked))
 		return;
 
-	struct cc_srvid *srvid = cs_malloc(&srvid, sizeof(struct cc_srvid), QUITERROR);
+	struct cc_srvid_block *srvid = cs_malloc(&srvid, sizeof(struct cc_srvid_block), QUITERROR);
 	memcpy(srvid, srvid_blocked, sizeof(struct cc_srvid));
+	srvid->blocked_till = time(NULL)+BLOCKING_SECONDS;
 	ll_append(card->badsids, srvid);
 	cs_debug_mask(D_READER, "%s added sid block %04X(%d) for card %08x",
 			getprefix(), srvid_blocked->sid, srvid_blocked->ecmlen,
@@ -1091,6 +1094,29 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	cur_er->rc = 101; //mark ECM as already send
 	cs_debug_mask(D_READER, "cccam: ecm-task %d", cur_er->idx);
 
+	//sleepsend support:
+    static const char *typtext[]={"ok", "invalid", "sleeping"};
+
+    if (cc->sleepsend && cl->stopped) {
+    	if (er->srvid == cl->lastsrvid && er->caid == cl->lastcaid && er->pid == cl->lastpid){
+        	cs_log("%s is stopped - requested by server (%s)",
+            	cl->reader->label, typtext[cl->stopped]);
+			if (!cc->extended_mode) {
+				rdr->available = 1;
+				cs_writeunlock(&cc->ecm_busy);
+			}
+			return(-1);
+		}
+        else {
+        	cl->stopped = 0;
+        }
+	}
+                                                                                                    
+    cl->lastsrvid = cur_er->srvid;
+	cl->lastcaid = cur_er->caid;
+	cl->lastpid = cur_er->pid;
+	//sleepsend support end
+
 	if (buf)
 		memcpy(buf, cur_er->ecm, cur_er->l);
 
@@ -1222,16 +1248,19 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			//cur_er->rcEx = 0;
 			//cs_sleepms(300);
 			rdr->last_s = rdr->last_g;
+			time_t utime = time(NULL);
 			
 			//reopen all blocked sids for this srvid:
 			it = ll_iter_create(cc->cards);
 			while ((card = ll_iter_next(&it))) {
 				if (card->caid == cur_er->caid) { // caid matches
 					LL_ITER it2 = ll_iter_create(card->badsids);
-					struct cc_srvid *srvid;
+					struct cc_srvid_block *srvid;
 					while ((srvid = ll_iter_next(&it2)))
-						if (srvid->ecmlen > 0 && sid_eq(srvid, &cur_srvid)) //ecmlen==0: From remote peer, so do not remove
-							ll_iter_remove_data(&it2);
+						if (srvid->ecmlen > 0 && sid_eq((struct cc_srvid*)srvid, &cur_srvid)) { //ecmlen==0: From remote peer, so do not remove
+							if (srvid->blocked_till <= utime)
+								ll_iter_remove_data(&it2);
+						}
 				}
 			}
 		} else {
@@ -1524,6 +1553,8 @@ int32_t check_extended_mode(struct s_client *cl, char *msg) {
 	// SID: Exchange of good sids/bad sids activated (like cccam 2.2.x)
 	//      card exchange command MSG_NEW_CARD_SIDINFO instead MSG_NEW_CARD is used
 	//
+	// SLP: Sleepsend supported, like camd35
+	//
 
 	struct cc_data *cc = cl->cc;
 	char *saveptr1 = NULL;
@@ -1539,6 +1570,11 @@ int32_t check_extended_mode(struct s_client *cl, char *msg) {
 		else if (p && strncmp(p, "SID", 3)==0) {
 			cc->cccam220 = 1;
 			cs_debug_mask(D_CLIENT, "%s extra SID mode", getprefix());
+			has_param = 1;
+		}
+		else if (p && strncmp(p, "SLP", 3)==0) {
+			cc->sleepsend = 1;
+			cs_debug_mask(D_CLIENT, "%s sleepsend", getprefix());
 			has_param = 1;
 		}
 	}
@@ -1638,9 +1674,10 @@ struct cc_card *read_card(uint8_t *buf, int32_t ext) {
             uint16_t sid = b2i(2, ptr);
             //cs_debug_mask(D_CLIENT, "      rejected sid = %04X, added to sid block list", sid);
 
-            struct cc_srvid *srvid = cs_malloc(&srvid, sizeof(struct cc_srvid), QUITERROR);
+            struct cc_srvid_block *srvid = cs_malloc(&srvid, sizeof(struct cc_srvid_block), QUITERROR);
             srvid->sid = sid;
             srvid->ecmlen = 0;
+            srvid->blocked_till = 0;
             ll_append(card->badsids, srvid);
             ptr+=2;
         }
@@ -1801,7 +1838,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			if (cc->is_oscam_cccam) {
 				uint8_t token[256];
 				snprintf((char *)token, sizeof(token),
-						"PARTNER: OSCam v%s, build #%s (%s) [EXT,SID]", CS_VERSION,
+						"PARTNER: OSCam v%s, build #%s (%s) [EXT,SID,SLP]", CS_VERSION,
 						CS_SVN_VERSION, CS_OSTYPE);
 				cc_cmd_send(cl, token, strlen((char *)token) + 1, MSG_CW_NOK1);
 			}
@@ -1957,10 +1994,29 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 		cs_writeunlock(&cc->cards_busy);
 		break;
 	}
-
+	
+	case MSG_SLEEPSEND:
+	 	//Server sends SLEEPSEND:
+		if (!cfg.c35_suppresscmd08) {
+        	if(buf[4] == 0xFF) {
+	        	cl->stopped = 2; // server says sleep
+	        	//rdr->card_status = NO_CARD;
+			} else {
+#ifdef WITH_LB
+		    	if (!cfg.lb_mode) {
+#endif
+					cl->stopped = 1; // server says invalid
+					//rdr->card_status = CARD_FAILURE;
+#ifdef WITH_LB
+				}
+#endif
+			}
+		}
+		//NO BREAK!! NOK Handling needed!
+		
 	case MSG_CW_NOK1:
 	case MSG_CW_NOK2:
-		if (l > 4) {
+		if (l > 5) {
 			//Received NOK with payload:
 			char *msg = (char*) buf + 4;
 
@@ -1974,7 +2030,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 					cc->is_oscam_cccam = 1;
 
 					//send params back. At the moment there is only "EXT"
-					char param[14];
+					char param[20];
 					if (!has_param)
 						param[0] = 0;
 					else {
@@ -1983,6 +2039,8 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 							addParam(param, "EXT");
 						if (cc->cccam220)
 							addParam(param, "SID");
+						if (cc->sleepsend)
+							addParam(param, "SLP");
 						strcat(param, "]");
 					}
 
@@ -2505,6 +2563,14 @@ int32_t cc_recv_chk(struct s_client *cl, uchar *dcw, int32_t *rc, uchar *buf, in
 //}
 
 
+// Sleepsend-format:
+//
+// offset len descr
+// 00     02  caid
+// 02     04  prid
+// 06     02  srvid
+// 08     01  ecmlen (& 0xff)
+// 09     01  sleepsend-time
 
 /**
  * Server: send DCW to client
@@ -2534,12 +2600,18 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 	} else { //NOT found:
 		//cs_debug_mask(D_TRACE, "%s send cw: NOK cpti: %d", getprefix(),
 		//		er->cpti);
-
+		
 		if (eei && cc->extended_mode)
 			cc->g_flag = eei->send_idx;
 
 		int32_t nok;
-		if (!eei || !eei->card)
+		int bufsize = 0;
+		if (cc->sleepsend && er->rc == E_STOPPED) {
+			buf[0] = cl->c35_sleepsend;
+			bufsize=1;
+			nok = MSG_SLEEPSEND;
+		}
+		else if (!eei || !eei->card)
 			nok = MSG_CW_NOK1; //share no more available
 		else {
 			if (cfg.cc_forward_origin_card && er->origin_card == eei->card)
@@ -2547,7 +2619,7 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 			else
 				nok = MSG_CW_NOK2; //can't decode
 		}
-		cc_cmd_send(cl, NULL, 0, nok);
+		cc_cmd_send(cl, buf, bufsize, nok);
 	}
 	cc->server_ecm_pending--;
 	if (eei) {

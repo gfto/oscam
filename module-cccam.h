@@ -53,6 +53,7 @@ typedef enum {
 	MSG_CMD_0D = 0x0d, // "
 	MSG_CMD_0E = 0x0e, // "
 	MSG_NEW_CARD_SIDINFO = 0x0f,
+	MSG_SLEEPSEND = 0x80, //Sleepsend support
 	MSG_CW_NOK1 = 0xfe, //Node no more available
 	MSG_CW_NOK2 = 0xff, //No decoding
 	MSG_NO_HEADER = 0xffff
@@ -68,6 +69,12 @@ struct cc_crypt_block {
 struct cc_srvid {
 	uint16_t sid;
 	uint8_t ecmlen;
+};
+
+struct cc_srvid_block {
+	uint16_t sid;
+	uint8_t  ecmlen;
+	time_t   blocked_till;
 };
 
 struct cc_provider {
@@ -195,6 +202,7 @@ struct cc_data {
 	uint8_t cccam220;
 
 	uint8_t mode;
+	uint8_t sleepsend;
 		
 	//Extended Mode for SPECIAL clients:
 	uint8_t extended_mode;
