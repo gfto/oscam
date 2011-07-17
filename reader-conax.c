@@ -275,6 +275,7 @@ static void conax_get_emm_filter(struct s_reader * rdr, uchar *filter)
 static int32_t conax_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   def_resp;
+  unsigned char insCA[]  = { 0xDD,0xCA,0x00,0x00,0x00 };
   unsigned char insEMM[] = { 0xDD,0x84,0x00,0x00,0x00 };
   unsigned char buf[255];
   int32_t rc=0;
@@ -286,6 +287,11 @@ static int32_t conax_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   buf[1]=l+3;
   memcpy(buf+2, ep->emm, buf[1]);
   write_cmd(insEMM, buf);
+
+  if (cta_res[0] == 0x98) {
+    insCA[4] = cta_res[1];
+    write_cmd(insCA, NULL);
+  }
 
   rc=((cta_res[0]==0x90)&&(cta_res[1]==0x00));
 

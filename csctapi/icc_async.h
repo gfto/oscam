@@ -49,7 +49,7 @@
  */
 
 //declare locking stuff for sc8in1 reader
-static CS_MUTEX_LOCK sc8in1_lock; //semaphore for SC8in1, FIXME should not be global, but one per SC8in1
+extern CS_MUTEX_LOCK sc8in1_lock; //semaphore for SC8in1, FIXME should not be global, but one per SC8in1
 
 /* Initialization and Deactivation */
 int32_t ICC_Async_Activate (struct s_reader *reader, ATR * newatr, uint16_t deprecated);

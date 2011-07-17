@@ -42,6 +42,8 @@
 #include "ifd_pcsc.h"
 #endif
 
+CS_MUTEX_LOCK sc8in1_lock; //semaphore for SC8in1, FIXME should not be global, but one per SC8in1
+
 // Default T0/T14 settings
 #define DEFAULT_WI		10
 // Default T1 settings

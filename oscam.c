@@ -856,7 +856,14 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 					if (account->uniq)
 						cs_fake_client(cl, account->usr, (account->uniq == 1 || account->uniq == 2)?account->uniq+2:account->uniq, cl->ip);
 #ifdef CS_ANTICASC
-					cl->ac_limit	= (account->ac_users * 100 + 80) * cfg.ac_stime;
+					int32_t numusers = account->ac_users;
+					if ( numusers == -1)
+						numusers = cfg.ac_users;
+					cl->ac_limit	= (numusers * 100 + 80) * cfg.ac_stime;
+					cl->ac_penalty = account->ac_penalty == -1 ? cfg.ac_penalty : account->ac_penalty;
+					cs_debug_mask(D_CLIENT, "acasc: client '%s', users=%d, stime=%d min, dwlimit=%d per min, penalty=%d",
+								  account->usr, numusers, cfg.ac_stime,
+								  numusers*100+80, cl->ac_penalty);
 #endif
 				}
 			} else {

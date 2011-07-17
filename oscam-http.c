@@ -1552,8 +1552,8 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 		for (i=1; i<CS_MAXTUNTAB; account->ttab.bt_srvid[i++]=0x0000);
 		account->expirationdate=(time_t)NULL;
 #ifdef CS_ANTICASC
-		account->ac_users=cfg.ac_users;
-		account->ac_penalty=cfg.ac_penalty;
+		account->ac_users   = -1; // by default create the new user with global ac_users value
+		account->ac_penalty = -1; // by default create the new user with global penality value
 #endif
 		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>New user has been added with default settings</b><BR>");
 
@@ -1725,9 +1725,18 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 
 #ifdef CS_ANTICASC
 	tpl_printf(vars, TPLADD, "AC_USERS", "%d", account->ac_users);
+	tpl_printf(vars, TPLADD, "CFGNUMUSERS", "%d", cfg.ac_users);
 	if(!apicall){
 		tpl_printf(vars, TPLADD, "TMP", "PENALTY%d", account->ac_penalty);
 		tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+		char *tmp = NULL;
+		switch(cfg.ac_penalty) {
+			case 0: tmp = "(0) Only write to log"; break;
+			case 1: tmp = "(1) Fake DW delayed"; break;
+			case 2: tmp = "(2) Ban"; break;
+			case 3: tmp = "(3) Real DW delayed"; break;
+		}
+		tpl_printf(vars, TPLADD, "CFGPENALTY", "%s", tmp);
 	} else {
 		tpl_printf(vars, TPLADD, "PENALTYVALUE", "%d", account->ac_penalty);
 	}
@@ -1767,52 +1776,25 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	if (cfg.mon_hideclient_to > 10)
 	hideclient = cfg.mon_hideclient_to;
 
-	if (!apicall) {
-		if (strcmp(getParam(params, "action"), "reinit") == 0) {
-			if(!cfg.http_readonly)
-				refresh_oscam(REFR_ACCOUNTS);
-		}
 
-		if (strcmp(getParam(params, "action"), "delete") == 0) {
-			if(cfg.http_readonly) {
-				tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Webif is in readonly mode. No deletion will be made!</b><BR>");
-			} else {
-				struct s_auth *account_prev = NULL;
-				
-				for(account = cfg.account; (account); account = account->next){
-					if(strcmp(account->usr, user) == 0) {
-						if(account_prev == NULL)
-							cfg.account = account->next;
-						else
-							account_prev->next = account->next;
-						ll_clear(account->aureader_list);
-						for (cl=first_client->next; cl ; cl=cl->next){
-							if(cl->account == account){
-								if (ph[cl->ctyp].type & MOD_CONN_NET) {
-									kill_thread(cl);
-								} else {
-									cl->account = first_client->account;
-								}
-							}
-						}
-						add_garbage(account);
-						found = 1;
-						break;
-					}
-					account_prev = account;
-				}
-				if (found > 0) {
-					if (write_userdb()!=0)
-						tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
-				} else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Sorry but the specified user doesn't exist. No deletion will be made!</b><BR>");
-			}
-		}
+	if (strcmp(getParam(params, "action"), "reinit") == 0) {
+		if(!cfg.http_readonly)
+			refresh_oscam(REFR_ACCOUNTS);
+	}
 
-		if ((strcmp(getParam(params, "action"), "disable") == 0) || (strcmp(getParam(params, "action"), "enable") == 0)) {
-			account = get_account_by_name(getParam(params, "user"));
-			if (account) {
-				if(strcmp(getParam(params, "action"), "disable") == 0){
-					account->disabled = 1;
+	if (strcmp(getParam(params, "action"), "delete") == 0) {
+		if(cfg.http_readonly) {
+			tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Webif is in readonly mode. No deletion will be made!</b><BR>");
+		} else {
+			struct s_auth *account_prev = NULL;
+
+			for(account = cfg.account; (account); account = account->next){
+				if(strcmp(account->usr, user) == 0) {
+					if(account_prev == NULL)
+						cfg.account = account->next;
+					else
+						account_prev->next = account->next;
+					ll_clear(account->aureader_list);
 					for (cl=first_client->next; cl ; cl=cl->next){
 						if(cl->account == account){
 							if (ph[cl->ctyp].type & MOD_CONN_NET) {
@@ -1822,38 +1804,65 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 							}
 						}
 					}
-				} else
-					account->disabled = 0;
-				if (write_userdb() != 0)
+					add_garbage(account);
+					found = 1;
+					break;
+				}
+				account_prev = account;
+			}
+			if (found > 0) {
+				if (write_userdb()!=0)
 					tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
-			} else {
-				tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Sorry but the specified user doesn't exist. No deletion will be made!</b><BR>");
-			}
-		}
-
-		if (strcmp(getParam(params, "action"), "resetstats") == 0) {
-			account = get_account_by_name(getParam(params, "user"));
-			if (account) clear_account_stats(account);
-		}
-
-		if (strcmp(getParam(params, "action"), "resetserverstats") == 0) {
-			clear_system_stats();
-		}
-
-		if (strcmp(getParam(params, "action"), "resetalluserstats") == 0) {
-			clear_all_account_stats();
-		}
-
-		if ((strcmp(getParam(params, "part"), "adduser") == 0) && (!cfg.http_readonly)) {
-			tpl_addVar(vars, TPLAPPEND, "NEWUSERFORM", tpl_getTpl(vars, "ADDNEWUSER"));
-		} else {
-			if(cfg.http_refresh > 0) {
-				tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg.http_refresh);
-				tpl_addVar(vars, TPLADD, "REFRESHURL", "userconfig.html");
-				tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
-			}
+			} else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Sorry but the specified user doesn't exist. No deletion will be made!</b><BR>");
 		}
 	}
+
+	if ((strcmp(getParam(params, "action"), "disable") == 0) || (strcmp(getParam(params, "action"), "enable") == 0)) {
+		account = get_account_by_name(getParam(params, "user"));
+		if (account) {
+			if(strcmp(getParam(params, "action"), "disable") == 0){
+				account->disabled = 1;
+				for (cl=first_client->next; cl ; cl=cl->next){
+					if(cl->account == account){
+						if (ph[cl->ctyp].type & MOD_CONN_NET) {
+							kill_thread(cl);
+						} else {
+							cl->account = first_client->account;
+						}
+					}
+				}
+			} else
+				account->disabled = 0;
+			if (write_userdb() != 0)
+				tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
+		} else {
+			tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Sorry but the specified user doesn't exist. No deletion will be made!</b><BR>");
+		}
+	}
+
+	if (strcmp(getParam(params, "action"), "resetstats") == 0) {
+		account = get_account_by_name(getParam(params, "user"));
+		if (account) clear_account_stats(account);
+	}
+
+	if (strcmp(getParam(params, "action"), "resetserverstats") == 0) {
+		clear_system_stats();
+	}
+
+	if (strcmp(getParam(params, "action"), "resetalluserstats") == 0) {
+		clear_all_account_stats();
+	}
+
+	if ((strcmp(getParam(params, "part"), "adduser") == 0) && (!cfg.http_readonly)) {
+		tpl_addVar(vars, TPLAPPEND, "NEWUSERFORM", tpl_getTpl(vars, "ADDNEWUSER"));
+	} else {
+		if(cfg.http_refresh > 0) {
+			tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg.http_refresh);
+			tpl_addVar(vars, TPLADD, "REFRESHURL", "userconfig.html");
+			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
+		}
+	}
+
 
 	/* List accounts*/
 	char *status, *expired, *classname, *lastchan;
@@ -2655,16 +2664,35 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 									    end_t.tm_year + 1900, end_t.tm_mon + 1, end_t.tm_mday);
 								}
 							}
+							
+							if (((total_ent) && (active_ent == 0)) || (total_ent == 0))
+							{
+								tpl_printf(vars, TPLAPPEND, "TMPSPAN", "No active entitlements found");
+							}
+							
 							tpl_printf(vars, TPLAPPEND, "TMPSPAN", "</SPAN>");
 							
-							tpl_printf(vars, TPLADD, "TMP", "(%d of %d entitlements)", active_ent, total_ent);
-							
+							if (active_ent)
+							{
+								tpl_printf(vars, TPLADD, "TMP", "(%d entitlement%s)", active_ent, (active_ent != 1)?"s":"");
+							}
+							else
+							{
+								tpl_printf(vars, TPLADD, "TMP", "(no entitlements)");
+								
+							}
 							
 							tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" class=\"tooltip%s\">%s%s</A>",
-														urlencode(vars, cl->reader->label),
-														active_ent > 0 ? "1": "",
-														tpl_getVar(vars, "TMP"),
-														active_ent > 0 ? tpl_getVar(vars, "TMPSPAN") : "");
+													urlencode(vars, cl->reader->label),
+													active_ent > 0 ? "": "1",
+													tpl_getVar(vars, "TMP"),
+													tpl_getVar(vars, "TMPSPAN"));
+						}
+						else
+						{
+							tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" class=\"tooltip\">(no entitlements)"
+												    "<SPAN>No active entitlements found</SPAN></A>",
+													urlencode(vars, cl->reader->label));
 						}
 					}
 
@@ -3289,11 +3317,12 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 	return tpl_getTpl(vars, "FILE");
 }
 
-static char *send_oscam_failban(struct templatevars *vars, struct uriparams *params) {
+static char *send_oscam_failban(struct templatevars *vars, struct uriparams *params, int8_t apicall) {
 
 	uint32_t ip2delete = 0;
 	LL_ITER itr = ll_iter_create(cfg.v_list);
 	V_BAN *v_ban_entry;
+	//int8_t apicall = 0; //remove before flight
 
 	if (strcmp(getParam(params, "action"), "delete") == 0) {
 
@@ -3324,18 +3353,35 @@ static char *send_oscam_failban(struct templatevars *vars, struct uriparams *par
 
 		struct tm st ;
 		localtime_r(&v_ban_entry->v_time, &st);
-
-		tpl_printf(vars, TPLADD, "VIOLATIONDATE", "%02d.%02d.%02d %02d:%02d:%02d",
-				st.tm_mday, st.tm_mon+1,
-				st.tm_year%100, st.tm_hour,
-				st.tm_min, st.tm_sec);
+		if (!apicall) {
+			tpl_printf(vars, TPLADD, "VIOLATIONDATE", "%02d.%02d.%02d %02d:%02d:%02d",
+					st.tm_mday, st.tm_mon+1,
+					st.tm_year%100, st.tm_hour,
+					st.tm_min, st.tm_sec);
+		} else {
+			char tbuffer [30];
+			strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &st);
+			tpl_addVar(vars, TPLADD, "VIOLATIONDATE", tbuffer);
+		}
 
 		tpl_printf(vars, TPLADD, "VIOLATIONCOUNT", "%d", v_ban_entry->v_count);
-		tpl_addVar(vars, TPLADD, "LEFTTIME", sec2timeformat(vars, (cfg.failbantime * 60) - (now - v_ban_entry->v_time)));
+
+		if (!apicall)
+			tpl_addVar(vars, TPLADD, "LEFTTIME", sec2timeformat(vars, (cfg.failbantime * 60) - (now - v_ban_entry->v_time)));
+		else
+			tpl_printf(vars, TPLADD, "LEFTTIME", "%d", (cfg.failbantime * 60) - (now - v_ban_entry->v_time));
+
 		tpl_printf(vars, TPLADD, "INTIP", "%u", v_ban_entry->v_ip);
-		tpl_addVar(vars, TPLAPPEND, "FAILBANROW", tpl_getTpl(vars, "FAILBANBIT"));
+
+		if (!apicall)
+			tpl_addVar(vars, TPLAPPEND, "FAILBANROW", tpl_getTpl(vars, "FAILBANBIT"));
+		else
+			tpl_addVar(vars, TPLAPPEND, "APIFAILBANROW", tpl_getTpl(vars, "APIFAILBANBIT"));
 	}
-	return tpl_getTpl(vars, "FAILBAN");
+	if (!apicall)
+		return tpl_getTpl(vars, "FAILBAN");
+	else
+		return tpl_getTpl(vars, "APIFAILBAN");
 }
 
 static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *params, int8_t *keepalive) {
@@ -3344,6 +3390,9 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 	}
 	else if (strcmp(getParam(params, "part"), "userstats") == 0) {
 		return send_oscam_user_config(vars, params, 1);
+	}
+	else if (strcmp(getParam(params, "part"), "failban") == 0) {
+		return send_oscam_failban(vars, params, 1);
 	}
 	else if (strcmp(getParam(params, "part"), "readerconfig") == 0) {
 		//Send Errormessage
@@ -3867,7 +3916,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 #ifdef WITH_LB
 				case 15: result = send_oscam_reader_stats(vars, &params, 0); break;
 #endif
-				case 16: result = send_oscam_failban(vars, &params); break;
+				case 16: result = send_oscam_failban(vars, &params, 0); break;
 				//case  17: js file
 				case 18: result = send_oscam_api(vars, f, &params, keepalive); break; //oscamapi.html
 				case 19: result = send_oscam_image(vars, f, &params, NULL, modifiedheader, etagheader); break;
@@ -4095,16 +4144,12 @@ void http_srv() {
 	cs_sleepms(300);
 #ifdef WITH_SSL
 	if (ssl_active){
-		int32_t i, num = CRYPTO_num_locks();;
 		SSL_CTX_free(ctx);
 		CRYPTO_set_dynlock_create_callback(NULL);
 		CRYPTO_set_dynlock_lock_callback(NULL);
 		CRYPTO_set_dynlock_destroy_callback(NULL);
 		CRYPTO_set_locking_callback(NULL);
 		CRYPTO_set_id_callback(NULL); 
-		for (i = 0; i < num; ++i) {
-			pthread_mutex_destroy(&lock_cs[i]);
-		}
 		OPENSSL_free(lock_cs);
 		lock_cs = NULL;
 	}

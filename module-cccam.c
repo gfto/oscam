@@ -1992,7 +1992,16 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 						CS_VERSION, CS_SVN_VERSION, CS_OSTYPE, param);
 					cc_cmd_send(cl, token, strlen((char *)token) + 1, MSG_CW_NOK1);
 				}
+			} else {
+				size_t msg_size = l-4;
+				char last_char = msg[msg_size-1];
+				if (last_char == 0) { // verify if the payload is a null terminated string
+					cs_realloc(&cc->nok_message, msg_size, -1);
+					memcpy(cc->nok_message, msg, msg_size);
+				} else
+					NULLFREE(cc->nok_message);
 			}
+
 			return ret;
 		}
 
@@ -2562,7 +2571,11 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 	cl->last = time((time_t *) 0);
 
 	if (n <= 0) {
-		cs_log("%s connection closed by %s", getprefix(), remote_txt());
+		struct cc_data *cc = cl->cc;
+		if (cc->nok_message)
+			cs_log("%s connection closed by %s. Reason: %s", getprefix(), remote_txt(), cc->nok_message);
+		else
+			cs_log("%s connection closed by %s.", getprefix(), remote_txt());
 		n = -1;
 	} else if (n < 4) {
 		cs_log("%s packet to small (%d bytes)", getprefix(), n);
@@ -2775,7 +2788,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 		cs_log("account '%s' has cccmaxhops = -1: user will not see any card!", usr);
 
 	cc->prefix = cs_malloc(&cc->prefix, strlen(cl->account->usr)+20, QUITERROR);
-	snprintf(cc->prefix, strlen(cl->account->usr)+20, "cccam(s) %s: ", cl->account->usr);
+	snprintf(cc->prefix, strlen(cl->account->usr)+20, "cccam(s) %s:", cl->account->usr);
 
 	//Starting readers to get cards:
 	cc_srv_wakeup_readers(cl);
@@ -2887,7 +2900,7 @@ int32_t cc_cli_connect(struct s_client *cl) {
 	}
 	if (!cc->prefix)
 		cc->prefix = cs_malloc(&cc->prefix, strlen(cl->reader->label)+20, QUITERROR);
-	snprintf(cc->prefix, strlen(cl->reader->label)+20, "cccam(r) %s: ", cl->reader->label);
+	snprintf(cc->prefix, strlen(cl->reader->label)+20, "cccam(r) %s:", cl->reader->label);
 		
 	if (is_connect_blocked(rdr)) {
 		struct timeb cur_time;
@@ -2956,6 +2969,7 @@ int32_t cc_cli_connect(struct s_client *cl) {
 	cc->num_resharex = 0;	
 	memset(&cc->cmd05_data, 0, sizeof(cc->cmd05_data));
 	memset(&cc->receive_buffer, 0, sizeof(cc->receive_buffer));
+	NULLFREE(cc->nok_message);
 	cc->cmd0c_mode = MODE_CMD_0x0C_NONE;
 
 	cs_ddump_mask(D_CLIENT, data, 16, "cccam: server init seed:");

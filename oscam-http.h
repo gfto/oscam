@@ -470,6 +470,12 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	</TABLE><BR>\n\
 ##TPLFOOTER##"
 
+#define TPLAPIFAILBAN "##TPLAPIHEADER##\n\
+	<failbanlist>\n\
+##APIFAILBANROW##\
+	</failbanlist>\n\
+##TPLAPIFOOTER##"
+
 #define TPLFAILBANBIT "\
 		<TR>\n\
 			<TD>##IPADDRESS##</TD>\
@@ -478,6 +484,9 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD class=\"centered\">##LEFTTIME##</TD>\
 			<TD class=\"centered\"><A HREF=\"failban.html?action=delete&intip=##INTIP##\" TITLE=\"Delete Entry\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\" BORDER=\"0\" ALT=\"Delete Entry\"/></A></TD>\n\
 		</TR>\n"
+
+#define TPLAPIFAILBANBIT "\
+		<ip ipinteger=\"##INTIP##\" count=\"##VIOLATIONCOUNT##\" date=\"##VIOLATIONDATE##\" secondsleft=\"\">##IPADDRESS##</ip>\n"
 
 #ifdef CS_ANTICASC
 #define TPLCONFIGMENUANTICASC "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=anticasc\">Anticascading</A></TD>\n"
@@ -646,7 +655,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?part=adduser\">Add User</A></TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=reinit\">Reinit User DB</A></TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=resetalluserstats\">Reset Userstats</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A TARGET=\"_NEW\" HREF=\"graph.svg?type=users&hidelabels=1\">Show Graphs</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A TARGET=\"_blank\" HREF=\"graph.svg?type=users&hidelabels=1\">Show Graphs</A></TD>\n\
 		</TR>\n\
 	</TABLE>\n\
 	<TABLE CLASS=\"users\">\n\
@@ -843,15 +852,20 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
 #ifdef CS_ANTICASC
 # define TPLUSEREDITANTICASC "\
-			<TR class=\"cfg_anticasc\"><TD>##TPLHELPPREFIX##user#numusers##TPLHELPSUFFIX##Anticascading numusers:</A></TD><TD><input name=\"numusers\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##AC_USERS##\"></TD></TR>\n\
+			<TR class=\"cfg_anticasc\"><TD>##TPLHELPPREFIX##user#numusers##TPLHELPSUFFIX##Anticascading numusers:</A></TD>\
+				<TD><input name=\"numusers\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##AC_USERS##\">\
+				&nbsp;Global Numuser value:<SPAN CLASS=\"global_conf\" TITLE=\"This value is used if Anticascading numusers = -1\"><A HREF=\"config.html?part=anticasc\">##CFGNUMUSERS##</A></SPAN></TD>\
+			</TR>\n\
 			<TR class=\"cfg_anticasc\"><TD>##TPLHELPPREFIX##user#penalty##TPLHELPSUFFIX##Anticascading penalty:</A></TD>\
 			<TD>\
 			<select name=\"penalty\">\n\
-					<option value=\"0\" ##PENALTY0##>0 - Only write to log</option>\n\
-					<option value=\"1\" ##PENALTY1##>1 - Fake DW</option>\n\
-					<option value=\"2\" ##PENALTY2##>2 - Ban</option>\n\
-					<option value=\"3\" ##PENALTY3##>3 - Fake DW delayed</option>\n\
+					<option value=\"-1\" ##PENALTY-1##>-1 - Use global penalty level</option>\n\
+					<option value=\"0\" ##PENALTY0##>&nbsp;0 - Only write to log</option>\n\
+					<option value=\"1\" ##PENALTY1##>&nbsp;1 - Fake DW</option>\n\
+					<option value=\"2\" ##PENALTY2##>&nbsp;2 - Ban</option>\n\
+					<option value=\"3\" ##PENALTY3##>&nbsp;3 - Fake DW delayed</option>\n\
 				</select>\n\
+				&nbsp;Global Penalty level:<SPAN CLASS=\"global_conf\"><A HREF=\"config.html?part=anticasc\" TITLE=\"This value is used if Anticascading penalty = -1\">##CFGPENALTY##</A></SPAN>\n\
 			</TD></TR>\n"
 #endif
 
@@ -888,7 +902,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLREADERS "\
 ##TPLHEADER##\
 ##TPLMENU##\
-	<TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD><TD CLASS=\"configmenu\"><A TARGET=\"_NEW\" HREF=\"graph.svg?type=servers\">Show Graphs</A></TD></TR></TABLE>\n\
+	<TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD><TD CLASS=\"configmenu\"><A TARGET=\"_blank\" HREF=\"graph.svg?type=servers\">Show Graphs</A></TD></TR></TABLE>\n\
 	<form action=\"readerconfig.html\" method=\"get\">\n\
 		<TABLE CLASS=\"readers\">\n\
 			<TR>\n\
@@ -2130,7 +2144,9 @@ char *tpl[]={
 	"FILEMENU",
 	"FILE",
 	"FAILBAN",
+	"APIFAILBAN",
 	"FAILBANBIT",
+	"APIFAILBANBIT",
 	"CONFIGGBOX",
 	"CONFIGMONITOR",
 	"CONFIGGLOBAL",
@@ -2274,7 +2290,9 @@ char *tplmap[]={
 	TPLFILEMENU,
 	TPLFILE,
 	TPLFAILBAN,
+	TPLAPIFAILBAN,
 	TPLFAILBANBIT,
+	TPLAPIFAILBANBIT,
 	TPLCONFIGGBOX,
 	TPLCONFIGMONITOR,
 	TPLCONFIGGLOBAL,

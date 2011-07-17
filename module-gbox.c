@@ -2,7 +2,6 @@
 #ifdef MODULE_GBOX
 #include <pthread.h>
 //#define _XOPEN_SOURCE 600
-#include <semaphore.h>
 #include <time.h>
 #include <sys/time.h>
 
@@ -54,7 +53,8 @@ struct gbox_data {
   struct gbox_peer peer;
   CS_MUTEX_LOCK lock;
   uchar buf[1024];
-  sem_t sem;
+  pthread_mutex_t peer_online_mutex;
+  pthread_cond_t  peer_online_cond;
   LLIST *local_cards;
 };
 
@@ -208,7 +208,7 @@ static void gbox_compress(struct gbox_data *gbox, uchar *buf, int32_t unpacked_l
 
   lzo_init();
 
-  lzo_voidp wrkmem;
+  lzo_voidp wrkmem = NULL;
   if(!cs_malloc(&tmp2,unpacked_len * 0x1000, -1)){
  		free(tmp);
  		free(tmp2);
@@ -320,8 +320,8 @@ static void gbox_expire_hello(struct s_client *cli)
   //printf("gbox: enter gbox_expire_hello()\n");
   struct gbox_data *gbox = cli->gbox;
 
-  sem_t sem;
-  sem_init(&sem, 0 , 1);
+  pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
+  pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 
   struct timespec ts;
   struct timeval tv;
@@ -330,14 +330,13 @@ static void gbox_expire_hello(struct s_client *cli)
   ts.tv_nsec = tv.tv_usec * 1000;
   ts.tv_sec += 5;
 
-  sem_wait(&sem);
-  if (sem_timedwait(&sem, &ts) == -1) {
-    if (errno == ETIMEDOUT) {
-      //printf("gbox: hello expired!\n");
-      gbox->hello_expired = 0;
-    }
+  pthread_mutex_lock (&mut);
+  int rc = pthread_cond_timedwait(&cond, &mut, &ts);
+  if (rc == ETIMEDOUT) {
+    //printf("gbox: hello expired!\n");
+    gbox->hello_expired = 0;
   }
-
+  pthread_mutex_unlock (&mut);
   //printf("gbox: exit gbox_expire_hello()\n");
 }
 
@@ -353,23 +352,22 @@ static void gbox_wait_for_response(struct s_client *cli)
 	ts.tv_nsec = tv.tv_usec * 1000;
 	ts.tv_sec += 5;
 
-	//sem_wait(&gbox->sem);
-	if (sem_timedwait(&gbox->sem, &ts) == -1) {
-		if (errno == ETIMEDOUT) {
-			gbox->peer.fail_count++;
-			//printf("gbox: sem wait timed-out, fail_count=%d\n", gbox->peer.fail_count);
+	pthread_mutex_lock (&gbox->peer_online_mutex);
+	int rc = pthread_cond_timedwait(&gbox->peer_online_cond, &gbox->peer_online_mutex, &ts);
+	if (rc == ETIMEDOUT) {
+		gbox->peer.fail_count++;
+		//printf("gbox: wait timed-out, fail_count=%d\n", gbox->peer.fail_count);
 #define GBOX_FAIL_COUNT 1
-			if (gbox->peer.fail_count >= GBOX_FAIL_COUNT) {
-				gbox->peer.online = 0;
-				//printf("gbox: fail_count >= %d, peer is offline\n", GBOX_FAIL_COUNT);
-			}
-			//cs_debug_mask(D_READER, "gbox: sem wait timed-out, fail_count=%d\n", gbox->peer.fail_count);
+		if (gbox->peer.fail_count >= GBOX_FAIL_COUNT) {
+			gbox->peer.online = 0;
+			//printf("gbox: fail_count >= %d, peer is offline\n", GBOX_FAIL_COUNT);
 		}
+		//cs_debug_mask(D_READER, "gbox: wait timed-out, fail_count=%d\n", gbox->peer.fail_count);
 	} else {
 		gbox->peer.fail_count = 0;
-		//printf("gbox: sem posted, peer is online\n");
+		//printf("gbox: cond posted, peer is online\n");
 	}
-	//cs_debug_mask(D_READER, "gbox: sem posted, peer is online");
+	pthread_mutex_unlock (&gbox->peer_online_mutex);
 
 	//cs_debug_mask(D_READER, "gbox: exit gbox_wait_for_response()");
 	//printf("gbox: exit gbox_wait_for_response()\n");
@@ -520,8 +518,10 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
   uchar *data = gbox->buf;
   int32_t n;
 
-  sem_post(&gbox->sem);
+  pthread_mutex_lock (&gbox->peer_online_mutex);
   gbox->peer.online = 1;
+  pthread_cond_signal(&gbox->peer_online_cond);
+  pthread_mutex_unlock (&gbox->peer_online_mutex);
 
   cs_writelock(&gbox->lock);
 
@@ -837,13 +837,14 @@ static int32_t gbox_client_init(struct s_client *cli)
   struct gbox_data *gbox = cli->gbox;
   struct s_reader *rdr = cli->reader;
 
-  sem_init(&gbox->sem, 0 , 1);
-
   rdr->card_status = CARD_FAILURE;
   rdr->tcp_connected = 0;
 
   memset(gbox, 0, sizeof(struct gbox_data));
   memset(&gbox->peer, 0, sizeof(struct gbox_peer));
+
+  pthread_mutex_init(&gbox->peer_online_mutex, NULL);
+  pthread_cond_init(&gbox->peer_online_cond, NULL);
 
   uint32_t r_pwd = a2i(rdr->r_pwd, 4);
   uint32_t key = a2i(cfg.gbox_key, 4);

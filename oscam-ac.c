@@ -47,8 +47,8 @@ void ac_do_stat()
 
     if( ac_stat->stat[idx])
     {
-      if( client->account->ac_penalty==2 ) {// banned
-        cs_debug_mask(D_CLIENT, "user '%s' banned", client->account->usr);
+      if( client->ac_penalty==2 ) {// banned
+        cs_debug_mask(D_CLIENT, "acasc: user '%s' banned", client->account->usr);
         acasc->ac_deny=1;
       }
       else
@@ -62,25 +62,25 @@ void ac_do_stat()
         prev_deny=acasc->ac_deny;
         acasc->ac_deny = (exceeds >= cfg.ac_denysamples);
         
-        cs_debug_mask(D_CLIENT, "%s limit=%d, max=%d, samples=%d, dsamples=%d, [idx=%d]:",
+        cs_debug_mask(D_CLIENT, "acasc: %s limit=%d, max=%d, samples=%d, dsamples=%d, [idx=%d]:",
           client->account->usr, client->ac_limit, maxval, 
           cfg.ac_samples, cfg.ac_denysamples, idx);
-        cs_debug_mask(D_CLIENT, "%d %d %d %d %d %d %d %d %d %d ", ac_stat->stat[0],
+        cs_debug_mask(D_CLIENT, "acasc: %d %d %d %d %d %d %d %d %d %d ", ac_stat->stat[0],
           ac_stat->stat[1], ac_stat->stat[2], ac_stat->stat[3],
           ac_stat->stat[4], ac_stat->stat[5], ac_stat->stat[6],
           ac_stat->stat[7], ac_stat->stat[8], ac_stat->stat[9]);
         if( acasc->ac_deny ) {
-          cs_log("user '%s' exceeds limit", client->account->usr);
+          cs_log("acasc: user '%s' exceeds limit", client->account->usr);
           ac_stat->stat[idx] = 0;
         } else if( prev_deny )
-          cs_log("user '%s' restored access", client->account->usr);
+          cs_log("acasc: user '%s' restored access", client->account->usr);
       }
     }
     else if (acasc->ac_deny)
     {
       prev_deny=1;
       acasc->ac_deny=0;
-      cs_log("restored access for inactive user '%s'", client->account->usr);
+      cs_log("acasc: restored access for inactive user '%s'", client->account->usr);
     }
 
     if (!acasc->ac_deny && !prev_deny)
@@ -109,18 +109,23 @@ void start_anticascader(){
 void ac_init_client(struct s_client *client, struct s_auth *account)
 {
   client->ac_limit = 0;
+  client->ac_penalty = account->ac_penalty == -1 ? cfg.ac_penalty : account->ac_penalty;
   if( cfg.ac_enabled )
   {
-    if( account->ac_users )
+	int32_t numusers = account->ac_users;
+	if ( numusers == -1)
+		numusers = cfg.ac_users;
+
+    if( numusers )
     {
-      client->ac_limit = (account->ac_users*100+80)*cfg.ac_stime;
-      cs_debug_mask(D_CLIENT, "login '%s', users=%d, stime=%d min, dwlimit=%d per min, penalty=%d", 
-              account->usr, account->ac_users, cfg.ac_stime, 
-              account->ac_users*100+80, account->ac_penalty);
+      client->ac_limit = (numusers*100+80)*cfg.ac_stime;
+      cs_debug_mask(D_CLIENT, "acasc: login '%s', users=%d, stime=%d min, dwlimit=%d per min, penalty=%d",
+              account->usr, numusers, cfg.ac_stime,
+              numusers*100+80, client->ac_penalty);
     }
     else
     {
-      cs_debug_mask(D_CLIENT, "anti-cascading not used for login '%s'", account->usr);
+      cs_debug_mask(D_CLIENT, "acasc: anti-cascading not used for login '%s'", account->usr);
     }
   }
 }
@@ -136,9 +141,9 @@ static int32_t ac_dw_weight(ECM_REQUEST *er)
         (cpmap->chid  ==0 || cpmap->chid  ==er->chid) )
       return (cpmap->dwtime*100/60);
 
-  cs_debug_mask(D_CLIENT, "WARNING: CAID %04X, PROVID %06X, SID %04X, CHID %04X not found in oscam.ac", 
+  cs_debug_mask(D_CLIENT, "acasc: WARNING: CAID %04X, PROVID %06X, SID %04X, CHID %04X not found in oscam.ac",
            er->caid, er->prid, er->srvid, er->chid);
-  cs_debug_mask(D_CLIENT, "set DW lifetime 10 sec");
+  cs_debug_mask(D_CLIENT, "acasc: set DW lifetime 10 sec");
   return 16; // 10*100/60
 }
 
@@ -163,11 +168,11 @@ void ac_chk(struct s_client *cl, ECM_REQUEST *er, int32_t level)
 	}
 
 	if( acasc->ac_deny ) {
-		if( cl->account->ac_penalty ) {
-			if (cl->account->ac_penalty == 3) {
-				cs_debug_mask(D_CLIENT, "fake delay %dms", cfg.ac_fakedelay);
+		if( cl->ac_penalty ) {
+			if (cl->ac_penalty == 3) {
+				cs_debug_mask(D_CLIENT, "acasc: fake delay %dms", cfg.ac_fakedelay);
 			} else {
-				cs_debug_mask(D_CLIENT, "send fake dw");
+				cs_debug_mask(D_CLIENT, "acasc: send fake dw");
 				er->rc = E_FAKE; // fake
 				er->rcEx = 0;
 			}
