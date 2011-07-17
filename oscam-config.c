@@ -3074,8 +3074,8 @@ struct s_auth *init_userdb()
 			nr++;
 
 #ifdef CS_ANTICASC
-			account->ac_users = cfg.ac_users;
-			account->ac_penalty = cfg.ac_penalty;
+			account->ac_users   = -1; // use ac_users global value
+			account->ac_penalty = -1; // use ac_penalty global value
 #endif
 			continue;
 		}
