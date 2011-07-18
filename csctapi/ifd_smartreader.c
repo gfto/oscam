@@ -209,8 +209,10 @@ static int32_t smart_read(S_READER *reader, unsigned char* buff, uint32_t  size,
 {
     int32_t ret = 0;
     uint32_t  total_read = 0;
-    struct timeval start, now, dif = {0};
-    struct timespec timeout = {0};
+    struct timeval start, now, dif;
+    struct timespec timeout;
+
+    memset(&dif, 0, sizeof(struct timeval));
 
     gettimeofday(&start, NULL);
     timeout.tv_sec = start.tv_sec + timeout_sec;
@@ -337,9 +339,6 @@ int32_t SR_Reset (struct s_reader *reader, ATR *atr)
 
 static int32_t smart_write(S_READER *reader, unsigned char* buff, uint32_t  size)
 {
-
-    uint32_t  idx;
-
     int32_t write_size;
     uint32_t  offset = 0;
     int32_t total_written = 0;
@@ -1383,8 +1382,8 @@ static void* ReaderThread(void *p)
         pthread_mutex_lock(&reader->sr_config->g_usb_mutex);
 
         if(!reader->sr_config->poll) {
-            struct timeval start = {0};
-            struct timespec timeout = {0};
+            struct timeval start;
+            struct timespec timeout;
 
             gettimeofday(&start, NULL);
             timeout.tv_sec = start.tv_sec + 1;

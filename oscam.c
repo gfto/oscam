@@ -3249,7 +3249,7 @@ void * reader_check(void) {
 				continue;
 #ifdef WITH_CARDREADER
 			//check for card inserted or card removed on pysical reader
-			if (rdr->client->init_done && rdr->client->typ == 'r')
+			if (rdr->client->init_done && rdr->client->typ == 'r' && !rdr->client->thread_active)
 				reader_checkhealth(rdr);
 #endif
 			//execute reader do idle on proxy reader after a certain time (rdr->tcp_ito = inactivitytimeout)
