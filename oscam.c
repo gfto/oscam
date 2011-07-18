@@ -1966,18 +1966,18 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 		ll_remove(ert->matching_rdr, er->selected_reader);
 
 		if (ll_has_elements(ert->matching_rdr)) {//we have still another chance
-				if (cfg.preferlocalcards && !er->locals_done) {
-					er->locals_done=1;
+				if (cfg.preferlocalcards && !ert->locals_done) {
+					ert->locals_done=1;
 					LL_NODE *ptr;
 					struct s_reader *rdr;
-					for (ptr = er->matching_rdr?er->matching_rdr->initial:NULL; ptr; ptr = ptr->nxt) {
+					for (ptr = ert->matching_rdr?ert->matching_rdr->initial:NULL; ptr; ptr = ptr->nxt) {
 						rdr = (struct s_reader*)ptr->obj;
 						if (!(rdr->typ & R_IS_NETWORK))
-							er->locals_done=0;
+							ert->locals_done=0;
 					}
 					// if there is no local reader left send request to network reader
-					if (er->locals_done)
-						request_cw(er, er->stage, 2);
+					if (ert->locals_done)
+						request_cw(ert, ert->stage, 2);
 					
 				}
 				ert->selected_reader=NULL;
