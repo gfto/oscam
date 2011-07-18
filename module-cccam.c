@@ -1098,14 +1098,16 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
     static const char *typtext[]={"ok", "invalid", "sleeping"};
 
     if (cc->sleepsend && cl->stopped) {
-    	if (er->srvid == cl->lastsrvid && er->caid == cl->lastcaid && er->pid == cl->lastpid){
+    	if (cur_er->srvid == cl->lastsrvid && cur_er->caid == cl->lastcaid && cur_er->pid == cl->lastpid){
         	cs_log("%s is stopped - requested by server (%s)",
             	cl->reader->label, typtext[cl->stopped]);
 			if (!cc->extended_mode) {
 				rdr->available = 1;
 				cs_writeunlock(&cc->ecm_busy);
 			}
-			return(-1);
+			cur_er->rc = E_STOPPED;
+			write_ecm_answer(rdr, cur_er);
+			return 0;
 		}
         else {
         	cl->stopped = 0;
@@ -2562,15 +2564,6 @@ int32_t cc_recv_chk(struct s_client *cl, uchar *dcw, int32_t *rc, uchar *buf, in
 //	return FALSE;
 //}
 
-
-// Sleepsend-format:
-//
-// offset len descr
-// 00     02  caid
-// 02     04  prid
-// 06     02  srvid
-// 08     01  ecmlen (& 0xff)
-// 09     01  sleepsend-time
 
 /**
  * Server: send DCW to client

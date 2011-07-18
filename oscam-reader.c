@@ -411,7 +411,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   //cs_log("hallo idx:%d rc:%d caid:%04X",er->idx,er->rc,er->caid);
   if (er->rc<=E_STOPPED)
     {
-      send_dcw(reader->client, er);
+      send_dcw(cl, er);
       return;
     }
   
