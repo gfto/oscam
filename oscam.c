@@ -31,7 +31,7 @@ LLIST * configured_readers = NULL; //list of all (configured) readers
 uint16_t  len4caid[256];    // table for guessing caid (by len)
 char  cs_confdir[128]=CS_CONFDIR;
 int32_t cs_dblevel=0;   // Debug Level
-int32_t thread_pipe[2] = {0, 0}, check_pipe[2] = {0, 0};
+int32_t thread_pipe[2] = {0, 0};
 #ifdef WEBIF
 int8_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)restart fork, restart by webif, 2=like=1, but also restart on segfaults
 #endif
@@ -48,6 +48,9 @@ CS_MUTEX_LOCK clientlist_lock;
 CS_MUTEX_LOCK readerlist_lock;
 CS_MUTEX_LOCK fakeuser_lock;
 pthread_key_t getclient;
+
+pthread_mutex_t	check_mutex;
+pthread_cond_t	check_cond;
 
 //Cache for  ecms, cws and rcs:
 LLIST *ecmcache = NULL;
@@ -2683,9 +2686,9 @@ void add_check(struct s_client *client, int8_t action, void *ptr, int32_t size, 
 
 	cs_debug_mask(D_TRACE, "adding check action=%d ms_delay=%d", action, ms_delay);
 
-	char buf[1];
-	if (check_pipe[1])
-		write(check_pipe[1], buf, 1); //wakeup check thread
+	pthread_mutex_lock(&check_mutex);
+	pthread_cond_signal(&check_cond);
+	pthread_mutex_unlock(&check_mutex);
 }
 
 int32_t process_input(uchar *buf, int32_t l, int32_t timeout)
@@ -3016,31 +3019,37 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int len) {
 	pthread_mutex_unlock(&cl->thread_lock);
 }
 
-void * check_thread(void) {
-	checklist = ll_create();
+static struct timespec *make_timeout(struct timespec *timeout, int32_t msec) {
+	struct timeval now;
+	gettimeofday(&now, NULL);
+
+	int32_t nano_secs	= ((now.tv_usec * 1000) + ((msec % 1000) * 1000 * 1000));
+
+	timeout->tv_sec = now.tv_sec + (msec / 1000) + (nano_secs / 1000000000);
+	timeout->tv_nsec = nano_secs % 1000000000;
+
+	return timeout;
+}
+
+static void * check_thread(void) {
 	int32_t next_check = 100, time_to_check, rc;
 	struct timeb t_now;
-	char buf[10];
 	ECM_REQUEST *er;
-	struct pollfd pfd[1];
 
-	if (pipe(check_pipe) == -1) {
-		printf("cannot create pipe, errno=%d\n", errno);
-		exit(1);
-	}
+	pthread_mutex_init(&check_mutex,NULL);
+	pthread_cond_init(&check_cond,NULL);
 
-	pfd[0].fd = check_pipe[0];
-	pfd[0].events = POLLIN | POLLPRI;
+	checklist = ll_create();
+
+	struct timespec timeout;
+	make_timeout(&timeout, 30000);
 
 	while(1) {
-		rc = poll(pfd, 1, next_check ? next_check : -1);
+		pthread_mutex_lock(&check_mutex);
+		rc = pthread_cond_timedwait(&check_cond, &check_mutex, &timeout);
+		pthread_mutex_unlock(&check_mutex);
+
 		cs_ftime(&t_now);
-
-		if (rc<0)
-			continue;
-
-		if (rc)
-			read(check_pipe[0], buf, sizeof(buf));
 
 		LL_ITER itr = ll_iter_create(checklist);
 
@@ -3050,7 +3059,8 @@ void * check_thread(void) {
 			time_to_check = ((t1->t_check.time - t_now.time) * 1000) + (t1->t_check.millitm - t_now.millitm);
 			if (time_to_check <= 0) {
 				//TODO: we should check here if cl and t1->ptr is still a valid pointer to avoid segfaults
-				if (!t1->cl || !is_valid_client(t1->cl)) {
+				if (!t1->cl || !is_valid_client(t1->cl) || !t1->ptr) {
+					cs_log("removing invalid check");
 					ll_iter_remove(&itr);
 					add_garbage(t1);
 					continue;
@@ -3093,9 +3103,14 @@ void * check_thread(void) {
 				ll_iter_remove(&itr);
 				add_garbage(t1);
 			} else {
-				if (!next_check || time_to_check < next_check)
+				if (!next_check || time_to_check < next_check) {
+					make_timeout(&timeout, time_to_check);
 					next_check = time_to_check;
+				}
 			}
+		}
+		if (next_check == 0) {
+			make_timeout(&timeout, 30000);
 		}
 	}
 }

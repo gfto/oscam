@@ -15,6 +15,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include <sys/timeb.h>
+#include <sys/time.h>
 #include <limits.h>
 #include <pwd.h>
 #include <netinet/tcp.h>
