@@ -548,8 +548,8 @@ int32_t do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigne
     }
   if(ins2[0]==0xd3) ins2[4]=len+16;
   len=ins2[4];
-
-  	
+    unsigned char tmp[264];  
+  	if(rxbuff == NULL) rxbuff=tmp;
   if(mode>1) {
     if(!write_cmd_vg(ins2,NULL) || !status_ok(cta_res+len)) return -1;
     memcpy(rxbuff,ins2,5);
@@ -562,7 +562,7 @@ int32_t do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigne
     memcpy(rxbuff+5,txbuff,len);
     memcpy(rxbuff+5+len,cta_res,2);
     }
-if (rxbuff != NULL)  cCamCryptVG_PostProcess_Decrypt(reader,rxbuff);
+cCamCryptVG_PostProcess_Decrypt(reader,rxbuff);
   return len;
   
 }
