@@ -65,7 +65,7 @@ static void radegast_auth_client(in_addr_t ip)
   if (!ok)
     cs_auth_client(cur_client(), (struct s_auth *)(-1), NULL);
 }
-
+/*
 static int32_t get_request(uchar *buf)
 {
   int32_t n, rc=0;
@@ -84,7 +84,7 @@ static int32_t get_request(uchar *buf)
   }
   return(rc);
 }
-
+*/
 static void radegast_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
   uchar mbuf[1024];

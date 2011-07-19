@@ -95,7 +95,7 @@ static void camd33_auth_client(uchar *camdbug)
     cs_disconnect_client(cur_client());
   }
 }
-
+/*
 static int32_t get_request(uchar *buf, int32_t n, uchar *camdbug)
 {
   int32_t rc, w;
@@ -146,7 +146,7 @@ static int32_t get_request(uchar *buf, int32_t n, uchar *camdbug)
   if (rc<0) rc=0;
   return(rc);
 }
-
+*/
 static void camd33_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
   uchar mbuf[1024];

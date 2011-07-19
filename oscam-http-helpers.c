@@ -609,8 +609,8 @@ static int32_t x2i(int32_t i){
 /* Decodes values in a http url. Note: The original value is modified! */
 void urldecode(char *s){
 	int32_t c, c1, n;
-	char *s0,*t;
-	t = s0 = s;
+	char *t;
+	t = s;
 	n = strlen(s);
 	while(n >0){
 		c = *s++;
