@@ -4550,6 +4550,7 @@ int32_t init_readerdb()
 	FILE *fp;
 	char *value;
 	char token[MAXLINESIZE];
+	configured_readers = ll_create();
 
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_srvr);
 	if (!(fp=fopen(token, "r"))) {
@@ -4558,7 +4559,7 @@ int32_t init_readerdb()
 	}
 	struct s_reader *rdr;
 	cs_malloc(&rdr, sizeof(struct s_reader), SIGINT);
-	configured_readers = ll_create();
+
 	ll_append(configured_readers, rdr);
 	while (fgets(token, sizeof(token), fp)) {
 		int32_t i, l;
