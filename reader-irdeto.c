@@ -271,7 +271,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR newatr)
 	if (!memcmp(atr+4, "IRDETO", 6))
 		reader->acs57=0;
 	else {
-		if((!memcmp(atr+5, "IRDETO", 6 ) || (atr[6]==0xC4 && atr[9]==0x8F && atr[10]==0xF1)) && reader->force_irdeto) {
+		if((!memcmp(atr+5, "IRDETO", 6 ) || (atr[6]==0xC4 && atr[9]==0x8F && atr[10]==0xF1)) || reader->force_irdeto) {
 			reader->acs57=1;
 			acspadd=8;
 			cs_ri_log(reader, "Hist. Bytes: %s",atr+5);
