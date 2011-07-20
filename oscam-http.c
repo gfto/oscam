@@ -2993,7 +2993,7 @@ static char *send_oscam_savetpls(struct templatevars *vars) {
 	return tpl_getTpl(vars, "SAVETEMPLATES");
 }
 
-static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *params, int32_t apicall, int8_t *keepalive) {
+static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *params, int8_t apicall, int8_t *keepalive) {
 	if (strcmp(strtolower(getParam(params, "action")), "shutdown") == 0) {
 		*keepalive = 0;
 		if(!apicall){
@@ -3109,9 +3109,13 @@ static char *send_oscam_scanusb(struct templatevars *vars) {
 	return tpl_getTpl(vars, "SCANUSB");
 }
 
-static char *send_oscam_files(struct templatevars *vars, struct uriparams *params) {
+static char *send_oscam_files(struct templatevars *vars, struct uriparams *params, int8_t apicall) {
 
 	int32_t writable=0;
+	//int8_t apicall = 0; //remove before flight
+
+	tpl_addVar(vars, TPLADD, "APIFILENAME", "null");
+	tpl_addVar(vars, TPLADD, "APIWRITABLE", "0");
 
 	char *stoplog = getParam(params, "stoplog");
 	if(strlen(stoplog) > 0)
@@ -3134,37 +3138,55 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 
 	char targetfile[256];
 
-	if (strcmp(getParam(params, "part"), "conf") == 0) {
+	if (strcmp(getParam(params, "file"), "conf") == 0) {
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.conf");
+		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.conf");
+		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
-	else if (strcmp(getParam(params, "part"), "version") == 0)
+	else if (strcmp(getParam(params, "file"), "version") == 0) {
 		snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "/oscam.version");
-	else if (strcmp(getParam(params, "part"), "user") == 0) {
+		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.version");
+		tpl_addVar(vars, TPLADD, "APIWRITABLE", "0");
+	}
+
+	else if (strcmp(getParam(params, "file"), "user") == 0) {
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.user");
+		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.user");
+		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
-	else if (strcmp(getParam(params, "part"), "server") == 0) {
+	else if (strcmp(getParam(params, "file"), "server") == 0) {
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.server");
+		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.server");
+		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
-	else if (strcmp(getParam(params, "part"), "services") == 0) {
+	else if (strcmp(getParam(params, "file"), "services") == 0) {
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.services");
+		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.services");
+		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
-	else if (strcmp(getParam(params, "part"), "srvid") == 0) {
+	else if (strcmp(getParam(params, "file"), "srvid") == 0) {
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.srvid");
+		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.srvid");
+		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
-	else if (strcmp(getParam(params, "part"), "provid") == 0) {
+	else if (strcmp(getParam(params, "file"), "provid") == 0) {
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.provid");
+		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.provid");
+		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
-	else if (strcmp(getParam(params, "part"), "tiers") == 0) {
+	else if (strcmp(getParam(params, "file"), "tiers") == 0) {
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.tiers");
+		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.tiers");
+		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
-	else if (strcmp(getParam(params, "part"), "logfile") == 0) {
+	else if (!apicall && strcmp(getParam(params, "file"), "logfile") == 0) {
 		snprintf(targetfile, 255,"%s", cfg.logfile);
 
 		if (strcmp(getParam(params, "clear"), "logfile") == 0) {
@@ -3195,21 +3217,21 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 		else
 			tpl_addVar(vars, TPLADD, "DCLASS255", "debugl");
 
-		tpl_addVar(vars, TPLADD, "CUSTOMPARAM", "&part=logfile");
+		tpl_addVar(vars, TPLADD, "CUSTOMPARAM", "&file=logfile");
 		tpl_printf(vars, TPLADD, "ACTDEBUG", "%d", cs_dblevel);
 		tpl_addVar(vars, TPLADD, "SDEBUG", tpl_getTpl(vars, "DEBUGSELECT"));
 		tpl_addVar(vars, TPLADD, "NEXTPAGE", "files.html");
 #endif
 
 		if(!cfg.disablelog)
-			tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?part=logfile&amp;stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 1, "Stop Log");
+			tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?file=logfile&amp;stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 1, "Stop Log");
 		else
-			tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?part=logfile&amp;stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 0, "Start Log");
+			tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?file=logfile&amp;stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 0, "Start Log");
 
-		tpl_addVar(vars, TPLAPPEND, "LOGMENU", "<A HREF=\"files.html?part=logfile&amp;clear=logfile\">Clear Log</A>");
+		tpl_addVar(vars, TPLAPPEND, "LOGMENU", "<A HREF=\"files.html?file=logfile&amp;clear=logfile\">Clear Log</A>");
 
 	}
-	else if (strcmp(getParam(params, "part"), "userfile") == 0) {
+	else if (!apicall && strcmp(getParam(params, "file"), "userfile") == 0) {
 		snprintf(targetfile, 255,"%s", cfg.usrfile);
 		if (strcmp(getParam(params, "clear"), "usrfile") == 0) {
 			if(strlen(targetfile) > 0) {
@@ -3219,14 +3241,14 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 		}
 
 		if(!cfg.disableuserfile)
-			tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?part=userfile&amp;stopusrlog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 1, "Stop Log");
+			tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?file=userfile&amp;stopusrlog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 1, "Stop Log");
 		else
-			tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?part=userfile&amp;stopusrlog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 0, "Start Log");
+			tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?file=userfile&amp;stopusrlog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 0, "Start Log");
 
-		tpl_addVar(vars, TPLAPPEND, "LOGMENU", "<A HREF=\"files.html?part=userfile&amp;clear=usrfile\">Clear Log</A>");
+		tpl_addVar(vars, TPLAPPEND, "LOGMENU", "<A HREF=\"files.html?file=userfile&amp;clear=usrfile\">Clear Log</A>");
 
 		tpl_addVar(vars, TPLADD,    "FILTERFORM", "<FORM ACTION=\"files.html\" method=\"get\">\n");
-		tpl_addVar(vars, TPLAPPEND, "FILTERFORM", "<INPUT name=\"part\" type=\"hidden\" value=\"userfile\">\n");
+		tpl_addVar(vars, TPLAPPEND, "FILTERFORM", "<INPUT name=\"file\" type=\"hidden\" value=\"userfile\">\n");
 		tpl_addVar(vars, TPLAPPEND, "FILTERFORM", "<SELECT name=\"filter\">\n");
 		tpl_printf(vars, TPLAPPEND, "FILTERFORM", "<OPTION value=\"%s\">%s</OPTION>\n", "all", "all");
 
@@ -3238,13 +3260,15 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 
 	}
 #ifdef CS_ANTICASC
-	else if (strcmp(getParam(params, "part"), "anticasc") == 0)
+	else if (!apicall && strcmp(getParam(params, "file"), "anticasc") == 0)
 		snprintf(targetfile, 255,"%s", cfg.ac_logfile);
 #endif
 
 #ifdef HAVE_DVBAPI
-	else if (strcmp(getParam(params, "part"), "dvbapi") == 0) {
+	else if (strcmp(getParam(params, "file"), "dvbapi") == 0) {
 		snprintf(targetfile, 255, "%s%s", cs_confdir, "oscam.dvbapi");
+		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.dvbapi");
+		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
 #endif
@@ -3261,14 +3285,14 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 					fprintf(fpsave,"%s",fcontent);
 					fclose(fpsave);
 
-					if (strcmp(getParam(params, "part"), "srvid") == 0)
+					if (strcmp(getParam(params, "file"), "srvid") == 0)
 						init_srvid();
 
-					if (strcmp(getParam(params, "part"), "user") == 0)
+					if (strcmp(getParam(params, "file"), "user") == 0)
 						cs_accounts_chk();
 
 #ifdef HAVE_DVBAPI
-					if (strcmp(getParam(params, "part"), "dvbapi") == 0)
+					if (strcmp(getParam(params, "file"), "dvbapi") == 0)
 						dvbapi_read_priority();
 #endif
 				}
@@ -3294,14 +3318,17 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 		tpl_addVar(vars, TPLAPPEND, "FILECONTENT", "File not valid!");
 	}
 
-	tpl_addVar(vars, TPLADD, "PART", getParam(params, "part"));
+	tpl_addVar(vars, TPLADD, "PART", getParam(params, "file"));
 
 	if (!writable) {
 		tpl_addVar(vars, TPLADD, "WRITEPROTECTION", "You cannot change the content of this file!");
 		tpl_addVar(vars, TPLADD, "BTNDISABLED", "DISABLED");
 	}
 
-	return tpl_getTpl(vars, "FILE");
+	if (!apicall)
+		return tpl_getTpl(vars, "FILE");
+	else
+		return tpl_getTpl(vars, "APIFILE");
 }
 
 static char *send_oscam_failban(struct templatevars *vars, struct uriparams *params, int8_t apicall) {
@@ -3380,6 +3407,9 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 	}
 	else if (strcmp(getParam(params, "part"), "failban") == 0) {
 		return send_oscam_failban(vars, params, 1);
+	}
+	else if (strcmp(getParam(params, "part"), "files") == 0) {
+		return send_oscam_files(vars, params, 1);
 	}
 	else if (strcmp(getParam(params, "part"), "readerconfig") == 0) {
 		//Send Errormessage
@@ -3899,7 +3929,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 				case 11: result = send_oscam_shutdown(vars, f, &params, 0, keepalive); break;
 				case 12: result = send_oscam_script(vars); break;
 				case 13: result = send_oscam_scanusb(vars); break;
-				case 14: result = send_oscam_files(vars, &params); break;
+				case 14: result = send_oscam_files(vars, &params, 0); break;
 #ifdef WITH_LB
 				case 15: result = send_oscam_reader_stats(vars, &params, 0); break;
 #endif

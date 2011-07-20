@@ -410,17 +410,17 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLFILEMENU "\
 	<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=version\">oscam.version</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=version\">oscam.version</A></TD>\n\
 ##TPLFILEMENUDVBAPI##\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=conf\">oscam.conf</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=user\">oscam.user</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=server\">oscam.server</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=services\">oscam.services</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=srvid\">oscam.srvid</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=provid\">oscam.provid</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=tiers\">oscam.tiers</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=logfile\">logfile</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=userfile\">userfile</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=conf\">oscam.conf</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=user\">oscam.user</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=server\">oscam.server</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=services\">oscam.services</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=srvid\">oscam.srvid</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=provid\">oscam.provid</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=tiers\">oscam.tiers</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=logfile\">logfile</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=userfile\">userfile</A></TD>\n\
 ##TPLFILEMENUANTICASC##\
 		</TR>\n\
 	</TABLE>"
@@ -433,12 +433,18 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	<DIV CLASS=\"logmenu\">##LOGMENU##</DIV>\
 	<DIV CLASS=\"filterform\">##FILTERFORM##</DIV>\
 	<FORM ACTION=\"files.html\" method=\"post\">\n\
-		<INPUT TYPE=\"hidden\" NAME=\"part\" VALUE=\"##PART##\">\n\
+		<INPUT TYPE=\"hidden\" NAME=\"file\" VALUE=\"##PART##\">\n\
 		<TEXTAREA NAME=\"filecontent\" CLASS=\"editor\" rows=\"50\" cols=\"200\">##FILECONTENT##</TEXTAREA>\n\
 		<BR>##WRITEPROTECTION##<BR>\n\
 		<INPUT TYPE=\"submit\" NAME=\"action\" VALUE=\"Save\" TITLE=\"Save file\" ##BTNDISABLED##>\n\
 	</FORM>\n\
 ##TPLFOOTER##"
+
+#define TPLAPIFILE "##TPLAPIHEADER##\n\
+	<file filename=\"##APIFILENAME##\" writable=\"##APIWRITABLE##\">\n\
+	<![CDATA[##FILECONTENT##]]>\n\
+	</file>\n\
+##TPLAPIFOOTER##"
 
 #ifdef WITH_DEBUG
 #define TPLDEBUGSELECT "\
@@ -490,12 +496,12 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
 #ifdef CS_ANTICASC
 #define TPLCONFIGMENUANTICASC "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=anticasc\">Anticascading</A></TD>\n"
-#define TPLFILEMENUANTICASC "			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=anticasc\">AC Log</A></TD>\n"
+#define TPLFILEMENUANTICASC "			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=anticasc\">AC Log</A></TD>\n"
 #endif
 
 #ifdef HAVE_DVBAPI
 #define TPLCONFIGMENUDVBAPI "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=dvbapi\">DVB-Api</A></TD>\n"
-#define TPLFILEMENUDVBAPI "			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=dvbapi\">oscam.dvbapi</A></TD>\n"
+#define TPLFILEMENUDVBAPI "			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=dvbapi\">oscam.dvbapi</A></TD>\n"
 #endif
 
 #ifdef WITH_LB
@@ -2143,6 +2149,7 @@ char *tpl[]={
 	"CONFIGMENU",
 	"FILEMENU",
 	"FILE",
+	"APIFILE",
 	"FAILBAN",
 	"APIFAILBAN",
 	"FAILBANBIT",
@@ -2289,6 +2296,7 @@ char *tplmap[]={
 	TPLCONFIGMENU,
 	TPLFILEMENU,
 	TPLFILE,
+	TPLAPIFILE,
 	TPLFAILBAN,
 	TPLAPIFAILBAN,
 	TPLFAILBANBIT,
