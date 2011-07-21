@@ -65,26 +65,7 @@ static void radegast_auth_client(in_addr_t ip)
   if (!ok)
     cs_auth_client(cur_client(), (struct s_auth *)(-1), NULL);
 }
-/*
-static int32_t get_request(uchar *buf)
-{
-  int32_t n, rc=0;
-  if ((n=process_input(buf, 2, cfg.cmaxidle))==2)
-  {
-    if ((n=process_input(buf+2, buf[1], 0))>=0)
-      n+=2;
-    if (n-2==buf[1])
-      rc=n;
-    else
-      cs_log("WARNING: protocol error (garbage)");
-  }
-  if (n>0)
-  {
-    cs_ddump_mask(D_CLIENT, buf, n, "received %d bytes from client", n);
-  }
-  return(rc);
-}
-*/
+
 static void radegast_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
   uchar mbuf[1024];
@@ -152,6 +133,8 @@ static void radegast_process_unknown(uchar *buf)
 
 static void * radegast_server(struct s_client * client, uchar *mbuf, int n)
 {
+	if (n<3)
+		return NULL;
 
 	if (!client->init_done) {
 		radegast_auth_client(cur_client()->ip);

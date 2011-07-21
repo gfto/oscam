@@ -95,58 +95,7 @@ static void camd33_auth_client(uchar *camdbug)
     cs_disconnect_client(cur_client());
   }
 }
-/*
-static int32_t get_request(uchar *buf, int32_t n, uchar *camdbug)
-{
-  int32_t rc, w;
-  struct s_client *cur_cl = cur_client();
 
-  if (camdbug[0])
-  {
-    memcpy(buf, camdbug+1, rc=camdbug[0]);
-    camdbug[0]=0;
-    return(rc);
-  }
-  for (rc=w=0; !rc;)
-  {
-    switch (rc=process_input(buf, 16, (w) ? cfg.ctimeout : cfg.cmaxidle))
-    {
-      case -9:
-        rc=0;
-      case  0:
-        if ((w) || cfg.c33_passive)
-          rc=-1;
-        else
-        {
-          buf[0]=0;
-          camd33_send(buf, 1);
-          w++;
-        }
-      case -1:
-        break;
-      default:
-        if (cur_cl->account && !memcmp(buf+1, cur_cl->account->usr, strlen(cur_cl->account->usr)))
-        {
-          cs_log("%s still alive", cs_inet_ntoa(cur_cl->ip));
-          rc=w=0;
-        }
-	      else
-        {
-          switch (buf[0])
-          {
-            case  2:
-            case  3: w=boundary(4, buf[9]+10); break;
-            default: w=n;	// garbage ?
-          }
-          w=process_input(buf+16, w-16, 0);
-          if (w>0) rc+=w;
-        }
-    }
-  }
-  if (rc<0) rc=0;
-  return(rc);
-}
-*/
 static void camd33_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
   uchar mbuf[1024];
