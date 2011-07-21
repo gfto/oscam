@@ -2582,7 +2582,7 @@ void azbox_openxcas_ex_callback(int32_t stream_id, uint32_t seq, int32_t idx, ui
 	else
 		cs_debug_mask(D_DVBAPI, "openxcas: ex filter stopped");
 
-	process_client_pipe(dvbapi_client, NULL, 0);
+
 
 	unsigned char mask[12];
 	unsigned char comp[12];
