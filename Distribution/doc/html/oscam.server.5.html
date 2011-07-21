@@ -302,18 +302,21 @@ reader assingment to group, <I>required</I>
 <DL COMPACT><DT><DD>
 set EMM cache of local reader:
 <P>
-<BR>&nbsp;<B>usecache</B>&nbsp;=&nbsp;<B>0</B>|<B>1</B>&nbsp;1&nbsp;=&nbsp;enable&nbsp;EMM&nbsp;caching,&nbsp;default:0
-<BR>&nbsp;<B>rewrite</B>&nbsp;&nbsp;=&nbsp;determines&nbsp;how&nbsp;often&nbsp;one&nbsp;and&nbsp;the&nbsp;same&nbsp;EMM&nbsp;is&nbsp;written
+<BR>&nbsp;<B>usecache</B>&nbsp;=&nbsp;<B>0</B>|<B>1</B>:&nbsp;1&nbsp;=&nbsp;enable&nbsp;EMM&nbsp;caching,&nbsp;default:0
+<P>
+<BR>&nbsp;<B>rewrite</B>&nbsp;&nbsp;=&nbsp;determines&nbsp;how&nbsp;often&nbsp;one&nbsp;and&nbsp;the&nbsp;same&nbsp;EMM&nbsp;is
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;written,&nbsp;default:0
+<P>
 <BR>&nbsp;<B>logging</B>&nbsp;&nbsp;=&nbsp;EMM&nbsp;logging&nbsp;mask:
 <P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;EMM&nbsp;logging&nbsp;disabled
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>1</B>&nbsp;=&nbsp;logging&nbsp;EMM&nbsp;errors
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>2</B>&nbsp;=&nbsp;logging&nbsp;written&nbsp;EMMs
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>4</B>&nbsp;=&nbsp;logging&nbsp;skipped&nbsp;EMMs
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>8</B>&nbsp;=&nbsp;logging&nbsp;blocked&nbsp;EMMs
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;EMM&nbsp;logging&nbsp;disabled&nbsp;(default)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>1</B>&nbsp;=&nbsp;logging&nbsp;EMM&nbsp;errors
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>2</B>&nbsp;=&nbsp;logging&nbsp;written&nbsp;EMMs
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>4</B>&nbsp;=&nbsp;logging&nbsp;skipped&nbsp;EMMs
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>8</B>&nbsp;=&nbsp;logging&nbsp;blocked&nbsp;EMMs
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>16</B>&nbsp;=&nbsp;logging&nbsp;disabled&nbsp;AU
 <P>
-<BR>&nbsp;example:&nbsp;emmcache&nbsp;=&nbsp;1,3,10
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;emmcache&nbsp;=&nbsp;1,2,6
+<BR>&nbsp;example:&nbsp;emmcache&nbsp;=&nbsp;1,3,2
 </DL>
 
 <P>

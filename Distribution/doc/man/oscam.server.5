@@ -227,18 +227,21 @@ reader assingment to group, \fIrequired\fR
 .RS 3n
 set EMM cache of local reader:
 
- \fBusecache\fP = \fB0\fP|\fB1\fP 1 = enable EMM caching, default:0
- \fBrewrite\fP  = determines how often one and the same EMM is written
+ \fBusecache\fP = \fB0\fP|\fB1\fP: 1 = enable EMM caching, default:0
+
+ \fBrewrite\fP  = determines how often one and the same EMM is
+            written, default:0
+
  \fBlogging\fP  = EMM logging mask:
 
-            \fB0\fP = EMM logging disabled
-            \fB1\fP = logging EMM errors
-            \fB2\fP = logging written EMMs
-            \fB4\fP = logging skipped EMMs
-            \fB8\fP = logging blocked EMMs
+             \fB0\fP = EMM logging disabled (default)
+             \fB1\fP = logging EMM errors
+             \fB2\fP = logging written EMMs
+             \fB4\fP = logging skipped EMMs
+             \fB8\fP = logging blocked EMMs
+            \fB16\fP = logging disabled AU
 
- example: emmcache = 1,3,10
-          emmcache = 1,2,6
+ example: emmcache = 1,3,2
 .RE
 .PP
 \fBratelimitecm\fP = \fBcount\fP
