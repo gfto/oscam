@@ -2592,20 +2592,27 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			strftime (buf, sizeof(buf), "%Y/%m/%d %H:%M:%S", &timeinfo);
 			snprintf (token, sizeof(token), "%s%s_emm.log", cfg.emmlogdir?cfg.emmlogdir:cs_confdir, aureader->label);
 			
-
-			if ((!(fp = fopen (token, "a"))) || (!(fp = fopen (token, "ab")))) {
+			if (!(fp = fopen (token, "a"))) {
 				cs_log ("ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
-			} else if((cs_malloc(&tmp2, (emm_length + 3)*2 + 1, -1)) || ((int)fwrite(ep->emm, 1, emm_length+3, fp) == emm_length+3) ) {
+			} else if(cs_malloc(&tmp2, (emm_length + 3)*2 + 1, -1)){
 				fprintf (fp, "%s   %s   ", buf, cs_hexdump(0, ep->hexserial, 8, tmp, sizeof(tmp)));
 				fprintf (fp, "%s\n", cs_hexdump(0, ep->emm, emm_length + 3, tmp2, (emm_length + 3)*2 + 1));
 				free(tmp2);
+				fclose (fp);
 				cs_log ("Successfully added EMM to %s.", token);
 			}
-			else {
+
+			snprintf (token, sizeof(token), "%s%s_emm.bin", cfg.emmlogdir?cfg.emmlogdir:cs_confdir, aureader->label);
+			if (!(fp = fopen (token, "ab"))) {
+				cs_log ("ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
+			} else {
+				if ((int)fwrite(ep->emm, 1, emm_length+3, fp) == emm_length+3)	{
+					cs_log ("Successfully added binary EMM to %s.", token);
+				} else {
 					cs_log ("ERROR: Cannot write binary EMM to %s (errno=%d: %s)\n", token, errno, strerror(errno));
 				}
-                  fclose (fp);
-             	
+				fclose (fp);
+			}
 		}
 
 		int32_t is_blocked = 0;
