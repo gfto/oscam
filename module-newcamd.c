@@ -221,7 +221,7 @@ static void network_cmd_no_data_send(int32_t handle, uint16_t *netMsgId,
                                      net_msg_type_t cmd, uint8_t *deskey, 
                                      comm_type_t commType)
 {
-  uint8_t buffer[CWS_NETMSGSIZE];
+  uint8_t buffer[3];
 
   buffer[0] = cmd; buffer[1] = 0;
   network_message_send(handle, netMsgId, buffer, 3, deskey, commType, 0, NULL);
@@ -584,7 +584,7 @@ static int8_t newcamd_auth_client(in_addr_t ip, uint8_t *deskey)
     uchar passwdcrypt[120];
     struct s_reader *aureader = NULL, *rdr = NULL;
     struct s_client *cl = cur_client();
-    uchar mbuf[1024];
+    uchar mbuf[CWS_NETMSGSIZE];
 
     ok = cfg.ncd_allowed ? check_ip(cfg.ncd_allowed, ip) : 1;
 
@@ -857,7 +857,7 @@ static void newcamd_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
   int32_t len;
   uint16_t cl_msgid;
-  uchar mbuf[1024];
+  uchar mbuf[19];
   
   if (!client->udp_fd) {
     cs_debug_mask(D_CLIENT, "ncd_send_dcw: error: client->udp_fd=%d", client->udp_fd);
