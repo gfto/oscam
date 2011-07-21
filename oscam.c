@@ -2536,6 +2536,16 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 
 		if (aureader->audisabled) {
 			cs_debug_mask(D_EMM, "AU is disabled for reader %s", aureader->label);
+			/* we have to write the log for blocked EMM here because
+	  		 this EMM never reach the reader module where the rest
+			 of EMM log is done. */
+			if (aureader->logemm & 0x10)  {
+				cs_log("%s emmtype=%s, len=%d, idx=0, cnt=1: audisabled (0 ms) by %s",
+						client->account->usr,
+						typtext[ep->type],
+						ep->emm[2],
+						aureader->label);
+			}
 			continue;
 		}
 
