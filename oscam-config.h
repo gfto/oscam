@@ -53,6 +53,10 @@
 //#define LCDSUPPORT
 #endif
 
+#ifndef IPV6SUPPORT
+//#define IPV6SUPPORT
+#endif
+
 //
 // MODULES
 //

@@ -14,6 +14,30 @@
 #include "module-cccam.h"
 #include "module-cccshare.h"
 
+#ifdef IPV6SUPPORT 
+char *cs_inet6_ntoa(struct in6_addr addr)
+{
+	static char buff[40];
+	
+	if ((addr.s6_addr32[0] == 0xFFFFFFFF) && (addr.s6_addr32[1] == 0xFFFFFFFF) & (addr.s6_addr32[2] == 0xFFFFFFFF)) //IPv4
+	{
+	    return cs_inet_ntoa(addr.s6_addr32[3]);
+	}
+	else
+	{
+	    snprintf(buff, sizeof(buff), "%4X:%4X:%4X:%4X:%4X:%4X:%4X:%4X",
+		(addr.s6_addr32[0] >> 16), (addr.s6_addr32[0] &0x0000FFFF),
+		(addr.s6_addr32[1] >> 16), (addr.s6_addr32[1] &0x0000FFFF),
+		(addr.s6_addr32[2] >> 16), (addr.s6_addr32[2] &0x0000FFFF),
+		(addr.s6_addr32[3] >> 16), (addr.s6_addr32[3] &0x0000FFFF));
+	    return buff;
+	}
+}
+#else
+#define cs_inet6_ntoa	cs_inet_ntoa
+#endif
+
+
 extern void restart_cardreader(struct s_reader *rdr, int32_t restart);
 
 static int8_t running = 1;
@@ -26,30 +50,30 @@ static void refresh_oscam(enum refreshtypes refreshtype) {
 
 	switch (refreshtype) {
 		case REFR_ACCOUNTS:
-		cs_log("Refresh Accounts requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
+		cs_log("Refresh Accounts requested by WebIF from %s", cs_inet6_ntoa(GET_IP()));
 		cs_accounts_chk();
 		break;
 		
 		case REFR_CLIENTS:
-		cs_log("Refresh Clients requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
+		cs_log("Refresh Clients requested by WebIF from %s", cs_inet6_ntoa(GET_IP()));
 		cs_reinit_clients(cfg.account);
 		break;
 
 		case REFR_SERVER:
-		cs_log("Refresh Server requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
+		cs_log("Refresh Server requested by WebIF from %s", cs_inet6_ntoa(GET_IP()));
 		//kill(first_client->pid, SIGHUP);
 		//todo how I can refresh the server after global settings
 		break;
 
 		case REFR_SERVICES:
-		cs_log("Refresh Services requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
+		cs_log("Refresh Services requested by WebIF from %s", cs_inet6_ntoa(GET_IP()));
 		//init_sidtab();
 		cs_accounts_chk();
 		break;
 
 #ifdef CS_ANTICASC
 		case REFR_ANTICASC:
-		cs_log("Refresh Anticascading requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
+		cs_log("Refresh Anticascading requested by WebIF from %s", cs_inet6_ntoa(GET_IP()));
 		ac_init_stat();
 		int8_t foundac = 0;
 		struct s_client *cl;
@@ -1324,7 +1348,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 
 	if (strcmp(getParam(params, "action"), "resetstat") == 0) {
 		clear_reader_stat(rdr);
-		cs_log("Reader %s stats resetted by WebIF from %s", rdr->label, cs_inet_ntoa(GET_IP()));
+		cs_log("Reader %s stats resetted by WebIF from %s", rdr->label, cs_inet6_ntoa(GET_IP()));
 	}
 
 	if (!apicall){
@@ -2316,7 +2340,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 		struct s_client *cl = get_client_by_tid(atol(getParam(params, "threadid")));
 		if (cl) {
 			kill_thread(cl);
-			cs_log("Client %s killed by WebIF from %s", cl->account->usr, cs_inet_ntoa(GET_IP()));
+			cs_log("Client %s killed by WebIF from %s", cl->account->usr, cs_inet6_ntoa(GET_IP()));
 		}
 	}
 
@@ -2324,7 +2348,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 		struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 		if(rdr) {
 			add_job(rdr->client, ACTION_READER_RESTART, NULL, 0);
-			cs_log("Reader %s restarted by WebIF from %s", rdr->label, cs_inet_ntoa(GET_IP()));
+			cs_log("Reader %s restarted by WebIF from %s", rdr->label, cs_inet6_ntoa(GET_IP()));
 		}
 	}
 
@@ -3007,10 +3031,10 @@ static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct urip
 			char *result = tpl_getTpl(vars, "SHUTDOWN");
 			send_headers(f, 200, "OK", NULL, "text/html", 0, strlen(result), NULL, 0);
 			webif_write(result, f);
-			cs_log("Shutdown requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
+			cs_log("Shutdown requested by WebIF from %s", cs_inet6_ntoa(GET_IP()));
 		} else {
 			tpl_addVar(vars, TPLADD, "APICONFIRMMESSAGE", "shutdown");
-			cs_log("Shutdown requested by XMLApi from %s", cs_inet_ntoa(GET_IP()));
+			cs_log("Shutdown requested by XMLApi from %s", cs_inet6_ntoa(GET_IP()));
 		}
 		running = 0;
 		pthread_kill(httpthread, SIGPIPE);		// send signal to master thread to wake up from accept()
@@ -3033,10 +3057,10 @@ static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct urip
 			char *result = tpl_getTpl(vars, "SHUTDOWN");
 			send_headers(f, 200, "OK", NULL, "text/html", 0,strlen(result), NULL, 0);
 			webif_write(result, f);
-			cs_log("Restart requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
+			cs_log("Restart requested by WebIF from %s", cs_inet6_ntoa(GET_IP()));
 		} else {
 			tpl_addVar(vars, TPLADD, "APICONFIRMMESSAGE", "restart");
-			cs_log("Restart requested by XMLApi from %s", cs_inet_ntoa(GET_IP()));
+			cs_log("Restart requested by XMLApi from %s", cs_inet6_ntoa(GET_IP()));
 		}
 		running = 0;
 		pthread_kill(httpthread, SIGPIPE);		// send signal to master thread to wake up from accept()
@@ -3619,7 +3643,12 @@ static int8_t check_request(char *result, int32_t read) {
 	return 0;
 }
 
-static int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t forcePlain){
+#ifdef IPV6SUPPORT
+static int32_t readRequest(FILE *f, struct in6_addr in, char **result, int8_t forcePlain)
+#else
+static int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t forcePlain)
+#endif
+{
 	int32_t n, bufsize=0, errcount = 0, is_ssl = 0;
 	char buf2[1024];
 	struct pollfd pfd2[1];
@@ -3665,7 +3694,12 @@ static int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t for
 
 		//max request size 100kb
 		if (bufsize>102400) {
+#ifdef IPV6SUPPORT
+			cs_log("error: too much data received from %s", cs_inet6_ntoa(in));
+#else
 			cs_log("error: too much data received from %s", inet_ntoa(in));
+#endif
+
 			free(*result);
 			return -1;
 		}
@@ -3694,11 +3728,18 @@ static int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t for
 	}
 	return bufsize;
 }
-
-static int32_t process_request(FILE *f, struct in_addr in) {	
+#ifdef IPV6SUPPORT
+static int32_t process_request(FILE *f, struct in6_addr in) {
+#else
+static int32_t process_request(FILE *f, struct in_addr in) {
+#endif
 	int32_t ok=0,v=cv();
 	int8_t *keepalive = (int8_t *)pthread_getspecific(getkeepalive);
+#ifdef IPV6SUPPORT
+	struct in6_addr addr = GET_IP();
+#else
 	in_addr_t addr = GET_IP();
+#endif
 	
 	do {
 #ifdef WITH_SSL
@@ -3706,8 +3747,9 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 #else
 		if (*keepalive) fflush(f);
 #endif
+#ifndef IPV6SUPPORT
 		ok = check_ip(cfg.http_allowed, addr) ? v : 0;
-	
+		
 		if (!ok && cfg.http_dyndns[0]) {
 			cs_debug_mask(D_TRACE, "WebIf: IP not found in allowed range - test dyndns");
 	
@@ -3724,10 +3766,12 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 			if (cfg.http_dyndns[0])
 				cs_debug_mask(D_TRACE, "WebIf: IP found in allowed range - bypass dyndns");
 		}
-	
+#else
+		ok = 1;
+#endif
 		if (!ok) {
 			send_error(f, 403, "Forbidden", NULL, "Access denied.", 0);
-			cs_log("unauthorized access from %s flag %d", cs_inet_ntoa(addr), v);
+			cs_log("unauthorized access from %s flag %d", cs_inet6_ntoa(addr), v);
 			return 0;
 		}
 	
@@ -3772,7 +3816,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 		bufsize = readRequest(f, in, &filebuf, 0);
 	
 		if (!filebuf || bufsize < 1) {
-			if(!*keepalive) cs_debug_mask(D_CLIENT, "WebIf: No data received from client %s. Closing connection.", cs_inet_ntoa(addr));
+			if(!*keepalive) cs_debug_mask(D_CLIENT, "WebIf: No data received from client %s. Closing connection.", cs_inet6_ntoa(addr));
 			return -1;
 		}
 	
@@ -3842,12 +3886,12 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 	
 		if(authok != 1) {
 			if(authok == 2)
-				cs_debug_mask(D_TRACE, "WebIf: Received stale header from %s.", cs_inet_ntoa(addr));
+				cs_debug_mask(D_TRACE, "WebIf: Received stale header from %s.", cs_inet6_ntoa(addr));
 			else if(authheader){
-				cs_debug_mask(D_CLIENT, "WebIf: Received wrong auth header from %s:", cs_inet_ntoa(addr));
+				cs_debug_mask(D_CLIENT, "WebIf: Received wrong auth header from %s:", cs_inet6_ntoa(addr));
 				cs_debug_mask(D_CLIENT, "%s", authheader);
 			} else
-				cs_debug_mask(D_CLIENT, "WebIf: Received no auth header from %s.", cs_inet_ntoa(addr));
+				cs_debug_mask(D_CLIENT, "WebIf: Received no auth header from %s.", cs_inet6_ntoa(addr));
 			char temp[sizeof(AUTHREALM) + sizeof(expectednonce) + 100];
 			snprintf(temp, sizeof(temp), "WWW-Authenticate: Digest algorithm=\"MD5\", realm=\"%s\", qop=\"auth\", opaque=\"\", nonce=\"%s\"", AUTHREALM, expectednonce);
 			if(authok == 2) strncat(temp, ", stale=true", sizeof(temp));
@@ -3908,7 +3952,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 				tpl_addVar(vars, TPLADD, "LANGUAGE", "en");
 	
 			tpl_addVar(vars, TPLADD, "UPTIME", sec2timeformat(vars, (now - first_client->login)));
-			tpl_addVar(vars, TPLADD, "CURIP", cs_inet_ntoa(addr));
+			tpl_addVar(vars, TPLADD, "CURIP", cs_inet6_ntoa(addr));
 			if(cfg.http_readonly)
 				tpl_addVar(vars, TPLAPPEND, "BTNDISABLED", "DISABLED");
 	
@@ -3969,14 +4013,22 @@ static void *serve_process(void *conn){
 	struct s_connection *myconn = (struct s_connection*)conn;
 	int32_t s = myconn->socket;
 	struct s_client *cl = myconn->cl;
+#ifdef IPV6SUPPORT
+	struct in6_addr in = myconn->remote;
+#else
 	struct in_addr in = myconn->remote;
+#endif
+	
 #ifdef WITH_SSL
 	SSL *ssl = myconn->ssl;
 	pthread_setspecific(getssl, ssl);
 #endif
 	free(myconn);
-
+#ifdef IPV6SUPPORT
+	pthread_setspecific(getip, &in.s6_addr);
+#else
 	pthread_setspecific(getip, &in.s_addr);
+#endif
 	pthread_setspecific(getclient, cl);
 
 	int8_t keepalive = 0;
@@ -4064,11 +4116,8 @@ void http_srv() {
 	pthread_setspecific(getclient, cl);
 	cl->typ = 'h';
 	int32_t sock, s, reuse = 1;
-	struct sockaddr_in sin;
-	struct sockaddr_in remote;
 	struct s_connection *conn;
 
-	socklen_t len = sizeof(remote);
 	/* Create random string for nonce value generation */
 	create_rand_str(noncekey,32);
 	
@@ -4082,6 +4131,40 @@ void http_srv() {
 		cs_log("Could not create getkeepalive");
 		return;
 	}
+
+#ifdef IPV6SUPPORT
+	struct sockaddr sin;
+	struct sockaddr_in6 *ia;
+	struct sockaddr remote;
+
+	socklen_t len = sizeof(remote);
+
+	/* Startup server */
+	if((sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+		cs_log("HTTP Server: Creating socket failed! (errno=%d %s)", errno, strerror(errno));
+		return;
+	}
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
+		cs_log("HTTP Server: Setting SO_REUSEADDR via setsockopt failed! (errno=%d %s)", errno, strerror(errno));
+	}
+
+	memset(&sin, 0, sizeof sin);
+	ia = (struct sockaddr_in6 *)&sin;
+	ia->sin6_family = AF_INET6;
+	ia->sin6_addr = in6addr_any;
+	ia->sin6_port = htons(cfg.http_port);
+	
+	if((bind(sock, &sin, sizeof(struct sockaddr_in6))) < 0) {
+		cs_log("HTTP Server couldn't bind on port %d (errno=%d %s). Not starting HTTP!", cfg.http_port, errno, strerror(errno));
+		close(sock);
+		return;
+	}
+#else
+	struct sockaddr_in sin;
+	struct sockaddr_in remote;
+
+
+	socklen_t len = sizeof(remote);
 
 	/* Startup server */
 	if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
@@ -4101,6 +4184,7 @@ void http_srv() {
 		close(sock);
 		return;
 	}
+#endif
 	if (listen(sock, SOMAXCONN) < 0) {
 		cs_log("HTTP Server: Call to listen() failed! (errno=%d %s)", errno, strerror(errno));
 		close(sock);
@@ -4133,7 +4217,11 @@ void http_srv() {
 			setTCPTimeouts(s);
 			cur_client()->last = time((time_t)0); //reset last busy time
 			conn->cl = cur_client();
+#ifdef IPV6SUPPORT
+			memcpy(&conn->remote, &ia->sin6_addr, sizeof(struct in6_addr));
+#else
 			memcpy(&conn->remote, &remote.sin_addr, sizeof(struct in_addr));
+#endif
 			conn->socket = s;
 #ifdef WITH_SSL
 			conn->ssl = NULL;

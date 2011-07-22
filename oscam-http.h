@@ -1,13 +1,22 @@
 struct s_connection{
 	int32_t socket;
 	struct s_client *cl;
+#ifdef IPV6SUPPORT
+	struct in6_addr remote;
+#else
 	struct in_addr remote;
+#endif
 #ifdef WITH_SSL
 	SSL *ssl;
 #endif
 };
 
+#ifdef IPV6SUPPORT
+#define GET_IP() *(struct in6_addr *)pthread_getspecific(getip)
+#else
 #define GET_IP() *(in_addr_t *)pthread_getspecific(getip)
+#endif
+
 pthread_key_t getkeepalive;
 
 #ifdef WITH_SSL
