@@ -2462,7 +2462,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 				tpl_printf(vars, TPLADD, "HIDEIDX", "%ld", cl->thread);
 
 				if(cl->typ == 'c' && !cfg.http_readonly) {
-
+					tpl_addVar(vars, TPLADD, "CSIDX", "");
 					//todo: we have no unique ID for clients. ThreadID not longer works bcaus changes permanently
 					//tpl_printf(vars, TPLADD, "CSIDX", "<A HREF=\"status.html?action=kill&threadid=%ld\" TITLE=\"Kill this client\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICKIL\" ALT=\"Kill\"></A>", cl->thread);
 				}
