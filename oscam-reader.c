@@ -411,7 +411,8 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   //cs_log("hallo idx:%d rc:%d caid:%04X",er->idx,er->rc,er->caid);
   if (er->rc<=E_STOPPED)
     {
-      send_dcw(cl, er);
+      //send_dcw(cl, er); --> schlocke: when the ecm already has found/not found etc, it's not needed to report this again
+      //                                this could also cause segfaults because if the er->client has disconnected, it's invalid!
       return;
     }
   

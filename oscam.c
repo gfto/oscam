@@ -3124,6 +3124,7 @@ static void * check_thread(void) {
 			make_timeout(&timeout, 30000);
 		}
 	}
+	return NULL;
 }
 
 void * client_check(void) {
