@@ -2283,25 +2283,26 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					saveptr1[-1]='\n';
 				}
 			}
-			*/
+			 */
+			if (rdr) {
 
-			if (rdr->ll_entitlements) {
+				if (rdr->ll_entitlements) {
 
-				char *typetxt[] = {"", "package", "PPV-Event", "chid", "tier", "class", "PBM" };
-				time_t now = time((time_t)0);
+					char *typetxt[] = {"", "package", "PPV-Event", "chid", "tier", "class", "PBM" };
+					time_t now = time((time_t)0);
 
-				struct tm start_t, end_t;
-				LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
-				S_ENTITLEMENT *item;
+					struct tm start_t, end_t;
+					LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
+					S_ENTITLEMENT *item;
 
-				tpl_addVar(vars, TPLAPPEND, "LOGHISTORY", "<BR><BR>New Structure:<BR>");
-				char tbuffer[30];
-				while ((item = ll_iter_next(&itr))) {
+					tpl_addVar(vars, TPLAPPEND, "LOGHISTORY", "<BR><BR>New Structure:<BR>");
+					char tbuffer[30];
+					while ((item = ll_iter_next(&itr))) {
 
-					localtime_r(&item->start, &start_t);
-					localtime_r(&item->end, &end_t);
+						localtime_r(&item->start, &start_t);
+						localtime_r(&item->end, &end_t);
 
-					/*
+						/*
 					// temporarly Testoutput
 					// to be able to display correctly on 32bit systems, uint64 has to be split in 2 uint32 values and used as 2 params
 					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "<SPAN CLASS=\"%s\">entitlement %s: caid %04X provid %06X id %08X%08X class %08X valid ",
@@ -2315,38 +2316,45 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 						tpl_printf(vars, TPLAPPEND, "LOGHISTORY", " until %02d.%02d.%04d</SPAN><BR>\n",
 								end_t.tm_mday, end_t.tm_mon + 1, end_t.tm_year + 1900);
 					}
-					*/
+						 */
 
-					// todo: preparing output of new structure in table view and xmlapi ---->
+						// todo: preparing output of new structure in table view and xmlapi ---->
 
-					if(!apicall)
-						strftime(tbuffer, 30, "%Y-%m-%d", &start_t);
-					else
-						strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &start_t);
-					tpl_addVar(vars, TPLADD, "ENTSTARTDATE", tbuffer);
+						if(!apicall)
+							strftime(tbuffer, 30, "%Y-%m-%d", &start_t);
+						else
+							strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &start_t);
+						tpl_addVar(vars, TPLADD, "ENTSTARTDATE", tbuffer);
 
-					if(!apicall)
-						strftime(tbuffer, 30, "%Y-%m-%d", &end_t);
-					else
-						strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &end_t);
-					tpl_addVar(vars, TPLADD, "ENTENDDATE", tbuffer);
+						if(!apicall)
+							strftime(tbuffer, 30, "%Y-%m-%d", &end_t);
+						else
+							strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &end_t);
+						tpl_addVar(vars, TPLADD, "ENTENDDATE", tbuffer);
 
-					tpl_addVar(vars, TPLADD, "ENTEXPIERED", item->end > now ? "e_valid" : "e_expired");
-					tpl_printf(vars, TPLADD, "ENTCAID", "%04X", item->caid);
-					tpl_printf(vars, TPLADD, "ENTPROVID", "%06X", item->provid);
-					tpl_printf(vars, TPLADD, "ENTID", "%08X%08X", (uint32_t)(item->id >> 32), (uint32_t)item->id);
-					tpl_printf(vars, TPLADD, "ENTCLASS", "%08X", item->class);
-					tpl_addVar(vars, TPLADD, "ENTTYPE", typetxt[item->type]);
+						tpl_addVar(vars, TPLADD, "ENTEXPIERED", item->end > now ? "e_valid" : "e_expired");
+						tpl_printf(vars, TPLADD, "ENTCAID", "%04X", item->caid);
+						tpl_printf(vars, TPLADD, "ENTPROVID", "%06X", item->provid);
+						tpl_printf(vars, TPLADD, "ENTID", "%08X%08X", (uint32_t)(item->id >> 32), (uint32_t)item->id);
+						tpl_printf(vars, TPLADD, "ENTCLASS", "%08X", item->class);
+						tpl_addVar(vars, TPLADD, "ENTTYPE", typetxt[item->type]);
 
-					tpl_addVar(vars, TPLAPPEND, "READERENTENTRY", tpl_getTpl(vars, "ENTITLEMENTITEMBIT"));
-					// <-----
+						tpl_addVar(vars, TPLAPPEND, "READERENTENTRY", tpl_getTpl(vars, "ENTITLEMENTITEMBIT"));
+						// <-----
 
+					}
 				}
-			}
 
-			tpl_printf(vars, TPLADD, "READERTYPE", "%c", rdr->client->typ);
-			tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
-			tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTBIT"));
+				if (rdr->client && rdr->client->typ)
+					tpl_printf(vars, TPLADD, "READERTYPE", "%c", rdr->client->typ);
+				else
+					tpl_addVar(vars, TPLADD, "READERTYPE", "null");
+				tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
+				tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTBIT"));
+
+			} else {
+				tpl_addVar(vars, TPLADD, "MESSAGE", "Reader does not exist or is not started");
+			}
 		}
 
 	} else {
