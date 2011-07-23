@@ -1750,6 +1750,9 @@ static void checkCW(ECM_REQUEST *er)
 
 int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 {
+	if (!client || client->kill)
+		return 0;
+		
 	static const char *stxt[]={"found", "cache1", "cache2", "emu",
 			"not found", "timeout", "sleeping",
 			"fake", "invalid", "corrupt", "no card", "expdate", "disabled", "stopped"};
@@ -2830,9 +2833,9 @@ void * work_thread(void *ptr) {
 			cs_log("client killed");
 
 			if (data->ptr)
-				free(data->ptr);
+				add_garbage(data->ptr);
 
-			free(data);
+			add_garbage(data);
 			data = NULL;
 			cleanup_thread(cl);
 			pthread_exit(NULL);
