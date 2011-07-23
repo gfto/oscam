@@ -2273,6 +2273,9 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 
 			rdr = get_reader_by_label(reader_);
 
+			/*
+
+			// legacy code for cs_ri_log
 			if (rdr->init_history) {
 				char *ptr, *saveptr1 = NULL;
 				for (ptr=strtok_r(rdr->init_history, "\n", &saveptr1); ptr; ptr=strtok_r(NULL, "\n", &saveptr1)) {
@@ -2280,6 +2283,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					saveptr1[-1]='\n';
 				}
 			}
+			*/
 
 			if (rdr->ll_entitlements) {
 
@@ -2296,6 +2300,9 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 
 					localtime_r(&item->start, &start_t);
 					localtime_r(&item->end, &end_t);
+
+					/*
+					// temporarly Testoutput
 					// to be able to display correctly on 32bit systems, uint64 has to be split in 2 uint32 values and used as 2 params
 					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "<SPAN CLASS=\"%s\">entitlement %s: caid %04X provid %06X id %08X%08X class %08X valid ",
 							item->end > now ? "e_valid" : "e_expired" , typetxt[item->type], item->caid, item->provid, (uint32_t)(item->id >> 32), (uint32_t)item->id, item->class);
@@ -2308,6 +2315,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 						tpl_printf(vars, TPLAPPEND, "LOGHISTORY", " until %02d.%02d.%04d</SPAN><BR>\n",
 								end_t.tm_mday, end_t.tm_mon + 1, end_t.tm_year + 1900);
 					}
+					*/
 
 					// todo: preparing output of new structure in table view and xmlapi ---->
 
@@ -2330,6 +2338,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					tpl_printf(vars, TPLADD, "ENTCLASS", "%08X", item->class);
 					tpl_addVar(vars, TPLADD, "ENTTYPE", typetxt[item->type]);
 
+					tpl_addVar(vars, TPLAPPEND, "READERENTENTRY", tpl_getTpl(vars, "ENTITLEMENTITEMBIT"));
 					// <-----
 
 				}
@@ -2337,7 +2346,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 
 			tpl_printf(vars, TPLADD, "READERTYPE", "%c", rdr->client->typ);
 			tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
-			tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
+			tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTBIT"));
 		}
 
 	} else {
