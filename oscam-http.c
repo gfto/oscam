@@ -4192,6 +4192,7 @@ void http_srv() {
 	}
 
 #ifdef IPV6SUPPORT
+	static uint8_t ipv4fallback = 0;
 	struct sockaddr sin;
 	struct sockaddr_in6 *ia;
 	struct sockaddr remote;
@@ -4204,8 +4205,13 @@ void http_srv() {
 
 	/* Startup server */
 	if((sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-		cs_log("HTTP Server: Creating socket failed! (errno=%d %s)", errno, strerror(errno));
-		return;
+		cs_log("HTTP Server: Creating IPv6 socket failed! (errno=%d %s)", errno, strerror(errno));
+		cs_log("HTTP Server: Trying fallback to IPv4.");
+		if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+			cs_log("HTTP Server: Creating socket failed! (errno=%d %s)", errno, strerror(errno));
+			return;
+		}
+		ipv4fallback = 1;
 	}
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
 		cs_log("HTTP Server: Setting SO_REUSEADDR via setsockopt failed! (errno=%d %s)", errno, strerror(errno));
@@ -4284,7 +4290,18 @@ void http_srv() {
 			cur_client()->last = time((time_t)0); //reset last busy time
 			conn->cl = cur_client();
 #ifdef IPV6SUPPORT
-			memcpy(&conn->remote, &ra->sin6_addr, sizeof(struct in6_addr));
+			if (ipv4fallback)
+			{
+				struct sockaddr_in *fba = (struct sockaddr_in *)&remote;
+				struct in6_addr taddr;
+				memset(&taddr, 0, sizeof(taddr));
+				taddr.s6_addr32[3] = fba->sin_addr.s_addr;
+				memcpy(&conn->remote, &taddr, sizeof(struct in6_addr));
+			}
+			else
+			{
+				memcpy(&conn->remote, &ra->sin6_addr, sizeof(struct in6_addr));
+			}
 #else
 			memcpy(&conn->remote, &remote.sin_addr, sizeof(struct in_addr));
 #endif
