@@ -19,19 +19,18 @@ char *cs_inet6_ntoa(struct in6_addr addr)
 {
 	static char buff[40];
 	
-	if ((addr.s6_addr32[0] == 0xFFFFFFFF) && (addr.s6_addr32[1] == 0xFFFFFFFF) & (addr.s6_addr32[2] == 0xFFFFFFFF)) //IPv4
+	if (IN6_IS_ADDR_V4MAPPED(&addr) || IN6_IS_ADDR_V4COMPAT(&addr))
 	{
-	    return cs_inet_ntoa(addr.s6_addr32[3]);
+	    snprintf(buff, sizeof(buff), "%d.%d.%d.%d",
+		addr.s6_addr[12], addr.s6_addr[13], addr.s6_addr[14], addr.s6_addr[15]);
 	}
 	else
 	{
-	    snprintf(buff, sizeof(buff), "%4X:%4X:%4X:%4X:%4X:%4X:%4X:%4X",
-		(addr.s6_addr32[0] >> 16), (addr.s6_addr32[0] &0x0000FFFF),
-		(addr.s6_addr32[1] >> 16), (addr.s6_addr32[1] &0x0000FFFF),
-		(addr.s6_addr32[2] >> 16), (addr.s6_addr32[2] &0x0000FFFF),
-		(addr.s6_addr32[3] >> 16), (addr.s6_addr32[3] &0x0000FFFF));
-	    return buff;
+	    snprintf(buff, sizeof(buff), "%x:%x:%x:%x:%x:%x:%x:%x",
+		ntohs(addr.s6_addr16[0]), ntohs(addr.s6_addr16[1]), ntohs(addr.s6_addr16[2]), ntohs(addr.s6_addr16[3]),
+		ntohs(addr.s6_addr16[4]), ntohs(addr.s6_addr16[5]), ntohs(addr.s6_addr16[6]), ntohs(addr.s6_addr16[7]));
 	}
+	return buff;
 }
 #else
 #define cs_inet6_ntoa	cs_inet_ntoa
@@ -3747,12 +3746,7 @@ static int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t for
 
 		//max request size 100kb
 		if (bufsize>102400) {
-#ifdef IPV6SUPPORT
 			cs_log("error: too much data received from %s", cs_inet6_ntoa(in));
-#else
-			cs_log("error: too much data received from %s", inet_ntoa(in));
-#endif
-
 			free(*result);
 			return -1;
 		}
@@ -4189,8 +4183,12 @@ void http_srv() {
 	struct sockaddr sin;
 	struct sockaddr_in6 *ia;
 	struct sockaddr remote;
+	struct sockaddr_in6 *ra;
 
 	socklen_t len = sizeof(remote);
+
+	ia = (struct sockaddr_in6 *)&sin;
+	ra = (struct sockaddr_in6 *)&remote;
 
 	/* Startup server */
 	if((sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP)) < 0) {
@@ -4202,11 +4200,11 @@ void http_srv() {
 	}
 
 	memset(&sin, 0, sizeof sin);
-	ia = (struct sockaddr_in6 *)&sin;
+	
 	ia->sin6_family = AF_INET6;
 	ia->sin6_addr = in6addr_any;
 	ia->sin6_port = htons(cfg.http_port);
-	
+
 	if((bind(sock, &sin, sizeof(struct sockaddr_in6))) < 0) {
 		cs_log("HTTP Server couldn't bind on port %d (errno=%d %s). Not starting HTTP!", cfg.http_port, errno, strerror(errno));
 		close(sock);
@@ -4255,6 +4253,8 @@ void http_srv() {
 	} else ssl_active = 0;
 #endif
 
+	memset(&remote, 0, sizeof(remote));
+
 	while (running) {
 		if((s = accept(sock, (struct sockaddr *) &remote, &len)) < 0) {
 			if(errno != EAGAIN && errno != EINTR){
@@ -4263,6 +4263,7 @@ void http_srv() {
 			} else cs_sleepms(5);
 			continue;
 		} else {
+			getpeername(s, (struct sockaddr *) &remote, &len);
 			if(!cs_malloc(&conn, sizeof(struct s_connection), -1)){
 				close(s);
 				continue;
@@ -4271,7 +4272,7 @@ void http_srv() {
 			cur_client()->last = time((time_t)0); //reset last busy time
 			conn->cl = cur_client();
 #ifdef IPV6SUPPORT
-			memcpy(&conn->remote, &ia->sin6_addr, sizeof(struct in6_addr));
+			memcpy(&conn->remote, &ra->sin6_addr, sizeof(struct in6_addr));
 #else
 			memcpy(&conn->remote, &remote.sin_addr, sizeof(struct in_addr));
 #endif
