@@ -1041,10 +1041,8 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
 #define TPLENTITLEMENTBIT "\
 	<TABLE CLASS=\"stats\">\n\
-		<TR><TH>Serial</TH><TH>Rom</TH><TH>ATR</TH></TR>\n\
-		<TR><TD>##READERSERIAL##</TD><TD>##READERROM##</TD><TD>##READERATR##</TD></TR>\n\
-	</TABLE><BR>\n\
-	<TABLE CLASS=\"stats\">\n\
+		<TR><TH colspan=\"2\">Serial</TH><TH colspan=\"2\">Rom</TH><TH colspan=\"3\">ATR</TH></TR>\n\
+		<TR><TD colspan=\"2\">##READERSERIAL##</TD><TD colspan=\"2\">##READERROM##</TD><TD colspan=\"3\">##READERATR##</TD></TR>\n\
 		<TR><TH>Type</TH><TH>Caid</TH><TH>Provid</TH><TH>ID</TH><TH>Class</TH><TH>Start Date</TH><TH>Expire Date</TH></TR>\n\
 ##READERENTENTRY##\
 	</TABLE>\n"
