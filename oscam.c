@@ -2839,7 +2839,7 @@ void * work_thread(void *ptr) {
 			data = NULL;
 			cleanup_thread(cl);
 			pthread_exit(NULL);
-			return 0;
+			return NULL;
 		}
 
 		if (!data->action)
@@ -2981,7 +2981,7 @@ void * work_thread(void *ptr) {
 	cs_debug_mask(D_TRACE, "ending thread");
 
 	pthread_exit(NULL);
-	return 0;
+	return NULL;
 }
 
 void add_job(struct s_client *cl, int8_t action, void *ptr, int len) {

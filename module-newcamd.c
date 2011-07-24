@@ -70,12 +70,7 @@ static int32_t network_message_send(int32_t handle, uint16_t *netMsgId, uint8_t 
   memcpy(netbuf+head_size, buffer, len);
   len += head_size;
   if (netMsgId) { 
-    switch(commType)
-    {
-    case COMMTYPE_CLIENT:
-      (*netMsgId)++; 
-      break;
-    }
+    if(commType==COMMTYPE_CLIENT) (*netMsgId)++; 
     netbuf[2] = (*netMsgId) >> 8; 
     netbuf[3] = (*netMsgId) & 0xff; 
   }

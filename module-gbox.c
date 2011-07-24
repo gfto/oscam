@@ -527,7 +527,7 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
 
   uint32_t r_addr_len = 0;
   struct sockaddr_in r_addr;
-  if ((n = recvfrom(cli->udp_fd, data, sizeof(gbox->buf), 0, (struct sockaddr *)&r_addr, &r_addr_len)) < 8) {
+  if ((n = recvfrom(cli->udp_fd, data, sizeof(gbox->buf), 0, (struct sockaddr *)&r_addr, (socklen_t *)&r_addr_len)) < 8) {
 	  cs_log("gbox: invalid recvfrom!!!");
     	cs_writeunlock(&gbox->lock);
     	return -1;
