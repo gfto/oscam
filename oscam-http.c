@@ -3746,7 +3746,11 @@ static int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t for
 
 		//max request size 100kb
 		if (bufsize>102400) {
+#ifdef IPV6SUPPORT
 			cs_log("error: too much data received from %s", cs_inet6_ntoa(in));
+#else
+			cs_log("error: too much data received from %s", inet_ntoa(in));
+#endif
 			free(*result);
 			return -1;
 		}
