@@ -381,7 +381,8 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 	ATR_GetRaw(atr, atrarr, &atr_size);
 	char tmp[atr_size*3+1];
 	cs_ri_log(reader, "ATR: %s", cs_hexdump(1, atrarr, atr_size, tmp, sizeof(tmp)));
-
+	memcpy(reader->card_atr, atrarr, atr_size);
+	reader->card_atr_length = atr_size;
 
 	/* Get ICC reader->convention */
 	if (ATR_GetConvention (atr, &(reader->convention)) != ATR_OK) {

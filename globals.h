@@ -891,6 +891,8 @@ struct s_reader  									//contains device info, reader info and card info
 	int8_t			force_irdeto;
 	uchar			rsa_mod[120];					// rsa modulus for nagra cards.
 	uchar			atr[64];
+	uchar			card_atr[64];					// ATR readed from card
+	int8_t			card_atr_length;				// length of ATR
 	int32_t			atrlen;
 	SIDTABBITS		sidtabok;						// positiv services
 	SIDTABBITS		sidtabno;						// negative services

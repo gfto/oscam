@@ -2354,6 +2354,8 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				int8_t i;
 				for(i = 0; i < 15; i++)	tpl_printf(vars, TPLAPPEND, "READERROM", "%c", rdr->rom[i]);
 				for(i = 0; i < 8; i++)	tpl_printf(vars, TPLAPPEND, "READERSERIAL", "%02X", rdr->hexserial[i]);
+				if(rdr->card_atr_length)
+					for(i = 0; i < rdr->card_atr_length; i++) tpl_printf(vars, TPLAPPEND, "READERATR", "%02X ", rdr->card_atr[i]);
 
 				tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTBIT"));
 
