@@ -2191,6 +2191,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 							tpl_printf(vars, TPLADD, "APIPROVIDERNUMBER", "%d", providercount);
 							tpl_addVar(vars, TPLADD, "APIPROVIDERNAME", xml_encode(vars, provider));
 							tpl_addVar(vars, TPLAPPEND, "PROVIDERLIST", tpl_getTpl(vars, "APICCCAMCARDPROVIDERBIT"));
+
 						}
 						providercount++;
 						tpl_printf(vars, TPLADD, "APITOTALPROVIDERS", "%d", providercount);
@@ -2350,6 +2351,18 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				else
 					tpl_addVar(vars, TPLADD, "READERTYPE", "null");
 				tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
+
+				int8_t i;
+				if(rdr->rom[0])
+					for(i = 0; i < 15; i++)	tpl_printf(vars, TPLAPPEND, "READERROM", "%s", rdr->rom[i]);
+				else
+					tpl_addVar(vars, TPLAPPEND, "READERROM", "");
+
+				if(rdr->hexserial[0])
+					for(i = 0; i < 8; i++)	tpl_printf(vars, TPLAPPEND, "READERSERIAL", "%s", rdr->hexserial[i]);
+				else
+					tpl_addVar(vars, TPLAPPEND, "READERSERIAL", "");
+
 				tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTBIT"));
 
 			} else {
