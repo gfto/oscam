@@ -2351,6 +2351,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					tpl_addVar(vars, TPLADD, "READERTYPE", "null");
 				tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
 
+				/*todo:  segfaults :-/
 				int8_t i;
 				if(rdr->rom[0])
 					for(i = 0; i < 15; i++)	tpl_printf(vars, TPLAPPEND, "READERROM", "%s", rdr->rom[i]);
@@ -2361,6 +2362,8 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					for(i = 0; i < 8; i++)	tpl_printf(vars, TPLAPPEND, "READERSERIAL", "%s", rdr->hexserial[i]);
 				else
 					tpl_addVar(vars, TPLAPPEND, "READERSERIAL", "");
+
+				*/
 
 				tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTBIT"));
 

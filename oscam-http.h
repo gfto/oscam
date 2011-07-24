@@ -144,6 +144,8 @@ path.graph_grid {stroke:gray;stroke-opacity:0.5}\n\
 text.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}\n\
 span.e_valid {background-color:#E6FEBF;}\n\
 span.e_expired {background-color:#fff3e7;}\n\
+TR.e_valid {background-color:#E6FEBF;}\n\
+TR.e_expired {background-color:#fff3e7;}\n\
 span.global_conf {color: blue; font-size: 12px; font-family: Arial; cursor: default; padding: 4px;}\n\
 "
 
