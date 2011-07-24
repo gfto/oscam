@@ -3798,28 +3798,41 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 #else
 		if (*keepalive) fflush(f);
 #endif
-#ifndef IPV6SUPPORT
+#ifdef IPV6SUPPORT
+		if (IN6_IS_ADDR_V4MAPPED(&in) || IN6_IS_ADDR_V4COMPAT(&in))
+		{
+		    // check for IPv4 as before
+		    ok = check_ip(cfg.http_allowed, *((in_addr_t *)&addr.s6_addr32[3])) ? v : 0;
+		}
+		else
+		{
+		    // Allow all IPv6
+		    // todo: check and filter
+		    ok = v;
+		}
+#else
 		ok = check_ip(cfg.http_allowed, addr) ? v : 0;
+#endif
 		
 		if (!ok && cfg.http_dyndns[0]) {
 			cs_debug_mask(D_TRACE, "WebIf: IP not found in allowed range - test dyndns");
-	
+#ifdef IPV6SUPPORT
+			if(cfg.http_dynip && cfg.http_dynip == addr.s6_addr32[3]) {
+#else
 			if(cfg.http_dynip && cfg.http_dynip == addr) {
+#endif
 				ok = v;
 				cs_debug_mask(D_TRACE, "WebIf: dyndns address previously resolved and ok");	
 			} else {
 				cfg.http_dynip = cs_getIPfromHost((char*)cfg.http_dyndns);
 				cs_debug_mask(D_TRACE, "WebIf: dynip resolved %s access from %s",
 					cs_inet_ntoa(cfg.http_dynip),
-					cs_inet_ntoa(addr));
+					cs_inet6_ntoa(addr));
 			}
 		} else {
 			if (cfg.http_dyndns[0])
 				cs_debug_mask(D_TRACE, "WebIf: IP found in allowed range - bypass dyndns");
 		}
-#else
-		ok = 1;
-#endif
 		if (!ok) {
 			send_error(f, 403, "Forbidden", NULL, "Access denied.", 0);
 			cs_log("unauthorized access from %s flag %d", cs_inet6_ntoa(addr), v);
