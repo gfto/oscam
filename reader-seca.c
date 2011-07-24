@@ -2,6 +2,31 @@
 #include "reader-common.h"
 #include <stdlib.h>
 
+static uint64_t get_pbm(struct s_reader * reader, size_t idx)
+{
+  def_resp;
+  static const unsigned char ins34[] = { 0xc1, 0x34, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00 }; //data following is provider Package Bitmap Records
+  unsigned char ins32[] = { 0xc1, 0x32, 0x00, 0x00, 0x20 };				// get PBM
+  uint64_t pbm = 0;
+
+  ins32[2] = idx;
+  write_cmd(ins34, ins34 + 5);	//prepare card for pbm request
+  write_cmd(ins32, NULL);	//pbm request
+
+  switch (cta_res[0]) {
+  case 0x04:
+    cs_ri_log(reader, "[seca-reader] no PBM for provider %i", idx + 1);
+    break;
+  case 0x83:
+    pbm = b2ll(8, cta_res + 1);
+    cs_ri_log(reader, "[seca-reader] PBM for provider %i: %08llx", idx + 1, pbm);
+    break;
+  default:
+    cs_log("[seca-reader] ERROR: PBM returns unknown byte %02x", cta_res[0]);
+  }
+  return pbm;
+}
+
 static int32_t set_provider_info(struct s_reader * reader, int32_t i)
 {
   def_resp;
@@ -49,9 +74,25 @@ static int32_t set_provider_info(struct s_reader * reader, int32_t i)
   lt.tm_year = year - 1900;
   lt.tm_mon = month - 1;
   lt.tm_mday = day;
-  // Add entitlements list
-  // PBM will be added in seca_card_info(...) by iterating the llist
-  if (i) // skip first issuer entry
+
+  // Check if entitlement entry exists
+  LL_ITER it = ll_iter_create(reader->ll_entitlements);
+  S_ENTITLEMENT *entry = NULL;
+  ssize_t prov = i;
+  do {
+    entry = ll_iter_next(&it);
+  } while(entry && --prov > 0);
+
+  if (entry) {
+    // update entitlement info
+    entry->provid = b2ll(4, reader->prid[i]);
+    entry->end = mktime(&lt);
+    entry->id = get_pbm(reader, i);
+    entry->type = 6;
+  }
+  else if (i) // skip first issuer entry
+    // add entitlement info
+    // PBM will be added in seca_card_info(...) by iterating the llist
     cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[i]), 0 , 0, 0, mktime(&lt), 0); 
 
   return OK;
@@ -365,41 +406,17 @@ static int32_t seca_card_info (struct s_reader * reader)
 //
 //This module is therefore optical only
 
-  def_resp;
-  static const unsigned char ins34[] = { 0xc1, 0x34, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00 };				//data following is provider Package Bitmap Records
-  unsigned char ins32[] = { 0xc1, 0x32, 0x00, 0x00, 0x20 };				// get PBM
-  char tmp[17];
   int32_t prov;
 
   LL_ITER it = ll_iter_create(reader->ll_entitlements);
   S_ENTITLEMENT *ent = NULL;
 
   for (prov = 0; prov < reader->nprov; prov++) {
-    ins32[2] = prov;
-    write_cmd (ins34, ins34 + 5);	//prepare card for pbm request
-    write_cmd (ins32, NULL);	//pbm request
-    uchar pbm[8];		//TODO should be arrayed per prov
-
-     if (prov) ent = ll_iter_next(&it);
-
-    switch (cta_res[0]) {
-    case 0x04:
-      cs_ri_log (reader, "[seca-reader] no PBM for provider %i", prov + 1);
-      break;
-    case 0x83:
-      memcpy (pbm, cta_res + 1, 8);
-      cs_ri_log (reader, "[seca-reader] PBM for provider %i: %s", prov + 1, cs_hexdump(0, pbm, 8, tmp, sizeof(tmp)));
-
-      if (ent) {
-        ent->id = b2ll(8, pbm);
-        ent->type = 6; // new type must be used
-      }
-
-      break;
-    default:
-      cs_log ("[seca-reader] ERROR: PBM returns unknown byte %02x", cta_res[0]);
+    if (prov) ent = ll_iter_next(&it);
+    if (ent) {
+      ent->id = get_pbm(reader, prov);
+      ent->type = 6; // new type must be used
     }
-
   }
   return OK;
 }
