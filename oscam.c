@@ -387,15 +387,6 @@ static struct s_client * idx_from_ip(in_addr_t ip, in_port_t port)
   return NULL;
 }
 
-struct s_client * get_client_by_tid(uint32_t tid) //FIXME untested!! no longer pid in output...
-{
-  struct s_client *cl;
-  for (cl=first_client; cl ; cl=cl->next)
-    if ((uint32_t)(cl->thread)==tid)
-      return cl;
-  return NULL;
-}
-
 static int32_t chk_caid(uint16_t caid, CAIDTAB *ctab)
 {
   int32_t n;
@@ -2769,35 +2760,6 @@ void cs_waitforcardinit()
 			cs_sleepms(cfg.waitforcards_extra_delay);
 		cs_log("init for all local cards done");
 	}
-}
-
-static int8_t is_valid_client(struct s_client *client) {
-	struct s_client *cl;
-	for (cl=first_client; cl ; cl=cl->next) {
-		if (cl==client)
-			return 1;
-	}
-	return 0;
-}
-
-int8_t check_fd_for_data(int32_t fd) {
-	int32_t rc;
-	struct pollfd pfd[1];
-
-	pfd[0].fd = fd;
-	pfd[0].events = POLLIN | POLLPRI | POLLHUP;
-	rc = poll(pfd, 1, 0);
-
-	if (rc == -1)
-		cs_log("check_fd_for_data(fd=%d) failed: (errno=%d %s)", fd, errno, strerror(errno));
-
-	if (rc == -1 || rc == 0)
-		return rc;
-
-	if (pfd[0].revents & POLLHUP)
-		return -2;
-
-	return 1;
 }
 
 void * work_thread(void *ptr) {

@@ -61,13 +61,6 @@ extern void clear_system_stats();
 extern void qboxhd_led_blink(int32_t color, int32_t duration);
 #endif
 
-extern void reader_do_idle(struct s_reader * reader);
-extern int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep);
-extern void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er);
-extern void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw);
-extern void casc_do_sock_log(struct s_reader * reader);
-extern void reader_do_card_info(struct s_reader * reader);
-
 extern int32_t accept_connection(int32_t i, int32_t j);
 extern void start_thread(void * startroutine, char * nameroutine);
 extern void add_job(struct s_client *cl, int8_t action, void *ptr, int len);
@@ -299,6 +292,13 @@ extern int32_t is_connect_blocked(struct s_reader *rdr);
 void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, uint64_t id, uint32_t class, time_t start, time_t end, uint8_t type);
 extern void cs_clear_entitlement(struct s_reader *rdr);
 
+extern void reader_do_idle(struct s_reader * reader);
+extern int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep);
+extern void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er);
+extern void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw);
+extern void casc_do_sock_log(struct s_reader * reader);
+extern void reader_do_card_info(struct s_reader * reader);
+
 /* ===========================
  *        oscam-simples
  * =========================== */
@@ -382,6 +382,8 @@ extern void setTCPTimeouts(int32_t socket);
 extern struct s_reader *get_reader_by_label(char *lbl);
 extern struct s_client *get_client_by_name(char *name);
 extern struct s_auth *get_account_by_name(char *name);
+extern int8_t is_valid_client(struct s_client *client);
+extern int8_t check_fd_for_data(int32_t fd);
 
 /* ===========================
  *       module-cccshare

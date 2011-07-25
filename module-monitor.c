@@ -299,7 +299,7 @@ static char *monitor_client_info(char id, struct s_client *cl, char *sbuf){
 			int32_t cnr=get_threadnum(cl);
 			snprintf(ltime, sizeof(ldate), "%02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
 			snprintf(sbuf, 256, "[%c--CCC]%8X|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d\n",
-					id, (uint32_t)cl->thread, cl->typ, cnr, usr, cau, cl->crypted,
+					id, (uint32_t)cl, cl->typ, cnr, usr, cau, cl->crypted,
 					cs_inet_ntoa(cl->ip), cl->port, monitor_get_proto(cl),
 					ldate, ltime, lsec, cl->last_caid, cl->last_srvid,
 					get_servicename(cl, cl->last_srvid, cl->last_caid, channame), isec, con,
@@ -418,12 +418,12 @@ static void monitor_process_details_reader(struct s_client *cl) {
 		if (cl->reader->init_history) {
 			char *ptr,*ptr1 = NULL;
 			for (ptr=strtok_r(cl->reader->init_history, "\n", &ptr1); ptr; ptr=strtok_r(NULL, "\n", &ptr1)) {
-				monitor_send_details(ptr, (uint32_t)(cl->thread));
+				monitor_send_details(ptr, (uint32_t)(cl));
 				ptr1[-1]='\n';
 			}
 		}
 	} else {
-		monitor_send_details("Missing reader index or entitlement not saved!", (uint32_t)(cl->thread));
+		monitor_send_details("Missing reader index or entitlement not saved!", (uint32_t)(cl));
 	}
 
 }
@@ -431,16 +431,18 @@ static void monitor_process_details_reader(struct s_client *cl) {
 
 static void monitor_process_details(char *arg){
 	uint32_t tid = 0; //using threadid 8 positions hex see oscam-log.c //FIXME untested but pid isnt working anyway with threading
-	struct s_client *cl;
+	struct s_client *cl = NULL, *cl1;
 	char sbuf[256];
 
 	if (!arg)
 		cl = first_client; // no arg - show master
-	else
-		if (sscanf(arg,"%X",&tid) == 1)
-			cl = get_client_by_tid(tid);
-		else
-			cl = NULL;
+	else {
+		if (sscanf(arg,"%X",&tid) == 1) {
+			for (cl1=first_client; cl1 ; cl1=cl1->next)
+				if ((uint32_t)(cl1)==tid)
+					cl=cl1;
+		}
+	}
 
 	if (!cl)
 		monitor_send_details("Invalid TID", tid);
@@ -450,16 +452,16 @@ static void monitor_process_details(char *arg){
 		switch(cl->typ)
 		{
 		case 's':
-			monitor_process_details_master(sbuf, (uint32_t)(cl->thread));
+			monitor_process_details_master(sbuf, (uint32_t)(cl));
 			break;
 		case 'c': case 'm':
-			monitor_send_details(monitor_client_info(1, cl, sbuf), (uint32_t)(cl->thread));
+			monitor_send_details(monitor_client_info(1, cl, sbuf), (uint32_t)(cl));
 			break;
 		case 'r':
 			monitor_process_details_reader(cl);//with client->typ='r' client->ridx is always filled and valid, so no need checking
 			break;
 		case 'p':
-			monitor_send_details(monitor_client_info(1, cl, sbuf), (uint32_t)(cl->thread));
+			monitor_send_details(monitor_client_info(1, cl, sbuf), (uint32_t)(cl));
 			break;
 		}
 	}

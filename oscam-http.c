@@ -2357,8 +2357,12 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 	struct tm lt;
 
 	if (strcmp(getParam(params, "action"), "kill") == 0) {
-		struct s_client *cl = get_client_by_tid(atol(getParam(params, "threadid")));
-		if (cl) {
+		char *cptr = getParam(params, "threadid");
+		struct s_client *cl = NULL;
+		if (strlen(cptr)>1)
+			sscanf(cptr, "%p", (void**)&cl);
+
+		if (cl && is_valid_client(cl)) {
 			kill_thread(cl);
 			cs_log("Client %s killed by WebIF from %s", cl->account->usr, cs_inet6_ntoa(GET_IP()));
 		}
@@ -2385,10 +2389,10 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 
 	char *hide = getParam(params, "hide");
 	if(strlen(hide) > 0) {
-		uint32_t clidx;
-		clidx = atol(hide);
-		struct s_client *hideidx = get_client_by_tid(clidx);
-		if(hideidx)
+		struct s_client *hideidx = NULL;
+		sscanf(hide, "%p", (void**)&hideidx);
+
+		if(hideidx && is_valid_client(hideidx))
 			hideidx->wihidden = 1;
 	}
 
@@ -2503,18 +2507,16 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 
 				localtime_r(&cl->login, &lt);
 
-				tpl_printf(vars, TPLADD, "HIDEIDX", "%ld", cl->thread);
+				tpl_printf(vars, TPLADD, "HIDEIDX", "%p", cl);
 
 				if(cl->typ == 'c' && !cfg.http_readonly) {
-					tpl_addVar(vars, TPLADD, "CSIDX", "");
-					//todo: we have no unique ID for clients. ThreadID not longer works bcaus changes permanently
-					//tpl_printf(vars, TPLADD, "CSIDX", "<A HREF=\"status.html?action=kill&threadid=%ld\" TITLE=\"Kill this client\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICKIL\" ALT=\"Kill\"></A>", cl->thread);
+					tpl_printf(vars, TPLADD, "CSIDX", "<A HREF=\"status.html?action=kill&threadid=%p\" TITLE=\"Kill this client\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICKIL\" ALT=\"Kill\"></A>", cl);
 				}
 				else if((cl->typ == 'p') && !cfg.http_readonly) {
 					tpl_printf(vars, TPLADD, "CSIDX", "<A HREF=\"status.html?action=restart&amp;label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICKIL\" ALT=\"Restart\"></A>", urlencode(vars, cl->reader->label));
 				}
 				else {
-					tpl_printf(vars, TPLADD, "CSIDX", "%8X&nbsp;", cl->thread);
+					tpl_printf(vars, TPLADD, "CSIDX", "%p&nbsp;", cl);
 				}
 
 				tpl_printf(vars, TPLADD, "CLIENTTYPE", "%c", cl->typ);

@@ -1288,3 +1288,32 @@ struct s_auth *get_account_by_name(char *name) {
 	}
 	return NULL;
 }
+
+int8_t is_valid_client(struct s_client *client) {
+	struct s_client *cl;
+	for (cl=first_client; cl ; cl=cl->next) {
+		if (cl==client)
+			return 1;
+	}
+	return 0;
+}
+
+int8_t check_fd_for_data(int32_t fd) {
+	int32_t rc;
+	struct pollfd pfd[1];
+
+	pfd[0].fd = fd;
+	pfd[0].events = POLLIN | POLLPRI | POLLHUP;
+	rc = poll(pfd, 1, 0);
+
+	if (rc == -1)
+		cs_log("check_fd_for_data(fd=%d) failed: (errno=%d %s)", fd, errno, strerror(errno));
+
+	if (rc == -1 || rc == 0)
+		return rc;
+
+	if (pfd[0].revents & POLLHUP)
+		return -2;
+
+	return 1;
+}
