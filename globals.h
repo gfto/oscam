@@ -387,6 +387,7 @@ extern void cs_switch_led(int32_t led, int32_t action);
 
 #define CHECK_ECM_FALLBACK		1
 #define CHECK_ECM_TIMEOUT		2
+#define CHECK_ANTICASCADER		3
 
 #define AVAIL_CHECK_CONNECTED	0
 #define AVAIL_CHECK_LOADBALANCE	1

@@ -74,21 +74,12 @@ static void refresh_oscam(enum refreshtypes refreshtype) {
 		case REFR_ANTICASC:
 		cs_log("Refresh Anticascading requested by WebIF from %s", cs_inet6_ntoa(GET_IP()));
 		ac_init_stat();
-		int8_t foundac = 0;
 		struct s_client *cl;
 		struct s_auth *account;
 		for (cl=first_client->next; cl ; cl=cl->next){
 			if (cl->typ=='c' && (account = cl->account)) {
 				 cl->ac_limit	= (account->ac_users * 100 + 80) * cfg.ac_stime;
-			} else if (cl->typ=='a'){				
-				if(!cfg.ac_enabled)
-					kill_thread(cl);
-				else foundac = 1;
 			}
-		}
-		if (cfg.ac_enabled && !foundac){
-			init_ac();
-			start_thread((void *) &start_anticascader, "anticascader");
 		}
 		break;
 #endif

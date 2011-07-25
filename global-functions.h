@@ -126,7 +126,6 @@ extern void ac_init_stat();
 extern void ac_clear();
 extern void ac_done_stat();
 extern void ac_do_stat(void);
-extern void start_anticascader();
 extern void ac_init_client(struct s_client *, struct s_auth *);
 extern void ac_chk(struct s_client *,ECM_REQUEST*, int32_t);
 #endif

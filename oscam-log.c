@@ -53,51 +53,38 @@ static void switch_log(char* file, FILE **f, int32_t (*pfinit)(void))
 
 static void cs_write_log(char *txt, int8_t lock)
 {
-#ifdef CS_ANTICASC
-	struct s_client *cl = cur_client();
-	if( cl && cl->typ == 'a' && fpa ) {
-		if(lock) cs_writelock(&ac_lock);
-		switch_log(cfg.ac_logfile, &fpa, ac_init_log);
-		if (fpa) {
-				fputs(txt, fpa);
-				fflush(fpa);
-		}
-		if(lock) cs_writeunlock(&ac_lock);
-	}
-	else
-#endif
-		// filter out entries with leading 's' and forward to statistics
-		if(txt[0] == 's') {
+	// filter out entries with leading 's' and forward to statistics
+	if(txt[0] == 's') {
+		if (fps) {
+			if(lock) cs_writelock(&user_lock);
+			switch_log(cfg.usrfile, &fps, cs_init_statistics);
 			if (fps) {
-				if(lock) cs_writelock(&user_lock);
-				switch_log(cfg.usrfile, &fps, cs_init_statistics);
-				if (fps) {
-						fputs(txt + 1, fps); // remove the leading 's' and write to file
-						fflush(fps);
-				}
-				if(lock) cs_writeunlock(&user_lock);
+					fputs(txt + 1, fps); // remove the leading 's' and write to file
+					fflush(fps);
 			}
-		} else {
-			if(!cfg.disablelog){
-				if (fp){
-					if(lock){
-						cs_writelock(&log_lock);
-						switch_log(cfg.logfile, &fp, cs_open_logfiles);		// only call the switch code if lock = 1 is specified as otherwise we are calling it internally
-					}
-					if (fp) {
-							fputs(txt, fp);
-							fflush(fp);
-					}
-					if(lock) cs_writeunlock(&log_lock);	
+			if(lock) cs_writeunlock(&user_lock);
+		}
+	} else {
+		if(!cfg.disablelog){
+			if (fp){
+				if(lock){
+					cs_writelock(&log_lock);
+					switch_log(cfg.logfile, &fp, cs_open_logfiles);		// only call the switch code if lock = 1 is specified as otherwise we are calling it internally
 				}
-				if(cfg.logtostdout){
-					if(lock) cs_writelock(&stdout_lock);
-					fputs(txt+11, stdout);
-					fflush(stdout);
-					if(lock) cs_writeunlock(&stdout_lock);	
+				if (fp) {
+						fputs(txt, fp);
+						fflush(fp);
 				}
+				if(lock) cs_writeunlock(&log_lock);	
+			}
+			if(cfg.logtostdout){
+				if(lock) cs_writelock(&stdout_lock);
+				fputs(txt+11, stdout);
+				fflush(stdout);
+				if(lock) cs_writeunlock(&stdout_lock);	
 			}
 		}
+	}
 }
 
 int32_t cs_open_logfiles()
@@ -147,18 +134,17 @@ int32_t ac_init_log(void){
 	FILE *tmp = fpa;
 	fpa=(FILE *)0;
 	if(tmp)
-    fclose(tmp);
+		fclose(tmp);
 
-  if(cfg.ac_logfile[0]){
-    if( (fpa=fopen(cfg.ac_logfile, "a+"))<=(FILE *)0 ){
-      fpa=(FILE *)0;
-      fprintf(stderr, "can't open anti-cascading logfile: %s\n", cfg.ac_logfile);
-    }
-    else
-      cs_log("anti-cascading log initialized");
-  }
+	if(cfg.ac_logfile[0]) {
+		if( (fpa=fopen(cfg.ac_logfile, "a+"))<=(FILE *)0 ) {
+			fpa=(FILE *)0;
+			fprintf(stderr, "can't open anti-cascading logfile: %s\n", cfg.ac_logfile);
+		} else
+			cs_log("anti-cascading log initialized");
+	}
 
-  return(fpa<=(FILE *)0);
+	return(fpa<=(FILE *)0);
 }
 #endif
 
@@ -211,20 +197,28 @@ static int32_t get_log_header(int32_t m, char *txt)
 		return pos + snprintf(txt+pos, LOG_BUF_SIZE-pos, "%8X%-3.3s ",(unsigned int) cl, "");
 }
 
-static void write_to_log(char *txt, int8_t lock)
+static void write_to_log(char *txt, int8_t lock, int32_t header_len)
 {
 	char sbuf[16];
 	struct s_client *cur_cl = cur_client();
 
 #ifdef CS_ANTICASC
-	if (cfg.logtosyslog && cur_cl && cur_cl->typ != 'a') // system-logfile
-#else
-	if (cfg.logtosyslog) // system-logfile
+	if (!strncmp(txt + header_len, "acasc:", 6)) {
+		strcat(txt, "\n");
+		if(lock) cs_writelock(&ac_lock);
+		switch_log(cfg.ac_logfile, &fpa, ac_init_log);
+		if (fpa) {
+			fputs(txt + 8, fpa);
+			fflush(fpa);
+		}
+		if(lock) cs_writeunlock(&ac_lock);
+	} else
 #endif
-		syslog(LOG_INFO, "%s", txt+24);
-
-	strcat(txt, "\n");
-
+	{
+		if (cfg.logtosyslog)
+			syslog(LOG_INFO, "%s", txt+24);
+		strcat(txt, "\n");
+	}
 	cs_write_log(txt + 8, lock);
 
 	if (loghist) {
@@ -300,7 +294,7 @@ __attribute__ ((noinline)) void cs_log_int(uint16_t mask, int8_t lock, const uch
 		va_start(params, fmt);
 		len = get_log_header(1, log_txt);
 		vsnprintf(log_txt + len, sizeof(log_txt) - len, fmt, params);
-		write_to_log(log_txt, lock);
+		write_to_log(log_txt, lock, len);
 		va_end(params);
 	}
 	if (buf && (mask & cs_dblevel || !mask))
@@ -309,7 +303,7 @@ __attribute__ ((noinline)) void cs_log_int(uint16_t mask, int8_t lock, const uch
 		{
 			len = get_log_header(0, log_txt);
 			cs_hexdump(1, buf+i, (n-i>16) ? 16 : n-i, log_txt + len, sizeof(log_txt) - len);
-			write_to_log(log_txt, lock);
+			write_to_log(log_txt, lock, len);
 		}
 	}
 }

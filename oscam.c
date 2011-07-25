@@ -3010,7 +3010,7 @@ static struct timespec *make_timeout(struct timespec *timeout, int32_t msec) {
 static void * check_thread(void) {
 	int32_t next_check = 100, time_to_check, rc;
 	struct timeb t_now;
-	ECM_REQUEST *er;
+	ECM_REQUEST *er = NULL;
 
 	pthread_mutex_init(&check_mutex,NULL);
 	pthread_cond_init(&check_cond,NULL);
@@ -3034,16 +3034,24 @@ static void * check_thread(void) {
 		while ((t1 = ll_iter_next(&itr))) {
 			time_to_check = ((t1->t_check.time - t_now.time) * 1000) + (t1->t_check.millitm - t_now.millitm);
 			if (time_to_check <= 0) {
-				//TODO: we should check here if cl and t1->ptr is still a valid pointer to avoid segfaults
-				if (!t1->cl || !is_valid_client(t1->cl) || !t1->ptr) {
+				if (t1->cl && !is_valid_client(t1->cl)) {
 					cs_log("removing invalid check");
 					ll_iter_remove(&itr);
 					add_garbage(t1);
 					continue;
 				}
 				switch(t1->action) {
+#ifdef CS_ANTICASC
+					case CHECK_ANTICASCADER:
+						if (cfg.ac_enabled) {
+							ac_do_stat();
+							add_check(NULL, CHECK_ANTICASCADER, NULL, 0, cfg.ac_stime*60*1000);
+						}
+						break;
+#endif
 					case CHECK_ECM_TIMEOUT:
 						er = t1->ptr;
+						if (!er) continue;
 						if (er->rc<E_99)
 							break;
 						
@@ -3063,6 +3071,7 @@ static void * check_thread(void) {
 						break;
 					case CHECK_ECM_FALLBACK:
 						er = t1->ptr;
+						if (!er) continue;
 						if (er->rc<E_99)
 							break;
 						
@@ -3638,8 +3647,8 @@ if (pthread_key_create(&getclient, NULL)) {
 		cs_log("anti cascading disabled");
 	else {
 		init_ac();
-		start_thread((void *) &start_anticascader, "anticascader"); // 96
-
+		ac_init_stat();
+		add_check(NULL, CHECK_ANTICASCADER, NULL, 0, cfg.ac_stime*60*1000);
 	}
 #endif
 
