@@ -1741,7 +1741,7 @@ static void checkCW(ECM_REQUEST *er)
 
 int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 {
-	if (!client || client->kill)
+	if (!client || client->kill || client->typ != 'c')
 		return 0;
 		
 	static const char *stxt[]={"found", "cache1", "cache2", "emu",

@@ -408,12 +408,16 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
 	struct s_client *cl = reader->client;
 	if(!cl) return;
-  //cs_log("hallo idx:%d rc:%d caid:%04X",er->idx,er->rc,er->caid);
-  if (er->rc<=E_STOPPED)
-    {
-      send_dcw(cl, er);
-      return;
-    }
+
+	if (er->rc<=E_STOPPED) {
+		//TODO: not sure what this is for, but it was in mpcs too.
+		// ecm request was already answered when the request was started (this ECM_REQUEST is a copy of client->ecmtask[] ECM_REQUEST).
+		// send_dcw is a client function but reader_get_ecm is only called from reader functions where client->ctyp is not set and so send_dcw() will segfault.
+		// so we could use send_dcw(er->client, er) or write_ecm_answer(reader, er), but send_dcw wont be threadsafe from here cause there may be multiple threads accessing same s_client struct.
+		// maybe rc should be checked before request is sent to reader but i could not find the reason why this is happening now and not in v1.10 (zetack)
+		//send_dcw(cl, er);
+		return;
+	}
   
   er->ocaid=er->caid;
   if (!chk_bcaid(er, &reader->ctab))
