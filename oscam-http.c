@@ -2268,7 +2268,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 
 				if (rdr->ll_entitlements) {
 
-					char *typetxt[] = {"", "package", "PPV-Event", "chid", "tier", "class", "PBM" };
+					char *typetxt[] = {"", "package", "PPV-Event", "chid", "tier", "class", "PBM", "admin" };
 					time_t now = time((time_t)0);
 
 					struct tm start_t, end_t;
@@ -2656,7 +2656,6 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 						struct s_reader *rdr = cl->reader;
 						if (rdr->ll_entitlements)
 						{
-							//char *typetxt[] = {"Id", "Package", "PPV-Event", "Chid", "Tier", "Class", "PBM" };
 							LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
 							S_ENTITLEMENT *ent;
 							uint16_t total_ent = 0;
@@ -2668,23 +2667,11 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 							while((ent = ll_iter_next(&itr)))
 							{
 								total_ent++;
-								if (ent->end > now)
+								if ((ent->end > now) && (ent->type != 7))
 								{	
 									if (active_ent) tpl_printf(vars, TPLAPPEND, "TMPSPAN", "<BR><BR>");
 									active_ent++;
 									localtime_r(&ent->end, &end_t);
-									/*
-									tpl_printf(vars, TPLAPPEND, "TMPSPAN", "%s:", 
-										typetxt[ent->type]);
-									// Attention: to be able to display correctly on 32bit systems, uint64 has to be split
-									// in 2 uint32 values and used as 2 params
-									if (ent->type == 6)
-									{
-									    tpl_printf(vars, TPLAPPEND, "TMPSPAN", "%08X", (uint32_t)(ent->id>>32));
-									}
-									tpl_printf(vars, TPLAPPEND, "TMPSPAN", (ent->type == 6)?"%08X<BR>":"%04X<BR>", 
-										(uint32_t)ent->id);
-									*/
 									tpl_printf(vars, TPLAPPEND, "TMPSPAN", "%04X:%06X<BR>exp:%04d/%02d/%02d",
 									    ent->caid, ent->provid, 
 									    end_t.tm_year + 1900, end_t.tm_mon + 1, end_t.tm_mday);

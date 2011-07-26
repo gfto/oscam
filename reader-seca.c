@@ -38,6 +38,8 @@ static int32_t set_provider_info(struct s_reader * reader, int32_t i)
   char l_name[16+8+1]=", name: ";
   char tmp[9];
 
+  uint32_t provid;
+
   ins12[2]=i;//select provider
   write_cmd(ins12, NULL); // show provider properties
 
@@ -45,6 +47,8 @@ static int32_t set_provider_info(struct s_reader * reader, int32_t i)
   reader->prid[i][0]=0;
   reader->prid[i][1]=0;//blanken high byte provider code
   memcpy(&reader->prid[i][2], cta_res, 2);
+
+  provid = b2ll(4, reader->prid[i]);
 
   year = (cta_res[22]>>1) + 1990;
   month = ((cta_res[22]&0x1)<< 3) | (cta_res[23] >>5);
@@ -63,8 +67,8 @@ static int32_t set_provider_info(struct s_reader * reader, int32_t i)
   trim(l_name+8);
   l_name[0]=(l_name[8]) ? ',' : 0;
   reader->availkeys[i][0]=valid; //misusing availkeys to register validity of provider
-  cs_ri_log (reader, "[seca-reader] provider: %d, valid: %i%s, expiry date: %4d/%02d/%02d",
-         i+1, valid,l_name, year, month, day);
+  cs_ri_log (reader, "[seca-reader] provider %d: %X, valid: %i%s, expiry date: %4d/%02d/%02d",
+         i+1, provid, valid, l_name, year, month, day);
   memcpy(&reader->sa[i][0], cta_res+18, 4);
   if (valid==1) //if not expired
     cs_ri_log (reader, "[seca-reader] SA: %s", cs_hexdump(0, cta_res+18, 4, tmp, sizeof(tmp)));
@@ -78,22 +82,21 @@ static int32_t set_provider_info(struct s_reader * reader, int32_t i)
   // Check if entitlement entry exists
   LL_ITER it = ll_iter_create(reader->ll_entitlements);
   S_ENTITLEMENT *entry = NULL;
-  ssize_t prov = i;
   do {
     entry = ll_iter_next(&it);
-  } while(entry && --prov > 0);
+    if ((entry) && (entry->provid == provid))
+	break;
+  } while (entry);
 
   if (entry) {
-    // update entitlement info
-    entry->provid = b2ll(4, reader->prid[i]);
+    // update entitlement info if found
     entry->end = mktime(&lt);
     entry->id = get_pbm(reader, i);
-    entry->type = 6;
+    entry->type = (i)?6:7;
   }
-  else if (i) // skip first issuer entry
+  else
     // add entitlement info
-    // PBM will be added in seca_card_info(...) by iterating the llist
-    cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[i]), 0 , 0, 0, mktime(&lt), 0); 
+    cs_add_entitlement(reader, reader->caid, provid, get_pbm(reader, i), 0, 0, mktime(&lt), (i)?6:7); 
 
   return OK;
 }
@@ -401,22 +404,11 @@ static int32_t seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
 static int32_t seca_card_info (struct s_reader * reader)
 {
-//SECA Package BitMap records (PBM) can be used to determine whether the channel is part of the package that the SECA card can decrypt. This module reads the PBM
-//from the SECA card. It cannot be used to check the channel, because this information seems to reside in the CA-descriptor, which seems not to be passed on through servers like camd, newcamd, radegast etc.
-//
-//This module is therefore optical only
 
   int32_t prov;
 
-  LL_ITER it = ll_iter_create(reader->ll_entitlements);
-  S_ENTITLEMENT *ent = NULL;
-
   for (prov = 0; prov < reader->nprov; prov++) {
-    if (prov) ent = ll_iter_next(&it);
-    if (ent) {
-      ent->id = get_pbm(reader, prov);
-      ent->type = 6; // new type must be used
-    }
+    set_provider_info(reader, prov);
   }
   return OK;
 }
