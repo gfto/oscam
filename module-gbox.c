@@ -938,27 +938,21 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *buf)
   struct gbox_data *gbox = cli->gbox;
 
 	if (!gbox || !cli->reader->tcp_connected) {
-		er->rc = E_RDR_NOTFOUND;
-		er->rcEx = 0x27;
 		cs_debug_mask(D_READER, "gbox: %s server not init!", cli->reader->label);
-		write_ecm_answer(cli->reader, er);
+		write_ecm_answer(cli->reader, er, E_NOTFOUND, 0x27, NULL, NULL);
 
 		return 0;
 	}
 
 	if (!ll_count(gbox->peer.cards)) {
-		er->rc = E_RDR_NOTFOUND;
-		er->rcEx = 0x27;
 		cs_debug_mask(D_READER, "gbox: %s NO CARDS!", cli->reader->label);
-		write_ecm_answer(cli->reader, er);
+		write_ecm_answer(cli->reader, er, E_NOTFOUND, 0x27, NULL, NULL);
 		return 0;
 	}
 
 	if (!gbox->peer.online) {
-		er->rc = E_RDR_NOTFOUND;
-		er->rcEx = 0x27;
 		cs_debug_mask(D_READER, "gbox: peer is OFFLINE!");
-		write_ecm_answer(cli->reader, er);
+		write_ecm_answer(cli->reader, er, E_NOTFOUND, 0x27, NULL, NULL);
 		return 0;
 	}
 
@@ -1006,10 +1000,8 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *buf)
   }
 
   if (!send_buf[16]) {
-		er->rc = E_RDR_NOTFOUND;
-		er->rcEx = 0x27;
 		cs_debug_mask(D_READER, "gbox: %s no suitable card found, discarding ecm", cli->reader->label);
-		write_ecm_answer(cli->reader, er);
+		write_ecm_answer(cli->reader, er, E_NOTFOUND, 0x27, NULL, NULL);
 
 		return 0;
   }

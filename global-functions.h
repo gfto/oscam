@@ -80,7 +80,7 @@ extern void cs_disconnect_client(struct s_client *);
 extern int32_t check_cwcache2(ECM_REQUEST *, uint64_t grp);
 extern int32_t write_to_pipe(struct s_client *, int32_t, uchar *, int32_t);
 extern int32_t read_from_pipe(struct s_client *, uchar **);
-extern int32_t write_ecm_answer(struct s_reader *, ECM_REQUEST *);
+extern int32_t write_ecm_answer(struct s_reader *, ECM_REQUEST *, int8_t, uint8_t, uchar *, char *);
 extern uint32_t chk_provid(uchar *, uint16_t);
 extern void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto);
 #ifdef IRDETO_GUESSING
@@ -265,7 +265,7 @@ extern void cs_log_int(uint16_t mask, int8_t lock, const uchar *buf, int32_t n, 
 #define cs_ddump_mask(...) nop()
 #endif
 extern void log_emm_request(struct s_reader *);
-extern void logCWtoFile(ECM_REQUEST *er);
+extern void logCWtoFile(ECM_REQUEST *er, uchar *cw);
 extern void cs_log_config(void);
 extern void cs_close_log(void);
 extern int32_t cs_init_statistics();
@@ -412,7 +412,7 @@ extern void sort_stat(struct s_reader *rdr, int32_t reverse);
 extern int32_t reader_device_init(struct s_reader * reader);
 extern int32_t reader_checkhealth(struct s_reader * reader);
 extern void reader_post_process(struct s_reader * reader);
-extern int32_t reader_ecm(struct s_reader * reader, ECM_REQUEST *);
+extern int32_t reader_ecm(struct s_reader * reader, ECM_REQUEST *, struct s_ecm_answer *);
 extern int32_t reader_emm(struct s_reader * reader, EMM_PACKET *);
 extern int32_t reader_get_emm_type(EMM_PACKET *ep, struct s_reader * reader);
 extern struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid);

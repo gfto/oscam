@@ -192,9 +192,6 @@
 #define R_IS_NETWORK    0x60
 #define R_IS_CASCADING  0xE0
 
-//ECM rc codes, reader only:
-#define E_RDR_NOTFOUND          0
-#define E_RDR_FOUND             1
 //ECM rc codes:
 #define E_FOUND			0
 #define E_CACHE1		1
@@ -514,6 +511,7 @@ typedef struct s_entitlement {			// contains entitlement Info
 struct s_client ;
 struct ecm_request_t ;
 struct emm_packet_t ;
+struct s_ecm_answer ;
 
 struct s_module {
 	int8_t			active;
@@ -587,12 +585,12 @@ struct s_cardreader
 struct s_cardsystem {
 	int8_t			active;
 	char			*desc;
-	int32_t			(*card_init)();
-	int32_t			(*card_info)();
-	int32_t			(*do_ecm)();
-	int32_t			(*do_emm)();
+	int32_t		(*card_init)();
+	int32_t		(*card_info)();
+	int32_t		(*do_ecm)(struct s_reader *, const struct ecm_request_t *, struct s_ecm_answer *);
+	int32_t		(*do_emm)(struct s_reader *, struct emm_packet_t *);
 	void			(*post_process)();
-	int32_t			(*get_emm_type)();
+	int32_t		(*get_emm_type)();
 	void			(*get_emm_filter)();
 	uchar			caids[2];
 };
@@ -625,8 +623,8 @@ typedef struct ecm_request_t {
 	int32_t			cpti;				// client pending table index
 	int32_t			stage;				// processing stage in server module
 	int32_t			level;				// send-level in client module
-	int32_t			rc;
-	uchar			rcEx;
+	int8_t			rc;
+	uint8_t			rcEx;
 	struct timeb	tps;				// incoming time stamp
 	uchar			locals_done;
 	int32_t			btun; 				// mark er as betatunneled
@@ -639,14 +637,27 @@ typedef struct ecm_request_t {
 #endif
 
 #ifdef MODULE_CCCAM
-	struct s_reader *origin_reader;
+	struct s_reader 	*origin_reader;
 	void			*origin_card; 		// CCcam preferred card!
 #endif
 
 	void			*src_data;
-	struct s_ecm	*ecmcacheptr;		// Pointer to ecm-cw-rc-cache!
+	struct s_ecm		*ecmcacheptr;		// Pointer to ecm-cw-rc-cache!
 	char			msglog[MSGLOGSIZE];
+	LLIST			*answer_list;
+	uint16_t		checksum;
+	struct ecm_request_t	*parent;
 } ECM_REQUEST;
+
+
+struct s_ecm_answer {
+	int8_t			status;
+	struct s_reader	*reader;
+	int8_t			rc;
+	uint8_t		rcEx;
+	uchar			cw[16];
+	char			msglog[MSGLOGSIZE];
+};
 
 #ifdef CS_ANTICASC
 struct s_acasc_shm {

@@ -293,7 +293,7 @@ bool dcw_crc(uchar *dw){
 	return 1;
 }
 
-static int32_t viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+static int32_t viaccess_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
 	def_resp;
 	static const unsigned char insa4[] = { 0xca,0xa4,0x04,0x00,0x03 }; // set provider id
@@ -301,8 +301,11 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	unsigned char insf8[] = { 0xca,0xf8,0x00,0x00,0x00 }; // set geographic info
 	static const unsigned char insc0[] = { 0xca,0xc0,0x00,0x00,0x12 }; // read dcw
 
-	uchar *ecm88Data=er->ecm+4; //XXX what is the 4th byte for ??
-	int32_t ecm88Len=SCT_LEN(er->ecm)-4;
+	// //XXX what is the 4th byte for ??
+	uchar ecmData[512];
+	uint32_t ecm88Len=SCT_LEN(er->ecm)-4;
+	memcpy(ecmData, er->ecm+4, ecm88Len > sizeof(ecmData) ? sizeof(ecmData) : ecm88Len);
+	uchar *ecm88Data = &ecmData[0];
 	uint32_t provid=0;
 	int32_t rc=0;
 	int32_t hasD2 = 0;
@@ -348,7 +351,7 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	}
 
 	//reset to beginning of ECM
-	ecm88Data=er->ecm+4; //XXX what is the 4th byte for ??
+	ecm88Data=&ecmData[0]; //XXX what is the 4th byte for ??
 	ecm88Len=SCT_LEN(er->ecm)-4;
 	curEcm88len=0;
 	nextEcm=ecm88Data;
@@ -465,7 +468,7 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 			if (!chk_prov(reader, ident, keynr))
 			{
 				cs_debug_mask(D_READER, "[viaccess-reader] ECM: provider or key not found on card");
-				snprintf( er->msglog, MSGLOGSIZE, "provider(%02x%02x%02x) or key(%d) not found on card", ident[0],ident[1],ident[2], keynr );
+				snprintf( ea->msglog, MSGLOGSIZE, "provider(%02x%02x%02x) or key(%d) not found on card", ident[0],ident[1],ident[2], keynr );
 				return ERROR;
 			}
 
@@ -509,7 +512,7 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 				// use AES from list to decrypt CW
 				cs_debug_mask(D_READER, "Decoding CW : using AES key id %d for provider %06x",D2KeyID, (provid & 0xFFFFF0));
 				if (aes_decrypt_from_list(reader->aes_list,0x500, (uint32_t) (provid & 0xFFFFF0), D2KeyID, &ecm88DataCW[0], 16) == 0)
-					snprintf( er->msglog, MSGLOGSIZE, "AES Decrypt : key id %d not found for CAID %04X , provider %06x", D2KeyID, 0x500, (provid & 0xFFFFF0) );
+					snprintf( ea->msglog, MSGLOGSIZE, "AES Decrypt : key id %d not found for CAID %04X , provider %06x", D2KeyID, 0x500, (provid & 0xFFFFF0) );
 			}
 
 			while(ecm88Len>0 && ecm88Data[0]<0xA0)
@@ -556,34 +559,34 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 			switch(cta_res[0])
 			{
 			case 0xe8: // even
-				if(cta_res[1]==8) { memcpy(er->cw,cta_res+2,8); rc=1; }
+				if(cta_res[1]==8) { memcpy(ea->cw,cta_res+2,8); rc=1; }
 				break;
 			case 0xe9: // odd
-				if(cta_res[1]==8) { memcpy(er->cw+8,cta_res+2,8); rc=1; }
+				if(cta_res[1]==8) { memcpy(ea->cw+8,cta_res+2,8); rc=1; }
 				break;
 			case 0xea: // complete
-				if(cta_res[1]==16) { memcpy(er->cw,cta_res+2,16); rc=1; }
+				if(cta_res[1]==16) { memcpy(ea->cw,cta_res+2,16); rc=1; }
 				break;
 			default :
 				ecm88Data=nextEcm;
 				ecm88Len-=curEcm88len;
 				cs_debug_mask(D_READER, "[viaccess-reader] ECM: key to use is not the current one, trying next ECM");
-				snprintf( er->msglog, MSGLOGSIZE, "key to use is not the current one, trying next ECM" );
+				snprintf( ea->msglog, MSGLOGSIZE, "key to use is not the current one, trying next ECM" );
 			}
 		}
 		else {
 			ecm88Data=nextEcm;
 			ecm88Len-=curEcm88len;
 			cs_debug_mask(D_READER, "[viaccess-reader] ECM: Unknown ECM type");
-			snprintf( er->msglog, MSGLOGSIZE, "Unknown ECM type" );
+			snprintf( ea->msglog, MSGLOGSIZE, "Unknown ECM type" );
 		}
 	}
 
-	if ( hasD2 && !dcw_crc(er->cw) && nanoD2 == 2) {
+	if ( hasD2 && !dcw_crc(ea->cw) && nanoD2 == 2) {
 		cs_debug_mask(D_READER, "Decoding CW : using AES key id %d for provider %06x",D2KeyID, (provid & 0xFFFFF0));
-		rc=aes_decrypt_from_list(reader->aes_list,0x500, (uint32_t) (provid & 0xFFFFF0), D2KeyID,er->cw, 16);
+		rc=aes_decrypt_from_list(reader->aes_list,0x500, (uint32_t) (provid & 0xFFFFF0), D2KeyID,ea->cw, 16);
 		if( rc == 0 )
-			snprintf( er->msglog, MSGLOGSIZE, "AES Decrypt : key id %d not found for CAID %04X , provider %06x", D2KeyID, 0x500, (provid & 0xFFFFF0) );
+			snprintf( ea->msglog, MSGLOGSIZE, "AES Decrypt : key id %d not found for CAID %04X , provider %06x", D2KeyID, 0x500, (provid & 0xFFFFF0) );
 	}
 
 	return(rc?OK:ERROR);

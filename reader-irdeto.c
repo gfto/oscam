@@ -434,7 +434,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR newatr)
 	return irdeto_card_init_provider(reader);
 }
 
-int32_t irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+int32_t irdeto_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
 	def_resp; cta_lr = 0; //suppress compiler error
 	static const uchar sc_EcmCmd[] = { 0x05, 0x00, 0x00, 0x02, 0x00 };
@@ -480,11 +480,11 @@ int32_t irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		int32_t ret;
 		do {
 			if (try >1)
-				snprintf( er->msglog, MSGLOGSIZE, "%s irdeto_do_cmd try nr %i", reader->label, try);
+				snprintf( ea->msglog, MSGLOGSIZE, "%s irdeto_do_cmd try nr %i", reader->label, try);
 			ret = (irdeto_do_cmd(reader, cta_cmd, 0x9D00, cta_res, &cta_lr));
 			ret = ret || (cta_lr < 24);
 			if (ret)
-					snprintf( er->msglog, MSGLOGSIZE, "%s irdeto_do_cmd [%d] %02x %02x", reader->label, cta_lr, cta_res[cta_lr - 2], cta_res[cta_lr - 1] );
+					snprintf( ea->msglog, MSGLOGSIZE, "%s irdeto_do_cmd [%d] %02x %02x", reader->label, cta_lr, cta_res[cta_lr - 2], cta_res[cta_lr - 1] );
 			try++;
 		} while ((try < 3) && (ret));
 		if (ret)
@@ -492,7 +492,7 @@ int32_t irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	}
 	ReverseSessionKeyCrypt(reader->nagra_boxkey, cta_res+6+acspadd);
 	ReverseSessionKeyCrypt(reader->nagra_boxkey, cta_res+14+acspadd);
-	memcpy(er->cw, cta_res + 6 + acspadd, 16);
+	memcpy(ea->cw, cta_res + 6 + acspadd, 16);
 	return OK;
 }
 

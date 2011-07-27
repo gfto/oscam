@@ -274,7 +274,7 @@ static unsigned char DESkeys[16*8]=
   0x49,0xD3,0x33,0xC2,0xEB,0x71,0xD3,0x14  // 0F
 };
 
-void DREover(unsigned char *ECMdata, unsigned char *DW)
+static void DREover(const unsigned char *ECMdata, unsigned char *DW)
 {
 	uchar key[8];
 	if(ECMdata[2] >= (43+4) && ECMdata[40] == 0x3A && ECMdata[41] == 0x4B)
@@ -288,7 +288,7 @@ void DREover(unsigned char *ECMdata, unsigned char *DW)
 	};
 };
 
-static int32_t dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
+static int32_t dre_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
   def_resp;
   tmp_dbg(256);
@@ -308,8 +308,8 @@ static int32_t dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
     if ((dre_cmd (ecmcmd41))) {	//ecm request
       if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
 				return ERROR;		//exit if response is not 90 00
-      memcpy (er->cw, cta_res + 11, 8);
-      memcpy (er->cw + 8, cta_res + 3, 8);
+      memcpy (ea->cw, cta_res + 11, 8);
+      memcpy (ea->cw + 8, cta_res + 3, 8);
 
       return OK;
     }
@@ -331,8 +331,8 @@ static int32_t dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
       if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
 				return ERROR;		//exit if response is not 90 00
       DREover(er->ecm, cta_res + 3);
-      memcpy (er->cw, cta_res + 11, 8);
-      memcpy (er->cw + 8, cta_res + 3, 8);
+      memcpy (ea->cw, cta_res + 11, 8);
+      memcpy (ea->cw + 8, cta_res + 3, 8);
       return OK;
     }
   }

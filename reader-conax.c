@@ -116,7 +116,7 @@ static int32_t conax_send_pin(struct s_reader * reader)
 }
 
 
-static int32_t conax_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+static int32_t conax_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
   def_resp;
   int32_t i,j,n, rc=0;
@@ -153,7 +153,7 @@ static int32_t conax_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
             if ( (cta_res[i+1]>=0xD) && !((n=cta_res[i+4])&0xFE) )
             {
             rc|=(1<<n);
-            memcpy(er->cw+(n<<3), cta_res+i+7, 8);
+            memcpy(ea->cw+(n<<3), cta_res+i+7, 8);
             }
             break;
           case 0x31:
@@ -179,7 +179,7 @@ static int32_t conax_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
                         !((n=cta_res[j+4])&0xFE))   // cw idx must be 0 or 1
                     {
                       rc|=(1<<n);
-                      memcpy(er->cw+(n<<3), cta_res+j+7, 8);
+                      memcpy(ea->cw+(n<<3), cta_res+j+7, 8);
                     }
                 }
               }

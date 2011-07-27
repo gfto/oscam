@@ -279,7 +279,7 @@ static int32_t cryptoworks_card_init(struct s_reader * reader, ATR newatr)
   return OK;
 }
 
-static int32_t cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+static int32_t cryptoworks_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
   def_resp;
 	int32_t r=0;
@@ -291,7 +291,7 @@ static int32_t cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   if(secLen>5)
   {
     int32_t i;
-    uchar *ecm=er->ecm;
+    const uchar *ecm=er->ecm;
     uchar buff[MAX_LEN];
 
     if(reader->ucpk_valid)
@@ -331,7 +331,7 @@ static int32_t cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
             cs_debug_mask(D_READER, "[cryptoworks-reader] nano DB (cw)");
             if(n==0x10)
             {
-              memcpy(er->cw, &cta_res[i+2], 16);
+              memcpy(ea->cw, &cta_res[i+2], 16);
               r|=1;
             }
             break;
@@ -375,7 +375,7 @@ static int32_t cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
         if (rc=(((cta_res[20]&0x50)==0x50) && 
                 (!(cta_res[21]&0x01)) && 
                 (cta_res[23]&0x80)))
-          memcpy(er->cw, cta_res+2, 16);
+          memcpy(ea->cw, cta_res+2, 16);
       }
     }
 #endif

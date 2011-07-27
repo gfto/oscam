@@ -94,11 +94,11 @@ Example ecm:
 A5 1B 8B CA A8 95 E0 D1 24 7D 36 8C F6 89 4A F7
 B2 3A 74 3D D1 D4
 */
-static int32_t tongfang_do_ecm(struct s_reader *reader, ECM_REQUEST *er)
+static int32_t tongfang_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
   uchar ecm_cmd[200];
   int32_t ecm_len;
-  uchar *pbuf = er->ecm;
+  const uchar *pbuf = er->ecm;
   char *tmp;
   int32_t i = 0;
   int32_t write_len = 0;
@@ -150,16 +150,16 @@ static int32_t tongfang_do_ecm(struct s_reader *reader, ECM_REQUEST *er)
 
   if(!(er->ecm[0] & 0x01))
   {
-    memcpy(er->cw, data + 8, 16);
+    memcpy(ea->cw, data + 8, 16);
   }
   else
   {
-    memcpy(er->cw, data + 16, 8);
-    memcpy(er->cw + 8, data + 8, 8);
+    memcpy(ea->cw, data + 16, 8);
+    memcpy(ea->cw + 8, data + 8, 8);
   }
 
   // All zeroes is no valid CW, can be a result of wrong boxid
-  if (!cw_is_valid(er->cw) || !cw_is_valid(er->cw + 8)) return ERROR;
+  if (!cw_is_valid(ea->cw) || !cw_is_valid(ea->cw + 8)) return ERROR;
 
   return OK;
 }

@@ -44,7 +44,7 @@ static void dimeno_PostProcess_Decrypt(struct s_reader * reader, unsigned char *
   }
 }
 
-static void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data)
+static void do_post_dw_hash(unsigned char *cw, const unsigned char *ecm_header_data)
 {
   int32_t i, ecmi, ecm_header_count;
   unsigned char buffer[0x80];
@@ -569,7 +569,7 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR newatr)
   return OK;
 }
 
-static int32_t videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+static int32_t videoguard2_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
   unsigned char cta_res[CTA_RES_LEN];
   unsigned char ins40[5] = { 0xD1,0x40,0x00,0x80,0xFF };
@@ -579,7 +579,7 @@ static int32_t videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   unsigned char tbuff[264], rbuff[264];
   tbuff[0]=0;
 
-  memset(er->cw+0,0,16); //set cw to 0 so client will know it is invalid unless it is overwritten with a valid cw
+  memset(ea->cw+0,0,16); //set cw to 0 so client will know it is invalid unless it is overwritten with a valid cw
   memcpy(tbuff+1,er->ecm+posECMpart2+1,lenECMpart2-1);
 
 /*
@@ -635,7 +635,7 @@ static int32_t videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
       }
 
       // copy cw1 in place
-      memcpy(er->cw+0,rbuff+5,8);
+      memcpy(ea->cw+0,rbuff+5,8);
 
       // process cw2
       unsigned char *payload = rbuff+5;
@@ -647,7 +647,7 @@ static int32_t videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
         {
           case 0x25:  // CW2
             //cs_dump (payload + ind, payload[ind+1]+2, "INS54 - CW2");
-            memcpy(er->cw+8,&payload[ind+3],8);
+            memcpy(ea->cw+8,&payload[ind+3],8);
             ind += payload[ind+1]+2;
             break;
 
@@ -660,11 +660,11 @@ static int32_t videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
       if (new_len != lenECMpart2)
       {
-         memcpy(er->cw, er->cw+8, 8);
-         memset(er->cw+8, 0, 8);
+         memcpy(ea->cw, ea->cw+8, 8);
+         memset(ea->cw+8, 0, 8);
       }
       // fix for 09ac cards
-      dimeno_PostProcess_Decrypt(reader, rbuff, er->cw);
+      dimeno_PostProcess_Decrypt(reader, rbuff, ea->cw);
 
       //test for postprocessing marker
       int32_t posB0 = -1;
@@ -676,22 +676,22 @@ static int32_t videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
         }
       }
       if (posB0 != -1) {
-        do_post_dw_hash( er->cw+0, &er->ecm[posB0-2]);
-        do_post_dw_hash( er->cw+8, &er->ecm[posB0-2]);
+        do_post_dw_hash( ea->cw+0, &er->ecm[posB0-2]);
+        do_post_dw_hash( ea->cw+8, &er->ecm[posB0-2]);
       }
 
       if (reader->caid == 0x0907) { //quickfix: cw2 is not a vaild cw, something went wrong before
-        memset(er->cw+8, 0, 8);
+        memset(ea->cw+8, 0, 8);
         if (er->ecm[0] & 1) {
-          memcpy(er->cw+8, er->cw, 8);
-          memset(er->cw, 0, 8);
+          memcpy(ea->cw+8, ea->cw, 8);
+          memset(ea->cw, 0, 8);
         }
       } else {
         if(er->ecm[0]&1) {
           unsigned char tmpcw[8];
           memcpy(tmpcw,er->cw+8,8);
-          memcpy(er->cw+8,er->cw+0,8);
-          memcpy(er->cw+0,tmpcw,8);
+          memcpy(ea->cw+8,ea->cw+0,8);
+          memcpy(ea->cw+0,tmpcw,8);
         }
       }
 

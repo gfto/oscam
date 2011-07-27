@@ -693,11 +693,9 @@ int32_t cc_get_nxt_ecm(struct s_client *cl) {
 		else if (er->rc >= 10 && er->rc <= 100) { // stil active and waiting
 			pending++;
 			if (loop_check(cc->peer_node_id, er->client)) {
-				er->rc = E_RDR_NOTFOUND;
-				er->rcEx = E2_CCCAM_LOOP;
 				cs_debug_mask(D_READER, "%s ecm loop detected! client %s (%8X)", 
 						getprefix(), er->client->account->usr, er->client->thread);
-				write_ecm_answer(cl->reader, &cl->ecmtask[i]);
+				write_ecm_answer(cl->reader, &cl->ecmtask[i], E_NOTFOUND, E2_CCCAM_LOOP, NULL, NULL);
 			}
 			else 		
 			// search for the ecm with the lowest time, this should be the next to go
@@ -1023,11 +1021,9 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 	if (!cc || (cl->pfd < 1) || !rdr->tcp_connected) {
 		if (er) {
-			er->rc = E_RDR_NOTFOUND;
-			er->rcEx = E2_CCCAM_NOCARD;
 			cs_debug_mask(D_READER, "%s server not init! ccinit=%d pfd=%d",
 					rdr->label, cc ? 1 : 0, cl->pfd);
-			write_ecm_answer(rdr, er);
+			write_ecm_answer(rdr, er, E_NOTFOUND, E2_CCCAM_NOCARD, NULL, NULL);
 		}
 		//cc_cli_close(cl);
 		return 0;
@@ -1105,8 +1101,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 				rdr->available = 1;
 				cs_writeunlock(&cc->ecm_busy);
 			}
-			cur_er->rc = E_STOPPED;
-			write_ecm_answer(rdr, cur_er);
+			write_ecm_answer(rdr, cur_er, E_STOPPED, 0, NULL, NULL);
 			return 0;
 		}
         else {
@@ -1243,9 +1238,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		if (cc->last_msg != MSG_NEW_CARD && cc->last_msg != MSG_NEW_CARD_SIDINFO && cc->last_msg != MSG_CARD_REMOVED && !cc->just_logged_in) {
 			cs_debug_mask(D_READER, "%s no suitable card on server", getprefix());
 
-			cur_er->rc = E_RDR_NOTFOUND;
-			cur_er->rcEx = E2_CCCAM_NOCARD;
-			write_ecm_answer(rdr, cur_er);
+			write_ecm_answer(rdr, cur_er, E_NOTFOUND, E2_CCCAM_NOCARD, NULL, NULL);
 			//cur_er->rc = 1;
 			//cur_er->rcEx = 0;
 			//cs_sleepms(300);
@@ -2110,10 +2103,8 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 								if (cl->ecmtask[i].idx == ecm_idx) {
 										cs_debug_mask(D_TRACE, "%s forward card: %s", getprefix(), (buf[1]==MSG_CW_NOK1)?"NOK1":"NOK2");
 										ECM_REQUEST *er = &cl->ecmtask[i];
-										er->rc = E_RDR_NOTFOUND;
-										er->rcEx = (buf[1] == MSG_CW_NOK1)?E2_CCCAM_NOK1:E2_CCCAM_NOK2;
 										cl->pending--;
-										write_ecm_answer(rdr, er);
+										write_ecm_answer(rdr, er, E_NOTFOUND, (buf[1] == MSG_CW_NOK1)?E2_CCCAM_NOK1:E2_CCCAM_NOK2, NULL, NULL);
 										break;
 								}
 						}		

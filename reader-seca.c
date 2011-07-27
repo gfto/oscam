@@ -198,7 +198,7 @@ static int32_t seca_card_init(struct s_reader * reader, ATR newatr)
   return OK;
 }
 
-static int32_t get_prov_index(struct s_reader * rdr, uint8_t *provid)	//returns provider id or -1 if not found
+static int32_t get_prov_index(struct s_reader * rdr, const uint8_t *provid)	//returns provider id or -1 if not found
 {
   int32_t prov;
   for (prov=0; prov<rdr->nprov; prov++) //search for provider index
@@ -208,7 +208,7 @@ static int32_t get_prov_index(struct s_reader * rdr, uint8_t *provid)	//returns 
 }
 	
 
-static int32_t seca_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
   def_resp;
   unsigned char ins3c[] = { 0xc1,0x3c,0x00,0x00,0x00 }; // coding cw
@@ -217,13 +217,13 @@ static int32_t seca_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
   if ((i = get_prov_index(reader, er->ecm+3)) == -1) // if provider not found
   {
-     snprintf( er->msglog, MSGLOGSIZE, "provider not found" );
+     snprintf( ea->msglog, MSGLOGSIZE, "provider not found" );
      return ERROR;
   }
 
   if ((er->ecm[7] & 0x0F) != 0x0E && reader->availkeys[i][0] == 0) // if expired and not using OP Key 0E
   {
-     snprintf( er->msglog, MSGLOGSIZE, "provider expired" );
+     snprintf( ea->msglog, MSGLOGSIZE, "provider expired" );
      return ERROR;
   }
 
@@ -234,7 +234,7 @@ static int32_t seca_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
  	int32_t ret;
   do {
     if (try > 1)
-      snprintf( er->msglog, MSGLOGSIZE, "ins3c try nr %i", try);
+      snprintf( ea->msglog, MSGLOGSIZE, "ins3c try nr %i", try);
     write_cmd(ins3c, er->ecm+8); //ecm request
     unsigned char ins30[] = { 0xC1, 0x30, 0x00, 0x02, 0x09 };
     unsigned char ins30data[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF };
@@ -245,19 +245,19 @@ static int32_t seca_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
     }
     ret = ((cta_res[0] != 0x90) || (cta_res[1] != 0x00));
     if ((cta_res[0] == 0x93) && (cta_res[1] == 0x02)) {
-      snprintf( er->msglog, MSGLOGSIZE, "%s unsubscribed", reader->label);
+      snprintf( ea->msglog, MSGLOGSIZE, "%s unsubscribed", reader->label);
       break;
     }
     if (ret)
-      snprintf( er->msglog, MSGLOGSIZE, "%s ins3c card res: %02x %02x", reader->label, cta_res[0] , cta_res[1] );
+      snprintf( ea->msglog, MSGLOGSIZE, "%s ins3c card res: %02x %02x", reader->label, cta_res[0] , cta_res[1] );
     try++;
   } while ((try < 3) && (ret));
   if (ret)
     return ERROR;
   
   write_cmd(ins3a, NULL); //get cw's
-  if ((cta_res[16] != 0x90) || (cta_res[17] != 0x00)) { snprintf( er->msglog, MSGLOGSIZE, "ins3a card response: %02x %02x", cta_res[16] , cta_res[17] ); return ERROR; };//exit if response is not 90 00 //TODO: if response is 9027 ppv mode is possible!
-  memcpy(er->cw,cta_res,16);
+  if ((cta_res[16] != 0x90) || (cta_res[17] != 0x00)) { snprintf( ea->msglog, MSGLOGSIZE, "ins3a card response: %02x %02x", cta_res[16] , cta_res[17] ); return ERROR; };//exit if response is not 90 00 //TODO: if response is 9027 ppv mode is possible!
+  memcpy(ea->cw,cta_res,16);
   return OK;
 }
 

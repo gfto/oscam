@@ -327,7 +327,7 @@ void log_emm_request(struct s_reader *rdr){
  * This will consume a bit cpu time, but nothing has to be stored between
  * each call. If not file exists, a header is prepended
  */
-void logCWtoFile(ECM_REQUEST *er){
+void logCWtoFile(ECM_REQUEST *er, uchar *cw){
 	FILE *pfCWL;
 	char srvname[128];
 	/* %s / %s   _I  %04X  _  %s  .cwl  */
@@ -379,7 +379,7 @@ void logCWtoFile(ECM_REQUEST *er){
 	parity = er->ecm[0]&1;
 	fprintf(pfCWL, "%d ", parity);
 	for (i = parity * 8; i < 8 + parity * 8; i++)
-		fprintf(pfCWL, "%02X ", er->cw[i]);
+		fprintf(pfCWL, "%02X ", cw[i]);
 	/* better use incoming time er->tps rather than current time? */
 	strftime(buf,sizeof(buf),"%H:%M:%S\n", &timeinfo);
 	fprintf(pfCWL, "# %s", buf);

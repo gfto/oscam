@@ -339,7 +339,7 @@ void reader_post_process(struct s_reader * reader)
 	}
 }
 
-int32_t reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
+int32_t reader_ecm(struct s_reader * reader, ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
   int32_t rc=-1;
 	if( (rc=reader_checkhealth(reader)) ) {
@@ -350,7 +350,7 @@ int32_t reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		}
 
 		if (reader->csystem.active && reader->csystem.do_ecm) 
-			rc=reader->csystem.do_ecm(reader, er);
+			rc=reader->csystem.do_ecm(reader, er, ea);
 		else
 			rc=0;
 	}

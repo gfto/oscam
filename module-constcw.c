@@ -102,6 +102,7 @@ static int32_t constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar 
 {
     time_t t;
     struct s_reader *rdr = client->reader;
+    uchar cw[16];
 
     // FIXME
     msgbuf = msgbuf;
@@ -110,15 +111,11 @@ static int32_t constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar 
     // Check if DCW exist in the files
     //cs_log("Searching ConstCW for ECM: %04X:%06X:%04X (%d)", er->caid, er->prid, er->srvid, er->l);
    
-    if (constcw_analyse_file(er->caid, er->prid, er->srvid, er->cw)==0)
-    {
-        er->rc = E_RDR_NOTFOUND;
-        er->rcEx = E1_READER<<4 | E2_SID;
-	//cs_sleepms(100);
+    if (constcw_analyse_file(er->caid, er->prid, er->srvid, cw)==0) {
+        write_ecm_answer(rdr, er, E_NOTFOUND, (E1_READER<<4 | E2_SID), NULL, NULL);
+    } else {
+        write_ecm_answer(rdr, er, E_FOUND, 0, cw, NULL);
     }
-
-    //cs_sleepms(50);
-    write_ecm_answer(rdr, er);
     
     client->last = t;
     rdr->last_g = t;

@@ -48,7 +48,7 @@ static char *nagra_datetime(uint8_t *ndays, char *result)
 	return result;
 }
 
-static int32_t do_cmd(struct s_reader * reader, unsigned char cmd, int32_t ilen, unsigned char res, int32_t rlen, unsigned char *data, unsigned char * cta_res, uint16_t * p_cta_lr)
+static int32_t do_cmd(struct s_reader * reader, unsigned char cmd, int32_t ilen, unsigned char res, int32_t rlen, const unsigned char *data, unsigned char * cta_res, uint16_t * p_cta_lr)
 {
 	/*
 	here we build the command related to the protocol T1 for ROM142 or T14 for ROM181
@@ -951,7 +951,7 @@ void nagra2_post_process(struct s_reader * reader)
 	}
 }
 
-static int32_t nagra2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+static int32_t nagra2_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
 	def_resp;
 	if (!reader->is_tiger)
@@ -999,16 +999,16 @@ static int32_t nagra2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		{
 			unsigned char v[8];
 			memset(v,0,sizeof(v));
-			idea_cbc_encrypt(&cta_res[30],er->cw,8,&reader->ksSession,v,IDEA_DECRYPT);
+			idea_cbc_encrypt(&cta_res[30],ea->cw,8,&reader->ksSession,v,IDEA_DECRYPT);
 			memset(v,0,sizeof(v));
-			idea_cbc_encrypt(&cta_res[4],er->cw+8,8,&reader->ksSession,v,IDEA_DECRYPT);
+			idea_cbc_encrypt(&cta_res[4],ea->cw+8,8,&reader->ksSession,v,IDEA_DECRYPT);
 			if (reader->swapCW==1)
 		  	{
 		  		cs_debug_mask(D_READER, "[nagra-reader] swap cws");
 		    		unsigned char tt[8];
 		    		memcpy(&tt[0],&er->cw[0],8);
-		    		memcpy(&er->cw[0],&er->cw[8],8);
-		   		memcpy(&er->cw[8],&tt[0],8);
+		    		memcpy(&ea->cw[0],&er->cw[8],8);
+		   		memcpy(&ea->cw[8],&tt[0],8);
 		    	}
 			return OK;
 		}
@@ -1031,9 +1031,9 @@ static int32_t nagra2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 				unsigned char v[8];
 				memset(v,0,sizeof(v));
-				idea_cbc_encrypt(&cta_res[14],er->cw,8,&reader->ksSession,v,IDEA_DECRYPT);
+				idea_cbc_encrypt(&cta_res[14],ea->cw,8,&reader->ksSession,v,IDEA_DECRYPT);
 				memset(v,0,sizeof(v));
-				idea_cbc_encrypt(&cta_res[6],er->cw+8,8,&reader->ksSession,v,IDEA_DECRYPT);
+				idea_cbc_encrypt(&cta_res[6],ea->cw+8,8,&reader->ksSession,v,IDEA_DECRYPT);
 				return OK;
 			}
 			cs_debug_mask(D_READER, "[nagra-reader] can't decode ecm");

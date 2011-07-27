@@ -326,7 +326,7 @@ static int32_t videoguard12_card_init(struct s_reader *reader, ATR newatr)
   return OK;
 }
 
-static int32_t videoguard12_do_ecm(struct s_reader *reader, ECM_REQUEST * er)
+static int32_t videoguard12_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
   unsigned char cta_res[CTA_RES_LEN];
   unsigned char ins40[5] = { 0x49, 0x40, 0x40, 0x80, 0xFF };
@@ -349,11 +349,11 @@ static int32_t videoguard12_do_ecm(struct s_reader *reader, ECM_REQUEST * er)
       }
 
       if(er->ecm[0]&1) {
-        memset(er->cw+0, 0, 8);
-        memcpy(er->cw+8, rbuff + 5, 8);
+        memset(ea->cw+0, 0, 8);
+        memcpy(ea->cw+8, rbuff + 5, 8);
       } else {
-        memcpy(er->cw+0, rbuff + 5, 8);
-        memset(er->cw+8, 0, 8);
+        memcpy(ea->cw+0, rbuff + 5, 8);
+        memset(ea->cw+8, 0, 8);
       }
       return OK;
     }

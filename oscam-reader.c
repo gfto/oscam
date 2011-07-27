@@ -90,12 +90,11 @@ void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw
 		ecm = &cl->ecmtask[i];
 		if ((ecm->rc>=10) && ecm->caid == cl->ecmtask[idx].caid && (!memcmp(ecm->ecmd5, cl->ecmtask[idx].ecmd5, CS_ECMSTORESIZE))) {
 			if (rc) {
-				ecm->rc=(i==idx) ? 1 : 2;
-				memcpy(ecm->cw, cw, 16);
+				write_ecm_answer(reader, ecm->parent, (i==idx) ? E_FOUND : E_CACHE2, 0, cw, NULL);
 			} else
-				ecm->rc=0;
-			write_ecm_answer(reader, ecm);
+				write_ecm_answer(reader, ecm->parent, E_NOTFOUND, 0 , NULL, NULL);
 			ecm->idx=0;
+			ecm->rc=0;
 		}
 
 		if (ecm->rc>=10 && (t-(uint32_t)ecm->tps.time > ((cfg.ctimeout + 500) / 1000) + 1)) { // drop timeouts
@@ -361,6 +360,7 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 	memcpy(&cl->ecmtask[n], er, sizeof(ECM_REQUEST));
 	cl->ecmtask[n].matching_rdr = NULL; //This avoids double free of matching_rdr!
+	cl->ecmtask[n].parent = er;
 
 	if( reader->typ == R_NEWCAMD )
 		cl->ecmtask[n].idx=(reader->ncd_msgid==0)?2:reader->ncd_msgid+1;
@@ -419,88 +419,84 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		return;
 	}
   
-  er->ocaid=er->caid;
-  if (!chk_bcaid(er, &reader->ctab))
-  {
-    cs_debug_mask(D_READER, "caid %04X filtered", er->caid);
-    er->rcEx=E2_CAID;
-    er->rc = E_RDR_NOTFOUND;
-    write_ecm_answer(reader, er);
-    return;
-  }
-  // cache2
-  if (check_cwcache2(er, reader->grp))
-  {
-    er->rc = E_CACHE2;
-    write_ecm_answer(reader, er);
-    return;
-  }
-  if (reader->typ & R_IS_CASCADING)
-  {
-    struct s_client *cl = reader->client;
-    if(!cl) return;
-    cl->last_srvid=er->srvid;
-    cl->last_caid=er->caid;
-    casc_process_ecm(reader, er);
-    cl->lastecm=time((time_t)0);
-    return;
-  }
-#ifdef WITH_CARDREADER
-  if (reader->ratelimitecm) {
-	cs_debug_mask(D_READER, "ratelimit idx:%d rc:%d caid:%04X srvid:%04X",er->idx,er->rc,er->caid,er->srvid);
-	int32_t foundspace=-1;
-	int32_t h;
-	for (h=0;h<reader->ratelimitecm;h++) {
-		if (reader->rlecmh[h].srvid == er->srvid) {
-			foundspace=h;
-			cs_debug_mask(D_READER, "ratelimit found srvid in use at pos: %d",h);
-			break;
-		} 
+	er->ocaid=er->caid;
+	if (!chk_bcaid(er, &reader->ctab)) {
+		cs_debug_mask(D_READER, "caid %04X filtered", er->caid);
+		write_ecm_answer(reader, er, E_NOTFOUND, E2_CAID, NULL, NULL);
+		return;
 	}
-	if (foundspace<0) {
+
+	// cache2
+	if (check_cwcache2(er, reader->grp)) {
+		write_ecm_answer(reader, er, E_CACHE2, 0, NULL, NULL);
+		return;
+	}
+
+	if (reader->typ & R_IS_CASCADING) {
+		struct s_client *cl = reader->client;
+		if(!cl) return;
+		cl->last_srvid=er->srvid;
+		cl->last_caid=er->caid;
+		casc_process_ecm(reader, er);
+		cl->lastecm=time((time_t)0);
+		return;
+	}
+
+#ifdef WITH_CARDREADER
+	if (reader->ratelimitecm) {
+		cs_debug_mask(D_READER, "ratelimit idx:%d rc:%d caid:%04X srvid:%04X",er->idx,er->rc,er->caid,er->srvid);
+		int32_t foundspace=-1;
+		int32_t h;
 		for (h=0;h<reader->ratelimitecm;h++) {
-			if ((reader->rlecmh[h].last ==- 1) || ((time(NULL)-reader->rlecmh[h].last) > reader->ratelimitseconds)) {
+			if (reader->rlecmh[h].srvid == er->srvid) {
 				foundspace=h;
-				cs_debug_mask(D_READER, "ratelimit found space at pos: %d old seconds %d",h,reader->rlecmh[h].last);
+				cs_debug_mask(D_READER, "ratelimit found srvid in use at pos: %d",h);
 				break;
 			} 
 		}
-	}
-	if (foundspace<0) {
-		//drop
-		cs_debug_mask(D_READER, "ratelimit could not find space for srvid %04X. Dropping.",er->srvid);
-		er->rcEx=32;
-		er->rc = E_RDR_NOTFOUND;
-		int32_t clcw;
-		for (clcw=0;clcw<16;clcw++) er->cw[clcw]=(uchar)0;
-		snprintf( er->msglog, MSGLOGSIZE, "ECMratelimit no space for srvid" );
-		write_ecm_answer(reader, er);
-		return;
-	} else {
-		reader->rlecmh[foundspace].last=time(NULL);
-		reader->rlecmh[foundspace].srvid=er->srvid;
+		if (foundspace<0) {
+			for (h=0;h<reader->ratelimitecm;h++) {
+				if ((reader->rlecmh[h].last ==- 1) || ((time(NULL)-reader->rlecmh[h].last) > reader->ratelimitseconds)) {
+					foundspace=h;
+					cs_debug_mask(D_READER, "ratelimit found space at pos: %d old seconds %d",h,reader->rlecmh[h].last);
+					break;
+				} 
+			}
+		}
+		if (foundspace<0) {
+			//drop
+			cs_debug_mask(D_READER, "ratelimit could not find space for srvid %04X. Dropping.",er->srvid);
+			write_ecm_answer(reader, er, E_NOTFOUND, 32, NULL, "ECMratelimit no space for srvid");
+			return;
+		} else {
+			reader->rlecmh[foundspace].last=time(NULL);
+			reader->rlecmh[foundspace].srvid=er->srvid;
+		}
 	}
 
-  }
-  cs_ddump_mask(D_ATR, er->ecm, er->l, "ecm:");
-  er->msglog[0] = 0;
-  struct timeb tps, tpe;
-  cs_ftime(&tps);
-  er->rc=reader_ecm(reader, er);
-  if(er->rc == ERROR){
-  	char buf[32];
-  	cs_log("Error processing ecm for caid %04X, srvid %04X (servicename: %s) on reader %s.", er->caid, er->srvid, get_servicename(reader->client, er->srvid, er->caid, buf), reader->label);  	
-  }
-  cs_ftime(&tpe);
- 	cl->lastecm=time((time_t)0);
-  if (cs_dblevel) {
-	uint16_t lc, *lp;
-	for (lp=(uint16_t *)er->ecm+(er->l>>2), lc=0; lp>=(uint16_t *)er->ecm; lp--)
-		lc^=*lp;
-	cs_debug_mask(D_TRACE, "reader: %s ecm: %04X real time: %d ms", reader->label, lc, 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm);
-  }
-  write_ecm_answer(reader, er);
-  reader_post_process(reader);
+	cs_ddump_mask(D_ATR, er->ecm, er->l, "ecm:");
+
+	struct timeb tps, tpe;
+	cs_ftime(&tps);
+
+	struct s_ecm_answer ea;
+	memset(&ea, 0, sizeof(struct s_ecm_answer));
+
+	int32_t rc = reader_ecm(reader, er, &ea);
+	if(rc == ERROR){
+		char buf[32];
+		cs_log("Error processing ecm for caid %04X, srvid %04X (servicename: %s) on reader %s.", er->caid, er->srvid, get_servicename(reader->client, er->srvid, er->caid, buf), reader->label);
+		ea.rc = E_NOTFOUND;
+	} else
+		ea.rc = E_FOUND;
+
+	cs_ftime(&tpe);
+	cl->lastecm=time((time_t)0);
+
+	cs_debug_mask(D_TRACE, "reader: %s ecm: %04X real time: %d ms", reader->label, htons(er->checksum), 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm);
+
+	write_ecm_answer(reader, er, ea.rc, 0, ea.cw, ea.msglog);
+	reader_post_process(reader);
 #endif
 }
 
