@@ -638,14 +638,23 @@ static int32_t videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
       memcpy(er->cw+0,rbuff+5,8);
 
       // process cw2
-      int32_t ind;
-      for(ind=15; ind<l+5-10; ind++) {   // +5 for 5 ins bytes, -10 to prevent memcpy ind+3,8 from reading past
-                                         // rxbuffer we start searching at 15 because start at 13 goes wrong
-                                         // with 090F 090b and 096a
-        if((rbuff[ind]==0x25) && ((rbuff[ind+1] == 0x13) || (rbuff[ind+1] == 0x11))) {
-          memcpy(er->cw+8,rbuff+ind+3,8);  //tested on viasat 093E, sky uk 0963, sky it 919
-                                           //don't care whether cw is 0 or not
-          break;
+      unsigned char *payload = rbuff+5;
+      int payloadLen = rbuff[4];
+      int ind=8+6;   // +8 for CW1, +6 for counter(?)
+
+      while(ind<payloadLen) {
+        switch(payload[ind])
+        {
+          case 0x25:  // CW2
+            //cs_dump (payload + ind, payload[ind+1]+2, "INS54 - CW2");
+            memcpy(er->cw+8,&payload[ind+3],8);
+            ind += payload[ind+1]+2;
+            break;
+
+          default:
+            //cs_dump (payload + ind, payload[ind+1]+2, "INS54");
+            ind += payload[ind+1]+2;
+            break;
         }
       }
 
