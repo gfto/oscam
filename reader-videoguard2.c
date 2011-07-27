@@ -642,7 +642,7 @@ static int32_t videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
       for(ind=15; ind<l+5-10; ind++) {   // +5 for 5 ins bytes, -10 to prevent memcpy ind+3,8 from reading past
                                          // rxbuffer we start searching at 15 because start at 13 goes wrong
                                          // with 090F 090b and 096a
-        if(rbuff[ind]==0x25 && rbuff[ind+1] == 0x11) {
+        if((rbuff[ind]==0x25)||(rbuff[ind]==0x25 && rbuff[ind+1] == 0x11)) {
           memcpy(er->cw+8,rbuff+ind+3,8);  //tested on viasat 093E, sky uk 0963, sky it 919
                                            //don't care whether cw is 0 or not
           break;
