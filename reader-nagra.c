@@ -1006,8 +1006,8 @@ static int32_t nagra2_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, st
 		  	{
 		  		cs_debug_mask(D_READER, "[nagra-reader] swap cws");
 		    		unsigned char tt[8];
-		    		memcpy(&tt[0],&er->cw[0],8);
-		    		memcpy(&ea->cw[0],&er->cw[8],8);
+		    		memcpy(&tt[0],&ea->cw[0],8);
+		    		memcpy(&ea->cw[0],&ea->cw[8],8);
 		   		memcpy(&ea->cw[8],&tt[0],8);
 		    	}
 			return OK;

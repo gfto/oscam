@@ -1993,7 +1993,7 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *ert)
 	if (ert->rc >= E_99 && !reader_left) {
 		// no more matching reader
 		ert->rc=E_NOTFOUND; //so we set the return code
-		store_cw_in_cache(ert, ert->selected_reader->grp, E_NOTFOUND, NULL);
+		store_cw_in_cache(ert, ert->selected_reader ? ert->selected_reader->grp : cl->grp, E_NOTFOUND, NULL);
 	}
 #ifdef WITH_LB
 	else send_reader_stat(ert->selected_reader, ert, E_NOTFOUND);
