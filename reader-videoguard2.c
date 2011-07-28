@@ -680,7 +680,7 @@ static int32_t videoguard2_do_ecm(struct s_reader * reader, const ECM_REQUEST *e
         do_post_dw_hash( ea->cw+8, &er->ecm[posB0-2]);
       }
 
-      if (reader->caid == 0x0907) { //quickfix: cw2 is not a vaild cw, something went wrong before
+      if (reader->caid == 0x0907) { //quickfix: cw2 is not a valid cw, something went wrong before
         memset(ea->cw+8, 0, 8);
         if (er->ecm[0] & 1) {
           memcpy(ea->cw+8, ea->cw, 8);
@@ -689,7 +689,7 @@ static int32_t videoguard2_do_ecm(struct s_reader * reader, const ECM_REQUEST *e
       } else {
         if(er->ecm[0]&1) {
           unsigned char tmpcw[8];
-          memcpy(tmpcw,er->cw+8,8);
+          memcpy(tmpcw,ea->cw+8,8);
           memcpy(ea->cw+8,ea->cw+0,8);
           memcpy(ea->cw+0,tmpcw,8);
         }
