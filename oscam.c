@@ -1593,33 +1593,29 @@ static int32_t write_ecm_request(struct s_reader *rdr, ECM_REQUEST *er)
  **/
 void distribute_ecm(ECM_REQUEST *er, uint64_t grp, int32_t rc)
 {
-  struct s_client *cl;
-  ECM_REQUEST *ecm;
-  int32_t n, i, pending;
+	struct s_client *cl;
+	ECM_REQUEST *ecm;
+	int32_t n, i, pending;
 
-  er->rc = rc;
-
-  for (cl=first_client->next; cl ; cl=cl->next) {
-    if (cl->typ=='c' && cl->ecmtask && (cl->grp&grp)) {
-
-      n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
-      pending=0;
-      for (i=0; i<n; i++) {
-        ecm = &cl->ecmtask[i];
-        if (ecm->rc >= E_99) {
-        	pending++;
-        	if (ecm->ecmcacheptr == er->ecmcacheptr) {
-        		er->cpti = ecm->cpti;
-        		//cs_log("distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
-			add_job(cl, ACTION_CLIENT_ECM_ANSWER, er, sizeof(ECM_REQUEST));
+	for (cl=first_client->next; cl ; cl=cl->next) {
+		if (cl->typ=='c' && cl->ecmtask && (cl->grp&grp)) {
+			n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
+			pending=0;
+			for (i=0; i<n; i++) {
+				ecm = &cl->ecmtask[i];
+				if (ecm->rc >= E_99) {
+					pending++;
+					if (ecm->ecmcacheptr == er->ecmcacheptr) {
+						//cs_log("distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
+						write_ecm_answer(er->selected_reader, ecm, rc, 0, er->cw, NULL);
+					}
+				}
+				//else if (ecm->rc == E_99)
+				//	cs_log("NO-distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
+			}
+			cl->pending=pending;
 		}
-        }
-        //else if (ecm->rc == E_99)
-        //  cs_log("NO-distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
-      }
-      cl->pending=pending;
-    }
-  }
+	}
 }
 
 
