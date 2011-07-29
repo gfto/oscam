@@ -1635,6 +1635,13 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	ea->rcEx = rcEx;
 	ea->reader = reader;
 
+	if (er->parent) {
+		// parent is only set on reader->client->ecmtask[], but we want client->ecmtask[]
+		er->rc = rc;
+		er->idx = 0;
+		er = er->parent;
+	}
+
 	for (i=0; i<16; i+=4) {
 		c=((ea->cw[i]+ea->cw[i+1]+ea->cw[i+2]) & 0xff);
 		if (ea->cw[i+3]!=c) {
