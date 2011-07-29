@@ -419,7 +419,6 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		return;
 	}
   
-	er->ocaid=er->caid;
 	if (!chk_bcaid(er, &reader->ctab)) {
 		cs_debug_mask(D_READER, "caid %04X filtered", er->caid);
 		write_ecm_answer(reader, er, E_NOTFOUND, E2_CAID, NULL, NULL);
