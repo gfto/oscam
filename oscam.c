@@ -1704,7 +1704,7 @@ ECM_REQUEST *get_ecmtask()
 		cs_log("WARNING: ecm pending table overflow !");
 	else
 	{
-		LLIST *save = er->matching_rdr;
+		LLIST *save = er->matching_rdr, *save_al = er->answer_list;
 		memset(er, 0, sizeof(ECM_REQUEST));
 		er->rc=E_UNHANDLED;
 		er->cpti=n;
@@ -1712,14 +1712,19 @@ ECM_REQUEST *get_ecmtask()
 		cs_ftime(&er->tps);
 
 		if (cl->typ=='c') { //for clients only! Not for readers!
-  		  if (save) {
-		    ll_clear(save);
-		    er->matching_rdr = save;
-                  }
-                  else
-                    er->matching_rdr = ll_create();
+			if (save) {
+				ll_clear(save);
+				er->matching_rdr = save;
+			} else
+				er->matching_rdr = ll_create();
 
-                    //cs_log("client %s ECMTASK %d multi %d ctyp %d", username(cl), n, (ph[cl->ctyp].multi)?CS_MAXPENDING:1, cl->ctyp);
+			if (save_al) {
+				ll_clear(save_al);
+				er->answer_list = save_al;
+			} else
+				er->answer_list = ll_create();
+
+			//cs_log("client %s ECMTASK %d multi %d ctyp %d", username(cl), n, (ph[cl->ctyp].multi)?CS_MAXPENDING:1, cl->ctyp);
                 }
 	}
 
@@ -2501,8 +2506,14 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		cs_writeunlock(&get_cw_lock);
 #endif
 
-	if (er->rc == E_99)
-			return; //ECM already requested / found in ECM cache
+	uint16_t *lp;
+	for (lp=(uint16_t *)er->ecm+(er->l>>2), er->checksum=0; lp>=(uint16_t *)er->ecm; lp--)
+		er->checksum^=*lp;
+
+	if (er->rc == E_99) {
+		add_check(er->client, CHECK_ECM_TIMEOUT, er, sizeof(ECM_REQUEST), cfg.ctimeout);
+		return; //ECM already requested / found in ECM cache
+	}
 
 	if (er->rc < E_UNHANDLED) {
 		if (cfg.delay)
@@ -2511,13 +2522,6 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		send_dcw(client, er);
 		return;
 	}
-
-	uint16_t *lp;
-	for (lp=(uint16_t *)er->ecm+(er->l>>2), er->checksum=0; lp>=(uint16_t *)er->ecm; lp--)
-		er->checksum^=*lp;
-
-	if (!er->answer_list)
-		er->answer_list = ll_create();
 
 	er->rcEx = 0;
 	request_cw(er, 0, (cfg.preferlocalcards && local_reader_count) ? 1 : 0);
