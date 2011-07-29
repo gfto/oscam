@@ -1824,10 +1824,6 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	if(!er->rc) cs_switch_led(LED2, LED_BLINK_OFF);
 #endif
 
-#ifdef WITH_LB
-	send_reader_stat(er->selected_reader, er, er->rc);
-#endif
-
 #ifdef WEBIF
 	if (er_reader) {
 		if(er->rc == E_FOUND)
@@ -1961,11 +1957,15 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *ert)
 			switch (ea->rc) {
 				case E_FOUND:
 				case E_CACHE2:
+				case E_CACHE1:
 				case E_EMU:
 					memcpy(ert->cw, ea->cw, 16);
 					ert->rcEx=0;
 					ert->rc = ea->rc;
 					ert->selected_reader = ea->reader;
+#ifdef WITH_LB
+					send_reader_stat(ert->selected_reader, ert, ea->rc);
+#endif
 					break;
 				case E_TIMEOUT:
 					ert->rc = E_TIMEOUT;
@@ -1975,6 +1975,9 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *ert)
 					cs_strncpy(ert->msglog, ea->msglog, sizeof(ert->msglog));
 					ll_remove(ert->matching_rdr, ea->reader);
 					ert->selected_reader=ea->reader;
+#ifdef WITH_LB
+					send_reader_stat(ert->selected_reader, ert, E_NOTFOUND);
+#endif
 
 					if (ll_has_elements(ert->matching_rdr)) {//we have still another chance
 						if (cfg.preferlocalcards && !ert->locals_done) {
@@ -1993,6 +1996,9 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *ert)
 						reader_left++;
 					}
 					break;
+				default:
+					cs_log("unexpected ecm answer rc=%d.", ea->rc);
+					break;
 			}
 			ea->status = 1;
 		}
@@ -2003,9 +2009,6 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *ert)
 		ert->rc=E_NOTFOUND; //so we set the return code
 		store_cw_in_cache(ert, ert->selected_reader ? ert->selected_reader->grp : cl->grp, E_NOTFOUND, NULL);
 	}
-#ifdef WITH_LB
-	else send_reader_stat(ert->selected_reader, ert, E_NOTFOUND);
-#endif
 
 	if (ert->rc < E_99) {
 		ll_destroy_data(ert->answer_list);
