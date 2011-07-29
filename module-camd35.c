@@ -74,102 +74,76 @@ static int32_t camd35_auth_client(uchar *ucrc)
 
 static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 {
-  int32_t rc, s, rs, n=0, buflen=0;
-  unsigned char recrc[4];
-  for (rc=rs=s=0; !rc; s++) switch(s)
-  {
-    case 0:
-      if (client->typ == 'c')
-      {
-        if (!client->udp_fd) return(-9);
-        if (client->is_udp)
-          rs=recv_from_udpipe(buf);
-        else
-          rs=recv(client->udp_fd, buf, l, 0);
-      }
-      else
-      {
-		if (!client->udp_fd) return(-9);
-		if (!client->is_udp) {
-			size_t len = recv(client->udp_fd, buf, l, MSG_PEEK);
-			switch (len) {
-				case -1: break;
-				case 332:
-				case 184:
-					l=36;	break;
-				case 348:
-				case 200:
-					l=52;	break;
-				case 296:
-					l=148;	break;
-				default:
-					l=len;
-					break;
-			}
-		}
-		rs = recv(client->udp_fd, buf, l, 0);
-	}
-	if (rs < 24) rc = -1;
-	break;
-    case 1:
-      memcpy(recrc, buf, 4);
-      memmove(buf, buf+4, rs-=4);
-      switch (camd35_auth_client(recrc))
-      {
-        case  0:        break;	// ok
-        case  1: rc=-2; break;	// unknown user
-	      default: rc=-9; break;	// error's from cs_auth()
-      }
-      break;
-    case 2:
-      aes_decrypt(buf, rs);
-      cs_ddump_mask(D_CLIENT, buf, rs, "received %d bytes from %s", rs, remote_txt());
-      if (rs!=boundary(4, rs))
-      {
-        cs_debug_mask(D_CLIENT, "WARNING: packet size has wrong decryption boundary");
-      }
-      //n=(buf[0]==3) ? n=0x34 : 0; this was original, but statement below seems more logical -- dingo35
-      n=(buf[0]==3) ? 0x34 : 0;
+	int32_t rc, s, rs, n=0, buflen=0, len=0;
+	for (rc=rs=s=0; !rc; s++) {
+		switch(s) {
+			case 0:
+				if (!client->udp_fd) return(-9);
+				if (client->is_udp && client->typ == 'c') {
+					rs=recv_from_udpipe(buf);
+				} else {
+					//read minimum packet size (4 byte ucrc + 32 byte data) to detect packet size (tcp only)
+					rs = recv(client->udp_fd, buf, client->is_udp ? l : 36, 0);
+				}
+				if (rs < 24) rc = -1;
+				break;
+			case 1:
+				switch (camd35_auth_client(buf)) {
+					case  0:        break;	// ok
+					case  1: rc=-2; break;	// unknown user
+					default: rc=-9; break;	// error's from cs_auth()
+				}
+				memmove(buf, buf+4, rs-=4);
+				break;
+			case 2:
+				aes_decrypt(buf, rs);
+				if (rs!=boundary(4, rs))
+					cs_debug_mask(D_CLIENT, "WARNING: packet size has wrong decryption boundary");
 
-      //Fix for ECM request size > 255
-      if(buf[0]==0)
-      {
-        buflen = (((buf[21]&0x0f)<< 8) | buf[22])+3;
-      }
-      else
-      {
-        buflen = buf[1];
-      }
-      n=boundary(4, n+20+buflen);
-      if (n<rs)
-      {
-        cs_debug_mask(D_CLIENT, "ignoring %d bytes of garbage", rs-n);
-      }
-      else
-        if (n>rs) rc=-3;
-      break;
-    case 3:
-      if (crc32(0L, buf+20, buflen)!=b2i(4, buf+4)) rc=-4;
-      if (!rc) rc=n;
-      break;
-  }
-  if ((rs>0) && ((rc==-1)||(rc==-2)))
-  {
-    cs_ddump_mask(D_CLIENT, buf, rs, "received %d bytes from %s (native)", rs, remote_txt);
-  }
-  client->last=time((time_t *) 0);
-  switch(rc)
-  {
-    case -1: cs_log("packet to small (%d bytes)", rs);
-             break;
-    case -2: cs_auth_client(client, 0, "unknown user");
-             break;
-    case -3: cs_log("incomplete request !");
-             break;
-    case -4: cs_log("checksum error (wrong password ?)");
-             break;
-  }
-  return(rc);
+				n=(buf[0]==3) ? 0x34 : 0;
+
+				//Fix for ECM request size > 255 (use ecm length field)
+				if(buf[0]==0)
+					buflen = (((buf[21]&0x0f)<< 8) | buf[22])+3;
+				else
+					buflen = buf[1];
+
+				n = boundary(4, n+20+buflen);
+				if (!(client->is_udp && client->typ == 'c') && (rs < n) && ((n-32) > 0)) {
+					len = recv(client->udp_fd, buf+32, n-32, 0); // read the rest of the packet
+					if (len>0) {
+						rs+=len;
+						aes_decrypt(buf+32, len);
+					}
+				}
+
+				cs_ddump_mask(D_CLIENT, buf, rs, "received %d bytes from %s", rs, remote_txt());
+
+				if (n<rs)
+					cs_debug_mask(D_CLIENT, "ignoring %d bytes of garbage", rs-n);
+				else
+					if (n>rs) rc=-3;
+				break;
+			case 3:
+				if (crc32(0L, buf+20, buflen)!=b2i(4, buf+4)) rc=-4;
+				if (!rc) rc=n;
+				break;
+		}
+	}
+
+	if ((rs>0) && ((rc==-1)||(rc==-2))) {
+		cs_ddump_mask(D_CLIENT, buf, rs, "received %d bytes from %s (native)", rs, remote_txt);
+	}
+	client->last=time((time_t *) 0);
+
+	switch(rc) {
+		case -1:	cs_log("packet to small (%d bytes)", rs);		break;
+		case -2:	cs_auth_client(client, 0, "unknown user");	break;
+		case -3:	cs_log("incomplete request !");			break;
+		case -4:	cs_log("checksum error (wrong password ?)");	break;
+	}
+
+	return(rc);
 }
 
 /*
