@@ -427,7 +427,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 	// cache2
 	if (check_cwcache2(er, reader->grp)) {
-		write_ecm_answer(reader, er, E_CACHE2, 0, NULL, NULL);
+		write_ecm_answer(reader, er, E_CACHE2, 0, er->cw, NULL);
 		return;
 	}
 
