@@ -592,7 +592,7 @@ static char *strend(char *c) {
 static int32_t get_retrylimit(ECM_REQUEST *er) {
 		int32_t i;
 		for (i = 0; i < cfg.lb_retrylimittab.n; i++) {
-				if (cfg.lb_retrylimittab.caid[i] == er->caid)
+				if (cfg.lb_retrylimittab.caid[i] == er->caid || cfg.lb_retrylimittab.caid[i] == er->caid>>8) 
 						return cfg.lb_retrylimittab.value[i];
 		}
 		return cfg.lb_retrylimit;
@@ -601,7 +601,7 @@ static int32_t get_retrylimit(ECM_REQUEST *er) {
 static int32_t get_nbest_readers(ECM_REQUEST *er) {
 		int32_t i;
 		for (i = 0; i < cfg.lb_nbest_readers_tab.n; i++) {
-				if (cfg.lb_nbest_readers_tab.caid[i] == er->caid)
+				if (cfg.lb_nbest_readers_tab.caid[i] == er->caid || cfg.lb_nbest_readers_tab.caid[i] == er->caid>>8)
 						return cfg.lb_nbest_readers_tab.value[i];
 		}
 		return cfg.lb_nbest_readers;
