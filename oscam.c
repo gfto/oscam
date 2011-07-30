@@ -1642,6 +1642,8 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 		er = er->parent;
 	}
 
+	ea->er = er;
+
 	for (i=0; i<16; i+=4) {
 		c=((ea->cw[i]+ea->cw[i+1]+ea->cw[i+2]) & 0xff);
 		if (ea->cw[i+3]!=c) {
@@ -1668,8 +1670,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 		if (ea->rc==E_TIMEOUT)
 			store_cw_in_cache(er, er->client->grp, E_TIMEOUT, NULL);
 
-		ll_append(er->answer_list, ea);
-		add_job(er->client, ACTION_CLIENT_ECM_ANSWER, er, sizeof(ECM_REQUEST));
+		add_job(er->client, ACTION_CLIENT_ECM_ANSWER, ea, sizeof(struct s_ecm_answer));
 		return 1;
 	}
 
@@ -1937,10 +1938,15 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	return 0;
 }
 
-void chk_dcw(struct s_client *cl, ECM_REQUEST *ert)
+static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 {
-	if (!cl || !cl->ecmtask)
+	if (!cl || !ea || !ea->er)
 		return;
+
+	ECM_REQUEST *ert = ea->er;
+
+	if (ea->reader)
+		cs_debug_mask(D_TRACE, "ecm answer from %s for ecm %04X rc=%d", ea->reader->label, ert->checksum, ea->rc);
 
 	if (ert->rc<E_99) {
 #ifdef WITH_LB
@@ -1949,59 +1955,49 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *ert)
 		return; // already done
 	}
 
-	struct s_ecm_answer *ea;
 	int32_t reader_left = 0;
-	LL_ITER itr = ll_iter_create(ert->answer_list);
-	while((ea = ll_iter_next(&itr))) {
-		if (!ea->status) {
-			switch (ea->rc) {
-				case E_FOUND:
-				case E_CACHE2:
-				case E_CACHE1:
-				case E_EMU:
-					memcpy(ert->cw, ea->cw, 16);
-					ert->rcEx=0;
-					ert->rc = ea->rc;
-					ert->selected_reader = ea->reader;
-#ifdef WITH_LB
-					send_reader_stat(ert->selected_reader, ert, ea->rc);
-#endif
-					break;
-				case E_TIMEOUT:
-					ert->rc = E_TIMEOUT;
-					break;
-				case E_NOTFOUND:
-					ert->rcEx=ea->rcEx;
-					cs_strncpy(ert->msglog, ea->msglog, sizeof(ert->msglog));
-					ll_remove(ert->matching_rdr, ea->reader);
-					ert->selected_reader=ea->reader;
-#ifdef WITH_LB
-					send_reader_stat(ert->selected_reader, ert, E_NOTFOUND);
-#endif
 
-					if (ll_has_elements(ert->matching_rdr)) {//we have still another chance
-						if (cfg.preferlocalcards && !ert->locals_done) {
-							ert->locals_done=1;
-							LL_NODE *ptr;
-							struct s_reader *rdr;
-							for (ptr = ert->matching_rdr?ert->matching_rdr->initial:NULL; ptr; ptr = ptr->nxt) {
-								rdr = (struct s_reader*)ptr->obj;
-								if (!(rdr->typ & R_IS_NETWORK))
-									ert->locals_done=0;
-							}
-							// if there is no local reader left send request to network reader
-							if (ert->locals_done)
-								request_cw(ert, ert->stage, 2);
-						}
-						reader_left++;
+	switch (ea->rc) {
+		case E_FOUND:
+		case E_CACHE2:
+		case E_CACHE1:
+		case E_EMU:
+			memcpy(ert->cw, ea->cw, 16);
+			ert->rcEx=0;
+			ert->rc = ea->rc;
+			ert->selected_reader = ea->reader;
+			break;
+		case E_TIMEOUT:
+			ert->rc = E_TIMEOUT;
+			break;
+		case E_NOTFOUND:
+			ert->rcEx=ea->rcEx;
+			cs_strncpy(ert->msglog, ea->msglog, sizeof(ert->msglog));
+			ll_remove(ert->matching_rdr, ea->reader);
+			ert->selected_reader=ea->reader;
+
+			if (ll_has_elements(ert->matching_rdr)) {//we have still another chance
+				if (cfg.preferlocalcards && !ert->locals_done) {
+					ert->locals_done=1;
+					LL_NODE *ptr;
+					struct s_reader *rdr;
+					for (ptr = ert->matching_rdr?ert->matching_rdr->initial:NULL; ptr; ptr = ptr->nxt) {
+						rdr = (struct s_reader*)ptr->obj;
+						if (!(rdr->typ & R_IS_NETWORK))
+							ert->locals_done=0;
 					}
-					break;
-				default:
-					cs_log("unexpected ecm answer rc=%d.", ea->rc);
-					break;
+					// if there is no local reader left send request to network reader
+					if (ert->locals_done)
+						request_cw(ert, ert->stage, 2);
+				}
+				reader_left++;
 			}
-			ea->status = 1;
-		}
+			break;
+		default:
+			cs_log("unexpected ecm answer rc=%d.", ea->rc);
+			add_garbage(ea);
+			return;
+			break;
 	}
 
 	if (ert->rc >= E_99 && !reader_left) {
@@ -2011,11 +2007,15 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *ert)
 	}
 
 	if (ert->rc < E_99) {
-		ll_destroy_data(ert->answer_list);
-		ert->answer_list = NULL;
+#ifdef WITH_LB
+		if (ert->selected_reader)
+			send_reader_stat(ert->selected_reader, ert, ea->rc);
+#endif
 		send_dcw(cl, ert);
 		distribute_ecm(ert, cl->grp, (ert->rc<E_NOTFOUND)?E_CACHE2:ert->rc);
 	}
+
+	add_garbage(ea);
 
 	return;
 }

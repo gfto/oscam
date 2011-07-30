@@ -653,6 +653,7 @@ typedef struct ecm_request_t {
 struct s_ecm_answer {
 	int8_t			status;
 	struct s_reader	*reader;
+	ECM_REQUEST		*er;
 	int8_t			rc;
 	uint8_t		rcEx;
 	uchar			cw[16];

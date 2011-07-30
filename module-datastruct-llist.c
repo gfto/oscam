@@ -147,10 +147,10 @@ LL_NODE* ll_append(LLIST *l, void *obj)
 LL_NODE *ll_prepend(LLIST *l, void *obj)
 {
     if (l && obj) {
-        if (!ll_lock(l)) return NULL;
-        
         LL_NODE *new;
         if(!cs_malloc(&new,sizeof(LL_NODE), -1)) return NULL;
+
+        if (!ll_lock(l)) { add_garbage(new); return NULL; }
 
         new->obj = obj;
         new->nxt = l->initial;
@@ -243,7 +243,7 @@ void ll_iter_insert(LL_ITER *it, void *obj)
             ll_append_nolock(it->l, obj);
         else {
             LL_NODE *n;
-            if(!cs_malloc(&n,sizeof(LL_NODE), -1)) return;
+            if(!cs_malloc(&n,sizeof(LL_NODE), -1)) { ll_unlock(it->l); return; }
 
             n->obj = obj;
             n->nxt = it->cur->nxt;
