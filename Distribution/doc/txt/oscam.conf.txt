@@ -176,7 +176,11 @@ DESCRIPTIONS
 	   1 = fast reopening of blocker readers
 
        lb_nbest_percaid = CAID1:count1[,CAID2:count2]...
-	  set count of best readers per CAIDs for load balancing, default:none
+	  set count of best readers per CAIDs for load balancing, wildcard CAIDs  with	two-digit
+	  CAIDs possible, default:none
+
+	   example: lb_nbest_percaid = 12:100,34:200,5678:300
+		    (wildcard CAIDs 12xx and 34xx)
 
        lb_min_ecmcount = counts
 	  minimal ECM count to evaluate load balancing values, default:5
@@ -185,11 +189,11 @@ DESCRIPTIONS
 	  maximum ECM count before resetting load balancing values, default:500
 
        lb_reopen_seconds = seconds
-	  time	between   retrying   failed   load   balanced	readers/CAIDs/providers/services,
+	  time	 between   retrying   failed   load   balanced	readers/CAIDs/providers/services,
 	  default:900
 
        lb_retrylimit = milli seconds
-	  retry  next  load  balanced  reader only if response time is higher then lb_retrylimit,
+	  retry next load balanced reader only if response time  is  higher  then  lb_retrylimit,
 	  default:800
 
        lb_savepath = filename
@@ -202,7 +206,11 @@ DESCRIPTIONS
 	  1 = disable parallel and identical load balancing ECM requests, default:0
 
        lb_retrylimits = CAID1:time1[,CAID2:time2]...
-	  load balancing retry limit time per CAID, default:none
+	  load balancing retry limit time per CAID, wildcard CAIDs with two-digit CAIDs possible,
+	  default:none
+
+	   example: lb_retrylimits = 12:0100,34:0200,5678:0300
+		    (wildcard CAIDs 12xx and 34xx)
 
        lb_noproviderforcaid = CAID1[,CAID2]...
 	  ignore provider  information	for  CAIDs  to	reduce	load  balancing  statistic  data,

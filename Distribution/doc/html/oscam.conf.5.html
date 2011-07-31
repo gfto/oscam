@@ -326,7 +326,10 @@ load balancing reopen readers mode:
 
 <B>lb_nbest_percaid</B> = <B>CAID1:count1[,CAID2:count2]...</B>
 <DL COMPACT><DT><DD>
-set count of best readers per CAIDs for load balancing, default:none
+set count of best readers per CAIDs for load balancing, wildcard CAIDs with two-digit CAIDs possible, default:none
+<P>
+<BR>&nbsp;example:&nbsp;lb_nbest_percaid&nbsp;=&nbsp;12:100,34:200,5678:300&nbsp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(wildcard&nbsp;CAIDs&nbsp;12xx&nbsp;and&nbsp;34xx)
 </DL>
 
 <P>
@@ -382,7 +385,10 @@ hours after the load balancing statistics will be deleted, default:336
 
 <B>lb_retrylimits</B> = <B>CAID1:time1[,CAID2:time2]...</B>
 <DL COMPACT><DT><DD>
-load balancing retry limit time per CAID, default:none
+load balancing retry limit time per CAID, wildcard CAIDs with two-digit CAIDs possible, default:none
+<P>
+<BR>&nbsp;example:&nbsp;lb_retrylimits&nbsp;=&nbsp;12:0100,34:0200,5678:0300&nbsp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(wildcard&nbsp;CAIDs&nbsp;12xx&nbsp;and&nbsp;34xx)
 <P>
 
 </DL>

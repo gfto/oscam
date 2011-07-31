@@ -239,7 +239,10 @@ load balancing reopen readers mode:
 .PP
 \fBlb_nbest_percaid\fP = \fBCAID1:count1[,CAID2:count2]...\fP
 .RS 3n
-set count of best readers per CAIDs for load balancing, default:none
+set count of best readers per CAIDs for load balancing, wildcard CAIDs with two-digit CAIDs possible, default:none
+
+ example: lb_nbest_percaid = 12:100,34:200,5678:300 
+          (wildcard CAIDs 12xx and 34xx)
 .RE
 .PP
 \fBlb_min_ecmcount\fP = \fBcounts\fP
@@ -279,7 +282,10 @@ hours after the load balancing statistics will be deleted, default:336
 .PP
 \fBlb_retrylimits\fP = \fBCAID1:time1[,CAID2:time2]...\fP
 .RS 3n
-load balancing retry limit time per CAID, default:none
+load balancing retry limit time per CAID, wildcard CAIDs with two-digit CAIDs possible, default:none
+
+ example: lb_retrylimits = 12:0100,34:0200,5678:0300 
+          (wildcard CAIDs 12xx and 34xx)
 .PP
 .RE
 \fBlb_noproviderforcaid\fP = \fBCAID1[,CAID2]...\fP
