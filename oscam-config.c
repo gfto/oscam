@@ -4747,13 +4747,25 @@ char *mk_t_caidtab(CAIDTAB *ctab){
 	char *saveptr = value;
 	i = 0;
 	while(ctab->caid[i]) {
-		if(i == 0) {
-			snprintf(value + pos, needed-(value-saveptr), "%04X", ctab->caid[i]);
-			pos += 4;
+	
+		if (ctab->caid[i] < 0x0100) { //for "ignore provider for" option, caid-shortcut, just first 2 bytes:
+			if(i == 0) {
+				snprintf(value + pos, needed-(value-saveptr), "%02X", ctab->caid[i]);
+				pos += 2;
+			} else {
+				snprintf(value + pos, needed-(value-saveptr), ",%02X", ctab->caid[i]);
+				pos += 3;
+			}
 		} else {
-			snprintf(value + pos, needed-(value-saveptr), ",%04X", ctab->caid[i]);
-			pos += 5;
+			if(i == 0) {
+				snprintf(value + pos, needed-(value-saveptr), "%04X", ctab->caid[i]);
+				pos += 4;
+			} else {
+				snprintf(value + pos, needed-(value-saveptr), ",%04X", ctab->caid[i]);
+				pos += 5;
+			}
 		}
+		
 		if((ctab->mask[i]) && (ctab->mask[i] != 0xFFFF)){
 			snprintf(value + pos, needed-(value-saveptr), "&%04X", ctab->mask[i]);
 			pos += 5;
@@ -5241,6 +5253,9 @@ char *mk_t_caidvaluetab(CAIDVALUETAB *tab)
 		char *ptr = buf;
 
 		for (i = 0; i < tab->n; i++) {
+			if (tab->caid[i] < 0x0100) //Do not format 0D as 000D, its a shortcut for 0Dxx:
+				ptr += snprintf(ptr, size-(ptr-buf), "%s%02X:%d", i?",":"", tab->caid[i], tab->value[i]);
+			else
 				ptr += snprintf(ptr, size-(ptr-buf), "%s%04X:%d", i?",":"", tab->caid[i], tab->value[i]);
 		}
 		*ptr = 0;
