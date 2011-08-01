@@ -1759,12 +1759,12 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 
 #ifdef MODULE_CCCAM
 	if (!strcmp(token, "cccmaxhops")) {
-		account->cccmaxhops = strToIntVal(value, 10);
+		account->cccmaxhops = strToIntVal(value, DEFAULT_CC_MAXHOP);
 		return;
 	}
 
 	if (!strcmp(token, "cccreshare")) {
-		account->cccreshare = strToIntVal(value, -1);
+		account->cccreshare = strToIntVal(value, DEFAULT_CC_RESHARE);
 		return;
 	}
 
@@ -1776,7 +1776,7 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 	}
 
 	if (!strcmp(token, "cccstealth")) {
-		account->cccstealth = strToIntVal(value, -1);
+		account->cccstealth = strToIntVal(value, DEFAULT_CC_STEALTH);
 		return;
 	}
 #endif
@@ -2518,16 +2518,16 @@ int32_t write_userdb()
 			fprintf_conf(f, "suppresscmd08", "%d\n", account->c35_suppresscmd08);
 
 #ifdef MODULE_CCCAM
-		if (account->cccmaxhops != 10 || cfg.http_full_cfg)
+		if (account->cccmaxhops != DEFAULT_CC_MAXHOP || cfg.http_full_cfg)
 			fprintf_conf(f, "cccmaxhops", "%d\n", account->cccmaxhops);
 
-		if ((account->cccreshare != -1) || cfg.http_full_cfg)
+		if ((account->cccreshare != DEFAULT_CC_RESHARE) || cfg.http_full_cfg)
 			fprintf_conf(f, "cccreshare", "%d\n", account->cccreshare);
 
 		if ((account->cccignorereshare != cfg.cc_ignore_reshare && account->cccignorereshare != -1) || cfg.http_full_cfg)
 			fprintf_conf(f, "cccignorereshare", "%d\n", account->cccignorereshare);
 
-		if ((account->cccstealth != -1) || cfg.http_full_cfg)
+		if ((account->cccstealth != DEFAULT_CC_STEALTH) || cfg.http_full_cfg)
 			fprintf_conf(f, "cccstealth", "%d\n", account->cccstealth);
 #endif
 
@@ -2640,7 +2640,7 @@ int32_t write_server()
 			if ((rdr->tcp_ito || cfg.http_full_cfg) && !isphysical && rdr->typ != R_CCCAM)
 				fprintf_conf(f, "inactivitytimeout", "%d\n", rdr->tcp_ito);
 
-			if ((rdr->tcp_rto != 30 || cfg.http_full_cfg) && !isphysical)
+			if ((rdr->tcp_rto != DEFAULT_TCP_RECONNECT_TIMEOUT || cfg.http_full_cfg) && !isphysical)
 				fprintf_conf(f, "reconnecttimeout", "%d\n", rdr->tcp_rto);
 
 			if ((rdr->ncd_disable_server_filt || cfg.http_full_cfg) && rdr->typ == R_NEWCAMD)
@@ -2797,7 +2797,7 @@ int32_t write_server()
 				if (rdr->cc_version[0] || cfg.http_full_cfg)
 					fprintf_conf(f, "cccversion", "%s\n", rdr->cc_version);
 
-				if (rdr->cc_maxhop != 10 || cfg.http_full_cfg)
+				if (rdr->cc_maxhop != DEFAULT_CC_MAXHOP || cfg.http_full_cfg)
 					fprintf_conf(f, "cccmaxhops", "%d\n", rdr->cc_maxhop);
 
 				if (rdr->cc_mindown > 0 || cfg.http_full_cfg)
@@ -2809,7 +2809,7 @@ int32_t write_server()
 				if (rdr->cc_keepalive || cfg.http_full_cfg)
 					fprintf_conf(f, "ccckeepalive", "%d\n", rdr->cc_keepalive);
 
-				if ((rdr->cc_reshare != cfg.cc_reshare && rdr->cc_reshare != -1) || cfg.http_full_cfg)
+				if (rdr->cc_reshare != DEFAULT_CC_RESHARE || cfg.http_full_cfg)
 					fprintf_conf(f, "cccreshare", "%d\n", rdr->cc_reshare);
 			}
 			else if (rdr->cc_hop > 0 || cfg.http_full_cfg)
@@ -3093,10 +3093,10 @@ struct s_auth *init_userdb()
 			account->monlvl = cfg.mon_level;
 			account->tosleep = cfg.tosleep;
 			account->c35_suppresscmd08 = cfg.c35_suppresscmd08;
-			account->cccmaxhops = 10;
-			account->cccreshare = -1; //-1 = use cfg.
+			account->cccmaxhops = DEFAULT_CC_MAXHOP;
+			account->cccreshare = DEFAULT_CC_RESHARE; // default: use global cfg
 			account->cccignorereshare = -1;
-			account->cccstealth = -1;
+			account->cccstealth = DEFAULT_CC_STEALTH; // default: use global cfg
 			account->ncd_keepalive = cfg.ncd_keepalive;
 			account->firstlogin = 0;
 			for (i = 1; i < CS_MAXCAIDTAB; account->ctab.mask[i++] = 0xffff);
@@ -3823,7 +3823,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "reconnecttimeout")) {
-		rdr->tcp_rto  = strToIntVal(value, 30);
+		rdr->tcp_rto  = strToIntVal(value, DEFAULT_TCP_RECONNECT_TIMEOUT);
 		return;
 	}
 
@@ -4331,7 +4331,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
 	if (!strcmp(token, "cccmaxhop") || !strcmp(token, "cccmaxhops")) { //Schlocke: cccmaxhops is better!
 		// cccam max card distance
-		rdr->cc_maxhop  = strToIntVal(value, 10);
+		rdr->cc_maxhop  = strToIntVal(value, DEFAULT_CC_MAXHOP);
 		return;
 	}
 
@@ -4352,9 +4352,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "ccchopsaway") || !strcmp(token, "cccreshar")  || !strcmp(token, "cccreshare")) {
-		rdr->cc_reshare = atoi(value);
-		if (rdr->cc_reshare == cfg.cc_reshare)
-			rdr->cc_reshare = -1;
+		rdr->cc_reshare = strToIntVal(value, DEFAULT_CC_RESHARE);
 		return;
 	}
 
@@ -4578,7 +4576,7 @@ int32_t init_readerdb()
 			memset(rdr->hexserial, 0, sizeof(rdr->hexserial));
 			memset(rdr->rom, 0, sizeof(rdr->rom));
 			rdr->enable = 1;
-			rdr->tcp_rto = 30;
+			rdr->tcp_rto = DEFAULT_TCP_RECONNECT_TIMEOUT;
 			rdr->show_cls = 10;
 			rdr->nagra_read = 0;
 			rdr->mhz = 357;
@@ -4586,8 +4584,8 @@ int32_t init_readerdb()
 			rdr->deprecated = 0;
 			rdr->force_irdeto = 0;
 #ifdef MODULE_CCCAM
-			rdr->cc_reshare = -1;
-			rdr->cc_maxhop = 10;
+			rdr->cc_reshare = DEFAULT_CC_RESHARE;
+			rdr->cc_maxhop  = DEFAULT_CC_MAXHOP;
 			rdr->cc_mindown = 0;
 #endif
 #ifdef WITH_LB

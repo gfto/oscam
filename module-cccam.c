@@ -1922,7 +1922,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 		card->origin_reader = rdr;
 		card->origin_id = card->id;
 		card->grp = rdr->grp;
-		card->rdr_reshare = rdr->cc_reshare;
+		card->rdr_reshare = rdr->cc_reshare > -1 ? rdr->cc_reshare : cfg.cc_reshare;
 
 		//Check if this card is from us:
 		LL_ITER it = ll_iter_create(card->remote_nodes);
@@ -3123,7 +3123,7 @@ int32_t cc_cli_init_int(struct s_client *cl) {
                 	
 	rdr->tcp_ito = 1; //60sec...This now invokes ph_idle()
 	if (rdr->cc_maxhop < 0)
-		rdr->cc_maxhop = 10;
+		rdr->cc_maxhop = DEFAULT_CC_MAXHOP;
 
 	if (rdr->tcp_rto <= 2)
 		rdr->tcp_rto = 2; // timeout to 120s

@@ -932,6 +932,11 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 			}
 		}
 		reader_ = newrdr->label;
+		newrdr->tcp_rto = DEFAULT_TCP_RECONNECT_TIMEOUT; // default value
+#ifdef MODULE_CCCAM
+		newrdr->cc_maxhop  = DEFAULT_CC_MAXHOP;  // default value
+		newrdr->cc_reshare = DEFAULT_CC_RESHARE; // default value
+#endif
 	} else if(strcmp(getParam(params, "action"), "Save") == 0) {
 
 		rdr = get_reader_by_label(getParam(params, "label"));
@@ -1240,9 +1245,11 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
 #ifdef MODULE_CCCAM
-	tpl_printf(vars, TPLADD, "CCCMAXHOP", "%d", rdr->cc_maxhop);
+	tpl_printf(vars, TPLADD, "CCCMAXHOP",  "%d", rdr->cc_maxhop);
 	tpl_printf(vars, TPLADD, "CCCMINDOWN", "%d", rdr->cc_mindown);
-	tpl_printf(vars, TPLADD, "CCCRESHARE", "%d", (rdr->cc_reshare==-1)?cfg.cc_reshare:rdr->cc_reshare);
+	tpl_printf(vars, TPLADD, "CCCRESHARE", "%d", rdr->cc_reshare);
+	tpl_printf(vars, TPLADD, "RESHARE",    "%d", cfg.cc_reshare);
+
 	if(rdr->cc_want_emu)
 		tpl_addVar(vars, TPLADD, "CCCWANTEMUCHECKED", "checked");
 	if(rdr->cc_keepalive)
@@ -1552,6 +1559,11 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 		for (i=1; i<CS_MAXCAIDTAB; account->ctab.mask[i++]=0xffff);
 		for (i=1; i<CS_MAXTUNTAB; account->ttab.bt_srvid[i++]=0x0000);
 		account->expirationdate=(time_t)NULL;
+#ifdef MODULE_CCCAM
+		account->cccmaxhops = DEFAULT_CC_MAXHOP;  // default value
+		account->cccreshare = DEFAULT_CC_RESHARE; // default use global conf
+		account->cccstealth = DEFAULT_CC_STEALTH; // default use global conf
+#endif
 #ifdef CS_ANTICASC
 		account->ac_users   = -1; // by default create the new user with global ac_users value
 		account->ac_penalty = -1; // by default create the new user with global penality value
@@ -1755,7 +1767,6 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
 	tpl_printf(vars, TPLADD, "STEALTH", "%s", cfg.cc_stealth ? "enable" : "disable");
-
 #endif
 
 	//Failban
