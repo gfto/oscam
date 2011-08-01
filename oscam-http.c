@@ -1565,8 +1565,8 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 		account->cccstealth = DEFAULT_CC_STEALTH; // default use global conf
 #endif
 #ifdef CS_ANTICASC
-		account->ac_users   = -1; // by default create the new user with global ac_users value
-		account->ac_penalty = -1; // by default create the new user with global penality value
+		account->ac_users   = DEFAULT_AC_USERS;   // by default create the new user with global ac_users value
+		account->ac_penalty = DEFAULT_AC_PENALTY; // by default create the new user with global penality value
 #endif
 		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>New user has been added with default settings</b><BR>");
 

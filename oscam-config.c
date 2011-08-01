@@ -1124,7 +1124,7 @@ void chk_t_newcamd(char *token, char *value)
 	}
 
 	if (!strcmp(token, "keepalive")) {
-		cfg.ncd_keepalive = strToIntVal(value, 1);
+		cfg.ncd_keepalive = strToIntVal(value, DEFAULT_NCD_KEEPALIVE);
 		return;
 	}
 
@@ -1566,7 +1566,7 @@ int32_t init_config()
 	cfg.mon_hideclient_to = 15;
 	cs_strncpy(cfg.http_tpl, "", sizeof(cfg.http_tpl));
 #endif
-	cfg.ncd_keepalive = 1;
+	cfg.ncd_keepalive = DEFAULT_NCD_KEEPALIVE;
 #ifdef CS_ANTICASC
 	cfg.ac_enabled = 0;
 	cfg.ac_users = 0;
@@ -1782,7 +1782,7 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 #endif
 
 	if (!strcmp(token, "keepalive")) {
-		account->ncd_keepalive = strToIntVal(value, 1);
+		account->ncd_keepalive = strToIntVal(value, DEFAULT_NCD_KEEPALIVE);
 		return;
 	}
 	/*
@@ -1899,16 +1899,16 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 
 #ifdef CS_ANTICASC
 	if( !strcmp(token, "numusers") ) {
-		account->ac_users = strToIntVal(value, -1);
+		account->ac_users = strToIntVal(value, DEFAULT_AC_USERS);
 		if ( account->ac_users < -1 )
-			account->ac_users = -1;
+			account->ac_users = DEFAULT_AC_USERS;
 		return;
 	}
 
 	if( !strcmp(token, "penalty") ) {
-		account->ac_penalty = strToIntVal(value, -1);
+		account->ac_penalty = strToIntVal(value, DEFAULT_AC_PENALTY);
 		if ( account->ac_penalty < -1 )
-			account->ac_penalty = -1;
+			account->ac_penalty = DEFAULT_AC_PENALTY;
 		return;
 	}
 #endif
@@ -2160,7 +2160,7 @@ int32_t write_config()
 		if(strlen(value) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, "allowed", "%s\n", value);
 		free_mk_t(value);
-		if(cfg.ncd_keepalive != 1 || cfg.http_full_cfg)
+		if(cfg.ncd_keepalive != DEFAULT_NCD_KEEPALIVE || cfg.http_full_cfg)
 			fprintf_conf(f, "keepalive", "%d\n", cfg.ncd_keepalive);
 		if(cfg.ncd_mgclient != 0 || cfg.http_full_cfg)
 			fprintf_conf(f, "mgclient", "%d\n", cfg.ncd_mgclient);
@@ -2537,13 +2537,13 @@ int32_t write_userdb()
 		if (account->failban || cfg.http_full_cfg)
 			fprintf_conf(f, "failban", "%d\n", account->failban);
 
-		if ((account->ncd_keepalive != cfg.ncd_keepalive) || cfg.http_full_cfg)
+		if ((account->ncd_keepalive != DEFAULT_NCD_KEEPALIVE) || cfg.http_full_cfg)
 			fprintf_conf(f, "keepalive", "%d\n", account->ncd_keepalive);
 
 #ifdef CS_ANTICASC
-		if (account->ac_users != -1 || cfg.http_full_cfg)
+		if (account->ac_users != DEFAULT_AC_USERS || cfg.http_full_cfg)
 			fprintf_conf(f, "numusers", "%d\n", account->ac_users);
-		if (account->ac_penalty != -1 || cfg.http_full_cfg)
+		if (account->ac_penalty != DEFAULT_AC_PENALTY || cfg.http_full_cfg)
 			fprintf_conf(f, "penalty", "%d\n", account->ac_penalty);
 #endif
 		fputc((int)'\n', f);
@@ -2806,7 +2806,7 @@ int32_t write_server()
 				if (rdr->cc_want_emu || cfg.http_full_cfg)
 					fprintf_conf(f, "cccwantemu", "%d\n", rdr->cc_want_emu);
 
-				if (rdr->cc_keepalive || cfg.http_full_cfg)
+				if (rdr->cc_keepalive != DEFAULT_CC_KEEPALIVE || cfg.http_full_cfg)
 					fprintf_conf(f, "ccckeepalive", "%d\n", rdr->cc_keepalive);
 
 				if (rdr->cc_reshare != DEFAULT_CC_RESHARE || cfg.http_full_cfg)
@@ -3104,8 +3104,8 @@ struct s_auth *init_userdb()
 			nr++;
 
 #ifdef CS_ANTICASC
-			account->ac_users   = -1; // use ac_users global value
-			account->ac_penalty = -1; // use ac_penalty global value
+			account->ac_users   = DEFAULT_AC_USERS;   // use ac_users global value
+			account->ac_penalty = DEFAULT_AC_PENALTY; // use ac_penalty global value
 #endif
 			continue;
 		}
@@ -4347,7 +4347,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "ccckeepalive")) {
-		rdr->cc_keepalive  = strToIntVal(value, 0);
+		rdr->cc_keepalive  = strToIntVal(value, DEFAULT_CC_KEEPALIVE);
 		return;
 	}
 

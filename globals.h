@@ -395,11 +395,18 @@ extern void cs_switch_led(int32_t led, int32_t action);
  *      Default Values
  * =========================== */
 #define DEFAULT_TCP_RECONNECT_TIMEOUT 30
+#define DEFAULT_NCD_KEEPALIVE 1
 
 #ifdef MODULE_CCCAM
-#define DEFAULT_CC_MAXHOP  10
-#define DEFAULT_CC_RESHARE -1 // Use global cfg
-#define DEFAULT_CC_STEALTH -1 // Use global cfg
+#define DEFAULT_CC_MAXHOP   10
+#define DEFAULT_CC_RESHARE  -1 // Use global cfg
+#define DEFAULT_CC_STEALTH  -1 // Use global cfg
+#define DEFAULT_CC_KEEPALIVE 0
+#endif
+
+#ifdef CS_ANTICASC
+#define DEFAULT_AC_USERS   -1 // Use global cfg
+#define DEFAULT_AC_PENALTY -1 // Use global cfg
 #endif
 
 /* ===========================
@@ -1239,7 +1246,7 @@ struct s_config
 	PTAB			ncd_ptab;
 	in_addr_t		ncd_srvip;
 	uchar			ncd_key[16];
-	int32_t			ncd_keepalive;
+	int8_t			ncd_keepalive;
 	int8_t			ncd_mgclient;
 	struct s_ip 	*ncd_allowed;
 	int32_t			rad_port;
