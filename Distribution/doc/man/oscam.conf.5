@@ -290,7 +290,11 @@ load balancing retry limit time per CAID, wildcard CAIDs with two-digit CAIDs po
 .RE
 \fBlb_noproviderforcaid\fP = \fBCAID1[,CAID2]...\fP
 .RS 3n
-ignore provider information for CAIDs to reduce load balancing statistic data, default:none
+ignore provider information for CAIDs to reduce load balancing statistic data, 
+wildcard CAIDs with two-digit CAIDs possible, default:none
+
+ example: lb_noproviderforcaid = 0100,02,0300,04 
+          (wildcard CAIDs 02xx and 04xx)
 .PP
 .RE
 \fBlb_max_readers\fP = \fBlimit\fP

@@ -395,7 +395,11 @@ load balancing retry limit time per CAID, wildcard CAIDs with two-digit CAIDs po
 
 <B>lb_noproviderforcaid</B> = <B>CAID1[,CAID2]...</B>
 <DL COMPACT><DT><DD>
-ignore provider information for CAIDs to reduce load balancing statistic data, default:none
+ignore provider information for CAIDs to reduce load balancing statistic data, 
+wildcard CAIDs with two-digit CAIDs possible, default:none
+<P>
+<BR>&nbsp;example:&nbsp;lb_noproviderforcaid&nbsp;=&nbsp;0100,02,0300,04&nbsp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(wildcard&nbsp;CAIDs&nbsp;02xx&nbsp;and&nbsp;04xx)
 <P>
 
 </DL>
