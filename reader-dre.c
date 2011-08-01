@@ -38,6 +38,7 @@ static int32_t dre_command (struct s_reader * reader, const uchar * cmd, int32_t
   reader_cmd2icc (reader, command, cmdlen, cta_res, p_cta_lr);
 
   if ((*p_cta_lr != 2) || (cta_res[0] != OK_RESPONSE)) {
+    cs_log ("[dre-reader] command sent to card: %s", cs_hexdump(0, command, cmdlen, tmp, sizeof(tmp)));
     cs_log ("[dre-reader] unexpected answer from card: %s", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
     return ERROR;			//error
   }
