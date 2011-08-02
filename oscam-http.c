@@ -510,8 +510,8 @@ static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams
 	tpl_printf(vars, TPLADD, "TMP", "RESHAREMODE%d", cfg.cc_reshare_services);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
-	if (cfg.cc_ignore_reshare)
-		tpl_printf(vars, TPLADD, "IGNORERESHARE", "selected");
+	tpl_printf(vars, TPLADD, "TMP", "IGNRSHRSELECTED%d", cfg.cc_ignore_reshare);
+	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
 	if (cfg.cc_forward_origin_card)
 		tpl_printf(vars, TPLADD, "FORWARDORIGINCARD", "selected");
@@ -1780,8 +1780,13 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	tpl_printf(vars, TPLADD, "CCCMAXHOPS", "%d", account->cccmaxhops);
 	tpl_printf(vars, TPLADD, "CCCRESHARE", "%d", account->cccreshare);
 	tpl_printf(vars, TPLADD, "RESHARE",    "%d", cfg.cc_reshare);
-	if ((account->cccignorereshare==-1)?cfg.cc_ignore_reshare:account->cccignorereshare)
-		tpl_printf(vars, TPLADD, "CCCIGNORERESHARE", "selected");
+
+	//CCcam Ignore Reshare
+	tpl_printf(vars, TPLADD, "TMP", "CCCIGNRSHRSELECTED%d", account->cccignorereshare);
+	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+	tpl_printf(vars, TPLADD, "CFGIGNORERESHARE", "%s",
+			   cfg.cc_ignore_reshare == 0 ?
+			   "0 - use reshare level of Server" : "1 - use reshare level of Reader or User");
 
 	//CCcam Stealth Mode
 	tpl_printf(vars, TPLADD, "TMP", "CCCSTEALTHSELECTED%d", account->cccstealth);

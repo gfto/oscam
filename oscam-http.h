@@ -892,7 +892,14 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TR class=\"cfg_cccam\"><TD>##TPLHELPPREFIX##user#cccmaxhops##TPLHELPSUFFIX##CCC Maxhops:</A></TD><TD><input name=\"cccmaxhops\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCMAXHOPS##\"></TD></TR>\n\
 			<TR class=\"cfg_cccam\"><TD>##TPLHELPPREFIX##user#cccreshare##TPLHELPSUFFIX##CCC Reshare:</A></TD><TD><input name=\"cccreshare\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCRESHARE##\">\
 				&nbsp;Global CCCam Reshare:<SPAN CLASS=\"global_conf\" TITLE=\"This value is used if CCC Reshare = -1\"><A HREF=\"config.html?part=cccam\">##RESHARE##</A></SPAN></TD></TR>\n\
-			<TR class=\"cfg_cccam\"><TD>##TPLHELPPREFIX##user#cccignorereshare##TPLHELPSUFFIX##CCC Ignore reshare:</A></TD><TD><SELECT NAME=\"cccignorereshare\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##CCCIGNORERESHARE##>ON</OPTION></SELECT></TD></TR>\n\
+			<TR class=\"cfg_cccam\"><TD>##TPLHELPPREFIX##user#cccignorereshare##TPLHELPSUFFIX##CCC Ignore reshare:</A></TD><TD>\
+			<SELECT NAME=\"cccignorereshare\">\
+				<OPTION VALUE=\"-1\" ##CCCIGNRSHRSELECTED-1##>-1 - Use Global CCcam Ignore Reshare value</OPTION>\
+				<OPTION VALUE=\"0\"  ##CCCIGNRSHRSELECTED0## >&nbsp;0 - Use reshare level of Server</OPTION>\
+				<OPTION VALUE=\"1\"  ##CCCIGNRSHRSELECTED1## >&nbsp;1 - Use reshare level of Reader or User</OPTION>\
+			</SELECT>\
+			&nbsp;Global Ignore Reshare value:<SPAN CLASS=\"global_conf\" TITLE=\"This value is used if CCC Ignore reshare = -1\"><A HREF=\"config.html?part=cccam\">##CFGIGNORERESHARE##</A></SPAN>\
+			</TD></TR>\n\
 			<TR class=\"cfg_cccam\"><TD>##TPLHELPPREFIX##user#cccstealth##TPLHELPSUFFIX##CCC stealth:</A></TD><TD>\
 			<SELECT NAME=\"cccstealth\">\
 				<OPTION VALUE=\"-1\" ##CCCSTEALTHSELECTED-1##>GLOBAL: Use Global CCcam Stealth value</OPTION>\
@@ -1355,7 +1362,11 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TH COLSPAN=\"2\">Edit Cccam Config</TH></TR>\n\
 			<TR class=\"cfg_cccam\"><TD>##TPLHELPPREFIX##conf#port_7##TPLHELPSUFFIX##Port:</A></TD><TD><input name=\"port\" type=\"text\" size=\"16\" maxlength=\"128\" value=\"##PORT##\"></TD></TR>\n\
 			<TR class=\"cfg_cccam\"><TD>##TPLHELPPREFIX##conf#reshare##TPLHELPSUFFIX##Reshare:</A></TD><TD><input name=\"reshare\" type=\"text\" size=\"2\" maxlength=\"1\" value=\"##RESHARE##\"></TD></TR>\n\
-			<TR class=\"cfg_cccam\"><TD>##TPLHELPPREFIX##conf#ignorereshare##TPLHELPSUFFIX##Ignore reshare:</A></TD><TD><SELECT NAME=\"ignorereshare\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##IGNORERESHARE##>ON</OPTION></SELECT></TD></TR>\n\
+			<TR class=\"cfg_cccam\"><TD>##TPLHELPPREFIX##conf#ignorereshare##TPLHELPSUFFIX##Ignore reshare:</A></TD><TD>\
+			<SELECT NAME=\"ignorereshare\">\
+				<OPTION VALUE=\"0\" ##IGNRSHRSELECTED1##>0 - Use reshare level of Server</OPTION>\
+				<OPTION VALUE=\"1\" ##IGNRSHRSELECTED1##>1 - Use reshare level of Reader or User</OPTION>\
+			</SELECT></TD></TR>\n\
 			<TR class=\"cfg_cccam\"><TD>##TPLHELPPREFIX##conf#forward_origin_card##TPLHELPSUFFIX##Forward origin card:</A></TD><TD><SELECT NAME=\"forward_origin_card\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##FORWARDORIGINCARD##>ON</OPTION></SELECT></TD></TR>\n\
 			<TR class=\"cfg_cccam\"><TD>##TPLHELPPREFIX##conf#stealth##TPLHELPSUFFIX##Stealth mode:</A></TD><TD><SELECT NAME=\"stealth\"><OPTION VALUE=\"0\">DISABLE</OPTION><OPTION VALUE=\"1\" ##STEALTH##>ENABLE</OPTION></SELECT></TD></TR>\n\
 			<TR class=\"cfg_cccam\"><TD>##TPLHELPPREFIX##conf#nodeid##TPLHELPSUFFIX##Node Id:</A></TD><TD><input name=\"nodeid\" type=\"text\" size=\"16\" maxlength=\"16\" value=\"##NODEID##\"></TD></TR>\n\

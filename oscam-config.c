@@ -1769,9 +1769,7 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 	}
 
 	if (!strcmp(token, "cccignorereshare")) {
-		account->cccignorereshare = strToIntVal(value, -1);
-		if (account->cccignorereshare == cfg.cc_ignore_reshare)
-			account->cccignorereshare = -1;
+		account->cccignorereshare = strToIntVal(value, DEFAULT_CC_IGNRSHR);
 		return;
 	}
 
@@ -2521,13 +2519,13 @@ int32_t write_userdb()
 		if (account->cccmaxhops != DEFAULT_CC_MAXHOP || cfg.http_full_cfg)
 			fprintf_conf(f, "cccmaxhops", "%d\n", account->cccmaxhops);
 
-		if ((account->cccreshare != DEFAULT_CC_RESHARE) || cfg.http_full_cfg)
+		if (account->cccreshare != DEFAULT_CC_RESHARE || cfg.http_full_cfg)
 			fprintf_conf(f, "cccreshare", "%d\n", account->cccreshare);
 
-		if ((account->cccignorereshare != cfg.cc_ignore_reshare && account->cccignorereshare != -1) || cfg.http_full_cfg)
+		if (account->cccignorereshare != DEFAULT_CC_IGNRSHR || cfg.http_full_cfg)
 			fprintf_conf(f, "cccignorereshare", "%d\n", account->cccignorereshare);
 
-		if ((account->cccstealth != DEFAULT_CC_STEALTH) || cfg.http_full_cfg)
+		if (account->cccstealth != DEFAULT_CC_STEALTH || cfg.http_full_cfg)
 			fprintf_conf(f, "cccstealth", "%d\n", account->cccstealth);
 #endif
 
@@ -3098,7 +3096,7 @@ struct s_auth *init_userdb()
 #ifdef MODULE_CCCAM
 			account->cccmaxhops = DEFAULT_CC_MAXHOP;
 			account->cccreshare = DEFAULT_CC_RESHARE; // default: use global cfg
-			account->cccignorereshare = -1;
+			account->cccignorereshare = DEFAULT_CC_IGNRSHR; // default: use global cfg
 			account->cccstealth = DEFAULT_CC_STEALTH; // default: use global cfg
 #endif
 #ifdef CS_ANTICASC

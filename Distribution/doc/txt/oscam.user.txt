@@ -154,7 +154,7 @@ DESCRIPTIONS
        cccignorereshare = -1|0|1
 	  CCcam ignore reshare setting:
 
-	   -1 = use ingore reshare level of oscam.conf (default)
+	   -1 = use ignore reshare level of oscam.conf (default)
 	    0 = use ignore reshare setting of server
 	    1 = use ignore reshare setting of reader or user
 

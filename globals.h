@@ -400,6 +400,7 @@ extern void cs_switch_led(int32_t led, int32_t action);
 #ifdef MODULE_CCCAM
 #define DEFAULT_CC_MAXHOP   10
 #define DEFAULT_CC_RESHARE  -1 // Use global cfg
+#define DEFAULT_CC_IGNRSHR  -1 // Use global cfg
 #define DEFAULT_CC_STEALTH  -1 // Use global cfg
 #define DEFAULT_CC_KEEPALIVE 0
 #endif

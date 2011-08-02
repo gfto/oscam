@@ -230,8 +230,8 @@ int32_t send_card_to_clients(struct cc_card *card, struct s_client *one_client) 
                         if (card_valid_for_client(cl, card)) {
 								int8_t usr_reshare = cl->account->cccreshare;
 								if (usr_reshare == -1) usr_reshare = cfg.cc_reshare;
-                                int8_t usr_ignorereshare = cl->account->cccignorereshare;
-                                if (usr_ignorereshare == -1) usr_ignorereshare = cfg.cc_ignore_reshare;
+                                int8_t ignorereshare = cl->account->cccignorereshare;
+                                if (ignorereshare == -1) ignorereshare = cfg.cc_ignore_reshare;
                                 
                                 int8_t reader_reshare = card->origin_reader ? card->rdr_reshare : usr_reshare;
                                 if (reader_reshare == -1) reader_reshare = cfg.cc_reshare;
@@ -239,7 +239,7 @@ int32_t send_card_to_clients(struct cc_card *card, struct s_client *one_client) 
 								int8_t new_reshare;
 								if (card->card_type == CT_CARD_BY_SERVICE_USER)
 									new_reshare = usr_reshare;
-								else if (cfg.cc_ignore_reshare || usr_ignorereshare)
+								else if (ignorereshare)
 									new_reshare = reshare;
 								else {
 									new_reshare = card->reshare;
@@ -384,9 +384,9 @@ int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card) {
 
         //Check reshare
         if (card->card_type == CT_REMOTECARD) {
-        	int32_t usr_ignorereshare = cl->account->cccignorereshare;
-        	if (usr_ignorereshare == -1) usr_ignorereshare = cfg.cc_ignore_reshare;
-        	if (!cfg.cc_ignore_reshare && !usr_ignorereshare && !card->reshare)
+			int8_t ignorereshare = cl->account->cccignorereshare;
+			if (ignorereshare == -1) ignorereshare = cfg.cc_ignore_reshare;
+			if (!ignorereshare && !card->reshare)
         		return 0;
 		}
         		
