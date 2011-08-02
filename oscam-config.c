@@ -3093,20 +3093,22 @@ struct s_auth *init_userdb()
 			account->monlvl = cfg.mon_level;
 			account->tosleep = cfg.tosleep;
 			account->c35_suppresscmd08 = cfg.c35_suppresscmd08;
+			account->ncd_keepalive = cfg.ncd_keepalive;
+			account->firstlogin = 0;
+#ifdef MODULE_CCCAM
 			account->cccmaxhops = DEFAULT_CC_MAXHOP;
 			account->cccreshare = DEFAULT_CC_RESHARE; // default: use global cfg
 			account->cccignorereshare = -1;
 			account->cccstealth = DEFAULT_CC_STEALTH; // default: use global cfg
-			account->ncd_keepalive = cfg.ncd_keepalive;
-			account->firstlogin = 0;
-			for (i = 1; i < CS_MAXCAIDTAB; account->ctab.mask[i++] = 0xffff);
-			for (i = 1; i < CS_MAXTUNTAB; account->ttab.bt_srvid[i++] = 0x0000);
-			nr++;
-
+#endif
 #ifdef CS_ANTICASC
 			account->ac_users   = DEFAULT_AC_USERS;   // use ac_users global value
 			account->ac_penalty = DEFAULT_AC_PENALTY; // use ac_penalty global value
 #endif
+			for (i = 1; i < CS_MAXCAIDTAB; account->ctab.mask[i++] = 0xffff);
+			for (i = 1; i < CS_MAXTUNTAB; account->ttab.bt_srvid[i++] = 0x0000);
+			nr++;
+
 			continue;
 		}
 
