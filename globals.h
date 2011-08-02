@@ -396,18 +396,13 @@ extern void cs_switch_led(int32_t led, int32_t action);
  * =========================== */
 #define DEFAULT_TCP_RECONNECT_TIMEOUT 30
 #define DEFAULT_NCD_KEEPALIVE 1
-
-#ifdef MODULE_CCCAM
 #define DEFAULT_CC_MAXHOP   10
 #define DEFAULT_CC_RESHARE  -1 // Use global cfg
 #define DEFAULT_CC_STEALTH  -1 // Use global cfg
 #define DEFAULT_CC_KEEPALIVE 0
-#endif
-
-#ifdef CS_ANTICASC
 #define DEFAULT_AC_USERS   -1 // Use global cfg
 #define DEFAULT_AC_PENALTY -1 // Use global cfg
-#endif
+
 
 /* ===========================
  *      global structures
