@@ -762,11 +762,9 @@ static void inactivate_reader(struct s_reader *rdr)
 		kill_thread(rdr->client);
 }
 
-static char *send_oscam_reader(struct templatevars *vars, struct uriparams *params) {
+static char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
 	struct s_reader *rdr;
 	int32_t i;
-
-	int8_t apicall=0; //remove before flight
 
 	if ((strcmp(getParam(params, "action"), "disable") == 0) || (strcmp(getParam(params, "action"), "enable") == 0)) {
 		if(cfg.http_readonly) {
@@ -901,7 +899,8 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 
 				// used only for API
 				tpl_addVar(vars, TPLADD, "APIREADERENABLED", !rdr->enable ? "0": "1");
-				tpl_printf(vars, TPLADD, "APIREADERTYPE", "%c", rdr->client->typ);
+				if(rdr->client)
+					tpl_printf(vars, TPLADD, "APIREADERTYPE", "%c", rdr->client->typ ? rdr->client->typ :'x');
 
 				// Add to API Template
 				tpl_addVar(vars, TPLAPPEND, "APIREADERLIST", tpl_getTpl(vars, "APIREADERSBIT"));
@@ -3470,10 +3469,8 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 	else if (strcmp(getParam(params, "part"), "files") == 0) {
 		return send_oscam_files(vars, params, 1);
 	}
-	else if (strcmp(getParam(params, "part"), "readerconfig") == 0) {
-		//Send Errormessage
-		tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "readerconfig not yet avail");
-		return tpl_getTpl(vars, "APIERROR");
+	else if (strcmp(getParam(params, "part"), "readerlist") == 0) {
+		return send_oscam_reader(vars, params, 1);
 	}
 	else if (strcmp(getParam(params, "part"), "serverconfig") == 0) {
 		//Send Errormessage
@@ -4007,7 +4004,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 			if(pgidx != 19 && pgidx != 20) cs_writelock(&http_lock);
 			switch(pgidx) {
 				case 0: result = send_oscam_config(vars, &params); break;
-				case 1: result = send_oscam_reader(vars, &params); break;
+				case 1: result = send_oscam_reader(vars, &params, 0); break;
 				case 2: result = send_oscam_entitlement(vars, &params, 0); break;
 				case 3: result = send_oscam_status(vars, &params, 0); break;
 				case 4: result = send_oscam_user_config(vars, &params, 0); break;
