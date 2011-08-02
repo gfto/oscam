@@ -962,6 +962,15 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	</form>\n\
 ##TPLFOOTER##"
 
+#define TPLAPIREADERS "##TPLAPIHEADER##\n\
+    <readers>\n\
+##APIREADERLIST##\
+    </readers>\n\
+##TPLAPIFOOTER##"
+
+#define TPLAPIREADERSBIT "\
+		<reader label=\"##READERNAME##\" protocol=\"##CTYP##\" type=\"##APIREADERTYPE##\" enabled=\"##APIREADERENABLED##\"></reader>"
+
 #define TPLREADERSBIT "\
 			<TR CLASS =\"##READERCLASS##\">\n\
 				<TD class=\"centered\"><A HREF=\"readers.html?label=##READERNAMEENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
@@ -2138,6 +2147,8 @@ char *tpl[]={
 	"SIDTAB",
 	"SIDTABBIT",
 	"READERS",
+	"APIREADERS",
+	"APIREADERSBIT",
 	"READERSBIT",
 	"READERENTITLEBIT",
 	"READERREFRESHBIT",
@@ -2287,6 +2298,8 @@ char *tplmap[]={
 	TPLSIDTAB,
 	TPLSIDTABBIT,
 	TPLREADERS,
+	TPLAPIREADERS,
+	TPLAPIREADERSBIT,
 	TPLREADERSBIT,
 	TPLREADERENTITLEBIT,
 	TPLREADERREFRESHBIT,

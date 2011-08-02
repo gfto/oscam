@@ -825,8 +825,9 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 		}
 	}
 
+	LL_ITER itr = ll_iter_create(configured_readers);
+
 	if(!apicall) {
-		LL_ITER itr = ll_iter_create(configured_readers);
 		for (i = 0, rdr = ll_iter_next(&itr); rdr && rdr->label[0]; rdr = ll_iter_next(&itr), i++);
 		tpl_printf(vars, TPLADD, "NEXTREADER", "Reader-%d", i); //Next Readername
 	}
@@ -900,6 +901,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 
 				// used only for API
 				tpl_addVar(vars, TPLADD, "APIREADERENABLED", !rdr->enable ? "0": "1");
+				tpl_printf(vars, TPLADD, "APIREADERTYPE", "%c", rdr->client->typ);
 
 				// Add to API Template
 				tpl_addVar(vars, TPLAPPEND, "APIREADERLIST", tpl_getTpl(vars, "APIREADERSBIT"));
@@ -907,16 +909,19 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 		}
 	}
 
+	if(!apicall) {
 #ifdef HAVE_PCSC
-	tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>pcsc</option>\n");
+		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>pcsc</option>\n");
 #endif
 
-	for (i=0; i<CS_MAX_MOD; i++) {
-		if (cardreader[i].desc[0]!=0)
-			tpl_printf(vars, TPLAPPEND, "ADDPROTOCOL", "<option>%s</option>\n", cardreader[i].desc);
+		for (i=0; i<CS_MAX_MOD; i++) {
+			if (cardreader[i].desc[0]!=0)
+				tpl_printf(vars, TPLAPPEND, "ADDPROTOCOL", "<option>%s</option>\n", cardreader[i].desc);
+		}
+		return tpl_getTpl(vars, "READERS");
+	} else {
+		return tpl_getTpl(vars, "APIREADERS");
 	}
-
-	return tpl_getTpl(vars, "READERS");
 }
 
 static char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *params) {
