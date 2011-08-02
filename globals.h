@@ -75,7 +75,7 @@
 #endif
 
 #ifdef UNUSED
-#elif defined(__GNUC__)
+#elif __GNUC__ >= 3 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
 # define UNUSED(x) UNUSED_ ## x __attribute__((unused))
 #elif defined(__LCLINT__)
 # define UNUSED(x) /*@unused@*/ x
@@ -92,7 +92,7 @@
 # define D_USE(x) x
 #else
 # define call(arg) arg
-# if defined(__GNUC__)
+# if  __GNUC__ >= 3 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
 #  define D_USE(x) D_USE_ ## x __attribute__((unused))
 # elif defined(__LCLINT__)
 #  define D_USE(x) /*@debug use only@*/ x
