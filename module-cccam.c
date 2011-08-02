@@ -306,7 +306,7 @@ void add_good_sid(struct s_client *cl __attribute__((unused)), struct cc_card *c
  * reader
  * clears and frees values for reinit
  */
-void cc_cli_close(struct s_client *cl, int32_t call_conclose) {
+void cc_cli_close(struct s_client *cl, int32_t UNUSED(call_conclose)) {
 	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
 	if (!rdr || !cc)

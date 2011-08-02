@@ -1949,7 +1949,7 @@ static void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	}
 }
 
-static void * dvbapi_handler(struct s_client * cl, uchar *mbuf, int len) {
+static void * dvbapi_handler(struct s_client * cl, uchar* UNUSED(mbuf), int len) {
 	//cs_log("dvbapi loaded fd=%d", idx);
 	if (cfg.dvbapi_enabled == 1) {
 		cl = create_client(0);
