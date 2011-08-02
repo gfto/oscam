@@ -766,6 +766,8 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 	struct s_reader *rdr;
 	int32_t i;
 
+	int8_t apicall=0; //remove before flight
+
 	if ((strcmp(getParam(params, "action"), "disable") == 0) || (strcmp(getParam(params, "action"), "enable") == 0)) {
 		if(cfg.http_readonly) {
 			tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Webif is in readonly mode. Enabling or disabling readers is not possible!</b><BR>");
@@ -797,7 +799,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 			if (rdr) {
 				inactivate_reader(rdr);
 				ll_remove(configured_readers, rdr);
-				
+
 				free_reader(rdr);
 
 				if(write_server()!=0)
@@ -823,70 +825,85 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 		}
 	}
 
-	LL_ITER itr = ll_iter_create(configured_readers);
-	for (i = 0, rdr = ll_iter_next(&itr); rdr && rdr->label[0]; rdr = ll_iter_next(&itr), i++);
-	tpl_printf(vars, TPLADD, "NEXTREADER", "Reader-%d", i); //Next Readername
+	if(!apicall) {
+		LL_ITER itr = ll_iter_create(configured_readers);
+		for (i = 0, rdr = ll_iter_next(&itr); rdr && rdr->label[0]; rdr = ll_iter_next(&itr), i++);
+		tpl_printf(vars, TPLADD, "NEXTREADER", "Reader-%d", i); //Next Readername
+	}
 
 	ll_iter_reset(&itr); //going to iterate all configured readers
 	while ((rdr = ll_iter_next(&itr))) {
 
 		if(rdr->label[0] && rdr->typ) {
 
-			if (rdr->enable)
-				tpl_addVar(vars, TPLADD, "READERCLASS", "enabledreader");
-			else
-				tpl_addVar(vars, TPLADD, "READERCLASS", "disabledreader");
-
+			// used for API and WebIf
 			tpl_addVar(vars, TPLADD, "READERNAME", xml_encode(vars, rdr->label));
 			tpl_addVar(vars, TPLADD, "READERNAMEENC", urlencode(vars, rdr->label));
-			tpl_printf(vars, TPLADD, "EMMERRORUK", "%d", rdr->emmerror[UNKNOWN]);
-			tpl_printf(vars, TPLADD, "EMMERRORG", "%d", rdr->emmerror[GLOBAL]);
-			tpl_printf(vars, TPLADD, "EMMERRORS", "%d", rdr->emmerror[SHARED]);
-			tpl_printf(vars, TPLADD, "EMMERRORUQ", "%d", rdr->emmerror[UNIQUE]);
+			tpl_addVar(vars, TPLADD, "CTYP", reader_get_type_desc(rdr, 0));
 
-			tpl_printf(vars, TPLADD, "EMMWRITTENUK", "%d", rdr->emmwritten[UNKNOWN]);
-			tpl_printf(vars, TPLADD, "EMMWRITTENG", "%d", rdr->emmwritten[GLOBAL]);
-			tpl_printf(vars, TPLADD, "EMMWRITTENS", "%d", rdr->emmwritten[SHARED]);
-			tpl_printf(vars, TPLADD, "EMMWRITTENUQ", "%d", rdr->emmwritten[UNIQUE]);
+			// used only for WebIf
+			if(!apicall){
+				if (rdr->enable)
+					tpl_addVar(vars, TPLADD, "READERCLASS", "enabledreader");
+				else
+					tpl_addVar(vars, TPLADD, "READERCLASS", "disabledreader");
 
-			tpl_printf(vars, TPLADD, "EMMSKIPPEDUK", "%d", rdr->emmskipped[UNKNOWN]);
-			tpl_printf(vars, TPLADD, "EMMSKIPPEDG", "%d", rdr->emmskipped[GLOBAL]);
-			tpl_printf(vars, TPLADD, "EMMSKIPPEDS", "%d", rdr->emmskipped[SHARED]);
-			tpl_printf(vars, TPLADD, "EMMSKIPPEDUQ", "%d", rdr->emmskipped[UNIQUE]);
+				tpl_printf(vars, TPLADD, "EMMERRORUK", "%d", rdr->emmerror[UNKNOWN]);
+				tpl_printf(vars, TPLADD, "EMMERRORG", "%d", rdr->emmerror[GLOBAL]);
+				tpl_printf(vars, TPLADD, "EMMERRORS", "%d", rdr->emmerror[SHARED]);
+				tpl_printf(vars, TPLADD, "EMMERRORUQ", "%d", rdr->emmerror[UNIQUE]);
 
-			tpl_printf(vars, TPLADD, "EMMBLOCKEDUK", "%d", rdr->emmblocked[UNKNOWN]);
-			tpl_printf(vars, TPLADD, "EMMBLOCKEDG", "%d", rdr->emmblocked[GLOBAL]);
-			tpl_printf(vars, TPLADD, "EMMBLOCKEDS", "%d", rdr->emmblocked[SHARED]);
-			tpl_printf(vars, TPLADD, "EMMBLOCKEDUQ", "%d", rdr->emmblocked[UNIQUE]);
+				tpl_printf(vars, TPLADD, "EMMWRITTENUK", "%d", rdr->emmwritten[UNKNOWN]);
+				tpl_printf(vars, TPLADD, "EMMWRITTENG", "%d", rdr->emmwritten[GLOBAL]);
+				tpl_printf(vars, TPLADD, "EMMWRITTENS", "%d", rdr->emmwritten[SHARED]);
+				tpl_printf(vars, TPLADD, "EMMWRITTENUQ", "%d", rdr->emmwritten[UNIQUE]);
 
-			if (!(rdr->typ & R_IS_NETWORK)) { //reader is physical
-				tpl_addVar(vars, TPLADD, "REFRICO", "image?i=ICREF");
-				tpl_addVar(vars, TPLADD, "READERREFRESH", tpl_getTpl(vars, "READERREFRESHBIT"));
-				tpl_addVar(vars, TPLADD, "ENTICO", "image?i=ICENT");
-				tpl_addVar(vars, TPLADD, "ENTITLEMENT", tpl_getTpl(vars, "READERENTITLEBIT"));
-			} else {
-				tpl_addVar(vars, TPLADD, "READERREFRESH","");
-				if (rdr->typ == R_CCCAM) {
+				tpl_printf(vars, TPLADD, "EMMSKIPPEDUK", "%d", rdr->emmskipped[UNKNOWN]);
+				tpl_printf(vars, TPLADD, "EMMSKIPPEDG", "%d", rdr->emmskipped[GLOBAL]);
+				tpl_printf(vars, TPLADD, "EMMSKIPPEDS", "%d", rdr->emmskipped[SHARED]);
+				tpl_printf(vars, TPLADD, "EMMSKIPPEDUQ", "%d", rdr->emmskipped[UNIQUE]);
+
+				tpl_printf(vars, TPLADD, "EMMBLOCKEDUK", "%d", rdr->emmblocked[UNKNOWN]);
+				tpl_printf(vars, TPLADD, "EMMBLOCKEDG", "%d", rdr->emmblocked[GLOBAL]);
+				tpl_printf(vars, TPLADD, "EMMBLOCKEDS", "%d", rdr->emmblocked[SHARED]);
+				tpl_printf(vars, TPLADD, "EMMBLOCKEDUQ", "%d", rdr->emmblocked[UNIQUE]);
+
+				if (!(rdr->typ & R_IS_NETWORK)) { //reader is physical
+					tpl_addVar(vars, TPLADD, "REFRICO", "image?i=ICREF");
+					tpl_addVar(vars, TPLADD, "READERREFRESH", tpl_getTpl(vars, "READERREFRESHBIT"));
 					tpl_addVar(vars, TPLADD, "ENTICO", "image?i=ICENT");
 					tpl_addVar(vars, TPLADD, "ENTITLEMENT", tpl_getTpl(vars, "READERENTITLEBIT"));
 				} else {
-					tpl_addVar(vars, TPLADD, "ENTITLEMENT","");
+					tpl_addVar(vars, TPLADD, "READERREFRESH","");
+					if (rdr->typ == R_CCCAM) {
+						tpl_addVar(vars, TPLADD, "ENTICO", "image?i=ICENT");
+						tpl_addVar(vars, TPLADD, "ENTITLEMENT", tpl_getTpl(vars, "READERENTITLEBIT"));
+					} else {
+						tpl_addVar(vars, TPLADD, "ENTITLEMENT","");
+					}
 				}
-			}
 
-			if(rdr->enable == 0) {
-				tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICENA");
-				tpl_addVar(vars, TPLADD, "SWITCHTITLE", "enable this reader");
-				tpl_addVar(vars, TPLADD, "SWITCH", "enable");
+				if(rdr->enable == 0) {
+					tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICENA");
+					tpl_addVar(vars, TPLADD, "SWITCHTITLE", "enable this reader");
+					tpl_addVar(vars, TPLADD, "SWITCH", "enable");
+				} else {
+					tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICDIS");
+					tpl_addVar(vars, TPLADD, "SWITCHTITLE", "disable this reader");
+					tpl_addVar(vars, TPLADD, "SWITCH", "disable");
+				}
+
+				// Add to WebIf Template
+				tpl_addVar(vars, TPLAPPEND, "READERLIST", tpl_getTpl(vars, "READERSBIT"));
+
 			} else {
-				tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICDIS");
-				tpl_addVar(vars, TPLADD, "SWITCHTITLE", "disable this reader");
-				tpl_addVar(vars, TPLADD, "SWITCH", "disable");
+
+				// used only for API
+				tpl_addVar(vars, TPLADD, "APIREADERENABLED", !rdr->enable ? "0": "1");
+
+				// Add to API Template
+				tpl_addVar(vars, TPLAPPEND, "APIREADERLIST", tpl_getTpl(vars, "APIREADERSBIT"));
 			}
-
-			tpl_addVar(vars, TPLADD, "CTYP", reader_get_type_desc(rdr, 0));
-
-			tpl_addVar(vars, TPLAPPEND, "READERLIST", tpl_getTpl(vars, "READERSBIT"));
 		}
 	}
 
