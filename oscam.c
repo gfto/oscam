@@ -1950,7 +1950,8 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 
 	if (ert->rc<E_99) {
 #ifdef WITH_LB
-		send_reader_stat(ert->selected_reader, ert, ea->rc);
+		if (ea->reader)
+			send_reader_stat(ea->reader, ert, ea->rc);
 #endif
 		return; // already done
 	}
@@ -1995,7 +1996,6 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 			break;
 		default:
 			cs_log("unexpected ecm answer rc=%d.", ea->rc);
-			add_garbage(ea);
 			return;
 			break;
 	}
@@ -2007,15 +2007,14 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 	}
 
 #ifdef WITH_LB
-		if (ert->selected_reader)
-			send_reader_stat(ert->selected_reader, ert, ea->rc);
+	if (ea->reader)
+		send_reader_stat(ea->reader, ert, ea->rc);
 #endif
+
 	if (ert->rc < E_99) {
 		send_dcw(cl, ert);
 		distribute_ecm(ert, cl->grp, (ert->rc<E_NOTFOUND)?E_CACHE2:ert->rc);
 	}
-
-	add_garbage(ea);
 
 	return;
 }
@@ -2924,6 +2923,7 @@ void * work_thread(void *ptr) {
 				break;
 			case ACTION_CLIENT_ECM_ANSWER:
 				chk_dcw(cl, data->ptr);
+				add_garbage(data->ptr);
 				break;
 			case ACTION_CLIENT_INIT:
 				if (ph[cl->ctyp].s_init)
