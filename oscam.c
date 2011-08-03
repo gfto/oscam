@@ -1950,7 +1950,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 
 	if (ert->rc<E_99) {
 #ifdef WITH_LB
-		send_reader_stat(ert->selected_reader, ea, ea->rc);
+		send_reader_stat(ert->selected_reader, ert, ea->rc);
 #endif
 		return; // already done
 	}
@@ -2006,11 +2006,11 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 		store_cw_in_cache(ert, ert->selected_reader ? ert->selected_reader->grp : cl->grp, E_NOTFOUND, NULL);
 	}
 
-	if (ert->rc < E_99) {
 #ifdef WITH_LB
 		if (ert->selected_reader)
 			send_reader_stat(ert->selected_reader, ert, ea->rc);
 #endif
+	if (ert->rc < E_99) {
 		send_dcw(cl, ert);
 		distribute_ecm(ert, cl->grp, (ert->rc<E_NOTFOUND)?E_CACHE2:ert->rc);
 	}
