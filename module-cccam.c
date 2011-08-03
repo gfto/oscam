@@ -559,6 +559,8 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 	if (n != len) {
 		if (rdr)
 			cc_cli_close(cl, TRUE);
+		else
+			cs_disconnect_client(cl);
 		n = -1;
 	}
 
@@ -2920,6 +2922,7 @@ void cc_srv_init2(struct s_client *cl) {
 				cs_debug_mask(D_CLIENT, "cccam: failed ret: %d", ret);
 			if (ret == -2)
 				cs_add_violation((uint)cl->ip, cfg.cc_port[0]);
+			cs_disconnect_client(cl);
 		}
 		else
 			cl->init_done = TRUE;
