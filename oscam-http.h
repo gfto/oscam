@@ -1364,7 +1364,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR class=\"cfg_cccam\"><TD>##TPLHELPPREFIX##conf#reshare##TPLHELPSUFFIX##Reshare:</A></TD><TD><input name=\"reshare\" type=\"text\" size=\"2\" maxlength=\"1\" value=\"##RESHARE##\"></TD></TR>\n\
 			<TR class=\"cfg_cccam\"><TD>##TPLHELPPREFIX##conf#ignorereshare##TPLHELPSUFFIX##Ignore reshare:</A></TD><TD>\
 			<SELECT NAME=\"ignorereshare\">\
-				<OPTION VALUE=\"0\" ##IGNRSHRSELECTED1##>0 - Use reshare level of Server</OPTION>\
+				<OPTION VALUE=\"0\" ##IGNRSHRSELECTED0##>0 - Use reshare level of Server</OPTION>\
 				<OPTION VALUE=\"1\" ##IGNRSHRSELECTED1##>1 - Use reshare level of Reader or User</OPTION>\
 			</SELECT></TD></TR>\n\
 			<TR class=\"cfg_cccam\"><TD>##TPLHELPPREFIX##conf#forward_origin_card##TPLHELPSUFFIX##Forward origin card:</A></TD><TD><SELECT NAME=\"forward_origin_card\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##FORWARDORIGINCARD##>ON</OPTION></SELECT></TD></TR>\n\
