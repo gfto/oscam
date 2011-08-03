@@ -1950,7 +1950,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 
 	if (ert->rc<E_99) {
 #ifdef WITH_LB
-		send_reader_stat(ert->selected_reader, ert, ert->rc);
+		send_reader_stat(ert->selected_reader, ert, ea->rc);
 #endif
 		return; // already done
 	}
