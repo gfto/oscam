@@ -530,7 +530,10 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 
 	if (!cl->cc || cc->mode == CCCAM_MODE_SHUTDOWN) return -1;
 	cs_writelock(&cc->lockcmd);
-	if (!cl->cc || cc->mode == CCCAM_MODE_SHUTDOWN) return -1;
+	if (!cl->cc || cc->mode == CCCAM_MODE_SHUTDOWN) {
+		cs_writeunlock(&cc->lockcmd);
+		return -1;
+	}
 	
 	if (cmd == MSG_NO_HEADER) {
 		memcpy(netbuf, buf, len);
@@ -559,8 +562,10 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 	if (n != len) {
 		if (rdr)
 			cc_cli_close(cl, TRUE);
-		else
+		else {
+			cs_writeunlock(&cc->cards_busy);
 			cs_disconnect_client(cl);
+		}
 		n = -1;
 	}
 
