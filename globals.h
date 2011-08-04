@@ -419,7 +419,7 @@ extern void cs_switch_led(int32_t led, int32_t action);
 typedef struct cs_mutexlock {
 	time_t			lastlock;
 	int32_t		timeout;
-	pthread_rwlock_t	rwlock;
+	pthread_mutex_t	lock;
 	const char		*name;
 	struct s_client	*client;
 } CS_MUTEX_LOCK;

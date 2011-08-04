@@ -3389,18 +3389,9 @@ static void restart_daemon()
 }
 #endif
 
-static void thread_destructor(void *ptr) {
-	struct s_client *cl = (struct s_client *) ptr;
-
-	if (cl && is_valid_client(cl) && !cl->kill && cl->lock && cl->lock->name) {
-		printf("WARNING: got unreleased lock %s from %s. Please report.\n", cl->lock->name, username(cl));
-		pthread_rwlock_unlock(&cl->lock->rwlock);
-	}
-}
-
 int32_t main (int32_t argc, char *argv[])
 {
-	if (pthread_key_create(&getclient, thread_destructor)) {
+	if (pthread_key_create(&getclient, NULL)) {
 		fprintf(stderr, "Could not create getclient, exiting...");
 		exit(1);
 	}

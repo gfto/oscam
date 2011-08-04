@@ -1040,7 +1040,7 @@ void cs_lock_create(CS_MUTEX_LOCK *l, int16_t timeout, const char *name)
 	memset(l, 0, sizeof(CS_MUTEX_LOCK));
 	l->timeout = timeout;
 	l->name = name;
-	pthread_rwlock_init(&l->rwlock, NULL);
+	pthread_mutex_init(&l->lock, NULL);
 #ifdef WITH_MUTEXDEBUG
 	cs_debug_mask_nolock(D_TRACE, "lock %s created", name);
 #endif
@@ -1049,7 +1049,7 @@ void cs_lock_create(CS_MUTEX_LOCK *l, int16_t timeout, const char *name)
 void cs_lock_destroy(CS_MUTEX_LOCK *l)
 {
 	l->name = NULL;
-	pthread_rwlock_destroy(&l->rwlock);
+	pthread_mutex_destroy(&l->lock);
 #ifdef WITH_MUTEXDEBUG
 	cs_debug_mask_nolock(D_TRACE, "lock %s destroyed", l->name);
 #endif
@@ -1065,10 +1065,7 @@ void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 	ts.tv_sec = time(NULL) + l->timeout;
 	ts.tv_nsec = 0;
 
-	if (type == 1)
-		ret = pthread_rwlock_timedwrlock(&l->rwlock, &ts);
-	else
-		ret = pthread_rwlock_timedrdlock(&l->rwlock, &ts);
+	ret = pthread_mutex_timedlock(&l->lock, &ts);
 
 	if (ret == EDEADLK) {
 		cs_log_nolock("WARNING: Deadlock detected on lock %s", l->name);
@@ -1086,6 +1083,7 @@ void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 		if (l->client)
 			l->client->lock = l;
 	}
+	cs_debug_mask_nolock(D_TRACE, "lock %s locked ret = %d", l->name, ret);
 
 	return;
 }
@@ -1100,7 +1098,8 @@ void cs_rwunlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 
 	l->client = NULL;
 
-	int32_t ret = pthread_rwlock_unlock(&l->rwlock);
+	int32_t ret = pthread_mutex_unlock(&l->lock);
+
 #ifdef WITH_MUTEXDEBUG
 	const char *typetxt[] = { "", "write", "read" };
 	cs_debug_mask_nolock(D_TRACE, "%slock %s: released (ret=%d)", typetxt[type], l->name, ret);
@@ -1115,10 +1114,7 @@ int8_t cs_try_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 
 	int32_t ret;
 
-	if (type == 1)
-		ret = pthread_rwlock_trywrlock(&l->rwlock);
-	else
-		ret = pthread_rwlock_tryrdlock(&l->rwlock);
+	ret = pthread_mutex_trylock(&l->lock);
 
 	if (ret == 0) {
 		l->lastlock = time(NULL);
