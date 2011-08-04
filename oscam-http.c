@@ -1538,6 +1538,14 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 		tpl_addVar(vars, TPLADD, "LASTACCESS", "");
 	}
 
+	if(apicall) {
+		if(rdr->client){
+			char *value = get_ecm_historystring(rdr->client);
+			tpl_printf(vars, TPLADD, "ECMHISTORY", "%s", value);
+			free_mk_t(value);
+		}
+	}
+
 	tpl_printf(vars, TPLADD, "TOTALECM", "%llu", ecmcount);
 
 	if(!apicall)
