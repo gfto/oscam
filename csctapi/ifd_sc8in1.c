@@ -17,10 +17,6 @@
  *
  */
 
-#include <stdio.h>
-//#include <time.h>
-//#include <string.h>
-//#include "ioctls.h"
 #include "../globals.h"
 #include "atr.h"
 #include <termios.h>

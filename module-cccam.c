@@ -1048,7 +1048,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	if (!cc->extended_mode) {
 		//Without extended mode, only one ecm at a time could be send
 		//this is a limitation of "O" CCCam
-		if (cs_try_writelock(&cc->ecm_busy)) { //Unlock by NOK or ECM ACK
+		if (cc->ecm_busy>0) { //Unlock by NOK or ECM ACK
 			cs_debug_mask(D_READER, 
 				"%s ecm trylock: ecm busy, retrying later after msg-receive",
 				getprefix());
@@ -1070,6 +1070,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 				return 0;
 			}
 		}
+		cc->ecm_busy = 1;
 		cs_debug_mask(D_READER, "cccam: ecm trylock: got lock");
 	}
 	int processed_ecms = 0;
@@ -1081,7 +1082,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	if ((n = cc_get_nxt_ecm(cl)) < 0) {
 		if (!cc->extended_mode) {
 			rdr->available = 1;
-			cs_writeunlock(&cc->ecm_busy);
+			cc->ecm_busy = 0;
 		}
 		cs_debug_mask(D_READER, "%s no ecm pending!", getprefix());
 		if (!cc_send_pending_emms(cl))
@@ -1101,7 +1102,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
             	cl->reader->label, typtext[cl->stopped]);
 			if (!cc->extended_mode) {
 				rdr->available = 1;
-				cs_writeunlock(&cc->ecm_busy);
+				cc->ecm_busy = 0;
 			}
 			write_ecm_answer(rdr, cur_er, E_STOPPED, 0, NULL, NULL);
 			return 0;
@@ -1280,7 +1281,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
                             
 	if (!cc->extended_mode) {
 		rdr->available = 1;
-		cs_writeunlock(&cc->ecm_busy);
+		cc->ecm_busy = 0;
 	}
 	
 	return -1;
@@ -1322,9 +1323,10 @@ int32_t cc_send_pending_emms(struct s_client *cl) {
 	int32_t size = 0;
 	if ((emmbuf = ll_iter_next(&it))) {
 		if (!cc->extended_mode) {
-			if (cs_try_writelock(&cc->ecm_busy)) { //Unlock by NOK or ECM ACK
+			if (cc->ecm_busy>0) { //Unlock by NOK or ECM ACK
 				return 0; //send later with cc_send_ecm
 			}
+			cc->ecm_busy = 1;
 			rdr->available = 0;
 		}
 		//Support for emmsize>256 bytes:
@@ -1497,7 +1499,6 @@ void cc_free(struct s_client *cl) {
 	cl->cc=NULL;
 	
 	cs_writelock(&cc->lockcmd);
-	cs_writelock(&cc->ecm_busy);
 	
 	cs_debug_mask(D_TRACE, "exit cccam1/3");
 	cc_free_cardlist(cc->cards, TRUE);
@@ -1508,7 +1509,6 @@ void cc_free(struct s_client *cl) {
 	cs_writeunlock(&cc->lockcmd);
 
 	cs_debug_mask(D_TRACE, "exit cccam2/3");
-	cs_writeunlock(&cc->ecm_busy);
 
 	add_garbage(cc->prefix);
 	add_garbage(cc);
@@ -2123,7 +2123,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 
 		if (!cc->extended_mode) {
 			rdr->available = 1;
-			cs_writeunlock(&cc->ecm_busy);
+			cc->ecm_busy = 0;
 		}
 
 		cc_send_ecm(cl, NULL, NULL);
@@ -2282,7 +2282,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 
 			if (!cc->extended_mode) {
 				rdr->available = 1;
-				cs_writeunlock(&cc->ecm_busy);
+				cc->ecm_busy = 0;
 			}
 
 			//cc_abort_user_ecms();
@@ -2494,7 +2494,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			cs_debug_mask(D_EMM, "%s EMM ACK!", getprefix());
 			if (!cc->extended_mode) {
 				rdr->available = 1;
-				cs_writeunlock(&cc->ecm_busy);
+				cc->ecm_busy = 0;
 			}
 			cc_send_ecm(cl, NULL, NULL);
 		}
@@ -2656,7 +2656,6 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 
 void cc_init_locks(struct cc_data *cc) {
 	cs_lock_create(&cc->lockcmd, 5, "lockcmd"); 
-	cs_lock_create(&cc->ecm_busy, 600, "ecm_busy");
 	cs_lock_create(&cc->cards_busy, 10, "cards_busy");
 }
 

@@ -91,7 +91,10 @@
 	}
 # define D_USE(x) x
 #else
-# define call(arg) arg
+# define call(arg) \
+	if (arg) { \
+		return ERROR; \
+	}
 # if  __GNUC__ >= 3 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
 #  define D_USE(x) D_USE_ ## x __attribute__((unused))
 # elif defined(__LCLINT__)
@@ -414,11 +417,11 @@ extern void cs_switch_led(int32_t led, int32_t action);
  *      global structures
  * =========================== */
 typedef struct cs_mutexlock {
-	int				read_lock;
-	int				write_lock;
 	time_t			lastlock;
-	int				timeout;
-	char			*name;
+	int32_t		timeout;
+	pthread_rwlock_t	rwlock;
+	const char		*name;
+	struct s_client	*client;
 } CS_MUTEX_LOCK;
 
 #include "module-datastruct-llist.h"
@@ -797,6 +800,7 @@ struct s_client {
 	struct s_emm	*emmcache;
 
 	pthread_t		thread;
+	CS_MUTEX_LOCK		*lock;
 	
 	struct s_serial_client	*serialdata;
 

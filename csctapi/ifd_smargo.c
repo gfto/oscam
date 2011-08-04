@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "../globals.h"
 #include "atr.h"
 #include <termios.h>

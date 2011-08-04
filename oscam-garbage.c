@@ -1,5 +1,3 @@
-#include <pthread.h>
-
 #include "globals.h"
 #include "module-datastruct-llist.h"
 #define HASH_BUCKETS 16

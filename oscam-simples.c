@@ -1035,167 +1035,102 @@ void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid)
 /**
  * creates a lock
  **/
-void cs_lock_create(CS_MUTEX_LOCK *l, int16_t timeout, char *name)
+void cs_lock_create(CS_MUTEX_LOCK *l, int16_t timeout, const char *name)
 {
 	memset(l, 0, sizeof(CS_MUTEX_LOCK));
 	l->timeout = timeout;
 	l->name = name;
+	pthread_rwlock_init(&l->rwlock, NULL);
 #ifdef WITH_MUTEXDEBUG
-	cs_debug_mask(D_TRACE, "lock %s created", name);
+	cs_debug_mask_nolock(D_TRACE, "lock %s created", name);
 #endif
 }
 
-/**
- * sets a writelock
- * a writelock blocks all readlocks and writelocks
- * if a readlock or a writelock is already set, we wait until its released
- **/
-void cs_writelock(CS_MUTEX_LOCK *l)
+void cs_lock_destroy(CS_MUTEX_LOCK *l)
 {
-	do {
-		while (l->write_lock) {  //Test for writelock
-			cs_sleepms(fast_rnd()%5 + 1);
-			
-			//timeout locks:
-			time_t t = time(NULL);
-			if (l->timeout && t > l->lastlock+l->timeout && l->write_lock) {
-				l->write_lock = 0;
-				l->read_lock = 0;
-				l->lastlock = t;
-				cs_log("writelock %s: timeout!", l->name);
-				break;			
-			}
+	l->name = NULL;
+	pthread_rwlock_destroy(&l->rwlock);
 #ifdef WITH_MUTEXDEBUG
-			cs_debug_mask(D_TRACE, "writelock %s: retry", l->name);
+	cs_debug_mask_nolock(D_TRACE, "lock %s destroyed", l->name);
 #endif
-		}
-		l->write_lock++; //atom function
-		if (l->write_lock > 1) {
-			l->write_lock--;
-			continue;
-		}
-		while (l->read_lock) {  //Test for readlock
-			cs_sleepms(fast_rnd()%5 + 1);
-			
-			//timeout locks:
-			time_t t = time(NULL);
-			if (l->timeout && t > l->lastlock+l->timeout) { //10s=timeout lock
-				l->lastlock = t;
-				l->read_lock = 0;
-				cs_log("writelock/readlock %s: timeout!", l->name);
-				break;			
-			}
-#ifdef WITH_MUTEXDEBUG
-			cs_debug_mask(D_TRACE, "writelock/readlock %s: retry", l->name);
-#endif
-		}
-		l->lastlock = time(NULL);
-#ifdef WITH_MUTEXDEBUG
-		cs_debug_mask(D_TRACE, "writelock %s: got lock", l->name);
-#endif
+}
+
+void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
+	int32_t ret = 0;
+	struct timespec ts;
+
+	if (!l || !l->name)
 		return;
-		
-	} while (1);
-}
 
-/**
- * unsets a writelock
- **/
-void cs_writeunlock(CS_MUTEX_LOCK *l)
-{
-	if (l->write_lock > 0)
-		l->write_lock--;
-#ifdef WITH_MUTEXDEBUG
-	cs_debug_mask(D_TRACE, "writelock %s: released", l->name);
-#endif
-}
+	ts.tv_sec = time(NULL) + l->timeout;
+	ts.tv_nsec = 0;
 
-/**
- * sets a readlock
- * a readlock does NOT block other readlocks, but blocks writelocks
- * if a writelock is already set, we wait until its realeased
- **/
-void cs_readlock(CS_MUTEX_LOCK *l)
-{
-	do {
-		while (l->write_lock) { 
-			cs_sleepms(fast_rnd()%5 + 1);
-			
-			//timeout locks:
-			time_t t = time(NULL);
-			if (l->timeout && t > l->lastlock+l->timeout && l->write_lock) {
-				l->write_lock = 0;
-				l->read_lock = 0;
-				l->lastlock = t;
-				cs_log("readlock %s: timeout!", l->name);
-				break;			
-			}
-			//cs_debug_mask(D_TRACE, "readlock %s: retry", l->name);
-		}
-		l->read_lock++; //atom function
-		if (l->write_lock > 0) {
-			l->read_lock--;
-			continue;
-		}
-		l->lastlock = time(NULL);
-#ifdef WITH_MUTEXDEBUG
-		cs_debug_mask(D_TRACE, "readlock %s: got lock", l->name);
-#endif
+	if (type == 1)
+		ret = pthread_rwlock_timedwrlock(&l->rwlock, &ts);
+	else
+		ret = pthread_rwlock_timedrdlock(&l->rwlock, &ts);
+
+	if (ret == EDEADLK) {
+		cs_log_nolock("WARNING: Deadlock detected on lock %s", l->name);
 		return;
-		
-	} while (1);
-}
-
-/**
- * unsets a readlock
- **/
-void cs_readunlock(CS_MUTEX_LOCK *l)
-{
-	if (l->read_lock > 0)
-		l->read_lock--;
-#ifdef WITH_MUTEXDEBUG
-	cs_debug_mask(D_TRACE, "writelock %s: released", l->name);
-#endif
-}
-
-/**
- * sets a readlock if not already locked by an writelock
- * returns 0 in success (like pthread_mutex_trylock())
- * returns 1 if a writelock is set and the readlock could not set 
- **/
-int8_t cs_try_readlock(CS_MUTEX_LOCK *l)
-{
-	if (l->write_lock) return 1;
-	l->read_lock++; //atom function
-	if (l->write_lock > 0) { //If a writelock is set during this time, give the readlock back an try again
-		l->read_lock--;
-		return 1;
 	}
-	l->lastlock = time(NULL);
-#ifdef WITH_MUTEXDEBUG
-	cs_debug_mask(D_TRACE, "try_readlock %s: got lock", l->name);
-#endif
-	return 0;
+
+	if (ret == ETIMEDOUT) {
+		cs_log_nolock("WARNING lock %s timed out. locked by %s. (%p)", l->name, is_valid_client(l->client) ?  username(l->client) : "none", l->client);
+		return;
+	}
+
+	if (ret == 0) {
+		l->lastlock = time(NULL);
+		l->client = cur_client();
+		if (l->client)
+			l->client->lock = l;
+	}
+
+	return;
 }
 
-/**
- * sets a writelock if not already locked by an writelock
- * returns 0 in success (like pthread_mutex_trylock())
- * returns 1 if a writelock is set and the readlock could not set 
- **/
-int8_t cs_try_writelock(CS_MUTEX_LOCK *l)
-{
-	if (l->write_lock) return 1;
-	l->write_lock++; //atom function
-	if (l->write_lock > 1) { //If a writelock is set during this time, give the readlock back an try again
-		l->write_lock--;
-		return 1;
-	}
-	l->lastlock = time(NULL);
+void cs_rwunlock_int(CS_MUTEX_LOCK *l, int8_t type) {
+
+	if (!l || !l->name)
+		return;
+
+	if (l->client)
+		l->client->lock = NULL;
+
+	l->client = NULL;
+
+	int32_t ret = pthread_rwlock_unlock(&l->rwlock);
 #ifdef WITH_MUTEXDEBUG
-	cs_debug_mask(D_TRACE, "try_writelock %s: got lock", l->name);
+	const char *typetxt[] = { "", "write", "read" };
+	cs_debug_mask_nolock(D_TRACE, "%slock %s: released (ret=%d)", typetxt[type], l->name, ret);
 #endif
-	return 0;
+	ret = type = 0;
+}
+
+int8_t cs_try_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
+
+	if (!l || !l->name)
+		return 0;
+
+	int32_t ret;
+
+	if (type == 1)
+		ret = pthread_rwlock_trywrlock(&l->rwlock);
+	else
+		ret = pthread_rwlock_tryrdlock(&l->rwlock);
+
+	if (ret == 0) {
+		l->lastlock = time(NULL);
+		l->client = cur_client();
+		if (l->client)
+			l->client->lock = l;
+	}
+#ifdef WITH_MUTEXDEBUG
+	const char *typetxt[] = { "", "write", "read" };
+	cs_debug_mask_nolock(D_TRACE, "try_%slock %s: got lock (ret=%d)", typetxt[type], l->name, ret);
+#endif
+	return ret;
 }
 
 /* Returns the ip from the given hostname. If gethostbyname is configured in the config file, a lock 

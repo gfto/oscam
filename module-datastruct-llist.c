@@ -1,8 +1,6 @@
 
 /* singularly linked-list */
 
-#include <stdlib.h>
-
 #include "globals.h"
 #include "module-datastruct-llist.h"
 
@@ -19,7 +17,7 @@ static void _destroy(LLIST *l)
 {
 	if (!l) return;  	
 	if (!l->flag++) {
-		cs_writelock(&l->lock);
+		cs_lock_destroy(&l->lock);
 		add_garbage(l);
 	}
 }
@@ -33,12 +31,9 @@ LLIST *ll_create()
 
 int32_t ll_lock(LLIST *l)
 {
-	int32_t res = 1;
-	while (l && !l->flag && (res=cs_try_writelock(&l->lock))) {
-		cs_debug_mask(D_TRACE, "trylock ll_lock wait");
-		cs_sleepms(fast_rnd()%5 + 1);
-	}
-	return !res;
+	if (l)
+		cs_writelock(&l->lock);
+	return 1;
 }
 
 void ll_unlock(LLIST *l)

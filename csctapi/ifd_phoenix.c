@@ -2,7 +2,6 @@
 		ifd_phoenix.c
 		This module provides IFD handling functions for Smartmouse/Phoenix reader.
 */
-#include <stdio.h>
 #include "../globals.h"
 #include "atr.h"
 #include <termios.h>

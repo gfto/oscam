@@ -3389,25 +3389,28 @@ static void restart_daemon()
 }
 #endif
 
+static void thread_destructor(void *ptr) {
+	struct s_client *cl = (struct s_client *) ptr;
+
+	if (cl && is_valid_client(cl) && !cl->kill && cl->lock && cl->lock->name) {
+		printf("WARNING: got unreleased lock %s from %s. Please report.\n", cl->lock->name, username(cl));
+		pthread_rwlock_unlock(&cl->lock->rwlock);
+	}
+}
+
 int32_t main (int32_t argc, char *argv[])
 {
+	if (pthread_key_create(&getclient, thread_destructor)) {
+		fprintf(stderr, "Could not create getclient, exiting...");
+		exit(1);
+	}
 
-if (pthread_key_create(&getclient, NULL)) {
-  fprintf(stderr, "Could not create getclient, exiting...");
-  exit(1);
-}
 #ifdef CS_LED
-  cs_switch_led(LED1A, LED_DEFAULT);
-  cs_switch_led(LED1A, LED_ON);
+	cs_switch_led(LED1A, LED_DEFAULT);
+	cs_switch_led(LED1A, LED_ON);
 #endif
 
-  //struct   sockaddr_in cad;     /* structure to hold client's address */
-  //int32_t      scad;                /* length of address */
-  //int32_t      fd;                  /* socket descriptors */
-  int32_t      i, j;
-  int32_t      bg=0;
-  int32_t      gbdb=0;
-
+	int32_t      i, j, bg=0, gbdb=0;
 
   void (*mod_def[])(struct s_module *)=
   {

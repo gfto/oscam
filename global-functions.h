@@ -256,11 +256,13 @@ extern void cs_log_int(uint16_t mask, int8_t lock, const uchar *buf, int32_t n, 
 
 #ifdef WITH_DEBUG
 #define cs_debug_mask(mask, args...)		cs_log_int(mask, 1, NULL, 0, ##args)
+#define cs_debug_mask_nolock(mask, args...)	cs_log_int(mask, 0, NULL, 0, ##args)
 #define cs_ddump_mask(mask, buf, n, args...)	cs_log_int(mask, 1, buf, n, ##args)
 #else
 #define nop() asm volatile("nop")
 #define cs_debug(...) nop()
 #define cs_debug_mask(...) nop()
+#define cs_debug_mask_nolock(...) nop()
 #define cs_ddump(...) nop()
 #define cs_ddump_mask(...) nop()
 #endif
@@ -369,13 +371,20 @@ extern char *strnew(char *str);
 extern void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid);
 extern void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid);
 extern int32_t check_ip(struct s_ip *ip, in_addr_t n);
-extern void cs_lock_create(CS_MUTEX_LOCK *l, int16_t timeout, char *name);
-extern void cs_writelock(CS_MUTEX_LOCK *l);
-extern void cs_writeunlock(CS_MUTEX_LOCK *l);
-extern void cs_readlock(CS_MUTEX_LOCK *l);
-extern void cs_readunlock(CS_MUTEX_LOCK *l);
-extern int8_t cs_try_readlock(CS_MUTEX_LOCK *l);
-extern int8_t cs_try_writelock(CS_MUTEX_LOCK *l);
+
+extern void cs_lock_create(CS_MUTEX_LOCK *l, int16_t timeout, const char *name);
+extern void cs_lock_destroy(CS_MUTEX_LOCK *l);
+extern void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type);
+extern void cs_rwunlock_int(CS_MUTEX_LOCK *l, int8_t type);
+extern int8_t cs_try_rwlock_int(CS_MUTEX_LOCK *l, int8_t type);
+
+#define cs_writelock(l)	cs_rwlock_int(l, 1)
+#define cs_readlock(l)	cs_rwlock_int(l, 2)
+#define cs_writeunlock(l)	cs_rwunlock_int(l, 1)
+#define cs_readunlock(l)	cs_rwunlock_int(l, 2)
+#define cs_try_writelock(l)	cs_try_rwlock_int(l, 1)
+#define cs_try_readlock(l)	cs_try_rwlock_int(l, 2)
+
 extern uint32_t cs_getIPfromHost(const char *hostname);
 extern void setTCPTimeouts(int32_t socket);
 extern struct s_reader *get_reader_by_label(char *lbl);

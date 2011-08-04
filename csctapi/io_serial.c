@@ -21,15 +21,12 @@
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
+
+#include "../globals.h"
 #ifdef OS_HPUX
 #include <sys/modem.h>
 #endif
 #include <unistd.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #ifdef HAVE_POLL
 #include <sys/poll.h>
@@ -37,15 +34,12 @@
 #include <sys/signal.h>
 #include <sys/types.h>
 #endif
-#include <sys/time.h>
 #include <sys/ioctl.h>
-#include <time.h>
 
 #ifdef OS_LINUX
 #include <linux/serial.h>
 #endif
 
-#include "../globals.h"
 #include "defines.h"
 #include "io_serial.h"
 #include "mc_global.h"

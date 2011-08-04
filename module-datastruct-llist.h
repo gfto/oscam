@@ -4,8 +4,6 @@
 #ifndef DATASTRUCT_LLIST_H_
 #define DATASTRUCT_LLIST_H_
 
-#include <pthread.h>
-
 typedef struct llnode LL_NODE;
 struct llnode {
     void *obj;

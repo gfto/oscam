@@ -189,7 +189,7 @@ struct cc_data {
 	uint16_t server_ecm_idx;
 	
 	CS_MUTEX_LOCK lockcmd;
-	CS_MUTEX_LOCK ecm_busy;
+	int8_t ecm_busy;
 	CS_MUTEX_LOCK cards_busy;
 	struct timeb ecm_time;
 	time_t answer_on_keepalive;
