@@ -4,9 +4,7 @@
     This module provides IFD handling functions for for Argolis smartreader+.
 */
 
-#include <stdio.h>
-#include <time.h>
-#include <string.h>
+#include "../globals.h"
 #include "ifd_smartreader.h"
 
 #ifdef OS_CYGWIN32

@@ -461,7 +461,10 @@ int32_t cc_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen) {
 
 	if (!cl->cc || cc->mode == CCCAM_MODE_SHUTDOWN) return -1;
 	cs_writelock(&cc->lockcmd);
-	if (!cl->cc || cc->mode == CCCAM_MODE_SHUTDOWN) return -1;
+	if (!cl->cc || cc->mode == CCCAM_MODE_SHUTDOWN) {
+		cs_writeunlock(&cc->lockcmd);
+		return -1;
+	}
 
 	len = recv(handle, buf, 4, MSG_WAITALL);
 	if (rdr)

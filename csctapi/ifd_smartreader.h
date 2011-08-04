@@ -6,22 +6,13 @@
 #ifndef __SMARTREADER__
 #define __SMARTREADER__
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <unistd.h>
-
-#include <sys/time.h>
-#include <sys/types.h>
-
-#include <pthread.h>
 #include <memory.h>
 #ifdef __FreeBSD__
 #include <libusb.h>
 #else
 #include <libusb-1.0/libusb.h>
 #endif
-#include "../globals.h"
+
 #include "atr.h"
 
 #include "smartreader_types.h"
