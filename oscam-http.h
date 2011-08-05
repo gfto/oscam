@@ -148,6 +148,8 @@ TR.e_valid TD{background-color:#E6FEBF;text-align:center; font-family:\"Courier 
 TR.e_expired TD{background-color:#fff3e7;text-align:center; font-family:\"Courier New\", monospace;}\n\
 TR.e_header TD{text-align:center; font-family:\"Courier New\", monospace;}\n\
 span.global_conf {color: blue; font-size: 12px; font-family: Arial; cursor: default; padding: 4px;}\n\
+TD.subheadline {height:10px; border:0px; font-family: Arial; font-size: 11px; padding:5px; background-color:#CCCCCC; color:black;}\n\
+TD.subheadline a {text-decoration: none;}	\
 "
 
 // minimized and optimized JS based on http://en.hasheminezhad.com/scrollsaver to retain scroll position.
@@ -1013,6 +1015,8 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	<TR><TH colspan=\"8\"> Loadbalance statistics for reader ##LABEL##</TH></TR>\n\
 	<TR><TH>Channel</TH><TH>Channelname</TH><TH>ECM Length</TH><TH>Result</TH><TH>Avg-Time</TH><TH>Last-Time</TH><TH>Count</TH><TH>Last checked/ found</TH></TR>\n\
 ##READERSTATSROWFOUND##\
+##READERSTATSTOHEADLINE##\
+##READERSTATSROWTIMEOUT##\
 ##READERSTATSNFHEADLINE##\
 ##READERSTATSROWNOTFOUND##\
 	</TABLE>\n\
