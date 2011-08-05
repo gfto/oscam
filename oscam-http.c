@@ -1365,7 +1365,18 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 	if(!rdr) return "0";
 
 	if (strcmp(getParam(params, "action"), "resetstat") == 0) {
-		clear_reader_stat(rdr);
+
+		if (strcmp(getParam(params, "rc"), "0") == 0){
+			//placeholder
+		}
+		else if (strcmp(getParam(params, "rc"), "4") == 0){
+			clean_stat_by_rc(rdr, 4);
+		}
+		else if (strcmp(getParam(params, "rc"), "5") == 0){
+			//placeholder
+		}
+		else
+			clear_reader_stat(rdr);
 		cs_log("Reader %s stats resetted by WebIF from %s", rdr->label, cs_inet6_ntoa(GET_IP()));
 	}
 
@@ -1508,7 +1519,8 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 				if (!apicall) {
 					if (stat->rc == 4) {
 						tpl_addVar(vars, TPLAPPEND, "READERSTATSROWNOTFOUND", tpl_getTpl(vars, "READERSTATSBIT"));
-						tpl_addVar(vars, TPLADD, "READERSTATSNFHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"8\">Not found</TD></TR>\n");
+						tpl_addVar(vars, TPLADD, "READERSTATSNFHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"7\">Not found</TD>");
+						tpl_printf(vars, TPLAPPEND, "READERSTATSNFHEADLINE", "<TD CLASS=\"subheadline\"><A HREF=\"readerstats.html?label=%s&amp;action=resetstat&amp;rc=4\">delete this</A></TD></TR>\n", urlencode(vars, rdr->label));
 					}
 					else
 						tpl_addVar(vars, TPLAPPEND, "READERSTATSROWFOUND", tpl_getTpl(vars, "READERSTATSBIT"));
