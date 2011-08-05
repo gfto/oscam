@@ -1079,6 +1079,7 @@ void cs_lock_create(CS_MUTEX_LOCK *l, int16_t timeout, const char *name)
 	l->timeout = timeout;
 	l->name = name;
 	pthread_mutex_init(&l->lock, NULL);
+	pthread_cond_init(&l->cond, NULL);
 #ifdef WITH_MUTEXDEBUG
 	cs_debug_mask_nolock(D_TRACE, "lock %s created", name);
 #endif
@@ -1088,14 +1089,15 @@ void cs_lock_destroy(CS_MUTEX_LOCK *l)
 {
 	l->name = NULL;
 	pthread_mutex_destroy(&l->lock);
+	pthread_cond_destroy(&l->cond);
 #ifdef WITH_MUTEXDEBUG
 	cs_debug_mask_nolock(D_TRACE, "lock %s destroyed", l->name);
 #endif
 }
 
 void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
-	int32_t ret = 0;
 	struct timespec ts;
+	int8_t ret = 0, counter = 0;
 
 	if (!l || !l->name)
 		return;
@@ -1103,25 +1105,47 @@ void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 	ts.tv_sec = time(NULL) + l->timeout;
 	ts.tv_nsec = 0;
 
-	ret = pthread_mutex_timedlock(&l->lock, &ts);
+	pthread_mutex_lock(&l->lock);
 
-	if (ret == EDEADLK) {
-		cs_log_nolock("WARNING: Deadlock detected on lock %s", l->name);
-		return;
+	while (counter++ < 100) {
+		if (type == WRITELOCK) {
+			l->writelock++;
+			if (l->writelock > 1 || l->readlock > 0) {
+				if ((ret=pthread_cond_timedwait(&l->cond, &l->lock, &ts)))
+					break;
+			}
+			break;
+		} else {
+			if (l->writelock > 0) {
+				if ((ret=pthread_cond_timedwait(&l->cond, &l->lock, &ts)))
+					break;
+
+				if (l->writelock == 0) {
+					l->readlock++;
+					break;
+				}
+				// writelock has always priority
+				continue;
+			}
+			l->readlock++;
+			break;
+		}
 	}
 
-	if (ret == ETIMEDOUT) {
+	if (ret>0 || counter >= 100) {
+		l->writelock = (type==WRITELOCK) ? 1 : 0;
+		l->readlock = (type==WRITELOCK) ? 0 : 1;
 		cs_log_nolock("WARNING lock %s timed out. locked by %s. (%p)", l->name, is_valid_client(l->client) ?  username(l->client) : "none", l->client);
-		return;
 	}
 
-	if (ret == 0) {
-		l->lastlock = time(NULL);
-		l->client = cur_client();
-		if (l->client)
-			l->client->lock = l;
-	}
-	cs_debug_mask_nolock(D_TRACE, "lock %s locked ret = %d", l->name, ret);
+	l->lastlock = time(NULL);
+	l->client = cur_client();
+	if (l->client)
+		l->client->lock = l;
+	
+	pthread_mutex_unlock(&l->lock);
+
+	cs_debug_mask_nolock(D_TRACE, "lock %s locked", l->name);
 
 	return;
 }
@@ -1136,25 +1160,48 @@ void cs_rwunlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 
 	l->client = NULL;
 
-	int32_t ret = pthread_mutex_unlock(&l->lock);
+	pthread_mutex_lock(&l->lock);
+
+	if (type == WRITELOCK)
+		l->writelock--;
+	else
+		l->readlock--;
+
+	if (l->writelock < 0) l->writelock = 0;
+	if (l->readlock < 0) l->readlock = 0;
+
+	if (l->writelock || (type == WRITELOCK && l->readlock))
+		pthread_cond_broadcast(&l->cond);
+
+	pthread_mutex_unlock(&l->lock);
 
 #ifdef WITH_MUTEXDEBUG
 	const char *typetxt[] = { "", "write", "read" };
-	cs_debug_mask_nolock(D_TRACE, "%slock %s: released (ret=%d)", typetxt[type], l->name, ret);
+	cs_debug_mask_nolock(D_TRACE, "%slock %s: released", typetxt[type], l->name);
 #endif
-	ret = type = 0;
 }
 
 int8_t cs_try_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
-
 	if (!l || !l->name)
 		return 0;
 
-	int32_t ret;
+	int8_t status = 0;
 
-	ret = pthread_mutex_trylock(&l->lock);
+	pthread_mutex_lock(&l->lock);
+	if (l->writelock > 0) {
+		status = 1;
+	} else {
+		if (type==WRITELOCK)
+			if(l->readlock>0)
+				status = 1;
+			else
+				l->writelock++;
+		else
+			l->readlock++;
+	}
+	pthread_mutex_unlock(&l->lock);
 
-	if (ret == 0) {
+	if (status == 0) {
 		l->lastlock = time(NULL);
 		l->client = cur_client();
 		if (l->client)
@@ -1162,9 +1209,9 @@ int8_t cs_try_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 	}
 #ifdef WITH_MUTEXDEBUG
 	const char *typetxt[] = { "", "write", "read" };
-	cs_debug_mask_nolock(D_TRACE, "try_%slock %s: got lock (ret=%d)", typetxt[type], l->name, ret);
+	cs_debug_mask_nolock(D_TRACE, "try_%slock %s: status=%d", typetxt[type], l->name, status);
 #endif
-	return ret;
+	return status;
 }
 
 /* Returns the ip from the given hostname. If gethostbyname is configured in the config file, a lock 

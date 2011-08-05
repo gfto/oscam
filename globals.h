@@ -263,6 +263,10 @@ extern const char *boxdesc[];
 #define SHARED	2
 #define GLOBAL	3
 
+//Lock types
+#define WRITELOCK 1
+#define READLOCK 2
+
 #ifdef CS_CORE
 char *PIP_ID_TXT[] = { "ECM", "EMM", "CIN", "KCL", "UDP", NULL  };
 char *RDR_CD_TXT[] = { "cd", "dsr", "cts", "ring", "none",
@@ -420,8 +424,11 @@ typedef struct cs_mutexlock {
 	time_t			lastlock;
 	int32_t		timeout;
 	pthread_mutex_t	lock;
+	pthread_cond_t	cond;
 	const char		*name;
 	struct s_client	*client;
+	int16_t		writelock;
+	int16_t		readlock;
 } CS_MUTEX_LOCK;
 
 #include "module-datastruct-llist.h"

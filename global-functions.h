@@ -378,12 +378,12 @@ extern void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type);
 extern void cs_rwunlock_int(CS_MUTEX_LOCK *l, int8_t type);
 extern int8_t cs_try_rwlock_int(CS_MUTEX_LOCK *l, int8_t type);
 
-#define cs_writelock(l)	cs_rwlock_int(l, 1)
-#define cs_readlock(l)	cs_rwlock_int(l, 2)
-#define cs_writeunlock(l)	cs_rwunlock_int(l, 1)
-#define cs_readunlock(l)	cs_rwunlock_int(l, 2)
-#define cs_try_writelock(l)	cs_try_rwlock_int(l, 1)
-#define cs_try_readlock(l)	cs_try_rwlock_int(l, 2)
+#define cs_writelock(l)	cs_rwlock_int(l, WRITELOCK)
+#define cs_readlock(l)	cs_rwlock_int(l, READLOCK)
+#define cs_writeunlock(l)	cs_rwunlock_int(l, WRITELOCK)
+#define cs_readunlock(l)	cs_rwunlock_int(l, READLOCK)
+#define cs_try_writelock(l)	cs_try_rwlock_int(l, WRITELOCK)
+#define cs_try_readlock(l)	cs_try_rwlock_int(l, READLOCK)
 
 extern uint32_t cs_getIPfromHost(const char *hostname);
 extern void setTCPTimeouts(int32_t socket);
