@@ -1113,19 +1113,21 @@ void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 			if (l->writelock > 1 || l->readlock > 0) {
 				if ((ret=pthread_cond_timedwait(&l->cond, &l->lock, &ts)))
 					break;
+				if (l->lock_active == 1) {
+					l->writelock--;
+					continue;
+				}
 			}
+			l->lock_active = 1;
 			break;
 		} else {
 			if (l->writelock > 0) {
 				if ((ret=pthread_cond_timedwait(&l->cond, &l->lock, &ts)))
 					break;
 
-				if (l->writelock == 0) {
-					l->readlock++;
-					break;
-				}
 				// writelock has always priority
-				continue;
+				if (l->writelock > 0)
+					continue;
 			}
 			l->readlock++;
 			break;
@@ -1135,6 +1137,7 @@ void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 	if (ret>0 || counter >= 100) {
 		l->writelock = (type==WRITELOCK) ? 1 : 0;
 		l->readlock = (type==WRITELOCK) ? 0 : 1;
+		l->lock_active = (type==WRITELOCK) ? 1 : 0;
 		cs_log_nolock("WARNING lock %s timed out. locked by %s. (%p)", l->name, is_valid_client(l->client) ?  username(l->client) : "none", l->client);
 	}
 
@@ -1170,6 +1173,9 @@ void cs_rwunlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 	if (l->writelock < 0) l->writelock = 0;
 	if (l->readlock < 0) l->readlock = 0;
 
+	if (type == WRITELOCK)
+		l->lock_active = 0;
+
 	if (l->writelock || (type == WRITELOCK && l->readlock))
 		pthread_cond_broadcast(&l->cond);
 
@@ -1194,11 +1200,14 @@ int8_t cs_try_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 		if (type==WRITELOCK)
 			if(l->readlock>0)
 				status = 1;
-			else
+			else {
 				l->writelock++;
+				l->lock_active = 1;
+			}
 		else
 			l->readlock++;
 	}
+
 	pthread_mutex_unlock(&l->lock);
 
 	if (status == 0) {

@@ -429,6 +429,7 @@ typedef struct cs_mutexlock {
 	struct s_client	*client;
 	int16_t		writelock;
 	int16_t		readlock;
+	int8_t			lock_active;
 } CS_MUTEX_LOCK;
 
 #include "module-datastruct-llist.h"
