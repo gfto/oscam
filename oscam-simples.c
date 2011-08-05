@@ -2,6 +2,44 @@
 #include "globals.h"
 #include "module-cccam.h"
 
+#if defined OS_MACOSX || defined OS_FREEBSD
+uint32_t pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *ts)
+{
+	uint32_t rc;
+	while ((rc = pthread_mutex_trylock(mutex)) == EBUSY)
+	{
+		if (time(NULL) > ts->tv_sec)
+                	return ETIMEDOUT;
+		cs_sleepms(10);
+	}
+	return rc;
+}
+
+uint32_t pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock, const struct timespec *ts)
+{
+	uint32_t rc;
+	while ((rc = pthread_rwlock_trywrlock(rwlock)) == EBUSY)
+	{
+		if (time(NULL) > ts->tv_sec)
+                	return ETIMEDOUT;
+		cs_sleepms(10);
+	}
+	return rc;
+}
+
+uint32_t pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock, const struct timespec *ts)
+{
+	uint32_t rc;
+	while ((rc = pthread_rwlock_tryrdlock(rwlock)) == EBUSY)
+	{
+		if (time(NULL) > ts->tv_sec)
+                	return ETIMEDOUT;
+		cs_sleepms(10);
+	}
+	return rc;
+}
+#endif
+
 /* Gets the client associated to the calling thread. */
 struct s_client *cur_client(void){
 	return (struct s_client *) pthread_getspecific(getclient);
