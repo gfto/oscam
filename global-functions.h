@@ -413,6 +413,7 @@ extern void save_stat_to_file(int32_t);
 extern void clear_all_stat();
 extern void housekeeping_stat(int32_t force);
 extern void sort_stat(struct s_reader *rdr, int32_t reverse);
+extern int32_t clean_stat_by_rc(struct s_reader *rdr, int8_t rc);
 #endif
 
 /* ===========================

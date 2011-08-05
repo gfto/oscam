@@ -193,7 +193,7 @@ READER_STAT *get_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16
 	prid = get_prid(caid, prid);
 	
 	LL_ITER it = ll_iter_create(rdr->lb_stat);
-	READER_STAT *stat = NULL;
+	READER_STAT *stat;
 	int32_t i = 0;
 	while ((stat = ll_iter_next(&it))) {
 		i++;
@@ -540,6 +540,23 @@ void reset_stat(uint16_t caid, uint32_t prid, uint16_t srvid, int16_t ecmlen)
 		}
 	}
 }
+
+int32_t clean_stat_by_rc(struct s_reader *rdr, int8_t rc)
+{
+	int32_t count = 0;
+	if (rdr && rdr->lb_stat) {
+		READER_STAT *stat;
+		LL_ITER itr = ll_iter_create(rdr->lb_stat);
+		while ((stat = ll_iter_next(&itr))) {
+			if (stat->rc == rc) {
+				ll_iter_remove_data(&itr);
+				count++;
+			}
+		}
+	}
+	return count;
+}
+
 
 int32_t has_ident(FTAB *ftab, ECM_REQUEST *er) {
 
