@@ -132,7 +132,7 @@ static time_t chid_date(struct s_reader * reader, uint32_t date, char *buf, int3
     // like we did for NDS
     // 
     // this is the known default value.
-    uint32_t date_base=870393600L; // this is actually 31.07.1997, 17:00
+    uint32_t date_base=870393600L; // this is actually 01.08.1997, 00:00
                                 // CAID, ACS, Country, base date       D . M.   Y, h : m
     CHID_BASE_DATE table[] = { {0x0604, 0x1541, "GRC", 977817600L}, // 26.12.2000, 00:00
                             {0x0604, 0x1542, "GRC", 977817600L},    // 26.12.2000, 00:00
@@ -146,6 +146,7 @@ static time_t chid_date(struct s_reader * reader, uint32_t date, char *buf, int3
                             {0x0664, 0x0608, "TUR", 946598400L},    // 31.12.1999, 00:00
                             {0x0624, 0x0006, "CZE", 946598400L},    // 30.12.1999, 16:00 	//skyklink irdeto
                             {0x0624, 0x0006, "SVK", 946598400L},    // 30.12.1999, 16:00	//skyklink irdeto
+							{0x0648, 0x0608, "AUT", 946598400L},    // 31.12.1999, 00:00 	//orf ice irdeto
                             // {0x1702, 0x0384, "AUT", XXXXXXXXXL},     // -> we need the base date for this
                             // {0x1702, 0x0384, "GER", 888883200L},     // 02.03.1998, 16:00 -> this fixes some card but break others (S02).
                             {0x0, 0x0, "", 0L}
