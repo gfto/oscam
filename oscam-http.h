@@ -1031,7 +1031,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 <TD class=\"centered\">##TIME##</TD>\
 <TD class=\"centered\">##TIMELAST##</TD>\
 <TD class=\"centered\">##COUNT##</TD>\
-<TD class=\"centered\">##LAST## <A HREF=\"readerstats.html?label=##ENCODEDLABEL##&amp;action=deleterecord&amp;record=##CHANNEL##:##ECMLEN##>\
+<TD class=\"centered\">##LAST## <A HREF=\"readerstats.html?label=##ENCODEDLABEL##&amp;action=deleterecord&amp;record=##CHANNEL##:##ECMLEN##\">\
 <IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\" BORDER=\"0\" ALT=\"Delete Entry\"/></A></TD></TR>\n"
 
 #define TPLSCANUSB "\
