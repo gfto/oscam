@@ -557,6 +557,25 @@ int32_t clean_stat_by_rc(struct s_reader *rdr, int8_t rc)
 	return count;
 }
 
+int32_t clean_stat_by_id(struct s_reader *rdr, uint32_t caid, uint32_t provid, uint32_t sid, uint32_t len)
+{
+	int32_t count = 0;
+	if (rdr && rdr->lb_stat) {
+		READER_STAT *stat;
+		LL_ITER itr = ll_iter_create(rdr->lb_stat);
+		while ((stat = ll_iter_next(&itr))) {
+			if (stat->caid == caid &&
+					stat->prid == provid &&
+					stat->srvid == sid &&
+					stat->ecmlen == (int16_t)len) {
+				ll_iter_remove_data(&itr);
+				count++;
+			}
+		}
+	}
+	return count;
+}
+
 
 int32_t has_ident(FTAB *ftab, ECM_REQUEST *er) {
 

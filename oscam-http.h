@@ -1025,13 +1025,14 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
 #define TPLREADERSTATSBIT "\
 		<TR><TD>##CHANNEL##</TD>\
-		<TD>##CHANNELNAME##</TD>\
-		<TD class=\"centered\">##ECMLEN##</TD>\
-		<TD class=\"centered\">##RC##</TD>\
-		<TD class=\"centered\">##TIME##</TD>\
-		<TD class=\"centered\">##TIMELAST##</TD>\
-		<TD class=\"centered\">##COUNT##</TD>\
-		<TD class=\"centered\">##LAST##</TD></TR>\n"
+<TD>##CHANNELNAME##</TD>\
+<TD class=\"centered\">##ECMLEN##</TD>\
+<TD class=\"centered\">##RC##</TD>\
+<TD class=\"centered\">##TIME##</TD>\
+<TD class=\"centered\">##TIMELAST##</TD>\
+<TD class=\"centered\">##COUNT##</TD>\
+<TD class=\"centered\">##LAST## <A HREF=\"readerstats.html?label=##ENCODEDLABEL##&amp;action=deleterecord&amp;record=##CHANNEL##:##ECMLEN##>\
+<IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\" BORDER=\"0\" ALT=\"Delete Entry\"/></A></TD></TR>\n"
 
 #define TPLSCANUSB "\
 ##TPLHEADER##\

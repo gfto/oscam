@@ -414,6 +414,7 @@ extern void clear_all_stat();
 extern void housekeeping_stat(int32_t force);
 extern void sort_stat(struct s_reader *rdr, int32_t reverse);
 extern int32_t clean_stat_by_rc(struct s_reader *rdr, int8_t rc);
+extern int32_t clean_stat_by_id(struct s_reader *rdr, uint32_t caid, uint32_t provid, uint32_t sid, uint32_t len);
 #endif
 
 /* ===========================

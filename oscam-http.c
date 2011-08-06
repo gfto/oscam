@@ -1376,6 +1376,15 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 		cs_log("Reader %s stats resetted by WebIF from %s", rdr->label, cs_inet6_ntoa(GET_IP()));
 	}
 
+	if (strcmp(getParam(params, "action"), "deleterecord") == 0) {
+		char *record = getParam(params, "record");
+		if(strlen(record) > 0) {
+			uint32_t caid, provid, sid, len;
+			sscanf(record, "%x:%x:%x:%x", &caid, &provid, &sid, &len);
+			clean_stat_by_id(rdr, caid, provid , sid, len);
+		}
+	}
+
 	if (!apicall){
 		tpl_addVar(vars, TPLADD, "LABEL", rdr->label);
 		tpl_addVar(vars, TPLADD, "ENCODEDLABEL", urlencode(vars, rdr->label));
