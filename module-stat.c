@@ -570,6 +570,7 @@ int32_t clean_stat_by_id(struct s_reader *rdr, uint32_t caid, uint32_t provid, u
 					stat->ecmlen == (int16_t)len) {
 				ll_iter_remove_data(&itr);
 				count++;
+				return count; // because the entry should unique we can left here
 			}
 		}
 	}
