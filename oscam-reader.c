@@ -266,7 +266,7 @@ void network_tcp_connection_close(struct s_reader *reader)
 	if(!cl) return;
 	int32_t fd = cl->udp_fd;
 
-	cs_log("tcp_conn_close(): fd=%d, cl->typ == '%c' is_udp %d", fd, cl->typ, cl->is_udp);
+	cs_log("tcp_conn_close(): fd=%d, cl->typ == '%c' is_udp %d label == '%s'", fd, cl->typ, cl->is_udp, reader->label);
 	int32_t i;
 
 	if (fd) {
