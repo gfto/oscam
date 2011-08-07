@@ -2811,7 +2811,7 @@ void * work_thread(void *ptr) {
 		}
 
 		if (cl->kill) {
-			cs_log("client killed");
+			cs_log("client %s killed", cl->account ? cl->account->usr : "");
 
 			add_garbage(data);
 			data = NULL;
