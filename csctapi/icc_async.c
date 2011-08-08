@@ -262,8 +262,9 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 #endif
 		case R_SC8in1:
 			cs_writelock(&sc8in1_lock);
-			call (Sc8in1_GetStatus(reader, &in));
+			int32_t ret = Sc8in1_GetStatus(reader, &in);
 			cs_writeunlock(&sc8in1_lock);
+			if (ret == ERROR) return ERROR;
 			break;
 		case R_MP35:
 		case R_MOUSE:
