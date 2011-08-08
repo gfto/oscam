@@ -227,7 +227,6 @@ void module_radegast(struct s_module *ph)
   ph->type=MOD_CONN_TCP;
   ph->listenertype = LIS_RADEGAST;
   ph->multi=0;
-  ph->watchdog=1;
   ph->s_ip=cfg.rad_srvip;
   ph->s_handler=radegast_server;
   ph->recv=radegast_recv;

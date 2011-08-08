@@ -809,7 +809,6 @@ void module_monitor(struct s_module *ph){
 	cs_strncpy(ph->desc, "monitor", sizeof(ph->desc));
 	ph->type=MOD_CONN_UDP;
 	ph->multi = 0;
-	ph->watchdog = 1;
 	ph->s_ip = cfg.mon_srvip;
 	ph->s_handler = monitor_server;
 	ph->recv = monitor_recv;

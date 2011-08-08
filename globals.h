@@ -388,6 +388,7 @@ extern void cs_switch_led(int32_t led, int32_t action);
 #define ACTION_CLIENT_ECM_ANSWER	24
 #define ACTION_CLIENT_KILL		25
 #define ACTION_CLIENT_INIT		26
+#define ACTION_CLIENT_IDLE		27
 
 #define CHECK_ECM_FALLBACK		1
 #define CHECK_ECM_TIMEOUT		2
@@ -548,7 +549,6 @@ struct s_module {
 	int8_t			multi;
 	int8_t			type;
 	int16_t			listenertype;
-	int8_t			watchdog;
 	char 			desc[16];
 	char 			*logtxt;
 	//int32_t  		s_port;
@@ -570,6 +570,7 @@ struct s_module {
 										// rdr (reader to check)
 										// int32_t checktype (0=return connected, 1=return loadbalance-avail) return int
 	void 			(*c_idle)(void);	// Schlocke: called when reader is idle
+	void			(*s_idle)(struct s_client*);
 	void 			(*c_card_info)(void);	// Schlocke: request card infos
 	int32_t  		c_port;
 	PTAB 			*ptab;

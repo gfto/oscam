@@ -1031,7 +1031,6 @@ void module_gbox(struct s_module *ph)
   ph->logtxt = ", crypted";
 
   ph->multi=1;
-  ph->watchdog=1;
   ph->send_dcw=gbox_send_dcw;
 
   ph->recv=gbox_recv;

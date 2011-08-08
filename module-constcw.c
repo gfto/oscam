@@ -140,7 +140,6 @@ void module_constcw(struct s_module *ph)
   ph->type = MOD_NO_CONN;
   ph->listenertype = LIS_CONSTCW;
   ph->multi = 0;
-  ph->watchdog = 1;
   ph->recv = constcw_recv;
   
   ph->c_multi = 1;

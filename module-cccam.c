@@ -3274,12 +3274,24 @@ void cc_update_nodeid()
 		memcpy(cfg.cc_fixed_nodeid, cc_node_id, 8);
 }
 
+static void cc_s_idle(struct s_client *cl) {
+	cs_debug_mask(D_TRACE, "ccc idle %s", username(cl));
+	if (cfg.cc_keep_connected) {
+		if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
+			cl->kill = 1;
+		else
+			cl->last = time(NULL);
+	} else {
+		cs_debug_mask(D_CLIENT, "%s keepalive after maxidle is reached", getprefix());
+		cl->kill = 1;
+	}
+}
+
 void module_cccam(struct s_module *ph) {
 	cs_strncpy(ph->desc, "cccam", sizeof(ph->desc));
 	ph->type = MOD_CONN_TCP;
 	ph->listenertype = LIS_CCCAM;
 	ph->logtxt = ", crypted";
-	ph->watchdog = 1;
 	ph->recv = cc_recv;
 	ph->cleanup = cc_cleanup;
 	ph->multi = 1;
@@ -3292,6 +3304,7 @@ void module_cccam(struct s_module *ph) {
 	ph->s_ip = cfg.cc_srvip;
 	ph->s_handler = cc_srv_init;
 	ph->s_init = cc_srv_init2;
+	ph->s_idle = cc_s_idle;
 	ph->send_dcw = cc_send_dcw;
 	ph->c_available = cc_available;
 	ph->c_card_info = cc_card_info;

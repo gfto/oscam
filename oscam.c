@@ -2817,6 +2817,24 @@ void * work_thread(void *ptr) {
 		if (data)
 			cs_debug_mask(D_TRACE, "data from add_job");
 
+		if (!cl || !is_valid_client(cl)) {
+			if (data && data!=&tmp_data)
+				free(data);
+			data = NULL;
+			return NULL;
+		}
+
+		if (cl->kill) {
+			cs_debug_mask(D_TRACE, "ending thread");
+			if (data && data!=&tmp_data)
+				free(data);
+
+			data = NULL;
+			cleanup_thread(cl);
+			pthread_exit(NULL);
+			return NULL;
+		}
+
 		if (!data) {
 			if (keep_threads_alive && cl->reader && cl->init_done && cl->typ == 'r')
 				reader_checkhealth(cl->reader);
@@ -2869,24 +2887,6 @@ void * work_thread(void *ptr) {
 				free(data);
 			data = NULL;
 			break;
-		}
-
-		if (!cl || !is_valid_client(cl)) {
-			if (data!=&tmp_data)
-				free(data);
-			data = NULL;
-			return NULL;
-		}
-
-		if (cl->kill) {
-			cs_log("client killed");
-			if (data!=&tmp_data)
-				free(data);
-
-			data = NULL;
-			cleanup_thread(cl);
-			pthread_exit(NULL);
-			return NULL;
 		}
 
 		if (!data->action)
@@ -2999,6 +2999,15 @@ void * work_thread(void *ptr) {
 				if (ph[cl->ctyp].s_init)
 					ph[cl->ctyp].s_init(cl);
 				cl->init_done=1;
+				break;
+			case ACTION_CLIENT_IDLE:
+				if (ph[cl->ctyp].s_idle)
+					ph[cl->ctyp].s_idle(cl);
+				else {
+					cs_log("user %s reached %d sec idle limit.", username(cl), cfg.cmaxidle);
+					cl->kill = 1;
+				}
+
 				break;
 		}
 
@@ -3307,8 +3316,7 @@ void * reader_check(void) {
 		for (cl=first_client->next; cl ; cl=cl->next) {
 			if (cl->init_done && !cl->kill && cl->typ=='c') {
 				if (cl->last && cfg.cmaxidle && (time(0) - cl->last) > (time_t)cfg.cmaxidle) {
-					cl->kill=1;
-					add_job(cl, ACTION_CLIENT_KILL, NULL, 0);
+					add_job(cl, ACTION_CLIENT_IDLE, NULL, 0);
 					continue;
 				}
 			}

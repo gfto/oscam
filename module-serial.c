@@ -1134,7 +1134,6 @@ void module_oscam_ser(struct s_module *ph)
   ph->type=MOD_CONN_SERIAL;
   ph->listenertype = LIS_SERIAL;
   ph->multi=1;
-  ph->watchdog=0;
   ph->s_handler=init_oscam_ser;
   ph->recv=oscam_ser_recv;
   ph->send_dcw=oscam_ser_send_dcw;
