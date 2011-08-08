@@ -1000,8 +1000,10 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 		er->pid   = demux[demux_id].ECMpids[num].ECM_PID;
 		er->prid  = demux[demux_id].ECMpids[num].PROVID;
 
-		er->l=3;
-		memset(er->ecm, 0, 3);
+		er->l=5;
+		er->ecm[1] = 0x00;
+		er->ecm[2] = 0x02;
+		i2b_buf(2, er->srvid, er->ecm+3);
 
 		cs_debug_mask(D_DVBAPI, "request cw for caid %04X provid %06X srvid %04X pid %04X", er->caid, er->prid, er->srvid, er->pid);
 		get_cw(dvbapi_client, er);
