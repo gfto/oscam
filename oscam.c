@@ -62,6 +62,8 @@ char    *processUsername = NULL;
 char    *loghist = NULL;     // ptr of log-history
 char    *loghistptr = NULL;
 
+int8_t keep_threads_alive = 0;
+
 int32_t cs_check_v(uint32_t ip, int32_t port, int32_t add) {
 	int32_t result = 0;
 	if (cfg.failbantime) {
@@ -629,6 +631,10 @@ static void cs_sigpipe()
 		cs_log("Got sigpipe signal -> captured");
 }
 
+static void cs_dummy() {
+	return;
+}
+
 /* Switch debuglevel forward one step (called when receiving SIGUSR1). */
 void cs_debug_level(){	
 	switch (cs_dblevel) {
@@ -709,7 +715,7 @@ static void init_signal()
 		//set_signal_handler(SIGHUP , 1, cs_sighup);
 		set_signal_handler(SIGUSR1, 1, cs_debug_level);
 		set_signal_handler(SIGUSR2, 1, cs_card_info);
-		set_signal_handler(SIGCONT, 1, SIG_IGN);
+		set_signal_handler(SIGCONT, 1, cs_dummy);
 
 		if (cs_capture_SEGV)
 			set_signal_handler(SIGSEGV, 1, cs_exit);
@@ -2790,30 +2796,93 @@ void * work_thread(void *ptr) {
 	struct s_client *cl = data->cl;
 	struct s_reader *reader = cl->reader;
 
+	struct s_data tmp_data;
+	struct pollfd pfd[1];
+
 	pthread_setspecific(getclient, cl);
 	cl->thread=pthread_self();
 
 	uchar mbuf[1024];
-	int n=0, rc=0, i, idx, s;
+	int32_t n=0, rc=0, i, idx, s;
 	uchar dcw[16];
+	sigset_t newmask;
 
-	while (data) {
+	if (keep_threads_alive) {
+		sigemptyset(&newmask);
+		sigaddset(&newmask, SIGCONT);
+		pthread_sigmask(SIG_BLOCK, &newmask, NULL);
+	}
+
+	while (1) {
+		if (data)
+			cs_debug_mask(D_TRACE, "data from add_job");
+
+		if (!data) {
+			if (keep_threads_alive && cl->reader && cl->init_done && cl->typ == 'r')
+				reader_checkhealth(cl->reader);
+
+			pthread_mutex_lock(&cl->thread_lock);
+			if (cl->joblist && ll_count(cl->joblist)>0) {
+				LL_ITER itr = ll_iter_create(cl->joblist);
+				data = ll_iter_next(&itr);
+				ll_iter_remove(&itr);
+				cs_debug_mask(D_TRACE, "start next job from list action=%d", data->action);
+			}
+
+			if (!keep_threads_alive && !data)
+				cl->thread_active=0;
+			pthread_mutex_unlock(&cl->thread_lock);
+		}
+
+		if (keep_threads_alive && !data) {
+			pfd[0].fd = cl->pfd;
+			pfd[0].events = POLLIN | POLLPRI | POLLHUP;
+
+			pthread_sigmask(SIG_UNBLOCK, &newmask, NULL);
+			rc = poll(pfd, 1, 3000);
+			pthread_sigmask(SIG_BLOCK, &newmask, NULL);
+
+			if (rc == -1)
+				cs_debug_mask(D_TRACE, "poll wakeup");
+
+			if (rc>0) {
+				cs_debug_mask(D_TRACE, "data on socket");
+				data=&tmp_data;
+				
+				data->action = ACTION_CLIENT_TCP;
+				data->ptr = NULL;
+
+				if (pfd[0].revents & (POLLHUP | POLLNVAL))
+					cl->kill = 1;
+			}
+		}
+
+		if (!data) {
+			if (keep_threads_alive) 
+				continue;
+			else
+				break;
+		}
+
 		if (data->action < 20 && !reader) {
-			free(data);
+			if (data!=&tmp_data)
+				free(data);
 			data = NULL;
 			break;
 		}
 
 		if (!cl || !is_valid_client(cl)) {
-			free(data);
+			if (data!=&tmp_data)
+				free(data);
 			data = NULL;
 			return NULL;
 		}
 
 		if (cl->kill) {
-			cs_log("client %s killed", cl->account ? cl->account->usr : "");
+			cs_log("client killed");
+			if (data!=&tmp_data)
+				free(data);
 
-			add_garbage(data);
 			data = NULL;
 			cleanup_thread(cl);
 			pthread_exit(NULL);
@@ -2890,7 +2959,8 @@ void * work_thread(void *ptr) {
 				//original cl struct was destroyed by restart reader, so we exit here
 				//init is done by a new thread
 
-				free(data);
+				if (data!=&tmp_data)
+					free(data);
 				data = NULL;
 				return NULL;
 				break;
@@ -2932,27 +3002,14 @@ void * work_thread(void *ptr) {
 				break;
 		}
 
-		free(data);
+		if (data!=&tmp_data)
+			free(data);
+
 		data = NULL;
-
-		pthread_mutex_lock(&cl->thread_lock);
-
-		if (cl->joblist && ll_count(cl->joblist)>0) {
-			cs_debug_mask(D_TRACE, "start next job");
-			LL_ITER itr = ll_iter_create(cl->joblist);
-			data = ll_iter_next(&itr);
-			ll_iter_remove(&itr);
-			pthread_mutex_unlock(&cl->thread_lock);
-			continue;
-		}
-
-		cl->thread_active=0;
-		pthread_mutex_unlock(&cl->thread_lock);
-		if (thread_pipe[1])
-			write(thread_pipe[1], mbuf, 1); //wakeup client check
-
-		break;
 	}
+
+	if (!keep_threads_alive && thread_pipe[1])
+		write(thread_pipe[1], mbuf, 1); //wakeup client check
 
 	cs_debug_mask(D_TRACE, "ending thread");
 
@@ -2981,6 +3038,8 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int len) {
 		ll_append(cl->joblist, data);
 		cs_debug_mask(D_TRACE, "add %s job action %d", action > 20 ? "client" : "reader", action);
 		pthread_mutex_unlock(&cl->thread_lock);
+		if (keep_threads_alive)
+			pthread_kill(cl->thread, SIGCONT);
 		return;
 	}
 
