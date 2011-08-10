@@ -161,7 +161,7 @@ static void camd35_request_emm(ECM_REQUEST *er)
 	if (ll_contains(cl->aureader_list, er->selected_reader) && !er->selected_reader->audisabled)
 		aureader = er->selected_reader;
 
-	if (!aureader) {
+	if (!aureader && cl->aureader_list) {
 		LL_ITER itr = ll_iter_create(cl->aureader_list);
 		while ((rdr = ll_iter_next(&itr))) {
 			if (emm_reader_match(rdr, er->caid, er->prid)) {

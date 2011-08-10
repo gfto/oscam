@@ -191,11 +191,12 @@ LL_NODE *ll_prepend(LLIST *l, void *obj)
 
 LL_ITER ll_iter_create(LLIST *l)
 {
-    LL_ITER it;
-    memset(&it, 0, sizeof(it));
-    it.l = l;
-    it.ll_version = it.l->version;
-    return it;
+	LL_ITER it;
+	memset(&it, 0, sizeof(it));
+	it.l = l;
+	if (it.l)
+		it.ll_version = it.l->version;
+	return it;
 }
 
 
