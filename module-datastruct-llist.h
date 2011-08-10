@@ -19,12 +19,14 @@ struct llist {
     int32_t count;
     CS_MUTEX_LOCK lock;
     int32_t flag;
+    struct timeb last_change;
 };
 
 typedef struct lliter LL_ITER;
 struct lliter {
     LLIST *l;
     LL_NODE *cur, *prv;
+    struct timeb time;
 };
 
 LLIST *ll_create();             // create llist, return ptr to llist

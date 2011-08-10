@@ -2706,12 +2706,17 @@ void add_check(struct s_client *client, int8_t action, void *ptr, int32_t size, 
 	t_now.time += ms_delay / 1000;
 	t_now.millitm += ms_delay % 1000;
 
+	if (t_now.millitm >= 1000) {
+		t_now.time++;
+		t_now.millitm -= 1000;
+	}
+
 	struct s_check *tt = cs_malloc(&tt, sizeof(struct s_check), -1);
 
 	tt->cl = client;
 	tt->ptr = ptr;
 	tt->len = size;
-	tt->action=action;
+	tt->action = action;
 	tt->t_check = t_now;
 
 	ll_append(checklist, tt);
@@ -2791,6 +2796,52 @@ void cs_waitforcardinit()
 	}
 }
 
+static void check_status(struct s_client *cl) {
+	if (!cl || cl->kill || !cl->init_done)
+		return;
+
+	struct s_reader *rdr = cl->reader;
+
+	switch (cl->typ) {
+		case 'c':
+			//check clients for exceeding cmaxidle by checking cl->last
+			if (cl->last && cfg.cmaxidle && (time(NULL) - cl->last) > (time_t)cfg.cmaxidle) {
+				add_job(cl, ACTION_CLIENT_IDLE, NULL, 0);
+			}
+
+			break;
+#ifdef WITH_CARDREADER
+		case 'r':
+			//check for card inserted or card removed on pysical reader
+			if (!rdr || !rdr->enable)
+				break;
+			reader_checkhealth(rdr);
+			break;
+#endif
+		case 'p':
+			//execute reader do idle on proxy reader after a certain time (rdr->tcp_ito = inactivitytimeout)
+			//disconnect when no keepalive available
+			if (!rdr || !rdr->enable)
+				break;
+			if (rdr->tcp_ito && (rdr->typ & R_IS_CASCADING)) {
+				int32_t time_diff;
+				time_diff = abs(time(NULL) - rdr->last_s);
+
+				if (time_diff>(rdr->tcp_ito*60)) {
+					add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
+					rdr->last_s = time(NULL);
+				}
+			}
+			if (!rdr->tcp_connected && ((time(NULL) - rdr->last_s) > 30) && rdr->typ == R_CCCAM) {
+				add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
+				rdr->last_s = time(NULL);
+			}
+			break;
+		default:
+			break;
+	}
+}
+
 void * work_thread(void *ptr) {
 	struct s_data *data = (struct s_data *) ptr;
 	struct s_client *cl = data->cl;
@@ -2815,7 +2866,7 @@ void * work_thread(void *ptr) {
 
 	while (1) {
 		if (data)
-			cs_debug_mask(D_TRACE, "data from add_job");
+			cs_debug_mask(D_TRACE, "data from add_job action=%d", data->action);
 
 		if (!cl || !is_valid_client(cl)) {
 			if (data && data!=&tmp_data)
@@ -2836,8 +2887,8 @@ void * work_thread(void *ptr) {
 		}
 
 		if (!data) {
-			if (keep_threads_alive && cl->reader && cl->init_done && cl->typ == 'r')
-				reader_checkhealth(cl->reader);
+			if (keep_threads_alive)
+				check_status(cl);
 
 			pthread_mutex_lock(&cl->thread_lock);
 			if (cl->joblist && ll_count(cl->joblist)>0) {
@@ -2870,8 +2921,10 @@ void * work_thread(void *ptr) {
 				data->action = ACTION_CLIENT_TCP;
 				data->ptr = NULL;
 
-				if (pfd[0].revents & (POLLHUP | POLLNVAL))
+				if (pfd[0].revents & (POLLHUP | POLLNVAL)) {
 					cl->kill = 1;
+					continue;
+				}
 			}
 		}
 
@@ -2942,7 +2995,7 @@ void * work_thread(void *ptr) {
 				break;
 			case ACTION_READER_EMM:
 				reader_do_emm(reader, data->ptr);
-				add_garbage(data->ptr); // allocated in do_emm()
+				free(data->ptr); // allocated in do_emm()
 				break;
 			case ACTION_READER_CARDINFO:
 				reader_do_card_info(reader);
@@ -2972,7 +3025,7 @@ void * work_thread(void *ptr) {
 					break;
 				}
 				ph[cl->ctyp].s_handler(cl, data->ptr, n);
-				add_garbage(data->ptr); // allocated in accept_connection()
+				free(data->ptr); // allocated in accept_connection()
 				break;
 			case ACTION_CLIENT_TCP:
 				s = check_fd_for_data(cl->pfd);
@@ -2993,7 +3046,7 @@ void * work_thread(void *ptr) {
 				break;
 			case ACTION_CLIENT_ECM_ANSWER:
 				chk_dcw(cl, data->ptr);
-				add_garbage(data->ptr);
+				free(data->ptr);
 				break;
 			case ACTION_CLIENT_INIT:
 				if (ph[cl->ctyp].s_init)
@@ -3307,48 +3360,13 @@ void * client_check(void) {
 }
 
 void * reader_check(void) {
-	struct s_reader *rdr;
 	struct s_client *cl;
-	int8_t counter = 0;
 
 	while (1) {
-		//check clients for exceeding cmaxidle by checking cl->last
 		for (cl=first_client->next; cl ; cl=cl->next) {
-			if (cl->init_done && !cl->kill && cl->typ=='c') {
-				if (cl->last && cfg.cmaxidle && (time(0) - cl->last) > (time_t)cfg.cmaxidle) {
-					add_job(cl, ACTION_CLIENT_IDLE, NULL, 0);
-					continue;
-				}
-			}
+			if (!cl->thread_active)
+				check_status(cl);
 		}
-
-		for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
-			if (!rdr->enable || !rdr->client)
-				continue;
-#ifdef WITH_CARDREADER
-			//check for card inserted or card removed on pysical reader
-			if (rdr->client->init_done && rdr->client->typ == 'r' && !rdr->client->thread_active)
-				reader_checkhealth(rdr);
-#endif
-			//execute reader do idle on proxy reader after a certain time (rdr->tcp_ito = inactivitytimeout)
-			//disconnect when no keepalive available
-			if (rdr->tcp_ito && rdr->typ & R_IS_CASCADING && !rdr->client->thread_active) {
-				time_t now;
-				int32_t time_diff;
-				time(&now);
-				time_diff = abs(now - rdr->last_s);
-
-				if (time_diff>(rdr->tcp_ito*60)) {
-					add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
-					rdr->last_s = now;
-				}
-			}
-			if (counter>20 && rdr->typ == R_CCCAM && !rdr->client->thread_active) {
-				add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
-			}
-		}
-		if (counter>20) counter=0;
-		counter++;
 		cs_sleepms(1000);
 	}
 }

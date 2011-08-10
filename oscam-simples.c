@@ -1176,7 +1176,7 @@ void cs_rwunlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 	if (type == WRITELOCK)
 		l->lock_active = 0;
 
-	if (l->writelock || (type == WRITELOCK && l->readlock))
+	if (l->writelock || type == WRITELOCK)
 		pthread_cond_broadcast(&l->cond);
 
 	pthread_mutex_unlock(&l->lock);

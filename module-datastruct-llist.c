@@ -26,6 +26,7 @@ LLIST *ll_create()
 {
     LLIST *l = cs_malloc(&l, sizeof(LLIST), 0);
     cs_lock_create(&l->lock, 5, "ll_lock");
+    cs_ftime(&l->last_change);
     return l;
 }
 
@@ -38,8 +39,10 @@ int32_t ll_lock(LLIST *l)
 
 void ll_unlock(LLIST *l)
 {
-	if (l)
+	if (l) {
+		cs_ftime(&l->last_change);
 		cs_writeunlock(&l->lock);
+	}
 }
 
 void ll_destroy(LLIST *l)
@@ -60,18 +63,39 @@ void ll_destroy_data(LLIST *l)
 
 void *ll_iter_next_nolock(LL_ITER *it)
 {
-    if (it && it->l) {
-        if (it->cur) {
-            it->prv = it->cur;
-            it->cur = it->cur->nxt;
-        } else if (it->l->initial && !it->prv)
-            it->cur = it->l->initial;
-        
-        if (it->cur)
-            return it->cur->obj;
-    }
+	if (it && it->l) {
+		if (comp_timeb(&it->l->last_change, &it->time)>0) {
+			cs_debug_mask_nolock(D_TRACE, "list changed, searching new position");
 
-    return NULL;
+			LL_NODE *ptr, *prv = NULL;
+			for (ptr = it->l->initial; ptr; ptr = ptr->nxt) {
+				if (ptr == it->prv && ptr->nxt != it->cur) {
+					it->cur = ptr->nxt;
+					break;
+				}
+				if (ptr == it->cur) {
+					it->prv = ptr;
+					it->cur = ptr->nxt;
+					break;
+				}
+				prv = ptr;
+			}
+			cs_ftime(&it->time);
+			if (it->cur)
+				return it->cur->obj;
+
+		} else {
+			if (it->cur) {
+				it->prv = it->cur;
+				it->cur = it->cur->nxt;
+			} else if (it->l->initial && !it->prv)
+				it->cur = it->l->initial;
+        
+			if (it->cur)
+				return it->cur->obj;
+		}
+	}
+	return NULL;
 }
 
 static void ll_clear_int(LLIST *l, int32_t clear_data)
@@ -167,6 +191,7 @@ LL_ITER ll_iter_create(LLIST *l)
     LL_ITER it;
     memset(&it, 0, sizeof(it));
     it.l = l;
+    cs_ftime(&it.time);
     return it;
 }
 
@@ -175,8 +200,9 @@ void *ll_iter_next(LL_ITER *it)
 {
     if (it && it->l) {
 		if (!ll_lock(it->l)) return NULL;
-    	void *res = ll_iter_next_nolock(it);
+		void *res = ll_iter_next_nolock(it);
 		ll_unlock(it->l);
+		cs_ftime(&it->time);
 		return res;
     }
     return NULL;
