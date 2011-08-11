@@ -1672,15 +1672,26 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 			logCWtoFile(er, ea->cw);
 	}
 
+	int res = 0;
 	if (er->client) {
 		if (ea->rc==E_TIMEOUT)
 			store_cw_in_cache(er, er->client->grp, E_TIMEOUT, NULL);
 
 		add_job(er->client, ACTION_CLIENT_ECM_ANSWER, ea, sizeof(struct s_ecm_answer));
-		return 1;
+		res = 1;
+	}
+	
+	if (rc == E_FOUND && reader->resetcycle > 0)
+	{
+		reader->resetcounter++;
+		if (reader->resetcounter > reader->resetcycle) {
+			reader->resetcounter = 0;
+			cs_log("resetting reader %s resetcyle of %d ecms reached", reader->label, reader->resetcycle);
+			reader_reset(reader);
+		}
 	}
 
-	return 0;
+	return res;
 }
 
 ECM_REQUEST *get_ecmtask()

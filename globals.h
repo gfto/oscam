@@ -1075,6 +1075,8 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t			ratelimitseconds;
 	struct ecmrl	rlecmh[MAXECMRATELIMIT];
 	int8_t			fix_9993;
+	int32_t         resetcounter;
+	int32_t         resetcycle;
 	struct s_reader *next;
 };
 
