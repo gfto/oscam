@@ -1713,10 +1713,10 @@ ECM_REQUEST *get_ecmtask()
 	{
 		LLIST *save = er->matching_rdr, *save_al = er->answer_list;
 		memset(er, 0, sizeof(ECM_REQUEST));
+		cs_ftime(&er->tps);
 		er->rc=E_UNHANDLED;
 		er->cpti=n;
 		er->client=cl;
-		cs_ftime(&er->tps);
 
 		if (cl->typ=='c') { //for clients only! Not for readers!
 			if (save) {
@@ -1976,6 +1976,13 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 			break;
 		case E_TIMEOUT:
 			ert->rc = E_TIMEOUT;
+#ifdef WITH_LB
+			if (cfg.lb_mode) {
+				LL_NODE *ptr;
+				for (ptr = ert->matching_rdr?ert->matching_rdr->initial:NULL; ptr ; ptr = ptr->nxt)
+					send_reader_stat((struct s_reader *)ptr->obj, ert, E_TIMEOUT);
+			}
+#endif
 			break;
 		case E_NOTFOUND:
 			ert->rcEx=ea->rcEx;
@@ -2519,7 +2526,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		er->checksum^=*lp;
 
 	if (er->rc == E_99) {
-		add_check(er->client, CHECK_ECM_TIMEOUT, er, sizeof(ECM_REQUEST), cfg.ctimeout);
+		er->stage++;
+		add_check(er->client, CHECK_WAKEUP, er, sizeof(ECM_REQUEST), cfg.ctimeout);
 		return; //ECM already requested / found in ECM cache
 	}
 
@@ -2535,7 +2543,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	request_cw(er, 0, (cfg.preferlocalcards && local_reader_count) ? 1 : 0);
 
 	//send ecm request to fallback reader after fallbacktimeout
-	add_check(er->client, CHECK_ECM_FALLBACK, er, sizeof(ECM_REQUEST), cfg.ftimeout);
+	add_check(er->client, CHECK_WAKEUP, er, sizeof(ECM_REQUEST), cfg.ftimeout);
 }
 
 void do_emm(struct s_client * client, EMM_PACKET *ep)
@@ -2700,16 +2708,16 @@ void add_check(struct s_client *client, int8_t action, void *ptr, int32_t size, 
 	if (!checklist)
 		return;
 
+	if (action == CHECK_WAKEUP) {
+		pthread_mutex_lock(&check_mutex);
+		pthread_cond_signal(&check_cond);
+		pthread_mutex_unlock(&check_mutex);
+		return;
+	}
+
 	struct timeb t_now;
 	cs_ftime(&t_now);
-	
-	t_now.time += ms_delay / 1000;
-	t_now.millitm += ms_delay % 1000;
-
-	if (t_now.millitm >= 1000) {
-		t_now.time++;
-		t_now.millitm -= 1000;
-	}
+	add_ms_to_timeb(&t_now, ms_delay);
 
 	struct s_check *tt = cs_malloc(&tt, sizeof(struct s_check), -1);
 
@@ -3126,22 +3134,12 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int len) {
 	pthread_mutex_unlock(&cl->thread_lock);
 }
 
-static struct timespec *make_timeout(struct timespec *timeout, int32_t msec) {
-	struct timeval now;
-	gettimeofday(&now, NULL);
-
-	int32_t nano_secs	= ((now.tv_usec * 1000) + ((msec % 1000) * 1000 * 1000));
-
-	timeout->tv_sec = now.tv_sec + (msec / 1000) + (nano_secs / 1000000000);
-	timeout->tv_nsec = nano_secs % 1000000000;
-
-	return timeout;
-}
-
 static void * check_thread(void) {
-	int32_t next_check = 100, time_to_check, rc;
-	struct timeb t_now;
+	int32_t next_check = 100, time_to_check, rc, i;
+	struct timeb t_now, tbc;
 	ECM_REQUEST *er = NULL;
+	struct s_client *cl;
+	struct s_check *t1;
 
 	pthread_mutex_init(&check_mutex,NULL);
 	pthread_cond_init(&check_cond,NULL);
@@ -3149,7 +3147,7 @@ static void * check_thread(void) {
 	checklist = ll_create();
 
 	struct timespec timeout;
-	make_timeout(&timeout, 30000);
+	add_ms_to_timespec(&timeout, 30000);
 
 	while(1) {
 		pthread_mutex_lock(&check_mutex);
@@ -3158,9 +3156,45 @@ static void * check_thread(void) {
 
 		cs_ftime(&t_now);
 
+		next_check = 0;
+		for (cl=first_client->next; cl ; cl=cl->next) {
+			if (cl->init_done && cl->typ=='c' && cl->ecmtask) {
+				for (i=0; i<CS_MAXPENDING; i++) {
+					if (cl->ecmtask[i].rc >= E_99) {
+						er = &cl->ecmtask[i];
+						tbc = er->tps;
+						time_to_check = add_ms_to_timeb(&tbc, !er->stage ? cfg.ftimeout : cfg.ctimeout);
+
+						if (comp_timeb(&t_now, &tbc) >= 0) {
+							if (!er->stage) {
+								er->stage++;
+								cs_debug_mask(D_TRACE, "fallback for %s %04X&%06X/%04X", username(er->client), er->caid, er->prid, er->srvid);
+								if (er->rc >= E_UNHANDLED) //do not request rc=99
+								        request_cw(er, er->stage, 0);
+
+							} else {
+								cs_debug_mask(D_TRACE, "timeout for %s %04X&%06X/%04X", username(er->client), er->caid, er->prid, er->srvid);
+								if (er->client && is_valid_client(er->client))
+									write_ecm_answer(NULL, er, E_TIMEOUT, 0, NULL, NULL);
+							}
+						}
+						if (!next_check || time_to_check < next_check) {
+							add_ms_to_timespec(&timeout, time_to_check);
+							next_check = time_to_check;
+						}
+					}
+				}
+			}
+		}
+
+		if (ll_count(checklist) == 0) {
+			if (!next_check)
+				add_ms_to_timespec(&timeout, 30000);
+			continue;
+		}	
+
 		LL_ITER itr = ll_iter_create(checklist);
 
-		struct s_check *t1;
 		next_check = 0;
 		while ((t1 = ll_iter_next(&itr))) {
 			time_to_check = ((t1->t_check.time - t_now.time) * 1000) + (t1->t_check.millitm - t_now.millitm);
@@ -3176,58 +3210,24 @@ static void * check_thread(void) {
 					case CHECK_ANTICASCADER:
 						if (cfg.ac_enabled) {
 							ac_do_stat();
-							add_check(NULL, CHECK_ANTICASCADER, NULL, 0, cfg.ac_stime*60*1000);
+							cs_ftime(&t1->t_check);
+							add_ms_to_timeb(&t1->t_check, cfg.ac_stime*60*1000);
+							time_to_check = cfg.ac_stime*60*1000;
 						}
 						break;
 #endif
-					case CHECK_ECM_TIMEOUT:
-						er = t1->ptr;
-						if (!er) continue;
-						if (er->rc<E_99)
-							break;
-						
-#ifdef WITH_LB
-						if (cfg.lb_mode) {
-							LL_NODE *ptr;
-							for (ptr = er->matching_rdr?er->matching_rdr->initial:NULL; ptr ; ptr = ptr->nxt)
-								send_reader_stat((struct s_reader *)ptr->obj, er, E_TIMEOUT);
-						}
-#endif
-						if (er->client && is_valid_client(er->client)) {
-							write_ecm_answer(NULL, er, E_TIMEOUT, 0, NULL, NULL);
-						}
-						break;
-					case CHECK_ECM_FALLBACK:
-						er = t1->ptr;
-						if (!er) continue;
-						if (er->rc<E_99)
-							break;
-						
-						er->stage++;
-						cs_debug_mask(D_TRACE, "fallback for %s %04X&%06X/%04X", username(er->client), er->caid, er->prid, er->srvid);
-						if (er->rc >= E_UNHANDLED) //do not request rc=99
-						        request_cw(er, er->stage, 0);
-
-						//check ecm request for timeout after (clienttimeout - fallbacktimeout)
-						add_check(er->client, CHECK_ECM_TIMEOUT, er, sizeof(ECM_REQUEST), (cfg.ctimeout - cfg.ftimeout));
-
-						break;
 					default:
 						break;
 				}
-
-				ll_iter_remove(&itr);
-				add_garbage(t1);
 			} else {
 				if (!next_check || time_to_check < next_check) {
-					make_timeout(&timeout, time_to_check);
+					add_ms_to_timespec(&timeout, time_to_check);
 					next_check = time_to_check;
 				}
 			}
 		}
-		if (next_check == 0) {
-			make_timeout(&timeout, 30000);
-		}
+		if (!next_check)
+			add_ms_to_timespec(&timeout, 30000);
 	}
 	return NULL;
 }

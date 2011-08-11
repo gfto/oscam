@@ -1079,7 +1079,8 @@ void cs_lock_create(CS_MUTEX_LOCK *l, int16_t timeout, const char *name)
 	l->timeout = timeout;
 	l->name = name;
 	pthread_mutex_init(&l->lock, NULL);
-	pthread_cond_init(&l->cond, NULL);
+	pthread_cond_init(&l->writecond, NULL);
+	pthread_cond_init(&l->readcond, NULL);
 #ifdef WITH_MUTEXDEBUG
 	cs_debug_mask_nolock(D_TRACE, "lock %s created", name);
 #endif
@@ -1089,7 +1090,8 @@ void cs_lock_destroy(CS_MUTEX_LOCK *l)
 {
 	l->name = NULL;
 	pthread_mutex_destroy(&l->lock);
-	pthread_cond_destroy(&l->cond);
+	pthread_cond_destroy(&l->writecond);
+	pthread_cond_destroy(&l->readcond);
 #ifdef WITH_MUTEXDEBUG
 	cs_debug_mask_nolock(D_TRACE, "lock %s destroyed", l->name);
 #endif
@@ -1097,7 +1099,7 @@ void cs_lock_destroy(CS_MUTEX_LOCK *l)
 
 void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 	struct timespec ts;
-	int8_t ret = 0, counter = 0;
+	int8_t ret = 0;
 
 	if (!l || !l->name)
 		return;
@@ -1107,41 +1109,26 @@ void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 
 	pthread_mutex_lock(&l->lock);
 
-	while (counter++ < 100) {
-		if (type == WRITELOCK) {
-			l->writelock++;
-			if (l->writelock > 1 || l->readlock > 0) {
-				if ((ret=pthread_cond_timedwait(&l->cond, &l->lock, &ts)))
-					break;
-				if (l->lock_active == 1) {
-					l->writelock--;
-					continue;
-				}
-			}
-			l->lock_active = 1;
-			break;
-		} else {
-			if (l->writelock > 0) {
-				if ((ret=pthread_cond_timedwait(&l->cond, &l->lock, &ts)))
-					break;
-
-				// writelock has always priority
-				if (l->writelock > 0)
-					continue;
-			}
-			l->readlock++;
-			break;
-		}
+	if (type == WRITELOCK) {
+		l->writelock++;
+		// if read- or writelock is busy, wait for unlock
+		if (l->writelock > 1 || l->readlock > 0)
+			ret = pthread_cond_timedwait(&l->writecond, &l->lock, &ts);
+	} else {
+		l->readlock++;
+		// if writelock is busy, wait for unlock
+		if (l->writelock > 0)
+			ret = pthread_cond_timedwait(&l->readcond, &l->lock, &ts);
 	}
 
-	if (ret>0 || counter >= 100) {
+	if (ret > 0) {
+		// lock wasn't returned within time, assume locking thread to
+		// be stuck or finished, so enforce lock.
 		l->writelock = (type==WRITELOCK) ? 1 : 0;
 		l->readlock = (type==WRITELOCK) ? 0 : 1;
-		l->lock_active = (type==WRITELOCK) ? 1 : 0;
 		cs_log_nolock("WARNING lock %s timed out. locked by %s. (%p)", l->name, is_valid_client(l->client) ?  username(l->client) : "none", l->client);
 	}
 
-	l->lastlock = time(NULL);
 	l->client = cur_client();
 	if (l->client)
 		l->client->lock = l;
@@ -1173,11 +1160,12 @@ void cs_rwunlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 	if (l->writelock < 0) l->writelock = 0;
 	if (l->readlock < 0) l->readlock = 0;
 
-	if (type == WRITELOCK)
-		l->lock_active = 0;
-
-	if (l->writelock || type == WRITELOCK)
-		pthread_cond_broadcast(&l->cond);
+	// waiting writelocks always have priority. If one is waiting, signal it
+	if (l->writelock)
+		pthread_cond_signal(&l->writecond);
+	// Otherwise signal a waiting readlock (if any)
+	else if (l->readlock && type != READLOCK)
+		pthread_cond_broadcast(&l->readcond);
 
 	pthread_mutex_unlock(&l->lock);
 
@@ -1194,16 +1182,16 @@ int8_t cs_try_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 	int8_t status = 0;
 
 	pthread_mutex_lock(&l->lock);
-	if (l->writelock > 0) {
-		status = 1;
-	} else {
-		if (type==WRITELOCK)
-			if(l->readlock>0)
-				status = 1;
-			else {
-				l->writelock++;
-				l->lock_active = 1;
-			}
+
+	if (type==WRITELOCK) {
+		if (l->writelock || l->readlock)
+			status = 1;
+		else
+			l->writelock++;
+	}
+	else {
+		if (l->writelock)
+			status = 1;
 		else
 			l->readlock++;
 	}
@@ -1211,7 +1199,6 @@ int8_t cs_try_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 	pthread_mutex_unlock(&l->lock);
 
 	if (status == 0) {
-		l->lastlock = time(NULL);
 		l->client = cur_client();
 		if (l->client)
 			l->client->lock = l;
@@ -1341,4 +1328,39 @@ int8_t check_fd_for_data(int32_t fd) {
 		return -2;
 
 	return 1;
+}
+
+void add_ms_to_timespec(struct timespec *timeout, int32_t msec) {
+	struct timeval now;
+	gettimeofday(&now, NULL);
+
+	int32_t nano_secs	= ((now.tv_usec * 1000) + ((msec % 1000) * 1000 * 1000));
+
+	timeout->tv_sec = now.tv_sec + (msec / 1000) + (nano_secs / 1000000000);
+	timeout->tv_nsec = nano_secs % 1000000000;
+}
+
+int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms) {
+	tb->time += ms / 1000;
+	tb->millitm += ms % 1000;
+
+	if (tb->millitm >= 1000) {
+		tb->millitm -= 1000;
+		tb->time++;
+	}
+
+	struct timeb tb_now;
+	cs_ftime(&tb_now);
+
+	int32_t secs, msecs;
+	secs = tb->time - tb_now.time;
+
+	msecs = tb->millitm - tb_now.millitm;
+
+	if (msecs<0) {
+		secs--;
+		msecs += 1000;
+	}
+
+	return ((secs * 1000) + msecs);
 }

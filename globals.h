@@ -390,9 +390,8 @@ extern void cs_switch_led(int32_t led, int32_t action);
 #define ACTION_CLIENT_INIT		26
 #define ACTION_CLIENT_IDLE		27
 
-#define CHECK_ECM_FALLBACK		1
-#define CHECK_ECM_TIMEOUT		2
-#define CHECK_ANTICASCADER		3
+#define CHECK_WAKEUP			1
+#define CHECK_ANTICASCADER		2
 
 #define AVAIL_CHECK_CONNECTED	0
 #define AVAIL_CHECK_LOADBALANCE	1
@@ -422,15 +421,12 @@ extern void cs_switch_led(int32_t led, int32_t action);
  *      global structures
  * =========================== */
 typedef struct cs_mutexlock {
-	time_t			lastlock;
 	int32_t		timeout;
 	pthread_mutex_t	lock;
-	pthread_cond_t	cond;
-	const char		*name;
+	pthread_cond_t	writecond, readcond;
+	const char	*name;
 	struct s_client	*client;
-	int16_t		writelock;
-	int16_t		readlock;
-	int8_t			lock_active;
+	int16_t		writelock, readlock;
 } CS_MUTEX_LOCK;
 
 #include "module-datastruct-llist.h"

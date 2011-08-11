@@ -393,6 +393,9 @@ extern struct s_auth *get_account_by_name(char *name);
 extern int8_t is_valid_client(struct s_client *client);
 extern int8_t check_fd_for_data(int32_t fd);
 
+extern void add_ms_to_timespec(struct timespec *timeout, int32_t msec);
+extern int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms);
+
 /* ===========================
  *       module-cccshare
  * =========================== */
