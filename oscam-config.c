@@ -2638,6 +2638,9 @@ int32_t write_server()
 			if ((rdr->tcp_ito || cfg.http_full_cfg) && !isphysical && rdr->typ != R_CCCAM)
 				fprintf_conf(f, "inactivitytimeout", "%d\n", rdr->tcp_ito);
 
+			if ((rdr->resetcycle != 0 || cfg.http_full_cfg) && !isphysical)
+				fprintf_conf(f, "resetcycle", "%d\n", rdr->resetcycle);
+
 			if ((rdr->tcp_rto != DEFAULT_TCP_RECONNECT_TIMEOUT || cfg.http_full_cfg) && !isphysical)
 				fprintf_conf(f, "reconnecttimeout", "%d\n", rdr->tcp_rto);
 
@@ -3819,6 +3822,11 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
 	if (!strcmp(token, "inactivitytimeout")) {
 		rdr->tcp_ito  = strToIntVal(value, 0);
+		return;
+	}
+
+	if (!strcmp(token, "resetcycle")) {
+		rdr->resetcycle  = strToIntVal(value, 0);
 		return;
 	}
 
