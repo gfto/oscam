@@ -1213,6 +1213,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 				<TR><TD>##TPLHELPPREFIX##server#showcls##TPLHELPSUFFIX##Showcls:</A></TD><TD><input name=\"showcls\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SHOWCLS##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#force_irdeto##TPLHELPSUFFIX##Force Irdeto:</A><input name=\"force_irdeto\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"force_irdeto\" type=\"checkbox\" value=\"1\" ##FORCEIRDETOCHECKED##></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#fix9993##TPLHELPSUFFIX##Fix 9993 for CAID 0919:</A><input name=\"fix9993\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"fix9993\" type=\"checkbox\" value=\"1\" ##FIX9993CHECKED##></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#resetcycle##TPLHELPSUFFIX##Reset after No. ECM:</A></TD><TD><input name=\"resetcycle\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RESETCYCLE##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#ndsversion##TPLHELPSUFFIX##Force NDS Version:</A></TD>\n\
 					<TD>\n\
 						<SELECT name=\"ndsversion\">\n\

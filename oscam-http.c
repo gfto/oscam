@@ -1022,6 +1022,9 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	// Receive timeout
 	tpl_printf(vars, TPLADD, "RECEIVETIMEOUT", "%d", rdr->tcp_rto);
 
+	// Reset Cycle
+	tpl_printf(vars, TPLADD, "RESETCYCLE", "%d", rdr->resetcycle);
+
 	// Disable Serverfilter
 	if(!apicall) {
 		tpl_addVar(vars, TPLADD, "DISABLESERVERFILTERCHECKED", (rdr->ncd_disable_server_filt == 1) ? "checked" : "");
