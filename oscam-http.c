@@ -304,6 +304,7 @@ static char *send_oscam_config_loadbalancer(struct templatevars *vars, struct ur
 }
 #endif
 
+#ifdef MODULE_CAMD33
 static char *send_oscam_config_camd33(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
 
@@ -332,7 +333,9 @@ static char *send_oscam_config_camd33(struct templatevars *vars, struct uriparam
 
 	return tpl_getTpl(vars, "CONFIGCAMD33");
 }
+#endif
 
+#ifdef MODULE_CAMD35
 static char *send_oscam_config_camd35(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
 	if ((strcmp(getParam(params, "action"),"execute") == 0) && (getParam(params, "port"))[0]) {
@@ -358,7 +361,9 @@ static char *send_oscam_config_camd35(struct templatevars *vars, struct uriparam
 	}
 	return tpl_getTpl(vars, "CONFIGCAMD35");
 }
+#endif
 
+#ifdef MODULE_CAMD35_TCP
 static char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
 	if ((strcmp(getParam(params, "action"),"execute") == 0) && (getParam(params, "port"))[0]) {
@@ -387,7 +392,9 @@ static char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uripa
 	}
 	return tpl_getTpl(vars, "CONFIGCAMD35TCP");
 }
+#endif
 
+#ifdef MODULE_NEWCAMD
 static char *send_oscam_config_newcamd(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
@@ -424,7 +431,9 @@ static char *send_oscam_config_newcamd(struct templatevars *vars, struct uripara
 	}
 	return tpl_getTpl(vars, "CONFIGNEWCAMD");
 }
+#endif
 
+#ifdef MODULE_RADEGAST
 static char *send_oscam_config_radegast(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
@@ -449,6 +458,7 @@ static char *send_oscam_config_radegast(struct templatevars *vars, struct uripar
 
 	return tpl_getTpl(vars, "CONFIGRADEGAST");
 }
+#endif
 
 #ifdef MODULE_CCCAM
 static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams *params) {
@@ -629,6 +639,7 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 	return tpl_getTpl(vars, "CONFIGMONITOR");
 }
 
+#ifdef MODULE_SERIAL
 static char *send_oscam_config_serial(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
 	char *saveptr1 = NULL;
@@ -643,6 +654,7 @@ static char *send_oscam_config_serial(struct templatevars *vars, struct uriparam
 		if(write_config()==0) refresh_oscam(REFR_SERVER);
 		else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
+#endif
 
 	if (cfg.ser_device[0]){
 		char sdevice[512];
@@ -734,11 +746,22 @@ static char *send_oscam_config_anticasc(struct templatevars *vars, struct uripar
 
 static char *send_oscam_config(struct templatevars *vars, struct uriparams *params) {
 	char *part = getParam(params, "part");
-	if (!strcmp(part,"camd33")) return send_oscam_config_camd33(vars, params);
+	if (!strcmp(part,"monitor")) return send_oscam_config_monitor(vars, params);
+#ifdef MODULE_CAMD33
+	else if (!strcmp(part,"camd33")) return send_oscam_config_camd33(vars, params);
+#endif
+#ifdef MODULE_CAMD35
 	else if (!strcmp(part,"camd35")) return send_oscam_config_camd35(vars, params);
+#endif
+#ifdef MODULE_CAMD35_TCP
 	else if (!strcmp(part,"camd35tcp")) return send_oscam_config_camd35tcp(vars, params);
+#endif
+#ifdef MODULE_NEWCAMD
 	else if (!strcmp(part,"newcamd")) return send_oscam_config_newcamd(vars, params);
+#endif
+#ifdef MODULE_RADEGAST
 	else if (!strcmp(part,"radegast")) return send_oscam_config_radegast(vars, params);
+#endif
 #ifdef MODULE_CCCAM
 	else if (!strcmp(part,"cccam")) return send_oscam_config_cccam(vars, params);
 #endif
@@ -748,8 +771,9 @@ static char *send_oscam_config(struct templatevars *vars, struct uriparams *para
 #ifdef CS_ANTICASC
 	else if (!strcmp(part,"anticasc")) return send_oscam_config_anticasc(vars, params);
 #endif
-	else if (!strcmp(part,"monitor")) return send_oscam_config_monitor(vars, params);
+#ifdef MODULE_SERIAL
 	else if (!strcmp(part,"serial")) return send_oscam_config_serial(vars, params);
+#endif
 #ifdef WITH_LB
 	else if (!strcmp(part,"loadbalancer")) return send_oscam_config_loadbalancer(vars, params);
 #endif
@@ -911,6 +935,34 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 	if(!apicall) {
 #ifdef HAVE_PCSC
 		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>pcsc</option>\n");
+#endif
+#ifdef MODULE_CAMD33
+		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>camd33</option>\n");
+#endif
+#ifdef MODULE_CAMD35
+		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>camd35</option>\n");
+#endif
+#ifdef MODULE_CAMD35_TCP
+		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>cs378x</option>\n");
+#endif
+#ifdef MODULE_NEWCAMD
+		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>newcamd</option>\n");
+		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>newcamd524</option>\n");
+#endif
+#ifdef MODULE_CCCAM
+		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>cccam</option>\n");
+#endif
+#ifdef MODULE_GBOX
+		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>gbox</option>\n");
+#endif
+#ifdef MODULE_RADEGAST
+		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>radegast</option>\n");
+#endif
+#ifdef MODULE_SERIAL
+		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>serial</option>\n");
+#endif
+#ifdef MODULE_CONSTCW
+		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>constcw</option>\n");
 #endif
 
 		for (i=0; i<CS_MAX_MOD; i++) {
