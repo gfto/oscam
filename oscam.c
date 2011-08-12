@@ -47,6 +47,7 @@ CS_MUTEX_LOCK gethostbyname_lock;
 CS_MUTEX_LOCK clientlist_lock;
 CS_MUTEX_LOCK readerlist_lock;
 CS_MUTEX_LOCK fakeuser_lock;
+CS_MUTEX_LOCK ecmcache_lock;
 pthread_key_t getclient;
 
 pthread_mutex_t	check_mutex;
@@ -954,6 +955,7 @@ static void init_first_client()
   cs_lock_create(&clientlist_lock, 5, "clientlist_lock");
   cs_lock_create(&readerlist_lock, 5, "readerlist_lock");
   cs_lock_create(&fakeuser_lock, 5, "fakeuser_lock");
+  cs_lock_create(&ecmcache_lock, 5, "ecmcache_lock");
 
 #ifdef COOL
   coolapi_open_all();
@@ -1465,28 +1467,58 @@ static int32_t check_and_store_ecmcache(ECM_REQUEST *er, uint64_t grp)
 {
 	time_t now = time(NULL);
 	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
-	struct s_ecm *ecmc;
+	struct s_ecm *ecmc, *ecmc_initial = NULL;
+
+	cs_readlock(&ecmcache_lock);
+
 	LL_ITER it = ll_iter_create(ecmcache);
 	while ((ecmc=ll_iter_next(&it))) {
-		if (ecmc->time < timeout) {
-			ll_iter_remove_data(&it);
-			continue;
-		}
+		if (!ecmcache->initial)
+			ecmc_initial = ecmc;
 
-		if (grp && !(grp & ecmc->grp))
-			continue;
+		if (ecmc->time < timeout)
+			break;
 
-		if (ecmc->caid!=er->caid)
+		if ((grp && !(grp & ecmc->grp)) || ecmc->caid!=er->caid)
 			continue;
 
 		if (memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
 			continue;
 
-		//cs_debug_mask(D_TRACE, "cachehit! (ecm)");
+		cs_readunlock(&ecmcache_lock);
+
 		memcpy(er->cw, ecmc->cw, 16);
 		er->selected_reader = ecmc->reader;
 		if (ecmc->rc == E_FOUND)
-				return E_CACHE1;
+			return E_CACHE1;
+		er->ecmcacheptr = ecmc;
+		return ecmc->rc;
+	}
+	cs_readunlock(&ecmcache_lock);
+
+	cs_writelock(&ecmcache_lock);
+	ll_iter_reset(&it);
+
+	//check cache again up to the point we started the first time (ecmc_initial) in case a new entry was added
+	while ((ecmc=ll_iter_next(&it))) {
+		if (ecmc == ecmc_initial)
+			break;
+
+		if (ecmc->time < timeout)
+			break;
+
+		if ((grp && !(grp & ecmc->grp)) || ecmc->caid!=er->caid)
+			continue;
+
+		if (memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
+			continue;
+
+		cs_writeunlock(&ecmcache_lock);
+
+		memcpy(er->cw, ecmc->cw, 16);
+		er->selected_reader = ecmc->reader;
+		if (ecmc->rc == E_FOUND)
+			return E_CACHE1;
 		er->ecmcacheptr = ecmc;
 		return ecmc->rc;
 	}
@@ -1501,14 +1533,12 @@ static int32_t check_and_store_ecmcache(ECM_REQUEST *er, uint64_t grp)
 	er->ecmcacheptr = ecmc;
 	ll_prepend(ecmcache, ecmc);
 
+	cs_writeunlock(&ecmcache_lock);
+
 	return E_UNHANDLED;
 }
 
-/**
- * cache 1: client-invoked
- * returns found ecm task index
- **/
-static int32_t check_cwcache1(ECM_REQUEST *er, uint64_t grp)
+int32_t check_cwcache2(ECM_REQUEST *er, uint64_t grp)
 {
 	//cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
 	//cs_log("cache1 CHECK: grp=%lX", grp);
@@ -1518,41 +1548,29 @@ static int32_t check_cwcache1(ECM_REQUEST *er, uint64_t grp)
 	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
 	struct s_ecm *ecmc;
 
-    LL_ITER it = ll_iter_create(ecmcache);
-    while ((ecmc=ll_iter_next(&it))) {
-        if (ecmc->time < timeout) {
-			ll_iter_remove_data(&it);
-			continue;
-		}
+	cs_readlock(&ecmcache_lock);
+	LL_ITER it = ll_iter_create(ecmcache);
+	while ((ecmc=ll_iter_next(&it))) {
+       	if (ecmc->time < timeout)
+			break;
 
    		if (ecmc->rc != E_FOUND)
 			continue;
 
-		if (ecmc->caid != er->caid)
-			continue;
-
-		if (grp && !(grp & ecmc->grp))
+		if ((grp && !(grp & ecmc->grp)) || ecmc->caid!=er->caid)
 			continue;
 
 		if (memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
 			continue;
 
+		cs_readunlock(&ecmcache_lock);
 		memcpy(er->cw, ecmc->cw, 16);
 		er->selected_reader = ecmc->reader;
 		//cs_debug_mask(D_TRACE, "cachehit!");
 		return 1;
 	}
+	cs_readunlock(&ecmcache_lock);
 	return 0;
-}
-
-/**
- * cache 2: reader-invoked
- * returns 1 if found in cache. cw is copied to er
- **/
-int32_t check_cwcache2(ECM_REQUEST *er, uint64_t grp)
-{
-	int32_t rc = check_cwcache1(er, grp);
-	return rc;
 }
 
 
@@ -1722,7 +1740,7 @@ ECM_REQUEST *get_ecmtask()
 		cs_log("WARNING: ecm pending table overflow !");
 	else
 	{
-		LLIST *save = er->matching_rdr, *save_al = er->answer_list;
+		LLIST *save = er->matching_rdr;
 		memset(er, 0, sizeof(ECM_REQUEST));
 		cs_ftime(&er->tps);
 		er->rc=E_UNHANDLED;
@@ -1735,12 +1753,6 @@ ECM_REQUEST *get_ecmtask()
 				er->matching_rdr = save;
 			} else
 				er->matching_rdr = ll_create();
-
-			if (save_al) {
-				ll_clear(save_al);
-				er->answer_list = save_al;
-			} else
-				er->answer_list = ll_create();
 
 			//cs_log("client %s ECMTASK %d multi %d ctyp %d", username(cl), n, (ph[cl->ctyp].multi)?CS_MAXPENDING:1, cl->ctyp);
                 }
@@ -3151,6 +3163,8 @@ static void * check_thread(void) {
 	ECM_REQUEST *er = NULL;
 	struct s_client *cl;
 	struct s_check *t1;
+	struct s_ecm *ecmc;
+	time_t now, ecm_timeout;
 
 	pthread_mutex_init(&check_mutex,NULL);
 	pthread_cond_init(&check_cond,NULL);
@@ -3227,6 +3241,23 @@ static void * check_thread(void) {
 						}
 						break;
 #endif
+					case CHECK_ECMCACHE:
+						now = time(NULL);
+						ecm_timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
+
+						cs_writelock(&ecmcache_lock);
+						LL_ITER it = ll_iter_create(ecmcache);
+						while ((ecmc=ll_iter_next(&it))) {
+							if (ecmc->time < ecm_timeout)
+								ll_iter_remove_data(&it);
+						}
+						cs_writeunlock(&ecmcache_lock);
+
+						cs_ftime(&t1->t_check);
+						add_ms_to_timeb(&t1->t_check, 60000);
+						time_to_check = 60000;
+
+						break;
 					default:
 						break;
 				}
@@ -3749,6 +3780,8 @@ int32_t main (int32_t argc, char *argv[])
 		add_check(NULL, CHECK_ANTICASCADER, NULL, 0, cfg.ac_stime*60*1000);
 	}
 #endif
+
+	add_check(NULL, CHECK_ECMCACHE, NULL, 0, 60000);
 
 	for (i=0; i<CS_MAX_MOD; i++)
 		if (ph[i].type & MOD_CONN_SERIAL)   // for now: oscam_ser only

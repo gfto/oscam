@@ -2,44 +2,6 @@
 #include "globals.h"
 #include "module-cccam.h"
 
-#if defined OS_MACOSX || defined OS_FREEBSD
-uint32_t pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *ts)
-{
-	uint32_t rc;
-	while ((rc = pthread_mutex_trylock(mutex)) == EBUSY)
-	{
-		if (time(NULL) > ts->tv_sec)
-                	return ETIMEDOUT;
-		cs_sleepms(10);
-	}
-	return rc;
-}
-
-uint32_t pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock, const struct timespec *ts)
-{
-	uint32_t rc;
-	while ((rc = pthread_rwlock_trywrlock(rwlock)) == EBUSY)
-	{
-		if (time(NULL) > ts->tv_sec)
-                	return ETIMEDOUT;
-		cs_sleepms(10);
-	}
-	return rc;
-}
-
-uint32_t pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock, const struct timespec *ts)
-{
-	uint32_t rc;
-	while ((rc = pthread_rwlock_tryrdlock(rwlock)) == EBUSY)
-	{
-		if (time(NULL) > ts->tv_sec)
-                	return ETIMEDOUT;
-		cs_sleepms(10);
-	}
-	return rc;
-}
-#endif
-
 /* Gets the client associated to the calling thread. */
 struct s_client *cur_client(void){
 	return (struct s_client *) pthread_getspecific(getclient);
@@ -1126,12 +1088,8 @@ void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 		// be stuck or finished, so enforce lock.
 		l->writelock = (type==WRITELOCK) ? 1 : 0;
 		l->readlock = (type==WRITELOCK) ? 0 : 1;
-		cs_log_nolock("WARNING lock %s timed out. locked by %s. (%p)", l->name, is_valid_client(l->client) ?  username(l->client) : "none", l->client);
+		cs_log_nolock("WARNING lock %s timed out.", l->name);
 	}
-
-	l->client = cur_client();
-	if (l->client)
-		l->client->lock = l;
 	
 	pthread_mutex_unlock(&l->lock);
 #ifdef WITH_MUTEXDEBUG
@@ -1144,11 +1102,6 @@ void cs_rwunlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 
 	if (!l || !l->name)
 		return;
-
-	if (l->client)
-		l->client->lock = NULL;
-
-	l->client = NULL;
 
 	pthread_mutex_lock(&l->lock);
 
@@ -1198,11 +1151,6 @@ int8_t cs_try_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 
 	pthread_mutex_unlock(&l->lock);
 
-	if (status == 0) {
-		l->client = cur_client();
-		if (l->client)
-			l->client->lock = l;
-	}
 #ifdef WITH_MUTEXDEBUG
 	const char *typetxt[] = { "", "write", "read" };
 	cs_debug_mask_nolock(D_TRACE, "try_%slock %s: status=%d", typetxt[type], l->name, status);

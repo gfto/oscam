@@ -392,6 +392,7 @@ extern void cs_switch_led(int32_t led, int32_t action);
 
 #define CHECK_WAKEUP			1
 #define CHECK_ANTICASCADER		2
+#define CHECK_ECMCACHE		3
 
 #define AVAIL_CHECK_CONNECTED	0
 #define AVAIL_CHECK_LOADBALANCE	1
@@ -425,7 +426,6 @@ typedef struct cs_mutexlock {
 	pthread_mutex_t	lock;
 	pthread_cond_t	writecond, readcond;
 	const char	*name;
-	struct s_client	*client;
 	int16_t		writelock, readlock;
 } CS_MUTEX_LOCK;
 
@@ -671,7 +671,6 @@ typedef struct ecm_request_t {
 	void			*src_data;
 	struct s_ecm		*ecmcacheptr;		// Pointer to ecm-cw-rc-cache!
 	char			msglog[MSGLOGSIZE];
-	LLIST			*answer_list;
 	uint16_t		checksum;
 	struct ecm_request_t	*parent;
 } ECM_REQUEST;
@@ -805,7 +804,6 @@ struct s_client {
 	struct s_emm	*emmcache;
 
 	pthread_t		thread;
-	CS_MUTEX_LOCK		*lock;
 	
 	struct s_serial_client	*serialdata;
 
