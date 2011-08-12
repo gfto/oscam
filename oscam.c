@@ -1705,6 +1705,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 		if (reader->resetcounter > reader->resetcycle) {
 			reader->resetcounter = 0;
 			cs_log("resetting reader %s resetcyle of %d ecms reached", reader->label, reader->resetcycle);
+			reader->card_status = CARD_NEED_INIT;
 			reader_reset(reader);
 		}
 	}
