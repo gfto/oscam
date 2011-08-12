@@ -330,7 +330,7 @@ number of different SIDs in ECMs allowed for an interval, default:0
 
 <B>resetcycle</B> = <B>count</B>
 <DL COMPACT><DT><DD>
-number of ECMs until SC reset is performed, 0 = disabled, default:0
+number of ECMs until SC reset is performed, 0 = disabled, valid for physical readers only, default:0
 </DL>
 
 <P>
@@ -344,7 +344,7 @@ interval for rate limit, default:0
 
 <B>blocknano</B> = <B>nano[,nano]...</B>|all
 <DL COMPACT><DT><DD>
-list of EMM-nanos to block (in hex w/o 0x) or all EMM-nanos, only valid for physical readers, default:none
+list of EMM-nanos to block (in hex w/o 0x) or all EMM-nanos, valid for physical readers only, default:none
 <P>
 <BR>&nbsp;example:&nbsp;blocknano&nbsp;=&nbsp;45,93,7a,ff
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;blocknano&nbsp;=&nbsp;all
