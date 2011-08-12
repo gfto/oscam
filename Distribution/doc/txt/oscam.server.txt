@@ -191,13 +191,13 @@ DESCRIPTIONS
 	  number of different SIDs in ECMs allowed for an interval, default:0
 
        resetcycle = count
-	  number of ECMs until SC reset is performed, 0 = disabled, default:0
+	  number of ECMs until SC reset is performed, 0 = disabled, valid for physical readers only, default:0
 
        ratelimitseconds = seconds
 	  interval for rate limit, default:0
 
        blocknano = nano[,nano]...|all
-	  list of EMM-nanos to block (in hex w/o 0x) or all EMM-nanos, only valid for physical readers, default:none
+	  list of EMM-nanos to block (in hex w/o 0x) or all EMM-nanos, valid for physical readers only, default:none
 
 	   example: blocknano = 45,93,7a,ff
 		    blocknano = all
