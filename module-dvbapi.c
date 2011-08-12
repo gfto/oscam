@@ -1829,6 +1829,29 @@ static void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t index) {
 	}
 }
 
+int getca(int value ,char *txt)
+{
+	int size = 25;
+
+	if(value == 0x0000) return snprintf(txt,size,"%s","Free to Air");                       // Standardized systems
+	if(value >= 0x0001 && value <= 0x009F) return snprintf(txt,size,"%s","Fixed");          // Standardized systems
+	if(value >= 0x00A0 && value <= 0x00A1) return snprintf(txt,size,"%s","Analog");         // Analog signals
+	if(value >= 0x00A2 && value <= 0x00FF) return snprintf(txt,size,"%s","Fixed");          // Standardized systems
+	if(value >= 0x0100 && value <= 0x01FF) return snprintf(txt,size,"%s","Seca/Mediaguard");// Canal Plus
+	if(value >= 0x0500 && value <= 0x05FF) return snprintf(txt,size,"%s","Viaccess");       // France Telecom
+	if(value >= 0x0600 && value <= 0x06FF) return snprintf(txt,size,"%s","Irdeto");         // Irdeto
+	if(value >= 0x0900 && value <= 0x09FF) return snprintf(txt,size,"%s","NDS/Videoguard"); // News Datacom
+	if(value >= 0x0B00 && value <= 0x0BFF) return snprintf(txt,size,"%s","Conax");          // Norwegian Telekom
+	if(value >= 0x0D00 && value <= 0x0DFF) return snprintf(txt,size,"%s","CryptoWorks");    // Philips
+	if(value >= 0x0E00 && value <= 0x0EFF) return snprintf(txt,size,"%s","PowerVu");        // Scientific Atlanta
+	if(value >= 0x1200 && value <= 0x12FF) return snprintf(txt,size,"%s","NagraVision");    // BellVu Express
+	if(value >= 0x1700 && value <= 0x17FF) return snprintf(txt,size,"%s","BetaCrypt");      // BetaTechnik
+	if(value >= 0x1800 && value <= 0x18FF) return snprintf(txt,size,"%s","NagraVision");    // Kudelski SA
+	if(value >= 0x4A60 && value <= 0x4A6F) return snprintf(txt,size,"%s","SkyCrypt");       // @Sky
+
+	return snprintf(txt,size,"0x%04X", value);
+}
+
 static void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er) 
 {
 #ifdef AZBOX
@@ -1931,17 +1954,18 @@ static void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			ecmtxt = fopen(ECMINFO_FILE, "w"); 
 			if(ecmtxt != NULL && er->selected_reader) { 
 				char tmp[25];
-				fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\nprov: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
-				fprintf(ecmtxt, "reader: %s\n", er->selected_reader->label);
-				if (er->selected_reader->typ & R_IS_CASCADING)
-					fprintf(ecmtxt, "from: %s\n", er->selected_reader->device);
-				else
-					fprintf(ecmtxt, "from: local\n");
-				fprintf(ecmtxt, "protocol: %s\n", er->selected_reader->ph.desc);
+				getca(er->caid,tmp);
+				fprintf(ecmtxt, "system:     %s\n", tmp);
+				fprintf(ecmtxt, "caid:       0x%04X\n", er->caid);
+				fprintf(ecmtxt, "prov:       0x%06X\n", (uint) er->prid);
+				fprintf(ecmtxt, "pid:        0x%04X\n",  er->pid);
+				fprintf(ecmtxt, "protocol:   %s\n", er->selected_reader->ph.desc);
+				fprintf(ecmtxt, "address:    %s\n", er->selected_reader->device);
 #ifdef MODULE_CCCAM
-				fprintf(ecmtxt, "hops: %d\n", er->selected_reader->cc_currenthops);
+				fprintf(ecmtxt, "hops:       %d\n", er->selected_reader->cc_currenthops);
 #endif
-				fprintf(ecmtxt, "ecm time: %.3f\n", (float) client->cwlastresptime/1000);
+				fprintf(ecmtxt, "reader:     %s\n", er->selected_reader->label);
+				fprintf(ecmtxt, "ecm time:   %05.3lf ms\n", (float) client->cwlastresptime/1000);
 				fprintf(ecmtxt, "cw0: %s\n", cs_hexdump(1,demux[i].lastcw[0],8, tmp, sizeof(tmp)));
 				fprintf(ecmtxt, "cw1: %s\n", cs_hexdump(1,demux[i].lastcw[1],8, tmp, sizeof(tmp)));
 				fclose(ecmtxt);
