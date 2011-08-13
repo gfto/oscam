@@ -2173,9 +2173,9 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 	int32_t offset = atoi(getParam(params, "offset")); //should be 0 if parameter is missed on very first call
 	
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
-	if (show_global_list || (cfg.saveinithistory && strlen(reader_) > 0) || rdr->typ == R_CCCAM) {
+	if (show_global_list || (cfg.saveinithistory && strlen(reader_) > 0) || (rdr && rdr->typ == R_CCCAM)) {
 
-		if (show_global_list || (rdr->typ == R_CCCAM && rdr->enable)) {
+		if (show_global_list || (rdr && rdr->typ == R_CCCAM && rdr->enable)) {
 
 			if (show_global_list) {
 					tpl_addVar(vars, TPLADD, "READERNAME", "GLOBAL");
