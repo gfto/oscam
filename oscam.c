@@ -36,6 +36,7 @@ int32_t thread_pipe[2] = {0, 0};
 int8_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)restart fork, restart by webif, 2=like=1, but also restart on segfaults
 #endif
 int8_t cs_capture_SEGV=0;
+uint16_t cs_waittime = 60;
 char  cs_tmpdir[200]={0x00};
 pid_t server_pid=0;
 #if defined(LIBUSB)
@@ -293,6 +294,7 @@ static void usage()
   fprintf(stderr, "\t               1 = restart activated, web interface can restart oscam (default)\n");
   fprintf(stderr, "\t               2 = like 1, but also restart on segmentation faults\n");
 #endif
+  fprintf(stderr, "\t-w <secs>  : wait up to <secs> seconds for the system time to be set correctly (default 60)\n");
   fprintf(stderr, "\t-h         : show this help\n");
   fprintf(stderr, "\n");
   exit(1);
@@ -996,11 +998,11 @@ static void init_check(){
 		timeinfo.tm_year = year - 1900;
 		time_t builddate = mktime(&timeinfo) - 86400;
 	  int32_t i = 0;
-	  while(time((time_t)0) < builddate){
-	  	cs_log("The current system time is smaller than the build date (%s). Waiting 5s for time to correct...", ptr);
-	  	cs_sleepms(5000);
+	  while(time((time_t)0) > builddate){
+	  	if(i == 0) cs_log("The current system time is smaller than the build date (%s). Waiting up to %d seconds for time to correct", ptr, cs_waittime);
+	  	cs_sleepms(1000);
 	  	++i;
-	  	if(i > 6){
+	  	if(i > cs_waittime){
 	  		cs_log("Waiting was not successful. OSCam will be started but is UNSUPPORTED this way. Do not report any errors with this version.");
 				break;
 	  	}
@@ -3631,12 +3633,12 @@ int32_t main (int32_t argc, char *argv[])
 	0
   };
 
-  while ((i=getopt(argc, argv, "gbsc:t:d:r:hm:x"))!=EOF)
+  while ((i=getopt(argc, argv, "gbsc:t:d:r:w:hm:x"))!=EOF)
   {
 	  switch(i) {
-	  	  case 'g':
-		      gbdb=1;
-		      break;
+		  case 'g':
+			  gbdb=1;
+			  break;
 		  case 'b':
 			  bg=1;
 			  break;
@@ -3650,9 +3652,9 @@ int32_t main (int32_t argc, char *argv[])
 			  cs_dblevel=atoi(optarg);
 			  break;
 #ifdef WEBIF
-                  case 'r':
-                          cs_restart_mode=atoi(optarg);
-                          break;
+		  case 'r':
+			  cs_restart_mode=atoi(optarg);
+			  break;
 #endif
 		  case 't':
 			  mkdir(optarg, S_IRWXU);
@@ -3664,6 +3666,9 @@ int32_t main (int32_t argc, char *argv[])
 				printf("WARNING: tmpdir does not exist. using default value.\n");
 			  }
 			  break;
+			case 'w':
+				cs_waittime=strtoul(optarg, NULL, 10);
+				break;
 		  case 'm':
 				printf("WARNING: -m parameter is deprecated, ignoring it.\n");
 				break;
