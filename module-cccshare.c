@@ -636,7 +636,7 @@ int32_t equal_providers(struct cc_card *card1, struct cc_card *card2) {
 /**
  * Adds a new card to a cardlist.
  */
-int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int free_card) {
+int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t free_card) {
 
     int32_t modified = 0;
     LL_ITER it = ll_iter_create(cardlist);

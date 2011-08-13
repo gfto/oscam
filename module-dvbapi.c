@@ -1829,27 +1829,25 @@ static void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t index) {
 	}
 }
 
-int getca(int value ,char *txt)
-{
-	int size = 25;
+void getca(uint16_t value, char *txt){
+	size_t size = 25;
 
-	if(value == 0x0000) return snprintf(txt,size,"%s","Free to Air");                       // Standardized systems
-	if(value >= 0x0001 && value <= 0x009F) return snprintf(txt,size,"%s","Fixed");          // Standardized systems
-	if(value >= 0x00A0 && value <= 0x00A1) return snprintf(txt,size,"%s","Analog");         // Analog signals
-	if(value >= 0x00A2 && value <= 0x00FF) return snprintf(txt,size,"%s","Fixed");          // Standardized systems
-	if(value >= 0x0100 && value <= 0x01FF) return snprintf(txt,size,"%s","Seca/Mediaguard");// Canal Plus
-	if(value >= 0x0500 && value <= 0x05FF) return snprintf(txt,size,"%s","Viaccess");       // France Telecom
-	if(value >= 0x0600 && value <= 0x06FF) return snprintf(txt,size,"%s","Irdeto");         // Irdeto
-	if(value >= 0x0900 && value <= 0x09FF) return snprintf(txt,size,"%s","NDS/Videoguard"); // News Datacom
-	if(value >= 0x0B00 && value <= 0x0BFF) return snprintf(txt,size,"%s","Conax");          // Norwegian Telekom
-	if(value >= 0x0D00 && value <= 0x0DFF) return snprintf(txt,size,"%s","CryptoWorks");    // Philips
-	if(value >= 0x0E00 && value <= 0x0EFF) return snprintf(txt,size,"%s","PowerVu");        // Scientific Atlanta
-	if(value >= 0x1200 && value <= 0x12FF) return snprintf(txt,size,"%s","NagraVision");    // BellVu Express
-	if(value >= 0x1700 && value <= 0x17FF) return snprintf(txt,size,"%s","BetaCrypt");      // BetaTechnik
-	if(value >= 0x1800 && value <= 0x18FF) return snprintf(txt,size,"%s","NagraVision");    // Kudelski SA
-	if(value >= 0x4A60 && value <= 0x4A6F) return snprintf(txt,size,"%s","SkyCrypt");       // @Sky
-
-	return snprintf(txt,size,"0x%04X", value);
+	if(value == 0x0000) cs_strncpy(txt, "Free to Air", size);                       // Standardized systems
+	else if(value >= 0x0001 && value <= 0x009F) cs_strncpy(txt, "Fixed", size);          // Standardized systems
+	else if(value >= 0x00A0 && value <= 0x00A1) cs_strncpy(txt, ,"Analog", size);         // Analog signals
+	else if(value >= 0x00A2 && value <= 0x00FF) cs_strncpy(txt, "Fixed", size);          // Standardized systems
+	else if(value >= 0x0100 && value <= 0x01FF) cs_strncpy(txt, "Seca/Mediaguard", size);// Canal Plus
+	else if(value >= 0x0500 && value <= 0x05FF) cs_strncpy(txt, "Viaccess", size);       // France Telecom
+	else if(value >= 0x0600 && value <= 0x06FF) cs_strncpy(txt, "Irdeto", size);         	// Irdeto
+	else if(value >= 0x0900 && value <= 0x09FF) cs_strncpy(txt, "NDS/Videoguard", size); // News Datacom
+	else if(value >= 0x0B00 && value <= 0x0BFF) cs_strncpy(txt, "Conax", size);          // Norwegian Telekom
+	else if(value >= 0x0D00 && value <= 0x0DFF) cs_strncpy(txt, "CryptoWorks", size);    // Philips
+	else if(value >= 0x0E00 && value <= 0x0EFF) cs_strncpy(txt, "PowerVu", size);        // Scientific Atlanta
+	else if(value >= 0x1200 && value <= 0x12FF) cs_strncpy(txt, "NagraVision", size);    // BellVu Express
+	else if(value >= 0x1700 && value <= 0x17FF) cs_strncpy(txt, "BetaCrypt", size);      // BetaTechnik
+	else if(value >= 0x1800 && value <= 0x18FF) cs_strncpy(txt, "NagraVision", size);    // Kudelski SA
+	else if(value >= 0x4A60 && value <= 0x4A6F) cs_strncpy(txt, "SkyCrypt", size);       // @Sky
+	else snprintf(txt, size, "0x%04X", value);
 }
 
 static void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er) 
@@ -1975,7 +1973,7 @@ static void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	}
 }
 
-static void * dvbapi_handler(struct s_client * cl, uchar* UNUSED(mbuf), int len) {
+static void * dvbapi_handler(struct s_client * cl, uchar* UNUSED(mbuf), int32_t len) {
 	//cs_log("dvbapi loaded fd=%d", idx);
 	if (cfg.dvbapi_enabled == 1) {
 		cl = create_client(0);

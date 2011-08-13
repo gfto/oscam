@@ -331,8 +331,7 @@ static void gbox_expire_hello(struct s_client *cli)
   ts.tv_sec += 5;
 
   pthread_mutex_lock (&mut);
-  int rc = pthread_cond_timedwait(&cond, &mut, &ts);
-  if (rc == ETIMEDOUT) {
+  if (pthread_cond_timedwait(&cond, &mut, &ts) == ETIMEDOUT) {
     //printf("gbox: hello expired!\n");
     gbox->hello_expired = 0;
   }
@@ -353,8 +352,7 @@ static void gbox_wait_for_response(struct s_client *cli)
 	ts.tv_sec += 5;
 
 	pthread_mutex_lock (&gbox->peer_online_mutex);
-	int rc = pthread_cond_timedwait(&gbox->peer_online_cond, &gbox->peer_online_mutex, &ts);
-	if (rc == ETIMEDOUT) {
+	if (pthread_cond_timedwait(&gbox->peer_online_cond, &gbox->peer_online_mutex, &ts) == ETIMEDOUT) {
 		gbox->peer.fail_count++;
 		//printf("gbox: wait timed-out, fail_count=%d\n", gbox->peer.fail_count);
 #define GBOX_FAIL_COUNT 1

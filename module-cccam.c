@@ -1086,7 +1086,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		cc->ecm_busy = 1;
 		cs_debug_mask(D_READER, "cccam: ecm trylock: got lock");
 	}
-	int processed_ecms = 0;
+	int32_t processed_ecms = 0;
 	do {
 	cc->ecm_time = cur_time;
 	rdr->available = cc->extended_mode;
@@ -1285,7 +1285,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	} while (cc->extended_mode || processed_ecms == 0);
 	
 	//Now mark all waiting as unprocessed:
-	int i;
+	int8_t i;
 	for (i = 0; i < CS_MAXPENDING; i++) {
 		er = &cl->ecmtask[i];
 		if (er->rc == 102)
@@ -2603,8 +2603,7 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 		if (eei && cc->extended_mode)
 			cc->g_flag = eei->send_idx;
 
-		int32_t nok;
-		int bufsize = 0;
+		int32_t nok, bufsize = 0;
 		if (cc->sleepsend && er->rc == E_STOPPED) {
 			buf[0] = cl->c35_sleepsend;
 			bufsize=1;
@@ -2943,7 +2942,7 @@ void cc_srv_init2(struct s_client *cl) {
 	return;
 }
 
-void * cc_srv_init(struct s_client *cl, uchar *UNUSED(mbuf), int UNUSED(len)) {
+void * cc_srv_init(struct s_client *cl, uchar *UNUSED(mbuf), int32_t UNUSED(len)) {
 	cc_srv_init2(cl);
 	return NULL;
 }
@@ -3262,7 +3261,7 @@ void cc_update_nodeid()
 	cc_node_id[6] = sum >> 8;
 	cc_node_id[7] = sum & 0xff;
 	
-	int valid = 0;
+	int8_t valid = 0;
 	if (cfg.cc_use_fixed_nodeid) {
 		for (i=0;i<8;i++)
 			if (cfg.cc_fixed_nodeid[i])

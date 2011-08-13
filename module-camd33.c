@@ -130,7 +130,7 @@ static void camd33_process_emm(uchar *buf, int32_t l)
   do_emm(cur_client(), &epg);
 }
 
-static void * camd33_server(struct s_client * client, uchar *mbuf, int n)
+static void * camd33_server(struct s_client * client, uchar *mbuf, int32_t n)
 {
 	uchar camdbug[256];
 

@@ -192,9 +192,9 @@ static int32_t get_log_header(int32_t m, char *txt)
 	pos = snprintf(txt, LOG_BUF_SIZE,  "[LOG000]%4d/%02d/%02d %2d:%02d:%02d ", lt.tm_year+1900, lt.tm_mon+1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec);
 
 	if(m)
-		return pos + snprintf(txt+pos, LOG_BUF_SIZE-pos, "%8X %c ",(unsigned int) cl, cl?cl->typ:' ');
+		return pos + snprintf(txt+pos, LOG_BUF_SIZE-pos, "%8X %c ", cl->tid, cl?cl->typ:' ');
 	else
-		return pos + snprintf(txt+pos, LOG_BUF_SIZE-pos, "%8X%-3.3s ",(unsigned int) cl, "");
+		return pos + snprintf(txt+pos, LOG_BUF_SIZE-pos, "%8X%-3.3s ", cl->tid, "");
 }
 
 static void write_to_log(char *txt, int8_t lock, int32_t header_len)

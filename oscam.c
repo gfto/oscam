@@ -892,10 +892,27 @@ struct s_client * create_client(in_addr_t ip) {
 		pthread_mutex_init(&cl->thread_lock, NULL);
 
 		cl->login=cl->last=time((time_t *)0);
+		
+		cl->tid = (uint32_t)(uintptr_t)cl;	// Use pointer adress of client as threadid (for monitor and log)
 
 		//Now add new client to the list:
 		struct s_client *last;
 		cs_writelock(&clientlist_lock);
+		if(sizeof(uintptr_t) > 4){		// 64bit systems can have collisions because of the cast so lets check if there are some
+			int8_t found;
+			do{
+				found = 0;
+				for (last=first_client; last; last=last->next){
+					if(last->tid == cl->tid){
+						found = 1;
+						break;
+					}
+				}
+				if(found || cl->tid == 0){
+					cl->tid = (uint32_t)rand();
+				}
+			} while (found || cl->tid == 0);
+		}
 		for (last=first_client; last->next != NULL; last=last->next); //ends with cl on last client
 		last->next = cl;
 		cs_writeunlock(&clientlist_lock);
@@ -1690,7 +1707,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 			logCWtoFile(er, ea->cw);
 	}
 
-	int res = 0;
+	int32_t res = 0;
 	if (er->client) {
 		if (ea->rc==E_TIMEOUT)
 			store_cw_in_cache(er, er->client->grp, E_TIMEOUT, NULL);
@@ -2485,7 +2502,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 #endif
 	}
 
-	int local_reader_count = 0;
+	int16_t local_reader_count = 0;
 	if(er->rc >= E_99) {
 		er->reader_avail=0;
 		struct s_reader *rdr;
@@ -3111,7 +3128,7 @@ void * work_thread(void *ptr) {
 	return NULL;
 }
 
-void add_job(struct s_client *cl, int8_t action, void *ptr, int len) {
+void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 
 	if (!cl) {
 		cs_log("WARNING: add_job failed.");

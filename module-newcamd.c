@@ -1019,7 +1019,7 @@ static void newcamd_server_init(struct s_client *client) {
 
 }
 
-static void * newcamd_server(struct s_client *client, uchar *mbuf, int len)
+static void * newcamd_server(struct s_client *client, uchar *mbuf, int32_t len)
 {
 	client = client;
 	// check for clienttimeout, if timeout occurs try to send keepalive / wait for answer

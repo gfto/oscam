@@ -329,7 +329,7 @@ static void camd35_server_init(struct s_client * client) {
 	client->is_udp = (ph[client->ctyp].type == MOD_CONN_UDP);
 }
 
-static void * camd35_server(struct s_client *UNUSED(client), uchar *mbuf, int n)
+static void * camd35_server(struct s_client *UNUSED(client), uchar *mbuf, int32_t n)
 {
 	switch(mbuf[0]) {
 		case  0:	// ECM

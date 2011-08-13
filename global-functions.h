@@ -63,7 +63,7 @@ extern void qboxhd_led_blink(int32_t color, int32_t duration);
 
 extern int32_t accept_connection(int32_t i, int32_t j);
 extern void start_thread(void * startroutine, char * nameroutine);
-extern void add_job(struct s_client *cl, int8_t action, void *ptr, int len);
+extern void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len);
 extern void add_check(struct s_client *client, int8_t action, void *ptr, int32_t size, int32_t ms_delay);
 extern int32_t reader_init(struct s_reader *);
 extern void reader_nullcard(struct s_reader * reader);

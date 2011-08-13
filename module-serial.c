@@ -974,7 +974,7 @@ static void * oscam_ser_fork(void *pthreadparam)
   return NULL;
 }
 
-void * init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int len)
+void * init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int32_t len)
 {
 	char sdevice[512];
   	struct s_thread_param param;

@@ -639,8 +639,8 @@ static int32_t videoguard2_do_ecm(struct s_reader * reader, const ECM_REQUEST *e
 
       // process cw2
       unsigned char *payload = rbuff+5;
-      int payloadLen = rbuff[4];
-      int ind=8+6;   // +8 for CW1, +6 for counter(?)
+      int32_t payloadLen = rbuff[4];
+      int32_t ind=8+6;   // +8 for CW1, +6 for counter(?)
 
       while(ind<payloadLen) {
         switch(payload[ind])

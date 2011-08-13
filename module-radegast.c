@@ -131,7 +131,7 @@ static void radegast_process_unknown(uchar *buf)
   cs_log("unknown request %02X, len=%d", buf[0], buf[1]);
 }
 
-static void * radegast_server(struct s_client * client, uchar *mbuf, int n)
+static void * radegast_server(struct s_client * client, uchar *mbuf, int32_t n)
 {
 	if (n<3)
 		return NULL;
