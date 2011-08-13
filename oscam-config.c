@@ -1694,7 +1694,10 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 
 #ifdef WEBIF
 	if (!strcmp(token, "description")) {
-		cs_strncpy(account->description, value, sizeof(account->description));
+		NULLFREE(account->description);
+		if(cs_malloc(&account->description, strlen(value)+1, -1)){
+			cs_strncpy(account->description, value, strlen(value)+1);
+		}
 		return;
 	}
 #endif
@@ -2406,8 +2409,8 @@ int32_t write_userdb()
 		fprintf_conf(f, "user", "%s\n", account->usr);
 		fprintf_conf(f, "pwd", "%s\n", account->pwd);
 #ifdef WEBIF
-		if (account->description[0] || cfg.http_full_cfg)
-			fprintf_conf(f, "description", "%s\n", account->description);
+		if (account->description || cfg.http_full_cfg)
+			fprintf_conf(f, "description", "%s\n", account->description?account->description:"");
 #endif
 		if (account->disabled || cfg.http_full_cfg)
 			fprintf_conf(f, "disabled", "%d\n", account->disabled);
@@ -2584,8 +2587,8 @@ int32_t write_server()
 			fprintf_conf(f, "label", "%s\n", rdr->label);
 
 #ifdef WEBIF
-			if (rdr->description[0] || cfg.http_full_cfg)
-				fprintf_conf(f, "description", "%s\n", rdr->description);
+			if (rdr->description || cfg.http_full_cfg)
+				fprintf_conf(f, "description", "%s\n", rdr->description?rdr->description:"");
 #endif
 
 			if (rdr->enable == 0 || cfg.http_full_cfg)
@@ -3644,7 +3647,10 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
 #ifdef WEBIF
 	if (!strcmp(token, "description")) {
-		cs_strncpy(rdr->description, value, sizeof(rdr->description));
+		NULLFREE(rdr->description);
+		if(cs_malloc(&rdr->description, strlen(value)+1, -1)){
+			cs_strncpy(rdr->description, value, strlen(value)+1);
+		}
 		return;
 	}
 #endif

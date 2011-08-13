@@ -2903,6 +2903,7 @@ void * work_thread(void *ptr) {
 	cl->thread=pthread_self();
 
 	uchar mbuf[1024];
+	memset(mbuf, 0, sizeof(mbuf));
 	int32_t n=0, rc=0, i, idx, s;
 	uchar dcw[16];
 	sigset_t newmask;

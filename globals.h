@@ -904,7 +904,7 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t			typ;
 	char			label[64];
 #ifdef WEBIF
-	char			description[64];
+	char			*description;
 #endif
 	char			device[128];
 	void			*spec_dev;						// pointer to structure that contains specific device data
@@ -1097,7 +1097,7 @@ struct s_auth
 	char			usr[64];
 	char			pwd[64];
 #ifdef WEBIF
-	char			description[64];
+	char			*description;
 #endif
 	int8_t			uniq;
 	int16_t			allowedprotocols;

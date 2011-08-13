@@ -1043,7 +1043,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	rdr = get_reader_by_label(reader_);
 
 	tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
-	tpl_addVar(vars, TPLADD, "DESCRIPTION", rdr->description);
+	tpl_addVar(vars, TPLADD, "DESCRIPTION", rdr->description?rdr->description:"");
 
 	// enabled
 	if(!apicall) {
@@ -1710,7 +1710,8 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 
 	tpl_addVar(vars, TPLADD, "USERNAME", account->usr);
 	tpl_addVar(vars, TPLADD, "PASSWORD", account->pwd);
-	tpl_addVar(vars, TPLADD, "DESCRIPTION", account->description);
+	if(account->description)
+		tpl_addVar(vars, TPLADD, "DESCRIPTION", account->description);
 
 	//Disabled
 	if(!apicall) {
@@ -2123,7 +2124,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "CLASSNAME", classname);
 		tpl_addVar(vars, TPLADD, "USER", xml_encode(vars, account->usr));
 		tpl_addVar(vars, TPLADD, "USERENC", urlencode(vars, account->usr));
-		tpl_addVar(vars, TPLADD, "DESCRIPTION", xml_encode(vars, account->description));
+		tpl_addVar(vars, TPLADD, "DESCRIPTION", xml_encode(vars, account->description?account->description:""));
 		tpl_addVar(vars, TPLADD, "STATUS", status);
 		tpl_addVar(vars, TPLAPPEND, "STATUS", expired);
 		// append row to table template
@@ -2640,10 +2641,10 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 				tpl_addVar(vars, TPLADD, "CLIENTUSER", xml_encode(vars, usr));
 				
 				if(cl->typ == 'c') {
-					tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", xml_encode(vars, cl->account?cl->account->description:""));
+					tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", xml_encode(vars, (cl->account && cl->account->description)?cl->account->description:""));
 				}
 				else if(cl->typ == 'p' || cl->typ == 'r') {
-					tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", xml_encode(vars, cl->reader->description));
+					tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", xml_encode(vars, cl->reader->description?cl->reader->description:""));
 				}
 				
 				tpl_printf(vars, TPLADD, "CLIENTCAU", "%d", cau);
@@ -3636,10 +3637,10 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 					tpl_printf(vars, TPLADD, "CLIENTTYPE", "%c", cl->typ);
 					tpl_addVar(vars, TPLADD, "CLIENTUSER", xml_encode(vars, usr));
 					if(cl->typ == 'c') {
-						tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", xml_encode(vars, cl->account?cl->account->description:""));
+						tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", xml_encode(vars, (cl->account && cl->account->description)?cl->account->description:""));
 					}
 					else if(cl->typ == 'p' || cl->typ == 'r') {
-						tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", xml_encode(vars, cl->reader->description));
+						tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", xml_encode(vars, cl->reader->description?cl->reader->description:""));
 					}
 					tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime?cl->cwlastresptime:-1);
 					tpl_printf(vars, TPLADD, "CLIENTIDLESECS", "%d", isec);
