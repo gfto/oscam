@@ -541,8 +541,7 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 				return (base == rdr->hexserial[3] && !memcmp(ep->emm + 4, rdr->hexserial, l));
 			}
 			else {
-				// not hex addressed and emm mode zero
-				if (base == 0)
+				if (!memcmp(ep->emm + 4, rdr->hexserial, l))
 					return TRUE;
 
 				// provider addressed
@@ -580,18 +579,18 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[0]=0xFF;
 	filter[1]=0;		//filter count
 
-	int32_t base = rdr->hexserial[3];
-	int32_t emm_g = base * 8;
-	int32_t emm_s = emm_g + 2;
-	int32_t emm_u = emm_g + 3;
+	//int32_t base = rdr->hexserial[3];
+	//int32_t emm_g = base * 8;
+	//int32_t emm_s = emm_g + 2;
+	//int32_t emm_u = emm_g + 3;
 
 
 	filter[idx++]=EMM_GLOBAL;
 	filter[idx++]=0;
 	filter[idx+0]    = 0x82;
 	filter[idx+0+16] = 0xFF;
-	filter[idx+1]    = emm_g;
-	filter[idx+1+16] = 0xFF;
+	filter[idx+1]    = 0x00;
+	filter[idx+1+16] = 0x03;
 	filter[1]++;
 	idx += 32;
 
@@ -610,8 +609,8 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[idx++]=0;
 	filter[idx+0]    = 0x82;
 	filter[idx+0+16] = 0xFF;
-	filter[idx+1]    = emm_u;
-	filter[idx+1+16] = 0xFF;
+	filter[idx+1]    = 0x03;
+	filter[idx+1+16] = 0x03;
 	memcpy(filter+idx+2, rdr->hexserial, 3);
 	memset(filter+idx+2+16, 0xFF, 3);
 	filter[1]++;
@@ -621,8 +620,8 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[idx++]=0;
 	filter[idx+0]    = 0x82;
 	filter[idx+0+16] = 0xFF;
-	filter[idx+1]    = emm_s;
-	filter[idx+1+16] = 0xFF;
+	filter[idx+1]    = 0x02;
+	filter[idx+1+16] = 0x03;
 	memcpy(filter+idx+2, rdr->hexserial, 2);
 	memset(filter+idx+2+16, 0xFF, 2);
 	filter[1]++;
@@ -674,15 +673,11 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 		ok = (mode == reader->hexserial[3] && (!l || !memcmp(&emm[4], reader->hexserial, l)));
 	}
 	else {
-		// not hex addressed and emm mode zero
-		if (mode == 0)
-			ok = 1;
-		else {
-			// provider addressed
-			for(i = 0; i < reader->nprov; i++) {
-				ok = (mode == reader->prid[i][0] && (!l || !memcmp(&emm[4], &reader->prid[i][1], l)));
-				if (ok) break;
-			}
+		ok = !memcmp(&emm[4], reader->hexserial, l);
+
+		// provider addressed
+		for(i = 0; i < reader->nprov && !ok; i++) {
+			ok = (mode == reader->prid[i][0] && (!l || !memcmp(&emm[4], &reader->prid[i][1], l)));
 		}
 	}
 
