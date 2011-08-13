@@ -1419,24 +1419,40 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 	if(!rdr) return "0";
 
+	char *stxt[]={"found", "cache1", "cache2", "emu",
+			"not found", "timeout", "sleeping",
+			"fake", "invalid", "corrupt", "no card", "expdate",
+			"disabled", "stopped"};
+
 	if (strcmp(getParam(params, "action"), "resetstat") == 0) {
 		char *rcs = getParam(params, "rc");
+		int32_t retval = 0;
 		if(strlen(rcs) > 0) {
 			int8_t rc;
 			rc = atoi(rcs);
-			clean_stat_by_rc(rdr, rc);
+			retval = clean_stat_by_rc(rdr, rc);
+			cs_log("Reader %s stats %d %s entr%s deleted by WebIF from %s",
+								rdr->label, retval, stxt[rc],
+								retval == 1 ? "y":"ies",
+								cs_inet6_ntoa(GET_IP()));
 		} else {
 			clear_reader_stat(rdr);
+			cs_log("Reader %s stats resetted by WebIF from %s", rdr->label, cs_inet6_ntoa(GET_IP()));
 		}
-		cs_log("Reader %s stats resetted by WebIF from %s", rdr->label, cs_inet6_ntoa(GET_IP()));
+
 	}
 
 	if (strcmp(getParam(params, "action"), "deleterecord") == 0) {
 		char *record = getParam(params, "record");
 		if(strlen(record) > 0) {
+			int32_t retval = 0;
 			uint32_t caid, provid, sid, len;
 			sscanf(record, "%x:%x:%x:%x", &caid, &provid, &sid, &len);
-			clean_stat_by_id(rdr, caid, provid , sid, len);
+			retval = clean_stat_by_id(rdr, caid, provid , sid, len);
+			cs_log("Reader %s stats %d entr%s deleted by WebIF from %s",
+					rdr->label, retval,
+					retval == 1 ? "y":"ies",
+					cs_inet6_ntoa(GET_IP()));
 		}
 	}
 
@@ -1447,10 +1463,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 		tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
 	}
 
-	char *stxt[]={"found", "cache1", "cache2", "emu",
-			"not found", "timeout", "sleeping",
-			"fake", "invalid", "corrupt", "no card", "expdate",
-			"disabled", "stopped"};
+
 
 	if (apicall) {
 		int32_t i, emmcount = 0;
