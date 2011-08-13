@@ -231,11 +231,10 @@ static int32_t irdeto_card_init_provider(struct s_reader * reader)
 			else
 				memcpy(&reader->prid[i][0], cta_res+acspadd, 4);
 
-			if (reader->acs57==1)
-				reader->prid[i][0] = 0;
+			reader->prid[i][0] = i;
 
 			if (!memcmp(cta_res+acspadd+1, &reader->hexserial, 3))
-				memset(&reader->prid[i][0], 0xFF, 4);
+				reader->prid[i][3] = 0xFF;
 
 			snprintf((char *) buf+strlen((char *)buf), sizeof(buf)-strlen((char *)buf), ",%06x", b2i(3, &reader->prid[i][1]));
 		}
@@ -708,7 +707,7 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 				if (ep->type==UNIQUE) {
 					memcpy(&cta_cmd[9],&ep->emm[9],dataLen-4);
 				} else {
-					if (ep->type==GLOBAL && (reader->caid==0x0624 || reader->caid==0x0624)) {
+					if (ep->type==GLOBAL && (reader->caid==0x0624 || reader->caid==0x0648)) {
 						memcpy(&cta_cmd[9],&ep->emm[6],1);
 						memcpy(&cta_cmd[10],&ep->emm[7],dataLen-6);					
 //						cta_cmd[9]=0x00;
