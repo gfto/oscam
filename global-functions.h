@@ -71,7 +71,6 @@ extern int reader_reset(struct s_reader * reader);
 extern void cs_reload_config();
 extern int32_t recv_from_udpipe(uchar *);
 extern char* username(struct s_client *);
-extern struct s_client * get_client_by_tid(uint32_t);
 extern int32_t chk_bcaid(ECM_REQUEST *, CAIDTAB *);
 extern void cs_exit(int32_t sig);
 extern struct s_client * create_client(in_addr_t);

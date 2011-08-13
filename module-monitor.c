@@ -439,8 +439,10 @@ static void monitor_process_details(char *arg){
 	else {
 		if (sscanf(arg,"%X",&tid) == 1) {
 			for (cl1=first_client; cl1 ; cl1=cl1->next)
-				if (cl1->tid==tid)
+				if (cl1->tid==tid){
 					cl=cl1;
+					break;
+				}
 		}
 	}
 
