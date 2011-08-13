@@ -998,7 +998,7 @@ static void init_check(){
 		timeinfo.tm_year = year - 1900;
 		time_t builddate = mktime(&timeinfo) - 86400;
 	  int32_t i = 0;
-	  while(time((time_t)0) > builddate){
+	  while(time((time_t*)0) < builddate){
 	  	if(i == 0) cs_log("The current system time is smaller than the build date (%s). Waiting up to %d seconds for time to correct", ptr, cs_waittime);
 	  	cs_sleepms(1000);
 	  	++i;
