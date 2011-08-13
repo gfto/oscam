@@ -654,7 +654,6 @@ static char *send_oscam_config_serial(struct templatevars *vars, struct uriparam
 		if(write_config()==0) refresh_oscam(REFR_SERVER);
 		else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
-#endif
 
 	if (cfg.ser_device[0]){
 		char sdevice[512];
@@ -672,6 +671,7 @@ static char *send_oscam_config_serial(struct templatevars *vars, struct uriparam
 
 	return tpl_getTpl(vars, "CONFIGSERIAL");
 }
+#endif
 
 #ifdef HAVE_DVBAPI
 static char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparams *params) {
