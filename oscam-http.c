@@ -3896,9 +3896,20 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 				cs_debug_mask(D_TRACE, "WebIf: dyndns address previously resolved and ok");	
 			} else {
 				cfg.http_dynip = cs_getIPfromHost((char*)cfg.http_dyndns);
-				cs_debug_mask(D_TRACE, "WebIf: dynip resolved %s access from %s",
-					cs_inet_ntoa(cfg.http_dynip),
-					cs_inet6_ntoa(addr));
+#ifdef IPV6SUPPORT
+				if(cfg.http_dynip && cfg.http_dynip == addr.s6_addr32[3]) {
+#else
+				if(cfg.http_dynip && cfg.http_dynip == addr) {
+#endif
+					ok = v;
+					cs_debug_mask(D_TRACE, "WebIf: dynip resolved %s access from %s => granted",
+						cs_inet_ntoa(cfg.http_dynip),
+						cs_inet6_ntoa(addr));	
+				} else {
+					cs_debug_mask(D_TRACE, "WebIf: dynip resolved %s access from %s => forbidden",
+						cs_inet_ntoa(cfg.http_dynip),
+						cs_inet6_ntoa(addr));
+				}
 			}
 		} else {
 			if (cfg.http_dyndns[0])
