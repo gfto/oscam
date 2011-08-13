@@ -222,7 +222,7 @@ static int32_t irdeto_card_init_provider(struct s_reader * reader)
 		//if ((cta_lr==26) && (cta_res[0]!=0xf))
 		if (((cta_lr == 26) && ((!(i&1)) || (cta_res[0] != 0xf))) || (reader->acs57==1))
 		{
-			reader->prid[i][4] = p++;
+			p++;
 
 			// maps the provider id for Betacrypt from FFFFFF to 000000,
 			// fixes problems with cascading CCcam and OSCam
@@ -230,6 +230,12 @@ static int32_t irdeto_card_init_provider(struct s_reader * reader)
 				memset(&reader->prid[i][0], 0, 4);
 			else
 				memcpy(&reader->prid[i][0], cta_res+acspadd, 4);
+
+			if (reader->acs57==1)
+				reader->prid[i][0] = 0;
+
+			if (!memcmp(cta_res+acspadd+1, &reader->hexserial, 3))
+				memset(&reader->prid[i][0], 0xFF, 4);
 
 			snprintf((char *) buf+strlen((char *)buf), sizeof(buf)-strlen((char *)buf), ",%06x", b2i(3, &reader->prid[i][1]));
 		}
@@ -346,15 +352,10 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR newatr)
 		reader_chk_cmd(sc_GetHEXSerial, 18);
 	}
 	reader->nprov = cta_res[10+acspadd];
-	if (reader->caid==0x0624) {
-		memcpy(reader->hexserial, cta_res+12+acspadd, 4);
-		cs_ri_log(reader, "providers: %d, ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
-			reader->nprov, buf, cta_res[20], cta_res[21], cta_res[22], cta_res[23]);
-	} else {
-		memcpy(reader->hexserial, cta_res+12+acspadd, 8);
-		cs_ri_log(reader, "providers: %d, ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
-			reader->nprov, buf, cta_res[12], cta_res[13], cta_res[14], cta_res[15]);
-	}
+	memcpy(reader->hexserial, cta_res+12+acspadd, 4);
+	
+	cs_ri_log(reader, "providers: %d, ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
+		reader->nprov, buf, reader->hexserial[0], reader->hexserial[1], reader->hexserial[2], reader->hexserial[3]);
 
 	/*
 	 * CardFile
@@ -698,7 +699,7 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 				}else{
 					dataLen=ep->emm[2];
 				}
-				if (ep->type==GLOBAL && reader->caid==0x0624) dataLen+=2;
+				if (ep->type==GLOBAL && (reader->caid==0x0624 || reader->caid==0x0648)) dataLen+=2;
 				int32_t crc=63;
 				sc_Acs57Emm[4]=dataLen;
 				memcpy(&cta_cmd, sc_Acs57Emm, sizeof(sc_Acs57Emm));
@@ -707,7 +708,7 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 				if (ep->type==UNIQUE) {
 					memcpy(&cta_cmd[9],&ep->emm[9],dataLen-4);
 				} else {
-					if (ep->type==GLOBAL && reader->caid==0x0624) {
+					if (ep->type==GLOBAL && (reader->caid==0x0624 || reader->caid==0x0624)) {
 						memcpy(&cta_cmd[9],&ep->emm[6],1);
 						memcpy(&cta_cmd[10],&ep->emm[7],dataLen-6);					
 //						cta_cmd[9]=0x00;
