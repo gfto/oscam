@@ -1066,6 +1066,7 @@ struct s_reader  									//contains device info, reader info and card info
  	int32_t			card_baseyear;
  	int32_t			card_tierstart;
  	int32_t			card_system_version;
+ 	time_t			card_valid_to;
  	struct s_CmdTab *cmd_table;
  	uint16_t		cardkeys[3][32];
  	unsigned char	stateD3A[16];

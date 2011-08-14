@@ -32,7 +32,7 @@ static time_t tier_date(uint32_t date, char *buf, int32_t l)
   return(ut);
 }
 
-static char *nagra_datetime(uint8_t *ndays, char *result)
+static char *nagra_datetime(uint8_t *ndays, char *result, time_t *t)
 {
 	struct tm tms;
 	memset(&tms, 0, sizeof(tms));
@@ -43,7 +43,7 @@ static char *nagra_datetime(uint8_t *ndays, char *result)
 	tms.tm_year = 92 - year_offset;
 	tms.tm_mday = days + 1;
 	tms.tm_sec = time;
-	mktime(&tms);
+	*t = mktime(&tms);
 	snprintf(result, 17, "%04d/%02d/%02d %02d:%02d", tms.tm_year + 1900 + year_offset, tms.tm_mon + 1, tms.tm_mday, tms.tm_hour, tms.tm_min);
 	return result;
 }
@@ -561,7 +561,7 @@ static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigne
 			memcpy(reader->irdId,cta_res+14,4);
 			cs_ri_log(reader, "[nagra-reader] type: NAGRA, caid: %04X, IRD ID: %s",reader->caid, cs_hexdump(1, reader->irdId, 4, ds, sizeof(ds)));
 			cs_ri_log(reader, "[nagra-reader] ProviderID: %s", cs_hexdump(1, reader->prid[0], 4, ds, sizeof(ds)));
-			nagra_datetime(cta_res+24, ds);
+			nagra_datetime(cta_res+24, ds, &reader->card_valid_to);
 			cs_ri_log(reader, "[nagra-reader] active to: %s", ds);
 			return OK;
      		}
