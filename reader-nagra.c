@@ -32,19 +32,26 @@ static time_t tier_date(uint32_t date, char *buf, int32_t l)
   return(ut);
 }
 
-static char *nagra_datetime(uint8_t *ndays, char *result, time_t *t)
+static char *nagra_datetime(struct s_reader *rdr, uint8_t *ndays, int32_t offset, char *result, time_t *t)
 {
 	struct tm tms;
 	memset(&tms, 0, sizeof(tms));
-	int32_t days = (ndays[0] << 8 | ndays[1]);
-	int32_t time = (ndays[2] << 8 | ndays[3]);
-	int32_t year_offset = 0;
-	if (days > 0x41B4) year_offset = 68; // to overcome 32-bit systems limitations
-	tms.tm_year = 92 - year_offset;
+	int32_t days = (ndays[0] << 8 | ndays[1]) + offset;
+	int32_t time = 0;
+	if (!rdr->is_tiger)
+		time = (ndays[2] << 8 | ndays[3]);
+	if (days > 0x41B4 && sizeof(time_t) < 8) // to overcome 32-bit systems limitations
+		days = 0x41A2;                   // 01-01-2038
+	tms.tm_year = 92;
 	tms.tm_mday = days + 1;
 	tms.tm_sec = time;
-	*t = mktime(&tms);
-	snprintf(result, 17, "%04d/%02d/%02d %02d:%02d", tms.tm_year + 1900 + year_offset, tms.tm_mon + 1, tms.tm_mday, tms.tm_hour, tms.tm_min);
+	time_t ut = mktime(&tms);
+	if (t)
+		*t = ut;
+	if (rdr->is_tiger)
+		snprintf(result, 11, "%02d/%02d/%04d", tms.tm_mday, tms.tm_mon + 1, tms.tm_year + 1900);
+	else
+		snprintf(result, 17, "%04d/%02d/%02d %02d:%02d", tms.tm_year + 1900, tms.tm_mon + 1, tms.tm_mday, tms.tm_hour, tms.tm_min);
 	return result;
 }
 
@@ -561,7 +568,7 @@ static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigne
 			memcpy(reader->irdId,cta_res+14,4);
 			cs_ri_log(reader, "[nagra-reader] type: NAGRA, caid: %04X, IRD ID: %s",reader->caid, cs_hexdump(1, reader->irdId, 4, ds, sizeof(ds)));
 			cs_ri_log(reader, "[nagra-reader] ProviderID: %s", cs_hexdump(1, reader->prid[0], 4, ds, sizeof(ds)));
-			nagra_datetime(cta_res+24, ds, &reader->card_valid_to);
+			nagra_datetime(reader, cta_res+24, 0, ds, &reader->card_valid_to);
 			cs_ri_log(reader, "[nagra-reader] active to: %s", ds);
 			return OK;
      		}
@@ -720,20 +727,6 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR newatr)
 	return OK;
 }
 
-static char *tiger_date(uint8_t *ndays, int32_t offset, char *result)
-{
-   struct tm tms;
-   memset(&tms, 0, sizeof(tms));
-   int32_t days = (ndays[0] << 8 | ndays[1]) + offset;
-   int32_t year_offset = 0;
-   if (days > 0x41B4) year_offset = 68; // to overcome 32-bit systems limitations
-   tms.tm_year = 92 - year_offset;
-   tms.tm_mday = days + 1;
-   mktime(&tms);
-   snprintf(result, 11, "%02d/%02d/%04d", tms.tm_mday, tms.tm_mon + 1, tms.tm_year + 1900 + year_offset);
-   return result;
-}
-
 typedef struct
 {
    char date1[11];
@@ -742,6 +735,20 @@ typedef struct
    uint16_t value;
    uint16_t price;
 } ncmed_rec;
+
+static time_t tiger_date2time(const char *date)
+{
+   struct tm timeinfo;
+   int32_t y, m, d;
+
+   sscanf(date, "%02d/%02d/%04d", &d, &m, &y);
+   memset(&timeinfo, 0, sizeof(struct tm));
+   timeinfo.tm_year = y - 1900;
+   timeinfo.tm_mon = m - 1;
+   timeinfo.tm_mday = d;
+
+   return mktime(&timeinfo);
+}
 
 static int32_t reccmp(const void *r1, const void *r2)
 {
@@ -783,8 +790,8 @@ static int32_t nagra2_card_info(struct s_reader * reader)
 	}
         if(reader->is_tiger)
         {
-	  cs_ri_log(reader, "Activation Date : %s", tiger_date(reader->ActivationDate, 0, currdate));
-	  cs_ri_log(reader, "Expiry Date : %s", tiger_date(reader->ExpiryDate, 0, currdate));
+	  cs_ri_log(reader, "Activation Date : %s", nagra_datetime(reader, reader->ActivationDate, 0, currdate, 0));
+	  cs_ri_log(reader, "Expiry Date : %s", nagra_datetime(reader, reader->ExpiryDate, 0, currdate, &reader->card_valid_to));
         }
         if (reader->nagra_read && reader->is_tiger && memcmp(reader->rom, "NCMED", 5) == 0)
         {
@@ -818,7 +825,7 @@ static int32_t nagra2_card_info(struct s_reader * reader)
                        {
                           int32_t val_offs = 0;
                           char tmp[52];
-                          tiger_date(&cta_res[j+6], 0, records[num_records].date2);
+                          nagra_datetime(reader, &cta_res[j+6], 0, records[num_records].date2, 0);
 
                           switch (cta_res[j+1])
                           {
@@ -827,12 +834,12 @@ static int32_t nagra2_card_info(struct s_reader * reader)
                              case 0x20:
                              case 0x21:
                              case 0x29:
-                                tiger_date(&cta_res[j+8], 0, records[num_records].date1);
+                                nagra_datetime(reader, &cta_res[j+8], 0, records[num_records].date1, 0);
                                 val_offs = 1;
                                 break;
 
                              case 0x80:
-                                tiger_date(&cta_res[j+6], 0, records[num_records].date1);
+                                nagra_datetime(reader, &cta_res[j+6], 0, records[num_records].date1, 0);
                                 val_offs = 1;
                                 break;
 
@@ -869,23 +876,31 @@ static int32_t nagra2_card_info(struct s_reader * reader)
                  {
                     case 0x00:
                     case 0x01: 
-                       if( (reader->nagra_read == 2) && (reccmp(records[i].date2,currdate) >= 0) )
-                         cs_ri_log(reader, "Tier : %04X, expiry date: %s %s",
-                                   records[i].value, records[i].date2, get_tiername(records[i].value, reader->caid, tiername));
-                       else if(reader->nagra_read == 1)
+                       if (reccmp(records[i].date2,currdate) >= 0)
                        {
-                         euro = (records[i].price / 100);
-                         cs_ri_log(reader, "Activation     : ( %04X ) from %s to %s  (%3d euro) %s",
-                                   records[i].value, records[i].date1, records[i].date2, euro, get_tiername(records[i].value, reader->caid, tiername));
+                          if (reader->nagra_read == 2)
+                             cs_ri_log(reader, "Tier : %04X, expiry date: %s %s",
+                                       records[i].value, records[i].date2, get_tiername(records[i].value, reader->caid, tiername));
+                          else if (reader->nagra_read == 1)
+                          {
+                             euro = (records[i].price / 100);
+                             cs_ri_log(reader, "Activation     : ( %04X ) from %s to %s  (%3d euro) %s",
+                                       records[i].value, records[i].date1, records[i].date2, euro, get_tiername(records[i].value, reader->caid, tiername));
+                          }
+                          cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), records[i].value, 0, tiger_date2time(records[i].date1), tiger_date2time(records[i].date2), 4);
                        }
                        break;
                  
                     case 0x20:
                     case 0x21:
-                       if( (reader->nagra_read == 2) && (reccmp(records[i].date2,currdate) >= 0) )
-                       {                         
-                         cs_ri_log(reader, "Tier : %04X, expiry date: %s %s",
-                                   records[i].value, records[i].date2, get_tiername(records[i].value, reader->caid, tiername));
+                       if (reccmp(records[i].date2,currdate) >= 0)
+                       {
+                          if (reader->nagra_read == 2)
+                          {                         
+                             cs_ri_log(reader, "Tier : %04X, expiry date: %s %s",
+                                       records[i].value, records[i].date2, get_tiername(records[i].value, reader->caid, tiername));
+                          }
+                          cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), records[i].value, 0, tiger_date2time(records[i].date1), tiger_date2time(records[i].date2), 4);
                        }
                        break;
                  }
