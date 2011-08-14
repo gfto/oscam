@@ -197,7 +197,7 @@ static int32_t get_log_header(int32_t m, char *txt)
 		return pos + snprintf(txt+pos, LOG_BUF_SIZE-pos, "%8X%-3.3s ", cl?cl->tid:0, "");
 }
 
-static void write_to_log(char *txt, int8_t lock, int32_t header_len)
+static void write_to_log(char *txt, int8_t lock, int32_t header_len __attribute__((unused)))
 {
 	char sbuf[16];
 	struct s_client *cur_cl = cur_client();
