@@ -200,6 +200,7 @@ static void chk_caidtab(char *caidasc, CAIDTAB *ctab)
 	memcpy(ctab, &newctab, sizeof(CAIDTAB));
 }
 
+#ifdef WITH_LB
 static void chk_caidvaluetab(char *lbrlt, CAIDVALUETAB *tab, int32_t minvalue)
 {
 		int32_t i;
@@ -224,6 +225,7 @@ static void chk_caidvaluetab(char *lbrlt, CAIDVALUETAB *tab, int32_t minvalue)
 		}
 		memcpy(tab, &newtab, sizeof(CAIDVALUETAB));
 }
+#endif
 
 static void chk_tuntab(char *tunasc, TUNTAB *ttab)
 {
