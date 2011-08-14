@@ -2466,11 +2466,13 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					tpl_addVar(vars, TPLADD, "READERCARDVALIDTO", "n/a");
 				}
 
+				/*
 				if (rdr->irdId[0]){
 					tpl_printf(vars, TPLAPPEND, "READERIRDID", "%s", rdr->irdId);
 				} else {
 					tpl_addVar(vars, TPLADD, "READERIRDID", "n/a");
 				}
+				*/
 
 				if(rdr->card_atr_length)
 					for(i = 0; i < rdr->card_atr_length; i++) tpl_printf(vars, TPLAPPEND, "READERATR", "%02X ", rdr->card_atr[i]);
