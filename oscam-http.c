@@ -2440,8 +2440,8 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 						tpl_printf(vars, TPLADD, "ENTCLASS", "%08X", item->class);
 						tpl_addVar(vars, TPLADD, "ENTTYPE", typetxt[item->type]);
 
-                                                get_tiername((uint16_t)(item->id & 0xFFFF), item->caid, tbuffer);
-                                                tpl_addVar(vars, TPLADD, "ENTRESNAME", tbuffer);
+						get_tiername((uint16_t)(item->id & 0xFFFF), item->caid, tbuffer);
+						tpl_addVar(vars, TPLADD, "ENTRESNAME", tbuffer);
 
 						if ((strcmp(getParam(params, "hideexpired"), "1") != 0) || (item->end > now))
 							tpl_addVar(vars, TPLAPPEND, "READERENTENTRY", tpl_getTpl(vars, "ENTITLEMENTITEMBIT"));
@@ -2470,7 +2470,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				}
 
 				if (rdr->irdId[0]){
-					for(i = 0; i < 4; i++)	tpl_printf(vars, TPLAPPEND, "READERIRDID", "%u", rdr->irdId[i]);
+					for(i = 0; i < 4; i++)	tpl_printf(vars, TPLAPPEND, "READERIRDID", "%02X ", rdr->irdId[i]);
 				} else {
 					tpl_addVar(vars, TPLADD, "READERIRDID", "n/a");
 				}
