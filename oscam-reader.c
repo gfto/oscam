@@ -324,9 +324,7 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	time_t t;//, tls;
 	struct s_client *cl = reader->client;
   
-	if(!cl) return -1;
-
-	if(!cl->ecmtask) {
+	if(!cl || !cl->ecmtask) {
 		cs_log("WARNING: casc_process_ecm: ecmtask not a available");
 		return -1;
 	}
@@ -357,7 +355,7 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	cl->pending=pending;
 
 	if (n<0) {
-		cs_log("WARNING: ecm pending table overflow !!");
+		cs_log("WARNING: reader ecm pending table overflow !!");
 		return(-2);
 	}
 
@@ -374,7 +372,7 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	}
 
 	cl->ecmtask[n].rc=10;
-	cs_debug_mask(D_READER, "---- ecm_task %d, idx %d, sflag=%d, level=%d", n, cl->ecmtask[n].idx, sflag, er->level);
+	cs_debug_mask(D_TRACE, "---- ecm_task %d, idx %d, sflag=%d, level=%d", n, cl->ecmtask[n].idx, sflag, er->level);
 
 	cs_ddump_mask(D_ATR, er->ecm, er->l, "casc ecm:");
 	rc=0;
@@ -385,8 +383,6 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 			cl->last_idx = cl->ecmtask[n].idx;
 		reader->last_s = t;   // used for inactive_timeout and reconnect_timeout in TCP reader
 	}
-
-//cs_log("casc_process_ecm 1: last_s=%d, last_g=%d", reader->last_s, reader->last_g);
 
 	if (cl->idx>0x1ffe) cl->idx=1;
 
@@ -419,6 +415,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		// so we could use send_dcw(er->client, er) or write_ecm_answer(reader, er), but send_dcw wont be threadsafe from here cause there may be multiple threads accessing same s_client struct.
 		// maybe rc should be checked before request is sent to reader but i could not find the reason why this is happening now and not in v1.10 (zetack)
 		//send_dcw(cl, er);
+		cs_debug_mask(D_TRACE, "skip ecm %04X reader=%s, rc=%d", er->checksum, reader->label, er->rc);
 		return;
 	}
   
@@ -430,13 +427,12 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 	// cache2
 	if (check_cwcache2(er, reader->grp)) {
+		cs_debug_mask(D_TRACE, "ecm %04X answer from cache reader=%s", er->checksum, reader->label);
 		write_ecm_answer(reader, er, E_CACHE2, 0, er->cw, NULL);
 		return;
 	}
 
 	if (reader->typ & R_IS_CASCADING) {
-		struct s_client *cl = reader->client;
-		if(!cl) return;
 		cl->last_srvid=er->srvid;
 		cl->last_caid=er->caid;
 		casc_process_ecm(reader, er);
