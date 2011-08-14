@@ -2467,7 +2467,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				}
 
 				if (rdr->irdId[0]){
-					for(i = 0; i < 4; i++)	tpl_printf(vars, TPLAPPEND, "READERIRDID", "%c", rdr->irdId[i]);
+					tpl_printf(vars, TPLAPPEND, "READERIRDID", "%s", rdr->irdId);
 				} else {
 					tpl_addVar(vars, TPLADD, "READERIRDID", "n/a");
 				}
