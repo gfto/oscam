@@ -19,7 +19,7 @@ struct llist {
     int32_t count;
     CS_MUTEX_LOCK lock;
     int32_t flag;
-    uint32_t version;
+    uint32_t version;		// updated on every modification of the list - exception is on appends as this should not have impacts on iterations!
 };
 
 typedef struct lliter LL_ITER;
@@ -35,7 +35,7 @@ void ll_destroy_data(LLIST *l); // same as ll_clear_data() but frees up obj allo
 void ll_clear(LLIST *l);        // frees up all llnodes nodes but not data held in obj ptrs
 void ll_clear_data(LLIST *l);   // same as ll_clear_data() but frees up obj allocations as well
 
-void ll_sort(LLIST *l, void *compare); // sorts the list, compare = int func(const T *a, const T *b)
+void **ll_sort(LLIST *l, void *compare, int32_t *size); // sorts the list, compare = int func(const T *a, const T *b)
 LL_NODE *ll_append(LLIST *l, void *obj);                // append obj to llist
 LL_NODE *ll_prepend(LLIST *l, void *obj);               // prepend obj to llist
 

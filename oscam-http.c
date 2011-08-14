@@ -1535,15 +1535,12 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 	time_t lastaccess = 0;
 
 	if (rdr->lb_stat) {
-	
+		int32_t statsize;
 		// @todo alno: sort by click, 0=ascending, 1=descending (maybe two buttons or reverse on second click)
-		sort_stat(rdr, 0);
-		
-		LL_ITER it = ll_iter_create(rdr->lb_stat);
-		READER_STAT *stat = ll_iter_next(&it);
+		READER_STAT **statarray = get_sorted_stat_copy(rdr, 0, &statsize);
 		char channame[32];
-		while (stat) {
-
+		for(; rowcount < statsize; ++rowcount){
+			READER_STAT *stat = statarray[rowcount];
 			if (!(stat->rc == rc2hide)) {
 				struct tm lt;
 				localtime_r(&stat->last_received, &lt);
@@ -1610,11 +1607,8 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 					tpl_addVar(vars, TPLAPPEND, "ECMSTATS", tpl_getTpl(vars, "APIREADERSTATSECMBIT"));
 				}
 			}
-
-		stat = ll_iter_next(&it);
-		rowcount++;
 		}
-
+		free(statarray);
 	} else {
 		tpl_addVar(vars, TPLAPPEND, "READERSTATSROW","<TR><TD colspan=\"8\"> No statistics found </TD></TR>");
 	}
@@ -2173,12 +2167,6 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 #define ENTITLEMENT_PAGE_SIZE 500
 
 static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
-
-	//just to stop the guys open tedious tickets for warnings related to unused variables xD
-	tpl_printf(vars, TPLADD, "ISAPICALL", "%d", apicall);
-	//**************
-
-	/* build entitlements from reader init history */
 	char *reader_ = getParam(params, "label");
 #ifdef MODULE_CCCAM	
 	char *sharelist_ = getParam(params, "globallist");
@@ -2228,19 +2216,18 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 			if (cards) {
 
 				uint8_t serbuf[8];
+				int32_t cardsize, i, count = 0;
 				char provname[83];
 
 				// @todo alno: sort by click, 0=ascending, 1=descending (maybe two buttons or reverse on second click)
-				sort_cards_by_hop(cards, 0);
-				
-                LL_ITER it = ll_iter_create(cards);
-                int32_t offset2 = offset+1;
-                int32_t count = 0;
-                while ((card = ll_iter_move(&it, offset2))) {
-                	offset2 = 1;
-                	if (count == ENTITLEMENT_PAGE_SIZE)
-                		break;
-                	count++;
+				struct cc_card **cardarray = get_sorted_card_copy(cards, 0, &cardsize);
+					
+					for(i = offset; i < cardsize; ++i) {
+					card = cardarray[i];
+
+					if (count == ENTITLEMENT_PAGE_SIZE)
+						break;
+					count++;
                 	
 					if (!apicall) {
 						if (show_global_list)
@@ -2354,6 +2341,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 
 					cardcount++;
 				}
+				free(cardarray);
 				
 				// set previous Link if needed
 				if (offset >= ENTITLEMENT_PAGE_SIZE) {
@@ -2364,7 +2352,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				}
 
 				// set next link if needed
-				if (card) {
+				if (cardsize > count && offset < cardsize) {
 					tpl_printf(vars, TPLAPPEND, "CONTROLS", "<A HREF=\"entitlements.html?offset=%d&globallist=%s&amp;label=%s\"> > NEXT >> </A>",
 							offset + ENTITLEMENT_PAGE_SIZE,
 							getParam(params, "globallist"),
@@ -2372,10 +2360,10 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				}
 
 				if (!apicall) {
-					tpl_printf(vars, TPLADD, "TOTALS", "card count=%d", cardcount);
+					tpl_printf(vars, TPLADD, "TOTALS", "card count=%d", cardsize);
 					tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTCCCAMBIT"));
 				} else {
-					tpl_printf(vars, TPLADD, "APITOTALCARDS", "%d", cardcount);
+					tpl_printf(vars, TPLADD, "APITOTALCARDS", "%d", cardsize);
 				}
 
 			} else {

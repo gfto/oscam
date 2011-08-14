@@ -1222,12 +1222,12 @@ int32_t compare_cards_by_hop_r(struct cc_card **pcard1, struct cc_card **pcard2)
 	return -compare_cards_by_hop(pcard1, pcard2);
 }
 
-void sort_cards_by_hop(LLIST *cards, int32_t reverse)
+struct cc_card **get_sorted_card_copy(LLIST *cards, int32_t reverse, int32_t *size)
 {
 	if (reverse)
-		ll_sort(cards, compare_cards_by_hop_r);
+		return (struct cc_card **)ll_sort(cards, compare_cards_by_hop_r, size);
 	else
-		ll_sort(cards, compare_cards_by_hop);
+		return (struct cc_card **)ll_sort(cards, compare_cards_by_hop, size);
 }
 
 void init_share() {

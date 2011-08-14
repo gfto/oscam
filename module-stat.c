@@ -1150,12 +1150,12 @@ static int compare_stat_r(READER_STAT **ps1, READER_STAT **ps2) {
 	return -compare_stat(ps1, ps2);
 }
 
-void sort_stat(struct s_reader *rdr, int32_t reverse)
+READER_STAT **get_sorted_stat_copy(struct s_reader *rdr, int32_t reverse, int32_t *size)
 {
 	if (reverse)
-		ll_sort(rdr->lb_stat, compare_stat_r);
+		return (READER_STAT **)ll_sort(rdr->lb_stat, compare_stat_r, size);
 	else
-		ll_sort(rdr->lb_stat, compare_stat);
+		return (READER_STAT **)ll_sort(rdr->lb_stat, compare_stat, size);
 }
 
 #endif

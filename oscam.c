@@ -3122,9 +3122,12 @@ void * work_thread(void *ptr) {
 		data = NULL;
 	}
 
-	if (!keep_threads_alive && thread_pipe[1])
-		write(thread_pipe[1], mbuf, 1); //wakeup client check
-
+	if (!keep_threads_alive && thread_pipe[1]){
+		if(write(thread_pipe[1], mbuf, 1) == -1){ //wakeup client check
+			cs_debug_mask(D_TRACE, "Writing to pipe failed (errno=%d %s)", errno, strerror(errno));
+		}
+	}
+	
 	cs_debug_mask(D_TRACE, "ending thread");
 
 	pthread_exit(NULL);
@@ -3364,7 +3367,9 @@ void * client_check(void) {
 
 			if (pfd[i].fd == thread_pipe[0] && (pfd[i].revents & (POLLIN | POLLPRI))) {
 				// a thread ended and cl->pfd should be added to pollfd list again (thread_active==0)
-				read(thread_pipe[0], buf, sizeof(buf));
+				if(read(thread_pipe[0], buf, sizeof(buf)) == -1){
+					cs_debug_mask(D_TRACE, "Reading from pipe failed (errno=%d %s)", errno, strerror(errno));
+				}
 				continue;
 			}
 

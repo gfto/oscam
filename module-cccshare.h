@@ -39,6 +39,6 @@ void send_remove_card_to_clients(struct cc_card *card);
 
 int32_t cc_srv_report_cards(struct s_client *cl);
 
-void sort_cards_by_hop(LLIST *cards, int32_t reverse);
+struct cc_card **get_sorted_card_copy(LLIST *cards, int32_t reverse, int32_t *size);
 #endif /* MODULECCCSHARE_H_ */
 #endif
