@@ -2415,7 +2415,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					S_ENTITLEMENT *item;
 
 					tpl_addVar(vars, TPLAPPEND, "LOGHISTORY", "<BR><BR>New Structure:<BR>");
-					char tbuffer[30];
+					char tbuffer[32];
 					while ((item = ll_iter_next(&itr))) {
 
 						localtime_r(&item->start, &start_t);
@@ -2439,6 +2439,9 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 						tpl_printf(vars, TPLADD, "ENTID", "%08X%08X", (uint32_t)(item->id >> 32), (uint32_t)item->id);
 						tpl_printf(vars, TPLADD, "ENTCLASS", "%08X", item->class);
 						tpl_addVar(vars, TPLADD, "ENTTYPE", typetxt[item->type]);
+
+                                                get_tiername((uint16_t)(item->id & 0xFFFF), item->caid, tbuffer);
+                                                tpl_addVar(vars, TPLADD, "ENTRESNAME", tbuffer);
 
 						if ((strcmp(getParam(params, "hideexpired"), "1") != 0) || (item->end > now))
 							tpl_addVar(vars, TPLAPPEND, "READERENTENTRY", tpl_getTpl(vars, "ENTITLEMENTITEMBIT"));
