@@ -1055,8 +1055,8 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
 #define TPLENTITLEMENTBIT "\
 	<TABLE CLASS=\"stats\">\n\
-		<TR><TH colspan=\"3\">Cardsystem</TH><TH colspan=\"2\">Valid To</TH><TH colspan=\"2\">&nbsp;</TH></TR>\n\
-		<TR CLASS=\"e_header\"><TD colspan=\"3\">##READERCSYSTEM##</TD><TD colspan=\"2\">##READERCARDVALIDTO##</TD><TD colspan=\"2\">&nbsp;</TD></TR>\n\
+		<TR><TH colspan=\"3\">Cardsystem</TH><TH colspan=\"2\">Valid To</TH><TH colspan=\"2\">IRD ID (nagra)</TH></TR>\n\
+		<TR CLASS=\"e_header\"><TD colspan=\"3\">##READERCSYSTEM##</TD><TD colspan=\"2\">##READERCARDVALIDTO##</TD><TD colspan=\"2\">##READERIRDID##</TD></TR>\n\
 		<TR><TH colspan=\"2\">Serial</TH><TH colspan=\"2\">Rom</TH><TH colspan=\"3\">ATR</TH></TR>\n\
 		<TR CLASS=\"e_header\"><TD colspan=\"2\">##READERSERIAL##</TD><TD colspan=\"2\">##READERROM##</TD><TD colspan=\"3\">##READERATR##</TD></TR>\n\
 		<TR><TH>Type</TH><TH>Caid</TH><TH>Provid</TH><TH>ID</TH><TH>Class</TH><TH>Start Date</TH><TH>Expire Date</TH></TR>\n\
