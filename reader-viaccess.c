@@ -694,15 +694,17 @@ static int32_t viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 	int32_t emmdatastart=7;
 
 	if (ep->emm[1] == 0x01) { // emm from cccam
-		emmdatastart=10;
+		emmdatastart=12;
 		ep->emm[1] = 0x70; // (& 0x0f) of this byte is length, so 0x01 would increase the length by 256
-		ep->emm[2] -= 3; // last 3 bytes are garbage
+		ep->emm[2] -= 1;
 		if (ep->type == SHARED) {
 			// build missing 0x90 nano from provider at serial position
 			memcpy(ep->emm+7, ep->emm+3, 3);
 			ep->emm[5] = 0x90;
 			ep->emm[6] = 0x03;
 			ep->emm[9] |= 0x01;
+			ep->emm[10] = 0x9E;
+            ep->emm[11] = 0x20; 
 			emmdatastart = 5;
 		}
 	}
