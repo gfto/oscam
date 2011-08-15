@@ -22,10 +22,10 @@ static void _destroy(LLIST *l)
 	}
 }
 
-LLIST *ll_create()
+LLIST *ll_create(const char *name)
 {
     LLIST *l = cs_malloc(&l, sizeof(LLIST), 0);
-    cs_lock_create(&l->lock, 5, "ll_lock");
+    cs_lock_create(&l->lock, 5, name);
     return l;
 }
 
@@ -97,7 +97,7 @@ static void ll_clear_int(LLIST *l, int32_t clear_data)
     LL_NODE *n=l->initial, *nxt;
     while (n) {
     	nxt = n->nxt;
-    	if (n && !n->flag++) {
+    	if (n) {
     		if (clear_data)
     			add_garbage(n->obj);
     		add_garbage(n);
@@ -212,22 +212,22 @@ void *ll_iter_move(LL_ITER *it, int32_t offset)
 	return NULL;
 }
 
-void *ll_iter_peek(LL_ITER *it, int32_t offset)
+void *ll_iter_peek(const LL_ITER *it, int32_t offset)
 {
 	if (it && it->l) {
-		cs_readlock(&it->l->lock);
+		cs_readlock(&((LL_ITER*)it)->l->lock);
 		
-	    LL_NODE *n = it->cur;
-	    int32_t i;
+		LL_NODE *n = it->cur;
+		int32_t i;
 
-	    for (i = 0; i < offset; i++) {
-	    	if (n)
-            	n = n->nxt;
-			else 
+		for (i = 0; i < offset; i++) {
+			if (n)
+				n = n->nxt;
+			else
 				break;
 		}
-		cs_readunlock(&it->l->lock);
-	    
+		cs_readunlock(&((LL_ITER*)it)->l->lock);
+
 		if (!n)
 			return NULL;
 		return n->obj;
@@ -271,7 +271,7 @@ void *ll_iter_remove(LL_ITER *it)
 	void *obj = NULL;
 	if (it) {		
 		LL_NODE *del = it->cur;
-		if (del && !del->flag++) { //preventing duplicate free because of multiple threads
+		if (del) {
 			obj = del->obj;
 			LL_NODE *prv = it->prv;
 			cs_writelock(&it->l->lock);
@@ -282,7 +282,10 @@ void *ll_iter_remove(LL_ITER *it)
 					prv = n;
 					n = n->nxt;
 				}
-				if(n != del) return NULL;
+				if(n != del) {
+					cs_writeunlock(&it->l->lock);
+					return NULL;
+				}
 			}
 			
 			if (prv)
@@ -319,7 +322,7 @@ int32_t ll_iter_move_first(LL_ITER *it)
 	int32_t moved = 0;
 	if (it) {	
 		LL_NODE *move = it->cur;
-		if (move && !move->flag++) { //preventing duplicate free because of multiple threads
+		if (move) {
 			LL_NODE *prv = it->prv;
 			cs_writelock(&it->l->lock);
 			if(it->ll_version != it->l->version || !prv){		// List has been modified so it->prv might be wrong!
@@ -329,7 +332,10 @@ int32_t ll_iter_move_first(LL_ITER *it)
 					prv = n;
 					n = n->nxt;
 				}
-				if(n != move) return moved;
+				if(n != move) {
+					cs_writeunlock(&it->l->lock);
+					return moved;
+				}
 			}
 			
 			if (prv)
@@ -357,7 +363,7 @@ void ll_iter_remove_data(LL_ITER *it)
     add_garbage(obj);
 }
 
-int32_t ll_count(LLIST *l)
+int32_t ll_count(const LLIST *l)
 {
     if (!l)
       return 0;
@@ -365,18 +371,18 @@ int32_t ll_count(LLIST *l)
     return l->count;
 }
 
-void *ll_has_elements(LLIST *l) {
+void *ll_has_elements(const LLIST *l) {
   if (!l || !l->initial)
     return NULL;
   return l->initial->obj;
 }
 
-int32_t ll_contains(LLIST *l, void *obj)
+int32_t ll_contains(const LLIST *l, const void *obj)
 {
     if (!l || !obj)
       return 0;
-    LL_ITER it = ll_iter_create(l);
-    void *data;
+    LL_ITER it = ll_iter_create((LLIST *) l);
+    const void *data;
     while ((data=ll_iter_next(&it))) {
       if (data==obj)
         break;
@@ -384,11 +390,11 @@ int32_t ll_contains(LLIST *l, void *obj)
     return (data==obj);
 }
 
-void *ll_contains_data(LLIST *l, void *obj, uint32_t size) {
+const void *ll_contains_data(const LLIST *l, const void *obj, uint32_t size) {
     if (!l || !obj)
       return NULL; 
-    LL_ITER it = ll_iter_create(l);
-    void *data;
+    LL_ITER it = ll_iter_create((LLIST*) l);
+    const void *data;
     while ((data=ll_iter_next(&it))) {
       if (!memcmp(data,obj,size))
         break;
@@ -396,7 +402,7 @@ void *ll_contains_data(LLIST *l, void *obj, uint32_t size) {
     return data; 
 }
 
-int32_t ll_remove(LLIST *l, void *obj)
+int32_t ll_remove(LLIST *l, const void *obj)
 {
 	int32_t n = 0;
     LL_ITER it = ll_iter_create(l);
@@ -421,13 +427,13 @@ void ll_remove_data(LLIST *l, void *obj)
 }
 
 // removes all elements from l where elements are in elements_to_remove 
-int32_t ll_remove_all(LLIST *l, LLIST *elements_to_remove)
+int32_t ll_remove_all(LLIST *l, const LLIST *elements_to_remove)
 {
 		int32_t count = 0;
 		LL_ITER it1 = ll_iter_create(l);
-		LL_ITER it2 = ll_iter_create(elements_to_remove);
+		LL_ITER it2 = ll_iter_create((LLIST*) elements_to_remove);
 		
-		void *data1, *data2;
+		const void *data1, *data2;
 		while ((data1=ll_iter_next(&it1))) {
 				ll_iter_reset(&it2);
 				while ((data2=ll_iter_next(&it2))) {
@@ -444,19 +450,19 @@ int32_t ll_remove_all(LLIST *l, LLIST *elements_to_remove)
 
 /* Returns an array with all elements sorted, the amount of elements is stored in size. We do not sort the original linked list 
    as this might harm running iterations. Furthermore, we need the array anyway for qsort() to work. Remember to free() the result. */
-void **ll_sort(LLIST *l, void *compare, int32_t *size)
+void **ll_sort(const LLIST *l, void *compare, int32_t *size)
 {
 	if (!l || !l->initial || !compare) return NULL;
 	int32_t i=0;
 	LL_NODE *n;
 	
-	cs_readlock(&l->lock);
+	cs_readlock(&((LLIST*)l)->lock);
 	*size = l->count;
 	void **p = cs_malloc(&p, l->count*sizeof(p[0]), 0);	
 	for (n = l->initial; n; n = n->nxt) {
 		p[i++] = n->obj;
 	}
-	cs_readunlock(&l->lock);
+	cs_readunlock(&((LLIST*)l)->lock);
 	//cs_debug_mask(D_TRACE, "sort: count %d size %d", l->count, sizeof(p[0]));
 	
 	qsort(p, l->count, sizeof(p[0]), compare);

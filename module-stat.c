@@ -127,7 +127,7 @@ void load_stat_from_file()
 			
 			if (rdr != NULL && strcmp(buf, rdr->label) == 0) {
 				if (!rdr->lb_stat)
-					rdr->lb_stat = ll_create();
+					rdr->lb_stat = ll_create("lb_stat");
 					
 				//Duplicate check:
 				if (cs_dblevel == 0xFF) //Only with full debug for faster reading...
@@ -188,7 +188,7 @@ static uint32_t get_prid(uint16_t caid, uint32_t prid)
 READER_STAT *get_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16_t srvid, int16_t ecmlen)
 {
 	if (!rdr->lb_stat)
-		rdr->lb_stat = ll_create();
+		rdr->lb_stat = ll_create("lb_stat");
 
 	prid = get_prid(caid, prid);
 	
@@ -766,9 +766,9 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		}
 	}
  		
-	LLIST * result = ll_create();
-	LLIST * selected = ll_create();
-	LLIST * timeout_services = ll_create();
+	LLIST * result = ll_create("result");
+	LLIST * selected = ll_create("selected");
+	LLIST * timeout_services = ll_create("timeout_services");
 	
 	struct timeb new_nulltime;
 	memset(&new_nulltime, 0, sizeof(new_nulltime));

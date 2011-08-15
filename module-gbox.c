@@ -431,7 +431,7 @@ static void gbox_send_hello(struct s_client *cli)
 
   // TODO build local card list
   if (!gbox->local_cards)
-    gbox->local_cards = ll_create();
+    gbox->local_cards = ll_create("local_cards");
   else
     ll_clear_data(gbox->local_cards);
 
@@ -589,7 +589,7 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
           exp_seq++;
 
           if (gbox->peer.cards) ll_destroy_data(gbox->peer.cards);
-          gbox->peer.cards = ll_create();
+          gbox->peer.cards = ll_create("peer.cards");
 
           int32_t checkcode_len = 7;
           int32_t hostname_len = data[payload_len - 1];

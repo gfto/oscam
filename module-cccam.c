@@ -1626,10 +1626,10 @@ struct cc_card *read_card(uint8_t *buf, int32_t ext) {
 
     int32_t nprov, nassign = 0, nreject = 0, offset = 21;
 
-	card->providers = ll_create();
-	card->badsids = ll_create();
-	card->goodsids = ll_create();
-	card->remote_nodes = ll_create();
+	card->providers = ll_create("providers");
+	card->badsids = ll_create("badsids");
+	card->goodsids = ll_create("goodsids");
+	card->remote_nodes = ll_create("remote_nodes");
 	card->id = b2i(4, buf);
 	card->remote_id = b2i(4, buf + 4);
 	card->caid = b2i(2, buf + 8);
@@ -2726,7 +2726,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	cc = cs_malloc(&cc, sizeof(struct cc_data), QUITERROR);
 	cl->cc = cc;
 	memset(cl->cc, 0, sizeof(struct cc_data));
-	cc->extended_ecm_idx = ll_create();
+	cc->extended_ecm_idx = ll_create("extended_ecm_idx");
 
 	cc_init_locks(cc);
 	uint8_t *buf = cc->send_buffer;
@@ -2960,10 +2960,10 @@ int32_t cc_cli_connect(struct s_client *cl) {
 		cc = cs_malloc(&cc, sizeof(struct cc_data), QUITERROR);
 		memset(cc, 0, sizeof(struct cc_data));
 		cc_init_locks(cc);
-		cc->cards = ll_create();
+		cc->cards = ll_create("cards");
 		cl->cc = cc;
-		cc->pending_emms = ll_create();
-		cc->extended_ecm_idx = ll_create();
+		cc->pending_emms = ll_create("pending_emms");
+		cc->extended_ecm_idx = ll_create("extended_ecm_idx");
 	} else {
 		cc_init_locks(cc);
 		cc_free_cardlist(cc->cards, FALSE);

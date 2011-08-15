@@ -1005,7 +1005,7 @@ static void write_msg(MAILMSG *msg, uint32_t baseyear)
 
 static void msgs_init(uint32_t baseyear)
 {
-   vg_msgs = ll_create();
+   vg_msgs = ll_create("vg_msgs");
    FILE *fp = fopen(cfg.mailfile, "r");
    if (fp == 0)
       return;

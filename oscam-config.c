@@ -1799,7 +1799,7 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		account->autoau = 0;
 
 		if (!account->aureader_list)
-			account->aureader_list = ll_create();
+			account->aureader_list = ll_create("aureader_list");
 
 		if(value && value[0] == '1') {
 			account->autoau = 1;
@@ -4566,7 +4566,7 @@ int32_t init_readerdb()
 	FILE *fp;
 	char *value;
 	char token[MAXLINESIZE];
-	configured_readers = ll_create();
+	configured_readers = ll_create("configured_readers");
 
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_srvr);
 	if (!(fp=fopen(token, "r"))) {

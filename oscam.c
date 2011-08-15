@@ -71,7 +71,7 @@ int32_t cs_check_v(uint32_t ip, int32_t port, int32_t add) {
 	if (cfg.failbantime) {
 
 		if (!cfg.v_list)
-			cfg.v_list = ll_create();
+			cfg.v_list = ll_create("v_list");
 
 		time_t now = time((time_t)0);
 		LL_ITER itr = ll_iter_create(cfg.v_list);
@@ -942,7 +942,7 @@ static void init_first_client()
 		processUsername = "root";
 
   //Generate 5 ECM cache entries:
-  ecmcache = ll_create();
+  ecmcache = ll_create("ecmcache");
 
   if(!cs_malloc(&first_client, sizeof(struct s_client), -1)){
     fprintf(stderr, "Could not allocate memory for master client, exiting...");
@@ -1772,7 +1772,7 @@ ECM_REQUEST *get_ecmtask()
 				ll_clear(save);
 				er->matching_rdr = save;
 			} else
-				er->matching_rdr = ll_create();
+				er->matching_rdr = ll_create("matching_rdr");
 
 			//cs_log("client %s ECMTASK %d multi %d ctyp %d", username(cl), n, (ph[cl->ctyp].multi)?CS_MAXPENDING:1, cl->ctyp);
                 }
@@ -3150,7 +3150,7 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 	pthread_mutex_lock(&cl->thread_lock);
 	if (cl->thread_active) {
 		if (!cl->joblist)
-			cl->joblist = ll_create();
+			cl->joblist = ll_create("joblist");
 
 		ll_append(cl->joblist, data);
 		cs_debug_mask(D_TRACE, "add %s job action %d", action > 20 ? "client" : "reader", action);
@@ -3193,7 +3193,7 @@ static void * check_thread(void) {
 	pthread_mutex_init(&check_mutex,NULL);
 	pthread_cond_init(&check_cond,NULL);
 
-	checklist = ll_create();
+	checklist = ll_create("checklist");
 
 	struct timespec timeout;
 	add_ms_to_timespec(&timeout, 30000);
