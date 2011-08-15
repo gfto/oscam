@@ -2021,9 +2021,10 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 			ert->rc = E_TIMEOUT;
 #ifdef WITH_LB
 			if (cfg.lb_mode) {
-				LL_NODE *ptr;
-				for (ptr = ert->matching_rdr?ert->matching_rdr->initial:NULL; ptr ; ptr = ptr->nxt)
-					send_reader_stat((struct s_reader *)ptr->obj, ert, E_TIMEOUT);
+				LL_ITER it = ll_iter_create(ert->matching_rdr);
+				struct s_reader *rdr;
+				while ((rdr = (struct s_reader *) ll_iter_next(&it)))
+					send_reader_stat(rdr, ert, E_TIMEOUT);
 			}
 #endif
 			break;
@@ -2036,10 +2037,9 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 			if (ll_has_elements(ert->matching_rdr)) {//we have still another chance
 				if (cfg.preferlocalcards && !ert->locals_done) {
 					ert->locals_done=1;
-					LL_NODE *ptr;
+					LL_ITER it = ll_iter_create(ert->matching_rdr);
 					struct s_reader *rdr;
-					for (ptr = ert->matching_rdr?ert->matching_rdr->initial:NULL; ptr; ptr = ptr->nxt) {
-						rdr = (struct s_reader*)ptr->obj;
+					while ((rdr = (struct s_reader *) ll_iter_next(&it))) {
 						if (!(rdr->typ & R_IS_NETWORK))
 							ert->locals_done=0;
 					}
@@ -2277,12 +2277,10 @@ void request_cw(ECM_REQUEST *er, int32_t flag, int32_t reader_types)
 		er->level=flag;
 	struct s_reader *rdr;
 
-	LL_NODE *ptr;
-	for (ptr = er->matching_rdr?er->matching_rdr->initial:NULL; ptr; ptr = ptr->nxt) {
-	        if (!flag && ptr == er->fallback)
-	          break;
-
-		rdr = (struct s_reader*)ptr->obj;
+	LL_ITER it = ll_iter_create(er->matching_rdr);
+	while ((rdr = (struct s_reader *) ll_iter_next(&it))) {
+		if (!flag && rdr == er->fallback)
+			break;
 
 		int32_t status = 0;
 		//reader_types:
@@ -2511,11 +2509,9 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 			if (matching_reader(er, rdr)) {
 				if (rdr->fallback) {
+					ll_append(er->matching_rdr, rdr);
 					if (er->fallback == NULL) //first fallbackreader to be added
-						er->fallback=ll_append(er->matching_rdr, rdr);
-					else
-						ll_append(er->matching_rdr, rdr);
-
+						er->fallback = rdr;
 				}
 				else {
 					ll_prepend(er->matching_rdr, rdr);
@@ -2538,9 +2534,12 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			get_best_reader(er);
 		}
 #endif
-		LL_NODE *ptr;
-		for (ptr = er->matching_rdr->initial; ptr && ptr != er->fallback; ptr = ptr->nxt)
+		LL_ITER it = ll_iter_create(er->matching_rdr);
+		while ((rdr = (struct s_reader *) ll_iter_next(&it))) {
+			if (rdr == er->fallback)
+				break;
 			er->reader_count++;
+		}
 
 		if (!ll_has_elements(er->matching_rdr)) { //no reader -> not found
 				er->rc = E_NOTFOUND;
@@ -2549,9 +2548,10 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				snprintf(er->msglog, MSGLOGSIZE, "no matching reader");
 		}
 		else
-			if (er->matching_rdr->initial == er->fallback) { //fallbacks only
-					er->fallback = NULL; //switch them
-					er->reader_count = er->reader_avail;
+			ll_iter_reset(&it);
+			if ((struct s_reader *) ll_iter_next(&it) == er->fallback) { //fallbacks only
+				er->fallback = NULL; //switch them
+				er->reader_count = er->reader_avail;
 			}
 
 		//we have to go through matching_reader() to check services!

@@ -645,7 +645,7 @@ typedef struct ecm_request_t {
 	uint32_t		prid;
 	struct s_reader	*selected_reader;
 	LLIST			*matching_rdr;		//list of matching readers
-	LL_NODE			*fallback;			// in *matching_rdr, at position "fallback" the first fallback reader is in the list
+	const struct s_reader	*fallback;		//fallback is the first fallback reader in the list matching_rdr
 	struct s_client	*client;			//contains pointer to 'c' client while running in 'r' client
 	int32_t			cpti;				// client pending table index
 	int32_t			stage;				// processing stage in server module
