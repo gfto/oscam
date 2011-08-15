@@ -663,8 +663,10 @@ typedef struct ecm_request_t {
 	uchar			cw_checked[16];
 #endif
 
-#ifdef MODULE_CCCAM
+#if defined MODULE_CCCAM || defined CS_WITH_DOUBLECHECK
 	struct s_reader 	*origin_reader;
+#endif
+#if defined MODULE_CCCAM
 	void			*origin_card; 		// CCcam preferred card!
 #endif
 
