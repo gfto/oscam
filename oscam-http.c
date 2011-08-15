@@ -856,7 +856,6 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 
 	ll_iter_reset(&itr); //going to iterate all configured readers
 	while ((rdr = ll_iter_next(&itr))) {
-
 		if(rdr->label[0] && rdr->typ) {
 
 			// used for API and WebIf
@@ -1000,7 +999,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 			for (i=0; i<CS_MAX_MOD; i++) {
 				if (ph[i].num && newrdr->typ==ph[i].num) {
 					newrdr->ph=ph[i];
-					newrdr->ph.active=1;
+					if(newrdr->device[0]) newrdr->ph.active=1;
 				}
 			}
 		}

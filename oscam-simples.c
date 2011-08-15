@@ -904,8 +904,6 @@ int32_t hexserialset(struct s_reader *rdr)
 	return 0;
 }
 
-static char *netw_ext_prot[] = { "cccam", "cccam ext", "newcamd524" };
-
 char *reader_get_type_desc(struct s_reader * rdr, int32_t extended __attribute__((unused)))
 {
 	static char *typtxt[] = { "unknown", "mouse", "mouse", "sc8in1", "mp35", "mouse", "internal", "smartreader", "pcsc" };
@@ -914,24 +912,23 @@ char *reader_get_type_desc(struct s_reader * rdr, int32_t extended __attribute__
 	if (rdr->crdr.active==1)
 		return rdr->crdr.desc;
 
-	if (rdr->typ & R_IS_NETWORK) {
+	if (rdr->typ & R_IS_NETWORK || rdr->typ == R_SERIAL) {
 		if (rdr->ph.desc)
 			desc = rdr->ph.desc;
-	} else {
+	} else if (rdr->typ >= 0 && rdr->typ < (int32_t)(sizeof(typtxt)/sizeof(char *))){
 		desc = typtxt[rdr->typ];
 	}
 
 	if ((rdr->typ == R_NEWCAMD) && (rdr->ncd_proto == NCD_524))
-		desc = netw_ext_prot[2];
+		desc = "newcamd524";
 
 #ifdef MODULE_CCCAM
-	else if (rdr->typ == R_CCCAM) {
-		desc = netw_ext_prot[0];
+	else if (extended && rdr->typ == R_CCCAM) {
 		struct s_client *cl = rdr->client;
 		if (cl) {
 			struct cc_data *cc = cl->cc;
 			if (cc && cc->extended_mode)
-				desc = netw_ext_prot[extended];
+				desc = "cccam ext";
 		}
 	}
 #endif
@@ -953,7 +950,7 @@ char *monitor_get_proto(struct s_client *cl)
 #ifdef MODULE_CCCAM
 		case 'c'	:
 			if (cl->cc && ((struct cc_data *)cl->cc)->extended_mode) {
-				ctyp = netw_ext_prot[1];
+				ctyp = "cccam ext";
 				break;
 			}
 #endif
