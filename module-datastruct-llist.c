@@ -452,7 +452,10 @@ int32_t ll_remove_all(LLIST *l, const LLIST *elements_to_remove)
    as this might harm running iterations. Furthermore, we need the array anyway for qsort() to work. Remember to free() the result. */
 void **ll_sort(const LLIST *l, void *compare, int32_t *size)
 {
-	if (!l || !l->initial || !compare) return NULL;
+	if (!l || !l->initial || !compare){
+		*size = 0;
+		return NULL;		
+	}
 	int32_t i=0;
 	LL_NODE *n;
 	
