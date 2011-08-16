@@ -1300,8 +1300,6 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 #endif
 
 #ifdef LIBUSB
-	tpl_addVar(vars, TPLADD, "DEVICEEP", tpl_getTpl(vars, "READERCONFIGDEVICEEPBIT"));
-
 	if(!rdr->device_endpoint) {
 		tpl_addVar(vars, TPLADD, "DEVICEOUTEP0", "selected");
 	} else if (rdr->device_endpoint == 0x82) {
@@ -1309,6 +1307,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	} else if (rdr->device_endpoint == 0x81) {
 		tpl_addVar(vars, TPLADD, "DEVICEOUTEP2", "selected");
 	}
+	tpl_addVar(vars, TPLADD, "DEVICEEP", tpl_getTpl(vars, "READERCONFIGDEVICEEPBIT"));
 #else
 	tpl_addVar(vars, TPLADD, "DEVICEEP", "not avail LIBUSB");
 #endif
