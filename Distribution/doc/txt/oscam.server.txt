@@ -157,9 +157,6 @@ DESCRIPTIONS
 
 	  example: ident = 0100:123456,234567;0200:345678,456789
 
-       provid = ID
-	  define provider ID for reader
-
        class = [!]class[,[!]class]...
 	  define SC specific class in hex for reader
 
