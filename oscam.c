@@ -1115,7 +1115,7 @@ static int32_t start_listener(struct s_module *ph, int32_t port_idx)
 
 	for( i=0; i<ph->ptab->ports[port_idx].ftab.nfilts; i++ ) {
 		int32_t j, pos=0;
-		char buf[120];
+		char buf[30 + (8*ph->ptab->ports[port_idx].ftab.filts[i].nprids)];
 		pos += snprintf(buf, sizeof(buf), "-> CAID: %04X PROVID: ", ph->ptab->ports[port_idx].ftab.filts[i].caid );
 		
 		for( j=0; j<ph->ptab->ports[port_idx].ftab.filts[i].nprids; j++ )
