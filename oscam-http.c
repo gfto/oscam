@@ -1412,11 +1412,11 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	return tpl_getTpl(vars, "READERCONFIG");
 }
 
-#ifdef WITH_LB
 static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 	if(!rdr) return "0";
 
+#ifdef WITH_LB
 	char *stxt[]={"found", "cache1", "cache2", "emu",
 			"not found", "timeout", "sleeping",
 			"fake", "invalid", "corrupt", "no card", "expdate",
@@ -1453,6 +1453,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 					cs_inet6_ntoa(GET_IP()));
 		}
 	}
+#endif
 
 	if (!apicall){
 		tpl_addVar(vars, TPLADD, "LABEL", rdr->label);
@@ -1532,6 +1533,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 	uint64_t ecmcount = 0;
 	time_t lastaccess = 0;
 
+#ifdef WITH_LB
 	if (rdr->lb_stat) {
 		int32_t statsize;
 		// @todo alno: sort by click, 0=ascending, 1=descending (maybe two buttons or reverse on second click)
@@ -1607,9 +1609,9 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 			}
 		}
 		free(statarray);
-	} else {
+	} else
+#endif
 		tpl_addVar(vars, TPLAPPEND, "READERSTATSROW","<TR><TD colspan=\"8\"> No statistics found </TD></TR>");
-	}
 
 	tpl_printf(vars, TPLADD, "ROWCOUNT", "%d", rowcount);
 
@@ -1638,7 +1640,6 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 	else
 		return tpl_getTpl(vars, "APIREADERSTATS");
 }
-#endif
 
 static char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
 	struct s_auth *account, *ptr;
@@ -3674,7 +3675,6 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 			}
 		}
 		return tpl_getTpl(vars, "APISTATUS"); 
-#ifdef WITH_LB
 	} else if (strcmp(getParam(params, "part"), "readerstats") == 0) {
 		if (strcmp(getParam(params, "label"),"")) {
 			struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
@@ -3690,7 +3690,6 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 			tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "no reader selected");
 			return tpl_getTpl(vars, "APIERROR");
 		}
-#endif
 	} else if (strcmp(getParam(params, "part"), "shutdown") == 0) {
 		if ((strcmp(strtolower(getParam(params, "action")), "restart") == 0) ||
 				(strcmp(strtolower(getParam(params, "action")), "shutdown") == 0)){
@@ -4142,9 +4141,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 				case 12: result = send_oscam_script(vars); break;
 				case 13: result = send_oscam_scanusb(vars); break;
 				case 14: result = send_oscam_files(vars, &params, 0); break;
-#ifdef WITH_LB
 				case 15: result = send_oscam_reader_stats(vars, &params, 0); break;
-#endif
 				case 16: result = send_oscam_failban(vars, &params, 0); break;
 				//case  17: js file
 				case 18: result = send_oscam_api(vars, f, &params, keepalive); break; //oscamapi.html
