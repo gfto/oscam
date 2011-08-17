@@ -2547,12 +2547,13 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 					er->rcEx = E2_GROUP;
 				snprintf(er->msglog, MSGLOGSIZE, "no matching reader");
 		}
-		else
+		else {
 			ll_iter_reset(&it);
 			if ((struct s_reader *) ll_iter_next(&it) == er->fallback) { //fallbacks only
 				er->fallback = NULL; //switch them
 				er->reader_count = er->reader_avail;
 			}
+		}
 
 		//we have to go through matching_reader() to check services!
 		if (er->rc == E_UNHANDLED)
