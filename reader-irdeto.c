@@ -523,7 +523,7 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 		case 0:
 			// global emm, 0 bytes addressed
 			ep->type = GLOBAL;
-			cs_debug_mask(D_EMM, "IRDETO EMM: GLOBAL");
+			cs_debug_mask(D_EMM, "IRDETO EMM: GLOBAL base = %02x", base);
 			return TRUE;
 
 		case 2:
@@ -559,10 +559,13 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			memcpy(ep->hexserial, ep->emm + 4, l);
 			cs_hexdump(1, rdr->hexserial, l, dumprdrserial, sizeof(dumprdrserial));
 			cs_hexdump(1, ep->hexserial, l, dumpemmserial, sizeof(dumpemmserial));
-			cs_debug_mask(D_EMM, "IRDETO EMM: UNIQUE l = %d ep = %s rdr = %s", l, 
-					dumpemmserial, dumprdrserial);
+			cs_debug_mask(D_EMM, "IRDETO EMM: UNIQUE l = %d ep = %s rdr = %s base = %02x", l, 
+					dumpemmserial, dumprdrserial, base);
 
-			return (base == rdr->hexserial[3] && !memcmp(ep->emm + 4, rdr->hexserial, l));
+			if (base & 0x10)
+				return (base == rdr->hexserial[3] && !memcmp(ep->emm + 4, rdr->hexserial, l));
+			else
+				return (!memcmp(ep->emm + 4, rdr->hexserial, l));			
 
 		default:
 			ep->type = UNKNOWN;
@@ -594,6 +597,7 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[1]++;
 	idx += 32;
 
+/*
 	filter[idx++]=EMM_GLOBAL;
 	filter[idx++]=0;
 	filter[idx+0]    = 0x82;
@@ -604,6 +608,7 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	memset(filter+idx+2+16, 0xFF, 1);
 	filter[1]++;
 	idx += 32;
+*/
 
 	filter[idx++]=EMM_UNIQUE;
 	filter[idx++]=0;
@@ -636,8 +641,8 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 		filter[idx++]=0;
 		filter[idx+0]    = 0x82;
 		filter[idx+0+16] = 0xFF;
-		// filter[idx+1]    = 0x02; // base = 0, len = 2
-		// filter[idx+1+16] = 0xFF;
+		filter[idx+1]    = 0x02;
+		filter[idx+1+16] = 0x03;
 		memcpy(filter+idx+2, &rdr->prid[i][1], 2);
 		memset(filter+idx+2+16, 0xFF, 2);
 		filter[1]++;
@@ -716,6 +721,8 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 				int32_t acslength=cta_res[cta_lr-1];
 				sc_Acs57_Cmd[4]=acslength;
 				reader_chk_cmd(sc_Acs57_Cmd, acslength+2);
+				if (cta_res[2] != 0)
+					cs_log("[irdeto-reader] EMM write error %02X", cta_res[2]);
 				return OK;
 			} else {
 				const int32_t dataLen = SCT_LEN(emm) - 5 - l;		// sizeof of emm bytes (nanos)
@@ -727,7 +734,7 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 				memcpy(ptr, emm, l);							// copy addr bytes
 				ptr += ADDRLEN; emm += l;
 				memcpy(ptr, &emm[2], dataLen);					// copy emm bytes
-				return(irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr) ? 0 : 1);
+				return(irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr) ? 0 : 1); // TODO: this always returns success cause return code cant be 0
 			}
 		} else
  			cs_debug_mask(D_EMM, "[irdeto-reader] addrlen %d > %d", l, ADDRLEN);
