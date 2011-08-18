@@ -4232,7 +4232,9 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 				}
 
 				if (!rdr->cooldown[0] || !rdr->cooldown[1]) {
-					fprintf(stderr, "cooldown must have 2 values (x,y)! cooldown deactivated\n");
+					fprintf(stderr, "cooldown must have 2 values (x,y) set values %d,%d ! cooldown deactivated\n",
+							rdr->cooldown[0], rdr->cooldown[1]);
+
 					rdr->cooldown[0] = 0;
 					rdr->cooldown[1] = 0;
 				}
