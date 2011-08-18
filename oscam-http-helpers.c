@@ -665,7 +665,7 @@ char *xml_encode(struct templatevars *vars, char *chartoencode) {
 			case '\'': memcpy(encoded + pos, "&apos;", 6); pos+=6; break;
 
 			default:
-				if ( (unsigned int)chartoencode[i] < 32 || (unsigned int)chartoencode[i] > 127 ) {
+				if ( (unsigned int)chartoencode[i] < 32 || (cs_http_use_utf8 != 1 && (unsigned int)chartoencode[i] > 127)) {
 					snprintf(buffer, 7, "&#%d;", chartoencode[i] + 256);
 					memcpy(encoded + pos, buffer, strlen(buffer));
 					pos+=strlen(buffer);

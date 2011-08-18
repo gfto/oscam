@@ -37,6 +37,7 @@ int8_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)rest
 #endif
 int8_t cs_capture_SEGV=0;
 uint16_t cs_waittime = 60;
+uint8_t cs_http_use_utf8 = 0;
 char  cs_tmpdir[200]={0x00};
 pid_t server_pid=0;
 #if defined(LIBUSB)
@@ -295,6 +296,7 @@ static void usage()
   fprintf(stderr, "\t               2 = like 1, but also restart on segmentation faults\n");
 #endif
   fprintf(stderr, "\t-w <secs>  : wait up to <secs> seconds for the system time to be set correctly (default 60)\n");
+  fprintf(stderr, "\t-u         : enable output of web interface in UTF-8 charset. Read documentation before enabling this!\n");
   fprintf(stderr, "\t-h         : show this help\n");
   fprintf(stderr, "\n");
   exit(1);
@@ -3641,7 +3643,7 @@ int32_t main (int32_t argc, char *argv[])
 	0
   };
 
-  while ((i=getopt(argc, argv, "gbsc:t:d:r:w:hm:x"))!=EOF)
+  while ((i=getopt(argc, argv, "gbsuc:t:d:r:w:hm:x"))!=EOF)
   {
 	  switch(i) {
 		  case 'g':
@@ -3676,6 +3678,10 @@ int32_t main (int32_t argc, char *argv[])
 			  break;
 			case 'w':
 				cs_waittime=strtoul(optarg, NULL, 10);
+				break;
+			case 'u':
+				cs_http_use_utf8 = 1;
+				printf("WARNING: Web interface UTF-8 mode enabled. Carefully read documentation as bugs may arise.\n");
 				break;
 		  case 'm':
 				printf("WARNING: -m parameter is deprecated, ignoring it.\n");

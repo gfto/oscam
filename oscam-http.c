@@ -966,7 +966,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 
 		for (i=0; i<CS_MAX_MOD; i++) {
 			if (cardreader[i].desc[0]!=0)
-				tpl_printf(vars, TPLAPPEND, "ADDPROTOCOL", "<option>%s</option>\n", cardreader[i].desc);
+				tpl_printf(vars, TPLAPPEND, "ADDPROTOCOL", "<option>%s</option>\n", xml_encode(vars, cardreader[i].desc));
 		}
 		return tpl_getTpl(vars, "READERS");
 	} else {
@@ -1397,7 +1397,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 #endif
 		default :
 			tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Error: protocol not resolvable</b><BR>");
-			tpl_printf(vars, TPLAPPEND, "MESSAGE", "<b>Error: protocol number: %d readername: %s</b><BR>", rdr->typ, rdr->label);
+			tpl_printf(vars, TPLAPPEND, "MESSAGE", "<b>Error: protocol number: %d readername: %s</b><BR>", rdr->typ, xml_encode(vars, rdr->label));
 			break;
 
 	}
@@ -2156,7 +2156,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		if (!filter || clientcount > 0) {
 			return tpl_getTpl(vars, "APIUSERCONFIGLIST");
 		} else {
-			tpl_printf(vars, TPLADD, "APIERRORMESSAGE", "Invalid client %s", filter);
+			tpl_printf(vars, TPLADD, "APIERRORMESSAGE", "Invalid client %s", xml_encode(vars, filter));
 			return tpl_getTpl(vars, "APIERROR");
 		}
 	}
@@ -3032,7 +3032,7 @@ static char *send_oscam_services_edit(struct templatevars *vars, struct uriparam
 		for (sidtab = cfg.sidtab; sidtab != NULL && strcmp(label, sidtab->label) != 0; sidtab=sidtab->next);
 	}
 
-	tpl_addVar(vars, TPLADD, "LABEL", sidtab->label);
+	tpl_addVar(vars, TPLADD, "LABEL", xml_encode(vars, sidtab->label));
 	tpl_addVar(vars, TPLADD, "LABELENC", urlencode(vars, sidtab->label));
 
 
@@ -4087,6 +4087,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 	
 			tpl_addVar(vars, TPLADD, "CS_VERSION", CS_VERSION);
 			tpl_addVar(vars, TPLADD, "CS_SVN_VERSION", CS_SVN_VERSION);
+			tpl_addVar(vars, TPLADD, "HTTP_CHARSET", cs_http_use_utf8?"UTF-8":"ISO-8859-1");
 			if(cfg.http_refresh > 0 && (pgidx == 3 || pgidx == -1)) {
 				tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg.http_refresh);
 				tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");

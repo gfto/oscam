@@ -343,7 +343,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 <HTML>\n\
 <HEAD>\n\
 	<TITLE>OSCAM ##CS_VERSION## build ###CS_SVN_VERSION##</TITLE>\n\
-	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=ISO-8859-1\">\n\
+	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=##HTTP_CHARSET##\">\n\
 	<link rel=\"stylesheet\" type=\"text/css\" href=\"site.css\">\n\
 	<link href=\"favicon.ico\" rel=\"icon\" type=\"image/x-icon\">\n\
 	<script type=\"text/javascript\" src=\"oscam.js\"></script>\n\
@@ -1827,7 +1827,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##MESSAGE##\
 	<BR><BR>\n\
 	<form action=\"services_edit.html\" method=\"get\">\n\
-		<input name=\"service\" type=\"hidden\" value=\"##LABELENC##\">\n\
+		<input name=\"service\" type=\"hidden\" value=\"##LABEL##\">\n\
 		<TABLE CLASS=\"stats\">\n\
 			<TR><TH COLSPAN=\"2\">Edit Service ##LABEL##</TH></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##services#caid##TPLHELPSUFFIX##caid: </A></TD><TD><input name=\"caid\" type=\"text\" size=\"63\" maxlength=\"160\" value=\"##CAIDS##\"></TD></TR>\n\

@@ -120,6 +120,16 @@ restart level:
 time waiting for system time to be set correctly
 </DL>
 
+<B>-u</B>
+<DL COMPACT><DT><DD>
+enable output of web interface pages as UTF-8 charset.
+Note: If you enable this, you may not use umlauts (or anything above ASCII char 127) in variables anymore
+(especially not in usernames/passwords where you should not use special chars at all as the protocols are
+all not UTF-8 compatible!). Furthermore, some web interface bugs/log bugs may occur which will not be fixed
+(don't report bugs for this). Also note that we can only give support for OSCam if you don't have this enabled
+because of the issues described above. If in doubt, don't enable this.
+</DL>
+
 <A NAME="lbAE">&nbsp;</A>
 <H2>SIGNALS</H2>
 
