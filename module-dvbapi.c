@@ -1157,7 +1157,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		dvbapi_client->last_srvid = demux[demux_id].program_number;
 		dvbapi_client->last_caid = 0;
 		// reset idle-Time
-		dvbapi_client->last=time((time_t)0);
+		dvbapi_client->last=time((time_t*)0);
 	}
 
 	return demux_id;
@@ -1926,7 +1926,7 @@ static void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			}
 
 			// reset idle-Time
-			client->last=time((time_t)0);
+			client->last=time((time_t*)0);
 
 			FILE *ecmtxt;
 			ecmtxt = fopen(ECMINFO_FILE, "w");

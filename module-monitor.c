@@ -246,7 +246,7 @@ static char *monitor_client_info(char id, struct s_client *cl, char *sbuf){
 		int32_t lsec, isec, con, cau, lrt =- 1;
 		time_t now;
 		struct tm lt;
-		now=time((time_t)0);
+		now=time((time_t*)0);
 
 		if	((cfg.mon_hideclient_to <= 0) ||
 				(now-cl->lastecm < cfg.mon_hideclient_to) ||
@@ -311,7 +311,7 @@ static char *monitor_client_info(char id, struct s_client *cl, char *sbuf){
 }
 
 static void monitor_process_info(){
-	time_t now = time((time_t)0);
+	time_t now = time((time_t*)0);
 	char sbuf[256];
 
 	struct s_client *cl, *cur_cl = cur_client();

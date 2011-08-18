@@ -2864,7 +2864,7 @@ void write_versionfile() {
   if (!(fp=fopen(targetfile, "w"))) {
 	  cs_log("Cannot open %s (errno=%d %s)", targetfile, errno, strerror(errno));
   } else {
-	  time_t now = time((time_t)0);
+	  time_t now = time((time_t*)0);
 	  struct tm st;
 	  localtime_r(&now, &st);
 	  fprintf(fp, "Unix starttime: %d\n", (int)now);

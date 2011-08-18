@@ -1999,7 +1999,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 
 	/* List accounts*/
 	char *status, *expired, *classname, *lastchan;
-	time_t now = time((time_t)0);
+	time_t now = time((time_t*)0);
 	int32_t isec = 0, chsec = 0;
 
 	char *filter = NULL;
@@ -2395,7 +2395,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				if (rdr->ll_entitlements) {
 
 					char *typetxt[] = {"", "package", "PPV-Event", "chid", "tier", "class", "PBM", "admin" };
-					time_t now = (time((time_t)0)/84600)*84600;
+					time_t now = (time((time_t*)0)/84600)*84600;
 
 					struct tm start_t, end_t;
 					LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
@@ -2490,7 +2490,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 	int32_t i;
 	char *usr;
 	int32_t lsec, isec, chsec, con, cau = 0;
-	time_t now = time((time_t)0);
+	time_t now = time((time_t*)0);
 	struct tm lt;
 
 	if (strcmp(getParam(params, "action"), "kill") == 0) {
@@ -2806,7 +2806,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 							S_ENTITLEMENT *ent;
 							uint16_t total_ent = 0;
 							uint16_t active_ent = 0;
-							time_t now = (time((time_t)0)/84600)*84600;
+							time_t now = (time((time_t*)0)/84600)*84600;
 							struct tm end_t;
 							
 							tpl_printf(vars, TPLADD, "TMPSPAN", "<SPAN>");
@@ -3531,7 +3531,7 @@ static char *send_oscam_failban(struct templatevars *vars, struct uriparams *par
 	}
 	ll_iter_reset(&itr);
 
-	time_t now = time((time_t)0);
+	time_t now = time((time_t*)0);
 
 	while ((v_ban_entry=ll_iter_next(&itr))) {
 
@@ -3634,7 +3634,7 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 		int32_t i;
 		int32_t isec;
 		int32_t shown;
-		time_t now = time((time_t)0); 
+		time_t now = time((time_t*)0); 
 		char *usr;
 		struct s_client *cl;
 		for (i=0, cl=first_client; cl ; cl=cl->next, i++) {
@@ -4100,7 +4100,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 			tpl_printf(vars, TPLADD, "STARTTIME", "%02d:%02d:%02d", st.tm_hour, st.tm_min, st.tm_sec);
 			tpl_printf(vars, TPLADD, "PROCESSID", "%d", server_pid);
 	
-			time_t now = time((time_t)0);
+			time_t now = time((time_t*)0);
 			// XMLAPI
 			if (pgidx == 18) {
 				char tbuffer [30];
@@ -4391,7 +4391,7 @@ void http_srv() {
 				continue;
 			}
 			setTCPTimeouts(s);
-			cur_client()->last = time((time_t)0); //reset last busy time
+			cur_client()->last = time((time_t*)0); //reset last busy time
 			conn->cl = cur_client();
 #ifdef IPV6SUPPORT
 			if (ipv4fallback)

@@ -36,11 +36,11 @@ void refresh_lcd_file() {
 
 	int8_t iscccam = 0;
 	int32_t seconds = 0, secs = 0, fullmins = 0, mins = 0, fullhours = 0, hours = 0,	days = 0;
-	time_t now = time((time_t)0);
+	time_t now = time((time_t*)0);
 
 
 	while(running) {
-		now = time((time_t)0);
+		now = time((time_t*)0);
 		int16_t cnt = 0, idx = 0, count_r = 0, count_p = 0, count_u = 0;
 		FILE *fpsave;
 

@@ -73,7 +73,7 @@ int32_t cs_check_v(uint32_t ip, int32_t port, int32_t add) {
 		if (!cfg.v_list)
 			cfg.v_list = ll_create("v_list");
 
-		time_t now = time((time_t)0);
+		time_t now = time((time_t*)0);
 		LL_ITER itr = ll_iter_create(cfg.v_list);
 		V_BAN *v_ban_entry;
 		int32_t ftime = cfg.failbantime*60;
@@ -851,7 +851,7 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 					int32_t i;
 					for(i = 0; i < CS_ECM_RINGBUFFER_MAX; i++) {
 						cl->cwlastresptimes[i].duration = 0;
-						cl->cwlastresptimes[i].timestamp = time((time_t)0);
+						cl->cwlastresptimes[i].timestamp = time((time_t*)0);
 						cl->cwlastresptimes[i].rc = 0;
 					}
 					cl->cwlastresptimes_last = 0;
@@ -1415,7 +1415,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 				client->disabled = account->disabled;
 				client->allowedtimeframe[0] = account->allowedtimeframe[0];
 				client->allowedtimeframe[1] = account->allowedtimeframe[1];
-				if(account->firstlogin == 0) account->firstlogin = time((time_t)0);
+				if(account->firstlogin == 0) account->firstlogin = time((time_t*)0);
 				client->failban = account->failban;
 				client->c35_suppresscmd08 = account->c35_suppresscmd08;
 				client->ncd_keepalive = account->ncd_keepalive;
@@ -1856,7 +1856,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	client->cwlastresptime = 1000 * (tpe.time-er->tps.time) + tpe.millitm-er->tps.millitm;
 
 #ifdef WEBIF
-	cs_add_lastresponsetime(client, client->cwlastresptime,time((time_t)0) ,er->rc); // add to ringbuffer
+	cs_add_lastresponsetime(client, client->cwlastresptime,time((time_t*)0) ,er->rc); // add to ringbuffer
 #endif
 
 	if (er_reader){
@@ -1864,7 +1864,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		if(er_cl){
 			er_cl->cwlastresptime = client->cwlastresptime;
 #ifdef WEBIF
-			cs_add_lastresponsetime(er_cl, client->cwlastresptime,time((time_t)0) ,er->rc);
+			cs_add_lastresponsetime(er_cl, client->cwlastresptime,time((time_t*)0) ,er->rc);
 #endif
 			er_cl->last_srvidptr=client->last_srvidptr;
 		}
@@ -2297,7 +2297,7 @@ void request_cw(ECM_REQUEST *er, int32_t flag, int32_t reader_types)
 void get_cw(struct s_client * client, ECM_REQUEST *er)
 {
 	int32_t i, j, m;
-	time_t now = time((time_t)0);
+	time_t now = time((time_t*)0);
 
 	client->lastecm = now;
 
@@ -2660,7 +2660,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		cs_debug_mask(D_EMM, "emmtype %s. Reader %s has serial %s.", typtext[ep->type], aureader->label, cs_hexdump(0, aureader->hexserial, 8, tmp, sizeof(tmp)));
 		cs_ddump_mask(D_EMM, ep->hexserial, 8, "emm UA/SA:");
 
-		client->last=time((time_t)0);
+		client->last=time((time_t*)0);
 		if ((1<<(ep->emm[0] % 0x80)) & aureader->s_nano) { //should this nano be saved?
 			char token[256];
 			char *tmp2;
@@ -2731,7 +2731,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			continue;
 		}
 
-		client->lastemm = time((time_t)0);
+		client->lastemm = time((time_t*)0);
 
 		client->emmok++;
 		if (client->account)
@@ -3021,7 +3021,7 @@ void * work_thread(void *ptr) {
 					break;
 				}
 
-				cl->last=time((time_t)0);
+				cl->last=time((time_t*)0);
 				idx=reader->ph.c_recv_chk(cl, dcw, &rc, mbuf, rc);
 
 				if (idx<0) break;  // no dcw received

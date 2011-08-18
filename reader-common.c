@@ -185,7 +185,7 @@ void reader_card_info(struct s_reader * reader)
 	if ((reader->card_status == CARD_NEED_INIT) || (reader->card_status == CARD_INSERTED)) {
 
 		if (reader->client)
-			reader->client->last=time((time_t)0);
+			reader->client->last=time((time_t*)0);
 
 		cs_ri_brk(reader, 0);
 
@@ -346,7 +346,7 @@ int32_t reader_ecm(struct s_reader * reader, ECM_REQUEST *er, struct s_ecm_answe
 		if (reader->client) {
 			reader->client->last_srvid=er->srvid;
 			reader->client->last_caid=er->caid;
-			reader->client->last=time((time_t)0);
+			reader->client->last=time((time_t*)0);
 		}
 
 		if (reader->csystem.active && reader->csystem.do_ecm) 
