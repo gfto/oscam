@@ -4220,7 +4220,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			rdr->cooldown[1] = 0;
 			return;
 		} else {
-			for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 3) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
+			for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 2) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
 				switch(i) {
 					case 0:
 						rdr->cooldown[0] = atoi(ptr);
