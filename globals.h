@@ -1077,6 +1077,9 @@ struct s_reader  									//contains device info, reader info and card info
 	//ratelimit
 	int32_t			ratelimitecm;
 	int32_t			ratelimitseconds;
+	int32_t			cooldown[2];
+	int8_t			cooldownstate;
+	time_t			cooldowntime;
 	struct ecmrl	rlecmh[MAXECMRATELIMIT];
 	int8_t			fix_9993;
 

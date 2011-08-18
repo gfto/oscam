@@ -2840,6 +2840,11 @@ int32_t write_server()
 				fprintf_conf(f, "ratelimitecm", "%d\n", rdr->ratelimitecm);
 				fprintf_conf(f, "ratelimitseconds", "%d\n", rdr->ratelimitseconds);
 			}
+
+			if ((rdr->cooldown[0] || cfg.http_full_cfg) && isphysical) {
+				fprintf_conf(f, "cooldown", "%d,%d\n", rdr->cooldown[0], rdr->cooldown[1]);
+			}
+
 			fprintf(f, "\n\n");
 		}
 	}
@@ -4204,6 +4209,34 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			g = atoi(ptr);
 			if ((g>0) && (g<65)) {
 				rdr->grp |= (((uint64_t)1)<<(g-1));
+			}
+		}
+		return;
+	}
+
+	if (!strcmp(token, "cooldown")) {
+		if(strlen(value) == 0) {
+			rdr->cooldown[0] = 0;
+			rdr->cooldown[1] = 0;
+			return;
+		} else {
+			for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 3) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
+				switch(i) {
+					case 0:
+						rdr->cooldown[0] = atoi(ptr);
+						break;
+
+					case 1:
+						rdr->cooldown[1] = atoi(ptr);
+						break;
+				}
+
+				if (!rdr->cooldown[0] || !rdr->cooldown[1]) {
+					fprintf(stderr, "cooldown must have 2 values (x,y)! cooldown deactivated\n");
+					rdr->cooldown[0] = 0;
+					rdr->cooldown[1] = 0;
+				}
+
 			}
 		}
 		return;

@@ -1,7 +1,7 @@
 #include "globals.h"
 #include "reader-common.h"
 
-int32_t logfd=0;
+int32_t logfd = 0;
 
 void reader_do_idle(struct s_reader * reader);
 
@@ -441,7 +441,29 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	}
 
 #ifdef WITH_CARDREADER
-	if (reader->ratelimitecm) {
+
+	if (reader->cooldown[0] && reader->ratelimitecm){
+		if (!reader->cooldowntime)
+			reader->cooldowntime = time((time_t)0);
+
+		time_t now = time((time_t)0);
+
+		if (reader->cooldownstate == 1) {
+			if (now - reader->cooldowntime >= reader->cooldown[1]) {
+				reader->cooldownstate = 0;
+				reader->cooldowntime = now;
+				cs_log("%s cooldown OFF", reader->label);
+			}
+		} else {
+			if (now - reader->cooldowntime >= reader->cooldown[0]) {
+				reader->cooldownstate = 1;
+				reader->cooldowntime = now;
+				cs_log("%s cooldown ON", reader->label);
+			}
+		}
+	}
+
+	if ((reader->ratelimitecm && !reader->cooldown[0]) || reader->cooldownstate == 1 ) {
 		cs_debug_mask(D_READER, "ratelimit idx:%d rc:%d caid:%04X srvid:%04X",er->idx,er->rc,er->caid,er->srvid);
 		int32_t foundspace=-1;
 		int32_t h;
