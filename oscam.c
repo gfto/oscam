@@ -3029,13 +3029,15 @@ void * work_thread(void *ptr) {
 
 				reader->last_g=time((time_t*)0); // for reconnect timeout
 
-				for (i=0; i<CS_MAXPENDING; i++) {
+				for (i=0, n=0; i<CS_MAXPENDING && n == 0; i++) {
 					if (cl->ecmtask[i].idx==idx) {
 						cl->pending--;
 						casc_check_dcw(reader, i, rc, dcw);
-						break;
+						n++;
 					}
 				}
+				if (!n)
+					cs_log("WARNING: reader ecm task not found!");
 				break;
 			case ACTION_READER_REMOTELOG:
 				casc_do_sock_log(reader);
@@ -3074,7 +3076,7 @@ void * work_thread(void *ptr) {
 			case ACTION_CLIENT_UDP:
 				n = ph[cl->ctyp].recv(cl, data->ptr, data->len);
 				if (n<0) {
-					cl->init_done=0;
+					free(data->ptr);
 					break;
 				}
 				ph[cl->ctyp].s_handler(cl, data->ptr, n);
