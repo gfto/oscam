@@ -4222,24 +4222,24 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		} else {
 			for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 2) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
 				switch(i) {
-					case 0:
-						rdr->cooldown[0] = atoi(ptr);
-						break;
+				case 0:
+					rdr->cooldown[0] = atoi(ptr);
+					break;
 
-					case 1:
-						rdr->cooldown[1] = atoi(ptr);
-						break;
+				case 1:
+					rdr->cooldown[1] = atoi(ptr);
+					break;
 				}
-
-				if (!rdr->cooldown[0] || !rdr->cooldown[1]) {
-					fprintf(stderr, "cooldown must have 2 values (x,y) set values %d,%d ! cooldown deactivated\n",
-							rdr->cooldown[0], rdr->cooldown[1]);
-
-					rdr->cooldown[0] = 0;
-					rdr->cooldown[1] = 0;
-				}
-
 			}
+
+			if (!rdr->cooldown[0] || !rdr->cooldown[1]) {
+				fprintf(stderr, "cooldown must have 2 values (x,y) set values %d,%d ! cooldown deactivated\n",
+						rdr->cooldown[0], rdr->cooldown[1]);
+
+				rdr->cooldown[0] = 0;
+				rdr->cooldown[1] = 0;
+			}
+
 		}
 		return;
 	}
