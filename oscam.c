@@ -3154,8 +3154,10 @@ static void * check_thread(void) {
 	struct s_ecm *ecmc;
 	time_t ecm_timeout, now;
 
+#ifdef CS_ANTICASC
 	cs_ftime(&ac_time);
 	add_ms_to_timeb(&ac_time, cfg.ac_stime*60*1000);
+#endif
 
 	cs_ftime(&ecmc_time);
 	add_ms_to_timeb(&ecmc_time, 60000);
