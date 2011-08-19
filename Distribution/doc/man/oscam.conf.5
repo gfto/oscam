@@ -241,8 +241,8 @@ load balancing reopen readers mode:
 .RS 3n
 set count of best readers per CAIDs for load balancing, wildcard CAIDs with two-digit CAIDs possible, default:none
 
- example: lb_nbest_percaid = 12:100,34:200,5678:300 
-          (wildcard CAIDs 12xx and 34xx)
+ example: lb_nbest_percaid = 0100:4,0200:3,03:2,04:1
+          (wildcard CAIDs 03xx and 04xx)
 .RE
 .PP
 \fBlb_min_ecmcount\fP = \fBcounts\fP
@@ -555,7 +555,7 @@ default key for newcamd client encryption, default:none
 .RS 3n
 TCP port/DES key/CAID/ident definitions, default:none
 
- example: port = 10000@0100:100000;20000{0102030405060708091011121314}@0200:200000,300000,400000
+ example: port = 10000@0100:100000;20000{0102030405060708091011121314}@0200:200000,300000
 
 Each CAID requires a separate port. If you don't specify a DES key for a port, the default DES Key will be used.
 .RE

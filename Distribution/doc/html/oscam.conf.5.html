@@ -328,8 +328,8 @@ load balancing reopen readers mode:
 <DL COMPACT><DT><DD>
 set count of best readers per CAIDs for load balancing, wildcard CAIDs with two-digit CAIDs possible, default:none
 <P>
-<BR>&nbsp;example:&nbsp;lb_nbest_percaid&nbsp;=&nbsp;12:100,34:200,5678:300&nbsp;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(wildcard&nbsp;CAIDs&nbsp;12xx&nbsp;and&nbsp;34xx)
+<BR>&nbsp;example:&nbsp;lb_nbest_percaid&nbsp;=&nbsp;0100:4,0200:3,03:2,04:1
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(wildcard&nbsp;CAIDs&nbsp;03xx&nbsp;and&nbsp;04xx)
 </DL>
 
 <P>
@@ -763,7 +763,7 @@ default key for newcamd client encryption, default:none
 <DL COMPACT><DT><DD>
 TCP port/DES key/CAID/ident definitions, default:none
 <P>
-<BR>&nbsp;example:&nbsp;port&nbsp;=&nbsp;<A HREF="mailto:10000@0100">10000@0100</A>:100000;20000{0102030405060708091011121314}@0200:200000,300000,400000
+<BR>&nbsp;example:&nbsp;port&nbsp;=&nbsp;<A HREF="mailto:10000@0100">10000@0100</A>:100000;20000{0102030405060708091011121314}@0200:200000,300000
 <P>
 Each CAID requires a separate port. If you don't specify a DES key for a port, the default DES Key will be used.
 </DL>
