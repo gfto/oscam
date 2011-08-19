@@ -517,6 +517,15 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR newatr)
     return ERROR;
     }
 
+  if (reader->ins7E[0x1A])
+  {
+    static const uint8_t ins7E[5] = { 0xD1,0x7E,0x10,0x00,0x1A };
+    l=do_cmd(reader,ins7E,reader->ins7E,NULL,cta_res);
+    if(l<0 || !status_ok(cta_res)) {
+      cs_log("classD1 ins7E: failed");
+      return ERROR;
+      }
+  }
 
   /* get parental lock settings */
   static const unsigned char ins74e[5] = {0xD0,0x74,0x0E,0x00,0x00};

@@ -2687,6 +2687,12 @@ int32_t write_server()
 			} else if(cfg.http_full_cfg && isphysical)
 				fprintf_conf(f, "rsakey", "\n");
 
+			if (rdr->ins7E[0x1A] && isphysical) {
+				char tmp[0x1A*2+1];
+				fprintf_conf(f, "ins7e", "%s\n", cs_hexdump(0, rdr->ins7E, 0x1A, tmp, sizeof(tmp)));
+			} else if (cfg.http_full_cfg && isphysical)
+				fprintf_conf(f, "ins7e", "\n");
+
 			if ((rdr->force_irdeto || cfg.http_full_cfg) && isphysical) {
 				fprintf_conf(f, "force_irdeto", "%d\n", rdr->force_irdeto);
 			}
@@ -3922,6 +3928,18 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			}
 			return;
 		}
+	}
+
+	if (!strcmp(token, "ins7e")) {
+		int32_t len = strlen(value);
+		if (len != 0x1A*2 || key_atob_l(value, rdr->ins7E, len)) {
+			if (len > 0)
+				fprintf(stderr, "Configuration reader: Error in ins7E\n");
+			memset(rdr->ins7E, 0, sizeof(rdr->ins7E));
+		}
+		else
+			rdr->ins7E[0x1A] = 1; // found and correct
+		return;
 	}
 
 	if (!strcmp(token, "boxkey")) {

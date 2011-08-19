@@ -1082,6 +1082,7 @@ struct s_reader  									//contains device info, reader info and card info
 	time_t			cooldowntime;
 	struct ecmrl	rlecmh[MAXECMRATELIMIT];
 	int8_t			fix_9993;
+	uint8_t			ins7E[0x1A+1];
 
 	struct s_reader *next;
 };
