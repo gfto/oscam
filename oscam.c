@@ -2857,6 +2857,7 @@ static void check_status(struct s_client *cl) {
 	struct s_reader *rdr = cl->reader;
 
 	switch (cl->typ) {
+		case 'm':
 		case 'c':
 			//check clients for exceeding cmaxidle by checking cl->last
 			if (cl->last && cfg.cmaxidle && (time(NULL) - cl->last) > (time_t)cfg.cmaxidle) {
