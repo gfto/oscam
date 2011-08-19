@@ -1382,14 +1382,6 @@ struct s_data {
 	uint16_t len;
 };
 
-struct s_check {
-	struct s_client *cl;
-	int8_t action;
-	void *ptr;
-	int32_t len;
-	struct timeb t_check;
-};
-
 typedef struct reader_stat_t
 {
 	int32_t			rc;

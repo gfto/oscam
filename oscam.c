@@ -52,12 +52,8 @@ CS_MUTEX_LOCK fakeuser_lock;
 CS_MUTEX_LOCK ecmcache_lock;
 pthread_key_t getclient;
 
-pthread_mutex_t	check_mutex;
-pthread_cond_t	check_cond;
-
 //Cache for  ecms, cws and rcs:
 LLIST *ecmcache = NULL;
-LLIST *checklist = NULL;
 
 struct  s_config  cfg;
 
@@ -2573,7 +2569,6 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	if (er->rc == E_99) {
 		er->stage++;
-		add_check(er->client, CHECK_WAKEUP, er, sizeof(ECM_REQUEST), cfg.ctimeout);
 		return; //ECM already requested / found in ECM cache
 	}
 
@@ -2587,9 +2582,6 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	er->rcEx = 0;
 	request_cw(er, 0, (cfg.preferlocalcards && local_reader_count) ? 1 : 0);
-
-	//send ecm request to fallback reader after fallbacktimeout
-	add_check(er->client, CHECK_WAKEUP, er, sizeof(ECM_REQUEST), cfg.ftimeout);
 }
 
 void do_emm(struct s_client * client, EMM_PACKET *ep)
@@ -2747,39 +2739,6 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		memcpy(emm_pack, ep, sizeof(EMM_PACKET));
 		add_job(aureader->client, ACTION_READER_EMM, emm_pack, sizeof(EMM_PACKET));
 	}
-}
-
-void add_check(struct s_client *client, int8_t action, void *ptr, int32_t size, int32_t ms_delay) {
-
-	if (!checklist)
-		return;
-
-	if (action == CHECK_WAKEUP) {
-		pthread_mutex_lock(&check_mutex);
-		pthread_cond_signal(&check_cond);
-		pthread_mutex_unlock(&check_mutex);
-		return;
-	}
-
-	struct timeb t_now;
-	cs_ftime(&t_now);
-	add_ms_to_timeb(&t_now, ms_delay);
-
-	struct s_check *tt = cs_malloc(&tt, sizeof(struct s_check), -1);
-
-	tt->cl = client;
-	tt->ptr = ptr;
-	tt->len = size;
-	tt->action = action;
-	tt->t_check = t_now;
-
-	ll_append(checklist, tt);
-
-	cs_debug_mask(D_TRACE, "adding check action=%d ms_delay=%d", action, ms_delay);
-
-	pthread_mutex_lock(&check_mutex);
-	pthread_cond_signal(&check_cond);
-	pthread_mutex_unlock(&check_mutex);
 }
 
 int32_t process_input(uchar *buf, int32_t l, int32_t timeout)
@@ -3188,37 +3147,31 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 }
 
 static void * check_thread(void) {
-	int32_t next_check = 100, time_to_check, rc, i;
-	struct timeb t_now, tbc;
+	int32_t i;
+	struct timeb t_now, tbc, ac_time, ecmc_time;
 	ECM_REQUEST *er = NULL;
 	struct s_client *cl;
-	struct s_check *t1;
 	struct s_ecm *ecmc;
-	time_t now, ecm_timeout;
+	time_t ecm_timeout, now;
 
-	pthread_mutex_init(&check_mutex,NULL);
-	pthread_cond_init(&check_cond,NULL);
+	cs_ftime(&ac_time);
+	add_ms_to_timeb(&ac_time, cfg.ac_stime*60*1000);
 
-	checklist = ll_create("checklist");
-
-	struct timespec timeout;
-	add_ms_to_timespec(&timeout, 30000);
+	cs_ftime(&ecmc_time);
+	add_ms_to_timeb(&ecmc_time, 60000);
 
 	while(1) {
-		pthread_mutex_lock(&check_mutex);
-		rc = pthread_cond_timedwait(&check_cond, &check_mutex, &timeout);
-		pthread_mutex_unlock(&check_mutex);
+		cs_sleepms(1000);
 
 		cs_ftime(&t_now);
-
-		next_check = 0;
+		cs_readlock(&clientlist_lock);
 		for (cl=first_client->next; cl ; cl=cl->next) {
-			if (cl->init_done && cl->typ=='c' && cl->ecmtask) {
+			if (cl->typ=='c' && cl->ecmtask) {
 				for (i=0; i<CS_MAXPENDING; i++) {
 					if (cl->ecmtask[i].rc >= E_99) {
 						er = &cl->ecmtask[i];
 						tbc = er->tps;
-						time_to_check = add_ms_to_timeb(&tbc, !er->stage ? cfg.ftimeout : cfg.ctimeout);
+						add_ms_to_timeb(&tbc, !er->stage ? cfg.ftimeout : cfg.ctimeout);
 
 						if (comp_timeb(&t_now, &tbc) >= 0) {
 							if (!er->stage) {
@@ -3233,73 +3186,39 @@ static void * check_thread(void) {
 									write_ecm_answer(NULL, er, E_TIMEOUT, 0, NULL, NULL);
 							}
 						}
-						if (!next_check || time_to_check < next_check) {
-							add_ms_to_timespec(&timeout, time_to_check);
-							next_check = time_to_check;
-						}
 					}
 				}
 			}
 		}
+		cs_readunlock(&clientlist_lock);
 
-		if (ll_count(checklist) == 0) {
-			if (!next_check)
-				add_ms_to_timespec(&timeout, 30000);
-			continue;
-		}	
-
-		LL_ITER itr = ll_iter_create(checklist);
-
-		next_check = 0;
-		while ((t1 = ll_iter_next(&itr))) {
-			time_to_check = ((t1->t_check.time - t_now.time) * 1000) + (t1->t_check.millitm - t_now.millitm);
-			if (time_to_check <= 0) {
-				if (t1->cl && !is_valid_client(t1->cl)) {
-					cs_log("removing invalid check");
-					ll_iter_remove(&itr);
-					add_garbage(t1);
-					continue;
-				}
-				switch(t1->action) {
 #ifdef CS_ANTICASC
-					case CHECK_ANTICASCADER:
-						if (cfg.ac_enabled) {
-							ac_do_stat();
-							cs_ftime(&t1->t_check);
-							add_ms_to_timeb(&t1->t_check, cfg.ac_stime*60*1000);
-							time_to_check = cfg.ac_stime*60*1000;
-						}
-						break;
-#endif
-					case CHECK_ECMCACHE:
-						now = time(NULL);
-						ecm_timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
+		if (comp_timeb(&t_now, &ac_time) >= 0) {
+			if (cfg.ac_enabled) {
+				ac_do_stat();
 
-						cs_writelock(&ecmcache_lock);
-						LL_ITER it = ll_iter_create(ecmcache);
-						while ((ecmc=ll_iter_next(&it))) {
-							if (ecmc->time < ecm_timeout)
-								ll_iter_remove_data(&it);
-						}
-						cs_writeunlock(&ecmcache_lock);
-
-						cs_ftime(&t1->t_check);
-						add_ms_to_timeb(&t1->t_check, 60000);
-						time_to_check = 60000;
-
-						break;
-					default:
-						break;
-				}
-			} else {
-				if (!next_check || time_to_check < next_check) {
-					add_ms_to_timespec(&timeout, time_to_check);
-					next_check = time_to_check;
-				}
+				cs_ftime(&ac_time);
+				add_ms_to_timeb(&ac_time, cfg.ac_stime*60*1000);
 			}
 		}
-		if (!next_check)
-			add_ms_to_timespec(&timeout, 30000);
+#endif
+
+		if (comp_timeb(&t_now, &ecmc_time) >= 0) {
+			now = time(NULL);
+			ecm_timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
+
+			cs_writelock(&ecmcache_lock);
+			LL_ITER it = ll_iter_create(ecmcache);
+			while ((ecmc=ll_iter_next(&it))) {
+				if (ecmc->time < ecm_timeout)
+					ll_iter_remove_data(&it);
+			}
+			cs_writeunlock(&ecmcache_lock);
+
+			cs_ftime(&ecmc_time);
+			add_ms_to_timeb(&ecmc_time, 60000);
+		}
+
 	}
 	return NULL;
 }
@@ -3333,14 +3252,12 @@ void * client_check(void) {
 					pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
 				}
 			}
-		}
-
-		//reader (only connected tcp proxy reader)
-		for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
-			if (rdr->client && rdr->client->init_done) {
-				if (rdr->client->pfd && !rdr->client->thread_active && rdr->tcp_connected) {
-					cl_list[pfdcount] = rdr->client;
-					pfd[pfdcount].fd = rdr->client->pfd;
+			//reader (only connected tcp proxy reader)
+			rdr = cl->reader;
+			if (rdr && cl->typ=='p' && cl->init_done) {
+				if (cl->pfd && !cl->thread_active && rdr->tcp_connected) {
+					cl_list[pfdcount] = cl;
+					pfd[pfdcount].fd = cl->pfd;
 					pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
 				}
 			}
@@ -3816,11 +3733,8 @@ int32_t main (int32_t argc, char *argv[])
 	else {
 		init_ac();
 		ac_init_stat();
-		add_check(NULL, CHECK_ANTICASCADER, NULL, 0, cfg.ac_stime*60*1000);
 	}
 #endif
-
-	add_check(NULL, CHECK_ECMCACHE, NULL, 0, 60000);
 
 	for (i=0; i<CS_MAX_MOD; i++)
 		if (ph[i].type & MOD_CONN_SERIAL)   // for now: oscam_ser only
