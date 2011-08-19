@@ -304,7 +304,7 @@ void *ll_iter_remove(LL_ITER *it)
 					it->prv = it->cur;
 					it->cur = it->cur->nxt;
 				}
-			}
+			} else it->cur = NULL;
 			it->l->count--;
 			it->ll_version = ++it->l->version;
 			
