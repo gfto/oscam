@@ -189,7 +189,7 @@ bool IO_Serial_SetBitrate (struct s_reader * reader, uint32_t bitrate, struct te
   { //no overclocking
     cfsetospeed(tio, IO_Serial_Bitrate(bitrate));
     cfsetispeed(tio, IO_Serial_Bitrate(bitrate));
-    cs_debug_mask(D_DEVICE, "standard baudrate: cardmhz=%d mhz=%d -> effective baudrate %lu", reader->cardmhz, reader->mhz, bitrate);
+    cs_debug_mask(D_DEVICE, "standard baudrate: cardmhz=%d mhz=%d -> effective baudrate %u", reader->cardmhz, reader->mhz, bitrate);
   }
 #ifdef OS_LINUX
   else

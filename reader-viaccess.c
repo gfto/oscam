@@ -245,7 +245,7 @@ static int32_t viaccess_card_init(struct s_reader * reader, ATR newatr)
 	memcpy(reader->hexserial, cta_res+2, 5);
 	//  cs_log("[viaccess-reader] type: Viaccess, ver: %s serial: %llu", ver, b2ll(5, cta_res+2));
 	cs_ri_log(reader, "type: Viaccess (%sstandard atr), caid: %04X, serial: %llu",
-		atr[9]==0x68?"":"non-",reader->caid, b2ll(5, cta_res+2));
+		atr[9]==0x68?"":"non-",reader->caid, (unsigned long long) b2ll(5, cta_res+2));
 
 	i=0;
 	insa4[2]=0x00; write_cmd(insa4, NULL); // select issuer 0
@@ -746,8 +746,8 @@ static int32_t viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 			if (chk_prov(reader, ident, keynr)) {
 				provider_ok = 1;
 			} else {
-				cs_debug_mask(D_READER, "[viaccess-reader] EMM: provider or key not found on card (%x, %x)", ident, keynr);
-				cs_log("[viaccess-reader] EMM: provider or key not found on card (%x, %x)", ident, keynr);
+				cs_debug_mask(D_READER, "[viaccess-reader] EMM: provider or key not found on card (%x, %x)", emm_provid, keynr);
+				cs_log("[viaccess-reader] EMM: provider or key not found on card (%x, %x)", emm_provid, keynr);
 				return ERROR;
 			}
 
@@ -951,7 +951,7 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 
 	insac[2]=0xa4; write_cmd(insac, NULL); // request unique id
 	insb8[4]=0x07; write_cmd(insb8, NULL); // read unique id
-	cs_log("[viaccess-reader] serial: %llu", b2ll(5, cta_res+2));
+	cs_log("[viaccess-reader] serial: %llu", (unsigned long long) b2ll(5, cta_res+2));
 
 	scls=0;
 	insa4[2]=0x00; write_cmd(insa4, NULL); // select issuer 0

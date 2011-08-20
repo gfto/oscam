@@ -212,7 +212,7 @@ int32_t Phoenix_Receive (struct s_reader * reader, BYTE * buffer, uint32_t size,
 
 int32_t Phoenix_SetBaudrate (struct s_reader * reader, uint32_t baudrate)
 {
-	cs_debug_mask (D_IFD, "IFD: Phoenix Setting baudrate to %lu\n", baudrate);
+	cs_debug_mask (D_IFD, "IFD: Phoenix Setting baudrate to %u\n", baudrate);
 
 	/* Get current settings */
 	struct termios tio;

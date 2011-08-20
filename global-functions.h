@@ -247,7 +247,7 @@ extern int32_t cs_open_logfiles();
 extern int32_t ac_init_log();
 #endif
 
-extern void cs_log_int(uint16_t mask, int8_t lock, const uchar *buf, int32_t n, const char *fmt, ...);
+extern void cs_log_int(uint16_t mask, int8_t lock, const uchar *buf, int32_t n, const char *fmt, ...) __attribute__ ((format (printf, 5, 6)));
 
 #define cs_log(args...)				cs_log_int(0, 1, NULL, 0, ##args)
 #define cs_log_nolock(args...)			cs_log_int(0, 0, NULL, 0, ##args)
@@ -280,7 +280,7 @@ extern int32_t reader_cmd2icc(struct s_reader * reader, const uchar *buf, const 
 extern int32_t card_write(struct s_reader * reader, const uchar *, const uchar *, uchar *, uint16_t *);
 extern int32_t check_sct_len(const unsigned char *data, int32_t off);
 extern void cs_ri_brk(struct s_reader * reader, int32_t);
-extern void cs_ri_log(struct s_reader * reader, char *,...);
+extern void cs_ri_log(struct s_reader * reader, char *,...) __attribute__ ((format (printf, 2, 3)));
 extern void * start_cardreader(void *);
 extern void reader_card_info(struct s_reader * reader);
 extern int32_t hostResolve(struct s_reader * reader);

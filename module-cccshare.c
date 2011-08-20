@@ -1189,14 +1189,14 @@ void share_updater()
 				//update cardlist if reader config has changed, also set interval to 1s / 30times
 				if (cur_check != last_check) {
 						i = DEFAULT_INTERVAL;
-						cs_debug_mask(D_TRACE, "share-update [1] %lu %lu", cur_check, last_check); 
+						cs_debug_mask(D_TRACE, "share-update [1] %u %u", cur_check, last_check); 
 						refresh_shares();
 						last_check = cur_check;
 						last_card_check = cur_card_check;
 				}
 				//update cardlist if cccam cards has changed:
 				else if (cur_card_check != last_card_check) {
-						cs_debug_mask(D_TRACE, "share-update [2] %lu %lu", cur_card_check, last_card_check); 
+						cs_debug_mask(D_TRACE, "share-update [2] %u %u", cur_card_check, last_card_check); 
 						refresh_shares();
 						last_card_check = cur_card_check;
 				}

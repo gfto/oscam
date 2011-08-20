@@ -209,7 +209,7 @@ int32_t radegast_cli_init(struct s_client *cl)
   cur_client()->reader->card_status = CARD_INSERTED;
   cur_client()->reader->last_g = cur_client()->reader->last_s = time((time_t *)0);
 
-  cs_debug_mask(D_CLIENT, "radegast: last_s=%d, last_g=%d", cur_client()->reader->last_s, cur_client()->reader->last_g);
+  cs_debug_mask(D_CLIENT, "radegast: last_s=%ld, last_g=%ld", cur_client()->reader->last_s, cur_client()->reader->last_g);
 
   cur_client()->pfd=cur_client()->udp_fd;
 

@@ -504,7 +504,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	else
 	{
 		if (rc >= 0)
-			cs_debug_mask(D_TRACE, "loadbalancer: not handled stat for reader %s: rc %d %04hX&%06lX/%04hX/%02hX time %dms",
+			cs_debug_mask(D_TRACE, "loadbalancer: not handled stat for reader %s: rc %d %04hX&%06X/%04hX/%02hX time %dms",
 				rdr->label, rc, er->caid, prid, er->srvid, er->l, ecm_time);
 	
 		return;
@@ -512,7 +512,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	
 	housekeeping_stat(0);
 		
-	cs_debug_mask(D_TRACE, "loadbalancer: adding stat for reader %s: rc %d %04hX&%06lX/%04hX/%02hX time %dms fail %d",
+	cs_debug_mask(D_TRACE, "loadbalancer: adding stat for reader %s: rc %d %04hX&%06X/%04hX/%02hX time %dms fail %d",
 				rdr->label, rc, er->caid, prid, er->srvid, er->l, ecm_time, stat->fail_factor);
 	
 	if (cfg.lb_save) {

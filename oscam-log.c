@@ -316,7 +316,7 @@ void cs_close_log(void)
 }
 
 void log_emm_request(struct s_reader *rdr){
-	cs_log("%s emm-request sent (reader=%s, caid=%04X, auprovid=%06lX)",
+	cs_log("%s emm-request sent (reader=%s, caid=%04X, auprovid=%06X)",
 			username(cur_client()), rdr->label, rdr->caid,
 			rdr->auprovid ? rdr->auprovid : b2i(4, rdr->prid[0]));
 }
@@ -403,7 +403,7 @@ void cs_log_config()
   else
     cs_strncpy((char *)buf, "unlimited", sizeof(buf));
   cs_log_nolock("max. logsize=%s, loghistorysize=%d bytes", buf, cfg.loghistorysize);
-  cs_log_nolock("client timeout=%lu ms, fallback timeout=%lu ms, cache delay=%d ms",
+  cs_log_nolock("client timeout=%u ms, fallback timeout=%u ms, cache delay=%d ms",
          cfg.ctimeout, cfg.ftimeout, cfg.delay);
 }
 

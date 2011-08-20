@@ -89,15 +89,15 @@ static int32_t conax_card_init(struct s_reader * reader, ATR newatr)
   memset(reader->prid, 0x00, sizeof(reader->prid));
 
   cs_ri_log(reader, "type: Conax, caid: %04X, serial: %llu, hex serial: %02x%02x%02x%02x, card: v%d",
-         reader->caid, b2ll(6, reader->hexserial), reader->hexserial[2], 
+         reader->caid, (unsigned long long) b2ll(6, reader->hexserial), reader->hexserial[2], 
          reader->hexserial[3], reader->hexserial[4], reader->hexserial[5], cardver);
 
   cs_ri_log(reader, "Providers: %d", reader->nprov);
 
   for (j=0; j<reader->nprov; j++)
   {
-    cs_ri_log(reader, "Provider: %d  Provider-Id: %06X", j+1, b2ll(4, reader->prid[j]));
-    cs_ri_log(reader, "Provider: %d  SharedAddress: %08X", j+1, b2ll(4, reader->sa[j]));
+    cs_ri_log(reader, "Provider: %d  Provider-Id: %06X", j+1, b2i(4, reader->prid[j]));
+    cs_ri_log(reader, "Provider: %d  SharedAddress: %08X", j+1, b2i(4, reader->sa[j]));
   }
 
   return OK;

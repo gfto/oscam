@@ -116,7 +116,7 @@ int32_t cs_check_v(uint32_t ip, int32_t port, int32_t add) {
 
 				ll_iter_insert(&itr, v_ban_entry);
 
-				cs_debug_mask(D_TRACE, "failban: ban ip %s:%d with timestamp %d",
+				cs_debug_mask(D_TRACE, "failban: ban ip %s:%d with timestamp %ld",
 						cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, v_ban_entry->v_time);
 			}
 		}
@@ -742,12 +742,12 @@ void cs_exit(int32_t sig)
 	set_signal_handler(SIGPIPE, 1, SIG_IGN);
 
 	if (sig==SIGALRM) {
-		cs_debug_mask(D_TRACE, "thread %8X: SIGALRM, skipping", pthread_self());
+		cs_debug_mask(D_TRACE, "thread %8lX: SIGALRM, skipping", pthread_self());
 		return;
 	}
 
   if (sig && (sig!=SIGQUIT))
-    cs_log("thread %8X exit with signal %d", pthread_self(), sig);
+    cs_log("thread %8lX exit with signal %d", pthread_self(), sig);
 
   struct s_client *cl = cur_client();
   if (!cl)
@@ -784,7 +784,7 @@ void cs_exit(int32_t sig)
 
 	// this is very important - do not remove
 	if (cl->typ != 's') {
-		cs_log("thread %8X ended!", pthread_self());
+		cs_log("thread %8lX ended!", pthread_self());
 
 		cleanup_thread(cl);
 
@@ -871,7 +871,7 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 				}
 			} else {
 				if (ph[cl->ctyp].type & MOD_CONN_NET) {
-					cs_debug_mask(D_TRACE, "client '%s', thread=%8X not found in db (or password changed)", cl->account->usr, cl->thread);
+					cs_debug_mask(D_TRACE, "client '%s', thread=%8lX not found in db (or password changed)", cl->account->usr, cl->thread);
 					kill_thread(cl);
 				} else {
 					cl->account = first_client->account;
@@ -1307,7 +1307,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 				cl->dup = 1;
 				cl->aureader_list = NULL;
 				cs_strncpy(buf, cs_inet_ntoa(cl->ip), sizeof(buf));
-				cs_log("client(%8X) duplicate user '%s' from %s (prev %s) set to fake (uniq=%d)",
+				cs_log("client(%8lX) duplicate user '%s' from %s (prev %s) set to fake (uniq=%d)",
 					cl->thread, usr, cs_inet_ntoa(ip), buf, uniq);
 				if (cl->failban & BAN_DUPLICATE) {
 					cs_add_violation(cl->ip, ph[cl->ctyp].ptab->ports[cl->port_idx].s_port);
@@ -1323,7 +1323,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 				client->dup = 1;
 				client->aureader_list = NULL;
 				cs_strncpy(buf, cs_inet_ntoa(ip), sizeof(buf));
-				cs_log("client(%8X) duplicate user '%s' from %s (current %s) set to fake (uniq=%d)",
+				cs_log("client(%8lX) duplicate user '%s' from %s (current %s) set to fake (uniq=%d)",
 					pthread_self(), usr, cs_inet_ntoa(cl->ip), buf, uniq);
 				if (client->failban & BAN_DUPLICATE) {
 					cs_add_violation(ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);

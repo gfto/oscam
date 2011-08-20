@@ -2,7 +2,7 @@
 #include "reader-common.h"
 #include <stdlib.h>
 
-static uint64_t get_pbm(struct s_reader * reader, size_t idx)
+static uint64_t get_pbm(struct s_reader * reader, uint8_t idx)
 {
   def_resp;
   static const unsigned char ins34[] = { 0xc1, 0x34, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00 }; //data following is provider Package Bitmap Records
@@ -15,11 +15,11 @@ static uint64_t get_pbm(struct s_reader * reader, size_t idx)
 
   switch (cta_res[0]) {
   case 0x04:
-    cs_ri_log(reader, "[seca-reader] no PBM for provider %i", idx + 1);
+    cs_ri_log(reader, "[seca-reader] no PBM for provider %u", idx + 1);
     break;
   case 0x83:
     pbm = b2ll(8, cta_res + 1);
-    cs_ri_log(reader, "[seca-reader] PBM for provider %i: %08llx", idx + 1, pbm);
+    cs_ri_log(reader, "[seca-reader] PBM for provider %u: %08llx", idx + 1, (unsigned long long) pbm);
     break;
   default:
     cs_log("[seca-reader] ERROR: PBM returns unknown byte %02x", cta_res[0]);
@@ -172,7 +172,7 @@ static int32_t seca_card_init(struct s_reader * reader, ATR newatr)
   memcpy(reader->hexserial, cta_res+2, 6);
   serial = b2ll(5, cta_res+3) ;
   cs_ri_log (reader, "type: SECA, caid: %04X, serial: %llu, card: %s v%d.%d",
-         reader->caid, serial, card, atr[9]&0x0F, atr[9]>>4);
+         reader->caid, (unsigned long long) serial, card, atr[9]&0x0F, atr[9]>>4);
   write_cmd(ins16, NULL); // read nr of providers
   pmap=cta_res[2]<<8|cta_res[3];
   for (reader->nprov=0, i=pmap; i; i>>=1)

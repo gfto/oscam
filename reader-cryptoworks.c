@@ -221,7 +221,7 @@ static int32_t cryptoworks_card_init(struct s_reader * reader, ATR newatr)
   if (read_record(reader, 0x80, cta_res)>=7)		// read serial
     memcpy(reader->hexserial, cta_res+2, 5);
   cs_ri_log (reader, "type: CryptoWorks, caid: %04X, ascii serial: %llu, hex serial: %s",
-            reader->caid, b2ll(5, reader->hexserial),cs_hexdump(0, reader->hexserial, 5, tmp, sizeof(tmp)));
+            reader->caid, (unsigned long long) b2ll(5, reader->hexserial),cs_hexdump(0, reader->hexserial, 5, tmp, sizeof(tmp)));
 
   if (read_record(reader, 0x9E, cta_res)>=66)	// read ISK
   {

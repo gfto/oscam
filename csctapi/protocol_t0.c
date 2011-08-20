@@ -382,7 +382,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 		{//printf("sw1\n");
 			recv++;
 			if (recv >= PROTOCOL_T0_MAX_SHORT_RESPONSE) {
-				cs_debug_mask(D_TRACE, "ERROR Protocol_T0_ExchangeTPDU: Maximum short response exceeded:%li",recv);
+				cs_debug_mask(D_TRACE, "ERROR Protocol_T0_ExchangeTPDU: Maximum short response exceeded:%d",recv);
 				return ERROR;
 			}
 			call (ICC_Async_Receive (reader, 1, buffer + recv));					//Read SW2 byte
@@ -398,7 +398,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 			/* Case 2 command: send data */
 			if (cmd_case == APDU_CASE_2S) {
 				if (sent >= Lc) {
-					cs_debug_mask(D_TRACE, "ERROR Protocol_T0_ExchangeTPDU ACK byte: sent=%li exceeds Lc=%li",sent, Lc);
+					cs_debug_mask(D_TRACE, "ERROR Protocol_T0_ExchangeTPDU ACK byte: sent=%d exceeds Lc=%d",sent, Lc);
 					return ERROR;
 				}
 				call (ICC_Async_Transmit(reader, MAX (Lc - sent, 0), data + sent)); /* Send remaining data bytes */
@@ -408,7 +408,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 			else /* Case 3 command: receive data */
 			{
 				if (recv >= PROTOCOL_T0_MAX_SHORT_RESPONSE) {
-					cs_debug_mask(D_TRACE, "ERROR Protocol_T0_ExchangeTPDU: Case 3 ACK - maximum short response exceeded:%li",recv);
+					cs_debug_mask(D_TRACE, "ERROR Protocol_T0_ExchangeTPDU: Case 3 ACK - maximum short response exceeded:%d",recv);
 					return ERROR;
 				}
 				
@@ -429,7 +429,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 			/* Case 2 command: send data */
 			if (cmd_case == APDU_CASE_2S) {
 				if (sent >= Lc) {
-					cs_debug_mask(D_TRACE, "ERROR Protocol_T0_ExchangeTPDU ~ACK byte: sent=%li exceeds Lc=%li",sent, Lc);
+					cs_debug_mask(D_TRACE, "ERROR Protocol_T0_ExchangeTPDU ~ACK byte: sent=%d exceeds Lc=%d",sent, Lc);
 					return ERROR;
 				}
 				call (ICC_Async_Transmit (reader, 1, data + sent));							//Send next data byte
@@ -438,7 +438,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 			}
 			else {/* Case 3 command: receive data */
 				if (recv >= PROTOCOL_T0_MAX_SHORT_RESPONSE) {
-					cs_debug_mask(D_TRACE, "ERROR Protocol_T0_ExchangeTPDU: Case 3 ~ACK - maximum short response exceeded:%li",recv);
+					cs_debug_mask(D_TRACE, "ERROR Protocol_T0_ExchangeTPDU: Case 3 ~ACK - maximum short response exceeded:%d",recv);
 					return ERROR;
 				}
 				call (ICC_Async_Receive (reader, 1, buffer + recv));						//Read next data byte

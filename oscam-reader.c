@@ -478,7 +478,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 			for (h=0;h<reader->ratelimitecm;h++) {
 				if ((reader->rlecmh[h].last ==- 1) || ((time(NULL)-reader->rlecmh[h].last) > reader->ratelimitseconds)) {
 					foundspace=h;
-					cs_debug_mask(D_READER, "ratelimit found space at pos: %d old seconds %d",h,reader->rlecmh[h].last);
+					cs_debug_mask(D_READER, "ratelimit found space at pos: %d old seconds %ld",h,reader->rlecmh[h].last);
 					break;
 				} 
 			}
@@ -513,7 +513,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	cs_ftime(&tpe);
 	cl->lastecm=time((time_t*)0);
 
-	cs_debug_mask(D_TRACE, "reader: %s ecm: %04X real time: %d ms", reader->label, htons(er->checksum), 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm);
+	cs_debug_mask(D_TRACE, "reader: %s ecm: %04X real time: %ld ms", reader->label, htons(er->checksum), 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm);
 
 	write_ecm_answer(reader, er, ea.rc, 0, ea.cw, ea.msglog);
 	reader_post_process(reader);
@@ -584,7 +584,7 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   {
     cs_ftime(&tpe);
 
-    cs_log("%s emmtype=%s, len=%d, idx=%d, cnt=%d: %s (%d ms) by %s",
+    cs_log("%s emmtype=%s, len=%d, idx=%d, cnt=%d: %s (%ld ms) by %s",
            username(ep->client), typedesc[cl->emmcache[i].type], ep->emm[2],
            i, no, rtxt[rc], 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm, reader->label); //FIXME not sure why emmtyp must come from ep->client and typedesc can be of cur_client
   }

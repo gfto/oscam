@@ -947,7 +947,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 				if (reader->typ <= R_MOUSE) 
 					call (Phoenix_SetBaudrate(reader, baud_temp));
 			}
-			cs_debug_mask(D_IFD, "Setting baudrate to %lu", baud_temp);
+			cs_debug_mask(D_IFD, "Setting baudrate to %u", baud_temp);
 			reader->current_baudrate = baud_temp; //this is needed for all readers to calculate work_etu for timings
 		}
 	}
@@ -984,7 +984,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 			reader->block_delay = gt_ms;
 			reader->char_delay = gt_ms;
 			cs_debug_mask(D_ATR, "Setting timings: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", reader->read_timeout, reader->block_delay, reader->char_delay);
-			cs_debug_mask (D_IFD, "Protocol: T=%i: WWT=%d, Clockrate=%lu\n", reader->protocol_type, (int)(WWT), ICC_Async_GetClockRate(reader->cardmhz));
+			cs_debug_mask (D_IFD, "Protocol: T=%i: WWT=%d, Clockrate=%u\n", reader->protocol_type, (int)(WWT), ICC_Async_GetClockRate(reader->cardmhz));
 			}
 			break;
 	 case ATR_PROTOCOL_TYPE_T1:

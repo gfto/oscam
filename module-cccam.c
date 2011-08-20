@@ -704,7 +704,7 @@ int32_t cc_get_nxt_ecm(struct s_client *cl) {
 		else if (er->rc >= 10 && er->rc <= 100) { // stil active and waiting
 			pending++;
 			if (loop_check(cc->peer_node_id, er->client)) {
-				cs_debug_mask(D_READER, "%s ecm loop detected! client %s (%8X)", 
+				cs_debug_mask(D_READER, "%s ecm loop detected! client %s (%8lX)", 
 						getprefix(), er->client->account->usr, er->client->thread);
 				write_ecm_answer(cl->reader, &cl->ecmtask[i], E_NOTFOUND, E2_CCCAM_LOOP, NULL, NULL);
 			}
@@ -967,7 +967,7 @@ void set_au_data(struct s_client *cl, struct s_reader *rdr, struct cc_card *card
 			rdr->prid[p][3] = provider->prov & 0xFF;
 			cc_SA_cccam2oscam(provider->sa, rdr->sa[p]);
 
-			cs_debug_mask(D_EMM, "%s au info: provider: %06lX:%02X%02X%02X%02X", getprefix(),
+			cs_debug_mask(D_EMM, "%s au info: provider: %06X:%02X%02X%02X%02X", getprefix(),
 				provider->prov,
 				provider->sa[0], provider->sa[1], provider->sa[2], provider->sa[3]);
 
@@ -1422,14 +1422,14 @@ int32_t cc_send_emm(EMM_PACKET *ep) {
 	}
 
 	if (!emm_card) { //Card for emm not found!
-		cs_debug_mask(D_EMM, "%s emm for client %8X not possible, no card found!",
+		cs_debug_mask(D_EMM, "%s emm for client %8lX not possible, no card found!",
 				getprefix(), ep->client->thread);
 		cs_readunlock(&cc->cards_busy);
 		return 0;
 	}
 
 	cs_debug_mask(D_EMM,
-			"%s emm received for client %8X caid %04X for card %08X",
+			"%s emm received for client %8lX caid %04X for card %08X",
 			getprefix(), ep->client->thread, caid, emm_card->id);
 
 	int32_t size = ep->l + 12;
@@ -2129,7 +2129,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 						cc_reset_pending(cl, ecm_idx);
 				}
 			} else
-				cs_debug_mask(D_READER, "%S NOK: NO CARD!", getprefix());
+				cs_debug_mask(D_READER, "%s NOK: NO CARD!", getprefix());
 		}
 		cc->cmd05NOK = 0;
 		cs_readunlock(&cc->cards_busy);
@@ -3098,7 +3098,7 @@ int32_t cc_cli_connect(struct s_client *cl) {
 		cs_debug_mask(D_READER, "%s login succeeded", getprefix());
 	}
 
-	cs_debug_mask(D_READER, "cccam: last_s=%d, last_g=%d", rdr->last_s, rdr->last_g);
+	cs_debug_mask(D_READER, "cccam: last_s=%ld, last_g=%ld", rdr->last_s, rdr->last_g);
 
 	cl->pfd = cl->udp_fd;
 	cs_debug_mask(D_READER, "cccam: pfd=%d", cl->pfd);

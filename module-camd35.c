@@ -132,7 +132,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 	}
 
 	if ((rs>0) && ((rc==-1)||(rc==-2))) {
-		cs_ddump_mask(D_CLIENT, buf, rs, "received %d bytes from %s (native)", rs, remote_txt);
+		cs_ddump_mask(D_CLIENT, buf, rs, "received %d bytes from %s (native)", rs, remote_txt());
 	}
 	client->last=time((time_t *) 0);
 
@@ -520,7 +520,7 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 		rdr->blockemm |= (buf[128]==1) ? 0 : EMM_GLOBAL;
 		rdr->blockemm |= (buf[129]==1) ? 0 : EMM_SHARED;
 		rdr->blockemm |= (buf[130]==1) ? 0 : EMM_UNIQUE;
-		cs_log("%s CMD05 AU request for caid: %04X auprovid: %06lX",
+		cs_log("%s CMD05 AU request for caid: %04X auprovid: %06X",
 				rdr->label,
 				rdr->caid,
 				rdr->auprovid);
