@@ -2447,9 +2447,16 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					tpl_addVar(vars, TPLADD, "READERTYPE", "null");
 				tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
 
-				int8_t i;
+				int8_t i, j;
 				for(i = 0; i < 15; i++)	tpl_printf(vars, TPLAPPEND, "READERROM", "%c", rdr->rom[i]);
 				for(i = 0; i < 8; i++)	tpl_printf(vars, TPLAPPEND, "READERSERIAL", "%02X", rdr->hexserial[i]);
+				for (i = 0; i < rdr->nprov; i++) {
+					tpl_addVar(vars, TPLAPPEND, "READERPROVIDS", "Prv.ID: ");
+					for(j = 0; j < 4; j++)	tpl_printf(vars, TPLAPPEND, "READERPROVIDS", "%02X ", rdr->prid[j]);
+					tpl_addVar(vars, TPLAPPEND, "READERPROVIDS", i==0 ? "(sysid)<br>\n" : "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>\n");
+				}
+
+
 
 				if (rdr->card_valid_to) {
 					struct tm vto_t;
