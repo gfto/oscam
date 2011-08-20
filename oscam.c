@@ -3187,7 +3187,7 @@ static void * check_thread(void) {
 		cs_ftime(&t_now);
 		cs_readlock(&clientlist_lock);
 		for (cl=first_client->next; cl ; cl=cl->next) {
-			if (cl->typ!='c' || !cl->ecmtask)
+			if (cl->typ!='c' || (cl->typ=='c' && !cl->ecmtask))
 				continue;
 
 			for (i=0; i<CS_MAXPENDING; i++) {
