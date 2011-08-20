@@ -3204,15 +3204,19 @@ static void * check_thread(void) {
 						cs_debug_mask(D_TRACE, "fallback for %s %04X&%06X/%04X", username(er->client), er->caid, er->prid, er->srvid);
 						if (er->rc >= E_UNHANDLED) //do not request rc=99
 						        request_cw(er, er->stage, 0);
+
+						tbc = er->tps;
+						time_to_check = add_ms_to_timeb(&tbc, cfg.ctimeout);
 					} else {
 						cs_debug_mask(D_TRACE, "timeout for %s %04X&%06X/%04X", username(er->client), er->caid, er->prid, er->srvid);
 						if (er->client && is_valid_client(er->client))
 							write_ecm_answer(NULL, er, E_TIMEOUT, 0, NULL, NULL);
+						time_to_check = 0;
 					}
-				} else {
-					if (!next_check || time_to_check < next_check)
-						next_check = time_to_check;
 				}
+				if (!next_check || (time_to_check > 0 && time_to_check < next_check))
+					next_check = time_to_check;
+				
 			}
 		}
 		cs_readunlock(&clientlist_lock);
