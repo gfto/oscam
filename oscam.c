@@ -52,6 +52,8 @@ CS_MUTEX_LOCK fakeuser_lock;
 CS_MUTEX_LOCK ecmcache_lock;
 pthread_key_t getclient;
 
+pthread_t timecheck_thread;
+
 //Cache for  ecms, cws and rcs:
 LLIST *ecmcache = NULL;
 
@@ -2569,6 +2571,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	if (er->rc == E_99) {
 		er->stage++;
+		pthread_kill(timecheck_thread, SIGCONT);
 		return; //ECM already requested / found in ECM cache
 	}
 
@@ -2582,6 +2585,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	er->rcEx = 0;
 	request_cw(er, 0, (cfg.preferlocalcards && local_reader_count) ? 1 : 0);
+	pthread_kill(timecheck_thread, SIGCONT);
 }
 
 void do_emm(struct s_client * client, EMM_PACKET *ep)
@@ -2873,11 +2877,9 @@ void * work_thread(void *ptr) {
 	uchar dcw[16];
 	sigset_t newmask;
 
-	if (keep_threads_alive) {
-		sigemptyset(&newmask);
-		sigaddset(&newmask, SIGCONT);
-		pthread_sigmask(SIG_BLOCK, &newmask, NULL);
-	}
+	sigemptyset(&newmask);
+	sigaddset(&newmask, SIGCONT);
+	pthread_sigmask(SIG_BLOCK, &newmask, NULL);
 
 	while (1) {
 		if (data)
@@ -3147,12 +3149,16 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 }
 
 static void * check_thread(void) {
-	int32_t i;
+	int32_t i, rc, time_to_check, next_check, ac_next, ecmc_next, msec_wait = 3000;
 	struct timeb t_now, tbc, ac_time, ecmc_time;
 	ECM_REQUEST *er = NULL;
 	struct s_client *cl;
 	struct s_ecm *ecmc;
 	time_t ecm_timeout, now;
+	sigset_t newmask;
+	struct timespec ts;
+
+	timecheck_thread = pthread_self();
 
 #ifdef CS_ANTICASC
 	cs_ftime(&ac_time);
@@ -3162,50 +3168,65 @@ static void * check_thread(void) {
 	cs_ftime(&ecmc_time);
 	add_ms_to_timeb(&ecmc_time, 60000);
 
+	sigemptyset(&newmask);
+	sigaddset(&newmask, SIGCONT);
+	pthread_sigmask(SIG_BLOCK, &newmask, NULL);
+
 	while(1) {
-		cs_sleepms(1000);
+		ts.tv_sec = msec_wait/1000;
+		ts.tv_nsec = (msec_wait % 1000) * 1000000L;
+		pthread_sigmask(SIG_UNBLOCK, &newmask, NULL);
+		rc = nanosleep(&ts, NULL);
+		pthread_sigmask(SIG_BLOCK, &newmask, NULL);
+
+		next_check = 0;
+		ac_next = 0;
+		ecmc_next = 0;
+		msec_wait = 0;
 
 		cs_ftime(&t_now);
 		cs_readlock(&clientlist_lock);
 		for (cl=first_client->next; cl ; cl=cl->next) {
-			if (cl->typ=='c' && cl->ecmtask) {
-				for (i=0; i<CS_MAXPENDING; i++) {
-					if (cl->ecmtask[i].rc >= E_99) {
-						er = &cl->ecmtask[i];
-						tbc = er->tps;
-						add_ms_to_timeb(&tbc, !er->stage ? cfg.ftimeout : cfg.ctimeout);
+			if (cl->typ!='c' || !cl->ecmtask)
+				continue;
 
-						if (comp_timeb(&t_now, &tbc) >= 0) {
-							if (!er->stage) {
-								er->stage++;
-								cs_debug_mask(D_TRACE, "fallback for %s %04X&%06X/%04X", username(er->client), er->caid, er->prid, er->srvid);
-								if (er->rc >= E_UNHANDLED) //do not request rc=99
-								        request_cw(er, er->stage, 0);
+			for (i=0; i<CS_MAXPENDING; i++) {
+				if (cl->ecmtask[i].rc < E_99)
+					continue;
 
-							} else {
-								cs_debug_mask(D_TRACE, "timeout for %s %04X&%06X/%04X", username(er->client), er->caid, er->prid, er->srvid);
-								if (er->client && is_valid_client(er->client))
-									write_ecm_answer(NULL, er, E_TIMEOUT, 0, NULL, NULL);
-							}
-						}
+				er = &cl->ecmtask[i];
+				tbc = er->tps;
+				time_to_check = add_ms_to_timeb(&tbc, !er->stage ? cfg.ftimeout : cfg.ctimeout);
+
+				if (comp_timeb(&t_now, &tbc) >= 0) {
+					if (!er->stage) {
+						er->stage++;
+						cs_debug_mask(D_TRACE, "fallback for %s %04X&%06X/%04X", username(er->client), er->caid, er->prid, er->srvid);
+						if (er->rc >= E_UNHANDLED) //do not request rc=99
+						        request_cw(er, er->stage, 0);
+					} else {
+						cs_debug_mask(D_TRACE, "timeout for %s %04X&%06X/%04X", username(er->client), er->caid, er->prid, er->srvid);
+						if (er->client && is_valid_client(er->client))
+							write_ecm_answer(NULL, er, E_TIMEOUT, 0, NULL, NULL);
 					}
+				} else {
+					if (!next_check || time_to_check < next_check)
+						next_check = time_to_check;
 				}
 			}
 		}
 		cs_readunlock(&clientlist_lock);
 
 #ifdef CS_ANTICASC
-		if (comp_timeb(&t_now, &ac_time) >= 0) {
-			if (cfg.ac_enabled) {
+		if ((ac_next = comp_timeb(&ac_time, &t_now)) <= 10) {
+			if (cfg.ac_enabled)
 				ac_do_stat();
-
-				cs_ftime(&ac_time);
-				add_ms_to_timeb(&ac_time, cfg.ac_stime*60*1000);
-			}
+			cs_ftime(&ac_time);
+			ac_next = add_ms_to_timeb(&ac_time, cfg.ac_stime*60*1000);
 		}
 #endif
 
-		if (comp_timeb(&t_now, &ecmc_time) >= 0) {
+		if ((ecmc_next = comp_timeb(&ecmc_time, &t_now)) <= 10) {
 			now = time(NULL);
 			ecm_timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
 
@@ -3218,9 +3239,21 @@ static void * check_thread(void) {
 			cs_writeunlock(&ecmcache_lock);
 
 			cs_ftime(&ecmc_time);
-			add_ms_to_timeb(&ecmc_time, 60000);
+			ecmc_next = add_ms_to_timeb(&ecmc_time, 60000);
 		}
 
+		msec_wait = next_check;
+
+#ifdef CS_ANTICASC
+		if (!msec_wait || (ac_next > 0 && ac_next < msec_wait))
+			msec_wait = ac_next;
+#endif
+
+		if (!msec_wait || (ecmc_next > 0 && ecmc_next < msec_wait))
+			msec_wait = ecmc_next;
+
+		if (!msec_wait)
+			msec_wait = 3000;
 	}
 	return NULL;
 }
