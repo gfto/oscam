@@ -2515,8 +2515,6 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				}
 				else {
 					ll_prepend(er->matching_rdr, rdr);
-					if (!(rdr->typ & R_IS_NETWORK))
-						local_reader_count++;
 				}
 #ifdef WITH_LB
 				if (cfg.lb_mode || !rdr->fallback)
@@ -2539,6 +2537,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			if (rdr == er->fallback)
 				break;
 			er->reader_count++;
+			if (!(rdr->typ & R_IS_NETWORK))
+				local_reader_count++;
 		}
 
 		if (!ll_has_elements(er->matching_rdr)) { //no reader -> not found
@@ -2557,7 +2557,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 		//we have to go through matching_reader() to check services!
 		if (er->rc == E_UNHANDLED)
-				er->rc = check_and_store_ecmcache(er, client->grp);
+			er->rc = check_and_store_ecmcache(er, client->grp);
 	}
 
 #ifdef WITH_LB
