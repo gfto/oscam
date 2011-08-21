@@ -400,7 +400,11 @@ extern void cs_switch_led(int32_t led, int32_t action);
 
 #define LB_MAX_STAT_TIME		10
 
+#if defined OS_MACOSX || defined OS_FREEBSD
+#define OSCAM_SIGNAL_WAKEUP		SIGCONT
+#else
 #define OSCAM_SIGNAL_WAKEUP		SIGRTMAX-2
+#endif
 
 /* ===========================
  *      Default Values
