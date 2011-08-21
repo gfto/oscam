@@ -718,7 +718,7 @@ static void init_signal()
 		//set_signal_handler(SIGHUP , 1, cs_sighup);
 		set_signal_handler(SIGUSR1, 1, cs_debug_level);
 		set_signal_handler(SIGUSR2, 1, cs_card_info);
-		set_signal_handler(SIGCONT, 1, cs_dummy);
+		set_signal_handler(OSCAM_SIGNAL_WAKEUP, 0, cs_dummy);
 
 		if (cs_capture_SEGV)
 			set_signal_handler(SIGSEGV, 1, cs_exit);
@@ -2571,7 +2571,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	if (er->rc == E_99) {
 		er->stage++;
-		pthread_kill(timecheck_thread, SIGCONT);
+		pthread_kill(timecheck_thread, OSCAM_SIGNAL_WAKEUP);
 		return; //ECM already requested / found in ECM cache
 	}
 
@@ -2585,7 +2585,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	er->rcEx = 0;
 	request_cw(er, 0, (cfg.preferlocalcards && local_reader_count) ? 1 : 0);
-	pthread_kill(timecheck_thread, SIGCONT);
+	pthread_kill(timecheck_thread, OSCAM_SIGNAL_WAKEUP);
 }
 
 void do_emm(struct s_client * client, EMM_PACKET *ep)
@@ -2878,7 +2878,7 @@ void * work_thread(void *ptr) {
 	sigset_t newmask;
 
 	sigemptyset(&newmask);
-	sigaddset(&newmask, SIGCONT);
+	sigaddset(&newmask, OSCAM_SIGNAL_WAKEUP);
 	pthread_sigmask(SIG_BLOCK, &newmask, NULL);
 
 	while (1) {
@@ -3123,7 +3123,7 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 		cs_debug_mask(D_TRACE, "add %s job action %d", action > 20 ? "client" : "reader", action);
 		pthread_mutex_unlock(&cl->thread_lock);
 		if (keep_threads_alive)
-			pthread_kill(cl->thread, SIGCONT);
+			pthread_kill(cl->thread, OSCAM_SIGNAL_WAKEUP);
 		return;
 	}
 
@@ -3169,7 +3169,7 @@ static void * check_thread(void) {
 	add_ms_to_timeb(&ecmc_time, 60000);
 
 	sigemptyset(&newmask);
-	sigaddset(&newmask, SIGCONT);
+	sigaddset(&newmask, OSCAM_SIGNAL_WAKEUP);
 	pthread_sigmask(SIG_BLOCK, &newmask, NULL);
 
 	while(1) {
@@ -3269,6 +3269,11 @@ void * client_check(void) {
 	struct pollfd pfd[1024];
 	struct s_client *cl_list[1024];
 	char buf[10];
+	sigset_t newmask;
+
+	sigemptyset(&newmask);
+	sigaddset(&newmask, OSCAM_SIGNAL_WAKEUP);
+	pthread_sigmask(SIG_BLOCK, &newmask, NULL);
 
 	if (pipe(thread_pipe) == -1) {
 		printf("cannot create pipe, errno=%d\n", errno);
@@ -3283,7 +3288,7 @@ void * client_check(void) {
 		pfdcount = 1;
 
 		//connected tcp clients
-		for (cl=first_client->next; cl ; cl=cl->next) {
+		for (cl=first_client->next; cl && pfdcount < 1024 ; cl=cl->next) {
 			if (cl->init_done && !cl->kill && cl->pfd && cl->typ=='c' && !cl->is_udp) {
 				if (cl->pfd && !cl->thread_active) {				
 					cl_list[pfdcount] = cl;
@@ -3303,7 +3308,7 @@ void * client_check(void) {
 		}
 
 		//server (new tcp connections or udp messages)
-		for (k=0; k<CS_MAX_MOD; k++) {
+		for (k=0; k < CS_MAX_MOD && pfdcount < 1024 ; k++) {
 			if ( (ph[k].type & MOD_CONN_NET) && ph[k].ptab ) {
 				for (j=0; j<ph[k].ptab->nports; j++) {
 					if (ph[k].ptab->ports[j].fd) {
@@ -3315,6 +3320,9 @@ void * client_check(void) {
 				}
 			}
 		}
+
+		if (pfdcount >= 1024)
+			cs_log("WARNING: too many users!");
 
 		rc = poll(pfd, pfdcount, 5000);
 

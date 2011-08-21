@@ -399,6 +399,8 @@ extern void cs_switch_led(int32_t led, int32_t action);
 
 #define LB_MAX_STAT_TIME		10
 
+#define OSCAM_SIGNAL_WAKEUP		SIGRTMAX-2
+
 /* ===========================
  *      Default Values
  * =========================== */
