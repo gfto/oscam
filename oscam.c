@@ -1817,8 +1817,8 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	static const char *stxt[]={"found", "cache1", "cache2", "emu",
 			"not found", "timeout", "sleeping",
 			"fake", "invalid", "corrupt", "no card", "expdate", "disabled", "stopped"};
-	static const char *stxtEx[]={"", "group", "caid", "ident", "class", "chid", "queue", "peer"};
-	static const char *stxtWh[]={"", "user ", "reader ", "server ", "lserver "};
+	static const char *stxtEx[16]={"", "group", "caid", "ident", "class", "chid", "queue", "peer", "sid", "", "", "", "", "", "", ""};
+	static const char *stxtWh[16]={"", "user ", "reader ", "server ", "lserver ", "", "", "", "", "", "", "", "" ,"" ,"", ""};
 	char sby[32]="", sreason[32]="", schaninfo[32]="";
 	char erEx[32]="";
 	char uname[38]="";
