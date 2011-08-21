@@ -87,7 +87,7 @@ static time_t chid_date(uchar *ptr, char *buf, int32_t l)
 	struct tm timeinfo;
 	memset(&timeinfo, 0, sizeof(struct tm));	
 	if (buf) {
-		timeinfo.tm_year = 90 + ptr[0]>>1;
+		timeinfo.tm_year = 90 + (ptr[0]>>1);
 		timeinfo.tm_mon = ((ptr[0]&1)<<3)|(ptr[1]>>5);
 		timeinfo.tm_mday = ptr[1]&0x1f;
 		rc = mktime(&timeinfo);
