@@ -8,7 +8,7 @@ static time_t chid_date(const uchar *ptr, char *buf, int32_t l)
 	memset(&timeinfo, 0, sizeof(struct tm));	
   if (buf){
 		timeinfo.tm_year = 90 + (ptr[1]>>4)+(((ptr[0]>>5)&7)*10);
-		timeinfo.tm_mon = ptr[1]&0xf;
+		timeinfo.tm_mon = (ptr[1]&0xf) - 1;
 		timeinfo.tm_mday = ptr[0]&0x1f;
 		rc = mktime(&timeinfo);
 		strftime(buf, l, "%Y/%m/%d", &timeinfo);
