@@ -3152,7 +3152,7 @@ static void * check_thread(void) {
 	int32_t i, rc, time_to_check, next_check, ac_next, ecmc_next, msec_wait = 3000;
 	struct timeb t_now, tbc, ecmc_time;
 #ifdef CS_ANTICASC
-	struct ac_time;
+	struct timeb ac_time;
 #endif
 	ECM_REQUEST *er = NULL;
 	struct s_client *cl;
