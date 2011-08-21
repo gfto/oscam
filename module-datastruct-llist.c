@@ -97,11 +97,9 @@ static void ll_clear_int(LLIST *l, int32_t clear_data)
     LL_NODE *n=l->initial, *nxt;
     while (n) {
     	nxt = n->nxt;
-    	if (n) {
     		if (clear_data)
     			add_garbage(n->obj);
-    		add_garbage(n);
-		}
+    		add_garbage(n);		
 		n = nxt;
     }
     l->version++;

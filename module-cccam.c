@@ -705,7 +705,7 @@ int32_t cc_get_nxt_ecm(struct s_client *cl) {
 			pending++;
 			if (loop_check(cc->peer_node_id, er->client)) {
 				cs_debug_mask(D_READER, "%s ecm loop detected! client %s (%8lX)", 
-						getprefix(), er->client->account->usr, er->client->thread);
+						getprefix(), er->client->account->usr, (unsigned long)er->client->thread);
 				write_ecm_answer(cl->reader, &cl->ecmtask[i], E_NOTFOUND, E2_CCCAM_LOOP, NULL, NULL);
 			}
 			else 		
@@ -1423,14 +1423,14 @@ int32_t cc_send_emm(EMM_PACKET *ep) {
 
 	if (!emm_card) { //Card for emm not found!
 		cs_debug_mask(D_EMM, "%s emm for client %8lX not possible, no card found!",
-				getprefix(), ep->client->thread);
+				getprefix(), (unsigned long)ep->client->thread);
 		cs_readunlock(&cc->cards_busy);
 		return 0;
 	}
 
 	cs_debug_mask(D_EMM,
 			"%s emm received for client %8lX caid %04X for card %08X",
-			getprefix(), ep->client->thread, caid, emm_card->id);
+			getprefix(), (unsigned long)ep->client->thread, caid, emm_card->id);
 
 	int32_t size = ep->l + 12;
 	uint8_t *emmbuf = cs_malloc(&emmbuf, size, QUITERROR);
