@@ -1,27 +1,20 @@
 #include "globals.h"
 #include "reader-common.h"
 
-static char *chid_date(const uchar *ptr, char *buf, int32_t l)
+static time_t chid_date(const uchar *ptr, char *buf, int32_t l)
 {
-  if (buf)
-  {
-    snprintf(buf, l, "%04d/%02d/%02d",
-              1990+(ptr[1]>>4)+(((ptr[0]>>5)&7)*10), ptr[1]&0xf, ptr[0]&0x1f);
+	time_t rc = 0;
+	struct tm timeinfo;
+	memset(&timeinfo, 0, sizeof(struct tm));	
+  if (buf){
+		timeinfo.tm_year = (ptr[1]>>4)+(((ptr[0]>>5)&7)*10);
+		timeinfo.tm_mon = ptr[1]&0xf;
+		timeinfo.tm_mday = ptr[0]&0x1f;
+		rc = mktime(&timeinfo);
+		strftime(buf, l, "%Y/%m/%d", &timeinfo);
   }
-  return(buf);
+  return(rc);
 }
-
-/* todo: for discussion
-static time_t chid_date_t(const uchar *ptr, char *buf, int32_t l)
-{
-	struct tm tm;
-	if (buf) {
-		snprintf(buf, l, "%04d/%02d/%02d", 1990+(ptr[1]>>4)+(((ptr[0]>>5)&7)*10), ptr[1]&0xf, ptr[0]&0x1f);
-		strptime(buf, "%Y/%m/%d", &tm);
-	}
-	return(mktime(&tm));
-}
-*/
 
 static int32_t read_record(struct s_reader * reader, const uchar *cmd, const uchar *data, uchar * cta_res)
 {
@@ -312,8 +305,6 @@ static int32_t conax_card_info(struct s_reader * reader)
 	uchar insCA[] = {0xDD, 0xCA, 0x00, 0x00, 0x00};
 	char *txt[] = { "Package", "PPV-Event" };
 	static const uchar *cmd[] = { insC6, ins26 };
-	struct tm tm;
-	memset(&tm, 0, sizeof(struct tm));
 	time_t start_t, end_t;
 	uint32_t cxclass = 0;
 
@@ -340,19 +331,15 @@ static int32_t conax_card_info(struct s_reader * reader)
 								if (k > 1) {
 									cs_ri_log(reader, "%s: %d, id: %04X%s, date: %s - %s, name: %s", txt[type], ++n, provid, chid, pdate, pdate+16, trim(provname));
 
-									strptime(pdate, "%Y/%m/%d", &tm);
-									start_t = mktime(&tm);
-									strptime(pdate + 16, "%Y/%m/%d", &tm);
-									end_t = mktime(&tm);
-
 									// add entitlements to list
 									cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), provid, cxclass, start_t, end_t, type + 1);
 
 									k = 0;
 									chid[0] = '\0';
-
 								}
-								chid_date(cta_res+i+2, pdate+(k++<<4), 15);
+								if(k == 0) start_t = chid_date(cta_res+i+2, pdate, 15);
+								else end_t = chid_date(cta_res+i+2, pdate+16, 15);
+								++k;
 								break;
 							case 0x20: // Provider classes
 							case 0x90: // (?) not sure what this is, saw it once in log
@@ -362,11 +349,6 @@ static int32_t conax_card_info(struct s_reader * reader)
 						}
 					}
 					cs_ri_log(reader, "%s: %d, id: %04X%s, date: %s - %s, name: %s", txt[type], ++n, provid, chid, pdate, pdate+16, trim(provname));
-
-					strptime(pdate, "%Y/%m/%d", &tm);
-					start_t = mktime(&tm);
-					strptime(pdate + 16, "%Y/%m/%d", &tm);
-					end_t = mktime(&tm);
 
 					// add entitlements to list
 					cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), provid, cxclass, start_t, end_t, type + 1);

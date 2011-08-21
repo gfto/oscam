@@ -81,28 +81,19 @@ static int32_t cw_RSA(unsigned char *out, unsigned char *in, int32_t n, BIGNUM *
   return(rc);
 }
 
-/*
-static char *chid_date(uchar *ptr, char *buf, int32_t l)
+static time_t chid_date(uchar *ptr, char *buf, int32_t l)
 {
-  if (buf)
-  {
-    snprintf(buf, l, "%04d/%02d/%02d",
-                     1990+(ptr[0]>>1), ((ptr[0]&1)<<3)|(ptr[1]>>5), ptr[1]&0x1f);
-  }
-  return(buf);
-}
-*/
-
-// todo: for discussion
-static time_t chid_date_t(uchar *ptr, char *buf, int32_t l)
-{
-	struct tm tm;
-	memset(&tm, 0, sizeof(struct tm));
+	time_t rc = 0;
+	struct tm timeinfo;
+	memset(&timeinfo, 0, sizeof(struct tm));	
 	if (buf) {
-		snprintf(buf, l, "%04d/%02d/%02d", 1990+(ptr[0]>>1), ((ptr[0]&1)<<3)|(ptr[1]>>5), ptr[1]&0x1f);
-		strptime(buf, "%Y/%m/%d", &tm);
+		timeinfo.tm_year = ptr[0]>>1;
+		timeinfo.tm_mon = ((ptr[0]&1)<<3)|(ptr[1]>>5);
+		timeinfo.tm_mday = ptr[1]&0x1f;
+		rc = mktime(&timeinfo);
+		strftime(buf, l, "%Y/%m/%d", &timeinfo);
 	}
-	return(mktime(&tm));
+	return(rc);
 }
 
 
@@ -615,12 +606,9 @@ static int32_t cryptoworks_card_info(struct s_reader * reader)
 
 					// todo: add entitlements to list but produces a warning related to date variable
 					cs_add_entitlement(reader, reader->caid, reader->prid[i][3], b2i(2, cta_res + 7), 0,
-							chid_date_t(cta_res+28, ds, sizeof(ds)-1),
-							chid_date_t(cta_res+30, de, sizeof(de)-1), 3);
+							chid_date(cta_res+28, ds, sizeof(ds)-1),
+							chid_date(cta_res+30, de, sizeof(de)-1), 3);
 
-
-					// chid_date(cta_res+28, ds, sizeof(ds)-1);
-					// chid_date(cta_res+30, de, sizeof(de)-1);
 					cs_ri_log (reader, "chid: %02X%02X, date: %s - %s, name: %s",
 							cta_res[6], cta_res[7], ds, de, trim((char *) cta_res+10));
 				}
@@ -641,11 +629,9 @@ static int32_t cryptoworks_card_info(struct s_reader * reader)
 					
 					// todo: add entitlements to list but produces a warning related to date variable
 					cs_add_entitlement(reader, reader->caid, reader->prid[i][3], b2i(2, cta_res + 6), 0,
-							chid_date_t(cta_res+28, ds, sizeof(ds)-1),
-							chid_date_t(cta_res+30, de, sizeof(de)-1), 3);
+							chid_date(cta_res+28, ds, sizeof(ds)-1),
+							chid_date(cta_res+30, de, sizeof(de)-1), 3);
 
-					//chid_date(cta_res+28, ds, sizeof(ds)-1);
-					//chid_date(cta_res+30, de, sizeof(de)-1);
 					cta_res[27]=0;
 					cs_ri_log (reader, "chid: %02X%02X, date: %s - %s, name: %s",
 							cta_res[6], cta_res[7], ds, de, trim((char *)cta_res+10));

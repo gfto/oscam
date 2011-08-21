@@ -72,6 +72,7 @@
 #define strcpy(a,b) UNSAFE_STRCPY_USE_CS_STRNCPY_INSTEAD()
 #define sprintf(a,...) UNSAFE_SPRINTF_USE_SNPRINTF_INSTEAD()
 #define strtok(a,b,c) UNSAFE_STRTOK_USE_STRTOK_R_INSTEAD()
+#define strptime(a,b,c) STRPTIME_NOT_EXISTS_ON_SOME_DM500_DB2()
 #endif
 
 #ifdef UNUSED
