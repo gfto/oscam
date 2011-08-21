@@ -358,7 +358,8 @@ extern int32_t safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakf
 extern void cs_strncpy(char * destination, const char * source, size_t num);
 extern char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf);
 extern char *get_tiername(uint16_t tierid, uint16_t caid, char *buf);
-extern char *get_provider(uint16_t caid, uint32_t provid, char *buf);
+extern char *get_provider(uint16_t caid, uint32_t provid, char *buf, uint32_t buflen);
+void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *sat, const char *lang);
 extern uchar fast_rnd(void);
 extern void init_rnd(void);
 extern int32_t hexserialset(struct s_reader *rdr);

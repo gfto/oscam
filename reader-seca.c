@@ -66,6 +66,8 @@ static int32_t set_provider_info(struct s_reader * reader, int32_t i)
   l_name[sizeof(l_name)-1]=0;
   trim(l_name+8);
   l_name[0]=(l_name[8]) ? ',' : 0;
+  if (l_name[8])
+	  add_provider(0x0100, provid, l_name + 8, "", "");
   reader->availkeys[i][0]=valid; //misusing availkeys to register validity of provider
   cs_ri_log (reader, "[seca-reader] provider %d: %X, valid: %i%s, expiry date: %4d/%02d/%02d",
          i+1, provid, valid, l_name, year, month, day);
