@@ -481,7 +481,7 @@ static FILTER mk_user_ftab()
   }
 
   // search CAID in client IDENT
-  cs_debug_mask(D_CLIENT, "client[%8lX].%s nfilts=%d, filt.caid=%04X", pthread_self(),
+  cs_debug_mask(D_CLIENT, "client[%8lX].%s nfilts=%d, filt.caid=%04X", (unsigned long)pthread_self(),
            cl->account->usr, cl->ftab.nfilts, filt.caid);
 
   if( !filt.caid && cl->ftab.nfilts ) 

@@ -181,7 +181,7 @@ bool IO_Serial_SetBitrate (struct s_reader * reader, uint32_t bitrate, struct te
 #else
   if(IO_Serial_Bitrate(bitrate) == B0)
   {
-    cs_log("Baudrate %lu not supported", bitrate);
+    cs_log("Baudrate %u not supported", bitrate);
     return ERROR;
   }
   else

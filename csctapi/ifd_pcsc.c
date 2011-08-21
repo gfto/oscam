@@ -22,7 +22,7 @@ int32_t pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
         // and after the actual device name is copied in pcsc_reader->pcsc_name .
         rv = SCardListReaders(pcsc_reader->hContext, NULL, NULL, &dwReaders);
         if( rv != SCARD_S_SUCCESS ) {
-            cs_debug_mask(D_DEVICE, "PCSC failed listing readers [1] : (%lx)", rv);
+            cs_debug_mask(D_DEVICE, "PCSC failed listing readers [1] : (%lx)", (unsigned long)rv);
             return  2;
         }
         mszReaders = malloc(sizeof(char)*dwReaders);
@@ -32,7 +32,7 @@ int32_t pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
         }
         rv = SCardListReaders(pcsc_reader->hContext, NULL, mszReaders, &dwReaders);
         if( rv != SCARD_S_SUCCESS ) {
-            cs_debug_mask(D_DEVICE, "PCSC failed listing readers [2]: (%lx)", rv);
+            cs_debug_mask(D_DEVICE, "PCSC failed listing readers [2]: (%lx)", (unsigned long)rv);
             free(mszReaders);
             return  2;
         }
@@ -81,7 +81,7 @@ int32_t pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
         free(readers);
     }
     else {
-        cs_log("PCSC failed establish context (%lx)", rv);
+        cs_log("PCSC failed establish context (%lx)", (unsigned long)rv);
         return 2;
     }
     return 0;
@@ -113,24 +113,24 @@ int32_t pcsc_reader_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar
             dwSendLength = l;
         else
             dwSendLength = l-1;
-        cs_debug_mask(D_DEVICE, "sending %d bytes to PCSC : %s", dwSendLength,cs_hexdump(1,buf,l, tmp, sizeof(tmp)));
+        cs_debug_mask(D_DEVICE, "sending %lu bytes to PCSC : %s", (unsigned long)dwSendLength,cs_hexdump(1,buf,l, tmp, sizeof(tmp)));
         rv = SCardTransmit((SCARDHANDLE)(pcsc_reader->hCard), SCARD_PCI_T0, (LPCBYTE) buf, dwSendLength, NULL, (LPBYTE) cta_res, (LPDWORD) &dwRecvLength);
         *cta_lr=dwRecvLength;
     }
     else  if(pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T1) {
         dwSendLength = l;
-        cs_debug_mask(D_DEVICE, "sending %d bytes to PCSC : %s", dwSendLength,cs_hexdump(1,buf,l, tmp, sizeof(tmp)));
+        cs_debug_mask(D_DEVICE, "sending %lu bytes to PCSC : %s", (unsigned long)dwSendLength,cs_hexdump(1,buf,l, tmp, sizeof(tmp)));
         rv = SCardTransmit((SCARDHANDLE)(pcsc_reader->hCard), SCARD_PCI_T1, (LPCBYTE) buf, dwSendLength, NULL, (LPBYTE) cta_res, (LPDWORD) &dwRecvLength);
         *cta_lr=dwRecvLength;
     }
     else {
-        cs_debug_mask(D_DEVICE, "PCSC invalid protocol (T=%d)", pcsc_reader->dwActiveProtocol);
+        cs_debug_mask(D_DEVICE, "PCSC invalid protocol (T=%lu)", (unsigned long)pcsc_reader->dwActiveProtocol);
         return ERR_INVALID;
     }
 
-     cs_debug_mask(D_DEVICE, "received %d bytes from PCSC with rv=%lx : %s", *cta_lr, rv,cs_hexdump(1,cta_res,*cta_lr, tmp, sizeof(tmp)));
+     cs_debug_mask(D_DEVICE, "received %d bytes from PCSC with rv=%lx : %s", *cta_lr, (unsigned long)rv,cs_hexdump(1,cta_res,*cta_lr, tmp, sizeof(tmp)));
 
-     cs_debug_mask(D_DEVICE, "PCSC doapi (%lx ) (T=%d), %d", rv, ( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1), *cta_lr );
+     cs_debug_mask(D_DEVICE, "PCSC doapi (%lx ) (T=%d), %d", (unsigned long)rv, ( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1), *cta_lr );
 
      if ( rv  == SCARD_S_SUCCESS ){
          return OK;
@@ -152,11 +152,11 @@ int32_t pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, uint16_t *a
     dwAtrLen = sizeof(pbAtr);
     dwReaderLen=0;
     
-    cs_debug_mask(D_DEVICE, "PCSC resetting card in (%s) with handle %lu", pcsc_reader->pcsc_name,(SCARDHANDLE)(pcsc_reader->hCard));
+    cs_debug_mask(D_DEVICE, "PCSC resetting card in (%s) with handle %ld", pcsc_reader->pcsc_name,(long)(pcsc_reader->hCard));
     rv = SCardReconnect((SCARDHANDLE)(pcsc_reader->hCard), SCARD_SHARE_EXCLUSIVE, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1,  SCARD_RESET_CARD, &pcsc_reader->dwActiveProtocol);
 
     if ( rv != SCARD_S_SUCCESS )  {
-        cs_debug_mask(D_DEVICE, "Error PCSC failed to reset card (%lx)", rv);
+        cs_debug_mask(D_DEVICE, "Error PCSC failed to reset card (%lx)", (unsigned long)rv);
         return(0);
     }
     
@@ -177,7 +177,7 @@ int32_t pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, uint16_t *a
         return(1);
     }
     else {
-        cs_debug_mask(D_DEVICE, "Error PCSC failed to get ATR for card (%lx)", rv);
+        cs_debug_mask(D_DEVICE, "Error PCSC failed to get ATR for card (%lx)", (unsigned long)rv);
     }
 
     return(0);
@@ -206,7 +206,7 @@ int32_t pcsc_check_card_inserted(struct s_reader *pcsc_reader)
                 SCardDisconnect((SCARDHANDLE)(pcsc_reader->hCard),SCARD_RESET_CARD);
                 pcsc_reader->hCard=0;
             }
-            // cs_debug_mask(D_DEVICE, "PCSC card in %s removed / absent [dwstate=%lx rv=(%lx)]", pcsc_reader->pcsc_name, dwState, rv );
+            // cs_debug_mask(D_DEVICE, "PCSC card in %s removed / absent [dwstate=%lx rv=(%lx)]", pcsc_reader->pcsc_name, dwState, (unsigned long)rv );
             return 0;
         }
         else if( rv == SCARD_W_UNRESPONSIVE_CARD ) {
@@ -222,7 +222,7 @@ int32_t pcsc_check_card_inserted(struct s_reader *pcsc_reader)
         }
         else {
             // if we get here we have a bigger problem -> display status and debug
-            // cs_debug_mask(D_DEVICE, "PCSC reader %s status [dwstate=%lx rv=(%lx)]", pcsc_reader->pcsc_name, dwState, rv );
+            // cs_debug_mask(D_DEVICE, "PCSC reader %s status [dwstate=%lx rv=(%lx)]", pcsc_reader->pcsc_name, dwState, (unsigned long)rv );
             return 0;
         }
         
