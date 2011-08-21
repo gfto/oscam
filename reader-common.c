@@ -134,50 +134,63 @@ static int32_t reader_activate_card(struct s_reader * reader, ATR * atr, uint16_
 static void do_emm_from_file(struct s_reader * reader)
 {
   //now here check whether we have EMM's on file to load and write to card:
-  if (reader->emmfile != NULL) {//readnano has something filled in
+  if (reader->emmfile == NULL)
+     return;
 
-    //handling emmfile
-    char token[256];
-    FILE *fp;
+   //handling emmfile
+   char token[256];
+   FILE *fp;
 	
-    if ((reader->emmfile[0] == '/'))
+   if ((reader->emmfile[0] == '/'))
       snprintf (token, sizeof(token), "%s", reader->emmfile); //pathname included
-    else
+   else
       snprintf (token, sizeof(token), "%s%s", cs_confdir, reader->emmfile); //only file specified, look in confdir for this file
+
+   free(reader->emmfile);
+   reader->emmfile = NULL; //clear emmfile, so no reading anymore
     
-    if (!(fp = fopen (token, "rb")))
+   if (!(fp = fopen (token, "rb"))) {
       cs_log ("ERROR: Cannot open EMM file '%s' (errno=%d %s)\n", token, errno, strerror(errno));
-    else {
-      EMM_PACKET *eptmp;
-      if(!cs_malloc(&eptmp,sizeof(EMM_PACKET), -1)){
+      return;
+   }
+   EMM_PACKET *eptmp;
+   if(!cs_malloc(&eptmp,sizeof(EMM_PACKET), -1)) {
       	fclose (fp);
       	return;
-      }
+   }
    size_t result;  
+   memset(eptmp, 0, sizeof(EMM_PACKET));
    result = fread (eptmp, sizeof(EMM_PACKET), 1, fp); 
    fclose (fp);
-			//save old b_nano value
-			//clear lsb and lsb+1, so no blocking, and no saving for this nano  
-			uint16_t save_s_nano = reader->s_nano;
-			uint16_t save_b_nano = reader->b_nano;
 
-			int32_t rc = reader_emm(reader, eptmp);
-			if (rc == OK)
-				cs_log ("EMM from file %s was successful written.", token);
-			else
-				cs_log ("ERROR: EMM read from file %s NOT processed correctly! (rc=%d)", token, rc);
+   eptmp->caid[0] = (reader->caid >> 8) & 0xFF;
+   eptmp->caid[1] = reader->caid & 0xFF;
+   if (reader->nprov > 0)
+      memcpy(eptmp->provid, reader->prid[0], sizeof(eptmp->provid));
+   eptmp->l = eptmp->emm[2] + 3;
 
-			//restore old block/save settings
-			reader->s_nano = save_s_nano; 
-			reader->b_nano = save_b_nano;
+   struct s_cardsystem *cs = get_cardsystem_by_caid(reader->caid);
+   if (cs && cs->get_emm_type && !cs->get_emm_type(eptmp, reader)) {
+      cs_debug_mask(D_EMM, "emm skipped, get_emm_type() returns error, reader %s", reader->label);
+      free(eptmp);
+      return;
+   }
+   //save old b_nano value
+   //clear lsb and lsb+1, so no blocking, and no saving for this nano  
+   uint16_t save_s_nano = reader->s_nano;
+   uint16_t save_b_nano = reader->b_nano;
 
-			free (reader->emmfile);
-			reader->emmfile = NULL; //clear emmfile, so no reading anymore
+   int32_t rc = reader_emm(reader, eptmp);
+   if (rc == OK)
+      cs_log ("EMM from file %s was successful written.", token);
+   else
+      cs_log ("ERROR: EMM read from file %s NOT processed correctly! (rc=%d)", token, rc);
 
-			free(eptmp);
-			eptmp = NULL;
-		}
-	}
+   //restore old block/save settings
+   reader->s_nano = save_s_nano; 
+   reader->b_nano = save_b_nano;
+               
+   free(eptmp);
 }
 
 void reader_card_info(struct s_reader * reader)
