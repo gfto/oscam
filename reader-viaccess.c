@@ -421,37 +421,26 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 				// if we have an ecm number we check it.
 				// we can't assume that if the nano len is 5 or more we have an ecm number
 				// as some card don't support this
-				//force use ecm 00 provider 030B00 & 032920 & 032940
-				if( reader->last_geo.number_ecm > 0 )
-				{
-					if(ecm88Data[2] == 0x03 && ((ecm88Data[3] == 0x0B && ecm88Data[4] == 0x00)||
-						                        (ecm88Data[3] == 0x29 && ecm88Data[4] == 0x20)||
-												(ecm88Data[3] == 0x29 && ecm88Data[4] == 0x40)))
-					{
-						if (reader->last_geo.number_ecm == curnumber_ecm && !( ecm88Data[nanoLen-1] == 0x01 )) //ecm 00
-						{
-							keynr=ecm88Data[5];
-							cs_debug_mask(D_READER, "keyToUse = %02x, ECM ending with %02x",ecm88Data[5], ecm88Data[nanoLen-1]);
-						}
-						else
-						{
-							// ecm 01
-							if( ecm88Data[nanoLen-1] == 0x01 )
-							{
-								cs_debug_mask(D_READER, "Skip ECM ending with = %02x for ecm number (%x) for provider %02x%02x%02x",ecm88Data[nanoLen-1], curnumber_ecm, ecm88Data[2], ecm88Data[3], ecm88Data[4]);
-							}
-							cs_debug_mask(D_READER, "Skip ECM ending with = %02x for ecm number (%x)",ecm88Data[nanoLen-1], curnumber_ecm);
-							ecm88Data=nextEcm;
-							ecm88Len-=curEcm88len;
-							continue; //loop to next ecm
-						}
-					}
-				}
-				else { // long ecm but we don't have an ecm number so we have to try them all.
-					keynr=ecm88Data[5];
-					cs_debug_mask(D_READER, "keyToUse = %02x",ecm88Data[5]);
-				}
-			}
+            if( reader->last_geo.number_ecm > 0 ) {               
+                if (reader->last_geo.number_ecm == curnumber_ecm && !( ecm88Data[nanoLen-1] == 0x01 && (ecm88Data[2] == 0x03 && ecm88Data[3] == 0x0B && ecm88Data[4] == 0x00 ) )) {
+                    keynr=ecm88Data[5];
+                    cs_debug_mask(D_READER, "keyToUse = %02x, ECM ending with %02x",ecm88Data[5], ecm88Data[nanoLen-1]);
+                } else {
+                    if( ecm88Data[nanoLen-1] == 0x01 && (ecm88Data[2] == 0x03 && ecm88Data[3] == 0x0B && ecm88Data[4] == 0x00 ) )
+                    {
+                        cs_debug_mask(D_READER, "Skip ECM ending with = %02x for ecm number (%x) for provider %02x%02x%02x",ecm88Data[nanoLen-1], curnumber_ecm, ecm88Data[2], ecm88Data[3], ecm88Data[4]);
+                    }
+                    cs_debug_mask(D_READER, "Skip ECM ending with = %02x for ecm number (%x)",ecm88Data[nanoLen-1], curnumber_ecm);
+                    ecm88Data=nextEcm;
+                    ecm88Len-=curEcm88len;
+                    continue; //loop to next ecm
+                }
+            }
+            else { // long ecm but we don't have an ecm number so we have to try them all.
+                keynr=ecm88Data[5];
+                cs_debug_mask(D_READER, "keyToUse = %02x",ecm88Data[5]);
+            }
+        }
 
 			memcpy (ident, &ecm88Data[2], sizeof(ident));
 			provid = b2i(3, ident);
