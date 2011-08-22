@@ -1833,13 +1833,12 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	struct s_reader *er_reader = er->selected_reader; //responding reader
 	if (!er_reader) er_reader = ll_has_elements(er->matching_rdr); //no reader? use first reader
 
-	if (er_reader)
-	{
-			// add marker to reader if ECM_REQUEST was betatunneled
-			if(er->btun)
-				snprintf(sby, sizeof(sby)-1, " by %s(btun)", er_reader->label);
-			else
-				snprintf(sby, sizeof(sby)-1, " by %s", er_reader->label);
+	if (er_reader) {
+		// add marker to reader if ECM_REQUEST was betatunneled
+		if(er->ocaid)
+			snprintf(sby, sizeof(sby)-1, " by %s(btun %04X)", er_reader->label, er->ocaid);
+		else
+			snprintf(sby, sizeof(sby)-1, " by %s", er_reader->label);
 	}
 	if (er->rc < E_NOTFOUND) er->rcEx=0;
 	if (er->rcEx)
@@ -1885,7 +1884,6 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	}
 #endif
 
-	er->caid = er->ocaid;
 	switch(er->rc) {
 		case E_FOUND:
 		case E_EMU: //FIXME obsolete ?
@@ -2172,9 +2170,7 @@ void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto)
 	static uchar headerN3[10] = {0xc7, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x87, 0x12};
 	static uchar headerN2[10] = {0xc9, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x48, 0x12};
 
-#ifdef WITH_DEBUG
-	uint16_t caidfrom = er->caid;
-#endif
+	er->ocaid = er->caid;
 	er->caid = caidto;
 	er->prid = 0;
 	er->l = er->ecm[2] + 3;
@@ -2192,7 +2188,7 @@ void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto)
 	else
 		memcpy(er->ecm + 3, headerN2, 10);
 
-    er->l += 10;
+	er->l += 10;
 	er->ecm[2] = er->l - 3;
 	er->btun = 1;
 
@@ -2201,7 +2197,7 @@ void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto)
 	first_client->cwtun++;
 
 	cs_debug_mask(D_TRACE, "ECM converted from: 0x%X to BetaCrypt: 0x%X for service id:0x%X",
-					caidfrom, caidto, er->srvid);
+					er->ocaid, caidto, er->srvid);
 }
 
 
@@ -2375,9 +2371,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	// rc<100 -> ecm error
 	if (er->rc >= E_UNHANDLED) {
-
 		m = er->caid;
-		er->ocaid = er->caid;
 		i = er->srvid;
 
 		if ((i != client->last_srvid) || (!client->lastswitch)) {
