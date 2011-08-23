@@ -2734,6 +2734,11 @@ int32_t write_server()
 			if ((rdr->cardmhz || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, "cardmhz", "%d\n", rdr->cardmhz);
 
+#ifdef AZBOX
+			if ((rdr->mode != -1 || cfg.http_full_cfg) && isphysical)
+				fprintf_conf(f, "mode", "%d\n", rdr->mode);
+#endif
+
 			value = mk_t_ftab(&rdr->ftab);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, "ident", "%s\n", value);
@@ -4652,6 +4657,9 @@ int32_t init_readerdb()
 			rdr->nagra_read = 0;
 			rdr->mhz = 357;
 			rdr->cardmhz = 357;
+#ifdef AZBOX
+			rdr->mode = -1;
+#endif
 			rdr->deprecated = 0;
 			rdr->force_irdeto = 0;
 #ifdef MODULE_CCCAM

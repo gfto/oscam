@@ -26,11 +26,11 @@
 #endif
 
 #ifndef IRDETO_GUESSING
-#define IRDETO_GUESSING
+//#define IRDETO_GUESSING
 #endif
 
 #ifndef CS_ANTICASC
-#define CS_ANTICASC
+//#define CS_ANTICASC
 #endif
 
 #ifndef WITH_DEBUG
@@ -46,7 +46,7 @@
 #endif
 
 #ifndef WITH_LB
-#define WITH_LB
+//#define WITH_LB
 #endif
 
 #ifndef LCDSUPPORT
@@ -62,7 +62,7 @@
 //
 
 #ifndef MODULE_MONITOR
-#define MODULE_MONITOR
+//#define MODULE_MONITOR
 #endif
 
 #ifndef MODULE_CAMD33
@@ -70,11 +70,11 @@
 #endif
 
 #ifndef MODULE_CAMD35
-#define MODULE_CAMD35
+//#define MODULE_CAMD35
 #endif
 
 #ifndef MODULE_CAMD35_TCP
-#define MODULE_CAMD35_TCP
+//#define MODULE_CAMD35_TCP
 #endif
 
 #ifndef MODULE_NEWCAMD
@@ -82,23 +82,23 @@
 #endif
 
 #ifndef MODULE_CCCAM
-#define MODULE_CCCAM
+//#define MODULE_CCCAM
 #endif
 
 #ifndef MODULE_GBOX
-#define MODULE_GBOX
+//#define MODULE_GBOX
 #endif
 
 #ifndef MODULE_RADEGAST
-#define MODULE_RADEGAST
+//#define MODULE_RADEGAST
 #endif
 
 #ifndef MODULE_SERIAL
-#define MODULE_SERIAL
+//#define MODULE_SERIAL
 #endif
 
 #ifndef MODULE_CONSTCW
-#define MODULE_CONSTCW
+//#define MODULE_CONSTCW
 #endif
 
 //
@@ -115,23 +115,23 @@
 #endif
 
 #ifndef READER_IRDETO
-#define READER_IRDETO
+//#define READER_IRDETO
 #endif
 
 #ifndef READER_CONAX
-#define READER_CONAX
+//#define READER_CONAX
 #endif
 
 #ifndef READER_CRYPTOWORKS
-#define READER_CRYPTOWORKS
+//#define READER_CRYPTOWORKS
 #endif
 
 #ifndef READER_SECA
-#define READER_SECA
+//#define READER_SECA
 #endif
 
 #ifndef READER_VIACCESS
-#define READER_VIACCESS
+//#define READER_VIACCESS
 #endif
 
 #ifndef READER_VIDEOGUARD
@@ -139,11 +139,11 @@
 #endif
 
 #ifndef READER_DRE
-#define READER_DRE
+//#define READER_DRE
 #endif
 
 #ifndef READER_TONGFANG
-#define READER_TONGFANG
+//#define READER_TONGFANG
 #endif
 #endif
 
