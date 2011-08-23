@@ -1993,7 +1993,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 	ECM_REQUEST *ert = ea->er;
 
 	if (ea->reader)
-		cs_debug_mask(D_TRACE, "ecm answer from %s for ecm %04X rc=%d", ea->reader->label, ert->checksum, ea->rc);
+		cs_debug_mask(D_TRACE, "ecm answer from reader %s for ecm %04X rc=%d", ea->reader->label, htons(ert->checksum), ea->rc);
 
 	if (ert->rc<E_99) {
 #ifdef WITH_LB
