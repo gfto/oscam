@@ -603,12 +603,14 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 		case R_INTERNAL:
 #if defined(SCI_DEV)
 			/* Dectivate ICC */
-			call (Sci_Deactivate(reader));
+			Sci_Deactivate(reader);
 			call (Phoenix_Close(reader));
 #elif defined(WITH_STAPI)
 			call(STReader_Close(reader->stsmart_handle));
 #elif defined(COOL)
 			call (Cool_Close(reader));
+#elif defined(AZBOX)
+			call (Azbox_Close(reader));
 #endif
 			break;
 #ifdef HAVE_PCSC
