@@ -180,6 +180,8 @@ static void do_emm_from_file(struct s_reader * reader)
    uint16_t save_s_nano = reader->s_nano;
    uint16_t save_b_nano = reader->b_nano;
 
+   reader->s_nano = reader->b_nano = 0;
+
    int32_t rc = reader_emm(reader, eptmp);
    if (rc == OK)
       cs_log ("EMM from file %s was successful written.", token);
