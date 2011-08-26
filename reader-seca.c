@@ -265,91 +265,118 @@ static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, stru
 
 static int32_t seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
 {
-	cs_debug_mask(D_EMM, "Entered seca_get_emm_type ep->emm[0]=%i",ep->emm[0]);
-	int32_t i;
-	tmp_dbg(13);
-	switch (ep->emm[0]) {
-		case 0x82:
-			ep->type = UNIQUE;
-			memset(ep->hexserial,0,8);
- 			memcpy(ep->hexserial, ep->emm + 3, 6);
-			cs_debug_mask(D_EMM, "SECA EMM: UNIQUE, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 6, tmp_dbg, sizeof(tmp_dbg))); 
-			cs_debug_mask(D_EMM, "SECA EMM: UNIQUE, rdr->hexserial = %s", cs_hexdump(1, rdr->hexserial, 6, tmp_dbg, sizeof(tmp_dbg))); 
- 			return (!memcmp (rdr->hexserial, ep->hexserial, 6));
+    cs_debug_mask(D_EMM, "Entered seca_get_emm_type ep->emm[0]=%i",ep->emm[0]);
+    int32_t i;
+    tmp_dbg(25);//patch size
+    switch (ep->emm[0])
+    {
+    case 0x82:
+        ep->type = UNIQUE;
+        memset(ep->hexserial,0,8);
+        memcpy(ep->hexserial, ep->emm + 3, 6);
+        cs_debug_mask(D_EMM, "SECA EMM: UNIQUE , ep->hexserial  = %s", cs_hexdump(1, ep->hexserial, 6, tmp_dbg, sizeof(tmp_dbg)));
+        cs_debug_mask(D_EMM, "SECA EMM: UNIQUE , rdr->hexserial = %s", cs_hexdump(1, rdr->hexserial, 6, tmp_dbg, sizeof(tmp_dbg)));
+        return (!memcmp (rdr->hexserial, ep->hexserial, 6));
+        break;
 
-		case 0x84:
-			ep->type = SHARED;
-			memset(ep->hexserial,0,8);
-			memcpy(ep->hexserial, ep->emm + 5, 3); //dont include custom byte; this way the network also knows SA
-			i=get_prov_index(rdr, ep->emm+3);
-			cs_debug_mask(D_EMM, "SECA EMM: SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 3, tmp_dbg, sizeof(tmp_dbg))); 
-			if (i== -1) //provider not found on this card
-				return FALSE; //do not pass this EMM
-			cs_debug_mask(D_EMM, "SECA EMM: SHARED, rdr->sa[%i] = %s", i, cs_hexdump(1, rdr->sa[i], 3, tmp_dbg, sizeof(tmp_dbg))); 
-			return (!memcmp (rdr->sa[i], ep->hexserial, 3));
+    case 0x84:
+        ep->type = SHARED;
+        memset(ep->hexserial,0,8);
+        memcpy(ep->hexserial, ep->emm + 5, 3); //dont include custom byte; this way the network also knows SA
+        i=get_prov_index(rdr, ep->emm+3);
+        cs_debug_mask(D_EMM, "SECA EMM: SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 3, tmp_dbg, sizeof(tmp_dbg)));
+        if (i== -1) //provider not found on this card
+            return FALSE; //do not pass this EMM
+        cs_debug_mask(D_EMM, "SECA EMM: SHARED, rdr->sa[%i] = %s", i, cs_hexdump(1, rdr->sa[i], 3, tmp_dbg, sizeof(tmp_dbg)));
+        return (!memcmp (rdr->sa[i], ep->hexserial, 3));
+        break;
 
-		// Unknown EMM types, but allready subbmited to dev's
-		// FIXME: Drop EMM's until there are implemented
-		case 0x83:
-		/* 	EMM-G ?
-			83 00 74 00 00 00 00 00 C4 7B E7 54 8D 25 8D 27
-			CD 9C 87 4F B2 24 85 68 13 81 5E F1 EA AB 73 6D
-			78 A2 86 F3 C9 4E 78 55 48 21 E4 A0 0B A0 54 3B
-			5C 54 4B 01 39 1F FE C6 29 33 B8 6C 48 A0 9F 60
-			47 EB 6A FC D3 CD 4B 9A 50 F2 05 80 66 F3 82 48
-			22 EF E3 04 28 86 1D AB 82 26 9B 4D 09 B1 A8 F1
-			1D D4 50 69 44 E8 94 04 91 5F 21 A2 3C 43 BC CB
-			DD C1 90 AD 71 A7 38
-		*/	
-		case 0x88:
-		case 0x89:
-		// 	EMM-G ?
-			ep->type = UNKNOWN;
-			return FALSE;
+        // Unknown EMM types, but allready subbmited to dev's
+        // FIXME: Drop EMM's until there are implemented
+    case 0x83:
+        ep->type = GLOBAL;
+        cs_debug_mask(D_EMM, "SECA EMM: GLOBAL, PROVID: %04X",(ep->emm[3]<<8) | ep->emm[4]);
+        return (TRUE);
+        /* 	EMM-G manadge ppv by provid
+         83 00 74 33 41 04 70 00 BF 20 A1 15 48 1B 88 FF
+         CF F5 50 CB 6F E1 26 A2 70 02 8F D0 07 6A 13 F9
+         50 F9 61 88 FB E4 B8 03 EF 68 C9 54 EB C0 51 2E
+         9D F9 E1 4A D9 A6 3F 5D 7A 1E B0 6E 3D 9B 93 E7
+         5A E8 D4 AE 29 B9 37 07 5A 43 C8 F2 DE BD F8 BA
+         69 DC A4 87 C2 FA 25 87 87 42 47 67 AE B7 1A 54
+         CA F6 B7 EC 15 0A 67 1C 59 F8 B9 B8 6F 7D 58 94
+         24 63 17 15 58 1E 59
+        */
+    case 0x88:
+    case 0x89:
+        // 	EMM-G ?
+        ep->type = UNKNOWN;
+        return FALSE;
 
-		default:
-			ep->type = UNKNOWN;
-			return TRUE;
-	}
+    default:
+        ep->type = UNKNOWN;
+        return TRUE;
+    }
 }
-
+//use start filter dvbapi
 static void seca_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
-	int32_t idx = 2;
+    int32_t idx = 2;
 
-	filter[0]=0xFF;
-	filter[1]=0;
+    filter[0]=0xFF;
+    filter[1]=0;
 
-	filter[idx++]=EMM_UNIQUE;
-	filter[idx++]=0;
-	filter[idx+0]    = 0x82;
-	filter[idx+0+16] = 0xFF;
-	memcpy(filter+idx+1, rdr->hexserial, 6);
-	memset(filter+idx+1+16, 0xFF, 6);
-	filter[1]++;
-	idx += 32;
+    if (rdr->blockemm & EMM_UNIQUE)//block emm unique ?  filter emm start yes or no
+    {
+        filter[idx++]=EMM_UNIQUE;
+        filter[idx++]=0;
+        filter[idx+0]    = 0x82;
+        filter[idx+0+16] = 0xFF;
+        memcpy(filter+idx+1, rdr->hexserial, 6);
+        memset(filter+idx+1+16, 0xFF, 6);
+        filter[1]++;
+        idx += 32;
+    }
 
-	int32_t prov;
-	for (prov=0; prov<rdr->nprov; prov++) {
-		filter[idx++]=EMM_SHARED;
-		filter[idx++]=0;
-		filter[idx+0]    = 0x84;
-		filter[idx+0+16] = 0xFF;
-		memcpy(filter+idx+1, &rdr->prid[prov][2], 2);
-		memset(filter+idx+1+16, 0xFF, 2);
-		memcpy(filter+idx+3, &rdr->sa[prov], 3);
-		memset(filter+idx+3+16, 0xFF, 3);
-		filter[1]++;
-		idx += 32;
-		if (filter[1]>=10) {
-			cs_log("seca_get_emm_filter: could not start all emm filter");
-			break;
-		}
-	}
+    int32_t prov;
+    for (prov=0; prov<rdr->nprov; prov++)
+    {
+        if(!memcmp (rdr->sa[prov], "\x00\x00\x00", 3)) continue;//if sa null swap update by shared & global (provid inactif)
 
-	return;
+        if (rdr->blockemm & EMM_GLOBAL) //block emm global ?  filter emm start yes or no
+        {
+            filter[idx++]=EMM_GLOBAL;//global by provider
+            filter[idx++]=0;
+            filter[idx+0]    = 0x83;
+            filter[idx+0+16] = 0xFF;
+            memcpy(filter+idx+1, &rdr->prid[prov][2], 2);
+            memset(filter+idx+1+16, 0xFF, 2);
+            filter[1]++;
+            idx += 32;
+        }
+
+        if (rdr->blockemm & EMM_SHARED)//block emm shared ?  filter emm start yes or no
+        {
+            filter[idx++]=EMM_SHARED;
+            filter[idx++]=0;
+            filter[idx+0]    = 0x84;
+            filter[idx+0+16] = 0xFF;
+            memcpy(filter+idx+1, &rdr->prid[prov][2], 2);
+            memset(filter+idx+1+16, 0xFF, 2);
+            memcpy(filter+idx+3, &rdr->sa[prov], 3);
+            memset(filter+idx+3+16, 0xFF, 3);
+            filter[1]++;
+            idx += 32;
+        }
+        if (filter[1]>=10)
+        {
+            cs_log("seca_get_emm_filter: could not start all emm filter");
+            break;
+        }
+    }
+
+    return;
 }
-
 	
 static int32_t seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
@@ -374,6 +401,13 @@ static int32_t seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 			ins40data_offset = 13;
 			prov_id_ptr = ep->emm+9;
 			break;
+			
+		case GLOBAL:
+			ins40[3]=ep->emm[6];
+			ins40[4]= emm_length - 0x04;
+			ins40data_offset = 7;
+			prov_id_ptr = ep->emm+3;
+			break;			
 
 		default:
     			cs_log("[seca-reader] EMM: Congratulations, you have discovered a new EMM on SECA.");
