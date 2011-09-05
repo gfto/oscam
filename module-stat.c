@@ -1,4 +1,4 @@
-#include "globals.h"
+	#include "globals.h"
 
 #ifdef WITH_LB
 #include "module-cccam.h"
@@ -183,8 +183,41 @@ static uint32_t get_prid(uint16_t caid, uint32_t prid)
 }
 
 /**
+ * returns the fastest statistics. Usefull to check if we have decoded it in the past
+ * 
+ * returns NULL if no reader stat is found.
+ * could also return a stat with rc=4 or rc=5 if no best found stat is available
+ *
+ * But: This function does not check user groups or reader configuration!
+ **/
+READER_STAT *get_fastest_stat(uint16_t caid, uint32_t prid, uint16_t srvid, int16_t ecmlen)
+{
+	READER_STAT *stat, *result = NULL, *result2 = NULL;
+	int32_t result_time = 0;
+	struct s_reader *rdr = first_active_reader;
+	while (rdr) {
+		stat = get_stat(rdr, caid, prid, srvid, ecmlen);
+		if (stat && stat->rc == 0) {//only return "founds"
+			int32_t weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
+			int32_t time = stat->time_avg*100/weight;
+			
+			if (!result || time < result_time) {
+				result = stat;
+				result_time = time;
+			}
+		}	
+		if (stat && (!result2 || stat->rc < result2->rc))
+			result2 = stat;			
+		rdr=rdr->next;
+	}
+	if (!result)
+		result = result2; //return not found/timeout stats if we found no 
+	return result;
+}
+
+/**
  * get statistic values for reader ridx and caid/prid/srvid/ecmlen
- */
+ **/
 READER_STAT *get_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16_t srvid, int16_t ecmlen)
 {
 	if (!rdr->lb_stat)

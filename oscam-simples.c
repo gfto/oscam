@@ -1101,7 +1101,7 @@ void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 	
 	pthread_mutex_unlock(&l->lock);
 #ifdef WITH_MUTEXDEBUG
-	cs_debug_mask_nolock(D_TRACE, "lock %s locked", l->name);
+	//cs_debug_mask_nolock(D_TRACE, "lock %s locked", l->name);
 #endif
 	return;
 }

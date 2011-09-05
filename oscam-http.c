@@ -3550,7 +3550,7 @@ static char *send_oscam_failban(struct templatevars *vars, struct uriparams *par
 	while ((v_ban_entry=ll_iter_next(&itr))) {
 
 		tpl_printf(vars, TPLADD, "IPADDRESS", "%s : %d", cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port);
-
+		tpl_printf(vars, TPLADD, "VIOLATIONUSER", "%s", v_ban_entry->info?v_ban_entry->info:"unknown");
 		struct tm st ;
 		localtime_r(&v_ban_entry->v_time, &st);
 		if (!apicall) {

@@ -106,6 +106,7 @@ struct cc_card {
 	struct s_reader  *origin_reader;
 	uint32_t origin_id;
 	cc_card_type card_type;
+	int8_t aufilter;
 	struct s_sidtab *sidtab; //pointer to sidtab entry if card_type = CT_CARD_BY_SERVICE
 	uint64_t grp;
 	uint8_t rdr_reshare;
@@ -236,7 +237,7 @@ void cc_UA_cccam2oscam(uint8_t *in, uint8_t *out, uint16_t caid);
 int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_t cmd);
 int32_t sid_eq(struct cc_srvid *srvid1, struct cc_srvid *srvid2);
 int32_t same_card(struct cc_card *card1, struct cc_card *card2);
-int32_t same_card2(struct cc_card *card1, struct cc_card *card2);
+int32_t same_card2(struct cc_card *card1, struct cc_card *card2, int8_t compare_grp);
 void cc_UA_oscam2cccam(uint8_t *in, uint8_t *out, uint16_t caid);
 void cc_SA_oscam2cccam(uint8_t *in, uint8_t *out);
 void cc_free_cardlist(LLIST *card_list, int32_t destroy_list);

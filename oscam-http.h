@@ -484,8 +484,8 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 		</TR>\n\
 	</TABLE>\
 	<TABLE CLASS=\"stats\">\n\
-		<TR><TH colspan=\"5\">List of banned IP Addresses</TH></TR>\n\
-		<TR><TH>IP Address</TH><TH>Violation date</TH><TH>Violation count</TH><TH>left ban time</TH><TH>Action</TH></TR>\n\
+		<TR><TH colspan=\"6\">List of banned IP Addresses</TH></TR>\n\
+		<TR><TH>IP Address</TH><TH>User</TH><TH>Violation date</TH><TH>Violation count</TH><TH>left ban time</TH><TH>Action</TH></TR>\n\
 ##FAILBANROW##\
 	</TABLE><BR>\n\
 ##TPLFOOTER##"
@@ -499,6 +499,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLFAILBANBIT "\
 		<TR>\n\
 			<TD>##IPADDRESS##</TD>\
+			<TD>##VIOLATIONUSER##</TD>\
 			<TD>##VIOLATIONDATE##</TD>\
 			<TD>##VIOLATIONCOUNT##</TD>\
 			<TD class=\"centered\">##LEFTTIME##</TD>\
@@ -506,7 +507,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 		</TR>\n"
 
 #define TPLAPIFAILBANBIT "\
-		<ip ipinteger=\"##INTIP##\" count=\"##VIOLATIONCOUNT##\" date=\"##VIOLATIONDATE##\" secondsleft=\"\">##IPADDRESS##</ip>\n"
+		<ip ipinteger=\"##INTIP##\" user=\"##VIOLATIONUSER##\" count=\"##VIOLATIONCOUNT##\" date=\"##VIOLATIONDATE##\" secondsleft=\"\">##IPADDRESS##</ip>\n"
 
 #ifdef CS_ANTICASC
 #define TPLCONFIGMENUANTICASC "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=anticasc\">Anticascading</A></TD>\n"

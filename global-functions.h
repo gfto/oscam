@@ -112,7 +112,8 @@ extern void cleanup_thread(void *var);
 extern void kill_thread(struct s_client *cl);
 extern void remove_reader_from_active(struct s_reader *rdr);
 extern void add_reader_to_active(struct s_reader *rdr);
-extern void cs_add_violation(uint32_t ip, int32_t port);
+extern void cs_add_violation_by_ip(uint32_t ip, int32_t port, char *info);
+extern void cs_add_violation(struct s_client *cl, char *info);
 extern void cs_card_info(void);
 extern void cs_debug_level(void);
 
@@ -412,6 +413,7 @@ extern void clear_reader_stat(struct s_reader *reader);
 extern void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t rc);
 extern void load_stat_from_file();
 extern READER_STAT *get_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16_t srvid, int16_t ecmlen);
+extern READER_STAT *get_fastest_stat(uint16_t caid, uint32_t prid, uint16_t srvid, int16_t ecmlen);
 extern void save_stat_to_file(int32_t);
 extern void clear_all_stat();
 extern void housekeeping_stat(int32_t force);

@@ -527,6 +527,7 @@ typedef struct v_ban {					// failban listmember
 	uint32_t 		v_ip;
 	int32_t			v_port;
 	time_t 			v_time;
+	char            *info;
 } V_BAN;
 
 typedef struct s_entitlement {			// contains entitlement Info

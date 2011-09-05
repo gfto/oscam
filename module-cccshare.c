@@ -374,7 +374,15 @@ int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card) {
         //Check group:
         if (card->grp && !(card->grp & cl->grp))
                 return 0;
-
+                
+		if (card->aufilter) { //aufilter (0=any, 1=au clients only, 2=nonau clients only)
+			int8_t cl_au = ll_count(cl->aureader_list) > 0; //client has au allowed
+			int8_t card_au = card->aufilter == 1;
+			if (card_au != cl_au) 
+				return 0;
+		}
+		
+		//Check idents:
         if (!chk_ident(&cl->ftab, card))
                 return 0;
 
@@ -633,20 +641,37 @@ int32_t equal_providers(struct cc_card *card1, struct cc_card *card2) {
     return (prov1 == NULL);
 }
 
+int32_t is_au_card(struct cc_card *card) {
+	if (card && card->origin_reader)
+		return !card->origin_reader->audisabled && cc_UA_valid(card->hexserial);
+	return 0;
+}
+
 /**
  * Adds a new card to a cardlist.
  */
 int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t free_card) {
 
     int32_t modified = 0;
+    if (!card->aufilter && is_au_card(card)) {
+    	//card keeps their hexserial, set aufilter (0=any, 1=au clients only, 2=nonau clients only)
+    	card->aufilter = 1;
+    	struct cc_card *card3 = create_card(card);
+    	
+    	//create a copy of the card, set aufilter to 2 and remove hexserial:
+    	card3->aufilter = 2;
+    	memset(card3->hexserial, 0, sizeof(card3->hexserial));
+    	modified = add_card_to_serverlist(cardlist, card3, TRUE);
+    }
+
     LL_ITER it = ll_iter_create(cardlist);
     struct cc_card *card2;
-
+    
     //Minimize all, transmit just CAID, merge providers:
     if (cfg.cc_minimize_cards == MINIMIZE_CAID && !cfg.cc_forward_origin_card) {
         while ((card2 = ll_iter_next(&it))) {
         	//compare caid, hexserial, cardtype and sidtab (if any):
-            if (same_card2(card, card2)) {
+            if (same_card2(card, card2, FALSE)) {
                 //Merge cards only if resulting providercount is smaller than CS_MAXPROV
                 int32_t nsame, ndiff, nnew;
 
@@ -673,6 +698,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t fre
 
         } else { //found, merge providers:
 			card_dup_count++;
+			card2->grp |=card->grp; //add group to the card
         	add_card_providers(card2, card, 0); //merge all providers
         	ll_clear_data(card2->remote_nodes); //clear remote nodes
            	if (!card2->sidtab)
@@ -684,7 +710,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t fre
     else if (cfg.cc_minimize_cards == MINIMIZE_HOPS && !cfg.cc_forward_origin_card) {
         while ((card2 = ll_iter_next(&it))) {
         	//compare caid, hexserial, cardtype, sidtab (if any), providers:
-            if (same_card2(card, card2) && equal_providers(card, card2)) {
+            if (same_card2(card, card2, FALSE) && equal_providers(card, card2)) {
                 break;
             }
         }
@@ -708,6 +734,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t fre
             modified = 1;
         } else { //found, merge cards (providers are same!)
         	card_dup_count++;
+			card2->grp |=card->grp; //add group to the card
         	add_card_providers(card2, card, 0);
            	if (!card2->sidtab)
            		ll_clear_data(card2->badsids);

@@ -998,16 +998,17 @@ int32_t same_first_node(struct cc_card *card1, struct cc_card *card2) {
 	return !memcmp(node1, node2, 8); //same?
 }
 
-int32_t same_card2(struct cc_card *card1, struct cc_card *card2) {
+int32_t same_card2(struct cc_card *card1, struct cc_card *card2, int8_t compare_grp) {
 	return (card1->caid == card2->caid && 
 		card1->card_type == card2->card_type &&
 		card1->sidtab == card2->sidtab &&
-		card1->grp == card2->grp);
+		(!compare_grp || card1->grp == card2->grp) &&
+		!memcmp(card1->hexserial, card2->hexserial, sizeof(card1->hexserial)));
 }
 
 int32_t same_card(struct cc_card *card1, struct cc_card *card2) {
 	return (card1->remote_id == card2->remote_id && 
-		same_card2(card1, card2) &&
+		same_card2(card1, card2, TRUE) &&
 		same_first_node(card1, card2));
 }
 
@@ -2788,8 +2789,10 @@ int32_t cc_srv_connect(struct s_client *cl) {
 			}
 		}
 		//cs_ddump_mask(D_CLIENT, buf, 20, "cccam: username '%s':", usr);
-	} else 
+	} else {
+		cs_add_violation(cl, NULL);
 		return -2;
+	}
 	cs_debug_mask(D_TRACE, "ccc username received %s", usr);
 
 	cl->crypted = 1;
@@ -2797,8 +2800,10 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	//CCCam only supports len=20 usr/pass. So we could have more than one user that matches the first 20 chars.
 	
 	//receive password-CCCam encrypted Hash:
-	if (cc_recv_to(cl, buf, 6) != 6)
+	if (cc_recv_to(cl, buf, 6) != 6) {
+		cs_add_violation(cl, usr);
 		return -2;
+	}
 	
 	cs_debug_mask(D_TRACE, "ccc passwdhash received %s", usr);
 	
@@ -2837,6 +2842,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 			cs_log("account '%s' not found!", usr);
 		else
 			cs_log("password for '%s' invalid!", usr);
+		cs_add_violation(cl, usr);
 		return -2;
 	}
 	if (cl->dup) {
@@ -2845,6 +2851,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	}
 	if (cl->disabled) {
 		cs_log("account '%s' disabled, blocking+disconnect!", usr);
+		cs_add_violation(cl, usr);
 		return -2;
 	}
 	if (account->cccmaxhops < -1) {
@@ -2932,8 +2939,6 @@ void cc_srv_init2(struct s_client *cl) {
 				cs_debug_mask(D_CLIENT, "cccam: failed errno: %d (%s)", errno, strerror(errno));
 			else
 				cs_debug_mask(D_CLIENT, "cccam: failed ret: %d", ret);
-			if (ret == -2)
-				cs_add_violation((uint)cl->ip, cfg.cc_port[0]);
 			cs_disconnect_client(cl);
 		}
 		else

@@ -545,7 +545,7 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
 	  if (memcmp(data + 6, gbox->peer.key, 4) && gbox_decode_cmd(data) != MSG_CW) {
 		  cs_log("gbox: INTRUDER ALERT (peer key)!");
 
-		  cs_add_violation((uint)cli->ip, cfg.gbox_port);
+		  cs_add_violation_by_ip((uint)cli->ip, cfg.gbox_port, cli->account->usr);
 
 		  cs_writeunlock(&gbox->lock);
 		  return -1;
@@ -553,7 +553,7 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
   } else {
     cs_log("gbox: INTRUDER ALERT!");
 
-    cs_add_violation((uint)cli->ip, cfg.gbox_port);
+    cs_add_violation_by_ip((uint)cli->ip, cfg.gbox_port, cli->account->usr);
 
     cs_writeunlock(&gbox->lock);
 	  return -1;

@@ -65,7 +65,7 @@ char    *loghistptr = NULL;
 
 int8_t keep_threads_alive = 0;
 
-int32_t cs_check_v(uint32_t ip, int32_t port, int32_t add) {
+int32_t cs_check_v(uint32_t ip, int32_t port, int32_t add, char *info) {
 	int32_t result = 0;
 	if (cfg.failbantime) {
 
@@ -82,28 +82,36 @@ int32_t cs_check_v(uint32_t ip, int32_t port, int32_t add) {
 
 			// housekeeping:
 			if ((now - v_ban_entry->v_time) >= ftime) { // entry out of time->remove
+				free(v_ban_entry->info);
 				ll_iter_remove_data(&itr);
 				continue;
 			}
 
 			if (ip == v_ban_entry->v_ip && port == v_ban_entry->v_port ) {
 				result=1;
+				if (!info) info = v_ban_entry->info;
+				else if (!v_ban_entry->info) {
+					int size = strlen(info)+1;
+					v_ban_entry->info = cs_malloc(&v_ban_entry->info, size, -1);
+					strncpy(v_ban_entry->info, info, size);
+				}
+				
 				if (!add) {
 					if (v_ban_entry->v_count >= cfg.failbancount) {
-						cs_debug_mask(D_TRACE, "failban: banned ip %s:%d - %ld seconds left",
+						cs_debug_mask(D_TRACE, "failban: banned ip %s:%d - %ld seconds left%s%s",
 								cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port,
-								ftime - (now - v_ban_entry->v_time));
+								ftime - (now - v_ban_entry->v_time), info?", info: ":"", info?info:"");
 					} else {
-						cs_debug_mask(D_TRACE, "failban: ip %s:%d chance %d of %d",
+						cs_debug_mask(D_TRACE, "failban: ip %s:%d chance %d of %d%s%s",
 								cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port,
-								v_ban_entry->v_count, cfg.failbancount);
+								v_ban_entry->v_count, cfg.failbancount, info?", info: ":"", info?info:"");
 
 						v_ban_entry->v_count++;
 					}
 				}
 				else {
-					cs_debug_mask(D_TRACE, "failban: banned ip %s:%d - already exist in list",
-							cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port);
+					cs_debug_mask(D_TRACE, "failban: banned ip %s:%d - already exist in list%s%s",
+							cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, info?", info: ":"", info?info:"");
 				}
 			}
 		}
@@ -113,11 +121,17 @@ int32_t cs_check_v(uint32_t ip, int32_t port, int32_t add) {
 				v_ban_entry->v_ip = ip;
 				v_ban_entry->v_port = port;
 				v_ban_entry->v_count = 1;
+				if (info) {
+					int size = strlen(info)+1;
+					v_ban_entry->info = cs_malloc(&v_ban_entry->info, size, -1);
+					strncpy(v_ban_entry->info, info, size);
+				}
 
 				ll_iter_insert(&itr, v_ban_entry);
 
-				cs_debug_mask(D_TRACE, "failban: ban ip %s:%d with timestamp %ld",
-						cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, v_ban_entry->v_time);
+				cs_debug_mask(D_TRACE, "failban: ban ip %s:%d with timestamp %ld%s%s",
+						cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, v_ban_entry->v_time, 
+						info?", info: ":"", info?info:"");
 			}
 		}
 	}
@@ -125,10 +139,14 @@ int32_t cs_check_v(uint32_t ip, int32_t port, int32_t add) {
 }
 
 int32_t cs_check_violation(uint32_t ip, int32_t port) {
-        return cs_check_v(ip, port, 0);
+        return cs_check_v(ip, port, 0, NULL);
 }
-void cs_add_violation(uint32_t ip, int32_t port) {
-        cs_check_v(ip, port, 1);
+void cs_add_violation_by_ip(uint32_t ip, int32_t port, char *info) {
+        cs_check_v(ip, port, 1, info);
+}
+
+void cs_add_violation(struct s_client *cl, char *info) {
+	 	cs_add_violation_by_ip((uint32_t)cl->ip, ph[cl->ctyp].ptab ? ph[cl->ctyp].ptab->ports[cl->port_idx].s_port : 0, info);
 }
 
 #ifdef WEBIF
@@ -1310,7 +1328,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 				cs_log("client(%8lX) duplicate user '%s' from %s (prev %s) set to fake (uniq=%d)",
 					(unsigned long)cl->thread, usr, cs_inet_ntoa(ip), buf, uniq);
 				if (cl->failban & BAN_DUPLICATE) {
-					cs_add_violation(cl->ip, ph[cl->ctyp].ptab->ports[cl->port_idx].s_port);
+					cs_add_violation(cl, usr);
 				}
 				if (cfg.dropdups){
 					cs_writeunlock(&fakeuser_lock);
@@ -1326,7 +1344,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 				cs_log("client(%8lX) duplicate user '%s' from %s (current %s) set to fake (uniq=%d)",
 					(unsigned long)pthread_self(), usr, cs_inet_ntoa(cl->ip), buf, uniq);
 				if (client->failban & BAN_DUPLICATE) {
-					cs_add_violation(ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
+					cs_add_violation_by_ip(ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port, usr);
 				}
 				if (cfg.dropdups){
 					cs_writeunlock(&fakeuser_lock);		// we need to unlock here as cs_disconnect_client kills the current thread!
@@ -1352,7 +1370,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 	memset(&client->grp, 0xff, sizeof(uint64_t));
 	//client->grp=0xffffffffffffff;
 	if ((intptr_t)account != 0 && (intptr_t)account != -1 && account->disabled){
-		cs_add_violation((uint32_t)client->ip, ph[client->ctyp].ptab ? ph[client->ctyp].ptab->ports[client->port_idx].s_port : 0);
+		cs_add_violation(client, account->usr);
 		cs_log("%s %s-client %s%s (%s%sdisabled account)",
 				client->crypted ? t_crypt : t_plain,
 				ph[client->ctyp].desc,
@@ -1366,7 +1384,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 	// check whether client comes in over allowed protocol
 	if ((intptr_t)account != 0 && (intptr_t)account != -1 && (intptr_t)account->allowedprotocols &&
 			(((intptr_t)account->allowedprotocols & ph[client->ctyp].listenertype) != ph[client->ctyp].listenertype )){
-		cs_add_violation((uint32_t)client->ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
+		cs_add_violation(client, account->usr);
 		cs_log("%s %s-client %s%s (%s%sprotocol not allowed)",
 						client->crypted ? t_crypt : t_plain,
 						ph[client->ctyp].desc,
@@ -1382,7 +1400,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 	{
 	case 0:           // reject access
 		rc=1;
-		cs_add_violation((uint32_t)client->ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
+		cs_add_violation(client, NULL);
 		cs_log("%s %s-client %s%s (%s)",
 				client->crypted ? t_crypt : t_plain,
 				ph[client->ctyp].desc,
@@ -1395,7 +1413,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 			if (client->ip != account->dynip)
 				cs_user_resolve(account);
 			if (client->ip != account->dynip) {
-				cs_add_violation((uint32_t)client->ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
+				cs_add_violation(client, account->usr);
 				rc=2;
 			}
 		}
@@ -2362,7 +2380,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	// user disabled
 	if(client->disabled != 0) {
 		if (client->failban & BAN_DISABLED){
-			cs_add_violation(client->ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
+			cs_add_violation(client, client->account->usr);
 			cs_disconnect_client(client);
 		}
 		er->rc = E_DISABLED;
@@ -2384,7 +2402,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		if ((client->tosleep) && (now - client->lastswitch > client->tosleep)) {
 
 			if (client->failban & BAN_SLEEPING) {
-				cs_add_violation(client->ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port);
+				cs_add_violation(client, client->account->usr);
 				cs_disconnect_client(client);
 			}
 
