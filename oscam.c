@@ -1598,7 +1598,7 @@ static void distribute_ecm(ECM_REQUEST *er, int32_t rc)
 
 	cs_readlock(&ecmcache_lock);
 	for (ecm = ecmtask; ecm; ecm = ecm->next) {
-		if (ecm->rc >= E_99 && ecm->ecmcacheptr == er->ecmcacheptr)
+		if (ecm->rc >= E_99 && ecm->ecmcacheptr && ecm->ecmcacheptr == er)
 			write_ecm_answer(er->selected_reader, ecm, rc, 0, er->cw, NULL);
 	}
 	cs_readunlock(&ecmcache_lock);
