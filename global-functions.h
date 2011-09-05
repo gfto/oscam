@@ -88,7 +88,6 @@ extern void guess_irdeto(ECM_REQUEST *);
 extern void get_cw(struct s_client *, ECM_REQUEST *);
 extern void do_emm(struct s_client *, EMM_PACKET *);
 extern ECM_REQUEST *get_ecmtask(void);
-extern void request_cw(ECM_REQUEST *, int32_t, int32_t);
 extern void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc);
 extern int32_t send_dcw(struct s_client *, ECM_REQUEST *);
 extern int32_t process_input(uchar *, int32_t, int32_t);

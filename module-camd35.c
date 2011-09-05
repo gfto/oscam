@@ -249,7 +249,12 @@ static void camd35_request_emm(ECM_REQUEST *er)
 static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
 	uchar *buf;
-	buf = client->req + (er->cpti * REQ_SIZE);	// get orig request
+	buf = er->src_data;	// get orig request
+
+	if (!buf) {
+		cs_log("camd35: src_data missing.");
+		return;
+	}
 
 	if (((er->rcEx > 0) || (er->rc == E_INVALID)) && !client->c35_suppresscmd08)
 	{
@@ -291,6 +296,8 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	}
 	camd35_send(buf);
 	camd35_request_emm(er);
+
+	if (er->src_data) free(er->src_data);
 }
 
 static void camd35_process_ecm(uchar *buf)
@@ -301,7 +308,8 @@ static void camd35_process_ecm(uchar *buf)
 //	er->l = buf[1];
 	//fix ECM LEN issue
 	er->l =(((buf[21]&0x0f)<< 8) | buf[22])+3;
-	memcpy(cur_client()->req + (er->cpti*REQ_SIZE), buf, 0x34 + 20 + er->l);	// save request
+	cs_malloc(&er->src_data, 0x34 + 20 + er->l, 0);
+	memcpy(er->src_data, buf, 0x34 + 20 + er->l);	// save request
 	er->srvid = b2i(2, buf+ 8);
 	er->caid = b2i(2, buf+10);
 	er->prid = b2i(4, buf+12);
@@ -322,10 +330,6 @@ static void camd35_process_emm(uchar *buf)
 }
 
 static void camd35_server_init(struct s_client * client) {
-	if (!client->req) {
-		cs_malloc(&client->req,CS_MAXPENDING*REQ_SIZE, 1);
-	}
-
 	client->is_udp = (ph[client->ctyp].type == MOD_CONN_UDP);
 }
 

@@ -404,6 +404,13 @@ extern void cs_switch_led(int32_t led, int32_t action);
 #define OSCAM_SIGNAL_WAKEUP		SIGRTMAX-2
 #endif
 
+#define READER_ACTIVE		0x01
+#define READER_FALLBACK		0x02
+#define READER_LOCAL			0x04
+
+#define REQUEST_SENT			0x10
+#define REQUEST_ANSWERED		0x20
+
 /* ===========================
  *      Default Values
  * =========================== */
@@ -650,10 +657,10 @@ typedef struct ecm_request_t {
 	uint16_t		idx;
 	uint32_t		prid;
 	struct s_reader	*selected_reader;
-	LLIST			*matching_rdr;		//list of matching readers
+	struct s_ecm_answer	*matching_rdr;		//list of matching readers
 	const struct s_reader	*fallback;		//fallback is the first fallback reader in the list matching_rdr
 	struct s_client	*client;			//contains pointer to 'c' client while running in 'r' client
-	int32_t			cpti;				// client pending table index
+	int32_t			msgid;				// client pending table index
 	int32_t			stage;				// processing stage in server module
 	int32_t			level;				// send-level in client module
 	int8_t			rc;
@@ -677,10 +684,11 @@ typedef struct ecm_request_t {
 #endif
 
 	void			*src_data;
-	struct s_ecm		*ecmcacheptr;		// Pointer to ecm-cw-rc-cache!
+	struct ecm_request_t	*ecmcacheptr;		// Pointer to ecm-cw-rc-cache!
 	char			msglog[MSGLOGSIZE];
 	uint16_t		checksum;
 	struct ecm_request_t	*parent;
+	struct ecm_request_t	*next;
 } ECM_REQUEST;
 
 
@@ -692,6 +700,12 @@ struct s_ecm_answer {
 	uint8_t		rcEx;
 	uchar			cw[16];
 	char			msglog[MSGLOGSIZE];
+#ifdef WITH_LB
+	int32_t		value;
+	int32_t		time;
+	int8_t			timeout_service;
+#endif
+	struct s_ecm_answer	*next;
 };
 
 #ifdef CS_ANTICASC
@@ -820,8 +834,6 @@ struct s_client {
 	int32_t			last_idx;
 	uint16_t		idx;
 	int8_t			rotate;
-
-	uchar			*req;
 
 	int8_t			ncd_proto;
 

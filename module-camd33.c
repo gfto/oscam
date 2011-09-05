@@ -100,7 +100,7 @@ static void camd33_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
   uchar mbuf[1024];
   mbuf[0]=2;
-  memcpy(mbuf+1, client->req+(er->cpti*REQ_SIZE), 4);	// get pin
+  memcpy(mbuf+1, &er->msgid, 4);	// get pin
   memcpy(mbuf+5, er->cw, 16);
   camd33_send(mbuf, 21);
   if (!cfg.c33_passive)
@@ -112,7 +112,7 @@ static void camd33_process_ecm(uchar *buf, int32_t l)
   ECM_REQUEST *er;
   if (!(er=get_ecmtask()))
     return;
-  memcpy(cur_client()->req+(er->cpti*REQ_SIZE), buf+3, 4);	// save pin
+  memcpy(&er->msgid, buf+3, 4);	// save pin
   er->l=l-7;
   er->caid=b2i(2, buf+1);
   memcpy(er->ecm , buf+7, er->l);
@@ -132,13 +132,6 @@ static void camd33_process_emm(uchar *buf, int32_t l)
 
 static void * camd33_server(struct s_client * client, uchar *mbuf, int32_t n)
 {
-	uchar camdbug[256];
-
-	if (!client->req) {
-		cs_malloc(&client->req,CS_MAXPENDING*REQ_SIZE, 1);
-		camd33_auth_client(camdbug);
-	}
-
 	switch(mbuf[0]) {
 		case 2:
 			camd33_process_ecm(mbuf, n);
@@ -151,6 +144,12 @@ static void * camd33_server(struct s_client * client, uchar *mbuf, int32_t n)
 	}
 
 	return NULL;
+}
+
+static void camd33_server_init(struct s_client * client) {
+	uchar camdbug[256];
+
+	camd33_auth_client(camdbug);
 }
 
 void module_camd33(struct s_module *ph)
@@ -167,6 +166,7 @@ void module_camd33(struct s_module *ph)
   ph->multi=1;
   ph->s_ip=cfg.c33_srvip;
   ph->s_handler=camd33_server;
+  ph->s_init=camd33_server_init;
   ph->recv=camd33_recv;
   ph->send_dcw=camd33_send_dcw;
   ph->num=R_CAMD33;

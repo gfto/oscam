@@ -858,7 +858,8 @@ static void newcamd_send_dcw(struct s_client *client, ECM_REQUEST *er)
     cs_debug_mask(D_CLIENT, "ncd_send_dcw: error: client->udp_fd=%d", client->udp_fd);
     return;  
   }
-  memcpy(&cl_msgid, client->req+(er->cpti*REQ_SIZE), 2);  // get client ncd_msgid + 0x8x
+  
+  cl_msgid = er->msgid;
   mbuf[0] = er->ecm[0];
   if( client->ftab.filts[0].nprids==0 || er->rc >= E_NOTFOUND /*not found*/) 
   {
@@ -872,7 +873,7 @@ static void newcamd_send_dcw(struct s_client *client, ECM_REQUEST *er)
     memcpy(mbuf+3, er->cw, 16);
   }
 
-  cs_debug_mask(D_CLIENT, "ncd_send_dcw: er->cpti=%d, cl_msgid=%d, %02X", er->cpti, cl_msgid, mbuf[0]);
+  cs_debug_mask(D_CLIENT, "ncd_send_dcw: er->msgid=%d, cl_msgid=%d, %02X", er->msgid, cl_msgid, mbuf[0]);
 
   network_message_send(client->udp_fd, &cl_msgid, mbuf, len, 
                        client->ncd_skey, COMMTYPE_SERVER, 0, NULL);
@@ -888,8 +889,8 @@ static void newcamd_process_ecm(uchar *buf)
     return;
   }
   // save client ncd_msgid
-  memcpy(cl->req+(er->cpti*REQ_SIZE), &cl->ncd_msgid, 2);
-  cs_debug_mask(D_CLIENT, "ncd_process_ecm: er->cpti=%d, cl_msgid=%d, %02X", er->cpti, 
+  er->msgid = cl->ncd_msgid;
+  cs_debug_mask(D_CLIENT, "ncd_process_ecm: er->msgid=%d, cl_msgid=%d, %02X", er->msgid, 
            cl->ncd_msgid, buf[2]);
   er->l=buf[4]+3; 
   er->srvid = (buf[0]<<8)|buf[1];
@@ -957,7 +958,6 @@ static void newcamd_process_emm(uchar *buf)
 
 static void newcamd_server_init(struct s_client *client) {
 	int8_t res = 0;
-	cs_malloc(&client->req,CS_MAXPENDING*REQ_SIZE, 1);
   
 	client->ncd_server = 1;
 	cs_log("client connected to %d port", cfg.ncd_ptab.ports[client->port_idx].s_port);
