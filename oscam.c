@@ -1959,7 +1959,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 		return; // already done
 	}
 
-	int32_t reader_left = 0;
+	int32_t reader_left = 0, local_left = 0;
 
 	switch (ea->rc) {
 		case E_FOUND:
@@ -1986,17 +1986,17 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 			cs_strncpy(ert->msglog, ea->msglog, sizeof(ert->msglog));
 			ert->selected_reader=ea->reader;
 
-			if (cfg.preferlocalcards && !ert->locals_done) {
-				ert->locals_done=1;
-				for(ea_list = ert->matching_rdr; ea_list; ea_list = ea_list->next) {
-					if (((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED|READER_LOCAL|READER_ACTIVE)) == (REQUEST_SENT|READER_LOCAL|READER_ACTIVE)))
-						ert->locals_done = 0;
-					if (((ea_list->status & (REQUEST_ANSWERED|READER_ACTIVE)) == (READER_ACTIVE)))
-						reader_left++;
-				}
-				if (ert->locals_done)
-					request_cw(ert);
+			for(ea_list = ert->matching_rdr; ea_list; ea_list = ea_list->next) {
+				if (((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED|READER_LOCAL|READER_ACTIVE)) == (REQUEST_SENT|READER_LOCAL|READER_ACTIVE)))
+					local_left++;
+				if (((ea_list->status & (REQUEST_ANSWERED|READER_ACTIVE)) == (READER_ACTIVE)))
+					reader_left++;
 			}
+			if (cfg.preferlocalcards && !local_left && !ert->locals_done) {
+				ert->locals_done = 1;
+				request_cw(ert);
+			}
+
 			break;
 		default:
 			cs_log("unexpected ecm answer rc=%d.", ea->rc);
@@ -2004,7 +2004,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 			break;
 	}
 
-	if (ert->rc >= E_99 && !reader_left) {
+	if (ea->rc == E_NOTFOUND && !reader_left) {
 		// no more matching reader
 		ert->rc=E_NOTFOUND; //so we set the return code
 	}
