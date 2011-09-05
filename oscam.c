@@ -1991,7 +1991,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 				for(ea_list = ert->matching_rdr; ea_list; ea_list = ea_list->next) {
 					if (((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED|READER_LOCAL|READER_ACTIVE)) == (REQUEST_SENT|READER_LOCAL|READER_ACTIVE)))
 						ert->locals_done = 0;
-					if ((ea->status & (READER_ACTIVE)) && !(ea->status & (REQUEST_ANSWERED)))
+					if (((ea_list->status & (REQUEST_ANSWERED|READER_ACTIVE)) == (READER_ACTIVE)))
 						reader_left++;
 				}
 				if (ert->locals_done)
