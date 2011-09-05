@@ -2670,8 +2670,13 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		cs_debug_mask(D_EMM, "emmtype %s. Reader %s has serial %s.", typtext[ep->type], aureader->label, cs_hexdump(0, aureader->hexserial, 8, tmp, sizeof(tmp)));
 		cs_ddump_mask(D_EMM, ep->hexserial, 8, "emm UA/SA:");
 
+		uint32_t emmtype;
+		if (ep->type == UNKNOWN)
+			emmtype = EMM_UNKNOWN;
+		else
+			emmtype = 1 << (ep->type-1);
 		client->last=time((time_t*)0);
-		if ((1<<(ep->emm[0] % 0x80)) & aureader->s_nano) { //should this nano be saved?
+		if ((1<<(ep->emm[0] % 0x80)) & aureader->s_nano || (aureader->saveemm & emmtype)) { //should this nano be saved?
 			char token[256];
 			char *tmp2;
 			FILE *fp;

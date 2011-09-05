@@ -2784,6 +2784,18 @@ int32_t write_server()
 			if ((rdr->blockemm & EMM_GLOBAL) || cfg.http_full_cfg)
 				fprintf_conf(f, "blockemm-g", "%d\n", (rdr->blockemm & EMM_GLOBAL) ? 1: 0);
 
+			if ((rdr->saveemm & EMM_UNKNOWN) || cfg.http_full_cfg)
+				fprintf_conf(f, "saveemm-unknown", "%d\n", (rdr->saveemm & EMM_UNKNOWN) ? 1: 0);
+
+			if ((rdr->saveemm & EMM_UNIQUE) || cfg.http_full_cfg)
+				fprintf_conf(f, "saveemm-u", "%d\n", (rdr->saveemm & EMM_UNIQUE) ? 1: 0);
+
+			if ((rdr->saveemm & EMM_SHARED) || cfg.http_full_cfg)
+				fprintf_conf(f, "saveemm-s", "%d\n", (rdr->saveemm & EMM_SHARED) ? 1: 0);
+
+			if ((rdr->saveemm & EMM_GLOBAL) || cfg.http_full_cfg)
+				fprintf_conf(f, "saveemm-g", "%d\n", (rdr->saveemm & EMM_GLOBAL) ? 1: 0);
+
 			value = mk_t_emmbylen(rdr);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, "blockemm-bylen", "%s\n", value);
@@ -4368,6 +4380,42 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			rdr->blockemm -= EMM_GLOBAL;
 		if (i)
 			rdr->blockemm |= EMM_GLOBAL;
+		return;
+	}
+
+	if (!strcmp(token, "saveemm-unknown")) {
+		i=atoi(value);
+		if (!i && (rdr->saveemm & EMM_UNKNOWN))
+			rdr->saveemm -= EMM_UNKNOWN;
+		if (i)
+			rdr->saveemm |= EMM_UNKNOWN;
+		return;
+	}
+
+	if (!strcmp(token, "saveemm-u")) {
+		i=atoi(value);
+		if (!i && (rdr->saveemm & EMM_UNIQUE))
+			rdr->saveemm -= EMM_UNIQUE;
+		if (i)
+			rdr->saveemm |= EMM_UNIQUE;
+		return;
+	}
+
+	if (!strcmp(token, "saveemm-s")) {
+		i=atoi(value);
+		if (!i && (rdr->saveemm & EMM_SHARED))
+			rdr->saveemm -= EMM_SHARED;
+		if (i)
+			rdr->saveemm |= EMM_SHARED;
+		return;
+	}
+
+	if (!strcmp(token, "saveemm-g")) {
+		i=atoi(value);
+		if (!i && (rdr->saveemm & EMM_GLOBAL))
+			rdr->saveemm -= EMM_GLOBAL;
+		if (i)
+			rdr->saveemm |= EMM_GLOBAL;
 		return;
 	}
 

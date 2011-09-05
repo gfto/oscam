@@ -956,6 +956,7 @@ struct s_reader  									//contains device info, reader info and card info
 	uint16_t		b_nano;
 	uint16_t		s_nano;
 	int32_t			blockemm;
+	int32_t			saveemm;
 	int16_t			blockemmbylen[CS_MAXEMMBLOCKBYLEN];
 	char			*emmfile;
 	char			pincode[5];

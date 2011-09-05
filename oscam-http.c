@@ -1272,13 +1272,24 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "BLOCKEMMUNIQCHK", (rdr->blockemm & EMM_UNIQUE) ? "checked" : "");
 		tpl_addVar(vars, TPLADD, "BLOCKEMMSHAREDCHK", (rdr->blockemm & EMM_SHARED) ? "checked" : "");
 		tpl_addVar(vars, TPLADD, "BLOCKEMMGLOBALCHK", (rdr->blockemm & EMM_GLOBAL) ? "checked" : "");
-		tpl_addVar(vars, TPLADD, "DEPRECATEDCHCHECKED", (rdr->deprecated == 1) ? "checked" : "0");
 	} else {
 		tpl_addVar(vars, TPLADD, "BLOCKEMMUNKNOWNVALUE", (rdr->blockemm & EMM_UNKNOWN) ? "1" : "0");
 		tpl_addVar(vars, TPLADD, "BLOCKEMMUNIQVALUE", (rdr->blockemm & EMM_UNIQUE) ? "1" : "0");
 		tpl_addVar(vars, TPLADD, "BLOCKEMMSHAREDVALUE", (rdr->blockemm & EMM_SHARED) ? "1" : "0");
 		tpl_addVar(vars, TPLADD, "BLOCKEMMGLOBALVALUE", (rdr->blockemm & EMM_GLOBAL) ? "1" : "0");
-		tpl_addVar(vars, TPLADD, "DEPRECATEDVALUE", (rdr->deprecated == 1) ? "1" : "0");
+	}
+
+	// Save EMM
+	if(!apicall) {
+		tpl_addVar(vars, TPLADD, "SAVEEMMUNKNOWNCHK", (rdr->saveemm & EMM_UNKNOWN) ? "checked" : "");
+		tpl_addVar(vars, TPLADD, "SAVEEMMUNIQCHK", (rdr->saveemm & EMM_UNIQUE) ? "checked" : "");
+		tpl_addVar(vars, TPLADD, "SAVEEMMSHAREDCHK", (rdr->saveemm & EMM_SHARED) ? "checked" : "");
+		tpl_addVar(vars, TPLADD, "SAVEEMMGLOBALCHK", (rdr->saveemm & EMM_GLOBAL) ? "checked" : "");
+	} else {
+		tpl_addVar(vars, TPLADD, "SAVEEMMUNKNOWNVALUE", (rdr->saveemm & EMM_UNKNOWN) ? "1" : "0");
+		tpl_addVar(vars, TPLADD, "SAVEEMMUNIQVALUE", (rdr->saveemm & EMM_UNIQUE) ? "1" : "0");
+		tpl_addVar(vars, TPLADD, "SAVEEMMSHAREDVALUE", (rdr->saveemm & EMM_SHARED) ? "1" : "0");
+		tpl_addVar(vars, TPLADD, "SAVEEMMGLOBALVALUE", (rdr->saveemm & EMM_GLOBAL) ? "1" : "0");
 	}
 
 	value = mk_t_emmbylen(rdr);

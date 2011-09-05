@@ -1167,6 +1167,18 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 					</TR>\n\
 				</TABLE>\n\
 			</TD>\n\
+			<TR><TD>##TPLHELPPREFIX##server#saveemm-u##TPLHELPSUFFIX##Saveemm:</A></TD>\n\
+			<TD>\n\
+				<TABLE class=\"invisible\">\n\
+					<TR><TD class=\"centered\">unknown</TD><TD class=\"centered\">unique</TD><TD class=\"centered\">shared</TD><TD class=\"centered\">global</TD></TR>\n\
+					<TR>\n\
+						<TD class=\"centered\"><input name=\"saveemm-unknown\" type=\"hidden\" value=\"0\"><input name=\"saveemm-unknown\" type=\"checkbox\" value=\"1\" ##SAVEEMMUNKNOWNCHK##></TD>\n\
+						<TD class=\"centered\"><input name=\"saveemm-u\" type=\"hidden\" value=\"0\"><input name=\"saveemm-u\" type=\"checkbox\" value=\"1\" ##SAVEEMMUNIQCHK##></TD>\n\
+						<TD class=\"centered\"><input name=\"saveemm-s\" type=\"hidden\" value=\"0\"><input name=\"saveemm-s\" type=\"checkbox\" value=\"1\" ##SAVEEMMSHAREDCHK##></TD>\n\
+						<TD class=\"centered\"><input name=\"saveemm-g\" type=\"hidden\" value=\"0\"><input name=\"saveemm-g\" type=\"checkbox\" value=\"1\" ##SAVEEMMGLOBALCHK##></TD>\n\
+					</TR>\n\
+				</TABLE>\n\
+			</TD>\n\
 			<TR><TD>##TPLHELPPREFIX##server#blockemm-bylen##TPLHELPSUFFIX##Block EMM by Len:</A></TD><TD><input name=\"blockemm-bylen\" type=\"text\" size=\"20\" maxlength=\"40\" value=\"##BLOCKEMMBYLEN##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#dropbadcws##TPLHELPSUFFIX##Drop CWs with wrong checksum:</A><input name=\"dropbadcws\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"dropbadcws\" type=\"checkbox\" value=\"1\" ##DROPBADCWSCHECKED##></TD></TR>\n\
 			<TR><TH>&nbsp;</TH><TH>Reader specific settings for protocol ##PROTOCOL##</TH></TR>\n\

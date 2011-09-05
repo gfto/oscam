@@ -378,7 +378,8 @@ void dvbapi_start_emm_filter(int32_t demux_index) {
 		if ( (filter[0] && (((1<<(filter[0] % 0x80)) & demux[demux_index].rdr->b_nano) && !((1<<(filter[0] % 0x80)) & demux[demux_index].rdr->s_nano))) )
 			continue;
 
-		if ((demux[demux_index].rdr->blockemm & emmtype) && !((1<<(filter[0] % 0x80)) & demux[demux_index].rdr->s_nano))
+		if ((demux[demux_index].rdr->blockemm & emmtype) && !(((1<<(filter[0] % 0x80)) & demux[demux_index].rdr->s_nano) ||
+                                                                     (demux[demux_index].rdr->saveemm & emmtype)))
 			continue;
 
 		l = dvbapi_find_emmpid(demux_index, emmtype);
