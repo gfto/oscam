@@ -146,9 +146,6 @@ static void do_emm_from_file(struct s_reader * reader)
    else
       snprintf (token, sizeof(token), "%s%s", cs_confdir, reader->emmfile); //only file specified, look in confdir for this file
 
-   free(reader->emmfile);
-   reader->emmfile = NULL; //clear emmfile, so no reading anymore
-    
    if (!(fp = fopen (token, "rb"))) {
       cs_log ("ERROR: Cannot open EMM file '%s' (errno=%d %s)\n", token, errno, strerror(errno));
       return;
