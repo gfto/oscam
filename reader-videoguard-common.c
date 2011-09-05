@@ -659,7 +659,7 @@ int32_t videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned cha
 {
    unsigned char cta_res[CTA_RES_LEN];
    unsigned char ins42[5] = { CLA, 0x42, 0x00, 0x00, 0xFF };
-   int32_t rc = ERROR;
+   int32_t rc = SKIPPED;
    int32_t nsubs = ((ep->emm[3] & 0x30) >> 4) + 1;
    int32_t offs = 4;
    int32_t emmv2 = 0;
@@ -707,29 +707,39 @@ int32_t videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned cha
          ++offs;
       if (ep->emm[offs] == 0x02 || ep->emm[offs] == 0x03 || ep->emm[offs] == 0x07)
       {
-         if (ep->emm[offs] == 0x03 && (position == ua_position || vdrsc_fix))
+         if (ep->emm[offs] == 0x03)
          {
-            videoguard_mail_msg(reader, &ep->emm[offs+2]);
-            return OK;
+            if (position == ua_position || vdrsc_fix)
+            {
+               videoguard_mail_msg(reader, &ep->emm[offs+2]);
+               return rc;
+            }
+            else
+            {
+               offs += ep->emm[offs+1] + 2;
+               if (!(offs+1 < ep->l)) return rc;
+               if (ep->emm[offs] == 0x00 && (ep->emm[offs+1] == 0x00 || ep->emm[offs+1] == 0x01))
+                  offs += 2 + 1 + emmv2;
+               continue;
+            }
          }
          offs += ep->emm[offs+1] + 2;
-         if (!(offs < ep->l))
-            return rc;
+         if (!(offs+1 < ep->l)) return rc;
          if (ep->emm[offs] != 0)
          {
             if (ep->type == GLOBAL || vdrsc_fix || position == ua_position)
             {
                ins42[4] = ep->emm[offs];
                int32_t l = (*docmd)(reader, ins42, &ep->emm[offs+1], NULL, cta_res);
-               if (l > 0 && status_ok(cta_res))
-                  rc = OK;
+               rc = (l > 0 && status_ok(cta_res)) ? OK : ERROR;
                cs_debug_mask(D_EMM, "EMM request return code : %02X%02X", cta_res[0], cta_res[1]);
                if (status_ok(cta_res) && (cta_res[1] & 0x01))
                   (*read_tiers)(reader);
             }
             offs += ep->emm[offs] + 1;
+            if (offs < ep->l && ep->emm[offs] == 0x00) ++offs;
          }
-         offs += 2;
+         offs += 1 + emmv2;
          if (vdrsc_fix) --position;
       }
       else
