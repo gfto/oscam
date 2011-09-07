@@ -300,30 +300,18 @@ void dvbapi_sort_nanos(unsigned char *dest, const unsigned char *src, int32_t le
 }
 
 
-int32_t dvbapi_find_emmpid(int32_t demux_id, uint8_t type) {
+static int32_t dvbapi_find_emmpid(int32_t demux_id, uint8_t type, uint16_t caid, uint32_t provid) {
 	int32_t k;
 	int32_t bck = -1;
 	for (k=0; k<demux[demux_id].EMMpidcount; k++) {
-		if (demux[demux_id].EMMpids[k].CAID == demux[demux_id].ECMpids[demux[demux_id].pidindex].CAID
-		 && demux[demux_id].EMMpids[k].PROVID == demux[demux_id].ECMpids[demux[demux_id].pidindex].PROVID
+		if (demux[demux_id].EMMpids[k].CAID == caid
+		 && demux[demux_id].EMMpids[k].PROVID == provid
 		 && demux[demux_id].EMMpids[k].type & type)
 			return k;
-		else if (demux[demux_id].EMMpids[k].CAID == demux[demux_id].ECMpids[demux[demux_id].pidindex].CAID
-		 && (!demux[demux_id].EMMpids[k].PROVID || !demux[demux_id].ECMpids[demux[demux_id].pidindex].PROVID)
+		else if (demux[demux_id].EMMpids[k].CAID == caid
+		 && (!demux[demux_id].EMMpids[k].PROVID || !provid)
 		 && (demux[demux_id].EMMpids[k].type & type) && bck == -1)
 			bck = k;
-	}
-	return bck;
-}
-
-int32_t dvbapi_find_emmpid_by_caid(int32_t demux_id, uint16_t CAID,uint32_t PROVID ) {
-	int32_t k;
-	int32_t bck = -1;
-	for (k=0; k<demux[demux_id].EMMpidcount; k++)
-         {
-		if (demux[demux_id].EMMpids[k].CAID == CAID
-		 && demux[demux_id].EMMpids[k].PROVID == PROVID)
-			return k;
 	}
 	return bck;
 }
@@ -361,8 +349,7 @@ void dvbapi_start_emm_filter(int32_t demux_index) {
 
 	cs_debug_mask(D_DVBAPI, "start %d emm filter for %s", filter_count, demux[demux_index].rdr->label);
 
-	for (j=1;j<=filter_count && j <= 10;j++)
-          {
+	for (j=1;j<=filter_count && j <= 10;j++) {
 		int32_t startpos=2+(34*(j-1));
 
 		if (dmx_filter[startpos+1] != 0x00)
@@ -373,41 +360,29 @@ void dvbapi_start_emm_filter(int32_t demux_index) {
 		int32_t emmtype=dmx_filter[startpos];
 		int32_t count=dmx_filter[startpos+1];
 		int32_t l=-1;
-		int32_t r=-1;
 
 		if ( (filter[0] && (((1<<(filter[0] % 0x80)) & demux[demux_index].rdr->b_nano) && !((1<<(filter[0] % 0x80)) & demux[demux_index].rdr->s_nano))) )
 			continue;
 
-		if ((demux[demux_index].rdr->blockemm & emmtype) && !(((1<<(filter[0] % 0x80)) & demux[demux_index].rdr->s_nano) ||
-                                                                     (demux[demux_index].rdr->saveemm & emmtype)))
+		if ((demux[demux_index].rdr->blockemm & emmtype) && !(((1<<(filter[0] % 0x80)) & demux[demux_index].rdr->s_nano) || (demux[demux_index].rdr->saveemm & emmtype)))
 			continue;
 
-		l = dvbapi_find_emmpid(demux_index, emmtype);
-
+		if(demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID == 0x100) {
+			uint32_t seca_provid = 0;
+			if (emmtype == EMM_SHARED)
+				seca_provid = ((filter[1] << 8) | filter[2]);
+			l = dvbapi_find_emmpid(demux_index, emmtype, 0x0100, seca_provid);
+		} else {
+			l = dvbapi_find_emmpid(demux_index, emmtype, demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID, demux[demux_index].ECMpids[demux[demux_index].pidindex].PROVID);
+		}
 		if (l>-1) {
 			uint32_t typtext_idx = 0;
 			while (((emmtype >> typtext_idx) & 0x01) == 0 && typtext_idx < sizeof(typtext) / sizeof(const char *))
                            ++typtext_idx;
-            //patch emm seca
-			if(demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID == 0x100)
-			{
-               uint16_t CAID=demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID;
-               uint32_t PROVID= (filter[1]<<8) | filter[2];
 
-			   if(filter[0]== 0x84)//SHARED patch for pid emm seca start filter
-	            r = dvbapi_find_emmpid_by_caid(demux_index, CAID,PROVID);
-
-			   if(filter[0]== 0x82 || filter[0]== 0x83 )// UNIQUE & GLOBAL
-			    r = dvbapi_find_emmpid_by_caid(demux_index, CAID,0);//find pid 0x00c1 unique & global pid seca
-
-			}
-            if(r > -1) l=r;
 			cs_ddump_mask(D_DVBAPI, filter, 32, "starting emm filter type %s, pid: 0x%04X", typtext[typtext_idx], demux[demux_index].EMMpids[l].PID);
 			dvbapi_set_filter(demux_index, selected_api, demux[demux_index].EMMpids[l].PID, filter, filter+16, 0, demux[demux_index].pidindex, count, TYPE_EMM);
-
-		}
-		 else
-		 {
+		} else {
 			cs_debug_mask(D_DVBAPI, "no emm pid found");
 		}
 	}
@@ -473,7 +448,7 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len) {
 
 		switch (caid >> 8) {
 			case 0x01:
-				dvbapi_add_emmpid(demux_id, caid, emm_pid, 0, EMM_UNIQUE);
+				dvbapi_add_emmpid(demux_id, caid, emm_pid, 0, EMM_UNIQUE|EMM_GLOBAL);
 				cs_debug_mask(D_DVBAPI, "[cat] CAID: %04x\tEMM_PID: %04x", caid, emm_pid);
 				for (k = i+7; k < i+buf[i+1]+2; k += 4) {
 					emm_provider = (buf[k+2] << 8| buf[k+3]);
@@ -952,7 +927,7 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 				descriptor_ca_provider = buffer[j+14] << 16 | (buffer[j+15] << 8| (buffer[j+16] & 0xF0));
 
 			if (descriptor_ca_system_id >> 8 == 0x18 && descriptor_length == 0x07)
-				descriptor_ca_provider = buffer[j+6] << 16 | (buffer[j+7] << 8| (buffer[j+8])); 
+				descriptor_ca_provider = (buffer[j+7] << 8| (buffer[j+8])); 
 
 			if (descriptor_ca_system_id >> 8 == 0x4A && descriptor_length == 0x05)
 				descriptor_ca_provider = buffer[j+6];

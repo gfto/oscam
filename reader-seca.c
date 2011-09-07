@@ -321,61 +321,50 @@ static int32_t seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //return
 //use start filter dvbapi
 static void seca_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
-    int32_t idx = 2;
+	int32_t idx = 2;
 
-    filter[0]=0xFF;
-    filter[1]=0;
+	filter[0]=0xFF;
+	filter[1]=0;
 
-    if (rdr->blockemm & EMM_UNIQUE)//block emm unique ?  filter emm start yes or no
-    {
-        filter[idx++]=EMM_UNIQUE;
-        filter[idx++]=0;
-        filter[idx+0]    = 0x82;
-        filter[idx+0+16] = 0xFF;
-        memcpy(filter+idx+1, rdr->hexserial, 6);
-        memset(filter+idx+1+16, 0xFF, 6);
-        filter[1]++;
-        idx += 32;
-    }
+	filter[idx++]=EMM_UNIQUE;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x82;
+	filter[idx+0+16] = 0xFF;
+	memcpy(filter+idx+1, rdr->hexserial, 6);
+	memset(filter+idx+1+16, 0xFF, 6);
+	filter[1]++;
+	idx += 32;
 
-    int32_t prov;
-    for (prov=0; prov<rdr->nprov; prov++)
-    {
-        if(!memcmp (rdr->sa[prov], "\x00\x00\x00", 3)) continue;//if sa null swap update by shared & global (provid inactif)
+	int32_t prov;
+	for (prov=0; prov<rdr->nprov; prov++) {
+		if(!memcmp (rdr->sa[prov], "\x00\x00\x00", 3)) continue;// if sa == null skip update by shared & global (provid inactive)
 
-        if (rdr->blockemm & EMM_GLOBAL) //block emm global ?  filter emm start yes or no
-        {
-            filter[idx++]=EMM_GLOBAL;//global by provider
-            filter[idx++]=0;
-            filter[idx+0]    = 0x83;
-            filter[idx+0+16] = 0xFF;
-            memcpy(filter+idx+1, &rdr->prid[prov][2], 2);
-            memset(filter+idx+1+16, 0xFF, 2);
-            filter[1]++;
-            idx += 32;
-        }
+		filter[idx++]=EMM_GLOBAL; //global by provider
+		filter[idx++]=0;
+		filter[idx+0]    = 0x83;
+		filter[idx+0+16] = 0xFF;
+		memcpy(filter+idx+1, &rdr->prid[prov][2], 2);
+		memset(filter+idx+1+16, 0xFF, 2);
+		filter[1]++;
+		idx += 32;
 
-        if (rdr->blockemm & EMM_SHARED)//block emm shared ?  filter emm start yes or no
-        {
-            filter[idx++]=EMM_SHARED;
-            filter[idx++]=0;
-            filter[idx+0]    = 0x84;
-            filter[idx+0+16] = 0xFF;
-            memcpy(filter+idx+1, &rdr->prid[prov][2], 2);
-            memset(filter+idx+1+16, 0xFF, 2);
-            memcpy(filter+idx+3, &rdr->sa[prov], 3);
-            memset(filter+idx+3+16, 0xFF, 3);
-            filter[1]++;
-            idx += 32;
-        }
-        if (filter[1]>=10)
-        {
-            cs_log("seca_get_emm_filter: could not start all emm filter");
-            break;
-        }
-    }
+		filter[idx++]=EMM_SHARED;
+		filter[idx++]=0;
+		filter[idx+0]    = 0x84;
+		filter[idx+0+16] = 0xFF;
+		memcpy(filter+idx+1, &rdr->prid[prov][2], 2);
+		memset(filter+idx+1+16, 0xFF, 2);
+		memcpy(filter+idx+3, &rdr->sa[prov], 3);
+		memset(filter+idx+3+16, 0xFF, 3);
+		filter[1]++;
+		idx += 32;
 
-    return;
+		if (filter[1]>=10) {
+			cs_log("seca_get_emm_filter: could not start all emm filter");
+			break;
+		}
+	}
+	return;
 }
 	
 static int32_t seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
