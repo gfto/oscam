@@ -1532,10 +1532,11 @@ static int32_t check_and_store_ecmcache(ECM_REQUEST *er, uint64_t grp)
 		if (!i) cs_readunlock(&ecmcache_lock);
 	}
 
-	if (!found) {
+	if (!found || (found && found->rc >= E_99)) {
 		er->next = ecmtask;
 		ecmtask = er;
-	} else 
+	}
+	if (found)
 		er->ecmcacheptr = found;
 
 	cs_writeunlock(&ecmcache_lock);
