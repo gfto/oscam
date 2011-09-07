@@ -1500,62 +1500,7 @@ void cs_disconnect_client(struct s_client * client)
 /**
  * ecm cache
  **/
-static int32_t check_and_store_ecmcache(ECM_REQUEST *er, uint64_t grp)
-{
-	time_t now = time(NULL);
-	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
-	struct ecm_request_t *ecm, *first = NULL, *found = NULL;
-	int8_t i;
-
-	for (i=0; i<2; i++) {
-		if (!i) cs_readlock(&ecmcache_lock);
-		else cs_writelock(&ecmcache_lock);
-
-		for (ecm = ecmtask; ecm && !found; ecm = ecm->next) {
-			if (ecm == first) break;
-			if (!first) first = ecm;
-			if (ecm == er) continue;
-
-			if (ecm->tps.time < timeout)
-				break;
-
-			if ((grp && !(grp & ecm->client->grp)) || ecm->caid!=er->caid)
-				continue;
-
-			if (memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
-				continue;
-
-			found = ecm;
-			break;
-		}
-
-		if (!i) cs_readunlock(&ecmcache_lock);
-	}
-
-	if (!found || (found && found->rc >= E_99)) {
-		er->next = ecmtask;
-		ecmtask = er;
-	}
-	if (found)
-		er->ecmcacheptr = found;
-
-	cs_writeunlock(&ecmcache_lock);
-
-	if (found) {
-		memcpy(er->cw, found->cw, 16);
-		er->selected_reader = found->selected_reader;
-		if (found->rc < E_NOTFOUND)
-			return E_CACHE1;
-		else if (found->rc < E_99)
-			return found->rc;
-
-		return E_99;
-	}
-
-	return E_UNHANDLED;
-}
-
-int32_t check_cwcache2(ECM_REQUEST *er, uint64_t grp)
+struct ecm_request_t *check_cwcache(ECM_REQUEST *er, uint64_t grp)
 {
 	time_t now = time(NULL);
 	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
@@ -1571,13 +1516,10 @@ int32_t check_cwcache2(ECM_REQUEST *er, uint64_t grp)
 		if (memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
 			continue;
 
-		if (ecm->rc <= E_NOTFOUND) {
-			memcpy(er->cw, ecm->cw, 16);
-			er->selected_reader = ecm->selected_reader;
-			return 1;
-		}
+		if (ecm->rc != E_99)
+			return ecm;
 	}
-	return 0;
+	return NULL;
 }
 
 /*
@@ -2406,11 +2348,6 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		// store ECM in cache
 		memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, md5tmp), CS_ECMSTORESIZE);
 
-		// cache1
-		//cache check now done by check_and_store_ecmcache() !!
-		//if (check_cwcache1(er, client->grp))
-		//		er->rc = E_CACHE1;
-
 #ifdef CS_ANTICASC
 		ac_chk(client, er, 0);
 #endif
@@ -2473,11 +2410,41 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				er->rcEx = E2_GROUP;
 			snprintf(er->msglog, MSGLOGSIZE, "no matching reader");
 		}
-
-		//we have to go through matching_reader() to check services!
-		if (er->rc == E_UNHANDLED)
-			er->rc = check_and_store_ecmcache(er, client->grp);
 	}
+
+	//we have to go through matching_reader() to check services!
+	struct ecm_request_t *ecm;
+	if (er->rc == E_UNHANDLED) {
+		ecm = check_cwcache(er, client->grp);
+
+		if (ecm) {
+			if (ecm->rc <= E_NOTFOUND) {
+				memcpy(er->cw, ecm->cw, 16);
+				er->selected_reader = ecm->selected_reader;
+				er->rc = E_CACHE1;
+			} else {
+				er->ecmcacheptr = ecm;
+				er->rc = E_99;
+			}
+		} else
+			er->rc = E_UNHANDLED;
+	}
+
+	if (er->rc >= E_99) {
+		cs_writelock(&ecmcache_lock);
+		er->next = ecmtask;
+		ecmtask = er;
+		cs_writeunlock(&ecmcache_lock);
+
+		if (er->rc == E_UNHANDLED) {
+			ecm = check_cwcache(er, client->grp);
+			if (ecm && ecm != er) {
+				er->rc = E_99;
+				er->ecmcacheptr = ecm;
+			}
+		}
+	}
+
 
 #ifdef WITH_LB
 	if (locked)
@@ -2488,19 +2455,21 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	for (lp=(uint16_t *)er->ecm+(er->l>>2), er->checksum=0; lp>=(uint16_t *)er->ecm; lp--)
 		er->checksum^=*lp;
 
-	if (er->rc == E_99) {
-		er->stage=3;
-		pthread_kill(timecheck_thread, OSCAM_SIGNAL_WAKEUP);
-		return; //ECM already requested / found in ECM cache
-	}
-
-	if (er->rc < E_UNHANDLED) {
+	if (er->rc < E_99) {
 		if (cfg.delay)
 			cs_sleepms(cfg.delay);
 
 		send_dcw(client, er);
+		for (ea = er->matching_rdr; ea; ea = ea->next)
+			free(ea);
 		free(er);
 		return;
+	}
+
+	if (er->rc == E_99) {
+		er->stage=3;
+		pthread_kill(timecheck_thread, OSCAM_SIGNAL_WAKEUP);
+		return; //ECM already requested / found in ECM cache
 	}
 
 	er->rcEx = 0;

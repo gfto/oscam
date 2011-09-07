@@ -76,7 +76,7 @@ extern void cs_exit(int32_t sig);
 extern struct s_client * create_client(in_addr_t);
 extern int32_t cs_auth_client(struct s_client *, struct s_auth *, const char*);
 extern void cs_disconnect_client(struct s_client *);
-extern int32_t check_cwcache2(ECM_REQUEST *, uint64_t grp);
+extern struct ecm_request_t *check_cwcache(ECM_REQUEST *, uint64_t grp);
 extern int32_t write_to_pipe(struct s_client *, int32_t, uchar *, int32_t);
 extern int32_t read_from_pipe(struct s_client *, uchar **);
 extern int32_t write_ecm_answer(struct s_reader *, ECM_REQUEST *, int8_t, uint8_t, uchar *, char *);
