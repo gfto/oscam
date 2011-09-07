@@ -1532,21 +1532,21 @@ static int32_t check_and_store_ecmcache(ECM_REQUEST *er, uint64_t grp)
 		if (!i) cs_readunlock(&ecmcache_lock);
 	}
 
-	if (!found || (found && found->rc == E_99)) {
+	if (!found) {
 		er->next = ecmtask;
 		ecmtask = er;
-
-		if (found)
-			er->ecmcacheptr = found;
-	}
+	} else 
+		er->ecmcacheptr = found;
 
 	cs_writeunlock(&ecmcache_lock);
 
 	if (found) {
 		memcpy(er->cw, found->cw, 16);
 		er->selected_reader = found->selected_reader;
-		if (found->rc <= E_NOTFOUND)
+		if (found->rc < E_NOTFOUND)
 			return E_CACHE1;
+		else if (found->rc < E_99)
+			return found->rc;
 
 		return E_99;
 	}
@@ -1598,7 +1598,7 @@ static void distribute_ecm(ECM_REQUEST *er, int32_t rc)
 
 	cs_readlock(&ecmcache_lock);
 	for (ecm = ecmtask; ecm; ecm = ecm->next) {
-		if (ecm->rc >= E_99 && ecm->ecmcacheptr && ecm->ecmcacheptr == er)
+		if (ecm->rc >= E_99 && ecm->ecmcacheptr == er)
 			write_ecm_answer(er->selected_reader, ecm, rc, 0, er->cw, NULL);
 	}
 	cs_readunlock(&ecmcache_lock);
