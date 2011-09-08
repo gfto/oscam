@@ -1819,9 +1819,15 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	if (is_fake)
 		er->rc = E_FAKE;
 
-	cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s (of %d avail %d)%s%s",
+	if (er->reader_avail == 1) {
+		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s %s%s",
+			uname, er->caid, er->prid, er->srvid, er->l, htons(er->checksum),
+			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, schaninfo, sreason);
+	} else {
+		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s (%d of %d)%s%s",
 			uname, er->caid, er->prid, er->srvid, er->l, htons(er->checksum),
 			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, er->reader_count, er->reader_avail, schaninfo, sreason);
+	}
 
 	cs_ddump_mask (D_ATR, er->cw, 16, "cw:");
 
