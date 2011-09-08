@@ -218,7 +218,19 @@ DESCRIPTIONS
        blockemm-bylen = [length,length]...
 	  block all types of EMMs by lenght, maximum 10 values, default:none
 
-       savenano = nano[,nano]....|all
+       saveemm-u = file name
+	  save unique EMMs to file, default:none
+
+       saveemm-s = file name
+	  save shared EMMs to file, default:none
+
+       saveemm-g = file name
+	  save global EMMs to file, default:none
+
+       saveemm-unknown = file name
+	  save unknown types of EMMs to file, default:none
+
+       savenano = nano[,nano]....|all (obsolete)
 	  list of EMM-nanos to save (in hex w/o 0x) or all EMM-nanos, only valid for physical readers, default:none
 
 	   example: savenano = 45,93,7a,ff

@@ -292,7 +292,27 @@ list of EMM-nanos to block (in hex w/o 0x) or all EMM-nanos, valid for physical 
 block all types of EMMs by lenght, maximum 10 values, default:none
 .RE
 .PP
-\fBsavenano\fP = \fBnano[,nano]....\fP|\fPall\fP
+\fBsaveemm-u\fP = \fBfile name\fP
+.RS 3n
+save unique EMMs to file, default:none
+.RE
+.PP
+\fBsaveemm-s\fP = \fBfile name\fP
+.RS 3n
+save shared EMMs to file, default:none
+.RE
+.PP
+\fBsaveemm-g\fP = \fBfile name\fP
+.RS 3n
+save global EMMs to file, default:none
+.RE
+.PP
+\fBsaveemm-unknown\fP = \fBfile name\fP
+.RS 3n
+save unknown types of EMMs to file, default:none
+.RE
+.PP
+\fBsavenano\fP = \fBnano[,nano]....\fP|\fPall\fP \fI(obsolete)\fR
 .RS 3n
 list of EMM-nanos to save (in hex w/o 0x) or all EMM-nanos, only valid for physical readers, default:none
 
