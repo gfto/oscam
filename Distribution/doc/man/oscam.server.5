@@ -254,6 +254,11 @@ number of ECMs until SC reset is performed, 0 = disabled, valid for physical rea
 interval for rate limit, default:0
 .RE
 .PP
+\fBcooldown\fP = \fBdelay\fP,\fBduration\fP
+.RS 3n
+activate ratelimitecm and ratelimitseconds parameters after specified delay for specified duration in seconds, \fIratelimitecm and ratelimitseconds are required\fR, default:none
+.RE
+.PP
 \fBblocknano\fP = \fBnano[,nano]...\fP|\fPall\fP
 .RS 3n
 list of EMM-nanos to block (in hex w/o 0x) or all EMM-nanos, valid for physical readers only, default:none

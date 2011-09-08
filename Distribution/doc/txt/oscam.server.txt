@@ -193,6 +193,10 @@ DESCRIPTIONS
        ratelimitseconds = seconds
 	  interval for rate limit, default:0
 
+       cooldown = delay,duration
+	  activate ratelimitecm and ratelimitseconds parameters after specified delay for specified duration  in  seconds,
+	  ratelimitecm and ratelimitseconds are required, default:none
+
        blocknano = nano[,nano]...|all
 	  list of EMM-nanos to block (in hex w/o 0x) or all EMM-nanos, valid for physical readers only, default:none
 
@@ -224,7 +228,7 @@ DESCRIPTIONS
 	  1 = reject bad CWs, default:0
 
        readnano = [path]filename
-	  write file (usually a copy of a file saved by savenano) to your smartcard, if no path is specified,  the  speci‐
+	  write  file  (usually a copy of a file saved by savenano) to your smartcard, if no path is specified, the speci‐
 	  fied file is searched for in the configuration directory, only valid for physical readers, default:none
 
 	   example: readnano = write.emm
@@ -296,7 +300,7 @@ DESCRIPTIONS
        boxkey = box key
 	  box key for Nagravision SCs / CAM key for Irdeto SCs
 
-       aeskeys	=  CAID #0@ident:AES key #0 CAID #0[,AES key #1 CAID #0],...[;CAID #1@ident:AES key #0 CAID #1[,AES key #1
+       aeskeys = CAID #0@ident:AES key #0 CAID #0[,AES key #1 CAID #0],...[;CAID #1@ident:AES key #0 CAID #1[,AES  key	#1
        CAID #1],...]...
 	  multiple 16 bytes AES keys for Viaccess SCs (the used postprocessing AES key is specified through the D2 nano of
 	  the ECM)
@@ -328,16 +332,16 @@ DESCRIPTIONS
 OVERCLOCKING
        ·  Dreambox and other internal readers
 
-	  For  Dreambox and other internal readers the highest possible clockrate will be auto detected. The mhz parameter
-	  lets you override the values chosen by OSCam, if it differs from 357 and 358, but usually you will not  set  any
+	  For Dreambox and other internal readers the highest possible clockrate will be auto detected. The mhz  parameter
+	  lets	you  override the values chosen by OSCam, if it differs from 357 and 358, but usually you will not set any
 	  value for mhz.
 
-	  For  certain	Dreamboxes  (especially  PPC clones) the default mhz parameter leads to slow ECM times and/or "not
-	  found" ECMs. By setting mhz to values like 200, 300, 400, ... 1600 you can find a  value  that  works  for  your
+	  For certain Dreamboxes (especially PPC clones) the default mhz parameter leads to slow  ECM  times  and/or  "not
+	  found"  ECMs.  By  setting  mhz  to values like 200, 300, 400, ... 1600 you can find a value that works for your
 	  receiver and your card. The higher the mhz value, the slower the ECM time (strange enough).
 
 	  If you choose the value too low, your card is not recognized (no ATR or "card not supported"). If you choose the
-	  value too high, you get slow ECM times. Our experience is that either no mhz line, or a line mhz  =  1000  works
+	  value  too  high,  you get slow ECM times. Our experience is that either no mhz line, or a line mhz = 1000 works
 	  best.
 
        ·  Phoenix / Smartmouse reader
@@ -349,12 +353,12 @@ OVERCLOCKING
 
 	  Set the reader frequency with the native Smargo Smartreader+ tool (srp_tools).  Do not set mhz and cardmhz.
 
-       OSCam tries to set the baudrate automatically.  A standard serial port has limited baudrate settings, so  SC  over‐
+       OSCam  tries  to set the baudrate automatically.  A standard serial port has limited baudrate settings, so SC over‐
        clocking might not work.  When using a serial reader the best way for overclocking is connecting it to a FTDI based
        USB to serial port adapter.
 
-       If overclocking does not work, verify the effective baudrate in the logfile.  If it  deviates  too  much  from  the
-       requested  baudrate,  the  SC  will not be recognized (no ATR) and the value for mhz should be adjusted again.  The
+       If  overclocking  does  not  work,  verify the effective baudrate in the logfile.  If it deviates too much from the
+       requested baudrate, the SC will not be recognized (no ATR) and the value for mhz should	be  adjusted  again.   The
        higher the baudrate, the more accurate the effective baudrate can be.
 
 EXAMPLES
