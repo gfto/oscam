@@ -1640,7 +1640,7 @@ ECM_REQUEST *get_ecmtask()
 #ifdef WITH_LB
 void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc)
 {
-	if (rc>=E_99)
+	if (!rdr || rc>=E_99)
 		return;
 	struct timeb tpe;
 	cs_ftime(&tpe);
@@ -1902,8 +1902,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 
 	if (ert->rc<E_99) {
 #ifdef WITH_LB
-		if (ea->reader)
-			send_reader_stat(ea->reader, ert, ea->rc);
+		send_reader_stat(ea->reader, ert, ea->rc);
 #endif
 		return; // already done
 	}
@@ -1925,8 +1924,8 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 #ifdef WITH_LB
 			if (cfg.lb_mode) {
 				for(ea_list = ert->matching_rdr; ea_list; ea_list = ea_list->next)
-					if ((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED)) == REQUEST_SENT)
-						send_reader_stat(ea->reader, ert, E_TIMEOUT);
+					if (ea != ea_list && ((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED)) == REQUEST_SENT))
+						send_reader_stat(ea_list->reader, ert, E_TIMEOUT);
 			}
 #endif
 			break;
@@ -1959,8 +1958,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 	}
 
 #ifdef WITH_LB
-	if (ea->reader)
-		send_reader_stat(ea->reader, ert, ea->rc);
+	send_reader_stat(ea->reader, ert, ea->rc);
 #endif
 
 	if (ert->rc < E_99) {
