@@ -476,7 +476,7 @@ int32_t irdeto_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_
 		cta_cmd[er->ecm[2]+2]=crc;
 
 		if (reader->caid == 0x0648)
-			cta_cmd[er->ecm[2]+2]=XorSum(cta_cmd, (er->ecm[2]+2)^0x3f^(cta_cmd[0]&0xf0));
+			cta_cmd[er->ecm[2]+2]=XorSum(cta_cmd, (er->ecm[2]+2)) ^ 0x3f ^ (cta_cmd[0]&0xf0);
 
 		irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr);
 		int32_t acslength=cta_res[cta_lr-1];
