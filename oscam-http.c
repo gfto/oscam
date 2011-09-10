@@ -1460,9 +1460,9 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 		char *record = getParam(params, "record");
 		if(strlen(record) > 0) {
 			int32_t retval = 0;
-			uint32_t caid, provid, sid, len;
-			sscanf(record, "%x:%x:%x:%x", &caid, &provid, &sid, &len);
-			retval = clean_stat_by_id(rdr, caid, provid , sid, len);
+			uint32_t caid, provid, sid, cid, len;
+			sscanf(record, "%x:%x:%x:%x:%x", &caid, &provid, &sid, &cid, &len);
+			retval = clean_stat_by_id(rdr, caid, provid, sid, cid, len);
 			cs_log("Reader %s stats %d entr%s deleted by WebIF from %s",
 					rdr->label, retval,
 					retval == 1 ? "y":"ies",

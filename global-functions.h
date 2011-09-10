@@ -411,14 +411,14 @@ extern int32_t get_best_reader(ECM_REQUEST *er);
 extern void clear_reader_stat(struct s_reader *reader);
 extern void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t rc);
 extern void load_stat_from_file();
-extern READER_STAT *get_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16_t srvid, int16_t ecmlen);
-extern READER_STAT *get_fastest_stat(uint16_t caid, uint32_t prid, uint16_t srvid, int16_t ecmlen);
+extern READER_STAT *get_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16_t srvid, uint16_t chid, int16_t ecmlen);
+extern READER_STAT *get_fastest_stat(uint16_t caid, uint32_t prid, uint16_t srvid, uint16_t chid, int16_t ecmlen);
 extern void save_stat_to_file(int32_t);
 extern void clear_all_stat();
 extern void housekeeping_stat(int32_t force);
 extern READER_STAT **get_sorted_stat_copy(struct s_reader *rdr, int32_t reverse, int32_t *size);
 extern int32_t clean_stat_by_rc(struct s_reader *rdr, int8_t rc);
-extern int32_t clean_stat_by_id(struct s_reader *rdr, uint32_t caid, uint32_t provid, uint32_t sid, uint32_t len);
+extern int32_t clean_stat_by_id(struct s_reader *rdr, uint32_t caid, uint32_t provid, uint32_t sid, uint32_t cid, uint32_t len);
 #endif
 
 /* ===========================

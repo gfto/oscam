@@ -1407,6 +1407,7 @@ typedef struct reader_stat_t
 	uint16_t		caid;
 	uint32_t		prid;
 	uint16_t		srvid;
+	uint16_t		chid;
 	int16_t			ecmlen;
 
 	time_t			last_received;
