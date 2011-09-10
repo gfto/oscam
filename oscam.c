@@ -2464,8 +2464,12 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			cs_sleepms(cfg.delay);
 
 		send_dcw(client, er);
-		for (ea = er->matching_rdr; ea; ea = ea->next)
-			free(ea);
+		for (ea = er->matching_rdr; ea;)
+		{
+			struct s_ecm_answer *tmp = ea;
+			ea = ea->next;
+			free(tmp);
+		}
 		free(er);
 		return;
 	}
