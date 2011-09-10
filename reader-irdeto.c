@@ -121,6 +121,12 @@ static void ReverseSessionKeyCrypt(const uchar *camkey, uchar *key)
   } 
 }
 
+static unsigned char XorSum(const unsigned char *mem, int len) {
+	unsigned char cs=0;
+	while(len>0) { cs ^= *mem++; len--; }
+	return cs;
+}
+
 static time_t chid_date(struct s_reader * reader, uint32_t date, char *buf, int32_t l)
 {
 
@@ -416,6 +422,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR newatr)
 				crc^=sc_Acs57CamKey[i];
 			sc_Acs57CamKey[69]=crc;
 			if (reader->caid == 0x0648) {
+				sc_Acs57CamKey[69] = XorSum(sc_Acs57CamKey, 69) ^ 0x3f ^ (sc_Acs57CamKey[0]&0xf0) ^ 0x1b;
 				if (irdeto_do_cmd(reader, sc_Acs57CamKey, 0x9011, cta_res, &cta_lr)) {
 					cs_log("[reader-irdeto] You have a bad Cam Key set");
 					return ERROR;
@@ -467,6 +474,10 @@ int32_t irdeto_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_
 		memcpy(cta_cmd,sc_Acs57Ecm,sizeof(sc_Acs57Ecm));
 		memcpy(cta_cmd+5,er->ecm+6,er->ecm[2]-1); 
 		cta_cmd[er->ecm[2]+2]=crc;
+
+		if (reader->caid == 0x0648)
+			cta_cmd[er->ecm[2]+2]=XorSum(cta_cmd, (er->ecm[2]+2)^0x3f^(cta_cmd[0]&0xf0));
+
 		irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr);
 		int32_t acslength=cta_res[cta_lr-1];
 		// If acslength != 0x1F you don't have the entitlements or you camkey is bad
