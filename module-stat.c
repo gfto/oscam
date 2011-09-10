@@ -95,7 +95,7 @@ void load_stat_from_file()
 		if (type==1) { //New format - faster parsing:
 			for (i = 0, ptr = strtok_r(line, ",", &saveptr1); ptr && i<11 ; ptr = strtok_r(NULL, ",", &saveptr1), i++)
 				split[i] = ptr;
-			valid = (i==10);
+			valid = (i==11);
 			if (valid) {
 				strncpy(buf, split[0], sizeof(buf)-1);
 				stat->rc = atoi(split[1]);
