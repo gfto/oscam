@@ -662,14 +662,15 @@ static int32_t get_nbest_readers(ECM_REQUEST *er) {
 		return cfg.lb_nbest_readers;
 }
 
-static int32_t get_reopen_seconds(READER_STAT *stat)
+static time_t get_reopen_seconds(READER_STAT *stat)
 {
 		int32_t max = (INT_MAX / cfg.lb_reopen_seconds);
+		if (max > 9999) max = 9999;
 		if (stat->fail_factor > max)
 				stat->fail_factor = max;
 		if (!stat->fail_factor)
 			return cfg.lb_reopen_seconds;
-		return stat->fail_factor * cfg.lb_reopen_seconds;
+		return (time_t)stat->fail_factor * (time_t)cfg.lb_reopen_seconds;
 }
 
 ushort get_betatunnel_caid_to(ushort caid) 
@@ -700,7 +701,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	if (!cfg.lb_mode || cfg.lb_mode==LB_LOG_ONLY)
 		return 0;
 
-	LL_ITER it;
 	struct s_reader *rdr;
 	struct s_ecm_answer *ea;
 
@@ -827,10 +827,13 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	}
 #endif	
 
+	for(ea = er->matching_rdr; ea; ea = ea->next) {
+		ea->status &= 0xFC;
+	}
+
 	for(ea = er->matching_rdr; ea && nreaders; ea = ea->next) {
 			rdr = ea->reader;
 			struct s_client *cl = rdr->client;
-			ea->status &= 0xFC;
 			reader_count++;
 	
 			int32_t weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
@@ -934,7 +937,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	while (nreaders) {
 		struct s_ecm_answer *best = NULL;
 
-		ll_iter_reset(&it);
 		for(ea = er->matching_rdr; ea; ea = ea->next) {
 			if (nlocal_readers && !(ea->status & READER_LOCAL))
 				continue;
