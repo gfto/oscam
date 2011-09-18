@@ -657,7 +657,8 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t fre
     	//card keeps their hexserial, set aufilter (0=any, 1=au clients only, 2=nonau clients only)
     	card->aufilter = 1;
     	struct cc_card *card3 = create_card(card);
-    	
+		add_card_providers(card3, card, 1); //copy providers to new card. Copy remote nodes to new card    	
+		
     	//create a copy of the card, set aufilter to 2 and remove hexserial:
     	card3->aufilter = 2;
     	memset(card3->hexserial, 0, sizeof(card3->hexserial));
