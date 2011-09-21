@@ -527,14 +527,10 @@ int32_t boundary(int32_t exp, int32_t n)
 
 void cs_ftime(struct timeb *tp)
 {
-#ifdef NO_FTIME
   struct timeval tv;
   gettimeofday(&tv, (struct timezone *)0);
   tp->time=tv.tv_sec;
   tp->millitm=tv.tv_usec/1000;
-#else
-  ftime(tp);
-#endif
 }
 
 void cs_sleepms(uint32_t msec)

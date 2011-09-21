@@ -14,7 +14,6 @@
 #include <sys/mman.h>
 #include <stdarg.h>
 #include <time.h>
-#include <sys/timeb.h>
 #include <sys/time.h>
 #include <limits.h>
 #include <pwd.h>
@@ -73,6 +72,7 @@
 #define sprintf(a,...) UNSAFE_SPRINTF_USE_SNPRINTF_INSTEAD()
 #define strtok(a,b,c) UNSAFE_STRTOK_USE_STRTOK_R_INSTEAD()
 #define strptime(a,b,c) STRPTIME_NOT_EXISTS_ON_SOME_DM500_DB2()
+#define ftime(a) FTIME_DEPRECATED()
 #endif
 
 #ifdef UNUSED
@@ -433,6 +433,11 @@ extern void cs_switch_led(int32_t led, int32_t action);
 /* ===========================
  *      global structures
  * =========================== */
+struct timeb {
+	time_t time;
+	uint16_t millitm;
+};
+
 typedef struct cs_mutexlock {
 	int32_t		timeout;
 	pthread_mutex_t	lock;
