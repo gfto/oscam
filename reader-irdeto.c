@@ -681,9 +681,6 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 	int32_t mode = (ep->emm[3] >> 3);
 	uchar *emm = ep->emm;
 
-	if (reader->caid == 0x0604 && ep->emm[2] != 0x38 && ep->emm[2] != 0x3F)
-		return ERROR;
-
 	if (mode & 0x10) {
 		// hex addressed
 		ok = (mode == reader->hexserial[3] && (!l || !memcmp(&emm[4], reader->hexserial, l)));
