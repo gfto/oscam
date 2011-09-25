@@ -638,11 +638,11 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_ms, uint32_t
 	while (1) {
 		select_ret = select(in_fd+1, &rfds, NULL,  &erfds, &tv);
 		if (select_ret==-1) {
-			cs_log("ERROR in IO_Serial_WaitToRead: (errno=%d %s)", errno, strerror(errno));
 			if (errno==EINTR) {
 				//try again in case of Interrupted system call
 				continue;
 			} else
+				cs_log("ERROR in IO_Serial_WaitToRead: (errno=%d %s)", errno, strerror(errno));
 				return ERROR;
 		}
 		if (select_ret==0) {
