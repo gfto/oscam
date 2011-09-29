@@ -324,37 +324,7 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 
 	nextEcm=ecm88Data;
 
-	//looking for nano E0
-	while (ecm88Len)
-	{
-		// 80 33 nano 80 (ecm) + len (33)
-		if(ecm88Data[0]==0x80) { // nano 80, give ecm len
-			curEcm88len=ecm88Data[1];
-			nextEcm=ecm88Data+curEcm88len+2;
-			ecm88Data += 2;
-			ecm88Len -= 2;
 
-			if (ecm88Data[0]==0x90  && ecm88Data[1]==0x07)
-			{
-				curnumber_ecm =(ecm88Data[6]<<8) | (ecm88Data[7]);
-				//if number_ecm & nano E0 ecm  not suported
-				if ((reader->last_geo.number_ecm == curnumber_ecm )&&((ecm88Data[9] == 0xE0)&&(ecm88Data[10] == 0x02)))
-				{
-					cs_log("[viaccess-reader] ECM: Invalid ECM nano E0 Rejecting");
-					return ERROR;
-				}
-			}
-			ecm88Data=nextEcm;
-			ecm88Len-=curEcm88len;
-			continue; //loop to next ecm
-		} else  ecm88Len = 0; //exit while
-	}
-
-	//reset to beginning of ECM
-	ecm88Data=&ecmData[0]; //XXX what is the 4th byte for ??
-	ecm88Len=SCT_LEN(er->ecm)-4;
-	curEcm88len=0;
-	nextEcm=ecm88Data;
 
 	while (ecm88Len && !rc) {
 
@@ -682,21 +652,6 @@ static int32_t viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
 	int32_t emmdatastart=7;
 
-	if (ep->emm[1] == 0x01) { // emm from cccam
-		emmdatastart=12;
-		ep->emm[1] = 0x70; // (& 0x0f) of this byte is length, so 0x01 would increase the length by 256
-		ep->emm[2] -= 1;
-		if (ep->type == SHARED) {
-			// build missing 0x90 nano from provider at serial position
-			memcpy(ep->emm+7, ep->emm+3, 3);
-			ep->emm[5] = 0x90;
-			ep->emm[6] = 0x03;
-			ep->emm[9] |= 0x01;
-			ep->emm[10] = 0x9E;
-            ep->emm[11] = 0x20; 
-			emmdatastart = 5;
-		}
-	}
 
 	if (ep->type == UNIQUE) emmdatastart++;
 	int32_t emmLen=SCT_LEN(ep->emm)-emmdatastart;
