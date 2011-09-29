@@ -244,6 +244,9 @@ static void usage()
 #ifdef MODULE_CCCAM
   fprintf(stderr, "cccam ");
 #endif
+#ifdef MODULE_PANDORA
+  fprintf(stderr, "pandora ");
+#endif
 #ifdef MODULE_GBOX
   fprintf(stderr, "gbox ");
 #endif
@@ -3457,6 +3460,9 @@ int32_t main (int32_t argc, char *argv[])
 #endif
 #ifdef MODULE_CCCAM
            module_cccam,
+#endif
+#ifdef MODULE_PANDORA
+           module_pandora,
 #endif
 #ifdef MODULE_GBOX
            module_gbox,

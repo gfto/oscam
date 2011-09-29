@@ -192,6 +192,7 @@
 /////////////////// peer to peer proxy readers after R_CCCAM
 #define R_GBOX      0x30  // Reader cascading gbox
 #define R_CCCAM     0x35  // Reader cascading cccam
+#define R_PANDORA   0x36  // Reader cascading pandora
 #define R_SERIAL    0x80  // Reader serial
 #define R_IS_NETWORK    0x60
 #define R_IS_CASCADING  0xE0
@@ -862,6 +863,14 @@ struct s_client {
 	//failban value set bitwise - compared with BAN_
 	int32_t			failban;
 	int8_t			cleaned;
+
+#ifdef MODULE_PANDORA
+	int 			pand_autodelay;
+	uchar 			pand_send_ecm;
+	uchar 			pand_ignore_ecm;
+	uchar 			pand_md5_key[16];
+#endif
+
 	struct s_client	*next; 							//make client a linked list
 };
 
@@ -1108,6 +1117,9 @@ struct s_reader  									//contains device info, reader info and card info
 	int8_t			fix_9993;
 	uint8_t			ins7E[0x1A+1];
 
+#ifdef MODULE_PANDORA
+	int8_t			pand_send_ecm;
+#endif
 	struct s_reader *next;
 };
 
@@ -1389,6 +1401,16 @@ struct s_config
 	char		*lcd_output_path;
 	int32_t		lcd_hide_idle;
 	int32_t		lcd_write_intervall;
+#endif
+
+#ifdef MODULE_PANDORA
+	int8_t		pand_skip_send_dw;
+	struct s_ip	*pand_allowed;
+	char        pand_usr[64];
+	char		pand_pass[64];
+	int8_t		pand_ecm;
+	int32_t		pand_port;
+	in_addr_t	pand_srvip;
 #endif
 };
 

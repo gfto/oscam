@@ -12,6 +12,9 @@ extern void module_oscam_ser(struct s_module *);
 #ifdef MODULE_CCCAM
 extern void module_cccam(struct s_module *);
 #endif
+#ifdef MODULE_PANDORA
+extern void module_pandora(struct s_module *);
+#endif
 extern void module_gbox(struct s_module *);
 extern void module_constcw(struct s_module *);
 #ifdef HAVE_DVBAPI
