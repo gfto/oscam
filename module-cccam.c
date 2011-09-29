@@ -1160,7 +1160,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 				if (is_sid_blocked(ncard, &cur_srvid))
 					continue;
 				
-				if (ncard->caid>>8==0x18 && (!xcard || ncard->hop < xcard->hop))
+				if (!(rdr->cc_want_emu) && (ncard->caid>>8==0x18) && (!xcard || ncard->hop < xcard->hop))
 					xcard = ncard; //remember card (D+ / 1810 fix) if request has no provider, but card has
 						
 				if (!cur_er->prid && !ll_count(ncard->providers)) { //card has no providers:
