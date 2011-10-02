@@ -228,29 +228,46 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 		return client->udp_fd;
 	}
   
-	//int32_t flag = 1;
-	//setsockopt(cl->udp_fd, IPPROTO_TCP, SO_DEBUG, (char *) &flag, sizeof(int));
+       int32_t fl = fcntl(client->udp_fd, F_GETFL);
+	fcntl(client->udp_fd, F_SETFL, O_NONBLOCK);
 
-	int32_t sd = client->udp_fd;
-
-	int32_t res = connect(sd, (struct sockaddr *)&client->udp_sa, sizeof(client->udp_sa));
+	int32_t res = connect(client->udp_fd, (struct sockaddr *)&client->udp_sa, sizeof(client->udp_sa));
 	if (res == -1) {
-		cs_log("connect(fd=%d) failed: (errno=%d %s)", sd, errno, strerror(errno));
-		//connect has failed. Block connect for a while:
-		block_connect(rdr);
-      		close(client->udp_fd);
-		client->udp_fd = 0;
-		return -1; 
+		int32_t r = -1;
+		if (errno == EINPROGRESS || errno == EALREADY) {
+			struct pollfd pfd;
+			pfd.fd = client->udp_fd;
+			pfd.events = POLLOUT;
+			int32_t rc = poll(&pfd, 1, 3000);
+			if (rc > 0) {
+				uint32_t l = sizeof(r);
+				if (getsockopt(client->udp_fd, SOL_SOCKET, SO_ERROR, &r, (socklen_t*)&l) != 0)
+					r = -1;
+				else
+					errno = r;
+			} else {
+				errno = ETIMEDOUT;
+			}
+		}
+		if (r != 0) {
+			cs_log("connect(fd=%d) failed: (errno=%d %s)", client->udp_fd, errno, strerror(errno));
+			block_connect(rdr); //connect has failed. Block connect for a while
+      			close(client->udp_fd);
+			client->udp_fd = 0;
+			return -1;
+		}
 	}
 
-	setTCPTimeouts(sd);
+	fcntl(client->udp_fd, F_SETFL, fl); //restore blocking mode
+
+	setTCPTimeouts(client->udp_fd);
 	clear_block_delay(rdr);
 	client->last=client->login=time((time_t*)0);
 	client->last_caid=client->last_srvid=0;
 	client->pfd = client->udp_fd;
 	rdr->tcp_connected = 1;
 	cs_log("connect succesfull %s fd=%d", rdr->ph.desc, client->udp_fd);
-	return sd;
+	return client->udp_fd;
 }
 
 void network_tcp_connection_close(struct s_reader *reader)

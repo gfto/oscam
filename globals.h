@@ -144,7 +144,7 @@
 #define CS_DELAY          0
 #define CS_ECM_RINGBUFFER_MAX 20 // max size for ECM last responsetimes ringbuffer
 
-#define CS_CACHE_TIMEOUT  60
+#define CS_CACHE_TIMEOUT  120
 #ifndef PTHREAD_STACK_MIN
 #define PTHREAD_STACK_MIN 64000
 #endif
