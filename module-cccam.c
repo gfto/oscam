@@ -1616,8 +1616,10 @@ void cc_idle() {
 	else
 	{
 		int32_t rto = abs(rdr->last_s - rdr->last_g);
-		if (rto >= (rdr->tcp_rto*60))
+		if (rto >= (rdr->tcp_rto*60)) {
+			cs_debug_mask(D_READER, "%s inactive_timeout, close connection (fd=%d)", rdr->ph.desc, rdr->client->pfd);
 			network_tcp_connection_close(rdr);
+		}
 	}
 }
 
@@ -3140,8 +3142,9 @@ int32_t cc_cli_init_int(struct s_client *cl) {
 	struct s_reader *rdr = cl->reader;
 	if (rdr->tcp_connected)
 		return 1;
-                	
-	rdr->tcp_ito = 1; //60sec...This now invokes ph_idle()
+                
+    if (rdr->tcp_ito < 1)	
+		rdr->tcp_ito = 1; //60sec...This now invokes ph_idle()
 	if (rdr->cc_maxhop < 0)
 		rdr->cc_maxhop = DEFAULT_CC_MAXHOP;
 

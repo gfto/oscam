@@ -2752,7 +2752,8 @@ static void check_status(struct s_client *cl) {
 				int32_t time_diff;
 				time_diff = abs(time(NULL) - rdr->last_s);
 
-				if (time_diff>(rdr->tcp_ito*60)) {
+				//if (time_diff>(rdr->tcp_ito*60)) {
+				if (time_diff>60) { //1x per minute
 					add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
 					rdr->last_s = time(NULL);
 				}

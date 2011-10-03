@@ -2729,7 +2729,7 @@ int32_t write_server()
 				fprintf_conf(f, "services", "%s\n", value);
 			free_mk_t(value);
 
-			if ((rdr->tcp_ito || cfg.http_full_cfg) && !isphysical && rdr->typ != R_CCCAM)
+			if ((rdr->tcp_ito || cfg.http_full_cfg) && !isphysical)
 				fprintf_conf(f, "inactivitytimeout", "%d\n", rdr->tcp_ito);
 
 			if ((rdr->resetcycle != 0 || cfg.http_full_cfg) && isphysical)
