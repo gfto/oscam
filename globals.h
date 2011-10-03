@@ -1019,6 +1019,7 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t			tcp_block_delay;				//incrementing block time
 	time_t			last_g;							// get (if last_s-last_g>tcp_rto - reconnect )
 	time_t			last_s;							// send
+	time_t			last_check;						// last checked
 	uint8_t			show_cls;						// number of classes subscription showed on kill -31
 	FTAB			fchid;
 	FTAB			ftab;

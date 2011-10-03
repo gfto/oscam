@@ -2750,17 +2750,16 @@ static void check_status(struct s_client *cl) {
 				break;
 			if (rdr->tcp_ito && (rdr->typ & R_IS_CASCADING)) {
 				int32_t time_diff;
-				time_diff = abs(time(NULL) - rdr->last_s);
+				time_diff = abs(time(NULL) - rdr->last_check);
 
-				//if (time_diff>(rdr->tcp_ito*60)) {
-				if (time_diff>60) { //1x per minute
+				if (time_diff>60) { //check 1x per minute
 					add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
-					rdr->last_s = time(NULL);
+					rdr->last_check = time(NULL);
 				}
 			}
-			if (!rdr->tcp_connected && ((time(NULL) - rdr->last_s) > 30) && rdr->typ == R_CCCAM) {
+			if (!rdr->tcp_connected && ((time(NULL) - rdr->last_check) > 30) && rdr->typ == R_CCCAM) {
 				add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
-				rdr->last_s = time(NULL);
+				rdr->last_check = time(NULL);
 			}
 			break;
 		default:

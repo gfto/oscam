@@ -468,8 +468,6 @@ int32_t cc_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen) {
 	}
 
 	len = recv(handle, buf, 4, MSG_WAITALL);
-	if (rdr)
-		rdr->last_g = time(NULL);
 
 	if (len != 4) { // invalid header length read
 		if (len <= 0)
@@ -494,7 +492,7 @@ int32_t cc_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen) {
 		}
 
 		len = recv(handle, buf + 4, size, MSG_WAITALL); // read rest of msg
-		if (rdr)
+		if (rdr && buf[1] == MSG_CW_ECM)
 			rdr->last_g = time(NULL);
 
 		if (len != size) {
@@ -556,7 +554,7 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 	cc_crypt(&cc->block[ENCRYPT], netbuf, len, ENCRYPT);
 
 	n = send(cl->udp_fd, netbuf, len, 0);
-	if (rdr)
+	if (rdr && cmd == MSG_CW_ECM)
 		rdr->last_s = time(NULL);
 
 	cs_writeunlock(&cc->lockcmd);
@@ -3144,7 +3142,7 @@ int32_t cc_cli_init_int(struct s_client *cl) {
 		return 1;
                 
     if (rdr->tcp_ito < 1)	
-		rdr->tcp_ito = 1; //60sec...This now invokes ph_idle()
+		rdr->tcp_ito = 30;
 	if (rdr->cc_maxhop < 0)
 		rdr->cc_maxhop = DEFAULT_CC_MAXHOP;
 
