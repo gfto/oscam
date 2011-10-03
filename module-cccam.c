@@ -1603,20 +1603,31 @@ void cc_idle() {
 		
 	if (!rdr || !rdr->tcp_connected || !cl || !cc)
 		return;
-
+		
+	time_t now = time(NULL);
 	if (rdr->cc_keepalive) {
-		if (cc->answer_on_keepalive + 55 <= time(NULL)) {
+		if (cc->answer_on_keepalive + 55 <= now) {
 			cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
 			cs_debug_mask(D_READER, "cccam: keepalive");
-			cc->answer_on_keepalive = time(NULL);
+			cc->answer_on_keepalive = now;
+			return;
 		}
 	}
 	else
 	{
-		int32_t rto = abs(rdr->last_s - rdr->last_g);
-		if (rto >= (rdr->tcp_rto*60)) {
+		//check inactivity timeout:
+		if (abs(rdr->last_s - now) > rdr->tcp_ito*60)
 			cs_debug_mask(D_READER, "%s inactive_timeout, close connection (fd=%d)", rdr->ph.desc, rdr->client->pfd);
 			network_tcp_connection_close(rdr);
+			return;
+		}
+			
+		//check read timeout:
+		int32_t rto = abs(rdr->last_s - rdr->last_g);
+		if (rto >= (rdr->tcp_rto*60)) {
+			cs_debug_mask(D_READER, "%s read timeout, close connection (fd=%d)", rdr->ph.desc, rdr->client->pfd);
+			network_tcp_connection_close(rdr);
+			return;
 		}
 	}
 }
