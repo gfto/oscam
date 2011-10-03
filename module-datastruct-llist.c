@@ -52,7 +52,7 @@ static void *ll_iter_next_nolock(LL_ITER *it)
 		cs_debug_mask_nolock(D_TRACE, "list changed, searching new position");
 
 		LL_NODE *ptr;
-		cs_readlock(&it->l->lock);
+		//cs_readlock(&it->l->lock);
 		if (!it->cur && !it->prv) {
 			it->cur = it->l->initial;
 		} else {
@@ -70,7 +70,7 @@ static void *ll_iter_next_nolock(LL_ITER *it)
 				it->cur = prvnxt;
 		}
 		it->ll_version = it->l->version;
-		cs_readunlock(&it->l->lock);
+		//cs_readunlock(&it->l->lock);
 		
 		if (it->cur)
 			return it->cur->obj;
@@ -190,7 +190,10 @@ LL_ITER ll_iter_create(LLIST *l)
 void *ll_iter_next(LL_ITER *it)
 {
 	if (it && it->l) {
-		return ll_iter_next_nolock(it);
+		cs_readlock(&it->l->lock);
+		void *res = ll_iter_next_nolock(it);
+		cs_readunlock(&it->l->lock);
+		return res;
 	}
 	return NULL;
 }

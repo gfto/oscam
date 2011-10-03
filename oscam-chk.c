@@ -404,7 +404,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
     return(0);
 
   //Checking connected & group valid:
-  struct s_client *cur_cl = cur_client();
+  struct s_client *cur_cl = er->client; //cur_client();
   
   if (!((rdr->grp&cur_cl->grp)))
     return(0);

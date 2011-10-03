@@ -2163,6 +2163,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 {
 	int32_t i, j, m;
 	time_t now = time((time_t*)0);
+	
+	er->client = client;
 
 	client->lastecm = now;
 
