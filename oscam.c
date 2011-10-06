@@ -513,8 +513,18 @@ static void cleanup_ecmtasks(struct s_client *cl)
 	for (i=0; i<n; i++) {
 		ecm = &cl->ecmtask[i];
 		ecm->matching_rdr=NULL;
+		ecm->client=NULL;
 	}
 	add_garbage(cl->ecmtask);
+	
+	//remove this clients ecm from queue. because of cache, just null the client:
+	cs_readlock(&ecmcache_lock);
+	for (ecm = ecmtask; ecm; ecm = ecm->next) {
+		if (ecm->client == cl) {
+			ecm->client = NULL;
+		}
+	}
+	cs_readunlock(&ecmcache_lock);
 }
 
 void cleanup_thread(void *var)
@@ -1677,7 +1687,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 			"fake", "invalid", "corrupt", "no card", "expdate", "disabled", "stopped"};
 	static const char *stxtEx[16]={"", "group", "caid", "ident", "class", "chid", "queue", "peer", "sid", "", "", "", "", "", "", ""};
 	static const char *stxtWh[16]={"", "user ", "reader ", "server ", "lserver ", "", "", "", "", "", "", "", "" ,"" ,"", ""};
-	char sby[64]="", sreason[32]="", schaninfo[32]="";
+	char sby[32]="", sreason[32]="", schaninfo[32]="";
 	char erEx[32]="";
 	char uname[38]="";
 	char channame[32];
@@ -1690,23 +1700,12 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 
 	struct s_reader *er_reader = er->selected_reader; //responding reader
 
-	if (er_reader && er->rc != E_TIMEOUT) {
+	if (er_reader) {
 		// add marker to reader if ECM_REQUEST was betatunneled
 		if(er->ocaid)
 			snprintf(sby, sizeof(sby)-1, " by %s(btun %04X)", er_reader->label, er->ocaid);
 		else
 			snprintf(sby, sizeof(sby)-1, " by %s", er_reader->label);
-	}
-	else if (er->rc == E_TIMEOUT) {
-		int32_t n = snprintf(sby, sizeof(sby)-1, " by ");
-		int8_t first = 1;
-		struct s_ecm_answer *ea;
-		for(ea = er->matching_rdr; ea; ea = ea->next) {
-			if (ea->reader && (ea->status & (REQUEST_ANSWERED|REQUEST_SENT)) == REQUEST_SENT) {
-				n += snprintf(sby+n, sizeof(sby)-1-n, "%s%s", first?"":"+", ea->reader->label);
-				first = 0;
-			}
-		}
 	}
 		
 	if (er->rc < E_NOTFOUND) er->rcEx=0;
@@ -1937,7 +1936,6 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 		case E_TIMEOUT:
 			ert->rc = E_TIMEOUT;
 			ert->rcEx = 0;
-			ert->selected_reader = ea->reader;
 #ifdef WITH_LB
 			if (cfg.lb_mode) {
 				for(ea_list = ert->matching_rdr; ea_list; ea_list = ea_list->next)
