@@ -79,7 +79,7 @@ void garbage_collector() {
 	                garbage = garbage_first[i];  
 	                while (garbage) {
 	                        next = garbage->next;
-	                        if (now > garbage->time+5) { //5 seconds!
+	                        if (now > (time_t)(garbage->time+cfg.ctimeout/1000+1)) { //clienttimeout +1 second
 	                                free(garbage->data);
 	                                
 	                                if (prev)

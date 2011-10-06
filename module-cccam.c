@@ -1063,7 +1063,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 			struct timeb timeout;
 			timeout = cc->ecm_time;
-			uint32_t tt = cfg.ctimeout+500;
+			uint32_t tt = 3*cfg.ctimeout+500;
 			timeout.time += tt / 1000;
 			timeout.millitm += tt % 1000;
             if (timeout.millitm >= 1000) {
@@ -1075,8 +1075,8 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 				return 0; //pending send...
 			} else {
 				cs_debug_mask(D_READER,
-						"%s unlocked-cycleconnection! timeout %ds",
-						getprefix(), tt / 1000);
+						"%s unlocked-cycleconnection! timeout %dms",
+						getprefix(), tt);
 				//cc_cycle_connection();
 				cc_cli_close(cl, TRUE);
 				return 0;
