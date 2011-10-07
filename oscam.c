@@ -1936,13 +1936,6 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 		case E_TIMEOUT:
 			ert->rc = E_TIMEOUT;
 			ert->rcEx = 0;
-#ifdef WITH_LB
-			if (cfg.lb_mode) {
-				for(ea_list = ert->matching_rdr; ea_list; ea_list = ea_list->next)
-					if (ea != ea_list && ((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED)) == REQUEST_SENT))
-						send_reader_stat(ea_list->reader, ert, E_TIMEOUT);
-			}
-#endif
 			break;
 		case E_NOTFOUND:
 			ert->rcEx=ea->rcEx;
@@ -3124,8 +3117,18 @@ static void * check_thread(void) {
 					time_to_check = add_ms_to_timeb(&tbc, cfg.ctimeout);
 				} else {
 					cs_debug_mask(D_TRACE, "timeout for %s %04X&%06X/%04X", username(er->client), er->caid, er->prid, er->srvid);
-					if (er->client && is_valid_client(er->client))
+					if (er->client && is_valid_client(er->client)) {
 						write_ecm_answer(NULL, er, E_TIMEOUT, 0, NULL, NULL);
+						
+						//because of lb, send E_TIMEOUT for all readers:
+						struct s_ecm_answer *ea_list;
+
+						for(ea_list = er->matching_rdr; ea_list; ea_list = ea_list->next) {
+							if ((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED)) == REQUEST_SENT)
+								send_reader_stat(ea_list->reader, er, E_TIMEOUT);
+						}
+					}
+
 					time_to_check = 0;
 				}
 			}
