@@ -1889,6 +1889,10 @@ static void request_cw(ECM_REQUEST *er)
 				// any non fallback reader not asked yet
 				if ((ea->status & (READER_ACTIVE|READER_FALLBACK)) != READER_ACTIVE)
 					continue;
+			} else {
+				// only fallbacks
+				if ((ea->status & (READER_ACTIVE|READER_FALLBACK)) != (READER_ACTIVE|READER_FALLBACK))
+					continue;
 			}
 					
 			cs_debug_mask(D_TRACE, "request_cw stage=%d to reader %s ecm=%04X", er->stage, ea->reader->label, htons(er->checksum));

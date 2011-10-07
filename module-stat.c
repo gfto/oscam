@@ -829,6 +829,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 
 	for(ea = er->matching_rdr; ea; ea = ea->next) {
 		ea->status &= 0xFC;
+		ea->value = 0;
 	}
 
 	for(ea = er->matching_rdr; ea && nreaders; ea = ea->next) {
