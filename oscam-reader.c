@@ -499,11 +499,13 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 					break;
 				} 
 			}
-		}
+		
+			#ifdef HAVE_DVBAPI
 		//overide ratelimit priority for dvbapi request
 		if ((foundspace < 0) && (cfg.dvbapi_enabled == 1) && (strcmp(er->client->account->usr,cfg.dvbapi_usr) == 0)) {
 			cs_debug_mask(D_READER, "Overiding ratelimit priority for DVBAPI request User=%s",er->client->account->usr);
 			foundspace=0;
+			#endif
 		}
 		if (foundspace<0) {
 			//drop

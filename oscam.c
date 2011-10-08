@@ -3123,6 +3123,7 @@ static void * check_thread(void) {
 					cs_debug_mask(D_TRACE, "timeout for %s %04X&%06X/%04X", username(er->client), er->caid, er->prid, er->srvid);
 					if (er->client && is_valid_client(er->client)) {
 						write_ecm_answer(NULL, er, E_TIMEOUT, 0, NULL, NULL);
+#ifdef WITH_LB		
 						
 						//because of lb, send E_TIMEOUT for all readers:
 						struct s_ecm_answer *ea_list;
@@ -3131,6 +3132,7 @@ static void * check_thread(void) {
 							if ((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED)) == REQUEST_SENT)
 								send_reader_stat(ea_list->reader, er, E_TIMEOUT);
 						}
+#endif
 					}
 
 					time_to_check = 0;
