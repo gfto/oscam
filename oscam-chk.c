@@ -170,8 +170,30 @@ int32_t chk_srvid_by_caid_prov(struct s_client *cl, uint16_t caid, uint32_t prov
         rc=1;
     }
   return(rc);
-
 }
+
+int32_t chk_srvid_by_caid_prov_rdr(struct s_reader *rdr, uint16_t caid, uint32_t provid) {
+  int32_t nr, rc=0;
+  SIDTAB *sidtab;
+
+  if (!rdr->sidtabok)
+  {
+    if (!rdr->sidtabno) return(1);
+    rc=1;
+  }
+  for (nr=0, sidtab=cfg.sidtab; sidtab; sidtab=sidtab->next, nr++)
+    if (sidtab->num_caid | sidtab->num_provid)
+    {
+      if ((rdr->sidtabno&((SIDTABBITS)1<<nr)) && !sidtab->num_srvid &&
+          (chk_srvid_match_by_caid_prov(caid, provid, sidtab)))
+        return(0);
+      if ((rdr->sidtabok&((SIDTABBITS)1<<nr)) &&
+          (chk_srvid_match_by_caid_prov(caid, provid, sidtab)))
+        rc=1;
+    }
+  return(rc);
+}
+
 
 // server filter for newcamd
 int32_t chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
@@ -345,7 +367,7 @@ int32_t chk_rsfilter(struct s_reader * reader, ECM_REQUEST *er)
   return(rc);
 }
 
-static int32_t chk_rfilter(ECM_REQUEST *er, struct s_reader *rdr)
+int32_t chk_rfilter2(uint16_t rcaid, uint32_t rprid, struct s_reader *rdr)
 {
   int32_t i, j, rc=1;
   uint16_t caid=0;
@@ -356,30 +378,36 @@ static int32_t chk_rfilter(ECM_REQUEST *er, struct s_reader *rdr)
     for( rc=i=0; (!rc) && (i<rdr->ftab.nfilts); i++ )
     {
       caid = rdr->ftab.filts[i].caid;
-      if( (caid!=0 && caid==er->caid) || caid==0 )
+      if( (caid!=0 && caid==rcaid) || caid==0 )
       { 
         for( j=0; (!rc) && (j<rdr->ftab.filts[i].nprids); j++)
         {
           prid = rdr->ftab.filts[i].prids[j];
           cs_debug_mask(D_CLIENT, "trying reader '%s' filter %04X:%06X",
                     rdr->label, caid, prid);
-          if( prid==er->prid )
+          if( prid==rprid )
           {
             rc=1;
             cs_debug_mask(D_CLIENT, "%04X:%06X allowed by reader '%s' filter %04X:%06X",
-                    er->caid, er->prid, rdr->label, caid, prid);
+                    rcaid, rprid, rdr->label, caid, prid);
           }
         }
       }
     }
     if(!rc) {
       cs_debug_mask(D_CLIENT, "no match, %04X:%06X rejected by reader '%s' filters",
-                er->caid, er->prid, rdr->label);
+                rcaid, rprid, rdr->label);
       return 0;
     }
   }
 
   return(rc);
+}
+
+
+static int32_t chk_rfilter(ECM_REQUEST *er, struct s_reader *rdr)
+{
+	return chk_rfilter2(er->caid, er->prid, rdr);
 }
 
 int32_t chk_ctab(uint16_t caid, CAIDTAB *ctab) {

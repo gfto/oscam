@@ -745,14 +745,24 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				if (weight <= 0) weight = 1;
 				
 				stat_nagra = get_stat(rdr, er->caid, prid, er->srvid, er->chid, er->l);
-				stat_beta = get_stat(rdr, caid_to, prid, er->srvid, er->chid, er->l+10);
 				
+				//Check if beta is valid on this reader:
+				int8_t valid = chk_ctab(caid_to, &rdr->ctab) //Check caid
+					&& chk_rfilter2(caid_to, 0, rdr) //Ident
+					&& chk_srvid_by_caid_prov_rdr(rdr, caid_to, 0); //Services
+				if (valid)
+					stat_beta = get_stat(rdr, caid_to, prid, er->srvid, er->chid, er->l+10);
+				else
+					stat_beta = NULL;
+
+				//calculate nagra data:				
 				if (stat_nagra && stat_nagra->rc == 0) {
 					time = stat_nagra->time_avg*100/weight;
 					if (!time_nagra || time < time_nagra)
 						time_nagra = time;
 				}
 				
+				//calculate beta data:
 				if (stat_beta && stat_beta->rc == 0) {
 					time = stat_beta->time_avg*100/weight;
 					if (!time_beta || time < time_beta)
@@ -762,7 +772,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				//Uncomplete reader evaluation, we need more stats!
 				if (!stat_nagra)
 					needs_stats_nagra = 1;
-				if (!stat_beta)
+				if (valid && !stat_beta)
 					needs_stats_beta = 1;
 			}
 			

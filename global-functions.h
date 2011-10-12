@@ -109,6 +109,8 @@ extern int32_t process_client_pipe(struct s_client *cl, uchar *buf, int32_t l);
 extern void update_reader_config(uchar *ptr);
 extern int32_t chk_ctab(uint16_t caid, CAIDTAB *ctab);
 extern int32_t chk_srvid_by_caid_prov(struct s_client *, uint16_t caid, uint32_t provid);
+extern int32_t chk_srvid_by_caid_prov_rdr(struct s_reader *, uint16_t caid, uint32_t provid);
+extern int32_t chk_rfilter2(uint16_t rcaid, uint32_t rprid, struct s_reader *rdr);
 extern void *clientthread_init(void * init);
 extern void cleanup_thread(void *var);
 extern void kill_thread(struct s_client *cl);
