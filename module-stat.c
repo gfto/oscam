@@ -725,6 +725,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	uint32_t prid = get_prid(er->caid, er->prid);
 
 	//auto-betatunnel: The trick is: "let the loadbalancer decide"!
+	int8_t check_betatunnel = 0;
 	if (cfg.lb_auto_betatunnel && er->caid >> 8 == 0x18) { //nagra 
 		ushort caid_to = get_betatunnel_caid_to(er->caid);
 		if (caid_to) {
@@ -746,12 +747,15 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				
 				stat_nagra = get_stat(rdr, er->caid, prid, er->srvid, er->chid, er->l);
 				
-				//Check if beta is valid on this reader:
+				//Check if betatunnel is allowed on this reader:
 				int8_t valid = chk_ctab(caid_to, &rdr->ctab) //Check caid
 					&& chk_rfilter2(caid_to, 0, rdr) //Ident
-					&& chk_srvid_by_caid_prov_rdr(rdr, caid_to, 0); //Services
-				if (valid)
+					&& chk_srvid_by_caid_prov_rdr(rdr, caid_to, 0) //Services
+					&& (!rdr->caid || rdr->caid==caid_to); //rdr-caid
+				if (valid) {
 					stat_beta = get_stat(rdr, caid_to, prid, er->srvid, er->chid, er->l+10);
+					ea->status |= READER_BETATUNNEL;
+				}
 				else
 					stat_beta = NULL;
 
@@ -779,12 +783,15 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			//if we needs stats, we send 2 ecm requests: 18xx and 17xx:
 			if (needs_stats_nagra || needs_stats_beta) {
 				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X needs more statistics...", er->caid, caid_to);
-				if (needs_stats_beta)				
+				if (needs_stats_beta) {
 					convert_to_beta_int(er, caid_to);
+					check_betatunnel = 1;
+				}
 			}
 			else if (time_beta && (!time_nagra || time_beta <= time_nagra)) {
 				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X selected beta: n%dms > b%dms", er->caid, caid_to, time_nagra, time_beta);
 				convert_to_beta_int(er, caid_to);
+				check_betatunnel = 1;
 			}
 			else {
 				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X selected nagra: n%dms < b%dms", er->caid, caid_to, time_nagra, time_beta);
@@ -843,6 +850,10 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	}
 
 	for(ea = er->matching_rdr; ea && nreaders; ea = ea->next) {
+			//skip reader if betatunnel active but reader is not allowed to betatunnel:
+			if (check_betatunnel && !((ea->status & READER_BETATUNNEL) == READER_BETATUNNEL))
+				continue;
+				
 			rdr = ea->reader;
 			struct s_client *cl = rdr->client;
 			reader_count++;
