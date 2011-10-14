@@ -523,9 +523,9 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
 
   cs_writelock(&gbox->lock);
 
-  uint32_t r_addr_len = 0;
   struct sockaddr_in r_addr;
-  if ((n = recvfrom(cli->udp_fd, data, sizeof(gbox->buf), 0, (struct sockaddr *)&r_addr, (socklen_t *)&r_addr_len)) < 8) {
+  socklen_t lenn = sizeof(struct sockaddr_in);
+  if ((n = recvfrom(cli->udp_fd, data, sizeof(gbox->buf), 0, (struct sockaddr *)&r_addr, &lenn)) < 8) {
 	  cs_log("gbox: invalid recvfrom!!!");
     	cs_writeunlock(&gbox->lock);
     	return -1;
@@ -822,7 +822,7 @@ static int32_t gbox_client_init(struct s_client *cli)
 	}
 
 	if (strlen(cfg.gbox_key) != 8) {
-		cs_log("gbox: error, no/invalid password configured in oscam.conf!");
+		cs_log("gbox: error, no/invalid password '%s' configured in oscam.conf!", cfg.gbox_key);
 		return -1;
 	}
 
