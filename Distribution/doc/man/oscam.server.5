@@ -292,24 +292,24 @@ list of EMM-nanos to block (in hex w/o 0x) or all EMM-nanos, valid for physical 
 block all types of EMMs by lenght, maximum 10 values, default:none
 .RE
 .PP
-\fBsaveemm-u\fP = \fBfile name\fP
+\fBsaveemm-u\fP = \fB0\fP|\fB1\fP
 .RS 3n
-save unique EMMs to file, default:none
+1 = save unique EMMs to log file, default:0
 .RE
 .PP
-\fBsaveemm-s\fP = \fBfile name\fP
+\fBsaveemm-s\fP = \fB0\fP|\fB1\fP
 .RS 3n
-save shared EMMs to file, default:none
+1 = save shared EMMs to log file, default:0
 .RE
 .PP
-\fBsaveemm-g\fP = \fBfile name\fP
+\fBsaveemm-g\fP = \fB0\fP|\fB1\fP
 .RS 3n
-save global EMMs to file, default:none
+1= save global EMMs to log file, default:0
 .RE
 .PP
-\fBsaveemm-unknown\fP = \fBfile name\fP
+\fBsaveemm-unknown\fP = \fB0\fP|\fB1\fP
 .RS 3n
-save unknown types of EMMs to file, default:none
+1 = save unknown types of EMMs to log file, default:0
 .RE
 .PP
 \fBsavenano\fP = \fBnano[,nano]....\fP|\fPall\fP \fI(obsolete)\fR
@@ -320,17 +320,17 @@ list of EMM-nanos to save (in hex w/o 0x) or all EMM-nanos, only valid for physi
           savenano = all
 .RE
 .PP
-\fBdropbadcws\fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = reject bad CWs, default:0
-.RE
-.PP
 \fBreadnano\fP = \fB[path]filename\fP
 .RS 3n
 write file (usually a copy of a file saved by savenano) to your smartcard, if no path is specified, the specified file is searched for in the configuration directory, only valid for physical readers, default:none
 
  example: readnano = write.emm
           readnano = /var/oscam/write.emm
+.RE
+.PP
+\fBdropbadcws\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = reject bad CWs, default:0
 .RE
 .PP
 \fBlb_weight\fP = \fBweight\fP

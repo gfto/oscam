@@ -387,30 +387,30 @@ block all types of EMMs by lenght, maximum 10 values, default:none
 
 <P>
 
-<B>saveemm-u</B> = <B>file name</B>
+<B>saveemm-u</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
-save unique EMMs to file, default:none
+1 = save unique EMMs to log file, default:0
 </DL>
 
 <P>
 
-<B>saveemm-s</B> = <B>file name</B>
+<B>saveemm-s</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
-save shared EMMs to file, default:none
+1 = save shared EMMs to log file, default:0
 </DL>
 
 <P>
 
-<B>saveemm-g</B> = <B>file name</B>
+<B>saveemm-g</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
-save global EMMs to file, default:none
+1= save global EMMs to log file, default:0
 </DL>
 
 <P>
 
-<B>saveemm-unknown</B> = <B>file name</B>
+<B>saveemm-unknown</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
-save unknown types of EMMs to file, default:none
+1 = save unknown types of EMMs to log file, default:0
 </DL>
 
 <P>
@@ -425,19 +425,19 @@ list of EMM-nanos to save (in hex w/o 0x) or all EMM-nanos, only valid for physi
 
 <P>
 
-<B>dropbadcws</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-1 = reject bad CWs, default:0
-</DL>
-
-<P>
-
 <B>readnano</B> = <B>[path]filename</B>
 <DL COMPACT><DT><DD>
 write file (usually a copy of a file saved by savenano) to your smartcard, if no path is specified, the specified file is searched for in the configuration directory, only valid for physical readers, default:none
 <P>
 <BR>&nbsp;example:&nbsp;readnano&nbsp;=&nbsp;write.emm
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readnano&nbsp;=&nbsp;/var/oscam/write.emm
+</DL>
+
+<P>
+
+<B>dropbadcws</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = reject bad CWs, default:0
 </DL>
 
 <P>
