@@ -3831,7 +3831,7 @@ static int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t for
 		else
 			n=webif_read(buf2, sizeof(buf2), f);
 		if (n <= 0) {
-			if ((!is_ssl) && (errno == 0 || errno == EINTR)){
+			if ((errno == 0 || errno == EINTR)){
 				if(errcount++ < 10){
 					cs_sleepms(5);
 					continue;
@@ -3839,10 +3839,12 @@ static int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t for
 			}
 #ifdef WITH_SSL
 			if (is_ssl){
-				int32_t errcode = ERR_peek_error();
-				char errstring[128];
-				ERR_error_string_n(errcode, errstring, sizeof(errstring) - 1);
-				cs_debug_mask(D_TRACE, "WebIf: read error ret=%d (%d%s%s)", n, SSL_get_error(cur_ssl(), n), errcode?" ":"", errcode?errstring:"");
+				if(errno != ECONNRESET) {
+					int32_t errcode = ERR_peek_error();
+					char errstring[128];
+					ERR_error_string_n(errcode, errstring, sizeof(errstring) - 1);
+					cs_debug_mask(D_TRACE, "WebIf: read error ret=%d (%d%s%s)", n, SSL_get_error(cur_ssl(), n), errcode?" ":"", errcode?errstring:"");
+				}
 				return -1;
 			}
 #else
