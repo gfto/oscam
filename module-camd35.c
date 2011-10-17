@@ -64,10 +64,13 @@ static int32_t camd35_auth_client(uchar *ucrc)
   for (account=cfg.account; (account) && (!cl->upwd[0]); account=account->next)
     if (crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), md5tmp), MD5_DIGEST_LENGTH))
     {
-      memcpy(cl->ucrc, ucrc, 4);
-      cs_strncpy((char *)cl->upwd, account->pwd, sizeof(cl->upwd));
-      aes_set_key((char *) MD5(cl->upwd, strlen((char *)cl->upwd), md5tmp));
       rc=cs_auth_client(cl, account, NULL);
+      if (!rc) {
+      	memcpy(cl->ucrc, ucrc, 4);
+      	cs_strncpy((char *)cl->upwd, account->pwd, sizeof(cl->upwd));
+      	aes_set_key((char *) MD5(cl->upwd, strlen((char *)cl->upwd), md5tmp));
+      	return 0;
+	  }
     }
   return(rc);
 }
