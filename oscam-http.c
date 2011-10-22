@@ -2024,15 +2024,28 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		filter = getParam(params, "label");
 	}
 
+	int32_t total_users = 0;
+	int32_t disabled_users = 0;
+	int32_t expired_users = 0;
+	int32_t active_users = 0;
+	int32_t connected_users = 0;
+	int32_t online_users = 0;
+	int8_t isactive;
+
 	for (account=cfg.account; (account); account=account->next) {
 		//clear for next client
+		total_users++;
+		isactive=1;
+
 		status = "offline"; lastchan = "&nbsp;", expired = ""; classname = "offline";
 		isec = 0;
 		chsec = 0;
 
-		if(account->expirationdate && account->expirationdate < time(NULL)) {
+		if(account->expirationdate && account->expirationdate < now) {
 			expired = " (expired)";
 			classname = "expired";
+			expired_users++;
+			isactive=0;
 		} else {
 			expired = "";
 		}
@@ -2042,11 +2055,16 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICENA");
 			tpl_addVar(vars, TPLADD, "SWITCHTITLE", "enable this account");
 			tpl_addVar(vars, TPLADD, "SWITCH", "enable");
+			disabled_users++;
+			isactive=0;
 		} else {
 			tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICDIS");
 			tpl_addVar(vars, TPLADD, "SWITCHTITLE", "disable this account");
 			tpl_addVar(vars, TPLADD, "SWITCH", "disable");
 		}
+
+		if (isactive)
+			active_users++;
 
 		int32_t lastresponsetm = 0, latestactivity=0;
 		char *proto = "";
@@ -2076,6 +2094,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			lastchan = xml_encode(vars, get_servicename(latestclient, latestclient->last_srvid, latestclient->last_caid, channame));
 			lastresponsetm = latestclient->cwlastresptime;
 			tpl_addVar(vars, TPLADDONCE, "CLIENTIP", cs_inet_ntoa(latestclient->ip));
+			connected_users++;
 		}
 		if(latestactivity > 0){
 			isec = now - latestactivity;
@@ -2088,6 +2107,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 					cwrate2 = now - latestclient->login;
 					cwrate2 /= (latestclient->cwfound + latestclient->cwnot + latestclient->cwcache);
 					tpl_printf(vars, TPLADDONCE, "CWRATE2", " (%.2f)", cwrate2);
+					online_users++;
 				}
 			}
 		}
@@ -2158,6 +2178,13 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				++clientcount;
 			}
 	}
+
+	tpl_printf(vars, TPLADD, "TOTAL_USERS", "%ld", total_users);
+	tpl_printf(vars, TPLADD, "TOTAL_DISABLED", "%ld", disabled_users);
+	tpl_printf(vars, TPLADD, "TOTAL_EXPIRED", "%ld", expired_users);
+	tpl_printf(vars, TPLADD, "TOTAL_ACTIVE", "%ld", active_users);
+	tpl_printf(vars, TPLADD, "TOTAL_CONNECTED", "%ld", connected_users);
+	tpl_printf(vars, TPLADD, "TOTAL_ONLINE", "%ld", online_users);
 
 	tpl_printf(vars, TPLADD, "TOTAL_CWOK", "%ld", first_client->cwfound);
 	tpl_printf(vars, TPLADD, "TOTAL_CWNOK", "%ld", first_client->cwnot);

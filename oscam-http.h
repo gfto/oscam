@@ -707,6 +707,12 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	Totals for the server:\n\
 	<TABLE cellpadding=\"10\">\n\
 		<TR>\n\
+			<TH TITLE=\"Total users\">Total</TH>\n\
+			<TH TITLE=\"Total disabled users\">Disabled</TH>\n\
+			<TH TITLE=\"Total expired users\">Expired</TH>\n\
+			<TH TITLE=\"Total active users\">Active</TH>\n\
+			<TH TITLE=\"Connected users\">Connected</TH>\n\
+			<TH TITLE=\"Online users requesting ecms\">Online</TH>\n\
 			<TH TITLE=\"Delivered ECM with status OK\">OK</TH>\n\
 			<TH TITLE=\"Delivered ECM with status not OK\">NOK</TH>\n\
 			<TH TITLE=\"Ignored ECM by filters, part of NOK\">IGN</TH>\n\
@@ -716,6 +722,12 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TH>Action</TH>\n\
 		</TR>\n\
 		<TR>\n\
+			<TD class=\"centered\">##TOTAL_USERS##</TD>\n\
+			<TD class=\"centered\">##TOTAL_DISABLED##</TD>\n\
+			<TD class=\"centered\">##TOTAL_EXPIRED##</TD>\n\
+			<TD class=\"centered\">##TOTAL_ACTIVE##</TD>\n\
+			<TD class=\"centered\">##TOTAL_CONNECTED##</TD>\n\
+			<TD class=\"centered\">##TOTAL_ONLINE##</TD>\n\
 			<TD class=\"centered\">##TOTAL_CWOK##</TD>\n\
 			<TD class=\"centered\">##TOTAL_CWNOK##</TD>\n\
 			<TD class=\"centered\">##TOTAL_CWIGN##</TD>\n\
