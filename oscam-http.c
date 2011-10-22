@@ -890,6 +890,9 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 				tpl_printf(vars, TPLADD, "EMMBLOCKEDS", "%d", rdr->emmblocked[SHARED]);
 				tpl_printf(vars, TPLADD, "EMMBLOCKEDUQ", "%d", rdr->emmblocked[UNIQUE]);
 
+				tpl_printf(vars, TPLADD, "ECMSOK", "%d", rdr->ecmsok);
+				tpl_printf(vars, TPLADD, "ECMSNOK", "%d", rdr->ecmsnok);
+
 				if (!(rdr->typ & R_IS_NETWORK)) { //reader is physical
 					tpl_addVar(vars, TPLADD, "REFRICO", "image?i=ICREF");
 					tpl_addVar(vars, TPLADD, "READERREFRESH", tpl_getTpl(vars, "READERREFRESHBIT"));

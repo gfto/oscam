@@ -1952,6 +1952,12 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 
 	ea->status |= REQUEST_ANSWERED;
 
+	//Update reader stats:
+	if (ea->rc == E_FOUND)
+		ea->reader->ecmsok++;
+	else if (ea->rc == E_NOTFOUND)
+		ea->reader->ecmsnok++;
+
 	if (ert->rc<E_99) {
 #ifdef WITH_LB
 		send_reader_stat(ea->reader, ert, ea->rc);
