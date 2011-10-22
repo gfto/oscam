@@ -699,6 +699,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TH TITLE=\"Valid EMM delivered\">EOK</TH>\n\
 			<TH TITLE=\"Invalid EMM delivered\">ENOK</TH>\n\
 			<TH>CW Rate</TH>\n\
+			<TH TITLE=\"Different services during last 60s\">CASC USERS</TH>\n\
 			<TH colspan=\"3\" class=\"centered\">Action</TH>\n\
 		</TR>\n\
 ##USERCONFIGS##\
@@ -768,6 +769,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD class=\"centered\">##EMMOK##</TD>\n\
 			<TD class=\"centered\">##EMMNOK##</TD>\n\
 			<TD class=\"centered\">##CWRATE####CWRATE2##</TD>\n\
+			<TD class=\"centered\">##CASCUSERS##</TD>\n\
 			<TD class=\"centered\"><A HREF=\"user_edit.html?user=##USERENC##\" TITLE=\"edit this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit User\"></A></TD>\n\
 			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=resetstats\" TITLE=\"reset statistics for this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICRES\"BORDER=\"0\" ALT=\"Reset Stats\"></A></TD>\n\
 			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=delete\" TITLE=\"delete this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\"BORDER=\"0\" ALT=\"Delete User\"></A></TD>\n\

@@ -517,6 +517,11 @@ static void cleanup_ecmtasks(struct s_client *cl)
 	}
 	add_garbage(cl->ecmtask);
 	
+	if (cl->cascadeusers) {
+		ll_clear_data(cl->cascadeusers);
+		cl->cascadeusers = NULL;
+	}
+
 	//remove this clients ecm from queue. because of cache, just null the client:
 	cs_readlock(&ecmcache_lock);
 	for (ecm = ecmtask; ecm; ecm = ecm->next) {
@@ -1677,6 +1682,33 @@ static void checkCW(ECM_REQUEST *er)
 	er->rc = E_NOTFOUND;
 }
 
+static void add_cascade_data(struct s_client *client, ECM_REQUEST *er)
+{
+	if (!client->cascadeusers)
+		client->cascadeusers = ll_create("cascade_data");
+	LLIST *l = client->cascadeusers;
+	LL_ITER it = ll_iter_create(l);
+	time_t now = time(NULL);
+	struct s_cascadeuser *cu;
+	int8_t found=0;
+	while ((cu=ll_iter_next(&it))) {
+		if (er->caid==cu->caid && er->prid==cu->prid && er->srvid==cu->srvid) { //found it
+			cu->time = now;
+			found=1;
+		}
+		else if (cu->time+60 < now) //cleanup old
+			ll_iter_remove_data(&it);
+	}
+	if (!found) { //add it if not found
+		cu = cs_malloc(&cu, sizeof(struct s_cascadeuser), 0);
+		cu->caid = er->caid;
+		cu->prid = er->prid;
+		cu->srvid = er->srvid;
+		cu->time = now;
+		ll_append(l, cu);
+	}
+}
+
 int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 {
 	if (!client || client->kill || client->typ != 'c')
@@ -1829,6 +1861,8 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 #endif
 
 	ph[client->ctyp].send_dcw(client, er);
+
+	add_cascade_data(client, er);
 
 	if (is_fake)
 		er->rc = E_FAKE;

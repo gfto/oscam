@@ -2031,6 +2031,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	int32_t connected_users = 0;
 	int32_t online_users = 0;
 	int8_t isactive;
+	int32_t casc_users = 0;
 
 	for (account=cfg.account; (account); account=account->next) {
 		//clear for next client
@@ -2086,6 +2087,8 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			cwrate = now - account->firstlogin;
 			cwrate /= (account->cwfound + account->cwnot + account->cwcache);
 		}
+
+		casc_users = 0;
 		if(latestclient != NULL) {
 			char channame[32];
 			status = (!apicall) ? "<b>connected</b>" : "connected";
@@ -2095,6 +2098,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			lastresponsetm = latestclient->cwlastresptime;
 			tpl_addVar(vars, TPLADDONCE, "CLIENTIP", cs_inet_ntoa(latestclient->ip));
 			connected_users++;
+			casc_users = ll_count(latestclient->cascadeusers);
 		}
 		if(latestactivity > 0){
 			isec = now - latestactivity;
@@ -2121,6 +2125,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_printf(vars, TPLADD, "EMMOK", "%d", account->emmok);
 		tpl_printf(vars, TPLADD, "EMMNOK", "%d", account->emmnok);
 		tpl_printf(vars, TPLADD, "CWRATE", "%.2f", cwrate);
+		tpl_printf(vars, TPLADD, "CASCUSERS", "%d", casc_users);
 
 		if ( isactive > 0 || !cfg.http_hide_idle_clients) {
 			tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
