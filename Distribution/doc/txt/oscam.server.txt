@@ -246,7 +246,7 @@ DESCRIPTIONS
 		    readnano = /var/oscam/write.emm
 
        dropbadcws = 0|1
-	  1 = reject bad SECA CWs, default:0
+	  1 = reject bad CWs, send "not found" instead of bad CWs, default:0
 
        lb_weight = weight
 	  the higher the value the higher the probability for reader selection, default:100
