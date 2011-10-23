@@ -797,6 +797,11 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			if (dup_beta_ecm) {
 				ECM_REQUEST *converted_er = get_ecmtask();
 				memcpy(converted_er, er, sizeof(ECM_REQUEST));
+				if (er->src_data) {
+					int size = 0x34 + 20 + er->l;
+					cs_malloc(&converted_er->src_data, size, 0); //camd35
+					memcpy(converted_er->src_data, er->src_data, size);
+				}
 				convert_to_beta_int(converted_er, caid_to);
 				get_cw(converted_er->client, converted_er);
 			}
