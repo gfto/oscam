@@ -998,8 +998,8 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 				<TD class=\"centered\">##EMMWRITTENUK## / ##EMMWRITTENG## / ##EMMWRITTENS## / ##EMMWRITTENUQ##</TD>\n\
 				<TD class=\"centered\">##EMMSKIPPEDUK## / ##EMMSKIPPEDG## / ##EMMSKIPPEDS## / ##EMMSKIPPEDUQ##</TD>\n\
 				<TD class=\"centered\">##EMMBLOCKEDUK## / ##EMMBLOCKEDG## / ##EMMBLOCKEDS## / ##EMMBLOCKEDUQ##</TD>\n\
-				<TD>##ECMSOK##</TD>\n\
-				<TD>##ECMSNOK##</TD>\n\
+				<TD class=\"centered\">##ECMSOK##</TD>\n\
+				<TD class=\"centered\">##ECMSNOK##</TD>\n\
 				<TD class=\"centered\"><A HREF=\"readerconfig.html?label=##READERNAMEENC##\" TITLE=\"Edit this Reader\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit Reader\"></A></TD>\n\
 				<TD class=\"centered\">##ENTITLEMENT##</TD>\n\
 				<TD class=\"centered\">##READERREFRESH##</TD>\n\
