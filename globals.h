@@ -689,6 +689,10 @@ typedef struct ecm_request_t {
 	void			*origin_card; 		// CCcam preferred card!
 #endif
 
+#if defined MODULE_GBOX
+	uint32_t		gbox_crc;		// rcrc for gbox, used to identify ECM task in peer responses
+#endif
+
 	void			*src_data;
 	struct ecm_request_t	*ecmcacheptr;		// Pointer to ecm-cw-rc-cache!
 	char			msglog[MSGLOGSIZE];
@@ -739,6 +743,7 @@ struct s_cascadeuser {
 	uint32_t		prid;
 	uint16_t		srvid;
 	time_t			time;
+	int8_t          cwrate;
 };
 
 struct s_client {
@@ -1336,7 +1341,7 @@ struct s_config
 	uint8_t			cc_fixed_nodeid[8];
 #endif
 	char			gbox_hostname[128];
-	char			gbox_key[9];
+	char			gbox_key[10];
 	char			gbox_gsms_path[200];
 	int32_t			gbox_port;
 	struct s_ip 	*rad_allowed;
