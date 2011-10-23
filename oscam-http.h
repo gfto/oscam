@@ -974,7 +974,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##ADDPROTOCOL##\n\
 					</select>\n\
 				</TD>\n\
-				<TD COLSPAN=\"5\" class=\"centered\"><input type=\"submit\" name=\"action\" value=\"Add\" ##BTNDISABLED##></TD>\n\
+				<TD COLSPAN=\"7\" class=\"centered\"><input type=\"submit\" name=\"action\" value=\"Add\" ##BTNDISABLED##></TD>\n\
 			</TR>\n\
 		</TABLE>\n\
 	</form>\n\
