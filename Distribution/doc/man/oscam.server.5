@@ -23,7 +23,9 @@ define local or remote reader
  \fBserial\fP       serial number of Smartreader+
               (get the serial number while starting OSCam)
 
- \fBlport\fP:       remapping to local port
+ \fBport\fP:        TCP/IP port
+
+ \fBlport\fP:       remapping to local TCP/IP port
 
  \fBPCSC\fP:        number of PCSC reader, starting with 0
 
@@ -627,7 +629,9 @@ gbox reader
  [reader]
  label        = mygboxreader
  protocol     = gbox
- mg-encrypted = D: { hostname { 1234 5678 { ABCD1234 { 9 9 }}}}
+ device       = 192.168.0.4,45678,56789
+ user         = user4
+ password     = password4
  group        = 11
  caid         = 1100
 .SH "SEE ALSO"

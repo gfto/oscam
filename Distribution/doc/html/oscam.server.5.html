@@ -38,7 +38,9 @@ define local or remote reader
 <BR>&nbsp;<B>serial</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;serial&nbsp;number&nbsp;of&nbsp;Smartreader+
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(get&nbsp;the&nbsp;serial&nbsp;number&nbsp;while&nbsp;starting&nbsp;OSCam)
 <P>
-<BR>&nbsp;<B>lport</B>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;remapping&nbsp;to&nbsp;local&nbsp;port
+<BR>&nbsp;<B>port</B>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TCP/IP&nbsp;port
+<P>
+<BR>&nbsp;<B>lport</B>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;remapping&nbsp;to&nbsp;local&nbsp;TCP/IP&nbsp;port
 <P>
 <BR>&nbsp;<B>PCSC</B>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;number&nbsp;of&nbsp;PCSC&nbsp;reader,&nbsp;starting&nbsp;with&nbsp;0
 <P>
@@ -769,7 +771,9 @@ gbox reader
 <BR>&nbsp;[reader]
 <BR>&nbsp;label&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;mygboxreader
 <BR>&nbsp;protocol&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;gbox
-<BR>&nbsp;mg-encrypted&nbsp;=&nbsp;D:&nbsp;{&nbsp;hostname&nbsp;{&nbsp;1234&nbsp;5678&nbsp;{&nbsp;ABCD1234&nbsp;{&nbsp;9&nbsp;9&nbsp;}}}}
+<BR>&nbsp;device&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;192.168.0.4,45678,56789
+<BR>&nbsp;user&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;user4
+<BR>&nbsp;password&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;password4
 <BR>&nbsp;group&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;11
 <BR>&nbsp;caid&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;1100
 </DL>

@@ -26,7 +26,9 @@ DESCRIPTIONS
 	   serial	serial number of Smartreader+
 			(get the serial number while starting OSCam)
 
-	   lport:	remapping to local port
+	   port:	TCP/IP port
+
+	   lport:	remapping to local TCP/IP port
 
 	   PCSC:	number of PCSC reader, starting with 0
 
@@ -485,7 +487,9 @@ EXAMPLES
 	   [reader]
 	   label	= mygboxreader
 	   protocol	= gbox
-	   mg-encrypted = D: { hostname { 1234 5678 { ABCD1234 { 9 9 }}}}
+	   device	= 192.168.0.4,45678,56789
+	   user 	= user4
+	   password	= password4
 	   group	= 11
 	   caid 	= 1100
 
