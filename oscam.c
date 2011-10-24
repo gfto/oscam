@@ -6,7 +6,7 @@
 #include "module-cccam.h"
 #endif
 #if defined(AZBOX) && defined(HAVE_DVBAPI)
-#  include "openxcas/openxcas_api.h"
+#include "openxcas/openxcas_api.h"
 #endif
 #define CS_VERSION_X  CS_VERSION
 #ifdef COOL
@@ -539,6 +539,7 @@ void cleanup_thread(void *var)
 
 	// Remove client from client list. kill_thread also removes this client, so here just if client exits itself...
 	struct s_client *prev, *cl2;
+	cl->thread_active = 0;
 	cs_writelock(&clientlist_lock);
 	for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
 		if (cl == cl2)
@@ -559,6 +560,9 @@ void cleanup_thread(void *var)
 		cl->reader->client = NULL;
 		cl->reader = NULL;
 	}
+	if (!pthread_mutex_trylock(&cl->thread_lock))
+		pthread_mutex_unlock(&cl->thread_lock);
+	pthread_mutex_destroy(&cl->thread_lock);
 
 	// Clean client specific data
 	if(cl->typ == 'c'){

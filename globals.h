@@ -33,7 +33,7 @@
 #include "oscam-config.h"
 
 #ifndef USE_CMAKE
-#  include "oscam-ostype.h"
+#include "oscam-ostype.h"
 #endif
 #include "oscam-types.h"
 #include "cscrypt/cscrypt.h"
