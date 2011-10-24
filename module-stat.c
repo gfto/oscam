@@ -778,33 +778,30 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					needs_stats_beta = 1;
 			}
 			
-			int dup_beta_ecm = 0;
 			//if we needs stats, we send 2 ecm requests: 18xx and 17xx:
 			if (needs_stats_nagra || needs_stats_beta) {
 				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X needs more statistics...", er->caid, caid_to);
-				if (needs_stats_beta)
-					dup_beta_ecm=1;
+				if (needs_stats_beta) {
+					//Duplicate Ecms for gettings stats:
+					ECM_REQUEST *converted_er = get_ecmtask();
+					memcpy(converted_er, er, sizeof(ECM_REQUEST));
+					if (er->src_data) {
+						int size = 0x34 + 20 + er->l;
+						cs_malloc(&converted_er->src_data, size, 0); //camd35
+						memcpy(converted_er->src_data, er->src_data, size);
+					}
+					convert_to_beta_int(converted_er, caid_to);
+					get_cw(converted_er->client, converted_er);
+				}
 			}
 			else if (time_beta && (!time_nagra || time_beta <= time_nagra)) {
 				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X selected beta: n%dms > b%dms", er->caid, caid_to, time_nagra, time_beta);
-				dup_beta_ecm=1;
+				convert_to_beta_int(er, caid_to);
 			}
 			else {
 				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X selected nagra: n%dms < b%dms", er->caid, caid_to, time_nagra, time_beta);
 			}
 			// else nagra is faster or no beta, so continue unmodified
-
-			if (dup_beta_ecm) {
-				ECM_REQUEST *converted_er = get_ecmtask();
-				memcpy(converted_er, er, sizeof(ECM_REQUEST));
-				if (er->src_data) {
-					int size = 0x34 + 20 + er->l;
-					cs_malloc(&converted_er->src_data, size, 0); //camd35
-					memcpy(converted_er->src_data, er->src_data, size);
-				}
-				convert_to_beta_int(converted_er, caid_to);
-				get_cw(converted_er->client, converted_er);
-			}
 		}
 	}
  		
