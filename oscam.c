@@ -3165,8 +3165,8 @@ static void * check_thread(void) {
 					tbc = er->tps;
 					time_to_check = add_ms_to_timeb(&tbc, cfg.ctimeout);
 				} else {
-					cs_debug_mask(D_TRACE, "timeout for %s %04X&%06X/%04X", username(er->client), er->caid, er->prid, er->srvid);
 					if (er->client && is_valid_client(er->client)) {
+						cs_debug_mask(D_TRACE, "timeout for %s %04X&%06X/%04X", username(er->client), er->caid, er->prid, er->srvid);
 						write_ecm_answer(NULL, er, E_TIMEOUT, 0, NULL, NULL);
 #ifdef WITH_LB		
 						
