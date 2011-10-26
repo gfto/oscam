@@ -337,7 +337,9 @@ write file (usually a copy of a file saved by savenano) to your smartcard, if no
 .PP
 \fBdisablecrccws\fP = \fB0\fP|\fB1\fP
 .RS 3n
-1 = disable cw checksum test, 0 = enable checksum check
+1 = disable CRC for CW, default: 0
+
+\fIIn normal operation mode this parameter is not required. Parameter is incompatible with DVB standard.\fR
 .RE
 .PP
 \fBlb_weight\fP = \fBweight\fP

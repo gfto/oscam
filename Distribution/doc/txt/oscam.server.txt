@@ -251,7 +251,9 @@ DESCRIPTIONS
 	  1 = reject bad CWs, send "not found" instead of bad CWs, default:0
 
        disablecrccws = 0|1
-          1 = disable cw checksum test, 0 = enable checksum check
+	  1 = disable CRC for CW, default: 0
+
+	  In normal operation mode this parameter is not required. Parameter is incompatible with DVB standard.
 
        lb_weight = weight
 	  the higher the value the higher the probability for reader selection, default:100
