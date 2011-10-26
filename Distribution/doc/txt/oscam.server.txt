@@ -250,6 +250,9 @@ DESCRIPTIONS
        dropbadcws = 0|1
 	  1 = reject bad CWs, send "not found" instead of bad CWs, default:0
 
+       disablecrccws = 0|1
+          1 = disable cw checksum test, 0 = enable checksum check
+
        lb_weight = weight
 	  the higher the value the higher the probability for reader selection, default:100
 

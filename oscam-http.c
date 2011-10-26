@@ -1114,6 +1114,13 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "DROPBADCWSVALUE", (rdr->dropbadcws == 1) ? "1" : "0");
 	}
 
+    // Disable CWs checksum test:
+    if(!apicall) {
+        tpl_addVar(vars, TPLADD, "DISABLECRCCWSCHECKED", (rdr->disablecrccws == 1) ? "checked" : "");
+    } else {
+        tpl_addVar(vars, TPLADD, "DISABLECRCCWSVALUE", (rdr->disablecrccws == 1) ? "1" : "0");
+    }
+
 	// AUdisabled
 	if(!apicall) {
 		tpl_addVar(vars, TPLADD, "AUDISABLED", (rdr->audisabled == 1) ? "checked" : "");

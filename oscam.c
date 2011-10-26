@@ -1605,20 +1605,24 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 
 	ea->er = er;
 
-	for (i=0; i<16; i+=4) {
-		c=((ea->cw[i]+ea->cw[i+1]+ea->cw[i+2]) & 0xff);
-		if (ea->cw[i+3]!=c) {
-			if (reader->dropbadcws) {
-				cs_debug_mask(D_TRACE, "dropping wrong dcw");
-				ea->rc = E_NOTFOUND;
-				ea->rcEx = E2_WRONG_CHKSUM;
-	  			break;
-	  		} else {
-				cs_debug_mask(D_TRACE, "notice: changed dcw checksum byte cw[%i] from %02x to %02x", i+3, ea->cw[i+3],c);
-				ea->cw[i+3]=c;
-			}
-		}
-	}
+        if (reader->disablecrccws == 0) {
+           for (i=0; i<16; i+=4) {
+               c=((ea->cw[i]+ea->cw[i+1]+ea->cw[i+2]) & 0xff);
+               if (ea->cw[i+3]!=c) {
+                   if (reader->dropbadcws) {
+                      ea->rc = E_NOTFOUND;
+                      ea->rcEx = E2_WRONG_CHKSUM;
+                      break;
+                   } else {
+                      cs_debug_mask(D_TRACE, "notice: changed dcw checksum byte cw[%i] from %02x to %02x", i+3, ea->cw[i+3],c);
+                      ea->cw[i+3]=c;
+                   }
+               }
+          }
+        }
+        else {
+              cs_debug_mask(D_TRACE, "notice: CW checksum check disabled");
+        }
 
 	if (reader && ea->rc==E_FOUND) {
 		/* CWL logging only if cwlogdir is set in config */

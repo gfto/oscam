@@ -946,7 +946,8 @@ struct s_reader  									//contains device info, reader info and card info
 	int8_t			enable;
 	int8_t			available;						// Schlocke: New flag for loadbalancing. Only reader if reader supports ph.c_available function
 	int8_t			dropbadcws;						// Schlocke: 1=drops cw if checksum is wrong. 0=fix checksum (default)
-	int8_t			fd_error;
+    int8_t          disablecrccws;                  // 1=disable cw checksum test. 0=enable checksum check
+    int8_t			fd_error;
 	uint64_t		grp;
 	int8_t			fallback;
 	int32_t			typ;
