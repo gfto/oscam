@@ -1605,6 +1605,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 
 	ea->er = er;
 
+	if (reader) {
         if (reader->disablecrccws == 0) {
            for (i=0; i<16; i+=4) {
                c=((ea->cw[i]+ea->cw[i+1]+ea->cw[i+2]) & 0xff);
@@ -1623,6 +1624,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
         else {
               cs_debug_mask(D_TRACE, "notice: CW checksum check disabled");
         }
+	}
 
 	if (reader && ea->rc==E_FOUND) {
 		/* CWL logging only if cwlogdir is set in config */
