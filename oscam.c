@@ -505,21 +505,30 @@ void cs_accounts_chk()
 
 static void cleanup_ecmtasks(struct s_client *cl)
 {
-	if (!cl->ecmtask)
-		return;
-	
-	int32_t i, n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
 	ECM_REQUEST *ecm;
-	for (i=0; i<n; i++) {
-		ecm = &cl->ecmtask[i];
-		ecm->matching_rdr=NULL;
+	cs_readlock(&ecmcache_lock); 
+	if (cl->ecmtask) {
+		int32_t i, n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
+		for (i=0; i<n; i++) {
+			ecm = &cl->ecmtask[i];
+			ecm->matching_rdr=NULL;
+			ecm->client = NULL;
+		}
+		add_garbage(cl->ecmtask);
 	}
-	add_garbage(cl->ecmtask);
 	
 	if (cl->cascadeusers) {
 		ll_clear_data(cl->cascadeusers);
 		cl->cascadeusers = NULL;
 	}
+	
+	//remove this clients ecm from queue. because of cache, just null the client: 
+	for (ecm = ecmtask; ecm; ecm = ecm->next) { 
+		if (ecm->client == cl) { 
+			ecm->client = NULL; 
+	    } 
+	} 
+	cs_readunlock(&ecmcache_lock); 
 }
 
 void cleanup_thread(void *var)
@@ -529,9 +538,9 @@ void cleanup_thread(void *var)
 
 	// Remove client from client list. kill_thread also removes this client, so here just if client exits itself...
 	struct s_client *prev, *cl2;
+	cs_writelock(&clientlist_lock);
 	cl->thread_active = 0;
 	cl->kill = 1;
-	cs_writelock(&clientlist_lock);
 	for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
 		if (cl == cl2)
 			break;
@@ -1525,7 +1534,7 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, uint64_t grp)
 		if (ecm->tps.time < timeout)
 			break;
 
-		if ((grp && !(grp & ecm->client->grp)) || ecm->caid!=er->caid)
+		if ((grp && !(grp & ecm->grp)) || ecm->caid!=er->caid)
 			continue;
 
 		if (memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
@@ -1624,11 +1633,13 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	}
 
 	int32_t res = 0;
+	cs_readlock(&ecmcache_lock);
 	if (er->client && !er->client->kill) {
 		add_job(er->client, ACTION_CLIENT_ECM_ANSWER, ea, sizeof(struct s_ecm_answer));
 		res = 1;
 	}
-	
+    cs_readunlock(&ecmcache_lock);
+ 	
 	if (rc == E_FOUND && reader->resetcycle > 0)
 	{
 		reader->resetcounter++;
@@ -1654,6 +1665,7 @@ ECM_REQUEST *get_ecmtask()
 	cs_ftime(&er->tps);
 	er->rc=E_UNHANDLED;
 	er->client=cl;
+	er->grp = cl->grp;
 	//cs_log("client %s ECMTASK %d multi %d ctyp %d", username(cl), n, (ph[cl->ctyp].multi)?CS_MAXPENDING:1, cl->ctyp);
 
 	return(er);
