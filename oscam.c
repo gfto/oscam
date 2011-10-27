@@ -513,7 +513,6 @@ static void cleanup_ecmtasks(struct s_client *cl)
 	for (i=0; i<n; i++) {
 		ecm = &cl->ecmtask[i];
 		ecm->matching_rdr=NULL;
-		ecm->client=NULL;
 	}
 	add_garbage(cl->ecmtask);
 	
@@ -521,15 +520,6 @@ static void cleanup_ecmtasks(struct s_client *cl)
 		ll_clear_data(cl->cascadeusers);
 		cl->cascadeusers = NULL;
 	}
-
-	//remove this clients ecm from queue. because of cache, just null the client:
-	cs_readlock(&ecmcache_lock);
-	for (ecm = ecmtask; ecm; ecm = ecm->next) {
-		if (ecm->client == cl) {
-			ecm->client = NULL;
-		}
-	}
-	cs_readunlock(&ecmcache_lock);
 }
 
 void cleanup_thread(void *var)
@@ -540,6 +530,7 @@ void cleanup_thread(void *var)
 	// Remove client from client list. kill_thread also removes this client, so here just if client exits itself...
 	struct s_client *prev, *cl2;
 	cl->thread_active = 0;
+	cl->kill = 1;
 	cs_writelock(&clientlist_lock);
 	for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
 		if (cl == cl2)
@@ -1633,7 +1624,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	}
 
 	int32_t res = 0;
-	if (er->client) {
+	if (er->client && !er->client->kill) {
 		add_job(er->client, ACTION_CLIENT_ECM_ANSWER, ea, sizeof(struct s_ecm_answer));
 		res = 1;
 	}
@@ -1711,7 +1702,7 @@ static void add_cascade_data(struct s_client *client, ECM_REQUEST *er)
 			cu->time = now;
 			found=1;
 		}
-		else if (cu->time+60 < now) //cleanup old
+		else if (cu->time+60 < now) //  old
 			ll_iter_remove_data(&it);
 	}
 	if (!found) { //add it if not found
