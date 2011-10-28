@@ -6,7 +6,7 @@ DIALOG=${DIALOG:-`which dialog`}
 
 height=30
 width=65
-listheight=14
+listheight=16
 
 if [ -z "${DIALOG}" ]; then
 	echo "Please install dialog package." 1>&2
