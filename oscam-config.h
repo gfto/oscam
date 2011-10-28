@@ -171,6 +171,10 @@
 #  endif
 #endif
 
+#if defined(WITH_SSLv3) && !defined(WITH_SSL)
+# define WITH_SSL
+#endif
+
 #if defined(WITH_SSL) && !defined(WITH_LIBCRYPTO)
 #  define WITH_LIBCRYPTO
 #endif
