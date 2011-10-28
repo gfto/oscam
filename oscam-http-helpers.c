@@ -892,7 +892,9 @@ SSL_CTX *SSL_Webif_Init() {
 	CRYPTO_set_dynlock_lock_callback(SSL_dyn_lock_function);
 	CRYPTO_set_dynlock_destroy_callback(SSL_dyn_destroy_function); 
 
-	ctx = SSL_CTX_new(SSLv23_server_method());
+	ctx = SSL_CTX_new(SSLv3_server_method());
+	SSL_CTX_clear_options(ctx, SSL_OP_ALL); //we CLEAR all bug workarounds! This is for security reason
+	SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2); // we force SSL v3 !
 
 	char path[128];
 
