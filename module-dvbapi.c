@@ -1246,7 +1246,7 @@ int32_t dvbapi_init_listenfd() {
 		return 0;
 	if ((listenfd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
 		return 0;
-	if (bind(listenfd, (struct sockaddr *) &servaddr, clilen) < 0)
+	if (bind(listenfd, (struct sockaddr_un *) &servaddr, clilen) < 0)
 		return 0;
 	if (listen(listenfd, 5) < 0)
 		return 0;
@@ -1255,8 +1255,8 @@ int32_t dvbapi_init_listenfd() {
     // and still allow non root client to connect to the socket
 
     chmod(devices[selected_box].cam_socket_path, S_IRWXU | S_IRWXG | S_IRWXO);
-
-	return listenfd;
+	
+       return listenfd;
 }
 
 void dvbapi_chk_caidtab(char *caidasc, char type) {
@@ -1758,7 +1758,8 @@ static void * dvbapi_main_local(void *cli) {
 			if (pfd2[i].revents & (POLLIN | POLLPRI)) {
 				if (type[i]==1) {
 					if (pfd2[i].fd==listenfd) {
-						connfd = accept(listenfd, (struct sockaddr *)&servaddr, (socklen_t *)&clilen);
+						clilen = sizeof(servaddr);
+						connfd = accept(listenfd, (struct sockaddr_un *)&servaddr, (socklen_t *)&clilen);
 						cs_debug_mask(D_DVBAPI, "new socket connection fd: %d", connfd);
 
 						disable_pmt_files=1;
