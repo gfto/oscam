@@ -13,6 +13,10 @@
 //#define WITH_SSL
 #endif
 
+#ifndef WITH_SSLv3
+//#define WITH_SSLv3
+#endif
+
 #ifndef HAVE_DVBAPI
 #if !defined(OS_CYGWIN32) && !defined(OS_HPUX) && !defined(OS_FREEBSD) && !defined(OS_MACOSX)
 //#define HAVE_DVBAPI
@@ -99,6 +103,10 @@
 
 #ifndef MODULE_CONSTCW
 #define MODULE_CONSTCW
+#endif
+
+#ifndef MODULE_PANDORA
+#define MODULE_PANDORA
 #endif
 
 //

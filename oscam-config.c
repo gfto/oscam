@@ -3007,6 +3007,11 @@ void write_versionfile() {
 #else
 	  fprintf(fp, "SSL support:                no\n");
 #endif
+#ifdef WITH_SSLv3
+	  fprintf(fp, "SSLv3 support:              yes\n");
+#else
+	  fprintf(fp, "SSLv3 support:              no\n");
+#endif
 #ifdef HAVE_DVBAPI
 	  fprintf(fp, "DVB API support             yes\n");
 #ifdef WITH_STAPI
@@ -3066,6 +3071,11 @@ void write_versionfile() {
 	  fprintf(fp, "LCD support:                yes\n");
 #else
 	  fprintf(fp, "LCD support:                no\n");
+#endif
+#ifdef IPV6SUPPORT
+	  fprintf(fp, "IPv6 support:               yes\n");
+#else
+	  fprintf(fp, "IPv6 support:               no\n");
 #endif
 #ifdef MODULE_CAMD33
 	  fprintf(fp, "camd 3.3x:                  yes\n");
