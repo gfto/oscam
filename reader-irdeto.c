@@ -154,9 +154,11 @@ static time_t chid_date(struct s_reader * reader, uint32_t date, char *buf, int3
                                {0x0624, 0x0006, "CZE", 946598400L},    // 30.12.1999, 16:00    //skyklink irdeto
                                {0x0624, 0x0006, "SVK", 946598400L},    // 30.12.1999, 16:00	   //skyklink irdeto
                                {0x0648, 0x0608, "AUT", 946598400L},    // 31.12.1999, 00:00    //orf ice irdeto
-                               {0x0604, 0x0607, "GRC", 1010793600L},   // 12.01.2002, 00:00    //nova irdeto
-                               {0x0604, 0x0608, "GRC", 1010793600L},   // 12.01.2002, 00:00    //nova irdeto
-                               {0x0604, 0x0005, "GRC", 1010793600L},   // 12.01.2002, 00:00    //nova irdeto
+                               {0x0604, 0x0605, "GRC", 1011052800L},   // 15.01.2002, 00:00    //nova irdeto
+                               {0x0604, 0x0606, "GRC", 1011052800L},   // 15.01.2002, 00:00    //nova irdeto
+                               {0x0604, 0x0607, "GRC", 1011052800L},   // 15.01.2002, 00:00    //nova irdeto
+                               {0x0604, 0x0608, "GRC", 1011052800L},   // 15.01.2002, 00:00    //nova irdeto
+                               {0x0604, 0x0005, "GRC", 1011052800L},   // 15.01.2002, 00:00    //mova irdeto
                                // {0x1702, 0x0384, "AUT", XXXXXXXXXL},     // -> we need the base date for this
                                // {0x1702, 0x0384, "GER", 888883200L},     // 02.03.1998, 16:00 -> this fixes some card but break others (S02).
                                {0x0, 0x0, "", 0L}
@@ -271,6 +273,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR newatr)
 
 	uchar	sc_GetASCIISerial[] = { 0x02, 0x00, 0x03, 0x00, 0x00 },
 		sc_GetHEXSerial[]   = { 0x02, 0x01, 0x00, 0x00, 0x00 },
+		sc_GetSCDetails[]   = { 0x02, 0x1E, 0x00, 0x00, 0x00 },
 		sc_GetCardFile[]    = { 0x02, 0x0E, 0x02, 0x00, 0x00 };
 
 
@@ -315,9 +318,16 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR newatr)
 			memcpy(reader->nagra_boxkey, "\x11\x22\x33\x44\x55\x66\x77\x88", 8);
 		}
  	}
-
+ 	/*
+ 	 * Get Irdeto Smartcard Details - version - patch level etc
+ 	 */
+ 	if(reader->acs57==0) {
+ 		reader_chk_cmd(sc_GetSCDetails,14);
+ 		cs_ri_log(reader,"Irdeto SC %0x version %0x revision %0x, patch level %0x",cta_res[0+acspadd],
+ 			  cta_res[1+acspadd],cta_res[2+acspadd],cta_res[5+acspadd]);
+	}
 	/*
-	 * ContryCode
+	 * CountryCode
 	 */
 	if(reader->acs57==1) {
 		irdeto_do_cmd(reader, sc_Acs57Country, 0x9019, cta_res, &cta_lr);
@@ -574,9 +584,19 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 					dumpemmserial, dumprdrserial, base);
 
 			if (base & 0x10)
+			        // unique hex addressed
 				return (base == rdr->hexserial[3] && !memcmp(ep->emm + 4, rdr->hexserial, l));
-			else
-				return (!memcmp(ep->emm + 4, rdr->hexserial, l));			
+			else {
+				if (!memcmp(ep->emm + 4, rdr->hexserial, l))
+					return TRUE;
+
+				// unique provider addressed
+				for(i = 0; i < rdr->nprov; i++)
+					if (base == rdr->prid[i][0] && !memcmp(ep->emm + 4, &rdr->prid[i][1], l))
+						return TRUE;
+			}
+			cs_debug_mask(D_EMM, "IRDETO EMM: neither hex nor provider addressed or unknown provider id");
+			return FALSE;
 
 		default:
 			ep->type = UNKNOWN;
