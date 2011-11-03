@@ -84,6 +84,54 @@ struct s_thread_param
 	struct s_serial_client serialdata;
 };
 
+static int32_t chk_ser_srvid_match(uint16_t caid, uint16_t sid, uint32_t provid, SIDTAB *sidtab)
+{
+  int32_t i, rc=0;
+
+  if (!sidtab->num_caid)
+    rc|=1;
+  else
+    for (i=0; (i<sidtab->num_caid) && (!(rc&1)); i++)
+      if (caid==sidtab->caid[i]) rc|=1;
+
+  if (!sidtab->num_provid)
+    rc|=2;
+  else
+    for (i=0; (i<sidtab->num_provid) && (!(rc&2)); i++)
+      if (provid==sidtab->provid[i]) rc|=2;
+
+  if (!sidtab->num_srvid)
+    rc|=4;
+  else
+    for (i=0; (i<sidtab->num_srvid) && (!(rc&4)); i++)
+      if (sid==sidtab->srvid[i]) rc|=4;
+
+  return(rc==7);
+}
+
+static int32_t chk_ser_srvid(struct s_client *cl, uint16_t caid, uint16_t sid, uint32_t provid)
+{
+  int32_t nr, rc=0;
+  SIDTAB *sidtab;
+
+  if (!cl->sidtabok)
+  {
+    if (!cl->sidtabno) return(1);
+    rc=1;
+  }
+  for (nr=0, sidtab=cfg.sidtab; sidtab; sidtab=sidtab->next, nr++)
+    if (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid)
+    {
+        if ((cl->sidtabno&((SIDTABBITS)1<<nr)) &&
+          (chk_ser_srvid_match(caid, sid, provid, sidtab)))
+        return(0);
+      if ((cl->sidtabok&((SIDTABBITS)1<<nr)) &&
+          (chk_ser_srvid_match(caid, sid, provid, sidtab)))
+        rc=1;
+    }
+  return(rc);
+}
+
 static void oscam_ser_disconnect(void);
 
 static void oscam_wait_ser_fork(void)
@@ -355,45 +403,55 @@ static int32_t oscam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
         p=(-3);
         if (oscam_ser_selrec(buf, 1, l, &n)) // now we have 3 bytes in buf
         {
-          p=(-2);
-          if (client->typ == 'c')		 // HERE IS SERVER
-          {
-            job=IS_ECM;		// assume ECM
-            switch(buf[0])
-            {
-              case 0x00: if( (buf[1]==0x01)&&(buf[2]==0x00) )
-                           { p=P_GS; job=IS_LGO; serialdata->tpe.time++; } break;
-              case 0x01: if( (buf[1]&0xf0)==0xb0 ) p=P_GBOX;
-                         else  {p=P_SSSP; job=IS_PMT;}
-                         break;	// pmt-request
-              case 0x02: p=P_HSIC; break;
-              case 0x03: switch(serialdata->oscam_ser_proto)
-                         {
-                           case P_SSSP  :
-                           case P_GS    :
-                           case P_DSR95 : p=serialdata->oscam_ser_proto; break;
-                           case P_AUTO  : p=(buf[1]<0x30) ? P_SSSP : P_DSR95;
-                                          break;	// auto for GS is useless !!
-                         } break;
-              case 0x04: p=P_DSR95; job=IS_ECHO; serialdata->dsr9500type=P_DSR_GNUSMAS; break;
-              case 0x7E: p=P_ALPHA; if (buf[1]!=0x80) job=IS_BAD; break;
-              case 0x80:
-              case 0x81: p=P_BOMBA; break;
-            }
-          }
-          else				// HERE IS CLIENT
-          {
-            job=IS_DCW;		// assume DCW
-            switch(serialdata->oscam_ser_proto)
-            {
-              case P_HSIC : if ((buf[0]==4) && (buf[1]==4)) p=P_HSIC; break;
-              case P_BOMBA: p=P_BOMBA; break;
-              case P_DSR95: if (buf[0]==4) p=P_DSR95; break;
-              case P_ALPHA: if (buf[0]==0x88) p=P_ALPHA; break;
-            }
-          }
-          if ((serialdata->oscam_ser_proto!=p) && (serialdata->oscam_ser_proto!=P_AUTO))
+	    if((buf[0] == 0x04) && (buf[1] == 0x00) && (buf[2] == 0x02)) {	//skip unsupported Advanced Serial Sharing Protocol HF 8900
+		    oscam_ser_selrec(buf, 2, l, &n); // get rest 2 bytes to buffor
+	        p=(-4);
+		have_lb=0;
+		break; 
+	    }
+	    else {
+	
             p=(-2);
+        	if (client->typ == 'c')		 // HERE IS SERVER
+        	{
+        	    job=IS_ECM;		// assume ECM
+        	    switch(buf[0])
+        	    {
+            		case 0x00: if( (buf[1]==0x01)&&(buf[2]==0x00) )
+                    		   { p=P_GS; job=IS_LGO; serialdata->tpe.time++; } break;
+            		case 0x01: if( (buf[1]&0xf0)==0xb0 ) p=P_GBOX;
+                    		     else  {p=P_SSSP; job=IS_PMT;}
+                        	break;	// pmt-request
+            		case 0x02: p=P_HSIC; break;
+            		case 0x03: switch(serialdata->oscam_ser_proto)
+                    	     {
+                        	case P_SSSP  :
+                        	case P_GS    :
+                        	case P_DSR95 : p=serialdata->oscam_ser_proto; break;
+                        	case P_AUTO  : p=(buf[1]<0x30) ? P_SSSP : P_DSR95;
+                                          break;	// auto for GS is useless !!
+                            } break;
+            		case 0x04: p=P_DSR95; job=IS_ECHO; serialdata->dsr9500type=P_DSR_GNUSMAS; break;
+            		case 0x7E: p=P_ALPHA; if (buf[1]!=0x80) job=IS_BAD; break;
+            		case 0x80:
+            		case 0x81: p=P_BOMBA; break;
+        	    }
+        	}
+         
+        	else				// HERE IS CLIENT
+        	{
+        	    job=IS_DCW;		// assume DCW
+        	    switch(serialdata->oscam_ser_proto)
+        	    {
+            		case P_HSIC : if ((buf[0]==4) && (buf[1]==4)) p=P_HSIC; break;
+            		case P_BOMBA: p=P_BOMBA; break;
+            		case P_DSR95: if (buf[0]==4) p=P_DSR95; break;
+            		case P_ALPHA: if (buf[0]==0x88) p=P_ALPHA; break;
+        	    }
+        	}
+            if ((serialdata->oscam_ser_proto!=p) && (serialdata->oscam_ser_proto!=P_AUTO))
+        	p=(-2);
+    	    }
         }
         break;
       case 2:		// STAGE 2: examine length
@@ -540,8 +598,14 @@ static int32_t oscam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
                  oscam_ser_disconnect();
                  cs_log("humax powered on");	// this is nice ;)
                }
-               else
-                 cs_log(incomplete, n);
+               else {
+            	    if(client->typ == 'c' && buf[0] == 0x1 && buf[1] == 0x08 && buf[2] == 0x20 && buf[3] == 0x08) {
+            		oscam_ser_disconnect();
+                	cs_log("ferguson powered on");	// this is nice to ;) 
+    		    }
+    		    else    	    
+                	cs_log(incomplete, n);
+		}    
                break;
     case (-2): cs_debug_mask(D_CLIENT, "unknown request or garbage");
                break;
@@ -712,12 +776,18 @@ static void oscam_ser_process_pmt(uchar *buf, int32_t l)
       serialdata->sssp_fix=0;
       memset(serialdata->sssp_tab, 0, sizeof(serialdata->sssp_tab));
       serialdata->sssp_srvid=b2i(2, buf+3);
-      for (i=9, serialdata->sssp_num=0; (i<l) && (serialdata->sssp_num<SSSP_MAX_PID); i+=7, serialdata->sssp_num++)
+      serialdata->sssp_num=0;
+
+	    
+      for (i=9; (i<l) && (serialdata->sssp_num<SSSP_MAX_PID); i+=7)
       {
-        memcpy(sbuf+3+(serialdata->sssp_num<<1), buf+i+2, 2);
-        serialdata->sssp_tab[serialdata->sssp_num].caid=b2i(2, buf+i  );
-        serialdata->sssp_tab[serialdata->sssp_num].pid =b2i(2, buf+i+2);
-        serialdata->sssp_tab[serialdata->sssp_num].prid=b2i(3, buf+i+4);
+	if(chk_ser_srvid(cur_client(), b2i(2, buf+i), b2i(2, buf+3), b2i(3, buf+i+4))) { // check support for pid (caid, sid and provid in oscam.services)
+            memcpy(sbuf+3+(serialdata->sssp_num<<1), buf+i+2, 2);
+	    serialdata->sssp_tab[serialdata->sssp_num].caid=b2i(2, buf+i  );
+    	    serialdata->sssp_tab[serialdata->sssp_num].pid =b2i(2, buf+i+2);
+    	    serialdata->sssp_tab[serialdata->sssp_num].prid=b2i(3, buf+i+4);
+    	    serialdata->sssp_num++;
+        }
       }
       sbuf[0]=0xF1;
       sbuf[1]=0;
