@@ -317,14 +317,14 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR newatr)
 		} else {
 			memcpy(reader->nagra_boxkey, "\x11\x22\x33\x44\x55\x66\x77\x88", 8);
 		}
- 	}
- 	/*
- 	 * Get Irdeto Smartcard Details - version - patch level etc
- 	 */
- 	if(reader->acs57==0) {
- 		reader_chk_cmd(sc_GetSCDetails,14);
- 		cs_ri_log(reader,"Irdeto SC %0x version %0x revision %0x, patch level %0x",cta_res[0+acspadd],
- 			  cta_res[1+acspadd],cta_res[2+acspadd],cta_res[5+acspadd]);
+	}
+	/*
+	 * Get Irdeto Smartcard Details - version - patch level etc
+	 */
+	if(reader->acs57==0) {
+		if (irdeto_do_cmd(reader,sc_GetSCDetails,0,cta_res, &cta_lr))
+			cs_ri_log(reader,"Irdeto SC %0x version %0x revision %0x, patch level %0x",cta_res[0+acspadd],
+				cta_res[1+acspadd],cta_res[2+acspadd],cta_res[5+acspadd]);
 	}
 	/*
 	 * CountryCode
