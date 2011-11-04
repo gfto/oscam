@@ -322,7 +322,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR newatr)
 	 * Get Irdeto Smartcard Details - version - patch level etc
 	 */
 	if(reader->acs57==0) {
-		if (irdeto_do_cmd(reader,sc_GetSCDetails,0,cta_res, &cta_lr))
+		if(!irdeto_do_cmd(reader,sc_GetSCDetails,0,cta_res, &cta_lr))
 			cs_ri_log(reader,"Irdeto SC %0x version %0x revision %0x, patch level %0x",cta_res[0+acspadd],
 				cta_res[1+acspadd],cta_res[2+acspadd],cta_res[5+acspadd]);
 	}
