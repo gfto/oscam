@@ -929,7 +929,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 #ifdef WEBIF
 				rdr->lbvalue = current;
 #endif
-				if (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_LOADBALANCE)) {
+				if (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_LOADBALANCE, NULL)) {
 					current=current*2;
 				}
 				

@@ -580,7 +580,7 @@ struct s_module {
 	int32_t			(*c_send_emm)(struct emm_packet_t *);
 	int32_t			(*c_init_log)(void);
 	int32_t			(*c_recv_log)(uint16_t *, uint32_t *, uint16_t *);
-	int32_t			(*c_available)(struct s_reader *, int32_t); 	//Schlocke: available check for load-balancing,
+	int32_t			(*c_available)(struct s_reader *, int32_t, struct ecm_request_t *); 	//Schlocke: available check for load-balancing,
 										// params:
 										// rdr (reader to check)
 										// int32_t checktype (0=return connected, 1=return loadbalance-avail) return int

@@ -1935,14 +1935,17 @@ static void request_cw(ECM_REQUEST *er)
 
 			if (er->stage == 1) {
 				// only local reader
-				if ((ea->status & (READER_ACTIVE|READER_FALLBACK|READER_LOCAL)) != (READER_ACTIVE|READER_LOCAL))
+				if ((ea->status & REQUEST_SENT) || 
+						(ea->status & (READER_ACTIVE|READER_FALLBACK|READER_LOCAL)) != (READER_ACTIVE|READER_LOCAL))
 					continue;
 			} else if (er->stage == 2) {
 				// any non fallback reader not asked yet
-				if ((ea->status & (READER_ACTIVE|READER_FALLBACK)) != READER_ACTIVE)
+				if ((ea->status & REQUEST_SENT) || 
+						(ea->status & (READER_ACTIVE|READER_FALLBACK)) != READER_ACTIVE)
 					continue;
 			} else {
 				// only fallbacks
+				// always send requests, regardless if asked
 				if ((ea->status & (READER_ACTIVE|READER_FALLBACK)) != (READER_ACTIVE|READER_FALLBACK))
 					continue;
 			}

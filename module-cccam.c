@@ -1010,6 +1010,58 @@ int32_t same_card(struct cc_card *card1, struct cc_card *card2) {
 		same_first_node(card1, card2));
 }
 
+struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er)
+{
+	struct cc_data *cc = cl->cc;
+	struct s_reader *rdr = cl->reader;
+
+	struct cc_srvid cur_srvid;
+	cur_srvid.sid = cur_er->srvid;
+	cur_srvid.ecmlen = cur_er->l;
+
+	int32_t h = -1;
+
+	LL_ITER it = ll_iter_create(cc->cards);
+	struct cc_card *card = NULL, *ncard, *xcard = NULL;
+	while ((ncard = ll_iter_next(&it))) {
+		if (ncard->caid == cur_er->caid) { // caid matches
+			if (is_sid_blocked(ncard, &cur_srvid))
+				continue;
+
+			if (!(rdr->cc_want_emu) && (ncard->caid>>8==0x18) && (!xcard || ncard->hop < xcard->hop))
+				xcard = ncard; //remember card (D+ / 1810 fix) if request has no provider, but card has
+
+			if (!cur_er->prid && !ll_count(ncard->providers)) { //card has no providers:
+				if (h < 0 || ncard->hop < h || (ncard->hop == h
+						&& cc_UA_valid(ncard->hexserial))) {
+					// ncard is closer
+					card = ncard;
+					h = ncard->hop; // ncard has been matched
+				}
+
+			}
+			else { //card has providers
+				LL_ITER it2 = ll_iter_create(ncard->providers);
+				struct cc_provider *provider;
+				while ((provider = ll_iter_next(&it2))) {
+					if (provider->prov	== cur_er->prid) { // provid matches
+						if (h < 0 || ncard->hop < h || (ncard->hop == h
+								&& cc_UA_valid(ncard->hexserial))) {
+							// ncard is closer
+							card = ncard;
+							h = ncard->hop; // ncard has been matched
+						}
+					}
+				}
+			}
+		}
+	}
+	if (!card)
+			card = xcard; //18xx: if request has no provider and we have no card, we try this card
+
+	return card;
+}
+
 /**
  * reader
  * sends a ecm request to the connected CCCam Server
@@ -1021,7 +1073,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	if (!rdr->tcp_connected)
 		cc_cli_connect(cl);
 
-	int32_t n, h = -1;
+	int32_t n;
 	struct cc_data *cc = cl->cc;
 	struct cc_card *card = NULL;
 	LL_ITER it;
@@ -1150,45 +1202,8 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		}
 	}
 	
-	if (!card) {
-		it = ll_iter_create(cc->cards);
-		struct cc_card *ncard, *xcard = NULL;
-		while ((ncard = ll_iter_next(&it))) {
-			if (ncard->caid == cur_er->caid) { // caid matches
-				if (is_sid_blocked(ncard, &cur_srvid))
-					continue;
-				
-				if (!(rdr->cc_want_emu) && (ncard->caid>>8==0x18) && (!xcard || ncard->hop < xcard->hop))
-					xcard = ncard; //remember card (D+ / 1810 fix) if request has no provider, but card has
-						
-				if (!cur_er->prid && !ll_count(ncard->providers)) { //card has no providers:
-					if (h < 0 || ncard->hop < h || (ncard->hop == h
-							&& cc_UA_valid(ncard->hexserial))) {
-						// ncard is closer
-						card = ncard;
-						h = ncard->hop; // ncard has been matched
-					}
-					
-				}
-				else { //card has providers
-					LL_ITER it2 = ll_iter_create(ncard->providers);
-					struct cc_provider *provider;
-					while ((provider = ll_iter_next(&it2))) {
-						if (provider->prov	== cur_er->prid) { // provid matches
-							if (h < 0 || ncard->hop < h || (ncard->hop == h
-									&& cc_UA_valid(ncard->hexserial))) {
-								// ncard is closer
-								card = ncard;
-								h = ncard->hop; // ncard has been matched
-							}
-						}
-					}
-				}
-			}
-		}
-		if (!card) 
-				card = xcard; //18xx: if request has no provider and we have no card, we try this card
-	}	
+	if (!card)
+		card = get_matching_card(cl, cur_er);
 
 	if (card) {
 		uint8_t *ecmbuf = cs_malloc(&ecmbuf, cur_er->l+13, 0);
@@ -3205,11 +3220,16 @@ int32_t cc_cli_init(struct s_client *cl) {
  * return 1 if we are able to send requests:
  *
  */
-int32_t cc_available(struct s_reader *rdr, int32_t checktype) {
+int32_t cc_available(struct s_reader *rdr, int32_t checktype, ECM_REQUEST *er) {
 	if (!rdr || !rdr->client) return 0;
 	
 	struct s_client *cl = rdr->client;
 	if(!cl) return 0;
+	if (er && cl->cc) {
+		struct cc_card *card  = get_matching_card(cl, er);
+		if (!card)
+			return 0;
+	}
 	//cs_debug_mask(D_TRACE, "checking reader %s availibility", rdr->label);
 	if (!cl->cc || rdr->tcp_connected != 2 || rdr->card_status != CARD_INSERTED) {
 		//Two cases: 

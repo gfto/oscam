@@ -438,7 +438,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
     return(0);
 
   //Schlocke reader-defined function, reader-self-check: 
-  if (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_CONNECTED)) {
+  if (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_CONNECTED, er)) {
     //cs_debug_mask(D_TRACE, "reader unavailable %s", rdr->label);
     return 0;
   }
