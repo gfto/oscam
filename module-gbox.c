@@ -344,7 +344,7 @@ static void gbox_expire_hello(struct s_client *cli)
   //printf("gbox: exit gbox_expire_hello()\n");
 }
 
-static void gbox_wait_for_response(struct s_client *cli)
+/* static void gbox_wait_for_response(struct s_client *cli)
 {
 	//printf("gbox: enter gbox_wait_for_response()\n");
 	//cs_debug_mask(D_READER, "gbox: enter gbox_wait_for_response()");
@@ -374,7 +374,7 @@ static void gbox_wait_for_response(struct s_client *cli)
 
 	//cs_debug_mask(D_READER, "gbox: exit gbox_wait_for_response()");
 	//printf("gbox: exit gbox_wait_for_response()\n");
-}
+} */
 
 static void gbox_send(struct s_client *cli, uchar *buf, int32_t l)
 {
@@ -415,7 +415,7 @@ static void gbox_send_boxinfo(struct s_client *cli)
 }
 
 
-static void gbox_send_goodbye(struct s_client *cli)
+/* static void gbox_send_goodbye(struct s_client *cli)
 {
   struct gbox_data *gbox = cli->gbox;
 
@@ -426,7 +426,7 @@ static void gbox_send_goodbye(struct s_client *cli)
  memcpy(buf + 6, gbox->key, 4);
 
  gbox_send(cli, buf, 11);
-}
+} */
 
 static void gbox_send_hello(struct s_client *cli)
 {
@@ -921,7 +921,7 @@ static int32_t gbox_client_init(struct s_client *cli)
 
 static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, uchar *data, int32_t UNUSED(n))
 {
-  struct gbox_data *gbox = cli->gbox;
+  //struct gbox_data *gbox = cli->gbox;
   char tmp[512];
   if (gbox_decode_cmd(data) == MSG_CW) {
 	int i, n;

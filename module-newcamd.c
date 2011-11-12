@@ -1,6 +1,6 @@
 #include "globals.h"
 
-#define CWS_NETMSGSIZE 272
+#define CWS_NETMSGSIZE 362
 #define NCD_CLIENT_ID 0x8888
 
 #define CWS_FIRSTCMDNO 0xe0
@@ -127,6 +127,7 @@ static int32_t network_message_receive(int32_t handle, uint16_t *netMsgId, uint8
     return -1;
   }
   if (((netbuf[0] << 8) | netbuf[1]) > CWS_NETMSGSIZE - 2) {
+    cs_debug_mask(D_CLIENT, "nmr: received data len=%d lonage than CWS_NETMSGSIZE=%d",((netbuf[0] << 8) | netbuf[1]),CWS_NETMSGSIZE);
     cs_debug_mask(D_CLIENT, "nmr: 1 return -1");
     return -1;
   }
