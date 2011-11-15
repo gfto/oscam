@@ -503,6 +503,16 @@ void cs_accounts_chk()
 #endif
 }
 
+static void free_ecm(ECM_REQUEST *ecm) {
+	struct s_ecm_answer *ea;
+	
+	for (ea = ecm->matching_rdr; ea; ea = ea->next)
+		add_garbage(ea);
+	ecm->matching_rdr = NULL;
+	add_garbage(ecm);
+}
+
+
 static void cleanup_ecmtasks(struct s_client *cl)
 {
 	ECM_REQUEST *ecm;
@@ -2565,13 +2575,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			cs_sleepms(cfg.delay);
 
 		send_dcw(client, er);
-		for (ea = er->matching_rdr; ea;)
-		{
-			struct s_ecm_answer *tmp = ea;
-			ea = ea->next;
-			free(tmp);
-		}
-		free(er);
+		free_ecm(er);
 		return;
 	}
 
@@ -3160,7 +3164,6 @@ static void * check_thread(void) {
 	time_t ecm_timeout, now;
 	sigset_t newmask;
 	struct timespec ts;
-	struct s_ecm_answer *ea;
 
 	timecheck_thread = pthread_self();
 
@@ -3262,9 +3265,7 @@ static void * check_thread(void) {
 				cs_readunlock(&ecmcache_lock);
 
 			for (ecm = ecmt; ecm; ecm = ecm->next) {
-				for (ea = ecm->matching_rdr; ea; ea = ea->next)
-					add_garbage(ea);
-				add_garbage(ecm);
+				free_ecm(ecm);
 			}
 
 			cs_ftime(&ecmc_time);
