@@ -1980,15 +1980,28 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 		ea->reader->ecmsnok++;
 
 	//Reader ECMs Health Try (by Pickser)
-	if (ea->reader->ecmsok != 0 || ea->reader->ecmsnok != 0) 
+	if (ea->reader) {
+		if (ea->reader->ecmsok != 0 || ea->reader->ecmsnok != 0)
 		{ 
-		ea->reader->ecmshealthok = ((double) ea->reader->ecmsok / (ea->reader->ecmsok + ea->reader->ecmsnok)) * 100;
-		ea->reader->ecmshealthnok = ((double) ea->reader->ecmsnok / (ea->reader->ecmsok + ea->reader->ecmsnok)) * 100;
+			ea->reader->ecmshealthok = ((double) ea->reader->ecmsok / (ea->reader->ecmsok + ea->reader->ecmsnok)) * 100;
+			ea->reader->ecmshealthnok = ((double) ea->reader->ecmsnok / (ea->reader->ecmsok + ea->reader->ecmsnok)) * 100;
 		}
 
-	//Reader Dynamic Loadbalancer Try (by Pickser)
-	if (ea->reader->ecmshealthok >= 75) {ea->reader->lb_weight = 100;} else if (ea->reader->ecmshealthok >= 50) {ea->reader->lb_weight = 75;} else if (ea->reader->ecmshealthok >= 25) {ea->reader->lb_weight = 50;} else {ea->reader->lb_weight = 25;}
-;
+		//Reader Dynamic Loadbalancer Try (by Pickser)
+		/*
+		 * todo: config-option!
+		 *
+		if (ea->reader->ecmshealthok >= 75) {
+			ea->reader->lb_weight = 100;
+		} else if (ea->reader->ecmshealthok >= 50) {
+			ea->reader->lb_weight = 75;
+		} else if (ea->reader->ecmshealthok >= 25) {
+			ea->reader->lb_weight = 50;
+		} else {
+			ea->reader->lb_weight = 25;
+		}
+		*/
+	}
 
 	if (ert->rc<E_99) {
 #ifdef WITH_LB
