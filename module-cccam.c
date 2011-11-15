@@ -2132,9 +2132,14 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 					add_sid_block(cl, card, &srvid);
 				}
 				else if (!is_good_sid(card, &srvid)) //MSG_CW_NOK2: can't decode
+					{
+					move_card_to_end(cl, card);
 					add_sid_block(cl, card, &srvid);
-				else
+					}
+				else	{
+					move_card_to_end(cl, card);
 					remove_good_sid(card, &srvid);
+					}
 
 				if (cfg.cc_forward_origin_card && card->origin_reader == rdr) { 
 						//this card is from us but it can't decode this ecm
@@ -2293,6 +2298,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 					if (is_null_dcw(cc->dcw)) {
 						cs_debug_mask(D_READER, "%s null dcw received! sid=%04X(%d)", getprefix(),
 								srvid.sid, srvid.ecmlen);
+						move_card_to_end(cl, card);
 						add_sid_block(cl, card, &srvid);
 						//ecm retry:
 						cc_reset_pending(cl, ecm_idx);
@@ -2309,6 +2315,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 						if (cwlastresptime > cfg.ftimeout && !cc->extended_mode) {
 							cs_debug_mask(D_READER, "%s card %04X is too slow, moving to the end...", getprefix(), card->id);
 							move_card_to_end(cl, card);
+							add_sid_block(cl, card, &srvid);
 						}
 						
 					}

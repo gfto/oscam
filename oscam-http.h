@@ -957,6 +957,9 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 				<TH>EMM blocked<br><span title=\"unknown EMM\"> UK </span>/<span title=\"global EMM\"> G </span>/<span title=\"shared EMM\"> S </span>/<span title=\"unique EMM\"> UQ </span></TH>\n\
 				<TH>ECMs OK</TH>\n\
 				<TH>ECMs NOK</TH>\n\
+				<TH>Health OK</TH>\n\
+				<TH>Health NOK</TH>\n\
+				<TH>LB Weight Current</TH>\n\
 				<TH COLSPAN=\"5\">Action</TH>\n\
 			</TR>\n\
 ##READERLIST##\n\
@@ -975,6 +978,9 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 					</select>\n\
 				</TD>\n\
 				<TD COLSPAN=\"7\" class=\"centered\"><input type=\"submit\" name=\"action\" value=\"Add\" ##BTNDISABLED##></TD>\n\
+				<TD></TD>\n\
+				<TD></TD>\n\
+				<TD></TD>\n\
 			</TR>\n\
 		</TABLE>\n\
 	</form>\n\
@@ -1000,6 +1006,9 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 				<TD class=\"centered\">##EMMBLOCKEDUK## / ##EMMBLOCKEDG## / ##EMMBLOCKEDS## / ##EMMBLOCKEDUQ##</TD>\n\
 				<TD class=\"centered\">##ECMSOK##</TD>\n\
 				<TD class=\"centered\">##ECMSNOK##</TD>\n\
+				<TD class=\"centered\">##HEALTHOK## %</TD>\n\
+				<TD class=\"centered\">##HEALTHNOK## %</TD>\n\
+				<TD class=\"centered\">##LBWEIGHT##</TD>\n\
 				<TD class=\"centered\"><A HREF=\"readerconfig.html?label=##READERNAMEENC##\" TITLE=\"Edit this Reader\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit Reader\"></A></TD>\n\
 				<TD class=\"centered\">##ENTITLEMENT##</TD>\n\
 				<TD class=\"centered\">##READERREFRESH##</TD>\n\
