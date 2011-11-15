@@ -1991,6 +1991,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 		/*
 		 * todo: config-option!
 		 *
+#ifdef WITH_LB
 		if (ea->reader->ecmshealthok >= 75) {
 			ea->reader->lb_weight = 100;
 		} else if (ea->reader->ecmshealthok >= 50) {
@@ -2000,6 +2001,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 		} else {
 			ea->reader->lb_weight = 25;
 		}
+#endif
 		*/
 	}
 

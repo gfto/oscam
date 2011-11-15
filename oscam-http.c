@@ -895,9 +895,9 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 
 				tpl_printf(vars, TPLADD, "HEALTHOK", "%d", rdr->ecmshealthok);
 				tpl_printf(vars, TPLADD, "HEALTHNOK", "%d", rdr->ecmshealthnok);
-
+#ifdef WITH_LB
 				tpl_printf(vars, TPLADD, "LBWEIGHT", "%d", rdr->lb_weight);
-
+#endif
 				if (!(rdr->typ & R_IS_NETWORK)) { //reader is physical
 					tpl_addVar(vars, TPLADD, "REFRICO", "image?i=ICREF");
 					tpl_addVar(vars, TPLADD, "READERREFRESH", tpl_getTpl(vars, "READERREFRESHBIT"));
