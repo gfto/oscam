@@ -962,59 +962,6 @@ set CCcam node ID in hex, default:none
 </DL>
 
 <A NAME="lbAQ">&nbsp;</A>
-<H3>The [pandora] section</H3>
-
-<P>
-
-<B>pand_skip_send_dw</B> = <B>unknown</B>
-<DL COMPACT><DT><DD>
-unknown
-</DL>
-
-<P>
-
-<B>pand_allowed</B> = <B>unknown</B>
-<DL COMPACT><DT><DD>
-unknown
-</DL>
-
-<P>
-
-<B>pand_usr</B> = <B>unknown</B>
-<DL COMPACT><DT><DD>
-unknown
-</DL>
-
-<P>
-
-<B>pand_pass</B> = <B>unknown</B>
-<DL COMPACT><DT><DD>
-unknown
-</DL>
-
-<P>
-
-<B>pand_ecm</B> = <B>unknown</B>
-<DL COMPACT><DT><DD>
-unknown
-</DL>
-
-<P>
-
-<B>pand_port</B> = <B>unknown</B>
-<DL COMPACT><DT><DD>
-unknown
-</DL>
-
-<P>
-
-<B>pand_srvid</B> = <B>unknown</B>
-<DL COMPACT><DT><DD>
-unknown
-</DL>
-
-
-<A NAME="lbAR">&nbsp;</A>
 <H3>The [gbox] section</H3>
 
 <P>
@@ -1038,7 +985,7 @@ password for gbox server
 gsms file for gbox server, default:none
 </DL>
 
-<A NAME="lbAS">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H3>The [dvbapi] section</H3>
 
 <P>
@@ -1121,7 +1068,7 @@ ipbox-pmt can be used on any DGS based images (with or without camd.socket suppo
 verified on HD models only
 </DL>
 
-<A NAME="lbAT">&nbsp;</A>
+<A NAME="lbAS">&nbsp;</A>
 <H3>The [anticasc] section</H3>
 
 <P>
@@ -1187,7 +1134,7 @@ fake delay time, default:1000
 how many samples should be penalized, default:8
 </DL>
 
-<A NAME="lbAU">&nbsp;</A>
+<A NAME="lbAT">&nbsp;</A>
 <H2>MONITOR</H2>
 
 monitor commands:
@@ -1281,7 +1228,7 @@ show OSCam version
 <P>
 show all valid monitor commands
 </DL>
-<A NAME="lbAV">&nbsp;</A>
+<A NAME="lbAU">&nbsp;</A>
 <H2>WEB INTERFACE</H2>
 
 <DL COMPACT>
@@ -1299,7 +1246,7 @@ Login is not possible by now with the Safari browser because of incorrect
 stale flag handling. Increasing the AUTHNONCEVALIDSECS in oscam-http.h would 
 be a workaround, but also a small security risk.
 </DL>
-<A NAME="lbAW">&nbsp;</A>
+<A NAME="lbAV">&nbsp;</A>
 <H2>CACHING</H2>
 
 types of ECM caching:
@@ -1313,13 +1260,13 @@ ECM and CW in cache already.
 <P>
 ECM and checksum in cache already.
 </DL>
-<A NAME="lbAX">&nbsp;</A>
+<A NAME="lbAW">&nbsp;</A>
 <H2>LOGGING</H2>
 
 log file format:
 <P>
 CAID&amp;ident/provider/length:checksum
-<A NAME="lbAY">&nbsp;</A>
+<A NAME="lbAX">&nbsp;</A>
 <H2>EXAMPLES</H2>
 
 <BR>&nbsp;[global]
@@ -1359,7 +1306,7 @@ CAID&amp;ident/provider/length:checksum
 <BR>&nbsp;hostname&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;host.example.com
 <BR>&nbsp;port&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;56789
 <BR>&nbsp;password&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;password4
-<A NAME="lbAZ">&nbsp;</A>
+<A NAME="lbAY">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="/cgi-bin/man/man2html?1+list_smargo">list_smargo</A></B>(1), <B><A HREF="/cgi-bin/man/man2html?1+oscam">oscam</A></B>(1), <B><A HREF="/cgi-bin/man/man2html?5+oscam.ac">oscam.ac</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.cert">oscam.cert</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.dvbapi">oscam.dvbapi</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.guess">oscam.guess</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.ird">oscam.ird</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.provid">oscam.provid</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.server">oscam.server</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.services">oscam.services</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.srvid">oscam.srvid</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.tiers">oscam.tiers</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.user">oscam.user</A></B>(5)
@@ -1383,17 +1330,16 @@ CAID&amp;ident/provider/length:checksum
 <DT><A HREF="#lbAN">The [radegast] section</A><DD>
 <DT><A HREF="#lbAO">The [serial] section</A><DD>
 <DT><A HREF="#lbAP">The [cccam] section</A><DD>
-<DT><A HREF="#lbAQ">The [pandora] section</A><DD>
-<DT><A HREF="#lbAR">The [gbox] section</A><DD>
-<DT><A HREF="#lbAS">The [dvbapi] section</A><DD>
-<DT><A HREF="#lbAT">The [anticasc] section</A><DD>
+<DT><A HREF="#lbAQ">The [gbox] section</A><DD>
+<DT><A HREF="#lbAR">The [dvbapi] section</A><DD>
+<DT><A HREF="#lbAS">The [anticasc] section</A><DD>
 </DL>
-<DT><A HREF="#lbAU">MONITOR</A><DD>
-<DT><A HREF="#lbAV">WEB INTERFACE</A><DD>
-<DT><A HREF="#lbAW">CACHING</A><DD>
-<DT><A HREF="#lbAX">LOGGING</A><DD>
-<DT><A HREF="#lbAY">EXAMPLES</A><DD>
-<DT><A HREF="#lbAZ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAT">MONITOR</A><DD>
+<DT><A HREF="#lbAU">WEB INTERFACE</A><DD>
+<DT><A HREF="#lbAV">CACHING</A><DD>
+<DT><A HREF="#lbAW">LOGGING</A><DD>
+<DT><A HREF="#lbAX">EXAMPLES</A><DD>
+<DT><A HREF="#lbAY">SEE ALSO</A><DD>
 </DL>
 </BODY>
 </HTML>

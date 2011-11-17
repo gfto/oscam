@@ -501,28 +501,6 @@ DESCRIPTIONS
 
 	   example: nodeid = 0a0b0c0d0e0f1011
 
-   The [pandora] section
-       pand_skip_send_dw = unknown
-	  unknown
-
-       pand_allowed = unknown
-	  unknown
-
-       pand_usr = unknown
-	  unknown
-
-       pand_pass = unknown
-	  unknown
-
-       pand_ecm = unknown
-	  unknown
-
-       pand_port = unknown
-	  unknown
-
-       pand_srvid = unknown
-	  unknown
-
    The [gbox] section
        port = 0|port
 	  UDP port for gbox clients, 0 = disabled, default:0
