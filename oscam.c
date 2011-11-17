@@ -2830,7 +2830,7 @@ static void check_status(struct s_client *cl) {
 		case 'm':
 		case 'c':
 			//check clients for exceeding cmaxidle by checking cl->last
-			if (cl->last && cfg.cmaxidle && (time(NULL) - cl->last) > (time_t)cfg.cmaxidle) {
+			if (!cl->ncd_keepalive && cl->last && cfg.cmaxidle && (time(NULL) - cl->last) > (time_t)cfg.cmaxidle) {
 				add_job(cl, ACTION_CLIENT_IDLE, NULL, 0);
 			}
 
