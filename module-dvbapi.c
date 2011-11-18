@@ -2050,7 +2050,7 @@ static int32_t stapi_open() {
 	oscam_stapi_CheckVersion();
 
 	i=0;
-	while (readdir_r(dirp, &entry, &dp)) {
+	while (!readdir_r(dirp, &entry, &dp)) {
 		if (!dp) break;
 
 		snprintf(pfad, sizeof(pfad), "%s%s", PROCDIR, dp->d_name);
