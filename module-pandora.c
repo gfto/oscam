@@ -145,8 +145,9 @@ static void * pandora_server(struct s_client *cl, uchar *UNUSED(mbuf),
 int pandora_client_init(struct s_client *cl) {
 	static struct sockaddr_in loc_sa;
 	struct protoent *ptrp;
-	int p_proto;
-	char ptxt[16];
+	struct protoent result_buf;
+	int16_t p_proto;
+	char ptxt[16], buf[256];
 	struct s_reader *rdr = cl->reader;
 
 	cl->pfd = 0;
@@ -154,7 +155,7 @@ int pandora_client_init(struct s_client *cl) {
 		cs_log("invalid port %d for server %s", rdr->r_port, rdr->device);
 		return (1);
 	}
-	if ((ptrp = getprotobyname("udp")))
+	if (!getprotobyname_r("udp", &result_buf, buf, sizeof(buf), &ptrp))
 		p_proto = ptrp->p_proto;
 	else
 		p_proto = 17;

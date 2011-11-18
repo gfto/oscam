@@ -525,6 +525,40 @@ int32_t boundary(int32_t exp, int32_t n)
   return((((n-1)>>exp)+1)<<exp);
 }
 
+/* Checks if year is a leap year. If so, 1 is returned, else 0. */
+static int8_t is_leap(unsigned y){
+	return (y % 4) == 0 && ((y % 100) != 0 || (y % 400) == 0);
+}
+
+/* Drop-in replacement for timegm function. */
+time_t cs_timegm(struct tm *tm){
+	time_t result = 0;
+	int32_t i;
+	
+	if (tm->tm_mon > 12 || tm->tm_mon < 0 || tm->tm_mday > 31 || tm->tm_min > 60 ||	tm->tm_sec > 60 || tm->tm_hour > 24) {
+		return 0;
+	}
+	
+	for (i = 70; i < tm->tm_year; ++i)
+		result += is_leap(i + 1900) ? 366 : 365;
+	
+	for (i = 0; i < tm->tm_mon; ++i){
+		if(i == 0 || i == 2 || i == 4 || i == 6 || i == 7 || i == 9 || i == 11) result += 31;
+		else if(i == 3 || i == 5 || i == 8 || i == 10) result += 30;
+		else if(is_leap(tm->tm_year + 1900)) result += 29;
+		else result += 28;
+	}
+
+	result += tm->tm_mday - 1;
+	result *= 24;
+	result += tm->tm_hour;
+	result *= 60;
+	result += tm->tm_min;
+	result *= 60;
+	result += tm->tm_sec;
+	return result;
+}
+
 void cs_ftime(struct timeb *tp)
 {
   struct timeval tv;

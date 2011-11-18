@@ -177,7 +177,7 @@ static time_t chid_date(struct s_reader * reader, uint32_t date, char *buf, int3
     time_t ut=date_base+date*(24*3600);  
     if (buf) {
         struct tm *t;
-        t=gmtime(&ut);
+        gmtime_r(&ut, t);
         snprintf(buf, l, "%04d/%02d/%02d", t->tm_year+1900, t->tm_mon+1, t->tm_mday);
     }
     return(ut);

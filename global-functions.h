@@ -339,6 +339,7 @@ extern uint64_t b2ll(int32_t, uchar *);
 extern uchar *i2b_buf(int32_t n, uint32_t i, uchar *b);
 extern uint32_t a2i(char *, int32_t);
 extern int32_t boundary(int32_t, int32_t);
+extern time_t cs_timegm(struct tm *tm);
 extern void cs_ftime(struct timeb *);
 extern void cs_sleepms(uint32_t);
 extern void cs_sleepus(uint32_t);

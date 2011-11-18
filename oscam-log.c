@@ -102,8 +102,11 @@ int32_t cs_open_logfiles()
 			memset(line, '-', sizeof(line));
 			line[(sizeof(line)/sizeof(char)) - 1] = '\0';
 			time(&t);
-			if (!cfg.disablelog)
-				fprintf(fp, "\n%s\n>> OSCam <<  cardserver %s at %s%s\n", line, starttext, ctime(&t), line);
+			if (!cfg.disablelog){
+				char buf[28];
+				ctime_r(&t, buf);
+				fprintf(fp, "\n%s\n>> OSCam <<  cardserver %s at %s%s\n", line, starttext, buf, line);
+			}
 		}
 	}
 	// according to syslog docu: calling closelog is not necessary and calling openlog multiple times is safe

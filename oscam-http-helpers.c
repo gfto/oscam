@@ -366,7 +366,7 @@ time_t parse_modifiedsince(char * value){
 			timeinfo.tm_hour = hour;
 			timeinfo.tm_min = minutes;
 			timeinfo.tm_sec = seconds;
-			modifiedheader = timegm(&timeinfo);
+			modifiedheader = cs_timegm(&timeinfo);
 		}
 	}	
 	return modifiedheader;
@@ -473,12 +473,14 @@ void send_headers(FILE *f, int32_t status, char *title, char *extra, char *mime,
   char timebuf[32];
   char buf[sizeof(PROTOCOL) + sizeof(SERVER) + strlen(title) + (extra == NULL?0:strlen(extra)+2) + (mime == NULL?0:strlen(mime)+2) + 350];
   char *pos = buf;
+  struct tm timeinfo;
 	
   pos += snprintf(pos, sizeof(buf)-(pos-buf), "%s %d %s\r\n", PROTOCOL, status, title);
   pos += snprintf(pos, sizeof(buf)-(pos-buf), "Server: %s\r\n", SERVER);
 
   now = time(NULL);
-  strftime(timebuf, sizeof(timebuf), RFC1123FMT, gmtime(&now));
+  gmtime_r(&now, &timeinfo);
+  strftime(timebuf, sizeof(timebuf), RFC1123FMT, &timeinfo);
   pos += snprintf(pos, sizeof(buf)-(pos-buf), "Date: %s\r\n", timebuf);
 
 	if (extra)
