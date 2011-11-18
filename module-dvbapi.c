@@ -1305,7 +1305,7 @@ void event_handler(int32_t signal) {
 	struct stat pmt_info;
 	char dest[1024];
 	DIR *dirp;
-	struct dirent *dp;
+	struct dirent entry, *dp = NULL;
 	int32_t i, pmt_fd;
 	uchar mbuf[1024];
 
@@ -1361,7 +1361,9 @@ void event_handler(int32_t signal) {
 		return;
 	}
 
-	while ((dp = readdir(dirp))) {
+	while (!readdir_r(dirp, &entry, &dp)) {
+		if (!dp) break;
+
 		if (strlen(dp->d_name) < 7)
   			continue;
 		if (strncmp(dp->d_name, "pmt", 3)!=0 || strncmp(dp->d_name+strlen(dp->d_name)-4, ".tmp", 4)!=0)
@@ -2015,7 +2017,7 @@ static int32_t stapi_open() {
 	uint32_t ErrorCode;
 
 	DIR *dirp;
-	struct dirent *dp;
+	struct dirent entry, *dp = NULL;
 	struct stat buf;
 	int32_t i;
 	char pfad[80];
@@ -2048,7 +2050,9 @@ static int32_t stapi_open() {
 	oscam_stapi_CheckVersion();
 
 	i=0;
-	while ((dp = readdir(dirp))) {
+	while (readdir_r(dirp, &entry, &dp)) {
+		if (!dp) break;
+
 		snprintf(pfad, sizeof(pfad), "%s%s", PROCDIR, dp->d_name);
 		if (stat(pfad,&buf) != 0)
 			continue;
