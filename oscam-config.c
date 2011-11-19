@@ -800,8 +800,8 @@ void chk_t_ac(char *token, char *value)
 	}
 
 	if( !strcmp(token, "fakedelay") ) {
-		cfg.ac_fakedelay = strToIntVal(value, 1000);
-		if( cfg.ac_fakedelay < 100 || cfg.ac_fakedelay > 1000 )
+		cfg.ac_fakedelay = strToIntVal(value, 3000);
+		if( cfg.ac_fakedelay < 100 || cfg.ac_fakedelay > 3000 )
 			cfg.ac_fakedelay = 1000;
 		return;
 	}
