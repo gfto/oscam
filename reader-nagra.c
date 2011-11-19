@@ -29,6 +29,7 @@ static time_t tier_date(uint32_t date, char *buf, int32_t l)
 	gmtime_r(&ut, &t);
 	snprintf(buf, l, "%04d/%02d/%02d", t.tm_year+1900, t.tm_mon+1, t.tm_mday);
     }
+  return ut;
 }
 
 static char *nagra_datetime(struct s_reader *rdr, uint8_t *ndays, int32_t offset, char *result, time_t *t)
