@@ -110,7 +110,7 @@ DESCRIPTIONS
 	  timeout for serial reader, default:1500
 
        maxlogsize = kbytes
-	  max log file size, 0 = unlimited, default:10
+	  maximum log file size, 0 = unlimited, default:10
 
        waitforcards = 0|1
 	  1 = wait for local SCs on startup before opening network ports, default:1
@@ -489,7 +489,7 @@ DESCRIPTIONS
        keepconnected = 0|1
 	  set CCcam keepalive modus:
 
-	    0 = disconnect client when max idle time is reached
+	    0 = disconnect client when maximum idle time is reached
 	    1 = keep client connected (default)
 
        forward_origin_card = 0|1
@@ -588,7 +588,7 @@ DESCRIPTIONS
 	  file for anti-cascading logging, default:none
 
        fakedelay = milli-seconds
-	  fake delay time, default:1000, min value is 100, max value is 3000
+	  fake delay time, default:1000, minimum value is 100, maximum value is 3000
 
        denysamples = quantity
 	  how many samples should be penalized, default:8
