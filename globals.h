@@ -454,7 +454,7 @@ extern void cs_switch_led(int32_t led, int32_t action);
  *      Default Values
  * =========================== */
 #define DEFAULT_TCP_RECONNECT_TIMEOUT 30
-#define DEFAULT_NCD_KEEPALIVE 1
+#define DEFAULT_NCD_KEEPALIVE 0
 
 #ifdef MODULE_CCCAM
 #define DEFAULT_CC_MAXHOP   10
