@@ -2027,7 +2027,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 		return; // already done
 	}
 
-	int32_t reader_left = 0, local_left = 0;
+	int32_t reader_left = 0, local_left = 0, cacheex_left = 0;
 
 	switch (ea->rc) {
 		case E_FOUND:
@@ -2047,14 +2047,22 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 			ert->rcEx=ea->rcEx;
 			cs_strncpy(ert->msglog, ea->msglog, sizeof(ert->msglog));
 			ert->selected_reader=ea->reader;
-
+			uchar has_cacheex = 0;
 			for(ea_list = ert->matching_rdr; ea_list; ea_list = ea_list->next) {
+				if (((ea_list->status & READER_CACHEEX)) == READER_CACHEEX)
+					has_cacheex = 1;
+				if (((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED|READER_CACHEEX|READER_ACTIVE)) == (REQUEST_SENT|READER_CACHEEX|READER_ACTIVE)))
+					cacheex_left++;
 				if (((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED|READER_LOCAL|READER_ACTIVE)) == (REQUEST_SENT|READER_LOCAL|READER_ACTIVE)))
 					local_left++;
 				if (((ea_list->status & (REQUEST_ANSWERED|READER_ACTIVE)) == (READER_ACTIVE)))
 					reader_left++;
 			}
-			if (cfg.preferlocalcards && !local_left && !ert->locals_done) {
+			
+			if (has_cacheex && !cacheex_left && !ert->cacheex_done) {
+				ert->cacheex_done = 1;
+				request_cw(ert);
+			} else if (cfg.preferlocalcards && !local_left && !ert->locals_done) {
 				ert->locals_done = 1;
 				request_cw(ert);
 			}

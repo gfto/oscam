@@ -713,6 +713,7 @@ typedef struct ecm_request_t {
 	uint8_t			rcEx;
 	struct timeb	tps;				// incoming time stamp
 	uchar			locals_done;
+	uchar			cacheex_done;
 	int32_t			btun; 				// mark er as betatunneled
 	int32_t			reader_avail; 		// count of available readers
 	int32_t			reader_count; 		// count of contacted readers
