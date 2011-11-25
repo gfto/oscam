@@ -1210,8 +1210,8 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##server#blockemm-bylen##TPLHELPSUFFIX##Block EMM by Len:</A></TD><TD><input name=\"blockemm-bylen\" type=\"text\" size=\"20\" maxlength=\"40\" value=\"##BLOCKEMMBYLEN##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#dropbadcws##TPLHELPSUFFIX##Drop CWs with wrong checksum:</A><input name=\"dropbadcws\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"dropbadcws\" type=\"checkbox\" value=\"1\" ##DROPBADCWSCHECKED##></TD></TR>\n\
             <TR><TD>##TPLHELPPREFIX##server#disablecrccws##TPLHELPSUFFIX##Skip CWs checksum test:</A><input name=\"disablecrccws\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"disablecrccws\" type=\"checkbox\" value=\"1\" ##DISABLECRCCWSCHECKED##></TD></TR>\n\
-			<TR><TH>&nbsp;</TH><TH>Reader specific settings for protocol ##PROTOCOL##</TH></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#cacheex##TPLHELPSUFFIX##Cache-EX:</A></TD><TD><input name=\"cacheex\" type=\"hidden\" value=\"0\"><input name=\"cacheex\" type=\"checkbox\" value=\"1\" ##CACHEEXCHECKED##></TD></TR>\n\
+			<TR><TH>&nbsp;</TH><TH>Reader specific settings for protocol ##PROTOCOL##</TH></TR>\n\
 ##READERDEPENDINGCONFIG##\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" name=\"action\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
