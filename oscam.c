@@ -2554,16 +2554,18 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	int8_t cacheex = client->account && client->account->cacheex;
 
 	if (er->rc >= E_99) {
-		cs_writelock(&ecmcache_lock);
-		er->next = ecmtask;
-		ecmtask = er;
-		cs_writeunlock(&ecmcache_lock);
+		if (!cacheex || er->rc == E_99) { //Cacheex should not add to the ecmcache:
+			cs_writelock(&ecmcache_lock);
+			er->next = ecmtask;
+			ecmtask = er;
+			cs_writeunlock(&ecmcache_lock);
 
-		if (er->rc == E_UNHANDLED && !cacheex) {
-			ecm = check_cwcache(er, client->grp);
-			if (ecm && ecm != er) {
-				er->rc = E_99;
-				er->ecmcacheptr = ecm;
+			if (er->rc == E_UNHANDLED) {
+				ecm = check_cwcache(er, client->grp);
+				if (ecm && ecm != er) {
+					er->rc = E_99;
+					er->ecmcacheptr = ecm;
+				}
 			}
 		}
 	}
@@ -2593,6 +2595,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		return; //ECM already requested / found in ECM cache
 	}
 
+	//er->rc == E_UNHANDLED
 	//Cache Exchange never request cws from readers!
 	if (cacheex) {
 		er->rc = E_NOTFOUND;

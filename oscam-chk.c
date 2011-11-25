@@ -434,6 +434,10 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   //Checking connected & group valid:
   struct s_client *cur_cl = er->client; //cur_client();
   
+  //To avoid cascading, a incoming cache request should not invoke a outgoing cache request:
+  if (rdr->cacheex && cur_cl->auth && cur_cl->account->cacheex)
+	  return (0);
+
   if (!((rdr->grp&cur_cl->grp)))
     return(0);
 
