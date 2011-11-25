@@ -446,6 +446,7 @@ extern void cs_switch_led(int32_t led, int32_t action);
 #define READER_ACTIVE		0x01
 #define READER_FALLBACK		0x02
 #define READER_LOCAL			0x04
+#define READER_CACHEEX			0x08
 
 #define REQUEST_SENT			0x10
 #define REQUEST_ANSWERED		0x20
@@ -989,6 +990,7 @@ struct s_reader  									//contains device info, reader info and card info
     int8_t			fd_error;
 	uint64_t		grp;
 	int8_t			fallback;
+	int8_t			cacheex;
 	int32_t			typ;
 	char			label[64];
 #ifdef WEBIF
@@ -1202,6 +1204,7 @@ struct s_auth
 	char			*description;
 #endif
 	int8_t			uniq;
+	int8_t			cacheex;
 	int16_t			allowedprotocols;
 	LLIST			*aureader_list;
 	int8_t			autoau;

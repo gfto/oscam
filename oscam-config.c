@@ -1781,6 +1781,11 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		return;
 	}
 
+	if (!strcmp(token, "cacheex")) {
+		account->cacheex = strToIntVal(value, 0);
+		return;
+	}
+
 	if (!strcmp(token, "sleep")) {
 		account->tosleep = strToIntVal(value, cfg.tosleep);
 		return;
@@ -2542,6 +2547,9 @@ int32_t write_userdb()
 		if (account->uniq || cfg.http_full_cfg)
 			fprintf_conf(f, "uniq", "%d\n", account->uniq);
 
+		if (account->cacheex || cfg.http_full_cfg)
+			fprintf_conf(f, "cacheex", "%d\n", account->cacheex);
+
 		if (account->tosleep != cfg.tosleep || cfg.http_full_cfg)
 			fprintf_conf(f, "sleep", "%d\n", account->tosleep);
 
@@ -2749,6 +2757,9 @@ int32_t write_server()
 
 			if (rdr->fallback || cfg.http_full_cfg)
 				fprintf_conf(f, "fallback", "%d\n", rdr->fallback);
+
+			if (rdr->cacheex || cfg.http_full_cfg)
+				fprintf_conf(f, "cacheex", "%d\n", rdr->cacheex);
 
 			if (rdr->log_port || cfg.http_full_cfg)
 				fprintf_conf(f, "logport", "%d\n", rdr->log_port);
@@ -4015,6 +4026,11 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
 	if (!strcmp(token, "fallback")) {
 		rdr->fallback  = strToIntVal(value, 0);
+		return;
+	}
+
+	if (!strcmp(token, "cacheex")) {
+		rdr->cacheex  = strToIntVal(value, 0);
 		return;
 	}
 

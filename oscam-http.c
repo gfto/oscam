@@ -1099,6 +1099,13 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "FALLBACKVALUE", (rdr->fallback == 1) ? "1" : "0");
 	}
 
+	// Cacheex
+	if(!apicall) {
+		tpl_addVar(vars, TPLADD, "CACHEEXCHECKED", (rdr->cacheex == 1) ? "checked" : "");
+	} else {
+		tpl_addVar(vars, TPLADD, "CACHEEXVALUE", (rdr->cacheex == 1) ? "1" : "0");
+	}
+
 	// Logport
 	tpl_printf(vars, TPLADD, "LOGPORT", "%d", rdr->log_port);
 
@@ -1875,6 +1882,13 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 
 	//Sleepsend
 	tpl_printf(vars, TPLADD, "SLEEPSEND", "%u", account->c35_sleepsend);
+
+	// Cacheex
+	if(!apicall) {
+		tpl_addVar(vars, TPLADD, "CACHEEXCHECKED", (account->cacheex == 1) ? "checked" : "");
+	} else {
+		tpl_addVar(vars, TPLADD, "CACHEEXVALUE", (account->cacheex == 1) ? "1" : "0");
+	}
 
 	//Keepalive
 	if(!apicall){

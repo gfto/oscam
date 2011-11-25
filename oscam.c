@@ -1684,7 +1684,7 @@ ECM_REQUEST *get_ecmtask()
 #ifdef WITH_LB
 void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc)
 {
-	if (!rdr || rc>=E_99)
+	if (!rdr || rc>=E_99 || rdr->cacheex)
 		return;
 	struct timeb tpe;
 	cs_ftime(&tpe);
@@ -1922,21 +1922,21 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
  * sends the ecm request to the readers
  * ECM_REQUEST er : the ecm
  * er->stage: 0 = no reader asked yet
- *            1 = ask only local reader (skipped without preferlocalcards)
- *            2 = ask any non fallback reader
- *            3 = ask fallback reader
+ *            2 = ask only local reader (skipped without preferlocalcards)
+ *            3 = ask any non fallback reader
+ *            4 = ask fallback reader
  **/
 static void request_cw(ECM_REQUEST *er)
 {
 	struct s_ecm_answer *ea;
 	int8_t sent = 0;
 
-	if (er->stage >= 3) return;
+	if (er->stage >= 4) return;
 
 	while (1) {
 		er->stage++;
 
-		if (er->stage == 1 && !cfg.preferlocalcards)
+		if (er->stage == 2 && !cfg.preferlocalcards)
 			er->stage++;
 
 		for(ea = er->matching_rdr; ea; ea = ea->next) {
@@ -1944,11 +1944,16 @@ static void request_cw(ECM_REQUEST *er)
 				continue;
 
 			if (er->stage == 1) {
+				// Cache-Echange
+				if ((ea->status & REQUEST_SENT) ||
+						(ea->status & (READER_CACHEEX|READER_ACTIVE)) != (READER_CACHEEX|READER_ACTIVE))
+					continue;
+			} else if (er->stage == 2) {
 				// only local reader
 				if ((ea->status & REQUEST_SENT) || 
 						(ea->status & (READER_ACTIVE|READER_FALLBACK|READER_LOCAL)) != (READER_ACTIVE|READER_LOCAL))
 					continue;
-			} else if (er->stage == 2) {
+			} else if (er->stage == 3) {
 				// any non fallback reader not asked yet
 				if ((ea->status & REQUEST_SENT) || 
 						(ea->status & (READER_ACTIVE|READER_FALLBACK)) != READER_ACTIVE)
@@ -1965,7 +1970,7 @@ static void request_cw(ECM_REQUEST *er)
 			ea->status |= REQUEST_SENT;
 			sent = 1;
 		}
-		if (sent || er->stage >= 3)
+		if (sent || er->stage >= 4)
 			break;
 	}
 }
@@ -2485,10 +2490,11 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				prv = ea;
 
 				ea->status = READER_ACTIVE;
-				if (!(ea->reader->typ & R_IS_NETWORK))
+				if (!(rdr->typ & R_IS_NETWORK))
 					ea->status |= READER_LOCAL;
-
-				if (rdr->fallback)
+				else if (rdr->cacheex)
+					ea->status |= READER_CACHEEX;
+				else if (rdr->fallback)
 					ea->status |= READER_FALLBACK;
 
 #ifdef WITH_LB
@@ -2545,13 +2551,15 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			er->rc = E_UNHANDLED;
 	}
 
+	int8_t cacheex = client->account && client->account->cacheex;
+
 	if (er->rc >= E_99) {
 		cs_writelock(&ecmcache_lock);
 		er->next = ecmtask;
 		ecmtask = er;
 		cs_writeunlock(&ecmcache_lock);
 
-		if (er->rc == E_UNHANDLED) {
+		if (er->rc == E_UNHANDLED && !cacheex) {
 			ecm = check_cwcache(er, client->grp);
 			if (ecm && ecm != er) {
 				er->rc = E_99;
@@ -2571,18 +2579,27 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		er->checksum^=*lp;
 
 	if (er->rc < E_99) {
-		if (cfg.delay)
+		if (cfg.delay && !cacheex) //No delay on cacheexchange!
 			cs_sleepms(cfg.delay);
 
 		send_dcw(client, er);
 		free_ecm(er);
-		return;
+		return; //ECM found/not found/error/invalid
 	}
 
 	if (er->rc == E_99) {
-		er->stage=3;
+		er->stage=4;
 		pthread_kill(timecheck_thread, OSCAM_SIGNAL_WAKEUP);
 		return; //ECM already requested / found in ECM cache
+	}
+
+	//Cache Exchange never request cws from readers!
+	if (cacheex) {
+		er->rc = E_NOTFOUND;
+		er->rcEx = E2_OFFLINE;
+		send_dcw(client, er);
+		free_ecm(er);
+		return;
 	}
 
 	er->rcEx = 0;
@@ -3199,10 +3216,10 @@ static void * check_thread(void) {
 				continue;
 
 			tbc = er->tps;
-			time_to_check = add_ms_to_timeb(&tbc, (er->stage < 3) ? cfg.ftimeout : cfg.ctimeout);
+			time_to_check = add_ms_to_timeb(&tbc, (er->stage < 4) ? cfg.ftimeout : cfg.ctimeout);
 
 			if (comp_timeb(&t_now, &tbc) >= 0) {
-				if (er->stage < 3) {
+				if (er->stage < 4) {
 					cs_debug_mask(D_TRACE, "fallback for %s %04X&%06X/%04X", username(er->client), er->caid, er->prid, er->srvid);
 					if (er->rc >= E_UNHANDLED) //do not request rc=99
 						request_cw(er);
