@@ -44,6 +44,11 @@ DESCRIPTIONS
 	   4 = set user only to fake if source ip is different,
 	       but only the last login will survive
 
+       cacheex = 0|1
+	  1 = enable cache exchange, default:0
+
+	  Cache exchange must be enabled on local and remote OSCam reader.
+
        sleep = minutes
 	  time waiting for inactive user, default:none
 
