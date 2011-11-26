@@ -530,7 +530,7 @@ static int8_t is_leap(unsigned y){
 	return (y % 4) == 0 && ((y % 100) != 0 || (y % 400) == 0);
 }
 
-/* Drop-in replacement for timegm function. */
+/* Drop-in replacement for timegm function as some plattforms strip the function from their libc.. */
 time_t cs_timegm(struct tm *tm){
 	time_t result = 0;
 	int32_t i;
@@ -559,12 +559,83 @@ time_t cs_timegm(struct tm *tm){
 	return result;
 }
 
+/* Drop-in replacement for gmtime_r as some plattforms strip the function from their libc. */
+struct tm *cs_gmtime_r(const time_t *timep, struct tm *r) {
+	const int16_t daysPerMonth[13] =
+  { 0,
+    (31),
+    (31+28),
+    (31+28+31),
+    (31+28+31+30),
+    (31+28+31+30+31),
+    (31+28+31+30+31+30),
+    (31+28+31+30+31+30+31),
+    (31+28+31+30+31+30+31+31),
+    (31+28+31+30+31+30+31+31+30),
+    (31+28+31+30+31+30+31+31+30+31),
+    (31+28+31+30+31+30+31+31+30+31+30),
+    (31+28+31+30+31+30+31+31+30+31+30+31),
+  };
+  time_t i;
+  time_t work=*timep%86400;
+  r->tm_sec=work%60; work/=60;
+  r->tm_min=work%60; r->tm_hour=work/60;
+  work=*timep/86400;
+  r->tm_wday=(4+work)%7;
+  for (i=1970; ; ++i) {
+    time_t k = is_leap(i)?366:365;
+    if (work>=k)
+      work-=k;
+    else
+      break;
+  }
+  r->tm_year=i-1900;
+  r->tm_yday=work;
+
+  r->tm_mday=1;
+  if (is_leap(i) && (work>58)) {
+    if (work==59) r->tm_mday=2; /* 29.2. */
+    work-=1;
+  }
+
+  for (i=11; i && (daysPerMonth[i]>work); --i) ;
+  r->tm_mon=i;
+  r->tm_mday+=work-daysPerMonth[i];
+  return r;
+}
+
+/* Drop-in replacement for ctime_r as some plattforms strip the function from their libc. */
+char *cs_ctime_r(const time_t *timep, char* buf) {
+	struct tm t;
+	localtime_r(timep, &t);
+	strftime(buf, 26, "%c\n", &t);
+  return buf;
+}
+
 void cs_ftime(struct timeb *tp)
 {
   struct timeval tv;
   gettimeofday(&tv, (struct timezone *)0);
   tp->time=tv.tv_sec;
   tp->millitm=tv.tv_usec/1000;
+}
+
+/* Drop-in replacement for readdir_r as some plattforms strip the function from their libc.
+   Furthermore, there are some security issues, see http://womble.decadent.org.uk/readdir_r-advisory.html */
+int32_t cs_readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result){ 
+/* According to POSIX the buffer readdir uses is not shared between directory streams.
+   However readdir is not guaranteed to be thread-safe and some implementations may use global state.
+   Thus we use a lock as we have many plattforms... */
+   int32_t rc;
+   cs_writelock(&readdir_lock);
+   *result = readdir(dirp);
+   rc = errno;
+   if(errno == 0 && *result != NULL){
+   	memcpy(entry, *result, sizeof(struct dirent));
+   	*result = entry;
+   }
+   cs_writeunlock(&readdir_lock);
+   return rc;
 }
 
 void cs_sleepms(uint32_t msec)

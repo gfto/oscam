@@ -1361,7 +1361,7 @@ void event_handler(int32_t signal) {
 		return;
 	}
 
-	while (!readdir_r(dirp, &entry, &dp)) {
+	while (!cs_readdir_r(dirp, &entry, &dp)) {
 		if (!dp) break;
 
 		if (strlen(dp->d_name) < 7)
@@ -2050,7 +2050,7 @@ static int32_t stapi_open() {
 	oscam_stapi_CheckVersion();
 
 	i=0;
-	while (!readdir_r(dirp, &entry, &dp)) {
+	while (!cs_readdir_r(dirp, &entry, &dp)) {
 		if (!dp) break;
 
 		snprintf(pfad, sizeof(pfad), "%s%s", PROCDIR, dp->d_name);

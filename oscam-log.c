@@ -104,7 +104,7 @@ int32_t cs_open_logfiles()
 			time(&t);
 			if (!cfg.disablelog){
 				char buf[28];
-				ctime_r(&t, buf);
+				cs_ctime_r(&t, buf);
 				fprintf(fp, "\n%s\n>> OSCam <<  cardserver %s at %s%s\n", line, starttext, buf, line);
 			}
 		}

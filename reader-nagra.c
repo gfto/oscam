@@ -26,7 +26,7 @@ static time_t tier_date(uint32_t date, char *buf, int32_t l)
   if (buf)
     {
 	struct tm t;
-	gmtime_r(&ut, &t);
+	cs_gmtime_r(&ut, &t);
 	snprintf(buf, l, "%04d/%02d/%02d", t.tm_year+1900, t.tm_mon+1, t.tm_mday);
     }
   return ut;

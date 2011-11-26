@@ -26,6 +26,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <pthread.h>
+#include <dirent.h>
 
 //for reader-nagra variables in s_reader:
 #include "cscrypt/idea.h"
@@ -71,28 +72,26 @@
 #define strcpy(a,b) UNSAFE_STRCPY_USE_CS_STRNCPY_INSTEAD()
 #define sprintf(a,...) UNSAFE_SPRINTF_USE_SNPRINTF_INSTEAD()
 #define strtok(a,b,c) UNSAFE_STRTOK_USE_STRTOK_R_INSTEAD()
-#define gmtime(a) UNSAFE_GMTIME_NOT_THREADSAFE_USE_GMTIME_R()
+#define gmtime(a) UNSAFE_GMTIME_NOT_THREADSAFE_USE_CS_GMTIME_R()
 #define localtime(a) UNSAFE_LOCALTIME_NOT_THREADSAFE_USE_LOCALTIME_R()
 #define asctime(a) UNSAFE_ASCTIME_NOT_THREADSAFE_USE_ASCTIME_R()
-#define ctime(a) UNSAFE_CTIME_NOT_THREADSAFE_USE_CTIME_R()
+#define ctime(a) UNSAFE_CTIME_NOT_THREADSAFE_USE_CS_CTIME_R()
 #define gethostbyaddr(a,b,c) UNSAFE_GETHOSTBYADDR_NOT_THREADSAFE_USE_GETADDRINFO()
 #define gethostent(a) UNSAFE_GETHOSTENT_NOT_THREADSAFE()
 #define getprotobyname(a) UNSAFE_GETPROTOBYNAME_NOT_THREADSAFE_USE_GETPROTOBYNAME_R()
 #define getservbyname(a,b) UNSAFE_GETSERVBYNAME_NOT_THREADSAFE_USE_GETSERVBYNAME_R()
 #define getservbyport(a,b) UNSAFE_GETSERVBYPORT_NOT_THREADSAFE_USE_GETSERVBYPORT_R()
 #define getservent() UNSAFE_GETSERVENT_NOT_THREADSAFE_USE_GETSERVENT_R()
-#define getprotobyname(a) UNSAFE_GETPROTOBYNAME_NOT_THREADSAFE_USE_GETPROTOBYNAME_R()
-#define getprotobyname(a) UNSAFE_GETPROTOBYNAME_NOT_THREADSAFE_USE_GETPROTOBYNAME_R()
 #define getnetbyname(a) UNSAFE_GETNETBYNAME_NOT_THREADSAFE_USE_GETNETBYNAME_R
 #define getnetbyaddr(a,b) UNSAFE_GETNETBYADDR_NOT_THREADSAFE_USE_GETNETBYADDR_R
 #define getnetent() UNSAFE_GETNETENT_NOT_THREADSAFE_USE_GETNETENT_R
-#define getrpcbyname(a) UNSAFE_GETRPCBYNAME_NOT_THREADSAFE_USE_GETRPCBYNAME
-#define getrpcbynumber(a) UNSAFE_GETRPCBYNUMBER_NOT_THREADSAFE_USE_GETRPCBYNUMBER
+#define getrpcbyname(a) UNSAFE_GETRPCBYNAME_NOT_THREADSAFE_USE_GETRPCBYNAME_R
+#define getrpcbynumber(a) UNSAFE_GETRPCBYNUMBER_NOT_THREADSAFE_USE_GETRPCBYNUMBER_R
 #define getrpcent() UNSAFE_GETRPCENT_NOT_THREADSAFE_USE_GETRPCENT_R
 #define ctermid(a) UNSAFE_CTERMID_NOT_THREADSAFE_USE_CTERMID_R
 #define tmpnam(a) UNSAFE_TMPNAM_NOT_THREADSAFE
 #define tempnam(a,b) UNSAFE_TEMPNAM_NOT_THREADSAFE
-#define readdir(a) UNSAFE_READDIR_NOT_THREADSAFE_USE_READDIR_R
+//#define readdir(a) UNSAFE_READDIR_NOT_THREADSAFE_USE_CS_READDIR_R
 #define getlogin() UNSAFE_GETLOGIN_NOT_THREADSAFE_USE_GETLOGIN_R
 #define getpwnam(a) UNSAFE_GETPWNAM_NOT_THREADSAFE_USE_GETPWNAM_R
 #define getpwent() UNSAFE_GETPWENT_NOT_THREADSAFE_USE_GETPWENT_R
@@ -1553,6 +1552,7 @@ extern struct s_module ph[CS_MAX_MOD];
 extern struct s_cardsystem cardsystem[CS_MAX_MOD];
 extern struct s_cardreader cardreader[CS_MAX_MOD];
 extern CS_MUTEX_LOCK gethostbyname_lock;
+extern CS_MUTEX_LOCK readdir_lock;
 #if defined(LIBUSB)
 extern CS_MUTEX_LOCK sr_lock;
 #endif

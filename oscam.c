@@ -50,6 +50,7 @@ CS_MUTEX_LOCK clientlist_lock;
 CS_MUTEX_LOCK readerlist_lock;
 CS_MUTEX_LOCK fakeuser_lock;
 CS_MUTEX_LOCK ecmcache_lock;
+CS_MUTEX_LOCK readdir_lock;
 pthread_key_t getclient;
 
 pthread_t timecheck_thread;
@@ -1025,6 +1026,7 @@ static void init_first_client()
   cs_lock_create(&readerlist_lock, 5, "readerlist_lock");
   cs_lock_create(&fakeuser_lock, 5, "fakeuser_lock");
   cs_lock_create(&ecmcache_lock, 5, "ecmcache_lock");
+  cs_lock_create(&readdir_lock, 5, "readdir_lock");
 
 #ifdef COOL
   coolapi_open_all();

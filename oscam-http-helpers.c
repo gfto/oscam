@@ -479,7 +479,7 @@ void send_headers(FILE *f, int32_t status, char *title, char *extra, char *mime,
   pos += snprintf(pos, sizeof(buf)-(pos-buf), "Server: %s\r\n", SERVER);
 
   now = time(NULL);
-  gmtime_r(&now, &timeinfo);
+  cs_gmtime_r(&now, &timeinfo);
   strftime(timebuf, sizeof(timebuf), RFC1123FMT, &timeinfo);
   pos += snprintf(pos, sizeof(buf)-(pos-buf), "Date: %s\r\n", timebuf);
 
