@@ -102,11 +102,12 @@ int32_t SR_Init (struct s_reader *reader)
         cs_log("Wrong device format (%s), it should be Device=bus:dev",reader->device);
         return ERROR;
     }
-    reader->sr_config=malloc(sizeof(struct s_sr_config));
+    if(!reader->sr_config) reader->sr_config=malloc(sizeof(struct s_sr_config));
     if(!reader->sr_config) {
         cs_log("Couldn't allocate memory for Device=%s config",reader->device);
         return ERROR;
     }
+    memset(reader->sr_config, 0, sizeof(struct s_sr_config));
     cs_writelock(&sr_lock);
     cs_debug_mask (D_DEVICE, "IO:SR: Looking for device %s on bus %s",devname,busname);
 
@@ -132,6 +133,9 @@ int32_t SR_Init (struct s_reader *reader)
 
     reader->sr_config->usb_dev=find_smartreader(busname,devname,out_endpoint);
     if(!reader->sr_config->usb_dev){
+    		--init_count;
+    		if (!init_count)
+    			libusb_exit(NULL);
         cs_writeunlock(&sr_lock);
         return ERROR;
     }
@@ -146,6 +150,9 @@ int32_t SR_Init (struct s_reader *reader)
     cs_debug_mask (D_DEVICE, "IO:SR: Opening smartreader device %s on bus %s",devname,busname);
 
     if ((ret=smartreader_usb_open_dev(reader))) {
+    		--init_count;
+    		if (!init_count)
+    			libusb_exit(NULL);
         cs_writeunlock(&sr_lock);
         cs_log("unable to open smartreader device %s in bus %s (ret=%d)\n", devname,busname,ret);
         return ERROR;
@@ -447,22 +454,24 @@ int32_t SR_SetParity (struct s_reader *reader, uint16_t  parity)
 int32_t SR_Close (struct s_reader *reader)
 {
   if (!reader->sr_config) return OK;
-  cs_writelock(&sr_lock);
   cs_debug_mask(D_DEVICE, "IO:SR: Closing smartreader\n");
 
     reader->sr_config->running=FALSE;
-    smart_fastpoll(reader, TRUE);
-    pthread_join(reader->sr_config->rt,NULL);
-    smart_fastpoll(reader, FALSE);
-    libusb_release_interface(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
+    if(reader->sr_config->usb_dev_handle){
+    	  cs_writelock(&sr_lock);
+	    smart_fastpoll(reader, TRUE);
+	    pthread_join(reader->sr_config->rt,NULL);
+	    smart_fastpoll(reader, FALSE);
+	    libusb_release_interface(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
 #if defined(OS_LINUX)
-    libusb_attach_kernel_driver(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
+    	libusb_attach_kernel_driver(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
 #endif
-    libusb_close(reader->sr_config->usb_dev_handle);
-    init_count--;
-    if (!init_count)
-    		libusb_exit(NULL);
-    cs_writeunlock(&sr_lock);
+    	libusb_close(reader->sr_config->usb_dev_handle);
+	    init_count--;
+	    if (!init_count)
+	    		libusb_exit(NULL);
+	    cs_writeunlock(&sr_lock);
+    }
     free(reader->sr_config);
     reader->sr_config = NULL;
     return OK;
