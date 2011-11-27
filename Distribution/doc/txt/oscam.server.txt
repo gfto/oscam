@@ -88,6 +88,11 @@ DESCRIPTIONS
        fallback = 0|1
 	  1 = define reader as fallback, standard and fallback reader must have the same group, default:0
 
+       cacheex = 0|1
+	  1 = enable cache exchange, default:0
+
+	  Cache exchange must be enabled on local and remote OSCam reader.
+
        logport = 0|port
 	  camd	3.x  reader logport, camd 3.x UDP must be activated, only works if there's no camd 3.x cascading, 0 =
 	  disabled, default=0

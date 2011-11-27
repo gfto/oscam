@@ -113,6 +113,13 @@ description of reader, default:none
 1 = define reader as fallback, standard and fallback reader must have the same group, default:0
 .RE
 .PP
+\fBcacheex\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = enable cache exchange, default:0
+
+\fICache exchange must be enabled on local and remote OSCam reader.\fR
+.RE
+.PP
 \fBlogport\fP = \fB0\fP|\fBport\fP
 .RS 3n
 camd 3.x reader logport, camd 3.x UDP must be activated, only works if there's no camd 3.x cascading, 0 = disabled, default=0
