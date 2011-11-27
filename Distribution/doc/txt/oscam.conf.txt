@@ -219,6 +219,9 @@ DESCRIPTIONS
 	  1 = enable automatic Betacrypt tunneling detection for CAIDs 1801, 1833, 1834, and 1835 for load balancing,
 	  Betacrypt defintion in oscam.user with betatunnel will be prefered, default:1
 
+       lb_auto_betatunnel_prefer_beta = time factor
+	  set automatic Betacrypt tunneling time factor prefering Betacrypt over Nagravision in percent, default: 50
+
        disablemail = 0|1
 	  1 = disable saving NDS Videoguard mail messages from provider, default:1
 
