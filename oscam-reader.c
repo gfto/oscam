@@ -696,8 +696,14 @@ int32_t reader_init(struct s_reader *reader) {
 	else {
 		client->typ='r';
 		client->ip=cs_inet_addr("127.0.0.1");
-		while (reader_device_init(reader)==2)
-			cs_sleepms(60000); // wait 60 secs and try again
+		while (reader_device_init(reader)==2){
+			int8_t i = 0;
+			do{
+				cs_sleepms(2000);
+				if(!ll_contains(configured_readers, reader) || !check_client(client) || reader->enable != 1) return 0;
+				++i;
+			} while (i < 30);
+		}
 		cs_log("reader %s initialized (device=%s, detect=%s%s, mhz=%d, cardmhz=%d)", reader->label, reader->device, reader->detect&0x80 ? "!" : "",RDR_CD_TXT[reader->detect&0x7f], reader->mhz,reader->cardmhz);
 	}
 #endif
