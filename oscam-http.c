@@ -299,7 +299,7 @@ static char *send_oscam_config_loadbalancer(struct templatevars *vars, struct ur
 	free_mk_t(value);
 
 	if (cfg.lb_auto_betatunnel) tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNEL", "selected");
-	tpl_addVar(vars, TPLADD, "LBPREFERBETA", cfg.lb_auto_betatunnel_prefer_beta);
+	tpl_printf(vars, TPLADD, "LBPREFERBETA", "%d", cfg.lb_auto_betatunnel_prefer_beta);
 
 	return tpl_getTpl(vars, "CONFIGLOADBALANCER");
 }
