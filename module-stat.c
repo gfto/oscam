@@ -778,6 +778,9 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					needs_stats_beta = 1;
 			}
 			
+			if (cfg.lb_auto_betatunnel_prefer_beta)
+				time_beta = time_beta * cfg.lb_auto_betatunnel_prefer_beta/100;
+			
 			//if we needs stats, we send 2 ecm requests: 18xx and 17xx:
 			if (needs_stats_nagra || needs_stats_beta) {
 				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X needs more statistics...", er->caid, caid_to);

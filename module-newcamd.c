@@ -342,9 +342,17 @@ static int32_t connect_newcamd_server()
   memset(cl->reader->prid, 0x00, sizeof(cl->reader->prid));
   for (i=0; i < cl->reader->nprov; i++) {
     cl->reader->availkeys[i][0] = 1;
-    cl->reader->prid[i][1] = buf[15+2+11*i];
-    cl->reader->prid[i][2] = buf[16+2+11*i];
-    cl->reader->prid[i][3] = buf[17+2+11*i];
+	if (((cl->reader->caid >> 8) == 0x17) ||
+		((cl->reader->caid >> 8) == 0x06)) //Betacrypt or Irdeto
+	{
+	    memcpy(&cl->reader->prid[i], buf+22+2+11*i, 4);
+    }
+    else
+    {
+        cl->reader->prid[i][1] = buf[15+2+11*i];
+		cl->reader->prid[i][2] = buf[16+2+11*i];
+        cl->reader->prid[i][3] = buf[17+2+11*i];
+	} 
     memcpy(&cl->reader->sa[i], buf+22+2+11*i, 4); // the 4 first bytes are not read
     cs_log("Provider ID: %02X%02X%02X - SA: %02X%02X%02X%02X", cl->reader->prid[i][1],  cl->reader->prid[i][2], cl->reader->prid[i][3], cl->reader->sa[i][0], cl->reader->sa[i][1], cl->reader->sa[i][2], cl->reader->sa[i][3]);
   }

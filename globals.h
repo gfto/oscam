@@ -352,6 +352,7 @@ extern char *RDR_CD_TXT[];
 #define DEFAULT_LB_REOPEN_MODE 0
 #define DEFAULT_UPDATEINTERVAL 240
 #define DEFAULT_LB_AUTO_BETATUNNEL 1
+#define DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA 50
 
 enum {E1_GLOBAL=0, E1_USER, E1_READER, E1_SERVER, E1_LSERVER};
 enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE, E2_OFFLINE, 
@@ -1421,6 +1422,7 @@ struct s_config
 	int32_t			lb_reopen_mode;					// reopen readers mode
 	int32_t			lb_max_readers;					// limit the amount of readers during learning
 	int32_t			lb_auto_betatunnel;				// automatic selection of betatunnel convertion based on learned data
+	int32_t			lb_auto_betatunnel_prefer_beta; // prefer-beta-over-nagra factor
 #endif
 	int32_t			resolve_gethostbyname;
 

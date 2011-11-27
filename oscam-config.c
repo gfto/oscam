@@ -722,6 +722,11 @@ void chk_t_global(const char *token, char *value)
 		cfg.lb_auto_betatunnel = strToIntVal(value, DEFAULT_LB_AUTO_BETATUNNEL);
 		return;
 	}
+	
+	if (!strcmp(token, "lb_auto_betatunnel_prefer_beta")) {
+		cfg.lb_auto_betatunnel_prefer_beta = strToIntVal(value, DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA);
+		return;
+	}
 #endif
 
 	if (!strcmp(token, "resolvegethostbyname")) {
@@ -1652,6 +1657,7 @@ int32_t init_config()
 	cfg.lb_retrylimit = DEFAULT_RETRYLIMIT;
 	cfg.lb_stat_cleanup = DEFAULT_LB_STAT_CLEANUP;
 	cfg.lb_auto_betatunnel = DEFAULT_LB_AUTO_BETATUNNEL;
+	cfg.lb_auto_betatunnel_prefer_beta = DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA;
 	//end loadbalancer defaults
 #endif
 
@@ -2173,6 +2179,8 @@ int32_t write_config()
 		fprintf_conf(f, "lb_max_readers", "%d\n", cfg.lb_max_readers);
 	if (cfg.lb_auto_betatunnel != DEFAULT_LB_AUTO_BETATUNNEL || cfg.http_full_cfg)
 		fprintf_conf(f, "lb_auto_betatunnel", "%d\n", cfg.lb_auto_betatunnel);
+	if (cfg.lb_auto_betatunnel_prefer_beta != DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA || cfg.http_full_cfg)
+		fprintf_conf(f, "lb_auto_betatunnel_prefer_beta", "%d\n", cfg.lb_auto_betatunnel_prefer_beta);
 #endif
 
 	if (cfg.resolve_gethostbyname || cfg.http_full_cfg)
