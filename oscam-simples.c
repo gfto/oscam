@@ -628,6 +628,7 @@ int32_t cs_readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result){
    Thus we use a lock as we have many plattforms... */
    int32_t rc;
    cs_writelock(&readdir_lock);
+   errno=0;
    *result = readdir(dirp);
    rc = errno;
    if(errno == 0 && *result != NULL){
