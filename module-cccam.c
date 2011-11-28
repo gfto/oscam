@@ -1024,9 +1024,11 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 	LL_ITER it = ll_iter_create(cc->cards);
 	struct cc_card *card = NULL, *ncard, *xcard = NULL;
 	while ((ncard = ll_iter_next(&it))) {
-		if (ncard->caid == cur_er->caid || // caid matches
-				(chk_only && cfg.lb_mode && cfg.lb_auto_betatunnel && cur_er->caid>>8==0x18 && ncard->caid>>8==0x17)) { //accept beta card when beta-tunnel is on
-				
+		if (ncard->caid == cur_er->caid  // caid matches
+				#ifdef WITH_LB  
+				||(chk_only && cfg.lb_mode && cfg.lb_auto_betatunnel && cur_er->caid>>8==0x18 && ncard->caid>>8==0x17) //accept beta card when beta-tunnel is on
+				#endif
+				) {
 			if (is_sid_blocked(ncard, &cur_srvid))
 				continue;
 
