@@ -3282,11 +3282,19 @@ static void * check_thread(void) {
 				if (ecm->tps.time < ecm_timeout) {
 					cs_readunlock(&ecmcache_lock);
 					cs_writelock(&ecmcache_lock);
-					ecmt = ecm;
-					if (prv)
-						prv->next = NULL;
-					else
-						ecmtask = NULL;
+					
+					//next line is because of thread-safety
+					//a readlock does does not prevent thread from walking through this list
+					//so ecm->tps.time < ecm_timeout and the following readunlock could be reached by
+					//multiple task. Only writelock could does the real thread-lock.
+					//so if thread 1 removes ecm from this list, thread 2 should check ecm prv/ecmtask:
+					if ((prv != NULL && prv->next == ecm) || (ecmtask == ecm)) {
+						ecmt = ecm;
+						if (prv)
+							prv->next = NULL;
+						else
+							ecmtask = NULL;
+					}
 					cs_writeunlock(&ecmcache_lock);
 					break;
 				}
