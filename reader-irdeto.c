@@ -153,6 +153,8 @@ static time_t chid_date(struct s_reader * reader, uint32_t date, char *buf, int3
                                {0x0664, 0x0608, "TUR", 946598400L},    // 31.12.1999, 00:00
                                {0x0624, 0x0006, "CZE", 946598400L},    // 30.12.1999, 16:00    //skyklink irdeto
                                {0x0624, 0x0006, "SVK", 946598400L},    // 30.12.1999, 16:00	   //skyklink irdeto
+                               {0x0666, 0x0006, "SVK", 946598400L},    // 30.12.1999, 16:00    //cslink irdeto
+                               {0x0666, 0x0006, "CZE", 946598400L},    // 30.12.1999, 16:00    //cslink irdeto
                                {0x0648, 0x0608, "AUT", 946598400L},    // 31.12.1999, 00:00    //orf ice irdeto
                                {0x0604, 0x0605, "GRC", 1011052800L},   // 15.01.2002, 00:00    //nova irdeto
                                {0x0604, 0x0606, "GRC", 1011052800L},   // 15.01.2002, 00:00    //nova irdeto
@@ -405,7 +407,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR newatr)
 		}
 	}
 
-	if (reader->caid == 0x0648) { // acs 6.08
+	if ((reader->caid == 0x0648) || (reader->caid == 0x0666)) { // acs 6.08
 		camkey = 4;
 		sc_Acs57CamKey[2] = 0;
 	}
@@ -431,7 +433,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR newatr)
 			for(i=5;i<(int)sizeof(sc_Acs57CamKey)-1;i++)
 				crc^=sc_Acs57CamKey[i];
 			sc_Acs57CamKey[69]=crc;
-			if (reader->caid == 0x0648) {
+			if ((reader->caid == 0x0648) || (reader->caid == 0x0666) || (reader->caid == 0x0624)) {
 				sc_Acs57CamKey[69] = XorSum(sc_Acs57CamKey, 69) ^ 0x3f ^ (sc_Acs57CamKey[0]&0xf0) ^ 0x1b;
 				if (irdeto_do_cmd(reader, sc_Acs57CamKey, 0x9011, cta_res, &cta_lr)) {
 					cs_log("[reader-irdeto] You have a bad Cam Key set");
@@ -485,7 +487,7 @@ int32_t irdeto_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_
 		memcpy(cta_cmd+5,er->ecm+6,er->ecm[2]-1); 
 		cta_cmd[er->ecm[2]+2]=crc;
 
-		if (reader->caid == 0x0648)
+		if ((reader->caid == 0x0648) || (reader->caid == 0x0666) || (reader->caid == 0x0624))
 			cta_cmd[er->ecm[2]+2]=XorSum(cta_cmd, (er->ecm[2]+2)) ^ 0x3f ^ (cta_cmd[0]&0xf0);
 
 		irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr);
@@ -724,7 +726,7 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 				}else{
 					dataLen=ep->emm[2];
 				}
-				if (ep->type==GLOBAL && (reader->caid==0x0624 || reader->caid==0x0648)) dataLen+=2;
+				if (ep->type==GLOBAL && (reader->caid==0x0624 || reader->caid==0x0648 || reader->caid == 0x0666)) dataLen+=2;
 				int32_t crc=63;
 				sc_Acs57Emm[4]=dataLen;
 				memcpy(&cta_cmd, sc_Acs57Emm, sizeof(sc_Acs57Emm));
@@ -733,7 +735,7 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 				if (ep->type==UNIQUE) {
 					memcpy(&cta_cmd[9],&ep->emm[9],dataLen-4);
 				} else {
-					if (ep->type==GLOBAL && (reader->caid==0x0624 || reader->caid==0x0648)) {
+					if (ep->type==GLOBAL && (reader->caid==0x0624 || reader->caid==0x0648 || reader->caid == 0x0666)) {
 						memcpy(&cta_cmd[9],&ep->emm[6],1);
 						memcpy(&cta_cmd[10],&ep->emm[7],dataLen-6);					
 //						cta_cmd[9]=0x00;
