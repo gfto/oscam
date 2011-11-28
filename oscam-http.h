@@ -698,7 +698,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TH TITLE=\"Last ECM Time\">LTIME</TH>\n\
 			<TH TITLE=\"Valid EMM delivered\">EOK</TH>\n\
 			<TH TITLE=\"Invalid EMM delivered\">ENOK</TH>\n\
-			<TH>CW Rate</TH>\n\
+			<TH TITLE=\"CW rate since Server start (CW rate current Session)\">CW Rate</TH>\n\
 			<TH TITLE=\"Different services during last 60s\">CASC USERS</TH>\n\
 			<TH colspan=\"3\" class=\"centered\">Action</TH>\n\
 		</TR>\n\
