@@ -695,11 +695,6 @@ WEB INTERFACE
 	  orignal template with the non-linked page savetemplates.html. Store your  own  template  in  the  directory
 	  specified by httptpl.
 
-       ·  known issues
-
-	  Login  is  not possible by now with the Safari browser because of incorrect stale flag handling. Increasing
-	  the AUTHNONCEVALIDSECS in oscam-http.h would be a workaround, but also a small security risk.
-
 CACHING
        types of ECM caching:
 
@@ -756,7 +751,7 @@ EXAMPLES
 	password     = password4
 
 SEE ALSO
-       list_smargo(1),	oscam(1),  oscam.ac(5),   oscam.cert(5),   oscam.dvbapi(5),   oscam.guess(5),	oscam.ird(5),
+       list_smargo(1),	 oscam(1),   oscam.ac(5),   oscam.cert(5),   oscam.dvbapi(5),  oscam.guess(5),	oscam.ird(5),
        oscam.provid(5), oscam.server(5), oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
 
 
