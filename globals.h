@@ -1477,7 +1477,7 @@ struct s_config
 	int32_t		pand_port;
 	in_addr_t	pand_srvip;
 #endif
-	int32_t     cacheex_wait_time; //cache wait time in ms
+	uint32_t     cacheex_wait_time; //cache wait time in ms
 };
 
 struct s_clientinit

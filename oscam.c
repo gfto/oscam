@@ -3250,7 +3250,7 @@ static void * check_thread(void) {
 				continue;
 
 			tbc = er->tps;
-			time_to_check = add_ms_to_timeb(&tbc, (er->stage < 4) ? cfg.ftimeout : cfg.ctimeout);
+			time_to_check = add_ms_to_timeb(&tbc, (er->stage < 2) ? cfg.cacheex_wait_time:((er->stage < 4) ? cfg.ftimeout : cfg.ctimeout));
 
 			if (comp_timeb(&t_now, &tbc) >= 0) {
 				if (er->stage < 4) {
