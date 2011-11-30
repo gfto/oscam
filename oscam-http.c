@@ -234,6 +234,8 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "DCHECKCSELECTED", "selected");
 #endif
 
+	tpl_printf(vars, TPLADD, "CACHEEXWAITTIME", "%d", cfg.cacheex_wait_time);
+
 	return tpl_getTpl(vars, "CONFIGGLOBAL");
 }
 

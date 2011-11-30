@@ -627,6 +627,11 @@ void chk_t_global(const char *token, char *value)
 		return;
 	}
 
+	if (!strcmp(token, "cacheexwaittime")) {
+			cfg.cacheex_wait_time = strToIntVal(value, DEFAULT_CACHEEX_WAIT_TIME);
+			return;
+		}
+
 #ifdef WITH_LB
 	if (!strcmp(token, "readerautoloadbalance") || !strcmp(token, "lb_mode")) {
 		cfg.lb_mode = strToIntVal(value, DEFAULT_LB_MODE);
@@ -1660,6 +1665,7 @@ int32_t init_config()
 	cfg.lb_auto_betatunnel_prefer_beta = DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA;
 	//end loadbalancer defaults
 #endif
+	cfg.cacheex_wait_time = DEFAULT_CACHEEX_WAIT_TIME;
 
 #ifdef LCDSUPPORT
 	cfg.lcd_hide_idle = 0;
@@ -2132,6 +2138,8 @@ int32_t write_config()
 		fprintf_conf(f, "readerrestartseconds", "%d\n", cfg.reader_restart_seconds);
 	if (cfg.dropdups || cfg.http_full_cfg)
 		fprintf_conf(f, "dropdups", "%d\n", cfg.dropdups);
+	if (cfg.cacheex_wait_time != DEFAULT_CACHEEX_WAIT_TIME || cfg.http_full_cfg)
+		fprintf_conf(f, "cacheexwaittime", cfg.cacheex_wait_time);
 
 #ifdef WITH_LB
 	if (cfg.lb_mode != DEFAULT_LB_MODE || cfg.http_full_cfg)

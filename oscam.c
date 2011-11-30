@@ -2563,6 +2563,27 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	int8_t cacheex = client->account && client->account->cacheex;
 
+	if (cacheex && er->rc == E_UNHANDLED) { //not found in cache, so wait!
+		int32_t max_wait = cfg.cacheex_wait_time;
+		while (max_wait > 0) {
+			cs_sleepms(50);
+			max_wait -= 50;
+			ecm = check_cwcache(er, client->grp);
+			if (ecm) {
+				if (ecm->rc <= E_NOTFOUND) { //Found cache!
+					memcpy(er->cw, ecm->cw, 16);
+					er->selected_reader = ecm->selected_reader;
+					er->rc = E_CACHE1;
+				} else { //Found request!
+					er->ecmcacheptr = ecm;
+					er->rc = E_99;
+				}
+				break;
+			}
+		}
+
+	}
+
 	if (er->rc >= E_99) {
 		if (!cacheex || er->rc == E_99) { //Cacheex should not add to the ecmcache:
 			cs_writelock(&ecmcache_lock);
