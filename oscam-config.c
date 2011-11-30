@@ -2139,7 +2139,7 @@ int32_t write_config()
 	if (cfg.dropdups || cfg.http_full_cfg)
 		fprintf_conf(f, "dropdups", "%d\n", cfg.dropdups);
 	if (cfg.cacheex_wait_time != DEFAULT_CACHEEX_WAIT_TIME || cfg.http_full_cfg)
-		fprintf_conf(f, "cacheexwaittime", cfg.cacheex_wait_time);
+		fprintf_conf(f, "cacheexwaittime", "%d\n", cfg.cacheex_wait_time);
 
 #ifdef WITH_LB
 	if (cfg.lb_mode != DEFAULT_LB_MODE || cfg.http_full_cfg)
