@@ -222,6 +222,9 @@ DESCRIPTIONS
        lb_auto_betatunnel_prefer_beta = time factor
 	  set automatic Betacrypt tunneling time factor prefering Betacrypt over Nagravision in percent, default: 50
 
+       cacheexwaittime = milliseconds
+	  cache waiting time in milliseconds for cache exchange, default:50
+
        disablemail = 0|1
 	  1 = disable saving NDS Videoguard mail messages from provider, default:1
 
