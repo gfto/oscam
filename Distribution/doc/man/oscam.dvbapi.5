@@ -5,23 +5,23 @@
 DVBAPI settings
 .SH DESCRIPTIONS
 .PP
-\fBP\fP: \fBCAID\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP[:]\fB[CHID]\fP \fB[continue]\fP
+\fBP\fP: \fB[CAID]\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP[:]\fB[CHID]\fP \fB[continue]\fP
 .RS 3n
  set priority, \fBcontinue\fP = \fB1\fP: proceed with priority, recommended for 
- pay-per-view services, default:none
+ pay-per-view services / EMMs \fI(use carefully)\fR, default:none
 .RE
 .PP
-\fBI\fP: \fBCAID\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP[:]\fB[CHID]\fP
+\fBI\fP: \fB[CAID]\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP[:]\fB[CHID]\fP
 .RS 3n
  set ignore
 .RE
 .PP
-\fBD\fP: \fBCAID\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP \fBdelay\fP
+\fBD\fP: \fB[CAID]\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP \fBdelay\fP
 .RS 3n
  set delay in milli seconds writing CWs
 .RE
 .PP
-\fBM\fP: \fBCAID\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP \fBtarget CAID\fP[:]\fB[target provider ID]\fP
+\fBM\fP: \fB[CAID]\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP \fBtarget CAID\fP[:]\fB[target provider ID]\fP
 .RS 3n
  mapping
 .RE
@@ -31,7 +31,7 @@ DVBAPI settings
  set DVB API device name and PMT file name \fI(valid for STAPI only)\fR
 .RE
 .PP
-\fBL\fP: \fBCAID\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP \fBlength\fP
+\fBL\fP: \fB[CAID]\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP \fBlength\fP
 .RS 3n
  set ECM length in hexadecimal
 .RE
@@ -48,16 +48,20 @@ DVBAPI settings
 
  P: 0300::9ABC        # prioritise CAID 0300 on service 9ABC only
 
- M: 0400 0500:123456  # map CAID 0400 to provider ID 123456 with
-                      # CAID 0500
+ P: 0400 1            # prioritise CAID 0400 for pay-per-view services
+ 
+ P: : 1               # prioritise for EMMs
 
- D: 0600 200          # wait 200 ms before writing CW for CAID 0600
+ M: 0500 0600:123456  # map CAID 0500 to provider ID 123456 with
+                      # CAID 0600
+
+ D: 0700 200          # wait 200 ms before writing CW for CAID 0700
 
  I: :654321           # ignore provider ID 654321 for every CAID and
                       # service
 
  I: 0                 # ignore every CAID that was not handled before
 
- L: 0700 8e           # ECM length for CAID 0700 to 8e (hexadecimal)
+ L: 0800 8e           # ECM length for CAID 0800 to 8e (hexadecimal)
 .SH "SEE ALSO"
 \fBlist_smargo\fR(1), \fBoscam\fR(1), \fBoscam.ac\fR(5), \fBoscam.cert\fR(5), \fBoscam.conf\fR(5), \fBoscam.guess\fR(5), \fBoscam.ird\fR(5), \fBoscam.provid\fR(5), \fBoscam.server\fR(5), \fBoscam.services\fR(5), \fBoscam.user\fR(5)

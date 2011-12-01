@@ -18,29 +18,29 @@ DVBAPI settings
 
 <P>
 
-<B>P</B>: <B>CAID</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B>[:]<B>[CHID]</B> <B>[continue]</B>
+<B>P</B>: <B>[CAID]</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B>[:]<B>[CHID]</B> <B>[continue]</B>
 <DL COMPACT><DT><DD>
 <BR>&nbsp;set&nbsp;priority,&nbsp;<B>continue</B>&nbsp;=&nbsp;<B>1</B>:&nbsp;proceed&nbsp;with&nbsp;priority,&nbsp;recommended&nbsp;for&nbsp;
-<BR>&nbsp;pay-per-view&nbsp;services,&nbsp;default:none
+<BR>&nbsp;pay-per-view&nbsp;services&nbsp;/&nbsp;EMMs&nbsp;<I>(use&nbsp;carefully)</I>,&nbsp;default:none
 </DL>
 
 <P>
 
-<B>I</B>: <B>CAID</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B>[:]<B>[CHID]</B>
+<B>I</B>: <B>[CAID]</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B>[:]<B>[CHID]</B>
 <DL COMPACT><DT><DD>
 <BR>&nbsp;set&nbsp;ignore
 </DL>
 
 <P>
 
-<B>D</B>: <B>CAID</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B> <B>delay</B>
+<B>D</B>: <B>[CAID]</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B> <B>delay</B>
 <DL COMPACT><DT><DD>
 <BR>&nbsp;set&nbsp;delay&nbsp;in&nbsp;milli&nbsp;seconds&nbsp;writing&nbsp;CWs
 </DL>
 
 <P>
 
-<B>M</B>: <B>CAID</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B> <B>target CAID</B>[:]<B>[target provider ID]</B>
+<B>M</B>: <B>[CAID]</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B> <B>target CAID</B>[:]<B>[target provider ID]</B>
 <DL COMPACT><DT><DD>
 <BR>&nbsp;mapping
 </DL>
@@ -54,7 +54,7 @@ DVBAPI settings
 
 <P>
 
-<B>L</B>: <B>CAID</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B> <B>length</B>
+<B>L</B>: <B>[CAID]</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B> <B>length</B>
 <DL COMPACT><DT><DD>
 <BR>&nbsp;set&nbsp;ECM&nbsp;length&nbsp;in&nbsp;hexadecimal
 </DL>
@@ -76,17 +76,21 @@ DVBAPI settings
 <P>
 <BR>&nbsp;P:&nbsp;0300::9ABC&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;prioritise&nbsp;CAID&nbsp;0300&nbsp;on&nbsp;service&nbsp;9ABC&nbsp;only
 <P>
-<BR>&nbsp;M:&nbsp;0400&nbsp;0500:123456&nbsp;&nbsp;#&nbsp;map&nbsp;CAID&nbsp;0400&nbsp;to&nbsp;provider&nbsp;ID&nbsp;123456&nbsp;with
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;CAID&nbsp;0500
+<BR>&nbsp;P:&nbsp;0400&nbsp;1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;prioritise&nbsp;CAID&nbsp;0400&nbsp;for&nbsp;pay-per-view&nbsp;services
+<BR>&nbsp;
+<BR>&nbsp;P:&nbsp;:&nbsp;1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;prioritise&nbsp;for&nbsp;EMMs
 <P>
-<BR>&nbsp;D:&nbsp;0600&nbsp;200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;wait&nbsp;200&nbsp;ms&nbsp;before&nbsp;writing&nbsp;CW&nbsp;for&nbsp;CAID&nbsp;0600
+<BR>&nbsp;M:&nbsp;0500&nbsp;0600:123456&nbsp;&nbsp;#&nbsp;map&nbsp;CAID&nbsp;0500&nbsp;to&nbsp;provider&nbsp;ID&nbsp;123456&nbsp;with
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;CAID&nbsp;0600
+<P>
+<BR>&nbsp;D:&nbsp;0700&nbsp;200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;wait&nbsp;200&nbsp;ms&nbsp;before&nbsp;writing&nbsp;CW&nbsp;for&nbsp;CAID&nbsp;0700
 <P>
 <BR>&nbsp;I:&nbsp;:654321&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;ignore&nbsp;provider&nbsp;ID&nbsp;654321&nbsp;for&nbsp;every&nbsp;CAID&nbsp;and
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;service
 <P>
 <BR>&nbsp;I:&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;ignore&nbsp;every&nbsp;CAID&nbsp;that&nbsp;was&nbsp;not&nbsp;handled&nbsp;before
 <P>
-<BR>&nbsp;L:&nbsp;0700&nbsp;8e&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;ECM&nbsp;length&nbsp;for&nbsp;CAID&nbsp;0700&nbsp;to&nbsp;8e&nbsp;(hexadecimal)
+<BR>&nbsp;L:&nbsp;0800&nbsp;8e&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;ECM&nbsp;length&nbsp;for&nbsp;CAID&nbsp;0800&nbsp;to&nbsp;8e&nbsp;(hexadecimal)
 <A NAME="lbAG">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
