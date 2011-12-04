@@ -1178,18 +1178,16 @@ READER_STAT **get_sorted_stat_copy(struct s_reader *rdr, int32_t reverse, int32_
 
 int8_t stat_in_ecmlen(struct s_reader *rdr, READER_STAT *stat)
 {
-	  if (rdr->ecmWhitelist) {
-		struct s_ecmWhitelist *tmp;
-		struct s_ecmWhitelistIdent *tmpIdent;
-		struct s_ecmWhitelistLen *tmpLen;
-		for (tmp = rdr->ecmWhitelist; tmp; tmp = tmp->next) {
-			if (tmp->caid == 0 || tmp->caid == stat->caid) {
-				for (tmpIdent = tmp->idents; tmpIdent; tmpIdent = tmpIdent->next) {
-					if (tmpIdent->ident == 0 || tmpIdent->ident == stat->prid) {
-						for (tmpLen = tmpIdent->lengths; tmpLen; tmpLen = tmpLen->next) {
-							if (tmpLen->len == stat->ecmlen) {
-								return 1;
-							}
+	struct s_ecmWhitelist *tmp;
+	struct s_ecmWhitelistIdent *tmpIdent;
+	struct s_ecmWhitelistLen *tmpLen;
+	for (tmp = rdr->ecmWhitelist; tmp; tmp = tmp->next) {
+		if (tmp->caid == 0 || tmp->caid == stat->caid) {
+			for (tmpIdent = tmp->idents; tmpIdent; tmpIdent = tmpIdent->next) {
+				if (tmpIdent->ident == 0 || tmpIdent->ident == stat->prid) {
+					for (tmpLen = tmpIdent->lengths; tmpLen; tmpLen = tmpLen->next) {
+						if (tmpLen->len == stat->ecmlen) {
+							return 1;
 						}
 					}
 				}
@@ -1204,17 +1202,9 @@ int8_t add_to_ecmlen(struct s_reader *rdr, READER_STAT *stat)
 	struct s_ecmWhitelist *tmp;
 	struct s_ecmWhitelistIdent *tmpIdent;
 	struct s_ecmWhitelistLen *tmpLen;
-	int8_t found_caid = 0;
-
-	if (!rdr->ecmWhitelist) {
-		tmp = cs_malloc(&tmp, sizeof(struct s_ecmWhitelist), 0);
-		tmp->caid = stat->caid;
-		rdr->ecmWhitelist = tmp;
-	}
 
 	for (tmp = rdr->ecmWhitelist; tmp; tmp = tmp->next) {
 		if (tmp->caid == stat->caid) {
-			found_caid = 1;
 			for (tmpIdent = tmp->idents; tmpIdent; tmpIdent = tmpIdent->next) {
 				if (tmpIdent->ident == stat->prid) {
 					for (tmpLen = tmpIdent->lengths; tmpLen; tmpLen = tmpLen->next) {
@@ -1232,8 +1222,8 @@ int8_t add_to_ecmlen(struct s_reader *rdr, READER_STAT *stat)
 	if (!tmp) {
 		tmp = cs_malloc(&tmp, sizeof(struct s_ecmWhitelist), 0);
 		tmp->caid = stat->caid;
-		tmp->next = rdr->ecmWhitelist->next;
-		rdr->ecmWhitelist->next = tmp;
+		tmp->next = rdr->ecmWhitelist;
+		rdr->ecmWhitelist = tmp;
 	}
 
 	if (!tmpIdent) {
@@ -1255,6 +1245,9 @@ int8_t add_to_ecmlen(struct s_reader *rdr, READER_STAT *stat)
 
 void update_ecmlen_from_stat(struct s_reader *rdr)
 {
+	if (!rdr)
+		return;
+
 	LL_ITER it = ll_iter_create(rdr->lb_stat);
 	READER_STAT *stat;
 	while ((stat = ll_iter_next(&it))) {

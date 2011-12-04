@@ -1030,7 +1030,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##ENCODEDLABEL##&amp;hide=-1\">show all</A></TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##ENCODEDLABEL##&amp;hide=4\">hide 'not found'</A></TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##ENCODEDLABEL##&amp;action=resetstat\">reset statistics</A>\
-			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##ENCODEDLABEL##&amp;action=updateecmlen\">update ecm len to whitelist</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##ENCODEDLABEL##&amp;action=updateecmlen\">store valid ecm len in whitelist</A></TD>\n\
 		</TR>\n\
 	</TABLE>\n\
 	<TABLE CLASS=\"stats\">\n\
