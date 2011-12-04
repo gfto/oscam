@@ -1176,4 +1176,93 @@ READER_STAT **get_sorted_stat_copy(struct s_reader *rdr, int32_t reverse, int32_
 		return (READER_STAT **)ll_sort(rdr->lb_stat, compare_stat, size);
 }
 
+int8_t stat_in_ecmlen(struct s_reader *rdr, READER_STAT *stat)
+{
+	  if (rdr->ecmWhitelist) {
+		struct s_ecmWhitelist *tmp;
+		struct s_ecmWhitelistIdent *tmpIdent;
+		struct s_ecmWhitelistLen *tmpLen;
+		for (tmp = rdr->ecmWhitelist; tmp; tmp = tmp->next) {
+			if (tmp->caid == 0 || tmp->caid == stat->caid) {
+				for (tmpIdent = tmp->idents; tmpIdent; tmpIdent = tmpIdent->next) {
+					if (tmpIdent->ident == 0 || tmpIdent->ident == stat->prid) {
+						for (tmpLen = tmpIdent->lengths; tmpLen; tmpLen = tmpLen->next) {
+							if (tmpLen->len == stat->ecmlen) {
+								return 1;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return 0;
+}
+
+int8_t add_to_ecmlen(struct s_reader *rdr, READER_STAT *stat)
+{
+	struct s_ecmWhitelist *tmp;
+	struct s_ecmWhitelistIdent *tmpIdent;
+	struct s_ecmWhitelistLen *tmpLen;
+	int8_t found_caid = 0;
+
+	if (!rdr->ecmWhitelist) {
+		tmp = cs_malloc(&tmp, sizeof(struct s_ecmWhitelist), 0);
+		tmp->caid = stat->caid;
+		rdr->ecmWhitelist = tmp;
+	}
+
+	for (tmp = rdr->ecmWhitelist; tmp; tmp = tmp->next) {
+		if (tmp->caid == stat->caid) {
+			found_caid = 1;
+			for (tmpIdent = tmp->idents; tmpIdent; tmpIdent = tmpIdent->next) {
+				if (tmpIdent->ident == stat->prid) {
+					for (tmpLen = tmpIdent->lengths; tmpLen; tmpLen = tmpLen->next) {
+						if (tmpLen->len == stat->ecmlen) {
+							return 1;
+						}
+					}
+					break;
+				}
+			}
+			break;
+		}
+	}
+
+	if (!tmp) {
+		tmp = cs_malloc(&tmp, sizeof(struct s_ecmWhitelist), 0);
+		tmp->caid = stat->caid;
+		tmp->next = rdr->ecmWhitelist->next;
+		rdr->ecmWhitelist->next = tmp;
+	}
+
+	if (!tmpIdent) {
+		tmpIdent = cs_malloc(&tmpIdent, sizeof(struct s_ecmWhitelistIdent), 0);
+		tmpIdent->ident = stat->prid;
+		tmpIdent->next = tmp->idents;
+		tmp->idents = tmpIdent;
+	}
+
+	if (!tmpLen) {
+		tmpLen = cs_malloc(&tmpLen, sizeof(struct s_ecmWhitelistLen), 0);
+		tmpLen->len = stat->ecmlen;
+		tmpLen->next = tmpIdent->lengths;
+		tmpIdent->lengths =  tmpLen;
+	}
+
+	return 0;
+}
+
+void update_ecmlen_from_stat(struct s_reader *rdr)
+{
+	LL_ITER it = ll_iter_create(rdr->lb_stat);
+	READER_STAT *stat;
+	while ((stat = ll_iter_next(&it))) {
+		if (stat->rc ==E_FOUND) {
+			if (!stat_in_ecmlen(rdr, stat))
+				add_to_ecmlen(rdr, stat);
+		}
+	}
+}
+
 #endif

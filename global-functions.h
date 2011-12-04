@@ -428,6 +428,7 @@ extern void housekeeping_stat(int32_t force);
 extern READER_STAT **get_sorted_stat_copy(struct s_reader *rdr, int32_t reverse, int32_t *size);
 extern int32_t clean_stat_by_rc(struct s_reader *rdr, int8_t rc);
 extern int32_t clean_stat_by_id(struct s_reader *rdr, uint32_t caid, uint32_t provid, uint32_t sid, uint32_t cid, uint32_t len);
+extern void update_ecmlen_from_stat(struct s_reader *rdr);
 #endif
 
 /* ===========================

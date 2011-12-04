@@ -1495,6 +1495,11 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 					cs_inet6_ntoa(GET_IP()));
 		}
 	}
+
+	if (strcmp(getParam(params, "action"), "updateecmlen") == 0) {
+		update_ecmlen_from_stat(rdr);
+	}
+
 #endif
 
 	if (!apicall){
