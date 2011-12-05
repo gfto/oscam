@@ -1498,6 +1498,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 
 	if (strcmp(getParam(params, "action"), "updateecmlen") == 0) {
 		update_ecmlen_from_stat(rdr);
+		write_server();
 	}
 
 #endif

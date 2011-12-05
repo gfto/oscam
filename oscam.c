@@ -2565,7 +2565,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	if (cacheex && er->rc == E_UNHANDLED) { //not found in cache, so wait!
 		int32_t max_wait = cfg.cacheex_wait_time;
-		while (max_wait > 0) {
+		while (max_wait > 0 && !client->kill) {
 			cs_sleepms(50);
 			max_wait -= 50;
 			ecm = check_cwcache(er, client->grp);
@@ -3303,19 +3303,11 @@ static void * check_thread(void) {
 				if (ecm->tps.time < ecm_timeout) {
 					cs_readunlock(&ecmcache_lock);
 					cs_writelock(&ecmcache_lock);
-					
-					//next line is because of thread-safety
-					//a readlock does does not prevent thread from walking through this list
-					//so ecm->tps.time < ecm_timeout and the following readunlock could be reached by
-					//multiple task. Only writelock could does the real thread-lock.
-					//so if thread 1 removes ecm from this list, thread 2 should check ecm prv/ecmtask:
-					if ((prv != NULL && prv->next == ecm) || (ecmtask == ecm)) {
-						ecmt = ecm;
-						if (prv)
-							prv->next = NULL;
-						else
-							ecmtask = NULL;
-					}
+					ecmt = ecm;
+					if (prv)
+						prv->next = NULL;
+					else
+						ecmtask = NULL;
 					cs_writeunlock(&ecmcache_lock);
 					break;
 				}
