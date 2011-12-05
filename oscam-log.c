@@ -1,6 +1,7 @@
 #include "globals.h"
 #include <syslog.h>
 #include <stdlib.h>
+#include "module-datastruct-llist.h"
 
 static FILE *fp=(FILE *)0;
 static FILE *fps=(FILE *)0;
@@ -8,11 +9,13 @@ static FILE *fps=(FILE *)0;
 static FILE *fpa=(FILE *)0;
 #endif
 static int8_t logStarted = 0;
+static LLIST *log_list;
 
-CS_MUTEX_LOCK log_lock;
-CS_MUTEX_LOCK ac_lock;
-CS_MUTEX_LOCK user_lock;
-CS_MUTEX_LOCK stdout_lock;
+struct s_log {
+	char *txt;
+	int8_t header_len;
+};
+
 CS_MUTEX_LOCK loghistory_lock;
 
 #define LOG_BUF_SIZE 512
@@ -51,37 +54,29 @@ static void switch_log(char* file, FILE **f, int32_t (*pfinit)(void))
 	}
 }
 
-static void cs_write_log(char *txt, int8_t lock)
+static void cs_write_log(char *txt)
 {
 	// filter out entries with leading 's' and forward to statistics
 	if(txt[0] == 's') {
 		if (fps) {
-			if(lock) cs_writelock(&user_lock);
 			switch_log(cfg.usrfile, &fps, cs_init_statistics);
 			if (fps) {
 					fputs(txt + 1, fps); // remove the leading 's' and write to file
 					fflush(fps);
 			}
-			if(lock) cs_writeunlock(&user_lock);
 		}
 	} else {
 		if(!cfg.disablelog){
 			if (fp){
-				if(lock){
-					cs_writelock(&log_lock);
-					switch_log(cfg.logfile, &fp, cs_open_logfiles);		// only call the switch code if lock = 1 is specified as otherwise we are calling it internally
-				}
+				switch_log(cfg.logfile, &fp, cs_open_logfiles);		// only call the switch code if lock = 1 is specified as otherwise we are calling it internally
 				if (fp) {
 						fputs(txt, fp);
 						fflush(fp);
 				}
-				if(lock) cs_writeunlock(&log_lock);	
 			}
 			if(cfg.logtostdout){
-				if(lock) cs_writelock(&stdout_lock);
 				fputs(txt+11, stdout);
 				fflush(stdout);
-				if(lock) cs_writeunlock(&stdout_lock);	
 			}
 		}
 	}
@@ -116,20 +111,6 @@ int32_t cs_open_logfiles()
 	cs_log_nolock(">> OSCam <<  cardserver %s, version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_OSTYPE ")", starttext);
 	cs_log_config();
 	return(fp <= (FILE *)0);
-}
-
-int32_t cs_init_log(void)
-{
-	if(logStarted == 0){
-		cs_lock_create(&log_lock, 5, "log_lock");
-		cs_lock_create(&ac_lock, 5, "ac_lock");
-		cs_lock_create(&user_lock, 5, "user_lock");
-		cs_lock_create(&stdout_lock, 5, "stdout_lock");
-		cs_lock_create(&loghistory_lock, 5, "loghistory_lock");
-	}
-	int32_t rc = cs_open_logfiles();
-	logStarted = 1;
-	return rc;
 }
 
 #ifdef CS_ANTICASC
@@ -200,7 +181,7 @@ static int32_t get_log_header(int32_t m, char *txt)
 		return pos + snprintf(txt+pos, LOG_BUF_SIZE-pos, "%8X%-3.3s ", cl?cl->tid:0, "");
 }
 
-static void write_to_log(char *txt, int8_t lock, int32_t header_len __attribute__((unused)))
+static void write_to_log(char *txt, int8_t header_len)
 {
 	char sbuf[16];
 	struct s_client *cur_cl = cur_client();
@@ -208,13 +189,11 @@ static void write_to_log(char *txt, int8_t lock, int32_t header_len __attribute_
 #ifdef CS_ANTICASC
 	if (!strncmp(txt + header_len, "acasc:", 6)) {
 		strcat(txt, "\n");
-		if(lock) cs_writelock(&ac_lock);
 		switch_log(cfg.ac_logfile, &fpa, ac_init_log);
 		if (fpa) {
 			fputs(txt + 8, fpa);
 			fflush(fpa);
 		}
-		if(lock) cs_writeunlock(&ac_lock);
 	} else
 #endif
 	{
@@ -222,7 +201,7 @@ static void write_to_log(char *txt, int8_t lock, int32_t header_len __attribute_
 			syslog(LOG_INFO, "%s", txt+24);
 		strcat(txt, "\n");
 	}
-	cs_write_log(txt + 8, lock);
+	cs_write_log(txt + 8);
 
 	if (loghist) {
 		char *usrtxt = NULL;
@@ -248,7 +227,7 @@ static void write_to_log(char *txt, int8_t lock, int32_t header_len __attribute_
 		char *target_ptr = NULL;
 		int32_t target_len = strlen(usrtxt) + (strlen(txt) - 8) + 1;
 		
-		if(lock) cs_writelock(&loghistory_lock);
+		cs_writelock(&loghistory_lock);
 		char *lastpos = loghist + (cfg.loghistorysize) - 1;		
 		if (!loghistptr)
 			loghistptr = loghist;
@@ -263,7 +242,7 @@ static void write_to_log(char *txt, int8_t lock, int32_t header_len __attribute_
 			loghistptr=loghistptr + target_len + 1;
 			*loghistptr='\0';
 		}
-		if(lock) cs_writeunlock(&loghistory_lock);
+		cs_writeunlock(&loghistory_lock);
 
 		snprintf(target_ptr, target_len + 1, "%s\t%s", usrtxt, txt + 8);
 	}
@@ -286,7 +265,15 @@ static void write_to_log(char *txt, int8_t lock, int32_t header_len __attribute_
 	}
 }
 
-__attribute__ ((noinline)) void cs_log_int(uint16_t mask, int8_t lock, const uchar *buf, int32_t n, const char *fmt, ...)
+static void write_to_log_int(char *txt, int8_t header_len)
+{
+	struct s_log *log = cs_malloc(&log, sizeof(struct s_log), 0);
+	log->txt = strnew(txt);
+	log->header_len = header_len;
+	ll_append(log_list, log);
+}
+
+__attribute__ ((noinline)) void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar *buf, int32_t n, const char *fmt, ...)
 {
 	va_list params;
 
@@ -297,7 +284,7 @@ __attribute__ ((noinline)) void cs_log_int(uint16_t mask, int8_t lock, const uch
 		va_start(params, fmt);
 		len = get_log_header(1, log_txt);
 		vsnprintf(log_txt + len, sizeof(log_txt) - len, fmt, params);
-		write_to_log(log_txt, lock, len);
+		write_to_log_int(log_txt, len);
 		va_end(params);
 	}
 	if (buf && (mask & cs_dblevel || !mask))
@@ -306,7 +293,7 @@ __attribute__ ((noinline)) void cs_log_int(uint16_t mask, int8_t lock, const uch
 		{
 			len = get_log_header(0, log_txt);
 			cs_hexdump(1, buf+i, (n-i>16) ? 16 : n-i, log_txt + len, sizeof(log_txt) - len);
-			write_to_log(log_txt, lock, len);
+			write_to_log_int(log_txt, len);
 		}
 	}
 }
@@ -490,6 +477,38 @@ void cs_statistics(struct s_client * client)
 				client->last_srvid,
 				channame);
 
-		cs_write_log(buf, 1);
+		cs_write_log(buf);
 	}
+}
+
+void log_list_thread()
+{
+	char buf[LOG_BUF_SIZE];
+
+	while (1) {
+		LL_ITER it = ll_iter_create(log_list);
+		struct s_log *log;
+		while ((log=ll_iter_next(&it))) {
+			ll_iter_remove(&it);
+
+			cs_strncpy(buf, log->txt, LOG_BUF_SIZE);
+			write_to_log(buf, log->header_len);
+			free(log->txt);
+			free(log);
+		}
+		cs_sleepms(500);
+	}
+}
+
+int32_t cs_init_log(void)
+{
+	if(logStarted == 0){
+		cs_lock_create(&loghistory_lock, 5, "loghistory_lock");
+
+		log_list = ll_create("log_list");
+		start_thread((void*)&log_list_thread, "log_list_thread");
+	}
+	int32_t rc = cs_open_logfiles();
+	logStarted = 1;
+	return rc;
 }
