@@ -25,7 +25,7 @@ At least one [reader] section is <I>required</I>.
 
 <B>device</B> = <B>&lt;device|bus:device|device:slot&gt;</B>|Serial:Reader <B>serial</B>|<B>&lt;ip|hostname&gt;,&lt;port&gt;[,&lt;lport&gt;]</B>|<B>pcsc</B>|&lt;<B>0|1</B>&gt;|<B>constantcw</B>
 <DL COMPACT><DT><DD>
-define local or remote reader 
+define local or remote reader
 <P>
 <BR>&nbsp;<B>device</B>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;device&nbsp;name
 <P>
@@ -205,7 +205,7 @@ example: auprovid = 123456
 
 <B>ecmwhitelist</B> = [<B>CAID</B>[@<B>ident</B>]:]<B>length</B>[,<B>length</B>]...[;[<B>CAID</B>[@<B>ident</B>]:]<B>length</B>[,<B>length</B>]...]...
 <DL COMPACT><DT><DD>
-define valid ECM length per CAID and ident in hex, default:none,ident=000000
+set valid ECM length per CAID and ident in hex, default:none,ident=000000
 <P>
 example: ecmwhitelist = 10,20,0a,0b
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ecmwhitelist&nbsp;=&nbsp;0100:10,20;<A HREF="mailto:0200@123456">0200@123456</A>:0a,4b
@@ -279,7 +279,7 @@ reader protocol, <I>required</I>:
 
 <B>ident</B> = <B>&lt;CAID&gt;:&lt;ident&gt;[,ident]...[;&lt;CAID&gt;:&lt;ident&gt;[,ident]...]...</B>
 <DL COMPACT><DT><DD>
-define CAID and SC specific ident for reader
+set CAID and SC specific ident for reader
 <P>
 example: ident = 0100:123456,234567;0200:345678,456789
 </DL>
@@ -288,7 +288,7 @@ example: ident = 0100:123456,234567;0200:345678,456789
 
 <B>class</B> = <B>[!]class[,[!]class]...</B>
 <DL COMPACT><DT><DD>
-define SC specific class in hex for reader
+set SC specific class in hex for reader
 <P>
 example: class = 01,02,!1b,!2b
 </DL>
@@ -473,7 +473,7 @@ the higher the value the higher the probability for reader selection, default:10
 
 <B>cccversion</B> = <B>&lt;main version&gt;.&lt;version&gt;.&lt;sub version&gt;</B>
 <DL COMPACT><DT><DD>
-define CCcam version, default:none
+set CCcam version, default:none
 <P>
 example: cccversion = 1.2.34
 </DL>
@@ -482,7 +482,7 @@ example: cccversion = 1.2.34
 
 <B>cccmaxhops</B> = <B>hops</B>
 <DL COMPACT><DT><DD>
-define CCcam maximum SC distance hops, default:10
+set CCcam maximum SC distance hops, default:10
 <P>
 <BR>&nbsp;<B>-1</B>&nbsp;=&nbsp;disabled
 <BR>&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;remote&nbsp;local&nbsp;SCs&nbsp;only
@@ -504,7 +504,7 @@ set hop for non CCCam readers, default:0
 
 <B>cccreshare</B> = <B>hop</B>
 <DL COMPACT><DT><DD>
-define reader's CCcam reshare hop, default:0
+set reader's CCcam reshare hop, default:0
 <P>
 <BR>&nbsp;<B>-1</B>&nbsp;=&nbsp;no&nbsp;resharing
 <BR>&nbsp;&nbsp;<B>x</B>&nbsp;=&nbsp;resharing&nbsp;for&nbsp;direct&nbsp;peer&nbsp;and&nbsp;share&nbsp;level&nbsp;x
@@ -542,7 +542,7 @@ pincode for Conax and Cryptoworks SCs, default:none
 
 <B>chid</B> = <B>CAID:ChID</B>
 <DL COMPACT><DT><DD>
-define SC specific ChIDs for reader, default:none
+set SC specific ChIDs for reader, default:none
 <P>
 example: chid = 0100:12
 </DL>
@@ -551,14 +551,14 @@ example: chid = 0100:12
 
 <B>ins7e</B> = <B>payload</B>
 <DL COMPACT><DT><DD>
-Add 26 hex-bytes payload for NDS Videoguard 2 SCs, valid for physical readers only, default:none
+add 26 hex-bytes payload for NDS Videoguard 2 SCs, valid for physical readers only, default:none
 </DL>
 
 <P>
 
-<B>ins7e11</B> = <B>TA1 Byte</B>
+<B>ins7e11</B> = <B>TA1 byte</B>
 <DL COMPACT><DT><DD>
-Define TA1 Byte for NDS Videoguard 2 SCs, valid for physical readers only, default:none
+set TA1 byte for NDS Videoguard 2 SCs, valid for physical readers only, default:none
 </DL>
 
 <P>

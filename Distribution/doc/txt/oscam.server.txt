@@ -115,7 +115,7 @@ DESCRIPTIONS
 	  example: auprovid = 123456
 
        ecmwhitelist = [CAID[@ident]:]length[,length]...[;[CAID[@ident]:]length[,length]...]...
-	  define valid ECM length per CAID and ident in hex, default:none,ident=000000
+	  set valid ECM length per CAID and ident in hex, default:none,ident=000000
 
 	  example: ecmwhitelist = 10,20,0a,0b
 		   ecmwhitelist = 0100:10,20;0200@123456:0a,4b
@@ -161,12 +161,12 @@ DESCRIPTIONS
 	   sc8in1
 
        ident = <CAID>:<ident>[,ident]...[;<CAID>:<ident>[,ident]...]...
-	  define CAID and SC specific ident for reader
+	  set CAID and SC specific ident for reader
 
 	  example: ident = 0100:123456,234567;0200:345678,456789
 
        class = [!]class[,[!]class]...
-	  define SC specific class in hex for reader
+	  set SC specific class in hex for reader
 
 	  example: class = 01,02,!1b,!2b
 
@@ -266,12 +266,12 @@ DESCRIPTIONS
 	   It's an divider for the average responstime.
 
        cccversion = <main version>.<version>.<sub version>
-	  define CCcam version, default:none
+	  set CCcam version, default:none
 
 	  example: cccversion = 1.2.34
 
        cccmaxhops = hops
-	  define CCcam maximum SC distance hops, default:10
+	  set CCcam maximum SC distance hops, default:10
 
 	   -1 = disabled
 	    0 = remote local SCs only
@@ -285,7 +285,7 @@ DESCRIPTIONS
 	  set hop for non CCCam readers, default:0
 
        cccreshare = hop
-	  define reader's CCcam reshare hop, default:0
+	  set reader's CCcam reshare hop, default:0
 
 	   -1 = no resharing
 	    x = resharing for direct peer and share level x
@@ -303,15 +303,15 @@ DESCRIPTIONS
 	  pincode for Conax and Cryptoworks SCs, default:none
 
        chid = CAID:ChID
-	  define SC specific ChIDs for reader, default:none
+	  set SC specific ChIDs for reader, default:none
 
 	  example: chid = 0100:12
 
        ins7e = payload
-	  Add 26 hex-bytes payload for NDS Videoguard 2 SCs, valid for physical readers only, default:none
+	  add 26 hex-bytes payload for NDS Videoguard 2 SCs, valid for physical readers only, default:none
 
-       ins7e11 = TA1 Byte
-	  Define TA1 Byte for NDS Videoguard 2 SCs, valid for physical readers only, default:none
+       ins7e11 = TA1 byte
+	  set TA1 byte for NDS Videoguard 2 SCs, valid for physical readers only, default:none
 
        force_irdeto = 0|1
 	  1 = force Irdeto SC mode even if RSA key is set for Irdeto tunnled Nagravion SC, default:0

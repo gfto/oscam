@@ -10,7 +10,7 @@ At least one [reader] section is \fIrequired\fR.
 .PP
 \fBdevice\fP = \fB<device|bus:device|device:slot>\fP|Serial:Reader \fBserial\fP|\fB<ip|hostname>,<port>[,<lport>]\fP|\fBpcsc\fP|<\fB0|1\fP>|\fBconstantcw\fP
 .RS 3n
-define local or remote reader 
+define local or remote reader
 
  \fBdevice\fP:      device name
 
@@ -150,7 +150,7 @@ example: auprovid = 123456
 .PP
 \fBecmwhitelist\fP = [\fBCAID\fP[@\fBident\fP]:]\fBlength\fP[,\fBlength\fP]...[;[\fBCAID\fP[@\fBident\fP]:]\fBlength\fP[,\fBlength\fP]...]...
 .RS 3n
-define valid ECM length per CAID and ident in hex, default:none,ident=000000
+set valid ECM length per CAID and ident in hex, default:none,ident=000000
 
 example: ecmwhitelist = 10,20,0a,0b
          ecmwhitelist = 0100:10,20;0200@123456:0a,4b
@@ -210,14 +210,14 @@ reader protocol, \fIrequired\fR:
 .PP
 \fBident\fP = \fB<CAID>:<ident>[,ident]...[;<CAID>:<ident>[,ident]...]...\fP
 .RS 3n
-define CAID and SC specific ident for reader
+set CAID and SC specific ident for reader
 
 example: ident = 0100:123456,234567;0200:345678,456789
 .RE
 .PP
 \fBclass\fP = \fB[!]class[,[!]class]...\fP
 .RS 3n
-define SC specific class in hex for reader
+set SC specific class in hex for reader
 
 example: class = 01,02,!1b,!2b
 .RE
@@ -358,14 +358,14 @@ the higher the value the higher the probability for reader selection, default:10
 .PP
 \fBcccversion\fP = \fB<main version>.<version>.<sub version>\fP
 .RS 3n
-define CCcam version, default:none
+set CCcam version, default:none
 
 example: cccversion = 1.2.34
 .RE
 .PP
 \fBcccmaxhops\fP = \fBhops\fP
 .RS 3n
-define CCcam maximum SC distance hops, default:10
+set CCcam maximum SC distance hops, default:10
 
  \fB-1\fP = disabled
   \fB0\fP = remote local SCs only
@@ -383,7 +383,7 @@ set hop for non CCCam readers, default:0
 .PP
 \fBcccreshare\fP = \fBhop\fP
 .RS 3n
-define reader's CCcam reshare hop, default:0
+set reader's CCcam reshare hop, default:0
 
  \fB-1\fP = no resharing
   \fBx\fP = resharing for direct peer and share level x
@@ -411,14 +411,19 @@ pincode for Conax and Cryptoworks SCs, default:none
 .PP
 \fBchid\fP = \fBCAID:ChID\fP
 .RS 3n
-define SC specific ChIDs for reader, default:none
+set SC specific ChIDs for reader, default:none
 
 example: chid = 0100:12
 .RE
 .PP
 \fBins7e\fP = \fBpayload\fP
 .RS 3n
-Add 26 hex-bytes payload for NDS Videoguard 2 SCs, valid for physical readers only, default:none
+add 26 hex-bytes payload for NDS Videoguard 2 SCs, valid for physical readers only, default:none
+.RE
+.PP
+\fBins7e11\fP = \fBTA1 byte\fP
+.RS 3n
+set TA1 byte for NDS Videoguard 2 SCs, valid for physical readers only, default:none
 .RE
 .PP
 \fBforce_irdeto\fP = \fB0\fP|\fB1\fP
