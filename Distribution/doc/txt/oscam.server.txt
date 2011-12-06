@@ -310,6 +310,9 @@ DESCRIPTIONS
        ins7e = payload
 	  Add 26 hex-bytes payload for NDS Videoguard 2 SCs, valid for physical readers only, default:none
 
+       ins7e11 = TA1 Byte
+	  Define TA1 Byte for NDS Videoguard 2 SCs, valid for physical readers only, default:none
+
        force_irdeto = 0|1
 	  1 = force Irdeto SC mode even if RSA key is set for Irdeto tunnled Nagravion SC, default:0
 

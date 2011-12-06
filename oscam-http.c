@@ -1174,6 +1174,11 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		for (i = 0; i < 26 ; i++) tpl_printf(vars, TPLAPPEND, "INS7E", "%02X", rdr->ins7E[i]);
 	}
 
+	// ins7E11
+	if(rdr->ins7E11[0x01]) {
+		tpl_printf(vars, TPLAPPEND, "INS7E11", "%02X", rdr->ins7E11[0]);
+	}
+
 	// ATR
 	if ( rdr->atr[0])
 		for (i = 0; i < rdr->atrlen/2; i++)

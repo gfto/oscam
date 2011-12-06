@@ -2809,6 +2809,12 @@ int32_t write_server()
 			} else if (cfg.http_full_cfg && isphysical)
 				fprintf_conf(f, "ins7e", "\n");
 
+			if (rdr->ins7E11[0x01] && isphysical) {
+				char tmp[0x01*2+1];
+				fprintf_conf(f, "ins7e11", "%s\n", cs_hexdump(0, rdr->ins7E11, 0x01, tmp, sizeof(tmp)));
+			} else if (cfg.http_full_cfg && isphysical)
+				fprintf_conf(f, "ins7e11", "\n");
+
 			if ((rdr->force_irdeto || cfg.http_full_cfg) && isphysical) {
 				fprintf_conf(f, "force_irdeto", "%d\n", rdr->force_irdeto);
 			}
@@ -4103,6 +4109,18 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		}
 		else
 			rdr->ins7E[0x1A] = 1; // found and correct
+		return;
+	}
+
+	if (!strcmp(token, "ins7e11")) {
+		int32_t len = strlen(value);
+		if (len != 0x01*2 || key_atob_l(value, rdr->ins7E11, len)) {
+			if (len > 0)
+				fprintf(stderr, "Configuration reader: Error in ins7E11\n");
+			memset(rdr->ins7E11, 0, sizeof(rdr->ins7E11));
+		}
+		else
+			rdr->ins7E11[0x01] = 1; // found and correct
 		return;
 	}
 

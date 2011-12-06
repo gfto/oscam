@@ -527,6 +527,25 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR newatr)
       }
   }
 
+  if (reader->ins7E11[0x01])
+	{
+	  static const uint8_t ins7E11[5] = { 0xD0,0x7E,0x11,0x00,0x01 };
+	  l=do_cmd(reader,ins7E11,reader->ins7E11,NULL,cta_res);
+	  if(l<0 || !status_ok(cta_res)) {
+		cs_log("classD0 ins7E11: failed");
+		return ERROR;
+	  }
+	  else {
+		BYTE TA1;
+		if (ATR_GetInterfaceByte (&newatr, 1, ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
+		  if (TA1 != reader->ins7E11[0x00]) {
+			cs_log("classD0 ins7E11: Scheduling card reset for TA1 change from %02X to %02X", TA1, reader->ins7E11[0x00]);
+			add_job(reader->client, ACTION_READER_RESTART, NULL, 0);
+		  }
+		}
+	  }
+	}
+
   /* get parental lock settings */
   static const unsigned char ins74e[5] = {0xD0,0x74,0x0E,0x00,0x00};
   if(cmd_exists(reader,ins74e)) {
