@@ -2449,7 +2449,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 #ifdef WITH_LB
     //Use locking - now default=FALSE, activate on problems!
 	int32_t locked;
-	if (cfg.lb_mode && cfg.lb_use_locking) {
+	if (cfg.lb_mode && cfg.lb_use_locking && er->btun != 2) {
 			cs_writelock(&get_cw_lock);
 			locked=1;
 	}
