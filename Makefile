@@ -597,6 +597,28 @@ cross-mipsel-router-linux-uclibc929-static:
 
 ######################################################################
 #
+#	Linux MIPS crosscompiler with ucLibc 0.9.30
+#
+######################################################################
+cross-mips-router-linux-uclibc930:
+	@-mips-linux-uclibc-setlib 0.9.30
+	@-$(MAKE) --no-print-directory \
+		-f Maketype TYP=$(subst cross-,,$@) \
+		OS_LIBS="-lcrypto -lm" \
+		OS_CULI="-lncurses" \
+		OS_PTLI="-lpthread" \
+		DS_OPTS="-O2 -DOS_LINUX -DMIPS -DWITH_LIBCRYPTO -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
+		DS_CFLAGS="-c" \
+		DS_LDFLAGS="" \
+		DS_ARFLAGS="-rvsl" \
+		DS_CC=mips-linux-uclibc-gcc \
+		DS_AR=mips-linux-uclibc-ar \
+		DS_LD=mips-linux-uclibc-ld \
+		DS_RL=mips-linux-uclibc-ranlib \
+		DS_ST=mips-linux-uclibc-strip
+
+######################################################################
+#
 #	Linux MIPS(LE) crosscompiler for La Fonera 2.0
 #
 ######################################################################
