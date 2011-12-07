@@ -1942,8 +1942,6 @@ static void request_cw(ECM_REQUEST *er)
 			er->stage++;
 
 		for(ea = er->matching_rdr; ea; ea = ea->next) {
-			if (ea->status & REQUEST_SENT)
-				continue;
 
 			if (er->stage == 1) {
 				// Cache-Echange
