@@ -673,7 +673,7 @@ static time_t get_reopen_seconds(READER_STAT *stat)
 		return (time_t)stat->fail_factor * (time_t)cfg.lb_reopen_seconds;
 }
 
-ushort get_betatunnel_caid_to(ushort caid) 
+uint16_t get_betatunnel_caid_to(uint16_t caid)
 {
 	if (caid == 0x1801) return 0x1722;
 	if (caid == 0x1833) return 0x1702;
@@ -727,7 +727,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 
 	//auto-betatunnel: The trick is: "let the loadbalancer decide"!
 	if (cfg.lb_auto_betatunnel && er->caid >> 8 == 0x18) { //nagra 
-		ushort caid_to = get_betatunnel_caid_to(er->caid);
+		uint16_t caid_to = get_betatunnel_caid_to(er->caid);
 		if (caid_to) {
 			int8_t needs_stats_nagra = 0, needs_stats_beta = 0;
 			

@@ -2487,7 +2487,20 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		struct s_reader *rdr;
 
 		for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
-			if (matching_reader(er, rdr)) {
+			int8_t match = matching_reader(er, rdr);
+#ifdef WITH_LB
+			//if this reader does not match, check betatunnel for it
+			if (!match && cfg.lb_auto_betatunnel) {
+				uint16_t caid = get_betatunnel_caid_to(er->caid);
+				if (caid) {
+					uint16_t save_caid = er->caid;
+					er->caid = caid;
+					match = matching_reader(er, rdr); //matching
+					er->caid = save_caid;
+				}
+			}
+#endif
+			if (match) {
 				cs_malloc(&ea, sizeof(struct s_ecm_answer), 0);
 				ea->reader = rdr;
 				if (prv)
