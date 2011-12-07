@@ -245,6 +245,7 @@ extern void end_lcd_thread();
 /* ===========================
  *         oscam-log
  * =========================== */
+extern char *LOG_LIST;
 extern int32_t  cs_init_log();
 extern void cs_reinit_loghist(uint32_t size);
 extern int32_t cs_open_logfiles();

@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include "module-datastruct-llist.h"
 
+char *LOG_LIST = "log_list";
+
 static FILE *fp=(FILE *)0;
 static FILE *fps=(FILE *)0;
 #ifdef CS_ANTICASC
@@ -14,6 +16,7 @@ static LLIST *log_list;
 struct s_log {
 	char *txt;
 	int8_t header_len;
+	int8_t direct_log;
 };
 
 CS_MUTEX_LOCK loghistory_lock;
@@ -54,7 +57,7 @@ static void switch_log(char* file, FILE **f, int32_t (*pfinit)(void))
 	}
 }
 
-static void cs_write_log(char *txt)
+static void cs_write_log(char *txt, int8_t do_flush)
 {
 	// filter out entries with leading 's' and forward to statistics
 	if(txt[0] == 's') {
@@ -62,7 +65,7 @@ static void cs_write_log(char *txt)
 			switch_log(cfg.usrfile, &fps, cs_init_statistics);
 			if (fps) {
 					fputs(txt + 1, fps); // remove the leading 's' and write to file
-					fflush(fps);
+					if (do_flush) fflush(fps);
 			}
 		}
 	} else {
@@ -71,15 +74,24 @@ static void cs_write_log(char *txt)
 				switch_log(cfg.logfile, &fp, cs_open_logfiles);		// only call the switch code if lock = 1 is specified as otherwise we are calling it internally
 				if (fp) {
 						fputs(txt, fp);
-						fflush(fp);
+						if (do_flush) fflush(fp);
 				}
 			}
 			if(cfg.logtostdout){
 				fputs(txt+11, stdout);
-				fflush(stdout);
+				if (do_flush) fflush(stdout);
 			}
 		}
 	}
+}
+
+static void cs_write_log_int(char *txt)
+{
+	struct s_log * log = cs_malloc(&log, sizeof(struct s_log), 0);
+	log->txt = strnew(txt);
+	log->header_len = 0;
+	log->direct_log = 1;
+	ll_append(log_list, log);
 }
 
 int32_t cs_open_logfiles()
@@ -181,7 +193,7 @@ static int32_t get_log_header(int32_t m, char *txt)
 		return pos + snprintf(txt+pos, LOG_BUF_SIZE-pos, "%8X%-3.3s ", cl?cl->tid:0, "");
 }
 
-static void write_to_log(char *txt, int8_t header_len)
+static void write_to_log(char *txt, int8_t header_len, int8_t do_flush)
 {
 	char sbuf[16];
 	struct s_client *cur_cl = cur_client();
@@ -192,7 +204,7 @@ static void write_to_log(char *txt, int8_t header_len)
 		switch_log(cfg.ac_logfile, &fpa, ac_init_log);
 		if (fpa) {
 			fputs(txt + 8, fpa);
-			fflush(fpa);
+			if (do_flush) fflush(fpa);
 		}
 	} else
 #endif
@@ -201,7 +213,7 @@ static void write_to_log(char *txt, int8_t header_len)
 			syslog(LOG_INFO, "%s", txt+24);
 		strcat(txt, "\n");
 	}
-	cs_write_log(txt + 8);
+	cs_write_log(txt + 8, do_flush);
 
 	if (loghist) {
 		char *usrtxt = NULL;
@@ -270,6 +282,7 @@ static void write_to_log_int(char *txt, int8_t header_len)
 	struct s_log *log = cs_malloc(&log, sizeof(struct s_log), 0);
 	log->txt = strnew(txt);
 	log->header_len = header_len;
+	log->direct_log = 0;
 	ll_append(log_list, log);
 }
 
@@ -477,7 +490,7 @@ void cs_statistics(struct s_client * client)
 				client->last_srvid,
 				channame);
 
-		cs_write_log(buf);
+		cs_write_log_int(buf);
 	}
 }
 
@@ -488,11 +501,14 @@ void log_list_thread()
 	while (1) {
 		LL_ITER it = ll_iter_create(log_list);
 		struct s_log *log;
-		while ((log=ll_iter_next(&it))) {
-			ll_iter_remove(&it);
+		while ((log=ll_iter_next_remove(&it))) {
+			int8_t do_flush = ll_count(log_list) == 0; //flush on writing last element
 
 			cs_strncpy(buf, log->txt, LOG_BUF_SIZE);
-			write_to_log(buf, log->header_len);
+			if (log->direct_log)
+				cs_write_log(buf, do_flush);
+			else
+				write_to_log(buf, log->header_len, do_flush);
 			free(log->txt);
 			free(log);
 		}
@@ -505,7 +521,7 @@ int32_t cs_init_log(void)
 	if(logStarted == 0){
 		cs_lock_create(&loghistory_lock, 5, "loghistory_lock");
 
-		log_list = ll_create("log_list");
+		log_list = ll_create(LOG_LIST);
 		start_thread((void*)&log_list_thread, "log_list_thread");
 	}
 	int32_t rc = cs_open_logfiles();

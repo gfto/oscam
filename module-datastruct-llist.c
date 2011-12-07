@@ -13,6 +13,12 @@
 
 
 */
+
+static int8_t chk_debuglog(LLIST *l)
+{
+	return (l && l->lock.name != LOG_LIST);
+}
+
 static void _destroy(LLIST *l)
 {
 	if (!l) return;  	
@@ -49,7 +55,10 @@ void ll_destroy_data(LLIST *l)
 static void *ll_iter_next_nolock(LL_ITER *it)
 {
 	if (it->l->version != it->ll_version) {
-		cs_debug_mask_nolock(D_TRACE, "list changed, searching new position");
+#ifdef WITH_DEBUG
+		if (chk_debuglog(it->l))
+			cs_debug_mask_nolock(D_TRACE, "list changed, searching new position");
+#endif
 
 		LL_NODE *ptr;
 		//cs_readlock(&it->l->lock);
@@ -198,6 +207,66 @@ void *ll_iter_next(LL_ITER *it)
 	return NULL;
 }
 
+void *ll_iter_remove_nolock(LL_ITER *it)
+{
+	void *obj = NULL;
+	if (it) {
+		LL_NODE *del = it->cur;
+		if (del) {
+			obj = del->obj;
+			LL_NODE *prv = it->prv;
+			if (it->ll_version != it->l->version || !prv) { // List has been modified so it->prv might be wrong!
+				LL_NODE *n = it->l->initial;
+				prv = NULL;
+				while (n && n != del) {
+					prv = n;
+					n = n->nxt;
+				}
+				if (n != del) {
+					cs_writeunlock(&it->l->lock);
+					return NULL;
+				}
+			}
+
+			if (prv)
+				prv->nxt = del->nxt;
+			else
+				it->l->initial = del->nxt;
+			if (!it->l->initial)
+				it->l->last = NULL;
+			else if (del == it->l->last)
+				it->l->last = prv;
+
+			it->cur = it->l->initial;
+			it->prv = NULL;
+			if (prv != NULL) {
+				while (it->cur && it->cur != prv) {
+					it->prv = it->cur;
+					it->cur = it->cur->nxt;
+				}
+			} else
+				it->cur = NULL;
+			it->l->count--;
+			it->ll_version = ++it->l->version;
+
+			add_garbage(del);
+		}
+	}
+	return obj;
+}
+
+void *ll_iter_next_remove(LL_ITER *it)
+{
+	if (it && it->l) {
+		cs_writelock(&it->l->lock);
+		void *res = ll_iter_next_nolock(it);
+		ll_iter_remove_nolock(it);
+		cs_writeunlock(&it->l->lock);
+		return res;
+	}
+	return NULL;
+}
+
 void *ll_iter_move(LL_ITER *it, int32_t offset)
 {
 	if (it && it->l) {
@@ -273,44 +342,9 @@ void *ll_iter_remove(LL_ITER *it)
 	if (it) {		
 		LL_NODE *del = it->cur;
 		if (del) {
-			obj = del->obj;
-			LL_NODE *prv = it->prv;
 			cs_writelock(&it->l->lock);
-			if(it->ll_version != it->l->version || !prv){		// List has been modified so it->prv might be wrong!
-				LL_NODE *n = it->l->initial;
-				prv = NULL;
-				while(n && n != del){
-					prv = n;
-					n = n->nxt;
-				}
-				if(n != del) {
-					cs_writeunlock(&it->l->lock);
-					return NULL;
-				}
-			}
-			
-			if (prv)
-				prv->nxt = del->nxt;
-			else
-				it->l->initial = del->nxt;
-			if (!it->l->initial)
-				it->l->last = NULL;
-			else if (del == it->l->last)
-				it->l->last = prv;
-	
-			it->cur = it->l->initial;
-			it->prv = NULL;
-			if(prv != NULL){
-				while(it->cur && it->cur != prv){
-					it->prv = it->cur;
-					it->cur = it->cur->nxt;
-				}
-			} else it->cur = NULL;
-			it->l->count--;
-			it->ll_version = ++it->l->version;
-			
+			ll_iter_remove_nolock(it);
 			cs_writeunlock(&it->l->lock);
-			add_garbage(del);
 		}
 	}
 
@@ -467,8 +501,10 @@ void **ll_sort(const LLIST *l, void *compare, int32_t *size)
 		p[i++] = n->obj;
 	}
 	cs_readunlock(&((LLIST*)l)->lock);
+#ifdef WITH_DEBUG
+	//	if (chk_debugLog(it->l))
 	//cs_debug_mask(D_TRACE, "sort: count %d size %d", l->count, sizeof(p[0]));
-	
+#endif
 	qsort(p, l->count, sizeof(p[0]), compare);
 
 	return p;

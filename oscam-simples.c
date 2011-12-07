@@ -1198,7 +1198,10 @@ void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 		// be stuck or finished, so enforce lock.
 		l->writelock = (type==WRITELOCK) ? 1 : 0;
 		l->readlock = (type==WRITELOCK) ? 0 : 1;
-		cs_log_nolock("WARNING lock %s timed out.", l->name);
+#ifdef WITH_DEBUG
+		if (l->name != LOG_LIST)
+			cs_log_nolock("WARNING lock %s (%s) timed out.", l->name, (type==WRITELOCK)?"WRITELOCK":"READLOCK");
+#endif
 	}
 	
 	pthread_mutex_unlock(&l->lock);
@@ -1233,8 +1236,12 @@ void cs_rwunlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 	pthread_mutex_unlock(&l->lock);
 
 #ifdef WITH_MUTEXDEBUG
-	const char *typetxt[] = { "", "write", "read" };
-	cs_debug_mask_nolock(D_TRACE, "%slock %s: released", typetxt[type], l->name);
+#ifdef WITH_DEBUG
+	if (l->name != LOG_LIST)  {
+		const char *typetxt[] = { "", "write", "read" };
+		cs_debug_mask_nolock(D_TRACE, "%slock %s: released", typetxt[type], l->name);
+	}
+#endif
 #endif
 }
 
@@ -1262,8 +1269,12 @@ int8_t cs_try_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 	pthread_mutex_unlock(&l->lock);
 
 #ifdef WITH_MUTEXDEBUG
-	const char *typetxt[] = { "", "write", "read" };
-	cs_debug_mask_nolock(D_TRACE, "try_%slock %s: status=%d", typetxt[type], l->name, status);
+#ifdef WITH_DEBUG
+	if (l->name != LOG_LIST) {
+		const char *typetxt[] = { "", "write", "read" };
+		cs_debug_mask_nolock(D_TRACE, "try_%slock %s: status=%d", typetxt[type], l->name, status);
+	}
+#endif
 #endif
 	return status;
 }
