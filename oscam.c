@@ -3340,8 +3340,10 @@ static void * check_thread(void) {
 			if (!ecmt)
 				cs_readunlock(&ecmcache_lock);
 
-			for (ecm = ecmt; ecm; ecm = ecm->next) {
-				free_ecm(ecm);
+			while (ecmt) {
+				ecm = ecmt->next;
+				free_ecm(ecmt);
+				ecmt = ecm;
 			}
 
 			cs_ftime(&ecmc_time);
