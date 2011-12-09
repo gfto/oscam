@@ -505,10 +505,14 @@ void cs_accounts_chk()
 }
 
 static void free_ecm(ECM_REQUEST *ecm) {
-	struct s_ecm_answer *ea;
+	struct s_ecm_answer *ea, *nxt;
 	
-	for (ea = ecm->matching_rdr; ea; ea = ea->next)
+	ea = ecm->matching_rdr;
+	while (ea) {
+		nxt = ea->next;
 		free(ea);
+		ea = nxt;
+	}
 	ecm->matching_rdr = NULL;
 	free(ecm);
 }
