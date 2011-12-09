@@ -508,9 +508,9 @@ static void free_ecm(ECM_REQUEST *ecm) {
 	struct s_ecm_answer *ea;
 	
 	for (ea = ecm->matching_rdr; ea; ea = ea->next)
-		add_garbage(ea);
+		free(ea);
 	ecm->matching_rdr = NULL;
-	add_garbage(ecm);
+	free(ecm);
 }
 
 
@@ -1542,9 +1542,12 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, uint64_t grp)
 	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
 	struct ecm_request_t *ecm;
 
+	cs_readlock(&ecmcache_lock);
 	for (ecm = ecmtask; ecm; ecm = ecm->next) {
-		if (ecm->tps.time < timeout)
+		if (ecm->tps.time < timeout) {
+			ecm = NULL;
 			break;
+		}
 
 		if ((grp && !(grp & ecm->grp)) || ecm->caid!=er->caid)
 			continue;
@@ -1553,9 +1556,10 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, uint64_t grp)
 			continue;
 
 		if (ecm->rc != E_99)
-			return ecm;
+			break;
 	}
-	return NULL;
+	cs_readunlock(&ecmcache_lock);
+	return ecm;
 }
 
 /*
@@ -2575,6 +2579,12 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	int8_t cacheex = client->account && client->account->cacheex;
 
 	if (cacheex && er->rc == E_UNHANDLED) { //not found in cache, so wait!
+#ifdef WITH_LB
+		if (locked) {
+			cs_writeunlock(&get_cw_lock);
+			locked = 0;
+		}
+#endif
 		int32_t max_wait = cfg.cacheex_wait_time;
 		while (max_wait > 0 && !client->kill) {
 			cs_sleepms(50);

@@ -788,10 +788,16 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				if (needs_stats_beta) {
 					//Duplicate Ecms for gettings stats:
 					ECM_REQUEST *converted_er = get_ecmtask();
-					memcpy(converted_er, er, sizeof(ECM_REQUEST));
-					if (er->src_data) {
+					memcpy(converted_er->ecm, er->ecm, er->l);
+					converted_er->l = er->l;
+					converted_er->caid = er->caid;
+					converted_er->srvid = er->srvid;
+					converted_er->chid = er->chid;
+					converted_er->pid = er->pid;
+					converted_er->prid = er->prid;
+					if (er->src_data) { //camd35:
 						int size = 0x34 + 20 + er->l;
-						cs_malloc(&converted_er->src_data, size, 0); //camd35
+						cs_malloc(&converted_er->src_data, size, 0);
 						memcpy(converted_er->src_data, er->src_data, size);
 					}
 					convert_to_beta_int(converted_er, caid_to);

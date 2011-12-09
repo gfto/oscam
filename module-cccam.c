@@ -491,7 +491,7 @@ int32_t cc_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen) {
 			return 0;
 		}
 
-		len = recv(handle, buf + 4, size, MSG_WAITALL); // read rest of msg
+		len = recv(handle, buf + 4, size, MSG_WAITALL);
 		if (rdr && buf[1] == MSG_CW_ECM)
 			rdr->last_g = time(NULL);
 
