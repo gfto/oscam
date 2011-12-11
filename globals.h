@@ -627,6 +627,7 @@ struct s_module {
 	void 			(*c_idle)(void);	// Schlocke: called when reader is idle
 	void			(*s_idle)(struct s_client*);
 	void 			(*c_card_info)(void);	// Schlocke: request card infos
+	int32_t			(*c_cache_push)(struct s_client*, struct ecm_request_t *); //Cache push
 	int32_t  		c_port;
 	PTAB 			*ptab;
 	int32_t 		num;

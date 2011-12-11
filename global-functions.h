@@ -120,6 +120,7 @@ extern void cs_add_violation_by_ip(uint32_t ip, int32_t port, char *info);
 extern void cs_add_violation(struct s_client *cl, char *info);
 extern void cs_card_info(void);
 extern void cs_debug_level(void);
+extern void cs_add_cache(struct s_client *client, ECM_REQUEST *er);
 
 /* ===========================
  *           oscam-ac

@@ -13,16 +13,17 @@
 
 #define REQ_SIZE	584		// 512 + 20 + 0x34
 
-static int32_t camd35_send(uchar *buf)
+static int32_t camd35_send(uchar *buf, int32_t buflen)
 {
-	int32_t l, buflen;
+	int32_t l;
 	unsigned char rbuf[REQ_SIZE+15+4], *sbuf = rbuf + 4;
 	struct s_client *cl = cur_client();
 
 	if (!cl->udp_fd) return(-1);
 
 	//Fix ECM len > 255
-	buflen = ((buf[0] == 0)? (((buf[21]&0x0f)<< 8) | buf[22])+3 : buf[1]);
+	if (buflen <= 0)
+		buflen = ((buf[0] == 0)? (((buf[21]&0x0f)<< 8) | buf[22])+3 : buf[1]);
 	l = 20 + (((buf[0] == 3) || (buf[0] == 4)) ? 0x34 : 0) + buflen;
 	memcpy(rbuf, cl->ucrc, 4);
 	memcpy(sbuf, buf, l);
@@ -244,9 +245,9 @@ static void camd35_request_emm(ECM_REQUEST *er)
 		mbuf[20] = mbuf[39] = mbuf[40] = mbuf[47] = mbuf[49] = 1;
 
 	memcpy(mbuf + 10, mbuf + 20, 2);
-	camd35_send(mbuf);		// send with data-len 111 for camd3 > 3.890
+	camd35_send(mbuf, 0);		// send with data-len 111 for camd3 > 3.890
 	mbuf[1]++;
-	camd35_send(mbuf);		// send with data-len 112 for camd3 < 3.890
+	camd35_send(mbuf, 0);		// send with data-len 112 for camd3 < 3.890
 }
 
 static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
@@ -297,7 +298,7 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			buf[1] = 0;
 		}
 	}
-	camd35_send(buf);
+	camd35_send(buf, 0);
 	camd35_request_emm(er);
 
 	if (er->src_data) free(er->src_data);
@@ -336,12 +337,99 @@ static void camd35_server_init(struct s_client * client) {
 	client->is_udp = (ph[client->ctyp].type == MOD_CONN_UDP);
 }
 
-static void * camd35_server(struct s_client *UNUSED(client), uchar *mbuf, int32_t n)
+static int32_t tcp_connect()
+{
+	struct s_client *cl = cur_client();
+
+	if (cl->is_udp) {
+	   if (!cl->udp_sa.sin_addr.s_addr || cl->reader->last_s-cl->reader->last_g > cl->reader->tcp_rto)
+	      if (!hostResolve(cl->reader)) return 0;
+	}
+
+	if (cl->reader->last_s-cl->reader->last_g > cl->reader->tcp_rto)
+		return 0;
+
+	if (!cl->reader->tcp_connected) {
+		int32_t handle=0;
+		handle = network_tcp_connection_open(cl->reader);
+		if (handle<0) return(0);
+
+		cl->reader->tcp_connected = 1;
+		cl->reader->card_status = CARD_INSERTED;
+		cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
+		cl->pfd = cl->udp_fd = handle;
+	}
+	if (!cl->udp_fd) return(0);
+	return(1);
+}
+
+int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
+{
+	cs_debug_mask(D_TRACE, "push 1");
+	if (!cl->udp_fd) return(-1);
+	cs_debug_mask(D_TRACE, "push 2");
+	int8_t rc = (er->rc<E_NOTFOUND)?E_FOUND:er->rc;
+	if (rc != E_FOUND) return -1; //Maybe later we could support other rcs
+	cs_debug_mask(D_TRACE, "push 3");
+	unsigned char buf[512+20+16];
+
+	memset(buf, 0, 20);
+	memset(buf + 20, 0xff, er->l+15);
+	buf[0]=0x3f; //New Command: Cache-push
+	buf[1]=er->l & 0xff;
+	buf[2]=er->l >> 8;
+	buf[3]=rc;
+	i2b_buf(2, er->srvid, buf + 8);
+	i2b_buf(2, er->caid, buf + 10);
+	i2b_buf(4, er->prid, buf + 12);
+	i2b_buf(2, er->idx, buf + 16);
+	memcpy(buf + 20, er->ecm, er->l);
+	memcpy(buf + 20 + er->l, er->cw, 16);
+
+	//Fix ECM len > 255
+	int32_t buflen = er->l;
+	if (er->rc < E_NOTFOUND)
+		buflen += 16;
+	cs_debug_mask(D_TRACE, "push 4");
+	int32_t res = camd35_send(buf, buflen);
+	cs_debug_mask(D_TRACE, "push 5 %d", res);
+	return res;
+}
+
+void camd35_cache_push_in(struct s_client *client, uchar *buf)
+{
+	cs_debug_mask(D_TRACE, "push 1");
+	if (buf[3] >= E_NOTFOUND) //Maybe later we could support other rcs
+		return;
+
+	cs_debug_mask(D_TRACE, "push 2");
+	ECM_REQUEST *er;
+	if (!(er = get_ecmtask()))
+		return;
+	er->l = buf[1] | buf[2] << 8;
+	er->srvid = b2i(2, buf+ 8);
+	er->caid = b2i(2, buf+10);
+	er->prid = b2i(4, buf+12);
+	er->pid  = b2i(2, buf+16);
+	er->rc = buf[3];
+
+	memcpy(er->ecm, buf + 20, er->l);
+	memcpy(er->cw, buf+20 +er->l, 16);
+
+	cs_debug_mask(D_TRACE, "push 3");
+	cs_add_cache(client, er);
+	cs_debug_mask(D_TRACE, "push 4");
+}
+
+static void * camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
 {
 	switch(mbuf[0]) {
 		case  0:	// ECM
 		case  3:	// ECM (cascading)
 			camd35_process_ecm(mbuf);
+			break;
+		case 0x3f:  // Cache-push
+			camd35_cache_push_in(client, mbuf);
 			break;
 		case  6:	// EMM
 		case 19:  // EMM
@@ -407,29 +495,6 @@ int32_t camd35_client_init_log()
   return(0);
 }
 
-static int32_t tcp_connect()
-{
-	struct s_client *cl = cur_client();
-
-	if (cl->is_udp) {
-	   if (!cl->udp_sa.sin_addr.s_addr || cl->reader->last_s-cl->reader->last_g > cl->reader->tcp_rto)
-	      if (!hostResolve(cl->reader)) return 0;
-	}
-
-	if (!cl->reader->tcp_connected) {
-		int32_t handle=0;
-		handle = network_tcp_connection_open(cl->reader);
-		if (handle<0) return(0);
-
-		cl->reader->tcp_connected = 1;
-		cl->reader->card_status = CARD_INSERTED;
-		cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
-		cl->pfd = cl->udp_fd = handle;
-	}
-	if (!cl->udp_fd) return(0);
-	return(1);
-}
-
 static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *buf)
 {
 	static const char *typtext[]={"ok", "invalid", "sleeping"};
@@ -467,7 +532,7 @@ static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *
 	buf[18] = 0xff;
 	buf[19] = 0xff;
 	memcpy(buf + 20, er->ecm, er->l);
-	return((camd35_send(buf) < 1) ? (-1) : 0);
+	return((camd35_send(buf, 0) < 1) ? (-1) : 0);
 }
 
 static int32_t camd35_send_emm(EMM_PACKET *ep)
@@ -487,7 +552,7 @@ static int32_t camd35_send_emm(EMM_PACKET *ep)
 	memcpy(buf+12, ep->provid, 4);
 	memcpy(buf+20, ep->emm, ep->l);
 
-	return((camd35_send(buf)<1) ? 0 : 1);
+	return((camd35_send(buf, 0)<1) ? 0 : 1);
 }
 
 static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t UNUSED(n))
@@ -550,6 +615,11 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 
 		cs_log("%s CMD08 (%02X - %d) stop request by server (%s)",
 				rdr->label, buf[21], buf[21], typtext[client->stopped]);
+	}
+
+	if (buf[0] == 0x3f) { //cache-push
+		camd35_cache_push_in(client, buf);
+		return -1;
 	}
 
 	// CMD44: old reject command introduced in mpcs
@@ -623,6 +693,7 @@ void module_camd35(struct s_module *ph)
   ph->c_send_emm=camd35_send_emm;
   ph->c_init_log=camd35_client_init_log;
   ph->c_recv_log=camd35_recv_log;
+  ph->c_cache_push=camd35_cache_push_out;
   ph->num=R_CAMD35;
 }
 
@@ -647,5 +718,6 @@ void module_camd35_tcp(struct s_module *ph)
   ph->c_send_emm=camd35_send_emm;
   ph->c_init_log=camd35_client_init_log;
   ph->c_recv_log=camd35_recv_log;
+  ph->c_cache_push=camd35_cache_push_out;
   ph->num=R_CS378X;
 }
