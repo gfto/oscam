@@ -346,9 +346,6 @@ static int32_t tcp_connect()
 	      if (!hostResolve(cl->reader)) return 0;
 	}
 
-	if (cl->reader->last_s-cl->reader->last_g > cl->reader->tcp_rto)
-		return 0;
-
 	if (!cl->reader->tcp_connected) {
 		int32_t handle=0;
 		handle = network_tcp_connection_open(cl->reader);
@@ -360,6 +357,12 @@ static int32_t tcp_connect()
 		cl->pfd = cl->udp_fd = handle;
 	}
 	if (!cl->udp_fd) return(0);
+	
+	if (cl->reader->last_s-cl->reader->last_g > cl->reader->tcp_rto) {
+		network_tcp_connection_close(cl->reader);
+		return 0;
+	}
+	
 	return(1);
 }
 
