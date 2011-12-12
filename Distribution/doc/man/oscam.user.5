@@ -55,9 +55,12 @@ unique level:
 .PP
 \fBcacheex\fP = \fB0\fP|\fB1\fP
 .RS 3n
-1 = enable cache exchange, default:0
+set cache exchange mode, default:0
 
-\fICache exchange must be enabled on local and remote OSCam reader.\fR
+ \fB1\fP: enable cache pull mode
+ \fB2\fP: enable cache push mode for camd 3.5x protocol
+
+\fIIdentical cache exchange modes must be set on local and remote OSCam reader.\fR
 .RE
 .PP
 \fBsleep\fP = \fBminutes\fP
