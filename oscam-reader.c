@@ -294,6 +294,7 @@ void network_tcp_connection_close(struct s_reader *reader)
 	}
 
 	reader->tcp_connected = 0;
+	reader->card_status = UNKNOWN;
 
 	if (cl->ecmtask) {
 		for (i = 0; i < CS_MAXPENDING; i++) {
