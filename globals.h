@@ -428,6 +428,7 @@ extern void cs_switch_led(int32_t led, int32_t action);
 #define ACTION_CLIENT_KILL		25
 #define ACTION_CLIENT_INIT		26
 #define ACTION_CLIENT_IDLE		27
+#define ACTION_CACHE_PUSH_OUT	28
 
 #define CHECK_WAKEUP			1
 #define CHECK_ANTICASCADER		2

@@ -198,7 +198,7 @@ READER_STAT *get_fastest_stat(uint16_t caid, uint32_t prid, uint16_t srvid, uint
 	struct s_reader *rdr = first_active_reader;
 	while (rdr) {
 		stat = get_stat(rdr, caid, prid, srvid, chid, ecmlen);
-		if (stat && stat->rc == 0) {//only return "founds"
+		if (stat && stat->rc == E_FOUND) {//only return "founds"
 			int32_t weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
 			int32_t time = stat->time_avg*100/weight;
 			
@@ -431,14 +431,14 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	//        - = causes loadbalancer to block this reader for this caid/prov/sid
 	//        -2 = causes loadbalancer to block if happens too often
 	
-	if (rc == 4 && (uint32_t)ecm_time >= cfg.ctimeout) //Map "not found" to "timeout" if ecm_time>client time out
-		rc = 5;
+	if (rc == E_NOTFOUND && (uint32_t)ecm_time >= cfg.ctimeout) //Map "not found" to "timeout" if ecm_time>client time out
+		rc = E_TIMEOUT;
 
 	time_t ctime = time(NULL);
 	
-	if (rc == 0) { //found
+	if (rc == E_FOUND) { //found
 		stat = get_add_stat(rdr, er, prid);
-		stat->rc = 0;
+		stat->rc = E_FOUND;
 		stat->ecm_count++;
 		stat->last_received = ctime;
 		stat->fail_factor = 0;
@@ -477,14 +477,14 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 			rdr->lb_usagelevel_time = ctime;
 		rdr->lb_usagelevel_ecmcount = ule+1;
 	}
-	else if (rc == 1 || rc == 2) { //cache
+	else if (rc == E_CACHE1 || rc == E_CACHE2) { //cache
 		//no increase of statistics here, cachetime is not real time
 		stat = get_stat(rdr, er->caid, prid, er->srvid, er->chid, er->l);
 		if (stat != NULL)
 			stat->last_received = ctime;
 		return;
 	}
-	else if (rc == 4||rc == 8) { //not found / invalid
+	else if (rc == E_NOTFOUND||rc == E_INVALID) { //not found / invalid
 		//CCcam card can't decode, 0x28=NOK1, 0x29=NOK2
 		//CCcam loop detection = E2_CCCAM_LOOP
 		if (er->rcEx == E2_CCCAM_NOK1 || er->rcEx == E2_CCCAM_NOK2 || er->rcEx == E2_CCCAM_LOOP || er->rcEx == E2_WRONG_CHKSUM) {
@@ -495,7 +495,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 		}
 			
 		stat = get_add_stat(rdr, er, prid);
-		if (stat->rc == 4) { //we have already "not found", so we change the time. In some cases (with services/ident set) the failing reader is selected again:
+		if (stat->rc == E_NOTFOUND) { //we have already "not found", so we change the time. In some cases (with services/ident set) the failing reader is selected again:
 			if (ecm_time < 100)
 				ecm_time = 100;
 			stat->time_avg += ecm_time;
@@ -508,20 +508,38 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 		if (!cfg.lb_reopen_mode)
 			stat->ecm_count /= 10;
 	}
-	else if (rc == 5) { //timeout
+	else if (rc == E_TIMEOUT) { //timeout
 		stat = get_add_stat(rdr, er, prid);
 		
 		//catch suddenly occuring timeouts and block reader:
 		if ((int)(ctime-stat->last_received) < (int)(5*cfg.ctimeout) && 
-				stat->rc == 0 && stat->ecm_count == 0) {
-			stat->rc = 5;
+				stat->rc == E_FOUND && stat->ecm_count == 0) {
+			stat->rc = E_TIMEOUT;
 				//inc_fail(stat); //do not inc fail factor in this case
 		}
 		//reader is longer than 5s connected && not more then 5 pending ecms:
 		else if ((cl->login+(int)(2*cfg.ctimeout/1000)) < ctime && cl->pending < 5 &&  
-				stat->rc == 0 && stat->ecm_count == 0) {
-			stat->rc = 5;
+				stat->rc == E_FOUND && stat->ecm_count == 0) {
+			stat->rc = E_TIMEOUT;
 			inc_fail(stat);
+		}
+		else if (stat->rc == E_FOUND) {
+			//search for alternate readers. If we have one, block this reader:
+			int n = 0;
+			struct s_ecm_answer *ea;
+			for (ea = er->matching_rdr; ea; ea = ea->next) {
+				if (ea->reader != rdr && ea->rc < E_NOTFOUND)
+					n++;
+			}
+			if (n > 0) //We have alternative readers, so we can block this one:
+				stat->rc = E_TIMEOUT;
+			else { //No other reader found. Inc fail factor and retry lb_min_ecmount times:
+				inc_fail(stat);
+				if (stat->fail_factor > cfg.lb_min_ecmcount) {
+					stat->fail_factor = 0;
+					stat->rc = E_TIMEOUT;
+				}
+			}
 		}
 				
 		stat->last_received = ctime;
@@ -537,7 +555,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	}
 	else
 	{
-		if (rc >= 0)
+		if (rc >= E_FOUND)
 			cs_debug_mask(D_TRACE, "loadbalancer: not handled stat for reader %s: rc %d %04hX&%06X/%04hX/%04hX/%02hX time %dms",
 				rdr->label, rc, er->caid, prid, er->srvid, er->chid, er->l, ecm_time);
 	
@@ -566,7 +584,7 @@ void reset_stat(uint16_t caid, uint32_t prid, uint16_t srvid, uint16_t chid, int
 			if (stat) {
 				if (stat->ecm_count > 0)
 					stat->ecm_count = 1; //not zero, so we know it's decodeable
-				stat->rc = 0;
+				stat->rc = E_FOUND;
 				stat->fail_factor = 0;
 			}
 		}
@@ -759,14 +777,14 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					stat_beta = NULL;
 
 				//calculate nagra data:				
-				if (stat_nagra && stat_nagra->rc == 0) {
+				if (stat_nagra && stat_nagra->rc == E_FOUND) {
 					time = stat_nagra->time_avg*100/weight;
 					if (!time_nagra || time < time_nagra)
 						time_nagra = time;
 				}
 				
 				//calculate beta data:
-				if (stat_beta && stat_beta->rc == 0) {
+				if (stat_beta && stat_beta->rc == E_FOUND) {
 					time = stat_beta->time_avg*100/weight;
 					if (!time_beta || time < time_beta)
 						time_beta = time;
@@ -896,7 +914,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				
 			int32_t hassrvid = has_srvid(rdr->client, er) || has_ident(&rdr->ftab, er);
 			
-			if (stat->rc == 0 && stat->ecm_count < cfg.lb_min_ecmcount) {
+			if (stat->rc == E_FOUND && stat->ecm_count < cfg.lb_min_ecmcount) {
 				cs_debug_mask(D_TRACE, "loadbalancer: reader %s needs more statistics", rdr->label);
 				ea->status |= READER_ACTIVE; //need more statistics!
 				nreaders--;
@@ -905,12 +923,12 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			}
 			
 			//Reader can decode this service (rc==0) and has lb_min_ecmcount ecms:
-			if (stat->rc == 0 || hassrvid) {
+			if (stat->rc == E_FOUND || hassrvid) {
 				if (cfg.preferlocalcards && (ea->status & 0x4))
 					nlocal_readers++; //Prefer local readers!
 
 				//just add another reader if best reader is nonresponding but has services
-				if (stat->rc >= 5)
+				if (stat->rc >= E_NOTFOUND)
 					ea->timeout_service = 1;
 
 					
@@ -1051,7 +1069,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				rdr = ea->reader;
 				stat = get_stat(rdr, er->caid, prid, er->srvid, er->chid, er->l);
 
-				if (stat && stat->rc != 0) { //retrylimit reached:
+				if (stat && stat->rc != E_FOUND) { //retrylimit reached:
 					if (cfg.lb_reopen_mode || stat->last_received+get_reopen_seconds(stat) < current_time) { //Retrying reader every (900/conf) seconds
 						stat->last_received = current_time;
 						if (!ea->status) {

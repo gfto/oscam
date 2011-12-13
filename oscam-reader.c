@@ -351,7 +351,7 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 	t=time((time_t *)0);
 	ECM_REQUEST *ecm;
-	for (n=-1, i=0, sflag=1; i<CS_MAXPENDING; i++) {
+	for (i=0; i<CS_MAXPENDING; i++) {
 		ecm = &cl->ecmtask[i];
 		if ((ecm->rc>=10) && (t-(uint32_t)ecm->tps.time > ((cfg.ctimeout + 500) / 1000) + 1)) { // drop timeouts
 			ecm->rc=0;
@@ -359,6 +359,10 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 			send_reader_stat(reader, ecm, E_TIMEOUT);
 #endif
 		}
+	}
+
+	for (n=-1, i=0, sflag=1; i<CS_MAXPENDING; i++) {
+		ecm = &cl->ecmtask[i];
 		if (n<0 && (ecm->rc<10))   // free slot found
 			n=i;
 

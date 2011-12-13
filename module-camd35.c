@@ -368,12 +368,12 @@ static int32_t tcp_connect()
 
 int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 {
-	cs_debug_mask(D_TRACE, "push 1");
+	cs_debug_mask(D_TRACE, "push out 1");
 	if (!cl->udp_fd) return(-1);
-	cs_debug_mask(D_TRACE, "push 2");
+	cs_debug_mask(D_TRACE, "push out 2");
 	int8_t rc = (er->rc<E_NOTFOUND)?E_FOUND:er->rc;
 	if (rc != E_FOUND) return -1; //Maybe later we could support other rcs
-	cs_debug_mask(D_TRACE, "push 3");
+	cs_debug_mask(D_TRACE, "push out 3");
 	unsigned char buf[512+20+16];
 
 	memset(buf, 0, 20);
@@ -393,19 +393,19 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	int32_t buflen = er->l;
 	if (er->rc < E_NOTFOUND)
 		buflen += 16;
-	cs_debug_mask(D_TRACE, "push 4");
+	cs_debug_mask(D_TRACE, "push out 4");
 	int32_t res = camd35_send(buf, buflen);
-	cs_debug_mask(D_TRACE, "push 5 %d", res);
+	cs_debug_mask(D_TRACE, "push out 5 %d", res);
 	return res;
 }
 
 void camd35_cache_push_in(struct s_client *client, uchar *buf)
 {
-	cs_debug_mask(D_TRACE, "push 1");
+	cs_debug_mask(D_TRACE, "push in 1");
 	if (buf[3] >= E_NOTFOUND) //Maybe later we could support other rcs
 		return;
 
-	cs_debug_mask(D_TRACE, "push 2");
+	cs_debug_mask(D_TRACE, "push in 2");
 	ECM_REQUEST *er;
 	if (!(er = get_ecmtask()))
 		return;
@@ -419,9 +419,9 @@ void camd35_cache_push_in(struct s_client *client, uchar *buf)
 	memcpy(er->ecm, buf + 20, er->l);
 	memcpy(er->cw, buf+20 +er->l, 16);
 
-	cs_debug_mask(D_TRACE, "push 3");
+	cs_debug_mask(D_TRACE, "push in 3");
 	cs_add_cache(client, er);
-	cs_debug_mask(D_TRACE, "push 4");
+	cs_debug_mask(D_TRACE, "push in 4");
 }
 
 static void * camd35_server(struct s_client *client, uchar *mbuf, int32_t n)

@@ -510,7 +510,7 @@ static void free_ecm(ECM_REQUEST *ecm) {
 	ecm->matching_rdr = NULL;
 	while (ea) {
 		nxt = ea->next;
-		free(ea);
+		add_garbage(ea);
 		ea = nxt;
 	}
 	add_garbage(ecm);
@@ -1545,10 +1545,9 @@ void cs_cache_push(ECM_REQUEST *er)
 				if ((cl->grp & er->grp) //Group-check
 						&& chk_srvid(cl, er) //Service-check
 						&& chk_caid(er->caid, &cl->ctab)) { //Caid-check
-					int32_t res = ph[cl->ctyp].c_cache_push(cl, er);
-
-					cs_debug_mask(D_TRACE, "pushed ECM %04X&%06X/%04X/%02X:%04X to %s res %d",
-						er->caid, er->prid, er->srvid, er->l, htons(er->checksum),  username(cl), res);
+					ECM_REQUEST *erc = cs_malloc(&erc, sizeof(ECM_REQUEST), 0);
+					memcpy(erc, er, sizeof(ECM_REQUEST));
+					add_job(cl, ACTION_CACHE_PUSH_OUT, erc, sizeof(ECM_REQUEST));
 				}
 			}
 		}
@@ -1558,8 +1557,8 @@ void cs_cache_push(ECM_REQUEST *er)
 void cs_add_cache(struct s_client *cl, ECM_REQUEST *er)
 {
 	//we receive this from a reader!
-//	if (!cl || !cl->reader || !cl->reader->cacheex==2)
-//		return;
+	if (!cl || !cl->reader || !cl->reader->cacheex==2)
+		return;
 
 	cs_debug_mask(D_TRACE, "got pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
 		er->caid, er->prid, er->srvid, er->l, htons(er->checksum),  username(cl));
@@ -3222,8 +3221,17 @@ void * work_thread(void *ptr) {
 					cs_log("user %s reached %d sec idle limit.", username(cl), cfg.cmaxidle);
 					cl->kill = 1;
 				}
-
 				break;
+			case ACTION_CACHE_PUSH_OUT: {
+				ECM_REQUEST *er = data->ptr;
+				int32_t res = ph[cl->ctyp].c_cache_push(cl, er);
+				cs_debug_mask(
+					D_TRACE,
+					"pushed ECM %04X&%06X/%04X/%02X:%04X to %s res %d", er->caid, er->prid, er->srvid, er->l,
+					htons(er->checksum), username(cl), res);
+				free(data->ptr);
+				break;
+			}
 		}
 
 		if (data!=&tmp_data)
