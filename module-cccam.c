@@ -1826,6 +1826,55 @@ static void chk_peer_node_for_oscam(struct cc_data *cc)
 	}
 }
 
+int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
+{
+	if (!cl->udp_fd) return(-1);
+	int8_t rc = (er->rc<E_NOTFOUND)?E_FOUND:er->rc;
+	if (rc != E_FOUND) return -1; //Maybe later we could support other rcs
+	uint8_t *ecmbuf = cs_malloc(&ecmbuf, 20 + er->l + 16, 0);
+
+	// build ecm message
+	ecmbuf[0] = er->caid >> 8;
+	ecmbuf[1] = er->caid & 0xff;
+	ecmbuf[2] = er->prid >> 24;
+	ecmbuf[3] = er->prid >> 16;
+	ecmbuf[4] = er->prid >> 8;
+	ecmbuf[5] = er->prid & 0xff;
+	ecmbuf[10] = er->srvid >> 8;
+	ecmbuf[11] = er->srvid & 0xff;
+	ecmbuf[12] = er->l & 0xff;
+	ecmbuf[13] = er->l >> 8;
+	ecmbuf[14] = rc;
+	memcpy(ecmbuf + 20, er->ecm, er->l);
+	memcpy(ecmbuf + 20 + er->l, er->cw, 16);
+
+	int32_t res = cc_cmd_send(cl, ecmbuf, 20 + er->l + 16, MSG_CACHE_PUSH);
+	free(ecmbuf);
+	return res;
+}
+
+void cc_cache_push_in(struct s_client *client, uchar *buf)
+{
+	if (buf[14] >= E_NOTFOUND) //Maybe later we could support other rcs
+		return;
+
+	ECM_REQUEST *er;
+	if (!(er = get_ecmtask()))
+		return;
+
+	er->caid = b2i(2, buf+0);
+	er->prid = b2i(4, buf+2);
+	er->srvid = b2i(2, buf+ 10);
+	er->rc = buf[14];
+
+	er->l = buf[12] | buf[13] << 8;
+	memcpy(er->ecm, buf + 20, er->l);
+	memcpy(er->cw, buf+20 +er->l, 16);
+
+	cs_add_cache(client, er);
+}
+
+
 int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
 	int32_t ret = buf[1];
@@ -2055,6 +2104,12 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 		}
 		//NO BREAK!! NOK Handling needed!
 		
+	case MSG_CACHE_PUSH:
+	{
+		cc_cache_push_in(cl, data);
+		break;
+	}
+
 	case MSG_CW_NOK1:
 	case MSG_CW_NOK2:
 		if (l > 5) {
@@ -3355,6 +3410,7 @@ void module_cccam(struct s_module *ph) {
 	ph->send_dcw = cc_send_dcw;
 	ph->c_available = cc_available;
 	ph->c_card_info = cc_card_info;
+	ph->c_cache_push=cc_cache_push_out;
 	static PTAB ptab; //since there is always only 1 cccam server running, this is threadsafe
 	memset(&ptab, 0, sizeof(PTAB));
 	int32_t i;

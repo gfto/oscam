@@ -54,6 +54,7 @@ typedef enum {
 	MSG_CMD_0E = 0x0e, // "
 	MSG_NEW_CARD_SIDINFO = 0x0f,
 	MSG_SLEEPSEND = 0x80, //Sleepsend support
+	MSG_CACHE_PUSH = 0x81, //CacheEx Cache-Push In/Out
 	MSG_CW_NOK1 = 0xfe, //Node no more available
 	MSG_CW_NOK2 = 0xff, //No decoding
 	MSG_NO_HEADER = 0xffff
