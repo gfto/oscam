@@ -1554,51 +1554,6 @@ void cs_cache_push(ECM_REQUEST *er)
 	}
 }
 
-void cs_add_cache(struct s_client *cl, ECM_REQUEST *er)
-{
-	//we receive this from a reader!
-	if (!cl || !cl->reader || !cl->reader->cacheex==2)
-		return;
-
-	uint16_t *lp;
-	for (lp=(uint16_t *)er->ecm+(er->l>>2), er->checksum=0; lp>=(uint16_t *)er->ecm; lp--)
-		er->checksum^=*lp;
-
-	er->grp = cl->grp;
-	er->ocaid = er->caid;
-
-	int32_t offset = 3;
-	if ((er->caid >> 8) == 0x17)
-		offset = 13;
-	unsigned char md5tmp[MD5_DIGEST_LENGTH];
-	memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, md5tmp), CS_ECMSTORESIZE);
-
-	cs_debug_mask(D_TRACE, "got pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
-		er->caid, er->prid, er->srvid, er->l, htons(er->checksum),  username(cl));
-
-	struct ecm_request_t *ecm = check_cwcache(er, cl->grp);
-	if (!ecm) {
-		cs_writelock(&ecmcache_lock);
-		er->next = ecmtask;
-		ecmtask = er;
-		cs_writeunlock(&ecmcache_lock);
-
-		cs_cache_push(er);  //cascade push!
-	}
-	else {
-		if(er->rc < ecm->rc) {
-			cs_readlock(&ecmcache_lock);
-			ecm->rc = er->rc;
-			memcpy(ecm->cw, er->cw, sizeof(er->cw));
-			memcpy(ecm->msglog, er->msglog, sizeof(er->msglog));
-			cs_readunlock(&ecmcache_lock);
-
-			cs_cache_push(er);  //cascade push!
-		}
-		free_ecm(er);
-	}
-}
-
 /**
  * ecm cache
  **/
@@ -1652,6 +1607,53 @@ static void distribute_ecm(ECM_REQUEST *er, int32_t rc)
 	}
 	cs_readunlock(&ecmcache_lock);
 }
+
+void cs_add_cache(struct s_client *cl, ECM_REQUEST *er)
+{
+	//we receive this from a reader!
+	if (!cl || !cl->reader || !cl->reader->cacheex==2)
+		return;
+
+	uint16_t *lp;
+	for (lp=(uint16_t *)er->ecm+(er->l>>2), er->checksum=0; lp>=(uint16_t *)er->ecm; lp--)
+		er->checksum^=*lp;
+
+	er->grp = cl->grp;
+	er->ocaid = er->caid;
+
+	int32_t offset = 3;
+	if ((er->caid >> 8) == 0x17)
+		offset = 13;
+	unsigned char md5tmp[MD5_DIGEST_LENGTH];
+	memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, md5tmp), CS_ECMSTORESIZE);
+
+	cs_debug_mask(D_TRACE, "got pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
+		er->caid, er->prid, er->srvid, er->l, htons(er->checksum),  username(cl));
+
+	struct ecm_request_t *ecm = check_cwcache(er, cl->grp);
+	if (!ecm) {
+		cs_writelock(&ecmcache_lock);
+		er->next = ecmtask;
+		ecmtask = er;
+		cs_writeunlock(&ecmcache_lock);
+
+		cs_cache_push(er);  //cascade push!
+	}
+	else {
+		if(er->rc < ecm->rc) {
+			cs_readlock(&ecmcache_lock);
+			ecm->rc = er->rc;
+			memcpy(ecm->cw, er->cw, sizeof(er->cw));
+			memcpy(ecm->msglog, er->msglog, sizeof(er->msglog));
+			cs_readunlock(&ecmcache_lock);
+			distribute_ecm(er, er->rc);
+			pthread_kill(timecheck_thread, OSCAM_SIGNAL_WAKEUP); 
+			cs_cache_push(er);  //cascade push!
+		}
+		free_ecm(er);
+	}
+}
+
 
 
 int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, uint8_t rcEx, uchar *cw, char *msglog)
