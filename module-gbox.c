@@ -70,8 +70,6 @@ struct gbox_ecm_info {
   uchar checksums[14];
 };
 
-#pragma GCC diagnostic ignored "-Wunused-parameter" 
-
 ////////////////////////////////////////////////////////////////////////////////
 // GBOX BUFFER ENCRYPTION/DECRYPTION (thanks to dvbcrypt@gmail.com)
 ////////////////////////////////////////////////////////////////////////////////
@@ -193,7 +191,7 @@ void gbox_decrypt(uchar *buffer, int bufsize, uchar *localkey)
 	gbox_decryptA(buffer, localkey);
 }
 
-static void gbox_compress(struct gbox_data *gbox, uchar *buf, int32_t unpacked_len, int32_t *packed_len)
+static void gbox_compress(struct gbox_data *UNUSED(gbox), uchar *buf, int32_t unpacked_len, int32_t *packed_len)
 {
   unsigned char *tmp, *tmp2;
   *packed_len = 0;
@@ -229,7 +227,7 @@ static void gbox_compress(struct gbox_data *gbox, uchar *buf, int32_t unpacked_l
   *packed_len = pl;
 }
 
-static void gbox_decompress(struct gbox_data *gbox, uchar *buf, int32_t *unpacked_len)
+static void gbox_decompress(struct gbox_data *UNUSED(gbox), uchar *buf, int32_t *unpacked_len)
 {
   uchar *tmp;
 
@@ -943,7 +941,7 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
   return -1;
 }
 
-static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *buf)
+static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSED(buf))
 {
   struct gbox_data *gbox = cli->gbox;
 
@@ -1038,7 +1036,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *buf)
   return 0;
 }
 
-static int32_t gbox_send_emm(EMM_PACKET *ep)
+static int32_t gbox_send_emm(EMM_PACKET *UNUSED(ep))
 {
   // emms not yet supported
 

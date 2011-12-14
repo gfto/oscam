@@ -650,7 +650,7 @@ static void monitor_set_account(char *args){
 		chk_account(token[found], argarray[2], account);
 	}
 
-	if (write_userdb(cfg.account)==0)
+	if (write_userdb()==0)
 		cs_reinit_clients(cfg.account);
 
 	snprintf(buf, sizeof(buf),"[S-0000]setuser: %s done - param %s set to %s\n", tmp, argarray[1], argarray[2]);

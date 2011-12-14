@@ -59,7 +59,7 @@ static int pandora_recv(struct s_client *cl, uchar *buf, int32_t l) {
 	if (cl->typ != 'c')
 		ret = recv_from_udpipe(buf);
 	else {
-		int clilen = sizeof(cl->udp_sa);
+		uint32_t clilen = sizeof(cl->udp_sa);
 		ret = recvfrom(cl->udp_fd, buf, l, 0, (struct sockaddr *) &cl->udp_sa,
 				&clilen);
 	}
@@ -126,7 +126,7 @@ static void * pandora_server(struct s_client *cl, uchar *UNUSED(mbuf),
 		if (cfg.pand_pass[0]) {
 			cl->pand_autodelay = 150000;
 			memcpy(cl->pand_md5_key,
-					MD5(cfg.pand_pass, strlen(cfg.pand_pass), NULL), 16);
+					MD5((uchar*)cfg.pand_pass, strlen(cfg.pand_pass), NULL), 16);
 			cl->pand_ignore_ecm = (cfg.pand_ecm) ? 0 : 1;
 			cl->crypted = 1;
 			pandora_auth_client(cl, cl->ip);
@@ -144,10 +144,8 @@ static void * pandora_server(struct s_client *cl, uchar *UNUSED(mbuf),
  *************************************************************************************************************************/
 int pandora_client_init(struct s_client *cl) {
 	static struct sockaddr_in loc_sa;
-	struct protoent *ptrp;
-	struct protoent result_buf;
 	int16_t p_proto;
-	char ptxt[16], buf[256];
+	char ptxt[16];
 	struct s_reader *rdr = cl->reader;
 
 	cl->pfd = 0;
@@ -188,7 +186,7 @@ int pandora_client_init(struct s_client *cl) {
 	} else
 		ptxt[0] = '\0';
 
-	memcpy(cl->pand_md5_key, MD5(rdr->r_pwd, strlen(rdr->r_pwd), NULL), 16);
+	memcpy(cl->pand_md5_key, MD5((uchar*)rdr->r_pwd, strlen(rdr->r_pwd), NULL), 16);
 	cl->crypted = 1;
 
 	//cl->grp = 0xFFFFFFFF;
@@ -206,7 +204,7 @@ int pandora_client_init(struct s_client *cl) {
 	return (0);
 }
 
-static int pandora_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
+static int pandora_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *UNUSED(buf)) {
 	uchar msgbuf[CWS_NETMSGSIZE];
 	int ret, len;
 	uchar adel;
@@ -238,8 +236,8 @@ static int pandora_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	return ((ret < len) ? (-1) : 0);
 }
 
-static int pandora_recv_chk(struct s_client *cl, uchar *dcw, int *rc,
-		uchar *buf, int n) {
+static int pandora_recv_chk(struct s_client *UNUSED(cl), uchar *dcw, int *rc,
+		uchar *buf, int UNUSED(n)) {
 	if (buf[0] != 0x2)
 		return (-1);
 	*rc = 1;
