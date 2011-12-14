@@ -558,11 +558,17 @@ static int32_t camd35_send_emm(EMM_PACKET *ep)
 	return((camd35_send(buf, 0)<1) ? 0 : 1);
 }
 
-static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t UNUSED(n))
+static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t rc2)
 {
 	uint16_t idx;
 	static const char *typtext[]={"ok", "invalid", "sleeping"};
-  struct s_reader *rdr = client->reader;
+	struct s_reader *rdr = client->reader;
+
+	if (rc2 < 0) {
+		if (rc2 == -4 || rc2 == -2) //checksum error / unknown user
+			network_tcp_connection_close(rdr);
+		return rc2;
+	}
 
 	// reading CMD05 Emm request and set serial
 	if (buf[0] == 0x05 && buf[1] == 111) {

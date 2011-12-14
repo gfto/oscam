@@ -2319,7 +2319,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 						if (cwlastresptime > cfg.ftimeout && !cc->extended_mode) {
 							cs_debug_mask(D_READER, "%s card %04X is too slow, moving to the end...", getprefix(), card->id);
 							move_card_to_end(cl, card);
-							add_sid_block(cl, card, &srvid);
+							//add_sid_block(cl, card, &srvid); Do not block slow cards!
 						}
 						
 					}

@@ -2035,7 +2035,15 @@ static void request_cw(ECM_REQUEST *er)
 			cs_debug_mask(D_TRACE, "request_cw stage=%d to reader %s ecm=%04X", er->stage, ea->reader->label, htons(er->checksum));
 			write_ecm_request(ea->reader, er);
 			ea->status |= REQUEST_SENT;
-			sent = 1;
+
+			//set sent=1 only if reader is active/connected. If not, switch to next stage!
+			if (!sent && ea->reader && ea->reader->client) {
+				struct s_client *rcl = ea->reader->client;
+				if (rcl->typ=='r' && ea->reader->card_status==CARD_INSERTED)
+					sent = 1;
+				else if (rcl->typ=='p' && (ea->reader->card_status==CARD_INSERTED ||ea->reader->tcp_connected))
+					sent = 1;
+			}
 		}
 		if (sent || er->stage >= 4)
 			break;
