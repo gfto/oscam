@@ -1560,8 +1560,9 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er)
 	if (!cl || !cl->reader || !cl->reader->cacheex==2)
 		return;
 
-	cs_debug_mask(D_TRACE, "got pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
-		er->caid, er->prid, er->srvid, er->l, htons(er->checksum),  username(cl));
+	uint16_t *lp;
+	for (lp=(uint16_t *)er->ecm+(er->l>>2), er->checksum=0; lp>=(uint16_t *)er->ecm; lp--)
+		er->checksum^=*lp;
 
 	er->grp = cl->grp;
 	er->ocaid = er->caid;
@@ -1571,6 +1572,9 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er)
 		offset = 13;
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
 	memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, md5tmp), CS_ECMSTORESIZE);
+
+	cs_debug_mask(D_TRACE, "got pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
+		er->caid, er->prid, er->srvid, er->l, htons(er->checksum),  username(cl));
 
 	struct ecm_request_t *ecm = check_cwcache(er, cl->grp);
 	if (!ecm) {
