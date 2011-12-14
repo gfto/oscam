@@ -2608,7 +2608,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 		char *cptr = getParam(params, "threadid");
 		struct s_client *cl = NULL;
 		if (strlen(cptr)>1)
-			sscanf(cptr, "%p", (void**)&cl);
+			sscanf(cptr, "%p", (void**)(void*)&cl);
 
 		if (cl && is_valid_client(cl)) {
 			kill_thread(cl);
@@ -2638,7 +2638,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 	char *hide = getParam(params, "hide");
 	if(strlen(hide) > 0) {
 		struct s_client *hideidx = NULL;
-		sscanf(hide, "%p", (void**)&hideidx);
+		sscanf(hide, "%p", (void**)(void*)&hideidx);
 
 		if(hideidx && is_valid_client(hideidx))
 			hideidx->wihidden = 1;
@@ -4286,7 +4286,6 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 	return 0;
 }
 
-#pragma GCC diagnostic ignored "-Wempty-body"
 static void *serve_process(void *conn){
 	struct s_connection *myconn = (struct s_connection*)conn;
 	int32_t s = myconn->socket;

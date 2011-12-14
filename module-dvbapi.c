@@ -1634,7 +1634,6 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 	}
 }
 
-#pragma GCC diagnostic ignored "-Wempty-body"
 static void * dvbapi_main_local(void *cli) {
 	struct s_client * client = (struct s_client *) cli;
 	client->thread=pthread_self();
