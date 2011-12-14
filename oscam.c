@@ -1646,7 +1646,7 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er)
 			memcpy(ecm->cw, er->cw, sizeof(er->cw));
 			memcpy(ecm->msglog, er->msglog, sizeof(er->msglog));
 			cs_readunlock(&ecmcache_lock);
-			distribute_ecm(er, er->rc);
+			distribute_ecm(ecm, er->rc);
 			pthread_kill(timecheck_thread, OSCAM_SIGNAL_WAKEUP); 
 			cs_cache_push(er);  //cascade push!
 		}
