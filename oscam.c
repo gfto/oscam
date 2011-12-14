@@ -1627,6 +1627,9 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er)
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
 	memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, md5tmp), CS_ECMSTORESIZE);
 
+	if( (er->caid & 0xFF00) == 0x600 && !er->chid )
+		er->chid = (er->ecm[6]<<8)|er->ecm[7];
+
 	cs_debug_mask(D_TRACE, "got pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
 		er->caid, er->prid, er->srvid, er->l, htons(er->checksum),  username(cl));
 

@@ -373,7 +373,7 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	if (!cl->udp_fd) return(-1);
 	int8_t rc = (er->rc<E_NOTFOUND)?E_FOUND:er->rc;
 	if (rc != E_FOUND) return -1; //Maybe later we could support other rcs
-	unsigned char buf[512+20+16];
+	unsigned char *buf = cs_malloc(&buf, 20 + er->l + 16 + 64, 0);
 
 	memset(buf, 0, 20);
 	memset(buf + 20, 0xff, er->l+15);
@@ -382,11 +382,10 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	i2b_buf(2, er->srvid, buf + 8);
 	i2b_buf(2, er->caid, buf + 10);
 	i2b_buf(4, er->prid, buf + 12);
-	i2b_buf(2, er->idx, buf + 16);
+	i2b_buf(2, er->idx, buf + 16); // Not relevant...?
 	memcpy(buf + 20, er->ecm, er->l);
 	memcpy(buf + 20 + er->l, er->cw, 16);
 
-	//Fix ECM len > 255
 	int32_t buflen = er->l;
 	if (er->rc < E_NOTFOUND)
 		buflen += 16;
@@ -394,6 +393,7 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	buf[2]=buflen >> 8;
 
 	int32_t res = camd35_send(buf, buflen);
+	free(buf);
 	return res;
 }
 
