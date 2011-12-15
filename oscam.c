@@ -1762,7 +1762,7 @@ ECM_REQUEST *get_ecmtask()
 #ifdef WITH_LB
 void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc)
 {
-	if (!rdr || rc>=E_99 || rdr->cacheex)
+	if (!rdr || rc>=E_99 || rdr->cacheex==1)
 		return;
 	struct timeb tpe;
 	cs_ftime(&tpe);
@@ -2072,14 +2072,14 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 
 	ea->status |= REQUEST_ANSWERED;
 
-	//Update reader stats:
-	if (ea->rc == E_FOUND)
-		ea->reader->ecmsok++;
-	else if (ea->rc == E_NOTFOUND)
-		ea->reader->ecmsnok++;
-
-	//Reader ECMs Health Try (by Pickser)
 	if (ea->reader) {
+		//Update reader stats:
+		if (ea->rc == E_FOUND)
+			ea->reader->ecmsok++;
+		else if (ea->rc == E_NOTFOUND)
+			ea->reader->ecmsnok++;
+
+		//Reader ECMs Health Try (by Pickser)
 		if (ea->reader->ecmsok != 0 || ea->reader->ecmsnok != 0)
 		{
 			ea->reader->ecmshealthok = ((double) ea->reader->ecmsok / (ea->reader->ecmsok + ea->reader->ecmsnok)) * 100;
@@ -3382,7 +3382,7 @@ static void * check_thread(void) {
 					struct s_ecm_answer *ea_list;
 
 					for(ea_list = er->matching_rdr; ea_list; ea_list = ea_list->next) {
-						if ((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED)) == REQUEST_SENT)
+						if ((ea_list->status & REQUEST_SENT) == REQUEST_SENT)
 							send_reader_stat(ea_list->reader, er, E_TIMEOUT);
 					}
 #endif
