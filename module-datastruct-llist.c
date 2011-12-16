@@ -222,10 +222,8 @@ void *ll_iter_remove_nolock(LL_ITER *it)
 					prv = n;
 					n = n->nxt;
 				}
-				if (n != del) {
-					cs_writeunlock(&it->l->lock);
+				if (n != del)
 					return NULL;
-				}
 			}
 
 			if (prv)
@@ -343,7 +341,7 @@ void *ll_iter_remove(LL_ITER *it)
 		LL_NODE *del = it->cur;
 		if (del) {
 			cs_writelock(&it->l->lock);
-			ll_iter_remove_nolock(it);
+			obj = ll_iter_remove_nolock(it);
 			cs_writeunlock(&it->l->lock);
 		}
 	}
