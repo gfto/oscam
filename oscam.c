@@ -1641,6 +1641,9 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er)
 		cs_writeunlock(&ecmcache_lock);
 
 		cs_cache_push(er);  //cascade push!
+
+		cl->cwcacheexgot++;
+		first_client->cwcacheexgot++;
 	}
 	else {
 		if(er->rc < ecm->rc) {
@@ -1652,6 +1655,9 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er)
 			distribute_ecm(ecm, er->rc);
 			pthread_kill(timecheck_thread, OSCAM_SIGNAL_WAKEUP); 
 			cs_cache_push(er);  //cascade push!
+
+			cl->cwcacheexgot++;
+			first_client->cwcacheexgot++;
 		}
 		free_ecm(er);
 	}
@@ -2658,7 +2664,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			er->rc = E_UNHANDLED;
 	}
 
-	int8_t cacheex = client->account && client->account->cacheex;
+	int8_t cacheex = client->account?client->account->cacheex:0;
 
 	if (cacheex == 1 && er->rc == E_UNHANDLED) { //not found in cache, so wait!
 #ifdef WITH_LB
@@ -3247,6 +3253,10 @@ void * work_thread(void *ptr) {
 					"pushed ECM %04X&%06X/%04X/%02X:%04X to %s res %d", er->caid, er->prid, er->srvid, er->l,
 					htons(er->checksum), username(cl), res);
 				free(data->ptr);
+
+				cl->cwcacheexpush++;
+				first_client->cwcacheexpush++;
+
 				break;
 			}
 		}

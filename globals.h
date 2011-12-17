@@ -845,6 +845,8 @@ struct s_client {
 	int32_t			emmok;       		// count EMM ok
 	int32_t			emmnok;	     		// count EMM nok
 	int8_t			pending;     		// number of ECMs pending
+	int32_t			cwcacheexpush;		// count pushed ecms/cws
+	int32_t         cwcacheexgot;		// count got ecms/cws
 
 #ifdef WEBIF
 	struct s_cwresponse cwlastresptimes[CS_ECM_RINGBUFFER_MAX]; //ringbuffer for last 20 times
