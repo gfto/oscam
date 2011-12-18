@@ -28,15 +28,7 @@ static void switch_log(char* file, FILE **f, int32_t (*pfinit)(void))
 	if(cfg.max_log_size)	//only 1 thread needs to switch the log; even if anticasc, statistics and normal log are running
 					//at the same time, it is ok to have the other logs switching 1 entry later
 	{
-		struct stat stlog;
-
-		if( stat(file, &stlog)!=0 )
-		{
-			fprintf(stderr, "stat('%s',..) failed (errno=%d %s)\n", file, errno, strerror(errno));
-			return;
-		}
-
-		if(stlog.st_size >= cfg.max_log_size*1024 && *f != NULL) {
+		if(*f != NULL && ftell(*f) >= cfg.max_log_size*1024) {
 			int32_t rc;
 			char prev_log[strlen(file) + 6];
 			snprintf(prev_log, sizeof(prev_log), "%s-prev", file);			
