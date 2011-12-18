@@ -3392,7 +3392,7 @@ static void * check_thread(void) {
 					struct s_ecm_answer *ea_list;
 
 					for(ea_list = er->matching_rdr; ea_list; ea_list = ea_list->next) {
-						if ((ea_list->status & REQUEST_SENT) == REQUEST_SENT)
+						if ((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED)) == REQUEST_SENT) //Request send, but no answer!
 							send_reader_stat(ea_list->reader, er, E_TIMEOUT);
 					}
 #endif
