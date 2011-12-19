@@ -507,6 +507,8 @@ static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams
 		tpl_addVar(vars, TPLADD, "VERSIONSELECTED5", "selected");
 	} else if (!strcmp((char*)cfg.cc_version,"2.2.1")) {
 		tpl_addVar(vars, TPLADD, "VERSIONSELECTED6", "selected");
+	} else if (!strcmp((char*)cfg.cc_version,"2.3.0")) {
+		tpl_addVar(vars, TPLADD, "VERSIONSELECTED7", "selected");
 	}
 
 	tpl_printf(vars, TPLADD, "UPDATEINTERVAL", "%d", cfg.cc_update_interval);
@@ -1343,6 +1345,8 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "CCCVERSIONSELECTED5", "selected");
 	} else if (!strcmp(rdr->cc_version, "2.2.1")) {
 		tpl_addVar(vars, TPLADD, "CCCVERSIONSELECTED6", "selected");
+	} else if (!strcmp(rdr->cc_version, "2.3.0")) {
+		tpl_addVar(vars, TPLADD, "CCCVERSIONSELECTED7", "selected");
 	}
 #endif
 

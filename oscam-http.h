@@ -1330,6 +1330,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 						<OPTION value=\"2.1.4\"##CCCVERSIONSELECTED4##>2.1.4</OPTION>\n\
 						<OPTION value=\"2.2.0\"##CCCVERSIONSELECTED5##>2.2.0</OPTION>\n\
 						<OPTION value=\"2.2.1\"##CCCVERSIONSELECTED6##>2.2.1</OPTION>\n\
+						<OPTION value=\"2.3.0\"##CCCVERSIONSELECTED7##>2.3.0</OPTION>\n\
 					</SELECT>\n\
 				</TD>\n\
 			</TR>\n\
@@ -1427,6 +1428,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 						<OPTION value=\"2.1.4\" ##VERSIONSELECTED4##>2.1.4</OPTION>\n\
 						<OPTION value=\"2.2.0\" ##VERSIONSELECTED5##>2.2.0</OPTION>\n\
 						<OPTION value=\"2.2.1\" ##VERSIONSELECTED6##>2.2.1</OPTION>\n\
+						<OPTION value=\"2.3.0\" ##VERSIONSELECTED7##>2.3.0</OPTION>\n\
 					</SELECT>\n\
 				</TD>\n\
 			</TR>\n\
