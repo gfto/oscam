@@ -1066,6 +1066,26 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 	return card;
 }
 
+//reopen all blocked sids for this srvid:
+static void reopen_sids(struct cc_data *cc, int8_t ignore_time, ECM_REQUEST *cur_er, struct cc_srvid *cur_srvid)
+{
+	time_t utime = time(NULL);
+	struct cc_card *card;
+	LL_ITER it = ll_iter_create(cc->cards);
+	while ((card = ll_iter_next(&it))) {
+		if (card->caid == cur_er->caid) { // caid matches
+			LL_ITER it2 = ll_iter_create(card->badsids);
+			struct cc_srvid_block *srvid;
+			while ((srvid = ll_iter_next(&it2)))
+				if (srvid->ecmlen > 0 && sid_eq((struct cc_srvid*)srvid, cur_srvid)) { //ecmlen==0: From remote peer, so do not remove
+					if (ignore_time || srvid->blocked_till <= utime)
+						ll_iter_remove_data(&it2);
+				}
+		}
+	}
+
+}
+
 /**
  * reader
  * sends a ecm request to the connected CCCam Server
@@ -1119,7 +1139,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 			struct timeb timeout;
 			timeout = cc->ecm_time;
-			uint32_t tt = 3*cfg.ctimeout+500;
+			uint32_t tt = cfg.ctimeout+500;
 			timeout.time += tt / 1000;
 			timeout.millitm += tt % 1000;
             if (timeout.millitm >= 1000) {
@@ -1209,6 +1229,11 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	if (!card)
 		card = get_matching_card(cl, cur_er, 0);
 
+	if (!card && has_srvid(rdr->client, cur_er)) {
+		reopen_sids(cc, 1, cur_er, &cur_srvid);
+		card = get_matching_card(cl, cur_er, 0);
+	}
+
 	if (card) {
 		uint8_t *ecmbuf = cs_malloc(&ecmbuf, cur_er->l+13, 0);
 
@@ -1277,21 +1302,8 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			//cur_er->rcEx = 0;
 			//cs_sleepms(300);
 			rdr->last_s = rdr->last_g;
-			time_t utime = time(NULL);
 			
-			//reopen all blocked sids for this srvid:
-			it = ll_iter_create(cc->cards);
-			while ((card = ll_iter_next(&it))) {
-				if (card->caid == cur_er->caid) { // caid matches
-					LL_ITER it2 = ll_iter_create(card->badsids);
-					struct cc_srvid_block *srvid;
-					while ((srvid = ll_iter_next(&it2)))
-						if (srvid->ecmlen > 0 && sid_eq((struct cc_srvid*)srvid, &cur_srvid)) { //ecmlen==0: From remote peer, so do not remove
-							if (srvid->blocked_till <= utime)
-								ll_iter_remove_data(&it2);
-						}
-				}
-			}
+			reopen_sids(cc, 0, cur_er, &cur_srvid);
 		} else {
 			//We didn't find a card and the last message was MSG_CARD_REMOVED - so we wait for a new card and process die ecm later
 			cur_er->rc = 102; //mark as waiting
@@ -1829,6 +1841,7 @@ static void chk_peer_node_for_oscam(struct cc_data *cc)
 int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 {
 	if (!cl->udp_fd) return(-1);
+	cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
 	int8_t rc = (er->rc<E_NOTFOUND)?E_FOUND:er->rc;
 	if (rc != E_FOUND) return -1; //Maybe later we could support other rcs
 	uint8_t *ecmbuf = cs_malloc(&ecmbuf, 20 + er->l + 16, 0);
@@ -1853,8 +1866,9 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	return res;
 }
 
-void cc_cache_push_in(struct s_client *client, uchar *buf)
+void cc_cache_push_in(struct s_client *cl, uchar *buf)
 {
+	cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
 	if (buf[14] >= E_NOTFOUND) //Maybe later we could support other rcs
 		return;
 
@@ -1871,7 +1885,7 @@ void cc_cache_push_in(struct s_client *client, uchar *buf)
 	memcpy(er->ecm, buf + 20, er->l);
 	memcpy(er->cw, buf+20 +er->l, 16);
 
-	cs_add_cache(client, er);
+	cs_add_cache(cl, er);
 }
 
 
