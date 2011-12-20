@@ -14,13 +14,13 @@
 }
 
 #define get_atr \
-		unsigned char atr[64]; \
+		unsigned char atr[ATR_MAX_SIZE]; \
 		uint32_t atr_size; \
 		memset(atr, 0, sizeof(atr)); \
 		ATR_GetRaw(&newatr, atr, &atr_size);
 
 #define get_hist \
-		unsigned char hist[64]; \
+		unsigned char hist[ATR_MAX_HISTORICAL]; \
 		uint32_t hist_size; \
 		ATR_GetHistoricalBytes(&newatr, hist, &hist_size);
 

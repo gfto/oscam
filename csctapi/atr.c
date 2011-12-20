@@ -49,7 +49,7 @@ const uint32_t atr_i_table[4] = {25, 50, 100, 0};
  * Exported funcions definition
  */
 
-int32_t ATR_InitFromArray (ATR * atr, BYTE atr_buffer[ATR_MAX_SIZE], uint32_t length)
+int32_t ATR_InitFromArray (ATR * atr, const BYTE atr_buffer[ATR_MAX_SIZE], uint32_t length)
 {
 	BYTE TDi;
 	BYTE buffer[ATR_MAX_SIZE];

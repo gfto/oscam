@@ -107,7 +107,7 @@ extern const uint32_t atr_i_table[4];
  */
 
 /* Initialization */
-int32_t ATR_InitFromArray (ATR * atr, BYTE buffer[ATR_MAX_SIZE], uint32_t length);
+int32_t ATR_InitFromArray (ATR * atr, const BYTE buffer[ATR_MAX_SIZE], uint32_t length);
 
 /* General smartcard characteristics */
 int32_t ATR_GetConvention (ATR * atr, int32_t *convention);
