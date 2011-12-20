@@ -499,6 +499,36 @@ int32_t SR_FastReset(struct s_reader *reader, int32_t delay)
     return 0;
 }
 
+int32_t SR_FastReset_With_ATR(struct s_reader *reader, ATR *atr)
+{
+    unsigned char data[ATR_MAX_SIZE];
+    int32_t ret;
+    int32_t atr_ok=ERROR;
+
+    smart_fastpoll(reader, TRUE);
+    //Set the DTR HIGH and RTS HIGH
+    smartreader_setdtr_rts(reader, 1, 1);
+    // A card with an active low reset is reset by maintaining RST in state L for at least 40 000 clock cycles
+    // so if we have a base freq of 3.5712MHz : 40000/3690000 = .0112007168458781 seconds, aka 11ms
+    // so if we have a base freq of 6.00MHz : 40000/6000000 = .0066666666666666 seconds, aka 6ms
+    cs_sleepms(20);
+
+    //Set the DTR HIGH and RTS LOW
+    smartreader_setdtr_rts(reader, 1, 0);
+
+    //Read the ATR
+    ret = smart_read(reader,data, ATR_MAX_SIZE,1);
+
+    // parse atr
+	if(ATR_InitFromArray (atr, data, ret) == ATR_OK) {
+		cs_debug_mask (D_DEVICE, "IO:SR: ATR parsing OK");
+		atr_ok=OK;
+	}
+
+    smart_fastpoll(reader, FALSE);
+    return atr_ok;
+}
+
 static void EnableSmartReader(S_READER *reader, int32_t clock, uint16_t  Fi, unsigned char Di, unsigned char Ni, unsigned char T, unsigned char inv,int32_t parity) {
 
     int32_t ret = 0;

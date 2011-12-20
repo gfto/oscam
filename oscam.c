@@ -3200,6 +3200,12 @@ void * work_thread(void *ptr) {
 				data = NULL;
 				return NULL;
 				break;
+			case ACTION_READER_RESET_FAST:
+				reader->ins7e11_fast_reset = 1;
+				reader->card_status = CARD_NEED_INIT;
+				reader_reset(reader);
+				reader->ins7e11_fast_reset = 0;
+				break;
 
 			case ACTION_CLIENT_UDP:
 				n = ph[cl->ctyp].recv(cl, data->ptr, data->len);

@@ -26,6 +26,7 @@ int32_t SR_SetBaudrate (struct s_reader *reader);
 int32_t SR_SetParity (struct s_reader *reader, uint16_t parity);
 int32_t SR_Close (struct s_reader *reader);
 int32_t SR_FastReset(struct s_reader *reader, int32_t delay);
+int32_t SR_FastReset_With_ATR(struct s_reader *reader, ATR *atr);
 
 #endif // __SMARTREADER__
 #endif // HAVE_LIBUSB

@@ -335,7 +335,13 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 				break;
 #if defined(LIBUSB)
 			case R_SMART:
-				call (SR_Reset(reader, atr));
+				if ( ! reader->ins7e11_fast_reset) {
+					call (SR_Reset(reader, atr));
+				}
+				else {
+					cs_log("Doing fast reset");
+					call (SR_FastReset_With_ATR(reader, atr));
+				}
 				break;
 #endif
 			case R_INTERNAL:

@@ -109,7 +109,12 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 		unsigned char buf[ATR_MAX_SIZE];
 		int32_t parity[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
 
-		call (Phoenix_SetBaudrate (reader, DEFAULT_BAUDRATE));
+		if ( ! reader->ins7e11_fast_reset ) {
+			call (Phoenix_SetBaudrate (reader, DEFAULT_BAUDRATE));
+		}
+		else {
+			cs_log("Doing fast reset");
+		}
 
 		for(i=0; i<3; i++) {
 #ifndef OS_CYGWIN32

@@ -246,7 +246,7 @@ int32_t pcsc_check_card_inserted(struct s_reader *pcsc_reader)
 void pcsc_close(struct s_reader *pcsc_reader)
 {
     cs_debug_mask (D_IFD, "PCSC : Closing device %s", pcsc_reader->device);
-    SCardDisconnect((SCARDHANDLE)(pcsc_reader->hCard),SCARD_RESET_CARD);
+    SCardDisconnect((SCARDHANDLE)(pcsc_reader->hCard),SCARD_LEAVE_CARD);
     SCardReleaseContext(pcsc_reader->hContext);
     pcsc_reader->hCard=0;
     pcsc_reader->pcsc_has_card=0;

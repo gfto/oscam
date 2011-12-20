@@ -540,7 +540,12 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR newatr)
 		if (ATR_GetInterfaceByte (&newatr, 1, ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
 		  if (TA1 != reader->ins7E11[0x00]) {
 			cs_log("classD0 ins7E11: Scheduling card reset for TA1 change from %02X to %02X", TA1, reader->ins7E11[0x00]);
-			add_job(reader->client, ACTION_READER_RESTART, NULL, 0);
+			if (reader->typ == R_MOUSE || reader->typ == R_SC8in1 || reader->typ == R_SMART ) {
+				add_job(reader->client, ACTION_READER_RESET_FAST, NULL, 0);
+			}
+			else {
+				add_job(reader->client, ACTION_READER_RESTART, NULL, 0);
+			}
 		  }
 		}
 	  }

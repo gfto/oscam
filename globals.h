@@ -420,6 +420,7 @@ extern void cs_switch_led(int32_t led, int32_t action);
 #define ACTION_READER_CARDINFO	7
 #define ACTION_READER_INIT		8
 #define ACTION_READER_RESTART	9
+#define ACTION_READER_RESET_FAST	10
 
 #define ACTION_CLIENT_TCP_CONNECT	21
 #define ACTION_CLIENT_UDP		22
@@ -1184,6 +1185,7 @@ struct s_reader  									//contains device info, reader info and card info
 	int8_t			fix_9993;
 	uint8_t			ins7E[0x1A+1];
 	uint8_t			ins7E11[0x01+1];
+	int8_t			ins7e11_fast_reset;
 
 #ifdef MODULE_PANDORA
 	int8_t			pand_send_ecm;
