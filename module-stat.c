@@ -512,18 +512,19 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 		stat = get_add_stat(rdr, er, prid);
 		
 		//catch suddenly occuring timeouts and block reader:
-		if ((int)(ctime-stat->last_received) < (int)(5*cfg.ctimeout) && 
-				stat->rc == E_FOUND && stat->ecm_count == 0) {
-			stat->rc = E_TIMEOUT;
-				//inc_fail(stat); //do not inc fail factor in this case
-		}
+//		if ((int)(ctime-stat->last_received) < (int)(5*cfg.ctimeout) && 
+//				stat->rc == E_FOUND && stat->ecm_count == 0) {
+//			stat->rc = E_TIMEOUT;
+//				//inc_fail(stat); //do not inc fail factor in this case
+//		}
 		//reader is longer than 5s connected && not more then 5 pending ecms:
-		else if ((cl->login+(int)(2*cfg.ctimeout/1000)) < ctime && cl->pending < 5 &&  
-				stat->rc == E_FOUND && stat->ecm_count == 0) {
-			stat->rc = E_TIMEOUT;
-			inc_fail(stat);
-		}
-		else if (stat->rc == E_FOUND) {
+//		else if ((cl->login+(int)(2*cfg.ctimeout/1000)) < ctime && cl->pending < 5 &&  
+//				stat->rc == E_FOUND && stat->ecm_count == 0) {
+//			stat->rc = E_TIMEOUT;
+//			inc_fail(stat);
+//		}
+//		else 
+		if (stat->rc == E_FOUND && ctime > stat->last_received+1) {
 			//search for alternate readers. If we have one, block this reader:
 			int n = 0;
 			struct s_ecm_answer *ea;
