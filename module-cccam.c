@@ -1841,7 +1841,8 @@ static void chk_peer_node_for_oscam(struct cc_data *cc)
 int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 {
 	if (!cl->udp_fd) return(-1);
-	cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
+	if (cl->reader)
+		cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
 	int8_t rc = (er->rc<E_NOTFOUND)?E_FOUND:er->rc;
 	if (rc != E_FOUND) return -1; //Maybe later we could support other rcs
 	uint8_t *ecmbuf = cs_malloc(&ecmbuf, 20 + er->l + 16, 0);
@@ -1868,7 +1869,8 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 
 void cc_cache_push_in(struct s_client *cl, uchar *buf)
 {
-	cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
+	if (cl->reader)
+		cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
 	if (buf[14] >= E_NOTFOUND) //Maybe later we could support other rcs
 		return;
 

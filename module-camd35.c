@@ -371,7 +371,8 @@ static int32_t tcp_connect()
 int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 {
 	if (!cl->udp_fd) return(-1);
-	cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
+	if (cl->reader)
+		cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
 	int8_t rc = (er->rc<E_NOTFOUND)?E_FOUND:er->rc;
 	if (rc != E_FOUND) return -1; //Maybe later we could support other rcs
 	unsigned char *buf = cs_malloc(&buf, 20 + er->l + 16 + 64, 0);
@@ -400,7 +401,8 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 
 void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 {
-	cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
+	if (cl->reader)
+		cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
 	if (buf[3] >= E_NOTFOUND) //Maybe later we could support other rcs
 		return;
 
