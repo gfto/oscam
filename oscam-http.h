@@ -648,6 +648,8 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
         <cwtimeout>##TOTAL_CWTOUT##</cwtimeout>\n\
         <cwcache>##TOTAL_CWCACHE##</cwcache>\n\
         <cwtun>##TOTAL_CWTUN##</cwtun>\n\
+        <cacheexpush>##TOTAL_CACHEXPUSH##</cacheexpush>\n\
+        <cacheexgot>##TOTAL_CACHEXGOT##</cacheexgot>\n\
     </totals>\n\
 ##TPLAPIFOOTER##"
 
@@ -663,6 +665,8 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
                 <emmok>##EMMOK##</emmok>\n\
                 <emmnok>##EMMNOK##</emmnok>\n\
                 <cwrate>##CWRATE##</cwrate>\n\
+                <cacheexpush>##CACHEXPUSH##</cacheexpush>\n\
+                <cacheexgot>##CACHEXGOT##</cacheexgot>\n\
             </stats>\n\
         </user>\n"
 
@@ -698,6 +702,8 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TH TITLE=\"Last ECM Time\">LTIME</TH>\n\
 			<TH TITLE=\"Valid EMM delivered\">EOK</TH>\n\
 			<TH TITLE=\"Invalid EMM delivered\">ENOK</TH>\n\
+			<TH TITLE=\"CacheEX push\">CXPUSH</TH>\n\
+			<TH TITLE=\"CacheEX got\">CXGOT</TH>\n\
 			<TH TITLE=\"CW rate since Server start (CW rate current Session)\">CW Rate</TH>\n\
 			<TH TITLE=\"Different services during last 60s\">CASC USERS</TH>\n\
 			<TH colspan=\"3\" class=\"centered\">Action</TH>\n\
@@ -720,6 +726,8 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TH TITLE=\"Timeout ECM, part of NOK\">TOUT</TH>\n\
 			<TH TITLE=\"Delivered ECM from cache, part of OK\">CACHE</TH>\n\
 			<TH TITLE=\"Delivered ECM from tunneled, part of OK\">TUN</TH>\n\
+			<TH TITLE=\"CacheEX push\">CXPUSH</TH>\n\
+			<TH TITLE=\"CacheEX got\">CXGOT</TH>\n\
 			<TH>Action</TH>\n\
 		</TR>\n\
 		<TR>\n\
@@ -735,6 +743,8 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD class=\"centered\">##TOTAL_CWTOUT##</TD>\n\
 			<TD class=\"centered\">##TOTAL_CWCACHE##</TD>\n\
 			<TD class=\"centered\">##TOTAL_CWTUN##</TD>\n\
+			<TD class=\"centered\">##TOTAL_CACHEXPUSH##</TD>\n\
+			<TD class=\"centered\">##TOTAL_CACHEXGOT##</TD>\n\
 			<TD class=\"centered\"><A HREF=\"userconfig.html?action=resetserverstats\" TITLE=\"reset statistics for server\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICRES\"BORDER=\"0\" ALT=\"Reset Server Stats\"></A></TD>\n\
 		</TR>\n\
 	</TABLE><BR>\n\
@@ -768,6 +778,8 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD class=\"centered\">##CWLASTRESPONSET##</TD>\n\
 			<TD class=\"centered\">##EMMOK##</TD>\n\
 			<TD class=\"centered\">##EMMNOK##</TD>\n\
+			<TD class=\"centered\">##CACHEXPUSH##</TD>\n\
+			<TD class=\"centered\">##CACHEXGOT##</TD>\n\
 			<TD class=\"centered\">##CWRATE####CWRATE2##</TD>\n\
 			<TD class=\"centered\">##CASCUSERSCOMB##</TD>\n\
 			<TD class=\"centered\"><A HREF=\"user_edit.html?user=##USERENC##\" TITLE=\"edit this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit User\"></A></TD>\n\

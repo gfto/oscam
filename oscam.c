@@ -441,10 +441,12 @@ void clear_account_stats(struct s_auth *account)
   account->cwcache = 0;
   account->cwnot = 0;
   account->cwtun = 0;
-  account->cwignored  = 0;
+  account->cwignored = 0;
   account->cwtout = 0;
   account->emmok = 0;
   account->emmnok = 0;
+  account->cwcacheexgot = 0;
+  account->cwcacheexpush = 0;
 }
 
 void clear_all_account_stats()
@@ -466,6 +468,8 @@ void clear_system_stats()
   first_client->cwtout = 0;
   first_client->emmok = 0;
   first_client->emmnok = 0;
+  first_client->cwcacheexgot = 0;
+  first_client->cwcacheexpush = 0;
 }
 #endif
 
@@ -1540,7 +1544,7 @@ void cs_cache_push(ECM_REQUEST *er)
 
 	struct s_client *cl;
 	for (cl=first_client->next; cl; cl=cl->next) {
-		if (cl->typ=='c' && cl->account && cl->account->cacheex == 2) {
+		if (cl->typ=='c' && cl->account && cl->account->cacheex == 2 && er->cacheex_src != cl) {
 			if (ph[cl->ctyp].c_cache_push) {
 				if ((cl->grp & er->grp) //Group-check
 						&& chk_srvid(cl, er) //Service-check
@@ -1637,26 +1641,29 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er)
 	if (!ecm) {
 		cs_writelock(&ecmcache_lock);
 		er->next = ecmtask;
+		er->cacheex_src = cl;
 		ecmtask = er;
 		cs_writeunlock(&ecmcache_lock);
 
 		cs_cache_push(er);  //cascade push!
 
-		cl->cwcacheexgot++;
+		cl->account->cwcacheexgot++;
 		first_client->cwcacheexgot++;
 	}
 	else {
 		if(er->rc < ecm->rc) {
 			cs_readlock(&ecmcache_lock);
-			ecm->rc = er->rc;
 			memcpy(ecm->cw, er->cw, sizeof(er->cw));
 			memcpy(ecm->msglog, er->msglog, sizeof(er->msglog));
+			ecm->rc = er->rc;
+			ecm->cacheex_src = cl;
 			cs_readunlock(&ecmcache_lock);
+
 			distribute_ecm(ecm, er->rc);
 			pthread_kill(timecheck_thread, OSCAM_SIGNAL_WAKEUP); 
 			cs_cache_push(er);  //cascade push!
 
-			cl->cwcacheexgot++;
+			cl->account->cwcacheexgot++;
 			first_client->cwcacheexgot++;
 		}
 		free_ecm(er);
@@ -2080,8 +2087,13 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 
 	if (ea->reader) {
 		//Update reader stats:
-		if (ea->rc == E_FOUND)
+		if (ea->rc == E_FOUND) {
 			ea->reader->ecmsok++;
+			if (ea->reader->cacheex == 1 && !ert->cacheex_done) {
+				ea->reader->client->cwcacheexgot++;
+				first_client->cwcacheexgot++;
+			}
+		}
 		else if (ea->rc == E_NOTFOUND)
 			ea->reader->ecmsnok++;
 
@@ -2347,8 +2359,7 @@ static void guess_cardsystem(ECM_REQUEST *er)
   if ((er->ecm[6]==1) && (er->ecm[4]==er->ecm[2]-2))
     er->caid=0x1801;
 
-  // seca2 - very poor
-  if ((er->ecm[8]==0x10) && ((er->ecm[9]&0xF1)==1))
+  // seca2 - very poor  if ((er->ecm[8]==0x10) && ((er->ecm[9]&0xF1)==1))
     last_hope=0x100;
 
   // is cryptoworks, but which caid ?
@@ -2723,6 +2734,10 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		if (cfg.delay && cacheex == 0) //No delay on cacheexchange!
 			cs_sleepms(cfg.delay);
 
+		if (cacheex == 1 && er->rc < E_NOTFOUND) {
+			client->cwcacheexpush++;
+			first_client->cwcacheexpush++;
+		}
 		send_dcw(client, er);
 		free_ecm(er);
 		return; //ECM found/not found/error/invalid
@@ -3260,7 +3275,7 @@ void * work_thread(void *ptr) {
 					htons(er->checksum), username(cl), res);
 				free(data->ptr);
 
-				cl->cwcacheexpush++;
+				cl->account->cwcacheexpush++;
 				first_client->cwcacheexpush++;
 
 				break;

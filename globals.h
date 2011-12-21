@@ -740,6 +740,7 @@ typedef struct ecm_request_t {
 
 	void			*src_data;
 	struct ecm_request_t	*ecmcacheptr;		// Pointer to ecm-cw-rc-cache!
+	struct s_client *cacheex_src;               // cacheex origin
 	char			msglog[MSGLOGSIZE];
 	uint16_t		checksum;
 	struct ecm_request_t	*parent;
@@ -1257,6 +1258,8 @@ struct s_auth
 	int32_t			cwtout;
 	int32_t			emmok;
 	int32_t			emmnok;
+	int32_t			cwcacheexpush;		// count pushed ecms/cws
+	int32_t         cwcacheexgot;		// count got ecms/cws
 	struct s_auth	*next;
 };
 

@@ -2180,6 +2180,8 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_printf(vars, TPLADD, "CWTUN", "%d", account->cwtun);
 		tpl_printf(vars, TPLADD, "EMMOK", "%d", account->emmok);
 		tpl_printf(vars, TPLADD, "EMMNOK", "%d", account->emmnok);
+		tpl_printf(vars, TPLADD, "CACHEXPUSH", "%d", account->cwcacheexpush);
+		tpl_printf(vars, TPLADD, "CACHEXGOT", "%d", account->cwcacheexgot);
 		tpl_printf(vars, TPLADD, "CWRATE", "%.2f", cwrate);
 		tpl_printf(vars, TPLADD, "CASCUSERS", "%d", casc_users);
 		tpl_printf(vars, TPLADD, "CASCUSERS2", "%d", casc_users2);
@@ -2255,6 +2257,8 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	tpl_printf(vars, TPLADD, "TOTAL_CWTOUT", "%ld", first_client->cwtout);
 	tpl_printf(vars, TPLADD, "TOTAL_CWCACHE", "%ld", first_client->cwcache);
 	tpl_printf(vars, TPLADD, "TOTAL_CWTUN", "%ld", first_client->cwtun);
+	tpl_printf(vars, TPLADD, "TOTAL_CACHEXPUSH", "%ld", first_client->cwcacheexpush);
+	tpl_printf(vars, TPLADD, "TOTAL_CACHEXGOT", "%ld", first_client->cwcacheexgot);
 
 	if (!apicall)
 		return tpl_getTpl(vars, "USERCONFIGLIST");
