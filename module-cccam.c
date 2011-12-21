@@ -1838,6 +1838,7 @@ static void chk_peer_node_for_oscam(struct cc_data *cc)
 	}
 }
 
+#ifdef CS_CACHEEX
 int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 {
 	if (!cl->udp_fd) return(-1);
@@ -1889,7 +1890,7 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 
 	cs_add_cache(cl, er);
 }
-
+#endif
 
 int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
@@ -2120,11 +2121,13 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 		}
 		//NO BREAK!! NOK Handling needed!
 		
+#ifdef CS_CACHEEX
 	case MSG_CACHE_PUSH:
 	{
 		cc_cache_push_in(cl, data);
 		break;
 	}
+#endif
 
 	case MSG_CW_NOK1:
 	case MSG_CW_NOK2:
@@ -3426,7 +3429,9 @@ void module_cccam(struct s_module *ph) {
 	ph->send_dcw = cc_send_dcw;
 	ph->c_available = cc_available;
 	ph->c_card_info = cc_card_info;
+#ifdef CS_CACHEEX
 	ph->c_cache_push=cc_cache_push_out;
+#endif
 	static PTAB ptab; //since there is always only 1 cccam server running, this is threadsafe
 	memset(&ptab, 0, sizeof(PTAB));
 	int32_t i;

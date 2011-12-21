@@ -629,7 +629,9 @@ struct s_module {
 	void 			(*c_idle)(void);	// Schlocke: called when reader is idle
 	void			(*s_idle)(struct s_client*);
 	void 			(*c_card_info)(void);	// Schlocke: request card infos
+#ifdef CS_CACHEEX
 	int32_t			(*c_cache_push)(struct s_client*, struct ecm_request_t *); //Cache push
+#endif
 	int32_t  		c_port;
 	PTAB 			*ptab;
 	int32_t 		num;
@@ -717,7 +719,6 @@ typedef struct ecm_request_t {
 	uint8_t			rcEx;
 	struct timeb	tps;				// incoming time stamp
 	uchar			locals_done;
-	uchar			cacheex_done;
 	int32_t			btun; 				// mark er as betatunneled
 	int32_t			reader_avail; 		// count of available readers
 	int32_t			reader_count; 		// count of contacted readers
@@ -740,7 +741,10 @@ typedef struct ecm_request_t {
 
 	void			*src_data;
 	struct ecm_request_t	*ecmcacheptr;		// Pointer to ecm-cw-rc-cache!
+#ifdef CS_CACHEEX
+	uchar			cacheex_done;
 	struct s_client *cacheex_src;               // cacheex origin
+#endif
 	char			msglog[MSGLOGSIZE];
 	uint16_t		checksum;
 	struct ecm_request_t	*parent;
@@ -847,8 +851,10 @@ struct s_client {
 	int32_t			emmok;       		// count EMM ok
 	int32_t			emmnok;	     		// count EMM nok
 	int8_t			pending;     		// number of ECMs pending
+#ifdef CS_CACHEEX
 	int32_t			cwcacheexpush;		// count pushed ecms/cws
 	int32_t         cwcacheexgot;		// count got ecms/cws
+#endif
 
 #ifdef WEBIF
 	struct s_cwresponse cwlastresptimes[CS_ECM_RINGBUFFER_MAX]; //ringbuffer for last 20 times
@@ -998,7 +1004,9 @@ struct s_reader  									//contains device info, reader info and card info
     int8_t			fd_error;
 	uint64_t		grp;
 	int8_t			fallback;
+#ifdef CS_CACHEEX
 	int8_t			cacheex;
+#endif
 	int32_t			typ;
 	char			label[64];
 #ifdef WEBIF
@@ -1214,7 +1222,9 @@ struct s_auth
 	char			*description;
 #endif
 	int8_t			uniq;
+#ifdef CS_CACHEEX
 	int8_t			cacheex;
+#endif
 	int16_t			allowedprotocols;
 	LLIST			*aureader_list;
 	int8_t			autoau;
@@ -1258,8 +1268,10 @@ struct s_auth
 	int32_t			cwtout;
 	int32_t			emmok;
 	int32_t			emmnok;
+#ifdef CS_CACHEEX
 	int32_t			cwcacheexpush;		// count pushed ecms/cws
 	int32_t         cwcacheexgot;		// count got ecms/cws
+#endif
 	struct s_auth	*next;
 };
 
@@ -1487,7 +1499,10 @@ struct s_config
 	int32_t		pand_port;
 	in_addr_t	pand_srvip;
 #endif
+
+#ifdef CS_CACHEEX
 	uint32_t     cacheex_wait_time; //cache wait time in ms
+#endif
 };
 
 struct s_clientinit

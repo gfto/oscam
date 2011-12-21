@@ -368,6 +368,7 @@ static int32_t tcp_connect()
 	return(1);
 }
 
+#ifdef CS_CACHEEX
 int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 {
 	if (!cl->udp_fd) return(-1);
@@ -425,17 +426,20 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 
 	cs_add_cache(cl, er);
 }
+#endif
 
-static void * camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
+static void * camd35_server(struct s_client *client __attribute__((unused)), uchar *mbuf, int32_t n)
 {
 	switch(mbuf[0]) {
 		case  0:	// ECM
 		case  3:	// ECM (cascading)
 			camd35_process_ecm(mbuf);
 			break;
+#ifdef CS_CACHEEX
 		case 0x3f:  // Cache-push
 			camd35_cache_push_in(client, mbuf);
 			break;
+#endif
 		case  6:	// EMM
 		case 19:  // EMM
 			camd35_process_emm(mbuf);
@@ -628,10 +632,12 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 				rdr->label, buf[21], buf[21], typtext[client->stopped]);
 	}
 
+#ifdef CS_CACHEEX
 	if (buf[0] == 0x3f) { //cache-push
 		camd35_cache_push_in(client, buf);
 		return -1;
 	}
+#endif
 
 	// CMD44: old reject command introduced in mpcs
 	// keeping this for backward compatibility
@@ -704,7 +710,9 @@ void module_camd35(struct s_module *ph)
   ph->c_send_emm=camd35_send_emm;
   ph->c_init_log=camd35_client_init_log;
   ph->c_recv_log=camd35_recv_log;
+#ifdef CS_CACHEEX
   ph->c_cache_push=camd35_cache_push_out;
+#endif
   ph->num=R_CAMD35;
 }
 
@@ -729,6 +737,8 @@ void module_camd35_tcp(struct s_module *ph)
   ph->c_send_emm=camd35_send_emm;
   ph->c_init_log=camd35_client_init_log;
   ph->c_recv_log=camd35_recv_log;
+#ifdef CS_CACHEEX
   ph->c_cache_push=camd35_cache_push_out;
+#endif
   ph->num=R_CS378X;
 }

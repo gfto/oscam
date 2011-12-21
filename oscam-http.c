@@ -234,7 +234,9 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "DCHECKCSELECTED", "selected");
 #endif
 
+#ifdef CS_CACHEEX
 	tpl_printf(vars, TPLADD, "CACHEEXWAITTIME", "%d", cfg.cacheex_wait_time);
+#endif
 
 	return tpl_getTpl(vars, "CONFIGGLOBAL");
 }
@@ -1104,12 +1106,14 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "FALLBACKVALUE", (rdr->fallback == 1) ? "1" : "0");
 	}
 
+#ifdef CS_CACHEEX
 	// Cacheex
 	if(!apicall) {
 		tpl_printf(vars, TPLADD, "CACHEEX", "%d", rdr->cacheex);
 	} else {
 		tpl_printf(vars, TPLADD, "CACHEEXVALUE", "%d", rdr->cacheex);
 	}
+#endif
 
 	// Logport
 	tpl_printf(vars, TPLADD, "LOGPORT", "%d", rdr->log_port);
@@ -1901,12 +1905,14 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	//Sleepsend
 	tpl_printf(vars, TPLADD, "SLEEPSEND", "%u", account->c35_sleepsend);
 
+#ifdef CS_CACHEEX
 	// Cacheex
 	if(!apicall) {
 		tpl_printf(vars, TPLADD, "CACHEEX", "%d", account->cacheex);
 	} else {
 		tpl_printf(vars, TPLADD, "CACHEEXVALUE", "%d", account->cacheex);
 	}
+#endif
 
 	//Keepalive
 	if(!apicall){
@@ -2180,8 +2186,10 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_printf(vars, TPLADD, "CWTUN", "%d", account->cwtun);
 		tpl_printf(vars, TPLADD, "EMMOK", "%d", account->emmok);
 		tpl_printf(vars, TPLADD, "EMMNOK", "%d", account->emmnok);
+#ifdef CS_CACHEEX
 		tpl_printf(vars, TPLADD, "CACHEXPUSH", "%d", account->cwcacheexpush);
 		tpl_printf(vars, TPLADD, "CACHEXGOT", "%d", account->cwcacheexgot);
+#endif
 		tpl_printf(vars, TPLADD, "CWRATE", "%.2f", cwrate);
 		tpl_printf(vars, TPLADD, "CASCUSERS", "%d", casc_users);
 		tpl_printf(vars, TPLADD, "CASCUSERS2", "%d", casc_users2);
@@ -2257,8 +2265,10 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	tpl_printf(vars, TPLADD, "TOTAL_CWTOUT", "%ld", first_client->cwtout);
 	tpl_printf(vars, TPLADD, "TOTAL_CWCACHE", "%ld", first_client->cwcache);
 	tpl_printf(vars, TPLADD, "TOTAL_CWTUN", "%ld", first_client->cwtun);
+#ifdef CS_CACHEEX
 	tpl_printf(vars, TPLADD, "TOTAL_CACHEXPUSH", "%ld", first_client->cwcacheexpush);
 	tpl_printf(vars, TPLADD, "TOTAL_CACHEXGOT", "%ld", first_client->cwcacheexgot);
+#endif
 
 	if (!apicall)
 		return tpl_getTpl(vars, "USERCONFIGLIST");

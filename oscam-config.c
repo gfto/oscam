@@ -627,10 +627,12 @@ void chk_t_global(const char *token, char *value)
 		return;
 	}
 
+#ifdef CS_CACHEEX
 	if (!strcmp(token, "cacheexwaittime")) {
 			cfg.cacheex_wait_time = strToIntVal(value, DEFAULT_CACHEEX_WAIT_TIME);
 			return;
 		}
+#endif
 
 #ifdef WITH_LB
 	if (!strcmp(token, "readerautoloadbalance") || !strcmp(token, "lb_mode")) {
@@ -1665,7 +1667,9 @@ int32_t init_config()
 	cfg.lb_auto_betatunnel_prefer_beta = DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA;
 	//end loadbalancer defaults
 #endif
+#ifdef CS_CACHEEX
 	cfg.cacheex_wait_time = DEFAULT_CACHEEX_WAIT_TIME;
+#endif
 
 #ifdef LCDSUPPORT
 	cfg.lcd_hide_idle = 0;
@@ -1793,10 +1797,12 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		return;
 	}
 
+#ifdef CS_CACHEEX
 	if (!strcmp(token, "cacheex")) {
 		account->cacheex = strToIntVal(value, 0);
 		return;
 	}
+#endif
 
 	if (!strcmp(token, "sleep")) {
 		account->tosleep = strToIntVal(value, cfg.tosleep);
@@ -2138,8 +2144,10 @@ int32_t write_config()
 		fprintf_conf(f, "readerrestartseconds", "%d\n", cfg.reader_restart_seconds);
 	if (cfg.dropdups || cfg.http_full_cfg)
 		fprintf_conf(f, "dropdups", "%d\n", cfg.dropdups);
+#ifdef CS_CACHEEX
 	if (cfg.cacheex_wait_time != DEFAULT_CACHEEX_WAIT_TIME || cfg.http_full_cfg)
 		fprintf_conf(f, "cacheexwaittime", "%d\n", cfg.cacheex_wait_time);
+#endif
 
 #ifdef WITH_LB
 	if (cfg.lb_mode != DEFAULT_LB_MODE || cfg.http_full_cfg)
@@ -2563,8 +2571,10 @@ int32_t write_userdb()
 		if (account->uniq || cfg.http_full_cfg)
 			fprintf_conf(f, "uniq", "%d\n", account->uniq);
 
+#ifdef CS_CACHEEX
 		if (account->cacheex || cfg.http_full_cfg)
 			fprintf_conf(f, "cacheex", "%d\n", account->cacheex);
+#endif
 
 		if (account->tosleep != cfg.tosleep || cfg.http_full_cfg)
 			fprintf_conf(f, "sleep", "%d\n", account->tosleep);
@@ -2774,8 +2784,10 @@ int32_t write_server()
 			if (rdr->fallback || cfg.http_full_cfg)
 				fprintf_conf(f, "fallback", "%d\n", rdr->fallback);
 
+#ifdef CS_CACHEEX
 			if (rdr->cacheex || cfg.http_full_cfg)
 				fprintf_conf(f, "cacheex", "%d\n", rdr->cacheex);
+#endif
 
 			if (rdr->log_port || cfg.http_full_cfg)
 				fprintf_conf(f, "logport", "%d\n", rdr->log_port);
@@ -4051,10 +4063,12 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
+#ifdef CS_CACHEEX
 	if (!strcmp(token, "cacheex")) {
 		rdr->cacheex  = strToIntVal(value, 0);
 		return;
 	}
+#endif
 
 	if (!strcmp(token, "logport")) {
 		rdr->log_port  = strToIntVal(value, 0);
