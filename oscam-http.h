@@ -46,6 +46,42 @@ static int32_t ssl_active = 0;
 #define TPLADDONCE 2
 /* Templates: Appends a variable or adds it if doesn't exist yet. The variable will be reset to "" after being used once. See TPLADDONCE for details. */
 #define TPLAPPENDONCE 3
+/* constants for menuactivating */
+#define MNU_STATUS 0
+#define MNU_CONFIG 1
+#define MNU_READERS 2
+#define MNU_USERS 3
+#define MNU_SERVICES 4
+#define MNU_FILES 5
+#define MNU_FAILBAN 6
+#define MNU_TOTAL_ITEMS 7 // sum of items above
+/* constants for submenuactivating */
+#define MNU_CFG_GLOBAL 0
+#define MNU_CFG_LOADBAL 1
+#define MNU_CFG_CAMD33 2
+#define MNU_CFG_CAMD35 3
+#define MNU_CFG_CAMD35TCP 4
+#define MNU_CFG_NEWCAMD 5
+#define MNU_CFG_RADEGAST 6
+#define MNU_CFG_CCCAM 7
+#define MNU_CFG_ANTICASC 8
+#define MNU_CFG_MONITOR 9
+#define MNU_CFG_SERIAL 10
+#define MNU_CFG_DVBAPI 11
+
+#define MNU_CFG_FVERSION 12
+#define MNU_CFG_FCONF 13
+#define MNU_CFG_FUSER 14
+#define MNU_CFG_FSERVER 15
+#define MNU_CFG_FSERVICES 16
+#define MNU_CFG_FSRVID 17
+#define MNU_CFG_FPROVID 18
+#define MNU_CFG_FTIERS 19
+#define MNU_CFG_FLOGFILE 20
+#define MNU_CFG_FUSERFILE 21
+#define MNU_CFG_FACLOG 22
+#define MNU_CFG_FDVBAPI 23
+#define MNU_CFG_TOTAL_ITEMS 24 // sum of items above
 
 #define CSS "\
 body {background-color: white; font-family: Arial; font-size: 11px; text-align:center}\n\
@@ -113,11 +149,13 @@ TABLE.status {border-spacing:1px; border:0px; padding:0px; background-color:whit
 TABLE.config {width:750px;}\n\
 TABLE.invisible TD {border:0px; font-family:Arial; font-size: 12px; padding:5px; background-color:#EEEEEE;}\n\
 TD.menu {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;}\n\
+TD.menu_selected {color:black; background-color:#E6FEBF; font-family: Arial; font-size:14px; font-weight:bold;font-style:italic;}\n\
 TD.script {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;}\n\
 TD.shutdown {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;}\n\
 TD.shutdown A:hover {color: red;}\n\
 TABLE.configmenu {line-height: 16px;}\n\
 TD.configmenu {color:black; background-color:white; font-family: Arial; font-size:11px; font-weight:bold;}\n\
+TD.configmenu_selected {color:black; background-color:#E6FEBF; font-family: Arial; font-size:11px; font-weight:bold;font-style:italic;}\n\
 DIV.debugmenu {line-height: 20px;}\n\
 DIV.logmenu {line-height: 20px;}\n\
 DIV.filterform {margin: 10px;}\n\
@@ -390,13 +428,13 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLMENU "\
 	<TABLE border=0 class=\"menu\">\n\
 		<TR>\n\
-			<TD CLASS=\"menu\"><A HREF=\"status.html\">STATUS</A></TD>\n\
-			<TD CLASS=\"menu\"><A HREF=\"config.html\">CONFIGURATION</A></TD>\n\
-			<TD CLASS=\"menu\"><A HREF=\"readers.html\">READERS</A></TD>\n\
-			<TD CLASS=\"menu\"><A HREF=\"userconfig.html\">USERS</A></TD>\n\
-			<TD CLASS=\"menu\"><A HREF=\"services.html\">SERVICES</A></TD>\n\
-			<TD CLASS=\"menu\"><A HREF=\"files.html\">FILES</A></TD>\n\
-			<TD CLASS=\"menu\"><A HREF=\"failban.html\">FAILBAN</A></TD>\n\
+			<TD CLASS=\"##MENUACTIVE0##\"><A HREF=\"status.html\">STATUS</A></TD>\n\
+			<TD CLASS=\"##MENUACTIVE1##\"><A HREF=\"config.html\">CONFIGURATION</A></TD>\n\
+			<TD CLASS=\"##MENUACTIVE2##\"><A HREF=\"readers.html\">READERS</A></TD>\n\
+			<TD CLASS=\"##MENUACTIVE3##\"><A HREF=\"userconfig.html\">USERS</A></TD>\n\
+			<TD CLASS=\"##MENUACTIVE4##\"><A HREF=\"services.html\">SERVICES</A></TD>\n\
+			<TD CLASS=\"##MENUACTIVE5##\"><A HREF=\"files.html\">FILES</A></TD>\n\
+			<TD CLASS=\"##MENUACTIVE6##\"><A HREF=\"failban.html\">FAILBAN</A></TD>\n\
 			<TD CLASS=\"script\"><A HREF=\"script.html\">SCRIPT</A></TD>\n\
 			<TD CLASS=\"shutdown\"><A HREF=\"shutdown.html\">SHUTDOWN</A></TD>\n\
 		</TR>\n\
@@ -405,7 +443,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLCONFIGMENU "\
 	<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=global\">Global</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE0##\"><A HREF=\"config.html?part=global\">Global</A></TD>\n\
 ##TPLCONFIGMENULB##\
 ##TPLCONFIGMENUCAMD33##\
 ##TPLCONFIGMENUCAMD35##\
@@ -415,7 +453,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##TPLCONFIGMENUCCCAM##\
 ##TPLCONFIGMENUGBOX##\
 ##TPLCONFIGMENUANTICASC##\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=monitor\">Monitor/WebIf</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE9##\"><A HREF=\"config.html?part=monitor\">Monitor/WebIf</A></TD>\n\
 ##TPLCONFIGMENUSERIAL##\
 ##TPLCONFIGMENUDVBAPI##\
 		</TR>\n\
@@ -424,17 +462,17 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLFILEMENU "\
 	<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=version\">oscam.version</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE12##\"><A HREF=\"files.html?file=version\">oscam.version</A></TD>\n\
 ##TPLFILEMENUDVBAPI##\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=conf\">oscam.conf</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=user\">oscam.user</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=server\">oscam.server</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=services\">oscam.services</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=srvid\">oscam.srvid</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=provid\">oscam.provid</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=tiers\">oscam.tiers</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=logfile\">logfile</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=userfile\">userfile</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE13##\"><A HREF=\"files.html?file=conf\">oscam.conf</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE14##\"><A HREF=\"files.html?file=user\">oscam.user</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE15##\"><A HREF=\"files.html?file=server\">oscam.server</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE16##\"><A HREF=\"files.html?file=services\">oscam.services</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE17##\"><A HREF=\"files.html?file=srvid\">oscam.srvid</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE18##\"><A HREF=\"files.html?file=provid\">oscam.provid</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE19##\"><A HREF=\"files.html?file=tiers\">oscam.tiers</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE20##\"><A HREF=\"files.html?file=logfile\">logfile</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE21##\"><A HREF=\"files.html?file=userfile\">userfile</A></TD>\n\
 ##TPLFILEMENUANTICASC##\
 		</TR>\n\
 	</TABLE>"
@@ -510,45 +548,45 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 		<ip ipinteger=\"##INTIP##\" user=\"##VIOLATIONUSER##\" count=\"##VIOLATIONCOUNT##\" date=\"##VIOLATIONDATE##\" secondsleft=\"\">##IPADDRESS##</ip>\n"
 
 #ifdef CS_ANTICASC
-#define TPLCONFIGMENUANTICASC "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=anticasc\">Anticascading</A></TD>\n"
-#define TPLFILEMENUANTICASC "			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=anticasc\">AC Log</A></TD>\n"
+#define TPLCONFIGMENUANTICASC "			<TD CLASS=\"##CMENUACTIVE8##\"><A HREF=\"config.html?part=anticasc\">Anticascading</A></TD>\n"
+#define TPLFILEMENUANTICASC "			<TD CLASS=\"##CMENUACTIVE22##\"><A HREF=\"files.html?file=anticasc\">AC Log</A></TD>\n"
 #endif
 
 #ifdef HAVE_DVBAPI
-#define TPLCONFIGMENUDVBAPI "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=dvbapi\">DVB-Api</A></TD>\n"
-#define TPLFILEMENUDVBAPI "			<TD CLASS=\"configmenu\"><A HREF=\"files.html?file=dvbapi\">oscam.dvbapi</A></TD>\n"
+#define TPLCONFIGMENUDVBAPI "			<TD CLASS=\"##CMENUACTIVE11##\"><A HREF=\"config.html?part=dvbapi\">DVB-Api</A></TD>\n"
+#define TPLFILEMENUDVBAPI "			<TD CLASS=\"##CMENUACTIVE23##\"><A HREF=\"files.html?file=dvbapi\">oscam.dvbapi</A></TD>\n"
 #endif
 
 #ifdef WITH_LB
-#define TPLCONFIGMENULB "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=loadbalancer\">Loadbalancer</A></TD>\n"
+#define TPLCONFIGMENULB "			<TD CLASS=\"##CMENUACTIVE1##\"><A HREF=\"config.html?part=loadbalancer\">Loadbalancer</A></TD>\n"
 #endif
 
 #ifdef MODULE_CAMD33
-#define TPLCONFIGMENUCAMD33 "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd33\">Camd3.3</A></TD>\n"
+#define TPLCONFIGMENUCAMD33 "			<TD CLASS=\"##CMENUACTIVE2##\"><A HREF=\"config.html?part=camd33\">Camd3.3</A></TD>\n"
 #endif
 
 #ifdef MODULE_CAMD35
-#define TPLCONFIGMENUCAMD35 "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd35\">Camd3.5</A></TD>\n"
+#define TPLCONFIGMENUCAMD35 "			<TD CLASS=\"##CMENUACTIVE3##\"><A HREF=\"config.html?part=camd35\">Camd3.5</A></TD>\n"
 #endif
 
 #ifdef MODULE_CAMD35_TCP
-#define TPLCONFIGMENUCAMD35TCP "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd35tcp\">Camd3.5 TCP</A></TD>\n"
+#define TPLCONFIGMENUCAMD35TCP "			<TD CLASS=\"##CMENUACTIVE4##\"><A HREF=\"config.html?part=camd35tcp\">Camd3.5 TCP</A></TD>\n"
 #endif
 
 #ifdef MODULE_CCCAM
-#define TPLCONFIGMENUCCCAM "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=cccam\">CCcam</A></TD>\n"
+#define TPLCONFIGMENUCCCAM "			<TD CLASS=\"##CMENUACTIVE7##\"><A HREF=\"config.html?part=cccam\">CCcam</A></TD>\n"
 #endif
 
 #ifdef MODULE_NEWCAMD
-#define TPLCONFIGMENUNEWCAMD "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=newcamd\">Newcamd</A></TD>\n"
+#define TPLCONFIGMENUNEWCAMD "			<TD CLASS=\"##CMENUACTIVE5##\"><A HREF=\"config.html?part=newcamd\">Newcamd</A></TD>\n"
 #endif
 
 #ifdef MODULE_RADEGAST
-#define TPLCONFIGMENURADEGAST "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=radegast\">Radegast</A></TD>\n"
+#define TPLCONFIGMENURADEGAST "			<TD CLASS=\"##CMENUACTIVE6##\"><A HREF=\"config.html?part=radegast\">Radegast</A></TD>\n"
 #endif
 
 #ifdef MODULE_SERIAL
-#define TPLCONFIGMENUSERIAL "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=serial\">Serial</A></TD>\n"
+#define TPLCONFIGMENUSERIAL "			<TD CLASS=\"##CMENUACTIVE10##\"><A HREF=\"config.html?part=serial\">Serial</A></TD>\n"
 #endif
 
 #define TPLSTATUS "\

@@ -157,8 +157,41 @@ char *get_ecm_fullhistorystring(struct s_client *cl){
 		return "";
 	}
 }
+
+/*
+ * Set the active menu to a different CSS class
+ */
+static void setActiveMenu(struct templatevars *vars, int8_t active)
+{
+	int8_t i;
+	for(i = 0; i < MNU_TOTAL_ITEMS; i++) {
+		tpl_printf(vars, TPLADD, "TMP", "MENUACTIVE%d", i);
+		if (i == active)
+			tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "menu_selected");
+		else
+			tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "menu");
+	}
+}
+
+/*
+ * Set the active submenu to a different CSS class
+ */
+static void setActiveSubMenu(struct templatevars *vars, int8_t active)
+{
+	int8_t i;
+	for(i = 0; i < MNU_CFG_TOTAL_ITEMS; i++) {
+		tpl_printf(vars, TPLADD, "TMP", "CMENUACTIVE%d", i);
+		if (i == active)
+			tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "configmenu_selected");
+		else
+			tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "configmenu");
+	}
+}
+
 static char *send_oscam_config_global(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
+
+	setActiveSubMenu(vars, MNU_CFG_GLOBAL);
 
 	if (strcmp(getParam(params, "action"), "execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
@@ -245,6 +278,8 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 static char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
 
+	setActiveSubMenu(vars, MNU_CFG_LOADBAL);
+
 	if (strcmp(getParam(params, "button"), "Load Stats") == 0) {
 		clear_all_stat();
 		load_stat_from_file();
@@ -313,6 +348,8 @@ static char *send_oscam_config_loadbalancer(struct templatevars *vars, struct ur
 static char *send_oscam_config_camd33(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
 
+	setActiveSubMenu(vars, MNU_CFG_CAMD33);
+
 	if (strcmp(getParam(params, "action"), "execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
@@ -343,6 +380,9 @@ static char *send_oscam_config_camd33(struct templatevars *vars, struct uriparam
 #ifdef MODULE_CAMD35
 static char *send_oscam_config_camd35(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
+
+	setActiveSubMenu(vars, MNU_CFG_CAMD35);
+
 	if ((strcmp(getParam(params, "action"),"execute") == 0) && (getParam(params, "port"))[0]) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
@@ -371,6 +411,9 @@ static char *send_oscam_config_camd35(struct templatevars *vars, struct uriparam
 #ifdef MODULE_CAMD35_TCP
 static char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
+
+	setActiveSubMenu(vars, MNU_CFG_CAMD35TCP);
+
 	if ((strcmp(getParam(params, "action"),"execute") == 0) && (getParam(params, "port"))[0]) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
@@ -402,6 +445,9 @@ static char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uripa
 #ifdef MODULE_NEWCAMD
 static char *send_oscam_config_newcamd(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
+
+	setActiveSubMenu(vars, MNU_CFG_NEWCAMD);
+
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
@@ -441,6 +487,9 @@ static char *send_oscam_config_newcamd(struct templatevars *vars, struct uripara
 #ifdef MODULE_RADEGAST
 static char *send_oscam_config_radegast(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
+
+	setActiveSubMenu(vars, MNU_CFG_RADEGAST);
+
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
@@ -467,6 +516,8 @@ static char *send_oscam_config_radegast(struct templatevars *vars, struct uripar
 
 #ifdef MODULE_CCCAM
 static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams *params) {
+
+	setActiveSubMenu(vars, MNU_CFG_CCCAM);
 
 	if (strcmp(getParam(params, "button"), "Refresh global list") == 0) {
 		cs_debug_mask(D_TRACE, "Entitlements: Refresh Shares start");
@@ -543,6 +594,9 @@ static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams
 
 static char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
+
+	setActiveSubMenu(vars, MNU_CFG_MONITOR);
+
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
@@ -650,6 +704,9 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 #ifdef MODULE_SERIAL
 static char *send_oscam_config_serial(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
+
+	setActiveSubMenu(vars, MNU_CFG_SERIAL);
+
 	char *saveptr1 = NULL;
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
@@ -684,6 +741,9 @@ static char *send_oscam_config_serial(struct templatevars *vars, struct uriparam
 #ifdef HAVE_DVBAPI
 static char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
+
+	setActiveSubMenu(vars, MNU_CFG_DVBAPI);
+
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
@@ -725,6 +785,9 @@ static char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparam
 #ifdef CS_ANTICASC
 static char *send_oscam_config_anticasc(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
+
+	setActiveSubMenu(vars, MNU_CFG_ANTICASC);
+
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
@@ -753,6 +816,9 @@ static char *send_oscam_config_anticasc(struct templatevars *vars, struct uripar
 #endif
 
 static char *send_oscam_config(struct templatevars *vars, struct uriparams *params) {
+
+	setActiveMenu(vars, MNU_CONFIG);
+
 	char *part = getParam(params, "part");
 	if (!strcmp(part,"monitor")) return send_oscam_config_monitor(vars, params);
 #ifdef MODULE_CAMD33
@@ -797,6 +863,8 @@ static void inactivate_reader(struct s_reader *rdr)
 static char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
 	struct s_reader *rdr;
 	int32_t i;
+
+	if(!apicall) setActiveMenu(vars, MNU_READERS);
 
 	if ((strcmp(getParam(params, "action"), "disable") == 0) || (strcmp(getParam(params, "action"), "enable") == 0)) {
 		if(cfg.http_readonly) {
@@ -997,6 +1065,8 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	char *value;
 
 	struct s_reader *rdr;
+
+	if(!apicall) setActiveMenu(vars, MNU_READERS);
 
 	if(strcmp(getParam(params, "action"), "Add") == 0) {
 		// Add new reader
@@ -1471,6 +1541,8 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 	if(!rdr) return "0";
 
+	if(!apicall) setActiveMenu(vars, MNU_READERS);
+
 #ifdef WITH_LB
 	char *stxt[]={"found", "cache1", "cache2", "emu",
 			"not found", "timeout", "sleeping",
@@ -1707,6 +1779,8 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	char user[sizeof(first_client->account->usr)];
 
 	int32_t i;
+
+	if(!apicall) setActiveMenu(vars, MNU_USERS);
 
 	if (strcmp(getParam(params, "action"), "Save As") == 0) cs_strncpy(user, getParam(params, "newuser"), sizeof(user)/sizeof(char));
 	else cs_strncpy(user, getParam(params, "user"), sizeof(user)/sizeof(char));
@@ -1975,6 +2049,8 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	struct s_client *cl;
 	char *user = getParam(params, "user");
 	int32_t found = 0, hideclient = 10;
+
+	if(!apicall) setActiveMenu(vars, MNU_USERS);
 
 	if (cfg.mon_hideclient_to > 10)
 	hideclient = cfg.mon_hideclient_to;
@@ -2622,6 +2698,8 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 	time_t now = time((time_t*)0);
 	struct tm lt;
 
+	if(!apicall) setActiveMenu(vars, MNU_STATUS);
+
 	if (strcmp(getParam(params, "action"), "kill") == 0) {
 		char *cptr = getParam(params, "threadid");
 		struct s_client *cl = NULL;
@@ -3120,6 +3198,8 @@ static char *send_oscam_services_edit(struct templatevars *vars, struct uriparam
 	char label[sizeof(cfg.sidtab->label)];
 	int32_t i;
 
+	setActiveMenu(vars, MNU_SERVICES);
+
 	cs_strncpy(label, strtolower(getParam(params, "service")), sizeof(label));
 
 	for (sidtab = cfg.sidtab; sidtab != NULL && strcmp(label, sidtab->label) != 0; sidtab=sidtab->next);
@@ -3201,6 +3281,8 @@ static char *send_oscam_services(struct templatevars *vars, struct uriparams *pa
 	char *service = getParam(params, "service");
 	char channame[32];
 	int32_t i, counter = 0;
+
+	setActiveMenu(vars, MNU_SERVICES);
 
 	if (strcmp(getParam(params, "action"), "delete") == 0) {
 		if(cfg.http_readonly) {
@@ -3415,6 +3497,8 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 	int32_t writable=0;
 	//int8_t apicall = 0; //remove before flight
 
+	if(!apicall) setActiveMenu(vars, MNU_FILES);
+
 	tpl_addVar(vars, TPLADD, "APIFILENAME", "null");
 	tpl_addVar(vars, TPLADD, "APIWRITABLE", "0");
 
@@ -3440,54 +3524,63 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 	char targetfile[256];
 
 	if (strcmp(getParam(params, "file"), "conf") == 0) {
+		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FCONF);
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.conf");
 		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.conf");
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
 	else if (strcmp(getParam(params, "file"), "version") == 0) {
+		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FVERSION);
 		snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "/oscam.version");
 		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.version");
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "0");
 	}
 
 	else if (strcmp(getParam(params, "file"), "user") == 0) {
+		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FUSER);
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.user");
 		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.user");
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
 	else if (strcmp(getParam(params, "file"), "server") == 0) {
+		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FSERVER);
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.server");
 		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.server");
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
 	else if (strcmp(getParam(params, "file"), "services") == 0) {
+		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FSERVICES);
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.services");
 		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.services");
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
 	else if (strcmp(getParam(params, "file"), "srvid") == 0) {
+		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FSRVID);
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.srvid");
 		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.srvid");
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
 	else if (strcmp(getParam(params, "file"), "provid") == 0) {
+		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FPROVID);
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.provid");
 		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.provid");
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
 	else if (strcmp(getParam(params, "file"), "tiers") == 0) {
+		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FTIERS);
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.tiers");
 		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.tiers");
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
 	else if (!apicall && strcmp(getParam(params, "file"), "logfile") == 0) {
+		setActiveSubMenu(vars, MNU_CFG_FLOGFILE);
 		snprintf(targetfile, 255,"%s", cfg.logfile);
 
 		if (strcmp(getParam(params, "clear"), "logfile") == 0) {
@@ -3533,6 +3626,7 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 
 	}
 	else if (!apicall && strcmp(getParam(params, "file"), "userfile") == 0) {
+		setActiveSubMenu(vars, MNU_CFG_FUSERFILE);
 		snprintf(targetfile, 255,"%s", cfg.usrfile);
 		if (strcmp(getParam(params, "clear"), "usrfile") == 0) {
 			if(strlen(targetfile) > 0) {
@@ -3561,19 +3655,27 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 
 	}
 #ifdef CS_ANTICASC
-	else if (!apicall && strcmp(getParam(params, "file"), "anticasc") == 0)
+	else if (!apicall && strcmp(getParam(params, "file"), "anticasc") == 0){
+		setActiveSubMenu(vars, MNU_CFG_FACLOG);
 		snprintf(targetfile, 255,"%s", cfg.ac_logfile);
+	}
 #endif
 
 #ifdef HAVE_DVBAPI
 	else if (strcmp(getParam(params, "file"), "dvbapi") == 0) {
+		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FDVBAPI);
 		snprintf(targetfile, 255, "%s%s", cs_confdir, "oscam.dvbapi");
 		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.dvbapi");
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
 #endif
-	else targetfile[0] = '\0';
+	else {
+		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FVERSION);
+		snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "/oscam.version");
+		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.version");
+		tpl_addVar(vars, TPLADD, "APIWRITABLE", "0");
+	}
 
 	if (!strstr(targetfile, "/dev/")) {
 
@@ -3638,6 +3740,8 @@ static char *send_oscam_failban(struct templatevars *vars, struct uriparams *par
 	LL_ITER itr = ll_iter_create(cfg.v_list);
 	V_BAN *v_ban_entry;
 	//int8_t apicall = 0; //remove before flight
+
+	if(!apicall) setActiveMenu(vars, MNU_FAILBAN);
 
 	if (strcmp(getParam(params, "action"), "delete") == 0) {
 
