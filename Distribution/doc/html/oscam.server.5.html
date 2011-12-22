@@ -158,12 +158,15 @@ description of reader, default:none
 
 <P>
 
-<B>cacheex</B> = <B>0</B>|<B>1</B>
+<B>cacheex</B> = <B>0</B>|<B>1</B>|<B>2</B>|<B>3</B>
 <DL COMPACT><DT><DD>
 set cache exchange mode, default:0
 <P>
-<BR>&nbsp;<B>1</B>:&nbsp;enable&nbsp;cache&nbsp;pull&nbsp;mode
-<BR>&nbsp;<B>2</B>:&nbsp;enable&nbsp;cache&nbsp;push&nbsp;mode&nbsp;for&nbsp;camd&nbsp;3.5x&nbsp;and&nbsp;CCcam&nbsp;protocol
+<BR>&nbsp;<B>0</B>:&nbsp;disable&nbsp;cache&nbsp;exchange&nbsp;mode
+<BR>&nbsp;<B>1</B>:&nbsp;enable&nbsp;cache&nbsp;exchange&nbsp;pull&nbsp;mode
+<BR>&nbsp;<B>2</B>:&nbsp;enable&nbsp;cache&nbsp;exchange&nbsp;push&nbsp;mode&nbsp;for&nbsp;camd&nbsp;3.5x&nbsp;and&nbsp;CCcam&nbsp;protocol
+<BR>&nbsp;<B>3</B>:&nbsp;enable&nbsp;reverse&nbsp;cache&nbsp;exchange&nbsp;push&nbsp;mode&nbsp;for&nbsp;camd&nbsp;3.5x&nbsp;and
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;CCcam&nbsp;protocol
 <P>
 <I>Identical cache exchange modes must be set on local and remote OSCam reader.</I>
 </DL>
