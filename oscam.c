@@ -1781,6 +1781,7 @@ ECM_REQUEST *get_ecmtask()
 	return(er);
 }
 
+#ifdef WITH_LB
 void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc)
 {
 #ifdef CS_CACHEEX
@@ -1798,6 +1799,7 @@ void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc)
 
 	add_stat(rdr, er, time, rc);
 }
+#endif
 
 /**
  * Check for NULL CWs
@@ -2041,7 +2043,7 @@ static void request_cw(ECM_REQUEST *er)
 
 #ifndef CS_CACHEEX
 		if (er->stage == 1)
-			er->stage = 2;
+			er->stage++;
 #endif
 		if (er->stage == 2 && !cfg.preferlocalcards)
 			er->stage++;
@@ -2743,9 +2745,6 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	if (er->rc >= E_99) {
 #ifdef CS_CACHEEX
 		if (cacheex == 0 || er->rc == E_99) { //Cacheex should not add to the ecmcache:
-#else
-		if (er->rc == E_99) {
-
 #endif
 			cs_writelock(&ecmcache_lock);
 			er->next = ecmtask;
@@ -2759,7 +2758,9 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 					er->ecmcacheptr = ecm;
 				}
 			}
+#ifdef CS_CACHEEX
 		}
+#endif
 	}
 
 
