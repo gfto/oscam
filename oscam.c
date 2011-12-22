@@ -1542,22 +1542,76 @@ void cs_disconnect_client(struct s_client * client)
 }
 
 #ifdef CS_CACHEEX
+static void cs_cache_push_to_client(struct s_client *cl, ECM_REQUEST *er)
+{
+	ECM_REQUEST *erc = cs_malloc(&erc, sizeof(ECM_REQUEST), 0);
+	memcpy(erc, er, sizeof(ECM_REQUEST));
+
+	add_job(cl, ACTION_CACHE_PUSH_OUT, erc, sizeof(ECM_REQUEST));
+}
+
+/**
+ * cacheex modes:
+ *
+ * cacheex=1 CACHE PULL:
+ * Situation: oscam A reader1 has cacheex=1, oscam B account1 has cacheex=1
+ *   oscam A gets a ECM request, reader1 send this request to oscam B, oscam B checks his cache
+ *   a. not found in cache: return NOK
+ *   a. found in cache: return OK+CW
+ *   b. not found in cache, but found pending request: wait max cacheexwaittime and check again
+ *   oscam B never requests new ECMs
+ *
+ *   CW-flow: B->A
+ *
+ * cachex=2 CACHE PUSH:
+ * Situation: oscam A reader1 has cacheex=2, oscam B account1 has cacheex=2
+ *   if oscam B gets a CW, its pushed to oscam A
+ *   reader has normal functionality and can request ECMs
+ *
+ *   Problem: oscam B can only push if oscam A is connected
+ *   Problem or feature?: oscam A reader can request ecms from oscam B
+ *
+ *   CW-flow: B->A
+ *
+ * caseex=3 REVERSE CACHE PUSH:
+ * Situation: oscam A reader1 has cacheex=3, oscam B account1 has cacheex=3
+ *   if oscam A gets a CW, its pushed to oscam B
+ *
+ *   oscam A never requests new ECMs
+ *
+ *   CW-flow: A->B
+ */
 void cs_cache_push(ECM_REQUEST *er)
 {
 	if (er->rc != E_FOUND) //Maybe later we could support other rcs
 		return;
 
+	//cacheex=2 mode: reverse push (server->remote)
 	struct s_client *cl;
-	for (cl=first_client->next; cl; cl=cl->next) {
-		if (cl->typ=='c' && cl->account && cl->account->cacheex == 2 && er->cacheex_src != cl) {
-			if (ph[cl->ctyp].c_cache_push) {
-				if ((cl->grp & er->grp) //Group-check
+	for (cl = first_client->next; cl; cl = cl->next) {
+		if (er->cacheex_src != cl) {
+			if (cl->typ == 'c' && cl->account && cl->account->cacheex == 2) { //send cache over user
+				if (ph[cl->ctyp].c_cache_push // cache-push able
+						&& (!er->grp || (cl->grp & er->grp)) //Group-check
 						&& chk_srvid(cl, er) //Service-check
-						&& chk_caid(er->caid, &cl->ctab)) { //Caid-check
-					ECM_REQUEST *erc = cs_malloc(&erc, sizeof(ECM_REQUEST), 0);
-					memcpy(erc, er, sizeof(ECM_REQUEST));
-					add_job(cl, ACTION_CACHE_PUSH_OUT, erc, sizeof(ECM_REQUEST));
+						&& (chk_caid(er->caid, &cl->ctab) > 0))  //Caid-check
+				{
+					cs_cache_push_to_client(cl, er);
 				}
+			}
+		}
+	}
+
+	//cacheex=3 mode: forward push (reader->server)
+	struct s_reader *rdr;
+	for (rdr = first_active_reader; rdr; rdr = rdr->next) {
+		if (rdr->client && er->cacheex_src != rdr->client && rdr->cacheex == 3) { //send cache over reader
+			if (rdr->ph.c_cache_push
+				&& (!er->grp || (rdr->grp & er->grp)) //Group-check
+				&& chk_srvid(rdr->client, er) //Service-check
+				&& chk_ctab(er->caid, &rdr->ctab))  //Caid-check
+			{
+				cs_cache_push_to_client(rdr->client, er);
 			}
 		}
 	}
@@ -1621,9 +1675,16 @@ static void distribute_ecm(ECM_REQUEST *er, int32_t rc)
 #ifdef CS_CACHEEX
 void cs_add_cache(struct s_client *cl, ECM_REQUEST *er)
 {
-	//we receive this from a reader!
-	if (!cl || !cl->reader || !cl->reader->cacheex==2)
+	if (!cl)
 		return;
+	if (cl->reader && !cl->reader->cacheex==2) //from reader
+		return;
+	if (cl->account && !cl->account->cacheex==3) //from user
+		return;
+	if (!cl->reader && !cl->account) { //not active!
+		cs_debug_mask(D_TRACE, "CACHEX received, but disabled for %s", username(cl));
+		return;
+	}
 
 	uint16_t *lp;
 	for (lp=(uint16_t *)er->ecm+(er->l>>2), er->checksum=0; lp>=(uint16_t *)er->ecm; lp--)
@@ -3320,7 +3381,12 @@ void * work_thread(void *ptr) {
 #ifdef CS_CACHEEX
 			case ACTION_CACHE_PUSH_OUT: {
 				ECM_REQUEST *er = data->ptr;
-				int32_t res = ph[cl->ctyp].c_cache_push(cl, er);
+
+				int32_t res;
+				if (reader)
+					res = reader->ph.c_cache_push(cl, er);
+				else
+					res = ph[cl->ctyp].c_cache_push(cl, er);
 				cs_debug_mask(
 					D_TRACE,
 					"pushed ECM %04X&%06X/%04X/%02X:%04X to %s res %d", er->caid, er->prid, er->srvid, er->l,
