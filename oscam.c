@@ -1573,7 +1573,7 @@ static void cs_cache_push_to_client(struct s_client *cl, ECM_REQUEST *er)
  *
  *   CW-flow: B->A
  *
- * casheex=3 REVERSE CACHE PUSH:
+ * cacheex=3 REVERSE CACHE PUSH:
  * Situation: oscam A reader1 has cacheex=3, oscam B account1 has cacheex=3
  *   if oscam A gets a CW, its pushed to oscam B
  *
