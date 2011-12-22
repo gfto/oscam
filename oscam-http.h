@@ -914,7 +914,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TR><TD>##TPLHELPPREFIX##user#betatunnel##TPLHELPSUFFIX##Betatunnel:</A></TD><TD><textarea name=\"betatunnel\" cols=\"58\" rows=\"3\" class=\"bt\">##BETATUNNELS##</textarea></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##user#suppresscmd08##TPLHELPSUFFIX##Suppresscmd08:</A></TD><TD><SELECT NAME=\"suppresscmd08\"><OPTION VALUE=\"0\">CMD08 active</OPTION><OPTION VALUE=\"1\" ##SUPPRESSCMD08##>CMD08 suppressed</OPTION></SELECT></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##user#sleepsend##TPLHELPSUFFIX##Sleepsend:</A></TD><TD><input name=\"sleepsend\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##SLEEPSEND##\"> 0 or 255</TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##user#cacheex##TPLHELPSUFFIX##Cache-EX-Mode:</A></TD><TD><input name=\"cacheex\" type=\"text\" size=\"5\" maxlength=\"4\" value=\"##CACHEEX##\"></TD></TR>\n\
+##TPLUSEREDITCACHEEXBIT##\
 ##TPLUSEREDITANTICASC##\
 ##TPLUSEREDITCCCAM##\
 			<TR><TD>##TPLHELPPREFIX##user#keepalive##TPLHELPSUFFIX##Keepalive:</A></TD><TD><SELECT NAME=\"keepalive\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##KEEPALIVE##>ON</OPTION></SELECT></TD></TR>\n\
@@ -927,6 +927,26 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##TPLFOOTER##"
 
 #define TPLUSEREDITRDRSELECTED "						<option value=\"##READERNAME##\" ##SELECTED##>##READERNAME##</option>"
+
+#ifdef CS_CACHEEX
+#define TPLUSEREDITCACHEEXBIT "				<TR><TD>##TPLHELPPREFIX##user#cacheex##TPLHELPSUFFIX##Cache-EX-Mode:</A></TD>\n\
+												<TD><select name=\"cacheex\">\n\
+														<option value=\"0\" ##CACHEEXSELECTED0##>0 - No CacheEX</option>\n\
+														<option value=\"1\" ##CACHEEXSELECTED1##>1 - CACHE PULL</option>\n\
+														<option value=\"2\" ##CACHEEXSELECTED2##>2 - CACHE PUSH</option>\n\
+														<option value=\"3\" ##CACHEEXSELECTED3##>3 - REVERSE CACHE PUSH</option>\n\
+													</select>\n\
+												</TD></TR>\n"
+
+#define TPLREADEREDITCACHEEXBIT "			<TR><TD>##TPLHELPPREFIX##server#cacheex##TPLHELPSUFFIX##Cache-EX-Mode:</A></TD>\n\
+												<TD><select name=\"cacheex\">\n\
+														<option value=\"0\" ##CACHEEXSELECTED0##>0 - No CacheEX</option>\n\
+														<option value=\"1\" ##CACHEEXSELECTED1##>1 - CACHE PULL</option>\n\
+														<option value=\"2\" ##CACHEEXSELECTED2##>2 - CACHE PUSH</option>\n\
+														<option value=\"3\" ##CACHEEXSELECTED3##>3 - REVERSE CACHE PUSH</option>\n\
+													</select>\n\
+												</TD></TR>\n"
+#endif
 
 #define TPLUSEREDITSIDOKBIT "\
 						<TR>\n\
@@ -1261,7 +1281,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##server#blockemm-bylen##TPLHELPSUFFIX##Block EMM by Len:</A></TD><TD><input name=\"blockemm-bylen\" type=\"text\" size=\"20\" maxlength=\"40\" value=\"##BLOCKEMMBYLEN##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#dropbadcws##TPLHELPSUFFIX##Drop CWs with wrong checksum:</A><input name=\"dropbadcws\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"dropbadcws\" type=\"checkbox\" value=\"1\" ##DROPBADCWSCHECKED##></TD></TR>\n\
             <TR><TD>##TPLHELPPREFIX##server#disablecrccws##TPLHELPSUFFIX##Skip CWs checksum test:</A><input name=\"disablecrccws\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"disablecrccws\" type=\"checkbox\" value=\"1\" ##DISABLECRCCWSCHECKED##></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##server#cacheex##TPLHELPSUFFIX##Cache-EX-Mode:</A></TD><TD><input name=\"cacheex\" type=\"text\" size=\"5\" maxlength=\"4\" value=\"##CACHEEX##\"></TD></TR>\n\
+			##TPLREADEREDITCACHEEXBIT##\
 			<TR><TH>&nbsp;</TH><TH>Reader specific settings for protocol ##PROTOCOL##</TH></TR>\n\
 ##READERDEPENDINGCONFIG##\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" name=\"action\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
@@ -2373,6 +2393,10 @@ char *tpl[]={
 #ifdef LCDSUPPORT
 	,"LCDOPTIONS"
 #endif
+#ifdef CS_CACHEEX
+	,"USEREDITCACHEEXBIT"
+	,"READEREDITCACHEEXBIT"
+#endif
 	,"ICMAI"
 	,"ICSTA"
 	,"ICDEL"
@@ -2523,6 +2547,10 @@ char *tplmap[]={
 #endif
 #ifdef LCDSUPPORT
 	,TPLLCDOPTIONS
+#endif
+#ifdef CS_CACHEEX
+	,TPLUSEREDITCACHEEXBIT
+	,TPLREADEREDITCACHEEXBIT
 #endif
 	,ICMAI
 	,ICSTA

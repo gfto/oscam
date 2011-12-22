@@ -1179,9 +1179,10 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 #ifdef CS_CACHEEX
 	// Cacheex
 	if(!apicall) {
-		tpl_printf(vars, TPLADD, "CACHEEX", "%d", rdr->cacheex);
+		tpl_printf(vars, TPLADD, "TMP", "CACHEEXSELECTED%d", rdr->cacheex);
+		tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 	} else {
-		tpl_printf(vars, TPLADD, "CACHEEXVALUE", "%d", rdr->cacheex);
+		tpl_printf(vars, TPLADD, "CACHEEX", "%d", rdr->cacheex);
 	}
 #endif
 
@@ -1982,9 +1983,11 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 #ifdef CS_CACHEEX
 	// Cacheex
 	if(!apicall) {
-		tpl_printf(vars, TPLADD, "CACHEEX", "%d", account->cacheex);
+		tpl_printf(vars, TPLADD, "TMP", "CACHEEXSELECTED%d", account->cacheex);
+		tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+
 	} else {
-		tpl_printf(vars, TPLADD, "CACHEEXVALUE", "%d", account->cacheex);
+		tpl_printf(vars, TPLADD, "CACHEEX", "%d", account->cacheex);
 	}
 #endif
 
