@@ -1563,7 +1563,7 @@ static void cs_cache_push_to_client(struct s_client *cl, ECM_REQUEST *er)
  *
  *   CW-flow: B->A
  *
- * cachex=2 CACHE PUSH:
+ * cacheex=2 CACHE PUSH:
  * Situation: oscam A reader1 has cacheex=2, oscam B account1 has cacheex=2
  *   if oscam B gets a CW, its pushed to oscam A
  *   reader has normal functionality and can request ECMs
@@ -1573,7 +1573,7 @@ static void cs_cache_push_to_client(struct s_client *cl, ECM_REQUEST *er)
  *
  *   CW-flow: B->A
  *
- * caseex=3 REVERSE CACHE PUSH:
+ * casheex=3 REVERSE CACHE PUSH:
  * Situation: oscam A reader1 has cacheex=3, oscam B account1 has cacheex=3
  *   if oscam A gets a CW, its pushed to oscam B
  *
@@ -2132,7 +2132,7 @@ static void request_cw(ECM_REQUEST *er)
 			} else {
 				// only fallbacks
 				// always send requests, regardless if asked
-				if ((ea->status & (READER_ACTIVE|READER_FALLBACK)) != (READER_ACTIVE|READER_FALLBACK))
+				if ((ea->status & READER_ACTIVE) != READER_ACTIVE)
 					continue;
 			}
 
@@ -3520,7 +3520,7 @@ static void * check_thread(void) {
 
 			if (comp_timeb(&t_now, &tbc) >= 0) {
 				if (er->stage < 4) {
-					cs_debug_mask(D_TRACE, "fallback for %s %04X&%06X/%04X", username(er->client), er->caid, er->prid, er->srvid);
+					cs_debug_mask(D_TRACE, "fallback for %s %04X&%06X/%04X ecm=%04X", username(er->client), er->caid, er->prid, er->srvid, htons(er->checksum));
 					if (er->rc >= E_UNHANDLED) //do not request rc=99
 						request_cw(er);
 
@@ -3528,7 +3528,7 @@ static void * check_thread(void) {
 					time_to_check = add_ms_to_timeb(&tbc, cfg.ctimeout);
 				} else {
 					if (er->client) {
-						cs_debug_mask(D_TRACE, "timeout for %s %04X&%06X/%04X", username(er->client), er->caid, er->prid, er->srvid);
+						cs_debug_mask(D_TRACE, "timeout for %s %04X&%06X/%04X ecm=%04X", username(er->client), er->caid, er->prid, er->srvid, htons(er->checksum));
 						write_ecm_answer(NULL, er, E_TIMEOUT, 0, NULL, NULL);
 					}
 #ifdef WITH_LB		
