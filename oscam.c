@@ -229,7 +229,7 @@ static void usage()
   fprintf(stderr, "lcd ");
 #endif
 #ifdef CS_CACHEEX
-  fprintf(stderr, "cacheex ");
+  fprintf(stderr, "cache-exchange ");
 #endif
   fprintf(stderr, "\n\tinbuilt protocols: ");
 #ifdef MODULE_CAMD33
