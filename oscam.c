@@ -228,6 +228,9 @@ static void usage()
 #ifdef LCDSUPPORT
   fprintf(stderr, "lcd ");
 #endif
+#ifdef CS_CACHEEX
+  fprintf(stderr, "cacheex ");
+#endif
   fprintf(stderr, "\n\tinbuilt protocols: ");
 #ifdef MODULE_CAMD33
   fprintf(stderr, "camd33 ");
