@@ -3122,6 +3122,11 @@ void write_versionfile() {
 #else
 	  fprintf(fp, "IPv6 support:               no\n");
 #endif
+#ifdef CS_CACHEEX
+	  fprintf(fp, "cacheex support:            yes\n");
+#else
+	  fprintf(fp, "cacheex support:            no\n");
+#endif
 #ifdef MODULE_CAMD33
 	  fprintf(fp, "camd 3.3x:                  yes\n");
 #else
