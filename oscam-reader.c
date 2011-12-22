@@ -146,14 +146,19 @@ void block_connect(struct s_reader *rdr) {
 int32_t is_connect_blocked(struct s_reader *rdr) {
   struct timeb cur_time;
   cs_ftime(&cur_time);
-  return (rdr->tcp_block_delay && comp_timeb(&cur_time, &rdr->tcp_block_connect_till) < 0);
+  int32_t blocked = (rdr->tcp_block_delay && comp_timeb(&cur_time, &rdr->tcp_block_connect_till) < 0);
+  if (blocked) {
+		int32_t time = 1000*(rdr->tcp_block_connect_till.time-cur_time.time)
+				+rdr->tcp_block_connect_till.millitm-cur_time.millitm;
+		cs_log("%s connection blocked, retrying in %ds", rdr->label, time/1000);
+  }
+  return blocked;
 }
                 
 int32_t network_tcp_connection_open(struct s_reader *rdr)
 {
 	if (!rdr) return -1;
 	struct s_client *client = rdr->client;
-	cs_log("connecting to %s on %s:%d", rdr->label, rdr->device, rdr->r_port);
 	struct sockaddr_in loc_sa;
 
 	memset((char *)&client->udp_sa, 0, sizeof(client->udp_sa));
@@ -166,7 +171,6 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 		clear_block_delay(rdr);
 
 	if (is_connect_blocked(rdr)) { //inside of blocking delay, do not connect!
-		cs_debug_mask(D_TRACE, "tcp connect blocking delay asserted for %s", rdr->label);
 		return -1;
 	}
 
@@ -176,6 +180,8 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 	}
 
 	client->is_udp=(rdr->typ==R_CAMD35);
+
+	cs_log("connecting to %s on %s:%d", rdr->label, rdr->device, rdr->r_port);
 
 	if (client->udp_fd)
 		cs_log("WARNING: client->udp_fd was not 0");

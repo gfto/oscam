@@ -353,7 +353,10 @@ static int32_t tcp_connect()
 	if (!cl->reader->tcp_connected) {
 		int32_t handle=0;
 		handle = network_tcp_connection_open(cl->reader);
-		if (handle<0) return(0);
+		if (handle<0)  {
+			block_connect(cl->reader);
+			return(0);
+		}
 
 		cl->reader->tcp_connected = 1;
 		cl->reader->card_status = CARD_INSERTED;

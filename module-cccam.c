@@ -3089,15 +3089,6 @@ int32_t cc_cli_connect(struct s_client *cl) {
 		cc->prefix = cs_malloc(&cc->prefix, strlen(cl->reader->label)+20, QUITERROR);
 	snprintf(cc->prefix, strlen(cl->reader->label)+20, "cccam(r) %s:", cl->reader->label);
 		
-	if (is_connect_blocked(rdr)) {
-		struct timeb cur_time;
-		cs_ftime(&cur_time);
-		int32_t time = 1000*(rdr->tcp_block_connect_till.time-cur_time.time)
-				+rdr->tcp_block_connect_till.millitm-cur_time.millitm;
-		cs_log("%s connection blocked, retrying in %ds", rdr->label, time/1000);
-		return -1;
-	}
-	
 	int32_t handle, n;
 	uint8_t data[20];
 	uint8_t hash[SHA_DIGEST_LENGTH];
