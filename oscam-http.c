@@ -2265,10 +2265,6 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_printf(vars, TPLADD, "CWTUN", "%d", account->cwtun);
 		tpl_printf(vars, TPLADD, "EMMOK", "%d", account->emmok);
 		tpl_printf(vars, TPLADD, "EMMNOK", "%d", account->emmnok);
-#ifdef CS_CACHEEX
-		tpl_printf(vars, TPLADD, "CACHEXPUSH", "%d", account->cwcacheexpush);
-		tpl_printf(vars, TPLADD, "CACHEXGOT", "%d", account->cwcacheexgot);
-#endif
 		tpl_printf(vars, TPLADD, "CWRATE", "%.2f", cwrate);
 		tpl_printf(vars, TPLADD, "CASCUSERS", "%d", casc_users);
 		tpl_printf(vars, TPLADD, "CASCUSERS2", "%d", casc_users2);
@@ -2344,10 +2340,6 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	tpl_printf(vars, TPLADD, "TOTAL_CWTOUT", "%ld", first_client->cwtout);
 	tpl_printf(vars, TPLADD, "TOTAL_CWCACHE", "%ld", first_client->cwcache);
 	tpl_printf(vars, TPLADD, "TOTAL_CWTUN", "%ld", first_client->cwtun);
-#ifdef CS_CACHEEX
-	tpl_printf(vars, TPLADD, "TOTAL_CACHEXPUSH", "%ld", first_client->cwcacheexpush);
-	tpl_printf(vars, TPLADD, "TOTAL_CACHEXGOT", "%ld", first_client->cwcacheexgot);
-#endif
 
 	if (!apicall)
 		return tpl_getTpl(vars, "USERCONFIGLIST");
@@ -3999,6 +3991,51 @@ static char *send_oscam_graph(struct templatevars *vars) {
 	return tpl_getTpl(vars, "GRAPH");
 }
 
+#ifdef CS_CACHEEX
+static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *params, int8_t apicall) {
+
+	if(!apicall) setActiveMenu(vars, MNU_CACHEEX);
+
+	if (strcmp(getParam(params, "x"), "x") == 0) {
+		// avoid compilerwarning unused vars
+	}
+
+	char *level[]= {"NONE","CACHE PULL","CACHE PUSH","REVERSE CACHE PUSH"};
+
+	int16_t i;
+	struct s_client *cl;
+
+	for (i = 0, cl = first_client; cl ; cl = cl->next, i++) {
+
+		if (cl->typ=='c') {
+			if (cl->account && cl->account->cacheex){
+				tpl_addVar(vars, TPLADD, "TYPE", "Client");
+				tpl_addVar(vars, TPLADD, "NAME", cl->account->usr);
+				tpl_addVar(vars, TPLADD, "LEVEL", level[cl->account->cacheex]);
+				tpl_printf(vars, TPLADD, "PUSH", "%ld", cl->cwcacheexpush);
+				tpl_printf(vars, TPLADD, "GOT", "%ld", cl->cwcacheexgot);
+				tpl_addVar(vars, TPLAPPEND, "TABLECLIENTROWS", tpl_getTpl(vars, "CACHEEXTABLEROW"));
+			}
+		}
+		else if (cl->typ=='p' || cl->typ=='r') {
+			if (cl->reader && cl->reader->cacheex){
+				tpl_addVar(vars, TPLADD, "TYPE", "Reader");
+				tpl_addVar(vars, TPLADD, "NAME", cl->reader->label);
+				tpl_addVar(vars, TPLADD, "LEVEL", level[cl->reader->cacheex]);
+				tpl_printf(vars, TPLADD, "PUSH", "%ld", cl->cwcacheexpush);
+				tpl_printf(vars, TPLADD, "GOT", "%ld", cl->cwcacheexgot);
+				tpl_addVar(vars, TPLAPPEND, "TABLEREADERROWS", tpl_getTpl(vars, "CACHEEXTABLEROW"));
+			}
+		}
+	}
+
+	tpl_printf(vars, TPLADD, "TOTAL_CACHEXPUSH", "%ld", first_client->cwcacheexpush);
+	tpl_printf(vars, TPLADD, "TOTAL_CACHEXGOT", "%ld", first_client->cwcacheexgot);
+
+	return tpl_getTpl(vars, "CACHEEXPAGE");
+}
+#endif
+
 static int8_t check_request(char *result, int32_t read) {
 	if(read < 50) return 0;
 	result[read]='\0';
@@ -4208,7 +4245,8 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 			"/image",
 			"/favicon.ico",
 			"/graph.svg",
-			"/oscamapi.xml"};
+			"/oscamapi.xml",
+			"/cacheex.html"};
 	
 		int32_t pagescnt = sizeof(pages)/sizeof(char *); // Calculate the amount of items in array
 		int32_t i, bufsize, len, pgidx = -1;
@@ -4389,6 +4427,9 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 				case 20: result = send_oscam_image(vars, f, &params, "ICMAI", modifiedheader, etagheader); break;
 				case 21: result = send_oscam_graph(vars); break;
 				case 22: result = send_oscam_api(vars, f, &params, keepalive); break; //oscamapi.xml
+#ifdef CS_CACHEEX
+				case 23: result = send_oscam_cacheex(vars, &params, 0); break;
+#endif
 				default: result = send_oscam_status(vars, &params, 0); break;
 			}
 			if(pgidx != 19 && pgidx != 20) cs_writeunlock(&http_lock);

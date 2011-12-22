@@ -54,7 +54,8 @@ static int32_t ssl_active = 0;
 #define MNU_SERVICES 4
 #define MNU_FILES 5
 #define MNU_FAILBAN 6
-#define MNU_TOTAL_ITEMS 7 // sum of items above
+#define MNU_CACHEEX 7
+#define MNU_TOTAL_ITEMS 8 // sum of items above
 /* constants for submenuactivating */
 #define MNU_CFG_GLOBAL 0
 #define MNU_CFG_LOADBAL 1
@@ -435,10 +436,13 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD CLASS=\"##MENUACTIVE4##\"><A HREF=\"services.html\">SERVICES</A></TD>\n\
 			<TD CLASS=\"##MENUACTIVE5##\"><A HREF=\"files.html\">FILES</A></TD>\n\
 			<TD CLASS=\"##MENUACTIVE6##\"><A HREF=\"failban.html\">FAILBAN</A></TD>\n\
+##TPLCACHEEXMENUITEM##\
 			<TD CLASS=\"script\"><A HREF=\"script.html\">SCRIPT</A></TD>\n\
 			<TD CLASS=\"shutdown\"><A HREF=\"shutdown.html\">SHUTDOWN</A></TD>\n\
 		</TR>\n\
 	</TABLE>\n"
+
+#define TPLCACHEEXMENUITEM "			<TD CLASS=\"##MENUACTIVE7##\"><A HREF=\"cacheex.html\">CACHEEX</A></TD>\n"
 
 #define TPLCONFIGMENU "\
 	<TABLE border=0 class=\"configmenu\">\n\
@@ -686,8 +690,6 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
         <cwtimeout>##TOTAL_CWTOUT##</cwtimeout>\n\
         <cwcache>##TOTAL_CWCACHE##</cwcache>\n\
         <cwtun>##TOTAL_CWTUN##</cwtun>\n\
-        <cacheexpush>##TOTAL_CACHEXPUSH##</cacheexpush>\n\
-        <cacheexgot>##TOTAL_CACHEXGOT##</cacheexgot>\n\
     </totals>\n\
 ##TPLAPIFOOTER##"
 
@@ -703,8 +705,6 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
                 <emmok>##EMMOK##</emmok>\n\
                 <emmnok>##EMMNOK##</emmnok>\n\
                 <cwrate>##CWRATE##</cwrate>\n\
-                <cacheexpush>##CACHEXPUSH##</cacheexpush>\n\
-                <cacheexgot>##CACHEXGOT##</cacheexgot>\n\
             </stats>\n\
         </user>\n"
 
@@ -740,8 +740,6 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TH TITLE=\"Last ECM Time\">LTIME</TH>\n\
 			<TH TITLE=\"Valid EMM delivered\">EOK</TH>\n\
 			<TH TITLE=\"Invalid EMM delivered\">ENOK</TH>\n\
-			<TH TITLE=\"Cache Exchange sent ECM\">CXPUSH</TH>\n\
-			<TH TITLE=\"Cache Exchange received ECM\">CXGOT</TH>\n\
 			<TH TITLE=\"CW rate since Server start (CW rate current Session)\">CW Rate</TH>\n\
 			<TH TITLE=\"Different services during last 60s\">CASC USERS</TH>\n\
 			<TH colspan=\"3\" class=\"centered\">Action</TH>\n\
@@ -764,8 +762,6 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TH TITLE=\"Timeout ECM, part of NOK\">TOUT</TH>\n\
 			<TH TITLE=\"Delivered ECM from cache, part of OK\">CACHE</TH>\n\
 			<TH TITLE=\"Delivered ECM from tunneled, part of OK\">TUN</TH>\n\
-			<TH TITLE=\"Cache Exchange sent ECM\">CXPUSH</TH>\n\
-			<TH TITLE=\"Cache Exchange received ECM\">CXGOT</TH>\n\
 			<TH>Action</TH>\n\
 		</TR>\n\
 		<TR>\n\
@@ -781,8 +777,6 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD class=\"centered\">##TOTAL_CWTOUT##</TD>\n\
 			<TD class=\"centered\">##TOTAL_CWCACHE##</TD>\n\
 			<TD class=\"centered\">##TOTAL_CWTUN##</TD>\n\
-			<TD class=\"centered\">##TOTAL_CACHEXPUSH##</TD>\n\
-			<TD class=\"centered\">##TOTAL_CACHEXGOT##</TD>\n\
 			<TD class=\"centered\"><A HREF=\"userconfig.html?action=resetserverstats\" TITLE=\"reset statistics for server\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICRES\"BORDER=\"0\" ALT=\"Reset Server Stats\"></A></TD>\n\
 		</TR>\n\
 	</TABLE><BR>\n\
@@ -816,8 +810,6 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD class=\"centered\">##CWLASTRESPONSET##</TD>\n\
 			<TD class=\"centered\">##EMMOK##</TD>\n\
 			<TD class=\"centered\">##EMMNOK##</TD>\n\
-			<TD class=\"centered\">##CACHEXPUSH##</TD>\n\
-			<TD class=\"centered\">##CACHEXGOT##</TD>\n\
 			<TD class=\"centered\">##CWRATE####CWRATE2##</TD>\n\
 			<TD class=\"centered\">##CASCUSERSCOMB##</TD>\n\
 			<TD class=\"centered\"><A HREF=\"user_edit.html?user=##USERENC##\" TITLE=\"edit this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit User\"></A></TD>\n\
@@ -1720,7 +1712,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#serialreadertimeout##TPLHELPSUFFIX##Serial reader timeout:</A></TD><TD><input name=\"serialreadertimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SERIALTIMEOUT##\"> ms</TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#readerrestartseconds##TPLHELPSUFFIX##Reader restart seconds:</A></TD><TD><input name=\"readerrestartseconds\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##READERRESTARTSECONDS##\"> s waittime to restart a reader</TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#dropdups##TPLHELPSUFFIX##Drop duplicate users:</A></TD><TD><SELECT NAME=\"dropdups\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##DROPDUPSCHECKED##>YES</OPTION></SELECT></TD></TR>\n\
-##TPLGLOBALCACHEEXWAITTIME##\
+##TPLCACHEEXWAITTIME##\
 ##TPLDOUBLECHECKBIT##\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
@@ -1728,8 +1720,8 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLFOOTER##"
 
 #ifdef CS_CACHEEX
-#define TPLGLOBALCACHEEXWAITTIME "\
-			<TR><TD>##TPLHELPPREFIX##conf#cacheexwaittime##TPLHELPSUFFIX##Cacheex wait time:</A></TD><TD><input name=\"cacheexwaittime\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CACHEEXWAITTIME##\"> ms max waittime for a cache entry</TD></TR>\n\"
+#define TPLCACHEEXWAITTIME "\
+			<TR><TD>##TPLHELPPREFIX##conf#cacheexwaittime##TPLHELPSUFFIX##Cacheex wait time:</A></TD><TD><input name=\"cacheexwaittime\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CACHEEXWAITTIME##\"> ms max waittime for a cache entry</TD></TR>\n"
 #endif
 
 #ifdef CS_WITH_DOUBLECHECK
@@ -2258,6 +2250,29 @@ function isNumber(a) {\n\
 </script>\
 </svg>"
 
+#ifdef CS_CACHEEX
+#define TPLCACHEEXPAGE "\
+##TPLHEADER##\
+##TPLMENU##\
+##MESSAGE##\
+	<BR><BR>\n\
+	<TABLE CLASS=\"stats\">\n\
+			<TR><TH COLSPAN=\"5\">CacheEX Stats</TH></TR>\n\
+			<TR><TH>Type</TH><TH>Name</TH><TH>Level</TH><TH>Push</TH><TH>Got</TH></TR>\n\
+##TABLECLIENTROWS##\
+##TABLEREADERROWS##\
+	</TABLE>\n\
+	<BR><BR>\n\
+	<TABLE>\n\
+		<TR><TH>Total push</TH><TH>Total got</TH></TR>\n\
+		<TR><TD class=\"centered\">##TOTAL_CACHEXPUSH##</TD><TD class=\"centered\">##TOTAL_CACHEXGOT##</TD></TR>\n\
+	</TABLE>\n\
+	<BR><BR>\n\
+##TPLFOOTER##"
+
+#define TPLCACHEEXTABLEROW "			<TR><TD>##TYPE##</TD><TD>##NAME##</TD><TD>##LEVEL##</TD><TD>##PUSH##</TD><TD>##GOT##</TD></TR>\n"
+#endif
+
 enum refreshtypes {REFR_ACCOUNTS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REFR_SERVICES};
 
 char *tpl[]={
@@ -2401,7 +2416,10 @@ char *tpl[]={
 #ifdef CS_CACHEEX
 	,"USEREDITCACHEEXBIT"
 	,"READEREDITCACHEEXBIT"
-	,"GLOBALCACHEEXWAITTIME"
+	,"CACHEEXWAITTIME"
+	,"CACHEEXPAGE"
+	,"CACHEEXTABLEROW"
+	,"CACHEEXMENUITEM"
 #endif
 	,"ICMAI"
 	,"ICSTA"
@@ -2557,7 +2575,10 @@ char *tplmap[]={
 #ifdef CS_CACHEEX
 	,TPLUSEREDITCACHEEXBIT
 	,TPLREADEREDITCACHEEXBIT
-	,TPLGLOBALCACHEEXWAITTIME
+	,TPLCACHEEXWAITTIME
+	,TPLCACHEEXPAGE
+	,TPLCACHEEXTABLEROW
+	,TPLCACHEEXMENUITEM
 #endif
 	,ICMAI
 	,ICSTA
