@@ -442,6 +442,34 @@ static char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uripa
 }
 #endif
 
+#ifdef CS_CACHEEX
+static char *send_oscam_config_csp(struct templatevars *vars, struct uriparams *params) {
+	int32_t i;
+
+	setActiveSubMenu(vars, MNU_CFG_CSP);
+
+	if ((strcmp(getParam(params, "action"),"execute") == 0) && (getParam(params, "port"))[0]) {
+		for(i = 0; i < (*params).paramcount; ++i) {
+			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
+				//we use the same function as used for parsing the config tokens
+				chk_t_csp((*params).params[i], (*params).values[i]);
+			}
+		}
+		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration CSP done. You should restart OSCam now.</B><BR><BR>");
+		if(write_config()==0) refresh_oscam(REFR_SERVER);
+		else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
+	}
+
+	if (cfg.csp_srvip != 0)
+		tpl_addVar(vars, TPLAPPEND, "SERVERIP", cs_inet_ntoa(cfg.csp_srvip));
+
+	if (cfg.csp_port)
+		tpl_printf(vars, TPLADD, "PORT", "%d", cfg.csp_port);
+
+	return tpl_getTpl(vars, "CONFIGCSP");
+}
+#endif
+
 #ifdef MODULE_NEWCAMD
 static char *send_oscam_config_newcamd(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
@@ -829,6 +857,9 @@ static char *send_oscam_config(struct templatevars *vars, struct uriparams *para
 #endif
 #ifdef MODULE_CAMD35_TCP
 	else if (!strcmp(part,"camd35tcp")) return send_oscam_config_camd35tcp(vars, params);
+#endif
+#ifdef CS_CACHEEX
+	else if (!strcmp(part,"csp")) return send_oscam_config_csp(vars, params);
 #endif
 #ifdef MODULE_NEWCAMD
 	else if (!strcmp(part,"newcamd")) return send_oscam_config_newcamd(vars, params);
@@ -4016,6 +4047,7 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 				tpl_addVar(vars, TPLADD, "LEVEL", level[cl->account->cacheex]);
 				tpl_printf(vars, TPLADD, "PUSH", "%ld", cl->cwcacheexpush);
 				tpl_printf(vars, TPLADD, "GOT", "%ld", cl->cwcacheexgot);
+				tpl_addVar(vars, TPLADD, "DIRECTIONIMG", "<IMG SRC=\"image?i=ICARRR\" ALT=\"Pushing\">");
 				tpl_addVar(vars, TPLAPPEND, "TABLECLIENTROWS", tpl_getTpl(vars, "CACHEEXTABLEROW"));
 			}
 		}
@@ -4026,6 +4058,7 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 				tpl_addVar(vars, TPLADD, "LEVEL", level[cl->reader->cacheex]);
 				tpl_printf(vars, TPLADD, "PUSH", "%ld", cl->cwcacheexpush);
 				tpl_printf(vars, TPLADD, "GOT", "%ld", cl->cwcacheexgot);
+				tpl_addVar(vars, TPLADD, "DIRECTIONIMG", "<IMG SRC=\"image?i=ICARRL\" ALT=\"Getting\">");
 				tpl_addVar(vars, TPLAPPEND, "TABLEREADERROWS", tpl_getTpl(vars, "CACHEEXTABLEROW"));
 			}
 		}

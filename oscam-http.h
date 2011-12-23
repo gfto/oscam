@@ -84,7 +84,8 @@ static int32_t ssl_active = 0;
 #define MNU_CFG_FUSERFILE 21
 #define MNU_CFG_FACLOG 22
 #define MNU_CFG_FDVBAPI 23
-#define MNU_CFG_TOTAL_ITEMS 24 // sum of items above
+#define MNU_CFG_CSP 24
+#define MNU_CFG_TOTAL_ITEMS 25 // sum of items above. Use it for "All inactive" in function calls too.
 
 #define CSS "\
 body {background-color: white; font-family: Arial; font-size: 11px; text-align:center}\n\
@@ -376,6 +377,35 @@ kMRadEBEgPJpXVzf5NhMxHp5pf/CYjBEpfRFLl8cObb3s4Z4LDz39qLfB13qqJENC2HXSMKddgwY\
 JosYm6oCZNJ7VBo1Lq/ue4njjQmEyw2zYcT8EmJlHeJbkNwG1QlAVogOoFSv8lb7sJDbJmgSkBJ+\
 O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
+#define ICSPAC "data:image/gif;base64,\
+R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAQAIBRAA7"
+
+#ifdef CS_CACHEEX
+#define ICARRR "data:image/gif;base64,\
+R0lGODlhJAALALMAAAUtBRB9DxKLERB9Dxe4FpPykhaxFUjpR4Pwgh3kHHXudLD1r+L84vj++P//\
+/////yH/C05FVFNDQVBFMi4wAwEAAAAh+QQJDwAFACwAAAAAJAALAAAEarDISau9OGsNeu1gKI6k\
+OAHHoaQLwzQwvCCpyrqxDEqA4v+KRSvmWgB/whfMtUMlngmDgdBy4RYHaHRatTYWIal4YBAcEGiE\
+UCGWks1pNaI52EqDs/SBMKi38XEHOzwlhYYhG4kZg4qNGxEAIfkECQ8ABQAsAAAAACQACwAABG6w\
+yEmrvThrDXrtYCiOpDgBTbMgR6u0C8Ok9Noe7xEzBCihDdlCQSwqFjGa0FhENnwA2WxxSFgTBgNh\
+J1VVr9mtLIRAIBXZ9MAgOJTL53R23UZAywfCYIBNH1dveXt9WX8+PyWJiiEbjRmHjpEbEQAh+QQJ\
+DwAFACwAAAAAJAALAAAEbrDISau9OGsNeu1gKI6kOAEL46zsghywAqcq67jwoYASoCiLFIvBWPyO\
+v2DNQTQeeQCDgUAjqhaHhDYhpVqJt+w2FAgIDog0IqiQugOGs3ptdBugBqBLfSCUuW56c31/dx49\
+JYmKIRuNGTyOkY0RACH+L0NvcHlyaWdodCBNYXJ5IEdhcnJlbiAxOTk4DQpBTEwgUklHSFRTIFJF\
+U0VSVkVEADs="
+
+#define ICARRL "data:image/gif;base64,\
+R0lGODlhJAALALMAAAUtBRB9DxKLERB9Dxe4FpPykhaxFUjpR4Pwgh3kHHXudLD1r+L84vj++P//\
+/////yH/C05FVFNDQVBFMi4wAwEAAAAh+QQJDwAFACwAAAAAJAALAAAEb7DISau9mIKdu5dbKI5k\
+OU7h0qwrwyzHocQHorKNC8sxUIQu1muhKBoVi2BrQTwWRSqXdEEwGBLYxCEqfVWv2YMvZEOYEQeB\
+YWBtIxdntJrdNvh+m9qZqagnBgMEemZ8fgN3eCaKiyEVjR+QkZIdEQAh+QQJDwAFACwAAAAAJAAL\
+AAAEcLDISau9mIKdu5dbKI5kOU4hwTDLcSjugSxNXa/tG881UISNxUJBLCoWKxtraCQiGb0QjmAw\
+JK6JA23FXVCtWG2D6wshDgLDoMo+LhDwc3rNNrjhvt9GqKgnBgMEMnF8foCCeCgmi4wiFSEfkZKT\
+HhEAIfkECQ8ABQAsAAAAACQACwAABG2wyEmrvZiCnbuXWyiOZDlOoXKsyOK8L8Msq8q6cLwARar8\
+CxlstvgZgUJdUSFKOBMHl2y6IBgMT6h0OrMaeKHrVbFYIM6Ig8AQEI/L6LQgEOD1Nlg64RAvK9wJ\
+enxofl8oJoiJIhUhH46PkB4RACH+L0NvcHlyaWdodCBNYXJ5IEdhcnJlbiAxOTk4DQpBTEwgUklH\
+SFRTIFJFU0VSVkVEADs="
+#endif
+
 #define TPLHEADER "\
 <!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\
 <HTML>\n\
@@ -455,6 +485,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##TPLCONFIGMENURADEGAST##\
 ##TPLCONFIGMENUCCCAM##\
 ##TPLCONFIGMENUGBOX##\
+##TPLCONFIGMENUCSP##\
 ##TPLCONFIGMENUANTICASC##\
 			<TD CLASS=\"##CMENUACTIVE9##\"><A HREF=\"config.html?part=monitor\">Monitor/WebIf</A></TD>\n\
 ##TPLCONFIGMENUSERIAL##\
@@ -574,6 +605,10 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
 #ifdef MODULE_CAMD35_TCP
 #define TPLCONFIGMENUCAMD35TCP "			<TD CLASS=\"##CMENUACTIVE4##\"><A HREF=\"config.html?part=camd35tcp\">Camd3.5 TCP</A></TD>\n"
+#endif
+
+#ifdef CS_CACHEEX
+#define TPLCONFIGMENUCSP "			<TD CLASS=\"##CMENUACTIVE24##\"><A HREF=\"config.html?part=csp\">CSP</A></TD>\n"
 #endif
 
 #ifdef MODULE_CCCAM
@@ -1849,6 +1884,25 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLFOOTER##"
 #endif
 
+#ifdef CS_CACHEEX
+#define TPLCONFIGCSP "\
+##TPLHEADER##\
+##TPLMENU##\
+##TPLCONFIGMENU##\
+##MESSAGE##\
+	<form action=\"config.html\" method=\"get\">\n\
+		<input name=\"part\" type=\"hidden\" value=\"csp\">\n\
+		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
+		<TABLE class=\"config\">\n\
+			<TR><TH COLSPAN=\"2\">Edit CSP CacheEX Config</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#port_9##TPLHELPSUFFIX##Port:</A></TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##PORT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#serverip_9##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"serverip\" type=\"text\" size=\"15\" maxlength=\"15\" value=\"##SERVERIP##\"></TD></TR>\n\
+			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
+		</TABLE>\n\
+	</form>\n\
+##TPLFOOTER##"
+#endif
+
 #ifdef MODULE_SERIAL
 #define TPLCONFIGSERIAL "\
 ##TPLHEADER##\
@@ -2256,8 +2310,8 @@ function isNumber(a) {\n\
 ##MESSAGE##\
 	<BR><BR>\n\
 	<TABLE CLASS=\"stats\">\n\
-			<TR><TH COLSPAN=\"5\">CacheEX Stats</TH></TR>\n\
-			<TR><TH>Type</TH><TH>Name</TH><TH>Level</TH><TH>Push</TH><TH>Got</TH></TR>\n\
+			<TR><TH COLSPAN=\"6\">CacheEX Stats</TH></TR>\n\
+			<TR><TH>Direction</TH><TH>Type</TH><TH>Name</TH><TH>Level</TH><TH>Push</TH><TH>Got</TH></TR>\n\
 ##TABLECLIENTROWS##\
 ##TABLEREADERROWS##\
 	</TABLE>\n\
@@ -2269,7 +2323,7 @@ function isNumber(a) {\n\
 	<BR><BR>\n\
 ##TPLFOOTER##"
 
-#define TPLCACHEEXTABLEROW "			<TR><TD>##TYPE##</TD><TD>##NAME##</TD><TD>##LEVEL##</TD><TD>##PUSH##</TD><TD>##GOT##</TD></TR>\n"
+#define TPLCACHEEXTABLEROW "			<TR><TD>&nbsp;&nbsp;##DIRECTIONIMG##&nbsp;&nbsp;</TD><TD>##TYPE##</TD><TD>##NAME##</TD><TD>##LEVEL##</TD><TD>##PUSH##</TD><TD>##GOT##</TD></TR>\n"
 #endif
 
 enum refreshtypes {REFR_ACCOUNTS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REFR_SERVICES};
@@ -2419,6 +2473,10 @@ char *tpl[]={
 	,"CACHEEXPAGE"
 	,"CACHEEXTABLEROW"
 	,"CACHEEXMENUITEM"
+	,"CONFIGMENUCSP"
+	,"CONFIGCSP"
+	,"ICARRR"
+	,"ICARRL"
 #endif
 	,"ICMAI"
 	,"ICSTA"
@@ -2431,6 +2489,7 @@ char *tpl[]={
 	,"ICENA"
 	,"ICHID"
 	,"ICRES"
+	,"ICSPAC"
 };
 
 char *tplmap[]={
@@ -2578,6 +2637,10 @@ char *tplmap[]={
 	,TPLCACHEEXPAGE
 	,TPLCACHEEXTABLEROW
 	,TPLCACHEEXMENUITEM
+	,TPLCONFIGMENUCSP
+	,TPLCONFIGCSP
+	,ICARRR
+	,ICARRL
 #endif
 	,ICMAI
 	,ICSTA
@@ -2590,6 +2653,7 @@ char *tplmap[]={
 	,ICENA
 	,ICHID
 	,ICRES
+	,ICSPAC
 };
 
 struct templatevars {

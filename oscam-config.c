@@ -1125,7 +1125,7 @@ void chk_t_camd35_tcp(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in camd35 tcp section not recognized\n", token);
+		fprintf(stderr, "Warning: keyword '%s' in CSP section not recognized\n", token);
 }
 
 void chk_t_newcamd(char *token, char *value)
