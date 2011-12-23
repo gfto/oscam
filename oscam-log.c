@@ -17,6 +17,7 @@ struct s_log {
 	char *txt;
 	int8_t header_len;
 	int8_t direct_log;
+	struct s_client *cl;
 };
 
 CS_MUTEX_LOCK loghistory_lock;
@@ -185,10 +186,9 @@ static int32_t get_log_header(int32_t m, char *txt)
 		return pos + snprintf(txt+pos, LOG_BUF_SIZE-pos, "%8X%-3.3s ", cl?cl->tid:0, "");
 }
 
-static void write_to_log(char *txt, int8_t header_len, int8_t do_flush)
+static void write_to_log(char *txt, int8_t header_len, int8_t do_flush, struct s_client *cur_cl)
 {
 	char sbuf[16];
-	struct s_client *cur_cl = cur_client();
 
 #ifdef CS_ANTICASC
 	if (!strncmp(txt + header_len, "acasc:", 6)) {
@@ -275,10 +275,11 @@ static void write_to_log_int(char *txt, int8_t header_len)
 	log->txt = strnew(txt);
 	log->header_len = header_len;
 	log->direct_log = 0;
+	log->cl = cur_client();
 	ll_append(log_list, log);
 }
 
-__attribute__ ((noinline)) void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar *buf, int32_t n, const char *fmt, ...)
+void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar *buf, int32_t n, const char *fmt, ...)
 {
 	va_list params;
 
@@ -500,7 +501,7 @@ void log_list_thread()
 			if (log->direct_log)
 				cs_write_log(buf, do_flush);
 			else
-				write_to_log(buf, log->header_len, do_flush);
+				write_to_log(buf, log->header_len, do_flush, log->cl);
 			free(log->txt);
 			free(log);
 		}
