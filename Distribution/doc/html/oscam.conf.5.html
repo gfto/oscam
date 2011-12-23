@@ -644,7 +644,23 @@ path for LCD output, default:/tmp
 LCD refresh interval (minimum 5), default:10
 </DL>
 
+
 <A NAME="lbAI">&nbsp;</A>
+<H3>The [csp] section</H3>
+
+<B>port</B> = <B>port</B>
+<DL COMPACT><DT><DD>
+TCP port of Cardservproxy for cache exchange, default:none
+</DL>
+
+<P>
+
+<B>serverip</B> = <B>IP</B>
+<DL COMPACT><DT><DD>
+IP address of Cardservproxy for cache exchange, default:none
+</DL>
+
+<A NAME="lbAJ">&nbsp;</A>
 <H3>The [camd33] section</H3>
 
 <B>port</B> = <B>0</B>|<B>port</B>
@@ -684,7 +700,7 @@ key for camd 3.3x client encryption, default:none
 <BR>&nbsp;example:&nbsp;key&nbsp;=&nbsp;01020304050607080910111213141516
 </DL>
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>The [camd35] section</H3>
 
 <P>
@@ -708,7 +724,7 @@ bind service to specified IP address, default:all
 0 = tell camd 3.5x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, can be overwritten per user in <B>oscam.user</B>, default:0
 </DL>
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>The [cs357x] section</H3>
 
 <P>
@@ -732,7 +748,7 @@ bind service to specified IP address, default:all
 0 = tell camd 3.57x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, can be overwritten per user in <B>oscam.user</B>, default:0
 </DL>
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>The [cs378x] section</H3>
 
 <P>
@@ -759,7 +775,7 @@ bind service to specified IP address, default:all
 0 = tell camd 3.78x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, can be overwritten per user in <B>oscam.user</B>, default:0
 </DL>
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H3>The [newcamd] section</H3>
 
 <P>
@@ -812,7 +828,7 @@ newcamd client connections allowed from, default:none
 0 = disable newcamd keepalive modus, default:1
 </DL>
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H3>The [radegast] section</H3>
 
 <P>
@@ -845,7 +861,7 @@ client connections allowed from, default:none
 user name for radegast client
 </DL>
 
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H3>The [serial] section</H3>
 
 <P>
@@ -867,7 +883,7 @@ supported serial devices:
 <BR>&nbsp;dsr9500&nbsp;(DSR&nbsp;9500)
 </DL>
 
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H3>The [cccam] section</H3>
 
 <P>
@@ -982,7 +998,7 @@ set CCcam node ID in hex, default:none
 <BR>&nbsp;example:&nbsp;nodeid&nbsp;=&nbsp;0a0b0c0d0e0f1011
 </DL>
 
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H3>The [gbox] section</H3>
 
 <P>
@@ -1006,7 +1022,7 @@ password for gbox server
 gsms file for gbox server, default:none
 </DL>
 
-<A NAME="lbAR">&nbsp;</A>
+<A NAME="lbAS">&nbsp;</A>
 <H3>The [dvbapi] section</H3>
 
 <P>
@@ -1089,7 +1105,7 @@ ipbox-pmt can be used on any DGS based images (with or without camd.socket suppo
 verified on HD models only
 </DL>
 
-<A NAME="lbAS">&nbsp;</A>
+<A NAME="lbAT">&nbsp;</A>
 <H3>The [anticasc] section</H3>
 
 <P>
@@ -1155,7 +1171,7 @@ fake delay time, default:1000, minimum value is 100, maximum value is 3000
 how many samples should be penalized, default:8
 </DL>
 
-<A NAME="lbAT">&nbsp;</A>
+<A NAME="lbAU">&nbsp;</A>
 <H2>MONITOR</H2>
 
 monitor commands:
@@ -1249,7 +1265,7 @@ show OSCam version
 <P>
 show all valid monitor commands
 </DL>
-<A NAME="lbAU">&nbsp;</A>
+<A NAME="lbAV">&nbsp;</A>
 <H2>WEB INTERFACE</H2>
 
 <DL COMPACT>
@@ -1261,7 +1277,7 @@ own template request the orignal template with the non-linked page
 <B>savetemplates.html</B>. Store your own template in the directory specified 
 by <B>httptpl</B>. 
 </DL>
-<A NAME="lbAV">&nbsp;</A>
+<A NAME="lbAW">&nbsp;</A>
 <H2>CACHING</H2>
 
 types of ECM caching:
@@ -1275,13 +1291,13 @@ ECM and CW in cache already.
 <P>
 ECM and checksum in cache already.
 </DL>
-<A NAME="lbAW">&nbsp;</A>
+<A NAME="lbAX">&nbsp;</A>
 <H2>LOGGING</H2>
 
 log file format:
 <P>
 CAID&amp;ident/provider/length:checksum
-<A NAME="lbAX">&nbsp;</A>
+<A NAME="lbAY">&nbsp;</A>
 <H2>EXAMPLES</H2>
 
 <BR>&nbsp;[global]
@@ -1321,7 +1337,7 @@ CAID&amp;ident/provider/length:checksum
 <BR>&nbsp;hostname&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;host.example.com
 <BR>&nbsp;port&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;56789
 <BR>&nbsp;password&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;password4
-<A NAME="lbAY">&nbsp;</A>
+<A NAME="lbAZ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="/cgi-bin/man/man2html?1+list_smargo">list_smargo</A></B>(1), <B><A HREF="/cgi-bin/man/man2html?1+oscam">oscam</A></B>(1), <B><A HREF="/cgi-bin/man/man2html?5+oscam.ac">oscam.ac</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.cert">oscam.cert</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.dvbapi">oscam.dvbapi</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.guess">oscam.guess</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.ird">oscam.ird</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.provid">oscam.provid</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.server">oscam.server</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.services">oscam.services</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.srvid">oscam.srvid</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.tiers">oscam.tiers</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.user">oscam.user</A></B>(5)
@@ -1338,24 +1354,25 @@ CAID&amp;ident/provider/length:checksum
 <DT><A HREF="#lbAF">The [monitor] section</A><DD>
 <DT><A HREF="#lbAG">The [webif] section</A><DD>
 <DT><A HREF="#lbAH">The [lcd] section</A><DD>
-<DT><A HREF="#lbAI">The [camd33] section</A><DD>
-<DT><A HREF="#lbAJ">The [camd35] section</A><DD>
-<DT><A HREF="#lbAK">The [cs357x] section</A><DD>
-<DT><A HREF="#lbAL">The [cs378x] section</A><DD>
-<DT><A HREF="#lbAM">The [newcamd] section</A><DD>
-<DT><A HREF="#lbAN">The [radegast] section</A><DD>
-<DT><A HREF="#lbAO">The [serial] section</A><DD>
-<DT><A HREF="#lbAP">The [cccam] section</A><DD>
-<DT><A HREF="#lbAQ">The [gbox] section</A><DD>
-<DT><A HREF="#lbAR">The [dvbapi] section</A><DD>
-<DT><A HREF="#lbAS">The [anticasc] section</A><DD>
+<DT><A HREF="#lbAI">The [csp] section</A><DD>
+<DT><A HREF="#lbAJ">The [camd33] section</A><DD>
+<DT><A HREF="#lbAK">The [camd35] section</A><DD>
+<DT><A HREF="#lbAL">The [cs357x] section</A><DD>
+<DT><A HREF="#lbAM">The [cs378x] section</A><DD>
+<DT><A HREF="#lbAN">The [newcamd] section</A><DD>
+<DT><A HREF="#lbAO">The [radegast] section</A><DD>
+<DT><A HREF="#lbAP">The [serial] section</A><DD>
+<DT><A HREF="#lbAQ">The [cccam] section</A><DD>
+<DT><A HREF="#lbAR">The [gbox] section</A><DD>
+<DT><A HREF="#lbAS">The [dvbapi] section</A><DD>
+<DT><A HREF="#lbAT">The [anticasc] section</A><DD>
 </DL>
-<DT><A HREF="#lbAT">MONITOR</A><DD>
-<DT><A HREF="#lbAU">WEB INTERFACE</A><DD>
-<DT><A HREF="#lbAV">CACHING</A><DD>
-<DT><A HREF="#lbAW">LOGGING</A><DD>
-<DT><A HREF="#lbAX">EXAMPLES</A><DD>
-<DT><A HREF="#lbAY">SEE ALSO</A><DD>
+<DT><A HREF="#lbAU">MONITOR</A><DD>
+<DT><A HREF="#lbAV">WEB INTERFACE</A><DD>
+<DT><A HREF="#lbAW">CACHING</A><DD>
+<DT><A HREF="#lbAX">LOGGING</A><DD>
+<DT><A HREF="#lbAY">EXAMPLES</A><DD>
+<DT><A HREF="#lbAZ">SEE ALSO</A><DD>
 </DL>
 </BODY>
 </HTML>
