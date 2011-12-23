@@ -17,6 +17,9 @@ extern void module_pandora(struct s_module *);
 #endif
 extern void module_gbox(struct s_module *);
 extern void module_constcw(struct s_module *);
+#ifdef CS_CACHEEX
+extern void module_csp(struct s_module *);
+#endif
 #ifdef HAVE_DVBAPI
 extern void module_dvbapi(struct s_module *);
 #endif
@@ -120,7 +123,7 @@ extern void cs_add_violation_by_ip(uint32_t ip, int32_t port, char *info);
 extern void cs_add_violation(struct s_client *cl, char *info);
 extern void cs_card_info(void);
 extern void cs_debug_level(void);
-extern void cs_add_cache(struct s_client *client, ECM_REQUEST *er);
+extern void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp);
 
 /* ===========================
  *           oscam-ac
@@ -169,6 +172,11 @@ extern void chk_t_gbox(char *token, char *value);
 #ifdef MODULE_CCCAM
 extern void chk_t_cccam(char *token, char *value);
 #endif
+#ifdef CS_CACHEEX
+extern void chk_t_csp(char *token, char *value);
+extern int32_t csp_ecm_hash(uchar *buf, int32_t n);
+#endif
+
 extern void chk_t_global(const char *token, char *value);
 extern void chk_t_monitor(char *token, char *value);
 extern void chk_reader(char *token, char *value, struct s_reader *rdr);

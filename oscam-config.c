@@ -57,6 +57,9 @@ typedef enum cs_proto_type
 #ifdef MODULE_PANDORA
 	TAG_PANDORA,	// pandora
 #endif
+#ifdef CS_CACHEEX
+	TAG_CSP,	// CSP
+#endif
 	TAG_CONSTCW,	// constcw
 	TAG_DVBAPI,	// dvbapi
 	TAG_WEBIF,	// webif
@@ -71,6 +74,9 @@ static const char *cctag[]={"global", "monitor", "camd33", "camd35", "newcamd", 
 #endif
 #ifdef MODULE_PANDORA
 		      "pandora",
+#endif
+#ifdef CS_CACHEEX
+		      "csp",
 #endif
 		      "constcw", "dvbapi", "webif", "anticasc",
 #ifdef LCDSUPPORT
@@ -1042,6 +1048,29 @@ void chk_t_camd33(char *token, char *value)
 		fprintf(stderr, "Warning: keyword '%s' in camd33 section not recognized\n",token);
 }
 
+#ifdef CS_CACHEEX
+void chk_t_csp(char *token, char *value)
+{
+	if (!strcmp(token, "port")) {
+		cfg.csp_port = strToIntVal(value, 0);
+		return;
+	}
+
+	if (!strcmp(token, "serverip")) {
+		if(strlen(value) == 0) {
+			cfg.csp_srvip = 0;
+			return;
+		} else {
+			cfg.csp_srvip = cs_inet_addr(value);
+			return;
+		}
+	}
+
+	if (token[0] != '#')
+		fprintf(stderr, "Warning: keyword '%s' in camd35 tcp section not recognized\n", token);
+}
+#endif
+
 void chk_t_camd35(char *token, char *value)
 {
 	if (!strcmp(token, "port")) {
@@ -1477,6 +1506,9 @@ static void chk_token(char *token, char *value, int32_t tag)
 #ifdef MODULE_PANDORA
 		case TAG_PANDORA : chk_t_pandora(token, value); break;
 #endif
+#ifdef CS_CACHEEX
+		case TAG_CSP     : chk_t_csp(token, value); break;
+#endif
 		case TAG_GBOX    : chk_t_gbox(token, value); break;
 
 #ifdef HAVE_DVBAPI
@@ -1756,6 +1788,7 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 				else if (!strcmp(ptr, "cs378x"))	account->allowedprotocols |= LIS_CAMD35TCP;
 				else if (!strcmp(ptr, "newcamd"))	account->allowedprotocols |= LIS_NEWCAMD;
 				else if (!strcmp(ptr, "cccam"))		account->allowedprotocols |= LIS_CCCAM;
+				else if (!strcmp(ptr, "csp"))		account->allowedprotocols |= LIS_CSPUDP;
 				else if (!strcmp(ptr, "gbox"))		account->allowedprotocols |= LIS_GBOX;
 				else if (!strcmp(ptr, "radegast"))	account->allowedprotocols |= LIS_RADEGAST;
 				// these have no listener ports so it doesn't make sense
@@ -2271,6 +2304,17 @@ int32_t write_config()
 		free_mk_t(value);
 		fprintf(f,"\n");
 	}
+
+	/*camd3.5*/
+#ifdef CS_CACHEEX
+	if ( cfg.csp_port > 0) {
+		fprintf(f,"[csp]\n");
+		fprintf_conf(f, "port", "%d\n", cfg.csp_port);
+		if (cfg.csp_srvip != 0)
+			fprintf_conf(f, "serverip", "%s\n", cs_inet_ntoa(cfg.csp_srvip));
+		fprintf(f,"\n");
+	}
+#endif
 
 	/*camd3.5*/
 	if ( cfg.c35_port > 0) {
@@ -3156,6 +3200,11 @@ void write_versionfile() {
 	  fprintf(fp, "Pandora:                    yes\n");
 #else
 	  fprintf(fp, "Pandora:                    no\n");
+#endif
+#ifdef CS_CACHEEX
+	  fprintf(fp, "CacheEx:                    yes\n");
+#else
+	  fprintf(fp, "CacheEx:                    no\n");
 #endif
 #ifdef MODULE_GBOX
 	  fprintf(fp, "gbox:                       yes\n");

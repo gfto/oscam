@@ -61,11 +61,13 @@ OBJECTS1	= $(LIBFILE1)(oscam-simples.o) \
 		  $(LIBFILE1)(module-newcamd.o) \
 		  $(LIBFILE1)(module-cccam.o) \
 		  $(LIBFILE1)(module-cccshare.o) \
+		  $(LIBFILE1)(module-pandora.o) \
 		  $(LIBFILE1)(module-gbox.o) \
 		  $(LIBFILE1)(module-pandora.o) \
 		  $(LIBFILE1)(module-constcw.o) \
 		  $(LIBFILE1)(module-dvbapi.o) \
 		  $(LIBFILE1)(module-stat.o) \
+		  $(LIBFILE1)(module-csp.o) \
 		  $(LIBFILE1)(module-datastruct-llist.o) \
 		  $(LIBFILE1)(oscam-chk.o) \
 		  $(LIBFILE1)(oscam-http.o) \

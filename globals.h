@@ -226,6 +226,7 @@
 #define R_RADEGAST  0x23  // Reader cascading radegast
 #define R_CS378X    0x24  // Reader cascading camd 3.5x TCP
 #define R_CONSTCW   0x25  // Reader for Constant CW
+#define R_CSP		0x26  // Cache CSP
 /////////////////// peer to peer proxy readers after R_CCCAM
 #define R_GBOX      0x30  // Reader cascading gbox
 #define R_CCCAM     0x35  // Reader cascading cccam
@@ -295,6 +296,7 @@ extern const char *boxdesc[];
 #define LIS_DVBAPI		128
 #define LIS_CONSTCW		256
 #define LIS_SERIAL		1024
+#define LIS_CSPUDP		2048
 
 //EMM types:
 #define UNKNOWN 0
@@ -744,6 +746,7 @@ typedef struct ecm_request_t {
 #ifdef CS_CACHEEX
 	uchar			cacheex_done;
 	struct s_client *cacheex_src;               // cacheex origin
+	int32_t			csp_hash; 					// csp has its own hash
 #endif
 	char			msglog[MSGLOGSIZE];
 	uint16_t		checksum;
@@ -1501,6 +1504,9 @@ struct s_config
 #endif
 
 #ifdef CS_CACHEEX
+	in_addr_t	csp_srvip;
+	int32_t		csp_port;
+
 	uint32_t     cacheex_wait_time; //cache wait time in ms
 #endif
 };

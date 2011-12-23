@@ -429,7 +429,7 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 	memcpy(er->ecm, buf + 20, er->l);
 	memcpy(er->cw, buf+20 +er->l, 16);
 
-	cs_add_cache(cl, er);
+	cs_add_cache(cl, er, 0);
 }
 #endif
 

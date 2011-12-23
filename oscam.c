@@ -250,6 +250,9 @@ static void usage()
 #ifdef MODULE_PANDORA
   fprintf(stderr, "pandora ");
 #endif
+#ifdef CS_CACHEEX
+  fprintf(stderr, "CacheEx ");
+#endif
 #ifdef MODULE_GBOX
   fprintf(stderr, "gbox ");
 #endif
@@ -444,7 +447,7 @@ void clear_account_stats(struct s_auth *account)
   account->cwcache = 0;
   account->cwnot = 0;
   account->cwtun = 0;
-  account->cwignored = 0;
+  account->cwignored  = 0;
   account->cwtout = 0;
   account->emmok = 0;
   account->emmnok = 0;
@@ -1212,6 +1215,7 @@ void start_thread(void * startroutine, char * nameroutine) {
 	pthread_t temp;
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
+	cs_log("starting thread %s", nameroutine);
 #ifndef TUXBOX
 	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
@@ -1549,7 +1553,6 @@ static void cs_cache_push_to_client(struct s_client *cl, ECM_REQUEST *er)
 {
 	ECM_REQUEST *erc = cs_malloc(&erc, sizeof(ECM_REQUEST), 0);
 	memcpy(erc, er, sizeof(ECM_REQUEST));
-
 	add_job(cl, ACTION_CACHE_PUSH_OUT, erc, sizeof(ECM_REQUEST));
 }
 
@@ -1591,7 +1594,7 @@ void cs_cache_push(ECM_REQUEST *er)
 
 	//cacheex=2 mode: reverse push (server->remote)
 	struct s_client *cl;
-	for (cl = first_client->next; cl; cl = cl->next) {
+	for (cl=first_client->next; cl; cl=cl->next) {
 		if (er->cacheex_src != cl) {
 			if (cl->typ == 'c' && cl->account && cl->account->cacheex == 2) { //send cache over user
 				if (ph[cl->ctyp].c_cache_push // cache-push able
@@ -1603,7 +1606,7 @@ void cs_cache_push(ECM_REQUEST *er)
 				}
 			}
 		}
-	}
+				}
 
 	//cacheex=3 mode: forward push (reader->server)
 	struct s_reader *rdr;
@@ -1676,15 +1679,44 @@ static void distribute_ecm(ECM_REQUEST *er, int32_t rc)
 }
 
 #ifdef CS_CACHEEX
-void cs_add_cache(struct s_client *cl, ECM_REQUEST *er)
+/**
+ * ecm cache
+ **/
+struct ecm_request_t *check_cwcache_csp(ECM_REQUEST *er, uint64_t grp)
+{
+	time_t now = time(NULL);
+	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
+	struct ecm_request_t *ecm;
+
+	cs_readlock(&ecmcache_lock);
+	for (ecm = ecmtask; ecm; ecm = ecm->next) {
+		if (ecm->tps.time < timeout) {
+			ecm = NULL;
+			break;
+		}
+
+		if ((grp && !(grp & ecm->grp)) || ecm->caid!=er->caid)
+			continue;
+
+		if (ecm->csp_hash != er->csp_hash)
+			continue;
+
+		if (ecm->rc != E_99)
+			break;
+	}
+	cs_readunlock(&ecmcache_lock);
+	return ecm;
+}
+
+void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 {
 	if (!cl)
 		return;
-	if (cl->reader && !cl->reader->cacheex==2) //from reader
+	if (!csp && cl->reader && !cl->reader->cacheex==2) //from reader
 		return;
-	if (cl->account && !cl->account->cacheex==3) //from user
+	if (!csp && cl->account && !cl->account->cacheex==3) //from user
 		return;
-	if (!cl->reader && !cl->account) { //not active!
+	if (!csp && !cl->reader && !cl->account) { //not active!
 		cs_debug_mask(D_TRACE, "CACHEX received, but disabled for %s", username(cl));
 		return;
 	}
@@ -1696,11 +1728,14 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er)
 	er->grp = cl->grp;
 	er->ocaid = er->caid;
 
-	int32_t offset = 3;
-	if ((er->caid >> 8) == 0x17)
-		offset = 13;
-	unsigned char md5tmp[MD5_DIGEST_LENGTH];
-	memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, md5tmp), CS_ECMSTORESIZE);
+	if (er->l > 0) {
+		int32_t offset = 3;
+		if ((er->caid >> 8) == 0x17)
+			offset = 13;
+		unsigned char md5tmp[MD5_DIGEST_LENGTH];
+		memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, md5tmp), CS_ECMSTORESIZE);
+		er->csp_hash = csp_ecm_hash(er->ecm, er->l);
+	}
 
 	if( (er->caid & 0xFF00) == 0x600 && !er->chid )
 		er->chid = (er->ecm[6]<<8)|er->ecm[7];
@@ -1708,7 +1743,12 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er)
 	cs_debug_mask(D_TRACE, "got pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
 		er->caid, er->prid, er->srvid, er->l, htons(er->checksum),  username(cl));
 
-	struct ecm_request_t *ecm = check_cwcache(er, cl->grp);
+	struct ecm_request_t *ecm;
+	if (csp)
+		ecm = check_cwcache_csp(er, cl->grp);
+	else
+		ecm = check_cwcache(er, cl->grp);
+
 	if (!ecm) {
 		cs_writelock(&ecmcache_lock);
 		er->next = ecmtask;
@@ -1719,7 +1759,8 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er)
 		cs_cache_push(er);  //cascade push!
 
 		cl->cwcacheexgot++;
-		cl->account->cwcacheexgot++;
+		if (cl->account)
+			cl->account->cwcacheexgot++;
 		first_client->cwcacheexgot++;
 	}
 	else {
@@ -1730,13 +1771,13 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er)
 			ecm->rc = er->rc;
 			ecm->cacheex_src = cl;
 			cs_readunlock(&ecmcache_lock);
-
 			distribute_ecm(ecm, er->rc);
 			pthread_kill(timecheck_thread, OSCAM_SIGNAL_WAKEUP); 
 			cs_cache_push(er);  //cascade push!
 
 			cl->cwcacheexgot++;
-			cl->account->cwcacheexgot++;
+			if (cl->account)
+				cl->account->cwcacheexgot++;
 			first_client->cwcacheexgot++;
 		}
 		free_ecm(er);
@@ -2458,7 +2499,8 @@ static void guess_cardsystem(ECM_REQUEST *er)
   if ((er->ecm[6]==1) && (er->ecm[4]==er->ecm[2]-2))
     er->caid=0x1801;
 
-  // seca2 - very poor  if ((er->ecm[8]==0x10) && ((er->ecm[9]&0xF1)==1))
+  // seca2 - very poor
+  if ((er->ecm[8]==0x10) && ((er->ecm[9]&0xF1)==1))
     last_hope=0x100;
 
   // is cryptoworks, but which caid ?
@@ -2677,6 +2719,9 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		unsigned char md5tmp[MD5_DIGEST_LENGTH];
 		// store ECM in cache
 		memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, md5tmp), CS_ECMSTORESIZE);
+#ifdef CS_CACHEEX
+		er->csp_hash = csp_ecm_hash(er->ecm, er->l);
+#endif
 
 #ifdef CS_ANTICASC
 		ac_chk(client, er, 0);
@@ -2844,7 +2889,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 		if (cacheex == 1 && er->rc < E_NOTFOUND) {
 			client->cwcacheexpush++;
-			client->account->cwcacheexpush++;
+			if (client->account)
+				client->account->cwcacheexpush++;
 			first_client->cwcacheexpush++;
 		}
 #else
@@ -3397,7 +3443,8 @@ void * work_thread(void *ptr) {
 				free(data->ptr);
 
 				cl->cwcacheexpush++;
-				cl->account->cwcacheexpush++;
+				if (cl->account)
+					cl->account->cwcacheexpush++;
 				first_client->cwcacheexpush++;
 
 				break;
@@ -3902,6 +3949,9 @@ int32_t main (int32_t argc, char *argv[])
 #endif
 #ifdef MODULE_PANDORA
            module_pandora,
+#endif
+#ifdef CS_CACHEEX
+           module_csp,
 #endif
 #ifdef MODULE_GBOX
            module_gbox,
