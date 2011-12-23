@@ -1074,10 +1074,8 @@ SFRTIFJFU0VSVkVEADs="
 ##ADDPROTOCOL##\n\
 					</select>\n\
 				</TD>\n\
-				<TD COLSPAN=\"7\" class=\"centered\"><input type=\"submit\" name=\"action\" value=\"Add\" ##BTNDISABLED##></TD>\n\
-				<TD></TD>\n\
-				<TD></TD>\n\
-				<TD></TD>\n\
+				<TD COLSPAN=\"5\" class=\"centered\"><input type=\"submit\" name=\"action\" value=\"Add\" ##BTNDISABLED##></TD>\n\
+				<TD COLSPAN=\"5\"></TD>\n\
 			</TR>\n\
 		</TABLE>\n\
 	</form>\n\
