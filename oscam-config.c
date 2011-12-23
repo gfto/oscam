@@ -3167,9 +3167,9 @@ void write_versionfile() {
 	  fprintf(fp, "IPv6 support:               no\n");
 #endif
 #ifdef CS_CACHEEX
-	  fprintf(fp, "Cache Exchange support:     yes\n");
+	  fprintf(fp, "Cache exchange support:     yes\n");
 #else
-	  fprintf(fp, "Cache Exchange support:     no\n");
+	  fprintf(fp, "Cache exchange support:     no\n");
 #endif
 #ifdef MODULE_CAMD33
 	  fprintf(fp, "camd 3.3x:                  yes\n");
@@ -3200,11 +3200,6 @@ void write_versionfile() {
 	  fprintf(fp, "Pandora:                    yes\n");
 #else
 	  fprintf(fp, "Pandora:                    no\n");
-#endif
-#ifdef CS_CACHEEX
-	  fprintf(fp, "CacheEx:                    yes\n");
-#else
-	  fprintf(fp, "CacheEx:                    no\n");
 #endif
 #ifdef MODULE_GBOX
 	  fprintf(fp, "gbox:                       yes\n");
