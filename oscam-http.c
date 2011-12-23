@@ -3372,6 +3372,7 @@ static char *send_oscam_savetpls(struct templatevars *vars) {
 }
 
 static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *params, int8_t apicall, int8_t *keepalive) {
+	if(!apicall) setActiveMenu(vars, MNU_SHUTDOWN);
 	if (strcmp(strtolower(getParam(params, "action")), "shutdown") == 0) {
 		*keepalive = 0;
 		if(!apicall){
@@ -3429,7 +3430,7 @@ static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct urip
 }
 
 static char *send_oscam_script(struct templatevars *vars) {
-
+	setActiveMenu(vars, MNU_SCRIPT);
 	char *result = "not found";
 	int32_t rc = 0;
 	if(!cfg.http_readonly) {

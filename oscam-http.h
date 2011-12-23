@@ -55,7 +55,9 @@ static int32_t ssl_active = 0;
 #define MNU_FILES 5
 #define MNU_FAILBAN 6
 #define MNU_CACHEEX 7
-#define MNU_TOTAL_ITEMS 8 // sum of items above
+#define MNU_SCRIPT 8
+#define MNU_SHUTDOWN 9
+#define MNU_TOTAL_ITEMS 10 // sum of items above
 /* constants for submenuactivating */
 #define MNU_CFG_GLOBAL 0
 #define MNU_CFG_LOADBAL 1
@@ -151,9 +153,6 @@ TABLE.config {width:750px;}\n\
 TABLE.invisible TD {border:0px; font-family:Arial; font-size: 12px; padding:5px; background-color:#EEEEEE;}\n\
 TD.menu {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;}\n\
 TD.menu_selected {color:black; background-color:#E6FEBF; font-family: Arial; font-size:14px; font-weight:bold;font-style:italic;}\n\
-TD.script {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;}\n\
-TD.shutdown {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;}\n\
-TD.shutdown A:hover {color: red;}\n\
 TABLE.configmenu {line-height: 16px;}\n\
 TD.configmenu {color:black; background-color:white; font-family: Arial; font-size:11px; font-weight:bold;}\n\
 TD.configmenu_selected {color:black; background-color:#E6FEBF; font-family: Arial; font-size:11px; font-weight:bold;font-style:italic;}\n\
@@ -437,8 +436,8 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD CLASS=\"##MENUACTIVE5##\"><A HREF=\"files.html\">FILES</A></TD>\n\
 			<TD CLASS=\"##MENUACTIVE6##\"><A HREF=\"failban.html\">FAILBAN</A></TD>\n\
 ##TPLCACHEEXMENUITEM##\
-			<TD CLASS=\"script\"><A HREF=\"script.html\">SCRIPT</A></TD>\n\
-			<TD CLASS=\"shutdown\"><A HREF=\"shutdown.html\">SHUTDOWN</A></TD>\n\
+			<TD CLASS=\"##MENUACTIVE8##\"><A HREF=\"script.html\">SCRIPT</A></TD>\n\
+			<TD CLASS=\"##MENUACTIVE9##\"><A HREF=\"shutdown.html\">SHUTDOWN</A></TD>\n\
 		</TR>\n\
 	</TABLE>\n"
 
