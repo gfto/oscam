@@ -2357,6 +2357,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 #define ENTITLEMENT_PAGE_SIZE 500
 
 static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
+	if(!apicall) setActiveMenu(vars, MNU_READERS);
 	char *reader_ = getParam(params, "label");
 #ifdef MODULE_CCCAM	
 	char *sharelist_ = getParam(params, "globallist");
