@@ -1846,7 +1846,8 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 		cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
 	int8_t rc = (er->rc<E_NOTFOUND)?E_FOUND:er->rc;
 	if (rc != E_FOUND) return -1; //Maybe later we could support other rcs
-	uint8_t *ecmbuf = cs_malloc(&ecmbuf, 20 + er->l + 16, 0);
+	int32_t size = 20 + sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw);
+	uint8_t *ecmbuf = cs_malloc(&ecmbuf, size, 0);
 
 	// build ecm message
 	ecmbuf[0] = er->caid >> 8;
@@ -1857,13 +1858,15 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	ecmbuf[5] = er->prid & 0xff;
 	ecmbuf[10] = er->srvid >> 8;
 	ecmbuf[11] = er->srvid & 0xff;
-	ecmbuf[12] = er->l & 0xff;
-	ecmbuf[13] = er->l >> 8;
+	ecmbuf[12] = 0;
+	ecmbuf[13] = 0;
 	ecmbuf[14] = rc;
-	memcpy(ecmbuf + 20, er->ecm, er->l);
-	memcpy(ecmbuf + 20 + er->l, er->cw, 16);
 
-	int32_t res = cc_cmd_send(cl, ecmbuf, 20 + er->l + 16, MSG_CACHE_PUSH);
+	memcpy(ecmbuf + 20, er->ecmd5, sizeof(er->ecmd5)); //16
+	memcpy(ecmbuf + 20 + sizeof(er->ecmd5), &er->csp_hash, sizeof(er->csp_hash)); // 4
+	memcpy(ecmbuf + 20 + sizeof(er->ecmd5) + sizeof(er->csp_hash), er->cw, sizeof(er->cw)); //16
+
+	int32_t res = cc_cmd_send(cl, ecmbuf, size, MSG_CACHE_PUSH);
 	free(ecmbuf);
 	return res;
 }
@@ -1875,6 +1878,10 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 	if (buf[14] >= E_NOTFOUND) //Maybe later we could support other rcs
 		return;
 
+	if (buf[12] != 0 || buf[13] != 0) {
+		cs_log("%s received old cash-push format! data ignored!", username(cl));
+		return;
+	}
 	ECM_REQUEST *er;
 	if (!(er = get_ecmtask()))
 		return;
@@ -1882,11 +1889,12 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 	er->caid = b2i(2, buf+0);
 	er->prid = b2i(4, buf+2);
 	er->srvid = b2i(2, buf+ 10);
-	er->rc = buf[14];
+	er->rc = E_FOUND;
 
-	er->l = buf[12] | buf[13] << 8;
-	memcpy(er->ecm, buf + 20, er->l);
-	memcpy(er->cw, buf+20 +er->l, 16);
+	er->l = 0;
+	memcpy(er->ecmd5, buf + 20, sizeof(er->ecmd5));
+	memcpy(&er->csp_hash, buf + 20 + sizeof(er->ecmd5), sizeof(er->csp_hash));
+	memcpy(er->cw, buf + 20 + sizeof(er->ecmd5) + sizeof(er->csp_hash), sizeof(er->cw));
 
 	cs_add_cache(cl, er, 0);
 }

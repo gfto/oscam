@@ -391,12 +391,12 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	i2b_buf(2, er->caid, buf + 10);
 	i2b_buf(4, er->prid, buf + 12);
 	i2b_buf(2, er->idx, buf + 16); // Not relevant...?
-	memcpy(buf + 20, er->ecm, er->l);
-	memcpy(buf + 20 + er->l, er->cw, 16);
 
-	int32_t buflen = er->l;
-	if (er->rc < E_NOTFOUND)
-		buflen += 16;
+	memcpy(buf + 20, er->ecmd5, sizeof(er->ecmd5)); //16
+	memcpy(buf + 20 + sizeof(er->ecmd5), &er->csp_hash, sizeof(er->csp_hash)); //4
+	memcpy(buf + 20 + sizeof(er->ecmd5) + sizeof(er->csp_hash), er->cw, sizeof(er->cw)); //16
+
+	int32_t buflen = sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw);
 	buf[1]=buflen & 0xff;
 	buf[2]=buflen >> 8;
 
@@ -413,6 +413,12 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 		return;
 
 	ECM_REQUEST *er;
+	int16_t testlen = buf[1] + (buf[2] << 8);
+	if (testlen != sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw)) {
+		cs_log("%s received old cash-push format! data ignored!", username(cl));
+		return;
+	}
+
 	if (!(er = get_ecmtask()))
 		return;
 
@@ -422,12 +428,10 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 	er->pid  = b2i(2, buf+16);
 	er->rc = buf[3];
 
-	er->l = buf[1] | buf[2] << 8;
-	if (er->rc < E_NOTFOUND)
-		er->l -= 16;
-
-	memcpy(er->ecm, buf + 20, er->l);
-	memcpy(er->cw, buf+20 +er->l, 16);
+	er->l = 0;
+	memcpy(er->ecmd5, buf + 20, sizeof(er->ecmd5)); //16
+	memcpy(&er->csp_hash, buf + 20 + sizeof(er->ecmd5), sizeof(er->csp_hash)); //4
+	memcpy(er->cw, buf + 20 + sizeof(er->ecmd5) + sizeof(er->csp_hash), sizeof(er->cw)); //16
 
 	cs_add_cache(cl, er, 0);
 }
@@ -569,7 +573,7 @@ static int32_t camd35_send_emm(EMM_PACKET *ep)
 	return((camd35_send(buf, 0)<1) ? 0 : 1);
 }
 
-static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t rc2)
+static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t rc2 __attribute__((unused)))
 {
 	uint16_t idx;
 	static const char *typtext[]={"ok", "invalid", "sleeping"};

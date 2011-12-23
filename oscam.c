@@ -1643,8 +1643,19 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, uint64_t grp)
 		if ((grp && !(grp & ecm->grp)) || ecm->caid!=er->caid)
 			continue;
 
+
+#ifdef CS_CACHEEX
+		//CWs from csp have no ecms, so ecm->l=0. ecmd5 is invalid, so do not check!
+		if (ecm->csp_hash != er->csp_hash)
+			continue;
+
+		if (ecm->l > 0 && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
+			continue;
+
+#else
 		if (memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
 			continue;
+#endif
 
 		if (ecm->rc != E_99)
 			break;
@@ -1679,35 +1690,6 @@ static void distribute_ecm(ECM_REQUEST *er, int32_t rc)
 }
 
 #ifdef CS_CACHEEX
-/**
- * ecm cache
- **/
-struct ecm_request_t *check_cwcache_csp(ECM_REQUEST *er, uint64_t grp)
-{
-	time_t now = time(NULL);
-	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
-	struct ecm_request_t *ecm;
-
-	cs_readlock(&ecmcache_lock);
-	for (ecm = ecmtask; ecm; ecm = ecm->next) {
-		if (ecm->tps.time < timeout) {
-			ecm = NULL;
-			break;
-		}
-
-		if ((grp && !(grp & ecm->grp)) || ecm->caid!=er->caid)
-			continue;
-
-		if (ecm->csp_hash != er->csp_hash)
-			continue;
-
-		if (ecm->rc != E_99)
-			break;
-	}
-	cs_readunlock(&ecmcache_lock);
-	return ecm;
-}
-
 void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 {
 	if (!cl)
@@ -1720,6 +1702,16 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 		cs_debug_mask(D_TRACE, "CACHEX received, but disabled for %s", username(cl));
 		return;
 	}
+
+	int i, c;
+	for (i = 0; i < 16; i += 4) {
+		c = ((er->cw[i] + er->cw[i + 1] + er->cw[i + 2]) & 0xff);
+		if (er->cw[i + 3] != c) {
+			cs_debug_mask(D_TRACE, "push received cw with chksum error from %s", csp?"csp":username(cl));
+			return;
+		}
+	}
+
 
 	uint16_t *lp;
 	for (lp=(uint16_t *)er->ecm+(er->l>>2), er->checksum=0; lp>=(uint16_t *)er->ecm; lp--)
@@ -1735,19 +1727,14 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 		unsigned char md5tmp[MD5_DIGEST_LENGTH];
 		memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, md5tmp), CS_ECMSTORESIZE);
 		er->csp_hash = csp_ecm_hash(er->ecm, er->l);
+		//csp has already initialized these hashcode
 	}
+
 
 	if( (er->caid & 0xFF00) == 0x600 && !er->chid )
 		er->chid = (er->ecm[6]<<8)|er->ecm[7];
 
-	cs_debug_mask(D_TRACE, "got pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
-		er->caid, er->prid, er->srvid, er->l, htons(er->checksum),  username(cl));
-
-	struct ecm_request_t *ecm;
-	if (csp)
-		ecm = check_cwcache_csp(er, cl->grp);
-	else
-		ecm = check_cwcache(er, cl->grp);
+	struct ecm_request_t *ecm = check_cwcache(er, cl->grp);
 
 	if (!ecm) {
 		cs_writelock(&ecmcache_lock);
@@ -1762,6 +1749,9 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 		if (cl->account)
 			cl->account->cwcacheexgot++;
 		first_client->cwcacheexgot++;
+
+		cs_debug_mask(D_TRACE, "got pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
+			er->caid, er->prid, er->srvid, er->l, htons(er->checksum),  csp?"csp":username(cl));
 	}
 	else {
 		if(er->rc < ecm->rc) {
@@ -1779,6 +1769,14 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 			if (cl->account)
 				cl->account->cwcacheexgot++;
 			first_client->cwcacheexgot++;
+
+			cs_debug_mask(D_TRACE, "replaced pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
+				er->caid, er->prid, er->srvid, er->l, htons(er->checksum),  csp?"csp":username(cl));
+		}
+		else
+		{
+			cs_debug_mask(D_TRACE, "ignored duplicate pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
+				er->caid, er->prid, er->srvid, er->l, htons(er->checksum),  csp?"csp":username(cl));
 		}
 		free_ecm(er);
 	}
