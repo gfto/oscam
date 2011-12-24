@@ -413,7 +413,7 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 		return;
 
 	ECM_REQUEST *er;
-	int16_t testlen = buf[1] + (buf[2] << 8);
+	int16_t testlen = buf[1] | (buf[2] << 8);
 	if (testlen != sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw)) {
 		cs_log("%s received old cash-push format! data ignored!", username(cl));
 		return;

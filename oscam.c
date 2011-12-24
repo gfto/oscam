@@ -1592,7 +1592,7 @@ static void cs_cache_push_to_client(struct s_client *cl, ECM_REQUEST *er)
  */
 void cs_cache_push(ECM_REQUEST *er)
 {
-	if (er->rc != E_FOUND) //Maybe later we could support other rcs
+	if (er->rc >= E_NOTFOUND) //Maybe later we could support other rcs
 		return;
 
 	//cacheex=2 mode: push (server->remote)
@@ -1728,8 +1728,8 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 		int32_t offset = 3;
 		if ((er->caid >> 8) == 0x17)
 			offset = 13;
-		unsigned char md5tmp[MD5_DIGEST_LENGTH];
 		if (er->l > 0) {
+			unsigned char md5tmp[MD5_DIGEST_LENGTH];
 			memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, md5tmp), CS_ECMSTORESIZE);
 			er->csp_hash = csp_ecm_hash(er);
 		}
