@@ -239,7 +239,7 @@
 #define E_FOUND			0
 #define E_CACHE1		1
 #define E_CACHE2		2
-#define E_EMU				3
+#define E_CACHEEX		3
 ///////above is all found
 #define E_NOTFOUND	4  //for selection of found, use < E_NOTFOUND
 #define E_TIMEOUT		5
@@ -857,6 +857,7 @@ struct s_client {
 #ifdef CS_CACHEEX
 	int32_t			cwcacheexpush;		// count pushed ecms/cws
 	int32_t         cwcacheexgot;		// count got ecms/cws
+	int32_t         cwcacheexhit;		// count hit ecms/cws
 #endif
 
 #ifdef WEBIF
@@ -1274,6 +1275,7 @@ struct s_auth
 #ifdef CS_CACHEEX
 	int32_t			cwcacheexpush;		// count pushed ecms/cws
 	int32_t         cwcacheexgot;		// count got ecms/cws
+	int32_t         cwcacheexhit;		// count hit ecms/cws
 #endif
 	struct s_auth	*next;
 };

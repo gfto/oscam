@@ -174,7 +174,7 @@ extern void chk_t_cccam(char *token, char *value);
 #endif
 #ifdef CS_CACHEEX
 extern void chk_t_csp(char *token, char *value);
-extern int32_t csp_ecm_hash(uchar *buf, int32_t n);
+extern int32_t csp_ecm_hash(ECM_REQUEST *er);
 #endif
 
 extern void chk_t_global(const char *token, char *value);

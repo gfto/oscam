@@ -707,6 +707,9 @@ void convert_to_beta_int(ECM_REQUEST *er, uint16_t caid_to)
 	convert_to_beta(er->client, er, caid_to);
 	// update ecmd5 for store ECM in cache
 	memcpy(er->ecmd5, MD5(er->ecm+13, er->l-13, md5tmp), CS_ECMSTORESIZE);
+#ifdef CS_CACHEEX
+	er->csp_hash = csp_ecm_hash(er);
+#endif
 	er->btun = 2; //marked as auto-betatunnel converted. Also for fixing recursive lock in get_cw
 }
 
