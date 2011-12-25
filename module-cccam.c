@@ -2454,6 +2454,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 		break;
 
 	case MSG_KEEPALIVE:
+		cl->last = time(NULL);
 		if (cl->typ != 'c') {
 			cs_debug_mask(D_READER, "cccam: keepalive ack");
 		} else {

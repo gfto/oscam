@@ -2033,6 +2033,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	else
 		cs_strncpy(client->lastreader, stxt[er->rc], sizeof(client->lastreader));
 #endif
+	client->last = time((time_t*)0);
 
 	//cs_debug_mask(D_TRACE, "CHECK rc=%d er->cacheex_src=%s", er->rc, username(er->cacheex_src));
 	switch(er->rc) {
