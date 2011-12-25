@@ -1066,8 +1066,13 @@ void chk_t_csp(char *token, char *value)
 		}
 	}
 
+	if (!strcmp(token, "wait_time")) {
+		cfg.csp_wait_time = strToIntVal(value, 0);
+		return;
+	}
+
 	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in camd35 tcp section not recognized\n", token);
+		fprintf(stderr, "Warning: keyword '%s' in csp section not recognized\n", token);
 }
 #endif
 
@@ -2312,6 +2317,8 @@ int32_t write_config()
 		fprintf_conf(f, "port", "%d\n", cfg.csp_port);
 		if (cfg.csp_srvip != 0)
 			fprintf_conf(f, "serverip", "%s\n", cs_inet_ntoa(cfg.csp_srvip));
+		if (cfg.csp_wait_time > 0 || cfg.http_full_cfg)
+			fprintf_conf(f, "wait_time", "%d\n", cfg.csp_wait_time);
 		fprintf(f,"\n");
 	}
 #endif

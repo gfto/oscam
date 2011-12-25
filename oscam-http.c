@@ -466,6 +466,9 @@ static char *send_oscam_config_csp(struct templatevars *vars, struct uriparams *
 	if (cfg.csp_port)
 		tpl_printf(vars, TPLADD, "PORT", "%d", cfg.csp_port);
 
+	if (cfg.csp_wait_time)
+		tpl_printf(vars, TPLADD, "WAIT_TIME", "%d", cfg.csp_wait_time);
+
 	return tpl_getTpl(vars, "CONFIGCSP");
 }
 #endif

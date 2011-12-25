@@ -1508,6 +1508,7 @@ struct s_config
 #ifdef CS_CACHEEX
 	in_addr_t	csp_srvip;
 	int32_t		csp_port;
+	uint32_t 	csp_wait_time;
 
 	uint32_t     cacheex_wait_time; //cache wait time in ms
 #endif

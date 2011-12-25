@@ -1643,9 +1643,11 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, uint64_t grp)
 			break;
 		}
 
-		if ((grp && ecm->grp && !(grp & ecm->grp)) || ecm->caid!=er->caid)
+		if ((grp && ecm->grp && !(grp & ecm->grp)))
 			continue;
 
+		if (!(ecm->caid == er->caid || (ecm->ocaid && er->ocaid && ecm->ocaid == er->ocaid)))
+			continue;
 
 #ifdef CS_CACHEEX
 		//CWs from csp have no ecms, so ecm->l=0. ecmd5 is invalid, so do not check!
@@ -1956,7 +1958,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	if (!client || client->kill || client->typ != 'c')
 		return 0;
 
-	static const char *stxt[]={"found", "cache1", "cache2", "cacheex",
+	static const char *stxt[]={"found", "cache1", "cache2", "cache3",
 			"not found", "timeout", "sleeping",
 			"fake", "invalid", "corrupt", "no card", "expdate", "disabled", "stopped"};
 	static const char *stxtEx[16]={"", "group", "caid", "ident", "class", "chid", "queue", "peer", "sid", "", "", "", "", "", "", ""};
@@ -2024,6 +2026,8 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		else
 			cs_strncpy(client->lastreader, stxt[er->rc], sizeof(client->lastreader));
 	}
+	else if (er->rc < E_FOUND)
+		cs_strncpy(client->lastreader, stxt[er->rc], sizeof(client->lastreader));
 #endif
 
 	switch(er->rc) {
@@ -2839,14 +2843,14 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 #ifdef CS_CACHEEX
 	int8_t cacheex = client->account?client->account->cacheex:0;
 
-	if (cacheex == 1 && er->rc == E_UNHANDLED) { //not found in cache, so wait!
+	if ((cacheex == 1 || cfg.csp_wait_time) && er->rc == E_UNHANDLED) { //not found in cache, so wait!
 #ifdef WITH_LB
 		if (locked) {
 			cs_writeunlock(&get_cw_lock);
 			locked = 0;
 		}
 #endif
-		int32_t max_wait = cfg.cacheex_wait_time;
+		uint32_t max_wait = (cacheex == 1)?cfg.cacheex_wait_time:cfg.csp_wait_time;
 		while (max_wait > 0 && !client->kill) {
 			cs_sleepms(50);
 			max_wait -= 50;
