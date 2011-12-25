@@ -2797,6 +2797,10 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 	struct s_client *cl;
 	for (i=0, cl=first_client; cl ; cl=cl->next, i++) {
 
+#ifdef CS_CACHEEX
+		if (ph[cl->ctyp].listenertype && ph[cl->ctyp].listenertype != LIS_CSPUDP) {
+#endif
+
 		// Reset template variables
 		tpl_addVar(vars, TPLADD, "CLIENTLBVALUE","");
 		tpl_addVar(vars, TPLADD, "LASTREADER", "");
@@ -3152,6 +3156,11 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 		} else {
 			if (shown) tpl_addVar(vars, TPLAPPEND, "APISTATUSBITS", tpl_getTpl(vars, "APISTATUSBIT"));
 		}
+
+#ifdef CS_CACHEEX
+	}
+#endif
+
 	}
 
 	if (loghist) {
