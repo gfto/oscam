@@ -4043,32 +4043,41 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 
 	for (i = 0, cl = first_client; cl ; cl = cl->next, i++) {
 
-		if (cl->typ=='c') {
-			if (cl->account && cl->account->cacheex){
-				tpl_addVar(vars, TPLADD, "TYPE", "Client");
-				tpl_addVar(vars, TPLADD, "NAME", cl->account->usr);
-				tpl_addVar(vars, TPLADD, "LEVEL", level[cl->account->cacheex]);
-				tpl_printf(vars, TPLADD, "PUSH", "%ld", cl->cwcacheexpush);
-				tpl_printf(vars, TPLADD, "GOT", "%ld", cl->cwcacheexgot);
-				tpl_addVar(vars, TPLADD, "DIRECTIONIMG", "<IMG SRC=\"image?i=ICARRR\" ALT=\"Pushing\">");
-				tpl_addVar(vars, TPLAPPEND, "TABLECLIENTROWS", tpl_getTpl(vars, "CACHEEXTABLEROW"));
-			}
+		if (cl->typ=='c' && cl->account && cl->account->cacheex){
+			tpl_addVar(vars, TPLADD, "TYPE", "Client");
+			tpl_addVar(vars, TPLADD, "NAME", cl->account->usr);
+			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->account->cacheex]);
+			tpl_printf(vars, TPLADD, "PUSH", "%ld", cl->account->cwcacheexpush);
+			tpl_printf(vars, TPLADD, "GOT", "%ld", cl->account->cwcacheexgot);
+			tpl_printf(vars, TPLADD, "HIT", "%ld", cl->account->cwcacheexhit);
+			tpl_addVar(vars, TPLADD, "DIRECTIONIMG", "<IMG SRC=\"image?i=ICARRR\" ALT=\"Pushing\">");
+			tpl_addVar(vars, TPLAPPEND, "TABLECLIENTROWS", tpl_getTpl(vars, "CACHEEXTABLEROW"));
 		}
-		else if (cl->typ=='p' || cl->typ=='r') {
-			if (cl->reader && cl->reader->cacheex){
-				tpl_addVar(vars, TPLADD, "TYPE", "Reader");
-				tpl_addVar(vars, TPLADD, "NAME", cl->reader->label);
-				tpl_addVar(vars, TPLADD, "LEVEL", level[cl->reader->cacheex]);
-				tpl_printf(vars, TPLADD, "PUSH", "%ld", cl->cwcacheexpush);
-				tpl_printf(vars, TPLADD, "GOT", "%ld", cl->cwcacheexgot);
-				tpl_addVar(vars, TPLADD, "DIRECTIONIMG", "<IMG SRC=\"image?i=ICARRL\" ALT=\"Getting\">");
-				tpl_addVar(vars, TPLAPPEND, "TABLEREADERROWS", tpl_getTpl(vars, "CACHEEXTABLEROW"));
-			}
+		else if ((cl->typ=='p' || cl->typ=='r') && (cl->reader && cl->reader->cacheex)) {
+			tpl_addVar(vars, TPLADD, "TYPE", "Reader");
+			tpl_addVar(vars, TPLADD, "NAME", cl->reader->label);
+			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->reader->cacheex]);
+			tpl_printf(vars, TPLADD, "PUSH", "%ld", cl->cwcacheexpush);
+			tpl_printf(vars, TPLADD, "GOT", "%ld", cl->cwcacheexgot);
+			tpl_printf(vars, TPLADD, "HIT", "%ld", cl->cwcacheexhit);
+			tpl_addVar(vars, TPLADD, "DIRECTIONIMG", "<IMG SRC=\"image?i=ICARRL\" ALT=\"Getting\">");
+			tpl_addVar(vars, TPLAPPEND, "TABLEREADERROWS", tpl_getTpl(vars, "CACHEEXTABLEROW"));
+		}
+		else if (ph[cl->ctyp].listenertype == LIS_CSPUDP) {
+			tpl_addVar(vars, TPLADD, "TYPE", "csp");
+			tpl_addVar(vars, TPLADD, "NAME", "csp");
+			tpl_addVar(vars, TPLADD, "LEVEL", "csp");
+			tpl_printf(vars, TPLADD, "PUSH", "%ld", cl->cwcacheexpush);
+			tpl_printf(vars, TPLADD, "GOT", "%ld", cl->cwcacheexgot);
+			tpl_printf(vars, TPLADD, "HIT", "%ld", cl->cwcacheexhit);
+			//tpl_addVar(vars, TPLADD, "DIRECTIONIMG", "<IMG SRC=\"image?i=ICARRL\" ALT=\"Getting\">");
+			tpl_addVar(vars, TPLAPPEND, "TABLEREADERROWS", tpl_getTpl(vars, "CACHEEXTABLEROW"));
 		}
 	}
 
 	tpl_printf(vars, TPLADD, "TOTAL_CACHEXPUSH", "%ld", first_client->cwcacheexpush);
 	tpl_printf(vars, TPLADD, "TOTAL_CACHEXGOT", "%ld", first_client->cwcacheexgot);
+	tpl_printf(vars, TPLADD, "TOTAL_CACHEXHIT", "%ld", first_client->cwcacheexhit);
 
 	return tpl_getTpl(vars, "CACHEEXPAGE");
 }

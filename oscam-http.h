@@ -2309,20 +2309,20 @@ function isNumber(a) {\n\
 ##MESSAGE##\
 	<BR><BR>\n\
 	<TABLE CLASS=\"stats\">\n\
-			<TR><TH COLSPAN=\"6\">CacheEX Stats</TH></TR>\n\
-			<TR><TH>Direction</TH><TH>Type</TH><TH>Name</TH><TH>Level</TH><TH>Push</TH><TH>Got</TH></TR>\n\
+			<TR><TH COLSPAN=\"7\">CacheEX Stats</TH></TR>\n\
+			<TR><TH>Direction</TH><TH>Type</TH><TH>Name</TH><TH>Level</TH><TH>Push</TH><TH>Got</TH><TH>Hit</TH></TR>\n\
 ##TABLECLIENTROWS##\
 ##TABLEREADERROWS##\
 	</TABLE>\n\
 	<BR><BR>\n\
 	<TABLE>\n\
-		<TR><TH>Total push</TH><TH>Total got</TH></TR>\n\
-		<TR><TD class=\"centered\">##TOTAL_CACHEXPUSH##</TD><TD class=\"centered\">##TOTAL_CACHEXGOT##</TD></TR>\n\
+		<TR><TH>Total push</TH><TH>Total got</TH><TH>Total hit</TH></TR>\n\
+		<TR><TD class=\"centered\">##TOTAL_CACHEXPUSH##</TD><TD class=\"centered\">##TOTAL_CACHEXGOT##</TD><TD class=\"centered\">##TOTAL_CACHEXHIT##</TD></TR>\n\
 	</TABLE>\n\
 	<BR><BR>\n\
 ##TPLFOOTER##"
 
-#define TPLCACHEEXTABLEROW "			<TR><TD>&nbsp;&nbsp;##DIRECTIONIMG##&nbsp;&nbsp;</TD><TD>##TYPE##</TD><TD>##NAME##</TD><TD>##LEVEL##</TD><TD>##PUSH##</TD><TD>##GOT##</TD></TR>\n"
+#define TPLCACHEEXTABLEROW "			<TR><TD>&nbsp;&nbsp;##DIRECTIONIMG##&nbsp;&nbsp;</TD><TD>##TYPE##</TD><TD>##NAME##</TD><TD>##LEVEL##</TD><TD>##PUSH##</TD><TD>##GOT##</TD><TD>##HIT##</TD></TR>\n"
 #endif
 
 enum refreshtypes {REFR_ACCOUNTS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REFR_SERVICES};

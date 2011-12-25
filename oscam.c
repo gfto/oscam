@@ -454,6 +454,7 @@ void clear_account_stats(struct s_auth *account)
 #ifdef CS_CACHEEX
   account->cwcacheexgot = 0;
   account->cwcacheexpush = 0;
+  account->cwcacheexhit = 0;
 #endif
 }
 
@@ -479,6 +480,7 @@ void clear_system_stats()
 #ifdef CS_CACHEEX
   first_client->cwcacheexgot = 0;
   first_client->cwcacheexpush = 0;
+  first_client->cwcacheexhit = 0;
 #endif
 }
 #endif
@@ -1725,6 +1727,7 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 	er->grp = cl->grp;
 	er->ocaid = er->caid;
 	er->rc = E_CACHEEX;
+	er->cacheex_src = cl;
 
 	if (!csp) {
 		int32_t offset = 3;
@@ -1747,7 +1750,6 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 	if (!ecm) {
 		cs_writelock(&ecmcache_lock);
 		er->next = ecmtask;
-		er->cacheex_src = cl;
 		ecmtask = er;
 		cs_writeunlock(&ecmcache_lock);
 
@@ -2032,6 +2034,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		cs_strncpy(client->lastreader, stxt[er->rc], sizeof(client->lastreader));
 #endif
 
+	//cs_debug_mask(D_TRACE, "CHECK rc=%d er->cacheex_src=%s", er->rc, username(er->cacheex_src));
 	switch(er->rc) {
 		case E_FOUND:
 					client->cwfound++;
@@ -2838,6 +2841,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				er->ecmcacheptr = ecm;
 				er->rc = E_99;
 			}
+			er->cacheex_src = ecm->cacheex_src;
 		} else
 			er->rc = E_UNHANDLED;
 	}
@@ -2866,6 +2870,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 					er->ecmcacheptr = ecm;
 					er->rc = E_99;
 				}
+				er->cacheex_src = ecm->cacheex_src;
 				break;
 			}
 		}
@@ -2886,6 +2891,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				if (ecm && ecm != er) {
 					er->rc = E_99;
 					er->ecmcacheptr = ecm;
+					er->cacheex_src = ecm->cacheex_src;
 				}
 			}
 #ifdef CS_CACHEEX
