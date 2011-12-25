@@ -2310,13 +2310,14 @@ function isNumber(a) {\n\
 	<BR><BR>\n\
 	<TABLE CLASS=\"stats\">\n\
 			<TR><TH COLSPAN=\"7\">CacheEX Stats</TH></TR>\n\
-			<TR><TH>Direction</TH><TH>Type</TH><TH>Name</TH><TH>Level</TH><TH>Push</TH><TH>Got</TH><TH>Hit</TH></TR>\n\
+			<TR><TH>Direction</TH><TH>Type</TH><TH>Name</TH><TH>Cache EX Mode</TH><TH>Push</TH><TH>Got</TH><TH>Hit</TH></TR>\n\
 ##TABLECLIENTROWS##\
 ##TABLEREADERROWS##\
 	</TABLE>\n\
 	<BR><BR>\n\
 	<TABLE>\n\
 		<TR><TH>Total push</TH><TH>Total got</TH><TH>Total hit</TH></TR>\n\
+		<TR><TD class=\"centered\">##TOTAL_CACHEXPUSH_IMG##</TD><TD class=\"centered\">##TOTAL_CACHEXGOT_IMG##</TD><TD class=\"centered\">&nbsp;</TD></TR>\n\
 		<TR><TD class=\"centered\">##TOTAL_CACHEXPUSH##</TD><TD class=\"centered\">##TOTAL_CACHEXGOT##</TD><TD class=\"centered\">##TOTAL_CACHEXHIT##</TD></TR>\n\
 	</TABLE>\n\
 	<BR><BR>\n\
