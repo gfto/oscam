@@ -575,8 +575,10 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 }
 
 #define CC_DEFAULT_VERSION 1
-char *version[] = { "2.0.11", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "2.2.0", "2.2.1", "2.3.0", "" };
-char *build[] = { "2892", "2971", "3094", "3165", "3191", "3290", "3316", "3367", "" };
+#define CC_VERSIONS 8
+char *version[CC_VERSIONS]  = { "2.0.11", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "2.2.0", "2.2.1", "2.3.0"};
+char *build[CC_VERSIONS]    = { "2892",   "2971",  "3094",  "3165",  "3191",  "3290",  "3316",  "3367"};
+char extcompat[CC_VERSIONS] = { 0,        0,       0,       0,       0,       1,       1,       1}; //Supporting new card format starting with 2.2.0
 
 /**
  * reader+server
@@ -584,7 +586,7 @@ char *build[] = { "2892", "2971", "3094", "3165", "3191", "3290", "3316", "3367"
  */
 void cc_check_version(char *cc_version, char *cc_build) {
 	int32_t i;
-	for (i = 0; strlen(version[i]); i++) {
+	for (i = 0; i < CC_VERSIONS; i++) {
 		if (!memcmp(cc_version, version[i], strlen(version[i]))) {
 			memcpy(cc_build, build[i], strlen(build[i]) + 1);
 			cs_debug_mask(D_CLIENT, "cccam: auto build set for version: %s build: %s",
@@ -598,7 +600,31 @@ void cc_check_version(char *cc_version, char *cc_build) {
 			build[CC_DEFAULT_VERSION]));
 
 	cs_debug_mask(D_CLIENT, "cccam: auto version set: %s build: %s", cc_version, cc_build);
+
+	return;
 }
+
+int32_t check_cccam_compat(struct cc_data *cc) {
+	int32_t res = 0;
+	int32_t i = 0;
+	for (i = 0; i < CC_VERSIONS; i++) {
+		if (!strcmp(cfg.cc_version, version[i])) {
+			res += extcompat[i];
+			break;
+		}
+	}
+	if (!res)
+		return 0;
+
+	for (i = 0; i < CC_VERSIONS; i++) {
+		if (!strcmp(cc->remote_version, version[i])) {
+			res += extcompat[i];
+			break;
+		}
+	}
+	return res == 2;
+}
+
 
 /**
  * reader
@@ -2820,17 +2846,6 @@ int32_t cc_srv_wakeup_readers(struct s_client *cl) {
 	return wakeup;
 }
 
-
-int32_t check_cccam_compat(struct cc_data *cc) {
-	int32_t res = 0;
-	if (strcmp(cfg.cc_version, "2.2.0") == 0 || strcmp(cfg.cc_version, "2.2.1") == 0) {
-	
-		if (strcmp(cc->remote_version, "2.2.0") == 0 || strcmp(cc->remote_version, "2.2.1") == 0) {
-			res = 1;
-		}
-	}
-	return res;
-}
 
 int32_t cc_srv_connect(struct s_client *cl) {
 	int32_t i;

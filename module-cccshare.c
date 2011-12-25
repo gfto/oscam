@@ -1138,12 +1138,14 @@ int32_t cc_srv_report_cards(struct s_client *cl) {
 	LLIST *carddata;
 	struct cc_data *cc = cl->cc;
 	struct cc_card *card;
+	int32_t count = 0;
 	carddata = reported_carddatas;		// sending carddata sometimes takes longer and the static llist may get cleaned and recreated while that
 	LL_ITER it = ll_iter_create(carddata);
 	while (cl->cc && cc->mode != CCCAM_MODE_SHUTDOWN && carddata == reported_carddatas && (card = ll_iter_next(&it))) {
-		send_card_to_clients(card, cl);
+		count += send_card_to_clients(card, cl);
 	}
 	cs_readunlock(&cc_shares_lock);
+	cs_debug_mask(D_TRACE, "reported %d cards for %s", count, username(cl));
 	
 	return cl->cc && cc->mode != CCCAM_MODE_SHUTDOWN;
 }
