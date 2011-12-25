@@ -2021,12 +2021,14 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	if (er_reader) {
 		if(er->rc == E_FOUND)
 			cs_strncpy(client->lastreader, er_reader->label, sizeof(client->lastreader));
+		else if (er->rc == E_CACHEEX)
+			cs_strncpy(client->lastreader, "cache3", sizeof(client->lastreader));
 		else if (er->rc < E_NOTFOUND)
 			snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s (cache)", er_reader->label);
 		else
 			cs_strncpy(client->lastreader, stxt[er->rc], sizeof(client->lastreader));
 	}
-	else if (er->rc < E_FOUND)
+	else
 		cs_strncpy(client->lastreader, stxt[er->rc], sizeof(client->lastreader));
 #endif
 
