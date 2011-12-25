@@ -2893,7 +2893,9 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				if (ecm && ecm != er) {
 					er->rc = E_99;
 					er->ecmcacheptr = ecm;
+#ifdef CS_CACHEEX
 					er->cacheex_src = ecm->cacheex_src;
+#endif
 				}
 			}
 #ifdef CS_CACHEEX
