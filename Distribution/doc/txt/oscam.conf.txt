@@ -333,6 +333,9 @@ DESCRIPTIONS
        serverip = IP
 	  IP address of Cardservproxy for cache exchange, default:none
 
+       wait_time = milli-seconds
+	  wait time for cache exchange before sending ECM to Cardservproxy, default:none
+
    The [camd33] section
        port = 0|port
 	  TCP port for camd 3.3x clients, 0 = disabled, default:0
