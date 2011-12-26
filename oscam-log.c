@@ -178,7 +178,7 @@ static int32_t get_log_header(int32_t m, char *txt)
 	time(&t);
 	localtime_r(&t, &lt);
 
-	pos = snprintf(txt, LOG_BUF_SIZE,  "[LOG000]%4d/%02d/%02d %2d:%02d:%02d ", lt.tm_year+1900, lt.tm_mon+1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec);
+	pos = snprintf(txt, LOG_BUF_SIZE,  "[LOG000]%4d/%02d/%02d %02d:%02d:%02d ", lt.tm_year+1900, lt.tm_mon+1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec);
 
 	if(m)
 		return pos + snprintf(txt+pos, LOG_BUF_SIZE-pos, "%8X %c ", cl?cl->tid:0, cl?cl->typ:' ');
