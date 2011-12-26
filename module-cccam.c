@@ -1653,9 +1653,7 @@ void cc_idle() {
 	struct cc_data *cc = cl->cc;
 	
 	if (rdr && rdr->cc_keepalive && !rdr->tcp_connected) {
-		if (cc_cli_connect(cl) != 0) {
-			cs_sleepms(cfg.reader_restart_seconds*1000);
-		}
+		cc_cli_connect(cl);
 	}
 		
 	if (!rdr || !rdr->tcp_connected || !cl || !cc)

@@ -2798,8 +2798,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 	for (i=0, cl=first_client; cl ; cl=cl->next, i++) {
 
 #ifdef CS_CACHEEX
-		// todo: find working filter rule to hide the CSP clients
-		//if (ph[cl->ctyp].listenertype && ph[cl->ctyp].listenertype != LIS_CSPUDP) {
+		if (ph[cl->ctyp].listenertype != LIS_CSPUDP) {
 #endif
 
 		// Reset template variables
@@ -3159,8 +3158,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 		}
 
 #ifdef CS_CACHEEX
-		//todo: CSP filter ends here
-		//}
+		}
 #endif
 
 	}
