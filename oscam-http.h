@@ -465,7 +465,7 @@ SFRTIFJFU0VSVkVEADs="
 			<TD CLASS=\"##MENUACTIVE3##\"><A HREF=\"userconfig.html\">USERS</A></TD>\n\
 			<TD CLASS=\"##MENUACTIVE4##\"><A HREF=\"services.html\">SERVICES</A></TD>\n\
 			<TD CLASS=\"##MENUACTIVE5##\"><A HREF=\"files.html\">FILES</A></TD>\n\
-			<TD CLASS=\"##MENUACTIVE6##\"><A HREF=\"failban.html\">FAILBAN</A><SPAN CLASS=\"notifier\">##FAILBANCOUNT##</SPAN></TD>\n\
+			<TD CLASS=\"##MENUACTIVE6##\"><A HREF=\"failban.html\">FAILBAN</A><SPAN CLASS=\"notifier\">##FAILBANNOTIFIER##</SPAN></TD>\n\
 ##TPLCACHEEXMENUITEM##\
 			<TD CLASS=\"##MENUACTIVE8##\"><A HREF=\"script.html\">SCRIPT</A></TD>\n\
 			<TD CLASS=\"##MENUACTIVE9##\"><A HREF=\"shutdown.html\">SHUTDOWN</A></TD>\n\

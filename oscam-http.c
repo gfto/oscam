@@ -4462,7 +4462,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 				tpl_addVar(vars, TPLAPPEND, "BTNDISABLED", "DISABLED");
 
 			i = ll_count(cfg.v_list);
-			if(i > 0)tpl_printf(vars, TPLADD, "FAILBANCOUNT", "(%d)", i);
+			if(i > 0)tpl_printf(vars, TPLADD, "FAILBANNOTIFIER", "(%d)", i);
 
 			char *result = NULL;
 			
