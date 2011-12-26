@@ -183,6 +183,7 @@ path.graph_grid {stroke:gray;stroke-opacity:0.5}\n\
 text.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}\n\
 span.e_valid {background-color:#E6FEBF;}\n\
 span.e_expired {background-color:#fff3e7;}\n\
+span.notifier {font-family: Arial; font-size: 9px;color: red}\n\
 TR.e_valid TD{background-color:#E6FEBF;text-align:center; font-family:\"Courier New\", monospace;}\n\
 TR.e_expired TD{background-color:#fff3e7;text-align:center; font-family:\"Courier New\", monospace;}\n\
 TR.e_header TD{text-align:center; font-family:\"Courier New\", monospace;}\n\
@@ -464,7 +465,7 @@ SFRTIFJFU0VSVkVEADs="
 			<TD CLASS=\"##MENUACTIVE3##\"><A HREF=\"userconfig.html\">USERS</A></TD>\n\
 			<TD CLASS=\"##MENUACTIVE4##\"><A HREF=\"services.html\">SERVICES</A></TD>\n\
 			<TD CLASS=\"##MENUACTIVE5##\"><A HREF=\"files.html\">FILES</A></TD>\n\
-			<TD CLASS=\"##MENUACTIVE6##\"><A HREF=\"failban.html\">FAILBAN</A></TD>\n\
+			<TD CLASS=\"##MENUACTIVE6##\"><A HREF=\"failban.html\">FAILBAN</A><SPAN CLASS=\"notifier\">##FAILBANCOUNT##</SPAN></TD>\n\
 ##TPLCACHEEXMENUITEM##\
 			<TD CLASS=\"##MENUACTIVE8##\"><A HREF=\"script.html\">SCRIPT</A></TD>\n\
 			<TD CLASS=\"##MENUACTIVE9##\"><A HREF=\"shutdown.html\">SHUTDOWN</A></TD>\n\

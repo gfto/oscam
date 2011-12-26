@@ -4460,7 +4460,10 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 			tpl_addVar(vars, TPLADD, "CURIP", cs_inet6_ntoa(addr));
 			if(cfg.http_readonly)
 				tpl_addVar(vars, TPLAPPEND, "BTNDISABLED", "DISABLED");
-	
+
+			i = ll_count(cfg.v_list);
+			if(i > 0)tpl_printf(vars, TPLADD, "FAILBANCOUNT", "(%d)", i);
+
 			char *result = NULL;
 			
 			// WebIf allows modifying many things. Thus, all pages except images/css are excpected to be non-threadsafe! 
