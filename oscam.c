@@ -599,10 +599,6 @@ void cleanup_thread(void *var)
 
 	// Clean client specific data
 	if(cl->typ == 'c'){
-#ifdef MODULE_CCCAM
-		struct cc_data *cc = cl->cc;
-		if (cc) cc->mode = CCCAM_MODE_SHUTDOWN;
-#endif
 		cs_statistics(cl);
 		cl->last_caid = 0xFFFF;
 		cl->last_srvid = 0xFFFF;
