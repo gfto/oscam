@@ -224,7 +224,7 @@ int32_t send_card_to_clients(struct cc_card *card, struct s_client *one_client) 
         struct s_client *cl;
         for (cl = one_client?one_client:first_client; cl; cl=one_client?NULL:cl->next) {
                 struct cc_data *cc = cl->cc;
-                if (cl->typ=='c' && cc && ((one_client && cc->mode != CCCAM_MODE_SHUTDOWN) || (ph[cl->ctyp].num == R_CCCAM && cc->mode == CCCAM_MODE_NORMAL))) { //CCCam-Client!
+                if (cl->typ=='c' && cc && ((one_client && !cl->kill) || (ph[cl->ctyp].num == R_CCCAM && !cl->kill))) { //CCCam-Client!
                 		int32_t is_ext = cc->cccam220 && can_use_ext(card);
                 		int32_t msg = is_ext?MSG_NEW_CARD_SIDINFO:MSG_NEW_CARD;
                         if (card_valid_for_client(cl, card)) {
@@ -259,7 +259,7 @@ int32_t send_card_to_clients(struct cc_card *card, struct s_client *one_client) 
 								buf[11] = new_reshare;
 
 								if (cc_cmd_send(cl, buf, len, msg) < 0)
-										cc->mode = CCCAM_MODE_SHUTDOWN;
+										cl->kill = 1;
 								count++;
                         }
                 }
@@ -280,7 +280,7 @@ void send_remove_card_to_clients(struct cc_card *card) {
 		struct s_client *cl;
 		for (cl = first_client; cl; cl=cl->next) {
 				struct cc_data *cc = cl->cc;
-				if (cl->typ=='c' && cc && ph[cl->ctyp].num == R_CCCAM && cc->mode == CCCAM_MODE_NORMAL) { //CCCam-Client!
+				if (cl->typ=='c' && cc && ph[cl->ctyp].num == R_CCCAM && !cl->kill) { //CCCam-Client!
 						if (card_valid_for_client(cl, card)) {
 								cc_cmd_send(cl, buf, 4, MSG_CARD_REMOVED);
 						}
@@ -1065,7 +1065,7 @@ void update_card_list() {
                 struct cc_data *rcc = rc?rc->cc:NULL;
 
                 int32_t count = 0;
-                if (rcc && rcc->cards && rcc->mode == CCCAM_MODE_NORMAL) {
+                if (rcc && rcc->cards && !rc->kill) {
                 	cs_readlock(&rcc->cards_busy);
 				
               		LL_ITER it = ll_iter_create(rcc->cards);
@@ -1092,7 +1092,7 @@ void update_card_list() {
                     cs_readunlock(&rcc->cards_busy);
                 }
                 else
-                	cs_debug_mask(D_TRACE, "reader %s not active! (mode=%d)", rdr->label, rcc?rcc->mode:-1);
+                	cs_debug_mask(D_TRACE, "reader %s not active!", rdr->label);
                 cs_debug_mask(D_TRACE, "got %d cards from %s", count, rdr->label);
             }
         }
@@ -1141,13 +1141,13 @@ int32_t cc_srv_report_cards(struct s_client *cl) {
 	int32_t count = 0;
 	carddata = reported_carddatas;		// sending carddata sometimes takes longer and the static llist may get cleaned and recreated while that
 	LL_ITER it = ll_iter_create(carddata);
-	while (cl->cc && cc->mode != CCCAM_MODE_SHUTDOWN && carddata == reported_carddatas && (card = ll_iter_next(&it))) {
+	while (cl->cc && !cl->kill && carddata == reported_carddatas && (card = ll_iter_next(&it))) {
 		count += send_card_to_clients(card, cl);
 	}
 	cs_readunlock(&cc_shares_lock);
 	cs_debug_mask(D_TRACE, "reported %d cards for %s", count, username(cl));
 	
-	return cl->cc && cc->mode != CCCAM_MODE_SHUTDOWN;
+	return cl->cc && !cl->kill;
 }
 
 void refresh_shares()
