@@ -67,6 +67,48 @@ char    *loghistptr = NULL;
 
 int8_t keep_threads_alive = 0;
 
+#ifdef CS_CACHEEX
+int32_t cs_add_cacheex_stats(struct s_client *cl, uint16_t caid, uint16_t srvid, uint32_t prid, uint8_t direction) {
+
+	if (!cfg.cacheex_enable_stats)
+		return -1;
+
+	// create list if doesn't exist
+	if (!cl->ll_cacheex_stats)
+		cl->ll_cacheex_stats = ll_create("ll_cacheex_stats");
+
+	time_t now = time((time_t*)0);
+	LL_ITER itr = ll_iter_create(cl->ll_cacheex_stats);
+	S_CACHEEX_STAT_ENTRY *cacheex_stats_entry;
+
+	// check for existing entry
+	while ((cacheex_stats_entry = ll_iter_next(&itr))) {
+		if (cacheex_stats_entry->cache_srvid == srvid &&
+				cacheex_stats_entry->cache_caid == caid &&
+				cacheex_stats_entry->cache_prid == prid &&
+				cacheex_stats_entry->cache_direction == direction) {
+			// we already have this entry - just add count and time
+			cacheex_stats_entry->cache_count++;
+			cacheex_stats_entry->cache_last = now;
+			return cacheex_stats_entry->cache_count;
+		}
+	}
+
+	// if we land here we have to add a new entry
+	if(cs_malloc(&cacheex_stats_entry, sizeof(S_CACHEEX_STAT_ENTRY), -1)){
+		cacheex_stats_entry->cache_caid = caid;
+		cacheex_stats_entry->cache_srvid = srvid;
+		cacheex_stats_entry->cache_prid = prid;
+		cacheex_stats_entry->cache_count = 1;
+		cacheex_stats_entry->cache_last = now;
+		cacheex_stats_entry->cache_direction = direction;
+		ll_iter_insert(&itr, cacheex_stats_entry);
+		return 1;
+	}
+	return 0;
+}
+#endif
+
 int32_t cs_check_v(uint32_t ip, int32_t port, int32_t add, char *info) {
 	int32_t result = 0;
 	if (cfg.failbantime) {
@@ -1771,6 +1813,7 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 			pthread_kill(timecheck_thread, OSCAM_SIGNAL_WAKEUP); 
 			cs_cache_push(er);  //cascade push!
 
+			cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 1);
 			cl->cwcacheexgot++;
 			if (cl->account)
 				cl->account->cwcacheexgot++;
@@ -2241,6 +2284,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 #ifdef CS_CACHEEX
 			if (ea->reader->cacheex == 1 && !ert->cacheex_done) {
 				ea->reader->client->cwcacheexgot++;
+				cs_add_cacheex_stats(ea->reader->client, ea->er->caid, ea->er->srvid, ea->er->prid, 1);
 				first_client->cwcacheexgot++;
 			}
 #endif
@@ -2916,6 +2960,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			cs_sleepms(cfg.delay);
 
 		if (cacheex == 1 && er->rc < E_NOTFOUND) {
+			cs_add_cacheex_stats(client, er->caid, er->srvid, er->prid, 0);
 			client->cwcacheexpush++;
 			if (client->account)
 				client->account->cwcacheexpush++;
@@ -3459,15 +3504,19 @@ void * work_thread(void *ptr) {
 			case ACTION_CACHE_PUSH_OUT: {
 				ECM_REQUEST *er = data->ptr;
 
-				int32_t res;
-				if (reader)
+				int32_t res, stats = -1;
+				if (reader) {
 					res = reader->ph.c_cache_push(cl, er);
+					stats = cs_add_cacheex_stats(reader->client, er->caid, er->srvid, er->prid, 0);
+				}
 				else
 					res = ph[cl->ctyp].c_cache_push(cl, er);
+
+
 				cs_debug_mask(
 					D_TRACE,
-					"pushed ECM %04X&%06X/%04X/%02X:%04X to %s res %d", er->caid, er->prid, er->srvid, er->l,
-					htons(er->checksum), username(cl), res);
+					"pushed ECM %04X&%06X/%04X/%02X:%04X to %s res %d stats %d", er->caid, er->prid, er->srvid, er->l,
+					htons(er->checksum), username(cl), res, stats);
 				free(data->ptr);
 
 				cl->cwcacheexpush++;

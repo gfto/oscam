@@ -269,6 +269,10 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 
 #ifdef CS_CACHEEX
 	tpl_printf(vars, TPLADD, "CACHEEXWAITTIME", "%d", cfg.cacheex_wait_time);
+
+	if (cfg.cacheex_enable_stats == 1)
+		tpl_addVar(vars, TPLADD, "CACHEEXSTATSSELECTED", "selected");
+
 #endif
 
 	return tpl_getTpl(vars, "CONFIGGLOBAL");
@@ -4046,11 +4050,13 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 	}
 
 	char *level[]= {"NONE","CACHE PULL","CACHE PUSH","REVERSE CACHE PUSH"};
-	char *getting = "local&nbsp;<IMG SRC=\"image?i=ICARRL\" ALT=\"Getting\">&nbsp;extern";
-	char *pushing = "local&nbsp;<IMG SRC=\"image?i=ICARRR\" ALT=\"Pushing\">&nbsp;extern";
+	char *getting = "<IMG SRC=\"image?i=ICARRL\" ALT=\"Getting\">";
+	char *pushing = "<IMG SRC=\"image?i=ICARRR\" ALT=\"Pushing\">";
+	char *rowvariable = "";
 
-	int16_t i;
+	int16_t i, write = 0;
 	struct s_client *cl;
+	time_t now = time((time_t*)0);
 
 	for (i = 0, cl = first_client; cl ; cl = cl->next, i++) {
 
@@ -4062,7 +4068,8 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 			tpl_printf(vars, TPLADD, "GOT", "%ld", cl->account->cwcacheexgot);
 			tpl_printf(vars, TPLADD, "HIT", "%ld", cl->account->cwcacheexhit);
 			tpl_addVar(vars, TPLADD, "DIRECTIONIMG", (cl->account->cacheex == 3) ? getting : pushing);
-			tpl_addVar(vars, TPLAPPEND, "TABLECLIENTROWS", tpl_getTpl(vars, "CACHEEXTABLEROW"));
+			rowvariable = "TABLECLIENTROWS";
+			write = 1;
 		}
 		else if ((cl->typ=='p' || cl->typ=='r') && (cl->reader && cl->reader->cacheex)) {
 			tpl_addVar(vars, TPLADD, "TYPE", "Reader");
@@ -4072,7 +4079,8 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 			tpl_printf(vars, TPLADD, "GOT", "%ld", cl->cwcacheexgot);
 			tpl_printf(vars, TPLADD, "HIT", "%ld", cl->cwcacheexhit);
 			tpl_addVar(vars, TPLADD, "DIRECTIONIMG", (cl->reader->cacheex == 3) ? pushing : getting);
-			tpl_addVar(vars, TPLAPPEND, "TABLEREADERROWS", tpl_getTpl(vars, "CACHEEXTABLEROW"));
+			rowvariable = "TABLEREADERROWS";
+			write = 1;
 		}
 		else if (ph[cl->ctyp].listenertype == LIS_CSPUDP) {
 			tpl_addVar(vars, TPLADD, "TYPE", "csp");
@@ -4082,7 +4090,43 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 			tpl_printf(vars, TPLADD, "GOT", "%ld", cl->cwcacheexgot);
 			tpl_printf(vars, TPLADD, "HIT", "%ld", cl->cwcacheexhit);
 			tpl_addVar(vars, TPLADD, "DIRECTIONIMG", getting);
-			tpl_addVar(vars, TPLAPPEND, "TABLEREADERROWS", tpl_getTpl(vars, "CACHEEXTABLEROW"));
+			rowvariable = "TABLECLIENTROWS";
+			write = 1;
+		}
+
+		if (write) {
+			tpl_addVar(vars, TPLAPPEND, rowvariable, tpl_getTpl(vars, "CACHEEXTABLEROW"));
+
+			if (cl->ll_cacheex_stats) {
+				LL_ITER itr = ll_iter_create(cl->ll_cacheex_stats);
+				S_CACHEEX_STAT_ENTRY *cacheex_stats_entry;
+
+				while ((cacheex_stats_entry = ll_iter_next(&itr))) {
+
+					tpl_addVar(vars, TPLADD, "DIRECTIONIMG","");
+					if (now - cacheex_stats_entry->cache_last < 20)
+						tpl_addVar(vars, TPLADD, "TYPE", cacheex_stats_entry->cache_direction == 0 ? pushing : getting);
+					else
+						tpl_addVar(vars, TPLADD, "TYPE","");
+					tpl_printf(vars, TPLADD, "NAME", "%04X:%06X:%04X", cacheex_stats_entry->cache_caid,
+							cacheex_stats_entry->cache_prid,
+							cacheex_stats_entry->cache_srvid);
+					if(cacheex_stats_entry->cache_direction == 0){
+						tpl_printf(vars, TPLADD, "PUSH", "%ld", cacheex_stats_entry->cache_count);
+						tpl_addVar(vars, TPLADD, "GOT","");
+					} else {
+						tpl_printf(vars, TPLADD, "GOT", "%ld", cacheex_stats_entry->cache_count);
+						tpl_addVar(vars, TPLADD, "PUSH","");
+					}
+					tpl_addVar(vars, TPLADD, "HIT","");
+					char channame[32];
+					char *lastchan = xml_encode(vars, get_servicename(cl, cacheex_stats_entry->cache_srvid, cacheex_stats_entry->cache_caid, channame));
+					tpl_addVar(vars, TPLADD, "LEVEL", lastchan);
+					tpl_addVar(vars, TPLAPPEND, rowvariable, tpl_getTpl(vars, "CACHEEXTABLEROW"));
+
+				}
+			}
+			write = 0;
 		}
 	}
 

@@ -587,6 +587,17 @@ typedef struct v_ban {					// failban listmember
 	char            *info;
 } V_BAN;
 
+#ifdef CS_CACHEEX
+typedef struct s_cacheex_stat_entry {	// cacheex stats listmember
+	int32_t 		cache_count;
+	time_t 			cache_last;
+	uint16_t		cache_caid;
+	uint16_t 		cache_srvid;
+	uint32_t 		cache_prid;
+	int8_t          cache_direction;	// 0 = push / 1 = got
+} S_CACHEEX_STAT_ENTRY;
+#endif
+
 typedef struct s_entitlement {			// contains entitlement Info
 	uint64_t		id;				// the element ID
 	uint32_t		type;				// enumerator for tier,chid whatever
@@ -858,6 +869,7 @@ struct s_client {
 	int32_t			cwcacheexpush;		// count pushed ecms/cws
 	int32_t         cwcacheexgot;		// count got ecms/cws
 	int32_t         cwcacheexhit;		// count hit ecms/cws
+	LLIST			*ll_cacheex_stats;	// List for cacheex statistics
 #endif
 
 #ifdef WEBIF
@@ -1510,7 +1522,8 @@ struct s_config
 	int32_t		csp_port;
 	uint32_t 	csp_wait_time;
 
-	uint32_t     cacheex_wait_time; //cache wait time in ms
+	uint32_t	cacheex_wait_time; 		//cache wait time in ms
+	uint8_t		cacheex_enable_stats;	//enable stats
 #endif
 };
 

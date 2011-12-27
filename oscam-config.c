@@ -638,6 +638,11 @@ void chk_t_global(const char *token, char *value)
 			cfg.cacheex_wait_time = strToIntVal(value, DEFAULT_CACHEEX_WAIT_TIME);
 			return;
 		}
+
+	if (!strcmp(token, "cacheexenablestats")) {
+			cfg.cacheex_enable_stats = strToIntVal(value, 0);
+			return;
+		}
 #endif
 
 #ifdef WITH_LB
@@ -1706,6 +1711,7 @@ int32_t init_config()
 #endif
 #ifdef CS_CACHEEX
 	cfg.cacheex_wait_time = DEFAULT_CACHEEX_WAIT_TIME;
+	cfg.cacheex_enable_stats = 0;
 #endif
 
 #ifdef LCDSUPPORT
@@ -2185,6 +2191,8 @@ int32_t write_config()
 #ifdef CS_CACHEEX
 	if (cfg.cacheex_wait_time != DEFAULT_CACHEEX_WAIT_TIME || cfg.http_full_cfg)
 		fprintf_conf(f, "cacheexwaittime", "%d\n", cfg.cacheex_wait_time);
+	if (cfg.cacheex_enable_stats != 0 || cfg.http_full_cfg)
+		fprintf_conf(f, "cacheexenablestats", "%d\n", cfg.cacheex_enable_stats);
 #endif
 
 #ifdef WITH_LB
