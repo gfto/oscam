@@ -224,7 +224,7 @@ int32_t send_card_to_clients(struct cc_card *card, struct s_client *one_client) 
         struct s_client *cl;
         for (cl = one_client?one_client:first_client; cl; cl=one_client?NULL:cl->next) {
                 struct cc_data *cc = cl->cc;
-                if (cl->typ=='c' && cc && ((one_client && !cl->kill) || (ph[cl->ctyp].num == R_CCCAM && !cl->kill))) { //CCCam-Client!
+                if (!cl->kill && cl->typ=='c' && cc && (one_client || ph[cl->ctyp].num == R_CCCAM)) { //CCCam-Client!
                 		int32_t is_ext = cc->cccam220 && can_use_ext(card);
                 		int32_t msg = is_ext?MSG_NEW_CARD_SIDINFO:MSG_NEW_CARD;
                         if (card_valid_for_client(cl, card)) {
@@ -1136,7 +1136,6 @@ int32_t cc_srv_report_cards(struct s_client *cl) {
 
 	cs_readlock(&cc_shares_lock);
 	LLIST *carddata;
-	struct cc_data *cc = cl->cc;
 	struct cc_card *card;
 	int32_t count = 0;
 	carddata = reported_carddatas;		// sending carddata sometimes takes longer and the static llist may get cleaned and recreated while that

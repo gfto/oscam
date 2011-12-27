@@ -2832,7 +2832,7 @@ int32_t cc_srv_wakeup_readers(struct s_client *cl) {
 			continue;
 		if (rdr->cc_keepalive) //if reader has keepalive but is NOT connected, reader can't connect. so don't ask him
 			continue;
-		if((client = rdr->client) == NULL || (cc = client->cc) == NULL || cl->kill)	//reader is in shutdown
+		if((client = rdr->client) == NULL || (cc = client->cc) == NULL || client->kill)	//reader is in shutdown
 			continue;
 		if(is_connect_blocked(rdr))	//reader cannot be waked up currently because its blocked
 			continue;
