@@ -292,9 +292,6 @@ static void usage()
 #ifdef MODULE_PANDORA
   fprintf(stderr, "pandora ");
 #endif
-#ifdef CS_CACHEEX
-  fprintf(stderr, "CacheEx ");
-#endif
 #ifdef MODULE_GBOX
   fprintf(stderr, "gbox ");
 #endif
