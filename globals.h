@@ -168,16 +168,15 @@
 #define CS_QLEN       128 // size of request queue
 #define CS_MAXCAIDTAB 32  // max. caid-defs/user
 #define CS_MAXTUNTAB  50  // max. betatunnel mappings
-#define CS_MAXPROV    64
-#define CS_MAXPORTS   64  // max server ports
+#define CS_MAXPROV    32
+#define CS_MAXPORTS   32  // max server ports
 #define CS_MAXFILTERS   16
 #define CS_MAX_CAIDVALUETAB 16
-#define CS_MAXLOCALS      16
 
 #define CS_ECMSTORESIZE   16  // use MD5()
 #define CS_EMMSTORESIZE   16  // use MD5()
 #define CS_CLIENT_TIMEOUT 5000
-#define CS_CLIENT_MAXIDLE 300
+#define CS_CLIENT_MAXIDLE 120
 #define CS_BIND_TIMEOUT   120
 #define CS_DELAY          0
 #define CS_ECM_RINGBUFFER_MAX 20 // max size for ECM last responsetimes ringbuffer
@@ -189,9 +188,9 @@
 #define PTHREAD_STACK_SIZE PTHREAD_STACK_MIN+32768
 
 #ifdef  CS_EMBEDDED
-#define CS_MAXPENDING   10
+#define CS_MAXPENDING   16
 #else
-#define CS_MAXPENDING   20
+#define CS_MAXPENDING   32
 #endif
 
 #define CS_MAXEMMBLOCKBYLEN 10
@@ -309,13 +308,6 @@ extern const char *boxdesc[];
 #define WRITELOCK 1
 #define READLOCK 2
 
-
-//================================== var leloup
-	uint32_t gbox_card_conter_total;
-	uint32_t gbox_pending_conter_total;
-
-
-//===================================
 #ifdef CS_CORE
 char *PIP_ID_TXT[] = { "ECM", "EMM", "CIN", "KCL", "UDP", NULL  };
 char *RDR_CD_TXT[] = { "cd", "dsr", "cts", "ring", "none",
@@ -873,10 +865,6 @@ struct s_client {
 	int32_t			emmok;       		// count EMM ok
 	int32_t			emmnok;	     		// count EMM nok
 	int8_t			pending;     		// number of ECMs pending
-
-
-
-
 #ifdef CS_CACHEEX
 	int32_t			cwcacheexpush;		// count pushed ecms/cws
 	int32_t         cwcacheexgot;		// count got ecms/cws
@@ -905,20 +893,6 @@ struct s_client {
 
 #ifdef MODULE_GBOX
 	void			*gbox;
-//================ var leloup pour s_client
-
-  int		ecm_perr;	     // count Ecm total one peer modif by leloup
-  int		ecm_serv;	     // count Ecm total one send to serveur  modif by leloup
-  int		ecm_serv_1;	     // count Ecm total one send to serveur  modif by leloup
-  int		dw_serv;	     // count dw total one serveur modif by leloup
-  int		dw_gbox;
-  uint32_t      card_conter_peer;    // leloup
-  uint32_t      tour_ecm;		// leloup
-  uchar 	gbox_ver;
-  uchar 	gbox_card_d1;
-  uchar         peer_id[2];
-
-//=============================================================
 #endif
 
 	int32_t			port_idx;    		// index in server ptab
@@ -1452,18 +1426,10 @@ struct s_config
 	int8_t			cc_use_fixed_nodeid;
 	uint8_t			cc_fixed_nodeid[8];
 #endif
-
-//======================== var gbox s_config
 	char			gbox_hostname[128];
 	char			gbox_key[10];
 	char			gbox_gsms_path[200];
 	int32_t			gbox_port;
-        unsigned long   gbox_carte[CS_MAXLOCALS]; //list local card gbox by leloup
-        int32_t        num_locals; //nombre local card gbox by leloup
-	char		maxdist;
-	char		maxecmsend;
-	char		gbox_reshare;
-//=========================================================
 	struct s_ip 	*rad_allowed;
 	char			rad_usr[32];
 	char			ser_device[512];

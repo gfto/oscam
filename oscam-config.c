@@ -1392,52 +1392,9 @@ void chk_t_gbox(char *token, char *value)
 		return;
 	}
 
-		if (!strcmp(token, "greshare")) {
-                    if(strlen(value) == 0)
-			return;
-		    else {
-		      cfg.gbox_reshare =atoi(value);
-		      return;
-		    }
-		}
-
-		if (!strcmp(token, "maxdist")) {
-                    if(strlen(value) == 0)
-			return;
-		    else {
-		      cfg.maxdist=atoi(value);
-		      return;
-		    }
-		}
-
-		if (!strcmp(token, "maxecmsend")) {
-                    if(strlen(value) == 0)
-			return;
-		    else {
-		      cfg.maxecmsend=atoi(value);
-		      return;
-		    }
-		}
 	if (!strcmp(token, "port")) {
 		cfg.gbox_port = strToIntVal(value, 0);
 		return;
-	}
-
-		if (!strcmp(token, "localcard")) {
-
-                if(strlen(value) == 0) {
-			return;
-		} else {
-		memset(cfg.gbox_carte, 0, sizeof(cfg.gbox_carte));
-			char *ptr1, *saveptr1= NULL;
-	                int n = 0, i;
-	                for (i = 0, ptr1 = strtok_r(value, ",", &saveptr1); (i < CS_MAXLOCALS) && (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1)) {
-	                        cfg.gbox_carte[n++] = a2i(ptr1, 8);
-	                }
-	                cfg.num_locals = n;
-			return;
-		}
-
 	}
 
 	if (token[0] != '#')
@@ -2434,16 +2391,6 @@ int32_t write_config()
 		fprintf_conf(f, "hostname", "%s\n", cfg.gbox_hostname);
 		fprintf_conf(f, "port", "%d\n", cfg.gbox_port);
 		fprintf_conf(f, "password", "%s\n", cfg.gbox_key);
-		fprintf_conf(f, "maxdist", "%d\n", cfg.maxdist);
-		fprintf_conf(f, "maxecmsend", "%d\n", cfg.maxecmsend);
-		fprintf_conf(f, "greshare", "%d\n", cfg.gbox_reshare);
-		fprintf_conf(f, "localcard", "");
-	                char *dot = "";
-	                for (i = 0; i < cfg.num_locals; i++){
-	                        fprintf(f,"%s%08lX", dot, cfg.gbox_carte[i]);
-	                        dot=",";
-	                }
-		fprintf(f,"\n");i = 0;
 		fprintf(f,"\n");
 	}
 
@@ -2863,9 +2810,6 @@ int32_t write_server()
 
 			if (strlen(rdr->r_pwd) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, "password", "%s\n", rdr->r_pwd);
-
-			if (strlen(rdr->l_pwd) > 0 || cfg.http_full_cfg)
-				fprintf_conf(f, "my_password", "%s\n", rdr->l_pwd);
 
 			if(strcmp(rdr->pincode, "none") || cfg.http_full_cfg)
 				fprintf_conf(f, "pincode", "%s\n", rdr->pincode);
@@ -3950,11 +3894,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "my_password")) {
-		cs_strncpy(rdr->l_pwd, value, sizeof(rdr->l_pwd));
-		return;
-	}
-
 	if (!strcmp(token, "user")) {
 		cs_strncpy(rdr->r_usr, value, sizeof(rdr->r_usr));
 		return;
@@ -4072,7 +4011,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
           cs_strncpy(rdr->device, ptr, sizeof(rdr->device));
           break;
         case 2:   // local port
-          rdr->l_port  = atoi(ptr);  // ***WARNING CHANGE OF GLOBAL LISTEN PORT FROM WITHIN READER!!!***
+          cfg.gbox_port = atoi(ptr);  // ***WARNING CHANGE OF GLOBAL LISTEN PORT FROM WITHIN READER!!!***
           break;
         case 3:   // remote port
           rdr->r_port = atoi(ptr);
