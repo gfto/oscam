@@ -201,9 +201,6 @@ DESCRIPTIONS
        lb_stat_cleanup = hour
 	  hours after the load balancing statistics will be deleted, default:336
 
-       lb_use_locking = 0|1
-	  1 = disable parallel and identical load balancing ECM requests, default:0
-
        lb_retrylimits = CAID1:time1[,CAID2:time2]...
 	  load balancing retry limit time per CAID, wildcard CAIDs with two-digit CAIDs possible, default:none
 
