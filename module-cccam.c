@@ -1180,7 +1180,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 						"%s unlocked-cycleconnection! timeout %dms",
 						getprefix(), tt);
 				//cc_cycle_connection();
-				//cc_cli_close(cl, TRUE);
+				cc_cli_close(cl, TRUE);
 				return 0;
 			}
 		}
@@ -2102,7 +2102,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 
 			if (!old_card) {
 			    card->card_type = CT_REMOTECARD;
-				if(card->reshare == 0)card->reshare = 1;
+				//if(card->reshare == 0)card->reshare = 1; ???
 					card->hop++; //inkrementing hop
 				ll_append(cc->cards, card);
 				set_au_data(cl, rdr, card, NULL);
