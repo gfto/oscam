@@ -85,7 +85,8 @@ static int32_t ssl_active = 0;
 #define MNU_CFG_FACLOG 22
 #define MNU_CFG_FDVBAPI 23
 #define MNU_CFG_CSP 24
-#define MNU_CFG_TOTAL_ITEMS 25 // sum of items above. Use it for "All inactive" in function calls too.
+#define MNU_CFG_WHITELIST 25
+#define MNU_CFG_TOTAL_ITEMS 26 // sum of items above. Use it for "All inactive" in function calls too.
 
 #define CSS "\
 body {background-color: white; font-family: Arial; font-size: 11px; text-align:center}\n\
@@ -506,6 +507,7 @@ SFRTIFJFU0VSVkVEADs="
 			<TD CLASS=\"##CMENUACTIVE17##\"><A HREF=\"files.html?file=srvid\">oscam.srvid</A></TD>\n\
 			<TD CLASS=\"##CMENUACTIVE18##\"><A HREF=\"files.html?file=provid\">oscam.provid</A></TD>\n\
 			<TD CLASS=\"##CMENUACTIVE19##\"><A HREF=\"files.html?file=tiers\">oscam.tiers</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE25##\"><A HREF=\"files.html?file=whitelist\">oscam.whitelist</A></TD>\n\
 			<TD CLASS=\"##CMENUACTIVE20##\"><A HREF=\"files.html?file=logfile\">logfile</A></TD>\n\
 			<TD CLASS=\"##CMENUACTIVE21##\"><A HREF=\"files.html?file=userfile\">userfile</A></TD>\n\
 ##TPLFILEMENUANTICASC##\

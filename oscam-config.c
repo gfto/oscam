@@ -5690,3 +5690,151 @@ char *mk_t_allowedprotocols(struct s_auth *account) {
 void free_mk_t(char *value){
 	if(strlen(value) > 0) free(value);
 }
+
+struct s_global_whitelist
+{
+	uint32_t line; //linenr of oscam.whitelist file, starting with 1
+	char type; // w or i
+	uint16_t caid;
+	uint32_t provid;
+	uint16_t srvid;
+	uint16_t chid;
+	uint16_t pid;
+	uint16_t ecmlen;
+	struct s_global_whitelist *next;
+} GLOBAL_WHITELIST;
+
+struct s_global_whitelist *global_whitelist = NULL;
+
+int32_t match_whitelist(ECM_REQUEST *er, struct s_global_whitelist *entry) {
+	return ((!entry->caid || entry->caid == er->caid)
+			&& (!entry->provid || entry->provid == er->prid)
+			&& (!entry->srvid || entry->srvid == er->srvid)
+			&& (!entry->chid || entry->chid == er->chid)
+			&& (!entry->ecmlen || entry->ecmlen == er->l)
+			&& (!entry->pid || entry->pid == er->pid));
+}
+
+int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line)
+{
+	*line = -1;
+	if (!global_whitelist)
+		return 1;
+
+	struct s_global_whitelist *entry = global_whitelist;
+	while (entry) {
+		if (match_whitelist(er, entry)) {
+			*line = entry->line;
+			if (entry->type == 'w')
+				return 1;
+			else if (entry->type == 'i')
+				return 0;
+		}
+		entry = entry->next;
+	}
+	return 0;
+}
+
+//Format:
+//Whitelist-Entry:
+//w:caid:prov:srvid:pid:chid:ecmlen
+//Ignore-Entry:
+//i:caid:prov:srvid:pid:chid:ecmlen
+
+static struct s_global_whitelist *global_whitelist_read_int() {
+	FILE *fp;
+	char token[128];
+	char type;
+	int32_t i, ret, count=0;
+	struct s_global_whitelist *new_whitelist = NULL, *entry, *last;
+	uint32_t line = 0;
+
+	const char *cs_whitelist="oscam.whitelist";
+
+	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_whitelist);
+	fp=fopen(token, "r");
+
+	if (!fp) {
+		cs_log("can't open whitelist file %s", token);
+		return NULL;
+	}
+
+	while (fgets(token, sizeof(token), fp)) {
+		line++;
+		if (strlen(token) <= 1) continue;
+		if (token[0]=='#' || token[0]=='/') continue;
+		if (strlen(token)>100) continue;
+
+		for (i=0;i<(int)strlen(token);i++) {
+			if ((token[i]==':' || token[i]==' ') && token[i+1]==':') {
+				memmove(token+i+2, token+i+1, strlen(token)-i+1);
+				token[i+1]='0';
+			}
+			if (token[i]=='#' || token[i]=='/') {
+				token[i]='\0';
+				break;
+			}
+		}
+
+		//Format:
+		//Whitelist-Entry:
+		//w:caid:prov:srvid:pid:chid:ecmlen
+		//Ignore-Entry:
+		//i:caid:prov:srvid:pid:chid:ecmlen
+
+		type = 'w';
+		uint32_t caid=0, provid=0, srvid=0, pid=0, chid=0, ecmlen=0;
+		ret = sscanf(token, "%c:%4x:%6x:%4x:%4x:%4x:%4x", &type, &caid, &provid, &srvid, &pid, &chid, &ecmlen);
+
+		type = tolower(type);
+
+		//w=whitelist
+		//i=ignore
+		if (ret<1 || (type != 'w' && type != 'i'))
+			continue;
+
+		if(!cs_malloc(&entry,sizeof(struct s_global_whitelist), -1))
+			continue;
+
+		count++;
+		entry->line=line;
+		entry->type=type;
+		entry->caid=caid;
+		entry->provid=provid;
+		entry->srvid=srvid;
+		entry->pid=pid;
+		entry->chid=chid;
+		entry->ecmlen=ecmlen;
+
+		cs_debug_mask(D_TRACE, "whitelist: %c: %04X %06X %04X %04X %04X %04X",
+			entry->type, entry->caid, entry->provid, entry->srvid, entry->pid, entry->chid, entry->ecmlen);
+
+		if (!new_whitelist) {
+			new_whitelist=entry;
+			last = new_whitelist;
+		} else {
+			last->next = entry;
+			last = entry;
+		}
+	}
+
+	cs_log("%d entries read from %s", count, cs_whitelist);
+
+	fclose(fp);
+
+	return new_whitelist;
+}
+
+void global_whitelist_read() {
+
+	struct s_global_whitelist *entry, *old_list = global_whitelist;
+
+	old_list = global_whitelist;
+	global_whitelist = global_whitelist_read_int();
+
+	while (old_list) {
+		entry = old_list->next;
+		free(old_list);
+		old_list = entry;
+	}
+}

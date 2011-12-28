@@ -44,7 +44,6 @@ pid_t server_pid=0;
 CS_MUTEX_LOCK sr_lock;
 #endif
 CS_MUTEX_LOCK system_lock;
-CS_MUTEX_LOCK get_cw_lock;
 CS_MUTEX_LOCK gethostbyname_lock;
 CS_MUTEX_LOCK clientlist_lock;
 CS_MUTEX_LOCK readerlist_lock;
@@ -1074,7 +1073,6 @@ static void init_first_client()
 #endif
   cs_lock_create(&sc8in1_lock, 10, "sc8in1_lock");
   cs_lock_create(&system_lock, 5, "system_lock");
-  cs_lock_create(&get_cw_lock, 5, "get_cw_lock");  
   cs_lock_create(&gethostbyname_lock, 10, "gethostbyname_lock");
   cs_lock_create(&clientlist_lock, 5, "clientlist_lock");
   cs_lock_create(&readerlist_lock, 5, "readerlist_lock");
@@ -2586,6 +2584,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 {
 	int32_t i, j, m;
 	time_t now = time((time_t*)0);
+	uint32_t line = 0;
 
 	er->client = client;
 
@@ -2662,6 +2661,12 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		er->rc = E_DISABLED;
 	}
 
+	if (!chk_global_whitelist(er, &line)) {
+		cs_debug_mask(D_TRACE, "whitelist filtered: %s (%04X&%06X/%04X/%02X:%04X) line %d",
+					username(client), er->caid, er->prid, er->srvid, er->l, htons(er->checksum),
+					line);
+		er->rc = E_INVALID;
+	}
 
 	// rc<100 -> ecm error
 	if (er->rc >= E_UNHANDLED) {
@@ -4188,6 +4193,8 @@ int32_t main (int32_t argc, char *argv[])
     cs_log("openxcas: could not init");
   }
 #endif
+
+  global_whitelist_read();
 
   for (i=0; i<CS_MAX_MOD; i++)
     if( (ph[i].type & MOD_CONN_NET) && ph[i].ptab )

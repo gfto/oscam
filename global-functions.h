@@ -63,6 +63,9 @@ extern void clear_all_account_stats();
 extern void clear_system_stats();
 #endif
 
+extern int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line);
+extern void global_whitelist_read();
+
 #ifdef QBOXHD_LED
 extern void qboxhd_led_blink(int32_t color, int32_t duration);
 #endif

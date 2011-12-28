@@ -3611,6 +3611,13 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
+	else if (strcmp(getParam(params, "file"), "whitelist") == 0) {
+		if(!apicall) setActiveSubMenu(vars, MNU_CFG_WHITELIST);
+		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.whitelist");
+		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.whitelist");
+		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
+		writable = 1;
+	}
 	else if (strcmp(getParam(params, "file"), "srvid") == 0) {
 		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FSRVID);
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.srvid");
@@ -3751,6 +3758,10 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 					if (strcmp(getParam(params, "file"), "dvbapi") == 0)
 						dvbapi_read_priority();
 #endif
+
+					if (strcmp(getParam(params, "file"), "whitelist") == 0)
+						global_whitelist_read();
+
 				}
 			}
 		}
