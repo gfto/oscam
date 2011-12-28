@@ -1424,6 +1424,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_
 				if (cl->failban & BAN_DUPLICATE) {
 					cs_add_violation(cl, usr);
 				}
+				kill_thread(cl);
 				if (cfg.dropdups){
 					cs_writeunlock(&fakeuser_lock);
 					kill_thread(cl);
@@ -1569,7 +1570,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 				}
 			}
 		}
-
+		if (client->ctyp != 6)
 		cs_log("%s %s-client %s%s (%s, %s)",
 			client->crypted ? t_crypt : t_plain,
 			e_txt ? e_txt : ph[client->ctyp].desc,
@@ -1996,6 +1997,7 @@ static void add_cascade_data(struct s_client *client, ECM_REQUEST *er)
 
 int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 {
+	if(client->ctyp != 6) 
 	if (!client || client->kill || client->typ != 'c')
 		return 0;
 
@@ -2010,7 +2012,9 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	char channame[32];
 	struct timeb tpe;
 
+	
 	snprintf(uname,sizeof(uname)-1, "%s", username(client));
+	
 
 	if (er->rc < E_NOTFOUND)
 		checkCW(er);
@@ -2166,7 +2170,13 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	if (is_fake)
 		er->rc = E_FAKE;
 
-	if (er->reader_avail == 1) {
+
+
+	if(client->ctyp == 6){
+		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s (%d of %d)%s%s",
+			client->reader->r_usr, er->caid, er->prid, er->srvid, er->l, htons(er->checksum),
+			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, er->reader_count, er->reader_avail, schaninfo, sreason);
+	} else if (er->reader_avail == 1) {
 		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s %s%s",
 			uname, er->caid, er->prid, er->srvid, er->l, htons(er->checksum),
 			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, schaninfo, sreason);

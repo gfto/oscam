@@ -109,8 +109,8 @@ TH.statuscol11 {text-align:center;}\n\
 TH.statuscol12 {text-align:center;}\n\
 TH.statuscol13 {text-align:center;}\n\
 TH.statuscol14 {text-align:center;}\n\
-TH.statuscol15 {text-align:center;}\n\
 TH.statuscol16 {text-align:center;}\n\
+TH.statuscol15 {text-align:center;}\n\
 TD {height:10px; border:0px; font-family: Arial; font-size: 11px; padding:5px; background-color:#EEEEEE; color:black;text-align: left}\n\
 TD.centered {text-align:center;}\n\
 TD.statuscol0 {text-align:center;width:10px;}\n\
@@ -129,9 +129,9 @@ TD.statuscol12 {text-align:center;}\n\
 TD.statuscol13 {}\n\
 TD.statuscol14 {text-align:center;}\n\
 TD.statuscol14 A {text-decoration: none;}\n\
-TD.statuscol15 {text-align:center;}\n\
 TD.statuscol16 {text-align:center;}\n\
-TD.statuscol16 A {text-decoration: none;}\n\
+TD.statuscol15 {text-align:center;}\n\
+TD.statuscol15 A {text-decoration: none;}\n\
 HR {height:1px; border-width:0; color:white; background-color:#AAAAAA}\n\
 TR.s TD {background-color:#e1e1ef;}\n\
 TR.l TD {background-color:#e1e1ef;}\n\
@@ -141,6 +141,7 @@ TR.r TD {background-color:#fff3e7;}\n\
 TR.p TD {background-color:#fdfbe1;}\n\
 TR.c TD {background-color:#f1f5e6;}\n\
 TR.a TD {background-color:#33ff00;}\n\
+TR.g TD {background-color:#33CCFF;}\n\
 TR.online TD {background-color:#f1f5e6;}\n\
 TR.expired TD {background-color:#ffe2d4;}\n\
 TR.cfg_anticasc TD {background-color:#FEF9BF;}\n\
@@ -485,6 +486,7 @@ SFRTIFJFU0VSVkVEADs="
 ##TPLCONFIGMENUNEWCAMD##\
 ##TPLCONFIGMENURADEGAST##\
 ##TPLCONFIGMENUCCCAM##\
+			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=gbox\">gbox</A></TD>\n\
 ##TPLCONFIGMENUGBOX##\
 ##TPLCONFIGMENUCSP##\
 ##TPLCONFIGMENUANTICASC##\
@@ -658,16 +660,20 @@ SFRTIFJFU0VSVkVEADs="
 			<TH class=\"statuscol12\">CAID:SRVID</TH>\n\
 			<TH class=\"statuscol13\">Current Channel</TH>\n\
 			<TH class=\"statuscol14\">LB Value/ Reader</TH>\n\
-			<TH class=\"statuscol15\">Idle</TH>\n\
-			<TH class=\"statuscol16\">Status</TH>\n\
+			<TH class=\"statuscol15\">Status</TH>\n\
+			<TH class=\"statuscol16\">Idle</TH>\n\
 		</TR>\n\
 ##SERVERSTATUS##\n\
 ##READERHEADLINE##\n\
 ##READERSTATUS##\n\
 ##PROXYHEADLINE##\n\
 ##PROXYSTATUS##\n\
+##GPROXYHEADLINE##\n\
+##GPROXYSTATUS##\n\
 ##CLIENTHEADLINE##\n\
 ##CLIENTSTATUS##\n\
+##GCLIENTHEADLINE##\n\
+##GCLIENTSTATUS##\n\
 	</TABLE><BR>\n\
 	<DIV class=\"log\">\n\
 ##LOGHISTORY##\
@@ -702,8 +708,8 @@ SFRTIFJFU0VSVkVEADs="
 			<TD class=\"statuscol12\">##CLIENTCAID##:##CLIENTSRVID##</TD>\n\
 			<TD class=\"statuscol13\">##CLIENTSRVPROVIDER####CLIENTSRVNAME##</TD>\n\
 			<TD class=\"statuscol14\">##CLIENTLBVALUE##</TD>\n\
-			<TD class=\"statuscol15\">##CLIENTIDLESECS##</TD>\n\
-			<TD class=\"statuscol16\">##CLIENTCON##</TD>\n\
+			<TD class=\"statuscol15\">##CLIENTCON##</TD>\n\
+			<TD class=\"statuscol16\">##CLIENTIDLESECS##</TD>\n\
 		</TR>\n"
 
 
@@ -1072,6 +1078,15 @@ SFRTIFJFU0VSVkVEADs="
 						<option>smartreader</option>\n\
 						<option>internal</option>\n\
 						<option>sc8in1</option>\n\
+						<option>serial</option>\n\
+						<option>camd35</option>\n\
+						<option>cs378x</option>\n\
+						<option>radegast</option>\n\
+						<option>newcamd</option>\n\
+						<option>newcamd524</option>\n\
+						<option>cccam</option>\n\
+						<option>gbox</option>\n\
+						<option>constcw</option>\n\
 ##ADDPROTOCOL##\n\
 					</select>\n\
 				</TD>\n\
@@ -1436,26 +1451,36 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR class=\"cfg_cccam\"><TD>##TPLHELPPREFIX##server#cccwantemu##TPLHELPSUFFIX##Want Emu:</A><input name=\"cccwantemu\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"cccwantemu\" type=\"checkbox\" value=\"1\" ##CCCWANTEMUCHECKED##></TD></TR>\n\
 			<TR class=\"cfg_cccam\"><TD>##TPLHELPPREFIX##server#ccckeepalive##TPLHELPSUFFIX##Keep alive:</A></TD><TD><SELECT NAME=\"ccckeepalive\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##KEEPALIVECHECKED##>YES</OPTION></SELECT></TD></TR>\n"
 
+#define TPLREADERCONFIGGBOXBIT "\
+			<TR><TD>##TPLHELPPREFIX##server#user##TPLHELPSUFFIX##User:</A></TD><TD><input name=\"user\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##ACCOUNT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#password##TPLHELPSUFFIX##Password:</A></TD><TD><input name=\"password\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##PASSWORD##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#my_password##TPLHELPSUFFIX##my_Password:</A></TD><TD><input name=\"my_password\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##MYPASSWORD##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#reconnecttimeout##TPLHELPSUFFIX##Reconnect-timeout:</A></TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#ccckeepalive##TPLHELPSUFFIX##Keep alive:</A></TD><TD><SELECT NAME=\"ccckeepalive\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##KEEPALIVECHECKED##>YES</OPTION></SELECT></TD></TR>\n"
+
+
 #define TPLCONFIGGBOX "\
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-	<DIV CLASS=\"message\">##MESSAGE##</DIV>\
+##MESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"gbox\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
 		<TABLE class=\"config\">\n\
 			<TR><TH COLSPAN=\"2\">Edit Gbox Config </TH></TR>\n\
-			<TR><TD>Password:</TD><TD><input name=\"password\" type=\"text\" size=\"10\" maxlength=\"8\" value=\"##PASSWORD##\"></TD></TR>\n\
-			<TR><TD>Maxdist:</TD><TD><input name=\"maxdist\" type=\"text\" size=\"5\" maxlength=\"2\" value=\"##MAXDIST##\"></TD></TR>\n\
-			<TR><TD>Ignorelist:</TD><TD><input name=\"ignorelist\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##IGNORELIST##\"></TD></TR>\n\
-			<TR><TD>Onlineinfos:</TD><TD><input name=\"onlineinfos\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##ONLINEINFOS##\"></TD></TR>\n\
-			<TR><TD>Cardinfos:</TD><TD><input name=\"cardinfos\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##CARDINFOS##\"></TD></TR>\n\
-			<TR><TD>Locals:</TD><TD><input name=\"locals\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##LOCALS##\"></TD></TR>\n\
-	    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##></TD></TR>\n\
+		<TR><TD>hostname:</TD><TD><input name=\"hostname\" type=\"text\" size=\"30\" maxlength=\"128\" value=\"##GHOSTNAME##\"></TD></TR>\n\
+		<TR><TD>port:</TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##GPORT##\"></TD></TR>\n\
+		<TR><TD>Password:</TD><TD><input name=\"password\" type=\"text\" size=\"30\" maxlength=\"26\" value=\"##PASSWORD##\"></TD></TR>\n\
+		<TR><TD>Maxdist:</TD><TD><input name=\"maxdist\" type=\"text\" size=\"5\" maxlength=\"2\" value=\"##MAXDIST##\"></TD></TR>\n\
+		<TR><TD>maxecmsend:</TD><TD><input name=\"maxecmsend\" type=\"text\" size=\"5\" maxlength=\"2\" value=\"##GMAXSENDECM##\"></TD></TR>\n\
+		<TR><TD>greshare:</TD><TD><input name=\"greshare\" type=\"text\" size=\"5\" maxlength=\"2\" value=\"##GRESHARE##\"></TD></TR>\n\
+		<TR><TD>localcard:</TD><TD><input name=\"localcard\" type=\"text\" size=\"80\" maxlength=\"75\" value=\"##LOCALS##\"></TD></TR>\n\
+	    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
+
 
 #ifdef CS_ANTICASC
 #define TPLCONFIGANTICASC "\
@@ -2386,6 +2411,7 @@ char *tpl[]={
 	"READERCONFIGNCD525BIT",
 	"READERCONFIGNCD524BIT",
 	"READERCONFIGCCCAMBIT",
+	"READERCONFIGGBOXBIT",
 	"APIUSEREDIT",
 	"USEREDIT",
 	"USEREDITRDRSELECTED",
@@ -2550,6 +2576,7 @@ char *tplmap[]={
 	TPLREADERCONFIGNCD525BIT,
 	TPLREADERCONFIGNCD524BIT,
 	TPLREADERCONFIGCCCAMBIT,
+	TPLREADERCONFIGGBOXBIT,
 	TPLAPIUSEREDIT,
 	TPLUSEREDIT,
 	TPLUSEREDITRDRSELECTED,

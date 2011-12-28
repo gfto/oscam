@@ -248,10 +248,12 @@ cross-i386-pc-freebsd:
 cross-powerpc-tuxbox-linux:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lcrypto -ldl -lm" \
+		OS_LIBS="-lcrypto -ldl -lm -lpthread" \
 		OS_CULI="-lncurses" \
-		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_LINUX -DTUXBOX -DPPC -DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"' -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
+		DS_OPTS="-O2 -DOS_LINUX -DTUXBOX -DPPC -DWITH_LIBCRYPTO \
+		-I/home/lucas/oscam/mipsel-unknown-linux-gnu/external_LIBS/DREAMBOX/include \
+		-L/home/lucas/oscam/mipsel-unknown-linux-gnu/external_LIBS/DREAMBOX/lib \
+		-DCS_CONFDIR='\"/var/tuxbox/config\"' -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
