@@ -1892,12 +1892,10 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	}
 
 	int32_t res = 0;
-	cs_readlock(&ecmcache_lock);
 	if (er->client && !er->client->kill) {
 		add_job(er->client, ACTION_CLIENT_ECM_ANSWER, ea, sizeof(struct s_ecm_answer));
 		res = 1;
 	}
-    cs_readunlock(&ecmcache_lock);
 
 	if (reader && rc == E_FOUND && reader->resetcycle > 0)
 	{
@@ -2752,17 +2750,6 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		}
 	}
 
-#ifdef WITH_LB
-    //Use locking - now default=FALSE, activate on problems!
-	int32_t locked;
-	if (cfg.lb_mode && cfg.lb_use_locking && er->btun != 2) {
-			cs_writelock(&get_cw_lock);
-			locked=1;
-	}
-	else
-			locked=0;
-#endif
-
 	//Schlocke: above checks could change er->rc so
 	if (er->rc >= E_UNHANDLED) {
 		/*BetaCrypt tunneling
@@ -2890,12 +2877,6 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	int8_t cacheex = client->account?client->account->cacheex:0;
 
 	if ((cacheex == 1 || cfg.csp_wait_time) && er->rc == E_UNHANDLED) { //not found in cache, so wait!
-#ifdef WITH_LB
-		if (locked) {
-			cs_writeunlock(&get_cw_lock);
-			locked = 0;
-		}
-#endif
 		uint32_t max_wait = (cacheex == 1)?cfg.cacheex_wait_time:cfg.csp_wait_time;
 		while (max_wait > 0 && !client->kill) {
 			cs_sleepms(50);
@@ -2940,12 +2921,6 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		}
 #endif
 	}
-
-
-#ifdef WITH_LB
-	if (locked)
-		cs_writeunlock(&get_cw_lock);
-#endif
 
 	uint16_t *lp;
 	for (lp=(uint16_t *)er->ecm+(er->l>>2), er->checksum=0; lp>=(uint16_t *)er->ecm; lp--)

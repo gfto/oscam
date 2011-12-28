@@ -350,7 +350,6 @@ extern char *RDR_CD_TXT[];
 #define DEFAULT_RETRYLIMIT 800
 #define DEFAULT_LB_MODE 0
 #define DEFAULT_LB_STAT_CLEANUP 336
-#define DEFAULT_LB_USE_LOCKING 0
 #define DEFAULT_LB_REOPEN_MODE 0
 #define DEFAULT_UPDATEINTERVAL 240
 #define DEFAULT_LB_AUTO_BETATUNNEL 1
@@ -1458,7 +1457,6 @@ struct s_config
 	CAIDTAB			lb_noproviderforcaid;			// do not store loadbalancer stats with providers for this caid
 	char			*lb_savepath;					// path where the stat file is save. Empty=default=/tmp/.oscam/stat
 	int32_t			lb_stat_cleanup;				// duration in hours for cleaning old statistics
-	int32_t			lb_use_locking;					// use a mutex lock while searching for readers (get_cw())
 	int32_t			lb_reopen_mode;					// reopen readers mode
 	int32_t			lb_max_readers;					// limit the amount of readers during learning
 	int32_t			lb_auto_betatunnel;				// automatic selection of betatunnel convertion based on learned data
