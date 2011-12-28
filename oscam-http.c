@@ -300,6 +300,16 @@ static char *send_oscam_config_loadbalancer(struct templatevars *vars, struct ur
 		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Stats cleared completly</B><BR><BR>");
 	}
 
+	if (strcmp(getParam(params, "button"), "Clear Timeouts") == 0) {
+		clean_all_stats_by_rc(E_TIMEOUT, 0);
+		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Stats cleared Timeouts</B><BR><BR>");
+	}
+
+	if (strcmp(getParam(params, "button"), "Clear Not Founds") == 0) {
+		clean_all_stats_by_rc(E_NOTFOUND, 0);
+		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Stats cleared Not Founds</B><BR><BR>");
+	}
+
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
@@ -1593,7 +1603,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 		if(strlen(rcs) > 0) {
 			int8_t rc;
 			rc = atoi(rcs);
-			retval = clean_stat_by_rc(rdr, rc);
+			retval = clean_stat_by_rc(rdr, rc, 0);
 			cs_log("Reader %s stats %d %s entr%s deleted by WebIF from %s",
 								rdr->label, retval, stxt[rc],
 								retval == 1 ? "y":"ies",

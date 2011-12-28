@@ -3313,7 +3313,7 @@ int32_t cc_available(struct s_reader *rdr, int32_t checktype, ECM_REQUEST *er) {
 	
 	struct s_client *cl = rdr->client;
 	if(!cl) return 0;
-	if (er && cl->cc) {
+	if (er && cl->cc && rdr->tcp_connected) {
 		struct cc_card *card  = get_matching_card(cl, er, 1);
 		if (!card)
 			return 0;

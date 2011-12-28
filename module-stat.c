@@ -1,4 +1,4 @@
-	#include "globals.h"
+#include "globals.h"
 
 #ifdef WITH_LB
 #include "module-cccam.h"
@@ -592,19 +592,31 @@ void reset_stat(uint16_t caid, uint32_t prid, uint16_t srvid, uint16_t chid, int
 	}
 }
 
-int32_t clean_stat_by_rc(struct s_reader *rdr, int8_t rc)
+int32_t clean_stat_by_rc(struct s_reader *rdr, int8_t rc, int8_t inverse)
 {
 	int32_t count = 0;
 	if (rdr && rdr->lb_stat) {
 		READER_STAT *stat;
 		LL_ITER itr = ll_iter_create(rdr->lb_stat);
 		while ((stat = ll_iter_next(&itr))) {
-			if (stat->rc == rc) {
+			if ((!inverse && stat->rc == rc) || (inverse && stat->rc != rc)) {
 				ll_iter_remove_data(&itr);
 				count++;
 			}
 		}
 	}
+	return count;
+}
+
+int32_t clean_all_stats_by_rc(int8_t rc, int8_t inverse)
+{
+	int32_t count = 0;
+	LL_ITER itr = ll_iter_create(configured_readers);
+	struct s_reader *rdr;
+	while ((rdr = ll_iter_next(&itr))) {
+		count += clean_stat_by_rc(rdr, rc, inverse);
+	}
+	save_stat_to_file(0);
 	return count;
 }
 

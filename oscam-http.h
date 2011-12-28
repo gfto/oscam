@@ -1808,11 +1808,13 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	<form action=\"config.html\" method=\"get\">\n\
 	<input name=\"part\" type=\"hidden\" value=\"loadbalancer\">\n\
 	<TABLE class=\"config\">\n\
-		<TR><TH COLSPAN=\"3\">Control</TH></TR>\n\
+		<TR><TH COLSPAN=\"5\">Control</TH></TR>\n\
 		<TR>\n\
 			<TD STYLE=\"text-align:center;\"><input type=\"submit\" name=\"button\" value=\"Load Stats\" ##BTNDISABLED##></TD>\n\
 			<TD STYLE=\"text-align:center;\"><input type=\"submit\" name=\"button\" value=\"Save Stats\" ##BTNDISABLED##></TD>\n\
 			<TD STYLE=\"text-align:center;\"><input type=\"submit\" name=\"button\" value=\"Clear Stats\" ##BTNDISABLED##></TD>\n\
+			<TD STYLE=\"text-align:center;\"><input type=\"submit\" name=\"button\" value=\"Clear Timeouts\" ##BTNDISABLED##></TD>\n\
+			<TD STYLE=\"text-align:center;\"><input type=\"submit\" name=\"button\" value=\"Clear Not Founds\" ##BTNDISABLED##></TD>\n\
 		</TR>\n\
 	</TABLE>\n\
 	</form>\n\
