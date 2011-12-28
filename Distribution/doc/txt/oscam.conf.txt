@@ -137,7 +137,12 @@ DESCRIPTIONS
 	  ID combination, 1 = disable, can be overwritten per user in oscam.user, default:0
 
        cacheexwaittime = delay
-	  maximum wait time for a cache entry in milli seconds, default:50
+	  maximum wait time for a cache exchange entry in milli seconds, default:50
+
+       cacheexenablestats = 0|1
+	  1 = enable statistics for cache exchange mode, default:0
+
+	  Please consider memory consumption.
 
        lb_mode = mode
 	  load balancing mode:
