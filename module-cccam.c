@@ -1189,157 +1189,163 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	}
 	int32_t processed_ecms = 0;
 	do {
-	cc->ecm_time = cur_time;
-	rdr->available = cc->extended_mode;
+		cc->ecm_time = cur_time;
+		rdr->available = cc->extended_mode;
 
-	//Search next ECM to send:
-	if ((n = cc_get_nxt_ecm(cl)) < 0) {
-		if (!cc->extended_mode) {
-			rdr->available = 1;
-			cc->ecm_busy = 0;
-		}
-		cs_debug_mask(D_READER, "%s no ecm pending!", getprefix());
-		if (!cc_send_pending_emms(cl))
-			send_cmd05_answer(cl);
-		return 0; // no queued ecms
-	}
-	cur_er = &cl->ecmtask[n];
-	cur_er->rc = 101; //mark ECM as already send
-	cs_debug_mask(D_READER, "cccam: ecm-task %d", cur_er->idx);
-
-	//sleepsend support:
-    static const char *typtext[]={"ok", "invalid", "sleeping"};
-
-    if (cc->sleepsend && cl->stopped) {
-    	if (cur_er->srvid == cl->lastsrvid && cur_er->caid == cl->lastcaid && cur_er->pid == cl->lastpid){
-        	cs_log("%s is stopped - requested by server (%s)",
-            	cl->reader->label, typtext[cl->stopped]);
+		//Search next ECM to send:
+		if ((n = cc_get_nxt_ecm(cl)) < 0) {
 			if (!cc->extended_mode) {
 				rdr->available = 1;
 				cc->ecm_busy = 0;
-			}
-			write_ecm_answer(rdr, cur_er, E_STOPPED, 0, NULL, NULL);
-			return 0;
+			}cs_debug_mask(D_READER, "%s no ecm pending!", getprefix());
+			if (!cc_send_pending_emms(cl))
+				send_cmd05_answer(cl);
+			return 0; // no queued ecms
 		}
-        else {
-        	cl->stopped = 0;
-        }
-	}
-                                                                                                    
-    cl->lastsrvid = cur_er->srvid;
-	cl->lastcaid = cur_er->caid;
-	cl->lastpid = cur_er->pid;
-	//sleepsend support end
+		cur_er = &cl->ecmtask[n];
+		cur_er->rc = 101; //mark ECM as already send
+		cs_debug_mask(D_READER, "cccam: ecm-task %d", cur_er->idx);
 
-	if (buf)
-		memcpy(buf, cur_er->ecm, cur_er->l);
+		//sleepsend support:
+		static const char *typtext[] = { "ok", "invalid", "sleeping" };
 
-	struct cc_srvid cur_srvid;
-	cur_srvid.sid = cur_er->srvid;
-	cur_srvid.ecmlen = cur_er->l;
-
-	cs_readlock(&cc->cards_busy);
-
-	//forward_origin:
-	if (cfg.cc_forward_origin_card && cur_er->origin_reader == rdr && cur_er->origin_card) {
-		it = ll_iter_create(cc->cards);
-		struct cc_card *ncard;
-		while ((ncard = ll_iter_next(&it))) {
-				if (ncard == cur_er->origin_card) { //Search the origin card
-						card = ncard; //found it, use it!
-						break;
+		if (cc->sleepsend && cl->stopped) {
+			if (cur_er->srvid == cl->lastsrvid && cur_er->caid == cl->lastcaid
+					&& cur_er->pid == cl->lastpid) {
+				cs_log(
+						"%s is stopped - requested by server (%s)", cl->reader->label, typtext[cl->stopped]);
+				if (!cc->extended_mode) {
+					rdr->available = 1;
+					cc->ecm_busy = 0;
 				}
-		}
-	}
-	
-	if (!card)
-		card = get_matching_card(cl, cur_er, 0);
-
-	if (!card && has_srvid(rdr->client, cur_er)) {
-		reopen_sids(cc, 1, cur_er, &cur_srvid);
-		card = get_matching_card(cl, cur_er, 0);
-	}
-
-	if (card) {
-		uint8_t *ecmbuf = cs_malloc(&ecmbuf, cur_er->l+13, 0);
-
-		// build ecm message
-		ecmbuf[0] = card->caid >> 8;
-		ecmbuf[1] = card->caid & 0xff;
-		ecmbuf[2] = cur_er->prid >> 24;
-		ecmbuf[3] = cur_er->prid >> 16;
-		ecmbuf[4] = cur_er->prid >> 8;
-		ecmbuf[5] = cur_er->prid & 0xff;
-		ecmbuf[6] = card->id >> 24;
-		ecmbuf[7] = card->id >> 16;
-		ecmbuf[8] = card->id >> 8;
-		ecmbuf[9] = card->id & 0xff;
-		ecmbuf[10] = cur_er->srvid >> 8;
-		ecmbuf[11] = cur_er->srvid & 0xff;
-		ecmbuf[12] = cur_er->l & 0xff;
-		memcpy(ecmbuf + 13, cur_er->ecm, cur_er->l);
-
-		uint8_t send_idx = 1;
-		if (cc->extended_mode) {
-			cc->server_ecm_idx++;
-			if (cc->server_ecm_idx >= 256)
-				cc->server_ecm_idx = 1;
-			cc->g_flag = cc->server_ecm_idx; //Flag is used as index!
-			send_idx = cc->g_flag;
+				write_ecm_answer(rdr, cur_er, E_STOPPED, 0, NULL, NULL);
+				return 0;
+			} else {
+				cl->stopped = 0;
+			}
 		}
 
-		struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cl, send_idx, FALSE);
-		if (eei) {
-			eei->ecm_idx = cur_er->idx;
-		    eei->card = card;
-		    eei->srvid = cur_srvid;
+		cl->lastsrvid = cur_er->srvid;
+		cl->lastcaid = cur_er->caid;
+		cl->lastpid = cur_er->pid;
+		//sleepsend support end
+
+		if (buf)
+			memcpy(buf, cur_er->ecm, cur_er->l);
+
+		struct cc_srvid cur_srvid;
+		cur_srvid.sid = cur_er->srvid;
+		cur_srvid.ecmlen = cur_er->l;
+
+		cs_readlock(&cc->cards_busy);
+
+		//forward_origin:
+		if (cfg.cc_forward_origin_card && cur_er->origin_reader == rdr
+				&& cur_er->origin_card) {
+			it = ll_iter_create(cc->cards);
+			struct cc_card *ncard;
+			while ((ncard = ll_iter_next(&it))) {
+				if (ncard == cur_er->origin_card) { //Search the origin card
+					card = ncard; //found it, use it!
+					break;
+				}
+			}
 		}
-		else
-			add_extended_ecm_idx(cl, send_idx, cur_er->idx, card, cur_srvid, 0);
 
-		rdr->cc_currenthops = card->hop;
+		if (!card)
+			card = get_matching_card(cl, cur_er, 0);
 
-		cs_debug_mask(D_READER,
-				"%s sending ecm for sid %04X(%d) to card %08x, hop %d, ecmtask %d",
-				getprefix(), cur_er->srvid, cur_er->l, card->id, card->hop,
-				cur_er->idx);
-		cc_cmd_send(cl, ecmbuf, cur_er->l + 13, MSG_CW_ECM); // send ecm
+		if (!card && has_srvid(rdr->client, cur_er)) {
+			reopen_sids(cc, 1, cur_er, &cur_srvid);
+			card = get_matching_card(cl, cur_er, 0);
+		}
 
-		free(ecmbuf);
-		
-		//For EMM
-		set_au_data(cl, rdr, card, cur_er);
-		cs_readunlock(&cc->cards_busy);
-		
-		processed_ecms++;
-		if (cc->extended_mode)
+		if (card) {
+			uint8_t *ecmbuf = cs_malloc(&ecmbuf, cur_er->l + 13, 0);
+
+			// build ecm message
+			ecmbuf[0] = card->caid >> 8;
+			ecmbuf[1] = card->caid & 0xff;
+			ecmbuf[2] = cur_er->prid >> 24;
+			ecmbuf[3] = cur_er->prid >> 16;
+			ecmbuf[4] = cur_er->prid >> 8;
+			ecmbuf[5] = cur_er->prid & 0xff;
+			ecmbuf[6] = card->id >> 24;
+			ecmbuf[7] = card->id >> 16;
+			ecmbuf[8] = card->id >> 8;
+			ecmbuf[9] = card->id & 0xff;
+			ecmbuf[10] = cur_er->srvid >> 8;
+			ecmbuf[11] = cur_er->srvid & 0xff;
+			ecmbuf[12] = cur_er->l & 0xff;
+			memcpy(ecmbuf + 13, cur_er->ecm, cur_er->l);
+
+			uint8_t send_idx = 1;
+			if (cc->extended_mode) {
+				cc->server_ecm_idx++;
+				if (cc->server_ecm_idx >= 256)
+					cc->server_ecm_idx = 1;
+				cc->g_flag = cc->server_ecm_idx; //Flag is used as index!
+				send_idx = cc->g_flag;
+			}
+
+			struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cl, send_idx,
+					FALSE);
+			if (eei) {
+				eei->ecm_idx = cur_er->idx;
+				eei->card = card;
+				eei->srvid = cur_srvid;
+			} else
+				add_extended_ecm_idx(cl, send_idx, cur_er->idx, card, cur_srvid,
+						0);
+
+			rdr->cc_currenthops = card->hop;
+			rdr->card_status = CARD_INSERTED;
+
+			cs_debug_mask(
+					D_READER,
+					"%s sending ecm for sid %04X(%d) to card %08x, hop %d, ecmtask %d", getprefix(), cur_er->srvid, cur_er->l, card->id, card->hop, cur_er->idx);
+			cc_cmd_send(cl, ecmbuf, cur_er->l + 13, MSG_CW_ECM); // send ecm
+
+			free(ecmbuf);
+
+			//For EMM
+			set_au_data(cl, rdr, card, cur_er);
+			cs_readunlock(&cc->cards_busy);
+
+			processed_ecms++;
+			if (cc->extended_mode)
 				continue; //process next pending ecm!
-		return 0;
-	} else {
-		//When connecting, it could happen than ecm requests come before all cards are received.
-		//So if the last Message was a MSG_NEW_CARD, this "card receiving" is not already done
-		//if this happens, we do not autoblock it and do not set rc status
-		//So fallback could resolve it
-		if (cc->last_msg != MSG_NEW_CARD && cc->last_msg != MSG_NEW_CARD_SIDINFO && cc->last_msg != MSG_CARD_REMOVED && !cc->just_logged_in) {
-			cs_debug_mask(D_READER, "%s no suitable card on server", getprefix());
-
-			write_ecm_answer(rdr, cur_er, E_NOTFOUND, E2_CCCAM_NOCARD, NULL, NULL);
-			//cur_er->rc = 1;
-			//cur_er->rcEx = 0;
-			//cs_sleepms(300);
-			rdr->last_s = rdr->last_g;
-			
-			reopen_sids(cc, 0, cur_er, &cur_srvid);
+			return 0;
 		} else {
-			//We didn't find a card and the last message was MSG_CARD_REMOVED - so we wait for a new card and process die ecm later
-			cur_er->rc = 102; //mark as waiting
-		}
-	}
-	cs_readunlock(&cc->cards_busy);
+			//When connecting, it could happen than ecm requests come before all cards are received.
+			//So if the last Message was a MSG_NEW_CARD, this "card receiving" is not already done
+			//if this happens, we do not autoblock it and do not set rc status
+			//So fallback could resolve it
+			if (cc->last_msg != MSG_NEW_CARD
+					&& cc->last_msg != MSG_NEW_CARD_SIDINFO
+					&& cc->last_msg != MSG_CARD_REMOVED
+					&& !cc->just_logged_in) {
+				cs_debug_mask(D_READER,
+						"%s no suitable card on server", getprefix());
 
-	//process next pending ecm!
+				write_ecm_answer(rdr, cur_er, E_NOTFOUND, E2_CCCAM_NOCARD, NULL,
+						NULL);
+				//cur_er->rc = 1;
+				//cur_er->rcEx = 0;
+				//cs_sleepms(300);
+				rdr->last_s = rdr->last_g;
+
+				reopen_sids(cc, 0, cur_er, &cur_srvid);
+			} else {
+				//We didn't find a card and the last message was MSG_CARD_REMOVED - so we wait for a new card and process die ecm later
+				cur_er->rc = 102; //mark as waiting
+			}
+		}
+		cs_readunlock(&cc->cards_busy);
+
+		//process next pending ecm!
 	} while (cc->extended_mode || processed_ecms == 0);
-	
+
 	//Now mark all waiting as unprocessed:
 	int8_t i;
 	for (i = 0; i < CS_MAXPENDING; i++) {
@@ -1347,12 +1353,12 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		if (er->rc == 102)
 			er->rc = 100;
 	}
-                            
+
 	if (!cc->extended_mode) {
 		rdr->available = 1;
 		cc->ecm_busy = 0;
 	}
-	
+
 	return -1;
 }
 
@@ -2145,7 +2151,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 		    	if (!cfg.lb_mode) {
 #endif
 					cl->stopped = 1; // server says invalid
-					//rdr->card_status = CARD_FAILURE;
+					rdr->card_status = CARD_FAILURE;
 #ifdef WITH_LB
 				}
 #endif
@@ -3087,6 +3093,7 @@ int32_t cc_cli_connect(struct s_client *cl) {
 	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
 	rdr->card_status = CARD_FAILURE;
+	cl->stopped = 0;
 
 	if (!cc) {
 		// init internals data struct
@@ -3319,7 +3326,7 @@ int32_t cc_available(struct s_reader *rdr, int32_t checktype, ECM_REQUEST *er) {
 			return 0;
 	}
 	//cs_debug_mask(D_TRACE, "checking reader %s availibility", rdr->label);
-	if (!cl->cc || rdr->tcp_connected != 2 || rdr->card_status != CARD_INSERTED) {
+	if (!cl->cc || rdr->tcp_connected != 2) {
 		//Two cases: 
 		// 1. Keepalive ON but not connected: Do NOT send requests, 
 		//     because we can't connect - problem of full running pipes

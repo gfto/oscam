@@ -89,13 +89,12 @@ int32_t constcw_client_init(struct s_client *client)
 
     client->pfd = client->udp_fd;
     
-    if (constcw_file_available())
-    {
-	client->reader->tcp_connected = 2;
-        client->reader->card_status = CARD_INSERTED;
-    }
+    if (constcw_file_available()) {
+		client->reader->tcp_connected = 2;
+		client->reader->card_status = CARD_INSERTED;
+	}
 
-    return(0);
+	return (0);
 }
 
 static int32_t constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *msgbuf)

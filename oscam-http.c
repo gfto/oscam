@@ -1688,19 +1688,27 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 
 	if (apicall) {
 		char *txt = "UNDEF";
-		switch(rdr->card_status)
-		{
-		case NO_CARD: txt = "OFF"; break;
-		case UNKNOWN: txt = "UNKNOWN"; break;
-		case CARD_NEED_INIT: txt = "NEEDINIT"; break;
+		switch (rdr->card_status) {
+		case NO_CARD:
+			txt = "OFF";
+			break;
+		case UNKNOWN:
+			txt = "UNKNOWN";
+			break;
+		case CARD_NEED_INIT:
+			txt = "NEEDINIT";
+			break;
 		case CARD_INSERTED:
-			if (rdr->client->typ=='p')
+			if (rdr->client->typ == 'p')
 				txt = "CONNECTED";
 			else
 				txt = "CARDOK";
 			break;
-		case CARD_FAILURE: txt = "ERROR"; break;
-		default: txt = "UNDEF";
+		case CARD_FAILURE:
+			txt = "ERROR";
+			break;
+		default:
+			txt = "UNDEF";
 		}
 		tpl_addVar(vars, TPLADD, "READERSTATUS", txt);
 		tpl_printf(vars, TPLADD, "READERCAID", "%04X", rdr->caid);
@@ -3029,29 +3037,29 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 					if (cl->typ == 'r' || cl->typ == 'p') //reader or proxy
 					{
 						struct s_reader *rdr = cl->reader;
-								if (rdr->lbvalue)
-									tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "<A HREF=\"readerstats.html?label=%s&amp;hide=4\" TITLE=\"Show statistics for this reader/ proxy\">%d</A>", urlencode(vars, rdr->label), rdr->lbvalue);
-								else
-									tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "<A HREF=\"readerstats.html?label=%s&amp;hide=4\" TITLE=\"Show statistics for this reader/ proxy\">%s</A>", urlencode(vars, rdr->label), "no data");
+						if (rdr->lbvalue)
+							tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "<A HREF=\"readerstats.html?label=%s&amp;hide=4\" TITLE=\"Show statistics for this reader/ proxy\">%d</A>", urlencode(vars, rdr->label), rdr->lbvalue);
+						else
+							tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "<A HREF=\"readerstats.html?label=%s&amp;hide=4\" TITLE=\"Show statistics for this reader/ proxy\">%s</A>", urlencode(vars, rdr->label), "no data");
 
-								switch(rdr->card_status)
-								{
-								case NO_CARD: txt = "OFF"; break;
-								case UNKNOWN: txt = "UNKNOWN"; break;
-								case CARD_NEED_INIT: txt = "NEEDINIT"; break;
-								case CARD_INSERTED:
-									if (cl->typ=='p')
-										txt = "CONNECTED";
-									else
-										txt = "CARDOK";
-									break;
-								case CARD_FAILURE: txt = "ERROR"; break;
-								default: txt = "UNDEF";
-								}
+						switch(rdr->card_status)
+						{
+							case NO_CARD: txt = "OFF"; break;
+							case UNKNOWN: txt = "UNKNOWN"; break;
+							case CARD_NEED_INIT: txt = "NEEDINIT"; break;
+							case CARD_INSERTED:
+								if (cl->typ=='p')
+									txt = "CONNECTED";
+								else
+									txt = "CARDOK";
+								break;
+							case CARD_FAILURE: txt = "ERROR"; break;
+							default: txt = "UNDEF";
+						}
 					}
 					tpl_addVar(vars, TPLADD, "CLIENTCON", txt);
 
-					if ((cl->typ == 'r') && (!apicall))//reader
+					if ((cl->typ == 'r') && (!apicall)) //reader
 					{ 
 						struct s_reader *rdr = cl->reader;
 						if (rdr->ll_entitlements)
