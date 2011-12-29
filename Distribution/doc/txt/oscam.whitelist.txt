@@ -9,10 +9,10 @@ SYNOPSIS
        whitelisting
 
 DESCRIPTIONS
-       w:[CAID][:][provider ID][:][service ID][:][ECM PID][:][CHID][:][ECM length]
+       w:[CAID][:][provider ID][:][service ID][:][ECM PID][:][CHID][:][ECM length 1[,ECM length 2]...]]
 	   entry for whitelisting
 
-       i:[CAID][:][provider ID][:][service ID][:][ECM PID][:][CHID][:][ECM length]
+       i:[CAID][:][provider ID][:][service ID][:][ECM PID][:][CHID][:][ECM length 1[,ECM length 2]...]]
 	   ignore entry
 
 ANNONTATIONS
