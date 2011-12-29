@@ -5743,7 +5743,7 @@ int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line)
 
 static struct s_global_whitelist *global_whitelist_read_int() {
 	FILE *fp;
-	char token[128];
+	char token[128], str1[128];
 	char type;
 	int32_t i, ret, count=0;
 	struct s_global_whitelist *new_whitelist = NULL, *entry, *last;
@@ -5784,7 +5784,9 @@ static struct s_global_whitelist *global_whitelist_read_int() {
 
 		type = 'w';
 		uint32_t caid=0, provid=0, srvid=0, pid=0, chid=0, ecmlen=0;
-		ret = sscanf(token, "%c:%4x:%6x:%4x:%4x:%4x:%4x", &type, &caid, &provid, &srvid, &pid, &chid, &ecmlen);
+		memset(str1, 0, sizeof(str1));
+
+		ret = sscanf(token, "%c:%4x:%6x:%4x:%4x:%4x:%128s", &type, &caid, &provid, &srvid, &pid, &chid, str1);
 
 		type = tolower(type);
 
@@ -5793,28 +5795,41 @@ static struct s_global_whitelist *global_whitelist_read_int() {
 		if (ret<1 || (type != 'w' && type != 'i'))
 			continue;
 
-		if(!cs_malloc(&entry,sizeof(struct s_global_whitelist), -1))
-			continue;
+		strncat(str1, ",", sizeof(str1));
+		char *p = str1, *p2 = str1;
+		while (*p) {
+			if (*p == ',') {
+				*p = 0;
+				ecmlen = 0;
+				sscanf(p2, "%4x", &ecmlen);
 
-		count++;
-		entry->line=line;
-		entry->type=type;
-		entry->caid=caid;
-		entry->provid=provid;
-		entry->srvid=srvid;
-		entry->pid=pid;
-		entry->chid=chid;
-		entry->ecmlen=ecmlen;
+				if(!cs_malloc(&entry,sizeof(struct s_global_whitelist), -1))
+					return new_whitelist;
 
-		cs_debug_mask(D_TRACE, "whitelist: %c: %04X %06X %04X %04X %04X %04X",
-			entry->type, entry->caid, entry->provid, entry->srvid, entry->pid, entry->chid, entry->ecmlen);
+				count++;
+				entry->line=line;
+				entry->type=type;
+				entry->caid=caid;
+				entry->provid=provid;
+				entry->srvid=srvid;
+				entry->pid=pid;
+				entry->chid=chid;
+				entry->ecmlen=ecmlen;
 
-		if (!new_whitelist) {
-			new_whitelist=entry;
-			last = new_whitelist;
-		} else {
-			last->next = entry;
-			last = entry;
+				cs_debug_mask(D_TRACE, "whitelist: %c: %04X %06X %04X %04X %04X %04X",
+					entry->type, entry->caid, entry->provid, entry->srvid, entry->pid, entry->chid, entry->ecmlen);
+
+				if (!new_whitelist) {
+					new_whitelist=entry;
+					last = new_whitelist;
+				} else {
+					last->next = entry;
+					last = entry;
+				}
+
+				p2 = p + 1;
+			}
+			p++;
 		}
 	}
 
