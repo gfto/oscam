@@ -623,7 +623,7 @@ void cleanup_thread(void *var)
 	if (cl->reader){
 		remove_reader_from_active(cl->reader);
 		if(cl->reader->ph.cleanup)
-		cl->reader->ph.cleanup(cl);
+			cl->reader->ph.cleanup(cl);
 		if (cl->typ == 'r')
 			ICC_Async_Close(cl->reader);
 		if (cl->typ == 'p')

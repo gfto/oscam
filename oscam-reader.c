@@ -189,6 +189,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 	if ((client->udp_fd=socket(PF_INET, client->is_udp ? SOCK_DGRAM : SOCK_STREAM, client->is_udp ? IPPROTO_UDP : IPPROTO_TCP))<0) {
 		cs_log("Socket creation failed (errno=%d %s)", errno, strerror(errno));
 		client->udp_fd = 0;
+		block_connect(rdr);
 		return -1;
 	}
 
@@ -220,6 +221,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 			cs_log("bind failed (errno=%d %s)", errno, strerror(errno));
 			close(client->udp_fd);
 			client->udp_fd = 0;
+			block_connect(rdr);
 			return -1;
 		}
 	}
@@ -258,7 +260,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 		if (r != 0) {
 			cs_log("connect(fd=%d) failed: (errno=%d %s)", client->udp_fd, errno, strerror(errno));
 			block_connect(rdr); //connect has failed. Block connect for a while
-      			close(client->udp_fd);
+			close(client->udp_fd);
 			client->udp_fd = 0;
 			return -1;
 		}
