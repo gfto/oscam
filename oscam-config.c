@@ -5746,7 +5746,7 @@ static struct s_global_whitelist *global_whitelist_read_int() {
 	char token[128], str1[128];
 	char type;
 	int32_t i, ret, count=0;
-	struct s_global_whitelist *new_whitelist = NULL, *entry, *last;
+	struct s_global_whitelist *new_whitelist = NULL, *entry, *last=NULL;
 	uint32_t line = 0;
 
 	const char *cs_whitelist="oscam.whitelist";
