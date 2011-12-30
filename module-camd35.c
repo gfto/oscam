@@ -354,7 +354,6 @@ static int32_t tcp_connect()
 		int32_t handle=0;
 		handle = network_tcp_connection_open(cl->reader);
 		if (handle<0)  {
-			block_connect(cl->reader);
 			return(0);
 		}
 
@@ -626,23 +625,26 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 				rdr->auprovid);
 	}
 
-	if (buf[0] == 0x08 && ((rdr->ph.type == MOD_CONN_TCP && !cfg.c35_tcp_suppresscmd08) || (rdr->ph.type == MOD_CONN_UDP && !cfg.c35_udp_suppresscmd08))) {
-		if(buf[21] == 0xFF) {
+	if (buf[0] == 0x08
+			&& ((rdr->ph.type == MOD_CONN_TCP && !cfg.c35_tcp_suppresscmd08)
+					|| (rdr->ph.type == MOD_CONN_UDP
+							&& !cfg.c35_udp_suppresscmd08))) {
+		if (buf[21] == 0xFF) {
 			client->stopped = 2; // server says sleep
 			rdr->card_status = NO_CARD;
 		} else {
 #ifdef WITH_LB
-		        if (!cfg.lb_mode) {
+			if (!cfg.lb_mode) {
 #endif
-			        client->stopped = 1; // server says invalid
-                                rdr->card_status = CARD_FAILURE;
+				client->stopped = 1; // server says invalid
+				rdr->card_status = CARD_FAILURE;
 #ifdef WITH_LB
-                        }
+			}
 #endif
 		}
 
-		cs_log("%s CMD08 (%02X - %d) stop request by server (%s)",
-				rdr->label, buf[21], buf[21], typtext[client->stopped]);
+		cs_log(
+				"%s CMD08 (%02X - %d) stop request by server (%s)", rdr->label, buf[21], buf[21], typtext[client->stopped]);
 	}
 
 #ifdef CS_CACHEEX

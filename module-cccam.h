@@ -114,6 +114,7 @@ struct cc_card {
 	SIDTABBITS sidtabno;
 	time_t timeout;
 	uint8_t is_ext;
+	uint8_t tout_counter;
 };
 
 typedef enum {
@@ -141,6 +142,7 @@ struct cc_extended_ecm_idx {
 	struct cc_card *card;
 	struct cc_srvid srvid;
 	uint8_t free_card;
+	struct timeb	tps;
 } EXTENDED_ECM_IDX;
 
 struct cc_data {
