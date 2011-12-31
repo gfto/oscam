@@ -2618,8 +2618,17 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	//Ariva quickfix (invalid nagra provider)
 	if (((er->caid & 0xFF00) == 0x1800) && er->prid > 0x00FFFF) er->prid=0;
 
+	//Check for invalid provider, extract provider out of ecm:
+	uint32_t prid = chk_provid(er->ecm, er->caid);
 	if (!er->prid)
-		er->prid = chk_provid(er->ecm, er->caid);
+		er->prid = prid;
+	else
+	{
+		if (prid && prid != er->prid) {
+			cs_debug_mask(D_TRACE, "provider fixed: %04X:%06X to %04X:%06X",er->caid, er->prid, er->caid, prid);
+			er->prid = prid;
+		}
+	}
 
 	// Set providerid for newcamd clients if none is given
 	if( (!er->prid) && client->ncd_server ) {
