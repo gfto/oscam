@@ -1065,7 +1065,7 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 			if (!(rdr->cc_want_emu) && (ncard->caid>>8==0x18) && (!xcard || ncard->hop < xcard->hop))
 				xcard = ncard; //remember card (D+ / 1810 fix) if request has no provider, but card has
 
-			if (!cur_er->prid && !ll_count(ncard->providers)) { //card has no providers:
+			if (!ll_count(ncard->providers)) { //card has no providers:
 				if (h < 0 || ncard->hop < h || (ncard->hop == h
 						&& cc_UA_valid(ncard->hexserial))) {
 					// ncard is closer
