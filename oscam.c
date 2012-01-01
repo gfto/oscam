@@ -289,7 +289,7 @@ static void usage()
   fprintf(stderr, "pandora ");
 #endif
 #ifdef CS_CACHEEX
-  fprintf(stderr, "CacheEx ");
+  fprintf(stderr, "cache-exchange ");
 #endif
 #ifdef MODULE_GBOX
   fprintf(stderr, "gbox ");
