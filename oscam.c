@@ -3323,6 +3323,10 @@ void * work_thread(void *ptr) {
 		}
 
 		if (!data) {
+			if (!cl->pfd) {
+				cl->kill = 1;
+				continue;
+			}
 			pfd[0].fd = cl->pfd;
 			pfd[0].events = POLLIN | POLLPRI | POLLHUP;
 
