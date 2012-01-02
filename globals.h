@@ -756,6 +756,7 @@ typedef struct ecm_request_t {
 #ifdef CS_CACHEEX
 	uchar			cacheex_done;
 	struct s_client *cacheex_src;               // cacheex origin
+	int8_t          cacheex_pushed;             // to avoid duplicate pushs
 	int32_t			csp_hash; 					// csp has its own hash
 #endif
 	char			msglog[MSGLOGSIZE];

@@ -3417,13 +3417,11 @@ void cc_update_nodeid()
 static void cc_s_idle(struct s_client *cl) {
 	cs_debug_mask(D_TRACE, "ccc idle %s", username(cl));
 	if (cfg.cc_keep_connected) {
-		if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
-			cl->kill = 1;
-		else
-			cl->last = time(NULL);
+		cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
+		cl->last = time(NULL);
 	} else {
 		cs_debug_mask(D_CLIENT, "%s keepalive after maxidle is reached", getprefix());
-		cl->kill = 1;
+		cs_disconnect_client(cl);
 	}
 }
 

@@ -1583,7 +1583,10 @@ void cs_disconnect_client(struct s_client * client)
 	if (client->ip)
 		snprintf(buf, sizeof(buf), " from %s", cs_inet_ntoa(client->ip));
 	cs_log("%s disconnected %s", username(client), buf);
-	cs_exit(0);
+	if (client == cur_client())
+		cs_exit(0);
+	else
+		kill_thread(client);
 }
 
 #ifdef CS_CACHEEX
@@ -1630,6 +1633,9 @@ void cs_cache_push(ECM_REQUEST *er)
 	if (er->rc >= E_NOTFOUND) //Maybe later we could support other rcs
 		return;
 
+	if (er->cacheex_pushed || (er->ecmcacheptr && er->ecmcacheptr->cacheex_pushed))
+		return;
+
 	//cacheex=2 mode: push (server->remote)
 	struct s_client *cl;
 	for (cl=first_client->next; cl; cl=cl->next) {
@@ -1659,6 +1665,9 @@ void cs_cache_push(ECM_REQUEST *er)
 			}
 		}
 	}
+
+	er->cacheex_pushed = 1;
+	if (er->ecmcacheptr) er->ecmcacheptr->cacheex_pushed = 1;
 }
 #endif
 
