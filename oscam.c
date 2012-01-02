@@ -3323,10 +3323,8 @@ void * work_thread(void *ptr) {
 		}
 
 		if (!data) {
-			if (!cl->pfd) {
-				cl->kill = 1;
-				continue;
-			}
+			if (!cl->pfd)
+				break;
 			pfd[0].fd = cl->pfd;
 			pfd[0].events = POLLIN | POLLPRI | POLLHUP;
 
@@ -3530,7 +3528,7 @@ void * work_thread(void *ptr) {
 	}
 	
 	cs_debug_mask(D_TRACE, "ending thread");
-
+	cl->thread_active = 0;
 	pthread_exit(NULL);
 	return NULL;
 }
