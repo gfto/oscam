@@ -3293,12 +3293,12 @@ void * work_thread(void *ptr) {
 		if (data)
 			cs_debug_mask(D_TRACE, "data from add_job action=%d", data->action);
 
-//		if (!cl || !is_valid_client(cl)) {
-//			if (data && data!=&tmp_data)
-//				free(data);
-//			data = NULL;
-//			return NULL;
-//		}
+		if (!cl || !is_valid_client(cl)) {
+			if (data && data!=&tmp_data)
+				free(data);
+			data = NULL;
+			return NULL;
+		}
 
 		if (cl->kill) {
 			cs_debug_mask(D_TRACE, "ending thread");
@@ -3312,12 +3312,13 @@ void * work_thread(void *ptr) {
 		}
 
 		if (!data) {
+			check_status(cl);
 			pthread_mutex_lock(&cl->thread_lock);
 			if (cl->joblist && ll_count(cl->joblist)>0) {
 				LL_ITER itr = ll_iter_create(cl->joblist);
 				data = ll_iter_next(&itr);
 				ll_iter_remove(&itr);
-				cs_debug_mask(D_TRACE, "start next job from list action=%d", data->action);
+				//cs_debug_mask(D_TRACE, "start next job from list action=%d", data->action);
 			}
 			pthread_mutex_unlock(&cl->thread_lock);
 		}
@@ -3332,11 +3333,11 @@ void * work_thread(void *ptr) {
 			rc = poll(pfd, 1, 3000);
 			pthread_sigmask(SIG_BLOCK, &newmask, NULL);
 
-			if (rc == -1)
-				cs_debug_mask(D_TRACE, "poll wakeup");
+			//if (rc == -1)
+			//	cs_debug_mask(D_TRACE, "poll wakeup");
 
 			if (rc>0) {
-				cs_debug_mask(D_TRACE, "data on socket");
+			//	cs_debug_mask(D_TRACE, "data on socket");
 				data=&tmp_data;
 				
 				if (reader)

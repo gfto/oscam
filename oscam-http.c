@@ -1869,6 +1869,8 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 		cs_strncpy((char *)account->usr, user, sizeof(account->usr));
 		account->monlvl=cfg.mon_level;
 		account->tosleep=cfg.tosleep;
+		if (!account->grp)
+			account->grp = 1;
 		for (i=1; i<CS_MAXCAIDTAB; account->ctab.mask[i++]=0xffff);
 		for (i=1; i<CS_MAXTUNTAB; account->ttab.bt_srvid[i++]=0x0000);
 		account->expirationdate=(time_t)NULL;
