@@ -348,8 +348,14 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 #if defined(SCI_DEV)
 				call (Sci_Activate(reader));
 				call (Sci_Reset(reader, atr));
-#elif defined(COOL)
-				call (Cool_Reset(reader, atr));
+#elif defined(COOL)				
+				if ( ! reader->ins7e11_fast_reset) {
+					call (Cool_Reset(reader, atr));
+				}
+				else {
+					cs_log("Doing fast reset");
+					call (Cool_FastReset_With_ATR(reader, atr));
+				}
 #elif defined(WITH_STAPI)
 				call (STReader_Reset(reader->stsmart_handle, atr));
 #elif defined(AZBOX)

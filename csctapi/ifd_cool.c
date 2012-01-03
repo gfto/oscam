@@ -142,6 +142,23 @@ int32_t Cool_FastReset (struct s_reader *reader)
     return 0;
 }
 
+int32_t Cool_FastReset_With_ATR (struct s_reader *reader, ATR * atr)
+{
+	int32_t n = 40;
+	unsigned char buf[40];
+
+	//reset card
+	call (cnxt_smc_reset_card (specdev()->handle, ATR_TIMEOUT, NULL, NULL));
+	cs_sleepms(50);
+	call (cnxt_smc_get_atr (specdev()->handle, buf, &n));
+
+	call (!ATR_InitFromArray (atr, buf, n) == ATR_OK);
+	{
+		cs_sleepms(50);
+		return OK;
+	}
+}
+
 int32_t Cool_Close (struct s_reader *reader)
 {
 	call(cnxt_smc_close (specdev()->handle));
