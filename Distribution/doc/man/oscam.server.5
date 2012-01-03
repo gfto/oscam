@@ -115,9 +115,9 @@ description of reader, default:none
 .PP
 \fBcacheex\fP = \fB0\fP|\fB1\fP|\fB2\fP|\fB3\fP
 .RS 3n
-set cache exchange mode, default:0
+set cache exchange mode
 
- \fB0\fP: disable cache exchange mode
+ \fB0\fP: disable cache exchange mode (default)
  \fB1\fP: enable cache exchange pull mode
  \fB2\fP: enable cache exchange push mode for camd 3.5x and CCcam protocol
  \fB3\fP: enable reverse cache exchange push mode for camd 3.5x and
@@ -535,6 +535,30 @@ If overclocking does not work, verify the effective baudrate in the logfile.
 If it deviates too much from the requested baudrate, the SC will not be recognized (no ATR) 
 and the value for \fBmhz\fR should be adjusted again. 
 The higher the baudrate, the more accurate the effective baudrate can be. 
+.SH CACHE EXCHANGE
+.TP 3n
+\(bu
+pull mode (on request: cache exchange from remote to local OSCam)
+
+ECM requests will be forwarded to the remote cache exchange partner. If the CW 
+could not be found in the cache of the remote exchange partner, a not found 
+will be answered. If the CW could not be found in the cache of the remote 
+exchange partner but a pending ECM request is open, the request will be 
+re-initiated after the wait time defined in \fBcacheexwaittime\fR.
+.TP 3n
+\(bu
+push mode (continuous: cache exchange from remote to local OSCam)
+
+CWs from the remote cache exchange partner will be forwarded to the local 
+cache. Forwarding only works while the camd 3.5x or CCcam protocol connection 
+between the local and remote OSCam has been established.
+.TP 3n
+\(bu
+reverse push mode (continuous: cache exchange from local to remote OSCam)
+
+CWs from the local cache will be forwarded to the remote cache exchange 
+partner. Forwarding only works while the camd 3.5x or CCcam protocol connection 
+between the remote and local OSCam has been established.
 .SH EXAMPLES
 .TP 3n
 \(bu
