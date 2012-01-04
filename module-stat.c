@@ -894,14 +894,14 @@ int32_t get_best_reader(ECM_REQUEST *er)
 #endif	
 
 	for(ea = er->matching_rdr; ea; ea = ea->next) {
-		ea->status &= 0xFC;
+		ea->status &= !(READER_ACTIVE|READER_FALLBACK);
 		ea->value = 0;
 	}
 
 	for(ea = er->matching_rdr; ea && nreaders; ea = ea->next) {
 			rdr = ea->reader;
 #ifdef CS_CACHEEX
-			int8_t cacheex = ea->reader->cacheex;
+			int8_t cacheex = rdr->cacheex;
 			if (cacheex == 1) {
 				ea->status |= READER_ACTIVE; //no statistics, this reader is a cacheex reader and so always active
 				continue;
@@ -1130,7 +1130,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		if (nr>5)
 			snprintf(rptr, 20, "...(%d more)", nr - 5);
 
-		cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X&%06X/%04X:%04X:%02hX: n=%d selected readers: %s",
+		cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X&%06X/%04X:%04X/%02hX: n=%d selected readers: %s",
 			username(er->client), er->caid, prid, er->srvid, er->chid, er->l, nr, buf);
 	}
 #endif

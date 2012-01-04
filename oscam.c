@@ -1804,15 +1804,11 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 	}
 	else {
 		if(er->rc < ecm->rc) {
-			cs_readlock(&ecmcache_lock);
-			memcpy(ecm->cw, er->cw, sizeof(er->cw));
-			memcpy(ecm->msglog, er->msglog, sizeof(er->msglog));
-			ecm->rc = er->rc;
-			ecm->cacheex_src = cl;
-			ecm->selected_reader = cl->reader;
-			cs_readunlock(&ecmcache_lock);
-			distribute_ecm(ecm, er->rc);
-			pthread_kill(timecheck_thread, OSCAM_SIGNAL_WAKEUP); 
+			er->ecmcacheptr = ecm;
+			er->client = ecm->client;
+			write_ecm_answer(cl->reader, er, er->rc, er->rcEx, er->cw, ecm->msglog);
+			//distribute_ecm(ecm, er->rc);
+			//pthread_kill(timecheck_thread, OSCAM_SIGNAL_WAKEUP);
 			cs_cache_push(er);  //cascade push!
 
 			cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 1);
