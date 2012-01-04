@@ -1764,19 +1764,17 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 		er->checksum^=*lp;
 
 	er->grp = cl->grp;
-	er->ocaid = er->caid;
+//	er->ocaid = er->caid;
 	er->rc = E_CACHEEX;
 	er->cacheex_src = cl;
 
-	if (!csp) {
+	if (er->l > 0) {
 		int32_t offset = 3;
 		if ((er->caid >> 8) == 0x17)
 			offset = 13;
-		if (er->l > 0) {
-			unsigned char md5tmp[MD5_DIGEST_LENGTH];
-			memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, md5tmp), CS_ECMSTORESIZE);
-			er->csp_hash = csp_ecm_hash(er);
-		}
+		unsigned char md5tmp[MD5_DIGEST_LENGTH];
+		memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, md5tmp), CS_ECMSTORESIZE);
+		er->csp_hash = csp_ecm_hash(er);
 		//csp has already initialized these hashcode
 	}
 
@@ -1791,6 +1789,8 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 		er->next = ecmtask;
 		ecmtask = er;
 		cs_writeunlock(&ecmcache_lock);
+
+		er->selected_reader = cl->reader;
 
 		cs_cache_push(er);  //cascade push!
 
@@ -1809,6 +1809,7 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 			memcpy(ecm->msglog, er->msglog, sizeof(er->msglog));
 			ecm->rc = er->rc;
 			ecm->cacheex_src = cl;
+			ecm->selected_reader = cl->reader;
 			cs_readunlock(&ecmcache_lock);
 			distribute_ecm(ecm, er->rc);
 			pthread_kill(timecheck_thread, OSCAM_SIGNAL_WAKEUP); 
