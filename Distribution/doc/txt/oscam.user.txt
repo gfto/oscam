@@ -53,7 +53,7 @@ DESCRIPTIONS
 	   3: enable reverse cache exchange push mode for camd 3.5x and
 	      CCcam protocol
 
-	  Identical cache exchange modes must be set on local and remote OSCam reader.
+	  Identical cache exchange modes must be set on local OSCam user account and remote OSCam server.
 
        sleep = minutes
 	  time waiting for inactive user, default:none

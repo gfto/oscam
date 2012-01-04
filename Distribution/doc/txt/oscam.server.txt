@@ -96,7 +96,7 @@ DESCRIPTIONS
 	   3: enable reverse cache exchange push mode for camd 3.5x and
 	      CCcam protocol
 
-	  Identical cache exchange modes must be set on local and remote OSCam reader.
+	  Identical cache exchange modes must be set on local OSCam server and remote OSCam user asccount.
 
        logport = 0|port
 	  camd 3.x reader logport, camd 3.x UDP must be activated, only works if there's no camd 3.x cascading, 0  =  dis‐
