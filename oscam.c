@@ -3339,15 +3339,15 @@ void * work_thread(void *ptr) {
 			if (rc>0) {
 			//	cs_debug_mask(D_TRACE, "data on socket");
 				data=&tmp_data;
+				data->ptr = NULL;
 				
 				if (reader)
 					data->action = ACTION_READER_REMOTE;
-				else
+				else {
 					data->action = ACTION_CLIENT_TCP;
-				data->ptr = NULL;
-
-				if (pfd[0].revents & (POLLHUP | POLLNVAL))
-					cl->kill = 1;
+					if (pfd[0].revents & (POLLHUP | POLLNVAL))
+						cl->kill = 1;
+				}
 			}
 		}
 
@@ -3863,12 +3863,23 @@ void * client_check(void) {
 
 void * reader_check(void) {
 	struct s_client *cl;
-
+	struct s_reader *rdr;
 	while (1) {
 		for (cl=first_client->next; cl ; cl=cl->next) {
 			if (!cl->thread_active)
 				check_status(cl);
 		}
+		cs_readlock(&readerlist_lock);
+		for (rdr=first_active_reader; rdr; rdr=rdr->next) {
+			if (rdr->enable) {
+				cl = rdr->client;
+				if (!cl || cl->kill)
+					restart_cardreader(rdr, 0);
+				else if (!cl->thread_active)
+					check_status(cl);
+			}
+		}
+		cs_readunlock(&readerlist_lock);
 		cs_sleepms(1000);
 	}
 }
