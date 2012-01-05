@@ -315,7 +315,6 @@ void cc_cli_close(struct s_client *cl, int32_t UNUSED(call_conclose)) {
 	rdr->tcp_connected = 0;
 	rdr->card_status = NO_CARD;
 	rdr->available = 0;
-	rdr->ncd_msgid = 0;
 	rdr->last_s = rdr->last_g = 0;
 	
 	network_tcp_connection_close(rdr); 

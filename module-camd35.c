@@ -143,12 +143,12 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 	client->last=time((time_t *) 0);
 
 	switch(rc) {
-		case 0: 	break;
+		//case 0: 	break;
 		case -1:	cs_log("packet to small (%d bytes)", rs);		break;
 		case -2:	cs_auth_client(client, 0, "unknown user");	break;
 		case -3:	cs_log("incomplete request !");			break;
 		case -4:	cs_log("checksum error (wrong password ?)");	break;
-		default:	cs_debug_mask(D_TRACE, "camd35_recv returns rc=%d", rc); break;
+		//default:	cs_debug_mask(D_TRACE, "camd35_recv returns rc=%d", rc); break;
 	}
 
 	return(rc);

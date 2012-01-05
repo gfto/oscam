@@ -883,7 +883,6 @@ struct s_client {
 	uint32_t		pcrc;        		// pwd crc
 	AES_KEY			aeskey;      		// encryption key needed by monitor and used by camd33, camd35
 	AES_KEY			aeskey_decrypt;		// decryption key needed by monitor and used by camd33, camd35
-	uint16_t		ncd_msgid;
 	char			ncd_client_id[5];
 	uchar			ncd_skey[16];
 
@@ -1086,7 +1085,6 @@ struct s_reader  									//contains device info, reader info and card info
 	uchar			ncd_key[16];
 	uchar			ncd_skey[16];
 	int8_t			ncd_disable_server_filt;
-	uint16_t		ncd_msgid;
 	int8_t			ncd_proto;
 #ifdef MODULE_CCCAM
 	char			cc_version[7];					// cccam version
