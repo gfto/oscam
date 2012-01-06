@@ -307,6 +307,14 @@ void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar 
 void cs_close_log(void)
 {
 	if (!fp) return;
+
+	//Wait for log close:
+	int i = 2;
+	while (ll_count(log_list) > 0 && i) {
+		cs_sleepms(500);
+		i--;
+	}
+
 	fclose(fp);
 	fp=(FILE *)0;
 }

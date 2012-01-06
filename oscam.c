@@ -36,6 +36,7 @@ int32_t thread_pipe[2] = {0, 0};
 int8_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)restart fork, restart by webif, 2=like=1, but also restart on segfaults
 #endif
 int8_t cs_capture_SEGV=0;
+int8_t cs_dump_stack=0;
 uint16_t cs_waittime = 60;
 uint8_t cs_http_use_utf8 = 0;
 char  cs_tmpdir[200]={0x00};
@@ -60,6 +61,7 @@ uint32_t ecmtask_counter = 0;
 
 struct  s_config  cfg;
 
+char    *prog_name = NULL;
 char    *processUsername = NULL;
 char    *loghist = NULL;     // ptr of log-history
 char    *loghistptr = NULL;
@@ -769,6 +771,33 @@ void cs_card_info()
 			add_job(cl, ACTION_READER_CARDINFO, NULL, 0);
 }
 
+void cs_dumpstack(int32_t sig)
+{
+	FILE *fp = fopen("oscam.crash", "a+");
+
+	time_t timep;
+	char buf[200];
+
+	time(&timep);
+	cs_ctime_r(&timep, buf);
+
+	fprintf(stderr, "oscam crashed with signal %d on %swriting oscam.crash\n", sig, buf);
+
+	fprintf(fp, "%sFATAL: Signal %d: %s Fault. Logged StackTrace:\n\n", buf, sig, (sig == SIGSEGV) ? "Segmentation" : ((sig == SIGBUS) ? "Bus" : "Unknown"));
+	fclose(fp);
+
+	FILE *cmd = fopen("/tmp/gdbcmd", "w");
+	fputs("bt\n", cmd);
+	fputs("thread apply all bt\n", cmd);
+	fclose(cmd);
+
+	snprintf(buf, sizeof(buf)-1, "gdb %s %d -batch -x /tmp/gdbcmd >> oscam.crash", prog_name, getpid());
+	system(buf);
+
+	exit(-1);
+}
+
+
 /**
  * called by signal SIGHUP
  *
@@ -824,8 +853,15 @@ static void init_signal()
 		set_signal_handler(SIGUSR2, 1, cs_card_info);
 		set_signal_handler(OSCAM_SIGNAL_WAKEUP, 0, cs_dummy);
 
-		if (cs_capture_SEGV)
+		if (cs_capture_SEGV) {
 			set_signal_handler(SIGSEGV, 1, cs_exit);
+			set_signal_handler(SIGBUS, 1, cs_exit);
+		}
+		else if (cs_dump_stack) {
+			set_signal_handler(SIGSEGV, 1, cs_dumpstack);
+			set_signal_handler(SIGBUS, 1, cs_dumpstack);
+		}
+
 
 		cs_log("signal handling initialized (type=%s)",
 #ifdef CS_SIGBSD
@@ -839,7 +875,8 @@ static void init_signal()
 
 void cs_exit(int32_t sig)
 {
-
+	if (cs_dump_stack && (sig == SIGSEGV || sig == SIGBUS))
+		cs_dumpstack(sig);
 
 	set_signal_handler(SIGCHLD, 1, SIG_IGN);
 	set_signal_handler(SIGHUP , 1, SIG_IGN);
@@ -3986,6 +4023,7 @@ static void restart_daemon()
 
 int32_t main (int32_t argc, char *argv[])
 {
+	prog_name = argv[0];
 	if (pthread_key_create(&getclient, NULL)) {
 		fprintf(stderr, "Could not create getclient, exiting...");
 		exit(1);
@@ -4086,7 +4124,7 @@ int32_t main (int32_t argc, char *argv[])
 	0
   };
 
-  while ((i=getopt(argc, argv, "gbsuc:t:d:r:w:hm:x"))!=EOF)
+  while ((i=getopt(argc, argv, "gbsauc:t:d:r:w:hm:x"))!=EOF)
   {
 	  switch(i) {
 		  case 'g':
@@ -4097,6 +4135,9 @@ int32_t main (int32_t argc, char *argv[])
 			  break;
 		  case 's':
 		      cs_capture_SEGV=1;
+		      break;
+		  case 'a':
+		      cs_dump_stack=1;
 		      break;
 		  case 'c':
 			  cs_strncpy(cs_confdir, optarg, sizeof(cs_confdir));
