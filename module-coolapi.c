@@ -16,7 +16,7 @@
 #include "globals.h"
 
 #define MAX_PIDS 20
-#define MAX_FILTER 10
+#define MAX_FILTER 24
 
 #define MAX_DEMUX 3
 
