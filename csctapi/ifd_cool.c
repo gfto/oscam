@@ -80,7 +80,7 @@ int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
 int32_t Cool_Transmit (struct s_reader *reader, BYTE * sent, uint32_t size)
 { 
 	specdev()->cardbuflen = 256;//it needs to know max buffer size to respond?
-	call (cnxt_smc_read_write(specdev()->handle, FALSE, sent, size, specdev()->cardbuffer, &specdev()->cardbuflen, 50, 0));
+	call (cnxt_smc_read_write(specdev()->handle, FALSE, sent, size, specdev()->cardbuffer, &specdev()->cardbuflen, 150, 0));
 	//call (cnxt_smc_read_write(specdev()->handle, FALSE, sent, size, specdev()->cardbuffer, &specdev()->cardbuflen, read_timeout, 0));
 	cs_ddump_mask(D_DEVICE, sent, size, "COOL IO: Transmit: ");
 	return OK;

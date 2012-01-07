@@ -941,9 +941,11 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 		I = 0;
 
 	//set clock speed to max if internal reader
+#ifndef COOL	//auto-overclock wont work fine with Cooli
 	if((reader->typ > R_MOUSE && reader->crdr.active == 0) || (reader->crdr.active == 1 && reader->crdr.max_clock_speed==1))
 		if (reader->mhz == 357 || reader->mhz == 358) //no overclocking
 			reader->mhz = atr_fs_table[FI] / 10000; //we are going to clock the card to this nominal frequency
+#endif
 
 	//set clock speed/baudrate must be done before timings
 	//because reader->current_baudrate is used in calculation of timings
