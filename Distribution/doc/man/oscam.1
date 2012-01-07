@@ -50,6 +50,11 @@ Windows (based on cygwin1.dll)
 Mac OS X
 .SH OPTIONS
 .PP
+\fB-a\fP
+.RS 3n
+write oscam.crash on segfault (needs installed GDB and OSCam compiled with debug infos -ggdb)
+.RE
+.PP
 \fB-b\fP
 .RS 3n
 starts in background, writing oscam.version with starttime and version info in temporary directory
@@ -98,6 +103,11 @@ restart level:
    \fB0\fP = disabled, restart request sets exit status to 99
    \fB1\fP = restart activated, web interface can restart oscam (default)
    \fB2\fP = like 1, but also restart on segmentation faults
+.RE
+.PP
+\fB-u\fP
+.RS 3n
+enable output of web interface in UTF-8 charset
 .RE
 .PP
 \fB-w\fP <seconds>
