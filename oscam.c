@@ -772,6 +772,13 @@ void cs_card_info()
 			add_job(cl, ACTION_READER_CARDINFO, NULL, 0);
 }
 
+/**
+ * write stacktrace to oscam.crash. file is always appended
+ * Usage:
+ * 1. compile oscam with debug parameters (Makefile: DS_OPTS="-ggdb")
+ * 2. you need gdb installed and working on the local machine
+ * 3. start oscam with parameter: -a
+ */
 void cs_dumpstack(int32_t sig)
 {
 	FILE *fp = fopen("oscam.crash", "a+");
@@ -3351,8 +3358,7 @@ void * work_thread(void *ptr) {
 			pthread_mutex_lock(&cl->thread_lock);
 			if (cl->joblist && ll_count(cl->joblist)>0) {
 				LL_ITER itr = ll_iter_create(cl->joblist);
-				data = ll_iter_next(&itr);
-				ll_iter_remove(&itr);
+				data = ll_iter_next_remove(&itr);
 				//cs_debug_mask(D_TRACE, "start next job from list action=%d", data->action);
 			}
 			pthread_mutex_unlock(&cl->thread_lock);
@@ -3952,7 +3958,8 @@ int32_t accept_connection(int32_t i, int32_t j) {
 				add_job(cl, ACTION_CLIENT_INIT, NULL, 0);
 			}
 			add_job(cl, ACTION_CLIENT_UDP, buf, n+3);
-		}
+		} else
+			free(buf);
 	} else { //TCP
 		int32_t pfd3;
 		if ((pfd3=accept(ph[i].ptab->ports[j].fd, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
