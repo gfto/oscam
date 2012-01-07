@@ -454,7 +454,7 @@ DESCRIPTIONS
 	   dsr9500 (DSR 9500)
 
    The [cccam] section
-       port = 0|port
+       port = 0|port[,0|port]...
 	  TCP/IP port for CCcam clients, 0 = disabled, default:0
 
        version = <main version>.<version>.<sub version>
