@@ -17,7 +17,9 @@ struct s_log {
 	char *txt;
 	int8_t header_len;
 	int8_t direct_log;
-	struct s_client *cl;
+	int8_t cl_typ;
+	char *cl_usr;
+	char *cl_text;
 };
 
 CS_MUTEX_LOCK loghistory_lock;
@@ -186,7 +188,7 @@ static int32_t get_log_header(int32_t m, char *txt)
 		return pos + snprintf(txt+pos, LOG_BUF_SIZE-pos, "%8X%-3.3s ", cl?cl->tid:0, "");
 }
 
-static void write_to_log(char *txt, int8_t header_len, int8_t do_flush, struct s_client *cur_cl)
+static void write_to_log(char *txt, int8_t header_len, int8_t cl_typ, char *cl_text, char *cl_usr, int8_t do_flush)
 {
 	char sbuf[16];
 
@@ -208,26 +210,7 @@ static void write_to_log(char *txt, int8_t header_len, int8_t do_flush, struct s
 	cs_write_log(txt + 8, do_flush);
 
 	if (loghist) {
-		char *usrtxt = NULL;
-
-		if (!cur_cl)
-			usrtxt = "undef";
-		else {
-			switch(cur_cl->typ) {
-				case 'c':
-				case 'm':
-					usrtxt = cur_cl->account ? cur_cl->account->usr : "";
-					break;
-				case 'p':
-				case 'r':
-					usrtxt = cur_cl->reader ? cur_cl->reader->label : "";
-					break;
-				default:
-					usrtxt = "server";
-					break;
-			}
-		}
-
+		char *usrtxt = cl_text;
 		char *target_ptr = NULL;
 		int32_t target_len = strlen(usrtxt) + (strlen(txt) - 8) + 1;
 		
@@ -256,9 +239,9 @@ static void write_to_log(char *txt, int8_t header_len, int8_t do_flush, struct s
 		if ((cl->typ == 'm') && (cl->monlvl>0) && cl->log) //this variable is only initialized for cl->typ = 'm' 
 		{
 			if (cl->monlvl<2) {
-				if (cur_cl && (cur_cl->typ != 'c') && (cur_cl->typ != 'm'))
+				if (cl_typ != 'c' && cl_typ != 'm')
 					continue;
-				if (cur_cl && cur_cl->account && cl->account && strcmp(cur_cl->account->usr, cl->account->usr))
+				if (cl_usr && cl->account && strcmp(cl_usr, cl->account->usr))
 					continue;
 			}
 			snprintf(sbuf, sizeof(sbuf), "%03d", cl->logcounter);
@@ -275,7 +258,30 @@ static void write_to_log_int(char *txt, int8_t header_len)
 	log->txt = strnew(txt);
 	log->header_len = header_len;
 	log->direct_log = 0;
-	log->cl = cur_client();
+	struct s_client *cl = cur_client();
+	log->cl_usr = "";
+	if (!cl){
+		log->cl_text = "undef";
+		log->cl_typ = ' ';		
+	} else {
+		switch(cl->typ) {
+			case 'c':
+			case 'm':
+				if(cl->account) {
+					log->cl_text = cl->account->usr;
+					log->cl_usr = cl->account->usr;
+				} else log->cl_text = "";
+				break;
+			case 'p':
+			case 'r':
+				log->cl_text = cl->reader ? cl->reader->label : "";
+				break;
+			default:
+				log->cl_text = "server";
+				break;
+		}
+		log->cl_typ = cl->typ;
+	}
 	ll_append(log_list, log);
 }
 
@@ -509,7 +515,7 @@ void log_list_thread()
 			if (log->direct_log)
 				cs_write_log(buf, do_flush);
 			else
-				write_to_log(buf, log->header_len, do_flush, log->cl);
+				write_to_log(buf, log->header_len, log->cl_typ, log->cl_text, log->cl_usr, do_flush);
 			free(log->txt);
 			free(log);
 		}
