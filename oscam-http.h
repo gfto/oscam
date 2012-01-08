@@ -727,6 +727,12 @@ SFRTIFJFU0VSVkVEADs="
         <cwtimeout>##TOTAL_CWTOUT##</cwtimeout>\n\
         <cwcache>##TOTAL_CWCACHE##</cwcache>\n\
         <cwtun>##TOTAL_CWTUN##</cwtun>\n\
+        <usertotal>##TOTAL_USERS##</usertotal>\n\
+        <userdisabled>##TOTAL_DISABLED##</userdisabled>\n\
+        <userexpired>##TOTAL_EXPIRED##</userexpired>\n\
+        <useractive>##TOTAL_ACTIVE##</useractive>\n\
+        <userconnected>##TOTAL_CONNECTED##</userconnected>\n\
+        <useronline>##TOTAL_ONLINE##</useronline>\n\
     </totals>\n\
 ##TPLAPIFOOTER##"
 
