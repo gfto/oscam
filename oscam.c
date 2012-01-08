@@ -215,7 +215,7 @@ static const char *logo = "  ___  ____   ___                \n / _ \\/ ___| / __
 static void usage()
 {
   fprintf(stderr, "%s\n\n", logo);
-  fprintf(stderr, "OSCam cardserver v%s, build #%s (%s) - (w) 2009-2011 Streamboard SVN\n", CS_VERSION_X, CS_SVN_VERSION, CS_OSTYPE);
+  fprintf(stderr, "OSCam cardserver v%s, build #%s (%s) - (w) 2009-2012 Streamboard SVN\n", CS_VERSION_X, CS_SVN_VERSION, CS_OSTYPE);
   fprintf(stderr, "\tsee http://streamboard.gmc.to/oscam/ for more details\n");
   fprintf(stderr, "\tbased on Streamboard mp-cardserver v0.9d - (w) 2004-2007 by dukat\n");
   fprintf(stderr, "\tThis program is distributed under GPL.\n");
