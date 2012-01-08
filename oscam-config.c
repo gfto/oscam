@@ -18,7 +18,7 @@
 #endif
 
 #define CONFVARWIDTH 30
-#define MAXLINESIZE 1024
+#define MAXLINESIZE 16384
 
 static const char *cs_conf="oscam.conf";
 static const char *cs_user="oscam.user";
@@ -1549,14 +1549,16 @@ void init_len4caid()
 {
 	int32_t nr;
 	FILE *fp;
-	char *value;
-	char token[MAXLINESIZE];
+	char *value, *token;
+	if(!cs_malloc(&token, MAXLINESIZE, -1)) return;	
 
 	memset(len4caid, 0, sizeof(uint16_t)<<8);
-	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_l4ca);
-	if (!(fp = fopen(token, "r")))
+	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_l4ca);
+	if (!(fp = fopen(token, "r"))){
+		free(token);
 		return;
-	for(nr = 0; fgets(token, sizeof(token), fp);) {
+	}
+	for(nr = 0; fgets(token, MAXLINESIZE, fp);) {
 		int32_t i, c;
 		char *ptr;
 		if (!(value=strchr(token, ':')))
@@ -1575,6 +1577,7 @@ void init_len4caid()
 		len4caid[i] = c;
 		nr++;
 	}
+	free(token);
 	fclose(fp);
 	cs_log("%d lengths for caid guessing loaded", nr);
 	return;
@@ -1625,8 +1628,8 @@ int32_t init_config()
 {
 	int32_t tag=TAG_GLOBAL;
 	FILE *fp;
-	char *value=NULL;
-	char token[MAXLINESIZE];
+	char *value=NULL, *token;
+	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 1;	
 
 #ifndef CS_EMBEDDED
 #ifdef PRIO_PROCESS
@@ -1714,12 +1717,12 @@ int32_t init_config()
 	cfg.lcd_write_intervall = 10;
 #endif
 
-	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_conf);
+	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_conf);
 	if (!(fp = fopen(token, "r"))) {
 		fprintf(stderr, "Cannot open config file '%s' (errno=%d %s)\n", token, errno, strerror(errno));
 		exit(1);
 	}
-	while (fgets(token, sizeof(token), fp)) {
+	while (fgets(token, MAXLINESIZE, fp)) {
 		int32_t i, l;
 		//void *ptr;
 		if ((l = strlen(trim(token))) < 3)
@@ -1735,6 +1738,7 @@ int32_t init_config()
 		*value++ ='\0';
 		chk_token(trim(strtolower(token)), trim(value), tag);
 	}
+	free(token);
 	fclose(fp);
 
 	if (cfg.logfile == NULL && cfg.logtostdout == 0 && cfg.logtosyslog == 0) {
@@ -3309,18 +3313,19 @@ struct s_auth *init_userdb()
 	int32_t tag = 0, nr = 0, expired = 0, disabled = 0;
 	//int32_t first=1;
 	FILE *fp;
-	char *value;
+	char *value, *token;
 	struct s_auth *account = NULL;
 	struct s_auth *probe = NULL;
-	char token[MAXLINESIZE];
+	if(!cs_malloc(&token, MAXLINESIZE, -1)) return authptr;
 
-	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_user);
+	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_user);
 	if (!(fp = fopen(token, "r"))) {
 		cs_log("Cannot open file \"%s\" (errno=%d %s)", token, errno, strerror(errno));
+		free(token);
 		return authptr;
 	}
 
-	while (fgets(token, sizeof(token), fp)) {
+	while (fgets(token, MAXLINESIZE, fp)) {
 		int32_t i, l;
 		void *ptr;
 
@@ -3331,7 +3336,10 @@ struct s_auth *init_userdb()
 			token[l - 1] = 0;
 			tag = (!strcmp("account", strtolower(token + 1)));
 
-			if(!cs_malloc(&ptr, sizeof(struct s_auth), -1)) return authptr;
+			if(!cs_malloc(&ptr, sizeof(struct s_auth), -1)){
+				free(token);
+				return authptr;
+			}
 			if (account)
 				account->next = ptr;
 			else
@@ -3383,7 +3391,7 @@ struct s_auth *init_userdb()
 
 		chk_account(trim(strtolower(token)), trim(value), account);
 	}
-
+	free(token);
 	fclose(fp);
 
 	for(account = authptr; account; account = account->next){
@@ -3478,15 +3486,16 @@ void init_free_sidtab() {
 int32_t init_sidtab() {
 	int32_t nr, nro, nrr;
 	FILE *fp;
-	char *value;
-	char token[MAXLINESIZE];
+	char *value, *token;
+	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 1;
 	struct s_sidtab *ptr;
 	struct s_sidtab *sidtab=(struct s_sidtab *)0;
 
-	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_sidt);
+	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_sidt);
 	if (!(fp=fopen(token, "r")))
 	{
 		cs_log("Cannot open file \"%s\" (errno=%d %s)", token, errno, strerror(errno));
+		free(token);
 		return(1);
 	}
 	for (nro=0, ptr=cfg.sidtab; ptr; nro++)
@@ -3497,7 +3506,7 @@ int32_t init_sidtab() {
 		ptr=ptr_next;
 	}
 	nr = 0; nrr = 0;
-	while (fgets(token, sizeof(token), fp))
+	while (fgets(token, MAXLINESIZE, fp))
 	{
 		int32_t l;
 		void *ptr;
@@ -3510,7 +3519,10 @@ int32_t init_sidtab() {
 				nr++;
 				nrr++;
 			} else {
-				if (!cs_malloc(&ptr, sizeof(struct s_sidtab), -1)) return(1);
+				if (!cs_malloc(&ptr, sizeof(struct s_sidtab), -1)) {
+					free(token);
+					return(1);
+				}
 				if (sidtab)
 					sidtab->next=ptr;
 				else
@@ -3526,6 +3538,7 @@ int32_t init_sidtab() {
 		*value++='\0';
 		chk_sidtab(trim(strtolower(token)), trim(strtolower(value)), sidtab);
 	}
+	free(token);
 	fclose(fp);
 
 #ifdef DEBUG_SIDTAB
@@ -3539,17 +3552,18 @@ int32_t init_sidtab() {
 int32_t init_provid() {
 	int32_t nr;
 	FILE *fp;
-	char *payload, *saveptr1 = NULL;
-	char token[MAXLINESIZE];
+	char *payload, *saveptr1 = NULL, *token;
+	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 0;	
 	static struct s_provid *provid=(struct s_provid *)0;
-	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_provid);
+	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_provid);
 
 	if (!(fp=fopen(token, "r"))) {
 		cs_log("can't open file \"%s\" (err=%d %s), no provids's loaded", token, errno, strerror(errno));
+		free(token);
 		return(0);
 	}
 	nr=0;
-	while (fgets(token, sizeof(token), fp)) {
+	while (fgets(token, MAXLINESIZE, fp)) {
 
 		int32_t l;
 		void *ptr;
@@ -3563,7 +3577,10 @@ int32_t init_provid() {
 
 		*payload++ = '\0';
 
-		if (!cs_malloc(&ptr, sizeof(struct s_provid), -1)) return(1);
+		if (!cs_malloc(&ptr, sizeof(struct s_provid), -1)) {
+			free(token);
+			return(1);
+		}
 		if (provid)
 			provid->next = ptr;
 		else
@@ -3592,7 +3609,7 @@ int32_t init_provid() {
 		provid->caid = a2i(token, 3);
 		nr++;
 	}
-
+	free(token);
 	fclose(fp);
 	if (nr>0)
 		cs_log("%d provid's loaded", nr);
@@ -3606,10 +3623,10 @@ int32_t init_srvid()
 {
 	int32_t nr = 0, i;
 	FILE *fp;
-	char *payload, *tmp, *saveptr1 = NULL;
-	char token[MAXLINESIZE];
+	char *payload, *tmp, *saveptr1 = NULL, *token;
+	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 0;
 	struct s_srvid *srvid=NULL, *new_cfg_srvid[16], *last_srvid[16];
-	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_srid);
+	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_srid);
 	// A cache for strings within srvids. A checksum is calculated which is the start point in the array (some kind of primitive hash algo).
 	// From this point, a sequential search is done. This greatly reduces the amount of string comparisons.
 	char **stringcache[1024];
@@ -3623,10 +3640,11 @@ int32_t init_srvid()
 
 	if (!(fp=fopen(token, "r"))) {
 		cs_log("can't open file \"%s\" (err=%d %s), no service-id's loaded", token, errno, strerror(errno));
+		free(token);
 		return(0);
 	}
 
-	while (fgets(token, sizeof(token), fp)) {
+	while (fgets(token, MAXLINESIZE, fp)) {
 		int32_t l, j, len=0, len2, srvidtmp;
 		uint32_t pos;
 		char *srvidasc;
@@ -3638,7 +3656,10 @@ int32_t init_srvid()
 		if (!(payload=strchr(token, '|'))) continue;
 		*payload++ = '\0';
 
-		if (!cs_malloc(&srvid, sizeof(struct s_srvid), -1)) return(1);
+		if (!cs_malloc(&srvid, sizeof(struct s_srvid), -1)){
+			free(token);
+			return(1);
+		}
 
 		char tmptxt[128];
 
@@ -3723,6 +3744,7 @@ int32_t init_srvid()
 	for(i = 0; i < 1024; ++i){
 		if(allocated[i] > 0) free(stringcache[i]);
 	}
+	free(token);
 
 	cs_ftime(&te);
 	int32_t time = 1000*(te.time-ts.time)+te.millitm-ts.millitm;
@@ -3763,18 +3785,19 @@ int32_t init_tierid()
 {
 	int32_t nr;
 	FILE *fp;
-	char *payload, *saveptr1 = NULL;
-	char token[MAXLINESIZE];
+	char *payload, *saveptr1 = NULL, *token;
+	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 0;	
 	static struct s_tierid *tierid=NULL, *new_cfg_tierid=NULL;
-	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_trid);
+	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_trid);
 
 	if (!(fp=fopen(token, "r"))) {
 		cs_log("can't open file \"%s\" (err=%d %s), no tier-id's loaded", token, errno, strerror(errno));
+		free(token);
 		return(0);
 	}
 
 	nr=0;
-	while (fgets(token, sizeof(token), fp)) {
+	while (fgets(token, MAXLINESIZE, fp)) {
 
 		int32_t l;
 		void *ptr;
@@ -3787,7 +3810,10 @@ int32_t init_tierid()
 		if (!(tieridasc = strchr(token, ':'))) continue;
 		*payload++ = '\0';
 
-		if (!cs_malloc(&ptr,sizeof(struct s_tierid), -1)) return(1);
+		if (!cs_malloc(&ptr,sizeof(struct s_tierid), -1)){
+			free(token);
+			return(1);
+		}
 		if (tierid)
 			tierid->next = ptr;
 		else
@@ -3812,7 +3838,7 @@ int32_t init_tierid()
 		}
 		nr++;
 	}
-
+	free(token);
 	fclose(fp);
 	if (nr>0)
 		cs_log("%d tier-id's loaded", nr);
@@ -4918,20 +4944,21 @@ int32_t init_readerdb()
 {
 	int32_t tag = 0;
 	FILE *fp;
-	char *value;
-	char token[MAXLINESIZE];
+	char *value, *token;
+	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 1;	
 	configured_readers = ll_create("configured_readers");
 
-	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_srvr);
+	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_srvr);
 	if (!(fp=fopen(token, "r"))) {
 		cs_log("can't open file \"%s\" (errno=%d %s)\n", token, errno, strerror(errno));
+		free(token);
 		return(1);
 	}
 	struct s_reader *rdr;
 	cs_malloc(&rdr, sizeof(struct s_reader), SIGINT);
 
 	ll_append(configured_readers, rdr);
-	while (fgets(token, sizeof(token), fp)) {
+	while (fgets(token, MAXLINESIZE, fp)) {
 		int32_t i, l;
 		if ((l = strlen(trim(token))) < 3)
 			continue;
@@ -4980,6 +5007,7 @@ int32_t init_readerdb()
 		*value++ ='\0';
 		chk_reader(trim(strtolower(token)), trim(value), rdr);
 	}
+	free(token);
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr))) { //build active readers list
 		int32_t i;
@@ -5001,20 +5029,21 @@ void init_ac()
 {
   int32_t nr;
   FILE *fp;
-  char *saveptr1 = NULL;
-  char token[MAXLINESIZE];
+  char *saveptr1 = NULL, *token;
+  if(!cs_malloc(&token, MAXLINESIZE, -1)) return;	
 
-  snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_ac);
+  snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_ac);
   if (!(fp=fopen(token, "r")))
   {
     cs_log("can't open file \"%s\" (errno=%d %s) anti-cascading table not loaded",
             token, errno, strerror(errno));
+    free(token);
     return;
   }
   
   struct s_cpmap *cur_cpmap, *first_cpmap = NULL, *last_cpmap = NULL;
 
-  for(nr=0; fgets(token, sizeof(token), fp);)
+  for(nr=0; fgets(token, MAXLINESIZE, fp);)
   {
     int32_t i, skip;
     uint16_t caid, sid, chid, dwtime;
@@ -5073,6 +5102,7 @@ void init_ac()
       if (!cs_malloc(&cur_cpmap, sizeof(struct s_cpmap), -1)){
       	for(cur_cpmap = first_cpmap; cur_cpmap; cur_cpmap = cur_cpmap->next)
       		free(cur_cpmap);
+      	free(token);
       	return;
       }
       if(last_cpmap)
@@ -5093,6 +5123,7 @@ void init_ac()
       nr++;
     }
   }
+  free(token);
   fclose(fp);
   
   last_cpmap = cfg.cpmap;
