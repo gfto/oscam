@@ -523,6 +523,11 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
 
 int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid) {
 	int32_t i;
+	
+	// if physical reader a card needs to be inserted
+	if ((!(reader->typ & R_IS_NETWORK)) && (reader->card_status != CARD_INSERTED)) {
+		return(0);
+	}
 
 	if (reader->caid != caid || reader->audisabled) {
 		return 0;
