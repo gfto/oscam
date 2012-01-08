@@ -2740,7 +2740,7 @@ void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er) {
     FILE *ecmtxt;
     if (ecmtxt = fopen(ECMINFO_FILE, "w")) {
     	char tmp[25];
-    	if(er->rc <= E_EMU) {
+    	if(er->rc <= E_CACHEEX) {
 			fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\nprov: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
 			fprintf(ecmtxt, "reader: %s\n", er->selected_reader->label);
 			if (er->selected_reader->typ & R_IS_CASCADING)
