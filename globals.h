@@ -883,6 +883,7 @@ struct s_client {
 	uint32_t		pcrc;        		// pwd crc
 	AES_KEY			aeskey;      		// encryption key needed by monitor and used by camd33, camd35
 	AES_KEY			aeskey_decrypt;		// decryption key needed by monitor and used by camd33, camd35
+    uint16_t        ncd_msgid;
 	char			ncd_client_id[5];
 	uchar			ncd_skey[16];
 
