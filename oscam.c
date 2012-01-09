@@ -4153,11 +4153,12 @@ int32_t main (int32_t argc, char *argv[])
 		  case 'd':
 			  cs_dblevel=atoi(optarg);
 			  break;
-#ifdef WEBIF
 		  case 'r':
-			  cs_restart_mode=atoi(optarg);
-			  break;
+#ifdef WEBIF
+		  cs_restart_mode=atoi(optarg);
 #endif
+		  break;
+
 		  case 't':
 			  mkdir(optarg, S_IRWXU);
 			  j = open(optarg, O_RDONLY);
