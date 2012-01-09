@@ -195,7 +195,7 @@
 
 #define CS_MAXEMMBLOCKBYLEN 10
 
-#define CS_EMMCACHESIZE  64 //nr of EMMs that each client will cache; cache is per client, so memory-expensive...
+#define CS_EMMCACHESIZE  127 //nr of EMMs that each client will cache; cache is per client, so memory-expensive...
 #define MSGLOGSIZE 64	//size of string buffer for a ecm to return messages
 
 #define D_TRACE     1 // Generate very detailed error/trace messages per routine
