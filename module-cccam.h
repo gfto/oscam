@@ -69,11 +69,13 @@ struct cc_crypt_block {
 
 struct cc_srvid {
 	uint16_t sid;
+	uint16_t chid;
 	uint8_t ecmlen;
 };
 
 struct cc_srvid_block {
 	uint16_t sid;
+	uint16_t chid;
 	uint8_t  ecmlen;
 	time_t   blocked_till;
 };

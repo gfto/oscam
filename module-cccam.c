@@ -232,7 +232,7 @@ void set_cmd0c_cryptkey(struct s_client *cl, uint8_t *key, uint8_t len) {
 }
 
 int32_t sid_eq(struct cc_srvid *srvid1, struct cc_srvid *srvid2) {
-	return (srvid1->sid == srvid2->sid && (srvid1->ecmlen == srvid2->ecmlen || !srvid1->ecmlen || !srvid2->ecmlen));
+	return (srvid1->sid == srvid2->sid && (srvid1->chid == srvid2->chid || !srvid1->chid || !srvid2->chid) && (srvid1->ecmlen == srvid2->ecmlen || !srvid1->ecmlen || !srvid2->ecmlen));
 }
 
 int32_t is_sid_blocked(struct cc_card *card, struct cc_srvid *srvid_blocked) {
@@ -268,8 +268,8 @@ void add_sid_block(struct s_client *cl __attribute__((unused)), struct cc_card *
 	memcpy(srvid, srvid_blocked, sizeof(struct cc_srvid));
 	srvid->blocked_till = time(NULL)+BLOCKING_SECONDS;
 	ll_append(card->badsids, srvid);
-	cs_debug_mask(D_READER, "%s added sid block %04X(%d) for card %08x",
-			getprefix(), srvid_blocked->sid, srvid_blocked->ecmlen,
+	cs_debug_mask(D_READER, "%s added sid block %04X(CHID %04X, length %d) for card %08x",
+			getprefix(), srvid_blocked->sid, srvid_blocked->chid, srvid_blocked->ecmlen,
 			card->id);
 }
 
@@ -1043,6 +1043,7 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 
 	struct cc_srvid cur_srvid;
 	cur_srvid.sid = cur_er->srvid;
+	cur_srvid.chid = cur_er->chid;
 	cur_srvid.ecmlen = cur_er->l;
 
 	int32_t h = -1;
@@ -1238,6 +1239,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 		struct cc_srvid cur_srvid;
 		cur_srvid.sid = cur_er->srvid;
+		cur_srvid.chid = cur_er->chid;
 		cur_srvid.ecmlen = cur_er->l;
 
 		cs_readlock(&cc->cards_busy);
@@ -1749,6 +1751,7 @@ struct cc_card *read_card(uint8_t *buf, int32_t ext) {
 
             struct cc_srvid *srvid = cs_malloc(&srvid, sizeof(struct cc_srvid), QUITERROR);
             srvid->sid = sid;
+            srvid->chid = 0;
             srvid->ecmlen = 0;
             ll_append(card->goodsids, srvid);
             ptr+=2;
@@ -1760,6 +1763,7 @@ struct cc_card *read_card(uint8_t *buf, int32_t ext) {
 
             struct cc_srvid_block *srvid = cs_malloc(&srvid, sizeof(struct cc_srvid_block), QUITERROR);
             srvid->sid = sid;
+            srvid->chid = 0;
             srvid->ecmlen = 0;
             srvid->blocked_till = 0;
             ll_append(card->badsids, srvid);
@@ -2385,6 +2389,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 
 				struct cc_srvid srvid;
 				srvid.sid = er->srvid;
+				srvid.chid = er->chid;
 				srvid.ecmlen = er->l;
 				add_extended_ecm_idx(cl, cc->extended_mode ? cc->g_flag : 1,
 						er->idx, server_card, srvid, 1);
