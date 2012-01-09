@@ -937,6 +937,27 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 	}
 }
 
+static int8_t request_cw(struct s_client *dvbapi_client, ECM_REQUEST *er)
+{
+	int8_t do_request = 1;
+	if (cfg.lb_mode) {
+		READER_STAT *stat = get_fastest_stat(er->caid, er->prid, er->srvid, er->chid, er->l);
+		if (stat && stat->rc >= E_NOTFOUND) {
+			do_request = 0;
+		}
+	}
+
+	if (do_request) {
+		cs_debug_mask(D_DVBAPI, "request cw for caid %04X provid %06X srvid %04X pid %04X chid %04X", er->caid, er->prid, er->srvid, er->pid, er->chid);
+		get_cw(dvbapi_client, er);
+	}
+	else {
+		cs_debug_mask(D_DVBAPI, "request cw lb-ignored for caid %04X provid %06X srvid %04X pid %04X chid %04X", er->caid, er->prid, er->srvid, er->pid, er->chid);
+		free(er);
+	}
+	return do_request;
+}
+
 void dvbapi_try_next_caid(int32_t demux_id) {
 	int32_t num=-1, n, j;
 
@@ -1018,8 +1039,7 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 			er->l += 2;
 		}
 
-		cs_debug_mask(D_DVBAPI, "request cw for caid %04X provid %06X srvid %04X pid %04X", er->caid, er->prid, er->srvid, er->pid);
-		get_cw(dvbapi_client, er);
+		request_cw(dvbapi_client, er);
 
 		if (cfg.dvbapi_requestmode == 1)
 			dvbapi_try_next_caid(demux_id);
@@ -1600,6 +1620,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		er->caid  = caid;
 		er->pid   = curpid->ECM_PID;
 		er->prid  = provid;
+		er->chid  = chid;
 
 		if (mapentry) {
 			cs_debug_mask(D_DVBAPI, "mapping ECM from %04X:%06X to %04X:%06X", er->caid, er->prid, mapentry->mapcaid, mapentry->mapprovid);
@@ -1610,8 +1631,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		er->l=len;
 		memcpy(er->ecm, buffer, er->l);
 
-		cs_debug_mask(D_DVBAPI, "request cw for caid %04X provid %06X srvid %04X pid %04X chid %04X", er->caid, er->prid, er->srvid, er->pid, chid);
-		get_cw(dvbapi_client, er);
+		request_cw(dvbapi_client, er);
 	}
 
 	if (demux[demux_id].demux_fd[filter_num].type==TYPE_EMM) {
@@ -2542,8 +2562,7 @@ void azbox_openxcas_ecm_callback(int32_t stream_id, uint32_t seq, int32_t cipher
 	er->l=l;
 	memcpy(er->ecm, ecm_data, er->l);
 
-	cs_debug_mask(D_DVBAPI, "request cw for caid %04X provid %06X srvid %04X pid %04X", er->caid, er->prid, er->srvid, er->pid);
-	get_cw(dvbapi_client, er);
+	request_cw(dvbapi_client, er);
 
 	//openxcas_stop_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
 	//openxcas_remove_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
@@ -2593,8 +2612,7 @@ void azbox_openxcas_ex_callback(int32_t stream_id, uint32_t seq, int32_t idx, ui
 	er->l=l;
 	memcpy(er->ecm, ecm_data, er->l);
 
-	cs_debug_mask(D_DVBAPI, "request cw for caid %04X provid %06X srvid %04X pid %04X", er->caid, er->prid, er->srvid, er->pid);
-	get_cw(dvbapi_client, er);
+	request_cw(dvbapi_client, er);
 
 	if (openxcas_stop_filter_ex(stream_id, seq, openxcas_filter_idx) < 0)
 		cs_log("openxcas: unable to stop ex filter");
