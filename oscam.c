@@ -692,8 +692,10 @@ static void cs_cleanup()
 	//cleanup readers:
 	struct s_reader *rdr;
 	for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
-		cs_log("killing reader %s", rdr->label);
-		kill_thread(rdr->client);
+		if(rdr->client){
+			cs_log("killing reader %s", rdr->label);
+			kill_thread(rdr->client);
+		}
 	}
 	first_active_reader = NULL;
 
