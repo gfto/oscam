@@ -607,6 +607,7 @@ void cleanup_thread(void *var)
 {
 	struct s_client *cl = var;
 	if(!cl) return;
+	struct s_reader *rdr = cl->reader;
 
 	// Remove client from client list. kill_thread also removes this client, so here just if client exits itself...
 	struct s_client *prev, *cl2;
@@ -620,15 +621,16 @@ void cleanup_thread(void *var)
 	cs_writeunlock(&clientlist_lock);
 		
 	// Clean reader. The cleaned structures should be only used by the reader thread, so we should be save without waiting
-	if (cl->reader){
-		remove_reader_from_active(cl->reader);
-		if(cl->reader->ph.cleanup)
-			cl->reader->ph.cleanup(cl);
+	if (rdr){
+		struct s_client *rdrcl = rdr->client;
+		remove_reader_from_active(rdr);
+		if(rdr->ph.cleanup)
+			rdr->ph.cleanup(cl);
 		if (cl->typ == 'r')
-			ICC_Async_Close(cl->reader);
+			ICC_Async_Close(rdr);
 		if (cl->typ == 'p')
-			network_tcp_connection_close(cl->reader);
-		cl->reader->client = NULL;
+			network_tcp_connection_close(rdr);
+		if(rdrcl) rdrcl = NULL;
 		cl->reader = NULL;
 	}
 	if (!pthread_mutex_trylock(&cl->thread_lock))
@@ -692,9 +694,10 @@ static void cs_cleanup()
 	//cleanup readers:
 	struct s_reader *rdr;
 	for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
-		if(rdr->client){
+		cl = rdr->client;
+		if(cl){
 			cs_log("killing reader %s", rdr->label);
-			kill_thread(rdr->client);
+			kill_thread(cl);
 		}
 	}
 	first_active_reader = NULL;
@@ -1351,8 +1354,9 @@ void add_reader_to_active(struct s_reader *rdr) {
 static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 	if (restart){
 		remove_reader_from_active(rdr);		//remove from list
-		if (rdr->client) {		//kill old thread
-			kill_thread(rdr->client);
+		struct s_client *cl = rdr->client;
+		if (cl) {		//kill old thread
+			kill_thread(cl);
 			rdr->client = NULL;
 		}
 	}
@@ -1699,13 +1703,14 @@ void cs_cache_push(ECM_REQUEST *er)
 	//cacheex=3 mode: reverse push (reader->server)
 	struct s_reader *rdr;
 	for (rdr = first_active_reader; rdr; rdr = rdr->next) {
-		if (rdr->client && er->cacheex_src != rdr->client && rdr->cacheex == 3) { //send cache over reader
+		struct s_client *cl = rdr->client;
+		if (cl && er->cacheex_src != cl && rdr->cacheex == 3) { //send cache over reader
 			if (rdr->ph.c_cache_push
 				&& (!er->grp || (rdr->grp & er->grp)) //Group-check
-				&& chk_srvid(rdr->client, er) //Service-check
+				&& chk_srvid(cl, er) //Service-check
 				&& chk_ctab(er->caid, &rdr->ctab))  //Caid-check
 			{
-				cs_cache_push_to_client(rdr->client, er);
+				cs_cache_push_to_client(cl, er);
 			}
 		}
 	}
@@ -1940,8 +1945,9 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	}
 
 	int32_t res = 0;
-	if (er->client && !er->client->kill) {
-		add_job(er->client, ACTION_CLIENT_ECM_ANSWER, ea, sizeof(struct s_ecm_answer));
+	struct s_client *cl = er->client;
+	if (cl && !cl->kill) {
+		add_job(cl, ACTION_CLIENT_ECM_ANSWER, ea, sizeof(struct s_ecm_answer));
 		res = 1;
 	}
 
@@ -2289,12 +2295,15 @@ static void request_cw(ECM_REQUEST *er)
 			ea->status |= REQUEST_SENT;
 
 			//set sent=1 only if reader is active/connected. If not, switch to next stage!
-			if (!sent && ea->reader && ea->reader->client) {
-				struct s_client *rcl = ea->reader->client;
-				if (rcl->typ=='r' && ea->reader->card_status==CARD_INSERTED)
-					sent = 1;
-				else if (rcl->typ=='p' && (ea->reader->card_status==CARD_INSERTED ||ea->reader->tcp_connected))
-					sent = 1;
+			struct s_reader *rdr = ea->reader;
+			if (!sent && rdr) {
+				struct s_client *rcl = rdr->client;
+				if(rcl){
+					if (rcl->typ=='r' && rdr->card_status==CARD_INSERTED)
+						sent = 1;
+					else if (rcl->typ=='p' && (rdr->card_status==CARD_INSERTED ||rdr->tcp_connected))
+						sent = 1;
+				}
 			}
 		}
 		if (sent || er->stage >= 4)
@@ -2309,8 +2318,12 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 
 	ECM_REQUEST *ert = ea->er;
 	struct s_ecm_answer *ea_list;
+	struct s_reader *eardr = ea->reader;
+	if(!eardr || !ert)
+		return;
+	struct s_client *eacl = eardr->client;
 
-	if (ea->reader) {
+	if (eardr) {
 		cs_debug_mask(D_TRACE, "ecm answer from reader %s for ecm %04X rc=%d", ea->reader->label, htons(ert->checksum), ea->rc);
 		//cs_ddump_mask(D_TRACE, ea->cw, sizeof(ea->cw), "received cw from %s caid=%04X srvid=%04X hash=%08X",
 		//		ea->reader->label, ert->caid, ert->srvid, ert->csp_hash);
@@ -2320,26 +2333,26 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 
 	ea->status |= REQUEST_ANSWERED;
 
-	if (ea->reader) {
+	if (eardr) {
 		//Update reader stats:
 		if (ea->rc == E_FOUND) {
-			ea->reader->ecmsok++;
+			eardr->ecmsok++;
 #ifdef CS_CACHEEX
-			if (ea->reader->cacheex == 1 && !ert->cacheex_done) {
-				ea->reader->client->cwcacheexgot++;
-				cs_add_cacheex_stats(ea->reader->client, ea->er->caid, ea->er->srvid, ea->er->prid, 1);
+			if (eardr->cacheex == 1 && !ert->cacheex_done && eacl) {
+				eacl->cwcacheexgot++;
+				cs_add_cacheex_stats(eacl, ea->er->caid, ea->er->srvid, ea->er->prid, 1);
 				first_client->cwcacheexgot++;
 			}
 #endif
 		}
 		else if (ea->rc == E_NOTFOUND)
-			ea->reader->ecmsnok++;
+			eardr->ecmsnok++;
 
 		//Reader ECMs Health Try (by Pickser)
-		if (ea->reader->ecmsok != 0 || ea->reader->ecmsnok != 0)
+		if (eardr->ecmsok != 0 || ea->reader->ecmsnok != 0)
 		{
-			ea->reader->ecmshealthok = ((double) ea->reader->ecmsok / (ea->reader->ecmsok + ea->reader->ecmsnok)) * 100;
-			ea->reader->ecmshealthnok = ((double) ea->reader->ecmsnok / (ea->reader->ecmsok + ea->reader->ecmsnok)) * 100;
+			eardr->ecmshealthok = ((double) eardr->ecmsok / (eardr->ecmsok + eardr->ecmsnok)) * 100;
+			eardr->ecmshealthnok = ((double) eardr->ecmsnok / (eardr->ecmsok + eardr->ecmsnok)) * 100;
 		}
 
 		//Reader Dynamic Loadbalancer Try (by Pickser)
@@ -2362,7 +2375,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 
 	if (ert->rc<E_99) {
 #ifdef WITH_LB
-		send_reader_stat(ea->reader, ert, ea->rc);
+		send_reader_stat(eardr, ert, ea->rc);
 #endif
 		return; // already done
 	}
@@ -2380,7 +2393,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 			memcpy(ert->cw, ea->cw, 16);
 			ert->rcEx=0;
 			ert->rc = ea->rc;
-			ert->selected_reader = ea->reader;
+			ert->selected_reader = eardr;
 			break;
 		case E_TIMEOUT:
 			ert->rc = E_TIMEOUT;
@@ -2389,7 +2402,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 		case E_NOTFOUND:
 			ert->rcEx=ea->rcEx;
 			cs_strncpy(ert->msglog, ea->msglog, sizeof(ert->msglog));
-			ert->selected_reader=ea->reader;
+			ert->selected_reader = eardr;
 #ifdef CS_CACHEEX
 			uchar has_cacheex = 0;
 #endif
@@ -2430,7 +2443,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 	}
 
 #ifdef WITH_LB
-	send_reader_stat(ea->reader, ert, ea->rc);
+	send_reader_stat(eardr, ert, ea->rc);
 #endif
 
 #ifdef CS_CACHEEX
@@ -3536,8 +3549,11 @@ void * work_thread(void *ptr) {
 
 				int32_t res, stats = -1;
 				if (reader) {
-					res = reader->ph.c_cache_push(cl, er);
-					stats = cs_add_cacheex_stats(reader->client, er->caid, er->srvid, er->prid, 0);
+					struct s_client *cl = reader->client;
+					if(cl){
+						res = reader->ph.c_cache_push(cl, er);
+						stats = cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 0);
+					}
 				}
 				else
 					res = ph[cl->ctyp].c_cache_push(cl, er);
@@ -3869,18 +3885,22 @@ void * client_check(void) {
 			// either an ecm answer, a keepalive or connection closed from a proxy
 			// physical reader ('r') should never send data without request
 			rdr = NULL;
-			if (cl && cl->typ == 'p')
+			struct s_client *cl2 = NULL;
+			if (cl && cl->typ == 'p'){
 				rdr = cl->reader;
+				if(rdr)
+					cl2 = rdr->client;
+			}
 
-			if (rdr && rdr->client && rdr->client->init_done) {
-				if (rdr->client->pfd && pfd[i].fd == rdr->client->pfd && (pfd[i].revents & (POLLHUP | POLLNVAL))) {
+			if (rdr && cl2 && cl2->init_done) {
+				if (cl2->pfd && pfd[i].fd == cl2->pfd && (pfd[i].revents & (POLLHUP | POLLNVAL))) {
 					//connection to remote proxy was closed
 					//oscam should check for rdr->tcp_connected and reconnect on next ecm request sent to the proxy
 					network_tcp_connection_close(rdr);
 					cs_debug_mask(D_READER, "connection to %s closed.", rdr->label);
 				}
-				if (rdr->client->pfd && pfd[i].fd == rdr->client->pfd && (pfd[i].revents & (POLLIN | POLLPRI))) {
-					add_job(rdr->client, ACTION_READER_REMOTE, NULL, 0);
+				if (cl2->pfd && pfd[i].fd == cl2->pfd && (pfd[i].revents & (POLLIN | POLLPRI))) {
+					add_job(cl2, ACTION_READER_REMOTE, NULL, 0);
 				}
 			}
 
@@ -4155,12 +4175,11 @@ int32_t main (int32_t argc, char *argv[])
 		  case 'd':
 			  cs_dblevel=atoi(optarg);
 			  break;
-		  case 'r':
 #ifdef WEBIF
-		  cs_restart_mode=atoi(optarg);
+		  case 'r':
+			  cs_restart_mode=atoi(optarg);
+			  break;
 #endif
-		  break;
-
 		  case 't':
 			  mkdir(optarg, S_IRWXU);
 			  j = open(optarg, O_RDONLY);

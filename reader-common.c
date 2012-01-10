@@ -94,8 +94,9 @@ static int32_t reader_card_inserted(struct s_reader * reader)
 		cs_log("Error getting status of terminal.");
 
 		reader->fd_error++;
-		if (reader->fd_error>5 && reader->client) {
-			reader->client->init_done = 0;
+		struct s_client *cl = reader->client;
+		if (reader->fd_error>5 && cl) {
+			cl->init_done = 0;
 			cs_log("WARNING: reader %s was disabled because of too many errors", reader->label);
 		}
  
@@ -198,9 +199,9 @@ static void do_emm_from_file(struct s_reader * reader)
 void reader_card_info(struct s_reader * reader)
 {
 	if ((reader->card_status == CARD_NEED_INIT) || (reader->card_status == CARD_INSERTED)) {
-
-		if (reader->client)
-			reader->client->last=time((time_t*)0);
+		struct s_client *cl = reader->client;
+		if (cl)
+			cl->last=time((time_t*)0);
 
 		cs_ri_brk(reader, 0);
 
@@ -318,6 +319,7 @@ int32_t reader_device_init(struct s_reader * reader)
 
 int32_t reader_checkhealth(struct s_reader * reader)
 {
+	struct s_client *cl = reader->client;
 	if (reader_card_inserted(reader)) {
 		if (reader->card_status == NO_CARD || reader->card_status == UNKNOWN) {
 			cs_log("%s card detected", reader->label);
@@ -326,14 +328,14 @@ int32_t reader_checkhealth(struct s_reader * reader)
 #endif
 			reader->card_status = CARD_NEED_INIT;
 			//reader_reset(reader);
-			add_job(reader->client, ACTION_READER_RESET, NULL, 0);
+			add_job(cl, ACTION_READER_RESET, NULL, 0);
 		}
 	} else {
 		if (reader->card_status == CARD_INSERTED) {
 			reader_nullcard(reader);
-			if (reader->client) {
-				reader->client->lastemm = 0;
-				reader->client->lastecm = 0;
+			if (cl) {
+				cl->lastemm = 0;
+				cl->lastecm = 0;
 			}
 			cs_log("card ejected");
 #ifdef QBOXHD_LED 
@@ -358,10 +360,11 @@ int32_t reader_ecm(struct s_reader * reader, ECM_REQUEST *er, struct s_ecm_answe
 {
   int32_t rc=-1;
 	if( (rc=reader_checkhealth(reader)) ) {
-		if (reader->client) {
-			reader->client->last_srvid=er->srvid;
-			reader->client->last_caid=er->caid;
-			reader->client->last=time((time_t*)0);
+		struct s_client *cl = reader->client;
+		if (cl) {
+			cl->last_srvid=er->srvid;
+			cl->last_caid=er->caid;
+			cl->last=time((time_t*)0);
 		}
 
 		if (reader->csystem.active && reader->csystem.do_ecm) 

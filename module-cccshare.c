@@ -1079,7 +1079,7 @@ void update_card_list() {
                             struct cc_provider *prov;
                             while ((prov = ll_iter_next(&it2))) {
                     			uint32_t prid = prov->prov;
-                                if (!chk_srvid_by_caid_prov(rdr->client, card->caid, prid)) {
+                                if (!chk_srvid_by_caid_prov(rc, card->caid, prid)) {
                                 	ignore = 1;
                                     break;
 								}
@@ -1189,7 +1189,8 @@ void share_updater()
 				struct s_reader *rdr;
 				struct cc_data *cc;
 				for (rdr=first_active_reader; rdr; rdr=rdr->next) {
-						if (rdr->client && (cc=rdr->client->cc)) { //check cccam-cardlist:
+						struct s_client *cl = rdr->client;
+						if (cl && (cc=cl->cc)) { //check cccam-cardlist:
 								cur_card_check += cc->card_added_count;
 								cur_card_check += cc->card_removed_count;
 								card_count += ll_count(cc->cards);

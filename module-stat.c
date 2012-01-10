@@ -935,7 +935,11 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				continue;
 			}
 				
-			int32_t hassrvid = has_srvid(rdr->client, er) || has_ident(&rdr->ftab, er);
+			int32_t hassrvid;
+			if(cl)
+				hassrvid = has_srvid(cl, er) || has_ident(&rdr->ftab, er);
+			else
+				hassrvid = 0;
 			
 			if (stat->rc == E_FOUND && stat->ecm_count < cfg.lb_min_ecmcount) {
 				cs_debug_mask(D_TRACE, "loadbalancer: reader %s needs more statistics", rdr->label);

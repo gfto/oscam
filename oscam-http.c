@@ -903,8 +903,9 @@ static char *send_oscam_config(struct templatevars *vars, struct uriparams *para
 
 static void inactivate_reader(struct s_reader *rdr)
 {
-	if (rdr->client)
-		kill_thread(rdr->client);
+	struct s_client *cl = rdr->client;
+	if (cl)
+		kill_thread(cl);
 }
 
 static char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
@@ -955,6 +956,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 
 	if (strcmp(getParam(params, "action"), "reread") == 0) {
 		rdr = get_reader_by_label(getParam(params, "label"));
+		struct s_client *cl = rdr->client;
 		if (rdr) {
 			//reset the counters
 			for (i = 0; i < 4; i++) {
@@ -964,8 +966,8 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 				rdr->emmblocked[i] = 0;
 			}
 
-			if(rdr->enable == 1 && rdr->client && rdr->client->typ == 'r') {
-				add_job(rdr->client, ACTION_READER_CARDINFO, NULL, 0);
+			if(rdr->enable == 1 && cl && cl->typ == 'r') {
+				add_job(cl, ACTION_READER_CARDINFO, NULL, 0);
 			}
 		}
 	}
@@ -979,6 +981,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 
 	ll_iter_reset(&itr); //going to iterate all configured readers
 	while ((rdr = ll_iter_next(&itr))) {
+		struct s_client *cl = rdr->client;
 		if(rdr->label[0] && rdr->typ) {
 
 			// used for API and WebIf
@@ -1053,8 +1056,8 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 
 				// used only for API
 				tpl_addVar(vars, TPLADD, "APIREADERENABLED", !rdr->enable ? "0": "1");
-				if(rdr->client)
-					tpl_printf(vars, TPLADD, "APIREADERTYPE", "%c", rdr->client->typ ? rdr->client->typ :'x');
+				if(cl)
+					tpl_printf(vars, TPLADD, "APIREADERTYPE", "%c", cl->typ ? cl->typ :'x');
 
 				// Add to API Template
 				tpl_addVar(vars, TPLAPPEND, "APIREADERLIST", tpl_getTpl(vars, "APIREADERSBIT"));
@@ -1595,6 +1598,8 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 	if(!rdr) return "0";
+	struct s_client *cl = rdr->client;
+	if(!cl) return "0";
 
 	if(!apicall) setActiveMenu(vars, MNU_READERS);
 
@@ -1706,7 +1711,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 			txt = "NEEDINIT";
 			break;
 		case CARD_INSERTED:
-			if (rdr->client->typ == 'p')
+			if (cl->typ == 'p')
 				txt = "CONNECTED";
 			else
 				txt = "CARDOK";
@@ -1822,8 +1827,8 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 	}
 
 	if(apicall) {
-		if(rdr->client){
-			char *value = get_ecm_historystring(rdr->client);
+		if(cl){
+			char *value = get_ecm_historystring(cl);
 			tpl_printf(vars, TPLADD, "ECMHISTORY", "%s", value);
 			free_mk_t(value);
 		}
@@ -2647,7 +2652,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 			rdr = get_reader_by_label(reader_);
 
 			if (rdr) {
-
+				struct s_client *cl = rdr->client;
 				if (rdr->ll_entitlements) {
 
 					char *typetxt[] = {"", "package", "PPV-Event", "chid", "tier", "class", "PBM", "admin" };
@@ -2695,8 +2700,8 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					}
 				}
 
-				if (rdr->client && rdr->client->typ)
-					tpl_printf(vars, TPLADD, "READERTYPE", "%c", rdr->client->typ);
+				if (cl && cl->typ)
+					tpl_printf(vars, TPLADD, "READERTYPE", "%c", cl->typ);
 				else
 					tpl_addVar(vars, TPLADD, "READERTYPE", "null");
 				tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);

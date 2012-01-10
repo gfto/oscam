@@ -428,7 +428,11 @@ int32_t chk_ctab(uint16_t caid, CAIDTAB *ctab) {
 
 int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   //simple checks first:
-  if (!er || !rdr ||!rdr->client)
+  if (!er || !rdr)
+    return(0);
+    
+   struct s_client *cl = rdr->client;
+   if (!cl)
     return(0);
   
   // if physical reader a card needs to be inserted 

@@ -544,7 +544,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	int32_t rc = reader_ecm(reader, er, &ea);
 	if(rc == ERROR){
 		char buf[32];
-		cs_log("Error processing ecm for caid %04X, srvid %04X (servicename: %s) on reader %s.", er->caid, er->srvid, get_servicename(reader->client, er->srvid, er->caid, buf), reader->label);
+		cs_log("Error processing ecm for caid %04X, srvid %04X (servicename: %s) on reader %s.", er->caid, er->srvid, get_servicename(cl, er->srvid, er->caid, buf), reader->label);
 		ea.rc = E_NOTFOUND;
 	} else
 		ea.rc = E_FOUND;
@@ -673,8 +673,9 @@ void reader_do_idle(struct s_reader * reader)
 		time(&now);
 		time_diff = abs(now - reader->last_s);
 		if (time_diff>(reader->tcp_ito*60)) {
-			if (reader->client && reader->tcp_connected && reader->ph.type==MOD_CONN_TCP) {
-				cs_debug_mask(D_READER, "%s inactive_timeout, close connection (fd=%d)", reader->ph.desc, reader->client->pfd);
+			struct s_client *cl = reader->client;
+			if (cl && reader->tcp_connected && reader->ph.type==MOD_CONN_TCP) {
+				cs_debug_mask(D_READER, "%s inactive_timeout, close connection (fd=%d)", reader->ph.desc, cl->pfd);
 				network_tcp_connection_close(reader);
 			} else
 				reader->last_s = now;
