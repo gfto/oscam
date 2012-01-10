@@ -3547,7 +3547,7 @@ void * work_thread(void *ptr) {
 			case ACTION_CACHE_PUSH_OUT: {
 				ECM_REQUEST *er = data->ptr;
 
-				int32_t res, stats = -1;
+				int32_t res=0, stats = -1;
 				if (reader) {
 					struct s_client *cl = reader->client;
 					if(cl){
