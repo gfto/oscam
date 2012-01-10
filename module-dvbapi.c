@@ -954,6 +954,8 @@ static int8_t request_cw(struct s_client *dvbapi_client, ECM_REQUEST *er)
 	}
 	else {
 		cs_debug_mask(D_DVBAPI, "request cw lb-ignored for caid %04X provid %06X srvid %04X pid %04X chid %04X", er->caid, er->prid, er->srvid, er->pid, er->chid);
+		er->rc = E_NOTFOUND;
+		dvbapi_send_dcw(dvbapi_client, er);
 		free(er);
 	}
 	return do_request;
@@ -1864,7 +1866,7 @@ static void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t index) {
 	}
 }
 
-static void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er) 
+void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
 #ifdef AZBOX
 	azbox_send_dcw(client, er);

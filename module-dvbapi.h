@@ -296,7 +296,7 @@ int32_t dvbapi_open_device(int32_t, int32_t, int);
 int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num);
 int32_t dvbapi_stop_filter(int32_t demux_index, int32_t type);
 struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidindex, char type);
-
+void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er);
 
 #undef cs_log
 #define cs_log(txt, x...)	cs_log_int(0, 1, NULL, 0, "dvbapi: "txt, ##x)
