@@ -5722,45 +5722,31 @@ void free_mk_t(char *value){
 	if(strlen(value) > 0) free(value);
 }
 
-struct s_global_whitelist
-{
-	uint32_t line; //linenr of oscam.whitelist file, starting with 1
-	char type; // w or i or l
-	uint16_t caid;
-	uint32_t provid;
-	uint16_t srvid;
-	uint16_t chid;
-	uint16_t pid;
-	uint16_t ecmlen;
-	struct s_global_whitelist *next;
-} GLOBAL_WHITELIST;
-
-struct s_global_whitelist *global_whitelist = NULL;
-int8_t use_l = 0;
-
 int32_t match_whitelist(ECM_REQUEST *er, struct s_global_whitelist *entry) {
 	return ((!entry->caid || entry->caid == er->caid)
 			&& (!entry->provid || entry->provid == er->prid)
 			&& (!entry->srvid || entry->srvid == er->srvid)
 			&& (!entry->chid || entry->chid == er->chid)
-			&& (!entry->ecmlen || entry->ecmlen == er->l)
-			&& (!entry->pid || entry->pid == er->pid));
+			&& (!entry->pid || entry->pid == er->pid)
+			&& (!entry->ecmlen || entry->ecmlen == er->l));
 }
 
 int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line)
 {
 	*line = -1;
-	if (!global_whitelist)
+	if (!cfg.global_whitelist)
 		return 1;
 
 	struct s_global_whitelist *entry;
-	if (use_l) { //Check caid/prov/srvid etc matching, except ecm-len:
-		entry = global_whitelist;
+	if (cfg.global_whitelist_use_l) { //Check caid/prov/srvid etc matching, except ecm-len:
+		entry = cfg.global_whitelist;
 		int8_t caidprov_matches = 0;
 		while (entry) {
 			if (entry->type == 'l') {
-				if (match_whitelist(er, entry))
+				if (match_whitelist(er, entry)) {
+					*line = entry->line;
 					return 1;
+				}
 				if ((!entry->caid || entry->caid == er->caid)
 						&& (!entry->provid || entry->provid == er->prid)
 						&& (!entry->srvid || entry->srvid == er->srvid)
@@ -5774,7 +5760,7 @@ int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line)
 			return 0;
 	}
 
-	entry = global_whitelist;
+	entry = cfg.global_whitelist;
 	while (entry) {
 		if (match_whitelist(er, entry)) {
 			*line = entry->line;
@@ -5793,6 +5779,8 @@ int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line)
 //w:caid:prov:srvid:pid:chid:ecmlen
 //Ignore-Entry:
 //i:caid:prov:srvid:pid:chid:ecmlen
+//ECM len check - Entry:
+//l:caid:prov:srvid:pid:chid:ecmlen
 
 static struct s_global_whitelist *global_whitelist_read_int() {
 	FILE *fp;
@@ -5803,7 +5791,7 @@ static struct s_global_whitelist *global_whitelist_read_int() {
 	uint32_t line = 0;
 
 	const char *cs_whitelist="oscam.whitelist";
-	use_l = 0;
+	cfg.global_whitelist_use_l = 0;
 
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_whitelist);
 	fp=fopen(token, "r");
@@ -5830,12 +5818,6 @@ static struct s_global_whitelist *global_whitelist_read_int() {
 			}
 		}
 
-		//Format:
-		//Whitelist-Entry:
-		//w:caid:prov:srvid:pid:chid:ecmlen
-		//Ignore-Entry:
-		//i:caid:prov:srvid:pid:chid:ecmlen
-
 		type = 'w';
 		uint32_t caid=0, provid=0, srvid=0, pid=0, chid=0, ecmlen=0;
 		memset(str1, 0, sizeof(str1));
@@ -5846,6 +5828,7 @@ static struct s_global_whitelist *global_whitelist_read_int() {
 
 		//w=whitelist
 		//i=ignore
+		//l=len-check
 		if (ret<1 || (type != 'w' && type != 'i' && type != 'l'))
 			continue;
 
@@ -5870,7 +5853,7 @@ static struct s_global_whitelist *global_whitelist_read_int() {
 				entry->chid=chid;
 				entry->ecmlen=ecmlen;
 				if (entry->type == 'l')
-					use_l = 1;
+					cfg.global_whitelist_use_l = 1;
 
 				cs_debug_mask(D_TRACE, "whitelist: %c: %04X %06X %04X %04X %04X %04X",
 					entry->type, entry->caid, entry->provid, entry->srvid, entry->pid, entry->chid, entry->ecmlen);
@@ -5898,10 +5881,10 @@ static struct s_global_whitelist *global_whitelist_read_int() {
 
 void global_whitelist_read() {
 
-	struct s_global_whitelist *entry, *old_list = global_whitelist;
+	struct s_global_whitelist *entry, *old_list = cfg.global_whitelist;
 
-	old_list = global_whitelist;
-	global_whitelist = global_whitelist_read_int();
+	old_list = cfg.global_whitelist;
+	cfg.global_whitelist = global_whitelist_read_int();
 
 	while (old_list) {
 		entry = old_list->next;

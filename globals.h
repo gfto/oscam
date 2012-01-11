@@ -1330,6 +1330,19 @@ struct s_ip
 	struct s_ip 	*next;
 };
 
+struct s_global_whitelist
+{
+	uint32_t line; //linenr of oscam.whitelist file, starting with 1
+	char type; // w or i or l
+	uint16_t caid;
+	uint32_t provid;
+	uint16_t srvid;
+	uint16_t chid;
+	uint16_t pid;
+	uint16_t ecmlen;
+	struct s_global_whitelist *next;
+} GLOBAL_WHITELIST;
+
 struct s_config
 {
 	int32_t			nice;
@@ -1523,6 +1536,10 @@ struct s_config
 	uint32_t	cacheex_wait_time; 		//cache wait time in ms
 	uint8_t		cacheex_enable_stats;	//enable stats
 #endif
+
+	//Global whitelist:
+	struct s_global_whitelist *global_whitelist;
+	int8_t global_whitelist_use_l;
 };
 
 struct s_clientinit
