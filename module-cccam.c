@@ -2243,12 +2243,13 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			uint16_t ecm_idx = eei->ecm_idx;
 			cc->recv_ecmtask = ecm_idx;
 			struct cc_card *card = eei->card;
-			struct cc_srvid srvid = eei->srvid;
-			free(eei);
+			struct cc_srvid srvid = eei->srvid;			
 
 			struct timeb tpe;
 			cs_ftime(&tpe);
 			int32_t cwlastresptime = 1000*(tpe.time-eei->tps.time)+tpe.millitm-eei->tps.millitm;
+			
+			free(eei);
 
 			if (card) {
 				if (buf[1] == MSG_CW_NOK1) //MSG_CW_NOK1: share no more available
@@ -2354,7 +2355,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 									cs_debug_mask(D_TRACE, "%s forward card: share %d origin reader %s origin id %d", getprefix(), card->id, ordr->label, card->origin_id);
 									struct s_client *cl = ordr->client;
 									if (card->origin_id && cl && cl->cc) { //only if we have a origin from a cccam reader
-										struct cc_data *rcc = ordr->client->cc;
+										struct cc_data *rcc = cl->cc;
 										
 										if(rcc){
 											itr = ll_iter_create(rcc->cards);

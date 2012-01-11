@@ -1949,7 +1949,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	if (cl && !cl->kill) {
 		add_job(cl, ACTION_CLIENT_ECM_ANSWER, ea, sizeof(struct s_ecm_answer));
 		res = 1;
-	}
+	} else free(ea);
 
 	if (reader && rc == E_FOUND && reader->resetcycle > 0)
 	{
@@ -2289,13 +2289,12 @@ static void request_cw(ECM_REQUEST *er)
 				if ((ea->status & READER_ACTIVE) != READER_ACTIVE)
 					continue;
 			}
-
-			cs_debug_mask(D_TRACE, "request_cw stage=%d to reader %s ecm=%04X", er->stage, ea->reader->label, htons(er->checksum));
+			struct s_reader *rdr = ea->reader;
+			cs_debug_mask(D_TRACE, "request_cw stage=%d to reader %s ecm=%04X", er->stage, rdr?rdr->label:'', htons(er->checksum));
 			write_ecm_request(ea->reader, er);
 			ea->status |= REQUEST_SENT;
 
-			//set sent=1 only if reader is active/connected. If not, switch to next stage!
-			struct s_reader *rdr = ea->reader;
+			//set sent=1 only if reader is active/connected. If not, switch to next stage!			
 			if (!sent && rdr) {
 				struct s_client *rcl = rdr->client;
 				if(rcl){
@@ -2324,11 +2323,11 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 	struct s_client *eacl = eardr->client;
 
 	if (eardr) {
-		cs_debug_mask(D_TRACE, "ecm answer from reader %s for ecm %04X rc=%d", ea->reader->label, htons(ert->checksum), ea->rc);
+		cs_debug_mask(D_TRACE, "ecm answer from reader %s for ecm %04X rc=%d", eardr->label, htons(ert->checksum), ea->rc);
 		//cs_ddump_mask(D_TRACE, ea->cw, sizeof(ea->cw), "received cw from %s caid=%04X srvid=%04X hash=%08X",
-		//		ea->reader->label, ert->caid, ert->srvid, ert->csp_hash);
+		//		eardr->label, ert->caid, ert->srvid, ert->csp_hash);
 		//cs_ddump_mask(D_TRACE, ert->ecm, ert->l, "received cw for ecm from %s caid=%04X srvid=%04X hash=%08X",
-		//		ea->reader->label, ert->caid, ert->srvid, ert->csp_hash);
+		//		eardr->label, ert->caid, ert->srvid, ert->csp_hash);
 	}
 
 	ea->status |= REQUEST_ANSWERED;
@@ -2349,7 +2348,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 			eardr->ecmsnok++;
 
 		//Reader ECMs Health Try (by Pickser)
-		if (eardr->ecmsok != 0 || ea->reader->ecmsnok != 0)
+		if (eardr->ecmsok != 0 || eardr->ecmsnok != 0)
 		{
 			eardr->ecmshealthok = ((double) eardr->ecmsok / (eardr->ecmsok + eardr->ecmsnok)) * 100;
 			eardr->ecmshealthnok = ((double) eardr->ecmsnok / (eardr->ecmsok + eardr->ecmsnok)) * 100;
@@ -2360,14 +2359,14 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 		 * todo: config-option!
 		 *
 #ifdef WITH_LB
-		if (ea->reader->ecmshealthok >= 75) {
-			ea->reader->lb_weight = 100;
-		} else if (ea->reader->ecmshealthok >= 50) {
-			ea->reader->lb_weight = 75;
-		} else if (ea->reader->ecmshealthok >= 25) {
-			ea->reader->lb_weight = 50;
+		if (eardr->ecmshealthok >= 75) {
+			eardr->lb_weight = 100;
+		} else if (eardr->ecmshealthok >= 50) {
+			eardr->lb_weight = 75;
+		} else if (eardr->ecmshealthok >= 25) {
+			eardr->lb_weight = 50;
 		} else {
-			ea->reader->lb_weight = 25;
+			eardr->lb_weight = 25;
 		}
 #endif
 		*/
