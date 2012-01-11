@@ -2290,7 +2290,7 @@ static void request_cw(ECM_REQUEST *er)
 					continue;
 			}
 			struct s_reader *rdr = ea->reader;
-			cs_debug_mask(D_TRACE, "request_cw stage=%d to reader %s ecm=%04X", er->stage, rdr?rdr->label:'', htons(er->checksum));
+			cs_debug_mask(D_TRACE, "request_cw stage=%d to reader %s ecm=%04X", er->stage, rdr?rdr->label:"", htons(er->checksum));
 			write_ecm_request(ea->reader, er);
 			ea->status |= REQUEST_SENT;
 
