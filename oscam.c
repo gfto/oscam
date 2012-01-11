@@ -1886,6 +1886,7 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, uint8_t rcEx, uchar *cw, char *msglog)
 {
 	int32_t i;
+	int8_t found = 1;
 	uchar c;
 	struct s_ecm_answer *ea = NULL, *ea_list;
 
@@ -1896,6 +1897,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 
 	if (!ea) {
 		ea = cs_malloc(&ea, sizeof(struct s_ecm_answer), -1); //Free by ACTION_CLIENT_ECM_ANSWER!
+		found = 0;
 	}
 
 	if (cw)
@@ -1949,7 +1951,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	if (cl && !cl->kill) {
 		add_job(cl, ACTION_CLIENT_ECM_ANSWER, ea, sizeof(struct s_ecm_answer));
 		res = 1;
-	} else free(ea);
+	} else if (found == 0) free(ea);
 
 	if (reader && rc == E_FOUND && reader->resetcycle > 0)
 	{
