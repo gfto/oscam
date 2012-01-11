@@ -1,18 +1,24 @@
 .TH oscam.whitelist 5
 .SH NAME
-\fBoscam.whitelist\fR - global whitelisting configuration file for OSCam
+\fBoscam.whitelist\fR - global ECM length whitelisting configuration file for OSCam
 .SH SYNOPSIS
-whitelisting
+ECM length whitelisting
 .SH DESCRIPTIONS
 .PP
 \fBw\fP:\fB[CAID]\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP[:]\fB[CHID]\fP[:]\fB[ECM length 1[,ECM length 2]...]]\fP
 .RS 3n
- entry for whitelisting
+ ECM length whitelisting
+.RE
+.PP
+\fBl\fP:\fB[CAID]\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP[:]\fB[CHID]\fP[:]\fB[ECM length 1[,ECM length 2]...]]\fP
+.RS 3n
+ ECM length whitelisting, does not proceed with any other ECM length 
+ whitelisting when matching
 .RE
 .PP
 \fBi\fP:\fB[CAID]\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP[:]\fB[CHID]\fP[:]\fB[ECM length 1[,ECM length 2]...]]\fP
 .RS 3n
- ignore entry
+ ignore ECM length
 .RE
 .SH ANNONTATIONS
 \fIPlease use Unix text file format only.\fR

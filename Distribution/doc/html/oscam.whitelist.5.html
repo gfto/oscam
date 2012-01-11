@@ -8,11 +8,11 @@ Section: File Formats (5)<BR><A HREF="#index">Index</A>
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-<B>oscam.whitelist</B> - global whitelisting configuration file for OSCam
+<B>oscam.whitelist</B> - global ECM length whitelisting configuration file for OSCam
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
-whitelisting
+ECM length whitelisting
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTIONS</H2>
 
@@ -20,14 +20,22 @@ whitelisting
 
 <B>w</B>:<B>[CAID]</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B>[:]<B>[CHID]</B>[:]<B>[ECM length 1[,ECM length 2]...]]</B>
 <DL COMPACT><DT><DD>
-<BR>&nbsp;entry&nbsp;for&nbsp;whitelisting
+<BR>&nbsp;ECM&nbsp;length&nbsp;whitelisting
+</DL>
+
+<P>
+
+<B>l</B>:<B>[CAID]</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B>[:]<B>[CHID]</B>[:]<B>[ECM length 1[,ECM length 2]...]]</B>
+<DL COMPACT><DT><DD>
+<BR>&nbsp;ECM&nbsp;length&nbsp;whitelisting,&nbsp;does&nbsp;not&nbsp;proceed&nbsp;with&nbsp;any&nbsp;other&nbsp;ECM&nbsp;length&nbsp;
+<BR>&nbsp;whitelisting&nbsp;when&nbsp;matching
 </DL>
 
 <P>
 
 <B>i</B>:<B>[CAID]</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B>[:]<B>[CHID]</B>[:]<B>[ECM length 1[,ECM length 2]...]]</B>
 <DL COMPACT><DT><DD>
-<BR>&nbsp;ignore&nbsp;entry
+<BR>&nbsp;ignore&nbsp;ECM&nbsp;length
 </DL>
 
 <A NAME="lbAE">&nbsp;</A>
