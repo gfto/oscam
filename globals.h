@@ -1198,6 +1198,7 @@ struct s_reader  									//contains device info, reader info and card info
 	//ratelimit
 	int32_t			ratelimitecm;
 	int32_t			ratelimitseconds;
+	time_t			lastdvbapirateoverride;
 	int32_t			ecmsok;
 	int32_t			ecmsnok;
 	uint32_t			ecmshealthok;
