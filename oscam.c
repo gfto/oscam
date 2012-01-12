@@ -2320,9 +2320,9 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 	ECM_REQUEST *ert = ea->er;
 	struct s_ecm_answer *ea_list;
 	struct s_reader *eardr = ea->reader;
-	if(!eardr || !ert)
+	if(!ert)
 		return;
-	struct s_client *eacl = eardr->client;
+	struct s_client *eacl = eardr?eardr->client:NULL; //reader is null on timeouts
 
 	if (eardr) {
 		cs_debug_mask(D_TRACE, "ecm answer from reader %s for ecm %04X rc=%d", eardr->label, htons(ert->checksum), ea->rc);
