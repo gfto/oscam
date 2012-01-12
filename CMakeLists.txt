@@ -551,6 +551,17 @@ else (OSCAM_SVN_REVISION)
     set (OSCAM_SVN_REVISION "0")
 endif (OSCAM_SVN_REVISION)
 
+# Check if we are using git svn
+if (OSCAM_SVN_REVISION MATCHES "Unversioned directory")
+	execute_process (COMMAND git rev-parse --verify HEAD COMMAND tr -d '\n' WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" OUTPUT_VARIABLE OSCAM_GIT_REVISION)	
+	if (OSCAM_GIT_REVISION)
+		execute_process (COMMAND git svn find-rev "${OSCAM_GIT_REVISION}" COMMAND tr -d '\n' WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" OUTPUT_VARIABLE OSCAM_GIT_SVN_REVISION)
+		if (OSCAM_GIT_SVN_REVISION)		
+			set (OSCAM_SVN_REVISION ${OSCAM_GIT_SVN_REVISION})
+		endif (OSCAM_GIT_SVN_REVISION)
+	endif (OSCAM_GIT_REVISION)	
+endif (OSCAM_SVN_REVISION MATCHES "Unversioned directory")
+
 # pass the version to the compilations as a define
 add_definitions ("-D'CS_SVN_VERSION=\"${OSCAM_SVN_REVISION}\"'")
 

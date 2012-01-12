@@ -633,9 +633,6 @@ void cleanup_thread(void *var)
 		if(rdrcl) rdrcl = NULL;
 		cl->reader = NULL;
 	}
-	if (!pthread_mutex_trylock(&cl->thread_lock))
-		pthread_mutex_unlock(&cl->thread_lock);
-	pthread_mutex_destroy(&cl->thread_lock);
 
 	// Clean client specific data
 	if(cl->typ == 'c'){
@@ -656,8 +653,11 @@ void cleanup_thread(void *var)
 			
 	// Clean all remaining structures
 
-
+	pthread_mutex_lock(&cl->thread_lock);
 	ll_destroy(cl->joblist);
+	cl->joblist = NULL;
+	pthread_mutex_unlock(&cl->thread_lock);
+	pthread_mutex_destroy(&cl->thread_lock);
 
 	cleanup_ecmtasks(cl);
 	add_garbage(cl->emmcache);
