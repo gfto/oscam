@@ -3299,7 +3299,7 @@ static void check_status(struct s_client *cl) {
 			//check for card inserted or card removed on pysical reader
 			if (!rdr || !rdr->enable)
 				break;
-			reader_checkhealth(rdr);
+			add_job(cl, ACTION_READER_CHECK_HEALTH, NULL, 0);
 			break;
 #endif
 		case 'p':
@@ -3499,6 +3499,9 @@ void * work_thread(void *ptr) {
 				reader_reset(reader);
 				reader->ins7e11_fast_reset = 0;
 				break;
+			case ACTION_READER_CHECK_HEALTH:
+				reader_checkhealth(reader);
+				break;
 
 			case ACTION_CLIENT_UDP:
 				n = ph[cl->ctyp].recv(cl, data->ptr, data->len);
@@ -3613,7 +3616,7 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 			cl->joblist = ll_create("joblist");
 
 		ll_append(cl->joblist, data);
-		cs_debug_mask(D_TRACE, "add %s job action %d", action > 20 ? "client" : "reader", action);
+		cs_debug_mask(D_TRACE, "add %s job action %d", action > ACTION_CLIENT_FIRST ? "client" : "reader", action);
 		pthread_mutex_unlock(&cl->thread_lock);
 		pthread_kill(cl->thread, OSCAM_SIGNAL_WAKEUP);
 		return;
@@ -3627,10 +3630,10 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
 
-	cs_debug_mask(D_TRACE, "start %s thread action %d", action > 20 ? "client" : "reader", action);
+	cs_debug_mask(D_TRACE, "start %s thread action %d", action > ACTION_CLIENT_FIRST ? "client" : "reader", action);
 
 	if (pthread_create(&cl->thread, &attr, work_thread, (void *)data)) {
-		cs_log("ERROR: can't create thread for %s", action > 20 ? "client" : "reader");
+		cs_log("ERROR: can't create thread for %s", action > ACTION_CLIENT_FIRST ? "client" : "reader");
 	} else
 		pthread_detach(cl->thread);
 

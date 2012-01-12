@@ -1058,7 +1058,8 @@ void update_card_list() {
 				}
             }
 
-            if (rdr->typ == R_CCCAM && (cfg.cc_reshare_services<2 || cfg.cc_reshare_services==4) && rdr->card_status != CARD_FAILURE) {
+            if (rdr->typ == R_CCCAM && rdr->tcp_connected &&
+            		(cfg.cc_reshare_services<2 || cfg.cc_reshare_services==4) && rdr->card_status != CARD_FAILURE) {
 
                 cs_debug_mask(D_TRACE, "asking reader %s for cards...", rdr->label);
 

@@ -34,6 +34,11 @@
 
 #define QUITERROR 1
 
+#define MIN_RATING -25
+#define MAX_RATING 25
+
+#define HOP_RATING 5
+
 typedef enum {
 	DECRYPT, ENCRYPT
 } cc_crypt_mode_t;
@@ -116,7 +121,7 @@ struct cc_card {
 	SIDTABBITS sidtabno;
 	time_t timeout;
 	uint8_t is_ext;
-	uint8_t tout_counter;
+	int8_t rating;
 };
 
 typedef enum {
