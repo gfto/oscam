@@ -3370,7 +3370,7 @@ void * work_thread(void *ptr) {
 		}
 
 		if (!data) {
-			check_status(cl);
+			if(cl->typ != 'r') check_status(cl);	// do not call for physical readers as this might cause an endless job loop
 			pthread_mutex_lock(&cl->thread_lock);
 			if (cl->joblist && ll_count(cl->joblist)>0) {
 				LL_ITER itr = ll_iter_create(cl->joblist);
