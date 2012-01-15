@@ -3132,7 +3132,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 
 #ifdef MODULE_CCCAM
 					if (!apicall) {
-						if(rdr && (cl->typ == 'r' || cl->typ == 'p') && strncmp(proto,"cccam", 5) == 0 && rdr->tcp_connected){
+						if(rdr && (cl->typ == 'r' || cl->typ == 'p') && strncmp(proto,"cccam", 5) == 0 && rdr->tcp_connected && rdr->card_status != CARD_FAILURE){
 							struct cc_data *rcc = cl->cc;
 							if(rcc){
 								LLIST *cards = rcc->cards;
