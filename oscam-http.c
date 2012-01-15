@@ -3048,7 +3048,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 				{
 					struct s_reader *rdr = cl->reader;
 					char *txt = "OK";
-					if(!rdr) txt = "UNKNOWN";
+					if(!rdr && (cl->typ == 'r' || cl->typ == 'p')) txt = "UNKNOWN";
 					else if (cl->typ == 'r' || cl->typ == 'p') //reader or proxy
 					{
 						if (rdr->lbvalue)
