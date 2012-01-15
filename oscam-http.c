@@ -3042,15 +3042,15 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 					tpl_printf(vars, TPLADD, "CLIENTIDLESECS", "%d", isec);
 				}
 
-
 				if(con == 2) tpl_addVar(vars, TPLADD, "CLIENTCON", "Duplicate");
 				else if (con == 1) tpl_addVar(vars, TPLADD, "CLIENTCON", "Sleep");
 				else
 				{
+					struct s_reader *rdr = cl->reader;
 					char *txt = "OK";
-					if (cl->typ == 'r' || cl->typ == 'p') //reader or proxy
+					if(!rdr) txt = "UNKNOWN";
+					else if (cl->typ == 'r' || cl->typ == 'p') //reader or proxy
 					{
-						struct s_reader *rdr = cl->reader;
 						if (rdr->lbvalue)
 							tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "<A HREF=\"readerstats.html?label=%s&amp;hide=4\" TITLE=\"Show statistics for this reader/ proxy\">%d</A>", urlencode(vars, rdr->label), rdr->lbvalue);
 						else
@@ -3073,9 +3073,8 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 					}
 					tpl_addVar(vars, TPLADD, "CLIENTCON", txt);
 
-					if ((cl->typ == 'r') && (!apicall)) //reader
-					{ 
-						struct s_reader *rdr = cl->reader;
+					if (rdr && (cl->typ == 'r') && (!apicall)) //reader
+					{						
 						if (rdr->ll_entitlements)
 						{
 							LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
@@ -3133,7 +3132,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 
 #ifdef MODULE_CCCAM
 					if (!apicall) {
-						if((cl->typ == 'r' || cl->typ == 'p') && strncmp(proto,"cccam", 5) == 0){
+						if(rdr && (cl->typ == 'r' || cl->typ == 'p') && strncmp(proto,"cccam", 5) == 0 && rdr->tcp_connected){
 							struct cc_data *rcc = cl->cc;
 							if(rcc){
 								LLIST *cards = rcc->cards;
