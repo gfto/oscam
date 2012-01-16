@@ -456,7 +456,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	}
 
 	// cache2
-	struct ecm_request_t *ecm = check_cwcache(er, reader->grp);
+	struct ecm_request_t *ecm = check_cwcache(er, cl);
 	if (ecm && ecm->rc <= E_NOTFOUND) {
 		cs_debug_mask(D_TRACE, "ecm %04X answer from cache reader=%s", er->checksum, reader->label);
 		write_ecm_answer(reader, er, E_CACHE2, 0, ecm->cw, NULL);

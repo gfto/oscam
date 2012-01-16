@@ -1390,6 +1390,7 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 
 		cl->sidtabok=rdr->sidtabok;
 		cl->sidtabno=rdr->sidtabno;
+		cl->grp = rdr->grp;
 
 		rdr->client=cl;
 
@@ -1718,16 +1719,40 @@ void cs_cache_push(ECM_REQUEST *er)
 	er->cacheex_pushed = 1;
 	if (er->ecmcacheptr) er->ecmcacheptr->cacheex_pushed = 1;
 }
+
+static int8_t is_match_alias(struct s_client *cl, ECM_REQUEST *er)
+{
+	return cl->account->cacheex == 1 && is_cacheex_matcher_matching(NULL, er);
+}
+
+static int8_t match_alias(struct s_client *cl, ECM_REQUEST *er, ECM_REQUEST *ecm)
+{
+	if (cl->account->cacheex == 1) {
+		struct s_cacheex_matcher *entry = is_cacheex_matcher_matching(ecm, er);
+		if (entry) {
+			int32_t diff = comp_timeb(&er->tps, &ecm->tps);
+			if (diff > entry->valid_from && diff < entry->valid_to) {
+				cs_debug_mask(D_TRACE, "cacheex-matching for: %04X:%06X:%04X:%04X:%04X:%02X = %04X:%06X:%04X:%04X:%04X:%02X valid %d/%d",
+						entry->caid, entry->provid, entry->srvid, entry->pid, entry->chid, entry->ecmlen,
+						entry->to_caid, entry->to_provid, entry->to_srvid, entry->to_pid, entry->to_chid, entry->to_ecmlen,
+						entry->valid_from, entry->valid_to);
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
 #endif
 
 /**
  * ecm cache
  **/
-struct ecm_request_t *check_cwcache(ECM_REQUEST *er, uint64_t grp)
+struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl)
 {
 	time_t now = time(NULL);
 	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
 	struct ecm_request_t *ecm;
+	uint64_t grp = cl?cl->grp:0;
 
 	cs_readlock(&ecmcache_lock);
 	for (ecm = ecmtask; ecm; ecm = ecm->next) {
@@ -1739,20 +1764,26 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, uint64_t grp)
 		if ((grp && ecm->grp && !(grp & ecm->grp)))
 			continue;
 
-		if (!(ecm->caid == er->caid || (ecm->ocaid && er->ocaid && ecm->ocaid == er->ocaid)))
-			continue;
+#ifdef CS_CACHEEX
+		if (!match_alias(cl, er, ecm)) {
+#endif
+			if (!(ecm->caid == er->caid || (ecm->ocaid && er->ocaid && ecm->ocaid == er->ocaid)))
+				continue;
 
 #ifdef CS_CACHEEX
-		//CWs from csp have no ecms, so ecm->l=0. ecmd5 is invalid, so do not check!
-		if (ecm->csp_hash != er->csp_hash)
-			continue;
+			//CWs from csp have no ecms, so ecm->l=0. ecmd5 is invalid, so do not check!
+			if (ecm->csp_hash != er->csp_hash)
+				continue;
 
-		if (ecm->l > 0 && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
-			continue;
+			if (ecm->l > 0 && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
+				continue;
 
 #else
-		if (memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
-			continue;
+			if (memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
+				continue;
+#endif
+#ifdef CS_CACHEEX
+		}
 #endif
 
 		if (ecm->rc != E_99)
@@ -1834,7 +1865,7 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 	if( (er->caid & 0xFF00) == 0x600 && !er->chid )
 		er->chid = (er->ecm[6]<<8)|er->ecm[7];
 
-	struct ecm_request_t *ecm = check_cwcache(er, cl->grp);
+	struct ecm_request_t *ecm = check_cwcache(er, cl);
 
 	if (!ecm) {
 		cs_writelock(&ecmcache_lock);
@@ -2857,7 +2888,11 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	}
 
 	struct s_ecm_answer *ea, *prv = NULL;
+#ifdef CS_CACHEEX
+	if(er->rc >= E_99 && !is_match_alias(client, er)) {
+#else
 	if(er->rc >= E_99) {
+#endif
 		er->reader_avail=0;
 		struct s_reader *rdr;
 
@@ -2934,7 +2969,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	//we have to go through matching_reader() to check services!
 	struct ecm_request_t *ecm;
 	if (er->rc == E_UNHANDLED) {
-		ecm = check_cwcache(er, client->grp);
+		ecm = check_cwcache(er, client);
 
 		if (ecm) {
 			if (ecm->rc < E_99) {
@@ -2960,7 +2995,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		while (max_wait > 0 && !client->kill) {
 			cs_sleepms(50);
 			max_wait -= 50;
-			ecm = check_cwcache(er, client->grp);
+			ecm = check_cwcache(er, client);
 			if (ecm) {
 				if (ecm->rc < E_99) { //Found cache!
 					memcpy(er->cw, ecm->cw, 16);
@@ -2987,7 +3022,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			cs_writeunlock(&ecmcache_lock);
 
 			if (er->rc == E_UNHANDLED) {
-				ecm = check_cwcache(er, client->grp);
+				ecm = check_cwcache(er, client);
 				if (ecm && ecm != er) {
 					er->rc = E_99;
 					er->ecmcacheptr = ecm;
@@ -4287,6 +4322,9 @@ int32_t main (int32_t argc, char *argv[])
 #endif
 
   global_whitelist_read();
+#ifdef CS_CACHEEX
+  cacheex_matcher_read();
+#endif
 
   for (i=0; i<CS_MAX_MOD; i++)
     if( (ph[i].type & MOD_CONN_NET) && ph[i].ptab )

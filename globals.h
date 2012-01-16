@@ -1346,6 +1346,32 @@ struct s_global_whitelist
 	struct s_global_whitelist *next;
 } GLOBAL_WHITELIST;
 
+#ifdef CS_CACHEEX
+struct s_cacheex_matcher
+{
+	uint32_t line; //linenr of oscam.cacheex file, starting with 1
+	char type; // m
+	uint16_t caid;
+	uint32_t provid;
+	uint16_t srvid;
+	uint16_t chid;
+	uint16_t pid;
+	uint16_t ecmlen;
+
+	uint16_t to_caid;
+	uint32_t to_provid;
+	uint16_t to_srvid;
+	uint16_t to_chid;
+	uint16_t to_pid;
+	uint16_t to_ecmlen;
+
+	int32_t valid_from;
+	int32_t valid_to;
+
+	struct s_cacheex_matcher *next;
+} CACHEEX_MATCHER;
+#endif
+
 struct s_config
 {
 	int32_t			nice;
@@ -1538,6 +1564,8 @@ struct s_config
 
 	uint32_t	cacheex_wait_time; 		//cache wait time in ms
 	uint8_t		cacheex_enable_stats;	//enable stats
+
+	struct s_cacheex_matcher *cacheex_matcher;
 #endif
 
 	//Global whitelist:
