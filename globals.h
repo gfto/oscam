@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <dirent.h>
+#include <termios.h>
 
 //for reader-nagra variables in s_reader:
 #include "cscrypt/idea.h"
@@ -1012,6 +1013,25 @@ struct ecmrl {
 };
 #define MAXECMRATELIMIT	20
 
+//sc8in1
+struct s_sc8in1_display {
+	char *text;
+	uint16_t text_length;
+	uint16_t char_change_time;
+	uint16_t last_char;
+	struct s_sc8in1_display	*next;
+};
+struct s_sc8in1_config {
+	struct termios stored_termio[8];
+	int32_t current_slot;
+	unsigned char cardstatus;
+	BYTE mcr_type;
+	CS_MUTEX_LOCK sc8in1_lock;
+	struct s_sc8in1_display *display;
+	CS_MUTEX_LOCK sc8in1_display_lock;
+	BYTE display_running;
+};
+
 struct s_reader  									//contains device info, reader info and card info
 {
 	int32_t			resetcycle;						// ECM until reset
@@ -1222,6 +1242,7 @@ struct s_reader  									//contains device info, reader info and card info
 	uint8_t			ins7E[0x1A+1];
 	uint8_t			ins7E11[0x01+1];
 	int8_t			ins7e11_fast_reset;
+	struct s_sc8in1_config *sc8in1_config;
 
 #ifdef MODULE_PANDORA
 	int8_t			pand_send_ecm;

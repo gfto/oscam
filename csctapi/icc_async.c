@@ -39,8 +39,6 @@
 #include "ifd_pcsc.h"
 #endif
 
-CS_MUTEX_LOCK sc8in1_lock; //semaphore for SC8in1, FIXME should not be global, but one per SC8in1
-
 // Default T0/T14 settings
 #define DEFAULT_WI		10
 // Default T1 settings
@@ -58,7 +56,7 @@ CS_MUTEX_LOCK sc8in1_lock; //semaphore for SC8in1, FIXME should not be global, b
 #define LOCK_SC8IN1 \
 { \
 	if (reader->typ == R_SC8in1) { \
-		cs_writelock(&sc8in1_lock); \
+		cs_writelock(&reader->sc8in1_config->sc8in1_lock); \
 		cs_debug_mask(D_ATR, "SC8in1: locked for access of slot %i", reader->slot); \
 		Sc8in1_Selectslot(reader, reader->slot); \
 	} \
@@ -67,7 +65,7 @@ CS_MUTEX_LOCK sc8in1_lock; //semaphore for SC8in1, FIXME should not be global, b
 #define UNLOCK_SC8IN1 \
 {	\
 	if (reader->typ == R_SC8in1) { \
-		cs_writeunlock(&sc8in1_lock); \
+		cs_writeunlock(&reader->sc8in1_config->sc8in1_lock); \
 		cs_debug_mask(D_ATR, "SC8in1: unlocked for access of slot %i", reader->slot); \
 	} \
 }
@@ -102,43 +100,39 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 
 	switch(reader->typ) {
 		case R_SC8in1:
-			cs_writelock(&sc8in1_lock);
+			cs_writelock(&reader->sc8in1_config->sc8in1_lock);
 			if (reader->handle != 0) {//this reader is already initialized
-				cs_writeunlock(&sc8in1_lock);
+				cs_debug_mask(D_DEVICE, "ICC_Async_Device_Init Sc8in1 already open.");
+				cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
 				return OK;
 			}
 
-			//this reader is uninitialized, thus the first one, since the first one initializes all others
-
 			//get physical device name
 			int32_t pos = strlen(reader->device)-2; //this is where : should be located; is also valid length of physical device name
-			if (reader->device[pos] != 0x3a) //0x3a = ":"
+			if (pos <= 0 || reader->device[pos] != 0x3a) //0x3a = ":"
 				cs_log("ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", reader->device[pos], reader->device);
-			reader->slot=(int)reader->device[pos+1] - 0x30;
-			reader->device[pos]= 0; //slot 1 reader now gets correct physicalname
 
-			//open physical device
-			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
-			if (reader->handle < 0) {
-				cs_log("ERROR opening device %s",reader->device);
-				cs_writeunlock(&sc8in1_lock);
-				return ERROR;
-			}
-
-			//copy physical device name and file handle to other slots
-			struct s_reader *rdr;
-			LL_ITER itr = ll_iter_create(configured_readers);
-			while((rdr = ll_iter_next(&itr))) //copy handle to other slots
-				if (rdr->typ == R_SC8in1 && rdr != reader) { //we have another sc8in1 reader
-					unsigned char save = rdr->device[pos];
-					rdr->device[pos]=0; //set to 0 so we can compare device names
-					if (!strcmp(reader->device, rdr->device)) {//we have a match to another slot with same device name
-						rdr->handle = reader->handle;
-						rdr->slot=(int)rdr->device[pos+1] - 0x30;
-					}
-					else
-						rdr->device[pos] = save; //restore character
+			// Check if serial port is open already
+			reader->handle = Sc8in1_GetActiveHandle(reader);
+			if ( ! reader->handle ) {
+				cs_debug_mask(D_DEVICE, "ICC_Async_Device_Init opening SC8in1");
+				//open physical device
+				unsigned char deviceName[128];
+				strncpy(deviceName, reader->device, 128);
+				deviceName[pos] = 0;
+				reader->handle = open (deviceName,  O_RDWR | O_NOCTTY| O_NONBLOCK);
+				if (reader->handle < 0) {
+					cs_log("ERROR opening device %s with real device %s",reader->device, deviceName);
+					cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+					return ERROR;
 				}
+			}
+			else {
+				// serial port already initialized
+				cs_debug_mask(D_DEVICE, "ICC_Async_Device_Init Another Sc8in1 already open.");
+				cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+				return OK;
+			}
 			break;
 		case R_MP35:
 		case R_MOUSE:
@@ -215,18 +209,36 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 	}
 	else if (reader->typ <= R_MOUSE)
 		if (Phoenix_Init(reader)) {
-				cs_log("ERROR: Phoenix_Init returns error");
-				Phoenix_Close (reader);
-				return ERROR;
+			cs_log("ERROR: Phoenix_Init returns error");
+			Phoenix_Close (reader);
+			cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+			return ERROR;
 		}
 
 	if (reader->typ == R_SC8in1) {
-		call(Sc8in1_Init(reader));
-		cs_writeunlock(&sc8in1_lock);
+		int32_t ret  = Sc8in1_Init(reader);
+		cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+		if (ret) {
+			cs_log("ERROR: Sc8in1_Init returns error");
+			return ERROR;
+		}
 	}
 
  cs_debug_mask (D_IFD, "IFD: Device %s succesfully opened\n", reader->device);
  return OK;
+}
+
+int32_t ICC_Async_Init_Locks () {
+	// Init device specific locks here, called from init thread
+	// before reader threads are running
+	struct s_reader *rdr;
+	LL_ITER itr = ll_iter_create(configured_readers);
+	while((rdr = ll_iter_next(&itr))) {
+		if (rdr->typ == R_SC8in1) {
+			Sc8in1_InitLocks(rdr);
+		}
+	}
+	return OK;
 }
 
 int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
@@ -261,9 +273,9 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 			break;
 #endif
 		case R_SC8in1:
-			cs_writelock(&sc8in1_lock);
+			cs_writelock(&reader->sc8in1_config->sc8in1_lock);
 			int32_t ret = Sc8in1_GetStatus(reader, &in);
-			cs_writeunlock(&sc8in1_lock);
+			cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
 			if (ret == ERROR) return ERROR;
 			break;
 		case R_MP35:
@@ -325,13 +337,7 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 			case R_DB2COM2:
 			case R_SC8in1:
 			case R_MOUSE:
-				LOCK_SC8IN1;
-				int32_t ret = Phoenix_Reset(reader, atr);
-				UNLOCK_SC8IN1;
-				if (ret) {
-					cs_debug_mask(D_TRACE, "ERROR, function call Phoenix_Reset returns error.");
-					return ERROR;
-				}
+				call (Phoenix_Reset(reader, atr));
 				break;
 #if defined(LIBUSB)
 			case R_SMART:
@@ -606,6 +612,13 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 		case R_DB2COM1:
 		case R_DB2COM2:
 		case R_SC8in1:
+			cs_writelock(&reader->sc8in1_config->sc8in1_lock);
+			int ret = Sc8in1_Close(reader);
+			cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+			if (ret) {
+				return 1;
+			}
+			break;
 		case R_MOUSE:
 			call (Phoenix_Close(reader));
 			break;

@@ -1,4 +1,3 @@
-//FIXME Only threadsafe for ONE sc8in1/MCR reader; two readers WILL go wrong !!!
 /*
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,270 +23,706 @@
 #include "io_serial.h"
 #include "icc_async.h"
 
-static struct termios stored_termio[8];//FIXME no globals please
-static int32_t current_slot; //FIXME should not be a global, but one per SC8in1
-static unsigned char cardstatus; //FIXME not global but one per SC8in1  //if not static, the threads dont share same cardstatus!
+static int32_t mcrReadStatus(struct s_reader *reader, BYTE *status);
 
-static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff, uint16_t lenwrite, uint16_t lenread)
-{
-  struct termios termio, termiobackup;
+static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
+		uint16_t lenwrite, uint16_t lenread, uint8_t enableEepromWrite, BYTE restoreBaudrate) {
+	struct termios termio, termiobackup;
 
-  // backup data
-  tcgetattr(reader->handle,&termio);
-  memcpy(&termiobackup,&termio,sizeof(termio));
+	// switch SC8in1 to command mode
+	IO_Serial_DTR_Set(reader);
 
-  // switch SC8in1 to command mode
-  IO_Serial_DTR_Set(reader);
+	// backup data
+	tcgetattr(reader->handle, &termio);
+	memcpy(&termiobackup, &termio, sizeof(termio));
 
-  // set communication parameters
-  termio.c_oflag = 0;
-  termio.c_lflag = 0;
-  termio.c_cc[VTIME] = 1; // working
-  termio.c_cflag = B9600|CS8|CREAD|CLOCAL;
-  if (tcsetattr(reader->handle,TCSANOW,&termio) < 0) {
-    cs_log("ERROR: SC8in1 Command error in set RS232 attributes\n");
-    return ERROR;
-  }
-  cs_ddump_mask (D_DEVICE, buff, lenwrite, "IO: Sending: ");
-  if (!write(reader->handle, buff, lenwrite)) { //dont use IO_Serial_Write since mcr commands dont echo back
-    cs_log("SC8in1 Command write error");
+	// set communication parameters
+	termio.c_oflag = 0;
+	termio.c_lflag = 0;
+	termio.c_cc[VTIME] = 1; // working
+	termio.c_cflag = B9600 | CS8 | CREAD | CLOCAL;
+	if (tcsetattr(reader->handle, TCSANOW, &termio) < 0) {
+		cs_log("ERROR: SC8in1 Command error in set RS232 attributes\n");
 		return ERROR;
 	}
-  tcdrain(reader->handle);
-  // give some time back to the system .. we're in a thread after all
-  sched_yield();
 
-  if (IO_Serial_Read (reader, 1000, lenread, buff) == ERROR) {
-    cs_log("SC8in1 Command read error");
-    return ERROR;
-  }
-  // give some time back to the system .. we're in a thread after all
-  sched_yield();
-  // restore data
-  memcpy(&termio,&termiobackup,sizeof(termio));
-  if (tcsetattr(reader->handle,TCSANOW,&termio) < 0) {
-    cs_log("ERROR: SC8in1 Command error in restore RS232 attributes\n");
-    return ERROR;
-  }
-  // switch SC8in1 to normal mode
- 	IO_Serial_DTR_Clr(reader);
-  // give some time back to the system .. we're in a thread after all
-  sched_yield();
-	return OK;
-}
-
-static int32_t readsc8in1(struct s_reader * reader)
-{
-  // Reads the card status
-  //
-  // the bits in the return bytes:
-  // bit0=1 means Slot1=Smartcard inside
-  // bit1=1 means Slot2=Smartcard inside
-  // bit2=1 means Slot3=Smartcard inside
-  // bit3=1 means Slot4=Smartcard inside
-  // bit4=1 means Slot5=Smartcard inside
-  // bit5=1 means Slot6=Smartcard inside
-  // bit6=1 means Slot7=Smartcard inside
-  // bit7=1 means Slot8=Smartcard inside
-  unsigned char buf[10];
-  buf[0]=0x47;
-  IO_Serial_Flush(reader);
-  if (sc8in1_command(reader, buf, 1, 8) < 0) return (-1);
-  if (buf[1]!=0x90) return(-1);
-
-  // return result byte
-  return(buf[2]);
-}
-
-int32_t Sc8in1_Selectslot(struct s_reader * reader, int32_t slot) {
-  // selects the Smartcard Socket "slot"
-  //
-	if (slot == current_slot)
-		return OK;
-	cs_debug_mask(D_DEVICE, "SC8in1: select slot %i", slot);
-  int32_t res;
-  unsigned char tmp[128];
-  struct termios termio;
-	//cs_sleepms(10); //FIXME do I need this?
-  // backup rs232 data
-  tcgetattr(reader->handle,&termio);
-	if (current_slot != 0)
-  	memcpy(&stored_termio[current_slot-1],&termio,sizeof(termio)); //not if current_slot is undefine
-	//
-  // switch SC8in1 to command mode
-  IO_Serial_DTR_Set(reader);
-  // give some time back to the system .. we're in a thread after all
-  sched_yield();
-
-  // set communication parameters
-  termio.c_cc[VTIME] = 1; // working
-  termio.c_cflag = B9600|CS8|CREAD|CLOCAL;
-  if (tcsetattr(reader->handle,TCSANOW,&termio) < 0) {
-    cs_log("ERROR: SC8in1 selectslot set RS232 attributes\n");
-    return ERROR;
-  }
-	tcflush(reader->handle, TCIOFLUSH);
-  // selecd select slot command to SC8in1
-  //tmp[0]=0x73; //MCR command
-  tmp[0]=0x53;
-  tmp[1]=slot&0x0F;
-  IO_Serial_Write (reader, 0, 2, tmp);
-  // give some time back to the system .. we're in a thread after all
-  sched_yield();
-	tcdrain(reader->handle);
-	//tcflush(reader->handle, TCIOFLUSH);
-  res=IO_Serial_Read (reader, 1000, 4, tmp); // ignore reader response of 4 bytes
-	current_slot = slot;
-  // give some time back to the system .. we're in a thread after all
-  sched_yield();
-  tcdrain(reader->handle);
-  // restore rs232 data
-  memcpy(&termio, &stored_termio[reader->slot-1], sizeof(termio));
-  if (tcsetattr(reader->handle,TCSANOW,&termio) < 0) {
-    cs_log("ERROR: SC8in1 selectslot restore RS232 attributes\n");
-    return ERROR;
-  }
-  // switch SC8in1 to normal mode
-  IO_Serial_DTR_Clr(reader);
-	//cs_sleepms(10); //FIXME do I need this?
-  // give some time back to the system .. we're in a thread after all
-  sched_yield();
-  return OK;
-}
-
-int32_t Sc8in1_Init(struct s_reader * reader)
-{
-	//additional init, Phoenix_Init is also called for Sc8in1 !
-	struct termios termio;
-	int32_t i, speed;
-	uint32_t is_mcr = 0, sc8in1_clock = 0;
-	unsigned char buff[3];
-	
-	tcgetattr(reader->handle,&termio);
-	for (i=0; i<8; i++) {
-		//init all stored termios to default comm settings after device init, before ATR
-		memcpy(&stored_termio[i],&termio,sizeof(termio)); //FIXME overclocking factor not taken into account?
+	// enable EEPROM write
+	if (enableEepromWrite) {
+		BYTE eepromBuff[3];
+		eepromBuff[0] = 0x70;
+		eepromBuff[1] = 0xab;
+		eepromBuff[2] = 0xba;
+		cs_ddump_mask(D_DEVICE, eepromBuff, 3, "IO: Sending: ");
+		if (!write(reader->handle, eepromBuff, 3)) {
+			cs_log("SC8in1 Command write EEPROM error");
+			return ERROR;
+		}
+		tcflush(reader->handle, TCIOFLUSH);
 	}
-    
-  // check for a MCR device and how many slots it has.
-	buff[0] = 0x74;
-	sc8in1_command(reader, buff, 1, 1);
-	if (buff[0] == 4 || buff[0] == 8) {
-		is_mcr = (uint16_t) buff[0];
-		cs_log("SC8in1: device MCR%i detected", is_mcr);
+	// write cmd
+	cs_ddump_mask(D_DEVICE, buff, lenwrite, "IO: Sending: ");
+	if (!write(reader->handle, buff, lenwrite)) { //dont use IO_Serial_Write since mcr commands dont echo back
+		cs_log("SC8in1 Command write error");
+		return ERROR;
+	}
+	tcdrain(reader->handle);
 
-		//now work-around the problem that timeout of MCR has to be 0 in case of USB
-		buff[0] = 0x72; //get timeout
-		buff[1] = 0;
-		buff[2] = 0;
-		int32_t ret = sc8in1_command(reader, buff, 1, 2);
-		if ((strstr(reader->device, "USB")) && (ret == ERROR || buff[0] != 0 || buff[1] != 0)) {//assuming we are connected thru USB and timeout is undetected or not zero
-			cs_log("DINGO: Detected Sc8in1 device connected with USB, setting timeout to 0 and writing to EEPROM");
-			buff[0] = 0x70; //enable write EEPROM
-			buff[1] = 0xab;
-			buff[2] = 0xba;
-			sc8in1_command(reader, buff, 3, 0);
-			buff[0] = 0x6F; //set timeout
-			buff[1] = 0;
-			buff[2] = 0;
-			sc8in1_command(reader, buff, 3, 0);
+	if (IO_Serial_Read(reader, 1000, lenread, buff) == ERROR) {
+		cs_log("SC8in1 Command read error");
+		return ERROR;
+	}
+
+	// restore data
+	memcpy(&termio, &termiobackup, sizeof(termio));
+	if (tcsetattr(reader->handle, TCSANOW, &termio) < 0) {
+		cs_log("ERROR: SC8in1 Command error in restore RS232 attributes\n");
+		return ERROR;
+	}
+
+	if (restoreBaudrate) {
+		if (reader->current_baudrate && reader->current_baudrate != DEFAULT_BAUDRATE) {
+			if (Sc8in1_SetBaudrate(reader, &termio)) {
+				cs_log("ERROR: SC8in1 selectslot restore Bitrate attributes\n");
+				return ERROR;
+			}
 		}
 	}
 
-	tcflush(reader->handle, TCIOFLUSH); // a non MCR reader might give longer answer
+	// switch SC8in1 to normal mode
+	IO_Serial_DTR_Clr(reader);
+
+	return OK;
+}
+
+static int32_t readSc8in1Status(struct s_reader * reader) {
+	// Reads the card status
+	//
+	// the bits in the return bytes:
+	// bit0=1 means Slot1=Smartcard inside
+	// bit1=1 means Slot2=Smartcard inside
+	// bit2=1 means Slot3=Smartcard inside
+	// bit3=1 means Slot4=Smartcard inside
+	// bit4=1 means Slot5=Smartcard inside
+	// bit5=1 means Slot6=Smartcard inside
+	// bit6=1 means Slot7=Smartcard inside
+	// bit7=1 means Slot8=Smartcard inside
+
+	if (reader->sc8in1_config->mcr_type) {
+		BYTE buff[2];
+		if (mcrReadStatus(reader, &buff[0])) {
+			return (-1);
+		}
+		tcflush(reader->handle, TCIOFLUSH);
+		return buff[0];
+	}
+	unsigned char buf[10];
+	buf[0] = 0x47;
+	IO_Serial_Flush(reader);
+	if (sc8in1_command(reader, buf, 1, 8, 0, 1) < 0)
+		return (-1);
+	if (buf[1] != 0x90)
+		return (-1);
+	tcflush(reader->handle, TCIOFLUSH);
+	// return result byte
+	return (buf[2]);
+}
+
+static int32_t mcrReadStatus(struct s_reader *reader, BYTE *status) {
+	unsigned char buff[2];
+	buff[0] = 0x3f;
+	if (sc8in1_command(reader, buff, 1, 2, 0, 1) < 0)
+		return ERROR;
+	status[0] = buff[0];
+	status[1] = buff[1];
+	return OK;
+}
+
+static int32_t mcrReadType(struct s_reader *reader, BYTE *type) {
+	unsigned char buff[1];
+	buff[0] = 0x74;
+	if (sc8in1_command(reader, buff, 1, 1, 0, 0) < 0)
+		return ERROR;
+	type[0] = buff[0];
+	return OK;
+}
+
+static int32_t mcrReadVersion(struct s_reader *reader, BYTE *version) {
+	unsigned char buff[1];
+	buff[0] = 0x76;
+	if (sc8in1_command(reader, buff, 1, 1, 0, 0) < 0)
+		return ERROR;
+	version[0] = buff[0];
+	return OK;
+}
+
+static int32_t mcrReadSerial(struct s_reader *reader, BYTE *serial) {
+	unsigned char buff[2];
+	buff[0] = 0x6e;
+	if (sc8in1_command(reader, buff, 1, 2, 0, 0) < 0)
+		return ERROR;
+	serial[0] = buff[1];
+	serial[1] = buff[0];
+	return OK;
+}
+
+static int32_t mcrWriteDisplayRaw(struct s_reader *reader, BYTE data[7]) {
+	unsigned char buff[8];
+	buff[0] = 0x64;
+	memcpy(&buff[1], &data[0], 7);
+	if (sc8in1_command(reader, buff, 8, 0, 0, 0) < 0)
+		return ERROR;
+	return OK;
+}
+
+static int32_t mcrWriteDisplayAscii(struct s_reader *reader, BYTE data, BYTE timeout) {
+	unsigned char buff[3];
+	buff[0] = 0x61;
+	buff[1] = data;
+	buff[2] = timeout;
+	if (sc8in1_command(reader, buff, 3, 0, 0, 0) < 0)
+		return ERROR;
+	return OK;
+}
+
+static int32_t mcrWriteClock(struct s_reader *reader, BYTE saveClock, BYTE clock[2]) {
+	unsigned char buff[3];
+	buff[0] = 0x63;
+	buff[1] = clock[0];
+	buff[2] = clock[1];
+	if (sc8in1_command(reader, buff, 3, 0, 0, 0) < 0)
+		return ERROR;
+	if (saveClock) {
+		buff[0] = 0x6d;
+		if (sc8in1_command(reader, buff, 1, 0, 1, 0) < 0)
+			return ERROR;
+	}
+	return OK;
+}
+
+static int32_t mcrReadClock(struct s_reader *reader, BYTE *clock) {
+	unsigned char buff[2];
+	buff[0] = 0x67;
+	if (sc8in1_command(reader, buff, 1, 2, 0, 0) < 0)
+		return ERROR;
+	clock[0] = buff[0];
+	clock[1] = buff[1];
+	return OK;
+}
+
+static int32_t mcrWriteTimeout(struct s_reader *reader, BYTE timeout[2]) {
+	unsigned char buff[3];
+	buff[0] = 0x6f;
+	buff[1] = timeout[0];
+	buff[2] = timeout[1];
+	if (sc8in1_command(reader, buff, 3, 0, 1, 0) < 0)
+		return ERROR;
+	return OK;
+}
+
+static int32_t mcrReadTimeout(struct s_reader *reader, BYTE *timeout) {
+	unsigned char buff[2];
+	buff[0] = 0x72;
+	if (sc8in1_command(reader, buff, 1, 2, 0, 0) < 0)
+		return ERROR;
+	timeout[0] = buff[1];
+	timeout[1] = buff[0];
+	return OK;
+}
+
+static int32_t mcrSelectSlot(struct s_reader *reader, BYTE slot) {
+	// Select slot for MCR device.
+	// Parameter slot is from 1-8
+	unsigned char buff[2];
+	buff[0] = 0x73;
+	buff[1] = slot - 1;
+	if (sc8in1_command(reader, buff, 2, 0, 0, 0) < 0)
+		return ERROR;
+	return OK;
+}
+
+static int32_t mcrHelloOscam(struct s_reader *reader) {
+	// Display "OSCam" on MCR display
+	BYTE helloOscam[5] = {'O', 'S', 'C', 'a', 'm'};
+	return MCR_DisplayText(reader, &helloOscam[0], 5, 100);
+}
+
+static void* mcr_update_display_thread(void *param) {
+	struct s_reader *reader = (struct s_reader *)param;
+	const uint16_t DEFAULT_SLEEP_TIME = 100;
+
+	if (reader->typ != R_SC8in1 ||  ! reader->sc8in1_config->mcr_type) {
+		cs_log("Error: mcr_update_display_thread reader no MCR8in1 reader");
+		pthread_exit(NULL);
+	}
+
+	while(reader->sc8in1_config->display_running) {
+		uint16_t display_sleep = DEFAULT_SLEEP_TIME;
+
+		cs_writelock(&reader->sc8in1_config->sc8in1_display_lock);
+		if (reader->sc8in1_config->display != NULL) { // is there something to display?
+			cs_writeunlock(&reader->sc8in1_config->sc8in1_display_lock);
+
+			display_sleep = reader->sc8in1_config->display->char_change_time;
+
+			// display the next character
+			cs_writelock(&reader->sc8in1_config->sc8in1_lock);
+			if (mcrWriteDisplayAscii(reader,
+					reader->sc8in1_config->display->text[++reader->sc8in1_config->display->last_char - 1], 0xFF)) {
+				cs_log("SC8in1: Error in mcr_update_display_thread write");
+			}
+			cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+
+			// remove the display struct if the text has been shown completely
+			if (reader->sc8in1_config->display->last_char == reader->sc8in1_config->display->text_length) {
+				cs_writelock(&reader->sc8in1_config->sc8in1_display_lock);
+				reader->sc8in1_config->display = reader->sc8in1_config->display->next;
+				cs_writeunlock(&reader->sc8in1_config->sc8in1_display_lock);
+				free(&reader->sc8in1_config->display->text);
+				free(reader->sc8in1_config->display);
+			}
+		}
+		else {
+			cs_writeunlock(&reader->sc8in1_config->sc8in1_display_lock);
+		}
+		cs_sleepms(display_sleep);
+	}
+	pthread_exit(NULL);
+	return NULL;
+}
+
+static int32_t MCR_DisplayText(struct s_reader *reader, char* text, uint16_t text_len, uint16_t time) {
+	struct s_sc8in1_display *display;
+	if (cs_malloc(&display, sizeof(struct s_sc8in1_display), -1)) {
+		if ( ! cs_malloc(&display->text, text_len, -1) ) {
+			cs_log("MCR_DisplayText: Out of memory.");
+			free(display);
+			return ERROR;
+		}
+		memcpy(display->text, text, text_len);
+		display->text_length = text_len;
+		display->char_change_time = time;
+		display->last_char = 0;
+		display->next = NULL;
+		cs_writelock(&reader->sc8in1_config->sc8in1_display_lock);
+		if (reader->sc8in1_config->display == NULL) {
+			reader->sc8in1_config->display = display;
+		}
+		else {
+			struct s_sc8in1_display *d = reader->sc8in1_config->display;
+			while (d != NULL) {
+				if (d->next == NULL) {
+					d->next = display;
+					break;
+				}
+				else {
+					d = d->next;
+				}
+			}
+		}
+		cs_writeunlock(&reader->sc8in1_config->sc8in1_display_lock);
+	} else {
+		cs_log("MCR_DisplayText: Out of memory.");
+		return ERROR;
+	}
+	return OK;
+}
+
+static sc8in1SelectSlot(struct s_reader *reader, int32_t slot) {
+	int32_t res;
+	unsigned char tmp[128];
+	struct termios termio;
+	//cs_sleepms(10); //FIXME do I need this?
+	// backup rs232 data
+	tcgetattr(reader->handle, &termio);
+	if (reader->sc8in1_config->current_slot != 0)
+		memcpy(&reader->sc8in1_config->stored_termio[reader->sc8in1_config->current_slot - 1],
+				&termio, sizeof(termio)); //not if current_slot is undefine
+	//
+	// switch SC8in1 to command mode
+	IO_Serial_DTR_Set(reader);
+
+	// set communication parameters
+	termio.c_cc[VTIME] = 1; // working
+	termio.c_cflag = B9600 | CS8 | CREAD | CLOCAL;
+	if (tcsetattr(reader->handle, TCSANOW, &termio) < 0) {
+		cs_log("ERROR: SC8in1 selectslot set RS232 attributes\n");
+		return ERROR;
+	}
+	tcflush(reader->handle, TCIOFLUSH);
+	// selecd select slot command to SC8in1
+	//tmp[0]=0x73; //MCR command
+	tmp[0] = 0x53;
+	tmp[1] = slot & 0x0F;
+	IO_Serial_Write(reader, 0, 2, tmp);
+	tcdrain(reader->handle);
+	//tcflush(reader->handle, TCIOFLUSH);
+	res = IO_Serial_Read(reader, 1000, 4, tmp); // ignore reader response of 4 bytes
+	tcdrain(reader->handle);
+	// restore rs232 data
+	memcpy(&termio, &reader->sc8in1_config->stored_termio[reader->slot - 1],
+			sizeof(termio));
+	if (tcsetattr(reader->handle, TCSANOW, &termio) < 0) {
+		cs_log("ERROR: SC8in1 selectslot restore RS232 attributes\n");
+		return ERROR;
+	}
+	if (reader->current_baudrate && reader->current_baudrate != DEFAULT_BAUDRATE) {
+		if (Sc8in1_SetBaudrate(reader, &termio)) {
+			cs_log("ERROR: SC8in1 selectslot restore Bitrate attributes\n");
+			return ERROR;
+		}
+	}
+	// switch SC8in1 to normal mode
+	IO_Serial_DTR_Clr(reader);
+	//cs_sleepms(10); //FIXME do I need this?
+
+	return OK;
+}
+
+int32_t Sc8in1_SetBaudrate(struct s_reader * reader, struct termios *tio) {
+	cs_debug_mask (D_IFD, "IFD: Sc8in1 Setting baudrate to %u\n", reader->current_baudrate);
+	call (IO_Serial_SetBitrate (reader, reader->current_baudrate, tio));
+	call (IO_Serial_SetProperties(reader, *tio));
+	return OK;
+}
+
+int32_t Sc8in1_SetTioAttr(int32_t fd, struct termios *current, struct termios *new) {
+	// Only call tcsetattr if something changed, otherwise strange things may happen
+	if ( ! memcmp(current, new, sizeof(struct termios))) {
+		memcpy(current, new, sizeof(struct termios));
+		return tcsetattr(fd, TCSANOW, new);
+	}
+	return OK;
+}
+
+int32_t Sc8in1_SetTermioForSlot(struct s_reader *reader, int32_t slot) {
+	struct termios termio_current, termio_new;
+	tcgetattr(reader->handle, &termio_current);
+	if (reader->sc8in1_config->current_slot != 0) {
+		memcpy(&reader->sc8in1_config->stored_termio[reader->sc8in1_config->current_slot - 1],
+				&termio_current, sizeof(termio_current)); //not if current_slot is undefined
+	}
+	memcpy(&termio_new, &reader->sc8in1_config->stored_termio[slot - 1],
+				sizeof(termio_new));
+	if (Sc8in1_SetTioAttr(reader->handle, &termio_current, &termio_new) < 0) {
+		cs_log("ERROR: SC8in1 selectslot restore RS232 attributes\n");
+		return ERROR;
+	}
+	if (reader->current_baudrate && reader->current_baudrate != DEFAULT_BAUDRATE) {
+		if (Sc8in1_SetBaudrate(reader, &termio_new)) {
+			cs_log("ERROR: SC8in1 selectslot restore Bitrate attributes\n");
+			return ERROR;
+		}
+	}
+	return OK;
+}
+
+int32_t Sc8in1_Selectslot(struct s_reader * reader, int32_t slot) {
+	// selects the Smartcard Socket "slot"
+	//
+#ifdef WITH_DEBUG
+	struct timeval tv_start, tv_mid, tv_end;
+	gettimeofday(&tv_start,0);
+#endif
+
+	if (slot == reader->sc8in1_config->current_slot)
+		return OK;
+	cs_debug_mask(D_DEVICE, "SC8in1: select slot %i", slot);
+
+	int32_t status = ERROR;
+	if (reader->sc8in1_config->mcr_type) {
+		status = mcrSelectSlot(reader, slot);
+#ifdef WITH_DEBUG
+		gettimeofday(&tv_mid,0);
+		long elapsed = (tv_mid.tv_sec-tv_start.tv_sec)*1000000 + tv_mid.tv_usec-tv_start.tv_usec;
+		cs_debug_mask(D_DEVICE, "SC8in1 Selectslot Phase1 in %ums", elapsed/1000);
+#endif
+		status |= Sc8in1_SetTermioForSlot(reader, slot);
+	}
+	else {
+		status = sc8in1SelectSlot(reader, slot);
+	}
+
+	if (status == OK) {
+		reader->sc8in1_config->current_slot = slot;
+	}
+#ifdef WITH_DEBUG
+	gettimeofday(&tv_end,0);
+	long elapsed = (tv_end.tv_sec-tv_start.tv_sec)*1000000 + tv_end.tv_usec-tv_start.tv_usec;
+	cs_debug_mask(D_DEVICE, "SC8in1 Selectslot in %ums", elapsed/1000);
+#endif
+	return status;
+}
+
+int32_t Sc8in1_Init(struct s_reader * reader) {
+	//additional init, Phoenix_Init is also called for Sc8in1 !
+	struct termios termio;
+	int32_t i, speed, retval;
+	uint16_t sc8in1_clock = 0;
+	unsigned char buff[3];
+
+	tcgetattr(reader->handle, &termio);
+	for (i = 0; i < 8; i++) {
+		//init all stored termios to default comm settings after device init, before ATR
+		memcpy(&reader->sc8in1_config->stored_termio[i], &termio,
+				sizeof(termio)); //FIXME overclocking factor not taken into account?
+	}
+
+	// check for a MCR device and how many slots it has.
+	BYTE mcrType[1]; mcrType[0] = 0;
+	if ( ! mcrReadType(reader, &mcrType[0]) ) {
+		if (mcrType[0] == 4 || mcrType[0] == 8) {
+			reader->sc8in1_config->mcr_type = mcrType[0];
+			cs_log("SC8in1: MCR%u detected for device %s", reader->sc8in1_config->mcr_type, reader->device);
+
+			BYTE version[1]; version[0] = 0;
+			if ( ! mcrReadVersion(reader, &version[0])) {
+				cs_log("SC8in1: Version %u for device %s", (BYTE)version[0], reader->device);
+			}
+
+			BYTE serial[2]; serial[0] = 0; serial[1] = 0;
+			if ( ! mcrReadSerial(reader, &serial[0])) {
+				cs_log("SC8in1: Serial %u for device %s", (uint16_t)serial[0], reader->device);
+			}
+
+			//now work-around the problem that timeout of MCR has to be 0 in case of USB
+			BYTE timeout[2]; timeout[0] = 0; timeout[1] = 0;
+			retval = mcrReadTimeout(reader, &timeout[0]);
+			if (retval) {
+				cs_log("SC8in1: Error reading timeout.");
+			}
+			else {
+				cs_log("SC8in1: Timeout %u for device %s", (uint16_t)timeout[0], reader->device);
+			}
+			if ((strstr(reader->device, "USB"))
+					&& (retval == ERROR || timeout[0] != 0 || timeout[1] != 0)) { //assuming we are connected thru USB and timeout is undetected or not zero
+				cs_log("SC8in1: Detected Sc8in1 device connected with USB, setting timeout to 0 and writing to EEPROM");
+				timeout[0] = 0; timeout[1] = 0;
+				if (mcrWriteTimeout(reader, timeout)) {
+					cs_log("SC8in1: Error writing timeout.");
+				}
+			}
+
+			// Start display thread
+			reader->sc8in1_config->display_running = TRUE;
+			start_thread_with_param(mcr_update_display_thread, "MCR_DISPLAY_THREAD", (void *)(reader));
+		}
+	}
+
+	if ( ! reader->sc8in1_config->mcr_type ) {
+		tcflush(reader->handle, TCIOFLUSH); // a non MCR reader might give longer answer
+	}
 
 	struct s_reader *rdr;
 	LL_ITER itr = ll_iter_create(configured_readers);
-	while((rdr = ll_iter_next(&itr))) //also do this for disabled readers, so we configure the clocks right for all readers
-		if (rdr->handle == reader->handle) { //corresponding slot
-
+	while ((rdr = ll_iter_next(&itr))) //also do this for disabled readers, so we configure the clocks right for all readers
+		if (rdr->sc8in1_config == reader->sc8in1_config) { //corresponding slot
 			//check slot boundaries
-			int32_t upper_slot = (is_mcr)? is_mcr : 8; //set upper limit to 8 for non MCR readers
+			int32_t upper_slot = (reader->sc8in1_config->mcr_type) ? reader->sc8in1_config->mcr_type : 8; //set upper limit to 8 for non MCR readers
 			if (rdr->slot <= 0 || rdr->slot > upper_slot) {
 				cs_log("ERROR: device %s has invalid slot number %i", rdr->device, rdr->slot);
 				return ERROR;
 			}
 
-			if (is_mcr) {
-				//set RTS for every slot to 1 to prevent jitter/glitch detection problems  
-				Sc8in1_Selectslot(rdr, rdr->slot);
+			if (reader->sc8in1_config->mcr_type) {
+				//set RTS for every slot to 1 to prevent jitter/glitch detection problems
+				Sc8in1_Selectslot(reader, rdr->slot);
 				IO_Serial_RTS_Set(reader);
 
-        //calculate clock-bits
-        switch (rdr->mhz) {
-            case 357:
-            case 358:
-                speed=0;
-                break;
-            case 368:
-            case 369:
-                speed = 1;
-                break;
-            case 600:
-                speed = 2;
-                break;
-            case 800:
-                speed = 3;
-                break;
-            default:
-                speed = 0;
-                cs_log("ERROR Sc8in1, cannot set clockspeed to %i", rdr->mhz);
-                break;
-        }
-        sc8in1_clock |= (speed << (rdr->slot - 1) * 2); 
+				//calculate clock-bits
+				switch (rdr->mhz) {
+				case 357:
+				case 358:
+					speed = 0;
+					break;
+				case 368:
+				case 369:
+					speed = 1;
+					break;
+				case 600:
+					speed = 2;
+					break;
+				case 800:
+					speed = 3;
+					break;
+				default:
+					speed = 0;
+					cs_log("ERROR Sc8in1, cannot set clockspeed to %i", rdr->mhz);
+					break;
+				}
+				sc8in1_clock |= (speed << ((rdr->slot - 1) * 2));
 			}
 		}
-		
-	if (is_mcr) {
+
+	if (reader->sc8in1_config->mcr_type) {
+		sc8in1_clock = ((sc8in1_clock & 0xFF) << 8) | ((sc8in1_clock & 0xFF00) >> 8);
+
 		//set clockspeeds for all slots
-		buff[0] = 0x63; //MCR set clock
-		buff[1] = (sc8in1_clock >> 8) & 0xFF;
-		buff[2] = sc8in1_clock & 0xFF;
-		sc8in1_command(reader, buff, 3, 0); //FIXME this doesnt work properly yet
+		BYTE clockspeed[2];
+		memcpy(&clockspeed, &sc8in1_clock, 2);
+		if (mcrWriteClock(reader, 0, clockspeed)) {
+			cs_log("ERROR Sc8in1, cannot set clockspeed %d", (uint16_t)clockspeed[0]);
+		}
 
 		//DEBUG get clockspeeds
-		buff[0] = 0x67;
-		sc8in1_command(reader, buff, 1, 2);
+		if (mcrReadClock(reader, &clockspeed[0])) {
+			cs_log("ERROR Sc8in1, cannot read clockspeed");
+		}
 		static char * clock[] = { "3,57", "3,68", "6,00", "8,00" };
-		uint16_t result = buff[0]<<8 | buff[1];
-		for(i=0; i<8; i++) {
-		cs_log("Slot %i is clocked with %s mhz", i+1, clock[(result>>(i*2))&0X0003]);
+		uint16_t result = clockspeed[0] << 8 | clockspeed[1];
+		for (i = 0; i < 8; i++) {
+			cs_log("Slot %i is clocked with %s mhz", i+1, clock[(result>>(i*2))&0X0003]);
 		}
 	}
-	
+
 	//IO_Serial_Flush(reader); //FIXME somehow ATR is generated and must be flushed
 	i = -1; //Flag for GetStatus init
 	Sc8in1_GetStatus(reader, &i); //Initialize cardstatus
+	// Gimmick
+	if (reader->sc8in1_config->mcr_type) {
+		mcrHelloOscam(reader);
+	}
 
 	return OK;
 }
 
 int32_t Sc8in1_Card_Changed(struct s_reader * reader) {
-  // returns the SC8in1 Status
-  // 0= no card was changed (inserted or removed)
-  // -1= one ore more cards were changed (inserted or removed)
-  int32_t result;
-  int32_t lineData;
-  ioctl(reader->handle, TIOCMGET, &lineData);
-  result= (lineData & TIOCM_CTS) / TIOCM_CTS;
-  // give some time back to the system .. we're in a thread after all
-  sched_yield();
-  return(result-1);
+	// returns the SC8in1 Status
+	// 0= no card was changed (inserted or removed)
+	// -1= one ore more cards were changed (inserted or removed)
+	int32_t result;
+	int32_t lineData;
+	ioctl(reader->handle, TIOCMGET, &lineData);
+	result = (lineData & TIOCM_CTS) / TIOCM_CTS;
+
+	return (result - 1);
 }
 
-int32_t Sc8in1_GetStatus (struct s_reader * reader, int32_t * in)
-{
-	if (Sc8in1_Card_Changed(reader)|| *in == -1) {
-		int32_t i=readsc8in1(reader); //read cardstatus
+int32_t Sc8in1_GetStatus(struct s_reader * reader, int32_t * in) {
+	if (Sc8in1_Card_Changed(reader) || *in == -1) {
+		int32_t i = readSc8in1Status(reader); //read cardstatus
 		if (i < 0) {
-            // give some time back to the system .. we're in a thread after all
-            sched_yield();
-            return ERROR;
-        }
-		cardstatus = i;
+			cs_log("Sc8in1_GetStatus Error");
+			return ERROR;
+		}
+		reader->sc8in1_config->cardstatus = i;
 	}
-	*in = (cardstatus & 1<<(reader->slot-1));
-    // give some time back to the system .. we're in a thread after all
-    sched_yield();
+	*in = (reader->sc8in1_config->cardstatus & 1 << (reader->slot - 1));
+
+	return OK;
+}
+
+int32_t Sc8in1_GetActiveHandle(struct s_reader *reader) {
+	// Returns a handle to the serial port, if it exists in some other
+	// slot of the same physical reader.
+	// Or returns 0 otherwise.
+	struct s_reader *rdr;
+	LL_ITER itr = ll_iter_create(configured_readers);
+	while ((rdr = ll_iter_next(&itr))) {
+		if (rdr->typ == R_SC8in1) {
+			if ((reader != rdr) && (reader->sc8in1_config == rdr->sc8in1_config)
+					&& rdr->handle != 0) {
+				return rdr->handle;
+			}
+		}
+	}
+	return OK;
+}
+
+int32_t Sc8in1_Close(struct s_reader *reader) {
+	// Check if we are the last active slot for the reader,
+	// then close the serial port. Otherwise just clear the handle.
+	cs_debug_mask(D_IFD, "IFD: Closing SC8in1 device %s", reader->device);
+
+	if (Sc8in1_GetActiveHandle(reader)) {
+		cs_debug_mask(D_IFD, "IFD: Just deactivating SC8in1 device %s", reader->device);
+		reader->handle = 0;
+		reader->written = 0;
+	} else {
+		IO_Serial_Close(reader);
+	}
+
+	return OK;
+}
+
+int32_t Sc8in1_InitLocks(struct s_reader * reader) {
+	// Create SC8in1_Configs and init locks.
+	// Method is called once for every reader.
+	// If there is already a Sc8in1 reader configured with the
+	// same device (means same reader, different slot) then use
+	// its sc8in1_config, otherwise create a new sc8in1_config and return.
+
+	// Only handle Sc8in1 reader
+	if (reader->typ != R_SC8in1) {
+		return OK;
+	}
+
+	Sc8in1_SetSlotForReader(reader);
+
+	// Get device name
+	int32_t pos = strlen(reader->device) - 2;
+	if (pos <= 0) {
+		return ERROR;
+	}
+	if (reader->device[pos] != 0x3a) //0x3a = ":"
+		cs_log("ERROR: Sc8in1_InitLocks: '%c' detected instead of slot separator `:` at second to last position of device %s", reader->device[pos], reader->device);
+	unsigned char savePos = reader->device[pos];
+	reader->device[pos] = 0;
+
+
+	uint8_t reader_config_exists = 0;
+	struct s_reader *rdr;
+	LL_ITER itr = ll_iter_create(configured_readers);
+	while ((rdr = ll_iter_next(&itr))) {
+		if (rdr->typ == R_SC8in1 && rdr != reader) {
+			unsigned char save = rdr->device[pos];
+			rdr->device[pos] = 0; //set to 0 so we can compare device names
+			if (!strcmp(reader->device, rdr->device)) { //we have a match to another slot with same device name
+				rdr->device[pos] = save; //restore character
+				Sc8in1_SetSlotForReader(rdr);
+				if (rdr->sc8in1_config) {
+					reader->sc8in1_config = rdr->sc8in1_config;
+					reader_config_exists = TRUE;
+					cs_debug_mask(D_DEVICE, "Sc8in1_InitLocks: Found config for %s", reader->device);
+				}
+			}
+			else {
+				rdr->device[pos] = save; //restore character
+			}
+			if (reader_config_exists) {
+				break;
+			}
+		}
+	}
+
+	if (!reader_config_exists) {
+		cs_debug_mask(D_DEVICE, "Sc8in1_InitLocks: Creating new config for %s", reader->device);
+		// Create SC8in1_Config for reader
+		struct s_sc8in1_config *sc8in1_config;
+		if (cs_malloc(&sc8in1_config, sizeof(struct s_sc8in1_config), -1)) {
+			reader->sc8in1_config = sc8in1_config;
+			char *buff = cs_malloc(&buff, 128, 1);
+			snprintf(buff, 128, "sc8in1_lock_%s", reader->device);
+			cs_lock_create(&reader->sc8in1_config->sc8in1_lock, 10, buff);
+			char *buff2 = cs_malloc(&buff2, 128, 1);
+			snprintf(buff2, 128, "display_sc8in1_lock_%s", reader->device);
+			cs_lock_create(&reader->sc8in1_config->sc8in1_display_lock, 10, buff2);
+		} else {
+			reader->device[pos] = savePos;
+			cs_log("sc8in1: Out of memory.");
+			return ERROR;
+		}
+	}
+
+	reader->device[pos] = savePos;
+
+	return OK;
+}
+
+int32_t Sc8in1_SetSlotForReader(struct s_reader *reader) {
+	// Sets the slot for the reader if it is not set already
+	int32_t pos = strlen(reader->device)-2; //this is where : should be located; is also valid length of physical device name
+	if (reader->device[pos] != 0x3a) //0x3a = ":"
+		cs_log("ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", reader->device[pos], reader->device);
+	reader->slot=(int)reader->device[pos+1] - 0x30;
 	return OK;
 }

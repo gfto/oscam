@@ -698,6 +698,11 @@ static void cs_cleanup()
 		if(cl){
 			cs_log("killing reader %s", rdr->label);
 			kill_thread(cl);
+			// Stop MCR reader display thread
+			if (cl->typ == 'r' && cl->reader && cl->reader->typ == R_SC8in1
+					&& cl->reader->sc8in1_config && cl->reader->sc8in1_config->display_running) {
+				cl->reader->sc8in1_config->display_running = FALSE;
+			}
 		}
 	}
 	first_active_reader = NULL;
@@ -1118,7 +1123,6 @@ static void init_first_client()
 #if defined(LIBUSB)
   cs_lock_create(&sr_lock, 10, "sr_lock");
 #endif
-  cs_lock_create(&sc8in1_lock, 10, "sc8in1_lock");
   cs_lock_create(&system_lock, 5, "system_lock");
   cs_lock_create(&gethostbyname_lock, 10, "gethostbyname_lock");
   cs_lock_create(&clientlist_lock, 5, "clientlist_lock");
@@ -1297,6 +1301,11 @@ void cs_user_resolve(struct s_auth *account){
 
 /* Starts a thread named nameroutine with the start function startroutine. */
 void start_thread(void * startroutine, char * nameroutine) {
+	start_thread_with_param(startroutine, nameroutine, NULL);
+}
+
+/* Starts a thread named nameroutine with the start function startroutine and parameter param. */
+void start_thread_with_param(void * startroutine, char * nameroutine, void * param) {
 	pthread_t temp;
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
@@ -1305,7 +1314,7 @@ void start_thread(void * startroutine, char * nameroutine) {
 	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
 	cs_writelock(&system_lock);
-	if (pthread_create(&temp, &attr, startroutine, NULL))
+	if (pthread_create(&temp, &attr, startroutine, param))
 		cs_log("ERROR: can't create %s thread", nameroutine);
 	else {
 		cs_log("%s thread started", nameroutine);
@@ -1382,10 +1391,8 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 		if (restart) {
 			cs_log("restarting reader %s", rdr->label);
 		}
-
 		struct s_client * cl = create_client(first_client->ip);
 		if (cl == NULL) return 0;
-
 		cl->reader=rdr;
 		cs_log("creating thread for device %s", rdr->device);
 
@@ -1420,13 +1427,14 @@ static void init_cardreader() {
 	cs_writelock(&system_lock);
 	struct s_reader *rdr;
 
+	ICC_Async_Init_Locks();
+
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr))) {
 		if (rdr->enable) {
 			restart_cardreader_int(rdr, 0);
 		}
 	}
-
 
 #ifdef WITH_LB
 	load_stat_from_file();

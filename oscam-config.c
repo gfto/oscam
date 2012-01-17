@@ -2782,8 +2782,6 @@ int32_t write_server()
 				fprintf(f, ",%d", rdr->r_port);
 			if ((rdr->l_port || cfg.http_full_cfg) && !isphysical && strncmp(ctyp, "cccam", 5))
 				fprintf(f, ",%d", rdr->l_port);
-			if ((rdr->slot || cfg.http_full_cfg) && !strncmp(ctyp, "sc8in1", 6))
-				fprintf(f, ":%d", rdr->slot);
 			fprintf(f, "\n");
 
 #ifdef LIBUSB

@@ -11,6 +11,23 @@
 
 #define MAX_TRANSMIT			255
 
+#define LOCK_SC8IN1 \
+{ \
+	if (reader->typ == R_SC8in1) { \
+		cs_writelock(&reader->sc8in1_config->sc8in1_lock); \
+		cs_debug_mask(D_ATR, "SC8in1: locked for access of slot %i", reader->slot); \
+		Sc8in1_Selectslot(reader, reader->slot); \
+	} \
+}
+
+#define UNLOCK_SC8IN1 \
+{	\
+	if (reader->typ == R_SC8in1) { \
+		cs_writeunlock(&reader->sc8in1_config->sc8in1_lock); \
+		cs_debug_mask(D_ATR, "SC8in1: unlocked for access of slot %i", reader->slot); \
+	} \
+}
+
 #ifdef USE_GPIO	//felix: definition of gpio functions
 #define pin (1<<(reader->detect-4))
 int32_t gpio_outen,gpio_out,gpio_in;
@@ -110,7 +127,15 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 		int32_t parity[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
 
 		if ( ! reader->ins7e11_fast_reset ) {
-			call (Phoenix_SetBaudrate (reader, DEFAULT_BAUDRATE));
+			LOCK_SC8IN1
+			if (Phoenix_SetBaudrate (reader, DEFAULT_BAUDRATE)) {
+				UNLOCK_SC8IN1
+#ifdef WITH_DEBUG
+				cs_debug_mask(D_TRACE, "ERROR, function call %s returns error.","Phoenix_SetBaudrate (reader, DEFAULT_BAUDRATE)");
+#endif
+				return ERROR;
+			}
+			UNLOCK_SC8IN1
 		}
 		else {
 			cs_log("Doing fast reset");
@@ -124,18 +149,28 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 			*/
 			cs_sleepms(200);
 #endif
+			LOCK_SC8IN1
 			IO_Serial_Flush(reader);
-			call (IO_Serial_SetParity (reader, parity[i]));
+			if (IO_Serial_SetParity (reader, parity[i])) {
+				UNLOCK_SC8IN1
+#ifdef WITH_DEBUG
+				cs_debug_mask(D_TRACE, "ERROR, function call %s returns error.","IO_Serial_SetParity (reader, parity[i])");
+#endif
+				return ERROR;
+			}
+			UNLOCK_SC8IN1
 
 			ret = ERROR;
 			cs_sleepms(500); //smartreader in mouse mode needs this
+			LOCK_SC8IN1
 			IO_Serial_Ioctl_Lock(reader, 1);
 #ifdef USE_GPIO
 			if (reader->detect>4)
 				set_gpio(reader, 0);
 			else
 #endif
-				IO_Serial_RTS_Set(reader);
+			IO_Serial_RTS_Set(reader);
+			UNLOCK_SC8IN1
 #ifdef OS_CYGWIN32
 			/* 
 			* Pause for 200ms as this might help with the PL2303.
@@ -145,14 +180,14 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 #else
 			cs_sleepms(200);
 #endif
-
+			LOCK_SC8IN1
 #ifdef USE_GPIO  //felix: set card reset hi (inactive)
 			if (reader->detect>4) {
 				set_gpio_input(reader);
 			}
 			else
 #endif
-				IO_Serial_RTS_Clr(reader);
+			IO_Serial_RTS_Clr(reader);
 
 			cs_sleepms(50);
 			IO_Serial_Ioctl_Lock(reader, 0);
@@ -160,6 +195,7 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 			int32_t n=0;
 			while(n<ATR_MAX_SIZE && !IO_Serial_Read(reader, ATR_TIMEOUT, 1, buf+n))
 				n++;
+			UNLOCK_SC8IN1
 			if(n==0)
 				continue;
 			if (ATR_InitFromArray (atr, buf, n) == ATR_OK)
@@ -168,8 +204,9 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 			if (ret == OK)
 				break;
 		}
+		LOCK_SC8IN1
 		IO_Serial_Flush(reader);
-
+		UNLOCK_SC8IN1
 /*
 		//PLAYGROUND faking ATR for test purposes only
 		//
