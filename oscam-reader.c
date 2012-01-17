@@ -534,7 +534,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		if (foundspace<0) {
 			//drop
 			cs_debug_mask(D_READER, "ratelimit could not find space for srvid %04X. Dropping.",er->srvid);
-			write_ecm_answer(reader, er, E_NOTFOUND, 32, NULL, "ECMratelimit no space for srvid");
+			write_ecm_answer(reader, er, E_NOTFOUND, E2_RATELIMIT, NULL, "ECMratelimit no space for srvid");
 			return;
 		} else {
 			reader->rlecmh[foundspace].last=time(NULL);
