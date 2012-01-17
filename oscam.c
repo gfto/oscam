@@ -1318,6 +1318,7 @@ void start_thread(void * startroutine, char * nameroutine) {
 /* Allows to kill another thread specified through the client cl with locking.
   If the own thread has to be cancelled, cs_exit or cs_disconnect_client has to be used. */
 void kill_thread(struct s_client *cl) {
+	if (!cl || cl->kill) return;
 	cl->kill=1;
 	add_job(cl, ACTION_CLIENT_KILL, NULL, 0);
 }
@@ -1722,12 +1723,12 @@ void cs_cache_push(ECM_REQUEST *er)
 
 static int8_t is_match_alias(struct s_client *cl, ECM_REQUEST *er)
 {
-	return cl->account->cacheex == 1 && is_cacheex_matcher_matching(NULL, er);
+	return cl && cl->account && cl->account->cacheex == 1 && is_cacheex_matcher_matching(NULL, er);
 }
 
 static int8_t match_alias(struct s_client *cl, ECM_REQUEST *er, ECM_REQUEST *ecm)
 {
-	if (cl->account->cacheex == 1) {
+	if (cl && cl->account && cl->account->cacheex == 1) {
 		struct s_cacheex_matcher *entry = is_cacheex_matcher_matching(ecm, er);
 		if (entry) {
 			int32_t diff = comp_timeb(&er->tps, &ecm->tps);
