@@ -12,10 +12,13 @@
 #include"ifd_cool.h"
 #include"icc_async.h"
 
+#define READ_WRITE_TRANSMIT_TIMEOUT				150
+
 struct s_coolstream_reader {
 	void      *handle; //device handle for coolstream
 	char      cardbuffer[256];
 	int32_t		cardbuflen;
+	int32_t		read_write_transmit_timeout;
 };
 
 #define specdev() \
@@ -38,6 +41,7 @@ int32_t Cool_Init (struct s_reader *reader)
 	if (cnxt_smc_open (&specdev()->handle, &reader_nb))
 		return FALSE;
 	specdev()->cardbuflen = 0;
+	specdev()->read_write_transmit_timeout = READ_WRITE_TRANSMIT_TIMEOUT;
 	return OK;
 }
 
@@ -80,9 +84,27 @@ int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
 int32_t Cool_Transmit (struct s_reader *reader, BYTE * sent, uint32_t size)
 { 
 	specdev()->cardbuflen = 256;//it needs to know max buffer size to respond?
-	call (cnxt_smc_read_write(specdev()->handle, FALSE, sent, size, specdev()->cardbuffer, &specdev()->cardbuflen, 150, 0));
+
+	call (cnxt_smc_read_write(specdev()->handle, FALSE, sent, size, specdev()->cardbuffer, &specdev()->cardbuflen, specdev()->read_write_transmit_timeout, 0));
 	//call (cnxt_smc_read_write(specdev()->handle, FALSE, sent, size, specdev()->cardbuffer, &specdev()->cardbuflen, read_timeout, 0));
-	cs_ddump_mask(D_DEVICE, sent, size, "COOL IO: Transmit: ");
+
+	cs_ddump_mask(D_DEVICE, sent, size, "COOL IO: Transmit: ");	
+	return OK;
+}
+
+int32_t Cool_Set_Transmit_Timeout(struct s_reader *reader)
+{ 
+	if (specdev()->read_write_transmit_timeout == READ_WRITE_TRANSMIT_TIMEOUT) {
+		if (reader->cool_timeout_after_init > 0) {
+			specdev()->read_write_transmit_timeout = reader->cool_timeout_after_init;
+			cs_log("%s timeout set to cool_timeout_after_init = %i", reader->label, reader->cool_timeout_after_init);
+		} else {
+			specdev()->read_write_transmit_timeout = reader->read_timeout;
+			cs_log("no timeout for reader %s specified - using standard timeout after init (%i)", reader->label, reader->read_timeout);
+		}
+	} else {
+		specdev()->read_write_transmit_timeout = READ_WRITE_TRANSMIT_TIMEOUT;
+	}
 	return OK;
 }
 

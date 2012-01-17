@@ -1026,6 +1026,9 @@ struct s_reader  									//contains device info, reader info and card info
 	int8_t			cacheex;
 #endif
 	int32_t			typ;
+#ifdef COOL
+	int32_t			cool_timeout_after_init; // read/transmit timeout after init for coolstream internal reader
+#endif
 	char			label[64];
 #ifdef WEBIF
 	char			*description;

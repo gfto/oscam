@@ -4473,7 +4473,12 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		rdr->typ = R_MOUSE;
 		return;
 	}
-
+#ifdef COOL
+	if (!strcmp(token, "cool_timeout_after_init")) {
+		rdr->cool_timeout_after_init  = strToIntVal(value, 0);
+		return;
+	}
+#endif
 	if (!strcmp(token, "ident")) {
 		if(strlen(value) == 0) {
 			clear_ftab(&rdr->ftab);

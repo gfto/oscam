@@ -353,6 +353,8 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 					call (Cool_Reset(reader, atr));
 				}
 				else {
+					cs_log("fast reset needed for %s - restoring transmit parameter for coolstream device %s", reader->label, reader->device);
+					call(Cool_Set_Transmit_Timeout(reader));
 					cs_log("Doing fast reset");
 					call (Cool_FastReset_With_ATR(reader, atr));
 				}
