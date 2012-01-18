@@ -3417,7 +3417,7 @@ void * work_thread(void *ptr) {
 		}
 
 		if (!data) {
-			if (!cl->pfd)
+			if (!cl->pfd || cl->is_udp)
 				break;
 			pfd[0].fd = cl->pfd;
 			pfd[0].events = POLLIN | POLLPRI | POLLHUP;
@@ -3426,11 +3426,11 @@ void * work_thread(void *ptr) {
 			rc = poll(pfd, 1, 3000);
 			pthread_sigmask(SIG_BLOCK, &newmask, NULL);
 
-			//if (rc == -1)
-			//	cs_debug_mask(D_TRACE, "poll wakeup");
+			if (rc == -1)
+				cs_debug_mask(D_TRACE, "poll wakeup");
 
 			if (rc>0) {
-			//	cs_debug_mask(D_TRACE, "data on socket");
+				cs_debug_mask(D_TRACE, "data on socket");
 				data=&tmp_data;
 				data->ptr = NULL;
 				
