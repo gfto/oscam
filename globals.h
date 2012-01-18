@@ -1025,11 +1025,11 @@ struct s_sc8in1_config {
 	struct termios stored_termio[8];
 	int32_t current_slot;
 	unsigned char cardstatus;
-	BYTE mcr_type;
+	unsigned char mcr_type;
 	CS_MUTEX_LOCK sc8in1_lock;
 	struct s_sc8in1_display *display;
 	CS_MUTEX_LOCK sc8in1_display_lock;
-	BYTE display_running;
+	unsigned char display_running;
 };
 
 struct s_reader  									//contains device info, reader info and card info

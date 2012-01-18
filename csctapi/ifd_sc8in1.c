@@ -23,10 +23,10 @@
 #include "io_serial.h"
 #include "icc_async.h"
 
-static int32_t mcrReadStatus(struct s_reader *reader, BYTE *status);
+static int32_t mcrReadStatus(struct s_reader *reader, unsigned char *status);
 
 static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
-		uint16_t lenwrite, uint16_t lenread, uint8_t enableEepromWrite, BYTE restoreBaudrate) {
+		uint16_t lenwrite, uint16_t lenread, uint8_t enableEepromWrite, unsigned char restoreBaudrate) {
 	struct termios termio, termiobackup;
 
 	// switch SC8in1 to command mode
@@ -48,7 +48,7 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 
 	// enable EEPROM write
 	if (enableEepromWrite) {
-		BYTE eepromBuff[3];
+		unsigned char eepromBuff[3];
 		eepromBuff[0] = 0x70;
 		eepromBuff[1] = 0xab;
 		eepromBuff[2] = 0xba;
@@ -108,7 +108,7 @@ static int32_t readSc8in1Status(struct s_reader * reader) {
 	// bit7=1 means Slot8=Smartcard inside
 
 	if (reader->sc8in1_config->mcr_type) {
-		BYTE buff[2];
+		unsigned char buff[2];
 		if (mcrReadStatus(reader, &buff[0])) {
 			return (-1);
 		}
@@ -127,7 +127,7 @@ static int32_t readSc8in1Status(struct s_reader * reader) {
 	return (buf[2]);
 }
 
-static int32_t mcrReadStatus(struct s_reader *reader, BYTE *status) {
+static int32_t mcrReadStatus(struct s_reader *reader, unsigned char *status) {
 	unsigned char buff[2];
 	buff[0] = 0x3f;
 	if (sc8in1_command(reader, buff, 1, 2, 0, 1) < 0)
@@ -137,7 +137,7 @@ static int32_t mcrReadStatus(struct s_reader *reader, BYTE *status) {
 	return OK;
 }
 
-static int32_t mcrReadType(struct s_reader *reader, BYTE *type) {
+static int32_t mcrReadType(struct s_reader *reader, unsigned char *type) {
 	unsigned char buff[1];
 	buff[0] = 0x74;
 	if (sc8in1_command(reader, buff, 1, 1, 0, 0) < 0)
@@ -146,7 +146,7 @@ static int32_t mcrReadType(struct s_reader *reader, BYTE *type) {
 	return OK;
 }
 
-static int32_t mcrReadVersion(struct s_reader *reader, BYTE *version) {
+static int32_t mcrReadVersion(struct s_reader *reader, unsigned char *version) {
 	unsigned char buff[1];
 	buff[0] = 0x76;
 	if (sc8in1_command(reader, buff, 1, 1, 0, 0) < 0)
@@ -155,7 +155,7 @@ static int32_t mcrReadVersion(struct s_reader *reader, BYTE *version) {
 	return OK;
 }
 
-static int32_t mcrReadSerial(struct s_reader *reader, BYTE *serial) {
+static int32_t mcrReadSerial(struct s_reader *reader, unsigned char *serial) {
 	unsigned char buff[2];
 	buff[0] = 0x6e;
 	if (sc8in1_command(reader, buff, 1, 2, 0, 0) < 0)
@@ -165,7 +165,7 @@ static int32_t mcrReadSerial(struct s_reader *reader, BYTE *serial) {
 	return OK;
 }
 
-static int32_t mcrWriteDisplayRaw(struct s_reader *reader, BYTE data[7]) {
+static int32_t mcrWriteDisplayRaw(struct s_reader *reader, unsigned char data[7]) {
 	unsigned char buff[8];
 	buff[0] = 0x64;
 	memcpy(&buff[1], &data[0], 7);
@@ -174,7 +174,7 @@ static int32_t mcrWriteDisplayRaw(struct s_reader *reader, BYTE data[7]) {
 	return OK;
 }
 
-static int32_t mcrWriteDisplayAscii(struct s_reader *reader, BYTE data, BYTE timeout) {
+static int32_t mcrWriteDisplayAscii(struct s_reader *reader, unsigned char data, unsigned char timeout) {
 	unsigned char buff[3];
 	buff[0] = 0x61;
 	buff[1] = data;
@@ -184,7 +184,7 @@ static int32_t mcrWriteDisplayAscii(struct s_reader *reader, BYTE data, BYTE tim
 	return OK;
 }
 
-static int32_t mcrWriteClock(struct s_reader *reader, BYTE saveClock, BYTE clock[2]) {
+static int32_t mcrWriteClock(struct s_reader *reader, unsigned char saveClock, unsigned char clock[2]) {
 	unsigned char buff[3];
 	buff[0] = 0x63;
 	buff[1] = clock[0];
@@ -199,7 +199,7 @@ static int32_t mcrWriteClock(struct s_reader *reader, BYTE saveClock, BYTE clock
 	return OK;
 }
 
-static int32_t mcrReadClock(struct s_reader *reader, BYTE *clock) {
+static int32_t mcrReadClock(struct s_reader *reader, unsigned char *clock) {
 	unsigned char buff[2];
 	buff[0] = 0x67;
 	if (sc8in1_command(reader, buff, 1, 2, 0, 0) < 0)
@@ -209,7 +209,7 @@ static int32_t mcrReadClock(struct s_reader *reader, BYTE *clock) {
 	return OK;
 }
 
-static int32_t mcrWriteTimeout(struct s_reader *reader, BYTE timeout[2]) {
+static int32_t mcrWriteTimeout(struct s_reader *reader, unsigned char timeout[2]) {
 	unsigned char buff[3];
 	buff[0] = 0x6f;
 	buff[1] = timeout[0];
@@ -219,7 +219,7 @@ static int32_t mcrWriteTimeout(struct s_reader *reader, BYTE timeout[2]) {
 	return OK;
 }
 
-static int32_t mcrReadTimeout(struct s_reader *reader, BYTE *timeout) {
+static int32_t mcrReadTimeout(struct s_reader *reader, unsigned char *timeout) {
 	unsigned char buff[2];
 	buff[0] = 0x72;
 	if (sc8in1_command(reader, buff, 1, 2, 0, 0) < 0)
@@ -229,7 +229,7 @@ static int32_t mcrReadTimeout(struct s_reader *reader, BYTE *timeout) {
 	return OK;
 }
 
-static int32_t mcrSelectSlot(struct s_reader *reader, BYTE slot) {
+static int32_t mcrSelectSlot(struct s_reader *reader, unsigned char slot) {
 	// Select slot for MCR device.
 	// Parameter slot is from 1-8
 	unsigned char buff[2];
@@ -242,7 +242,7 @@ static int32_t mcrSelectSlot(struct s_reader *reader, BYTE slot) {
 
 static int32_t mcrHelloOscam(struct s_reader *reader) {
 	// Display "OSCam" on MCR display
-	BYTE helloOscam[5] = {'O', 'S', 'C', 'a', 'm'};
+	unsigned char helloOscam[5] = {'O', 'S', 'C', 'a', 'm'};
 	return MCR_DisplayText(reader, &helloOscam[0], 5, 100);
 }
 
@@ -433,7 +433,7 @@ int32_t Sc8in1_Selectslot(struct s_reader * reader, int32_t slot) {
 		status = mcrSelectSlot(reader, slot);
 #ifdef WITH_DEBUG
 		gettimeofday(&tv_mid,0);
-		long elapsed = (tv_mid.tv_sec-tv_start.tv_sec)*1000000 + tv_mid.tv_usec-tv_start.tv_usec;
+		uint32_t elapsed = (tv_mid.tv_sec-tv_start.tv_sec)*1000000 + tv_mid.tv_usec-tv_start.tv_usec;
 		cs_debug_mask(D_DEVICE, "SC8in1 Selectslot Phase1 in %ums", elapsed/1000);
 #endif
 		status |= Sc8in1_SetTermioForSlot(reader, slot);
@@ -447,7 +447,7 @@ int32_t Sc8in1_Selectslot(struct s_reader * reader, int32_t slot) {
 	}
 #ifdef WITH_DEBUG
 	gettimeofday(&tv_end,0);
-	long elapsed = (tv_end.tv_sec-tv_start.tv_sec)*1000000 + tv_end.tv_usec-tv_start.tv_usec;
+	uint32_t elapsed = (tv_end.tv_sec-tv_start.tv_sec)*1000000 + tv_end.tv_usec-tv_start.tv_usec;
 	cs_debug_mask(D_DEVICE, "SC8in1 Selectslot in %ums", elapsed/1000);
 #endif
 	return status;
@@ -468,24 +468,24 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 	}
 
 	// check for a MCR device and how many slots it has.
-	BYTE mcrType[1]; mcrType[0] = 0;
+	unsigned char mcrType[1]; mcrType[0] = 0;
 	if ( ! mcrReadType(reader, &mcrType[0]) ) {
 		if (mcrType[0] == 4 || mcrType[0] == 8) {
 			reader->sc8in1_config->mcr_type = mcrType[0];
 			cs_log("SC8in1: MCR%u detected for device %s", reader->sc8in1_config->mcr_type, reader->device);
 
-			BYTE version[1]; version[0] = 0;
+			unsigned char version[1]; version[0] = 0;
 			if ( ! mcrReadVersion(reader, &version[0])) {
-				cs_log("SC8in1: Version %u for device %s", (BYTE)version[0], reader->device);
+				cs_log("SC8in1: Version %u for device %s", (unsigned char)version[0], reader->device);
 			}
 
-			BYTE serial[2]; serial[0] = 0; serial[1] = 0;
+			unsigned char serial[2]; serial[0] = 0; serial[1] = 0;
 			if ( ! mcrReadSerial(reader, &serial[0])) {
 				cs_log("SC8in1: Serial %u for device %s", (uint16_t)serial[0], reader->device);
 			}
 
 			//now work-around the problem that timeout of MCR has to be 0 in case of USB
-			BYTE timeout[2]; timeout[0] = 0; timeout[1] = 0;
+			unsigned char timeout[2]; timeout[0] = 0; timeout[1] = 0;
 			retval = mcrReadTimeout(reader, &timeout[0]);
 			if (retval) {
 				cs_log("SC8in1: Error reading timeout.");
@@ -557,7 +557,7 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 		sc8in1_clock = ((sc8in1_clock & 0xFF) << 8) | ((sc8in1_clock & 0xFF00) >> 8);
 
 		//set clockspeeds for all slots
-		BYTE clockspeed[2];
+		unsigned char clockspeed[2];
 		memcpy(&clockspeed, &sc8in1_clock, 2);
 		if (mcrWriteClock(reader, 0, clockspeed)) {
 			cs_log("ERROR Sc8in1, cannot set clockspeed %d", (uint16_t)clockspeed[0]);
