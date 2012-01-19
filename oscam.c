@@ -4002,10 +4002,10 @@ int32_t accept_connection(int32_t i, int32_t j) {
 			buf[0]='U';
 			memcpy(buf+1, &rl, 2);
 
-			if (!cl) {
-				if (cs_check_violation((uint32_t)cad.sin_addr.s_addr, ph[i].ptab->ports[j].s_port))
-					return 0;
+			if (cs_check_violation((uint32_t)cad.sin_addr.s_addr, ph[i].ptab->ports[j].s_port))
+				return 0;
 
+			if (!cl) {
 				cl = create_client(cad.sin_addr.s_addr);
 				if (!cl) return 0;
 
