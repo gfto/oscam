@@ -3417,7 +3417,7 @@ void * work_thread(void *ptr) {
 		}
 
 		if (!data) {
-			if (!cl->pfd || cl->is_udp)
+			if (!cl->pfd)
 				break;
 			pfd[0].fd = cl->pfd;
 			pfd[0].events = POLLIN | POLLPRI | POLLHUP;
@@ -3437,7 +3437,10 @@ void * work_thread(void *ptr) {
 				if (reader)
 					data->action = ACTION_READER_REMOTE;
 				else {
-					data->action = ACTION_CLIENT_TCP;
+					if (cl->is_udp)
+						data->action = ACTION_CLIENT_UDP;
+					else
+						data->action = ACTION_CLIENT_TCP;
 					if (pfd[0].revents & (POLLHUP | POLLNVAL))
 						cl->kill = 1;
 				}
@@ -3819,12 +3822,39 @@ static void * check_thread(void) {
 	return NULL;
 }
 
+static uint32_t resize_pfd_cllist(struct pollfd **pfd, struct s_client ***cl_list, uint32_t old_size, uint32_t new_size) {
+	if (old_size != new_size) {
+		struct pollfd *pfd_new = cs_malloc(&pfd_new, new_size*sizeof(struct pollfd), 0);
+		struct s_client **cl_list_new = cs_malloc(&cl_list_new, new_size*sizeof(cl_list), 0);
+		if (old_size > 0) {
+			memcpy(pfd_new, *pfd, old_size*sizeof(struct pollfd));
+			memcpy(cl_list_new, *cl_list, old_size*sizeof(cl_list));
+			free(*pfd);
+			free(*cl_list);
+		}
+		*pfd = pfd_new;
+		*cl_list = cl_list_new;
+	}
+	return new_size;
+}
+
+static uint32_t chk_resize_cllist(struct pollfd **pfd, struct s_client ***cl_list, uint32_t cur_size, uint32_t chk_size) {
+	chk_size++;
+	if (chk_size > cur_size) {
+		uint32_t new_size = ((chk_size % 100)+1) * 100; //increase 100 step
+		cur_size = resize_pfd_cllist(pfd, cl_list, cur_size, new_size);
+	}
+	return cur_size;
+}
+
 void * client_check(void) {
 	int32_t i, k, j, rc, pfdcount = 0;
 	struct s_client *cl;
 	struct s_reader *rdr;
-	struct pollfd pfd[1024];
-	struct s_client *cl_list[1024];
+	struct pollfd *pfd;
+	struct s_client **cl_list;
+	uint32_t cl_size = 0;
+
 	char buf[10];
 	sigset_t newmask;
 
@@ -3837,6 +3867,8 @@ void * client_check(void) {
 		exit(1);
 	}
 
+	cl_size = chk_resize_cllist(&pfd, &cl_list, 0, 100);
+
 	pfd[pfdcount].fd = thread_pipe[0];
 	pfd[pfdcount].events = POLLIN | POLLPRI | POLLHUP;
 	cl_list[pfdcount] = NULL;
@@ -3845,9 +3877,10 @@ void * client_check(void) {
 		pfdcount = 1;
 
 		//connected tcp clients
-		for (cl=first_client->next; cl && pfdcount < 1024 ; cl=cl->next) {
+		for (cl=first_client->next; cl; cl=cl->next) {
 			if (cl->init_done && !cl->kill && cl->pfd && cl->typ=='c' && !cl->is_udp) {
-				if (cl->pfd && !cl->thread_active) {				
+				if (cl->pfd && !cl->thread_active) {
+					cl_size = chk_resize_cllist(&pfd, &cl_list, cl_size, pfdcount);
 					cl_list[pfdcount] = cl;
 					pfd[pfdcount].fd = cl->pfd;
 					pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
@@ -3863,6 +3896,7 @@ void * client_check(void) {
 			rdr = cl->reader;
 			if (rdr && cl->typ=='p' && cl->init_done) {
 				if (cl->pfd && !cl->thread_active && ((rdr->tcp_connected && rdr->ph.type==MOD_CONN_TCP)||(rdr->ph.type==MOD_CONN_UDP))) {
+					cl_size = chk_resize_cllist(&pfd, &cl_list, cl_size, pfdcount);
 					cl_list[pfdcount] = cl;
 					pfd[pfdcount].fd = cl->pfd;
 					pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
@@ -3871,10 +3905,11 @@ void * client_check(void) {
 		}
 
 		//server (new tcp connections or udp messages)
-		for (k=0; k < CS_MAX_MOD && pfdcount < 1024 ; k++) {
+		for (k=0; k < CS_MAX_MOD; k++) {
 			if ( (ph[k].type & MOD_CONN_NET) && ph[k].ptab ) {
 				for (j=0; j<ph[k].ptab->nports; j++) {
 					if (ph[k].ptab->ports[j].fd) {
+						cl_size = chk_resize_cllist(&pfd, &cl_list, cl_size, pfdcount);
 						cl_list[pfdcount] = NULL;
 						pfd[pfdcount].fd = ph[k].ptab->ports[j].fd;
 						pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
@@ -3947,7 +3982,7 @@ void * client_check(void) {
 
 			//server sockets
 			// new connection on a tcp listen socket or new message on udp listen socket
-			if (!cl && pfd[i].revents & (POLLIN | POLLPRI)) {
+			if (!cl && (pfd[i].revents & (POLLIN | POLLPRI))) {
 				for (k=0; k<CS_MAX_MOD; k++) {
 					if( (ph[k].type & MOD_CONN_NET) && ph[k].ptab ) {
 						for ( j=0; j<ph[k].ptab->nports; j++ ) {
@@ -3961,6 +3996,8 @@ void * client_check(void) {
 		}
 		first_client->last=time((time_t *)0);
 	}
+	free(pfd);
+	free(cl_list);
 	return NULL;
 }
 
