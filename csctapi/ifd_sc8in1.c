@@ -23,11 +23,37 @@
 #include "io_serial.h"
 #include "icc_async.h"
 
+#define LOCK_SC8IN1 \
+{ \
+	if (reader->typ == R_SC8in1) { \
+		cs_writelock(&reader->sc8in1_config->sc8in1_lock); \
+		cs_debug_mask(D_ATR, "SC8in1: locked for access of slot %i", reader->slot); \
+		Sc8in1_Selectslot(reader, reader->slot); \
+	} \
+}
+
+#define UNLOCK_SC8IN1 \
+{	\
+	if (reader->typ == R_SC8in1) { \
+		cs_writeunlock(&reader->sc8in1_config->sc8in1_lock); \
+		cs_debug_mask(D_ATR, "SC8in1: unlocked for access of slot %i", reader->slot); \
+	} \
+}
+
 static int32_t mcrReadStatus(struct s_reader *reader, unsigned char *status);
+static int32_t Sc8in1_RestoreBaudrate(struct s_reader * reader, struct termios *tio);
+int32_t Sc8in1_RestoreRts(struct s_reader *reader);
 
 static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
-		uint16_t lenwrite, uint16_t lenread, uint8_t enableEepromWrite, unsigned char restoreBaudrate) {
+		uint16_t lenwrite, uint16_t lenread, uint8_t enableEepromWrite, unsigned char restoreBaudrate,
+		unsigned char rts) {
 	struct termios termio, termiobackup;
+
+	// save RTS state before slot change
+	if (rts && Sc8in1_SaveRts(reader)) {
+		cs_log("ERROR SC8in1: Sc8in1_SaveRts slot\n");
+		return ERROR;
+	}
 
 	// switch SC8in1 to command mode
 	IO_Serial_DTR_Set(reader);
@@ -79,13 +105,15 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 		return ERROR;
 	}
 
-	if (restoreBaudrate) {
-		if (reader->current_baudrate && reader->current_baudrate != DEFAULT_BAUDRATE) {
-			if (Sc8in1_SetBaudrate(reader, &termio)) {
-				cs_log("ERROR: SC8in1 selectslot restore Bitrate attributes\n");
-				return ERROR;
-			}
-		}
+	/*if (restoreBaudrate && Sc8in1_RestoreBaudrate(reader, &termio)) {
+		cs_log("ERROR: SC8in1 selectslot restore Bitrate attributes\n");
+		return ERROR;
+	}*/
+
+	// restore RTS stare after slot change
+	if (rts && Sc8in1_RestoreRts(reader)) {
+		cs_log("ERROR: Sc8in1_RestoreRts\n");
+		return ERROR;
 	}
 
 	// switch SC8in1 to normal mode
@@ -118,7 +146,7 @@ static int32_t readSc8in1Status(struct s_reader * reader) {
 	unsigned char buf[10];
 	buf[0] = 0x47;
 	IO_Serial_Flush(reader);
-	if (sc8in1_command(reader, buf, 1, 8, 0, 1) < 0)
+	if (sc8in1_command(reader, buf, 1, 8, 0, 1, 0) < 0)
 		return (-1);
 	if (buf[1] != 0x90)
 		return (-1);
@@ -130,7 +158,7 @@ static int32_t readSc8in1Status(struct s_reader * reader) {
 static int32_t mcrReadStatus(struct s_reader *reader, unsigned char *status) {
 	unsigned char buff[2];
 	buff[0] = 0x3f;
-	if (sc8in1_command(reader, buff, 1, 2, 0, 1) < 0)
+	if (sc8in1_command(reader, buff, 1, 2, 0, 1, 0) < 0)
 		return ERROR;
 	status[0] = buff[0];
 	status[1] = buff[1];
@@ -140,7 +168,7 @@ static int32_t mcrReadStatus(struct s_reader *reader, unsigned char *status) {
 static int32_t mcrReadType(struct s_reader *reader, unsigned char *type) {
 	unsigned char buff[1];
 	buff[0] = 0x74;
-	if (sc8in1_command(reader, buff, 1, 1, 0, 0) < 0)
+	if (sc8in1_command(reader, buff, 1, 1, 0, 0, 0) < 0)
 		return ERROR;
 	type[0] = buff[0];
 	return OK;
@@ -149,7 +177,7 @@ static int32_t mcrReadType(struct s_reader *reader, unsigned char *type) {
 static int32_t mcrReadVersion(struct s_reader *reader, unsigned char *version) {
 	unsigned char buff[1];
 	buff[0] = 0x76;
-	if (sc8in1_command(reader, buff, 1, 1, 0, 0) < 0)
+	if (sc8in1_command(reader, buff, 1, 1, 0, 0, 0) < 0)
 		return ERROR;
 	version[0] = buff[0];
 	return OK;
@@ -158,7 +186,7 @@ static int32_t mcrReadVersion(struct s_reader *reader, unsigned char *version) {
 static int32_t mcrReadSerial(struct s_reader *reader, unsigned char *serial) {
 	unsigned char buff[2];
 	buff[0] = 0x6e;
-	if (sc8in1_command(reader, buff, 1, 2, 0, 0) < 0)
+	if (sc8in1_command(reader, buff, 1, 2, 0, 0, 0) < 0)
 		return ERROR;
 	serial[0] = buff[1];
 	serial[1] = buff[0];
@@ -169,7 +197,7 @@ static int32_t mcrWriteDisplayRaw(struct s_reader *reader, unsigned char data[7]
 	unsigned char buff[8];
 	buff[0] = 0x64;
 	memcpy(&buff[1], &data[0], 7);
-	if (sc8in1_command(reader, buff, 8, 0, 0, 0) < 0)
+	if (sc8in1_command(reader, buff, 8, 0, 0, 0, 0) < 0)
 		return ERROR;
 	return OK;
 }
@@ -179,7 +207,7 @@ static int32_t mcrWriteDisplayAscii(struct s_reader *reader, unsigned char data,
 	buff[0] = 0x61;
 	buff[1] = data;
 	buff[2] = timeout;
-	if (sc8in1_command(reader, buff, 3, 0, 0, 0) < 0)
+	if (sc8in1_command(reader, buff, 3, 0, 0, 0, 0) < 0)
 		return ERROR;
 	return OK;
 }
@@ -189,11 +217,11 @@ static int32_t mcrWriteClock(struct s_reader *reader, unsigned char saveClock, u
 	buff[0] = 0x63;
 	buff[1] = clock[0];
 	buff[2] = clock[1];
-	if (sc8in1_command(reader, buff, 3, 0, 0, 0) < 0)
+	if (sc8in1_command(reader, buff, 3, 0, 0, 0, 0) < 0)
 		return ERROR;
 	if (saveClock) {
 		buff[0] = 0x6d;
-		if (sc8in1_command(reader, buff, 1, 0, 1, 0) < 0)
+		if (sc8in1_command(reader, buff, 1, 0, 1, 0, 0) < 0)
 			return ERROR;
 	}
 	return OK;
@@ -202,7 +230,7 @@ static int32_t mcrWriteClock(struct s_reader *reader, unsigned char saveClock, u
 static int32_t mcrReadClock(struct s_reader *reader, unsigned char *clock) {
 	unsigned char buff[2];
 	buff[0] = 0x67;
-	if (sc8in1_command(reader, buff, 1, 2, 0, 0) < 0)
+	if (sc8in1_command(reader, buff, 1, 2, 0, 0, 0) < 0)
 		return ERROR;
 	clock[0] = buff[0];
 	clock[1] = buff[1];
@@ -214,7 +242,7 @@ static int32_t mcrWriteTimeout(struct s_reader *reader, unsigned char timeout[2]
 	buff[0] = 0x6f;
 	buff[1] = timeout[0];
 	buff[2] = timeout[1];
-	if (sc8in1_command(reader, buff, 3, 0, 1, 0) < 0)
+	if (sc8in1_command(reader, buff, 3, 0, 1, 0, 0) < 0)
 		return ERROR;
 	return OK;
 }
@@ -222,7 +250,7 @@ static int32_t mcrWriteTimeout(struct s_reader *reader, unsigned char timeout[2]
 static int32_t mcrReadTimeout(struct s_reader *reader, unsigned char *timeout) {
 	unsigned char buff[2];
 	buff[0] = 0x72;
-	if (sc8in1_command(reader, buff, 1, 2, 0, 0) < 0)
+	if (sc8in1_command(reader, buff, 1, 2, 0, 0, 0) < 0)
 		return ERROR;
 	timeout[0] = buff[1];
 	timeout[1] = buff[0];
@@ -235,7 +263,7 @@ static int32_t mcrSelectSlot(struct s_reader *reader, unsigned char slot) {
 	unsigned char buff[2];
 	buff[0] = 0x73;
 	buff[1] = slot - 1;
-	if (sc8in1_command(reader, buff, 2, 0, 0, 0) < 0)
+	if (sc8in1_command(reader, buff, 2, 0, 0, 0, 1) < 0)
 		return ERROR;
 	return OK;
 }
@@ -341,6 +369,12 @@ static sc8in1SelectSlot(struct s_reader *reader, int32_t slot) {
 	// switch SC8in1 to command mode
 	IO_Serial_DTR_Set(reader);
 
+	// save RTS state before slot change
+	if (Sc8in1_SaveRts(reader)) {
+		cs_log("ERROR SC8in1: Sc8in1_SaveRts slot");
+		return ERROR;
+	}
+
 	// set communication parameters
 	termio.c_cc[VTIME] = 1; // working
 	termio.c_cflag = B9600 | CS8 | CREAD | CLOCAL;
@@ -365,12 +399,17 @@ static sc8in1SelectSlot(struct s_reader *reader, int32_t slot) {
 		cs_log("ERROR: SC8in1 selectslot restore RS232 attributes\n");
 		return ERROR;
 	}
-	if (reader->current_baudrate && reader->current_baudrate != DEFAULT_BAUDRATE) {
-		if (Sc8in1_SetBaudrate(reader, &termio)) {
-			cs_log("ERROR: SC8in1 selectslot restore Bitrate attributes\n");
-			return ERROR;
-		}
+	if (Sc8in1_RestoreBaudrate(reader, &termio)) {
+		cs_log("ERROR: SC8in1 selectslot restore Bitrate attributes\n");
+		return ERROR;
 	}
+
+	// restore RTS stare after slot change
+	if (Sc8in1_RestoreRts(reader)) {
+		cs_log("ERROR: Sc8in1_RestoreRts\n");
+		return ERROR;
+	}
+
 	// switch SC8in1 to normal mode
 	IO_Serial_DTR_Clr(reader);
 	//cs_sleepms(10); //FIXME do I need this?
@@ -378,10 +417,120 @@ static sc8in1SelectSlot(struct s_reader *reader, int32_t slot) {
 	return OK;
 }
 
-int32_t Sc8in1_SetBaudrate(struct s_reader * reader, struct termios *tio) {
-	cs_debug_mask (D_IFD, "IFD: Sc8in1 Setting baudrate to %u\n", reader->current_baudrate);
-	call (IO_Serial_SetBitrate (reader, reader->current_baudrate, tio));
-	call (IO_Serial_SetProperties(reader, *tio));
+int32_t SC8in1_Reset (struct s_reader * reader, ATR * atr)
+{
+		cs_debug_mask (D_IFD, "IFD: Resetting card:\n");
+		int32_t ret;
+		int32_t i;
+		unsigned char buf[ATR_MAX_SIZE];
+		int32_t parity[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
+
+		if ( ! reader->ins7e11_fast_reset ) {
+			LOCK_SC8IN1
+			if (Sc8in1_SetBaudrate(reader, DEFAULT_BAUDRATE, NULL)) {
+				UNLOCK_SC8IN1
+#ifdef WITH_DEBUG
+				cs_debug_mask(D_TRACE, "ERROR, function call %s returns error.","Phoenix_SetBaudrate (reader, DEFAULT_BAUDRATE)");
+#endif
+				return ERROR;
+			}
+			UNLOCK_SC8IN1
+		}
+		else {
+			cs_log("Doing fast reset");
+		}
+
+		for(i=0; i<3; i++) {
+			LOCK_SC8IN1
+			IO_Serial_Flush(reader);
+			if (IO_Serial_SetParity (reader, parity[i])) {
+				UNLOCK_SC8IN1
+#ifdef WITH_DEBUG
+				cs_debug_mask(D_TRACE, "ERROR, function call %s returns error.","IO_Serial_SetParity (reader, parity[i])");
+#endif
+				return ERROR;
+			}
+
+			ret = ERROR;
+			IO_Serial_Ioctl_Lock(reader, 1);
+#ifdef USE_GPIO
+			if (reader->detect>4)
+				set_gpio(reader, 0);
+			else
+#endif
+			IO_Serial_RTS_Set(reader);
+			UNLOCK_SC8IN1
+
+			cs_sleepms(200);
+
+			LOCK_SC8IN1
+#ifdef USE_GPIO  //felix: set card reset hi (inactive)
+			if (reader->detect>4) {
+				set_gpio_input(reader);
+			}
+			else
+#endif
+			IO_Serial_RTS_Clr(reader);
+
+			cs_sleepms(50);
+			IO_Serial_Ioctl_Lock(reader, 0);
+
+			int32_t n=0;
+			while(n<ATR_MAX_SIZE && !IO_Serial_Read(reader, ATR_TIMEOUT, 1, buf+n))
+				n++;
+
+			UNLOCK_SC8IN1
+
+			if(n==0)
+				continue;
+			if (ATR_InitFromArray (atr, buf, n) == ATR_OK)
+				ret = OK;
+			// Succesfully retrieve ATR
+			if (ret == OK)
+				break;
+		}
+		LOCK_SC8IN1
+		IO_Serial_Flush(reader);
+		UNLOCK_SC8IN1
+/*
+		//PLAYGROUND faking ATR for test purposes only
+		//
+		// sky 919 unsigned char atr_test[] = { 0x3F, 0xFF, 0x13, 0x25, 0x03, 0x10, 0x80, 0x33, 0xB0, 0x0E, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x49, 0x54, 0x02, 0x00, 0x00 };
+		// HD+ unsigned char atr_test[] = { 0x3F, 0xFF, 0x95, 0x00, 0xFF, 0x91, 0x81, 0x71, 0xFE, 0x47, 0x00, 0x44, 0x4E, 0x41, 0x53, 0x50, 0x31, 0x34, 0x32, 0x20, 0x52, 0x65, 0x76, 0x47, 0x43, 0x34, 0x63 };
+		// S02 = irdeto unsigned char atr_test[] = { 0x3B, 0x9F, 0x21, 0x0E, 0x49, 0x52, 0x44, 0x45, 0x54, 0x4F, 0x20, 0x41, 0x43, 0x53, 0x03};
+		// conax unsigned char atr_test[] = { 0x3B, 0x24, 0x00, 0x30, 0x42, 0x30, 0x30 };
+		//cryptoworks 	unsigned char atr_test[] = { 0x3B, 0x78, 0x12, 0x00, 0x00, 0x65, 0xC4, 0x05, 0xFF, 0x8F, 0xF1, 0x90, 0x00 };
+		ATR_InitFromArray (atr, atr_test, sizeof(atr_test));
+		//END OF PLAYGROUND
+*/
+
+		return ret;
+}
+
+static int32_t Sc8in1_RestoreBaudrate(struct s_reader * reader, struct termios *tio) {
+	if (reader->current_baudrate && reader->current_baudrate != DEFAULT_BAUDRATE) {
+		if (Sc8in1_SetBaudrate(reader, 0, tio)) {
+			return ERROR;
+		}
+	}
+	return OK;
+}
+
+int32_t Sc8in1_SetBaudrate (struct s_reader * reader, uint32_t baudrate, struct termios *termio)
+{
+	/* Get current settings */
+	struct termios tio;
+	if (termio == NULL) {
+		call (tcgetattr (reader->handle, &tio) != 0);
+	}
+	else {
+		tio = *termio;
+		baudrate = reader->current_baudrate;
+	}
+	cs_debug_mask (D_IFD, "IFD: Sc8in1 Setting baudrate to %u\n", baudrate);
+	call (IO_Serial_SetBitrate (reader, baudrate, &tio));
+	call (IO_Serial_SetProperties(reader, tio));
+	reader->current_baudrate = baudrate;
 	return OK;
 }
 
@@ -389,7 +538,42 @@ int32_t Sc8in1_SetTioAttr(int32_t fd, struct termios *current, struct termios *n
 	// Only call tcsetattr if something changed, otherwise strange things may happen
 	if ( ! memcmp(current, new, sizeof(struct termios))) {
 		memcpy(current, new, sizeof(struct termios));
-		return tcsetattr(fd, TCSANOW, new);
+		return tcsetattr(fd, TCSANOW, current);
+	}
+	return OK;
+}
+
+int32_t Sc8in1_RestoreRts(struct s_reader *reader) {
+	uint32_t msr;
+	if (ioctl(reader->handle, TIOCMGET, &msr) < 0)
+		return ERROR;
+
+	unsigned char rts_slot = (reader->sc8in1_config->slotstatus_rts >> (reader->slot - 1)) & 1;
+	unsigned char rts_current = (msr & TIOCM_RTS) >> 2 ;
+
+	if ( rts_slot != rts_current) {
+		if (rts_slot) {
+			msr |= TIOCM_RTS;
+		}
+		else {
+			msr &= ~TIOCM_RTS;
+		}
+		if (ioctl(reader->handle, TIOCMSET, &msr)<0)
+			return ERROR;
+	}
+
+	return OK;
+}
+
+int32_t Sc8in1_SaveRts(struct s_reader *reader) {
+	uint32_t msr;
+	if (ioctl(reader->handle, TIOCMGET, &msr) < 0)
+		return ERROR;
+	if (msr & TIOCM_RTS) {
+		reader->sc8in1_config->slotstatus_rts |= (1 << (reader->slot - 1));
+	}
+	else {
+		reader->sc8in1_config->slotstatus_rts &= ~(1 << (reader->slot - 1));
 	}
 	return OK;
 }
@@ -407,11 +591,9 @@ int32_t Sc8in1_SetTermioForSlot(struct s_reader *reader, int32_t slot) {
 		cs_log("ERROR: SC8in1 selectslot restore RS232 attributes\n");
 		return ERROR;
 	}
-	if (reader->current_baudrate && reader->current_baudrate != DEFAULT_BAUDRATE) {
-		if (Sc8in1_SetBaudrate(reader, &termio_new)) {
-			cs_log("ERROR: SC8in1 selectslot restore Bitrate attributes\n");
-			return ERROR;
-		}
+	if (Sc8in1_RestoreBaudrate(reader, &termio_new)) {
+		cs_log("ERROR: SC8in1 selectslot restore Bitrate attributes\n");
+		return ERROR;
 	}
 	return OK;
 }

@@ -336,6 +336,8 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 			case R_DB2COM1:
 			case R_DB2COM2:
 			case R_SC8in1:
+				call (SC8in1_Reset(reader, atr));
+				break;
 			case R_MOUSE:
 				call (Phoenix_Reset(reader, atr));
 				break;
@@ -975,7 +977,10 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 				if (reader->crdr.set_baudrate)
 					call (reader->crdr.set_baudrate(reader, baud_temp));
 			} else {
-				if (reader->typ <= R_MOUSE) 
+				if (reader->typ != R_SC8in1) {
+					call (Sc8in1_SetBaudrate(reader, baud_temp, NULL));
+				}
+				else if (reader->typ <= R_MOUSE)
 					call (Phoenix_SetBaudrate(reader, baud_temp));
 			}
 			cs_debug_mask(D_IFD, "Setting baudrate to %u", baud_temp);

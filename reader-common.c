@@ -340,7 +340,7 @@ int32_t reader_checkhealth(struct s_reader * reader)
 			add_job(cl, ACTION_READER_RESET, NULL, 0);
 		}
 	} else {
-		if (reader->card_status == CARD_INSERTED) {
+		if (reader->card_status == CARD_INSERTED || reader->card_status == CARD_NEED_INIT) {
 			reader_nullcard(reader);
 			if (cl) {
 				cl->lastemm = 0;
