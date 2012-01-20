@@ -1956,18 +1956,18 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 		data = cc->receive_buffer;
 
 		if (l == 0x48) { //72 bytes: normal server data
-			cs_writelock(&cc->cards_busy);
+			//cs_writelock(&cc->cards_busy);
 			//cc_free_cardlist(cc->cards, FALSE);
 			free_extended_ecm_idx(cc); 
 			cc->last_emm_card = NULL;
-			cc->num_hop1 = 0;
-			cc->num_hop2 = 0;
-			cc->num_hopx = 0;
-			cc->num_reshare0 = 0;
-			cc->num_reshare1 = 0;
-			cc->num_reshare2 = 0;
-			cc->num_resharex = 0;
-            cs_writeunlock(&cc->cards_busy);
+			//cc->num_hop1 = 0;
+			//cc->num_hop2 = 0;
+			//cc->num_hopx = 0;
+			//cc->num_reshare0 = 0;
+			//cc->num_reshare1 = 0;
+			//cc->num_reshare2 = 0;
+			//cc->num_resharex = 0;
+            //cs_writeunlock(&cc->cards_busy);
                 			
 			memcpy(cc->peer_node_id, data, 8);
 			memcpy(cc->peer_version, data + 8, 8);
@@ -3187,13 +3187,13 @@ int32_t cc_cli_connect(struct s_client *cl) {
 	cc->answer_on_keepalive = time(NULL);
 	cc->extended_mode = 0;
 	cc->last_emm_card = NULL;
-	cc->num_hop1 = 0;
-	cc->num_hop2 = 0;
-	cc->num_hopx = 0;
-	cc->num_reshare0 = 0;
-	cc->num_reshare1 = 0;
-	cc->num_reshare2 = 0;
-	cc->num_resharex = 0;	
+//	cc->num_hop1 = 0;
+//	cc->num_hop2 = 0;
+//	cc->num_hopx = 0;
+//	cc->num_reshare0 = 0;
+//	cc->num_reshare1 = 0;
+//	cc->num_reshare2 = 0;
+//	cc->num_resharex = 0;
 	memset(&cc->cmd05_data, 0, sizeof(cc->cmd05_data));
 	memset(&cc->receive_buffer, 0, sizeof(cc->receive_buffer));
 	NULLFREE(cc->nok_message);
