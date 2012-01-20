@@ -719,10 +719,8 @@ int32_t cc_get_nxt_ecm(struct s_client *cl) {
 		if ((t - (uint32_t) er->tps.time > ((cfg.ctimeout + 500)
 				/ 1000) + 1) && (er->rc >= 10)) // drop timeouts
 		{
+			write_ecm_answer(cl->reader, &cl->ecmtask[i], E_TIMEOUT, 0, NULL, NULL);
 			er->rc = 0;
-#ifdef WITH_LB
-			send_reader_stat(cl->reader, er, E_TIMEOUT);
-#endif
 		}
 
 		else if (er->rc >= 10 && er->rc <= 100) { // stil active and waiting
@@ -1169,7 +1167,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 			struct timeb timeout;
 			timeout = cc->ecm_time;
-			uint32_t tt = cfg.ctimeout+500;
+			uint32_t tt = 3*cfg.ctimeout;
 			timeout.time += tt / 1000;
 			timeout.millitm += tt % 1000;
             if (timeout.millitm >= 1000) {
@@ -1958,18 +1956,18 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 		data = cc->receive_buffer;
 
 		if (l == 0x48) { //72 bytes: normal server data
-			cs_writelock(&cc->cards_busy);
-			cc_free_cardlist(cc->cards, FALSE);
+			//cs_writelock(&cc->cards_busy);
+			//cc_free_cardlist(cc->cards, FALSE);
 			free_extended_ecm_idx(cc); 
 			cc->last_emm_card = NULL;
-			cc->num_hop1 = 0;
-			cc->num_hop2 = 0;
-			cc->num_hopx = 0;
-			cc->num_reshare0 = 0;
-			cc->num_reshare1 = 0;
-			cc->num_reshare2 = 0;
-			cc->num_resharex = 0;
-            cs_writeunlock(&cc->cards_busy);
+			//cc->num_hop1 = 0;
+			//cc->num_hop2 = 0;
+			//cc->num_hopx = 0;
+			//cc->num_reshare0 = 0;
+			//cc->num_reshare1 = 0;
+			//cc->num_reshare2 = 0;
+			//cc->num_resharex = 0;
+            //cs_writeunlock(&cc->cards_busy);
                 			
 			memcpy(cc->peer_node_id, data, 8);
 			memcpy(cc->peer_version, data + 8, 8);
@@ -3136,7 +3134,7 @@ int32_t cc_cli_connect(struct s_client *cl) {
 		cc->extended_ecm_idx = ll_create("extended_ecm_idx");
 	} else {
 		cc_init_locks(cc);
-		cc_free_cardlist(cc->cards, FALSE);
+		//cc_free_cardlist(cc->cards, FALSE);
 		free_extended_ecm_idx(cc);
 	}
 	if (!cc->prefix)
@@ -3189,13 +3187,13 @@ int32_t cc_cli_connect(struct s_client *cl) {
 	cc->answer_on_keepalive = time(NULL);
 	cc->extended_mode = 0;
 	cc->last_emm_card = NULL;
-	cc->num_hop1 = 0;
-	cc->num_hop2 = 0;
-	cc->num_hopx = 0;
-	cc->num_reshare0 = 0;
-	cc->num_reshare1 = 0;
-	cc->num_reshare2 = 0;
-	cc->num_resharex = 0;	
+//	cc->num_hop1 = 0;
+//	cc->num_hop2 = 0;
+//	cc->num_hopx = 0;
+//	cc->num_reshare0 = 0;
+//	cc->num_reshare1 = 0;
+//	cc->num_reshare2 = 0;
+//	cc->num_resharex = 0;
 	memset(&cc->cmd05_data, 0, sizeof(cc->cmd05_data));
 	memset(&cc->receive_buffer, 0, sizeof(cc->receive_buffer));
 	NULLFREE(cc->nok_message);

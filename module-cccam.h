@@ -210,8 +210,8 @@ struct cc_data {
 	char remote_version[7];
 	char remote_build[7];
 	char remote_oscam[200];
-	uint8_t cccam220;
 
+	uint8_t cccam220;
 	uint8_t sleepsend;
 		
 	//Extended Mode for SPECIAL clients:
