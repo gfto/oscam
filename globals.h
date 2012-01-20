@@ -1019,6 +1019,7 @@ struct s_sc8in1_display {
 	uint16_t text_length;
 	uint16_t char_change_time;
 	uint16_t last_char;
+	uint8_t blocking;
 	struct s_sc8in1_display	*next;
 };
 struct s_sc8in1_config {
