@@ -123,6 +123,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 				reader->handle = open (deviceName,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 				if (reader->handle < 0) {
 					cs_log("ERROR opening device %s with real device %s",reader->device, deviceName);
+					reader->handle = 0;
 					cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
 					return ERROR;
 				}
@@ -977,8 +978,8 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 				if (reader->crdr.set_baudrate)
 					call (reader->crdr.set_baudrate(reader, baud_temp));
 			} else {
-				if (reader->typ != R_SC8in1) {
-					call (Sc8in1_SetBaudrate(reader, baud_temp, NULL));
+				if (reader->typ == R_SC8in1) {
+					call (Sc8in1_SetBaudrate(reader, baud_temp, NULL, 0));
 				}
 				else if (reader->typ <= R_MOUSE)
 					call (Phoenix_SetBaudrate(reader, baud_temp));
