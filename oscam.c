@@ -654,7 +654,7 @@ void cleanup_thread(void *var)
 	// Clean all remaining structures
 
 	pthread_mutex_lock(&cl->thread_lock);
-	ll_destroy(cl->joblist);
+	ll_destroy_data(cl->joblist);
 	cl->joblist = NULL;
 	pthread_mutex_unlock(&cl->thread_lock);
 	pthread_mutex_destroy(&cl->thread_lock);
@@ -3394,7 +3394,7 @@ void * work_thread(void *ptr) {
 			return NULL;
 		}
 
-		if (cl->kill) {
+		if (cl->kill && ll_count(cl->joblist) == 0) {
 			cs_debug_mask(D_TRACE, "ending thread");
 			if (data && data!=&tmp_data)
 				free(data);
