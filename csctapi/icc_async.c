@@ -348,16 +348,16 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 #if defined(SCI_DEV)
 				call (Sci_Activate(reader));
 				call (Sci_Reset(reader, atr));
-#elif defined(COOL)				
+#elif defined(COOL)
 				if ( ! reader->ins7e11_fast_reset) {
 					call (Cool_Reset(reader, atr));
 				}
 				else {
-					cs_log("fast reset needed for %s - restoring transmit parameter for coolstream device %s", reader->label, reader->device);
-					call(Cool_Set_Transmit_Timeout(reader));
+					cs_debug_mask(D_DEVICE,"fast reset needed for %s - restoring transmit parameter for coolstream device %s", reader->label, reader->device);
+					call(Cool_Set_Transmit_Timeout(reader, 0));
 					cs_log("Doing fast reset");
 					call (Cool_FastReset_With_ATR(reader, atr));
-				}
+				}					
 #elif defined(WITH_STAPI)
 				call (STReader_Reset(reader->stsmart_handle, atr));
 #elif defined(AZBOX)
@@ -943,11 +943,9 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 		I = 0;
 
 	//set clock speed to max if internal reader
-#ifndef COOL	//auto-overclock wont work fine with Cooli
 	if((reader->typ > R_MOUSE && reader->crdr.active == 0) || (reader->crdr.active == 1 && reader->crdr.max_clock_speed==1))
 		if (reader->mhz == 357 || reader->mhz == 358) //no overclocking
 			reader->mhz = atr_fs_table[FI] / 10000; //we are going to clock the card to this nominal frequency
-#endif
 
 	//set clock speed/baudrate must be done before timings
 	//because reader->current_baudrate is used in calculation of timings
@@ -1097,7 +1095,6 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 			ETU = F / d;
 		call (Sci_WriteSettings (reader, reader->protocol_type, reader->mhz / 100, ETU, WWT, reader->BWT, reader->CWT, EGT, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
 #elif defined(COOL)
-		call (Cool_SetClockrate(reader, reader->mhz));
 		call (Cool_WriteSettings (reader, reader->BWT, reader->CWT, EGT, BGT));
 #elif defined(WITH_STAPI)
 		call (STReader_SetClockrate(reader->stsmart_handle));
