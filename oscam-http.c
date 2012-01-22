@@ -3774,7 +3774,17 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 				char *fcontent = getParam(params, "filecontent");
 
 				if((fpsave = fopen(targetfile,"w"))){
-					fprintf(fpsave,"%s",fcontent);
+					int32_t i, lastpos = 0, len = strlen(fcontent) + 1;
+					//write submitted file line by line to disk and remove windows linebreaks
+					for(i = 0; i < len; ++i){
+						char tmp = fcontent[i];
+						if(tmp == '\r' || tmp == '\n' || tmp == 0){
+							fcontent[i] = 0;
+							fprintf(fpsave,"%s%s",fcontent + lastpos, tmp == 0?"":"\n");
+							if(tmp == '\r' && fcontent[i+1] == '\n') ++i;							
+							lastpos = i + 1;
+						}							
+					}
 					fclose(fpsave);
 
 					if (strcmp(getParam(params, "file"), "srvid") == 0)
