@@ -12,7 +12,7 @@
 #include"ifd_cool.h"
 #include"icc_async.h"
 
-#define READ_WRITE_TRANSMIT_TIMEOUT				150
+#define READ_WRITE_TRANSMIT_TIMEOUT				500
 
 struct s_coolstream_reader {
 	void      *handle; //device handle for coolstream
@@ -70,7 +70,7 @@ int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
 	uint32_t clk;
 	call (cnxt_smc_get_clock_freq (specdev()->handle, &clk));
 	if (clk/10000 != reader->cardmhz) {
-		cs_debug_mask(D_DEVICE,"COOL: %s clock freq: %i, scheduling change to %i for card reset", reader->label, clk, reader->cardmhz);
+		cs_debug_mask(D_DEVICE,"COOL: %s clock freq: %i, scheduling change to %i for card reset", reader->label, clk, reader->cardmhz*10000);
 		call (Cool_SetClockrate(reader, reader->cardmhz));
 	} 
 
@@ -107,8 +107,14 @@ int32_t Cool_Set_Transmit_Timeout(struct s_reader *reader, uint32_t set)
 			specdev()->read_write_transmit_timeout = reader->cool_timeout_after_init;
 			cs_debug_mask(D_DEVICE,"%s timeout set to cool_timeout_after_init = %i", reader->label, reader->cool_timeout_after_init);
 		} else {
-			specdev()->read_write_transmit_timeout = reader->read_timeout;
-			cs_debug_mask(D_DEVICE,"no timeout for reader %s specified - using calculated timeout after init (%i)", reader->label, reader->read_timeout);
+			if (reader->read_timeout > 50) {
+				cs_log("ATTENTION: The calculated timeout value (%i) is greater than 50 which probably leads to a slow card response. We are going to use the reader parameter cool_timeout_after_init = 50.", reader->read_timeout);
+				cs_log("If you encounter any problems try a higher value. If you have no problems try a value below to get a faster card response.");
+				specdev()->read_write_transmit_timeout = 50;
+			} else {
+				cs_debug_mask(D_DEVICE,"no timeout for reader %s specified - using calculated timeout after init (%i)", reader->label, reader->read_timeout);
+				specdev()->read_write_transmit_timeout = reader->read_timeout;
+			}
 		}
 	} else {
 		specdev()->read_write_transmit_timeout = READ_WRITE_TRANSMIT_TIMEOUT;
@@ -162,7 +168,7 @@ int32_t Cool_WriteSettings (struct s_reader *reader, uint32_t BWT, uint32_t CWT,
 	uint32_t clk;
 	call (cnxt_smc_get_clock_freq (specdev()->handle, &clk));
 	if (clk/10000 != reader->mhz) {
-		cs_debug_mask(D_DEVICE,"COOL: %s clock freq: %i, scheduling change to %i", reader->label, clk, reader->mhz);
+		cs_debug_mask(D_DEVICE,"COOL: %s clock freq: %i, scheduling change to %i", reader->label, clk, reader->mhz*10000);
 		call (Cool_SetClockrate(reader, reader->mhz));
 	} 
 
