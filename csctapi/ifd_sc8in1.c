@@ -64,21 +64,19 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 	termio.c_cc[VTIME] = 1; // working
 	termio.c_cflag = B9600 | CS8 | CREAD | CLOCAL;
 
-
+	// Do we need to set the baudrate?
 	if (Sc8in1_NeedBaudrateChange(reader, 9600, &termiobackup, &termio, 1)) {
 		cs_debug_mask(D_TRACE, "Sc8in1_NeedBaudrateChange for SC8in1 command");
 		// save current baudrate for later restore
 		currentBaudrate = reader->sc8in1_config->current_baudrate;
-		if (Sc8in1_SetBaudrate(reader, 9600, &termio, 1)) {
-			cs_log("ERROR: SC8in1 Command Sc8in1_SetBaudrate\n");
-			return ERROR;
-		}
+		reader->sc8in1_config->current_baudrate = 9600;
+		cfsetospeed(&termio, B9600);
+		cfsetispeed(&termio, B9600);
+		cs_debug_mask(D_DEVICE, "standard baudrate: cardmhz=%d mhz=%d -> effective baudrate %u", reader->cardmhz, reader->mhz, 9600);
 	}
-	else {
-		if (tcsetattr(reader->handle, TCSANOW, &termio) < 0) {
-			cs_log("ERROR: SC8in1 Command error in set RS232 attributes\n");
-			return ERROR;
-		}
+	if (tcsetattr(reader->handle, TCSANOW, &termio) < 0) {
+		cs_log("ERROR: SC8in1 Command error in set RS232 attributes\n");
+		return ERROR;
 	}
 
 	// enable EEPROM write
@@ -711,6 +709,9 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 		}
 
 	if (reader->sc8in1_config->mcr_type) {
+		// select current readers slot again
+		mcrSelectSlot(reader, reader->slot);
+
 		sc8in1_clock = ((sc8in1_clock & 0xFF) << 8) | ((sc8in1_clock & 0xFF00) >> 8);
 
 		//set clockspeeds for all slots
