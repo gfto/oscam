@@ -1546,8 +1546,11 @@ struct s_config
 	struct		s_cpmap *cpmap;
 #endif
 
-#ifdef QBOXHD_LED
-    int8_t disableqboxhdled; 						// disable qboxhd led , default = 0
+#if defined(QBOXHD_LED) || defined(CS_LED) 
+	int8_t enableled; 						// 0=disabled led, 1=enable led for routers, 2=enable qboxhd led
+#endif
+#ifdef LCDSUPPORT
+	int8_t enablelcd;
 #endif
 
 #ifdef LCDSUPPORT

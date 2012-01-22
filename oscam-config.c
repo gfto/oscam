@@ -426,9 +426,9 @@ void chk_t_global(const char *token, char *value)
 {
 	char *saveptr1 = NULL;
 
-#ifdef QBOXHD_LED
-	if (!strcmp(token, "disableqboxhdled")) {
-		cfg.disableqboxhdled = strToIntVal(value, 0);
+#if defined(QBOXHD_LED) || defined(CS_LED)
+	if (!strcmp(token, "enableled")) {
+		cfg.enableled = strToIntVal(value, 0);
 		return;
 	}
 #endif
@@ -1466,6 +1466,10 @@ void chk_t_dvbapi(char *token, char *value)
 #ifdef LCDSUPPORT
 void chk_t_lcd(char *token, char *value)
 {
+	if (!strcmp(token, "enablelcd")) {
+		cfg.enablelcd = strToIntVal(value, 0);
+		return;
+	}
 
 	if (!strcmp(token, "lcd_outputpath")) {
 		NULLFREE(cfg.lcd_output_path);
@@ -1663,9 +1667,6 @@ int32_t init_config()
 	cfg.reader_restart_seconds = 5;
 	cfg.waitforcards = 1;
 	cfg.waitforcards_extra_delay = 500;
-#ifdef QBOXHD_LED
-    cfg.disableqboxhdled = 1;
-#endif
 
 #ifdef WEBIF
 	cs_strncpy(cfg.http_user, "", sizeof(cfg.http_user));
@@ -2133,10 +2134,6 @@ int32_t write_config()
 		fprintf_conf(f, "cwlogdir", "%s\n", cfg.cwlogdir?cfg.cwlogdir:"");
 	if (cfg.emmlogdir != NULL || cfg.http_full_cfg)
 		fprintf_conf(f, "emmlogdir", "%s\n", cfg.emmlogdir?cfg.emmlogdir:"");
-#ifdef QBOXHD_LED
-	if (cfg.disableqboxhdled || cfg.http_full_cfg)
-		fprintf_conf(f, "disableqboxhdled", "%d\n", cfg.disableqboxhdled);
-#endif
 	if (cfg.disablelog || cfg.http_full_cfg)
 		fprintf_conf(f, "disablelog", "%d\n", cfg.disablelog);
 	if ((cfg.usrfile && cfg.disableuserfile == 0) || cfg.http_full_cfg)
@@ -2192,6 +2189,10 @@ int32_t write_config()
 		fprintf_conf(f, "cacheexwaittime", "%d\n", cfg.cacheex_wait_time);
 	if (cfg.cacheex_enable_stats != 0 || cfg.http_full_cfg)
 		fprintf_conf(f, "cacheexenablestats", "%d\n", cfg.cacheex_enable_stats);
+#endif
+#if defined(QBOXHD_LED) || defined(CS_LED) 
+	if (cfg.enableled || cfg.http_full_cfg)
+		fprintf_conf(f, "enableled", "%d\n", cfg.enableled);
 #endif
 
 #ifdef WITH_LB
@@ -2544,6 +2545,8 @@ int32_t write_config()
 
 #ifdef LCDSUPPORT
 	fprintf(f,"[lcd]\n");
+	if (cfg.enablelcd || cfg.http_full_cfg)
+		fprintf_conf(f, "enablelcd", "%d\n", cfg.enablelcd);
 	if(cfg.lcd_output_path != NULL) {
 		if(strlen(cfg.lcd_output_path) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, "lcd_outputpath", "%s\n", cfg.lcd_output_path);

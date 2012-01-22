@@ -909,17 +909,21 @@ void cs_exit(int32_t sig)
 
   if(cl->typ == 'h' || cl->typ == 's'){
 #ifdef CS_LED
-		cs_switch_led(LED1B, LED_OFF);
-		cs_switch_led(LED2, LED_OFF);
-		cs_switch_led(LED3, LED_OFF);
-		cs_switch_led(LED1A, LED_ON);
+		if(cfg.enableled == 1){
+			cs_switch_led(LED1B, LED_OFF);
+			cs_switch_led(LED2, LED_OFF);
+			cs_switch_led(LED3, LED_OFF);
+			cs_switch_led(LED1A, LED_ON);
+		}
 #endif
 #ifdef QBOXHD_LED
-    qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_FAST);
-    qboxhd_led_blink(QBOXHD_LED_COLOR_RED,QBOXHD_LED_BLINK_FAST);
-    qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN,QBOXHD_LED_BLINK_FAST);
-    qboxhd_led_blink(QBOXHD_LED_COLOR_BLUE,QBOXHD_LED_BLINK_FAST);
-    qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_FAST);
+		if(cfg.enableled == 2){
+	    qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_FAST);
+	    qboxhd_led_blink(QBOXHD_LED_COLOR_RED,QBOXHD_LED_BLINK_FAST);
+	    qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN,QBOXHD_LED_BLINK_FAST);
+	    qboxhd_led_blink(QBOXHD_LED_COLOR_BLUE,QBOXHD_LED_BLINK_FAST);
+	    qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_FAST);
+	  }
 #endif
 #ifdef LCDSUPPORT
     end_lcd_thread();
@@ -2138,7 +2142,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	}
 
 #ifdef CS_LED
-	if(!er->rc) cs_switch_led(LED2, LED_BLINK_OFF);
+	if(!er->rc &&cfg.enableled == 1) cs_switch_led(LED2, LED_BLINK_OFF);
 #endif
 
 #ifdef WEBIF
@@ -2262,11 +2266,13 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	cs_ddump_mask (D_ATR, er->cw, 16, "cw:");
 
 #ifdef QBOXHD_LED
+	if(cfg.enableled == 2){
     if (er->rc < E_NOTFOUND) {
         qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN, QBOXHD_LED_BLINK_MEDIUM);
     } else if (er->rc <= E_STOPPED) {
         qboxhd_led_blink(QBOXHD_LED_COLOR_RED, QBOXHD_LED_BLINK_MEDIUM);
     }
+  }
 #endif
 
 	return 0;
@@ -4391,7 +4397,8 @@ int32_t main (int32_t argc, char *argv[])
 	start_thread((void *) &reader_check, "reader check"); 
 	start_thread((void *) &check_thread, "check"); 
 #ifdef LCDSUPPORT
-	start_lcd_thread();
+	if(cfg.enablelcd)
+		start_lcd_thread();
 #endif
 
 	init_cardreader();
@@ -4399,18 +4406,21 @@ int32_t main (int32_t argc, char *argv[])
 	cs_waitforcardinit();
 
 #ifdef CS_LED
-	cs_switch_led(LED1A, LED_OFF);
-	cs_switch_led(LED1B, LED_ON);
+	if(cfg.enableled == 1){
+		cs_switch_led(LED1A, LED_OFF);
+		cs_switch_led(LED1B, LED_ON);
+	}
 #endif
 
 #ifdef QBOXHD_LED
-	if(!cfg.disableqboxhdled)
+	if(cfg.enableled == 2){
 		cs_log("QboxHD LED enabled");
     qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_FAST);
     qboxhd_led_blink(QBOXHD_LED_COLOR_RED,QBOXHD_LED_BLINK_FAST);
     qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN,QBOXHD_LED_BLINK_FAST);
     qboxhd_led_blink(QBOXHD_LED_COLOR_BLUE,QBOXHD_LED_BLINK_FAST);
     qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_FAST);
+  }
 #endif
 
 #ifdef CS_ANTICASC
@@ -4538,10 +4548,6 @@ void cs_switch_led(int32_t led, int32_t action) {
 #ifdef QBOXHD_LED
 void qboxhd_led_blink(int32_t color, int32_t duration) {
     int32_t f;
-
-    if (cfg.disableqboxhdled) {
-        return;
-    }
 
     // try QboxHD-MINI first
     if ( (f = open ( QBOXHDMINI_LED_DEVICE,  O_RDWR |O_NONBLOCK )) > -1 ) {

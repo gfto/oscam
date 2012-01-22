@@ -266,6 +266,12 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	if(cfg.double_check == 1)
 		tpl_addVar(vars, TPLADD, "DCHECKCSELECTED", "selected");
 #endif
+#if defined(QBOXHD_LED) || defined(CS_LED) 
+	if(cfg.enableled == 1)
+		tpl_addVar(vars, TPLADD, "ENABLELEDSELECTED1", "selected");
+	else if(cfg.enableled == 2)
+		tpl_addVar(vars, TPLADD, "ENABLELEDSELECTED2", "selected");
+#endif
 
 #ifdef CS_CACHEEX
 	tpl_printf(vars, TPLADD, "CACHEEXWAITTIME", "%d", cfg.cacheex_wait_time);
@@ -735,6 +741,8 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 		tpl_addVar(vars, TPLADD, "HTTPSAVEFULLSELECT", "selected");
 
 #ifdef LCDSUPPORT
+	if(cfg.enablelcd)
+		tpl_addVar(vars, TPLADD, "ENABLELCDSELECTED", "selected");
 	if (cfg.lcd_output_path != NULL)
 		tpl_addVar(vars, TPLADD, "LCDOUTPUTPATH", cfg.lcd_output_path);
 	if (cfg.lcd_hide_idle)
