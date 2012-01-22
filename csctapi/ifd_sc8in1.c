@@ -682,7 +682,7 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 
 			if (reader->sc8in1_config->mcr_type) {
 				//set RTS for every slot to 1 to prevent jitter/glitch detection problems
-				Sc8in1_Selectslot(reader, rdr->slot);
+				mcrSelectSlot(reader, rdr->slot);
 				IO_Serial_RTS_Set(reader);
 
 				//calculate clock-bits
