@@ -16,13 +16,14 @@
 #include "reader-common.h"
 #include <poll.h>
 
+#define CAID_KEY 0x20
 
 void init_share();
 void done_share();
 void add_share(struct cc_card *card);
 void remove_share(struct cc_card *card);
 
-LLIST *get_and_lock_sharelist();
+LLIST **get_and_lock_sharelist();
 void unlock_sharelist();
 void refresh_shares();
                         
@@ -38,6 +39,8 @@ int32_t send_card_to_clients(struct cc_card *card, struct s_client *one_client);
 void send_remove_card_to_clients(struct cc_card *card);
 
 int32_t cc_srv_report_cards(struct s_client *cl);
+
+LLIST *get_cardlist(uint16_t caid, LLIST **list);
 
 struct cc_card **get_sorted_card_copy(LLIST *cards, int32_t reverse, int32_t *size);
 #endif /* MODULECCCSHARE_H_ */

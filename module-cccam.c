@@ -1829,7 +1829,7 @@ void move_card_to_end(struct s_client * cl, struct cc_card *card_to_move) {
 		}
 	}
 	if (card) {
-		cs_debug_mask(D_READER, "%s CMD05: Moving card %08X to the end...", getprefix(), card_to_move->id);
+		cs_debug_mask(D_READER, "%s Moving card %08X to the end...", getprefix(), card_to_move->id);
 		free_extended_ecm_idx_by_card(cl, card);
 		ll_append(cc->cards, card_to_move);
 	}
@@ -2252,6 +2252,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			if (card) {
 				if (buf[1] == MSG_CW_NOK1) //MSG_CW_NOK1: share no more available
 					cc_card_removed(cl, card->id);
+				//else MSG_CW_NOK2: can't decode
 				else if (cc->cmd05NOK)
 				{
 					move_card_to_end(cl, card);
@@ -2260,41 +2261,49 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 					else
 						card->rating--;
 				}
-				else if (!is_good_sid(card, &srvid)) //MSG_CW_NOK2: can't decode
-				{
-					move_card_to_end(cl, card);
-					if (cwlastresptime < 5000)
-						add_sid_block(cl, card, &srvid);
-					else
-						card->rating--;
-				}
-				else
-				{
-					move_card_to_end(cl, card);
-					remove_good_sid(card, &srvid);
-				}
+				else if (rdr->cacheex!=1) {
+					if (!is_good_sid(card, &srvid))
+					{
+						move_card_to_end(cl, card);
+						if (cwlastresptime < 5000)
+							add_sid_block(cl, card, &srvid);
+						else
+							card->rating--;
+					} else {
+						move_card_to_end(cl, card);
+						remove_good_sid(card, &srvid);
+					}
 
-				if (card->rating < MIN_RATING)
-					card->rating = MIN_RATING;
+					if (card->rating < MIN_RATING)
+						card->rating = MIN_RATING;
 
-				if (cfg.cc_forward_origin_card && card->origin_reader == rdr) { 
+					if (cfg.cc_forward_origin_card
+							&& card->origin_reader == rdr) {
 						//this card is from us but it can't decode this ecm
 						//also origin card is only set on cccam clients
 						//so wie send back the nok to the client
 						int32_t i = 0;
-						for (i=0;i<CS_MAXPENDING;i++) {
-								if (cl->ecmtask[i].idx == ecm_idx) {
-										cs_debug_mask(D_TRACE, "%s forward card: %s", getprefix(), (buf[1]==MSG_CW_NOK1)?"NOK1":"NOK2");
-										ECM_REQUEST *er = &cl->ecmtask[i];
-										cl->pending--;
-										write_ecm_answer(rdr, er, E_NOTFOUND, (buf[1] == MSG_CW_NOK1)?E2_CCCAM_NOK1:E2_CCCAM_NOK2, NULL, NULL);
-										break;
-								}
-						}		
-				}
-				else {
+						for (i = 0; i < CS_MAXPENDING; i++) {
+							if (cl->ecmtask[i].idx == ecm_idx) {
+								cs_debug_mask(
+										D_TRACE,
+										"%s forward card: %s", getprefix(), (buf[1]==MSG_CW_NOK1)?"NOK1":"NOK2");
+								ECM_REQUEST *er = &cl->ecmtask[i];
+								cl->pending--;
+								write_ecm_answer(
+										rdr,
+										er,
+										E_NOTFOUND,
+										(buf[1] == MSG_CW_NOK1) ?
+												E2_CCCAM_NOK1 : E2_CCCAM_NOK2,
+										NULL, NULL);
+								break;
+							}
+						}
+					} else {
 						//retry ecm:
 						cc_reset_pending(cl, ecm_idx);
+					}
 				}
 			} else
 				cs_debug_mask(D_READER, "%s NOK: NO CARD!", getprefix());
@@ -2333,7 +2342,8 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 
 				if (cfg.cc_forward_origin_card) { //search my shares for this card:
 						cs_debug_mask(D_TRACE, "%s forward card: %04X:%04x search share %d", getprefix(), er->caid, er->srvid, server_card->id);
-						LL_ITER itr = ll_iter_create(get_and_lock_sharelist());
+						LLIST **sharelist = get_and_lock_sharelist();
+						LL_ITER itr = ll_iter_create(get_cardlist(er->caid, sharelist));
 						struct cc_card *card;
 						struct cc_card *rcard = NULL;
 						while ((card=ll_iter_next(&itr))) {
