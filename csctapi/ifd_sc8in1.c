@@ -709,9 +709,6 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 		}
 
 	if (reader->sc8in1_config->mcr_type) {
-		// select current readers slot again
-		mcrSelectSlot(reader, reader->slot);
-
 		sc8in1_clock = ((sc8in1_clock & 0xFF) << 8) | ((sc8in1_clock & 0xFF00) >> 8);
 
 		//set clockspeeds for all slots
@@ -730,6 +727,15 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 		for (i = 0; i < 8; i++) {
 			cs_log("Slot %i is clocked with %s mhz", i+1, clock[(result>>(i*2))&0X0003]);
 		}
+	}
+
+	if (reader->sc8in1_config->mcr_type) {
+		// select current readers slot again
+		mcrSelectSlot(reader, reader->slot);
+		reader->sc8in1_config->current_slot = reader->slot;
+	}
+	else {
+		sc8in1SelectSlot(reader, reader->slot);
 	}
 
 	//IO_Serial_Flush(reader); //FIXME somehow ATR is generated and must be flushed
