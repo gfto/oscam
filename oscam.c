@@ -53,7 +53,7 @@ CS_MUTEX_LOCK ecmcache_lock;
 CS_MUTEX_LOCK readdir_lock;
 pthread_key_t getclient;
 
-pthread_t timecheck_thread;
+struct s_client *timecheck_client;
 
 //Cache for  ecms, cws and rcs:
 struct ecm_request_t	*ecmtask = NULL;
@@ -3064,7 +3064,12 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	if (er->rc == E_99) {
 		er->stage=4;
-		pthread_kill(timecheck_thread, OSCAM_SIGNAL_WAKEUP);
+		if(timecheck_client){
+			pthread_mutex_lock(&timecheck_client->thread_lock);
+			if(timecheck_client->thread_active == 2)
+				pthread_kill(timecheck_client->thread, OSCAM_SIGNAL_WAKEUP);
+			pthread_mutex_unlock(&timecheck_client->thread_lock);
+		}
 		return; //ECM already requested / found in ECM cache
 	}
 
@@ -3082,7 +3087,12 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	er->rcEx = 0;
 	request_cw(er);
-	pthread_kill(timecheck_thread, OSCAM_SIGNAL_WAKEUP);
+	if(timecheck_client){
+		pthread_mutex_lock(&timecheck_client->thread_lock);
+		if(timecheck_client->thread_active == 2)
+			pthread_kill(timecheck_client->thread, OSCAM_SIGNAL_WAKEUP);
+		pthread_mutex_unlock(&timecheck_client->thread_lock);
+	}
 }
 
 void do_emm(struct s_client * client, EMM_PACKET *ep)
@@ -3377,11 +3387,6 @@ void * work_thread(void *ptr) {
 	memset(mbuf, 0, sizeof(mbuf));
 	int32_t n=0, rc=0, i, idx, s;
 	uchar dcw[16];
-	sigset_t newmask;
-
-	sigemptyset(&newmask);
-	sigaddset(&newmask, OSCAM_SIGNAL_WAKEUP);
-	pthread_sigmask(SIG_BLOCK, &newmask, NULL);
 
 	while (1) {
 		if (data)
@@ -3421,10 +3426,14 @@ void * work_thread(void *ptr) {
 				break;
 			pfd[0].fd = cl->pfd;
 			pfd[0].events = POLLIN | POLLPRI | POLLHUP;
-
-			pthread_sigmask(SIG_UNBLOCK, &newmask, NULL);
+			
+			pthread_mutex_lock(&cl->thread_lock);
+			cl->thread_active = 2;
+			pthread_mutex_unlock(&cl->thread_lock);
 			rc = poll(pfd, 1, 3000);
-			pthread_sigmask(SIG_BLOCK, &newmask, NULL);
+			pthread_mutex_lock(&cl->thread_lock);
+			cl->thread_active = 1;
+			pthread_mutex_unlock(&cl->thread_lock);
 
 			if (rc == -1)
 				cs_debug_mask(D_TRACE, "poll wakeup");
@@ -3655,9 +3664,10 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 			cl->joblist = ll_create("joblist");
 
 		ll_append(cl->joblist, data);
-		cs_debug_mask(D_TRACE, "add %s job action %d", action > ACTION_CLIENT_FIRST ? "client" : "reader", action);
+		if(cl->thread_active == 2)
+			pthread_kill(cl->thread, OSCAM_SIGNAL_WAKEUP);
 		pthread_mutex_unlock(&cl->thread_lock);
-		pthread_kill(cl->thread, OSCAM_SIGNAL_WAKEUP);
+		cs_debug_mask(D_TRACE, "add %s job action %d", action > ACTION_CLIENT_FIRST ? "client" : "reader", action);
 		return;
 	}
 
@@ -3690,10 +3700,11 @@ static void * check_thread(void) {
 #endif
 	ECM_REQUEST *er = NULL;
 	time_t ecm_timeout, now;
-	sigset_t newmask;
 	struct timespec ts;
+	struct s_client *cl = create_client(0);
+	cl->thread = pthread_self();
 
-	timecheck_thread = pthread_self();
+	timecheck_client = cl;
 
 #ifdef CS_ANTICASC
 	cs_ftime(&ac_time);
@@ -3703,16 +3714,16 @@ static void * check_thread(void) {
 	cs_ftime(&ecmc_time);
 	add_ms_to_timeb(&ecmc_time, 60000);
 
-	sigemptyset(&newmask);
-	sigaddset(&newmask, OSCAM_SIGNAL_WAKEUP);
-	pthread_sigmask(SIG_BLOCK, &newmask, NULL);
-
 	while(1) {
 		ts.tv_sec = msec_wait/1000;
 		ts.tv_nsec = (msec_wait % 1000) * 1000000L;
-		pthread_sigmask(SIG_UNBLOCK, &newmask, NULL);
+		pthread_mutex_lock(&cl->thread_lock);
+		cl->thread_active = 2;
+		pthread_mutex_unlock(&cl->thread_lock);
 		rc = nanosleep(&ts, NULL);
-		pthread_sigmask(SIG_BLOCK, &newmask, NULL);
+		pthread_mutex_lock(&cl->thread_lock);
+		cl->thread_active = 1;
+		pthread_mutex_unlock(&cl->thread_lock);
 
 		next_check = 0;
 		ac_next = 0;
@@ -3819,6 +3830,8 @@ static void * check_thread(void) {
 		if (!msec_wait)
 			msec_wait = 3000;
 	}
+	add_garbage(cl);
+	timecheck_client = NULL;
 	return NULL;
 }
 
@@ -3856,11 +3869,6 @@ void * client_check(void) {
 	uint32_t cl_size = 0;
 
 	char buf[10];
-	sigset_t newmask;
-
-	sigemptyset(&newmask);
-	sigaddset(&newmask, OSCAM_SIGNAL_WAKEUP);
-	pthread_sigmask(SIG_BLOCK, &newmask, NULL);
 
 	if (pipe(thread_pipe) == -1) {
 		printf("cannot create pipe, errno=%d\n", errno);
