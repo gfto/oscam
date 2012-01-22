@@ -554,14 +554,22 @@ int32_t Sc8in1_SetTermioForSlot(struct s_reader *reader, int32_t slot) {
 	}
 	memcpy(&termio_new, &reader->sc8in1_config->stored_termio[slot - 1],
 				sizeof(termio_new));
-	if (Sc8in1_SetTioAttr(reader->handle, &termio_current, &termio_new) < 0) {
-		cs_log("ERROR: SC8in1 selectslot restore RS232 attributes\n");
-		return ERROR;
+
+	if (Sc8in1_NeedBaudrateChange(reader, reader->current_baudrate, &termio_current, &termio_new, 0)) {
+		cs_debug_mask(D_TRACE, "Sc8in1_SetTermioForSlot for select slot");
+		// save current baudrate for later restore
+		if (Sc8in1_SetBaudrate(reader, reader->current_baudrate, &termio_new, 0)) {
+			cs_log("ERROR: SC8in1 Command Sc8in1_SetBaudrate\n");
+			return ERROR;
+		}
 	}
-	if (Sc8in1_RestoreBaudrate(reader, &termio_current, &termio_new)) {
-		cs_log("ERROR: SC8in1 selectslot restore Bitrate attributes\n");
-		return ERROR;
+	else {
+		if (tcsetattr(reader->handle, TCSANOW, &termio_new) < 0) {
+			cs_log("ERROR: SC8in1 Command error in set RS232 attributes\n");
+			return ERROR;
+		}
 	}
+
 	return OK;
 }
 
