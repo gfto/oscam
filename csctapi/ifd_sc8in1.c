@@ -43,20 +43,13 @@
 static int32_t mcrReadStatus(struct s_reader *reader, unsigned char *status);
 int32_t Sc8in1_SetBaudrate (struct s_reader * reader, uint32_t baudrate, struct termios *termio, uint8_t cmdMode);
 static int32_t Sc8in1_RestoreBaudrate(struct s_reader * reader, struct termios *current, struct termios *new);
-int32_t Sc8in1_RestoreRts(struct s_reader *reader);
 int32_t Sc8in1_NeedBaudrateChange(struct s_reader * reader, uint32_t desiredBaudrate, struct termios *current, struct termios *new, uint8_t cmdMode);
 
 static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 		uint16_t lenwrite, uint16_t lenread, uint8_t enableEepromWrite, unsigned char getStatusMode,
-		unsigned char rts) {
+		uint8_t selectSlotMode) {
 	struct termios termio, termiobackup;
 	uint32_t currentBaudrate = 0;
-
-	// save RTS state before slot change
-	if (rts && Sc8in1_SaveRts(reader)) {
-		cs_log("ERROR SC8in1: Sc8in1_SaveRts slot\n");
-		return ERROR;
-	}
 
 	// switch SC8in1 to command mode
 	IO_Serial_DTR_Set(reader);
@@ -72,7 +65,7 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 	termio.c_cflag = B9600 | CS8 | CREAD | CLOCAL;
 
 
-	if (Sc8in1_NeedBaudrateChange(reader, 9600, &termiobackup, &termio, 0)) {
+	if (Sc8in1_NeedBaudrateChange(reader, 9600, &termiobackup, &termio, 1)) {
 		cs_debug_mask(D_TRACE, "Sc8in1_NeedBaudrateChange for SC8in1 command");
 		// save current baudrate for later restore
 		currentBaudrate = reader->sc8in1_config->current_baudrate;
@@ -127,12 +120,6 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 			cs_log("ERROR: SC8in1 Command error in restore RS232 attributes\n");
 			return ERROR;
 		}
-	}
-
-	// restore RTS stare after slot change
-	if (rts && Sc8in1_RestoreRts(reader)) {
-		cs_log("ERROR: Sc8in1_RestoreRts\n");
-		return ERROR;
 	}
 
 	// switch SC8in1 to normal mode
@@ -282,7 +269,7 @@ static int32_t mcrSelectSlot(struct s_reader *reader, unsigned char slot) {
 	unsigned char buff[2];
 	buff[0] = 0x73;
 	buff[1] = slot - 1;
-	if (sc8in1_command(reader, buff, 2, 0, 0, 0, 1) < 0)
+	if (sc8in1_command(reader, buff, 2, 0, 0, 0, slot) < 0)
 		return ERROR;
 	return OK;
 }
@@ -402,12 +389,6 @@ static sc8in1SelectSlot(struct s_reader *reader, int32_t slot) {
 	// switch SC8in1 to command mode
 	IO_Serial_DTR_Set(reader);
 
-	// save RTS state before slot change
-	if (Sc8in1_SaveRts(reader)) {
-		cs_log("ERROR SC8in1: Sc8in1_SaveRts slot");
-		return ERROR;
-	}
-
 	// set communication parameters
 	termio.c_cc[VTIME] = 1; // working
 	termio.c_cflag = B9600 | CS8 | CREAD | CLOCAL;
@@ -436,12 +417,6 @@ static sc8in1SelectSlot(struct s_reader *reader, int32_t slot) {
 		cs_log("ERROR: SC8in1 selectslot restore Bitrate attributes\n");
 		return ERROR;
 	}*/
-
-	// restore RTS stare after slot change
-	if (Sc8in1_RestoreRts(reader)) {
-		cs_log("ERROR: Sc8in1_RestoreRts\n");
-		return ERROR;
-	}
 
 	// switch SC8in1 to normal mode
 	IO_Serial_DTR_Clr(reader);
@@ -522,11 +497,7 @@ int32_t SC8in1_Reset (struct s_reader * reader, ATR * atr)
 int32_t Sc8in1_NeedBaudrateChange(struct s_reader * reader, uint32_t desiredBaudrate, struct termios *current, struct termios *new, uint8_t cmdMode) {
 	// Returns 1 if we need to change the baudrate
 	if ((desiredBaudrate != reader->sc8in1_config->current_baudrate)
-			||(cmdMode == 0 && current->c_ispeed != new->c_ispeed)
-			||(cmdMode == 0 && current->c_ospeed != new->c_ospeed)
-			||(cmdMode == 0 && current->c_iflag != new->c_iflag)
-			||(cmdMode == 0 && current->c_oflag != new->c_oflag)
-			||(cmdMode == 0 && current->c_cflag != new->c_cflag)) {
+			||(cmdMode == 0 && memcmp(current, new, sizeof(struct termios)))) {
 		cs_debug_mask(D_TRACE, "Sc8in1_NeedBaudrateChange TRUE");
 		return TRUE;
 	}
@@ -570,41 +541,6 @@ int32_t Sc8in1_SetTioAttr(int32_t fd, struct termios *current, struct termios *n
 	if ( ! memcmp(current, new, sizeof(struct termios))) {
 		//memcpy(current, new, sizeof(struct termios));
 		return tcsetattr(fd, TCSANOW, new);
-	}
-	return OK;
-}
-
-int32_t Sc8in1_RestoreRts(struct s_reader *reader) {
-	uint32_t msr;
-	if (ioctl(reader->handle, TIOCMGET, &msr) < 0)
-		return ERROR;
-
-	unsigned char rts_slot = (reader->sc8in1_config->slotstatus_rts >> (reader->slot - 1)) & 1;
-	unsigned char rts_current = (msr & TIOCM_RTS) >> 2 ;
-
-	if ( rts_slot != rts_current) {
-		if (rts_slot) {
-			msr |= TIOCM_RTS;
-		}
-		else {
-			msr &= ~TIOCM_RTS;
-		}
-		if (ioctl(reader->handle, TIOCMSET, &msr)<0)
-			return ERROR;
-	}
-
-	return OK;
-}
-
-int32_t Sc8in1_SaveRts(struct s_reader *reader) {
-	uint32_t msr;
-	if (ioctl(reader->handle, TIOCMGET, &msr) < 0)
-		return ERROR;
-	if (msr & TIOCM_RTS) {
-		reader->sc8in1_config->slotstatus_rts |= (1 << (reader->slot - 1));
-	}
-	else {
-		reader->sc8in1_config->slotstatus_rts &= ~(1 << (reader->slot - 1));
 	}
 	return OK;
 }
@@ -846,15 +782,28 @@ int32_t Sc8in1_Close(struct s_reader *reader) {
 	// Check if we are the last active slot for the reader,
 	// then close the serial port. Otherwise just clear the handle.
 	cs_debug_mask(D_IFD, "IFD: Closing SC8in1 device %s", reader->device);
+	bool status = ERROR;
 
 	if (Sc8in1_GetActiveHandle(reader)) {
 		cs_debug_mask(D_IFD, "IFD: Just deactivating SC8in1 device %s", reader->device);
 		reader->written = 0;
+		status = OK;
 	} else {
-		IO_Serial_Close(reader);
+		// close serial port
+		status = IO_Serial_Close(reader);
+		// disable handle from other slots
+		struct s_reader *rdr;
+		LL_ITER itr = ll_iter_create(configured_readers);
+		while ((rdr = ll_iter_next(&itr))) {
+			if (rdr->typ == R_SC8in1) {
+				if ((reader != rdr) && (reader->sc8in1_config == rdr->sc8in1_config)) {
+					rdr->handle = 0;
+				}
+			}
+		}
 	}
 
-	return OK;
+	return status;
 }
 
 int32_t Sc8in1_InitLocks(struct s_reader * reader) {

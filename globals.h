@@ -1027,7 +1027,6 @@ struct s_sc8in1_config {
 	int32_t current_slot;
 	uint32_t current_baudrate;
 	unsigned char cardstatus;
-	unsigned char slotstatus_rts;
 	unsigned char mcr_type;
 	CS_MUTEX_LOCK sc8in1_lock;
 	struct s_sc8in1_display *display;
