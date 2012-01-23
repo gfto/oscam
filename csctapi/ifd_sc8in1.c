@@ -120,6 +120,10 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 		}
 	}
 
+	// Clear RTS which may have been set by tcsetattr
+	IO_Serial_RTS_Clr(reader);
+	tcflush(reader->handle, TCIOFLUSH);
+
 	// switch SC8in1 to normal mode
 	IO_Serial_DTR_Clr(reader);
 
@@ -544,6 +548,10 @@ int32_t Sc8in1_SetTioAttr(int32_t fd, struct termios *current, struct termios *n
 }
 
 int32_t Sc8in1_SetTermioForSlot(struct s_reader *reader, int32_t slot) {
+
+	// switch SC8in1 to command mode
+	IO_Serial_DTR_Set(reader);
+
 	struct termios termio_current, termio_new;
 	tcgetattr(reader->handle, &termio_current);
 	if (reader->sc8in1_config->current_slot != 0) {
@@ -567,6 +575,12 @@ int32_t Sc8in1_SetTermioForSlot(struct s_reader *reader, int32_t slot) {
 			return ERROR;
 		}
 	}
+
+	// Clear RTS which may have been set by tcsetattr
+	IO_Serial_RTS_Clr(reader);
+	tcflush(reader->handle, TCIOFLUSH);
+
+	IO_Serial_DTR_Clr(reader);
 
 	return OK;
 }
