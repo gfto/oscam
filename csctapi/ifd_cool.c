@@ -12,7 +12,7 @@
 #include"ifd_cool.h"
 #include"icc_async.h"
 
-#define READ_WRITE_TRANSMIT_TIMEOUT				500
+#define READ_WRITE_TRANSMIT_TIMEOUT				50
 
 struct s_coolstream_reader {
 	void      *handle; //device handle for coolstream
@@ -43,7 +43,13 @@ int32_t Cool_Init (struct s_reader *reader)
 
 	call(cnxt_smc_enable_flow_control(specdev()->handle));
 	specdev()->cardbuflen = 0;
-	specdev()->read_write_transmit_timeout = READ_WRITE_TRANSMIT_TIMEOUT;
+	if (reader->cool_timeout_init > 0) {
+		cs_debug_mask(D_DEVICE,"%s init timeout set to cool_timeout_init = %i", reader->label, reader->cool_timeout_init);
+		specdev()->read_write_transmit_timeout = reader->cool_timeout_init;
+	} else {
+		cs_debug_mask(D_DEVICE,"No init timeout for reader %s specified - using default init timeout (%i). If you encounter any problems while card init try to use the reader parameter cool_timeout_init = 500", reader->label, READ_WRITE_TRANSMIT_TIMEOUT);
+		specdev()->read_write_transmit_timeout = READ_WRITE_TRANSMIT_TIMEOUT;
+	}
 	return OK;
 }
 
@@ -101,14 +107,14 @@ int32_t Cool_Transmit (struct s_reader *reader, BYTE * sent, uint32_t size)
 
 int32_t Cool_Set_Transmit_Timeout(struct s_reader *reader, uint32_t set)
 { 
-	//set=0 (default), set=1(change)
+	//set=0 (init), set=1(after init)
 	if (set == 1) {
 		if (reader->cool_timeout_after_init > 0) {
 			specdev()->read_write_transmit_timeout = reader->cool_timeout_after_init;
 			cs_debug_mask(D_DEVICE,"%s timeout set to cool_timeout_after_init = %i", reader->label, reader->cool_timeout_after_init);
 		} else {
 			if (reader->read_timeout > 50) {
-				cs_log("ATTENTION: The calculated timeout value (%i) is greater than 50 which probably leads to a slow card response. We are going to use the reader parameter cool_timeout_after_init = 50.", reader->read_timeout);
+				cs_log("ATTENTION: The calculated timeout after init value (%i) is greater than 50 which probably leads to a slow card response. We are going to use the reader parameter cool_timeout_after_init = 50.", reader->read_timeout);
 				cs_log("If you encounter any problems try a higher value. If you have no problems try a value below to get a faster card response.");
 				specdev()->read_write_transmit_timeout = 50;
 			} else {
@@ -117,7 +123,11 @@ int32_t Cool_Set_Transmit_Timeout(struct s_reader *reader, uint32_t set)
 			}
 		}
 	} else {
-		specdev()->read_write_transmit_timeout = READ_WRITE_TRANSMIT_TIMEOUT;
+		if (reader->cool_timeout_init > 0) {
+			specdev()->read_write_transmit_timeout = reader->cool_timeout_init;
+		} else {
+			specdev()->read_write_transmit_timeout = READ_WRITE_TRANSMIT_TIMEOUT;
+		}
 	}
 	return OK;
 }

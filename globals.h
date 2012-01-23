@@ -1034,6 +1034,7 @@ struct s_reader  									//contains device info, reader info and card info
 #endif
 	int32_t			typ;
 #ifdef COOL
+	int32_t			cool_timeout_init; // read/transmit timeout while init for coolstream internal reader
 	int32_t			cool_timeout_after_init; // read/transmit timeout after init for coolstream internal reader
 #endif
 	char			label[64];

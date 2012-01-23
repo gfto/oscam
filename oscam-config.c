@@ -4484,6 +4484,10 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 #ifdef COOL
+	if (!strcmp(token, "cool_timeout_init")) {
+		rdr->cool_timeout_init  = strToIntVal(value, 0);
+		return;
+	}
 	if (!strcmp(token, "cool_timeout_after_init")) {
 		rdr->cool_timeout_after_init  = strToIntVal(value, 0);
 		return;
