@@ -79,6 +79,8 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 		return ERROR;
 	}
 
+	IO_Serial_DTR_Set(reader);
+
 	// enable EEPROM write
 	if (enableEepromWrite) {
 		unsigned char eepromBuff[3];
@@ -119,6 +121,8 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 			return ERROR;
 		}
 	}
+
+	IO_Serial_DTR_Set(reader);
 
 	// Clear RTS which may have been set by tcsetattr
 	IO_Serial_RTS_Clr(reader);
@@ -575,6 +579,8 @@ int32_t Sc8in1_SetTermioForSlot(struct s_reader *reader, int32_t slot) {
 			return ERROR;
 		}
 	}
+
+	IO_Serial_DTR_Set(reader);
 
 	// Clear RTS which may have been set by tcsetattr
 	IO_Serial_RTS_Clr(reader);
