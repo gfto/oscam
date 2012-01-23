@@ -4245,11 +4245,11 @@ int32_t main (int32_t argc, char *argv[])
 	0
   };
 
-  while ((i=getopt(argc, argv, "gbsauc:t:d:r:w:hm:x"))!=EOF)
+  while ((i=getopt(argc, argv, "g:bsauc:t:d:r:w:hm:x"))!=EOF)
   {
 	  switch(i) {
 		  case 'g':
-			  gbdb=1;
+			  gbdb=atoi(optarg);
 			  break;
 		  case 'b':
 			  bg=1;

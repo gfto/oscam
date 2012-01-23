@@ -1182,7 +1182,10 @@ void share_updater()
 {
 		int32_t i = DEFAULT_INTERVAL + cfg.waitforcards_extra_delay/1000;
 		uint32_t last_check = 0;
+		uint32_t last_check_rdroptions = 0;
+		uint32_t cur_check_rdroptions = 0;
 		uint32_t last_card_check = 0;
+		uint32_t last_sidtab_generation = 0;
 		uint32_t card_count = 0;
 		while (TRUE) {
 				if (i > 0 && card_count < 100) { //fast refresh only if we have less cards
@@ -1205,6 +1208,7 @@ void share_updater()
 				
 				uint32_t cur_check = 0;
 				uint32_t cur_card_check = 0;
+				int8_t rdroptionchange = 0;
 				card_count = 0;
 				struct s_reader *rdr;
 				struct cc_data *cc;
@@ -1225,21 +1229,25 @@ void share_updater()
 							cur_check = crc32(cur_check, (uint8_t*)&rdr->sa, rdr->nprov * sizeof(rdr->sa[0])); //check provider-SA
 						}
 						
-						cur_check = crc32(cur_check, (uint8_t*)&rdr->ftab, sizeof(FTAB)); //check reader 
-						cur_check = crc32(cur_check, (uint8_t*)&rdr->ctab, sizeof(CAIDTAB)); //check caidtab
-						cur_check = crc32(cur_check, (uint8_t*)&rdr->fchid, sizeof(FTAB)); //check chids
-						cur_check = crc32(cur_check, (uint8_t*)&rdr->sidtabok, sizeof(rdr->sidtabok)); //check assigned ok services
-						cur_check = crc32(cur_check, (uint8_t*)&rdr->sidtabno, sizeof(rdr->sidtabno)); //check assigned no services
+						if(rdr->changes_since_shareupdate){
+							rdr->changes_since_shareupdate = 0;
+							rdroptionchange = 1;		
+						}
 				}
-				
-				//check defined services:
-				struct s_sidtab *ptr;
-		        for (ptr=cfg.sidtab; ptr; ptr=ptr->next) {
-		        		cur_check = crc32(cur_check, (uint8_t*)ptr, sizeof(struct s_sidtab));
-				}
+				if(rdroptionchange){
+					cur_check_rdroptions = 0;
+					for (rdr=first_active_reader; rdr; rdr=rdr->next) {
+						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->ftab, sizeof(FTAB)); //check reader 
+						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->ctab, sizeof(CAIDTAB)); //check caidtab
+						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->fchid, sizeof(FTAB)); //check chids
+						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->sidtabok, sizeof(rdr->sidtabok)); //check assigned ok services
+						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->sidtabno, sizeof(rdr->sidtabno)); //check assigned no services	
+					}
+				}				
 				
 				//update cardlist if reader config has changed, also set interval to 1s / 30times
-				if (cur_check != last_check) {
+				if (cur_check != last_check || last_sidtab_generation != cfg_sidtab_generation || last_check_rdroptions != cur_check_rdroptions) {
+						last_sidtab_generation = cfg_sidtab_generation;
 						i = DEFAULT_INTERVAL;
 						cs_debug_mask(D_TRACE, "share-update [1] %u %u", cur_check, last_check); 
 						refresh_shares();
@@ -1252,6 +1260,7 @@ void share_updater()
 						refresh_shares();
 						last_card_check = cur_card_check;
 				}
+				last_check_rdroptions = cur_check_rdroptions;
 		}
 }
 

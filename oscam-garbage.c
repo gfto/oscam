@@ -23,45 +23,44 @@ void add_garbage_debug(void *data, char *file, uint16_t line) {
 #else
 void add_garbage(void *data) {
 #endif
-        if (!data)
-                return;
-                
-        if (!garbage_collector_active || garbage_debug) {
-          free(data);
-          return;
-        }
-		
-		int32_t bucket = (uintptr_t)data/16 % HASH_BUCKETS;
-        cs_writelock(&garbage_lock[bucket]);
-        
-        struct cs_garbage *garbagecheck = garbage_first[bucket];
-        while(garbagecheck) {
-        	if(garbagecheck->data == data) {
-      			cs_log("Found a try to add garbage twice. Not adding the element to garbage list...");
-      			#ifdef WITH_DEBUG
-      			cs_log("Current garbage addition: %s, line %d.", file, line);
-      			cs_log("Original garbage addition: %s, line %d.", garbagecheck->file, garbagecheck->line);
-      			#else
-      			cs_log("Please compile with debug for exact info.");
-      			#endif
-        		break;
-        	}
-        	garbagecheck = garbagecheck->next;
-        }
-		
-		if (garbagecheck == NULL) {
-	        struct cs_garbage *garbage = malloc(sizeof(struct cs_garbage));
-	        garbage->time = time(NULL);
-	        garbage->data = data;
-	        garbage->next = garbage_first[bucket];
-	        #ifdef WITH_DEBUG
-	        garbage->file = file;
-	        garbage->line = line;
-	        #endif
-	        garbage_first[bucket] = garbage;
-	    }
-
-        cs_writeunlock(&garbage_lock[bucket]);
+	if (!data)
+		return;
+	
+	if (!garbage_collector_active || garbage_debug == 1) {
+		free(data);
+		return;
+	}
+	
+	int32_t bucket = (uintptr_t)data/16 % HASH_BUCKETS;
+	cs_writelock(&garbage_lock[bucket]);
+	
+	#ifdef WITH_DEBUG
+	if(garbage_debug == 2){
+		struct cs_garbage *garbagecheck = garbage_first[bucket];
+		while(garbagecheck) {
+			if(garbagecheck->data == data) {
+				cs_log("Found a try to add garbage twice. Not adding the element to garbage list...");
+				cs_log("Current garbage addition: %s, line %d.", file, line);
+				cs_log("Original garbage addition: %s, line %d.", garbagecheck->file, garbagecheck->line);				
+				cs_writeunlock(&garbage_lock[bucket]);
+				return;
+			}
+			garbagecheck = garbagecheck->next;
+		}
+	}
+	#endif
+	
+	struct cs_garbage *garbage = malloc(sizeof(struct cs_garbage));
+	garbage->time = time(NULL);
+	garbage->data = data;
+	garbage->next = garbage_first[bucket];
+	#ifdef WITH_DEBUG
+	garbage->file = file;
+	garbage->line = line;
+	#endif
+	garbage_first[bucket] = garbage;
+	
+	cs_writeunlock(&garbage_lock[bucket]);
 }
 
 void garbage_collector() {

@@ -1014,6 +1014,7 @@ struct ecmrl {
 
 struct s_reader  									//contains device info, reader info and card info
 {
+	uint8_t		changes_since_shareupdate;
 	int32_t			resetcycle;						// ECM until reset
 	int32_t			resetcounter;					// actual count
 	uint32_t		auprovid;						// AU only for this provid
@@ -1647,6 +1648,7 @@ typedef struct {
  *      global variables
  * =========================== */
 extern char cs_tmpdir[200];
+extern uint32_t cfg_sidtab_generation;
 extern uint8_t cs_http_use_utf8;
 extern pthread_key_t getclient;
 extern struct s_client *first_client;

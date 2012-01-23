@@ -38,6 +38,7 @@ static const char *cs_provid="oscam.provid";
 #ifdef IRDETO_GUESSING
 static const char *cs_ird="oscam.ird";
 #endif
+uint32_t cfg_sidtab_generation = 1;
 
 typedef enum cs_proto_type
 {
@@ -3484,6 +3485,7 @@ void init_free_sidtab() {
 				ptr = nxt;
 		}
 		cfg.sidtab = NULL;
+		++cfg_sidtab_generation;
 }
 
 int32_t init_sidtab() {
@@ -3547,6 +3549,7 @@ int32_t init_sidtab() {
 #ifdef DEBUG_SIDTAB
 	show_sidtab(cfg.sidtab);
 #endif
+	++cfg_sidtab_generation;
 	cs_log("services reloaded: %d services freed, %d services loaded, rejected %d", nro, nr, nrr);
 	return(0);
 }
@@ -4097,9 +4100,11 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		if(strlen(value) == 0) {
 			rdr->sidtabok = 0;
 			rdr->sidtabno = 0;
+			rdr->changes_since_shareupdate = 1;
 			return;
 		} else {
 			chk_services(value, &rdr->sidtabok, &rdr->sidtabno);
+			rdr->changes_since_shareupdate = 1;
 			return;
 		}
 	}
@@ -4164,9 +4169,11 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	if (!strcmp(token, "caid")) {
 		if(strlen(value) == 0) {
 			clear_caidtab(&rdr->ctab);
+			rdr->changes_since_shareupdate = 1;
 			return;
 		} else {
 			chk_caidtab(value, &rdr->ctab);
+			rdr->changes_since_shareupdate = 1;
 			return;
 		}
 	}
@@ -4485,9 +4492,11 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	if (!strcmp(token, "ident")) {
 		if(strlen(value) == 0) {
 			clear_ftab(&rdr->ftab);
+			rdr->changes_since_shareupdate = 1;
 			return;
 		} else {
 			chk_ftab(value, &rdr->ftab,"reader",rdr->label,"provid");
+			rdr->changes_since_shareupdate = 1;
 			return;
 		}
 	}
@@ -4499,6 +4508,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
 	if (!strcmp(token, "chid")) {
 		chk_ftab(value, &rdr->fchid,"reader",rdr->label,"chid");
+		rdr->changes_since_shareupdate = 1;
 		return;
 	}
 

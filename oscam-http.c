@@ -3285,7 +3285,7 @@ static char *send_oscam_services_edit(struct templatevars *vars, struct uriparam
 	setActiveMenu(vars, MNU_SERVICES);
 
 	cs_strncpy(label, strtolower(getParam(params, "service")), sizeof(label));
-
+++cfg_sidtab_generation;
 	for (sidtab = cfg.sidtab; sidtab != NULL && strcmp(label, sidtab->label) != 0; sidtab=sidtab->next);
 
 	if (sidtab == NULL) {
@@ -3304,7 +3304,7 @@ static char *send_oscam_services_edit(struct templatevars *vars, struct uriparam
 			ptr->next = sidtab;
 		}
 		cs_strncpy((char *)sidtab->label, label, sizeof(sidtab->label));
-
+		++cfg_sidtab_generation;
 		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>New service has been added</b><BR>");
 		// Adding is uncritical as the new service is appended to sidtabok/sidtabno and accounts/clients/readers have zeros there
 		if (write_services()!=0) 
@@ -3317,6 +3317,7 @@ static char *send_oscam_services_edit(struct templatevars *vars, struct uriparam
 				chk_sidtab((*params).params[i], (*params).values[i], sidtab);
 			}
 		}
+		++cfg_sidtab_generation;
 		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Services updated</B><BR><BR>");
 		// We don't need any refresh here as accounts/clients/readers sidtabok/sidtabno are unaffected!
 		if (write_services()!=0)
@@ -3381,7 +3382,7 @@ static char *send_oscam_services(struct templatevars *vars, struct uriparams *pa
 				++sidtablength;
 			
 			for (sidtab=cfg.sidtab; sidtab; sidtab = sidtab->next){
-				if(strcmp(sidtab->label, service) == 0) {
+				if(strcmp(sidtab->label, service) == 0) {					
 					struct s_auth *account;
 					struct s_client *cl;
 					struct s_reader *rdr;					
@@ -3409,12 +3410,13 @@ static char *send_oscam_services(struct templatevars *vars, struct uriparams *pa
 						delete_from_SIDTABBITS(&rdr->sidtabok, counter, sidtablength);
 						delete_from_SIDTABBITS(&rdr->sidtabno, counter, sidtablength);
 					}
+					++counter;
 					break;
-				}
-				++counter;
+				}				
 				sidtab_prev = sidtab;
 			}
 			if (counter > 0) {
+				++cfg_sidtab_generation;
 				tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Service has been deleted!</b><BR>");
 				if (write_services() != 0) 
 					tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Writing services to disk failed!</b><BR>");
