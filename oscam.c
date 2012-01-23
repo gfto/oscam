@@ -3709,7 +3709,9 @@ static void * check_thread(void) {
 	struct timespec ts;
 	struct s_client *cl = create_client(first_client->ip);
 	cl->typ = 's';
+#ifdef WEBIF
 	cl->wihidden = 1;
+#endif
 	cl->thread = pthread_self();
 
 	timecheck_client = cl;
