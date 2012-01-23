@@ -194,9 +194,14 @@ will remain on normal ATR speed of 9600 baud.
 set card init mode for AzBox internal reader, default:none
 .RE
 .PP
+\fBcool_timeout_init\fP = \fBtimeout\fP
+.RS 3n
+set timeout for SC init in milli-seconds for Coolstream internal reader only, default:50
+.RE
+.PP
 \fBcool_timeout_after_init\fP = \fBtimeout\fP
 .RS 3n
-set read/transmit timeout after init in milli-seconds for Coolstream internal reader, default:150
+set read/transmit timeout after SC init in milli-seconds for Coolstream internal reader only, default:150
 .RE
 .PP
 \fBprotocol\fP = \fBreader protocol\fP
