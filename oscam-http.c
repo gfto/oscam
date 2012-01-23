@@ -2433,6 +2433,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 
 #define ENTITLEMENT_PAGE_SIZE 500
 
+#ifdef MODULE_CCCAM
 static void print_cards(struct templatevars *vars, struct uriparams *params, LLIST *cards, int8_t show_global_list, struct s_reader *rdr, int32_t offset, int32_t apicall)
 {
 	if (cards) {
@@ -2603,6 +2604,7 @@ static void print_cards(struct templatevars *vars, struct uriparams *params, LLI
 	}
 
 }
+#endif
 
 static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
 	if(!apicall) setActiveMenu(vars, MNU_READERS);
