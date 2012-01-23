@@ -3396,7 +3396,7 @@ void * work_thread(void *ptr) {
 
 	while (1) {
 		if (data)
-			cs_debug_mask(D_TRACE, "data from add_job action=%d", data->action);
+			cs_debug_mask(D_TRACE, "data from add_job action=%d client %c %s", data->action, cl->typ, username(cl));
 
 		if (!cl || !is_valid_client(cl)) {
 			if (data && data!=&tmp_data)
@@ -4059,6 +4059,8 @@ int32_t accept_connection(int32_t i, int32_t j) {
 
 			if (cs_check_violation((uint32_t)cad.sin_addr.s_addr, ph[i].ptab->ports[j].s_port))
 				return 0;
+
+			cs_debug_mask(D_TRACE, "got %d bytes from ip %s:%d", n, cs_inet_ntoa(cad.sin_addr.s_addr), cad.sin_port);
 
 			if (!cl) {
 				cl = create_client(cad.sin_addr.s_addr);
