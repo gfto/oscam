@@ -463,7 +463,7 @@ DESCRIPTIONS
 	  TCP/IP ports for CCcam clients, 0 = disabled, default:0
 
        version = <main version>.<version>.<sub version>
-	  define CCcam version, minimum CCcam version 2.0.11, default:none
+	  define CCcam version, minimum CCcam version 2.0.11, used with original CCcam only, default:none
 
 	   example: version = 1.2.34
 
