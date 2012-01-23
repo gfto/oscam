@@ -2433,14 +2433,13 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 
 #define ENTITLEMENT_PAGE_SIZE 500
 
-static void print_cards(struct templatevars *vars, struct uriparams *params, LLIST *cards, int8_t show_global_list, int32_t offset, int32_t apicall)
+static void print_cards(struct templatevars *vars, struct uriparams *params, LLIST *cards, int8_t show_global_list, struct s_reader *rdr, int32_t offset, int32_t apicall)
 {
 	if (cards) {
 		uint8_t serbuf[8];
 		int32_t cardsize, i, count = 0;
 		char provname[83];
 		struct cc_card *card;
-		struct s_reader *rdr;
 		int32_t cardcount = 0;
 		int32_t providercount = 0;
 		int32_t nodecount = 0;
@@ -2634,7 +2633,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				LLIST **sharelist = get_and_lock_sharelist();
 				for (i=0;i<CAID_KEY;i++) {
 					if (sharelist[i])
-						print_cards(vars, params, sharelist[i], 1, offset, apicall);
+						print_cards(vars, params, sharelist[i], 1, NULL, offset, apicall);
 				}
 				unlock_sharelist();
 			} else {
@@ -2645,7 +2644,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					LLIST *cards = rcc->cards;
 					CS_MUTEX_LOCK *lock = &rcc->cards_busy;
 					cs_readlock(lock);
-					print_cards(vars, params, cards, 0, offset, apicall);
+					print_cards(vars, params, cards, 0, rdr, offset, apicall);
 					cs_readunlock(lock);
 				}
 			}
