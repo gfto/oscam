@@ -3707,7 +3707,9 @@ static void * check_thread(void) {
 	ECM_REQUEST *er = NULL;
 	time_t ecm_timeout, now;
 	struct timespec ts;
-	struct s_client *cl = create_client(0);
+	struct s_client *cl = create_client(first_client->ip);
+	cl->typ = 's';
+	cl->wihidden = 1;
 	cl->thread = pthread_self();
 
 	timecheck_client = cl;
