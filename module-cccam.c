@@ -2261,7 +2261,11 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 					else
 						card->rating--;
 				}
+#ifdef CS_CACHEEX
 				else if (rdr->cacheex!=1) {
+#else
+				else {
+#endif
 					if (!is_good_sid(card, &srvid))
 					{
 						move_card_to_end(cl, card);
