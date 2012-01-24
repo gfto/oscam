@@ -40,6 +40,13 @@
 	} \
 }
 
+#ifdef WITH_DEBUG
+int32_t Sc8in1_DebugSignals(struct s_reader *reader, uint16_t slot, const char *extra);
+#else
+#define Sc8in1_DebugSignals(a, b, c) {}
+#endif
+
+
 static int32_t mcrReadStatus(struct s_reader *reader, unsigned char *status);
 int32_t Sc8in1_SetBaudrate (struct s_reader * reader, uint32_t baudrate, struct termios *termio, uint8_t cmdMode);
 int32_t Sc8in1_NeedBaudrateChange(struct s_reader * reader, uint32_t desiredBaudrate, struct termios *current, struct termios *new, uint8_t cmdMode);
@@ -49,6 +56,8 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 		uint8_t selectSlotMode) {
 	struct termios termio, termiobackup;
 	uint32_t currentBaudrate = 0;
+
+	Sc8in1_DebugSignals(reader, reader->slot, "CMD10");
 
 	// switch SC8in1 to command mode
 	IO_Serial_DTR_Set(reader);
@@ -77,7 +86,7 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 		cs_log("ERROR: SC8in1 Command error in set RS232 attributes\n");
 		return ERROR;
 	}
-
+	Sc8in1_DebugSignals(reader, reader->slot, "CMD11");
 	IO_Serial_DTR_Set(reader);
 
 	// enable EEPROM write
@@ -120,15 +129,17 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 			return ERROR;
 		}
 	}
-
+	Sc8in1_DebugSignals(reader, reader->slot, "CMD12");
 	IO_Serial_DTR_Set(reader);
 
 	// Clear RTS which may have been set by tcsetattr
-	IO_Serial_RTS_Clr(reader);
+	//IO_Serial_RTS_Clr(reader);
 	tcflush(reader->handle, TCIOFLUSH);
 
 	// switch SC8in1 to normal mode
 	IO_Serial_DTR_Clr(reader);
+
+	Sc8in1_DebugSignals(reader, reader->slot, "CMD13");
 
 	return OK;
 }
@@ -538,6 +549,7 @@ int32_t Sc8in1_SetTioAttr(int32_t fd, struct termios *current, struct termios *n
 
 int32_t Sc8in1_SetTermioForSlot(struct s_reader *reader, int32_t slot) {
 
+	Sc8in1_DebugSignals(reader, reader->slot, "SL100");
 	// switch SC8in1 to command mode
 	IO_Serial_DTR_Set(reader);
 
@@ -564,14 +576,14 @@ int32_t Sc8in1_SetTermioForSlot(struct s_reader *reader, int32_t slot) {
 			return ERROR;
 		}
 	}
-
+	Sc8in1_DebugSignals(reader, reader->slot, "SL101");
 	IO_Serial_DTR_Set(reader);
 
-	// Clear RTS which may have been set by tcsetattr
-	IO_Serial_RTS_Clr(reader);
 	tcflush(reader->handle, TCIOFLUSH);
 
 	IO_Serial_DTR_Clr(reader);
+
+	Sc8in1_DebugSignals(reader, reader->slot, "SL102");
 
 	return OK;
 }
@@ -619,6 +631,11 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 	int32_t i, speed, retval;
 	uint16_t sc8in1_clock = 0;
 	unsigned char buff[3];
+
+	Sc8in1_DebugSignals(reader, reader->slot, "I-1");
+
+	// Clr DTR, which is set by phoenix_init
+	IO_Serial_DTR_Clr(reader);
 
 	tcgetattr(reader->handle, &termio);
 	for (i = 0; i < 8; i++) {
@@ -672,6 +689,8 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 		tcflush(reader->handle, TCIOFLUSH); // a non MCR reader might give longer answer
 	}
 
+	Sc8in1_DebugSignals(reader, reader->slot, "I0");
+
 	struct s_reader *rdr;
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while ((rdr = ll_iter_next(&itr))) //also do this for disabled readers, so we configure the clocks right for all readers
@@ -685,8 +704,11 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 
 			if (reader->sc8in1_config->mcr_type) {
 				//set RTS for every slot to 1 to prevent jitter/glitch detection problems
+				Sc8in1_DebugSignals(reader, rdr->slot, "I1");
 				mcrSelectSlot(reader, rdr->slot);
+				Sc8in1_DebugSignals(reader, rdr->slot, "I2");
 				IO_Serial_RTS_Set(reader);
+				Sc8in1_DebugSignals(reader, rdr->slot, "I3");
 
 				//calculate clock-bits
 				switch (rdr->mhz) {
@@ -753,6 +775,16 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 
 	return OK;
 }
+
+#ifdef WITH_DEBUG
+int32_t Sc8in1_DebugSignals(struct s_reader *reader, uint16_t slot, const char *extra) {
+	uint32_t msr;
+	if (ioctl(reader->handle, TIOCMGET, &msr) < 0)
+		  return ERROR;
+	cs_debug_mask(D_DEVICE, "SC8in1: Signals(%s): Slot: %i, DTR: %u, RTS: %u", extra, slot, msr & TIOCM_DTR ? 1 : 0, msr & TIOCM_RTS ? 1 : 0);
+	return OK;
+}
+#endif
 
 int32_t Sc8in1_Card_Changed(struct s_reader * reader) {
 	// returns the SC8in1 Status
