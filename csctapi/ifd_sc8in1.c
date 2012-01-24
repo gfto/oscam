@@ -296,9 +296,28 @@ static int32_t mcrHelloOscam(struct s_reader *reader) {
 	return MCR_DisplayText(reader, &helloOscam[0], 5, 100, 1);
 }
 
+int32_t mcr_generateStatisticsForDisplay(struct s_reader *reader) {
+	// show number of clients
+	struct s_client *cl;
+	int numClients = 0;
+	for ( cl=first_client; cl ; cl=cl->next ) {
+		if (cl->typ == 'c'){
+			numClients++;
+		}
+	}
+	char msg[8] = { 0 };
+	int msgLen = snprintf(&msg[0], 8, "CN%i", numClients);
+	if (msgLen > 0 && MCR_DisplayText(reader, msg, msgLen, 300, 0)) {
+		return ERROR;
+	}
+	return OK;
+}
+
 static void* mcr_update_display_thread(void *param) {
-	struct s_reader *reader = (struct s_reader *)param;
 	const uint16_t DEFAULT_SLEEP_TIME = 100;
+	const int32_t STATISTICS_UPDATE_SECONDS = 60;
+	struct s_reader *reader = (struct s_reader *)param;
+	time_t lastStatisticUpdateTime = time((time_t*)0);
 
 	if (reader->typ != R_SC8in1 ||  ! reader->sc8in1_config->mcr_type) {
 		cs_log("Error: mcr_update_display_thread reader no MCR8in1 reader");
@@ -307,6 +326,15 @@ static void* mcr_update_display_thread(void *param) {
 
 	while(reader->sc8in1_config->display_running) {
 		uint16_t display_sleep = DEFAULT_SLEEP_TIME;
+
+		// Update statistics
+		time_t currentTime = time((time_t*)0);
+		if (currentTime - lastStatisticUpdateTime >= STATISTICS_UPDATE_SECONDS) {
+			if (mcr_generateStatisticsForDisplay(reader)) {
+				cs_log("ERROR: mcr_generateStatisticsForDisplay");
+			}
+			lastStatisticUpdateTime = currentTime;
+		}
 
 		cs_writelock(&reader->sc8in1_config->sc8in1_display_lock);
 		if (reader->sc8in1_config->display != NULL) { // is there something to display?
