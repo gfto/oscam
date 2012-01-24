@@ -72,6 +72,14 @@ usrfile logging mode:
   1 = each zapping of a client will be logged in usrfile
 .RE
 .PP
+\fBenableled\fP = \fB0\fP|\fB1\fP|\fB2\fP
+.RS 3n
+
+ \fB0\fP = LED support disabled (default)
+ \fB1\fP = LED support enabled for routers
+ \fB2\fP = LED support enabled for Qbox HD
+.RE
+.PP
 \fBcwlogdir\fP = \fBpath\fP
 .RS 3n
 directory for CW logging, default:config dir
@@ -460,6 +468,13 @@ write config:
 set right language for wiki entry point, default:en
 .RE
 .SS "The [lcd] section"
+.RE
+.PP
+\fBenablelcd\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 =enable LCD output, default:0
+
+.RE
 \fBlcd_outputpath\fP = \fBpath\fP
 .RS 3n
 path for LCD output, default:/tmp
@@ -659,7 +674,7 @@ TCP/IP ports for CCcam clients, 0 = disabled, default:0
 .PP
 \fBversion\fP = \fB<main version>.<version>.<sub version>\fP
 .RS 3n
-define CCcam version, \fIminimum CCcam version 2.0.11\fR, default:none
+define CCcam version, \fIminimum CCcam version 2.0.11\fR, used with original CCcam only, default:none
 
  example: version = 1.2.34
 .RE

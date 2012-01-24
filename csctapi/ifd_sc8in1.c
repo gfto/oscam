@@ -42,7 +42,6 @@
 
 static int32_t mcrReadStatus(struct s_reader *reader, unsigned char *status);
 int32_t Sc8in1_SetBaudrate (struct s_reader * reader, uint32_t baudrate, struct termios *termio, uint8_t cmdMode);
-static int32_t Sc8in1_RestoreBaudrate(struct s_reader * reader, struct termios *current, struct termios *new);
 int32_t Sc8in1_NeedBaudrateChange(struct s_reader * reader, uint32_t desiredBaudrate, struct termios *current, struct termios *new, uint8_t cmdMode);
 
 static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
@@ -419,10 +418,6 @@ static sc8in1SelectSlot(struct s_reader *reader, int32_t slot) {
 		cs_log("ERROR: SC8in1 selectslot restore RS232 attributes\n");
 		return ERROR;
 	}
-	/*if (Sc8in1_RestoreBaudrate(reader, &termio)) {
-		cs_log("ERROR: SC8in1 selectslot restore Bitrate attributes\n");
-		return ERROR;
-	}*/
 
 	// switch SC8in1 to normal mode
 	IO_Serial_DTR_Clr(reader);
@@ -509,16 +504,6 @@ int32_t Sc8in1_NeedBaudrateChange(struct s_reader * reader, uint32_t desiredBaud
 	}
 	cs_debug_mask(D_TRACE, "Sc8in1_NeedBaudrateChange FALSE");
 	return FALSE;
-}
-
-static int32_t Sc8in1_RestoreBaudrate(struct s_reader * reader, struct termios *current, struct termios *new) {
-	// Restores the readers/slots baudrate
-	if (Sc8in1_NeedBaudrateChange(reader, reader->current_baudrate, current, new, 0)) {
-		if (Sc8in1_SetBaudrate(reader, reader->current_baudrate, new, 0)) {
-			return ERROR;
-		}
-	}
-	return OK;
 }
 
 int32_t Sc8in1_SetBaudrate (struct s_reader * reader, uint32_t baudrate, struct termios *termio, uint8_t cmdMode) {

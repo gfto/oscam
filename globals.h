@@ -1036,6 +1036,7 @@ struct s_sc8in1_config {
 
 struct s_reader  									//contains device info, reader info and card info
 {
+	uint8_t		changes_since_shareupdate;
 	int32_t			resetcycle;						// ECM until reset
 	int32_t			resetcounter;					// actual count
 	uint32_t		auprovid;						// AU only for this provid
@@ -1055,6 +1056,7 @@ struct s_reader  									//contains device info, reader info and card info
 #endif
 	int32_t			typ;
 #ifdef COOL
+	int32_t			cool_timeout_init; // read/transmit timeout while init for coolstream internal reader
 	int32_t			cool_timeout_after_init; // read/transmit timeout after init for coolstream internal reader
 #endif
 	char			label[64];
@@ -1569,8 +1571,11 @@ struct s_config
 	struct		s_cpmap *cpmap;
 #endif
 
-#ifdef QBOXHD_LED
-    int8_t disableqboxhdled; 						// disable qboxhd led , default = 0
+#if defined(QBOXHD_LED) || defined(CS_LED) 
+	int8_t enableled; 						// 0=disabled led, 1=enable led for routers, 2=enable qboxhd led
+#endif
+#ifdef LCDSUPPORT
+	int8_t enablelcd;
 #endif
 
 #ifdef LCDSUPPORT
@@ -1667,6 +1672,7 @@ typedef struct {
  *      global variables
  * =========================== */
 extern char cs_tmpdir[200];
+extern uint32_t cfg_sidtab_generation;
 extern uint8_t cs_http_use_utf8;
 extern pthread_key_t getclient;
 extern struct s_client *first_client;

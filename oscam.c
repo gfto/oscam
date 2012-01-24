@@ -53,7 +53,7 @@ CS_MUTEX_LOCK ecmcache_lock;
 CS_MUTEX_LOCK readdir_lock;
 pthread_key_t getclient;
 
-pthread_t timecheck_thread;
+struct s_client *timecheck_client;
 
 //Cache for  ecms, cws and rcs:
 struct ecm_request_t	*ecmtask = NULL;
@@ -654,7 +654,7 @@ void cleanup_thread(void *var)
 	// Clean all remaining structures
 
 	pthread_mutex_lock(&cl->thread_lock);
-	ll_destroy(cl->joblist);
+	ll_destroy_data(cl->joblist);
 	cl->joblist = NULL;
 	pthread_mutex_unlock(&cl->thread_lock);
 	pthread_mutex_destroy(&cl->thread_lock);
@@ -914,17 +914,21 @@ void cs_exit(int32_t sig)
 
   if(cl->typ == 'h' || cl->typ == 's'){
 #ifdef CS_LED
-		cs_switch_led(LED1B, LED_OFF);
-		cs_switch_led(LED2, LED_OFF);
-		cs_switch_led(LED3, LED_OFF);
-		cs_switch_led(LED1A, LED_ON);
+		if(cfg.enableled == 1){
+			cs_switch_led(LED1B, LED_OFF);
+			cs_switch_led(LED2, LED_OFF);
+			cs_switch_led(LED3, LED_OFF);
+			cs_switch_led(LED1A, LED_ON);
+		}
 #endif
 #ifdef QBOXHD_LED
-    qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_FAST);
-    qboxhd_led_blink(QBOXHD_LED_COLOR_RED,QBOXHD_LED_BLINK_FAST);
-    qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN,QBOXHD_LED_BLINK_FAST);
-    qboxhd_led_blink(QBOXHD_LED_COLOR_BLUE,QBOXHD_LED_BLINK_FAST);
-    qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_FAST);
+		if(cfg.enableled == 2){
+	    qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_FAST);
+	    qboxhd_led_blink(QBOXHD_LED_COLOR_RED,QBOXHD_LED_BLINK_FAST);
+	    qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN,QBOXHD_LED_BLINK_FAST);
+	    qboxhd_led_blink(QBOXHD_LED_COLOR_BLUE,QBOXHD_LED_BLINK_FAST);
+	    qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_FAST);
+	  }
 #endif
 #ifdef LCDSUPPORT
     end_lcd_thread();
@@ -2146,7 +2150,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	}
 
 #ifdef CS_LED
-	if(!er->rc) cs_switch_led(LED2, LED_BLINK_OFF);
+	if(!er->rc &&cfg.enableled == 1) cs_switch_led(LED2, LED_BLINK_OFF);
 #endif
 
 #ifdef WEBIF
@@ -2270,11 +2274,13 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	cs_ddump_mask (D_ATR, er->cw, 16, "cw:");
 
 #ifdef QBOXHD_LED
+	if(cfg.enableled == 2){
     if (er->rc < E_NOTFOUND) {
         qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN, QBOXHD_LED_BLINK_MEDIUM);
     } else if (er->rc <= E_STOPPED) {
         qboxhd_led_blink(QBOXHD_LED_COLOR_RED, QBOXHD_LED_BLINK_MEDIUM);
     }
+  }
 #endif
 
 	return 0;
@@ -3072,7 +3078,12 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	if (er->rc == E_99) {
 		er->stage=4;
-		pthread_kill(timecheck_thread, OSCAM_SIGNAL_WAKEUP);
+		if(timecheck_client){
+			pthread_mutex_lock(&timecheck_client->thread_lock);
+			if(timecheck_client->thread_active == 2)
+				pthread_kill(timecheck_client->thread, OSCAM_SIGNAL_WAKEUP);
+			pthread_mutex_unlock(&timecheck_client->thread_lock);
+		}
 		return; //ECM already requested / found in ECM cache
 	}
 
@@ -3090,7 +3101,12 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	er->rcEx = 0;
 	request_cw(er);
-	pthread_kill(timecheck_thread, OSCAM_SIGNAL_WAKEUP);
+	if(timecheck_client){
+		pthread_mutex_lock(&timecheck_client->thread_lock);
+		if(timecheck_client->thread_active == 2)
+			pthread_kill(timecheck_client->thread, OSCAM_SIGNAL_WAKEUP);
+		pthread_mutex_unlock(&timecheck_client->thread_lock);
+	}
 }
 
 void do_emm(struct s_client * client, EMM_PACKET *ep)
@@ -3385,15 +3401,10 @@ void * work_thread(void *ptr) {
 	memset(mbuf, 0, sizeof(mbuf));
 	int32_t n=0, rc=0, i, idx, s;
 	uchar dcw[16];
-	sigset_t newmask;
-
-	sigemptyset(&newmask);
-	sigaddset(&newmask, OSCAM_SIGNAL_WAKEUP);
-	pthread_sigmask(SIG_BLOCK, &newmask, NULL);
 
 	while (1) {
 		if (data)
-			cs_debug_mask(D_TRACE, "data from add_job action=%d", data->action);
+			cs_debug_mask(D_TRACE, "data from add_job action=%d client %c %s", data->action, cl->typ, username(cl));
 
 		if (!cl || !is_valid_client(cl)) {
 			if (data && data!=&tmp_data)
@@ -3402,7 +3413,7 @@ void * work_thread(void *ptr) {
 			return NULL;
 		}
 
-		if (cl->kill) {
+		if (cl->kill && ll_count(cl->joblist) == 0) {
 			cs_debug_mask(D_TRACE, "ending thread");
 			if (data && data!=&tmp_data)
 				free(data);
@@ -3429,10 +3440,14 @@ void * work_thread(void *ptr) {
 				break;
 			pfd[0].fd = cl->pfd;
 			pfd[0].events = POLLIN | POLLPRI | POLLHUP;
-
-			pthread_sigmask(SIG_UNBLOCK, &newmask, NULL);
+			
+			pthread_mutex_lock(&cl->thread_lock);
+			cl->thread_active = 2;
+			pthread_mutex_unlock(&cl->thread_lock);
 			rc = poll(pfd, 1, 3000);
-			pthread_sigmask(SIG_BLOCK, &newmask, NULL);
+			pthread_mutex_lock(&cl->thread_lock);
+			cl->thread_active = 1;
+			pthread_mutex_unlock(&cl->thread_lock);
 
 			if (rc == -1)
 				cs_debug_mask(D_TRACE, "poll wakeup");
@@ -3663,9 +3678,10 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 			cl->joblist = ll_create("joblist");
 
 		ll_append(cl->joblist, data);
-		cs_debug_mask(D_TRACE, "add %s job action %d", action > ACTION_CLIENT_FIRST ? "client" : "reader", action);
+		if(cl->thread_active == 2)
+			pthread_kill(cl->thread, OSCAM_SIGNAL_WAKEUP);
 		pthread_mutex_unlock(&cl->thread_lock);
-		pthread_kill(cl->thread, OSCAM_SIGNAL_WAKEUP);
+		cs_debug_mask(D_TRACE, "add %s job action %d", action > ACTION_CLIENT_FIRST ? "client" : "reader", action);
 		return;
 	}
 
@@ -3698,10 +3714,15 @@ static void * check_thread(void) {
 #endif
 	ECM_REQUEST *er = NULL;
 	time_t ecm_timeout, now;
-	sigset_t newmask;
 	struct timespec ts;
+	struct s_client *cl = create_client(first_client->ip);
+	cl->typ = 's';
+#ifdef WEBIF
+	cl->wihidden = 1;
+#endif
+	cl->thread = pthread_self();
 
-	timecheck_thread = pthread_self();
+	timecheck_client = cl;
 
 #ifdef CS_ANTICASC
 	cs_ftime(&ac_time);
@@ -3711,16 +3732,16 @@ static void * check_thread(void) {
 	cs_ftime(&ecmc_time);
 	add_ms_to_timeb(&ecmc_time, 60000);
 
-	sigemptyset(&newmask);
-	sigaddset(&newmask, OSCAM_SIGNAL_WAKEUP);
-	pthread_sigmask(SIG_BLOCK, &newmask, NULL);
-
 	while(1) {
 		ts.tv_sec = msec_wait/1000;
 		ts.tv_nsec = (msec_wait % 1000) * 1000000L;
-		pthread_sigmask(SIG_UNBLOCK, &newmask, NULL);
+		pthread_mutex_lock(&cl->thread_lock);
+		cl->thread_active = 2;
+		pthread_mutex_unlock(&cl->thread_lock);
 		rc = nanosleep(&ts, NULL);
-		pthread_sigmask(SIG_BLOCK, &newmask, NULL);
+		pthread_mutex_lock(&cl->thread_lock);
+		cl->thread_active = 1;
+		pthread_mutex_unlock(&cl->thread_lock);
 
 		next_check = 0;
 		ac_next = 0;
@@ -3827,6 +3848,8 @@ static void * check_thread(void) {
 		if (!msec_wait)
 			msec_wait = 3000;
 	}
+	add_garbage(cl);
+	timecheck_client = NULL;
 	return NULL;
 }
 
@@ -3864,11 +3887,6 @@ void * client_check(void) {
 	uint32_t cl_size = 0;
 
 	char buf[10];
-	sigset_t newmask;
-
-	sigemptyset(&newmask);
-	sigaddset(&newmask, OSCAM_SIGNAL_WAKEUP);
-	pthread_sigmask(SIG_BLOCK, &newmask, NULL);
 
 	if (pipe(thread_pipe) == -1) {
 		printf("cannot create pipe, errno=%d\n", errno);
@@ -4049,6 +4067,8 @@ int32_t accept_connection(int32_t i, int32_t j) {
 
 			if (cs_check_violation((uint32_t)cad.sin_addr.s_addr, ph[i].ptab->ports[j].s_port))
 				return 0;
+
+			cs_debug_mask(D_TRACE, "got %d bytes from ip %s:%d", n, cs_inet_ntoa(cad.sin_addr.s_addr), cad.sin_port);
 
 			if (!cl) {
 				cl = create_client(cad.sin_addr.s_addr);
@@ -4239,11 +4259,11 @@ int32_t main (int32_t argc, char *argv[])
 	0
   };
 
-  while ((i=getopt(argc, argv, "gbsauc:t:d:r:w:hm:x"))!=EOF)
+  while ((i=getopt(argc, argv, "g:bsauc:t:d:r:w:hm:x"))!=EOF)
   {
 	  switch(i) {
 		  case 'g':
-			  gbdb=1;
+			  gbdb=atoi(optarg);
 			  break;
 		  case 'b':
 			  bg=1;
@@ -4391,7 +4411,8 @@ int32_t main (int32_t argc, char *argv[])
 	start_thread((void *) &reader_check, "reader check"); 
 	start_thread((void *) &check_thread, "check"); 
 #ifdef LCDSUPPORT
-	start_lcd_thread();
+	if(cfg.enablelcd)
+		start_lcd_thread();
 #endif
 
 	init_cardreader();
@@ -4399,18 +4420,21 @@ int32_t main (int32_t argc, char *argv[])
 	cs_waitforcardinit();
 
 #ifdef CS_LED
-	cs_switch_led(LED1A, LED_OFF);
-	cs_switch_led(LED1B, LED_ON);
+	if(cfg.enableled == 1){
+		cs_switch_led(LED1A, LED_OFF);
+		cs_switch_led(LED1B, LED_ON);
+	}
 #endif
 
 #ifdef QBOXHD_LED
-	if(!cfg.disableqboxhdled)
+	if(cfg.enableled == 2){
 		cs_log("QboxHD LED enabled");
     qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_FAST);
     qboxhd_led_blink(QBOXHD_LED_COLOR_RED,QBOXHD_LED_BLINK_FAST);
     qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN,QBOXHD_LED_BLINK_FAST);
     qboxhd_led_blink(QBOXHD_LED_COLOR_BLUE,QBOXHD_LED_BLINK_FAST);
     qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_FAST);
+  }
 #endif
 
 #ifdef CS_ANTICASC
@@ -4538,10 +4562,6 @@ void cs_switch_led(int32_t led, int32_t action) {
 #ifdef QBOXHD_LED
 void qboxhd_led_blink(int32_t color, int32_t duration) {
     int32_t f;
-
-    if (cfg.disableqboxhdled) {
-        return;
-    }
 
     // try QboxHD-MINI first
     if ( (f = open ( QBOXHDMINI_LED_DEVICE,  O_RDWR |O_NONBLOCK )) > -1 ) {

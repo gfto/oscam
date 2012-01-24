@@ -313,8 +313,8 @@ int32_t reader_reset(struct s_reader * reader)
 
 #ifdef COOL
 	if (reader->typ == R_INTERNAL) {
-		cs_log("%s init done - modifying timeout for coolstream internal device %s", reader->label, reader->device);
-		call(Cool_Set_Transmit_Timeout(reader));
+		cs_debug_mask(D_DEVICE,"%s init done - modifying timeout for coolstream internal device %s", reader->label, reader->device);
+		call(Cool_Set_Transmit_Timeout(reader, 1));
 	}
 #endif
       }

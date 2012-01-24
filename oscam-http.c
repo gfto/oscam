@@ -266,6 +266,12 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	if(cfg.double_check == 1)
 		tpl_addVar(vars, TPLADD, "DCHECKCSELECTED", "selected");
 #endif
+#if defined(QBOXHD_LED) || defined(CS_LED) 
+	if(cfg.enableled == 1)
+		tpl_addVar(vars, TPLADD, "ENABLELEDSELECTED1", "selected");
+	else if(cfg.enableled == 2)
+		tpl_addVar(vars, TPLADD, "ENABLELEDSELECTED2", "selected");
+#endif
 
 #ifdef CS_CACHEEX
 	tpl_printf(vars, TPLADD, "CACHEEXWAITTIME", "%d", cfg.cacheex_wait_time);
@@ -735,6 +741,8 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 		tpl_addVar(vars, TPLADD, "HTTPSAVEFULLSELECT", "selected");
 
 #ifdef LCDSUPPORT
+	if(cfg.enablelcd)
+		tpl_addVar(vars, TPLADD, "ENABLELCDSELECTED", "selected");
 	if (cfg.lcd_output_path != NULL)
 		tpl_addVar(vars, TPLADD, "LCDOUTPUTPATH", cfg.lcd_output_path);
 	if (cfg.lcd_hide_idle)
@@ -2425,15 +2433,188 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 
 #define ENTITLEMENT_PAGE_SIZE 500
 
+#ifdef MODULE_CCCAM
+static void print_cards(struct templatevars *vars, struct uriparams *params, LLIST *cards, int8_t show_global_list, struct s_reader *rdr, int32_t offset, int32_t apicall)
+{
+	if (cards) {
+		uint8_t serbuf[8];
+		int32_t cardsize, i, count = 0;
+		char provname[83];
+		struct cc_card *card;
+		int32_t cardcount = 0;
+		int32_t providercount = 0;
+		int32_t nodecount = 0;
+
+		char *provider = "";
+
+		// @todo alno: sort by click, 0=ascending, 1=descending (maybe two buttons or reverse on second click)
+		struct cc_card **cardarray = get_sorted_card_copy(cards, 0, &cardsize);
+
+		for(i = offset; i < cardsize; ++i) {
+			card = cardarray[i];
+
+			if (count == ENTITLEMENT_PAGE_SIZE)
+				break;
+			count++;
+
+			if (!apicall) {
+				if (show_global_list)
+					rdr = card->origin_reader;
+				if (rdr)
+					tpl_printf(vars, TPLADD, "HOST", "%s:%d", rdr->device, rdr->r_port);
+				tpl_printf(vars, TPLADD, "CAID", "%04X", card->caid);
+				tpl_printf(vars, TPLADD, "CARDTYPE", "%02X", card->card_type);
+			} else {
+				tpl_printf(vars, TPLADD, "APICARDNUMBER", "%d", cardcount);
+				tpl_printf(vars, TPLADD, "APICAID", "%04X", card->caid);
+				tpl_printf(vars, TPLADD, "APICARDTYPE", "%02X", card->card_type);
+			}
+
+			if (cc_UA_valid(card->hexserial)) { //Add UA:
+				cc_UA_cccam2oscam(card->hexserial, serbuf, card->caid);
+				char tmp[20];
+				tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_Oscam:%s", cs_hexdump(0, serbuf, 8, tmp, 20));
+				tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_CCcam:%s", cs_hexdump(0, card->hexserial, 8, tmp, 20));
+			}
+				if (!apicall) {
+						int32_t n;
+						LL_ITER its = ll_iter_create(card->goodsids);
+						struct cc_srvid *srv;
+						n=0;
+						tpl_printf(vars, TPLADD, "SERVICESGOOD", "");
+						while ((srv=ll_iter_next(&its))) {
+								tpl_printf(vars, TPLAPPEND, "SERVICESGOOD", "%04X%s", srv->sid, ++n%10==0?"<BR>\n":" ");
+						}
+
+						its = ll_iter_create(card->badsids);
+						n=0;
+						tpl_printf(vars, TPLADD, "SERVICESBAD", "");
+						while ((srv=ll_iter_next(&its))) {
+								tpl_printf(vars, TPLAPPEND, "SERVICESBAD", "%04X%s", srv->sid, ++n%10==0?"<BR>\n":" ");
+						}
+			}
+
+			struct s_cardsystem *cs = get_cardsystem_by_caid(card->caid);
+
+			if (cs)
+				tpl_addVar(vars, TPLADD, "SYSTEM", cs->desc ? cs->desc : "");
+			else
+				tpl_addVar(vars, TPLADD, "SYSTEM", "???");
+
+            tpl_printf(vars, TPLADD, "SHAREID", "%08X", card->id);
+            tpl_printf(vars, TPLADD, "REMOTEID", "%08X", card->remote_id);
+			tpl_printf(vars, TPLADD, "UPHOPS", "%d", card->hop);
+			tpl_printf(vars, TPLADD, "MAXDOWN", "%d", card->reshare);
+
+			LL_ITER pit = ll_iter_create(card->providers);
+			struct cc_provider *prov;
+
+			providercount = 0;
+
+			if (!apicall)
+				tpl_addVar(vars, TPLADD, "PROVIDERS", "");
+			else
+				tpl_addVar(vars, TPLADD, "PROVIDERLIST", "");
+
+			while ((prov = ll_iter_next(&pit))) {
+				provider = xml_encode(vars, get_provider(card->caid, prov->prov, provname, sizeof(provname)));
+
+				if (!apicall) {
+					if (prov->sa[0] || prov->sa[1] || prov->sa[2] || prov->sa[3]) {
+						tpl_printf(vars, TPLAPPEND, "PROVIDERS", "%s SA:%02X%02X%02X%02X<BR>\n", provider, prov->sa[0], prov->sa[1], prov->sa[2], prov->sa[3]);
+					} else {
+						tpl_printf(vars, TPLAPPEND, "PROVIDERS", "%s<BR>\n", provider);
+					}
+				} else {
+					if (prov->sa[0] || prov->sa[1] || prov->sa[2] || prov->sa[3])
+						tpl_printf(vars, TPLADD, "APIPROVIDERSA", "%02X%02X%02X%02X", prov->sa[0], prov->sa[1], prov->sa[2], prov->sa[3]);
+					else
+						tpl_addVar(vars, TPLADD, "APIPROVIDERSA","");
+					tpl_printf(vars, TPLADD, "APIPROVIDERCAID", "%04X", card->caid);
+					tpl_printf(vars, TPLADD, "APIPROVIDERPROVID", "%06X", prov->prov);
+					tpl_printf(vars, TPLADD, "APIPROVIDERNUMBER", "%d", providercount);
+					tpl_addVar(vars, TPLADD, "APIPROVIDERNAME", xml_encode(vars, provider));
+					tpl_addVar(vars, TPLAPPEND, "PROVIDERLIST", tpl_getTpl(vars, "APICCCAMCARDPROVIDERBIT"));
+
+				}
+				providercount++;
+				tpl_printf(vars, TPLADD, "APITOTALPROVIDERS", "%d", providercount);
+			}
+
+			LL_ITER nit = ll_iter_create(card->remote_nodes);
+			uint8_t *node;
+
+			nodecount = 0;
+			if (!apicall) tpl_addVar(vars, TPLADD, "NODES", "");
+			else tpl_addVar(vars, TPLADD, "NODELIST", "");
+
+			while ((node = ll_iter_next(&nit))) {
+
+				if (!apicall) {
+					tpl_printf(vars, TPLAPPEND, "NODES", "%02X%02X%02X%02X%02X%02X%02X%02X<BR>\n",
+							node[0], node[1], node[2], node[3], node[4], node[5], node[6], node[7]);
+				} else {
+					tpl_printf(vars, TPLADD, "APINODE", "%02X%02X%02X%02X%02X%02X%02X%02X", node[0], node[1], node[2], node[3], node[4], node[5], node[6], node[7]);
+					tpl_printf(vars, TPLADD, "APINODENUMBER", "%d", nodecount);
+					tpl_addVar(vars, TPLAPPEND, "NODELIST", tpl_getTpl(vars, "APICCCAMCARDNODEBIT"));
+				}
+				nodecount++;
+				tpl_printf(vars, TPLADD, "APITOTALNODES", "%d", nodecount);
+			}
+
+			if (!apicall)
+				tpl_addVar(vars, TPLAPPEND, "CCCAMSTATSENTRY", tpl_getTpl(vars, "ENTITLEMENTCCCAMENTRYBIT"));
+			else
+				tpl_addVar(vars, TPLAPPEND, "CARDLIST", tpl_getTpl(vars, "APICCCAMCARDBIT"));
+
+			cardcount++;
+		}
+		free(cardarray);
+
+		// set previous Link if needed
+		if (offset >= ENTITLEMENT_PAGE_SIZE) {
+			tpl_printf(vars, TPLAPPEND, "CONTROLS", "<A HREF=\"entitlements.html?offset=%d&globallist=%s&amp;label=%s\"> << PREVIOUS < </A>",
+					offset - ENTITLEMENT_PAGE_SIZE,
+					getParam(params, "globallist"),
+					getParam(params, "label"));
+		}
+
+		// set next link if needed
+		if (cardsize > count && offset < cardsize) {
+			tpl_printf(vars, TPLAPPEND, "CONTROLS", "<A HREF=\"entitlements.html?offset=%d&globallist=%s&amp;label=%s\"> > NEXT >> </A>",
+					offset + ENTITLEMENT_PAGE_SIZE,
+					getParam(params, "globallist"),
+					getParam(params, "label"));
+		}
+
+		if (!apicall) {
+			tpl_printf(vars, TPLADD, "TOTALS", "card count=%d", cardsize);
+			tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTCCCAMBIT"));
+		} else {
+			tpl_printf(vars, TPLADD, "APITOTALCARDS", "%d", cardsize);
+		}
+
+	} else {
+		if (!apicall) {
+			tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
+			tpl_addVar(vars, TPLADD, "LOGHISTORY", "no cards found<BR>\n");
+		} else {
+			tpl_printf(vars, TPLADD, "APITOTALCARDS", "%d", 0);
+		}
+	}
+
+}
+#endif
+
 static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
 	if(!apicall) setActiveMenu(vars, MNU_READERS);
 	char *reader_ = getParam(params, "label");
-#ifdef MODULE_CCCAM	
+#ifdef MODULE_CCCAM
 	char *sharelist_ = getParam(params, "globallist");
 	int32_t show_global_list = sharelist_ && sharelist_[0]=='1';
 
 	int32_t offset = atoi(getParam(params, "offset")); //should be 0 if parameter is missed on very first call
-	
+
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 	if (show_global_list || (cfg.saveinithistory && strlen(reader_) > 0) || (rdr && rdr->typ == R_CCCAM)) {
 
@@ -2449,196 +2630,27 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					tpl_printf(vars, TPLADD, "APIHOSTPORT", "%d", rdr->r_port);
 			}
 
-			int32_t cardcount = 0;
-			int32_t providercount = 0;
-			int32_t nodecount = 0;
-
-			char *provider = "";
-
-			struct cc_card *card;
-
-			LLIST *cards = NULL;
-			CS_MUTEX_LOCK *lock = NULL;
-
 			if (show_global_list) {
-					cards = get_and_lock_sharelist();
+				int i;
+				LLIST **sharelist = get_and_lock_sharelist();
+				for (i=0;i<CAID_KEY;i++) {
+					if (sharelist[i])
+						print_cards(vars, params, sharelist[i], 1, NULL, offset, apicall);
+				}
+				unlock_sharelist();
 			} else {
-					struct s_client *rc = rdr->client;
-					struct cc_data *rcc = (rc)?rc->cc:NULL;
+				struct s_client *rc = rdr->client;
+				struct cc_data *rcc = (rc)?rc->cc:NULL;
 
-					if (rcc && rcc->cards) {
-							cards = rcc->cards;
-							lock = &rcc->cards_busy;
-							cs_readlock(lock);
-					}
-			}
-
-			if (cards) {
-
-				uint8_t serbuf[8];
-				int32_t cardsize, i, count = 0;
-				char provname[83];
-
-				// @todo alno: sort by click, 0=ascending, 1=descending (maybe two buttons or reverse on second click)
-				struct cc_card **cardarray = get_sorted_card_copy(cards, 0, &cardsize);
-					
-					for(i = offset; i < cardsize; ++i) {
-					card = cardarray[i];
-
-					if (count == ENTITLEMENT_PAGE_SIZE)
-						break;
-					count++;
-                	
-					if (!apicall) {
-						if (show_global_list)
-							rdr = card->origin_reader;
-						if (rdr)
-							tpl_printf(vars, TPLADD, "HOST", "%s:%d", rdr->device, rdr->r_port);
-						tpl_printf(vars, TPLADD, "CAID", "%04X", card->caid);
-						tpl_printf(vars, TPLADD, "CARDTYPE", "%02X", card->card_type);
-					} else {
-						tpl_printf(vars, TPLADD, "APICARDNUMBER", "%d", cardcount);
-						tpl_printf(vars, TPLADD, "APICAID", "%04X", card->caid);
-						tpl_printf(vars, TPLADD, "APICARDTYPE", "%02X", card->card_type);
-					}
-
-					if (cc_UA_valid(card->hexserial)) { //Add UA:
-						cc_UA_cccam2oscam(card->hexserial, serbuf, card->caid);
-						char tmp[20];
-						tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_Oscam:%s", cs_hexdump(0, serbuf, 8, tmp, 20));
-						tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_CCcam:%s", cs_hexdump(0, card->hexserial, 8, tmp, 20));
-					}
-   					if (!apicall) {
-								int32_t n;
-								LL_ITER its = ll_iter_create(card->goodsids);
-								struct cc_srvid *srv;
-								n=0;
-								tpl_printf(vars, TPLADD, "SERVICESGOOD", "");
-								while ((srv=ll_iter_next(&its))) {
-										tpl_printf(vars, TPLAPPEND, "SERVICESGOOD", "%04X%s", srv->sid, ++n%10==0?"<BR>\n":" ");
-								}
-
-								its = ll_iter_create(card->badsids);
-								n=0;
-								tpl_printf(vars, TPLADD, "SERVICESBAD", "");
-								while ((srv=ll_iter_next(&its))) {
-										tpl_printf(vars, TPLAPPEND, "SERVICESBAD", "%04X%s", srv->sid, ++n%10==0?"<BR>\n":" ");
-								}
-					}
-
-					struct s_cardsystem *cs = get_cardsystem_by_caid(card->caid);
-
-					if (cs)
-						tpl_addVar(vars, TPLADD, "SYSTEM", cs->desc ? cs->desc : "");
-					else
-						tpl_addVar(vars, TPLADD, "SYSTEM", "???");
-
-                    tpl_printf(vars, TPLADD, "SHAREID", "%08X", card->id);
-                    tpl_printf(vars, TPLADD, "REMOTEID", "%08X", card->remote_id);
-					tpl_printf(vars, TPLADD, "UPHOPS", "%d", card->hop);
-					tpl_printf(vars, TPLADD, "MAXDOWN", "%d", card->reshare);
-
-					LL_ITER pit = ll_iter_create(card->providers);
-					struct cc_provider *prov;
-
-					providercount = 0;
-
-					if (!apicall)
-						tpl_addVar(vars, TPLADD, "PROVIDERS", "");
-					else
-						tpl_addVar(vars, TPLADD, "PROVIDERLIST", "");
-
-					while ((prov = ll_iter_next(&pit))) {
-						provider = xml_encode(vars, get_provider(card->caid, prov->prov, provname, sizeof(provname)));
-
-						if (!apicall) {
-							if (prov->sa[0] || prov->sa[1] || prov->sa[2] || prov->sa[3]) {
-								tpl_printf(vars, TPLAPPEND, "PROVIDERS", "%s SA:%02X%02X%02X%02X<BR>\n", provider, prov->sa[0], prov->sa[1], prov->sa[2], prov->sa[3]);
-							} else {
-								tpl_printf(vars, TPLAPPEND, "PROVIDERS", "%s<BR>\n", provider);
-							}
-						} else {
-							if (prov->sa[0] || prov->sa[1] || prov->sa[2] || prov->sa[3])
-								tpl_printf(vars, TPLADD, "APIPROVIDERSA", "%02X%02X%02X%02X", prov->sa[0], prov->sa[1], prov->sa[2], prov->sa[3]);
-							else
-								tpl_addVar(vars, TPLADD, "APIPROVIDERSA","");
-							tpl_printf(vars, TPLADD, "APIPROVIDERCAID", "%04X", card->caid);
-							tpl_printf(vars, TPLADD, "APIPROVIDERPROVID", "%06X", prov->prov);
-							tpl_printf(vars, TPLADD, "APIPROVIDERNUMBER", "%d", providercount);
-							tpl_addVar(vars, TPLADD, "APIPROVIDERNAME", xml_encode(vars, provider));
-							tpl_addVar(vars, TPLAPPEND, "PROVIDERLIST", tpl_getTpl(vars, "APICCCAMCARDPROVIDERBIT"));
-
-						}
-						providercount++;
-						tpl_printf(vars, TPLADD, "APITOTALPROVIDERS", "%d", providercount);
-					}
-
-					LL_ITER nit = ll_iter_create(card->remote_nodes);
-					uint8_t *node;
-
-					nodecount = 0;
-					if (!apicall) tpl_addVar(vars, TPLADD, "NODES", "");
-					else tpl_addVar(vars, TPLADD, "NODELIST", "");
-
-					while ((node = ll_iter_next(&nit))) {
-
-						if (!apicall) {
-							tpl_printf(vars, TPLAPPEND, "NODES", "%02X%02X%02X%02X%02X%02X%02X%02X<BR>\n",
-									node[0], node[1], node[2], node[3], node[4], node[5], node[6], node[7]);
-						} else {
-							tpl_printf(vars, TPLADD, "APINODE", "%02X%02X%02X%02X%02X%02X%02X%02X", node[0], node[1], node[2], node[3], node[4], node[5], node[6], node[7]);
-							tpl_printf(vars, TPLADD, "APINODENUMBER", "%d", nodecount);
-							tpl_addVar(vars, TPLAPPEND, "NODELIST", tpl_getTpl(vars, "APICCCAMCARDNODEBIT"));
-						}
-						nodecount++;
-						tpl_printf(vars, TPLADD, "APITOTALNODES", "%d", nodecount);
-					}
-
-					if (!apicall)
-						tpl_addVar(vars, TPLAPPEND, "CCCAMSTATSENTRY", tpl_getTpl(vars, "ENTITLEMENTCCCAMENTRYBIT"));
-					else
-						tpl_addVar(vars, TPLAPPEND, "CARDLIST", tpl_getTpl(vars, "APICCCAMCARDBIT"));
-
-					cardcount++;
-				}
-				free(cardarray);
-				
-				// set previous Link if needed
-				if (offset >= ENTITLEMENT_PAGE_SIZE) {
-					tpl_printf(vars, TPLAPPEND, "CONTROLS", "<A HREF=\"entitlements.html?offset=%d&globallist=%s&amp;label=%s\"> << PREVIOUS < </A>",
-							offset - ENTITLEMENT_PAGE_SIZE,
-							getParam(params, "globallist"),
-							getParam(params, "label"));
-				}
-
-				// set next link if needed
-				if (cardsize > count && offset < cardsize) {
-					tpl_printf(vars, TPLAPPEND, "CONTROLS", "<A HREF=\"entitlements.html?offset=%d&globallist=%s&amp;label=%s\"> > NEXT >> </A>",
-							offset + ENTITLEMENT_PAGE_SIZE,
-							getParam(params, "globallist"),
-							getParam(params, "label"));
-				}
-
-				if (!apicall) {
-					tpl_printf(vars, TPLADD, "TOTALS", "card count=%d", cardsize);
-					tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTCCCAMBIT"));
-				} else {
-					tpl_printf(vars, TPLADD, "APITOTALCARDS", "%d", cardsize);
-				}
-
-			} else {
-				if (!apicall) {
-					tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
-					tpl_addVar(vars, TPLADD, "LOGHISTORY", "no cards found<BR>\n");
-				} else {
-					tpl_printf(vars, TPLADD, "APITOTALCARDS", "%d", cardcount);
-				}
-			}
-
-			if (show_global_list)
-					unlock_sharelist();
-			else if (lock)
+				if (rcc && rcc->cards) {
+					LLIST *cards = rcc->cards;
+					CS_MUTEX_LOCK *lock = &rcc->cards_busy;
+					cs_readlock(lock);
+					print_cards(vars, params, cards, 0, rdr, offset, apicall);
 					cs_readunlock(lock);
+				}
+			}
+
 
 		} else {
 #else
@@ -3274,7 +3286,7 @@ static char *send_oscam_services_edit(struct templatevars *vars, struct uriparam
 	setActiveMenu(vars, MNU_SERVICES);
 
 	cs_strncpy(label, strtolower(getParam(params, "service")), sizeof(label));
-
+++cfg_sidtab_generation;
 	for (sidtab = cfg.sidtab; sidtab != NULL && strcmp(label, sidtab->label) != 0; sidtab=sidtab->next);
 
 	if (sidtab == NULL) {
@@ -3293,7 +3305,7 @@ static char *send_oscam_services_edit(struct templatevars *vars, struct uriparam
 			ptr->next = sidtab;
 		}
 		cs_strncpy((char *)sidtab->label, label, sizeof(sidtab->label));
-
+		++cfg_sidtab_generation;
 		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>New service has been added</b><BR>");
 		// Adding is uncritical as the new service is appended to sidtabok/sidtabno and accounts/clients/readers have zeros there
 		if (write_services()!=0) 
@@ -3306,6 +3318,7 @@ static char *send_oscam_services_edit(struct templatevars *vars, struct uriparam
 				chk_sidtab((*params).params[i], (*params).values[i], sidtab);
 			}
 		}
+		++cfg_sidtab_generation;
 		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Services updated</B><BR><BR>");
 		// We don't need any refresh here as accounts/clients/readers sidtabok/sidtabno are unaffected!
 		if (write_services()!=0)
@@ -3370,7 +3383,7 @@ static char *send_oscam_services(struct templatevars *vars, struct uriparams *pa
 				++sidtablength;
 			
 			for (sidtab=cfg.sidtab; sidtab; sidtab = sidtab->next){
-				if(strcmp(sidtab->label, service) == 0) {
+				if(strcmp(sidtab->label, service) == 0) {					
 					struct s_auth *account;
 					struct s_client *cl;
 					struct s_reader *rdr;					
@@ -3398,12 +3411,13 @@ static char *send_oscam_services(struct templatevars *vars, struct uriparams *pa
 						delete_from_SIDTABBITS(&rdr->sidtabok, counter, sidtablength);
 						delete_from_SIDTABBITS(&rdr->sidtabno, counter, sidtablength);
 					}
+					++counter;
 					break;
-				}
-				++counter;
+				}				
 				sidtab_prev = sidtab;
 			}
 			if (counter > 0) {
+				++cfg_sidtab_generation;
 				tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Service has been deleted!</b><BR>");
 				if (write_services() != 0) 
 					tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Writing services to disk failed!</b><BR>");
@@ -3766,7 +3780,17 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 				char *fcontent = getParam(params, "filecontent");
 
 				if((fpsave = fopen(targetfile,"w"))){
-					fprintf(fpsave,"%s",fcontent);
+					int32_t i, lastpos = 0, len = strlen(fcontent) + 1;
+					//write submitted file line by line to disk and remove windows linebreaks
+					for(i = 0; i < len; ++i){
+						char tmp = fcontent[i];
+						if(tmp == '\r' || tmp == '\n' || tmp == 0){
+							fcontent[i] = 0;
+							fprintf(fpsave,"%s%s",fcontent + lastpos, tmp == 0?"":"\n");
+							if(tmp == '\r' && fcontent[i+1] == '\n') ++i;							
+							lastpos = i + 1;
+						}							
+					}
 					fclose(fpsave);
 
 					if (strcmp(getParam(params, "file"), "srvid") == 0)

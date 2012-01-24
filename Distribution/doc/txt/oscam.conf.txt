@@ -1,4 +1,4 @@
-oscam.conf(5)																				    oscam.conf(5)
+oscam.conf(5)														     oscam.conf(5)
 
 
 
@@ -6,8 +6,8 @@ NAME
        oscam.conf - main configuration file for OSCam
 
 SYNOPSIS
-       The  main configuration file for OSCam contains global parameters such as debugging, logging, monitor, protocols and anti-cascading.  sections in oscam.conf are nonrecurring. The
-       [global] section is required. All other sections are optional.
+       The main configuration file for OSCam contains global parameters such as debugging, logging, monitor, protocols and anti-cascading.
+       sections in oscam.conf are nonrecurring. The [global] section is required. All other sections are optional.
 
 DESCRIPTIONS
    The [global] section
@@ -18,8 +18,8 @@ DESCRIPTIONS
 	  value to delay cached requests, default:0
 
        logfile = [filename][;syslog][;stdout]
-	  logging targets, default: /var/log/oscam.log. You can define a maximum of one filename and additionally to log to stdout or syslog (you can also only log to stdout  or  syslog
-	  and omit the filename).
+	  logging targets, default: /var/log/oscam.log. You can define a maximum of one filename and additionally to log to stdout or sys‐
+	  log (you can also only log to stdout or syslog and omit the filename).
 
        loghistorysize = bytes
 	  size of log message history in web interface or monitor, 0 = disabled , default:4096
@@ -56,6 +56,12 @@ DESCRIPTIONS
 
 	    0 = only client logon/logoff will be logged in usrfile (default)
 	    1 = each zapping of a client will be logged in usrfile
+
+       enableled = 0|1|2
+
+	   0 = LED support disabled (default)
+	   1 = LED support enabled for routers
+	   2 = LED support enabled for Qbox HD
 
        cwlogdir = path
 	  directory for CW logging, default:config dir
@@ -127,11 +133,12 @@ DESCRIPTIONS
 	  1 = save SC init history to /tmp/.oscam/reader<number>, default:0
 
        double_check = 0|1
-	  1 = ECM will be send to two or more readers with the same SC and the CWs will be verified against each other, lb_nbest_readers must be set to 2 or higher, default:0
+	  1  =	ECM will be send to two or more readers with the same SC and the CWs will be verified against each other, lb_nbest_readers
+	  must be set to 2 or higher, default:0
 
        suppresscmd08 = 0|1
-	  0  =	tell  camd  3.5x,  3.57x  and  3.78x  clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, can be overwritten per user in
-	  oscam.user, default:0
+	  0 = tell camd 3.5x, 3.57x and 3.78x clients not to request again for rejected CAID, service ID and provider ID combination, 1  =
+	  disable, can be overwritten per user in oscam.user, default:0
 
        cacheexwaittime = delay
 	  maximum wait time for a cache exchange entry in milli-seconds, default:50
@@ -204,7 +211,8 @@ DESCRIPTIONS
 		    (wildcard CAIDs 12xx and 34xx)
 
        lb_noproviderforcaid = CAID1[,CAID2]...
-	  ignore provider information for CAIDs to reduce load balancing statistic data, wildcard CAIDs with two-digit CAIDs possible, default:none
+	  ignore  provider  information  for  CAIDs to reduce load balancing statistic data, wildcard CAIDs with two-digit CAIDs possible,
+	  default:none
 
 	   example: lb_noproviderforcaid = 0100,02,0300,04
 		    (wildcard CAIDs 02xx and 04xx)
@@ -216,8 +224,8 @@ DESCRIPTIONS
 	   limit = restrict load balancer readers to limit
 
        lb_auto_betatunnel = 0|1
-	  1 = enable automatic Betacrypt tunneling detection for CAIDs 1801, 1833, 1834, and 1835 for load balancing, Betacrypt defintion in oscam.user with betatunnel will be prefered,
-	  default:1
+	  1 = enable automatic Betacrypt tunneling detection for CAIDs 1801, 1833, 1834, and 1835 for load balancing, Betacrypt  defintion
+	  in oscam.user with betatunnel will be prefered, default:1
 
        lb_auto_betatunnel_prefer_beta = time factor
 	  set automatic Betacrypt tunneling time factor prefering Betacrypt over Nagravision in percent, default: 50
@@ -314,6 +322,9 @@ DESCRIPTIONS
 	  set right language for wiki entry point, default:en
 
    The [lcd] section
+       enablelcd = 0|1
+	  1 =enable LCD output, default:0
+
        lcd_outputpath = path
 	  path for LCD output, default:/tmp
 
@@ -361,7 +372,8 @@ DESCRIPTIONS
 	  bind service to specified IP address, default:all
 
        suppresscmd08 = 0|1
-	  0 = tell camd 3.5x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, can be overwritten per user in oscam.user, default:0
+	  0  =	tell camd 3.5x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, can be
+	  overwritten per user in oscam.user, default:0
 
    The [cs357x] section
        port = 0|port
@@ -371,7 +383,8 @@ DESCRIPTIONS
 	  bind service to specified IP address, default:all
 
        suppresscmd08 = 0|1
-	  0 = tell camd 3.57x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, can be overwritten per user in oscam.user, default:0
+	  0 = tell camd 3.57x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, can	be
+	  overwritten per user in oscam.user, default:0
 
    The [cs378x] section
        port = 0|port[@CAID][:ident][,ident]...[;port@CAID[:ident][,ident]...]...
@@ -384,7 +397,8 @@ DESCRIPTIONS
 	  bind service to specified IP address, default:all
 
        suppresscmd08 = 0|1
-	  0 = tell camd 3.78x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, can be overwritten per user in oscam.user, default:0
+	  0  = tell camd 3.78x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, can be
+	  overwritten per user in oscam.user, default:0
 
    The [newcamd] section
        mgclient = 0|1
@@ -449,7 +463,7 @@ DESCRIPTIONS
 	  TCP/IP ports for CCcam clients, 0 = disabled, default:0
 
        version = <main version>.<version>.<sub version>
-	  define CCcam version, minimum CCcam version 2.0.11, default:none
+	  define CCcam version, minimum CCcam version 2.0.11, used with original CCcam only, default:none
 
 	   example: version = 1.2.34
 
@@ -482,7 +496,8 @@ DESCRIPTIONS
 	   1 = use reshare setting of reader or user
 
        stealth = 0|1
-	  1 = behaviour like the original CCcam: no activate partner detection and extended OSCam-CCcam protocol, prevent other OSCam to detect the server as OSCam server, default:0
+	  1 = behaviour like the original CCcam: no activate partner detection and extended OSCam-CCcam protocol, prevent other  OSCam	to
+	  detect the server as OSCam server, default:0
 
        minimizecards = mode
 	  mode how to provide CCcam servers to CCcam clients:
@@ -693,8 +708,8 @@ MONITOR
 WEB INTERFACE
        ·  template system
 
-	  The web interface allows you to create your own template. For developing your own template request the orignal template with the non-linked page savetemplates.html. Store your
-	  own template in the directory specified by httptpl.
+	  The web interface allows you to create your own template. For developing your own template request the orignal template with the
+	  non-linked page savetemplates.html. Store your own template in the directory specified by httptpl.
 
 CACHING
        types of ECM caching:
@@ -752,9 +767,9 @@ EXAMPLES
 	password     = password4
 
 SEE ALSO
-       list_smargo(1), oscam(1), oscam.ac(5), oscam.cacheex(5),  oscam.cert(5),  oscam.dvbapi(5),  oscam.guess(5),  oscam.ird(5),  oscam.provid(5),  oscam.server(5),  oscam.services(5),
-       oscam.srvid(5), oscam.tiers(5), oscam.user(5), oscam.whitelist(5)
+       list_smargo(1),	oscam(1),   oscam.ac(5),   oscam.cacheex(5),   oscam.cert(5),	oscam.dvbapi(5),   oscam.guess(5),   oscam.ird(5),
+       oscam.provid(5), oscam.server(5), oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5), oscam.whitelist(5)
 
 
 
-																					    oscam.conf(5)
+															     oscam.conf(5)
