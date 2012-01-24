@@ -4,7 +4,7 @@
 
 #include "module-dvbapi.h"
 
-const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt", "dm7000", "qboxhd", "coolstream", "neumo" };
+const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt", "dm7000", "qboxhd", "coolstream", "neumo", "pc" };
 
 const struct box_devices devices[BOX_COUNT] = {
 	/* QboxHD (dvb-api-3)*/	{ "/tmp/virtual_adapter/", 	"ca%d",		"demux%d",			"/tmp/camd.socket" },
@@ -214,6 +214,9 @@ int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter) {
 		if (cfg.dvbapi_boxtype==BOXTYPE_QBOXHD)
 			num=0;
 
+		if (cfg.dvbapi_boxtype==BOXTYPE_PC)
+			num=0;
+
 		snprintf(device_path2, sizeof(device_path2), devices[selected_box].ca_device, num+ca_offset);
 		snprintf(device_path, sizeof(device_path), devices[selected_box].path, adapter);
 
@@ -227,6 +230,31 @@ int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter) {
 
 	cs_debug_mask(D_DVBAPI, "DEVICE open (%s) fd %d", device_path, dmx_fd);
 	return dmx_fd;
+}
+
+int32_t dvbapi_open_netdevice(int32_t UNUSED(type), int32_t UNUSED(num), int32_t adapter) {
+	int32_t socket_fd;
+
+	socket_fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (socket_fd == -1) {
+		cs_debug_mask(D_DVBAPI, "Failed to open socket (%d %s)", errno, strerror(errno));
+	} else {
+		struct sockaddr_in saddr;
+		fcntl(socket_fd, F_SETFL, O_NONBLOCK);
+		bzero(&saddr, sizeof(saddr));
+		saddr.sin_family = AF_INET;
+		saddr.sin_port = htons(PORT + adapter); // port = PORT + adapter number
+		saddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+		int r = connect(socket_fd, (struct sockaddr *) &saddr, sizeof(saddr));
+		if (r<0) {
+			cs_debug_mask(D_DVBAPI, "Failed to connect socket (%d %s), at localhost, port=%d", errno, strerror(errno), PORT + adapter);
+			close(socket_fd);
+			socket_fd = -1;
+		}
+	}
+
+	cs_debug_mask(D_DVBAPI, "NET DEVICE open (port = %d) fd %d", PORT + adapter, socket_fd);
+	return socket_fd;
 }
 
 int32_t dvbapi_stop_filter(int32_t demux_index, int32_t type) {
@@ -511,17 +539,28 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t index) {
 		default:
 			for (i=0;i<8;i++) {
 				if (demux[demux_id].ca_mask & (1 << i)) {
-					if (ca_fd[i]<=0)
-						ca_fd[i]=dvbapi_open_device(1, i, demux[demux_id].adapter_index);
+					if (ca_fd[i]<=0) {
+						if (cfg.dvbapi_boxtype == BOXTYPE_PC)
+							ca_fd[i]=dvbapi_open_netdevice(1, i, demux[demux_id].adapter_index);
+						else
+							ca_fd[i]=dvbapi_open_device(1, i, demux[demux_id].adapter_index);
+					}
 					if (ca_fd[i]>0) {
 						ca_pid_t ca_pid2;
 						memset(&ca_pid2,0,sizeof(ca_pid2));
 						ca_pid2.pid = demux[demux_id].STREAMpids[num];
 						ca_pid2.index = index;
-						if (ioctl(ca_fd[i], CA_SET_PID, &ca_pid2)==-1)
-							cs_debug_mask(D_DVBAPI, "Error CA_SET_PID pid=0x%04x index=%d (errno=%d %s)", ca_pid2.pid, ca_pid2.index, errno, strerror(errno));
-						else
-							cs_debug_mask(D_DVBAPI, "CA_SET_PID pid=0x%04x index=%d", ca_pid2.pid, ca_pid2.index);
+
+						if (cfg.dvbapi_boxtype == BOXTYPE_PC) {
+							int request = CA_SET_PID;
+							send(ca_fd[i],(void*)&request, sizeof(request), 0);
+							send(ca_fd[i],(void*)&ca_pid2, sizeof(ca_pid2), 0);
+						} else {
+							if (ioctl(ca_fd[i], CA_SET_PID, &ca_pid2)==-1)
+								cs_debug_mask(D_DVBAPI, "Error CA_SET_PID pid=0x%04x index=%d (errno=%d %s)", ca_pid2.pid, ca_pid2.index, errno, strerror(errno));
+							else
+								cs_debug_mask(D_DVBAPI, "CA_SET_PID pid=0x%04x index=%d", ca_pid2.pid, ca_pid2.index);
+						}
 					}
 				}
 			}
@@ -1132,6 +1171,12 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		adapter_index = buffer[21]; // with STONE 1.0.4 adapter index can be 0,1,2
 		ca_mask = (1 << adapter_index); // use adapter_index as ca_mask (used as index for ca_fd[] array)
 	}
+	
+	if (cfg.dvbapi_boxtype == BOXTYPE_PC && buffer[7]==0x82 && buffer[8]==0x02) {
+		demux_index = buffer[9];	// it is always 0 but you never know
+		adapter_index = buffer[10];	// adapter index can be 0,1,2
+		ca_mask = (1 << adapter_index);	// use adapter_index as ca_mask (used as index for ca_fd[] array)
+	}
 
 	demux[demux_id].program_number=((buffer[1] << 8) | buffer[2]);
 	demux[demux_id].demux_index=demux_index;
@@ -1343,9 +1388,13 @@ void event_handler(int32_t signal) {
 	if (pthread_mutex_trylock(&event_handler_lock) == EBUSY)
 		return;
 
-	int32_t standby_fd = open(STANDBY_FILE, O_RDONLY);
-	pausecam = (standby_fd > 0) ? 1 : 0;
-	if (standby_fd) close(standby_fd);
+	if (cfg.dvbapi_boxtype == BOXTYPE_PC)
+		pausecam = 0;
+	else {
+		int32_t standby_fd = open(STANDBY_FILE, O_RDONLY);
+		pausecam = (standby_fd > 0) ? 1 : 0;
+		if (standby_fd) close(standby_fd);
+	}
 
 	if (cfg.dvbapi_boxtype==BOXTYPE_IPBOX || cfg.dvbapi_pmtmode == 1) {
 		pthread_mutex_unlock(&event_handler_lock);
@@ -1852,13 +1901,22 @@ static void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t index) {
 				if (demux[demux_id].ca_mask & (1 << i)) {
 					cs_debug_mask(D_DVBAPI, "write cw%d index: %d (ca%d)", n, ca_descr.index, i);
 					if (ca_fd[i]<=0) {
-						ca_fd[i]=dvbapi_open_device(1, i, demux[demux_id].adapter_index);
+						if (cfg.dvbapi_boxtype == BOXTYPE_PC)
+							ca_fd[i]=dvbapi_open_netdevice(1, i, demux[demux_id].adapter_index);
+						else
+							ca_fd[i]=dvbapi_open_device(1, i, demux[demux_id].adapter_index);
 						if (ca_fd[i]<=0)
 							return;
 					}
 
-					if (ioctl(ca_fd[i], CA_SET_DESCR, &ca_descr) < 0)
-						cs_debug_mask(D_DVBAPI, "Error CA_SET_DESCR");
+					if (cfg.dvbapi_boxtype == BOXTYPE_PC) {
+						int request = CA_SET_DESCR;
+						send(ca_fd[i],(void*)&request, sizeof(request), 0);
+						send(ca_fd[i],(void*)&ca_descr, sizeof(ca_descr), 0);
+					} else {
+						if (ioctl(ca_fd[i], CA_SET_DESCR, &ca_descr) < 0)
+							cs_debug_mask(D_DVBAPI, "Error CA_SET_DESCR");
+					}
 				}
 			}
 #endif

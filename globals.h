@@ -181,7 +181,6 @@
 #define CS_DELAY          0
 #define CS_ECM_RINGBUFFER_MAX 20 // max size for ECM last responsetimes ringbuffer
 
-#define CS_CACHE_TIMEOUT  120
 #ifndef PTHREAD_STACK_MIN
 #define PTHREAD_STACK_MIN 64000
 #endif
@@ -276,7 +275,8 @@
 #define BOXTYPE_QBOXHD	8
 #define BOXTYPE_COOLSTREAM	9
 #define BOXTYPE_NEUMO	10
-#define BOXTYPES		10
+#define BOXTYPE_PC		11
+#define BOXTYPES		11
 extern const char *boxdesc[];
 #endif
 
@@ -355,6 +355,9 @@ extern char *RDR_CD_TXT[];
 #define DEFAULT_LB_AUTO_BETATUNNEL 1
 #define DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA 50
 #define DEFAULT_CACHEEX_WAIT_TIME 50
+
+#define DEFAULT_MAX_CACHE_TIME 15
+#define DEFAULT_MAX_CACHE_COUNT 1000
 
 enum {E1_GLOBAL=0, E1_USER, E1_READER, E1_SERVER, E1_LSERVER};
 
@@ -1571,6 +1574,9 @@ struct s_config
 	in_addr_t	pand_srvip;
 #endif
 
+	uint32_t	max_cache_time;  //seconds
+	uint32_t	max_cache_count; //count ecms
+	
 #ifdef CS_CACHEEX
 	in_addr_t	csp_srvip;
 	int32_t		csp_port;
@@ -1578,7 +1584,7 @@ struct s_config
 
 	uint32_t	cacheex_wait_time; 		//cache wait time in ms
 	uint8_t		cacheex_enable_stats;	//enable stats
-
+	
 	struct s_cacheex_matcher *cacheex_matcher;
 #endif
 
