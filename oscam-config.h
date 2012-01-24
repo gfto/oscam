@@ -10,11 +10,11 @@
 #endif
 
 #ifndef WITH_SSL
-//#define WITH_SSL
+#define WITH_SSL
 #endif
 
 #ifndef WITH_SSLv3
-//#define WITH_SSLv3
+#define WITH_SSLv3
 #endif
 
 #ifndef HAVE_DVBAPI
@@ -70,7 +70,7 @@
 #endif
 
 #ifndef MODULE_CAMD33
-//#define MODULE_CAMD33
+#define MODULE_CAMD33
 #endif
 
 #ifndef MODULE_CAMD35
@@ -166,7 +166,6 @@
 #ifndef CS_LOGHISTORY
 #define CS_LOGHISTORY
 #endif
-
 
 #ifdef TUXBOX
 #  ifdef MIPSEL

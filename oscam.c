@@ -57,7 +57,6 @@ struct s_client *timecheck_client;
 
 //Cache for  ecms, cws and rcs:
 struct ecm_request_t	*ecmtask = NULL;
-uint32_t ecmtask_counter = 0;
 
 struct  s_config  cfg;
 
@@ -1755,7 +1754,8 @@ static int8_t match_alias(struct s_client *cl, ECM_REQUEST *er, ECM_REQUEST *ecm
 struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl)
 {
 	time_t now = time(NULL);
-	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
+	//time_t timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
+	time_t timeout = now-cfg.max_cache_time;
 	struct ecm_request_t *ecm;
 	uint64_t grp = cl?cl->grp:0;
 
@@ -3722,7 +3722,7 @@ static void * check_thread(void) {
 #endif
 
 	cs_ftime(&ecmc_time);
-	add_ms_to_timeb(&ecmc_time, 60000);
+	add_ms_to_timeb(&ecmc_time, 1000);
 
 	while(1) {
 		ts.tv_sec = msec_wait/1000;
@@ -3797,12 +3797,13 @@ static void * check_thread(void) {
 
 		if ((ecmc_next = comp_timeb(&ecmc_time, &t_now)) <= 10) {
 			now = time(NULL);
-			ecm_timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
+			ecm_timeout = now-cfg.max_cache_time;
+			uint32_t count = 0;
 
 			struct ecm_request_t *ecm, *ecmt=NULL, *prv;
 			cs_readlock(&ecmcache_lock);
-			for (ecm = ecmtask, prv = NULL; ecm; prv = ecm, ecm = ecm->next) {
-				if (ecm->tps.time < ecm_timeout) {
+			for (ecm = ecmtask, prv = NULL; ecm; prv = ecm, ecm = ecm->next, count++) {
+				if (ecm->tps.time < ecm_timeout || count > cfg.max_cache_count) {
 					cs_readunlock(&ecmcache_lock);
 					cs_writelock(&ecmcache_lock);
 					ecmt = ecm;
@@ -3824,7 +3825,7 @@ static void * check_thread(void) {
 			}
 
 			cs_ftime(&ecmc_time);
-			ecmc_next = add_ms_to_timeb(&ecmc_time, 60000);
+			ecmc_next = add_ms_to_timeb(&ecmc_time, 1000);
 		}
 
 		msec_wait = next_check;
