@@ -2745,8 +2745,11 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	else
 	{
 		if (prid && prid != er->prid) {
-			cs_debug_mask(D_TRACE, "provider fixed: %04X:%06X to %04X:%06X",er->caid, er->prid, er->caid, prid);
-			er->prid = prid;
+			cs_debug_mask(D_TRACE, "wrong provider found: %04X:%06X to %04X:%06X",er->caid, er->prid, er->caid, prid);
+			//er->prid = prid;
+			er->rc = E_INVALID;
+			er->rcEx = E2_IDENT;
+			snprintf( er->msglog, MSGLOGSIZE, "Wrong provider found in ECM" );
 		}
 	}
 
