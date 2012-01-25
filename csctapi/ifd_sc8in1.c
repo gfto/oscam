@@ -299,7 +299,7 @@ static int32_t mcrHelloOscam(struct s_reader *reader) {
 int32_t mcr_generateStatisticsForDisplay(struct s_reader *reader) {
 	// show number of clients
 	struct s_client *cl;
-	int numClients = 0;
+	uint16_t numClients = 0;
 	for ( cl=first_client; cl ; cl=cl->next ) {
 		if (cl->typ == 'c'){
 			numClients++;
@@ -345,7 +345,7 @@ static void* mcr_update_display_thread(void *param) {
 			// display the next character
 			cs_writelock(&reader->sc8in1_config->sc8in1_lock);
 			if (reader->sc8in1_config->display->blocking) {
-				int i = 0;
+				uint16_t i = 0;
 				for (i = 0; i < reader->sc8in1_config->display->text_length; i++) {
 					if (mcrWriteDisplayAscii(reader,
 							reader->sc8in1_config->display->text[++reader->sc8in1_config->display->last_char - 1], 0xFF)) {
@@ -419,7 +419,7 @@ int32_t MCR_DisplayText(struct s_reader *reader, char* text, uint16_t text_len, 
 	return OK;
 }
 
-static sc8in1SelectSlot(struct s_reader *reader, int32_t slot) {
+static sc8in1SelectSlot(struct s_reader *reader, uint16_t slot) {
 	int32_t res;
 	unsigned char tmp[128];
 	struct termios termio;
@@ -575,7 +575,7 @@ int32_t Sc8in1_SetTioAttr(int32_t fd, struct termios *current, struct termios *n
 	return OK;
 }
 
-int32_t Sc8in1_SetTermioForSlot(struct s_reader *reader, int32_t slot) {
+int32_t Sc8in1_SetTermioForSlot(struct s_reader *reader, uint16_t slot) {
 
 	Sc8in1_DebugSignals(reader, reader->slot, "SL100");
 	// switch SC8in1 to command mode
@@ -616,7 +616,7 @@ int32_t Sc8in1_SetTermioForSlot(struct s_reader *reader, int32_t slot) {
 	return OK;
 }
 
-int32_t Sc8in1_Selectslot(struct s_reader * reader, int32_t slot) {
+int32_t Sc8in1_Selectslot(struct s_reader * reader, uint16_t slot) {
 	// selects the Smartcard Socket "slot"
 	//
 #ifdef WITH_DEBUG
@@ -860,7 +860,7 @@ int32_t Sc8in1_GetActiveHandle(struct s_reader *reader) {
 
 int32_t Sc8in1_Close(struct s_reader *reader) {
 	// Check if we are the last active slot for the reader,
-	// then close the serial port. Otherwise just clear the handle.
+	// then close the serial port. Otherwise select next acive slot.
 	cs_debug_mask(D_IFD, "IFD: Closing SC8in1 device %s", reader->device);
 	bool status = ERROR;
 
@@ -868,6 +868,19 @@ int32_t Sc8in1_Close(struct s_reader *reader) {
 		cs_debug_mask(D_IFD, "IFD: Just deactivating SC8in1 device %s", reader->device);
 		reader->written = 0;
 		status = OK;
+		// select next active reader slot, so getstatus still works
+		if (reader->sc8in1_config->current_slot == reader->slot) {
+			struct s_reader *rdr;
+			for (rdr=first_active_reader; rdr; rdr=rdr->next) {
+				if (rdr->typ == R_SC8in1) {
+					if ((reader != rdr) && (reader->sc8in1_config == rdr->sc8in1_config)
+							&& rdr->handle != 0) {
+						status = Sc8in1_Selectslot(rdr, rdr->slot);
+						break;
+					}
+				}
+			}
+		}
 	} else {
 		// close serial port
 		status = IO_Serial_Close(reader);
@@ -965,6 +978,6 @@ int32_t Sc8in1_SetSlotForReader(struct s_reader *reader) {
 	int32_t pos = strlen(reader->device)-2; //this is where : should be located; is also valid length of physical device name
 	if (reader->device[pos] != 0x3a) //0x3a = ":"
 		cs_log("ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", reader->device[pos], reader->device);
-	reader->slot=(int)reader->device[pos+1] - 0x30;
+	reader->slot=(uint16_t)reader->device[pos+1] - 0x30;
 	return OK;
 }

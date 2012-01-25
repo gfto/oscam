@@ -770,6 +770,15 @@ void chk_t_global(const char *token, char *value)
 	}
 #endif
 
+	if (!strcmp(token, "max_cache_time")) {
+		cfg.max_cache_time = strToIntVal(value, 0);
+		return;
+	}
+	
+	if (!strcmp(token, "max_cache_count")) {
+		cfg.max_cache_count = strToIntVal(value, 0);
+		return;
+	}
 
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in global section not recognized\n", token);
@@ -1719,6 +1728,9 @@ int32_t init_config()
 	cfg.lcd_write_intervall = 10;
 #endif
 
+	cfg.max_cache_time = DEFAULT_MAX_CACHE_TIME;
+	cfg.max_cache_count = DEFAULT_MAX_CACHE_COUNT;
+	 
 	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_conf);
 	if (!(fp = fopen(token, "r"))) {
 		fprintf(stderr, "Cannot open config file '%s' (errno=%d %s)\n", token, errno, strerror(errno));
@@ -2252,6 +2264,11 @@ int32_t write_config()
 		fprintf_conf(f, "double_check", "%d\n", cfg.double_check);
 #endif
 
+	if (cfg.max_cache_time != DEFAULT_MAX_CACHE_TIME || cfg.http_full_cfg)
+		fprintf_conf(f, "max_cache_time", "%d\n", cfg.max_cache_time);
+	if (cfg.max_cache_count != DEFAULT_MAX_CACHE_COUNT || cfg.http_full_cfg)
+		fprintf_conf(f, "max_cache_count", "%d\n", cfg.max_cache_count);
+		
 	fputc((int)'\n', f);
 
 	/*monitor settings*/
