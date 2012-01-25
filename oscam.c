@@ -56,7 +56,8 @@ pthread_key_t getclient;
 struct s_client *timecheck_client;
 
 //Cache for  ecms, cws and rcs:
-struct ecm_request_t	*ecmtask = NULL;
+struct ecm_request_t	*ecmcwcache = NULL;
+uint32_t ecmcwcache_size = 0;
 
 struct  s_config  cfg;
 
@@ -591,7 +592,7 @@ static void cleanup_ecmtasks(struct s_client *cl)
 	
 	//remove this clients ecm from queue. because of cache, just null the client: 
 	cs_readlock(&ecmcache_lock);
-	for (ecm = ecmtask; ecm; ecm = ecm->next) { 
+	for (ecm = ecmcwcache; ecm; ecm = ecm->next) { 
 		if (ecm->client == cl)
 			ecm->client = NULL; 
 #ifdef CS_CACHEEX
@@ -1760,7 +1761,7 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl)
 	uint64_t grp = cl?cl->grp:0;
 
 	cs_readlock(&ecmcache_lock);
-	for (ecm = ecmtask; ecm; ecm = ecm->next) {
+	for (ecm = ecmcwcache; ecm; ecm = ecm->next) {
 		if (ecm->tps.time < timeout) {
 			ecm = NULL;
 			break;
@@ -1816,7 +1817,7 @@ static void distribute_ecm(ECM_REQUEST *er, int32_t rc)
 	struct ecm_request_t *ecm;
 
 	cs_readlock(&ecmcache_lock);
-	for (ecm = ecmtask; ecm; ecm = ecm->next) {
+	for (ecm = ecmcwcache; ecm; ecm = ecm->next) {
 		if (ecm->rc >= E_99 && ecm->ecmcacheptr == er)
 			write_ecm_answer(er->selected_reader, ecm, rc, 0, er->cw, NULL);
 	}
@@ -1874,8 +1875,8 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 
 	if (!ecm) {
 		cs_writelock(&ecmcache_lock);
-		er->next = ecmtask;
-		ecmtask = er;
+		er->next = ecmcwcache;
+		ecmcwcache = er;
 		cs_writeunlock(&ecmcache_lock);
 
 		er->selected_reader = cl->reader;
@@ -2690,8 +2691,24 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	uint32_t line = 0;
 
 	er->client = client;
-
 	client->lastecm = now;
+
+	if (client == first_client || !client ->account || client->account == first_client->account) {
+		//DVBApi+serial is allowed to request anonymous accounts:
+		int16_t lt = ph[client->ctyp].listenertype;
+		if (lt != LIS_DVBAPI && lt != LIS_SERIAL) {
+			er->rc = E_INVALID;
+			er->rcEx = E2_GLOBAL;
+			snprintf(er->msglog, sizeof(er->msglog), "invalid user account %s", username(client));
+		}
+	}
+
+	if (!client->grp) {
+		er->rc = E_INVALID;
+		er->rcEx = E2_GROUP;
+		snprintf(er->msglog, sizeof(er->msglog), "invalid user group %s", username(client));
+	}
+
 
 	if (!er->caid)
 		guess_cardsystem(er);
@@ -3024,8 +3041,9 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		if (cacheex == 0 || er->rc == E_99) { //Cacheex should not add to the ecmcache:
 #endif
 			cs_writelock(&ecmcache_lock);
-			er->next = ecmtask;
-			ecmtask = er;
+			er->next = ecmcwcache;
+			ecmcwcache = er;
+			ecmcwcache_size++;
 			cs_writeunlock(&ecmcache_lock);
 
 			if (er->rc == E_UNHANDLED) {
@@ -3743,7 +3761,7 @@ static void * check_thread(void) {
 		cs_ftime(&t_now);
 		cs_readlock(&ecmcache_lock);
 
-		for (er = ecmtask; er; er = er->next) {
+		for (er = ecmcwcache; er; er = er->next) {
 			if (er->rc < E_99)
 				continue;
 
@@ -3802,7 +3820,7 @@ static void * check_thread(void) {
 
 			struct ecm_request_t *ecm, *ecmt=NULL, *prv;
 			cs_readlock(&ecmcache_lock);
-			for (ecm = ecmtask, prv = NULL; ecm; prv = ecm, ecm = ecm->next, count++) {
+			for (ecm = ecmcwcache, prv = NULL; ecm; prv = ecm, ecm = ecm->next, count++) {
 				if (ecm->tps.time < ecm_timeout || count > cfg.max_cache_count) {
 					cs_readunlock(&ecmcache_lock);
 					cs_writelock(&ecmcache_lock);
@@ -3810,13 +3828,14 @@ static void * check_thread(void) {
 					if (prv)
 						prv->next = NULL;
 					else
-						ecmtask = NULL;
+						ecmcwcache = NULL;
 					cs_writeunlock(&ecmcache_lock);
 					break;
 				}
 			}
 			if (!ecmt)
 				cs_readunlock(&ecmcache_lock);
+			ecmcwcache_size = count;
 
 			while (ecmt) {
 				ecm = ecmt->next;

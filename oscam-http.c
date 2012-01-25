@@ -251,6 +251,10 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	if (cfg.reader_restart_seconds)
 		tpl_printf(vars, TPLADD, "READERRESTARTSECONDS", "%d", cfg.reader_restart_seconds);
 
+	tpl_printf(vars, TPLADD, "MAXCACHETIME", "%d", cfg.max_cache_time);
+
+	tpl_printf(vars, TPLADD, "MAXCACHECOUNT", "%d", cfg.max_cache_count);
+
 	if (cfg.dropdups)
 		tpl_addVar(vars, TPLADD, "DROPDUPSCHECKED", "selected");
 
@@ -4200,6 +4204,7 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 	tpl_printf(vars, TPLADD, "TOTAL_CACHEXGOT", "%ld", first_client->cwcacheexgot);
 	tpl_addVar(vars, TPLADD, "TOTAL_CACHEXGOT_IMG", getting);
 	tpl_printf(vars, TPLADD, "TOTAL_CACHEXHIT", "%ld", first_client->cwcacheexhit);
+	tpl_printf(vars, TPLADD, "TOTAL_CACHESIZE", "%d", ecmcwcache_size);
 
 	return tpl_getTpl(vars, "CACHEEXPAGE");
 }

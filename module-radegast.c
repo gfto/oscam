@@ -46,24 +46,25 @@ static void radegast_auth_client(in_addr_t ip)
 {
   int32_t ok;
   struct s_auth *account;
+  struct s_client *cl = cur_client();
 
   ok = check_ip(cfg.rad_allowed, ip);
 
   if (!ok)
   {
-    cs_auth_client(cur_client(), (struct s_auth *)0, NULL);
-    cs_disconnect_client(cur_client());
+    cs_auth_client(cl, (struct s_auth *)0, NULL);
+    cs_disconnect_client(cl);
   }
 
   for (ok=0, account=cfg.account; (cfg.rad_usr[0]) && (account) && (!ok); account=account->next)
   {
     ok=(!strcmp(cfg.rad_usr, account->usr));
-    if (ok && cs_auth_client(cur_client(), account, NULL))
-      cs_disconnect_client(cur_client());
+    if (ok && cs_auth_client(cl, account, NULL))
+      cs_disconnect_client(cl);
   }
 
   if (!ok)
-    cs_auth_client(cur_client(), (struct s_auth *)(-1), NULL);
+    cs_auth_client(cl, (struct s_auth *)(-1), NULL);
 }
 
 static void radegast_send_dcw(struct s_client *client, ECM_REQUEST *er)
@@ -90,6 +91,7 @@ static void radegast_process_ecm(uchar *buf, int32_t l)
 {
   int32_t i, n, sl;
   ECM_REQUEST *er;
+  struct s_client *cl = cur_client();
 
   if (!(er=get_ecmtask()))
     return;
@@ -121,7 +123,7 @@ static void radegast_process_ecm(uchar *buf, int32_t l)
   if (l!=i)
     cs_log("WARNING: ECM-request corrupt");
   else
-    get_cw(cur_client(), er);
+    get_cw(cl, er);
 }
 
 static void radegast_process_unknown(uchar *buf)
@@ -196,22 +198,21 @@ static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar
 
 int32_t radegast_cli_init(struct s_client *cl)
 {
-  *cl = *cl; //prevent compiler warning
   int32_t handle;
 
   cs_log("radegast: proxy %s:%d (fd=%d)",
-  cur_client()->reader->device, cur_client()->reader->r_port, cur_client()->udp_fd);
+  cl->reader->device, cl->reader->r_port, cl->udp_fd);
 
   handle = network_tcp_connection_open(cl->reader);
   if(handle < 0) return -1;
 
-  cur_client()->reader->tcp_connected = 2;
-  cur_client()->reader->card_status = CARD_INSERTED;
-  cur_client()->reader->last_g = cur_client()->reader->last_s = time((time_t *)0);
+  cl->reader->tcp_connected = 2;
+  cl->reader->card_status = CARD_INSERTED;
+  cl->reader->last_g = cl->reader->last_s = time((time_t *)0);
 
-  cs_debug_mask(D_CLIENT, "radegast: last_s=%ld, last_g=%ld", cur_client()->reader->last_s, cur_client()->reader->last_g);
+  cs_debug_mask(D_CLIENT, "radegast: last_s=%ld, last_g=%ld", cl->reader->last_s, cl->reader->last_g);
 
-  cur_client()->pfd=cur_client()->udp_fd;
+  cl->pfd=cl->udp_fd;
 
   return(0);
 }
