@@ -113,7 +113,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 				cs_log("ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", reader->device[pos], reader->device);
 
 			// Check if serial port is open already
-			reader->handle = Sc8in1_GetActiveHandle(reader);
+			reader->handle = Sc8in1_GetActiveHandle(reader, FALSE);
 			if ( ! reader->handle ) {
 				cs_debug_mask(D_DEVICE, "ICC_Async_Device_Init opening SC8in1");
 				//open physical device

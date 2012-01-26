@@ -1304,11 +1304,6 @@ void cs_user_resolve(struct s_auth *account){
 
 /* Starts a thread named nameroutine with the start function startroutine. */
 void start_thread(void * startroutine, char * nameroutine) {
-	start_thread_with_param(startroutine, nameroutine, NULL);
-}
-
-/* Starts a thread named nameroutine with the start function startroutine and parameter param. */
-void start_thread_with_param(void * startroutine, char * nameroutine, void * param) {
 	pthread_t temp;
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
@@ -1317,7 +1312,7 @@ void start_thread_with_param(void * startroutine, char * nameroutine, void * par
 	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
 	cs_writelock(&system_lock);
-	if (pthread_create(&temp, &attr, startroutine, param))
+	if (pthread_create(&temp, &attr, startroutine, NULL))
 		cs_log("ERROR: can't create %s thread", nameroutine);
 	else {
 		cs_log("%s thread started", nameroutine);
