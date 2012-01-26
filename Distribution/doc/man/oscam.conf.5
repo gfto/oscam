@@ -19,6 +19,16 @@ bind service to specified IP address, default:all
 value to delay cached requests, default:0
 .RE
 .PP
+\fBmax_cache_time\fP = \fBseconds\fP
+.RS 3n
+maximum time CWs resist in cache after 1st client request, default:15
+.RE
+.PP
+\fBmax_cache_count\fP = \fBcount\fP
+.RS 3n
+maximum CWs in cache, default:1000
+.RE
+.PP
 \fBlogfile\fP = [\fBfilename\fP][\fB;syslog\fP][\fB;stdout\fP]
 .RS 3n
 logging targets, default: /var/log/oscam.log. You can define a maximum of one filename and 
