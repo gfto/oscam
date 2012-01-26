@@ -609,6 +609,7 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR newatr)
 static int32_t videoguard2_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
   unsigned char cta_res[CTA_RES_LEN];
+  static const char valid_ecm[] = { 0x00, 0x00, 0x01 };
   unsigned char ins40[5] = { 0xD1,0x40,0x00,0x80,0xFF };
   static const unsigned char ins54[5] = { 0xD3,0x54,0x00,0x00,0x00};
   int32_t posECMpart2=er->ecm[6]+7;
@@ -617,6 +618,13 @@ static int32_t videoguard2_do_ecm(struct s_reader * reader, const ECM_REQUEST *e
   tbuff[0]=0;
 
   memset(ea->cw+0,0,16); //set cw to 0 so client will know it is invalid unless it is overwritten with a valid cw
+
+  if (memcmp(&(er->ecm[3]), valid_ecm, sizeof(valid_ecm) != 0))
+  {
+    cs_log("Not a valid ecm");
+    return ERROR;
+  }
+  
   memcpy(tbuff+1,er->ecm+posECMpart2+1,lenECMpart2-1);
 
 /*
