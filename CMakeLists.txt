@@ -566,7 +566,16 @@ endif (OSCAM_SVN_REVISION MATCHES "Unversioned directory")
 add_definitions ("-D'CS_SVN_VERSION=\"${OSCAM_SVN_REVISION}\"'")
 
 #----------------------- global compile and link options ------------------------------
-
+# disable warning about unused but set variables in gcc 4.6+
+if (CMAKE_COMPILER_IS_GNUCC)
+    execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+    string(REGEX MATCHALL "[0-9]+" GCC_VERSION_COMPONENTS ${GCC_VERSION})
+    list(GET GCC_VERSION_COMPONENTS 0 GCC_MAJOR)
+    list(GET GCC_VERSION_COMPONENTS 1 GCC_MINOR)
+    if (${GCC_MAJOR} GREATER 3 AND ${GCC_MINOR} GREATER 5)
+        add_definitions ("-Wno-unused-but-set-variable")
+    endif (${GCC_MAJOR} GREATER 3 AND ${GCC_MINOR} GREATER 5)
+endif (CMAKE_COMPILER_IS_GNUCC)
 # some optimisations
 if (OSCamOperatingSystem MATCHES "Mac OS X")
     add_definitions ("-Winline -Wall -Wextra -m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk")
