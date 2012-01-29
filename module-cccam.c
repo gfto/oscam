@@ -2088,7 +2088,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				break;
 			}
 		}
-		
+#ifdef CCCSHARE
 		//Check Ident filter:
 		if (card) {
 			if (!chk_ident(&rdr->ftab, card)) {
@@ -2096,7 +2096,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				card=NULL;
 			}
 		}
-				
+#endif					
 		if (card) {
 			//Check if we already have this card:
 			it = ll_iter_create(cc->cards);
@@ -2343,7 +2343,9 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				er->prid = b2i(4, buf + 6);
 				cc->server_ecm_pending++;
 				er->idx = ++cc->server_ecm_idx;
-
+				
+#ifdef MODULE_CCCSHARE
+				
 				if (cfg.cc_forward_origin_card) { //search my shares for this card:
 						cs_debug_mask(D_TRACE, "%s forward card: %04X:%04x search share %d", getprefix(), er->caid, er->srvid, server_card->id);
 						LLIST **sharelist = get_and_lock_sharelist();
@@ -2397,6 +2399,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 										card->id, ordr->label, rcard->id);
 						unlock_sharelist();
 				}
+#endif				
 						
 				cs_debug_mask(
 						D_CLIENT,
@@ -3095,9 +3098,10 @@ int32_t cc_srv_connect(struct s_client *cl) {
 		cs_debug_mask(D_CLIENT, "%s 2.1.x compatibility mode", getprefix());
 
 	cs_debug_mask(D_TRACE, "ccc send cards %s", usr);
- 
+ #ifdef CCCSHARE
 	if (!cc_srv_report_cards(cl))
 		return -1;
+#endif		
 	cs_ftime(&cc->ecm_time);
 
 	//some clients, e.g. mgcamd, does not support keepalive. So if not answered, keep connection
@@ -3496,8 +3500,9 @@ void module_cccam(struct s_module *ph) {
 	ph->num = R_CCCAM;
 
 	cc_update_nodeid();
-
+#ifdef CCCSHARE
 	if (cfg.cc_port[0])
-		init_share();		
+		init_share();
+#endif		
 }
 #endif

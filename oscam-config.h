@@ -10,7 +10,7 @@
 #endif
 
 #ifndef WITH_SSL
-//#define WITH_SSL
+#define WITH_SSL
 #endif
 
 #ifndef HAVE_DVBAPI
@@ -19,11 +19,13 @@
 #endif
 #endif
 
+
 #ifdef HAVE_DVBAPI
 #ifndef WITH_STAPI
 //#define WITH_STAPI
 #endif
 #endif
+
 
 #ifndef IRDETO_GUESSING
 #define IRDETO_GUESSING
@@ -76,6 +78,11 @@
 #ifndef MODULE_CCCAM
 #define MODULE_CCCAM
 #endif
+
+#ifdef MODULE_CCCSHARE
+#define MODULE_CCCSHARE
+#endif
+
 
 #ifndef MODULE_GBOX
 #define MODULE_GBOX

@@ -275,6 +275,9 @@ static void usage()
 #ifdef MODULE_CCCAM
   fprintf(stderr, "cccam ");
 #endif
+#ifdef MODULE_CCCSHARE
+  fprintf(stderr, "cccam share ");
+#endif
 #ifdef MODULE_PANDORA
   fprintf(stderr, "pandora ");
 #endif
@@ -678,7 +681,7 @@ static void cs_cleanup()
 	}
 #endif
 
-#ifdef MODULE_CCCAM
+#ifdef MODULE_CCCSHARE
 	done_share();
 #endif
 
@@ -4214,6 +4217,9 @@ int32_t main (int32_t argc, char *argv[])
 #endif
 #ifdef MODULE_CCCAM
            module_cccam,
+#endif
+#ifdef MODULE_CCCSHARE
+           module_cccshare,
 #endif
 #ifdef MODULE_PANDORA
            module_pandora,

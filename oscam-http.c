@@ -573,7 +573,9 @@ static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams
 
 	if (strcmp(getParam(params, "button"), "Refresh global list") == 0) {
 		cs_debug_mask(D_TRACE, "Entitlements: Refresh Shares start");
+#ifdef MODULE_CCCSHARE		
 		refresh_shares();
+#endif		
 		cs_debug_mask(D_TRACE, "Entitlements: Refresh Shares finished");
 		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Refresh Shares started</B><BR><BR>");
 	}
@@ -2451,11 +2453,13 @@ static void print_cards(struct templatevars *vars, struct uriparams *params, LLI
 		char *provider = "";
 
 		// @todo alno: sort by click, 0=ascending, 1=descending (maybe two buttons or reverse on second click)
+#ifdef MODULE_CCCSHARE
 		struct cc_card **cardarray = get_sorted_card_copy(cards, 0, &cardsize);
-
+#endif
 		for(i = offset; i < cardsize; ++i) {
+#ifdef MODULE_CCCSHARE
 			card = cardarray[i];
-
+#endif
 			if (count == ENTITLEMENT_PAGE_SIZE)
 				break;
 			count++;
@@ -2572,8 +2576,9 @@ static void print_cards(struct templatevars *vars, struct uriparams *params, LLI
 
 			cardcount++;
 		}
+#ifdef MODULE_CCCSHARE
 		free(cardarray);
-
+#endif
 		// set previous Link if needed
 		if (offset >= ENTITLEMENT_PAGE_SIZE) {
 			tpl_printf(vars, TPLAPPEND, "CONTROLS", "<A HREF=\"entitlements.html?offset=%d&globallist=%s&amp;label=%s\"> << PREVIOUS < </A>",
@@ -2634,13 +2639,15 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 			}
 
 			if (show_global_list) {
+#ifdef MODULE_CCCSHARE								
 				int i;
-				LLIST **sharelist = get_and_lock_sharelist();
+				LLIST **sharelist = get_and_lock_sharelist();				
 				for (i=0;i<CAID_KEY;i++) {
-					if (sharelist[i])
+					if (sharelist[i])		
 						print_cards(vars, params, sharelist[i], 1, NULL, offset, apicall);
-				}
+				}			
 				unlock_sharelist();
+#endif
 			} else {
 				struct s_client *rc = rdr->client;
 				struct cc_data *rcc = (rc)?rc->cc:NULL;
