@@ -90,7 +90,7 @@ menu_protocols() {
 		MODULE_CAMD35_TCP	"camd 3.5 TCP"	        $(check_test "MODULE_CAMD35_TCP") \
 		MODULE_NEWCAMD		"newcamd"		$(check_test "MODULE_NEWCAMD") \
 		MODULE_CCCAM		"CCcam"			$(check_test "MODULE_CCCAM") \
-		MODULE_CCCAM		"CCcam Share"		$(check_test "MODULE_CCCSHARE") \
+		MODULE_CCCSHARE		"CCcam Share"		$(check_test "MODULE_CCCSHARE") \
 		MODULE_GBOX		"gbox"  		$(check_test "MODULE_GBOX") \
 		MODULE_RADEGAST		"radegast"		$(check_test "MODULE_RADEGAST") \
 		MODULE_SERIAL		"Serial"		$(check_test "MODULE_SERIAL") \
