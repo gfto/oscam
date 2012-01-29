@@ -79,7 +79,7 @@
 #define MODULE_CCCAM
 #endif
 
-#ifdef MODULE_CCCSHARE
+#ifndef MODULE_CCCSHARE
 #define MODULE_CCCSHARE
 #endif
 

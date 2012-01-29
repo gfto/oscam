@@ -4218,9 +4218,6 @@ int32_t main (int32_t argc, char *argv[])
 #ifdef MODULE_CCCAM
            module_cccam,
 #endif
-#ifdef MODULE_CCCSHARE
-           module_cccshare,
-#endif
 #ifdef MODULE_PANDORA
            module_pandora,
 #endif
