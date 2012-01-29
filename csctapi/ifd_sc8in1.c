@@ -23,6 +23,8 @@
 #include "io_serial.h"
 #include "icc_async.h"
 
+#define SC8IN1_TIMEOUT_HACK 1
+
 #define LOCK_SC8IN1 \
 { \
 	if (reader->typ == R_SC8in1) { \
@@ -66,7 +68,6 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 
 	// switch SC8in1 to command mode
 	IO_Serial_DTR_Set(reader);
-	tcflush(reader->handle, TCIOFLUSH);
 
 	// backup data
 	tcgetattr(reader->handle, &termio);
@@ -93,8 +94,6 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 		return ERROR;
 	}
 	Sc8in1_DebugSignals(reader, reader->slot, "CMD11");
-	IO_Serial_DTR_Set(reader);
-	tcflush(reader->handle, TCIOFLUSH);
 
 	// enable EEPROM write
 	if (enableEepromWrite) {
@@ -111,17 +110,60 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 	}
 	// write cmd
 	cs_ddump_mask(D_DEVICE, buff, lenwrite, "IO: Sending: ");
-	if (!write(reader->handle, buff, lenwrite)) { //dont use IO_Serial_Write since mcr commands dont echo back
-		cs_log("SC8in1 Command write error");
-		return ERROR;
+	uint32_t dataWritten = 0, dataToWrite = lenwrite;
+	while (dataWritten < lenwrite) {
+		uint32_t written = write(reader->handle, buff, dataToWrite);
+		if (written == -1) {
+			cs_log("SC8in1 Command write error");
+			return ERROR;
+		}
+		if (written == lenwrite) {
+			break;
+		}
+		else {
+			dataWritten += written;
+			dataToWrite -= written;
+		}
 	}
-	tcdrain(reader->handle);
+	while (1) {
+		int32_t tcdrain_ret = tcdrain(reader->handle);
+		if (tcdrain_ret==-1) {
+			if (errno==EINTR) {
+				//try again in case of Interrupted system call
+				continue;
+			} else
+				cs_log("ERROR in sc8in1_command - tcdrain: (errno=%d %s)", errno, strerror(errno));
+				return ERROR;
+		}
+		break;
+	}
 
 	if (IO_Serial_Read(reader, 1000, lenread, buff) == ERROR) {
 		cs_log("SC8in1 Command read error");
 		return ERROR;
 	}
 
+#ifdef SC8IN1_TIMEOUT_HACK
+	// On some system, at least my dockstar, tcdrain returns before the transmitted bytes actually
+	// reach the serial port. This here is an awful hack, to workaround the issue.
+	// We transmit the ECHO command to the device and wait until it sends back the echo char 'A'
+	// to us. This way we can be sure that the main command in buff has been received by the device.
+	// Another way to workaround this issue is to wait for an appropriate amount of time, but i think
+	// thats even worse.
+	if (lenread <= 0 && reader->sc8in1_config->mcr_type) {
+		unsigned char buff_echo_hack[2] = { 0x65, 'A' };
+		cs_ddump_mask(D_DEVICE, &buff_echo_hack[0], 2, "IO: Sending: ");
+		if (write(reader->handle, &buff_echo_hack[0], 2) != 2) {
+			cs_log("SC8in1 Command write error");
+			return ERROR;
+		}
+		tcdrain(reader->handle); // should be useless.. but what the hell
+		if (IO_Serial_Read(reader, 1000, 1, &buff_echo_hack[0]) == ERROR) {
+			cs_log("SC8in1 Command read error");
+			return ERROR;
+		}
+	}
+#endif
 	// restore baudrate only if changed
 	if (currentBaudrate) {
 		if (Sc8in1_SetBaudrate(reader, currentBaudrate, &termiobackup, 1)) {
