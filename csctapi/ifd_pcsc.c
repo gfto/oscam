@@ -1,6 +1,6 @@
+#include "ifd_pcsc.h"
 #ifdef WITH_CARDREADER
 #ifdef HAVE_PCSC
-#include "ifd_pcsc.h"
 int32_t pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
 {
     ULONG rv;

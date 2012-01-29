@@ -108,7 +108,7 @@
 // CARDREADER
 //
 
-#if defined(WITH_CARDREADER) || !defined(HAVE_PCSC)
+#ifndef WITH_CARDREADER
 #define WITH_CARDREADER
 #endif
 

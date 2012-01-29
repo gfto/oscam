@@ -896,7 +896,11 @@ SSL_CTX *SSL_Webif_Init() {
 
 	if(cfg.http_force_sslv3){
 		ctx = SSL_CTX_new(SSLv3_server_method());
+		#ifdef SSL_CTX_clear_options
 		SSL_CTX_clear_options(ctx, SSL_OP_ALL); //we CLEAR all bug workarounds! This is for security reason
+		#else
+		cs_log("WARNING: You enabled to force sslv3 but your system does not support to clear the ssl workarounds! SSL security will be reduced!")
+		#endif
 		SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2); // we force SSL v3 !
 		SSL_CTX_set_cipher_list(ctx, SSL_TXT_RC4);
 	} else
