@@ -332,7 +332,7 @@ static void usage()
   fprintf(stderr, "tongfang ");
 #endif
   fprintf(stderr, "\n\n");
-  fprintf(stderr, "oscam [-b] [-s] [-c <config dir>] [-t <tmp dir>] [-d <level>] [-r <level>] [-h]");
+  fprintf(stderr, "oscam [-a] [-b] [-s] [-c <config dir>] [-t <tmp dir>] [-d <level>] [-r <level>] [-w <secs>] [-g <mode>] [-u] [-h]");
   fprintf(stderr, "\n\n\t-a         : write oscam.crash on segfault (needs installed GDB and OSCam compiled with debug infos -ggdb)\n");
   fprintf(stderr, "\t-b         : start in background\n");
   fprintf(stderr, "\t-s         : capture segmentation faults\n");
@@ -361,6 +361,7 @@ static void usage()
   fprintf(stderr, "\t               1 = restart activated, web interface can restart oscam (default)\n");
   fprintf(stderr, "\t               2 = like 1, but also restart on segmentation faults\n");
 #endif
+	fprintf(stderr, "\t-g <mode>  : garbage collector debug mode (1=immediate free, 2=check for double frees); these options are only intended for debug!\n");
   fprintf(stderr, "\t-w <secs>  : wait up to <secs> seconds for the system time to be set correctly (default 60)\n");
   fprintf(stderr, "\t-u         : enable output of web interface in UTF-8 charset\n");
   fprintf(stderr, "\t-h         : show this help\n");
