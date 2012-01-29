@@ -681,8 +681,10 @@ static void cs_cleanup()
 	}
 #endif
 
+#ifdef MODULE_CCCAM
 #ifdef MODULE_CCCSHARE
 	done_share();
+#endif
 #endif
 
 	//cleanup clients:
