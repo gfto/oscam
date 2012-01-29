@@ -1,4 +1,5 @@
 #include "globals.h"
+#ifdef MODULE_NEWCAMD
 
 #define CWS_NETMSGSIZE 362
 #define NCD_CLIENT_ID 0x8888
@@ -1180,3 +1181,4 @@ void module_newcamd(struct s_module *ph)
   ph->c_idle = newcamd_idle;
   ph->num=R_NEWCAMD;
 }
+#endif

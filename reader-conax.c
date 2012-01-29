@@ -1,4 +1,5 @@
 #include "globals.h"
+#ifdef READER_CONAX 
 #include "reader-common.h"
 
 static time_t chid_date(const uchar *ptr, char *buf, int32_t l)
@@ -371,3 +372,4 @@ void reader_conax(struct s_cardsystem *ph)
 	ph->caids[0]=0x0B;
 	ph->desc="conax";
 }
+#endif

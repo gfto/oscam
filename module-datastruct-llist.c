@@ -14,10 +14,12 @@
 
 */
 
+#ifdef WITH_DEBUG
 static int8_t chk_debuglog(LLIST *l)
 {
 	return (l && l->lock.name != LOG_LIST);
 }
+#endif
 
 static void _destroy(LLIST *l)
 {

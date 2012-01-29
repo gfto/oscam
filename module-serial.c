@@ -1,4 +1,5 @@
 #include "globals.h"
+#ifdef MODULE_SERIAL
 #include <termios.h>
 
 #define HSIC_CRC 0xA5
@@ -1213,3 +1214,4 @@ void module_oscam_ser(struct s_module *ph)
   ph->c_send_ecm=oscam_ser_send_ecm;
   ph->num=R_SERIAL;
 }
+#endif

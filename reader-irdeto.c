@@ -1,4 +1,5 @@
 #include "globals.h"
+#ifdef READER_IRDETO 
 #include "reader-common.h"
 
 static const uchar CryptTable[256] =
@@ -887,3 +888,4 @@ void reader_irdeto(struct s_cardsystem *ph)
 	ph->caids[1]=0x17;
 	ph->desc="irdeto";
 }
+#endif

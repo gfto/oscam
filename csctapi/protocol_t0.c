@@ -23,6 +23,7 @@
 */
 
 #include "../globals.h"
+#ifdef WITH_CARDREADER
 #include "defines.h"
 
 #include "protocol_t0.h"
@@ -512,3 +513,4 @@ int32_t Protocol_T14_ExchangeTPDU (struct s_reader *reader, unsigned char * cmd_
 	memcpy(rsp, buffer + 8, *lr); 
 	return OK;
 }
+#endif

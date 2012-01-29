@@ -2,7 +2,9 @@
 		ifd_phoenix.c
 		This module provides IFD handling functions for Smartmouse/Phoenix reader.
 */
+
 #include "../globals.h"
+#ifdef WITH_CARDREADER
 #include "atr.h"
 #include <termios.h>
 #include "ifd_phoenix.h"
@@ -375,3 +377,4 @@ void cardreader_mouse(struct s_cardreader *crdr)
 	crdr->need_inverse	= 1;
 	crdr->read_written	= 1;
 }
+#endif

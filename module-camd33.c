@@ -1,4 +1,5 @@
 #include "globals.h"
+#ifdef MODULE_CAMD33
 
 #define REQ_SIZE	4
 
@@ -171,3 +172,4 @@ void module_camd33(struct s_module *ph)
   ph->send_dcw=camd33_send_dcw;
   ph->num=R_CAMD33;
 }
+#endif

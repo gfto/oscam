@@ -1,4 +1,5 @@
-
+#ifdef WITH_CARDREADER
+#ifdef AZBOX
 #include "ifd_azbox.h"
 #include"icc_async.h"
 
@@ -105,3 +106,5 @@ int32_t Azbox_Close(struct s_reader *reader)
 
   return OK;
 }
+#endif
+#endif

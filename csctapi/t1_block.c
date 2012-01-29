@@ -21,7 +21,8 @@
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-
+#include "../globals.h"
+#ifdef WITH_CARDREADER
 #include "t1_block.h"
 #include <stdlib.h>
 #include <string.h>
@@ -189,3 +190,4 @@ static unsigned char T1_Block_LRC (unsigned char * data, uint32_t length)
       lrc ^= data[i];
   return lrc;       
 }
+#endif

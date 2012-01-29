@@ -1,4 +1,5 @@
 #include "../globals.h"
+#ifdef WITH_CARDREADER
 #include "icc_async.h"
 #include "io_serial.h"
 #include <termios.h>
@@ -202,3 +203,4 @@ int32_t MP35_Close(struct s_reader * reader)
 
 	return OK;
 }
+#endif

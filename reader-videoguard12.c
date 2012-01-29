@@ -1,4 +1,5 @@
 #include "globals.h"
+#ifdef READER_VIDEOGUARD
 #include "reader-common.h"
 #include "reader-videoguard-common.h"
 
@@ -386,3 +387,4 @@ void reader_videoguard12(struct s_cardsystem *ph)
   ph->get_emm_filter=videoguard_get_emm_filter;
   ph->caids[0]=0x09;
 }
+#endif

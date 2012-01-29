@@ -624,8 +624,8 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
   if (rc) cl->lastemm=time((time_t*)0);
 
-#ifdef CS_LED
-  if (rc) cs_switch_led(LED3, LED_BLINK_ON);
+#ifdef ARM
+  if (rc && cfg.enableled == 1) cs_switch_led(LED3, LED_BLINK_ON);
 #endif
 
   if (reader->logemm & (1 << rc))
@@ -655,8 +655,8 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   }
 #endif
 
-#ifdef QBOXHD_LED
-  if (rc) qboxhd_led_blink(QBOXHD_LED_COLOR_BLUE,QBOXHD_LED_BLINK_MEDIUM);
+#ifdef QBOXHD
+  if (rc && cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_BLUE,QBOXHD_LED_BLINK_MEDIUM);
 #endif
 
 

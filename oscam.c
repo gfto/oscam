@@ -34,11 +34,11 @@ int32_t cs_dblevel=0;   // Debug Level
 int32_t thread_pipe[2] = {0, 0};
 #ifdef WEBIF
 int8_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)restart fork, restart by webif, 2=like=1, but also restart on segfaults
+uint8_t cs_http_use_utf8 = 0;
 #endif
 int8_t cs_capture_SEGV=0;
 int8_t cs_dump_stack=0;
 uint16_t cs_waittime = 60;
-uint8_t cs_http_use_utf8 = 0;
 char  cs_tmpdir[200]={0x00};
 pid_t server_pid=0;
 #if defined(LIBUSB)
@@ -63,8 +63,10 @@ struct  s_config  cfg;
 
 char    *prog_name = NULL;
 char    *processUsername = NULL;
+#if defined(WEBIF) || defined(MODULE_MONITOR) 
 char    *loghist = NULL;     // ptr of log-history
 char    *loghistptr = NULL;
+#endif
 
 #ifdef CS_CACHEEX
 int32_t cs_add_cacheex_stats(struct s_client *cl, uint16_t caid, uint16_t srvid, uint32_t prid, uint8_t direction) {
@@ -245,18 +247,6 @@ static void usage()
 #ifdef WITH_DEBUG
   fprintf(stderr, "debug ");
 #endif
-#ifdef CS_LED
-  fprintf(stderr, "led ");
-#endif
-#ifdef CS_WITH_DOUBLECHECK
-  fprintf(stderr, "doublecheck ");
-#endif
-#ifdef QBOXHD_LED
-  fprintf(stderr, "qboxhd-led ");
-#endif
-#ifdef CS_LOGHISTORY
-  fprintf(stderr, "loghistory ");
-#endif
 #ifdef LIBUSB
   fprintf(stderr, "smartreader ");
 #endif
@@ -332,7 +322,11 @@ static void usage()
   fprintf(stderr, "tongfang ");
 #endif
   fprintf(stderr, "\n\n");
+#ifdef WEBIF
   fprintf(stderr, "oscam [-a] [-b] [-s] [-c <config dir>] [-t <tmp dir>] [-d <level>] [-r <level>] [-w <secs>] [-g <mode>] [-u] [-h]");
+#else
+	fprintf(stderr, "oscam [-a] [-b] [-s] [-c <config dir>] [-t <tmp dir>] [-d <level>] [-w <secs>] [-g <mode>] [-h]");
+#endif
   fprintf(stderr, "\n\n\t-a         : write oscam.crash on segfault (needs installed GDB and OSCam compiled with debug infos -ggdb)\n");
   fprintf(stderr, "\t-b         : start in background\n");
   fprintf(stderr, "\t-s         : capture segmentation faults\n");
@@ -363,7 +357,9 @@ static void usage()
 #endif
 	fprintf(stderr, "\t-g <mode>  : garbage collector debug mode (1=immediate free, 2=check for double frees); these options are only intended for debug!\n");
   fprintf(stderr, "\t-w <secs>  : wait up to <secs> seconds for the system time to be set correctly (default 60)\n");
+#ifdef WEBIF 
   fprintf(stderr, "\t-u         : enable output of web interface in UTF-8 charset\n");
+#endif
   fprintf(stderr, "\t-h         : show this help\n");
   fprintf(stderr, "\n");
   exit(1);
@@ -627,8 +623,10 @@ void cleanup_thread(void *var)
 		remove_reader_from_active(rdr);
 		if(rdr->ph.cleanup)
 			rdr->ph.cleanup(cl);
+#ifdef WITH_CARDREADER
 		if (cl->typ == 'r')
 			ICC_Async_Close(rdr);
+#endif
 		if (cl->typ == 'p')
 			network_tcp_connection_close(rdr);
 		if(rdrcl) rdrcl = NULL;
@@ -665,7 +663,9 @@ void cleanup_thread(void *var)
 #ifdef MODULE_CCCAM
 	add_garbage(cl->cc);
 #endif
+#ifdef MODULE_SERIAL
 	add_garbage(cl->serialdata);
+#endif
 	add_garbage(cl);
 }
 
@@ -909,7 +909,7 @@ void cs_exit(int32_t sig)
   	return;
 
   if(cl->typ == 'h' || cl->typ == 's'){
-#ifdef CS_LED
+#ifdef ARM
 		if(cfg.enableled == 1){
 			cs_switch_led(LED1B, LED_OFF);
 			cs_switch_led(LED2, LED_OFF);
@@ -917,7 +917,7 @@ void cs_exit(int32_t sig)
 			cs_switch_led(LED1A, LED_ON);
 		}
 #endif
-#ifdef QBOXHD_LED
+#ifdef QBOXHD
 		if(cfg.enableled == 2){
 	    qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_FAST);
 	    qboxhd_led_blink(QBOXHD_LED_COLOR_RED,QBOXHD_LED_BLINK_FAST);
@@ -1123,7 +1123,9 @@ static void init_first_client()
 #if defined(LIBUSB)
   cs_lock_create(&sr_lock, 10, "sr_lock");
 #endif
+#ifdef WITH_CARDREADER
   cs_lock_create(&sc8in1_lock, 10, "sc8in1_lock");
+#endif
   cs_lock_create(&system_lock, 5, "system_lock");
   cs_lock_create(&gethostbyname_lock, 10, "gethostbyname_lock");
   cs_lock_create(&clientlist_lock, 5, "clientlist_lock");
@@ -1998,7 +2000,9 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 			reader->resetcounter = 0;
 			cs_log("resetting reader %s resetcyle of %d ecms reached", reader->label, reader->resetcycle);
 			reader->card_status = CARD_NEED_INIT;
+#ifdef WITH_CARDREADER
 			reader_reset(reader);
+#endif
 		}
 	}
 
@@ -2143,7 +2147,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		}
 	}
 
-#ifdef CS_LED
+#ifdef ARM
 	if(!er->rc &&cfg.enableled == 1) cs_switch_led(LED2, LED_BLINK_OFF);
 #endif
 
@@ -2223,7 +2227,6 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		er->rc=E_FOUND;
 	}
 
-#ifdef CS_WITH_DOUBLECHECK
 	if (cfg.double_check && er->rc < E_NOTFOUND) {
 	  if (er->checked == 0) {//First CW, save it and wait for next one
 	    er->checked = 1;
@@ -2246,7 +2249,6 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	    return 0;
 	  }
 	}
-#endif
 
 	ph[client->ctyp].send_dcw(client, er);
 
@@ -2267,7 +2269,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 
 	cs_ddump_mask (D_ATR, er->cw, 16, "cw:");
 
-#ifdef QBOXHD_LED
+#ifdef QBOXHD
 	if(cfg.enableled == 2){
     if (er->rc < E_NOTFOUND) {
         qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN, QBOXHD_LED_BLINK_MEDIUM);
@@ -2362,7 +2364,6 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 	struct s_reader *eardr = ea->reader;
 	if(!ert)
 		return;
-	struct s_client *eacl = eardr?eardr->client:NULL; //reader is null on timeouts
 
 	if (eardr) {
 		cs_debug_mask(D_TRACE, "ecm answer from reader %s for ecm %04X rc=%d", eardr->label, htons(ert->checksum), ea->rc);
@@ -2379,6 +2380,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 		if (ea->rc == E_FOUND) {
 			eardr->ecmsok++;
 #ifdef CS_CACHEEX
+			struct s_client *eacl = eardr?eardr->client:NULL; //reader is null on timeouts
 			if (eardr->cacheex == 1 && !ert->cacheex_done && eacl) {
 				eacl->cwcacheexgot++;
 				cs_add_cacheex_stats(eacl, ea->er->caid, ea->er->srvid, ea->er->prid, 1);
@@ -3539,9 +3541,11 @@ void * work_thread(void *ptr) {
 			case ACTION_READER_REMOTELOG:
 				casc_do_sock_log(reader);
  				break;
+#ifdef WITH_CARDREADER
 			case ACTION_READER_RESET:
 		 		reader_reset(reader);
  				break;
+#endif
 			case ACTION_READER_ECM_REQUEST:
 				reader_get_ecm(reader, data->ptr);
 				break;
@@ -3569,6 +3573,7 @@ void * work_thread(void *ptr) {
 				data = NULL;
 				return NULL;
 				break;
+#ifdef WITH_CARDREADER
 			case ACTION_READER_RESET_FAST:
 				reader->ins7e11_fast_reset = 1;
 				reader->card_status = CARD_NEED_INIT;
@@ -3578,7 +3583,7 @@ void * work_thread(void *ptr) {
 			case ACTION_READER_CHECK_HEALTH:
 				reader_checkhealth(reader);
 				break;
-
+#endif
 			case ACTION_CLIENT_UDP:
 				n = ph[cl->ctyp].recv(cl, data->ptr, data->len);
 				if (n<0) {
@@ -3721,9 +3726,10 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 }
 
 static void * check_thread(void) {
-	int32_t rc, time_to_check, next_check, ac_next, ecmc_next, msec_wait = 3000;
+	int32_t time_to_check, next_check, ecmc_next, msec_wait = 3000;
 	struct timeb t_now, tbc, ecmc_time;
 #ifdef CS_ANTICASC
+	int32_t ac_next;
 	struct timeb ac_time;
 #endif
 	ECM_REQUEST *er = NULL;
@@ -3752,13 +3758,15 @@ static void * check_thread(void) {
 		pthread_mutex_lock(&cl->thread_lock);
 		cl->thread_active = 2;
 		pthread_mutex_unlock(&cl->thread_lock);
-		rc = nanosleep(&ts, NULL);
+		nanosleep(&ts, NULL);
 		pthread_mutex_lock(&cl->thread_lock);
 		cl->thread_active = 1;
 		pthread_mutex_unlock(&cl->thread_lock);
 
 		next_check = 0;
+#ifdef CS_ANTICASC
 		ac_next = 0;
+#endif
 		ecmc_next = 0;
 		msec_wait = 0;
 
@@ -4180,7 +4188,7 @@ int32_t main (int32_t argc, char *argv[])
 		exit(1);
 	}
 
-#ifdef CS_LED
+#ifdef ARM
 	cs_switch_led(LED1A, LED_DEFAULT);
 	cs_switch_led(LED1A, LED_ON);
 #endif
@@ -4267,8 +4275,10 @@ int32_t main (int32_t argc, char *argv[])
 
   void (*cardreader_def[])(struct s_cardreader *)=
   {
+#ifdef WITH_CARDREADER 
 	cardreader_mouse,
 	cardreader_smargo,
+#endif
 #ifdef WITH_STAPI
 	cardreader_stapi,
 #endif
@@ -4314,10 +4324,12 @@ int32_t main (int32_t argc, char *argv[])
 			case 'w':
 				cs_waittime=strtoul(optarg, NULL, 10);
 				break;
+#ifdef WEBIF 
 			case 'u':
 				cs_http_use_utf8 = 1;
 				printf("WARNING: Web interface UTF-8 mode enabled. Carefully read documentation as bugs may arise.\n");
 				break;
+#endif
 		  case 'm':
 				printf("WARNING: -m parameter is deprecated, ignoring it.\n");
 				break;
@@ -4435,14 +4447,14 @@ int32_t main (int32_t argc, char *argv[])
 
 	cs_waitforcardinit();
 
-#ifdef CS_LED
+#ifdef ARM
 	if(cfg.enableled == 1){
 		cs_switch_led(LED1A, LED_OFF);
 		cs_switch_led(LED1B, LED_ON);
 	}
 #endif
 
-#ifdef QBOXHD_LED
+#ifdef QBOXHD
 	if(cfg.enableled == 2){
 		cs_log("QboxHD LED enabled");
     qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_FAST);
@@ -4503,7 +4515,7 @@ int32_t cs_get_restartmode() {
 
 #endif
 
-#ifdef CS_LED
+#ifdef ARM
 void cs_switch_led(int32_t led, int32_t action) {
 
 	if(action < 2) { // only LED_ON and LED_OFF
@@ -4575,7 +4587,7 @@ void cs_switch_led(int32_t led, int32_t action) {
 }
 #endif
 
-#ifdef QBOXHD_LED
+#ifdef QBOXHD
 void qboxhd_led_blink(int32_t color, int32_t duration) {
     int32_t f;
 

@@ -1,4 +1,5 @@
 #include "globals.h"
+#ifdef READER_VIACCESS
 #include "reader-common.h"
 
 struct via_date {
@@ -1060,3 +1061,4 @@ void reader_viaccess(struct s_cardsystem *ph)
 	ph->caids[0]=0x05;
 	ph->desc="viaccess";
 }
+#endif

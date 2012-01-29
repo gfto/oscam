@@ -13,10 +13,6 @@
 //#define WITH_SSL
 #endif
 
-#ifndef WITH_SSLv3
-//#define WITH_SSLv3
-#endif
-
 #ifndef HAVE_DVBAPI
 #if !defined(OS_CYGWIN32) && !defined(OS_HPUX) && !defined(OS_FREEBSD) && !defined(OS_MACOSX)
 #define HAVE_DVBAPI
@@ -39,14 +35,6 @@
 
 #ifndef WITH_DEBUG
 #define WITH_DEBUG
-#endif
-
-#ifndef CS_LED
-//#define CS_LED
-#endif
-
-#ifndef CS_WITH_DOUBLECHECK
-//#define CS_WITH_DOUBLECHECK
 #endif
 
 #ifndef WITH_LB
@@ -159,14 +147,6 @@
 #define CS_CACHEEX
 #endif
 
-#ifndef QBOXHD_LED
-//#define QBOXHD_LED
-#endif
-
-#ifndef CS_LOGHISTORY
-#define CS_LOGHISTORY
-#endif
-
 
 #ifdef TUXBOX
 #  ifdef MIPSEL
@@ -181,10 +161,6 @@
 #  ifndef HAVE_DVBAPI
 #    define HAVE_DVBAPI
 #  endif
-#endif
-
-#if defined(WITH_SSLv3) && !defined(WITH_SSL)
-# define WITH_SSL
 #endif
 
 #if defined(WITH_SSL) && !defined(WITH_LIBCRYPTO)

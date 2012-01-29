@@ -266,11 +266,9 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	tpl_printf(vars, TPLADD, "FAILBANTIME", "%d", cfg.failbantime);
 	tpl_printf(vars, TPLADD, "FAILBANCOUNT", "%d", cfg.failbancount);
 
-#ifdef CS_WITH_DOUBLECHECK
 	if(cfg.double_check == 1)
 		tpl_addVar(vars, TPLADD, "DCHECKCSELECTED", "selected");
-#endif
-#if defined(QBOXHD_LED) || defined(CS_LED) 
+#if defined(QBOXHD) || defined(ARM) 
 	if(cfg.enableled == 1)
 		tpl_addVar(vars, TPLADD, "ENABLELEDSELECTED1", "selected");
 	else if(cfg.enableled == 2)
@@ -743,6 +741,11 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 
 	if (cfg.http_full_cfg)
 		tpl_addVar(vars, TPLADD, "HTTPSAVEFULLSELECT", "selected");
+
+#ifdef WITH_SSL		
+	if (cfg.http_force_sslv3)
+		tpl_addVar(vars, TPLADD, "HTTPFORCESSLV3SELECT", "selected");
+#endif
 
 #ifdef LCDSUPPORT
 	if(cfg.enablelcd)
@@ -1738,15 +1741,15 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 		tpl_printf(vars, TPLADD, "READERCAID", "%04X", rdr->caid);
 	}
 
-	int32_t rc2hide = (-1);
-	if (strlen(getParam(params, "hide")) > 0)
-			rc2hide = atoi(getParam(params, "hide"));
-
 	int32_t rowcount = 0;
 	uint64_t ecmcount = 0;
 	time_t lastaccess = 0;
 
 #ifdef WITH_LB
+	int32_t rc2hide = (-1);
+	if (strlen(getParam(params, "hide")) > 0)
+		rc2hide = atoi(getParam(params, "hide"));
+			
 	if (rdr->lb_stat) {
 		int32_t statsize;
 		// @todo alno: sort by click, 0=ascending, 1=descending (maybe two buttons or reverse on second click)
@@ -2132,13 +2135,9 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	struct s_auth *account;
 	struct s_client *cl;
 	char *user = getParam(params, "user");
-	int32_t found = 0, hideclient = 10;
+	int32_t found = 0;
 
 	if(!apicall) setActiveMenu(vars, MNU_USERS);
-
-	if (cfg.mon_hideclient_to > 10)
-	hideclient = cfg.mon_hideclient_to;
-
 
 	if (strcmp(getParam(params, "action"), "reinit") == 0) {
 		if(!cfg.http_readonly)
@@ -4820,7 +4819,6 @@ void http_srv() {
 		close(sock);
 		return;
 	}
-	cs_log("HTTP Server listening on port %d%s", cfg.http_port, cfg.http_use_ssl ? " (SSL)" : "");
 
 #ifdef WITH_SSL
 	SSL_CTX *ctx = NULL;
@@ -4830,6 +4828,9 @@ void http_srv() {
 			cs_log("SSL could not be initialized. Starting WebIf in plain mode.");
 		else ssl_active = 1;
 	} else ssl_active = 0;
+	cs_log("HTTP Server listening on port %d%s", cfg.http_port, ssl_active ? " (SSL)" : "");
+#else
+	cs_log("HTTP Server listening on port %d", cfg.http_port);
 #endif
 
 	memset(&remote, 0, sizeof(remote));

@@ -1,3 +1,5 @@
+#include"../globals.h"
+#ifdef WITH_CARDREADER
 #ifdef COOL
 /*
 		ifd_cool.c
@@ -8,7 +10,6 @@
 #include <time.h>
 #include <string.h>
 #include <stdint.h>
-#include"../globals.h"
 #include"ifd_cool.h"
 #include"icc_async.h"
 
@@ -224,4 +225,5 @@ int32_t Cool_Close (struct s_reader *reader)
 	return OK;
 }
 
+#endif
 #endif

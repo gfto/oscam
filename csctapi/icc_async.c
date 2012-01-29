@@ -23,6 +23,7 @@
 */
 
 #include "../globals.h"
+#ifdef WITH_CARDREADER
 #include "defines.h"
 #include "icc_async.h"
 #include "mc_global.h"
@@ -1129,3 +1130,4 @@ static BYTE PPS_GetPCK (BYTE * block, uint32_t length)
 
 	return pck;
 }
+#endif

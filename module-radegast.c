@@ -1,4 +1,5 @@
 #include "globals.h"
+#ifdef MODULE_RADEGAST
 
 static int32_t radegast_send(struct s_client * client, uchar *buf)
 {
@@ -238,3 +239,4 @@ void module_radegast(struct s_module *ph)
   ph->c_send_ecm=radegast_send_ecm;
   ph->num=R_RADEGAST;
 }
+#endif

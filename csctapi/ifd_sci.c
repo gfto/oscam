@@ -4,7 +4,7 @@
 */
 
 #include "ifd_sci.h"
-
+#ifdef WITH_CARDREADER
 #ifdef SCI_DEV
 
 #include <stdio.h>
@@ -151,4 +151,5 @@ int32_t Sci_FastReset (struct s_reader *reader)
     return 0;
 }
 
+#endif
 #endif

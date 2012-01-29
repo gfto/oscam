@@ -1,5 +1,6 @@
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
+#ifdef MODULE_CONSTCW
 
 int32_t pserver = 0;
 
@@ -147,3 +148,4 @@ void module_constcw(struct s_module *ph)
   ph->c_send_ecm = constcw_send_ecm;
   ph->num=R_CONSTCW;
 }
+#endif

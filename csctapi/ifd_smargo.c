@@ -1,4 +1,5 @@
 #include "../globals.h"
+#ifdef WITH_CARDREADER
 #include "atr.h"
 #include <termios.h>
 #include "ifd_phoenix.h"
@@ -192,3 +193,4 @@ void cardreader_smargo(struct s_cardreader *crdr)
 
 	crdr->need_inverse	= 1;
 }
+#endif
