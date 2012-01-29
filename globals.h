@@ -1128,7 +1128,7 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t			init_history_pos;
 	int32_t			brk_pos;
 	int32_t			msg_idx;
-#ifdef WEBIF
+#if defined(WEBIF) || defined(LCDSUPPORT)
 	int32_t			emmwritten[4];					// count written EMM
 	int32_t			emmskipped[4];					// count skipped EMM
 	int32_t			emmerror[4];					// count error EMM

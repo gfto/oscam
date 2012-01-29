@@ -987,7 +987,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 						current = rdr->lb_usagelevel * 100 / weight;
 						break;
 				}
-#ifdef WEBIF
+#if defined(WEBIF) || defined(LCDSUPPORT)
 				rdr->lbvalue = current;
 #endif
 				if (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_LOADBALANCE, NULL)) {

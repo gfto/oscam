@@ -637,7 +637,7 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
            i, no, rtxt[rc], 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm, reader->label); //FIXME not sure why emmtyp must come from ep->client and typedesc can be of cur_client
   }
 
-#ifdef WEBIF
+#if defined(WEBIF) || defined(LCDSUPPORT)
   //counting results
   switch(rc){
 	  case 0:
