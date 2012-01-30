@@ -227,3 +227,4 @@ int32_t Cool_Close (struct s_reader *reader)
 
 #endif
 #endif
+
