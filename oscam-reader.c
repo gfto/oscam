@@ -698,6 +698,7 @@ int32_t reader_init(struct s_reader *reader) {
 	if (reader->typ & R_IS_CASCADING) {
 		client->typ='p';
 		client->port=reader->r_port;
+		client->ip=cs_inet_addr("0.0.0.0");
 
 		if (!(reader->ph.c_init)) {
 			cs_log("FATAL: %s-protocol not supporting cascading", reader->ph.desc);
