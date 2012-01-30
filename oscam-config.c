@@ -1762,7 +1762,7 @@ int32_t init_config()
 	free(token);
 	fclose(fp);
 
-	if (cfg.logfile == NULL && cfg.logtostdout == 0 && cfg.logtosyslog == 0) {
+	if (!cfg.logfile && cfg.logtostdout == 0 && cfg.logtosyslog == 0) {
 		if(cs_malloc(&(cfg.logfile), strlen(CS_LOGFILE) + 1, -1))
 			memcpy(cfg.logfile, CS_LOGFILE, strlen(CS_LOGFILE) + 1);
 		else cfg.logtostdout = 1;
@@ -2145,7 +2145,7 @@ int32_t write_config()
 		fprintf_conf(f, "usrfile", "%s\n", cfg.usrfile?cfg.usrfile:"");
 	if (cfg.mailfile != NULL || cfg.http_full_cfg)
 		fprintf_conf(f, "mailfile", "%s\n", cfg.mailfile?cfg.mailfile:"");
-	if (cfg.logfile != NULL || cfg.logtostdout == 1 || cfg.logtosyslog == 1 || cfg.http_full_cfg){
+	if (cfg.logfile || cfg.logtostdout == 1 || cfg.logtosyslog == 1 || cfg.http_full_cfg){
 		value = mk_t_logfile();
 		fprintf_conf(f, "logfile", "%s\n", value);
 		free_mk_t(value);
@@ -5567,7 +5567,7 @@ char *mk_t_logfile(){
 
 	if(cfg.logtostdout == 1) needed += 7;
 	if(cfg.logtosyslog == 1) needed += 7;
-	if(cfg.logfile != NULL) needed += strlen(cfg.logfile);
+	if(cfg.logfile) needed += strlen(cfg.logfile);
 	if(needed == 1 || !cs_malloc(&value, needed * sizeof(char), -1)) return "";
 
 	if(cfg.logtostdout == 1){
@@ -5578,7 +5578,7 @@ char *mk_t_logfile(){
 		pos += snprintf(value + pos, needed - pos, "%ssyslog", dot);
 		dot = ";";
 	}
-	if(cfg.logfile != NULL){
+	if(cfg.logfile){
 		pos += snprintf(value + pos, needed - pos, "%s%s", dot, cfg.logfile);
 	}
 	return value;

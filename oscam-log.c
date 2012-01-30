@@ -30,7 +30,7 @@ CS_MUTEX_LOCK loghistory_lock;
 
 static void switch_log(char* file, FILE **f, int32_t (*pfinit)(void))
 {
-	if(cfg.max_log_size)	//only 1 thread needs to switch the log; even if anticasc, statistics and normal log are running
+	if(cfg.max_log_size && file)	//only 1 thread needs to switch the log; even if anticasc, statistics and normal log are running
 					//at the same time, it is ok to have the other logs switching 1 entry later
 	{
 		if(*f != NULL && ftell(*f) >= cfg.max_log_size*1024) {
@@ -96,7 +96,7 @@ int32_t cs_open_logfiles()
 	char *starttext;
 	if(logStarted) starttext = "log switched";
 	else starttext = "started";
-	if (!fp && cfg.logfile != NULL) {	//log to file
+	if (!fp && cfg.logfile) {	//log to file
 		if ((fp = fopen(cfg.logfile, "a+")) <= (FILE *)0) {
 			fp = (FILE *)0;
 			fprintf(stderr, "couldn't open logfile: %s (errno %d %s)\n", cfg.logfile, errno, strerror(errno));
