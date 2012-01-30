@@ -235,7 +235,7 @@ int32_t sid_eq(struct cc_srvid *srvid1, struct cc_srvid *srvid2) {
 	return (srvid1->sid == srvid2->sid && (srvid1->chid == srvid2->chid || !srvid1->chid || !srvid2->chid) && (srvid1->ecmlen == srvid2->ecmlen || !srvid1->ecmlen || !srvid2->ecmlen));
 }
 
-int32_t is_sid_blocked(struct cc_card *card, struct cc_srvid *srvid_blocked) {
+struct cc_srvid * is_sid_blocked(struct cc_card *card, struct cc_srvid *srvid_blocked) {
 	LL_ITER it = ll_iter_create(card->badsids);
 	struct cc_srvid *srvid;
 	while ((srvid = ll_iter_next(&it))) {
@@ -243,10 +243,10 @@ int32_t is_sid_blocked(struct cc_card *card, struct cc_srvid *srvid_blocked) {
 			break;
 		}
 	}
-	return (srvid != 0);
+	return srvid;
 }
 
-int32_t is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
+struct cc_srvid *  is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
 	LL_ITER it = ll_iter_create(card->goodsids);
 	struct cc_srvid *srvid;
 	while ((srvid = ll_iter_next(&it))) {
@@ -254,7 +254,7 @@ int32_t is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
 			break;
 		}
 	}
-	return (srvid != 0);
+	return srvid;
 }
 
 #define BLOCKING_SECONDS 60
@@ -1057,7 +1057,8 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 				||(chk_only && cfg.lb_mode && cfg.lb_auto_betatunnel && cur_er->caid>>8==0x18 && ncard->caid>>8==0x17) //accept beta card when beta-tunnel is on
 				#endif
 				) {
-			if (is_sid_blocked(ncard, &cur_srvid))
+			struct cc_srvid *blocked_sid = is_sid_blocked(ncard, &cur_srvid);
+			if (blocked_sid && (!chk_only || blocked_sid->ecmlen == 0))
 				continue;
 
 			if (!(rdr->cc_want_emu) && (ncard->caid>>8==0x18) && (!xcard || ncard->hop < xcard->hop))
