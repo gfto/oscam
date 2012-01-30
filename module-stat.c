@@ -904,7 +904,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		ea->value = 0;
 	}
 
-	for(ea = er->matching_rdr; ea && nreaders; ea = ea->next) {
+	for(ea = er->matching_rdr; ea; ea = ea->next) {
 			rdr = ea->reader;
 #ifdef CS_CACHEEX
 			int8_t cacheex = rdr->cacheex;
@@ -923,7 +923,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				cs_debug_mask(D_TRACE, "loadbalancer: starting statistics for reader %s", rdr->label);
 				add_stat(rdr, er, 1, -1);
 				ea->status |= READER_ACTIVE; //no statistics, this reader is active (now) but we need statistics first!
-				nreaders--;
 				new_stats = 1;
 				continue;
 			}
@@ -932,7 +931,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				cs_debug_mask(D_TRACE, "loadbalancer: max ecms (%d) reached by reader %s, resetting statistics", cfg.lb_max_ecmcount, rdr->label);
 				reset_stat(er->caid, prid, er->srvid, er->chid, er->l);
 				ea->status |= READER_ACTIVE; //max ecm reached, get new statistics
-				nreaders--;
 				continue;
 			}
 				
@@ -945,7 +943,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			if (stat->rc == E_FOUND && stat->ecm_count < cfg.lb_min_ecmcount) {
 				cs_debug_mask(D_TRACE, "loadbalancer: reader %s needs more statistics", rdr->label);
 				ea->status |= READER_ACTIVE; //need more statistics!
-				nreaders--;
 				new_stats = 1;
 				continue;
 			}
@@ -966,7 +963,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					case LB_LOG_ONLY:
 						//cs_debug_mask(D_TRACE, "loadbalance disabled");
 						ea->status = 1;
-						nreaders--;
 						continue;
 						
 					case LB_FASTEST_READER_FIRST:
@@ -1040,18 +1036,20 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		best->value = 0;
 			
 		if (nlocal_readers) {//primary readers, local
-			if (!best->timeout_service)
+			if (!best->timeout_service) {
 				nlocal_readers--;
+				nreaders--;
+			}
 			best->status |= READER_ACTIVE;
-			nreaders--;
 			//OLDEST_READER:
 			cs_ftime(&best_rdri->lb_last);
 		}
 		else if (nbest_readers) {//primary readers, other
-			if (!best->timeout_service)
+			if (!best->timeout_service) {
 				nbest_readers--;
+				nreaders--;
+			}
 			best->status |= READER_ACTIVE;
-			nreaders--;
 			//OLDEST_READER:
 			cs_ftime(&best_rdri->lb_last);
 		}
