@@ -121,7 +121,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 			//open physical device
 			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 			if (reader->handle < 0) {
-				cs_log("ERROR opening device %s",reader->device);
+				cs_log("ERROR opening device %s (errno=%d %s)",reader->device, errno, strerror(errno));
 				cs_writeunlock(&sc8in1_lock);
 				return ERROR;
 			}
@@ -145,7 +145,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 		case R_MOUSE:
 			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 			if (reader->handle < 0) {
-				cs_log("ERROR opening device %s",reader->device);
+				cs_log("ERROR opening device %s (errno=%d %s)",reader->device, errno, strerror(errno));
 				return ERROR;
 			}
 			break;
@@ -154,12 +154,12 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 		case R_DB2COM2:
 			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_SYNC);
 			if (reader->handle < 0) {
-				cs_log("ERROR opening device %s",reader->device);
+				cs_log("ERROR opening device %s (errno=%d %s)",reader->device, errno, strerror(errno));
 				return ERROR;
 			}
-			if ((reader->fdmc = open(DEV_MULTICAM, O_RDWR)) < 0) {
+			if ((reader->fdmc = open(DEV_MULTICAM, O_RDWR)) < 0) {				
+				cs_log("ERROR opening device %s (errno=%d %s)",DEV_MULTICAM, errno, strerror(errno));
 				close(reader->handle);
-				cs_log("ERROR opening device %s",DEV_MULTICAM);
 				return ERROR;
 			}
 			break;
@@ -185,7 +185,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 			reader->handle = open (reader->device, O_RDWR);
 	#endif
 			if (reader->handle < 0) {
-				cs_log("ERROR opening device %s",reader->device);
+				cs_log("ERROR opening device %s",reader->device, errno, strerror(errno));
 				return ERROR;
 			}
 #elif defined(WITH_STAPI)

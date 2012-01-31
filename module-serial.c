@@ -967,7 +967,7 @@ static int32_t init_oscam_ser_device(char *device, speed_t baud)
   else
   {
     fd=0;
-    cs_log("ERROR opening %s", device);
+    cs_log("ERROR opening %s (errno=%d %s)", device, errno, strerror(errno));
   }
   return(fd);
 }

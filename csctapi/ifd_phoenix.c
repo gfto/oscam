@@ -293,7 +293,7 @@ static int32_t mouse_init(struct s_reader *reader) {
 	cs_log("mouse_test init");
 	reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 	if (reader->handle < 0) {
-		cs_log("ERROR opening device %s",reader->device);
+		cs_log("ERROR opening device %s (errno=%d %s)",reader->device, errno, strerror(errno));
 		return ERROR;
 	}
 	if (Phoenix_Init(reader)) {

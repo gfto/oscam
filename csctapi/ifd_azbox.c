@@ -1,3 +1,4 @@
+#include"../globals.h"
 #ifdef WITH_CARDREADER
 #ifdef AZBOX
 #include "ifd_azbox.h"
