@@ -902,6 +902,9 @@ int32_t Sc8in1_Card_Changed(struct s_reader * reader) {
 	// -1= one ore more cards were changed (inserted or removed)
 	int32_t result;
 	int32_t lineData;
+	if (reader->handle == 0) {
+		return 0;
+	}
 	ioctl(reader->handle, TIOCMGET, &lineData);
 	result = (lineData & TIOCM_CTS) / TIOCM_CTS;
 
@@ -964,9 +967,11 @@ int32_t Sc8in1_Close(struct s_reader *reader) {
 			}
 		}
 	} else {
-		// disable reader threads
-		reader->sc8in1_config->display_running = FALSE;
-		pthread_join(reader->sc8in1_config->display_thread, NULL);
+		if (reader->sc8in1_config->mcr_type) {
+			// disable reader threads
+			reader->sc8in1_config->display_running = FALSE;
+			pthread_join(reader->sc8in1_config->display_thread, NULL);
+		}
 		// disable other slots
 		struct s_reader *rdr;
 		LL_ITER itr = ll_iter_create(configured_readers);
@@ -978,8 +983,10 @@ int32_t Sc8in1_Close(struct s_reader *reader) {
 			}
 		}
 		// close serial port
-		status = IO_Serial_Close(reader);
-		reader->handle = 0;
+		if (reader->handle != 0) {
+			status = IO_Serial_Close(reader);
+			reader->handle = 0;
+		}
 	}
 
 	return status;
