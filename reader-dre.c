@@ -1,4 +1,5 @@
 #include "globals.h"
+#ifdef READER_DRE
 #include "reader-common.h"
 
 #define OK_RESPONSE 0x61
@@ -504,3 +505,4 @@ void reader_dre(struct s_cardsystem *ph)
 	ph->caids[0]=0x4A;
 	ph->desc="dre";
 }
+#endif

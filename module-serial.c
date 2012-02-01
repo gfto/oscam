@@ -1,4 +1,5 @@
 #include "globals.h"
+#ifdef MODULE_SERIAL
 #include <termios.h>
 
 #define HSIC_CRC 0xA5
@@ -966,7 +967,7 @@ static int32_t init_oscam_ser_device(char *device, speed_t baud)
   else
   {
     fd=0;
-    cs_log("ERROR opening %s", device);
+    cs_log("ERROR opening %s (errno=%d %s)", device, errno, strerror(errno));
   }
   return(fd);
 }
@@ -1213,3 +1214,4 @@ void module_oscam_ser(struct s_module *ph)
   ph->c_send_ecm=oscam_ser_send_ecm;
   ph->num=R_SERIAL;
 }
+#endif

@@ -2,7 +2,9 @@
 		ifd_phoenix.c
 		This module provides IFD handling functions for Smartmouse/Phoenix reader.
 */
+
 #include "../globals.h"
+#ifdef WITH_CARDREADER
 #include "atr.h"
 #include <termios.h>
 #include "ifd_phoenix.h"
@@ -291,7 +293,7 @@ static int32_t mouse_init(struct s_reader *reader) {
 	cs_log("mouse_test init");
 	reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 	if (reader->handle < 0) {
-		cs_log("ERROR opening device %s",reader->device);
+		cs_log("ERROR opening device %s (errno=%d %s)",reader->device, errno, strerror(errno));
 		return ERROR;
 	}
 	if (Phoenix_Init(reader)) {
@@ -375,3 +377,4 @@ void cardreader_mouse(struct s_cardreader *crdr)
 	crdr->need_inverse	= 1;
 	crdr->read_written	= 1;
 }
+#endif

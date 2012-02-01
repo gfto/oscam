@@ -23,6 +23,7 @@
 */
 
 #include "../globals.h"
+#ifdef WITH_CARDREADER
 #include "defines.h"
 #include "t1_block.h"
 #include "icc_async.h"
@@ -296,3 +297,4 @@ static int32_t Protocol_T1_ReceiveBlock (struct s_reader *reader, T1_Block ** bl
 		(*block) = NULL;
   return ret;
 }
+#endif

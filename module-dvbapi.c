@@ -1333,9 +1333,8 @@ int32_t dvbapi_init_listenfd() {
 
 void dvbapi_chk_caidtab(char *caidasc, char type) {
 	char *ptr1, *ptr3, *saveptr1 = NULL;
-	int32_t i;
 
-	for (i=0, ptr1=strtok_r(caidasc, ",", &saveptr1); (ptr1); ptr1=strtok_r(NULL, ",", &saveptr1)) {
+	for (ptr1=strtok_r(caidasc, ",", &saveptr1); (ptr1); ptr1=strtok_r(NULL, ",", &saveptr1)) {
 		uint32_t caid, prov;
 		if( (ptr3=strchr(trim(ptr1), ':')) )
 			*ptr3++='\0';
@@ -2271,7 +2270,7 @@ static uint32_t check_slot(int32_t dev_id, uint32_t checkslot, FILTERTYPE *skipf
 
 static int32_t stapi_do_set_filter(int32_t demux_id, FILTERTYPE *filter, uint16_t *pids, int32_t pidcount, uchar *filt, uchar *mask, int32_t dev_id) {
 	uint32_t FilterAssociateError=0;
-	int32_t k, ErrorCode=0, ret=0;
+	int32_t k, ret=0;
 
 	filter->fd			= 0;
 	filter->BufferHandle[0] 	= 0;
@@ -2413,7 +2412,7 @@ static void *stapi_read_thread(void *sparam) {
 		uint32_t NumFilterMatches = 0;
 		int32_t demux_id=0, filter_num=0;
 		DataSize = 0;
-		int32_t found=0, k;
+		int32_t k;
 
 		uint32_t MatchedFilterList[10];
 		ErrorCode = oscam_stapi_BufferReadSection(QueryBufferHandle, MatchedFilterList, 10, &NumFilterMatches, &CRCValid, buf, BUFFLEN, &DataSize);	

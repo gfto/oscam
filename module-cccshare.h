@@ -1,5 +1,6 @@
 #include "globals.h"
 #ifdef MODULE_CCCAM
+#ifdef MODULE_CCCSHARE
 /*
 * module-cccshare.h
 *
@@ -44,4 +45,5 @@ LLIST *get_cardlist(uint16_t caid, LLIST **list);
 
 struct cc_card **get_sorted_card_copy(LLIST *cards, int32_t reverse, int32_t *size);
 #endif /* MODULECCCSHARE_H_ */
+#endif
 #endif

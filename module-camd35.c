@@ -1,4 +1,5 @@
 #include "globals.h"
+#if defined MODULE_CAMD35 || defined MODULE_CAMD35_TCP
 
 //CMD00 - ECM (request)
 //CMD01 - ECM (response)
@@ -145,7 +146,10 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 	switch(rc) {
 		//case 0: 	break;
 		case -1:	cs_log("packet to small (%d bytes)", rs);		break;
-		case -2:	cs_auth_client(client, 0, "unknown user");	break;
+		case -2:
+			if (cs_auth_client(client, 0, "unknown user"))
+				cs_disconnect_client(client);
+			break;
 		case -3:	cs_log("incomplete request !");			break;
 		case -4:	cs_log("checksum error (wrong password ?)");	break;
 		//default:	cs_debug_mask(D_TRACE, "camd35_recv returns rc=%d", rc); break;
@@ -701,7 +705,7 @@ static int32_t camd35_recv_log(uint16_t *caid, uint32_t *provid, uint16_t *srvid
 /*
  *	module definitions
  */
-
+#ifdef MODULE_CAMD35
 void module_camd35(struct s_module *ph)
 {
   static PTAB ptab; //since there is always only 1 camd35 server running, this is threadsafe
@@ -730,7 +734,9 @@ void module_camd35(struct s_module *ph)
 #endif
   ph->num=R_CAMD35;
 }
+#endif
 
+#ifdef MODULE_CAMD35_TCP 
 void module_camd35_tcp(struct s_module *ph)
 {
   cs_strncpy(ph->desc, "cs378x", sizeof(ph->desc));
@@ -757,3 +763,5 @@ void module_camd35_tcp(struct s_module *ph)
 #endif
   ph->num=R_CS378X;
 }
+#endif
+#endif

@@ -1,4 +1,5 @@
 #include "globals.h"
+#ifdef READER_NAGRA
 #include "reader-common.h"
 #include "cscrypt/idea.h"
 #include <termios.h>
@@ -1175,3 +1176,4 @@ void reader_nagra(struct s_cardsystem *ph)
 	ph->caids[0]=0x18;
 	ph->desc="nagra";
 }
+#endif

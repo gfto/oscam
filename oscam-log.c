@@ -22,13 +22,15 @@ struct s_log {
 	char *cl_text;
 };
 
+#if defined(WEBIF) || defined(MODULE_MONITOR) 
 CS_MUTEX_LOCK loghistory_lock;
+#endif
 
 #define LOG_BUF_SIZE 512
 
 static void switch_log(char* file, FILE **f, int32_t (*pfinit)(void))
 {
-	if(cfg.max_log_size)	//only 1 thread needs to switch the log; even if anticasc, statistics and normal log are running
+	if(cfg.max_log_size && file)	//only 1 thread needs to switch the log; even if anticasc, statistics and normal log are running
 					//at the same time, it is ok to have the other logs switching 1 entry later
 	{
 		if(*f != NULL && ftell(*f) >= cfg.max_log_size*1024) {
@@ -94,7 +96,7 @@ int32_t cs_open_logfiles()
 	char *starttext;
 	if(logStarted) starttext = "log switched";
 	else starttext = "started";
-	if (!fp && cfg.logfile != NULL) {	//log to file
+	if (!fp && cfg.logfile) {	//log to file
 		if ((fp = fopen(cfg.logfile, "a+")) <= (FILE *)0) {
 			fp = (FILE *)0;
 			fprintf(stderr, "couldn't open logfile: %s (errno %d %s)\n", cfg.logfile, errno, strerror(errno));
@@ -139,6 +141,7 @@ int32_t ac_init_log(void){
 }
 #endif
 
+#if defined(WEBIF) || defined(MODULE_MONITOR) 
 /* 
  This function allows to reinit the in-memory loghistory with a new size.
 */
@@ -169,6 +172,7 @@ void cs_reinit_loghist(uint32_t size)
 		}
 	}
 }
+#endif
 
 static int32_t get_log_header(int32_t m, char *txt)
 {
@@ -188,12 +192,12 @@ static int32_t get_log_header(int32_t m, char *txt)
 		return pos + snprintf(txt+pos, LOG_BUF_SIZE-pos, "%8X%-3.3s ", cl?cl->tid:0, "");
 }
 
-static void write_to_log(char *txt, int8_t header_len, int8_t cl_typ, char *cl_text, char *cl_usr, int8_t do_flush)
+static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 {
 	char sbuf[16];
 
 #ifdef CS_ANTICASC
-	if (!strncmp(txt + header_len, "acasc:", 6)) {
+	if (!strncmp(txt + log->header_len, "acasc:", 6)) {
 		strcat(txt, "\n");
 		switch_log(cfg.ac_logfile, &fpa, ac_init_log);
 		if (fpa) {
@@ -209,8 +213,9 @@ static void write_to_log(char *txt, int8_t header_len, int8_t cl_typ, char *cl_t
 	}
 	cs_write_log(txt + 8, do_flush);
 
+#if defined(WEBIF) || defined(MODULE_MONITOR) 
 	if (loghist) {
-		char *usrtxt = cl_text;
+		char *usrtxt = log->cl_text;
 		char *target_ptr = NULL;
 		int32_t target_len = strlen(usrtxt) + (strlen(txt) - 8) + 1;
 		
@@ -233,21 +238,24 @@ static void write_to_log(char *txt, int8_t header_len, int8_t cl_typ, char *cl_t
 
 		snprintf(target_ptr, target_len + 1, "%s\t%s", usrtxt, txt + 8);
 	}
+#endif
 
 	struct s_client *cl;
 	for (cl=first_client; cl ; cl=cl->next) {
 		if ((cl->typ == 'm') && (cl->monlvl>0) && cl->log) //this variable is only initialized for cl->typ = 'm' 
 		{
 			if (cl->monlvl<2) {
-				if (cl_typ != 'c' && cl_typ != 'm')
+				if (log->cl_typ != 'c' && log->cl_typ != 'm')
 					continue;
-				if (cl_usr && cl->account && strcmp(cl_usr, cl->account->usr))
+				if (log->cl_usr && cl->account && strcmp(log->cl_usr, cl->account->usr))
 					continue;
 			}
 			snprintf(sbuf, sizeof(sbuf), "%03d", cl->logcounter);
 			cl->logcounter = (cl->logcounter+1) % 1000;
 			memcpy(txt + 4, sbuf, 3);
+#ifdef MODULE_MONITOR
 			monitor_send_idx(cl, txt);
+#endif
 		}
 	}
 }
@@ -412,7 +420,11 @@ void cs_log_config()
     snprintf((char *)buf, sizeof(buf), "%d Kb", cfg.max_log_size);
   else
     cs_strncpy((char *)buf, "unlimited", sizeof(buf));
+#if defined(WEBIF) || defined(MODULE_MONITOR) 
   cs_log_nolock("max. logsize=%s, loghistorysize=%d bytes", buf, cfg.loghistorysize);
+#else
+	cs_log_nolock("max. logsize=%s bytes", buf);
+#endif
   cs_log_nolock("client timeout=%u ms, fallback timeout=%u ms, cache delay=%d ms",
          cfg.ctimeout, cfg.ftimeout, cfg.delay);
 }
@@ -515,7 +527,7 @@ void log_list_thread()
 			if (log->direct_log)
 				cs_write_log(buf, do_flush);
 			else
-				write_to_log(buf, log->header_len, log->cl_typ, log->cl_text, log->cl_usr, do_flush);
+				write_to_log(buf, log, do_flush);
 			free(log->txt);
 			free(log);
 		}
@@ -526,7 +538,9 @@ void log_list_thread()
 int32_t cs_init_log(void)
 {
 	if(logStarted == 0){
+#if defined(WEBIF) || defined(MODULE_MONITOR) 
 		cs_lock_create(&loghistory_lock, 5, "loghistory_lock");
+#endif
 
 		log_list = ll_create(LOG_LIST);
 		start_thread((void*)&log_list_thread, "log_list_thread");

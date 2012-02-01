@@ -17,6 +17,7 @@
  */
 
 #include "../globals.h"
+#ifdef WITH_CARDREADER
 #include "atr.h"
 #include <termios.h>
 #include "ifd_sc8in1.h"
@@ -1074,3 +1075,4 @@ int32_t Sc8in1_SetSlotForReader(struct s_reader *reader) {
 	reader->slot=(uint16_t)reader->device[pos+1] - 0x30;
 	return OK;
 }
+#endif

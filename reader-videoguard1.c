@@ -1,4 +1,5 @@
 #include "globals.h"
+#ifdef READER_VIDEOGUARD
 #include "reader-common.h"
 #include "reader-videoguard-common.h"
 
@@ -327,3 +328,4 @@ void reader_videoguard1(struct s_cardsystem *ph)
 	ph->caids[0]=0x09;
 	ph->desc="videoguard1";
 }
+#endif

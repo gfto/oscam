@@ -38,6 +38,20 @@ value to delay cached requests, default:0
 
 <P>
 
+<B>max_cache_time</B> = <B>seconds</B>
+<DL COMPACT><DT><DD>
+maximum time CWs resist in cache after 1st client request, default:15
+</DL>
+
+<P>
+
+<B>max_cache_count</B> = <B>count</B>
+<DL COMPACT><DT><DD>
+maximum CWs in cache, default:1000
+</DL>
+
+<P>
+
 <B>logfile</B> = [<B>filename</B>][<B>;syslog</B>][<B>;stdout</B>]
 <DL COMPACT><DT><DD>
 logging targets, default: /var/log/oscam.log. You can define a maximum of one filename and 
@@ -622,6 +636,13 @@ write config:
 
 <P>
 
+<B>httpforcesslv3 </B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = force using SSLv3, default:0
+</DL>
+
+<P>
+
 <B>httpreadonly</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
 1 = read only modus for web interface, default:0
@@ -1122,7 +1143,7 @@ CAID request mode:
 
 <P>
 
-<B>boxtype</B> = <B>dbox2</B>|<B>dreambox</B>|<B>dm7000</B>|<B>duckbox</B>|<B>ufs910</B>|<B>ipbox</B>|<B>ipbox-pmt</B>|<B>qboxhd</B>|<B>coolstream</B>|<B>neumo</B>
+<B>boxtype</B> = <B>dbox2</B>|<B>dreambox</B>|<B>dm7000</B>|<B>duckbox</B>|<B>ufs910</B>|<B>ipbox</B>|<B>ipbox-pmt</B>|<B>qboxhd</B>|<B>coolstream</B>|<B>neumo</B>|<B>pc</B>
 <DL COMPACT><DT><DD>
 set boxtype, auto detection of DVB API will be aspired, default:dreambox
 <P>
@@ -1131,6 +1152,8 @@ verified on HD models only
 <P>
 ipbox-pmt can be used on any DGS based images (with or without camd.socket support), 
 verified on HD models only
+<P>
+pc is for generic pc support (currently supported on VDR with vdr-plugin-dvbapi)
 </DL>
 
 <A NAME="lbAT">&nbsp;</A>

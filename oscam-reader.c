@@ -629,8 +629,8 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
   if (rc) cl->lastemm=time((time_t*)0);
 
-#ifdef CS_LED
-  if (rc) cs_switch_led(LED3, LED_BLINK_ON);
+#ifdef ARM
+  if (rc && cfg.enableled == 1) cs_switch_led(LED3, LED_BLINK_ON);
 #endif
 
   if (reader->logemm & (1 << rc))
@@ -642,7 +642,7 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
            i, no, rtxt[rc], 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm, reader->label); //FIXME not sure why emmtyp must come from ep->client and typedesc can be of cur_client
   }
 
-#ifdef WEBIF
+#if defined(WEBIF) || defined(LCDSUPPORT)
   //counting results
   switch(rc){
 	  case 0:
@@ -660,8 +660,8 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   }
 #endif
 
-#ifdef QBOXHD_LED
-  if (rc) qboxhd_led_blink(QBOXHD_LED_COLOR_BLUE,QBOXHD_LED_BLINK_MEDIUM);
+#ifdef QBOXHD
+  if (rc && cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_BLUE,QBOXHD_LED_BLINK_MEDIUM);
 #endif
 
 
@@ -703,6 +703,7 @@ int32_t reader_init(struct s_reader *reader) {
 	if (reader->typ & R_IS_CASCADING) {
 		client->typ='p';
 		client->port=reader->r_port;
+		client->ip=cs_inet_addr("0.0.0.0");
 
 		if (!(reader->ph.c_init)) {
 			cs_log("FATAL: %s-protocol not supporting cascading", reader->ph.desc);

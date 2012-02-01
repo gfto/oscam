@@ -2,6 +2,7 @@
 // Common videoguard functions.
 //
 #include "globals.h"
+#ifdef READER_VIDEOGUARD 
 #include "reader-common.h"
 #include "reader-videoguard-common.h"
 
@@ -955,4 +956,4 @@ void videoguard_mail_msg(struct s_reader *rdr, uint8_t *data)
    if (msg->mask == (1 << msg->nsubs) - 1)
       write_msg(msg, rdr->card_baseyear);
 }
-
+#endif

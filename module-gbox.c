@@ -395,7 +395,6 @@ static void gbox_send_boxinfo(struct s_client *cli)
 {
   struct gbox_data *gbox = cli->gbox;
 
-  int32_t len;
   uchar buf[256];
 
   int32_t hostname_len = strlen(cfg.gbox_hostname);
@@ -406,8 +405,6 @@ static void gbox_send_boxinfo(struct s_client *cli)
   buf[10] = gbox->peer.ver;
   buf[11] = 0x10;
   memcpy(buf + 12, cfg.gbox_hostname, hostname_len);
-
-  len = 12 + hostname_len;
 
  gbox_send(cli, buf, 11);
 }

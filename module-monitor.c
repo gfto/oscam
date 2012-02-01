@@ -1,4 +1,5 @@
 #include "globals.h"
+#ifdef MODULE_MONITOR
 
 #define CS_VERSION_X  CS_VERSION
 
@@ -660,12 +661,12 @@ static void monitor_set_account(char *args){
 static void monitor_set_server(char *args){
 	char delimiter[] = "=";
 	char *ptr, *saveptr1;
-	int32_t argidx, i, found;
+	int32_t argidx, i;
 	char *argarray[3];
 	static const char *token[]={"clienttimeout", "fallbacktimeout", "clientmaxidle", "cachedelay", "bindwait", "netprio", "sleep", "unlockparental", "serialreadertimeout", "maxlogsize", "showecmdw", "waitforcards", "preferlocalcards"};
 	char buf[256];
 
-	argidx=0;	found=0;
+	argidx=0;
 	ptr = strtok_r(args, delimiter, &saveptr1);
 
 	// resolve arguments
@@ -816,5 +817,4 @@ void module_monitor(struct s_module *ph){
 	ph->recv = monitor_recv;
 	//  ph->send_dcw=NULL;
 }
-
-
+#endif

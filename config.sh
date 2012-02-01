@@ -15,8 +15,8 @@ fi
 
 cp -f $configfile $tempfileconfig
 
-addons="WEBIF HAVE_DVBAPI WITH_STAPI IRDETO_GUESSING CS_ANTICASC WITH_DEBUG CS_WITH_DOUBLECHECK CS_LED QBOXHD_LED CS_LOGHISTORY MODULE_MONITOR WITH_SSL WITH_SSLv3 WITH_LB CS_CACHEEX LCDSUPPORT IPV6SUPPORT"
-protocols="MODULE_CAMD33 MODULE_CAMD35 MODULE_CAMD35_TCP MODULE_NEWCAMD MODULE_CCCAM MODULE_GBOX MODULE_RADEGAST MODULE_SERIAL MODULE_CONSTCW MODULE_PANDORA"
+addons="WEBIF HAVE_DVBAPI WITH_STAPI IRDETO_GUESSING CS_ANTICASC WITH_DEBUG MODULE_MONITOR WITH_SSL WITH_LB CS_CACHEEX LCDSUPPORT IPV6SUPPORT"
+protocols="MODULE_CAMD33 MODULE_CAMD35 MODULE_CAMD35_TCP MODULE_NEWCAMD MODULE_CCCAM MODULE_CCCSHARE MODULE_GBOX MODULE_RADEGAST MODULE_SERIAL MODULE_CONSTCW MODULE_PANDORA"
 readers="WITH_CARDREADER READER_NAGRA READER_IRDETO READER_CONAX READER_CRYPTOWORKS READER_SECA READER_VIACCESS READER_VIDEOGUARD READER_DRE READER_TONGFANG"
 
 check_test() {
@@ -68,13 +68,8 @@ menu_addons() {
 		IRDETO_GUESSING		"Irdeto guessing"			$(check_test "IRDETO_GUESSING") \
 		CS_ANTICASC			"Anti cascading"			$(check_test "CS_ANTICASC") \
 		WITH_DEBUG			"Debug messages"			$(check_test "WITH_DEBUG") \
-		CS_WITH_DOUBLECHECK	"ECM doublecheck"			$(check_test "CS_WITH_DOUBLECHECK") \
-		CS_LED				"LED"						$(check_test "CS_LED") \
-		QBOXHD_LED			"QboxHD LED"				$(check_test "QBOXHD_LED") \
-		CS_LOGHISTORY		"Log history"				$(check_test "CS_LOGHISTORY") \
 		MODULE_MONITOR		"Monitor"					$(check_test "MODULE_MONITOR") \
 		WITH_SSL			"OpenSSL support"			$(check_test "WITH_SSL") \
-		WITH_SSLv3          "OpenSSL v3 only support"   $(check_test "WITH_SSLv3") \
 		WITH_LB				"Loadbalancing"				$(check_test "WITH_LB") \
 		CS_CACHEEX			"Cache exchange"			$(check_test "CS_CACHEEX") \
 		LCDSUPPORT			"LCD support"				$(check_test "LCDSUPPORT") \
@@ -91,14 +86,15 @@ menu_addons() {
 menu_protocols() {
 	${DIALOG} --checklist "\nChoose protocols:\n " $height $width $listheight \
 		MODULE_CAMD33		"camd 3.3"		$(check_test "MODULE_CAMD33") \
-		MODULE_CAMD35		"camd 3.5 UDP"	$(check_test "MODULE_CAMD35") \
-		MODULE_CAMD35_TCP	"camd 3.5 TCP"	$(check_test "MODULE_CAMD35_TCP") \
+		MODULE_CAMD35		"camd 3.5 UDP"	        $(check_test "MODULE_CAMD35") \
+		MODULE_CAMD35_TCP	"camd 3.5 TCP"	        $(check_test "MODULE_CAMD35_TCP") \
 		MODULE_NEWCAMD		"newcamd"		$(check_test "MODULE_NEWCAMD") \
 		MODULE_CCCAM		"CCcam"			$(check_test "MODULE_CCCAM") \
-		MODULE_GBOX			"gbox"			$(check_test "MODULE_GBOX") \
+		MODULE_CCCSHARE		"CCcam share"		$(check_test "MODULE_CCCSHARE") \
+		MODULE_GBOX		"gbox"  		$(check_test "MODULE_GBOX") \
 		MODULE_RADEGAST		"radegast"		$(check_test "MODULE_RADEGAST") \
 		MODULE_SERIAL		"Serial"		$(check_test "MODULE_SERIAL") \
-		MODULE_CONSTCW		"constant CW"	$(check_test "MODULE_CONSTCW") \
+		MODULE_CONSTCW		"constant CW"	        $(check_test "MODULE_CONSTCW") \
 		MODULE_PANDORA		"Pandora"		$(check_test "MODULE_PANDORA") \
 		2> ${tempfile}
 

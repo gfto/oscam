@@ -19,6 +19,16 @@ bind service to specified IP address, default:all
 value to delay cached requests, default:0
 .RE
 .PP
+\fBmax_cache_time\fP = \fBseconds\fP
+.RS 3n
+maximum time CWs resist in cache after 1st client request, default:15
+.RE
+.PP
+\fBmax_cache_count\fP = \fBcount\fP
+.RS 3n
+maximum CWs in cache, default:1000
+.RE
+.PP
 \fBlogfile\fP = [\fBfilename\fP][\fB;syslog\fP][\fB;stdout\fP]
 .RS 3n
 logging targets, default: /var/log/oscam.log. You can define a maximum of one filename and 
@@ -458,6 +468,11 @@ write config:
  \fB1\fP = all parameters
 .RE
 .PP
+\fBhttpforcesslv3 \fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = force using SSLv3, default:0
+.RE
+.PP
 \fBhttpreadonly\fP = \fB0\fP|\fB1\fP
 .RS 3n
 1 = read only modus for web interface, default:0
@@ -827,7 +842,7 @@ CAID request mode:
  \fB1\fP = try all CAIDs simultaneously
 .RE
 .PP
-\fBboxtype\fP = \fBdbox2\fP|\fBdreambox\fP|\fBdm7000\fP|\fBduckbox\fP|\fBufs910\fP|\fBipbox\fP|\fBipbox-pmt\fP|\fBqboxhd\fP|\fBcoolstream\fP|\fBneumo\fP
+\fBboxtype\fP = \fBdbox2\fP|\fBdreambox\fP|\fBdm7000\fP|\fBduckbox\fP|\fBufs910\fP|\fBipbox\fP|\fBipbox-pmt\fP|\fBqboxhd\fP|\fBcoolstream\fP|\fBneumo\fP|\fBpc\fP
 .RS 3n
 set boxtype, auto detection of DVB API will be aspired, default:dreambox
 
@@ -836,6 +851,8 @@ verified on HD models only
 
 ipbox-pmt can be used on any DGS based images (with or without camd.socket support), 
 verified on HD models only
+
+pc is for generic pc support (currently supported on VDR with vdr-plugin-dvbapi)
 .RE
 .SS "The [anticasc] section"
 .PP

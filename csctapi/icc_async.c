@@ -23,6 +23,7 @@
 */
 
 #include "../globals.h"
+#ifdef WITH_CARDREADER
 #include "defines.h"
 #include "icc_async.h"
 #include "mc_global.h"
@@ -122,7 +123,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 				deviceName[pos] = 0;
 				reader->handle = open (deviceName,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 				if (reader->handle < 0) {
-					cs_log("ERROR opening device %s with real device %s",reader->device, deviceName);
+					cs_log("ERROR opening device %s with real device %s (errno=%d %s)",reader->device, deviceName, errno, strerror(errno));
 					reader->handle = 0;
 					cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
 					return ERROR;
@@ -139,7 +140,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 		case R_MOUSE:
 			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 			if (reader->handle < 0) {
-				cs_log("ERROR opening device %s",reader->device);
+				cs_log("ERROR opening device %s (errno=%d %s)",reader->device, errno, strerror(errno));
 				return ERROR;
 			}
 			break;
@@ -148,12 +149,12 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 		case R_DB2COM2:
 			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_SYNC);
 			if (reader->handle < 0) {
-				cs_log("ERROR opening device %s",reader->device);
+				cs_log("ERROR opening device %s (errno=%d %s)",reader->device, errno, strerror(errno));
 				return ERROR;
 			}
-			if ((reader->fdmc = open(DEV_MULTICAM, O_RDWR)) < 0) {
+			if ((reader->fdmc = open(DEV_MULTICAM, O_RDWR)) < 0) {				
+				cs_log("ERROR opening device %s (errno=%d %s)",DEV_MULTICAM, errno, strerror(errno));
 				close(reader->handle);
-				cs_log("ERROR opening device %s",DEV_MULTICAM);
 				return ERROR;
 			}
 			break;
@@ -179,7 +180,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 			reader->handle = open (reader->device, O_RDWR);
 	#endif
 			if (reader->handle < 0) {
-				cs_log("ERROR opening device %s",reader->device);
+				cs_log("ERROR opening device %s",reader->device, errno, strerror(errno));
 				return ERROR;
 			}
 #elif defined(WITH_STAPI)
@@ -1148,3 +1149,4 @@ static BYTE PPS_GetPCK (BYTE * block, uint32_t length)
 
 	return pck;
 }
+#endif

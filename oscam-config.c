@@ -427,7 +427,7 @@ void chk_t_global(const char *token, char *value)
 {
 	char *saveptr1 = NULL;
 
-#if defined(QBOXHD_LED) || defined(CS_LED)
+#if defined(QBOXHD) || defined(ARM)
 	if (!strcmp(token, "enableled")) {
 		cfg.enableled = strToIntVal(value, 0);
 		return;
@@ -449,6 +449,7 @@ void chk_t_global(const char *token, char *value)
 		return;
 	}
 
+#if defined(WEBIF) || defined(MODULE_MONITOR) 
 	if (!strcmp(token, "loghistorysize")) {
 		uint32_t newsize = strToUIntVal(value, 4096);
 		if (newsize < 1024) {
@@ -458,6 +459,7 @@ void chk_t_global(const char *token, char *value)
 		cs_reinit_loghist(newsize);
 		return;
 	}
+#endif
 
 	if (!strcmp(token, "serverip")) {
 		if (strlen(value) == 0) {
@@ -763,12 +765,10 @@ void chk_t_global(const char *token, char *value)
 		return;
 	}
 
-#ifdef CS_WITH_DOUBLECHECK
 	if (!strcmp(token, "double_check")) {
 		cfg.double_check = strToIntVal(value, 0);
 		return;
 	}
-#endif
 
 	if (!strcmp(token, "max_cache_time")) {
 		cfg.max_cache_time = strToIntVal(value, 0);
@@ -1000,6 +1000,13 @@ void chk_t_webif(char *token, char *value)
 		cfg.http_full_cfg = strToIntVal(value, 0);
 		return;
 	}
+
+#ifdef WITH_SSL		
+	if (!strcmp(token, "httpforcesslv3")) {
+		cfg.http_force_sslv3 = strToIntVal(value, 0);
+		return;
+	}
+#endif
 
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in webif section not recognized\n",token);
@@ -1668,7 +1675,7 @@ int32_t init_config()
 	cfg.max_log_size = 10;
 	cfg.disableuserfile = 1;
 	cfg.disablemail = 1;
-#ifdef CS_LOGHISTORY
+#if defined(WEBIF) || defined(MODULE_MONITOR) 
 	cfg.loghistorysize = 0;
 	cs_reinit_loghist(4096);
 #endif
@@ -1755,7 +1762,7 @@ int32_t init_config()
 	free(token);
 	fclose(fp);
 
-	if (cfg.logfile == NULL && cfg.logtostdout == 0 && cfg.logtosyslog == 0) {
+	if (!cfg.logfile && cfg.logtostdout == 0 && cfg.logtosyslog == 0) {
 		if(cs_malloc(&(cfg.logfile), strlen(CS_LOGFILE) + 1, -1))
 			memcpy(cfg.logfile, CS_LOGFILE, strlen(CS_LOGFILE) + 1);
 		else cfg.logtostdout = 1;
@@ -2138,7 +2145,7 @@ int32_t write_config()
 		fprintf_conf(f, "usrfile", "%s\n", cfg.usrfile?cfg.usrfile:"");
 	if (cfg.mailfile != NULL || cfg.http_full_cfg)
 		fprintf_conf(f, "mailfile", "%s\n", cfg.mailfile?cfg.mailfile:"");
-	if (cfg.logfile != NULL || cfg.logtostdout == 1 || cfg.logtosyslog == 1 || cfg.http_full_cfg){
+	if (cfg.logfile || cfg.logtostdout == 1 || cfg.logtosyslog == 1 || cfg.http_full_cfg){
 		value = mk_t_logfile();
 		fprintf_conf(f, "logfile", "%s\n", value);
 		free_mk_t(value);
@@ -2153,8 +2160,10 @@ int32_t write_config()
 		fprintf_conf(f, "disableuserfile", "%d\n", cfg.usrfile?cfg.disableuserfile:1);
 	if ((cfg.mailfile && cfg.disablemail == 0) || cfg.http_full_cfg)
 		fprintf_conf(f, "disablemail", "%d\n", cfg.mailfile?cfg.disablemail:1);
+#if defined(WEBIF) || defined(MODULE_MONITOR) 
 	if ((cfg.loghistorysize != 4096) || cfg.http_full_cfg)
 		fprintf_conf(f, "loghistorysize", "%u\n", cfg.loghistorysize);
+#endif
 	if (cfg.usrfileflag || cfg.http_full_cfg)
 		fprintf_conf(f, "usrfileflag", "%d\n", cfg.usrfileflag);
 	if (cfg.ctimeout != CS_CLIENT_TIMEOUT || cfg.http_full_cfg)
@@ -2203,7 +2212,7 @@ int32_t write_config()
 	if (cfg.cacheex_enable_stats != 0 || cfg.http_full_cfg)
 		fprintf_conf(f, "cacheexenablestats", "%d\n", cfg.cacheex_enable_stats);
 #endif
-#if defined(QBOXHD_LED) || defined(CS_LED) 
+#if defined(QBOXHD) || defined(ARM) 
 	if (cfg.enableled || cfg.http_full_cfg)
 		fprintf_conf(f, "enableled", "%d\n", cfg.enableled);
 #endif
@@ -2259,10 +2268,8 @@ int32_t write_config()
 	if (cfg.resolve_gethostbyname || cfg.http_full_cfg)
 		fprintf_conf(f, "resolvegethostbyname", "%d\n", cfg.resolve_gethostbyname);
 
-#ifdef CS_WITH_DOUBLECHECK
 	if (cfg.double_check ||(!cfg.double_check && cfg.http_full_cfg))
 		fprintf_conf(f, "double_check", "%d\n", cfg.double_check);
-#endif
 
 	if (cfg.max_cache_time != DEFAULT_MAX_CACHE_TIME || cfg.http_full_cfg)
 		fprintf_conf(f, "max_cache_time", "%d\n", cfg.max_cache_time);
@@ -2498,11 +2505,12 @@ int32_t write_config()
 	/*webinterface*/
 	if (cfg.http_port > 0) {
 		fprintf(f,"[webif]\n");
+#ifdef WITH_SSL	
 		if (cfg.http_use_ssl) {
 			fprintf_conf(f, "httpport", "+%d\n", cfg.http_port);
-		} else {
+		} else
+#endif
 			fprintf_conf(f, "httpport", "%d\n", cfg.http_port);
-		}
 
 		if(strcmp(cfg.http_help_lang, "en") != 0 || cfg.http_full_cfg)
 			fprintf_conf(f, "httphelplang", "%s\n", cfg.http_help_lang);
@@ -2534,6 +2542,10 @@ int32_t write_config()
 			fprintf_conf(f, "httpreadonly", "%d\n", cfg.http_readonly);
 		if(cfg.http_full_cfg)
 			fprintf_conf(f, "httpsavefullcfg", "%d\n", cfg.http_full_cfg);
+#ifdef WITH_SSL	
+		if(cfg.http_force_sslv3 || cfg.http_full_cfg)
+			fprintf_conf(f, "httpforcesslv3", "%d\n", cfg.http_force_sslv3);
+#endif
 
 		fputc((int)'\n', f);
 	}
@@ -3127,11 +3139,6 @@ void write_versionfile() {
 #else
 	  fprintf(fp, "SSL support:                no\n");
 #endif
-#ifdef WITH_SSLv3
-	  fprintf(fp, "SSLv3 support:              yes\n");
-#else
-	  fprintf(fp, "SSLv3 support:              no\n");
-#endif
 #ifdef HAVE_DVBAPI
 	  fprintf(fp, "DVB API support             yes\n");
 #ifdef WITH_STAPI
@@ -3147,11 +3154,6 @@ void write_versionfile() {
 #else
 	  fprintf(fp, "Anti-cascading support:     no\n");
 #endif
-#ifdef CS_WITH_DOUBLECHECK
-	  fprintf(fp, "ECM doublecheck:            yes\n");
-#else
-	  fprintf(fp, "ECM doublecheck:            no\n");
-#endif
 #ifdef IRDETO_GUESSING
 	  fprintf(fp, "Irdeto guessing:            yes\n");
 #else
@@ -3161,21 +3163,6 @@ void write_versionfile() {
 	  fprintf(fp, "Debug mode:                 yes\n");
 #else
 	  fprintf(fp, "Debug mode:                 no\n");
-#endif
-#ifdef CS_LED
-	  fprintf(fp, "LED support:                yes\n");
-#else
-	  fprintf(fp, "LED support:                no\n");
-#endif
-#ifdef QBOXHD_LED
-	  fprintf(fp, "Q-Box HD LED support:       yes\n");
-#else
-	  fprintf(fp, "Q-Box HD LED support:       no\n");
-#endif
-#ifdef CS_LOGHISTORY
-	  fprintf(fp, "Log history:                yes\n");
-#else
-	  fprintf(fp, "Log history:                no\n");
 #endif
 #ifdef MODULE_MONITOR
 	  fprintf(fp, "Monitor:                    yes\n");
@@ -5578,7 +5565,7 @@ char *mk_t_logfile(){
 
 	if(cfg.logtostdout == 1) needed += 7;
 	if(cfg.logtosyslog == 1) needed += 7;
-	if(cfg.logfile != NULL) needed += strlen(cfg.logfile);
+	if(cfg.logfile) needed += strlen(cfg.logfile);
 	if(needed == 1 || !cs_malloc(&value, needed * sizeof(char), -1)) return "";
 
 	if(cfg.logtostdout == 1){
@@ -5589,7 +5576,7 @@ char *mk_t_logfile(){
 		pos += snprintf(value + pos, needed - pos, "%ssyslog", dot);
 		dot = ";";
 	}
-	if(cfg.logfile != NULL){
+	if(cfg.logfile){
 		pos += snprintf(value + pos, needed - pos, "%s%s", dot, cfg.logfile);
 	}
 	return value;

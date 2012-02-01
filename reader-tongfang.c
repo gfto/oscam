@@ -1,4 +1,5 @@
 #include "globals.h"
+#ifdef READER_TONGFANG
 #include "reader-common.h"
 
 static int32_t cw_is_valid(unsigned char *cw) //returns 1 if cw_is_valid, returns 0 if cw is all zeros
@@ -212,3 +213,4 @@ void reader_tongfang(struct s_cardsystem *ph)
 	ph->caids[0]=0x4B;
 	ph->desc="tongfang";
 }
+#endif

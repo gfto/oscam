@@ -1,4 +1,5 @@
 #include "../globals.h"
+#ifdef WITH_CARDREADER
 #include "atr.h"
 #include <termios.h>
 #include "ifd_phoenix.h"
@@ -79,7 +80,7 @@ static int32_t smargo_init(struct s_reader *reader) {
 	cs_log("smargo init");
 	reader->handle = open (reader->device,  O_RDWR);
 	if (reader->handle < 0) {
-		cs_log("ERROR opening device %s",reader->device);
+		cs_log("ERROR opening device %s (errno=%d %s)",reader->device, errno, strerror(errno));
 		return ERROR;
 	}
 
@@ -192,3 +193,4 @@ void cardreader_smargo(struct s_cardreader *crdr)
 
 	crdr->need_inverse	= 1;
 }
+#endif

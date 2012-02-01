@@ -1,4 +1,5 @@
 #include "globals.h"
+#ifdef READER_SECA
 #include "reader-common.h"
 #include <stdlib.h>
 
@@ -449,3 +450,4 @@ void reader_seca(struct s_cardsystem *ph)
 	ph->caids[0]=0x01;
 	ph->desc="seca";
 }
+#endif

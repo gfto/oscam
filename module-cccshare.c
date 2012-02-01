@@ -1,6 +1,7 @@
 #include "globals.h"
 
 #ifdef MODULE_CCCAM
+#ifdef MODULE_CCCSHARE
 #include "module-cccam.h"
 #include "reader-common.h"
 #include "module-cccshare.h"
@@ -1323,4 +1324,5 @@ void done_share() {
 					cc_free_reported_carddata(reported_carddatas[i], NULL, 0);
 		}
 }
+#endif
 #endif

@@ -235,7 +235,7 @@ int32_t sid_eq(struct cc_srvid *srvid1, struct cc_srvid *srvid2) {
 	return (srvid1->sid == srvid2->sid && (srvid1->chid == srvid2->chid || !srvid1->chid || !srvid2->chid) && (srvid1->ecmlen == srvid2->ecmlen || !srvid1->ecmlen || !srvid2->ecmlen));
 }
 
-int32_t is_sid_blocked(struct cc_card *card, struct cc_srvid *srvid_blocked) {
+struct cc_srvid * is_sid_blocked(struct cc_card *card, struct cc_srvid *srvid_blocked) {
 	LL_ITER it = ll_iter_create(card->badsids);
 	struct cc_srvid *srvid;
 	while ((srvid = ll_iter_next(&it))) {
@@ -243,10 +243,10 @@ int32_t is_sid_blocked(struct cc_card *card, struct cc_srvid *srvid_blocked) {
 			break;
 		}
 	}
-	return (srvid != 0);
+	return srvid;
 }
 
-int32_t is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
+struct cc_srvid *  is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
 	LL_ITER it = ll_iter_create(card->goodsids);
 	struct cc_srvid *srvid;
 	while ((srvid = ll_iter_next(&it))) {
@@ -254,7 +254,7 @@ int32_t is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
 			break;
 		}
 	}
-	return (srvid != 0);
+	return srvid;
 }
 
 #define BLOCKING_SECONDS 60
@@ -1057,7 +1057,8 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 				||(chk_only && cfg.lb_mode && cfg.lb_auto_betatunnel && cur_er->caid>>8==0x18 && ncard->caid>>8==0x17) //accept beta card when beta-tunnel is on
 				#endif
 				) {
-			if (is_sid_blocked(ncard, &cur_srvid))
+			struct cc_srvid *blocked_sid = is_sid_blocked(ncard, &cur_srvid);
+			if (blocked_sid && (!chk_only || blocked_sid->ecmlen == 0))
 				continue;
 
 			if (!(rdr->cc_want_emu) && (ncard->caid>>8==0x18) && (!xcard || ncard->hop < xcard->hop))
@@ -1520,7 +1521,7 @@ int32_t cc_send_emm(EMM_PACKET *ep) {
 	ll_append(cc->pending_emms, emmbuf);
 	cc_send_pending_emms(cl);
 
-#ifdef WEBIF
+#if defined(WEBIF) || defined(LCDSUPPORT)
 	rdr->emmwritten[ep->type]++;
 #endif	
 	return 1;
@@ -2088,7 +2089,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				break;
 			}
 		}
-		
+#ifdef MODULE_CCCSHARE
 		//Check Ident filter:
 		if (card) {
 			if (!chk_ident(&rdr->ftab, card)) {
@@ -2096,7 +2097,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				card=NULL;
 			}
 		}
-				
+#endif					
 		if (card) {
 			//Check if we already have this card:
 			it = ll_iter_create(cc->cards);
@@ -2343,7 +2344,9 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				er->prid = b2i(4, buf + 6);
 				cc->server_ecm_pending++;
 				er->idx = ++cc->server_ecm_idx;
-
+				
+#ifdef MODULE_CCCSHARE
+				
 				if (cfg.cc_forward_origin_card) { //search my shares for this card:
 						cs_debug_mask(D_TRACE, "%s forward card: %04X:%04x search share %d", getprefix(), er->caid, er->srvid, server_card->id);
 						LLIST **sharelist = get_and_lock_sharelist();
@@ -2397,6 +2400,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 										card->id, ordr->label, rcard->id);
 						unlock_sharelist();
 				}
+#endif				
 						
 				cs_debug_mask(
 						D_CLIENT,
@@ -2864,6 +2868,7 @@ void cc_init_locks(struct cc_data *cc) {
 	cs_lock_create(&cc->cards_busy, 10, "cards_busy");
 }
 
+#ifdef MODULE_CCCSHARE
 /**
  * Starting readers to get cards:
  **/
@@ -3095,7 +3100,6 @@ int32_t cc_srv_connect(struct s_client *cl) {
 		cs_debug_mask(D_CLIENT, "%s 2.1.x compatibility mode", getprefix());
 
 	cs_debug_mask(D_TRACE, "ccc send cards %s", usr);
- 
 	if (!cc_srv_report_cards(cl))
 		return -1;
 	cs_ftime(&cc->ecm_time);
@@ -3130,6 +3134,7 @@ void * cc_srv_init(struct s_client *cl, uchar *UNUSED(mbuf), int32_t UNUSED(len)
 	cc_srv_init2(cl);
 	return NULL;
 }
+#endif
 
 int32_t cc_cli_connect(struct s_client *cl) {
 	struct s_reader *rdr = cl->reader;
@@ -3448,6 +3453,7 @@ void cc_update_nodeid()
 		memcpy(cfg.cc_fixed_nodeid, cc_node_id, 8);
 }
 
+#ifdef MODULE_CCCSHARE
 static void cc_s_idle(struct s_client *cl) {
 	cs_debug_mask(D_TRACE, "ccc idle %s", username(cl));
 	if (cfg.cc_keep_connected) {
@@ -3458,11 +3464,13 @@ static void cc_s_idle(struct s_client *cl) {
 		cs_disconnect_client(cl);
 	}
 }
+#endif
 
 void module_cccam(struct s_module *ph) {
 	cs_strncpy(ph->desc, "cccam", sizeof(ph->desc));
 	ph->type = MOD_CONN_TCP;
 	ph->listenertype = LIS_CCCAM;
+	ph->num = R_CCCAM;
 	ph->logtxt = ", crypted";
 	ph->recv = cc_recv;
 	ph->cleanup = cc_cleanup;
@@ -3473,16 +3481,22 @@ void module_cccam(struct s_module *ph) {
 	ph->c_recv_chk = cc_recv_chk;
 	ph->c_send_ecm = cc_send_ecm;
 	ph->c_send_emm = cc_send_emm;
+#ifdef MODULE_CCCSHARE
 	ph->s_ip = cfg.cc_srvip;
 	ph->s_handler = cc_srv_init;
 	ph->s_init = cc_srv_init2;
 	ph->s_idle = cc_s_idle;
 	ph->send_dcw = cc_send_dcw;
+#endif
 	ph->c_available = cc_available;
 	ph->c_card_info = cc_card_info;
 #ifdef CS_CACHEEX
 	ph->c_cache_push=cc_cache_push_out;
 #endif
+
+	cc_update_nodeid();
+
+#ifdef MODULE_CCCSHARE
 	static PTAB ptab; //since there is always only 1 cccam server running, this is threadsafe
 	memset(&ptab, 0, sizeof(PTAB));
 	int32_t i;
@@ -3493,11 +3507,9 @@ void module_cccam(struct s_module *ph) {
 	}
 			
 	ph->ptab = &ptab;
-	ph->num = R_CCCAM;
-
-	cc_update_nodeid();
 
 	if (cfg.cc_port[0])
-		init_share();		
+		init_share();
+#endif		
 }
 #endif

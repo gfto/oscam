@@ -1,22 +1,40 @@
 /* ===========================
  *      protocol modules
  * =========================== */
-extern int32_t  monitor_send_idx(struct s_client *, char *);
+#ifdef MODULE_MONITOR 
+extern int32_t monitor_send_idx(struct s_client *, char *);
+#endif
 extern void module_monitor(struct s_module *);
+#ifdef MODULE_CAMD35
 extern void module_camd35(struct s_module *);
+#endif
+#ifdef MODULE_CAMD35_TCP
 extern void module_camd35_tcp(struct s_module *);
+#endif
+#ifdef MODULE_CAMD33
 extern void module_camd33(struct s_module *);
+#endif
+#ifdef MODULE_NEWCAMD
 extern void module_newcamd(struct s_module *);
+#endif
+#ifdef MODULE_RADEGAST 
 extern void module_radegast(struct s_module *);
+#endif
+#ifdef MODULE_SERIAL
 extern void module_oscam_ser(struct s_module *);
+#endif
 #ifdef MODULE_CCCAM
 extern void module_cccam(struct s_module *);
 #endif
 #ifdef MODULE_PANDORA
 extern void module_pandora(struct s_module *);
 #endif
+#ifdef MODULE_GBOX
 extern void module_gbox(struct s_module *);
+#endif
+#ifdef MODULE_CONSTCW
 extern void module_constcw(struct s_module *);
+#endif
 #ifdef CS_CACHEEX
 extern void module_csp(struct s_module *);
 #endif
@@ -27,21 +45,40 @@ extern void module_dvbapi(struct s_module *);
 /* ===========================
  *       card support
  * =========================== */
+#ifdef READER_NAGRA
 extern void reader_nagra(struct s_cardsystem *);
+#endif
+#ifdef READER_IRDETO
 extern void reader_irdeto(struct s_cardsystem *);
+#endif
+#ifdef READER_CRYPTOWORKS
 extern void reader_cryptoworks(struct s_cardsystem *);
+#endif
+#ifdef READER_VIACCESS
 extern void reader_viaccess(struct s_cardsystem *);
+#endif
+#ifdef READER_CONAX
 extern void reader_conax(struct s_cardsystem *);
+#endif
+#ifdef READER_SECA
 extern void reader_seca(struct s_cardsystem *);
+#endif
+#ifdef READER_VIDEOGUARD 
 extern void reader_videoguard1(struct s_cardsystem *);
 extern void reader_videoguard2(struct s_cardsystem *);
 extern void reader_videoguard12(struct s_cardsystem *);
+#endif
+#ifdef READER_DRE
 extern void reader_dre(struct s_cardsystem *);
+#endif
+#ifdef READER_TONGFANG
 extern void reader_tongfang(struct s_cardsystem *);
+#endif
 
 /* ===========================
  *         cardreaders
  * =========================== */
+#ifdef WITH_CARDREADER
 extern void cardreader_mouse(struct s_cardreader *crdr);
 extern void cardreader_smargo(struct s_cardreader *crdr);
 #ifdef WITH_STAPI
@@ -49,6 +86,7 @@ extern void cardreader_stapi(struct s_cardreader *crdr);
 #endif
 #ifdef HAVE_PCSC
 extern void pcsc_close(struct s_reader *pcsc_reader);
+#endif
 #endif
 
 /* ===========================
@@ -70,7 +108,7 @@ extern struct s_cacheex_matcher *is_cacheex_matcher_matching(ECM_REQUEST *er, EC
 extern void cacheex_matcher_read();
 #endif
 
-#ifdef QBOXHD_LED
+#ifdef QBOXHD
 extern void qboxhd_led_blink(int32_t color, int32_t duration);
 #endif
 
@@ -263,7 +301,9 @@ extern void end_lcd_thread();
  * =========================== */
 extern char *LOG_LIST;
 extern int32_t  cs_init_log();
+#if defined(WEBIF) || defined(MODULE_MONITOR) 
 extern void cs_reinit_loghist(uint32_t size);
+#endif
 extern int32_t cs_open_logfiles();
 #ifdef CS_ANTICASC
 extern int32_t ac_init_log();

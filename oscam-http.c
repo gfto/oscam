@@ -251,6 +251,10 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	if (cfg.reader_restart_seconds)
 		tpl_printf(vars, TPLADD, "READERRESTARTSECONDS", "%d", cfg.reader_restart_seconds);
 
+	tpl_printf(vars, TPLADD, "MAXCACHETIME", "%d", cfg.max_cache_time);
+
+	tpl_printf(vars, TPLADD, "MAXCACHECOUNT", "%d", cfg.max_cache_count);
+
 	if (cfg.dropdups)
 		tpl_addVar(vars, TPLADD, "DROPDUPSCHECKED", "selected");
 
@@ -262,11 +266,9 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	tpl_printf(vars, TPLADD, "FAILBANTIME", "%d", cfg.failbantime);
 	tpl_printf(vars, TPLADD, "FAILBANCOUNT", "%d", cfg.failbancount);
 
-#ifdef CS_WITH_DOUBLECHECK
 	if(cfg.double_check == 1)
 		tpl_addVar(vars, TPLADD, "DCHECKCSELECTED", "selected");
-#endif
-#if defined(QBOXHD_LED) || defined(CS_LED) 
+#if defined(QBOXHD) || defined(ARM) 
 	if(cfg.enableled == 1)
 		tpl_addVar(vars, TPLADD, "ENABLELEDSELECTED1", "selected");
 	else if(cfg.enableled == 2)
@@ -571,7 +573,9 @@ static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams
 
 	if (strcmp(getParam(params, "button"), "Refresh global list") == 0) {
 		cs_debug_mask(D_TRACE, "Entitlements: Refresh Shares start");
+#ifdef MODULE_CCCSHARE		
 		refresh_shares();
+#endif		
 		cs_debug_mask(D_TRACE, "Entitlements: Refresh Shares finished");
 		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Refresh Shares started</B><BR><BR>");
 	}
@@ -739,6 +743,11 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 
 	if (cfg.http_full_cfg)
 		tpl_addVar(vars, TPLADD, "HTTPSAVEFULLSELECT", "selected");
+
+#ifdef WITH_SSL		
+	if (cfg.http_force_sslv3)
+		tpl_addVar(vars, TPLADD, "HTTPFORCESSLV3SELECT", "selected");
+#endif
 
 #ifdef LCDSUPPORT
 	if(cfg.enablelcd)
@@ -1734,15 +1743,15 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 		tpl_printf(vars, TPLADD, "READERCAID", "%04X", rdr->caid);
 	}
 
-	int32_t rc2hide = (-1);
-	if (strlen(getParam(params, "hide")) > 0)
-			rc2hide = atoi(getParam(params, "hide"));
-
 	int32_t rowcount = 0;
 	uint64_t ecmcount = 0;
 	time_t lastaccess = 0;
 
 #ifdef WITH_LB
+	int32_t rc2hide = (-1);
+	if (strlen(getParam(params, "hide")) > 0)
+		rc2hide = atoi(getParam(params, "hide"));
+			
 	if (rdr->lb_stat) {
 		int32_t statsize;
 		// @todo alno: sort by click, 0=ascending, 1=descending (maybe two buttons or reverse on second click)
@@ -2128,13 +2137,9 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	struct s_auth *account;
 	struct s_client *cl;
 	char *user = getParam(params, "user");
-	int32_t found = 0, hideclient = 10;
+	int32_t found = 0;
 
 	if(!apicall) setActiveMenu(vars, MNU_USERS);
-
-	if (cfg.mon_hideclient_to > 10)
-	hideclient = cfg.mon_hideclient_to;
-
 
 	if (strcmp(getParam(params, "action"), "reinit") == 0) {
 		if(!cfg.http_readonly)
@@ -2448,11 +2453,13 @@ static void print_cards(struct templatevars *vars, struct uriparams *params, LLI
 		char *provider = "";
 
 		// @todo alno: sort by click, 0=ascending, 1=descending (maybe two buttons or reverse on second click)
+#ifdef MODULE_CCCSHARE
 		struct cc_card **cardarray = get_sorted_card_copy(cards, 0, &cardsize);
-
+#endif
 		for(i = offset; i < cardsize; ++i) {
+#ifdef MODULE_CCCSHARE
 			card = cardarray[i];
-
+#endif
 			if (count == ENTITLEMENT_PAGE_SIZE)
 				break;
 			count++;
@@ -2569,8 +2576,9 @@ static void print_cards(struct templatevars *vars, struct uriparams *params, LLI
 
 			cardcount++;
 		}
+#ifdef MODULE_CCCSHARE
 		free(cardarray);
-
+#endif
 		// set previous Link if needed
 		if (offset >= ENTITLEMENT_PAGE_SIZE) {
 			tpl_printf(vars, TPLAPPEND, "CONTROLS", "<A HREF=\"entitlements.html?offset=%d&globallist=%s&amp;label=%s\"> << PREVIOUS < </A>",
@@ -2631,13 +2639,15 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 			}
 
 			if (show_global_list) {
+#ifdef MODULE_CCCSHARE								
 				int i;
-				LLIST **sharelist = get_and_lock_sharelist();
+				LLIST **sharelist = get_and_lock_sharelist();				
 				for (i=0;i<CAID_KEY;i++) {
-					if (sharelist[i])
+					if (sharelist[i])		
 						print_cards(vars, params, sharelist[i], 1, NULL, offset, apicall);
-				}
+				}			
 				unlock_sharelist();
+#endif
 			} else {
 				struct s_client *rc = rdr->client;
 				struct cc_data *rcc = (rc)?rc->cc:NULL;
@@ -4200,6 +4210,7 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 	tpl_printf(vars, TPLADD, "TOTAL_CACHEXGOT", "%ld", first_client->cwcacheexgot);
 	tpl_addVar(vars, TPLADD, "TOTAL_CACHEXGOT_IMG", getting);
 	tpl_printf(vars, TPLADD, "TOTAL_CACHEXHIT", "%ld", first_client->cwcacheexhit);
+	tpl_printf(vars, TPLADD, "TOTAL_CACHESIZE", "%d", ecmcwcache_size);
 
 	return tpl_getTpl(vars, "CACHEEXPAGE");
 }
@@ -4815,7 +4826,6 @@ void http_srv() {
 		close(sock);
 		return;
 	}
-	cs_log("HTTP Server listening on port %d%s", cfg.http_port, cfg.http_use_ssl ? " (SSL)" : "");
 
 #ifdef WITH_SSL
 	SSL_CTX *ctx = NULL;
@@ -4825,6 +4835,9 @@ void http_srv() {
 			cs_log("SSL could not be initialized. Starting WebIf in plain mode.");
 		else ssl_active = 1;
 	} else ssl_active = 0;
+	cs_log("HTTP Server listening on port %d%s", cfg.http_port, ssl_active ? " (SSL)" : "");
+#else
+	cs_log("HTTP Server listening on port %d", cfg.http_port);
 #endif
 
 	memset(&remote, 0, sizeof(remote));

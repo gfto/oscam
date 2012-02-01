@@ -372,7 +372,7 @@ enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE, E2_
 
 #define CTA_RES_LEN 512
 
-#ifdef CS_LED
+#ifdef ARM
 #define  LED1A 		0
 #define  LED1B 		1
 #define  LED2 		2
@@ -385,7 +385,7 @@ enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE, E2_
 extern void cs_switch_led(int32_t led, int32_t action);
 #endif
 
-#ifdef QBOXHD_LED
+#ifdef QBOXHD
 #define QBOXHD_LED_DEVICE               "/dev/sw0"
 #define QBOXHD_SET_LED_ALL_PANEL_COLOR	_IO(0xBC, 13)    // payload = 3byte [H][S][V]
 #define QBOXHD_LED_COLOR_RED        359  // only H value, S and V values are always == 99
@@ -408,7 +408,7 @@ extern void cs_switch_led(int32_t led, int32_t action);
 #define QBOXHD_LED_BLINK_MEDIUM     200
 #define QBOXHD_LED_BLINK_SLOW       400
 
-#endif //QBOXHD_LED
+#endif
 
 #define MAX_ATR_LEN		33			// max. ATR length
 #define MAX_HIST		15			// max. number of historical characters
@@ -746,15 +746,10 @@ typedef struct ecm_request_t {
 	int32_t			btun; 				// mark er as betatunneled
 	int32_t			reader_avail; 		// count of available readers
 	int32_t			reader_count; 		// count of contacted readers
-
-#ifdef CS_WITH_DOUBLECHECK
-	int32_t			checked;
-	uchar			cw_checked[16];
-#endif
-
-#if defined MODULE_CCCAM || defined CS_WITH_DOUBLECHECK
+	int32_t			checked;				//for doublecheck
+	uchar			cw_checked[16];		//for doublecheck
 	struct s_reader 	*origin_reader;
-#endif
+
 #if defined MODULE_CCCAM
 	void			*origin_card; 		// CCcam preferred card!
 #endif
@@ -927,9 +922,10 @@ struct s_client {
 	struct s_emm	*emmcache;
 
 	pthread_t		thread;
-	
-	struct s_serial_client	*serialdata;
 
+#ifdef MODULE_SERIAL	
+	struct s_serial_client	*serialdata;
+#endif
 	//reader common
 	int32_t			last_idx;
 	uint16_t		idx;
@@ -1155,7 +1151,7 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t			init_history_pos;
 	int32_t			brk_pos;
 	int32_t			msg_idx;
-#ifdef WEBIF
+#if defined(WEBIF) || defined(LCDSUPPORT)
 	int32_t			emmwritten[4];					// count written EMM
 	int32_t			emmskipped[4];					// count skipped EMM
 	int32_t			emmerror[4];					// count error EMM
@@ -1175,15 +1171,17 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t			mode;
 #endif
 	////variables from icc_async.h start
+#ifdef WITH_CARDREADER
 	int32_t 		convention;						// Convention of this ICC
 	unsigned char 	protocol_type;					// Type of protocol
-	uint16_t		BWT,CWT;						// (for overclocking uncorrected) block waiting time, character waiting time, in ETU
 	uint32_t		current_baudrate;				// (for overclocking uncorrected) baudrate to prevent unnecessary conversions from/to termios structure
 	uint32_t		read_timeout;					// Max timeout (ms) to receive characters
 	uint32_t		block_delay;					// Delay (ms) after starting to transmit
 	uint32_t		char_delay;						// Delay (ms) after transmiting each sucesive char
 	////variables from io_serial.h
 	int32_t			written;						// keep score of how much bytes are written to serial port, since they are echoed back they have to be read
+#endif
+	uint16_t		BWT,CWT;						// (for overclocking uncorrected) block waiting time, character waiting time, in ETU
 	////variables from protocol_t1.h
 	uint16_t		ifsc;							// Information field size for the ICC
 	unsigned char	ns;								// Send sequence number
@@ -1429,7 +1427,9 @@ struct s_config
 	char			*mailfile;
 	uint8_t			logtostdout;
 	uint8_t 		logtosyslog;
+#if defined(WEBIF) || defined(MODULE_MONITOR) 
 	uint32_t		loghistorysize;
+#endif
 	int8_t			disablelog;
 	int8_t			disablemail;
 	int8_t			disableuserfile;
@@ -1461,7 +1461,10 @@ struct s_config
 	int8_t			http_readonly;
 	in_addr_t		http_dynip;
 	uchar			http_dyndns[64];
+#ifdef WITH_SSL	
 	int8_t			http_use_ssl;
+	int8_t			http_force_sslv3;
+#endif
 	char			http_cert[128];
 	char			http_help_lang[3];
 #endif
@@ -1543,10 +1546,7 @@ struct s_config
 	int32_t			lb_auto_betatunnel_prefer_beta; // prefer-beta-over-nagra factor
 #endif
 	int32_t			resolve_gethostbyname;
-
-#ifdef CS_WITH_DOUBLECHECK
 	int8_t double_check;							// schlocke: Double checks each ecm+dcw from two (or more) readers
-#endif
 
 #ifdef IRDETO_GUESSING
 	struct s_irdeto_quess *itab[0xff];
@@ -1575,7 +1575,7 @@ struct s_config
 	struct		s_cpmap *cpmap;
 #endif
 
-#if defined(QBOXHD_LED) || defined(CS_LED) 
+#if defined(QBOXHD) || defined(ARM) 
 	int8_t enableled; 						// 0=disabled led, 1=enable led for routers, 2=enable qboxhd led
 #endif
 #ifdef LCDSUPPORT
@@ -1661,7 +1661,7 @@ typedef struct emm_packet_t
 	struct s_client *client;
 } EMM_PACKET;
 
-#ifdef QBOXHD_LED
+#ifdef QBOXHD
 typedef struct {
 	uint16_t H;										// range 0-359
 	unsigned char S;								// range 0-99
@@ -1683,13 +1683,16 @@ extern uint32_t cfg_sidtab_generation;
 extern uint8_t cs_http_use_utf8;
 extern pthread_key_t getclient;
 extern struct s_client *first_client;
+extern uint32_t ecmcwcache_size;
 extern struct s_reader *first_active_reader;		//points to list of _active_ readers (enable = 1, deleted = 0)
 extern LLIST *configured_readers;
 extern int32_t cs_dblevel;
 extern uint16_t len4caid[256];
 extern struct s_config cfg;
 extern char cs_confdir[];
+#if defined(WEBIF) || defined(MODULE_MONITOR) 
 extern char *loghist, *loghistptr;
+#endif
 extern struct s_module ph[CS_MAX_MOD];
 extern struct s_cardsystem cardsystem[CS_MAX_MOD];
 extern struct s_cardreader cardreader[CS_MAX_MOD];

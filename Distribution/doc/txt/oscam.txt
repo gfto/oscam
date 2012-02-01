@@ -64,6 +64,12 @@ OPTIONS
 	   128 = DVBAPI logging
 	   255 = debug all
 
+       -g <mode>
+	  garbage collector debug mode, default:none:
+
+	     0 = immediate free
+	     1 = check for double frees
+
        -h
 	  usage
 

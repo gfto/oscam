@@ -23,6 +23,7 @@
 */
 
 #include "../globals.h"
+#ifdef WITH_CARDREADER
 #ifdef OS_HPUX
 #include <sys/modem.h>
 #endif
@@ -729,3 +730,4 @@ bool IO_Serial_InitPnP (struct s_reader * reader)
 
 		return OK;
 }
+#endif
