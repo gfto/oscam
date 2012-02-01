@@ -1249,6 +1249,7 @@ struct s_reader  									//contains device info, reader info and card info
 	uint8_t			ins7E11[0x01+1];
 	int8_t			ins7e11_fast_reset;
 	struct s_sc8in1_config *sc8in1_config;
+	uint8_t			sc8in1_dtrrts_patch; // fix for kernel commit 6a1a82df91fa0eb1cc76069a9efe5714d087eccd
 
 #ifdef MODULE_PANDORA
 	int8_t			pand_send_ecm;

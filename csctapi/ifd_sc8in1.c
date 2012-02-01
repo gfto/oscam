@@ -94,6 +94,9 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 		cs_log("ERROR: SC8in1 Command error in set RS232 attributes\n");
 		return ERROR;
 	}
+	if (reader->sc8in1_dtrrts_patch == 1) {
+		IO_Serial_DTR_Set(reader);
+	}
 	Sc8in1_DebugSignals(reader, reader->slot, "CMD11");
 
 	// enable EEPROM write
@@ -180,10 +183,10 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 		}
 	}
 	Sc8in1_DebugSignals(reader, reader->slot, "CMD12");
-	IO_Serial_DTR_Set(reader);
+	if (reader->sc8in1_dtrrts_patch == 1) {
+		IO_Serial_DTR_Set(reader);
+	}
 
-	// Clear RTS which may have been set by tcsetattr
-	//IO_Serial_RTS_Clr(reader);
 	tcflush(reader->handle, TCIOFLUSH);
 
 	// switch SC8in1 to normal mode
@@ -490,6 +493,9 @@ static sc8in1SelectSlot(struct s_reader *reader, uint16_t slot) {
 		cs_log("ERROR: SC8in1 selectslot set RS232 attributes\n");
 		return ERROR;
 	}
+	if (reader->sc8in1_dtrrts_patch == 1) {
+		IO_Serial_DTR_Set(reader);
+	}
 	tcflush(reader->handle, TCIOFLUSH);
 	// selecd select slot command to SC8in1
 	//tmp[0]=0x73; //MCR command
@@ -659,7 +665,9 @@ int32_t Sc8in1_SetTermioForSlot(struct s_reader *reader, uint16_t slot) {
 		}
 	}
 	Sc8in1_DebugSignals(reader, reader->slot, "SL101");
-	IO_Serial_DTR_Set(reader);
+	if (reader->sc8in1_dtrrts_patch == 1) {
+		IO_Serial_DTR_Set(reader);
+	}
 
 	tcflush(reader->handle, TCIOFLUSH);
 
