@@ -4283,9 +4283,9 @@ int32_t main (int32_t argc, char *argv[])
 #ifdef WITH_CARDREADER 
 	cardreader_mouse,
 	cardreader_smargo,
-#endif
 #ifdef WITH_STAPI
 	cardreader_stapi,
+#endif
 #endif
 	0
   };
