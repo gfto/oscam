@@ -593,6 +593,7 @@ int32_t SC8in1_Reset (struct s_reader * reader, ATR * atr)
 int32_t Sc8in1_NeedBaudrateChange(struct s_reader * reader, uint32_t desiredBaudrate, struct termios *current, struct termios *new, uint8_t cmdMode) {
 	// Returns 1 if we need to change the baudrate
 	if ((desiredBaudrate != reader->sc8in1_config->current_baudrate)
+			||(reader->mhz != reader->cardmhz)
 			||(cmdMode == 0 && memcmp(current, new, sizeof(struct termios)))) {
 		cs_debug_mask(D_TRACE, "Sc8in1_NeedBaudrateChange TRUE");
 		return TRUE;
