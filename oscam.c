@@ -1365,6 +1365,7 @@ void add_reader_to_active(struct s_reader *rdr) {
 /* Starts or restarts a cardreader without locking. If restart=1, the existing thread is killed before restarting,
    if restart=0 the cardreader is only started. */
 static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
+	struct s_client *old_client = rdr->client;
 	if (restart){
 		remove_reader_from_active(rdr);		//remove from list
 		struct s_client *cl = rdr->client;
@@ -1372,6 +1373,12 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 			kill_thread(cl);
 			rdr->client = NULL;
 		}
+	}
+
+	while (old_client && old_client->reader == rdr) { //If we quick disable+enable a reader (webif), remove_reader_from_active is called from
+										  //cleanup. this could happen AFTER reader is restarted, so oscam crashes or reader is hidden
+										  //Fixme
+		cs_sleepms(50);
 	}
 
 	rdr->tcp_connected = 0;
