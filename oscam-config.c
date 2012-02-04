@@ -4962,6 +4962,7 @@ void free_reader(struct s_reader *rdr)
 
 #ifdef WITH_LB
 	ll_destroy_data(rdr->lb_stat);
+	rdr->lb_stat = NULL;
 #endif
 	add_garbage(rdr);
 }
