@@ -48,7 +48,7 @@ const uint32_t atr_i_table[4] = {25, 50, 100, 0};
 /* 
  * Exported funcions definition
  */
-#if defined(WITH_CARDREADER) || defined(WITH_STAPI)
+#ifdef WITH_CARDREADER
 int32_t ATR_InitFromArray (ATR * atr, const BYTE atr_buffer[ATR_MAX_SIZE], uint32_t length)
 {
 	BYTE TDi;
@@ -198,8 +198,7 @@ int32_t ATR_InitFromArray (ATR * atr, const BYTE atr_buffer[ATR_MAX_SIZE], uint3
     }
 	return (ATR_OK);
 }
-#endif
-#ifdef WITH_CARDREADER
+
 int32_t ATR_GetConvention (ATR * atr, int32_t *convention)
 {
 	if (atr->TS == 0x3B)
