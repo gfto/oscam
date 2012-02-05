@@ -2501,6 +2501,8 @@ int32_t write_config()
 			fprintf_conf(f, "pmt_mode", "%d\n", cfg.dvbapi_pmtmode);
 		if(cfg.dvbapi_requestmode != 0 || cfg.http_full_cfg)
 			fprintf_conf(f, "request_mode", "%d\n", cfg.dvbapi_requestmode);
+		if(cfg.dvbapi_reopenonzap != 0 || cfg.http_full_cfg)
+			fprintf_conf(f, "reopenonzap", "%d\n", cfg.dvbapi_reopenonzap);
 
 		fputc((int)'\n', f);
 	}
