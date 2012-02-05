@@ -655,7 +655,7 @@ void cleanup_thread(void *var)
 			
 	// Clean all remaining structures
 
-	pthread_mutex_lock(&cl->thread_lock);
+	pthread_mutex_trylock(&cl->thread_lock);
 	ll_destroy_data(cl->joblist);
 	cl->joblist = NULL;
 	pthread_mutex_unlock(&cl->thread_lock);
@@ -1430,10 +1430,10 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 		}
 	}
 
-	while (old_client && old_client->reader == rdr) {
+	while (old_client && old_client->kill && old_client->reader == rdr) {
 		//If we quick disable+enable a reader (webif), remove_reader_from_active is called from
 		//cleanup. this could happen AFTER reader is restarted, so oscam crashes or reader is hidden
-		cs_sleepms(50);					  //Fixme
+		cs_sleepms(100);					  //Fixme, cleanup does old_client->reader = NULL
 	}
 
 	rdr->tcp_connected = 0;
@@ -4063,8 +4063,7 @@ void * client_check(void) {
 			if (cl && cl->init_done && cl->pfd && (cl->typ == 'c' || cl->typ == 'm')) {
 				if (pfd[i].fd == cl->pfd && (pfd[i].revents & (POLLHUP | POLLNVAL))) {
 					//client disconnects
-					cl->kill=1;
-					add_job(cl, ACTION_CLIENT_KILL, NULL, 0);
+					kill_thread(cl);
 					continue;
 				}
 				if (pfd[i].fd == cl->pfd && (pfd[i].revents & (POLLIN | POLLPRI))) {

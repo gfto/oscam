@@ -1182,10 +1182,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		chk_reader("services", servicelabels, rdr);
 
 		if (rdr->typ & R_IS_NETWORK) { //physical readers make trouble if re-started
-			if (rdr->client)
-				add_job(rdr->client, ACTION_READER_RESTART, NULL, 0);
-			else
-				restart_cardreader(rdr, 0);
+			restart_cardreader(rdr, 1);
 		}
 
 		if(write_server()!=0)
