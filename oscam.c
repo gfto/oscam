@@ -3486,16 +3486,13 @@ void * work_thread(void *ptr) {
 	uchar dcw[16];
 
 	while (1) {
-		if (data)
-			cs_debug_mask(D_TRACE, "data from add_job action=%d client %c %s", data->action, cl->typ, username(cl));
-
 		if (!cl || !is_valid_client(cl)) {
 			if (data && data!=&tmp_data)
 				free(data);
 			data = NULL;
 			return NULL;
 		}
-
+		
 		if (cl->kill && ll_count(cl->joblist) == 0) {
 			cs_debug_mask(D_TRACE, "ending thread");
 			if (data && data!=&tmp_data)
@@ -3506,6 +3503,9 @@ void * work_thread(void *ptr) {
 			pthread_exit(NULL);
 			return NULL;
 		}
+		
+		if (data)
+			cs_debug_mask(D_TRACE, "data from add_job action=%d client %c %s", data->action, cl->typ, username(cl));
 
 		if (!data) {
 			if(cl->typ != 'r') check_status(cl);	// do not call for physical readers as this might cause an endless job loop
