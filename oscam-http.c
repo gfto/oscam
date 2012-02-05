@@ -822,6 +822,9 @@ static char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparam
 
 	if (cfg.dvbapi_au > 0)
 		tpl_addVar(vars, TPLADD, "AUCHECKED", "checked");
+		
+	if (cfg.dvbapi_reopenonzap > 0)
+		tpl_addVar(vars, TPLADD, "REOPENONZAPCHECKED", "checked");
 
 	tpl_printf(vars, TPLADD, "BOXTYPE", "<option value=\"\"%s>None</option>\n", cfg.dvbapi_boxtype == 0 ? " selected" : "");
 	for (i=1; i<=BOXTYPES; i++) {

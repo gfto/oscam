@@ -1474,6 +1474,11 @@ void chk_t_dvbapi(char *token, char *value)
 		dvbapi_chk_caidtab(value, 'd');
 		return;
 	}
+	
+	if (!strcmp(token, "reopenonzap")) {
+		cfg.dvbapi_reopenonzap = strToIntVal(value, 0);
+		return;
+	}
 
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in dvbapi section not recognized\n",token);

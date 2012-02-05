@@ -1537,6 +1537,7 @@ struct s_config
 	int8_t		dvbapi_requestmode;
 	SIDTABBITS	dvbapi_sidtabok;					// positiv services
 	SIDTABBITS	dvbapi_sidtabno;					// negative services
+	int8_t dvbapi_reopenonzap;
 #endif
 
 #ifdef CS_ANTICASC
