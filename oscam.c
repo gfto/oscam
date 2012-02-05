@@ -1339,26 +1339,81 @@ void kill_thread(struct s_client *cl) {
 void remove_reader_from_active(struct s_reader *rdr) {
 	struct s_reader *rdr2, *prv = NULL;
 	cs_writelock(&readerlist_lock);
-	for (rdr2=first_active_reader; rdr2 ; rdr2=rdr2->next) {
+	for (rdr2=first_active_reader; rdr2 ; prv=rdr2, rdr2=rdr2->next) {
 		if (rdr2==rdr) {
 			if (prv) prv->next = rdr2->next;
 			else first_active_reader = rdr2->next;
 			break;
 		}
-		prv = rdr2;
 	}
+	rdr->next = NULL;
 	cs_writeunlock(&readerlist_lock);
 }
 
 /* Adds a reader to the list of active readers so that it can serve ecms. */
 void add_reader_to_active(struct s_reader *rdr) {
-	struct s_reader *rdr2;
-	rdr->next = NULL;
+	struct s_reader *rdr2, *rdr_prv=NULL, *rdr_tmp=NULL;
+	int8_t at_first = 1;
+
+	if (rdr->next)
+		remove_reader_from_active(rdr);
+
 	cs_writelock(&readerlist_lock);
+	cs_writelock(&clientlist_lock);
+
+	//search configured position:
+	LL_ITER it = ll_iter_create(configured_readers);
+	while ((rdr2=ll_iter_next(&it))) {
+		if(rdr2==rdr) break;
+		if (rdr2->client && rdr2->enable) {
+			rdr_prv = rdr2;
+			at_first = 0;
+		}
+	}
+
+	//insert at configured position:
 	if (first_active_reader) {
-		for (rdr2=first_active_reader; rdr2->next ; rdr2=rdr2->next) ; //search last element
-		rdr2->next = rdr;
+		if (at_first) {
+			rdr->next = first_active_reader;
+			first_active_reader = rdr;
+
+			//resort client list:
+			struct s_client *prev, *cl;
+			for (prev = first_client, cl = first_client->next;
+					prev->next != NULL; prev = prev->next, cl = cl->next)
+				if (rdr->client == cl)
+					break;
+			if (rdr->client == cl) {
+				prev->next = cl->next; //remove client from list
+				cl->next = first_client->next;
+				first_client->next = cl;
+			}
+		}
+		else
+		{
+			for (rdr2=first_active_reader; rdr2->next && rdr2 != rdr_prv ; rdr2=rdr2->next) ; //search last element
+			rdr_prv = rdr2;
+			rdr_tmp = rdr2->next;
+			rdr2->next = rdr;
+			rdr->next = rdr_tmp;
+
+			//resort client list:
+			struct s_client *prev, *cl;
+			for (prev = first_client, cl = first_client->next;
+					prev->next != NULL; prev = prev->next, cl = cl->next)
+				if (rdr->client == cl)
+					break;
+			if (rdr->client == cl) {
+				prev->next = cl->next; //remove client from list
+				cl = rdr_prv->client->next;
+				rdr_prv->client->next = rdr->client;
+				rdr->client->next = cl;
+			}
+		}
+
 	} else first_active_reader = rdr;
+
+	cs_writeunlock(&clientlist_lock);
 	cs_writeunlock(&readerlist_lock);
 }
 
@@ -1375,10 +1430,10 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 		}
 	}
 
-	while (old_client && old_client->reader == rdr) { //If we quick disable+enable a reader (webif), remove_reader_from_active is called from
-										  //cleanup. this could happen AFTER reader is restarted, so oscam crashes or reader is hidden
-										  //Fixme
-		cs_sleepms(50);
+	while (old_client && old_client->reader == rdr) {
+		//If we quick disable+enable a reader (webif), remove_reader_from_active is called from
+		//cleanup. this could happen AFTER reader is restarted, so oscam crashes or reader is hidden
+		cs_sleepms(50);					  //Fixme
 	}
 
 	rdr->tcp_connected = 0;
