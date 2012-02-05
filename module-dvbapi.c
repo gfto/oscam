@@ -7,12 +7,12 @@
 const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt", "dm7000", "qboxhd", "coolstream", "neumo", "pc" };
 
 const struct box_devices devices[BOX_COUNT] = {
-	/* QboxHD (dvb-api-3)*/	{ "/tmp/virtual_adapter/", 	"ca%d",		"demux%d",			"/tmp/camd.socket" },
-	/* dreambox (dvb-api-3)*/	{ "/dev/dvb/adapter%d/",	"ca%d", 		"demux%d",			"/tmp/camd.socket" },
-	/* dreambox (dvb-api-1)*/	{ "/dev/dvb/card%d/",	"ca%d",		"demux%d",			"/tmp/camd.socket" },
-	/* neumo (dvb-api-1)*/	{ "/dev/",			"demuxapi",		"demuxapi",			"/tmp/camd.socket" },
-	/* sh4      (stapi)*/	{ "/dev/stapi/", 		"stpti4_ioctl",	"stpti4_ioctl",		"/tmp/camd.socket" },
-	/* coolstream*/		{ "/dev/cnxt/", 		"null",		"null",			"/tmp/camd.socket" }
+	/* QboxHD (dvb-api-3)*/	{ "/tmp/virtual_adapter/", 	"ca%d",		"demux%d",			"/tmp/camd.socket", DVBAPI_3  },
+	/* dreambox (dvb-api-3)*/	{ "/dev/dvb/adapter%d/",	"ca%d", 		"demux%d",			"/tmp/camd.socket", DVBAPI_3 },
+	/* dreambox (dvb-api-1)*/	{ "/dev/dvb/card%d/",	"ca%d",		"demux%d",			"/tmp/camd.socket", DVBAPI_1 },
+	/* neumo (dvb-api-1)*/	{ "/dev/",			"demuxapi",		"demuxapi",			"/tmp/camd.socket", DVBAPI_1 },
+	/* sh4      (stapi)*/	{ "/dev/stapi/", 		"stpti4_ioctl",	"stpti4_ioctl",		"/tmp/camd.socket", STAPI },
+	/* coolstream*/		{ "/dev/cnxt/", 		"null",		"null",			"/tmp/camd.socket", COOLAPI }
 };
 
 int32_t selected_box=-1;
@@ -114,11 +114,11 @@ static int32_t dvbapi_detect_api() {
 	cs_debug_mask(D_DVBAPI, "Detected coolstream Api");
 	return 1;
 #else
-	int32_t num_apis=2, i,devnum=-1, dmx_fd=0, ret=-1;
+	int32_t i,devnum=-1, dmx_fd=0, ret=-1, boxnum = sizeof(devices)/sizeof(struct box_devices);
 	uchar filter[32];
 	char device_path[128], device_path2[128];
 
-	for (i=0;i<BOX_COUNT;i++) {
+	for (i=0;i<boxnum;i++) {
 		snprintf(device_path2, sizeof(device_path2), devices[i].demux_device, 0);
 		snprintf(device_path, sizeof(device_path), devices[i].path, 0);
 
@@ -133,6 +133,7 @@ static int32_t dvbapi_detect_api() {
 	if (dmx_fd < 0) return 0;
 	close(dmx_fd);
 	selected_box = devnum;
+	selected_api=devices[selected_box].api;
 
 #ifdef WITH_STAPI
 	if (devnum==4) {
@@ -140,9 +141,6 @@ static int32_t dvbapi_detect_api() {
 			cs_log("stapi: setting up stapi failed.");
 			return 0;
 		}
-
-		selected_api=STAPI;
-		selected_box=4;
 		close(dmx_fd);
 		return 1;
 	}
@@ -153,21 +151,12 @@ static int32_t dvbapi_detect_api() {
 	}
 
 	memset(filter,0,32);
-
 	filter[0]=0x01;
 	filter[16]=0xFF;
 
-	for (i=0;i<num_apis;i++) {
-		ret = dvbapi_set_filter(0, i, 0x0001, filter, filter+16, 1, 0, 0, TYPE_ECM);
-
-		if (ret >= 0) {
-			selected_api=i;
-			dvbapi_stop_filter(0, TYPE_ECM);
-			break;
-		}
-	}
-
-	if (ret < 0) return 0;
+	ret = dvbapi_set_filter(0, selected_api, 0x0001, filter, filter+16, 1, 0, 0, TYPE_ECM);
+	if (ret >= 0) dvbapi_stop_filter(0, TYPE_ECM);
+	else return 0;
 
 	cs_debug_mask(D_DVBAPI, "Detected %s Api: %d", device_path, selected_api);
 #endif
@@ -560,6 +549,10 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t index) {
 								cs_debug_mask(D_DVBAPI, "Error CA_SET_PID pid=0x%04x index=%d (errno=%d %s)", ca_pid2.pid, ca_pid2.index, errno, strerror(errno));
 							else
 								cs_debug_mask(D_DVBAPI, "CA_SET_PID pid=0x%04x index=%d", ca_pid2.pid, ca_pid2.index);
+						}
+						if(cfg.dvbapi_reopenonzap && index == -1){
+							close(ca_fd[i]);
+							ca_fd[i] = 0;
 						}
 					}
 				}

@@ -1099,6 +1099,13 @@ CAIDs to be ignored, default:none
 
 <P>
 
+<B>services</B> = <B>&lt;service ID&gt;[,&lt;service ID&gt;]...</B> <I>(detached by oscam.dvbapi, obsolete)</I>
+<DL COMPACT><DT><DD>
+services to be prioritized, default:none
+</DL>
+
+<P>
+
 <B>priority</B> = <B>&lt;CAID&gt;:&lt;provider ID&gt;[,CAID:&lt;provider ID&gt;]...</B> <I>(detached by oscam.dvbapi, obsolete)</I>
 <DL COMPACT><DT><DD>
 CAIDs and provider IDs to be prioritized, default:CAIDs and provider IDs of local SCs will be prioritized
@@ -1154,6 +1161,20 @@ ipbox-pmt can be used on any DGS based images (with or without camd.socket suppo
 verified on HD models only
 <P>
 pc is for generic pc support (currently supported on VDR with vdr-plugin-dvbapi)
+</DL>
+
+<P>
+
+<B>cw_delay</B> = <B>milli-seconds</B>
+<DL COMPACT><DT><DD>
+delay of CW writing, default:none
+</DL>
+
+<P>
+
+<B>reopenonzap</B> =  <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = reopen demux devices on each channel switching, default:0
 </DL>
 
 <A NAME="lbAT">&nbsp;</A>

@@ -47,6 +47,7 @@ struct box_devices
 	char *ca_device;
 	char *demux_device;
 	char *cam_socket_path;
+	int8_t api;
 };
 
 struct s_ecmpids

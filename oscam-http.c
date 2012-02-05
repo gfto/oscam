@@ -822,6 +822,9 @@ static char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparam
 
 	if (cfg.dvbapi_au > 0)
 		tpl_addVar(vars, TPLADD, "AUCHECKED", "checked");
+		
+	if (cfg.dvbapi_reopenonzap > 0)
+		tpl_addVar(vars, TPLADD, "REOPENONZAPCHECKED", "checked");
 
 	tpl_printf(vars, TPLADD, "BOXTYPE", "<option value=\"\"%s>None</option>\n", cfg.dvbapi_boxtype == 0 ? " selected" : "");
 	for (i=1; i<=BOXTYPES; i++) {
@@ -1182,10 +1185,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		chk_reader("services", servicelabels, rdr);
 
 		if (rdr->typ & R_IS_NETWORK) { //physical readers make trouble if re-started
-			if (rdr->client)
-				add_job(rdr->client, ACTION_READER_RESTART, NULL, 0);
-			else
-				restart_cardreader(rdr, 0);
+			restart_cardreader(rdr, 1);
 		}
 
 		if(write_server()!=0)

@@ -806,6 +806,11 @@ user name for DVB API client, default:anonymous
 CAIDs to be ignored, default:none
 .RE
 .PP
+\fBservices\fP = \fB<service ID>[,<service ID>]...\fP \fI(detached by oscam.dvbapi, obsolete)\fR
+.RS 3n
+services to be prioritized, default:none
+.RE
+.PP
 \fBpriority\fP = \fB<CAID>:<provider ID>[,CAID:<provider ID>]...\fP \fI(detached by oscam.dvbapi, obsolete)\fR
 .RS 3n
 CAIDs and provider IDs to be prioritized, default:CAIDs and provider IDs of local SCs will be prioritized
@@ -853,6 +858,16 @@ ipbox-pmt can be used on any DGS based images (with or without camd.socket suppo
 verified on HD models only
 
 pc is for generic pc support (currently supported on VDR with vdr-plugin-dvbapi)
+.RE
+.PP
+\fBcw_delay\fP = \fBmilli-seconds\fP
+.RS 3n
+delay of CW writing, default:none
+.RE
+.PP
+\fBreopenonzap\fP =  \fB0\fP|\fB1\fP
+.RS 3n
+1 = reopen demux devices on each channel switching, default:0
 .RE
 .SS "The [anticasc] section"
 .PP

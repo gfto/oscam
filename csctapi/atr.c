@@ -22,7 +22,6 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "../globals.h"
-#ifdef WITH_CARDREADER
 #include "defines.h"
 #include "atr.h"
 
@@ -49,7 +48,7 @@ const uint32_t atr_i_table[4] = {25, 50, 100, 0};
 /* 
  * Exported funcions definition
  */
-
+#ifdef WITH_CARDREADER
 int32_t ATR_InitFromArray (ATR * atr, const BYTE atr_buffer[ATR_MAX_SIZE], uint32_t length)
 {
 	BYTE TDi;

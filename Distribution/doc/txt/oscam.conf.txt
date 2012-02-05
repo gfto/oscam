@@ -563,6 +563,9 @@ DESCRIPTIONS
        ignore = <CAID>[,<CAID>]... (detached by oscam.dvbapi, obsolete)
 	  CAIDs to be ignored, default:none
 
+       services = <service ID>[,<service ID>]... (detached by oscam.dvbapi, obsolete)
+	  services to be prioritized, default:none
+
        priority = <CAID>:<provider ID>[,CAID:<provider ID>]... (detached by oscam.dvbapi, obsolete)
 	  CAIDs and provider IDs to be prioritized, default:CAIDs and provider IDs of local SCs will be prioritized
 
@@ -601,6 +604,12 @@ DESCRIPTIONS
 	  only
 
 	  pc is for generic pc support (currently supported on VDR with vdr-plugin-dvbapi)
+
+       cw_delay = milli-seconds
+	  delay of CW writing, default:none
+
+       reopenonzap =  0|1
+	  1 = reopen demux devices on each channel switching, default:0
 
    The [anticasc] section
        enabled = 0|1

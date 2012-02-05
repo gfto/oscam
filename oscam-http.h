@@ -1609,7 +1609,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#hideclient_to##TPLHELPSUFFIX##Hide client to:</A></TD><TD><input name=\"hideclient_to\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##HIDECLIENTTO##\"> s</TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#appendchaninfo##TPLHELPSUFFIX##Append channel info:</A></TD><TD><input name=\"appendchaninfo\" type=\"checkbox\" value=\"1\" ##APPENDCHANINFO##></TD></TR>\n\
 			<TR><TH COLSPAN=\"2\">Webinterface Config</TH></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#httpport##TPLHELPSUFFIX##Http port:</A></TD><TD><input name=\"httpport\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##HTTPPORT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#httpport##TPLHELPSUFFIX##Http port:</A></TD><TD><input name=\"httpport\" type=\"text\" size=\"6\" maxlength=\"6\" value=\"##HTTPPORT##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#httpuser##TPLHELPSUFFIX##Http user:</A></TD><TD><input name=\"httpuser\" type=\"text\" size=\"63\" maxlength=\"64\" value=\"##HTTPUSER##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#httppwd##TPLHELPSUFFIX##Http pwd:</A></TD><TD><input name=\"httppwd\" type=\"text\" size=\"63\" maxlength=\"64\" value=\"##HTTPPASSWORD##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#httpcss##TPLHELPSUFFIX##Http css:</A></TD>\n\
@@ -1967,6 +1967,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		<TR><TD>##TPLHELPPREFIX##conf#enabled##TPLHELPSUFFIX##Enabled:</A></TD><TD><input name=\"enabled\" type=\"checkbox\" value=\"1\" ##ENABLEDCHECKED##>\n\
 		<TR><TD>##TPLHELPPREFIX##conf#au##TPLHELPSUFFIX##AU:</A></TD><TD><input name=\"au\" type=\"checkbox\" value=\"1\" ##AUCHECKED##>\n\
 		<TR><TD>##TPLHELPPREFIX##conf#boxtype##TPLHELPSUFFIX##Boxtype:</A></TD><TD><SELECT name=\"boxtype\">##BOXTYPE##</select></TD></TR>\n\
+		<TR><TD>##TPLHELPPREFIX##conf#reopenonzap##TPLHELPSUFFIX##ReopenOnZap:</A></TD><TD><input name=\"reopenonzap\" type=\"checkbox\" value=\"1\" ##REOPENONZAPCHECKED##>\n\
 		<TR><TD>##TPLHELPPREFIX##conf#user_2##TPLHELPSUFFIX##User:</A></TD><TD><input name=\"user\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##USER##\"></TD></TR>\n\
 		<TR><TD>##TPLHELPPREFIX##conf#pmt_mode##TPLHELPSUFFIX##PMT Mode:</A></TD><TD><select name=\"pmt_mode\">\n\
 			<option value=\"0\" ##PMTMODESELECTED0##>0 - use camd.socket and PMT file</option>\n\
@@ -2496,6 +2497,9 @@ char *tpl[]={
 #ifdef LCDSUPPORT
 	,"LCDOPTIONS"
 #endif
+#ifdef WITH_SSL
+	,"HTTPFORCESSLV3"
+#endif
 #ifdef CS_CACHEEX
 	,"USEREDITCACHEEXBIT"
 	,"READEREDITCACHEEXBIT"
@@ -2662,6 +2666,9 @@ char *tplmap[]={
 #endif
 #ifdef LCDSUPPORT
 	,TPLLCDOPTIONS
+#endif
+#ifdef WITH_SSL
+	,TPLHTTPFORCESSLV3
 #endif
 #ifdef CS_CACHEEX
 	,TPLUSEREDITCACHEEXBIT

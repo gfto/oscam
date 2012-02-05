@@ -655,7 +655,7 @@ void cleanup_thread(void *var)
 			
 	// Clean all remaining structures
 
-	pthread_mutex_lock(&cl->thread_lock);
+	pthread_mutex_trylock(&cl->thread_lock);
 	ll_destroy_data(cl->joblist);
 	cl->joblist = NULL;
 	pthread_mutex_unlock(&cl->thread_lock);
@@ -1341,32 +1341,88 @@ void kill_thread(struct s_client *cl) {
 void remove_reader_from_active(struct s_reader *rdr) {
 	struct s_reader *rdr2, *prv = NULL;
 	cs_writelock(&readerlist_lock);
-	for (rdr2=first_active_reader; rdr2 ; rdr2=rdr2->next) {
+	for (rdr2=first_active_reader; rdr2 ; prv=rdr2, rdr2=rdr2->next) {
 		if (rdr2==rdr) {
 			if (prv) prv->next = rdr2->next;
 			else first_active_reader = rdr2->next;
 			break;
 		}
-		prv = rdr2;
 	}
+	rdr->next = NULL;
 	cs_writeunlock(&readerlist_lock);
 }
 
 /* Adds a reader to the list of active readers so that it can serve ecms. */
 void add_reader_to_active(struct s_reader *rdr) {
-	struct s_reader *rdr2;
-	rdr->next = NULL;
+	struct s_reader *rdr2, *rdr_prv=NULL, *rdr_tmp=NULL;
+	int8_t at_first = 1;
+
+	if (rdr->next)
+		remove_reader_from_active(rdr);
+
 	cs_writelock(&readerlist_lock);
+	cs_writelock(&clientlist_lock);
+
+	//search configured position:
+	LL_ITER it = ll_iter_create(configured_readers);
+	while ((rdr2=ll_iter_next(&it))) {
+		if(rdr2==rdr) break;
+		if (rdr2->client && rdr2->enable) {
+			rdr_prv = rdr2;
+			at_first = 0;
+		}
+	}
+
+	//insert at configured position:
 	if (first_active_reader) {
-		for (rdr2=first_active_reader; rdr2->next ; rdr2=rdr2->next) ; //search last element
-		rdr2->next = rdr;
+		if (at_first) {
+			rdr->next = first_active_reader;
+			first_active_reader = rdr;
+
+			//resort client list:
+			struct s_client *prev, *cl;
+			for (prev = first_client, cl = first_client->next;
+					prev->next != NULL; prev = prev->next, cl = cl->next)
+				if (rdr->client == cl)
+					break;
+			if (rdr->client == cl) {
+				prev->next = cl->next; //remove client from list
+				cl->next = first_client->next;
+				first_client->next = cl;
+			}
+		}
+		else
+		{
+			for (rdr2=first_active_reader; rdr2->next && rdr2 != rdr_prv ; rdr2=rdr2->next) ; //search last element
+			rdr_prv = rdr2;
+			rdr_tmp = rdr2->next;
+			rdr2->next = rdr;
+			rdr->next = rdr_tmp;
+
+			//resort client list:
+			struct s_client *prev, *cl;
+			for (prev = first_client, cl = first_client->next;
+					prev->next != NULL; prev = prev->next, cl = cl->next)
+				if (rdr->client == cl)
+					break;
+			if (rdr->client == cl) {
+				prev->next = cl->next; //remove client from list
+				cl = rdr_prv->client->next;
+				rdr_prv->client->next = rdr->client;
+				rdr->client->next = cl;
+			}
+		}
+
 	} else first_active_reader = rdr;
+
+	cs_writeunlock(&clientlist_lock);
 	cs_writeunlock(&readerlist_lock);
 }
 
 /* Starts or restarts a cardreader without locking. If restart=1, the existing thread is killed before restarting,
    if restart=0 the cardreader is only started. */
 static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
+	struct s_client *old_client = rdr->client;
 	if (restart){
 		remove_reader_from_active(rdr);		//remove from list
 		struct s_client *cl = rdr->client;
@@ -1374,6 +1430,12 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 			kill_thread(cl);
 			rdr->client = NULL;
 		}
+	}
+
+	while (old_client && old_client->kill && old_client->reader == rdr) {
+		//If we quick disable+enable a reader (webif), remove_reader_from_active is called from
+		//cleanup. this could happen AFTER reader is restarted, so oscam crashes or reader is hidden
+		cs_sleepms(100);					  //Fixme, cleanup does old_client->reader = NULL
 	}
 
 	rdr->tcp_connected = 0;
@@ -2276,7 +2338,6 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	cs_ddump_mask (D_ATR, er->cw, 16, "cw:");
 
 #ifdef QBOXHD
-	if(cfg.enableled == 2){
 	if(cfg.enableled == 2){
     if (er->rc < E_NOTFOUND) {
         qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN, QBOXHD_LED_BLINK_MEDIUM);
@@ -3426,16 +3487,13 @@ void * work_thread(void *ptr) {
 	uchar dcw[16];
 
 	while (1) {
-		if (data)
-			cs_debug_mask(D_TRACE, "data from add_job action=%d client %c %s", data->action, cl->typ, username(cl));
-
 		if (!cl || !is_valid_client(cl)) {
 			if (data && data!=&tmp_data)
 				free(data);
 			data = NULL;
 			return NULL;
 		}
-
+		
 		if (cl->kill && ll_count(cl->joblist) == 0) {
 			cs_debug_mask(D_TRACE, "ending thread");
 			if (data && data!=&tmp_data)
@@ -3446,6 +3504,9 @@ void * work_thread(void *ptr) {
 			pthread_exit(NULL);
 			return NULL;
 		}
+		
+		if (data)
+			cs_debug_mask(D_TRACE, "data from add_job action=%d client %c %s", data->action, cl->typ, username(cl));
 
 		if (!data) {
 			if(cl->typ != 'r') check_status(cl);	// do not call for physical readers as this might cause an endless job loop
@@ -4003,8 +4064,7 @@ void * client_check(void) {
 			if (cl && cl->init_done && cl->pfd && (cl->typ == 'c' || cl->typ == 'm')) {
 				if (pfd[i].fd == cl->pfd && (pfd[i].revents & (POLLHUP | POLLNVAL))) {
 					//client disconnects
-					cl->kill=1;
-					add_job(cl, ACTION_CLIENT_KILL, NULL, 0);
+					kill_thread(cl);
 					continue;
 				}
 				if (pfd[i].fd == cl->pfd && (pfd[i].revents & (POLLIN | POLLPRI))) {

@@ -116,7 +116,7 @@ void load_stat_from_file()
 			valid = i>5;
 		}
 		
-		if (valid) {
+		if (valid && stat->ecmlen > 0) {
 			if (rdr == NULL || strcmp(buf, rdr->label) != 0) {
 				LL_ITER itr = ll_iter_create(configured_readers);
 				while ((rdr=ll_iter_next(&itr))) {
@@ -325,7 +325,7 @@ void save_stat_to_file_thread()
 			READER_STAT *stat;
 			while ((stat = ll_iter_next(&it))) {
 			
-				if (stat->last_received < cleanup_time) { //cleanup old stats
+				if (stat->last_received < cleanup_time || !stat->ecmlen) { //cleanup old stats
 					ll_iter_remove_data(&it);
 					continue;
 				}
@@ -399,7 +399,7 @@ READER_STAT *get_add_stat(struct s_reader *rdr, ECM_REQUEST *er, uint32_t prid)
  */
 void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t rc)
 {
-	if (!rdr || !er || !cfg.lb_mode)
+	if (!rdr || !er || !cfg.lb_mode ||!er->l)
 		return;
 	struct s_client *cl = rdr->client;
 	if (!cl)
