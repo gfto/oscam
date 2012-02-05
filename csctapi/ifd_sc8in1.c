@@ -74,6 +74,13 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 	tcgetattr(reader->handle, &termio);
 	memcpy(&termiobackup, &termio, sizeof(termio));
 
+	if (selectSlotMode) {
+		if (reader->sc8in1_config->current_slot != 0) {
+			memcpy(&reader->sc8in1_config->stored_termio[reader->sc8in1_config->current_slot - 1],
+					&termiobackup, sizeof(termiobackup)); //not if current_slot is undefined
+		}
+	}
+
 	// set communication parameters
 	termio.c_oflag = 0;
 	termio.c_lflag = 0;
@@ -168,20 +175,40 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 		}
 	}
 #endif
-	// restore baudrate only if changed
-	if (currentBaudrate) {
-		if (Sc8in1_SetBaudrate(reader, currentBaudrate, &termiobackup, 1)) {
-			cs_log("ERROR: SC8in1 selectslot restore Bitrate attributes\n");
-			return ERROR;
+	if (selectSlotMode) {
+		memcpy(&termiobackup, &reader->sc8in1_config->stored_termio[selectSlotMode - 1],
+				sizeof(termiobackup));
+		if (Sc8in1_NeedBaudrateChange(reader, reader->current_baudrate, &termio, &termiobackup, 1)) {
+			cs_debug_mask(D_TRACE, "Sc8in1_SetTermioForSlot for select slot");
+			if (Sc8in1_SetBaudrate(reader, reader->current_baudrate, &termiobackup, 0)) {
+				cs_log("ERROR: SC8in1 Command Sc8in1_SetBaudrate\n");
+				return ERROR;
+			}
+		}
+		else {
+			if (tcsetattr(reader->handle, TCSANOW, &termiobackup) < 0) {
+				cs_log("ERROR: SC8in1 Command error in set RS232 attributes\n");
+				return ERROR;
+			}
 		}
 	}
 	else {
-		// restore data
-		if (tcsetattr(reader->handle, TCSANOW, &termiobackup) < 0) {
-			cs_log("ERROR: SC8in1 Command error in restore RS232 attributes\n");
-			return ERROR;
+		// restore baudrate only if changed
+		if (currentBaudrate) {
+			if (Sc8in1_SetBaudrate(reader, currentBaudrate, &termiobackup, 1)) {
+				cs_log("ERROR: SC8in1 selectslot restore Bitrate attributes\n");
+				return ERROR;
+			}
+		}
+		else {
+			// restore data
+			if (tcsetattr(reader->handle, TCSANOW, &termiobackup) < 0) {
+				cs_log("ERROR: SC8in1 Command error in restore RS232 attributes\n");
+				return ERROR;
+			}
 		}
 	}
+
 	Sc8in1_DebugSignals(reader, reader->slot, "CMD12");
 	if (reader->sc8in1_dtrrts_patch == 1) {
 		IO_Serial_DTR_Set(reader);
@@ -636,70 +663,21 @@ int32_t Sc8in1_SetTioAttr(int32_t fd, struct termios *current, struct termios *n
 	return OK;
 }
 
-int32_t Sc8in1_SetTermioForSlot(struct s_reader *reader, uint16_t slot) {
-
-	Sc8in1_DebugSignals(reader, reader->slot, "SL100");
-	// switch SC8in1 to command mode
-	IO_Serial_DTR_Set(reader);
-
-	struct termios termio_current, termio_new;
-	tcgetattr(reader->handle, &termio_current);
-	if (reader->sc8in1_config->current_slot != 0) {
-		memcpy(&reader->sc8in1_config->stored_termio[reader->sc8in1_config->current_slot - 1],
-				&termio_current, sizeof(termio_current)); //not if current_slot is undefined
-	}
-	memcpy(&termio_new, &reader->sc8in1_config->stored_termio[slot - 1],
-				sizeof(termio_new));
-
-	if (Sc8in1_NeedBaudrateChange(reader, reader->current_baudrate, &termio_current, &termio_new, 0)) {
-		cs_debug_mask(D_TRACE, "Sc8in1_SetTermioForSlot for select slot");
-		// save current baudrate for later restore
-		if (Sc8in1_SetBaudrate(reader, reader->current_baudrate, &termio_new, 0)) {
-			cs_log("ERROR: SC8in1 Command Sc8in1_SetBaudrate\n");
-			return ERROR;
-		}
-	}
-	else {
-		if (tcsetattr(reader->handle, TCSANOW, &termio_new) < 0) {
-			cs_log("ERROR: SC8in1 Command error in set RS232 attributes\n");
-			return ERROR;
-		}
-	}
-	Sc8in1_DebugSignals(reader, reader->slot, "SL101");
-	if (reader->sc8in1_dtrrts_patch == 1) {
-		IO_Serial_DTR_Set(reader);
-	}
-
-	tcflush(reader->handle, TCIOFLUSH);
-
-	IO_Serial_DTR_Clr(reader);
-
-	Sc8in1_DebugSignals(reader, reader->slot, "SL102");
-
-	return OK;
-}
-
 int32_t Sc8in1_Selectslot(struct s_reader * reader, uint16_t slot) {
 	// selects the Smartcard Socket "slot"
 	//
-#ifdef WITH_DEBUG
-	struct timeval tv_start, tv_mid, tv_end;
-	gettimeofday(&tv_start,0);
-#endif
-
 	if (slot == reader->sc8in1_config->current_slot)
 		return OK;
 	cs_debug_mask(D_TRACE, "SC8in1: select slot %i", slot);
 
+#ifdef WITH_DEBUG
+	struct timeval tv_start, tv_end;
+	gettimeofday(&tv_start,0);
+#endif
+
 	int32_t status = ERROR;
 	if (reader->sc8in1_config->mcr_type) {
 		status = mcrSelectSlot(reader, slot);
-#ifdef WITH_DEBUG
-		gettimeofday(&tv_mid,0);
-		uint32_t elapsed = (tv_mid.tv_sec-tv_start.tv_sec)*1000000 + tv_mid.tv_usec-tv_start.tv_usec;
-		cs_debug_mask(D_DEVICE, "SC8in1 Selectslot Phase1 in %ums", elapsed/1000);
-#endif
-		status |= Sc8in1_SetTermioForSlot(reader, slot);
 	}
 	else {
 		status = sc8in1SelectSlot(reader, slot);
@@ -803,6 +781,9 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 				cs_log("ERROR: device %s has invalid slot number %i", rdr->device, rdr->slot);
 				return ERROR;
 			}
+
+			// set initial current_baudrate which is needed by sc8in1_command
+			rdr->current_baudrate = reader->current_baudrate;
 
 			if (reader->sc8in1_config->mcr_type) {
 				//set RTS for every slot to 1 to prevent jitter/glitch detection problems
