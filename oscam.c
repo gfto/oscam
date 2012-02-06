@@ -622,7 +622,6 @@ void cleanup_thread(void *var)
 		
 	// Clean reader. The cleaned structures should be only used by the reader thread, so we should be save without waiting
 	if (rdr){
-		struct s_client *rdrcl = rdr->client;
 		remove_reader_from_active(rdr);
 		if(rdr->ph.cleanup)
 			rdr->ph.cleanup(cl);
@@ -632,7 +631,6 @@ void cleanup_thread(void *var)
 #endif
 		if (cl->typ == 'p')
 			network_tcp_connection_close(rdr);
-		if(rdrcl) rdrcl = NULL;
 		cl->reader = NULL;
 	}
 
@@ -1338,6 +1336,7 @@ void kill_thread(struct s_client *cl) {
 /* Removes a reader from the list of active readers so that no ecms can be requested anymore. */
 void remove_reader_from_active(struct s_reader *rdr) {
 	struct s_reader *rdr2, *prv = NULL;
+	//cs_log("CHECK: REMOVE READER %s FROM ACTIVE", rdr->label);
 	cs_writelock(&readerlist_lock);
 	for (rdr2=first_active_reader; rdr2 ; prv=rdr2, rdr2=rdr2->next) {
 		if (rdr2==rdr) {
@@ -1358,6 +1357,7 @@ void add_reader_to_active(struct s_reader *rdr) {
 	if (rdr->next)
 		remove_reader_from_active(rdr);
 
+	//cs_log("CHECK: ADD READER %s TO ACTIVE", rdr->label);
 	cs_writelock(&readerlist_lock);
 	cs_writelock(&clientlist_lock);
 
@@ -1430,9 +1430,10 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 		}
 	}
 
-	while (old_client && old_client->kill && old_client->reader == rdr) {
+	while (restart && old_client && old_client->reader == rdr) {
 		//If we quick disable+enable a reader (webif), remove_reader_from_active is called from
 		//cleanup. this could happen AFTER reader is restarted, so oscam crashes or reader is hidden
+		//cs_log("CHECK: WAITING FOR CLEANUP READER %s", rdr->label);
 		cs_sleepms(100);					  //Fixme, cleanup does old_client->reader = NULL
 	}
 
@@ -3553,7 +3554,7 @@ void * work_thread(void *ptr) {
 			}
 		}
 
-		if (!data || cl->kill)
+		if (!data)
 			continue;
 
 		if (data->action < 20 && !reader) {

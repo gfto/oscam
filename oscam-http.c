@@ -943,14 +943,13 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 				if (strcmp(getParam(params, "action"), "enable") == 0) {
 					if (!rdr->enable) {
 						rdr->enable = 1;
-						restart_cardreader(rdr, 1);
 					}
 				} else {
 					if (rdr->enable) {
 						rdr->enable = 0;
-						inactivate_reader(rdr);
 					}
 				}
+				restart_cardreader(rdr, 1);
 				if(write_server() != 0)
 					tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 			}
