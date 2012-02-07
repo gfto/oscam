@@ -2215,10 +2215,6 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		}
 	}
 
-#ifdef ARM
-	if(!er->rc &&cfg.enableled == 1) cs_switch_led(LED2, LED_BLINK_OFF);
-#endif
-
 #ifdef WEBIF
 	if (er_reader) {
 		if(er->rc == E_FOUND)
@@ -2336,6 +2332,10 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	}
 
 	cs_ddump_mask (D_ATR, er->cw, 16, "cw:");
+
+#ifdef ARM
+	if(!er->rc &&cfg.enableled == 1) cs_switch_led(LED2, LED_BLINK_OFF);
+#endif
 
 #ifdef QBOXHD
 	if(cfg.enableled == 2){
