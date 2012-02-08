@@ -24,8 +24,6 @@
 #include "io_serial.h"
 #include "icc_async.h"
 
-#define SC8IN1_TIMEOUT_HACK 1
-
 #define LOCK_SC8IN1 \
 { \
 	if (reader->typ == R_SC8in1) { \
@@ -136,45 +134,41 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 			dataToWrite -= written;
 		}
 	}
-	while (1) {
-		int32_t tcdrain_ret = tcdrain(reader->handle);
-		if (tcdrain_ret==-1) {
-			if (errno==EINTR) {
-				//try again in case of Interrupted system call
-				continue;
-			} else
-				cs_log("ERROR in sc8in1_command - tcdrain: (errno=%d %s)", errno, strerror(errno));
-				return ERROR;
-		}
-		break;
-	}
 
 	if (IO_Serial_Read(reader, 1000, lenread, buff) == ERROR) {
 		cs_log("SC8in1 Command read error");
 		return ERROR;
 	}
 
-#ifdef SC8IN1_TIMEOUT_HACK
-	// On some system, at least my dockstar, tcdrain returns before the transmitted bytes actually
-	// reach the serial port. This here is an awful hack, to workaround the issue.
-	// We transmit the ECHO command to the device and wait until it sends back the echo char 'A'
-	// to us. This way we can be sure that the main command in buff has been received by the device.
-	// Another way to workaround this issue is to wait for an appropriate amount of time, but i think
-	// thats even worse.
+	// If we dont expect an answer use the echo function of the
+	// mcr to actually receive an answer. This way tcdrain can
+	// be skipped which either slow or doesnt even work properly.
 	if (lenread <= 0 && reader->sc8in1_config->mcr_type) {
 		unsigned char buff_echo_hack[2] = { 0x65, 'A' };
 		cs_ddump_mask(D_DEVICE, &buff_echo_hack[0], 2, "IO: Sending: ");
 		if (write(reader->handle, &buff_echo_hack[0], 2) != 2) {
-			cs_log("SC8in1 Command write error");
+			cs_log("SC8in1 Echo command write error");
 			return ERROR;
 		}
-		tcdrain(reader->handle); // should be useless.. but what the hell
-		if (IO_Serial_Read(reader, 1000, 1, &buff_echo_hack[0]) == ERROR) {
-			cs_log("SC8in1 Command read error");
+		if (IO_Serial_Read(reader, 1000, 1, &buff_echo_hack[0]) == ERROR || buff_echo_hack[0] != 'A') {
+			cs_log("SC8in1 Echo command read error");
 			return ERROR;
 		}
 	}
-#endif
+	else if (lenread <= 0 && ! reader->sc8in1_config->mcr_type) {
+		while (1) {
+			int32_t tcdrain_ret = tcdrain(reader->handle);
+			if (tcdrain_ret==-1) {
+				if (errno==EINTR) {
+					//try again in case of Interrupted system call
+					continue;
+				} else
+					cs_log("ERROR in sc8in1_command - tcdrain: (errno=%d %s)", errno, strerror(errno));
+					return ERROR;
+			}
+			break;
+		}
+	}
 	if (selectSlotMode) {
 		memcpy(&termiobackup, &reader->sc8in1_config->stored_termio[selectSlotMode - 1],
 				sizeof(termiobackup));
