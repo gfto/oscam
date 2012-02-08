@@ -1319,7 +1319,7 @@ void done_share() {
 				pthread_cancel(share_updater_thread);
 				share_updater_thread = 0;
 
-				int i;
+				int8_t i;
 				for (i=0;i<CAID_KEY;i++)
 					cc_free_reported_carddata(reported_carddatas[i], NULL, 0);
 		}

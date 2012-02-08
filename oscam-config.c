@@ -5932,7 +5932,7 @@ void global_whitelist_read() {
 struct s_cacheex_matcher *is_cacheex_matcher_matching(ECM_REQUEST *from_er, ECM_REQUEST *to_er)
 {
 	struct s_cacheex_matcher *entry = cfg.cacheex_matcher;
-	int v_ok = (from_er && to_er)?2:1;
+	int8_t v_ok = (from_er && to_er)?2:1;
 	while (entry) {
 		int8_t ok = 0;
 		if (from_er

@@ -136,7 +136,7 @@ int32_t cs_check_v(uint32_t ip, int32_t port, int32_t add, char *info) {
 				result=1;
 				if (!info) info = v_ban_entry->info;
 				else if (!v_ban_entry->info) {
-					int size = strlen(info)+1;
+					int32_t size = strlen(info)+1;
 					v_ban_entry->info = cs_malloc(&v_ban_entry->info, size, -1);
 					strncpy(v_ban_entry->info, info, size);
 				}
@@ -167,7 +167,7 @@ int32_t cs_check_v(uint32_t ip, int32_t port, int32_t add, char *info) {
 				v_ban_entry->v_port = port;
 				v_ban_entry->v_count = 1;
 				if (info) {
-					int size = strlen(info)+1;
+					int32_t size = strlen(info)+1;
 					v_ban_entry->info = cs_malloc(&v_ban_entry->info, size, -1);
 					strncpy(v_ban_entry->info, info, size);
 				}
@@ -1924,7 +1924,7 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 		return;
 	}
 
-	int i, c;
+	int8_t i, c;
 	for (i = 0; i < 16; i += 4) {
 		c = ((er->cw[i] + er->cw[i + 1] + er->cw[i + 2]) & 0xff);
 		if (er->cw[i + 3] != c) {

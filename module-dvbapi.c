@@ -234,7 +234,7 @@ int32_t dvbapi_open_netdevice(int32_t UNUSED(type), int32_t UNUSED(num), int32_t
 		saddr.sin_family = AF_INET;
 		saddr.sin_port = htons(PORT + adapter); // port = PORT + adapter number
 		saddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-		int r = connect(socket_fd, (struct sockaddr *) &saddr, sizeof(saddr));
+		int32_t r = connect(socket_fd, (struct sockaddr *) &saddr, sizeof(saddr));
 		if (r<0) {
 			cs_debug_mask(D_DVBAPI, "Failed to connect socket (%d %s), at localhost, port=%d", errno, strerror(errno), PORT + adapter);
 			close(socket_fd);
@@ -541,7 +541,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t index) {
 						ca_pid2.index = index;
 
 						if (cfg.dvbapi_boxtype == BOXTYPE_PC) {
-							int request = CA_SET_PID;
+							int32_t request = CA_SET_PID;
 							send(ca_fd[i],(void*)&request, sizeof(request), 0);
 							send(ca_fd[i],(void*)&ca_pid2, sizeof(ca_pid2), 0);
 						} else {
@@ -549,10 +549,6 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t index) {
 								cs_debug_mask(D_DVBAPI, "Error CA_SET_PID pid=0x%04x index=%d (errno=%d %s)", ca_pid2.pid, ca_pid2.index, errno, strerror(errno));
 							else
 								cs_debug_mask(D_DVBAPI, "CA_SET_PID pid=0x%04x index=%d", ca_pid2.pid, ca_pid2.index);
-						}
-						if(cfg.dvbapi_reopenonzap && index == -1){
-							close(ca_fd[i]);
-							ca_fd[i] = 0;
 						}
 					}
 				}
@@ -574,6 +570,25 @@ void dvbapi_stop_descrambling(int32_t demux_id) {
 
 	for (i=0;i<demux[demux_id].STREAMpidcount;i++) {
 		dvbapi_set_pid(demux_id, i, -1);
+	}
+	if(cfg.dvbapi_reopenonzap && selected_api != STAPI){
+		for (i=0;i<8;i++) {
+			if (ca_fd[i] && demux[demux_id].ca_mask & (1 << i)) {
+				int8_t j, found = 0;
+				// Check for other demuxes running on same ca device
+				for(j = 0; j < MAX_DEMUX; ++j){
+					if(j != demux_id && demux[j].pidindex != -1 && demux[j].ca_mask & (1 << i)){
+						found = 1;
+						break;
+					}
+				}
+				if(!found){
+					cs_debug_mask(D_DVBAPI, "Closing unused demux device ca%d (fd=%d).", i, ca_fd[i]);
+					close(ca_fd[i]);
+					ca_fd[i] = 0;
+				}
+			}
+		}
 	}
 
 	memset(&demux[demux_id], 0 ,sizeof(DEMUXTYPE));
@@ -1902,7 +1917,7 @@ static void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t index) {
 					}
 
 					if (cfg.dvbapi_boxtype == BOXTYPE_PC) {
-						int request = CA_SET_DESCR;
+						int32_t request = CA_SET_DESCR;
 						send(ca_fd[i],(void*)&request, sizeof(request), 0);
 						send(ca_fd[i],(void*)&ca_descr, sizeof(ca_descr), 0);
 					} else {

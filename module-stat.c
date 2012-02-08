@@ -532,11 +532,13 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 //		else 
 		if (stat->rc == E_FOUND && ctime > stat->last_received+1) {
 			//search for alternate readers. If we have one, block this reader:
-			int n = 0;
+			int8_t n = 0;
 			struct s_ecm_answer *ea;
 			for (ea = er->matching_rdr; ea; ea = ea->next) {
-				if (ea->reader != rdr && ea->rc < E_NOTFOUND)
-					n++;
+				if (ea->reader != rdr && ea->rc < E_NOTFOUND){
+					n = 1;
+					break;
+				}
 			}
 			if (n > 0) //We have alternative readers, so we can block this one:
 				stat->rc = E_TIMEOUT;
