@@ -605,7 +605,7 @@ static void cleanup_ecmtasks(struct s_client *cl)
 	//remove client from rdr ecm-queue:
 	struct s_reader *rdr = first_active_reader;
 	while (rdr) {
-		if (rdr->client) {
+		if (rdr->client && rdr->client->ecmtask) {
 			ECM_REQUEST *ecm;
 			int i;
 			for (i=0; i<CS_MAXPENDING; i++) {
