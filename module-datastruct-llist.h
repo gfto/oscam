@@ -56,4 +56,7 @@ const void *ll_contains_data(const LLIST *l, const void *obj, uint32_t size);
 int32_t ll_remove(LLIST *l, const void *obj);
 void ll_remove_data(LLIST *l, void *obj);
 int32_t ll_remove_all(LLIST *l, const LLIST *elements_to_remove); // removes all elements from l where elements are in elements_to_remove
+
+void ll_putall(LLIST *dest, LLIST *src);
+
 #endif

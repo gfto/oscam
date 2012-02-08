@@ -2438,11 +2438,12 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 #define ENTITLEMENT_PAGE_SIZE 500
 
 #ifdef MODULE_CCCAM
-static void print_cards(struct templatevars *vars, struct uriparams *params, LLIST *cards, int8_t show_global_list, struct s_reader *rdr, int32_t offset, int32_t apicall)
+static void print_cards(struct templatevars *vars, struct uriparams *params, struct cc_card **cardarray, int32_t cardsize,
+		int8_t show_global_list, struct s_reader *rdr, int32_t offset, int32_t apicall)
 {
-	if (cards) {
+	if (cardarray) {
 		uint8_t serbuf[8];
-		int32_t cardsize, i, count = 0;
+		int32_t i, count = 0;
 		char provname[83];
 		struct cc_card *card;
 		int32_t cardcount = 0;
@@ -2452,13 +2453,8 @@ static void print_cards(struct templatevars *vars, struct uriparams *params, LLI
 		char *provider = "";
 
 		// @todo alno: sort by click, 0=ascending, 1=descending (maybe two buttons or reverse on second click)
-#ifdef MODULE_CCCSHARE
-		struct cc_card **cardarray = get_sorted_card_copy(cards, 0, &cardsize);
-#endif
 		for(i = offset; i < cardsize; ++i) {
-#ifdef MODULE_CCCSHARE
 			card = cardarray[i];
-#endif
 			if (count == ENTITLEMENT_PAGE_SIZE)
 				break;
 			count++;
@@ -2575,9 +2571,6 @@ static void print_cards(struct templatevars *vars, struct uriparams *params, LLI
 
 			cardcount++;
 		}
-#ifdef MODULE_CCCSHARE
-		free(cardarray);
-#endif
 		// set previous Link if needed
 		if (offset >= ENTITLEMENT_PAGE_SIZE) {
 			tpl_printf(vars, TPLAPPEND, "CONTROLS", "<A HREF=\"entitlements.html?offset=%d&globallist=%s&amp;label=%s\"> << PREVIOUS < </A>",
@@ -2637,26 +2630,32 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					tpl_printf(vars, TPLADD, "APIHOSTPORT", "%d", rdr->r_port);
 			}
 
+			int32_t cardsize;
 			if (show_global_list) {
 #ifdef MODULE_CCCSHARE								
-				int i;
-				LLIST **sharelist = get_and_lock_sharelist();				
+				int32_t i;
+				LLIST **sharelist = get_and_lock_sharelist();
+				LLIST *sharelist2 = ll_create("web-sharelist");
 				for (i=0;i<CAID_KEY;i++) {
-					if (sharelist[i])		
-						print_cards(vars, params, sharelist[i], 1, NULL, offset, apicall);
-				}			
+					if (sharelist[i])
+						ll_putall(sharelist2, sharelist[i]);
+				}
 				unlock_sharelist();
+				struct cc_card **cardarray = get_sorted_card_copy(sharelist2, 0, &cardsize);
+				ll_destroy(sharelist2);
+
+				print_cards(vars, params, cardarray, cardsize, 1, NULL, offset, apicall);
+
+				free(cardarray);
 #endif
 			} else {
 				struct s_client *rc = rdr->client;
 				struct cc_data *rcc = (rc)?rc->cc:NULL;
 
 				if (rcc && rcc->cards) {
-					LLIST *cards = rcc->cards;
-					CS_MUTEX_LOCK *lock = &rcc->cards_busy;
-					cs_readlock(lock);
-					print_cards(vars, params, cards, 0, rdr, offset, apicall);
-					cs_readunlock(lock);
+					struct cc_card **cardarray = get_sorted_card_copy(rcc->cards, 0, &cardsize);
+					print_cards(vars, params, cardarray, cardsize, 0, rdr, offset, apicall);
+					free(cardarray);
 				}
 			}
 

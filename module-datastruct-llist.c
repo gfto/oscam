@@ -509,3 +509,12 @@ void **ll_sort(const LLIST *l, void *compare, int32_t *size)
 
 	return p;
 }
+
+void ll_putall(LLIST *dest, LLIST *src)
+{
+	LL_ITER it = ll_iter_create(src);
+	void *data;
+	while ((data=ll_iter_next(&it))) {
+		ll_append(dest, data);
+	}
+}

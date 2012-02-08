@@ -600,7 +600,22 @@ static void cleanup_ecmtasks(struct s_client *cl)
 			ecm->cacheex_src = NULL;
 #endif
 	} 
-	cs_readunlock(&ecmcache_lock); 
+	cs_readunlock(&ecmcache_lock);
+
+	//remove client from rdr ecm-queue:
+	struct s_reader *rdr = first_active_reader;
+	while (rdr) {
+		if (rdr->client) {
+			ECM_REQUEST *ecm;
+			int i;
+			for (i=0; i<CS_MAXPENDING; i++) {
+				ecm = &rdr->client->ecmtask[i];
+				if (ecm->client == cl)
+					ecm->client = NULL;
+			}
+		}
+		rdr=rdr->next;
+	}
 }
 
 void cleanup_thread(void *var)
