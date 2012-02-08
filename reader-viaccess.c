@@ -475,7 +475,7 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 					snprintf( ea->msglog, MSGLOGSIZE, "AES Decrypt : key id %d not found for CAID %04X , provider %06x", D2KeyID, 0x500, (provid & 0xFFFFF0) );
 			}
 
-			while(ecm88Len>0 && ecm88Data[0]<0xA0)
+			while(ecm88Len>1 && ecm88Data[0]<0xA0)
 			{
 				int32_t nanoLen=ecm88Data[1]+2;
 				if (!ecmf8Data)

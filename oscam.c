@@ -136,7 +136,7 @@ int32_t cs_check_v(uint32_t ip, int32_t port, int32_t add, char *info) {
 				result=1;
 				if (!info) info = v_ban_entry->info;
 				else if (!v_ban_entry->info) {
-					int size = strlen(info)+1;
+					int32_t size = strlen(info)+1;
 					v_ban_entry->info = cs_malloc(&v_ban_entry->info, size, -1);
 					strncpy(v_ban_entry->info, info, size);
 				}
@@ -167,7 +167,7 @@ int32_t cs_check_v(uint32_t ip, int32_t port, int32_t add, char *info) {
 				v_ban_entry->v_port = port;
 				v_ban_entry->v_count = 1;
 				if (info) {
-					int size = strlen(info)+1;
+					int32_t size = strlen(info)+1;
 					v_ban_entry->info = cs_malloc(&v_ban_entry->info, size, -1);
 					strncpy(v_ban_entry->info, info, size);
 				}
@@ -600,7 +600,22 @@ static void cleanup_ecmtasks(struct s_client *cl)
 			ecm->cacheex_src = NULL;
 #endif
 	} 
-	cs_readunlock(&ecmcache_lock); 
+	cs_readunlock(&ecmcache_lock);
+
+	//remove client from rdr ecm-queue:
+	struct s_reader *rdr = first_active_reader;
+	while (rdr) {
+		if (rdr->client && rdr->client->ecmtask) {
+			ECM_REQUEST *ecm;
+			int i;
+			for (i=0; i<CS_MAXPENDING; i++) {
+				ecm = &rdr->client->ecmtask[i];
+				if (ecm->client == cl)
+					ecm->client = NULL;
+			}
+		}
+		rdr=rdr->next;
+	}
 }
 
 void cleanup_thread(void *var)
@@ -622,7 +637,6 @@ void cleanup_thread(void *var)
 		
 	// Clean reader. The cleaned structures should be only used by the reader thread, so we should be save without waiting
 	if (rdr){
-		struct s_client *rdrcl = rdr->client;
 		remove_reader_from_active(rdr);
 		if(rdr->ph.cleanup)
 			rdr->ph.cleanup(cl);
@@ -632,7 +646,6 @@ void cleanup_thread(void *var)
 #endif
 		if (cl->typ == 'p')
 			network_tcp_connection_close(rdr);
-		if(rdrcl) rdrcl = NULL;
 		cl->reader = NULL;
 	}
 
@@ -1340,6 +1353,7 @@ void kill_thread(struct s_client *cl) {
 /* Removes a reader from the list of active readers so that no ecms can be requested anymore. */
 void remove_reader_from_active(struct s_reader *rdr) {
 	struct s_reader *rdr2, *prv = NULL;
+	//cs_log("CHECK: REMOVE READER %s FROM ACTIVE", rdr->label);
 	cs_writelock(&readerlist_lock);
 	for (rdr2=first_active_reader; rdr2 ; prv=rdr2, rdr2=rdr2->next) {
 		if (rdr2==rdr) {
@@ -1360,6 +1374,7 @@ void add_reader_to_active(struct s_reader *rdr) {
 	if (rdr->next)
 		remove_reader_from_active(rdr);
 
+	//cs_log("CHECK: ADD READER %s TO ACTIVE", rdr->label);
 	cs_writelock(&readerlist_lock);
 	cs_writelock(&clientlist_lock);
 
@@ -1432,9 +1447,10 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 		}
 	}
 
-	while (old_client && old_client->kill && old_client->reader == rdr) {
+	while (restart && old_client && old_client->reader == rdr) {
 		//If we quick disable+enable a reader (webif), remove_reader_from_active is called from
 		//cleanup. this could happen AFTER reader is restarted, so oscam crashes or reader is hidden
+		//cs_log("CHECK: WAITING FOR CLEANUP READER %s", rdr->label);
 		cs_sleepms(100);					  //Fixme, cleanup does old_client->reader = NULL
 	}
 
@@ -1909,7 +1925,7 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 		return;
 	}
 
-	int i, c;
+	int8_t i, c;
 	for (i = 0; i < 16; i += 4) {
 		c = ((er->cw[i] + er->cw[i + 1] + er->cw[i + 2]) & 0xff);
 		if (er->cw[i + 3] != c) {
@@ -2215,10 +2231,6 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		}
 	}
 
-#ifdef ARM
-	if(!er->rc &&cfg.enableled == 1) cs_switch_led(LED2, LED_BLINK_OFF);
-#endif
-
 #ifdef WEBIF
 	if (er_reader) {
 		if(er->rc == E_FOUND)
@@ -2336,6 +2348,10 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	}
 
 	cs_ddump_mask (D_ATR, er->cw, 16, "cw:");
+
+#ifdef ARM
+	if(!er->rc &&cfg.enableled == 1) cs_switch_led(LED2, LED_BLINK_OFF);
+#endif
 
 #ifdef QBOXHD
 	if(cfg.enableled == 2){
@@ -3554,7 +3570,7 @@ void * work_thread(void *ptr) {
 			}
 		}
 
-		if (!data || cl->kill)
+		if (!data)
 			continue;
 
 		if (data->action < 20 && !reader) {
@@ -4345,9 +4361,9 @@ int32_t main (int32_t argc, char *argv[])
 #ifdef WITH_CARDREADER 
 	cardreader_mouse,
 	cardreader_smargo,
-#endif
 #ifdef WITH_STAPI
 	cardreader_stapi,
+#endif
 #endif
 	0
   };

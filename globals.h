@@ -957,7 +957,7 @@ struct s_client {
 	LLIST			*cascadeusers; //s_cascadeuser
 
 #ifdef MODULE_PANDORA
-	int 			pand_autodelay;
+	int32_t 			pand_autodelay;
 	uchar 			pand_send_ecm;
 	uchar 			pand_ignore_ecm;
 	uchar 			pand_md5_key[16];
@@ -1626,7 +1626,7 @@ struct s_clientinit
 };
 
 struct s_data {
-	int action;
+	int8_t action;
 	struct s_reader *rdr;
 	struct s_client *cl;
 	void *ptr;

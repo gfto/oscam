@@ -1065,6 +1065,10 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 				xcard = ncard; //remember card (D+ / 1810 fix) if request has no provider, but card has
 
 			rating = ncard->rating - ncard->hop * HOP_RATING;
+			if (rating < MIN_RATING)
+				rating = MIN_RATING;
+			else if (rating > MAX_RATING)
+				rating = MAX_RATING;
 
 			if (!ll_count(ncard->providers)) { //card has no providers:
 				if (rating > best_rating) {
@@ -3206,13 +3210,13 @@ int32_t cc_cli_connect(struct s_client *cl) {
 	cc->answer_on_keepalive = time(NULL);
 	cc->extended_mode = 0;
 	cc->last_emm_card = NULL;
-//	cc->num_hop1 = 0;
-//	cc->num_hop2 = 0;
-//	cc->num_hopx = 0;
-//	cc->num_reshare0 = 0;
-//	cc->num_reshare1 = 0;
-//	cc->num_reshare2 = 0;
-//	cc->num_resharex = 0;
+	cc->num_hop1 = 0;
+	cc->num_hop2 = 0;
+	cc->num_hopx = 0;
+	cc->num_reshare0 = 0;
+	cc->num_reshare1 = 0;
+	cc->num_reshare2 = 0;
+	cc->num_resharex = 0;
 	memset(&cc->cmd05_data, 0, sizeof(cc->cmd05_data));
 	memset(&cc->receive_buffer, 0, sizeof(cc->receive_buffer));
 	NULLFREE(cc->nok_message);
