@@ -3794,9 +3794,11 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
-#if !defined(TUXBOX) && !defined(HAVE_PCSC)
+#if !defined(TUXBOX)
 	/* pcsc doesn't like this either; segfaults on x86, x86_64 */
-	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+	struct s_reader *rdr = cl->reader;
+	if(cl->typ != 'r' || !rdr || rdr->typ != R_PCSC)
+		pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
 
 	cs_debug_mask(D_TRACE, "start %s thread action %d", action > ACTION_CLIENT_FIRST ? "client" : "reader", action);
