@@ -1272,8 +1272,8 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			uint8_t *ecmbuf = cs_malloc(&ecmbuf, cur_er->l + 13, 0);
 
 			// build ecm message
-			ecmbuf[0] = card->caid >> 8;
-			ecmbuf[1] = card->caid & 0xff;
+			ecmbuf[0] = cur_er->caid >> 8;
+			ecmbuf[1] = cur_er->caid & 0xff;
 			ecmbuf[2] = cur_er->prid >> 24;
 			ecmbuf[3] = cur_er->prid >> 16;
 			ecmbuf[4] = cur_er->prid >> 8;
