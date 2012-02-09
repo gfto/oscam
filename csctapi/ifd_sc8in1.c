@@ -51,6 +51,7 @@ int32_t Sc8in1_DebugSignals(struct s_reader *reader, uint16_t slot, const char *
 static int32_t mcrReadStatus(struct s_reader *reader, unsigned char *status);
 int32_t Sc8in1_SetBaudrate (struct s_reader * reader, uint32_t baudrate, struct termios *termio, uint8_t cmdMode);
 int32_t Sc8in1_NeedBaudrateChange(struct s_reader * reader, uint32_t desiredBaudrate, struct termios *current, struct termios *new, uint8_t cmdMode);
+static int32_t sc8in1_tcdrain(struct s_reader *reader);
 
 static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 		uint16_t lenwrite, uint16_t lenread, uint8_t enableEepromWrite, unsigned char getStatusMode,
@@ -67,6 +68,7 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 
 	// switch SC8in1 to command mode
 	IO_Serial_DTR_Set(reader);
+	tcflush(reader->handle, TCIOFLUSH);
 
 	// backup data
 	tcgetattr(reader->handle, &termio);
@@ -135,14 +137,14 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 		}
 	}
 
+	sc8in1_tcdrain(reader);
+
 	if (IO_Serial_Read(reader, 1000, lenread, buff) == ERROR) {
 		cs_log("SC8in1 Command read error");
 		return ERROR;
 	}
 
-	// If we dont expect an answer use the echo function of the
-	// mcr to actually receive an answer. This way tcdrain can
-	// be skipped which either slow or doesnt even work properly.
+	// Workaround for systems where tcdrain doesnt work properly
 	if (lenread <= 0 && reader->sc8in1_config->mcr_type) {
 		unsigned char buff_echo_hack[2] = { 0x65, 'A' };
 		cs_ddump_mask(D_DEVICE, &buff_echo_hack[0], 2, "IO: Sending: ");
@@ -150,25 +152,16 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 			cs_log("SC8in1 Echo command write error");
 			return ERROR;
 		}
-		if (IO_Serial_Read(reader, 1000, 1, &buff_echo_hack[0]) == ERROR || buff_echo_hack[0] != 'A') {
+		sc8in1_tcdrain(reader);
+		if (IO_Serial_Read(reader, 1000, 1, &buff_echo_hack[0]) == ERROR) {
 			cs_log("SC8in1 Echo command read error");
 			return ERROR;
 		}
-	}
-	else if (lenread <= 0 && ! reader->sc8in1_config->mcr_type) {
-		while (1) {
-			int32_t tcdrain_ret = tcdrain(reader->handle);
-			if (tcdrain_ret==-1) {
-				if (errno==EINTR) {
-					//try again in case of Interrupted system call
-					continue;
-				} else
-					cs_log("ERROR in sc8in1_command - tcdrain: (errno=%d %s)", errno, strerror(errno));
-					return ERROR;
-			}
-			break;
+		if (buff_echo_hack[0] != 'A') {
+			cs_log("SC8in1 Echo command read wrong character");
 		}
 	}
+
 	if (selectSlotMode) {
 		memcpy(&termiobackup, &reader->sc8in1_config->stored_termio[selectSlotMode - 1],
 				sizeof(termiobackup));
@@ -215,6 +208,22 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 
 	Sc8in1_DebugSignals(reader, reader->slot, "CMD13");
 
+	return OK;
+}
+
+static int32_t sc8in1_tcdrain(struct s_reader *reader) {
+	while (1) {
+		int32_t tcdrain_ret = tcdrain(reader->handle);
+		if (tcdrain_ret==-1) {
+			if (errno==EINTR) {
+				//try again in case of Interrupted system call
+				continue;
+			} else
+				cs_log("ERROR in sc8in1_tcdrain - (errno=%d %s)", errno, strerror(errno));
+				return ERROR;
+		}
+		break;
+	}
 	return OK;
 }
 
@@ -421,7 +430,7 @@ static void* mcr_update_display_thread(void *param) {
 			if (reader->sc8in1_config->display->blocking) {
 				uint16_t i = 0;
 				for (i = 0; i < reader->sc8in1_config->display->text_length; i++) {
-					if (mcrWriteDisplayAscii(reader,
+					if (mcrWriteDisplayAscii(reader->sc8in1_config->current_reader,
 							reader->sc8in1_config->display->text[++reader->sc8in1_config->display->last_char - 1], 0xFF)) {
 						cs_log("SC8in1: Error in mcr_update_display_thread write");
 					}
@@ -429,7 +438,7 @@ static void* mcr_update_display_thread(void *param) {
 				}
 			}
 			else {
-				if (mcrWriteDisplayAscii(reader,
+				if (mcrWriteDisplayAscii(reader->sc8in1_config->current_reader,
 						reader->sc8in1_config->display->text[++reader->sc8in1_config->display->last_char - 1], 0xFF)) {
 					cs_log("SC8in1: Error in mcr_update_display_thread write");
 				}
@@ -678,6 +687,7 @@ int32_t Sc8in1_Selectslot(struct s_reader * reader, uint16_t slot) {
 	}
 
 	if (status == OK) {
+		reader->sc8in1_config->current_reader = reader;
 		reader->sc8in1_config->current_slot = slot;
 	}
 #ifdef WITH_DEBUG
@@ -707,8 +717,11 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 				sizeof(termio)); //FIXME overclocking factor not taken into account?
 	}
 
-	// check for a MCR device and how many slots it has.
+	// Init sc8in1 config
 	reader->sc8in1_config->mcr_type = 0;
+	reader->sc8in1_config->current_reader = reader;
+
+	// check for a MCR device and how many slots it has.
 	unsigned char mcrType[1]; mcrType[0] = 0;
 	if ( ! mcrReadType(reader, &mcrType[0]) ) {
 		if (mcrType[0] == 4 || mcrType[0] == 8) {

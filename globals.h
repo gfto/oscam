@@ -1025,6 +1025,7 @@ struct s_sc8in1_config {
 	struct termios stored_termio[8];
 	uint16_t current_slot;
 	uint32_t current_baudrate;
+	struct s_reader *current_reader;
 	unsigned char cardstatus;
 	unsigned char mcr_type;
 	CS_MUTEX_LOCK sc8in1_lock;
