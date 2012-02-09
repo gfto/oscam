@@ -15,6 +15,7 @@ void coolapi_open_all();
 #endif
 
 static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_addr_t ip);
+static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea);
 
 /*****************************************************************************
         Globals
@@ -2074,7 +2075,10 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	if (cl && !cl->kill) {
 		add_job(cl, ACTION_CLIENT_ECM_ANSWER, ea, sizeof(struct s_ecm_answer));
 		res = 1;
-	} else if (found == 0) free(ea);
+	} else { //client has disconnected. Distribute ecms to other waiting clients
+		chk_dcw(NULL, ea);
+		if (found == 0) free(ea);
+	}
 
 	if (reader && rc == E_FOUND && reader->resetcycle > 0)
 	{
@@ -2439,7 +2443,7 @@ static void request_cw(ECM_REQUEST *er)
 
 static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 {
-	if (!cl || !ea || !ea->er)
+	if (!ea || !ea->er)
 		return;
 
 	ECM_REQUEST *ert = ea->er;
@@ -2578,7 +2582,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 #endif
 
 	if (ert->rc < E_99) {
-		send_dcw(cl, ert);
+		if (cl) send_dcw(cl, ert);
 		distribute_ecm(ert, (ert->rc == E_FOUND)?E_CACHE2:ert->rc);
 	}
 
