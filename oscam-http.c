@@ -2648,7 +2648,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				print_cards(vars, params, cardarray, cardsize, 1, NULL, offset, apicall);
 
 				free(cardarray);
-#endif
+
 			} else {
 				struct s_client *rc = rdr->client;
 				struct cc_data *rcc = (rc)?rc->cc:NULL;
@@ -2658,7 +2658,8 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					print_cards(vars, params, cardarray, cardsize, 0, rdr, offset, apicall);
 					free(cardarray);
 				}
-			}
+#endif
+				}
 
 
 		} else {
