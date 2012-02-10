@@ -3073,6 +3073,9 @@ int32_t write_server()
 
 				if (rdr->cc_reshare != DEFAULT_CC_RESHARE || cfg.http_full_cfg)
 					fprintf_conf(f, "cccreshare", "%d\n", rdr->cc_reshare);
+
+				if (rdr->cc_reconnect != DEFAULT_CC_RECONNECT || cfg.http_full_cfg)
+					fprintf_conf(f, "cccreconnect", "%d\n", rdr->cc_reconnect);
 			}
 			else if (rdr->cc_hop > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, "ccchop", "%d\n", rdr->cc_hop);
@@ -4779,6 +4782,12 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		rdr->cc_hop = strToIntVal(value, 0);
 		return;
 	}
+
+	if (!strcmp(token, "cccreconnect")) {
+		rdr->cc_reconnect = strToIntVal(value, DEFAULT_CC_RECONNECT);
+		return;
+	}
+
 #endif
 
 #ifdef MODULE_PANDORA
@@ -5023,6 +5032,7 @@ int32_t init_readerdb()
 			rdr->cc_reshare = DEFAULT_CC_RESHARE;
 			rdr->cc_maxhop  = DEFAULT_CC_MAXHOP;
 			rdr->cc_mindown = 0;
+			rdr->cc_reconnect = DEFAULT_CC_RECONNECT;
 #endif
 #ifdef WITH_LB
 			rdr->lb_weight = 100;
