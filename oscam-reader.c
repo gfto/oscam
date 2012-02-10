@@ -199,7 +199,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 		setsockopt(client->udp_fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg.netprio, sizeof(uintptr_t));
 #endif
 
-	int32_t keep_alive = client->reader->tcp_ito?1:0;
+	int32_t keep_alive = 1;
 	setsockopt(client->udp_fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keep_alive, sizeof(keep_alive));
 
 	int32_t flag = 1;
