@@ -199,22 +199,18 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 		setsockopt(client->udp_fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg.netprio, sizeof(uintptr_t));
 #endif
 
-	int32_t keep_alive = 1;
+	int32_t keep_alive = client->reader->tcp_ito?1:0;
 	setsockopt(client->udp_fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keep_alive, sizeof(keep_alive));
 
-	if (!client->reader->tcp_ito) { 
-		uint32_t keep_alive = client->reader->tcp_ito?1:0;
-		setsockopt(client->udp_fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keep_alive, sizeof(uintptr_t));
-	}
+	int32_t flag = 1;
+	setsockopt(client->udp_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&flag, sizeof(flag));
 
 	if (client->reader->l_port>0) {
 		memset((char *)&loc_sa,0,sizeof(loc_sa));
 		loc_sa.sin_family = AF_INET;
-#ifdef LALL
-		if (cfg.serverip[0])
-			loc_sa.sin_addr.s_addr = inet_addr(cfg.serverip);
+		if (cfg.srvip)
+			loc_sa.sin_addr.s_addr = cfg.srvip;
 		else
-#endif
 			loc_sa.sin_addr.s_addr = INADDR_ANY;
 
 		loc_sa.sin_port = htons(client->reader->l_port);
