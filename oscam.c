@@ -576,6 +576,8 @@ static void free_ecm(ECM_REQUEST *ecm) {
 static void cleanup_ecmtasks(struct s_client *cl)
 {
 	ECM_REQUEST *ecm;
+	struct s_ecm_answer *ea_list, *ea_prev=NULL;
+
 	if (cl->ecmtask) {
 		int32_t i, n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
 		for (i=0; i<n; i++) {
@@ -600,6 +602,16 @@ static void cleanup_ecmtasks(struct s_client *cl)
 		if (ecm->cacheex_src == cl)
 			ecm->cacheex_src = NULL;
 #endif
+		for(ea_list = ecm->matching_rdr; ea_list; ea_prev = ea_list, ea_list = ea_list->next) {
+			if (ea_list->reader->client == cl) {
+				if (ea_prev)
+					ea_prev->next = ea_list->next;
+				else
+					ecm->matching_rdr = ea_list->next;
+				add_garbage(ea_list);
+			}
+		}
+
 	} 
 	cs_readunlock(&ecmcache_lock);
 
@@ -1399,6 +1411,7 @@ void add_reader_to_active(struct s_reader *rdr) {
 					prev->next != NULL; prev = prev->next, cl = cl->next)
 				if (rdr->client == cl)
 					break;
+
 			if (rdr->client == cl) {
 				prev->next = cl->next; //remove client from list
 				cl->next = first_client->next;
@@ -1421,9 +1434,8 @@ void add_reader_to_active(struct s_reader *rdr) {
 					break;
 			if (rdr->client == cl) {
 				prev->next = cl->next; //remove client from list
-				cl = rdr_prv->client->next;
-				rdr_prv->client->next = rdr->client;
-				rdr->client->next = cl;
+				cl->next = rdr_prv->client->next;
+				rdr_prv->client->next = cl;
 			}
 		}
 
@@ -1466,7 +1478,7 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 		cs_debug_mask(D_TRACE, "reader %s protocol: %s", rdr->label, rdr->ph.desc);
 	}
 
-	if (rdr->enable == 0)
+	if (!rdr->enable)
 		return 0;
 
 	if (rdr->device[0]) {
@@ -1490,6 +1502,7 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 		//client[i].ctyp=99;
 
 		add_job(cl, ACTION_READER_INIT, NULL, 0);
+		add_reader_to_active(rdr);
 
 		return 1;
 	}
@@ -2117,10 +2130,10 @@ ECM_REQUEST *get_ecmtask()
 void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc)
 {
 #ifdef CS_CACHEEX
-	if (!rdr || rc>=E_99 || rdr->cacheex==1)
+	if (!rdr || rc>=E_99 || rdr->cacheex==1 || !rdr->client)
 		return;
 #else
-	if (!rdr || rc>=E_99)
+	if (!rdr || rc>=E_99 || !rdr->client)
 		return;
 #endif
 	struct timeb tpe;
@@ -3644,10 +3657,8 @@ void * work_thread(void *ptr) {
 				reader_do_card_info(reader);
 				break;
 			case ACTION_READER_INIT:
-				if (!cl->init_done) {
+				if (!cl->init_done)
 					reader_init(reader);
-					add_reader_to_active(reader);
-				}
 				break;
 			case ACTION_READER_RESTART:
 				cleanup_thread(cl); //should close connections
