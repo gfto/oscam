@@ -864,7 +864,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	int32_t current = -1;
 	READER_STAT *stat = NULL;
 	int32_t retrylimit = get_retrylimit(er);
-
+	int8_t ignore_timeout_service=0;
 	int32_t reader_count = 0;
 	int32_t new_stats = 0;	
 	int32_t nlocal_readers = 0;
@@ -935,6 +935,13 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				ea->status |= READER_ACTIVE; //max ecm reached, get new statistics
 				continue;
 			}
+
+			if (stat->rc != E_FOUND && stat->last_received+get_reopen_seconds(stat) < current_time) {
+				cs_debug_mask(D_TRACE, "loadbalancer: reopen reader %s", rdr->label);
+				reset_stat(er->caid, prid, er->srvid, er->chid, er->l);
+				ea->status |= READER_ACTIVE; //max ecm reached, get new statistics
+				continue;
+			}
 				
 			int32_t hassrvid;
 			if(cl)
@@ -948,17 +955,18 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				new_stats = 1;
 				continue;
 			}
-			
+
+			//just add another reader if best reader is nonresponding but has services
+			ea->timeout_service = (hassrvid && stat->rc != E_FOUND);
+
 			//Reader can decode this service (rc==0) and has lb_min_ecmcount ecms:
 			if (stat->rc == E_FOUND || hassrvid) {
 				if (cfg.preferlocalcards && (ea->status & 0x4))
 					nlocal_readers++; //Prefer local readers!
 
-				//just add another reader if best reader is nonresponding but has services
-				if (stat->rc >= E_NOTFOUND)
-					ea->timeout_service = 1;
+				if (stat->rc == E_FOUND)
+					ignore_timeout_service = 1;
 
-					
 				switch (cfg.lb_mode) {
 					default:
 					case LB_NONE:
@@ -1022,7 +1030,10 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		for(ea = er->matching_rdr; ea; ea = ea->next) {
 			if (nlocal_readers && !(ea->status & READER_LOCAL))
 				continue;
-						
+
+			if (ignore_timeout_service && ea->timeout_service)
+				continue;
+
 			if (ea->value && (!best || ea->value < best->value))
 				best=ea;
 		}
