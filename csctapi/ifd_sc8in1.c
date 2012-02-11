@@ -256,7 +256,6 @@ static int32_t readSc8in1Status(struct s_reader * reader) {
 			return (-1);
 		}
 		if (buff[1] != 0x90) {
-			cs_log("readSc8in1Status");
 			return (-1);
 		}
 		tcflush(reader->handle, TCIOFLUSH);
