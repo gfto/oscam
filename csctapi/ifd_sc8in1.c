@@ -839,14 +839,7 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 		}
 	}
 
-	if (reader->sc8in1_config->mcr_type) {
-		// select current readers slot again
-		mcrSelectSlot(reader, reader->slot);
-		reader->sc8in1_config->current_slot = reader->slot;
-	}
-	else {
-		sc8in1SelectSlot(reader, reader->slot);
-	}
+	Sc8in1_Selectslot(reader, reader->slot);
 
 	//IO_Serial_Flush(reader); //FIXME somehow ATR is generated and must be flushed
 	i = -1; //Flag for GetStatus init
