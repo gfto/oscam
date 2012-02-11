@@ -2316,24 +2316,32 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 						int32_t i = 0;
 						for (i = 0; i < CS_MAXPENDING; i++) {
 							if (cl->ecmtask[i].idx == ecm_idx) {
-								cs_debug_mask(
-										D_TRACE,
-										"%s forward card: %s", getprefix(), (buf[1]==MSG_CW_NOK1)?"NOK1":"NOK2");
+								cs_debug_mask(D_TRACE, "%s forward card: %s", getprefix(), (buf[1]==MSG_CW_NOK1)?"NOK1":"NOK2");
 								ECM_REQUEST *er = &cl->ecmtask[i];
 								cl->pending--;
-								write_ecm_answer(
-										rdr,
-										er,
-										E_NOTFOUND,
-										(buf[1] == MSG_CW_NOK1) ?
-												E2_CCCAM_NOK1 : E2_CCCAM_NOK2,
+								write_ecm_answer(rdr, er, E_NOTFOUND,
+										(buf[1] == MSG_CW_NOK1) ? E2_CCCAM_NOK1 : E2_CCCAM_NOK2,
 										NULL, NULL);
 								break;
 							}
 						}
 					} else {
 						//retry ecm:
-						cc_reset_pending(cl, ecm_idx);
+						if (!cc->extended_mode)
+							cc_reset_pending(cl, ecm_idx);
+						else {
+							cl->pending--;
+							int32_t i = 0; //A "NOK" in extended mode means, NOTHING found, regardless of the requested card. So do not retry
+							for (i = 0; i < CS_MAXPENDING; i++) {
+								if (cl->ecmtask[i].idx == ecm_idx) {
+									cs_debug_mask(D_TRACE, "%s ext NOK %s", getprefix(), (buf[1]==MSG_CW_NOK1)?"NOK1":"NOK2");
+									ECM_REQUEST *er = &cl->ecmtask[i];
+									cl->pending--;
+									write_ecm_answer(rdr, er, E_NOTFOUND, 0, NULL, NULL);
+									break;
+								}
+							}
+						}
 					}
 				}
 			} else
