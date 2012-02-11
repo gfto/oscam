@@ -255,11 +255,11 @@ static int32_t readSc8in1Status(struct s_reader * reader) {
 		if (sc8in1ReadStatus(reader, &buff[0])) {
 			return (-1);
 		}
-		if (buff[1] != 0x90) {
+		if (buff[0] != 0x90) {
 			return (-1);
 		}
 		tcflush(reader->handle, TCIOFLUSH);
-		return buff[2];
+		return buff[1];
 	}
 }
 
@@ -274,11 +274,11 @@ static int32_t mcrReadStatus(struct s_reader *reader, unsigned char *status) {
 }
 
 static int32_t sc8in1ReadStatus(struct s_reader *reader, unsigned char *status) {
-	unsigned char buff[8];
+	unsigned char buff[9]; // read 1 echo byte + 8 status bytes
 	buff[0] = 0x47;
-	if (sc8in1_command(reader, buff, 1, 8, 0, 1, 0) < 0)
+	if (sc8in1_command(reader, buff, 1, 9, 0, 1, 0) < 0)
 		return ERROR;
-	memcpy(&status[0], &buff[0], 8);
+	memcpy(&status[0], &buff[1], 8);
 	return OK;
 }
 
