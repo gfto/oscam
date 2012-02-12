@@ -698,6 +698,10 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 
 	// check for a MCR device and how many slots it has.
 	unsigned char mcrType[1]; mcrType[0] = 0;
+	//mhh.. fritzbox7170 sends some unknown bytes when 
+	// the ftdi driver is first used. this is a test.
+	mcrReadType(reader, &mcrType[0]);
+	mcrType[0] = 0;
 	if ( ! mcrReadType(reader, &mcrType[0]) ) {
 		if (mcrType[0] == 4 || mcrType[0] == 8) {
 			reader->sc8in1_config->mcr_type = mcrType[0];
