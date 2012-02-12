@@ -579,8 +579,8 @@ static void cleanup_ecmtasks(struct s_client *cl)
 	struct s_ecm_answer *ea_list, *ea_prev=NULL;
 
 	if (cl->ecmtask) {
-		int32_t i, n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
-		for (i=0; i<n; i++) {
+		int32_t i;
+		for (i=0; i<CS_MAXPENDING; i++) {
 			ecm = &cl->ecmtask[i];
 			ecm->matching_rdr=NULL;
 			ecm->client = NULL;
@@ -602,6 +602,7 @@ static void cleanup_ecmtasks(struct s_client *cl)
 		if (ecm->cacheex_src == cl)
 			ecm->cacheex_src = NULL;
 #endif
+		//cl is a reader, remove from matching_rdr:
 		for(ea_list = ecm->matching_rdr; ea_list; ea_prev = ea_list, ea_list = ea_list->next) {
 			if (ea_list->reader->client == cl) {
 				if (ea_prev)
@@ -616,6 +617,7 @@ static void cleanup_ecmtasks(struct s_client *cl)
 	cs_readunlock(&ecmcache_lock);
 
 	//remove client from rdr ecm-queue:
+	cs_readlock(&readerlist_lock);
 	struct s_reader *rdr = first_active_reader;
 	while (rdr) {
 		if (rdr->client && rdr->client->ecmtask) {
@@ -629,6 +631,7 @@ static void cleanup_ecmtasks(struct s_client *cl)
 		}
 		rdr=rdr->next;
 	}
+	cs_readunlock(&readerlist_lock);
 }
 
 void cleanup_thread(void *var)

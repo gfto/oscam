@@ -872,6 +872,9 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	int32_t nfb_readers = cfg.lb_nfb_readers;
 	int32_t nreaders = cfg.lb_max_readers;
 	if (!nreaders) nreaders = -1;
+	int32_t nreopen_readers = cfg.lb_max_readers;
+	if (nreopen_readers <= 0)
+		nreopen_readers = 1;
 
 #ifdef WITH_DEBUG 
 	if (cs_dblevel & 0x01) {
@@ -929,17 +932,19 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				continue;
 			}
 			
-			if (stat->ecm_count < 0||(stat->ecm_count > cfg.lb_max_ecmcount && stat->time_avg > retrylimit)) {
+			if (nreopen_readers && (stat->ecm_count < 0||(stat->ecm_count > cfg.lb_max_ecmcount && stat->time_avg > retrylimit))) {
 				cs_debug_mask(D_TRACE, "loadbalancer: max ecms (%d) reached by reader %s, resetting statistics", cfg.lb_max_ecmcount, rdr->label);
 				reset_stat(er->caid, prid, er->srvid, er->chid, er->l);
 				ea->status |= READER_ACTIVE; //max ecm reached, get new statistics
+				nreopen_readers--;
 				continue;
 			}
 
-			if (stat->rc != E_FOUND && stat->last_received+get_reopen_seconds(stat) < current_time) {
+			if (nreopen_readers && stat->rc != E_FOUND && stat->last_received+get_reopen_seconds(stat) < current_time) {
 				cs_debug_mask(D_TRACE, "loadbalancer: reopen reader %s", rdr->label);
 				reset_stat(er->caid, prid, er->srvid, er->chid, er->l);
 				ea->status |= READER_ACTIVE; //max ecm reached, get new statistics
+				nreopen_readers--;
 				continue;
 			}
 				
@@ -949,10 +954,11 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			else
 				hassrvid = 0;
 			
-			if (stat->rc == E_FOUND && stat->ecm_count < cfg.lb_min_ecmcount) {
+			if (nreopen_readers && stat->rc == E_FOUND && stat->ecm_count < cfg.lb_min_ecmcount) {
 				cs_debug_mask(D_TRACE, "loadbalancer: reader %s needs more statistics", rdr->label);
 				ea->status |= READER_ACTIVE; //need more statistics!
 				new_stats = 1;
+				nreopen_readers--;
 				continue;
 			}
 
