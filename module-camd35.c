@@ -43,7 +43,7 @@ static int32_t camd35_send(uchar *buf, int32_t buflen)
 	} else {
 		status = send(cl->udp_fd, rbuf, l + 4, 0);
 		if (cl->typ == 'p' && cl->reader) {
-			if (status == -1) network_tcp_connection_close(cl->reader);
+			if (status == -1) network_tcp_connection_close(cl->reader, "can't send");
 		} else if (cl->typ=='c') {
 			if (status == -1) cs_disconnect_client(cl);
 		}
@@ -369,7 +369,7 @@ static int32_t tcp_connect()
 	if (!cl->udp_fd) return(0);
 	
 	if (cl->reader->last_s-cl->reader->last_g > cl->reader->tcp_rto) {
-		network_tcp_connection_close(cl->reader);
+		network_tcp_connection_close(cl->reader, "rto");
 		return 0;
 	}
 	

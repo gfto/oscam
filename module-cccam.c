@@ -318,7 +318,7 @@ void cc_cli_close(struct s_client *cl, int32_t call_conclose) {
 	rdr->last_s = rdr->last_g = 0;
 	
 	if (call_conclose) //clears also pending ecms!
-		network_tcp_connection_close(rdr);
+		network_tcp_connection_close(rdr, "close");
 	else
 	{
 		if (cl->udp_fd) {
@@ -1708,7 +1708,7 @@ void cc_idle() {
 		//check inactivity timeout:
 		if (abs(rdr->last_s - now) > rdr->tcp_ito*60) {
 			cs_debug_mask(D_READER, "%s inactive_timeout, close connection (fd=%d)", rdr->ph.desc, rdr->client->pfd);
-			network_tcp_connection_close(rdr);
+			network_tcp_connection_close(rdr, "inavtivity");
 			return;
 		}
 			
@@ -1716,7 +1716,7 @@ void cc_idle() {
 		int32_t rto = abs(rdr->last_s - rdr->last_g);
 		if (rto >= (rdr->tcp_rto*60)) {
 			cs_debug_mask(D_READER, "%s read timeout, close connection (fd=%d)", rdr->ph.desc, rdr->client->pfd);
-			network_tcp_connection_close(rdr);
+			network_tcp_connection_close(rdr, "rto");
 			return;
 		}
 	}

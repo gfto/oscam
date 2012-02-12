@@ -661,7 +661,7 @@ void cleanup_thread(void *var)
 			ICC_Async_Close(rdr);
 #endif
 		if (cl->typ == 'p')
-			network_tcp_connection_close(rdr);
+			network_tcp_connection_close(rdr, "close");
 		cl->reader = NULL;
 	}
 
@@ -3529,7 +3529,7 @@ void * work_thread(void *ptr) {
 			return NULL;
 		}
 		
-		if (cl->kill && ll_count(cl->joblist) == 0) {
+		if (cl->kill) {
 			cs_debug_mask(D_TRACE, "ending thread");
 			if (data && data!=&tmp_data)
 				free(data);
@@ -3614,14 +3614,14 @@ void * work_thread(void *ptr) {
 
 				if (s < 0) {
 					if (reader->ph.type==MOD_CONN_TCP)
-						network_tcp_connection_close(reader);
+						network_tcp_connection_close(reader, "disconnect");
 					break;
 				}
 
 				rc = reader->ph.recv(cl, mbuf, sizeof(mbuf));
 				if (rc < 0) {
 					if (reader->ph.type==MOD_CONN_TCP)
-						network_tcp_connection_close(reader);
+						network_tcp_connection_close(reader, "disconnect on receive");
 					break;
 				}
 
@@ -4123,7 +4123,7 @@ void * client_check(void) {
 				if (cl2->pfd && pfd[i].fd == cl2->pfd && (pfd[i].revents & (POLLHUP | POLLNVAL))) {
 					//connection to remote proxy was closed
 					//oscam should check for rdr->tcp_connected and reconnect on next ecm request sent to the proxy
-					network_tcp_connection_close(rdr);
+					network_tcp_connection_close(rdr, "closed");
 					cs_debug_mask(D_READER, "connection to %s closed.", rdr->label);
 				}
 				if (cl2->pfd && pfd[i].fd == cl2->pfd && (pfd[i].revents & (POLLIN | POLLPRI))) {

@@ -347,7 +347,7 @@ extern void * start_cardreader(void *);
 extern void reader_card_info(struct s_reader * reader);
 extern int32_t hostResolve(struct s_reader * reader);
 extern int32_t network_tcp_connection_open(struct s_reader *);
-extern void network_tcp_connection_close(struct s_reader *);
+extern void network_tcp_connection_close(struct s_reader *, char *);
 extern void clear_reader_pipe(struct s_reader * reader);
 extern void block_connect(struct s_reader *rdr);
 extern int32_t is_connect_blocked(struct s_reader *rdr);

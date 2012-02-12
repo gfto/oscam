@@ -940,13 +940,13 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				continue;
 			}
 
-			if (nreopen_readers && stat->rc != E_FOUND && stat->last_received+get_reopen_seconds(stat) < current_time) {
-				cs_debug_mask(D_TRACE, "loadbalancer: reopen reader %s", rdr->label);
-				reset_stat(er->caid, prid, er->srvid, er->chid, er->l);
-				ea->status |= READER_ACTIVE; //max ecm reached, get new statistics
-				nreopen_readers--;
-				continue;
-			}
+//			if (nreopen_readers && stat->rc != E_FOUND && stat->last_received+get_reopen_seconds(stat) < current_time) {
+//				cs_debug_mask(D_TRACE, "loadbalancer: reopen reader %s", rdr->label);
+//				reset_stat(er->caid, prid, er->srvid, er->chid, er->l);
+//				ea->status |= READER_ACTIVE; //max ecm reached, get new statistics
+//				nreopen_readers--;
+//				continue;
+//			}
 				
 			int32_t hassrvid;
 			if(cl)
@@ -1089,7 +1089,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			for(ea = er->matching_rdr; ea; ea = ea->next) {
 				rdr = ea->reader;
    	     			stat = get_stat(rdr, er->caid, prid, er->srvid, er->chid, er->l);
-   		     		if (stat && stat->ecm_count>0 && stat->last_received+get_reopen_seconds(stat) < current_time) {
+   		     		if (stat && stat->last_received+get_reopen_seconds(stat) < current_time) {
 	   	     			if (!ea->status && nreaders) {
    	     					ea->status |= READER_ACTIVE;
    	     					nreaders--;

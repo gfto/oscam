@@ -119,12 +119,12 @@ static int32_t network_message_receive(int32_t handle, uint16_t *netMsgId, uint8
   cs_debug_mask(D_CLIENT, "nmr(): len=%d, errno=%d", len, (len==-1)?errno:0);
   if (!len) {
     cs_debug_mask(D_CLIENT, "nmr: 1 return 0");
-    network_tcp_connection_close(cl->reader);
+    network_tcp_connection_close(cl->reader, "receive error1");
     return 0;
   }
   if (len != 2) {
     cs_debug_mask(D_CLIENT, "nmr: len!=2");
-    network_tcp_connection_close(cl->reader);
+    network_tcp_connection_close(cl->reader, "receive error2");
     return -1;
   }
   if (((netbuf[0] << 8) | netbuf[1]) > CWS_NETMSGSIZE - 2) {
@@ -279,7 +279,7 @@ static int32_t connect_newcamd_server()
   cl->ncd_msgid = 0;
   if( read(handle, keymod, sizeof(keymod)) != sizeof(keymod)) {
     cs_log("server does not return 14 bytes");
-    network_tcp_connection_close(cl->reader);
+    network_tcp_connection_close(cl->reader, "connect error");
     return -2;
   }
   cs_ddump_mask(D_CLIENT, keymod, 14, "server init sequence:");
@@ -303,14 +303,14 @@ static int32_t connect_newcamd_server()
   if( login_answer == MSG_CLIENT_2_SERVER_LOGIN_NAK )
   {
     cs_log("login failed for user '%s'", cl->reader->r_usr);
-    network_tcp_connection_close(cl->reader);
+    network_tcp_connection_close(cl->reader, "login error1");
     return -3;
   }
   if( login_answer != MSG_CLIENT_2_SERVER_LOGIN_ACK ) 
   {
     cs_log("expected MSG_CLIENT_2_SERVER_LOGIN_ACK (%02X), received %02X", 
              MSG_CLIENT_2_SERVER_LOGIN_ACK, login_answer);
-    network_tcp_connection_close(cl->reader);
+    network_tcp_connection_close(cl->reader, "login error2");
     return -3;
   }
 
@@ -328,7 +328,7 @@ static int32_t connect_newcamd_server()
   if( bytes_received < 16 || buf[2] != MSG_CARD_DATA ) {
     cs_log("expected MSG_CARD_DATA (%02X), received %02X", 
              MSG_CARD_DATA, buf[2]);
-    network_tcp_connection_close(cl->reader);
+    network_tcp_connection_close(cl->reader, "receive error");
     return -4;
   }
 
@@ -1072,7 +1072,7 @@ void newcamd_idle() {
 		if (client->ncd_keepalive)
 			newcamd_reply_ka();
 		else
-			network_tcp_connection_close(client->reader);
+			network_tcp_connection_close(client->reader, "inactivity");
 	}
 }
 
