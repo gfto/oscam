@@ -864,7 +864,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	int32_t current = -1;
 	READER_STAT *stat = NULL;
 	int32_t retrylimit = get_retrylimit(er);
-
+	int8_t ignore_timeout_service=0;
 	int32_t reader_count = 0;
 	int32_t new_stats = 0;	
 	int32_t nlocal_readers = 0;
@@ -872,6 +872,9 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	int32_t nfb_readers = cfg.lb_nfb_readers;
 	int32_t nreaders = cfg.lb_max_readers;
 	if (!nreaders) nreaders = -1;
+	int32_t nreopen_readers = cfg.lb_max_readers;
+	if (nreopen_readers <= 0)
+		nreopen_readers = 1;
 
 #ifdef WITH_DEBUG 
 	if (cs_dblevel & 0x01) {
@@ -929,12 +932,21 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				continue;
 			}
 			
-			if (stat->ecm_count < 0||(stat->ecm_count > cfg.lb_max_ecmcount && stat->time_avg > retrylimit)) {
+			if (nreopen_readers && (stat->ecm_count < 0||(stat->ecm_count > cfg.lb_max_ecmcount && stat->time_avg > retrylimit))) {
 				cs_debug_mask(D_TRACE, "loadbalancer: max ecms (%d) reached by reader %s, resetting statistics", cfg.lb_max_ecmcount, rdr->label);
 				reset_stat(er->caid, prid, er->srvid, er->chid, er->l);
 				ea->status |= READER_ACTIVE; //max ecm reached, get new statistics
+				nreopen_readers--;
 				continue;
 			}
+
+//			if (nreopen_readers && stat->rc != E_FOUND && stat->last_received+get_reopen_seconds(stat) < current_time) {
+//				cs_debug_mask(D_TRACE, "loadbalancer: reopen reader %s", rdr->label);
+//				reset_stat(er->caid, prid, er->srvid, er->chid, er->l);
+//				ea->status |= READER_ACTIVE; //max ecm reached, get new statistics
+//				nreopen_readers--;
+//				continue;
+//			}
 				
 			int32_t hassrvid;
 			if(cl)
@@ -942,23 +954,25 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			else
 				hassrvid = 0;
 			
-			if (stat->rc == E_FOUND && stat->ecm_count < cfg.lb_min_ecmcount) {
+			if (nreopen_readers && stat->rc == E_FOUND && stat->ecm_count < cfg.lb_min_ecmcount) {
 				cs_debug_mask(D_TRACE, "loadbalancer: reader %s needs more statistics", rdr->label);
 				ea->status |= READER_ACTIVE; //need more statistics!
 				new_stats = 1;
+				nreopen_readers--;
 				continue;
 			}
-			
+
+			//just add another reader if best reader is nonresponding but has services
+			ea->timeout_service = (hassrvid && stat->rc != E_FOUND);
+
 			//Reader can decode this service (rc==0) and has lb_min_ecmcount ecms:
 			if (stat->rc == E_FOUND || hassrvid) {
 				if (cfg.preferlocalcards && (ea->status & 0x4))
 					nlocal_readers++; //Prefer local readers!
 
-				//just add another reader if best reader is nonresponding but has services
-				if (stat->rc >= E_NOTFOUND)
-					ea->timeout_service = 1;
+				if (stat->rc == E_FOUND)
+					ignore_timeout_service = 1;
 
-					
 				switch (cfg.lb_mode) {
 					default:
 					case LB_NONE:
@@ -1022,7 +1036,10 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		for(ea = er->matching_rdr; ea; ea = ea->next) {
 			if (nlocal_readers && !(ea->status & READER_LOCAL))
 				continue;
-						
+
+			if (ignore_timeout_service && ea->timeout_service)
+				continue;
+
 			if (ea->value && (!best || ea->value < best->value))
 				best=ea;
 		}
@@ -1072,7 +1089,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			for(ea = er->matching_rdr; ea; ea = ea->next) {
 				rdr = ea->reader;
    	     			stat = get_stat(rdr, er->caid, prid, er->srvid, er->chid, er->l);
-   		     		if (stat && stat->ecm_count>0 && stat->last_received+get_reopen_seconds(stat) < current_time) {
+   		     		if (stat && stat->last_received+get_reopen_seconds(stat) < current_time) {
 	   	     			if (!ea->status && nreaders) {
    	     					ea->status |= READER_ACTIVE;
    	     					nreaders--;

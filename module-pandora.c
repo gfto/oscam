@@ -159,12 +159,10 @@ int pandora_client_init(struct s_client *cl) {
 	memset((char *) &loc_sa, 0, sizeof(loc_sa));
 	loc_sa.sin_family = AF_INET;
 
-#ifdef LALL
-	if (cfg.serverip[0])
-	loc_sa.sin_addr.s_addr = inet_addr(cfg.serverip);
+	if (cfg.srvip)
+		loc_sa.sin_addr.s_addr = cfg.srvip;
 	else
-#endif
-	loc_sa.sin_addr.s_addr = INADDR_ANY;
+		loc_sa.sin_addr.s_addr = INADDR_ANY;
 	loc_sa.sin_port = htons(rdr->l_port);
 
 	if ((cl->udp_fd = socket(PF_INET, SOCK_DGRAM, p_proto)) < 0) {

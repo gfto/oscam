@@ -1525,10 +1525,11 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
 #ifdef MODULE_CCCAM
-	tpl_printf(vars, TPLADD, "CCCMAXHOP",  "%d", rdr->cc_maxhop);
-	tpl_printf(vars, TPLADD, "CCCMINDOWN", "%d", rdr->cc_mindown);
-	tpl_printf(vars, TPLADD, "CCCRESHARE", "%d", rdr->cc_reshare);
-	tpl_printf(vars, TPLADD, "RESHARE",    "%d", cfg.cc_reshare);
+	tpl_printf(vars, TPLADD, "CCCMAXHOP",    "%d", rdr->cc_maxhop);
+	tpl_printf(vars, TPLADD, "CCCMINDOWN",   "%d", rdr->cc_mindown);
+	tpl_printf(vars, TPLADD, "CCCRESHARE",   "%d", rdr->cc_reshare);
+	tpl_printf(vars, TPLADD, "RESHARE",      "%d", cfg.cc_reshare);
+	tpl_printf(vars, TPLADD, "CCCRECONNECT", "%d", rdr->cc_reconnect);
 
 	if(rdr->cc_want_emu)
 		tpl_addVar(vars, TPLADD, "CCCWANTEMUCHECKED", "checked");
@@ -2654,7 +2655,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				print_cards(vars, params, cardarray, cardsize, 1, NULL, offset, apicall);
 
 				free(cardarray);
-#endif
+
 			} else {
 				struct s_client *rc = rdr->client;
 				struct cc_data *rcc = (rc)?rc->cc:NULL;
@@ -2664,7 +2665,8 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					print_cards(vars, params, cardarray, cardsize, 0, rdr, offset, apicall);
 					free(cardarray);
 				}
-			}
+#endif
+				}
 
 
 		} else {

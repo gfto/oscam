@@ -338,10 +338,10 @@ static void cCamCryptVG_Process_D0(struct s_reader * reader, const unsigned char
       memcpy(key2,reader->cardkeys[2],sizeof(key2));
       int32_t count2;
       uint16_t iidata[32];
+      memcpy( (unsigned char*)&iidata, data, 64 );
       for(count2=0; count2<32; count2++) {
         uint32_t rem=0, div=key1[count2];
-        int32_t i;
-        memcpy( (unsigned char*)&iidata, data, 64 );
+        int8_t i;        
         for(i=31; i>=0; i--) {
           uint32_t x=iidata[i] | (rem<<16);
           rem=(x%div)&0xffff;

@@ -467,6 +467,8 @@ extern void cs_switch_led(int32_t led, int32_t action);
 #define REQUEST_SENT			0x10
 #define REQUEST_ANSWERED		0x20
 
+#define READER_EA_FREE			0x80
+
 /* ===========================
  *      Default Values
  * =========================== */
@@ -479,6 +481,7 @@ extern void cs_switch_led(int32_t led, int32_t action);
 #define DEFAULT_CC_IGNRSHR  -1 // Use global cfg
 #define DEFAULT_CC_STEALTH  -1 // Use global cfg
 #define DEFAULT_CC_KEEPALIVE 0
+#define DEFAULT_CC_RECONNECT 4000
 #endif
 
 #ifdef CS_ANTICASC
@@ -634,6 +637,7 @@ struct s_module {
 	char 			*logtxt;
 	//int32_t  		s_port;
 	in_addr_t		s_ip;
+	uint16_t		bufsize;
 	void			*(*s_handler)(struct s_client *, uchar *, int32_t);
 	void			(*s_init)(struct s_client *);
 	int32_t		(*recv)(struct s_client *, uchar *, int32_t);
@@ -1134,6 +1138,7 @@ struct s_reader  									//contains device info, reader info and card info
 	int8_t			cc_keepalive;
 	int8_t			cc_hop;							// For non-cccam reader: hop for virtual cards
 	int8_t			cc_reshare;
+	int32_t			cc_reconnect;					//reconnect on ecm-request timeout
 #endif
 	int8_t			tcp_connected;
 	int32_t			tcp_ito;						// inactivity timeout

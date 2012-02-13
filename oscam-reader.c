@@ -203,19 +203,15 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 	int32_t keep_alive = 1;
 	setsockopt(client->udp_fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keep_alive, sizeof(keep_alive));
 
-	if (!client->reader->tcp_ito) { 
-		uint32_t keep_alive = client->reader->tcp_ito?1:0;
-		setsockopt(client->udp_fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keep_alive, sizeof(uintptr_t));
-	}
+	int32_t flag = 1;
+	setsockopt(client->udp_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&flag, sizeof(flag));
 
 	if (client->reader->l_port>0) {
 		memset((char *)&loc_sa,0,sizeof(loc_sa));
 		loc_sa.sin_family = AF_INET;
-#ifdef LALL
-		if (cfg.serverip[0])
-			loc_sa.sin_addr.s_addr = inet_addr(cfg.serverip);
+		if (cfg.srvip)
+			loc_sa.sin_addr.s_addr = cfg.srvip;
 		else
-#endif
 			loc_sa.sin_addr.s_addr = INADDR_ANY;
 
 		loc_sa.sin_port = htons(client->reader->l_port);
@@ -280,7 +276,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 	return client->udp_fd;
 }
 
-void network_tcp_connection_close(struct s_reader *reader)
+void network_tcp_connection_close(struct s_reader *reader, char *reason)
 {
 	if (!reader) {
 		//only proxy reader should call this, client connections are closed on thread cleanup
@@ -293,10 +289,11 @@ void network_tcp_connection_close(struct s_reader *reader)
 	if(!cl) return;
 	int32_t fd = cl->udp_fd;
 
-	cs_log("tcp_conn_close(): fd=%d, cl->typ == '%c' is_udp %d label == '%s'", fd, cl->typ, cl->is_udp, reader->label);
 	int32_t i;
 
 	if (fd) {
+		cs_log("tcp_conn_close(): fd=%d, cl->typ == '%c' is_udp %d label == '%s' reason %s",
+				fd, cl->typ, cl->is_udp, reader->label, reason?reason:"undef");
 		close(fd);
 
 		cl->udp_fd = 0;
@@ -690,7 +687,7 @@ void reader_do_idle(struct s_reader * reader)
 			struct s_client *cl = reader->client;
 			if (cl && reader->tcp_connected && reader->ph.type==MOD_CONN_TCP) {
 				cs_debug_mask(D_READER, "%s inactive_timeout, close connection (fd=%d)", reader->ph.desc, cl->pfd);
-				network_tcp_connection_close(reader);
+				network_tcp_connection_close(reader, "inactivity");
 			} else
 				reader->last_s = now;
 		}
