@@ -309,7 +309,10 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	camd35_send(buf, 0);
 	camd35_request_emm(er);
 
-	if (er->src_data) free(er->src_data);
+	if (er->src_data) {
+		free(er->src_data);
+		er->src_data = NULL;
+	}
 }
 
 static void camd35_process_ecm(uchar *buf)
