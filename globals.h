@@ -466,6 +466,8 @@ extern void cs_switch_led(int32_t led, int32_t action);
 #define REQUEST_SENT			0x10
 #define REQUEST_ANSWERED		0x20
 
+#define READER_EA_FREE			0x80
+
 /* ===========================
  *      Default Values
  * =========================== */
@@ -634,6 +636,7 @@ struct s_module {
 	char 			*logtxt;
 	//int32_t  		s_port;
 	in_addr_t		s_ip;
+	uint16_t		bufsize;
 	void			*(*s_handler)(struct s_client *, uchar *, int32_t);
 	void			(*s_init)(struct s_client *);
 	int32_t		(*recv)(struct s_client *, uchar *, int32_t);

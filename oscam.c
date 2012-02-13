@@ -2026,7 +2026,6 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, uint8_t rcEx, uchar *cw, char *msglog)
 {
 	int32_t i;
-	int8_t found = 1;
 	uchar c;
 	struct s_ecm_answer *ea = NULL, *ea_list;
 
@@ -2037,7 +2036,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 
 	if (!ea) {
 		ea = cs_malloc(&ea, sizeof(struct s_ecm_answer), -1); //Free by ACTION_CLIENT_ECM_ANSWER!
-		found = 0;
+		ea->status |= READER_EA_FREE;
 	}
 
 	if (cw)
@@ -2093,7 +2092,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 		res = 1;
 	} else { //client has disconnected. Distribute ecms to other waiting clients
 		chk_dcw(NULL, ea);
-		if (found == 0) free(ea);
+		if (ea->status & READER_EA_FREE) free(ea);
 	}
 
 	if (reader && rc == E_FOUND && reader->resetcycle > 0)
@@ -3516,8 +3515,9 @@ void * work_thread(void *ptr) {
 	pthread_setspecific(getclient, cl);
 	cl->thread=pthread_self();
 
-	uchar mbuf[1024];
-	memset(mbuf, 0, sizeof(mbuf));
+	uint16_t bufsize = cl?ph[cl->ctyp].bufsize:1024; //CCCam needs more than 1024bytes!
+	if (!bufsize) bufsize = 1024;
+	uchar *mbuf = cs_malloc(&mbuf, bufsize, 0);
 	int32_t n=0, rc=0, i, idx, s;
 	uchar dcw[16];
 
@@ -3526,6 +3526,7 @@ void * work_thread(void *ptr) {
 			if (data && data!=&tmp_data)
 				free(data);
 			data = NULL;
+			free(mbuf);
 			return NULL;
 		}
 		
@@ -3537,6 +3538,7 @@ void * work_thread(void *ptr) {
 			data = NULL;
 			cleanup_thread(cl);
 			pthread_exit(NULL);
+			free(mbuf);
 			return NULL;
 		}
 		
@@ -3618,7 +3620,7 @@ void * work_thread(void *ptr) {
 					break;
 				}
 
-				rc = reader->ph.recv(cl, mbuf, sizeof(mbuf));
+				rc = reader->ph.recv(cl, mbuf, bufsize);
 				if (rc < 0) {
 					if (reader->ph.type==MOD_CONN_TCP)
 						network_tcp_connection_close(reader, "disconnect on receive");
@@ -3672,6 +3674,7 @@ void * work_thread(void *ptr) {
 				if (data!=&tmp_data)
 					free(data);
 				data = NULL;
+				free(mbuf);
 				return NULL;
 				break;
 #ifdef WITH_CARDREADER
@@ -3703,7 +3706,7 @@ void * work_thread(void *ptr) {
 					continue;
 				}
 
-				n = ph[cl->ctyp].recv(cl, mbuf, sizeof(mbuf));
+				n = ph[cl->ctyp].recv(cl, mbuf, bufsize);
 				if (n < 0) {
 					cl->kill=1; // kill client on next run
 					continue;
@@ -3713,7 +3716,7 @@ void * work_thread(void *ptr) {
 				break;
 			case ACTION_CLIENT_ECM_ANSWER:
 				chk_dcw(cl, data->ptr);
-				if (!((struct s_ecm_answer*)data->ptr)->reader)
+				if (!((struct s_ecm_answer*)data->ptr)->status & READER_EA_FREE)
 					free(data->ptr);
 				break;
 			case ACTION_CLIENT_INIT:
@@ -3776,6 +3779,7 @@ void * work_thread(void *ptr) {
 	cs_debug_mask(D_TRACE, "ending thread");
 	cl->thread_active = 0;
 	pthread_exit(NULL);
+	free(mbuf);
 	return NULL;
 }
 
