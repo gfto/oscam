@@ -2027,17 +2027,17 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 {
 	int32_t i;
 	uchar c;
-	struct s_ecm_answer *ea = NULL, *ea_list;
+	struct s_ecm_answer *ea = NULL, *ea_list, *ea_org = NULL;
 
-	for(ea_list = er->matching_rdr; reader && ea_list && !ea; ea_list = ea_list->next) {
+	for(ea_list = er->matching_rdr; reader && ea_list && !ea_org; ea_list = ea_list->next) {
 		if (ea_list->reader == reader)
-			ea = ea_list;
+			ea_org = ea_list;
 	}
 
-	if (!ea) {
-		ea = cs_malloc(&ea, sizeof(struct s_ecm_answer), -1); //Free by ACTION_CLIENT_ECM_ANSWER!
-		ea->status |= READER_EA_FREE;
-	}
+	if (!ea_org)
+		ea = cs_malloc(&ea, sizeof(struct s_ecm_answer), 0); //Free by ACTION_CLIENT_ECM_ANSWER!
+	else
+		ea = ea_org;
 
 	if (cw)
 		memcpy(ea->cw, cw, 16);
@@ -2048,6 +2048,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	ea->rc = rc;
 	ea->rcEx = rcEx;
 	ea->reader = reader;
+	ea->status |= REQUEST_ANSWERED;
 
 	if (er->parent) {
 		// parent is only set on reader->client->ecmtask[], but we want client->ecmtask[]
@@ -2088,11 +2089,16 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	int32_t res = 0;
 	struct s_client *cl = er->client;
 	if (cl && !cl->kill) {
+		if (ea_org) { //duplicate for queue
+			ea = cs_malloc(&ea, sizeof(struct s_ecm_answer), 0);
+			memcpy(ea, ea_org, sizeof(struct s_ecm_answer));
+		}
 		add_job(cl, ACTION_CLIENT_ECM_ANSWER, ea, sizeof(struct s_ecm_answer));
 		res = 1;
 	} else { //client has disconnected. Distribute ecms to other waiting clients
 		chk_dcw(NULL, ea);
-		if (ea->status & READER_EA_FREE) free(ea);
+		if (!ea_org)
+			free(ea);
 	}
 
 	if (reader && rc == E_FOUND && reader->resetcycle > 0)
@@ -3717,8 +3723,7 @@ void * work_thread(void *ptr) {
 				break;
 			case ACTION_CLIENT_ECM_ANSWER:
 				chk_dcw(cl, data->ptr);
-				if (((struct s_ecm_answer*)data->ptr)->status & READER_EA_FREE)
-					free(data->ptr);
+				free(data->ptr);
 				break;
 			case ACTION_CLIENT_INIT:
 				if (ph[cl->ctyp].s_init)

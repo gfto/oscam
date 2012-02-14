@@ -466,8 +466,6 @@ extern void cs_switch_led(int32_t led, int32_t action);
 #define REQUEST_SENT			0x10
 #define REQUEST_ANSWERED		0x20
 
-#define READER_EA_FREE			0x80
-
 /* ===========================
  *      Default Values
  * =========================== */
