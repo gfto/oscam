@@ -602,6 +602,7 @@ static void cleanup_ecmtasks(struct s_client *cl)
 		if (ecm->cacheex_src == cl)
 			ecm->cacheex_src = NULL;
 #endif
+		ea_prev = NULL;
 		//cl is a reader, remove from matching_rdr:
 		for(ea_list = ecm->matching_rdr; ea_list; ea_prev = ea_list, ea_list = ea_list->next) {
 			if (ea_list->reader->client == cl) {
