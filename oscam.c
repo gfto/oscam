@@ -3716,7 +3716,7 @@ void * work_thread(void *ptr) {
 				break;
 			case ACTION_CLIENT_ECM_ANSWER:
 				chk_dcw(cl, data->ptr);
-				if (!((struct s_ecm_answer*)data->ptr)->status & READER_EA_FREE)
+				if (((struct s_ecm_answer*)data->ptr)->status & READER_EA_FREE)
 					free(data->ptr);
 				break;
 			case ACTION_CLIENT_INIT:
