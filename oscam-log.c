@@ -11,7 +11,7 @@ static FILE *fps=(FILE *)0;
 static FILE *fpa=(FILE *)0;
 #endif
 static int8_t logStarted = 0;
-static LLIST *log_list;
+LLIST *log_list;
 
 struct s_log {
 	char *txt;
@@ -84,11 +84,15 @@ static void cs_write_log(char *txt, int8_t do_flush)
 
 static void cs_write_log_int(char *txt)
 {
-	struct s_log * log = cs_malloc(&log, sizeof(struct s_log), 0);
-	log->txt = strnew(txt);
-	log->header_len = 0;
-	log->direct_log = 1;
-	ll_append(log_list, log);
+	if(exit_oscam == 1) {
+		cs_write_log(txt, 1);
+	} else {
+		struct s_log * log = cs_malloc(&log, sizeof(struct s_log), 0);
+		log->txt = strnew(txt);
+		log->header_len = 0;
+		log->direct_log = 1;
+		ll_append(log_list, log);		
+	}
 }
 
 int32_t cs_open_logfiles()
@@ -290,7 +294,13 @@ static void write_to_log_int(char *txt, int8_t header_len)
 		}
 		log->cl_typ = cl->typ;
 	}
-	ll_append(log_list, log);
+	if(exit_oscam == 1){
+		char buf[LOG_BUF_SIZE];
+		cs_strncpy(buf, log->txt, LOG_BUF_SIZE);
+		write_to_log(buf, log, 1);
+		free(log);
+	} else
+		ll_append(log_list, log);	
 }
 
 void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar *buf, int32_t n, const char *fmt, ...)
@@ -531,7 +541,7 @@ void log_list_thread()
 			free(log->txt);
 			free(log);
 		}
-		cs_sleepms(500);
+		cs_sleepms(50);
 	}
 }
 

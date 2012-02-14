@@ -1670,6 +1670,7 @@ extern int32_t cs_dblevel;
 extern uint16_t len4caid[256];
 extern struct s_config cfg;
 extern char cs_confdir[];
+extern int32_t exit_oscam;
 #if defined(WEBIF) || defined(MODULE_MONITOR) 
 extern char *loghist, *loghistptr;
 #endif
@@ -1683,7 +1684,7 @@ extern CS_MUTEX_LOCK sr_lock;
 #endif
 
 extern pid_t server_pid;							// PID of server - set while startup
-
+extern LLIST *log_list;				// log list
 /* ===========================
  *      global functions
  * =========================== */
