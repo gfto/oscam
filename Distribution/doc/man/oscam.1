@@ -2,35 +2,26 @@
 .SH NAME
 \fBOSCam\fR - SC server
 .SH DESCRIPTIONS
-The OSCam software is an \fIopen source\fR multi-protocol/multi-plattform SC server.
+The OSCam software is an \fIopen source\fR multi-protocol/multi-platform SC server.
 
 \fIPlease check the compile options for included features in the binary.\fR
 
 OSCam supports the following protocols:
 .TP 3n
 \(bu
-camd 3.3x
-.TP 3n
-\(bu
-camd 3.5x UDP and TCP
-.TP 3n
-\(bu
 newcamd with cascading/remote server ECM support
 .TP 3n
 \(bu
-radegast
+camd 3.3x TCP
 .TP 3n
 \(bu
-serial (HSIC, SSSP, BOMBA, DSR 9500)
+camd 3.5x UDP
 .TP 3n
 \(bu
-camd 3.57x with cascading/remote server ECM support, ECM and EMM support with size > 256 bytes
+camd 3.57x UDP with cascading/remote server ECM support, ECM and EMM support with size > 256 bytes
 .TP 3n
 \(bu
-camd 3.78x with cascading/remote server ECM support, ECM and EMM support with size > 256 bytes
-.TP 3n
-\(bu
-gbox with cascading/remote server ECM support
+camd 3.78x TCP with cascading/remote server ECM support, ECM and EMM support with size > 256 bytes
 .TP 3n
 \(bu
 CCcam with cascading/remote server ECM support, ECM and EMM support with size > 256 bytes
@@ -38,10 +29,19 @@ CCcam with cascading/remote server ECM support, ECM and EMM support with size > 
 \(bu
 DVB API with multi tuner and PIP support
 .TP 3n
-OSCam works on the following plattforms:
+\(bu
+gbox with cascading/remote server ECM support
 .TP 3n
 \(bu
-Linux (tuxbox, arm, mips, mipsel, sh4, powerpc, ...)
+serial (HSIC, SSSP, BOMBA, DSR 9500)
+.TP 3n
+\(bu
+radegast
+.TP 3n
+OSCam works on the following platforms:
+.TP 3n
+\(bu
+Linux (Tuxbox, ARM, MIPS, MIPSel, SH-4, PowerPC, ...)
 .TP 3n
 \(bu
 Windows (based on cygwin1.dll)
