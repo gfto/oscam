@@ -1346,8 +1346,9 @@ void start_thread(void * startroutine, char * nameroutine) {
 	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
 	cs_writelock(&system_lock);
-	if (pthread_create(&temp, &attr, startroutine, NULL))
-		cs_log("ERROR: can't create %s thread", nameroutine);
+	int32_t ret = pthread_create(&temp, &attr, startroutine, NULL);
+	if (ret)
+		cs_log("ERROR: can't create %s thread (errno=%d %s)", nameroutine, ret, strerror(ret));
 	else {
 		cs_log("%s thread started", nameroutine);
 		pthread_detach(temp);
@@ -3827,8 +3828,9 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 
 	cs_debug_mask(D_TRACE, "start %s thread action %d", action > ACTION_CLIENT_FIRST ? "client" : "reader", action);
 
-	if (pthread_create(&cl->thread, &attr, work_thread, (void *)data)) {
-		cs_log("ERROR: can't create thread for %s", action > ACTION_CLIENT_FIRST ? "client" : "reader");
+	int32_t ret = pthread_create(&cl->thread, &attr, work_thread, (void *)data);
+	if (ret) {
+		cs_log("ERROR: can't create thread for %s (errno=%d %s)", action > ACTION_CLIENT_FIRST ? "client" : "reader", ret, strerror(ret));
 	} else
 		pthread_detach(cl->thread);
 

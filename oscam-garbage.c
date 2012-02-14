@@ -115,8 +115,13 @@ void start_garbage_collector(int32_t debug) {
 #ifndef TUXBOX
 	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
-	pthread_create(&garbage_thread, &attr, (void*)&garbage_collector, NULL);
-	pthread_detach(garbage_thread);
+	int32_t ret = pthread_create(&garbage_thread, &attr, (void*)&garbage_collector, NULL);
+	if(ret){
+		cs_log("ERROR: can't create garbagecollector thread (errno=%d %s)", ret, strerror(ret));
+		pthread_attr_destroy(&attr);
+		cs_exit(1);
+	} else
+		pthread_detach(garbage_thread);
 	pthread_attr_destroy(&attr);
 }
 

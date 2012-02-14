@@ -1048,8 +1048,14 @@ static void * oscam_ser_fork(void *pthreadparam)
 void * init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int32_t len)
 {
 	char sdevice[512];
-  	struct s_thread_param param;
-  	oscam_init_serialdata(&param.serialdata);
+	int32_t ret;
+  struct s_thread_param param;
+  pthread_attr_t attr;
+	pthread_attr_init(&attr);
+#ifndef TUXBOX
+	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+#endif
+  oscam_init_serialdata(&param.serialdata);
 	cs_strncpy(sdevice, cfg.ser_device, sizeof(sdevice));
 	param.ctyp=len;
 	char *p;
@@ -1065,16 +1071,29 @@ void * init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int32_t 
 		*p = 0;
 		if (!(p + 1) || (!(p + 1)[0])) return NULL;
 		if (!oscam_ser_parse_url(p + 1, &param.serialdata, &cltype)) return NULL;
-		pthread_create(&temp, NULL, oscam_ser_fork, (void *) &param);
-    		oscam_wait_ser_fork();
-		pthread_detach(temp);
+		ret = pthread_create(&temp, &attr, oscam_ser_fork, (void *) &param);
+		if(ret){
+			cs_log("ERROR: can't create serial reader thread (errno=%d %s)", ret, strerror(ret));
+			pthread_attr_destroy(&attr);
+			return NULL;
+		} else {
+			oscam_wait_ser_fork();
+			pthread_detach(temp);
+		}
 	}
 
 	if (!sdevice[0]) return NULL;
 	if (!oscam_ser_parse_url(sdevice, &param.serialdata, &cltype)) return NULL;
-	pthread_create(&temp, NULL, oscam_ser_fork, (void *) &param);
-  	oscam_wait_ser_fork();
-	pthread_detach(temp); 
+	ret = pthread_create(&temp, &attr, oscam_ser_fork, (void *) &param);
+	if(ret){
+		cs_log("ERROR: can't create serial reader thread (errno=%d %s)", ret, strerror(ret));
+		pthread_attr_destroy(&attr);
+		return NULL;
+	} else {
+		oscam_wait_ser_fork();
+		pthread_detach(temp);
+	}
+	pthread_attr_destroy(&attr);
 	return NULL;
 }
 

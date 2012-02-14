@@ -1779,8 +1779,12 @@ static void * dvbapi_main_local(void *cli) {
 		}
 	} else {
 		pthread_t event_thread;
-		pthread_create(&event_thread, NULL, dvbapi_event_thread, (void*) dvbapi_client);
-		pthread_detach(event_thread);
+		int32_t ret = pthread_create(&event_thread, NULL, dvbapi_event_thread, (void*) dvbapi_client);
+		if(ret){
+			cs_log("ERROR: can't create dvbapi event thread (errno=%d %s)", ret, strerror(ret));
+			return NULL;
+		} else
+			pthread_detach(event_thread);
 	}
 
 
@@ -2065,11 +2069,15 @@ static void * dvbapi_handler(struct s_client * cl, uchar* UNUSED(mbuf), int32_t 
 		cl->ctyp = len;
 		cl->typ='c';
 #ifdef AZBOX
-		pthread_create(&cl->thread, NULL, azbox_main, (void*) cl);
+		int32_t ret = pthread_create(&cl->thread, NULL, azbox_main, (void*) cl);
 #else
-		pthread_create(&cl->thread, NULL, dvbapi_main_local, (void*) cl);
+		int32_t ret = pthread_create(&cl->thread, NULL, dvbapi_main_local, (void*) cl);
 #endif
-		pthread_detach(cl->thread);
+		if(ret){
+			cs_log("ERROR: can't create dvbapi handler thread (errno=%d %s)", ret, strerror(ret));
+			return NULL;
+		} else
+			pthread_detach(cl->thread);
 	}
 
 	return NULL;
@@ -2201,8 +2209,12 @@ static int32_t stapi_open() {
 		para->id=i;
 		para->cli=cur_client();
 
-		pthread_create(&dev_list[i].thread, NULL, stapi_read_thread, (void *)para);
-		pthread_detach(dev_list[i].thread);
+		int32_t ret = pthread_create(&dev_list[i].thread, NULL, stapi_read_thread, (void *)para);
+		if(ret){
+			cs_log("ERROR: can't create stapi read thread (errno=%d %s)", ret, strerror(ret));
+			return FALSE;
+		} else
+			pthread_detach(dev_list[i].thread);
 	}
 
 	atexit(stapi_off);

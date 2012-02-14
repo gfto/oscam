@@ -183,7 +183,7 @@ int32_t SR_Init (struct s_reader *reader)
     pthread_cond_init(&reader->sr_config->g_usb_cond,NULL);
     ret = pthread_create(&reader->sr_config->rt, NULL, ReaderThread, (void *)(reader));
     if (ret) {
-        cs_log("ERROR; return code from pthread_create() is %d", ret);
+        cs_log("ERROR: Can't create smartreader thread (errno=%d %s)", ret, strerror(ret));
         return ERROR;
     }
 

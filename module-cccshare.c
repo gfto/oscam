@@ -1304,8 +1304,9 @@ void init_share() {
 #ifndef TUXBOX
         pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
-        if (pthread_create(&temp, &attr, (void*)&share_updater, NULL))
-        		cs_log("ERROR: can't create share updater thread!");
+				int32_t ret = pthread_create(&temp, &attr, (void*)&share_updater, NULL);
+        if (ret)
+        		cs_log("ERROR: can't create share updater thread (errno=%d %s)", ret, strerror(ret));
 		else {
         		cs_debug_mask(D_TRACE, "share updater thread started");
         		pthread_detach(temp);
