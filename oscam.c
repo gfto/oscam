@@ -3537,8 +3537,8 @@ void * work_thread(void *ptr) {
 
 			data = NULL;
 			cleanup_thread(cl);
-			pthread_exit(NULL);
 			free(mbuf);
+			pthread_exit(NULL);
 			return NULL;
 		}
 		
@@ -3675,6 +3675,7 @@ void * work_thread(void *ptr) {
 					free(data);
 				data = NULL;
 				free(mbuf);
+				pthread_exit(NULL);
 				return NULL;
 				break;
 #ifdef WITH_CARDREADER
@@ -3778,8 +3779,8 @@ void * work_thread(void *ptr) {
 	
 	cs_debug_mask(D_TRACE, "ending thread");
 	cl->thread_active = 0;
-	pthread_exit(NULL);
 	free(mbuf);
+	pthread_exit(NULL);
 	return NULL;
 }
 
