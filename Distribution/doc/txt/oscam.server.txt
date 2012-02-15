@@ -329,6 +329,9 @@ DESCRIPTIONS
        ins7e11 = TA1 byte
 	  set TA1 byte for NDS Videoguard 2 SCs, valid for physical readers only, default:none
 
+       sc8in1_dtrrts_patch = SC8in1 DTR/RTS Patch
+	  Fix for DTR/RTS Bug in some Kernels
+
        force_irdeto = 0|1
 	  1 = force Irdeto SC mode even if RSA key is set for Irdeto tunnled Nagravion SC, default:0
 

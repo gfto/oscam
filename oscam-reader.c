@@ -1,5 +1,6 @@
 #include "globals.h"
 #include "reader-common.h"
+#include "csctapi/ifd_sc8in1.h"
 
 int32_t logfd = 0;
 
@@ -552,6 +553,10 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		char buf[32];
 		cs_log("Error processing ecm for caid %04X, srvid %04X (servicename: %s) on reader %s.", er->caid, er->srvid, get_servicename(cl, er->srvid, er->caid, buf), reader->label);
 		ea.rc = E_NOTFOUND;
+		if (reader->typ == R_SC8in1 && reader->sc8in1_config->mcr_type) {
+			char text[] = {'S', (char)reader->slot+0x30, 'E', 'e', 'r'};
+			MCR_DisplayText(reader, text, 5, 400, 0);
+		}
 	} else
 		ea.rc = E_FOUND;
 

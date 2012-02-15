@@ -1345,6 +1345,13 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	} else {
 		tpl_addVar(vars, TPLADD, "SMARGOPATCHVALUE", (rdr->smargopatch == 1) ? "1" : "0");
 	}
+	
+	// sc8in1 dtrrts patch
+	if(!apicall) {
+		tpl_addVar(vars, TPLADD, "SC8IN1DTRRTSPATCHCHECKED", (rdr->sc8in1_dtrrts_patch == 1) ? "checked" : "");
+	} else {
+		tpl_addVar(vars, TPLADD, "SC8IN1DTRRTSPATCHVALUE", (rdr->sc8in1_dtrrts_patch == 1) ? "1" : "0");
+	}
 
 	// Detect
 	if (rdr->detect&0x80)

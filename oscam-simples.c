@@ -1203,7 +1203,7 @@ void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 			cs_log_nolock("WARNING lock %s (%s) timed out.", l->name, (type==WRITELOCK)?"WRITELOCK":"READLOCK");
 #endif
 	}
-	
+
 	pthread_mutex_unlock(&l->lock);
 #ifdef WITH_MUTEXDEBUG
 	//cs_debug_mask_nolock(D_TRACE, "lock %s locked", l->name);

@@ -2825,8 +2825,6 @@ int32_t write_server()
 				fprintf(f, ",%d", rdr->r_port);
 			if ((rdr->l_port || cfg.http_full_cfg) && !isphysical && strncmp(ctyp, "cccam", 5))
 				fprintf(f, ",%d", rdr->l_port);
-			if ((rdr->slot || cfg.http_full_cfg) && !strncmp(ctyp, "sc8in1", 6))
-				fprintf(f, ":%d", rdr->slot);
 			fprintf(f, "\n");
 
 #ifdef LIBUSB
@@ -2876,6 +2874,9 @@ int32_t write_server()
 
 			if ((rdr->smargopatch || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, "smargopatch", "%d\n", rdr->smargopatch);
+
+			if ((rdr->sc8in1_dtrrts_patch || cfg.http_full_cfg) && isphysical)
+				fprintf_conf(f, "sc8in1_dtrrts_patch", "%d\n", rdr->sc8in1_dtrrts_patch);
 
 			if ((rdr->show_cls != 10 || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, "showcls", "%d\n", rdr->show_cls);
@@ -4152,6 +4153,11 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	//FIXME workaround for Smargo until native mode works
 	if (!strcmp(token, "smargopatch")) {
 		rdr->smargopatch  = strToIntVal(value, 0);
+		return;
+	}
+
+	if (!strcmp(token, "sc8in1_dtrrts_patch")) {
+		rdr->sc8in1_dtrrts_patch  = strToIntVal(value, 0);
 		return;
 	}
 

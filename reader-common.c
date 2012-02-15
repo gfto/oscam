@@ -10,6 +10,8 @@
 #include "csctapi/ifd_cool.h"
 #endif
 
+#include "csctapi/ifd_sc8in1.h"
+
 #if defined(TUXBOX) && defined(PPC) //dbox2 only
 #include "csctapi/mc_global.h"
 static int32_t reader_device_type(struct s_reader * reader)
@@ -277,7 +279,7 @@ int32_t reader_reset(struct s_reader * reader)
 #endif
   uint16_t deprecated;
 	for (deprecated = reader->deprecated; deprecated < 2; deprecated++) {
-		if (!reader_activate_card(reader, &atr, deprecated)) return(0);
+		if (!reader_activate_card(reader, &atr, deprecated)) break;
 		ret = reader_get_cardsystem(reader, atr);
 		if (ret)
 			break;
@@ -292,6 +294,10 @@ int32_t reader_reset(struct s_reader * reader)
       {
         reader->card_status = CARD_FAILURE;
         cs_log("card initializing error");
+        if (reader->typ == R_SC8in1 && reader->sc8in1_config->mcr_type) {
+        	char text[] = {'S', (char)reader->slot+0x30, 'A', 'E', 'R'};
+        	MCR_DisplayText(reader, text, 5, 400, 0);
+        }
 #ifdef QBOXHD 
         if(cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_MEDIUM);
 #endif
@@ -301,6 +307,11 @@ int32_t reader_reset(struct s_reader * reader)
         reader_card_info(reader);
         reader->card_status = CARD_INSERTED;
         do_emm_from_file(reader);
+        if (reader->typ == R_SC8in1 && reader->sc8in1_config->mcr_type) {
+			char text[] = {'S', (char)reader->slot+0x30, 'A', 'O', 'K'};
+			MCR_DisplayText(reader, text, 5, 400, 0);
+		}
+
 #ifdef COOL
 	if (reader->typ == R_INTERNAL) {
 		cs_debug_mask(D_DEVICE,"%s init done - modifying timeout for coolstream internal device %s", reader->label, reader->device);
@@ -341,7 +352,7 @@ int32_t reader_checkhealth(struct s_reader * reader)
 			add_job(cl, ACTION_READER_RESET, NULL, 0);
 		}
 	} else {
-		if (reader->card_status == CARD_INSERTED) {
+		if (reader->card_status == CARD_INSERTED || reader->card_status == CARD_NEED_INIT) {
 			reader_nullcard(reader);
 			if (cl) {
 				cl->lastemm = 0;

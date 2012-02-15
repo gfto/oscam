@@ -733,6 +733,11 @@ static void cs_cleanup()
 		if(cl){
 			cs_log("killing reader %s", rdr->label);
 			kill_thread(cl);
+			// Stop MCR reader display thread
+			if (cl->typ == 'r' && cl->reader && cl->reader->typ == R_SC8in1
+					&& cl->reader->sc8in1_config && cl->reader->sc8in1_config->display_running) {
+				cl->reader->sc8in1_config->display_running = FALSE;
+			}
 		}
 	}
 	first_active_reader = NULL;
@@ -1157,9 +1162,6 @@ static void init_first_client()
 #if defined(LIBUSB)
   cs_lock_create(&sr_lock, 10, "sr_lock");
 #endif
-#ifdef WITH_CARDREADER
-  cs_lock_create(&sc8in1_lock, 10, "sc8in1_lock");
-#endif
   cs_lock_create(&system_lock, 5, "system_lock");
   cs_lock_create(&gethostbyname_lock, 10, "gethostbyname_lock");
   cs_lock_create(&clientlist_lock, 5, "clientlist_lock");
@@ -1489,10 +1491,8 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 		if (restart) {
 			cs_log("restarting reader %s", rdr->label);
 		}
-
 		struct s_client * cl = create_client(first_client->ip);
 		if (cl == NULL) return 0;
-
 		cl->reader=rdr;
 		cs_log("creating thread for device %s", rdr->device);
 
@@ -1528,13 +1528,14 @@ static void init_cardreader() {
 	cs_writelock(&system_lock);
 	struct s_reader *rdr;
 
+	ICC_Async_Init_Locks();
+
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr))) {
 		if (rdr->enable) {
 			restart_cardreader_int(rdr, 0);
 		}
 	}
-
 
 #ifdef WITH_LB
 	load_stat_from_file();
