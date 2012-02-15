@@ -576,7 +576,7 @@ static void free_ecm(ECM_REQUEST *ecm) {
 static void cleanup_ecmtasks(struct s_client *cl)
 {
 	ECM_REQUEST *ecm;
-	struct s_ecm_answer *ea_list, *ea_prev=NULL;
+	struct s_ecm_answer *ea_list, *ea_prev;
 
 	if (cl->ecmtask) {
 		int32_t i;
@@ -604,7 +604,7 @@ static void cleanup_ecmtasks(struct s_client *cl)
 #endif
 		ea_prev = NULL;
 		//cl is a reader, remove from matching_rdr:
-		for(ea_list = ecm->matching_rdr; ea_list; ea_prev = ea_list, ea_list = ea_list->next) {
+		for(ea_list = ecm->matching_rdr, ea_prev=NULL; ea_list; ea_prev = ea_list, ea_list = ea_list->next) {
 			if (ea_list->reader->client == cl) {
 				if (ea_prev)
 					ea_prev->next = ea_list->next;
@@ -1943,11 +1943,12 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 		return;
 	}
 
-	int8_t i, c;
+	uint8_t i, c;
 	for (i = 0; i < 16; i += 4) {
 		c = ((er->cw[i] + er->cw[i + 1] + er->cw[i + 2]) & 0xff);
 		if (er->cw[i + 3] != c) {
-			cs_debug_mask(D_TRACE, "push received cw with chksum error from %s", csp?"csp":username(cl));
+			cs_ddump_mask(D_TRACE, er->cw, 16,
+					"push received cw with chksum error from %s", csp?"csp":username(cl));
 			return;
 		}
 	}
