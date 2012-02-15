@@ -1789,6 +1789,9 @@ int32_t init_config()
 		cfg.ctimeout = cfg.srtimeout + 100;
 		cs_log("WARNING: clienttimeout adjusted to %u ms (must be greater than serialreadertimeout (%u ms))", cfg.ctimeout, cfg.srtimeout);
 	}
+	if (cfg.max_cache_time < (cfg.ctimeout/1000+1))
+		cfg.max_cache_time = cfg.ctimeout/1000+2;
+
 #ifdef CS_ANTICASC
 	if( cfg.ac_denysamples+1 > cfg.ac_samples ) {
 		cfg.ac_denysamples = cfg.ac_samples - 1;

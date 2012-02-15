@@ -602,7 +602,6 @@ static void cleanup_ecmtasks(struct s_client *cl)
 		if (ecm->cacheex_src == cl)
 			ecm->cacheex_src = NULL;
 #endif
-		ea_prev = NULL;
 		//cl is a reader, remove from matching_rdr:
 		for(ea_list = ecm->matching_rdr, ea_prev=NULL; ea_list; ea_prev = ea_list, ea_list = ea_list->next) {
 			if (ea_list->reader->client == cl) {
@@ -2031,6 +2030,15 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	int32_t i;
 	uchar c;
 	struct s_ecm_answer *ea = NULL, *ea_list, *ea_org = NULL;
+	time_t now = time(NULL);
+
+	if (er->tps.time <= now-(time_t)(cfg.ctimeout/1000+1)) { // drop real old answers, because er->parent is dropped !
+		cs_log("dropped old reader answer rc=%d from %s time %ds", rc, reader?reader->label:"undef", (int32_t)(now-er->tps.time));
+#ifdef WITH_LB
+		send_reader_stat(reader, er, E_TIMEOUT);
+#endif
+		return 0;
+	}
 
 	for(ea_list = er->matching_rdr; reader && ea_list && !ea_org; ea_list = ea_list->next) {
 		if (ea_list->reader == reader)
@@ -3539,7 +3547,7 @@ void * work_thread(void *ptr) {
 			return NULL;
 		}
 		
-		if (cl->kill) {
+		if (cl->kill && ll_count(cl->joblist) == 0) { //we need to process joblist to free data->ptr
 			cs_debug_mask(D_TRACE, "ending thread");
 			if (data && data!=&tmp_data)
 				free(data);
@@ -3850,7 +3858,8 @@ static void * check_thread(void) {
 	struct timeb ac_time;
 #endif
 	ECM_REQUEST *er = NULL;
-	time_t ecm_timeout, now;
+	time_t ecm_timeout;
+	time_t ecm_mintimeout;
 	struct timespec ts;
 	struct s_client *cl = create_client(first_client->ip);
 	cl->typ = 's';
@@ -3943,14 +3952,14 @@ static void * check_thread(void) {
 #endif
 
 		if ((ecmc_next = comp_timeb(&ecmc_time, &t_now)) <= 10) {
-			now = time(NULL);
-			ecm_timeout = now-cfg.max_cache_time;
+			ecm_timeout = t_now.time-cfg.max_cache_time;
+			ecm_mintimeout = t_now.time-(cfg.ctimeout/1000+1);
 			uint32_t count = 0;
 
 			struct ecm_request_t *ecm, *ecmt=NULL, *prv;
 			cs_readlock(&ecmcache_lock);
 			for (ecm = ecmcwcache, prv = NULL; ecm; prv = ecm, ecm = ecm->next, count++) {
-				if (ecm->tps.time < ecm_timeout || count > cfg.max_cache_count) {
+				if (ecm->tps.time < ecm_timeout || (ecm->tps.time<ecm_mintimeout && count>cfg.max_cache_count)) {
 					cs_readunlock(&ecmcache_lock);
 					cs_writelock(&ecmcache_lock);
 					ecmt = ecm;
