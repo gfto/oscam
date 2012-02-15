@@ -2032,8 +2032,12 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	struct s_ecm_answer *ea = NULL, *ea_list, *ea_org = NULL;
 	time_t now = time(NULL);
 
-	if (er->tps.time <= now-(time_t)(cfg.ctimeout/1000+1)) { // drop real old answers, because er->parent is dropped !
-		cs_log("dropped old reader answer rc=%d from %s time %ds", rc, reader?reader->label:"undef", (int32_t)(now-er->tps.time));
+	if (er->tps.time <= now-(time_t)(cfg.ctimeout/1000+2)) { // drop real old answers, because er->parent is dropped !
+#ifdef WITH_DEBUG
+		if (er->tps.time <= now-(time_t)(cfg.max_cache_time))
+			cs_log("dropped old reader answer rc=%d from %s time %ds",
+				rc, reader?reader->label:"undef", (int32_t)(now-er->tps.time));
+#endif
 #ifdef WITH_LB
 		send_reader_stat(reader, er, E_TIMEOUT);
 #endif
@@ -3953,7 +3957,7 @@ static void * check_thread(void) {
 
 		if ((ecmc_next = comp_timeb(&ecmc_time, &t_now)) <= 10) {
 			ecm_timeout = t_now.time-cfg.max_cache_time;
-			ecm_mintimeout = t_now.time-(cfg.ctimeout/1000+1);
+			ecm_mintimeout = t_now.time-(cfg.ctimeout/1000+2);
 			uint32_t count = 0;
 
 			struct ecm_request_t *ecm, *ecmt=NULL, *prv;
