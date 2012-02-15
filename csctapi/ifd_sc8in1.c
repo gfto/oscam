@@ -24,23 +24,6 @@
 #include "io_serial.h"
 #include "icc_async.h"
 
-#define LOCK_SC8IN1 \
-{ \
-	if (reader->typ == R_SC8in1) { \
-		cs_writelock(&reader->sc8in1_config->sc8in1_lock); \
-		cs_debug_mask(D_ATR, "SC8in1: locked for access of slot %i", reader->slot); \
-		Sc8in1_Selectslot(reader, reader->slot); \
-	} \
-}
-
-#define UNLOCK_SC8IN1 \
-{	\
-	if (reader->typ == R_SC8in1) { \
-		cs_writeunlock(&reader->sc8in1_config->sc8in1_lock); \
-		cs_debug_mask(D_ATR, "SC8in1: unlocked for access of slot %i", reader->slot); \
-	} \
-}
-
 #ifdef WITH_DEBUG
 int32_t Sc8in1_DebugSignals(struct s_reader *reader, uint16_t slot, const char *extra);
 #else
@@ -53,7 +36,8 @@ static int32_t sc8in1ReadStatus(struct s_reader *reader, unsigned char *status);
 int32_t Sc8in1_SetBaudrate (struct s_reader * reader, uint32_t baudrate, struct termios *termio, uint8_t cmdMode);
 int32_t Sc8in1_NeedBaudrateChange(struct s_reader * reader, uint32_t desiredBaudrate, struct termios *current, struct termios *new, uint8_t cmdMode);
 static int32_t sc8in1_tcdrain(struct s_reader *reader);
-
+int32_t Sc8in1_SetSlotForReader(struct s_reader *reader);
+int32_t Sc8in1_Card_Changed (struct s_reader * reader);
 
 static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 		uint16_t lenwrite, uint16_t lenread, uint8_t enableEepromWrite, unsigned char getStatusMode,
@@ -526,75 +510,6 @@ int32_t MCR_DisplayText(struct s_reader *reader, char* text, uint16_t text_len, 
 	return OK;
 }
 
-int32_t SC8in1_Reset (struct s_reader * reader, ATR * atr)
-{
-		LOCK_SC8IN1
-		cs_debug_mask (D_IFD, "IFD: Resetting card:\n");
-		int32_t ret;
-		int32_t i;
-		unsigned char buf[ATR_MAX_SIZE];
-		int32_t parity[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
-
-		if ( ! reader->ins7e11_fast_reset ) {
-			if (Sc8in1_SetBaudrate(reader, DEFAULT_BAUDRATE, NULL, 0)) {
-				UNLOCK_SC8IN1
-#ifdef WITH_DEBUG
-				cs_debug_mask(D_TRACE, "ERROR, function call %s returns error.","Phoenix_SetBaudrate (reader, DEFAULT_BAUDRATE)");
-#endif
-				return ERROR;
-			}
-		}
-		else {
-			cs_log("Doing fast reset");
-		}
-
-		for(i=0; i<3; i++) {
-			IO_Serial_Flush(reader);
-			if (IO_Serial_SetParity (reader, parity[i])) {
-				UNLOCK_SC8IN1
-#ifdef WITH_DEBUG
-				cs_debug_mask(D_TRACE, "ERROR, function call %s returns error.","IO_Serial_SetParity (reader, parity[i])");
-#endif
-				return ERROR;
-			}
-
-			ret = ERROR;
-			IO_Serial_Ioctl_Lock(reader, 1);
-#ifdef USE_GPIO
-			if (reader->detect>4)
-				set_gpio(reader, 0);
-			else
-#endif
-			IO_Serial_RTS_Set(reader);
-			cs_sleepms(200);
-#ifdef USE_GPIO  //felix: set card reset hi (inactive)
-			if (reader->detect>4) {
-				set_gpio_input(reader);
-			}
-			else
-#endif
-			IO_Serial_RTS_Clr(reader);
-
-			cs_sleepms(50);
-			IO_Serial_Ioctl_Lock(reader, 0);
-
-			int32_t n=0;
-			while(n<ATR_MAX_SIZE && !IO_Serial_Read(reader, ATR_TIMEOUT, 1, buf+n))
-				n++;
-			if(n==0)
-				continue;
-			if (ATR_InitFromArray (atr, buf, n) == ATR_OK)
-				ret = OK;
-			// Succesfully retrieve ATR
-			if (ret == OK)
-				break;
-		}
-		IO_Serial_Flush(reader);
-		UNLOCK_SC8IN1
-
-		return ret;
-}
-
 int32_t Sc8in1_NeedBaudrateChange(struct s_reader * reader, uint32_t desiredBaudrate, struct termios *current, struct termios *new, uint8_t cmdMode) {
 	// Returns 1 if we need to change the baudrate
 	if ((desiredBaudrate != reader->sc8in1_config->current_baudrate)
@@ -698,8 +613,7 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 
 	// check for a MCR device and how many slots it has.
 	unsigned char mcrType[1]; mcrType[0] = 0;
-	//mhh.. fritzbox7170 sends some unknown bytes when 
-	// the ftdi driver is first used. this is a test.
+	// at least fritzbox7170 needs to issue this twice
 	mcrReadType(reader, &mcrType[0]);
 	mcrType[0] = 0;
 	if ( ! mcrReadType(reader, &mcrType[0]) ) {
@@ -845,7 +759,6 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 
 	Sc8in1_Selectslot(reader, reader->slot);
 
-	//IO_Serial_Flush(reader); //FIXME somehow ATR is generated and must be flushed
 	i = -1; //Flag for GetStatus init
 	Sc8in1_GetStatus(reader, &i); //Initialize cardstatus
 	// Gimmick

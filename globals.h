@@ -1017,6 +1017,22 @@ struct ecmrl {
 #define MAXECMRATELIMIT	20
 
 //sc8in1
+#define LOCK_SC8IN1 \
+{ \
+	if (reader->typ == R_SC8in1) { \
+		cs_writelock(&reader->sc8in1_config->sc8in1_lock); \
+		cs_debug_mask(D_ATR, "SC8in1: locked for access of slot %i", reader->slot); \
+		Sc8in1_Selectslot(reader, reader->slot); \
+	} \
+}
+
+#define UNLOCK_SC8IN1 \
+{	\
+	if (reader->typ == R_SC8in1) { \
+		cs_writeunlock(&reader->sc8in1_config->sc8in1_lock); \
+		cs_debug_mask(D_ATR, "SC8in1: unlocked for access of slot %i", reader->slot); \
+	} \
+}
 struct s_sc8in1_display {
 	char *text;
 	uint16_t text_length;

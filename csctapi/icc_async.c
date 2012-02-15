@@ -54,23 +54,6 @@
 #define PPS_HAS_PPS2(block)       ((block[1] & 0x20) == 0x20)
 #define PPS_HAS_PPS3(block)       ((block[1] & 0x40) == 0x40)
 
-#define LOCK_SC8IN1 \
-{ \
-	if (reader->typ == R_SC8in1) { \
-		cs_writelock(&reader->sc8in1_config->sc8in1_lock); \
-		cs_debug_mask(D_ATR, "SC8in1: locked for access of slot %i", reader->slot); \
-		Sc8in1_Selectslot(reader, reader->slot); \
-	} \
-}
-
-#define UNLOCK_SC8IN1 \
-{	\
-	if (reader->typ == R_SC8in1) { \
-		cs_writeunlock(&reader->sc8in1_config->sc8in1_lock); \
-		cs_debug_mask(D_ATR, "SC8in1: unlocked for access of slot %i", reader->slot); \
-	} \
-}
-
 /*
  * Not exported functions declaration
  */
@@ -338,10 +321,14 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 			case R_DB2COM1:
 			case R_DB2COM2:
 			case R_SC8in1:
-				call (SC8in1_Reset(reader, atr));
-				break;
 			case R_MOUSE:
-				call (Phoenix_Reset(reader, atr));
+				LOCK_SC8IN1
+				int32_t retval = Phoenix_Reset(reader, atr);
+				UNLOCK_SC8IN1
+				if (retval) {
+					cs_debug_mask(D_TRACE, "ERROR, function call Phoenix_Reset returns error.");
+					return ERROR;
+				}
 				break;
 #if defined(LIBUSB)
 			case R_SMART:

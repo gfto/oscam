@@ -16,15 +16,10 @@
  *
  */
 
-#include <pthread.h>
-
 int32_t Sc8in1_Init (struct s_reader * reader);
 int32_t Sc8in1_GetStatus (struct s_reader * reader, int32_t * status);
-int32_t Sc8in1_Card_Changed (struct s_reader * reader);
 int32_t Sc8in1_Selectslot(struct s_reader * reader, uint16_t slot);
 int32_t Sc8in1_GetActiveHandle(struct s_reader *reader, uint8_t onlyEnabledReaders);
 int32_t Sc8in1_Close(struct s_reader *reader);
 int32_t Sc8in1_InitLocks(struct s_reader * reader);
-int32_t Sc8in1_SetSlotForReader(struct s_reader *reader);
-int32_t SC8in1_Reset (struct s_reader * reader, ATR * atr);
 int32_t MCR_DisplayText(struct s_reader *reader, char* text, uint16_t text_len, uint16_t time, uint8_t blocking);
