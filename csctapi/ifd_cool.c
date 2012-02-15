@@ -39,7 +39,7 @@ int32_t Cool_Init (struct s_reader *reader)
 		return FALSE;
 	}
 	reader->spec_dev=malloc(sizeof(struct s_coolstream_reader));
-	if (cnxt_smc_open (&specdev()->handle, &reader_nb))
+	if (cnxt_smc_open (&specdev()->handle, &reader_nb, NULL, NULL))
 		return FALSE;
 
 	call(cnxt_smc_enable_flow_control(specdev()->handle));

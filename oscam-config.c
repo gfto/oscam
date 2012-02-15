@@ -3602,6 +3602,7 @@ int32_t init_provid() {
 
 		if (!cs_malloc(&ptr, sizeof(struct s_provid), -1)) {
 			free(token);
+			fclose(fp);
 			return(1);
 		}
 		if (provid)
@@ -3681,6 +3682,7 @@ int32_t init_srvid()
 
 		if (!cs_malloc(&srvid, sizeof(struct s_srvid), -1)){
 			free(token);
+			fclose(fp);
 			return(1);
 		}
 
@@ -3835,6 +3837,7 @@ int32_t init_tierid()
 
 		if (!cs_malloc(&ptr,sizeof(struct s_tierid), -1)){
 			free(token);
+			fclose(fp);
 			return(1);
 		}
 		if (tierid)
@@ -5887,8 +5890,10 @@ static struct s_global_whitelist *global_whitelist_read_int() {
 				ecmlen = 0;
 				sscanf(p2, "%4x", &ecmlen);
 
-				if(!cs_malloc(&entry,sizeof(struct s_global_whitelist), -1))
+				if(!cs_malloc(&entry,sizeof(struct s_global_whitelist), -1)){
+					fclose(fp);
 					return new_whitelist;
+				}
 
 				count++;
 				entry->line=line;
@@ -6031,9 +6036,10 @@ static struct s_cacheex_matcher *cacheex_matcher_read_int() {
 		if (ret<7 || type != 'm')
 			continue;
 
-		if(!cs_malloc(&entry,sizeof(struct s_cacheex_matcher), -1))
+		if(!cs_malloc(&entry,sizeof(struct s_cacheex_matcher), -1)){
+			fclose(fp);
 			return new_cacheex_matcher;
-
+		}
 		count++;
 		entry->line=line;
 		entry->type=type;
