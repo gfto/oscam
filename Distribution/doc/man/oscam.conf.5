@@ -549,11 +549,11 @@ key for camd 3.3x client encryption, default:none
 
  example: key = 01020304050607080910111213141516
 .RE
-.SS "The [camd35] section"
+.SS "The [camd35|cs357x] section"
 .PP
 \fBport\fP = \fB0\fP|\fBport\fP
 .RS 3n
-UDP port for camd 3.5x clients, 0 = disabled, default:0
+UDP port for camd 3.5x / 3.57x clients, 0 = disabled, default:0
 .RE
 .PP
 \fBserverip\fP = \fBIP address\fP
@@ -563,23 +563,7 @@ bind service to specified IP address, default:all
 .PP
 \fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
 .RS 3n
-0 = tell camd 3.5x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, can be overwritten per user in \fBoscam.user\fP, default:0
-.RE
-.SS "The [cs357x] section"
-.PP
-\fBport\fP = \fB0\fP|\fBport\fP
-.RS 3n
-UDP port for camd 3.57x clients, 0 = disabled, default:0
-.RE
-.PP
-\fBserverip\fP = \fBIP address\fP
-.RS 3n
-bind service to specified IP address, default:all
-.RE
-.PP
-\fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
-.RS 3n
-0 = tell camd 3.57x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, can be overwritten per user in \fBoscam.user\fP, default:0
+0 = tell camd 3.5x / 3.57x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, can be overwritten per user in \fBoscam.user\fP, default:0
 .RE
 .SS "The [cs378x] section"
 .PP

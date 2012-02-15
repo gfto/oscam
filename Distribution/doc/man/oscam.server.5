@@ -119,9 +119,10 @@ set cache exchange mode
 
  \fB0\fP: disable cache exchange mode (default)
  \fB1\fP: enable cache exchange pull mode
- \fB2\fP: enable cache exchange push mode for camd 3.5x and CCcam protocol
- \fB3\fP: enable reverse cache exchange push mode for camd 3.5x and
-    CCcam protocol
+ \fB2\fP: enable cache exchange push mode for camd 3.5x / 3.57x and CCcam 
+    protocol
+ \fB3\fP: enable reverse cache exchange push mode for camd camd 
+    3.5x / 3.57x and CCcam protocol
 
 \fIIdentical cache exchange modes must be set on local OSCam server and remote OSCam user asccount.\fR
 .RE
@@ -565,15 +566,15 @@ re-initiated after the wait time defined in \fBcacheexwaittime\fR.
 push mode (continuous: cache exchange from remote to local OSCam)
 
 CWs from the remote cache exchange partner will be forwarded to the local 
-cache. Forwarding only works while the camd 3.5x or CCcam protocol connection 
-between the local and remote OSCam has been established.
+cache. Forwarding only works while the camd camd 3.5x / 3.57x or CCcam 
+protocol connection between the local and remote OSCam has been established.
 .TP 3n
 \(bu
 reverse push mode (continuous: cache exchange from local to remote OSCam)
 
 CWs from the local cache will be forwarded to the remote cache exchange 
-partner. Forwarding only works while the camd 3.5x or CCcam protocol connection 
-between the remote and local OSCam has been established.
+partner. Forwarding only works while the camd camd 3.5x / 3.57x or CCcam 
+protocol connection between the remote and local OSCam has been established.
 .SH EXAMPLES
 .TP 3n
 \(bu

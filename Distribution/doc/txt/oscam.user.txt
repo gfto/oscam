@@ -49,9 +49,10 @@ DESCRIPTIONS
 
 	   0: disable cache exchange mode (default)
 	   1: enable cache exchange pull mode
-	   2: enable cache exchange push mode for camd 3.5x and CCcam protocol
-	   3: enable reverse cache exchange push mode for camd 3.5x and
+	   2: enable cache exchange push mode for camd 3.5x / 3.57x and
 	      CCcam protocol
+	   3: enable reverse cache exchange push mode for camd 3.5x / 3.57x
+	      and CCcam protocol
 
 	  Identical cache exchange modes must be set on local OSCam user account and remote OSCam server.
 
