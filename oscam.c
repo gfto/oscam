@@ -1528,7 +1528,9 @@ static void init_cardreader() {
 	cs_writelock(&system_lock);
 	struct s_reader *rdr;
 
+#ifdef WITH_CARDREADER
 	ICC_Async_Init_Locks();
+#endif
 
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr))) {
