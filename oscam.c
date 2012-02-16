@@ -3635,10 +3635,9 @@ void * work_thread(void *ptr) {
 			break;
 	
 		now = time(NULL);
-		if (data->time < now-(time_t)(cfg.ctimeout/1000)) {
+		if (data != &tmp_data && data->time < now-(time_t)(cfg.ctimeout/1000)) {
 			cs_log("dropping client data for %s time %ds", username(cl), (int32_t)(now-(time_t)(cfg.ctimeout/1000)));
-			if (data!=&tmp_data)
-				free(data);
+			free(data);
 			data = NULL;
 			continue;
 		}
