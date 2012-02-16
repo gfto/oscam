@@ -98,6 +98,16 @@ reconnect if missing answers for all TCP based remote readers, default:30
 1 = ignore \fBcaid\fP and \fBident\fP settings of reader due faulty clients, default:0
 .RE
 .PP
+\fBsmargopatch\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = enable workaround for Smartreader+ reader until native mode works, default:0
+.RE
+.PP
+\fBsc8in1_dtrrts_patch\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = enable fix for SC8in1/MCR DTR/RTS kernel bug, default:0
+.RE
+.PP
 \fBlabel\fP = \fBname\fP
 .RS 3n
 name for reader, \fIrequired\fR
