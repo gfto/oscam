@@ -3549,6 +3549,7 @@ void * work_thread(void *ptr) {
 	uchar *mbuf = cs_malloc(&mbuf, bufsize, 0);
 	int32_t n=0, rc=0, i, idx, s;
 	uchar dcw[16];
+	time_t now;
 
 	while (1) {
 		if (!cl || !is_valid_client(cl)) {
@@ -3633,6 +3634,15 @@ void * work_thread(void *ptr) {
 		if (!data->action)
 			break;
 	
+		now = time(NULL);
+		if (data->time < now-(time_t)(cfg.ctimeout/1000)) {
+			cs_log("dropping client data for %s time %ds", username(cl), (int32_t)(now-(time_t)(cfg.ctimeout/1000)));
+			if (data!=&tmp_data)
+				free(data);
+			data = NULL;
+			continue;
+		}
+
 		switch(data->action) {
 			case ACTION_READER_IDLE:
 				reader_do_idle(reader);
@@ -3656,13 +3666,13 @@ void * work_thread(void *ptr) {
 					break;
 				}
 
-				cl->last=time((time_t*)0);
+				cl->last=now;
 				idx=reader->ph.c_recv_chk(cl, dcw, &rc, mbuf, rc);
 
 				if (idx<0) break;  // no dcw received
 				if (!idx) idx=cl->last_idx;
 
-				reader->last_g=time((time_t*)0); // for reconnect timeout
+				reader->last_g=now; // for reconnect timeout
 
 				for (i=0, n=0; i<CS_MAXPENDING && n == 0; i++) {
 					if (cl->ecmtask[i].idx==idx) {
@@ -3824,6 +3834,7 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 	data->ptr = ptr;
 	data->cl = cl;
 	data->len = len;
+	data->time = time(NULL);
 
 	pthread_mutex_lock(&cl->thread_lock);
 	if (cl->thread_active) {
