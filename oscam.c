@@ -45,6 +45,10 @@ pid_t server_pid=0;
 #if defined(LIBUSB)
 CS_MUTEX_LOCK sr_lock;
 #endif
+#ifdef ARM
+pthread_t	arm_led_thread = 0;
+LLIST		*arm_led_actions = NULL;
+#endif
 CS_MUTEX_LOCK system_lock;
 CS_MUTEX_LOCK gethostbyname_lock;
 CS_MUTEX_LOCK clientlist_lock;
@@ -955,6 +959,7 @@ void cs_exit(int32_t sig)
 			cs_switch_led(LED3, LED_OFF);
 			cs_switch_led(LED1A, LED_ON);
 		}
+		arm_led_stop_thread();
 #endif
 #ifdef QBOXHD
 		if(cfg.enableled == 2){
@@ -4535,6 +4540,10 @@ int32_t main (int32_t argc, char *argv[])
   write_versionfile();
   server_pid = getpid();
 
+#ifdef ARM
+  arm_led_start_thread();
+#endif
+
 #if defined(AZBOX) && defined(HAVE_DVBAPI)
   openxcas_debug_message_onoff(1);  // debug
 
@@ -4649,7 +4658,7 @@ int32_t cs_get_restartmode() {
 #endif
 
 #ifdef ARM
-void cs_switch_led(int32_t led, int32_t action) {
+static void cs_switch_led_from_thread(int32_t led, int32_t action) {
 
 	if(action < 2) { // only LED_ON and LED_OFF
 		char ledfile[256];
@@ -4692,7 +4701,7 @@ void cs_switch_led(int32_t led, int32_t action) {
 
 		if (!(f=fopen(ledfile, "w"))){
 			// FIXME: sometimes cs_log was not available when calling cs_switch_led -> signal 11
-			//cs_log("Cannot open file \"%s\" (errno=%d %s)", ledfile, errno, strerror(errno));
+			// cs_log("Cannot open file \"%s\" (errno=%d %s)", ledfile, errno, strerror(errno));
 			return;
 		}
 		fprintf(f,"%d", action);
@@ -4700,22 +4709,97 @@ void cs_switch_led(int32_t led, int32_t action) {
 	} else { // LED Macros
 		switch(action){
 		case LED_DEFAULT:
-			cs_switch_led(LED1A, LED_OFF);
-			cs_switch_led(LED1B, LED_OFF);
-			cs_switch_led(LED2, LED_ON);
-			cs_switch_led(LED3, LED_OFF);
+			cs_switch_led_from_thread(LED1A, LED_OFF);
+			cs_switch_led_from_thread(LED1B, LED_OFF);
+			cs_switch_led_from_thread(LED2, LED_ON);
+			cs_switch_led_from_thread(LED3, LED_OFF);
 			break;
 		case LED_BLINK_OFF:
-			cs_switch_led(led, LED_OFF);
+			cs_switch_led_from_thread(led, LED_OFF);
 			cs_sleepms(100);
-			cs_switch_led(led, LED_ON);
+			cs_switch_led_from_thread(led, LED_ON);
 			break;
 		case LED_BLINK_ON:
-			cs_switch_led(led, LED_ON);
+			cs_switch_led_from_thread(led, LED_ON);
 			cs_sleepms(300);
-			cs_switch_led(led, LED_OFF);
+			cs_switch_led_from_thread(led, LED_OFF);
 			break;
 		}
+	}
+}
+
+static void* arm_led_thread_main() {
+	uint8_t running = 1;
+	while (running) {
+		LL_ITER iter = ll_iter_create(arm_led_actions);
+		struct s_arm_led *arm_led;
+		while ((arm_led = ll_iter_next(&iter))) {
+			int32_t led, action;
+			time_t now, start;
+			led = arm_led->led;
+			action = arm_led->action;
+			now = time((time_t)0);
+			start = arm_led->start_time;
+			ll_iter_remove_data(&iter);
+			if (action == LED_STOP_THREAD) {
+				running = 0;
+				break;
+			}
+			if (now - start < ARM_LED_TIMEOUT) {
+				cs_switch_led_from_thread(led, action);
+			}
+		}
+		if (running) {
+			sleep(60);
+		}
+	}
+	ll_clear_data(arm_led_actions);
+	pthread_exit(NULL);
+	return NULL;
+}
+
+void arm_led_start_thread() {
+	// call this after signal handling is done
+	if ( ! arm_led_actions ) {
+		arm_led_actions = ll_create("arm_led_actions");
+	}
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	cs_log("starting thread arm_led_thread");
+#ifndef TUXBOX
+	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+#endif
+	int32_t ret = pthread_create(&arm_led_thread, &attr, arm_led_thread_main, NULL);
+	if (ret)
+		cs_log("ERROR: can't create arm_led_thread thread (errno=%d %s)", ret, strerror(ret));
+	else {
+		cs_log("arm_led_thread thread started");
+		pthread_detach(arm_led_thread);
+	}
+	pthread_attr_destroy(&attr);
+}
+
+void arm_led_stop_thread() {
+	cs_switch_led(0, LED_STOP_THREAD);
+}
+
+void cs_switch_led(int32_t led, int32_t action) {
+	struct s_arm_led *arm_led = (struct s_arm_led *)malloc(sizeof(struct s_arm_led));
+	if (arm_led == NULL) {
+		cs_log("ERROR: cs_switch_led out of memory");
+		return;
+	}
+	arm_led->start_time = time((time_t)0);
+	arm_led->led = led;
+	arm_led->action = action;
+	if ( ! arm_led_actions ) {
+		arm_led_actions = ll_create("arm_led_actions");
+	}
+	ll_append(arm_led_actions, (void *)arm_led);
+	if (arm_led_thread) {
+		// arm_led_thread_main is not started at oscam startup
+		// when first cs_switch_led calls happen
+		pthread_kill(arm_led_thread, OSCAM_SIGNAL_WAKEUP);
 	}
 }
 #endif

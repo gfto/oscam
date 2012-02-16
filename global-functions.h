@@ -297,6 +297,15 @@ extern void end_lcd_thread();
 #endif
 
 /* ===========================
+ *         arm-led
+ * =========================== */
+#ifdef ARM
+extern void cs_switch_led(int32_t led, int32_t action);
+extern void arm_led_start_thread();
+extern void arm_led_stop_thread();
+#endif
+
+/* ===========================
  *         oscam-log
  * =========================== */
 extern char *LOG_LIST;

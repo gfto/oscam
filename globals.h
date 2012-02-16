@@ -382,7 +382,13 @@ enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE, E2_
 #define  LED_BLINK_ON 	2
 #define  LED_BLINK_OFF 	3
 #define  LED_DEFAULT 	10
-extern void cs_switch_led(int32_t led, int32_t action);
+#define  LED_STOP_THREAD 100
+#define  ARM_LED_TIMEOUT 3 //Dont blink for actions which are < ARM_LED_TIMEOUT seconds ago
+struct s_arm_led {
+	int32_t led;
+	int32_t action;
+	time_t start_time;
+};
 #endif
 
 #ifdef QBOXHD
