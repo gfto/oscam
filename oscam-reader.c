@@ -551,7 +551,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	int32_t rc = reader_ecm(reader, er, &ea);
 	if(rc == ERROR){
 		char buf[32];
-		cs_log("Error processing ecm for caid %04X, srvid %04X (servicename: %s) on reader %s.", er->caid, er->srvid, get_servicename(cl, er->srvid, er->caid, buf), reader->label);
+		cs_debug_mask(D_TRACE, "Error processing ecm for caid %04X, srvid %04X (servicename: %s) on reader %s.", er->caid, er->srvid, get_servicename(cl, er->srvid, er->caid, buf), reader->label);
 		ea.rc = E_NOTFOUND;
 		if (reader->typ == R_SC8in1 && reader->sc8in1_config->mcr_type) {
 			char text[] = {'S', (char)reader->slot+0x30, 'E', 'e', 'r'};

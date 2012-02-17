@@ -20,7 +20,13 @@ static uint64_t get_pbm(struct s_reader * reader, uint8_t idx)
     break;
   case 0x83:
     pbm = b2ll(8, cta_res + 1);
-    cs_ri_log(reader, "[seca-reader] PBM for provider %u: %08llx", idx + 1, (unsigned long long) pbm);
+		int seca_version;
+		if (pbm > 0xFFFF)
+			seca_version = 3;
+		else
+			seca_version = 2;
+    cs_ri_log(reader, "[seca-reader] PBM for provider %u: %08llx, Seca%01x detected", idx + 1, (unsigned long long) pbm, seca_version);
+  	reader->availkeys[0][1]=seca_version; //misusing availkeys to store seca_version
     break;
   default:
     cs_log("[seca-reader] ERROR: PBM returns unknown byte %02x", cta_res[0]);
@@ -213,6 +219,12 @@ static int32_t get_prov_index(struct s_reader * rdr, const uint8_t *provid)	//re
 
 static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
+	int ecm_type;
+	ecm_type = er->ecm[1] >> 4; //ecm_type 0 is seca2, ecm_type 3 is seca3
+  int seca_version = reader->availkeys[0][1]; //misusing availkeys to store seca_version
+	if ((ecm_type == 0 && seca_version == 3) || (ecm_type == 3 && seca_version == 2))
+		return ERROR;
+
   def_resp;
   unsigned char ins3c[] = { 0xc1,0x3c,0x00,0x00,0x00 }; // coding cw
   unsigned char ins3a[] = { 0xc1,0x3a,0x00,0x00,0x10 }; // decoding cw
@@ -400,7 +412,7 @@ static int32_t seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 			break;			
 
 		default:
-    			cs_log("[seca-reader] EMM: Congratulations, you have discovered a new EMM on SECA.");
+			cs_log("[seca-reader] EMM: Congratulations, you have discovered a new EMM on SECA.");
 			cs_log("This has not been decoded yet, so send this output to authors:");
 			cs_dump (ep->emm, emm_length + 3, "EMM:");
 			return ERROR;
@@ -422,10 +434,12 @@ static int32_t seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 	 	cs_log("[seca-reader] EMM: Update not necessary.");
 	 return OK; //Update not necessary
   }
-  if ((cta_res[0] == 0x90) && ((cta_res[1] == 0x00) || (cta_res[1] == 0x19)))
-  	if (set_provider_info(reader, i) == OK) //after successfull EMM, print32_t new provider info
-	  return OK;
-  return ERROR;
+	if ((cta_res[0] == 0x90) && ((cta_res[1] == 0x00) || (cta_res[1] == 0x19))) {
+		if (ep->type == GLOBAL) return OK; //do not print new provider info after global emm
+		if (set_provider_info(reader, i) == OK) //after successfull EMM, print32_t new provider info
+			return OK;
+	}
+	return ERROR;
 }
 
 static int32_t seca_card_info (struct s_reader * reader)
