@@ -1365,8 +1365,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 				cur_er->rc = E_NOTFOUND;
 				cur_er->rcEx = E2_CCCAM_NOCARD;
-				write_ecm_answer(rdr, cur_er, E_NOTFOUND, E2_CCCAM_NOCARD, NULL,
-						NULL);
+				write_ecm_answer(rdr, cur_er, E_NOTFOUND, E2_CCCAM_NOCARD, NULL, NULL);
 				//cur_er->rc = 1;
 				//cur_er->rcEx = 0;
 				//cs_sleepms(300);
@@ -2880,7 +2879,7 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 
 	if (n <= 0) {
 		struct cc_data *cc = cl->cc;
-		if (cc->nok_message)
+		if (cc && cc->nok_message)
 			cs_log("%s connection closed by %s. Reason: %s", getprefix(), remote_txt(), cc->nok_message);
 		else
 			cs_log("%s connection closed by %s.", getprefix(), remote_txt());

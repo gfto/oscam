@@ -80,6 +80,7 @@ static void *ll_iter_next_nolock(LL_ITER *it)
 			if (!ptr) {
 				//it->cur = prvnxt;
 				ll_iter_reset(it); // restart iteration
+				it->cur = it->l->initial;
 			}
 		}
 		it->ll_version = it->l->version;

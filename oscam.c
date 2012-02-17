@@ -2079,7 +2079,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	if (er->parent) {
 		// parent is only set on reader->client->ecmtask[], but we want client->ecmtask[]
 		er->rc = rc;
-		//er->idx = 0;
+		er->idx = 0;
 		er = er->parent;
 	}
 
@@ -3634,8 +3634,11 @@ void * work_thread(void *ptr) {
 				if (reader)
 					data->action = ACTION_READER_REMOTE;
 				else {
-					if (cl->is_udp)
+					if (cl->is_udp) {
 						data->action = ACTION_CLIENT_UDP;
+						data->ptr = mbuf;
+						data->len = bufsize;
+					}
 					else
 						data->action = ACTION_CLIENT_TCP;
 					if (pfd[0].revents & (POLLHUP | POLLNVAL))
@@ -3744,11 +3747,13 @@ void * work_thread(void *ptr) {
 			case ACTION_CLIENT_UDP:
 				n = ph[cl->ctyp].recv(cl, data->ptr, data->len);
 				if (n<0) {
-					free(data->ptr);
+					if (data->ptr != mbuf)
+						free(data->ptr);
 					break;
 				}
 				ph[cl->ctyp].s_handler(cl, data->ptr, n);
-				free(data->ptr); // allocated in accept_connection()
+				if (data->ptr != mbuf)
+					free(data->ptr); // allocated in accept_connection()
 				break;
 			case ACTION_CLIENT_TCP:
 				s = check_fd_for_data(cl->pfd);
