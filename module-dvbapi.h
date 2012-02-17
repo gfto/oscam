@@ -25,7 +25,7 @@
 #ifdef COOL
 #define MAX_DEMUX 3
 #else
-#define MAX_DEMUX 5
+#define MAX_DEMUX 16
 #endif
 #define MAX_CAID 50
 #define ECM_PIDS 30
