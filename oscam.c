@@ -2079,7 +2079,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	if (er->parent) {
 		// parent is only set on reader->client->ecmtask[], but we want client->ecmtask[]
 		er->rc = rc;
-		er->idx = 0;
+		//er->idx = 0;
 		er = er->parent;
 	}
 
@@ -2170,6 +2170,9 @@ void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc)
 	if (!rdr || rc>=E_99 || !rdr->client)
 		return;
 #endif
+	if (er->ecmcacheptr) //ignore cache answer
+		return;
+
 	struct timeb tpe;
 	cs_ftime(&tpe);
 	int32_t time = 1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm;
@@ -2443,30 +2446,37 @@ static void request_cw(ECM_REQUEST *er)
 
 		for(ea = er->matching_rdr; ea; ea = ea->next) {
 
+			switch(er->stage) {
 #ifdef CS_CACHEEX
-			if (er->stage == 1) {
+			case 1:
 				// Cache-Echange
 				if ((ea->status & REQUEST_SENT) ||
 						(ea->status & (READER_CACHEEX|READER_ACTIVE)) != (READER_CACHEEX|READER_ACTIVE))
 					continue;
-			} else
+				break;
 #endif
-			if (er->stage == 2) {
+			case 2:
 				// only local reader
 				if ((ea->status & REQUEST_SENT) ||
 						(ea->status & (READER_ACTIVE|READER_FALLBACK|READER_LOCAL)) != (READER_ACTIVE|READER_LOCAL))
 					continue;
-			} else if (er->stage == 3) {
+				break;
+
+			case 3:
 				// any non fallback reader not asked yet
 				if ((ea->status & REQUEST_SENT) ||
 						(ea->status & (READER_ACTIVE|READER_FALLBACK)) != READER_ACTIVE)
 					continue;
-			} else {
+				break;
+
+			default:
 				// only fallbacks
 				// always send requests, regardless if asked
 				if ((ea->status & READER_ACTIVE) != READER_ACTIVE)
 					continue;
+				break;
 			}
+
 			struct s_reader *rdr = ea->reader;
 			cs_debug_mask(D_TRACE, "request_cw stage=%d to reader %s ecm=%04X", er->stage, rdr?rdr->label:"", htons(er->checksum));
 			write_ecm_request(ea->reader, er);
@@ -2580,31 +2590,33 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 			ert->rcEx=ea->rcEx;
 			cs_strncpy(ert->msglog, ea->msglog, sizeof(ert->msglog));
 			ert->selected_reader = eardr;
+			if (!ert->ecmcacheptr) {
 #ifdef CS_CACHEEX
-			uchar has_cacheex = 0;
+				uchar has_cacheex = 0;
 #endif
-			for(ea_list = ert->matching_rdr; ea_list; ea_list = ea_list->next) {
+				for(ea_list = ert->matching_rdr; ea_list; ea_list = ea_list->next) {
 #ifdef CS_CACHEEX
-				if (((ea_list->status & READER_CACHEEX)) == READER_CACHEEX)
-					has_cacheex = 1;
-				if (((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED|READER_CACHEEX|READER_ACTIVE)) == (REQUEST_SENT|READER_CACHEEX|READER_ACTIVE)))
-					cacheex_left++;
+					if (((ea_list->status & READER_CACHEEX)) == READER_CACHEEX)
+						has_cacheex = 1;
+					if (((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED|READER_CACHEEX|READER_ACTIVE)) == (REQUEST_SENT|READER_CACHEEX|READER_ACTIVE)))
+						cacheex_left++;
 #endif
-				if (((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED|READER_LOCAL|READER_ACTIVE)) == (REQUEST_SENT|READER_LOCAL|READER_ACTIVE)))
-					local_left++;
-				if (((ea_list->status & (REQUEST_ANSWERED|READER_ACTIVE)) == (READER_ACTIVE)))
-					reader_left++;
-			}
+					if (((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED|READER_LOCAL|READER_ACTIVE)) == (REQUEST_SENT|READER_LOCAL|READER_ACTIVE)))
+						local_left++;
+					if (((ea_list->status & (REQUEST_ANSWERED|READER_ACTIVE)) == (READER_ACTIVE)))
+						reader_left++;
+				}
 
 #ifdef CS_CACHEEX
-			if (has_cacheex && !cacheex_left && !ert->cacheex_done) {
-				ert->cacheex_done = 1;
-				request_cw(ert);
-			} else
+				if (has_cacheex && !cacheex_left && !ert->cacheex_done) {
+					ert->cacheex_done = 1;
+					request_cw(ert);
+				} else
 #endif
-			if (cfg.preferlocalcards && !local_left && !ert->locals_done) {
-				ert->locals_done = 1;
-				request_cw(ert);
+				if (cfg.preferlocalcards && !local_left && !ert->locals_done) {
+					ert->locals_done = 1;
+					request_cw(ert);
+				}
 			}
 
 			break;
@@ -2624,13 +2636,14 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 #endif
 
 #ifdef CS_CACHEEX
-	if (ea->rc < E_NOTFOUND)
+	if (ea->rc < E_NOTFOUND && !ert->ecmcacheptr)
 		cs_cache_push(ert);
 #endif
 
 	if (ert->rc < E_99) {
 		if (cl) send_dcw(cl, ert);
-		distribute_ecm(ert, (ert->rc == E_FOUND)?E_CACHE2:ert->rc);
+		if (!ert->ecmcacheptr)
+			distribute_ecm(ert, (ert->rc == E_FOUND)?E_CACHE2:ert->rc);
 	}
 
 	return;
