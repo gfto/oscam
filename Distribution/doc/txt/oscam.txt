@@ -66,8 +66,8 @@ OPTIONS
        -g <mode>
 	  garbage collector debug mode, default:none:
 
-	     0 = immediate free
-	     1 = check for double frees
+	     1 = immediate free
+	     2 = check for double frees
 
        -h
 	  usage
