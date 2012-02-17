@@ -4488,9 +4488,9 @@ int32_t main (int32_t argc, char *argv[])
 
 
 #ifdef OS_MACOSX
-  if (bg && daemon_compat(1,0))
+  if (bg && daemon_compat(1,1))
 #else
-  if (bg && daemon(1,0))
+  if (bg && daemon(1,1))
 #endif
   {
     printf("Error starting in background (errno=%d: %s)", errno, strerror(errno));
