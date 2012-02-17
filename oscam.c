@@ -2471,9 +2471,12 @@ static void request_cw(ECM_REQUEST *er)
 
 			default:
 				// only fallbacks
-				// always send requests, regardless if asked
-				if ((ea->status & READER_ACTIVE) != READER_ACTIVE)
-					continue;
+				if ((ea->status & REQUEST_SENT) ||
+						(ea->status & READER_ACTIVE) != READER_ACTIVE)
+				{
+					if (er->reader_count > 1) //resend if we only have one reader
+						continue;
+				}
 				break;
 			}
 
