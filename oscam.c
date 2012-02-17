@@ -460,7 +460,7 @@ static struct s_client * idx_from_ip(in_addr_t ip, in_port_t port)
 {
   struct s_client *cl;
   for (cl=first_client; cl ; cl=cl->next)
-    if ((cl->ip==ip) && (cl->port==port) && ((cl->typ=='c') || (cl->typ=='m')))
+    if (!cl->kill && (cl->ip==ip) && (cl->port==port) && ((cl->typ=='c') || (cl->typ=='m')))
       return cl;
   return NULL;
 }
@@ -665,7 +665,7 @@ void cleanup_thread(void *var)
 			ICC_Async_Close(rdr);
 #endif
 		if (cl->typ == 'p')
-			network_tcp_connection_close(rdr, "close");
+			network_tcp_connection_close(rdr, "cleanup");
 		cl->reader = NULL;
 	}
 
@@ -687,6 +687,9 @@ void cleanup_thread(void *var)
 		close(cl->pfd); 
 			
 	// Clean all remaining structures
+
+	if (cl->cascadeusers)
+		ll_destroy_data(cl->cascadeusers);
 
 	pthread_mutex_trylock(&cl->thread_lock);
 	ll_destroy_data(cl->joblist);
@@ -3550,15 +3553,17 @@ void * work_thread(void *ptr) {
 	int32_t n=0, rc=0, i, idx, s;
 	uchar dcw[16];
 	time_t now;
+	int8_t restart_reader=0;
 
 	while (1) {
-		if (!cl || !is_valid_client(cl)) {
-			if (data && data!=&tmp_data)
-				free(data);
-			data = NULL;
-			free(mbuf);
-			return NULL;
-		}
+//		if (!cl || !is_valid_client(cl)) { // corsair: I think this is not necessary anymore and causes memleaks
+//			if (data && data!=&tmp_data)
+//				free(data);
+//			data = NULL;
+//			free(mbuf);
+//			pthread_exit(NULL);
+//			return NULL;
+//		}
 		
 		if (cl->kill && ll_count(cl->joblist) == 0) { //we need to process joblist to free data->ptr
 			cs_debug_mask(D_TRACE, "ending thread");
@@ -3567,6 +3572,8 @@ void * work_thread(void *ptr) {
 
 			data = NULL;
 			cleanup_thread(cl);
+			if (restart_reader)
+				restart_cardreader(reader, 0);
 			free(mbuf);
 			pthread_exit(NULL);
 			return NULL;
@@ -3704,17 +3711,8 @@ void * work_thread(void *ptr) {
 					reader_init(reader);
 				break;
 			case ACTION_READER_RESTART:
-				cleanup_thread(cl); //should close connections
-				restart_cardreader(reader, 0);
-				//original cl struct was destroyed by restart reader, so we exit here
-				//init is done by a new thread
-
-				if (data!=&tmp_data)
-					free(data);
-				data = NULL;
-				free(mbuf);
-				pthread_exit(NULL);
-				return NULL;
+				cl->kill = 1;
+				restart_reader = 1;
 				break;
 #ifdef WITH_CARDREADER
 			case ACTION_READER_RESET_FAST:
@@ -3863,6 +3861,9 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 	int32_t ret = pthread_create(&cl->thread, &attr, work_thread, (void *)data);
 	if (ret) {
 		cs_log("ERROR: can't create thread for %s (errno=%d %s)", action > ACTION_CLIENT_FIRST ? "client" : "reader", ret, strerror(ret));
+		if (data->ptr && len>0)
+			free(data->ptr);
+		free(data);
 	} else
 		pthread_detach(cl->thread);
 
@@ -4236,8 +4237,10 @@ int32_t accept_connection(int32_t i, int32_t j) {
 			buf[0]='U';
 			memcpy(buf+1, &rl, 2);
 
-			if (cs_check_violation((uint32_t)cad.sin_addr.s_addr, ph[i].ptab->ports[j].s_port))
+			if (cs_check_violation((uint32_t)cad.sin_addr.s_addr, ph[i].ptab->ports[j].s_port)) {
+				free(buf);
 				return 0;
+			}
 
 			cs_debug_mask(D_TRACE, "got %d bytes from ip %s:%d", n, cs_inet_ntoa(cad.sin_addr.s_addr), cad.sin_port);
 
@@ -4488,9 +4491,9 @@ int32_t main (int32_t argc, char *argv[])
 
 
 #ifdef OS_MACOSX
-  if (bg && daemon_compat(1,1))
+  if (bg && daemon_compat(1,0))
 #else
-  if (bg && daemon(1,1))
+  if (bg && daemon(1,0))
 #endif
   {
     printf("Error starting in background (errno=%d: %s)", errno, strerror(errno));

@@ -1212,7 +1212,7 @@ void housekeeping_stat_thread()
 void housekeeping_stat(int32_t force)
 {
 	time_t now = time(NULL);
-	if (!force && now/60/60 == last_housekeeping/60/60) //only clean once in an hour
+	if (!force && last_housekeeping + 60*60 > now) //only clean once in an hour
 		return;
 	
 	last_housekeeping = now;

@@ -1715,7 +1715,7 @@ void cc_idle() {
 		//check inactivity timeout:
 		if (abs(rdr->last_s - now) > rdr->tcp_ito*60) {
 			cs_debug_mask(D_READER, "%s inactive_timeout, close connection (fd=%d)", rdr->ph.desc, rdr->client->pfd);
-			network_tcp_connection_close(rdr, "inavtivity");
+			network_tcp_connection_close(rdr, "inactivity");
 			return;
 		}
 			
