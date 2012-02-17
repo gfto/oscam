@@ -722,10 +722,14 @@ void dvbapi_read_priority() {
 
 		memset(str1, 0, 128);
 
+		for (i=0; i<(int)strlen(token) && token[i]==' '; i++);
+		if (i  == (int)strlen(token) - 1) //empty line or all spaces
+			continue;
+		
 		for (i=0;i<(int)strlen(token);i++) {
-			if ((token[i]==':' || token[i]==' ') && token[i+1]==':') {
-				memmove(token+i+2, token+i+1, strlen(token)-i+1);
-				token[i+1]='0';
+			if ((token[i]==':' || token[i]==' ') && token[i+1]==':') { 	// if "::" or " :"
+				memmove(token+i+2, token+i+1, strlen(token)-i+1); //insert extra position 
+				token[i+1]='0';		//and fill it with NULL 
 			}
 			if (token[i]=='#' || token[i]=='/') {
 				token[i]='\0';
@@ -742,8 +746,14 @@ void dvbapi_read_priority() {
 #endif
 		type = tolower(type);
 
-		if (ret<1 || (type != 'p' && type != 'i' && type != 'm' && type != 'd' && type != 's' && type != 'l'))
+		if (ret<1 || (type != 'p' && type != 'i' && type != 'm' && type != 'd' && type != 's' && type != 'l')) {
+			//fprintf(stderr, "Warning: line containing %s in %s not recognized, ignoring line\n", token, cs_prio); 
+			//fprintf would issue the warning to the command line, which is more consistent with other config warnings
+			//however it takes OSCam a long time (>4 seconds) to reach this part of the program, so the warnings are reaching tty rather late
+			//which leads to confusion. So send the warnings to log file instead
+			cs_log("Warning: line containing %s in %s not recognized, ignoring line\n", token, cs_prio);
 			continue;
+		}
 
 		struct s_dvbapi_priority *entry;
 		if(!cs_malloc(&entry,sizeof(struct s_dvbapi_priority), -1)){
