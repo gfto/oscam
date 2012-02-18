@@ -76,7 +76,7 @@ static int32_t set_provider_info(struct s_reader * reader, int32_t i)
   if (l_name[8])
 	  add_provider(0x0100, provid, l_name + 8, "", "");
   reader->availkeys[i][0]=valid; //misusing availkeys to register validity of provider
-  cs_ri_log (reader, "[seca-reader] provider %d: %X, valid: %i%s, expiry date: %4d/%02d/%02d",
+  cs_ri_log (reader, "[seca-reader] provider %d: %04X, valid: %i%s, expiry date: %4d/%02d/%02d",
          i+1, provid, valid, l_name, year, month, day);
   memcpy(&reader->sa[i][0], cta_res+18, 4);
   if (valid==1) //if not expired
@@ -219,11 +219,12 @@ static int32_t get_prov_index(struct s_reader * rdr, const uint8_t *provid)	//re
 
 static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
-	int ecm_type;
-	ecm_type = er->ecm[1] >> 4; //ecm_type 0 is seca2, ecm_type 3 is seca3
-  int seca_version = reader->availkeys[0][1]; //misusing availkeys to store seca_version
-	if ((ecm_type == 0 && seca_version == 3) || (ecm_type == 3 && seca_version == 2))
-		return ERROR;
+	if (er->ecm[3] == 0x00 && er->ecm[4] == 0x6a) { //provid 006A = CDNL uses seca2/seca3 simulcrypt on same caid
+		int ecm_type = er->ecm[1] >> 4; //ecm_type 0 is seca2, ecm_type 3 is seca3
+	  int seca_version = reader->availkeys[0][1]; //misusing availkeys to store seca_version
+		if ((ecm_type == 0 && seca_version == 3) || (ecm_type == 3 && seca_version == 2))
+			return ERROR;
+	}
 
   def_resp;
   unsigned char ins3c[] = { 0xc1,0x3c,0x00,0x00,0x00 }; // coding cw
