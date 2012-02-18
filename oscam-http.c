@@ -2762,7 +2762,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				}
 
 				if(rdr->card_atr_length)
-					for(i = 0; i < rdr->card_atr_length; i++) tpl_printf(vars, TPLAPPEND, "READERATR", "%02X ", rdr->card_atr[i]);
+					for(i = 0; i < rdr->card_atr_length; i++) tpl_printf(vars, TPLAPPEND, "READERATR", "%02X ", rdr->atr[i]);
 
 				tpl_addVar(vars, TPLADD, "READERCSYSTEM", rdr->csystem.desc ? rdr->csystem.desc : "unknown");
 
