@@ -75,7 +75,7 @@ DESCRIPTIONS
 	  reconnect if missing answers for all TCP based remote readers, default:30
 
        disableserverfilter = 0|1
-	  1 = ignore caid and ident settings of reader due faulty clients, default:0
+	  1 = ignore caid and provid settings of reader due faulty clients, default:0
 
        smargopatch = 0|1
 	  1 = enable workaround for Smartreader+ reader until native mode works, default:0
@@ -124,8 +124,8 @@ DESCRIPTIONS
 
 	  example: auprovid = 123456
 
-       ecmwhitelist = [CAID[@ident]:]length[,length]...[;[CAID[@ident]:]length[,length]...]...
-	  set valid ECM length per CAID and ident in hex, default:none,ident=000000
+       ecmwhitelist = [CAID[@provid]:]length[,length]...[;[CAID[@provid]:]length[,length]...]...
+	  set valid ECM length per CAID and provid in hex, default:none,provid=000000
 
 	  example: ecmwhitelist = 10,20,0a,0b
 		   ecmwhitelist = 0100:10,20;0200@123456:0a,4b
@@ -174,7 +174,7 @@ DESCRIPTIONS
 	   constcw
 	   sc8in1
 
-       ident = <CAID>:<ident>[,ident]...[;<CAID>:<ident>[,ident]...]...
+       ident = <CAID>:<provid>[,provid]...[;<CAID>:<provid>[,provid]...]...
 	  set CAID and SC specific ident for reader
 
 	  example: ident = 0100:123456,234567;0200:345678,456789
@@ -348,7 +348,7 @@ DESCRIPTIONS
        boxkey = box key
 	  box key for Nagravision SCs / CAM key for Irdeto SCs
 
-       aeskeys = CAID #0@ident:AES key #0 CAID #0[,AES key #1 CAID #0],...[;CAID #1@ident:AES key #0 CAID #1[,AES key #1 CAID #1],...]...
+       aeskeys = CAID #0@provid:AES key #0 CAID #0[,AES key #1 CAID #0],...[;CAID #1@provid:AES key #0 CAID #1[,AES key #1 CAID #1],...]...
 	  multiple 16 bytes AES keys for Viaccess SCs (the used postprocessing AES key is specified through the D2 nano of the ECM)
 
 	  special AES keys:

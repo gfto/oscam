@@ -388,8 +388,8 @@ DESCRIPTIONS
 	  bination, 1 = disable, can be overwritten per user in oscam.user, default:0
 
    The [cs378x] section
-       port = 0|port[@CAID][:ident][,ident]...[;port@CAID[:ident][,ident]...]...
-	  TCP port/CAID/ident definitions for camd 3.78x clients, 0 = disabled, default:0
+       port = 0|port[@CAID][:provid][,provid]...[;port@CAID[:provid][,provid]...]...
+	  TCP port/CAID/provid definitions for camd 3.78x clients, 0 = disabled, default:0
 
 	   examples: port = 10000@0100:100000;20000@0200:200000,300000,400000
 		     port = 30000
@@ -410,8 +410,8 @@ DESCRIPTIONS
 
 	   example: key = 0102030405060708091011121314
 
-       port = port[{DES key}]@CAID[:ident][,ident]...[;port[{DES key}]@CAID[:ident][,ident]...]...
-	  TCP port/DES key/CAID/ident definitions, default:none
+       port = port[{DES key}]@CAID[:provid][,provid]...[;port[{DES key}]@CAID[:provid][,provid]...]...
+	  TCP port/DES key/CAID/provid definitions, default:none
 
 	   example: port = 10000@0100:100000;20000{0102030405060708091011121314}@0200:200000,300000
 
@@ -481,7 +481,7 @@ DESCRIPTIONS
 	  CCcam reshare mode:
 
 	   0 = reader reshares only received SCs for CCcam readers,
-	       defined filters/CAIDs/idents on other readers (default)
+	       defined filters/CAIDs/provids on other readers (default)
 	   1 = reader reshares received SCs (like=0) and defined services
 	   2 = reader reshares only defined reader services as virtual SCs
 	   3 = reader reshares only defined user services as virtual SCs
@@ -687,7 +687,7 @@ MONITOR
 
        ·  reload
 
-	  reinit  user	db,  clients  and  anti-cascading, for newcamd connections: after reloading the ident, please
+	  reinit  user	db,  clients  and  anti-cascading, for newcamd connections: after reloading the provid, please
 	  restart newcamd client
 
 
@@ -745,7 +745,7 @@ CACHING
 LOGGING
        log file format:
 
-       CAID&ident/provider/length:checksum
+       CAID&provid/servid/length:checksum
 
 EXAMPLES
 	[global]

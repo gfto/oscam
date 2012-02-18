@@ -778,9 +778,9 @@ bind service to specified IP address, default:all
 
 <P>
 
-<B>port</B> = <B>0</B>|<B>port[@CAID][:ident][,ident]...[;<A HREF="mailto:port@CAID">port@CAID</A>[:ident][,ident]...]...</B>
+<B>port</B> = <B>0</B>|<B>port[@CAID][:provid][,provid]...[;<A HREF="mailto:port@CAID">port@CAID</A>[:provid][,provid]...]...</B>
 <DL COMPACT><DT><DD>
-TCP port/CAID/ident definitions for camd 3.78x clients, 0 = disabled, default:0
+TCP port/CAID/provid definitions for camd 3.78x clients, 0 = disabled, default:0
 <P>
 <BR>&nbsp;examples:&nbsp;port&nbsp;=&nbsp;<A HREF="mailto:10000@0100">10000@0100</A>:100000;<A HREF="mailto:20000@0200">20000@0200</A>:200000,300000,400000
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;port&nbsp;=&nbsp;30000
@@ -821,9 +821,9 @@ default key for newcamd client encryption, default:none
 
 <P>
 
-<B>port</B> = <B>port[{DES key}]@CAID[:ident][,ident]...[;port[{DES key}]@CAID[:ident][,ident]...]...</B>
+<B>port</B> = <B>port[{DES key}]@CAID[:provid][,provid]...[;port[{DES key}]@CAID[:provid][,provid]...]...</B>
 <DL COMPACT><DT><DD>
-TCP port/DES key/CAID/ident definitions, default:none
+TCP port/DES key/CAID/provid definitions, default:none
 <P>
 <BR>&nbsp;example:&nbsp;port&nbsp;=&nbsp;<A HREF="mailto:10000@0100">10000@0100</A>:100000;20000{0102030405060708091011121314}@0200:200000,300000
 <P>
@@ -946,7 +946,7 @@ reshare level for CCcam clients (default:10):
 CCcam reshare mode:
 <P>
 <BR>&nbsp;<B>0</B>&nbsp;=&nbsp;reader&nbsp;reshares&nbsp;only&nbsp;received&nbsp;SCs&nbsp;for&nbsp;CCcam&nbsp;readers,&nbsp;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;defined&nbsp;filters/CAIDs/idents&nbsp;on&nbsp;other&nbsp;readers&nbsp;(default)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;defined&nbsp;filters/CAIDs/provids&nbsp;on&nbsp;other&nbsp;readers&nbsp;(default)
 <BR>&nbsp;<B>1</B>&nbsp;=&nbsp;reader&nbsp;reshares&nbsp;received&nbsp;SCs&nbsp;(like=0)&nbsp;and&nbsp;defined&nbsp;services
 <BR>&nbsp;<B>2</B>&nbsp;=&nbsp;reader&nbsp;reshares&nbsp;only&nbsp;defined&nbsp;reader&nbsp;services&nbsp;as&nbsp;virtual&nbsp;SCs
 <BR>&nbsp;<B>3</B>&nbsp;=&nbsp;reader&nbsp;reshares&nbsp;only&nbsp;defined&nbsp;user&nbsp;services&nbsp;as&nbsp;virtual&nbsp;SCs
@@ -1277,7 +1277,7 @@ send keepalive
 <DT>&bull;<DD>
 <B>reload</B>
 <P>
-reinit user db, clients and anti-cascading, for newcamd connections: after reloading the ident, please restart newcamd client
+reinit user db, clients and anti-cascading, for newcamd connections: after reloading the provid, please restart newcamd client
 <P>
 <DT>&bull;<DD>
 <B>details &lt;PID&gt;</B>
@@ -1344,7 +1344,7 @@ ECM and checksum in cache already.
 
 log file format:
 <P>
-CAID&amp;ident/provider/length:checksum
+CAID&amp;provid/srvid/length:checksum
 <A NAME="lbAX">&nbsp;</A>
 <H2>EXAMPLES</H2>
 

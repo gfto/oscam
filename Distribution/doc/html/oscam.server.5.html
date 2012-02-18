@@ -132,7 +132,7 @@ reconnect if missing answers for all TCP based remote readers, default:30
 
 <B>disableserverfilter</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
-1 = ignore <B>caid</B> and <B>ident</B> settings of reader due faulty clients, default:0
+1 = ignore <B>caid</B> and <B>provid</B> settings of reader due faulty clients, default:0
 </DL>
 
 <P>
@@ -224,9 +224,9 @@ example: auprovid = 123456
 
 <P>
 
-<B>ecmwhitelist</B> = [<B>CAID</B>[@<B>ident</B>]:]<B>length</B>[,<B>length</B>]...[;[<B>CAID</B>[@<B>ident</B>]:]<B>length</B>[,<B>length</B>]...]...
+<B>ecmwhitelist</B> = [<B>CAID</B>[@<B>provid</B>]:]<B>length</B>[,<B>length</B>]...[;[<B>CAID</B>[@<B>provid</B>]:]<B>length</B>[,<B>length</B>]...]...
 <DL COMPACT><DT><DD>
-set valid ECM length per CAID and ident in hex, default:none,ident=000000
+set valid ECM length per CAID and provid in hex, default:none,provid=000000
 <P>
 example: ecmwhitelist = 10,20,0a,0b
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ecmwhitelist&nbsp;=&nbsp;0100:10,20;<A HREF="mailto:0200@123456">0200@123456</A>:0a,4b
@@ -312,7 +312,7 @@ reader protocol, <I>required</I>:
 
 <P>
 
-<B>ident</B> = <B>&lt;CAID&gt;:&lt;ident&gt;[,ident]...[;&lt;CAID&gt;:&lt;ident&gt;[,ident]...]...</B>
+<B>ident</B> = <B>&lt;CAID&gt;:&lt;provid&gt;[,provid]...[;&lt;CAID&gt;:&lt;provid&gt;[,provid]...]...</B>
 <DL COMPACT><DT><DD>
 set CAID and SC specific ident for reader
 <P>
@@ -644,7 +644,7 @@ box key for Nagravision SCs / CAM key for Irdeto SCs
 
 <P>
 
-<B>aeskeys</B> = <B>CAID #0</B>@<B>ident</B>:<B>AES key #0 CAID #0</B>[,<B>AES key #1 CAID #0</B>],...[;<B>CAID #1</B>@<B>ident</B>:<B>AES key #0 CAID #1</B>[,<B>AES key #1 CAID #1</B>],...]...
+<B>aeskeys</B> = <B>CAID #0</B>@<B>provid</B>:<B>AES key #0 CAID #0</B>[,<B>AES key #1 CAID #0</B>],...[;<B>CAID #1</B>@<B>provid</B>:<B>AES key #0 CAID #1</B>[,<B>AES key #1 CAID #1</B>],...]...
 <DL COMPACT><DT><DD>
 multiple 16 bytes AES keys for Viaccess SCs (the used postprocessing AES key is specified through the D2 nano of the ECM)
 <P>

@@ -95,7 +95,7 @@ reconnect if missing answers for all TCP based remote readers, default:30
 .PP
 \fBdisableserverfilter\fP = \fB0\fP|\fB1\fP
 .RS 3n
-1 = ignore \fBcaid\fP and \fBident\fP settings of reader due faulty clients, default:0
+1 = ignore \fBcaid\fP and \fBprovid\fP settings of reader due faulty clients, default:0
 .RE
 .PP
 \fBsmargopatch\fP = \fB0\fP|\fB1\fP
@@ -165,9 +165,9 @@ set provider ID to use the right reader for auto AU
 example: auprovid = 123456
 .RE
 .PP
-\fBecmwhitelist\fP = [\fBCAID\fP[@\fBident\fP]:]\fBlength\fP[,\fBlength\fP]...[;[\fBCAID\fP[@\fBident\fP]:]\fBlength\fP[,\fBlength\fP]...]...
+\fBecmwhitelist\fP = [\fBCAID\fP[@\fBprovid\fP]:]\fBlength\fP[,\fBlength\fP]...[;[\fBCAID\fP[@\fBprovid\fP]:]\fBlength\fP[,\fBlength\fP]...]...
 .RS 3n
-set valid ECM length per CAID and ident in hex, default:none,ident=000000
+set valid ECM length per CAID and provid in hex, default:none,provid=000000
 
 example: ecmwhitelist = 10,20,0a,0b
          ecmwhitelist = 0100:10,20;0200@123456:0a,4b
@@ -235,7 +235,7 @@ reader protocol, \fIrequired\fR:
  \fBsc8in1\fP
 .RE
 .PP
-\fBident\fP = \fB<CAID>:<ident>[,ident]...[;<CAID>:<ident>[,ident]...]...\fP
+\fBident\fP = \fB<CAID>:<provid>[,provid]...[;<CAID>:<provid>[,provid]...]...\fP
 .RS 3n
 set CAID and SC specific ident for reader
 
@@ -487,7 +487,7 @@ RSA key for Nagravision/Tiger SCs / CAM key data for Irdeto SCs
 box key for Nagravision SCs / CAM key for Irdeto SCs
 .RE
 .PP
-\fBaeskeys\fP = \fBCAID #0\fP@\fBident\fP:\fBAES key #0 CAID #0\fP[,\fBAES key #1 CAID #0\fP],...[;\fBCAID #1\fP@\fBident\fP:\fBAES key #0 CAID #1\fP[,\fBAES key #1 CAID #1\fP],...]...
+\fBaeskeys\fP = \fBCAID #0\fP@\fBprovid\fP:\fBAES key #0 CAID #0\fP[,\fBAES key #1 CAID #0\fP],...[;\fBCAID #1\fP@\fBprovid\fP:\fBAES key #0 CAID #1\fP[,\fBAES key #1 CAID #1\fP],...]...
 .RS 3n
 multiple 16 bytes AES keys for Viaccess SCs (the used postprocessing AES key is specified through the D2 nano of the ECM)
 
