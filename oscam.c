@@ -593,7 +593,7 @@ static void cleanup_ecmtasks(struct s_client *cl)
 	}
 	
 	if (cl->cascadeusers) {
-		ll_clear_data(cl->cascadeusers);
+		ll_destroy_data(cl->cascadeusers);
 		cl->cascadeusers = NULL;
 	}
 	
@@ -687,9 +687,6 @@ void cleanup_thread(void *var)
 		close(cl->pfd); 
 			
 	// Clean all remaining structures
-
-	if (cl->cascadeusers)
-		ll_destroy_data(cl->cascadeusers);
 
 	pthread_mutex_trylock(&cl->thread_lock);
 	ll_destroy_data(cl->joblist);

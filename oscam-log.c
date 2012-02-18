@@ -298,6 +298,7 @@ static void write_to_log_int(char *txt, int8_t header_len)
 		char buf[LOG_BUF_SIZE];
 		cs_strncpy(buf, log->txt, LOG_BUF_SIZE);
 		write_to_log(buf, log, 1);
+		free(log->txt);
 		free(log);
 	} else
 		ll_append(log_list, log);	
