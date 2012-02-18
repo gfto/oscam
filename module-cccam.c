@@ -542,7 +542,6 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
 
 	int32_t n;
-	uint8_t *netbuf = cs_malloc(&netbuf, len + 4, 0);
 	struct cc_data *cc = cl->cc;
 
 	if (!cl->cc || cl->kill) return -1;
@@ -551,8 +550,10 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 		cs_writeunlock(&cc->lockcmd);
 		return -1;
 	}
+  
+  uint8_t *netbuf = cs_malloc(&netbuf, len + 4, 0);	
 	
-	if (cmd == MSG_NO_HEADER) {
+  if (cmd == MSG_NO_HEADER) {
 		memcpy(netbuf, buf, len);
 	} else {
 		// build command message
