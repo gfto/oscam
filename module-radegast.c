@@ -53,6 +53,7 @@ static void radegast_auth_client(in_addr_t ip)
 
   if (!ok)
   {
+    cs_log ("radegast: IP not allowed");
     cs_auth_client(cl, (struct s_auth *)0, NULL);
     cs_disconnect_client(cl);
   }
@@ -61,11 +62,11 @@ static void radegast_auth_client(in_addr_t ip)
   {
     ok=(!strcmp(cfg.rad_usr, account->usr));
     if (ok && cs_auth_client(cl, account, NULL))
-      cs_disconnect_client(cl);
+       cs_disconnect_client(cl);
   }
 
   if (!ok)
-    cs_auth_client(cl, (struct s_auth *)(-1), NULL);
+    cs_auth_client(cl, ok ? account : (struct s_auth *)(-1), "radegast");
 }
 
 static void radegast_send_dcw(struct s_client *client, ECM_REQUEST *er)
@@ -189,7 +190,7 @@ static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar
   client->reader->msg_idx = er->idx;
   n = send(client->pfd, ecmbuf, er->l + 30, 0);
 
-  cs_log("radegast: sending ecm");
+  cs_debug_mask(D_TRACE,"radegast: sending ecm");
   cs_ddump_mask(D_CLIENT, ecmbuf, er->l + 30, "ecm:");
 
   free(ecmbuf);
@@ -218,6 +219,16 @@ int32_t radegast_cli_init(struct s_client *cl)
   return(0);
 }
 
+static void radegast_server_init(struct s_client *cl) {
+	if (!cl->init_done) {
+		if (cl->ip)
+			cs_log("radegast: new connection from %s", cs_inet_ntoa(cl->ip));
+		radegast_auth_client(cur_client()->ip);
+		cl->init_done=1;
+	}
+	return;
+}
+
 void module_radegast(struct s_module *ph)
 {
   static PTAB ptab; //since there is always only 1 radegast server running, this is threadsafe
@@ -231,6 +242,7 @@ void module_radegast(struct s_module *ph)
   ph->multi=0;
   ph->s_ip=cfg.rad_srvip;
   ph->s_handler=radegast_server;
+  ph->s_init=radegast_server_init;
   ph->recv=radegast_recv;
   ph->send_dcw=radegast_send_dcw;
   ph->c_multi=0;
