@@ -2474,7 +2474,7 @@ static void request_cw(ECM_REQUEST *er)
 				if ((ea->status & REQUEST_SENT) ||
 						(ea->status & READER_ACTIVE) != READER_ACTIVE)
 				{
-					if (er->reader_count > 1) //resend if we only have one reader
+					if (er->reader_avail > 1) //do not resend to the same reader(s) if we have more than one reader
 						continue;
 				}
 				break;
@@ -3662,7 +3662,7 @@ void * work_thread(void *ptr) {
 	
 		now = time(NULL);
 		if (data != &tmp_data && data->time < now-(time_t)(cfg.ctimeout/1000)) {
-			cs_log("dropping client data for %s time %ds", username(cl), (int32_t)(now-(time_t)(cfg.ctimeout/1000)));
+			cs_log("dropping client data for %s time %ds", username(cl), (int32_t)(now-data->time));
 			free(data);
 			data = NULL;
 			continue;
@@ -3968,13 +3968,14 @@ static void * check_thread(void) {
 						write_ecm_answer(NULL, er, E_TIMEOUT, 0, NULL, NULL);
 					}
 #ifdef WITH_LB		
-						
-					//because of lb, send E_TIMEOUT for all readers:
-					struct s_ecm_answer *ea_list;
+					if (!er->ecmcacheptr) { //do not add stat for cache entries:
+						//because of lb, send E_TIMEOUT for all readers:
+						struct s_ecm_answer *ea_list;
 
-					for(ea_list = er->matching_rdr; ea_list; ea_list = ea_list->next) {
-						if ((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED)) == REQUEST_SENT) //Request send, but no answer!
-							send_reader_stat(ea_list->reader, er, E_TIMEOUT);
+						for(ea_list = er->matching_rdr; ea_list; ea_list = ea_list->next) {
+							if ((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED)) == REQUEST_SENT) //Request send, but no answer!
+								send_reader_stat(ea_list->reader, er, E_TIMEOUT);
+						}
 					}
 #endif
 
