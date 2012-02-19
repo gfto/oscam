@@ -307,7 +307,7 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 
 	reader->current_baudrate = DEFAULT_BAUDRATE; //this is needed for all readers to calculate work_etu for timings
 
-	if (reader->atr[0] != 0) {
+	if (reader->atr[0] != 0 && !reader->ins7e11_fast_reset) {
 		cs_log("using ATR from reader config");
 		ATR_InitFromArray(atr, reader->atr, ATR_MAX_SIZE);
 	}
