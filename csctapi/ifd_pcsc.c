@@ -172,7 +172,7 @@ int32_t pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, uint16_t *a
         pcsc_reader->init_history_pos=0;
 
         cs_log("%s ATR: %s",pcsc_reader->label, cs_hexdump(1, (uchar *)pbAtr, dwAtrLen, tmp, sizeof(tmp)));
-    	memcpy(pcsc_reader->atr, pbAtr, dwAtrLen);
+    	memcpy(pcsc_reader->card_atr, pbAtr, dwAtrLen);
     	pcsc_reader->card_atr_length = dwAtrLen;
         return(1);
     }
