@@ -529,32 +529,33 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR newatr)
   }
 
   if (reader->ins7E11[0x01])
-	{
-	  static const uint8_t ins7E11[5] = { 0xD0,0x7E,0x11,0x00,0x01 };
-	  l=do_cmd(reader,ins7E11,reader->ins7E11,NULL,cta_res);
-	  if(l<0 || !status_ok(cta_res)) {
-		cs_log("classD0 ins7E11: failed");
-		return ERROR;
-	  }
-	  else {
-		BYTE TA1;
-		if (ATR_GetInterfaceByte (&newatr, 1, ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
-		  if (TA1 != reader->ins7E11[0x00]) {
-			cs_log("classD0 ins7E11: Scheduling card reset for TA1 change from %02X to %02X", TA1, reader->ins7E11[0x00]);
+  {
+    static const uint8_t ins7E11[5] = { 0xD0,0x7E,0x11,0x00,0x01 };
+    l=do_cmd(reader,ins7E11,reader->ins7E11,NULL,cta_res);
+    if(l<0 || !status_ok(cta_res)) {
+      cs_log("classD0 ins7E11: failed");
+      return ERROR;
+    }
+    else {
+      BYTE TA1;
+      if (ATR_GetInterfaceByte (&newatr, 1, ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
+        if (TA1 != reader->ins7E11[0x00]) {
+          cs_log("classD0 ins7E11: Scheduling card reset for TA1 change from %02X to %02X", TA1, reader->ins7E11[0x00]);
 #ifdef COOL
-			if (reader->typ == R_MOUSE || reader->typ == R_SC8in1 || reader->typ == R_SMART || reader->typ == R_INTERNAL) {
+          if (reader->typ == R_MOUSE || reader->typ == R_SC8in1 || reader->typ == R_SMART || reader->typ == R_INTERNAL) {
 #else
-			if (reader->typ == R_MOUSE || reader->typ == R_SC8in1 || reader->typ == R_SMART ) {
+          if (reader->typ == R_MOUSE || reader->typ == R_SC8in1 || reader->typ == R_SMART ) {
 #endif
-				add_job(reader->client, ACTION_READER_RESET_FAST, NULL, 0);
-			}
-			else {
-				add_job(reader->client, ACTION_READER_RESTART, NULL, 0);
-			}
-		  }
-		}
-	  }
-	}
+            add_job(reader->client, ACTION_READER_RESET_FAST, NULL, 0);
+          }
+          else {
+            add_job(reader->client, ACTION_READER_RESTART, NULL, 0);
+          }
+          return OK; // Skip the rest of the init since the card will be reset anyway
+        }
+      }
+    }
+  }
 
   /* get parental lock settings */
   static const unsigned char ins74e[5] = {0xD0,0x74,0x0E,0x00,0x00};
@@ -563,7 +564,7 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR newatr)
     if (l<0 || !status_ok(cta_res+l)) {
       cs_log("classD0 ins74e: failed to get parental lock settings");
     } else {
-    	char tmp[l>0?l*3:1];
+      char tmp[l>0?l*3:1];
       cs_log("parental lock setting: %s",cs_hexdump(1, cta_res+2, l-2, tmp, sizeof(tmp)));
     }
   }
@@ -582,7 +583,7 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR newatr)
       if (l<0 || !status_ok(cta_res+l)) {
         cs_log("classD0 ins74e: failed to get parental lock settings");
       } else {
-      	char tmp[l>0?l*3:1];
+        char tmp[l>0?l*3:1];
         cs_log("parental lock setting after disabling: %s",cs_hexdump(1, cta_res+2, l-2, tmp, sizeof(tmp)));
       }
     }
@@ -762,13 +763,14 @@ static int32_t videoguard2_card_info(struct s_reader * reader)
 
 void reader_videoguard2(struct s_cardsystem *ph) 
 {
-	ph->do_emm=videoguard2_do_emm;
-	ph->do_ecm=videoguard2_do_ecm;
-	ph->card_info=videoguard2_card_info;
-	ph->card_init=videoguard2_card_init;
-	ph->get_emm_type=videoguard_get_emm_type;
-	ph->get_emm_filter=videoguard_get_emm_filter;
-	ph->caids[0]=0x09;
-	ph->desc="videoguard2";
+  ph->do_emm=videoguard2_do_emm;
+  ph->do_ecm=videoguard2_do_ecm;
+  ph->card_info=videoguard2_card_info;
+  ph->card_init=videoguard2_card_init;
+  ph->get_emm_type=videoguard_get_emm_type;
+  ph->get_emm_filter=videoguard_get_emm_filter;
+  ph->caids[0]=0x09;
+  ph->desc="videoguard2";
 }
 #endif
+
