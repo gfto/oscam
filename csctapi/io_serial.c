@@ -479,17 +479,15 @@ bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t size, c
 	/* Discard input data from previous commands */
 //	tcflush (reader->handle, TCIFLUSH);
 	
+	to_send = (delay? 1: size);
+
 	for (count = 0; count < size; count += to_send)
 	{
-//		if(reader->typ == R_INTERNAL)
-//			to_send = 1;
-//		else
-			to_send = (delay? 1: size);
-		
 		if (!IO_Serial_WaitToWrite (reader, delay, 1000))
 		{
 			for (i_w=0; i_w < to_send; i_w++)
 				data_w [i_w] = data [count + i_w];
+
 			uint32_t u = write (reader->handle, data_w, to_send);
 			if (u != to_send)
 			{
@@ -503,7 +501,7 @@ bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t size, c
 			if ((reader->typ != R_INTERNAL && reader->crdr.active==0) || (reader->crdr.active==1 && reader->crdr.read_written==1))
 				reader->written += to_send;
 			
-			cs_ddump_mask(D_DEVICE, data_w+count, to_send, "IO: Sending: ");
+			cs_ddump_mask(D_DEVICE, data_w, to_send, "IO: Sending: ");
 		}
 		else
 		{
