@@ -3729,10 +3729,8 @@ void * work_thread(void *ptr) {
 				break;
 #ifdef WITH_CARDREADER
 			case ACTION_READER_RESET_FAST:
-				reader->ins7e11_fast_reset = 1;
 				reader->card_status = CARD_NEED_INIT;
 				reader_reset(reader);
-				reader->ins7e11_fast_reset = 0;
 				break;
 			case ACTION_READER_CHECK_HEALTH:
 				reader_checkhealth(reader);

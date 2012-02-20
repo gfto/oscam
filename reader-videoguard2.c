@@ -530,6 +530,7 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR newatr)
 
   if (reader->ins7E11[0x01])
   {
+    reader->ins7e11_fast_reset = 0;
     static const uint8_t ins7E11[5] = { 0xD0,0x7E,0x11,0x00,0x01 };
     l=do_cmd(reader,ins7E11,reader->ins7E11,NULL,cta_res);
     if(l<0 || !status_ok(cta_res)) {
@@ -541,6 +542,7 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR newatr)
       if (ATR_GetInterfaceByte (&newatr, 1, ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
         if (TA1 != reader->ins7E11[0x00]) {
           cs_log("classD0 ins7E11: Scheduling card reset for TA1 change from %02X to %02X", TA1, reader->ins7E11[0x00]);
+          reader->ins7e11_fast_reset = 1;
 #ifdef COOL
           if (reader->typ == R_MOUSE || reader->typ == R_SC8in1 || reader->typ == R_SMART || reader->typ == R_INTERNAL) {
 #else
@@ -757,7 +759,9 @@ static int32_t videoguard2_card_info(struct s_reader * reader)
   /* info is displayed in init, or when processing info */
   cs_log("%s card detected", reader->label);
   cs_log("type: %s", reader->card_desc );
-  vg2_read_tiers(reader);
+  if (reader->ins7e11_fast_reset != 1) {
+	  vg2_read_tiers(reader);
+  }
   return OK;
 }
 
