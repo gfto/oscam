@@ -376,7 +376,7 @@ int32_t cc_free_reported_carddata(LLIST *reported_carddatas, LLIST *except,
         int32_t i=0;
         if (reported_carddatas) {
                 i = cc_clear_reported_carddata(reported_carddatas, except, send_removed);
-                ll_destroy(reported_carddatas);
+                ll_destroy_NULL(reported_carddatas);
         }
         return i;
 }
@@ -1143,7 +1143,7 @@ void update_card_list() {
     while ((card = ll_iter_next(&it))) {
 		send_card_to_clients(card, NULL);
 	}
-	ll_destroy(new_cards);
+	ll_destroy_NULL(new_cards);
 
     
     cs_writeunlock(&cc_shares_lock);

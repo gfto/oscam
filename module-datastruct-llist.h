@@ -34,6 +34,9 @@ void ll_destroy_data(LLIST *l); // same as ll_clear_data() but frees up obj allo
 void ll_clear(LLIST *l);        // frees up all llnodes nodes but not data held in obj ptrs
 void ll_clear_data(LLIST *l);   // same as ll_clear_data() but frees up obj allocations as well
 
+#define ll_destroy_NULL(X) {if (X) {LLIST *tmpX=X; X=NULL;ll_destroy(tmpX);}}
+#define ll_destroy_data_NULL(X) {if (X) {LLIST *tmpX=X; X=NULL;ll_destroy_data(tmpX);}}
+
 void **ll_sort(const LLIST *l, void *compare, int32_t *size); // sorts the list, compare = int func(const T *a, const T *b)
 LL_NODE *ll_append(LLIST *l, void *obj);                // append obj to llist
 LL_NODE *ll_prepend(LLIST *l, void *obj);               // prepend obj to llist

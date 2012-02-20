@@ -34,7 +34,7 @@ void add_garbage(void *data) {
 	int32_t bucket = (uintptr_t)data/16 % HASH_BUCKETS;
 	cs_writelock(&garbage_lock[bucket]);
 	
-	#ifdef WITH_DEBUG
+#ifdef WITH_DEBUG
 	if(garbage_debug == 2){
 		struct cs_garbage *garbagecheck = garbage_first[bucket];
 		while(garbagecheck) {
@@ -48,7 +48,7 @@ void add_garbage(void *data) {
 			garbagecheck = garbagecheck->next;
 		}
 	}
-	#endif
+#endif
 	
 	struct cs_garbage *garbage = malloc(sizeof(struct cs_garbage));
 	garbage->time = time(NULL);

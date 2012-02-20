@@ -3536,7 +3536,7 @@ static void check_status(struct s_client *cl) {
 					rdr->last_check = time(NULL);
 				}
 			}
-			if (!rdr->tcp_connected && ((time(NULL) - rdr->last_check) > 30) && rdr->typ == R_CCCAM) {
+			if (((time(NULL) - rdr->last_check) > 30) && rdr->typ == R_CCCAM) {
 				add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
 				rdr->last_check = time(NULL);
 			}
