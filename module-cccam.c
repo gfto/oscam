@@ -475,9 +475,9 @@ int32_t cc_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen) {
 	if (handle <= 0 || maxlen < 4)
 		return -1;
 
-	if (!cl->cc || cl->kill) return -1;
+	if (!cl->cc) return -1;
 	cs_writelock(&cc->lockcmd);
-	if (!cl->cc || cl->kill) {
+	if (!cl->cc) {
 		cs_writeunlock(&cc->lockcmd);
 		return -1;
 	}
@@ -1692,6 +1692,9 @@ void cc_idle() {
 	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
 	
+	if (cl && !cl->udp_fd)
+		cc_cli_close(cl, FALSE);
+
 	if (rdr && rdr->cc_keepalive && !rdr->tcp_connected) {
 		cc_cli_connect(cl);
 	}
@@ -1702,10 +1705,11 @@ void cc_idle() {
 	time_t now = time(NULL);
 	if (rdr->cc_keepalive) {
 		if (cc->answer_on_keepalive + 55 <= now) {
-			cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
-			cl->last = now;
-			cs_debug_mask(D_READER, "cccam: keepalive");
-			cc->answer_on_keepalive = now;
+			if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) > 0) {
+				cl->last = now;
+				cs_debug_mask(D_READER, "cccam: keepalive");
+				cc->answer_on_keepalive = now;
+			}
 			return;
 		}
 	}
@@ -2865,16 +2869,13 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 
 int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 	int32_t n;
-	uchar *cbuf;
 
 	if (buf == NULL || l <= 0)
 		return -1;
-	cbuf = cs_malloc(&cbuf, l, QUITERROR);
-	memcpy(cbuf, buf, l); // make a copy of buf
 
-	n = cc_msg_recv(cl, cbuf, l); // recv and decrypt msg
+	n = cc_msg_recv(cl, buf, l); // recv and decrypt msg
 
-	//cs_ddump_mask(D_CLIENT, cbuf, n, "cccam: received %d bytes from %s", n, remote_txt());
+	//cs_ddump_mask(D_CLIENT, buf, n, "cccam: received %d bytes from %s", n, remote_txt());
 	cl->last = time((time_t *) 0);
 
 	if (n <= 0) {
@@ -2889,11 +2890,8 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 		n = -1;
 	} else {
 		// parse it and write it back, if we have received something of value
-		n = cc_parse_msg(cl, cbuf, n);
-		memcpy(buf, cbuf, l);
+		n = cc_parse_msg(cl, buf, n);
 	}
-
-	NULLFREE(cbuf);
 
 	if (n == -1) {
 		if (cl->typ != 'c')
@@ -3151,7 +3149,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 }
 
 void cc_srv_init2(struct s_client *cl) {
-	if (!cl->init_done) {
+	if (!cl->init_done && !cl->kill) {
 		if (cl->ip)
 			cs_debug_mask(D_CLIENT, "cccam: new connection from %s", cs_inet_ntoa(cl->ip));
                 
