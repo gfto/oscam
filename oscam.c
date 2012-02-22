@@ -2907,8 +2907,15 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			er->prid = cfg.ncd_ptab.ports[pi].ftab.filts[0].prids[0];
 	}
 
+	// ECM nano not supported
+	if (er->caid == 0x0100 && (er->prid == 0x003311 || er->prid == 0x003315) && er->ecm[5] != 0x00) {
+		er->rc = E_NOTFOUND;
+		er->rcEx = E2_WRONG_CHKSUM;
+		snprintf( er->msglog, MSGLOGSIZE, "ECM nano %02x not supported", er->ecm[5] );
+	}
+
 	// CAID not supported or found
-	if (!er->caid) {
+	if (!er->caid || ((er->caid == 0x0919 && er->ecm[28] != 0x7F) || (er->caid == 0x093B && er->ecm[28] != 0x7E) || (er->caid == 0x09CD && er->ecm[28] != 0x7D))) {
 		er->rc = E_INVALID;
 		er->rcEx = E2_CAID;
 		snprintf( er->msglog, MSGLOGSIZE, "CAID not supported or found" );

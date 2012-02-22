@@ -4874,7 +4874,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 	
 	if (!strcmp(token, "dropbadcws")) {
-		rdr->dropbadcws = strToIntVal(value, 0);
+		rdr->dropbadcws = strToIntVal(value, 1);
 		return;
 	}
 
