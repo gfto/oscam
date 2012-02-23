@@ -309,6 +309,9 @@ DESCRIPTIONS
        ccckeepalive = 0|1
 	  1 = send keepalive messages to keep connection to remote CCCam server up, default:0
 
+       cccreconnect = timeout
+	  reconnect again after ECM request timeout in milli-seconds, default:4000
+
        cccmindown = number
 	  filters all readers with hops smaller than number, default:0
 

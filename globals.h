@@ -485,6 +485,7 @@ struct s_arm_led {
 #define DEFAULT_CC_IGNRSHR  -1 // Use global cfg
 #define DEFAULT_CC_STEALTH  -1 // Use global cfg
 #define DEFAULT_CC_KEEPALIVE 0
+#define DEFAULT_CC_RECONNECT 12000
 #endif
 
 #ifdef CS_ANTICASC
@@ -1157,6 +1158,7 @@ struct s_reader  									//contains device info, reader info and card info
 	int8_t			cc_keepalive;
 	int8_t			cc_hop;							// For non-cccam reader: hop for virtual cards
 	int8_t			cc_reshare;
+	int32_t			cc_reconnect;					//reconnect on ecm-request timeout
 #endif
 	int8_t			tcp_connected;
 	int32_t			tcp_ito;						// inactivity timeout
