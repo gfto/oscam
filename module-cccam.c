@@ -732,12 +732,12 @@ int32_t cc_get_nxt_ecm(struct s_client *cl) {
 	struct timeb t;
 
 	cs_ftime(&t);
-	add_ms_to_timeb(&t, -((int32_t)cfg.ctimeout+500));
+	int32_t diff = (int32_t)cfg.ctimeout+500;
 
 	n = -1;
 	for (i = 0; i < CS_MAXPENDING; i++) {
 		er = &cl->ecmtask[i];	
-		if ((comp_timeb(&t, &er->tps) > 0) && (er->rc >= 10)) // drop timeouts
+		if ((comp_timeb(&t, &er->tps) >= diff) && (er->rc >= 10)) // drop timeouts
 		{
 			er->rc = E_TIMEOUT;
 			write_ecm_answer(cl->reader, er, E_TIMEOUT, 0, NULL, NULL);
