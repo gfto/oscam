@@ -1070,7 +1070,6 @@ struct s_reader  									//contains device info, reader info and card info
 	struct s_client *client;						// pointer to 'r'client this reader is running in
 	LLIST			*ll_entitlements;				// entitlements
 	int8_t			enable;
-	int8_t			available;						// Schlocke: New flag for loadbalancing. Only reader if reader supports ph.c_available function
 	int8_t			dropbadcws;						// Schlocke: 1=drops cw if checksum is wrong. 0=fix checksum (default)
     int8_t          disablecrccws;                  // 1=disable cw checksum test. 0=enable checksum check
     int8_t			fd_error;
