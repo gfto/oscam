@@ -732,7 +732,7 @@ int32_t cc_get_nxt_ecm(struct s_client *cl) {
 	struct timeb t;
 
 	cs_ftime(&t);
-	add_ms_to_timeb(&t, -(cfg.ctimeout+500));
+	add_ms_to_timeb(&t, -((int32_t)cfg.ctimeout+500));
 
 	n = -1;
 	for (i = 0; i < CS_MAXPENDING; i++) {
