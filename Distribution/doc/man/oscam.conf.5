@@ -8,25 +8,11 @@ sections in \fBoscam.conf\fR are \fInonrecurring\fR. The [global]
 section is \fIrequired\fR. All other sections are optional.
 .SH DESCRIPTIONS
 .SS "The [global] section"
+
 .PP
-\fBserverip\fP = \fBIP address\fP
+\fBnice\fP = \fB-20\fP..\fB+20\fP
 .RS 3n
-bind service to specified IP address, default:all
-.RE
-.PP
-\fBcachedelay\fP = \fBmilli-seconds\fP
-.RS 3n
-value to delay cached requests, default:0
-.RE
-.PP
-\fBmax_cache_time\fP = \fBseconds\fP
-.RS 3n
-maximum time CWs resist in cache after 1st client request, default:15
-.RE
-.PP
-\fBmax_cache_count\fP = \fBcount\fP
-.RS 3n
-maximum CWs in cache, default:1000
+system priority, default:99
 .RE
 .PP
 \fBlogfile\fP = [\fBfilename\fP][\fB;syslog\fP][\fB;stdout\fP]
@@ -41,9 +27,24 @@ the filename).
 size of log message history in web interface or monitor, 0 = disabled , default:4096
 .RE
 .PP
+\fBmaxlogsize\fP = \fBkbytes\fP
+.RS 3n
+maximum log file size, 0 = unlimited, default:10
+.RE
+.PP
 \fBdisablelog\fP = \fB0\fP|\fB1\fP
 .RS 3n
 1 = disable log file, default:0
+.RE
+.PP
+\fBcwlogdir\fP = \fBpath\fP
+.RS 3n
+directory for CW logging, default:config dir
+.RE
+.PP
+\fBemmlogdir\fP = \fBpath\fP
+.RS 3n
+directory for EMM logging, default:config dir
 .RE
 .PP
 \fBusrfile\fP = \fBfilename\fP
@@ -82,6 +83,21 @@ usrfile logging mode:
   1 = each zapping of a client will be logged in usrfile
 .RE
 .PP
+\fBsaveinithistory\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = save SC init history to /tmp/.oscam/reader<number>, default:0
+.RE
+.PP
+\fBdisablemail\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = disable saving NDS Videoguard mail messages from provider, default:1
+.RE
+.PP
+\fBmailfile\fP = \fBfile\fP
+.RS 3n
+define file saving NDS Videoguard mail messages from provider, default:none
+.RE
+.PP
 \fBenableled\fP = \fB0\fP|\fB1\fP|\fB2\fP
 .RS 3n
 
@@ -90,14 +106,61 @@ usrfile logging mode:
  \fB2\fP = LED support enabled for Qbox HD
 .RE
 .PP
-\fBcwlogdir\fP = \fBpath\fP
+\fBserialreadertimeout\fP = \fBmilli-seconds\fP
 .RS 3n
-directory for CW logging, default:config dir
+timeout for serial reader, default:1500
 .RE
 .PP
-\fBemmlogdir\fP = \fBpath\fP
+\fBwaitforcards\fP = \fB0\fP|\fB1\fP 
 .RS 3n
-directory for EMM logging, default:config dir
+1 = wait for local SCs on startup before opening network ports, default:1
+.RE
+.PP
+\fBwaitforcards_extra_delay\fP = \fBdelay\fP 
+.RS 3n
+additional delay in milli-seconds after waiting for local SCs on startup before opening network ports, default:500
+.RE
+.PP
+\fBpreferlocalcards\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = try decoding on local cards first, default:0
+.RE
+.PP
+\fBreaderrestartseconds\fP = \fBseconds\fP
+.RS 3n
+seconds beetween restarts, 0 = disable reader restart, default:5
+.RE
+.PP
+\fBcachedelay\fP = \fBmilli-seconds\fP
+.RS 3n
+value to delay cached requests, default:0
+.RE
+.PP
+\fBmax_cache_time\fP = \fBseconds\fP
+.RS 3n
+maximum time CWs resist in cache after 1st client request, default:15
+.RE
+.PP
+\fBmax_cache_count\fP = \fBcount\fP
+.RS 3n
+maximum CWs in cache, default:1000
+.RE
+.PP
+\fBcacheexwaittime\fP = \fBmilli-seconds\fP
+.RS 3n
+cache waiting time in milli-seconds for cache exchange, default:50
+.RE
+.PP
+\fBcacheexwaittime\fP = \fBdelay\fP
+.RS 3n
+maximum wait time for a cache exchange entry in milli-seconds, default:50
+.RE
+.PP
+\fBcacheexenablestats\fP = \fB0|1\fP
+.RS 3n
+1 = enable statistics for cache exchange mode, default:0
+
+\fIPlease consider memory consumption.\fR
 .RE
 .PP
 \fBclienttimeout\fP = \fBmilli-seconds\fP|\fBseconds\fP
@@ -105,14 +168,31 @@ directory for EMM logging, default:config dir
 value (clienttimeout in seconds < 100, else milli-seconds) for client process to wait for key, default:5
 .RE
 .PP
+\fBclientmaxidle\fP = \fBseconds\fP
+.RS 3n
+value for client process being idle before disconnect, default:120
+.RE
+.PP
+\fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
+.RS 3n
+0 = tell camd 3.5x, 3.57x and 3.78x clients not to request again for rejected 
+CAID, service ID and provider ID combination, 1 = disable, can be overwritten 
+per user in \fBoscam.user\fP, default:0
+.RE
+.PP
 \fBfallbacktimeout\fP = \fBmilli-seconds\fP
 .RS 3n
 time falling back to fallback reader, default:2500
 .RE
 .PP
-\fBclientmaxidle\fP = \fBseconds\fP
+\fBsleep\fP = \fBminutes\fP
 .RS 3n
-value for client process being idle before disconnect, default:120
+time waiting for inactive users, default:none, can be overwritten per user in \fBoscam.user\fR
+.RE
+.PP
+\fBserverip\fP = \fBIP address\fP
+.RS 3n
+bind service to specified IP address, default:all
 .RE
 .PP
 \fBbindwait\fP = \fBseconds\fP
@@ -151,78 +231,14 @@ mode for duplicate client connections (requirement: uniq > 0):
   \fB1\fP = drop duplicate connections instead of marking as duplicate
 .RE
 .PP
-\fBsleep\fP = \fBminutes\fP
-.RS 3n
-time waiting for inactive users, default:none, can be overwritten per user in \fBoscam.user\fR
-.RE
-.PP
 \fBunlockparental\fP = \fB0\fP|\fB1\fP
 .RS 3n
 1 = unlock parental mode option to disable Seca pin code request for adult movie, default:0
 .RE
 .PP
-\fBnice\fP = \fB-20\fP..\fB+20\fP
-.RS 3n
-system priority, default:99
-.RE
-.PP
-\fBserialreadertimeout\fP = \fBmilli-seconds\fP
-.RS 3n
-timeout for serial reader, default:1500
-.RE
-.PP
-\fBmaxlogsize\fP = \fBkbytes\fP
-.RS 3n
-maximum log file size, 0 = unlimited, default:10
-.RE
-.PP
-\fBwaitforcards\fP = \fB0\fP|\fB1\fP 
-.RS 3n
-1 = wait for local SCs on startup before opening network ports, default:1
-.RE
-.PP
-\fBwaitforcards_extra_delay\fP = \fBdelay\fP 
-.RS 3n
-additional delay in milli-seconds after waiting for local SCs on startup before opening network ports, default:500
-.RE
-.PP
-\fBpreferlocalcards\fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = try decoding on local cards first, default:0
-.RE
-.PP
-\fBreaderrestartseconds\fP = \fBseconds\fP
-.RS 3n
-seconds beetween restarts, 0 = disable reader restart, default:5
-.RE
-.PP
-\fBsaveinithistory\fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = save SC init history to /tmp/.oscam/reader<number>, default:0
-.RE
-.PP
 \fBdouble_check\fP = \fB0\fP|\fB1\fP
 .RS 3n
 1 = ECM will be send to two or more readers with the same SC and the CWs will be verified against each other, \fBlb_nbest_readers\fP must be set to 2 or higher, default:0
-.RE
-.PP
-\fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
-.RS 3n
-0 = tell camd 3.5x, 3.57x and 3.78x clients not to request again for rejected 
-CAID, service ID and provider ID combination, 1 = disable, can be overwritten 
-per user in \fBoscam.user\fP, default:0
-.RE
-.PP
-\fBcacheexwaittime\fP = \fBdelay\fP
-.RS 3n
-maximum wait time for a cache exchange entry in milli-seconds, default:50
-.RE
-.PP
-\fBcacheexenablestats\fP = \fB0|1\fP
-.RS 3n
-1 = enable statistics for cache exchange mode, default:0
-
-\fIPlease consider memory consumption.\fR
 .RE
 .PP
 \fBlb_mode\fP = \fBmode\fP
@@ -339,21 +355,6 @@ restrict the reader count to limit during load balancing learning:
 .RS 3n
 set automatic Betacrypt tunneling time factor prefering Betacrypt over Nagravision in percent, default: 50
 .RE
-.PP
-\fBcacheexwaittime\fP = \fBmilli-seconds\fP
-.RS 3n
-cache waiting time in milli-seconds for cache exchange, default:50
-.RE
-.PP
-\fBdisablemail\fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = disable saving NDS Videoguard mail messages from provider, default:1
-.RE
-.PP
-\fBmailfile\fP = \fBfile\fP
-.RS 3n
-define file saving NDS Videoguard mail messages from provider, default:none
-.RE
 .SS "The [monitor] section"
 .PP
 \fBport\fP = \fB0\fP|\fBport\fP
@@ -411,6 +412,11 @@ port for web interface, 0 = disabled, praefix + = enable SSL, default:none, \fIr
 file for http SSL certificate, default:\fBoscam.pem\fP
 .RE
 .PP
+\fBhttpforcesslv3 \fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = force using SSLv3, default:0
+.RE
+.PP
 \fBhttpuser\fP = \fBusername\fP
 .RS 3n
 username for password protection, default:none
@@ -466,11 +472,6 @@ write config:
      parameters not containing the same value as the same 
      parameter in global configuration (default)
  \fB1\fP = all parameters
-.RE
-.PP
-\fBhttpforcesslv3 \fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = force using SSLv3, default:0
 .RE
 .PP
 \fBhttpreadonly\fP = \fB0\fP|\fB1\fP
@@ -586,11 +587,6 @@ bind service to specified IP address, default:all
 .RE
 .SS "The [newcamd] section"
 .PP
-\fBmgclient\fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = provide share information of all available CAIDs and provider IDs to mgcamd clients, default:0
-.RE
-.PP
 \fBkey\fP = \fBDES key\fP
 .RS 3n
 default key for newcamd client encryption, default:none
@@ -622,6 +618,11 @@ newcamd client connections allowed from, default:none
 \fBkeepalive\fP = \fB0\fP|\fB1\fP
 .RS 3n
 0 = disable newcamd keepalive modus, default:0
+.RE
+.PP
+\fBmgclient\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = provide share information of all available CAIDs and provider IDs to mgcamd clients, default:0
 .RE
 .SS "The [radegast] section"
 .PP

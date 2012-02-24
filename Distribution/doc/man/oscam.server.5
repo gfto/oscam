@@ -8,6 +8,41 @@ At least one [reader] section is \fIrequired\fR.
 .SH DESCRIPTIONS
 .SS "The [reader] section"
 .PP
+\fBlabel\fP = \fBname\fP
+.RS 3n
+name for reader, \fIrequired\fR
+.RE
+.PP
+\fBenable\fP = \fB0\fP|\fB1\fP
+.RS 3n
+0 = deactivate reader, default:1
+.RE
+.PP
+\fBdescription\fP = \fBtext\fP
+.RS 3n
+description of reader, default:none
+.RE
+.PP
+\fBprotocol\fP = \fBreader protocol\fP
+.RS 3n
+reader protocol, \fIrequired\fR:
+ \fBmouse\fP
+ \fBmp35\fP
+ \fBsmartreader\fP
+ \fBinternal\fP
+ \fBserial\fP
+ \fBcamd35\fP|\fBcs357x\fP
+ \fBcs378x\fP
+ \fBgbox\fP
+ \fBnewcamd\fP|\fBnewcamd525\fP
+ \fBnewcamd524\fP
+ \fBcccam\fP
+ \fBradegast\fP
+ \fBpcsc\fP
+ \fBconstcw\fP
+ \fBsc8in1\fP
+.RE
+.PP
 \fBdevice\fP = \fB<device|bus:device|device:slot>\fP|Serial:Reader \fBserial\fP|\fB<ip|hostname>,<port>[,<lport>]\fP|\fBpcsc\fP|<\fB0|1\fP>|\fBconstantcw\fP
 .RS 3n
 define local or remote reader
@@ -40,6 +75,36 @@ key (16 Bytes seperated by spaces)
 example: 1234:123456:1234:1234:1234\fI::\fR00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
 .RE
 .PP
+\fBdetect\fP = \fBCD\fP|\fBDSR\fP|\fBCTS\fP|\fBRING\fP|\fBNONE\fP|\fBgpio[1-7]\fP
+.RS 3n
+status detect of card (NONE = no detection), default:CD
+.RE
+.PP
+\fBcardmhz\fP = \fBmhz\fP
+.RS 3n
+set standard SC frequency in units of 10 kHz, for Irdeto SC set to 600, refer to OVERCLOCKING, default:357
+.RE
+.PP
+\fBmhz\fP = \fBfrequency\fP
+.RS 3n
+set reader frequency in units of 10 kHz, if \fBmhz\fP > \fBcardmhz\fP you are in overclocking mode, 
+refer to OVERCLOCKING, default:357 
+.RE
+.PP
+\fBdeprecated\fP = \fB0\fP|\fB1\fP
+.RS 3n
+First the SC will be initialized in normal mode. If it fails, the SC will be automatically 
+reverted to deprecated mode, so that the SC speed will not be changed and the communication 
+will remain on normal ATR speed of 9600 baud.
+
+1 = use deprecated SC mode only, default:0
+.RE
+.PP
+\fBmode\fP = \fBmode\fP
+.RS 3n
+set card init mode for AzBox internal reader, default:none
+.RE
+.PP
 \fBdevice_out_endpoint\fP = \fBaddress\fP
 .RS 3n
 set endpoint address for FTDI chips,default:0x82
@@ -48,9 +113,102 @@ set endpoint address for FTDI chips,default:0x82
  \fB0x82\fP: Smartreader+ (default)
 .RE
 .PP
-\fBenable\fP = \fB0\fP|\fB1\fP
+\fBsmargopatch\fP = \fB0\fP|\fB1\fP
 .RS 3n
-0 = deactivate reader, default:1
+1 = enable workaround for Smartreader+ reader until native mode works, default:0
+.RE
+.PP
+\fBsc8in1_dtrrts_patch\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = enable fix for SC8in1/MCR DTR/RTS kernel bug, default:0
+.RE
+.PP
+\fBcool_timeout_init\fP = \fBtimeout\fP
+.RS 3n
+set timeout for SC init in milli-seconds for Coolstream internal reader only, default:50
+.RE
+.PP
+\fBcool_timeout_after_init\fP = \fBtimeout\fP
+.RS 3n
+set read/transmit timeout after SC init in milli-seconds for Coolstream internal reader only, default:150
+.RE
+.PP
+\fBins7e\fP = \fBpayload\fP
+.RS 3n
+add 26 hex-bytes payload for NDS Videoguard 2 SCs, valid for physical readers only, default:none
+.RE
+.PP
+\fBins7e11\fP = \fBTA1 byte\fP
+.RS 3n
+set TA1 byte for NDS Videoguard 2 SCs, valid for physical readers only, default:none
+.RE
+.PP
+\fBforce_irdeto\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = force Irdeto SC mode even if RSA key is set for Irdeto tunnled Nagravion SC, default:0
+.RE
+.PP
+\fBnagra_read\fP = \fB0\fP|\fB1\fP|\fB2\fP
+.RS 3n
+read Nagravison records (on NCMED cards only):
+
+  \fB0\fP = disabled (default)
+  \fB1\fP = read all records with expired rights
+  \fB2\fP = read records with valid rights only
+.RE
+.PP
+\fBrsakey\fP = \fBRSA key\fP
+.RS 3n
+RSA key for Nagravision/Tiger SCs / CAM key data for Irdeto SCs 
+.RE
+.PP
+\fBfix9993\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = enable fix for 9993 error with CAID 0919 SCs, default:0
+.RE
+.PP
+\fBboxkey\fP = \fBbox key\fP
+.RS 3n
+box key for Nagravision SCs / CAM key for Irdeto SCs
+.RE
+.PP
+\fBpincode\fP = \fBpincode\fP
+.RS 3n
+pincode for Conax and Cryptoworks SCs, default:none
+.RE
+.PP
+\fBboxid\fP = \fBNDS box ID\fP
+.RS 3n
+NDS receiver box id
+.RE
+.PP
+\fBndsversion\fP = \fB0\fP|\fB1\fP|\fB12\fP|\fB2\fP
+.RS 3n
+set NDS Videoguard version
+
+  \fB0\fP = autodetection (default)
+  \fB1\fP = NDS Videoguard 1
+ \fB12\fP = NDS Videoguard 1+
+  \fB2\fP = NDS Videoguard 2
+.RE
+.PP
+\fBaeskeys\fP = \fBCAID #0\fP@\fBprovid\fP:\fBAES key #0 CAID #0\fP[,\fBAES key #1 CAID #0\fP],...[;\fBCAID #1\fP@\fBprovid\fP:\fBAES key #0 CAID #1\fP[,\fBAES key #1 CAID #1\fP],...]...
+.RS 3n
+multiple 16 bytes AES keys for Viaccess SCs (the used postprocessing AES key is specified through the D2 nano of the ECM)
+
+special AES keys:
+
+ \fB00\fP = do not return any CW, no AES key specified
+ \fBFF\fP = return CW received from the S, no AES key specified
+
+example: 
+
+ aeskeys = 0500@012345:000102030405060708090a0b0c0d0e0f;0500@543210:000102030405060708090a0b0c0d0e0f,0,0f0e0d0c0b0a090807060504030201
+.RE
+.PP
+\fBshowcls\fP = \fBquantity\fP
+.RS 3n
+number of classes subscriptions to show for Viaccess SCs, default=10
 .RE
 .PP
 \fBkey\fP = \fBDES key\fP
@@ -83,65 +241,6 @@ mgcamd encrypted gbox line, default MAC address = eth0
 reader [de]assignment to service group, default=none
 .RE
 .PP
-\fBinactivitytimeout\fP = \fBseconds\fP
-.RS 3n
-inactivity timeout for all TCP based remote readers, default:none
-.RE
-.PP
-\fBreconnecttimeout\fP = \fBseconds\fP
-.RS 3n
-reconnect if missing answers for all TCP based remote readers, default:30
-.RE
-.PP
-\fBdisableserverfilter\fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = ignore \fBcaid\fP and \fBprovid\fP settings of reader due faulty clients, default:0
-.RE
-.PP
-\fBsmargopatch\fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = enable workaround for Smartreader+ reader until native mode works, default:0
-.RE
-.PP
-\fBsc8in1_dtrrts_patch\fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = enable fix for SC8in1/MCR DTR/RTS kernel bug, default:0
-.RE
-.PP
-\fBlabel\fP = \fBname\fP
-.RS 3n
-name for reader, \fIrequired\fR
-.RE
-.PP
-\fBdescription\fP = \fBtext\fP
-.RS 3n
-description of reader, default:none
-.RE
-.PP
-\fBfallback\fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = define reader as fallback, standard and fallback reader must have the same group, default:0
-.RE
-.PP
-\fBcacheex\fP = \fB0\fP|\fB1\fP|\fB2\fP|\fB3\fP
-.RS 3n
-set cache exchange mode
-
- \fB0\fP: disable cache exchange mode (default)
- \fB1\fP: enable cache exchange pull mode
- \fB2\fP: enable cache exchange push mode for camd 3.5x / 3.57x and CCcam 
-    protocol
- \fB3\fP: enable reverse cache exchange push mode for camd camd 
-    3.5x / 3.57x and CCcam protocol
-
-\fIIdentical cache exchange modes must be set on local OSCam server and remote OSCam user asccount.\fR
-.RE
-.PP
-\fBlogport\fP = \fB0\fP|\fBport\fP
-.RS 3n
-camd 3.x reader logport, camd 3.x UDP must be activated, only works if there's no camd 3.x cascading, 0 = disabled, default=0
-.RE
-.PP
 \fBcaid\fP = \fB<CAID>[&<mask>][:<target CAID>][,<CAID>[&<mask>][:target <CAID>]]...\fP
 .RS 3n
 define and mapping of CAIDs for reader, default:all CAIDs with mask FFFF
@@ -151,88 +250,6 @@ example: caid = 0100
          caid = 0400&ff00:0500,0600
          caid = 0702,0722
          caid = 0702&ffdf (shortcut for the example above)
-.RE
-.PP
-\fBaudisabled\fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = exclude reader from auto AU, default:0
-.RE
-.PP
-\fBauprovid\fP = \fBprovider ID\fP
-.RS 3n
-set provider ID to use the right reader for auto AU
-
-example: auprovid = 123456
-.RE
-.PP
-\fBecmwhitelist\fP = [\fBCAID\fP[@\fBprovid\fP]:]\fBlength\fP[,\fBlength\fP]...[;[\fBCAID\fP[@\fBprovid\fP]:]\fBlength\fP[,\fBlength\fP]...]...
-.RS 3n
-set valid ECM length per CAID and provid in hex, default:none,provid=000000
-
-example: ecmwhitelist = 10,20,0a,0b
-         ecmwhitelist = 0100:10,20;0200@123456:0a,4b
-
-\fIIn normal operation mode this parameter is not required.\fR
-.RE
-.PP
-\fBdetect\fP = \fBCD\fP|\fBDSR\fP|\fBCTS\fP|\fBRING\fP|\fBNONE\fP|\fBgpio[1-7]\fP
-.RS 3n
-status detect of card (NONE = no detection), default:CD
-.RE
-.PP
-\fBcardmhz\fP = \fBmhz\fP
-.RS 3n
-set standard SC frequency in units of 10 kHz, for Irdeto SC set to 600, refer to OVERCLOCKING, default:357
-.RE
-.PP
-\fBmhz\fP = \fBfrequency\fP
-.RS 3n
-set reader frequency in units of 10 kHz, if \fBmhz\fP > \fBcardmhz\fP you are in overclocking mode, 
-refer to OVERCLOCKING, default:357 
-.RE
-.PP
-\fBdeprecated\fP = \fB0\fP|\fB1\fP
-.RS 3n
-First the SC will be initialized in normal mode. If it fails, the SC will be automatically 
-reverted to deprecated mode, so that the SC speed will not be changed and the communication 
-will remain on normal ATR speed of 9600 baud.
-
-1 = use deprecated SC mode only, default:0
-.RE
-.PP
-\fBmode\fP = \fBmode\fP
-.RS 3n
-set card init mode for AzBox internal reader, default:none
-.RE
-.PP
-\fBcool_timeout_init\fP = \fBtimeout\fP
-.RS 3n
-set timeout for SC init in milli-seconds for Coolstream internal reader only, default:50
-.RE
-.PP
-\fBcool_timeout_after_init\fP = \fBtimeout\fP
-.RS 3n
-set read/transmit timeout after SC init in milli-seconds for Coolstream internal reader only, default:150
-.RE
-.PP
-\fBprotocol\fP = \fBreader protocol\fP
-.RS 3n
-reader protocol, \fIrequired\fR:
- \fBmouse\fP
- \fBmp35\fP
- \fBsmartreader\fP
- \fBinternal\fP
- \fBserial\fP
- \fBcamd35\fP|\fBcs357x\fP
- \fBcs378x\fP
- \fBgbox\fP
- \fBnewcamd\fP|\fBnewcamd525\fP
- \fBnewcamd524\fP
- \fBcccam\fP
- \fBradegast\fP
- \fBpcsc\fP
- \fBconstcw\fP
- \fBsc8in1\fP
 .RE
 .PP
 \fBident\fP = \fB<CAID>:<provid>[,provid]...[;<CAID>:<provid>[,provid]...]...\fP
@@ -249,9 +266,48 @@ set SC specific class in hex for reader
 example: class = 01,02,!1b,!2b
 .RE
 .PP
+\fBchid\fP = \fBCAID:ChID\fP
+.RS 3n
+set SC specific ChIDs for reader, default:none
+
+example: chid = 0100:12
+.RE
+.PP
 \fBgroup\fP = \fB1..64[,1..64]...\fP
 .RS 3n
 reader assingment to groups, default:none, \fIrequired\fR
+.RE
+.PP
+\fBaudisabled\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = exclude reader from auto AU, default:0
+.RE
+.PP
+\fBauprovid\fP = \fBprovider ID\fP
+.RS 3n
+set provider ID to use the right reader for auto AU
+
+example: auprovid = 123456
+.RE
+.PP
+\fBdisableserverfilter\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = ignore \fBcaid\fP and \fBprovid\fP settings of reader due faulty clients, default:0
+.RE
+.PP
+\fBinactivitytimeout\fP = \fBseconds\fP
+.RS 3n
+inactivity timeout for all TCP based remote readers, default:none
+.RE
+.PP
+\fBreconnecttimeout\fP = \fBseconds\fP
+.RS 3n
+reconnect if missing answers for all TCP based remote readers, default:30
+.RE
+.PP
+\fBfallback\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = define reader as fallback, standard and fallback reader must have the same group, default:0
 .RE
 .PP
 \fBemmcache\fP = \fBusecache,rewrite,logging\fP
@@ -273,6 +329,35 @@ set EMM cache of local reader:
             \fB16\fP = logging disabled AU
 
  example: emmcache = 1,3,2
+.RE
+.PP
+\fBcacheex\fP = \fB0\fP|\fB1\fP|\fB2\fP|\fB3\fP
+.RS 3n
+set cache exchange mode
+
+ \fB0\fP: disable cache exchange mode (default)
+ \fB1\fP: enable cache exchange pull mode
+ \fB2\fP: enable cache exchange push mode for camd 3.5x / 3.57x and CCcam 
+    protocol
+ \fB3\fP: enable reverse cache exchange push mode for camd camd 
+    3.5x / 3.57x and CCcam protocol
+
+\fIIdentical cache exchange modes must be set on local OSCam server and remote OSCam user asccount.\fR
+.RE
+.PP
+\fBlogport\fP = \fB0\fP|\fBport\fP
+.RS 3n
+camd 3.x reader logport, camd 3.x UDP must be activated, only works if there's no camd 3.x cascading, 0 = disabled, default=0
+.RE
+.PP
+\fBecmwhitelist\fP = [\fBCAID\fP[@\fBprovid\fP]:]\fBlength\fP[,\fBlength\fP]...[;[\fBCAID\fP[@\fBprovid\fP]:]\fBlength\fP[,\fBlength\fP]...]...
+.RS 3n
+set valid ECM length per CAID and provid in hex, default:none,provid=000000
+
+example: ecmwhitelist = 10,20,0a,0b
+         ecmwhitelist = 0100:10,20;0200@123456:0a,4b
+
+\fIIn normal operation mode this parameter is not required.\fR
 .RE
 .PP
 \fBratelimitecm\fP = \fBcount\fP
@@ -434,91 +519,6 @@ reconnect again after ECM request timeout in milli-seconds, default:4000
 \fBcccmindown\fP = \fBnumber\fP
 .RS 3n
 filters all readers with hops smaller than number, default:0
-.RE
-.PP
-\fBpincode\fP = \fBpincode\fP
-.RS 3n
-pincode for Conax and Cryptoworks SCs, default:none
-.RE
-.PP
-\fBchid\fP = \fBCAID:ChID\fP
-.RS 3n
-set SC specific ChIDs for reader, default:none
-
-example: chid = 0100:12
-.RE
-.PP
-\fBins7e\fP = \fBpayload\fP
-.RS 3n
-add 26 hex-bytes payload for NDS Videoguard 2 SCs, valid for physical readers only, default:none
-.RE
-.PP
-\fBins7e11\fP = \fBTA1 byte\fP
-.RS 3n
-set TA1 byte for NDS Videoguard 2 SCs, valid for physical readers only, default:none
-.RE
-.PP
-\fBforce_irdeto\fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = force Irdeto SC mode even if RSA key is set for Irdeto tunnled Nagravion SC, default:0
-.RE
-.PP
-\fBnagra_read\fP = \fB0\fP|\fB1\fP|\fB2\fP
-.RS 3n
-read Nagravison records (on NCMED cards only):
-
-  \fB0\fP = disabled (default)
-  \fB1\fP = read all records with expired rights
-  \fB2\fP = read records with valid rights only
-.RE
-.PP
-\fBrsakey\fP = \fBRSA key\fP
-.RS 3n
-RSA key for Nagravision/Tiger SCs / CAM key data for Irdeto SCs 
-.RE
-.PP
-\fBfix9993\fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = enable fix for 9993 error with CAID 0919 SCs, default:0
-.RE
-.PP
-\fBboxkey\fP = \fBbox key\fP
-.RS 3n
-box key for Nagravision SCs / CAM key for Irdeto SCs
-.RE
-.PP
-\fBaeskeys\fP = \fBCAID #0\fP@\fBprovid\fP:\fBAES key #0 CAID #0\fP[,\fBAES key #1 CAID #0\fP],...[;\fBCAID #1\fP@\fBprovid\fP:\fBAES key #0 CAID #1\fP[,\fBAES key #1 CAID #1\fP],...]...
-.RS 3n
-multiple 16 bytes AES keys for Viaccess SCs (the used postprocessing AES key is specified through the D2 nano of the ECM)
-
-special AES keys:
-
- \fB00\fP = do not return any CW, no AES key specified
- \fBFF\fP = return CW received from the S, no AES key specified
-
-example: 
-
- aeskeys = 0500@012345:000102030405060708090a0b0c0d0e0f;0500@543210:000102030405060708090a0b0c0d0e0f,0,0f0e0d0c0b0a090807060504030201
-.RE
-.PP
-\fBshowcls\fP = \fBquantity\fP
-.RS 3n
-number of classes subscriptions to show for Viaccess SCs, default=10
-.RE
-.PP
-\fBboxid\fP = \fBNDS box ID\fP
-.RS 3n
-NDS receiver box id
-.RE
-.PP
-\fBndsversion\fP = \fB0\fP|\fB1\fP|\fB12\fP|\fB2\fP
-.RS 3n
-set NDS Videoguard version
-
-  \fB0\fP = autodetection (default)
-  \fB1\fP = NDS Videoguard 1
- \fB12\fP = NDS Videoguard 1+
-  \fB2\fP = NDS Videoguard 2
 .RE
 .SH OVERCLOCKING
 .TP 3n

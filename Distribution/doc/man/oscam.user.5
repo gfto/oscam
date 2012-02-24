@@ -22,21 +22,32 @@ password for account, \fIrequired\fR
 description of user account
 .RE
 .PP
+\fBdisabled\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = account disabled, default:0
+.RE
+.PP
 \fBhostname\fP = \fBhostname\fP
 .RS 3n
 host from which user connection is allowed
 .RE
 .PP
-\fBbetatunnel\fP = \fB<CAID>.<ServiceID>:<target CAID>[,<CAID>.<ServiceID>:
-<target CAID>]...\fP
+\fBexpdate\fP = \fB<year>-<month>-<day>\fP|\fB<year>/<month>/<day>\fP
 .RS 3n
-define Betacrypt tunneling (maximum see CS_MAXTUNTAB in \fBglobals.h\fP).
-The ServiceID can also be used for wildcarded CAIDs.
+expiration date for account, default:none
 
- example: betatunnel = 0100.0001:0200,0300.0004:0500
-          betatunnel = 0600.FFFF:0700
-
-\fIBe carefull using abbreviations.\fR
+ example: expdate = 2001-11-21
+          expdate = 2002/12/22
+.RE
+.PP
+\fBallowedprotocols\fP = \fB[camd33][,][camd35][,][cs357x][,][cs378x][,][newcamd][,][cccam][,][gbox][,][radegast]\fP
+.RS 3n
+list of all allowed connection protocols, default:all connection protocols
+.RE
+.PP
+\fBallowedtimeframe\fP = \fBhh:mm\fP-\fBhh:mm\fP
+.RS 3n
+account enabled from hh:mm to hh:mm, default:none
 .RE
 .PP
 \fBuniq\fP = \fB0\fP|\fB1\fP|\fB2\fP|\fB4\fP
@@ -51,6 +62,30 @@ unique level:
      will survive (old MpCS behavior)
  \fB4\fP = set user only to fake if source ip is different, 
      but only the last login will survive
+.RE
+.PP
+\fBnumusers\fP = \fBquantity\fP
+.RS 3n
+anti-cascading: user per account, 0 = anti-cascading disabled, default:0
+.RE
+.PP
+\fBpenalty\fP = \fB0\fP|\fB1\fP|\fB2\fP
+.RS 3n
+level of penalty, default: level of oscam.conf:
+
+ \fB0\fP = only logging
+ \fB1\fP = send fake CWs
+ \fB2\fP = disbable user temporary
+ \fB3\fP = send delayed CWs
+.RE
+.PP
+\fBfailban\fP = \fB0\fP|\fB2\fP|\fB4\fP
+.RS 3n
+mask for IP based blocking:
+
+ \fB0\fP = ignore (default)
+ \fB2\fP = block IP of a disabled account on connecting
+ \fB4\fP = block IP of a sleeping account while sleeping comes up
 .RE
 .PP
 \fBcacheex\fP = \fB0\fP|\fB1\fP|\fB2\fP|\fB3\fP
@@ -77,6 +112,17 @@ time waiting for inactive user, default:none
 255 = \fIOSCam client only\fR: stopping requests until next zap, 255 = \fIcamd 3.x only\fR: stopping requests until restart of camd 3.x client, default:0
 .RE
 .PP
+\fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
+.RS 3n
+0 = tell camd 3.5x, 3.57x and 3.78x clients not to request again for rejected 
+CAID, service ID and provider ID combination, 1 =  disable, default:0
+.RE
+.PP
+\fBkeepalive\fP = \fB0\fP|\fB1\fP
+.RS 3n
+0 = disable keepalive between server and client for newcamd or CCcam protocol, default:1
+.RE
+.PP
 \fBcaid\fP = \fB<CAID>[&<mask>][:<target CAID>][,<CAID>[&<mask>][:<target CAID>]]...\fP
 .RS 3n
 limit and mapping of CAIDs, default:all CAIDs with mask FFFF
@@ -101,6 +147,18 @@ AU setting, default:none:
 \fBgroup\fP = \fB1..64[,1..64]...\fP
 .RS 3n
 user assingment to reader groups, default:none, \fIrequired\fR
+.RE
+.PP
+\fBbetatunnel\fP = \fB<CAID>.<ServiceID>:<target CAID>[,<CAID>.<ServiceID>:
+<target CAID>]...\fP
+.RS 3n
+define Betacrypt tunneling (maximum see CS_MAXTUNTAB in \fBglobals.h\fP).
+The ServiceID can also be used for wildcarded CAIDs.
+
+ example: betatunnel = 0100.0001:0200,0300.0004:0500
+          betatunnel = 0600.FFFF:0700
+
+\fIBe carefull using abbreviations.\fR
 .RE
 .PP
 \fBservices\fP = \fB[!]services[,[!]<services>]...\fP
@@ -134,64 +192,6 @@ monitor level:
  \fB2\fP = all procs, but viewing only (default)
  \fB3\fP = all procs, reload of \fBoscam.user\fR possible
  \fB4\fP = complete access
-.RE
-.PP
-\fBexpdate\fP = \fB<year>-<month>-<day>\fP|\fB<year>/<month>/<day>\fP
-.RS 3n
-expiration date for account, default:none
-
- example: expdate = 2001-11-21
-          expdate = 2002/12/22
-.RE
-.PP
-\fBdisabled\fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = account disabled, default:0
-.RE
-.PP
-\fBallowedprotocols\fP = \fB[camd33][,][camd35][,][cs357x][,][cs378x][,][newcamd][,][cccam][,][gbox][,][radegast]\fP
-.RS 3n
-list of all allowed connection protocols, default:all connection protocols
-.RE
-.PP
-\fBallowedtimeframe\fP = \fBhh:mm\fP-\fBhh:mm\fP
-.RS 3n
-account enabled from hh:mm to hh:mm, default:none
-.RE
-.PP
-\fBnumusers\fP = \fBquantity\fP
-.RS 3n
-anti-cascading: user per account, 0 = anti-cascading disabled, default:0
-.RE
-.PP
-\fBpenalty\fP = \fB0\fP|\fB1\fP|\fB2\fP
-.RS 3n
-level of penalty, default: level of oscam.conf:
-
- \fB0\fP = only logging
- \fB1\fP = send fake CWs
- \fB2\fP = disbable user temporary
- \fB3\fP = send delayed CWs
-.RE
-.PP
-\fBfailban\fP = \fB0\fP|\fB2\fP|\fB4\fP
-.RS 3n
-mask for IP based blocking:
-
- \fB0\fP = ignore (default)
- \fB2\fP = block IP of a disabled account on connecting
- \fB4\fP = block IP of a sleeping account while sleeping comes up
-.RE
-.PP
-\fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
-.RS 3n
-0 = tell camd 3.5x, 3.57x and 3.78x clients not to request again for rejected 
-CAID, service ID and provider ID combination, 1 =  disable, default:0
-.RE
-.PP
-\fBkeepalive\fP = \fB0\fP|\fB1\fP
-.RS 3n
-0 = disable keepalive between server and client for newcamd or CCcam protocol, default:1
 .RE
 .PP
 \fBcccmaxhops\fP = \fBhops\fP

@@ -91,6 +91,15 @@ garbage collector debug mode, default:none:
 usage
 .RE
 .PP
+\fB-r\fP <level>
+.RS 3n
+restart level:
+
+   \fB0\fP = disabled, restart request sets exit status to 99
+   \fB1\fP = restart activated, web interface can restart oscam (default)
+   \fB2\fP = like 1, but also restart on segmentation faults
+.RE
+.PP
 \fB-s\fP
 .RS 3n
 capture segmentation faults
@@ -99,15 +108,6 @@ capture segmentation faults
 \fB-t\fP <directory>
 .RS 3n
 use <directory> for temporary data, default:temporary directory of OS
-.RE
-.PP
-\fB-r\fP <level>
-.RS 3n
-restart level:
-
-   \fB0\fP = disabled, restart request sets exit status to 99
-   \fB1\fP = restart activated, web interface can restart oscam (default)
-   \fB2\fP = like 1, but also restart on segmentation faults
 .RE
 .PP
 \fB-u\fP

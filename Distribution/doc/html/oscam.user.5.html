@@ -43,6 +43,13 @@ description of user account
 
 <P>
 
+<B>disabled</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = account disabled, default:0
+</DL>
+
+<P>
+
 <B>hostname</B> = <B>hostname</B>
 <DL COMPACT><DT><DD>
 host from which user connection is allowed
@@ -50,16 +57,26 @@ host from which user connection is allowed
 
 <P>
 
-<B>betatunnel</B> = <B>&lt;CAID&gt;.&lt;ServiceID&gt;:&lt;target CAID&gt;[,&lt;CAID&gt;.&lt;ServiceID&gt;:
-&lt;target CAID&gt;]...</B>
+<B>expdate</B> = <B>&lt;year&gt;-&lt;month&gt;-&lt;day&gt;</B>|<B>&lt;year&gt;/&lt;month&gt;/&lt;day&gt;</B>
 <DL COMPACT><DT><DD>
-define Betacrypt tunneling (maximum see CS_MAXTUNTAB in <B>globals.h</B>).
-The ServiceID can also be used for wildcarded CAIDs.
+expiration date for account, default:none
 <P>
-<BR>&nbsp;example:&nbsp;betatunnel&nbsp;=&nbsp;0100.0001:0200,0300.0004:0500
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;betatunnel&nbsp;=&nbsp;0600.FFFF:0700
+<BR>&nbsp;example:&nbsp;expdate&nbsp;=&nbsp;2001-11-21
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expdate&nbsp;=&nbsp;2002/12/22
+</DL>
+
 <P>
-<I>Be carefull using abbreviations.</I>
+
+<B>allowedprotocols</B> = <B>[camd33][,][camd35][,][cs357x][,][cs378x][,][newcamd][,][cccam][,][gbox][,][radegast]</B>
+<DL COMPACT><DT><DD>
+list of all allowed connection protocols, default:all connection protocols
+</DL>
+
+<P>
+
+<B>allowedtimeframe</B> = <B>hh:mm</B>-<B>hh:mm</B>
+<DL COMPACT><DT><DD>
+account enabled from hh:mm to hh:mm, default:none
 </DL>
 
 <P>
@@ -76,6 +93,36 @@ unique level:
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;will&nbsp;survive&nbsp;(old&nbsp;MpCS&nbsp;behavior)
 <BR>&nbsp;<B>4</B>&nbsp;=&nbsp;set&nbsp;user&nbsp;only&nbsp;to&nbsp;fake&nbsp;if&nbsp;source&nbsp;ip&nbsp;is&nbsp;different,&nbsp;
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;but&nbsp;only&nbsp;the&nbsp;last&nbsp;login&nbsp;will&nbsp;survive
+</DL>
+
+<P>
+
+<B>numusers</B> = <B>quantity</B>
+<DL COMPACT><DT><DD>
+anti-cascading: user per account, 0 = anti-cascading disabled, default:0
+</DL>
+
+<P>
+
+<B>penalty</B> = <B>0</B>|<B>1</B>|<B>2</B>
+<DL COMPACT><DT><DD>
+level of penalty, default: level of oscam.conf:
+<P>
+<BR>&nbsp;<B>0</B>&nbsp;=&nbsp;only&nbsp;logging
+<BR>&nbsp;<B>1</B>&nbsp;=&nbsp;send&nbsp;fake&nbsp;CWs
+<BR>&nbsp;<B>2</B>&nbsp;=&nbsp;disbable&nbsp;user&nbsp;temporary
+<BR>&nbsp;<B>3</B>&nbsp;=&nbsp;send&nbsp;delayed&nbsp;CWs
+</DL>
+
+<P>
+
+<B>failban</B> = <B>0</B>|<B>2</B>|<B>4</B>
+<DL COMPACT><DT><DD>
+mask for IP based blocking:
+<P>
+<BR>&nbsp;<B>0</B>&nbsp;=&nbsp;ignore&nbsp;(default)
+<BR>&nbsp;<B>2</B>&nbsp;=&nbsp;block&nbsp;IP&nbsp;of&nbsp;a&nbsp;disabled&nbsp;account&nbsp;on&nbsp;connecting
+<BR>&nbsp;<B>4</B>&nbsp;=&nbsp;block&nbsp;IP&nbsp;of&nbsp;a&nbsp;sleeping&nbsp;account&nbsp;while&nbsp;sleeping&nbsp;comes&nbsp;up
 </DL>
 
 <P>
@@ -110,6 +157,21 @@ time waiting for inactive user, default:none
 
 <P>
 
+<B>suppresscmd08</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+0 = tell camd 3.5x, 3.57x and 3.78x clients not to request again for rejected 
+CAID, service ID and provider ID combination, 1 =  disable, default:0
+</DL>
+
+<P>
+
+<B>keepalive</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+0 = disable keepalive between server and client for newcamd or CCcam protocol, default:1
+</DL>
+
+<P>
+
 <B>caid</B> = <B>&lt;CAID&gt;[&amp;&lt;mask&gt;][:&lt;target CAID&gt;][,&lt;CAID&gt;[&amp;&lt;mask&gt;][:&lt;target CAID&gt;]]...</B>
 <DL COMPACT><DT><DD>
 limit and mapping of CAIDs, default:all CAIDs with mask FFFF
@@ -138,6 +200,20 @@ AU setting, default:none:
 <B>group</B> = <B>1..64[,1..64]...</B>
 <DL COMPACT><DT><DD>
 user assingment to reader groups, default:none, <I>required</I>
+</DL>
+
+<P>
+
+<B>betatunnel</B> = <B>&lt;CAID&gt;.&lt;ServiceID&gt;:&lt;target CAID&gt;[,&lt;CAID&gt;.&lt;ServiceID&gt;:
+&lt;target CAID&gt;]...</B>
+<DL COMPACT><DT><DD>
+define Betacrypt tunneling (maximum see CS_MAXTUNTAB in <B>globals.h</B>).
+The ServiceID can also be used for wildcarded CAIDs.
+<P>
+<BR>&nbsp;example:&nbsp;betatunnel&nbsp;=&nbsp;0100.0001:0200,0300.0004:0500
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;betatunnel&nbsp;=&nbsp;0600.FFFF:0700
+<P>
+<I>Be carefull using abbreviations.</I>
 </DL>
 
 <P>
@@ -181,82 +257,6 @@ monitor level:
 <BR>&nbsp;<B>2</B>&nbsp;=&nbsp;all&nbsp;procs,&nbsp;but&nbsp;viewing&nbsp;only&nbsp;(default)
 <BR>&nbsp;<B>3</B>&nbsp;=&nbsp;all&nbsp;procs,&nbsp;reload&nbsp;of&nbsp;<B>oscam.user</B>&nbsp;possible
 <BR>&nbsp;<B>4</B>&nbsp;=&nbsp;complete&nbsp;access
-</DL>
-
-<P>
-
-<B>expdate</B> = <B>&lt;year&gt;-&lt;month&gt;-&lt;day&gt;</B>|<B>&lt;year&gt;/&lt;month&gt;/&lt;day&gt;</B>
-<DL COMPACT><DT><DD>
-expiration date for account, default:none
-<P>
-<BR>&nbsp;example:&nbsp;expdate&nbsp;=&nbsp;2001-11-21
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expdate&nbsp;=&nbsp;2002/12/22
-</DL>
-
-<P>
-
-<B>disabled</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-1 = account disabled, default:0
-</DL>
-
-<P>
-
-<B>allowedprotocols</B> = <B>[camd33][,][camd35][,][cs357x][,][cs378x][,][newcamd][,][cccam][,][gbox][,][radegast]</B>
-<DL COMPACT><DT><DD>
-list of all allowed connection protocols, default:all connection protocols
-</DL>
-
-<P>
-
-<B>allowedtimeframe</B> = <B>hh:mm</B>-<B>hh:mm</B>
-<DL COMPACT><DT><DD>
-account enabled from hh:mm to hh:mm, default:none
-</DL>
-
-<P>
-
-<B>numusers</B> = <B>quantity</B>
-<DL COMPACT><DT><DD>
-anti-cascading: user per account, 0 = anti-cascading disabled, default:0
-</DL>
-
-<P>
-
-<B>penalty</B> = <B>0</B>|<B>1</B>|<B>2</B>
-<DL COMPACT><DT><DD>
-level of penalty, default: level of oscam.conf:
-<P>
-<BR>&nbsp;<B>0</B>&nbsp;=&nbsp;only&nbsp;logging
-<BR>&nbsp;<B>1</B>&nbsp;=&nbsp;send&nbsp;fake&nbsp;CWs
-<BR>&nbsp;<B>2</B>&nbsp;=&nbsp;disbable&nbsp;user&nbsp;temporary
-<BR>&nbsp;<B>3</B>&nbsp;=&nbsp;send&nbsp;delayed&nbsp;CWs
-</DL>
-
-<P>
-
-<B>failban</B> = <B>0</B>|<B>2</B>|<B>4</B>
-<DL COMPACT><DT><DD>
-mask for IP based blocking:
-<P>
-<BR>&nbsp;<B>0</B>&nbsp;=&nbsp;ignore&nbsp;(default)
-<BR>&nbsp;<B>2</B>&nbsp;=&nbsp;block&nbsp;IP&nbsp;of&nbsp;a&nbsp;disabled&nbsp;account&nbsp;on&nbsp;connecting
-<BR>&nbsp;<B>4</B>&nbsp;=&nbsp;block&nbsp;IP&nbsp;of&nbsp;a&nbsp;sleeping&nbsp;account&nbsp;while&nbsp;sleeping&nbsp;comes&nbsp;up
-</DL>
-
-<P>
-
-<B>suppresscmd08</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-0 = tell camd 3.5x, 3.57x and 3.78x clients not to request again for rejected 
-CAID, service ID and provider ID combination, 1 =  disable, default:0
-</DL>
-
-<P>
-
-<B>keepalive</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-0 = disable keepalive between server and client for newcamd or CCcam protocol, default:1
 </DL>
 
 <P>

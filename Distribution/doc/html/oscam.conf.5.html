@@ -23,31 +23,11 @@ section is <I>required</I>. All other sections are optional.
 <H3>The [global] section</H3>
 
 <P>
-
-<B>serverip</B> = <B>IP address</B>
-<DL COMPACT><DT><DD>
-bind service to specified IP address, default:all
-</DL>
-
 <P>
 
-<B>cachedelay</B> = <B>milli-seconds</B>
+<B>nice</B> = <B>-20</B>..<B>+20</B>
 <DL COMPACT><DT><DD>
-value to delay cached requests, default:0
-</DL>
-
-<P>
-
-<B>max_cache_time</B> = <B>seconds</B>
-<DL COMPACT><DT><DD>
-maximum time CWs resist in cache after 1st client request, default:15
-</DL>
-
-<P>
-
-<B>max_cache_count</B> = <B>count</B>
-<DL COMPACT><DT><DD>
-maximum CWs in cache, default:1000
+system priority, default:99
 </DL>
 
 <P>
@@ -68,9 +48,30 @@ size of log message history in web interface or monitor, 0 = disabled , default:
 
 <P>
 
+<B>maxlogsize</B> = <B>kbytes</B>
+<DL COMPACT><DT><DD>
+maximum log file size, 0 = unlimited, default:10
+</DL>
+
+<P>
+
 <B>disablelog</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
 1 = disable log file, default:0
+</DL>
+
+<P>
+
+<B>cwlogdir</B> = <B>path</B>
+<DL COMPACT><DT><DD>
+directory for CW logging, default:config dir
+</DL>
+
+<P>
+
+<B>emmlogdir</B> = <B>path</B>
+<DL COMPACT><DT><DD>
+directory for EMM logging, default:config dir
 </DL>
 
 <P>
@@ -117,6 +118,27 @@ usrfile logging mode:
 
 <P>
 
+<B>saveinithistory</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = save SC init history to /tmp/.oscam/reader&lt;number&gt;, default:0
+</DL>
+
+<P>
+
+<B>disablemail</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = disable saving NDS Videoguard mail messages from provider, default:1
+</DL>
+
+<P>
+
+<B>mailfile</B> = <B>file</B>
+<DL COMPACT><DT><DD>
+define file saving NDS Videoguard mail messages from provider, default:none
+</DL>
+
+<P>
+
 <B>enableled</B> = <B>0</B>|<B>1</B>|<B>2</B>
 <DL COMPACT><DT><DD>
 <P>
@@ -127,16 +149,81 @@ usrfile logging mode:
 
 <P>
 
-<B>cwlogdir</B> = <B>path</B>
+<B>serialreadertimeout</B> = <B>milli-seconds</B>
 <DL COMPACT><DT><DD>
-directory for CW logging, default:config dir
+timeout for serial reader, default:1500
 </DL>
 
 <P>
 
-<B>emmlogdir</B> = <B>path</B>
+<B>waitforcards</B> = <B>0</B>|<B>1</B> 
 <DL COMPACT><DT><DD>
-directory for EMM logging, default:config dir
+1 = wait for local SCs on startup before opening network ports, default:1
+</DL>
+
+<P>
+
+<B>waitforcards_extra_delay</B> = <B>delay</B> 
+<DL COMPACT><DT><DD>
+additional delay in milli-seconds after waiting for local SCs on startup before opening network ports, default:500
+</DL>
+
+<P>
+
+<B>preferlocalcards</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = try decoding on local cards first, default:0
+</DL>
+
+<P>
+
+<B>readerrestartseconds</B> = <B>seconds</B>
+<DL COMPACT><DT><DD>
+seconds beetween restarts, 0 = disable reader restart, default:5
+</DL>
+
+<P>
+
+<B>cachedelay</B> = <B>milli-seconds</B>
+<DL COMPACT><DT><DD>
+value to delay cached requests, default:0
+</DL>
+
+<P>
+
+<B>max_cache_time</B> = <B>seconds</B>
+<DL COMPACT><DT><DD>
+maximum time CWs resist in cache after 1st client request, default:15
+</DL>
+
+<P>
+
+<B>max_cache_count</B> = <B>count</B>
+<DL COMPACT><DT><DD>
+maximum CWs in cache, default:1000
+</DL>
+
+<P>
+
+<B>cacheexwaittime</B> = <B>milli-seconds</B>
+<DL COMPACT><DT><DD>
+cache waiting time in milli-seconds for cache exchange, default:50
+</DL>
+
+<P>
+
+<B>cacheexwaittime</B> = <B>delay</B>
+<DL COMPACT><DT><DD>
+maximum wait time for a cache exchange entry in milli-seconds, default:50
+</DL>
+
+<P>
+
+<B>cacheexenablestats</B> = <B>0|1</B>
+<DL COMPACT><DT><DD>
+1 = enable statistics for cache exchange mode, default:0
+<P>
+<I>Please consider memory consumption.</I>
 </DL>
 
 <P>
@@ -148,6 +235,22 @@ value (clienttimeout in seconds &lt; 100, else milli-seconds) for client process
 
 <P>
 
+<B>clientmaxidle</B> = <B>seconds</B>
+<DL COMPACT><DT><DD>
+value for client process being idle before disconnect, default:120
+</DL>
+
+<P>
+
+<B>suppresscmd08</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+0 = tell camd 3.5x, 3.57x and 3.78x clients not to request again for rejected 
+CAID, service ID and provider ID combination, 1 = disable, can be overwritten 
+per user in <B>oscam.user</B>, default:0
+</DL>
+
+<P>
+
 <B>fallbacktimeout</B> = <B>milli-seconds</B>
 <DL COMPACT><DT><DD>
 time falling back to fallback reader, default:2500
@@ -155,9 +258,16 @@ time falling back to fallback reader, default:2500
 
 <P>
 
-<B>clientmaxidle</B> = <B>seconds</B>
+<B>sleep</B> = <B>minutes</B>
 <DL COMPACT><DT><DD>
-value for client process being idle before disconnect, default:120
+time waiting for inactive users, default:none, can be overwritten per user in <B>oscam.user</B>
+</DL>
+
+<P>
+
+<B>serverip</B> = <B>IP address</B>
+<DL COMPACT><DT><DD>
+bind service to specified IP address, default:all
 </DL>
 
 <P>
@@ -210,13 +320,6 @@ mode for duplicate client connections (requirement: uniq &gt; 0):
 
 <P>
 
-<B>sleep</B> = <B>minutes</B>
-<DL COMPACT><DT><DD>
-time waiting for inactive users, default:none, can be overwritten per user in <B>oscam.user</B>
-</DL>
-
-<P>
-
 <B>unlockparental</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
 1 = unlock parental mode option to disable Seca pin code request for adult movie, default:0
@@ -224,90 +327,9 @@ time waiting for inactive users, default:none, can be overwritten per user in <B
 
 <P>
 
-<B>nice</B> = <B>-20</B>..<B>+20</B>
-<DL COMPACT><DT><DD>
-system priority, default:99
-</DL>
-
-<P>
-
-<B>serialreadertimeout</B> = <B>milli-seconds</B>
-<DL COMPACT><DT><DD>
-timeout for serial reader, default:1500
-</DL>
-
-<P>
-
-<B>maxlogsize</B> = <B>kbytes</B>
-<DL COMPACT><DT><DD>
-maximum log file size, 0 = unlimited, default:10
-</DL>
-
-<P>
-
-<B>waitforcards</B> = <B>0</B>|<B>1</B> 
-<DL COMPACT><DT><DD>
-1 = wait for local SCs on startup before opening network ports, default:1
-</DL>
-
-<P>
-
-<B>waitforcards_extra_delay</B> = <B>delay</B> 
-<DL COMPACT><DT><DD>
-additional delay in milli-seconds after waiting for local SCs on startup before opening network ports, default:500
-</DL>
-
-<P>
-
-<B>preferlocalcards</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-1 = try decoding on local cards first, default:0
-</DL>
-
-<P>
-
-<B>readerrestartseconds</B> = <B>seconds</B>
-<DL COMPACT><DT><DD>
-seconds beetween restarts, 0 = disable reader restart, default:5
-</DL>
-
-<P>
-
-<B>saveinithistory</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-1 = save SC init history to /tmp/.oscam/reader&lt;number&gt;, default:0
-</DL>
-
-<P>
-
 <B>double_check</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
 1 = ECM will be send to two or more readers with the same SC and the CWs will be verified against each other, <B>lb_nbest_readers</B> must be set to 2 or higher, default:0
-</DL>
-
-<P>
-
-<B>suppresscmd08</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-0 = tell camd 3.5x, 3.57x and 3.78x clients not to request again for rejected 
-CAID, service ID and provider ID combination, 1 = disable, can be overwritten 
-per user in <B>oscam.user</B>, default:0
-</DL>
-
-<P>
-
-<B>cacheexwaittime</B> = <B>delay</B>
-<DL COMPACT><DT><DD>
-maximum wait time for a cache exchange entry in milli-seconds, default:50
-</DL>
-
-<P>
-
-<B>cacheexenablestats</B> = <B>0|1</B>
-<DL COMPACT><DT><DD>
-1 = enable statistics for cache exchange mode, default:0
-<P>
-<I>Please consider memory consumption.</I>
 </DL>
 
 <P>
@@ -459,27 +481,6 @@ restrict the reader count to limit during load balancing learning:
 set automatic Betacrypt tunneling time factor prefering Betacrypt over Nagravision in percent, default: 50
 </DL>
 
-<P>
-
-<B>cacheexwaittime</B> = <B>milli-seconds</B>
-<DL COMPACT><DT><DD>
-cache waiting time in milli-seconds for cache exchange, default:50
-</DL>
-
-<P>
-
-<B>disablemail</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-1 = disable saving NDS Videoguard mail messages from provider, default:1
-</DL>
-
-<P>
-
-<B>mailfile</B> = <B>file</B>
-<DL COMPACT><DT><DD>
-define file saving NDS Videoguard mail messages from provider, default:none
-</DL>
-
 <A NAME="lbAF">&nbsp;</A>
 <H3>The [monitor] section</H3>
 
@@ -559,6 +560,13 @@ file for http SSL certificate, default:<B>oscam.pem</B>
 
 <P>
 
+<B>httpforcesslv3 </B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = force using SSLv3, default:0
+</DL>
+
+<P>
+
 <B>httpuser</B> = <B>username</B>
 <DL COMPACT><DT><DD>
 username for password protection, default:none
@@ -632,13 +640,6 @@ write config:
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;parameters&nbsp;not&nbsp;containing&nbsp;the&nbsp;same&nbsp;value&nbsp;as&nbsp;the&nbsp;same&nbsp;
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;parameter&nbsp;in&nbsp;global&nbsp;configuration&nbsp;(default)
 <BR>&nbsp;<B>1</B>&nbsp;=&nbsp;all&nbsp;parameters
-</DL>
-
-<P>
-
-<B>httpforcesslv3 </B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-1 = force using SSLv3, default:0
 </DL>
 
 <P>
@@ -805,13 +806,6 @@ bind service to specified IP address, default:all
 
 <P>
 
-<B>mgclient</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-1 = provide share information of all available CAIDs and provider IDs to mgcamd clients, default:0
-</DL>
-
-<P>
-
 <B>key</B> = <B>DES key</B>
 <DL COMPACT><DT><DD>
 default key for newcamd client encryption, default:none
@@ -851,6 +845,13 @@ newcamd client connections allowed from, default:none
 <B>keepalive</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
 0 = disable newcamd keepalive modus, default:0
+</DL>
+
+<P>
+
+<B>mgclient</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = provide share information of all available CAIDs and provider IDs to mgcamd clients, default:0
 </DL>
 
 <A NAME="lbAN">&nbsp;</A>

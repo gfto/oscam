@@ -23,6 +23,49 @@ At least one [reader] section is <I>required</I>.
 
 <P>
 
+<B>label</B> = <B>name</B>
+<DL COMPACT><DT><DD>
+name for reader, <I>required</I>
+</DL>
+
+<P>
+
+<B>enable</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+0 = deactivate reader, default:1
+</DL>
+
+<P>
+
+<B>description</B> = <B>text</B>
+<DL COMPACT><DT><DD>
+description of reader, default:none
+</DL>
+
+<P>
+
+<B>protocol</B> = <B>reader protocol</B>
+<DL COMPACT><DT><DD>
+reader protocol, <I>required</I>:
+<BR>&nbsp;<B>mouse</B>
+<BR>&nbsp;<B>mp35</B>
+<BR>&nbsp;<B>smartreader</B>
+<BR>&nbsp;<B>internal</B>
+<BR>&nbsp;<B>serial</B>
+<BR>&nbsp;<B>camd35</B>|<B>cs357x</B>
+<BR>&nbsp;<B>cs378x</B>
+<BR>&nbsp;<B>gbox</B>
+<BR>&nbsp;<B>newcamd</B>|<B>newcamd525</B>
+<BR>&nbsp;<B>newcamd524</B>
+<BR>&nbsp;<B>cccam</B>
+<BR>&nbsp;<B>radegast</B>
+<BR>&nbsp;<B>pcsc</B>
+<BR>&nbsp;<B>constcw</B>
+<BR>&nbsp;<B>sc8in1</B>
+</DL>
+
+<P>
+
 <B>device</B> = <B>&lt;device|bus:device|device:slot&gt;</B>|Serial:Reader <B>serial</B>|<B>&lt;ip|hostname&gt;,&lt;port&gt;[,&lt;lport&gt;]</B>|<B>pcsc</B>|&lt;<B>0|1</B>&gt;|<B>constantcw</B>
 <DL COMPACT><DT><DD>
 define local or remote reader
@@ -57,6 +100,46 @@ example: 1234:123456:1234:1234:1234<I>::</I>00 01 02 03 04 05 06 07 08 09 0A 0B 
 
 <P>
 
+<B>detect</B> = <B>CD</B>|<B>DSR</B>|<B>CTS</B>|<B>RING</B>|<B>NONE</B>|<B>gpio[1-7]</B>
+<DL COMPACT><DT><DD>
+status detect of card (NONE = no detection), default:CD
+</DL>
+
+<P>
+
+<B>cardmhz</B> = <B>mhz</B>
+<DL COMPACT><DT><DD>
+set standard SC frequency in units of 10 kHz, for Irdeto SC set to 600, refer to OVERCLOCKING, default:357
+</DL>
+
+<P>
+
+<B>mhz</B> = <B>frequency</B>
+<DL COMPACT><DT><DD>
+set reader frequency in units of 10 kHz, if <B>mhz</B> &gt; <B>cardmhz</B> you are in overclocking mode, 
+refer to OVERCLOCKING, default:357 
+</DL>
+
+<P>
+
+<B>deprecated</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+First the SC will be initialized in normal mode. If it fails, the SC will be automatically 
+reverted to deprecated mode, so that the SC speed will not be changed and the communication 
+will remain on normal ATR speed of 9600 baud.
+<P>
+1 = use deprecated SC mode only, default:0
+</DL>
+
+<P>
+
+<B>mode</B> = <B>mode</B>
+<DL COMPACT><DT><DD>
+set card init mode for AzBox internal reader, default:none
+</DL>
+
+<P>
+
 <B>device_out_endpoint</B> = <B>address</B>
 <DL COMPACT><DT><DD>
 set endpoint address for FTDI chips,default:0x82
@@ -67,9 +150,132 @@ set endpoint address for FTDI chips,default:0x82
 
 <P>
 
-<B>enable</B> = <B>0</B>|<B>1</B>
+<B>smargopatch</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
-0 = deactivate reader, default:1
+1 = enable workaround for Smartreader+ reader until native mode works, default:0
+</DL>
+
+<P>
+
+<B>sc8in1_dtrrts_patch</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = enable fix for SC8in1/MCR DTR/RTS kernel bug, default:0
+</DL>
+
+<P>
+
+<B>cool_timeout_init</B> = <B>timeout</B>
+<DL COMPACT><DT><DD>
+set timeout for SC init in milli-seconds for Coolstream internal reader only, default:50
+</DL>
+
+<P>
+
+<B>cool_timeout_after_init</B> = <B>timeout</B>
+<DL COMPACT><DT><DD>
+set read/transmit timeout after SC init in milli-seconds for Coolstream internal reader only, default:150
+</DL>
+
+<P>
+
+<B>ins7e</B> = <B>payload</B>
+<DL COMPACT><DT><DD>
+add 26 hex-bytes payload for NDS Videoguard 2 SCs, valid for physical readers only, default:none
+</DL>
+
+<P>
+
+<B>ins7e11</B> = <B>TA1 byte</B>
+<DL COMPACT><DT><DD>
+set TA1 byte for NDS Videoguard 2 SCs, valid for physical readers only, default:none
+</DL>
+
+<P>
+
+<B>force_irdeto</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = force Irdeto SC mode even if RSA key is set for Irdeto tunnled Nagravion SC, default:0
+</DL>
+
+<P>
+
+<B>nagra_read</B> = <B>0</B>|<B>1</B>|<B>2</B>
+<DL COMPACT><DT><DD>
+read Nagravison records (on NCMED cards only):
+<P>
+<BR>&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;disabled&nbsp;(default)
+<BR>&nbsp;&nbsp;<B>1</B>&nbsp;=&nbsp;read&nbsp;all&nbsp;records&nbsp;with&nbsp;expired&nbsp;rights
+<BR>&nbsp;&nbsp;<B>2</B>&nbsp;=&nbsp;read&nbsp;records&nbsp;with&nbsp;valid&nbsp;rights&nbsp;only
+</DL>
+
+<P>
+
+<B>rsakey</B> = <B>RSA key</B>
+<DL COMPACT><DT><DD>
+RSA key for Nagravision/Tiger SCs / CAM key data for Irdeto SCs 
+</DL>
+
+<P>
+
+<B>fix9993</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = enable fix for 9993 error with CAID 0919 SCs, default:0
+</DL>
+
+<P>
+
+<B>boxkey</B> = <B>box key</B>
+<DL COMPACT><DT><DD>
+box key for Nagravision SCs / CAM key for Irdeto SCs
+</DL>
+
+<P>
+
+<B>pincode</B> = <B>pincode</B>
+<DL COMPACT><DT><DD>
+pincode for Conax and Cryptoworks SCs, default:none
+</DL>
+
+<P>
+
+<B>boxid</B> = <B>NDS box ID</B>
+<DL COMPACT><DT><DD>
+NDS receiver box id
+</DL>
+
+<P>
+
+<B>ndsversion</B> = <B>0</B>|<B>1</B>|<B>12</B>|<B>2</B>
+<DL COMPACT><DT><DD>
+set NDS Videoguard version
+<P>
+<BR>&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;autodetection&nbsp;(default)
+<BR>&nbsp;&nbsp;<B>1</B>&nbsp;=&nbsp;NDS&nbsp;Videoguard&nbsp;1
+<BR>&nbsp;<B>12</B>&nbsp;=&nbsp;NDS&nbsp;Videoguard&nbsp;1+
+<BR>&nbsp;&nbsp;<B>2</B>&nbsp;=&nbsp;NDS&nbsp;Videoguard&nbsp;2
+</DL>
+
+<P>
+
+<B>aeskeys</B> = <B>CAID #0</B>@<B>provid</B>:<B>AES key #0 CAID #0</B>[,<B>AES key #1 CAID #0</B>],...[;<B>CAID #1</B>@<B>provid</B>:<B>AES key #0 CAID #1</B>[,<B>AES key #1 CAID #1</B>],...]...
+<DL COMPACT><DT><DD>
+multiple 16 bytes AES keys for Viaccess SCs (the used postprocessing AES key is specified through the D2 nano of the ECM)
+<P>
+special AES keys:
+<P>
+<BR>&nbsp;<B>00</B>&nbsp;=&nbsp;do&nbsp;not&nbsp;return&nbsp;any&nbsp;CW,&nbsp;no&nbsp;AES&nbsp;key&nbsp;specified
+<BR>&nbsp;<B>FF</B>&nbsp;=&nbsp;return&nbsp;CW&nbsp;received&nbsp;from&nbsp;the&nbsp;S,&nbsp;no&nbsp;AES&nbsp;key&nbsp;specified
+<P>
+example: 
+<P>
+<BR>&nbsp;aeskeys&nbsp;=&nbsp;<A HREF="mailto:0500@012345">0500@012345</A>:000102030405060708090a0b0c0d0e0f;<A HREF="mailto:0500@543210">0500@543210</A>:000102030405060708090a0b0c0d0e0f,0,0f0e0d0c0b0a090807060504030201
+</DL>
+
+<P>
+
+<B>showcls</B> = <B>quantity</B>
+<DL COMPACT><DT><DD>
+number of classes subscriptions to show for Viaccess SCs, default=10
 </DL>
 
 <P>
@@ -116,6 +322,76 @@ reader [de]assignment to service group, default=none
 
 <P>
 
+<B>caid</B> = <B>&lt;CAID&gt;[&amp;&lt;mask&gt;][:&lt;target CAID&gt;][,&lt;CAID&gt;[&amp;&lt;mask&gt;][:target &lt;CAID&gt;]]...</B>
+<DL COMPACT><DT><DD>
+define and mapping of CAIDs for reader, default:all CAIDs with mask FFFF
+<P>
+example: caid = 0100
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;caid&nbsp;=&nbsp;0200&amp;ffee:0300
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;caid&nbsp;=&nbsp;0400&amp;ff00:0500,0600
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;caid&nbsp;=&nbsp;0702,0722
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;caid&nbsp;=&nbsp;0702&amp;ffdf&nbsp;(shortcut&nbsp;for&nbsp;the&nbsp;example&nbsp;above)
+</DL>
+
+<P>
+
+<B>ident</B> = <B>&lt;CAID&gt;:&lt;provid&gt;[,provid]...[;&lt;CAID&gt;:&lt;provid&gt;[,provid]...]...</B>
+<DL COMPACT><DT><DD>
+set CAID and SC specific ident for reader
+<P>
+example: ident = 0100:123456,234567;0200:345678,456789
+</DL>
+
+<P>
+
+<B>class</B> = <B>[!]class[,[!]class]...</B>
+<DL COMPACT><DT><DD>
+set SC specific class in hex for reader
+<P>
+example: class = 01,02,!1b,!2b
+</DL>
+
+<P>
+
+<B>chid</B> = <B>CAID:ChID</B>
+<DL COMPACT><DT><DD>
+set SC specific ChIDs for reader, default:none
+<P>
+example: chid = 0100:12
+</DL>
+
+<P>
+
+<B>group</B> = <B>1..64[,1..64]...</B>
+<DL COMPACT><DT><DD>
+reader assingment to groups, default:none, <I>required</I>
+</DL>
+
+<P>
+
+<B>audisabled</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = exclude reader from auto AU, default:0
+</DL>
+
+<P>
+
+<B>auprovid</B> = <B>provider ID</B>
+<DL COMPACT><DT><DD>
+set provider ID to use the right reader for auto AU
+<P>
+example: auprovid = 123456
+</DL>
+
+<P>
+
+<B>disableserverfilter</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = ignore <B>caid</B> and <B>provid</B> settings of reader due faulty clients, default:0
+</DL>
+
+<P>
+
 <B>inactivitytimeout</B> = <B>seconds</B>
 <DL COMPACT><DT><DD>
 inactivity timeout for all TCP based remote readers, default:none
@@ -130,44 +406,32 @@ reconnect if missing answers for all TCP based remote readers, default:30
 
 <P>
 
-<B>disableserverfilter</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-1 = ignore <B>caid</B> and <B>provid</B> settings of reader due faulty clients, default:0
-</DL>
-
-<P>
-
-<B>smargopatch</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-1 = enable workaround for Smartreader+ reader until native mode works, default:0
-</DL>
-
-<P>
-
-<B>sc8in1_dtrrts_patch</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-1 = enable fix for SC8in1/MCR DTR/RTS kernel bug, default:0
-</DL>
-
-<P>
-
-<B>label</B> = <B>name</B>
-<DL COMPACT><DT><DD>
-name for reader, <I>required</I>
-</DL>
-
-<P>
-
-<B>description</B> = <B>text</B>
-<DL COMPACT><DT><DD>
-description of reader, default:none
-</DL>
-
-<P>
-
 <B>fallback</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
 1 = define reader as fallback, standard and fallback reader must have the same group, default:0
+</DL>
+
+<P>
+
+<B>emmcache</B> = <B>usecache,rewrite,logging</B>
+<DL COMPACT><DT><DD>
+set EMM cache of local reader:
+<P>
+<BR>&nbsp;<B>usecache</B>&nbsp;=&nbsp;<B>0</B>|<B>1</B>:&nbsp;1&nbsp;=&nbsp;enable&nbsp;EMM&nbsp;caching,&nbsp;default:0
+<P>
+<BR>&nbsp;<B>rewrite</B>&nbsp;&nbsp;=&nbsp;determines&nbsp;how&nbsp;often&nbsp;one&nbsp;and&nbsp;the&nbsp;same&nbsp;EMM&nbsp;is
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;written,&nbsp;default:0
+<P>
+<BR>&nbsp;<B>logging</B>&nbsp;&nbsp;=&nbsp;EMM&nbsp;logging&nbsp;mask:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;EMM&nbsp;logging&nbsp;disabled&nbsp;(default)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>1</B>&nbsp;=&nbsp;logging&nbsp;EMM&nbsp;errors
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>2</B>&nbsp;=&nbsp;logging&nbsp;written&nbsp;EMMs
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>4</B>&nbsp;=&nbsp;logging&nbsp;skipped&nbsp;EMMs
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>8</B>&nbsp;=&nbsp;logging&nbsp;blocked&nbsp;EMMs
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>16</B>&nbsp;=&nbsp;logging&nbsp;disabled&nbsp;AU
+<P>
+<BR>&nbsp;example:&nbsp;emmcache&nbsp;=&nbsp;1,3,2
 </DL>
 
 <P>
@@ -195,35 +459,6 @@ camd 3.x reader logport, camd 3.x UDP must be activated, only works if there's n
 
 <P>
 
-<B>caid</B> = <B>&lt;CAID&gt;[&amp;&lt;mask&gt;][:&lt;target CAID&gt;][,&lt;CAID&gt;[&amp;&lt;mask&gt;][:target &lt;CAID&gt;]]...</B>
-<DL COMPACT><DT><DD>
-define and mapping of CAIDs for reader, default:all CAIDs with mask FFFF
-<P>
-example: caid = 0100
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;caid&nbsp;=&nbsp;0200&amp;ffee:0300
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;caid&nbsp;=&nbsp;0400&amp;ff00:0500,0600
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;caid&nbsp;=&nbsp;0702,0722
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;caid&nbsp;=&nbsp;0702&amp;ffdf&nbsp;(shortcut&nbsp;for&nbsp;the&nbsp;example&nbsp;above)
-</DL>
-
-<P>
-
-<B>audisabled</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-1 = exclude reader from auto AU, default:0
-</DL>
-
-<P>
-
-<B>auprovid</B> = <B>provider ID</B>
-<DL COMPACT><DT><DD>
-set provider ID to use the right reader for auto AU
-<P>
-example: auprovid = 123456
-</DL>
-
-<P>
-
 <B>ecmwhitelist</B> = [<B>CAID</B>[@<B>provid</B>]:]<B>length</B>[,<B>length</B>]...[;[<B>CAID</B>[@<B>provid</B>]:]<B>length</B>[,<B>length</B>]...]...
 <DL COMPACT><DT><DD>
 set valid ECM length per CAID and provid in hex, default:none,provid=000000
@@ -232,130 +467,6 @@ example: ecmwhitelist = 10,20,0a,0b
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ecmwhitelist&nbsp;=&nbsp;0100:10,20;<A HREF="mailto:0200@123456">0200@123456</A>:0a,4b
 <P>
 <I>In normal operation mode this parameter is not required.</I>
-</DL>
-
-<P>
-
-<B>detect</B> = <B>CD</B>|<B>DSR</B>|<B>CTS</B>|<B>RING</B>|<B>NONE</B>|<B>gpio[1-7]</B>
-<DL COMPACT><DT><DD>
-status detect of card (NONE = no detection), default:CD
-</DL>
-
-<P>
-
-<B>cardmhz</B> = <B>mhz</B>
-<DL COMPACT><DT><DD>
-set standard SC frequency in units of 10 kHz, for Irdeto SC set to 600, refer to OVERCLOCKING, default:357
-</DL>
-
-<P>
-
-<B>mhz</B> = <B>frequency</B>
-<DL COMPACT><DT><DD>
-set reader frequency in units of 10 kHz, if <B>mhz</B> &gt; <B>cardmhz</B> you are in overclocking mode, 
-refer to OVERCLOCKING, default:357 
-</DL>
-
-<P>
-
-<B>deprecated</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-First the SC will be initialized in normal mode. If it fails, the SC will be automatically 
-reverted to deprecated mode, so that the SC speed will not be changed and the communication 
-will remain on normal ATR speed of 9600 baud.
-<P>
-1 = use deprecated SC mode only, default:0
-</DL>
-
-<P>
-
-<B>mode</B> = <B>mode</B>
-<DL COMPACT><DT><DD>
-set card init mode for AzBox internal reader, default:none
-</DL>
-
-<P>
-
-<B>cool_timeout_init</B> = <B>timeout</B>
-<DL COMPACT><DT><DD>
-set timeout for SC init in milli-seconds for Coolstream internal reader only, default:50
-</DL>
-
-<P>
-
-<B>cool_timeout_after_init</B> = <B>timeout</B>
-<DL COMPACT><DT><DD>
-set read/transmit timeout after SC init in milli-seconds for Coolstream internal reader only, default:150
-</DL>
-
-<P>
-
-<B>protocol</B> = <B>reader protocol</B>
-<DL COMPACT><DT><DD>
-reader protocol, <I>required</I>:
-<BR>&nbsp;<B>mouse</B>
-<BR>&nbsp;<B>mp35</B>
-<BR>&nbsp;<B>smartreader</B>
-<BR>&nbsp;<B>internal</B>
-<BR>&nbsp;<B>serial</B>
-<BR>&nbsp;<B>camd35</B>|<B>cs357x</B>
-<BR>&nbsp;<B>cs378x</B>
-<BR>&nbsp;<B>gbox</B>
-<BR>&nbsp;<B>newcamd</B>|<B>newcamd525</B>
-<BR>&nbsp;<B>newcamd524</B>
-<BR>&nbsp;<B>cccam</B>
-<BR>&nbsp;<B>radegast</B>
-<BR>&nbsp;<B>pcsc</B>
-<BR>&nbsp;<B>constcw</B>
-<BR>&nbsp;<B>sc8in1</B>
-</DL>
-
-<P>
-
-<B>ident</B> = <B>&lt;CAID&gt;:&lt;provid&gt;[,provid]...[;&lt;CAID&gt;:&lt;provid&gt;[,provid]...]...</B>
-<DL COMPACT><DT><DD>
-set CAID and SC specific ident for reader
-<P>
-example: ident = 0100:123456,234567;0200:345678,456789
-</DL>
-
-<P>
-
-<B>class</B> = <B>[!]class[,[!]class]...</B>
-<DL COMPACT><DT><DD>
-set SC specific class in hex for reader
-<P>
-example: class = 01,02,!1b,!2b
-</DL>
-
-<P>
-
-<B>group</B> = <B>1..64[,1..64]...</B>
-<DL COMPACT><DT><DD>
-reader assingment to groups, default:none, <I>required</I>
-</DL>
-
-<P>
-
-<B>emmcache</B> = <B>usecache,rewrite,logging</B>
-<DL COMPACT><DT><DD>
-set EMM cache of local reader:
-<P>
-<BR>&nbsp;<B>usecache</B>&nbsp;=&nbsp;<B>0</B>|<B>1</B>:&nbsp;1&nbsp;=&nbsp;enable&nbsp;EMM&nbsp;caching,&nbsp;default:0
-<P>
-<BR>&nbsp;<B>rewrite</B>&nbsp;&nbsp;=&nbsp;determines&nbsp;how&nbsp;often&nbsp;one&nbsp;and&nbsp;the&nbsp;same&nbsp;EMM&nbsp;is
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;written,&nbsp;default:0
-<P>
-<BR>&nbsp;<B>logging</B>&nbsp;&nbsp;=&nbsp;EMM&nbsp;logging&nbsp;mask:
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;EMM&nbsp;logging&nbsp;disabled&nbsp;(default)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>1</B>&nbsp;=&nbsp;logging&nbsp;EMM&nbsp;errors
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>2</B>&nbsp;=&nbsp;logging&nbsp;written&nbsp;EMMs
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>4</B>&nbsp;=&nbsp;logging&nbsp;skipped&nbsp;EMMs
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>8</B>&nbsp;=&nbsp;logging&nbsp;blocked&nbsp;EMMs
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>16</B>&nbsp;=&nbsp;logging&nbsp;disabled&nbsp;AU
-<P>
-<BR>&nbsp;example:&nbsp;emmcache&nbsp;=&nbsp;1,3,2
 </DL>
 
 <P>
@@ -571,117 +682,6 @@ reconnect again after ECM request timeout in milli-seconds, default:4000
 <B>cccmindown</B> = <B>number</B>
 <DL COMPACT><DT><DD>
 filters all readers with hops smaller than number, default:0
-</DL>
-
-<P>
-
-<B>pincode</B> = <B>pincode</B>
-<DL COMPACT><DT><DD>
-pincode for Conax and Cryptoworks SCs, default:none
-</DL>
-
-<P>
-
-<B>chid</B> = <B>CAID:ChID</B>
-<DL COMPACT><DT><DD>
-set SC specific ChIDs for reader, default:none
-<P>
-example: chid = 0100:12
-</DL>
-
-<P>
-
-<B>ins7e</B> = <B>payload</B>
-<DL COMPACT><DT><DD>
-add 26 hex-bytes payload for NDS Videoguard 2 SCs, valid for physical readers only, default:none
-</DL>
-
-<P>
-
-<B>ins7e11</B> = <B>TA1 byte</B>
-<DL COMPACT><DT><DD>
-set TA1 byte for NDS Videoguard 2 SCs, valid for physical readers only, default:none
-</DL>
-
-<P>
-
-<B>force_irdeto</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-1 = force Irdeto SC mode even if RSA key is set for Irdeto tunnled Nagravion SC, default:0
-</DL>
-
-<P>
-
-<B>nagra_read</B> = <B>0</B>|<B>1</B>|<B>2</B>
-<DL COMPACT><DT><DD>
-read Nagravison records (on NCMED cards only):
-<P>
-<BR>&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;disabled&nbsp;(default)
-<BR>&nbsp;&nbsp;<B>1</B>&nbsp;=&nbsp;read&nbsp;all&nbsp;records&nbsp;with&nbsp;expired&nbsp;rights
-<BR>&nbsp;&nbsp;<B>2</B>&nbsp;=&nbsp;read&nbsp;records&nbsp;with&nbsp;valid&nbsp;rights&nbsp;only
-</DL>
-
-<P>
-
-<B>rsakey</B> = <B>RSA key</B>
-<DL COMPACT><DT><DD>
-RSA key for Nagravision/Tiger SCs / CAM key data for Irdeto SCs 
-</DL>
-
-<P>
-
-<B>fix9993</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-1 = enable fix for 9993 error with CAID 0919 SCs, default:0
-</DL>
-
-<P>
-
-<B>boxkey</B> = <B>box key</B>
-<DL COMPACT><DT><DD>
-box key for Nagravision SCs / CAM key for Irdeto SCs
-</DL>
-
-<P>
-
-<B>aeskeys</B> = <B>CAID #0</B>@<B>provid</B>:<B>AES key #0 CAID #0</B>[,<B>AES key #1 CAID #0</B>],...[;<B>CAID #1</B>@<B>provid</B>:<B>AES key #0 CAID #1</B>[,<B>AES key #1 CAID #1</B>],...]...
-<DL COMPACT><DT><DD>
-multiple 16 bytes AES keys for Viaccess SCs (the used postprocessing AES key is specified through the D2 nano of the ECM)
-<P>
-special AES keys:
-<P>
-<BR>&nbsp;<B>00</B>&nbsp;=&nbsp;do&nbsp;not&nbsp;return&nbsp;any&nbsp;CW,&nbsp;no&nbsp;AES&nbsp;key&nbsp;specified
-<BR>&nbsp;<B>FF</B>&nbsp;=&nbsp;return&nbsp;CW&nbsp;received&nbsp;from&nbsp;the&nbsp;S,&nbsp;no&nbsp;AES&nbsp;key&nbsp;specified
-<P>
-example: 
-<P>
-<BR>&nbsp;aeskeys&nbsp;=&nbsp;<A HREF="mailto:0500@012345">0500@012345</A>:000102030405060708090a0b0c0d0e0f;<A HREF="mailto:0500@543210">0500@543210</A>:000102030405060708090a0b0c0d0e0f,0,0f0e0d0c0b0a090807060504030201
-</DL>
-
-<P>
-
-<B>showcls</B> = <B>quantity</B>
-<DL COMPACT><DT><DD>
-number of classes subscriptions to show for Viaccess SCs, default=10
-</DL>
-
-<P>
-
-<B>boxid</B> = <B>NDS box ID</B>
-<DL COMPACT><DT><DD>
-NDS receiver box id
-</DL>
-
-<P>
-
-<B>ndsversion</B> = <B>0</B>|<B>1</B>|<B>12</B>|<B>2</B>
-<DL COMPACT><DT><DD>
-set NDS Videoguard version
-<P>
-<BR>&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;autodetection&nbsp;(default)
-<BR>&nbsp;&nbsp;<B>1</B>&nbsp;=&nbsp;NDS&nbsp;Videoguard&nbsp;1
-<BR>&nbsp;<B>12</B>&nbsp;=&nbsp;NDS&nbsp;Videoguard&nbsp;1+
-<BR>&nbsp;&nbsp;<B>2</B>&nbsp;=&nbsp;NDS&nbsp;Videoguard&nbsp;2
 </DL>
 
 <A NAME="lbAF">&nbsp;</A>
