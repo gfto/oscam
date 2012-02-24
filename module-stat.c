@@ -867,17 +867,16 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	int32_t current = -1;
 	READER_STAT *stat = NULL;
 	int32_t retrylimit = get_retrylimit(er);
-	int8_t ignore_timeout_service=0;
 	int32_t reader_count = 0;
 	int32_t new_stats = 0;	
 	int32_t nlocal_readers = 0;
 	int32_t nbest_readers = get_nbest_readers(er);
 	int32_t nfb_readers = cfg.lb_nfb_readers;
 	int32_t nreaders = cfg.lb_max_readers;
-	if (!nreaders) nreaders = -1;
-	int32_t nreopen_readers = cfg.lb_max_readers;
-	if (nreopen_readers <= 0)
-		nreopen_readers = 1;
+	if (!nreaders)
+		nreaders = -1;
+	else if (nreaders <= cfg.lb_nbest_readers)
+		nreaders = cfg.lb_nbest_readers+1;
 
 #ifdef WITH_DEBUG 
 	if (cs_dblevel & 0x01) {
@@ -912,7 +911,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		ea->value = 0;
 	}
 
-	for(ea = er->matching_rdr; ea; ea = ea->next) {
+	for(ea = er->matching_rdr; ea && nreaders; ea = ea->next) {
 			rdr = ea->reader;
 #ifdef CS_CACHEEX
 			int8_t cacheex = rdr->cacheex;
@@ -932,14 +931,15 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				add_stat(rdr, er, 1, -1);
 				ea->status |= READER_ACTIVE; //no statistics, this reader is active (now) but we need statistics first!
 				new_stats = 1;
+				nreaders--;
 				continue;
 			}
 			
-			if (nreopen_readers && (stat->ecm_count < 0||(stat->ecm_count > cfg.lb_max_ecmcount && stat->time_avg > retrylimit))) {
+			if (stat->ecm_count < 0||(stat->ecm_count > cfg.lb_max_ecmcount && stat->time_avg > retrylimit)) {
 				cs_debug_mask(D_TRACE, "loadbalancer: max ecms (%d) reached by reader %s, resetting statistics", cfg.lb_max_ecmcount, rdr->label);
 				reset_stat(er->caid, prid, er->srvid, er->chid, er->l);
 				ea->status |= READER_ACTIVE; //max ecm reached, get new statistics
-				nreopen_readers--;
+				nreaders--;
 				continue;
 			}
 
@@ -957,24 +957,18 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			else
 				hassrvid = 0;
 			
-			if (nreopen_readers && stat->rc == E_FOUND && stat->ecm_count < cfg.lb_min_ecmcount) {
+			if (stat->rc == E_FOUND && stat->ecm_count < cfg.lb_min_ecmcount) {
 				cs_debug_mask(D_TRACE, "loadbalancer: reader %s needs more statistics", rdr->label);
 				ea->status |= READER_ACTIVE; //need more statistics!
 				new_stats = 1;
-				nreopen_readers--;
+				nreaders--;
 				continue;
 			}
-
-			//just add another reader if best reader is nonresponding but has services
-			ea->timeout_service = (hassrvid && stat->rc != E_FOUND);
 
 			//Reader can decode this service (rc==0) and has lb_min_ecmcount ecms:
 			if (stat->rc == E_FOUND || hassrvid) {
 				if (cfg.preferlocalcards && (ea->status & 0x4))
 					nlocal_readers++; //Prefer local readers!
-
-				if (stat->rc == E_FOUND)
-					ignore_timeout_service = 1;
 
 				switch (cfg.lb_mode) {
 					default:
@@ -1011,6 +1005,10 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				
 				if (cl && cl->pending)
 					current=current*cl->pending;
+
+				if (stat->rc >= E_NOTFOUND) { //when reader has service this is possible
+					current=current*(stat->fail_factor+2); //Mark als slow
+				}
 					
 				if (current < 1)
 					current=1;
@@ -1040,9 +1038,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			if (nlocal_readers && !(ea->status & READER_LOCAL))
 				continue;
 
-			if (ignore_timeout_service && ea->timeout_service)
-				continue;
-
 			if (ea->value && (!best || ea->value < best->value))
 				best=ea;
 		}
@@ -1058,26 +1053,21 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		best->value = 0;
 			
 		if (nlocal_readers) {//primary readers, local
-			if (!best->timeout_service) {
-				nlocal_readers--;
-				nreaders--;
-			}
+			nlocal_readers--;
+			nreaders--;
 			best->status |= READER_ACTIVE;
 			//OLDEST_READER:
 			cs_ftime(&best_rdri->lb_last);
 		}
 		else if (nbest_readers) {//primary readers, other
-			if (!best->timeout_service) {
-				nbest_readers--;
-				nreaders--;
-			}
+			nbest_readers--;
+			nreaders--;
 			best->status |= READER_ACTIVE;
 			//OLDEST_READER:
 			cs_ftime(&best_rdri->lb_last);
 		}
 		else if (nfb_readers) { //fallbacks:
-			if (!best->timeout_service)
-				nfb_readers--;
+			nfb_readers--;
 			best->status |= (READER_ACTIVE|READER_FALLBACK);
 		}
 		else

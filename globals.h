@@ -792,7 +792,6 @@ struct s_ecm_answer {
 #ifdef WITH_LB
 	int32_t		value;
 	int32_t		time;
-	int8_t			timeout_service;
 #endif
 	struct s_ecm_answer	*next;
 };
