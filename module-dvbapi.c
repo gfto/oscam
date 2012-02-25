@@ -1424,8 +1424,7 @@ void event_handler(int32_t signal) {
 
 	signal=signal; //avoid compiler warnings
 
-	if (pthread_mutex_trylock(&event_handler_lock) == EBUSY)
-		return;
+	pthread_mutex_lock(&event_handler_lock);
 
 	if (cfg.dvbapi_boxtype == BOXTYPE_PC)
 		pausecam = 0;
