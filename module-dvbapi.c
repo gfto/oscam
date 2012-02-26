@@ -599,6 +599,13 @@ void dvbapi_stop_descrambling(int32_t demux_id) {
 	return;
 }
 
+void dvbapi_prepare_descrambling_restart(int32_t demux_id) {
+        int32_t i;
+	for (i=0;i<demux[demux_id].STREAMpidcount;i++) {
+		dvbapi_set_pid(demux_id, i, -1);
+	}
+}
+
 void dvbapi_start_descrambling(int32_t demux_id) {
 	int32_t j,k;
 	int32_t streamcount=0;
@@ -946,7 +953,8 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 	if (cfg.preferlocalcards) {
 	        struct s_reader *rdr;
 	        for (n=0; n<demux[demux_index].ECMpidcount; n++) {
-	                demux[demux_index].ECMpids[n].status = 0;
+	                if (demux[demux_index].ECMpids[n].status == -1) //ignore
+	                        continue;
           	        LL_ITER it = ll_iter_create(configured_readers);
 	                while ((rdr=ll_iter_next(&it))) {
 	                        if (rdr->enable && !(rdr->typ & R_IS_NETWORK) && rdr->card_status==CARD_INSERTED) { //local reader
@@ -1980,43 +1988,66 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 						break;
 			if (j==demux[i].ECMpidcount) continue;
 
-			if (er->rc < E_NOTFOUND && (demux[i].pidindex==-1) && er->caid!=0) {
+			if (er->rc < E_NOTFOUND && cfg.dvbapi_requestmode==0 && (demux[i].pidindex==-1) && er->caid!=0) {
+			                dvbapi_start_descrambling(i);
+			}
 
-                                if (cfg.dvbapi_requestmode == 1) {
-                                        int32_t num_pids  = 0;
+			if (er->rc < E_NOTFOUND && cfg.dvbapi_requestmode==1 && er->caid!=0) { //FOUND
+
+                                        int32_t num_pids=0, last_idx=j;
+                                        int8_t switch_pid = (demux[i].pidindex==-1 || demux[i].ECMpids[j].status > demux[i].ECMpids[demux[i].pidindex].status);
 
                                         int32_t t;
                                         for (t=0;t<demux[i].ECMpidcount && demux[i].max_status>1;t++) {
-                                                if (t!=j && demux[i].ECMpids[j].status > demux[i].ECMpids[t].status) {
+                                        
+                                                //check this FOUND for higher status:
+                                                if (t!=j && demux[i].ECMpids[t].checked != 2 && 
+                                                                demux[i].ECMpids[j].status > demux[i].ECMpids[t].status) { //mark index t as low status
                                                         demux[i].ECMpids[t].checked = 2;
                                                         int32_t o;
-                                                        for (o = 0; o < MAX_FILTER; o++) {
+                                                        for (o = 0; o < MAX_FILTER; o++) { //disable index t filter:
                                                                 if (demux[i].demux_fd[o].fd > 0) {
                                                                         if (demux[i].demux_fd[o].pid == demux[i].ECMpids[t].ECM_PID)
                                                                                 dvbapi_stop_filternum(i, o);
                                                                 }
                                                         }
                                                 }
-                                                if (demux[i].ECMpids[t].checked != 2)
+                                                //check this FOUND for same status (e.g. == 0):
+                                                if (t!=j && demux[i].ECMpids[j].checked != 2 && 
+                                                                demux[i].ECMpids[j].status == demux[i].ECMpids[t].status) { //mark index j as low status
+                                                        demux[i].ECMpids[j].checked = 2;
+                                                        int32_t o;
+                                                        for (o = 0; o < MAX_FILTER; o++) { //disable index j filter:
+                                                                if (demux[i].demux_fd[o].fd > 0) {
+                                                                        if (demux[i].demux_fd[o].pid == demux[i].ECMpids[j].ECM_PID)
+                                                                                dvbapi_stop_filternum(i, o);
+                                                                }
+                                                        }
+                                                }
+                                                if (demux[i].ECMpids[t].checked != 2) {
                                                         num_pids++;
+                                                        last_idx=t;
+                                                }
                                         }
 
-                                        if (num_pids <= 1) {
+                                        if (num_pids <= 1) { //Only one left, activate it:
                                                 int32_t o;
                                                 for (o = 0; o < MAX_FILTER; o++) {
                                                         if (demux[i].demux_fd[o].fd > 0) {
-                                                                if (demux[i].demux_fd[o].pid == er->pid)
-                                                                        demux[i].demux_fd[o].count = 0;
+                                                                if (demux[i].demux_fd[o].pid == demux[i].ECMpids[last_idx].ECM_PID)
+                                                                        demux[i].demux_fd[o].count = 0; //activate last_idx
                                                                 else
-                                                                        dvbapi_stop_filternum(i, o);
+                                                                        dvbapi_stop_filternum(i, o); //drop other
                                                         }
                                                 }
+                                        }
+                                        
+                                        if (switch_pid) {
+                                                if (demux[i].pidindex != -1)
+                                                        dvbapi_prepare_descrambling_restart(i);
                                                 demux[i].curindex = j;
                                                 dvbapi_start_descrambling(i);
                                         }
-                                }
-                                else
-                                        dvbapi_start_descrambling(i);
 			}
 
 			if (er->rc >= E_NOTFOUND) {
