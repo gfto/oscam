@@ -901,7 +901,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 		demux[demux_index].ECMpids[n].status=0;
 
 	demux[demux_index].max_status=0;
-	int32_t new_status=1;
+	int32_t new_status = demux[demux_index].ECMpidcount; // reverse order!
 
 	if (dvbapi_priority) {
 		struct s_dvbapi_priority *p;
@@ -916,7 +916,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 				if (p->srvid	&& p->srvid	!= demux[demux_index].program_number)	continue;
 
 				if (p->type=='p') {
-					demux[demux_index].ECMpids[n].status = new_status++;
+					demux[demux_index].ECMpids[n].status = new_status--;
 					cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X (position: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].status);
 				} else if (p->type=='i') {
 					if (p->chid) continue;
@@ -926,6 +926,8 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 			}
 		}
 	}
+	
+	new_status = demux[demux_index].ECMpidcount+1;
 
 	for (n=0; n<demux[demux_index].ECMpidcount; n++) {
 		int32_t nr;
