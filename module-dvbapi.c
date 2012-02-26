@@ -896,28 +896,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 	demux[demux_index].max_status=0;
 	int32_t new_status=1;
 
-	//prefer caids from local readers:
-        int8_t found=0;
-	if (cfg.preferlocalcards) {
-	        struct s_reader *rdr;
-	        for (n=0; n<demux[demux_index].ECMpidcount; n++) {
-          	        LL_ITER it = ll_iter_create(configured_readers);
-	                while ((rdr=ll_iter_next(&it))) {
-	                        if (rdr->enable && !(rdr->typ & R_IS_NETWORK) && rdr->card_status==CARD_INSERTED) { //local reader
-	                                uint16_t caid = demux[demux_index].ECMpids[n].CAID;
-	                                if (rdr->caid==caid || chk_ctab(caid, &rdr->ctab)) {
-	                                        demux[demux_index].ECMpids[n].status = new_status++; //priority
-                                                cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X (localrdr: %s position: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, rdr->label, demux[demux_index].ECMpids[n].status);
-                                                found++;
-                                                break;
-                                        }
-                                }
-                        }
-                }
-	}
-
-
-	if (!found && dvbapi_priority) {
+	if (dvbapi_priority) {
 		struct s_dvbapi_priority *p;
 		for (p=dvbapi_priority, i=0; p != NULL; p=p->next, i++) {
 			if (p->type != 'p' && p->type != 'i') continue;
@@ -963,6 +942,24 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 		}
 	}
 
+	//prefer caids from local readers:
+	if (cfg.preferlocalcards) {
+	        struct s_reader *rdr;
+	        for (n=0; n<demux[demux_index].ECMpidcount; n++) {
+	                demux[demux_index].ECMpids[n].status = 0;
+          	        LL_ITER it = ll_iter_create(configured_readers);
+	                while ((rdr=ll_iter_next(&it))) {
+	                        if (rdr->enable && !(rdr->typ & R_IS_NETWORK) && rdr->card_status==CARD_INSERTED) { //local reader
+	                                uint16_t caid = demux[demux_index].ECMpids[n].CAID;
+	                                if (rdr->caid==caid || chk_ctab(caid, &rdr->ctab)) {
+                                                demux[demux_index].ECMpids[n].status = new_status++; //priority
+                                                cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X (localrdr: %s position: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, rdr->label, demux[demux_index].ECMpids[n].status);
+                                                break;
+                                        }
+                                }
+                        }
+                }
+	}
 
 	demux[demux_index].max_status = new_status;
 	return;
@@ -1058,7 +1055,7 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 	int32_t end=demux[demux_id].max_status;
 
 	while (num==-1) {
-		for (j = start; j <= end && num == -1; j++) {
+		for (j = end; j >= start && num == -1; j--) { //largest status first!
 			for (n=0; n<demux[demux_id].ECMpidcount; n++) {
 				if (demux[demux_id].ECMpids[n].checked == 0 && demux[demux_id].ECMpids[n].status == j) {
 					num=n;
@@ -1986,18 +1983,40 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			if (er->rc < E_NOTFOUND && (demux[i].pidindex==-1) && er->caid!=0) {
 
                                 if (cfg.dvbapi_requestmode == 1) {
-                                        int32_t o = 0;
-                                        for (o = 0; o < MAX_FILTER; o++) {
-                                                if (demux[i].demux_fd[o].fd > 0) {
-                                                        if (demux[i].demux_fd[o].pid == er->pid)
-                                                                demux[i].demux_fd[o].count = 0;
-                                                        else
-                                                                dvbapi_stop_filternum(i, o);
+                                        int32_t num_pids  = 0;
+
+                                        int32_t t;
+                                        for (t=0;t<demux[i].ECMpidcount && demux[i].max_status>1;t++) {
+                                                if (t!=j && demux[i].ECMpids[j].status > demux[i].ECMpids[t].status) {
+                                                        demux[i].ECMpids[t].checked = 2;
+                                                        int32_t o;
+                                                        for (o = 0; o < MAX_FILTER; o++) {
+                                                                if (demux[i].demux_fd[o].fd > 0) {
+                                                                        if (demux[i].demux_fd[o].pid == demux[i].ECMpids[t].ECM_PID)
+                                                                                dvbapi_stop_filternum(i, o);
+                                                                }
+                                                        }
                                                 }
+                                                if (demux[i].ECMpids[t].checked != 2)
+                                                        num_pids++;
                                         }
-                                        demux[i].curindex = j;
+
+                                        if (num_pids <= 1) {
+                                                int32_t o;
+                                                for (o = 0; o < MAX_FILTER; o++) {
+                                                        if (demux[i].demux_fd[o].fd > 0) {
+                                                                if (demux[i].demux_fd[o].pid == er->pid)
+                                                                        demux[i].demux_fd[o].count = 0;
+                                                                else
+                                                                        dvbapi_stop_filternum(i, o);
+                                                        }
+                                                }
+                                                demux[i].curindex = j;
+                                                dvbapi_start_descrambling(i);
+                                        }
                                 }
-                                dvbapi_start_descrambling(i);
+                                else
+                                        dvbapi_start_descrambling(i);
 			}
 
 			if (er->rc >= E_NOTFOUND) {
@@ -2010,6 +2029,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				demux[i].ECMpids[j].irdeto_chids = 0;
 				demux[i].ECMpids[j].irdeto_curchid = 0;
 				demux[i].ECMpids[j].irdeto_cycle = 0;
+				demux[i].ECMpids[j].checked = 2;
 
 				if (demux[i].pidindex==-1) {
 					if (cfg.dvbapi_requestmode == 1)
@@ -2032,6 +2052,15 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 						demux[i].curindex = 0;
 						demux[i].pidindex = -1;
 						dvbapi_try_next_caid(i);
+					}
+					else if (cfg.dvbapi_requestmode == 1) {
+					        int32_t t, num_pids;
+					        for (num_pids=0,t=0;t<demux[i].ECMpidcount;t++) {
+					                if (demux[i].ECMpids[t].checked != 2)
+					                        num_pids++;
+					        }                             
+					        if (num_pids < 1)
+					                dvbapi_try_next_caid(i);                                                                                                                                                                                                                                                
 					}
 				}
 				return;
