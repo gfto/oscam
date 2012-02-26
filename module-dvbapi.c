@@ -615,7 +615,7 @@ void dvbapi_start_descrambling(int32_t demux_id) {
 	for (j=0; j<demux[demux_id].ECMpidcount; j++) {
 		if (demux[demux_id].curindex == j || (demux[demux_id].ECMpids[demux[demux_id].curindex].CAID == demux[demux_id].ECMpids[j].CAID
 				&& demux[demux_id].ECMpids[demux[demux_id].curindex].PROVID == demux[demux_id].ECMpids[j].PROVID
-				&& demux[demux_id].ECMpids[j].PROVID > 0)) {
+				&& demux[demux_id].ECMpids[j].PROVID > 0 && demux[demux_id].ECMpids[demux[demux_id].curindex].ECM_PID == demux[demux_id].ECMpids[j].ECM_PID)) {
 
 			if (demux[demux_id].curindex != j) {
 				if (demux[demux_id].ECMpids[j].status < 0 || !demux[demux_id].ECMpids[demux[demux_id].curindex].streams)
