@@ -2038,18 +2038,28 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	int32_t i;
 	uchar c;
 	struct s_ecm_answer *ea = NULL, *ea_list, *ea_org = NULL;
-	time_t now = time(NULL);
+	int32_t diff, maxdiff = (int32_t)cfg.ctimeout+1000;
+	struct timeb now;
+	cs_ftime(&now);
 
-	if (er->tps.time <= now-(time_t)(cfg.ctimeout/1000+2)) { // drop real old answers, because er->parent is dropped !
+	if ((diff=comp_timeb(&now, &er->tps))>maxdiff) { // drop real old answers, because er->parent is dropped !
 #ifdef WITH_DEBUG
-		if (er->tps.time <= now-(time_t)(cfg.max_cache_time))
-			cs_log("dropped old reader answer rc=%d from %s time %ds",
-				rc, reader?reader->label:"undef", (int32_t)(now-er->tps.time));
+		if (diff > (int32_t)cfg.max_cache_time*1000)
+			cs_log("dropped old reader answer rc=%d from %s time %dms",
+				rc, reader?reader->label:"undef", diff);
 #endif
 #ifdef WITH_LB
 		send_reader_stat(reader, er, E_TIMEOUT);
 #endif
 		return 0;
+	}
+
+	if (er->parent) {
+		// parent is only set on reader->client->ecmtask[], but we want client->ecmtask[]
+		// this means: reader has a ecm copy from client, so point to client
+		er->rc = rc;
+		er->idx = 0;
+		er = er->parent;
 	}
 
 	for(ea_list = er->matching_rdr; reader && ea_list && !ea_org; ea_list = ea_list->next) {
@@ -2072,14 +2082,6 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	ea->rcEx = rcEx;
 	ea->reader = reader;
 	ea->status |= REQUEST_ANSWERED;
-
-	if (er->parent) {
-		// parent is only set on reader->client->ecmtask[], but we want client->ecmtask[]
-		er->rc = rc;
-		er->idx = 0;
-		er = er->parent;
-	}
-
 	ea->er = er;
 
 	if (reader) {

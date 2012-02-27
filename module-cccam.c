@@ -2873,7 +2873,7 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 	n = cc_msg_recv(cl, buf, l); // recv and decrypt msg
 
 	//cs_ddump_mask(D_CLIENT, buf, n, "cccam: received %d bytes from %s", n, remote_txt());
-	cl->last = time((time_t *) 0);
+
 
 	if (n <= 0) {
 		struct cc_data *cc = cl->cc;
@@ -2888,6 +2888,7 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 	} else {
 		// parse it and write it back, if we have received something of value
 		n = cc_parse_msg(cl, buf, n);
+    cl->last = time((time_t *) 0);
 	}
 
 	if (n == -1) {
