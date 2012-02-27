@@ -176,9 +176,6 @@ static int32_t seca_card_init(struct s_reader * reader, ATR newatr)
   serial = b2ll(5, cta_res+3) ;
   cs_ri_log (reader, "type: SECA, caid: %04X, serial: %llu, card: %s v%d.%d",
          reader->caid, (unsigned long long) serial, card, atr[9]&0x0F, atr[9]>>4);
-  int secaversion;
-  secaversion = atr[9]&0X0F;  
-  reader->availkeys[0][1]=secaversion; //misusing availkeys to store seca_version
   write_cmd(ins16, NULL); // read nr of providers
   pmap=cta_res[2]<<8|cta_res[3];
   for (reader->nprov=0, i=pmap; i; i>>=1)
@@ -216,27 +213,22 @@ static int32_t get_prov_index(struct s_reader * rdr, const uint8_t *provid)	//re
 
 static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
-	if (er->ecm[3] == 0x00 && er->ecm[4] == 0x6a) { //provid 006A = CDNL uses seca2/seca3 simulcrypt on same caid
-		int ecm_type = 0;
-		int seca_version = reader->availkeys[0][1]; //misusing availkeys to store seca_version 
-		if (seca_version == 10) { //assume ecm type same as card in reader
-			ecm_type = 10;	
-		}
-		if (seca_version == 7) { //assume ecm type same as card in reader
-			ecm_type = 7;
-		} 
-		if (er->ecm[8] == 0x00) { //this is a mediaguard 3 ecm request
-			ecm_type = 10;
-		} 
-		if (er->ecm[8] == 0x10) { // first seca2 request byte found
-			if (er->ecm[9] == 0x01) { //second seca2 ecmrequest byte found
-				ecm_type = 7;
-			}
-		}
-		if (ecm_type != seca_version){ //only accept ecmrequest for right card!
-			snprintf( ea->msglog, MSGLOGSIZE, "Invalid ecm for card!" );
-			return ERROR;
-		}
+	int ecm_type = 0;
+	int seca_version = reader->card_atr[9]&0X0F; //Get seca cardversion from cardatr
+	if (seca_version == 10) { //assume ecm type same as card in reader
+		ecm_type = 10;
+	}
+	if (seca_version == 7) { //assume ecm type same as card in reader
+		ecm_type = 7;
+	} 
+	if (er->ecm[8] == 0x00) { //this is a mediaguard3 ecm request
+		ecm_type = 10;
+	}
+	if ((er->ecm[8] == 0x10) && (er->ecm[9] == 0x01)) { //this is a seca2 ecm request
+		ecm_type = 7;
+	}
+	if (ecm_type != seca_version){ //only accept ecmrequest for right card!
+		return ERROR;
 	}
 
   def_resp;
