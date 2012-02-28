@@ -2009,8 +2009,10 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
                                                         int32_t o;
                                                         for (o = 0; o < MAX_FILTER; o++) { //disable index t filter:
                                                                 if (demux[i].demux_fd[o].fd > 0) {
-                                                                        if (demux[i].demux_fd[o].pid == demux[i].ECMpids[t].ECM_PID)
-                                                                                dvbapi_stop_filternum(i, o);
+                                                                        if (demux[i].demux_fd[o].pid == demux[i].ECMpids[t].ECM_PID) {
+                                                                        		if (!switch_pid || t != demux[i].pidindex)
+                                                                        				dvbapi_stop_filternum(i, o);
+                                                                        }
                                                                 }
                                                         }
                                                 }
