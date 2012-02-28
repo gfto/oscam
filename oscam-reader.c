@@ -549,23 +549,34 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	memset(&ea, 0, sizeof(struct s_ecm_answer));
 
 	int32_t rc = reader_ecm(reader, er, &ea);
-	if(rc == ERROR){
+	
+	ea.rc = E_FOUND; //default assume found
+	ea.rcEx = 0; //no special flag
+	
+	if(rc == ERROR ){
 		char buf[32];
 		cs_debug_mask(D_TRACE, "Error processing ecm for caid %04X, srvid %04X (servicename: %s) on reader %s.", er->caid, er->srvid, get_servicename(cl, er->srvid, er->caid, buf), reader->label);
 		ea.rc = E_NOTFOUND;
+		ea.rcEx = 0;
 		if (reader->typ == R_SC8in1 && reader->sc8in1_config->mcr_type) {
 			char text[] = {'S', (char)reader->slot+0x30, 'E', 'e', 'r'};
 			MCR_DisplayText(reader, text, 5, 400, 0);
 		}
-	} else
-		ea.rc = E_FOUND;
+	}
 
+	if(rc == E_CORRUPT ){
+		char buf[32];
+		cs_debug_mask(D_TRACE, "Error processing ecm for caid %04X, srvid %04X (servicename: %s) on reader %s.", er->caid, er->srvid, get_servicename(cl, er->srvid, er->caid, buf), reader->label);
+		ea.rc = E_NOTFOUND;
+		ea.rcEx = E2_WRONG_CHKSUM; //flag it as wrong checksum
+		memcpy (ea.msglog,"Invalid ecm type for card",25);
+	}
 	cs_ftime(&tpe);
 	cl->lastecm=time((time_t*)0);
 
 	cs_debug_mask(D_TRACE, "reader: %s ecm: %04X real time: %ld ms", reader->label, htons(er->checksum), 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm);
 
-	write_ecm_answer(reader, er, ea.rc, 0, ea.cw, ea.msglog);
+	write_ecm_answer(reader, er, ea.rc, ea.rcEx, ea.cw, ea.msglog);
 	reader_post_process(reader);
 #endif
 }

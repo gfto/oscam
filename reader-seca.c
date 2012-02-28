@@ -228,7 +228,7 @@ static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, stru
 		ecm_type = 7;
 	}
 	if (ecm_type != seca_version){ //only accept ecmrequest for right card!
-		return ERROR;
+		return E_CORRUPT;
 	}
 
   def_resp;
