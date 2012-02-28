@@ -508,9 +508,9 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 			if (DE04[0]==0xDE)
 			{
 				uint32_t l = curEcm88len-6;
-				if (l > 256) { //don't known if this is ok...
+				if (l > 256 || curEcm88len <= 6) { //don't known if this is ok...
 					cs_log("viacess-reader: ecm invalid/too long! len=%d", curEcm88len);
-					l = 256;
+					return ERROR;
 				}
 				memcpy(DE04+6, (uchar *)ecm88Data, l);
 				write_cmd(ins88, DE04); // request dcw

@@ -2121,7 +2121,8 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 		add_job(cl, ACTION_CLIENT_ECM_ANSWER, ea, sizeof(struct s_ecm_answer));
 		res = 1;
 	} else { //client has disconnected. Distribute ecms to other waiting clients
-		chk_dcw(NULL, ea);
+		if (!er->ecmcacheptr)
+			chk_dcw(NULL, ea);
 		if (!ea_org)
 			free(ea);
 	}
@@ -3820,6 +3821,9 @@ void * work_thread(void *ptr) {
 				break;
 			}
 #endif
+			case ACTION_CLIENT_KILL:
+				cl->kill = 1;
+				break;
 		}
 
 		if (data!=&tmp_data)
