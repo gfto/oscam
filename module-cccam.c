@@ -1689,10 +1689,10 @@ int32_t check_extended_mode(struct s_client *cl, char *msg) {
 
 void cc_idle() {
 	struct s_client *cl = cur_client();
-	struct s_reader *rdr = cl->reader;
-	struct cc_data *cc = cl->cc;
+	   struct s_reader *rdr = cl->reader;
+       struct cc_data *cc = cl->cc;
 	
-	if (cl && !cl->udp_fd)
+	if (!cl->udp_fd)
 		cc_cli_close(cl, FALSE);
 
 	if (rdr && rdr->cc_keepalive && !rdr->tcp_connected) {
