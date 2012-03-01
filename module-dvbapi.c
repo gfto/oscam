@@ -599,18 +599,11 @@ void dvbapi_stop_descrambling(int32_t demux_id) {
 	return;
 }
 
-void dvbapi_prepare_descrambling_restart(int32_t demux_id) {
-        int32_t i;
-	for (i=0;i<demux[demux_id].STREAMpidcount;i++) {
-                dvbapi_set_pid(demux_id, i, -1);
-	}
-}
-
 void dvbapi_start_descrambling(int32_t demux_id) {
 	int32_t j,k;
 	int32_t streamcount=0;
-
-	demux[demux_id].pidindex = demux[demux_id].curindex;
+          
+  	demux[demux_id].pidindex = demux[demux_id].curindex;
 
 	for (j=0; j<demux[demux_id].ECMpidcount; j++) {
 		if (demux[demux_id].curindex == j || (demux[demux_id].ECMpids[demux[demux_id].curindex].CAID == demux[demux_id].ECMpids[j].CAID
@@ -627,13 +620,16 @@ void dvbapi_start_descrambling(int32_t demux_id) {
 			if (!demux[demux_id].ECMpids[j].index)
 				demux[demux_id].ECMpids[j].index=dvbapi_get_descindex();
 
-			demux[demux_id].ECMpids[j].checked=1;
+			if (!demux[demux_id].ECMpids[j].checked)
+				demux[demux_id].ECMpids[j].checked=1;
 			demux[demux_id].ECMpids[j].irdeto_curchid=demux[demux_id].ECMpids[demux[demux_id].curindex].irdeto_curchid;
 
 			for (k=0;k<demux[demux_id].STREAMpidcount;k++) {
 				if (!demux[demux_id].ECMpids[j].streams || (demux[demux_id].ECMpids[j].streams & (1 << k))) {
 					dvbapi_set_pid(demux_id, k, demux[demux_id].ECMpids[j].index-1);
 				}
+				else 
+				        dvbapi_set_pid(demux_id, k, -1);
 			}
 
 			streamcount++;
@@ -1997,24 +1993,13 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			if (er->rc < E_NOTFOUND && cfg.dvbapi_requestmode==1 && er->caid!=0 && demux[i].ECMpids[j].checked != 2) { //FOUND
 
                                         int32_t num_pids=0, last_idx=j;
-                                        int8_t switch_pid = (demux[i].pidindex==-1 || demux[i].ECMpids[j].status > demux[i].ECMpids[demux[i].pidindex].status);
 
                                         int32_t t;
                                         for (t=0;t<demux[i].ECMpidcount;t++) {
                                         
                                                 //check this FOUND for higher status:
-                                                if (t!=j && demux[i].ECMpids[t].checked != 2 && 
-                                                                demux[i].ECMpids[j].status >= demux[i].ECMpids[t].status) { //mark index t as low status
+                                                if (t!=j && demux[i].ECMpids[j].status >= demux[i].ECMpids[t].status) { //mark index t as low status
                                                         demux[i].ECMpids[t].checked = 2;
-                                                        int32_t o;
-                                                        for (o = 0; o < MAX_FILTER; o++) { //disable index t filter:
-                                                                if (demux[i].demux_fd[o].fd > 0) {
-                                                                        if (demux[i].demux_fd[o].pid == demux[i].ECMpids[t].ECM_PID) {
-                                                                        		if (!switch_pid || t != demux[i].pidindex)
-                                                                        				dvbapi_stop_filternum(i, o);
-                                                                        }
-                                                                }
-                                                        }
                                                 }
                                                 if (demux[i].ECMpids[t].checked != 2) {
                                                         num_pids++;
@@ -2034,9 +2019,13 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
                                                 }
                                         }
                                         
-                                        if (switch_pid && (memcmp(demux[i].lastcw, er->cw, 16) != 0)) {
-                                                dvbapi_prepare_descrambling_restart(i);
+                                        if (demux[i].pidindex==-1) {
                                                 demux[i].curindex = j;
+                                                dvbapi_start_descrambling(i);
+                                        } else if (demux[i].curindex != j) {
+                                                demux[i].curindex = j;
+                                                //I hope this trick works for all: adjust the index to write the right cw:
+                                                demux[i].ECMpids[j].index = demux[i].ECMpids[demux[i].pidindex].index;
                                                 dvbapi_start_descrambling(i);
                                         }
 			}
