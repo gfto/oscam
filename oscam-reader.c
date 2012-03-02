@@ -44,9 +44,7 @@ void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, ui
 {
 	if (!rdr->ll_entitlements) rdr->ll_entitlements = ll_create("ll_entitlements");
 
-	LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
 	S_ENTITLEMENT *item;
-
 	if(cs_malloc(&item,sizeof(S_ENTITLEMENT), -1)){
 
 		// fill item
@@ -59,7 +57,7 @@ void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, ui
 		item->type = type;
 
 		//add item
-		ll_iter_insert(&itr, item);
+		ll_append(rdr->ll_entitlements, item);
 
 		// cs_debug_mask(D_TRACE, "entitlement: Add caid %4X id %4X %s - %s ", item->caid, item->id, item->start, item->end);
 	}
