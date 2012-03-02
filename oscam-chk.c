@@ -431,8 +431,9 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   if (!er || !rdr)
     return(0);
     
-   struct s_client *cl = rdr->client;
-   if (!cl)
+  //reader active?
+  struct s_client *cl = rdr->client;
+  if (!cl || !rdr->enable)
     return(0);
   
   // if physical reader a card needs to be inserted 
@@ -452,7 +453,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
 	  return (0);
 #endif
 
-  if (!((rdr->grp&cur_cl->grp)))
+  if (!(rdr->grp&cur_cl->grp))
     return(0);
 
   //Schlocke reader-defined function, reader-self-check: 
@@ -495,7 +496,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   }
   
   //Checking ecmlength:
-  if (rdr->ecmWhitelist){
+  if (rdr->ecmWhitelist && er->l){
   	struct s_ecmWhitelist *tmp;
   	struct s_ecmWhitelistIdent *tmpIdent;
   	struct s_ecmWhitelistLen *tmpLen;
