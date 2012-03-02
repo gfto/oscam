@@ -963,7 +963,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 					
           	        LL_ITER it = ll_iter_create(configured_readers);
 	                while ((rdr=ll_iter_next(&it))) {
-	                        if (rdr->enable && (rdr->typ & R_IS_NETWORK) && rdr->card_status==CARD_INSERTED) { //local reader
+	                        if (rdr->enable && !(rdr->typ & R_IS_NETWORK) && rdr->card_status==CARD_INSERTED) { //local reader
 	                                if (matching_reader(er, rdr)) {
                                                 demux[demux_index].ECMpids[n].status = new_status++; //priority
                                                 cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X (localrdr: %s position: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, rdr->label, demux[demux_index].ECMpids[n].status);
