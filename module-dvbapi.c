@@ -952,7 +952,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 	        struct s_reader *rdr;
 	        ECM_REQUEST *er = cs_malloc(&er, sizeof(ECM_REQUEST), 0);
 	                                        
-	        for (n=0; n<demux[demux_index].ECMpidcount; n++) {
+	        for (n=demux[demux_index].ECMpidcount; n>-1; n--) { //maintain pid prio order of the pmt. 
 	                if (demux[demux_index].ECMpids[n].status == -1) //ignore
 	                        continue;
 			        er->caid   = demux[demux_index].ECMpids[n].CAID;
@@ -965,9 +965,9 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 	                while ((rdr=ll_iter_next(&it))) {
 	                        if (rdr->enable && !(rdr->typ & R_IS_NETWORK) && rdr->card_status==CARD_INSERTED) { //local reader
 	                                if (matching_reader(er, rdr)) {
-                                                demux[demux_index].ECMpids[n].status = new_status++; //priority
-                                                cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X (localrdr: %s position: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, rdr->label, demux[demux_index].ECMpids[n].status);
-                                                break;
+										demux[demux_index].ECMpids[n].status = new_status++; //priority
+										cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X (localrdr: %s position: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, rdr->label, demux[demux_index].ECMpids[n].status);
+										break;
                                     }
 							}
                     }
