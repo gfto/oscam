@@ -1241,6 +1241,7 @@ struct s_reader  									//contains device info, reader info and card info
 	time_t			lb_usagelevel_time;				//time for counting ecms, this creates usagelevel
 	struct timeb	lb_last;						//time for oldest reader
 	LLIST			*lb_stat;						//loadbalancer reader statistics
+	CS_MUTEX_LOCK   lb_stat_lock;
 #endif
 
 	AES_ENTRY		*aes_list;						// multi AES linked list

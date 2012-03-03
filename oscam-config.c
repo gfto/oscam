@@ -4989,8 +4989,12 @@ void free_reader(struct s_reader *rdr)
 	clear_ftab(&rdr->ftab);
 
 #ifdef WITH_LB
-	ll_destroy_data(rdr->lb_stat);
-	rdr->lb_stat = NULL;
+	if (rdr->lb_stat) {
+		cs_lock_destroy(&rdr->lb_stat_lock);
+		ll_destroy_data(rdr->lb_stat);
+		rdr->lb_stat = NULL;
+	}
+
 #endif
 	add_garbage(rdr);
 }

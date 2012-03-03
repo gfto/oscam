@@ -15,6 +15,8 @@
 #define LB_LOWEST_USAGELEVEL 3
 #define LB_LOG_ONLY 10
 
+#define DEFAULT_LOCK_TIMEOUT 1000
+
 static int32_t stat_load_save;
 static struct timeb nulltime;
 static time_t last_housekeeping = 0;
@@ -127,8 +129,10 @@ void load_stat_from_file()
 			}
 			
 			if (rdr != NULL && strcmp(buf, rdr->label) == 0) {
-				if (!rdr->lb_stat)
+				if (!rdr->lb_stat) {
 					rdr->lb_stat = ll_create("lb_stat");
+					cs_lock_create(&rdr->lb_stat_lock, DEFAULT_LOCK_TIMEOUT, rdr->label);
+				}
 					
 				//Duplicate check:
 				if (cs_dblevel == 0xFF) //Only with full debug for faster reading...
@@ -219,11 +223,14 @@ READER_STAT *get_fastest_stat(uint16_t caid, uint32_t prid, uint16_t srvid, uint
 /**
  * get statistic values for reader ridx and caid/prid/srvid/ecmlen
  **/
-READER_STAT *get_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16_t srvid, uint16_t chid, int16_t ecmlen)
+READER_STAT *get_stat_lock(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16_t srvid, uint16_t chid, int16_t ecmlen, int8_t lock)
 {
-	if (!rdr->lb_stat)
+	if (!rdr->lb_stat) {
 		rdr->lb_stat = ll_create("lb_stat");
+		cs_lock_create(&rdr->lb_stat_lock, DEFAULT_LOCK_TIMEOUT, rdr->label);
+	}
 
+	if (lock) cs_readlock(&rdr->lb_stat_lock);
 	prid = get_prid(caid, prid);
 	
 	LL_ITER it = ll_iter_create(rdr->lb_stat);
@@ -240,12 +247,24 @@ READER_STAT *get_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16
 			}
 		}
 	}
+	if (lock) cs_readunlock(&rdr->lb_stat_lock);
 	
 	//Move stat to list start for faster access:
-	if (i > 10 && stat)
+	if (i > 10 && stat) {
+		if (lock) cs_writelock(&rdr->lb_stat_lock);
 		ll_iter_move_first(&it);
+		if (lock) cs_writeunlock(&rdr->lb_stat_lock);
+	}
 	
 	return stat;
+}
+
+/**
+ * get statistic values for reader ridx and caid/prid/srvid/ecmlen
+ **/
+READER_STAT *get_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16_t srvid, uint16_t chid, int16_t ecmlen)
+{
+	return get_stat_lock(rdr, caid, prid, srvid, chid, ecmlen, 1);
 }
 
 /**
@@ -256,6 +275,7 @@ int32_t remove_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16_t
 	if (!rdr->lb_stat)
 		return 0;
 
+	cs_writelock(&rdr->lb_stat_lock);
 	int32_t c = 0;
 	LL_ITER it = ll_iter_create(rdr->lb_stat);
 	READER_STAT *stat;
@@ -267,6 +287,7 @@ int32_t remove_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16_t
 			}
 		}
 	}
+	cs_writeunlock(&rdr->lb_stat_lock);
 	return c;
 }
 
@@ -321,6 +342,7 @@ void save_stat_to_file_thread()
 	while ((rdr=ll_iter_next(&itr))) {
 		
 		if (rdr->lb_stat) {
+			cs_readlock(&rdr->lb_stat_lock);
 			LL_ITER it = ll_iter_create(rdr->lb_stat);
 			READER_STAT *stat;
 			while ((stat = ll_iter_next(&it))) {
@@ -341,6 +363,7 @@ void save_stat_to_file_thread()
 					stat->srvid, stat->chid, stat->time_avg, stat->ecm_count, stat->last_received, stat->fail_factor, stat->ecmlen);
 				count++;
 			}
+			cs_readunlock(&rdr->lb_stat_lock);
 		}
 	}
 	
@@ -375,7 +398,14 @@ void inc_fail(READER_STAT *stat)
 
 READER_STAT *get_add_stat(struct s_reader *rdr, ECM_REQUEST *er, uint32_t prid)
 {
-	READER_STAT *stat = get_stat(rdr, er->caid, prid, er->srvid, er->chid, er->l);
+	if (!rdr->lb_stat) {
+		rdr->lb_stat = ll_create("lb_stat");
+		cs_lock_create(&rdr->lb_stat_lock, DEFAULT_LOCK_TIMEOUT, rdr->label);
+	}
+
+	cs_writelock(&rdr->lb_stat_lock);
+
+	READER_STAT *stat = get_stat_lock(rdr, er->caid, prid, er->srvid, er->chid, er->l, 0);
 	if (!stat) {
 		if(cs_malloc(&stat,sizeof(READER_STAT), -1)){
 			stat->caid = er->caid;
@@ -390,7 +420,9 @@ READER_STAT *get_add_stat(struct s_reader *rdr, ECM_REQUEST *er, uint32_t prid)
 
 	if (stat->ecm_count < 0)
 		stat->ecm_count=0;
-		
+
+	cs_writeunlock(&rdr->lb_stat_lock);
+
 	return stat;
 }
 
@@ -607,6 +639,7 @@ int32_t clean_stat_by_rc(struct s_reader *rdr, int8_t rc, int8_t inverse)
 {
 	int32_t count = 0;
 	if (rdr && rdr->lb_stat) {
+		cs_writelock(&rdr->lb_stat_lock);
 		READER_STAT *stat;
 		LL_ITER itr = ll_iter_create(rdr->lb_stat);
 		while ((stat = ll_iter_next(&itr))) {
@@ -615,6 +648,7 @@ int32_t clean_stat_by_rc(struct s_reader *rdr, int8_t rc, int8_t inverse)
 				count++;
 			}
 		}
+		cs_writeunlock(&rdr->lb_stat_lock);
 	}
 	return count;
 }
@@ -635,6 +669,7 @@ int32_t clean_stat_by_id(struct s_reader *rdr, uint32_t caid, uint32_t provid, u
 {
 	int32_t count = 0;
 	if (rdr && rdr->lb_stat) {
+		cs_writelock(&rdr->lb_stat_lock);
 		READER_STAT *stat;
 		LL_ITER itr = ll_iter_create(rdr->lb_stat);
 		while ((stat = ll_iter_next(&itr))) {
@@ -645,9 +680,10 @@ int32_t clean_stat_by_id(struct s_reader *rdr, uint32_t caid, uint32_t provid, u
 					stat->ecmlen == (int16_t)len) {
 				ll_iter_remove_data(&itr);
 				count++;
-				return count; // because the entry should unique we can left here
+				break; // because the entry should unique we can left here
 			}
 		}
+		cs_writeunlock(&rdr->lb_stat_lock);
 	}
 	return count;
 }
@@ -1080,15 +1116,17 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		{
 			cs_debug_mask(D_TRACE, "loadbalancer: NO MATCHING READER FOUND, reopen last valid:");	
 			for(ea = er->matching_rdr; ea; ea = ea->next) {
-				rdr = ea->reader;
+				if (!(ea->status&READER_ACTIVE)) {
+					rdr = ea->reader;
    	     			stat = get_stat(rdr, er->caid, prid, er->srvid, er->chid, er->l);
-   		     		if (stat && stat->last_received+get_reopen_seconds(stat) < current_time) {
+   		     		if (stat && stat->rc != E_FOUND && stat->last_received+get_reopen_seconds(stat) < current_time) {
 	   	     			if (!ea->status && nreaders) {
    	     					ea->status |= READER_ACTIVE;
    	     					nreaders--;
-					}
-        			n++;
-        			cs_debug_mask(D_TRACE, "loadbalancer: reopened reader %s", rdr->label);
+   	     					cs_debug_mask(D_TRACE, "loadbalancer: reopened reader %s", rdr->label);
+	   	     			}
+	   	     			n++;
+   		     		}
 				}
 			}
 			cs_debug_mask(D_TRACE, "loadbalancer: reopened %d readers", n);
@@ -1104,17 +1142,19 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				cs_debug_mask(D_TRACE, "loadbalancer: no best reader found, reopening other readers");	
 #endif	
 			for(ea = er->matching_rdr; ea && nreaders; ea = ea->next) {
-				rdr = ea->reader;
-				stat = get_stat(rdr, er->caid, prid, er->srvid, er->chid, er->l);
+				if (!(ea->status&READER_ACTIVE)) {
+					rdr = ea->reader;
+					stat = get_stat(rdr, er->caid, prid, er->srvid, er->chid, er->l);
 
-				if (stat && stat->rc != E_FOUND) { //retrylimit reached:
-					if (cfg.lb_reopen_mode || stat->last_received+get_reopen_seconds(stat) < current_time) { //Retrying reader every (900/conf) seconds
-						stat->last_received = current_time;
-						if (!ea->status) {
-							ea->status |= READER_ACTIVE;
-							nreaders--;
+					if (stat && stat->rc != E_FOUND) { //retrylimit reached:
+						if (cfg.lb_reopen_mode || stat->last_received+get_reopen_seconds(stat) < current_time) { //Retrying reader every (900/conf) seconds
+							stat->last_received = current_time;
+							if (!ea->status) {
+								ea->status |= READER_ACTIVE;
+								nreaders--;
+								cs_debug_mask(D_TRACE, "loadbalancer: retrying reader %s (fail %d)", rdr->label, stat->fail_factor);
+							}
 						}
-						cs_debug_mask(D_TRACE, "loadbalancer: retrying reader %s (fail %d)", rdr->label, stat->fail_factor);
 					}
 				}
 			}
@@ -1185,6 +1225,7 @@ void housekeeping_stat_thread()
     LL_ITER itr = ll_iter_create(configured_readers);
     while ((rdr = ll_iter_next(&itr))) {
 		if (rdr->lb_stat) {
+			cs_writelock(&rdr->lb_stat_lock);
 			LL_ITER it = ll_iter_create(rdr->lb_stat);
 			READER_STAT *stat;
 			while ((stat=ll_iter_next(&it))) {
@@ -1194,6 +1235,7 @@ void housekeeping_stat_thread()
 					cleaned++;
 				}
 			}
+			cs_writeunlock(&rdr->lb_stat_lock);
 		}
 	}
 	cs_debug_mask(D_TRACE, "loadbalancer cleanup: removed %d entries", cleaned);
@@ -1308,9 +1350,10 @@ int8_t add_to_ecmlen(struct s_reader *rdr, READER_STAT *stat)
 
 void update_ecmlen_from_stat(struct s_reader *rdr)
 {
-	if (!rdr)
+	if (!rdr || &rdr->lb_stat)
 		return;
 
+	cs_readlock(&rdr->lb_stat_lock);
 	LL_ITER it = ll_iter_create(rdr->lb_stat);
 	READER_STAT *stat;
 	while ((stat = ll_iter_next(&it))) {
@@ -1319,6 +1362,7 @@ void update_ecmlen_from_stat(struct s_reader *rdr)
 				add_to_ecmlen(rdr, stat);
 		}
 	}
+	cs_readunlock(&rdr->lb_stat_lock);
 }
 
 #endif
