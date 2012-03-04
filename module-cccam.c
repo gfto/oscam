@@ -2866,6 +2866,7 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 
 int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 	int32_t n;
+	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
 
 	if (buf == NULL || l <= 0)
 		return -1;
@@ -2879,8 +2880,19 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 		struct cc_data *cc = cl->cc;
 		if (cc && cc->nok_message)
 			cs_log("%s connection closed by %s. Reason: %s", getprefix(), remote_txt(), cc->nok_message);
-		else
+		else {
 			cs_log("%s connection closed by %s.", getprefix(), remote_txt());
+			if (rdr) {
+				cc_cli_close(cl, TRUE);
+			} else {
+				cs_writelock(&cc->cards_busy);
+				cs_disconnect_client(cl);
+				cs_writeunlock(&cc->cards_busy);
+			}
+			cs_sleepms(150);
+			n = -1;
+			return n;
+		}
 		n = -1;
 	} else if (n < 4) {
 		cs_log("%s packet to small (%d bytes)", getprefix(), n);
@@ -2888,14 +2900,14 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 	} else {
 		// parse it and write it back, if we have received something of value
 		n = cc_parse_msg(cl, buf, n);
-    cl->last = time((time_t *) 0);
+		// cl->last = time((time_t *) 0);
 	}
 
 	if (n == -1) {
 		if (cl->typ != 'c')
 			cc_cli_close(cl, TRUE);
 	}
-
+	cl->last = time((time_t *) 0);
 	return n;
 }
 
