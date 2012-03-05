@@ -213,20 +213,21 @@ static int32_t get_prov_index(struct s_reader * rdr, const uint8_t *provid)	//re
 
 static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
-	int seca_version = reader->card_atr[9]&0X0F; //Get seca cardversion from cardatr
-	if ((seca_version == 7) || (seca_version == 10)) { // we only proces V7 or V10 cards from CDS NL  
-		int ecm_type = seca_version; //assume ecm type same as card in reader
-		if (er->ecm[8] == 0x00) { //this is a mediaguard3 ecm request
-			ecm_type = 10; //flag it!
-		}
-		if ((er->ecm[8] == 0x10) && (er->ecm[9] == 0x01)) { //this is a seca2 ecm request
-			ecm_type = 7; //flag it!
-		}
-		if (ecm_type != seca_version){ //only accept ecmrequest for right card!
-			return E_CORRUPT; //loadbalancer fix for CDS NL simulcrypt
+	if (er->ecm[3] == 0x00 && er->ecm[4] == 0x6a) { //provid 006A = CDNL uses seca2/seca3 simulcrypt on same caid 
+		int seca_version = reader->card_atr[9]&0X0F; //Get seca cardversion from cardatr
+		if ((seca_version == 7) || (seca_version == 10)) { // we only proces V7 or V10 cards from CDS NL  
+			int ecm_type = seca_version; //assume ecm type same as card in reader
+			if (er->ecm[8] == 0x00) { //this is a mediaguard3 ecm request
+				ecm_type = 10; //flag it!
+			}
+			if ((er->ecm[8] == 0x10) && (er->ecm[9] == 0x01)) { //this is a seca2 ecm request
+				ecm_type = 7; //flag it!
+			}
+			if (ecm_type != seca_version){ //only accept ecmrequest for right card!
+				return E_CORRUPT; //loadbalancer fix for CDS NL simulcrypt
+			}
 		}
 	}
-  
   def_resp;
   unsigned char ins3c[] = { 0xc1,0x3c,0x00,0x00,0x00 }; // coding cw
   unsigned char ins3a[] = { 0xc1,0x3a,0x00,0x00,0x10 }; // decoding cw
