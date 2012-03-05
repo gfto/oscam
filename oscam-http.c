@@ -1628,7 +1628,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 	if(!apicall) setActiveMenu(vars, MNU_READERS);
 
 #ifdef WITH_LB
-	char *stxt[]={"found", "cache1", "cache2", "emu",
+	char *stxt[]={"found", "cache1", "cache2", "cache3",
 			"not found", "timeout", "sleeping",
 			"fake", "invalid", "corrupt", "no card", "expdate",
 			"disabled", "stopped"};

@@ -143,15 +143,6 @@ typedef enum {
 } cc_cmd0c_mode;
 
 
-struct cc_extended_ecm_idx {
-	uint8_t send_idx;
-	uint16_t ecm_idx;
-	struct cc_card *card;
-	struct cc_srvid srvid;
-	uint8_t free_card;
-	struct timeb	tps;
-} EXTENDED_ECM_IDX;
-
 struct cc_data {
 	uint8_t g_flag;
 	char *prefix;
@@ -216,7 +207,6 @@ struct cc_data {
 		
 	//Extended Mode for SPECIAL clients:
 	uint8_t extended_mode;
-	LLIST *extended_ecm_idx;
 	
 	//stats:
 	int32_t num_hop1;
@@ -239,7 +229,6 @@ int32_t cc_get_nxt_ecm(struct s_client *cl);
 int32_t cc_send_pending_emms(struct s_client *cl);
 void cc_rc4_crypt(struct cc_crypt_block *block, uint8_t *data, int32_t len,
 		cc_crypt_mode_t mode);
-void free_extended_ecm_idx(struct cc_data *cc);
 void cc_free_card(struct cc_card *card);
 int32_t cc_UA_valid(uint8_t *ua);
 void cc_UA_cccam2oscam(uint8_t *in, uint8_t *out, uint16_t caid);
@@ -252,6 +241,9 @@ void cc_SA_oscam2cccam(uint8_t *in, uint8_t *out);
 void cc_free_cardlist(LLIST *card_list, int32_t destroy_list);
 void cc_update_nodeid();
 void set_card_timeout(struct cc_card *card);
+
+extern struct ecm_request_t	*ecmcwcache;
+extern CS_MUTEX_LOCK ecmcache_lock;
 
 #endif
 #endif /* MODULECCCAM_H_ */

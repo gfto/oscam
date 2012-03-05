@@ -964,7 +964,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			stat = get_stat(rdr, er->caid, prid, er->srvid, er->chid, er->l);
 			if (!stat) {
 				cs_debug_mask(D_TRACE, "loadbalancer: starting statistics for reader %s", rdr->label);
-				add_stat(rdr, er, 1, -1);
 				ea->status |= READER_ACTIVE; //no statistics, this reader is active (now) but we need statistics first!
 				new_stats = 1;
 				nreaders--;
