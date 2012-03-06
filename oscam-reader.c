@@ -388,6 +388,9 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 	memcpy(&cl->ecmtask[n], er, sizeof(ECM_REQUEST));
 	cl->ecmtask[n].matching_rdr = NULL; //This avoids double free of matching_rdr!
+#ifdef CS_CACHEEX
+	cl->ecmtask[n].csp_lastnodes = NULL; //This avoids double free of csp_lastnodes!
+#endif
 	cl->ecmtask[n].parent = er;
 
 	if( reader->typ == R_NEWCAMD )

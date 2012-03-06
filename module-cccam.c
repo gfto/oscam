@@ -1882,14 +1882,59 @@ static void chk_peer_node_for_oscam(struct cc_data *cc)
 }
 
 #ifdef CS_CACHEEX
+int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
+{
+	struct cc_data *cc = cl->cc;
+	if (!cl->cc) {
+		if (cl->reader && !cl->reader->tcp_connected)
+			return 1;
+		return 0;
+	}
+
+	//check max 10 nodes to push:
+	if (ll_count(er->csp_lastnodes) >= 10) {
+		cs_debug_mask(D_TRACE, "cacheex: nodelist reached 10 nodes, no push");
+		return 0;
+	}
+
+	//search existing peer nodes:
+	LL_ITER it = ll_iter_create(er->csp_lastnodes);
+	uint8_t *node;
+	while ((node = ll_iter_next(&it))) {
+		cs_debug_mask(D_TRACE, "cacheex: check node %llX == %llX ?", *(uint64_t*)node, *(uint64_t*)cc->peer_node_id);
+		if (memcmp(node, cc->peer_node_id, 8) == 0) {
+			break;
+		}
+	}
+
+	//node found, so we got it from there, do not push:
+	if (node) {
+		cs_debug_mask(D_TRACE,
+				"cacheex: node %llX found in list => skip push!", *(uint64_t*)node);
+		return 0;
+	}
+
+	return 1;
+}
+
 int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 {
-	if (!cl->udp_fd) return(-1);
-	if (cl->reader)
-		cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
 	int8_t rc = (er->rc<E_NOTFOUND)?E_FOUND:er->rc;
 	if (rc != E_FOUND) return -1; //Maybe later we could support other rcs
-	int32_t size = 20 + sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw);
+
+	time_t now = time((time_t*)0);
+	if (cl->reader) {
+		if (!cl->reader->tcp_connected)
+			cc_cli_connect(cl);
+		cl->reader->last_s = cl->reader->last_g = now;
+	}
+	cl->last = now;
+
+	struct cc_data *cc = cl->cc;
+	if (!cc || !cl->udp_fd) return(-1);
+
+	int32_t size = 20 + sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw) + sizeof(uint8_t) +
+			(ll_count(er->csp_lastnodes)+1)*8; //lastnodes+ownnode
 	uint8_t *ecmbuf = cs_malloc(&ecmbuf, size, 0);
 
 	// build ecm message
@@ -1905,9 +1950,35 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	ecmbuf[13] = 0;
 	ecmbuf[14] = rc;
 
-	memcpy(ecmbuf + 20, er->ecmd5, sizeof(er->ecmd5)); //16
-	memcpy(ecmbuf + 20 + sizeof(er->ecmd5), &er->csp_hash, sizeof(er->csp_hash)); // 4
-	memcpy(ecmbuf + 20 + sizeof(er->ecmd5) + sizeof(er->csp_hash), er->cw, sizeof(er->cw)); //16
+	uint8_t *ofs = ecmbuf + 20;
+
+	//Write oscam ecmd5 hash:
+	memcpy(ofs, er->ecmd5, sizeof(er->ecmd5)); //16
+	ofs += sizeof(er->ecmd5);
+
+	//Write CSP hashcode:
+	memcpy(ofs, &er->csp_hash, sizeof(er->csp_hash)); // 4
+	ofs += sizeof(er->csp_hash);
+
+	//Write cw:
+	memcpy(ofs, er->cw, sizeof(er->cw)); //16
+	ofs += sizeof(er->cw);
+
+	//Write count of lastnodes:
+	*ofs = ll_count(er->csp_lastnodes)+1;
+	ofs ++;
+
+	//Write own node:
+	memcpy(ofs, cc->node_id, 8);
+	ofs+=8;
+
+	//Write lastnodes:
+	LL_ITER it = ll_iter_create(er->csp_lastnodes);
+	uint8_t *node;
+	while ((node=ll_iter_next(&it))) {
+		memcpy(ofs, node, 8);
+		ofs+=8;
+	}
 
 	int32_t res = cc_cmd_send(cl, ecmbuf, size, MSG_CACHE_PUSH);
 	free(ecmbuf);
@@ -1916,6 +1987,9 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 
 void cc_cache_push_in(struct s_client *cl, uchar *buf)
 {
+	struct cc_data *cc = cl->cc;
+	if (!cc) return;
+
 	if (cl->reader)
 		cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
 	if (buf[14] >= E_NOTFOUND) //Maybe later we could support other rcs
@@ -1935,9 +2009,47 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 	er->rc = E_FOUND;
 
 	er->l = 0;
-	memcpy(er->ecmd5, buf + 20, sizeof(er->ecmd5));
-	memcpy(&er->csp_hash, buf + 20 + sizeof(er->ecmd5), sizeof(er->csp_hash));
-	memcpy(er->cw, buf + 20 + sizeof(er->ecmd5) + sizeof(er->csp_hash), sizeof(er->cw));
+
+	uint8_t *ofs = buf+20;
+
+	//Read oscam ecmd:
+	memcpy(er->ecmd5, ofs, sizeof(er->ecmd5));
+	ofs += sizeof(er->ecmd5);
+
+	//Read CSP hashcode:
+	memcpy(&er->csp_hash, ofs, sizeof(er->csp_hash));
+	ofs += sizeof(er->csp_hash);
+
+	//Read cw:
+	memcpy(er->cw, ofs, sizeof(er->cw));
+	ofs += sizeof(er->cw);
+
+	//Read lastnode count:
+	uint8_t count = *ofs;
+	ofs++;
+
+	//Read lastnodes:
+	uint8_t *data;
+	er->csp_lastnodes = ll_create("csp_lastnodes");
+	if (count > 10) {
+		cs_debug_mask(D_TRACE, "cacheex: received %d nodes (max=10), ignored!", (int32_t)count);
+		count = 0;
+	}
+	while (count) {
+		data = cs_malloc(&data, 8, 0);
+		memcpy(data, ofs, 8);
+		ofs+=8;
+		ll_append(er->csp_lastnodes, data);
+		count--;
+	}
+
+	//for compatibility: add peer node if no node received:
+	if (!ll_count(er->csp_lastnodes)) {
+		data = cs_malloc(&data, 8, 0);
+		memcpy(data, cc->peer_node_id, 8);
+		ll_append(er->csp_lastnodes, data);
+		cs_debug_mask(D_TRACE, "cacheex: added missing remote node id %llX", *(uint64_t*)data);
+	}
 
 	cs_add_cache(cl, er, 0);
 }
@@ -3421,6 +3533,11 @@ void cc_cleanup(struct s_client *cl) {
 	cc_free(cl);
 }
 
+uint8_t *cc_get_cccam_node_id()
+{
+	return cc_node_id;
+}
+
 void cc_update_nodeid()
 {
 	//Partner Detection:
@@ -3498,6 +3615,7 @@ void module_cccam(struct s_module *ph) {
 	ph->c_card_info = cc_card_info;
 #ifdef CS_CACHEEX
 	ph->c_cache_push=cc_cache_push_out;
+	ph->c_cache_push_chk=cc_cache_push_chk;
 #endif
 
 	cc_update_nodeid();

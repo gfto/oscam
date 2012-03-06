@@ -108,6 +108,16 @@ extern struct s_cacheex_matcher *is_cacheex_matcher_matching(ECM_REQUEST *er, EC
 extern void cacheex_matcher_read();
 #endif
 
+#ifdef CS_CACHEEX
+#if defined MODULE_CAMD35 || defined MODULE_CAMD35_TCP
+extern void cacheex_update_peer_id();
+extern void cacheex_set_peer_id(uint8_t *id);
+#endif
+#ifdef MODULE_CCCAM
+extern uint8_t *cc_get_cccam_node_id();
+#endif
+#endif
+
 #ifdef QBOXHD
 extern void qboxhd_led_blink(int32_t color, int32_t duration);
 #endif

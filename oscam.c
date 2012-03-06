@@ -573,6 +573,10 @@ static void free_ecm(ECM_REQUEST *ecm) {
 		add_garbage(ea);
 		ea = nxt;
 	}
+#ifdef CS_CACHEEX
+	ll_destroy_data(ecm->csp_lastnodes);
+	ecm->csp_lastnodes = NULL;
+#endif
 	add_garbage(ecm);
 }
 
@@ -1812,6 +1816,10 @@ void cs_cache_push(ECM_REQUEST *er)
 						&& chk_srvid(cl, er) //Service-check
 						&& (chk_caid(er->caid, &cl->ctab) > 0))  //Caid-check
 				{
+					if(ph[cl->ctyp].c_cache_push_chk)
+						if (!ph[cl->ctyp].c_cache_push_chk(cl, er))
+							continue;
+
 					cs_cache_push_to_client(cl, er);
 				}
 			}
@@ -1828,6 +1836,11 @@ void cs_cache_push(ECM_REQUEST *er)
 				&& chk_srvid(cl, er) //Service-check
 				&& chk_ctab(er->caid, &rdr->ctab))  //Caid-check
 			{
+				// cc-nodeid-list-check
+				if(rdr->ph.c_cache_push_chk)
+					if (!rdr->ph.c_cache_push_chk(cl, er))
+						continue;
+
 				cs_cache_push_to_client(cl, er);
 			}
 		}
@@ -1937,17 +1950,17 @@ static void distribute_ecm(ECM_REQUEST *er, int32_t rc)
 }
 
 #ifdef CS_CACHEEX
-void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
+static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 {
 	if (!cl)
-		return;
+		return 0;
 	if (!csp && cl->reader && !cl->reader->cacheex==2) //from reader
-		return;
+		return 0;
 	if (!csp && cl->account && !cl->account->cacheex==3) //from user
-		return;
+		return 0;
 	if (!csp && !cl->reader && !cl->account) { //not active!
 		cs_debug_mask(D_TRACE, "CACHEX received, but disabled for %s", username(cl));
-		return;
+		return 0;
 	}
 
 	uint8_t i, c;
@@ -1956,7 +1969,7 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 		if (er->cw[i + 3] != c) {
 			cs_ddump_mask(D_TRACE, er->cw, 16,
 					"push received cw with chksum error from %s", csp?"csp":username(cl));
-			return;
+			return 0;
 		}
 	}
 
@@ -2006,12 +2019,11 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 	}
 	else {
 		if(er->rc < ecm->rc) {
-			er->ecmcacheptr = ecm;
-			er->client = ecm->client;
-			write_ecm_answer(cl->reader, er, er->rc, er->rcEx, er->cw, ecm->msglog);
-			//distribute_ecm(ecm, er->rc);
-			//pthread_kill(timecheck_thread, OSCAM_SIGNAL_WAKEUP);
-			cs_cache_push(er);  //cascade push!
+			if (ecm->csp_lastnodes == NULL) {
+				ecm->csp_lastnodes = er->csp_lastnodes;
+				er->csp_lastnodes = NULL;
+			}
+			write_ecm_answer(cl->reader, ecm, er->rc, er->rcEx, er->cw, ecm->msglog);
 
 			cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 1);
 			cl->cwcacheexgot++;
@@ -2027,9 +2039,17 @@ void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 			cs_debug_mask(D_TRACE, "ignored duplicate pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
 				er->caid, er->prid, er->srvid, er->l, htons(er->checksum),  csp?"csp":username(cl));
 		}
-		free_ecm(er);
+		return 0;
 	}
+	return 1;
 }
+
+void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
+{
+	if (!cs_add_cache_int(cl, er, csp))
+		free_ecm(er);
+}
+
 #endif
 
 
@@ -4572,6 +4592,17 @@ int32_t main (int32_t argc, char *argv[])
   init_provid();
 
   start_garbage_collector(gbdb);
+
+  //set cacheex cccam+camd35 node id:
+#ifdef CS_CACHEEX
+#if defined MODULE_CAMD35 || defined MODULE_CAMD35_TCP
+#ifdef MODULE_CCCAM
+  cacheex_set_peer_id(cc_get_cccam_node_id());
+#else
+  cacheex_update_peer_id();
+#endif
+#endif
+#endif
 
   init_len4caid();
 #ifdef IRDETO_GUESSING

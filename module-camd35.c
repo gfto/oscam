@@ -14,11 +14,10 @@
 
 #define REQ_SIZE	584		// 512 + 20 + 0x34
 
-static int32_t camd35_send(uchar *buf, int32_t buflen)
+static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen)
 {
 	int32_t l;
 	unsigned char rbuf[REQ_SIZE+15+4], *sbuf = rbuf + 4;
-	struct s_client *cl = cur_client();
 
 	if (!cl->udp_fd) return(-1);
 
@@ -253,9 +252,9 @@ static void camd35_request_emm(ECM_REQUEST *er)
 		mbuf[20] = mbuf[39] = mbuf[40] = mbuf[47] = mbuf[49] = 1;
 
 	memcpy(mbuf + 10, mbuf + 20, 2);
-	camd35_send(mbuf, 0);		// send with data-len 111 for camd3 > 3.890
+	camd35_send(cl, mbuf, 0);		// send with data-len 111 for camd3 > 3.890
 	mbuf[1]++;
-	camd35_send(mbuf, 0);		// send with data-len 112 for camd3 < 3.890
+	camd35_send(cl, mbuf, 0);		// send with data-len 112 for camd3 < 3.890
 }
 
 static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
@@ -306,7 +305,7 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			buf[1] = 0;
 		}
 	}
-	camd35_send(buf, 0);
+	camd35_send(client, buf, 0);
 	camd35_request_emm(er);
 
 	if (er->src_data) {
@@ -348,10 +347,8 @@ static void camd35_server_init(struct s_client * client) {
 	client->is_udp = (ph[client->ctyp].type == MOD_CONN_UDP);
 }
 
-static int32_t tcp_connect()
+static int32_t tcp_connect(struct s_client *cl)
 {
-	struct s_client *cl = cur_client();
-
 	if (cl->is_udp) {
 	   if (!cl->udp_sa.sin_addr.s_addr || cl->reader->last_s-cl->reader->last_g > cl->reader->tcp_rto)
 	      if (!hostResolve(cl->reader)) return 0;
@@ -380,6 +377,86 @@ static int32_t tcp_connect()
 }
 
 #ifdef CS_CACHEEX
+uint8_t camd35_node_id[8];
+
+void cacheex_update_peer_id()
+{
+	int8_t i;
+	for (i=0; i<8; i++)
+		camd35_node_id[i] = fast_rnd();
+}
+
+void cacheex_set_peer_id(uint8_t *id)
+{
+	memcpy(camd35_node_id, id, 8);
+}
+
+/**
+ * send own id
+ */
+void camd35_cache_push_id_request(struct s_client *cl) {
+	uint8_t rbuf[20+8];
+	memset(rbuf, sizeof(rbuf), 0);
+	rbuf[0] = 0x3e;
+	memcpy(rbuf+20, camd35_node_id, 8);
+	cs_debug_mask(D_TRACE, "cacheex: sending id request to %s", username(cl));
+	camd35_send(cl, rbuf, 8); //send adds +20
+}
+
+/**
+ * store received remote id
+ */
+void camd35_cache_push_id_answer(struct s_client *cl, uint8_t *buf) {
+	memcpy(cl->ncd_skey, buf+20, 8);
+	cl->ncd_skey[8] = 1;
+	cs_debug_mask(D_TRACE, "cacheex: received id answer from %s: %llX", username(cl), *(uint64_t*)cl->ncd_skey);
+}
+
+
+int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
+{
+	//check max 10 nodes to push:
+	if (ll_count(er->csp_lastnodes) >= 10) {
+		cs_debug_mask(D_TRACE, "cacheex: nodelist reached 10 nodes, no push");
+		return 0;
+	}
+
+	if (cl->reader) {
+		tcp_connect(cl);
+	}
+	if (!cl->udp_fd) return 0;
+
+	//Update remote id:
+	if (!cl->ncd_skey[8] && !cl->ncd_skey[9]) {
+		cl->ncd_skey[9] = 1; //remeber request
+		camd35_cache_push_id_request(cl);
+	}
+
+	if (!cl->ncd_skey[8]) { // We have no remote node, so push out
+		return 1;
+	}
+
+	uint8_t *remote_node = cl->ncd_skey;
+
+	//search existing peer nodes:
+	LL_ITER it = ll_iter_create(er->csp_lastnodes);
+	uint8_t *node;
+	while ((node = ll_iter_next(&it))) {
+		cs_debug_mask(D_TRACE, "cacheex: check node %llX == %llX ?", *(uint64_t*)node, *(uint64_t*)remote_node);
+		if (memcmp(node, remote_node, 8) == 0) {
+			break;
+		}
+	}
+
+	//node found, so we got it from there, do not push:
+	if (node) {
+		cs_debug_mask(D_TRACE,
+				"cacheex: node %llX found in list => skip push!", *(uint64_t*)node);
+		return 0;
+	}
+
+	return 1;
+}
 int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 {
 	int8_t rc = (er->rc<E_NOTFOUND)?E_FOUND:er->rc;
@@ -387,36 +464,61 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 
 	time_t now = time((time_t*)0);
 	if (cl->reader) {
-		tcp_connect();
+		tcp_connect(cl);
 		cl->reader->last_s = cl->reader->last_g = now;
 	}
 	if (!cl->udp_fd) return(-1);
 	cl->last = now;
 
+	uint32_t size = sizeof(er->ecmd5)+sizeof(er->csp_hash)+sizeof(er->cw)+sizeof(uint8_t) +
+			(ll_count(er->csp_lastnodes)+1)*8;
+	unsigned char *buf = cs_malloc(&buf, size+20, 0); //camd35_send() adds +20
 
-	unsigned char *buf = cs_malloc(&buf, 20 + er->l + 16 + 64, 0);
-
-	memset(buf, 0, 20);
-	memset(buf + 20, 0xff, er->l+15);
 	buf[0]=0x3f; //New Command: Cache-push
+	buf[1]=size & 0xff;
+	buf[2]=size >> 8;
 	buf[3]=rc;
+
 	i2b_buf(2, er->srvid, buf + 8);
 	i2b_buf(2, er->caid, buf + 10);
 	i2b_buf(4, er->prid, buf + 12);
 	i2b_buf(2, er->idx, buf + 16); // Not relevant...?
 
-	memcpy(buf + 20, er->ecmd5, sizeof(er->ecmd5)); //16
-	memcpy(buf + 20 + sizeof(er->ecmd5), &er->csp_hash, sizeof(er->csp_hash)); //4
-	memcpy(buf + 20 + sizeof(er->ecmd5) + sizeof(er->csp_hash), er->cw, sizeof(er->cw)); //16
+	uint8_t *ofs = buf+20;
 
-	int32_t buflen = sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw);
-	buf[1]=buflen & 0xff;
-	buf[2]=buflen >> 8;
+	//write oscam ecmd5:
+	memcpy(ofs, er->ecmd5, sizeof(er->ecmd5)); //16
+	ofs += sizeof(er->ecmd5);
 
-	int32_t res = camd35_send(buf, buflen);
+	//write csp hashcode:
+	memcpy(ofs, &er->csp_hash, sizeof(er->csp_hash)); //4
+	ofs += sizeof(er->csp_hash);
+
+	//write cw:
+	memcpy(ofs, er->cw, sizeof(er->cw)); //16
+	ofs += sizeof(er->cw);
+
+	//write node count:
+	*ofs = ll_count(er->csp_lastnodes)+1;
+	ofs++;
+
+	//write own node:
+	memcpy(ofs, camd35_node_id, 8);
+	ofs += 8;
+
+	//write other nodes:
+	LL_ITER it = ll_iter_create(er->csp_lastnodes);
+	uint8_t *node;
+	while ((node=ll_iter_next(&it))) {
+		memcpy(ofs, node, 8);
+		ofs+=8;
+	}
+
+	int32_t res = camd35_send(cl, buf, size);
 	free(buf);
 	return res;
 }
+
 
 void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 {
@@ -429,9 +531,9 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 	cl->last = now;
 
 	ECM_REQUEST *er;
-	int16_t testlen = buf[1] | (buf[2] << 8);
-	if (testlen != sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw)) {
-		cs_log("%s received old cash-push format! data ignored!", username(cl));
+	uint16_t size = buf[1] | (buf[2] << 8);
+	if (size < sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw)) {
+		cs_log("cacheex: %s received old cash-push format! data ignored!", username(cl));
 		return;
 	}
 
@@ -445,12 +547,71 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 	er->rc = buf[3];
 
 	er->l = 0;
-	memcpy(er->ecmd5, buf + 20, sizeof(er->ecmd5)); //16
-	memcpy(&er->csp_hash, buf + 20 + sizeof(er->ecmd5), sizeof(er->csp_hash)); //4
-	memcpy(er->cw, buf + 20 + sizeof(er->ecmd5) + sizeof(er->csp_hash), sizeof(er->cw)); //16
+
+	uint8_t *ofs = buf+20;
+
+	//Read ecmd5
+	memcpy(er->ecmd5, ofs, sizeof(er->ecmd5)); //16
+	ofs+= sizeof(er->ecmd5);
+
+	//Read csp_hash:
+	memcpy(&er->csp_hash, ofs, sizeof(er->csp_hash)); //4
+	ofs+=sizeof(er->csp_hash);
+
+	//Read cw:
+	memcpy(er->cw, ofs, sizeof(er->cw)); //16
+	ofs += sizeof(er->cw);
+
+	//Check auf neues Format:
+	uint8_t *data;
+	er->csp_lastnodes = ll_create("csp_lastnodes");
+	if (size > sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw)) {
+
+		//Read lastnodes:
+		uint8_t count = *ofs;
+		ofs++;
+
+		if (count > 10) {
+			cs_debug_mask(D_TRACE, "cacheex: received %d nodes (max=10), ignored!", (int32_t)count);
+			count = 0;
+		}
+		while (count) {
+			data = cs_malloc(&data, 8, 0);
+			memcpy(data, ofs, 8);
+			ofs+=8;
+			ll_append(er->csp_lastnodes, data);
+			count--;
+		}
+	}
+
+	//store remote node id if we got one. The remote node is the first node in the node list
+	data = ll_has_elements(er->csp_lastnodes);
+	if (data && !cl->ncd_skey[8]) { //Ok, this is tricky, we use newcamd key storage for saving the remote node
+		memcpy(cl->ncd_skey, data, 8);
+		cl->ncd_skey[8] = 1; //Mark as valid node
+	}
+	cs_debug_mask(D_TRACE, "cacheex: received cacheex from remote node id %llX", *(uint64_t*)cl->ncd_skey);
+
+	//for compatibility: add peer node if no node received (not working now, maybe later):
+	if (!ll_count(er->csp_lastnodes) && cl->ncd_skey[8]) {
+		data = cs_malloc(&data, 8, 0);
+		memcpy(data, cl->ncd_skey, 8);
+		ll_append(er->csp_lastnodes, data);
+		cs_debug_mask(D_TRACE, "cacheex: added missing remote node id %llX", *(uint64_t*)data);
+	}
+
+	if (!ll_count(er->csp_lastnodes)) {
+		data = cs_malloc(&data, 8, 0);
+		memcpy(data, &cl->ip, 4);
+		memcpy(data+4, &cl->port, 2);
+		memcpy(data+6, &cl->is_udp, 1);
+		ll_append(er->csp_lastnodes, data);
+		cs_debug_mask(D_TRACE, "cacheex: added compat remote node id %llX", *(uint64_t*)data);
+	}
 
 	cs_add_cache(cl, er, 0);
 }
+
 #endif
 
 static void * camd35_server(struct s_client *client __attribute__((unused)), uchar *mbuf, int32_t n)
@@ -461,6 +622,12 @@ static void * camd35_server(struct s_client *client __attribute__((unused)), uch
 			camd35_process_ecm(mbuf);
 			break;
 #ifdef CS_CACHEEX
+		case 0x3d:  // Cache-push id request
+			camd35_cache_push_id_request(client);
+			break;
+		case 0x3e:  // Cache-push id answer
+			camd35_cache_push_id_answer(client, mbuf);
+			break;
 		case 0x3f:  // Cache-push
 			camd35_cache_push_in(client, mbuf);
 			break;
@@ -550,7 +717,7 @@ static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *
 
 
 
-	if (!tcp_connect()) return -1;
+	if (!tcp_connect(client)) return -1;
        	
 	client->reader->card_status = CARD_INSERTED; //for udp
 	
@@ -566,16 +733,16 @@ static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *
 	buf[18] = 0xff;
 	buf[19] = 0xff;
 	memcpy(buf + 20, er->ecm, er->l);
-	return((camd35_send(buf, 0) < 1) ? (-1) : 0);
+	return((camd35_send(client, buf, 0) < 1) ? (-1) : 0);
 }
 
 static int32_t camd35_send_emm(EMM_PACKET *ep)
 {
 	uchar buf[512];
-	//struct s_client *cl = cur_client();
+	struct s_client *cl = cur_client();
 	
 
-	if (!tcp_connect()) return -1;
+	if (!tcp_connect(cl)) return -1;
 	
 	memset(buf, 0, 20);
 	memset(buf+20, 0xff, ep->l+15);
@@ -586,7 +753,7 @@ static int32_t camd35_send_emm(EMM_PACKET *ep)
 	memcpy(buf+12, ep->provid, 4);
 	memcpy(buf+20, ep->emm, ep->l);
 
-	return((camd35_send(buf, 0)<1) ? 0 : 1);
+	return((camd35_send(cl, buf, 0)<1) ? 0 : 1);
 }
 
 static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t rc2 __attribute__((unused)))
@@ -655,6 +822,14 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 	}
 
 #ifdef CS_CACHEEX
+	if (buf[0] == 0x3d) { // Cache-push id request
+		camd35_cache_push_id_request(client);
+		return -1;
+	}
+	if (buf[0] == 0x3e) {  // Cache-push id answer
+		camd35_cache_push_id_answer(client, buf);
+		return -1;
+	}
 	if (buf[0] == 0x3f) { //cache-push
 		camd35_cache_push_in(client, buf);
 		return -1;
@@ -734,6 +909,7 @@ void module_camd35(struct s_module *ph)
   ph->c_recv_log=camd35_recv_log;
 #ifdef CS_CACHEEX
   ph->c_cache_push=camd35_cache_push_out;
+  ph->c_cache_push_chk=camd35_cache_push_chk;
 #endif
   ph->num=R_CAMD35;
 }
@@ -763,6 +939,7 @@ void module_camd35_tcp(struct s_module *ph)
   ph->c_recv_log=camd35_recv_log;
 #ifdef CS_CACHEEX
   ph->c_cache_push=camd35_cache_push_out;
+  ph->c_cache_push_chk=camd35_cache_push_chk;
 #endif
   ph->num=R_CS378X;
 }
