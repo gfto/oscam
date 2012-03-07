@@ -2431,6 +2431,9 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	tpl_printf(vars, TPLADD, "TOTAL_CWTUN", "%ld", first_client->cwtun);
 
 	uint32_t ecmsum = first_client->cwfound + first_client->cwnot + first_client->cwignored + first_client->cwtout+ first_client->cwcache + first_client->cwtun;
+	if (ecmsum < 1) {
+		ecmsum = 1;
+	}
 	tpl_printf(vars, TPLADD, "REL_CWOK", "%ld", first_client->cwfound * 100 / ecmsum);
 	tpl_printf(vars, TPLADD, "REL_CWNOK", "%ld", first_client->cwnot * 100 / ecmsum);
 	tpl_printf(vars, TPLADD, "REL_CWIGN", "%ld", first_client->cwignored * 100 / ecmsum);
@@ -4222,7 +4225,9 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 	}
 
 	uint32_t cachesum = first_client->cwcacheexgot;
-
+	if (cachesum < 1) {
+		cachesum = 1;
+	}
 	tpl_printf(vars, TPLADD, "TOTAL_CACHEXPUSH", "%ld", first_client->cwcacheexpush);
 	tpl_addVar(vars, TPLADD, "TOTAL_CACHEXPUSH_IMG", pushing);
 	tpl_printf(vars, TPLADD, "TOTAL_CACHEXGOT", "%ld", first_client->cwcacheexgot);
