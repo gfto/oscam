@@ -1954,9 +1954,9 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 {
 	if (!cl)
 		return 0;
-	if (!csp && cl->reader && !cl->reader->cacheex==2) //from reader
+	if (!csp && cl->reader && cl->reader->cacheex!=2) //from reader
 		return 0;
-	if (!csp && cl->account && !cl->account->cacheex==3) //from user
+	if (!csp && cl->account && cl->account->cacheex!=3) //from user
 		return 0;
 	if (!csp && !cl->reader && !cl->account) { //not active!
 		cs_debug_mask(D_TRACE, "CACHEX received, but disabled for %s", username(cl));
