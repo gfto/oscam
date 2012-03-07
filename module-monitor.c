@@ -140,7 +140,7 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 		}
 		if (!res)
 			return(buf[0]=0);
-		aes_decrypt(buf+5, 16);
+		aes_decrypt(client, buf+5, 16);
 		bsize=boundary(4, buf[9]+5)+5;
 		// cs_log("n=%d bsize=%d", n, bsize);
 		if (n>bsize)
@@ -156,7 +156,7 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 			cs_log("packet-size mismatch !");
 			return(buf[0]=0);
 		}
-		aes_decrypt(buf+21, n-21);
+		aes_decrypt(client, buf+21, n-21);
 		uchar tmp[10];
 		if (memcmp(buf+5, i2b_buf(4, crc32(0L, buf+10, n-10), tmp), 4))
 		{

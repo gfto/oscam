@@ -12,6 +12,10 @@
 //CMD08 - Stop sending requests to the server for current srvid,prvid,caid
 //CMD44 - MPCS/OScam internal error notification
 
+//CMD0x3d - CACHEEX Cache-push id request
+//CMD0x3e - CACHEEX Cache-push id answer
+//CMD0x3f - CACHEEX cache-push
+
 #define REQ_SIZE	584		// 512 + 20 + 0x34
 
 static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen)
@@ -33,7 +37,7 @@ static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen)
 	cs_ddump_mask(D_CLIENT, sbuf, l, "send %d bytes to %s", l, remote_txt());
 	aes_encrypt(sbuf, l);
 
-        int32_t status;
+	int32_t status;
 	if (cl->is_udp) {
 		status = sendto(cl->udp_fd, rbuf, l+4, 0,
 				           (struct sockaddr *)&cl->udp_sa,
@@ -50,12 +54,11 @@ static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen)
 	return status;		
 }
 
-static int32_t camd35_auth_client(uchar *ucrc)
+static int32_t camd35_auth_client(struct s_client *cl, uchar *ucrc)
 {
   int32_t rc=1;
   uint32_t crc;
   struct s_auth *account;
-  struct s_client *cl = cur_client();
   unsigned char md5tmp[MD5_DIGEST_LENGTH];
 
   if (cl->upwd[0])
@@ -92,7 +95,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 				if (rs < 24) rc = -1;
 				break;
 			case 1:
-				switch (camd35_auth_client(buf)) {
+				switch (camd35_auth_client(client, buf)) {
 					case  0:        break;	// ok
 					case  1: rc=-2; break;	// unknown user
 					default: rc=-9; break;	// error's from cs_auth()
@@ -100,7 +103,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 				memmove(buf, buf+4, rs-=4);
 				break;
 			case 2:
-				aes_decrypt(buf, rs);
+				aes_decrypt(client, buf, rs);
 				if (rs!=boundary(4, rs))
 					cs_debug_mask(D_CLIENT, "WARNING: packet size has wrong decryption boundary");
 
@@ -109,7 +112,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 				//Fix for ECM request size > 255 (use ecm length field)
 				if(buf[0]==0)
 					buflen = (((buf[21]&0x0f)<< 8) | buf[22])+3;
-				else if (buf[0] == 0x3f) //cacheex-push
+				else if (buf[0] == 0x3d || buf[0] == 0x3e || buf[0] == 0x3f) //cacheex-push
 					buflen = buf[1] | (buf[2] << 8);
 				else
 					buflen = buf[1];
@@ -119,7 +122,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 					len = recv(client->udp_fd, buf+32, n-32, 0); // read the rest of the packet
 					if (len>0) {
 						rs+=len;
-						aes_decrypt(buf+32, len);
+						aes_decrypt(client, buf+32, len);
 					}
 				}
 
@@ -394,19 +397,38 @@ void cacheex_set_peer_id(uint8_t *id)
 /**
  * send own id
  */
-void camd35_cache_push_id_request(struct s_client *cl) {
-	uint8_t rbuf[20+8];
+void camd35_cache_push_send_own_id(struct s_client *cl, uint8_t *mbuf) {
+	uint8_t rbuf[32]; //minimal size
+
+	cs_debug_mask(D_TRACE, "cacheex: received id request from node %llX %s", *(uint64_t*)(mbuf+20), username(cl));
+
 	memset(rbuf, sizeof(rbuf), 0);
 	rbuf[0] = 0x3e;
-	memcpy(rbuf+20, camd35_node_id, 8);
+	rbuf[1] = 12;
+	rbuf[2] = 0;
+	memcpy(rbuf+20, camd35_node_id, 12);
+	cs_debug_mask(D_TRACE, "cacheex: sending own id %llX request %s", *(uint64_t*)camd35_node_id, username(cl));
+	camd35_send(cl, rbuf, 12); //send adds +20
+}
+
+/**
+ * request remote id
+ */
+void camd35_cache_push_request_remote_id(struct s_client *cl) {
+	uint8_t rbuf[32];//minimal size
+	memset(rbuf, sizeof(rbuf), 0);
+	rbuf[0] = 0x3d;
+	rbuf[1] = 12;
+	rbuf[2] = 0;
+	memcpy(rbuf+20, camd35_node_id, 12);
 	cs_debug_mask(D_TRACE, "cacheex: sending id request to %s", username(cl));
-	camd35_send(cl, rbuf, 8); //send adds +20
+	camd35_send(cl, rbuf, 12); //send adds +20
 }
 
 /**
  * store received remote id
  */
-void camd35_cache_push_id_answer(struct s_client *cl, uint8_t *buf) {
+void camd35_cache_push_receive_remote_id(struct s_client *cl, uint8_t *buf) {
 	memcpy(cl->ncd_skey, buf+20, 8);
 	cl->ncd_skey[8] = 1;
 	cs_debug_mask(D_TRACE, "cacheex: received id answer from %s: %llX", username(cl), *(uint64_t*)cl->ncd_skey);
@@ -429,7 +451,7 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 	//Update remote id:
 	if (!cl->ncd_skey[8] && !cl->ncd_skey[9]) {
 		cl->ncd_skey[9] = 1; //remeber request
-		camd35_cache_push_id_request(cl);
+		camd35_cache_push_request_remote_id(cl);
 	}
 
 	if (!cl->ncd_skey[8]) { // We have no remote node, so push out
@@ -600,14 +622,14 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 		cs_debug_mask(D_TRACE, "cacheex: added missing remote node id %llX", *(uint64_t*)data);
 	}
 
-	if (!ll_count(er->csp_lastnodes)) {
-		data = cs_malloc(&data, 8, 0);
-		memcpy(data, &cl->ip, 4);
-		memcpy(data+4, &cl->port, 2);
-		memcpy(data+6, &cl->is_udp, 1);
-		ll_append(er->csp_lastnodes, data);
-		cs_debug_mask(D_TRACE, "cacheex: added compat remote node id %llX", *(uint64_t*)data);
-	}
+//	if (!ll_count(er->csp_lastnodes)) {
+//		data = cs_malloc(&data, 8, 0);
+//		memcpy(data, &cl->ip, 4);
+//		memcpy(data+4, &cl->port, 2);
+//		memcpy(data+6, &cl->is_udp, 1);
+//		ll_append(er->csp_lastnodes, data);
+//		cs_debug_mask(D_TRACE, "cacheex: added compat remote node id %llX", *(uint64_t*)data);
+//	}
 
 	cs_add_cache(cl, er, 0);
 }
@@ -623,10 +645,10 @@ static void * camd35_server(struct s_client *client __attribute__((unused)), uch
 			break;
 #ifdef CS_CACHEEX
 		case 0x3d:  // Cache-push id request
-			camd35_cache_push_id_request(client);
+			camd35_cache_push_send_own_id(client, mbuf);
 			break;
 		case 0x3e:  // Cache-push id answer
-			camd35_cache_push_id_answer(client, mbuf);
+			camd35_cache_push_receive_remote_id(client, mbuf);
 			break;
 		case 0x3f:  // Cache-push
 			camd35_cache_push_in(client, mbuf);
@@ -823,11 +845,11 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 
 #ifdef CS_CACHEEX
 	if (buf[0] == 0x3d) { // Cache-push id request
-		camd35_cache_push_id_request(client);
+		camd35_cache_push_send_own_id(client, buf);
 		return -1;
 	}
 	if (buf[0] == 0x3e) {  // Cache-push id answer
-		camd35_cache_push_id_answer(client, buf);
+		camd35_cache_push_receive_remote_id(client, buf);
 		return -1;
 	}
 	if (buf[0] == 0x3f) { //cache-push

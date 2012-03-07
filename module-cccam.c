@@ -1884,12 +1884,13 @@ static void chk_peer_node_for_oscam(struct cc_data *cc)
 #ifdef CS_CACHEEX
 int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 {
-	struct cc_data *cc = cl->cc;
 	if (!cl->cc) {
-		if (cl->reader && !cl->reader->tcp_connected)
-			return 1;
-		return 0;
+		if (cl->reader && !cl->reader->tcp_connected) {
+			cc_cli_connect(cl);
+		}
 	}
+	struct cc_data *cc = cl->cc;
+	if (!cc || !cl->udp_fd) return 0;
 
 	//check max 10 nodes to push:
 	if (ll_count(er->csp_lastnodes) >= 10) {

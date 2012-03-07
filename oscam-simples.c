@@ -65,11 +65,11 @@ void aes_set_key(char *key)
   AES_set_encrypt_key((const unsigned char *)key, 128, &cur_client()->aeskey);
 }
 
-void aes_decrypt(uchar *buf, int32_t n)
+void aes_decrypt(struct s_client *cl, uchar *buf, int32_t n)
 {
   int32_t i;
   for(i=0; i<n; i+=16)
-    AES_decrypt(buf+i, buf+i, &cur_client()->aeskey_decrypt);
+    AES_decrypt(buf+i, buf+i, &cl->aeskey_decrypt);
 }
 
 void aes_encrypt_idx(struct s_client *cl, uchar *buf, int32_t n)
