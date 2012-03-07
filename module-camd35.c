@@ -35,7 +35,7 @@ static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen)
 	i2b_buf(4, crc32(0L, sbuf+20, buflen), sbuf + 4);
 	l = boundary(4, l);
 	cs_ddump_mask(D_CLIENT, sbuf, l, "send %d bytes to %s", l, remote_txt());
-	aes_encrypt(sbuf, l);
+	aes_encrypt_idx(cl, sbuf, l);
 
 	int32_t status;
 	if (cl->is_udp) {
@@ -446,7 +446,10 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 	if (cl->reader) {
 		tcp_connect(cl);
 	}
-	if (!cl->udp_fd) return 0;
+	if (!cl->udp_fd) {
+		cs_debug_mask(D_TRACE, "cacheex: not connected %s -> no push", username(cl));
+		return 0;
+	}
 
 	//Update remote id:
 	if (!cl->ncd_skey[8] && !cl->ncd_skey[9]) {
@@ -455,6 +458,7 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 	}
 
 	if (!cl->ncd_skey[8]) { // We have no remote node, so push out
+		cs_debug_mask(D_TRACE, "cacheex: push without remote node %s", username(cl));
 		return 1;
 	}
 
@@ -476,6 +480,8 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 				"cacheex: node %llX found in list => skip push!", *(uint64_t*)node);
 		return 0;
 	}
+
+	cs_debug_mask(D_TRACE, "cacheex: push ok %llX to %llX %s", *(uint64_t*)camd35_node_id, *(uint64_t*)remote_node, username(cl));
 
 	return 1;
 }
@@ -587,24 +593,28 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 	//Check auf neues Format:
 	uint8_t *data;
 	er->csp_lastnodes = ll_create("csp_lastnodes");
-	if (size > sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw)) {
+	if (size > (sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw))) {
 
 		//Read lastnodes:
 		uint8_t count = *ofs;
 		ofs++;
 
 		if (count > 10) {
-			cs_debug_mask(D_TRACE, "cacheex: received %d nodes (max=10), ignored!", (int32_t)count);
+			cs_debug_mask(D_TRACE, "cacheex: received %d nodes (max=10), ignored! %s", (int32_t)count, username(cl));
 			count = 0;
 		}
+		cs_debug_mask(D_TRACE, "cacheex: received %d nodes %s", (int32_t)count, username(cl));
 		while (count) {
 			data = cs_malloc(&data, 8, 0);
 			memcpy(data, ofs, 8);
 			ofs+=8;
 			ll_append(er->csp_lastnodes, data);
 			count--;
+			cs_debug_mask(D_TRACE, "cacheex: received lasnode %llX %s", *(uint64_t*)data, username(cl));
 		}
 	}
+	else
+		cs_debug_mask(D_TRACE, "cacheex: received old cachex from %s", username(cl));
 
 	//store remote node id if we got one. The remote node is the first node in the node list
 	data = ll_has_elements(er->csp_lastnodes);
