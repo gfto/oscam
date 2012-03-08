@@ -2048,6 +2048,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				demux[i].ECMpids[j].irdeto_chids = 0;
 				demux[i].ECMpids[j].irdeto_curchid = 0;
 				demux[i].ECMpids[j].irdeto_cycle = 0;
+				int8_t last_checked = demux[i].ECMpids[j].checked;
 				demux[i].ECMpids[j].checked = 2;
 
 				if (demux[i].pidindex==-1) {
@@ -2078,8 +2079,12 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 					                if (demux[i].ECMpids[t].checked != 2)
 					                        num_pids++;
 					        }                             
-					        if (num_pids < 1)
-					                dvbapi_try_next_caid(i);                                                                                                                                                                                                                                                
+  					        if (!num_pids && last_checked == 1) { // we had rc=E_FOUND, but now we get a NOT_FOUND? Try all caids again:
+					                for (t=0;t<demux[i].ECMpidcount;t++)
+					                        demux[i].ECMpids[t].checked = 0;
+                                                        demux[i].tries = 3;
+					                dvbapi_try_next_caid(i);        
+					        }                                                                                                                                                                                                                                        
 					}
 				}
 				return;
