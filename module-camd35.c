@@ -380,6 +380,9 @@ static int32_t tcp_connect(struct s_client *cl)
 }
 
 #ifdef CS_CACHEEX
+
+#define cnode(x) *(unsigned long long*)x
+
 uint8_t camd35_node_id[8];
 
 void cacheex_update_peer_id()
@@ -400,14 +403,14 @@ void cacheex_set_peer_id(uint8_t *id)
 void camd35_cache_push_send_own_id(struct s_client *cl, uint8_t *mbuf) {
 	uint8_t rbuf[32]; //minimal size
 
-	cs_debug_mask(D_TRACE, "cacheex: received id request from node %llX %s", *(uint64_t*)(mbuf+20), username(cl));
+	cs_debug_mask(D_TRACE, "cacheex: received id request from node %llX %s", cnode(mbuf+20), username(cl));
 
-	memset(rbuf, sizeof(rbuf), 0);
+	memset(rbuf, 0, sizeof(rbuf));
 	rbuf[0] = 0x3e;
 	rbuf[1] = 12;
 	rbuf[2] = 0;
 	memcpy(rbuf+20, camd35_node_id, 12);
-	cs_debug_mask(D_TRACE, "cacheex: sending own id %llX request %s", *(uint64_t*)camd35_node_id, username(cl));
+	cs_debug_mask(D_TRACE, "cacheex: sending own id %llX request %s", cnode(camd35_node_id), username(cl));
 	camd35_send(cl, rbuf, 12); //send adds +20
 }
 
@@ -416,7 +419,7 @@ void camd35_cache_push_send_own_id(struct s_client *cl, uint8_t *mbuf) {
  */
 void camd35_cache_push_request_remote_id(struct s_client *cl) {
 	uint8_t rbuf[32];//minimal size
-	memset(rbuf, sizeof(rbuf), 0);
+	memset(rbuf, 0, sizeof(rbuf));
 	rbuf[0] = 0x3d;
 	rbuf[1] = 12;
 	rbuf[2] = 0;
@@ -431,7 +434,7 @@ void camd35_cache_push_request_remote_id(struct s_client *cl) {
 void camd35_cache_push_receive_remote_id(struct s_client *cl, uint8_t *buf) {
 	memcpy(cl->ncd_skey, buf+20, 8);
 	cl->ncd_skey[8] = 1;
-	cs_debug_mask(D_TRACE, "cacheex: received id answer from %s: %llX", username(cl), *(uint64_t*)cl->ncd_skey);
+	cs_debug_mask(D_TRACE, "cacheex: received id answer from %s: %llX", username(cl), cnode(cl->ncd_skey));
 }
 
 
@@ -468,7 +471,7 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 	LL_ITER it = ll_iter_create(er->csp_lastnodes);
 	uint8_t *node;
 	while ((node = ll_iter_next(&it))) {
-		cs_debug_mask(D_TRACE, "cacheex: check node %llX == %llX ?", *(uint64_t*)node, *(uint64_t*)remote_node);
+		cs_debug_mask(D_TRACE, "cacheex: check node %llX == %llX ?", cnode(node), cnode(remote_node));
 		if (memcmp(node, remote_node, 8) == 0) {
 			break;
 		}
@@ -477,11 +480,11 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 	//node found, so we got it from there, do not push:
 	if (node) {
 		cs_debug_mask(D_TRACE,
-				"cacheex: node %llX found in list => skip push!", *(uint64_t*)node);
+				"cacheex: node %llX found in list => skip push!", cnode(node));
 		return 0;
 	}
 
-	cs_debug_mask(D_TRACE, "cacheex: push ok %llX to %llX %s", *(uint64_t*)camd35_node_id, *(uint64_t*)remote_node, username(cl));
+	cs_debug_mask(D_TRACE, "cacheex: push ok %llX to %llX %s", cnode(camd35_node_id), cnode(remote_node), username(cl));
 
 	return 1;
 }
@@ -610,7 +613,7 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 			ofs+=8;
 			ll_append(er->csp_lastnodes, data);
 			count--;
-			cs_debug_mask(D_TRACE, "cacheex: received lasnode %llX %s", *(uint64_t*)data, username(cl));
+			cs_debug_mask(D_TRACE, "cacheex: received lasnode %llX %s", cnode(data), username(cl));
 		}
 	}
 	else
@@ -622,14 +625,14 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 		memcpy(cl->ncd_skey, data, 8);
 		cl->ncd_skey[8] = 1; //Mark as valid node
 	}
-	cs_debug_mask(D_TRACE, "cacheex: received cacheex from remote node id %llX", *(uint64_t*)cl->ncd_skey);
+	cs_debug_mask(D_TRACE, "cacheex: received cacheex from remote node id %llX", cnode(cl->ncd_skey));
 
 	//for compatibility: add peer node if no node received (not working now, maybe later):
 	if (!ll_count(er->csp_lastnodes) && cl->ncd_skey[8]) {
 		data = cs_malloc(&data, 8, 0);
 		memcpy(data, cl->ncd_skey, 8);
 		ll_append(er->csp_lastnodes, data);
-		cs_debug_mask(D_TRACE, "cacheex: added missing remote node id %llX", *(uint64_t*)data);
+		cs_debug_mask(D_TRACE, "cacheex: added missing remote node id %llX", cnode(data));
 	}
 
 //	if (!ll_count(er->csp_lastnodes)) {
@@ -638,7 +641,7 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 //		memcpy(data+4, &cl->port, 2);
 //		memcpy(data+6, &cl->is_udp, 1);
 //		ll_append(er->csp_lastnodes, data);
-//		cs_debug_mask(D_TRACE, "cacheex: added compat remote node id %llX", *(uint64_t*)data);
+//		cs_debug_mask(D_TRACE, "cacheex: added compat remote node id %llX", cnode(data));
 //	}
 
 	cs_add_cache(cl, er, 0);

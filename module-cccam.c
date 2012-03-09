@@ -1882,6 +1882,9 @@ static void chk_peer_node_for_oscam(struct cc_data *cc)
 }
 
 #ifdef CS_CACHEEX
+
+#define cnode(x) *(unsigned long long*)x
+
 int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 {
 	if (!cl->cc) {
@@ -1902,7 +1905,7 @@ int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 	LL_ITER it = ll_iter_create(er->csp_lastnodes);
 	uint8_t *node;
 	while ((node = ll_iter_next(&it))) {
-		cs_debug_mask(D_TRACE, "cacheex: check node %llX == %llX ?", *(uint64_t*)node, *(uint64_t*)cc->peer_node_id);
+		cs_debug_mask(D_TRACE, "cacheex: check node %llX == %llX ?", cnode(node), cnode(cc->peer_node_id));
 		if (memcmp(node, cc->peer_node_id, 8) == 0) {
 			break;
 		}
@@ -1911,7 +1914,7 @@ int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 	//node found, so we got it from there, do not push:
 	if (node) {
 		cs_debug_mask(D_TRACE,
-				"cacheex: node %llX found in list => skip push!", *(uint64_t*)node);
+				"cacheex: node %llX found in list => skip push!", cnode(node));
 		return 0;
 	}
 
@@ -2049,7 +2052,7 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 		data = cs_malloc(&data, 8, 0);
 		memcpy(data, cc->peer_node_id, 8);
 		ll_append(er->csp_lastnodes, data);
-		cs_debug_mask(D_TRACE, "cacheex: added missing remote node id %llX", *(uint64_t*)data);
+		cs_debug_mask(D_TRACE, "cacheex: added missing remote node id %llX", cnode(data));
 	}
 
 	cs_add_cache(cl, er, 0);
