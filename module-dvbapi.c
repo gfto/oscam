@@ -603,6 +603,7 @@ void dvbapi_start_descrambling(int32_t demux_id) {
 	int32_t j,k;
 	int32_t streamcount=0;
           
+	int32_t last_pidindex = demux[demux_id].pidindex;
   	demux[demux_id].pidindex = demux[demux_id].curindex;
 
 for (j=0; j<demux[demux_id].ECMpidcount; j++) {
@@ -638,8 +639,11 @@ for (j=0; j<demux[demux_id].ECMpidcount; j++) {
 
 	cs_log("Start descrambling PID #%d (CAID: %04X) %d", demux[demux_id].curindex, demux[demux_id].ECMpids[demux[demux_id].curindex].CAID, streamcount);
 
-	if (cfg.dvbapi_au>0)
+	if (cfg.dvbapi_au>0 && last_pidindex != demux[demux_id].pidindex) {
+		if (last_pidindex != -1)
+			dvbapi_stop_filter(demux_id, TYPE_EMM);
 		dvbapi_start_filter(demux_id, demux[demux_id].pidindex, 0x001, 0x01, 0xFF, 0, TYPE_EMM, 0); //CAT
+	}
 }
 
 #ifdef READER_VIACCESS
@@ -2022,7 +2026,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
                                                                 if (demux[i].demux_fd[o].pid == demux[i].ECMpids[last_idx].ECM_PID)
                                                                         demux[i].demux_fd[o].count = 0; //activate last_idx
                                                                 else
-                                                                        dvbapi_stop_filternum(i, TYPE_ECM); //drop other
+                                                                        dvbapi_stop_filternum(i, o); //drop other
                                                         }
                                                 }
                                         }
