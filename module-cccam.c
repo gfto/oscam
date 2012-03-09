@@ -2948,9 +2948,9 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 	if (n <= 0) {
 		struct cc_data *cc = cl->cc;
 		if (cc && cc->nok_message)
-			cs_log("%s connection closed by %s. Reason: %s", getprefix(), remote_txt(), cc->nok_message);
+			cs_log("%s connection closed by %s. n=%d, Reason: %s", getprefix(), remote_txt(), n, cc->nok_message);
 		else {
-			cs_log("%s connection closed by %s.", getprefix(), remote_txt());
+			cs_log("%s connection closed by %s, n=%d.", getprefix(), remote_txt(), n);
 			if (rdr) {
 				cc_cli_close(cl, TRUE);
 			} else {

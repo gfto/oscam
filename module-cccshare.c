@@ -438,6 +438,10 @@ int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card) {
 			}
 			if (!found) return 0;
 		}
+        else {
+        	if (!chk_srvid_by_caid_prov(cl, card->caid, 0))
+        		return 0;
+		}
 		
         //Check Card created by Service:
         if (card->sidtab) {
