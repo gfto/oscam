@@ -1990,7 +1990,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			demux[i].rdr=er->selected_reader;
 
 			for (j=0; j<demux[i].ECMpidcount; j++)
-				if ((demux[i].ECMpids[j].CAID == er->caid || demux[i].ECMpids[j].CAID == er->ocaid) && demux[i].ECMpids[j].ECM_PID == er->pid)
+				if ((demux[i].ECMpids[j].CAID == er->caid || demux[i].ECMpids[j].CAID == er->ocaid) && demux[i].ECMpids[j].ECM_PID == er->pid && demux[i].ECMpids[j].PROVID == er->prid)
 						break;
 			if (j==demux[i].ECMpidcount) continue;
 
@@ -2022,7 +2022,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
                                                                 if (demux[i].demux_fd[o].pid == demux[i].ECMpids[last_idx].ECM_PID)
                                                                         demux[i].demux_fd[o].count = 0; //activate last_idx
                                                                 else
-                                                                        dvbapi_stop_filternum(i, o); //drop other
+                                                                        dvbapi_stop_filternum(i, TYPE_ECM); //drop other
                                                         }
                                                 }
                                         }
