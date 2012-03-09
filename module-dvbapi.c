@@ -2026,7 +2026,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
                                                                 if (demux[i].demux_fd[o].pid == demux[i].ECMpids[last_idx].ECM_PID)
                                                                         demux[i].demux_fd[o].count = 0; //activate last_idx
                                                                 else
-                                                                        dvbapi_stop_filternum(i, o); //drop other
+                                                                        dvbapi_stop_filternum(i, TYPE_ECM); //drop other
                                                         }
                                                 }
                                         }
