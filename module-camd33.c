@@ -23,7 +23,7 @@ static int32_t camd33_recv(struct s_client * client, uchar *buf, int32_t l)
   {
     client->last=time((time_t *) 0);
     if (client->crypted)
-      aes_decrypt(buf, n);
+      aes_decrypt(client, buf, n);
   }
   cs_ddump_mask(D_CLIENT, buf, n, "received %d bytes from client", n);
   return(n);
