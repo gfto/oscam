@@ -4932,7 +4932,10 @@ int32_t init_irdeto_guess_tab()
     }
     if( !skip )
     {
-      if (!cs_malloc(&ird_row, sizeof(struct s_irdeto_quess), -1)) return(1);
+      if (!cs_malloc(&ird_row, sizeof(struct s_irdeto_quess), -1)) {
+        fclose(fp);
+        return(1);
+      }
       ird_row->b47  = b47;
       ird_row->caid = caid;
       ird_row->sid  = sid;
