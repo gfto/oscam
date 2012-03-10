@@ -166,6 +166,11 @@ static time_t chid_date(struct s_reader * reader, uint32_t date, char *buf, int3
 							   {0x0604, 0x0608, "NLD", 1066089600L},   // Ziggo irdeto card orange-white caid: 0604, acs: 6.08
 							   {0x0604, 0x0605, "NLD", 1066089600L},   // Ziggo irdeto card caid: 0604, acs: 6.05
 							   {0x0604, 0x0005, "NLD", 1066089600L},   // Ziggo irdeto card caid: 0604, acs: 0.05
+							   {0x0602, 0x0606, "NLD", 76208400L},     // Ziggo (before Casema) irdeto card gray-blue caid: 0602, acs: 6.06
+							   {0x0602, 0x0505, "NLD", 946602000L},    // Ziggo (before Casema) irdeto card black-orange caid: 0602, acs: 5.05
+							   {0x0606, 0x0605, "NLD", 76208400L},     // Caiway irdeto card caid: 0606, acs: 6.05  *** UNTESTED, PLEASE TEST ***
+
+
                                // {0x1702, 0x0384, "AUT", XXXXXXXXXL},     // -> we need the base date for this
                                // {0x1702, 0x0384, "GER", 888883200L},     // 02.03.1998, 16:00 -> this fixes some card but break others (S02).
                                {0x0, 0x0, "", 0L}
