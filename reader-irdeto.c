@@ -164,6 +164,8 @@ static time_t chid_date(struct s_reader * reader, uint32_t date, char *buf, int3
                                {0x0604, 0x0608, "GRC", 1011052800L},   // 15.01.2002, 00:00    //nova irdeto
                                {0x0604, 0x0005, "GRC", 1011052800L},   // 15.01.2002, 00:00    //mova irdeto
 							   {0x0604, 0x0608, "NLD", 1066089600L},   // Ziggo irdeto card orange-white caid: 0604, acs: 6.08
+							   {0x0604, 0x0605, "NLD", 1066089600L},   // Ziggo irdeto card caid: 0604, acs: 6.05
+							   {0x0604, 0x0005, "NLD", 1066089600L},   // Ziggo irdeto card caid: 0604, acs: 0.05
                                // {0x1702, 0x0384, "AUT", XXXXXXXXXL},     // -> we need the base date for this
                                // {0x1702, 0x0384, "GER", 888883200L},     // 02.03.1998, 16:00 -> this fixes some card but break others (S02).
                                {0x0, 0x0, "", 0L}
