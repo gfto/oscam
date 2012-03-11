@@ -2876,6 +2876,12 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		}
 	}
 
+	if (er->l > MAX_ECM_SIZE) {
+		er->rc = E_INVALID;
+		er->rcEx = E2_GLOBAL;
+		snprintf(er->msglog, sizeof(er->msglog), "ECM size %d > Max Ecm size %d, ignored! client %s", er->l, MAX_ECM_SIZE, username(client));
+	}
+
 	if (!client->grp) {
 		er->rc = E_INVALID;
 		er->rcEx = E2_GROUP;

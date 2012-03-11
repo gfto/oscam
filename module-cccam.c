@@ -345,10 +345,11 @@ ECM_REQUEST *get_ecm_by_idx(struct s_client *cl, uint16_t idx)
 {
 	int32_t i;
 	ECM_REQUEST *ecm;
+	uint8_t mod = idx2mod(idx);
 
 	for (i=0; i<CS_MAXPENDING; i++) {
 		ecm = &cl->ecmtask[i];
-		if (ecm->idx && ecm->idx == idx)
+		if (ecm->cccam_idx == mod || (ecm->idx && ecm->idx == idx))
 			return ecm;
 	}
 	return NULL;
@@ -361,7 +362,7 @@ ECM_REQUEST *get_ecm_by_mod(struct s_client *cl, uint8_t mod)
 
 	for (i=0; i<CS_MAXPENDING; i++) {
 		ecm = &cl->ecmtask[i];
-		if (ecm->idx && ecm2mod(ecm) == mod)
+		if (ecm->cccam_idx == mod || (ecm->idx && ecm2mod(ecm) == mod))
 			return ecm;
 	}
 	return NULL;
@@ -454,7 +455,7 @@ int32_t cc_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen) {
 	cc_crypt(&cc->block[DECRYPT], buf, 4, DECRYPT);
 	//cs_ddump_mask(D_CLIENT, buf, 4, "cccam: decrypted header:");
 
-	cc->g_flag = buf[0];
+	//cc->g_flag = buf[0];
 
 	int32_t size = (buf[2] << 8) | buf[3];
 	if (size) { // check if any data is expected in msg
@@ -1274,12 +1275,14 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			ecmbuf[12] = cur_er->l & 0xff;
 			memcpy(ecmbuf + 13, cur_er->ecm, cur_er->l);
 
-			if (cc->extended_mode)
-				cc->g_flag = ecm2mod(cur_er); //Flag is used as index!
 			cc->server_ecm_idx = cur_er->idx;
 
 			cur_er->cccam_id = card->id;
+			cur_er->cccam_idx = ecm2mod(cur_er);
 			cur_er->origin_card = card;
+
+			if (cc->extended_mode)
+				cc->g_flag = cur_er->cccam_idx; //Flag is used as index!
 
 			rdr->cc_currenthops = card->hop;
 			rdr->card_status = CARD_INSERTED;
@@ -2475,6 +2478,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 
 				er->idx = cc->server_ecm_idx;
 				er->cccam_id = buf[10] << 24 | buf[11] << 16 | buf[12] << 8 | buf[13];
+				er->cccam_idx = ecm2mod(er);
 				
 #ifdef MODULE_CCCSHARE
 				
@@ -2908,7 +2912,7 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 		if (!cc->extended_mode)
 			cc_cw_crypt(cl, buf, er->cccam_id);
 		else
-			cc->g_flag = ecm2mod(er);
+			cc->g_flag = er->cccam_idx?er->cccam_idx:ecm2mod(er);
 		cc_cmd_send(cl, buf, 16, MSG_CW_ECM);
 		if (!cc->extended_mode)
 			cc_crypt(&cc->block[ENCRYPT], buf, 16, ENCRYPT); // additional crypto step
@@ -2918,7 +2922,7 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 		//		er->cpti);
 		
 		if (cc->extended_mode)
-			cc->g_flag = ecm2mod(er);
+			cc->g_flag = er->cccam_idx?er->cccam_idx:ecm2mod(er);
 
 		int32_t nok, bufsize = 0;
 		if (cc->sleepsend && er->rc == E_STOPPED) {

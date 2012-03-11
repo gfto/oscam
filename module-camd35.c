@@ -12,17 +12,12 @@
 //CMD08 - Stop sending requests to the server for current srvid,prvid,caid
 //CMD44 - MPCS/OScam internal error notification
 
-//CMD0x3d - CACHEEX Cache-push id request
-//CMD0x3e - CACHEEX Cache-push id answer
-//CMD0x3f - CACHEEX cache-push
-
-//#define REQ_SIZE	584		// 512 + 20 + 0x34
+#define REQ_SIZE	584		// 512 + 20 + 0x34
 
 static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen)
 {
-	uint32_t l, l2;
-	//unsigned char rbuf[REQ_SIZE+15+4], *sbuf = rbuf + 4;
-	uint8_t *rbuf, *sbuf;
+	int32_t l;
+	unsigned char rbuf[REQ_SIZE+15+4], *sbuf = rbuf + 4;
 
 	if (!cl->udp_fd) return(-1);
 
@@ -30,34 +25,28 @@ static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen)
 	if (buflen <= 0)
 		buflen = ((buf[0] == 0)? (((buf[21]&0x0f)<< 8) | buf[22])+3 : buf[1]);
 	l = 20 + (((buf[0] == 3) || (buf[0] == 4)) ? 0x34 : 0) + buflen;
-	l2 = boundary(4, l);
-
-	rbuf = cs_malloc(&rbuf, l2, 0);
-	sbuf = rbuf+4;
-
 	memcpy(rbuf, cl->ucrc, 4);
 	memcpy(sbuf, buf, l);
-	memset(sbuf + l, 0xff, l2-l);	// set unused space to 0xff for newer camd3's
+	memset(sbuf + l, 0xff, 15);	// set unused space to 0xff for newer camd3's
 	i2b_buf(4, crc32(0L, sbuf+20, buflen), sbuf + 4);
-	cs_ddump_mask(D_CLIENT, sbuf, l2, "send %d bytes to %s", l2, remote_txt());
-	aes_encrypt_idx(cl, sbuf, l2);
+	l = boundary(4, l);
+	cs_ddump_mask(D_CLIENT, sbuf, l, "send %d bytes to %s", l, remote_txt());
+	aes_encrypt_idx(cl, sbuf, l);
 
 	int32_t status;
 	if (cl->is_udp) {
-		status = sendto(cl->udp_fd, rbuf, l2+4, 0,
+		status = sendto(cl->udp_fd, rbuf, l+4, 0,
 				           (struct sockaddr *)&cl->udp_sa,
 				            sizeof(cl->udp_sa));
 		if (status == -1) cl->udp_sa.sin_addr.s_addr = 0;
 	} else {
-		status = send(cl->udp_fd, rbuf, l2 + 4, 0);
+		status = send(cl->udp_fd, rbuf, l + 4, 0);
 		if (cl->typ == 'p' && cl->reader) {
 			if (status == -1) network_tcp_connection_close(cl->reader, "can't send");
 		} else if (cl->typ=='c') {
 			if (status == -1) cs_disconnect_client(cl);
 		}
 	}
-	free(rbuf);
-
 	return status;		
 }
 

@@ -728,8 +728,10 @@ struct s_irdeto_quess {
 };
 #endif
 
+#define MAX_ECM_SIZE 512
+
 typedef struct ecm_request_t {
-	uchar			ecm[512];
+	uchar			ecm[MAX_ECM_SIZE];
 	uchar			cw[16];
 	uchar			ecmd5[CS_ECMSTORESIZE];
 	int16_t			l;
@@ -762,6 +764,7 @@ typedef struct ecm_request_t {
 #if defined MODULE_CCCAM
 	void			*origin_card; 		// CCcam preferred card!
 	uint32_t		cccam_id;           // CCcam card id
+	uint8_t			cccam_idx;			// CCcam extended idx
 #endif
 
 #if defined MODULE_GBOX
