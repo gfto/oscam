@@ -333,7 +333,7 @@ void cc_cli_close(struct s_client *cl, int32_t call_conclose) {
 
 uint8_t idx2mod(uint16_t idx)
 {
-	return (idx % 255) +1;
+	return (idx % 255) +1; //returns range 1..255
 }
 
 uint8_t ecm2mod(ECM_REQUEST *ecm)
@@ -2364,7 +2364,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 
 		if (!ecm) {
 			cs_debug_mask(D_READER, "%s received extended ecm NOK id %d but not found!",
-					getprefix(), cc->g_flag);
+					getprefix(), cc->extended_mode?cc->g_flag:cc->server_ecm_idx);
 		}
 		else
 		{
