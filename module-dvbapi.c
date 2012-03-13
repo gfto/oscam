@@ -1123,32 +1123,10 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 	}
 }
 
-static int8_t request_cw(struct s_client *dvbapi_client, ECM_REQUEST *er)
+static void request_cw(struct s_client *dvbapi_client, ECM_REQUEST *er)
 {
-#ifdef WITH_LB
-	int8_t do_request = 1;
-	if (cfg.lb_mode) {
-		READER_STAT *stat = get_fastest_stat(er->caid, er->prid, er->srvid, er->chid, er->l);
-		if (stat && stat->rc >= E_NOTFOUND) {
-			do_request = 0;
-		}
-	}
-
-	if (do_request) {
-		cs_debug_mask(D_DVBAPI, "request cw for caid %04X provid %06X srvid %04X pid %04X chid %04X", er->caid, er->prid, er->srvid, er->pid, er->chid);
-		get_cw(dvbapi_client, er);
-	}
-	else {
-		cs_debug_mask(D_DVBAPI, "request cw lb-ignored for caid %04X provid %06X srvid %04X pid %04X chid %04X", er->caid, er->prid, er->srvid, er->pid, er->chid);
-		er->rc = E_NOTFOUND;
-		dvbapi_send_dcw(dvbapi_client, er);
-		free(er);
-	}
-	return do_request;
-#else
 	cs_debug_mask(D_DVBAPI, "request cw for caid %04X provid %06X srvid %04X pid %04X chid %04X", er->caid, er->prid, er->srvid, er->pid, er->chid);
 	get_cw(dvbapi_client, er);
-#endif
 }
 
 void dvbapi_try_next_caid(int32_t demux_id) {

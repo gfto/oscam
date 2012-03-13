@@ -513,7 +513,7 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	i2b_buf(2, er->srvid, buf + 8);
 	i2b_buf(2, er->caid, buf + 10);
 	i2b_buf(4, er->prid, buf + 12);
-	i2b_buf(2, er->idx, buf + 16); // Not relevant...?
+	//i2b_buf(2, er->idx, buf + 16); // Not relevant...?
 
 	uint8_t *ofs = buf+20;
 

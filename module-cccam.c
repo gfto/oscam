@@ -1345,7 +1345,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		cc->ecm_busy = 0;
 	}
 
-	return -1;
+	return 0;
 }
 
 /*
