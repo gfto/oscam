@@ -2407,7 +2407,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			struct cc_card *card = eei->card;
 //			uint32_t cccam_id = eei->cccam_id;
 			struct cc_srvid srvid = eei->srvid;			
-			int8_t retry = 0;
+			int8_t retry = 1;
 			struct timeb tpe;
 			cs_ftime(&tpe);
 			int32_t cwlastresptime = 1000*(tpe.time-eei->tps.time)+tpe.millitm-eei->tps.millitm;
@@ -2450,48 +2450,36 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 						//this card is from us but it can't decode this ecm
 						//also origin card is only set on cccam clients
 						//so wie send back the nok to the client
-						int32_t i = 0;
-						for (i = 0; i < CS_MAXPENDING; i++) {
-							if (cl->ecmtask[i].idx == ecm_idx) {
-								cs_debug_mask(D_TRACE, "%s forward card: %s", getprefix(), (buf[1]==MSG_CW_NOK1)?"NOK1":"NOK2");
-								cl->pending--;
-//								ECM_REQUEST *er = &cl->ecmtask[i];
-//								er->rc = E_NOTFOUND;
-//								write_ecm_answer(rdr, er, E_NOTFOUND,
-//										(buf[1] == MSG_CW_NOK1) ? E2_CCCAM_NOK1 : E2_CCCAM_NOK2,
-//										NULL, NULL);
-								break;
-							}
-						}
-					} else {
-						retry = 1;
+						cs_debug_mask(D_TRACE, "%s forward card: %s", getprefix(), (buf[1]==MSG_CW_NOK1)?"NOK1":"NOK2");
+						retry = 0;
 					}
 				}
 			} else {
 				cs_debug_mask(D_READER, "%s NOK: NO CARD!", getprefix());
 				//try next card...
-				retry = 1;
+			}
+
+			//A "NOK" in extended mode means, NOTHING found, regardless of the requested card. So do not retry
+			if (cc->extended_mode) {
+				cl->pending--;
+				retry = 0;
 			}
 
 			if (retry) {
-				//retry ecm:
-				if (!cc->extended_mode)
-					cc_reset_pending(cl, ecm_idx);
-				else {
-					cl->pending--;
-//					int32_t i = 0; //A "NOK" in extended mode means, NOTHING found, regardless of the requested card. So do not retry
-//					for (i = 0; i < CS_MAXPENDING; i++) {
-//						if (cl->ecmtask[i].idx == ecm_idx) {
-//							cs_debug_mask(D_TRACE,
-//									"%s ext NOK %s", getprefix(), (buf[1]==MSG_CW_NOK1)?"NOK1":"NOK2");
-//							ECM_REQUEST *er = &cl->ecmtask[i];
-//							cl->pending--;
-//							er->rc = E_NOTFOUND;
-//							write_ecm_answer(rdr, er, E_NOTFOUND, 0, NULL,
-//									NULL);
-//							break;
-//						}
-//					}
+				cc_reset_pending(cl, ecm_idx);
+			}
+			else {
+				int32_t i = 0;
+				for (i = 0; i < CS_MAXPENDING; i++) {
+					if (cl->ecmtask[i].idx == ecm_idx) {
+						cs_debug_mask(D_TRACE,
+								"%s ext NOK %s", getprefix(), (buf[1]==MSG_CW_NOK1)?"NOK1":"NOK2");
+						ECM_REQUEST *er = &cl->ecmtask[i];
+						cl->pending--;
+						er->rc = E_NOTFOUND;
+						write_ecm_answer(rdr, er, E_NOTFOUND, 0, NULL, NULL);
+						break;
+					}
 				}
 			}
 		}
