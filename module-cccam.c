@@ -331,47 +331,99 @@ void cc_cli_close(struct s_client *cl, int32_t call_conclose) {
 	cc->just_logged_in = 0;
 }
 
-uint8_t idx2mod(uint16_t idx)
-{
-	return (idx % 255) +1; //returns range 1..255
+struct cc_extended_ecm_idx *add_extended_ecm_idx(struct s_client *cl,
+		uint8_t send_idx, uint16_t ecm_idx, struct cc_card *card,
+		struct cc_srvid srvid, int8_t free_card) {
+	struct cc_data *cc = cl->cc;
+	struct cc_extended_ecm_idx *eei =
+			cs_malloc(&eei, sizeof(struct cc_extended_ecm_idx), QUITERROR);
+	eei->send_idx = send_idx;
+	eei->ecm_idx = ecm_idx;
+	eei->card = card;
+	eei->cccam_id = card->id;
+	eei->srvid = srvid;
+	eei->free_card = free_card;
+	cs_ftime(&eei->tps);
+	ll_append(cc->extended_ecm_idx, eei);
+	//cs_debug_mask(D_TRACE, "%s add extended ecm-idx: %d:%d", getprefix(), send_idx, ecm_idx);
+	return eei;
 }
 
-uint8_t ecm2mod(ECM_REQUEST *ecm)
-{
-	return ecm?idx2mod(ecm->idx):0;
-}
-
-ECM_REQUEST *get_ecm_by_idx(struct s_client *cl, uint16_t idx)
-{
-	int32_t i;
-	ECM_REQUEST *ecm;
-	uint8_t mod = idx2mod(idx);
-
-	for (i=0; i<CS_MAXPENDING; i++) {
-		ecm = &cl->ecmtask[i];
-		if (ecm->cccam_idx == mod || (ecm->idx && ecm->idx == idx))
-			return ecm;
+struct cc_extended_ecm_idx *get_extended_ecm_idx(struct s_client *cl,
+		uint8_t send_idx, int32_t remove) {
+	struct cc_data *cc = cl->cc;
+	struct cc_extended_ecm_idx *eei;
+	LL_ITER it = ll_iter_create(cc->extended_ecm_idx);
+	while ((eei = ll_iter_next(&it))) {
+		if (eei->send_idx == send_idx) {
+			if (remove)
+				ll_iter_remove(&it);
+			//cs_debug_mask(D_TRACE, "%s get by send-idx: %d FOUND: %d",
+			//		getprefix(), send_idx, eei->ecm_idx);
+			return eei;
+		}
 	}
+	cs_debug_mask(cl->typ=='c'?D_CLIENT:D_READER, "%s get by send-idx: %d NOT FOUND", getprefix(),
+			send_idx);
 	return NULL;
 }
 
-ECM_REQUEST *get_ecm_by_mod(struct s_client *cl, uint8_t mod)
-{
-	int32_t i;
-	ECM_REQUEST *ecm;
-
-	for (i=0; i<CS_MAXPENDING; i++) {
-		ecm = &cl->ecmtask[i];
-		if (ecm->cccam_idx == mod || (ecm->idx && ecm2mod(ecm) == mod))
-			return ecm;
+struct cc_extended_ecm_idx *get_extended_ecm_idx_by_idx(struct s_client *cl,
+		uint16_t ecm_idx, int32_t remove) {
+	struct cc_data *cc = cl->cc;
+	struct cc_extended_ecm_idx *eei;
+	LL_ITER it = ll_iter_create(cc->extended_ecm_idx);
+	while ((eei = ll_iter_next(&it))) {
+		if (eei->ecm_idx == ecm_idx) {
+			if (remove)
+				ll_iter_remove(&it);
+			//cs_debug_mask(D_TRACE, "%s get by ecm-idx: %d FOUND: %d",
+			//		getprefix(), ecm_idx, eei->send_idx);
+			return eei;
+		}
 	}
+	cs_debug_mask(cl->typ=='c'?D_CLIENT:D_READER, "%s get by ecm-idx: %d NOT FOUND", getprefix(),
+			ecm_idx);
 	return NULL;
-
 }
 
-void cc_reset_pending(ECM_REQUEST *ecm) {
-	if (ecm->rc == 101)
-		ecm->rc = 100; //Mark unused
+void cc_reset_pending(struct s_client *cl, int32_t ecm_idx) {
+	int32_t i = 0;
+	for (i = 0; i < CS_MAXPENDING; i++) {
+		if (cl->ecmtask[i].idx == ecm_idx && cl->ecmtask[i].rc == 101)
+			cl->ecmtask[i].rc = 100; //Mark unused
+	}
+}
+
+void free_extended_ecm_idx_by_card(struct s_client *cl, struct cc_card *card, int8_t null_only) {
+	struct cc_data *cc = cl->cc;
+	struct cc_extended_ecm_idx *eei;
+	LL_ITER it = ll_iter_create(cc->extended_ecm_idx);
+	while ((eei = ll_iter_next(&it))) {
+		if (eei->card == card) {
+			if (null_only) {
+				cc_reset_pending(cl, eei->ecm_idx);
+				if (eei->free_card)
+					free(eei->card);
+				ll_iter_remove_data(&it);
+			}
+			else {
+				if (eei->free_card)
+					free(eei->card);
+				eei->card = NULL;
+			}
+		}
+	}
+}
+
+void free_extended_ecm_idx(struct cc_data *cc) {
+	struct cc_extended_ecm_idx *eei;
+	LL_ITER it = ll_iter_create(cc->extended_ecm_idx);
+	while ((eei = ll_iter_next(&it))) {
+		if (eei->free_card)
+			free(eei->card);
+		ll_iter_remove_data(&it);
+	}
 }
 
 int32_t cc_recv_to(struct s_client *cl, uint8_t *buf, int32_t len) {
@@ -455,7 +507,7 @@ int32_t cc_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen) {
 	cc_crypt(&cc->block[DECRYPT], buf, 4, DECRYPT);
 	//cs_ddump_mask(D_CLIENT, buf, 4, "cccam: decrypted header:");
 
-	//cc->g_flag = buf[0];
+	cc->g_flag = buf[0];
 
 	int32_t size = (buf[2] << 8) | buf[3];
 	if (size) { // check if any data is expected in msg
@@ -1275,14 +1327,24 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			ecmbuf[12] = cur_er->l & 0xff;
 			memcpy(ecmbuf + 13, cur_er->ecm, cur_er->l);
 
-			cc->server_ecm_idx = cur_er->idx;
+			uint8_t send_idx = 1;
+			if (cc->extended_mode) {
+				cc->server_ecm_idx++;
+				if (cc->server_ecm_idx >= 256)
+					cc->server_ecm_idx = 1;
+				cc->g_flag = cc->server_ecm_idx; //Flag is used as index!
+				send_idx = cc->g_flag;
+			}
 
-			cur_er->cccam_id = card->id;
-			cur_er->cccam_idx = ecm2mod(cur_er);
-			cur_er->origin_card = card;
-
-			if (cc->extended_mode)
-				cc->g_flag = cur_er->cccam_idx; //Flag is used as index!
+			struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cl, send_idx, FALSE);
+			if (eei) {
+				eei->ecm_idx = cur_er->idx;
+				eei->card = card;
+				eei->cccam_id = card->id;
+				eei->srvid = cur_srvid;
+			} else
+				eei = add_extended_ecm_idx(cl, send_idx, cur_er->idx, card, cur_srvid, 0);
+			eei->tps = cur_er->tps;
 
 			rdr->cc_currenthops = card->hop;
 			rdr->card_status = CARD_INSERTED;
@@ -1417,21 +1479,6 @@ struct cc_card *get_card_by_hexserial(struct s_client *cl, uint8_t *hexserial,
 	struct cc_card *card;
 	while ((card = ll_iter_next(&it)))
 		if (card->caid == caid && memcmp(card->hexserial, hexserial, 8) == 0) { //found it!
-			break;
-		}
-	return card;
-}
-
-/**
- * READER only:
- * find card by id
- * */
-struct cc_card *get_card_by_id(struct s_client *cl, uint32_t id) {
-	struct cc_data *cc = cl->cc;
-	LL_ITER it = ll_iter_create(cc->cards);
-	struct cc_card *card;
-	while ((card = ll_iter_next(&it)))
-		if (card->id == id) { //found it!
 			break;
 		}
 	return card;
@@ -1574,6 +1621,8 @@ void cc_free(struct s_client *cl) {
 	cs_debug_mask(D_TRACE, "exit cccam1/3");
 	cc_free_cardlist(cc->cards, TRUE);
 	ll_destroy_data_NULL(cc->pending_emms);
+	free_extended_ecm_idx(cc);
+	ll_destroy_data_NULL(cc->extended_ecm_idx);
 
 	cs_writeunlock(&cc->lockcmd);
 
@@ -1781,9 +1830,6 @@ struct cc_card *read_card(uint8_t *buf, int32_t ext) {
 void cc_card_removed(struct s_client *cl, uint32_t shareid) {
 	struct cc_data *cc = cl->cc;
 	struct cc_card *card;
-	int32_t i;
-	ECM_REQUEST *ecm;
-
 	LL_ITER it = ll_iter_create(cc->cards);
 
 	while ((card = ll_iter_next(&it))) {
@@ -1796,20 +1842,7 @@ void cc_card_removed(struct s_client *cl, uint32_t shareid) {
 				cs_debug_mask(D_READER, "%s current card %08x removed!",
 						getprefix(), card->id);
 			}		
-
-			//Remove card from reader queue:
-			for (i=0; i<CS_MAXPENDING; i++) {
-				ecm = &cl->ecmtask[i];
-				if (ecm->origin_card == card)
-					ecm->origin_card = NULL;
-			}
-			//Remove card from client queue:
-			cs_readlock(&ecmcache_lock);
-			for (ecm = ecmcwcache; ecm; ecm = ecm->next) {
-				if (ecm->origin_card == card)
-					ecm->origin_card = NULL;
-			}
-			cs_readunlock(&ecmcache_lock);
+			free_extended_ecm_idx_by_card(cl, card, 1);
 			
 			if (card->hop == 1) cc->num_hop1--;
 			else if (card->hop == 2) cc->num_hop2--;
@@ -1844,6 +1877,7 @@ void move_card_to_end(struct s_client * cl, struct cc_card *card_to_move) {
 	}
 	if (card) {
 		cs_debug_mask(D_READER, "%s Moving card %08X to the end...", getprefix(), card_to_move->id);
+		free_extended_ecm_idx_by_card(cl, card, 0);
 		ll_append(cc->cards, card_to_move);
 	}
 }
@@ -2087,6 +2121,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 		if (l == 0x48) { //72 bytes: normal server data
 			cs_writelock(&cc->cards_busy);
 			cc_free_cardlist(cc->cards, FALSE);
+			free_extended_ecm_idx(cc); 
 			cc->last_emm_card = NULL;
 			cc->num_hop1 = 0;
 			cc->num_hop2 = 0;
@@ -2359,34 +2394,26 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 
 		cs_readlock(&cc->cards_busy);
 
-		ECM_REQUEST *ecm;
-		if (cc->extended_mode)
-			ecm = get_ecm_by_mod(cl, cc->g_flag);
-		else
-			ecm = get_ecm_by_idx(cl, cc->server_ecm_idx);
-
-		if (!ecm) {
+   		struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cl,
+				cc->extended_mode ? cc->g_flag : 1, TRUE);
+		if (!eei) {
 			cs_debug_mask(D_READER, "%s received extended ecm NOK id %d but not found!",
-					getprefix(), cc->extended_mode?cc->g_flag:cc->server_ecm_idx);
-			if (!cc->extended_mode)
-				cc_cli_close(cl, 0);
+					getprefix(), cc->g_flag);
 		}
 		else
 		{
-			cc->recv_ecmtask = ecm->idx;
-			struct cc_card *card = ecm->origin_card;
-			struct cc_srvid srvid;
-			srvid.chid = ecm->chid;
-			srvid.ecmlen = ecm->l;
-			srvid.sid = ecm->srvid;
-
+			uint16_t ecm_idx = eei->ecm_idx;
+			cc->recv_ecmtask = ecm_idx;
+			struct cc_card *card = eei->card;
+//			uint32_t cccam_id = eei->cccam_id;
+			struct cc_srvid srvid = eei->srvid;			
+			int8_t retry = 0;
 			struct timeb tpe;
 			cs_ftime(&tpe);
-			int32_t cwlastresptime = 1000*(tpe.time-ecm->tps.time)+tpe.millitm-ecm->tps.millitm;
-
-			if (!card)
-				card = get_card_by_id(cl, ecm->cccam_id);
+			int32_t cwlastresptime = 1000*(tpe.time-eei->tps.time)+tpe.millitm-eei->tps.millitm;
 			
+			free(eei);
+
 			if (card) {
 				if (buf[1] == MSG_CW_NOK1) //MSG_CW_NOK1: share no more available
 					cc_card_removed(cl, card->id);
@@ -2423,31 +2450,49 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 						//this card is from us but it can't decode this ecm
 						//also origin card is only set on cccam clients
 						//so wie send back the nok to the client
-						cs_debug_mask(D_TRACE, "%s forward card: %s", getprefix(), (buf[1]==MSG_CW_NOK1)?"NOK1":"NOK2");
-						cl->pending--;
-						ecm->rc = E_NOTFOUND;
-						write_ecm_answer(rdr, ecm, E_NOTFOUND, (buf[1] == MSG_CW_NOK1) ? E2_CCCAM_NOK1 : E2_CCCAM_NOK2,
-										NULL, NULL);
+						int32_t i = 0;
+						for (i = 0; i < CS_MAXPENDING; i++) {
+							if (cl->ecmtask[i].idx == ecm_idx) {
+								cs_debug_mask(D_TRACE, "%s forward card: %s", getprefix(), (buf[1]==MSG_CW_NOK1)?"NOK1":"NOK2");
+								cl->pending--;
+//								ECM_REQUEST *er = &cl->ecmtask[i];
+//								er->rc = E_NOTFOUND;
+//								write_ecm_answer(rdr, er, E_NOTFOUND,
+//										(buf[1] == MSG_CW_NOK1) ? E2_CCCAM_NOK1 : E2_CCCAM_NOK2,
+//										NULL, NULL);
+								break;
+							}
+						}
 					} else {
-						//retry ecm:
-						if (!cc->extended_mode) {
-							if (ecm->rc == 101) ecm->rc = 100;
-						}
-						else {
-							cl->pending--;
-							//A "NOK" in extended mode means, NOTHING found, regardless of the requested card. So do not retry
-							cs_debug_mask(D_TRACE, "%s ext NOK %s", getprefix(), (buf[1]==MSG_CW_NOK1)?"NOK1":"NOK2");
-							cl->pending--;
-							ecm->rc = E_NOTFOUND;
-							write_ecm_answer(rdr, ecm, E_NOTFOUND, 0, NULL, NULL);
-						}
+						retry = 1;
 					}
 				}
 			} else {
 				cs_debug_mask(D_READER, "%s NOK: NO CARD!", getprefix());
-				cl->pending--;
-				ecm->rc = E_NOTFOUND;
-				write_ecm_answer(rdr, ecm, E_NOTFOUND, E2_CCCAM_NOK1, NULL, NULL);
+				//try next card...
+				retry = 1;
+			}
+
+			if (retry) {
+				//retry ecm:
+				if (!cc->extended_mode)
+					cc_reset_pending(cl, ecm_idx);
+				else {
+					cl->pending--;
+//					int32_t i = 0; //A "NOK" in extended mode means, NOTHING found, regardless of the requested card. So do not retry
+//					for (i = 0; i < CS_MAXPENDING; i++) {
+//						if (cl->ecmtask[i].idx == ecm_idx) {
+//							cs_debug_mask(D_TRACE,
+//									"%s ext NOK %s", getprefix(), (buf[1]==MSG_CW_NOK1)?"NOK1":"NOK2");
+//							ECM_REQUEST *er = &cl->ecmtask[i];
+//							cl->pending--;
+//							er->rc = E_NOTFOUND;
+//							write_ecm_answer(rdr, er, E_NOTFOUND, 0, NULL,
+//									NULL);
+//							break;
+//						}
+//					}
+				}
 			}
 		}
 		cc->cmd05NOK = 0;
@@ -2465,6 +2510,12 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 		if (cl->typ == 'c') { //SERVER:
 			ECM_REQUEST *er;
 
+			struct cc_card *server_card = cs_malloc(&server_card, sizeof(struct cc_card), QUITERROR);
+			memset(server_card, 0, sizeof(struct cc_card));
+			server_card->id = buf[10] << 24 | buf[11] << 16 | buf[12] << 8
+					| buf[13];
+			server_card->caid = b2i(2, data);
+
 			if ((er = get_ecmtask())) {
 				er->caid = b2i(2, buf + 4);
 				er->srvid = b2i(2, buf + 14);
@@ -2473,29 +2524,22 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				memcpy(er->ecm, buf + 17, er->l);
 				er->prid = b2i(4, buf + 6);
 				cc->server_ecm_pending++;
-
-				cc->server_ecm_idx++;
-				if (!cc->server_ecm_idx)  //Overflow 0xFFFF -> 0x0000
-					cc->server_ecm_idx++; //-->0x0001
-
-				er->idx = cc->server_ecm_idx;
-				er->cccam_id = buf[10] << 24 | buf[11] << 16 | buf[12] << 8 | buf[13];
-				er->cccam_idx = ecm2mod(er);
+				er->idx = ++cc->server_ecm_idx;
 				
 #ifdef MODULE_CCCSHARE
 				
 				if (cfg.cc_forward_origin_card) { //search my shares for this card:
-						cs_debug_mask(D_TRACE, "%s forward card: %04X:%04x search share %d", getprefix(), er->caid, er->srvid, er->cccam_id);
+						cs_debug_mask(D_TRACE, "%s forward card: %04X:%04x search share %d", getprefix(), er->caid, er->srvid, server_card->id);
 						LLIST **sharelist = get_and_lock_sharelist();
 						LL_ITER itr = ll_iter_create(get_cardlist(er->caid, sharelist));
 						struct cc_card *card;
 						struct cc_card *rcard = NULL;
 						while ((card=ll_iter_next(&itr))) {
-								if (card->id == er->cccam_id) { //found it
+								if (card->id == server_card->id) { //found it
 										break;
 								}
 						}
-						cs_debug_mask(D_TRACE, "%s forward card: share %d found: %d", getprefix(), er->cccam_id, card?1:0);
+						cs_debug_mask(D_TRACE, "%s forward card: share %d found: %d", getprefix(), server_card->id, card?1:0);
 						
 						struct s_reader *ordr = NULL;
 						if (card && card->origin_reader) { // found own card, now search reader card:
@@ -2528,7 +2572,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 						
 						er->origin_card = rcard;
 						if (!rcard || !ordr) {
-								cs_debug_mask(D_TRACE, "%s forward card: share %d not found!", getprefix(), er->cccam_id);
+								cs_debug_mask(D_TRACE, "%s forward card: share %d not found!", getprefix(), server_card->id);
 								er->rc = E_NOTFOUND;
 								er->rcEx = E2_CCCAM_NOK1; //share not found!
 						}
@@ -2539,39 +2583,44 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				}
 #endif				
 						
-				cs_debug_mask(D_CLIENT, "%s ECM request from client: caid %04x srvid %04x(%d) prid %06x",
+				cs_debug_mask(
+						D_CLIENT,
+						"%s ECM request from client: caid %04x srvid %04x(%d) prid %06x",
 						getprefix(), er->caid, er->srvid, er->l, er->prid);
+
+				struct cc_srvid srvid;
+				srvid.sid = er->srvid;
+				srvid.chid = er->chid;
+				srvid.ecmlen = er->l;
+				add_extended_ecm_idx(cl, cc->extended_mode ? cc->g_flag : 1,
+						er->idx, server_card, srvid, 1);
 
 				get_cw(cl, er);
 
 			} else {
 				cs_debug_mask(D_CLIENT, "%s NO ECMTASK!!!!", getprefix());
+				free(server_card);
 			}
 
 		} else { //READER:
 			cs_readlock(&cc->cards_busy);
     		cc->recv_ecmtask = -1;
-    		ECM_REQUEST *ecm;
-    		if (cc->extended_mode)
-    			ecm = get_ecm_by_mod(cl, cc->g_flag);
-    		else
-    			ecm = get_ecm_by_idx(cl, cc->server_ecm_idx);
-
-			if (!ecm) {
+			struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cl,
+					cc->extended_mode ? cc->g_flag : 1, TRUE);
+			if (!eei) {
 				cs_debug_mask(D_READER, "%s received extended ecm id %d but not found!",
-						getprefix(), cc->extended_mode?cc->g_flag:cc->server_ecm_idx);
+						getprefix(), cc->g_flag);
 				if (!cc->extended_mode)
 					cc_cli_close(cl, 0);
 			}
 			else
 			{
-				uint16_t ecm_idx = ecm->idx;
+				uint16_t ecm_idx = eei->ecm_idx;
 				cc->recv_ecmtask = ecm_idx;
-				struct cc_card *card = ecm->origin_card;
-				struct cc_srvid srvid;
-				srvid.chid = ecm->chid;
-				srvid.ecmlen = ecm->l;
-				srvid.sid = ecm->srvid;
+				struct cc_card *card = eei->card;
+				uint32_t cccam_id = eei->cccam_id;
+				struct cc_srvid srvid = eei->srvid;
+				free(eei);
 
 				if (card) {
 
@@ -2591,7 +2640,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 						move_card_to_end(cl, card);
 						add_sid_block(cl, card, &srvid);
 						//ecm retry:
-						cc_reset_pending(ecm);
+						cc_reset_pending(cl, ecm_idx);
 						buf[1] = MSG_CW_NOK2; //So it's really handled like a nok!
 					} else {
 						cs_debug_mask(D_READER, "%s cws: %d %s", getprefix(),
@@ -2617,9 +2666,22 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 						}
 					}
 				} else {
+					// Card removed...
 					cs_debug_mask(D_READER,
 							"%s warning: ECM-CWS respond by CCCam server without current card!",
 							getprefix());
+
+					if (!cc->extended_mode) {
+ 						cc_cw_crypt(cl, buf + 4, cccam_id);
+						cc_crypt_cmd0c(cl, buf + 4, 16);
+					}
+					memcpy(cc->dcw, buf + 4, 16);
+					//fix_dcw(cc->dcw);
+					if (!cc->extended_mode)
+						cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
+
+					cs_debug_mask(D_READER, "%s cws: %d %s", getprefix(),
+							ecm_idx, cs_hexdump(0, cc->dcw, 16, tmp_dbg, sizeof(tmp_dbg)));
 				}
 			}
 			cs_readunlock(&cc->cards_busy);
@@ -2908,15 +2970,18 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 
 	memset(buf, 0, sizeof(buf));
 
-	if (er->rc < E_NOTFOUND) { //found:
+	struct cc_extended_ecm_idx *eei = get_extended_ecm_idx_by_idx(cl, er->idx,
+			TRUE);
+
+	if (er->rc < E_NOTFOUND && eei) { //found:
 		memcpy(buf, er->cw, sizeof(buf));
 		//fix_dcw(buf);
 		//cs_debug_mask(D_TRACE, "%s send cw: %s cpti: %d", getprefix(),
 		//		cs_hexdump(0, buf, 16, tmp_dbg, sizeof(tmp_dbg)), er->cpti);
 		if (!cc->extended_mode)
-			cc_cw_crypt(cl, buf, er->cccam_id);
+			cc_cw_crypt(cl, buf, eei->cccam_id);
 		else
-			cc->g_flag = er->cccam_idx?er->cccam_idx:ecm2mod(er);
+			cc->g_flag = eei->send_idx;
 		cc_cmd_send(cl, buf, 16, MSG_CW_ECM);
 		if (!cc->extended_mode)
 			cc_crypt(&cc->block[ENCRYPT], buf, 16, ENCRYPT); // additional crypto step
@@ -2925,8 +2990,8 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 		//cs_debug_mask(D_TRACE, "%s send cw: NOK cpti: %d", getprefix(),
 		//		er->cpti);
 		
-		if (cc->extended_mode)
-			cc->g_flag = er->cccam_idx?er->cccam_idx:ecm2mod(er);
+		if (eei && cc->extended_mode)
+			cc->g_flag = eei->send_idx;
 
 		int32_t nok, bufsize = 0;
 		if (cc->sleepsend && er->rc == E_STOPPED) {
@@ -2934,14 +2999,21 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 			bufsize=1;
 			nok = MSG_SLEEPSEND;
 		}
-		else if (cfg.cc_forward_origin_card && er->origin_card)
-			nok = (er->rcEx==E2_CCCAM_NOK1)?MSG_CW_NOK1:MSG_CW_NOK2;
-		else
-			nok = MSG_CW_NOK2; //can't decode
-
+		else if (!eei || !eei->card)
+			nok = MSG_CW_NOK1; //share no more available
+		else {
+			if (cfg.cc_forward_origin_card && er->origin_card == eei->card)
+				nok = (er->rcEx==E2_CCCAM_NOK1)?MSG_CW_NOK1:MSG_CW_NOK2;
+			else
+				nok = MSG_CW_NOK2; //can't decode
+		}
 		cc_cmd_send(cl, buf, bufsize, nok);
 	}
 	cc->server_ecm_pending--;
+	if (eei) {
+		free(eei->card);
+		free(eei);
+	}
 }
 
 int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
@@ -3041,6 +3113,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	cc = cs_malloc(&cc, sizeof(struct cc_data), QUITERROR);
 	cl->cc = cc;
 	memset(cl->cc, 0, sizeof(struct cc_data));
+	cc->extended_ecm_idx = ll_create("extended_ecm_idx");
 
 	cc_init_locks(cc);
 	uint8_t *buf = cc->send_buffer;
@@ -3277,8 +3350,10 @@ int32_t cc_cli_connect(struct s_client *cl) {
 		cc->cards = ll_create("cards");
 		cl->cc = cc;
 		cc->pending_emms = ll_create("pending_emms");
+		cc->extended_ecm_idx = ll_create("extended_ecm_idx");
 	} else {
 		cc_free_cardlist(cc->cards, FALSE);
+		free_extended_ecm_idx(cc);
 	}
 	if (!cc->prefix)
 		cc->prefix = cs_malloc(&cc->prefix, strlen(cl->reader->label)+20, QUITERROR);
