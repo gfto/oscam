@@ -198,15 +198,19 @@
 #define CS_EMMCACHESIZE  127 //nr of EMMs that each client will cache; cache is per client, so memory-expensive...
 #define MSGLOGSIZE 64	//size of string buffer for a ecm to return messages
 
-#define D_TRACE     1 // Generate very detailed error/trace messages per routine
-#define D_ATR       2 // Debug ATR parsing, dump of ecm, cw
-#define D_READER    4 // Debug Reader/Proxy Process
-#define D_CLIENT    8 // Debug Client Process
-#define D_IFD       16  // Debug IFD+protocol
-#define D_DEVICE    32  // Debug Reader I/O
-#define D_EMM				64  // Dumps EMM
-#define D_DVBAPI		128 // Debug DVBAPI
-#define D_ALL_DUMP  255 // dumps all
+#define D_TRACE     0x0001  // Generate very detailed error/trace messages per routine
+#define D_ATR       0x0002  // Debug ATR parsing, dump of ecm, cw
+#define D_READER    0x0004  // Debug Reader/Proxy Process
+#define D_CLIENT    0x0008  // Debug Client Process
+#define D_IFD       0x0010  // Debug IFD+protocol
+#define D_DEVICE    0x0020  // Debug Reader I/O
+#define D_EMM		0x0040  // Dumps EMM
+#define D_DVBAPI    0x0080  // Debug DVBAPI
+#define D_LB        0x0100  // Debug Loadbalancer
+#define D_CACHEEX   0x0200  // Debug CACHEEX
+#define D_ALL_DUMP  0xFFFF  // dumps all
+
+#define MAX_DEBUG_LEVELS 10
 
 #define R_DB2COM1   0x1 // Reader Dbox2 @ com1
 #define R_DB2COM2   0x2 // Reader Dbox2 @ com1
@@ -1720,7 +1724,7 @@ extern struct s_client *first_client;
 extern uint32_t ecmcwcache_size;
 extern struct s_reader *first_active_reader;		//points to list of _active_ readers (enable = 1, deleted = 0)
 extern LLIST *configured_readers;
-extern int32_t cs_dblevel;
+extern uint16_t cs_dblevel;
 extern uint16_t len4caid[256];
 extern struct s_config cfg;
 extern char cs_confdir[];

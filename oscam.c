@@ -31,7 +31,7 @@ LLIST * configured_readers = NULL; //list of all (configured) readers
 
 uint16_t  len4caid[256];    // table for guessing caid (by len)
 char  cs_confdir[128]=CS_CONFDIR;
-int32_t cs_dblevel=0;   // Debug Level
+uint16_t cs_dblevel=0;   // Debug Level
 int32_t thread_pipe[2] = {0, 0};
 #ifdef WEBIF
 int8_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)restart fork, restart by webif, 2=like=1, but also restart on segfaults
@@ -1863,7 +1863,7 @@ static int8_t match_alias(struct s_client *cl, ECM_REQUEST *er, ECM_REQUEST *ecm
 		if (entry) {
 			int32_t diff = comp_timeb(&er->tps, &ecm->tps);
 			if (diff > entry->valid_from && diff < entry->valid_to) {
-				cs_debug_mask(D_TRACE, "cacheex-matching for: %04X:%06X:%04X:%04X:%04X:%02X = %04X:%06X:%04X:%04X:%04X:%02X valid %d/%d",
+				cs_debug_mask(D_CACHEEX, "cacheex-matching for: %04X:%06X:%04X:%04X:%04X:%02X = %04X:%06X:%04X:%04X:%04X:%02X valid %d/%d",
 						entry->caid, entry->provid, entry->srvid, entry->pid, entry->chid, entry->ecmlen,
 						entry->to_caid, entry->to_provid, entry->to_srvid, entry->to_pid, entry->to_chid, entry->to_ecmlen,
 						entry->valid_from, entry->valid_to);
@@ -1960,7 +1960,7 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 	if (!csp && cl->account && cl->account->cacheex!=3) //from user
 		return 0;
 	if (!csp && !cl->reader && !cl->account) { //not active!
-		cs_debug_mask(D_TRACE, "CACHEX received, but disabled for %s", username(cl));
+		cs_debug_mask(D_CACHEEX, "CACHEX received, but disabled for %s", username(cl));
 		return 0;
 	}
 
@@ -1968,7 +1968,7 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 	for (i = 0; i < 16; i += 4) {
 		c = ((er->cw[i] + er->cw[i + 1] + er->cw[i + 2]) & 0xff);
 		if (er->cw[i + 3] != c) {
-			cs_ddump_mask(D_TRACE, er->cw, 16,
+			cs_ddump_mask(D_CACHEEX, er->cw, 16,
 					"push received cw with chksum error from %s", csp?"csp":username(cl));
 			return 0;
 		}
@@ -2015,7 +2015,7 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 			cl->account->cwcacheexgot++;
 		first_client->cwcacheexgot++;
 
-		cs_debug_mask(D_TRACE, "got pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
+		cs_debug_mask(D_CACHEEX, "got pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
 			er->caid, er->prid, er->srvid, er->l, htons(er->checksum),  csp?"csp":username(cl));
 	}
 	else {
@@ -2032,12 +2032,12 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 				cl->account->cwcacheexgot++;
 			first_client->cwcacheexgot++;
 
-			cs_debug_mask(D_TRACE, "replaced pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
+			cs_debug_mask(D_CACHEEX, "replaced pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
 				er->caid, er->prid, er->srvid, er->l, htons(er->checksum),  csp?"csp":username(cl));
 		}
 		else
 		{
-			cs_debug_mask(D_TRACE, "ignored duplicate pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
+			cs_debug_mask(D_CACHEEX, "ignored duplicate pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
 				er->caid, er->prid, er->srvid, er->l, htons(er->checksum),  csp?"csp":username(cl));
 		}
 		return 0;
@@ -2080,8 +2080,11 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 		// this means: reader has a ecm copy from client, so point to client
 		er->rc = rc;
 		er->idx = 0;
-		er = er->parent;
+		er = er->parent; //Now er is "original" ecm, before it was the reader-copy
 	}
+
+	if (er->rc < E_99) //Already done
+		return 0;
 
 	for(ea_list = er->matching_rdr; reader && ea_list && !ea_org; ea_list = ea_list->next) {
 		if (ea_list->reader == reader)
@@ -3835,7 +3838,7 @@ void * work_thread(void *ptr) {
 
 
 				cs_debug_mask(
-					D_TRACE,
+					D_CACHEEX,
 					"pushed ECM %04X&%06X/%04X/%02X:%04X to %s res %d stats %d", er->caid, er->prid, er->srvid, er->l,
 					htons(er->checksum), username(cl), res, stats);
 				free(data->ptr);

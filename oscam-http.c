@@ -2832,7 +2832,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 		cs_log("*** Warning: Debug Support not compiled in ***");
 #else
 		int32_t dblvl = atoi(debuglvl);
-		if(dblvl >= 0 && dblvl <= 255) cs_dblevel = dblvl;
+		if(dblvl >= 0 && dblvl <= 65535) cs_dblevel = dblvl;
 		cs_log("%s debug_level=%d", "all", cs_dblevel);
 #endif
 	}
@@ -3276,7 +3276,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 #ifdef WITH_DEBUG
 	// Debuglevel Selector
 	int32_t lvl;
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < MAX_DEBUG_LEVELS; i++) {
 		lvl = 1 << i;
 		tpl_printf(vars, TPLADD, "TMPC", "DCLASS%d", lvl);
 		tpl_printf(vars, TPLADD, "TMPV", "DEBUGVAL%d", lvl);
@@ -3290,9 +3290,9 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 	}
 
 	if (cs_dblevel == 255)
-		tpl_addVar(vars, TPLADD, "DCLASS255", "debugls");
+		tpl_addVar(vars, TPLADD, "DCLASS65535", "debugls");
 	else
-		tpl_addVar(vars, TPLADD, "DCLASS255", "debugl");
+		tpl_addVar(vars, TPLADD, "DCLASS65535", "debugl");
 
 	tpl_addVar(vars, TPLADD, "NEXTPAGE", "status.html");
 	tpl_addVar(vars, TPLADD, "DCLASS", "debugl"); //default
@@ -3633,7 +3633,7 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 		cs_log("*** Warning: Debug Support not compiled in ***");
 #else
 		int32_t dblvl = atoi(debuglvl);
-		if(dblvl >= 0 && dblvl <= 255) cs_dblevel = dblvl;
+		if(dblvl >= 0 && dblvl <= 65535) cs_dblevel = dblvl;
 		cs_log("%s debug_level=%d", "all", cs_dblevel);
 #endif
 	}
@@ -3717,7 +3717,7 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 #ifdef WITH_DEBUG
 		// Debuglevel Selector
 		int32_t i, lvl;
-		for (i = 0; i < 8; i++) {
+		for (i = 0; i < MAX_DEBUG_LEVELS; i++) {
 			lvl = 1 << i;
 			tpl_printf(vars, TPLADD, "TMPC", "DCLASS%d", lvl);
 			tpl_printf(vars, TPLADD, "TMPV", "DEBUGVAL%d", lvl);
@@ -3730,10 +3730,10 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 			}
 		}
 
-		if (cs_dblevel == 255)
-			tpl_addVar(vars, TPLADD, "DCLASS255", "debugls");
+		if (cs_dblevel == D_ALL_DUMP)
+			tpl_addVar(vars, TPLADD, "DCLASS65535", "debugls");
 		else
-			tpl_addVar(vars, TPLADD, "DCLASS255", "debugl");
+			tpl_addVar(vars, TPLADD, "DCLASS65535", "debugl");
 
 		tpl_addVar(vars, TPLADD, "CUSTOMPARAM", "&file=logfile");
 		tpl_printf(vars, TPLADD, "ACTDEBUG", "%d", cs_dblevel);

@@ -547,7 +547,9 @@ SFRTIFJFU0VSVkVEADs="
 	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS32##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL32####CUSTOMPARAM##\" title=\"traffic to the reader-device on I/O layer\">&nbsp;32&nbsp;</A></SPAN>\n\
 	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS64##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL64####CUSTOMPARAM##\" title=\"EMM logging\">&nbsp;64&nbsp;</A></SPAN>\n\
 	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS128##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL128####CUSTOMPARAM##\" title=\"DVBAPI logging\">&nbsp;128&nbsp;</A></SPAN>\n\
-	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS255##\" HREF=\"##NEXTPAGE##?debug=255##CUSTOMPARAM##\" title=\"debug all\">&nbsp;255&nbsp;</A></SPAN>\n"
+	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS256##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL256####CUSTOMPARAM##\" title=\"Loadbalancer logging\">&nbsp;256&nbsp;</A></SPAN>\n\
+	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS512##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL512####CUSTOMPARAM##\" title=\"CACHEEX logging\">&nbsp;512&nbsp;</A></SPAN>\n\
+	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS65535##\" HREF=\"##NEXTPAGE##?debug=65535##CUSTOMPARAM##\" title=\"debug all\">&nbsp;ALL&nbsp;</A></SPAN>\n"
 #endif
 
 #define TPLFAILBAN "\
@@ -814,12 +816,12 @@ SFRTIFJFU0VSVkVEADs="
 			<TD class=\"centered\">##TOTAL_ACTIVE##</TD>\n\
 			<TD class=\"centered\">##TOTAL_CONNECTED##</TD>\n\
 			<TD class=\"centered\">##TOTAL_ONLINE##</TD>\n\
-			<TD class=\"centered\">##TOTAL_CWOK## (##REL_CWOK##%)</TD>\n\
-			<TD class=\"centered\">##TOTAL_CWNOK## (##REL_CWNOK##%)</TD>\n\
-			<TD class=\"centered\">##TOTAL_CWIGN## (##REL_CWIGN##%)</TD>\n\
-			<TD class=\"centered\">##TOTAL_CWTOUT## (##REL_CWTOUT##%)</TD>\n\
-			<TD class=\"centered\">##TOTAL_CWCACHE## (##REL_CWCACHE##%)</TD>\n\
-			<TD class=\"centered\">##TOTAL_CWTUN## (##REL_CWTUN##%)</TD>\n\
+			<TD class=\"centered\">##TOTAL_CWOK## (##REL_CWOK##&percnt;)</TD>\n\
+			<TD class=\"centered\">##TOTAL_CWNOK## (##REL_CWNOK##&percnt;)</TD>\n\
+			<TD class=\"centered\">##TOTAL_CWIGN## (##REL_CWIGN##&percnt;)</TD>\n\
+			<TD class=\"centered\">##TOTAL_CWTOUT## (##REL_CWTOUT##&percnt;)</TD>\n\
+			<TD class=\"centered\">##TOTAL_CWCACHE## (##REL_CWCACHE##&percnt;)</TD>\n\
+			<TD class=\"centered\">##TOTAL_CWTUN## (##REL_CWTUN##&percnt;)</TD>\n\
 			<TD class=\"centered\"><A HREF=\"userconfig.html?action=resetserverstats\" TITLE=\"reset statistics for server\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICRES\"BORDER=\"0\" ALT=\"Reset Server Stats\"></A></TD>\n\
 		</TR>\n\
 	</TABLE><BR>\n\
@@ -2347,10 +2349,10 @@ function isNumber(a) {\n\
 	<TABLE>\n\
 		<TR><TH>Total push</TH><TH>Total got</TH><TH>Total hit</TH><TH>Cache size</TH></TR>\n\
 		<TR><TD class=\"centered\">##TOTAL_CACHEXPUSH_IMG##</TD><TD class=\"centered\">##TOTAL_CACHEXGOT_IMG##</TD><TD class=\"centered\">&nbsp;</TD><TD class=\"centered\">&nbsp;</TD></TR>\n\
-		<TR><TD class=\"centered\">##TOTAL_CACHEXPUSH##</TD><TD class=\"centered\">##TOTAL_CACHEXGOT##</TD><TD class=\"centered\">##TOTAL_CACHEXHIT## (##REL_CACHEXHIT##%)</TD><TD class=\"centered\">##TOTAL_CACHESIZE##</TD></TR>\n\
+		<TR><TD class=\"centered\">##TOTAL_CACHEXPUSH##</TD><TD class=\"centered\">##TOTAL_CACHEXGOT##</TD><TD class=\"centered\">##TOTAL_CACHEXHIT## (##REL_CACHEXHIT##&percnt;)</TD><TD class=\"centered\">##TOTAL_CACHESIZE##</TD></TR>\n\
 	</TABLE>\n\
 	<BR><BR>\n\
-##TPLFOOTER##"
+##TPLFOOTER##" 
 
 #define TPLCACHEEXTABLEROW "			<TR><TD>&nbsp;&nbsp;##DIRECTIONIMG##&nbsp;&nbsp;</TD><TD>##TYPE##</TD><TD>##NAME##</TD><TD>##LEVEL##</TD><TD>##PUSH##</TD><TD>##GOT##</TD><TD>##HIT##</TD></TR>\n"
 #endif

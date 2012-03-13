@@ -1900,7 +1900,7 @@ int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 
 	//check max 10 nodes to push:
 	if (ll_count(er->csp_lastnodes) >= 10) {
-		cs_debug_mask(D_TRACE, "cacheex: nodelist reached 10 nodes, no push");
+		cs_debug_mask(D_CACHEEX, "cacheex: nodelist reached 10 nodes, no push");
 		return 0;
 	}
 
@@ -1908,7 +1908,7 @@ int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 	LL_ITER it = ll_iter_create(er->csp_lastnodes);
 	uint8_t *node;
 	while ((node = ll_iter_next(&it))) {
-		cs_debug_mask(D_TRACE, "cacheex: check node %llX == %llX ?", cnode(node), cnode(cc->peer_node_id));
+		cs_debug_mask(D_CACHEEX, "cacheex: check node %llX == %llX ?", cnode(node), cnode(cc->peer_node_id));
 		if (memcmp(node, cc->peer_node_id, 8) == 0) {
 			break;
 		}
@@ -1916,7 +1916,7 @@ int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 
 	//node found, so we got it from there, do not push:
 	if (node) {
-		cs_debug_mask(D_TRACE,
+		cs_debug_mask(D_CACHEEX,
 				"cacheex: node %llX found in list => skip push!", cnode(node));
 		return 0;
 	}
@@ -2039,7 +2039,7 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 	uint8_t *data;
 	er->csp_lastnodes = ll_create("csp_lastnodes");
 	if (count > 10) {
-		cs_debug_mask(D_TRACE, "cacheex: received %d nodes (max=10), ignored!", (int32_t)count);
+		cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes (max=10), ignored!", (int32_t)count);
 		count = 0;
 	}
 	while (count) {
@@ -2055,7 +2055,7 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 		data = cs_malloc(&data, 8, 0);
 		memcpy(data, cc->peer_node_id, 8);
 		ll_append(er->csp_lastnodes, data);
-		cs_debug_mask(D_TRACE, "cacheex: added missing remote node id %llX", cnode(data));
+		cs_debug_mask(D_CACHEEX, "cacheex: added missing remote node id %llX", cnode(data));
 	}
 
 	cs_add_cache(cl, er, 0);
@@ -2368,6 +2368,8 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 		if (!ecm) {
 			cs_debug_mask(D_READER, "%s received extended ecm NOK id %d but not found!",
 					getprefix(), cc->extended_mode?cc->g_flag:cc->server_ecm_idx);
+			if (!cc->extended_mode)
+				cc_cli_close(cl, 0);
 		}
 		else
 		{
@@ -2558,6 +2560,8 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			if (!ecm) {
 				cs_debug_mask(D_READER, "%s received extended ecm id %d but not found!",
 						getprefix(), cc->extended_mode?cc->g_flag:cc->server_ecm_idx);
+				if (!cc->extended_mode)
+					cc_cli_close(cl, 0);
 			}
 			else
 			{
