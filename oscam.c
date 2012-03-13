@@ -853,7 +853,8 @@ void cs_dumpstack(int32_t sig)
 	fclose(cmd);
 
 	snprintf(buf, sizeof(buf)-1, "gdb %s %d -batch -x /tmp/gdbcmd >> oscam.crash", prog_name, getpid());
-	system(buf);
+	if(system(buf) == -1)
+		fprintf(stderr, "Fatal error on trying to start gdb process.");
 
 	exit(-1);
 }
