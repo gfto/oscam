@@ -1955,12 +1955,16 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 {
 	if (!cl)
 		return 0;
-	if (!csp && cl->reader && cl->reader->cacheex!=2) //from reader
-		return 0;
-	if (!csp && cl->account && cl->account->cacheex!=3) //from user
-		return 0;
-	if (!csp && !cl->reader && !cl->account) { //not active!
+	if (!csp && cl->reader && cl->reader->cacheex!=2) { //from reader
 		cs_debug_mask(D_CACHEEX, "CACHEX received, but disabled for %s", username(cl));
+		return 0;
+	}
+	if (!csp && !cl->reader && cl->account && cl->account->cacheex!=3) { //from user
+		cs_debug_mask(D_CACHEEX, "CACHEX received, but disabled for %s", username(cl));
+		return 0;
+	}
+	if (!csp && !cl->reader && !cl->account) { //not active!
+		cs_debug_mask(D_CACHEEX, "CACHEX received, but invalid client state %s", username(cl));
 		return 0;
 	}
 
@@ -2009,6 +2013,8 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 		er->selected_reader = cl->reader;
 
 		cs_cache_push(er);  //cascade push!
+
+		cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 1);
 
 		cl->cwcacheexgot++;
 		if (cl->account)
