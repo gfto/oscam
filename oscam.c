@@ -2384,7 +2384,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		er->rc=E_FOUND;
 	}
 
-	if (cfg.double_check && er->rc < E_NOTFOUND) {
+	if (cfg.double_check && er->rc < E_NOTFOUND && er->selected_reader) {
 	  if (er->checked == 0) {//First CW, save it and wait for next one
 	    er->checked = 1;
 	    er->origin_reader = er->selected_reader;

@@ -2965,9 +2965,9 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 			if (rdr) {
 				cc_cli_close(cl, TRUE);
 			} else {
-				cs_writelock(&cc->cards_busy);
+				//cs_writelock(&cc->cards_busy); maybe uninitialized
 				cs_disconnect_client(cl);
-				cs_writeunlock(&cc->cards_busy);
+				//cs_writeunlock(&cc->cards_busy);
 			}
 			cs_sleepms(150);
 			n = -1;
