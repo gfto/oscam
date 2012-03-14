@@ -16,6 +16,12 @@
 //CMD0x3e - CACHEEX Cache-push id answer
 //CMD0x3f - CACHEEX cache-push
 
+//used variable ncd_skey for storing remote node id:
+//ncd_skey[0..7] : 8 bytes node id
+//ncd_skey[8]    : 1=valid node id
+//ncd_skey[9]    : 1=remote node id already requested
+//ncd_skey[10]   : counter to check for ip changes, >30 do dns resolve
+
 #define REQ_SIZE	584		// 512 + 20 + 0x34
 
 static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen)
@@ -497,6 +503,13 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	if (cl->reader) {
 		tcp_connect(cl);
 		cl->reader->last_s = cl->reader->last_g = now;
+		if (cl->is_udp) { //resolve ip every 30 cache push:
+			cl->ncd_skey[10]++;
+			if (cl->ncd_skey[10] > 30) {
+				cl->ncd_skey[10] = 0;
+				hostResolve(cl->reader);
+			}
+		}
 	}
 	if (!cl->udp_fd) return(-1);
 	cl->last = now;
