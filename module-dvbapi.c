@@ -94,7 +94,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 		case COOLAPI:
 			demux[demux_id].demux_fd[n].fd = coolapi_open_device(demux[demux_id].demux_index, demux_id);
 			if(demux[demux_id].demux_fd[n].fd > 0)
-				ret = coolapi_set_filter(demux[demux_id].demux_fd[n].fd, n, pid, filt, mask);
+				ret = coolapi_set_filter(demux[demux_id].demux_fd[n].fd, n, pid, filt, mask, type);
 			break;
 #endif
 		default:
@@ -526,6 +526,10 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t index) {
 			stapi_set_pid(demux_id, num, index, demux[demux_id].STREAMpids[num], demux[demux_id].pmt_file);
 			break;
 #endif
+#ifdef COOL
+		case COOLAPI:
+			break;
+#endif
 		default:
 			for (i=0;i<8;i++) {
 				if (demux[demux_id].ca_mask & (1 << i)) {
@@ -894,8 +898,10 @@ struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidi
 void dvbapi_resort_ecmpids(int32_t demux_index) {
 	int32_t n,i;
 
-	for (n=0; n<demux[demux_index].ECMpidcount; n++)
+	for (n=0; n<demux[demux_index].ECMpidcount; n++) {
 		demux[demux_index].ECMpids[n].status=0;
+		demux[demux_index].ECMpids[n].checked=0;
+	}
 
 	demux[demux_index].max_status=0;
 	int32_t new_status = demux[demux_index].ECMpidcount; // reverse order!
@@ -1158,7 +1164,11 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	int32_t demux_id=-1;
 	uint16_t ca_mask=0x01, demux_index=0x00, adapter_index=0x00;
 
+#ifdef COOL
+	int32_t ca_pmt_list_management = 0x03;
+#else
 	int32_t ca_pmt_list_management = buffer[0];
+#endif
 	uint32_t program_number = (buffer[1] << 8) | buffer[2];
 	uint32_t program_info_length = ((buffer[4] & 0x0F) << 8) | buffer[5];
 
@@ -1173,22 +1183,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	for (i = 0; i < MAX_DEMUX; i++) {
 		if (connfd>0 && demux[i].socket_fd == connfd) {
 			//PMT Update
-#ifdef COOL
-			demux_id = i;
-			unsigned char lastcw[16];
-			int32_t n;
-			for(n = 0; n < 2; n++) {
-				memcpy(&lastcw[n*8], demux[demux_id].lastcw[n], 8);
-				memset(demux[demux_id].lastcw[n], 0, 8);
-			}
-			demux[demux_id].ca_mask=ca_mask;
-			dvbapi_write_cw(demux_id, lastcw, 0);//FIXME
-			demux[demux_id].curindex = demux[demux_id].pidindex;
-			demux[demux_id].STREAMpidcount=0;
-			demux[demux_id].ECMpidcount=0;
-			demux[demux_id].EMMpidcount=0;
-			ca_pmt_list_management = 0x03;
-#else
 			if (ca_pmt_list_management == 0x05) {
 				demux_id = i;
 				demux[demux_id].curindex = demux[demux_id].pidindex;
@@ -1200,7 +1194,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 				dvbapi_stop_descrambling(i);
 			if (ca_pmt_list_management == 0x02)
 				demux_id=i;
-#endif
 		}
 	}
 
@@ -1596,7 +1589,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 	uint16_t chid = 0;
 
 #ifdef COOL
-	cs_debug_mask(D_DVBAPI, "dvbapi_process_input: demux %d filter %d len %d buffer %x curtable %x curindex %d\n", demux_id, filter_num, len, buffer[0], curpid->table, demux[demux_id].curindex);
+	//cs_debug_mask(D_DVBAPI, "dvbapi_process_input: demux %d filter %d len %d buffer %x curtable %x curindex %d\n", demux_id, filter_num, len, buffer[0], curpid->table, demux[demux_id].curindex);
 #endif
 
 	if (pausecam)
@@ -1701,11 +1694,6 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 			return;
 
 		curpid->table = buffer[0];
-#ifdef COOL
-		int32_t num = demux[demux_id].curindex;//FIXME or pidindex ?
-		dvbapi_stop_filternum(demux_id, filter_num);
-		dvbapi_start_filter(demux_id, num, demux[demux_id].ECMpids[num].ECM_PID, demux[demux_id].ECMpids[num].CAID, buffer[0] ^ 1, 0xFF, 3000, TYPE_ECM, 0);
-#endif
 
 		struct s_dvbapi_priority *mapentry = dvbapi_check_prio_match(demux_id, demux[demux_id].demux_fd[filter_num].pidindex, 'm');
 
@@ -1834,7 +1822,9 @@ static void * dvbapi_main_local(void *cli) {
 	pfd2[0].fd = listenfd;
 	pfd2[0].events = (POLLIN | POLLPRI);
 	type[0]=1;
-
+#ifdef COOL
+	system("pzapit -rz");
+#endif
 	while (1) {
 		pfdcount = (listenfd > -1) ? 1 : 0;
 
@@ -1933,7 +1923,7 @@ static void * dvbapi_main_local(void *cli) {
 	return NULL;
 }
 
-static void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t index) {
+void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t index) {
 	int32_t n;
 	unsigned char nullcw[8];
 	memset(nullcw, 0, 8);

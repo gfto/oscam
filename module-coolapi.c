@@ -2,6 +2,7 @@
 
 #ifdef COOL
 #define _GNU_SOURCE
+#include "globals.h"
 
 #include <pthread.h>
 #include <stdio.h>
@@ -12,57 +13,15 @@
 #include <sys/time.h>
 #include <stdint.h>
 
+#include "module-dvbapi.h"
 #include "module-coolapi.h"
-#include "globals.h"
 
-#define MAX_PIDS 20
-#define MAX_FILTER 24
-
-#define MAX_DEMUX 3
-
-int32_t cooldebug = 0;
 static bool dmx_opened = false;
+int32_t cool_kal_opened = 0;
 
-#define check_error(label, ret) \
-{ \
-        if(ret != 0) { \
-                cs_log("[%s:%d] %s: API ERROR %d",	\
-		__FUNCTION__, __LINE__ ,		\
-		label, ret);				\
-	}						\
-}
+static void * dmx_device[MAX_CA_DEVICES];
+static dmx_t cdemuxes[MAX_CA_DEVICES][MAX_FILTER];
 
-typedef struct ca_descr {
-        uint32_t index;
-        uint32_t parity;    /* 0 == even, 1 == odd */
-        unsigned char cw[8];
-} ca_descr_t;
-
-struct cool_dmx
-{
-	bool		opened;
-	bool		filter_attached;
-	int32_t		fd;
-	void *		buffer1;
-	void *		buffer2;
-	void *	 	channel;
-	void *		filter;
-	void *		device;
-	int32_t		pid;
-	pthread_mutex_t	mutex;
-	int32_t 		demux_id;
-	int32_t 		demux_index;
-	int32_t 		filter_num;
-};
-typedef struct cool_dmx dmx_t;
-
-static void * dmx_device[MAX_DEMUX];
-static dmx_t cdemuxes[MAX_DEMUX][MAX_FILTER];
-
-int32_t coolapi_read(int32_t fd, unsigned char * buffer, uint32_t len);
-void coolapi_open();
-
-extern void dvbapi_process_input(int32_t demux_num, int32_t filter_num, unsigned char *buffer, int32_t len);
 extern pthread_key_t getclient;
 extern void * dvbapi_client;
 
@@ -74,7 +33,7 @@ static dmx_t *find_demux(int32_t fd, int32_t dmx_dev_num)
 {
 	int32_t i, idx;
 
-	if(dmx_dev_num < 0 || dmx_dev_num >= MAX_DEMUX) {
+	if(dmx_dev_num < 0 || dmx_dev_num >= MAX_CA_DEVICES) {
 		cs_log("Invalid demux %d", dmx_dev_num);
 		return NULL;
 	}
@@ -82,7 +41,7 @@ static dmx_t *find_demux(int32_t fd, int32_t dmx_dev_num)
 
 	if(fd == 0) {
 		for(i = 0; i < MAX_FILTER; i++) {
-			if (cdemuxes[idx][i].opened == false) {
+			if (!cdemuxes[idx][i].opened) {
 				cdemuxes[idx][i].fd = COOLDEMUX_FD(dmx_dev_num, i);
 				cs_debug_mask(D_DVBAPI, "opening new fd: %08x", cdemuxes[idx][i].fd);
 				cdemuxes[idx][i].demux_index = dmx_dev_num;
@@ -146,7 +105,7 @@ static void dmx_callback(void * unk, dmx_t * dmx, int32_t type, void * data)
 	}
 }
 
-int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char * flt, unsigned char * mask)
+int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char * flt, unsigned char * mask, int32_t type)
 {
 	int32_t result;
 	filter_set_t filter;
@@ -169,7 +128,7 @@ int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char 
 
 	pthread_mutex_lock(&dmx->mutex);
 	if(dmx->filter == NULL) {
-		dmx->filter_attached = false;
+		dmx->filter_attached = 0;
 		result = cnxt_dmx_open_filter(dmx->device, &dmx->filter);
 		check_error ("cnxt_dmx_open_filter", result);
 	}
@@ -180,6 +139,7 @@ int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char 
 	if(!dmx->filter_attached) {
 		result = cnxt_dmx_channel_attach_filter(dmx->channel, dmx->filter);
 		check_error ("cnxt_dmx_channel_attach_filter", result);
+		dmx->filter_attached = 1;
 	}
 
 	if(dmx->pid != pid) {
@@ -193,7 +153,18 @@ int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char 
 	check_error ("cnxt_cbuf_flush", result);
 
 	result = cnxt_dmx_channel_ctrl(dmx->channel, 2, 0);
-	check_error ("cnxt_dmx_channel_ctrl", result);
+
+	/* FIXME 
+	 1) we need more than one filter for an EMM-PID, so we exclude the annoying CNXT_STATUS_DUPLICATE_PID (Code 99) which is probably(?) just a notification and not an error
+	 2) rezap needed if this happens with an ECM-PID
+	*/
+
+	if (result != 99) {
+		check_error ("cnxt_dmx_channel_ctrl", result);
+	} else if (type==TYPE_ECM) {
+		system("pzapit -rz");
+	}
+
 	dmx->pid = pid;
 	pthread_mutex_unlock(&dmx->mutex);
 	return 0;
@@ -253,7 +224,7 @@ int32_t coolapi_open_device (int32_t demux_index, int32_t demux_id)
 	memset(&bufarg, 0, sizeof(bufarg));
 
 	dmx->device = dmx_device[demux_index];
-	dmx->opened = true;
+	dmx->opened = 1;
 
 	bufarg.type = 3;
 	bufarg.size = uBufferSize;
@@ -307,7 +278,7 @@ int32_t coolapi_close_device(int32_t fd)
 		result = cnxt_dmx_close_filter(dmx->filter);
 		check_error ("cnxt_dmx_close_filter", result);
 		dmx->filter = NULL;
-		dmx->filter_attached = false;
+		dmx->filter_attached = 0;
 	}
 
 	result = cnxt_cbuf_detach(dmx->buffer2, 2, dmx->channel);
@@ -326,7 +297,7 @@ int32_t coolapi_close_device(int32_t fd)
 	result = cnxt_cbuf_close(dmx->buffer1);
 	check_error ("cnxt_cbuf_close", result);
 
-	dmx->opened = false;
+	dmx->opened = 0;
 
 	pthread_mutex_destroy(&dmx->mutex);
 
@@ -368,6 +339,7 @@ int32_t coolapi_read(int32_t fd, unsigned char * buffer, uint32_t len)
 	int32_t result;
 	uint32_t done = 0, toread;
 	unsigned char * buff = &buffer[0];
+	uint32_t bytes_used = 0;
 
 	dmx_t * dmx = find_demux(fd, 0);
 	if(!dmx) {
@@ -375,6 +347,11 @@ int32_t coolapi_read(int32_t fd, unsigned char * buffer, uint32_t len)
 		return 0;
 	}
 	cs_debug_mask(D_DVBAPI, "dmx channel %x pid %x len %d",  (int) dmx->channel, dmx->pid, len);
+
+	result = cnxt_cbuf_get_used(dmx->buffer2, &bytes_used);
+	check_error ("cnxt_cbuf_get_used", result);
+	if(bytes_used == 0) 
+		return 0;
 
 	result = cnxt_cbuf_read_data(dmx->buffer2, buff, 3, &done);
 	check_error ("cnxt_cbuf_read_data", result);
@@ -399,6 +376,8 @@ void coolapi_open_all()
 {
 	cnxt_kal_initialize();
 	cnxt_drv_init();
+	cnxt_smc_init (NULL);
+	cool_kal_opened = 1;
 }
 
 void coolapi_open()
@@ -418,12 +397,12 @@ void coolapi_open()
                 devarg.unknown1 = 1;
                 devarg.unknown3 = 3;
                 devarg.unknown6 = 1;
-                for(i = 0; i < MAX_DEMUX; i++) {
+                for(i = 0; i < MAX_CA_DEVICES; i++) {
                         devarg.number = i;
                         result = cnxt_dmx_open (&dmx_device[i], &devarg, NULL, NULL);
                         check_error ("cnxt_dmx_open", result);
                 }
-                dmx_opened = true;
+                dmx_opened = 1;
         }
 }
 
@@ -432,22 +411,22 @@ void coolapi_close_all()
 	int32_t result;
 	int32_t i, j;
 
-	if(!dmx_opened)
-		return;
-
-	for(i = 0; i < MAX_DEMUX; i++) {
-		for(j = 0; j < MAX_FILTER; j++) {
-			if(cdemuxes[i][j].fd > 0) {
-				coolapi_remove_filter(cdemuxes[i][j].fd, cdemuxes[i][j].filter_num);
-				coolapi_close_device(cdemuxes[i][j].fd);
+	if(dmx_opened) {
+		for(i = 0; i < MAX_CA_DEVICES; i++) {
+			for(j = 0; j < MAX_FILTER; j++) {
+				if(cdemuxes[i][j].fd > 0) {
+					coolapi_remove_filter(cdemuxes[i][j].fd, cdemuxes[i][j].filter_num);
+					coolapi_close_device(cdemuxes[i][j].fd);
+				}
 			}
 		}
+		for(i = 0; i < MAX_CA_DEVICES; i++) {
+			result = cnxt_dmx_close(dmx_device[i]);
+			check_error ("cnxt_dmx_close", result);
+			dmx_device[i] = NULL;
+		}
 	}
-	for(i = 0; i < MAX_DEMUX; i++) {
-		result = cnxt_dmx_close(dmx_device[i]);
-		check_error ("cnxt_dmx_close", result);
-		dmx_device[i] = NULL;
-	}
+	cool_kal_opened = 0;
 	cnxt_kal_terminate();
 	cnxt_drv_term();
 }
