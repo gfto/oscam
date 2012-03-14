@@ -40,7 +40,7 @@ static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen)
 	memset(sbuf + l, 0xff, 15);	// set unused space to 0xff for newer camd3's
 	i2b_buf(4, crc32(0L, sbuf+20, buflen), sbuf + 4);
 	l = boundary(4, l);
-	cs_ddump_mask(D_CLIENT, sbuf, l, "send %d bytes to %s", l, remote_txt());
+	cs_ddump_mask(cl->typ == 'c'?D_CLIENT:D_READER, sbuf, l, "send %d bytes to %s", l, remote_txt());
 	aes_encrypt_idx(cl, sbuf, l);
 
 	int32_t status;
@@ -111,7 +111,8 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 			case 2:
 				aes_decrypt(client, buf, rs);
 				if (rs!=boundary(4, rs))
-					cs_debug_mask(D_CLIENT, "WARNING: packet size has wrong decryption boundary");
+					cs_debug_mask(client->typ == 'c'?D_CLIENT:D_READER,
+							"WARNING: packet size has wrong decryption boundary");
 
 				n=(buf[0]==3) ? 0x34 : 0;
 
@@ -132,10 +133,12 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 					}
 				}
 
-				cs_ddump_mask(D_CLIENT, buf, rs, "received %d bytes from %s", rs, remote_txt());
+				cs_ddump_mask(client->typ == 'c'?D_CLIENT:D_READER,
+						buf, rs, "received %d bytes from %s", rs, remote_txt());
 
 				if (n<rs)
-					cs_debug_mask(D_CLIENT, "ignoring %d bytes of garbage", rs-n);
+					cs_debug_mask(client->typ == 'c'?D_CLIENT:D_READER,
+							"ignoring %d bytes of garbage", rs-n);
 				else
 					if (n>rs) rc=-3;
 				break;
@@ -147,7 +150,8 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 	}
 
 	if ((rs>0) && ((rc==-1)||(rc==-2))) {
-		cs_ddump_mask(D_CLIENT, buf, rs, "received %d bytes from %s (native)", rs, remote_txt());
+		cs_ddump_mask(client->typ == 'c'?D_CLIENT:D_READER, buf, rs,
+				"received %d bytes from %s (native)", rs, remote_txt());
 	}
 	client->last=time((time_t *) 0);
 

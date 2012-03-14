@@ -2089,8 +2089,12 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 		er = er->parent; //Now er is "original" ecm, before it was the reader-copy
 	}
 
-	if (er->rc < E_99) //Already done
-		return 0;
+	if (er->rc < E_99) {
+#ifdef WITH_LB
+		send_reader_stat(reader, er, rc);
+#endif
+		return 0;  //Already done
+	}
 
 	for(ea_list = er->matching_rdr; reader && ea_list && !ea_org; ea_list = ea_list->next) {
 		if (ea_list->reader == reader)
