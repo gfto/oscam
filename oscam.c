@@ -1999,7 +1999,7 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 	}
 
 
-	if( (er->caid & 0xFF00) == 0x600 && !er->chid )
+	if( (er->caid & 0xFF00) == 0x600 && !er->chid && er->l > 7)
 		er->chid = (er->ecm[6]<<8)|er->ecm[7];
 
 	struct ecm_request_t *ecm = check_cwcache(er, cl);

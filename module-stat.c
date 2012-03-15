@@ -810,7 +810,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	if (cfg.lb_auto_betatunnel && er->caid >> 8 == 0x18) { //nagra 
 		uint16_t caid_to = get_betatunnel_caid_to(er->caid);
 		if (caid_to) {
-			int8_t needs_stats_nagra = 0, needs_stats_beta = 0;
+			int8_t needs_stats_nagra = 1, needs_stats_beta = 1;
 			
 			int32_t time_nagra = 0;
 			int32_t time_beta = 0;
@@ -821,7 +821,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			READER_STAT *stat_beta;
 			
 			//What is faster? nagra or beta?
-			for(ea = er->matching_rdr; ea && !needs_stats_nagra && !needs_stats_beta; ea = ea->next) {
+			for(ea = er->matching_rdr; ea; ea = ea->next) {
 				rdr = ea->reader;
 				weight = rdr->lb_weight;
 				if (weight <= 0) weight = 1;
@@ -854,10 +854,10 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				}
 				
 				//Uncomplete reader evaluation, we need more stats!
-				if (!stat_nagra)
-					needs_stats_nagra = 1;
-				if (valid && !stat_beta)
-					needs_stats_beta = 1;
+				if (stat_nagra)
+					needs_stats_nagra = 0;
+				if (stat_beta)
+					needs_stats_beta = 0;
 			}
 			
 			if (cfg.lb_auto_betatunnel_prefer_beta)
@@ -1011,6 +1011,8 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					case LB_LOG_ONLY:
 						//cs_debug_mask(D_LB, "loadbalance disabled");
 						ea->status = READER_ACTIVE;
+						if (rdr->fallback)
+							ea->status |= READER_FALLBACK;
 						continue;
 						
 					case LB_FASTEST_READER_FIRST:
