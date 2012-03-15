@@ -1299,7 +1299,7 @@ struct cc_card **get_sorted_card_copy(LLIST *cards, int32_t reverse, int32_t *si
 void init_share() {
 
 		memset(reported_carddatas, 0, sizeof(reported_carddatas));
-		cs_lock_create(&cc_shares_lock, 10, "cc_shares_lock");
+		cs_lock_create(&cc_shares_lock, 200, "cc_shares_lock");
 
 		share_updater_thread = 0;
 		pthread_t temp;
