@@ -446,7 +446,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	// 0 = found       +
 	// 1 = cache1      #
 	// 2 = cache2      #
-	// 3 = emu         +
+	// 3 = cacheex     #
 	// 4 = not found   -
 	// 5 = timeout     -2
 	// 6 = sleeping    #
@@ -483,7 +483,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 			struct s_ecm_answer *ea;
 			for(ea = er->matching_rdr; ea; ea = ea->next) {
 				if (ea->reader == rdr) {
-					if ((ea->status & 0x4) && (uint32_t)ecm_time >= cfg.ftimeout)
+					if ((ea->status & READER_FALLBACK) && (uint32_t)ecm_time >= cfg.ftimeout)
 						ecm_time -= cfg.ftimeout;
 					break;
 				}
@@ -512,7 +512,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 			rdr->lb_usagelevel_time = ctime;
 		rdr->lb_usagelevel_ecmcount = ule+1;
 	}
-	else if (rc == E_CACHE1 || rc == E_CACHE2) { //cache
+	else if (rc < E_FOUND ) { //cache1+2+3
 		//no increase of statistics here, cachetime is not real time
 		stat = get_stat(rdr, er->caid, prid, er->srvid, er->chid, er->l);
 		if (stat != NULL)
@@ -792,7 +792,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			struct cc_card *card = er->origin_card;
 			struct s_ecm_answer *eab = NULL;
 			for(ea = er->matching_rdr; ea; ea = ea->next) {
-				ea->status &= 0xFC;
+				ea->status &= !(READER_ACTIVE|READER_FALLBACK);
 				if (card->origin_reader == ea->reader)
 					eab = ea;		
 			}
@@ -1002,7 +1002,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 
 			//Reader can decode this service (rc==0) and has lb_min_ecmcount ecms:
 			if (stat->rc == E_FOUND || hassrvid) {
-				if (cfg.preferlocalcards && (ea->status & 0x4))
+				if (cfg.preferlocalcards && (ea->status & READER_LOCAL))
 					nlocal_readers++; //Prefer local readers!
 
 				switch (cfg.lb_mode) {
@@ -1010,7 +1010,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					case LB_NONE:
 					case LB_LOG_ONLY:
 						//cs_debug_mask(D_LB, "loadbalance disabled");
-						ea->status = 1;
+						ea->status = READER_ACTIVE;
 						continue;
 						
 					case LB_FASTEST_READER_FIRST:
