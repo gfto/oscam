@@ -1008,8 +1008,8 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 			}
 			free(er);
 	}
-	
-	for (n=0; n<demux[demux_index].ECMpidcount; n++) {
+	highest_prio++;
+	for (n=demux[demux_index].ECMpidcount; n>-1; n--) { //maintain pid prio order of the pmt.
 		int32_t nr;
 		SIDTAB *sidtab;
 		ECM_REQUEST er;
@@ -1024,7 +1024,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 					cs_debug_mask(D_DVBAPI, "[IGNORE PID %d] %04X:%06X (service %s) pos %d", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, sidtab->label, nr);
 				}
 				if ((cfg.dvbapi_sidtabok&((SIDTABBITS)1<<nr)) && (chk_srvid_match(&er, sidtab))) {
-					demux[demux_index].ECMpids[n].status = ++highest_prio; //priority
+					demux[demux_index].ECMpids[n].status = highest_prio++; //priority
 					cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X (service: %s position: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, sidtab->label, demux[demux_index].ECMpids[n].status);
 				}
 			}
@@ -2058,8 +2058,8 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
                                         if (num_pids <= 1) { //Only one left, activate it:
                                                 int32_t o;
                                                 for (o = 0; o < MAX_FILTER; o++) {
-                                                        if (demux[i].demux_fd[o].fd > 0) { //FIXME: maybee ocaid for betatunnel needs to be added?!
-                                                                if ((demux[i].demux_fd[o].pid == demux[i].ECMpids[last_idx].ECM_PID) && (demux[i].demux_fd[o].caid == demux[i].ECMpids[last_idx].CAID ))
+                                                        if (demux[i].demux_fd[o].fd > 0) { //TESTME: ocaid for betatunnel added!
+                                                                if ((demux[i].demux_fd[o].pid == demux[i].ECMpids[last_idx].ECM_PID) && ((demux[i].demux_fd[o].caid == demux[i].ECMpids[last_idx].CAID ) || (demux[i].demux_fd[o].caid == er->ocaid)))
                                                                         demux[i].demux_fd[o].count = 0; //activate last_idx
                                                                 else
                                                                         dvbapi_stop_filternum(i, TYPE_ECM); //only drop ECMTYPE Filters
