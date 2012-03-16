@@ -512,7 +512,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 			rdr->lb_usagelevel_time = ctime;
 		rdr->lb_usagelevel_ecmcount = ule+1;
 	}
-	else if (rc < E_FOUND ) { //cache1+2+3
+	else if (rc < E_NOTFOUND ) { //cache1+2+3
 		//no increase of statistics here, cachetime is not real time
 		stat = get_stat(rdr, er->caid, prid, er->srvid, er->chid, er->l);
 		if (stat != NULL)

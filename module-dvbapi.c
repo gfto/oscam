@@ -1558,7 +1558,7 @@ void dvbapi_chk_caidtab(char *caidasc, char type) {
 
 pthread_mutex_t event_handler_lock;
 
-void event_handler(int32_t signal) {
+void event_handler(int32_t UNUSED(signal)) {
 	struct stat pmt_info;
 	char dest[1024];
 	DIR *dirp;
@@ -1567,8 +1567,6 @@ void event_handler(int32_t signal) {
 	uchar mbuf[1024];
 
 	if (dvbapi_client != cur_client()) return;
-
-	signal=signal; //avoid compiler warnings
 
 	pthread_mutex_lock(&event_handler_lock);
 
