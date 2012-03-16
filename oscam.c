@@ -2958,7 +2958,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	}
 
 	// CAID not supported or found
-	if (!er->caid || ((er->caid == 0x0919 && er->ecm[28] != 0x7F) || (er->caid == 0x093B && er->ecm[28] != 0x7E) || (er->caid == 0x09CD && er->ecm[28] != 0x7D))) {
+	if (!er->caid) {
 		er->rc = E_INVALID;
 		er->rcEx = E2_CAID;
 		snprintf( er->msglog, MSGLOGSIZE, "CAID not supported or found" );
