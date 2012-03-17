@@ -3849,7 +3849,7 @@ void * work_thread(void *ptr) {
 
 				cs_debug_mask(
 					D_CACHEEX,
-					"pushed ECM %04X&%06X/%04X/%04X/%02X:%04X to %s res %d stats %d", er->caid, er->prid, er->pid er->srvid, er->l,
+					"pushed ECM %04X&%06X/%04X/%04X/%02X:%04X to %s res %d stats %d", er->caid, er->prid, er->pid, er->srvid, er->l,
 					htons(er->checksum), username(cl), res, stats);
 				free(data->ptr);
 
