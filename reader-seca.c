@@ -224,7 +224,7 @@ static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, stru
 				ecm_type = 7; //flag it!
 			}
 			if (ecm_type != seca_version){ //only accept ecmrequest for right card!
-				return E_CORRUPT; //loadbalancer fix for CDS NL simulcrypt
+				return ERROR; 
 			}
 		}
 	}
