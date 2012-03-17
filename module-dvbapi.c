@@ -973,7 +973,8 @@ struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidi
 }
 
 void dvbapi_resort_ecmpids(int32_t demux_index) {
-	int32_t n,i,highest_prio=0, found=-1;
+	int32_t n,highest_prio=0,btun_found, found=-1;
+	uint16_t btun_caid=0;
 
 	for (n=0; n<demux[demux_index].ECMpidcount; n++) {
 		demux[demux_index].ECMpids[n].status=0;
@@ -1006,11 +1007,12 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 	if (dvbapi_priority) {
 		struct s_reader *rdr;
 		ECM_REQUEST *er = cs_malloc(&er, sizeof(ECM_REQUEST), 0);
+		ECM_REQUEST *er_btun = cs_malloc(&er_btun, sizeof(ECM_REQUEST), 0);
 
 		int32_t p_order = demux[demux_index].ECMpidcount; // reverse order! makes sure that user defined p: values are in the right order
 
 		struct s_dvbapi_priority *p;
-		for (p = dvbapi_priority, i = 0; p != NULL; p = p->next, i++) {
+		for (p = dvbapi_priority; p != NULL; p = p->next) {
 			if (p->type != 'p' && p->type != 'i')
 				continue;
 			for (n = 0; n < demux[demux_index].ECMpidcount; n++) {
@@ -1028,55 +1030,50 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 
 				if (p->type == 'p') {
 
-					for (n = 0; n < demux[demux_index].ECMpidcount; n++) {
-						if (demux[demux_index].ECMpids[n].status == -1) //ignore
-							continue;
-						er->caid = demux[demux_index].ECMpids[n].CAID;
-						er->prid = demux[demux_index].ECMpids[n].PROVID;
-						er->pid = demux[demux_index].ECMpids[n].ECM_PID;
-						er->srvid = demux[demux_index].program_number;
-						er->client = cur_client();
-
-						LL_ITER it = ll_iter_create(configured_readers);
-						while ((rdr = ll_iter_next(&it))) {
-							networkreader_connected = 1;
-							if (cfg.preferlocalcards
-									&& !(rdr->typ & R_IS_NETWORK)
-									&& rdr->card_status == CARD_INSERTED) { // cfg.preferlocalcards = 1 local reader
-								if (matching_reader(er, rdr)) {
-									if (rdr->caid != p->caid) {
-										demux[demux_index].ECMpids[n].status += (prio * 3); //priority
-										highest_prio += (prio * 3);
-									} else {
-										demux[demux_index].ECMpids[n].status += (prio * 4) + (p_order--); //priority
-										highest_prio += (prio * 4) + (p_order--);
-									}
+					if (demux[demux_index].ECMpids[n].status == -1) //ignore
+						continue;
+						
+					btun_found=0;
+					btun_caid = get_betatunnel_caid_to(demux[demux_index].ECMpids[n].CAID);
+					if (btun_caid) {
+						btun_found=1;
+						er_btun->caid=btun_caid;
+					}
+														
+					er->caid = demux[demux_index].ECMpids[n].CAID;
+					er->prid = er_btun->prid = demux[demux_index].ECMpids[n].PROVID;
+					er->pid = er_btun->pid = demux[demux_index].ECMpids[n].ECM_PID;
+					er->srvid = er_btun->srvid = demux[demux_index].program_number;
+					er->client = er_btun->client = cur_client();
+	
+					LL_ITER it = ll_iter_create(configured_readers);
+					while ((rdr = ll_iter_next(&it))) {
+						networkreader_connected = 1;
+						if (cfg.preferlocalcards
+								&& !(rdr->typ & R_IS_NETWORK)
+								&& rdr->card_status == CARD_INSERTED) { // cfg.preferlocalcards = 1 local reader
+							if (matching_reader(er, rdr) || (btun_caid && matching_reader(er_btun, rdr))) {
+									demux[demux_index].ECMpids[n].status += (prio * demux[demux_index].ECMpidcount) + (p_order--); //priority*ECMpidcount should overrule network reader
+									highest_prio += (prio * demux[demux_index].ECMpidcount) + (p_order+1);
 									cs_debug_mask(D_DVBAPI,
 											"[PRIORITIZE PID %d] %04X:%06X (localrdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID,
 											demux[demux_index].ECMpids[n].PROVID, rdr->label, demux[demux_index].ECMpids[n].status);
-									break;
-								}
-							} else { // cfg.preferlocalcards = 0 or cfg.preferlocalcards = 1 and no local reader
-								if ((rdr->typ & R_IS_NETWORK)
-										&& (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_CONNECTED, er))) //network reader should be connected
-									networkreader_connected = 0;
-
-								if (((rdr->typ & R_IS_NETWORK)
-										&& networkreader_connected
-										&& matching_reader(er, rdr))
-										|| (!(rdr->typ & R_IS_NETWORK) && matching_reader(er, rdr))) {
-									if (rdr->caid != p->caid) {
-										demux[demux_index].ECMpids[n].status += prio;
-										highest_prio += prio;
-									} else {
-										demux[demux_index].ECMpids[n].status += (prio * 2) + (p_order--);
-										highest_prio += (prio * 2) + (p_order--);
-									}
-									cs_debug_mask(D_DVBAPI,
+								break;
+							}
+						} else { // cfg.preferlocalcards = 0 or cfg.preferlocalcards = 1 and no local reader
+							if ((rdr->typ & R_IS_NETWORK)
+									&& (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_CONNECTED, er))) //network reader should be connected
+								networkreader_connected = 0;
+							if (((rdr->typ & R_IS_NETWORK)
+									&& networkreader_connected
+									&& (matching_reader(er, rdr) || (btun_caid && matching_reader(er_btun, rdr))))
+									|| (!(rdr->typ & R_IS_NETWORK) && (matching_reader(er, rdr) || (btun_caid && matching_reader(er_btun, rdr))))) {
+										demux[demux_index].ECMpids[n].status += prio + (p_order--);
+										highest_prio += prio + (p_order+1);
+										cs_debug_mask(D_DVBAPI,
 											"[PRIORITIZE PID %d] %04X:%06X (rdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID,
 											demux[demux_index].ECMpids[n].PROVID, rdr->label, demux[demux_index].ECMpids[n].status);
-									break;
-								}
+								break;
 							}
 						}
 					}
@@ -1090,10 +1087,18 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 			}
 		}
 		free(er);
+		free(er_btun);
 	} else if (cfg.preferlocalcards) { //works if there is cfg.preferlocalcards=1 but no oscam.dvbapi
 			struct s_reader *rdr;
 			ECM_REQUEST *er = cs_malloc(&er, sizeof(ECM_REQUEST), 0);
+			ECM_REQUEST *er_btun = cs_malloc(&er_btun, sizeof(ECM_REQUEST), 0);
 			for (n=0; n<demux[demux_index].ECMpidcount; n++) {
+					btun_found=0;
+					btun_caid = get_betatunnel_caid_to(demux[demux_index].ECMpids[n].CAID);
+					if (btun_caid) {
+						btun_found=1;
+						er_btun->caid=btun_caid;
+					}
 					er->caid   = demux[demux_index].ECMpids[n].CAID;
 					er->prid   = demux[demux_index].ECMpids[n].PROVID;
 					er->pid    = demux[demux_index].ECMpids[n].ECM_PID;
@@ -1102,7 +1107,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 					LL_ITER it = ll_iter_create(configured_readers);
 					while ((rdr=ll_iter_next(&it))) {
 							if (!(rdr->typ & R_IS_NETWORK) && rdr->card_status==CARD_INSERTED) { // cfg.preferlocalcards = 1 local reader
-								  if (matching_reader(er, rdr)) {
+								  if (matching_reader(er, rdr) || (btun_caid && matching_reader(er_btun, rdr))) {
 								      demux[demux_index].ECMpids[n].status += prio*2; //priority
 								      highest_prio += prio*2;
 								      cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X (localrdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, rdr->label, demux[demux_index].ECMpids[n].status);
@@ -1110,8 +1115,11 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 								  }
 							} else { // cfg.preferlocalcards = 1 and no local reader
 									if ((rdr->typ & R_IS_NETWORK) && (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_CONNECTED, er))) //network reader should be connected
-													networkreader_connected=0;
-									if (((rdr->typ & R_IS_NETWORK) && networkreader_connected && matching_reader(er, rdr)) || (!(rdr->typ & R_IS_NETWORK) && matching_reader(er, rdr))) {
+													networkreader_connected=0;										
+											if (((rdr->typ & R_IS_NETWORK)
+													&& networkreader_connected
+													&& (matching_reader(er, rdr) || (btun_caid && matching_reader(er_btun, rdr))))
+													|| (!(rdr->typ & R_IS_NETWORK) && (matching_reader(er, rdr) || (btun_caid && matching_reader(er_btun, rdr))))) {	
 				              demux[demux_index].ECMpids[n].status += prio;
 				              highest_prio += prio;
 				              cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X (rdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, rdr->label, demux[demux_index].ECMpids[n].status);
@@ -1121,6 +1129,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 					}
 			}
 			free(er);
+			free(er_btun);
 	}
 	highest_prio++;
 	for (n=demux[demux_index].ECMpidcount; n>-1; n--) { //maintain pid prio order of the pmt.
