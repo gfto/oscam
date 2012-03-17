@@ -10,10 +10,6 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <sys/socket.h>
-#ifdef SHOW_MEM
-#include <sys/sysinfo.h>
-#include <stdint.h>
-#endif
 #include "oscam-http-helpers.c"
 #include "module-cccam.h"
 #include "module-cccshare.h"
@@ -3651,7 +3647,6 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
-#ifndef OIA
 	else if (strcmp(getParam(params, "file"), "version") == 0) {
 		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FVERSION);
 		snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "/oscam.version");
@@ -3708,7 +3703,6 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
-#endif
 	else if (!apicall && strcmp(getParam(params, "file"), "logfile") == 0) {
 		setActiveSubMenu(vars, MNU_CFG_FLOGFILE);
 		snprintf(targetfile, 255,"%s", cfg.logfile);
@@ -4573,19 +4567,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 	
 			localtime_r(&t, &lt);
 	
-#ifdef SHOW_MEM
-		//meminfo.mod
-		struct sysinfo sys_info;
-		if(sysinfo(&sys_info) != 0)
-			perror("sysinfo");
-			{
-			tpl_printf(vars, TPLADD, "MEM_INFO","Total Ram: %lluMB	Free: %lluMB	Used: %lluMB\n",
-			sys_info.totalram *(uint64_t)sys_info.mem_unit / (1024*1024),
-			sys_info.freeram *(uint64_t)sys_info.mem_unit/ (1024*1024),
-			(sys_info.totalram *(uint64_t)sys_info.mem_unit-sys_info.freeram *(uint64_t)sys_info.mem_unit)/ (1024*1024));
-			}
-#endif
-		tpl_addVar(vars, TPLADD, "CS_VERSION", CS_VERSION);
+			tpl_addVar(vars, TPLADD, "CS_VERSION", CS_VERSION);
 			tpl_addVar(vars, TPLADD, "CS_SVN_VERSION", CS_SVN_VERSION);
 			tpl_addVar(vars, TPLADD, "HTTP_CHARSET", cs_http_use_utf8?"UTF-8":"ISO-8859-1");
 			if(cfg.http_refresh > 0 && (pgidx == 3 || pgidx == -1)) {
