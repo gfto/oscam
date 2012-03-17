@@ -79,7 +79,7 @@ void load_stat_from_file()
 	int32_t count=0;
 	int32_t type=0;
 	char *ptr, *saveptr1 = NULL;
-	char *split[11];
+	char *split[12];
 	
 	while (fgets(line, LINESIZE, file))
 	{
@@ -95,21 +95,22 @@ void load_stat_from_file()
 		}	
 		
 		if (type==1) { //New format - faster parsing:
-			for (i = 0, ptr = strtok_r(line, ",", &saveptr1); ptr && i<11 ; ptr = strtok_r(NULL, ",", &saveptr1), i++)
+			for (i = 0, ptr = strtok_r(line, ",", &saveptr1); ptr && i<12 ; ptr = strtok_r(NULL, ",", &saveptr1), i++)
 				split[i] = ptr;
-			valid = (i==11);
+			valid = (i==12);
 			if (valid) {
 				strncpy(buf, split[0], sizeof(buf)-1);
 				stat->rc = atoi(split[1]);
 				stat->caid = a2i(split[2], 4);
 				stat->prid = a2i(split[3], 6);
-				stat->srvid = a2i(split[4], 4);
-				stat->chid = a2i(split[5], 4);
-				stat->time_avg = atoi(split[6]);
-				stat->ecm_count = atoi(split[7]);
-				stat->last_received = atol(split[8]);
-				stat->fail_factor = atoi(split[9]);
-				stat->ecmlen = a2i(split[10], 2);
+				stat->ecmpid = a2i(split[4], 4);
+				stat->srvid = a2i(split[5], 4);
+				stat->chid = a2i(split[6], 4);
+				stat->time_avg = atoi(split[7]);
+				stat->ecm_count = atoi(split[8]);
+				stat->last_received = atol(split[9]);
+				stat->fail_factor = atoi(split[10]);
+				stat->ecmlen = a2i(split[11], 2);
 			}
 		} else { //Old format - keep for compatibility:
 			i = sscanf(line, "%s rc %d caid %04hX prid %06X srvid %04hX time avg %dms ecms %d last %ld fail %d len %02hX\n",
@@ -358,8 +359,8 @@ void save_stat_to_file_thread()
 				//	stat->srvid, stat->time_avg, stat->ecm_count, stat->last_received, stat->fail_factor, stat->ecmlen);
 				
 				//New version:
-				fprintf(file, "%s,%d,%04hX,%06X,%04hX,%04hX,%d,%d,%ld,%d,%02hX\n",
-					rdr->label, stat->rc, stat->caid, stat->prid, 
+				fprintf(file, "%s,%d,%04hX,%06X,%04hX,%04hX,%04hX,%d,%d,%ld,%d,%02hX\n",
+					rdr->label, stat->rc, stat->caid, stat->prid, stat->ecmpid,
 					stat->srvid, stat->chid, stat->time_avg, stat->ecm_count, stat->last_received, stat->fail_factor, stat->ecmlen);
 				count++;
 			}
