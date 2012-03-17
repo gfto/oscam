@@ -1056,8 +1056,8 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 									demux[demux_index].ECMpids[n].status += (prio * demux[demux_index].ECMpidcount) + (p_order--); //priority*ECMpidcount should overrule network reader
 									highest_prio += (prio * demux[demux_index].ECMpidcount) + (p_order+1);
 									cs_debug_mask(D_DVBAPI,
-											"[PRIORITIZE PID %d] %04X:%06X (localrdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID,
-											demux[demux_index].ECMpids[n].PROVID, rdr->label, demux[demux_index].ECMpids[n].status);
+											"[PRIORITIZE PID %d] %04X:%06X:%04X (localrdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID,
+											demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, rdr->label, demux[demux_index].ECMpids[n].status);
 								break;
 							}
 						} else { // cfg.preferlocalcards = 0 or cfg.preferlocalcards = 1 and no local reader
@@ -1071,8 +1071,8 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 										demux[demux_index].ECMpids[n].status += prio + (p_order--);
 										highest_prio += prio + (p_order+1);
 										cs_debug_mask(D_DVBAPI,
-											"[PRIORITIZE PID %d] %04X:%06X (rdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID,
-											demux[demux_index].ECMpids[n].PROVID, rdr->label, demux[demux_index].ECMpids[n].status);
+											"[PRIORITIZE PID %d] %04X:%06X:%04X (rdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID,
+											demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, rdr->label, demux[demux_index].ECMpids[n].status);
 								break;
 							}
 						}
@@ -1082,7 +1082,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 						continue;
 					demux[demux_index].ECMpids[n].status = -1;
 					cs_debug_mask(D_DVBAPI,
-							"[IGNORE PID %d] %04X:%06X (file)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID);
+							"[IGNORE PID %d] %04X:%06X:%04X (file)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,demux[demux_index].ECMpids[n].ECM_PID);
 				}
 			}
 		}
@@ -1110,7 +1110,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 								  if (matching_reader(er, rdr) || (btun_caid && matching_reader(er_btun, rdr))) {
 								      demux[demux_index].ECMpids[n].status += prio*2; //priority
 								      highest_prio += prio*2;
-								      cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X (localrdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, rdr->label, demux[demux_index].ECMpids[n].status);
+								      cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X:%04X (localrdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, rdr->label, demux[demux_index].ECMpids[n].status);
 								      break;
 								  }
 							} else { // cfg.preferlocalcards = 1 and no local reader
@@ -1122,7 +1122,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 													|| (!(rdr->typ & R_IS_NETWORK) && (matching_reader(er, rdr) || (btun_caid && matching_reader(er_btun, rdr))))) {	
 				              demux[demux_index].ECMpids[n].status += prio;
 				              highest_prio += prio;
-				              cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X (rdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, rdr->label, demux[demux_index].ECMpids[n].status);
+				              cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X:%04X (rdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, rdr->label, demux[demux_index].ECMpids[n].status);
 				              break;
 		            	}
 							}
@@ -1144,11 +1144,11 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 			if (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid) {
 				if ((cfg.dvbapi_sidtabno&((SIDTABBITS)1<<nr)) && (chk_srvid_match(&er, sidtab))) {
 					demux[demux_index].ECMpids[n].status = -1; //ignore
-					cs_debug_mask(D_DVBAPI, "[IGNORE PID %d] %04X:%06X (service %s) pos %d", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, sidtab->label, nr);
+					cs_debug_mask(D_DVBAPI, "[IGNORE PID %d] %04X:%06X:%04X (service %s) pos %d", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, sidtab->label, nr);
 				}
 				if ((cfg.dvbapi_sidtabok&((SIDTABBITS)1<<nr)) && (chk_srvid_match(&er, sidtab))) {
 					demux[demux_index].ECMpids[n].status = highest_prio++; //priority
-					cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X (service: %s position: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, sidtab->label, demux[demux_index].ECMpids[n].status);
+					cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X:%04X (service: %s position: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, sidtab->label, demux[demux_index].ECMpids[n].status);
 				}
 			}
 		}

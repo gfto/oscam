@@ -2021,8 +2021,8 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 			cl->account->cwcacheexgot++;
 		first_client->cwcacheexgot++;
 
-		cs_debug_mask(D_CACHEEX, "got pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
-			er->caid, er->prid, er->srvid, er->l, htons(er->checksum),  csp?"csp":username(cl));
+		cs_debug_mask(D_CACHEEX, "got pushed ECM %04X&%06X/%04X/%04X/%02X:%04X from %s",
+			er->caid, er->prid, er->pid, er->srvid, er->l, htons(er->checksum),  csp?"csp":username(cl));
 	}
 	else {
 		if(er->rc < ecm->rc) {
@@ -2038,13 +2038,13 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 				cl->account->cwcacheexgot++;
 			first_client->cwcacheexgot++;
 
-			cs_debug_mask(D_CACHEEX, "replaced pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
-				er->caid, er->prid, er->srvid, er->l, htons(er->checksum),  csp?"csp":username(cl));
+			cs_debug_mask(D_CACHEEX, "replaced pushed ECM %04X&%06X/%04X/%04X/%02X:%04X from %s",
+				er->caid, er->prid, er->pid, er->srvid, er->l, htons(er->checksum),  csp?"csp":username(cl));
 		}
 		else
 		{
-			cs_debug_mask(D_CACHEEX, "ignored duplicate pushed ECM %04X&%06X/%04X/%02X:%04X from %s",
-				er->caid, er->prid, er->srvid, er->l, htons(er->checksum),  csp?"csp":username(cl));
+			cs_debug_mask(D_CACHEEX, "ignored duplicate pushed ECM %04X&%06X/%04X/%04X/%02X:%04X from %s",
+				er->caid, er->prid, er->pid, er->srvid, er->l, htons(er->checksum),  csp?"csp":username(cl));
 		}
 		return 0;
 	}
@@ -2425,12 +2425,12 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		er->rc = E_FAKE;
 
 	if (er->reader_avail == 1) {
-		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s %s%s",
-			uname, er->caid, er->prid, er->srvid, er->l, htons(er->checksum),
+		cs_log("%s (%04X&%06X/%04X/%04X/%02X:%04X): %s (%d ms)%s %s%s",
+			uname, er->caid, er->prid, er->pid, er->srvid, er->l, htons(er->checksum),
 			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, schaninfo, sreason);
 	} else {
-		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s (%d of %d)%s%s",
-			uname, er->caid, er->prid, er->srvid, er->l, htons(er->checksum),
+		cs_log("%s (%04X&%06X/%04X/%04X/%02X:%04X): %s (%d ms)%s (%d of %d)%s%s",
+			uname, er->caid, er->prid, er->pid, er->srvid, er->l, htons(er->checksum),
 			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, er->reader_count, er->reader_avail, schaninfo, sreason);
 	}
 
@@ -2991,8 +2991,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	}
 
 	if (!chk_global_whitelist(er, &line)) {
-		cs_debug_mask(D_TRACE, "whitelist filtered: %s (%04X&%06X/%04X/%02X:%04X) line %d",
-					username(client), er->caid, er->prid, er->srvid, er->l, htons(er->checksum),
+		cs_debug_mask(D_TRACE, "whitelist filtered: %s (%04X&%06X/%04X/%04X/%02X:%04X) line %d",
+					username(client), er->caid, er->prid, er->pid, er->srvid, er->l, htons(er->checksum),
 					line);
 		er->rc = E_INVALID;
 	}
@@ -3165,8 +3165,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 #ifdef WITH_LB
 		if (cfg.lb_mode && er->reader_avail) {
-			cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X",
-				username(client), er->caid, er->prid, er->srvid);
+			cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X/%04X",
+				username(client), er->caid, er->prid, er->pid, er->srvid);
 			get_best_reader(er);
 		}
 #endif
@@ -3849,7 +3849,7 @@ void * work_thread(void *ptr) {
 
 				cs_debug_mask(
 					D_CACHEEX,
-					"pushed ECM %04X&%06X/%04X/%02X:%04X to %s res %d stats %d", er->caid, er->prid, er->srvid, er->l,
+					"pushed ECM %04X&%06X/%04X/%04X/%02X:%04X to %s res %d stats %d", er->caid, er->prid, er->pid er->srvid, er->l,
 					htons(er->checksum), username(cl), res, stats);
 				free(data->ptr);
 
@@ -4001,7 +4001,7 @@ static void * check_thread(void) {
 
 			if (comp_timeb(&t_now, &tbc) >= 0) {
 				if (er->stage < 4) {
-					cs_debug_mask(D_TRACE, "fallback for %s %04X&%06X/%04X ecm=%04X", username(er->client), er->caid, er->prid, er->srvid, htons(er->checksum));
+					cs_debug_mask(D_TRACE, "fallback for %s %04X&%06X/%04X/%04X ecm=%04X", username(er->client), er->caid, er->prid, er->pid, er->srvid, htons(er->checksum));
 					if (er->rc >= E_UNHANDLED) //do not request rc=99
 						request_cw(er);
 
@@ -4009,7 +4009,7 @@ static void * check_thread(void) {
 					time_to_check = add_ms_to_timeb(&tbc, cfg.ctimeout);
 				} else {
 					if (er->client) {
-						cs_debug_mask(D_TRACE, "timeout for %s %04X&%06X/%04X ecm=%04X", username(er->client), er->caid, er->prid, er->srvid, htons(er->checksum));
+						cs_debug_mask(D_TRACE, "timeout for %s %04X&%06X/%04X/%04X ecm=%04X", username(er->client), er->caid, er->prid, er->pid, er->srvid, htons(er->checksum));
 						write_ecm_answer(NULL, er, E_TIMEOUT, 0, NULL, NULL);
 					}
 #ifdef WITH_LB		
