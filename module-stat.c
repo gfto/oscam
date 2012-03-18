@@ -44,20 +44,7 @@ void init_stat()
 }
 
 #define LINESIZE 1024
-#endif
 
-#if defined WITH_LB || defined HAVE_DVBAPI
-uint16_t get_betatunnel_caid_to(uint16_t caid)
-{
-	if (caid == 0x1801) return 0x1722;
-	if (caid == 0x1833) return 0x1702;
-	if (caid == 0x1834) return 0x1722;
-	if (caid == 0x1835) return 0x1722;
-	return 0;
-}
-#endif
-
-#ifdef WITH_LB
 void load_stat_from_file()
 {
 	stat_load_save = 0;
@@ -201,6 +188,13 @@ static uint32_t get_prid(uint16_t caid, uint32_t prid)
 	return prid;
 }
 
+static uint16_t get_ecmpid(uint16_t caid, uint16_t ecmpid)
+{
+	if ((caid>>8) == 0x01) //seca
+		return ecmpid;
+	return 0;
+}
+
 /**
  * returns the fastest statistics. Usefull to check if we have decoded it in the past
  * 
@@ -244,13 +238,14 @@ READER_STAT *get_stat_lock(struct s_reader *rdr, uint16_t caid, uint32_t prid, u
 		cs_lock_create(&rdr->lb_stat_lock, DEFAULT_LOCK_TIMEOUT, rdr->label);
 	}
 
-	if (lock) cs_readlock(&rdr->lb_stat_lock);
 	prid = get_prid(caid, prid);
+	ecmpid = get_ecmpid(caid, ecmpid);
 	
+	if (lock) cs_readlock(&rdr->lb_stat_lock);
+
 	LL_ITER it = ll_iter_create(rdr->lb_stat);
 	READER_STAT *stat;
 	int32_t i = 0;
-	if (caid != 256) ecmpid = 0;
 	while ((stat = ll_iter_next(&it))) {
 		i++;
 		if (stat->caid==caid && stat->prid==prid && stat->ecmpid==ecmpid && stat->srvid==srvid && stat->chid==chid) {
@@ -290,12 +285,14 @@ int32_t remove_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16_t
 	if (!rdr->lb_stat)
 		return 0;
 
+	prid = get_prid(caid, prid);
+	ecmpid = get_ecmpid(caid, ecmpid);
+
 	cs_writelock(&rdr->lb_stat_lock);
 	int32_t c = 0;
 	LL_ITER it = ll_iter_create(rdr->lb_stat);
 	READER_STAT *stat;
 	while ((stat = ll_iter_next(&it))) {
-		if (caid != 256) ecmpid = 0;
 		if (stat->caid==caid && stat->prid==prid && stat->ecmpid == ecmpid && stat->srvid==srvid && stat->chid==chid) {
 			if (!stat->ecmlen || stat->ecmlen == ecmlen) {
 				ll_iter_remove_data(&it);
@@ -412,22 +409,24 @@ void inc_fail(READER_STAT *stat)
 		stat->fail_factor *= 2;
 }
 
-READER_STAT *get_add_stat(struct s_reader *rdr, ECM_REQUEST *er, uint32_t prid)
+READER_STAT *get_add_stat(struct s_reader *rdr, ECM_REQUEST *er)
 {
 	if (!rdr->lb_stat) {
 		rdr->lb_stat = ll_create("lb_stat");
 		cs_lock_create(&rdr->lb_stat_lock, DEFAULT_LOCK_TIMEOUT, rdr->label);
 	}
 
+	uint32_t prid = get_prid(er->caid, er->prid);
+	uint16_t pid = get_ecmpid(er->caid, er->pid);
+
 	cs_writelock(&rdr->lb_stat_lock);
 
-	READER_STAT *stat = get_stat_lock(rdr, er->caid, prid, er->pid, er->srvid, er->chid, er->l, 0);
+	READER_STAT *stat = get_stat_lock(rdr, er->caid, prid, pid, er->srvid, er->chid, er->l, 0);
 	if (!stat) {
 		if(cs_malloc(&stat,sizeof(READER_STAT), -1)){
-			if (er->caid != 0x100) er->pid = 0;
 			stat->caid = er->caid;
 			stat->prid = prid;
-			stat->ecmpid = er->pid;
+			stat->ecmpid = pid;
 			stat->srvid = er->srvid;
 			stat->chid = er->chid;
 			stat->ecmlen = er->l;
@@ -456,6 +455,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 		return;
 		
 	uint32_t prid = get_prid(er->caid, er->prid);
+	uint16_t pid = get_ecmpid(er->caid, er->pid);
 	
 	READER_STAT *stat;
 	
@@ -490,7 +490,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	time_t ctime = time(NULL);
 	
 	if (rc == E_FOUND) { //found
-		stat = get_add_stat(rdr, er, prid);
+		stat = get_add_stat(rdr, er);
 		stat->rc = E_FOUND;
 		stat->ecm_count++;
 		stat->last_received = ctime;
@@ -548,7 +548,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 			return;
 		}
 			
-		stat = get_add_stat(rdr, er, prid);
+		stat = get_add_stat(rdr, er);
 		if (stat->rc == E_NOTFOUND) { //we have already "not found", so we change the time. In some cases (with services/ident set) the failing reader is selected again:
 			if (ecm_time < 100)
 				ecm_time = 100;
@@ -568,7 +568,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 			stat->ecm_count /= 10;
 	}
 	else if (rc == E_TIMEOUT) { //timeout
-		stat = get_add_stat(rdr, er, prid);
+		stat = get_add_stat(rdr, er);
 		
 		//catch suddenly occuring timeouts and block reader:
 //		if ((int)(ctime-stat->last_received) < (int)(5*cfg.ctimeout) && 
@@ -687,11 +687,14 @@ int32_t clean_stat_by_id(struct s_reader *rdr, uint32_t caid, uint32_t provid, u
 {
 	int32_t count = 0;
 	if (rdr && rdr->lb_stat) {
+
+		provid = get_prid(caid, provid);
+		ecmpid = get_ecmpid(caid, ecmpid);
+
 		cs_writelock(&rdr->lb_stat_lock);
 		READER_STAT *stat;
 		LL_ITER itr = ll_iter_create(rdr->lb_stat);
 		while ((stat = ll_iter_next(&itr))) {
-			if (caid != 256) ecmpid = 0;
 			if (stat->caid == caid &&
 					stat->prid == provid &&
 					stat->ecmpid == ecmpid &&
@@ -769,6 +772,15 @@ static time_t get_reopen_seconds(READER_STAT *stat)
 		if (!stat->fail_factor)
 			return cfg.lb_reopen_seconds;
 		return (time_t)stat->fail_factor * (time_t)cfg.lb_reopen_seconds;
+}
+
+uint16_t get_betatunnel_caid_to(uint16_t caid)
+{
+	if (caid == 0x1801) return 0x1722;
+	if (caid == 0x1833) return 0x1702;
+	if (caid == 0x1834) return 0x1722;
+	if (caid == 0x1835) return 0x1722;
+	return 0;
 }
 
 void convert_to_beta_int(ECM_REQUEST *er, uint16_t caid_to)
