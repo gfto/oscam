@@ -594,6 +594,7 @@ static void cleanup_ecmtasks(struct s_client *cl)
 			ecm->client = NULL;
 		}
 		add_garbage(cl->ecmtask);
+		cl->ecmtask = NULL;
 	}
 	
 	if (cl->cascadeusers) {
