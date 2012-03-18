@@ -44,7 +44,20 @@ void init_stat()
 }
 
 #define LINESIZE 1024
+#endif
 
+#if defined WITH_LB || defined HAVE_DVBAPI
+uint16_t get_betatunnel_caid_to(uint16_t caid)
+{
+	if (caid == 0x1801) return 0x1722;
+	if (caid == 0x1833) return 0x1702;
+	if (caid == 0x1834) return 0x1722;
+	if (caid == 0x1835) return 0x1722;
+	return 0;
+}
+#endif
+
+#ifdef WITH_LB
 void load_stat_from_file()
 {
 	stat_load_save = 0;
@@ -190,7 +203,7 @@ static uint32_t get_prid(uint16_t caid, uint32_t prid)
 
 static uint16_t get_ecmpid(uint16_t caid, uint16_t ecmpid)
 {
-	if ((caid>>8) == 0x01) //seca
+	if ((caid>>8) == 0x01) // 0x0100 seca
 		return ecmpid;
 	return 0;
 }
@@ -454,9 +467,6 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	if (!cl)
 		return;
 		
-	uint32_t prid = get_prid(er->caid, er->prid);
-	uint16_t pid = get_ecmpid(er->caid, er->pid);
-	
 	READER_STAT *stat;
 	
 	//inc ecm_count if found, drop to 0 if not found:
@@ -532,7 +542,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	}
 	else if (rc < E_NOTFOUND ) { //cache1+2+3
 		//no increase of statistics here, cachetime is not real time
-		stat = get_stat(rdr, er->caid, prid, er->pid, er->srvid, er->chid, er->l);
+		stat = get_stat(rdr, er->caid, er->prid, er->pid, er->srvid, er->chid, er->l);
 		if (stat != NULL)
 			stat->last_received = ctime;
 		return;
@@ -542,7 +552,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 		//CCcam card can't decode, 0x28=NOK1, 0x29=NOK2
 		//CCcam loop detection = E2_CCCAM_LOOP
 		if (er->rcEx >= LB_NONBLOCK_E2_FIRST) {
-			stat = get_stat(rdr, er->caid, prid, er->pid, er->srvid, er->chid, er->l);
+			stat = get_stat(rdr, er->caid, er->prid, er->pid, er->srvid, er->chid, er->l);
 			if (stat != NULL)
 				stat->last_received = ctime; //to avoid timeouts
 			return;
@@ -619,7 +629,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	{
 		if (rc >= E_FOUND)
 			cs_debug_mask(D_LB, "loadbalancer: not handled stat for reader %s: rc %d %04hX&%06X/%04hX/%04hX/%04hX/%02hX time %dms",
-				rdr->label, rc, er->caid, prid, er->pid, er->srvid, er->chid, er->l, ecm_time);
+				rdr->label, rc, er->caid, er->prid, er->pid, er->srvid, er->chid, er->l, ecm_time);
 	
 		return;
 	}
@@ -627,7 +637,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	housekeeping_stat(0);
 		
 	cs_debug_mask(D_LB, "loadbalancer: adding stat for reader %s: rc %d %04hX&%06X/%04hX/%04hX/%04hX/%02hX time %dms fail %d",
-				rdr->label, rc, er->caid, prid, er->pid, er->srvid, er->chid, er->l, ecm_time, stat->fail_factor);
+				rdr->label, rc, er->caid, er->prid, er->pid, er->srvid, er->chid, er->l, ecm_time, stat->fail_factor);
 	
 	if (cfg.lb_save) {
 		stat_load_save++;
@@ -772,15 +782,6 @@ static time_t get_reopen_seconds(READER_STAT *stat)
 		if (!stat->fail_factor)
 			return cfg.lb_reopen_seconds;
 		return (time_t)stat->fail_factor * (time_t)cfg.lb_reopen_seconds;
-}
-
-uint16_t get_betatunnel_caid_to(uint16_t caid)
-{
-	if (caid == 0x1801) return 0x1722;
-	if (caid == 0x1833) return 0x1702;
-	if (caid == 0x1834) return 0x1722;
-	if (caid == 0x1835) return 0x1722;
-	return 0;
 }
 
 void convert_to_beta_int(ECM_REQUEST *er, uint16_t caid_to)
