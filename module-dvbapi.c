@@ -2178,8 +2178,8 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
                                                         if (demux[i].demux_fd[o].fd > 0) { //TESTME: ocaid for betatunnel added!
                                                                 if ((demux[i].demux_fd[o].pid == demux[i].ECMpids[last_idx].ECM_PID) && ((demux[i].demux_fd[o].caid == demux[i].ECMpids[last_idx].CAID ) || (demux[i].demux_fd[o].caid == er->ocaid)))
                                                                         demux[i].demux_fd[o].count = 0; //activate last_idx
-                                                                else
-                                                                        dvbapi_stop_filternum(i, TYPE_ECM); //only drop ECMTYPE Filters
+                                                                else if (demux[i].demux_fd[o].type == TYPE_ECM)
+                                                                        dvbapi_stop_filternum(i, o); //only drop ECMTYPE Filters
                                                         }													//otherwise no EMM updates for 0100:00006a
                                                 }
                                                 edit_channel_cache(i, j, 1);
@@ -2233,17 +2233,24 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 						dvbapi_try_next_caid(i);
 					}
 					else if (cfg.dvbapi_requestmode == 1) {
-					        int32_t t, num_pids;
-					        for (num_pids=0,t=0;t<demux[i].ECMpidcount;t++) {
-					                if (demux[i].ECMpids[t].checked != 2)
-					                        num_pids++;
-					        }                             
-  					        if (!num_pids && last_checked == 1) { // we had rc=E_FOUND, but now we get a NOT_FOUND? Try all caids again:
-					                for (t=0;t<demux[i].ECMpidcount;t++)
-					                        demux[i].ECMpids[t].checked = 0;
-                                                        demux[i].tries = 3;
-					                dvbapi_try_next_caid(i);        
-					        }                                                                                                                                                                                                                                        
+						int32_t t, num_pids;
+						for (num_pids = 0, t = 0; t < demux[i].ECMpidcount;
+								t++) {
+							if (demux[i].ECMpids[t].checked != 2)
+								num_pids++;
+						}
+						if (!num_pids && last_checked == 1) { // we had rc=E_FOUND, but now we get a NOT_FOUND? Try all caids again:
+							for (t = 0; t < demux[i].ECMpidcount; t++) {
+								demux[i].ECMpids[t].checked = 0;
+								demux[i].ECMpids[t].status = 0;
+							}
+							demux[i].tries = 0;
+							demux[i].curindex = 0;
+							demux[i].pidindex = -1;
+
+							dvbapi_resort_ecmpids(i);
+							dvbapi_try_next_caid(i);
+						}
 					}
 				}
 				return;

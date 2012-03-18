@@ -363,9 +363,11 @@ struct cc_extended_ecm_idx *get_extended_ecm_idx(struct s_client *cl,
 			return eei;
 		}
 	}
+#ifdef WITH_DEBUG
 	if (remove)
 		cs_debug_mask(cl->typ=='c'?D_CLIENT:D_READER, "%s get by send-idx: %d NOT FOUND", getprefix(),
 			send_idx);
+#endif
 	return NULL;
 }
 
@@ -383,8 +385,11 @@ struct cc_extended_ecm_idx *get_extended_ecm_idx_by_idx(struct s_client *cl,
 			return eei;
 		}
 	}
-	cs_debug_mask(cl->typ=='c'?D_CLIENT:D_READER, "%s get by ecm-idx: %d NOT FOUND", getprefix(),
+#ifdef WITH_DEBUG
+	if (remove)
+		cs_debug_mask(cl->typ=='c'?D_CLIENT:D_READER, "%s get by ecm-idx: %d NOT FOUND", getprefix(),
 			ecm_idx);
+#endif
 	return NULL;
 }
 
