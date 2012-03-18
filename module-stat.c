@@ -246,7 +246,7 @@ READER_STAT *get_stat_lock(struct s_reader *rdr, uint16_t caid, uint32_t prid, u
 
 	if (lock) cs_readlock(&rdr->lb_stat_lock);
 	prid = get_prid(caid, prid);
-	
+	if (caid != 0x100) ecmpid = 0x0000;  //TESTME: fix for 1702/1833 random ecmpid causing cpuload
 	LL_ITER it = ll_iter_create(rdr->lb_stat);
 	READER_STAT *stat;
 	int32_t i = 0;
@@ -982,7 +982,10 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			
 			if (stat->ecm_count < 0||(stat->ecm_count > cfg.lb_max_ecmcount && stat->time_avg > retrylimit)) {
 				cs_debug_mask(D_LB, "loadbalancer: max ecms (%d) reached by reader %s, resetting statistics", cfg.lb_max_ecmcount, rdr->label);
-				reset_stat(er->caid, prid, er->pid, er->srvid, er->chid, er->l);
+				int ecmpid = 0x0000;   // TESTME: tryfix cpuload for 1720/1833 -> ecmpid is not in use but random delivered
+				if (er->caid != 0x100) // only add ecmpid if provider = seca
+					ecmpid = er->pid;
+				reset_stat(er->caid, prid, ecmpid, er->srvid, er->chid, er->l);
 				ea->status |= READER_ACTIVE; //max ecm reached, get new statistics
 				nreaders--;
 				continue;
