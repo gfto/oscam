@@ -501,17 +501,16 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   
 	for (h=0;h<rdr->ratelimitecm;h++) {
 		if ((rdr->rlecmh[h].last ==- 1) || ((time(NULL)-rdr->rlecmh[h].last) > rdr->ratelimitseconds)) {
-		free_slots++;
+		        free_slots++;
 		}
 		if (rdr->rlecmh[h].srvid == er->srvid) {
-		free_slots++;
+		        free_slots++;
 		}
 	}
 
 	if(free_slots == 0){
 		cs_debug_mask(D_TRACE, "ratelimit - no free slot on reader %s", rdr->label);
 		return(0);
-		}
 	}
   }
   //Checking entitlements:
