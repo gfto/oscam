@@ -483,19 +483,27 @@ void dvbapi_start_emm_filter(int32_t demux_index) {
 }
 
 void dvbapi_add_ecmpid(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_t provid) {
-	int32_t n;
+	int32_t n,added=0;
 
 	if (demux[demux_id].ECMpidcount>=ECM_PIDS)
 		return;
 
 	int32_t stream = demux[demux_id].STREAMpidcount-1;
 	for (n=0;n<demux[demux_id].ECMpidcount;n++) {
-		if (demux[demux_id].ECMpids[n].CAID == caid && demux[demux_id].ECMpids[n].ECM_PID == ecmpid && demux[demux_id].ECMpids[n].PROVID == provid) {
-			//there is no need to add a caid with same pid and same provid
-			cs_debug_mask(D_DVBAPI, "[SKIP PID %d] CAID: %04X\tECM_PID: %04X\tPROVID: %06X", demux[demux_id].ECMpidcount, caid, ecmpid, provid);
-			return;
+		if (stream>-1 && demux[demux_id].ECMpids[n].CAID == caid && demux[demux_id].ECMpids[n].ECM_PID == ecmpid) {
+			if (!demux[demux_id].ECMpids[n].streams) {
+				//we already got this caid/ecmpid as global, no need to add the single stream
+				cs_debug_mask(D_DVBAPI, "[SKIP STREAM %d] CAID: %04X\tECM_PID: %04X\tPROVID: %06X", n, caid, ecmpid, provid);
+				continue;
+			}
+			added=1;
+			demux[demux_id].ECMpids[n].streams |= (1 << stream);
+			cs_debug_mask(D_DVBAPI, "[ADD STREAM %d] CAID: %04X\tECM_PID: %04X\tPROVID: %06X", n, caid, ecmpid, provid);
 		}
 	}
+
+	if (added==1)
+		return;
 
 	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].ECM_PID = ecmpid;
 	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].CAID = caid;
