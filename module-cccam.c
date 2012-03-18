@@ -709,6 +709,7 @@ int32_t cc_send_srv_data(struct s_client *cl) {
 	memcpy(buf, cc->node_id, 8);
 		
 	char cc_build[7]; tmp_dbg(17);
+	memset(cc_build, 0, sizeof(cc_build));
 	cc_check_version((char *) cfg.cc_version, cc_build);
 	memcpy(buf + 8, cfg.cc_version, sizeof(cfg.cc_version)); // cccam version (ascii)
 	memcpy(buf + 40, cc_build, sizeof(cc_build)); // build number (ascii)
