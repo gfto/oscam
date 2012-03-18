@@ -458,13 +458,13 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
 
   //Schlocke reader-defined function, reader-self-check: 
   if (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_CONNECTED, er)) {
-    //cs_debug_mask(D_TRACE, "reader unavailable %s", rdr->label);
+    cs_debug_mask(D_TRACE, "reader unavailable %s", rdr->label);
     return 0;
   }
 
   //Checking caids:
   if ((!er->ocaid || !chk_ctab(er->ocaid, &rdr->ctab)) && !chk_ctab(er->caid, &rdr->ctab)) {
-    //cs_debug_mask(D_TRACE, "caid %04X not found in caidlist reader %s", er->caid, rdr->label);
+    cs_debug_mask(D_TRACE, "caid %04X not found in caidlist reader %s", er->caid, rdr->label);
     return 0;
   }
 
@@ -473,25 +473,25 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
 
   //Checking services:
   if (!chk_srvid(rdr->client, er)) {
-    //cs_debug_mask(D_TRACE, "service %04X not matching  reader %s", er->srvid, rdr->label);
+    cs_debug_mask(D_TRACE, "service %04X not matching  reader %s", er->srvid, rdr->label);
     return(0);
   }
 
   //Checking ident:
   if (!chk_rfilter(er, rdr)) {
-    //cs_debug_mask(D_TRACE, "r-filter reader %s", rdr->label);
+    cs_debug_mask(D_TRACE, "r-filter reader %s", rdr->label);
     return(0);
   }
 
   //Check ECM nanos:
   if (!chk_class(er, &rdr->cltab, "reader", rdr->label)) {
-    //cs_debug_mask(D_TRACE, "class filter reader %s", rdr->label);    
+    cs_debug_mask(D_TRACE, "class filter reader %s", rdr->label);    
     return(0);
   }
 
   //Checking chid:
   if (!chk_chid(er, &rdr->fchid, "reader", rdr->label)) {
-    //cs_debug_mask(D_TRACE, "chid filter reader %s", rdr->label);    
+    cs_debug_mask(D_TRACE, "chid filter reader %s", rdr->label);    
     return(0);
   }
   
@@ -509,8 +509,10 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
 	}
 
 	if(free_slots == 0){
+		cs_debug_mask(D_TRACE, "ratelimit - no free slot on reader %s", rdr->label);
 		return(0);
 		}
+	}
   }
   //Checking entitlements:
   if (ll_count(rdr->ll_entitlements) > 0) {
@@ -523,8 +525,10 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
 				break;
 			}
 		}
-		if (!found)
+		if (!found){
+			cs_debug_mask(D_TRACE, "entitlements check failed on reader %s", rdr->label);
 			return 0;
+		}
   }
 
   //Checking ecmlength:
