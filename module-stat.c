@@ -427,7 +427,6 @@ READER_STAT *get_add_stat(struct s_reader *rdr, ECM_REQUEST *er, uint32_t prid)
 			stat->ecmpid = 0x0000;       // TESTME: tryfix cpuload for 1720/1833 -> ecmpid is not in use but random delivered
 			if (er->caid != 0x100)		 // only add ecmpid to stat if provider = seca
 				stat->ecmpid = er->pid;
-			stat->ecmpid = er->pid;
 			stat->srvid = er->srvid;
 			stat->chid = er->chid;
 			stat->ecmlen = er->l;
