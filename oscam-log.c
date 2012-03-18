@@ -218,7 +218,7 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 	cs_write_log(txt + 8, do_flush);
 
 #if defined(WEBIF) || defined(MODULE_MONITOR) 
-	if (loghist) {
+	if (loghist && exit_oscam != 1) {
 		char *usrtxt = log->cl_text;
 		char *target_ptr = NULL;
 		int32_t target_len = strlen(usrtxt) + (strlen(txt) - 8) + 1;
