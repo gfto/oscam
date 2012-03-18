@@ -44,7 +44,20 @@ void init_stat()
 }
 
 #define LINESIZE 1024
+#endif
 
+#if defined WITH_LB || defined HAVE_DVBAPI
+uint16_t get_betatunnel_caid_to(uint16_t caid)
+{
+	if (caid == 0x1801) return 0x1722;
+	if (caid == 0x1833) return 0x1702;
+	if (caid == 0x1834) return 0x1722;
+	if (caid == 0x1835) return 0x1722;
+	return 0;
+}
+#endif
+
+#ifdef WITH_LB
 void load_stat_from_file()
 {
 	stat_load_save = 0;
@@ -752,15 +765,6 @@ static time_t get_reopen_seconds(READER_STAT *stat)
 		if (!stat->fail_factor)
 			return cfg.lb_reopen_seconds;
 		return (time_t)stat->fail_factor * (time_t)cfg.lb_reopen_seconds;
-}
-
-uint16_t get_betatunnel_caid_to(uint16_t caid)
-{
-	if (caid == 0x1801) return 0x1722;
-	if (caid == 0x1833) return 0x1702;
-	if (caid == 0x1834) return 0x1722;
-	if (caid == 0x1835) return 0x1722;
-	return 0;
 }
 
 void convert_to_beta_int(ECM_REQUEST *er, uint16_t caid_to)
