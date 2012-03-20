@@ -425,6 +425,14 @@ SFRTIFJFU0VSVkVEADs="
 #define TPLAPIHEADER "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
 <oscam version=\"##CS_VERSION## build ###CS_SVN_VERSION##\" revision=\"##CS_SVN_VERSION##\" starttime=\"##APISTARTTIME##\" uptime=\"##APIUPTIME##\" readonly=\"##APIREADONLY##\">\n"
 
+#define TPLJSONHEADER "##CALLBACK##({\n\
+\"oscam\": {\n\
+    \"version\": \"##CS_VERSION## build ###CS_SVN_VERSION##\",\n\
+    \"revision\": \"##CS_SVN_VERSION##\",\n\
+    \"starttime\": \"##APISTARTTIME##\",\n\
+    \"uptime\": \"##APIUPTIME##\",\n\
+    \"readonly\": \"##APIREADONLY##\","
+
 #define TPLAPIERROR "##TPLAPIHEADER##\n\
 		<error>##APIERRORMESSAGE##</error>\n\
 ##TPLAPIFOOTER##"
@@ -444,6 +452,9 @@ SFRTIFJFU0VSVkVEADs="
 </HTML>"
 
 #define TPLAPIFOOTER "</oscam>"
+
+#define TPLJSONFOOTER "    }\n\
+})"
 
 #define TPLREFRESH "\
 	<script>\n\
@@ -688,6 +699,11 @@ SFRTIFJFU0VSVkVEADs="
 	]]></log>\
 ##TPLAPIFOOTER##"
 
+#define TPLJSONSTATUS "##TPLJSONHEADER##\n\
+	\"status\": { \"client\":[\n\
+	                          ##JSONSTATUSBITS##\
+								]}\
+##TPLJSONFOOTER##"
 
 #define TPLCLIENTSTATUSBIT "\
 		<TR class=\"##CLIENTTYPE##\">\n\
@@ -711,12 +727,39 @@ SFRTIFJFU0VSVkVEADs="
 		</TR>\n"
 
 
-#define TPLAPISTATUSBIT "      <client type=\"##CLIENTTYPE##\" name=\"##CLIENTUSER##\" desc=\"##CLIENTDESCRIPTION##\" protocol=\"##CLIENTPROTO##\" protocolext=\"##CLIENTPROTOTITLE##\" au=\"##CLIENTCAU##\">\n\
+#define TPLAPISTATUSBIT "      <client type=\"##CLIENTTYPE##\" name=\"##CLIENTUSER##\" desc=\"##CLIENTDESCRIPTION##\" protocol=\"##CLIENTPROTO##\" protocolext=\"##CLIENTPROTOTITLE##\" au=\"##CLIENTCAU##\" thid=\"##CSIDX##\">\n\
          <request caid=\"##CLIENTCAID##\" srvid=\"##CLIENTSRVID##\" ecmtime=\"##CLIENTLASTRESPONSETIME##\" ecmhistory=\"##CLIENTLASTRESPONSETIMEHIST##\" answered=\"##LASTREADER##\">##CLIENTSRVPROVIDER####CLIENTSRVNAME##</request>\n\
          <times login=\"##CLIENTLOGINDATE##\" online=\"##CLIENTLOGINSECS##\" idle=\"##CLIENTIDLESECS##\"></times>\n\
          <connection ip=\"##CLIENTIP##\" port=\"##CLIENTPORT##\">##CLIENTCON##</connection>\n\
       </client>\n"
 
+#define TPLJSONSTATUSBIT "{\n\
+\"thid\": \"##CSIDX##\",\n\
+\"type\": \"##CLIENTTYPE##\",\n\
+\"name\": \"##CLIENTUSER##\",\n\
+\"desc\": \"##CLIENTDESCRIPTION##\",\n\
+\"protocol\": \"##CLIENTPROTO##\",\n\
+\"protocolext\": \"##CLIENTPROTOTITLE##\",\n\
+\"au\": \"##CLIENTCAU##\",\n\
+\"request\": {\n\
+    \"caid\": \"##CLIENTCAID##\",\n\
+    \"srvid\": \"##CLIENTSRVID##\",\n\
+    \"ecmtime\": \"##CLIENTLASTRESPONSETIME##\",\n\
+    \"ecmhistory\": \"##CLIENTLASTRESPONSETIMEHIST##\",\n\
+    \"answered\": \"##LASTREADER##\",\n\
+    \"$\": \"##CLIENTSRVPROVIDER####CLIENTSRVNAME##\"\n\
+},\n\
+\"times\": {\n\
+    \"login\": \"##CLIENTLOGINDATE##\",\n\
+    \"online\": \"##CLIENTLOGINSECS##\",\n\
+    \"idle\": \"##CLIENTIDLESECS##\"\n\
+},\n\
+\"connection\": {\n\
+    \"ip\": \"##CLIENTIP##\",\n\
+    \"port\": \"##CLIENTPORT##\",\n\
+    \"$\": \"##CLIENTCON##\"\n\
+}\n\
+}##JSONARRAYDELIMITER##"
 
 #define TPLAPIUSERCONFIGLIST "##TPLAPIHEADER##\n\
     <users>\n\
@@ -2362,18 +2405,22 @@ enum refreshtypes {REFR_ACCOUNTS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REFR
 char *tpl[]={
 	"HEADER",
 	"APIHEADER",
+	"JSONHEADER",
 	"APIERROR",
 	"APICONFIRMATION",
 	"FOOTER",
 	"APIFOOTER",
+	"JSONFOOTER",
 	"MENU",
 	"REFRESH",
 	"HELPPREFIX",
 	"HELPSUFFIX",
 	"STATUS",
 	"APISTATUS",
+	"JSONSTATUS",
 	"CLIENTSTATUSBIT",
 	"APISTATUSBIT",
+	"JSONSTATUSBIT",
 	"USERCONFIGLIST",
 	"ADDNEWUSER",
 	"USERCONFIGLISTBIT",
@@ -2532,18 +2579,22 @@ char *tpl[]={
 char *tplmap[]={
 	TPLHEADER,
 	TPLAPIHEADER,
+	TPLJSONHEADER,
 	TPLAPIERROR,
 	TPLAPICONFIRMATION,
 	TPLFOOTER,
 	TPLAPIFOOTER,
+	TPLJSONFOOTER,
 	TPLMENU,
 	TPLREFRESH,
 	TPLHELPPREFIX,
 	TPLHELPSUFFIX,
 	TPLSTATUS,
 	TPLAPISTATUS,
+	TPLJSONSTATUS,
 	TPLCLIENTSTATUSBIT,
 	TPLAPISTATUSBIT,
+	TPLJSONSTATUSBIT,
 	TPLUSERCONFIGLIST,
 	TPLADDNEWUSER,
 	TPLUSERCONFIGLISTBIT,

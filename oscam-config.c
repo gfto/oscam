@@ -992,7 +992,13 @@ void chk_t_webif(char *token, char *value)
 	}
 
 	if (!strcmp(token, "httpdyndns")) {
-		cs_strncpy((char *)cfg.http_dyndns, value, sizeof(cfg.http_dyndns));
+		int32_t i;
+		char *ptr, *saveptr1 = NULL;
+
+		for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < MAX_HTTP_DYNDNS) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
+			trim(ptr);
+			cs_strncpy((char *)cfg.http_dyndns[i], ptr, sizeof(cfg.http_dyndns[i]));
+		}
 		return;
 	}
 
@@ -2544,8 +2550,16 @@ int32_t write_config()
 		if(strlen(value) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, "httpallowed", "%s\n", value);
 		free_mk_t(value);
-		if(strlen((const char *) (cfg.http_dyndns)) > 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "httpdyndns", "%s\n", cfg.http_dyndns);
+		if(strlen((const char *) (cfg.http_dyndns[0])) > 0 || cfg.http_full_cfg){
+			fprintf_conf(f, "httpdyndns", "%s", "");
+			for(i = 0; i < MAX_HTTP_DYNDNS; i++){
+				if(cfg.http_dyndns[i][0]){
+					fprintf(f, "%s", i > 0 ? "," : "");
+					fprintf(f,  "%s", cfg.http_dyndns[i]);
+				}
+			}
+			fputc((int)'\n', f);
+		}
 		if(cfg.http_hide_idle_clients || cfg.http_full_cfg)
 			fprintf_conf(f, "httphideidleclients", "%d\n", cfg.http_hide_idle_clients);
 		if(cfg.http_readonly || cfg.http_full_cfg)

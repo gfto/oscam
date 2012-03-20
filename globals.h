@@ -432,6 +432,8 @@ struct s_arm_led {
 #define BAN_SLEEPING	4			// failban mask for sleeping user
 #define BAN_DUPLICATE	8			// failban mask for duplicate user
 
+#define MAX_HTTP_DYNDNS 3			// maximum allowed dyndns addresses for webif access
+
 #define ACTION_READER_IDLE		1
 #define ACTION_READER_REMOTE	2
 #define ACTION_READER_REMOTELOG	3
@@ -1493,8 +1495,8 @@ struct s_config
 	int8_t			http_hide_idle_clients;
 	struct s_ip 	*http_allowed;
 	int8_t			http_readonly;
-	in_addr_t		http_dynip;
-	uchar			http_dyndns[64];
+	in_addr_t		http_dynip[MAX_HTTP_DYNDNS];
+	uchar			http_dyndns[MAX_HTTP_DYNDNS][64];
 #ifdef WITH_SSL	
 	int8_t			http_use_ssl;
 	int8_t			http_force_sslv3;
