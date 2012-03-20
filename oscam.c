@@ -1812,7 +1812,7 @@ void cs_cache_push(ECM_REQUEST *er)
 	struct s_client *cl;
 	for (cl=first_client->next; cl; cl=cl->next) {
 		if (er->cacheex_src != cl) {
-			if (cl->typ == 'c' && cl->account && cl->account->cacheex == 2) { //send cache over user
+			if (cl->typ == 'c' && !cl->dup && cl->account && cl->account->cacheex == 2) { //send cache over user
 				if (ph[cl->ctyp].c_cache_push // cache-push able
 						&& (!er->grp || (cl->grp & er->grp)) //Group-check
 						&& chk_srvid(cl, er) //Service-check
@@ -2030,6 +2030,7 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 			if (ecm->csp_lastnodes == NULL) {
 				ecm->csp_lastnodes = er->csp_lastnodes;
 				er->csp_lastnodes = NULL;
+				ecm->cacheex_src = cl;
 			}
 			write_ecm_answer(cl->reader, ecm, er->rc, er->rcEx, er->cw, ecm->msglog);
 
