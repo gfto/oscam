@@ -491,6 +491,9 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	//        - = causes loadbalancer to block this reader for this caid/prov/sid
 	//        -2 = causes loadbalancer to block if happens too often
 	
+	if (rdr->typ & R_IS_NETWORK) // tryfix for network readers not sending correct ecmpid but a random one causing high cpuload
+		er->pid = 0x0000; 
+	
 	if (rc == E_NOTFOUND && (uint32_t)ecm_time >= cfg.ctimeout) //Map "not found" to "timeout" if ecm_time>client time out
 		rc = E_TIMEOUT;
 
