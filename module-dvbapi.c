@@ -167,7 +167,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 		case COOLAPI:
 			demux[demux_id].demux_fd[n].fd = coolapi_open_device(demux[demux_id].demux_index, demux_id);
 			if(demux[demux_id].demux_fd[n].fd > 0)
-				ret = coolapi_set_filter(demux[demux_id].demux_fd[n].fd, n, pid, filt, mask, type);
+				ret = coolapi_set_filter(demux[demux_id].demux_fd[n].fd, n, pid, filt, mask);
 			break;
 #endif
 		default:
@@ -1349,7 +1349,11 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	cs_ddump_mask(D_DVBAPI, buffer, length, "capmt:");
 
 	for (i = 0; i < MAX_DEMUX; i++) {
+#ifdef COOL
+		if (demux[i].program_number==((buffer[1] << 8) | buffer[2])) {
+#else
 		if (connfd>0 && demux[i].socket_fd == connfd) {
+#endif
 			//PMT Update
 			if (ca_pmt_list_management == 0x05) {
 				demux_id = i;
