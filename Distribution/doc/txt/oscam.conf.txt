@@ -746,7 +746,7 @@ CACHING
 LOGGING
        log file format:
 
-       CAID&provid/srvid/length:checksum
+       CAID&ProviderID/ECMPID/ServiceID/length:checksum
 
 EXAMPLES
 	[global]
