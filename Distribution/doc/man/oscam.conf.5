@@ -458,10 +458,11 @@ http web interface connections allowed, default:none
  example: httpallowed = 127.0.0.1,192.168.0.0-192.168.255.255
 .RE
 .PP
-\fBhttpdyndns\fP = \fBhostname\fP
+\fBhttpdyndns\fP = \fBhostname[,hostname][,hostname]\fP
 .RS 3n
 http web interface connections allowed, default:none
  example: httpdyndns = host.example.com
+          httpdyndns = host1.example.com,host2.example.com
 .RE
 .PP
 \fBhttpsavefullcfg\fP = \fB0\fP|\fB1\fP

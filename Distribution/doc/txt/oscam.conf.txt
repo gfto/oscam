@@ -315,9 +315,10 @@ DESCRIPTIONS
 	  http web interface connections allowed, default:none
 	   example: httpallowed = 127.0.0.1,192.168.0.0-192.168.255.255
 
-       httpdyndns = hostname
+       httpdyndns = hostname[,hostname][,hostname]
 	  http web interface connections allowed, default:none
 	   example: httpdyndns = host.example.com
+		    httpdyndns = host1.example.com,host2.example.com
 
        httpsavefullcfg = 0|1
 	  write config:
