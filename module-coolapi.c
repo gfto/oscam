@@ -268,6 +268,7 @@ int32_t coolapi_close_device(int32_t fd)
 	}
   	cs_debug_mask(D_DVBAPI, "fd %08x channel %x pid %x", fd, (int) dmx->channel, dmx->pid);
 
+	pthread_mutex_lock(&dmx->mutex);
 	if(dmx->filter != NULL) {
 		result = cnxt_dmx_channel_detach_filter(dmx->channel, dmx->filter);
 		check_error ("cnxt_dmx_channel_detach_filter", result);
@@ -294,7 +295,7 @@ int32_t coolapi_close_device(int32_t fd)
 	check_error ("cnxt_cbuf_close", result);
 
 	dmx->opened = 0;
-
+	pthread_mutex_unlock(&dmx->mutex);
 	pthread_mutex_destroy(&dmx->mutex);
 
 	memset(dmx, 0, sizeof(dmx_t));

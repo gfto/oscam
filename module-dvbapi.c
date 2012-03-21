@@ -1102,75 +1102,93 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 	}
 	
 	if (cfg.preferlocalcards) { //works if there is cfg.preferlocalcards=1 but no oscam.dvbapi OR if there is oscam.dvbapi but without local cards in it
-			struct s_reader *rdr;
-			ECM_REQUEST *er = cs_malloc(&er, sizeof(ECM_REQUEST), 0);
-			
-			if (!dvbapi_priority)
-				highest_prio = prio*2;
-			
-			for (n=0; n<demux[demux_index].ECMpidcount; n++) {
+		struct s_reader *rdr;
+		ECM_REQUEST *er = cs_malloc(&er, sizeof(ECM_REQUEST), 0);
+		int32_t proceed=0;
+	
+		if (!dvbapi_priority)
+			highest_prio = prio*2;
+	
+		for (n=0; n<demux[demux_index].ECMpidcount; n++) {
+		
+			er->caid = er->ocaid = demux[demux_index].ECMpids[n].CAID;
+			er->prid = demux[demux_index].ECMpids[n].PROVID;
+			er->pid = demux[demux_index].ECMpids[n].ECM_PID;
+			er->srvid = demux[demux_index].program_number;
+			er->client = cur_client();
+	
+			btun_caid = get_betatunnel_caid_to(demux[demux_index].ECMpids[n].CAID);
+			if (btun_caid) {
+				if (chk_valid_btun(er->caid,er->srvid))
+					er->caid = btun_caid;
+			}	
+	
+			if (dvbapi_priority) { //user has oscam.dvbapi - check if he already defined his local cards in the file or if we have to change status
+				matching=0;
+				proceed=0;
+					
+				if (demux[demux_index].ECMpids[n].status > (prio + demux[demux_index].ECMpidcount)) // caid already priorized higher than network caid
+					continue;
 				
-					er->caid = er->ocaid = demux[demux_index].ECMpids[n].CAID;
-					er->prid = demux[demux_index].ECMpids[n].PROVID;
-					er->pid = demux[demux_index].ECMpids[n].ECM_PID;
-					er->srvid = demux[demux_index].program_number;
-					er->client = cur_client();
-					
-					btun_caid = get_betatunnel_caid_to(demux[demux_index].ECMpids[n].CAID);
-					if (btun_caid) {
-						if (chk_valid_btun(er->caid,er->srvid))
-							er->caid = btun_caid;
-					}	
-					
-					if (dvbapi_priority) { //user has oscam.dvbapi - check if he already defined his local cards in the file or if we have to change status
-						matching=0;
-						LL_ITER it = ll_iter_create(configured_readers);
-						while ((rdr=ll_iter_next(&it))) {
-							if (!(rdr->typ & R_IS_NETWORK) && rdr->card_status == CARD_INSERTED && rdr->caid == demux[demux_index].ECMpids[n].CAID) {	
-								if (demux[demux_index].ECMpids[n].status == -1) //status of caid could be -1 due to I:0
-									demux[demux_index].ECMpids[n].status = 0;				
-							  if (!(demux[demux_index].ECMpids[n].status > (prio + demux[demux_index].ECMpidcount))
-							  		|| demux[demux_index].ECMpids[n].status > 0 || matching_reader(er, rdr)) {
-							  	demux[demux_index].ECMpids[n].status = highest_prio;
-							  	cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X:%04X (localrdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, rdr->label, demux[demux_index].ECMpids[n].status);
-							  	matching=1;
-							  	break;
-							  }
-							}
-						}
-						if (!matching) {
-							demux[demux_index].ECMpids[n].status = -1;
+				LL_ITER it = ll_iter_create(configured_readers);
+				while ((rdr=ll_iter_next(&it))) {
+					if (!(rdr->typ & R_IS_NETWORK) && rdr->card_status == CARD_INSERTED) {	
+						
+						if (demux[demux_index].ECMpids[n].status == -1) //status of caid could be -1 due to I:0
+							demux[demux_index].ECMpids[n].status = 0;	
+							
+						if (demux[demux_index].ECMpids[n].status > 0 || matching_reader(er, rdr)) {						  	
+							demux[demux_index].ECMpids[n].status = highest_prio;
 							cs_debug_mask(D_DVBAPI,
-									"[IGNORE PID %d] %04X:%06X:%04X (no matching reader)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,demux[demux_index].ECMpids[n].ECM_PID);
+									"[PRIORITIZE PID %d] %04X:%06X:%04X (localrdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID,
+									demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, rdr->label, demux[demux_index].ECMpids[n].status);
+							proceed=1;
+							matching=1;
+							break;
 						}
-						continue; //user has oscam.dvbapi - everything evaluated already
+					} else {
+						proceed=0;	
 					}
-					
-					matching=0;
-					LL_ITER it = ll_iter_create(configured_readers);
-					while ((rdr=ll_iter_next(&it))) {
-						if (!(rdr->typ & R_IS_NETWORK) && rdr->card_status==CARD_INSERTED) { // cfg.preferlocalcards = 1 local reader
-						  if (matching_reader(er, rdr)) {
-					      demux[demux_index].ECMpids[n].status = prio*2; //priority
-					      cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X:%04X (localrdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, rdr->label, demux[demux_index].ECMpids[n].status);
-					      matching=1;
-					      break;
-						  }
-					} else { // cfg.preferlocalcards = 1 and no local reader
-							if (matching_reader(er, rdr)) {
-	              demux[demux_index].ECMpids[n].status = prio;
-	              cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X:%04X (rdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, rdr->label, demux[demux_index].ECMpids[n].status);
-	              matching=1;
-	              break;
-            	}
-						}
-					}
-					if (!matching) {
-						demux[demux_index].ECMpids[n].status = -1;
-						cs_debug_mask(D_DVBAPI,
-								"[IGNORE PID %d] %04X:%06X:%04X (no matching reader)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,demux[demux_index].ECMpids[n].ECM_PID);
-					}
+				}
+				if (proceed && !matching) {
+					demux[demux_index].ECMpids[n].status = -1;
+					cs_debug_mask(D_DVBAPI,
+							"[IGNORE PID %d] %04X:%06X:%04X (no matching reader)", n, demux[demux_index].ECMpids[n].CAID,
+							demux[demux_index].ECMpids[n].PROVID,demux[demux_index].ECMpids[n].ECM_PID);
+				}
+				continue; //user has oscam.dvbapi - everything evaluated already
 			}
+	
+			matching=0;
+			LL_ITER it = ll_iter_create(configured_readers);
+			while ((rdr=ll_iter_next(&it))) {
+				if (!(rdr->typ & R_IS_NETWORK) && rdr->card_status==CARD_INSERTED) { // cfg.preferlocalcards = 1 local reader
+					if (matching_reader(er, rdr)) {
+						demux[demux_index].ECMpids[n].status = prio*2; //priority
+						cs_debug_mask(D_DVBAPI,
+								"[PRIORITIZE PID %d] %04X:%06X:%04X (localrdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID,
+								demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, rdr->label, demux[demux_index].ECMpids[n].status);
+						matching=1;
+						break;
+					}
+				} else { // cfg.preferlocalcards = 1 and no local reader
+					if (matching_reader(er, rdr)) {
+						demux[demux_index].ECMpids[n].status = prio;
+						cs_debug_mask(D_DVBAPI, 
+								"[PRIORITIZE PID %d] %04X:%06X:%04X (rdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID,
+								demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, rdr->label, demux[demux_index].ECMpids[n].status);
+						matching=1;
+					break;
+					}
+				}
+			}
+			if (!matching) {
+				demux[demux_index].ECMpids[n].status = -1;
+				cs_debug_mask(D_DVBAPI,
+						"[IGNORE PID %d] %04X:%06X:%04X (no matching reader)", n, demux[demux_index].ECMpids[n].CAID,
+						demux[demux_index].ECMpids[n].PROVID,demux[demux_index].ECMpids[n].ECM_PID);
+			}
+		}
 			free(er);
 	}
 	highest_prio++;
@@ -1374,7 +1392,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 
 	for (i = 0; i < MAX_DEMUX; i++) {
 #ifdef COOL
-		if (demux[i].program_number==((buffer[1] << 8) | buffer[2])) {
+		if (connfd>0 && demux[i].program_number==((buffer[1] << 8) | buffer[2])) {
 #else
 		if (connfd>0 && demux[i].socket_fd == connfd) {
 #endif
