@@ -1776,7 +1776,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 				localtime_r(&stat->last_received, &lt);
 				ecmcount += stat->ecm_count;
 				if (!apicall) {
-					tpl_printf(vars, TPLADD, "CHANNEL", "%04X:%06lX:%04X:%04X", stat->caid, stat->prid, stat->srvid, stat->chid);
+					tpl_printf(vars, TPLADD, "CHANNEL", "%04X:%06lX:%04X:%04X:%04X", stat->caid, stat->prid, stat->ecmpid, stat->srvid, stat->chid);
 					tpl_addVar(vars, TPLADD, "CHANNELNAME", xml_encode(vars, get_servicename(cur_client(), stat->srvid, stat->caid, channame)));
 					tpl_printf(vars, TPLADD, "ECMLEN","%04hX", stat->ecmlen);
 					tpl_addVar(vars, TPLADD, "RC", stxt[stat->rc]);
@@ -1796,6 +1796,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 				} else {
 					tpl_printf(vars, TPLADD, "ECMCAID", "%04X", stat->caid);
 					tpl_printf(vars, TPLADD, "ECMPROVID", "%06lX", stat->prid);
+					tpl_printf(vars, TPLADD, "ECMPID", "%04X", stat->ecmpid);
 					tpl_printf(vars, TPLADD, "ECMSRVID", "%04X", stat->srvid);
 					tpl_printf(vars, TPLADD, "ECMLEN", "%04hX", stat->ecmlen);
 					tpl_addVar(vars, TPLADD, "ECMCHANNELNAME", xml_encode(vars, get_servicename(cur_client(), stat->srvid, stat->caid, channame)));
