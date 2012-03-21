@@ -456,12 +456,6 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   if (!(rdr->grp&cur_cl->grp))
     return(0);
 
-  //Schlocke reader-defined function, reader-self-check: 
-  if (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_CONNECTED, er)) {
-    cs_debug_mask(D_TRACE, "reader unavailable %s", rdr->label);
-    return 0;
-  }
-
   //Checking caids:
   if ((!er->ocaid || !chk_ctab(er->ocaid, &rdr->ctab)) && !chk_ctab(er->caid, &rdr->ctab)) {
     cs_debug_mask(D_TRACE, "caid %04X not found in caidlist reader %s", er->caid, rdr->label);
@@ -493,6 +487,12 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   if (!chk_chid(er, &rdr->fchid, "reader", rdr->label)) {
     cs_debug_mask(D_TRACE, "chid filter reader %s", rdr->label);    
     return(0);
+  }
+
+  //Schlocke reader-defined function, reader-self-check
+  if (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_CONNECTED, er)) {
+    cs_debug_mask(D_TRACE, "reader unavailable %s", rdr->label);
+    return 0;
   }
   
   // Checking ratelimit
