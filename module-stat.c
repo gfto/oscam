@@ -201,9 +201,9 @@ static uint32_t get_prid(uint16_t caid, uint32_t prid)
 	return prid;
 }
 
-static uint16_t get_ecmpid(uint16_t caid, uint16_t ecmpid)
+static uint16_t get_ecmpid(struct s_reader *rdr, uint16_t caid, uint16_t ecmpid)
 {
-	if ((caid>>8) == 0x01) // 0x0100 seca
+	if (!(rdr->typ & R_IS_NETWORK) && (caid>>8 == 0x01)) // tryfix for seca network readers not sending correct ecmpid but a random one causing high cpuload
 		return ecmpid;
 	return 0;
 }
@@ -252,7 +252,7 @@ READER_STAT *get_stat_lock(struct s_reader *rdr, uint16_t caid, uint32_t prid, u
 	}
 
 	prid = get_prid(caid, prid);
-	ecmpid = get_ecmpid(caid, ecmpid);
+	ecmpid = get_ecmpid(rdr, caid, ecmpid);
 	
 	if (lock) cs_readlock(&rdr->lb_stat_lock);
 
@@ -261,7 +261,7 @@ READER_STAT *get_stat_lock(struct s_reader *rdr, uint16_t caid, uint32_t prid, u
 	int32_t i = 0;
 	while ((stat = ll_iter_next(&it))) {
 		i++;
-		if (stat->caid==caid && stat->prid==prid && stat->ecmpid==ecmpid && stat->srvid==srvid && stat->chid==chid) {
+		if (stat->caid==caid && stat->prid==prid && (stat->ecmpid==ecmpid || ecmpid==0x0000) && stat->srvid==srvid && stat->chid==chid) {
 			if (stat->ecmlen == ecmlen)
 				break;
 			if (!stat->ecmlen) {
@@ -299,14 +299,14 @@ int32_t remove_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16_t
 		return 0;
 
 	prid = get_prid(caid, prid);
-	ecmpid = get_ecmpid(caid, ecmpid);
+	ecmpid = get_ecmpid(rdr, caid, ecmpid);
 
 	cs_writelock(&rdr->lb_stat_lock);
 	int32_t c = 0;
 	LL_ITER it = ll_iter_create(rdr->lb_stat);
 	READER_STAT *stat;
 	while ((stat = ll_iter_next(&it))) {
-		if (stat->caid==caid && stat->prid==prid && stat->ecmpid == ecmpid && stat->srvid==srvid && stat->chid==chid) {
+		if (stat->caid==caid && stat->prid==prid && (stat->ecmpid==ecmpid || ecmpid==0x0000) && stat->srvid==srvid && stat->chid==chid) {
 			if (!stat->ecmlen || stat->ecmlen == ecmlen) {
 				ll_iter_remove_data(&it);
 				c++;
@@ -430,7 +430,7 @@ READER_STAT *get_add_stat(struct s_reader *rdr, ECM_REQUEST *er)
 	}
 
 	uint32_t prid = get_prid(er->caid, er->prid);
-	uint16_t pid = get_ecmpid(er->caid, er->pid);
+	uint16_t pid = get_ecmpid(rdr, er->caid, er->pid);
 
 	cs_writelock(&rdr->lb_stat_lock);
 
@@ -491,8 +491,6 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	//        - = causes loadbalancer to block this reader for this caid/prov/sid
 	//        -2 = causes loadbalancer to block if happens too often
 	
-	if (rdr->typ & R_IS_NETWORK) // tryfix for network readers not sending correct ecmpid but a random one causing high cpuload
-		er->pid = 0x0000; 
 	
 	if (rc == E_NOTFOUND && (uint32_t)ecm_time >= cfg.ctimeout) //Map "not found" to "timeout" if ecm_time>client time out
 		rc = E_TIMEOUT;
@@ -702,7 +700,7 @@ int32_t clean_stat_by_id(struct s_reader *rdr, uint32_t caid, uint32_t provid, u
 	if (rdr && rdr->lb_stat) {
 
 		provid = get_prid(caid, provid);
-		ecmpid = get_ecmpid(caid, ecmpid);
+		ecmpid = get_ecmpid(rdr, caid, ecmpid);
 
 		cs_writelock(&rdr->lb_stat_lock);
 		READER_STAT *stat;
@@ -710,7 +708,7 @@ int32_t clean_stat_by_id(struct s_reader *rdr, uint32_t caid, uint32_t provid, u
 		while ((stat = ll_iter_next(&itr))) {
 			if (stat->caid == caid &&
 					stat->prid == provid &&
-					stat->ecmpid == ecmpid &&
+					(stat->ecmpid==ecmpid || ecmpid == 0x0000) &&
 					stat->srvid == sid &&
 					stat->chid == cid &&
 					stat->ecmlen == (int16_t)len) {
