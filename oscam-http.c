@@ -4259,6 +4259,77 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 }
 #endif
 
+static int8_t check_httpip(in_addr_t addr) {
+	int8_t i = 0;
+	// check all previously dyndns resolved addresses
+	for(i = 0; i < MAX_HTTP_DYNDNS; i++) {
+#ifdef IPV6SUPPORT
+		if(cfg.http_dynip[i] && cfg.http_dynip[i] == addr.s6_addr32[3]) {
+#else
+		if(cfg.http_dynip[i] && cfg.http_dynip[i] == addr) {
+#endif
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static int8_t check_httpdyndns(in_addr_t addr) {
+
+	// check all previously dyndns resolved addresses
+	if(check_httpip(addr))
+		return 1;
+
+	// we are not ok, so resolve all dyndns entries into IP's - maybe outdated IP's
+
+	if(cfg.http_dyndns[0][0]) {
+		int8_t i = 0;
+		for(i = 0; i < MAX_HTTP_DYNDNS; i++) {
+			if(cfg.http_dyndns[i][0]){
+				cfg.http_dynip[i] = cs_getIPfromHost((char*)cfg.http_dyndns[i]);
+				cs_debug_mask(D_TRACE, "WebIf: httpdyndns [%d] resolved %s to %s ", i, (char*)cfg.http_dyndns[i], cs_inet_ntoa(cfg.http_dynip[i]));
+			}
+		}
+	} else {
+		cs_debug_mask(D_TRACE, "WebIf: No dyndns addresses found");
+		return 0;
+	}
+
+	// again check all dyndns resolved addresses
+	if(check_httpip(addr))
+		return 1;
+
+	return 0;
+}
+
+static int8_t check_valid_origin(in_addr_t addr) {
+
+#ifdef IPV6SUPPORT
+	if (IN6_IS_ADDR_V4MAPPED(&in) || IN6_IS_ADDR_V4COMPAT(&in)) {
+		// check for IPv4 as before
+		if(check_ip(cfg.http_allowed, *((in_addr_t *)&addr.s6_addr32[3])))
+			return 1;
+
+	} else {
+		// Allow all IPv6
+		// todo: check and filter
+		return 1;
+	}
+#else
+	// check whether requesting IP is in allowed IP ranges
+	if(check_ip(cfg.http_allowed, addr))
+		return 1;
+#endif
+
+	// we havn't found the requesting IP in allowed range. So we check for allowed httpdyndns as last chance
+	if (cfg.http_dyndns[0][0]) {
+		int8_t ok;
+		ok = check_httpdyndns(addr);
+		return ok;
+	}
+	return 0;
+}
+
 static int8_t check_request(char *result, int32_t read) {
 	if(read < 50) return 0;
 	result[read]='\0';
@@ -4387,71 +4458,12 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 #else
 		if (*keepalive) fflush(f);
 #endif
-#ifdef IPV6SUPPORT
-		if (IN6_IS_ADDR_V4MAPPED(&in) || IN6_IS_ADDR_V4COMPAT(&in))
-		{
-		    // check for IPv4 as before
-		    ok = check_ip(cfg.http_allowed, *((in_addr_t *)&addr.s6_addr32[3])) ? v : 0;
-		}
-		else
-		{
-		    // Allow all IPv6
-		    // todo: check and filter
-		    ok = v;
-		}
-#else
-		ok = check_ip(cfg.http_allowed, addr) ? v : 0;
-#endif
 
-		if (!ok && cfg.http_dyndns[0][0]) {
-			cs_debug_mask(D_TRACE, "WebIf: IP not found in allowed range - test dyndns");
+		// at this point we do all checks related origin IP, ranges and dyndns stuff
+		ok = check_valid_origin(addr) ? v : 0;
+		cs_debug_mask(D_TRACE, "WebIf: Origin checked. Result: access from %s => %s", cs_inet6_ntoa(addr), (!ok)? "forbidden" : "allowed");
 
-			int i = 0;
-			// check all previously dyndns resolved addresses
-			for(i = 0; i < MAX_HTTP_DYNDNS; i++) {
-#ifdef IPV6SUPPORT
-				if(cfg.http_dynip[i] && cfg.http_dynip[i] == addr.s6_addr32[3]) {
-#else
-				if(cfg.http_dynip[i] && cfg.http_dynip[i] == addr) {
-#endif
-					ok = v;
-					cs_debug_mask(D_TRACE, "WebIf: dyndns address previously resolved and ok");
-					break;
-				}
-			}
-
-			// we are not ok, so resolve all dyndns entries into IP's
-			if(!ok && cfg.http_dyndns[0][0]) {
-				for(i = 0; i < MAX_HTTP_DYNDNS; i++) {
-					if(cfg.http_dyndns[i][0]){
-						cfg.http_dynip[i] = cs_getIPfromHost((char*)cfg.http_dyndns[i]);
-						cs_debug_mask(D_TRACE, "WebIf: dynip resolved %s to %s ",(char*)cfg.http_dyndns[i],cs_inet_ntoa(cfg.http_dynip[i]));
-					}
-				}
-			}
-
-			// again check all dyndns resolved addresses
-			for(i = 0; i < MAX_HTTP_DYNDNS; i++) {
-#ifdef IPV6SUPPORT
-				if(cfg.http_dynip[i] && cfg.http_dynip[i] == addr.s6_addr32[3]) {
-#else
-				if(cfg.http_dynip[i] && cfg.http_dynip[i] == addr) {
-#endif
-					ok = v;
-					break;
-				}
-
-			}
-
-			cs_debug_mask(D_TRACE, "WebIf: dynip resolved %s access from %s => %s",
-											cs_inet_ntoa(cfg.http_dynip[i]),
-											cs_inet6_ntoa(addr),
-											(!ok)? "forbidden":"allowed");
-
-		} else {
-			if (cfg.http_dyndns[0][0])
-				cs_debug_mask(D_TRACE, "WebIf: IP found in allowed range - bypass dyndns");
-		}
+		// based on the failed origin checks we send a 403 to calling browser
 		if (!ok) {
 			send_error(f, 403, "Forbidden", NULL, "Access denied.", 0);
 			cs_log("unauthorized access from %s flag %d", cs_inet6_ntoa(addr), v);
