@@ -1660,9 +1660,9 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 		char *record = getParam(params, "record");
 		if(strlen(record) > 0) {
 			int32_t retval = 0;
-			uint32_t caid, provid, ecmpid, sid, cid, len;
-			sscanf(record, "%x:%x:%x:%x:%x:%x", &caid, &provid, &ecmpid, &sid, &cid, &len);
-			retval = clean_stat_by_id(rdr, caid, provid, ecmpid, sid, cid, len);
+			uint32_t caid, provid, sid, cid, len;
+			sscanf(record, "%x:%x:%x:%x:%x", &caid, &provid, &sid, &cid, &len);
+			retval = clean_stat_by_id(rdr, caid, provid, sid, cid, len);
 			cs_log("Reader %s stats %d entr%s deleted by WebIF from %s",
 					rdr->label, retval,
 					retval == 1 ? "y":"ies",
@@ -1776,7 +1776,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 				localtime_r(&stat->last_received, &lt);
 				ecmcount += stat->ecm_count;
 				if (!apicall) {
-					tpl_printf(vars, TPLADD, "CHANNEL", "%04X:%06lX:%04X:%04X:%04X", stat->caid, stat->prid, stat->ecmpid, stat->srvid, stat->chid);
+					tpl_printf(vars, TPLADD, "CHANNEL", "%04X:%06lX:%04X:%04X", stat->caid, stat->prid, stat->srvid, stat->chid);
 					tpl_addVar(vars, TPLADD, "CHANNELNAME", xml_encode(vars, get_servicename(cur_client(), stat->srvid, stat->caid, channame)));
 					tpl_printf(vars, TPLADD, "ECMLEN","%04hX", stat->ecmlen);
 					tpl_addVar(vars, TPLADD, "RC", stxt[stat->rc]);
@@ -1796,7 +1796,6 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 				} else {
 					tpl_printf(vars, TPLADD, "ECMCAID", "%04X", stat->caid);
 					tpl_printf(vars, TPLADD, "ECMPROVID", "%06lX", stat->prid);
-					tpl_printf(vars, TPLADD, "ECMPID", "%04X", stat->ecmpid);
 					tpl_printf(vars, TPLADD, "ECMSRVID", "%04X", stat->srvid);
 					tpl_printf(vars, TPLADD, "ECMLEN", "%04hX", stat->ecmlen);
 					tpl_addVar(vars, TPLADD, "ECMCHANNELNAME", xml_encode(vars, get_servicename(cur_client(), stat->srvid, stat->caid, channame)));

@@ -1674,9 +1674,8 @@ typedef struct reader_stat_t
 	int32_t			rc;
 	uint16_t		caid;
 	uint32_t		prid;
-	uint16_t		ecmpid;
 	uint16_t		srvid;
-	uint16_t		chid;
+	uint32_t		chid;
 	int16_t			ecmlen;
 
 	time_t			last_received;
@@ -1688,6 +1687,15 @@ typedef struct reader_stat_t
 
 	int32_t			fail_factor;
 } READER_STAT;
+
+typedef struct cs_stat_query {
+	uint16_t		caid;
+	uint32_t		prid;
+	uint16_t		srvid;
+	uint32_t		chid;
+	int16_t			ecmlen;
+} STAT_QUERY;
+
 
 typedef struct emm_packet_t
 {

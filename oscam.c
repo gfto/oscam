@@ -696,6 +696,7 @@ void cleanup_thread(void *var)
 	pthread_mutex_trylock(&cl->thread_lock);
 	ll_destroy_data(cl->joblist);
 	cl->joblist = NULL;
+	cl->account = NULL;
 	pthread_mutex_unlock(&cl->thread_lock);
 	pthread_mutex_destroy(&cl->thread_lock);
 
@@ -2078,7 +2079,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 				rc, reader?reader->label:"undef", diff);
 #endif
 #ifdef WITH_LB
-		send_reader_stat(reader, er, E_TIMEOUT);
+		send_reader_stat(reader, er, NULL, E_TIMEOUT);
 #endif
 		return 0;
 	}
@@ -2093,7 +2094,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 
 	if (er->rc < E_99) {
 #ifdef WITH_LB
-		send_reader_stat(reader, er, rc);
+		send_reader_stat(reader, er, NULL, rc);
 #endif
 		return 0;  //Already done
 	}
@@ -2197,7 +2198,7 @@ ECM_REQUEST *get_ecmtask()
 }
 
 #ifdef WITH_LB
-void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc)
+void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, struct s_ecm_answer *ea, int8_t rc)
 {
 #ifdef CS_CACHEEX
 	if (!rdr || rc>=E_99 || rdr->cacheex==1 || !rdr->client)
@@ -2214,6 +2215,9 @@ void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc)
 	int32_t time = 1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm;
 	if (time < 1)
 	        time = 1;
+
+	if (ea && (ea->status & READER_FALLBACK) && time > (int32_t)cfg.ftimeout)
+		time = time - cfg.ftimeout;
 
 	add_stat(rdr, er, time, rc);
 }
@@ -2601,7 +2605,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 
 	if (ert->rc<E_99) {
 #ifdef WITH_LB
-		send_reader_stat(eardr, ert, ea->rc);
+		send_reader_stat(eardr, ert, ea, ea->rc);
 #endif
 		return; // already done
 	}
@@ -2671,7 +2675,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 	}
 
 #ifdef WITH_LB
-	send_reader_stat(eardr, ert, ea->rc);
+	send_reader_stat(eardr, ert, ea, ea->rc);
 #endif
 
 #ifdef CS_CACHEEX
@@ -4021,7 +4025,7 @@ static void * check_thread(void) {
 
 						for(ea_list = er->matching_rdr; ea_list; ea_list = ea_list->next) {
 							if ((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED)) == REQUEST_SENT) //Request send, but no answer!
-								send_reader_stat(ea_list->reader, er, E_TIMEOUT);
+								send_reader_stat(ea_list->reader, er, NULL, E_TIMEOUT);
 						}
 					}
 #endif
