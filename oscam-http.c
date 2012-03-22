@@ -4262,7 +4262,7 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 
 #ifdef IPV6SUPPORT
 
-static int8_t check_httpip(in6_addr addr) {
+static int8_t check_httpip(struct in6_addr addr) {
 	int8_t i = 0;
 	// check all previously dyndns resolved addresses
 	for(i = 0; i < MAX_HTTP_DYNDNS; i++) {
@@ -4286,7 +4286,11 @@ static int8_t check_httpip(in_addr_t addr) {
 
 #endif
 
+#ifdef IPV6SUPPORT
+static int8_t check_httpdyndns(struct in6_addr addr) {
+#else
 static int8_t check_httpdyndns(in_addr_t addr) {
+#endif
 
 	// check all previously dyndns resolved addresses
 	if(check_httpip(addr))
@@ -4316,9 +4320,9 @@ static int8_t check_httpdyndns(in_addr_t addr) {
 
 #ifdef IPV6SUPPORT
 
-static int8_t check_valid_origin(in6_addr addr) {
+static int8_t check_valid_origin(struct in6_addr addr) {
 
-	if (IN6_IS_ADDR_V4MAPPED(&in) || IN6_IS_ADDR_V4COMPAT(&in)) {
+	if (IN6_IS_ADDR_V4MAPPED(&addr) || IN6_IS_ADDR_V4COMPAT(&addr)) {
 		// check for IPv4 as before
 		if(check_ip(cfg.http_allowed, *((in_addr_t *)&addr.s6_addr32[3])))
 			return 1;
