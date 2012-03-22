@@ -203,7 +203,7 @@ static uint32_t get_prid(uint16_t caid, uint32_t prid)
 
 static uint16_t get_ecmpid(struct s_reader *rdr, uint16_t caid, uint16_t ecmpid)
 {
-	if (!(rdr->typ & R_IS_NETWORK) && (caid>>8 == 0x01)) // tryfix for seca network readers not sending correct ecmpid but a random one causing high cpuload
+	if (!(rdr->typ & R_IS_NETWORK)) // tryfix for network readers in general not sending correct ecmpid but a random one causing high cpuload
 		return ecmpid;
 	return 0;
 }
