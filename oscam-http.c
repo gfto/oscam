@@ -4260,20 +4260,31 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 }
 #endif
 
+#ifdef IPV6SUPPORT
+
+static int8_t check_httpip(in6_addr addr) {
+	int8_t i = 0;
+	// check all previously dyndns resolved addresses
+	for(i = 0; i < MAX_HTTP_DYNDNS; i++) {
+		if(cfg.http_dynip[i] && cfg.http_dynip[i] == addr.s6_addr32[3])
+			return 1;
+	}
+	return 0;
+}
+
+#else
+
 static int8_t check_httpip(in_addr_t addr) {
 	int8_t i = 0;
 	// check all previously dyndns resolved addresses
 	for(i = 0; i < MAX_HTTP_DYNDNS; i++) {
-#ifdef IPV6SUPPORT
-		if(cfg.http_dynip[i] && cfg.http_dynip[i] == addr.s6_addr32[3]) {
-#else
-		if(cfg.http_dynip[i] && cfg.http_dynip[i] == addr) {
-#endif
+		if(cfg.http_dynip[i] && cfg.http_dynip[i] == addr)
 			return 1;
-		}
 	}
 	return 0;
 }
+
+#endif
 
 static int8_t check_httpdyndns(in_addr_t addr) {
 
@@ -4303,9 +4314,10 @@ static int8_t check_httpdyndns(in_addr_t addr) {
 	return 0;
 }
 
-static int8_t check_valid_origin(in_addr_t addr) {
-
 #ifdef IPV6SUPPORT
+
+static int8_t check_valid_origin(in6_addr addr) {
+
 	if (IN6_IS_ADDR_V4MAPPED(&in) || IN6_IS_ADDR_V4COMPAT(&in)) {
 		// check for IPv4 as before
 		if(check_ip(cfg.http_allowed, *((in_addr_t *)&addr.s6_addr32[3])))
@@ -4316,11 +4328,6 @@ static int8_t check_valid_origin(in_addr_t addr) {
 		// todo: check and filter
 		return 1;
 	}
-#else
-	// check whether requesting IP is in allowed IP ranges
-	if(check_ip(cfg.http_allowed, addr))
-		return 1;
-#endif
 
 	// we havn't found the requesting IP in allowed range. So we check for allowed httpdyndns as last chance
 	if (cfg.http_dyndns[0][0]) {
@@ -4330,6 +4337,24 @@ static int8_t check_valid_origin(in_addr_t addr) {
 	}
 	return 0;
 }
+
+#else
+
+static int8_t check_valid_origin(in_addr_t addr) {
+
+	// check whether requesting IP is in allowed IP ranges
+	if(check_ip(cfg.http_allowed, addr))
+		return 1;
+
+	// we havn't found the requesting IP in allowed range. So we check for allowed httpdyndns as last chance
+	if (cfg.http_dyndns[0][0]) {
+		int8_t ok;
+		ok = check_httpdyndns(addr);
+		return ok;
+	}
+	return 0;
+}
+#endif
 
 static int8_t check_request(char *result, int32_t read) {
 	if(read < 50) return 0;
