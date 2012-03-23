@@ -791,11 +791,17 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	get_stat_query(er, &q);
 
 	//auto-betatunnel: The trick is: "let the loadbalancer decide"!
-	if (cfg.lb_auto_betatunnel && er->caid >> 8 == 0x18) { //nagra 
+	if (cfg.lb_auto_betatunnel && er->caid >> 8 == 0x18 && er->l) { //nagra
 		uint16_t caid_to = get_betatunnel_caid_to(er->caid);
 		if (caid_to) {
 			int8_t needs_stats_nagra = 1, needs_stats_beta = 1;
 			
+			//Clone query parameters for beta:
+			STAT_QUERY qbeta = q;
+			qbeta.caid = caid_to;
+			qbeta.prid = 0;
+			qbeta.ecmlen = er->ecm[2] + 3 + 10;
+
 			int32_t time_nagra = 0;
 			int32_t time_beta = 0;
 			int32_t weight;
@@ -818,9 +824,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					&& chk_srvid_by_caid_prov_rdr(rdr, caid_to, 0) //Services
 					&& (!rdr->caid || rdr->caid==caid_to); //rdr-caid
 				if (valid) {
-					q.ecmlen += 10;
-					stat_beta = get_stat(rdr, &q);
-					q.ecmlen -= 10;
+					stat_beta = get_stat(rdr, &qbeta);
 				}
 				else
 					stat_beta = NULL;
