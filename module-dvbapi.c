@@ -1060,8 +1060,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 					}
 					
 					matching=0;
-					LL_ITER it = ll_iter_create(configured_readers);
-					while ((rdr = ll_iter_next(&it))) {
+					for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 						if (cfg.preferlocalcards
 								&& !(rdr->typ & R_IS_NETWORK)
 								&& rdr->card_status == CARD_INSERTED) { // cfg.preferlocalcards = 1 local reader
@@ -1130,8 +1129,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 				if (demux[demux_index].ECMpids[n].status > (prio + demux[demux_index].ECMpidcount)) // caid already priorized higher than network caid
 					continue;
 				
-				LL_ITER it = ll_iter_create(configured_readers);
-				while ((rdr=ll_iter_next(&it))) {
+				for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 					if (!(rdr->typ & R_IS_NETWORK) && rdr->card_status == CARD_INSERTED) {	
 						
 						if (demux[demux_index].ECMpids[n].status == -1) //status of caid could be -1 due to I:0
@@ -1160,8 +1158,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 			}
 	
 			matching=0;
-			LL_ITER it = ll_iter_create(configured_readers);
-			while ((rdr=ll_iter_next(&it))) {
+			for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 				if (!(rdr->typ & R_IS_NETWORK) && rdr->card_status==CARD_INSERTED) { // cfg.preferlocalcards = 1 local reader
 					if (matching_reader(er, rdr)) {
 						demux[demux_index].ECMpids[n].status = prio*2; //priority
@@ -1178,7 +1175,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 								"[PRIORITIZE PID %d] %04X:%06X:%04X (rdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID,
 								demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, rdr->label, demux[demux_index].ECMpids[n].status);
 						matching=1;
-					break;
+						break;
 					}
 				}
 			}
