@@ -1098,15 +1098,11 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 			}
 		}
 		free(er);
-	}
-	
-	if (cfg.preferlocalcards) { //works if there is cfg.preferlocalcards=1 but no oscam.dvbapi OR if there is oscam.dvbapi but without local cards in it
+	} else if (cfg.preferlocalcards) { //works if there is cfg.preferlocalcards=1 but no oscam.dvbapi
 		struct s_reader *rdr;
 		ECM_REQUEST *er = cs_malloc(&er, sizeof(ECM_REQUEST), 0);
-		int32_t proceed=0;
 	
-		if (!dvbapi_priority)
-			highest_prio = prio*2;
+		highest_prio = prio*2;
 	
 		for (n=0; n<demux[demux_index].ECMpidcount; n++) {
 		
@@ -1121,42 +1117,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 				if (chk_valid_btun(er->caid,er->srvid))
 					er->caid = btun_caid;
 			}	
-	
-			if (dvbapi_priority) { //user has oscam.dvbapi - check if he already defined his local cards in the file or if we have to change status
-				matching=0;
-				proceed=0;
-					
-				if (demux[demux_index].ECMpids[n].status > (prio + demux[demux_index].ECMpidcount)) // caid already priorized higher than network caid
-					continue;
-				
-				for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
-					if (!(rdr->typ & R_IS_NETWORK) && rdr->card_status == CARD_INSERTED) {	
-						
-						if (demux[demux_index].ECMpids[n].status == -1) //status of caid could be -1 due to I:0
-							demux[demux_index].ECMpids[n].status = 0;	
-							
-						if (demux[demux_index].ECMpids[n].status > 0 || matching_reader(er, rdr)) {						  	
-							demux[demux_index].ECMpids[n].status = highest_prio;
-							cs_debug_mask(D_DVBAPI,
-									"[PRIORITIZE PID %d] %04X:%06X:%04X (localrdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID,
-									demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, rdr->label, demux[demux_index].ECMpids[n].status);
-							proceed=1;
-							matching=1;
-							break;
-						}
-					} else {
-						proceed=0;	
-					}
-				}
-				if (proceed && !matching) {
-					demux[demux_index].ECMpids[n].status = -1;
-					cs_debug_mask(D_DVBAPI,
-							"[IGNORE PID %d] %04X:%06X:%04X (no matching reader)", n, demux[demux_index].ECMpids[n].CAID,
-							demux[demux_index].ECMpids[n].PROVID,demux[demux_index].ECMpids[n].ECM_PID);
-				}
-				continue; //user has oscam.dvbapi - everything evaluated already
-			}
-	
+		
 			matching=0;
 			for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 				if (!(rdr->typ & R_IS_NETWORK) && rdr->card_status==CARD_INSERTED) { // cfg.preferlocalcards = 1 local reader
@@ -1186,7 +1147,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 						demux[demux_index].ECMpids[n].PROVID,demux[demux_index].ECMpids[n].ECM_PID);
 			}
 		}
-			free(er);
+		free(er);
 	}
 	highest_prio++;
 	for (n=demux[demux_index].ECMpidcount; n>-1; n--) { //maintain pid prio order of the pmt.
