@@ -949,6 +949,7 @@ struct s_client {
 	int8_t			rotate;
 
 	int8_t			ncd_proto;
+	uint8_t         ncd_header[12];
 
 	//camd35
 	uchar			upwd[64];

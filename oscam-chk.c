@@ -209,6 +209,9 @@ int32_t chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
   prid = er->prid;
   pi = cur_cl->port_idx;
 
+  if (cfg.ncd_mgclient && ptab == &cfg.ncd_ptab)
+	  return 1;
+
   if (ptab->nports && ptab->ports[pi].ftab.nfilts)
   {
     for( rc=j=0; (!rc) && (j<ptab->ports[pi].ftab.nfilts); j++ )
