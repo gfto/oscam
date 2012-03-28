@@ -873,11 +873,13 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					}
 					convert_to_beta_int(converted_er, caid_to);
 					get_cw(converted_er->client, converted_er);
+
 				}
 			}
 			else if (time_beta && (!time_nagra || time_beta <= time_nagra)) {
 				cs_debug_mask(D_LB, "loadbalancer-betatunnel %04X:%04X selected beta: n%dms > b%dms", er->caid, caid_to, time_nagra, time_beta);
 				convert_to_beta_int(er, caid_to);
+				get_stat_query(er, &q);
 			}
 			else {
 				cs_debug_mask(D_LB, "loadbalancer-betatunnel %04X:%04X selected nagra: n%dms < b%dms", er->caid, caid_to, time_nagra, time_beta);
