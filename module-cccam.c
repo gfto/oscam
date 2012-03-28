@@ -1968,7 +1968,7 @@ int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 {
 	int8_t rc = (er->rc<E_NOTFOUND)?E_FOUND:er->rc;
-	if (rc != E_FOUND) return -1; //Maybe later we could support other rcs
+	if (rc != E_FOUND && rc != E_UNHANDLED) return -1; //Maybe later we could support other rcs
 
 	time_t now = time((time_t*)0);
 	if (cl->reader) {
@@ -2040,7 +2040,9 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 
 	if (cl->reader)
 		cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
-	if (buf[14] >= E_NOTFOUND) //Maybe later we could support other rcs
+
+	int8_t rc = buf[14];
+	if (rc != E_FOUND && rc != E_UNHANDLED) //Maybe later we could support other rcs
 		return;
 
 	if (buf[12] != 0 || buf[13] != 0) {
@@ -2054,7 +2056,7 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 	er->caid = b2i(2, buf+0);
 	er->prid = b2i(4, buf+2);
 	er->srvid = b2i(2, buf+ 10);
-	er->rc = E_FOUND;
+	er->rc = rc;
 
 	er->l = 0;
 

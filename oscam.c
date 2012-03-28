@@ -1803,8 +1803,8 @@ static void cs_cache_push_to_client(struct s_client *cl, ECM_REQUEST *er)
  */
 void cs_cache_push(ECM_REQUEST *er)
 {
-	if (er->rc >= E_NOTFOUND) //Maybe later we could support other rcs
-		return;
+	if (er->rc >= E_NOTFOUND && er->rc != E_UNHANDLED) //Maybe later we could support other rcs
+		return; //NOT FOUND/Invalid
 
 	if (er->cacheex_pushed || (er->ecmcacheptr && er->ecmcacheptr->cacheex_pushed))
 		return;
@@ -1932,7 +1932,7 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl)
  */
 static int32_t write_ecm_request(struct s_reader *rdr, ECM_REQUEST *er)
 {
-	add_job(rdr->client, ACTION_READER_ECM_REQUEST, (void*)er, sizeof(ECM_REQUEST));
+	add_job(rdr->client, ACTION_READER_ECM_REQUEST, (void*)er, 0);
 	return 1;
 }
 
@@ -1946,8 +1946,13 @@ static void distribute_ecm(ECM_REQUEST *er, int32_t rc)
 
 	cs_readlock(&ecmcache_lock);
 	for (ecm = ecmcwcache; ecm; ecm = ecm->next) {
-		if (ecm != er && ecm->rc >= E_99 && ecm->ecmcacheptr == er)
+		if (ecm != er && ecm->rc >= E_99 && ecm->ecmcacheptr == er) {
+#ifdef CS_CACHEEX
+			if (!ecm->cacheex_src)
+				ecm->cacheex_src = er->cacheex_src;
+#endif
 			write_ecm_answer(er->selected_reader, ecm, rc, 0, er->cw, NULL);
+		}
 	}
 	cs_readunlock(&ecmcache_lock);
 }
@@ -1970,16 +1975,17 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 		return 0;
 	}
 
-	uint8_t i, c;
-	for (i = 0; i < 16; i += 4) {
-		c = ((er->cw[i] + er->cw[i + 1] + er->cw[i + 2]) & 0xff);
-		if (er->cw[i + 3] != c) {
-			cs_ddump_mask(D_CACHEEX, er->cw, 16,
-					"push received cw with chksum error from %s", csp?"csp":username(cl));
-			return 0;
+	if (er->rc < E_NOTFOUND) { //=FOUND Check CW:
+		uint8_t i, c;
+		for (i = 0; i < 16; i += 4) {
+			c = ((er->cw[i] + er->cw[i + 1] + er->cw[i + 2]) & 0xff);
+			if (er->cw[i + 3] != c) {
+				cs_ddump_mask(D_CACHEEX, er->cw, 16,
+						"push received cw with chksum error from %s", csp?"csp":username(cl));
+				return 0;
+			}
 		}
 	}
-
 
 	uint16_t *lp;
 	for (lp=(uint16_t *)er->ecm+(er->l>>2), er->checksum=0; lp>=(uint16_t *)er->ecm; lp--)
@@ -1987,8 +1993,10 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 
 	er->grp = cl->grp;
 //	er->ocaid = er->caid;
-	er->rc = E_CACHEEX;
+	if (er->rc < E_NOTFOUND) //map FOUND to CACHEEX
+		er->rc = E_CACHEEX;
 	er->cacheex_src = cl;
+	er->client = NULL; //No Owner! So no fallback!
 
 	if (er->l > 0) {
 		int32_t offset = 3;
@@ -2016,7 +2024,8 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 
 		cs_cache_push(er);  //cascade push!
 
-		cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 1);
+		if (er->rc < E_NOTFOUND)
+			cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 1);
 
 		cl->cwcacheexgot++;
 		if (cl->account)
@@ -2025,17 +2034,21 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 
 		cs_debug_mask(D_CACHEEX, "got pushed ECM %04X&%06X/%04X/%04X/%02X:%04X from %s",
 			er->caid, er->prid, er->pid, er->srvid, er->l, htons(er->checksum),  csp?"csp":username(cl));
+
+		return 1;
 	}
 	else {
 		if(er->rc < ecm->rc) {
 			if (ecm->csp_lastnodes == NULL) {
 				ecm->csp_lastnodes = er->csp_lastnodes;
 				er->csp_lastnodes = NULL;
-				ecm->cacheex_src = cl;
 			}
+			ecm->cacheex_src = cl;
+
 			write_ecm_answer(cl->reader, ecm, er->rc, er->rcEx, er->cw, ecm->msglog);
 
-			cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 1);
+			if (er->rc < E_NOTFOUND)
+				cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 1);
 			cl->cwcacheexgot++;
 			if (cl->account)
 				cl->account->cwcacheexgot++;
@@ -2049,9 +2062,9 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 			cs_debug_mask(D_CACHEEX, "ignored duplicate pushed ECM %04X&%06X/%04X/%04X/%02X:%04X from %s",
 				er->caid, er->prid, er->pid, er->srvid, er->l, htons(er->checksum),  csp?"csp":username(cl));
 		}
+
 		return 0;
 	}
-	return 1;
 }
 
 void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
@@ -2090,13 +2103,13 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 		er->rc = rc;
 		er->idx = 0;
 		er = er->parent; //Now er is "original" ecm, before it was the reader-copy
-	}
 
-	if (er->rc < E_99) {
+    	if (er->rc < E_99) {
 #ifdef WITH_LB
-		send_reader_stat(reader, er, NULL, rc);
+			send_reader_stat(reader, er, NULL, rc);
 #endif
-		return 0;  //Already done
+			return 0;  //Already done
+		}
 	}
 
 	for(ea_list = er->matching_rdr; reader && ea_list && !ea_org; ea_list = ea_list->next) {
@@ -2121,7 +2134,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	ea->status |= REQUEST_ANSWERED;
 	ea->er = er;
 
-	if (reader) {
+	if (reader && rc<E_NOTFOUND) {
         if (reader->disablecrccws == 0) {
            for (i=0; i<16; i+=4) {
                c=((ea->cw[i]+ea->cw[i+1]+ea->cw[i+2]) & 0xff);
@@ -3206,9 +3219,23 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				memcpy(er->cw, ecm->cw, 16);
 				er->selected_reader = ecm->selected_reader;
 				er->rc = (ecm->rc == E_FOUND)?E_CACHE1:ecm->rc;
-			} else {
+			} else { //E_UNHANDLED
 				er->ecmcacheptr = ecm;
 				er->rc = E_99;
+#ifdef CS_CACHEEX
+				//to support cache without ecms we store the first client ecm request here
+				//when we go a cache ecm from cacheex
+				if (!ecm->l && er->l && !ecm->matching_rdr) {
+					ea = er->matching_rdr;
+					er->matching_rdr = NULL;
+					ecm->matching_rdr = ea;
+					ecm->l = er->l;
+					ecm->client = er->client;
+					er->client = NULL;
+					memcpy(ecm->ecm, er->ecm, sizeof(ecm->ecm));
+					memcpy(ecm->ecmd5, er->ecmd5, sizeof(ecm->ecmd5));
+				}
+#endif
 			}
 #ifdef CS_CACHEEX
 			er->cacheex_src = ecm->cacheex_src;
@@ -3895,10 +3922,16 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 
 	if (!cl) {
 		cs_log("WARNING: add_job failed.");
+		if (len && ptr) free(ptr);
 		return;
 	}
 
 	struct s_data *data = cs_malloc(&data, sizeof(struct s_data), -1);
+	if (!data && len && ptr) {
+		free(ptr);
+		return;
+	}
+
 	data->action = action;
 	data->ptr = ptr;
 	data->cl = cl;
@@ -3995,7 +4028,7 @@ static void * check_thread(void) {
 		cs_readlock(&ecmcache_lock);
 
 		for (er = ecmcwcache; er; er = er->next) {
-			if (er->rc < E_99)
+			if (er->rc < E_99 || !er->l || !er->matching_rdr) //ignore CACHEEX pending ECMs
 				continue;
 
 			tbc = er->tps;

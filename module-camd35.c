@@ -501,7 +501,10 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 {
 	int8_t rc = (er->rc<E_NOTFOUND)?E_FOUND:er->rc;
-	if (rc != E_FOUND) return -1; //Maybe later we could support other rcs
+	if (rc != E_FOUND && rc != E_UNHANDLED) return -1; //Maybe later we could support other rcs
+
+	//E_FOUND     : we have the CW,
+	//E_UNHANDLED : incoming ECM request
 
 	time_t now = time((time_t*)0);
 	if (cl->reader) {
@@ -570,7 +573,8 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 
 void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 {
-	if (buf[3] >= E_NOTFOUND) //Maybe later we could support other rcs
+	int8_t rc = buf[3];
+	if (rc != E_FOUND && rc != E_UNHANDLED) //Maybe later we could support other rcs
 		return;
 
 	time_t now = time((time_t*)0);
@@ -592,7 +596,7 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 	er->caid = b2i(2, buf+10);
 	er->prid = b2i(4, buf+12);
 	er->pid  = b2i(2, buf+16);
-	er->rc = buf[3];
+	er->rc = rc;
 
 	er->l = 0;
 

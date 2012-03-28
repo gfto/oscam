@@ -50,7 +50,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 	}
 	//cs_ddump_mask(D_TRACE, buf, rs, "received %d bytes from csp", rs);
 
-	int8_t type = buf[0]; //TYPE
+	uint8_t type = buf[0]; //TYPE
 	//int8_t commandTag = buf[1]; //commandTag
 
     switch(type) {
@@ -72,19 +72,31 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 			er->rc = E_FOUND;
 			memcpy(er->cw, buf+13, sizeof(er->cw));
 
-			//cs_ddump_mask(D_TRACE, er->cw, sizeof(er->cw), "received cw from csp caid=%04X srvid=%04X hash=%08X", caid, srvid, hash);
+			cs_ddump_mask(D_TRACE, er->cw, sizeof(er->cw), "received cw from csp caid=%04X srvid=%04X hash=%08X", caid, srvid, hash);
 			cs_add_cache(client, er, 1);
     	  }
         break;
 
       case TYPE_REQUEST: // We got an Request:
-//    	  if (rs >= 12) {
-//			uint16_t srvid = (buf[2] << 8) | buf[3];
-//			uint16_t nwid = (buf[4] << 8) | buf[5];
-//			uint16_t caid = (buf[6] << 8) | buf[7];
-//			int32_t hash = (buf[8] << 24) | (buf[9] << 16) | (buf[10] << 8) | buf[11];
-//			int8_t commandTag2 = buf[12];
-//    	  }
+    	  if (rs >= 12) {
+			uint16_t srvid = (buf[2] << 8) | buf[3];
+			//uint16_t nwid = (buf[4] << 8) | buf[5];
+			uint16_t caid = (buf[6] << 8) | buf[7];
+			int32_t hash = (buf[8] << 24) | (buf[9] << 16) | (buf[10] << 8) | buf[11];
+			//int8_t commandTag2 = buf[12];
+
+			ECM_REQUEST *er = get_ecmtask();
+			if (!er)
+				return -1;
+
+			er->caid = caid;
+			er->srvid = srvid;
+			er->csp_hash = hash;
+			er->rc = E_UNHANDLED;
+
+			cs_ddump_mask(D_TRACE, buf, l, "received ecm request from csp caid=%04X srvid=%04X hash=%08X", caid, srvid, hash);
+			cs_add_cache(client, er, 1);
+    	  }
         break;
 
       case TYPE_PINGREQ:
@@ -102,6 +114,28 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 
 	return rs;
 }
+
+//int32_t csp_send(struct s_client *client, ECM_REQUEST *er, struct s_ecm_answer *ea)
+//{
+//	int8_t rc = ea?ea->rc:er->rc;
+//	uint8_t *cw = ea?ea->cw:er->cw;
+//
+//	uint8_t buf[512];
+//	memset(buf, 0, sizeof(buf));
+//	uint16_t srvid = (buf[2] << 8) | buf[3];
+//	//uint16_t nwid = (buf[4] << 8) | buf[5];
+//	uint16_t caid = (buf[6] << 8) | buf[7];
+//	int32_t hash = (buf[8] << 24) | (buf[9] << 16) | (buf[10] << 8) | buf[11];
+//	//int8_t commandTag2 = buf[12];
+//
+//	switch(rc) {
+//		case E_FOUND:
+//			buf[0] = TYPE_REPLY;
+//
+//			break;
+//
+//	}
+//}
 
 //
 //static void csp_send_dcw(struct s_client *client, ECM_REQUEST *er)
