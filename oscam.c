@@ -1985,11 +1985,17 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 				return 0;
 			}
 		}
-	}
 
-	uint16_t *lp;
-	for (lp=(uint16_t *)er->ecm+(er->l>>2), er->checksum=0; lp>=(uint16_t *)er->ecm; lp--)
-		er->checksum^=*lp;
+		//Check for NULL CWs:
+		for (c=i=0; !c && i < 16; i++) {
+			c = er->cw[i];
+		}
+		if (!c) {
+			cs_ddump_mask(D_CACHEEX, er->cw, 16,
+					"push received null cw from %s", csp?"csp":username(cl));
+			return 0;
+		}
+	}
 
 	er->grp = cl->grp;
 //	er->ocaid = er->caid;
@@ -1998,7 +2004,11 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 	er->cacheex_src = cl;
 	er->client = NULL; //No Owner! So no fallback!
 
-	if (er->l > 0) {
+	if (er->l) {
+		uint16_t *lp;
+		for (lp=(uint16_t *)er->ecm+(er->l>>2), er->checksum=0; lp>=(uint16_t *)er->ecm; lp--)
+			er->checksum^=*lp;
+
 		int32_t offset = 3;
 		if ((er->caid >> 8) == 0x17)
 			offset = 13;
@@ -2044,11 +2054,17 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 				er->csp_lastnodes = NULL;
 			}
 			ecm->cacheex_src = cl;
+			ecm->cacheex_pushed = 0;
 
 			write_ecm_answer(cl->reader, ecm, er->rc, er->rcEx, er->cw, ecm->msglog);
 
-			if (er->rc < E_NOTFOUND)
+			cs_cache_push(ecm);  //cascade push!
+
+			if (er->rc < E_NOTFOUND) {
+				ecm->selected_reader = cl->reader;
 				cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 1);
+			}
+
 			cl->cwcacheexgot++;
 			if (cl->account)
 				cl->account->cwcacheexgot++;
@@ -3738,7 +3754,8 @@ void * work_thread(void *ptr) {
 			break;
 	
 		now = time(NULL);
-		if (data != &tmp_data && data->time < now-(time_t)(cfg.ctimeout/1000)) {
+		time_t diff = (time_t)(cfg.ctimeout/1000)+1;
+		if (data != &tmp_data && data->time < now-diff) {
 			cs_log("dropping client data for %s time %ds", username(cl), (int32_t)(now-data->time));
 			free(data);
 			data = NULL;
