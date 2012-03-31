@@ -2087,7 +2087,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 
 	if ((diff=comp_timeb(&now, &er->tps))>maxdiff) { // drop real old answers, because er->parent is dropped !
 #ifdef WITH_DEBUG
-		if (diff > (int32_t)cfg.ctimeout)
+		if (diff > (int32_t)cfg.max_cache_time*1000)
 			cs_log("dropped old reader answer rc=%d from %s time %dms",
 				rc, reader?reader->label:"undef", diff);
 #endif
