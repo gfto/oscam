@@ -972,24 +972,24 @@ struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidi
 
 }
 
-int32_t chk_valid_btun(uint16_t caid,uint16_t srvid)
-{
-	int32_t i;
-	struct s_client *cl = cur_client();
-	TUNTAB *ttab;
-	ttab = &cl->ttab;
-	
-	for (i = 0; i<ttab->n; i++) {
-		if ((caid==ttab->bt_caidfrom[i]) && ((srvid==ttab->bt_srvid[i]) || (ttab->bt_srvid[i])==0xFFFF)) {
-			return 1;
-		}
-	}
-	return 0;
-}
+//int32_t chk_valid_btun(uint16_t caid,uint16_t srvid)
+//{
+//	int32_t i;
+//	struct s_client *cl = cur_client();
+//	TUNTAB *ttab;
+//	ttab = &cl->ttab;
+//
+//	for (i = 0; i<ttab->n; i++) {
+//		if ((caid==ttab->bt_caidfrom[i]) && ((srvid==ttab->bt_srvid[i]) || (ttab->bt_srvid[i])==0xFFFF)) {
+//			return 1;
+//		}
+//	}
+//	return 0;
+//}
 
 void dvbapi_resort_ecmpids(int32_t demux_index) {
 	int32_t n,highest_prio=0,found=-1,matching=0;
-	uint16_t btun_caid=0;
+	//uint16_t btun_caid=0;
 
 	for (n=0; n<demux[demux_index].ECMpidcount; n++) {
 		demux[demux_index].ECMpids[n].status=0;
@@ -1053,11 +1053,11 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 					er->srvid = demux[demux_index].program_number;
 					er->client = cur_client();
 					
-					btun_caid = get_betatunnel_caid_to(demux[demux_index].ECMpids[n].CAID);
-					if (btun_caid) {
-						if (chk_valid_btun(er->caid,er->srvid))
-							er->caid = btun_caid;
-					}
+//					btun_caid = get_betatunnel_caid_to(demux[demux_index].ECMpids[n].CAID);
+//					if (btun_caid) {
+//						if (chk_valid_btun(er->caid,er->srvid))
+//							er->caid = btun_caid;
+//					}
 					
 					matching=0;
 					for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
@@ -1112,11 +1112,11 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 			er->srvid = demux[demux_index].program_number;
 			er->client = cur_client();
 	
-			btun_caid = get_betatunnel_caid_to(demux[demux_index].ECMpids[n].CAID);
-			if (btun_caid) {
-				if (chk_valid_btun(er->caid,er->srvid))
-					er->caid = btun_caid;
-			}	
+//			btun_caid = get_betatunnel_caid_to(demux[demux_index].ECMpids[n].CAID);
+//			if (btun_caid) {
+//				if (chk_valid_btun(er->caid,er->srvid))
+//					er->caid = btun_caid;
+//			}
 		
 			matching=0;
 			for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
@@ -2238,11 +2238,12 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 					}
 					else if (cfg.dvbapi_requestmode == 1) {
 						int32_t t, num_pids;
-						for (num_pids = 0, t = 0; t < demux[i].ECMpidcount;
-								t++) {
+						for (num_pids = 0, t = 0; t < demux[i].ECMpidcount;t++) {
 							if (demux[i].ECMpids[t].checked != 2)
 								num_pids++;
 						}
+						cs_debug_mask(D_DVBAPI, "request restarting num_pids=%d last_checked=%d", num_pids, last_checked);
+
 						if (!num_pids && last_checked == 1) { // we had rc=E_FOUND, but now we get a NOT_FOUND? Try all caids again:
 							for (t = 0; t < demux[i].ECMpidcount; t++) {
 								demux[i].ECMpids[t].checked = 0;
