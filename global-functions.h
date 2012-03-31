@@ -352,6 +352,7 @@ extern void cs_log_config(void);
 extern void cs_close_log(void);
 extern int32_t cs_init_statistics();
 extern void cs_statistics(struct s_client * client);
+extern void cs_disable_log(int8_t disabled);
 
 /* ===========================
  *        oscam-reader

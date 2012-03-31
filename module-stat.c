@@ -556,7 +556,9 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 //			inc_fail(stat);
 //		}
 //		else 
-		if (stat->rc == E_FOUND && ctime > stat->last_received+1) {
+		if (!stat->ecm_count)
+			stat->rc = E_TIMEOUT;
+		else if (stat->rc == E_FOUND && ctime > stat->last_received+1) {
 			//search for alternate readers. If we have one, block this reader:
 			int8_t n = 0;
 			struct s_ecm_answer *ea;
@@ -858,22 +860,24 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				cs_debug_mask(D_LB, "loadbalancer-betatunnel %04X:%04X needs more statistics...", er->caid, caid_to);
 				if (needs_stats_beta) {
 					//Duplicate Ecms for gettings stats:
-					ECM_REQUEST *converted_er = get_ecmtask();
-					memcpy(converted_er->ecm, er->ecm, er->l);
-					converted_er->l = er->l;
-					converted_er->caid = er->caid;
-					converted_er->srvid = er->srvid;
-					converted_er->chid = er->chid;
-					converted_er->pid = er->pid;
-					converted_er->prid = er->prid;
-					if (er->src_data) { //camd35:
-						int size = 0x34 + 20 + er->l;
-						cs_malloc(&converted_er->src_data, size, 0);
-						memcpy(converted_er->src_data, er->src_data, size);
-					}
-					convert_to_beta_int(converted_er, caid_to);
-					get_cw(converted_er->client, converted_er);
+//					ECM_REQUEST *converted_er = get_ecmtask();
+//					memcpy(converted_er->ecm, er->ecm, er->l);
+//					converted_er->l = er->l;
+//					converted_er->caid = er->caid;
+//					converted_er->srvid = er->srvid;
+//					converted_er->chid = er->chid;
+//					converted_er->pid = er->pid;
+//					converted_er->prid = er->prid;
+//					if (er->src_data) { //camd35:
+//						int size = 0x34 + 20 + er->l;
+//						cs_malloc(&converted_er->src_data, size, 0);
+//						memcpy(converted_er->src_data, er->src_data, size);
+//					}
+//					convert_to_beta_int(converted_er, caid_to);
+//					get_cw(converted_er->client, converted_er);
 
+					convert_to_beta_int(er, caid_to);
+					get_stat_query(er, &q);
 				}
 			}
 			else if (time_beta && (!time_nagra || time_beta <= time_nagra)) {

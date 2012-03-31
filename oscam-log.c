@@ -542,7 +542,7 @@ void log_list_thread()
 			free(log->txt);
 			free(log);
 		}
-		cs_sleepms(50);
+		cs_sleepms(250);
 	}
 }
 
@@ -560,3 +560,18 @@ int32_t cs_init_log(void)
 	logStarted = 1;
 	return rc;
 }
+
+void cs_disable_log(int8_t disabled)
+{
+	if (cfg.disablelog != disabled) {
+		cfg.disablelog = disabled;
+		if (disabled) {
+			if (logStarted) {
+				cs_sleepms(100);
+				log_list_thread(); //Clean log
+				cs_close_log();
+			}
+		}
+	}
+}
+

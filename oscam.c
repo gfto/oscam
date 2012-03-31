@@ -2087,7 +2087,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 
 	if ((diff=comp_timeb(&now, &er->tps))>maxdiff) { // drop real old answers, because er->parent is dropped !
 #ifdef WITH_DEBUG
-		if (diff > (int32_t)cfg.max_cache_time*1000)
+		if (diff > (int32_t)cfg.ctimeout)
 			cs_log("dropped old reader answer rc=%d from %s time %dms",
 				rc, reader?reader->label:"undef", diff);
 #endif
@@ -3226,11 +3226,11 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				//to support cache without ecms we store the first client ecm request here
 				//when we go a cache ecm from cacheex
 				if (!ecm->l && er->l && !ecm->matching_rdr) {
-					ea = er->matching_rdr;
+					ecm->matching_rdr = er->matching_rdr;
 					er->matching_rdr = NULL;
-					ecm->matching_rdr = ea;
 					ecm->l = er->l;
 					ecm->client = er->client;
+					ecm->checksum = er->checksum;
 					er->client = NULL;
 					memcpy(ecm->ecm, er->ecm, sizeof(ecm->ecm));
 					memcpy(ecm->ecmd5, er->ecmd5, sizeof(ecm->ecmd5));

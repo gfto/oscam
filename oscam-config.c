@@ -435,7 +435,7 @@ void chk_t_global(const char *token, char *value)
 #endif
 
 	if (!strcmp(token, "disablelog")) {
-		cfg.disablelog = strToIntVal(value, 0);
+		cs_disable_log(strToIntVal(value, 0));
 		return;
 	}
 

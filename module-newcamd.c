@@ -79,6 +79,10 @@ static int32_t network_message_send(int32_t handle, uint16_t *netMsgId, uint8_t 
     netbuf[2] = netbuf[3] = 0;
   memset(netbuf+4, 0, (cl->ncd_proto==NCD_524)?4:8);
   if( sid ) {
+	  if (cl->reader && cl->reader->ncd_disable_server_filt &&
+			  sid != NCD_CLIENT_ID && cl->ncd_proto!=NCD_524) { //mgclient send header
+		  memcpy(netbuf+4, cl->ncd_header+4, 7);
+	  }
     netbuf[(cl->ncd_proto==NCD_524)?6:4] = (uchar)(sid>>8); //sid
     netbuf[(cl->ncd_proto==NCD_524)?7:5] = (uchar)(sid);
   }
@@ -97,10 +101,13 @@ static int32_t network_message_send(int32_t handle, uint16_t *netMsgId, uint8_t 
     //}
 
   if (cl->ncd_proto==NCD_525 && cfg.ncd_mgclient && buffer[0]==MSG_CLIENT_2_SERVER_LOGIN_ACK) {
-	  netbuf[4] = 0x6E; //From ExtNewcamSession.java CSD line 65-66 getLoginOkMsg()
+	  netbuf[4] = 0x6E; //From ExtNewcamSession.java CSP line 65-66 getLoginOkMsg()
 	  netbuf[5] = 0x73;
 	  netbuf[11] = 0x14;
   }
+//  if (buffer[0]==MSG_CLIENT_2_SERVER_LOGIN && cur_client()->reader->ncd_disable_server_filt) {
+//  	  netbuf[11] = 0x11; //From ChameleonCwsConnector.java CSP line 59-61 run()
+//    }
 
   netbuf[0] = (len - 2) >> 8;
   netbuf[1] = (len - 2) & 0xff;
@@ -377,6 +384,11 @@ static int32_t connect_newcamd_server()
 
   // Only after connect() on cl->udp_fd (Linux)
    cl->pfd=cl->udp_fd;     
+
+   if (cl->reader->ncd_disable_server_filt) { //act like mgclient
+	   network_cmd_no_data_send(handle, &cl->ncd_msgid, MSG_SERVER_2_CLIENT_GET_VERSION,
+	                              key, COMMTYPE_CLIENT);
+   }
 
   return 0;
 }
@@ -1177,6 +1189,15 @@ static int32_t newcamd_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar 
     return(-1);
 
   memcpy(buf, er->ecm, er->l);
+
+  client->ncd_header[4] = er->srvid >> 8;
+  client->ncd_header[5] = er->srvid & 0xFF;
+  client->ncd_header[6] = er->caid >> 8;
+  client->ncd_header[7] = er->caid & 0xFF;
+  client->ncd_header[8] = er->prid >> 16;
+  client->ncd_header[9] = er->prid >> 8;
+  client->ncd_header[10] = er->prid & 0xFF;
+
   return((newcamd_send(buf, er->l, er->srvid)<1) ? (-1) : 0);
 }
 
@@ -1192,7 +1213,7 @@ static int32_t newcamd_send_emm(EMM_PACKET *ep)
   return((newcamd_send(buf, ep->l, 0)<1) ? 0 : 1);
 }
 
-static int32_t newcamd_recv_chk(struct s_client *UNUSED(client), uchar *dcw, int32_t *rc, uchar *buf, int32_t n)
+static int32_t newcamd_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t n)
 {
   uint16_t idx = -1;
 
@@ -1217,8 +1238,16 @@ static int32_t newcamd_recv_chk(struct s_client *UNUSED(client), uchar *dcw, int
       *rc = 1;
       memcpy(dcw, buf+5, 16);
       break;
+
     case MSG_KEEPALIVE:
       return -1;
+
+    case MSG_SERVER_2_CLIENT_ADDCARD:
+    	if (client->reader) {
+    		client->reader->ncd_disable_server_filt=1;
+    	}
+    	return -1;
+
     default:
       if (buf[2]>0x81 && buf[2]<0x90) { //answer to emm
         return -1;

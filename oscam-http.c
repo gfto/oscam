@@ -3639,7 +3639,7 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 
 	char *stoplog = getParam(params, "stoplog");
 	if(strlen(stoplog) > 0)
-		cfg.disablelog = atoi(stoplog);
+		cs_disable_log(atoi(stoplog));
 
 	char *stopusrlog = getParam(params, "stopusrlog");
 	if(strlen(stopusrlog) > 0)
