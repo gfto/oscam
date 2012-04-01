@@ -166,10 +166,10 @@ static time_t chid_date(struct s_reader * reader, uint32_t date, char *buf, int3
 							   {0x0604, 0x0608, "NLD", 1066089600L},   // 14.10.2003, 00:00    //Ziggo irdeto caid: 0604, acs: 6.08
 							   {0x0604, 0x0605, "NLD", 1066089600L},   // 14.10.2003, 00:00    //Ziggo irdeto caid: 0604, acs: 6.05
 							   {0x0604, 0x0005, "NLD", 1066089600L},   // 14.10.2003, 00:00    //Ziggo irdeto caid: 0604, acs: 0.05
-							   {0x0602, 0x0606, "NLD", 946584000L},    // 31.12.1999, 00:00    //Ziggo irdeto caid: 0602, acs: 6.06
-							   {0x0602, 0x0505, "NLD", 946584000L},    // 31.12.1999, 00:00    //Ziggo irdeto caid: 0602, acs: 5.05
-							   {0x0606, 0x0605, "NLD", 946584000L},    // 31.12.1999, 00:00    //Caiway irdeto card caid: 0606, acs: 6.05
-							   {0x0606, 0x0606, "NLD", 946584000L},    // 31.12.1999, 00:00    //Caiway irdeto card caid: 0606, acs: 6.06
+							   {0x0602, 0x0606, "NLD", 946756800L},    // 01.01.2000, 08:00    //Ziggo irdeto caid: 0602, acs: 6.06
+							   {0x0602, 0x0505, "NLD", 946756800L},    // 01.01.2000, 08:00    //Ziggo irdeto caid: 0602, acs: 5.05
+							   {0x0606, 0x0605, "NLD", 946756800L},    // 01.01.2000, 08:00    //Caiway irdeto card caid: 0606, acs: 6.05
+							   {0x0606, 0x0606, "NLD", 946756800L},    // 01.01.2000, 08:00    //Caiway irdeto card caid: 0606, acs: 6.06
 
                                // {0x1702, 0x0384, "AUT", XXXXXXXXXL},     // -> we need the base date for this
                                // {0x1702, 0x0384, "GER", 888883200L},     // 02.03.1998, 16:00 -> this fixes some card but break others (S02).
