@@ -598,14 +598,14 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 	MD5(ep->emm, ep->emm[2], md5tmp);
 
 	no=0;
-	for (i=ecs=0; (i<CS_EMMCACHESIZE) && (!ecs); i++) {
+	for (i=ecs=0; i<CS_EMMCACHESIZE; i++) {
        	if (!memcmp(cl->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE)) {
 			if (reader->cachemm)
 				ecs=(reader->rewritemm > cl->emmcache[i].count) ? 1 : 2;
 			else
 				ecs=1;
 			no=++cl->emmcache[i].count;
-			i--;
+			break;
 		}
 	}
 
