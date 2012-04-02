@@ -67,15 +67,18 @@ while starting OSCam prints warnings on invalid keywords, comment lines start wi
 .RS 3n
 debug level mask:
 
-   \fB0\fP = no debugging (default)
-   \fB2\fP = ATR parsing info, ECM dumps, CW dumps
-   \fB4\fP = traffic from/to the reader
-   \fB8\fP = traffic from/to the clients
-  \fB16\fP = traffic to the reader-device on IFD layer
-  \fB32\fP = traffic to the reader-device on I/O layer
-  \fB64\fP = EMM logging
- \fB128\fP = DVBAPI logging
- \fB255\fP = debug all
+     \fB0\fP = no debugging (default)
+     \fB2\fP = ATR parsing info, ECM dumps, CW dumps
+     \fB4\fP = traffic from/to the reader
+     \fB8\fP = traffic from/to the clients
+    \fB16\fP = traffic to the reader-device on IFD layer
+    \fB32\fP = traffic to the reader-device on I/O layer
+    \fB64\fP = EMM logging
+   \fB128\fP = DVBAPI logging
+   \fB256\fP = load balancing logging
+   \fB512\fP = cache exchange logging
+  \fB1024\fP = client ECM logging
+ \fB65535\fP = debug all
 .RE
 .PP
 \fB-g\fP <mode>
