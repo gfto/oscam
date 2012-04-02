@@ -53,6 +53,7 @@ void add_garbage(void *data) {
 	struct cs_garbage *garbage = malloc(sizeof(struct cs_garbage));
 	if (!garbage) {
 		free(data);
+		cs_writeunlock(&garbage_lock[bucket]);
 		return;
 	}
 	garbage->time = time(NULL);
