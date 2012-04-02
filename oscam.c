@@ -3360,6 +3360,10 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	er->rcEx = 0;
 	request_cw(er);
+
+	cs_ddump_mask(D_CLIENTECM, er->ecm, er->l, "Client %s ECM dump %04X:%06X:%04X:%04X", username(client),
+			er->caid, er->prid, er->srvid, er->l);
+
 	if(timecheck_client){
 		pthread_mutex_lock(&timecheck_client->thread_lock);
 		if(timecheck_client->thread_active == 2)
