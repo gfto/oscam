@@ -63,22 +63,22 @@ static dmx_t *find_demux(int32_t fd, int32_t dmx_dev_num)
 	return NULL;
 }
 
-void coolapi_read_data(int32_t fd, int32_t len)
+void coolapi_read_data(dmx_t * dmx, int32_t len)
 {
-	int32_t ret;
-	unsigned char buffer[4096];
-	dmx_t * dmx =  find_demux(fd, 0);
-
 	if(!dmx) {
 		cs_debug_mask(D_DVBAPI, "handle is NULL!");
 		return;
 	}
+
+	int32_t ret;
 	
 	pthread_setspecific(getclient, dvbapi_client);
-	pthread_mutex_lock(&dmx->mutex);	
-	ret = coolapi_read(dmx->fd, buffer, len);
+	pthread_mutex_lock(&dmx->mutex);
+	memset(dmx->buffer,0,4096);	
+	ret = coolapi_read(dmx, len);
 	pthread_mutex_unlock(&dmx->mutex);
-	dvbapi_process_input(dmx->demux_id, dmx->filter_num, buffer, len);
+	if (!ret)
+		dvbapi_process_input(dmx->demux_id, dmx->filter_num, dmx->buffer, len);
 }
 
 static void dmx_callback(void * unk, dmx_t * dmx, int32_t type, void * data)
@@ -94,7 +94,7 @@ static void dmx_callback(void * unk, dmx_t * dmx, int32_t type, void * data)
 		switch(type) {
 			case 0xE:
 				if(cdata->type == 1) {
-					coolapi_read_data(dmx->fd, cdata->len);
+					coolapi_read_data(dmx, cdata->len);
 				} else
 					cs_debug_mask(D_DVBAPI, "unknown callback data %d len %d", cdata->type, cdata->len);
 				break;
@@ -122,6 +122,8 @@ int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char 
 
 	memset(&filter, 0, sizeof(filter));
 
+	memcpy(dmx->filter16, flt, 16);
+	memcpy(dmx->mask16, mask, 16);
 	filter.length = 12;
 	memcpy(filter.filter, flt, 12);
 	memcpy(filter.mask, mask, 12);
@@ -154,10 +156,7 @@ int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char 
 
 	result = cnxt_dmx_channel_ctrl(dmx->channel, 2, 0);
 
-	/* FIXME 
-	 we need more than one filter for an EMM-PID, so we exclude the annoying CNXT_STATUS_DUPLICATE_PID (Code 99) which is probably(?) just a notification and not an error
-	*/
-
+	// we need more than one filter for an EMM-PID, so we exclude the annoying CNXT_STATUS_DUPLICATE_PID (Code 99) which is just a notification and not an error
 	if (result != 99)
 		check_error ("cnxt_dmx_channel_ctrl", result);
 
@@ -331,42 +330,73 @@ int32_t coolapi_write_cw(int32_t mask, uint16_t *STREAMpids, int32_t count, ca_d
         return 0;
 }
 
-int32_t coolapi_read(int32_t fd, unsigned char * buffer, uint32_t len)
+int32_t pattern_matching(unsigned char * buff, int32_t len, dmx_t * dmx)
 {
-	int32_t result;
-	uint32_t done = 0, toread;
-	unsigned char * buff = &buffer[0];
-	uint32_t bytes_used = 0;
-
-	dmx_t * dmx = find_demux(fd, 0);
 	if(!dmx) {
 		cs_debug_mask(D_DVBAPI, "dmx is NULL!");
-		return 0;
+		return -1;
 	}
+
+	int32_t i,j,found;
+
+	if (((buff[0] ^ dmx->filter16[0]) & dmx->mask16[0]) != 0)
+		return 0;
+
+	for (i = 0; i < len; i++) {
+		if (len - i >= 16) {
+			found = 1;
+			for (j = 1; j < 16 && found == 1; j++) {
+				if (((buff[i+j] ^ dmx->filter16[j]) & dmx->mask16[j]) != 0)
+					found = 0;
+			}
+		}
+		if (found)
+			return 1;
+	}
+	return 0;
+}
+
+int32_t coolapi_read(dmx_t * dmx, uint32_t len)
+{
+	if(!dmx) {
+		cs_debug_mask(D_DVBAPI, "dmx is NULL!");
+		return -1;
+	}
+
+	int32_t result;
+	uint32_t done = 0, toread;
+	unsigned char * buff = &dmx->buffer[0];
+	uint32_t bytes_used = 0;
+
 	//cs_debug_mask(D_DVBAPI, "dmx channel %x pid %x len %d",  (int) dmx->channel, dmx->pid, len);
 
 	result = cnxt_cbuf_get_used(dmx->buffer2, &bytes_used);
 	check_error ("cnxt_cbuf_get_used", result);
 	if(bytes_used == 0) 
-		return 0;
+		return -1;
 
 	result = cnxt_cbuf_read_data(dmx->buffer2, buff, 3, &done);
 	check_error ("cnxt_cbuf_read_data", result);
 
 	if(done != 3)
-		return 0;
+		return -1;
 
 	toread = ((buff[1] << 8) | buff[2]) & 0xFFF;
 	if((toread+3) > len)
-		return 0;
+		return -1;
 	result = cnxt_cbuf_read_data(dmx->buffer2, buff+3, toread, &done);
 	check_error ("cnxt_cbuf_read_data", result);
 	if(done != toread)
-		return 0;
+		return -1;
 	done += 3;
 
 	//cs_debug_mask(D_DVBAPI, "bytes read %d\n", done);
-	return done;
+
+	//coolstream supports only a 12 bytes demux filter so we need to compare all 16 bytes
+	if (pattern_matching(buff,len,dmx))
+		return 0;
+	else
+		return -1;
 }
 
 void coolapi_open_all()
