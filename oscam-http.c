@@ -2301,6 +2301,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 
 		//search account in active clients
 		int32_t isactive = 0;
+		int16_t clientcount = 0;
 		struct s_client *cl, *latestclient=NULL;
 		for (cl=first_client->next; cl ; cl=cl->next) {
 			if (cl->account && !strcmp(cl->account->usr, account->usr)) {
@@ -2308,6 +2309,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 					if(cl->lastecm > cl->login) latestactivity = cl->lastecm;
 					else latestactivity = cl->login;
 					latestclient = cl;
+					clientcount++;
 				}
 			}
 		}
@@ -2411,6 +2413,8 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "DESCRIPTION", xml_encode(vars, account->description?account->description:""));
 		tpl_addVar(vars, TPLADD, "STATUS", status);
 		tpl_addVar(vars, TPLAPPEND, "STATUS", expired);
+		if(clientcount) tpl_printf(vars, TPLADDONCE, "CLIENTCOUNT", "&nbsp;&nbsp;%d", clientcount);
+
 		// append row to table template
 		if (!apicall)
 			tpl_addVar(vars, TPLAPPEND, "USERCONFIGS", tpl_getTpl(vars, "USERCONFIGLISTBIT"));
