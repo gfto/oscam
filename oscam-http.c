@@ -2413,7 +2413,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "DESCRIPTION", xml_encode(vars, account->description?account->description:""));
 		tpl_addVar(vars, TPLADD, "STATUS", status);
 		tpl_addVar(vars, TPLAPPEND, "STATUS", expired);
-		if(clientcount) tpl_printf(vars, TPLADDONCE, "CLIENTCOUNT", "&nbsp;&nbsp;%d", clientcount);
+		if(clientcount > 1) tpl_printf(vars, TPLADDONCE, "CLIENTCOUNT", "&nbsp;&nbsp;%d", clientcount);
 
 		// append row to table template
 		if (!apicall)
