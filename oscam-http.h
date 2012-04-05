@@ -884,7 +884,7 @@ SFRTIFJFU0VSVkVEADs="
 		<TR class=\"##CLASSNAME##\">\n\
 			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
 			<TD><SPAN TITLE=\"##DESCRIPTION##\">##USER##</SPAN><span class=\"notifier\">##CLIENTCOUNT##</span></TD>\n\
-			<TD class=\"centered\">##STATUS##</td></TD>\n\
+			<TD class=\"centered\">##STATUS##</TD>\n\
 			<TD class=\"centered\">##CLIENTIP##</TD>\n\
 			<TD class=\"centered\"><SPAN TITLE=\"##CLIENTPROTOTITLE##\">##CLIENTPROTO##</SPAN></TD>\n\
 			<TD>##LASTCHANNEL##</TD>\n\
