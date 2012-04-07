@@ -2309,8 +2309,8 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 					if(cl->lastecm > cl->login) latestactivity = cl->lastecm;
 					else latestactivity = cl->login;
 					latestclient = cl;
-					clientcount++;
 				}
+				clientcount++;
 			}
 		}
 		if (account->cwfound + account->cwnot + account->cwcache > 0) {
