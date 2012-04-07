@@ -1424,7 +1424,8 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 				<TR><TD>##TPLHELPPREFIX##server#deprecated##TPLHELPSUFFIX##Deprecated:</A><input name=\"deprecated\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"deprecated\" type=\"checkbox\" value=\"1\" ##DEPRECATEDCHECKED##></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#smargopatch##TPLHELPSUFFIX##Smargopatch:</A><input name=\"smargopatch\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"smargopatch\" type=\"checkbox\" value=\"1\" ##SMARGOPATCHCHECKED##></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#sc8in1_dtrrts_patch##TPLHELPSUFFIX##SC8in1 DTR/RTS Patch:</A><input name=\"sc8in1_dtrrts_patch\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"sc8in1_dtrrts_patch\" type=\"checkbox\" value=\"1\" ##SC8IN1DTRRTSPATCHCHECKED##></TD></TR>\n\
-				<TR><TD>##TPLHELPPREFIX##server#device_out_endpoint##TPLHELPSUFFIX##Device Out Endpoint:</A></TD><TD>##DEVICEEP##</TD></TR>\n"
+				<TR><TD>##TPLHELPPREFIX##server#device_out_endpoint##TPLHELPSUFFIX##Device Out Endpoint:</A></TD><TD>##DEVICEEP##</TD></TR>\n\
+				##TPLREADERCOOLSTREAMBIT##"
 
 #ifdef LIBUSB
 #define TPLREADERCONFIGDEVICEEPBIT "\
@@ -1433,6 +1434,13 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 					<OPTION value=\"0x82\" ##DEVICEOUTEP1##>0x82 - Smargo+</OPTION>\n\
 					<OPTION value=\"0x81\" ##DEVICEOUTEP2##>0x81 - Infinity USB Smart</OPTION>\n\
 				</SELECT>\n"
+#endif
+
+#ifdef COOL
+#define TPLREADERCOOLSTREAMBIT "\
+		<TR><TH>&nbsp;</TH><TH>Reader specific settings for Coolstream STB</TH></TR>\n\
+		<TR><TD>##TPLHELPPREFIX##server#cool_timeout_init##TPLHELPSUFFIX##Cool Timeout Init:</A></TD><TD><input name=\"cool_timeout_init\" type=\"text\" size=\"20\" maxlength=\"16\" value=\"##COOLTIMEOUTINIT##\"></TD></TR>\n\
+		<TR><TD>##TPLHELPPREFIX##server#cool_timeout_after_init##TPLHELPSUFFIX##Cool Timeout after Init:</A></TD><TD><input name=\"cool_timeout_after_init\" type=\"text\" size=\"20\" maxlength=\"16\" value=\"##COOLTIMEOUTAFTERINIT##\"></TD></TR>\n"
 #endif
 
 #define TPLREADERCONFIGHOPBIT "\
@@ -2509,6 +2517,9 @@ char *tpl[]={
 #ifdef LIBUSB
 	,"READERCONFIGDEVICEEPBIT"
 #endif
+#ifdef COOL
+	,"READERCOOLSTREAMBIT"
+#endif
 #ifdef WITH_DEBUG
 	,"DEBUGSELECT"
 #endif
@@ -2682,6 +2693,9 @@ char *tplmap[]={
 #endif
 #ifdef LIBUSB
 	,TPLREADERCONFIGDEVICEEPBIT
+#endif
+#ifdef COOL
+	,TPLREADERCOOLSTREAMBIT
 #endif
 #ifdef WITH_DEBUG
 	,TPLDEBUGSELECT

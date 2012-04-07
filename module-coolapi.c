@@ -334,7 +334,7 @@ int32_t pattern_matching(unsigned char * buff, int32_t len, dmx_t * dmx)
 {
 	if(!dmx) {
 		cs_debug_mask(D_DVBAPI, "dmx is NULL!");
-		return -1;
+		return 0;
 	}
 
 	int32_t i,j,found;

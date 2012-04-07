@@ -2903,6 +2903,12 @@ int32_t write_server()
 				fprintf_conf(f, "cacheex", "%d\n", rdr->cacheex);
 #endif
 
+#ifdef COOL
+			if (rdr->cool_timeout_init || cfg.http_full_cfg)
+				fprintf_conf(f, "cool_timeout_init", "%d\n", rdr->cool_timeout_init);
+			if (rdr->cool_timeout_after_init || cfg.http_full_cfg)
+				fprintf_conf(f, "cool_timeout_after_init", "%d\n", rdr->cool_timeout_after_init);
+#endif
 			if (rdr->log_port || cfg.http_full_cfg)
 				fprintf_conf(f, "logport", "%d\n", rdr->log_port);
 
