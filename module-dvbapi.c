@@ -972,24 +972,24 @@ struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidi
 
 }
 
-//int32_t chk_valid_btun(uint16_t caid,uint16_t srvid)
-//{
-//	int32_t i;
-//	struct s_client *cl = cur_client();
-//	TUNTAB *ttab;
-//	ttab = &cl->ttab;
-//
-//	for (i = 0; i<ttab->n; i++) {
-//		if ((caid==ttab->bt_caidfrom[i]) && ((srvid==ttab->bt_srvid[i]) || (ttab->bt_srvid[i])==0xFFFF)) {
-//			return 1;
-//		}
-//	}
-//	return 0;
-//}
+int32_t chk_valid_btun(uint16_t caid,uint16_t srvid)
+{
+	int32_t i;
+	struct s_client *cl = cur_client();
+	TUNTAB *ttab;
+	ttab = &cl->ttab;
+
+	for (i = 0; i<ttab->n; i++) {
+		if ((caid==ttab->bt_caidfrom[i]) && ((srvid==ttab->bt_srvid[i]) || (ttab->bt_srvid[i])==0xFFFF)) {
+			return 1;
+		}
+	}
+	return 0;
+}
 
 void dvbapi_resort_ecmpids(int32_t demux_index) {
 	int32_t n,highest_prio=0,found=-1,matching=0;
-	//uint16_t btun_caid=0;
+	uint16_t btun_caid=0;
 
 	for (n=0; n<demux[demux_index].ECMpidcount; n++) {
 		demux[demux_index].ECMpids[n].status=0;
@@ -1053,11 +1053,11 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 					er->srvid = demux[demux_index].program_number;
 					er->client = cur_client();
 					
-//					btun_caid = get_betatunnel_caid_to(demux[demux_index].ECMpids[n].CAID);
-//					if (btun_caid) {
-//						if (chk_valid_btun(er->caid,er->srvid))
-//							er->caid = btun_caid;
-//					}
+					btun_caid = get_betatunnel_caid_to(demux[demux_index].ECMpids[n].CAID);
+					if (btun_caid) {
+						if (chk_valid_btun(er->caid,er->srvid))
+							er->caid = btun_caid;
+					}
 					
 					matching=0;
 					for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
@@ -1112,11 +1112,11 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 			er->srvid = demux[demux_index].program_number;
 			er->client = cur_client();
 	
-//			btun_caid = get_betatunnel_caid_to(demux[demux_index].ECMpids[n].CAID);
-//			if (btun_caid) {
-//				if (chk_valid_btun(er->caid,er->srvid))
-//					er->caid = btun_caid;
-//			}
+			btun_caid = get_betatunnel_caid_to(demux[demux_index].ECMpids[n].CAID);
+			if (btun_caid) {
+				if (chk_valid_btun(er->caid,er->srvid))
+					er->caid = btun_caid;
+			}
 		
 			matching=0;
 			for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
