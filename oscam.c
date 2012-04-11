@@ -3448,7 +3448,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		else
 			emmtype = 1 << (ep->type-1);
 		client->last=time((time_t*)0);
-		if ((1<<(ep->emm[0] % 0x80)) & aureader->s_nano || (aureader->saveemm & emmtype)) { //should this nano be saved?
+		if (((1<<(ep->emm[0] % 0x80)) & aureader->s_nano) || (aureader->saveemm & emmtype)) { //should this nano be saved?
 			char token[256];
 			char *tmp2;
 			FILE *fp;
@@ -3525,7 +3525,24 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			client->account->emmok++;
 		first_client->emmok++;
 
-		ep->client = cur_client();
+		//Check emmcache early:
+		int32_t i;
+		unsigned char md5tmp[MD5_DIGEST_LENGTH];
+		struct s_client *au_cl = aureader->client;
+
+		MD5(ep->emm, ep->emm[2], md5tmp);
+
+		for (i=0; i<CS_EMMCACHESIZE; i++) {
+	       	if (!memcmp(au_cl->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE)) {
+	       		au_cl->emmcache[i].count++;
+				if (aureader->cachemm && (aureader->rewritemm < au_cl->emmcache[i].count)) {
+					aureader->emmskipped[ep->type]++;
+					return;
+				}
+			}
+		}
+
+		ep->client = client;
 		cs_debug_mask(D_EMM, "emm is being sent to reader %s.", aureader->label);
 
 		EMM_PACKET *emm_pack = cs_malloc(&emm_pack, sizeof(EMM_PACKET), -1);

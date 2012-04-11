@@ -419,12 +419,11 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	return(rc);
 }
 
-static int32_t reader_store_emm(uchar *emm, uchar type)
+static int32_t reader_store_emm(uchar type, uchar *emmd5)
 {
   int32_t rc;
-  unsigned char md5tmp[MD5_DIGEST_LENGTH];
   struct s_client *cl = cur_client();
-  memcpy(cl->emmcache[cl->rotate].emmd5, MD5(emm, emm[2], md5tmp), CS_EMMSTORESIZE);
+  memcpy(cl->emmcache[cl->rotate].emmd5, emmd5, CS_EMMSTORESIZE);
   cl->emmcache[cl->rotate].type=type;
   cl->emmcache[cl->rotate].count=1;
 //  cs_debug_mask(D_READER, "EMM stored (index %d)", rotate);
@@ -631,9 +630,11 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
           if (!ecs)
           {
-                  i=reader_store_emm(ep->emm, ep->type);
+                  i=reader_store_emm(ep->type, md5tmp);
                   no=1;
           }
+          else
+        	  cl->emmcache[i].count = 0;
   }
 
   if (rc) cl->lastemm=time((time_t*)0);
