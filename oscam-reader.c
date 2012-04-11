@@ -581,29 +581,73 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 #endif
 }
 
+void reader_log_emm(struct s_reader * reader, EMM_PACKET *ep, int32_t i, int32_t rc, struct timeb *tps) {
+	char *rtxt[] = { "error",
+			(reader->typ & R_IS_CASCADING) ? "sent" : "written", "skipped",
+			"blocked" };
+	char *typedesc[] = { "unknown", "unique", "shared", "global" };
+	struct s_client *cl = reader->client;
+	struct timeb tpe;
+
+	if (reader->logemm & (1 << rc)) {
+		cs_ftime(&tpe);
+		if (!tps)
+			tps = &tpe;
+
+		cs_log("%s emmtype=%s, len=%d, idx=%d, cnt=%d: %s (%ld ms) by %s", username(ep->client), typedesc[cl->emmcache[i].type], ep->emm[2], i, cl->emmcache[i].count, rtxt[rc],
+				1000*(tpe.time-tps->time)+tpe.millitm-tps->millitm, reader->label);
+	}
+
+	if (rc)
+		cl->lastemm = time((time_t*) 0);
+
+#ifdef ARM
+	if (rc && cfg.enableled == 1) cs_switch_led(LED3, LED_BLINK_ON);
+#endif
+
+#if defined(WEBIF) || defined(LCDSUPPORT)
+	//counting results
+	switch (rc) {
+	case 0:
+		reader->emmerror[ep->type]++;
+		break;
+	case 1:
+		reader->emmwritten[ep->type]++;
+		break;
+	case 2:
+		reader->emmskipped[ep->type]++;
+		break;
+	case 3:
+		reader->emmblocked[ep->type]++;
+		break;
+	}
+#endif
+
+#ifdef QBOXHD
+	if (rc && cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_BLUE,QBOXHD_LED_BLINK_MEDIUM);
+#endif
+}
+
 int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
-  int32_t i, no, rc, ecs;
+  int32_t i, rc, ecs;
   unsigned char md5tmp[MD5_DIGEST_LENGTH];
-  char *rtxt[] = { "error", (reader->typ & R_IS_CASCADING) ? "sent" : "written", "skipped", "blocked" };
-  char *typedesc[]= { "unknown", "unique", "shared", "global" };
-  struct timeb tps, tpe;
+  struct timeb tps;
   struct s_client *cl = reader->client;
   
   if(!cl) return 0;
-
-  cs_ftime(&tps);
+  
+    cs_ftime(&tps);
 
 	MD5(ep->emm, ep->emm[2], md5tmp);
 
-	no=0;
 	for (i=ecs=0; i<CS_EMMCACHESIZE; i++) {
        	if (!memcmp(cl->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE)) {
+			cl->emmcache[i].count++;
 			if (reader->cachemm)
-				ecs=(reader->rewritemm > cl->emmcache[i].count) ? 1 : 2;
+				ecs=(cl->emmcache[i].count > reader->rewritemm) ? 1 : 2;
 			else
 				ecs=1;
-			no=++cl->emmcache[i].count;
 			break;
 		}
 	}
@@ -629,51 +673,12 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
           }
 
           if (!ecs)
-          {
-                  i=reader_store_emm(ep->type, md5tmp);
-                  no=1;
-          }
+        	  i=reader_store_emm(ep->type, md5tmp);
           else
         	  cl->emmcache[i].count = 0;
   }
 
-  if (rc) cl->lastemm=time((time_t*)0);
-
-#ifdef ARM
-  if (rc && cfg.enableled == 1) cs_switch_led(LED3, LED_BLINK_ON);
-#endif
-
-  if (reader->logemm & (1 << rc))
-  {
-    cs_ftime(&tpe);
-
-    cs_log("%s emmtype=%s, len=%d, idx=%d, cnt=%d: %s (%ld ms) by %s",
-           username(ep->client), typedesc[cl->emmcache[i].type], ep->emm[2],
-           i, no, rtxt[rc], 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm, reader->label); //FIXME not sure why emmtyp must come from ep->client and typedesc can be of cur_client
-  }
-
-#if defined(WEBIF) || defined(LCDSUPPORT)
-  //counting results
-  switch(rc){
-	  case 0:
-		  reader->emmerror[ep->type]++;
-		  break;
-	  case 1:
-		  reader->emmwritten[ep->type]++;
-		  break;
-	  case 2:
-		  reader->emmskipped[ep->type]++;
-		  break;
-	  case 3:
-		  reader->emmblocked[ep->type]++;
-		  break;
-  }
-#endif
-
-#ifdef QBOXHD
-  if (rc && cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_BLUE,QBOXHD_LED_BLINK_MEDIUM);
-#endif
-
+  reader_log_emm(reader, ep, i, rc, &tps);
 
   return(rc);
 }

@@ -972,7 +972,7 @@ struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidi
 
 }
 
-int32_t chk_valid_btun(uint16_t caid,uint16_t srvid)
+int32_t chk_valid_btun(ECM_REQUEST *er, uint16_t caidto)
 {
 	int32_t i;
 	struct s_client *cl = cur_client();
@@ -980,16 +980,23 @@ int32_t chk_valid_btun(uint16_t caid,uint16_t srvid)
 	ttab = &cl->ttab;
 
 	for (i = 0; i<ttab->n; i++) {
-		if ((caid==ttab->bt_caidfrom[i]) && ((srvid==ttab->bt_srvid[i]) || (ttab->bt_srvid[i])==0xFFFF)) {
+		if ((er->caid==ttab->bt_caidfrom[i]) &&
+				((caidto==ttab->bt_caidto[i])) &&
+				((er->srvid==ttab->bt_srvid[i]) || (ttab->bt_srvid[i])==0xFFFF)) {
 			return 1;
 		}
 	}
+#ifdef WITH_LB
+	if (cfg.lb_auto_betatunnel && lb_valid_btun(er, caidto))
+		return 1;
+
+#endif
 	return 0;
 }
 
 void dvbapi_resort_ecmpids(int32_t demux_index) {
 	int32_t n,highest_prio=0,found=-1,matching=0;
-	uint16_t btun_caid=0;
+	uint16_t btun_caid=0, caid;
 
 	for (n=0; n<demux[demux_index].ECMpidcount; n++) {
 		demux[demux_index].ECMpids[n].status=0;
@@ -1033,7 +1040,14 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 				if (demux[demux_index].ECMpids[n].status != 0)
 					continue;
 
-				if (p->caid && p->caid != demux[demux_index].ECMpids[n].CAID)
+				caid = demux[demux_index].ECMpids[n].CAID;
+				btun_caid = get_betatunnel_caid_to(caid);
+				if (p->type == 'p' && btun_caid) {
+					if (chk_valid_btun(er, btun_caid))
+						caid = btun_caid;
+				}
+
+				if (p->caid && p->caid != caid)
 					continue;
 				if (p->provid && p->provid != demux[demux_index].ECMpids[n].PROVID)
 					continue;
@@ -1047,17 +1061,12 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 					if (demux[demux_index].ECMpids[n].status == -1) //ignore
 						continue;
 					
-					er->caid = er->ocaid = demux[demux_index].ECMpids[n].CAID;
+					er->caid = caid;
+					er->ocaid = demux[demux_index].ECMpids[n].CAID;
 					er->prid = demux[demux_index].ECMpids[n].PROVID;
 					er->pid = demux[demux_index].ECMpids[n].ECM_PID;
 					er->srvid = demux[demux_index].program_number;
 					er->client = cur_client();
-					
-					btun_caid = get_betatunnel_caid_to(demux[demux_index].ECMpids[n].CAID);
-					if (btun_caid) {
-						if (chk_valid_btun(er->caid,er->srvid))
-							er->caid = btun_caid;
-					}
 					
 					matching=0;
 					for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
@@ -1114,7 +1123,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 	
 			btun_caid = get_betatunnel_caid_to(demux[demux_index].ECMpids[n].CAID);
 			if (btun_caid) {
-				if (chk_valid_btun(er->caid,er->srvid))
+				if (chk_valid_btun(er, btun_caid))
 					er->caid = btun_caid;
 			}
 		
@@ -1433,7 +1442,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 
 	char channame[32];
 	get_servicename(dvbapi_client, demux[demux_id].program_number, demux[demux_id].ECMpidcount>0 ? demux[demux_id].ECMpids[0].CAID : 0, channame);
-	cs_log("new program number: %04X (%s)", program_number, channame);
+	cs_log("new program number: %04X (%s) [pmt_list_management %d]", program_number, channame, ca_pmt_list_management);
 
 #ifdef AZBOX
 	openxcas_sid = program_number;

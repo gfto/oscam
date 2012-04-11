@@ -3527,24 +3527,23 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 
 		//Check emmcache early:
 		int32_t i;
-		unsigned char md5tmp[MD5_DIGEST_LENGTH];
+		unsigned char md5tmp[CS_EMMSTORESIZE];
 		struct s_client *au_cl = aureader->client;
 
 		MD5(ep->emm, ep->emm[2], md5tmp);
+		ep->client = client;
 
 		for (i=0; i<CS_EMMCACHESIZE; i++) {
 	       	if (!memcmp(au_cl->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE)) {
 	       		au_cl->emmcache[i].count++;
-				if (aureader->cachemm && (aureader->rewritemm < au_cl->emmcache[i].count)) {
-#ifdef WEBIF
-					aureader->emmskipped[ep->type]++;
-#endif
+	       		cs_debug_mask(D_EMM, "emm found in cache: reader %s count %d rewrite %d", aureader->label, au_cl->emmcache[i].count, aureader->rewritemm);
+				if (aureader->cachemm && (au_cl->emmcache[i].count < aureader->rewritemm)) {
+					reader_log_emm(aureader, ep, i, 2, NULL);
 					return;
 				}
 			}
 		}
 
-		ep->client = client;
 		cs_debug_mask(D_EMM, "emm is being sent to reader %s.", aureader->label);
 
 		EMM_PACKET *emm_pack = cs_malloc(&emm_pack, sizeof(EMM_PACKET), -1);

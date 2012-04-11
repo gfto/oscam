@@ -243,6 +243,8 @@ READER_STAT *get_stat_lock(struct s_reader *rdr, STAT_QUERY *q, int8_t lock)
 				stat->ecmlen = q->ecmlen;
 				break;
 			}
+			if (!q->ecmlen) //Query without ecmlen from dvbapi
+				break;
 		}
 	}
 	if (lock) cs_readunlock(&rdr->lb_stat_lock);
@@ -1360,6 +1362,25 @@ void update_ecmlen_from_stat(struct s_reader *rdr)
 		}
 	}
 	cs_readunlock(&rdr->lb_stat_lock);
+}
+
+int32_t lb_valid_btun(ECM_REQUEST *er, uint16_t caidto)
+{
+	STAT_QUERY q;
+	READER_STAT *stat;
+	struct s_reader *rdr;
+
+	get_stat_query(er, &q);
+	q.caid = caidto;
+
+	for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
+		if (rdr->lb_stat && rdr->client) {
+			stat = get_stat(rdr, &q);
+			if (stat && stat->rc == E_FOUND)
+				return 1;
+		}
+	}
+	return 0;
 }
 
 #endif
