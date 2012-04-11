@@ -3536,7 +3536,9 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 	       	if (!memcmp(au_cl->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE)) {
 	       		au_cl->emmcache[i].count++;
 				if (aureader->cachemm && (aureader->rewritemm < au_cl->emmcache[i].count)) {
+#ifdef WEBIF
 					aureader->emmskipped[ep->type]++;
+#endif
 					return;
 				}
 			}
