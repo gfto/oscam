@@ -887,7 +887,7 @@ SFRTIFJFU0VSVkVEADs="
 			<TD class=\"centered\">##STATUS##</TD>\n\
 			<TD class=\"centered\">##CLIENTIP##</TD>\n\
 			<TD class=\"centered\"><SPAN TITLE=\"##CLIENTPROTOTITLE##\">##CLIENTPROTO##</SPAN></TD>\n\
-			<TD>##LASTCHANNEL##</TD>\n\
+			<TD class=\"centered\">##LASTCHANNEL##</TD>\n\
 			<TD class=\"centered\" title=\"##CLIENTTIMETOSLEEP##\">##CLIENTTIMEONCHANNEL##</TD>\n\
 			<TD class=\"centered\">##IDLESECS##</TD>\n\
 			<TD class=\"centered\">##CWOK##</TD>\n\
