@@ -2123,7 +2123,7 @@ int32_t write_services()
 			if (i==0) fprintf(f,"%04X", sidtab->srvid[i]);
 			else fprintf(f,",%04X", sidtab->srvid[i]);
 		}
-		fprintf(f,"\n\n");
+		fprintf(f,"\n");
 		sidtab=sidtab->next;
 	}
 
@@ -3136,7 +3136,7 @@ int32_t write_server()
 				fprintf_conf(f, "cooldown", "%d,%d\n", rdr->cooldown[0], rdr->cooldown[1]);
 			}
 
-			fprintf(f, "\n\n");
+			fprintf(f, "\n");
 		}
 	}
 	fclose(f);
