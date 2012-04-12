@@ -1229,6 +1229,22 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 			dvbapi_add_ecmpid(demux_id, descriptor_ca_system_id, descriptor_ca_pid, descriptor_ca_provider);
 		}
 	}
+
+	//Apply mapping:
+	if (dvbapi_priority) {
+		struct s_dvbapi_priority *mapentry;
+		for (j = 0; j < demux[demux_id].ECMpidcount; j++) {
+			mapentry = dvbapi_check_prio_match(demux_id, j, 'm');
+			if (mapentry) {
+				cs_debug_mask(D_DVBAPI,
+						"mapping ECM from %04X:%06X to %04X:%06X",
+						demux[demux_id].ECMpids[j].CAID, demux[demux_id].ECMpids[j].PROVID,
+						mapentry->mapcaid, mapentry->mapprovid);
+				demux[demux_id].ECMpids[j].CAID = mapentry->mapcaid;
+				demux[demux_id].ECMpids[j].PROVID = mapentry->mapprovid;
+			}
+		}
+	}
 }
 
 static void request_cw(struct s_client *dvbapi_client, ECM_REQUEST *er)
@@ -1872,8 +1888,6 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 
 		curpid->table = buffer[0];
 
-		struct s_dvbapi_priority *mapentry = dvbapi_check_prio_match(demux_id, demux[demux_id].demux_fd[filter_num].pidindex, 'm');
-
 		if (!provid)
 			provid = chk_provid(buffer, caid);
 
@@ -1892,14 +1906,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		er->pid   = curpid->ECM_PID;
 		er->prid  = provid;
 		er->chid  = chid;
-
-		if (mapentry) {
-			cs_debug_mask(D_DVBAPI, "mapping ECM from %04X:%06X to %04X:%06X", er->caid, er->prid, mapentry->mapcaid, mapentry->mapprovid);
-			er->caid = mapentry->mapcaid;
-			er->prid = mapentry->mapprovid;
-		}
-
-		er->l=len;
+		er->l     = len;
 		memcpy(er->ecm, buffer, er->l);
 
 		request_cw(dvbapi_client, er);
