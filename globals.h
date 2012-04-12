@@ -483,6 +483,7 @@ struct s_arm_led {
 /* ===========================
  *      Default Values
  * =========================== */
+#define DEFAULT_INACTIVITYTIMEOUT 0
 #define DEFAULT_TCP_RECONNECT_TIMEOUT 30
 #define DEFAULT_NCD_KEEPALIVE 0
 
