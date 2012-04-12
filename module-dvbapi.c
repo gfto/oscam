@@ -996,7 +996,7 @@ int32_t chk_valid_btun(ECM_REQUEST *er, uint16_t caidto)
 
 void dvbapi_resort_ecmpids(int32_t demux_index) {
 	int32_t n,highest_prio=0,found=-1,matching=0;
-	uint16_t btun_caid=0, caid;
+	uint16_t btun_caid=0;
 
 	for (n=0; n<demux[demux_index].ECMpidcount; n++) {
 		demux[demux_index].ECMpids[n].status=0;
@@ -1040,33 +1040,31 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 				if (demux[demux_index].ECMpids[n].status != 0)
 					continue;
 
-				caid = demux[demux_index].ECMpids[n].CAID;
-				btun_caid = get_betatunnel_caid_to(caid);
+				er->caid = er->ocaid = demux[demux_index].ECMpids[n].CAID;
+				er->prid = demux[demux_index].ECMpids[n].PROVID;
+				er->pid = demux[demux_index].ECMpids[n].ECM_PID;
+				er->srvid = demux[demux_index].program_number;
+				er->client = cur_client();
+
+				btun_caid = get_betatunnel_caid_to(er->caid);
 				if (p->type == 'p' && btun_caid) {
 					if (chk_valid_btun(er, btun_caid))
-						caid = btun_caid;
+						er->caid = btun_caid;
 				}
 
-				if (p->caid && p->caid != caid)
+				if (p->caid && p->caid != er->caid)
 					continue;
-				if (p->provid && p->provid != demux[demux_index].ECMpids[n].PROVID)
+				if (p->provid && p->provid != er->prid)
 					continue;
-				if (p->ecmpid && p->ecmpid != demux[demux_index].ECMpids[n].ECM_PID)
+				if (p->ecmpid && p->ecmpid != er->pid)
 					continue;
-				if (p->srvid && p->srvid != demux[demux_index].program_number)
+				if (p->srvid && p->srvid != er->srvid)
 					continue;
 
 				if (p->type == 'p') {
 
 					if (demux[demux_index].ECMpids[n].status == -1) //ignore
 						continue;
-					
-					er->caid = caid;
-					er->ocaid = demux[demux_index].ECMpids[n].CAID;
-					er->prid = demux[demux_index].ECMpids[n].PROVID;
-					er->pid = demux[demux_index].ECMpids[n].ECM_PID;
-					er->srvid = demux[demux_index].program_number;
-					er->client = cur_client();
 					
 					matching=0;
 					for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
@@ -1121,7 +1119,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 			er->srvid = demux[demux_index].program_number;
 			er->client = cur_client();
 	
-			btun_caid = get_betatunnel_caid_to(demux[demux_index].ECMpids[n].CAID);
+			btun_caid = get_betatunnel_caid_to(er->caid);
 			if (btun_caid) {
 				if (chk_valid_btun(er, btun_caid))
 					er->caid = btun_caid;
