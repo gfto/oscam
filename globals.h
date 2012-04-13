@@ -1418,6 +1418,8 @@ struct s_global_whitelist
 	uint16_t chid;
 	uint16_t pid;
 	uint16_t ecmlen;
+	uint16_t mapcaid;
+	uint16_t mapprovid;
 	struct s_global_whitelist *next;
 } GLOBAL_WHITELIST;
 
@@ -1655,6 +1657,7 @@ struct s_config
 	//Global whitelist:
 	struct s_global_whitelist *global_whitelist;
 	int8_t global_whitelist_use_l;
+	int8_t global_whitelist_use_m;
 };
 
 struct s_clientinit
