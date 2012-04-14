@@ -39,6 +39,14 @@ ECM length whitelisting
 <BR>&nbsp;ignore&nbsp;ECM&nbsp;length
 </DL>
 
+<P>
+
+<B>m</B>:<B>[CAID]</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B>[:]<B>[CHID]</B>[:]<B>[ECM length 1[,ECM length 2]...]]</B> <B>[new CAID]</B>[:]<B>[new provider ID]</B>
+<DL COMPACT><DT><DD>
+<BR>&nbsp;CAID&nbsp;und&nbsp;provider&nbsp;ID&nbsp;mapping,&nbsp;<I>first&nbsp;matching&nbsp;rules</I>,&nbsp;<I>mapping&nbsp;is&nbsp;
+<BR>&nbsp;preferred&nbsp;over&nbsp;all&nbsp;other&nbsp;whitelistings</I>
+</DL>
+
 <A NAME="lbAE">&nbsp;</A>
 <H2>ANNONTATIONS</H2>
 
@@ -46,16 +54,19 @@ ECM length whitelisting
 <A NAME="lbAF">&nbsp;</A>
 <H2>EXAMPLES</H2>
 
-<BR>&nbsp;w:0100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;whitelisting&nbsp;for&nbsp;CAID&nbsp;0100
+<BR>&nbsp;w:0100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;whitelisting&nbsp;for&nbsp;CAID&nbsp;0100
 <P>
-<BR>&nbsp;i:0200::1234&nbsp;&nbsp;#&nbsp;ignore&nbsp;CAID&nbsp;0200&nbsp;with&nbsp;service&nbsp;ID&nbsp;1234
+<BR>&nbsp;i:0200::1234&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;ignore&nbsp;CAID&nbsp;0200&nbsp;with&nbsp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;service&nbsp;ID&nbsp;1234
 <P>
-<BR>&nbsp;i:::::2345&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;ignore&nbsp;CHID&nbsp;2345
+<BR>&nbsp;i:::::2345&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;ignore&nbsp;CHID&nbsp;2345
 <P>
-<BR>&nbsp;w:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;allow&nbsp;all&nbsp;others&nbsp;(blacklist)
-<BR>&nbsp;
-<BR>&nbsp;l:0300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;whitelisting&nbsp;for&nbsp;CAID&nbsp;0300&nbsp;not&nbsp;proceeding
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;if&nbsp;matching
+<BR>&nbsp;m:3456:123456:::::&nbsp;4567:234567&nbsp;&nbsp;#&nbsp;mapping
+<P>
+<BR>&nbsp;w:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;allow&nbsp;all&nbsp;others&nbsp;(blacklist)
+<P>
+<BR>&nbsp;l:0300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;whitelisting&nbsp;for&nbsp;CAID&nbsp;0300&nbsp;not&nbsp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;proceeding&nbsp;if&nbsp;matching
 <A NAME="lbAG">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
