@@ -5831,6 +5831,7 @@ int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line)
 					er->caid = entry->mapcaid;
 					er->prid = entry->mapprovid;
 					cs_debug_mask(D_TRACE, "whitelist: mapped %04X:%06X to %04X:%06X", er->caid, er->prid, entry->mapcaid, entry->mapprovid);
+					break;
 				}
 			}
 			entry = entry->next;
