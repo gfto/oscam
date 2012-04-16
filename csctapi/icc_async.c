@@ -101,7 +101,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 			if ( ! reader->handle ) {
 				cs_debug_mask(D_DEVICE, "ICC_Async_Device_Init opening SC8in1");
 				//open physical device
-				unsigned char deviceName[128];
+				char deviceName[128];
 				strncpy(deviceName, reader->device, 128);
 				deviceName[pos] = 0;
 				reader->handle = open (deviceName,  O_RDWR | O_NOCTTY| O_NONBLOCK);

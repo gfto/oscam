@@ -1233,7 +1233,7 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 	//Apply mapping:
 	if (dvbapi_priority) {
 		struct s_dvbapi_priority *mapentry;
-		for (j = 0; j < demux[demux_id].ECMpidcount; j++) {
+		for (j = 0; (int32_t)j < demux[demux_id].ECMpidcount; j++) {
 			mapentry = dvbapi_check_prio_match(demux_id, j, 'm');
 			if (mapentry) {
 				cs_debug_mask(D_DVBAPI,

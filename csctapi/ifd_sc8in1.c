@@ -33,14 +33,13 @@ int32_t Sc8in1_DebugSignals(struct s_reader *reader, uint16_t slot, const char *
 
 static int32_t mcrReadStatus(struct s_reader *reader, unsigned char *status);
 static int32_t sc8in1ReadStatus(struct s_reader *reader, unsigned char *status);
-int32_t Sc8in1_SetBaudrate (struct s_reader * reader, uint32_t baudrate, struct termios *termio, uint8_t cmdMode);
 int32_t Sc8in1_NeedBaudrateChange(struct s_reader * reader, uint32_t desiredBaudrate, struct termios *current, struct termios *new, uint8_t cmdMode);
 static int32_t sc8in1_tcdrain(struct s_reader *reader);
 int32_t Sc8in1_SetSlotForReader(struct s_reader *reader);
 int32_t Sc8in1_Card_Changed (struct s_reader * reader);
 
 static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
-		uint16_t lenwrite, uint16_t lenread, uint8_t enableEepromWrite, unsigned char getStatusMode,
+		uint16_t lenwrite, uint16_t lenread, uint8_t enableEepromWrite, unsigned char UNUSED(getStatusMode),
 		uint8_t selectSlotMode) {
 	struct termios termio, termiobackup;
 	uint32_t currentBaudrate = 0;
@@ -107,9 +106,9 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 	}
 	// write cmd
 	cs_ddump_mask(D_DEVICE, buff, lenwrite, "IO: Sending: ");
-	uint32_t dataWritten = 0, dataToWrite = lenwrite;
+	int32_t dataWritten = 0, dataToWrite = lenwrite;
 	while (dataWritten < lenwrite) {
-		uint32_t written = write(reader->handle, buff, dataToWrite);
+		int32_t written = write(reader->handle, buff, dataToWrite);
 		if (written == -1) {
 			cs_log("SC8in1 Command write error");
 			return ERROR;
@@ -383,7 +382,7 @@ static int32_t sc8in1SelectSlot(struct s_reader *reader, unsigned char slot) {
 
 static int32_t mcrHelloOscam(struct s_reader *reader) {
 	// Display "OSCam" on MCR display
-	unsigned char helloOscam[5] = {'O', 'S', 'C', 'a', 'm'};
+	char helloOscam[5] = {'O', 'S', 'C', 'a', 'm'};
 	return MCR_DisplayText(reader, &helloOscam[0], 5, 100, 1);
 }
 
@@ -593,7 +592,7 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 	struct termios termio;
 	int32_t i, speed, retval;
 	uint16_t sc8in1_clock = 0;
-	unsigned char buff[3];
+	//unsigned char buff[3];
 
 	Sc8in1_DebugSignals(reader, reader->slot, "I-1");
 

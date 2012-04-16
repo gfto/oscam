@@ -23,3 +23,4 @@ int32_t Sc8in1_GetActiveHandle(struct s_reader *reader, uint8_t onlyEnabledReade
 int32_t Sc8in1_Close(struct s_reader *reader);
 int32_t Sc8in1_InitLocks(struct s_reader * reader);
 int32_t MCR_DisplayText(struct s_reader *reader, char* text, uint16_t text_len, uint16_t time, uint8_t blocking);
+int32_t Sc8in1_SetBaudrate (struct s_reader * reader, uint32_t baudrate, struct termios *termio, uint8_t cmdMode);
