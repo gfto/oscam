@@ -645,12 +645,16 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
        	if (!memcmp(cl->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE)) {
 			cl->emmcache[i].count++;
 			if (reader->cachemm)
-				ecs=(cl->emmcache[i].count > reader->rewritemm) ? 1 : 2;
+				ecs=(cl->emmcache[i].count > reader->rewritemm) ? 2 : 1; //skip : rewrite
 			else
 				ecs=1;
 			break;
 		}
 	}
+
+	//Ecs=0 not found in cache
+	//Ecs=1 found in cache, rewrite emm
+	//Ecs=2 skip
 
   if ((rc=ecs)<2)
   {
