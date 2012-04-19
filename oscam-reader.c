@@ -644,11 +644,14 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 	for (i=ecs=0; i<CS_EMMCACHESIZE; i++) {
        	if (!memcmp(cl->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE)) {
 			cl->emmcache[i].count++;
-			if (reader->cachemm)
-				ecs=(cl->emmcache[i].count > reader->rewritemm) ? 2 : 1; //skip : rewrite
-			else
-				ecs=1;
-			break;
+			if (reader->cachemm){
+				if (cl->emmcache[i].count > reader->rewritemm){
+					ecs=2; //skip emm
+				}
+				else
+					ecs=1; //rewrite emm
+			}
+		break;
 		}
 	}
 
@@ -678,8 +681,6 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
           if (!ecs)
         	  i=reader_store_emm(ep->type, md5tmp);
-          else
-        	  cl->emmcache[i].count = 0;
   }
 
   reader_log_emm(reader, ep, i, rc, &tps);

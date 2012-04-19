@@ -3535,7 +3535,6 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 
 		for (i=0; i<CS_EMMCACHESIZE; i++) {
 	       	if (!memcmp(au_cl->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE)) {
-	       		au_cl->emmcache[i].count++;
 	       		cs_debug_mask(D_EMM, "emm found in cache: reader %s count %d rewrite %d", aureader->label, au_cl->emmcache[i].count, aureader->rewritemm);
 				if (aureader->cachemm && (au_cl->emmcache[i].count > aureader->rewritemm)) {
 					reader_log_emm(aureader, ep, i, 2, NULL);
