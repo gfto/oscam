@@ -3553,7 +3553,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 
 int32_t process_input(uchar *buf, int32_t l, int32_t timeout)
 {
-	int32_t rc, i, pfdcount;
+	int32_t rc, i, pfdcount, polltime;
 	struct pollfd pfd[2];
 	struct s_client *cl = cur_client();
 
@@ -3566,7 +3566,12 @@ int32_t process_input(uchar *buf, int32_t l, int32_t timeout)
 			pfd[pfdcount++].events = POLLIN | POLLPRI;
 		}
 
-		int32_t p_rc = poll(pfd, pfdcount, 0);
+		polltime  = timeout - (time(NULL) - starttime);
+		if (polltime < 0) {
+			polltime = 0;
+		}
+
+		int32_t p_rc = poll(pfd, pfdcount, polltime);
 
 		if (p_rc < 0) {
 			if (errno==EINTR) continue;
