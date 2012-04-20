@@ -3724,7 +3724,9 @@ void * work_thread(void *ptr) {
 		}
 
 		if (!data) {
-			if (!cl->pfd)
+            /* for serial client cl->pfd is file descriptor for serial port not socket
+               for example: pfd=open("/dev/ttyUSB0"); */
+			if (!cl->pfd || ph[cl->ctyp].listenertype == LIS_SERIAL)
 				break;
 			pfd[0].fd = cl->pfd;
 			pfd[0].events = POLLIN | POLLPRI | POLLHUP;
