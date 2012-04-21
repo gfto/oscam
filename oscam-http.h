@@ -2016,6 +2016,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	<input name=\"part\" type=\"hidden\" value=\"dvbapi\">\n\
 	<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
 	<input name=\"enabled\" type=\"hidden\" value=\"0\">\n\
+	<input name=\"reopenonzap\" type=\"hidden\" value=\"0\">\n\
 	<input name=\"au\" type=\"hidden\" value=\"0\">\n\
 	<TABLE class=\"config\">\n\
 		<TR><TH COLSPAN=\"2\">Edit DVB Api Config</TH></TR>\n\
