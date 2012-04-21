@@ -1086,12 +1086,12 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 	struct cc_card *card = NULL, *ncard, *xcard = NULL;
 	while ((ncard = ll_iter_next(&it))) {
 		if ((ncard->caid == cur_er->caid // caid matches
-				|| (rdr->cc_want_emu && (ncard->caid & 0x00FF) == 0x0000 && (ncard->caid == (cur_er->caid & 0xFF00))))
+				|| (rdr->cc_want_emu && (ncard->id < 0x64) && (ncard->caid == (cur_er->caid & 0xFF00))))
 						// or system matches if caid ends with 00
 	                    // needed for wantemu
-				#ifdef WITH_LB  
+#ifdef WITH_LB
 				||(chk_only && cfg.lb_mode && cfg.lb_auto_betatunnel && cur_er->caid>>8==0x18 && ncard->caid>>8==0x17) //accept beta card when beta-tunnel is on
-				#endif
+#endif
 				) {
 			struct cc_srvid *blocked_sid = is_sid_blocked(ncard, &cur_srvid);
 			if (blocked_sid && (!chk_only || blocked_sid->ecmlen == 0))

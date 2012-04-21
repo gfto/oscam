@@ -363,7 +363,13 @@ void save_stat_to_file_thread()
 				fprintf(file, "%s,%d,%04hX,%06X,%04hX,%04hX,%d,%d,%ld,%d,%02hX\n",
 					rdr->label, stat->rc, stat->caid, stat->prid,
 					stat->srvid, stat->chid, stat->time_avg, stat->ecm_count, stat->last_received, stat->fail_factor, stat->ecmlen);
+
 				count++;
+				if (count % 500 == 0) { //Saving stats is using too much cpu and causes high file load. so we need a break
+					cs_readunlock(&rdr->lb_stat_lock);
+					cs_sleepms(100);
+					cs_readlock(&rdr->lb_stat_lock);
+				}
 			}
 			cs_readunlock(&rdr->lb_stat_lock);
 		}
