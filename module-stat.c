@@ -124,6 +124,8 @@ void load_stat_from_file()
 		cs_log("loadbalancer: can't read from file %s", fname);
 		return;
 	}
+	setvbuf(file, NULL, _IOFBF, 128*1024);
+
 	cs_debug_mask(D_LB, "loadbalancer: load statistics from %s", fname);
 
 	struct timeb ts, te;
@@ -318,6 +320,7 @@ void save_stat_to_file_thread()
 {
 	stat_load_save = 0;
 	char buf[256];
+
 	char *fname;
 	if (!cfg.lb_savepath || !cfg.lb_savepath[0]) {
 		snprintf(buf, sizeof(buf), "%s/stat", get_tmp_dir());
@@ -333,6 +336,8 @@ void save_stat_to_file_thread()
 		return;
 	}
 	
+	setvbuf(file, NULL, _IOFBF, 128*1024);
+
 	struct timeb ts, te;
     cs_ftime(&ts);
          
@@ -365,11 +370,11 @@ void save_stat_to_file_thread()
 					stat->srvid, stat->chid, stat->time_avg, stat->ecm_count, stat->last_received, stat->fail_factor, stat->ecmlen);
 
 				count++;
-				if (count % 500 == 0) { //Saving stats is using too much cpu and causes high file load. so we need a break
-					cs_readunlock(&rdr->lb_stat_lock);
-					cs_sleepms(100);
-					cs_readlock(&rdr->lb_stat_lock);
-				}
+//				if (count % 500 == 0) { //Saving stats is using too much cpu and causes high file load. so we need a break
+//					cs_readunlock(&rdr->lb_stat_lock);
+//					cs_sleepms(100);
+//					cs_readlock(&rdr->lb_stat_lock);
+//				}
 			}
 			cs_readunlock(&rdr->lb_stat_lock);
 		}

@@ -12,6 +12,7 @@ static FILE *fpa=(FILE *)0;
 #endif
 static int8_t logStarted = 0;
 LLIST *log_list;
+char *vbuf;
 
 struct s_log {
 	char *txt;
@@ -105,6 +106,7 @@ int32_t cs_open_logfiles()
 			fp = (FILE *)0;
 			fprintf(stderr, "couldn't open logfile: %s (errno %d %s)\n", cfg.logfile, errno, strerror(errno));
 		} else {
+			setvbuf(fp, NULL, _IOFBF, 8*1024);
 			time_t t;
 			char line[80];
 			memset(line, '-', sizeof(line));

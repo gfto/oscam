@@ -1448,9 +1448,6 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	tpl_addVar(vars, TPLADD, "CLASS", value);
 	free_mk_t(value);
 
-	if (rdr->show_cls)
-		tpl_printf(vars, TPLADD, "SHOWCLS", "%d", rdr->show_cls);
-
 	if(rdr->cachemm)
 		tpl_printf(vars, TPLADD, "EMMCACHE", "%d,%d,%d", rdr->cachemm, rdr->rewritemm, rdr->logemm);
 

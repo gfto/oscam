@@ -2096,6 +2096,7 @@ int32_t write_services()
 		cs_log("Cannot open file \"%s\" (errno=%d %s)", tmpfile, errno, strerror(errno));
 		return(1);
 	}
+	setvbuf(f, NULL, _IOFBF, 16*1024);
 	fprintf(f,"# oscam.services generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
 	fprintf(f,"# Read more: http://streamboard.gmc.to/svn/oscam/trunk/Distribution/doc/txt/oscam.services.txt\n\n");
 
@@ -2148,6 +2149,7 @@ int32_t write_config()
 		cs_log("Cannot open file \"%s\" (errno=%d %s)", tmpfile, errno, strerror(errno));
 		return(1);
 	}
+	setvbuf(f, NULL, _IOFBF, 16*1024);
 	fprintf(f,"# oscam.conf generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
 	fprintf(f,"# Read more: http://streamboard.gmc.to/svn/oscam/trunk/Distribution/doc/txt/oscam.conf.txt\n\n");
 
@@ -2633,6 +2635,7 @@ int32_t write_userdb()
     cs_log("Cannot open file \"%s\" (errno=%d %s)", tmpfile, errno, strerror(errno));
     return(1);
   }
+  setvbuf(f, NULL, _IOFBF, 16*1024);
   fprintf(f,"# oscam.user generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
   fprintf(f,"# Read more: http://streamboard.gmc.to/svn/oscam/trunk/Distribution/doc/txt/oscam.user.txt\n\n");
 
@@ -2810,6 +2813,7 @@ int32_t write_server()
 		cs_log("Cannot open file \"%s\" (errno=%d %s)", tmpfile, errno, strerror(errno));
 		return(1);
 	}
+	setvbuf(f, NULL, _IOFBF, 16*1024);
 	fprintf(f,"# oscam.server generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
 	fprintf(f,"# Read more: http://streamboard.gmc.to/svn/oscam/trunk/Distribution/doc/txt/oscam.server.txt\n\n");
 
@@ -2891,9 +2895,6 @@ int32_t write_server()
 
 			if ((rdr->sc8in1_dtrrts_patch || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, "sc8in1_dtrrts_patch", "%d\n", rdr->sc8in1_dtrrts_patch);
-
-			if ((rdr->show_cls != 10 || cfg.http_full_cfg) && isphysical)
-				fprintf_conf(f, "showcls", "%d\n", rdr->show_cls);
 
 			if (rdr->fallback || cfg.http_full_cfg)
 				fprintf_conf(f, "fallback", "%d\n", rdr->fallback);
@@ -3014,9 +3015,6 @@ int32_t write_server()
 			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, "aeskeys", "%s\n", value);
 			free_mk_t(value);
-
-			if ((rdr->show_cls && !rdr->show_cls == 10) || cfg.http_full_cfg)
-				fprintf_conf(f, "showcls", "%d\n", rdr->show_cls);
 
 			value = mk_t_group(rdr->grp);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
@@ -4562,11 +4560,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "showcls")) {
-		rdr->show_cls  = strToIntVal(value, 0);
-		return;
-	}
-
 	if (!strcmp(token, "group")) {
 		rdr->grp = 0;
 		for (ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1)) {
@@ -5058,7 +5051,6 @@ int32_t init_readerdb()
 			memset(rdr->rom, 0, sizeof(rdr->rom));
 			rdr->enable = 1;
 			rdr->tcp_rto = DEFAULT_TCP_RECONNECT_TIMEOUT;
-			rdr->show_cls = 10;
 			rdr->nagra_read = 0;
 			rdr->mhz = 357;
 			rdr->cardmhz = 357;

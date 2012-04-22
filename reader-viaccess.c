@@ -874,7 +874,7 @@ static int32_t viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 static int32_t viaccess_card_info(struct s_reader * reader)
 {
 	def_resp;
-	int32_t i, l, scls, show_cls;
+	int32_t i, l, scls;
 	uchar insac[] = { 0xca, 0xac, 0x00, 0x00, 0x00 }; // select data
 	uchar insb8[] = { 0xca, 0xb8, 0x00, 0x00, 0x00 }; // read selected data
 	uchar insa4[] = { 0xca, 0xa4, 0x00, 0x00, 0x00 }; // select issuer
@@ -887,7 +887,6 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 	time_t start_t, end_t;
 	uchar via_cls = 0;
 
-	show_cls=reader->show_cls;
 	reader->last_geo.provid  = 0;
 	reader->last_geo.geo_len = 0;
 	reader->last_geo.geo[0]  = 0;
@@ -946,12 +945,9 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 			insb8[4]=0x02; write_cmd(insb8, NULL); // read class subs nano + len
 			if( (cta_res[cta_lr-2]==0x90) && (cta_res[cta_lr-1]==0) )
 			{
-				int32_t fshow;
 				l=cta_res[1];
-				//fshow=(client[cs_idx].dbglvl==D_DUMP)?1:(scls < show_cls)?1:0;
-				fshow=(scls<show_cls);
 				insb8[4]=l; write_cmd(insb8, NULL); // read class subs
-				if( (cta_res[cta_lr-2]==0x90) && (fshow) &&
+				if( (cta_res[cta_lr-2]==0x90) &&
 					(cta_res[cta_lr-1]==0x00 || cta_res[cta_lr-1]==0x08) )
 				{
 					show_class(reader, NULL, cta_res, cta_lr-2);
