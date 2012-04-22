@@ -1086,7 +1086,7 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 	struct cc_card *card = NULL, *ncard, *xcard = NULL;
 	while ((ncard = ll_iter_next(&it))) {
 		if ((ncard->caid == cur_er->caid // caid matches
-				|| (rdr->cc_want_emu && (ncard->id < 0x64) && (ncard->caid == (cur_er->caid & 0xFF00))))
+				|| (rdr->cc_want_emu && (ncard->caid == (cur_er->caid & 0xFF00))))
 						// or system matches if caid ends with 00
 	                    // needed for wantemu
 #ifdef WITH_LB
