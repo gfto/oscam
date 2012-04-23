@@ -937,9 +937,9 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			if (nr>5) continue;
 
 			if (!(ea->status & READER_FALLBACK))
-				snprintf(rptr, 32, "%s ", ea->reader->label);
+				snprintf(rptr, 32, "%s%s%s ", ea->reader->label, (ea->status&READER_CACHEEX)?"*":"", (ea->status&READER_LOCAL)?"L":"");
 			else
-				snprintf(rptr, 32, "[%s] ", ea->reader->label);
+				snprintf(rptr, 32, "[%s%s%s] ", ea->reader->label, (ea->status&READER_CACHEEX)?"*":"", (ea->status&READER_LOCAL)?"L":"");
 			rptr = strend(rptr);
 		}
 
@@ -952,7 +952,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 #endif	
 
 	for(ea = er->matching_rdr; ea; ea = ea->next) {
-		ea->status &= !(READER_ACTIVE|READER_FALLBACK);
+		ea->status &= ~(READER_ACTIVE|READER_FALLBACK);
 		ea->value = 0;
 	}
 
@@ -1019,7 +1019,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					case LB_NONE:
 					case LB_LOG_ONLY:
 						//cs_debug_mask(D_LB, "loadbalance disabled");
-						ea->status = READER_ACTIVE;
+						ea->status |= READER_ACTIVE;
 						if (rdr->fallback)
 							ea->status |= READER_FALLBACK;
 						continue;
@@ -1191,9 +1191,9 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			if (nr>5) continue;
 
 			if (!(ea->status & READER_FALLBACK))
-				snprintf(rptr, 32, "%s ", ea->reader->label);
+				snprintf(rptr, 32, "%s%s%s ", ea->reader->label, (ea->status&READER_CACHEEX)?"*":"", (ea->status&READER_LOCAL)?"L":"");
 			else
-				snprintf(rptr, 32, "[%s] ", ea->reader->label);
+				snprintf(rptr, 32, "[%s%s%s] ", ea->reader->label, (ea->status&READER_CACHEEX)?"*":"", (ea->status&READER_LOCAL)?"L":"");
 			rptr = strend(rptr);
 		}
 
