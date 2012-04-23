@@ -491,6 +491,87 @@ static int32_t bulcrypt_get_emm_type(EMM_PACKET *ep, struct s_reader *reader)
 	return ret;
 }
 
+static void bulcrypt_get_emm_filter(struct s_reader * rdr, uchar *filter)
+{
+	int32_t idx = 2;
+
+	filter[0] = 0xFF;
+	filter[1] = 0;
+
+	filter[1]++;
+	filter[idx++]			= EMM_UNIQUE;
+	filter[idx++]			= 0;
+	filter[idx + 0]			= 0x82;
+	filter[idx + 1]			= rdr->hexserial[0];
+	filter[idx + 2]			= rdr->hexserial[1];
+	filter[idx + 3]			= rdr->hexserial[2];
+	filter[idx + 4]			= 0xFF;
+	filter[idx + 0 + 16]	= 0xFF;
+	filter[idx + 1 + 16]	= 0xFF;
+	filter[idx + 2 + 16]	= 0xFF;
+	filter[idx + 3 + 16]	= 0xFF;
+	filter[idx + 4 + 16]	= 0xFF;
+	idx += 32;
+
+	filter[1]++;
+	filter[idx++]			= EMM_UNIQUE;
+	filter[idx++]			= 0;
+	filter[idx + 0]			= 0x85;
+	filter[idx + 1]			= rdr->hexserial[0];
+	filter[idx + 2]			= rdr->hexserial[1];
+	filter[idx + 3]			= rdr->hexserial[2];
+	filter[idx + 4]			= 0xFF;
+	filter[idx + 0 + 16]	= 0xFF;
+	filter[idx + 1 + 16]	= 0xFF;
+	filter[idx + 2 + 16]	= 0xFF;
+	filter[idx + 3 + 16]	= 0xFF;
+	filter[idx + 4 + 16]	= 0xFF;
+	idx += 32;
+
+	filter[1]++;
+	filter[idx++]			= EMM_SHARED;
+	filter[idx++]			= 0;
+	filter[idx + 0]			= 0x84;
+	filter[idx + 2]			= rdr->hexserial[0];
+	filter[idx + 2]			= rdr->hexserial[1];
+	filter[idx + 3]			= 0xFF;
+	filter[idx + 0 + 16]	= 0xFF;
+	filter[idx + 1 + 16]	= 0xFF;
+	filter[idx + 2 + 16]	= 0xFF;
+	filter[idx + 3 + 16]	= 0xFF;
+	idx += 32;
+
+	filter[1]++;
+	filter[idx++]			= EMM_GLOBAL;
+	filter[idx++]			= 0;
+	filter[idx + 0]			= 0x8a;
+	filter[idx + 1]			= 0x00;
+	filter[idx + 2]			= rdr->hexserial[0];
+	filter[idx + 3]			= rdr->hexserial[1];
+	filter[idx + 4]			= 0xFF;
+	filter[idx + 0 + 16]	= 0xFF;
+	filter[idx + 1 + 16]	= 0xFF;
+	filter[idx + 2 + 16]	= 0xFF;
+	filter[idx + 3 + 16]	= 0xFF;
+	filter[idx + 4 + 16]	= 0xFF;
+	idx += 32;
+
+	filter[1]++;
+	filter[idx++]			= EMM_UNKNOWN;
+	filter[idx++]			= 0;
+	filter[idx + 0]			= 0x8b;
+	filter[idx + 1]			= 0x00;
+	filter[idx + 2]			= rdr->hexserial[0];
+	filter[idx + 3]			= 0xFF;
+	filter[idx + 0 + 16]	= 0xFF;
+	filter[idx + 1 + 16]	= 0xFF;
+	filter[idx + 2 + 16]	= 0xFF;
+	filter[idx + 3 + 16]	= 0xFF;
+	idx += 32;
+
+	return;
+}
+
 static int32_t bulcrypt_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 {
 	char tmp[512];
@@ -642,6 +723,7 @@ void reader_bulcrypt(struct s_cardsystem *ph)
 	ph->card_info		= bulcrypt_card_info;
 	ph->card_init		= bulcrypt_card_init;
 	ph->get_emm_type	= bulcrypt_get_emm_type;
+	ph->get_emm_filter	= bulcrypt_get_emm_filter;
 	ph->desc			= "bulcrypt";
 	ph->caids[0]		= 0x5581;
 	ph->caids[1]		= 0x4aee;
