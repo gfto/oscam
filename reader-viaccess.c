@@ -63,10 +63,9 @@ static void parse_via_date(const uchar *buf, struct via_date *vd, int32_t fend)
 //
 //}
 
-static void show_class(struct s_reader * reader, const char *p, const uchar *b, int32_t l)
+static void show_class(struct s_reader *reader, const char *p, uint32_t provid, const uchar *b, int32_t l)
 {
 	int32_t i, j;
-	uint32_t provid = b2i(3, b);
 
 	// b -> via date (4 bytes)
 	b+=4;
@@ -116,7 +115,7 @@ static void show_subs(struct s_reader * reader, const uchar *emm)
 	switch( emm[0] )
 	{
 	case 0xA9:
-		show_class(reader, "nano A9: ", emm+2, emm[1]);
+		show_class(reader, "nano A9: ", 0, emm+2, emm[1]);
 		break;
 		/*
 		{
@@ -963,7 +962,7 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 				if( (cta_res[cta_lr-2]==0x90) &&
 					(cta_res[cta_lr-1]==0x00 || cta_res[cta_lr-1]==0x08) )
 				{
-					show_class(reader, NULL, cta_res, cta_lr-2);
+					show_class(reader, NULL, l_provid, cta_res, cta_lr-2);
 				}
 			}
 		}
