@@ -329,6 +329,9 @@ static void usage()
 #ifdef READER_TONGFANG
   fprintf(stderr, "tongfang ");
 #endif
+#ifdef READER_BULCRYPT
+  fprintf(stderr, "bulcrypt ");
+#endif
   fprintf(stderr, "\n\n");
 #ifdef WEBIF
   fprintf(stderr, "oscam [-a] [-b] [-s] [-c <config dir>] [-t <tmp dir>] [-d <level>] [-r <level>] [-w <secs>] [-g <mode>] [-u] [-h]");
@@ -4570,6 +4573,9 @@ int32_t main (int32_t argc, char *argv[])
 #endif
 #ifdef READER_TONGFANG
 	reader_tongfang,
+#endif
+#ifdef READER_BULCRYPT
+	reader_bulcrypt,
 #endif
 	0
   };

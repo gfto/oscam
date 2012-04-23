@@ -74,6 +74,9 @@ extern void reader_dre(struct s_cardsystem *);
 #ifdef READER_TONGFANG
 extern void reader_tongfang(struct s_cardsystem *);
 #endif
+#ifdef READER_BULCRYPT
+extern void reader_bulcrypt(struct s_cardsystem *);
+#endif
 
 /* ===========================
  *         cardreaders

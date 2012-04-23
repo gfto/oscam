@@ -150,6 +150,10 @@
 #ifndef READER_TONGFANG
 #define READER_TONGFANG
 #endif
+
+#ifndef READER_BULCRYPT
+#define READER_BULCRYPT
+#endif
 #endif
 
 #ifndef CS_CACHEEX

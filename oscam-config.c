@@ -3322,6 +3322,11 @@ void write_versionfile() {
 	#else
 	  fprintf(fp, "TONGFANG:                   no\n");
 	#endif
+	#ifdef READER_BULCRYPT
+	  fprintf(fp, "BULCRYPT:                   yes\n");
+	#else
+	  fprintf(fp, "BULCRYPT:                   no\n");
+	#endif
 #else
 	  fprintf(fp, "Cardreader:                 no\n");
 #endif

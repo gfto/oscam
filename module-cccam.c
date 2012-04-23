@@ -896,6 +896,8 @@ int32_t get_UA_ofs(uint16_t caid) {
 		ofs = 2;
 		break;
 	}
+	if (caid == 0x5581 || caid == 0x4AEE) //BULCRYPT:
+		ofs = 1;
 	return ofs;
 }
 
