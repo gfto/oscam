@@ -724,7 +724,7 @@ struct s_cardsystem {
 	void			(*post_process)();
 	int32_t		(*get_emm_type)();
 	void			(*get_emm_filter)();
-	uchar			caids[2];
+	uint16_t		caids[2];
 };
 
 #ifdef IRDETO_GUESSING
