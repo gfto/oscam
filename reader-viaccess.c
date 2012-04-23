@@ -30,38 +30,38 @@ static void parse_via_date(const uchar *buf, struct via_date *vd, int32_t fend)
 	}
 }
 
-static void get_via_data(const uchar *b, int32_t l, time_t *start_t, time_t *end_t, uchar *cls)
-{
-	int32_t i, j;
-	struct via_date vd;
-	struct tm tm;
-	memset(&vd, 0, sizeof(struct via_date));
-
-	// b -> via date (4 bytes)
-	b+=4;
-	l-=4;
-
-	j=l-1;
-	for (; j>=0; j--)
-		for (i=0; i<8; i++)
-			if (b[j] & (1 << (i&7)))
-			{
-				parse_via_date(b-4, &vd, 1);
-				*cls=(l-(j+1))*8+i;
-			}
-
-	memset(&tm, 0, sizeof(struct tm));
-	tm.tm_year = vd.year_s + 80;	//via year starts in 1980, tm_year starts in 1900
-	tm.tm_mon = vd.month_s - 1;	// january is 0 in tm_mon
-	tm.tm_mday = vd.day_s;
-	*start_t = mktime(&tm);
-
-	tm.tm_year = vd.year_e + 80;
-	tm.tm_mon = vd.month_e - 1;
-	tm.tm_mday = vd.day_e;
-	*end_t = mktime(&tm);
-
-}
+//static void get_via_data(const uchar *b, int32_t l, time_t *start_t, time_t *end_t, uchar *cls)
+//{
+//	int32_t i, j;
+//	struct via_date vd;
+//	struct tm tm;
+//	memset(&vd, 0, sizeof(struct via_date));
+//
+//	// b -> via date (4 bytes)
+//	b+=4;
+//	l-=4;
+//
+//	j=l-1;
+//	for (; j>=0; j--)
+//		for (i=0; i<8; i++)
+//			if (b[j] & (1 << (i&7)))
+//			{
+//				parse_via_date(b-4, &vd, 1);
+//				*cls=(l-(j+1))*8+i;
+//			}
+//
+//	memset(&tm, 0, sizeof(struct tm));
+//	tm.tm_year = vd.year_s + 80;	//via year starts in 1980, tm_year starts in 1900
+//	tm.tm_mon = vd.month_s - 1;	// january is 0 in tm_mon
+//	tm.tm_mday = vd.day_s;
+//	*start_t = mktime(&tm);
+//
+//	tm.tm_year = vd.year_e + 80;
+//	tm.tm_mon = vd.month_e - 1;
+//	tm.tm_mday = vd.day_e;
+//	*end_t = mktime(&tm);
+//
+//}
 
 static void show_class(struct s_reader * reader, const char *p, const uchar *b, int32_t l)
 {
@@ -84,10 +84,27 @@ static void show_class(struct s_reader * reader, const char *p, const uchar *b, 
 					cs_log("%sclass: %02X, expiry date: %04d/%02d/%02d - %04d/%02d/%02d", p, cls,
 					vd.year_s+1980, vd.month_s, vd.day_s,
 					vd.year_e+1980, vd.month_e, vd.day_e);
-				else
+				else {
 					cs_ri_log(reader, "class: %02X, expiry date: %04d/%02d/%02d - %04d/%02d/%02d", cls,
 					vd.year_s+1980, vd.month_s, vd.day_s,
 					vd.year_e+1980, vd.month_e, vd.day_e);
+
+					time_t start_t, end_t;
+					struct tm tm;
+					//convert time:
+					memset(&tm, 0, sizeof(tm));
+					tm.tm_year = vd.year_s+80; //via year starts in 1980, tm_year starts in 1900
+					tm.tm_mon = vd.month_s-1;  // january is 0 in tm_mon
+					tm.tm_mday = vd.day_s;
+					start_t = cs_timegm(&tm);
+
+					tm.tm_year = vd.year_e+80; //via year starts in 1980, tm_year starts in 1900
+					tm.tm_mon = vd.month_e-1;  // january is 0 in tm_mon
+					tm.tm_mday = vd.day_e;
+					end_t = cs_timegm(&tm);
+
+					cs_add_entitlement(reader, reader->caid, b2i(3, b), cls, cls, start_t, end_t, 5);
+				}
 			}
 }
 
@@ -874,7 +891,7 @@ static int32_t viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 static int32_t viaccess_card_info(struct s_reader * reader)
 {
 	def_resp;
-	int32_t i, l, scls;
+	int32_t i, l;
 	uchar insac[] = { 0xca, 0xac, 0x00, 0x00, 0x00 }; // select data
 	uchar insb8[] = { 0xca, 0xb8, 0x00, 0x00, 0x00 }; // read selected data
 	uchar insa4[] = { 0xca, 0xa4, 0x00, 0x00, 0x00 }; // select issuer
@@ -883,9 +900,6 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 
 	static const uchar cls[] = { 0x00, 0x21, 0xff, 0x9f};
 	static const uchar pin[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04};
-
-	time_t start_t, end_t;
-	uchar via_cls = 0;
 
 	reader->last_geo.provid  = 0;
 	reader->last_geo.geo_len = 0;
@@ -902,7 +916,6 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 	insb8[4]=0x07; write_cmd(insb8, NULL); // read unique id
 	cs_log("[viaccess-reader] serial: %llu", (unsigned long long) b2ll(5, cta_res+2));
 
-	scls=0;
 	insa4[2]=0x00; write_cmd(insa4, NULL); // select issuer 0
 	for (i=1; (cta_res[cta_lr-2]==0x90) && (cta_res[cta_lr-1]==0); i++)
 	{
@@ -939,7 +952,6 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 		// read classes subscription
 		insac[2]=0xa9; insac[4]=4;
 		write_cmd(insac, cls); // request class subs
-		scls=0;
 		while( (cta_res[cta_lr-2]==0x90) && (cta_res[cta_lr-1]==0) )
 		{
 			insb8[4]=0x02; write_cmd(insb8, NULL); // read class subs nano + len
@@ -951,11 +963,6 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 					(cta_res[cta_lr-1]==0x00 || cta_res[cta_lr-1]==0x08) )
 				{
 					show_class(reader, NULL, cta_res, cta_lr-2);
-
-					get_via_data(cta_res, cta_lr-2, &start_t, &end_t, &via_cls);
-					cs_add_entitlement(reader, reader->caid, (uint64_t)l_provid, (uint16_t)via_cls, (uint16_t)via_cls, start_t, end_t, 5);
-
-					scls++;
 				}
 			}
 		}

@@ -451,7 +451,7 @@ int32_t check_ip(struct s_ip *ip, in_addr_t n)
 	return ok;
 }
 
-uint32_t b2i(int32_t n, uchar *b)
+uint32_t b2i(int32_t n, const uchar *b)
 {
   switch(n)
   {
