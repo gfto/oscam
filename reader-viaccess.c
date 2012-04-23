@@ -66,6 +66,7 @@ static void parse_via_date(const uchar *buf, struct via_date *vd, int32_t fend)
 static void show_class(struct s_reader * reader, const char *p, const uchar *b, int32_t l)
 {
 	int32_t i, j;
+	uint32_t provid = b2i(3, b);
 
 	// b -> via date (4 bytes)
 	b+=4;
@@ -103,7 +104,7 @@ static void show_class(struct s_reader * reader, const char *p, const uchar *b, 
 					tm.tm_mday = vd.day_e;
 					end_t = cs_timegm(&tm);
 
-					cs_add_entitlement(reader, reader->caid, b2i(3, b), cls, cls, start_t, end_t, 5);
+					cs_add_entitlement(reader, reader->caid, provid, cls, cls, start_t, end_t, 5);
 				}
 			}
 }
