@@ -533,7 +533,7 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len) {
 
 		if (demux[demux_id].EMMpidcount >= ECM_PIDS) break;
 
-		uint16_t caid=(((buf[i + 2] & 0x1F) << 8) | buf[i + 3]);
+		uint16_t caid=((buf[i + 2] << 8) | buf[i + 3]);
 		uint16_t emm_pid=(((buf[i + 4] & 0x1F) << 8) | buf[i + 5]);
 		uint32_t emm_provider = 0;
 
