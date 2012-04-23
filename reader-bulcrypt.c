@@ -532,7 +532,7 @@ static void bulcrypt_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[idx++]			= EMM_SHARED;
 	filter[idx++]			= 0;
 	filter[idx + 0]			= 0x84;
-	filter[idx + 2]			= rdr->hexserial[0];
+	filter[idx + 1]			= rdr->hexserial[0];
 	filter[idx + 2]			= rdr->hexserial[1];
 	filter[idx + 3]			= 0xFF;
 	filter[idx + 0 + 16]	= 0xFF;
