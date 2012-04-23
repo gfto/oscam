@@ -643,5 +643,7 @@ void reader_bulcrypt(struct s_cardsystem *ph)
 	ph->card_init		= bulcrypt_card_init;
 	ph->get_emm_type	= bulcrypt_get_emm_type;
 	ph->desc			= "bulcrypt";
+	ph->caids[0]		= 0x5581;
+	ph->caids[1]		= 0x4aee;
 }
 #endif

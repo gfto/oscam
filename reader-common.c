@@ -417,6 +417,8 @@ struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid) {
 	for (i=0; i<CS_MAX_MOD; i++) { 
 		if (cardsystem[i].caids) { 
 			for (j=0;j<2;j++) { 
+				if (cardsystem[i].caids[j] == caid)
+					return &cardsystem[i];
 				if ((cardsystem[i].caids[j]==caid >> 8)) { 
 					return &cardsystem[i];
 				} 
