@@ -505,12 +505,10 @@ static void bulcrypt_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[idx + 1]			= rdr->hexserial[0];
 	filter[idx + 2]			= rdr->hexserial[1];
 	filter[idx + 3]			= rdr->hexserial[2];
-	filter[idx + 4]			= 0xFF;
 	filter[idx + 0 + 16]	= 0xFF;
 	filter[idx + 1 + 16]	= 0xFF;
 	filter[idx + 2 + 16]	= 0xFF;
 	filter[idx + 3 + 16]	= 0xFF;
-	filter[idx + 4 + 16]	= 0xFF;
 	idx += 32;
 
 	filter[1]++;
@@ -520,12 +518,10 @@ static void bulcrypt_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[idx + 1]			= rdr->hexserial[0];
 	filter[idx + 2]			= rdr->hexserial[1];
 	filter[idx + 3]			= rdr->hexserial[2];
-	filter[idx + 4]			= 0xFF;
 	filter[idx + 0 + 16]	= 0xFF;
 	filter[idx + 1 + 16]	= 0xFF;
 	filter[idx + 2 + 16]	= 0xFF;
 	filter[idx + 3 + 16]	= 0xFF;
-	filter[idx + 4 + 16]	= 0xFF;
 	idx += 32;
 
 	filter[1]++;
@@ -534,11 +530,9 @@ static void bulcrypt_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[idx + 0]			= 0x84;
 	filter[idx + 1]			= rdr->hexserial[0];
 	filter[idx + 2]			= rdr->hexserial[1];
-	filter[idx + 3]			= 0xFF;
 	filter[idx + 0 + 16]	= 0xFF;
 	filter[idx + 1 + 16]	= 0xFF;
 	filter[idx + 2 + 16]	= 0xFF;
-	filter[idx + 3 + 16]	= 0xFF;
 	idx += 32;
 
 	filter[1]++;
@@ -548,12 +542,10 @@ static void bulcrypt_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[idx + 1]			= 0x00;
 	filter[idx + 2]			= rdr->hexserial[0];
 	filter[idx + 3]			= rdr->hexserial[1];
-	filter[idx + 4]			= 0xFF;
 	filter[idx + 0 + 16]	= 0xFF;
 	filter[idx + 1 + 16]	= 0xFF;
 	filter[idx + 2 + 16]	= 0xFF;
 	filter[idx + 3 + 16]	= 0xFF;
-	filter[idx + 4 + 16]	= 0xFF;
 	idx += 32;
 
 	filter[1]++;
@@ -562,11 +554,9 @@ static void bulcrypt_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[idx + 0]			= 0x8b;
 	filter[idx + 1]			= 0x00;
 	filter[idx + 2]			= rdr->hexserial[0];
-	filter[idx + 3]			= 0xFF;
 	filter[idx + 0 + 16]	= 0xFF;
 	filter[idx + 1 + 16]	= 0xFF;
 	filter[idx + 2 + 16]	= 0xFF;
-	filter[idx + 3 + 16]	= 0xFF;
 	idx += 32;
 
 	return;
