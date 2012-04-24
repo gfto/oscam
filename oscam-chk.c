@@ -572,8 +572,21 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 		return(0);
 	}
 
-	if (reader->caid != caid || reader->audisabled) {
+	if (reader->audisabled)
 		return 0;
+
+	if (reader->caid != caid) {
+		int caid_found = 0;
+		for (i = 0; i < 2; i++) {
+			if (reader->csystem.caids[i] == caid) {
+				caid_found = 1;
+				break;
+			}
+		}
+		if (!caid_found) {
+			//cs_debug_mask(D_EMM, "emm reader %s reader_caid %04x != caid %04x", reader->label, reader->caid, caid);
+			return 0;
+		}
 	}
 
 	if (!hexserialset(reader)) {
