@@ -2441,16 +2441,16 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	tpl_printf(vars, TPLADD, "TOTAL_CWCACHE", "%ld", first_client->cwcache);
 	tpl_printf(vars, TPLADD, "TOTAL_CWTUN", "%ld", first_client->cwtun);
 
-	uint32_t ecmsum = first_client->cwfound + first_client->cwnot + first_client->cwignored + first_client->cwtout+ first_client->cwcache + first_client->cwtun;
+	float ecmsum = first_client->cwfound + first_client->cwnot + first_client->cwignored + first_client->cwtout+ first_client->cwcache + first_client->cwtun;
 	if (ecmsum < 1) {
 		ecmsum = 1;
 	}
-	tpl_printf(vars, TPLADD, "REL_CWOK", "%ld", first_client->cwfound * 100 / ecmsum);
-	tpl_printf(vars, TPLADD, "REL_CWNOK", "%ld", first_client->cwnot * 100 / ecmsum);
-	tpl_printf(vars, TPLADD, "REL_CWIGN", "%ld", first_client->cwignored * 100 / ecmsum);
-	tpl_printf(vars, TPLADD, "REL_CWTOUT", "%ld", first_client->cwtout * 100 / ecmsum);
-	tpl_printf(vars, TPLADD, "REL_CWCACHE", "%ld", first_client->cwcache * 100 / ecmsum);
-	tpl_printf(vars, TPLADD, "REL_CWTUN", "%ld", first_client->cwtun * 100 / ecmsum);
+	tpl_printf(vars, TPLADD, "REL_CWOK", "%.2f", first_client->cwfound * 100 / ecmsum);
+	tpl_printf(vars, TPLADD, "REL_CWNOK", "%.2f", first_client->cwnot * 100 / ecmsum);
+	tpl_printf(vars, TPLADD, "REL_CWIGN", "%.2f", first_client->cwignored * 100 / ecmsum);
+	tpl_printf(vars, TPLADD, "REL_CWTOUT", "%.2f", first_client->cwtout * 100 / ecmsum);
+	tpl_printf(vars, TPLADD, "REL_CWCACHE", "%.2f", first_client->cwcache * 100 / ecmsum);
+	tpl_printf(vars, TPLADD, "REL_CWTUN", "%.2f", first_client->cwtun * 100 / ecmsum);
 
 
 	if (!apicall)
@@ -4248,7 +4248,7 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 		}
 	}
 
-	uint32_t cachesum = first_client->cwcacheexgot;
+	float cachesum = first_client->cwcacheexgot;
 	if (cachesum < 1) {
 		cachesum = 1;
 	}
@@ -4259,7 +4259,7 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 	tpl_printf(vars, TPLADD, "TOTAL_CACHEXHIT", "%ld", first_client->cwcacheexhit);
 	tpl_printf(vars, TPLADD, "TOTAL_CACHESIZE", "%d", ecmcwcache_size);
 
-	tpl_printf(vars, TPLADD, "REL_CACHEXHIT", "%ld", first_client->cwcacheexhit * 100 / cachesum);
+	tpl_printf(vars, TPLADD, "REL_CACHEXHIT", "%.2f", first_client->cwcacheexhit * 100 / cachesum);
 
 	return tpl_getTpl(vars, "CACHEEXPAGE");
 }
