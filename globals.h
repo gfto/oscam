@@ -1275,8 +1275,8 @@ struct s_reader  									//contains device info, reader info and card info
 	time_t			lastdvbapirateoverride;
 	int32_t			ecmsok;
 	int32_t			ecmsnok;
-	uint32_t			ecmshealthok;
-	uint32_t			ecmshealthnok;
+	float			ecmshealthok;
+	float			ecmshealthnok;
 	int32_t			cooldown[2];
 	int8_t			cooldownstate;
 	time_t			cooldowntime;

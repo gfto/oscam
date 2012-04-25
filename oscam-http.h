@@ -1109,9 +1109,7 @@ SFRTIFJFU0VSVkVEADs="
 				<TH>EMM blocked<br><span title=\"unknown EMM\"> UK </span>/<span title=\"global EMM\"> G </span>/<span title=\"shared EMM\"> S </span>/<span title=\"unique EMM\"> UQ </span></TH>\n\
 				<TH>ECMs OK</TH>\n\
 				<TH>ECMs NOK</TH>\n\
-				<TH>Health OK</TH>\n\
-				<TH>Health NOK</TH>\n\
-				<TH>LB Weight Current</TH>\n\
+				<TH>LB Weight</TH>\n\
 				<TH COLSPAN=\"5\">Action</TH>\n\
 			</TR>\n\
 ##READERLIST##\n\
@@ -1156,8 +1154,6 @@ SFRTIFJFU0VSVkVEADs="
 				<TD class=\"centered\">##EMMBLOCKEDUK## / ##EMMBLOCKEDG## / ##EMMBLOCKEDS## / ##EMMBLOCKEDUQ##</TD>\n\
 				<TD class=\"centered\">##ECMSOK##</TD>\n\
 				<TD class=\"centered\">##ECMSNOK##</TD>\n\
-				<TD class=\"centered\">##HEALTHOK## %</TD>\n\
-				<TD class=\"centered\">##HEALTHNOK## %</TD>\n\
 				<TD class=\"centered\">##LBWEIGHT##</TD>\n\
 				<TD class=\"centered\"><A HREF=\"readerconfig.html?label=##READERNAMEENC##\" TITLE=\"Edit this Reader\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit Reader\"></A></TD>\n\
 				<TD class=\"centered\">##ENTITLEMENT##</TD>\n\
@@ -1396,6 +1392,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 				<TR><TD>##TPLHELPPREFIX##server#aeskeys##TPLHELPSUFFIX##AES Keys:</A></TD><TD><textarea name=\"aeskeys\" cols=\"98\" rows=\"4\" class=\"bt\" maxlength=\"128\">##AESKEYS##</textarea></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#rsakey##TPLHELPSUFFIX##RSA Key:</A></TD><TD><textarea name=\"rsakey\" cols=\"98\" rows=\"4\" class=\"bt\" maxlength=\"128\">##RSAKEY##</textarea></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#boxkey##TPLHELPSUFFIX##Boxkey:</A></TD><TD><input name=\"boxkey\" type=\"text\" size=\"20\" maxlength=\"16\" value=\"##BOXKEY##\"></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#showcls##TPLHELPSUFFIX##Showcls:</A></TD><TD><input name=\"showcls\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SHOWCLS##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#force_irdeto##TPLHELPSUFFIX##Force Irdeto:</A><input name=\"force_irdeto\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"force_irdeto\" type=\"checkbox\" value=\"1\" ##FORCEIRDETOCHECKED##></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#fix9993##TPLHELPSUFFIX##Fix 9993 for CAID 0919:</A><input name=\"fix9993\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"fix9993\" type=\"checkbox\" value=\"1\" ##FIX9993CHECKED##></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#ins7e##TPLHELPSUFFIX##ins7E payload (26 bytes):</A></TD><TD><input name=\"ins7e\" type=\"text\" size=\"60\" maxlength=\"56\" value=\"##INS7E##\"></TD></TR>\n\
