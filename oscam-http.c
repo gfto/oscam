@@ -2365,8 +2365,6 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_printf(vars, TPLADD, "CASCUSERS", "%d", casc_users);
 		tpl_printf(vars, TPLADD, "CASCUSERS2", "%d", casc_users2);
 		tpl_printf(vars, TPLADD, "CASCUSERSCOMB", "%d/%d", casc_users, casc_users2);
-		tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", latestclient->last_caid);
-		tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", latestclient->last_srvid);
 
 		if ( isactive > 0 || !cfg.http_hide_idle_clients) {
 			tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
@@ -2379,9 +2377,17 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 					tpl_printf(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "Sleeping in %d minutes", account->tosleep - (chsec / 60));
 				else
 					tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "No sleep defined");
+
+				if(latestclient){
+					tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", latestclient->last_caid);
+					tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", latestclient->last_srvid);
+				}
+
 			} else {
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMEONCHANNEL", "");
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "");
+				tpl_addVar(vars, TPLADD, "CLIENTCAID", "");
+				tpl_addVar(vars, TPLADD, "CLIENTSRVID", "");
 			}
 
 			if ((strcmp(proto,"newcamd") == 0) && (latestclient->typ == 'c'))
