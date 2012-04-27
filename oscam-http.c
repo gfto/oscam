@@ -2365,6 +2365,8 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_printf(vars, TPLADD, "CASCUSERS", "%d", casc_users);
 		tpl_printf(vars, TPLADD, "CASCUSERS2", "%d", casc_users2);
 		tpl_printf(vars, TPLADD, "CASCUSERSCOMB", "%d/%d", casc_users, casc_users2);
+		tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", latestclient->last_caid);
+		tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", latestclient->last_srvid);
 
 		if ( isactive > 0 || !cfg.http_hide_idle_clients) {
 			tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
