@@ -2270,6 +2270,11 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		isec = 0;
 		chsec = 0;
 
+		//reset caid/srevid template variables
+		tpl_addVar(vars, TPLADD, "CLIENTCAID", "");
+		tpl_addVar(vars, TPLADD, "CLIENTSRVID", "");
+		tpl_addVar(vars, TPLADD, "CLIENTPICON", "");
+
 		if(account->expirationdate && account->expirationdate < now) {
 			expired = " (expired)";
 			classname = "expired";
@@ -2381,6 +2386,9 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				if(latestclient){
 					tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", latestclient->last_caid);
 					tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", latestclient->last_srvid);
+					tpl_printf(vars, TPLADD, "CLIENTPICON", "<img class=\"clientpicon\" src=\"image?i=IC_%04X_%04X\">",
+																latestclient->last_caid,
+																latestclient->last_srvid);
 				}
 
 			} else {
@@ -2388,6 +2396,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "");
 				tpl_addVar(vars, TPLADD, "CLIENTCAID", "");
 				tpl_addVar(vars, TPLADD, "CLIENTSRVID", "");
+				tpl_addVar(vars, TPLADD, "CLIENTPICON", "");
 			}
 
 			if ((strcmp(proto,"newcamd") == 0) && (latestclient->typ == 'c'))
