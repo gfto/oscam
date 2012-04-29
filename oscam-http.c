@@ -726,6 +726,7 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 	tpl_addVar(vars, TPLADD, "HTTPJSCRIPT", cfg.http_jscript);
 
 	if (cfg.http_hide_idle_clients > 0) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
+	if (cfg.http_showpicons > 0) tpl_addVar(vars, TPLADD, "SHOWPICONSCHECKED", "checked");
 
 	char *value = mk_t_iprange(cfg.mon_allowed);
 	tpl_addVar(vars, TPLADD, "NOCRYPT", value);
@@ -2261,6 +2262,8 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	int32_t casc_users = 0;
 	int32_t casc_users2 = 0;
 
+	if (cfg.http_showpicons) tpl_addVar(vars, TPLADD, "PICONHEADER", "<TH>Image</TH>");
+
 	for (account=cfg.account; (account); account=account->next) {
 		//clear for next client
 		total_users++;
@@ -2274,6 +2277,11 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "CLIENTCAID", "");
 		tpl_addVar(vars, TPLADD, "CLIENTSRVID", "");
 		tpl_addVar(vars, TPLADD, "CLIENTPICON", "");
+
+		if (cfg.http_showpicons) {
+			tpl_addVar(vars, TPLADD, "PICONCOLUMNSTART", "<TD>");
+			tpl_addVar(vars, TPLADD, "PICONCOLUMNEND", "</TD>");
+		}
 
 		if(account->expirationdate && account->expirationdate < now) {
 			expired = " (expired)";
@@ -2386,9 +2394,12 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				if(latestclient){
 					tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", latestclient->last_caid);
 					tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", latestclient->last_srvid);
-					tpl_printf(vars, TPLADD, "CLIENTPICON", "<img class=\"clientpicon\" src=\"image?i=IC_%04X_%04X\">",
+
+					if (cfg.http_showpicons) {
+						tpl_printf(vars, TPLADD, "CLIENTPICON", "<img class=\"clientpicon\" src=\"image?i=IC_%04X_%04X\">",
 																latestclient->last_caid,
 																latestclient->last_srvid);
+					}
 				}
 
 			} else {

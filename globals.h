@@ -1497,6 +1497,7 @@ struct s_config
 	char			http_script[128];
 	int32_t			http_refresh;
 	int8_t			http_hide_idle_clients;
+	int8_t			http_showpicons;
 	struct s_ip 	*http_allowed;
 	int8_t			http_readonly;
 	in_addr_t		http_dynip[MAX_HTTP_DYNDNS];

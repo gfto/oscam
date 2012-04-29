@@ -191,6 +191,7 @@ TR.e_header TD{text-align:center; font-family:\"Courier New\", monospace;}\n\
 span.global_conf {color: blue; font-size: 12px; font-family: Arial; cursor: default; padding: 4px;}\n\
 TD.subheadline {height:10px; border:0px; font-family: Arial; font-size: 11px; padding:5px; background-color:#CCCCCC; color:black;}\n\
 TD.subheadline a {text-decoration: none;}	\
+img.clientpicon{height:40px;width:80px;}\
 "
 
 // minimized and optimized JS based on http://en.hasheminezhad.com/scrollsaver to retain scroll position.
@@ -818,6 +819,7 @@ SFRTIFJFU0VSVkVEADs="
 			<TH>Address</TH>\n\
 			<TH>Protocol</TH>\n\
 			<TH>Last Channel</TH>\n\
+			##PICONHEADER##\n\
 			<TH>Time on Channel</TH>\n\
 			<TH>Idle</TH>\n\
 			<TH TITLE=\"Delivered ECM with status OK\">OK</TH>\n\
@@ -888,6 +890,7 @@ SFRTIFJFU0VSVkVEADs="
 			<TD class=\"centered\">##CLIENTIP##</TD>\n\
 			<TD class=\"centered\"><SPAN TITLE=\"##CLIENTPROTOTITLE##\">##CLIENTPROTO##</SPAN></TD>\n\
 			<TD class=\"centered\">##LASTCHANNEL##</TD>\n\
+			##PICONCOLUMNSTART####CLIENTPICON####PICONCOLUMNEND##\n\
 			<TD class=\"centered\" title=\"##CLIENTTIMETOSLEEP##\">##CLIENTTIMEONCHANNEL##</TD>\n\
 			<TD class=\"centered\">##IDLESECS##</TD>\n\
 			<TD class=\"centered\">##CWOK##</TD>\n\
@@ -1638,6 +1641,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		<input name=\"part\" type=\"hidden\" value=\"monitor\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
 		<input name=\"httphideidleclients\" type=\"hidden\" value=\"0\">\n\
+		<input name=\"httpshowpicons\" type=\"hidden\" value=\"0\">\n\
 		<input name=\"appendchaninfo\" type=\"hidden\" value=\"0\">\n\
 		<TABLE class=\"config\">\n\
 			<TR><TH COLSPAN=\"2\">Edit Monitor Config</TH></TR>\n\
@@ -1675,6 +1679,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#httptpl##TPLHELPSUFFIX##Http tpl:</A></TD><TD><input name=\"httptpl\" type=\"text\" size=\"63\" maxlength=\"127\" value=\"##HTTPTPL##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#httpscript##TPLHELPSUFFIX##Http script:</A></TD><TD><input name=\"httpscript\" type=\"text\" size=\"63\" maxlength=\"127\" value=\"##HTTPSCRIPT##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#httphideidleclients##TPLHELPSUFFIX##Http Hide Idle Clients:</A></TD><TD><input name=\"httphideidleclients\" type=\"checkbox\" value=\"1\" ##CHECKED##>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#httpshowpicons##TPLHELPSUFFIX##Http Show Icons:</A></TD><TD><input name=\"httpshowpicons\" type=\"checkbox\" value=\"1\" ##SHOWPICONSCHECKED##>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#httpallowed##TPLHELPSUFFIX##Http allowed:</A></TD><TD><input name=\"httpallowed\" type=\"text\" size=\"63\" maxlength=\"200\" value=\"##HTTPALLOW##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#httpdyndns##TPLHELPSUFFIX##Http dyndns:</A></TD><TD><input name=\"httpdyndns\" type=\"text\" size=\"63\" maxlength=\"200\" value=\"##HTTPDYNDNS##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#httpsavefullcfg##TPLHELPSUFFIX##Http save full config:</A></TD><TD><SELECT NAME=\"httpsavefullcfg\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##HTTPSAVEFULLSELECT##>YES</OPTION></SELECT></TD></TR>\n\

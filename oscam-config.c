@@ -976,6 +976,11 @@ void chk_t_webif(char *token, char *value)
 		return;
 	}
 
+	if (!strcmp(token, "httpshowpicons")) {
+		cfg.http_showpicons = strToIntVal(value, 0);
+		return;
+	}
+
 	if (!strcmp(token, "httpallowed")) {
 		if(strlen(value) == 0) {
 			clear_sip(&cfg.http_allowed);
@@ -2564,6 +2569,8 @@ int32_t write_config()
 		}
 		if(cfg.http_hide_idle_clients || cfg.http_full_cfg)
 			fprintf_conf(f, "httphideidleclients", "%d\n", cfg.http_hide_idle_clients);
+		if(cfg.http_showpicons || cfg.http_full_cfg)
+			fprintf_conf(f, "httpshowpicons", "%d\n", cfg.http_showpicons);
 		if(cfg.http_readonly || cfg.http_full_cfg)
 			fprintf_conf(f, "httpreadonly", "%d\n", cfg.http_readonly);
 		if(cfg.http_full_cfg)
