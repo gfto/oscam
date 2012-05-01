@@ -22,9 +22,30 @@ additionally to log to stdout or syslog (you can also only log to stdout or sysl
 the filename).
 .RE
 .PP
+\fBecmfmt\fP = \fBformat\fP
+.RS 3n
+define ECM log format, default:c&p/i/d/s/l:h
+
+possible variables:
+
+  \fBc\fP = CAID
+  \fBp\fP = provider ID
+  \fBi\fP = Channel ID
+  \fBd\fP = PID
+  \fBs\fP = service ID
+  \fBl\fP = length
+  \fBh\fP = checksum
+
+use a value as prefix to hide variable with this value, control characters will be escaped by "\\"
+
+ expample: ecmfmt = c&0p/i/d/s/l:h
+           (hide provider ID if 0)
+
+.RE
+.PP
 \fBloghistorysize\fP = \fBbytes\fP
 .RS 3n
-size of log message history in web interface or monitor, 0 = disabled , default:4096
+size of log message history in web interface or monitor, 0 = disabled, default:4096
 .RE
 .PP
 \fBmaxlogsize\fP = \fBkbytes\fP
@@ -1035,10 +1056,6 @@ ECM and CW in cache already.
 \fBcache2\fP
 
 ECM and checksum in cache already.
-.SH LOGGING
-log file format:
-
-CAID&ProviderID/ECMPID/ServiceID/length:checksum
 .SH EXAMPLES
  [global]
  logfile      = /var/log/oscam/oscam.log

@@ -19,8 +19,27 @@ DESCRIPTIONS
 	  logging  targets, default: /var/log/oscam.log. You can define a maximum of one filename and additionally to
 	  log to stdout or syslog (you can also only log to stdout or syslog and omit the filename).
 
+       ecmfmt = format
+	  define ECM log format, default:c&p/i/d/s/l:h
+
+	  possible variables:
+
+	    c = CAID
+	    p = provider ID
+	    i = Channel ID
+	    d = PID
+	    s = service ID
+	    l = length
+	    h = checksum
+
+	  use a value as prefix to hide variable with this value, control characters will be escaped by "\"
+
+	   expample: ecmfmt = c&0p/i/d/s/l:h
+		     (hide provider ID if 0)
+
+
        loghistorysize = bytes
-	  size of log message history in web interface or monitor, 0 = disabled , default:4096
+	  size of log message history in web interface or monitor, 0 = disabled, default:4096
 
        maxlogsize = kbytes
 	  maximum log file size, 0 = unlimited, default:10
@@ -745,11 +764,6 @@ CACHING
        ·  cache2
 
 	  ECM and checksum in cache already.
-
-LOGGING
-       log file format:
-
-       CAID&ProviderID/ECMPID/ServiceID/length:checksum
 
 EXAMPLES
 	[global]
