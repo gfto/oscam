@@ -819,7 +819,6 @@ SFRTIFJFU0VSVkVEADs="
 			<TH>Address</TH>\n\
 			<TH>Protocol</TH>\n\
 			<TH>Last Channel</TH>\n\
-			##PICONHEADER##\n\
 			<TH>Time on Channel</TH>\n\
 			<TH>Idle</TH>\n\
 			<TH TITLE=\"Delivered ECM with status OK\">OK</TH>\n\
@@ -890,7 +889,6 @@ SFRTIFJFU0VSVkVEADs="
 			<TD class=\"centered\">##CLIENTIP##</TD>\n\
 			<TD class=\"centered\"><SPAN TITLE=\"##CLIENTPROTOTITLE##\">##CLIENTPROTO##</SPAN></TD>\n\
 			<TD class=\"centered\">##LASTCHANNEL##</TD>\n\
-			##PICONCOLUMNSTART####CLIENTPICON####PICONCOLUMNEND##\n\
 			<TD class=\"centered\" title=\"##CLIENTTIMETOSLEEP##\">##CLIENTTIMEONCHANNEL##</TD>\n\
 			<TD class=\"centered\">##IDLESECS##</TD>\n\
 			<TD class=\"centered\">##CWOK##</TD>\n\
