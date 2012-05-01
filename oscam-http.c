@@ -2391,9 +2391,10 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 					tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", latestclient->last_srvid);
 
 					if (cfg.http_showpicons) {
-						tpl_printf(vars, TPLADD, "LASTCHANNEL", "<img class=\"clientpicon\" src=\"image?i=IC_%04X_%04X\" alt=\"%s\">",
+						tpl_printf(vars, TPLADD, "LASTCHANNEL", "<img class=\"clientpicon\" src=\"image?i=IC_%04X_%04X\" alt=\"%s\" title=\"%s\">",
 																latestclient->last_caid,
 																latestclient->last_srvid,
+																lastchan,
 																lastchan);
 					} else {
 						tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
