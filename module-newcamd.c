@@ -99,11 +99,15 @@ static int32_t network_message_send(int32_t handle, uint16_t *netMsgId, uint8_t 
       netbuf[10] = cd->provid & 0xff;
     }
     //}
-
-  if (cl->ncd_proto==NCD_525 && cfg.ncd_mgclient && buffer[0]==MSG_CLIENT_2_SERVER_LOGIN_ACK) {
+  if (NCD_525 == cl->ncd_proto && cfg.ncd_mgclient &&
+      MSG_CLIENT_2_SERVER_LOGIN_ACK == buffer[0]) {
 	  netbuf[4] = 0x6E; //From ExtNewcamSession.java CSP line 65-66 getLoginOkMsg()
 	  netbuf[5] = 0x73;
 	  netbuf[11] = 0x14;
+  }
+  if (NCD_525 == cl->ncd_proto && 
+      MSG_SERVER_2_CLIENT_ADDSID == buffer[0]) {
+      netbuf[11] = 0x14;
   }
 //  if (buffer[0]==MSG_CLIENT_2_SERVER_LOGIN && cur_client()->reader->ncd_disable_server_filt) {
 //  	  netbuf[11] = 0x11; //From ChameleonCwsConnector.java CSP line 59-61 run()
@@ -117,6 +121,84 @@ static int32_t network_message_send(int32_t handle, uint16_t *netMsgId, uint8_t 
   netbuf[0] = (len - 2) >> 8;
   netbuf[1] = (len - 2) & 0xff;
   return send(handle, netbuf, len, 0);
+}
+
+static int32_t send_sid_list()
+{
+ struct s_client *cl = cur_client();
+
+ if(1 != cl->ftab.nfilts || !cl->sidtabno)
+ {
+   cs_log("SID list will not be send to mgcamd client.");
+   return 0;
+ }
+
+ uchar mbuf[CWS_NETMSGSIZE];
+ int32_t n = 0, nr = 0, portion_sid_num = 0, i = 0, sid_num = 0,
+ portion_num = 0;
+ SIDTAB *sidtab = 0;
+ custom_data_t cd;
+
+ cs_debug_mask(D_TRACE,"Send SID list to mgcamd client.");
+ memset(&cd, 0, sizeof(cd));
+ FILTER *pfilts = cfg.ncd_ptab.ports[cl->port_idx].ftab.filts;
+
+ /*memset(mbuf, 0, sizeof(mbuf));*/ // not nessesery
+
+ for (nr=0, sidtab=cfg.sidtab; sidtab; sidtab=sidtab->next, nr++)
+ if ((cl->sidtabno&((SIDTABBITS)1<<nr)) && (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid))
+ {
+   for(n = 0; n < pfilts[0].nprids; n++)
+   {
+     if(chk_srvid_match_by_caid_prov(pfilts[0].caid, pfilts[0].prids[n], sidtab))
+     {
+       for(i = 0; i < sidtab->num_srvid; i++)
+       {
+         // First SID goes to header
+         if(0 == portion_sid_num)
+         {
+             cd.sid = sidtab->srvid[i]; // first sid
+             cd.caid = cfg.ncd_ptab.ports[cl->port_idx].s_port;   //assigned port
+             cd.provid = 0x1; // mark as deny
+         }
+         mbuf[portion_sid_num*3] = (uchar)(sidtab->srvid[i] >> 8);
+         mbuf[portion_sid_num*3 +1] = (uchar)(sidtab->srvid[i] & 0xFF);
+         mbuf[portion_sid_num*3 +2] = 0x1; // mark as deny
+
+         ++sid_num;
+         ++portion_sid_num;
+
+         if(portion_sid_num >= (CWS_NETMSGSIZE/4))
+         {
+           ++portion_num;
+           cs_ddump_mask(0x0800, mbuf, (portion_sid_num)*3, "Portion %d contains %d SIDs", portion_num, portion_sid_num);
+           mbuf[0] = MSG_SERVER_2_CLIENT_ADDSID;
+           mbuf[1] = 0x0;
+           mbuf[2] = 0x0;
+           network_message_send(cl->udp_fd, &cl->ncd_msgid,
+                   mbuf, portion_sid_num*3, cl->ncd_skey, COMMTYPE_SERVER, 0, &cd);
+           portion_sid_num = 0;
+         }
+       }
+
+       break;
+     }
+   }
+ }
+
+ if(portion_sid_num)
+ {
+   ++portion_num;
+   cs_ddump_mask(0x0800, mbuf, (portion_sid_num)*3, "Portion %d contains %d SIDs", portion_num, portion_sid_num);
+   mbuf[0] = MSG_SERVER_2_CLIENT_ADDSID;
+   mbuf[1] = 0x0;
+   mbuf[2] = 0x0;
+   network_message_send(cl->udp_fd, &cl->ncd_msgid, mbuf, portion_sid_num*3, cl->ncd_skey, COMMTYPE_SERVER, 0, &cd);
+   portion_sid_num = 0;
+ }
+
+ cs_log("%d deny SIDs in the %d messages were sent to the client.", sid_num, portion_num);
+ return sid_num;
 }
 
 static int32_t network_message_receive(int32_t handle, uint16_t *netMsgId, uint8_t *buffer, 
@@ -603,7 +685,7 @@ static FILTER mk_user_ftab()
 
 static int8_t newcamd_auth_client(in_addr_t ip, uint8_t *deskey)
 {
-    int32_t i, ok, rc;
+    int32_t i, ok, rc, sid_list;
     uchar *usr = NULL, *pwd = NULL;
     char *client_name = NULL;
     struct s_auth *account;
@@ -613,6 +695,8 @@ static int8_t newcamd_auth_client(in_addr_t ip, uint8_t *deskey)
     struct s_reader *aureader = NULL, *rdr = NULL;
     struct s_client *cl = cur_client();
     uchar mbuf[CWS_NETMSGSIZE];
+    
+    sid_list = 0;
 
     ok = cfg.ncd_allowed ? check_ip(cfg.ncd_allowed, ip) : 1;
 
@@ -651,6 +735,12 @@ static int8_t newcamd_auth_client(in_addr_t ip, uint8_t *deskey)
 
     snprintf(cl->ncd_client_id, sizeof(cl->ncd_client_id), "%02X%02X", mbuf[0], mbuf[1]);
     client_name = get_ncd_client_name(cl->ncd_client_id);
+    
+    if(cl->ncd_proto==NCD_525 && 0x6D == mbuf[0] 
+       && 0x67 == mbuf[1] && 0x11 == cl->ncd_header[11])
+    {
+      sid_list = 1;
+    }
 
     for (ok=0, account=cfg.account; (usr) && (account) && (!ok); account=account->next) 
     {
@@ -726,7 +816,7 @@ static int8_t newcamd_auth_client(in_addr_t ip, uint8_t *deskey)
     network_cmd_no_data_send(cl->udp_fd, &cl->ncd_msgid, 
               (ok)?MSG_CLIENT_2_SERVER_LOGIN_ACK:MSG_CLIENT_2_SERVER_LOGIN_NAK,
               cl->ncd_skey, COMMTYPE_SERVER);
-
+              
     if (ok) 
     {
       FILTER *pufilt = 0;
@@ -875,6 +965,10 @@ static int8_t newcamd_auth_client(in_addr_t ip, uint8_t *deskey)
           return -1;
         }
       }
+      
+      // send SID list
+      if (sid_list)
+        send_sid_list();    
     }
     else
     {

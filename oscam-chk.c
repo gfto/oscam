@@ -131,7 +131,7 @@ int32_t has_srvid(struct s_client *cl, ECM_REQUEST *er) {
 }
 
 
-static int32_t chk_srvid_match_by_caid_prov(uint16_t caid, uint32_t provid, SIDTAB *sidtab)
+int32_t chk_srvid_match_by_caid_prov(uint16_t caid, uint32_t provid, SIDTAB *sidtab)
 {
   int32_t i, rc=0;
 

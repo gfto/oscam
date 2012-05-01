@@ -158,6 +158,7 @@ extern int32_t process_input(uchar *, int32_t, int32_t);
 extern int32_t has_srvid(struct s_client *cl, ECM_REQUEST *er);
 extern int32_t chk_srvid(struct s_client *, ECM_REQUEST *);
 extern int32_t chk_srvid_match(ECM_REQUEST *, SIDTAB *);
+extern int32_t chk_srvid_match_by_caid_prov(uint16_t, uint32_t, SIDTAB *);
 extern int32_t chk_sfilter(ECM_REQUEST *, PTAB*);
 extern int32_t chk_ufilters(ECM_REQUEST *);
 extern int32_t chk_rsfilter(struct s_reader * reader, ECM_REQUEST *);
