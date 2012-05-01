@@ -325,7 +325,7 @@ void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar 
 		write_to_log_int(log_txt, len);
 		va_end(params);
 	}
-	if (buf && (mask & cs_dblevel || !mask))
+	if (buf && ((mask & cs_dblevel) || !mask))
 	{
 		for (i=0; i<n; i+=16)
 		{

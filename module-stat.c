@@ -607,17 +607,25 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	}
 	else
 	{
-		if (rc >= E_FOUND)
-			cs_debug_mask(D_LB, "loadbalancer: not handled stat for reader %s: rc %d %04hX&%06X/%04hX/%04hX/%04hX/%02hX time %dms",
-				rdr->label, rc, er->caid, er->prid, er->pid, er->srvid, er->chid, er->l, ecm_time);
-	
+#ifdef WITH_DEBUG
+		if (rc >= E_FOUND) {
+			char buf[ECM_FMT_LEN];
+			format_ecm(er, buf, ECM_FMT_LEN);
+			cs_debug_mask(D_LB, "loadbalancer: not handled stat for reader %s: rc %d %s time %dms",
+				rdr->label, rc, buf, ecm_time);
+		}
+#endif
 		return;
 	}
 	
 	housekeeping_stat(0);
 		
-	cs_debug_mask(D_LB, "loadbalancer: adding stat for reader %s: rc %d %04hX&%06X/%04hX/%04hX/%04hX/%02hX time %dms fail %d",
-				rdr->label, rc, er->caid, er->prid, er->pid, er->srvid, er->chid, er->l, ecm_time, stat->fail_factor);
+#ifdef WITH_DEBUG
+	char buf[ECM_FMT_LEN];
+	format_ecm(er, buf, ECM_FMT_LEN);
+	cs_debug_mask(D_LB, "loadbalancer: adding stat for reader %s: rc %d %s time %dms fail %d",
+				rdr->label, rc, buf, ecm_time, stat->fail_factor);
+#endif
 	
 	if (cfg.lb_save) {
 		stat_load_save++;

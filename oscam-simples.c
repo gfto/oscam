@@ -1423,3 +1423,70 @@ int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms) {
 
 	return comp_timeb(tb, &tb_now);
 }
+
+int32_t ecmfmt(uint16_t caid, uint32_t prid, uint16_t chid, uint16_t pid, uint16_t srvid, uint16_t l, uint16_t checksum, char *result, size_t size)
+{
+	if (!cfg.ecmfmt[0])
+		return snprintf(result, size, "%04X&%06X/%04X/%04X/%02X:%04X", caid, prid, chid, srvid, l, htons(checksum));
+
+	uint32_t s=0, zero=0, flen, value=0;
+	char *c = cfg.ecmfmt, fmt[5] = "%04X";
+	while (*c) {
+		switch(*c)
+		{
+			case '0': zero=1; value=0; break;
+			case 'c': flen=4; value=caid; break;
+			case 'p': flen=6; value=prid; break;
+			case 'i': flen=4; value=chid; break;
+			case 'd': flen=4; value=pid; break;
+			case 's': flen=4; value=srvid; break;
+			case 'l': flen=2; value=l; break;
+			case 'h': flen=4; value=htons(checksum); break;
+			case '\\':
+				c++;
+				flen=0;
+				value=*c;
+				break;
+			default:  flen=0; value=*c; break;
+		}
+		if (value) zero=0;
+
+		if (!zero) {
+			//fmt[0] = '%';
+			if (flen) { //Build %04X / %06X / %02X
+				fmt[1] = '0';
+				fmt[2] = flen+'0';
+				fmt[3] = 'X';
+				fmt[4] = 0;
+			}
+			else {
+				fmt[1] = 'c';
+				fmt[2] = 0;
+			}
+
+			s += snprintf(result+s, size-s, fmt, value);
+		}
+		c++;
+	}
+	return s;
+}
+
+int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
+{
+	return ecmfmt(ecm->caid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->l, ecm->checksum, result, size);
+}
+
+
+int32_t format_cxm(struct s_cacheex_matcher *entry, char *result, size_t size)
+{
+	int32_t s;
+
+	s = ecmfmt(entry->caid, entry->provid, entry->chid, entry->pid, entry->srvid, entry->ecmlen, 0, result, size);
+	s += snprintf(result+s, size-s, " = ");
+	s += ecmfmt(entry->to_caid, entry->to_provid, entry->to_chid, entry->to_pid, entry->to_srvid, entry->to_ecmlen, 0, result+s, size-s);
+	s += snprintf(result+s, size-s, " valid %d/%d", entry->valid_from, entry->valid_to);
+
+	return s;
+}
+
+

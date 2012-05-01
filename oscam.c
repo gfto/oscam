@@ -1868,10 +1868,11 @@ static int8_t match_alias(struct s_client *cl, ECM_REQUEST *er, ECM_REQUEST *ecm
 		if (entry) {
 			int32_t diff = comp_timeb(&er->tps, &ecm->tps);
 			if (diff > entry->valid_from && diff < entry->valid_to) {
-				cs_debug_mask(D_CACHEEX, "cacheex-matching for: %04X:%06X:%04X:%04X:%04X:%02X = %04X:%06X:%04X:%04X:%04X:%02X valid %d/%d",
-						entry->caid, entry->provid, entry->srvid, entry->pid, entry->chid, entry->ecmlen,
-						entry->to_caid, entry->to_provid, entry->to_srvid, entry->to_pid, entry->to_chid, entry->to_ecmlen,
-						entry->valid_from, entry->valid_to);
+#ifdef WITH_DEBUG
+				char buf[CXM_FMT_LEN];
+				format_cxm(entry, buf, CXM_FMT_LEN);
+				cs_debug_mask(D_CACHEEX, "cacheex-matching for: %s", buf);
+#endif
 				return 1;
 			}
 		}
@@ -2045,9 +2046,11 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 			cl->account->cwcacheexgot++;
 		first_client->cwcacheexgot++;
 
-		cs_debug_mask(D_CACHEEX, "got pushed ECM %04X&%06X/%04X/%04X/%02X:%04X from %s",
-			er->caid, er->prid, er->pid, er->srvid, er->l, htons(er->checksum),  csp?"csp":username(cl));
-
+#ifdef WITH_DEBUG
+		char buf[ECM_FMT_LEN];
+		format_ecm(er, buf, ECM_FMT_LEN);
+		cs_debug_mask(D_CACHEEX, "got pushed ECM %s from %s", buf, csp?"csp":username(cl));
+#endif
 		return 1;
 	}
 	else {
@@ -2073,13 +2076,19 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 				cl->account->cwcacheexgot++;
 			first_client->cwcacheexgot++;
 
-			cs_debug_mask(D_CACHEEX, "replaced pushed ECM %04X&%06X/%04X/%04X/%02X:%04X from %s",
-				er->caid, er->prid, er->pid, er->srvid, er->l, htons(er->checksum),  csp?"csp":username(cl));
+#ifdef WITH_DEBUG
+			char buf[ECM_FMT_LEN];
+			format_ecm(er, buf, ECM_FMT_LEN);
+			cs_debug_mask(D_CACHEEX, "replaced pushed ECM %s from %s", buf, csp?"csp":username(cl));
+#endif
 		}
 		else
 		{
-			cs_debug_mask(D_CACHEEX, "ignored duplicate pushed ECM %04X&%06X/%04X/%04X/%02X:%04X from %s",
-				er->caid, er->prid, er->pid, er->srvid, er->l, htons(er->checksum),  csp?"csp":username(cl));
+#ifdef WITH_DEBUG
+			char buf[ECM_FMT_LEN];
+			format_ecm(er, buf, ECM_FMT_LEN);
+			cs_debug_mask(D_CACHEEX, "ignored duplicate pushed ECM %s from %s", buf,  csp?"csp":username(cl));
+#endif
 		}
 
 		return 0;
@@ -2463,12 +2472,16 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		er->rc = E_FAKE;
 
 	if (er->reader_avail == 1) {
-		cs_log("%s (%04X&%06X/%04X/%04X/%02X:%04X): %s (%d ms)%s %s%s",
-			uname, er->caid, er->prid, er->pid, er->srvid, er->l, htons(er->checksum),
+		char buf[ECM_FMT_LEN];
+		format_ecm(er, buf, ECM_FMT_LEN);
+		cs_log("%s (%s): %s (%d ms)%s %s%s",
+			uname, buf,
 			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, schaninfo, sreason);
 	} else {
-		cs_log("%s (%04X&%06X/%04X/%04X/%02X:%04X): %s (%d ms)%s (%d of %d)%s%s",
-			uname, er->caid, er->prid, er->pid, er->srvid, er->l, htons(er->checksum),
+		char buf[ECM_FMT_LEN];
+		format_ecm(er, buf, ECM_FMT_LEN);
+		cs_log("%s (%s): %s (%d ms)%s (%d of %d)%s%s",
+			uname, buf,
 			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, er->reader_count, er->reader_avail, schaninfo, sreason);
 	}
 
@@ -3029,9 +3042,12 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	}
 
 	if (!chk_global_whitelist(er, &line)) {
-		cs_debug_mask(D_TRACE, "whitelist filtered: %s (%04X&%06X/%04X/%04X/%02X:%04X) line %d",
-					username(client), er->caid, er->prid, er->pid, er->srvid, er->l, htons(er->checksum),
-					line);
+#ifdef WITH_DEBUG
+		char buf[ECM_FMT_LEN];
+		format_ecm(er, buf, ECM_FMT_LEN);
+		cs_debug_mask(D_TRACE, "whitelist filtered: %s (%s) line %d",
+					username(client), buf, line);
+#endif
 		er->rc = E_INVALID;
 	}
 
@@ -3203,8 +3219,11 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 #ifdef WITH_LB
 		if (cfg.lb_mode && er->reader_avail) {
-			cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X/%04X",
-				username(client), er->caid, er->prid, er->pid, er->srvid);
+#ifdef WITH_DEBUG
+			char buf[ECM_FMT_LEN];
+			format_ecm(er, buf, ECM_FMT_LEN);
+			cs_debug_mask(D_TRACE, "requesting client %s best reader for %s", username(client), buf);
+#endif
 			get_best_reader(er);
 		}
 #endif
@@ -3364,8 +3383,11 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	er->rcEx = 0;
 	request_cw(er);
 
-	cs_ddump_mask(D_CLIENTECM, er->ecm, er->l, "Client %s ECM dump %04X:%06X:%04X:%04X", username(client),
-			er->caid, er->prid, er->srvid, er->l);
+#ifdef WITH_DEBUG
+	char buf[ECM_FMT_LEN];
+	format_ecm(er, buf, ECM_FMT_LEN);
+	cs_ddump_mask(D_CLIENTECM, er->ecm, er->l, "Client %s ECM dump %s", username(client), buf);
+#endif
 
 	if(timecheck_client){
 		pthread_mutex_lock(&timecheck_client->thread_lock);
@@ -3927,11 +3949,11 @@ void * work_thread(void *ptr) {
 				else
 					res = ph[cl->ctyp].c_cache_push(cl, er);
 
-
-				cs_debug_mask(
-					D_CACHEEX,
-					"pushed ECM %04X&%06X/%04X/%04X/%02X:%04X to %s res %d stats %d", er->caid, er->prid, er->pid, er->srvid, er->l,
-					htons(er->checksum), username(cl), res, stats);
+#ifdef WITH_DEBUG
+				char buf[ECM_FMT_LEN];
+				format_ecm(er, buf, ECM_FMT_LEN);
+				cs_debug_mask(D_CACHEEX, "pushed ECM %s to %s res %d stats %d", buf, username(cl), res, stats);
+#endif
 				free(data->ptr);
 
 				cl->cwcacheexpush++;
@@ -4088,7 +4110,11 @@ static void * check_thread(void) {
 
 			if (comp_timeb(&t_now, &tbc) >= 0) {
 				if (er->stage < 4) {
-					cs_debug_mask(D_TRACE, "fallback for %s %04X&%06X/%04X/%04X ecm=%04X", username(er->client), er->caid, er->prid, er->pid, er->srvid, htons(er->checksum));
+#ifdef WITH_DEBUG
+					char buf[ECM_FMT_LEN];
+					format_ecm(er, buf, ECM_FMT_LEN);
+					cs_debug_mask(D_TRACE, "fallback for %s %s", username(er->client), buf);
+#endif
 					if (er->rc >= E_UNHANDLED) //do not request rc=99
 						request_cw(er);
 
@@ -4096,7 +4122,11 @@ static void * check_thread(void) {
 					time_to_check = add_ms_to_timeb(&tbc, cfg.ctimeout);
 				} else {
 					if (er->client) {
-						cs_debug_mask(D_TRACE, "timeout for %s %04X&%06X/%04X/%04X ecm=%04X", username(er->client), er->caid, er->prid, er->pid, er->srvid, htons(er->checksum));
+#ifdef WITH_DEBUG
+						char buf[ECM_FMT_LEN];
+						format_ecm(er, buf, ECM_FMT_LEN);
+						cs_debug_mask(D_TRACE, "timeout for %s %s", username(er->client), buf);
+#endif
 						write_ecm_answer(NULL, er, E_TIMEOUT, 0, NULL, NULL);
 					}
 #ifdef WITH_LB		

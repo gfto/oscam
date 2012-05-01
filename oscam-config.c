@@ -745,6 +745,11 @@ void chk_t_global(const char *token, char *value)
 	}
 #endif
 
+	if (!strcmp(token, "ecmfmt")) {
+		strncpy(cfg.ecmfmt, value, sizeof(cfg.ecmfmt));
+		return;
+	}
+
 	if (!strcmp(token, "resolvegethostbyname")) {
 		cfg.resolve_gethostbyname = strToIntVal(value, 0);
 		return;
@@ -2286,6 +2291,8 @@ int32_t write_config()
 		fprintf_conf(f, "lb_auto_betatunnel_prefer_beta", "%d\n", cfg.lb_auto_betatunnel_prefer_beta);
 #endif
 
+	if (cfg.ecmfmt[0] || cfg.http_full_cfg)
+		fprintf_conf(f, "ecmfmt", "%s\n", cfg.ecmfmt);
 	if (cfg.resolve_gethostbyname || cfg.http_full_cfg)
 		fprintf_conf(f, "resolvegethostbyname", "%d\n", cfg.resolve_gethostbyname);
 

@@ -56,7 +56,11 @@ struct s_channel_cache *find_channel_cache(int32_t demux_id, int32_t pidindex)
 				p->ECM_PID == c->pid &&
 				p->PROVID == c->prid &&
 				p->irdeto_curchid == c->chid) {
-			cs_debug_mask(D_DVBAPI, "found in channel cache: %4X:%6X:%4X:%4X:%4X", c->caid, c->prid, c->srvid, c->pid, c->chid);
+#ifdef WITH_DEBUG
+			char buf[ECM_FMT_LEN];
+			ecmfmt(c->caid, c->prid, c->chid, c->pid, c->srvid, 0, 0, buf, ECM_FMT_LEN);
+			cs_debug_mask(D_DVBAPI, "found in channel cache: %s", buf);
+#endif
 			return c;
 		}
 	}
@@ -95,7 +99,11 @@ int32_t edit_channel_cache(int32_t demux_id, int32_t pidindex, uint8_t add)
 		c->prid = p->PROVID;
 		c->chid = p->irdeto_curchid;
 		ll_append(channel_cache, c);
-		cs_debug_mask(D_DVBAPI, "added to channel cache: %4X:%6X:%4X:%4X:%4X", c->caid, c->prid, c->srvid, c->pid, c->chid);
+#ifdef WITH_DEBUG
+		char buf[ECM_FMT_LEN];
+		ecmfmt(c->caid, c->prid, c->chid, c->pid, c->srvid, 0, 0, buf, ECM_FMT_LEN);
+		cs_debug_mask(D_DVBAPI, "added to channel cache: %s", buf);
+#endif
 		count++;
 	}
 
@@ -1249,7 +1257,11 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 
 static void request_cw(struct s_client *dvbapi_client, ECM_REQUEST *er)
 {
-	cs_debug_mask(D_DVBAPI, "request cw for caid %04X provid %06X srvid %04X pid %04X chid %04X", er->caid, er->prid, er->srvid, er->pid, er->chid);
+#ifdef WITH_DEBUG
+	char buf[ECM_FMT_LEN];
+	format_ecm(er, buf, ECM_FMT_LEN);
+	cs_debug_mask(D_DVBAPI, "dvbapi request cw for %s", buf);
+#endif
 	get_cw(dvbapi_client, er);
 }
 

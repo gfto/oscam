@@ -464,6 +464,9 @@ struct s_arm_led {
 #define AVAIL_CHECK_CONNECTED	0
 #define AVAIL_CHECK_LOADBALANCE	1
 
+#define ECM_FMT_LEN 60
+#define CXM_FMT_LEN 160
+
 #define LB_MAX_STAT_TIME		10
 
 #if defined OS_MACOSX || defined OS_FREEBSD
@@ -1658,6 +1661,8 @@ struct s_config
 	struct s_global_whitelist *global_whitelist;
 	int8_t global_whitelist_use_l;
 	int8_t global_whitelist_use_m;
+
+	char ecmfmt[ECM_FMT_LEN];
 };
 
 struct s_clientinit

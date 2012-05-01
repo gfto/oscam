@@ -486,6 +486,10 @@ extern int8_t check_fd_for_data(int32_t fd);
 extern void add_ms_to_timespec(struct timespec *timeout, int32_t msec);
 extern int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms);
 
+extern int32_t ecmfmt(uint16_t caid, uint32_t prid, uint16_t chid, uint16_t pid, uint16_t srvid, uint16_t l, uint16_t checksum, char *result, size_t size);
+extern int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size);
+extern int32_t format_cxm(struct s_cacheex_matcher *entry, char *result, size_t size);
+
 /* ===========================
  *       module-cccshare
  * =========================== */
