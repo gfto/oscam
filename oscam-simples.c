@@ -1476,7 +1476,7 @@ int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 	return ecmfmt(ecm->caid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->l, ecm->checksum, result, size);
 }
 
-
+#ifdef CS_CACHEEX
 int32_t format_cxm(struct s_cacheex_matcher *entry, char *result, size_t size)
 {
 	int32_t s;
@@ -1488,5 +1488,5 @@ int32_t format_cxm(struct s_cacheex_matcher *entry, char *result, size_t size)
 
 	return s;
 }
-
+#endif
 
