@@ -20,7 +20,7 @@ DESCRIPTIONS
 	  log to stdout or syslog (you can also only log to stdout or syslog and omit the filename).
 
        ecmfmt = format
-	  define ECM log format, default:c&p/i/d/s/l:h
+	  define ECM log format, default:c&p/i/s/l:h
 
 	  possible variables:
 
