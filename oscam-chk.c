@@ -466,7 +466,17 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   }
 
   if ((!(rdr->typ & R_IS_NETWORK)) && ((rdr->caid >> 8) != ((er->caid >> 8) & 0xFF) && (rdr->caid >> 8) != ((er->ocaid >> 8) & 0xFF)))
-    return 0;
+  {
+    int i, caid_found = 0;
+    for (i = 0; i < 2; i++) {
+      if (rdr->csystem.caids[i] == er->caid || rdr->csystem.caids[i] == er->ocaid) {
+        caid_found = 1;
+        break;
+      }
+    }
+    if (!caid_found)
+      return 0;
+  }
 
   //Checking services:
   if (!chk_srvid(rdr->client, er)) {
