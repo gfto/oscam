@@ -113,10 +113,7 @@ static const unsigned char __md5_itoa64[] =		/* 0 ... 63 => ascii - 64 */
  */
 
 static void
-__md5_Encode (output, input, len)
-	unsigned char *output;
-	u_int32_t *input;
-	unsigned int len;
+__md5_Encode (unsigned char *output, u_int32_t *input, unsigned int len)
 {
 	unsigned int i, j;
 
@@ -134,10 +131,7 @@ __md5_Encode (output, input, len)
  */
 
 static void
-__md5_Decode (output, input, len)
-	u_int32_t *output;
-	const unsigned char *input;
-	unsigned int len;
+__md5_Decode (u_int32_t *output, const unsigned char *input, unsigned int len)
 {
 	unsigned int i, j;
 
@@ -280,9 +274,7 @@ static void __md5_Final ( unsigned char digest[16], struct MD5Context *context)
 /* MD5 basic transformation. Transforms state based on block. */
 
 static void
-__md5_Transform (state, block)
-	u_int32_t state[4];
-	const unsigned char block[64];
+__md5_Transform (u_int32_t state[4], const unsigned char block[64])
 {
 	u_int32_t a, b, c, d, x[16];
 
