@@ -67,10 +67,7 @@ static void *ll_iter_next_nolock(LL_ITER *it)
 		if (!it->cur && !it->prv) {
 			it->cur = it->l->initial;
 		} else {
-			LL_NODE *prvnxt = NULL;
 			for (ptr = it->l->initial; ptr; ptr = ptr->nxt) {
-				if (ptr == it->prv && ptr->nxt != it->cur)
-					prvnxt = ptr->nxt;
 				if (ptr == it->cur) {
 					it->prv = ptr;
 					it->cur = ptr->nxt;
@@ -78,7 +75,6 @@ static void *ll_iter_next_nolock(LL_ITER *it)
 				}
 			}
 			if (!ptr) {
-				//it->cur = prvnxt;
 				ll_iter_reset(it); // restart iteration
 				it->cur = it->l->initial;
 			}
