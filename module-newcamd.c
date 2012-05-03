@@ -168,7 +168,7 @@ static int32_t send_sid_list()
          ++sid_num;
          ++portion_sid_num;
 
-         if(portion_sid_num >= (CWS_NETMSGSIZE/4))
+         if(portion_sid_num >= 50)
          {
            ++portion_num;
            cs_ddump_mask(0x0800, mbuf, (portion_sid_num)*3, "Portion %d contains %d SIDs", portion_num, portion_sid_num);
