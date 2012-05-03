@@ -164,8 +164,14 @@ static void do_emm_from_file(struct s_reader * reader)
       	fclose (fp);
       	return;
    }
-   size_t result;
-   result = fread (eptmp, sizeof(EMM_PACKET), 1, fp); 
+
+   size_t result = fread(eptmp, sizeof(EMM_PACKET), 1, fp);
+   if (result == 0) {
+        cs_log("ERROR: Can't read EMM from file '%s' (errno=%d %s)", token, errno, strerror(errno));
+        free(eptmp);
+        fclose(fp);
+        return;
+   }
    fclose (fp);
 
    eptmp->caid[0] = (reader->caid >> 8) & 0xFF;
