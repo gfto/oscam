@@ -359,7 +359,10 @@ static void usage()
   fprintf(stderr, "\t              32 = traffic to the reader-device on I/O layer\n");
   fprintf(stderr, "\t              64 = EMM logging\n");
   fprintf(stderr, "\t             128 = DVBAPI logging\n");
-  fprintf(stderr, "\t             255 = debug all\n");
+  fprintf(stderr, "\t             256 = Loadbalancer logging\n");
+  fprintf(stderr, "\t             512 = CACHEEX logging\n");
+  fprintf(stderr, "\t            1024 = Client ECM logging\n");
+  fprintf(stderr, "\t           65535 = Debug all\n");
 #ifdef WEBIF
   fprintf(stderr, "\t-r <level> : restart level\n");
   fprintf(stderr, "\t               0 = disabled, restart request sets exit status 99\n");
