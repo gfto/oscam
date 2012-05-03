@@ -21,7 +21,6 @@
 #define DELAY 150
 
 static int32_t smargo_set_settings(struct s_reader *reader, int32_t freq, unsigned char T, unsigned char inv, uint16_t Fi, unsigned char Di, unsigned char Ni) {
-	int32_t ret = 0;
 	uint16_t  freqk = (freq * 10);
 	uchar data[4];
 	struct termios term;
@@ -40,25 +39,25 @@ static int32_t smargo_set_settings(struct s_reader *reader, int32_t freq, unsign
 		data[1]=HIBYTE(Fi);
 		data[2]=LOBYTE(Fi);
 		data[3]=Di;
-		ret = IO_Serial_Write(reader, 0, 4, data);
+		IO_Serial_Write(reader, 0, 4, data);
 	}
 
 	data[0]=0x02;
 	data[1]=HIBYTE(freqk);
 	data[2]=LOBYTE(freqk);
-	ret = IO_Serial_Write(reader, 0, 3, data);
+	IO_Serial_Write(reader, 0, 3, data);
 
 	data[0]=0x03;
 	data[1]=Ni;
-	ret = IO_Serial_Write(reader, 0, 2, data);
+	IO_Serial_Write(reader, 0, 2, data);
 
 	data[0]=0x04;
 	data[1]=T;
-	ret = IO_Serial_Write(reader, 0, 2, data);
+	IO_Serial_Write(reader, 0, 2, data);
 
 	data[0]=0x05;
 	data[1]=0; //always done by oscam
-	ret = IO_Serial_Write(reader, 0, 2, data);
+	IO_Serial_Write(reader, 0, 2, data);
 
 	cs_sleepms(DELAY);
 

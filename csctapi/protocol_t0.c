@@ -335,7 +335,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 	BYTE buffer[PROTOCOL_T0_MAX_SHORT_RESPONSE];
 	BYTE *data;
 	int32_t Lc, Le, sent, recv;
-	int32_t ret = OK, nulls, cmd_case;
+	int32_t nulls, cmd_case;
 	*lr = 0; //in case of error this will be returned
 	
 	cmd_case = APDU_Cmd_Case (command, command_len);
@@ -388,7 +388,6 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 			}
 			call (ICC_Async_Receive (reader, 1, buffer + recv));					//Read SW2 byte
 			recv++;
-			ret = OK;
 			break;
 		}
 		else if ((buffer[recv] & 0x0E) == (command[1] & 0x0E)) /* ACK byte received */
