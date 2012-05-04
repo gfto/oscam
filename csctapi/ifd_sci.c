@@ -4,6 +4,7 @@
 */
 
 #include "ifd_sci.h"
+#include "io_serial.h"
 #ifdef WITH_CARDREADER
 #ifdef SCI_DEV
 
