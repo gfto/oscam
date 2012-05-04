@@ -5,8 +5,8 @@
 #  include <openssl/sha.h>
 #  include <openssl/bn.h>
 #else
-#  include "aes/aes.h"
-#  include "sha/sha1.h"
+#  include "aes.h"
+#  include "sha1.h"
 #  include "bn.h"
 #endif
 

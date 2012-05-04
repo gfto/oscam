@@ -1,3 +1,5 @@
+#include "../oscam-config.h"
+#ifndef WITH_LIBCRYPTO
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 /*
 SHA-1 in C
@@ -78,10 +80,6 @@ A million repetitions of "a"
 */
 
 /* #define SHA1HANDSOFF  */
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -255,3 +253,4 @@ void SHA1_Final(uint8_t digest[SHA_DIGEST_LENGTH], SHA_CTX* context)
     SHA1_Transform(context->state, context->buffer);
 #endif
 }
+#endif

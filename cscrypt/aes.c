@@ -1,3 +1,5 @@
+#include "../oscam-config.h"
+#ifndef WITH_LIBCRYPTO
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 #include <assert.h>
 #include <stdlib.h>
@@ -1205,3 +1207,4 @@ void AES_decrypt(const unsigned char *in, unsigned char *out,
    		rk[3];
 	PUTU32(out + 12, s3);
 }
+#endif

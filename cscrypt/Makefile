@@ -23,7 +23,9 @@ OBJECTS1	= $(LIBFILE1)(md5.o) \
 		  $(LIBFILE1)(i_skey.o) \
 		  $(LIBFILE1)(mem.o) \
 		  $(LIBFILE1)(rc6.o) \
-		  $(LIBFILE1)(i_ecb.o)
+		  $(LIBFILE1)(i_ecb.o) \
+		  $(LIBFILE1)(aes.o) \
+		  $(LIBFILE1)(sha1.o)
 
 all:		$(LIBFILE1)
 
