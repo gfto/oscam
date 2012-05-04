@@ -596,7 +596,7 @@ SFRTIFJFU0VSVkVEADs="
 			<TD>##VIOLATIONDATE##</TD>\
 			<TD>##VIOLATIONCOUNT##</TD>\
 			<TD class=\"centered\">##LEFTTIME##</TD>\
-			<TD class=\"centered\"><A HREF=\"failban.html?action=delete&intip=##INTIP##\" TITLE=\"Delete Entry\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\" BORDER=\"0\" ALT=\"Delete Entry\"/></A></TD>\n\
+			<TD class=\"centered\"><A HREF=\"failban.html?action=delete&intip=##INTIP##\" TITLE=\"Delete Entry\"><IMG CLASS=\"icon\" SRC=\"image?i=ICDEL\" ALT=\"Delete Entry\"/></A></TD>\n\
 		</TR>\n"
 
 #define TPLAPIFAILBANBIT "\
@@ -712,7 +712,7 @@ SFRTIFJFU0VSVkVEADs="
 
 #define TPLCLIENTSTATUSBIT "\
 		<TR class=\"##CLIENTTYPE##\">\n\
-			<TD class=\"statuscol0\"><A HREF =\"status.html?hide=##HIDEIDX##\" TITLE=\"Hide this client\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICHID\" ALT=\"Hide\"></A></TD>\n\
+			<TD class=\"statuscol0\"><A HREF =\"status.html?hide=##HIDEIDX##\" TITLE=\"Hide this client\"><IMG CLASS=\"icon\" SRC=\"image?i=ICHID\" ALT=\"Hide\"></A></TD>\n\
 			<TD class=\"statuscol1\">##CSIDX##</TD>\n\
 			<TD class=\"statuscol2\">##CLIENTTYPE##</TD>\n\
 			<TD class=\"statuscol3\">##CLIENTCNR##</TD>\n\
@@ -870,7 +870,7 @@ SFRTIFJFU0VSVkVEADs="
 			<TD class=\"centered\">##TOTAL_CWTOUT## (##REL_CWTOUT##%)</TD>\n\
 			<TD class=\"centered\">##TOTAL_CWCACHE## (##REL_CWCACHE##%)</TD>\n\
 			<TD class=\"centered\">##TOTAL_CWTUN## (##REL_CWTUN##%)</TD>\n\
-			<TD class=\"centered\"><A HREF=\"userconfig.html?action=resetserverstats\" TITLE=\"reset statistics for server\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICRES\"BORDER=\"0\" ALT=\"Reset Server Stats\"></A></TD>\n\
+			<TD class=\"centered\"><A HREF=\"userconfig.html?action=resetserverstats\" TITLE=\"reset statistics for server\"><IMG CLASS=\"icon\" SRC=\"image?i=ICRES\" ALT=\"Reset Server Stats\"></A></TD>\n\
 		</TR>\n\
 	</TABLE><BR>\n\
 ##TPLFOOTER##"
@@ -886,7 +886,7 @@ SFRTIFJFU0VSVkVEADs="
 
 #define TPLUSERCONFIGLISTBIT "\
 		<TR class=\"##CLASSNAME##\">\n\
-			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG CLASS=\"icon\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
+			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG CLASS=\"icon\" SRC=\"##SWITCHICO##\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
 			<TD><SPAN TITLE=\"##DESCRIPTION##\">##USER##</SPAN><span class=\"notifier\">##CLIENTCOUNT##</span></TD>\n\
 			<TD class=\"centered\">##STATUS##</TD>\n\
 			<TD class=\"centered\">##CLIENTIP##</TD>\n\
@@ -905,9 +905,9 @@ SFRTIFJFU0VSVkVEADs="
 			<TD class=\"centered\">##EMMNOK##</TD>\n\
 			<TD class=\"centered\">##CWRATE####CWRATE2##</TD>\n\
 			<TD class=\"centered\">##CASCUSERSCOMB##</TD>\n\
-			<TD class=\"centered\"><A HREF=\"user_edit.html?user=##USERENC##\" TITLE=\"edit this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit User\"></A></TD>\n\
-			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=resetstats\" TITLE=\"reset statistics for this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICRES\"BORDER=\"0\" ALT=\"Reset Stats\"></A></TD>\n\
-			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=delete\" TITLE=\"delete this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\"BORDER=\"0\" ALT=\"Delete User\"></A></TD>\n\
+			<TD class=\"centered\"><A HREF=\"user_edit.html?user=##USERENC##\" TITLE=\"edit this user\"><IMG CLASS=\"icon\" SRC=\"image?i=ICEDI\" ALT=\"Edit User\"></A></TD>\n\
+			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=resetstats\" TITLE=\"reset statistics for this user\"><IMG CLASS=\"icon\" SRC=\"image?i=ICRES\" ALT=\"Reset Stats\"></A></TD>\n\
+			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=delete\" TITLE=\"delete this user\"><IMG CLASS=\"icon\" SRC=\"image?i=ICDEL\" ALT=\"Delete User\"></A></TD>\n\
 		</TR>\n"
 
 #define TPLAPIUSEREDIT "##TPLAPIHEADER##\n\
@@ -1149,7 +1149,7 @@ SFRTIFJFU0VSVkVEADs="
 
 #define TPLREADERSBIT "\
 			<TR CLASS =\"##READERCLASS##\">\n\
-				<TD class=\"centered\"><A HREF=\"readers.html?label=##READERNAMEENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG CLASS=\"icon\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
+				<TD class=\"centered\"><A HREF=\"readers.html?label=##READERNAMEENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG CLASS=\"icon\" SRC=\"##SWITCHICO##\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
 				<TD>##READERNAME##</TD>\n\
 				<TD>##CTYP##</TD>\n\
 				<TD class=\"centered\">##EMMERRORUK## / ##EMMERRORG## / ##EMMERRORS## / ##EMMERRORUQ##</TD>\n\
@@ -1159,16 +1159,16 @@ SFRTIFJFU0VSVkVEADs="
 				<TD class=\"centered\">##ECMSOK##</TD>\n\
 				<TD class=\"centered\">##ECMSNOK##</TD>\n\
 				<TD class=\"centered\">##LBWEIGHT##</TD>\n\
-				<TD class=\"centered\"><A HREF=\"readerconfig.html?label=##READERNAMEENC##\" TITLE=\"Edit this Reader\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit Reader\"></A></TD>\n\
+				<TD class=\"centered\"><A HREF=\"readerconfig.html?label=##READERNAMEENC##\" TITLE=\"Edit this Reader\"><IMG CLASS=\"icon\" SRC=\"image?i=ICEDI\" ALT=\"Edit Reader\"></A></TD>\n\
 				<TD class=\"centered\">##ENTITLEMENT##</TD>\n\
 				<TD class=\"centered\">##READERREFRESH##</TD>\n\
-				<TD class=\"centered\"><A HREF=\"readerstats.html?label=##READERNAMEENC##&amp;hide=4\" TITLE=\"Show loadbalancer statistics\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICSTA\" BORDER=\"0\" ALT=\"Loadbalancer statistics\"></A></TD>\n\
-				<TD class=\"centered\"><A HREF=\"readers.html?label=##READERNAMEENC##&amp;action=delete\" TITLE=\"Delete this Reader\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\" BORDER=\"0\" ALT=\"Delete Reader\"></A></TD>\n\
+				<TD class=\"centered\"><A HREF=\"readerstats.html?label=##READERNAMEENC##&amp;hide=4\" TITLE=\"Show loadbalancer statistics\"><IMG CLASS=\"icon\" SRC=\"image?i=ICSTA\" ALT=\"Loadbalancer statistics\"></A></TD>\n\
+				<TD class=\"centered\"><A HREF=\"readers.html?label=##READERNAMEENC##&amp;action=delete\" TITLE=\"Delete this Reader\"><IMG CLASS=\"icon\" SRC=\"image?i=ICDEL\" ALT=\"Delete Reader\"></A></TD>\n\
 			</TR>\n"
 
-#define TPLREADERENTITLEBIT "<A HREF=\"entitlements.html?label=##READERNAMEENC##\" TITLE=\"Show Entitlement\"><IMG CLASS=\"icon\" SRC=\"##ENTICO##\" BORDER=\"0\" ALT=\"Show Entitlement\"></A>"
+#define TPLREADERENTITLEBIT "<A HREF=\"entitlements.html?label=##READERNAMEENC##\" TITLE=\"Show Entitlement\"><IMG CLASS=\"icon\" SRC=\"##ENTICO##\" ALT=\"Show Entitlement\"></A>"
 
-#define TPLREADERREFRESHBIT "<A HREF=\"readers.html?action=reread&amp;label=##READERNAMEENC##\" TITLE=\"Refresh Entitlement\"><IMG CLASS=\"icon\" SRC=\"##REFRICO##\" BORDER=\"0\" ALT=\"Reset and reload Entitlement\"></A>"
+#define TPLREADERREFRESHBIT "<A HREF=\"readers.html?action=reread&amp;label=##READERNAMEENC##\" TITLE=\"Refresh Entitlement\"><IMG CLASS=\"icon\" SRC=\"##REFRICO##\" ALT=\"Reset and reload Entitlement\"></A>"
 
 #define TPLREADERSTATS "\
 ##TPLHEADER##\
@@ -1204,7 +1204,7 @@ SFRTIFJFU0VSVkVEADs="
 <TD class=\"centered\">##TIMELAST##</TD>\
 <TD class=\"centered\">##COUNT##</TD>\
 <TD class=\"centered\">##LAST## <A HREF=\"readerstats.html?label=##ENCODEDLABEL##&amp;action=deleterecord&amp;record=##CHANNEL##:##ECMLEN##\">\
-<IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\" BORDER=\"0\" ALT=\"Delete Entry\"/></A></TD></TR>\n"
+<IMG SRC=\"image?i=ICDEL\" ALT=\"Delete Entry\"/></A></TD></TR>\n"
 
 #define TPLSCANUSB "\
 ##TPLHEADER##\
@@ -2070,8 +2070,8 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 				<TD width=\"250\" class=\"centered\">\n\
 ##SIDLIST##\
 				</TD>\n\
-				<TD><A HREF=\"services_edit.html?service=##LABELENC##&amp;action=edit\" TITLE=\"Edit this Service\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit Service\"></A></TD>\n\
-				<TD><A HREF=\"services.html?service=##LABELENC##&amp;action=delete\" TITLE=\"Delete this Service\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\" BORDER=\"0\" ALT=\"Delete Service\"></A></TD>\n\
+				<TD><A HREF=\"services_edit.html?service=##LABELENC##&amp;action=edit\" TITLE=\"Edit this Service\"><IMG CLASS=\"icon\" SRC=\"image?i=ICEDI\" ALT=\"Edit Service\"></A></TD>\n\
+				<TD><A HREF=\"services.html?service=##LABELENC##&amp;action=delete\" TITLE=\"Delete this Service\"><IMG CLASS=\"icon\" SRC=\"image?i=ICDEL\" ALT=\"Delete Service\"></A></TD>\n\
 			</TR>\n"
 
 #define TPLSERVICECONFIGSIDBIT "				<DIV class=\"##SIDCLASS##\">##SID##</DIV>\n"
