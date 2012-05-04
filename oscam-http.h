@@ -185,7 +185,7 @@ path.graph_grid {stroke:gray;stroke-opacity:0.5}\n\
 text.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}\n\
 span.e_valid {background-color:#E6FEBF;}\n\
 span.e_expired {background-color:#fff3e7;}\n\
-span.notifier {font-family: Arial; font-size: 9px;color: red}\n\
+span.notifier {margin-left:4px;height:16px;width:16px;background-color:red;color:white;text-align:center;font-family:Arial;font-size:8px;-moz-border-radius:8px;-webkit-border-radius: 8px;}\n\
 span.idlesec_normal {font-family: Arial; font-size: 9px;color: black}\n\
 span.idlesec_alert {font-family: Arial; font-size: 9px;color: red}\n\
 TR.e_valid TD{background-color:#E6FEBF;text-align:center; font-family:\"Courier New\", monospace;}\n\

@@ -2440,7 +2440,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "DESCRIPTION", xml_encode(vars, account->description?account->description:""));
 		tpl_addVar(vars, TPLADD, "STATUS", status);
 		tpl_addVar(vars, TPLAPPEND, "STATUS", expired);
-		if(nrclients > 1) tpl_printf(vars, TPLADDONCE, "CLIENTCOUNT", "&nbsp;&nbsp;%d", nrclients);
+		if(nrclients > 1) tpl_printf(vars, TPLADDONCE, "CLIENTCOUNT", "%d", nrclients);
 
 		// append row to table template
 		if (!apicall)
@@ -4721,7 +4721,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 				tpl_addVar(vars, TPLAPPEND, "BTNDISABLED", "DISABLED");
 
 			i = ll_count(cfg.v_list);
-			if(i > 0)tpl_printf(vars, TPLADD, "FAILBANNOTIFIER", "(%d)", i);
+			if(i > 0)tpl_printf(vars, TPLADD, "FAILBANNOTIFIER", "%d", i);
 
 			char *result = NULL;
 			
