@@ -3002,10 +3002,10 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 
 				if(!apicall) {
 					if(cl->typ == 'c' && !cfg.http_readonly) {
-						tpl_printf(vars, TPLADD, "CSIDX", "<A HREF=\"status.html?action=kill&threadid=%p\" TITLE=\"Kill this client\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICKIL\" ALT=\"Kill\"></A>", cl);
+						tpl_printf(vars, TPLADD, "CSIDX", "<A HREF=\"status.html?action=kill&threadid=%p\" TITLE=\"Kill this client\"><IMG CLASS=\"icon\" SRC=\"image?i=ICKIL\" ALT=\"Kill\"></A>", cl);
 					}
 					else if((cl->typ == 'p') && !cfg.http_readonly) {
-						tpl_printf(vars, TPLADD, "CSIDX", "<A HREF=\"status.html?action=restart&amp;label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICKIL\" ALT=\"Restart\"></A>", urlencode(vars, cl->reader->label));
+						tpl_printf(vars, TPLADD, "CSIDX", "<A HREF=\"status.html?action=restart&amp;label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG CLASS=\"icon\" SRC=\"image?i=ICKIL\" ALT=\"Restart\"></A>", urlencode(vars, cl->reader->label));
 					}
 					else {
 						tpl_printf(vars, TPLADD, "CSIDX", "%p&nbsp;", cl);
@@ -3116,10 +3116,12 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 				}
 
 				if (!apicall) {
+					tpl_addVar(vars, TPLADD, "CLIENTIDLESECS", sec2timeformat(vars, isec));
+
 					if((cl->typ != 'p' && cl->typ != 'r') || cl->reader->card_status == CARD_INSERTED)
-						tpl_addVar(vars, TPLADD, "CLIENTIDLESECS", sec2timeformat(vars, isec));
+						tpl_addVar(vars, TPLADD, "CLIENTIDLESECSCLASS", "idlesec_normal");
 					else
-						tpl_printf(vars, TPLADD, "CLIENTIDLESECS", "<font color=\"red\">%s</font>", sec2timeformat(vars, isec));
+						tpl_addVar(vars, TPLADD, "CLIENTIDLESECSCLASS", "idlesec_alert");
 				} else {
 					tpl_printf(vars, TPLADD, "CLIENTIDLESECS", "%d", isec);
 				}

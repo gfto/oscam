@@ -171,6 +171,7 @@ A:active {color: #050840;}\n\
 A:hover {color: #ff9e5f;}\n\
 DIV.message {float:right}\n\
 IMG{border:0px solid;}\n\
+IMG.icon{border:0px solid;width:16px;height:16px;background-color:darkblue;-moz-border-radius: 3px; -webkit-border-radius: 3px;}\n\
 P.blinking {text-decoration: blink; font-weight:bold; font-size:large; color:red;}\n\
 a.tooltip  {position: relative; text-decoration: none; cursor:default;}\n\
 a.tooltip1 {position: relative; text-decoration: none; cursor:default;color:red;}\n\
@@ -185,6 +186,8 @@ text.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}\n\
 span.e_valid {background-color:#E6FEBF;}\n\
 span.e_expired {background-color:#fff3e7;}\n\
 span.notifier {font-family: Arial; font-size: 9px;color: red}\n\
+span.idlesec_normal {font-family: Arial; font-size: 9px;color: black}\n\
+span.idlesec_alert {font-family: Arial; font-size: 9px;color: red}\n\
 TR.e_valid TD{background-color:#E6FEBF;text-align:center; font-family:\"Courier New\", monospace;}\n\
 TR.e_expired TD{background-color:#fff3e7;text-align:center; font-family:\"Courier New\", monospace;}\n\
 TR.e_header TD{text-align:center; font-family:\"Courier New\", monospace;}\n\
@@ -724,7 +727,7 @@ SFRTIFJFU0VSVkVEADs="
 			<TD class=\"statuscol12\">##CLIENTCAID##:##CLIENTSRVID##</TD>\n\
 			<TD class=\"statuscol13\">##CLIENTSRVPROVIDER####CLIENTSRVNAME##</TD>\n\
 			<TD class=\"statuscol14\">##CLIENTLBVALUE##</TD>\n\
-			<TD class=\"statuscol15\">##CLIENTIDLESECS##</TD>\n\
+			<TD class=\"statuscol15\"><SPAN CLASS=\"##CLIENTIDLESECSCLASS##\">##CLIENTIDLESECS##</SPAN></TD>\n\
 			<TD class=\"statuscol16\">##CLIENTCON##</TD>\n\
 		</TR>\n"
 
@@ -883,7 +886,7 @@ SFRTIFJFU0VSVkVEADs="
 
 #define TPLUSERCONFIGLISTBIT "\
 		<TR class=\"##CLASSNAME##\">\n\
-			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
+			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG CLASS=\"icon\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
 			<TD><SPAN TITLE=\"##DESCRIPTION##\">##USER##</SPAN><span class=\"notifier\">##CLIENTCOUNT##</span></TD>\n\
 			<TD class=\"centered\">##STATUS##</TD>\n\
 			<TD class=\"centered\">##CLIENTIP##</TD>\n\
@@ -1146,7 +1149,7 @@ SFRTIFJFU0VSVkVEADs="
 
 #define TPLREADERSBIT "\
 			<TR CLASS =\"##READERCLASS##\">\n\
-				<TD class=\"centered\"><A HREF=\"readers.html?label=##READERNAMEENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
+				<TD class=\"centered\"><A HREF=\"readers.html?label=##READERNAMEENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG CLASS=\"icon\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
 				<TD>##READERNAME##</TD>\n\
 				<TD>##CTYP##</TD>\n\
 				<TD class=\"centered\">##EMMERRORUK## / ##EMMERRORG## / ##EMMERRORS## / ##EMMERRORUQ##</TD>\n\
@@ -1163,9 +1166,9 @@ SFRTIFJFU0VSVkVEADs="
 				<TD class=\"centered\"><A HREF=\"readers.html?label=##READERNAMEENC##&amp;action=delete\" TITLE=\"Delete this Reader\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\" BORDER=\"0\" ALT=\"Delete Reader\"></A></TD>\n\
 			</TR>\n"
 
-#define TPLREADERENTITLEBIT "<A HREF=\"entitlements.html?label=##READERNAMEENC##\" TITLE=\"Show Entitlement\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##ENTICO##\" BORDER=\"0\" ALT=\"Show Entitlement\"></A>"
+#define TPLREADERENTITLEBIT "<A HREF=\"entitlements.html?label=##READERNAMEENC##\" TITLE=\"Show Entitlement\"><IMG CLASS=\"icon\" SRC=\"##ENTICO##\" BORDER=\"0\" ALT=\"Show Entitlement\"></A>"
 
-#define TPLREADERREFRESHBIT "<A HREF=\"readers.html?action=reread&amp;label=##READERNAMEENC##\" TITLE=\"Refresh Entitlement\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##REFRICO##\" BORDER=\"0\" ALT=\"Reset and reload Entitlement\"></A>"
+#define TPLREADERREFRESHBIT "<A HREF=\"readers.html?action=reread&amp;label=##READERNAMEENC##\" TITLE=\"Refresh Entitlement\"><IMG CLASS=\"icon\" SRC=\"##REFRICO##\" BORDER=\"0\" ALT=\"Reset and reload Entitlement\"></A>"
 
 #define TPLREADERSTATS "\
 ##TPLHEADER##\
