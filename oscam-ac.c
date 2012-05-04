@@ -101,13 +101,13 @@ void ac_init_client(struct s_client *client, struct s_auth *account)
     if( numusers )
     {
       client->ac_limit = (numusers*100+80)*cfg.ac_stime;
-      cs_debug_mask(D_CLIENT, "acasc: login '%s', users=%d, stime=%d min, dwlimit=%d per min, penalty=%d",
+      cs_debug_mask(D_CLIENT, "acasc: user '%s', users=%d, stime=%d min, dwlimit=%d per min, penalty=%d",
               account->usr, numusers, cfg.ac_stime,
               numusers*100+80, client->ac_penalty);
     }
     else
     {
-      cs_debug_mask(D_CLIENT, "acasc: anti-cascading not used for login '%s'", account->usr);
+      cs_debug_mask(D_CLIENT, "acasc: anti-cascading not used for user '%s'", account->usr);
     }
   }
 }
