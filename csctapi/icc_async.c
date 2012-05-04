@@ -163,7 +163,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 			reader->handle = open (reader->device, O_RDWR);
 	#endif
 			if (reader->handle < 0) {
-				cs_log("ERROR opening device %s",reader->device, errno, strerror(errno));
+				cs_log("ERROR opening device %s (errno:%d %s)", reader->device, errno, strerror(errno));
 				return ERROR;
 			}
 #elif defined(WITH_STAPI)
