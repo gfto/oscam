@@ -171,7 +171,7 @@ A:active {color: #050840;}\n\
 A:hover {color: #ff9e5f;}\n\
 DIV.message {float:right}\n\
 IMG{border:0px solid;}\n\
-IMG.icon{border:0px solid;width:16px;height:16px;background-color:darkblue;-moz-border-radius: 3px; -webkit-border-radius: 3px;}\n\
+IMG.icon{border:0px solid;width:16px;height:16px;}\n\
 P.blinking {text-decoration: blink; font-weight:bold; font-size:large; color:red;}\n\
 a.tooltip  {position: relative; text-decoration: none; cursor:default;}\n\
 a.tooltip1 {position: relative; text-decoration: none; cursor:default;color:red;}\n\
