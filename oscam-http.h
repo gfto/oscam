@@ -185,7 +185,8 @@ path.graph_grid {stroke:gray;stroke-opacity:0.5}\n\
 text.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}\n\
 span.e_valid {background-color:#E6FEBF;}\n\
 span.e_expired {background-color:#fff3e7;}\n\
-span.notifier {margin-left:4px;height:16px;width:16px;background-color:red;color:white;text-align:center;font-family:Arial;font-size:8px;-moz-border-radius:8px;-webkit-border-radius: 8px;}\n\
+DIV.div_notifier {height:14px;width:14px;border-radius:7px;-webkit-border-radius:7px;background-color:red;margin-left:4px;text-align:center;float:right;}\n\
+SPAN.div_notifier {background-color:red;color: white;font-family:Arial;font-size:10px;font-weight:bold;}\n\
 span.idlesec_normal {font-family: Arial; font-size: 9px;color: black}\n\
 span.idlesec_alert {font-family: Arial; font-size: 9px;color: red}\n\
 TR.e_valid TD{background-color:#E6FEBF;text-align:center; font-family:\"Courier New\", monospace;}\n\
@@ -481,7 +482,7 @@ SFRTIFJFU0VSVkVEADs="
 			<TD CLASS=\"##MENUACTIVE3##\"><A HREF=\"userconfig.html\">USERS</A></TD>\n\
 			<TD CLASS=\"##MENUACTIVE4##\"><A HREF=\"services.html\">SERVICES</A></TD>\n\
 			<TD CLASS=\"##MENUACTIVE5##\"><A HREF=\"files.html\">FILES</A></TD>\n\
-			<TD CLASS=\"##MENUACTIVE6##\"><A HREF=\"failban.html\">FAILBAN</A><SPAN CLASS=\"notifier\">##FAILBANNOTIFIER##</SPAN></TD>\n\
+			<TD CLASS=\"##MENUACTIVE6##\"><A HREF=\"failban.html\">FAILBAN</A>##FAILBANNOTIFIER##</TD>\n\
 ##TPLCACHEEXMENUITEM##\
 			<TD CLASS=\"##MENUACTIVE8##\"><A HREF=\"script.html\">SCRIPT</A></TD>\n\
 			<TD CLASS=\"##MENUACTIVE9##\"><A HREF=\"shutdown.html\">SHUTDOWN</A></TD>\n\
@@ -887,7 +888,7 @@ SFRTIFJFU0VSVkVEADs="
 #define TPLUSERCONFIGLISTBIT "\
 		<TR class=\"##CLASSNAME##\">\n\
 			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG CLASS=\"icon\" SRC=\"##SWITCHICO##\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
-			<TD><SPAN TITLE=\"##DESCRIPTION##\">##USER##</SPAN><span class=\"notifier\">##CLIENTCOUNT##</span></TD>\n\
+			<TD><SPAN TITLE=\"##DESCRIPTION##\">##USER##</SPAN>##CLIENTCOUNTNOTIFIER##</TD>\n\
 			<TD class=\"centered\">##STATUS##</TD>\n\
 			<TD class=\"centered\">##CLIENTIP##</TD>\n\
 			<TD class=\"centered\"><SPAN TITLE=\"##CLIENTPROTOTITLE##\">##CLIENTPROTO##</SPAN></TD>\n\
