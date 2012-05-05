@@ -175,7 +175,7 @@ TABLE.menu {border-spacing:0px; border:0px; padding:0px; margin-left:auto; margi
 TABLE.status {border-spacing:1px; border:0px; padding:0px; background-color:white; empty-cells:show;}\n\
 TABLE.config {width:750px;}\n\
 TABLE.invisible TD {border:0px; font-family:Arial; font-size: 12px; padding:5px; background-color:#EEEEEE;}\n\
-TD.menu {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;}\n\
+TD.menu {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;white-space: normal;}\n\
 TD.menu_selected {color:black; background-color:#E6FEBF; font-family: Arial; font-size:14px; font-weight:bold;font-style:italic;}\n\
 TABLE.configmenu {line-height: 16px;}\n\
 TD.configmenu {color:black; background-color:white; font-family: Arial; font-size:11px; font-weight:bold;}\n\
@@ -422,7 +422,7 @@ SFRTIFJFU0VSVkVEADs="
 })"
 
 #define TPLREFRESH "\
-	<script>\n\
+	<script type=\"text/javascript\">\n\
 	<!--\n\
 	addUnloadHandler();\n\
 	window.onload=setTimeout(function(){saveScroll();window.location.href=\"##REFRESHURL##\";},##REFRESHTIME## * 1000)\n\
