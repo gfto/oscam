@@ -133,6 +133,28 @@ TD.statuscol14 A {text-decoration: none;}\n\
 TD.statuscol15 {text-align:center;}\n\
 TD.statuscol16 {text-align:center;}\n\
 TD.statuscol16 A {text-decoration: none;}\n\
+TD.usercol0 {text-align:center;}\n\
+TD.usercol1 {white-space: normal;}\n\
+TD.usercol2 {text-align:center;}\n\
+TD.usercol3 {text-align:center;}\n\
+TD.usercol4 {text-align:center;}\n\
+TD.usercol5 {text-align:center;}\n\
+TD.usercol6 {text-align:center;}\n\
+TD.usercol7 {text-align:center;}\n\
+TD.usercol8 {text-align:center;}\n\
+TD.usercol9 {text-align:center;}\n\
+TD.usercol10 {text-align:center;}\n\
+TD.usercol11 {text-align:center;}\n\
+TD.usercol12 {text-align:center;}\n\
+TD.usercol13 {text-align:center;}\n\
+TD.usercol14 {text-align:center;}\n\
+TD.usercol15 {text-align:center;}\n\
+TD.usercol16 {text-align:center;}\n\
+TD.usercol17 {text-align:center;}\n\
+TD.usercol18 {text-align:center;}\n\
+TD.usercol19 {text-align:center;}\n\
+TD.usercol20 {text-align:center;}\n\
+TD.usercol21 {text-align:center;}\n\
 HR {height:1px; border-width:0; color:white; background-color:#AAAAAA}\n\
 TR.s TD {background-color:#e1e1ef;}\n\
 TR.l TD {background-color:#e1e1ef;}\n\
@@ -825,28 +847,28 @@ SFRTIFJFU0VSVkVEADs="
 
 #define TPLUSERCONFIGLISTBIT "\
 		<TR class=\"##CLASSNAME##\">\n\
-			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG CLASS=\"icon\" SRC=\"##SWITCHICO##\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
-			<TD><SPAN TITLE=\"##DESCRIPTION##\">##USER##</SPAN>##CLIENTCOUNTNOTIFIER##</TD>\n\
-			<TD class=\"centered\">##STATUS##</TD>\n\
-			<TD class=\"centered\">##CLIENTIP##</TD>\n\
-			<TD class=\"centered\"><SPAN TITLE=\"##CLIENTPROTOTITLE##\">##CLIENTPROTO##</SPAN></TD>\n\
-			<TD class=\"centered\">##LASTCHANNEL##</TD>\n\
-			<TD class=\"centered\" title=\"##CLIENTTIMETOSLEEP##\">##CLIENTTIMEONCHANNEL##</TD>\n\
-			<TD class=\"centered\">##IDLESECS##</TD>\n\
-			<TD class=\"centered\">##CWOK##</TD>\n\
-			<TD class=\"centered\">##CWNOK##</TD>\n\
-			<TD class=\"centered\">##CWIGN##</TD>\n\
-			<TD class=\"centered\">##CWTOUT##</TD>\n\
-			<TD class=\"centered\">##CWCACHE##</TD>\n\
-			<TD class=\"centered\">##CWTUN##</TD>\n\
-			<TD class=\"centered\">##CWLASTRESPONSET##</TD>\n\
-			<TD class=\"centered\">##EMMOK##</TD>\n\
-			<TD class=\"centered\">##EMMNOK##</TD>\n\
-			<TD class=\"centered\">##CWRATE####CWRATE2##</TD>\n\
-			<TD class=\"centered\">##CASCUSERSCOMB##</TD>\n\
-			<TD class=\"centered\"><A HREF=\"user_edit.html?user=##USERENC##\" TITLE=\"edit this user\"><IMG CLASS=\"icon\" SRC=\"image?i=ICEDI\" ALT=\"Edit User\"></A></TD>\n\
-			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=resetstats\" TITLE=\"reset statistics for this user\"><IMG CLASS=\"icon\" SRC=\"image?i=ICRES\" ALT=\"Reset Stats\"></A></TD>\n\
-			<TD class=\"centered\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=delete\" TITLE=\"delete this user\"><IMG CLASS=\"icon\" SRC=\"image?i=ICDEL\" ALT=\"Delete User\"></A></TD>\n\
+			<TD class=\"usercol0\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG CLASS=\"icon\" SRC=\"##SWITCHICO##\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
+			<TD class=\"usercol1\"><SPAN TITLE=\"##DESCRIPTION##\">##USER##</SPAN>##CLIENTCOUNTNOTIFIER##</TD>\n\
+			<TD class=\"usercol2\">##STATUS##</TD>\n\
+			<TD class=\"usercol3\">##CLIENTIP##</TD>\n\
+			<TD class=\"usercol4\"><SPAN TITLE=\"##CLIENTPROTOTITLE##\">##CLIENTPROTO##</SPAN></TD>\n\
+			<TD class=\"usercol5\">##LASTCHANNEL##</TD>\n\
+			<TD class=\"usercol6\" title=\"##CLIENTTIMETOSLEEP##\">##CLIENTTIMEONCHANNEL##</TD>\n\
+			<TD class=\"usercol7\">##IDLESECS##</TD>\n\
+			<TD class=\"usercol8\">##CWOK##</TD>\n\
+			<TD class=\"usercol9\">##CWNOK##</TD>\n\
+			<TD class=\"usercol10\">##CWIGN##</TD>\n\
+			<TD class=\"usercol11\">##CWTOUT##</TD>\n\
+			<TD class=\"usercol12\">##CWCACHE##</TD>\n\
+			<TD class=\"usercol13\">##CWTUN##</TD>\n\
+			<TD class=\"usercol14\">##CWLASTRESPONSET##</TD>\n\
+			<TD class=\"usercol15\">##EMMOK##</TD>\n\
+			<TD class=\"usercol16\">##EMMNOK##</TD>\n\
+			<TD class=\"usercol17\">##CWRATE####CWRATE2##</TD>\n\
+			<TD class=\"usercol18\">##CASCUSERSCOMB##</TD>\n\
+			<TD class=\"usercol19\"><A HREF=\"user_edit.html?user=##USERENC##\" TITLE=\"edit this user\"><IMG CLASS=\"icon\" SRC=\"image?i=ICEDI\" ALT=\"Edit User\"></A></TD>\n\
+			<TD class=\"usercol20\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=resetstats\" TITLE=\"reset statistics for this user\"><IMG CLASS=\"icon\" SRC=\"image?i=ICRES\" ALT=\"Reset Stats\"></A></TD>\n\
+			<TD class=\"usercol21\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=delete\" TITLE=\"delete this user\"><IMG CLASS=\"icon\" SRC=\"image?i=ICDEL\" ALT=\"Delete User\"></A></TD>\n\
 		</TR>\n"
 
 #define TPLAPIUSEREDIT "##TPLAPIHEADER##\n\
