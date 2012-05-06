@@ -162,6 +162,7 @@ void module_camd33(struct s_module *ph)
 
   cs_strncpy(ph->desc, "camd33", sizeof(ph->desc));
   ph->type=MOD_CONN_TCP;
+  ph->large_ecm_support = 1;
   ph->listenertype = LIS_CAMD33TCP;
   ph->logtxt=cfg.c33_crypted ? ", crypted" : ", UNCRYPTED!";
   ph->multi=1;

@@ -478,9 +478,16 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
       return 0;
   }
 
+  //Supports long ecms?
+  if (er->l > 255 && (rdr->typ & R_IS_NETWORK) && !rdr->ph.large_ecm_support) {
+	  cs_debug_mask(D_TRACE, "no large ecm support (l=%d) for reader %s", er->l, rdr->label);
+	  return 0;
+  }
+
+
   //Checking services:
   if (!chk_srvid(rdr->client, er)) {
-    cs_debug_mask(D_TRACE, "service %04X not matching  reader %s", er->srvid, rdr->label);
+    cs_debug_mask(D_TRACE, "service %04X not matching reader %s", er->srvid, rdr->label);
     return(0);
   }
 

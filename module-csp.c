@@ -166,6 +166,7 @@ void module_csp(struct s_module *ph)
 
   cs_strncpy(ph->desc, "csp", sizeof(ph->desc));
   ph->type=MOD_CONN_UDP;
+  ph->large_ecm_support = 1;
   ph->listenertype = LIS_CSPUDP;
   ph->multi=1;
   ph->s_ip=cfg.csp_srvip;

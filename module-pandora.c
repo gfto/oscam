@@ -252,6 +252,7 @@ void module_pandora(struct s_module *ph) {
 
 	cs_strncpy(ph->desc, "pandora", sizeof(ph->desc));
 	ph->type = MOD_CONN_UDP;
+	ph->large_ecm_support = 1;
 	ph->multi = 0;
 	//ph->watchdog = 1;
 	ph->s_ip = cfg.pand_srvip;

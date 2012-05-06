@@ -647,6 +647,7 @@ struct s_module {
 	int8_t			active;
 	int8_t			multi;
 	int8_t			type;
+	int8_t			large_ecm_support;
 	int16_t			listenertype;
 	char 			desc[16];
 	char 			*logtxt;

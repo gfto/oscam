@@ -1222,6 +1222,7 @@ void module_oscam_ser(struct s_module *ph)
 {
   cs_strncpy(ph->desc, "serial", sizeof(ph->desc));
   ph->type=MOD_CONN_SERIAL;
+  ph->large_ecm_support = 1;
   ph->listenertype = LIS_SERIAL;
   ph->multi=1;
   ph->s_handler=init_oscam_ser;
