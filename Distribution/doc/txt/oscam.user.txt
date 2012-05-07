@@ -81,6 +81,9 @@ DESCRIPTIONS
 
 	  Please consider memory consumption.
 
+       cacheex_maxhop = hops
+	  define maximum hops for cache exchange, default=10
+
        sleep = minutes
 	  time waiting for inactive user, default:none
 
