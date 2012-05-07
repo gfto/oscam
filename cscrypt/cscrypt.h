@@ -19,10 +19,6 @@
 extern "C" {
 #endif
 
-#if !defined(OS_SOLARIS7) && !defined (OS_AIX42)
-#include <sys/cdefs.h>
-#endif
-
 #define MD5_DIGEST_LENGTH 16
 char * __md5_crypt(const char *, const char *, char *);
 unsigned char *MD5(const unsigned char *, unsigned long, unsigned char *);
