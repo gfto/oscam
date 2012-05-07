@@ -451,8 +451,8 @@ void camd35_cache_push_receive_remote_id(struct s_client *cl, uint8_t *buf) {
 int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 {
 	//check max 10 nodes to push:
-	if (ll_count(er->csp_lastnodes) >= 10) {
-		cs_debug_mask(D_CACHEEX, "cacheex: nodelist reached 10 nodes, no push");
+	if (ll_count(er->csp_lastnodes) >= cs_cacheex_maxhop(cl)) {
+		cs_debug_mask(D_CACHEEX, "cacheex: nodelist reached %d nodes, no push", cs_cacheex_maxhop(cl));
 		return 0;
 	}
 
@@ -623,8 +623,8 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 		uint8_t count = *ofs;
 		ofs++;
 
-		if (count > 10) {
-			cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes (max=10), ignored! %s", (int32_t)count, username(cl));
+		if (count > cs_cacheex_maxhop(cl)) {
+			cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes (max=%d), ignored! %s", (int32_t)count, cs_cacheex_maxhop(cl), username(cl));
 			count = 0;
 		}
 		cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes %s", (int32_t)count, username(cl));

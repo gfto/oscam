@@ -1942,8 +1942,8 @@ int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 	if (!cc || !cl->udp_fd) return 0;
 
 	//check max 10 nodes to push:
-	if (ll_count(er->csp_lastnodes) >= 10) {
-		cs_debug_mask(D_CACHEEX, "cacheex: nodelist reached 10 nodes, no push");
+	if (ll_count(er->csp_lastnodes) >= cs_cacheex_maxhop(cl)) {
+		cs_debug_mask(D_CACHEEX, "cacheex: nodelist reached %d nodes, no push", cs_cacheex_maxhop(cl));
 		return 0;
 	}
 
@@ -2083,8 +2083,8 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 	//Read lastnodes:
 	uint8_t *data;
 	er->csp_lastnodes = ll_create("csp_lastnodes");
-	if (count > 10) {
-		cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes (max=10), ignored!", (int32_t)count);
+	if (count > cs_cacheex_maxhop(cl)) {
+		cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes (max=%d), ignored!", (int32_t)count, cs_cacheex_maxhop(cl));
 		count = 0;
 	}
 	while (count) {

@@ -900,6 +900,7 @@ struct s_client {
 	int32_t         cwcacheexgot;		// count got ecms/cws
 	int32_t         cwcacheexhit;		// count hit ecms/cws
 	LLIST			*ll_cacheex_stats;	// List for cacheex statistics
+	int8_t          cacheex_maxhop;
 #endif
 
 #ifdef WEBIF
@@ -1093,6 +1094,7 @@ struct s_reader  									//contains device info, reader info and card info
 	int8_t			fallback;
 #ifdef CS_CACHEEX
 	int8_t			cacheex;
+	int8_t			cacheex_maxhop;
 #endif
 	int32_t			typ;
 #ifdef COOL
@@ -1320,6 +1322,7 @@ struct s_auth
 	int8_t			uniq;
 #ifdef CS_CACHEEX
 	int8_t			cacheex;
+	int8_t          cacheex_maxhop;
 #endif
 	int16_t			allowedprotocols;
 	LLIST			*aureader_list;

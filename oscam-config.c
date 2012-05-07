@@ -1890,6 +1890,11 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		account->cacheex = strToIntVal(value, 0);
 		return;
 	}
+
+	if (!strcmp(token, "cacheex_maxhop")) {
+		account->cacheex_maxhop = strToIntVal(value, 0);
+		return;
+	}
 #endif
 
 	if (!strcmp(token, "sleep")) {
@@ -2704,6 +2709,9 @@ int32_t write_userdb()
 #ifdef CS_CACHEEX
 		if (account->cacheex || cfg.http_full_cfg)
 			fprintf_conf(f, "cacheex", "%d\n", account->cacheex);
+
+		if (account->cacheex_maxhop || cfg.http_full_cfg)
+			fprintf_conf(f, "cacheex_maxhop", "%d\n", account->cacheex_maxhop);
 #endif
 
 		if (account->tosleep != cfg.tosleep || cfg.http_full_cfg)
@@ -2916,6 +2924,9 @@ int32_t write_server()
 #ifdef CS_CACHEEX
 			if (rdr->cacheex || cfg.http_full_cfg)
 				fprintf_conf(f, "cacheex", "%d\n", rdr->cacheex);
+
+			if (rdr->cacheex_maxhop || cfg.http_full_cfg)
+				fprintf_conf(f, "cacheex_maxhop", "%d\n", rdr->cacheex_maxhop);
 #endif
 
 #ifdef COOL
@@ -4220,6 +4231,11 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 #ifdef CS_CACHEEX
 	if (!strcmp(token, "cacheex")) {
 		rdr->cacheex  = strToIntVal(value, 0);
+		return;
+	}
+
+	if (!strcmp(token, "cacheex_maxhop")) {
+		rdr->cacheex_maxhop  = strToIntVal(value, 0);
 		return;
 	}
 #endif

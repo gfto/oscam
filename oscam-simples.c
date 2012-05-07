@@ -1488,5 +1488,15 @@ int32_t format_cxm(struct s_cacheex_matcher *entry, char *result, size_t size)
 
 	return s;
 }
+
+int8_t cs_cacheex_maxhop(struct s_client *cl)
+{
+	int maxhop = 10;
+	if (cl->reader && cl->reader->cacheex_maxhop)
+		maxhop = cl->reader->cacheex_maxhop;
+	else if (cl->account && cl->account->cacheex_maxhop)
+		maxhop = cl->account->cacheex_maxhop;
+	return maxhop;
+}
 #endif
 
