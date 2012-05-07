@@ -23,10 +23,6 @@ extern "C" {
 #include <sys/cdefs.h>
 #endif
 
-#if !defined(__P)
-#define __P(a)	a
-#endif
-
 #if defined(OS_SOLARIS) || defined (OS_AIX)
 #define u_int32_t unsigned long
 #endif
