@@ -810,7 +810,9 @@ void dvbapi_read_priority() {
 	}
 
 	while (fgets(token, sizeof(token), fp)) {
-		if (token[0]=='#' || token[0]=='/') continue;
+		// Ignore comments and empty lines
+		if (token[0]=='#' || token[0]=='/' || token[0]=='\n' || token[0]=='\r' || token[0]=='\0')
+			continue;
 		if (strlen(token)>100) continue;
 
 		memset(str1, 0, 128);
