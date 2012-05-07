@@ -1,7 +1,7 @@
 #ifndef _TYPES_H_
 #define _TYPES_H_
 
-#if !defined(OS_AIX)
+#ifndef uchar
 typedef unsigned char uchar;
 #endif
 
