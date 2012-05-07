@@ -602,23 +602,7 @@ unsigned char *MD5(const unsigned char *d, unsigned long n, unsigned char *md)
 
 	if (md == NULL) md=m;
 	__md5_Init(&c);
-#ifndef CHARSET_EBCDIC
 	__md5_Update(&c,d,n);
-#else
-	{
-		char temp[1024];
-		unsigned long chunk;
-
-		while (n > 0)
-		{
-			chunk = (n > sizeof(temp)) ? sizeof(temp) : n;
-			ebcdic2ascii(temp, d, chunk);
-			__md5_Update(&c,d,n);
-			n -= chunk;
-			d += chunk;
-		}
-	}
-#endif
 	__md5_Final(md,&c);
 	memset(&c,0,sizeof(c)); /* security consideration */
 	return(md);
