@@ -200,7 +200,7 @@ a.tooltip  {position: relative; text-decoration: none; cursor:default;}\n\
 a.tooltip1 {position: relative; text-decoration: none; cursor:default;color:red;}\n\
 a.tooltip  span {display: none; z-index:99;}\n\
 a.tooltip1 span {display: none; z-index:99;}\n\
-a:hover span{display: block;position: absolute;top: 2em; left: 1em; margin: 0px;padding: 10px;color: #335500;font-weight: normal;background: #ffffdd;text-align: left;border: 1px solid #666;}\n\
+a:hover span{display: block;position: absolute;top: 2em; right: 1em; margin: 0px;padding: 10px;color: #335500;font-weight: normal;background: #ffffdd;text-align: left;border: 1px solid #666;}\n\
 H4.styleauthor:after {content:\"Eneen\";}\n\
 rect.graph_bg {fill:white;}\n\
 text.graph_error {text-anchor:middle;fill:red}\n\
