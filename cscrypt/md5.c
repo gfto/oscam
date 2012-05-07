@@ -78,13 +78,15 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdint.h>
+
 //#include <crypt.h>
 #include "cscrypt.h"
 	
 /* MD5 context. */
 struct MD5Context {
-  u_int32_t state[4];	/* state (ABCD) */
-  u_int32_t count[2];	/* number of bits, modulo 2^64 (lsb first) */
+  uint32_t state[4];	/* state (ABCD) */
+  uint32_t count[2];	/* number of bits, modulo 2^64 (lsb first) */
   unsigned char buffer[64];	/* input buffer */
 };
 
@@ -92,7 +94,7 @@ static void   __md5_Init (struct MD5Context *);
 static void   __md5_Update (struct MD5Context *, const unsigned char *, unsigned int);
 static void   __md5_Pad (struct MD5Context *);
 static void   __md5_Final (unsigned char [16], struct MD5Context *);
-static void __md5_Transform (u_int32_t [4], const unsigned char [64]);
+static void __md5_Transform (uint32_t [4], const unsigned char [64]);
 
 
 static const char __md5__magic[] = "$1$";	/* This string is magic for this algorithm.  Having 
@@ -108,12 +110,12 @@ static const unsigned char __md5_itoa64[] =		/* 0 ... 63 => ascii - 64 */
 #else /* i386 */
 
 /*
- * __md5_Encodes input (u_int32_t) into output (unsigned char). Assumes len is
+ * __md5_Encodes input (uint32_t) into output (unsigned char). Assumes len is
  * a multiple of 4.
  */
 
 static void
-__md5_Encode (unsigned char *output, u_int32_t *input, unsigned int len)
+__md5_Encode (unsigned char *output, uint32_t *input, unsigned int len)
 {
 	unsigned int i, j;
 
@@ -126,18 +128,18 @@ __md5_Encode (unsigned char *output, u_int32_t *input, unsigned int len)
 }
 
 /*
- * __md5_Decodes input (unsigned char) into output (u_int32_t). Assumes len is
+ * __md5_Decodes input (unsigned char) into output (uint32_t). Assumes len is
  * a multiple of 4.
  */
 
 static void
-__md5_Decode (u_int32_t *output, const unsigned char *input, unsigned int len)
+__md5_Decode (uint32_t *output, const unsigned char *input, unsigned int len)
 {
 	unsigned int i, j;
 
 	for (i = 0, j = 0; j < len; i++, j += 4)
-		output[i] = ((u_int32_t)input[j]) | (((u_int32_t)input[j+1]) << 8) |
-		    (((u_int32_t)input[j+2]) << 16) | (((u_int32_t)input[j+3]) << 24);
+		output[i] = ((uint32_t)input[j]) | (((uint32_t)input[j+1]) << 8) |
+		    (((uint32_t)input[j+2]) << 16) | (((uint32_t)input[j+3]) << 24);
 }
 #endif /* i386 */
 
@@ -155,22 +157,22 @@ __md5_Decode (u_int32_t *output, const unsigned char *input, unsigned int len)
  * Rotation is separate from addition to prevent recomputation.
  */
 #define FF(a, b, c, d, x, s, ac) { \
-	(a) += F ((b), (c), (d)) + (x) + (u_int32_t)(ac); \
+	(a) += F ((b), (c), (d)) + (x) + (uint32_t)(ac); \
 	(a) = ROTATE_LEFT ((a), (s)); \
 	(a) += (b); \
 	}
 #define GG(a, b, c, d, x, s, ac) { \
-	(a) += G ((b), (c), (d)) + (x) + (u_int32_t)(ac); \
+	(a) += G ((b), (c), (d)) + (x) + (uint32_t)(ac); \
 	(a) = ROTATE_LEFT ((a), (s)); \
 	(a) += (b); \
 	}
 #define HH(a, b, c, d, x, s, ac) { \
-	(a) += H ((b), (c), (d)) + (x) + (u_int32_t)(ac); \
+	(a) += H ((b), (c), (d)) + (x) + (uint32_t)(ac); \
 	(a) = ROTATE_LEFT ((a), (s)); \
 	(a) += (b); \
 	}
 #define II(a, b, c, d, x, s, ac) { \
-	(a) += I ((b), (c), (d)) + (x) + (u_int32_t)(ac); \
+	(a) += I ((b), (c), (d)) + (x) + (uint32_t)(ac); \
 	(a) = ROTATE_LEFT ((a), (s)); \
 	(a) += (b); \
 	}
@@ -203,10 +205,10 @@ static void __md5_Update ( struct MD5Context *context, const unsigned char *inpu
 	index = (unsigned int)((context->count[0] >> 3) & 0x3F);
 
 	/* Update number of bits */
-	if ((context->count[0] += ((u_int32_t)inputLen << 3))
-	    < ((u_int32_t)inputLen << 3))
+	if ((context->count[0] += ((uint32_t)inputLen << 3))
+	    < ((uint32_t)inputLen << 3))
 		context->count[1]++;
-	context->count[1] += ((u_int32_t)inputLen >> 29);
+	context->count[1] += ((uint32_t)inputLen >> 29);
 
 	partLen = 64 - index;
 
@@ -274,12 +276,12 @@ static void __md5_Final ( unsigned char digest[16], struct MD5Context *context)
 /* MD5 basic transformation. Transforms state based on block. */
 
 static void
-__md5_Transform (u_int32_t state[4], const unsigned char block[64])
+__md5_Transform (uint32_t state[4], const unsigned char block[64])
 {
-	u_int32_t a, b, c, d, x[16];
+	uint32_t a, b, c, d, x[16];
 
 #if MD5_SIZE_OVER_SPEED > 1
-	u_int32_t temp;
+	uint32_t temp;
 	const char *ps;
 
 	static const char S[] = {
@@ -291,11 +293,11 @@ __md5_Transform (u_int32_t state[4], const unsigned char block[64])
 #endif /* MD5_SIZE_OVER_SPEED > 1 */
 
 #if MD5_SIZE_OVER_SPEED > 0
-	const u_int32_t *pc;
+	const uint32_t *pc;
 	const char *pp;
 	int i;
 
-	static const u_int32_t C[] = {
+	static const uint32_t C[] = {
 								/* round 1 */
 		0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
 		0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,

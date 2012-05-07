@@ -23,10 +23,6 @@ extern "C" {
 #include <sys/cdefs.h>
 #endif
 
-#if defined(OS_SOLARIS) || defined (OS_AIX)
-#define u_int32_t unsigned long
-#endif
-
 #define MD5_DIGEST_LENGTH 16
 char * __md5_crypt(const char *, const char *, char *);
 unsigned char *MD5(const unsigned char *, unsigned long, unsigned char *);
