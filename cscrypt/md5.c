@@ -102,47 +102,6 @@ static const char __md5__magic[] = "$1$";	/* This string is magic for this algor
 static const unsigned char __md5_itoa64[] =		/* 0 ... 63 => ascii - 64 */
 	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-
-
-#ifdef i386
-#define __md5_Encode memcpy
-#define __md5_Decode memcpy
-#else /* i386 */
-
-/*
- * __md5_Encodes input (uint32_t) into output (unsigned char). Assumes len is
- * a multiple of 4.
- */
-
-static void
-__md5_Encode (unsigned char *output, uint32_t *input, unsigned int len)
-{
-	unsigned int i, j;
-
-	for (i = 0, j = 0; j < len; i++, j += 4) {
-		output[j] = (unsigned char)(input[i] & 0xff);
-		output[j+1] = (unsigned char)((input[i] >> 8) & 0xff);
-		output[j+2] = (unsigned char)((input[i] >> 16) & 0xff);
-		output[j+3] = (unsigned char)((input[i] >> 24) & 0xff);
-	}
-}
-
-/*
- * __md5_Decodes input (unsigned char) into output (uint32_t). Assumes len is
- * a multiple of 4.
- */
-
-static void
-__md5_Decode (uint32_t *output, const unsigned char *input, unsigned int len)
-{
-	unsigned int i, j;
-
-	for (i = 0, j = 0; j < len; i++, j += 4)
-		output[i] = ((uint32_t)input[j]) | (((uint32_t)input[j+1]) << 8) |
-		    (((uint32_t)input[j+2]) << 16) | (((uint32_t)input[j+3]) << 24);
-}
-#endif /* i386 */
-
 /* F, G, H and I are basic MD5 functions. */
 #define F(x, y, z) (((x) & (y)) | ((~x) & (z)))
 #define G(x, y, z) (((x) & (z)) | ((y) & (~z)))
@@ -245,7 +204,7 @@ static void __md5_Pad ( struct MD5Context *context)
 	PADDING[0] = 0x80;
 
 	/* Save number of bits */
-	__md5_Encode (bits, context->count, 8);
+	memcpy(bits, context->count, 8);
 
 	/* Pad out to 56 mod 64. */
 	index = (unsigned int)((context->count[0] >> 3) & 0x3f);
@@ -267,7 +226,7 @@ static void __md5_Final ( unsigned char digest[16], struct MD5Context *context)
 	__md5_Pad (context);
 
 	/* Store state in digest */
-	__md5_Encode (digest, context->state, 16);
+	memcpy(digest, context->state, 16);
 
 	/* Zeroize sensitive information. */
 	memset ((void *)context, 0, sizeof (*context));
@@ -329,7 +288,7 @@ __md5_Transform (uint32_t state[4], const unsigned char block[64])
 
 #endif /* MD5_SIZE_OVER_SPEED > 0 */
 
-	__md5_Decode (x, block, 64);
+	memcpy(x, block, 64);
 
 	a = state[0]; b = state[1]; c = state[2]; d = state[3]; 
 
