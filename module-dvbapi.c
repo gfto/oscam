@@ -1662,14 +1662,14 @@ void event_handler(int32_t UNUSED(signal)) {
 				}
 
 				if (pmt_info.st_mtime != demux[i].pmt_time) {
-					cs_log("stoping demux for pmt file %s", dest);
+					cs_log("stopping demux for pmt file %s", dest);
 				 	dvbapi_stop_descrambling(i);
 				}
 
 				close(pmt_fd);
 				continue;
 			} else {
-				cs_log("stoping demux for pmt file %s", dest);
+				cs_log("stopping demux for pmt file %s", dest);
 				dvbapi_stop_descrambling(i);
 			}
 		}
