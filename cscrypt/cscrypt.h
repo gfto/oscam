@@ -11,6 +11,7 @@
 #endif
 
 #include "des.h"
+#include "md5.h"
 
 #ifndef HEADER_CSCRYPT_H
 #define HEADER_CSCRYPT_H
@@ -19,9 +20,6 @@
 extern "C" {
 #endif
 
-#define MD5_DIGEST_LENGTH 16
-char * __md5_crypt(const char *, const char *, char *);
-unsigned char *MD5(const unsigned char *, unsigned long, unsigned char *);
 unsigned long crc32(unsigned long, const unsigned char *, unsigned int);
 
 #ifdef  __cplusplus
