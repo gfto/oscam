@@ -10,8 +10,9 @@ ifeq ($(WITH_SSL), WITH_SSL)
 endif
 
 LIB_PTHREAD = -lpthread
+LIB_MATH = -lm
 
-override STD_LIBS := $(LIB_PTHREAD)
+override STD_LIBS := $(LIB_PTHREAD) $(LIB_MATH)
 override STD_DEFS := -D'CS_SVN_VERSION="$(SVN_REV)"'
 
 CC		= $(DS_CC)

@@ -70,7 +70,7 @@ nptar:	clean
 i386-pc-linux:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
-		OS_LIBS="-lcrypto -lm" \
+		OS_LIBS="-lcrypto" \
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -Winline -Wall -Wextra" \
 		DS_CFLAGS="" \
 		DS_LDFLAGS="" \
@@ -83,7 +83,7 @@ i386-pc-linux:
 i386-pc-linux-debug:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
-		OS_LIBS="-lcrypto -lm -lrt" \
+		OS_LIBS="-lcrypto -lrt" \
 		DS_OPTS="-O0 -ggdb -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -Winline -Wall -Wextra" \
 		DS_CFLAGS="" \
 		DS_LDFLAGS="" \
@@ -100,7 +100,7 @@ i386-pc-linux-libusb:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
         	LIBUSB="/usr/local/lib/libusb-1.0.a" \
-		OS_LIBS="-lcrypto -lm -lrt" \
+		OS_LIBS="-lcrypto -lrt" \
 		DS_OPTS="-O2 -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -Winline -Wall -Wextra -I/usr/local/include" \
 		DS_CFLAGS="" \
 		DS_LDFLAGS="" \
@@ -118,7 +118,7 @@ i386-pc-linux-libusb:
 i386-pc-linux-pcsc:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
-		OS_LIBS="-lcrypto -lm" \
+		OS_LIBS="-lcrypto" \
 		OS_PTLI="-lpcsclite" \
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -DHAVE_PCSC=1 -I/usr/include/PCSC -Winline -Wall -Wextra" \
 		DS_CFLAGS="" \
@@ -138,7 +138,7 @@ i386-pc-linux-pcsc-libusb:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
         	LIBUSB="/usr/local/lib/libusb-1.0.a" \
-		OS_LIBS="-lcrypto -lm -lrt" \
+		OS_LIBS="-lcrypto -lrt" \
 		OS_PTLI="-lpcsclite" \
 		DS_OPTS="-O2 -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -DHAVE_PCSC=1 -I/usr/include/PCSC -Winline -Wall -Wextra -I/usr/local/include" \
 		DS_CFLAGS="" \
@@ -157,7 +157,7 @@ i386-pc-linux-pcsc-libusb:
 macosx-native:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lcrypto -lm" \
+		OS_LIBS="-lcrypto" \
 		OS_PTLI="" \
 		DS_OPTS="-O2 -DHAVE_PTHREAD_H -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -DHAVE_PCSC=1 -m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer" \
 		DS_CFLAGS="" \
@@ -177,7 +177,7 @@ macosx-libusb:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		LIBUSB="/usr/local/lib/libusb-1.0.a" \
-		OS_LIBS="-lcrypto -lm " \
+		OS_LIBS="-lcrypto " \
 		OS_PTLI="" \
 		DS_OPTS="-O2 -DHAVE_PTHREAD_H -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -DHAVE_PCSC=1 -DLIBUSB -m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -I/usr/local/include" \
 		DS_CFLAGS="" \
@@ -235,7 +235,7 @@ cross-i386-pc-freebsd:
 cross-powerpc-tuxbox-linux:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lcrypto -ldl -lm" \
+		OS_LIBS="-lcrypto -ldl" \
 		OS_PTLI="" \
 		DS_OPTS="-O2 -DTUXBOX -DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"'" \
 		DS_CFLAGS="" \
@@ -268,7 +268,7 @@ cross-powerpc-tuxbox-linux-uclibc:
 cross-powerpc-405-linux:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lcrypto -ldl -lm" \
+		OS_LIBS="-lcrypto -ldl" \
 		OS_PTLI="" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DSTB04SCI -DCS_CONFDIR='\"/var/tuxbox/config\"'" \
 		DS_CFLAGS="" \
@@ -287,7 +287,7 @@ cross-powerpc-405-linux:
 cross-sh4-linux:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lcrypto -lm" \
+		OS_LIBS="-lcrypto" \
 		OS_PTLI="" \
 		DS_OPTS="-O2 -DTUXBOX -DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"'" \
 		DS_CFLAGS="" \
@@ -301,7 +301,7 @@ cross-sh4-linux:
 cross-sh4-linux-stapi:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lcrypto -lm -L./stapi -loscam_stapi" \
+		OS_LIBS="-lcrypto -L./stapi -loscam_stapi" \
 		OS_PTLI="" \
 		DS_OPTS="-O2 -DWITH_STAPI -DWITH_LIBCRYPTO -DTUXBOX -DSCI_DEV -DCS_CONFDIR='\"/var/tuxbox/config\"'" \
 		DS_CFLAGS="" \
@@ -320,7 +320,7 @@ cross-sh4-linux-stapi:
 cross-i386-pc-cygwin:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lcrypto -lm" \
+		OS_LIBS="-lcrypto" \
 		OS_PTLI="" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DCS_CONFDIR=${CS_CONFDIR} -static" \
 		DS_CFLAGS="" \
@@ -339,7 +339,7 @@ cross-i386-pc-cygwin:
 i386-pc-cygwin:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lcrypto -lm" \
+		OS_LIBS="-lcrypto" \
 		OS_PTLI="" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DCS_CONFDIR='\".\"' -I /tmp/include" \
 		DS_CFLAGS="" \
@@ -359,7 +359,7 @@ i386-pc-cygwin:
 i386-pc-cygwin-pcsc:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lcrypto -lm -lwinscard" \
+		OS_LIBS="-lcrypto -lwinscard" \
 		OS_PTLI="" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -D_WIN32 -DCS_CONFDIR=${CS_CONFDIR} -DHAVE_PCSC=1 -I /tmp/include -I ./cygwin -I/usr/include/w32api" \
 		DS_CFLAGS="" \
@@ -380,7 +380,7 @@ i386-pc-cygwin-libusb:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		LIBUSB="/usr/lib/libusb-1.0.a" \
-		OS_LIBS="-lcrypto -lm -lSetupAPI -lOle32 -lshell32" \
+		OS_LIBS="-lcrypto -lSetupAPI -lOle32 -lshell32" \
 		OS_PTLI="" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -D_WIN32 -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -I /tmp/include -I ./cygwin" \
 		DS_CFLAGS="" \
@@ -419,7 +419,7 @@ cross-sparc-sun-solaris2.7:
 opensolaris:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lcrypto -lnsl -lm" \
+		OS_LIBS="-lcrypto -lnsl" \
 		OS_PTLI="" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="" \
@@ -498,7 +498,7 @@ cross-mipsel-router-linux-uclibc928:
 	@-mipsel-linux-uclibc-setlib 0.9.28
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lcrypto -lm" \
+		OS_LIBS="-lcrypto" \
 		OS_PTLI="" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="" \
@@ -518,7 +518,7 @@ cross-mipsel-router-linux-uclibc929:
 	@-mipsel-linux-uclibc-setlib 0.9.29
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lcrypto -lm" \
+		OS_LIBS="-lcrypto" \
 		OS_PTLI="" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="" \
@@ -538,7 +538,7 @@ cross-mipsel-router-linux-uclibc929-static:
 	@-mipsel-linux-uclibc-setlib 0.9.29
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lcrypto -lm" \
+		OS_LIBS="-lcrypto" \
 		OS_PTLI="" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="" \
@@ -558,7 +558,7 @@ cross-mips-router-linux-uclibc930:
 	@-mips-linux-uclibc-setlib 0.9.30
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lcrypto -lm" \
+		OS_LIBS="-lcrypto" \
 		OS_PTLI="" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="" \
@@ -578,7 +578,7 @@ cross-mips-router-linux-uclibc931:
 	@-mips-linux-uclibc-setlib 0.9.31
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lcrypto -lm" \
+		OS_LIBS="-lcrypto" \
 		OS_PTLI="" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="" \
@@ -597,7 +597,7 @@ cross-mips-router-linux-uclibc931:
 cross-mipsel-fonera2:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-Lopenssl-lib -lcrypto -lm" \
+		OS_LIBS="-Lopenssl-lib -lcrypto" \
 		OS_PTLI="" \
 		DS_OPTS="-Iopenssl-include -O2 -DWITH_LIBCRYPTO -DUCLIBC -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="" \
@@ -616,7 +616,7 @@ cross-mipsel-fonera2:
 cross-mipsel-tuxbox-linux-glibc:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lcrypto -lm" \
+		OS_LIBS="-lcrypto" \
 		OS_PTLI="" \
 		DS_OPTS="-O2 -DTUXBOX -DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"' -static-libgcc" \
 		DS_CFLAGS="" \
@@ -630,7 +630,7 @@ cross-mipsel-tuxbox-linux-glibc:
 cross-mipsel-tuxbox-linux:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lcrypto -lm" \
+		OS_LIBS="-lcrypto" \
 		OS_PTLI="" \
 		DS_OPTS="-O2 -DTUXBOX -DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"' -static-libgcc" \
 		DS_CFLAGS="" \
