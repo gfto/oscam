@@ -1829,6 +1829,10 @@ void cs_cache_push(ECM_REQUEST *er)
 	}
 
 	//cacheex=3 mode: reverse push (reader->server)
+
+	cs_readlock(&readerlist_lock);
+	cs_readlock(&clientlist_lock);
+
 	struct s_reader *rdr;
 	for (rdr = first_active_reader; rdr; rdr = rdr->next) {
 		struct s_client *cl = rdr->client;
@@ -1847,6 +1851,9 @@ void cs_cache_push(ECM_REQUEST *er)
 			}
 		}
 	}
+
+	cs_readunlock(&clientlist_lock);
+	cs_readunlock(&readerlist_lock);
 
 	er->cacheex_pushed = 1;
 	if (er->ecmcacheptr) er->ecmcacheptr->cacheex_pushed = 1;
@@ -3170,6 +3177,9 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		er->reader_avail=0;
 		struct s_reader *rdr;
 
+		cs_readlock(&readerlist_lock);
+		cs_readlock(&clientlist_lock);
+
 		for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 			int8_t match = matching_reader(er, rdr);
 #ifdef WITH_LB
@@ -3212,6 +3222,9 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 					er->reader_avail++;
 			}
 		}
+
+		cs_readunlock(&clientlist_lock);
+		cs_readunlock(&readerlist_lock);
 
 #ifdef WITH_LB
 		if (cfg.lb_mode && er->reader_avail) {
