@@ -73,6 +73,16 @@ ifeq ($(wildcard csgbox), csgbox)
  VERX	= -gbx-$(subst ",,$(filter-out \#define GBXVERSION,$(shell grep GBXVERSION csgbox/gbox.h)))
 endif
 
+# Setup quiet build
+Q =
+SAY = @true
+ifndef V
+Q = @
+NP = --no-print-directory
+SAY = @echo
+endif
+export Q SAY
+
 EXEFILE1	= Distribution/oscam-$(VER)$(VERX)-$(subst cygwin,cygwin.exe,$(TARGET))
 EXEFILE2	= Distribution/list_smargo-$(VER)$(VERX)-$(subst cygwin,cygwin.exe,$(TARGET))
 
@@ -191,8 +201,9 @@ prepare:
 		  }' > oscam-ostype.h
 		@[ -d "$(LIBDIR)" ] || mkdir "$(LIBDIR)"
 ifeq ($(wildcard csgbox), csgbox)
-		@-echo "#define CS_WITH_GBOX 1" >> oscam-ostype.h
-		$(MAKE) -C csgbox
+	@-echo "#define CS_WITH_GBOX 1" >> oscam-ostype.h
+	$(SAY) "MAKE	csgbox"
+	$(MAKE) $(NP) -C csgbox
 endif
 
 $(ALGO_OBJ): $(ALGO_DEP)
@@ -212,22 +223,27 @@ $(OSCAM_LIB): $(OSCAM_OBJ)
 	-@$(RANLIB) $@
 
 $(EXEFILE1): oscam.c $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(OSCAM_LIB)
-		$(CC) $(LDFLAGS) $(LIBS) oscam.c $(OSCAM_LIB) $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(LIBUSB) $(LIBPCSC) $(LIBRT) -o $@
+	$(SAY) "LINK	$@"
+	$(Q)$(CC) $(LDFLAGS) $(LIBS) oscam.c $(OSCAM_LIB) $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(LIBUSB) $(LIBPCSC) $(LIBRT) -o $@
 ifndef DEBUG
 ifdef DS_ST
-		$(STRIP) $@
+	$(SAY) "STRIP	$@"
+	$(Q)$(STRIP) $@
 endif
 endif
 
 $(EXEFILE2):	utils/list_smargo.c
-		$(CC) $(LDFLAGS) $(LIBS) utils/list_smargo.c $(LIBUSB) $(LIBRT) -o $@
+	$(SAY) "LINK	$@"
+	$(Q)$(CC) $(LDFLAGS) $(LIBS) utils/list_smargo.c $(LIBUSB) $(LIBRT) -o $@
 ifndef DEBUG
-		$(STRIP) $@
+	$(SAY) "STRIP	$@"
+	$(Q)$(STRIP) $@
 endif
 
 .c.a:
-		$(CC) $(CFLAGS) -c $< -o $(subst .c,.o,$<)
-		$(AR) $(ARFLAGS) $@ $*.o
-		-@rm -f $*.o
+	$(SAY) "CC	$<"
+	$(Q)$(CC) $(CFLAGS) -c $< -o $(subst .c,.o,$<)
+	@$(AR) $(ARFLAGS) $@ $*.o
+	-@rm -f $*.o
 
 .SUFFIXES:	.o .c .a
