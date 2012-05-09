@@ -202,7 +202,7 @@
 #  define _XOPEN_SOURCE_EXTENDED
 #endif
 
-#ifdef ARM
+#if defined(__ARM__)
 #  define CS_EMBEDDED
 #endif
 

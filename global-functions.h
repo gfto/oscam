@@ -313,7 +313,7 @@ extern void end_lcd_thread();
 /* ===========================
  *         arm-led
  * =========================== */
-#ifdef ARM
+#if defined(__ARM__)
 extern void cs_switch_led(int32_t led, int32_t action);
 extern void arm_led_start_thread();
 extern void arm_led_stop_thread();

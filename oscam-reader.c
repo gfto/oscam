@@ -601,7 +601,7 @@ void reader_log_emm(struct s_reader * reader, EMM_PACKET *ep, int32_t i, int32_t
 	if (rc)
 		cl->lastemm = time((time_t*) 0);
 
-#ifdef ARM
+#if defined(__ARM__)
 	if (rc && cfg.enableled == 1) cs_switch_led(LED3, LED_BLINK_ON);
 #endif
 

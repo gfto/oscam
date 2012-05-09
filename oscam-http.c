@@ -268,7 +268,7 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 
 	if(cfg.double_check == 1)
 		tpl_addVar(vars, TPLADD, "DCHECKCSELECTED", "selected");
-#if defined(QBOXHD) || defined(ARM) 
+#if defined(QBOXHD) || defined(__ARM__)
 	if(cfg.enableled == 1)
 		tpl_addVar(vars, TPLADD, "ENABLELEDSELECTED1", "selected");
 	else if(cfg.enableled == 2)

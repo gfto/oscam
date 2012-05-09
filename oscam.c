@@ -45,7 +45,7 @@ pid_t server_pid=0;
 #if defined(LIBUSB)
 CS_MUTEX_LOCK sr_lock;
 #endif
-#ifdef ARM
+#if defined(__ARM__)
 pthread_t	arm_led_thread = 0;
 LLIST		*arm_led_actions = NULL;
 #endif
@@ -965,7 +965,7 @@ void cs_exit(int32_t sig)
   	return;
 
   if(cl->typ == 'h' || cl->typ == 's'){
-#ifdef ARM
+#if defined(__ARM__)
 		if(cfg.enableled == 1){
 			cs_switch_led(LED1B, LED_OFF);
 			cs_switch_led(LED2, LED_OFF);
@@ -2483,7 +2483,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 
 	cs_ddump_mask (D_ATR, er->cw, 16, "cw:");
 
-#ifdef ARM
+#if defined(__ARM__)
 	if(!er->rc &&cfg.enableled == 1) cs_switch_led(LED2, LED_BLINK_OFF);
 #endif
 
@@ -4518,7 +4518,7 @@ int32_t main (int32_t argc, char *argv[])
 		exit(1);
 	}
 
-#ifdef ARM
+#if defined(__ARM__)
 	cs_switch_led(LED1A, LED_DEFAULT);
 	cs_switch_led(LED1A, LED_ON);
 #endif
@@ -4748,7 +4748,7 @@ int32_t main (int32_t argc, char *argv[])
   write_versionfile();
   server_pid = getpid();
 
-#ifdef ARM
+#if defined(__ARM__)
   arm_led_start_thread();
 #endif
 
@@ -4796,7 +4796,7 @@ int32_t main (int32_t argc, char *argv[])
 
 	cs_waitforcardinit();
 
-#ifdef ARM
+#if defined(__ARM__)
 	if(cfg.enableled == 1){
 		cs_switch_led(LED1A, LED_OFF);
 		cs_switch_led(LED1B, LED_ON);
@@ -4865,7 +4865,7 @@ int32_t cs_get_restartmode() {
 
 #endif
 
-#ifdef ARM
+#if defined(__ARM__)
 static void cs_switch_led_from_thread(int32_t led, int32_t action) {
 
 	if(action < 2) { // only LED_ON and LED_OFF
