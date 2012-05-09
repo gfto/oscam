@@ -49,6 +49,8 @@ extra:	all
 clean:
 	@-rm -rf oscam-ostype.h lib Distribution/oscam-*
 
+distclean: clean
+
 tar:	clean
 	@tar cvf "oscam$(VER)-src.tar" Distribution Make* *.c *.h cscrypt csctapi
 	@bzip2 -9f "oscam$(VER)-src.tar"
