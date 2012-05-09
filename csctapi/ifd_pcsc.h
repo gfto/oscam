@@ -10,7 +10,7 @@
   #else
     #include <PCSC/pcsclite.h> 
     #include <PCSC/winscard.h>
-    #ifdef OS_MACOSX 
+    #if defined(__APPLE__)
         #include <PCSC/wintypes.h> 
     #else 
         #include <PCSC/reader.h> 

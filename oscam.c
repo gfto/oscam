@@ -380,7 +380,7 @@ static void usage()
 }
 
 #ifdef NEED_DAEMON
-#ifdef OS_MACOSX
+#if defined(__APPLE__)
 // this is done because daemon is being deprecated starting with 10.5 and -Werror will always trigger an error
 static int32_t daemon_compat(int32_t nochdir, int32_t noclose)
 #else
@@ -902,7 +902,7 @@ static void init_signal()
 {
 		set_signal_handler(SIGINT, 3, cs_exit);
 		//set_signal_handler(SIGKILL, 3, cs_exit);
-#ifdef OS_MACOSX
+#if defined(__APPLE__)
 		set_signal_handler(SIGEMT, 3, cs_exit);
 #else
 		//set_signal_handler(SIGPOLL, 3, cs_exit);
@@ -4674,7 +4674,7 @@ int32_t main (int32_t argc, char *argv[])
   }
 
 
-#ifdef OS_MACOSX
+#if defined(__APPLE__)
   if (bg && daemon_compat(1,0))
 #else
   if (bg && daemon(1,0))

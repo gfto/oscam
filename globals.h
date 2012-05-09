@@ -48,7 +48,7 @@
     #include "cygwin/WinSCard.h"
   #else
     #include <PCSC/pcsclite.h>
-    #ifdef OS_MACOSX
+    #if defined(__APPLE__)
         #include <PCSC/wintypes.h>
     #else
         #include <PCSC/reader.h>
@@ -69,7 +69,7 @@
  *         macros
  * =========================== */
 // Prevent use of unsafe functions (doesn't work for MacOSX)
-#ifndef OS_MACOSX
+#if !defined(__APPLE__)
 #define strcpy(a,b) UNSAFE_STRCPY_USE_CS_STRNCPY_INSTEAD()
 #define sprintf(a,...) UNSAFE_SPRINTF_USE_SNPRINTF_INSTEAD()
 #define strtok(a,b,c) UNSAFE_STRTOK_USE_STRTOK_R_INSTEAD()
@@ -469,7 +469,7 @@ struct s_arm_led {
 
 #define LB_MAX_STAT_TIME		10
 
-#if defined OS_MACOSX || defined(__FREEBSD__)
+#if defined(__APPLE__) || defined(__FREEBSD__)
 #define OSCAM_SIGNAL_WAKEUP		SIGCONT
 #else
 #define OSCAM_SIGNAL_WAKEUP		SIGRTMAX-2

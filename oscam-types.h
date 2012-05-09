@@ -8,7 +8,7 @@ typedef unsigned char uchar;
 #endif // _TYPES_H_
 
 #ifndef NO_ENDIAN_H
- #ifdef OS_MACOSX
+ #if defined(__APPLE__)
     #include <machine/endian.h>
     #define __BYTE_ORDER __DARWIN_BYTE_ORDER 
     #define __BIG_ENDIAN    __DARWIN_BIG_ENDIAN 
