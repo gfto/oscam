@@ -208,7 +208,4 @@
 #  define CS_EMBEDDED
 #endif
 
-//#ifdef ALIGNMENT
-//#  define STRUCTS_PACKED
-//#endif
 #endif //OSCAM_CONFIG_H_
