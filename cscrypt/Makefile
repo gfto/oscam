@@ -35,7 +35,7 @@ $(LIBFILE1):	$(OBJECTS1)
 $(OBJECTS1):	$(GENERAL)
 
 .c.a:
-		$(CC) $(CFLAGS) $<
+		$(CC) $(CFLAGS) -c $<
 		$(AR) $(ARFLAGS) $@ $*.o
 		-@rm -f $*.o
 
