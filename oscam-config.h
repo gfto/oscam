@@ -205,7 +205,7 @@
 #  define socklen_t unsigned long
 #endif
 
-#ifdef OS_IRIX
+#if defined(__SGI__)
 #  define NO_ENDIAN_H
 #  define NEED_DAEMON
 #  define socklen_t unsigned long
