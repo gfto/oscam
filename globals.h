@@ -57,7 +57,7 @@
 #endif
 
 #if defined(LIBUSB)
-#ifdef __FreeBSD__
+#if defined(__FREEBSD__)
 #include <libusb.h>
 #else
 #include <libusb-1.0/libusb.h>
@@ -469,7 +469,7 @@ struct s_arm_led {
 
 #define LB_MAX_STAT_TIME		10
 
-#if defined OS_MACOSX || defined OS_FREEBSD
+#if defined OS_MACOSX || defined(__FREEBSD__)
 #define OSCAM_SIGNAL_WAKEUP		SIGCONT
 #else
 #define OSCAM_SIGNAL_WAKEUP		SIGRTMAX-2
