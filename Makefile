@@ -74,7 +74,6 @@ i386-pc-linux:
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -pthread -Winline -Wall -Wextra" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=gcc \
 		DS_AR=ar \
 		DS_LD=ld \
@@ -88,7 +87,6 @@ i386-pc-linux-debug:
 		DS_OPTS="-O0 -ggdb -pthread -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -Winline -Wall -Wextra" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=gcc \
 		DS_AR=ar \
 		DS_LD=ld \
@@ -106,7 +104,6 @@ i386-pc-linux-libusb:
 		DS_OPTS="-O2 -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -pthread -Winline -Wall -Wextra -I/usr/local/include" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=gcc \
 		DS_AR=ar \
 		DS_LD=ld \
@@ -126,7 +123,6 @@ i386-pc-linux-pcsc:
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -pthread -DHAVE_PCSC=1 -I/usr/include/PCSC -Winline -Wall -Wextra" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=gcc \
 		DS_AR=ar \
 		DS_LD=ld \
@@ -147,7 +143,6 @@ i386-pc-linux-pcsc-libusb:
 		DS_OPTS="-O2 -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -pthread -DHAVE_PCSC=1 -I/usr/include/PCSC -Winline -Wall -Wextra -I/usr/local/include" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=gcc \
 		DS_AR=ar \
 		DS_LD=ld \
@@ -167,7 +162,6 @@ macosx-native:
 		DS_OPTS="-O2 -DHAVE_PTHREAD_H -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -DHAVE_PCSC=1 -m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="-framework PCSC -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=gcc \
 		DS_AR=ar \
 		DS_LD=ld \
@@ -188,7 +182,6 @@ macosx-libusb:
 		DS_OPTS="-O2 -DHAVE_PTHREAD_H -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -DHAVE_PCSC=1 -DLIBUSB -m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -I/usr/local/include" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="-framework PCSC -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -Wl,-framework -Wl,IOKit -Wl,-framework -Wl,CoreFoundation -Wl,-prebind -no-undefined" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=gcc \
 		DS_AR=ar \
 		DS_LD=ld \
@@ -209,7 +202,6 @@ i386-pc-freebsd:
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=gcc \
 		DS_AR=ar \
 		DS_LD=ld \
@@ -229,7 +221,6 @@ cross-i386-pc-freebsd:
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=i386-pc-freebsd5.4-gcc \
 		DS_AR=i386-pc-freebsd5.4-ar \
 		DS_LD=i386-pc-freebsd5.4-ld \
@@ -249,7 +240,6 @@ cross-powerpc-tuxbox-linux:
 		DS_OPTS="-O2 -DTUXBOX -DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=powerpc-tuxbox-linux-gnu-gcc \
 		DS_AR=powerpc-tuxbox-linux-gnu-ar \
 		DS_LD=powerpc-tuxbox-linux-gnu-ld \
@@ -264,7 +254,6 @@ cross-powerpc-tuxbox-linux-uclibc:
 		DS_OPTS="-O2 -DTUXBOX -DCS_CONFDIR='\"/var/tuxbox/config\"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=powerpc-tuxbox-linux-uclibc-gcc \
 		DS_AR=powerpc-tuxbox-linux-uclibc-ar \
 		DS_LD=powerpc-tuxbox-linux-uclibc-ld \
@@ -284,7 +273,6 @@ cross-powerpc-405-linux:
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DSTB04SCI -DCS_CONFDIR='\"/var/tuxbox/config\"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=powerpc-405-linux-gnu-gcc \
 		DS_AR=powerpc-405-linux-gnu-ar \
 		DS_LD=powerpc-405-linux-gnu-ld \
@@ -304,7 +292,6 @@ cross-sh4-linux:
 		DS_OPTS="-O2 -DTUXBOX -DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=sh4-linux-gcc \
 		DS_AR=sh4-linux-ar \
 		DS_LD=sh4-linux-ld \
@@ -319,7 +306,6 @@ cross-sh4-linux-stapi:
 		DS_OPTS="-O2 -DWITH_STAPI -DWITH_LIBCRYPTO -DTUXBOX -DSCI_DEV -DCS_CONFDIR='\"/var/tuxbox/config\"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=sh4-linux-gcc \
 		DS_AR=sh4-linux-ar \
 		DS_LD=sh4-linux-ld \
@@ -339,7 +325,6 @@ cross-i386-pc-cygwin:
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DCS_CONFDIR=${CS_CONFDIR} -static" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=i686-pc-cygwin-gcc \
 		DS_AR=i686-pc-cygwin-ar \
 		DS_LD=i686-pc-cygwin-ld \
@@ -359,7 +344,6 @@ i386-pc-cygwin:
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DCS_CONFDIR='\".\"' -I /tmp/include" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=gcc \
 		DS_AR=ar \
 		DS_LD=ld \
@@ -380,7 +364,6 @@ i386-pc-cygwin-pcsc:
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -D_WIN32 -DCS_CONFDIR=${CS_CONFDIR} -DHAVE_PCSC=1 -I /tmp/include -I ./cygwin -I/usr/include/w32api" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="-L/cygdrive/c/WINDOWS/system32/" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=gcc \
 		DS_AR=ar \
 		DS_LD=ld \
@@ -402,7 +385,6 @@ i386-pc-cygwin-libusb:
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -D_WIN32 -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -I /tmp/include -I ./cygwin" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=gcc \
 		DS_AR=ar \
 		DS_LD=ld \
@@ -423,7 +405,6 @@ cross-sparc-sun-solaris2.7:
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="-lsocket" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=sparc-sun-solaris2.7-gcc \
 		DS_AR=sparc-sun-solaris2.7-ar \
 		DS_LD=sparc-sun-solaris2.7-ld \
@@ -443,7 +424,6 @@ opensolaris:
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="-lsocket" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=gcc \
 		DS_AR=ar \
 		DS_LD=ld \
@@ -463,7 +443,6 @@ cross-rs6000-ibm-aix4.2:
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=rs6000-ibm-aix4.2-gcc \
 		DS_AR=rs6000-ibm-aix4.2-ar \
 		DS_LD=rs6000-ibm-aix4.2-ld \
@@ -483,7 +462,6 @@ cross-mips-sgi-irix6.5:
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=mips-sgi-irix6.5-gcc \
 		DS_AR=mips-sgi-irix6.5-ar \
 		DS_LD=mips-sgi-irix6.5-ld \
@@ -504,7 +482,6 @@ cross-mipsel-router-linux-uclibc927:
 		DS_OPTS="-O2 -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=mipsel-linux-uclibc-gcc \
 		DS_AR=mipsel-linux-uclibc-ar \
 		DS_LD=mipsel-linux-uclibc-ld \
@@ -525,7 +502,6 @@ cross-mipsel-router-linux-uclibc928:
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=mipsel-linux-uclibc-gcc \
 		DS_AR=mipsel-linux-uclibc-ar \
 		DS_LD=mipsel-linux-uclibc-ld \
@@ -546,7 +522,6 @@ cross-mipsel-router-linux-uclibc929:
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=mipsel-linux-uclibc-gcc \
 		DS_AR=mipsel-linux-uclibc-ar \
 		DS_LD=mipsel-linux-uclibc-ld \
@@ -567,7 +542,6 @@ cross-mipsel-router-linux-uclibc929-static:
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="-static" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=mipsel-linux-uclibc-gcc \
 		DS_AR=mipsel-linux-uclibc-ar \
 		DS_LD=mipsel-linux-uclibc-ld \
@@ -588,7 +562,6 @@ cross-mips-router-linux-uclibc930:
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=mips-linux-uclibc-gcc \
 		DS_AR=mips-linux-uclibc-ar \
 		DS_LD=mips-linux-uclibc-ld \
@@ -609,7 +582,6 @@ cross-mips-router-linux-uclibc931:
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=mips-linux-uclibc-gcc \
 		DS_AR=mips-linux-uclibc-ar \
 		DS_LD=mips-linux-uclibc-ld \
@@ -629,7 +601,6 @@ cross-mipsel-fonera2:
 		DS_OPTS="-Iopenssl-include -O2 -DWITH_LIBCRYPTO -DUCLIBC -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=mips-linux-gcc \
 		DS_AR=mips-linux-ar \
 		DS_LD=mips-linux-ld \
@@ -649,7 +620,6 @@ cross-mipsel-tuxbox-linux-glibc:
 		DS_OPTS="-O2 -DTUXBOX -DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"' -static-libgcc" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=mipsel-linux-glibc-gcc \
 		DS_AR=mipsel-linux-glibc-ar \
 		DS_LD=mipsel-linux-glibc-ld \
@@ -664,7 +634,6 @@ cross-mipsel-tuxbox-linux:
 		DS_OPTS="-O2 -DTUXBOX -DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"' -static-libgcc" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=mipsel-linux-gcc \
 		DS_AR=mipsel-linux-ar \
 		DS_LD=mipsel-linux-ld \
@@ -684,7 +653,6 @@ hppa1.1-hp-hpux10.20:
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR}" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=gcc \
 		DS_AR=ar \
 		DS_LD=ld \
@@ -705,7 +673,6 @@ alpha-dec-osf5.1:
 		XDS_CFLAGS="-I/usr/include -c" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC=cc \
 		DS_AR=ar \
 		DS_LD=ld \
@@ -725,7 +692,6 @@ cross-arm-nslu2-linux:
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR}" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC="armv5b-softfloat-linux-gcc" \
 		DS_AR="armv5b-softfloat-linux-ar" \
 		DS_LD="armv5b-softfloat-linux-ld" \
@@ -745,7 +711,6 @@ cross-armBE-unkown-linux:
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR}" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC="arm-linux-gcc -mbig-endian" \
 		DS_AR="arm-linux-ar" \
 		DS_LD="arm-linux-ld -EB" \
@@ -765,7 +730,6 @@ cross-armLE-unkown-linux:
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR}" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
-		DS_ARFLAGS="-rvsl" \
 		DS_CC="arm-linux-gcc -mlittle-endian" \
 		DS_AR="arm-linux-ar" \
 		DS_LD="arm-linux-ld -EL" \
