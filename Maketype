@@ -189,17 +189,31 @@ all:		prepare $(EXEFILE1)
 endif
 
 prepare:
-		@-echo "-----------------------------------------------------"
-		@-echo "Build for platform $(TARGET)"
-		@-echo "-----------------------------------------------------"
-		@echo "$(TARGET)" | awk -F- ' \
-		  { \
-		    printf("#define CS_OSTYPE \"%s\"\n", $$0);  \
-		    printf("#define CS_OS_CPU \"%s\"\n", $$1);  \
-		    printf("#define CS_OS_HW  \"%s\"\n", $$2);  \
-		    printf("#define CS_OS_SYS \"%s\"\n", $$3);  \
-		  }' > oscam-ostype.h
-		@[ -d "$(LIBDIR)" ] || mkdir "$(LIBDIR)"
+	@-test -d "$(LIBDIR)" || mkdir "$(LIBDIR)"
+	@-echo -e "\
++-------------------------------------------------------------------------------\n\
+| OSCAM ver: $(VER) rev: $(SVN_REV) target: $(TARGET)\n\
+| Tools:\n\
+|  CROSS    = $(CROSS)\n\
+|  CC       = $(CC)\n\
+|  AR       = $(AR)\n\
+|  STRIP    = $(STRIP)\n\
+|  RANLIB   = $(RANLIB)\n\
+| Settings:\n\
+|  CC_OPTS  = $(CC_OPTS)\n\
+|  CC_WARN  = $(CC_WARN)\n\
+|  CFLAGS   = $(CFLAGS)\n\
+|  LDFLAGS  = $(LDFLAGS)\n\
+|  ARFLAGS  = $(ARFLAGS)\n\
+|  LIBS     = $(LIBS)\n\
++-------------------------------------------------------------------------------"
+	@echo "$(TYPE)" | awk -F- ' \
+	  { \
+	    printf("#define CS_OSTYPE \"%s\"\n", $$0);  \
+	    printf("#define CS_OS_CPU \"%s\"\n", $$1);  \
+	    printf("#define CS_OS_HW  \"%s\"\n", $$2);  \
+	    printf("#define CS_OS_SYS \"%s\"\n", $$3);  \
+	  }' > oscam-ostype.h
 ifeq ($(wildcard csgbox), csgbox)
 	@-echo "#define CS_WITH_GBOX 1" >> oscam-ostype.h
 	$(SAY) "MAKE	csgbox"
