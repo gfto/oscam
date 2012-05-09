@@ -16,7 +16,7 @@ override STD_LIBS := $(LIB_PTHREAD) $(LIB_MATH)
 override STD_DEFS := -D'CS_SVN_VERSION="$(SVN_REV)"'
 
 # Compiler warnings
-CC_WARN = -Winline -Wall -Wextra
+CC_WARN = -Winline -Wall -Wextra -fno-strict-aliasing
 
 # Compiler optimizations
 ifndef DEBUG
