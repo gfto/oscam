@@ -2,7 +2,7 @@
 
 #include "globals.h"
 
-#if defined(__APPLE__) || defined(__FREEBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
 #include <net/if_dl.h>
 #include <ifaddrs.h>
 #elif defined(__SOLARIS__)
@@ -4031,7 +4031,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
     }
 
     if (!memcmp(mac, "\x00\x00\x00\x00\x00\x00", 6)) {
-#if defined(__APPLE__) || defined(__FREEBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
       // no mac address specified so use mac of en0 on local box
       struct ifaddrs *ifs, *current;
 

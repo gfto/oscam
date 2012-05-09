@@ -200,7 +200,7 @@
 #  define socklen_t unsigned long
 #endif
 
-#if defined(__SOLARIS__) || defined(__FREEBSD__)
+#if defined(__SOLARIS__) || defined(__FreeBSD__)
 #  define BSD_COMP
 #endif
 
