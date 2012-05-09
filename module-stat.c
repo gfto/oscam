@@ -1055,7 +1055,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 #if defined(WEBIF) || defined(LCDSUPPORT)
 				rdr->lbvalue = current;
 #endif
-				if (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_LOADBALANCE, NULL)) {
+				if (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_LOADBALANCE, er)) {
 					current=current*2;
 				}
 				

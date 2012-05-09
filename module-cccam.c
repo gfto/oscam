@@ -2151,6 +2151,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			
 			strncpy(cc->remote_version, (char*)data+8, sizeof(cc->remote_version)-1);
 			strncpy(cc->remote_build, (char*)data+40, sizeof(cc->remote_build)-1);
+			cc->remote_build_nr = atoi(cc->remote_build);
 			                       
 			cs_debug_mask(D_READER, "%s remove server %s running v%s (%s)", getprefix(), cs_hexdump(0,
 					cc->peer_node_id, 8, tmp_dbg, sizeof(tmp_dbg)), cc->remote_version, cc->remote_build);
@@ -3569,7 +3570,7 @@ int32_t cc_available(struct s_reader *rdr, int32_t checktype, ECM_REQUEST *er) {
 	struct s_client *cl = rdr->client;
 	if(!cl) return 0;
 	struct cc_data *cc = cl->cc;
-
+	
 	if (er && cc && rdr->tcp_connected) {
 		struct cc_card *card  = get_matching_card(cl, er, 1);
 		if (!card)
@@ -3586,6 +3587,10 @@ int32_t cc_available(struct s_reader *rdr, int32_t checktype, ECM_REQUEST *er) {
 		if (rdr->cc_keepalive)
 			return 0;
 	}
+
+	if (er && er->l > 255 && !cc->extended_mode && (cc->remote_build_nr < 3367))
+		return 0; // remote does not support large ecms!
+		
 
 	if (checktype == AVAIL_CHECK_LOADBALANCE && cc->ecm_busy) {
 		if (cc_request_timeout(cl))

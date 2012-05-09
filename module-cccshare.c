@@ -234,6 +234,7 @@ int32_t send_card_to_clients(struct cc_card *card, struct s_client *one_client) 
         uint8_t buf[CC_MAXMSGSIZE];
 
         struct s_client *cl;
+    	cs_readlock(&clientlist_lock);
         for (cl = one_client?one_client:first_client; cl; cl=one_client?NULL:cl->next) {
                 struct cc_data *cc = cl->cc;
                 if (!cl->kill && cl->typ=='c' && cc && (one_client || ph[cl->ctyp].num == R_CCCAM)) { //CCCam-Client!
@@ -276,6 +277,7 @@ int32_t send_card_to_clients(struct cc_card *card, struct s_client *one_client) 
                         }
                 }
 		}
+        cs_readunlock(&clientlist_lock);
         return count;
 }
 
@@ -290,6 +292,7 @@ void send_remove_card_to_clients(struct cc_card *card) {
 		buf[3] = card->id & 0xFF;
 
 		struct s_client *cl;
+		cs_readlock(&clientlist_lock);
 		for (cl = first_client; cl; cl=cl->next) {
 				struct cc_data *cc = cl->cc;
 				if (cl->typ=='c' && cc && ph[cl->ctyp].num == R_CCCAM && !cl->kill) { //CCCam-Client!
@@ -298,6 +301,7 @@ void send_remove_card_to_clients(struct cc_card *card) {
 						}
 				}
 		}
+		cs_readunlock(&clientlist_lock);
 }
 
 
