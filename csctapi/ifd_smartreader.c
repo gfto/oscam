@@ -463,7 +463,7 @@ int32_t SR_Close (struct s_reader *reader)
 	    pthread_join(reader->sr_config->rt,NULL);
 	    smart_fastpoll(reader, FALSE);
 	    libusb_release_interface(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
-#if defined(OS_LINUX)
+#if defined(__linux__)
     	libusb_attach_kernel_driver(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
 #endif
     	libusb_close(reader->sr_config->usb_dev_handle);
@@ -855,7 +855,7 @@ int32_t smartreader_usb_open_dev(S_READER *reader)
         return (-4);
     }
 
-#if defined(OS_LINUX)
+#if defined(__linux__)
     // Try to detach ftdi_sio kernel module.
     // Returns ENODATA if driver is not loaded.
     //
@@ -884,7 +884,7 @@ int32_t smartreader_usb_open_dev(S_READER *reader)
         if (libusb_set_configuration(reader->sr_config->usb_dev_handle, config) &&
             errno != EBUSY)
         {
-#if defined(OS_LINUX)
+#if defined(__linux__)
         		if(detach_errno == 0) libusb_attach_kernel_driver(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
 #endif
             smartreader_usb_close_internal (reader);
@@ -903,7 +903,7 @@ int32_t smartreader_usb_open_dev(S_READER *reader)
     ret=libusb_claim_interface(reader->sr_config->usb_dev_handle, reader->sr_config->interface) ;
     if (ret!= 0)
     {
-#if defined(OS_LINUX)
+#if defined(__linux__)
     		if(detach_errno == 0) libusb_attach_kernel_driver(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
 #endif
         smartreader_usb_close_internal (reader);
@@ -919,7 +919,7 @@ int32_t smartreader_usb_open_dev(S_READER *reader)
 
     if (smartreader_usb_reset (reader) != 0) {
     		libusb_release_interface(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
-#if defined(OS_LINUX)
+#if defined(__linux__)
     		if(detach_errno == 0) libusb_attach_kernel_driver(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
 #endif
         smartreader_usb_close_internal (reader);
@@ -960,7 +960,7 @@ int32_t smartreader_usb_open_dev(S_READER *reader)
 
     if (smartreader_set_baudrate (reader, 9600) != 0) {
     		libusb_release_interface(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
-#if defined(OS_LINUX)
+#if defined(__linux__)
     		if(detach_errno == 0) libusb_attach_kernel_driver(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
 #endif
         smartreader_usb_close_internal (reader);

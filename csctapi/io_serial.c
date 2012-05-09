@@ -37,7 +37,7 @@
 #endif
 #include <sys/ioctl.h>
 
-#ifdef OS_LINUX
+#if defined(__linux__)
 #include <linux/serial.h>
 #endif
 
@@ -176,7 +176,7 @@ bool IO_Serial_DTR_RTS(struct s_reader * reader, int32_t * dtr, int32_t * rts)
 bool IO_Serial_SetBitrate (struct s_reader * reader, uint32_t bitrate, struct termios * tio)
 {
    /* Set the bitrate */
-#ifdef OS_LINUX
+#if defined(__linux__)
   //FIXME workaround for Smargo until native mode works
   if ((reader->mhz == reader->cardmhz) && (reader->smargopatch != 1) && IO_Serial_Bitrate(bitrate) != B0)
 #else
@@ -192,10 +192,10 @@ bool IO_Serial_SetBitrate (struct s_reader * reader, uint32_t bitrate, struct te
     cfsetispeed(tio, IO_Serial_Bitrate(bitrate));
     cs_debug_mask(D_DEVICE, "standard baudrate: cardmhz=%d mhz=%d -> effective baudrate %u", reader->cardmhz, reader->mhz, bitrate);
   }
-#ifdef OS_LINUX
+#if defined(__linux__)
   else
   { //over or underclocking
-    /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
+    /* these structures are only available on linux */
     struct serial_struct nuts;
     ioctl(reader->handle, TIOCGSERIAL, &nuts);
     int32_t custom_baud_asked = bitrate * reader->mhz / reader->cardmhz;

@@ -5,7 +5,7 @@
 
 #include <termios.h>
 #include <unistd.h>
-#ifdef OS_LINUX
+#if defined(__linux__)
 #include <linux/serial.h>
 #endif
 

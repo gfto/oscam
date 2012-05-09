@@ -24,7 +24,7 @@ typedef unsigned char uchar;
  #endif
 #endif
 
-#if defined(CS_EMBEDDED) || defined(OS_LINUX)
+#if defined(CS_EMBEDDED) || defined(__linux__)
 
 #ifdef ntohl
 #undef ntohl
@@ -53,4 +53,4 @@ typedef unsigned char uchar;
 #  endif
 #endif
 
-#endif // CS_EMBEDDED || OS_LINUX
+#endif // CS_EMBEDDED
