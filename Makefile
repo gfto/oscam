@@ -288,7 +288,7 @@ cross-powerpc-405-linux:
 		OS_LIBS="-lcrypto -ldl -lm" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_LINUX -DTRIPLEDRAGON -DWITH_LIBCRYPTO -DSTB04SCI -DCS_CONFDIR='\"/var/tuxbox/config\"' -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
+		DS_OPTS="-O2 -DOS_LINUX -DWITH_LIBCRYPTO -DSTB04SCI -DCS_CONFDIR='\"/var/tuxbox/config\"' -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
