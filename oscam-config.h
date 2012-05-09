@@ -200,6 +200,10 @@
 #  define socklen_t unsigned long
 #endif
 
+#if defined(__SOLARIS__) || defined(__FREEBSD__)
+#  define BSD_COMP
+#endif
+
 #if defined(__HPUX__)
 #  define _XOPEN_SOURCE_EXTENDED
 #endif
