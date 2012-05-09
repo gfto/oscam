@@ -14,7 +14,7 @@
 #include "sci_global.h"
 #include "sci_ioctl.h"
 #include "string.h"
-#ifdef SH4
+#if defined(__SH4__)
 #include <fcntl.h> 
 #endif
 
@@ -102,7 +102,7 @@ int32_t Sci_Activate (struct s_reader * reader)
 	cs_debug_mask(D_IFD, "IFD: Activating card");
 		int32_t in;
 
-#if defined(TUXBOX) && (defined(MIPSEL) || defined(PPC) || defined(SH4))
+#if defined(TUXBOX) && (defined(MIPSEL) || defined(PPC) || defined(__SH4__))
 		call (ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in)<0);
 #else
 		call (ioctl(reader->handle, IOCTL_GET_IS_CARD_ACTIVATED, &in)<0);
@@ -120,7 +120,7 @@ int32_t Sci_Deactivate (struct s_reader * reader)
 	cs_debug_mask(D_IFD, "IFD: Deactivating card");
 	int32_t in;
 		
-#if defined(TUXBOX) && (defined(MIPSEL) || defined(PPC) || defined(SH4))
+#if defined(TUXBOX) && (defined(MIPSEL) || defined(PPC) || defined(__SH4__))
 	call (ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in)<0);
 #else
 	call (ioctl(reader->handle, IOCTL_GET_IS_CARD_ACTIVATED, &in)<0);

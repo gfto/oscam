@@ -412,7 +412,7 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t timeout, uint32_t size, 
 {
 	BYTE c;
 	uint32_t count = 0;
-#ifdef SH4
+#if defined(__SH4__)
 	bool readed;
 	struct timeval tv, tv_spent;
 #endif
@@ -429,7 +429,7 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t timeout, uint32_t size, 
 	
 	for (count = 0; count < size ; count++)
 	{
-#ifdef SH4
+#if defined(__SH4__)
 		gettimeofday(&tv,0);
 		memcpy(&tv_spent,&tv,sizeof(struct timeval));
 		readed=FALSE;

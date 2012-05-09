@@ -157,7 +157,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 #elif defined(AZBOX)
 			return Azbox_Init(reader);
 #elif defined(SCI_DEV)
-	#if defined(SH4) || defined(STB04SCI)
+	#if defined(__SH4__) || defined(STB04SCI)
 			reader->handle = open (reader->device, O_RDWR|O_NONBLOCK|O_NOCTTY);
 	#else
 			reader->handle = open (reader->device, O_RDWR);
