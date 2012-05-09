@@ -59,7 +59,7 @@ override RANLIB=$(DS_RL)
 endif
 endif
 
-CFLAGS  = $(CC_WARN) $(CC_OPTS) $(DS_OPTS) $(KFLAG) $(DS_CFLAGS)
+CFLAGS  = $(DS_OPTS) $(KFLAG) $(DS_CFLAGS)
 LDFLAGS = $(DS_OPTS) $(DS_LDFLAGS)
 ARFLAGS = -rcsl
 LIBS    = $(DS_LIBS) $(OS_LIBS) $(OS_PTLI) $(LIB_SSL)
@@ -242,7 +242,7 @@ endif
 
 .c.a:
 	$(SAY) "CC	$<"
-	$(Q)$(CC) $(STD_DEFS) $(CFLAGS) -c $< -o $(subst .c,.o,$<)
+	$(Q)$(CC) $(STD_DEFS) $(CC_OPTS) $(CC_WARN) $(CFLAGS) -c $< -o $(subst .c,.o,$<)
 	@$(AR) $(ARFLAGS) $@ $*.o
 	-@rm -f $*.o
 
