@@ -12,7 +12,7 @@
 
 #include "csctapi/ifd_sc8in1.h"
 
-#if defined(TUXBOX) && defined(PPC) //dbox2 only
+#if defined(TUXBOX) && defined(__POWERPC__) //dbox2 only
 #include "csctapi/mc_global.h"
 static int32_t reader_device_type(struct s_reader * reader)
 {
@@ -332,7 +332,7 @@ int32_t reader_reset(struct s_reader * reader)
 int32_t reader_device_init(struct s_reader * reader)
 {
 	int32_t rc = -1; //FIXME
-#if defined(TUXBOX) && defined(PPC)
+#if defined(TUXBOX) && defined(__POWERPC__)
 	struct stat st;
 	if (!stat(DEV_MULTICAM, &st))
 		reader->typ = reader_device_type(reader);

@@ -127,7 +127,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 				return ERROR;
 			}
 			break;
-#if defined(TUXBOX) && defined(PPC)
+#if defined(TUXBOX) && defined(__POWERPC__)
 		case R_DB2COM1:
 		case R_DB2COM2:
 			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_SYNC);
@@ -244,7 +244,7 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 	switch(reader->typ) {
 		case R_DB2COM1:
 		case R_DB2COM2:
-#if defined(TUXBOX) && defined(PPC)
+#if defined(TUXBOX) && defined(__POWERPC__)
 			{
 			uint16_t msr=1;
 			IO_Serial_Ioctl_Lock(reader, 1);
