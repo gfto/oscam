@@ -238,7 +238,7 @@ $(OSCAM_LIB): $(OSCAM_OBJ)
 
 $(EXEFILE1): oscam.c $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(OSCAM_LIB)
 	$(SAY) "LINK	$@"
-	$(Q)$(CC) $(STD_DEFS) $(LDFLAGS) $(STD_LIBS) $(LIBS) oscam.c $(OSCAM_LIB) $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(LIBUSB) $(LIBPCSC) $(LIBRT) -o $@
+	$(Q)$(CC) $(STD_DEFS) $(LDFLAGS) $(STD_LIBS) oscam.c $(OSCAM_LIB) $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(LIBUSB) $(LIBPCSC) $(LIBRT) $(LIBS) -o $@
 ifndef DEBUG
 ifdef DS_ST
 	$(SAY) "STRIP	$@"
@@ -248,7 +248,7 @@ endif
 
 $(EXEFILE2):	utils/list_smargo.c
 	$(SAY) "LINK	$@"
-	$(Q)$(CC) $(STD_DEFS) $(LDFLAGS) $(STD_LIBS) $(LIBS) utils/list_smargo.c $(LIBUSB) $(LIBRT) -o $@
+	$(Q)$(CC) $(STD_DEFS) $(LDFLAGS) $(STD_LIBS) utils/list_smargo.c $(LIBUSB) $(LIBRT) $(LIBS) -o $@
 ifndef DEBUG
 	$(SAY) "STRIP	$@"
 	$(Q)$(STRIP) $@
