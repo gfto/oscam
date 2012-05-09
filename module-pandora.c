@@ -20,6 +20,7 @@ static void simple_crypt(uchar *buf, int len, uchar * key, int key_len) {
 static void pandora_process_request(struct s_client *cl, uchar *buf, int32_t l) {
 	int ecmlen;
 	ECM_REQUEST *er;
+	uchar md5tmp[MD5_DIGEST_LENGTH];
 
 	if (!(er = get_ecmtask()))
 		return;
@@ -35,7 +36,7 @@ static void pandora_process_request(struct s_client *cl, uchar *buf, int32_t l) 
 			er->l = 0;
 		else {
 			if (!memcmp(buf + 10,
-					MD5(buf + 14 + CS_ECMSTORESIZE, ecmlen, NULL),
+					MD5(buf + 14 + CS_ECMSTORESIZE, ecmlen, md5tmp),
 					CS_ECMSTORESIZE)) {
 				er->l = ecmlen;
 				memcpy(er->ecm, buf + 14 + CS_ECMSTORESIZE, ecmlen);
@@ -122,11 +123,12 @@ int pandora_auth_client(struct s_client *cl, in_addr_t ip) {
 
 static void * pandora_server(struct s_client *cl, uchar *UNUSED(mbuf),
 		int32_t UNUSED(len)) {
+	uchar md5tmp[MD5_DIGEST_LENGTH];
 	if (!cl->init_done) {
 		if (cfg.pand_pass[0]) {
 			cl->pand_autodelay = 150000;
 			memcpy(cl->pand_md5_key,
-					MD5((uchar*)cfg.pand_pass, strlen(cfg.pand_pass), NULL), 16);
+					MD5((uchar*)cfg.pand_pass, strlen(cfg.pand_pass), md5tmp), 16);
 			cl->pand_ignore_ecm = (cfg.pand_ecm) ? 0 : 1;
 			cl->crypted = 1;
 			pandora_auth_client(cl, cl->ip);
@@ -147,6 +149,7 @@ int pandora_client_init(struct s_client *cl) {
 	int16_t p_proto;
 	char ptxt[16];
 	struct s_reader *rdr = cl->reader;
+	uchar md5tmp[MD5_DIGEST_LENGTH];
 
 	cl->pfd = 0;
 	if (rdr->r_port <= 0) {
@@ -184,7 +187,7 @@ int pandora_client_init(struct s_client *cl) {
 	} else
 		ptxt[0] = '\0';
 
-	memcpy(cl->pand_md5_key, MD5((uchar*)rdr->r_pwd, strlen(rdr->r_pwd), NULL), 16);
+	memcpy(cl->pand_md5_key, MD5((uchar*)rdr->r_pwd, strlen(rdr->r_pwd), md5tmp), 16);
 	cl->crypted = 1;
 
 	//cl->grp = 0xFFFFFFFF;
@@ -203,6 +206,7 @@ int pandora_client_init(struct s_client *cl) {
 }
 
 static int pandora_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *UNUSED(buf)) {
+	uchar md5tmp[MD5_DIGEST_LENGTH];
 	uchar msgbuf[CWS_NETMSGSIZE];
 	int ret, len;
 	uchar adel;
@@ -218,7 +222,7 @@ static int pandora_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *UNUSED(
 	msgbuf[7] = er->prid >> 8;
 	msgbuf[8] = er->prid & 0xFF;
 	msgbuf[9] = adel;
-	memcpy(&msgbuf[10], MD5(er->ecm, er->l, NULL), CS_ECMSTORESIZE);
+	memcpy(&msgbuf[10], MD5(er->ecm, er->l, md5tmp), CS_ECMSTORESIZE);
 	msgbuf[10 + CS_ECMSTORESIZE] = er->chid >> 8;
 	msgbuf[11 + CS_ECMSTORESIZE] = er->chid & 0xFF;
 	len = 12 + CS_ECMSTORESIZE;

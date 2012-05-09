@@ -1,4 +1,3 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
 /*
  * This code implements the MD5 message-digest algorithm.
  * The algorithm is due to Ron Rivest. This code was
@@ -374,17 +373,13 @@ char * __md5_crypt( const char *pw, const char *salt, char *passwd )
 	return passwd;
 }
 
-// FIXME: This code is not thread safe if called with md = NULL
-unsigned char *MD5(const unsigned char *d, unsigned long n, unsigned char *md)
+unsigned char *MD5(const unsigned char *input, unsigned long len, unsigned char *output)
 {
-	struct MD5Context c;
-	static unsigned char m[MD5_DIGEST_LENGTH];
-
-	if (md == NULL) md=m;
-	__md5_Init(&c);
-	__md5_Update(&c,d,n);
-	__md5_Final(md,&c);
-	memset(&c,0,sizeof(c)); /* security consideration */
-	return(md);
+	struct MD5Context ctx;
+	__md5_Init(&ctx);
+	__md5_Update(&ctx, input, len);
+	__md5_Final(output, &ctx);
+	memset(&ctx, 0, sizeof(ctx)); /* security consideration */
+	return output;
 }
 
