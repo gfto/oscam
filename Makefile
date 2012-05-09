@@ -670,7 +670,6 @@ alpha-dec-osf5.1:
 		OS_LIBS="-lm" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR}" \
-		XDS_CFLAGS="-I/usr/include -c" \
 		DS_CFLAGS="" \
 		DS_LDFLAGS="" \
 		DS_CC=cc \
