@@ -729,7 +729,7 @@ alpha-dec-osf5.1:
 		OS_LIBS="-lm" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_OSF -DOS_OSF5 -DCS_CONFDIR=${CS_CONFDIR} -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
+		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		XDS_CFLAGS="-I/usr/include -c" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
