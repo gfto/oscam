@@ -721,7 +721,6 @@ cross-arm-nslu2-linux:
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
-		DS_AWK="awk" \
 		DS_CC="armv5b-softfloat-linux-gcc" \
 		DS_AR="armv5b-softfloat-linux-ar" \
 		DS_LD="armv5b-softfloat-linux-ld" \
@@ -742,7 +741,6 @@ cross-armBE-unkown-linux:
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
-		DS_AWK="awk" \
 		DS_CC="arm-linux-gcc -mbig-endian" \
 		DS_AR="arm-linux-ar" \
 		DS_LD="arm-linux-ld -EB" \
@@ -763,7 +761,6 @@ cross-armLE-unkown-linux:
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
-		DS_AWK="awk" \
 		DS_CC="arm-linux-gcc -mlittle-endian" \
 		DS_AR="arm-linux-ar" \
 		DS_LD="arm-linux-ld -EL" \
