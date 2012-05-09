@@ -189,12 +189,7 @@
 #  define NO_ENDIAN_H
 #endif
 
-#ifdef OS_SOLARIS
-#  define NO_ENDIAN_H
-#  define NEED_DAEMON
-#endif
-
-#if defined(__AIX__) || defined(__SGI__) || defined(__OSF__) || defined(__HPUX__)
+#if defined(__AIX__) || defined(__SGI__) || defined(__OSF__) || defined(__HPUX__) || defined(__SOLARIS__)
 #  define NO_ENDIAN_H
 #  define NEED_DAEMON
 #endif

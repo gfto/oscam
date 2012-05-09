@@ -5,7 +5,7 @@
 #if defined OS_MACOSX || defined OS_FREEBSD
 #include <net/if_dl.h>
 #include <ifaddrs.h>
-#elif defined OS_SOLARIS
+#elif defined(__SOLARIS__)
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <sys/sockio.h>
@@ -4048,7 +4048,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
          }
          freeifaddrs(ifs);
       }
-#elif defined OS_SOLARIS
+#elif defined(__SOLARIS__)
 			// no mac address specified so use first filled mac
 			int32_t j, sock, niccount;
 			struct ifreq nicnumber[16];
