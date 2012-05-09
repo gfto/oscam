@@ -9,6 +9,9 @@ ifeq ($(WITH_SSL), WITH_SSL)
 	LIB_SSL=-lssl
 endif
 
+LIB_PTHREAD = -lpthread
+
+override STD_LIBS := $(LIB_PTHREAD)
 override STD_DEFS := -D'CS_SVN_VERSION="$(SVN_REV)"'
 
 CC		= $(DS_CC)
@@ -18,7 +21,7 @@ RANLIB		= $(DS_RL)
 CFLAGS  = $(STD_DEFS) $(DS_OPTS) $(KFLAG) $(DS_CFLAGS)
 LDFLAGS = $(STD_DEFS) $(DS_OPTS) $(DS_LDFLAGS)
 ARFLAGS = -rcsl
-LIBS		= $(DS_LIBS) $(OS_LIBS) $(OS_PTLI) $(LIB_SSL)
+LIBS    = $(STD_LIBS) $(DS_LIBS) $(OS_LIBS) $(OS_PTLI) $(LIB_SSL)
 export		CC AR STRIP RANLIB CFLAGS LDFLAGS ARFLAGS
 
 GENERAL		= Makefile Maketype globals.h oscam-config.h
@@ -108,13 +111,13 @@ endif
 		$(MAKE) -C algo
 
 $(EXEFILE1):	oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(LIBFILE4) $(GENERAL)
-		$(CC) $(LDFLAGS) oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(LIBFILE4) $(LIBUSB) $(LIBPCSC) $(LIBRT) -o "$@" $(LIBS)
+		$(CC) $(LDFLAGS) $(LIBS) oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(LIBFILE4) $(LIBUSB) $(LIBPCSC) $(LIBRT) -o $@
 ifdef DS_ST
 		$(STRIP) $@
 endif
 
 $(EXEFILE2):	utils/list_smargo.c
-		$(CC) $(LDFLAGS) utils/list_smargo.c $(LIBUSB) $(LIBRT) -o "$@" $(LIBS)
+		$(CC) $(LDFLAGS) $(LIBS) utils/list_smargo.c $(LIBUSB) $(LIBRT) -o $@
 		$(STRIP) $@
 
 $(LIBFILE1):	$(OBJECTS1)
