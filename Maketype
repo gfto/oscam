@@ -65,8 +65,6 @@ ARFLAGS = -rcsl
 LIBS    = $(STD_LIBS) $(DS_LIBS) $(OS_LIBS) $(OS_PTLI) $(LIB_SSL)
 export		CC AR STRIP RANLIB CFLAGS LDFLAGS ARFLAGS TARGET
 
-GENERAL		= Makefile Maketype globals.h oscam-config.h
-
 # Process EXTRA_xxx variables
 CC_WARN += $(EXTRA_CC_WARN)
 CC_OPTS += $(EXTRA_CC_OPTS)
@@ -79,53 +77,100 @@ EXEFILE1	= Distribution/oscam-$(VER)$(VERX)-$(subst cygwin,cygwin.exe,$(TARGET))
 EXEFILE2	= Distribution/list_smargo-$(VER)$(VERX)-$(subst cygwin,cygwin.exe,$(TARGET))
 
 LIBDIR		= lib
-LIBFILE1	= $(LIBDIR)/libcs-$(TARGET).a
-LIBFILE2	= $(LIBDIR)/libcscrypt-$(TARGET).a
-LIBFILE3	= $(LIBDIR)/libcsctapi-$(TARGET).a
-LIBFILE4	= $(LIBDIR)/libminilzo-$(TARGET).a
 
-OBJECTS1	= $(LIBFILE1)(oscam-simples.o) \
-		  $(LIBFILE1)(oscam-config.o) \
-		  $(LIBFILE1)(oscam-log.o) \
-		  $(LIBFILE1)(oscam-reader.o) \
-		  $(LIBFILE1)(oscam-garbage.o) \
-		  $(LIBFILE1)(reader-common.o) \
-		  $(LIBFILE1)(reader-irdeto.o) \
-		  $(LIBFILE1)(reader-viaccess.o) \
-		  $(LIBFILE1)(reader-videoguard1.o) \
-		  $(LIBFILE1)(reader-videoguard12.o) \
-		  $(LIBFILE1)(reader-videoguard2.o) \
-		  $(LIBFILE1)(reader-videoguard-common.o) \
-		  $(LIBFILE1)(reader-nds.o) \
-		  $(LIBFILE1)(reader-seca.o) \
-		  $(LIBFILE1)(reader-bulcrypt.o) \
-		  $(LIBFILE1)(reader-cryptoworks.o) \
-		  $(LIBFILE1)(reader-conax.o) \
-		  $(LIBFILE1)(reader-dre.o) \
-		  $(LIBFILE1)(reader-nagra.o) \
-		  $(LIBFILE1)(reader-tongfang.o) \
-		  $(LIBFILE1)(module-camd33.o) \
-		  $(LIBFILE1)(module-camd35.o) \
-		  $(LIBFILE1)(module-radegast.o) \
-		  $(LIBFILE1)(module-serial.o) \
-		  $(LIBFILE1)(module-monitor.o) \
-		  $(LIBFILE1)(module-newcamd.o) \
-		  $(LIBFILE1)(module-cccam.o) \
-		  $(LIBFILE1)(module-cccshare.o) \
-		  $(LIBFILE1)(module-pandora.o) \
-		  $(LIBFILE1)(module-gbox.o) \
-		  $(LIBFILE1)(module-pandora.o) \
-		  $(LIBFILE1)(module-constcw.o) \
-		  $(LIBFILE1)(module-dvbapi.o) \
-		  $(LIBFILE1)(module-stat.o) \
-		  $(LIBFILE1)(module-csp.o) \
-		  $(LIBFILE1)(module-datastruct-llist.o) \
-		  $(LIBFILE1)(oscam-chk.o) \
-		  $(LIBFILE1)(oscam-http.o) \
-		  $(LIBFILE1)(oscam-http-helpers.o) \
-		  $(LIBFILE1)(oscam-ac.o) \
-		  $(LIBFILE1)(module-coolapi.o)\
-		  $(LIBFILE1)(module-lcd.o)
+ALGO_LIB = $(LIBDIR)/libminilzo-$(TARGET).a
+ALGO_DEP = algo/minilzo.h
+ALGO_OBJ = \
+	$(ALGO_LIB)(algo/minilzo.o)
+
+CSCRYPT_LIB = $(LIBDIR)/libcscrypt-$(TARGET).a
+CSCRYPT_DEP = cscrypt/cscrypt.h cscrypt/des.h cscrypt/bn.h
+CSCRYPT_OBJ = \
+	$(CSCRYPT_LIB)(cscrypt/aes.o) \
+	$(CSCRYPT_LIB)(cscrypt/bn_add.o) \
+	$(CSCRYPT_LIB)(cscrypt/bn_asm.o) \
+	$(CSCRYPT_LIB)(cscrypt/bn_ctx.o) \
+	$(CSCRYPT_LIB)(cscrypt/bn_div.o) \
+	$(CSCRYPT_LIB)(cscrypt/bn_exp.o) \
+	$(CSCRYPT_LIB)(cscrypt/bn_lib.o) \
+	$(CSCRYPT_LIB)(cscrypt/bn_mul.o) \
+	$(CSCRYPT_LIB)(cscrypt/bn_print.o) \
+	$(CSCRYPT_LIB)(cscrypt/bn_shift.o) \
+	$(CSCRYPT_LIB)(cscrypt/bn_sqr.o) \
+	$(CSCRYPT_LIB)(cscrypt/bn_word.o) \
+	$(CSCRYPT_LIB)(cscrypt/crc32.o) \
+	$(CSCRYPT_LIB)(cscrypt/des.o) \
+	$(CSCRYPT_LIB)(cscrypt/i_cbc.o) \
+	$(CSCRYPT_LIB)(cscrypt/i_ecb.o) \
+	$(CSCRYPT_LIB)(cscrypt/i_skey.o) \
+	$(CSCRYPT_LIB)(cscrypt/md5.o) \
+	$(CSCRYPT_LIB)(cscrypt/mem.o) \
+	$(CSCRYPT_LIB)(cscrypt/rc6.o) \
+	$(CSCRYPT_LIB)(cscrypt/sha1.o)
+
+CSCTAPI_LIB = $(LIBDIR)/libcsctapi-$(TARGET).a
+CSCTAPI_DEP = csctapi/defines.h csctapi/atr.h
+CSCTAPI_OBJ = \
+	$(CSCTAPI_LIB)(csctapi/atr.o) \
+	$(CSCTAPI_LIB)(csctapi/icc_async.o) \
+	$(CSCTAPI_LIB)(csctapi/ifd_cool.o) \
+	$(CSCTAPI_LIB)(csctapi/ifd_mp35.o) \
+	$(CSCTAPI_LIB)(csctapi/ifd_pcsc.o) \
+	$(CSCTAPI_LIB)(csctapi/ifd_phoenix.o) \
+	$(CSCTAPI_LIB)(csctapi/ifd_sc8in1.o) \
+	$(CSCTAPI_LIB)(csctapi/ifd_sci.o) \
+	$(CSCTAPI_LIB)(csctapi/ifd_smargo.o) \
+	$(CSCTAPI_LIB)(csctapi/ifd_smartreader.o) \
+	$(CSCTAPI_LIB)(csctapi/io_serial.o) \
+	$(CSCTAPI_LIB)(csctapi/protocol_t0.o) \
+	$(CSCTAPI_LIB)(csctapi/protocol_t1.o) \
+	$(CSCTAPI_LIB)(csctapi/t1_block.o)
+
+OSCAM_LIB = $(LIBDIR)/libcs-$(TARGET).a
+OSCAM_DEP = globals.h oscam-config.h
+OSCAM_OBJ = \
+	$(OSCAM_LIB)(module-camd33.o) \
+	$(OSCAM_LIB)(module-camd35.o) \
+	$(OSCAM_LIB)(module-cccam.o) \
+	$(OSCAM_LIB)(module-cccshare.o) \
+	$(OSCAM_LIB)(module-constcw.o) \
+	$(OSCAM_LIB)(module-coolapi.o)\
+	$(OSCAM_LIB)(module-csp.o) \
+	$(OSCAM_LIB)(module-datastruct-llist.o) \
+	$(OSCAM_LIB)(module-dvbapi.o) \
+	$(OSCAM_LIB)(module-gbox.o) \
+	$(OSCAM_LIB)(module-lcd.o) \
+	$(OSCAM_LIB)(module-monitor.o) \
+	$(OSCAM_LIB)(module-newcamd.o) \
+	$(OSCAM_LIB)(module-pandora.o) \
+	$(OSCAM_LIB)(module-pandora.o) \
+	$(OSCAM_LIB)(module-radegast.o) \
+	$(OSCAM_LIB)(module-serial.o) \
+	$(OSCAM_LIB)(module-stat.o) \
+	$(OSCAM_LIB)(oscam-ac.o) \
+	$(OSCAM_LIB)(oscam-chk.o) \
+	$(OSCAM_LIB)(oscam-config.o) \
+	$(OSCAM_LIB)(oscam-garbage.o) \
+	$(OSCAM_LIB)(oscam-http-helpers.o) \
+	$(OSCAM_LIB)(oscam-http.o) \
+	$(OSCAM_LIB)(oscam-log.o) \
+	$(OSCAM_LIB)(oscam-reader.o) \
+	$(OSCAM_LIB)(oscam-simples.o) \
+	$(OSCAM_LIB)(reader-bulcrypt.o) \
+	$(OSCAM_LIB)(reader-common.o) \
+	$(OSCAM_LIB)(reader-conax.o) \
+	$(OSCAM_LIB)(reader-cryptoworks.o) \
+	$(OSCAM_LIB)(reader-dre.o) \
+	$(OSCAM_LIB)(reader-irdeto.o) \
+	$(OSCAM_LIB)(reader-nagra.o) \
+	$(OSCAM_LIB)(reader-nds.o) \
+	$(OSCAM_LIB)(reader-seca.o) \
+	$(OSCAM_LIB)(reader-tongfang.o) \
+	$(OSCAM_LIB)(reader-viaccess.o) \
+	$(OSCAM_LIB)(reader-videoguard-common.o) \
+	$(OSCAM_LIB)(reader-videoguard1.o) \
+	$(OSCAM_LIB)(reader-videoguard12.o) \
+	$(OSCAM_LIB)(reader-videoguard2.o)
 
 ifneq ($(LIBUSB),)
 all:		prepare $(EXEFILE1) $(EXEFILE2)
@@ -145,18 +190,29 @@ prepare:
 		    printf("#define CS_OS_SYS \"%s\"\n", $$3);  \
 		  }' > oscam-ostype.h
 		@[ -d "$(LIBDIR)" ] || mkdir "$(LIBDIR)"
-
 ifeq ($(wildcard csgbox), csgbox)
 		@-echo "#define CS_WITH_GBOX 1" >> oscam-ostype.h
 		$(MAKE) -C csgbox
 endif
 
-		$(MAKE) -C cscrypt
-		$(MAKE) -C csctapi
-		$(MAKE) -C algo
+$(ALGO_OBJ): $(ALGO_DEP)
+$(ALGO_LIB): $(ALGO_OBJ)
+	-@$(RANLIB) $@
 
-$(EXEFILE1):	oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(LIBFILE4) $(GENERAL)
-		$(CC) $(LDFLAGS) $(LIBS) oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(LIBFILE4) $(LIBUSB) $(LIBPCSC) $(LIBRT) -o $@
+$(CSCRYPT_OBJ): $(CSCRYPT_DEP)
+$(CSCRYPT_LIB): $(CSCRYPT_OBJ)
+	-@$(RANLIB) $@
+
+$(CSCTAPI_OBJ): $(CSCTAPI_DEP)
+$(CSCTAPI_LIB): $(CSCTAPI_OBJ)
+	-@$(RANLIB) $@
+
+$(OSCAM_OBJ): $(OSCAM_DEP)
+$(OSCAM_LIB): $(OSCAM_OBJ)
+	-@$(RANLIB) $@
+
+$(EXEFILE1): oscam.c $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(OSCAM_LIB)
+		$(CC) $(LDFLAGS) $(LIBS) oscam.c $(OSCAM_LIB) $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(LIBUSB) $(LIBPCSC) $(LIBRT) -o $@
 ifndef DEBUG
 ifdef DS_ST
 		$(STRIP) $@
@@ -169,13 +225,8 @@ ifndef DEBUG
 		$(STRIP) $@
 endif
 
-$(LIBFILE1):	$(OBJECTS1)
-		-$(RANLIB) $@
-
-$(OBJECTS1):	$(GENERAL)
-
 .c.a:
-		$(CC) $(CFLAGS) -c $<
+		$(CC) $(CFLAGS) -c $< -o $(subst .c,.o,$<)
 		$(AR) $(ARFLAGS) $@ $*.o
 		-@rm -f $*.o
 
