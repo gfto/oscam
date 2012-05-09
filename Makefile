@@ -71,7 +71,7 @@ i386-pc-linux:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
 		OS_LIBS="-lcrypto" \
-		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -Winline -Wall -Wextra" \
+		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO" \
 		DS_CFLAGS="" \
 		DS_LDFLAGS="" \
 		DS_CC=gcc \
@@ -84,7 +84,7 @@ i386-pc-linux-debug:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
 		OS_LIBS="-lcrypto -lrt" \
-		DS_OPTS="-O0 -ggdb -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -Winline -Wall -Wextra" \
+		DS_OPTS="-O0 -ggdb -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO" \
 		DS_CFLAGS="" \
 		DS_LDFLAGS="" \
 		DS_CC=gcc \
@@ -101,7 +101,7 @@ i386-pc-linux-libusb:
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
         	LIBUSB="/usr/local/lib/libusb-1.0.a" \
 		OS_LIBS="-lcrypto -lrt" \
-		DS_OPTS="-O2 -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -Winline -Wall -Wextra -I/usr/local/include" \
+		DS_OPTS="-O2 -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -I/usr/local/include" \
 		DS_CFLAGS="" \
 		DS_LDFLAGS="" \
 		DS_CC=gcc \
@@ -120,7 +120,7 @@ i386-pc-linux-pcsc:
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
 		OS_LIBS="-lcrypto" \
 		OS_PTLI="-lpcsclite" \
-		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -DHAVE_PCSC=1 -I/usr/include/PCSC -Winline -Wall -Wextra" \
+		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -DHAVE_PCSC=1 -I/usr/include/PCSC" \
 		DS_CFLAGS="" \
 		DS_LDFLAGS="" \
 		DS_CC=gcc \
@@ -140,7 +140,7 @@ i386-pc-linux-pcsc-libusb:
         	LIBUSB="/usr/local/lib/libusb-1.0.a" \
 		OS_LIBS="-lcrypto -lrt" \
 		OS_PTLI="-lpcsclite" \
-		DS_OPTS="-O2 -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -DHAVE_PCSC=1 -I/usr/include/PCSC -Winline -Wall -Wextra -I/usr/local/include" \
+		DS_OPTS="-O2 -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -DHAVE_PCSC=1 -I/usr/include/PCSC -I/usr/local/include" \
 		DS_CFLAGS="" \
 		DS_LDFLAGS="" \
 		DS_CC=gcc \
@@ -159,7 +159,7 @@ macosx-native:
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto" \
 		OS_PTLI="" \
-		DS_OPTS="-O2 -DHAVE_PTHREAD_H -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -DHAVE_PCSC=1 -m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer" \
+		DS_OPTS="-O2 -DHAVE_PTHREAD_H -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -DHAVE_PCSC=1 -m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -finline-functions -fomit-frame-pointer" \
 		DS_CFLAGS="" \
 		DS_LDFLAGS="-framework PCSC -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk" \
 		DS_CC=gcc \
@@ -179,7 +179,7 @@ macosx-libusb:
 		LIBUSB="/usr/local/lib/libusb-1.0.a" \
 		OS_LIBS="-lcrypto " \
 		OS_PTLI="" \
-		DS_OPTS="-O2 -DHAVE_PTHREAD_H -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -DHAVE_PCSC=1 -DLIBUSB -m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -I/usr/local/include" \
+		DS_OPTS="-O2 -DHAVE_PTHREAD_H -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -DHAVE_PCSC=1 -DLIBUSB -m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -finline-functions -fomit-frame-pointer -I/usr/local/include" \
 		DS_CFLAGS="" \
 		DS_LDFLAGS="-framework PCSC -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -Wl,-framework -Wl,IOKit -Wl,-framework -Wl,CoreFoundation -Wl,-prebind -no-undefined" \
 		DS_CC=gcc \
