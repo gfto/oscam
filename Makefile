@@ -1,7 +1,7 @@
 SHELL	= /bin/sh
 
-VER	= $(subst ",,$(filter-out \#define CS_VERSION,$(shell grep CS_VERSION globals.h)))$(shell test -f `which svnversion` && svnversion -n . | awk 'BEGIN {FS = ":"} {print $$1}' | sed 's/[MS]$$//' | sed 's/exported/0/;s| |_|g' || echo -n 0 )
-SVN_REV=""$(shell test -f `which svnversion` && svnversion -n . | awk 'BEGIN {FS = ":"} {print $$1}' | sed 's/[MS]$$//' | sed 's/exported/0/;s| |_|g' || echo -n 0 )""
+SVN_REV = $(shell (svnversion -n . 2>/dev/null || echo -n 0) | cut -d: -f1 | sed 's/[^0-9]*$$//; s/^$$/0/')
+VER	= $(subst ",,$(filter-out \#define CS_VERSION,$(shell grep CS_VERSION globals.h)))$(SVN_REV)
 
 CS_CONFDIR = '\"/usr/local/etc\"'
 
