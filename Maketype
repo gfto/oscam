@@ -16,13 +16,16 @@ override STD_LIBS := $(LIB_PTHREAD) $(LIB_MATH)
 override STD_DEFS := -D'CS_SVN_VERSION="$(SVN_REV)"'
 
 # Compiler warnings
-CC_WARN = -Winline -Wall -Wextra $(EXTRA_CC_WARN)
+CC_WARN = -Winline -Wall -Wextra
+
+# Compiler optimizations
+CC_OPTS = -O2
 
 CC		= $(DS_CC)
 AR		= $(DS_AR)
 STRIP		= $(DS_ST)
 RANLIB		= $(DS_RL)
-CFLAGS  = $(STD_DEFS) $(CC_WARN) $(DS_OPTS) $(KFLAG) $(DS_CFLAGS)
+CFLAGS  = $(STD_DEFS) $(CC_WARN) $(CC_OPTS) $(DS_OPTS) $(KFLAG) $(DS_CFLAGS)
 LDFLAGS = $(STD_DEFS) $(DS_OPTS) $(DS_LDFLAGS)
 ARFLAGS = -rcsl
 LIBS    = $(STD_LIBS) $(DS_LIBS) $(OS_LIBS) $(OS_PTLI) $(LIB_SSL)
@@ -32,6 +35,7 @@ GENERAL		= Makefile Maketype globals.h oscam-config.h
 
 # Process EXTRA_xxx variables
 CC_WARN += $(EXTRA_CC_WARN)
+CC_OPTS += $(EXTRA_CC_OPTS)
 
 ifeq ($(wildcard csgbox), csgbox)
  VERX	= -gbx-$(subst ",,$(filter-out \#define GBXVERSION,$(shell grep GBXVERSION csgbox/gbox.h)))
