@@ -162,7 +162,7 @@
 
 
 #ifdef TUXBOX
-#  ifdef MIPSEL
+#  if defined(__MIPSEL__)
 #    define CS_LOGFILE "/dev/null"
 #  else
 #    define CS_LOGFILE "/dev/tty"
