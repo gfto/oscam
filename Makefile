@@ -46,6 +46,9 @@ extra:	all
 	@cd Distribution && tar cvf "../oscam$(VER)-extra.tar" *
 	@bzip2 -9f "oscam$(VER)-extra.tar"
 
+config:
+	$(SHELL) ./config.sh
+
 clean:
 	@-rm -rf oscam-ostype.h lib Distribution/oscam-*
 
