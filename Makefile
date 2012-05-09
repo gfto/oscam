@@ -476,7 +476,7 @@ cross-rs6000-ibm-aix4.2:
 		OS_LIBS="-lm" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthreads" \
-		DS_OPTS="-O2 -DOS_AIX -DOS_AIX42 -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
+		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \

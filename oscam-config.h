@@ -199,13 +199,7 @@
 #  define NEED_DAEMON
 #endif
 
-#ifdef OS_AIX
-#  define NO_ENDIAN_H
-#  define NEED_DAEMON
-#  define socklen_t unsigned long
-#endif
-
-#if defined(__SGI__)
+#if defined(__AIX__) || defined(__SGI__)
 #  define NO_ENDIAN_H
 #  define NEED_DAEMON
 #  define socklen_t unsigned long
