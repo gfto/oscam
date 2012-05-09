@@ -194,7 +194,7 @@
 #  define NEED_DAEMON
 #endif
 
-#if defined(__AIX__) || defined(__SGI__) || defined(__OSF__)
+#if defined(__AIX__) || defined(__SGI__) || defined(__OSF__) || defined(__HPUX__)
 #  define NO_ENDIAN_H
 #  define NEED_DAEMON
 #endif
@@ -203,9 +203,8 @@
 #  define socklen_t unsigned long
 #endif
 
-#ifdef OS_HPUX
-#  define NO_ENDIAN_H
-#  define NEED_DAEMON
+#if defined(__HPUX__)
+#  define _XOPEN_SOURCE_EXTENDED
 #endif
 
 #ifdef ARM

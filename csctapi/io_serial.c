@@ -24,7 +24,7 @@
 
 #include "../globals.h"
 #ifdef WITH_CARDREADER
-#ifdef OS_HPUX
+#if defined(__HPUX__)
 #include <sys/modem.h>
 #endif
 #include <unistd.h>
