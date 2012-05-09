@@ -66,7 +66,6 @@ i386-pc-linux:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
 		OS_LIBS="-lcrypto -lm" \
-		OS_CULI="-lncurses" \
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -pthread -Winline -Wall -Wextra -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
@@ -81,7 +80,6 @@ i386-pc-linux-debug:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
 		OS_LIBS="-lcrypto -lm -lrt" \
-		OS_CULI="-lncurses" \
 		DS_OPTS="-O0 -ggdb -pthread -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -Winline -Wall -Wextra -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
@@ -100,7 +98,6 @@ i386-pc-linux-libusb:
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
         	LIBUSB="/usr/local/lib/libusb-1.0.a" \
 		OS_LIBS="-lcrypto -lm -lrt" \
-		OS_CULI="-lncurses" \
 		DS_OPTS="-O2 -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -pthread -Winline -Wall -Wextra -D'CS_SVN_VERSION="\"$(SVN_REV)\""' -I/usr/local/include" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
@@ -120,7 +117,6 @@ i386-pc-linux-pcsc:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
 		OS_LIBS="-lcrypto -lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpcsclite" \
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -pthread -DHAVE_PCSC=1 -I/usr/include/PCSC -Winline -Wall -Wextra -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -142,7 +138,6 @@ i386-pc-linux-pcsc-libusb:
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
         	LIBUSB="/usr/local/lib/libusb-1.0.a" \
 		OS_LIBS="-lcrypto -lm -lrt" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpcsclite" \
 		DS_OPTS="-O2 -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -pthread -DHAVE_PCSC=1 -I/usr/include/PCSC -Winline -Wall -Wextra -D'CS_SVN_VERSION="\"$(SVN_REV)\""' -I/usr/local/include" \
 		DS_CFLAGS="-c" \
@@ -163,7 +158,6 @@ macosx-native:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto -lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DHAVE_PTHREAD_H -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -DHAVE_PCSC=1 -m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -185,7 +179,6 @@ macosx-libusb:
 		-f Maketype TYP=$(subst cross-,,$@) \
 		LIBUSB="/usr/local/lib/libusb-1.0.a" \
 		OS_LIBS="-lcrypto -lm " \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DHAVE_PTHREAD_H -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO -DHAVE_PCSC=1 -DLIBUSB -m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="\"$(SVN_REV)\""' -I/usr/local/include" \
 		DS_CFLAGS="-c" \
@@ -207,7 +200,6 @@ i386-pc-freebsd:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -228,7 +220,6 @@ cross-i386-pc-freebsd:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -249,7 +240,6 @@ cross-powerpc-tuxbox-linux:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto -ldl -lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DTUXBOX -DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"' -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -265,7 +255,6 @@ cross-powerpc-tuxbox-linux-uclibc:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DTUXBOX -DCS_CONFDIR='\"/var/tuxbox/config\"' -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -286,7 +275,6 @@ cross-powerpc-405-linux:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto -ldl -lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DSTB04SCI -DCS_CONFDIR='\"/var/tuxbox/config\"' -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -307,7 +295,6 @@ cross-sh4-linux:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto -lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DTUXBOX -DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"' -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -323,7 +310,6 @@ cross-sh4-linux-stapi:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto -lm -L./stapi -loscam_stapi" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DWITH_STAPI -DWITH_LIBCRYPTO -DTUXBOX -DSCI_DEV -DCS_CONFDIR='\"/var/tuxbox/config\"' -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -344,7 +330,6 @@ cross-i386-pc-cygwin:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto -lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DCS_CONFDIR=${CS_CONFDIR} -static -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -365,7 +350,6 @@ i386-pc-cygwin:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto -lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DCS_CONFDIR='\".\"' -I /tmp/include -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -387,7 +371,6 @@ i386-pc-cygwin-pcsc:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto -lm -lwinscard" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -D_WIN32 -DCS_CONFDIR=${CS_CONFDIR} -DHAVE_PCSC=1 -I /tmp/include -I ./cygwin -I/usr/include/w32api -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -410,7 +393,6 @@ i386-pc-cygwin-libusb:
 		-f Maketype TYP=$(subst cross-,,$@) \
 		LIBUSB="/usr/lib/libusb-1.0.a" \
 		OS_LIBS="-lcrypto -lm -lSetupAPI -lOle32 -lshell32" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -D_WIN32 -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -I /tmp/include -I ./cygwin -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -432,7 +414,6 @@ cross-sparc-sun-solaris2.7:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -453,7 +434,6 @@ opensolaris:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto -lnsl -lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -474,7 +454,6 @@ cross-rs6000-ibm-aix4.2:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthreads" \
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -495,7 +474,6 @@ cross-mips-sgi-irix6.5:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -517,7 +495,6 @@ cross-mipsel-router-linux-uclibc927:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -539,7 +516,6 @@ cross-mipsel-router-linux-uclibc928:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto -lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -561,7 +537,6 @@ cross-mipsel-router-linux-uclibc929:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto -lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -583,7 +558,6 @@ cross-mipsel-router-linux-uclibc929-static:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto -lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -605,7 +579,6 @@ cross-mips-router-linux-uclibc930:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto -lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -627,7 +600,6 @@ cross-mips-router-linux-uclibc931:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto -lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DWITH_LIBCRYPTO -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -648,7 +620,6 @@ cross-mipsel-fonera2:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-Lopenssl-lib -lcrypto -lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-Iopenssl-include -O2 -DWITH_LIBCRYPTO -DUCLIBC -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -669,7 +640,6 @@ cross-mipsel-tuxbox-linux-glibc:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto -lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DTUXBOX -DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"' -static-libgcc -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -685,7 +655,6 @@ cross-mipsel-tuxbox-linux:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto -lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DTUXBOX -DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"' -static-libgcc -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -706,7 +675,6 @@ hppa1.1-hp-hpux10.20:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -727,7 +695,6 @@ alpha-dec-osf5.1:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		XDS_CFLAGS="-I/usr/include -c" \
@@ -749,7 +716,6 @@ cross-arm-nslu2-linux:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP="$(subst cross-,,$@)" \
 		OS_LIBS="-lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -771,7 +737,6 @@ cross-armBE-unkown-linux:
 	-$(MAKE) --no-print-directory \
 		-f Maketype TYP="$(subst cross-,,$@)" \
 		OS_LIBS="-lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR} -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
@@ -793,7 +758,6 @@ cross-armLE-unkown-linux:
 	-$(MAKE) --no-print-directory \
 		-f Maketype TYP="$(subst cross-,,$@)" \
 		OS_LIBS="-lm" \
-		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DCS_CONFDIR=${CS_CONFDIR}  -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
