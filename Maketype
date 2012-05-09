@@ -261,3 +261,4 @@ endif
 	-@rm -f $*.o
 
 .SUFFIXES:	.o .c .a
+.NOTPARALLEL: all
