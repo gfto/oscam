@@ -83,8 +83,9 @@ i386-pc-linux:
 i386-pc-linux-debug:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
+		DEBUG=1 \
 		OS_LIBS="-lcrypto -lrt" \
-		DS_OPTS="-O0 -ggdb -DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO" \
+		DS_OPTS="-DCS_CONFDIR=${CS_CONFDIR} -DWITH_LIBCRYPTO" \
 		DS_CFLAGS="" \
 		DS_LDFLAGS="" \
 		DS_CC=gcc \

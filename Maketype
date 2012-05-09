@@ -19,7 +19,11 @@ override STD_DEFS := -D'CS_SVN_VERSION="$(SVN_REV)"'
 CC_WARN = -Winline -Wall -Wextra
 
 # Compiler optimizations
+ifndef DEBUG
 CC_OPTS = -O2
+else
+CC_OPTS = -O0 -ggdb
+endif
 
 CC = $(CROSS)gcc
 AR = $(CROSS)ar
@@ -153,13 +157,17 @@ endif
 
 $(EXEFILE1):	oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(LIBFILE4) $(GENERAL)
 		$(CC) $(LDFLAGS) $(LIBS) oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(LIBFILE4) $(LIBUSB) $(LIBPCSC) $(LIBRT) -o $@
+ifndef DEBUG
 ifdef DS_ST
 		$(STRIP) $@
+endif
 endif
 
 $(EXEFILE2):	utils/list_smargo.c
 		$(CC) $(LDFLAGS) $(LIBS) utils/list_smargo.c $(LIBUSB) $(LIBRT) -o $@
+ifndef DEBUG
 		$(STRIP) $@
+endif
 
 $(LIBFILE1):	$(OBJECTS1)
 		-$(RANLIB) $@
