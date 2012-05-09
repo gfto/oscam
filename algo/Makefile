@@ -3,7 +3,7 @@ SHELL		= /bin/sh
 GENERAL		= Makefile minilzo.h
 
 LIBDIR		= ../lib
-LIBFILE1	= $(LIBDIR)/libminilzo-$(TYP).a
+LIBFILE1	= $(LIBDIR)/libminilzo-$(TARGET).a
 
 OBJECTS1	= $(LIBFILE1)(minilzo.o)
 

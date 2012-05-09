@@ -3,7 +3,7 @@ SHELL		= /bin/sh
 GENERAL		= Makefile
 
 LIBDIR		= ../lib
-LIBFILE1	= $(LIBDIR)/libcsctapi-$(TYP).a
+LIBFILE1	= $(LIBDIR)/libcsctapi-$(TARGET).a
 
 OBJECTS1	= $(LIBFILE1)(atr.o) \
 		  $(LIBFILE1)(icc_async.o) \

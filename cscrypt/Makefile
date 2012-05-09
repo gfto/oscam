@@ -3,7 +3,7 @@ SHELL		= /bin/sh
 GENERAL		= Makefile cscrypt.h des.h bn.h
 
 LIBDIR		= ../lib
-LIBFILE1	= $(LIBDIR)/libcscrypt-$(TYP).a
+LIBFILE1	= $(LIBDIR)/libcscrypt-$(TARGET).a
 
 OBJECTS1	= $(LIBFILE1)(md5.o) \
 		  $(LIBFILE1)(crc32.o) \
