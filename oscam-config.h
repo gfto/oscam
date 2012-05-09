@@ -184,7 +184,7 @@
 #  define CS_EMBEDDED
 #endif
 
-#ifdef OS_CYGWIN32
+#if defined(__CYGWIN__)
 #  define CS_LOGFILE "/dev/tty"
 #  define NO_ENDIAN_H
 #endif

@@ -119,7 +119,7 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 		}
 
 		for(i=0; i<3; i++) {
-#ifndef OS_CYGWIN32
+#if !defined(__CYGWIN__)
 			/* 
 			* Pause for 200ms as this might help with the PL2303.
 			* Some users reporting that this breaks cygwin, so we exclude this.
@@ -138,7 +138,7 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 			else
 #endif
 				IO_Serial_RTS_Set(reader);
-#ifdef OS_CYGWIN32
+#if defined(__CYGWIN__)
 			/* 
 			* Pause for 200ms as this might help with the PL2303.
 			* Some users reporting that this breaks cygwin, so we went back to 50ms.
@@ -225,7 +225,7 @@ int32_t Phoenix_SetBaudrate (struct s_reader * reader, uint32_t baudrate)
 	struct termios tio;
 	call (tcgetattr (reader->handle, &tio) != 0);
 	call (IO_Serial_SetBitrate (reader, baudrate, &tio));
-#ifndef OS_CYGWIN32
+#if !defined(__CYGWIN__)
 	/* 
 	* Pause for 200ms as this might help with the PL2303.
 	* Some users reporting that this breaks cygwin, so we exclude this.
@@ -233,7 +233,7 @@ int32_t Phoenix_SetBaudrate (struct s_reader * reader, uint32_t baudrate)
         cs_sleepms(200);
 #endif
 	call (IO_Serial_SetProperties(reader, tio));
-#ifndef OS_CYGWIN32
+#if !defined(__CYGWIN__)
 	/* 
 	* Pause for 200ms as this might help with the PL2303.
 	* Some users reporting that this breaks cygwin, so we exclude this.

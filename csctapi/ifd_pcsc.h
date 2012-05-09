@@ -2,7 +2,7 @@
 #include "../globals.h"
 
 #ifdef HAVE_PCSC
-  #ifdef OS_CYGWIN32
+  #if defined(__CYGWIN__)
     #define __reserved
     #define __nullnullterminated
     #include <specstrings.h>

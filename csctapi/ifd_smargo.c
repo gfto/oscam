@@ -6,7 +6,7 @@
 #include "icc_async.h"
 #include "io_serial.h"
 
-#ifdef OS_CYGWIN32
+#if defined(__CYGWIN__)
 #undef OK
 #undef ERROR
 #undef LOBYTE

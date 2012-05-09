@@ -344,7 +344,7 @@ static void usage()
   fprintf(stderr, "\t-c <dir>   : read configuration from <dir>\n");
   fprintf(stderr, "\t             default = %s\n", CS_CONFDIR);
   fprintf(stderr, "\t-t <dir>   : tmp dir <dir>\n");
-#ifdef CS_CYGWIN32
+#if defined(__CYGWIN__)
   fprintf(stderr, "\t             default = (OS-TMP)\n");
 #else
   fprintf(stderr, "\t             default = /tmp/.oscam\n");
@@ -987,7 +987,7 @@ void cs_exit(int32_t sig)
     end_lcd_thread();
 #endif
 
-#ifndef OS_CYGWIN32
+#if !defined(__CYGWIN__)
 	char targetfile[256];
 		snprintf(targetfile, 255, "%s%s", get_tmp_dir(), "/oscam.version");
 		if (unlink(targetfile) < 0)

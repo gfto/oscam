@@ -3169,7 +3169,7 @@ int32_t write_server()
 
 void write_versionfile() {
 
-#ifndef OS_CYGWIN32
+#if !defined(__CYGWIN__)
   // /tmp/oscam.version file (Uptime + Version)
   char targetfile[256];
   snprintf(targetfile, sizeof(targetfile),"%s%s", get_tmp_dir(), "/oscam.version");

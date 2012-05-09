@@ -3628,7 +3628,7 @@ static char *send_oscam_script(struct templatevars *vars) {
 
 static char *send_oscam_scanusb(struct templatevars *vars) {
 	setActiveMenu(vars, MNU_READERS);
-#ifndef OS_CYGWIN32
+#if !defined(__CYGWIN__)
 	FILE *fp;
 	int32_t err=0;
 	char path[1035];

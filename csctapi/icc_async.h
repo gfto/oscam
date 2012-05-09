@@ -33,7 +33,7 @@
  */
 
 /* Return codes */
-#ifdef OS_CYGWIN32
+#if defined(__CYGWIN__)
 #undef Ok
 #undef ERROR
 #endif

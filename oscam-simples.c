@@ -26,7 +26,7 @@ char *get_tmp_dir(){
   if (cs_tmpdir[0])
     return cs_tmpdir;
 
-#ifdef OS_CYGWIN32
+#if defined(__CYGWIN__)
   char *d = getenv("TMPDIR");
   if (!d || !d[0])
     d = getenv("TMP");
@@ -661,7 +661,7 @@ void cs_sleepus(uint32_t usec)
 	errno = olderrno;
 }
 
-#ifdef OS_CYGWIN32
+#if defined(__CYGWIN__)
 #include <windows.h>
 void cs_setpriority(int32_t prio)
 {

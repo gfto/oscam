@@ -295,7 +295,7 @@ static int32_t oscam_ser_set_serial_device(int32_t fd, speed_t baud)
   tio.c_iflag = IGNPAR;
   tio.c_cc[VMIN] = 1;
   tio.c_cc[VTIME] = 0;
-//#if !defined(OS_CYGWIN32)
+//#if !defined(__CYGWIN__)
   oscam_ser_set_baud(&tio, B1200);
   tcsetattr(fd, TCSANOW, &tio);
   cs_sleepms(500);

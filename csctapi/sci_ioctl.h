@@ -27,7 +27,7 @@
 #define IOCTL_GET_ATR_STATUS				_IO (0x64, 12)
 #define IOCTL_DUMP_REGS							_IO (0x64, 20)
 
-#elif defined(OS_CYGWIN32)
+#elif defined(__CYGWIN__)
 /* ioctl cmd table */
 #define IOCTL_SET_RESET							1
 #define IOCTL_SET_MODES							2

@@ -7,7 +7,7 @@
 #include "../globals.h"
 #include "ifd_smartreader.h"
 
-#ifdef OS_CYGWIN32
+#if defined(__CYGWIN__)
 #undef OK
 #undef ERROR
 #undef LOBYTE
@@ -1335,7 +1335,7 @@ static int32_t smartreader_set_latency_timer(S_READER *reader, uint16_t  latency
     return 0;
 }
 
-#ifdef OS_CYGWIN32
+#if defined(__CYGWIN__)
 static WINAPI read_callback(struct libusb_transfer *transfer){
 #else
 static void read_callback(struct libusb_transfer *transfer){
