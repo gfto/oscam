@@ -186,12 +186,14 @@
 
 #if defined(__CYGWIN__)
 #  define CS_LOGFILE "/dev/tty"
-#  define NO_ENDIAN_H
 #endif
 
-#if defined(__AIX__) || defined(__SGI__) || defined(__OSF__) || defined(__HPUX__) || defined(__SOLARIS__)
-#  define NO_ENDIAN_H
+#if defined(__AIX__) || defined(__SGI__) || defined(__OSF__) || defined(__HPUX__) || defined(__SOLARIS__) || defined(__APPLE__)
 #  define NEED_DAEMON
+#endif
+
+#if defined(__AIX__) || defined(__SGI__) || defined(__OSF__) || defined(__HPUX__) || defined(__SOLARIS__) || defined(__CYGWIN__)
+#  define NO_ENDIAN_H
 #endif
 
 #if defined(__AIX__) || defined(__SGI__)
