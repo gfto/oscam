@@ -21,10 +21,33 @@ CC_WARN = -Winline -Wall -Wextra
 # Compiler optimizations
 CC_OPTS = -O2
 
-CC		= $(DS_CC)
-AR		= $(DS_AR)
-STRIP		= $(DS_ST)
-RANLIB		= $(DS_RL)
+CC = $(CROSS)gcc
+AR = $(CROSS)ar
+STRIP = $(CROSS)strip
+RANLIB = $(CROSS)ranlib
+
+# CROSS variable was never used or set in the times when DS_xxx
+# variables ruled the world. So it fairly safe to assume that if
+# it is set then no compatability with DS_CC, DS_AR, DS_ST and DS_RL
+# is needed.
+ifeq "$(CROSS)" ""
+# Backwards compatability. It was expected that when DS_CC,
+# DS_AR, DS_ST and DS_RL were set they are used as CC, AR,
+# STRIP and RANLIB
+ifneq "$(DS_CC)" ""
+override CC=$(DS_CC)
+endif
+ifneq "$(DS_AR)" ""
+override AR=$(DS_AR)
+endif
+ifneq "$(DS_ST)" ""
+override STRIP=$(DS_ST)
+endif
+ifneq "$(DS_RL)" ""
+override RANLIB=$(DS_RL)
+endif
+endif
+
 CFLAGS  = $(STD_DEFS) $(CC_WARN) $(CC_OPTS) $(DS_OPTS) $(KFLAG) $(DS_CFLAGS)
 LDFLAGS = $(STD_DEFS) $(DS_OPTS) $(DS_LDFLAGS)
 ARFLAGS = -rcsl
