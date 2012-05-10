@@ -71,10 +71,10 @@ override RANLIB=$(DS_RL)
 endif
 endif
 
-CFLAGS  = $(DS_OPTS) $(KFLAG) $(DS_CFLAGS)
-LDFLAGS = $(DS_OPTS) $(DS_LDFLAGS)
+CFLAGS  = $(strip $(DS_OPTS) $(KFLAG) $(DS_CFLAGS))
+LDFLAGS = $(strip $(DS_OPTS) $(DS_LDFLAGS))
 ARFLAGS = -rcsl
-LIBS    = $(DS_LIBS) $(OS_LIBS) $(OS_PTLI) $(LIB_SSL)
+LIBS    = $(strip $(DS_LIBS) $(OS_LIBS) $(OS_PTLI) $(LIB_SSL))
 
 # Process EXTRA_xxx variables
 CC_WARN += $(EXTRA_CC_WARN)
