@@ -191,7 +191,7 @@ A.debugls:visited {color: white;background-color:red;}\n\
 A:visited {color: #050840;}\n\
 A:active {color: #050840;}\n\
 A:hover {color: #ff9e5f;}\n\
-DIV.message {float:right}\n\
+DIV.message {position:absolute;right:0;font-family: Arial; font-size: 12px;font-weight:bold;}\n\
 IMG{border:0px solid;}\n\
 IMG.icon{border: 0px solid;width:16px;height:16px;background-color:#660000;border-radius:3px;-webkit-border-radius:3px;}\n\
 A:hover IMG.icon {border: 1px solid yellow;width:14px;height:14px;}\n\

@@ -1626,12 +1626,28 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 }
 
 static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
-	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
-	if(!rdr) return "0";
-	struct s_client *cl = rdr->client;
-	if(!cl) return "0";
 
 	if(!apicall) setActiveMenu(vars, MNU_READERS);
+
+	int8_t error;
+	struct s_client *cl;
+	struct s_reader *rdr;
+
+	rdr = get_reader_by_label(getParam(params, "label"));
+	error = (rdr ? 0 : 1);
+
+	if(!error){
+		cl = rdr->client;
+		error = (cl ? 0 : 1);
+	}
+
+	if(error){
+		tpl_addVar(vars, TPLAPPEND, "READERSTATSROW","<TR><TD colspan=\"8\"> No statistics found - Reader exist and active?</TD></TR>");
+		if(!apicall)
+			return tpl_getTpl(vars, "READERSTATS");
+		else
+			return tpl_getTpl(vars, "APIREADERSTATS");
+	}
 
 #ifdef WITH_LB
 	char *stxt[]={"found", "cache1", "cache2", "cache3",
