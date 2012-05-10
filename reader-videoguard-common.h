@@ -26,7 +26,7 @@ typedef struct nds_atr {
     const char *desc;
 } NDS_ATR_ENTRY;
 
-extern int32_t cw_is_valid(unsigned char *cw, int32_t start);
+extern int32_t cw_is_valid(unsigned char *cw);
 extern void cAES_SetKey(struct s_reader * reader, const unsigned char *key);
 
 extern void __xxor(unsigned char *data, int32_t len, const unsigned char *v1, const unsigned char *v2);

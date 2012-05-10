@@ -206,10 +206,10 @@ static void cCamCryptVG_PostProcess_Decrypt(struct s_reader * reader, unsigned c
 static int32_t cAES_Encrypt(struct s_reader * reader, const unsigned char *data, int32_t len, unsigned char *crypt);
 static void swap_lb (const unsigned char *buff, int32_t len);
 
-int32_t cw_is_valid(unsigned char *cw, int32_t start)	//returns 1 if cw_is_valid, returns 0 if cw is all zeros
+int32_t cw_is_valid(unsigned char *cw) // returns 1 if cw_is_valid, returns 0 if cw is all zeros
 {
   int32_t i;
-  for (i = start; i < start+8; i++)
+  for (i = 0; i < 8; i++)
     if (cw[i] != 0) {		//test if cw = 00
       return OK;
     }
