@@ -7,6 +7,7 @@ endif
 WITH_SSL=$(subst ",,$(filter-out \#define, $(shell grep '^\#define WITH_SSL' oscam-config.h)))
 ifeq ($(WITH_SSL), WITH_SSL)
 	LIB_SSL=-lssl
+	override USE_LIBCRYPTO=1
 endif
 
 CONF_DIR = /usr/local/etc
@@ -76,12 +77,24 @@ LDFLAGS = $(strip $(DS_OPTS) $(DS_LDFLAGS))
 ARFLAGS = -rcsl
 LIBS    = $(strip $(LIBUSB) $(LIBPCSC) $(LIBRT) $(DS_LIBS) $(OS_LIBS) $(OS_PTLI) $(LIB_SSL))
 
-# Add EXTRA_xxx and STD_xxx vars
+# Process USE_ variables
+ifdef USE_LIBCRYPTO
+LIBCRYPTO_CFLAGS = -DWITH_LIBCRYPTO
+LIBCRYPTO_LDFLAGS = -DWITH_LIBCRYPTO
+LIBCRYPTO_LIB = -lcrypto
+endif
+
+# Set USE_ flags
+override USE_CFLAGS = $(LIBCRYPTO_CFLAGS)
+override USE_LDFLAGS= $(LIBCRYPTO_LDFLAGS)
+override USE_LIBS   = $(LIBCRYPTO_LIB)
+
+# Add USE_xxx, EXTRA_xxx and STD_xxx vars
 override CC_WARN += $(EXTRA_CC_WARN)
 override CC_OPTS += $(EXTRA_CC_OPTS)
-override CFLAGS  += $(EXTRA_CFLAGS)
-override LDFLAGS += $(EXTRA_LDFLAGS)
-override LIBS    += $(EXTRA_LIBS) $(STD_LIBS)
+override CFLAGS  += $(USE_CFLAGS) $(EXTRA_CFLAGS)
+override LDFLAGS += $(USE_LDFLAGS) $(EXTRA_LDFLAGS)
+override LIBS    += $(USE_LIBS) $(EXTRA_LIBS) $(STD_LIBS)
 
 export		CC AR STRIP RANLIB CFLAGS LDFLAGS ARFLAGS TARGET
 
