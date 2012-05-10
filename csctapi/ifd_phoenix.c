@@ -313,6 +313,15 @@ static int32_t mouse_transmit(struct s_reader *reader, unsigned char *sent, uint
 }
 
 #if defined(WITH_STAPI)
+extern int32_t STReader_Open(char *device, uint32_t *stsmart_handle);
+extern int32_t STReader_GetStatus(uint32_t stsmart_handle, int32_t *in);
+extern int32_t STReader_Reset(uint32_t stsmart_handle, ATR *atr);
+extern int32_t STReader_Transmit(uint32_t stsmart_handle, unsigned char *sent, uint32_t size);
+extern int32_t STReader_Receive(uint32_t stsmart_handle, unsigned char *data, uint32_t size);
+extern int32_t STReader_Close(uint32_t stsmart_handle);
+extern int32_t STReader_SetProtocol(uint32_t stsmart_handle, unsigned char *params, unsigned *length, uint32_t len_request);
+extern int32_t STReader_SetClockrate(uint32_t stsmart_handle);
+
 static int32_t stapi_init(struct s_reader *reader) {
 	return STReader_Open(reader->device, &reader->stsmart_handle);
 }
@@ -342,6 +351,7 @@ static int32_t stapi_setprotocol(struct s_reader *reader, unsigned char *params,
 }
 
 static int32_t stapi_writesettings(struct s_reader *reader, uint32_t ETU, uint32_t EGT, unsigned char P, unsigned char I, uint16_t Fi, unsigned char Di, unsigned char Ni) {
+	(void)ETU; (void)EGT; (void)P; (void)I; (void)Fi; (void)Di; (void)Ni;
 	return STReader_SetClockrate(reader->stsmart_handle);
 }
 
@@ -357,7 +367,6 @@ void cardreader_stapi(struct s_cardreader *crdr)
 	crdr->set_protocol	= stapi_setprotocol;
 	crdr->write_settings = stapi_writesettings;
 	crdr->typ		= R_INTERNAL;
-	int32_t max_clock_speed	= 1;
 }
 #endif
 

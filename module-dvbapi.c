@@ -2628,7 +2628,7 @@ static int32_t stapi_do_set_filter(int32_t demux_id, FILTERTYPE *filter, uint16_
 	}
 }
 
-static int32_t stapi_do_remove_filter(int32_t demux_id, FILTERTYPE *filter, int32_t dev_id) {
+static int32_t stapi_do_remove_filter(int32_t UNUSED(demux_id), FILTERTYPE *filter, int32_t dev_id) {
 	if (filter->fd==0) return FALSE;
 
 	uint32_t BufferDeallocateError=0, SlotDeallocateError=0;
@@ -2716,7 +2716,7 @@ static void *stapi_read_thread(void *sparam) {
 		uint32_t NumFilterMatches = 0;
 		int32_t demux_id=0, filter_num=0;
 		DataSize = 0;
-		int32_t k;
+		uint32_t k;
 
 		uint32_t MatchedFilterList[10];
 		ErrorCode = oscam_stapi_BufferReadSection(QueryBufferHandle, MatchedFilterList, 10, &NumFilterMatches, &CRCValid, buf, BUFFLEN, &DataSize);	
@@ -2830,7 +2830,7 @@ static void stapi_startdescrambler(int32_t demux_id, int32_t dev_index, int32_t 
 	return;
 }
 
-static int32_t stapi_set_pid(int32_t demux_id, int32_t num, int32_t index, uint16_t pid, char *pmtfile) {
+static int32_t stapi_set_pid(int32_t demux_id, int32_t UNUSED(num), int32_t index, uint16_t UNUSED(pid), char *UNUSED(pmtfile)) {
 	int32_t n;
 
 	if (index==-1) {
