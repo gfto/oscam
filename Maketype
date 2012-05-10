@@ -259,10 +259,8 @@ $(EXEFILE1): oscam.c $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(OSCAM_LIB)
 	$(SAY) "LINK	$@"
 	$(Q)$(CC) $(STD_DEFS) $(LDFLAGS) oscam.c $(OSCAM_LIB) $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(LIBUSB) $(LIBPCSC) $(LIBRT) $(STD_LIBS) $(LIBS) -o $@
 ifndef DEBUG
-ifdef DS_ST
 	$(SAY) "STRIP	$@"
 	$(Q)$(STRIP) $@
-endif
 endif
 
 $(EXEFILE2):	utils/list_smargo.c
