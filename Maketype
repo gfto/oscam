@@ -223,7 +223,6 @@ prepare:
 |  CC_WARN  = $(CC_WARN)\n\
 |  CFLAGS   = $(CFLAGS)\n\
 |  LDFLAGS  = $(LDFLAGS)\n\
-|  ARFLAGS  = $(ARFLAGS)\n\
 |  LIBS     = $(LIBS)\n\
 +-------------------------------------------------------------------------------\n"
 	@echo "$(TYPE)" | awk -F- ' \
