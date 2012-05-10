@@ -9,11 +9,23 @@ ifeq ($(WITH_SSL), WITH_SSL)
 	LIB_SSL=-lssl
 endif
 
+CONF_DIR = /usr/local/etc
+
 LIB_PTHREAD = -lpthread
 LIB_MATH = -lm
 
 override STD_LIBS := $(LIB_PTHREAD) $(LIB_MATH)
 override STD_DEFS := -D'CS_SVN_VERSION="$(SVN_REV)"'
+
+# The following is workaround until Makefile is fixed not to
+# set -DCS_CONFDIR=/blah in DS_OPTS variable. Basically it
+# sets CONF_DIR from in DS_OPTS and removes -DCS_CONFDIR=blah
+# from DS_OTS to avoid warnings about CS_CONFDIR being redefined.
+ifeq "$(findstring -DCS_CONFDIR,$(DS_OPTS))" "-DCS_CONFDIR"
+override CONF_DIR:= $(subst ",,$(subst ',,$(subst -DCS_CONFDIR=,,$(filter -DCS_CONFDIR=%,$(DS_OPTS)))))
+override DS_OPTS := $(filter-out -DCS_CONFDIR%,$(DS_OPTS))
+endif
+override STD_DEFS += -D'CS_CONFDIR="$(CONF_DIR)"'
 
 # Compiler warnings
 CC_WARN = -Winline -Wall -Wextra -fno-strict-aliasing
@@ -204,6 +216,7 @@ prepare:
 |  STRIP    = $(STRIP)\n\
 |  RANLIB   = $(RANLIB)\n\
 | Settings:\n\
+|  CONF_DIR = $(CONF_DIR)\n\
 |  CC_OPTS  = $(CC_OPTS)\n\
 |  CC_WARN  = $(CC_WARN)\n\
 |  CFLAGS   = $(CFLAGS)\n\
