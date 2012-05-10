@@ -63,11 +63,15 @@ CFLAGS  = $(DS_OPTS) $(KFLAG) $(DS_CFLAGS)
 LDFLAGS = $(DS_OPTS) $(DS_LDFLAGS)
 ARFLAGS = -rcsl
 LIBS    = $(DS_LIBS) $(OS_LIBS) $(OS_PTLI) $(LIB_SSL)
-export		CC AR STRIP RANLIB CFLAGS LDFLAGS ARFLAGS TARGET
 
 # Process EXTRA_xxx variables
 CC_WARN += $(EXTRA_CC_WARN)
 CC_OPTS += $(EXTRA_CC_OPTS)
+CFLAGS  += $(EXTRA_CFLAGS)
+LDFLAGS += $(EXTRA_LDFLAGS)
+LIBS    += $(EXTRA_LIBS)
+
+export		CC AR STRIP RANLIB CFLAGS LDFLAGS ARFLAGS TARGET
 
 ifeq ($(wildcard csgbox), csgbox)
  VERX	= -gbx-$(subst ",,$(filter-out \#define GBXVERSION,$(shell grep GBXVERSION csgbox/gbox.h)))
