@@ -198,7 +198,7 @@ macosx-libusb:
 i386-pc-freebsd:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lm" \
+		OS_LIBS="" \
 		OS_PTLI="" \
 		DS_OPTS="-DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="" \
@@ -217,7 +217,7 @@ i386-pc-freebsd:
 cross-i386-pc-freebsd:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lm" \
+		OS_LIBS="" \
 		OS_PTLI="" \
 		DS_OPTS="-DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="" \
@@ -250,7 +250,7 @@ cross-powerpc-tuxbox-linux:
 cross-powerpc-tuxbox-linux-uclibc:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lm" \
+		OS_LIBS="" \
 		OS_PTLI="" \
 		DS_OPTS="-DTUXBOX -DCS_CONFDIR='\"/var/tuxbox/config\"'" \
 		DS_CFLAGS="" \
@@ -401,7 +401,7 @@ i386-pc-cygwin-libusb:
 cross-sparc-sun-solaris2.7:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lm" \
+		OS_LIBS="" \
 		OS_PTLI="" \
 		DS_OPTS="-DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="" \
@@ -439,7 +439,7 @@ opensolaris:
 cross-rs6000-ibm-aix4.2:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lm" \
+		OS_LIBS="" \
 		OS_PTLI="" \
 		LIB_PTHREAD=-lpthreads \
 		DS_OPTS="-DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
@@ -459,7 +459,7 @@ cross-rs6000-ibm-aix4.2:
 cross-mips-sgi-irix6.5:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lm" \
+		OS_LIBS="" \
 		OS_PTLI="" \
 		DS_OPTS="-DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="" \
@@ -479,7 +479,7 @@ cross-mipsel-router-linux-uclibc927:
 	@-mipsel-linux-uclibc-setlib 0.9.27
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lm" \
+		OS_LIBS="" \
 		OS_PTLI="" \
 		DS_OPTS="-DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="" \
@@ -650,7 +650,7 @@ cross-mipsel-tuxbox-linux:
 hppa1.1-hp-hpux10.20:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lm" \
+		OS_LIBS="" \
 		OS_PTLI="" \
 		DS_OPTS="-DCS_CONFDIR=${CS_CONFDIR}" \
 		DS_CFLAGS="" \
@@ -669,7 +669,7 @@ hppa1.1-hp-hpux10.20:
 alpha-dec-osf5.1:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lm" \
+		OS_LIBS="" \
 		OS_PTLI="" \
 		DS_OPTS="-DCS_CONFDIR=${CS_CONFDIR}" \
 		DS_CFLAGS="" \
@@ -688,7 +688,7 @@ alpha-dec-osf5.1:
 cross-arm-nslu2-linux:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP="$(subst cross-,,$@)" \
-		OS_LIBS="-lm" \
+		OS_LIBS="" \
 		OS_PTLI="" \
 		DS_OPTS="-DCS_CONFDIR=${CS_CONFDIR}" \
 		DS_CFLAGS="" \
@@ -707,7 +707,7 @@ cross-arm-nslu2-linux:
 cross-armBE-unknown-linux:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP="$(subst cross-,,$@)" \
-		OS_LIBS="-lm" \
+		OS_LIBS="" \
 		OS_PTLI="" \
 		DS_OPTS="-DCS_CONFDIR=${CS_CONFDIR}" \
 		DS_CFLAGS="" \
@@ -728,7 +728,7 @@ cross-armBE-unkown-linux: cross-armBE-unknown-linux
 cross-armLE-unknown-linux:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP="$(subst cross-,,$@)" \
-		OS_LIBS="-lm" \
+		OS_LIBS="" \
 		OS_PTLI="" \
 		DS_OPTS="-DCS_CONFDIR=${CS_CONFDIR}" \
 		DS_CFLAGS="" \
