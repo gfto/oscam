@@ -62,6 +62,10 @@ nptar:	clean
 	@tar cvf "oscam$(VER)-nonpublic-src.tar" Distribution Make* *.c *.np *.h cscrypt csctapi csgbox
 	@bzip2 -9f "oscam$(VER)-nonpublic-src.tar"
 
+# This target sets no variables
+simple:
+	@-$(MAKE) --no-print-directory -f Maketype
+
 ######################################################################
 #
 #	LINUX native
