@@ -104,13 +104,15 @@ EXEFILE2	= Distribution/list_smargo-$(VER)$(VERX)-$(subst cygwin,cygwin.exe,$(TA
 
 LIBDIR		= lib
 
+GLOBAL_DEP = Makefile Maketype
+
 ALGO_LIB = $(LIBDIR)/libminilzo-$(TARGET).a
-ALGO_DEP = algo/minilzo.h
+ALGO_DEP = $(GLOBAL_DEP) algo/minilzo.h
 ALGO_OBJ = \
 	$(ALGO_LIB)(algo/minilzo.o)
 
 CSCRYPT_LIB = $(LIBDIR)/libcscrypt-$(TARGET).a
-CSCRYPT_DEP = cscrypt/cscrypt.h cscrypt/des.h cscrypt/bn.h
+CSCRYPT_DEP = $(GLOBAL_DEP) cscrypt/cscrypt.h cscrypt/des.h cscrypt/bn.h
 CSCRYPT_OBJ = \
 	$(CSCRYPT_LIB)(cscrypt/aes.o) \
 	$(CSCRYPT_LIB)(cscrypt/bn_add.o) \
@@ -135,7 +137,7 @@ CSCRYPT_OBJ = \
 	$(CSCRYPT_LIB)(cscrypt/sha1.o)
 
 CSCTAPI_LIB = $(LIBDIR)/libcsctapi-$(TARGET).a
-CSCTAPI_DEP = csctapi/defines.h csctapi/atr.h
+CSCTAPI_DEP = $(GLOBAL_DEP) csctapi/defines.h csctapi/atr.h
 CSCTAPI_OBJ = \
 	$(CSCTAPI_LIB)(csctapi/atr.o) \
 	$(CSCTAPI_LIB)(csctapi/icc_async.o) \
@@ -153,7 +155,7 @@ CSCTAPI_OBJ = \
 	$(CSCTAPI_LIB)(csctapi/t1_block.o)
 
 OSCAM_LIB = $(LIBDIR)/libcs-$(TARGET).a
-OSCAM_DEP = globals.h oscam-config.h
+OSCAM_DEP = $(GLOBAL_DEP) globals.h oscam-config.h
 OSCAM_OBJ = \
 	$(OSCAM_LIB)(module-camd33.o) \
 	$(OSCAM_LIB)(module-camd35.o) \
