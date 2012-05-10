@@ -76,12 +76,12 @@ LDFLAGS = $(strip $(DS_OPTS) $(DS_LDFLAGS))
 ARFLAGS = -rcsl
 LIBS    = $(strip $(DS_LIBS) $(OS_LIBS) $(OS_PTLI) $(LIB_SSL))
 
-# Process EXTRA_xxx variables
-CC_WARN += $(EXTRA_CC_WARN)
-CC_OPTS += $(EXTRA_CC_OPTS)
-CFLAGS  += $(EXTRA_CFLAGS)
-LDFLAGS += $(EXTRA_LDFLAGS)
-LIBS    += $(EXTRA_LIBS)
+# Add EXTRA_xxx vars
+override CC_WARN += $(EXTRA_CC_WARN)
+override CC_OPTS += $(EXTRA_CC_OPTS)
+override CFLAGS  += $(EXTRA_CFLAGS)
+override LDFLAGS += $(EXTRA_LDFLAGS)
+override LIBS    += $(EXTRA_LIBS)
 
 export		CC AR STRIP RANLIB CFLAGS LDFLAGS ARFLAGS TARGET
 
