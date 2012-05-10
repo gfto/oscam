@@ -616,18 +616,20 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 
 	//Check auf neues Format:
 	uint8_t *data;
-	er->csp_lastnodes = ll_create("csp_lastnodes");
 	if (size > (sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw))) {
 
 		//Read lastnodes:
 		uint8_t count = *ofs;
 		ofs++;
 
+		//check max nodes:
 		if (count > cs_cacheex_maxhop(cl)) {
 			cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes (max=%d), ignored! %s", (int32_t)count, cs_cacheex_maxhop(cl), username(cl));
-			count = 0;
+			free(er);
+			return;
 		}
 		cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes %s", (int32_t)count, username(cl));
+		er->csp_lastnodes = ll_create("csp_lastnodes");
 		while (count) {
 			data = cs_malloc(&data, 8, 0);
 			memcpy(data, ofs, 8);
@@ -637,8 +639,10 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 			cs_debug_mask(D_CACHEEX, "cacheex: received lasnode %llX %s", cnode(data), username(cl));
 		}
 	}
-	else
+	else {
 		cs_debug_mask(D_CACHEEX, "cacheex: received old cachex from %s", username(cl));
+		er->csp_lastnodes = ll_create("csp_lastnodes");
+	}
 
 	//store remote node id if we got one. The remote node is the first node in the node list
 	data = ll_has_elements(er->csp_lastnodes);

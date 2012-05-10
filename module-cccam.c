@@ -2080,13 +2080,16 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 	uint8_t count = *ofs;
 	ofs++;
 
+	//check max nodes:
+	if (count > cs_cacheex_maxhop(cl)) {
+		cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes (max=%d), ignored!", (int32_t)count, cs_cacheex_maxhop(cl));
+		free(er);
+		return;
+	}
+
 	//Read lastnodes:
 	uint8_t *data;
 	er->csp_lastnodes = ll_create("csp_lastnodes");
-	if (count > cs_cacheex_maxhop(cl)) {
-		cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes (max=%d), ignored!", (int32_t)count, cs_cacheex_maxhop(cl));
-		count = 0;
-	}
 	while (count) {
 		data = cs_malloc(&data, 8, 0);
 		memcpy(data, ofs, 8);
