@@ -190,7 +190,7 @@ endif
 
 prepare:
 	@-test -d "$(LIBDIR)" || mkdir "$(LIBDIR)"
-	@-echo -e "\
+	@-printf "\
 +-------------------------------------------------------------------------------\n\
 | OSCAM ver: $(VER) rev: $(SVN_REV) target: $(TARGET)\n\
 | Tools:\n\
@@ -206,7 +206,7 @@ prepare:
 |  LDFLAGS  = $(LDFLAGS)\n\
 |  ARFLAGS  = $(ARFLAGS)\n\
 |  LIBS     = $(LIBS)\n\
-+-------------------------------------------------------------------------------"
++-------------------------------------------------------------------------------\n"
 	@echo "$(TYPE)" | awk -F- ' \
 	  { \
 	    printf("#define CS_OSTYPE \"%s\"\n", $$0);  \
