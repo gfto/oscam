@@ -44,7 +44,7 @@ int32_t Sci_Reset (struct s_reader * reader, ATR * atr)
 	
 	call (ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params)!=0);
 	call (ioctl(reader->handle, IOCTL_SET_RESET)<0);
-#if defined(__POWERPC__)
+#if defined(__powerpc__)
     // looks like PPC box need a delay here. From the data provided we need at least 140ms at 3.57MHz so I'll chose 150ms to be safe
     cs_log("Extra delay for PPC box between reset and IO_Serial_Read for the ATR");
     cs_sleepms(150);
@@ -102,7 +102,7 @@ int32_t Sci_Activate (struct s_reader * reader)
 	cs_debug_mask(D_IFD, "IFD: Activating card");
 		int32_t in;
 
-#if defined(TUXBOX) && (defined(__MIPSEL__) || defined(__POWERPC__) || defined(__SH4__))
+#if defined(TUXBOX) && (defined(__MIPSEL__) || defined(__powerpc__) || defined(__SH4__))
 		call (ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in)<0);
 #else
 		call (ioctl(reader->handle, IOCTL_GET_IS_CARD_ACTIVATED, &in)<0);
@@ -120,7 +120,7 @@ int32_t Sci_Deactivate (struct s_reader * reader)
 	cs_debug_mask(D_IFD, "IFD: Deactivating card");
 	int32_t in;
 		
-#if defined(TUXBOX) && (defined(__MIPSEL__) || defined(__POWERPC__) || defined(__SH4__))
+#if defined(TUXBOX) && (defined(__MIPSEL__) || defined(__powerpc__) || defined(__SH4__))
 	call (ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in)<0);
 #else
 	call (ioctl(reader->handle, IOCTL_GET_IS_CARD_ACTIVATED, &in)<0);
