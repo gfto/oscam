@@ -1429,7 +1429,7 @@ int32_t ecmfmt(uint16_t caid, uint32_t prid, uint16_t chid, uint16_t pid, uint16
 	if (!cfg.ecmfmt[0])
 		return snprintf(result, size, "%04X&%06X/%04X/%04X/%02X:%04X", caid, prid, chid, srvid, l, htons(checksum));
 
-	uint32_t s=0, zero=0, flen, value=0;
+	uint32_t s=0, zero=0, flen=0, value=0;
 	char *c = cfg.ecmfmt, fmt[5] = "%04X";
 	while (*c) {
 		switch(*c)
