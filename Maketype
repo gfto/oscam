@@ -74,14 +74,14 @@ endif
 CFLAGS  = $(strip $(DS_OPTS) $(KFLAG) $(DS_CFLAGS))
 LDFLAGS = $(strip $(DS_OPTS) $(DS_LDFLAGS))
 ARFLAGS = -rcsl
-LIBS    = $(strip $(DS_LIBS) $(OS_LIBS) $(OS_PTLI) $(LIB_SSL))
+LIBS    = $(strip $(LIBUSB) $(LIBPCSC) $(LIBRT) $(DS_LIBS) $(OS_LIBS) $(OS_PTLI) $(LIB_SSL))
 
-# Add EXTRA_xxx vars
+# Add EXTRA_xxx and STD_xxx vars
 override CC_WARN += $(EXTRA_CC_WARN)
 override CC_OPTS += $(EXTRA_CC_OPTS)
 override CFLAGS  += $(EXTRA_CFLAGS)
 override LDFLAGS += $(EXTRA_LDFLAGS)
-override LIBS    += $(EXTRA_LIBS)
+override LIBS    += $(EXTRA_LIBS) $(STD_LIBS)
 
 export		CC AR STRIP RANLIB CFLAGS LDFLAGS ARFLAGS TARGET
 
@@ -256,7 +256,7 @@ $(OSCAM_LIB): $(OSCAM_OBJ)
 
 $(EXEFILE1): oscam.c $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(OSCAM_LIB)
 	$(SAY) "LINK	$@"
-	$(Q)$(CC) $(STD_DEFS) $(LDFLAGS) oscam.c $(OSCAM_LIB) $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(LIBUSB) $(LIBPCSC) $(LIBRT) $(STD_LIBS) $(LIBS) -o $@
+	$(Q)$(CC) $(STD_DEFS) $(LDFLAGS) oscam.c $(OSCAM_LIB) $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(LIBS) -o $@
 ifndef DEBUG
 	$(SAY) "STRIP	$@"
 	$(Q)$(STRIP) $@
@@ -264,7 +264,7 @@ endif
 
 $(EXEFILE2):	utils/list_smargo.c
 	$(SAY) "LINK	$@"
-	$(Q)$(CC) $(STD_DEFS) $(LDFLAGS) utils/list_smargo.c $(LIBUSB) $(LIBRT) $(STD_LIBS) $(LIBS) -o $@
+	$(Q)$(CC) $(STD_DEFS) $(LDFLAGS) utils/list_smargo.c $(LIBS) -o $@
 ifndef DEBUG
 	$(SAY) "STRIP	$@"
 	$(Q)$(STRIP) $@
