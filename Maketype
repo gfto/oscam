@@ -92,10 +92,16 @@ SSL_LDFLAGS = -DWITH_SSL
 SSL_LIB = -lssl
 endif
 
+ifdef USE_LIBUSB
+LIBUSB_CFLAGS = -DLIBUSB
+LIBUSB_LDFLAGS = -DLIBUSB
+LIBUSB_LIB = -lusb-1.0
+endif
+
 # Set USE_ flags
-override USE_CFLAGS = $(LIBCRYPTO_CFLAGS) $(SSL_CFLAGS)
-override USE_LDFLAGS= $(LIBCRYPTO_LDFLAGS) $(SSL_LDFLAGS)
-override USE_LIBS   = $(LIBCRYPTO_LIB) $(SSL_LIB)
+override USE_CFLAGS = $(LIBCRYPTO_CFLAGS) $(SSL_CFLAGS) $(LIBUSB_CFLAGS)
+override USE_LDFLAGS= $(LIBCRYPTO_LDFLAGS) $(SSL_LDFLAGS) $(LIBUSB_LDFLAGS)
+override USE_LIBS   = $(LIBCRYPTO_LIB) $(SSL_LIB) $(LIBUSB_LIB)
 
 # Add USE_xxx, EXTRA_xxx and STD_xxx vars
 override CC_WARN += $(EXTRA_CC_WARN)
@@ -221,7 +227,7 @@ OSCAM_OBJ = \
 	$(OSCAM_LIB)(reader-videoguard12.o) \
 	$(OSCAM_LIB)(reader-videoguard2.o)
 
-ifneq ($(LIBUSB),)
+ifneq ($(USE_LIBUSB)$(LIBUSB),)
 all:		prepare $(EXEFILE1) $(EXEFILE2)
 else
 all:		prepare $(EXEFILE1)
