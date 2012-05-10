@@ -4,9 +4,11 @@ ifeq ($(wildcard oscam-boxkeys.np), oscam-boxkeys.np)
   KFLAG		= -DCS_WITH_BOXKEYS
 endif
 
-WITH_SSL=$(subst ",,$(filter-out \#define, $(shell grep '^\#define WITH_SSL' oscam-config.h)))
-ifeq ($(WITH_SSL), WITH_SSL)
-	LIB_SSL=-lssl
+ifeq ($(subst ",,$(filter-out \#define, $(shell grep '^\#define WITH_SSL' oscam-config.h))), WITH_SSL)
+	override USE_SSL=1
+	override USE_LIBCRYPTO=1
+endif
+ifdef USE_SSL
 	override USE_LIBCRYPTO=1
 endif
 
@@ -75,7 +77,7 @@ endif
 CFLAGS  = $(strip $(DS_OPTS) $(KFLAG) $(DS_CFLAGS))
 LDFLAGS = $(strip $(DS_OPTS) $(DS_LDFLAGS))
 ARFLAGS = -rcsl
-LIBS    = $(strip $(LIBUSB) $(LIBPCSC) $(LIBRT) $(DS_LIBS) $(OS_LIBS) $(OS_PTLI) $(LIB_SSL))
+LIBS    = $(strip $(LIBUSB) $(LIBPCSC) $(LIBRT) $(DS_LIBS) $(OS_LIBS) $(OS_PTLI))
 
 # Process USE_ variables
 ifdef USE_LIBCRYPTO
@@ -84,10 +86,16 @@ LIBCRYPTO_LDFLAGS = -DWITH_LIBCRYPTO
 LIBCRYPTO_LIB = -lcrypto
 endif
 
+ifdef USE_SSL
+SSL_CFLAGS = -DWITH_SSL
+SSL_LDFLAGS = -DWITH_SSL
+SSL_LIB = -lssl
+endif
+
 # Set USE_ flags
-override USE_CFLAGS = $(LIBCRYPTO_CFLAGS)
-override USE_LDFLAGS= $(LIBCRYPTO_LDFLAGS)
-override USE_LIBS   = $(LIBCRYPTO_LIB)
+override USE_CFLAGS = $(LIBCRYPTO_CFLAGS) $(SSL_CFLAGS)
+override USE_LDFLAGS= $(LIBCRYPTO_LDFLAGS) $(SSL_LDFLAGS)
+override USE_LIBS   = $(LIBCRYPTO_LIB) $(SSL_LIB)
 
 # Add USE_xxx, EXTRA_xxx and STD_xxx vars
 override CC_WARN += $(EXTRA_CC_WARN)
