@@ -827,7 +827,7 @@ SFRTIFJFU0VSVkVEADs="
 	</TABLE>\n\
 	<TABLE CLASS=\"users\">\n\
 		<TR>\n\
-			<TH>Lock</TH>\n\
+			<TH>Enabled</TH>\n\
 			<TH>Label</TH>\n\
 			<TH>Status</TH>\n\
 			<TH>Address</TH>\n\
@@ -1115,7 +1115,7 @@ SFRTIFJFU0VSVkVEADs="
 	<form action=\"readerconfig.html\" method=\"get\">\n\
 		<TABLE CLASS=\"readers\">\n\
 			<TR>\n\
-				<TH>Lock</TH>\n\
+				<TH>Enabled</TH>\n\
 				<TH>Reader</TH>\n\
 				<TH>Protocol</TH>\n\
 				<TH>EMM error<br><span title=\"unknown EMM\"> UK </span>/<span title=\"global EMM\"> G </span>/<span title=\"shared EMM\"> S </span>/<span title=\"unique EMM\"> UQ </span></TH>\n\
