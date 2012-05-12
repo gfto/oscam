@@ -50,9 +50,10 @@ config:
 	$(SHELL) ./config.sh
 
 clean:
-	@-rm -rf oscam-ostype.h lib Distribution/oscam-*
+	@-rm -rfv oscam-ostype.h lib
 
 distclean: clean
+	@-rm -rfv Distribution/oscam-* Distribution/list_smargo-*
 
 # This target sets no variables
 simple:
