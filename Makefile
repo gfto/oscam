@@ -54,14 +54,6 @@ clean:
 
 distclean: clean
 
-tar:	clean
-	@tar cvf "oscam$(VER)-src.tar" Distribution Make* *.c *.h cscrypt csctapi
-	@bzip2 -9f "oscam$(VER)-src.tar"
-
-nptar:	clean
-	@tar cvf "oscam$(VER)-nonpublic-src.tar" Distribution Make* *.c *.np *.h cscrypt csctapi csgbox
-	@bzip2 -9f "oscam$(VER)-nonpublic-src.tar"
-
 # This target sets no variables
 simple:
 	@-$(MAKE) --no-print-directory -f Maketype
