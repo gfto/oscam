@@ -1165,7 +1165,7 @@ SFRTIFJFU0VSVkVEADs="
 <TD class=\"centered\">##TIMELAST##</TD>\
 <TD class=\"centered\">##COUNT##</TD>\
 <TD class=\"centered\">##LAST## <A HREF=\"readerstats.html?label=##ENCODEDLABEL##&amp;action=deleterecord&amp;record=##CHANNEL##:##ECMLEN##\">\
-<IMG SRC=\"image?i=ICDEL\" ALT=\"Delete Entry\"/></A></TD></TR>\n"
+<IMG CLASS=\"icon\" SRC=\"image?i=ICDEL\" ALT=\"Delete Entry\"/></A></TD></TR>\n"
 
 #define TPLSCANUSB "\
 ##TPLHEADER##\
