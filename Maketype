@@ -31,7 +31,7 @@ endif
 override STD_DEFS += -D'CS_CONFDIR="$(CONF_DIR)"'
 
 # Compiler warnings
-CC_WARN = -Winline -Wall -Wextra -fno-strict-aliasing
+CC_WARN = -W -Wall -Winline -fno-strict-aliasing
 
 # Compiler optimizations
 ifndef DEBUG
