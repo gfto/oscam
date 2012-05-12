@@ -7,6 +7,7 @@ CS_CONFDIR = '\"/usr/local/etc\"'
 
 export VER SVN_REV
 
+default: simple
 linux:	i386-pc-linux
 debug: i386-pc-linux-debug
 linux-pcsc:	i386-pc-linux-pcsc
