@@ -1,9 +1,5 @@
 SHELL		= /bin/sh
 
-ifeq ($(wildcard oscam-boxkeys.np), oscam-boxkeys.np)
-  KFLAG		= -DCS_WITH_BOXKEYS
-endif
-
 ifeq ($(subst ",,$(filter-out \#define, $(shell grep '^\#define WITH_SSL' oscam-config.h))), WITH_SSL)
 	override USE_SSL=1
 	override USE_LIBCRYPTO=1
@@ -132,10 +128,6 @@ override LIBS    += $(USE_LIBS) $(EXTRA_LIBS) $(STD_LIBS)
 
 export		CC AR STRIP RANLIB CFLAGS LDFLAGS ARFLAGS TARGET
 
-ifeq ($(wildcard csgbox), csgbox)
- VERX	= -gbx-$(subst ",,$(filter-out \#define GBXVERSION,$(shell grep GBXVERSION csgbox/gbox.h)))
-endif
-
 # Setup quiet build
 Q =
 SAY = @true
@@ -146,8 +138,8 @@ SAY = @echo
 endif
 export Q SAY
 
-EXEFILE1	= Distribution/oscam-$(VER)$(VERX)-$(subst cygwin,cygwin.exe,$(TARGET))
-EXEFILE2	= Distribution/list_smargo-$(VER)$(VERX)-$(subst cygwin,cygwin.exe,$(TARGET))
+EXEFILE1	= Distribution/oscam-$(VER)-$(subst cygwin,cygwin.exe,$(TARGET))
+EXEFILE2	= Distribution/list_smargo-$(VER)-$(subst cygwin,cygwin.exe,$(TARGET))
 
 LIBDIR		= lib
 
@@ -279,11 +271,6 @@ prepare:
 	    printf("#define CS_OS_HW  \"%s\"\n", $$2);  \
 	    printf("#define CS_OS_SYS \"%s\"\n", $$3);  \
 	  }' > oscam-ostype.h
-ifeq ($(wildcard csgbox), csgbox)
-	@-echo "#define CS_WITH_GBOX 1" >> oscam-ostype.h
-	$(SAY) "MAKE	csgbox"
-	$(MAKE) $(NP) -C csgbox
-endif
 
 $(ALGO_OBJ): $(ALGO_DEP)
 $(ALGO_LIB): $(ALGO_OBJ)
