@@ -42,7 +42,7 @@ STRIP = $(CROSS)strip
 RANLIB = $(CROSS)ranlib
 
 # The compiler knows for what target it compiles, so use this information
-TARGET = $(shell $(CC) -dumpmachine)$(EXTRA_TARGET)
+TARGET := $(shell $(CC) -dumpmachine 2>/dev/null)$(EXTRA_TARGET)
 
 # CROSS variable was never used or set in the times when DS_xxx
 # variables ruled the world. So it fairly safe to assume that if
