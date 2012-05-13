@@ -37,7 +37,7 @@ static const uint32_t atr_num_ib_table[16] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3
  * Exported variables definition
  */
 
-const uint32_t atr_f_table[16] = {372, 372, 558, 744, 1116, 1488, 1860, 0, 0, 512, 768, 1024, 1536, 2048, 0, 0};
+const uint32_t atr_f_table[16] = {0, 372, 558, 744, 1116, 1488, 1860, 0, 0, 512, 768, 1024, 1536, 2048, 0, 0};
 
 const double atr_d_table[16] = {0, 1, 2, 4, 8, 16, 32, 64, 12, 20, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625};
 //old table has 0 for RFU:
