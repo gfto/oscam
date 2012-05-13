@@ -136,7 +136,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 				return ERROR;
 			}
 			if ((reader->fdmc = open(DEV_MULTICAM, O_RDWR)) < 0) {				
-				cs_log("ERROR reader %s opening device %s (errno=%d %s)", reaer->label, DEV_MULTICAM, errno, strerror(errno));
+				cs_log("ERROR reader %s opening device %s (errno=%d %s)", reader->label, DEV_MULTICAM, errno, strerror(errno));
 				close(reader->handle);
 				return ERROR;
 			}
