@@ -804,7 +804,7 @@ SFRTIFJFU0VSVkVEADs="
 ##NEWUSERFORM##\
 	</TABLE><BR>\n\
 	<SPAN CLASS = \"user_totals_headline\">Totals for the server:</SPAN>\n\
-	<TABLE CLASS=\"user_totals\">>\n\
+	<TABLE CLASS=\"user_totals\">\n\
 		<TR>\n\
 			<TH TITLE=\"Total users\">Total</TH>\n\
 			<TH TITLE=\"Total disabled users\">Disabled</TH>\n\
