@@ -785,7 +785,7 @@ SFRTIFJFU0VSVkVEADs="
 			<TH>Address</TH>\n\
 			<TH>Protocol</TH>\n\
 			<TH>Last Channel</TH>\n\
-			<TH>Time on Channel</TH>\n\
+			<TH>On Channel</TH>\n\
 			<TH>Idle</TH>\n\
 			<TH TITLE=\"Delivered ECM with status OK\">OK</TH>\n\
 			<TH TITLE=\"Delivered ECM with status not OK\">NOK</TH>\n\
