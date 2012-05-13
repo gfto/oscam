@@ -645,16 +645,16 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 	return OK;
 }
 
-static uint32_t ICC_Async_GetClockRate (int32_t cardmhz)
+static uint32_t ICC_Async_GetClockRate (int32_t mhz)
 {
-	switch (cardmhz) {
+	switch (mhz) {
 		case 357:
 		case 358:
 	  	return (372L * 9600L);
 		case 368:
 	  	return (384L * 9600L);
 		default:
- 	  	return cardmhz * 10000L;
+ 	  	return mhz * 10000L;
 	}
 }
 
@@ -874,7 +874,7 @@ static uint32_t ETU_to_ms(struct s_reader * reader, uint32_t WWT)
 	else
 		WWT = 0;
 	double work_etu = 1000 / (double)reader->current_baudrate;//FIXME sometimes work_etu should be used, sometimes initial etu
-	return (uint32_t) WWT * work_etu * reader->cardmhz / reader->mhz;
+	return (uint32_t) WWT * work_etu * reader->mhz / reader->cardmhz;
 }
 
 static int32_t ICC_Async_SetParity (struct s_reader * reader, uint16_t parity)
@@ -945,21 +945,22 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 	//set the amps and the volts according to ATR
 	if (ATR_GetParameter(atr, ATR_PARAMETER_I, &I) != ATR_OK)
 		I = 0;
-
-	//set clock speed to max if internal reader
-	if((reader->typ > R_MOUSE && reader->crdr.active == 0) || (reader->crdr.active == 1 && reader->crdr.max_clock_speed==1))
-		if (reader->mhz == 357 || reader->mhz == 358) //no overclocking
-			reader->mhz = atr_fs_table[FI] / 10000; //we are going to clock the card to this nominal frequency
+	
+	F = atr_fs_table[FI]; //get optimal cardmhz according to ATR (for warning users they should adapt their readersettings)
+		if (reader->cardmhz!=F/10000) {
+		cs_log("Reader %s: ******* Warning: fix your oscam reader config for correct mhz (interface speed) and cardmhz (cardspeed) *******", reader->label);
+		cs_log("Reader %s: ******* Your setting: %d, is not matching formal optimal cardspeed: %d *******", reader->label, reader->cardmhz, (uint32_t) F/10000);
+		}
 
 	//set clock speed/baudrate must be done before timings
 	//because reader->current_baudrate is used in calculation of timings
-	F =	(double) atr_f_table[FI];
-
+	F =	(double) atr_f_table[FI];  //Get FI (this is != clockspeed)
+			
 	reader->current_baudrate = DEFAULT_BAUDRATE;
 
 	if (deprecated == 0) {
 		if (reader->protocol_type != ATR_PROTOCOL_TYPE_T14) { //dont switch for T14
-			uint32_t baud_temp = d * ICC_Async_GetClockRate (reader->cardmhz) / F;
+			uint32_t baud_temp = d * ICC_Async_GetClockRate (reader->mhz) / F;
 			if (reader->crdr.active == 1) {
 				if (reader->crdr.set_baudrate)
 					call (reader->crdr.set_baudrate(reader, baud_temp));
@@ -1007,7 +1008,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 			reader->block_delay = gt_ms;
 			reader->char_delay = gt_ms;
 			cs_debug_mask(D_ATR, "Setting timings reader %s: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", reader->label, reader->read_timeout, reader->block_delay, reader->char_delay);
-			cs_debug_mask (D_IFD, "reader %s Protocol: T=%i, WWT=%d, Clockrate=%u\n", reader->label, reader->protocol_type, (int)(WWT), ICC_Async_GetClockRate(reader->cardmhz));
+			cs_debug_mask (D_IFD, "reader %s Protocol: T=%i, WWT=%d, Clockrate=%u\n", reader->label, reader->protocol_type, (int)(WWT), ICC_Async_GetClockRate(reader->mhz));
 			}
 			break;
 	 case ATR_PROTOCOL_TYPE_T1:
@@ -1050,7 +1051,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 				reader->CWT = (uint16_t) (((1<<cwi) + 11)); // in ETU
 
 				// Set BWT = (2^BWI * 960 + 11) work etu
-				reader->BWT = (uint16_t)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate(reader->cardmhz))	+ 11 ;
+				reader->BWT = (uint16_t)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate(reader->mhz))	+ 11 ;
 
 				// Set BGT = 22 * work etu
 				BGT = 22L; //in ETU
@@ -1102,7 +1103,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 		//for Irdeto T14 cards, do not set ETU
 		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14))
 			ETU = F / d;
-		call (Sci_WriteSettings (reader, reader->protocol_type, reader->mhz / 100, ETU, WWT, reader->BWT, reader->CWT, EGT, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
+		call (Sci_WriteSettings (reader, reader->protocol_type, reader->cardmhz / 100, ETU, WWT, reader->BWT, reader->CWT, EGT, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
 #elif defined(COOL)
 		call (Cool_WriteSettings (reader, reader->BWT, reader->CWT, EGT, BGT));
 #elif defined(WITH_STAPI)
@@ -1113,7 +1114,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 	if (reader->typ == R_SMART)
 		SR_WriteSettings(reader, (uint16_t) atr_f_table[FI], (BYTE)d, (BYTE)EGT, (BYTE)reader->protocol_type, reader->convention);
 #endif
-	cs_log("Reader %s: Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", reader->label, atr_fs_table[FI] / 1000000, (float) reader->mhz / 100);
+	cs_log("Reader %s: Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", reader->label, atr_fs_table[FI] / 1000000, (float) reader->cardmhz / 100);
 
 	//IFS setting in case of T1
 	if ((reader->protocol_type == ATR_PROTOCOL_TYPE_T1) && (reader->ifsc != DEFAULT_IFSC)) {
