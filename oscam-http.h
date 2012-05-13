@@ -803,8 +803,8 @@ SFRTIFJFU0VSVkVEADs="
 ##USERCONFIGS##\
 ##NEWUSERFORM##\
 	</TABLE><BR>\n\
-	Totals for the server:\n\
-	<TABLE cellpadding=\"10\">\n\
+	<SPAN CLASS = \"user_totals_headline\">Totals for the server:</SPAN>\n\
+	<TABLE CLASS=\"user_totals\">>\n\
 		<TR>\n\
 			<TH TITLE=\"Total users\">Total</TH>\n\
 			<TH TITLE=\"Total disabled users\">Disabled</TH>\n\
