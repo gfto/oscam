@@ -686,19 +686,28 @@ char *xml_encode(struct templatevars *vars, char *chartoencode) {
 	return tpl_addTmp(vars, result);
 }
 
-int32_t b64decode(unsigned char *result){
-	char inalphabet[256], decoder[256];
-	unsigned char alphabet[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	int32_t i, len = strlen((char *)result), j = 0, bits = 0, char_count = 0;
+/* Prepares the base64 decoding array */
+void b64prepare(){
+	const unsigned char alphabet[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	int32_t i;
+	for (i = sizeof(b64decoder) - 1; i >= 0; --i) {
+		b64decoder[i] = -1;
+	}
 	
 	for (i = sizeof(alphabet) - 1; i >= 0; --i) {
-		inalphabet[alphabet[i]] = 1;
-		decoder[alphabet[i]] = i;
+		b64decoder[alphabet[i]] = i;
 	}
+}
+
+/* Decodes a base64-encoded string. The given array will be used directly for output and is thus modified! */
+int32_t b64decode(unsigned char *result){
+	int32_t i, len = strlen((char *)result), j = 0, bits = 0, char_count = 0;
+	
 	for(i = 0; i < len; ++i){
 		if (result[i] == '=') break;
-		if (!inalphabet[result[i]]) continue;
-		bits += decoder[result[i]];
+		int8_t tmp = b64decoder[result[i]];
+		if(tmp == -1) continue;
+		bits += tmp;
 		++char_count;
 		if (char_count == 4) {
 			result[j++] = bits >> 16;
