@@ -834,6 +834,9 @@ static char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparam
 		
 	if (cfg.dvbapi_reopenonzap > 0)
 		tpl_addVar(vars, TPLADD, "REOPENONZAPCHECKED", "checked");
+		
+	if (cfg.dvbapi_delayer > 0)
+		tpl_printf(vars, TPLADD, "DELAYER", "%d", cfg.dvbapi_delayer);
 
 	tpl_printf(vars, TPLADD, "BOXTYPE", "<option value=\"\"%s>None</option>\n", cfg.dvbapi_boxtype == 0 ? " selected" : "");
 	for (i=1; i<=BOXTYPES; i++) {
@@ -1257,6 +1260,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	} else {
 		tpl_printf(vars, TPLADD, "CACHEEX", "%d", rdr->cacheex);
 	}
+	tpl_printf(vars, TPLADD, "CACHEEX_MAXHOP", "%d", rdr->cacheex_maxhop);
 #endif
 
 #ifdef COOL
@@ -2107,6 +2111,7 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	} else {
 		tpl_printf(vars, TPLADD, "CACHEEX", "%d", account->cacheex);
 	}
+	tpl_printf(vars, TPLADD, "CACHEEX_MAXHOP", "%d", account->cacheex_maxhop);
 #endif
 
 	//Keepalive

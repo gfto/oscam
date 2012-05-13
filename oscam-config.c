@@ -1499,6 +1499,11 @@ void chk_t_dvbapi(char *token, char *value)
 		cfg.dvbapi_reopenonzap = strToIntVal(value, 0);
 		return;
 	}
+	
+	if (!strcmp(token, "delayer")) {
+		cfg.dvbapi_delayer = strToIntVal(value, 0);
+		return;
+	}
 
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in dvbapi section not recognized\n",token);
@@ -2535,7 +2540,8 @@ int32_t write_config()
 			fprintf_conf(f, "request_mode", "%d\n", cfg.dvbapi_requestmode);
 		if(cfg.dvbapi_reopenonzap != 0 || cfg.http_full_cfg)
 			fprintf_conf(f, "reopenonzap", "%d\n", cfg.dvbapi_reopenonzap);
-
+		if(cfg.dvbapi_delayer != 0 || cfg.http_full_cfg)
+			fprintf_conf(f, "delayer", "%d\n", cfg.dvbapi_delayer);
 		fputc((int)'\n', f);
 	}
 #endif

@@ -1610,7 +1610,8 @@ struct s_config
 	int8_t		dvbapi_requestmode;
 	SIDTABBITS	dvbapi_sidtabok;					// positiv services
 	SIDTABBITS	dvbapi_sidtabno;					// negative services
-	int8_t dvbapi_reopenonzap;
+	int8_t          dvbapi_reopenonzap;
+	int32_t         dvbapi_delayer;                                         // delayer ms, minimum time to write cw
 #endif
 
 #ifdef CS_ANTICASC
