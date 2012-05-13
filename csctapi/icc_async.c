@@ -136,7 +136,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 				return ERROR;
 			}
 			if ((reader->fdmc = open(DEV_MULTICAM, O_RDWR)) < 0) {				
-				cs_log("ERROR reader %s opening device %s (errno=%d %s)", reader->label, DEV_MULTICAM, errno, strerror(errno));
+				cs_log("ERROR reader %s opening device %s (errno=%d %s)", reaer->label, DEV_MULTICAM, errno, strerror(errno));
 				close(reader->handle);
 				return ERROR;
 			}
@@ -180,7 +180,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 			break;
 #endif
 		default:
-			cs_log("ERROR reader %s ICC_Device_Init: unknow reader type %i", reader->label, reader->typ);
+			cs_log("ERROR reader %s ICC_Device_Init: unknown reader type %i", reader->label, reader->typ);
 			return ERROR;
 	}
 
@@ -289,7 +289,7 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 			break;
 #endif
 		default:
-			cs_log("ERROR: reader %s ICC_Get_Status: unknow reader type %i", reader->label, reader->typ);
+			cs_log("ERROR: reader %s ICC_Get_Status: unknown reader type %i", reader->label, reader->typ);
 			return ERROR;
 	}
 
@@ -379,7 +379,7 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 				break;
 #endif
 			default:
-				cs_log("ERROR reader %s ICC_Async_Activate: unknow reader type %i", reader->label, reader->typ);
+				cs_log("ERROR reader %s ICC_Async_Activate: unknown reader type %i", reader->label, reader->typ);
 				return ERROR;
 		}
 		}
@@ -527,7 +527,7 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, BYTE * data)
 #endif
 			break;
 		default:
-			cs_log("ERROR reader %s ICC_Async_Transmit: unknow reader type %i", reader->label, reader->typ);
+			cs_log("ERROR reader %s ICC_Async_Transmit: unknown reader type %i", reader->label, reader->typ);
 			return ERROR;
 	}
 
@@ -575,7 +575,7 @@ int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, BYTE * data)
 #endif
 			break;
 		default:
-			cs_log("ERROR reader %s ICC_Async_Receive: unknow reader type %i", reader->label, reader->typ);
+			cs_log("ERROR reader %s ICC_Async_Receive: unknown reader type %i", reader->label, reader->typ);
 			return ERROR;
 	}
 
@@ -637,7 +637,7 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 			break;
 #endif
 		default:
-			cs_log("ERROR reader %s ICC_Async_Close: unknow reader type %i", reader->label, reader->typ);
+			cs_log("ERROR reader %s ICC_Async_Close: unknown reader type %i", reader->label, reader->typ);
 			return ERROR;
 	}
 
@@ -880,28 +880,31 @@ static uint32_t ETU_to_ms(struct s_reader * reader, uint32_t WWT)
 static int32_t ICC_Async_SetParity (struct s_reader * reader, uint16_t parity)
 {
 	if (reader->crdr.active && reader->crdr.set_parity) {
-		switch(reader->typ) {
-			case R_MP35:
-			case R_DB2COM1:
-			case R_DB2COM2:
-			case R_SC8in1:
-			case R_MOUSE:
-				call (IO_Serial_SetParity (reader, parity));
-				break;
-#if defined(LIBUSB)
-			case R_SMART:
-				call (SR_SetParity(reader, parity));
-				break;
-#endif
-			case R_INTERNAL:
-				return OK;
-			default:
-				cs_log("ERROR reader %s ICC_Async_SetParity: unknow reader type %i", reader->label, reader->typ);
-				return ERROR;
-		}
+		call(reader->crdr.set_parity(reader, parity));
+		return OK;
 	} else if(reader->crdr.active)
 		return OK;
-return OK;
+
+	switch(reader->typ) {
+		case R_MP35:
+		case R_DB2COM1:
+		case R_DB2COM2:
+		case R_SC8in1:
+		case R_MOUSE:
+			call (IO_Serial_SetParity (reader, parity));
+		break;
+#if defined(LIBUSB)
+		case R_SMART:
+			call (SR_SetParity(reader, parity));
+			break;
+#endif
+		case R_INTERNAL:
+			return OK;
+		default:
+			cs_log("ERROR reader %s ICC_Async_SetParity: unknown reader type %i", reader->label, reader->typ);
+			return ERROR;
+	}
+	return OK;
 }
 
 static int32_t SetRightParity (struct s_reader * reader)
