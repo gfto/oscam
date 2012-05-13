@@ -537,9 +537,9 @@ void send_header304(FILE *f){
  * function for sending files.
  */
 void send_file(FILE *f, char *filename, time_t modifiedheader, uint32_t etagheader){
-	int8_t fileno = 0, allocated = 0;
+	int8_t fileno = 0;
 	int32_t size = 0;
-	char* mimetype = "", *result = "";
+	char* mimetype = "", *result = " ", *allocated = NULL;
 	time_t moddate;
 
 	if (!strcmp(filename, "CSS")){
@@ -556,48 +556,57 @@ void send_file(FILE *f, char *filename, time_t modifiedheader, uint32_t etaghead
 		struct stat st;		
 		stat(filename, &st);
 		moddate = st.st_mtime;		
+		// We need at least size 1 or keepalive gets problems on some browsers...
 		if(st.st_size > 0){
 			FILE *fp;
 			int32_t read;
-			size = st.st_size;
 			if((fp = fopen(filename, "r"))==NULL) return;
-			if(!cs_malloc(&result, st.st_size + 1, -1)){
+			if(!cs_malloc(&allocated, st.st_size + 1, -1)){
 				send_error500(f);
 				fclose(fp);
 				return;
 			}
-			allocated = 1;
-			if((read = fread(result, 1, st.st_size, fp)) != size){
-				result[0] = '\0';
-				size = 0;
-			} else result[read] = '\0';
+			if((read = fread(allocated, 1, st.st_size, fp)) == st.st_size){
+			  allocated[read] = '\0';
+			}
 			fclose(fp);
 		}
+
+		if (fileno == 1 && cfg.http_prepend_embedded_css) { // Prepend Embedded CSS
+			char* separator = "/* External CSS */";
+			char* oldallocated = allocated;
+			int32_t newsize = strlen(CSS) + strlen(separator) + 2;
+			if (oldallocated) newsize += strlen(oldallocated) + 1;
+			if(!cs_malloc(&allocated, newsize, -1)){
+				if (oldallocated) free(oldallocated);
+				send_error500(f);
+				return;
+			}
+			snprintf(allocated, newsize, "%s\n%s\n%s",
+					 CSS, separator, (oldallocated != NULL ? oldallocated : ""));
+			if (oldallocated) free(oldallocated);
+		}
+
+		if (allocated) result = allocated;
+
 	} else {
 		moddate = first_client->login;
-		if (fileno == 1){
+		if (fileno == 1 && strlen(CSS) > 0){
 			result = CSS;
-		} else if (fileno == 2){
+		} else if (fileno == 2 && strlen(JSCRIPT) > 0){
 			result = JSCRIPT;
 		}
-		size = strlen(result);
 	}
-	// We need at least size 1 or keepalive gets problems on some browsers...
-	if(size < 1){
-		if(allocated){
-			free(result);
-			allocated = 0;
-		}
-		result = " ";
-		size = 1;
-	}
+
+	size = strlen(result);
+
 	if((etagheader == 0 && moddate < modifiedheader) || (etagheader > 0 && (uint32_t)crc32(0L, (uchar *)result, size) == etagheader)){
 		send_header304(f);
 	} else {
 		send_headers(f, 200, "OK", NULL, mimetype, 1, size, result, 0);
 		webif_write(result, f);
 	}
-	if(allocated) free(result);
+	if (allocated) free(allocated);
 }
 
 /* Helper function for urldecode.*/

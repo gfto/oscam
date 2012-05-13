@@ -701,7 +701,7 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 
 	DIR *hdir;
 	struct dirent entry;
-  struct dirent *result;
+	struct dirent *result;
 	if((hdir = opendir(cs_confdir)) != NULL){
 		while(cs_readdir_r(hdir, &entry, &result) == 0 && result != NULL){
 			if (strstr(entry.d_name, ".css")) {
@@ -714,6 +714,9 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 		}
 		closedir(hdir);
 	}
+
+	if(cfg.http_prepend_embedded_css)
+		tpl_addVar(vars, TPLADD, "HTTPPREPENDEMBEDDEDCSS", "checked");
 
 	if (cfg.http_help_lang[0])
 		tpl_addVar(vars, TPLADD, "HTTPHELPLANG", cfg.http_help_lang);

@@ -939,6 +939,10 @@ void chk_t_webif(char *token, char *value)
 		return;
 	}
 
+	if (!strcmp(token, "http_prepend_embedded_css")) {
+		cfg.http_prepend_embedded_css = strToIntVal(value, 0);
+		return;
+	}
 	if (!strcmp(token, "httpjscript")) {
 		cs_strncpy(cfg.http_jscript, value, sizeof(cfg.http_jscript));
 		return;
@@ -2555,6 +2559,8 @@ int32_t write_config()
 			fprintf_conf(f, "httppwd", "%s\n", cfg.http_pwd);
 		if(strlen(cfg.http_cert) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, "httpcert", "%s\n", cfg.http_cert);
+		if(cfg.http_prepend_embedded_css != 0 || cfg.http_full_cfg)
+			fprintf_conf(f, "http_prepend_embedded_css", "%d\n", cfg.http_prepend_embedded_css);
 		if(strlen(cfg.http_css) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, "httpcss", "%s\n", cfg.http_css);
 		if(strlen(cfg.http_jscript) > 0 || cfg.http_full_cfg)
