@@ -496,7 +496,7 @@ bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t size, c
 				int32_t u = write (reader->handle, data_w, to_send);
 				if (u < 0) {
 					errorcount++;
-					cs_log("Reader %s: ERROR in IO_Serial_Write actual written=%d of=%d (errno=%d %s)", reader->label, u, (size - to_do), errno, strerror(errno));
+					cs_log("Reader %s: ERROR in IO_Serial_Write actual written=%d of=%d (errno=%d %s)", reader->label, (size - to_do), size, errno, strerror(errno));
 					if (errorcount > 10) return ERROR; //exit if more than 10 errors
 					}
 				else {
