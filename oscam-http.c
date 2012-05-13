@@ -2396,12 +2396,15 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			tpl_addVar(vars, TPLADDONCE, "IDLESECS", sec2timeformat(vars, isec));
 
 			if (isactive > 0) {
+				tpl_printf(vars, TPLADDONCE, "CLIENTTIMEONCHANNELAPI", "%d", chsec);
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMEONCHANNEL", sec2timeformat(vars, chsec));
-				if (account->tosleep)
+				if (account->tosleep){
 					tpl_printf(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "Sleeping in %d minutes", account->tosleep - (chsec / 60));
-				else
+					tpl_printf(vars, TPLADDONCE, "CLIENTTIMETOSLEEPAPI", "%d", account->tosleep - (chsec / 60));
+				} else {
 					tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "No sleep defined");
-
+					tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEPAPI", "undefined");
+				}
 				if(latestclient){
 					tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", latestclient->last_caid);
 					tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", latestclient->last_srvid);
@@ -2418,8 +2421,10 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				}
 
 			} else {
+				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMEONCHANNELAPI", "");
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMEONCHANNEL", "");
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "");
+				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEPAPI", "");
 				tpl_addVar(vars, TPLADD, "CLIENTCAID", "");
 				tpl_addVar(vars, TPLADD, "CLIENTSRVID", "");
 				tpl_addVar(vars, TPLADD, "CLIENTPICON", "");

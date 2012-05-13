@@ -759,6 +759,8 @@ SFRTIFJFU0VSVkVEADs="
                 <emmok>##EMMOK##</emmok>\n\
                 <emmnok>##EMMNOK##</emmnok>\n\
                 <cwrate>##CWRATE##</cwrate>\n\
+                <timeonchannel>##CLIENTTIMEONCHANNELAPI##</timeonchannel>\n\
+                <expectsleep>##CLIENTTIMETOSLEEPAPI##</expectsleep>\n\
             </stats>\n\
         </user>\n"
 
