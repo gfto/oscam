@@ -3179,200 +3179,72 @@ int32_t write_server()
 	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
 }
 
+#define write_conf(CONFIG_VAR, text) \
+	fprintf(fp, "%-27s %s\n", text ":", config_##CONFIG_VAR() ? "yes" : "no")
+
 void write_versionfile() {
+#if defined(__CYGWIN__)
+	return;
+#endif
+	struct tm st;
+	char targetfile[256];
+	snprintf(targetfile, sizeof(targetfile) - 1, "%s%s", get_tmp_dir(), "/oscam.version");
+	targetfile[sizeof(targetfile) - 1] = 0;
+	FILE *fp = fopen(targetfile, "w");
+	if (!fp) {
+		cs_log("Cannot open %s (errno=%d %s)", targetfile, errno, strerror(errno));
+		return;
+	}
 
-#if !defined(__CYGWIN__)
-  // /tmp/oscam.version file (Uptime + Version)
-  char targetfile[256];
-  snprintf(targetfile, sizeof(targetfile),"%s%s", get_tmp_dir(), "/oscam.version");
-  FILE *fp;
+	time_t now = time(NULL);
+	localtime_r(&now, &st);
 
-  if (!(fp=fopen(targetfile, "w"))) {
-	  cs_log("Cannot open %s (errno=%d %s)", targetfile, errno, strerror(errno));
-  } else {
-	  time_t now = time((time_t*)0);
-	  struct tm st;
-	  localtime_r(&now, &st);
-	  fprintf(fp, "Unix starttime: %d\n", (int)now);
-	  fprintf(fp, "Starttime:      %02d.%02d.%02d", st.tm_mday, st.tm_mon+1, st.tm_year%100);
-	  fprintf(fp, " %02d:%02d:%02d\n", st.tm_hour, st.tm_min, st.tm_sec);
-	  fprintf(fp, "Version:        %s  Rev. %s\n", CS_VERSION, CS_SVN_VERSION);
-	  fprintf(fp, "Max PID:        unlimited\n\n\n");
-	  fprintf(fp, "Active modules:\n");
+	fprintf(fp, "Unix starttime: %ld\n", (long)now);
+	fprintf(fp, "Starttime:      %02d.%02d.%04d", st.tm_mday, st.tm_mon + 1, st.tm_year + 1900);
+	fprintf(fp, " %02d:%02d:%02d\n", st.tm_hour, st.tm_min, st.tm_sec);
+	fprintf(fp, "Version:        %s  Rev. %s\n", CS_VERSION, CS_SVN_VERSION);
+	fprintf(fp, "Max PID:        unlimited\n\n\n");
+	fprintf(fp, "Active modules:\n");
 
-#ifdef WEBIF
-	  fprintf(fp, "Web interface support:      yes\n");
-#else
-	  fprintf(fp, "Web interface support:      no\n");
-#endif
-#ifdef WITH_SSL
-	  fprintf(fp, "SSL support:                yes\n");
-#else
-	  fprintf(fp, "SSL support:                no\n");
-#endif
-#ifdef HAVE_DVBAPI
-	  fprintf(fp, "DVB API support             yes\n");
-#ifdef WITH_STAPI
-	  fprintf(fp, "DVB API with STAPI support: yes\n");
-#else
-	  fprintf(fp, "DVB API with STAPI support: no\n");
-#endif
-#else
-	  fprintf(fp, "DVB API support             no\n");
-#endif
-#ifdef CS_ANTICASC
-	  fprintf(fp, "Anti-cascading support:     yes\n");
-#else
-	  fprintf(fp, "Anti-cascading support:     no\n");
-#endif
-#ifdef IRDETO_GUESSING
-	  fprintf(fp, "Irdeto guessing:            yes\n");
-#else
-	  fprintf(fp, "Irdeto guessing:            no\n");
-#endif
-#ifdef WITH_DEBUG
-	  fprintf(fp, "Debug mode:                 yes\n");
-#else
-	  fprintf(fp, "Debug mode:                 no\n");
-#endif
-#ifdef MODULE_MONITOR
-	  fprintf(fp, "Monitor:                    yes\n");
-#else
-	  fprintf(fp, "Monitor:                    no\n");
-#endif
-#ifdef WITH_LB
-	  fprintf(fp, "Loadbalancing support:      yes\n");
-#else
-	  fprintf(fp, "Loadbalancing support:      no\n");
-#endif
-#ifdef LCDSUPPORT
-	  fprintf(fp, "LCD support:                yes\n");
-#else
-	  fprintf(fp, "LCD support:                no\n");
-#endif
-#ifdef IPV6SUPPORT
-	  fprintf(fp, "IPv6 support:               yes\n");
-#else
-	  fprintf(fp, "IPv6 support:               no\n");
-#endif
-#ifdef CS_CACHEEX
-	  fprintf(fp, "Cache exchange support:     yes\n");
-#else
-	  fprintf(fp, "Cache exchange support:     no\n");
-#endif
-#ifdef MODULE_CAMD33
-	  fprintf(fp, "camd 3.3x:                  yes\n");
-#else
-	  fprintf(fp, "camd 3.3x:                  no\n");
-#endif
-#ifdef MODULE_CAMD35
-	  fprintf(fp, "camd 3.5 UDP:               yes\n");
-#else
-	  fprintf(fp, "camd 3.5 UDP:               no\n");
-#endif
-#ifdef MODULE_CAMD35_TCP
-	  fprintf(fp, "camd 3.5 TCP:               yes\n");
-#else
-	  fprintf(fp, "camd 3.5 TCP:               no\n");
-#endif
-#ifdef MODULE_NEWCAMD
-	  fprintf(fp, "newcamd:                    yes\n");
-#else
-	  fprintf(fp, "newcamd:                    no\n");
-#endif
-#ifdef MODULE_CCCAM
-	  fprintf(fp, "CCcam:                      yes\n");
-#else
-	  fprintf(fp, "CCcam:                      no\n");
-#endif
-#ifdef MODULE_PANDORA
-	  fprintf(fp, "Pandora:                    yes\n");
-#else
-	  fprintf(fp, "Pandora:                    no\n");
-#endif
-#ifdef MODULE_GBOX
-	  fprintf(fp, "gbox:                       yes\n");
-#else
-	  fprintf(fp, "gbox:                       no\n");
-#endif
-#ifdef MODULE_RADEGAST
-	  fprintf(fp, "radegast:                   yes\n");
-#else
-	  fprintf(fp, "radegast:                   no\n");
-#endif
-#ifdef MODULE_SERIAL
-	  fprintf(fp, "serial:                     yes\n");
-#else
-	  fprintf(fp, "serial:                     no\n");
-#endif
-#ifdef MODULE_CONSTCW
-	  fprintf(fp, "constant CW:                yes\n");
-#else
-	  fprintf(fp, "constant CW:                no\n");
-#endif
-#ifdef WITH_CARDREADER
-	  fprintf(fp, "Cardreader:                 yes\n");
-
-	#ifdef READER_NAGRA
-	  fprintf(fp, "Nagra:                      yes\n");
-	#else
-	  fprintf(fp, "Nagra:                      no\n");
-	#endif
-	#ifdef READER_IRDETO
-	  fprintf(fp, "Irdeto:                     yes\n");
-	#else
-	  fprintf(fp, "Irdeto:                     no\n");
-	#endif
-	#ifdef READER_CONAX
-	  fprintf(fp, "Conax:                      yes\n");
-	#else
-	  fprintf(fp, "Conax:                      no\n");
-	#endif
-	#ifdef READER_CRYPTOWORKS
-	  fprintf(fp, "Cryptoworks:                yes\n");
-	#else
-	  fprintf(fp, "Cryptoworks:                no\n");
-	#endif
-	#ifdef READER_SECA
-	  fprintf(fp, "Seca:                       yes\n");
-	#else
-	  fprintf(fp, "Seca:                       no\n");
-	#endif
-	#ifdef READER_VIACCESS
-	  fprintf(fp, "Viaccess:                   yes\n");
-	#else
-	  fprintf(fp, "Viaccess:                   no\n");
-	#endif
-	#ifdef READER_VIDEOGUARD
-	  fprintf(fp, "NDS Videoguard:             yes\n");
-	#else
-	  fprintf(fp, "NDS Videoguard:             no\n");
-	#endif
-	#ifdef READER_DRE
-	  fprintf(fp, "DRE Crypt:                  yes\n");
-	#else
-	  fprintf(fp, "DRE Crypt:                  no\n");
-	#endif
-
-	#ifdef READER_TONGFANG
-	  fprintf(fp, "TONGFANG:                   yes\n");
-	#else
-	  fprintf(fp, "TONGFANG:                   no\n");
-	#endif
-	#ifdef READER_BULCRYPT
-	  fprintf(fp, "BULCRYPT:                   yes\n");
-	#else
-	  fprintf(fp, "BULCRYPT:                   no\n");
-	#endif
-#else
-	  fprintf(fp, "Cardreader:                 no\n");
-#endif
-
-	  fclose(fp);
-  }
-#endif
-
+	write_conf(WEBIF, "Web interface support");
+	write_conf(WITH_SSL, "SSL support");
+	write_conf(HAVE_DVBAPI, "DVB API support");
+	if (config_HAVE_DVBAPI())
+		write_conf(WITH_STAPI, "DVB API with STAPI support");
+	write_conf(CS_ANTICASC, "Anti-cascading support");
+	write_conf(IRDETO_GUESSING, "Irdeto guessing");
+	write_conf(WITH_DEBUG, "Debug mode");
+	write_conf(MODULE_MONITOR, "Monitor");
+	write_conf(WITH_LB, "Loadbalancing support");
+	write_conf(LCDSUPPORT, "LCD support");
+	write_conf(IPV6SUPPORT, "IPv6 support");
+	write_conf(CS_CACHEEX, "Cache exchange support");
+	write_conf(MODULE_CAMD33, "camd 3.3x");
+	write_conf(MODULE_CAMD35, "camd 3.5 UDP");
+	write_conf(MODULE_CAMD35_TCP, "camd 3.5 TCP");
+	write_conf(MODULE_NEWCAMD, "newcamd");
+	write_conf(MODULE_CCCAM, "CCcam");
+	write_conf(MODULE_PANDORA, "Pandora");
+	write_conf(MODULE_GBOX, "gbox");
+	write_conf(MODULE_RADEGAST, "radegast");
+	write_conf(MODULE_SERIAL, "serial");
+	write_conf(MODULE_CONSTCW, "constant CW");
+	write_conf(WITH_CARDREADER, "Cardreader");
+	if (config_WITH_CARDREADER()) {
+		write_conf(READER_NAGRA, "Nagra");
+		write_conf(READER_IRDETO, "Irdeto");
+		write_conf(READER_CONAX, "Conax");
+		write_conf(READER_CRYPTOWORKS, "Cryptoworks");
+		write_conf(READER_SECA, "Seca");
+		write_conf(READER_VIACCESS, "Viaccess");
+		write_conf(READER_VIDEOGUARD, "NDS Videoguard");
+		write_conf(READER_DRE, "DRE Crypt");
+		write_conf(READER_TONGFANG, "TONGFANG");
+		write_conf(READER_BULCRYPT, "Bulcrypt");
+	}
+	fclose(fp);
 }
+#undef write_conf
 
 int32_t init_free_userdb(struct s_auth *ptr) {
 	int32_t nro;
