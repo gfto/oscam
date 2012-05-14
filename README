@@ -24,7 +24,7 @@
    Use config.sh to enable/disable features.
 
    If you use cmake you may use the interface to change build parameters
-      ccmake ..
+      cmake ..
 
    or specify them on the command line like this:
       cmake -DCS_CONFDIR=/where/is/config/files -DCMAKE_INSTALL_PREFIX=/where/to/installed ..
@@ -38,6 +38,7 @@
 
 2. Build with a different toolchain (cross-compilation)
 -------------------------------------------------------
+
 In short, you need to define the toolchain file on the command line, for 
 example:
 
@@ -47,8 +48,9 @@ For current toolchains and more detailed instructions see
 http://streamboard.gmc.to/oscam/wiki/crosscompiling/
 
 
-3. License
+3. Licence
 ----------
+
 OSCam: Open Source CAM
 Copyright (C) 2009-2012 OSCam developers
 Based on Streamboard mp-cardserver v0.9d - (w) 2004-2007 by dukat
@@ -71,6 +73,7 @@ http://www.gnu.org/licenses/gpl-3.0.html
 
 4. Copyright
 ------------
+
 OSCam is based on the Streamboard mp-cardserver 0.9d by dukat and has 
 been extended and worked on by many more since then.
 You are free to use it under the terms of the GNU General Public
@@ -79,6 +82,7 @@ License v3 as described in the COPYING file.
 
 5. Version History
 ------------------
+
 See the file VERSION which should come with your distribution for details.
 
 You may also have a look at the Trac timeline
@@ -88,6 +92,7 @@ for more detailed and up-to-date changes.
 
 6. Web Links
 ------------
+
 svn repository:
 svn co http://streamboard.gmc.to/svn/oscam/trunk oscam-svn
 
@@ -103,6 +108,9 @@ http://streamboard.gmc.to/wiki/index.php/OSCam/
 
 7. Help and Support
 -------------------
+
+man pages and examples in path Distribution/doc
+
 If you experience any problems with OSCam, feel free to post in our support 
 forum under (mainly German and English language)
 http://streamboard.gmc.to/wbb2/portal.php
