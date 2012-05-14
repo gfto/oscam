@@ -626,6 +626,9 @@ DESCRIPTIONS
        cw_delay = milli-seconds
 	  delay of CW writing, default:none
 
+       delayer = milli-seconds
+	  minimum time to write CW, default:0
+
        reopenonzap =  0|1
 	  1 = reopen demux devices on each channel switching, default:0
 
