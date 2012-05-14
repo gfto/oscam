@@ -318,8 +318,14 @@ DESCRIPTIONS
        httpcss = path
 	  path for external CSS file, default:none
 
+       http_prepend_embedded_css = 0|1
+	  1 = prefer embedded CSS, default:0
+
        httptpl = path
 	  path for external templates and picons, default:none
+
+       httpjscript = path
+	  path for oscam.js javascript, default:none
 
        httprefresh = seconds
 	  status refresh in seconds, default:none
