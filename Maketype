@@ -138,8 +138,8 @@ SAY = @echo
 endif
 export Q SAY
 
-EXEFILE1	= Distribution/oscam-$(VER)-$(subst cygwin,cygwin.exe,$(TARGET))
-EXEFILE2	= Distribution/list_smargo-$(VER)-$(subst cygwin,cygwin.exe,$(TARGET))
+OSCAM_BIN := Distribution/oscam-$(VER)-$(subst cygwin,cygwin.exe,$(TARGET))
+LIST_SMARGO_BIN := Distribution/list_smargo-$(VER)-$(subst cygwin,cygwin.exe,$(TARGET))
 
 LIBDIR		= lib
 
@@ -240,9 +240,9 @@ OSCAM_OBJ = \
 	$(OSCAM_LIB)(reader-videoguard2.o)
 
 ifneq ($(USE_LIBUSB)$(LIBUSB),)
-all:		prepare $(EXEFILE1) $(EXEFILE2)
+all:		prepare $(OSCAM_BIN) $(LIST_SMARGO_BIN)
 else
-all:		prepare $(EXEFILE1)
+all:		prepare $(OSCAM_BIN)
 endif
 
 prepare:
@@ -293,7 +293,7 @@ $(OSCAM_OBJ): $(OSCAM_DEP)
 $(OSCAM_LIB): $(OSCAM_OBJ)
 	-@$(RANLIB) $@
 
-$(EXEFILE1): oscam.c $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(OSCAM_LIB)
+$(OSCAM_BIN): oscam.c $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(OSCAM_LIB)
 	$(SAY) "LINK	$@"
 	$(Q)$(CC) $(STD_DEFS) $(LDFLAGS) oscam.c $(OSCAM_LIB) $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(LIBS) -o $@
 ifndef DEBUG
@@ -301,7 +301,7 @@ ifndef DEBUG
 	$(Q)$(STRIP) $@
 endif
 
-$(EXEFILE2):	utils/list_smargo.c
+$(LIST_SMARGO_BIN): utils/list_smargo.c
 	$(SAY) "LINK	$@"
 	$(Q)$(CC) $(STD_DEFS) $(LDFLAGS) utils/list_smargo.c $(LIBS) -o $@
 ifndef DEBUG
