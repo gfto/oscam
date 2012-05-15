@@ -939,7 +939,7 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
 		cs_debug_mask(D_READER, "gbox: received cws=%s, peer=%04x, ecm_pid=%d, sid=%d, crc=%08x",
 		cs_hexdump(0, dcw, 16, tmp, sizeof(tmp)), data[10] << 8 | data[11], data[6] << 8 | data[7], data[8] << 8 | data[9], crc);
 
-		for (i=0, n=0; i<CS_MAXPENDING && n == 0; i++) {
+		for (i = 0, n = 0; i < cfg.max_pending && n == 0; i++) {
 			if (cli->ecmtask[i].gbox_crc==crc) {
 			        return cli->ecmtask[i].idx;
 			}

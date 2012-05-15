@@ -395,7 +395,7 @@ struct cc_extended_ecm_idx *get_extended_ecm_idx_by_idx(struct s_client *cl,
 
 void cc_reset_pending(struct s_client *cl, int32_t ecm_idx) {
 	int32_t i = 0;
-	for (i = 0; i < CS_MAXPENDING; i++) {
+	for (i = 0; i < cfg.max_pending; i++) {
 		if (cl->ecmtask[i].idx == ecm_idx && cl->ecmtask[i].rc == 101)
 			cl->ecmtask[i].rc = 100; //Mark unused
 	}
@@ -750,7 +750,7 @@ int32_t cc_get_nxt_ecm(struct s_client *cl) {
 	int32_t diff = (int32_t)cfg.ctimeout+500;
 
 	n = -1;
-	for (i = 0; i < CS_MAXPENDING; i++) {
+	for (i = 0; i < cfg.max_pending; i++) {
 		er = &cl->ecmtask[i];	
 		if ((comp_timeb(&t, &er->tps) >= diff) && (er->rc >= 10)) // drop timeouts
 		{
@@ -775,7 +775,7 @@ int32_t cc_get_nxt_ecm(struct s_client *cl) {
 				if (cc->extended_mode) {
 					int32_t j,found;
 					ECM_REQUEST *erx;
-					for (found=j=0;j<CS_MAXPENDING;j++) {
+					for (found = j = 0; j < cfg.max_pending; j++) {
 						erx = &cl->ecmtask[j];	
 						if (i!=j && erx->rc == 101 &&
 							er->caid==erx->caid &&
@@ -1406,7 +1406,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 	//Now mark all waiting as unprocessed:
 	int8_t i;
-	for (i = 0; i < CS_MAXPENDING; i++) {
+	for (i = 0; i < cfg.max_pending; i++) {
 		er = &cl->ecmtask[i];
 		if (er->rc == 102)
 			er->rc = 100;
@@ -1426,7 +1426,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
  struct cc_data *cc = rdr->cc;
 
  t=time((time_t *)0);
- for (i=1,n=1; i<CS_MAXPENDING; i++)
+ for (i = 1, n = 1; i < cfg.max_pending; i++)
  {
  if ((t-cl->ecmtask[i].tps.time > ((cfg.ctimeout + 500) / 1000) + 1) &&
  (cl->ecmtask[i].rc>=10))      // drop timeouts
@@ -2485,7 +2485,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			}
 			else {
 				int32_t i = 0;
-				for (i = 0; i < CS_MAXPENDING; i++) {
+				for (i = 0; i < cfg.max_pending; i++) {
 					if (cl->ecmtask[i].idx == ecm_idx) {
 						cs_debug_mask(D_TRACE,
 								"%s ext NOK %s", getprefix(), (buf[1]==MSG_CW_NOK1)?"NOK1":"NOK2");

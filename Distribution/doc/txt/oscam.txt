@@ -92,6 +92,9 @@ OPTIONS
        -w <seconds>
 	  time waiting for system time to be set correctly
 
+       -p <num>
+	  set maximum number of pending ECM packets (default: 32, max: 255)
+
 SIGNALS
        SIGHUP
 	  reinit user db, TIERs, services, clients and anti-cascading, for newcamd connections: after reloading the ident, please restart newcamd client

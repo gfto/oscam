@@ -85,7 +85,7 @@ void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw
 
 	if(!cl) return; 
   
-	for (i=0; i<CS_MAXPENDING; i++) {
+	for (i = 0; i < cfg.max_pending; i++) {
 		ecm = &cl->ecmtask[i];
 		if ((ecm->rc>=10) && ecm->caid == cl->ecmtask[idx].caid && (!memcmp(ecm->ecmd5, cl->ecmtask[idx].ecmd5, CS_ECMSTORESIZE))) {
 			if (rc) {
@@ -302,7 +302,7 @@ void network_tcp_connection_close(struct s_reader *reader, char *reason)
 	reader->card_status = UNKNOWN;
 
 	if (cl->ecmtask) {
-		for (i = 0; i < CS_MAXPENDING; i++) {
+		for (i = 0; i < cfg.max_pending; i++) {
 			cl->ecmtask[i].idx = 0;
 			cl->ecmtask[i].rc = 0;
 		}
@@ -327,7 +327,7 @@ void casc_do_sock_log(struct s_reader * reader)
     return;
   }
 
-  for (i=0; i<CS_MAXPENDING; i++)
+  for (i = 0; i < cfg.max_pending; i++)
   {
     if (  (cl->ecmtask[i].rc>=10)
        && (cl->ecmtask[i].idx==idx)
@@ -356,7 +356,7 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 	t=time((time_t *)0);
 	ECM_REQUEST *ecm;
-	for (i=0; i<CS_MAXPENDING; i++) {
+	for (i = 0; i < cfg.max_pending; i++) {
 		ecm = &cl->ecmtask[i];
 		if ((ecm->rc>=10) && (t-(uint32_t)ecm->tps.time > ((cfg.ctimeout + 500) / 1000) + 1)) { // drop timeouts
 			ecm->rc=0;
@@ -366,7 +366,7 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		}
 	}
 
-	for (n=-1, i=0, sflag=1; i<CS_MAXPENDING; i++) {
+	for (n = -1, i = 0, sflag = 1; i < cfg.max_pending; i++) {
 		ecm = &cl->ecmtask[i];
 		if (n<0 && (ecm->rc<10))   // free slot found
 			n=i;
@@ -738,7 +738,7 @@ int32_t reader_init(struct s_reader *reader) {
 		if ((reader->log_port) && (reader->ph.c_init_log))
 			reader->ph.c_init_log();
 
-		cs_malloc(&client->ecmtask,CS_MAXPENDING*(sizeof(ECM_REQUEST)), 1);
+		cs_malloc(&client->ecmtask, cfg.max_pending * sizeof(ECM_REQUEST), 1);
 
 		cs_log("proxy %s initialized (server=%s:%d)", reader->label, reader->device, reader->r_port);
 	}
