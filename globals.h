@@ -687,7 +687,7 @@ struct s_ATR ;
 struct s_cardreader
 {
 	int8_t			active;
-	char			desc[16];
+	char			*desc;
 	int32_t			(*reader_init)(struct s_reader*);
 	int32_t			(*get_status)(struct s_reader*, int*);
 	int32_t			(*activate)(struct s_reader*, struct s_ATR *);

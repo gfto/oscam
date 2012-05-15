@@ -4347,7 +4347,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	if (!strcmp(token, "protocol")) {
 
 		for (i=0; i<CS_MAX_MOD; i++) {
-			if (!strcmp(value, cardreader[i].desc)) {
+			if (cardreader[i].desc && strcmp(value, cardreader[i].desc) == 0) {
 				rdr->crdr = cardreader[i];
 				rdr->crdr.active = 1;
 				rdr->typ = cardreader[i].typ; //FIXME
