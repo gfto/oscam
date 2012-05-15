@@ -691,7 +691,7 @@ static struct libusb_device* find_smartreader(const char *busname,const char *de
             // If the device is specified as "Serial:number", check iSerial
             if(!strcmp(busname,"Serial")) {
                 char iserialbuffer[128];
-                if(libusb_get_string_descriptor_ascii(usb_dev_handle,usbdesc.iSerialNumber,iserialbuffer,sizeof(iserialbuffer))>0)  {
+                if(libusb_get_string_descriptor_ascii(usb_dev_handle,usbdesc.iSerialNumber,(unsigned char *)iserialbuffer,sizeof(iserialbuffer))>0)  {
                     if(!strcmp(trim(iserialbuffer),devname)) {
                         cs_log("Found reader with serial %s at %03d:%03d",devname,libusb_get_bus_number(dev),libusb_get_device_address(dev));
                         if(smartreader_check_endpoint(dev,out_endpoint))
