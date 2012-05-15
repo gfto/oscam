@@ -317,9 +317,9 @@ bool IO_Serial_SetProperties (struct s_reader * reader, struct termios newtio)
 
 	if (tcsetattr (reader->handle, TCSANOW, &newtio) < 0)
 		return ERROR;
-//	tcflush(reader->handle, TCIOFLUSH);
-//	if (tcsetattr (reader->handle, TCSAFLUSH, &newtio) < 0)
-//		return ERROR;
+	tcflush(reader->handle, TCIOFLUSH);
+	if (tcsetattr (reader->handle, TCSAFLUSH, &newtio) < 0)
+		return ERROR;
 
   int32_t mctl;
 	if (ioctl (reader->handle, TIOCMGET, &mctl) >= 0) {
@@ -451,11 +451,11 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t timeout, uint32_t size, 
 		{
 			while (readed == 0){
 				readed = read (reader->handle, &c, 1);
-				if (readed < 1) {
+				if (readed < 0) {
 					cs_log("Reader %s: ERROR in IO_Serial_Read (errno=%d %s)", reader->label, errno, strerror(errno));
 					if (errorcount > 10) return ERROR;
 					errorcount++;
-					//tcflush (reader->handle, TCIFLUSH);
+					tcflush (reader->handle, TCIFLUSH);
 				}
 			}
 			cs_debug_mask(D_DEVICE, "Reader %s: IO_Received: %02X", reader->label, c);
@@ -463,7 +463,7 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t timeout, uint32_t size, 
 		else
 		{
 			cs_debug_mask(D_DEVICE, "Reader %s: Timeout in IO_Serial_WaitToRead, timeout=%d ms", reader->label, timeout);
-			//tcflush (reader->handle, TCIFLUSH);
+			tcflush (reader->handle, TCIFLUSH);
 			return ERROR;
 		}
 #endif
@@ -478,7 +478,7 @@ bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t size, c
 	BYTE data_w[512];
 	
 	/* Discard input data from previous commands */
-//	tcflush (reader->handle, TCIFLUSH);
+	tcflush (reader->handle, TCIFLUSH);
 	
 	to_send = (delay? 1: size);
 	uint16_t errorcount=0, to_do=to_send;
@@ -493,7 +493,7 @@ bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t size, c
 			while (to_do !=0){
 				cs_ddump_mask(D_DEVICE, data_w, to_send, "IO: Sending: ");
 				int32_t u = write (reader->handle, data_w, to_send);
-				if (u < 1) {
+				if (u < 0) {
 					errorcount++;
 					cs_log("Reader %s: ERROR in IO_Serial_Write actual written=%d of=%d (errno=%d %s)", reader->label, (size - to_do), size, errno, strerror(errno));
 					if (errorcount > 10) return ERROR; //exit if more than 10 errors
@@ -503,14 +503,14 @@ bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t size, c
 					errorcount = 0;
 					if ((reader->typ != R_INTERNAL && reader->crdr.active==0) || (reader->crdr.active==1 && reader->crdr.read_written==1))
 					reader->written += u;
-					//tcflush (reader->handle, TCIFLUSH);
+					tcflush (reader->handle, TCIFLUSH);
 					}
 			}
 		}
 		else
 		{
 			cs_log("Reader %s: timeout in IO_Serial_WaitToWrite, timeout=%d ms", reader->label, delay);
-			//tcflush (reader->handle, TCIFLUSH);
+			tcflush (reader->handle, TCIFLUSH);
 			return ERROR;
 		}
 	}
