@@ -446,26 +446,31 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t timeout, uint32_t size, 
 			return ERROR;
 		}
 #else
-		int16_t readed = 0, errorcount=0;
-		if (!IO_Serial_WaitToRead (reader, 0, timeout))
-		{
-			while (readed == 0){
-				readed = read (reader->handle, &c, 1);
-				if (readed < 1) {
-					if (readed !=0) cs_log("Reader %s: ERROR in IO_Serial_Read (errno=%d %s)", reader->label, errno, strerror(errno));
-					if (errorcount > 10) return ERROR;
-					errorcount++;
-					tcflush (reader->handle, TCIFLUSH);
-				}
+		int16_t readed = -1, errorcount=0;
+		if (count == 0) {
+			if(IO_Serial_WaitToRead (reader, 0, timeout)) {
+				cs_debug_mask(D_DEVICE, "Reader %s: Timeout in IO_Serial_WaitToRead, timeout=%d ms", reader->label, timeout);
+				tcflush (reader->handle, TCIFLUSH);
+				return ERROR;
 			}
-			cs_debug_mask(D_DEVICE, "Reader %s: IO_Received: %02X", reader->label, c);
-		}
-		else
-		{
-			cs_debug_mask(D_DEVICE, "Reader %s: Timeout in IO_Serial_WaitToRead, timeout=%d ms", reader->label, timeout);
-			tcflush (reader->handle, TCIFLUSH);
+		}	
+		
+		while (readed <0 && errorcount < 10) {
+			readed = read (reader->handle, &c, 1);
+			if (readed < 0) {
+				cs_log("Reader %s: ERROR in IO_Serial_Read (errno=%d %s)", reader->label, errno, strerror(errno));
+				errorcount++;
+				tcflush (reader->handle, TCIFLUSH);
+			}
+		} 
+			
+		if (readed == 0) {
+			cs_debug_mask(D_DEVICE, "Reader %s: IO_Received: End of transmission", reader->label);
 			return ERROR;
-		}
+			}
+			
+		if (readed == 1) cs_debug_mask(D_DEVICE, "Reader %s: IO_Received: %02X", reader->label, c);
+		
 #endif
 		data[count] = c;
 	}
