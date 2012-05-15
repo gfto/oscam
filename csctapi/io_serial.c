@@ -81,7 +81,6 @@ static bool IO_Serial_DTR_RTS_dbox2(struct s_reader * reader, int32_t * dtr, int
 {
   int32_t rc;
   uint16_t msr;
-  uint32_t mbit;
   uint16_t rts_bits[2]={ 0x10, 0x800};
   uint16_t dtr_bits[2]={0x100,     0};
   int32_t mcport = (reader->typ == R_DB2COM2);
