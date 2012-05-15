@@ -267,6 +267,7 @@ prepare:
 |  Addons   : $(shell ./config.sh --show addons)\n\
 |  Protocols: $(shell ./config.sh --show protocols)\n\
 |  Readers  : $(shell ./config.sh --show readers)\n\
+|  Compiler : $(shell $(CC) --version 2>/dev/null | head -n 1)\n\
 +-------------------------------------------------------------------------------\n"
 	@echo "$(TYPE)" | awk -F- ' \
 	  { \
