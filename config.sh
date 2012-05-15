@@ -38,8 +38,24 @@ case "$1" in
 		esac
 		exit 0
 		;;
+	'-e'|'--enabled')
+		grep "^\#define $2$" oscam-config.h >/dev/null 2>/dev/null
+		if [ $? = 0 ]; then
+			echo "Y" && exit 0
+		else
+			echo "N" && exit 1
+		fi
+	;;
+	'-d'|'--disabled')
+		grep "^\#define $2$" oscam-config.h >/dev/null 2>/dev/null
+		if [ $? = 1 ]; then
+			echo "Y" && exit 0
+		else
+			echo "N" && exit 1
+		fi
+	;;
 	'-h'|'--help')
-		echo "Usage: `basename $0` [--show (all|addons|protocols|readers)] [--help]"
+		echo "Usage: `basename $0` [--show (all|addons|protocols|readers)] [--enabled option] [--disabled option] [--help]"
 		exit 1
 	;;
 esac

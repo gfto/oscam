@@ -1,6 +1,6 @@
 SHELL		= /bin/sh
 
-ifeq ($(subst ",,$(filter-out \#define, $(shell grep '^\#define WITH_SSL' oscam-config.h))), WITH_SSL)
+ifeq "$(shell ./config.sh --enabled WITH_SSL)" "Y"
 	override USE_SSL=1
 	override USE_LIBCRYPTO=1
 endif
