@@ -73,6 +73,9 @@ OPTIONS
        -h
 	  usage
 
+       -p <number>
+	  maximum number of pending ECM packets, default:32, maximum:255
+
        -r <level>
 	  restart level:
 
@@ -91,9 +94,6 @@ OPTIONS
 
        -w <seconds>
 	  time waiting for system time to be set correctly
-
-       -p <num>
-	  set maximum number of pending ECM packets (default: 32, max: 255)
 
 SIGNALS
        SIGHUP

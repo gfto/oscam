@@ -283,47 +283,51 @@ static void usage()
 	printf("\n");
 
 	printf("\n");
-	printf(" Usage: oscam [-a] [-b] [-s] [-c <config dir>] [-t <tmp dir>] [-d <level>] [-w <secs>] [-g <mode>] [-p <num>]");
+	printf(" Usage: oscam [-a] [-b] [-c <config dir>] [-d <level>] [-g <mode>] [-h] [-p <num>] ");
 	if (config_WEBIF())
-		printf(" [-r <level>] [-u]");
-	printf(" [-h]\n");
+		printf("[-r <level>] ");
+	printf("[-s] [-t <tmp dir>] ");
+	if (config_WEBIF())
+		printf("[-u] ");
+	printf("[-w <secs>]\n");
 	printf("\n");
-	printf("\t-a         : write oscam.crash on segfault (needs installed GDB and OSCam compiled with debug infos -ggdb)\n");
-	printf("\t-b         : start in background\n");
-	printf("\t-s         : capture segmentation faults\n");
+	printf("\t-a         : write oscam.crash on segfault (needs installed GDB and OSCam compiled with debug infos -ggdb)\n\n");
+	printf("\t-b         : start in background\n\n");
 	printf("\t-c <dir>   : read configuration from <dir>\n");
-	printf("\t             default = %s\n", CS_CONFDIR);
-	printf("\t-t <dir>   : tmp dir <dir>\n");
-#if defined(__CYGWIN__)
-	printf("\t             default = (OS-TMP)\n");
-#else
-	printf("\t             default = /tmp/.oscam\n");
-#endif
+	printf("\t             default = %s\n\n", CS_CONFDIR);
 	printf("\t-d <level> : debug level mask\n");
-	printf("\t               0 = no debugging (default)\n");
-	printf("\t               1 = detailed error messages\n");
-	printf("\t               2 = ATR parsing info, ECM, EMM and CW dumps\n");
-	printf("\t               4 = traffic from/to the reader\n");
-	printf("\t               8 = traffic from/to the clients\n");
-	printf("\t              16 = traffic to the reader-device on IFD layer\n");
-	printf("\t              32 = traffic to the reader-device on I/O layer\n");
-	printf("\t              64 = EMM logging\n");
-	printf("\t             128 = DVBAPI logging\n");
-	printf("\t             256 = Loadbalancer logging\n");
-	printf("\t             512 = CACHEEX logging\n");
-	printf("\t            1024 = Client ECM logging\n");
-	printf("\t           65535 = Debug all\n");
-	printf("\t-g <mode>  : garbage collector debug mode (1=immediate free, 2=check for double frees); these options are only intended for debug!\n");
-	printf("\t-w <secs>  : wait up to <secs> seconds for the system time to be set correctly (default 60)\n");
+	printf("\t                   0 = no debugging (default)\n");
+	printf("\t                   1 = detailed error messages\n");
+	printf("\t                   2 = ATR parsing info, ECM, EMM and CW dumps\n");
+	printf("\t                   4 = traffic from/to the reader\n");
+	printf("\t                   8 = traffic from/to the clients\n");
+	printf("\t                  16 = traffic to the reader-device on IFD layer\n");
+	printf("\t                  32 = traffic to the reader-device on I/O layer\n");
+	printf("\t                  64 = EMM logging\n");
+	printf("\t                 128 = DVBAPI logging\n");
+	printf("\t                 256 = Loadbalancer logging\n");
+	printf("\t                 512 = CACHEEX logging\n");
+	printf("\t                1024 = Client ECM logging\n");
+	printf("\t               65535 = Debug all\n\n");
+	printf("\t-g <mode>  : garbage collector debug mode (1=immediate free, 2=check for double frees), these options are intended for debug only!\n\n");
+	printf("\t-h         : show this help\n\n");
+	printf("\t-p <num>   : maximum number of pending ECM packets, default:32, maximum:255\n\n");
 	if (config_WEBIF()) {
 		printf("\t-r <level> : restart level\n");
 		printf("\t               0 = disabled, restart request sets exit status 99\n");
 		printf("\t               1 = restart activated, web interface can restart oscam (default)\n");
-		printf("\t               2 = like 1, but also restart on segmentation faults\n");
-		printf("\t-u         : enable output of web interface in UTF-8 charset\n");
+		printf("\t               2 = like 1, but also restart on segmentation faults\n\n");
 	}
-	printf("\t-p <num>   : how much pending packets to keep (default 32)\n");
-	printf("\t-h         : show this help\n");
+	printf("\t-s         : capture segmentation faults\n\n");
+	printf("\t-t <dir>   : tmp dir <dir>\n");
+#if defined(__CYGWIN__)
+	printf("\t             default = (OS-TMP)\n\n");
+#else
+	printf("\t             default = /tmp/.oscam\n\n");
+#endif
+	if (config_WEBIF())
+	    printf("\t-u         : enable output of web interface in UTF-8 charset\n\n");
+	printf("\t-w <secs>  : wait up to <secs> seconds for the system time to be set correctly, default:60\n\n");
 }
 #undef _check
 

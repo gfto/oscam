@@ -94,6 +94,11 @@ garbage collector debug mode, default:none:
 usage
 .RE
 .PP
+\fB-p\fP <number>
+.RS 3n
+maximum number of pending ECM packets, default:32, maximum:255
+.RE
+.PP
 \fB-r\fP <level>
 .RS 3n
 restart level:
@@ -121,11 +126,6 @@ enable output of web interface in UTF-8 charset
 \fB-w\fP <seconds>
 .RS 3n
 time waiting for system time to be set correctly
-.RE
-.PP
-\fB-p\fP <num>
-.RS 3n
-set maximum number of pending ECM packets (default: 32, max 255)
 .RE
 .SH SIGNALS
 .PP
