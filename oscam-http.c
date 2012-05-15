@@ -1128,7 +1128,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 #endif
 
 		for (i=0; i<CS_MAX_MOD; i++) {
-			if (cardreader[i].desc[0]!=0)
+			if (cardreader[i].desc)
 				tpl_printf(vars, TPLAPPEND, "ADDPROTOCOL", "<option>%s</option>\n", xml_encode(vars, cardreader[i].desc));
 		}
 		return tpl_getTpl(vars, "READERS");
@@ -2584,7 +2584,7 @@ static void print_cards(struct templatevars *vars, struct uriparams *params, str
 			struct s_cardsystem *cs = get_cardsystem_by_caid(card->caid);
 
 			if (cs)
-				tpl_addVar(vars, TPLADD, "SYSTEM", cs->desc ? cs->desc : "");
+				tpl_addVar(vars, TPLADD, "SYSTEM", cs->desc);
 			else
 				tpl_addVar(vars, TPLADD, "SYSTEM", "???");
 
@@ -2841,7 +2841,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				if(rdr->card_atr_length)
 					for(i = 0; i < rdr->card_atr_length; i++) tpl_printf(vars, TPLAPPEND, "READERATR", "%02X ", rdr->card_atr[i]);
 
-				tpl_addVar(vars, TPLADD, "READERCSYSTEM", rdr->csystem.desc ? rdr->csystem.desc : "unknown");
+				tpl_addVar(vars, TPLADD, "READERCSYSTEM", rdr->csystem.desc);
 
 				tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTBIT"));
 

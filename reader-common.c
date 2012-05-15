@@ -232,7 +232,7 @@ static int32_t reader_get_cardsystem(struct s_reader * reader, ATR atr)
 	for (i=0; i<CS_MAX_MOD; i++) {
 		if (cardsystem[i].card_init) {
 			if (cardsystem[i].card_init(reader, atr)) {
-				cs_log("found cardsystem %s", (cardsystem[i].desc) ? cardsystem[i].desc : "");
+				cs_log("found cardsystem %s", cardsystem[i].desc);
 				reader->csystem=cardsystem[i];
 				reader->csystem.active=1;
 #ifdef QBOXHD
@@ -407,7 +407,7 @@ int32_t reader_ecm(struct s_reader * reader, ECM_REQUEST *er, struct s_ecm_answe
 
 int32_t reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs from calling reader!
 {
-	cs_debug_mask(D_EMM, "Entered reader_get_emm_type cardsystem %s", rdr->csystem.desc ? rdr->csystem.desc : "");
+	cs_debug_mask(D_EMM, "Entered reader_get_emm_type cardsystem %s", rdr->csystem.desc);
 	int32_t rc;
 
 	if (rdr->csystem.active && rdr->csystem.get_emm_type) 
