@@ -7,7 +7,6 @@
 #  else
 #    define CS_LOGFILE "/dev/tty"
 #  endif
-#  define CS_EMBEDDED
 #  if !defined(COOL) && !defined(SCI_DEV)
 #    define SCI_DEV 1
 #  endif
@@ -18,10 +17,6 @@
 
 #if defined(WITH_SSL) && !defined(WITH_LIBCRYPTO)
 #  define WITH_LIBCRYPTO
-#endif
-
-#ifdef UCLIBC
-#  define CS_EMBEDDED
 #endif
 
 #if defined(__CYGWIN__)
@@ -46,10 +41,6 @@
 
 #if defined(__HPUX__)
 #  define _XOPEN_SOURCE_EXTENDED
-#endif
-
-#if defined(__ARM__)
-#  define CS_EMBEDDED
 #endif
 
 /*

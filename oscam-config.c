@@ -1682,12 +1682,10 @@ int32_t init_config()
 	char *value=NULL, *token;
 	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 1;	
 
-#ifndef CS_EMBEDDED
 #ifdef PRIO_PROCESS
 	errno=0;
 	if ((cfg.nice = getpriority(PRIO_PROCESS, 0)) == (-1))
 	if (errno)
-#endif
 #endif
 	cfg.nice = 99;
 	cfg.ctimeout = CS_CLIENT_TIMEOUT;
