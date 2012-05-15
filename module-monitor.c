@@ -813,7 +813,7 @@ void module_monitor(struct s_module *ph){
 
 	if (cfg.mon_aulow < 1)
 		cfg.mon_aulow = 30;
-	cs_strncpy(ph->desc, "monitor", sizeof(ph->desc));
+	ph->desc = "monitor";
 	ph->type=MOD_CONN_UDP;
 	ph->multi = 0;
 	ph->s_ip = cfg.mon_srvip;

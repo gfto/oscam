@@ -164,7 +164,7 @@ void module_csp(struct s_module *ph)
   ph->ptab = &ptab;
   ph->ptab->nports = 1;
 
-  cs_strncpy(ph->desc, "csp", sizeof(ph->desc));
+  ph->desc="csp";
   ph->type=MOD_CONN_UDP;
   ph->large_ecm_support = 1;
   ph->listenertype = LIS_CSPUDP;

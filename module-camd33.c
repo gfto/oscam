@@ -160,7 +160,7 @@ void module_camd33(struct s_module *ph)
   ph->ptab = &ptab;
   ph->ptab->nports = 1;
 
-  cs_strncpy(ph->desc, "camd33", sizeof(ph->desc));
+  ph->desc="camd33";
   ph->type=MOD_CONN_TCP;
   ph->large_ecm_support = 1;
   ph->listenertype = LIS_CAMD33TCP;

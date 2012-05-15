@@ -3224,7 +3224,7 @@ void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 
 void module_dvbapi(struct s_module *ph)
 {
-	cs_strncpy(ph->desc, "dvbapi", sizeof(ph->desc));
+	ph->desc="dvbapi";
 	ph->type=MOD_CONN_SERIAL;
 	ph->listenertype = LIS_DVBAPI;
 	ph->multi=1;

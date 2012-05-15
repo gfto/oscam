@@ -236,7 +236,7 @@ void module_radegast(struct s_module *ph)
   ph->ptab = &ptab;
   ph->ptab->nports = 1;
 
-  cs_strncpy(ph->desc, "radegast", sizeof(ph->desc));
+  ph->desc="radegast";
   ph->type=MOD_CONN_TCP;
   ph->listenertype = LIS_RADEGAST;
   ph->multi=0;

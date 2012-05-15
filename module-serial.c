@@ -1220,7 +1220,7 @@ static int32_t oscam_ser_recv_chk(struct s_client *client, uchar *dcw, int32_t *
 
 void module_oscam_ser(struct s_module *ph)
 {
-  cs_strncpy(ph->desc, "serial", sizeof(ph->desc));
+  ph->desc="serial";
   ph->type=MOD_CONN_SERIAL;
   ph->large_ecm_support = 1;
   ph->listenertype = LIS_SERIAL;

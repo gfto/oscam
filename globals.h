@@ -649,7 +649,7 @@ struct s_module {
 	int8_t			type;
 	int8_t			large_ecm_support;
 	int16_t			listenertype;
-	char 			desc[16];
+	char 			*desc;
 	char 			*logtxt;
 	//int32_t  		s_port;
 	in_addr_t		s_ip;

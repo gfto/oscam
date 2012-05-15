@@ -3683,7 +3683,7 @@ static void cc_s_idle(struct s_client *cl) {
 #endif
 
 void module_cccam(struct s_module *ph) {
-	cs_strncpy(ph->desc, "cccam", sizeof(ph->desc));
+	ph->desc = "cccam";
 	ph->type = MOD_CONN_TCP;
 	ph->large_ecm_support = 1;
 	ph->listenertype = LIS_CCCAM;

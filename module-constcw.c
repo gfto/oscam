@@ -136,7 +136,7 @@ static int32_t constcw_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc
 
 void module_constcw(struct s_module *ph)
 {
-  cs_strncpy(ph->desc, "constcw", sizeof(ph->desc));
+  ph->desc = "constcw";
   ph->type = MOD_NO_CONN;
   ph->listenertype = LIS_CONSTCW;
   ph->multi = 0;

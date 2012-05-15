@@ -964,7 +964,7 @@ void module_camd35(struct s_module *ph)
   ph->ptab = &ptab;
   ph->ptab->nports = 1;
 
-  cs_strncpy(ph->desc, "camd35", sizeof(ph->desc));
+  ph->desc="camd35";
   ph->type=MOD_CONN_UDP;
   ph->large_ecm_support = 1;
   ph->listenertype = LIS_CAMD35UDP;
@@ -992,7 +992,7 @@ void module_camd35(struct s_module *ph)
 #ifdef MODULE_CAMD35_TCP 
 void module_camd35_tcp(struct s_module *ph)
 {
-  cs_strncpy(ph->desc, "cs378x", sizeof(ph->desc));
+  ph->desc="cs378x";
   ph->type=MOD_CONN_TCP;
   ph->large_ecm_support = 1;
   ph->listenertype = LIS_CAMD35TCP;

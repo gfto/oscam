@@ -1354,7 +1354,7 @@ static int32_t newcamd_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc
 
 void module_newcamd(struct s_module *ph)
 {
-  cs_strncpy(ph->desc, "newcamd", sizeof(ph->desc));
+  ph->desc="newcamd";
   ph->type=MOD_CONN_TCP;
   ph->listenertype = LIS_NEWCAMD;
   ph->logtxt = ", crypted";

@@ -254,7 +254,7 @@ void module_pandora(struct s_module *ph) {
 	ph->ptab->nports = 1;
 	ph->num = R_PANDORA;
 
-	cs_strncpy(ph->desc, "pandora", sizeof(ph->desc));
+	ph->desc = "pandora";
 	ph->type = MOD_CONN_UDP;
 	ph->large_ecm_support = 1;
 	ph->multi = 0;

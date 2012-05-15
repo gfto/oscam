@@ -1054,7 +1054,7 @@ static int32_t gbox_send_emm(EMM_PACKET *UNUSED(ep))
 
 void module_gbox(struct s_module *ph)
 {
-  cs_strncpy(ph->desc, "gbox", sizeof(ph->desc));
+  ph->desc="gbox";
   ph->num=R_GBOX;
   ph->type=MOD_CONN_UDP;
   ph->listenertype = LIS_GBOX;
