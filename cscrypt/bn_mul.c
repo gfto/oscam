@@ -228,7 +228,7 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
 	     int n, BN_ULONG *t)
 	{
 	int c1,c2,i,j,n2=n*2;
-	unsigned int neg,zero;
+	unsigned int neg;
 	BN_ULONG ln,lo,*p;
 
 # ifdef BN_COUNT
@@ -244,7 +244,7 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
 	/* r=(a[0]-a[1])*(b[1]-b[0]) */
 	c1=bn_cmp_words(a,&(a[n]),n);
 	c2=bn_cmp_words(&(b[n]),b,n);
-	zero=neg=0;
+	neg=0;
 	switch (c1*3+c2)
 		{
 	case -4:
@@ -252,8 +252,6 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
 		bn_sub_words(&(t[n]),b,      &(b[n]),n); /* - */
 		break;
 	case -3:
-		zero=1;
-		/* break; */
 	case -2:
 		bn_sub_words(t,      &(a[n]),a,      n); /* - */
 		bn_sub_words(&(t[n]),&(b[n]),b,      n); /* + */
@@ -262,16 +260,12 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
 	case -1:
 	case 0:
 	case 1:
-		zero=1;
-		/* break; */
 	case 2:
 		bn_sub_words(t,      a,      &(a[n]),n); /* + */
 		bn_sub_words(&(t[n]),b,      &(b[n]),n); /* - */
 		neg=1;
 		break;
 	case 3:
-		zero=1;
-		/* break; */
 	case 4:
 		bn_sub_words(t,      a,      &(a[n]),n);
 		bn_sub_words(&(t[n]),&(b[n]),b,      n);
