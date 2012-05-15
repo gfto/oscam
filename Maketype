@@ -263,6 +263,10 @@ prepare:
 |  CFLAGS   = $(CFLAGS)\n\
 |  LDFLAGS  = $(LDFLAGS)\n\
 |  LIBS     = $(LIBS)\n\
+| Config:\n\
+|  Addons   : $(shell ./config.sh --show addons)\n\
+|  Protocols: $(shell ./config.sh --show protocols)\n\
+|  Readers  : $(shell ./config.sh --show readers)\n\
 +-------------------------------------------------------------------------------\n"
 	@echo "$(TYPE)" | awk -F- ' \
 	  { \

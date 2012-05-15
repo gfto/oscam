@@ -1,4 +1,49 @@
 #!/bin/bash
+
+addons="WEBIF HAVE_DVBAPI WITH_STAPI IRDETO_GUESSING CS_ANTICASC WITH_DEBUG MODULE_MONITOR WITH_SSL WITH_LB CS_CACHEEX LCDSUPPORT IPV6SUPPORT"
+protocols="MODULE_CAMD33 MODULE_CAMD35 MODULE_CAMD35_TCP MODULE_NEWCAMD MODULE_CCCAM MODULE_GBOX MODULE_RADEGAST MODULE_SERIAL MODULE_CONSTCW MODULE_PANDORA"
+readers="WITH_CARDREADER READER_NAGRA READER_IRDETO READER_CONAX READER_CRYPTOWORKS READER_SECA READER_VIACCESS READER_VIDEOGUARD READER_DRE READER_TONGFANG READER_BULCRYPT"
+
+list_options() {
+	PREFIX="$1"
+	shift
+	for OPT in $@
+	do
+		grep "^\#define $OPT$" oscam-config.h >/dev/null 2>/dev/null
+		[ $? = 0 ] && echo -n "${OPT//$PREFIX/} "
+	done
+	echo
+}
+
+case "$1" in
+	'-s'|'--show')
+		shift
+		case "$1" in
+			'all')
+				list_options "" $addons $protocols $readers
+			;;
+			'addons')
+				list_options "" $addons
+			;;
+			'protocols')
+				list_options "MODULE_" $protocols
+			;;
+			'readers')
+				list_options "READER_" $readers
+			;;
+			*)
+				echo "Unknown parameter: $1"
+				exit 1
+			;;
+		esac
+		exit 0
+		;;
+	'-h'|'--help')
+		echo "Usage: `basename $0` [--show (all|addons|protocols|readers)] [--help]"
+		exit 1
+	;;
+esac
+
 tempfile=/tmp/test$$
 tempfileconfig=/tmp/oscam-config.h
 configfile=oscam-config.h
@@ -14,10 +59,6 @@ if [ -z "${DIALOG}" ]; then
 fi
 
 cp -f $configfile $tempfileconfig
-
-addons="WEBIF HAVE_DVBAPI WITH_STAPI IRDETO_GUESSING CS_ANTICASC WITH_DEBUG MODULE_MONITOR WITH_SSL WITH_LB CS_CACHEEX LCDSUPPORT IPV6SUPPORT"
-protocols="MODULE_CAMD33 MODULE_CAMD35 MODULE_CAMD35_TCP MODULE_NEWCAMD MODULE_CCCAM MODULE_GBOX MODULE_RADEGAST MODULE_SERIAL MODULE_CONSTCW MODULE_PANDORA"
-readers="WITH_CARDREADER READER_NAGRA READER_IRDETO READER_CONAX READER_CRYPTOWORKS READER_SECA READER_VIACCESS READER_VIDEOGUARD READER_DRE READER_TONGFANG READER_BULCRYPT"
 
 check_test() {
 	if [ "$(cat $tempfileconfig | grep "^#define $1$")" != "" ]; then
