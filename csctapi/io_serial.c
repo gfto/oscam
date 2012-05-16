@@ -443,13 +443,12 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t timeout, uint32_t size, 
 		}
 #else
 		int16_t readed = -1, errorcount=0;
-		if (count == 0) {
-			if(IO_Serial_WaitToRead (reader, 0, timeout)) {
-				cs_debug_mask(D_DEVICE, "Reader %s: Timeout in IO_Serial_WaitToRead, timeout=%d ms", reader->label, timeout);
-				//tcflush (reader->handle, TCIFLUSH);
-				return ERROR;
-			}
-		}	
+		if(IO_Serial_WaitToRead (reader, 0, timeout)) {
+			cs_debug_mask(D_DEVICE, "Reader %s: Timeout in IO_Serial_WaitToRead, timeout=%d ms", reader->label, timeout);
+			//tcflush (reader->handle, TCIFLUSH);
+			return ERROR;
+		}
+			
 		
 		while (readed <0 && errorcount < 10) {
 			readed = read (reader->handle, &c, 1);
