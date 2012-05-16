@@ -637,16 +637,16 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 	return OK;
 }
 
-static uint32_t ICC_Async_GetClockRate (int32_t mhz)
+static uint32_t ICC_Async_GetClockRate (int32_t cardmhz)
 {
-	switch (mhz) {
+	switch (cardmhz) {
 		case 357:
 		case 358:
 	  	return (372L * 9600L);
 		case 368:
 	  	return (384L * 9600L);
 		default:
- 	  	return mhz * 10000L;
+ 	  	return cardmhz * 10000L;
 	}
 }
 
@@ -866,7 +866,7 @@ static uint32_t ETU_to_ms(struct s_reader * reader, uint32_t WWT)
 	else
 		WWT = 0;
 	double work_etu = 1000 / (double)reader->current_baudrate;//FIXME sometimes work_etu should be used, sometimes initial etu
-	return (uint32_t) WWT * work_etu * reader->mhz / reader->cardmhz;
+	return (uint32_t) WWT * work_etu * reader->cardmhz / reader->mhz;
 }
 
 static int32_t ICC_Async_SetParity (struct s_reader * reader, uint16_t parity)
@@ -951,7 +951,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 
 	if (deprecated == 0) {
 		if (reader->protocol_type != ATR_PROTOCOL_TYPE_T14) { //dont switch for T14
-			uint32_t baud_temp = d * ICC_Async_GetClockRate (reader->mhz) / F;
+			uint32_t baud_temp = d * ICC_Async_GetClockRate (reader->cardmhz) / F;
 			if (reader->crdr.active == 1) {
 				if (reader->crdr.set_baudrate)
 					call (reader->crdr.set_baudrate(reader, baud_temp));
@@ -1042,7 +1042,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 				reader->CWT = (uint16_t) (((1<<cwi) + 11)); // in ETU
 
 				// Set BWT = (2^BWI * 960 + 11) work etu
-				reader->BWT = (uint16_t)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate(reader->mhz))	+ 11 ;
+				reader->BWT = (uint16_t)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate(reader->cardmhz))	+ 11 ;
 
 				// Set BGT = 22 * work etu
 				BGT = 22L; //in ETU
@@ -1098,7 +1098,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 		//for Irdeto T14 cards, do not set ETU
 		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14))
 			ETU = F / d;
-		call (Sci_WriteSettings (reader, reader->protocol_type, reader->cardmhz / 100, ETU, WWT, reader->BWT, reader->CWT, EGT, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
+		call (Sci_WriteSettings (reader, reader->protocol_type, reader->mhz / 100, ETU, WWT, reader->BWT, reader->CWT, EGT, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
 #endif //COOL
 	}
 #if defined(LIBUSB)
