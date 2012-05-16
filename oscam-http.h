@@ -191,9 +191,9 @@ A:active {color: #050840;}\n\
 A:hover {color: #ff9e5f;}\n\
 DIV.message {position:absolute;right:0;font-family: Arial; font-size: 12px;font-weight:bold;}\n\
 IMG{border:0px solid;}\n\
-IMG.icon{border: 0px solid;width:16px;height:16px;background-color:#AA0000;border-radius:3px;-webkit-border-radius:3px;}\n\
-IMG.enable{border: 0px solid;width:16px;height:16px;background-color:#00AA00;border-radius:3px;-webkit-border-radius:3px;}\n\
-IMG.disable{border: 0px solid;width:16px;height:16px;background-color:#AA0000;border-radius:3px;-webkit-border-radius:3px;}\n\
+IMG.icon{border: 0px solid;width:22px;height:22px;background-color:#AA0000;border-radius:3px;-webkit-border-radius:3px;}\n\
+IMG.enable{border: 0px solid;width:22px;height:22px;background-color:#00AA00;border-radius:3px;-webkit-border-radius:3px;}\n\
+IMG.disable{border: 0px solid;width:22px;height:22px;background-color:#AA0000;border-radius:3px;-webkit-border-radius:3px;}\n\
 A:hover IMG.icon {border: 1px solid yellow;width:20px;height:20px;}\n\
 P.blinking {text-decoration: blink; font-weight:bold; font-size:large; color:red;}\n\
 a.tooltip  {position: relative; text-decoration: none; cursor:default;}\n\
