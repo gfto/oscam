@@ -1,5 +1,5 @@
-#if defined(SCI_DEV) && !defined(_sci_inf_h_)
-#define _sci_inf_h_
+#ifndef _sci_ioctl_h_
+#define _sci_ioctl_h_
 
 /* constants */
 #define DEVICE_NAME			"sci_dev"
@@ -61,4 +61,4 @@
 /* MAJOR NUM OF DEVICE DRVIER */
 #define MAJOR_NUM			169
 
-#endif /* _sci_inf_h_ */
+#endif /* _sci_ioctl_h_ */

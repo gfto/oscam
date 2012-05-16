@@ -1,4 +1,4 @@
-#if defined(SCI_DEV) && !defined(_sci_global_h_)
+#ifndef _sci_global_h_
 #define _sci_global_h_
 
 #define INT int32_t

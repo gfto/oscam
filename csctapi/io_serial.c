@@ -674,7 +674,7 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_ms, 
    int32_t select_ret;
    int32_t out_fd;
    
-#ifdef SCI_DEV
+#if !defined(COOL) && !defined(AZBOX) && !defined(WITH_STAPI)
    if(reader->typ == R_INTERNAL)
       return OK;
 #endif
