@@ -1,7 +1,7 @@
 SHELL	= /bin/sh
 
-SVN_REV = $(shell (svnversion -n . 2>/dev/null || echo -n 0) | cut -d: -f1 | sed 's/[^0-9]*$$//; s/^$$/0/')
-VER	= $(subst ",,$(filter-out \#define CS_VERSION,$(shell grep CS_VERSION globals.h)))$(SVN_REV)
+SVN_REV := $(shell ./config.sh --oscam-revision)
+VER     := $(shell ./config.sh --oscam-version)$(SVN_REV)
 
 CS_CONFDIR = '\"/usr/local/etc\"'
 
