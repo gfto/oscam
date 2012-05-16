@@ -692,9 +692,7 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
             pthread_t t;
             pthread_attr_t attr;
 						pthread_attr_init(&attr);
-#ifndef TUXBOX
 						pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
-#endif
             int32_t ret = pthread_create(&t, &attr, (void *)gbox_expire_hello, cli);
             if(ret){
 							cs_log("ERROR: can't create gbox expire thread (errno=%d %s)", ret, strerror(ret));

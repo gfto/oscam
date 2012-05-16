@@ -5063,9 +5063,7 @@ void http_srv() {
 			}
 #endif
 			pthread_attr_init(&attr);
-#ifndef TUXBOX
 			pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
-#endif
 			int32_t ret = pthread_create(&workthread, &attr, serve_process, (void *)conn);
 			if (ret) {
 				cs_log("ERROR: can't create thread for webif (errno=%d %s)", ret, strerror(ret));

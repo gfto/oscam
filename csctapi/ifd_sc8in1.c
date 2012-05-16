@@ -652,9 +652,7 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 			reader->sc8in1_config->display_running = TRUE;
 			pthread_attr_t attr;
 			pthread_attr_init(&attr);
-#ifndef TUXBOX
 			pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
-#endif
 			if (pthread_create(&reader->sc8in1_config->display_thread, &attr, mcr_update_display_thread, (void *)(reader)))
 				cs_log("ERROR: can't create MCR_DISPLAY_THREAD thread");
 			else {

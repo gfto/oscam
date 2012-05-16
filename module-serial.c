@@ -1052,9 +1052,7 @@ void * init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int32_t 
   struct s_thread_param param;
   pthread_attr_t attr;
 	pthread_attr_init(&attr);
-#ifndef TUXBOX
 	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
-#endif
   oscam_init_serialdata(&param.serialdata);
 	cs_strncpy(sdevice, cfg.ser_device, sizeof(sdevice));
 	param.ctyp=len;
