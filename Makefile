@@ -53,7 +53,7 @@ config:
 menuconfig: config
 
 clean:
-	@-rm -rfv oscam-ostype.h lib
+	@-rm -rfv lib
 
 distclean: clean
 	@-rm -rfv Distribution/oscam-* Distribution/list_smargo-*
