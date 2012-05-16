@@ -50,6 +50,8 @@ extra:	all
 config:
 	$(SHELL) ./config.sh
 
+menuconfig: config
+
 clean:
 	@-rm -rfv oscam-ostype.h lib
 
