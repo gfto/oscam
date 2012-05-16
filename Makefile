@@ -236,7 +236,7 @@ cross-powerpc-tuxbox-linux:
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto -ldl" \
 		OS_PTLI="" \
-		DS_OPTS="-DTUXBOX -DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"'" \
+		DS_OPTS="-DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"'" \
 		DS_CFLAGS="" \
 		DS_LDFLAGS="" \
 		DS_CC=powerpc-tuxbox-linux-gnu-gcc \
@@ -250,7 +250,7 @@ cross-powerpc-tuxbox-linux-uclibc:
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="" \
 		OS_PTLI="" \
-		DS_OPTS="-DTUXBOX -DCS_CONFDIR='\"/var/tuxbox/config\"'" \
+		DS_OPTS="-DCS_CONFDIR='\"/var/tuxbox/config\"'" \
 		DS_CFLAGS="" \
 		DS_LDFLAGS="" \
 		DS_CC=powerpc-tuxbox-linux-uclibc-gcc \
@@ -288,7 +288,7 @@ cross-sh4-linux:
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto" \
 		OS_PTLI="" \
-		DS_OPTS="-DTUXBOX -DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"'" \
+		DS_OPTS="-DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"'" \
 		DS_CFLAGS="" \
 		DS_LDFLAGS="" \
 		DS_CC=sh4-linux-gcc \
@@ -302,7 +302,7 @@ cross-sh4-linux-stapi:
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto -L./stapi -loscam_stapi" \
 		OS_PTLI="" \
-		DS_OPTS="-DWITH_STAPI -DWITH_LIBCRYPTO -DTUXBOX -DSCI_DEV -DCS_CONFDIR='\"/var/tuxbox/config\"'" \
+		DS_OPTS="-DWITH_STAPI -DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"'" \
 		DS_CFLAGS="" \
 		DS_LDFLAGS="" \
 		DS_CC=sh4-linux-gcc \
@@ -617,7 +617,7 @@ cross-mipsel-tuxbox-linux-glibc:
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto" \
 		OS_PTLI="" \
-		DS_OPTS="-DTUXBOX -DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"' -static-libgcc" \
+		DS_OPTS="-DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"' -static-libgcc" \
 		DS_CFLAGS="" \
 		DS_LDFLAGS="" \
 		DS_CC=mipsel-linux-glibc-gcc \
@@ -631,7 +631,7 @@ cross-mipsel-tuxbox-linux:
 		-f Maketype TYP=$(subst cross-,,$@) \
 		OS_LIBS="-lcrypto" \
 		OS_PTLI="" \
-		DS_OPTS="-DTUXBOX -DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"' -static-libgcc" \
+		DS_OPTS="-DWITH_LIBCRYPTO -DCS_CONFDIR='\"/var/tuxbox/config\"' -static-libgcc" \
 		DS_CFLAGS="" \
 		DS_LDFLAGS="" \
 		DS_CC=mipsel-linux-gcc \
