@@ -1,5 +1,7 @@
 #!/bin/bash
 
+WD=$(dirname $0)
+
 addons="WEBIF HAVE_DVBAPI WITH_STAPI IRDETO_GUESSING CS_ANTICASC WITH_DEBUG MODULE_MONITOR WITH_SSL WITH_LB CS_CACHEEX LCDSUPPORT IPV6SUPPORT"
 protocols="MODULE_CAMD33 MODULE_CAMD35 MODULE_CAMD35_TCP MODULE_NEWCAMD MODULE_CCCAM MODULE_GBOX MODULE_RADEGAST MODULE_SERIAL MODULE_CONSTCW MODULE_PANDORA"
 readers="WITH_CARDREADER READER_NAGRA READER_IRDETO READER_CONAX READER_CRYPTOWORKS READER_SECA READER_VIACCESS READER_VIDEOGUARD READER_DRE READER_TONGFANG READER_BULCRYPT"
@@ -54,8 +56,16 @@ case "$1" in
 			echo "N" && exit 1
 		fi
 	;;
+	'-v'|'--oscam-version')
+		grep CS_VERSION $WD/globals.h | cut -d\" -f2
+		exit 0
+	;;
+	'-r'|'--oscam-revision')
+		(svnversion -n $WD 2>/dev/null || echo -n 0) | cut -d: -f1 | sed 's/[^0-9]*$//; s/^$/0/'
+		exit 0
+	;;
 	'-h'|'--help')
-		echo "Usage: `basename $0` [--show (all|addons|protocols|readers)] [--enabled option] [--disabled option] [--help]"
+		echo "Usage: `basename $0` [--show (all|addons|protocols|readers)] [--enabled option] [--disabled option] [--oscam-version] [--oscam-revision] [--help]"
 		exit 1
 	;;
 esac
