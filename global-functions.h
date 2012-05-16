@@ -382,6 +382,7 @@ extern int8_t cs_try_rwlock_int(CS_MUTEX_LOCK *l, int8_t type);
 #define cs_try_readlock(l)	cs_try_rwlock_int(l, READLOCK)
 
 extern uint32_t cs_getIPfromHost(const char *hostname);
+extern int set_socket_priority(int fd, int priority);
 extern void setTCPTimeouts(int32_t socket);
 extern struct s_reader *get_reader_by_label(char *lbl);
 extern struct s_client *get_client_by_name(char *name);

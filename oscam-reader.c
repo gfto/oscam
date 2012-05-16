@@ -193,10 +193,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 		return -1;
 	}
 
-#ifdef SO_PRIORITY
-	if (cfg.netprio)
-		setsockopt(client->udp_fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg.netprio, sizeof(uintptr_t));
-#endif
+	set_socket_priority(client->udp_fd, cfg.netprio);
 
 	int32_t keep_alive = 1;
 	setsockopt(client->udp_fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keep_alive, sizeof(keep_alive));

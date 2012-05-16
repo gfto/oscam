@@ -1310,6 +1310,15 @@ uint32_t cs_getIPfromHost(const char *hostname){
 	return result;
 }
 
+int set_socket_priority(int fd, int priority) {
+#ifdef SO_PRIORITY
+	return priority ? setsockopt(fd, SOL_SOCKET, SO_PRIORITY, (void *)&priority, sizeof(int *)) : -1;
+#else
+	(void)fd; (void)priority;
+	return -1;
+#endif
+}
+
 void setTCPTimeouts(int32_t socket){
 	int32_t flag = 1;
 	// this is not only for a real keepalive but also to detect closed connections so it should not be configurable

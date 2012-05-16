@@ -886,10 +886,7 @@ static int32_t gbox_client_init(struct s_client *cli)
   int32_t opt = 1;
   setsockopt(cli->udp_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof (opt));
 
-#ifdef SO_PRIORITY
-  if (cfg.netprio)
-    setsockopt(cli->udp_fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg.netprio, sizeof(uintptr_t));
-#endif
+  set_socket_priority(cli->udp_fd, cfg.netprio);
 
   if (cfg.gbox_port>0)
   {

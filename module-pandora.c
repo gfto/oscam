@@ -172,10 +172,8 @@ int pandora_client_init(struct s_client *cl) {
 		cs_log("Socket creation failed (errno=%d)", errno);
 		cs_exit(1);
 	}
-#ifdef SO_PRIORITY
-	if (cfg.netprio)
-	setsockopt(cl->udp_fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg.netprio, sizeof(ulong));
-#endif
+
+	set_socket_priority(cl->udp_fd, cfg.netprio);
 
 	if (rdr->l_port > 0) {
 		if (bind(cl->udp_fd, (struct sockaddr *) &loc_sa, sizeof(loc_sa)) < 0) {

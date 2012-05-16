@@ -1224,11 +1224,8 @@ static int32_t start_listener(struct s_module *ph, int32_t port_idx)
   setsockopt(ph->ptab->ports[port_idx].fd, SOL_SOCKET, SO_REUSEPORT, (void *)&ov, sizeof(ov));
 #endif
 
-#ifdef SO_PRIORITY
-  if (cfg.netprio)
-    if (!setsockopt(ph->ptab->ports[port_idx].fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg.netprio, sizeof(uint32_t)))
+  if (set_socket_priority(ph->ptab->ports[port_idx].fd, cfg.netprio) > -1)
       snprintf(ptxt[1], sizeof(ptxt[1]), ", prio=%d", cfg.netprio);
-#endif
 
   if( !is_udp )
   {
