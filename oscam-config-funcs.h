@@ -1,20 +1,6 @@
 #ifndef OSCAM_CONFIG_FUNCS_H_
 #define OSCAM_CONFIG_FUNCS_H_
 
-#ifdef TUXBOX
-#  if defined(__MIPSEL__)
-#    define CS_LOGFILE "/dev/null"
-#  else
-#    define CS_LOGFILE "/dev/tty"
-#  endif
-#  if !defined(COOL) && !defined(SCI_DEV)
-#    define SCI_DEV 1
-#  endif
-#  ifndef HAVE_DVBAPI
-#    define HAVE_DVBAPI
-#  endif
-#endif
-
 #if defined(WITH_SSL) && !defined(WITH_LIBCRYPTO)
 #  define WITH_LIBCRYPTO
 #endif

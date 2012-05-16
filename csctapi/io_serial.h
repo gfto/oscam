@@ -68,11 +68,7 @@ bool IO_Serial_Close (struct s_reader * reader);
 
 /* Transmission properties */
 bool IO_Serial_DTR_RTS(struct s_reader * reader, int32_t * dtr, int32_t * rts);
-#if defined(TUXBOX) && defined(__powerpc__)
 void IO_Serial_Ioctl_Lock(struct s_reader * reader, int32_t);
-#else
-#define IO_Serial_Ioctl_Lock(a,b) {} //FIXME ugly !!
-#endif
 
 bool IO_Serial_SetBitrate (struct s_reader * reader, uint32_t bitrate, struct termios * tio);
 bool IO_Serial_SetParams (struct s_reader * reader, uint32_t bitrate, uint32_t bits, int32_t parity, uint32_t stopbits, int32_t dtr, int32_t rts);

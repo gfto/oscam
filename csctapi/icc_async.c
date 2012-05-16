@@ -127,7 +127,6 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 				return ERROR;
 			}
 			break;
-#if defined(TUXBOX) && defined(__powerpc__)
 		case R_DB2COM1:
 		case R_DB2COM2:
 			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_SYNC);
@@ -141,7 +140,6 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 				return ERROR;
 			}
 			break;
-#endif
 		case R_SMART:
 #if defined(LIBUSB)
 			call (SR_Init(reader));
@@ -244,7 +242,6 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 	switch(reader->typ) {
 		case R_DB2COM1:
 		case R_DB2COM2:
-#if defined(TUXBOX) && defined(__powerpc__)
 			{
 			uint16_t msr=1;
 			IO_Serial_Ioctl_Lock(reader, 1);
@@ -256,7 +253,6 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 			IO_Serial_Ioctl_Lock(reader, 0);
 			}
 			break;
-#endif
 		case R_SC8in1:
 			cs_writelock(&reader->sc8in1_config->sc8in1_lock);
 			int32_t ret = Sc8in1_GetStatus(reader, &in);

@@ -12,7 +12,6 @@
 
 #include "csctapi/ifd_sc8in1.h"
 
-#if defined(TUXBOX) && defined(__powerpc__) //dbox2 only
 #include "csctapi/mc_global.h"
 static int32_t reader_device_type(struct s_reader * reader)
 {
@@ -40,7 +39,6 @@ static int32_t reader_device_type(struct s_reader * reader)
 	reader->typ = rc;
   return(rc);
 }
-#endif
 
 void reader_nullcard(struct s_reader * reader)
 {
@@ -332,11 +330,9 @@ int32_t reader_reset(struct s_reader * reader)
 int32_t reader_device_init(struct s_reader * reader)
 {
 	int32_t rc = -1; //FIXME
-#if defined(TUXBOX) && defined(__powerpc__)
 	struct stat st;
 	if (!stat(DEV_MULTICAM, &st))
 		reader->typ = reader_device_type(reader);
-#endif
 	if (ICC_Async_Device_Init(reader))
 		cs_log("Cannot open device: %s", reader->device);
 	else
