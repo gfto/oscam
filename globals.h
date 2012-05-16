@@ -34,9 +34,6 @@
 
 #include "oscam-config.h"
 
-#ifndef USE_CMAKE
-#include "oscam-ostype.h"
-#endif
 #include "oscam-types.h"
 #include "cscrypt/cscrypt.h"
 
@@ -159,6 +156,9 @@
 #define CS_VERSION    "1.20-unstable_svn"
 #ifndef CS_SVN_VERSION
 #	define CS_SVN_VERSION "test"
+#endif
+#ifndef CS_TARGET
+#	define CS_TARGET "unknown"
 #endif
 #ifndef CS_CONFDIR
 #define CS_CONFDIR    "/usr/local/etc"

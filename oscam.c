@@ -8,7 +8,6 @@
 #if defined(AZBOX) && defined(HAVE_DVBAPI)
 #include "openxcas/openxcas_api.h"
 #endif
-#define CS_VERSION_X  CS_VERSION
 #ifdef COOL
 void coolapi_close_all();
 void coolapi_open_all();
@@ -231,7 +230,7 @@ static void usage()
 "| | | \\___ \\| |  / _` | '_ ` _ \\\n"
 "| |_| |___) | |_| (_| | | | | | |\n"
 " \\___/|____/ \\___\\__,_|_| |_| |_|\n\n");
-	printf("OSCam cardserver v%s, build #%s (%s)\n", CS_VERSION_X, CS_SVN_VERSION, CS_OSTYPE);
+	printf("OSCam cardserver v%s, build #%s (%s)\n", CS_VERSION, CS_SVN_VERSION, CS_TARGET);
 	printf("Copyright (C) 2009-2012 OSCam developers.\n");
 	printf("This program is distributed under GPLv3.\n");
 	printf("OSCam is based on Streamboard mp-cardserver v0.9d written by dukat\n");

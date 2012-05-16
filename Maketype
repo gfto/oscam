@@ -126,6 +126,8 @@ override CFLAGS  += $(USE_CFLAGS) $(EXTRA_CFLAGS)
 override LDFLAGS += $(USE_LDFLAGS) $(EXTRA_LDFLAGS)
 override LIBS    += $(USE_LIBS) $(EXTRA_LIBS) $(STD_LIBS)
 
+override STD_DEFS += -D'CS_TARGET="$(TARGET)"'
+
 export		CC AR STRIP RANLIB CFLAGS LDFLAGS ARFLAGS TARGET
 
 # Setup quiet build
@@ -269,13 +271,6 @@ prepare:
 |  Readers  : $(shell ./config.sh --show readers)\n\
 |  Compiler : $(shell $(CC) --version 2>/dev/null | head -n 1)\n\
 +-------------------------------------------------------------------------------\n"
-	@echo "$(TYPE)" | awk -F- ' \
-	  { \
-	    printf("#define CS_OSTYPE \"%s\"\n", $$0);  \
-	    printf("#define CS_OS_CPU \"%s\"\n", $$1);  \
-	    printf("#define CS_OS_HW  \"%s\"\n", $$2);  \
-	    printf("#define CS_OS_SYS \"%s\"\n", $$3);  \
-	  }' > oscam-ostype.h
 
 $(ALGO_OBJ): $(ALGO_DEP)
 $(ALGO_LIB): $(ALGO_OBJ)

@@ -123,7 +123,7 @@ int32_t cs_open_logfiles()
 	// We use openlog to set the default syslog settings so that it's possible to allow switching syslog on and off
 	openlog("oscam", LOG_NDELAY, LOG_DAEMON);
 	
-	cs_log_nolock(">> OSCam <<  cardserver %s, version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_OSTYPE ")", starttext);
+	cs_log_nolock(">> OSCam <<  cardserver %s, version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_TARGET ")", starttext);
 	cs_log_config();
 	return(fp <= (FILE *)0);
 }
@@ -431,7 +431,7 @@ void cs_log_config()
     snprintf((char *)buf, sizeof(buf), ", nice=%d", cfg.nice);
   else
     buf[0]='\0';
-  cs_log_nolock("version=%s, build #%s, system=%s-%s-%s%s", CS_VERSION, CS_SVN_VERSION, CS_OS_CPU, CS_OS_HW, CS_OS_SYS, buf);
+  cs_log_nolock("version=%s, build #%s, system=%s%s", CS_VERSION, CS_SVN_VERSION, CS_TARGET, buf);
   cs_log_nolock("client max. idle=%d sec, debug level=%d", cfg.cmaxidle, cs_dblevel);
 
   if( cfg.max_log_size )

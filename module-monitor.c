@@ -1,8 +1,6 @@
 #include "globals.h"
 #ifdef MODULE_MONITOR
 
-#define CS_VERSION_X  CS_VERSION
-
 static int8_t monitor_check_ip()
 {
 	int32_t ok=0;
@@ -345,7 +343,7 @@ static void monitor_send_details(char *txt, uint32_t tid){
 
 static void monitor_send_details_version(){
 	char buf[256];
-	snprintf(buf, sizeof(buf), "[V-0000]version=%s, build=%s, system=%s-%s-%s\n", CS_VERSION_X, CS_SVN_VERSION,  CS_OS_CPU, CS_OS_HW, CS_OS_SYS);
+	snprintf(buf, sizeof(buf), "[V-0000]version=%s, build=%s, system=%s\n", CS_VERSION, CS_SVN_VERSION, CS_TARGET);
 	monitor_send_info(buf, 1);
 }
 
@@ -356,9 +354,9 @@ static void monitor_send_keepalive_ack(){
 }
 
 static void monitor_process_details_master(char *buf, uint32_t pid){
-	snprintf(buf, 256, "Version=%s#%s", CS_VERSION_X, CS_SVN_VERSION);
+	snprintf(buf, 256, "Version=%s#%s", CS_VERSION, CS_SVN_VERSION);
 	monitor_send_details(buf, pid);
-	snprintf(buf, 256, "System=%s-%s-%s",  CS_OS_CPU, CS_OS_HW, CS_OS_SYS);
+	snprintf(buf, 256, "System=%s", CS_TARGET);
 	monitor_send_details(buf, pid);
 	snprintf(buf, 256, "DebugLevel=%d", cs_dblevel);
 	monitor_send_details(buf, pid);
