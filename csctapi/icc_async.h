@@ -41,7 +41,7 @@
 #define OK		0
 #define ERROR	1
 
-#define ATR_TIMEOUT			5000
+#define ATR_TIMEOUT			1000
 #define DEFAULT_BAUDRATE	9600
 
 /*

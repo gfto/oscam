@@ -38,8 +38,8 @@ int32_t Sci_Reset (struct s_reader * reader, ATR * atr)
 	memset(&params,0,sizeof(SCI_PARAMETERS));
 	
 	params.ETU = 372; //initial ETU (in iso this parameter F)
-	params.EGT = 0; //initial guardtime should be 0 (in iso this is parameter N)
-	params.fs = 1; //initial cardmhz (in iso this is parameter D)
+	params.EGT = 3; //initial guardtime should be 0 (in iso this is parameter N)
+	params.fs = 5; //initial cardmhz should be 1 (in iso this is parameter D)
 	params.T = 0;
 	
 	call (ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params)!=0);

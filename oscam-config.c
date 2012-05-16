@@ -4970,7 +4970,7 @@ int32_t init_readerdb()
 			rdr->tcp_rto = DEFAULT_TCP_RECONNECT_TIMEOUT;
 			rdr->nagra_read = 0;
 			rdr->mhz = 357;
-			rdr->cardmhz = 500;
+			rdr->cardmhz = 357;
 #ifdef AZBOX
 			rdr->mode = -1;
 #endif

@@ -538,7 +538,7 @@ int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, BYTE * data)
 		if (reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.need_inverse==1)
 			ICC_Async_InvertBuffer (size, data);
 
-		//cs_ddump_mask(D_IFD, data, size, "IFD Received: ");
+		cs_ddump_mask(D_IFD, data, size, "IFD Received: ");
 		return OK;
 	}
 
@@ -574,7 +574,7 @@ int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, BYTE * data)
 	if (reader->convention == ATR_CONVENTION_INVERSE && reader->typ <= R_MOUSE)
 		ICC_Async_InvertBuffer (size, data);
 
-	//cs_ddump_mask(D_IFD, data, size, "IFD Received: ");
+	cs_ddump_mask(D_IFD, data, size, "IFD Received: ");
 	return OK;
 }
 
@@ -938,11 +938,10 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 	if (ATR_GetParameter(atr, ATR_PARAMETER_I, &I) != ATR_OK)
 		I = 0;
 	
-	F = atr_fs_table[FI]; //get optimal cardmhz according to ATR (for warning users they should adapt their readersettings)
-		if (reader->cardmhz!=F/10000) {
-		cs_log("Reader %s: ******* Warning: fix your oscam reader config for correct mhz (interface speed) and cardmhz (cardspeed) *******", reader->label);
-		cs_log("Reader %s: ******* Your setting: %d, is not matching formal optimal cardspeed: %d *******", reader->label, reader->cardmhz, (uint32_t) F/10000);
-		}
+	//set clock speed to max if internal reader 
+	if((reader->typ > R_MOUSE && reader->crdr.active == 0) || (reader->crdr.active == 1 && reader->crdr.max_clock_speed==1))
+		if (reader->mhz == 357 || reader->mhz == 358) //no overclocking
+			reader->mhz = atr_fs_table[FI] / 10000; //we are going to clock the card to this nominal frequency
 
 	//set clock speed/baudrate must be done before timings
 	//because reader->current_baudrate is used in calculation of timings
@@ -1000,7 +999,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 			reader->block_delay = gt_ms;
 			reader->char_delay = gt_ms;
 			cs_debug_mask(D_ATR, "Setting timings reader %s: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", reader->label, reader->read_timeout, reader->block_delay, reader->char_delay);
-			cs_debug_mask (D_IFD, "reader %s Protocol: T=%i, WWT=%d, Clockrate=%u\n", reader->label, reader->protocol_type, (int)(WWT), ICC_Async_GetClockRate(reader->mhz));
+			cs_debug_mask (D_IFD, "reader %s Protocol: T=%i, WWT=%d, Clockrate=%u\n", reader->label, reader->protocol_type, (int)(WWT), ICC_Async_GetClockRate(reader->cardmhz));
 			}
 			break;
 	 case ATR_PROTOCOL_TYPE_T1:
@@ -1106,7 +1105,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 	if (reader->typ == R_SMART)
 		SR_WriteSettings(reader, (uint16_t) atr_f_table[FI], (BYTE)d, (BYTE)EGT, (BYTE)reader->protocol_type, reader->convention);
 #endif
-	cs_log("Reader %s: Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", reader->label, atr_fs_table[FI] / 1000000, (float) reader->cardmhz / 100);
+	cs_log("Reader %s: Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", reader->label, atr_fs_table[FI] / 1000000, (float) reader->mhz / 100);
 
 	//IFS setting in case of T1
 	if ((reader->protocol_type == ATR_PROTOCOL_TYPE_T1) && (reader->ifsc != DEFAULT_IFSC)) {

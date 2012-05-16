@@ -722,8 +722,8 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR newatr)
 		cs_debug_mask(D_READER, "[nagra-reader] NegotiateSessionKey failed");
 		return ERROR;
 	}
-	//if ((reader->mhz != 368) && (reader->is_pure_nagra==0))
-	//cs_log("WARNING: For NAGRA2 cards you will have to set reader interfacespeed 'mhz = 368' in oscam.server");
+	if ((reader->cardmhz != 368) && (reader->is_pure_nagra==0))
+			cs_log("WARNING: For NAGRA2 cards you will have to set 'cardmhz = 368' in oscam.server");
 	
 	return OK;
 }

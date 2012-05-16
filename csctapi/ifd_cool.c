@@ -79,15 +79,15 @@ int32_t Cool_GetStatus (struct s_reader *reader, int32_t * in)
 
 int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
 {
-	//set freq to reader->mhz if necessary
+	//set freq to reader->cardmhz if necessary
 	uint32_t clk;
 	int32_t ret;
 
 	ret = cnxt_smc_get_clock_freq (specdev()->handle, &clk);
 	check_error("cnxt_smc_get_clock_freq", ret);
-	if (clk/10000 != reader->mhz) {
-		cs_debug_mask(D_DEVICE,"COOL: %s clock freq: %i, scheduling change to %i for card reset", reader->label, clk, reader->mhz*10000);
-		call (Cool_SetClockrate(reader, reader->mhz));
+	if (clk/10000 != reader->cardmhz) {
+		cs_debug_mask(D_DEVICE,"COOL: %s clock freq: %i, scheduling change to %i for card reset", reader->label, clk, reader->cardmhz*10000);
+		call (Cool_SetClockrate(reader, reader->cardmhz));
 	} 
 
 	//reset card
