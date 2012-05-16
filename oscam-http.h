@@ -166,7 +166,6 @@ TR.c TD {background-color:#f1f5e6;}\n\
 TR.a TD {background-color:#33ff00;}\n\
 TR.online TD {background-color:#646464; color:white;}\n\
 TR.expired TD {background-color:#ffe2d4;}\n\
-TR.cfg_anticasc TD {background-color:#FEF9BF;}\n\
 TR.scanusbsubhead TD {background-color:#fdfbe1;}\n\
 DIV.log {border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:10px; font-family:\"Courier New\", monospace; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left; }\n\
 DIV.sidlist {border:1px dotted #AAAAAA; background-color: #fffdf5; padding:2px; font-family:\"Courier New\", monospace ; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left;}\n\
