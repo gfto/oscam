@@ -65,7 +65,18 @@ case "$1" in
 		exit 0
 	;;
 	'-h'|'--help')
-		echo "Usage: `basename $0` [--show (all|addons|protocols|readers)] [--enabled option] [--disabled option] [--oscam-version] [--oscam-revision] [--help]"
+		echo \
+"OSCam config
+Usage: `basename $0` [parameters]
+
+ -s, --show [param]        Show enabled configuration options.
+                           Possible params: all, addons, protocols, readers
+ -e, --enabled [option]    Check if certain option is enabled.
+ -d, --disabled [option]   Check if certain option is disabled.
+ -v, --oscam-version       Display OSCam version.
+ -r, --oscam-revision      Display OSCam SVN revision.
+ -h, --help                Display this help text.
+"
 		exit 1
 	;;
 esac
