@@ -516,7 +516,7 @@ endif (OSCAM_SVN_REVISION MATCHES "Unversioned directory")
 # pass the version to the compilations as a define
 add_definitions ("-D'CS_SVN_VERSION=\"${OSCAM_SVN_REVISION}\"'")
 
-execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpmachine OUTPUT_VARIABLE CS_TARGET)
+execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpmachine COMMAND tr -d '\n' OUTPUT_VARIABLE CS_TARGET)
 add_definitions ("-D'CS_TARGET=\"${CS_TARGET}\"'")
 
 #----------------------- global compile and link options ------------------------------
