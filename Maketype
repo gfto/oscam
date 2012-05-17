@@ -42,7 +42,7 @@ STRIP = $(CROSS)strip
 RANLIB = $(CROSS)ranlib
 
 # The compiler knows for what target it compiles, so use this information
-TARGET := $(shell $(CC) -dumpmachine 2>/dev/null)$(EXTRA_TARGET)
+TARGET := $(shell $(CC) -dumpmachine 2>/dev/null)
 
 # CROSS variable was never used or set in the times when DS_xxx
 # variables ruled the world. So it fairly safe to assume that if
@@ -81,6 +81,7 @@ STAPI_FLAGS = -DWITH_STAPI
 STAPI_CFLAGS = $(STAPI_FLAGS)
 STAPI_LDFLAGS = $(STAPI_FLAGS)
 STAPI_LIB = -L./stapi -loscam_stapi
+override PLUS_TARGET := $(PLUS_TARGET)-stapi
 endif
 
 ifdef USE_LIBCRYPTO
@@ -102,6 +103,7 @@ LIBUSB_FLAGS = -DLIBUSB
 LIBUSB_CFLAGS = $(LIBUSB_FLAGS)
 LIBUSB_LDFLAGS = $(LIBUSB_FLAGS)
 LIBUSB_LIB = -lusb-1.0
+override PLUS_TARGET := $(PLUS_TARGET)-libusb
 endif
 
 ifdef USE_PCSC
@@ -109,6 +111,18 @@ PCSC_FLAGS = -DHAVE_PCSC=1
 PCSC_CFLAGS = $(PCSC_FLAGS)
 PCSC_LDFLAGS = $(PCSC_FLAGS)
 PCSC_LIB = -lpcsclite
+override PLUS_TARGET := $(PLUS_TARGET)-pcsc
+endif
+
+ifdef DEBUG
+override PLUS_TARGET := $(PLUS_TARGET)-debug
+endif
+
+# Add PLUS_TARGET and EXTRA_TARGET to TARGET
+ifdef NO_PLUS_TARGET
+override TARGET := $(TARGET)$(EXTRA_TARGET)
+else
+override TARGET := $(TARGET)$(PLUS_TARGET)$(EXTRA_TARGET)
 endif
 
 # Set USE_ flags
