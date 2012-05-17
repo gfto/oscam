@@ -686,8 +686,10 @@ user name for radegast client
 .RE
 .SS "The [serial] section"
 .PP
-\fBdevice\fP = \fB<user>@<device>[:baud][?option1=value1[&option2=value2]]\fP
+\fBdevice\fP = \fB<user>\fP@\fB<device>\fP[:\fBbaud\fP][?\fBoption1\fP=\fBvalue1\fP[&\fBoption2\fP=\fBvalue2\fP]...]
+         [;\fB<user>\fP@\fB<device>\fP[:\fBbaud\fP][?\fBoption1\fP=\fBvalue1\fP[&\fBoption2\fP=\fBvalue2\fP]...]]...
 .RS 3n
+
 parameters:
  \fBuser\fP   = \fBaccount\fP
  \fBdevice\fP = \fBserial device name\fP
