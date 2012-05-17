@@ -311,9 +311,7 @@ extern const char *boxdesc[];
 #ifdef CS_CORE
 char *PIP_ID_TXT[] = { "ECM", "EMM", "CIN", "KCL", "UDP", NULL  };
 char *RDR_CD_TXT[] = { "cd", "dsr", "cts", "ring", "none",
-#ifdef USE_GPIO
-                       "gpio1", "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7", //felix: changed so that gpio can be used
-#endif
+                       "gpio1", "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7",
                        NULL };
 #else
 extern char *PIP_ID_TXT[];
@@ -1206,6 +1204,11 @@ struct s_reader  									//contains device info, reader info and card info
 #ifdef AZBOX
 	int32_t			mode;
 #endif
+	int32_t			use_gpio;						// Should this reader use GPIO functions
+	int				gpio_outen;						// fd of opened /dev/gpio/outen
+	int				gpio_out;						// fd of opened /dev/gpio/out
+	int				gpio_in;						// fd of opened /dev/gpio/in
+	uint32_t		gpio;							// gpio addr
 	////variables from icc_async.h start
 #ifdef WITH_CARDREADER
 	int32_t 		convention;						// Convention of this ICC

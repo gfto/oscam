@@ -101,6 +101,9 @@ DESCRIPTIONS
        sc8in1_dtrrts_patch = 0|1
 	  1 = enable fix for SC8in1/MCR DTR/RTS kernel bug, default:0
 
+       use_gpio = 0|1
+	  1 = use GPIO to init the reader. This needs to be set on WRT54G router, default:0
+
        cool_timeout_init = timeout
 	  set timeout for SC init in milli-seconds for Coolstream internal reader only, default:50
 

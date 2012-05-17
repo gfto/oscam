@@ -1296,6 +1296,13 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
         tpl_addVar(vars, TPLADD, "DISABLECRCCWSVALUE", (rdr->disablecrccws == 1) ? "1" : "0");
     }
 
+    // Set reader to use GPIO
+    if(!apicall) {
+        tpl_addVar(vars, TPLADD, "USE_GPIOCHECKED", rdr->use_gpio ? "checked" : "");
+    } else {
+        tpl_addVar(vars, TPLADD, "USE_GPIOVALUE", rdr->use_gpio ? "1" : "0");
+    }
+
 	// AUdisabled
 	if(!apicall) {
 		tpl_addVar(vars, TPLADD, "AUDISABLED", (rdr->audisabled == 1) ? "checked" : "");

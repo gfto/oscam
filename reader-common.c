@@ -91,10 +91,9 @@ int32_t check_sct_len(const uchar *data, int32_t off)
 #ifdef WITH_CARDREADER
 static int32_t reader_card_inserted(struct s_reader * reader)
 {
-#ifndef USE_GPIO
-	if ((reader->detect&0x7f) > 3)
+	if (!reader->use_gpio && (reader->detect & 0x7f) > 3)
 		return 1;
-#endif
+
 	int32_t card;
 	if (ICC_Async_GetStatus (reader, &card)) {
 		cs_log("Error getting status of terminal.");

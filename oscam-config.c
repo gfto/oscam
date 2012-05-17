@@ -3111,6 +3111,9 @@ int32_t write_server()
             if (rdr->disablecrccws)
                 fprintf_conf(f, "disablecrccws", "%d\n", rdr->disablecrccws);
 
+			if (rdr->use_gpio)
+				fprintf_conf(f, "use_gpio", "%d\n", rdr->use_gpio);
+
 #ifdef MODULE_CCCAM
 			if (rdr->typ == R_CCCAM) {
 				if (rdr->cc_version[0] || cfg.http_full_cfg)
@@ -4812,6 +4815,11 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
         rdr->disablecrccws = strToIntVal(value, 0);
         return;
     }
+
+	if (!strcmp(token, "use_gpio")) {
+		rdr->use_gpio = strToIntVal(value, 0);
+		return;
+	}
 
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in reader section not recognized\n",token);

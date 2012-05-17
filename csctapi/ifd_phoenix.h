@@ -3,14 +3,6 @@
     Header file for Smartmouse/Phoenix reader.
 */
 
-
-#ifdef USE_GPIO	//felix: definition of gpio functions
-static void set_gpio(struct s_reader * reader, int32_t level);
-static void set_gpio_input(struct s_reader * reader);
-static int32_t get_gpio(struct s_reader * reader);
-#endif
-
-
 int32_t Phoenix_Init (struct s_reader * reader);
 int32_t Phoenix_GetStatus (struct s_reader * reader, int32_t * status);
 int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr);

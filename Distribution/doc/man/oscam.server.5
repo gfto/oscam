@@ -123,6 +123,11 @@ set endpoint address for FTDI chips,default:0x82
 1 = enable fix for SC8in1/MCR DTR/RTS kernel bug, default:0
 .RE
 .PP
+\fBuse_gpio\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = use GPIO to init the reader. This needs to be set on WRT54G router, default:0
+.RE
+.PP
 \fBcool_timeout_init\fP = \fBtimeout\fP
 .RS 3n
 set timeout for SC init in milli-seconds for Coolstream internal reader only, default:50
