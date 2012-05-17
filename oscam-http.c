@@ -2362,7 +2362,8 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		if(latestclient != NULL) {
 			char channame[32];
 			status = (!apicall) ? "<b>connected</b>" : "connected";
-			classname = "connected";
+			if(account->expirationdate && account->expirationdate < now) classname = "expired";
+			else classname = "connected";
 			proto = monitor_get_proto(latestclient);
 			lastchan = xml_encode(vars, get_servicename(latestclient, latestclient->last_srvid, latestclient->last_caid, channame));
 			lastresponsetm = latestclient->cwlastresptime;
@@ -2382,7 +2383,8 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			if(isec < cfg.mon_hideclient_to) {
 				isactive = 1;
 				status = (!apicall) ? "<b>online</b>" : "online";
-				classname = "online";
+				if(account->expirationdate && account->expirationdate < now) classname = "expired";
+				else classname = "online";
 				if (latestclient->cwfound + latestclient->cwnot + latestclient->cwcache > 0) {
 					cwrate2 = now - latestclient->login;
 					cwrate2 /= (latestclient->cwfound + latestclient->cwnot + latestclient->cwcache);

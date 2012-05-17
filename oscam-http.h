@@ -89,10 +89,12 @@ static int32_t ssl_active = 0;
 #define MNU_CFG_TOTAL_ITEMS 26 // sum of items above. Use it for "All inactive" in function calls too.
 
 #define CSS "\
-body {background-color: white; font-family: Arial; font-size: 11px; text-align:center}\n\
-p {color: white; }\n\
-h2 {color: #F5F5F5; font-family: Arial; font-size: 32px; line-height: 32px; text-align:center; margin-top:0px; margin-bottom:0px}\n\
-h4 {color: #AAAAAA; font-family: Arial; font-size: 12px; line-height: 9px; text-align:center}\n\
+BODY {background-color: white; font-family: Arial; font-size: 11px; text-align:center}\n\
+P {color: white; }\n\
+P.blinking {text-decoration: blink; font-weight:bold; font-size:large; color:red;}\n\
+H2 {color: #F5F5F5; font-family: Arial; font-size: 32px; line-height: 32px; text-align:center; margin-top:0px; margin-bottom:0px}\n\
+H4 {color: #AAAAAA; font-family: Arial; font-size: 12px; line-height: 9px; text-align:center}\n\
+H4.styleauthor:after {content:\"Eneen\";}\n\
 TABLE {border-spacing:1px; border:0px; padding:0px; margin-left:auto; margin-right:auto;}\n\
 TH {height:10px; border:0px; font-family: Arial; font-size: 11px; padding:5px; background-color:#CCCCCC; color:black;}\n\
 TH.statuscol0 {text-align:center;width:10px;}\n\
@@ -155,7 +157,12 @@ TD.usercol18 {text-align:center;}\n\
 TD.usercol19 {text-align:center;}\n\
 TD.usercol20 {text-align:center;}\n\
 TD.usercol21 {text-align:center;}\n\
-HR {height:1px; border-width:0; color:white; background-color:#AAAAAA}\n\
+TD.menu {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;white-space: normal;}\n\
+TD.menu_selected {color:black; background-color:#E6FEBF; font-family: Arial; font-size:14px; font-weight:bold;font-style:italic;}\n\
+TD.configmenu {color:black; background-color:white; font-family: Arial; font-size:11px; font-weight:bold;}\n\
+TD.configmenu_selected {color:black; background-color:#E6FEBF; font-family: Arial; font-size:11px; font-weight:bold;font-style:italic;}\n\
+TD.subheadline {height:10px; border:0px; font-family: Arial; font-size: 11px; padding:5px; background-color:#CCCCCC; color:black;}\n\
+TD.subheadline A {text-decoration: none;}\n\
 TR.s TD {background-color:#e1e1ef;}\n\
 TR.l TD {background-color:#e1e1ef;}\n\
 TR.n TD {background-color:#e1e1ef;}\n\
@@ -164,61 +171,58 @@ TR.r TD {background-color:#fff3e7;}\n\
 TR.p TD {background-color:#fdfbe1;}\n\
 TR.c TD {background-color:#f1f5e6;}\n\
 TR.a TD {background-color:#33ff00;}\n\
-TR.online TD {background-color:#646464; color:white;}\n\
-TR.expired TD {background-color:#ffe2d4;}\n\
+TR.online TD {background-color:#BBFFAA;}\n\
+TR.online TD.usercol5 {background-color:#646464;}\n\
+TR.expired TD {background-color:#FFBBAA;}\n\
+TR.expired TD.usercol5 {background-color:#646464;}\n\
+TR.connected TD {background-color:#FFFFAA;}\n\
+TR.connected TD.usercol5 {background-color:#646464;}\n\
+TR.disabled TD:first-child IMG.icon {background-color:#00AA00;}\n\
+TR.disabledreader TD:first-child IMG.icon {background-color:#00AA00;}\n\
 TR.scanusbsubhead TD {background-color:#fdfbe1;}\n\
+TR.e_valid TD {background-color:#E6FEBF;text-align:center; font-family:\"Courier New\", monospace;}\n\
+TR.e_expired TD {background-color:#fff3e7;text-align:center; font-family:\"Courier New\", monospace;}\n\
+TR.e_header TD {text-align:center; font-family:\"Courier New\", monospace;}\n\
+HR {height:1px; border-width:0; color:white; background-color:#AAAAAA}\n\
 DIV.log {border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:10px; font-family:\"Courier New\", monospace; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left; }\n\
 DIV.sidlist {border:1px dotted #AAAAAA; background-color: #fffdf5; padding:2px; font-family:\"Courier New\", monospace ; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left;}\n\
+DIV.message {position:absolute;right:0;font-family: Arial; font-size: 12px;font-weight:bold;}\n\
+DIV.div_notifier {height:14px;width:14px;border-radius:7px;-webkit-border-radius:7px;background-color:red;margin-left:4px;text-align:center;float:right;}\n\
+DIV.debugmenu {line-height: 20px;}\n\
+DIV.logmenu {line-height: 20px;}\n\
+DIV.filterform {margin: 10px;}\n\
 TABLE.menu {border-spacing:0px; border:0px; padding:0px; margin-left:auto; margin-right:auto;}\n\
 TABLE.status {border-spacing:1px; border:0px; padding:0px; background-color:white; empty-cells:show;}\n\
 TABLE.config {width:750px;}\n\
 TABLE.invisible TD {border:0px; font-family:Arial; font-size: 12px; padding:5px; background-color:#EEEEEE;}\n\
-TD.menu {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;white-space: normal;}\n\
-TD.menu_selected {color:black; background-color:#E6FEBF; font-family: Arial; font-size:14px; font-weight:bold;font-style:italic;}\n\
 TABLE.configmenu {line-height: 16px;}\n\
-TD.configmenu {color:black; background-color:white; font-family: Arial; font-size:11px; font-weight:bold;}\n\
-TD.configmenu_selected {color:black; background-color:#E6FEBF; font-family: Arial; font-size:11px; font-weight:bold;font-style:italic;}\n\
-DIV.debugmenu {line-height: 20px;}\n\
-DIV.logmenu {line-height: 20px;}\n\
-DIV.filterform {margin: 10px;}\n\
-textarea.bt{font-family: Arial; font-size: 12px;}\n\
-textarea.editor {width:99%; height:508px; border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:8px 10px; font-family:\"Courier New\", monospace; color:black; font-size: 11px; word-wrap:break-word; text-align:left;}\n\
-A:link {color: #050840;}\n\
+TEXTAREA.bt {font-family: Arial; font-size: 12px;}\n\
+TEXTAREA.editor {width:99%; height:508px; border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:8px 10px; font-family:\"Courier New\", monospace; color:black; font-size: 11px; word-wrap:break-word; text-align:left;}\n\
 A.debugls:link {color: white;background-color:red;}\n\
 A.debugls:visited {color: white;background-color:red;}\n\
+A:link {color: #050840;}\n\
 A:visited {color: #050840;}\n\
 A:active {color: #050840;}\n\
 A:hover {color: #ff9e5f;}\n\
-DIV.message {position:absolute;right:0;font-family: Arial; font-size: 12px;font-weight:bold;}\n\
-IMG{border:0px solid;}\n\
-IMG.icon{border: 0px solid;width:22px;height:22px;background-color:#AA0000;border-radius:3px;-webkit-border-radius:3px;}\n\
-IMG.enable{border: 0px solid;width:22px;height:22px;background-color:#00AA00;border-radius:3px;-webkit-border-radius:3px;}\n\
-IMG.disable{border: 0px solid;width:22px;height:22px;background-color:#AA0000;border-radius:3px;-webkit-border-radius:3px;}\n\
 A:hover IMG.icon {border: 1px solid yellow;width:20px;height:20px;}\n\
-P.blinking {text-decoration: blink; font-weight:bold; font-size:large; color:red;}\n\
-a.tooltip  {position: relative; text-decoration: none; cursor:default;}\n\
-a.tooltip1 {position: relative; text-decoration: none; cursor:default;color:red;}\n\
-a.tooltip  span {display: none; z-index:99;}\n\
-a.tooltip1 span {display: none; z-index:99;}\n\
-a:hover span{display: block;position: absolute;top: 2em; right: 1em; margin: 0px;padding: 10px;color: #335500;font-weight: normal;background: #ffffdd;text-align: left;border: 1px solid #666;}\n\
-H4.styleauthor:after {content:\"Eneen\";}\n\
-rect.graph_bg {fill:white;}\n\
-text.graph_error {text-anchor:middle;fill:red}\n\
-path.graph_grid {stroke:gray;stroke-opacity:0.5}\n\
-text.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}\n\
-span.e_valid {background-color:#E6FEBF;}\n\
-span.e_expired {background-color:#fff3e7;}\n\
-DIV.div_notifier {height:14px;width:14px;border-radius:7px;-webkit-border-radius:7px;background-color:red;margin-left:4px;text-align:center;float:right;}\n\
+A.tooltip  {position: relative; text-decoration: none; cursor:default;}\n\
+A.tooltip1 {position: relative; text-decoration: none; cursor:default;color:red;}\n\
+A.tooltip  SPAN {display: none; z-index:99;}\n\
+A.tooltip1 SPAN {display: none; z-index:99;}\n\
+A:hover SPAN {display: block;position: absolute;top: 2em; right: 1em; margin: 0px;padding: 10px;color: #335500;font-weight: normal;background: #ffffdd;text-align: left;border: 1px solid #666;}\n\
+IMG {border:0px solid;}\n\
+IMG.icon {border: 0px solid;width:22px;height:22px;background-color:#AA0000;border-radius:3px;-webkit-border-radius:3px;}\n\
+IMG.clientpicon {height:40px;width:80px;}\n\
+RECT.graph_bg {fill:white;}\n\
+TEXT.graph_error {text-anchor:middle;fill:red}\n\
+TEXT.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}\n\
+PATH.graph_grid {stroke:gray;stroke-opacity:0.5}\n\
+SPAN.e_valid {background-color:#E6FEBF;}\n\
+SPAN.e_expired {background-color:#fff3e7;}\n\
 SPAN.div_notifier {background-color:red;color: white;font-family:Arial;font-size:10px;font-weight:bold;}\n\
-span.idlesec_normal {font-family: Arial; font-size: 9px;color: black}\n\
-span.idlesec_alert {font-family: Arial; font-size: 9px;color: red}\n\
-TR.e_valid TD{background-color:#E6FEBF;text-align:center; font-family:\"Courier New\", monospace;}\n\
-TR.e_expired TD{background-color:#fff3e7;text-align:center; font-family:\"Courier New\", monospace;}\n\
-TR.e_header TD{text-align:center; font-family:\"Courier New\", monospace;}\n\
-span.global_conf {color: blue; font-size: 12px; font-family: Arial; cursor: default; padding: 4px;}\n\
-TD.subheadline {height:10px; border:0px; font-family: Arial; font-size: 11px; padding:5px; background-color:#CCCCCC; color:black;}\n\
-TD.subheadline a {text-decoration: none;}	\
-img.clientpicon{height:40px;width:80px;}\
+SPAN.idlesec_normal {font-family: Arial; font-size: 9px;color: black}\n\
+SPAN.idlesec_alert {font-family: Arial; font-size: 9px;color: red}\n\
+SPAN.global_conf {color: blue; font-size: 12px; font-family: Arial; cursor: default; padding: 4px;}\
 "
 
 // minimized and optimized JS based on http://en.hasheminezhad.com/scrollsaver to retain scroll position.
@@ -849,7 +853,7 @@ SFRTIFJFU0VSVkVEADs="
 
 #define TPLUSERCONFIGLISTBIT "\
 		<TR class=\"##CLASSNAME##\">\n\
-			<TD class=\"usercol0\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG CLASS=\"##SWITCH##\" SRC=\"##SWITCHICO##\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
+			<TD class=\"usercol0\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG CLASS=\"icon\" SRC=\"##SWITCHICO##\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
 			<TD class=\"usercol1\"><SPAN TITLE=\"##DESCRIPTION##\">##USER##</SPAN>##CLIENTCOUNTNOTIFIER##</TD>\n\
 			<TD class=\"usercol2\">##STATUS##</TD>\n\
 			<TD class=\"usercol3\">##CLIENTIP##</TD>\n\
@@ -1115,7 +1119,7 @@ SFRTIFJFU0VSVkVEADs="
 
 #define TPLREADERSBIT "\
 			<TR CLASS =\"##READERCLASS##\">\n\
-				<TD class=\"centered\"><A HREF=\"readers.html?label=##READERNAMEENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG CLASS=\"##SWITCH##\" SRC=\"##SWITCHICO##\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
+				<TD class=\"centered\"><A HREF=\"readers.html?label=##READERNAMEENC##&amp;action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG CLASS=\"icon\" SRC=\"##SWITCHICO##\" ALT=\"##SWITCHTITLE##\"></A></TD>\n\
 				<TD>##READERNAME##</TD>\n\
 				<TD>##CTYP##</TD>\n\
 				<TD class=\"centered\">##EMMERRORUK## / ##EMMERRORG## / ##EMMERRORS## / ##EMMERRORUQ##</TD>\n\
