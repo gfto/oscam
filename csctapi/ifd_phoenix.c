@@ -17,29 +17,37 @@
 
 static void set_gpio(struct s_reader * reader, int32_t level)
 {
-	read(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio));
-	reader->gpio |= GPIO_PIN;
-	write(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio));
+	if (read(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio) < 0))
+		return;
 
-	read(reader->gpio_out, &reader->gpio, sizeof(reader->gpio));
+	reader->gpio |= GPIO_PIN;
+	if (write(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio)) < 0)
+		return;
+
+	if (read(reader->gpio_out, &reader->gpio, sizeof(reader->gpio)) < 0)
+		return;
 	if (level > 0)
 		reader->gpio |= GPIO_PIN;
 	else
 		reader->gpio &= ~GPIO_PIN;
-	write(reader->gpio_out, &reader->gpio, sizeof(reader->gpio));
+	if (write(reader->gpio_out, &reader->gpio, sizeof(reader->gpio)) < 0)
+		return;
 }
 
 static void set_gpio_input(struct s_reader * reader)
 {
-	read(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio));
+	if (read(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio)) < 0)
+		return;
 	reader->gpio &= ~GPIO_PIN;
-	write(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio));
+	if (write(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio)) < 0)
+		return;
 }
 
 static int32_t get_gpio(struct s_reader * reader)
 {
 	set_gpio_input(reader);
-	read(reader->gpio_in, &reader->gpio, sizeof(reader->gpio));
+	if (read(reader->gpio_in, &reader->gpio, sizeof(reader->gpio)) < 0)
+		return ERROR;
 	if (reader->gpio & GPIO_PIN)
 		return OK;
 	else
