@@ -154,8 +154,6 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 			return Cool_Init(reader);
 #elif defined(AZBOX)
 			return Azbox_Init(reader);
-#elif defined(WITH_STAPI)
-			return STReader_Open(reader->device, &reader->stsmart_handle);
 #else
 	#if defined(__SH4__) || defined(STB04SCI)
 			reader->handle = open (reader->device, O_RDWR|O_NONBLOCK|O_NOCTTY);
@@ -267,8 +265,6 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 		case R_INTERNAL:
 #if defined(COOL)
 			call (Cool_GetStatus(reader, &in));
-#elif defined(WITH_STAPI)
-			call (STReader_GetStatus(reader->stsmart_handle, &in));
 #elif defined(AZBOX)
 			call(Azbox_GetStatus(reader, &in));
 #else
@@ -344,8 +340,6 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 					cs_log("reader %s doing fast reset", reader->label);
 					call (Cool_FastReset_With_ATR(reader, atr));
 				}					
-#elif defined(WITH_STAPI)
-				call (STReader_Reset(reader->stsmart_handle, atr));
 #elif defined(AZBOX)
 				call (Azbox_Reset(reader, atr));
 #else
@@ -512,8 +506,6 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, BYTE * data)
 			call (Cool_Transmit(reader, sent, size));
 #elif defined(AZBOX)
 			call (Azbox_Transmit(reader, sent, size));
-#elif defined(WITH_STAPI)
-			call (STReader_Transmit(reader->stsmart_handle, sent, size));
 #else
 			call (Phoenix_Transmit (reader, sent, size, 0, 0)); //the internal reader will provide the delay
 #endif
@@ -560,8 +552,6 @@ int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, BYTE * data)
 			call (Cool_Receive(reader, data, size));
 #elif defined(AZBOX)
 			call (Azbox_Receive(reader, data, size));
-#elif defined(WITH_STAPI)
-			call (STReader_Receive(reader->stsmart_handle, data, size));
 #else
 			call (Phoenix_Receive (reader, data, size, reader->read_timeout));
 #endif
@@ -615,8 +605,6 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 			call (Cool_Close(reader));
 #elif defined(AZBOX)
 			call (Azbox_Close(reader));
-#elif defined(WITH_STAPI)
-			call(STReader_Close(reader->stsmart_handle));
 #else
 			/* Dectivate ICC */
 			Sci_Deactivate(reader);
@@ -817,11 +805,6 @@ static int32_t PPS_Exchange (struct s_reader * reader, BYTE * params, uint32_t *
 		return ret;
 	}
 	
-#if defined(WITH_STAPI)
-	ret = STReader_SetProtocol(reader->stsmart_handle, params, length, len_request);
-	return ret;
-#endif
-
 	/* Send PPS request */
 	call (ICC_Async_Transmit (reader, len_request, params));
 
@@ -916,7 +899,7 @@ static int32_t SetRightParity (struct s_reader * reader)
 		return OK;
 	}
 
-#if defined(COOL) || defined(WITH_STAPI) || defined(AZBOX)
+#if defined(COOL) || defined(AZBOX)
 	if (reader->typ != R_INTERNAL)
 #endif
 #if defined(LIBUSB)
@@ -1090,8 +1073,6 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 	if(reader->typ == R_INTERNAL && reader->crdr.active==0) {
 #if defined(COOL)
 		call (Cool_WriteSettings (reader, reader->BWT, reader->CWT, EGT, BGT));
-#elif defined(WITH_STAPI)
-		call (STReader_SetClockrate(reader->stsmart_handle));
 #else
 		double F =	(double) atr_f_table[FI];
 		uint32_t ETU = 0;
