@@ -174,9 +174,7 @@ TR.a TD {background-color:#33ff00;}\n\
 TR.online TD {background-color:#BBFFAA;}\n\
 TR.online TD.usercol5 {background-color:#646464;}\n\
 TR.expired TD {background-color:#FFBBAA;}\n\
-TR.expired TD.usercol5 {background-color:#646464;}\n\
 TR.connected TD {background-color:#FFFFAA;}\n\
-TR.connected TD.usercol5 {background-color:#646464;}\n\
 TR.disabled TD:first-child IMG.icon {background-color:#00AA00;}\n\
 TR.disabledreader TD:first-child IMG.icon {background-color:#00AA00;}\n\
 TR.scanusbsubhead TD {background-color:#fdfbe1;}\n\
