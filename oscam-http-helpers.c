@@ -184,7 +184,7 @@ char *tpl_getTplPath(const char *name, const char *path, char *result, uint32_t 
 
 /* Returns an unparsed template either from disk or from internal templates.
    Note: You must free() the result after using it and you may get NULL if an error occured!*/
-static char *tpl_getUnparsedTpl(const char* name){
+static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader){
   int32_t i;
   int32_t tplcnt = sizeof(tpl)/sizeof(char *);
   int32_t tplmapcnt = sizeof(tplmap)/sizeof(char *);
@@ -199,15 +199,25 @@ static char *tpl_getUnparsedTpl(const char* name){
   	if(strlen(tpl_getTplPath(name, cfg.http_tpl, path, 255)) > 0 && file_exists(path)){
 			FILE *fp;
 			char buffer[1024];
-			int32_t read, allocated = 1025, size = 0;
+			int32_t read, allocated = 1025, offset, size = 0;
 			if(!cs_malloc(&result, allocated * sizeof(char), -1)) return NULL;
 			if((fp = fopen(path,"r"))!=NULL){
 			while((read = fread(&buffer,sizeof(char),1024,fp)) > 0){
+				offset = 0;
+				if(size == 0 && removeHeader){
+					if(strncmp(buffer,"<!--OSCam", 9) == 0){
+						char *pch = strstr(buffer,"-->");
+						if(pch != NULL){
+							offset = pch - buffer + 4;
+							read -= offset;
+						}
+					}
+				}
 				if(allocated < size + read + 1) {
 					allocated += size + 1024;
 					if(!cs_realloc(&result, allocated * sizeof(char), -1)) return NULL;
 				}
-				memcpy(result + size, buffer, read);
+				memcpy(result + size, buffer + offset, read);
 				size += read;
 			}
 			result[size] = '\0';
@@ -231,7 +241,7 @@ static char *tpl_getUnparsedTpl(const char* name){
    empty string if the template doesn't exist. Do not free the result yourself, it 
    will get automatically cleaned up! */
 char *tpl_getTpl(struct templatevars *vars, const char* name){
-	char *tplorg = tpl_getUnparsedTpl(name);
+	char *tplorg = tpl_getUnparsedTpl(name, 1);
 	if(!tplorg) return "";
 	char *tplend = tplorg + strlen(tplorg);
 	char *pch, *pch2, *tpl=tplorg;
@@ -289,12 +299,52 @@ int32_t tpl_saveIncludedTpls(const char *path){
   FILE *fp;
   for(i = 0; i < tplcnt && i < tplmapcnt; ++i){
   	if(strlen(tpl_getTplPath(tpl[i], path, tmp, 256)) > 0 && (fp = fopen(tmp,"w")) != NULL){
-			fwrite(tplmap[i], sizeof(char), strlen(tplmap[i]), fp);
+  		int32_t len = strlen(tplmap[i]);
+  		if(!(tpl[i][0] == 'I' && tpl[i][1] == 'C')){
+  			fprintf(fp, "<!--OSCam;%lu;%s;%s-->\n", crc32(0L, (unsigned char*)tplmap[i], len), CS_VERSION, CS_SVN_VERSION);
+  		} 
+			fwrite(tplmap[i], sizeof(char), len, fp);
 			fclose (fp);
 			++cnt;
 		}
 	}
 	return cnt;
+}
+
+/* Checks all disk templates if they are still current or may need upgrade! */
+void tpl_checkDiskRevisions(){
+	if(strlen(cfg.http_tpl) > 0){
+		int32_t i, tplcnt = sizeof(tpl)/sizeof(char *);
+		char path[255];
+		for(i = 0; i < tplcnt; ++i){
+			if(tpl[i][0] != 'I' && tpl[i][1] != 'C' && strlen(tpl_getTplPath(tpl[i], cfg.http_tpl, path, 255)) > 0 && file_exists(path)){	
+				int8_t error = 1;
+				char *tplorg = tpl_getUnparsedTpl(tpl[i], 0);
+				unsigned long curchecksum = crc32(0L, (unsigned char*)tplmap[i], strlen(tplmap[i]));
+				if(strncmp(tplorg,"<!--OSCam;", 10) == 0){
+					char *pch = tplorg + 10;
+					unsigned long checksum = strtoul(pch, NULL, 10);					
+					if(checksum != curchecksum){
+						pch = strchr(pch, ';');
+						char *version = "", *revision = "";
+						if(pch != NULL){
+							version = pch + 1;
+							pch = strchr(version, ';');
+							if(pch != NULL){
+								pch[0] = '\0';
+								revision = pch + 1;
+								pch = strstr(revision, "-->");
+								if(pch != NULL) pch[0] = '\0';
+							}
+						}
+						cs_log("WARNING: Your http disk template %s was created for an older revision of OSCam and was changed in original OSCam (%s,r%s). Please consider upgrading it!", path, version, revision);
+					} else error = 0;
+				} else cs_log("WARNING: Your http disk template %s is in the old template format without revision info. Please consider upgrading it!", path);
+				if(error) cs_log("If you are sure that it is current, add the following line at the beginning of the template to suppress this warning: <!--OSCam;%lu;%s;%s-->", curchecksum, CS_VERSION, CS_SVN_VERSION);
+				free(tplorg);
+			}
+		}		
+	}
 }
 
 /* Parses a value in an authentication string by removing all quotes/whitespace. Note that the original array is modified. */
