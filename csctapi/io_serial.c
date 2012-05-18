@@ -454,6 +454,7 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t timeout, uint32_t size, 
 			readed = read (reader->handle, &c, 1);
 			if (readed < 0) {
 				cs_log("Reader %s: ERROR in IO_Serial_Read (errno=%d %s)", reader->label, errno, strerror(errno));
+				if (errno == 11) return ERROR; // fix for ET boxes otherwise they have very long timeout on cardinit
 				errorcount++;
 				//tcflush (reader->handle, TCIFLUSH);
 			}
