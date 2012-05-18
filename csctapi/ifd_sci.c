@@ -41,7 +41,25 @@ int32_t Sci_Reset (struct s_reader * reader, ATR * atr)
 	params.EGT = 3; //initial guardtime should be 0 (in iso this is parameter N)
 	params.fs = 5; //initial cardmhz should be 1 (in iso this is parameter D)
 	params.T = 0;
-	
+	if (reader->mhz > 2000) { // PLL based reader
+		params.ETU = 372;
+		params.EGT = 0;
+		int32_t divider = 0; // calculate divider for 1 mhz, calculate PLL divider ugly fast fix -> FIX ME!!!!
+			double cardclock1, cardclock2;
+
+			while (divider != reader->mhz/100){
+				divider++;																		
+				cardclock1 = reader->mhz / divider;
+				divider++;
+				cardclock2 = reader->mhz / (divider);	
+				if ((cardclock1 > 100) && (cardclock2 > 100)) continue;
+				if ( abs(cardclock1 - 100) > abs(cardclock2 - 100) ) break;
+				divider--;
+				break;
+			}
+		params.fs = divider; 
+		params.T = 0;
+	}
 	call (ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params)!=0);
 	call (ioctl(reader->handle, IOCTL_SET_RESET)<0);
 #if defined(__powerpc__)

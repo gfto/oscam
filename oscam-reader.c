@@ -751,8 +751,29 @@ int32_t reader_init(struct s_reader *reader) {
 				++i;
 			} while (i < 30);
 		}
+		if (reader->mhz > 2000) {
+			int32_t divider = 0;
+			double cardclock1, cardclock2;
+
+			while (divider != reader->mhz/100){  //calculate PLL divider ugly fast fix should be global function-> FIX ME!!!!
+				divider++;																		
+				cardclock1 = reader->mhz / divider;
+				divider++;
+				cardclock2 = reader->mhz / (divider);	
+				if ((cardclock1 > reader->cardmhz) && (cardclock2 > reader->cardmhz)) continue;
+				if ( abs(cardclock1 - reader->cardmhz) > abs(cardclock2 - reader->cardmhz) ) break;
+				divider--;
+				break;
+			}
+
+			cs_log("Reader %s initialized (device=%s, detect=%s%s, pll max=%.2f Mhz, divider=%d, actual cardmhz=%.2f Mhz", reader->label, reader->device,
+				reader->detect&0x80 ? "!" : "",RDR_CD_TXT[reader->detect&0x7f], (float) (reader->mhz /100), divider, (float) (reader->mhz / divider)/100L);
+		}
+		else {
 		cs_log("reader %s initialized (device=%s, detect=%s%s, mhz=%d, cardmhz=%d)", reader->label, reader->device, reader->detect&0x80 ? "!" : "",RDR_CD_TXT[reader->detect&0x7f], reader->mhz,reader->cardmhz);
+		}
 	}
+
 #endif
 
 	cs_malloc(&client->emmcache,CS_EMMCACHESIZE*(sizeof(struct s_emm)), 1);
