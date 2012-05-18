@@ -653,7 +653,7 @@ static uint32_t ICC_Async_GetPLL_Divider (uint32_t cardmhz, uint32_t maxmhz)
 		divider--;
 		break;
 	}
-	cs_log("PLL maxmhz = %.2f, wanted cardmhz = %.2f, divider used = %d, actualcardclock=%.2f", (float) maxmhz/100, (float) cardmhz/100, divider, (float) maxmhz/divider/100);
+	cs_debug_mask(D_DEVICE, "PLL maxmhz = %.2f, wanted cardmhz = %.2f, divider used = %d, actualcardclock=%.2f", (float) maxmhz/100, (float) cardmhz/100, divider, (float) maxmhz/divider/100);
 	return (divider);
 }
 
