@@ -334,5 +334,161 @@ endif
 	@$(AR) $(ARFLAGS) $@ $*.o
 	-@rm -f $*.o
 
+.PHONY: help
 .SUFFIXES:	.o .c .a
 .NOTPARALLEL: all
+
+help:
+	@-printf "\
+OSCam $(VER) build\n\
+\n\
+ Build variables:\n\
+   The build variables are set on the make command line and control the build\n\
+   process. Setting the variables lets you enable additional features, request\n\
+   extra libraries and more. Currently recognized build variables are:\n\
+\n\
+   CROSS=prefix   - Set tools prefix. This variable is used when OScam is being\n\
+                    cross compiled. For example if you want to cross compile\n\
+                    for SH4 architecture you can run: 'make CROSS=sh4-linux-'\n\
+                    If you don't have the directory where cross compilers are\n\
+                    in your PATH you can run:\n\
+                    'make CROSS=/opt/STM/STLinux-2.3/devkit/sh4/bin/sh4-linux-'\n\
+\n\
+   CONF_DIR=/dir  - Set OSCam config directory. For example to change config\n\
+                    directory to /etc run: 'make CONF_DIR=/etc'\n\
+                    The default config directory is: '$(CONF_DIR)'\n\
+\n\
+   DEBUG=1        - Compile OScam with debug information.\n\
+                    Using DEBUG=1 adds '-debug' to PLUS_TARGET.\n\
+\n\
+   CC_OPTS=text   - This variable holds compiler optimization parameters.\n\
+                    Default CC_OPTS value is:\n\
+                    '$(CC_OPTS)'\n\
+                    To add text to this variable set EXTRA_CC_OPTS=text.\n\
+\n\
+   CC_WARN=text   - This variable holds compiler warning parameters.\n\
+                    Default CC_WARN value is:\n\
+                    '$(CC_WARN)'\n\
+                    To add text to this variable set EXTRA_CC_WARN=text.\n\
+\n\
+   V=1            - Request build process to print verbose messages. By\n\
+                    default the only messages that are shown are simple info\n\
+                    what is being compiled. To request verbose build run:\n\
+                    'make V=1'\n\
+\n\
+ Use flags:\n\
+   Use flags are used to request additional libraries or features to be used\n\
+   by OSCam. Currently defined USE_xxx flags are:\n\
+\n\
+   USE_LIBUSB=1    - Request linking with libusb. The variables that control\n\
+                     USE_LIBUSB=1 build are:\n\
+                         LIBUSB_FLAGS='$(DEFAULT_LIBUSB_FLAGS)'\n\
+                         LIBUSB_CFLAGS='$(DEFAULT_LIBUSB_FLAGS)'\n\
+                         LIBUSB_LDFLAGS='$(DEFAULT_LIBUSB_FLAGS)'\n\
+                         LIBUSB_LIB='$(DEFAULT_LIBUSB_LIB)'\n\
+                     Using USE_LIBUSB=1 adds to '-libusb' to PLUS_TARGET.\n\
+\n\
+   USE_PCSC=1      - Request linking with PCSC. The variables that control\n\
+                     USE_PCSC=1 build are:\n\
+                         PCSC_FLAGS='$(DEFAULT_PCSC_FLAGS)'\n\
+                         PCSC_CFLAGS='$(DEFAULT_PCSC_FLAGS)'\n\
+                         PCSC_LDFLAGS='$(DEFAULT_PCSC_FLAGS)'\n\
+                         PCSC_LIB='$(DEFAULT_PCSC_LIB)'\n\
+                     Using USE_PCSC=1 adds to '-pcsc' to PLUS_TARGET.\n\
+\n\
+   USE_STAPI=1    - Request linking with STAPI. The variables that control\n\
+                     USE_STAPI=1 build are:\n\
+                         STAPI_FLAGS='$(DEFAULT_STAPI_FLAGS)'\n\
+                         STAPI_CFLAGS='$(DEFAULT_STAPI_FLAGS)'\n\
+                         STAPI_LDFLAGS='$(DEFAULT_STAPI_FLAGS)'\n\
+                         STAPI_LIB='$(DEFAULT_STAPI_LIB)'\n\
+                     Using USE_STAPI=1 adds to '-stapi' to PLUS_TARGET.\n\
+                     In order for USE_STAPI to work you have to create stapi\n\
+                     directory and put liboscam_stapi.a file in it.\n\
+\n\
+   USE_LIBCRYPTO=1 - Request linking with libcrypto instead of using OSCam\n\
+                     internal crypto functions. USE_LIBCRYPTO is automatically\n\
+                     enabled if the build is configured with SSL support. The\n\
+                     variables that control USE_LIBCRYPTO=1 build are:\n\
+                         LIBCRYPTO_FLAGS='$(DEFAULT_LIBCRYPTO_FLAGS)'\n\
+                         LIBCRYPTO_CFLAGS='$(DEFAULT_LIBCRYPTO_FLAGS)'\n\
+                         LIBCRYPTO_LDFLAGS='$(DEFAULT_LIBCRYPTO_FLAGS)'\n\
+                         LIBCRYPTO_LIB='$(DEFAULT_LIBCRYPTO_LIB)'\n\
+\n\
+   USE_SSL=1       - Request linking with libssl. USE_SSL is automatically\n\
+                     enabled if the build is configured with SSL support. The\n\
+                     variables that control USE_SSL=1 build are:\n\
+                         SSL_FLAGS='$(DEFAULT_SSL_FLAGS)'\n\
+                         SSL_CFLAGS='$(DEFAULT_SSL_FLAGS)'\n\
+                         SSL_LDFLAGS='$(DEFAULT_SSL_FLAGS)'\n\
+                         SSL_LIB='$(DEFAULT_SSL_LIB)'\n\
+\n\
+ Automatically intialized variables:\n\
+\n\
+   TARGET=text     - This variable is auto detected by using the compiler's\n\
+                    -dumpmachine output. On your machine the target is set to\n\
+                    '$(TARGET)'\n\
+\n\
+   PLUS_TARGET     - This variable is added to TARGET and it is set depending\n\
+                     on the chosen USE_xxx (or DEBUG) flags. To disable adding\n\
+                     PLUS_TARGET to TARGET, set NO_PLUS_TARGET=1\n\
+\n\
+   OSCAM_BIN=text  - This variable controls how the oscam binary will be named.\n\
+                     Default OSCAM_BIN value is:\n\
+                     '$(OSCAM_BIN)'\n\
+                     For example you can run: 'make OSCAM_BIN=my-oscam'\n\
+\n\
+ Extra build variables:\n\
+   These variables add text to build variables. They are useful if you want\n\
+   to add additional options to already set variables without overwriting them\n\
+   Currently defined EXTRA_xxx variables are:\n\
+\n\
+   EXTRA_CC_OPTS  - Add text to CC_OPTS.\n\
+                    Example: 'make EXTRA_CC_OPTS=-Os'\n\
+\n\
+   EXTRA_CC_WARN  - Add text to CC_WARN.\n\
+                    Example: 'make EXTRA_CC_WARN=-Wshadow'\n\
+\n\
+   EXTRA_TARGET   - Add text to TARGET.\n\
+                    Example: 'make EXTRA_TARGET=-private'\n\
+\n\
+   EXTRA_CFLAGS   - Add text to CFLAGS (affects compilation).\n\
+                    Example: 'make EXTRA_CFLAGS=-DBLAH=1 -I/opt/local'\n\
+\n\
+   EXTRA_LDLAGS   - Add text to LDLAGS (affects linking).\n\
+                    Example: 'make EXTRA_LDLAGS=-Llibdir'\n\
+\n\
+   EXTRA_FLAGS    - Add text to both EXTRA_CFLAGS and EXTRA_LDFLAGS.\n\
+                    Example: 'make EXTRA_FLAGS=-DWEBIF=1'\n\
+\n\
+   EXTRA_LIBS     - Add text to LIBS (affects linking).\n\
+                    Example: 'make EXTRA_LIBS=-L./stapi -loscam_stapi'\n\
+\n\
+ Config target:\n\
+   make config    - Start configuration utility.\n\
+\n\
+ Cleaning targets:\n\
+   make clean     - Remove lib/ directory which contains built object files.\n\
+   make distclean - Executes clean target and also removes binary files\n\
+                    located in Distribution/ directory.\n\
+\n\
+ Examples:\n\
+   Build OSCam for SH4 (the compilers are in the path):\n\
+     make CROSS=sh4-linux-\n\n\
+   Build OSCam for SH4 (the compilers are in not in the path):\n\
+     make CROSS=/opt/STM/STLinux-2.3/devkit/sh4/bin/sh4-linux-\n\n\
+   Build OSCam for SH4 with STAPI:\n\
+     make CROSS=sh4-linux- USE_STAPI=1\n\n\
+   Build OSCam for SH4 with STAPI and changed configuration directory:\n\
+     make CROSS=sh4-linux- USE_STAPI=1 CONF_DIR=/var/tuxbox/config\n\n\
+   Build OSCam with libusb and PCSC:\n\
+     make USE_LIBUSB=1 USE_PCSC=1\n\n\
+   Build OSCam with static libusb:\n\
+     make USE_LIBUSB=1 LIBUSB_LIB=\"-Llibusb-directory -llibusb.a\"\n\n\
+   Build OSCam with static libcrypto:\n\
+     make USE_LIBCRYPTO=1 LIBCRYPTO_LIB=\"-Lopenssl-build -llibcrypto.a\"\n\n\
+   Build with verbose messages and size optimizations:\n\
+     make V=1 CC_OPTS=-Os\n\n\
+   Build and set oscam file name:\n\
+     make OSCAM_BIN=oscam\n\n\
+"

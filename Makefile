@@ -62,6 +62,9 @@ distclean: clean
 simple:
 	@-$(MAKE) --no-print-directory -f Maketype
 
+help:
+	@-$(MAKE) --no-print-directory -f Maketype help
+
 ######################################################################
 #
 #	LINUX native
