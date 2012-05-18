@@ -92,7 +92,7 @@ int32_t Sci_WriteSettings (struct s_reader * reader, BYTE T, uint32_t fs, uint32
 	if (I)
 		params.I = I;
 
-	cs_debug_mask(D_IFD, "IFD: Setting reader %s: T=%d fs=%d mhz ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d", reader->label, (int)params.T, params.fs, (int)params.ETU, (int)params.WWT, (int)params.CWT, (int)params.BWT, (int)params.EGT, (int)params.clock_stop_polarity, (int)params.check, (int)params.P, (int)params.I, (int)params.U);
+	cs_debug_mask(D_IFD, "IFD: Setting reader %s: T=%d fs=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d", reader->label, (int)params.T, params.fs, (int)params.ETU, (int)params.WWT, (int)params.CWT, (int)params.BWT, (int)params.EGT, (int)params.clock_stop_polarity, (int)params.check, (int)params.P, (int)params.I, (int)params.U);
 
 	call (ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params)!=0);
 	return OK;
