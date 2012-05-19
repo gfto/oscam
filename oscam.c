@@ -1910,6 +1910,14 @@ static void distribute_ecm(ECM_REQUEST *er, int32_t rc)
 	cs_readunlock(&ecmcache_lock);
 }
 
+static void update_chid(ECM_REQUEST *er)
+{
+	if( (er->caid>>8) == 0x06 && !er->chid && er->l > 7)
+		er->chid = (er->ecm[6]<<8)|er->ecm[7];
+        if( (er->caid>>8) == 0x17 && !er->chid && er->l > 5)
+                er->chid = (er->ecm[3]|er->ecm[4]<<8);
+}
+
 #ifdef CS_CACHEEX
 static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 {
@@ -1969,12 +1977,10 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 		memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, md5tmp), CS_ECMSTORESIZE);
 		er->csp_hash = csp_ecm_hash(er);
 		//csp has already initialized these hashcode
-	}
 
-
-	if( (er->caid & 0xFF00) == 0x600 && !er->chid && er->l > 7)
-		er->chid = (er->ecm[6]<<8)|er->ecm[7];
-
+        	update_chid(er);
+        }
+	
 	struct ecm_request_t *ecm = check_cwcache(er, cl);
 
 	if (!ecm) {
@@ -2907,9 +2913,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		guess_cardsystem(er);
 
 	/* Quickfix Area */
-
-	if( (er->caid & 0xFF00) == 0x600 && !er->chid )
-		er->chid = (er->ecm[6]<<8)|er->ecm[7];
+	update_chid(er);
 
 	// quickfix for 0100:000065
 	if (er->caid == 0x100 && er->prid == 0x65 && er->srvid == 0)
