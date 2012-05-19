@@ -33,6 +33,7 @@
 #include "cscrypt/idea.h"
 
 #include "oscam-config.h"
+#include "oscam-config-funcs.h"
 
 #include "oscam-types.h"
 #include "cscrypt/cscrypt.h"

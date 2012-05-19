@@ -160,6 +160,4 @@
 #define CS_CACHEEX
 #endif
 
-#include "oscam-config-funcs.h"
-
 #endif //OSCAM_CONFIG_H_

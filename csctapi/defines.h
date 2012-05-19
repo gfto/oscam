@@ -29,6 +29,7 @@
  */
 
 #include "../oscam-config.h"
+#include "../oscam-config-funcs.h"
 
 /*
  * Boolean constants

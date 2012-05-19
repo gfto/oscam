@@ -1,4 +1,8 @@
+#ifndef HEADER_CSCRYPT_H
+#define HEADER_CSCRYPT_H
+
 #include "../oscam-config.h"
+#include "../oscam-config-funcs.h"
 
 #if defined(WITH_SSL) || defined(WITH_LIBCRYPTO)
 #  include <openssl/aes.h>
@@ -12,9 +16,6 @@
 
 #include "des.h"
 #include "md5.h"
-
-#ifndef HEADER_CSCRYPT_H
-#define HEADER_CSCRYPT_H
 
 #ifdef  __cplusplus
 extern "C" {

@@ -1,4 +1,5 @@
 #include "../oscam-config.h"
+#include "../oscam-config-funcs.h"
 #ifndef WITH_LIBCRYPTO
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 /* crypto/bn/bn_ctx.c */
