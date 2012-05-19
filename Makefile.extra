@@ -15,8 +15,6 @@ linux-pcsc: i386-pc-linux-pcsc
 i386-pc-linux-libusb:
 	$(MAKE) --no-print-directory \
 		USE_LIBUSB=1 \
-		LIBUSB_LIB="/usr/local/lib/libusb-1.0.a" \
-		EXTRA_CFLAGS="-I/usr/local/include" \
 		$(MAKEFLAGS)
 
 i386-pc-linux-pcsc:
@@ -27,7 +25,6 @@ i386-pc-linux-pcsc:
 i386-pc-linux-pcsc-libusb:
 	$(MAKE) --no-print-directory \
 		USE_LIBUSB=1 \
-		LIBUSB_LIB="/usr/local/lib/libusb-1.0.a" \
 		USE_PCSC=1 \
 		$(MAKEFLAGS)
 
