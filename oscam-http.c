@@ -98,7 +98,7 @@ char *get_ecm_historystring(struct s_client *cl){
 		char *value, *dot = "";
 		int32_t ptr = cl->cwlastresptimes_last;
 
-		needed = CS_ECM_RINGBUFFER_MAX * 5; //4 digits + delimiter
+		needed = CS_ECM_RINGBUFFER_MAX * 6; //5 digits + delimiter
 		if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
 
 		if(ptr == CS_ECM_RINGBUFFER_MAX - 1){
