@@ -653,7 +653,7 @@ static uint32_t ICC_Async_GetPLL_Divider (uint32_t cardmhz, uint32_t maxmhz)
 		divider--;
 		break;
 	}
-	cs_debug_mask(D_DEVICE, "PLL maxmhz = %.2f, wanted cardmhz = %.2f, divider used = %d, actualcardclock=%.2f", (float) maxmhz/100, (float) cardmhz/100, divider, (float) maxmhz/divider/100);
+	cs_debug_mask(D_DEVICE,"PLL maxmhz = %.2f, wanted cardmhz = %.2f, divider used = %d, actualcardclock=%.2f", (float) maxmhz/100, (float) cardmhz/100, divider, (float) maxmhz/divider/100);
 	return (divider);
 }
 
@@ -870,7 +870,7 @@ static uint32_t ETU_to_ms(struct s_reader * reader, uint32_t WWT)
 		WWT = 0;
 	double work_etu = 1000 / (double)reader->current_baudrate;//FIXME sometimes work_etu should be used, sometimes initial etu
 	
-	if (reader->mhz > 2000) return (uint32_t) WWT * work_etu * reader->cardmhz / 1000 / (reader->mhz / ICC_Async_GetPLL_Divider(reader->cardmhz, reader->mhz));
+	if (reader->mhz > 2000) return (uint32_t) WWT * work_etu * reader->cardmhz / (reader->mhz / ICC_Async_GetPLL_Divider(reader->cardmhz, reader->mhz));
 	else return (uint32_t) WWT * work_etu * reader->cardmhz / reader->mhz;
 }
 
@@ -947,7 +947,8 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 	if((reader->typ > R_MOUSE && reader->crdr.active == 0) || (reader->crdr.active == 1 && reader->crdr.max_clock_speed==1))
 		if (reader->mhz == 357 || reader->mhz == 358) //no overclocking
 			reader->mhz = atr_fs_table[FI] / 10000; //we are going to clock the card to this nominal frequency
-
+		if (reader->mhz > 2000 && reader->cardmhz == 100) // pll internal reader set cardmhz according to optimal atr speed
+			reader->cardmhz = atr_fs_table[FI] / 10000 ;
 	//set clock speed/baudrate must be done before timings
 	//because reader->current_baudrate is used in calculation of timings
 	F =	(double) atr_f_table[FI];  //Get FI (this is != clockspeed)
@@ -1000,7 +1001,12 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 			wi = DEFAULT_WI;
 
 			// WWT = 960 * WI * (Fi / f) * 1000 milliseconds
+			if (reader->mhz > 2000){
+				WWT= (uint32_t) 960 * wi * (F / (reader->mhz / ICC_Async_GetPLL_Divider(reader->cardmhz, reader->mhz)*10000)*1000);
+			}
+			else {
 			WWT = (uint32_t) 960 * wi; //in ETU
+			}
 			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
 				WWT >>= 1; //is this correct?
 
@@ -1051,8 +1057,11 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 				reader->CWT = (uint16_t) (((1<<cwi) + 11)); // in ETU
 
 				// Set BWT = (2^BWI * 960 + 11) work etu
-				reader->BWT = (uint16_t)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate(reader->cardmhz))	+ 11 ;
-
+				if (reader->mhz > 2000) {
+					reader->BWT = (uint16_t)((1<<bwi) * 960 + 11) ;
+				}
+				else {reader->BWT = (uint16_t)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate(reader->cardmhz))	+ 11 ;
+				}
 				// Set BGT = 22 * work etu
 				BGT = 22L; //in ETU
 

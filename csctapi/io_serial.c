@@ -454,22 +454,24 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t timeout, uint32_t size, 
 			readed = read (reader->handle, &c, 1);
 			if (readed < 0) {
 				cs_log("Reader %s: ERROR in IO_Serial_Read (errno=%d %s)", reader->label, errno, strerror(errno));
-				if (errno == 11) return ERROR; // fix for ET boxes otherwise they have very long timeout on cardinit
+				if (errno == 11) {
+					cs_ddump_mask(D_DEVICE, data, count, "IO: Receiving:");
+					return ERROR; // fix for ET boxes otherwise they have very long timeout on cardinit
+				}
 				errorcount++;
 				//tcflush (reader->handle, TCIFLUSH);
 			}
 		} 
 			
 		if (readed == 0) {
+			cs_ddump_mask(D_DEVICE, data, count, "IO: Receiving:");
 			cs_debug_mask(D_DEVICE, "Reader %s: IO_Received: End of transmission", reader->label);
 			return ERROR;
 			}
-			
-		if (readed == 1) cs_debug_mask(D_DEVICE, "Reader %s: IO_Received: %02X", reader->label, c);
-		
 #endif
 		data[count] = c;
 	}
+	cs_ddump_mask(D_DEVICE, data, count, "IO: Receiving:");
 	return OK;
 }
 
