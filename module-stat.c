@@ -86,6 +86,7 @@ static uint32_t get_subid(ECM_REQUEST *er)
 		case 0x01: id = b2i(2, er->ecm+7); break;
 		case 0x06: id = b2i(2, er->ecm+6); break;
 		case 0x09: id = b2i(2, er->ecm+11); break;
+		case 0x17: id = er->ecm[3]|er->ecm[4]<<8; break;
 		case 0x4A: // DRE-Crypt, Bulcrypt, others?
 			if (er->caid != 0x4AEE) // Bulcrypt
 				id = er->ecm[7];
@@ -429,6 +430,7 @@ READER_STAT *get_add_stat(struct s_reader *rdr, STAT_QUERY *q)
 			stat->chid = q->chid;
 			stat->ecmlen = q->ecmlen;
 			stat->time_avg = UNDEF_AVG_TIME; //dummy placeholder
+			stat->rc = E_NOTFOUND;
 			ll_append(rdr->lb_stat, stat);
 		}
 	}
