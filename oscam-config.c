@@ -1683,9 +1683,14 @@ int32_t init_config()
 	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 1;	
 
 #ifdef PRIO_PROCESS
+// FIXME: On WRT54G calling getpriority() results in OSCam not starting.
+//        This needs additional debugging by somebody who has WRT54G in
+//        front of him and can debug this.
+#if !defined(__UCLIBC__)
 	errno=0;
 	if ((cfg.nice = getpriority(PRIO_PROCESS, 0)) == (-1))
 	if (errno)
+#endif
 #endif
 	cfg.nice = 99;
 	cfg.ctimeout = CS_CLIENT_TIMEOUT;
