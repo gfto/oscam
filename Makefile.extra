@@ -22,7 +22,6 @@ i386-pc-linux-libusb:
 i386-pc-linux-pcsc:
 	$(MAKE) --no-print-directory \
 		USE_PCSC=1 \
-		EXTRA_CFLAGS="-I/usr/local/PCSC" \
 		$(MAKEFLAGS)
 
 i386-pc-linux-pcsc-libusb:
@@ -30,7 +29,6 @@ i386-pc-linux-pcsc-libusb:
 		USE_LIBUSB=1 \
 		LIBUSB_LIB="/usr/local/lib/libusb-1.0.a" \
 		USE_PCSC=1 \
-		EXTRA_CFLAGS="-I/usr/local/include -I/usr/local/PCSC" \
 		$(MAKEFLAGS)
 
 macosx-native:
