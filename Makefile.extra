@@ -173,12 +173,17 @@ cross-mipsel-fonera2: cross-mips-router-linux-uclibc
 
 cross-mipsel-tuxbox-linux:
 	$(MAKE) --no-print-directory \
-		CROSS=mipsel-linux-glibc- \
+		CROSS=mipsel-unknown-linux-gnu- \
 		CONF_DIR=/var/tuxbox/config \
 		EXTRA_FLAGS="-static-libgcc" \
 		$(MAKEFLAGS)
 
-cross-mipsel-tuxbox-linux-glibc: cross-mipsel-tuxbox-linux
+cross-mipsel-tuxbox-linux-glibc:
+	$(MAKE) --no-print-directory \
+		CROSS=mipsel-linux-glibc- \
+		CONF_DIR=/var/tuxbox/config \
+		EXTRA_FLAGS="-static-libgcc" \
+		$(MAKEFLAGS)
 
 cross-arm-nslu2-linux:
 	$(MAKE) --no-print-directory \
