@@ -864,14 +864,17 @@ static uint32_t PPS_GetLength (BYTE * block)
 static uint32_t ETU_to_ms(struct s_reader * reader, uint32_t WWT)
 {
 #define CHAR_LEN 10L //character length in ETU, perhaps should be 9 when parity = none?
+	if (reader->mhz>2000){
+		double work_etu = 1000 / (double)reader->current_baudrate;//FIXME sometimes work_etu should be used, sometimes initial etu
+		return (uint32_t) (WWT / work_etu);
+	}
+	
 	if (WWT > CHAR_LEN)
 		WWT -= CHAR_LEN;
 	else
 		WWT = 0;
 	double work_etu = 1000 / (double)reader->current_baudrate;//FIXME sometimes work_etu should be used, sometimes initial etu
-	
-	if (reader->mhz > 2000) return (uint32_t) WWT * work_etu * reader->cardmhz / (reader->mhz / ICC_Async_GetPLL_Divider(reader->cardmhz, reader->mhz));
-	else return (uint32_t) WWT * work_etu * reader->cardmhz / reader->mhz;
+	return (uint32_t) WWT * work_etu * reader->cardmhz / reader->mhz;
 }
 
 static int32_t ICC_Async_SetParity (struct s_reader * reader, uint16_t parity)
@@ -1002,7 +1005,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 
 			// WWT = 960 * WI * (Fi / f) * 1000 milliseconds
 			if (reader->mhz > 2000){
-				WWT= (uint32_t) 960 * wi * (F / (reader->mhz / ICC_Async_GetPLL_Divider(reader->cardmhz, reader->mhz)*10000)*1000);
+				WWT= (uint32_t) 960 * wi *(F / (reader->mhz / ICC_Async_GetPLL_Divider(reader->cardmhz, reader->mhz)*10000));
 			}
 			else {
 			WWT = (uint32_t) 960 * wi; //in ETU
@@ -1058,7 +1061,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 
 				// Set BWT = (2^BWI * 960 + 11) work etu
 				if (reader->mhz > 2000) {
-					reader->BWT = (uint16_t)((1<<bwi) * 960 + 11) ;
+					reader->BWT = (uint16_t)(11+(1<<bwi) * 960 * 372 / (reader->mhz / ICC_Async_GetPLL_Divider(reader->cardmhz, reader->mhz)*10000)) ;
 				}
 				else {reader->BWT = (uint16_t)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate(reader->cardmhz))	+ 11 ;
 				}
