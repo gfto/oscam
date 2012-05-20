@@ -1,3 +1,6 @@
+#ifndef GLOBAL_FUNCTIONS_H_
+#define GLOBAL_FUNCTIONS_H_
+
 /* ===========================
  *      protocol modules
  * =========================== */
@@ -435,3 +438,5 @@ extern int32_t reader_get_emm_type(EMM_PACKET *ep, struct s_reader * reader);
 extern struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid);
 extern void reader_device_close(struct s_reader * reader);
 extern int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int16_t len);
+
+#endif

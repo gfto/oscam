@@ -1,3 +1,6 @@
+#ifndef GLOBALS_H_
+#define GLOBALS_H_
+
 #define _GNU_SOURCE //needed for PTHREAD_MUTEX_RECURSIVE on some plattforms and maybe other things; do not remove
 #include <stdlib.h>
 #include <stdio.h>
@@ -1774,5 +1777,7 @@ extern LLIST *log_list;				// log list
  *      global functions
  * =========================== */
 #include "global-functions.h"
+
+#endif
 
 #endif
