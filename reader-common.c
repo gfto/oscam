@@ -91,7 +91,7 @@ int32_t check_sct_len(const uchar *data, int32_t off)
 #ifdef WITH_CARDREADER
 static int32_t reader_card_inserted(struct s_reader * reader)
 {
-	if (!reader->use_gpio && (reader->detect & 0x7f) > 3)
+	if (!use_gpio(reader) && (reader->detect & 0x7f) > 3)
 		return 1;
 
 	int32_t card;

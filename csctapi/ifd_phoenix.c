@@ -17,45 +17,41 @@
 
 static void set_gpio(struct s_reader * reader, int32_t level)
 {
-	if (read(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio) < 0))
-		return;
+	int ret = 0;
 
+	ret |= read(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio));
 	reader->gpio |= GPIO_PIN;
-	if (write(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio)) < 0)
-		return;
+	ret |= write(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio));
 
-	if (read(reader->gpio_out, &reader->gpio, sizeof(reader->gpio)) < 0)
-		return;
+	ret |= read(reader->gpio_out, &reader->gpio, sizeof(reader->gpio));
 	if (level > 0)
 		reader->gpio |= GPIO_PIN;
 	else
 		reader->gpio &= ~GPIO_PIN;
-	if (write(reader->gpio_out, &reader->gpio, sizeof(reader->gpio)) < 0)
-		return;
+	ret |= write(reader->gpio_out, &reader->gpio, sizeof(reader->gpio));
+
+	cs_debug_mask(D_IFD, "%s: rdr: %s level: %d ret: %d", __func__, reader->label, level, ret);
 }
 
 static void set_gpio_input(struct s_reader * reader)
 {
-	if (read(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio)) < 0)
-		return;
+	int ret = 0;
+	ret |= read(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio));
 	reader->gpio &= ~GPIO_PIN;
-	if (write(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio)) < 0)
-		return;
+	ret |= write(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio));
+	cs_debug_mask(D_IFD, "%s: rdr: %s ret:%d", __func__, reader->label, ret);
 }
 
 static int32_t get_gpio(struct s_reader * reader)
 {
+	int ret = 0;
 	set_gpio_input(reader);
-	if (read(reader->gpio_in, &reader->gpio, sizeof(reader->gpio)) < 0)
-		return ERROR;
+	ret = read(reader->gpio_in, &reader->gpio, sizeof(reader->gpio));
+	cs_debug_mask(D_IFD, "%s: rdr: %s ok:%d ret:%d", __func__, reader->label, reader->gpio & GPIO_PIN, ret);
 	if (reader->gpio & GPIO_PIN)
 		return OK;
 	else
 		return ERROR;
-}
-
-static int use_gpio(struct s_reader * reader) {
-	return reader->use_gpio && reader->detect > 4;
 }
 
 int32_t Phoenix_Init (struct s_reader * reader)
@@ -69,6 +65,8 @@ int32_t Phoenix_Init (struct s_reader * reader)
 		reader->gpio_outen = open("/dev/gpio/outen", O_RDWR);
 		reader->gpio_out   = open("/dev/gpio/out",   O_RDWR);
 		reader->gpio_in    = open("/dev/gpio/in",    O_RDWR);
+		cs_debug_mask(D_IFD, "%s: rdr: %s gpio_outen:%d gpio_out:%d gpio_in:%d", __func__, reader->label,
+			reader->gpio_outen, reader->gpio_out, reader->gpio_in);
 		set_gpio_input(reader);
 	}
 	
@@ -248,12 +246,14 @@ int32_t Phoenix_SetBaudrate (struct s_reader * reader, uint32_t baudrate)
 int32_t Phoenix_Close (struct s_reader * reader)
 {
 	cs_debug_mask (D_IFD, "IFD: Closing phoenix device %s", reader->device);
-	// close dev if card detected
 	if (use_gpio(reader))
 	{
-		close(reader->gpio_outen);
-		close(reader->gpio_out);
-		close(reader->gpio_in);
+		if (reader->gpio_outen > -1)
+			close(reader->gpio_outen);
+		if (reader->gpio_out > -1)
+			close(reader->gpio_out);
+		if (reader->gpio_outen > -1)
+			close(reader->gpio_outen);
 	}
 	IO_Serial_Close(reader);
 	return OK;

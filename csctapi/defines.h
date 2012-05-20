@@ -92,4 +92,8 @@ typedef void *PVOID;
 				(((a) >> 7) & 0x01))
 #endif
 
+static inline int use_gpio(struct s_reader * reader) {
+	return reader->use_gpio && reader->detect > 4;
+}
+
 #endif /* DEFINES_H */
