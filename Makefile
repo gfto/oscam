@@ -8,6 +8,8 @@ SHELL = /bin/sh
 VER     := $(shell ./config.sh --oscam-version)
 SVN_REV := $(shell ./config.sh --oscam-revision)
 
+uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
+
 ifeq "$(shell ./config.sh --enabled WITH_SSL)" "Y"
 	override USE_SSL=1
 	override USE_LIBCRYPTO=1
@@ -75,7 +77,11 @@ SSL_LIB = $(DEFAULT_SSL_LIB)
 endif
 
 DEFAULT_LIBUSB_FLAGS = -DLIBUSB
+ifeq ($(uname_S),Linux)
+DEFAULT_LIBUSB_LIB = -lusb-1.0 -lrt
+else
 DEFAULT_LIBUSB_LIB = -lusb-1.0
+endif
 ifdef USE_LIBUSB
 LIBUSB_FLAGS = $(DEFAULT_LIBUSB_FLAGS)
 LIBUSB_CFLAGS = $(DEFAULT_LIBUSB_FLAGS)
