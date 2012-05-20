@@ -142,6 +142,7 @@ static int32_t bulcrypt_card_init(struct s_reader *reader, ATR newatr)
 	cs_ri_log(reader, LOG_PREFIX "Card detected.");
 
 	reader->nprov = 1;
+	reader->caid = 0x5581;
 	memset(reader->prid, 0, sizeof(reader->prid));
 	memset(reader->hexserial, 0, sizeof(reader->hexserial));
 	memset(card_serial, 0, sizeof(card_serial));
