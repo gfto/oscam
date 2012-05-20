@@ -61,7 +61,7 @@ case "$1" in
 		exit 0
 	;;
 	'-r'|'--oscam-revision')
-		(svnversion -n $WD 2>/dev/null || echo -n 0) | cut -d: -f2 | sed 's/[^0-9]*$//; s/^$/0/'
+		(svnversion -n $WD 2>/dev/null || echo -n 0) | sed 's/.*://; s/[^0-9]*$//; s/^$/0/'
 		exit 0
 	;;
 	'-h'|'--help')
