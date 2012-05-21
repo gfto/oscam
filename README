@@ -1,8 +1,10 @@
-OSCam: Open source conditional access module
+OSCam: Open Source Conditional Access Module
 ============================================
+
 
 License
 =======
+
 OSCam: Open Source CAM
 Copyright (C) 2009-2012 OSCam developers
 
@@ -28,12 +30,14 @@ top directory or visit http://www.gnu.org/licenses/gpl-3.0.html
 
 Version history
 ===============
+
 OSCam history is accessible through Trac timeline at:
    http://streamboard.gmc.to/oscam/timeline/
 
 
 Repositories
 ============
+
 SVN repository:
    svn checkout http://streamboard.gmc.to/svn/oscam/trunk oscam-svn
 
@@ -43,6 +47,7 @@ SVN mirror:
 
 Building OSCam from source
 ==========================
+
  - Get the lastest sources from SVN
     svn checkout http://streamboard.gmc.to/svn/oscam/trunk oscam-trunk
 
@@ -57,6 +62,7 @@ For more information and examples on using the build system, run `make help`.
 
 Building OScam for different CPUs (cross-compilation)
 =====================================================
+
 First you need to install the target CPU toolchain. Already built toolchains
 for various architectures can be downloaded from:
 
@@ -70,6 +76,7 @@ in your PATH - `make CROSS=/opt/STM/STLinux-2.3/devkit/sh4/bin/sh4-linux-`.
 
 Dependencies
 ============
+
 OSCam by default do not depend on external libraries except when compilation
 with SSL is requested. In that case openssl (libcrypto) library must be
 installed.
@@ -89,6 +96,7 @@ For more information about building with external libraries, run 'make help'.
 
 Web links
 =========
+
 Build server for automated builds:
    http://download.oscam.to/index.php
 
@@ -98,6 +106,7 @@ Configuration wiki:
 
 Help and Support
 ================
+
 man pages and configuration examples are in Distribution/doc directory.
 
 If you experience any problems with OSCam, feel free to post in our support
