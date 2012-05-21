@@ -254,7 +254,7 @@ static int32_t chk_chid(ECM_REQUEST *er, FTAB *fchid, char *D_USE(type), char *D
   if( !fchid->nfilts ) return 1;
 
   for( i=rc=0; (!rc) && i<fchid->nfilts; i++ )
-    if( er->caid == fchid->filts[i].caid )
+    if( er->caid == fchid->filts[i].caid ) {
       found_caid=1;
       for( j=0; (!rc) && j<fchid->filts[i].nprids; j++ )
       {
@@ -268,6 +268,7 @@ static int32_t chk_chid(ECM_REQUEST *er, FTAB *fchid, char *D_USE(type), char *D
           rc=1;
         }
       }
+  }
 
   if( !rc )
   {
