@@ -72,6 +72,15 @@ char    *loghist = NULL;     // ptr of log-history
 char    *loghistptr = NULL;
 #endif
 
+#define debug_ecm(mask, args...) \
+	do { \
+		if (config_WITH_DEBUG()) { \
+			char buf[ECM_FMT_LEN]; \
+			format_ecm(er, buf, ECM_FMT_LEN); \
+			cs_debug_mask(mask, ##args); \
+		} \
+	} while(0)
+
 #ifdef CS_CACHEEX
 int32_t cs_add_cacheex_stats(struct s_client *cl, uint16_t caid, uint16_t srvid, uint32_t prid, uint8_t direction) {
 
@@ -2001,11 +2010,7 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 			cl->account->cwcacheexgot++;
 		first_client->cwcacheexgot++;
 
-#ifdef WITH_DEBUG
-		char buf[ECM_FMT_LEN];
-		format_ecm(er, buf, ECM_FMT_LEN);
-		cs_debug_mask(D_CACHEEX, "got pushed ECM %s from %s", buf, csp?"csp":username(cl));
-#endif
+		debug_ecm(D_CACHEEX, "got pushed ECM %s from %s", buf, csp ? "csp" : username(cl));
 		return 1;
 	}
 	else {
@@ -2031,19 +2036,9 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 				cl->account->cwcacheexgot++;
 			first_client->cwcacheexgot++;
 
-#ifdef WITH_DEBUG
-			char buf[ECM_FMT_LEN];
-			format_ecm(er, buf, ECM_FMT_LEN);
-			cs_debug_mask(D_CACHEEX, "replaced pushed ECM %s from %s", buf, csp?"csp":username(cl));
-#endif
-		}
-		else
-		{
-#ifdef WITH_DEBUG
-			char buf[ECM_FMT_LEN];
-			format_ecm(er, buf, ECM_FMT_LEN);
-			cs_debug_mask(D_CACHEEX, "ignored duplicate pushed ECM %s from %s", buf,  csp?"csp":username(cl));
-#endif
+			debug_ecm(D_CACHEEX, "replaced pushed ECM %s from %s", buf, csp ? "csp" : username(cl));
+		} else {
+			debug_ecm(D_CACHEEX, "ignored duplicate pushed ECM %s from %s", buf, csp ? "csp" : username(cl));
 		}
 
 		return 0;
@@ -2995,12 +2990,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	}
 
 	if (!chk_global_whitelist(er, &line)) {
-#ifdef WITH_DEBUG
-		char buf[ECM_FMT_LEN];
-		format_ecm(er, buf, ECM_FMT_LEN);
-		cs_debug_mask(D_TRACE, "whitelist filtered: %s (%s) line %d",
-					username(client), buf, line);
-#endif
+		debug_ecm(D_TRACE, "whitelist filtered: %s (%s) line %d", username(client), buf, line);
 		er->rc = E_INVALID;
 	}
 
@@ -3178,11 +3168,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 #ifdef WITH_LB
 		if (cfg.lb_mode && er->reader_avail) {
-#ifdef WITH_DEBUG
-			char buf[ECM_FMT_LEN];
-			format_ecm(er, buf, ECM_FMT_LEN);
-			cs_debug_mask(D_TRACE, "requesting client %s best reader for %s", username(client), buf);
-#endif
+			debug_ecm(D_TRACE, "requesting client %s best reader for %s", username(client), buf);
 			get_best_reader(er);
 		}
 #endif
@@ -3908,11 +3894,7 @@ void * work_thread(void *ptr) {
 				else
 					res = ph[cl->ctyp].c_cache_push(cl, er);
 
-#ifdef WITH_DEBUG
-				char buf[ECM_FMT_LEN];
-				format_ecm(er, buf, ECM_FMT_LEN);
-				cs_debug_mask(D_CACHEEX, "pushed ECM %s to %s res %d stats %d", buf, username(cl), res, stats);
-#endif
+				debug_ecm(D_CACHEEX, "pushed ECM %s to %s res %d stats %d", buf, username(cl), res, stats);
 				free(data->ptr);
 
 				cl->cwcacheexpush++;
@@ -4067,11 +4049,8 @@ static void * check_thread(void) {
 
 			if (comp_timeb(&t_now, &tbc) >= 0) {
 				if (er->stage < 4) {
-#ifdef WITH_DEBUG
-					char buf[ECM_FMT_LEN];
-					format_ecm(er, buf, ECM_FMT_LEN);
-					cs_debug_mask(D_TRACE, "fallback for %s %s", username(er->client), buf);
-#endif
+					debug_ecm(D_TRACE, "fallback for %s %s", username(er->client), buf);
+
 					if (er->rc >= E_UNHANDLED) //do not request rc=99
 						request_cw(er);
 
@@ -4079,11 +4058,7 @@ static void * check_thread(void) {
 					time_to_check = add_ms_to_timeb(&tbc, cfg.ctimeout);
 				} else {
 					if (er->client) {
-#ifdef WITH_DEBUG
-						char buf[ECM_FMT_LEN];
-						format_ecm(er, buf, ECM_FMT_LEN);
-						cs_debug_mask(D_TRACE, "timeout for %s %s", username(er->client), buf);
-#endif
+						debug_ecm(D_TRACE, "timeout for %s %s", username(er->client), buf);
 						write_ecm_answer(NULL, er, E_TIMEOUT, 0, NULL, NULL);
 					}
 #ifdef WITH_LB		
