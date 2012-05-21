@@ -249,7 +249,7 @@ static int32_t chk_chid(ECM_REQUEST *er, FTAB *fchid, char *D_USE(type), char *D
 {
   int32_t rc=1, i, j;
 
-  if( (er->caid & 0xFF00)!=0x600 ) return 1;
+  //if( (er->caid & 0xFF00)!=0x600 ) return 1; //chid needed for 1722 and other systems!
   if( !er->chid ) return 1;
   if( !fchid->nfilts ) return 1;
 
