@@ -247,7 +247,7 @@ int32_t chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
 
 static int32_t chk_chid(ECM_REQUEST *er, FTAB *fchid, char *D_USE(type), char *D_USE(name))
 {
-  int32_t rc=1, i, j;
+  int32_t rc=1, i, j, found_caid=0;
 
   //if( (er->caid & 0xFF00)!=0x600 ) return 1; //chid needed for 1722 and other systems!
   if( !er->chid ) return 1;
@@ -255,6 +255,7 @@ static int32_t chk_chid(ECM_REQUEST *er, FTAB *fchid, char *D_USE(type), char *D
 
   for( i=rc=0; (!rc) && i<fchid->nfilts; i++ )
     if( er->caid == fchid->filts[i].caid )
+      found_caid=1;
       for( j=0; (!rc) && j<fchid->filts[i].nprids; j++ )
       {
         cs_debug_mask(D_CLIENT, "trying %s '%s' CHID filter %04X:%04X", 
@@ -270,8 +271,14 @@ static int32_t chk_chid(ECM_REQUEST *er, FTAB *fchid, char *D_USE(type), char *D
 
   if( !rc )
   {
-    cs_debug_mask(D_CLIENT, "no match, %04X:%04X rejected by %s '%s' CHID filter(s)", 
+    if (found_caid)
+    	cs_debug_mask(D_CLIENT, "no match, %04X:%04X rejected by %s '%s' CHID filter(s)", 
                       er->caid, er->chid, type, name);
+    else {
+    	rc=1;
+        cs_debug_mask(D_CLIENT, "%04X:%04X allowed by %s '%s' CHID filter, CAID not spezified",
+                   er->caid, er->chid, type, name);
+    }
   }
   return (rc);
 }
