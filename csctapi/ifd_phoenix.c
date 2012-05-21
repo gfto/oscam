@@ -252,8 +252,8 @@ int32_t Phoenix_Close (struct s_reader * reader)
 			close(reader->gpio_outen);
 		if (reader->gpio_out > -1)
 			close(reader->gpio_out);
-		if (reader->gpio_outen > -1)
-			close(reader->gpio_outen);
+		if (reader->gpio_in > -1)
+			close(reader->gpio_in);
 	}
 	IO_Serial_Close(reader);
 	return OK;
