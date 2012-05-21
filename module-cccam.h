@@ -233,7 +233,7 @@ struct cc_data {
 	char* nok_message;
 };
 
-int32_t cc_cli_init();
+int32_t cc_cli_init(struct s_client *cl);
 int32_t cc_cli_init_int(struct s_client *cl);
 void cc_cleanup(struct s_client *cl);
 int32_t cc_cli_connect(struct s_client *cl);
@@ -252,7 +252,7 @@ int32_t same_card2(struct cc_card *card1, struct cc_card *card2, int8_t compare_
 void cc_UA_oscam2cccam(uint8_t *in, uint8_t *out, uint16_t caid);
 void cc_SA_oscam2cccam(uint8_t *in, uint8_t *out);
 void cc_free_cardlist(LLIST *card_list, int32_t destroy_list);
-void cc_update_nodeid();
+void cc_update_nodeid(void);
 void set_card_timeout(struct cc_card *card);
 
 extern struct ecm_request_t	*ecmcwcache;

@@ -121,7 +121,7 @@ char *tpl_getVar(struct templatevars *vars, char *name){
 
 /* Initializes all variables for a templatevar-structure and returns a pointer to it. Make
    sure to call tpl_clear() when you are finished or you'll run into a memory leak! */
-struct templatevars *tpl_create(){
+struct templatevars *tpl_create(void) {
 	struct templatevars *vars;
 	if(!cs_malloc(&vars, sizeof(struct templatevars), -1)) return NULL;
 	(*vars).varsalloc = 64;
@@ -312,7 +312,7 @@ int32_t tpl_saveIncludedTpls(const char *path){
 }
 
 /* Checks all disk templates if they are still current or may need upgrade! */
-void tpl_checkDiskRevisions(){
+void tpl_checkDiskRevisions(void) {
 	if(strlen(cfg.http_tpl) > 0){
 		int32_t i, tplcnt = sizeof(tpl)/sizeof(char *);
 		char path[255];
@@ -746,7 +746,7 @@ char *xml_encode(struct templatevars *vars, char *chartoencode) {
 }
 
 /* Prepares the base64 decoding array */
-void b64prepare(){
+void b64prepare(void) {
 	const unsigned char alphabet[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 	int32_t i;
 	for (i = sizeof(b64decoder) - 1; i >= 0; --i) {

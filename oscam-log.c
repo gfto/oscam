@@ -531,7 +531,7 @@ void cs_statistics(struct s_client * client)
 	}
 }
 
-void log_list_thread()
+void log_list_thread(void)
 {
 	char buf[LOG_BUF_SIZE];
 

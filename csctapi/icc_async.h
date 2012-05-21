@@ -56,7 +56,7 @@
 int32_t ICC_Async_Activate (struct s_reader *reader, ATR * newatr, uint16_t deprecated);
 int32_t ICC_Async_Close (struct s_reader *reader);
 int32_t ICC_Async_Device_Init (struct s_reader *reader);
-int32_t ICC_Async_Init_Locks ();
+int32_t ICC_Async_Init_Locks (void);
 
 /* Attributes */
 int32_t ICC_Async_SetTimings (struct s_reader * reader, uint32_t wait_etu);

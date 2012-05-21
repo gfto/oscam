@@ -872,7 +872,7 @@ void report_card(struct cc_card *card, LLIST *new_reported_carddatas, LLIST *new
  *				=3 CCCAM reader reshares only defined user-services as virtual cards
  *				=4 CCCAM reader reshares only received cards
  */
-void update_card_list() {
+void update_card_list(void) {
     int32_t i, j, k, l, flt, card_count = 0;
 
     LLIST *server_cards[CAID_KEY];
@@ -1187,7 +1187,7 @@ void refresh_shares()
 
 #define DEFAULT_INTERVAL 30
 
-void share_updater()
+void share_updater(void)
 {
 		int32_t i = DEFAULT_INTERVAL + cfg.waitforcards_extra_delay/1000;
 		uint32_t last_check = 0;

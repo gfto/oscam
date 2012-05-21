@@ -1705,7 +1705,7 @@ int32_t check_extended_mode(struct s_client *cl, char *msg) {
 	return has_param;
 }
 
-void cc_idle() {
+void cc_idle(void) {
 	struct s_client *cl = cur_client();
 	   struct s_reader *rdr = cl->reader;
        struct cc_data *cc = cl->cc;
@@ -3612,7 +3612,7 @@ int32_t cc_available(struct s_reader *rdr, int32_t checktype, ECM_REQUEST *er) {
  *
  *
  **/
-void cc_card_info() {
+void cc_card_info(void) {
 	struct s_client *cl = cur_client();
 	struct s_reader *rdr = cl->reader;
 

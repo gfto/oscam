@@ -734,7 +734,7 @@ int32_t camd35_client_init(struct s_client *client)
 	return(0);
 }
 
-int32_t camd35_client_init_log()
+int32_t camd35_client_init_log(void)
 {
   struct sockaddr_in loc_sa;
   struct s_client *cl = cur_client();

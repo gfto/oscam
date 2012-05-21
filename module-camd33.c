@@ -29,7 +29,7 @@ static int32_t camd33_recv(struct s_client * client, uchar *buf, int32_t l)
   return(n);
 }
 
-static void camd33_request_emm()
+static void camd33_request_emm(void)
 {
   uchar mbuf[20];
 	struct s_reader *aureader = NULL, *rdr = NULL;

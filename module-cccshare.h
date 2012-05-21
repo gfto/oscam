@@ -22,9 +22,9 @@
 void add_share(struct cc_card *card);
 void remove_share(struct cc_card *card);
 
-LLIST **get_and_lock_sharelist();
-void unlock_sharelist();
-void refresh_shares();
+LLIST **get_and_lock_sharelist(void);
+void unlock_sharelist(void);
+void refresh_shares(void);
                         
 int32_t chk_ident(FTAB *ftab, struct cc_card *card);
 int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card);

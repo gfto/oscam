@@ -20,7 +20,7 @@
 
 int8_t running;
 
-void refresh_lcd_file() {
+void refresh_lcd_file(void) {
 
 	char targetfile[256];
 	char tmpfile[256];

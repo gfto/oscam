@@ -1,7 +1,7 @@
 #include "globals.h"
 #ifdef MODULE_MONITOR
 
-static int8_t monitor_check_ip()
+static int8_t monitor_check_ip(void)
 {
 	int32_t ok=0;
 	struct s_client *cur_cl = cur_client();
@@ -313,7 +313,7 @@ static char *monitor_client_info(char id, struct s_client *cl, char *sbuf){
 	return(sbuf);
 }
 
-static void monitor_process_info(){
+static void monitor_process_info(void) {
 	time_t now = time((time_t*)0);
 	char sbuf[256];
 
@@ -341,13 +341,13 @@ static void monitor_send_details(char *txt, uint32_t tid){
 	monitor_send_info(buf, 0);
 }
 
-static void monitor_send_details_version(){
+static void monitor_send_details_version(void) {
 	char buf[256];
 	snprintf(buf, sizeof(buf), "[V-0000]version=%s, build=%s, system=%s\n", CS_VERSION, CS_SVN_VERSION, CS_TARGET);
 	monitor_send_info(buf, 1);
 }
 
-static void monitor_send_keepalive_ack(){
+static void monitor_send_keepalive_ack(void) {
 	char buf[32];
 	snprintf(buf, sizeof(buf), "[K-0000]keepalive_ack\n");
 	monitor_send_info(buf, 1);
@@ -560,7 +560,7 @@ static void monitor_set_debuglevel(char *flag){
 	}
 }
 
-static void monitor_get_account(){
+static void monitor_get_account(void) {
 	struct s_auth *account;
 	char buf[256];
         int32_t count = 0;
@@ -720,7 +720,7 @@ static void monitor_set_server(char *args){
 }
 
 #ifdef WEBIF
-static void monitor_restart_server(){
+static void monitor_restart_server(void) {
 	cs_restart_oscam();
 }
 #endif

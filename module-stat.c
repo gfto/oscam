@@ -319,7 +319,7 @@ void calc_stat(READER_STAT *stat)
 /**
  * Saves statistik to /tmp/.oscam/stat.n where n is reader-index
  */
-void save_stat_to_file_thread()
+void save_stat_to_file_thread(void)
 {
 	stat_load_save = 0;
 	char buf[256];
@@ -1239,7 +1239,7 @@ void clear_all_stat()
 	}
 }
 
-void housekeeping_stat_thread()
+void housekeeping_stat_thread(void)
 {	
 	time_t cleanup_time = time(NULL) - (cfg.lb_stat_cleanup*60*60);
 	int32_t cleaned = 0;

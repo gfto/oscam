@@ -363,7 +363,7 @@ void coolapi_close_all();
 #endif
 
 #ifdef WITH_STAPI
-static int32_t stapi_open();
+static int32_t stapi_open(void);
 static int32_t stapi_set_filter(int32_t demux_id, uint16_t pid, uchar *filter, uchar *mask, int32_t num, char *pmtfile);
 static int32_t stapi_remove_filter(int32_t demux_id, int32_t num, char *pmtfile);
 static int32_t stapi_set_pid(int32_t demux_id, int32_t num, int32_t index, uint16_t pid, char *pmtfile);
@@ -384,7 +384,7 @@ uint32_t oscam_stapi_SlotDeallocate(uint32_t slothandle);
 uint32_t oscam_stapi_BufferDeallocate(uint32_t bufferhandle);
 uint32_t oscam_stapi_FilterDeallocate(uint32_t filterhandle);
 uint32_t oscam_stapi_Close(uint32_t sessionhandle);
-uint32_t oscam_stapi_CheckVersion();
+uint32_t oscam_stapi_CheckVersion(void);
 uint32_t oscam_stapi_DescramblerAssociate(uint32_t deschandle, uint32_t slot);
 uint32_t oscam_stapi_DescramblerDisassociate(uint32_t deschandle, uint32_t slot);
 uint32_t oscam_stapi_DescramblerAllocate(uint32_t sessionhandle, uint32_t *deschandle);

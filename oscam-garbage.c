@@ -68,7 +68,7 @@ void add_garbage(void *data) {
 	cs_writeunlock(&garbage_lock[bucket]);
 }
 
-void garbage_collector() {
+void garbage_collector(void) {
         time_t now;
         int8_t i;
         struct cs_garbage *garbage, *next, *prev;

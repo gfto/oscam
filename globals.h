@@ -717,13 +717,13 @@ struct s_cardreader
 struct s_cardsystem {
 	int8_t			active;
 	char			*desc;
-	int32_t		(*card_init)();
-	int32_t		(*card_info)();
+	int32_t		(*card_init)(struct s_reader *reader, struct s_ATR);
+	int32_t		(*card_info)(struct s_reader *);
 	int32_t		(*do_ecm)(struct s_reader *, const struct ecm_request_t *, struct s_ecm_answer *);
 	int32_t		(*do_emm)(struct s_reader *, struct emm_packet_t *);
-	void			(*post_process)();
-	int32_t		(*get_emm_type)();
-	void			(*get_emm_filter)();
+	void			(*post_process)(struct s_reader *);
+	int32_t		(*get_emm_type)(struct emm_packet_t *, struct s_reader *);
+	void			(*get_emm_filter)(struct s_reader * rdr, uchar *filter);
 	uint16_t		caids[2];
 };
 

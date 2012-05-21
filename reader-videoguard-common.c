@@ -694,7 +694,9 @@ xx xx xx xx xx xx xx xx xx xx xx xx xx xx xx
 	}
 }
 
-int32_t videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned char CLA, void (*read_tiers)(), int32_t (*docmd)())
+int32_t videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned char CLA,
+	void (*read_tiers)(struct s_reader *),
+	int32_t (*docmd)(struct s_reader *, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff, unsigned char *cta_res))
 {
    unsigned char cta_res[CTA_RES_LEN];
    unsigned char ins42[5] = { CLA, 0x42, 0x00, 0x00, 0xFF };

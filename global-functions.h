@@ -46,21 +46,21 @@ extern void pcsc_close(struct s_reader *pcsc_reader);
 /* ===========================
  *           oscam
  * =========================== */
-extern void cs_exit_oscam();
-extern void cs_restart_oscam();
-extern int32_t cs_get_restartmode();
+extern void cs_exit_oscam(void);
+extern void cs_restart_oscam(void);
+extern int32_t cs_get_restartmode(void);
 extern void clear_account_stats(struct s_auth *account);
-extern void clear_all_account_stats();
-extern void clear_system_stats();
+extern void clear_all_account_stats(void);
+extern void clear_system_stats(void);
 
 extern int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line);
-extern void global_whitelist_read();
+extern void global_whitelist_read(void);
 extern struct s_cacheex_matcher *is_cacheex_matcher_matching(ECM_REQUEST *er, ECM_REQUEST *ecm);
-extern void cacheex_matcher_read();
+extern void cacheex_matcher_read(void);
 
-extern void cacheex_update_peer_id();
+extern void cacheex_update_peer_id(void);
 extern void cacheex_set_peer_id(uint8_t *id);
-extern uint8_t *cc_get_cccam_node_id();
+extern uint8_t *cc_get_cccam_node_id(void);
 
 extern void qboxhd_led_blink(int32_t color, int32_t duration);
 
@@ -71,7 +71,7 @@ extern void add_check(struct s_client *client, int8_t action, void *ptr, int32_t
 extern int32_t reader_init(struct s_reader *);
 extern void reader_nullcard(struct s_reader * reader);
 extern int reader_reset(struct s_reader * reader);
-extern void cs_reload_config();
+extern void cs_reload_config(void);
 extern int32_t recv_from_udpipe(uchar *);
 extern char* username(struct s_client *);
 extern int32_t chk_bcaid(ECM_REQUEST *, CAIDTAB *);
@@ -125,9 +125,9 @@ extern void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp);
  *           oscam-ac
  * =========================== */
 extern void init_ac(void);
-extern void ac_init_stat();
-extern void ac_clear();
-extern void ac_done_stat();
+extern void ac_init_stat(void);
+extern void ac_clear(void);
+extern void ac_done_stat(void);
 extern void ac_do_stat(void);
 extern void ac_init_client(struct s_client *, struct s_auth *);
 extern void ac_chk(struct s_client *,ECM_REQUEST*, int32_t);
@@ -137,13 +137,13 @@ extern void ac_chk(struct s_client *,ECM_REQUEST*, int32_t);
  * =========================== */
 extern int32_t  init_config(void);
 extern int32_t  init_free_userdb(struct s_auth *auth);
-extern struct s_auth *init_userdb();
+extern struct s_auth *init_userdb(void);
 extern int32_t  init_readerdb(void);
 extern void free_reader(struct s_reader *rdr);
 extern int32_t  init_sidtab(void);
 extern void free_sidtab(struct s_sidtab *sidtab);
-extern void init_free_sidtab();
-extern int32_t init_provid();
+extern void init_free_sidtab(void);
+extern int32_t init_provid(void);
 
 extern int32_t  init_srvid(void);
 extern int32_t  init_tierid(void);
@@ -177,24 +177,24 @@ extern void chk_t_lcd(char *token, char *value);
 extern void cs_accounts_chk(void);
 extern void chk_account(const char *token, char *value, struct s_auth *account);
 extern void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab);
-extern int32_t write_services();
-extern int32_t write_userdb();
-extern int32_t write_config();
-extern int32_t write_server();
-extern void write_versionfile();
+extern int32_t write_services(void);
+extern int32_t write_userdb(void);
+extern int32_t write_config(void);
+extern int32_t write_server(void);
+extern void write_versionfile(void);
 extern char *mk_t_caidtab(CAIDTAB *ctab);
 extern char *mk_t_caidvaluetab(CAIDVALUETAB *tab);
 extern char *mk_t_tuntab(TUNTAB *ttab);
 extern char *mk_t_group(uint64_t grp);
 extern char *mk_t_ftab(FTAB *ftab);
-extern char *mk_t_camd35tcp_port();
-extern char *mk_t_cccam_port();
+extern char *mk_t_camd35tcp_port(void);
+extern char *mk_t_cccam_port(void);
 extern char *mk_t_aeskeys(struct s_reader *rdr);
-extern char *mk_t_newcamd_port();
+extern char *mk_t_newcamd_port(void);
 extern char *mk_t_aureader(struct s_auth *account);
 extern char *mk_t_nano(struct s_reader *rdr, uchar flag);
 extern char *mk_t_service( uint64_t sidtabok, uint64_t sidtabno);
-extern char *mk_t_logfile();
+extern char *mk_t_logfile(void);
 extern char *mk_t_iprange(struct s_ip *range);
 extern char *mk_t_ecmwhitelist(struct s_ecmWhitelist *whitelist);
 extern char *mk_t_cltab(CLASSTAB *clstab);
@@ -212,34 +212,34 @@ extern void add_garbage_debug(void *data, char *file, uint16_t line);
 extern void add_garbage(void *data);
 #endif
 extern void start_garbage_collector(int32_t);
-extern void stop_garbage_collector();
+extern void stop_garbage_collector(void);
 
 /* ===========================
  *         oscam-http
  * =========================== */
-extern void http_srv();
+extern void http_srv(void);
 
 /* ===========================
  *         oscam-lcd
  * =========================== */
-extern void start_lcd_thread();
-extern void end_lcd_thread();
+extern void start_lcd_thread(void);
+extern void end_lcd_thread(void);
 
 /* ===========================
  *         arm-led
  * =========================== */
 extern void cs_switch_led(int32_t led, int32_t action);
-extern void arm_led_start_thread();
-extern void arm_led_stop_thread();
+extern void arm_led_start_thread(void);
+extern void arm_led_stop_thread(void);
 
 /* ===========================
  *         oscam-log
  * =========================== */
 extern char *LOG_LIST;
-extern int32_t  cs_init_log();
+extern int32_t  cs_init_log(void);
 extern void cs_reinit_loghist(uint32_t size);
-extern int32_t cs_open_logfiles();
-extern int32_t ac_init_log();
+extern int32_t cs_open_logfiles(void);
+extern int32_t ac_init_log(void);
 
 extern void cs_log_int(uint16_t mask, int8_t lock, const uchar *buf, int32_t n, const char *fmt, ...) __attribute__ ((format (printf, 5, 6)));
 
@@ -263,7 +263,7 @@ extern void log_emm_request(struct s_reader *);
 extern void logCWtoFile(ECM_REQUEST *er, uchar *cw);
 extern void cs_log_config(void);
 extern void cs_close_log(void);
-extern int32_t cs_init_statistics();
+extern int32_t cs_init_statistics(void);
 extern void cs_statistics(struct s_client * client);
 extern void cs_disable_log(int8_t disabled);
 
@@ -300,7 +300,7 @@ extern void reader_do_card_info(struct s_reader * reader);
  * =========================== */
 extern struct s_client *cur_client(void);
 extern int32_t get_threadnum(struct s_client *client);
-extern char *get_tmp_dir();
+extern char *get_tmp_dir(void);
 extern int8_t check_client(struct s_client *client);
 extern void aes_set_key(char *);
 extern void aes_encrypt_idx(struct s_client *, uchar *, int32_t);
@@ -401,20 +401,20 @@ extern int8_t cs_cacheex_maxhop(struct s_client *cl);
 /* ===========================
  *       module-cccshare
  * =========================== */
-extern void init_share();
-extern void done_share();
+extern void init_share(void);
+extern void done_share(void);
 
 /* ===========================
  *         module-stat
  * =========================== */
-extern void init_stat();
+extern void init_stat(void);
 extern int32_t get_best_reader(ECM_REQUEST *er);
 extern void clear_reader_stat(struct s_reader *reader);
 extern void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t rc);
-extern void load_stat_from_file();
+extern void load_stat_from_file(void);
 extern READER_STAT *get_stat(struct s_reader *rdr, STAT_QUERY *q);
 extern void save_stat_to_file(int32_t);
-extern void clear_all_stat();
+extern void clear_all_stat(void);
 extern uint16_t get_betatunnel_caid_to(uint16_t);
 extern void housekeeping_stat(int32_t force);
 extern READER_STAT **get_sorted_stat_copy(struct s_reader *rdr, int32_t reverse, int32_t *size);

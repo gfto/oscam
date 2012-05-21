@@ -123,7 +123,7 @@ static int32_t network_message_send(int32_t handle, uint16_t *netMsgId, uint8_t 
   return send(handle, netbuf, len, 0);
 }
 
-static int32_t send_sid_list()
+static int32_t send_sid_list(void)
 {
  struct s_client *cl = cur_client();
 
@@ -334,7 +334,7 @@ static int32_t network_cmd_no_data_receive(int32_t handle, uint16_t *netMsgId,
   return buffer[2];
 }
 
-void newcamd_reply_ka()
+void newcamd_reply_ka(void)
 {
 	struct s_client *cl = cur_client();
 
@@ -353,7 +353,7 @@ void newcamd_reply_ka()
 	network_cmd_no_data_send(cl->udp_fd, &cl->ncd_msgid, MSG_KEEPALIVE, cl->ncd_skey,COMMTYPE_SERVER);
 }
 
-static int32_t connect_newcamd_server() 
+static int32_t connect_newcamd_server(void)
 {
   int32_t i;
   uint8_t buf[CWS_NETMSGSIZE];
@@ -475,7 +475,7 @@ static int32_t connect_newcamd_server()
   return 0;
 }
 
-static int32_t newcamd_connect()
+static int32_t newcamd_connect(void)
 {
   struct s_client *cl = cur_client();
 
@@ -561,7 +561,7 @@ static FILTER mk_user_au_ftab(struct s_reader *aureader)
   return filt;
 }
 
-static FILTER mk_user_ftab()
+static FILTER mk_user_ftab(void)
 {
   FILTER *psfilt = 0;
   FILTER filt;
@@ -1235,7 +1235,7 @@ static void * newcamd_server(struct s_client *client, uchar *mbuf, int32_t len)
 	return NULL;
 }
 
-void newcamd_idle() {
+void newcamd_idle(void) {
 	struct s_client *client = cur_client();
 	struct s_reader *rdr = client->reader;
 

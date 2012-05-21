@@ -617,7 +617,7 @@ static int32_t oscam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
  *	server functions
  */
 
-static void oscam_ser_disconnect_client()
+static void oscam_ser_disconnect_client(void)
 {
   uchar mbuf[1024];
   struct s_serial_client *serialdata=cur_client()->serialdata;
@@ -635,7 +635,7 @@ static void oscam_ser_disconnect_client()
   serialdata->serial_errors=0;
 }
 
-static void oscam_ser_init_client()
+static void oscam_ser_init_client(void)
 {
   uchar mbuf[4];
   switch(cur_client()->serialdata->oscam_ser_proto)		// sure, does not work in auto-mode
@@ -914,7 +914,7 @@ static void oscam_ser_process_ecm(uchar *buf, int32_t l)
 }
 
 
-static void oscam_ser_server()
+static void oscam_ser_server(void)
 {
   int32_t n;
   uchar mbuf[1024];

@@ -489,7 +489,7 @@ static int32_t dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
   return OK;			//success
 }
 
-static int32_t dre_card_info (void)
+static int32_t dre_card_info (struct s_reader *UNUSED(rdr))
 {
   return OK;
 }

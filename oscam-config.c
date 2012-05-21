@@ -5807,7 +5807,7 @@ int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line)
 //Mapping:
 //m:caid:prov:srvid:pid:chid:ecmlen caidto:provto
 
-static struct s_global_whitelist *global_whitelist_read_int() {
+static struct s_global_whitelist *global_whitelist_read_int(void) {
 	FILE *fp;
 	char token[1024], str1[1024];
 	char type;
@@ -5977,7 +5977,7 @@ struct s_cacheex_matcher *is_cacheex_matcher_matching(ECM_REQUEST *from_er, ECM_
 //validfrom: default=-2000
 //validto: default=4000
 //valid time if found in cache
-static struct s_cacheex_matcher *cacheex_matcher_read_int() {
+static struct s_cacheex_matcher *cacheex_matcher_read_int(void) {
 	FILE *fp;
 	char token[1024];
 	char type;
