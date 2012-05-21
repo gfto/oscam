@@ -511,9 +511,9 @@ endif (CMAKE_COMPILER_IS_GNUCC)
 if (OSCamOperatingSystem MATCHES "Mac OS X")
     add_definitions ("-m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk")
 elseif (OSCAM_SYSTEM_NAME MATCHES "Padre")
-    add_definitions ("-finline-functions -fomit-frame-pointer")
+    add_definitions ("-fomit-frame-pointer")
 elseif (OSCAM_SYSTEM_NAME MATCHES "FriendlyARM")
-    add_definitions ("-finline-functions -fomit-frame-pointer")
+    add_definitions ("-fomit-frame-pointer")
 endif (OSCamOperatingSystem MATCHES "Mac OS X")
 
 # we don't want the '-rdynamic' in the link command
