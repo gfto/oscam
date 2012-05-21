@@ -21,7 +21,7 @@ static int32_t stat_load_save;
 static struct timeb nulltime;
 static time_t last_housekeeping = 0;
 
-void init_stat()
+void init_stat(void)
 {
 	cs_ftime(&nulltime);
 	stat_load_save = -100;
@@ -107,7 +107,7 @@ void get_stat_query(ECM_REQUEST *er, STAT_QUERY *q)
 	q->ecmlen = er->l;
 }
 
-void load_stat_from_file()
+void load_stat_from_file(void)
 {
 	stat_load_save = 0;
 	char buf[256];
@@ -1230,7 +1230,7 @@ void clear_reader_stat(struct s_reader *rdr)
 	ll_clear_data(rdr->lb_stat);
 }
 
-void clear_all_stat()
+void clear_all_stat(void)
 {
 	struct s_reader *rdr;
 	LL_ITER itr = ll_iter_create(configured_readers);

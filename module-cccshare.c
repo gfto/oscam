@@ -24,13 +24,13 @@ LLIST *get_cardlist(uint16_t caid, LLIST **list)
 }
 
 
-LLIST **get_and_lock_sharelist()
+LLIST **get_and_lock_sharelist(void)
 {
 		cs_readlock(&cc_shares_lock);
 		return reported_carddatas;
 }
 
-void unlock_sharelist()
+void unlock_sharelist(void)
 {
 		cs_readunlock(&cc_shares_lock);
 }
@@ -1180,7 +1180,7 @@ int32_t cc_srv_report_cards(struct s_client *cl) {
 	return cl->cc && !cl->kill;
 }
 
-void refresh_shares()
+void refresh_shares(void)
 {
 		update_card_list();
 }
@@ -1300,7 +1300,7 @@ struct cc_card **get_sorted_card_copy(LLIST *cards, int32_t reverse, int32_t *si
 		return (struct cc_card **)ll_sort(cards, compare_cards_by_hop, size);
 }
 
-void init_share() {
+void init_share(void) {
 
 		memset(reported_carddatas, 0, sizeof(reported_carddatas));
 		cs_lock_create(&cc_shares_lock, 200, "cc_shares_lock");
@@ -1321,7 +1321,7 @@ void init_share() {
         pthread_attr_destroy(&attr);
 }            
 
-void done_share() {
+void done_share(void) {
 		if (share_updater_thread) {
 				pthread_cancel(share_updater_thread);
 				share_updater_thread = 0;

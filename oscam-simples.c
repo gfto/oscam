@@ -22,7 +22,7 @@ int32_t get_threadnum(struct s_client *client) {
 }
 
 /* Gets the tmp dir */
-char *get_tmp_dir(){
+char *get_tmp_dir(void) {
   if (cs_tmpdir[0])
     return cs_tmpdir;
 
@@ -991,7 +991,7 @@ uint32_t seed;
 
 /* A fast random number generator. Depends on initialization of seed from init_rnd(). 
    Only use this if you don't need good random numbers (so don't use in security critical situations). */
-uchar fast_rnd() {
+uchar fast_rnd(void) {
 	uint32_t offset = 12923;
 	uint32_t multiplier = 4079;
 
@@ -1000,7 +1000,7 @@ uchar fast_rnd() {
 }
 
 /* Initializes the random number generator and the seed for the fast_rnd() function. */
-void init_rnd() {
+void init_rnd(void) {
 	srand((uint32_t)time((time_t *)NULL));
 	seed = (uint32_t) time((time_t*)0);
 }

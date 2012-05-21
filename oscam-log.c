@@ -96,7 +96,7 @@ static void cs_write_log_int(char *txt)
 	}
 }
 
-int32_t cs_open_logfiles()
+int32_t cs_open_logfiles(void)
 {
 	char *starttext;
 	if(logStarted) starttext = "log switched";
@@ -423,7 +423,7 @@ void logCWtoFile(ECM_REQUEST *er, uchar *cw){
 	fclose(pfCWL);
 }
 
-void cs_log_config()
+void cs_log_config(void)
 {
   uchar buf[20];
 

@@ -1596,7 +1596,7 @@ static void chk_token(char *token, char *value, int32_t tag)
 	}
 }
 
-void init_len4caid()
+void init_len4caid(void)
 {
 	int32_t nr;
 	FILE *fp;
@@ -1675,7 +1675,7 @@ int32_t search_boxkey(uint16_t caid, char *key)
 	return(rc);
 }
 
-int32_t init_config()
+int32_t init_config(void)
 {
 	int32_t tag=TAG_GLOBAL;
 	FILE *fp;
@@ -2105,7 +2105,7 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		fprintf(stderr, "Warning: keyword '%s' in account section not recognized\n",token);
 }
 
-int32_t write_services()
+int32_t write_services(void)
 {
 	int32_t i;
 	FILE *f;
@@ -2159,7 +2159,7 @@ int32_t write_services()
 	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
 }
 
-int32_t write_config()
+int32_t write_config(void)
 {
 	int32_t i;
 	FILE *f;
@@ -2652,7 +2652,7 @@ int32_t write_config()
 	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
 }
 
-int32_t write_userdb()
+int32_t write_userdb(void)
 {
 	FILE *f;
 	struct s_auth *account;
@@ -2832,7 +2832,7 @@ int32_t write_userdb()
   return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
 }
 
-int32_t write_server()
+int32_t write_server(void)
 {
 	int32_t j;
 	char *value;
@@ -3188,7 +3188,7 @@ int32_t write_server()
 #define write_conf(CONFIG_VAR, text) \
 	fprintf(fp, "%-27s %s\n", text ":", config_##CONFIG_VAR() ? "yes" : "no")
 
-void write_versionfile() {
+void write_versionfile(void) {
 #if defined(__CYGWIN__)
 	return;
 #endif
@@ -3267,7 +3267,7 @@ int32_t init_free_userdb(struct s_auth *ptr) {
 	return nro;
 }
 
-struct s_auth *init_userdb()
+struct s_auth *init_userdb(void)
 {
 	struct s_auth *authptr = NULL;
 	int32_t tag = 0, nr = 0, expired = 0, disabled = 0;
@@ -3433,7 +3433,7 @@ void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab)
     fprintf(stderr, "Warning: keyword '%s' in sidtab section not recognized\n",token);
 }
 
-void init_free_sidtab() {
+void init_free_sidtab(void) {
 		struct s_sidtab *nxt, *ptr = cfg.sidtab;
 		while (ptr) {
 				nxt = ptr->next;
@@ -3444,7 +3444,7 @@ void init_free_sidtab() {
 		++cfg_sidtab_generation;
 }
 
-int32_t init_sidtab() {
+int32_t init_sidtab(void) {
 	int32_t nr, nro, nrr;
 	FILE *fp;
 	char *value, *token;
@@ -3511,7 +3511,7 @@ int32_t init_sidtab() {
 }
 
 //Todo #ifdef CCCAM
-int32_t init_provid() {
+int32_t init_provid(void) {
 	int32_t nr;
 	FILE *fp;
 	char *payload, *saveptr1 = NULL, *token;
@@ -3582,7 +3582,7 @@ int32_t init_provid() {
 	return(0);
 }
 
-int32_t init_srvid()
+int32_t init_srvid(void)
 {
 	int32_t nr = 0, i;
 	FILE *fp;
@@ -3745,7 +3745,7 @@ int32_t init_srvid()
 	return(0);
 }
 
-int32_t init_tierid()
+int32_t init_tierid(void)
 {
 	int32_t nr;
 	FILE *fp;
@@ -4831,7 +4831,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 }
 
 #ifdef IRDETO_GUESSING
-int32_t init_irdeto_guess_tab()
+int32_t init_irdeto_guess_tab(void)
 {
   int32_t i, j, skip;
   int32_t b47;
@@ -4945,7 +4945,7 @@ void free_reader(struct s_reader *rdr)
 	add_garbage(rdr);
 }
 
-int32_t init_readerdb()
+int32_t init_readerdb(void)
 {
 	int32_t tag = 0;
 	FILE *fp;
@@ -5030,7 +5030,7 @@ int32_t init_readerdb()
 }
 
 #ifdef CS_ANTICASC
-void init_ac()
+void init_ac(void)
 {
   int32_t nr;
   FILE *fp;
@@ -5292,7 +5292,7 @@ char *mk_t_ftab(FTAB *ftab){
 /*
  * Creates a string ready to write as a token into config or WebIf for the camd35 tcp ports. You must free the returned value through free_mk_t().
  */
-char *mk_t_camd35tcp_port(){
+char *mk_t_camd35tcp_port(void){
 	int32_t i, j, pos = 0, needed = 1;
 
 	/* Precheck to determine how long the resulting string will maximally be (might be a little bit smaller but that shouldn't hurt) */
@@ -5333,7 +5333,7 @@ char *mk_t_camd35tcp_port(){
 /*
  * Creates a string ready to write as a token into config or WebIf for the cccam tcp ports. You must free the returned value through free_mk_t().
  */
-char *mk_t_cccam_port(){
+char *mk_t_cccam_port(void) {
 	int32_t i, pos = 0, needed = CS_MAXPORTS*6+8;
 
 	char *value;
@@ -5419,7 +5419,7 @@ char *mk_t_aeskeys(struct s_reader *rdr){
 /*
  * Creates a string ready to write as a token into config or WebIf for the Newcamd Port. You must free the returned value through free_mk_t().
  */
-char *mk_t_newcamd_port(){
+char *mk_t_newcamd_port(void) {
 	int32_t i, j, k, pos = 0, needed = 1;
 
 	/* Precheck to determine how long the resulting string will maximally be (might be a little bit smaller but that shouldn't hurt) */
@@ -5540,7 +5540,7 @@ char *mk_t_service( uint64_t sidtabok, uint64_t sidtabno){
 /*
  * Creates a string ready to write as a token into config or WebIf for the logfile parameter. You must free the returned value through free_mk_t().
  */
-char *mk_t_logfile(){
+char *mk_t_logfile(void) {
 	int32_t pos = 0, needed = 1;
 	char *value, *dot = "";
 
@@ -5923,7 +5923,7 @@ static struct s_global_whitelist *global_whitelist_read_int(void) {
 	return new_whitelist;
 }
 
-void global_whitelist_read() {
+void global_whitelist_read(void) {
 
 	struct s_global_whitelist *entry, *old_list = cfg.global_whitelist;
 
@@ -6071,7 +6071,7 @@ static struct s_cacheex_matcher *cacheex_matcher_read_int(void) {
 	return new_cacheex_matcher;
 }
 
-void cacheex_matcher_read() {
+void cacheex_matcher_read(void) {
 
 	struct s_cacheex_matcher *entry, *old_list = cfg.cacheex_matcher;
 

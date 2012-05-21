@@ -6,7 +6,7 @@
 //static time_t ac_last_chk;
 static uchar  ac_ecmd5[CS_ECMSTORESIZE];
 
-void ac_clear()
+void ac_clear(void)
 {
 	struct s_client *client;
 	struct s_auth *account;
@@ -21,7 +21,7 @@ void ac_clear()
 		memset(&account->ac_stat, 0, sizeof(account->ac_stat));
 }
 
-void ac_init_stat()
+void ac_init_stat(void)
 {
   ac_clear();
 
@@ -29,7 +29,7 @@ void ac_init_stat()
     cs_exit(0);
 }
 
-void ac_do_stat()
+void ac_do_stat(void)
 {
   int32_t j, idx, exceeds, maxval, prev_deny=0;
 

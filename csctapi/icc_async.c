@@ -205,7 +205,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
  return OK;
 }
 
-int32_t ICC_Async_Init_Locks () {
+int32_t ICC_Async_Init_Locks (void) {
 	// Init device specific locks here, called from init thread
 	// before reader threads are running
 	struct s_reader *rdr;

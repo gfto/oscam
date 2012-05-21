@@ -3627,12 +3627,12 @@ void cc_cleanup(struct s_client *cl) {
 	cc_free(cl);
 }
 
-uint8_t *cc_get_cccam_node_id()
+uint8_t *cc_get_cccam_node_id(void)
 {
 	return cc_node_id;
 }
 
-void cc_update_nodeid()
+void cc_update_nodeid(void)
 {
 	//Partner Detection:
 	init_rnd();

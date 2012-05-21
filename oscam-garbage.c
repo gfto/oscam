@@ -128,7 +128,7 @@ void start_garbage_collector(int32_t debug) {
 	pthread_attr_destroy(&attr);
 }
 
-void stop_garbage_collector()
+void stop_garbage_collector(void)
 {
 	if (garbage_collector_active) {
 		int8_t i;

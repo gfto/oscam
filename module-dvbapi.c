@@ -783,7 +783,7 @@ void dvbapi_process_emm (int32_t demux_index, int32_t filter_num, unsigned char 
 	do_emm(dvbapi_client, &epg);
 }
 
-void dvbapi_read_priority() {
+void dvbapi_read_priority(void) {
 	FILE *fp;
 	char token[128], str1[128];
 	char type;

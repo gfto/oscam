@@ -652,7 +652,7 @@ static void oscam_ser_init_client(void)
   }
 }
 
-static void oscam_ser_disconnect()
+static void oscam_ser_disconnect(void)
 {
   oscam_ser_disconnect_client();
   if (cur_client()->serialdata->connected)

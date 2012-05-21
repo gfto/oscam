@@ -408,7 +408,7 @@ static int32_t tcp_connect(struct s_client *cl)
 
 uint8_t camd35_node_id[8];
 
-void cacheex_update_peer_id()
+void cacheex_update_peer_id(void)
 {
 	int8_t i;
 	for (i=0; i<8; i++)
