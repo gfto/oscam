@@ -33,7 +33,6 @@ macosx-native:
 		USE_PCSC=1 \
 		PCSC_LIB="-framework PCSC" \
 		EXTRA_FLAGS="-m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk" \
-		EXTRA_CFLAGS="-fomit-frame-pointer" \
 		$(MAKEFLAGS)
 
 macosx-libusb:
@@ -42,7 +41,6 @@ macosx-libusb:
 		USE_PCSC=1 \
 		PCSC_LIB="-framework PCSC" \
 		EXTRA_FLAGS="-m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk" \
-		EXTRA_CFLAGS="-fomit-frame-pointer" \
 		$(MAKEFLAGS)
 
 cross-i386-pc-freebsd:
