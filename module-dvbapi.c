@@ -215,7 +215,8 @@ static int32_t dvbapi_detect_api(void) {
 	if (dmx_fd < 0) return 0;
 	close(dmx_fd);
 	selected_box = devnum;
-	selected_api=devices[selected_box].api;
+	if (selected_box > -1)
+		selected_api=devices[selected_box].api;
 
 #ifdef WITH_STAPI
 	if (devnum==4) {
