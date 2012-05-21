@@ -309,7 +309,6 @@ extern void aes_decrypt(struct s_client *, uchar *, int32_t);
 extern int32_t aes_decrypt_from_list(AES_ENTRY *list, uint16_t caid, uint32_t provid,int32_t keyid, uchar *buf, int32_t n);
 extern int32_t aes_present(AES_ENTRY *list, uint16_t caid, uint32_t provid,int32_t keyid);
 extern void parse_aes_keys(struct s_reader *rdr,char *value);
-#define aes_encrypt(b, n) aes_encrypt_idx(cur_client(), b, n)
 extern char *remote_txt(void);
 extern char *trim(char *);
 extern char *strtolower(char *);

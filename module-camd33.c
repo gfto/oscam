@@ -11,7 +11,7 @@ static int32_t camd33_send(uchar *buf, int32_t ml)
   memset(buf+ml, 0, l-ml);
   cs_ddump_mask(D_CLIENT, buf, l, "send %d bytes to client", l);
   if (cur_client()->crypted)
-    aes_encrypt(buf, l);
+    aes_encrypt_idx(cur_client(), buf, l);
   return(send(cur_client()->pfd, buf, l, 0));
 }
 
@@ -23,7 +23,7 @@ static int32_t camd33_recv(struct s_client * client, uchar *buf, int32_t l)
   {
     client->last=time((time_t *) 0);
     if (client->crypted)
-      aes_decrypt(client, buf, n);
+      aes_encrypt_idx(cur_client(), buf, n);
   }
   cs_ddump_mask(D_CLIENT, buf, n, "received %d bytes from client", n);
   return(n);
