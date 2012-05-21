@@ -133,8 +133,6 @@ static int32_t chk_ser_srvid(struct s_client *cl, uint16_t caid, uint16_t sid, u
   return(rc);
 }
 
-static void oscam_ser_disconnect(void);
-
 static void oscam_wait_ser_fork(void)
 {
     pthread_mutex_lock(&mutex);

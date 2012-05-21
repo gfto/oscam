@@ -26,7 +26,6 @@
 #define _ICC_ASYNC_
 
 #include "atr.h"
-#include "icc_async_exports.h"
 
 /*
  * Exported constants definition
@@ -38,8 +37,13 @@
 #undef ERROR
 #endif
 
+#ifndef OK
 #define OK		0
+#endif
+
+#ifndef ERROR
 #define ERROR	1
+#endif
 
 #define ATR_TIMEOUT			1000
 #define DEFAULT_BAUDRATE	9600

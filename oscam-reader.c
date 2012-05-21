@@ -4,8 +4,6 @@
 
 int32_t logfd = 0;
 
-void reader_do_idle(struct s_reader * reader);
-
 void cs_ri_brk(struct s_reader * reader, int32_t flag)
 {
   if (flag)

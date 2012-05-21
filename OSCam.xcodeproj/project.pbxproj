@@ -46,7 +46,6 @@
 		93B819FF124D484C00E9DF68 /* defines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = defines.h; path = /usr/src/Dev/oscam/trunk/csctapi/defines.h; sourceTree = "<absolute>"; };
 		93B81A00124D484C00E9DF68 /* icc_async.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = icc_async.c; path = /usr/src/Dev/oscam/trunk/csctapi/icc_async.c; sourceTree = "<absolute>"; };
 		93B81A01124D484C00E9DF68 /* icc_async.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = icc_async.h; path = /usr/src/Dev/oscam/trunk/csctapi/icc_async.h; sourceTree = "<absolute>"; };
-		93B81A02124D484C00E9DF68 /* icc_async_exports.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = icc_async_exports.h; path = /usr/src/Dev/oscam/trunk/csctapi/icc_async_exports.h; sourceTree = "<absolute>"; };
 		93B81A03124D484C00E9DF68 /* ifd_azbox.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ifd_azbox.c; path = /usr/src/Dev/oscam/trunk/csctapi/ifd_azbox.c; sourceTree = "<absolute>"; };
 		93B81A04124D484C00E9DF68 /* ifd_azbox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ifd_azbox.h; path = /usr/src/Dev/oscam/trunk/csctapi/ifd_azbox.h; sourceTree = "<absolute>"; };
 		93B81A05124D484C00E9DF68 /* ifd_cool.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ifd_cool.c; path = /usr/src/Dev/oscam/trunk/csctapi/ifd_cool.c; sourceTree = "<absolute>"; };
@@ -319,7 +318,6 @@
 				93B819FF124D484C00E9DF68 /* defines.h */,
 				93B81A00124D484C00E9DF68 /* icc_async.c */,
 				93B81A01124D484C00E9DF68 /* icc_async.h */,
-				93B81A02124D484C00E9DF68 /* icc_async_exports.h */,
 				93B81A03124D484C00E9DF68 /* ifd_azbox.c */,
 				93B81A04124D484C00E9DF68 /* ifd_azbox.h */,
 				93B81A05124D484C00E9DF68 /* ifd_cool.c */,
