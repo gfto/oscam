@@ -162,8 +162,8 @@ static void do_emm_from_file(struct s_reader * reader)
       	return;
    }
 
-   fread(eptmp, sizeof(EMM_PACKET), 1, fp);
-   if (ferror(fp)) {
+   size_t ret = fread(eptmp, sizeof(EMM_PACKET), 1, fp);
+   if (ret < 1 && ferror(fp)) {
         cs_log("ERROR: Can't read EMM from file '%s' (errno=%d %s)", token, errno, strerror(errno));
         free(eptmp);
         fclose(fp);
