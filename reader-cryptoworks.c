@@ -162,7 +162,7 @@ static int32_t cryptoworks_disable_pin(struct s_reader * reader)
   return OK;
 }
 
-static int32_t cryptoworks_card_init(struct s_reader * reader, ATR newatr)
+static int32_t cryptoworks_card_init(struct s_reader * reader, ATR *newatr)
 {
   get_atr;
   def_resp;

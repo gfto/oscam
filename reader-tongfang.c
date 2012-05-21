@@ -29,7 +29,7 @@ static int32_t tongfang_read_data(struct s_reader *reader, uchar size, uchar *ct
   return(cta_lr - 2);
 }
 
-static int32_t tongfang_card_init(struct s_reader *reader, ATR newatr)
+static int32_t tongfang_card_init(struct s_reader *reader, ATR *newatr)
 {
   static const uchar begin_cmd[] = {0x00,0xa4,0x04,0x00,0x05,0xf9,0x5a,0x54,0x00,0x06};
   static const uchar get_serial_cmd[] = {0x80,0x46,0x00,0x00,0x04,0x01,0x00,0x00,0x04};

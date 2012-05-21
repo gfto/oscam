@@ -170,8 +170,9 @@ void set_known_card_info(struct s_reader * reader, const unsigned char * atr, co
   };
 
   int32_t i=0;
-  ATR newatr;
-  ATR_InitFromArray(&newatr, atr, *atr_size);
+  ATR atrdata;
+  ATR *newatr = &atrdata;
+  ATR_InitFromArray(newatr, atr, *atr_size);
   get_hist;
 
   ATR tableatr;

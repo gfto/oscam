@@ -97,7 +97,7 @@ static void read_tiers(struct s_reader *reader)
   }
 }
 
-static int32_t videoguard12_card_init(struct s_reader *reader, ATR newatr)
+static int32_t videoguard12_card_init(struct s_reader *reader, ATR *newatr)
 {
 
   get_hist;

@@ -138,7 +138,7 @@ static int32_t dre_set_provider_info (struct s_reader * reader)
   return OK;
 }
 
-static int32_t dre_card_init (struct s_reader * reader, ATR newatr)
+static int32_t dre_card_init (struct s_reader * reader, ATR *newatr)
 {
 	get_atr;
   def_resp;

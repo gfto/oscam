@@ -621,7 +621,7 @@ static int32_t GetDataType(struct s_reader * reader, unsigned char dt, int32_t l
   	return OK;
 }
 
-static int32_t nagra2_card_init(struct s_reader * reader, ATR newatr)
+static int32_t nagra2_card_init(struct s_reader * reader, ATR *newatr)
 {
 	get_atr;
 	def_resp;

@@ -223,7 +223,7 @@ void reader_card_info(struct s_reader * reader)
 }
 
 #ifdef WITH_CARDREADER
-static int32_t reader_get_cardsystem(struct s_reader * reader, ATR atr)
+static int32_t reader_get_cardsystem(struct s_reader * reader, ATR *atr)
 {
 	int32_t i;
 	for (i=0; i<CS_MAX_MOD; i++) {
@@ -268,12 +268,12 @@ int32_t reader_reset(struct s_reader * reader)
     if (reader->mode != -1) {
       Azbox_SetMode(reader->mode);
       if (!reader_activate_card(reader, &atr, 0)) return(0);
-      ret = reader_get_cardsystem(reader, atr);
+      ret = reader_get_cardsystem(reader, &atr);
     } else {
       for (i = 0; i < AZBOX_MODES; i++) {
         Azbox_SetMode(i);
         if (!reader_activate_card(reader, &atr, 0)) return(0);
-        ret = reader_get_cardsystem(reader, atr);
+        ret = reader_get_cardsystem(reader, &atr);
         if (ret)
           break;
       }
@@ -283,7 +283,7 @@ int32_t reader_reset(struct s_reader * reader)
   uint16_t deprecated;
 	for (deprecated = reader->deprecated; deprecated < 2; deprecated++) {
 		if (!reader_activate_card(reader, &atr, deprecated)) break;
-		ret = reader_get_cardsystem(reader, atr);
+		ret = reader_get_cardsystem(reader, &atr);
 		if (ret)
 			break;
 		if (!deprecated)

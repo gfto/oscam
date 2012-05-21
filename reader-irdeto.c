@@ -267,7 +267,7 @@ static int32_t irdeto_card_init_provider(struct s_reader * reader)
 
 
 
-static int32_t irdeto_card_init(struct s_reader * reader, ATR newatr)
+static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 {
 	def_resp;
 	get_atr;

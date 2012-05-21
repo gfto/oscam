@@ -33,7 +33,7 @@ static int32_t read_record(struct s_reader * reader, const uchar *cmd, const uch
   return(cta_lr-2);
 }
 
-static int32_t conax_card_init(struct s_reader * reader, ATR newatr)
+static int32_t conax_card_init(struct s_reader * reader, ATR *newatr)
 {
   unsigned char cta_res[CTA_RES_LEN];
   int32_t i, j, n;

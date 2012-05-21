@@ -210,7 +210,7 @@ static int32_t unlock_parental(struct s_reader * reader)
 	return 0;
 }
 
-static int32_t viaccess_card_init(struct s_reader * reader, ATR newatr)
+static int32_t viaccess_card_init(struct s_reader * reader, ATR *newatr)
 {
 	get_atr;
 	def_resp;

@@ -120,7 +120,7 @@ static const uchar cmd_sub_info2[] = { 0xDE, 0x1E, 0x00, 0x00, 0x2B, 0x00 };
 
 #define LOG_PREFIX "[bulcrypt] "
 
-static int32_t bulcrypt_card_init(struct s_reader *reader, ATR newatr)
+static int32_t bulcrypt_card_init(struct s_reader *reader, ATR *newatr)
 {
 	int i;
 	char tmp[1024];
