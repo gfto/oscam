@@ -41,11 +41,11 @@ endif (HAVE_LIBUSB AND HAVE_PTHREAD AND HAVE_LIBRT OR HAVE_LIBRT_STATIC)
 
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    add_definitions ("-Winline -Werror -s -m32")
+    add_definitions ("-Werror -s -m32")
     set (CMAKE_C_FLAGS_DEBUG "-O0 -ggdb")
     set (CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb")
 else (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    add_definitions ("-Winline -Werror")
+    add_definitions ("-Werror")
     set (CMAKE_C_FLAGS "-O2 -finline-functions -fomit-frame-pointer -s")
     set (CMAKE_C_FLAGS_DEBUG "-O0 -g")
     set (CMAKE_CXX_FLAGS_DEBUG "-O0 -g")

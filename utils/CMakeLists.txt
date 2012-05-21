@@ -275,9 +275,9 @@ endif (OSCamOperatingSystem MATCHES "Linux")
 
 # some optimisations
 if (OSCamOperatingSystem MATCHES "Mac OS X")
-add_definitions ("-Winline -Wall -Wextra -m32")
+add_definitions ("-Wall -Wextra -m32")
 else (OSCamOperatingSystem MATCHES "Mac OS X")
-add_definitions ("-O2 -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer")
+add_definitions ("-O2 -Wall -Wextra -finline-functions -fomit-frame-pointer")
 endif (OSCamOperatingSystem MATCHES "Mac OS X")
 
 # we don't want the '-rdynamic' in the link command
