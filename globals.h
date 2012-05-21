@@ -1114,6 +1114,7 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t			detect;
 	int32_t			mhz;							// actual clock rate of reader in 10khz steps
 	int32_t			cardmhz;						// standard clock speed your card should have in 10khz steps; normally 357 but for Irdeto cards 600
+	int32_t			divider;						// PLL divider for internal readers
 	int32_t			r_port;
 	char			r_usr[64];
 	char			r_pwd[64];

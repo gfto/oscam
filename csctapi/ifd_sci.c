@@ -44,7 +44,7 @@ int32_t Sci_Reset (struct s_reader * reader, ATR * atr)
 	if (reader->mhz > 2000) { // PLL based reader
 		params.ETU = 372;
 		params.EGT = 0;
-		int32_t divider = 0; // calculate divider for 1 mhz, calculate PLL divider ugly fast fix -> FIX ME!!!!
+		int32_t divider = 0; // calculate divider for 1 Mhz
 			double cardclock1, cardclock2;
 
 			while (divider != reader->mhz/100){
