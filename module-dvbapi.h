@@ -89,27 +89,8 @@ struct s_emmpids
 	uint8_t type;
 };
 
-#ifdef WITH_STAPI
-struct STDEVICE
-{
-	char name[20];
-	uint32_t 	SessionHandle;
-	uint32_t	SignalHandle;
-	pthread_t thread;
-	struct filter_s demux_fd[MAX_DEMUX][MAX_FILTER];
-};
-
-struct read_thread_param
-{
-	int32_t id;
-	struct s_client *cli;
-};
-
-#define BUFFLEN	1024
-#define PROCDIR	"/proc/stpti4_core/"
 #define PTINUM 10
 #define SLOTNUM 20
-#endif
 
 typedef struct demux_s
 {
@@ -360,42 +341,6 @@ int32_t coolapi_read(dmx_t * dmx, uint32_t len);
 int32_t coolapi_write_cw(int32_t mask, uint16_t *STREAMpids, int32_t count, ca_descr_t * ca_descr);
 int32_t coolapi_set_pid (int32_t demux_id, int32_t num, int32_t index, int32_t pid);
 void coolapi_close_all();
-#endif
-
-#ifdef WITH_STAPI
-static int32_t stapi_open(void);
-static int32_t stapi_set_filter(int32_t demux_id, uint16_t pid, uchar *filter, uchar *mask, int32_t num, char *pmtfile);
-static int32_t stapi_remove_filter(int32_t demux_id, int32_t num, char *pmtfile);
-static int32_t stapi_set_pid(int32_t demux_id, int32_t num, int32_t index, uint16_t pid, char *pmtfile);
-static int32_t stapi_write_cw(int32_t demux_id, uchar *cw, uint16_t *, int32_t, char *pmtfile);
-static int32_t stapi_do_set_filter(int32_t demux_id, FILTERTYPE *filter, uint16_t *pids, int32_t pidcount, uchar *filt, uchar *mask, int32_t dev_id);
-static int32_t stapi_do_remove_filter(int32_t demux_id, FILTERTYPE *filter, int32_t dev_id);
-static void *stapi_read_thread(void *);
-
-uint32_t oscam_stapi_Capability(char *name);
-char *oscam_stapi_LibVersion(void);
-uint32_t oscam_stapi_Open(char *name, uint32_t *sessionhandle);
-uint32_t oscam_stapi_SignalAllocate(uint32_t sessionhandle, uint32_t *signalhandle);
-uint32_t oscam_stapi_FilterAllocate(uint32_t sessionhandle, uint32_t *filterhandle);
-uint32_t oscam_stapi_SlotInit(uint32_t sessionhandle, uint32_t signalhandle, uint32_t *bufferhandle, uint32_t *slothandle, uint16_t pid);
-uint32_t oscam_stapi_FilterSet(uint32_t filterhandle, uchar *filt, uchar *mask);
-uint32_t oscam_stapi_FilterAssociate(uint32_t filterhandle, uint32_t slothandle);
-uint32_t oscam_stapi_SlotDeallocate(uint32_t slothandle);
-uint32_t oscam_stapi_BufferDeallocate(uint32_t bufferhandle);
-uint32_t oscam_stapi_FilterDeallocate(uint32_t filterhandle);
-uint32_t oscam_stapi_Close(uint32_t sessionhandle);
-uint32_t oscam_stapi_CheckVersion(void);
-uint32_t oscam_stapi_DescramblerAssociate(uint32_t deschandle, uint32_t slot);
-uint32_t oscam_stapi_DescramblerDisassociate(uint32_t deschandle, uint32_t slot);
-uint32_t oscam_stapi_DescramblerAllocate(uint32_t sessionhandle, uint32_t *deschandle);
-uint32_t oscam_stapi_DescramblerDeallocate(uint32_t deschandle);
-uint32_t oscam_stapi_DescramblerSet(uint32_t deschandle, int32_t parity, uchar *cw);
-uint32_t oscam_stapi_SignalWaitBuffer(uint32_t signalhandle, uint32_t *qbuffer, int32_t timeout);
-uint32_t oscam_stapi_BufferReadSection(uint32_t bufferhandle, uint32_t *filterlist, int32_t maxfilter, uint32_t *filtercount, int32_t *crc, uchar *buf, int32_t bufsize, uint32_t *size);
-uint32_t oscam_stapi_SignalAbort(uint32_t signalhandle);
-uint32_t oscam_stapi_PidQuery(char *name, uint16_t pid);
-uint32_t oscam_stapi_BufferFlush(uint32_t bufferhandle);
-uint32_t oscam_stapi_SlotClearPid(uint32_t slot);
 #endif
 
 void dvbapi_stop_descrambling(int);
