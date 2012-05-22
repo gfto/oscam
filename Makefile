@@ -187,6 +187,7 @@ CSCTAPI_OBJ = \
 	$(CSCTAPI_LIB)(csctapi/ifd_sci.o) \
 	$(CSCTAPI_LIB)(csctapi/ifd_smargo.o) \
 	$(CSCTAPI_LIB)(csctapi/ifd_smartreader.o) \
+	$(CSCTAPI_LIB)(csctapi/ifd_stapi.o) \
 	$(CSCTAPI_LIB)(csctapi/io_serial.o) \
 	$(CSCTAPI_LIB)(csctapi/protocol_t0.o) \
 	$(CSCTAPI_LIB)(csctapi/protocol_t1.o) \
