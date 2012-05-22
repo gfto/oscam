@@ -179,6 +179,7 @@ CSCTAPI_DEP = $(GLOBAL_DEP) csctapi/defines.h csctapi/atr.h
 CSCTAPI_OBJ = \
 	$(CSCTAPI_LIB)(csctapi/atr.o) \
 	$(CSCTAPI_LIB)(csctapi/icc_async.o) \
+	$(CSCTAPI_LIB)(csctapi/ifd_azbox.o) \
 	$(CSCTAPI_LIB)(csctapi/ifd_cool.o) \
 	$(CSCTAPI_LIB)(csctapi/ifd_mp35.o) \
 	$(CSCTAPI_LIB)(csctapi/ifd_pcsc.o) \

@@ -198,3 +198,12 @@ cross-armLE-unknown-linux:
 		$(MAKEFLAGS)
 
 cross-armLE-unkown-linux: cross-armLE-unknown-linux
+
+azbox:
+	$(MAKE) --no-print-directory \
+		CROSS=mipsel-linux-uclibc- \
+		CONF_DIR=/PLUGINS/OpenXCAS/oscamCAS \
+		EXTRA_LIBS="-Lopenxcas -lOpenXCASAPI" \
+		EXTRA_FLAGS=-DAZBOX \
+		EXTRA_TARGET=-azbox \
+		$(MAKEFLAGS)
