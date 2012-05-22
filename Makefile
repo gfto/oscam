@@ -453,6 +453,17 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
    make distclean - Executes clean target and also removes binary files\n\
                     located in Distribution/ directory.\n\
 \n\
+ Build system files:\n\
+   config.sh      - OSCam configuration. Run 'config.sh --help' to see\n\
+                    available parameters or 'make config' to start GUI\n\
+                    configuratior.\n\
+   Makefile       - Main build system file.\n\
+   Makefile.extra - Contains predefined targets.\n\
+   Makefile.local - This file is included in Makefile and allows creation\n\
+                    of local build system targets. See Makefile.extra for\n\
+                    examples.\n\
+   CMakeLists.txt - These files are used by 'cmake' build system.\n\
+\n\
  Examples:\n\
    Build OSCam for SH4 (the compilers are in the path):\n\
      make CROSS=sh4-linux-\n\n\
