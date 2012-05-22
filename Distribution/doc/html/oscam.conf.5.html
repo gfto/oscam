@@ -216,7 +216,7 @@ value to delay cached requests, default:0
 
 <B>max_cache_time</B> = <B>seconds</B>
 <DL COMPACT><DT><DD>
-maximum time CWs resist in cache after 1st client request, default:15
+maximum time CWs resist in cache after 1st client request, the time must be 2 seconds highter than the parameter <B>clienttimeout</B>, default:15
 </DL>
 
 <P>
@@ -937,8 +937,10 @@ user name for radegast client
 
 <P>
 
-<B>device</B> = <B>&lt;user&gt;@&lt;device&gt;[:baud][?option1=value1[&amp;option2=value2]]</B>
+<B>device</B> = <B>&lt;user&gt;</B>@<B>&lt;device&gt;</B>[:<B>baud</B>][?<B>option1</B>=<B>value1</B>[&amp;<B>option2</B>=<B>value2</B>]...]
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[;<B>&lt;user&gt;</B>@<B>&lt;device&gt;</B>[:<B>baud</B>][?<B>option1</B>=<B>value1</B>[&amp;<B>option2</B>=<B>value2</B>]...]]...
 <DL COMPACT><DT><DD>
+<P>
 parameters:
 <BR>&nbsp;<B>user</B>&nbsp;&nbsp;&nbsp;=&nbsp;<B>account</B>
 <BR>&nbsp;<B>device</B>&nbsp;=&nbsp;<B>serial&nbsp;device&nbsp;name</B>
