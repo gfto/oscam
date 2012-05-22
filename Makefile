@@ -483,6 +483,8 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
      make V=1 CC_OPTS=-Os\n\n\
    Build and set oscam file name:\n\
      make OSCAM_BIN=oscam\n\n\
+   Build and set oscam file name depending on revision:\n\
+     make OSCAM_BIN=oscam-\`./config.sh -r\`\n\n\
 "
 
 simple: all
