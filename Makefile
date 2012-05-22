@@ -483,3 +483,4 @@ debug:
 		$(MAKEFLAGS)
 
 -include Makefile.extra
+-include Makefile.local
