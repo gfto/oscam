@@ -488,6 +488,8 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 
 	STAT_QUERY q;
 	get_stat_query(er, &q);
+	if (er->ocaid)
+		q.caid = er->ocaid;
 
 	time_t ctime = time(NULL);
 	
