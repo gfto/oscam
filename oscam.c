@@ -1923,8 +1923,6 @@ static void update_chid(ECM_REQUEST *er)
 {
 	if( (er->caid>>8) == 0x06 && !er->chid && er->l > 7)
 		er->chid = (er->ecm[6]<<8)|er->ecm[7];
-        if( (er->caid>>8) == 0x17 && !er->chid && er->l > 5)
-                er->chid = (er->ecm[3]|er->ecm[4]<<8);
 }
 
 #ifdef CS_CACHEEX

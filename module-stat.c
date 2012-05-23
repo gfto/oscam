@@ -86,7 +86,6 @@ static uint32_t get_subid(ECM_REQUEST *er)
 		case 0x01: id = b2i(2, er->ecm+7); break;
 		case 0x06: id = b2i(2, er->ecm+6); break;
 		case 0x09: id = b2i(2, er->ecm+11); break;
-		case 0x17: id = er->ecm[3]|er->ecm[4]<<8; break;
 		case 0x4A: // DRE-Crypt, Bulcrypt, others?
 			if (er->caid != 0x4AEE) // Bulcrypt
 				id = er->ecm[7];
@@ -488,8 +487,6 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 
 	STAT_QUERY q;
 	get_stat_query(er, &q);
-	if (er->ocaid)
-		q.caid = er->ocaid;
 
 	time_t ctime = time(NULL);
 	
@@ -884,7 +881,8 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			
 			//if we needs stats, we send 2 ecm requests: 18xx and 17xx:
 			if (needs_stats_nagra || needs_stats_beta) {
-				cs_debug_mask(D_LB, "loadbalancer-betatunnel %04X:%04X needs more statistics...", er->caid, caid_to);
+				cs_debug_mask(D_LB, "loadbalancer-betatunnel %04X:%04X (%d/%d) needs more statistics...", er->caid, caid_to, 
+				needs_stats_nagra, needs_stats_beta);
 				if (needs_stats_beta) {
 					//Duplicate Ecms for gettings stats:
 //					ECM_REQUEST *converted_er = get_ecmtask();
