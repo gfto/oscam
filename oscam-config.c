@@ -427,7 +427,7 @@ void chk_t_global(const char *token, char *value)
 {
 	char *saveptr1 = NULL;
 
-#if defined(QBOXHD) || defined(__ARM__)
+#if defined(QBOXHD) || defined(__arm__)
 	if (!strcmp(token, "enableled")) {
 		cfg.enableled = strToIntVal(value, 0);
 		return;
@@ -2255,7 +2255,7 @@ int32_t write_config(void)
 	if (cfg.cacheex_enable_stats != 0 || cfg.http_full_cfg)
 		fprintf_conf(f, "cacheexenablestats", "%d\n", cfg.cacheex_enable_stats);
 #endif
-#if defined(QBOXHD) || defined(__ARM__)
+#if defined(QBOXHD) || defined(__arm__)
 	if (cfg.enableled || cfg.http_full_cfg)
 		fprintf_conf(f, "enableled", "%d\n", cfg.enableled);
 #endif

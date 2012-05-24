@@ -5,7 +5,7 @@
 #  define WITH_LIBCRYPTO
 #endif
 
-#if defined(__ARM__) || defined(__SH4__) || defined(__MIPS__) || defined(__MIPSEL__) || defined(__powerpc__)
+#if defined(__arm__) || defined(__SH4__) || defined(__MIPS__) || defined(__MIPSEL__) || defined(__powerpc__)
 #  define CS_EMBEDDED 1
 #endif
 

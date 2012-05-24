@@ -373,7 +373,7 @@ enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE, E2_
 
 #define CTA_RES_LEN 512
 
-#if defined(__ARM__)
+#if defined(__arm__)
 #define  LED1A 		0
 #define  LED1B 		1
 #define  LED2 		2
@@ -1628,7 +1628,7 @@ struct s_config
 	struct		s_cpmap *cpmap;
 #endif
 
-#if defined(QBOXHD) || defined(__ARM__)
+#if defined(QBOXHD) || defined(__arm__)
 	int8_t enableled; 						// 0=disabled led, 1=enable led for routers, 2=enable qboxhd led
 #endif
 #ifdef LCDSUPPORT

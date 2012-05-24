@@ -1804,7 +1804,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#cacheexenablestats##TPLHELPSUFFIX##Cacheex write statistic:</A></TD><TD><SELECT NAME=\"cacheexenablestats\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##CACHEEXSTATSSELECTED##>ON</OPTION></SELECT></TD></TR>\n"
 #endif
 
-#if defined(QBOXHD) || defined(__ARM__)
+#if defined(QBOXHD) || defined(__arm__)
 #define TPLENABLELEDBIT "\
 			<TR><TD>##TPLHELPPREFIX##conf#enableled##TPLHELPSUFFIX##Enable LED:</A></TD><TD><SELECT NAME=\"enableled\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##ENABLELEDSELECTED1##>For Router</OPTION><OPTION VALUE=\"2\" ##ENABLELEDSELECTED2##>For QboxHD</OPTION></SELECT></TD></TR>\n"
 #endif
@@ -2482,7 +2482,7 @@ char *tpl[]={
 	,"CONFIGMENUANTICASC"
 	,"FILEMENUANTICASC"
 #endif
-#if defined(QBOXHD) || defined(__ARM__)
+#if defined(QBOXHD) || defined(__arm__)
 	,"ENABLELEDBIT"
 #endif
 #if defined(QBOXHD_LED) || defined(CS_LED) 
@@ -2659,7 +2659,7 @@ char *tplmap[]={
 	,TPLCONFIGMENUANTICASC
 	,TPLFILEMENUANTICASC
 #endif
-#if defined(QBOXHD) || defined(__ARM__)
+#if defined(QBOXHD) || defined(__arm__)
 	,TPLENABLELEDBIT
 #endif
 #if defined(QBOXHD_LED) || defined(CS_LED) 
