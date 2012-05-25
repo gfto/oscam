@@ -38,9 +38,8 @@ possible variables:
 
 use a value as prefix to hide variable with this value, control characters will be escaped by "\\"
 
- expample: ecmfmt = c&0p/i/d/s/l:h
-           (hide provider ID if 0)
-
+ example: ecmfmt = c&0p/i/d/s/l:h
+          (hide provider ID if 0)
 .RE
 .PP
 \fBloghistorysize\fP = \fBbytes\fP
@@ -946,7 +945,22 @@ fake delay time, default:1000, minimum value is 100, maximum value is 3000
 .RS 3n
 how many samples should be penalized, default:8
 .RE
+.SH CACHE EXCHANGE LOGGING
+.TP 3n
+\(bu
+reader stages
+
+ \fB1\fP = cacheex (=1) reader (\fBC\fP)
+ \fB2\fP = local SCs (\fBL\fP)
+ \fB3\fP = other reader / proxies (\fBP\fP)
+ \fB4\fP = fallback reader (\fBF\fP)
+.TP 3n
+\(bu
+logging format
+
+ stage/requested/chosen/possible
 .SH MONITOR
+
 monitor commands:
 .TP 3n
 \(bu

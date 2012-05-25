@@ -57,9 +57,8 @@ possible variables:
 <P>
 use a value as prefix to hide variable with this value, control characters will be escaped by &quot;\&quot;
 <P>
-<BR>&nbsp;expample:&nbsp;ecmfmt&nbsp;=&nbsp;c&amp;0p/i/d/s/l:h
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(hide&nbsp;provider&nbsp;ID&nbsp;if&nbsp;0)
-<P>
+<BR>&nbsp;example:&nbsp;ecmfmt&nbsp;=&nbsp;c&amp;0p/i/d/s/l:h
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(hide&nbsp;provider&nbsp;ID&nbsp;if&nbsp;0)
 </DL>
 
 <P>
@@ -1275,8 +1274,25 @@ how many samples should be penalized, default:8
 </DL>
 
 <A NAME="lbAT">&nbsp;</A>
+<H2>CACHE EXCHANGE LOGGING</H2>
+
+<DL COMPACT>
+<DT>&bull;<DD>
+reader stages
+<P>
+<BR>&nbsp;<B>1</B>&nbsp;=&nbsp;cacheex&nbsp;(=1)&nbsp;reader&nbsp;(<B>C</B>)
+<BR>&nbsp;<B>2</B>&nbsp;=&nbsp;local&nbsp;SCs&nbsp;(<B>L</B>)
+<BR>&nbsp;<B>3</B>&nbsp;=&nbsp;other&nbsp;reader&nbsp;/&nbsp;proxies&nbsp;(<B>P</B>)
+<BR>&nbsp;<B>4</B>&nbsp;=&nbsp;fallback&nbsp;reader&nbsp;(<B>F</B>)
+<DT>&bull;<DD>
+logging format
+<P>
+<BR>&nbsp;stage/requested/chosen/possible
+</DL>
+<A NAME="lbAU">&nbsp;</A>
 <H2>MONITOR</H2>
 
+<P>
 monitor commands:
 <DL COMPACT>
 <DT>&bull;<DD>
@@ -1368,7 +1384,7 @@ show OSCam version
 <P>
 show all valid monitor commands
 </DL>
-<A NAME="lbAU">&nbsp;</A>
+<A NAME="lbAV">&nbsp;</A>
 <H2>WEB INTERFACE</H2>
 
 <DL COMPACT>
@@ -1380,7 +1396,7 @@ own template request the orignal template with the non-linked page
 <B>savetemplates.html</B>. Store your own template in the directory specified 
 by <B>httptpl</B>. 
 </DL>
-<A NAME="lbAV">&nbsp;</A>
+<A NAME="lbAW">&nbsp;</A>
 <H2>CACHING</H2>
 
 types of ECM caching:
@@ -1394,7 +1410,7 @@ ECM and CW in cache already.
 <P>
 ECM and checksum in cache already.
 </DL>
-<A NAME="lbAW">&nbsp;</A>
+<A NAME="lbAX">&nbsp;</A>
 <H2>EXAMPLES</H2>
 
 <BR>&nbsp;[global]
@@ -1434,7 +1450,7 @@ ECM and checksum in cache already.
 <BR>&nbsp;hostname&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;host.example.com
 <BR>&nbsp;port&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;56789
 <BR>&nbsp;password&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;password4
-<A NAME="lbAX">&nbsp;</A>
+<A NAME="lbAY">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="/cgi-bin/man/man2html?1+list_smargo">list_smargo</A></B>(1), <B><A HREF="/cgi-bin/man/man2html?1+oscam">oscam</A></B>(1), <B><A HREF="/cgi-bin/man/man2html?5+oscam.ac">oscam.ac</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.cacheex">oscam.cacheex</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.cert">oscam.cert</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.dvbapi">oscam.dvbapi</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.guess">oscam.guess</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.ird">oscam.ird</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.provid">oscam.provid</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.server">oscam.server</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.services">oscam.services</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.srvid">oscam.srvid</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.tiers">oscam.tiers</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.user">oscam.user</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.whitelist">oscam.whitelist</A></B>(5)
@@ -1463,11 +1479,12 @@ ECM and checksum in cache already.
 <DT><A HREF="#lbAR">The [dvbapi] section</A><DD>
 <DT><A HREF="#lbAS">The [anticasc] section</A><DD>
 </DL>
-<DT><A HREF="#lbAT">MONITOR</A><DD>
-<DT><A HREF="#lbAU">WEB INTERFACE</A><DD>
-<DT><A HREF="#lbAV">CACHING</A><DD>
-<DT><A HREF="#lbAW">EXAMPLES</A><DD>
-<DT><A HREF="#lbAX">SEE ALSO</A><DD>
+<DT><A HREF="#lbAT">CACHE EXCHANGE LOGGING</A><DD>
+<DT><A HREF="#lbAU">MONITOR</A><DD>
+<DT><A HREF="#lbAV">WEB INTERFACE</A><DD>
+<DT><A HREF="#lbAW">CACHING</A><DD>
+<DT><A HREF="#lbAX">EXAMPLES</A><DD>
+<DT><A HREF="#lbAY">SEE ALSO</A><DD>
 </DL>
 </BODY>
 </HTML>

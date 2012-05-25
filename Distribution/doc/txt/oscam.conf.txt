@@ -34,9 +34,8 @@ DESCRIPTIONS
 
 	  use a value as prefix to hide variable with this value, control characters will be escaped by "\"
 
-	   expample: ecmfmt = c&0p/i/d/s/l:h
-		     (hide provider ID if 0)
-
+	   example: ecmfmt = c&0p/i/d/s/l:h
+		    (hide provider ID if 0)
 
        loghistorysize = bytes
 	  size of log message history in web interface or monitor, 0 = disabled, default:4096
@@ -666,6 +665,18 @@ DESCRIPTIONS
 
        denysamples = quantity
 	  how many samples should be penalized, default:8
+
+CACHE EXCHANGE LOGGING
+       ·  reader stages
+
+	   1 = cacheex (=1) reader (C)
+	   2 = local SCs (L)
+	   3 = other reader / proxies (P)
+	   4 = fallback reader (F)
+
+       ·  logging format
+
+	   stage/requested/chosen/possible
 
 MONITOR
        monitor commands:
