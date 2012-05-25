@@ -2258,6 +2258,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	if (!client || client->kill || client->typ != 'c')
 		return 0;
 
+	static const char stageTxt[]={'0','C','L','P','F','X'};
 	static const char *stxt[]={"found", "cache1", "cache2", "cache3",
 			"not found", "timeout", "sleeping",
 			"fake", "invalid", "corrupt", "no card", "expdate", "disabled", "stopped"};
@@ -2428,9 +2429,11 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	} else {
 		char buf[ECM_FMT_LEN];
 		format_ecm(er, buf, ECM_FMT_LEN);
-		cs_log("%s (%s): %s (%d ms)%s (%d of %d)%s%s",
+		cs_log("%s (%s): %s (%d ms)%s (%c/%d/%d/%d)%s%s",
 			uname, buf,
-			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, er->reader_count, er->reader_avail, schaninfo, sreason);
+			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby,
+					stageTxt[er->stage], er->reader_requested, er->reader_count, er->reader_avail,
+					schaninfo, sreason);
 	}
 
 	cs_ddump_mask (D_ATR, er->cw, 16, "cw:");
@@ -2517,6 +2520,7 @@ static void request_cw(ECM_REQUEST *er)
 			cs_debug_mask(D_TRACE, "request_cw stage=%d to reader %s ecm=%04X", er->stage, rdr?rdr->label:"", htons(er->checksum));
 			write_ecm_request(ea->reader, er);
 			ea->status |= REQUEST_SENT;
+			er->reader_requested++;
 
 			//set sent=1 only if reader is active/connected. If not, switch to next stage!			
 			if (!sent && rdr) {

@@ -763,8 +763,9 @@ typedef struct ecm_request_t {
 	struct timeb	tps;				// incoming time stamp
 	uchar			locals_done;
 	int32_t			btun; 				// mark er as betatunneled
-	int32_t			reader_avail; 		// count of available readers
-	int32_t			reader_count; 		// count of contacted readers
+	uint16_t			reader_avail; 		// count of available readers
+	uint16_t			reader_count; 		// count of contacted readers
+	uint16_t        	reader_requested;   // count of real requested readers
 	int32_t			checked;				//for doublecheck
 	uchar			cw_checked[16];		//for doublecheck
 	struct s_reader 	*origin_reader;
