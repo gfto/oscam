@@ -666,7 +666,7 @@ DESCRIPTIONS
        denysamples = quantity
 	  how many samples should be penalized, default:8
 
-CACHE EXCHANGE LOGGING
+LOGGING
        ·  reader stages
 
 	   1 = cacheex (=1) reader (C)
@@ -676,7 +676,7 @@ CACHE EXCHANGE LOGGING
 
        ·  logging format
 
-	   stage/requested/chosen/possible
+	   stage/used/chosen/possible
 
 MONITOR
        monitor commands:
