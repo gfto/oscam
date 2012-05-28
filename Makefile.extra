@@ -211,9 +211,8 @@ azbox:
 cool:
 	$(MAKE) --no-print-directory \
 		CROSS=arm-cx2450x-linux-gnueabi- \
-		EXTRA_LIBS="-lnxp -lrt" \
-		EXTRA_FLAGS=-DWITH_COOLAPI=1 \
-		EXTRA_TARGET=-coolstream \
+		CONF_DIR=/var/tuxbox/config \
+		USE_COOLAPI=1 \
 		$(MAKEFLAGS)
 
 neutrinohd: cool

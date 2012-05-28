@@ -58,6 +58,17 @@ STAPI_LIB = $(DEFAULT_STAPI_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-stapi
 endif
 
+# Process USE_ variables
+DEFAULT_COOLAPI_FLAGS = -DWITH_COOLAPI
+DEFAULT_COOLAPI_LIB = -lnxp -lrt
+ifdef USE_COOLAPI
+COOLAPI_FLAGS = $(DEFAULT_COOLAPI_FLAGS)
+COOLAPI_CFLAGS = $(DEFAULT_COOLAPI_FLAGS)
+COOLAPI_LDFLAGS = $(DEFAULT_COOLAPI_FLAGS)
+COOLAPI_LIB = $(DEFAULT_COOLAPI_LIB)
+override PLUS_TARGET := $(PLUS_TARGET)-coolapi
+endif
+
 DEFAULT_LIBCRYPTO_FLAGS = -DWITH_LIBCRYPTO
 DEFAULT_LIBCRYPTO_LIB = -lcrypto
 ifdef USE_LIBCRYPTO
@@ -112,9 +123,9 @@ override TARGET := $(TARGET)$(PLUS_TARGET)$(EXTRA_TARGET)
 endif
 
 # Set USE_ flags
-override USE_CFLAGS = $(STAPI_CFLAGS) $(LIBCRYPTO_CFLAGS) $(SSL_CFLAGS) $(LIBUSB_CFLAGS) $(PCSC_CFLAGS)
-override USE_LDFLAGS= $(STAPI_LDFLAGS) $(LIBCRYPTO_LDFLAGS) $(SSL_LDFLAGS) $(LIBUSB_LDFLAGS) $(PCSC_LDFLAGS)
-override USE_LIBS   = $(STAPI_LIB) $(LIBCRYPTO_LIB) $(SSL_LIB) $(LIBUSB_LIB) $(PCSC_LIB)
+override USE_CFLAGS = $(STAPI_CFLAGS) $(COOLAPI_CFLAGS) $(LIBCRYPTO_CFLAGS) $(SSL_CFLAGS) $(LIBUSB_CFLAGS) $(PCSC_CFLAGS)
+override USE_LDFLAGS= $(STAPI_LDFLAGS) $(COOLAPI_LDFLAGS) $(LIBCRYPTO_LDFLAGS) $(SSL_LDFLAGS) $(LIBUSB_LDFLAGS) $(PCSC_LDFLAGS)
+override USE_LIBS   = $(STAPI_LIB) $(COOLAPI_LIB) $(LIBCRYPTO_LIB) $(SSL_LIB) $(LIBUSB_LIB) $(PCSC_LIB)
 
 EXTRA_CFLAGS = $(EXTRA_FLAGS)
 EXTRA_LDFLAGS = $(EXTRA_FLAGS)
@@ -390,6 +401,17 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
                      In order for USE_STAPI to work you have to create stapi\n\
                      directory and put liboscam_stapi.a file in it.\n\
 \n\
+   USE_COOLAPI=1  - Request support for Coolstream API (libnxp) aka NeutrinoHD\n\
+                    box. The variables that control the build are:\n\
+                     USE_COOLAPI=1 build are:\n\
+                         COOLAPI_FLAGS='$(DEFAULT_COOLAPI_FLAGS)'\n\
+                         COOLAPI_CFLAGS='$(DEFAULT_COOLAPI_FLAGS)'\n\
+                         COOLAPI_LDFLAGS='$(DEFAULT_COOLAPI_FLAGS)'\n\
+                         COOLAPI_LIB='$(DEFAULT_COOLAPI_LIB)'\n\
+                     Using USE_COOLAPI=1 adds to '-coolapi' to PLUS_TARGET.\n\
+                     In order for USE_COOLAPI to work you have to have libnxp.so\n\
+                     library in your cross compilation toolchain.\n\
+\n\
    USE_LIBCRYPTO=1 - Request linking with libcrypto instead of using OSCam\n\
                      internal crypto functions. USE_LIBCRYPTO is automatically\n\
                      enabled if the build is configured with SSL support. The\n\
@@ -476,6 +498,8 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
      make CROSS=sh4-linux- USE_STAPI=1\n\n\
    Build OSCam for SH4 with STAPI and changed configuration directory:\n\
      make CROSS=sh4-linux- USE_STAPI=1 CONF_DIR=/var/tuxbox/config\n\n\
+   Build OSCam for ARM with COOLAPI (coolstream aka NeutrinoHD):\n\
+     make CROSS=arm-cx2450x-linux-gnueabi- USE_COOLAPI=1\n\n\
    Build OSCam with libusb and PCSC:\n\
      make USE_LIBUSB=1 USE_PCSC=1\n\n\
    Build OSCam with static libusb:\n\
