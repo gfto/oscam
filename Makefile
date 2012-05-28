@@ -403,7 +403,6 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
 \n\
    USE_COOLAPI=1  - Request support for Coolstream API (libnxp) aka NeutrinoHD\n\
                     box. The variables that control the build are:\n\
-                     USE_COOLAPI=1 build are:\n\
                          COOLAPI_FLAGS='$(DEFAULT_COOLAPI_FLAGS)'\n\
                          COOLAPI_CFLAGS='$(DEFAULT_COOLAPI_FLAGS)'\n\
                          COOLAPI_LDFLAGS='$(DEFAULT_COOLAPI_FLAGS)'\n\
