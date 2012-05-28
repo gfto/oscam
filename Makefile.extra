@@ -212,7 +212,7 @@ cool:
 	$(MAKE) --no-print-directory \
 		CROSS=arm-cx2450x-linux-gnueabi- \
 		EXTRA_LIBS="-lnxp -lrt" \
-		EXTRA_FLAGS=-DCOOL \
+		EXTRA_FLAGS=-DWITH_COOLAPI=1 \
 		EXTRA_TARGET=-coolstream \
 		$(MAKEFLAGS)
 

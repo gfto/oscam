@@ -150,7 +150,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 			return ERROR;
 #endif
 		case R_INTERNAL:
-#if defined(COOL)
+#if defined(WITH_COOLAPI)
 			return Cool_Init(reader);
 #elif defined(AZBOX)
 			return Azbox_Init(reader);
@@ -263,7 +263,7 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 			break;
 #endif
 		case R_INTERNAL:
-#if defined(COOL)
+#if defined(WITH_COOLAPI)
 			call (Cool_GetStatus(reader, &in));
 #elif defined(AZBOX)
 			call(Azbox_GetStatus(reader, &in));
@@ -330,7 +330,7 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 				break;
 #endif
 			case R_INTERNAL:
-#if defined(COOL)
+#if defined(WITH_COOLAPI)
 				if ( ! reader->ins7e11_fast_reset) {
 					call (Cool_Reset(reader, atr));
 				}
@@ -502,7 +502,7 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, BYTE * data)
 			break;
 #endif
 		case R_INTERNAL:
-#if defined(COOL)
+#if defined(WITH_COOLAPI)
 			call (Cool_Transmit(reader, sent, size));
 #elif defined(AZBOX)
 			call (Azbox_Transmit(reader, sent, size));
@@ -548,7 +548,7 @@ int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, BYTE * data)
 			break;
 #endif
 		case R_INTERNAL:
-#if defined(COOL)
+#if defined(WITH_COOLAPI)
 			call (Cool_Receive(reader, data, size));
 #elif defined(AZBOX)
 			call (Azbox_Receive(reader, data, size));
@@ -601,7 +601,7 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 			break;
 #endif
 		case R_INTERNAL:
-#if defined(COOL)
+#if defined(WITH_COOLAPI)
 			call (Cool_Close(reader));
 #elif defined(AZBOX)
 			call (Azbox_Close(reader));
@@ -926,7 +926,7 @@ static int32_t SetRightParity (struct s_reader * reader)
 		return OK;
 	}
 
-#if defined(COOL) || defined(AZBOX)
+#if defined(WITH_COOLAPI) || defined(AZBOX)
 	if (reader->typ != R_INTERNAL)
 #endif
 #if defined(LIBUSB)
@@ -1123,7 +1123,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 
   //write settings to internal device
 	if(reader->typ == R_INTERNAL && reader->crdr.active==0) {
-#if defined(COOL)
+#if defined(WITH_COOLAPI)
 		call (Cool_WriteSettings (reader, reader->BWT, reader->CWT, EGT, BGT));
 #else
 		double F =	(double) atr_f_table[FI];
@@ -1137,7 +1137,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 		else {
 			call (Sci_WriteSettings (reader, reader->protocol_type, reader->mhz / 100, ETU, WWT, reader->BWT, reader->CWT, EGT, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
 		}
-#endif //COOL
+#endif //WITH_COOLAPI
 	}
 #if defined(LIBUSB)
 	if (reader->typ == R_SMART)

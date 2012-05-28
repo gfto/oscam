@@ -1,10 +1,10 @@
-#include"../globals.h"
-#ifdef WITH_CARDREADER
-#ifdef COOL
 /*
-		ifd_cool.c
-		This module provides IFD handling functions for Coolstream internal reader.
+ This module provides IFD handling functions for Coolstream internal reader.
 */
+
+#include"../globals.h"
+
+#if defined(WITH_CARDREADER) && defined(WITH_COOLAPI)
 
 #include <stdio.h>
 #include <time.h>
@@ -248,5 +248,3 @@ int32_t Cool_Close (struct s_reader *reader)
 }
 
 #endif
-#endif
-

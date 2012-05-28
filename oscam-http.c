@@ -1263,7 +1263,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	tpl_printf(vars, TPLADD, "CACHEEX_MAXHOP", "%d", rdr->cacheex_maxhop);
 #endif
 
-#ifdef COOL
+#ifdef WITH_COOLAPI
 	tpl_printf(vars, TPLADD, "COOLTIMEOUTINIT", "%d", rdr->cool_timeout_init);
 	tpl_printf(vars, TPLADD, "COOLTIMEOUTAFTERINIT", "%d", rdr->cool_timeout_after_init);
 #endif

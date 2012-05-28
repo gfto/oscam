@@ -1094,7 +1094,7 @@ struct s_reader  									//contains device info, reader info and card info
 	int8_t			cacheex_maxhop;
 #endif
 	int32_t			typ;
-#ifdef COOL
+#ifdef WITH_COOLAPI
 	int32_t			cool_timeout_init; // read/transmit timeout while init for coolstream internal reader
 	int32_t			cool_timeout_after_init; // read/transmit timeout after init for coolstream internal reader
 #endif

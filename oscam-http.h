@@ -1404,7 +1404,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 				</SELECT>\n"
 #endif
 
-#ifdef COOL
+#ifdef WITH_COOLAPI
 #define TPLREADERCOOLSTREAMBIT "\
 		<TR><TH>&nbsp;</TH><TH>Reader specific settings for Coolstream STB</TH></TR>\n\
 		<TR><TD>##TPLHELPPREFIX##server#cool_timeout_init##TPLHELPSUFFIX##Cool Timeout Init:</A></TD><TD><input name=\"cool_timeout_init\" type=\"text\" size=\"20\" maxlength=\"16\" value=\"##COOLTIMEOUTINIT##\"></TD></TR>\n\
@@ -2491,7 +2491,7 @@ char *tpl[]={
 #ifdef LIBUSB
 	,"READERCONFIGDEVICEEPBIT"
 #endif
-#ifdef COOL
+#ifdef WITH_COOLAPI
 	,"READERCOOLSTREAMBIT"
 #endif
 #ifdef WITH_DEBUG
@@ -2668,7 +2668,7 @@ char *tplmap[]={
 #ifdef LIBUSB
 	,TPLREADERCONFIGDEVICEEPBIT
 #endif
-#ifdef COOL
+#ifdef WITH_COOLAPI
 	,TPLREADERCOOLSTREAMBIT
 #endif
 #ifdef WITH_DEBUG

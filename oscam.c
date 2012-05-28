@@ -9,7 +9,7 @@
 #include "openxcas/openxcas_api.h"
 #endif
 
-#ifndef COOL
+#ifndef WITH_COOLAPI
 void coolapi_close_all(void) { };
 void coolapi_open_all(void) { };
 #endif

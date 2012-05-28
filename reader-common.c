@@ -6,9 +6,7 @@
 #ifdef AZBOX
 #include "csctapi/ifd_azbox.h"
 #endif
-#ifdef COOL
 #include "csctapi/ifd_cool.h"
-#endif
 
 #include "csctapi/ifd_sc8in1.h"
 
@@ -315,7 +313,7 @@ int32_t reader_reset(struct s_reader * reader)
 			MCR_DisplayText(reader, text, 5, 400, 0);
 		}
 
-#ifdef COOL
+#ifdef WITH_COOLAPI
 	if (reader->typ == R_INTERNAL) {
 		cs_debug_mask(D_DEVICE,"%s init done - modifying timeout for coolstream internal device %s", reader->label, reader->device);
 		call(Cool_Set_Transmit_Timeout(reader, 1));

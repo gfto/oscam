@@ -2,7 +2,7 @@
 
 #include "globals.h"
 
-#if defined(HAVE_DVBAPI) && defined(COOL)
+#if defined(HAVE_DVBAPI) && defined(WITH_COOLAPI)
 
 #include "coolapi.h"
 

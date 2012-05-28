@@ -2944,7 +2944,7 @@ int32_t write_server(void)
 				fprintf_conf(f, "cacheex_maxhop", "%d\n", rdr->cacheex_maxhop);
 #endif
 
-#ifdef COOL
+#ifdef WITH_COOLAPI
 			if (rdr->cool_timeout_init || cfg.http_full_cfg)
 				fprintf_conf(f, "cool_timeout_init", "%d\n", rdr->cool_timeout_init);
 			if (rdr->cool_timeout_after_init || cfg.http_full_cfg)
@@ -4452,7 +4452,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		rdr->typ = R_MOUSE;
 		return;
 	}
-#ifdef COOL
+#ifdef WITH_COOLAPI
 	if (!strcmp(token, "cool_timeout_init")) {
 		rdr->cool_timeout_init  = strToIntVal(value, 0);
 		return;
