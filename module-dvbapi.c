@@ -3,6 +3,7 @@
 #ifdef HAVE_DVBAPI
 
 #include "module-dvbapi.h"
+#include "module-coolapi.h"
 #include "module-dvbapi-stapi.h"
 
 const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt", "dm7000", "qboxhd", "coolstream", "neumo", "pc" };
