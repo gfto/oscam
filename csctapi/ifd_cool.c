@@ -19,7 +19,7 @@
 struct s_coolstream_reader {
 	void      *handle; //device handle for coolstream
 	char      cardbuffer[256];
-	int32_t		cardbuflen;
+	uint32_t	cardbuflen;
 	int32_t		read_write_transmit_timeout;
 };
 
@@ -85,7 +85,7 @@ int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
 
 	ret = cnxt_smc_get_clock_freq (specdev()->handle, &clk);
 	check_error("cnxt_smc_get_clock_freq", ret);
-	if (clk/10000 != reader->cardmhz) {
+	if (clk/10000 != (uint32_t)reader->cardmhz) {
 		cs_debug_mask(D_DEVICE,"COOL: %s clock freq: %i, scheduling change to %i for card reset", reader->label, clk, reader->cardmhz*10000);
 		call (Cool_SetClockrate(reader, reader->cardmhz));
 	} 
@@ -166,7 +166,7 @@ int32_t Cool_SetClockrate (struct s_reader *reader, int32_t mhz)
 	return OK;
 }
 
-int32_t Cool_WriteSettings (struct s_reader *reader, uint32_t BWT, uint32_t CWT, uint32_t EGT, uint32_t BGT)
+int32_t Cool_WriteSettings (struct s_reader *reader, uint32_t UNUSED(BWT), uint32_t UNUSED(CWT), uint32_t UNUSED(EGT), uint32_t UNUSED(BGT))
 {
 	//this code worked with old cnxt_lnx.ko, but prevented nagra cards from working with new cnxt_lnx.ko
 /*	struct
@@ -191,7 +191,7 @@ int32_t Cool_WriteSettings (struct s_reader *reader, uint32_t BWT, uint32_t CWT,
 	uint32_t clk;
 	int32_t ret = cnxt_smc_get_clock_freq (specdev()->handle, &clk);
 	check_error("cnxt_smc_get_clock_freq", ret);
-	if (clk/10000 != reader->mhz) {
+	if (clk/10000 != (uint32_t)reader->mhz) {
 		cs_debug_mask(D_DEVICE,"COOL: %s clock freq: %i, scheduling change to %i", reader->label, clk, reader->mhz*10000);
 		call (Cool_SetClockrate(reader, reader->mhz));
 	} 
