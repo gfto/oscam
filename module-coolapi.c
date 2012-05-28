@@ -22,7 +22,6 @@ int32_t cool_kal_opened = 0;
 static void * dmx_device[MAX_CA_DEVICES];
 static dmx_t cdemuxes[MAX_CA_DEVICES][MAX_FILTER];
 
-extern pthread_key_t getclient;
 extern void * dvbapi_client;
 
 #define COOLDEMUX_FD(device, num) (('O' << 24) | ('S' << 16) | (device << 8) | num)
