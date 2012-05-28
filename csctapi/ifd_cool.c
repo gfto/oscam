@@ -10,9 +10,13 @@
 #include <time.h>
 #include <string.h>
 #include <stdint.h>
+
+#include"../coolapi.h"
+
 #include"ifd_cool.h"
 #include"icc_async.h"
-#include"../module-coolapi.h"
+
+extern int32_t cool_kal_opened;
 
 #define READ_WRITE_TRANSMIT_TIMEOUT				50
 

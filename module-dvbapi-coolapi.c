@@ -13,8 +13,9 @@
 #include <sys/time.h>
 #include <stdint.h>
 
+#include "coolapi.h"
 #include "module-dvbapi.h"
-#include "module-coolapi.h"
+#include "module-dvbapi-coolapi.h"
 
 static bool dmx_opened = false;
 int32_t cool_kal_opened = 0;

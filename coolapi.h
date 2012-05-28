@@ -1,80 +1,8 @@
-#ifndef _MODULE_COOLAPI_H_
-#define _MODULE_COOLAPI_H_
+#ifndef _COOLAPI_H_
+#define _COOLAPI_H_
 
-#include "module-dvbapi.h"
-
-extern int32_t cool_kal_opened;
-
-#define MAX_CA_DEVICES 4
-
-struct cool_dmx
-{
-	int32_t		opened;
-	int32_t		filter_attached;
-	int32_t		fd;
-	unsigned char   buffer[4096];
-	void *		buffer1;
-	void *		buffer2;
-	void *	 	channel;
-	void *		filter;
-	unsigned char   filter16[16];
-	unsigned char   mask16[16];
-	void *		device;
-	int32_t		pid;
-	pthread_mutex_t	mutex;
-	int32_t 	demux_id;
-	int32_t 	demux_index;
-	int32_t 	filter_num;
-};
-typedef struct cool_dmx dmx_t;
-
-typedef struct
-{
-	int32_t  type;
-	uint32_t size;
-	int32_t unknown1;
-	int16_t unknown2;
-	int32_t unknown3;
-	int32_t unknown[4];
-} buffer_open_arg_t;
-
-typedef struct
-{
-	int32_t type;
-	int32_t unknown[2];
-} channel_open_arg_t;
-
-typedef struct
-{
-	uint32_t number;
-	int32_t unknown1;
-	int32_t unknown2;
-	int32_t unknown3;
-	int32_t unknown4;
-	int32_t unknown5;
-	int32_t unknown6;
-	int32_t unknown[6];
-} device_open_arg_t;
-
-typedef struct
-{
-	uint32_t length;
-	unsigned char filter[12];
-	unsigned char mask[12];
-	int32_t unknown[16];
-} filter_set_t;
-
-typedef struct
-{
-	int32_t unk;
-	int32_t type;
-	int32_t unknown[4];
-	uint32_t len;
-} dmx_callback_data_t;
-
-/* These functions are implemented in libnxp */
+/* These functions are implemented in libnxp and are used in coolstream */
 int32_t cnxt_cbuf_init(void *);
-int32_t cnxt_cbuf_open(void **handle, buffer_open_arg_t * arg, void *, void *);
 int32_t cnxt_cbuf_get_used(void *buffer, uint32_t * bytes_used);
 int32_t cnxt_cbuf_attach(void *handle, int32_t type, void * channel);
 int32_t cnxt_cbuf_detach(void *handle, int32_t type, void * channel);
@@ -88,12 +16,9 @@ void cnxt_drv_init(void);
 void cnxt_drv_term(void);
 
 int32_t cnxt_dmx_init(void *);
-int32_t cnxt_dmx_open(void **device, device_open_arg_t *arg, void *, void *);
 int32_t cnxt_dmx_close(void * handle);
-int32_t cnxt_dmx_channel_open(void * device, void **channel, channel_open_arg_t * arg, void * callback, void *);
 int32_t cnxt_dmx_channel_close(void * channel);
 int32_t cnxt_dmx_open_filter(void * handle, void *flt);
-int32_t cnxt_dmx_set_filter(void * handle, filter_set_t * arg, void *);
 int32_t cnxt_dmx_close_filter(void * filter);
 int32_t cnxt_dmx_channel_attach(void * channel, int32_t param1, int32_t param2, void * buffer);
 int32_t cnxt_dmx_channel_detach(void * channel, int32_t param1, int32_t param2, void * buffer);
@@ -107,17 +32,15 @@ int32_t cnxt_dmx_channel_ctrl(void * channel, int32_t param1, int32_t param2);
 
 int32_t cnxt_smc_init(void *);
 
-/* Local coolapi functions */
-void coolapi_open(void);
-void coolapi_open_all(void);
-void coolapi_close_all(void);
-int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char * flt, unsigned char * mask);
-int32_t coolapi_remove_filter (int32_t fd, int32_t num);
-int32_t coolapi_open_device (int32_t demux_index, int32_t demux_id);
-int32_t coolapi_close_device(int32_t fd);
-int32_t coolapi_read(dmx_t * dmx, uint32_t len);
-int32_t coolapi_write_cw(int32_t mask, uint16_t *STREAMpids, int32_t count, ca_descr_t * ca_descr);
-int32_t coolapi_set_pid (int32_t demux_id, int32_t num, int32_t index, int32_t pid);
+int32_t cnxt_smc_open(void *cool_handle, int32_t *, void *, void *);
+int32_t cnxt_smc_enable_flow_control(void *cool_handle);
+int32_t cnxt_smc_get_state(void *cool_handle, int32_t *state);
+int32_t cnxt_smc_get_clock_freq(void *cool_handle, uint32_t *clk);
+int32_t cnxt_smc_reset_card(void *cool_handle, int timeout, void *, void *);
+int32_t cnxt_smc_get_atr(void *cool_handle, unsigned char *buf, int32_t *buflen);
+int32_t cnxt_smc_read_write(void *cool_handle, int32_t b, uint8_t *sent, uint32_t size, char *cardbuffer, uint32_t *cardbuflen, int32_t rw_timeout, int);
+int32_t cnxt_smc_set_clock_freq(void *cool_handle, int32_t clk);
+int32_t cnxt_smc_close(void *cool_handle);
 
 /* Error checking */
 static const char* const cnxt_status[] = {

@@ -202,9 +202,9 @@ OSCAM_OBJ = \
 	$(OSCAM_LIB)(module-cccam.o) \
 	$(OSCAM_LIB)(module-cccshare.o) \
 	$(OSCAM_LIB)(module-constcw.o) \
-	$(OSCAM_LIB)(module-coolapi.o)\
 	$(OSCAM_LIB)(module-csp.o) \
 	$(OSCAM_LIB)(module-datastruct-llist.o) \
+	$(OSCAM_LIB)(module-dvbapi-coolapi.o)\
 	$(OSCAM_LIB)(module-dvbapi-stapi.o) \
 	$(OSCAM_LIB)(module-dvbapi.o) \
 	$(OSCAM_LIB)(module-gbox.o) \
