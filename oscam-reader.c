@@ -752,7 +752,7 @@ int32_t reader_init(struct s_reader *reader) {
 		if (reader->mhz > 2000) {
 			
 			cs_log("Reader %s initialized (device=%s, detect=%s%s, pll max=%.2f Mhz, wanted cardmhz=%.2f Mhz", reader->label, reader->device,
-				reader->detect&0x80 ? "!" : "",RDR_CD_TXT[reader->detect&0x7f], (float) (reader->mhz /100), (float) (reader->cardmhz / 100));
+				reader->detect&0x80 ? "!" : "",RDR_CD_TXT[reader->detect&0x7f], (float) reader->mhz /100, (float) reader->cardmhz / 100);
 		}
 		else {
 		cs_log("reader %s initialized (device=%s, detect=%s%s, mhz=%d, cardmhz=%d)", reader->label, reader->device, reader->detect&0x80 ? "!" : "",RDR_CD_TXT[reader->detect&0x7f], reader->mhz,reader->cardmhz);

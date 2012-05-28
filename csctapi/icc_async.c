@@ -1015,8 +1015,6 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 			// WWT = 960 * WI * (Fi / f) * 1000 milliseconds
 			if (reader->mhz > 2000){
 				WWT= (uint32_t) 960 * wi *(F / (reader->mhz / reader->divider *10000));
-				reader->CWT = GT;
-				reader->BWT = GT;
 			}
 			else {
 			WWT = (uint32_t) 960 * wi; //in ETU
@@ -1144,7 +1142,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 		SR_WriteSettings(reader, (uint16_t) atr_f_table[FI], (BYTE)d, (BYTE)EGT, (BYTE)reader->protocol_type, reader->convention);
 #endif
 	if (reader->mhz > 2000) 
-		cs_log("Reader %s: Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", reader->label, atr_fs_table[FI] / 1000000, (float) (reader->mhz / reader->divider / 100));
+		cs_log("Reader %s: Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", reader->label, atr_fs_table[FI] / 1000000, (float) reader->mhz / reader->divider / 100);
 	else
 		cs_log("Reader %s: Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", reader->label, atr_fs_table[FI] / 1000000, (float) reader->mhz / 100);
 
