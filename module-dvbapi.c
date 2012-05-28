@@ -1943,7 +1943,13 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 	}
 }
 
+void * azbox_main_thread(void *cli);
+
 static void * dvbapi_main_local(void *cli) {
+#ifdef AZBOX
+	return azbox_main_thread(cli);
+#endif
+
 	struct s_client * client = (struct s_client *) cli;
 	client->thread=pthread_self();
 	pthread_setspecific(getclient, cli);
@@ -2365,11 +2371,7 @@ static void * dvbapi_handler(struct s_client * cl, uchar* UNUSED(mbuf), int32_t 
 		cl = create_client(0);
 		cl->ctyp = len;
 		cl->typ='c';
-#ifdef AZBOX
-		int32_t ret = pthread_create(&cl->thread, NULL, azbox_main, (void*) cl);
-#else
 		int32_t ret = pthread_create(&cl->thread, NULL, dvbapi_main_local, (void*) cl);
-#endif
 		if(ret){
 			cs_log("ERROR: can't create dvbapi handler thread (errno=%d %s)", ret, strerror(ret));
 			return NULL;
@@ -2381,7 +2383,7 @@ static void * dvbapi_handler(struct s_client * cl, uchar* UNUSED(mbuf), int32_t 
 }
 
 #ifdef AZBOX
-void azbox_openxcas_ecm_callback(int32_t stream_id, uint32_t seq, int32_t cipher_index, uint32_t caid, unsigned char *ecm_data, int32_t l, uint16_t pid) {
+void azbox_openxcas_ecm_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t cipher_index, uint32_t UNUSED(caid), unsigned char *ecm_data, int32_t l, uint16_t pid) {
 	cs_debug_mask(D_DVBAPI, "openxcas: ecm callback received");
 
   openxcas_stream_id = stream_id;
@@ -2475,8 +2477,7 @@ void azbox_openxcas_ex_callback(int32_t stream_id, uint32_t seq, int32_t idx, ui
 		cs_debug_mask(D_DVBAPI, "openxcas: ex filter started, pid = %x", openxcas_ecm_pid);
 }
 
-#pragma GCC diagnostic ignored "-Wempty-body"
-void * azbox_main(void *cli) {
+void * azbox_main_thread(void *cli) {
 	struct s_client * client = (struct s_client *) cli;
 	client->thread=pthread_self();
 	pthread_setspecific(getclient, cli);
@@ -2596,7 +2597,7 @@ void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 	cs_debug_mask(D_DVBAPI, "openxcas: send_dcw");
 
     FILE *ecmtxt;
-    if (ecmtxt = fopen(ECMINFO_FILE, "w")) {
+    if ((ecmtxt = fopen(ECMINFO_FILE, "w"))) {
     	char tmp[25];
     	if(er->rc <= E_CACHEEX) {
 			fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\nprov: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
