@@ -8,9 +8,10 @@
 #if defined(AZBOX) && defined(HAVE_DVBAPI)
 #include "openxcas/openxcas_api.h"
 #endif
-#ifdef COOL
-void coolapi_close_all();
-void coolapi_open_all();
+
+#ifndef COOL
+void coolapi_close_all(void) { };
+void coolapi_open_all(void) { };
 #endif
 
 static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_addr_t ip);
@@ -953,9 +954,7 @@ void cs_exit(int32_t sig)
 		if (unlink(targetfile) < 0)
 			cs_log("cannot remove oscam version file %s (errno=%d %s)", targetfile, errno, strerror(errno));
 #endif
-#ifdef COOL
 		coolapi_close_all();
-#endif
   }
 
 	// this is very important - do not remove
@@ -1141,9 +1140,7 @@ static void init_first_client()
   cs_lock_create(&ecmcache_lock, 5, "ecmcache_lock");
   cs_lock_create(&readdir_lock, 5, "readdir_lock");
 
-#ifdef COOL
   coolapi_open_all();
-#endif
 }
 
 /* Checks if the date of the system is correct and waits if necessary. */
