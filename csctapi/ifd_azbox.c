@@ -7,7 +7,7 @@
 
 static int32_t sc_mode;
 
-int32_t _GetStatus(struct s_reader *reader, int32_t *in)
+int32_t _GetStatus(struct s_reader *reader, int32_t *UNUSED(in))
 {
   unsigned char tmp[512];
   memset (tmp, 0, sizeof(tmp));
@@ -56,7 +56,7 @@ int32_t Azbox_GetStatus(struct s_reader *reader, int32_t *in)
 
 int32_t Azbox_Reset(struct s_reader *reader, ATR *atr)
 {
-  int32_t status, reset = -1, mode = 0;
+  int32_t status;
   unsigned char tmp[512];
 
   memset(tmp, 0, sizeof(tmp));
@@ -88,7 +88,7 @@ int32_t Azbox_Reset(struct s_reader *reader, ATR *atr)
 
 int32_t Azbox_Transmit(struct s_reader *reader, BYTE *buffer, uint32_t size)
 {
-  if (write(reader->handle, buffer, size) != size)
+  if (write(reader->handle, buffer, size) != (ssize_t)size)
     return FALSE;
 
   return OK;
@@ -96,13 +96,13 @@ int32_t Azbox_Transmit(struct s_reader *reader, BYTE *buffer, uint32_t size)
 
 int32_t Azbox_Receive(struct s_reader *reader, BYTE *buffer, uint32_t size)
 {
-  if (read(reader->handle, buffer, size) != size)
+  if (read(reader->handle, buffer, size) != (ssize_t)size)
     return FALSE;
 
   return OK;
  }
 
-int32_t Azbox_Close(struct s_reader *reader)
+int32_t Azbox_Close(struct s_reader *UNUSED(reader))
 {
   openxcas_release_smartcard_device(0);
 
