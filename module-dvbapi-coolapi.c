@@ -1,23 +1,15 @@
 /* Reversed from libcoolstream.so, this comes without any warranty */
 
-#ifdef COOL
-#define _GNU_SOURCE
 #include "globals.h"
 
-#include <pthread.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <poll.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <stdint.h>
+#if defined(HAVE_DVBAPI) && defined(COOL)
 
 #include "coolapi.h"
+
 #include "module-dvbapi.h"
 #include "module-dvbapi-coolapi.h"
 
-static bool dmx_opened = false;
+static int dmx_opened = 0;
 int32_t cool_kal_opened = 0;
 
 static void * dmx_device[MAX_CA_DEVICES];
