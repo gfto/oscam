@@ -398,7 +398,7 @@ int32_t coolapi_read(dmx_t * dmx, uint32_t len)
 		return -1;
 }
 
-void coolapi_open_all()
+void coolapi_open_all(void)
 {
 	cnxt_kal_initialize();
 	cnxt_drv_init();
@@ -406,7 +406,7 @@ void coolapi_open_all()
 	cool_kal_opened = 1;
 }
 
-void coolapi_open()
+void coolapi_open(void)
 {
 	int32_t result = 0;
 	device_open_arg_t devarg;
@@ -432,7 +432,7 @@ void coolapi_open()
         }
 }
 
-void coolapi_close_all()
+void coolapi_close_all(void)
 {
 	int32_t result;
 	int32_t i, j;
