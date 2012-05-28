@@ -933,7 +933,7 @@ void SSL_dyn_destroy_function(struct CRYPTO_dynlock_value *l, const char *file, 
 }
 
 /* Init necessary structures for SSL in WebIf*/
-SSL_CTX *SSL_Webif_Init() {
+SSL_CTX *SSL_Webif_Init(void) {
 	SSL_library_init();
 	SSL_load_error_strings();
 	ERR_load_BIO_strings();
