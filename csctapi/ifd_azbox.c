@@ -1,10 +1,11 @@
 #include"../globals.h"
-#ifdef WITH_CARDREADER
-#ifdef AZBOX
-#include "ifd_azbox.h"
-#include"icc_async.h"
 
-int32_t sc_mode;
+#if defined(WITH_CARDREADER) && defined(AZBOX)
+
+#include "ifd_azbox.h"
+#include "icc_async.h"
+
+static int32_t sc_mode;
 
 int32_t _GetStatus(struct s_reader *reader, int32_t *in)
 {
@@ -107,5 +108,4 @@ int32_t Azbox_Close(struct s_reader *reader)
 
   return OK;
 }
-#endif
 #endif
