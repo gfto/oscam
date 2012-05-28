@@ -47,7 +47,7 @@ int32_t Cool_Init (struct s_reader *reader)
 		return FALSE;
 
 	int32_t ret = cnxt_smc_enable_flow_control(specdev()->handle);
-	check_error("cnxt_smc_enable_flow_control", ret);
+	coolapi_check_error("cnxt_smc_enable_flow_control", ret);
 
 	specdev()->cardbuflen = 0;
 	if (reader->cool_timeout_init > 0) {
@@ -67,7 +67,7 @@ int32_t Cool_GetStatus (struct s_reader *reader, int32_t * in)
 		int32_t state;
 		int32_t ret = cnxt_smc_get_state(specdev()->handle, &state);
 		if (ret) {
-			check_error("cnxt_smc_get_state", ret);
+			coolapi_check_error("cnxt_smc_get_state", ret);
 			return ERROR;
 		}
 		//state = 0 no card, 1 = not ready, 2 = ready
@@ -88,7 +88,7 @@ int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
 	int32_t ret;
 
 	ret = cnxt_smc_get_clock_freq (specdev()->handle, &clk);
-	check_error("cnxt_smc_get_clock_freq", ret);
+	coolapi_check_error("cnxt_smc_get_clock_freq", ret);
 	if (clk/10000 != (uint32_t)reader->cardmhz) {
 		cs_debug_mask(D_DEVICE,"COOL: %s clock freq: %i, scheduling change to %i for card reset", reader->label, clk, reader->cardmhz*10000);
 		call (Cool_SetClockrate(reader, reader->cardmhz));
@@ -96,12 +96,12 @@ int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
 
 	//reset card
 	ret = cnxt_smc_reset_card (specdev()->handle, ATR_TIMEOUT, NULL, NULL);
-	check_error("cnxt_smc_reset_card", ret);
+	coolapi_check_error("cnxt_smc_reset_card", ret);
 	cs_sleepms(50);
 	int32_t n = 40;
 	unsigned char buf[40];
 	ret = cnxt_smc_get_atr (specdev()->handle, buf, &n);
-	check_error("cnxt_smc_get_atr", ret);
+	coolapi_check_error("cnxt_smc_get_atr", ret);
 		
 	call (!ATR_InitFromArray (atr, buf, n) == ATR_OK);
 	{
@@ -115,7 +115,7 @@ int32_t Cool_Transmit (struct s_reader *reader, BYTE * sent, uint32_t size)
 	specdev()->cardbuflen = 256;//it needs to know max buffer size to respond?
 
 	int32_t ret = cnxt_smc_read_write(specdev()->handle, FALSE, sent, size, specdev()->cardbuffer, &specdev()->cardbuflen, specdev()->read_write_transmit_timeout, 0);
-	check_error("cnxt_smc_read_write", ret);
+	coolapi_check_error("cnxt_smc_read_write", ret);
 
 	cs_ddump_mask(D_DEVICE, sent, size, "COOL IO: Transmit: ");	
 	return OK;
@@ -164,7 +164,7 @@ int32_t Cool_SetClockrate (struct s_reader *reader, int32_t mhz)
 	uint32_t clk;
 	clk = mhz * 10000;
 	int32_t ret = cnxt_smc_set_clock_freq (specdev()->handle, clk);
-	check_error("cnxt_smc_set_clock_freq", ret);
+	coolapi_check_error("cnxt_smc_set_clock_freq", ret);
 	call (Cool_FastReset(reader));
 	cs_debug_mask(D_DEVICE, "COOL: %s clock succesfully set to %i",reader->label, clk);
 	return OK;
@@ -194,7 +194,7 @@ int32_t Cool_WriteSettings (struct s_reader *reader, uint32_t UNUSED(BWT), uint3
 	//set freq back to reader->mhz if necessary
 	uint32_t clk;
 	int32_t ret = cnxt_smc_get_clock_freq (specdev()->handle, &clk);
-	check_error("cnxt_smc_get_clock_freq", ret);
+	coolapi_check_error("cnxt_smc_get_clock_freq", ret);
 	if (clk/10000 != (uint32_t)reader->mhz) {
 		cs_debug_mask(D_DEVICE,"COOL: %s clock freq: %i, scheduling change to %i", reader->label, clk, reader->mhz*10000);
 		call (Cool_SetClockrate(reader, reader->mhz));
@@ -210,10 +210,10 @@ int32_t Cool_FastReset (struct s_reader *reader)
 
 	//reset card
 	ret = cnxt_smc_reset_card (specdev()->handle, ATR_TIMEOUT, NULL, NULL);
-	check_error("cnxt_smc_reset_card", ret);
+	coolapi_check_error("cnxt_smc_reset_card", ret);
 	cs_sleepms(50);
 	ret = cnxt_smc_get_atr (specdev()->handle, buf, &n);
-	check_error("cnxt_smc_get_atr", ret);
+	coolapi_check_error("cnxt_smc_get_atr", ret);
 
     return 0;
 }
@@ -225,10 +225,10 @@ int32_t Cool_FastReset_With_ATR (struct s_reader *reader, ATR * atr)
 
 	//reset card
 	ret = cnxt_smc_reset_card (specdev()->handle, ATR_TIMEOUT, NULL, NULL);
-	check_error("cnxt_smc_reset_card", ret);
+	coolapi_check_error("cnxt_smc_reset_card", ret);
 	cs_sleepms(50);
 	ret = cnxt_smc_get_atr (specdev()->handle, buf, &n);
-	check_error("cnxt_smc_get_atr", ret);
+	coolapi_check_error("cnxt_smc_get_atr", ret);
 
 	call (!ATR_InitFromArray (atr, buf, n) == ATR_OK);
 	{
@@ -241,7 +241,7 @@ int32_t Cool_Close (struct s_reader *reader)
 {
 	if (cool_kal_opened) {
 		int32_t ret = cnxt_smc_close (specdev()->handle);
-		check_error("cnxt_smc_close", ret);
+		coolapi_check_error("cnxt_smc_close", ret);
 	}
 	NULLFREE(reader->spec_dev);
 	return OK;

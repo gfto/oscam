@@ -132,33 +132,33 @@ int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char 
 	if(dmx->filter == NULL) {
 		dmx->filter_attached = 0;
 		result = cnxt_dmx_open_filter(dmx->device, &dmx->filter);
-		check_error ("cnxt_dmx_open_filter", result);
+		coolapi_check_error("cnxt_dmx_open_filter", result);
 	}
 
 	result = cnxt_dmx_set_filter(dmx->filter, &filter, NULL);
-	check_error ("cnxt_dmx_set_filter", result);
+	coolapi_check_error("cnxt_dmx_set_filter", result);
 
 	if(!dmx->filter_attached) {
 		result = cnxt_dmx_channel_attach_filter(dmx->channel, dmx->filter);
-		check_error ("cnxt_dmx_channel_attach_filter", result);
+		coolapi_check_error("cnxt_dmx_channel_attach_filter", result);
 		dmx->filter_attached = 1;
 	}
 
 	if(dmx->pid != pid) {
 		result = cnxt_dmx_set_channel_pid(dmx->channel, pid);
-		check_error ("cnxt_dmx_set_channel_pid", result);
+		coolapi_check_error("cnxt_dmx_set_channel_pid", result);
 	}
 
 	result = cnxt_cbuf_flush (dmx->buffer1, 0);
-	check_error ("cnxt_cbuf_flush", result);
+	coolapi_check_error("cnxt_cbuf_flush", result);
 	result = cnxt_cbuf_flush (dmx->buffer2, 0);
-	check_error ("cnxt_cbuf_flush", result);
+	coolapi_check_error("cnxt_cbuf_flush", result);
 
 	result = cnxt_dmx_channel_ctrl(dmx->channel, 2, 0);
 
 	// we need more than one filter for an EMM-PID, so we exclude the annoying CNXT_STATUS_DUPLICATE_PID (Code 99) which is just a notification and not an error
 	if (result != 99)
-		check_error ("cnxt_dmx_channel_ctrl", result);
+		coolapi_check_error("cnxt_dmx_channel_ctrl", result);
 
 	dmx->pid = pid;
 	pthread_mutex_unlock(&dmx->mutex);
@@ -181,15 +181,15 @@ int32_t coolapi_remove_filter (int32_t fd, int32_t num)
 
 	pthread_mutex_lock(&dmx->mutex);
 	result = cnxt_dmx_channel_ctrl(dmx->channel, 0, 0);
-	check_error ("cnxt_dmx_channel_ctrl", result);
+	coolapi_check_error("cnxt_dmx_channel_ctrl", result);
 
 	result = cnxt_dmx_set_channel_pid(dmx->channel, 0x1FFF);
-	check_error ("cnxt_dmx_set_channel_pid", result);
+	coolapi_check_error("cnxt_dmx_set_channel_pid", result);
 
 	result = cnxt_cbuf_flush (dmx->buffer1, 0);
-	check_error ("cnxt_cbuf_flush", result);
+	coolapi_check_error("cnxt_cbuf_flush", result);
 	result = cnxt_cbuf_flush (dmx->buffer2, 0);
-	check_error ("cnxt_cbuf_flush", result);
+	coolapi_check_error("cnxt_cbuf_flush", result);
 	pthread_mutex_unlock(&dmx->mutex);
 
 	dmx->pid = -1;
@@ -226,27 +226,27 @@ int32_t coolapi_open_device (int32_t demux_index, int32_t demux_id)
 	bufarg.unknown3 = (uBufferSize * 7) / 8;
 
 	result = cnxt_cbuf_open(&dmx->buffer1, &bufarg, NULL, NULL);
-	check_error ("cnxt_cbuf_open", result);
+	coolapi_check_error("cnxt_cbuf_open", result);
 
 	bufarg.type = 0;
 
 	result = cnxt_cbuf_open(&dmx->buffer2, &bufarg, NULL, NULL);
-	check_error ("cnxt_cbuf_open", result);
+	coolapi_check_error("cnxt_cbuf_open", result);
 
 	memset(&chanarg, 0, sizeof(channel_open_arg_t));
 	chanarg.type = 4;
 
 	result = cnxt_dmx_channel_open(dmx->device, &dmx->channel, &chanarg, dmx_callback, dmx);
-	check_error ("cnxt_dmx_channel_open", result);
+	coolapi_check_error("cnxt_dmx_channel_open", result);
 
 	result = cnxt_dmx_set_channel_buffer(dmx->channel, 0, dmx->buffer1);
-	check_error ("cnxt_dmx_set_channel_buffer", result);
+	coolapi_check_error("cnxt_dmx_set_channel_buffer", result);
 
 	result = cnxt_dmx_channel_attach(dmx->channel, 0xB, 0, dmx->buffer2);
-	check_error ("cnxt_dmx_channel_attach", result);
+	coolapi_check_error("cnxt_dmx_channel_attach", result);
 
 	result = cnxt_cbuf_attach(dmx->buffer2, 2, dmx->channel);
-	check_error ("cnxt_cbuf_attach", result);
+	coolapi_check_error("cnxt_cbuf_attach", result);
 
 	pthread_mutexattr_t attr;
 	pthread_mutexattr_init(&attr);
@@ -270,28 +270,28 @@ int32_t coolapi_close_device(int32_t fd)
 	pthread_mutex_lock(&dmx->mutex);
 	if(dmx->filter != NULL) {
 		result = cnxt_dmx_channel_detach_filter(dmx->channel, dmx->filter);
-		check_error ("cnxt_dmx_channel_detach_filter", result);
+		coolapi_check_error("cnxt_dmx_channel_detach_filter", result);
 		result = cnxt_dmx_close_filter(dmx->filter);
-		check_error ("cnxt_dmx_close_filter", result);
+		coolapi_check_error("cnxt_dmx_close_filter", result);
 		dmx->filter = NULL;
 		dmx->filter_attached = 0;
 	}
 
 	result = cnxt_cbuf_detach(dmx->buffer2, 2, dmx->channel);
-	check_error ("cnxt_cbuf_detach", result);
+	coolapi_check_error("cnxt_cbuf_detach", result);
 	result = cnxt_dmx_channel_detach(dmx->channel, 0xB, 0, dmx->buffer2);
-	check_error ("cnxt_dmx_channel_detach", result);
+	coolapi_check_error("cnxt_dmx_channel_detach", result);
 
 	result = cnxt_dmx_channel_detach(dmx->channel, 0xB, 0, dmx->buffer1);
-	check_error ("cnxt_dmx_channel_detach", result);
+	coolapi_check_error("cnxt_dmx_channel_detach", result);
 	result = cnxt_dmx_channel_close(dmx->channel);
-	check_error ("cnxt_dmx_channel_close", result);
+	coolapi_check_error("cnxt_dmx_channel_close", result);
 
 	result = cnxt_cbuf_close(dmx->buffer2);
-	check_error ("cnxt_cbuf_close", result);
+	coolapi_check_error("cnxt_cbuf_close", result);
 
 	result = cnxt_cbuf_close(dmx->buffer1);
-	check_error ("cnxt_cbuf_close", result);
+	coolapi_check_error("cnxt_cbuf_close", result);
 
 	dmx->opened = 0;
 	pthread_mutex_unlock(&dmx->mutex);
@@ -319,7 +319,7 @@ int32_t coolapi_write_cw(int32_t mask, uint16_t *STREAMpids, int32_t count, ca_d
 				if(result == 0) {
 					cs_debug_mask(D_DVBAPI, "Found demux %d channel %x for pid %x", j, (int) channel, pid);
 					result = cnxt_dmx_set_channel_key(channel, 0, ca_descr->parity, ca_descr->cw, 8);
-					check_error ("cnxt_dmx_set_channel_key", result);
+					coolapi_check_error("cnxt_dmx_set_channel_key", result);
 					if(result != 0) {
 						cs_log("set_channel_key failed for demux %d pid 0x%x", j, pid);
 					}
@@ -371,12 +371,12 @@ int32_t coolapi_read(dmx_t * dmx, uint32_t len)
 	//cs_debug_mask(D_DVBAPI, "dmx channel %x pid %x len %d",  (int) dmx->channel, dmx->pid, len);
 
 	result = cnxt_cbuf_get_used(dmx->buffer2, &bytes_used);
-	check_error ("cnxt_cbuf_get_used", result);
+	coolapi_check_error("cnxt_cbuf_get_used", result);
 	if(bytes_used == 0) 
 		return -1;
 
 	result = cnxt_cbuf_read_data(dmx->buffer2, buff, 3, &done);
-	check_error ("cnxt_cbuf_read_data", result);
+	coolapi_check_error("cnxt_cbuf_read_data", result);
 
 	if(done != 3)
 		return -1;
@@ -385,7 +385,7 @@ int32_t coolapi_read(dmx_t * dmx, uint32_t len)
 	if((toread+3) > len)
 		return -1;
 	result = cnxt_cbuf_read_data(dmx->buffer2, buff+3, toread, &done);
-	check_error ("cnxt_cbuf_read_data", result);
+	coolapi_check_error("cnxt_cbuf_read_data", result);
 	if(done != toread)
 		return -1;
 	done += 3;
@@ -427,7 +427,7 @@ void coolapi_open(void)
                 for(i = 0; i < MAX_CA_DEVICES; i++) {
                         devarg.number = i;
                         result = cnxt_dmx_open (&dmx_device[i], &devarg, NULL, NULL);
-                        check_error ("cnxt_dmx_open", result);
+                        coolapi_check_error("cnxt_dmx_open", result);
                 }
                 dmx_opened = 1;
         }
@@ -449,7 +449,7 @@ void coolapi_close_all(void)
 		}
 		for(i = 0; i < MAX_CA_DEVICES; i++) {
 			result = cnxt_dmx_close(dmx_device[i]);
-			check_error ("cnxt_dmx_close", result);
+			coolapi_check_error("cnxt_dmx_close", result);
 			dmx_device[i] = NULL;
 		}
 	}
