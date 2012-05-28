@@ -312,16 +312,6 @@ extern const char *boxdesc[];
 #define WRITELOCK 1
 #define READLOCK 2
 
-#ifdef CS_CORE
-char *PIP_ID_TXT[] = { "ECM", "EMM", "CIN", "KCL", "UDP", NULL  };
-char *RDR_CD_TXT[] = { "cd", "dsr", "cts", "ring", "none",
-                       "gpio1", "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7",
-                       NULL };
-#else
-extern char *PIP_ID_TXT[];
-extern char *RDR_CD_TXT[];
-#endif
-
 #define PIP_ID_ECM    0
 #define PIP_ID_EMM    1
 #define PIP_ID_CIN    2  // CARD_INFO
@@ -1747,6 +1737,7 @@ typedef struct {
 /* ===========================
  *      global variables
  * =========================== */
+extern char *RDR_CD_TXT[];
 extern char cs_tmpdir[200];
 extern uint32_t cfg_sidtab_generation;
 extern uint8_t cs_http_use_utf8;

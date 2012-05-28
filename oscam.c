@@ -1,5 +1,4 @@
   //FIXME Not checked on threadsafety yet; after checking please remove this line
-#define CS_CORE
 #include "globals.h"
 #include "csctapi/icc_async.h"
 #ifdef MODULE_CCCAM
@@ -20,6 +19,12 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea);
 /*****************************************************************************
         Globals
 *****************************************************************************/
+char *RDR_CD_TXT[] = {
+	"cd", "dsr", "cts", "ring", "none",
+	"gpio1", "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7",
+	NULL
+};
+
 int32_t exit_oscam=0;
 struct s_module 	ph[CS_MAX_MOD]; // Protocols
 struct s_cardsystem	cardsystem[CS_MAX_MOD];
