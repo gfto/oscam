@@ -3,9 +3,7 @@
 #include "csctapi/defines.h"
 #include "csctapi/atr.h" 
 #include "csctapi/icc_async.h"
-#ifdef AZBOX
 #include "csctapi/ifd_azbox.h"
-#endif
 #include "csctapi/ifd_cool.h"
 
 #include "csctapi/ifd_sc8in1.h"
@@ -260,7 +258,7 @@ int32_t reader_reset(struct s_reader * reader)
   reader_nullcard(reader);
   ATR atr;
   uint16_t ret = 0;
-#ifdef AZBOX
+#ifdef WITH_AZBOX
   int32_t i;
   if (reader->typ == R_INTERNAL) {
     if (reader->mode != -1) {
@@ -287,7 +285,7 @@ int32_t reader_reset(struct s_reader * reader)
 		if (!deprecated)
 			cs_log("Normal mode failed, reverting to Deprecated Mode");
 	}
-#ifdef AZBOX
+#ifdef WITH_AZBOX
   }
 #endif
 

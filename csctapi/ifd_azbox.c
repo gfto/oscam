@@ -1,6 +1,6 @@
 #include"../globals.h"
 
-#if defined(WITH_CARDREADER) && defined(AZBOX)
+#if defined(WITH_CARDREADER) && defined(WITH_AZBOX)
 
 #include "ifd_azbox.h"
 #include "icc_async.h"

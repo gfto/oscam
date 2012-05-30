@@ -110,7 +110,7 @@ int32_t edit_channel_cache(int32_t demux_id, int32_t pidindex, uint8_t add)
 
 
 int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t caid, uchar *filt, uchar *mask, int32_t timeout, int32_t pidindex, int32_t count, int32_t type) {
-#ifdef AZBOX
+#ifdef WITH_AZBOX
 	openxcas_caid = demux[demux_id].ECMpids[pidindex].CAID;
 	openxcas_ecm_pid = pid;
 
@@ -1314,7 +1314,7 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 		dvbapi_stop_filter(demux_id, TYPE_ECM);
 
 	cs_debug_mask(D_DVBAPI, "[TRY PID %d] CAID: %04X PROVID: %06X CA_PID: %04X", num, demux[demux_id].ECMpids[num].CAID, demux[demux_id].ECMpids[num].PROVID, demux[demux_id].ECMpids[num].ECM_PID);
-#ifdef AZBOX
+#ifdef WITH_AZBOX
 	openxcas_provid = demux[demux_id].ECMpids[num].PROVID;
 	openxcas_caid = demux[demux_id].ECMpids[num].CAID;
 	openxcas_ecm_pid = demux[demux_id].ECMpids[num].ECM_PID;
@@ -1470,7 +1470,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	get_servicename(dvbapi_client, demux[demux_id].program_number, demux[demux_id].ECMpidcount>0 ? demux[demux_id].ECMpids[0].CAID : 0, channame);
 	cs_log("new program number: %04X (%s) [pmt_list_management %d]", program_number, channame, ca_pmt_list_management);
 
-#ifdef AZBOX
+#ifdef WITH_AZBOX
 	openxcas_sid = program_number;
 #endif
 
@@ -1945,7 +1945,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 }
 
 static void * dvbapi_main_local(void *cli) {
-#ifdef AZBOX
+#ifdef WITH_AZBOX
 	return azbox_main_thread(cli);
 #endif
 
@@ -2183,7 +2183,7 @@ void delayer(ECM_REQUEST *er)
 
 void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
-#ifdef AZBOX
+#ifdef WITH_AZBOX
 	azbox_send_dcw(client, er);
 	return;
 #endif

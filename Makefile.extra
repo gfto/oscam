@@ -204,7 +204,7 @@ azbox:
 		CROSS=mipsel-linux-uclibc- \
 		CONF_DIR=/PLUGINS/OpenXCAS/oscamCAS \
 		EXTRA_LIBS="-Lopenxcas -lOpenXCASAPI" \
-		EXTRA_FLAGS=-DAZBOX \
+		EXTRA_FLAGS=-DWITH_AZBOX \
 		EXTRA_TARGET=-azbox \
 		$(MAKEFLAGS)
 

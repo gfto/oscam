@@ -152,7 +152,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 		case R_INTERNAL:
 #if defined(WITH_COOLAPI)
 			return Cool_Init(reader);
-#elif defined(AZBOX)
+#elif defined(WITH_AZBOX)
 			return Azbox_Init(reader);
 #else
 	#if defined(__SH4__) || defined(STB04SCI)
@@ -265,7 +265,7 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 		case R_INTERNAL:
 #if defined(WITH_COOLAPI)
 			call (Cool_GetStatus(reader, &in));
-#elif defined(AZBOX)
+#elif defined(WITH_AZBOX)
 			call(Azbox_GetStatus(reader, &in));
 #else
 			call(Sci_GetStatus(reader, &in));
@@ -340,7 +340,7 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 					cs_log("reader %s doing fast reset", reader->label);
 					call (Cool_FastReset_With_ATR(reader, atr));
 				}					
-#elif defined(AZBOX)
+#elif defined(WITH_AZBOX)
 				call (Azbox_Reset(reader, atr));
 #else
 				call (Sci_Activate(reader));
@@ -504,7 +504,7 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, BYTE * data)
 		case R_INTERNAL:
 #if defined(WITH_COOLAPI)
 			call (Cool_Transmit(reader, sent, size));
-#elif defined(AZBOX)
+#elif defined(WITH_AZBOX)
 			call (Azbox_Transmit(reader, sent, size));
 #else
 			call (Phoenix_Transmit (reader, sent, size, 0, 0)); //the internal reader will provide the delay
@@ -550,7 +550,7 @@ int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, BYTE * data)
 		case R_INTERNAL:
 #if defined(WITH_COOLAPI)
 			call (Cool_Receive(reader, data, size));
-#elif defined(AZBOX)
+#elif defined(WITH_AZBOX)
 			call (Azbox_Receive(reader, data, size));
 #else
 			call (Phoenix_Receive (reader, data, size, reader->read_timeout));
@@ -603,7 +603,7 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 		case R_INTERNAL:
 #if defined(WITH_COOLAPI)
 			call (Cool_Close(reader));
-#elif defined(AZBOX)
+#elif defined(WITH_AZBOX)
 			call (Azbox_Close(reader));
 #else
 			/* Dectivate ICC */
@@ -926,7 +926,7 @@ static int32_t SetRightParity (struct s_reader * reader)
 		return OK;
 	}
 
-#if defined(WITH_COOLAPI) || defined(AZBOX)
+#if defined(WITH_COOLAPI) || defined(WITH_AZBOX)
 	if (reader->typ != R_INTERNAL)
 #endif
 #if defined(LIBUSB)

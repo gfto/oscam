@@ -4,7 +4,7 @@
 #ifdef MODULE_CCCAM
 #include "module-cccam.h"
 #endif
-#if defined(AZBOX) && defined(HAVE_DVBAPI)
+#if defined(WITH_AZBOX) && defined(HAVE_DVBAPI)
 #include "openxcas/openxcas_api.h"
 #endif
 
@@ -4701,7 +4701,7 @@ int32_t main (int32_t argc, char *argv[])
   arm_led_start_thread();
 #endif
 
-#if defined(AZBOX) && defined(HAVE_DVBAPI)
+#if defined(WITH_AZBOX) && defined(HAVE_DVBAPI)
   openxcas_debug_message_onoff(1);  // debug
 
 #ifdef WITH_CARDREADER
@@ -4781,7 +4781,7 @@ int32_t main (int32_t argc, char *argv[])
 	client_check();
 
 
-#if defined(AZBOX) && defined(HAVE_DVBAPI)
+#if defined(WITH_AZBOX) && defined(HAVE_DVBAPI)
   if (openxcas_close() < 0) {
     cs_log("openxcas: could not close");
   }

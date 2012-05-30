@@ -1,6 +1,6 @@
 #include "globals.h"
 
-#if defined(HAVE_DVBAPI) && defined(AZBOX)
+#if defined(HAVE_DVBAPI) && defined(WITH_AZBOX)
 
 #include "module-dvbapi.h"
 #include "module-dvbapi-azbox.h"

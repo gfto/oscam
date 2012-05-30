@@ -3029,7 +3029,7 @@ int32_t write_server(void)
 			if ((rdr->cardmhz || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, "cardmhz", "%d\n", rdr->cardmhz);
 
-#ifdef AZBOX
+#ifdef WITH_AZBOX
 			if ((rdr->mode != -1 || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, "mode", "%d\n", rdr->mode);
 #endif
@@ -4778,7 +4778,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 
-#ifdef AZBOX
+#ifdef WITH_AZBOX
 	if (!strcmp(token, "mode")) {
 		rdr->mode = strToIntVal(value, -1);
 		return;
@@ -4984,7 +4984,7 @@ int32_t init_readerdb(void)
 			rdr->nagra_read = 0;
 			rdr->mhz = 357;
 			rdr->cardmhz = 357;
-#ifdef AZBOX
+#ifdef WITH_AZBOX
 			rdr->mode = -1;
 #endif
 			rdr->deprecated = 0;
