@@ -203,9 +203,7 @@ azbox:
 	$(MAKE) --no-print-directory \
 		CROSS=mipsel-linux-uclibc- \
 		CONF_DIR=/PLUGINS/OpenXCAS/oscamCAS \
-		EXTRA_LIBS="-Lopenxcas -lOpenXCASAPI" \
-		EXTRA_FLAGS=-DWITH_AZBOX \
-		EXTRA_TARGET=-azbox \
+		USE_AZBOX=1 \
 		$(MAKEFLAGS)
 
 cool:

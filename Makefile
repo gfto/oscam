@@ -58,7 +58,6 @@ STAPI_LIB = $(DEFAULT_STAPI_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-stapi
 endif
 
-# Process USE_ variables
 DEFAULT_COOLAPI_FLAGS = -DWITH_COOLAPI
 DEFAULT_COOLAPI_LIB = -lnxp -lrt
 ifdef USE_COOLAPI
@@ -67,6 +66,16 @@ COOLAPI_CFLAGS = $(DEFAULT_COOLAPI_FLAGS)
 COOLAPI_LDFLAGS = $(DEFAULT_COOLAPI_FLAGS)
 COOLAPI_LIB = $(DEFAULT_COOLAPI_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-coolapi
+endif
+
+DEFAULT_AZBOX_FLAGS = -DWITH_AZBOX
+DEFAULT_AZBOX_LIB = -Lopenxcas -lOpenXCASAPI
+ifdef USE_AZBOX
+AZBOX_FLAGS = $(DEFAULT_AZBOX_FLAGS)
+AZBOX_CFLAGS = $(DEFAULT_AZBOX_FLAGS)
+AZBOX_LDFLAGS = $(DEFAULT_AZBOX_FLAGS)
+AZBOX_LIB = $(DEFAULT_AZBOX_LIB)
+override PLUS_TARGET := $(PLUS_TARGET)-azbox
 endif
 
 DEFAULT_LIBCRYPTO_FLAGS = -DWITH_LIBCRYPTO
@@ -123,9 +132,9 @@ override TARGET := $(TARGET)$(PLUS_TARGET)$(EXTRA_TARGET)
 endif
 
 # Set USE_ flags
-override USE_CFLAGS = $(STAPI_CFLAGS) $(COOLAPI_CFLAGS) $(LIBCRYPTO_CFLAGS) $(SSL_CFLAGS) $(LIBUSB_CFLAGS) $(PCSC_CFLAGS)
-override USE_LDFLAGS= $(STAPI_LDFLAGS) $(COOLAPI_LDFLAGS) $(LIBCRYPTO_LDFLAGS) $(SSL_LDFLAGS) $(LIBUSB_LDFLAGS) $(PCSC_LDFLAGS)
-override USE_LIBS   = $(STAPI_LIB) $(COOLAPI_LIB) $(LIBCRYPTO_LIB) $(SSL_LIB) $(LIBUSB_LIB) $(PCSC_LIB)
+override USE_CFLAGS = $(STAPI_CFLAGS) $(COOLAPI_CFLAGS) $(AZBOX_CFLAGS) $(LIBCRYPTO_CFLAGS) $(SSL_CFLAGS) $(LIBUSB_CFLAGS) $(PCSC_CFLAGS)
+override USE_LDFLAGS= $(STAPI_LDFLAGS) $(COOLAPI_LDFLAGS) $(AZBOX_LDFLAGS) $(LIBCRYPTO_LDFLAGS) $(SSL_LDFLAGS) $(LIBUSB_LDFLAGS) $(PCSC_LDFLAGS)
+override USE_LIBS   = $(STAPI_LIB) $(COOLAPI_LIB) $(AZBOX_LIB) $(LIBCRYPTO_LIB) $(SSL_LIB) $(LIBUSB_LIB) $(PCSC_LIB)
 
 EXTRA_CFLAGS = $(EXTRA_FLAGS)
 EXTRA_LDFLAGS = $(EXTRA_FLAGS)
@@ -412,6 +421,16 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
                      In order for USE_COOLAPI to work you have to have libnxp.so\n\
                      library in your cross compilation toolchain.\n\
 \n\
+   USE_AZBOX=1    - Request support for AZBOX (openxcas)\n\
+                    box. The variables that control the build are:\n\
+                         AZBOX_FLAGS='$(DEFAULT_AZBOX_FLAGS)'\n\
+                         AZBOX_CFLAGS='$(DEFAULT_AZBOX_FLAGS)'\n\
+                         AZBOX_LDFLAGS='$(DEFAULT_AZBOX_FLAGS)'\n\
+                         AZBOX_LIB='$(DEFAULT_AZBOX_LIB)'\n\
+                     Using USE_AZBOX=1 adds to '-azbox' to PLUS_TARGET.\n\
+                     The openxcas/libOpenXCASAPI.a library shipped with OSCam\n\
+                     is compiled for MIPSEL.\n\
+\n\
    USE_LIBCRYPTO=1 - Request linking with libcrypto instead of using OSCam\n\
                      internal crypto functions. USE_LIBCRYPTO is automatically\n\
                      enabled if the build is configured with SSL support. The\n\
@@ -500,6 +519,8 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
      make CROSS=sh4-linux- USE_STAPI=1 CONF_DIR=/var/tuxbox/config\n\n\
    Build OSCam for ARM with COOLAPI (coolstream aka NeutrinoHD):\n\
      make CROSS=arm-cx2450x-linux-gnueabi- USE_COOLAPI=1\n\n\
+   Build OSCam for MIPSEL with AZBOX support:\n\
+     make CROSS=mipsel-linux-uclibc- USE_AZBOX=1\n\n\
    Build OSCam with libusb and PCSC:\n\
      make USE_LIBUSB=1 USE_PCSC=1\n\n\
    Build OSCam with static libusb:\n\
