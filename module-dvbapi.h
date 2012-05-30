@@ -210,20 +210,6 @@ typedef struct ca_pid {
 #define CA_SET_PID		_IOW('o', 135, ca_pid_t)
 // --------------------------------------------------------------------
 
-#ifdef AZBOX
-#include "openxcas/openxcas_api.h"
-#include "openxcas/openxcas_message.h"
-
-int32_t openxcas_provid, openxcas_seq, openxcas_filter_idx, openxcas_stream_id, openxcas_cipher_idx, openxcas_busy;
-unsigned char openxcas_cw[16];
-uint16_t openxcas_sid, openxcas_caid, openxcas_ecm_pid, openxcas_video_pid, openxcas_audio_pid, openxcas_data_pid;
-
-void azbox_openxcas_ecm_callback(int32_t stream_id, uint32_t sequence, int32_t cipher_index, uint32_t caid, unsigned char *ecm_data, int32_t l, uint16_t pid);
-void azbox_openxcas_ex_callback(int32_t stream_id, uint32_t seq, int32_t idx, uint32_t pid, unsigned char *ecm_data, int32_t l);
-void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er);
-void * azbox_main(void * cli);
-#endif
-
 void dvbapi_stop_descrambling(int);
 void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, int32_t len);
 int32_t dvbapi_open_device(int32_t, int32_t, int);
@@ -232,6 +218,9 @@ int32_t dvbapi_stop_filter(int32_t demux_index, int32_t type);
 struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidindex, char type);
 void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er);
 void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t index);
+int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connfd, char *pmtfile);
+void request_cw(struct s_client *dvbapi_client, ECM_REQUEST *er);
+void dvbapi_try_next_caid(int32_t demux_id);
 
 #undef cs_log
 #define cs_log(txt, x...)	cs_log_int(0, 1, NULL, 0, "dvbapi: "txt, ##x)
