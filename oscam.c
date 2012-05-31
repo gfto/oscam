@@ -950,9 +950,8 @@ void cs_exit(int32_t sig)
 	    qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_FAST);
 	  }
 #endif
-#ifdef LCDSUPPORT
-    end_lcd_thread();
-#endif
+
+	end_lcd_thread();
 
 #if !defined(__CYGWIN__)
 	char targetfile[256];
@@ -4737,10 +4736,8 @@ int32_t main (int32_t argc, char *argv[])
 #endif
 	start_thread((void *) &reader_check, "reader check"); 
 	start_thread((void *) &check_thread, "check"); 
-#ifdef LCDSUPPORT
-	if(cfg.enablelcd)
-		start_lcd_thread();
-#endif
+
+	start_lcd_thread();
 
 	init_cardreader();
 

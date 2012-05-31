@@ -238,12 +238,19 @@ static void refresh_lcd_file(void) {
 }
 
 void start_lcd_thread(void) {
-	running = 1;
-	start_thread((void *) &refresh_lcd_file, "LCD");
+	if (cfg.enablelcd) {
+		running = 1;
+		start_thread((void *) &refresh_lcd_file, "LCD");
+	}
 }
 
 void end_lcd_thread(void) {
 	running = 0;
 }
+
+#else
+
+void start_lcd_thread(void) { }
+void end_lcd_thread(void) { }
 
 #endif
