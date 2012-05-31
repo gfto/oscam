@@ -454,7 +454,7 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, ui
 int32_t ICC_Async_SetTimings (struct s_reader * reader, uint32_t wait_etu)
 {
 	reader->read_timeout = ETU_to_ms(reader, wait_etu);
-	cs_debug_mask(D_IFD, "Setting reader %s timeout to %i", reader->label, wait_etu);
+	cs_debug_mask(D_IFD, "Setting reader %s timeout to %i ETU", reader->label, wait_etu);
 	return OK;
 }
 
@@ -867,8 +867,8 @@ static uint32_t ETU_to_ms(struct s_reader * reader, uint32_t WWT)
 {
 #define CHAR_LEN 10L //character length in ETU, perhaps should be 9 when parity = none?
 	if (reader->mhz>2000){
-		double work_etu = 1 / (double)reader->current_baudrate * 1000*1000;//22-05-2012: Timings checked according to iso-> OK!
-		return (uint32_t) (WWT * work_etu);
+		double work_etu = 1000 / reader->current_baudrate;
+		return (uint32_t) (WWT * work_etu); // in ms
 	}
 	
 	if (WWT > CHAR_LEN)
@@ -971,7 +971,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 		uint32_t baud_temp;
 		if (reader->protocol_type != ATR_PROTOCOL_TYPE_T14) { //dont switch for T14
 			if (reader->mhz >2000) 
-				baud_temp = d * (reader->mhz / reader->divider *10000) / F;
+				baud_temp = (uint32_t) (d * (double) reader->mhz / reader->divider *10000L / F);
 			else 
 				baud_temp = d * ICC_Async_GetClockRate (reader->cardmhz) / F;
 			if (reader->crdr.active == 1) {
@@ -984,8 +984,8 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 				else if (reader->typ <= R_MOUSE)
 					call (Phoenix_SetBaudrate(reader, baud_temp));
 			}
-			cs_debug_mask(D_IFD, "Reader %s setting baudrate to %u", reader->label, baud_temp);
 			reader->current_baudrate = baud_temp; //this is needed for all readers to calculate work_etu for timings
+			cs_debug_mask(D_IFD, "Reader %s setting baudrate to %u", reader->label, reader->current_baudrate);
 		}
 	}
 
@@ -1013,12 +1013,9 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 			wi = DEFAULT_WI;
 
 			// WWT = 960 * WI * (Fi / f) * 1000 milliseconds
-			if (reader->mhz > 2000){
-				WWT= (uint32_t) 960 * wi *(F / (reader->mhz / reader->divider *10000));
-			}
-			else {
+			
 			WWT = (uint32_t) 960 * wi; //in ETU
-			}
+			
 			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
 				WWT >>= 1; //is this correct?
 
@@ -1073,7 +1070,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 
 				// Set BWT = (2^BWI * 960 + 11) work etu
 				if (reader->mhz > 2000) {
-					reader->BWT = (uint16_t)((1<<bwi) * 960) + 11;
+					reader->BWT = (uint16_t) (((1<<bwi) * 960 * 372 / (reader->mhz / reader->divider /100L) + 11)/1*reader->current_baudrate/1000L/1000L); // BWT in ETU otherwise it wont fit in uint16_t
 				}
 				else {reader->BWT = (uint16_t)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate(reader->cardmhz))	+ 11 ;
 				}
