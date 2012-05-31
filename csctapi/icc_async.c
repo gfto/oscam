@@ -454,7 +454,7 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, ui
 int32_t ICC_Async_SetTimings (struct s_reader * reader, uint32_t wait_etu)
 {
 	reader->read_timeout = ETU_to_ms(reader, wait_etu);
-	cs_debug_mask(D_IFD, "Setting reader %s timeout to %i ETU", reader->label, wait_etu);
+	cs_debug_mask(D_IFD, "Setting reader %s timeout to %i ETU (%d ms)", reader->label, wait_etu, reader->read_timeout);
 	return OK;
 }
 
