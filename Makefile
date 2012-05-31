@@ -37,10 +37,10 @@ else
 CC_OPTS = -O0 -ggdb
 endif
 
-CC = $(CROSS)gcc
-AR = $(CROSS)ar
-STRIP = $(CROSS)strip
-RANLIB = $(CROSS)ranlib
+CC = $(CROSS_DIR)$(CROSS)gcc
+AR = $(CROSS_DIR)$(CROSS)ar
+STRIP = $(CROSS_DIR)$(CROSS)strip
+RANLIB = $(CROSS_DIR)$(CROSS)ranlib
 
 ARFLAGS = -rcsl
 
@@ -274,7 +274,7 @@ prepare:
 +-------------------------------------------------------------------------------\n\
 | OSCam ver: $(VER) rev: $(SVN_REV) target: $(TARGET)\n\
 | Tools:\n\
-|  CROSS    = $(CROSS)\n\
+|  CROSS    = $(CROSS_DIR)$(CROSS)\n\
 |  CC       = $(CC)\n\
 |  AR       = $(AR)\n\
 |  STRIP    = $(STRIP)\n\
@@ -358,6 +358,13 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
                     If you don't have the directory where cross compilers are\n\
                     in your PATH you can run:\n\
                     'make CROSS=/opt/STM/STLinux-2.3/devkit/sh4/bin/sh4-linux-'\n\
+\n\
+   CROSS_DIR=dir  - Set tools directory. This variable is added in front of\n\
+                    CROSS variable. CROSS_DIR is useful if you want to use\n\
+                    predefined targets that are setting CROSS, but you don't have\n\
+                    the cross compilers in your PATH. For example:\n\
+                    'make sh4 CROSS_DIR=/opt/STM/STLinux-2.3/devkit/sh4/bin/'\n\
+                    'make dm500 CROSS_DIR=/opt/cross/dm500/cdk/bin/'\n\
 \n\
    CONF_DIR=/dir  - Set OSCam config directory. For example to change config\n\
                     directory to /etc run: 'make CONF_DIR=/etc'\n\
@@ -512,6 +519,8 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
    Build OSCam for SH4 (the compilers are in the path):\n\
      make CROSS=sh4-linux-\n\n\
    Build OSCam for SH4 (the compilers are in not in the path):\n\
+     make sh4 CROSS_DIR=/opt/STM/STLinux-2.3/devkit/sh4/bin/\n\n\
+     make CROSS_DIR=/opt/STM/STLinux-2.3/devkit/sh4/bin/ CROSS=sh4-linux-\n\n\
      make CROSS=/opt/STM/STLinux-2.3/devkit/sh4/bin/sh4-linux-\n\n\
    Build OSCam for SH4 with STAPI:\n\
      make CROSS=sh4-linux- USE_STAPI=1\n\n\
