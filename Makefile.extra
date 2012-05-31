@@ -11,6 +11,9 @@ win: cross-i386-pc-cygwin
 cygwin: i386-pc-cygwin
 macosx: macosx-native
 linux-pcsc: i386-pc-linux-pcsc
+dm500: cross-powerpc-tuxbox-linux
+sh4: cross-sh4-linux
+sh4-stapi: cross-sh4-linux-stapi
 
 i386-pc-linux-libusb:
 	$(MAKE) --no-print-directory \
