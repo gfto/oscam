@@ -21,9 +21,8 @@ endif
 CONF_DIR = /usr/local/etc
 
 LIB_PTHREAD = -lpthread
-LIB_MATH = -lm
 
-override STD_LIBS := $(LIB_PTHREAD) $(LIB_MATH)
+override STD_LIBS := $(LIB_PTHREAD)
 override STD_DEFS := -D'CS_SVN_VERSION="$(SVN_REV)"'
 override STD_DEFS += -D'CS_CONFDIR="$(CONF_DIR)"'
 
