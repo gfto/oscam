@@ -151,7 +151,7 @@ struct cc_extended_ecm_idx {
 	uint8_t free_card;
 	struct timeb	tps;
 	uint32_t cccam_id;
-} EXTENDED_ECM_IDX;
+};
 
 struct cc_data {
 	uint8_t g_flag;

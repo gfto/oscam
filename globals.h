@@ -1407,7 +1407,7 @@ struct s_global_whitelist
 	uint16_t mapcaid;
 	uint16_t mapprovid;
 	struct s_global_whitelist *next;
-} GLOBAL_WHITELIST;
+};
 
 #ifdef CS_CACHEEX
 struct s_cacheex_matcher
@@ -1432,7 +1432,7 @@ struct s_cacheex_matcher
 	int32_t valid_to;
 
 	struct s_cacheex_matcher *next;
-} CACHEEX_MATCHER;
+};
 #endif
 
 struct s_config
