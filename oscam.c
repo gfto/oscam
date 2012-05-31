@@ -816,9 +816,10 @@ void cs_dumpstack(int32_t sig)
 	time(&timep);
 	cs_ctime_r(&timep, buf);
 
-	fprintf(stderr, "oscam crashed with signal %d on %swriting oscam.crash\n", sig, buf);
+	fprintf(stderr, "crashed with signal %d on %swriting oscam.crash\n", sig, buf);
 
-	fprintf(fp, "%sFATAL: Signal %d: %s Fault. Logged StackTrace:\n\n", buf, sig, (sig == SIGSEGV) ? "Segmentation" : ((sig == SIGBUS) ? "Bus" : "Unknown"));
+	fprintf(fp, "%sOSCam cardserver v%s, build #%s (%s)\n", buf, CS_VERSION, CS_SVN_VERSION, CS_TARGET);
+	fprintf(fp, "FATAL: Signal %d: %s Fault. Logged StackTrace:\n\n", sig, (sig == SIGSEGV) ? "Segmentation" : ((sig == SIGBUS) ? "Bus" : "Unknown"));
 	fclose(fp);
 
 	FILE *cmd = fopen("/tmp/gdbcmd", "w");
