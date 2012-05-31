@@ -94,6 +94,7 @@ SSL_FLAGS = $(DEFAULT_SSL_FLAGS)
 SSL_CFLAGS = $(DEFAULT_SSL_FLAGS)
 SSL_LDFLAGS = $(DEFAULT_SSL_FLAGS)
 SSL_LIB = $(DEFAULT_SSL_LIB)
+override PLUS_TARGET := $(PLUS_TARGET)-ssl
 endif
 
 DEFAULT_LIBUSB_FLAGS = -DLIBUSB
@@ -454,6 +455,7 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
                          SSL_CFLAGS='$(DEFAULT_SSL_FLAGS)'\n\
                          SSL_LDFLAGS='$(DEFAULT_SSL_FLAGS)'\n\
                          SSL_LIB='$(DEFAULT_SSL_LIB)'\n\
+                     Using USE_SSL=1 adds to '-ssl' to PLUS_TARGET.\n\
 \n\
  Automatically intialized variables:\n\
 \n\
