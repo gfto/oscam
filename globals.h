@@ -129,19 +129,11 @@
 		cs_debug_mask(D_TRACE, "ERROR, function call %s returns error.",#arg); \
 		return ERROR; \
 	}
-# define D_USE(x) x
 #else
 # define call(arg) \
 	if (arg) { \
 		return ERROR; \
 	}
-# if  __GNUC__ >= 3 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
-#  define D_USE(x) D_USE_ ## x __attribute__((unused))
-# elif defined(__LCLINT__)
-#  define D_USE(x) /*@debug use only@*/ x
-# else
-#  define D_USE(x) x
-# endif
 #endif
 
 //checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything

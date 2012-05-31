@@ -286,7 +286,7 @@ static void chk_services(char *labels, SIDTABBITS *sidok, SIDTABBITS *sidno)
 	*sidno = newsidno;
 }
 
-static void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *D_USE(zType), const char *D_USE(zName), const char *zFiltName)
+static void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName, const char *zFiltName)
 {
 	int32_t i, j;
 	char *ptr1, *ptr2, *ptr3, *saveptr1 = NULL;

@@ -20,7 +20,7 @@ static int32_t find_nano(uchar *ecm, int32_t l, uchar nano, int32_t s)
   return (s<l)?++s:0;
 }
 
-static int32_t chk_class(ECM_REQUEST *er, CLASSTAB *clstab, const char *D_USE(type), const char *D_USE(name))
+static int32_t chk_class(ECM_REQUEST *er, CLASSTAB *clstab, const char *type, const char *name)
 {
   int32_t i, j, an, cl_n, l;
   uchar ecm_class;
@@ -245,7 +245,7 @@ int32_t chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
   return (rc);
 }
 
-static int32_t chk_chid(ECM_REQUEST *er, FTAB *fchid, char *D_USE(type), char *D_USE(name))
+static int32_t chk_chid(ECM_REQUEST *er, FTAB *fchid, char *type, char *name)
 {
   int32_t rc=1, i, j, found_caid=0;
 
