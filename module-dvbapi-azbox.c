@@ -9,6 +9,14 @@
 extern void * dvbapi_client;
 extern DEMUXTYPE demux[MAX_DEMUX];
 
+// These are used in module-dvbapi.c
+int32_t openxcas_provid;
+uint16_t openxcas_sid, openxcas_caid, openxcas_ecm_pid;
+
+static unsigned char openxcas_cw[16];
+static int32_t openxcas_seq, openxcas_filter_idx, openxcas_stream_id, openxcas_cipher_idx, openxcas_busy;
+static uint16_t openxcas_video_pid, openxcas_audio_pid, openxcas_data_pid;
+
 void azbox_openxcas_ecm_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t cipher_index, uint32_t UNUSED(caid), unsigned char *ecm_data, int32_t l, uint16_t pid) {
 	cs_debug_mask(D_DVBAPI, "openxcas: ecm callback received");
 
