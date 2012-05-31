@@ -252,6 +252,11 @@ extern void cs_log_int(uint16_t mask, int8_t lock, const uchar *buf, int32_t n, 
 #define cs_debug_mask_nolock(mask, args...)	cs_log_int(mask, 0, NULL, 0, ##args)
 #define cs_ddump_mask(mask, buf, n, args...)	cs_log_int(mask, 1, buf, n, ##args)
 #else
+#if (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 #define nop() asm volatile("nop")
 #define cs_debug(...) nop()
 #define cs_debug_mask(...) nop()
