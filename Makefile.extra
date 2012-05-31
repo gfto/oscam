@@ -223,6 +223,6 @@ dockstar:
 	$(MAKE) --no-print-directory \
 		CROSS=arm-openwrt-linux-uclibcgnueabi- \
 		EXTRA_FLAGS=-DDOCKSTAR \
-		EXTRA_TARGET=-dockstar \
+		PLUS_TARGET=-dockstar \
 		CONF_DIR=/jffs/etc/config/oscam \
 		$(MAKEFLAGS)
