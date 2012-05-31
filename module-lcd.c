@@ -18,10 +18,9 @@
 #include "module-cccshare.h"
 #endif
 
-int8_t running;
+static int8_t running;
 
-void refresh_lcd_file(void) {
-
+static void refresh_lcd_file(void) {
 	char targetfile[256];
 	char tmpfile[256];
 	char channame[32];
