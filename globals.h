@@ -268,7 +268,7 @@
 #define MOD_CARDSYSTEM  16
 #define MOD_ADDON       32
 
-#ifdef HAVE_DVBAPI
+// Box types
 #define BOXTYPE_DREAMBOX	1
 #define BOXTYPE_DUCKBOX	2
 #define BOXTYPE_UFS910	3
@@ -282,7 +282,6 @@
 #define BOXTYPE_PC		11
 #define BOXTYPES		11
 extern const char *boxdesc[];
-#endif
 
 #define EMM_UNIQUE 1
 #define EMM_SHARED 2
@@ -363,7 +362,6 @@ enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE, E2_
 
 #define CTA_RES_LEN 512
 
-#if defined(__arm__)
 #define  LED1A 		0
 #define  LED1B 		1
 #define  LED2 		2
@@ -375,14 +373,13 @@ enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE, E2_
 #define  LED_DEFAULT 	10
 #define  LED_STOP_THREAD 100
 #define  ARM_LED_TIMEOUT 3 //Dont blink for actions which are < ARM_LED_TIMEOUT seconds ago
+
 struct s_arm_led {
 	int32_t led;
 	int32_t action;
 	time_t start_time;
 };
-#endif
 
-#ifdef QBOXHD
 #define QBOXHD_LED_DEVICE               "/dev/sw0"
 #define QBOXHD_SET_LED_ALL_PANEL_COLOR	_IO(0xBC, 13)    // payload = 3byte [H][S][V]
 #define QBOXHD_LED_COLOR_RED        359  // only H value, S and V values are always == 99
@@ -404,8 +401,6 @@ struct s_arm_led {
 #define QBOXHD_LED_BLINK_FAST       100  // blink milliseconds
 #define QBOXHD_LED_BLINK_MEDIUM     200
 #define QBOXHD_LED_BLINK_SLOW       400
-
-#endif
 
 #define MAX_ATR_LEN		33			// max. ATR length
 #define MAX_HIST		15			// max. number of historical characters
@@ -1720,18 +1715,18 @@ typedef struct emm_packet_t
 	struct s_client *client;
 } EMM_PACKET;
 
-#ifdef QBOXHD
+// QBOX led structures
 typedef struct {
 	uint16_t H;										// range 0-359
 	unsigned char S;								// range 0-99
 	unsigned char V;								// range 0-99
 } qboxhd_led_color_struct;
+
 typedef struct {
 	unsigned char red;								// first 5 bit used (&0x1F)
 	unsigned char green;							// first 5 bit used (&0x1F)
 	unsigned char blue;								// first 5 bit used (&0x1F)
 } qboxhdmini_led_color_struct;
-#endif
 
 
 /* ===========================
