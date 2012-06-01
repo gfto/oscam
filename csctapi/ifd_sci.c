@@ -119,13 +119,15 @@ int32_t Sci_WriteSettings (struct s_reader * reader, BYTE T, uint32_t fs, uint32
 int32_t Sci_Activate (struct s_reader * reader)
 {
 		cs_debug_mask(D_IFD, "IFD: Activating card");
-		int32_t in;
+		uint32_t in = 1;
 
 	cs_debug_mask(D_IFD, "IFD: Is card activated?");
 	if (ioctl(reader->handle, IOCTL_GET_IS_CARD_ACTIVATED, &in) < 0) {
+		cs_debug_mask(D_IFD, "IFD: ioctl returned: %u", in);
 		cs_debug_mask(D_IFD, "IFD: Is card present?");
 		call(ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in) < 0);
 	}
+	cs_debug_mask(D_IFD, "IFD: ioctl returned: %u", in);
 
 		if(in)
 			cs_sleepms(50);
