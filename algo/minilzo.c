@@ -540,7 +540,6 @@ const lzo_byte __lzo_copyright[] =
     "http://www.infosys.tuwien.ac.at/Staff/lux/marco/lzo.html\n"
     "\n"
     "LZO version: v" LZO_VERSION_STRING ", " LZO_VERSION_DATE "\n"
-    "LZO build date: " __DATE__ " " __TIME__ "\n\n"
     "LZO special compilation options:\n"
 #ifdef __cplusplus
     " __cplusplus\n"
@@ -583,7 +582,6 @@ const lzo_byte __lzo_copyright[] =
 #endif
     "\n\n"
 
-    "$Id: LZO " LZO_VERSION_STRING " built " __DATE__ " " __TIME__
 #if defined(__GNUC__) && defined(__VERSION__)
     " by gcc " __VERSION__
 #elif defined(__BORLANDC__)
