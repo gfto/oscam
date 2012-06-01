@@ -1757,11 +1757,12 @@ void event_handler(int32_t UNUSED(signal)) {
 		}
 		cs_ddump_mask(D_DVBAPI, mbuf,len,"pmt:");
 
-		memcpy(dest, "\x03\xFF\xFF\x00\x00\x13\x00", 7);
-
+		dest[0] = 0x03;
 		dest[1] = mbuf[3];
 		dest[2] = mbuf[4];
-		dest[5] = mbuf[11]+1;
+
+		i2b_buf(2, (((mbuf[10] & 0x0F) << 8) | mbuf[11])+1, (uchar*)dest+4);
+		dest[6] = 0;
 
 		memcpy(dest + 7, mbuf + 12, len - 12 - 4);
 
