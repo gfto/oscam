@@ -22,6 +22,9 @@ CONF_DIR = /usr/local/etc
 
 LIB_PTHREAD = -lpthread
 LIB_DL = -ldl
+ifeq ($(uname_S),FreeBSD)
+LIB_DL :=
+endif
 
 override STD_LIBS := $(LIB_PTHREAD) $(LIB_DL)
 override STD_DEFS := -D'CS_SVN_VERSION="$(SVN_REV)"'
