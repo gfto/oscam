@@ -1070,7 +1070,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 
 				// Set BWT = (2^BWI * 960 + 11) work etu
 				if (reader->mhz > 2000) {
-					reader->BWT = (uint16_t) (((1<<bwi) * 960 * 372 / (reader->mhz / reader->divider /100L) + 11)/1*reader->current_baudrate/1000L/1000L); // BWT in ETU otherwise it wont fit in uint16_t
+					reader->BWT = (uint16_t) (((1<<bwi) * 960 * 372 / (reader->mhz / reader->divider /100L) + 11)/1000)*reader->current_baudrate/1000L; // BWT in ETU otherwise it wont fit in uint16_t
 				}
 				else {reader->BWT = (uint16_t)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate(reader->cardmhz))	+ 11 ;
 				}
