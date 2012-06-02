@@ -211,10 +211,10 @@ A:hover SPAN {display: block;position: absolute;top: 2em; right: 1em; margin: 0p
 IMG {border:0px solid;}\n\
 IMG.icon {border: 0px solid;width:22px;height:22px;background-color:#AA0000;border-radius:3px;-webkit-border-radius:3px;}\n\
 IMG.clientpicon {height:40px;width:80px;}\n\
-RECT.graph_bg {fill:white;}\n\
-TEXT.graph_error {text-anchor:middle;fill:red}\n\
-TEXT.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}\n\
-PATH.graph_grid {stroke:gray;stroke-opacity:0.5}\n\
+rect.graph_bg {fill:white;}\n\
+text.graph_error {text-anchor:middle;fill:red}\n\
+text.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}\n\
+path.graph_grid {stroke:gray;stroke-opacity:0.5}\n\
 SPAN.e_valid {background-color:#E6FEBF;}\n\
 SPAN.e_expired {background-color:#fff3e7;}\n\
 SPAN.div_notifier {background-color:red;color: white;font-family:Arial;font-size:10px;font-weight:bold;}\n\
