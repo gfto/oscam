@@ -1096,7 +1096,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 				reader->read_timeout = ETU_to_us(reader, reader->BWT);
 				reader->block_delay = ETU_to_us(reader, BGT);
 				reader->char_delay = ETU_to_us(reader, CGT);
-				cs_debug_mask(D_ATR, "Setting reader %s timings: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", reader->label, reader->read_timeout, reader->block_delay, reader->char_delay);
+				cs_debug_mask(D_ATR, "Setting reader %s timings: timeout=%u us, block_delay=%u us, char_delay=%u us", reader->label, reader->read_timeout, reader->block_delay, reader->char_delay);
 			}
 			break;
 	 default:
