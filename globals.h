@@ -1203,7 +1203,7 @@ struct s_reader  									//contains device info, reader info and card info
 	////variables from io_serial.h
 	int32_t			written;						// keep score of how much bytes are written to serial port, since they are echoed back they have to be read
 #endif
-	uint16_t		BWT,CWT;						// (for overclocking uncorrected) block waiting time, character waiting time, in ETU
+	uint32_t		BWT,CWT;						// (for overclocking uncorrected) block waiting time, character waiting time, in ETU
 	////variables from protocol_t1.h
 	uint16_t		ifsc;							// Information field size for the ICC
 	unsigned char	ns;								// Send sequence number
