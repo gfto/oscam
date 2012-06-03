@@ -537,7 +537,30 @@ void cs_accounts_chk()
 
 static void free_ecm(ECM_REQUEST *ecm) {
 	struct s_ecm_answer *ea, *nxt;
+	ECM_REQUEST *er;
+	int i, pending=0;
+	struct s_reader *rdr;
 	
+	//remove this ecm from reader queue to avoid segfault on very late answers (when ecm is already disposed)
+	//first check for outstanding answers:
+	ea = ecm->matching_rdr;
+	while (ea) {
+	    if (!ea->status&REQUEST_ANSWERED) {
+	        //we found a outstanding reader, clean it:
+                rdr = ea->reader;
+                if (rdr->client && rdr->client->ecmtask) {
+	            for (i = 0; i < cfg.max_pending; i++) {
+                        er = &rdr->client->ecmtask[i];
+                        if (er->parent == ecm) {
+                            er->parent = NULL;
+                        }
+                    }	        
+                }
+	    }
+	    ea = ea->next;
+	}
+
+        //free matching_rdr list:	
 	ea = ecm->matching_rdr;
 	ecm->matching_rdr = NULL;
 	while (ea) {
@@ -606,8 +629,10 @@ static void cleanup_ecmtasks(struct s_client *cl)
 			int i;
 			for (i = 0; i < cfg.max_pending; i++) {
 				ecm = &rdr->client->ecmtask[i];
-				if (ecm->client == cl)
+				if (ecm->client == cl) {
 					ecm->client = NULL;
+					ecm->parent = NULL;
+                                }
 			}
 		}
 		rdr=rdr->next;
@@ -2082,7 +2107,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 		er->idx = 0;
 		er = er->parent; //Now er is "original" ecm, before it was the reader-copy
 
-    	if (er->rc < E_99) {
+        	if (er->rc < E_99) {
 #ifdef WITH_LB
 			send_reader_stat(reader, er, NULL, rc);
 #endif
