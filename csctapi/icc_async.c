@@ -867,8 +867,8 @@ static uint32_t ETU_to_ms(struct s_reader * reader, uint32_t WWT)
 {
 #define CHAR_LEN 10L //character length in ETU, perhaps should be 9 when parity = none?
 	if (reader->mhz>2000){
-		double work_etu = 1000 / (double) reader->current_baudrate;
-		return (uint32_t) (WWT * work_etu); // in ms
+		double work_etu = 1000*1000 / (double) reader->current_baudrate;
+		return (uint32_t) (WWT * work_etu); // in us
 	}
 	
 	if (WWT > CHAR_LEN)

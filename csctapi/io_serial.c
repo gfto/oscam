@@ -628,9 +628,12 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_ms, uint32_t
    int32_t select_ret;
    int32_t in_fd;
    
-   if (delay_ms > 0)
-      cs_sleepms (delay_ms);
-   
+   if (delay_ms > 0){
+      if (reader->mhz > 2000)
+		cs_sleepus (delay_ms); // for pll readers do wait in us
+	  else
+	    cs_sleepms (delay_ms); // all other reader do wait in ms
+   }
    in_fd=reader->handle;
    
    FD_ZERO(&rfds);
@@ -638,7 +641,8 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_ms, uint32_t
    
    FD_ZERO(&erfds);
    FD_SET(in_fd, &erfds);
-   
+   if (reader->mhz > 2000)
+	  timeout_ms = timeout_ms / 1000;
    tv.tv_sec = timeout_ms/1000;
    tv.tv_usec = (timeout_ms % 1000) * 1000L;
 
@@ -681,9 +685,12 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_ms, 
 	return OK;
 #endif
 
-   if (delay_ms > 0)
-      cs_sleepms(delay_ms);
-
+   if (delay_ms > 0) {
+	  if (reader->mhz > 2000)
+		cs_sleepus (delay_ms); // for pll readers do wait in us
+	  else
+	    cs_sleepms (delay_ms); // all other readers do wait in ms
+	}
    out_fd=reader->handle;
     
    FD_ZERO(&wfds);
@@ -692,7 +699,9 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_ms, 
    FD_ZERO(&ewfds);
    FD_SET(out_fd, &ewfds);
    
-   tv.tv_sec = timeout_ms/1000L;
+   if (reader->mhz > 2000)
+	  timeout_ms = timeout_ms / 1000;
+   tv.tv_sec = timeout_ms/1000;
    tv.tv_usec = (timeout_ms % 1000) * 1000L;
 
    select_ret = select(out_fd+1, NULL, &wfds, &ewfds, &tv);
