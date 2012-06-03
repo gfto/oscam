@@ -682,7 +682,7 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_ms, 
 #endif
 
    if (delay_ms > 0)
-      cs_sleepus(delay_ms);
+      cs_sleepms(delay_ms);
 
    out_fd=reader->handle;
     
