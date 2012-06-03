@@ -538,7 +538,7 @@ void cs_accounts_chk()
 static void free_ecm(ECM_REQUEST *ecm) {
 	struct s_ecm_answer *ea, *nxt;
 	ECM_REQUEST *er;
-	int i, pending=0;
+	int i;
 	struct s_reader *rdr;
 	
 	//remove this ecm from reader queue to avoid segfault on very late answers (when ecm is already disposed)
