@@ -54,9 +54,9 @@
 
 static int32_t IO_Serial_Bitrate(int32_t bitrate);
 
-bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_us, uint32_t timeout_ms);
+bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_ms, uint32_t timeout_ms);
 
-static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, uint32_t timeout_ms);
+static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_ms, uint32_t timeout_ms);
 
 void IO_Serial_Ioctl_Lock(struct s_reader * reader, int32_t flag)
 {
@@ -620,7 +620,7 @@ static int32_t IO_Serial_Bitrate(int32_t bitrate)
 	return B0;
 }
 
-bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_us, uint32_t timeout_ms)
+bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_ms, uint32_t timeout_ms)
 {
    fd_set rfds;
    fd_set erfds;
@@ -628,8 +628,8 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_us, uint32_t
    int32_t select_ret;
    int32_t in_fd;
    
-   if (delay_us > 0)
-      cs_sleepus (delay_us);
+   if (delay_ms > 0)
+      cs_sleepms (delay_ms);
    
    in_fd=reader->handle;
    
@@ -668,7 +668,7 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_us, uint32_t
 		return ERROR;
 }
 
-static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, uint32_t timeout_ms)
+static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_ms, uint32_t timeout_ms)
 {
    fd_set wfds;
    fd_set ewfds;
@@ -681,8 +681,8 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, 
 	return OK;
 #endif
 
-   if (delay_us > 0)
-      cs_sleepus(delay_us);
+   if (delay_ms > 0)
+      cs_sleepus(delay_ms);
 
    out_fd=reader->handle;
     

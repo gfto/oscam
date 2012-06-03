@@ -63,7 +63,7 @@ static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecat
 static int32_t PPS_Exchange (struct s_reader * reader, BYTE * params, uint32_t *length);
 static uint32_t PPS_GetLength (BYTE * block);
 static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, double n, uint16_t deprecated);
-static uint32_t ETU_to_us(struct s_reader * reader, uint32_t WWT);
+static uint32_t ETU_to_ms(struct s_reader * reader, uint32_t WWT);
 static BYTE PPS_GetPCK (BYTE * block, uint32_t length);
 static int32_t SetRightParity (struct s_reader * reader);
 
@@ -453,8 +453,8 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, ui
 
 int32_t ICC_Async_SetTimings (struct s_reader * reader, uint32_t wait_etu)
 {
-	reader->read_timeout = ETU_to_us(reader, wait_etu);
-	cs_debug_mask(D_IFD, "Setting reader %s timeout to %i ETU (%d us)", reader->label, wait_etu, reader->read_timeout);
+	reader->read_timeout = ETU_to_ms(reader, wait_etu);
+	cs_debug_mask(D_IFD, "Setting reader %s timeout to %i ETU (%d ms)", reader->label, wait_etu, reader->read_timeout);
 	return OK;
 }
 
@@ -863,19 +863,19 @@ static uint32_t PPS_GetLength (BYTE * block)
 	return length;
 }
 
-static uint32_t ETU_to_us(struct s_reader * reader, uint32_t WWT)
+static uint32_t ETU_to_ms(struct s_reader * reader, uint32_t WWT)
 {
 #define CHAR_LEN 10L //character length in ETU, perhaps should be 9 when parity = none?
 	if (reader->mhz>2000){
-		double work_etu = 1000000 / (double) reader->current_baudrate;
-		return (uint32_t) (WWT * work_etu); // in us
+		double work_etu = 1000 / (double) reader->current_baudrate;
+		return (uint32_t) (WWT * work_etu); // in ms
 	}
 	
 	if (WWT > CHAR_LEN)
 		WWT -= CHAR_LEN;
 	else
 		WWT = 0;
-	double work_etu = 1000000 / (double)reader->current_baudrate;
+	double work_etu = 1000 / (double)reader->current_baudrate;
 	return (uint32_t) (WWT * work_etu * reader->cardmhz / reader->mhz);
 }
 
@@ -942,7 +942,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 	double F;
 	uint32_t BGT, edc, EGT, CGT, WWT = 0;
 	uint32_t GT;
-	uint32_t gt_us;
+	uint32_t gt_ms;
 
 	//set the amps and the volts according to ATR
 	if (ATR_GetParameter(atr, ATR_PARAMETER_I, &I) != ATR_OK)
@@ -999,7 +999,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 	else
 		EGT = n;
 	GT = EGT + 12; //Guard Time in ETU
-	gt_us = ETU_to_us(reader, GT);
+	gt_ms = ETU_to_ms(reader, GT);
 
 	switch (reader->protocol_type) {
 		case ATR_PROTOCOL_TYPE_T0:
@@ -1019,10 +1019,10 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
 				WWT >>= 1; //is this correct?
 
-			reader->read_timeout = ETU_to_us(reader, WWT);
-			reader->block_delay = gt_us;
-			reader->char_delay = gt_us;
-			cs_debug_mask(D_ATR, "Setting timings reader %s: timeout=%u us, block_delay=%u us, char_delay=%u us", reader->label, reader->read_timeout, reader->block_delay, reader->char_delay);
+			reader->read_timeout = ETU_to_ms(reader, WWT);
+			reader->block_delay = gt_ms;
+			reader->char_delay = gt_ms;
+			cs_debug_mask(D_ATR, "Setting timings reader %s: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", reader->label, reader->read_timeout, reader->block_delay, reader->char_delay);
 			if( reader->mhz > 2000)
 				cs_debug_mask (D_IFD, "reader %s Protocol: T=%i, WWT=%u, Clockrate=%u\n", reader->label, reader->protocol_type, WWT, (reader->mhz / reader->divider * 10000));
 			else
@@ -1093,10 +1093,10 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 
 				cs_debug_mask(D_ATR, "Reader %s protocol: T=%i: IFSC=%d, CWT=%d etu, BWT=%d etu, BGT=%d etu, EDC=%s\n", reader->label, reader->protocol_type, reader->ifsc, reader->CWT, reader->BWT, BGT, (edc == EDC_LRC) ? "LRC" : "CRC");
 
-				reader->read_timeout = ETU_to_us(reader, reader->BWT);
-				reader->block_delay = ETU_to_us(reader, BGT);
-				reader->char_delay = ETU_to_us(reader, CGT);
-				cs_debug_mask(D_ATR, "Setting reader %s timings: timeout=%u us, block_delay=%u us, char_delay=%u us", reader->label, reader->read_timeout, reader->block_delay, reader->char_delay);
+				reader->read_timeout = ETU_to_ms(reader, reader->BWT);
+				reader->block_delay = ETU_to_ms(reader, BGT);
+				reader->char_delay = ETU_to_ms(reader, CGT);
+				cs_debug_mask(D_ATR, "Setting reader %s timings: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", reader->label, reader->read_timeout, reader->block_delay, reader->char_delay);
 			}
 			break;
 	 default:
