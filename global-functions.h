@@ -255,6 +255,8 @@ extern void cs_log_int(uint16_t mask, int8_t lock, const uchar *buf, int32_t n, 
 #if (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wunused-variable"
+#endif
+#if (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
 #define nop() asm volatile("nop")
