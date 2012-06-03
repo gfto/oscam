@@ -1012,9 +1012,9 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 #endif
 			wi = DEFAULT_WI;
 
-			// WWT = 960 * WI * (Fi / f) * 1000 milliseconds
+			// WWT = d * WI  work etu
 			
-			WWT = (uint32_t) 960 * wi; //in ETU
+			WWT = (uint32_t) 960 * d * wi; //in work ETU
 			
 			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
 				WWT >>= 1; //is this correct?
