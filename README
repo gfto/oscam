@@ -81,17 +81,19 @@ OSCam by default do not depend on external libraries except when compilation
 with SSL is requested. In that case openssl (libcrypto) library must be
 installed.
 
-OSCam supports building with the following externals:
+OSCam supports building with the following external dependencies:
   - libcrypto (libssl) - 'make USE_LIBCRYPTO=1'
   - libusb             - 'make USE_LIBUSB=1'
   - PCSC               - 'make USE_PCSC=1'
   - SH4 STAPI support  - 'make USE_STAPI=1'
+  - Coolapi support    - 'make USE_COOLAPI=1'
+  - AZBOX support      - 'make USE_AZBOX=1'
 
 For STAPI support you need to download liboscam_stapi.a library and place
 it in stapi directory under oscam/ root dir. liboscam_stapi.a can be downloaded
 from: http://streamboard.gmc.to/wbb2/thread.php?threadid=28854
 
-For more information about building with external libraries, run 'make help'.
+For more information and examples on using the build system, run `make help`.
 
 
 Web links
