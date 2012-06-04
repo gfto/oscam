@@ -366,7 +366,7 @@ endif
 	-@rm -f $*.o
 
 config:
-	$(SHELL) ./config.sh
+	$(SHELL) ./config.sh --gui
 
 menuconfig: config
 
