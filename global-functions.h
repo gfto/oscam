@@ -444,4 +444,12 @@ extern struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid);
 extern void reader_device_close(struct s_reader * reader);
 extern int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int16_t len);
 
+#ifdef WITH_COOLAPI
+extern void coolapi_open_all(void);
+extern void coolapi_close_all(void);
+#else
+static inline void coolapi_open_all(void) { };
+static inline void coolapi_close_all(void) { };
+#endif
+
 #endif

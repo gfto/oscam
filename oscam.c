@@ -8,11 +8,6 @@
 #include "openxcas/openxcas_api.h"
 #endif
 
-#ifndef WITH_COOLAPI
-void coolapi_close_all(void) { };
-void coolapi_open_all(void) { };
-#endif
-
 static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_addr_t ip);
 static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea);
 

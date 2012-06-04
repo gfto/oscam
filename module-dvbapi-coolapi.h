@@ -76,8 +76,6 @@ int32_t cnxt_dmx_set_filter(void * handle, filter_set_t * arg, void *);
 
 /* Local coolapi functions */
 void coolapi_open(void);
-void coolapi_open_all(void);
-void coolapi_close_all(void);
 int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char * flt, unsigned char * mask);
 int32_t coolapi_remove_filter (int32_t fd, int32_t num);
 int32_t coolapi_open_device (int32_t demux_index, int32_t demux_id);
