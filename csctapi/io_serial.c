@@ -624,7 +624,7 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_ms, uint32_t
 {
    fd_set rfds;
    fd_set erfds;
-   struct timeval tv;
+   struct timespec tv;
    int32_t select_ret;
    int32_t in_fd;
    
@@ -641,13 +641,19 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_ms, uint32_t
    
    FD_ZERO(&erfds);
    FD_SET(in_fd, &erfds);
-   if (reader->mhz > 2000)
-	  timeout_ms = timeout_ms / 1000;
-   tv.tv_sec = timeout_ms/1000;
-   tv.tv_usec = (timeout_ms % 1000) * 1000L;
+   if (reader->mhz > 2000){ // calculate timeout in us for pll readers
+		tv.tv_sec = timeout_ms/1000000;
+		tv.tv_nsec = (timeout_ms % 1000000) * 1000L;
+		cs_debug_mask(D_DEVICE,"tv_sec =%d, tv_nsec=%d", (int) tv.tv_sec,(int) tv.tv_nsec);
+   }
+   else {
+		tv.tv_sec = timeout_ms/1000;
+		tv.tv_nsec = (timeout_ms % 1000) * 1000000L;
+		cs_debug_mask(D_DEVICE,"tv_sec =%d, tv_usec=%d", (int) tv.tv_sec,(int) tv.tv_nsec);
+   }
 
 	while (1) {
-		select_ret = select(in_fd+1, &rfds, NULL,  &erfds, &tv);
+		select_ret = pselect(in_fd+1, &rfds, NULL,  &erfds, &tv, NULL);
 		if (select_ret==-1) {
 			if (errno==EINTR) {
 				//try again in case of Interrupted system call
@@ -676,12 +682,12 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_ms, 
 {
    fd_set wfds;
    fd_set ewfds;
-   struct timeval tv;
+   struct timespec tv;
    int32_t select_ret;
    int32_t out_fd;
 
 #if !defined(WITH_COOLAPI) && !defined(WITH_AZBOX)
-   if(reader->typ == R_INTERNAL)
+   if(reader->typ == R_INTERNAL && reader->mhz < 2000)
 	return OK;
 #endif
 
@@ -699,12 +705,18 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_ms, 
    FD_ZERO(&ewfds);
    FD_SET(out_fd, &ewfds);
    
-   if (reader->mhz > 2000)
-	  timeout_ms = timeout_ms / 1000;
-   tv.tv_sec = timeout_ms/1000;
-   tv.tv_usec = (timeout_ms % 1000) * 1000L;
+   if (reader->mhz > 2000){ // calculate timeout in us for pll readers
+		tv.tv_sec = timeout_ms/1000000;
+		tv.tv_nsec = (timeout_ms % 1000000) * 1000L;
+		cs_debug_mask(D_DEVICE,"tv_sec =%d, tv_usec=%d", (int) tv.tv_sec,(int) tv.tv_nsec);
+   }
+   else {
+		tv.tv_sec = timeout_ms/1000;
+		tv.tv_nsec = (timeout_ms % 1000) * 1000000L;
+		cs_debug_mask(D_DEVICE,"tv_sec =%d, tv_usec=%d", (int) tv.tv_sec,(int) tv.tv_nsec);
+   }
 
-   select_ret = select(out_fd+1, NULL, &wfds, &ewfds, &tv);
+   select_ret = pselect(out_fd+1, NULL, &wfds, &ewfds, &tv, NULL);
 
    if(select_ret==-1)
    {

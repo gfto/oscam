@@ -940,9 +940,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 {
 	double I;
 	double F;
-	uint32_t BGT, edc, EGT, CGT, WWT = 0;
-	uint32_t GT;
-	uint32_t gt_ms;
+	uint32_t BGT, edc, EGT, CGT, WWT, GT, gt_ms = 0;
 
 	//set the amps and the volts according to ATR
 	if (ATR_GetParameter(atr, ATR_PARAMETER_I, &I) != ATR_OK)
@@ -993,14 +991,14 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 	reader->read_timeout = 0;
 	reader->block_delay = 0;
 	reader->char_delay = 0;
-
-	if (n == 255) //Extra Guard Time
-		EGT = 0;
-	else
-		EGT = n;
-	GT = EGT + 12; //Guard Time in ETU
-	gt_ms = ETU_to_ms(reader, GT);
-
+	if ( reader->mhz < 2000){
+		if (n == 255) //Extra Guard Time
+			EGT = 0;
+		else
+			EGT = n;
+		GT = EGT + 12; //Guard Time in ETU
+		gt_ms = ETU_to_ms(reader, GT);
+	}
 	switch (reader->protocol_type) {
 		case ATR_PROTOCOL_TYPE_T0:
 		case ATR_PROTOCOL_TYPE_T14:
@@ -1017,18 +1015,26 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 			WWT = (uint32_t) 960 * d * wi; //in work ETU
 			
 			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
-				WWT >>= 1; //is this correct?
-
+				WWT >>= 1; //is this correct?			
+			
+			if( reader->mhz > 2000){
+				EGT = 2;
+				if (n != 255) //Extra Guard Time
+					EGT =+ n;  // T0 protocol, if TC1 = 255 then dont add extra guardtime
+				gt_ms = 0; // T0 protocol doesnt have char_delay and block_delay.
+				reader->CWT = 0;
+				reader->BWT = 0;
+				cs_debug_mask (D_IFD, "reader %s Protocol: T=%i, WWT=%u, Clockrate=%u\n", reader->label, reader->protocol_type, WWT, (reader->mhz / reader->divider * 10000));
+			}
+			else
+				cs_debug_mask (D_IFD, "reader %s Protocol: T=%i, WWT=%u, Clockrate=%u\n", reader->label, reader->protocol_type, WWT, ICC_Async_GetClockRate(reader->cardmhz));
+			
 			reader->read_timeout = ETU_to_ms(reader, WWT);
 			reader->block_delay = gt_ms;
 			reader->char_delay = gt_ms;
 			cs_debug_mask(D_ATR, "Setting timings reader %s: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", reader->label, reader->read_timeout, reader->block_delay, reader->char_delay);
-			if( reader->mhz > 2000)
-				cs_debug_mask (D_IFD, "reader %s Protocol: T=%i, WWT=%u, Clockrate=%u\n", reader->label, reader->protocol_type, WWT, (reader->mhz / reader->divider * 10000));
-			else
-				cs_debug_mask (D_IFD, "reader %s Protocol: T=%i, WWT=%u, Clockrate=%u\n", reader->label, reader->protocol_type, WWT, ICC_Async_GetClockRate(reader->cardmhz));
-			}
 			break;
+		}
 	 case ATR_PROTOCOL_TYPE_T1:
 			{
 				BYTE ta, tb, tc, cwi, bwi;
@@ -1044,11 +1050,11 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 				//FIXME workaround for Smargo until native mode works
 				if (reader->smargopatch == 1)
 					reader->ifsc = MIN (reader->ifsc, 28);
-				else
+				//else
 					// Towitoko does not allow IFSC > 251
 					//FIXME not sure whether this limitation still exists
-					reader->ifsc = MIN (reader->ifsc, MAX_IFSC);
-
+					//reader->ifsc = MIN (reader->ifsc, MAX_IFSC);
+				
 			#ifndef PROTOCOL_T1_USE_DEFAULT_TIMINGS
 				// Calculate CWI and BWI
 				if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TB, &tb) == ATR_NOT_FOUND)
@@ -1070,11 +1076,11 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 
 				// Set BWT = (2^BWI * 960 * 372 / clockspeed) seconds + 11 work etu  (in seconds) 
 				// 1 worketu = 1 / baudrate *1000*1000 us
-				if (reader->mhz > 2000) {
+				if (reader->mhz > 2000)
 					reader->BWT = (uint32_t) ((((1<<bwi) * 960L * 372L / ((double)reader->mhz / (double) reader->divider / 100L)) * (double) reader->current_baudrate / 1000L / 1000L)+ 11L); // BWT in ETU
-				}
-				else {reader->BWT = (uint32_t)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate(reader->cardmhz))	+ 11 ;
-				}
+				else
+					reader->BWT = (uint32_t)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate(reader->cardmhz))	+ 11 ;
+				
 				// Set BGT = 22 * work etu
 				BGT = 22L; //in ETU
 
@@ -1093,7 +1099,15 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 				reader->ns = 1;
 
 				cs_debug_mask(D_ATR, "Reader %s protocol: T=%i: IFSC=%d, CWT=%d etu, BWT=%d etu, BGT=%d etu, EDC=%s\n", reader->label, reader->protocol_type, reader->ifsc, reader->CWT, reader->BWT, BGT, (edc == EDC_LRC) ? "LRC" : "CRC");
-
+				
+				if( reader->mhz > 2000){
+					EGT = 2;
+					if (n == 255) //Extra Guard Time T1
+						EGT--;  // T1 protocol, if TC1 = 255 then substract 1 ETU from guardtime
+					else
+						EGT =+n;
+				CGT = 0;
+				}
 				reader->read_timeout = ETU_to_ms(reader, reader->BWT);
 				reader->block_delay = ETU_to_ms(reader, BGT);
 				reader->char_delay = ETU_to_ms(reader, CGT);
