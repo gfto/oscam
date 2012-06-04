@@ -162,6 +162,7 @@ config_dialog() {
 				print_components
 				rm $tempfile
 				rm $tempfileconfig
+				$0 --make-config.mak
 				exit
 			;;
 		esac
