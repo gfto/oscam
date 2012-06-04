@@ -34,16 +34,12 @@ i386-pc-linux-pcsc-libusb:
 macosx-native:
 	$(MAKE) --no-print-directory \
 		USE_PCSC=1 \
-		PCSC_LIB="-framework PCSC" \
-		EXTRA_FLAGS="-m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk" \
 		$(MAKEFLAGS)
 
 macosx-libusb:
 	$(MAKE) --no-print-directory \
 		USE_LIBUSB=1 \
 		USE_PCSC=1 \
-		PCSC_LIB="-framework PCSC" \
-		EXTRA_FLAGS="-m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk" \
 		$(MAKEFLAGS)
 
 cross-i386-pc-freebsd:

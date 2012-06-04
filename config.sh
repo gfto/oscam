@@ -64,6 +64,20 @@ case "$1" in
 		(svnversion -n $WD 2>/dev/null || echo -n 0) | sed 's/.*://; s/[^0-9]*$//; s/^$/0/'
 		exit 0
 	;;
+	'--detect-osx-sdk-version')
+		shift
+		OSX_VER=${1:-10.8}
+		for DIR in /Developer/SDKs/MacOSX{$OSX_VER,10.7,10.6,10.5}.sdk
+		do
+			if test -d $DIR
+			then
+				echo $DIR
+				exit 0
+			fi
+		done
+		echo /Developer/SDKs/MacOSX$(OSX_VER).sdk
+		exit 0
+	;;
 	'-h'|'--help')
 		echo \
 "OSCam config

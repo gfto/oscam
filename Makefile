@@ -10,6 +10,16 @@ SVN_REV := $(shell ./config.sh --oscam-revision)
 
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 
+# Find OSX SDK
+ifeq ($(uname_S),Darwin)
+# Setting OSX_VER allows you to choose prefered version if you have
+# two SDKs installed. For example if you have 10.6 and 10.5 installed
+# you can choose 10.5 by using 'make USE_PCSC=1 OSX_VER=10.5'
+# './config.sh --detect-osx-sdk-version' returns the newest SDK if
+# SDK_VER is not set.
+OSX_SDK := $(shell ./config.sh --detect-osx-sdk-version $(OSX_VER))
+endif
+
 ifeq "$(shell ./config.sh --enabled WITH_SSL)" "Y"
 	override USE_SSL=1
 	override USE_LIBCRYPTO=1
@@ -114,8 +124,13 @@ LIBUSB_LIB = $(DEFAULT_LIBUSB_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-libusb
 endif
 
+ifeq ($(uname_S),Darwin)
+DEFAULT_PCSC_FLAGS = -isysroot $(OSX_SDK) -DHAVE_PCSC=1
+DEFAULT_PCSC_LIB = -syslibroot,$(OSX_SDK) -framework IOKit -framework CoreFoundation -framework PCSC
+else
 DEFAULT_PCSC_FLAGS = -DHAVE_PCSC=1 -I/usr/include/PCSC
 DEFAULT_PCSC_LIB = -lpcsclite
+endif
 ifdef USE_PCSC
 PCSC_FLAGS = $(DEFAULT_PCSC_FLAGS)
 PCSC_CFLAGS = $(DEFAULT_PCSC_FLAGS)
