@@ -545,7 +545,7 @@ static void free_ecm(ECM_REQUEST *ecm) {
 	//first check for outstanding answers:
 	ea = ecm->matching_rdr;
 	while (ea) {
-	    if (!ea->status&REQUEST_ANSWERED) {
+	    if (!(ea->status & REQUEST_ANSWERED)) {
 	        //we found a outstanding reader, clean it:
                 rdr = ea->reader;
                 if (rdr->client && rdr->client->ecmtask) {
