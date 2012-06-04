@@ -362,7 +362,7 @@ $(OSCAM_LIB): $(OSCAM_OBJ)
 
 $(OSCAM_BIN): oscam.c $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(OSCAM_LIB)
 	$(SAY) "LINK	$@"
-	$(Q)$(CC) $(STD_DEFS) $(LDFLAGS) oscam.c $(OSCAM_LIB) $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(LIBS) -o $@
+	$(Q)$(CC) $(STD_DEFS) $(CC_OPTS) $(CC_WARN) $(LDFLAGS) oscam.c $(OSCAM_LIB) $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(LIBS) -o $@
 ifndef DEBUG
 	$(SAY) "STRIP	$@"
 	$(Q)$(STRIP) $@
