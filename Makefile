@@ -193,6 +193,11 @@ endif
 OSCAM_BIN := Distribution/oscam-$(VER)$(SVN_REV)-$(subst cygwin,cygwin.exe,$(TARGET))
 LIST_SMARGO_BIN := Distribution/list_smargo-$(VER)$(SVN_REV)-$(subst cygwin,cygwin.exe,$(TARGET))
 
+# Build list_smargo-.... only when LIBUSB build is requested.
+ifndef USE_LIBUSB
+override LIST_SMARGO_BIN =
+endif
+
 LIBDIR = lib
 
 GLOBAL_DEP = Makefile
@@ -295,11 +300,8 @@ OSCAM_OBJ = \
 	$(OSCAM_LIB)(reader-videoguard12.o) \
 	$(OSCAM_LIB)(reader-videoguard2.o)
 
-ifneq ($(USE_LIBUSB)$(LIBUSB),)
-all:		prepare $(OSCAM_BIN) $(LIST_SMARGO_BIN)
-else
-all:		prepare $(OSCAM_BIN)
-endif
+# The default build target
+all: prepare $(OSCAM_BIN) $(LIST_SMARGO_BIN)
 
 prepare:
 	@-test -d "$(LIBDIR)" || mkdir "$(LIBDIR)"
