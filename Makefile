@@ -75,7 +75,12 @@ LDFLAGS = -Wl,--gc-sections
 # For more information about the bug see:
 #   http://cygwin.com/ml/binutils/2005-01/msg00103.html
 LINKER_VER := $(shell $(CC) -Wl,--version 2>&1 | head -1 | cut -d' ' -f5)
+# dm500 toolchain
 ifeq "$(LINKER_VER)" "20040727"
+LDFLAGS :=
+endif
+# dm600/7000/7020 toolchain
+ifeq "$(LINKER_VER)" "20041121"
 LDFLAGS :=
 endif
 # The OS X linker do not support --gc-sections
