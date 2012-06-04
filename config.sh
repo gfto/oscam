@@ -224,6 +224,26 @@ case "$1" in
 		done
 		echo /Developer/SDKs/MacOSX$(OSX_VER).sdk
 	;;
+	'-l'|'--list-config')
+		for OPT in $addons $protocols $readers
+		do
+			grep "^\#define $OPT$" oscam-config.h >/dev/null 2>/dev/null
+			[ $? = 0 ] && echo "CONFIG_$OPT=y" || echo "# CONFIG_$OPT=n"
+		done
+		echo "CONFIG_INCLUDED=Yes"
+		exit 0
+	;;
+	'-m'|'--make-config.mak')
+		$0 --list-config > config.mak.tmp
+		cmp config.mak.tmp config.mak >/dev/null 2>/dev/null
+		if [ $? != 0 ]
+		then
+			mv config.mak.tmp config.mak
+		else
+			rm config.mak.tmp
+		fi
+		exit 0
+	;;
 	*)
 		echo \
 "OSCam config
@@ -236,6 +256,8 @@ Usage: `basename $0` [parameters]
  -d, --disabled [option]   Check if certain option is disabled.
  -v, --oscam-version       Display OSCam version.
  -r, --oscam-revision      Display OSCam SVN revision.
+ -l, --list-config         List active configuration variables.
+ -m, --make-config.mak     Create or update config.mak
  -h, --help                Display this help text.
 "
 		exit 1

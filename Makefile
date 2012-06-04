@@ -3,7 +3,19 @@ SHELL = /bin/sh
 .SUFFIXES:
 .SUFFIXES: .o .c .a
 .NOTPARALLEL: all
-.PHONY: help
+.PHONY: help config.mak build_config.mak
+
+# Include config.mak which contains variables for all enabled modules
+# These variables will be used to select only needed files for compilation
+-include config.mak
+
+# config.mak do not exists, rebuild it
+# and re-execute make so the variables can be included
+ifndef CONFIG_INCLUDED
+build_config.mak:
+	@$(MAKE) --no-print-directory -s config.mak
+	@$(MAKE) --no-print-directory
+endif
 
 VER     := $(shell ./config.sh --oscam-version)
 SVN_REV := $(shell ./config.sh --oscam-revision)
@@ -303,6 +315,9 @@ OSCAM_OBJ = $(OSCAM_OBJ_y)
 # The default build target
 all: prepare $(OSCAM_BIN) $(LIST_SMARGO_BIN)
 
+config.mak: oscam-config.h
+	$(shell ./config.sh --make-config.mak)
+
 prepare:
 	@-test -d "$(LIBDIR)" || mkdir "$(LIBDIR)"
 	@-printf "\
@@ -376,7 +391,7 @@ clean:
 	@-rm -rfv lib
 
 distclean: clean
-	@-rm -rfv Distribution/oscam-* Distribution/list_smargo-*
+	@-rm -rfv Distribution/oscam-* Distribution/list_smargo-* config.mak
 
 help:
 	@-printf "\
