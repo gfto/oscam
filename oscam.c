@@ -237,7 +237,7 @@ void cs_add_lastresponsetime(struct s_client *cl, int32_t ltime, time_t timestam
 	} while(0)
 
 /* Prints usage information and information about the built-in modules. */
-static void usage()
+static void usage(void)
 {
 	printf("%s",
 "  ___  ____   ___\n"
@@ -474,7 +474,7 @@ void clear_account_stats(struct s_auth *account)
 #endif
 }
 
-void clear_all_account_stats()
+void clear_all_account_stats(void)
 {
   struct s_auth *account = cfg.account;
   while (account) {
@@ -483,7 +483,7 @@ void clear_all_account_stats()
   }
 }
 
-void clear_system_stats()
+void clear_system_stats(void)
 {
   first_client->cwfound = 0;
   first_client->cwcache = 0;
@@ -501,7 +501,7 @@ void clear_system_stats()
 }
 #endif
 
-void cs_accounts_chk()
+void cs_accounts_chk(void)
 {
   struct s_auth *old_accounts = cfg.account;
   struct s_auth *new_accounts = init_userdb();
@@ -708,7 +708,7 @@ void cleanup_thread(void *var)
 	add_garbage(cl);
 }
 
-static void cs_cleanup()
+static void cs_cleanup(void)
 {
 #ifdef WITH_LB
 	if (cfg.lb_mode && cfg.lb_save) {
@@ -780,25 +780,25 @@ void set_signal_handler(int32_t sig, int32_t flags, void (*sighandler))
 #endif
 }
 
-static void cs_master_alarm()
+static void cs_master_alarm(void)
 {
   cs_log("PANIC: master deadlock!");
   fprintf(stderr, "PANIC: master deadlock!");
   fflush(stderr);
 }
 
-static void cs_sigpipe()
+static void cs_sigpipe(void)
 {
 	if (cs_dblevel & D_ALL_DUMP)
 		cs_log("Got sigpipe signal -> captured");
 }
 
-static void cs_dummy() {
+static void cs_dummy(void) {
 	return;
 }
 
 /* Switch debuglevel forward one step (called when receiving SIGUSR1). */
-void cs_debug_level(){	
+void cs_debug_level(void) {
 	switch (cs_dblevel) {
 		case 0:
 			cs_dblevel = 1;
@@ -816,7 +816,7 @@ void cs_debug_level(){
 	cs_log("debug_level=%d", cs_dblevel);
 }
 
-void cs_card_info()
+void cs_card_info(void)
 {
 	struct s_client *cl;
 	for (cl=first_client->next; cl ; cl=cl->next)
@@ -869,7 +869,7 @@ void cs_dumpstack(int32_t sig)
  *  - tier ids     (oscam.tiers)
  *  Also clears anticascading stats.
  **/
-void cs_reload_config()
+void cs_reload_config(void)
 {
 		cs_accounts_chk();
 		init_srvid();
@@ -881,7 +881,7 @@ void cs_reload_config()
 
 /* Sets signal handlers to ignore for early startup of OSCam because for example log 
    could cause SIGPIPE errors and the normal signal handlers can't be used at this point. */
-static void init_signal_pre()
+static void init_signal_pre(void)
 {
 		set_signal_handler(SIGPIPE , 1, SIG_IGN);
 		set_signal_handler(SIGWINCH, 1, SIG_IGN);
@@ -890,7 +890,7 @@ static void init_signal_pre()
 }
 
 /* Sets the signal handlers.*/
-static void init_signal()
+static void init_signal(void)
 {
 		set_signal_handler(SIGINT, 3, cs_exit);
 		//set_signal_handler(SIGKILL, 3, cs_exit);
@@ -1125,7 +1125,7 @@ struct s_client * create_client(in_addr_t ip) {
 
 
 /* Creates the master client of OSCam and inits some global variables/mutexes. */
-static void init_first_client()
+static void init_first_client(void)
 {
 	// get username OScam is running under
 	struct passwd pwd;
@@ -1174,7 +1174,7 @@ static void init_first_client()
 }
 
 /* Checks if the date of the system is correct and waits if necessary. */
-static void init_check(){
+static void init_check(void){
 	char *ptr = __DATE__;
 	int32_t month, year = atoi(ptr + strlen(ptr) - 4), day = atoi(ptr + 4);
 	if(day > 0 && day < 32 && year > 2010 && year < 9999){
@@ -1515,7 +1515,7 @@ int32_t restart_cardreader(struct s_reader *rdr, int32_t restart) {
 	return result;
 }
 
-static void init_cardreader() {
+static void init_cardreader(void) {
 
 	cs_debug_mask(D_TRACE, "cardreader: Initializing");
 	cs_writelock(&system_lock);
@@ -2196,7 +2196,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	return res;
 }
 
-ECM_REQUEST *get_ecmtask()
+ECM_REQUEST *get_ecmtask(void)
 {
 	ECM_REQUEST *er = NULL;
 	struct s_client *cl = cur_client();
@@ -3596,7 +3596,7 @@ int32_t process_input(uchar *buf, int32_t l, int32_t timeout)
 	return(rc);
 }
 
-void cs_waitforcardinit()
+void cs_waitforcardinit(void)
 {
 	if (cfg.waitforcards)
 	{
@@ -4440,7 +4440,7 @@ int32_t accept_connection(int32_t i, int32_t j) {
 }
 
 #ifdef WEBIF
-static void restart_daemon()
+static void restart_daemon(void)
 {
   while (1) {
 
@@ -4818,20 +4818,20 @@ int32_t main (int32_t argc, char *argv[])
 	return exit_oscam;
 }
 
-void cs_exit_oscam()
+void cs_exit_oscam(void)
 {
   exit_oscam=1;
   cs_log("exit oscam requested");
 }
 
 #ifdef WEBIF
-void cs_restart_oscam()
+void cs_restart_oscam(void)
 {
   exit_oscam=99;
   cs_log("restart oscam requested");
 }
 
-int32_t cs_get_restartmode() {
+int32_t cs_get_restartmode(void) {
 	return cs_restart_mode;
 }
 
@@ -4908,7 +4908,7 @@ static void cs_switch_led_from_thread(int32_t led, int32_t action) {
 	}
 }
 
-static void* arm_led_thread_main() {
+static void* arm_led_thread_main(void *UNUSED(thread_data)) {
 	uint8_t running = 1;
 	while (running) {
 		LL_ITER iter = ll_iter_create(arm_led_actions);
@@ -4938,7 +4938,7 @@ static void* arm_led_thread_main() {
 	return NULL;
 }
 
-void arm_led_start_thread() {
+void arm_led_start_thread(void) {
 	// call this after signal handling is done
 	if ( ! arm_led_actions ) {
 		arm_led_actions = ll_create("arm_led_actions");
@@ -4957,7 +4957,7 @@ void arm_led_start_thread() {
 	pthread_attr_destroy(&attr);
 }
 
-void arm_led_stop_thread() {
+void arm_led_stop_thread(void) {
 	cs_switch_led(0, LED_STOP_THREAD);
 }
 
