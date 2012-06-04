@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 WD=$(dirname $0)
 
@@ -12,7 +12,7 @@ list_options() {
 	for OPT in $@
 	do
 		grep "^\#define $OPT$" oscam-config.h >/dev/null 2>/dev/null
-		[ $? = 0 ] && echo "${OPT//$PREFIX/}"
+		[ $? = 0 ] && echo "${OPT#$PREFIX}"
 	done
 }
 
@@ -26,14 +26,14 @@ check_test() {
 
 disable_all() {
 	for i in $1; do
-		sed -i -e "s/^#define ${i}$/\/\/#define ${i}/g" $tempfileconfig
+		sed -i.bak -e "s/^#define ${i}$/\/\/#define ${i}/g" $tempfileconfig
 	done
 }
 
 enable_package() {
 	for i in $(cat $tempfile); do
 		strip=$(echo $i | sed "s/\"//g")
-		sed -i -e "s/\/\/#define ${strip}$/#define ${strip}/g" $tempfileconfig
+		sed -i.bak -e "s/\/\/#define ${strip}$/#define ${strip}/g" $tempfileconfig
 	done
 }
 
