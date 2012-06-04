@@ -45,7 +45,7 @@ CC_WARN = -W -Wall -fno-strict-aliasing -Wredundant-decls -Wstrict-prototypes -W
 
 # Compiler optimizations
 ifndef DEBUG
-CC_OPTS = -O2
+CC_OPTS = -O2 -ffunction-sections -fdata-sections
 else
 CC_OPTS = -O0 -ggdb
 endif
@@ -56,6 +56,20 @@ STRIP = $(CROSS_DIR)$(CROSS)strip
 RANLIB = $(CROSS_DIR)$(CROSS)ranlib
 
 ARFLAGS = -rcsl
+LDFLAGS = -Wl,--gc-sections
+
+# The linker for powerpc have bug that prevents --gc-sections from working
+# Check for the linker version and if it matches disable --gc-sections
+# For more information about the bug see:
+#   http://cygwin.com/ml/binutils/2005-01/msg00103.html
+LINKER_VER := $(shell $(CC) -Wl,--version 2>&1 | head -1 | cut -d' ' -f5)
+ifeq "$(LINKER_VER)" "20040727"
+LDFLAGS :=
+endif
+# The OS X linker do not support --gc-sections
+ifeq ($(uname_S),Darwin)
+LDFLAGS :=
+endif
 
 # The compiler knows for what target it compiles, so use this information
 TARGET := $(shell $(CC) -dumpmachine 2>/dev/null)
