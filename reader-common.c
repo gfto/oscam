@@ -9,7 +9,7 @@
 #include "csctapi/ifd_sc8in1.h"
 
 #include "csctapi/mc_global.h"
-static int32_t reader_device_type(struct s_reader * reader)
+int32_t reader_device_type(struct s_reader * reader)
 {
   int32_t rc=reader->typ;
   struct stat sb;
