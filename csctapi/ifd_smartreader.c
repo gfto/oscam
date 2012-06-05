@@ -5,7 +5,7 @@
 
 #include "../globals.h"
 
-#if defined(WITH_LIBUSB)
+#if defined(WITH_CARDREADER) && defined(WITH_LIBUSB)
 #include "ifd_smartreader.h"
 
 #if defined(__CYGWIN__)
