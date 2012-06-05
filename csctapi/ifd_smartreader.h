@@ -7,10 +7,13 @@
 #define __SMARTREADER__
 
 #include <memory.h>
+
+#ifdef LIBUSB
 #if defined(__FreeBSD__)
 #include <libusb.h>
 #else
 #include <libusb-1.0/libusb.h>
+#endif
 #endif
 
 #include "atr.h"
