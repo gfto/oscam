@@ -248,9 +248,4 @@ void end_lcd_thread(void) {
 	running = 0;
 }
 
-#else
-
-void start_lcd_thread(void) { }
-void end_lcd_thread(void) { }
-
 #endif
