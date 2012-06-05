@@ -36,9 +36,7 @@
 #include "ifd_sci.h"
 #include "ifd_smartreader.h"
 #include "ifd_azbox.h"
-#ifdef HAVE_PCSC
 #include "ifd_pcsc.h"
-#endif
 
 // Default T0/T14 settings
 #define DEFAULT_WI		10

@@ -1,6 +1,9 @@
+#include "../globals.h"
+
+#if defined(WITH_CARDREADER) && defined(HAVE_PCSC)
+
 #include "ifd_pcsc.h"
-#ifdef WITH_CARDREADER
-#ifdef HAVE_PCSC
+
 int32_t pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
 {
     ULONG rv;
@@ -251,5 +254,4 @@ void pcsc_close(struct s_reader *pcsc_reader)
     pcsc_reader->hCard=0;
     pcsc_reader->pcsc_has_card=0;
 }
-#endif
 #endif
