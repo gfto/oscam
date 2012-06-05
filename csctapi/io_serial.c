@@ -687,16 +687,10 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_ms, 
    int32_t out_fd;
 
 #if !defined(WITH_COOLAPI) && !defined(WITH_AZBOX)
-   if(reader->typ == R_INTERNAL && reader->mhz < 2000)
+   if(reader->typ == R_INTERNAL) // needed for ppc, otherwise error!
 	return OK;
 #endif
-
-   if (delay_ms > 0) {
-	  if (reader->mhz > 2000)
-		cs_sleepus (delay_ms); // for pll readers do wait in us
-	  else
-	    cs_sleepms (delay_ms); // all other readers do wait in ms
-	}
+   cs_sleepms (delay_ms); // all not pll readers do wait in ms
    out_fd=reader->handle;
     
    FD_ZERO(&wfds);
