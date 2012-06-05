@@ -212,7 +212,12 @@ int32_t Phoenix_Receive (struct s_reader * reader, BYTE * buffer, uint32_t size,
 #define IFD_TOWITOKO_TIMEOUT             1000
 
 	/* Read all data bytes with the same timeout */
-	call (IO_Serial_Read (reader, timeout + IFD_TOWITOKO_TIMEOUT, size, buffer));
+	if (reader->mhz >2000){
+		call (IO_Serial_Read (reader, timeout, size, buffer));
+	}
+	else{
+		call (IO_Serial_Read (reader, timeout + IFD_TOWITOKO_TIMEOUT, size, buffer));
+	}
 	return OK;
 }
 

@@ -643,13 +643,11 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_ms, uint32_t
    FD_SET(in_fd, &erfds);
    if (reader->mhz > 2000){ // calculate timeout in us for pll readers
 		tv.tv_sec = timeout_ms/1000000L;
-		tv.tv_usec = (timeout_ms);
-		cs_debug_mask(D_DEVICE,"tv_sec =%d, tv_usec=%d", (int) tv.tv_sec,(int) tv.tv_usec);
+		tv.tv_usec = (timeout_ms % 1000000);
    }
    else {
 		tv.tv_sec = timeout_ms/1000;
 		tv.tv_usec = (timeout_ms % 1000) * 1000L;
-		cs_debug_mask(D_DEVICE,"tv_sec =%d, tv_usec=%d", (int) tv.tv_sec,(int) tv.tv_usec);
    }
 
 	while (1) {
@@ -699,16 +697,8 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_ms, 
    FD_ZERO(&ewfds);
    FD_SET(out_fd, &ewfds);
    
-   if (reader->mhz > 2000){ // calculate timeout in us for pll readers
-		tv.tv_sec = timeout_ms/1000000L;
-		tv.tv_usec = (timeout_ms);
-		cs_debug_mask(D_DEVICE,"tv_sec =%d, tv_usec=%d", (int) tv.tv_sec,(int) tv.tv_usec);
-   }
-   else {
-		tv.tv_sec = timeout_ms/1000;
-		tv.tv_usec = (timeout_ms % 1000) * 1000L;
-		cs_debug_mask(D_DEVICE,"tv_sec =%d, tv_usec=%d", (int) tv.tv_sec,(int) tv.tv_usec);
-   }
+   tv.tv_sec = timeout_ms/1000;
+   tv.tv_usec = (timeout_ms % 1000) * 1000L;
 
    select_ret = select(out_fd+1, NULL, &wfds, &ewfds, &tv);
 
