@@ -321,9 +321,9 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 
 	// //XXX what is the 4th byte for ??
 	uchar ecmData[512];
-	int32_t ecm88Len=SCT_LEN(er->ecm)-4;
+	int32_t ecm88Len = MIN((signed)sizeof(ecmData), SCT_LEN(er->ecm)-4);
 	memset(ecmData, 0, sizeof(ecmData));
-	memcpy(ecmData, er->ecm+4, ecm88Len > (int32_t)sizeof(ecmData) ? (int32_t)sizeof(ecmData) : ecm88Len);
+	memcpy(ecmData, er->ecm+4, ecm88Len);
 	uchar *ecm88Data = &ecmData[0];
 	uint32_t provid=0;
 	int32_t rc=0;
