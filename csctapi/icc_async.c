@@ -940,7 +940,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 {
 	double I;
 	double F;
-	uint32_t BGT, edc, EGT, CGT, WWT, GT, gt_ms = 0;
+	uint32_t BGT, edc, EGT = 0, CGT = 0, WWT = 0, GT = 0, gt_ms = 0;
 
 	//set the amps and the volts according to ATR
 	if (ATR_GetParameter(atr, ATR_PARAMETER_I, &I) != ATR_OK)
