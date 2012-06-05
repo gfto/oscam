@@ -1525,7 +1525,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	}
 #endif
 
-#ifdef LIBUSB
+#ifdef WITH_LIBUSB
 	if(!rdr->device_endpoint) {
 		tpl_addVar(vars, TPLADD, "DEVICEOUTEP0", "selected");
 	} else if (rdr->device_endpoint == 0x82) {

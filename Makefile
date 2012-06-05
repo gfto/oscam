@@ -141,7 +141,7 @@ SSL_LIB = $(DEFAULT_SSL_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-ssl
 endif
 
-DEFAULT_LIBUSB_FLAGS = -DLIBUSB
+DEFAULT_LIBUSB_FLAGS = -DWITH_LIBUSB
 ifeq ($(uname_S),Linux)
 DEFAULT_LIBUSB_LIB = -lusb-1.0 -lrt
 else
@@ -210,7 +210,7 @@ endif
 OSCAM_BIN := Distribution/oscam-$(VER)$(SVN_REV)-$(subst cygwin,cygwin.exe,$(TARGET))
 LIST_SMARGO_BIN := Distribution/list_smargo-$(VER)$(SVN_REV)-$(subst cygwin,cygwin.exe,$(TARGET))
 
-# Build list_smargo-.... only when LIBUSB build is requested.
+# Build list_smargo-.... only when WITH_LIBUSB build is requested.
 ifndef USE_LIBUSB
 override LIST_SMARGO_BIN =
 endif

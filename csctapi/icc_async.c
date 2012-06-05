@@ -139,7 +139,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 			}
 			break;
 		case R_SMART:
-#if defined(LIBUSB)
+#if defined(WITH_LIBUSB)
 			call (SR_Init(reader));
 			break;
 #else
@@ -255,7 +255,7 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 		case R_MOUSE:
 			call (Phoenix_GetStatus(reader, &in));
 			break;
-#if defined(LIBUSB)
+#if defined(WITH_LIBUSB)
 		case R_SMART:
 			call (SR_GetStatus(reader, &in));
 			break;
@@ -316,7 +316,7 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 					return ERROR;
 				}
 				break;
-#if defined(LIBUSB)
+#if defined(WITH_LIBUSB)
 			case R_SMART:
 				if ( ! reader->ins7e11_fast_reset) {
 					call (SR_Reset(reader, atr));
@@ -494,7 +494,7 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, BYTE * data)
 		case R_MOUSE:
 			call (Phoenix_Transmit (reader, sent, size, reader->block_delay, reader->char_delay));
 			break;
-#if defined(LIBUSB)
+#if defined(WITH_LIBUSB)
 		case R_SMART:
 			call (SR_Transmit(reader, sent, size));
 			break;
@@ -540,7 +540,7 @@ int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, BYTE * data)
 		case R_MOUSE:
 			call (Phoenix_Receive (reader, data, size, reader->read_timeout));
 			break;
-#if defined(LIBUSB)
+#if defined(WITH_LIBUSB)
 		case R_SMART:
 			call (SR_Receive(reader, data, size));
 			break;
@@ -593,7 +593,7 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 		case R_MOUSE:
 			call (Phoenix_Close(reader));
 			break;
-#if defined(LIBUSB)
+#if defined(WITH_LIBUSB)
 		case R_SMART:
 			call (SR_Close(reader));
 			break;
@@ -893,7 +893,7 @@ static int32_t ICC_Async_SetParity (struct s_reader * reader, uint16_t parity)
 		case R_MOUSE:
 			call (IO_Serial_SetParity (reader, parity));
 		break;
-#if defined(LIBUSB)
+#if defined(WITH_LIBUSB)
 		case R_SMART:
 			call (SR_SetParity(reader, parity));
 			break;
@@ -927,7 +927,7 @@ static int32_t SetRightParity (struct s_reader * reader)
 #if defined(WITH_COOLAPI) || defined(WITH_AZBOX)
 	if (reader->typ != R_INTERNAL)
 #endif
-#if defined(LIBUSB)
+#if defined(WITH_LIBUSB)
   if (reader->typ != R_SMART)
 #endif
             IO_Serial_Flush(reader);
@@ -1147,7 +1147,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 		}
 #endif //WITH_COOLAPI
 	}
-#if defined(LIBUSB)
+#if defined(WITH_LIBUSB)
 	if (reader->typ == R_SMART)
 		SR_WriteSettings(reader, (uint16_t) atr_f_table[FI], (BYTE)d, (BYTE)EGT, (BYTE)reader->protocol_type, reader->convention);
 #endif

@@ -42,7 +42,7 @@ int8_t cs_dump_stack=0;
 uint16_t cs_waittime = 60;
 char  cs_tmpdir[200]={0x00};
 pid_t server_pid=0;
-#if defined(LIBUSB)
+#if defined(WITH_LIBUSB)
 CS_MUTEX_LOCK sr_lock;
 #endif
 #if defined(__arm__)
@@ -257,7 +257,7 @@ static void usage(void)
 	_check(IRDETO_GUESSING, "irdeto-guessing");
 	_check(CS_ANTICASC, "anticascading");
 	_check(WITH_DEBUG, "debug");
-	_check(LIBUSB, "smartreader");
+	_check(WITH_LIBUSB, "smartreader");
 	_check(HAVE_PCSC, "pcsc");
 	_check(WITH_LB, "loadbalancing");
 	_check(LCDSUPPORT, "lcd");
@@ -1154,7 +1154,7 @@ static void init_first_client(void)
     exit(1);
   }
 
-#if defined(LIBUSB)
+#if defined(WITH_LIBUSB)
   cs_lock_create(&sr_lock, 10, "sr_lock");
 #endif
   cs_lock_create(&system_lock, 5, "system_lock");

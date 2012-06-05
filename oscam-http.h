@@ -1395,7 +1395,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 				<TR><TD>##TPLHELPPREFIX##server#device_out_endpoint##TPLHELPSUFFIX##Device Out Endpoint:</A></TD><TD>##DEVICEEP##</TD></TR>\n\
 				##TPLREADERCOOLSTREAMBIT##"
 
-#ifdef LIBUSB
+#ifdef WITH_LIBUSB
 #define TPLREADERCONFIGDEVICEEPBIT "\
 				<SELECT name=\"device_out_endpoint\">\n\
 					<OPTION value=\"\" ##DEVICEOUTEP0##>default</OPTION>\n\
@@ -2488,7 +2488,7 @@ char *tpl[]={
 #if defined(QBOXHD_LED) || defined(CS_LED) 
 	,"ENABLELEDBIT"
 #endif
-#ifdef LIBUSB
+#ifdef WITH_LIBUSB
 	,"READERCONFIGDEVICEEPBIT"
 #endif
 #ifdef WITH_COOLAPI
@@ -2665,7 +2665,7 @@ char *tplmap[]={
 #if defined(QBOXHD_LED) || defined(CS_LED) 
 	,TPLENABLELEDBIT
 #endif
-#ifdef LIBUSB
+#ifdef WITH_LIBUSB
 	,TPLREADERCONFIGDEVICEEPBIT
 #endif
 #ifdef WITH_COOLAPI

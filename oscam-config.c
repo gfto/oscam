@@ -2882,7 +2882,7 @@ int32_t write_server(void)
 				fprintf(f, ",%d", rdr->l_port);
 			fprintf(f, "\n");
 
-#ifdef LIBUSB
+#ifdef WITH_LIBUSB
 			if (!(rdr->typ & R_IS_NETWORK))
 				if (rdr->device_endpoint || cfg.http_full_cfg)
 					fprintf_conf(f, "device_out_endpoint", "0x%2X\n", rdr->device_endpoint);
@@ -3851,7 +3851,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-#ifdef LIBUSB
+#ifdef WITH_LIBUSB
 	if (!strcmp(token, "device_out_endpoint")) {
 		if (strlen(value) > 0) {
 			sscanf(value, "0x%2X", &i);

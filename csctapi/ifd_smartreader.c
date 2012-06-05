@@ -1,10 +1,11 @@
-#if defined(LIBUSB)
 /*
     ifd_smartreader.c
     This module provides IFD handling functions for for Argolis smartreader+.
 */
 
 #include "../globals.h"
+
+#if defined(WITH_LIBUSB)
 #include "ifd_smartreader.h"
 
 #if defined(__CYGWIN__)
@@ -1441,4 +1442,4 @@ static void smart_fastpoll(S_READER *reader, int32_t on)
     pthread_mutex_unlock(&reader->sr_config->g_usb_mutex);
 }
 
-#endif // HAVE_LIBUSB
+#endif // WITH_LIBUSB

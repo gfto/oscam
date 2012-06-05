@@ -2,13 +2,12 @@
     ifd_smartreader.h
     Header file for Argolis smartreader+.
 */
-#if defined(LIBUSB)
 #ifndef __SMARTREADER__
 #define __SMARTREADER__
 
 #include <memory.h>
 
-#ifdef LIBUSB
+#ifdef WITH_LIBUSB
 #if defined(__FreeBSD__)
 #include <libusb.h>
 #else
@@ -33,4 +32,3 @@ int32_t SR_FastReset_With_ATR(struct s_reader *reader, ATR *atr);
 int32_t SR_WriteSettings (struct s_reader *reader, uint16_t F, BYTE D, BYTE N, BYTE T, uint16_t convention);
 
 #endif // __SMARTREADER__
-#endif // HAVE_LIBUSB

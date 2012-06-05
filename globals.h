@@ -1171,7 +1171,7 @@ struct s_reader  									//contains device info, reader info and card info
 	SCARDHANDLE		hCard;
 	DWORD			dwActiveProtocol;
 #endif
-#ifdef LIBUSB
+#ifdef WITH_LIBUSB
 	uint8_t			device_endpoint; 				// usb endpoint for Infinity USB Smart in smartreader mode.
 	struct s_sr_config *sr_config;
 #endif
@@ -1738,7 +1738,7 @@ extern struct s_cardsystem cardsystem[CS_MAX_MOD];
 extern struct s_cardreader cardreader[CS_MAX_MOD];
 extern CS_MUTEX_LOCK gethostbyname_lock;
 extern CS_MUTEX_LOCK readdir_lock;
-#if defined(LIBUSB)
+#if defined(WITH_LIBUSB)
 extern CS_MUTEX_LOCK sr_lock;
 #endif
 
