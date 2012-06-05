@@ -14,18 +14,22 @@ linux-pcsc: i386-pc-linux-pcsc
 dm500: cross-powerpc-tuxbox-linux
 sh4: cross-sh4-linux
 sh4-stapi: cross-sh4-linux-stapi
+i386-pc-linux-libusb: libusb
+i386-pc-linux-pcsc: pcsc
+i386-pc-linux-pcsc-libusb: pcsc-libusb
+libusb-pcsc: pcsc-libusb
 
-i386-pc-linux-libusb:
+libusb:
 	$(MAKE) --no-print-directory \
 		USE_LIBUSB=1 \
 		$(MAKEFLAGS)
 
-i386-pc-linux-pcsc:
+pcsc:
 	$(MAKE) --no-print-directory \
 		USE_PCSC=1 \
 		$(MAKEFLAGS)
 
-i386-pc-linux-pcsc-libusb:
+pcsc-libusb:
 	$(MAKE) --no-print-directory \
 		USE_LIBUSB=1 \
 		USE_PCSC=1 \
