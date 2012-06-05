@@ -156,10 +156,10 @@ override PLUS_TARGET := $(PLUS_TARGET)-libusb
 endif
 
 ifeq ($(uname_S),Darwin)
-DEFAULT_PCSC_FLAGS = -isysroot $(OSX_SDK) -DHAVE_PCSC=1
+DEFAULT_PCSC_FLAGS = -isysroot $(OSX_SDK) -DWITH_PCSC
 DEFAULT_PCSC_LIB = -syslibroot,$(OSX_SDK) -framework IOKit -framework CoreFoundation -framework PCSC
 else
-DEFAULT_PCSC_FLAGS = -DHAVE_PCSC=1 -I/usr/include/PCSC
+DEFAULT_PCSC_FLAGS = -DWITH_PCSC -I/usr/include/PCSC
 DEFAULT_PCSC_LIB = -lpcsclite
 endif
 ifdef USE_PCSC

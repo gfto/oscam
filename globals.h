@@ -41,7 +41,7 @@
 #include "oscam-types.h"
 #include "cscrypt/cscrypt.h"
 
-#ifdef HAVE_PCSC
+#ifdef WITH_PCSC
   #if defined(__CYGWIN__)
     #define __reserved
     #define __nullnullterminated
@@ -1166,7 +1166,7 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t			emmblocked[4];					// count blocked EMM
 	int32_t			lbvalue;						// loadbalance Value
 #endif
-#ifdef HAVE_PCSC
+#ifdef WITH_PCSC
 	SCARDCONTEXT	hContext;
 	SCARDHANDLE		hCard;
 	DWORD			dwActiveProtocol;

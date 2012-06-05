@@ -1,7 +1,7 @@
 #ifndef _CSCTAPI_IFD_PCSC_H_
 #define _CSCTAPI_IFD_PCSC_H_
 
-#ifdef HAVE_PCSC
+#ifdef WITH_PCSC
   #if defined(__CYGWIN__)
     #define __reserved
     #define __nullnullterminated

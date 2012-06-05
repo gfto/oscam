@@ -258,7 +258,7 @@ static void usage(void)
 	_check(CS_ANTICASC, "anticascading");
 	_check(WITH_DEBUG, "debug");
 	_check(WITH_LIBUSB, "smartreader");
-	_check(HAVE_PCSC, "pcsc");
+	_check(WITH_PCSC, "pcsc");
 	_check(WITH_LB, "loadbalancing");
 	_check(LCDSUPPORT, "lcd");
 	printf("\n");

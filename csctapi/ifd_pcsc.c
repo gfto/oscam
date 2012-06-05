@@ -1,6 +1,6 @@
 #include "../globals.h"
 
-#if defined(WITH_CARDREADER) && defined(HAVE_PCSC)
+#if defined(WITH_CARDREADER) && defined(WITH_PCSC)
 
 #include "ifd_pcsc.h"
 

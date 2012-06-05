@@ -4386,7 +4386,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		}
 
-#ifdef HAVE_PCSC
+#ifdef WITH_PCSC
 		if (!strcmp(value, "pcsc")) {
 			rdr->typ = R_PCSC;
 			return;

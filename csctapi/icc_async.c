@@ -164,7 +164,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 			}
 #endif
 			break;
-#ifdef HAVE_PCSC
+#ifdef WITH_PCSC
 		case R_PCSC:
 			return (pcsc_reader_init(reader, reader->device));
 			break;
@@ -269,7 +269,7 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 			call(Sci_GetStatus(reader, &in));
 #endif
 			break;
-#ifdef HAVE_PCSC
+#ifdef WITH_PCSC
 		case R_PCSC:
 			in =  pcsc_check_card_inserted(reader);
 			break;
@@ -345,7 +345,7 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 				call (Sci_Reset(reader, atr));
 #endif
 				break;
-#ifdef HAVE_PCSC
+#ifdef WITH_PCSC
 			case R_PCSC:
 				 {
 					unsigned char atrarr[ATR_MAX_SIZE];
@@ -401,7 +401,7 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 
 int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, uint16_t command_len, unsigned char *rsp, uint16_t *lr)
 {
-#ifdef HAVE_PCSC
+#ifdef WITH_PCSC
 	if (reader->typ == R_PCSC)
  	  return (pcsc_reader_do_api(reader, command, rsp, lr, command_len));
 #endif
@@ -609,7 +609,7 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 			call (Phoenix_Close(reader));
 #endif
 			break;
-#ifdef HAVE_PCSC
+#ifdef WITH_PCSC
 		case R_PCSC:
 			pcsc_close(reader);
 			break;

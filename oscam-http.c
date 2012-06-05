@@ -1095,7 +1095,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 	}
 
 	if(!apicall) {
-#ifdef HAVE_PCSC
+#ifdef WITH_PCSC
 		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>pcsc</option>\n");
 #endif
 #ifdef MODULE_CAMD33
@@ -1616,7 +1616,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCCCAMBIT"));
 			break;
 #endif
-#ifdef HAVE_PCSC
+#ifdef WITH_PCSC
 		case R_PCSC :
 			tpl_addVar(vars, TPLADD, "PROTOCOL", "pcsc");
 			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
