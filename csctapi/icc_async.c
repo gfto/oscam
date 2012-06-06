@@ -748,7 +748,9 @@ static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecat
 			cs_debug_mask(D_ATR, "Reader %s specific mode: T%i, F=%.0f, D=%.6f, N=%.0f\n", reader->label, reader->protocol_type, (double) atr_f_table[FI], d, n);
 		}
 		else { //negotiable mode
-
+		
+			if (reader->mhz > 2000)  // timeout is zero, might work with ms timings but not for us timings.
+					reader->read_timeout = 1000000;
 			bool PPS_success = FALSE;
 			bool NeedsPTS = ((reader->protocol_type != ATR_PROTOCOL_TYPE_T14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || n == 255)); //needs PTS according to old ISO 7816
 			if (NeedsPTS && deprecated == 0) {
