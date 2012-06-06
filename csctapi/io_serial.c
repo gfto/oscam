@@ -485,10 +485,13 @@ bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t size, c
 	
 	to_send = (delay? 1: size);
 	uint16_t errorcount=0, to_do=to_send;
+	uint32_t timeout = 1000;
+	if (reader->mhz > 2000)
+		timeout = timeout*1000; // pll readers timings in us
 	
 	for (count = 0; count < size; count += to_send)
 	{
-		if (!IO_Serial_WaitToWrite (reader, delay, 1000))
+		if (!IO_Serial_WaitToWrite (reader, delay, timeout))
 		{
 			for (i_w=0; i_w < to_send; i_w++)
 				data_w [i_w] = data [count + i_w];
@@ -499,7 +502,7 @@ bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t size, c
 				if (u < 1) {
 					errorcount++;
 					//tcflush (reader->handle, TCIFLUSH);
-					if (u != 0) cs_log("Reader %s: ERROR in IO_Serial_Write actual written=%d of=%d (errno=%d %s)", reader->label, (size - to_do), size, errno, strerror(errno));
+					if (u != 0) cs_log("Reader %s: ERROR in IO_Serial_Write actual written=%d of %d (errno=%d %s)", reader->label, (size - to_do), size, errno, strerror(errno));
 					if (errorcount > 10) return ERROR; //exit if more than 10 errors
 					}
 				else {
