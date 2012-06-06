@@ -1104,7 +1104,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 						EGT--;  // T1 protocol, if TC1 = 255 then substract 1 ETU from guardtime
 					else
 						EGT =+n;
-				CGT = 0;
+				CGT = reader->CWT; // otherwise break T1 timings on MIPS, PPC ok
 				}
 				reader->read_timeout = ETU_to_ms(reader, reader->BWT);
 				reader->block_delay = ETU_to_ms(reader, BGT);
