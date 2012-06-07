@@ -749,8 +749,10 @@ static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecat
 		}
 		else { //negotiable mode
 		
-			if (reader->mhz > 2000)  // timeout is zero, might work with ms timings but not for us timings.
+			if (reader->mhz > 2000)  // Initial timeout for pll readers to 10000000 us
 					reader->read_timeout = 1000000;
+			else
+					reader->read_timeout = 1000; // for all other readers set initial timeout to 1000 ms
 			bool PPS_success = FALSE;
 			bool NeedsPTS = ((reader->protocol_type != ATR_PROTOCOL_TYPE_T14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || n == 255)); //needs PTS according to old ISO 7816
 			if (NeedsPTS && deprecated == 0) {
