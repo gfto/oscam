@@ -2442,20 +2442,20 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	if (is_fake)
 		er->rc = E_FAKE;
 
-	if (er->reader_avail == 1) {
+	if (client->cwlastresptime > 0) {
 		char buf[ECM_FMT_LEN];
 		format_ecm(er, buf, ECM_FMT_LEN);
-		cs_log("%s (%s): %s (%d ms)%s %s%s",
-			uname, buf,
-			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, schaninfo, sreason);
-	} else {
-		char buf[ECM_FMT_LEN];
-		format_ecm(er, buf, ECM_FMT_LEN);
-		cs_log("%s (%s): %s (%d ms)%s (%c/%d/%d/%d)%s%s",
-			uname, buf,
-			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby,
-					stageTxt[er->stage], er->reader_requested, er->reader_count, er->reader_avail,
-					schaninfo, sreason);
+		if (er->reader_avail == 1) {
+			cs_log("%s (%s): %s (%d ms)%s %s%s",
+				uname, buf,
+				er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, schaninfo, sreason);
+		} else {
+			cs_log("%s (%s): %s (%d ms)%s (%c/%d/%d/%d)%s%s",
+				uname, buf,
+				er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby,
+						stageTxt[er->stage], er->reader_requested, er->reader_count, er->reader_avail,
+						schaninfo, sreason);
+		}
 	}
 
 	cs_ddump_mask (D_ATR, er->cw, 16, "cw:");
