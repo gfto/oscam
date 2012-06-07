@@ -953,7 +953,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 		if (reader->mhz == 357 || reader->mhz == 358) //no overclocking
 			reader->mhz = atr_fs_table[FI] / 10000; //we are going to clock the card to this nominal frequency
 		
-		if (reader->mhz > 2000 && reader->cardmhz == 100) // pll internal reader set cardmhz according to optimal atr speed
+		if (reader->mhz > 2000 && reader->cardmhz == -1) // -1 is magic number pll internal reader set cardmhz according to optimal atr speed
 			reader->cardmhz = atr_fs_table[FI] / 10000 ;
 		
 		if (reader->mhz > 2000) {
