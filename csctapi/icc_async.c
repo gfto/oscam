@@ -1023,8 +1023,9 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 				EGT = 2;
 				if (n != 255) //Extra Guard Time
 					EGT =+ n;  // T0 protocol, if TC1 = 255 then dont add extra guardtime
-				gt_ms = 0; // T0 protocol doesnt have char_delay and block_delay.
-				reader->CWT = 0;
+				GT = 0; 
+				gt_ms = ETU_to_ms(reader, GT); 
+				reader->CWT = 0; // T0 protocol doesnt have char_delay, block_delay.
 				reader->BWT = 0;
 				cs_debug_mask (D_IFD, "reader %s Protocol: T=%i, WWT=%u, Clockrate=%u\n", reader->label, reader->protocol_type, WWT, (reader->mhz / reader->divider * 10000));
 			}
@@ -1032,8 +1033,8 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 				cs_debug_mask (D_IFD, "reader %s Protocol: T=%i, WWT=%u, Clockrate=%u\n", reader->label, reader->protocol_type, WWT, ICC_Async_GetClockRate(reader->cardmhz));
 			
 			reader->read_timeout = ETU_to_ms(reader, WWT);
-			reader->block_delay = gt_ms;
-			reader->char_delay = gt_ms;
+			reader->block_delay = 0; //gt_ms;
+			reader->char_delay = 0; //gt_ms;
 			cs_debug_mask(D_ATR, "Setting timings reader %s: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", reader->label, reader->read_timeout, reader->block_delay, reader->char_delay);
 			break;
 		}
@@ -1144,7 +1145,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14))
 			ETU = F / d;
 		if (reader->mhz > 2000){
-			call (Sci_WriteSettings (reader, reader->protocol_type, reader->divider, ETU, WWT, reader->BWT, reader->CWT, EGT, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
+			call (Sci_WriteSettings (reader, reader->protocol_type, reader->divider, ETU, WWT, reader->BWT, reader->CWT, 0, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
 		}
 		else {
 			call (Sci_WriteSettings (reader, reader->protocol_type, reader->mhz / 100, ETU, WWT, reader->BWT, reader->CWT, EGT, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
