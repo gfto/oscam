@@ -530,14 +530,12 @@ void cs_accounts_chk(void)
 #endif
 }
 
-static void free_ecm(ECM_REQUEST *ecm) {
-	struct s_ecm_answer *ea, *nxt;
+static void remove_ecm_from_reader(ECM_REQUEST *ecm) {
+	struct s_ecm_answer *ea;
+	struct s_reader *rdr;
 	ECM_REQUEST *er;
 	int i;
-	struct s_reader *rdr;
 	
-	//remove this ecm from reader queue to avoid segfault on very late answers (when ecm is already disposed)
-	//first check for outstanding answers:
 	ea = ecm->matching_rdr;
 	while (ea) {
 	    if (!(ea->status & REQUEST_ANSWERED)) {
@@ -548,6 +546,7 @@ static void free_ecm(ECM_REQUEST *ecm) {
                         er = &rdr->client->ecmtask[i];
                         if (er->parent == ecm) {
                             er->parent = NULL;
+                            er->client = NULL;
                         }
                     }	        
                 }
@@ -555,7 +554,15 @@ static void free_ecm(ECM_REQUEST *ecm) {
 	    ea = ea->next;
 	}
 
-        //free matching_rdr list:	
+}
+static void free_ecm(ECM_REQUEST *ecm) {
+	struct s_ecm_answer *ea, *nxt;
+
+	//remove this ecm from reader queue to avoid segfault on very late answers (when ecm is already disposed)
+	//first check for outstanding answers:
+	remove_ecm_from_reader(ecm);
+
+    //free matching_rdr list:
 	ea = ecm->matching_rdr;
 	ecm->matching_rdr = NULL;
 	while (ea) {
@@ -601,7 +608,7 @@ static void cleanup_ecmtasks(struct s_client *cl)
 		if (ecm->cacheex_src == cl)
 			ecm->cacheex_src = NULL;
 #endif
-		//cl is a reader, remove from matching_rdr:
+		//if cl is a reader, remove from matching_rdr:
 		for(ea_list = ecm->matching_rdr, ea_prev=NULL; ea_list; ea_prev = ea_list, ea_list = ea_list->next) {
 			if (ea_list->reader->client == cl) {
 				if (ea_prev)
@@ -612,6 +619,8 @@ static void cleanup_ecmtasks(struct s_client *cl)
 			}
 		}
 
+		//if cl is a client, remove ecm from reader queue:
+		remove_ecm_from_reader(ecm);
 	} 
 	cs_readunlock(&ecmcache_lock);
 
@@ -2079,21 +2088,12 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	int32_t i;
 	uchar c;
 	struct s_ecm_answer *ea = NULL, *ea_list, *ea_org = NULL;
-	int32_t diff, maxdiff = (int32_t)cfg.ctimeout+1000;
 	struct timeb now;
-	cs_ftime(&now);
 
-	if ((diff=comp_timeb(&now, &er->tps))>maxdiff) { // drop real old answers, because er->parent is dropped !
-#ifdef WITH_DEBUG
-		if (diff > (int32_t)cfg.max_cache_time*1000)
-			cs_log("dropped old reader answer rc=%d from %s time %dms",
-				rc, reader?reader->label:"undef", diff);
-#endif
-#ifdef WITH_LB
-		send_reader_stat(reader, er, NULL, E_TIMEOUT);
-#endif
+	if (!er->parent && !er->client)
 		return 0;
-	}
+
+	cs_ftime(&now);
 
 	if (er->parent) {
 		// parent is only set on reader->client->ecmtask[], but we want client->ecmtask[]
