@@ -1033,8 +1033,8 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 				cs_debug_mask (D_IFD, "reader %s Protocol: T=%i, WWT=%u, Clockrate=%u\n", reader->label, reader->protocol_type, WWT, ICC_Async_GetClockRate(reader->cardmhz));
 			
 			reader->read_timeout = ETU_to_ms(reader, WWT);
-			reader->block_delay = 0; //gt_ms;
-			reader->char_delay = 0; //gt_ms;
+			reader->block_delay = gt_ms;
+			reader->char_delay = gt_ms;
 			cs_debug_mask(D_ATR, "Setting timings reader %s: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", reader->label, reader->read_timeout, reader->block_delay, reader->char_delay);
 			break;
 		}
@@ -1053,10 +1053,10 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 				//FIXME workaround for Smargo until native mode works
 				if (reader->smargopatch == 1)
 					reader->ifsc = MIN (reader->ifsc, 28);
-				//else
+				else
 					// Towitoko does not allow IFSC > 251
 					//FIXME not sure whether this limitation still exists
-					//reader->ifsc = MIN (reader->ifsc, MAX_IFSC);
+					reader->ifsc = MIN (reader->ifsc, MAX_IFSC);
 				
 			#ifndef PROTOCOL_T1_USE_DEFAULT_TIMINGS
 				// Calculate CWI and BWI
@@ -1109,11 +1109,11 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 						EGT--;  // T1 protocol, if TC1 = 255 then substract 1 ETU from guardtime
 					else
 						EGT =+n;
-				CGT = reader->CWT; // otherwise break T1 timings on MIPS, PPC ok
+				CGT = GT + EGT; // otherwise break T1 timings on MIPS, PPC ok
 				}
-				reader->read_timeout = ETU_to_ms(reader, reader->BWT);
-				reader->block_delay = ETU_to_ms(reader, BGT);
-				reader->char_delay = ETU_to_ms(reader, CGT);
+				reader->read_timeout = ETU_to_ms(reader, reader->BWT+reader->CWT);
+				reader->block_delay = ETU_to_ms(reader, reader->BWT);
+				reader->char_delay = ETU_to_ms(reader, reader->CWT);
 				cs_debug_mask(D_ATR, "Setting reader %s timings: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", reader->label, reader->read_timeout, reader->block_delay, reader->char_delay);
 			}
 			break;
@@ -1144,8 +1144,10 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 		//for Irdeto T14 cards, do not set ETU
 		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14))
 			ETU = F / d;
-		if (reader->mhz > 2000){
-			call (Sci_WriteSettings (reader, reader->protocol_type, reader->divider, ETU, WWT, reader->BWT, reader->CWT, 0, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
+		if (reader->mhz > 2000){ // Extra Guardtime is only slowing card ecm responses down. Although its calculated correct its not needed with internal readers!
+			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T0) EGT = 0;
+			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T1) EGT = 0;
+			call (Sci_WriteSettings (reader, reader->protocol_type, reader->divider, ETU, WWT, reader->BWT, reader->CWT, EGT, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
 		}
 		else {
 			call (Sci_WriteSettings (reader, reader->protocol_type, reader->mhz / 100, ETU, WWT, reader->BWT, reader->CWT, EGT, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated

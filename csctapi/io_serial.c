@@ -395,7 +395,8 @@ void IO_Serial_Flush (struct s_reader * reader)
 	BYTE b;
 
   tcflush(reader->handle, TCIOFLUSH);
-	while(!IO_Serial_Read(reader, 1000, 1, &b));
+	if (reader->mhz > 2000) while(!IO_Serial_Read(reader, 1000*1000, 1, &b));
+	else while(!IO_Serial_Read(reader, 1000, 1, &b));
 }
 
 void IO_Serial_Sendbreak(struct s_reader * reader, int32_t duration)
