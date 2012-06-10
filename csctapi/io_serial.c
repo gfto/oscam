@@ -506,6 +506,7 @@ bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t size, c
 				cs_ddump_mask(D_DEVICE, data_w+(to_send-to_do), to_do, "IO: Sending: ");
 				int32_t u = write (reader->handle, data_w+(to_send-to_do), to_do);
 				if (u < 1) {
+					if (errno==EINTR) continue; //try again in case of Interrupted system call
 					errorcount++;
 					//tcflush (reader->handle, TCIFLUSH);
 					int16_t written = count + to_send - to_do;
