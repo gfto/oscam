@@ -1104,6 +1104,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 				cs_debug_mask(D_ATR, "Reader %s protocol: T=%i: IFSC=%d, CWT=%d etu, BWT=%d etu, BGT=%d etu, EDC=%s\n", reader->label, reader->protocol_type, reader->ifsc, reader->CWT, reader->BWT, BGT, (edc == EDC_LRC) ? "LRC" : "CRC");
 				
 				if( reader->mhz > 2000){
+					GT = 12L;
 					EGT = 2;
 					if (n == 255) //Extra Guard Time T1
 						EGT--;  // T1 protocol, if TC1 = 255 then substract 1 ETU from guardtime
@@ -1111,9 +1112,9 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 						EGT =+n;
 				CGT = GT + EGT; // otherwise break T1 timings on MIPS, PPC ok
 				}
-				reader->read_timeout = ETU_to_ms(reader, reader->BWT+reader->CWT);
-				reader->block_delay = ETU_to_ms(reader, reader->BWT);
-				reader->char_delay = ETU_to_ms(reader, reader->CWT);
+				reader->read_timeout = ETU_to_ms(reader, reader->BWT);
+				reader->block_delay = ETU_to_ms(reader, BGT); 
+				reader->char_delay = ETU_to_ms(reader, CGT);
 				cs_debug_mask(D_ATR, "Setting reader %s timings: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", reader->label, reader->read_timeout, reader->block_delay, reader->char_delay);
 			}
 			break;
