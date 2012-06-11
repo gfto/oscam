@@ -1,6 +1,48 @@
 #include "globals.h"
 #ifdef READER_CONAX 
 #include "reader-common.h"
+#include "cscrypt/idea.h"
+
+static void ReverseMem(unsigned char *vIn, int32_t len)
+{
+  unsigned char temp;
+  int32_t i;
+  for(i=0; i < (len/2); i++)
+  {
+    temp = vIn[i];
+    vIn[i] = vIn[len-i-1];
+    vIn[len-i-1] = temp;
+  }
+}
+
+static void RSA_CNX(byte *msg, byte *mod, byte *exp, unsigned int modbytes, unsigned int expbytes) 
+{
+  int32_t n = 0;
+  BN_CTX *ctx;
+  BIGNUM *bn_mod, *bn_exp, *bn_data, *bn_res;
+  
+  ReverseMem(msg, modbytes);
+  
+    bn_mod = BN_new ();
+    bn_exp = BN_new ();
+    bn_data = BN_new ();
+    bn_res = BN_new ();
+    ctx= BN_CTX_new();
+    if (ctx == NULL) { 
+      cs_debug_mask(D_READER, "[conax-reader] RSA Error in RSA_CNX");
+    }
+    BN_bin2bn (mod, modbytes, bn_mod); // rsa modulus
+    BN_bin2bn (exp, expbytes, bn_exp); // exponent
+    BN_bin2bn (msg, modbytes, bn_data);
+    BN_mod_exp (bn_res, bn_data, bn_exp, bn_mod, ctx);
+    
+    memset (msg, 0, modbytes);
+    n = BN_bn2bin (bn_res, msg);
+    BN_CTX_free (ctx);
+    
+   ReverseMem(msg, n);
+
+}
 
 static time_t chid_date(const uchar *ptr, char *buf, int32_t l)
 {
@@ -109,29 +151,33 @@ static int32_t conax_send_pin(struct s_reader * reader)
   return OK;
 }
 
-
 static int32_t conax_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
   def_resp;
-  int32_t i,j,n, rc=0;
+  int32_t i,j,n,k,l, rc=0;
   unsigned char insA2[]  = { 0xDD,0xA2,0x00,0x00,0x00 };
   unsigned char insCA[]  = { 0xDD,0xCA,0x00,0x00,0x00 };
 
+  unsigned char exp[] = {0x01, 0x00, 0x01};
   unsigned char buf[256];
+  unsigned char edw[64];
 
   if ((n=check_sct_len(er->ecm, 3))<0)
     return ERROR;
 
   buf[0]=0x14;
   buf[1]=n+1;
-  buf[2]=0;
+  if(0x0 != reader->rsa_mod[0])
+    buf[2]=2; // card will answer with encrypted dw
+  else 
+    buf[2]=0;
 
   memcpy(buf+3, er->ecm, n);
   insA2[4]=n+3;
 
   write_cmd(insA2, buf);  // write Header + ECM
 
-  while ((cta_res[cta_lr-2]==0x98) && 	// Antwort
+  while ((cta_res[cta_lr-2]==0x98) &&   // Antwort
   ((insCA[4]=cta_res[cta_lr-1])>0) && (insCA[4]!=0xFF))
   {
     write_cmd(insCA, NULL);  //Codeword auslesen
@@ -143,6 +189,49 @@ static int32_t conax_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, str
       {
         switch (cta_res[i])
         {
+         // conax paring start
+         case 0x81:
+          if ( cta_res[2] >> 5 == 2 )
+          {
+             k = cta_res[1]+1;
+             l = 0;
+             if(k>64)
+             {
+               // get encrypted dw
+               do
+               {
+                 edw[l] = cta_res[k];
+                 k--; l++;
+               }
+               while ( l != 64 );
+               // decrypt dw
+               RSA_CNX(edw, reader->rsa_mod /*mod*/, exp, 64u, 3u);
+               if ( edw[61] == 0x0D && edw[62] == 0x25 &&
+                    edw[46] == 0x0D && edw[47] == 0x25)
+               {
+                 l = 0;
+                 // get dw0 rev_edw[43] == 0x0
+                 for(k = 40; k >= 33; k--)
+                 {
+                   ea->cw[l] = edw[k];
+                   l++;
+                 }
+                 // get dw1 rev_edw[58] == 0x1
+                 for(k = 55; k >= 48; k--)
+                 {
+                   ea->cw[l] = edw[k];
+                   l++;
+                 }
+                 rc = 3;
+               }
+               else
+                 rc = -2;
+             }
+             else
+               rc = -1;
+          }
+           break;
+         // conax paring end
           case 0x25:
             if ( (cta_res[i+1]>=0xD) && !((n=cta_res[i+4])&0xFE) )
             {
@@ -183,6 +272,8 @@ static int32_t conax_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, str
       }
     }
   }
+ if( rc == -1) cs_log("[conax-reader] unknown pairing algo - wrong encCW size");
+ else if( rc == -2) cs_log("[conax-reader] conax decode ECM problem - RSA key is probably faulty");
   if (rc==3)
     return OK;
   else
