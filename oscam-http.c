@@ -94,28 +94,23 @@ static void refresh_oscam(enum refreshtypes refreshtype) {
 char *get_ecm_historystring(struct s_client *cl){
 
 	if(cl){
-		int32_t k, pos = 0, needed = 1;
+		int32_t k, i, pos = 0, needed = 1, v;
 		char *value, *dot = "";
 		int32_t ptr = cl->cwlastresptimes_last;
 
 		needed = CS_ECM_RINGBUFFER_MAX * 6; //5 digits + delimiter
 		if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
 
-		if(ptr == CS_ECM_RINGBUFFER_MAX - 1){
-			for(k = 0; k < CS_ECM_RINGBUFFER_MAX ; k++){
-				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k].duration);
+		k = ptr + 1;
+		for (i = 0; i < CS_ECM_RINGBUFFER_MAX; i++) {
+			if (k >= CS_ECM_RINGBUFFER_MAX)
+				k = 0;
+			v = cl->cwlastresptimes[k].duration;
+			if (v > 0 && v < (int32_t)cfg.ctimeout*5) {
+				pos += snprintf(value + pos, needed-pos, "%s%d", dot, v);
 				dot=",";
 			}
-		} else {
-			for(k = ptr + 1; k < CS_ECM_RINGBUFFER_MAX; k++){
-				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k].duration);
-				dot=",";
-			}
-
-			for(k = 0; k < ptr + 1 ; k++){
-				pos += snprintf(value + pos, needed-pos, "%s%d", dot, cl->cwlastresptimes[k].duration);
-				dot=",";
-			}
+			k++;
 		}
 
 		return (value);
@@ -127,28 +122,23 @@ char *get_ecm_historystring(struct s_client *cl){
 char *get_ecm_fullhistorystring(struct s_client *cl){
 
 	if(cl){
-		int32_t k, pos = 0, needed = 1;
+		int32_t k, i, pos = 0, needed = 1, v;
 		char *value, *dot = "";
 		int32_t ptr = cl->cwlastresptimes_last;
 
-		needed = CS_ECM_RINGBUFFER_MAX * 19; //4 digits + : + returncode(2) + : + time(10) + delimiter
+		needed = CS_ECM_RINGBUFFER_MAX * 20; //5 digits + : + returncode(2) + : + time(10) + delimiter
 		if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
 
-		if(ptr == CS_ECM_RINGBUFFER_MAX - 1){
-			for(k = 0; k < CS_ECM_RINGBUFFER_MAX ; k++){
+		k = ptr + 1;
+		for (i = 0; i < CS_ECM_RINGBUFFER_MAX; i++) {
+			if (k >= CS_ECM_RINGBUFFER_MAX)
+				k = 0;
+			v = cl->cwlastresptimes[k].duration;
+			if (v > 0 && v < (int32_t)cfg.ctimeout*5) {
 				pos += snprintf(value + pos, needed-pos, "%s%d:%d:%ld", dot, cl->cwlastresptimes[k].duration, cl->cwlastresptimes[k].rc, cl->cwlastresptimes[k].timestamp);
 				dot=",";
 			}
-		} else {
-			for(k = ptr + 1; k < CS_ECM_RINGBUFFER_MAX; k++){
-				pos += snprintf(value + pos, needed-pos, "%s%d:%d:%ld", dot, cl->cwlastresptimes[k].duration, cl->cwlastresptimes[k].rc, cl->cwlastresptimes[k].timestamp);
-				dot=",";
-			}
-
-			for(k = 0; k < ptr + 1 ; k++){
-				pos += snprintf(value + pos, needed-pos, "%s%d:%d:%ld", dot, cl->cwlastresptimes[k].duration, cl->cwlastresptimes[k].rc, cl->cwlastresptimes[k].timestamp);
-				dot=",";
-			}
+			k++;
 		}
 
 		return (value);
