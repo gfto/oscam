@@ -1014,7 +1014,8 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 
 			// WWT = 960 * d * WI  work etu
 			
-			WWT = (uint32_t) 960 * d * wi; //in work ETU
+			if (reader->mhz > 2000) WWT = (uint32_t) 960 * d * wi; //in work ETU
+			else WWT = (uint32_t) 960 * wi; //in ETU
 			
 			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
 				WWT >>= 1; //is this correct?			
@@ -1075,14 +1076,14 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 			#endif
 
 				// Set CWT = (2^CWI + 11) work etu
-				reader->CWT = (uint16_t) (((1<<cwi) + 11)); // in ETU
+				reader->CWT = (uint16_t) (((1<<cwi) + 11L)); // in ETU
 
 				// Set BWT = (2^BWI * 960 * 372 / clockspeed) seconds + 11 work etu  (in seconds) 
 				// 1 worketu = 1 / baudrate *1000*1000 us
 				if (reader->mhz > 2000)
 					reader->BWT = (uint32_t) ((((1<<bwi) * 960L * 372L / ((double)reader->mhz / (double) reader->divider / 100L)) * (double) reader->current_baudrate / 1000L / 1000L)+ 11L); // BWT in ETU
 				else
-					reader->BWT = (uint32_t)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate(reader->cardmhz))	+ 11 ;
+					reader->BWT = (uint32_t)((1<<bwi) * 960L * 372L * 9600L / (double) ICC_Async_GetClockRate(reader->cardmhz))	+ 11L ;
 				
 				// Set BGT = 22 * work etu
 				BGT = 22L; //in ETU
