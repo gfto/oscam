@@ -74,8 +74,8 @@ DESCRIPTIONS
 	  status detect of card (NONE = no detection), default:CD
 
        cardmhz = mhz
-	  set  standard SC frequency in units of 10 kHz, for Irdeto SC set to 600, refer to OVER‐
-	  CLOCKING, default:357
+	  set  standard  SC  frequency	in  units of 10 kHz, for Irdeto SC set to 600, auto clock
+	  speed in Dreambox mode set to 100, refer to OVERCLOCKING, default:357
 
        mhz = frequency
 	  set reader frequency in units of 10 kHz, if mhz > cardmhz you are in overclocking mode,
