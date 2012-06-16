@@ -2212,10 +2212,10 @@ ECM_REQUEST *get_ecmtask(void)
 void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, struct s_ecm_answer *ea, int8_t rc)
 {
 #ifdef CS_CACHEEX
-	if (!rdr || rc>=E_99 || rdr->cacheex==1 || !rdr->client)
+	if (!rdr || rc>=E_99 || rdr->cacheex==1)
 		return;
 #else
-	if (!rdr || rc>=E_99 || !rdr->client)
+	if (!rdr || rc>=E_99)
 		return;
 #endif
 	if (er->ecmcacheptr) //ignore cache answer
