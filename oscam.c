@@ -3685,14 +3685,14 @@ void * work_thread(void *ptr) {
 	int8_t restart_reader=0;
 
 	while (1) {
-//		if (!cl || !is_valid_client(cl)) { // corsair: I think this is not necessary anymore and causes memleaks
-//			if (data && data!=&tmp_data)
-//				free(data);
-//			data = NULL;
-//			free(mbuf);
-//			pthread_exit(NULL);
-//			return NULL;
-//		}
+		if (!cl || !is_valid_client(cl)) { // corsair: I think this is not necessary anymore and causes memleaks
+			if (data && data!=&tmp_data)
+				free(data);
+			data = NULL;
+			free(mbuf);
+			pthread_exit(NULL);
+			return NULL;
+		}
 		
 		if (cl->kill && ll_count(cl->joblist) == 0) { //we need to process joblist to free data->ptr
 			cs_debug_mask(D_TRACE, "ending thread");

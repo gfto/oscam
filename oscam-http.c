@@ -2935,6 +2935,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 	int32_t shown;
 
 	struct s_client *cl;
+	cs_readlock(&clientlist_lock);
 	for (i=0, cl=first_client; cl ; cl=cl->next, i++) {
 
 #ifdef CS_CACHEEX
@@ -3313,6 +3314,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 #endif
 
 	}
+	cs_readunlock(&clientlist_lock);
 
 	if (cfg.loghistorysize) {
 		char *t_loghistptr = loghistptr, *ptr1 = NULL;
