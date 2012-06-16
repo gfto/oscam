@@ -153,9 +153,9 @@ int32_t ac_init_log(void){
 */
 void cs_reinit_loghist(uint32_t size)
 {
-	char *tmp, *tmp2;
+	char *tmp = NULL, *tmp2;
 	if(size != cfg.loghistorysize){
-		if(cs_malloc(&tmp, size, -1)){
+		if(size == 0 || cs_malloc(&tmp, size, -1)){
 			cs_writelock(&loghistory_lock);
 			tmp2 = loghist;
 			// On shrinking, the log is not copied and the order is reversed
@@ -226,11 +226,15 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 		int32_t target_len = strlen(usrtxt) + (strlen(txt) - 8) + 1;
 		
 		cs_writelock(&loghistory_lock);
-		char *lastpos = loghist + (cfg.loghistorysize) - 1;		
+		char *lastpos = loghist + (cfg.loghistorysize) - 1;	
+		if(loghist + target_len + 1 >= lastpos){
+			strncpy(txt + 39, "Log entry too long!", strlen(txt) - 39);	// we can assume that the min loghistorysize is always 1024 so we don't need to check if this new string fits into it!
+			target_len = strlen(usrtxt) + (strlen(txt) - 8) + 1;
+		}	
 		if (!loghistptr)
 			loghistptr = loghist;
-
-		if (loghistptr+target_len > lastpos - 1) {
+		
+		if (loghistptr + target_len + 1 > lastpos) {
 			*loghistptr='\0';
 			loghistptr=loghist + target_len + 1;
 			*loghistptr='\0';

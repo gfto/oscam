@@ -452,7 +452,7 @@ void chk_t_global(const char *token, char *value)
 #if defined(WEBIF) || defined(MODULE_MONITOR) 
 	if (!strcmp(token, "loghistorysize")) {
 		uint32_t newsize = strToUIntVal(value, 4096);
-		if (newsize < 1024) {
+		if (newsize < 1024 && newsize != 0) {
 			fprintf(stderr, "WARNING: loghistorysize is too small, adjusted to 1024\n");
 			newsize = 1024;
 		}

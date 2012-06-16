@@ -515,7 +515,7 @@ static void monitor_logsend(char *flag){
 		return;
 
 	int32_t i, d = 0;
-	if (!strcmp(flag, "on") && loghist){
+	if (!strcmp(flag, "on") && cfg.loghistorysize){
 		char *t_loghistptr = loghistptr, *ptr1 = NULL;
 		if(loghistptr >= loghist + (cfg.loghistorysize) - 1)
 			t_loghistptr = loghist;
