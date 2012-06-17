@@ -708,6 +708,10 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 	uchar sc_Acs57_Cmd[]={ ACS57EMM, 0xFE, 0x00, 0x00, 0x00 };
 
 	uchar cta_cmd[272];
+	if (ep->emm[0] != 0x82) {
+		cs_debug_mask(D_EMM, "[irdeto-reader] Invalid EMM: Has to start with 0x82, but starts with %02x!", ep->emm[0]);
+		return ERROR;
+	}
 
 	int32_t i, l = (ep->emm[3] & 0x07), ok = 0;
 	int32_t mode = (ep->emm[3] >> 3);
@@ -735,6 +739,10 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 					dataLen=ep->emm[2]-1;
 				}else{
 					dataLen=ep->emm[2];
+				}
+				if(dataLen < 7 || dataLen > (int32_t)sizeof(ep->emm) - 6 || dataLen > (int32_t)sizeof(cta_cmd) - 9) {
+					cs_debug_mask(D_EMM, "[irdeto-reader] dataLen %d seems wrong, faulty EMM?", dataLen);
+					return ERROR;
 				}
 				if (ep->type==GLOBAL && (reader->caid==0x0624 || reader->caid==0x0648 || reader->caid == 0x0666)) dataLen+=2;
 				int32_t crc=63;
@@ -766,6 +774,10 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 				return OK;
 			} else {
 				const int32_t dataLen = SCT_LEN(emm) - 5 - l;		// sizeof of emm bytes (nanos)
+				if(dataLen < 1 || dataLen > (int32_t)sizeof(ep->emm) - 5 - l || dataLen > (int32_t)sizeof(cta_cmd) - (int32_t)sizeof(sc_EmmCmd) - ADDRLEN) {
+					cs_debug_mask(D_EMM, "[irdeto-reader] dataLen %d seems wrong, faulty EMM?", dataLen);
+					return ERROR;
+				}
 				uchar *ptr = cta_cmd;
 				memcpy(ptr, sc_EmmCmd, sizeof(sc_EmmCmd));		// copy card command
 				ptr[4] = dataLen + ADDRLEN;						// set card command emm size
