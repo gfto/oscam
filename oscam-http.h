@@ -92,7 +92,7 @@ static int32_t ssl_active = 0;
 BODY {background-color: white; font-family: Arial; font-size: 11px; text-align:center}\n\
 P {color: white; }\n\
 P.blinking {text-decoration: blink; font-weight:bold; font-size:large; color:red;}\n\
-H2 {color: #F5F5F5; font-family: Arial; font-size: 32px; line-height: 32px; text-align:center; margin-top:0px; margin-bottom:0px}\n\
+H2 {color: #AAAAAA; font-family: Arial; font-size: 32px; line-height: 32px; text-align:center; margin-top:0px; margin-bottom:0px}\n\
 H4 {color: #AAAAAA; font-family: Arial; font-size: 12px; line-height: 9px; text-align:center}\n\
 H4.styleauthor:after {content:\"Eneen\";}\n\
 TABLE {border-spacing:1px; border:0px; padding:0px; margin-left:auto; margin-right:auto;}\n\
