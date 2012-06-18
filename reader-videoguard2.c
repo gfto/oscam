@@ -666,11 +666,15 @@ static int32_t videoguard2_do_ecm(struct s_reader * reader, const ECM_REQUEST *e
   l = do_cmd(reader,ins40,tbuff,NULL,cta_res);
   if(l<0 || !status_ok(cta_res)) {
     cs_log ("classD0 ins40: (%d) status not ok %02x %02x",l,cta_res[0],cta_res[1]);
+    cs_log ("The card is not answering correctly! Restarting reader for safety");
+    add_job(reader->client, ACTION_READER_RESTART, NULL, 0);
     return ERROR;
   } else {
     l = do_cmd(reader,ins54,NULL,rbuff,cta_res);
     if(l<0 || !status_ok(cta_res+l)) {
       cs_log("classD3 ins54: (%d) status not ok %02x %02x",l,cta_res[0],cta_res[1]);
+      cs_log ("The card is not answering correctly! Restarting reader for safety");
+      add_job(reader->client, ACTION_READER_RESTART, NULL, 0);
       return ERROR;
     } else {
 

@@ -562,6 +562,7 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 			ecm88Len-=curEcm88len;
 			cs_debug_mask(D_READER, "[viaccess-reader] ECM: Unknown ECM type");
 			snprintf( ea->msglog, MSGLOGSIZE, "Unknown ECM type" );
+			return ERROR; /*Lets interupt the loop and exit, because we don't know this ECM type.*/
 		}
 	}
 

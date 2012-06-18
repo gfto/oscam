@@ -1396,7 +1396,7 @@ struct s_global_whitelist
 	uint16_t pid;
 	uint16_t ecmlen;
 	uint16_t mapcaid;
-	uint16_t mapprovid;
+	uint32_t mapprovid;
 	struct s_global_whitelist *next;
 };
 

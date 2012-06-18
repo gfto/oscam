@@ -44,20 +44,24 @@ int32_t Sci_Reset (struct s_reader * reader, ATR * atr)
 	if (reader->mhz > 2000) { // PLL based reader
 		params.ETU = 372;
 		params.EGT = 0;
-		int32_t divider = 0; // calculate divider for 1 Mhz
-			double cardclock1, cardclock2;
-
-			while (divider != reader->mhz/100){
-				divider++;																		
-				cardclock1 = reader->mhz / divider;
-				divider++;
-				cardclock2 = reader->mhz / (divider);	
-				if ((cardclock1 > 100) && (cardclock2 > 100)) continue;
-				if ( abs(cardclock1 - 100) > abs(cardclock2 - 100) ) break;
-				divider--;
-				break;
-			}
-		params.fs = divider; 
+		params.fs = (int32_t) (reader->mhz / 100.0 + 0.5); /* calculate divider for 1 MHz  */
+		params.T = 0;
+	}
+	if (reader->mhz == 8300) { /* PLL based reader DM7025 */
+		params.ETU = 372;
+		params.EGT = 0;
+		params.fs = 16; /* read from table setting for 1 MHz:
+		params.fs = 6 for cardmhz = 5.188 Mhz
+		params.fs = 7 for cardmhz = 4.611 MHz
+		params.fs = 8 for cardmhz = 3.953 MHz
+		params.fs = 9 for cardmhz = 3.609 MHz
+		params.fs = 10 for cardmhz = 3.192 MHz
+		params.fs = 11 for cardmhz = 2.965 MHz
+		params.fs = 12 for cardmhz = 2.677 MHz
+		params.fs = 13 for cardmhz = 2.441 MHz
+		params.fs = 14 for cardmhz = 2.306 MHz
+		params.fs = 15 for cardmhz = 2.128 MHz
+		params.fs = 16 for cardmhz = 1.977 MHz */
 		params.T = 0;
 	}
 	call (ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params)!=0);
