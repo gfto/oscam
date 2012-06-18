@@ -321,6 +321,10 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 
 	// //XXX what is the 4th byte for ??
 	int32_t ecm88Len = MIN(MAX_ECM_SIZE-4, SCT_LEN(er->ecm)-4);
+	if(ecm88Len < 1){
+		cs_log("[viaccess-reader] ECM: Size of ECM couldn't be correctly calculated.");
+		return ERROR;
+	}
 	uchar ecmData[ecm88Len];
 	memset(ecmData, 0, ecm88Len);
 	memcpy(ecmData, er->ecm+4, ecm88Len);
