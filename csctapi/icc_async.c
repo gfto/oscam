@@ -663,7 +663,7 @@ static uint32_t ICC_Async_GetPLL_Divider (struct s_reader * reader)
 		}
 		else if (reader->cardmhz >= 395) {
 			reader->divider = 8;
-			reader->cardmhz = 319;
+			reader->cardmhz = 395;
 		}
 		else if (reader->cardmhz >= 360) {
 			reader->divider = 9;
