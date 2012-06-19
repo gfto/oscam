@@ -640,11 +640,13 @@ static uint32_t ICC_Async_GetPLL_Divider (struct s_reader * reader)
 {
 	float divider = reader->divider;
 	int32_t t_cardmhz;
+
 	if (reader->divider !=0) return divider;
 
 	if(reader->mhz != 8300) /* Check dreambox is not DM7025 */ {
 		divider = ((float) reader->mhz) / ((float) reader->cardmhz);
-		reader->divider = (int32_t) (divider + 1.0); /* round to nearest integer and prevend over clocking*/
+		reader->divider = (int32_t) divider;
+		if(divider > reader->divider) reader->divider++; /* round to nearest integer and prevend over clocking*/
 
 		cs_debug_mask(D_DEVICE,"PLL maxmhz = %.2f, wanted cardmhz = %.2f, divider used = %d, actualcardclock=%.2f", (float) reader->mhz/100, (float) reader->cardmhz/100,
 			reader->divider, (float) reader->mhz/reader->divider/100);
