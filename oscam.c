@@ -695,7 +695,17 @@ void cleanup_thread(void *var)
 	// Clean all remaining structures
 
 	pthread_mutex_trylock(&cl->thread_lock);
-	ll_destroy_data(cl->joblist);
+
+	//cleanup job list
+	LL_ITER it = ll_iter_create(cl->joblist);
+	struct s_data *data;
+	while ((data=ll_iter_next(&it)))
+	{
+		if (data->ptr && data->len)
+			free(data->ptr);
+		free(data);
+	}
+	ll_destroy(cl->joblist);
 	cl->joblist = NULL;
 	cl->account = NULL;
 	pthread_mutex_unlock(&cl->thread_lock);
@@ -3685,16 +3695,7 @@ void * work_thread(void *ptr) {
 	int8_t restart_reader=0;
 
 	while (1) {
-		if (!cl || !is_valid_client(cl)) { // corsair: I think this is not necessary anymore and causes memleaks
-			if (data && data!=&tmp_data)
-				free(data);
-			data = NULL;
-			free(mbuf);
-			pthread_exit(NULL);
-			return NULL;
-		}
-		
-		if (cl->kill && ll_count(cl->joblist) == 0) { //we need to process joblist to free data->ptr
+		if (!cl || cl->kill || !is_valid_client(cl)) {
 			cs_debug_mask(D_TRACE, "ending thread");
 			if (data && data!=&tmp_data)
 				free(data);
@@ -3712,7 +3713,7 @@ void * work_thread(void *ptr) {
 			cs_debug_mask(D_TRACE, "data from add_job action=%d client %c %s", data->action, cl->typ, username(cl));
 
 		if (!data) {
-			if(cl->typ != 'r') check_status(cl);	// do not call for physical readers as this might cause an endless job loop
+			if (!cl->kill && cl->typ != 'r') check_status(cl);	// do not call for physical readers as this might cause an endless job loop
 			pthread_mutex_lock(&cl->thread_lock);
 			if (cl->joblist && ll_count(cl->joblist)>0) {
 				LL_ITER itr = ll_iter_create(cl->joblist);
