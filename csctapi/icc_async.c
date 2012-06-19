@@ -696,7 +696,7 @@ static uint32_t ICC_Async_GetPLL_Divider (struct s_reader * reader)
 			reader->cardmhz = 197;
 		}
 
-		cs_debug_mask(D_DEVICE,"PLL maxmhz = %.2f, wanted cardmhz = %.2f, PLL setting used = %d, actualcardclock=%.2f", (float) reader->mhz/100, (float) t_cardmhz/100,
+		cs_debug_mask(D_DEVICE,"DM7025 PLL maxmhz = %.2f, wanted cardmhz = %.2f, PLL setting used = %d, actualcardclock=%.2f", (float) reader->mhz/100, (float) t_cardmhz/100,
 			reader->divider, (float) reader->cardmhz/100);
 	}
 
@@ -1074,7 +1074,12 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 				gt_ms = ETU_to_ms(reader, GT); 
 				reader->CWT = 0; // T0 protocol doesnt have char_delay, block_delay.
 				reader->BWT = 0;
-				cs_debug_mask (D_IFD, "reader %s Protocol: T=%i, WWT=%u, Clockrate=%u\n", reader->label, reader->protocol_type, WWT, (reader->mhz / reader->divider * 10000));
+				if (reader->mhz != 8300)
+					cs_debug_mask (D_IFD, "reader %s Protocol: T=%i, WWT=%u, Clockrate=%u\n", reader->label, reader->protocol_type, WWT, 
+						(reader->mhz / reader->divider * 10000));
+				else
+					cs_debug_mask (D_IFD, "reader %s Protocol: T=%i, WWT=%u, Clockrate=%u\n", reader->label, reader->protocol_type, WWT, 
+						(reader->cardmhz * 10000));
 			}
 			else
 				cs_debug_mask (D_IFD, "reader %s Protocol: T=%i, WWT=%u, Clockrate=%u\n", reader->label, reader->protocol_type, WWT, ICC_Async_GetClockRate(reader->cardmhz));
@@ -1126,7 +1131,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 
 				// Set BWT = (2^BWI * 960 * 372 / clockspeed) seconds + 11 work etu  (in seconds) 
 				// 1 worketu = 1 / baudrate *1000*1000 us
-				if (reader->mhz > 2000)
+				if (reader->mhz > 2000 && reader->mhz != 8300)
 					reader->BWT = (uint32_t) ((((1<<bwi) * 960L * 372L / ((double)reader->mhz / (double) reader->divider / 100L)) * (double) reader->current_baudrate / 1000L / 1000L)+ 11L); // BWT in ETU
 				else
 					reader->BWT = (uint32_t)((1<<bwi) * 960L * 372L * 9600L / (double) ICC_Async_GetClockRate(reader->cardmhz))	+ 11L ;
@@ -1206,8 +1211,13 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 	if (reader->typ == R_SMART)
 		SR_WriteSettings(reader, (uint16_t) atr_f_table[FI], (BYTE)d, (BYTE)EGT, (BYTE)reader->protocol_type, reader->convention);
 #endif
-	if (reader->mhz > 2000) 
-		cs_log("Reader %s: Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", reader->label, atr_fs_table[FI] / 1000000, (float) reader->mhz / reader->divider / 100);
+	if (reader->mhz > 2000)
+		if (reader->mhz != 8300)
+			cs_log("Reader %s: Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", reader->label, atr_fs_table[FI] / 1000000, 
+				(float) reader->mhz / reader->divider / 100);
+		else
+			cs_log("Reader %s: Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", reader->label, atr_fs_table[FI] / 1000000, 
+				(float) reader->cardmhz / 100);
 	else
 		cs_log("Reader %s: Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", reader->label, atr_fs_table[FI] / 1000000, (float) reader->mhz / 100);
 

@@ -641,9 +641,9 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_ms, uint32_t
    
    if (delay_ms > 0){
       if (reader->mhz > 2000)
-		cs_sleepus (delay_ms); // for pll readers do wait in us
-	  else
-	    cs_sleepms (delay_ms); // all other reader do wait in ms
+         cs_sleepus (delay_ms); // for pll readers do wait in us
+      else
+	 cs_sleepms (delay_ms); // all other reader do wait in ms
    }
    in_fd=reader->handle;
    
