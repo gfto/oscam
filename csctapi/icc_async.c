@@ -636,73 +636,37 @@ static uint32_t ICC_Async_GetClockRate (int32_t cardmhz)
 	}
 }
 
-static uint32_t ICC_Async_GetPLL_Divider (struct s_reader * reader)
+static int32_t ICC_Async_GetPLL_Divider (struct s_reader * reader)
 {
-	float divider = reader->divider;
-	int32_t t_cardmhz;
-
-	if (reader->divider !=0) return divider;
+	if(reader->divider != 0) return reader->divider;
 
 	if(reader->mhz != 8300) /* Check dreambox is not DM7025 */ {
+		float divider;
+
 		divider = ((float) reader->mhz) / ((float) reader->cardmhz);
 		reader->divider = (int32_t) divider;
-		if(divider > reader->divider) reader->divider++; /* round to nearest integer and prevend over clocking*/
+		if(divider > reader->divider) reader->divider++; /* to prevent over clocking, ceil (round up) the divider */
 
 		cs_debug_mask(D_DEVICE,"PLL maxmhz = %.2f, wanted cardmhz = %.2f, divider used = %d, actualcardclock=%.2f", (float) reader->mhz/100, (float) reader->cardmhz/100,
 			reader->divider, (float) reader->mhz/reader->divider/100);
 	}
 	else /* STB is DM7025 */ {
-		t_cardmhz = reader->cardmhz;
-		if (reader->cardmhz >= 518) {
-			reader->divider = 6;
-			reader->cardmhz = 518;
-		}
-		else if (reader->cardmhz >= 461) {
-			reader->divider = 7;
-			reader->cardmhz = 461;
-		}
-		else if (reader->cardmhz >= 395) {
-			reader->divider = 8;
-			reader->cardmhz = 395;
-		}
-		else if (reader->cardmhz >= 360) {
-			reader->divider = 9;
-			reader->cardmhz = 360;
-		}
-		else if (reader->cardmhz >= 319) {
-			reader->divider = 10;
-			reader->cardmhz = 319;
-		}
-		else if (reader->cardmhz >= 296) {
-			reader->divider = 11;
-			reader->cardmhz = 296;
-		}
-		else if (reader->cardmhz >= 267) {
-			reader->divider = 12;
-			reader->cardmhz = 267;
-		}
-		else if (reader->cardmhz >= 244) {
-			reader->divider = 13;
-			reader->cardmhz = 244;
-		}
-		else if (reader->cardmhz >= 230) {
-			reader->divider = 14;
-			reader->cardmhz = 230;
-		}
-		else if (reader->cardmhz >= 212) {
-			reader->divider = 15;
-			reader->cardmhz = 212;
-		}
-		else {
-			reader->divider = 16;
-			reader->cardmhz = 197;
-		}
+		int32_t i, dm7025_clock_freq[] = {518, 461, 395, 360, 319, 296, 267, 244, 230, 212, 197},
+			dm7025_PLL_setting[] = {6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}, t_cardmhz = reader->cardmhz;
+
+		for(i = 0; i < 11; i++)
+			if(t_cardmhz >= dm7025_clock_freq[i]) break;
+
+		if(i > 10) i = 10;
+
+		reader->cardmhz = dm7025_clock_freq[i];
+		reader->divider = dm7025_PLL_setting[i]; /*Nicer way of codeing is: reader->divider = i + 6;*/
 
 		cs_debug_mask(D_DEVICE,"DM7025 PLL maxmhz = %.2f, wanted cardmhz = %.2f, PLL setting used = %d, actualcardclock=%.2f", (float) reader->mhz/100, (float) t_cardmhz/100,
 			reader->divider, (float) reader->cardmhz/100);
 	}
 
-	return (reader->divider);
+	return reader->divider;
 }
 
 
