@@ -1461,23 +1461,21 @@ void add_reader_to_active(struct s_reader *rdr) {
 /* Starts or restarts a cardreader without locking. If restart=1, the existing thread is killed before restarting,
    if restart=0 the cardreader is only started. */
 static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
-	struct s_client *old_client = rdr->client;
+	struct s_client *cl = rdr->client;
 	if (restart){
 		remove_reader_from_active(rdr);		//remove from list
-		struct s_client *cl = rdr->client;
-		if (cl) {		//kill old thread
-			kill_thread(cl);
-			rdr->client = NULL;
-		}
+    		kill_thread(cl); //kill old thread
+    		cs_sleepms(500);
 	}
 
-	while (restart && old_client && old_client->reader == rdr) {
+	while (restart && is_valid_client(cl)) {
 		//If we quick disable+enable a reader (webif), remove_reader_from_active is called from
 		//cleanup. this could happen AFTER reader is restarted, so oscam crashes or reader is hidden
 		//cs_log("CHECK: WAITING FOR CLEANUP READER %s", rdr->label);
-		cs_sleepms(100);					  //Fixme, cleanup does old_client->reader = NULL
+		cs_sleepms(500);
 	}
 
+	rdr->client = NULL;
 	rdr->tcp_connected = 0;
 	rdr->card_status = UNKNOWN;
 	rdr->tcp_block_delay = 100;
@@ -1498,7 +1496,7 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 		if (restart) {
 			cs_log("restarting reader %s", rdr->label);
 		}
-		struct s_client * cl = create_client(first_client->ip);
+		cl = create_client(first_client->ip);
 		if (cl == NULL) return 0;
 		cl->reader=rdr;
 		cs_log("creating thread for device %s", rdr->device);
@@ -3376,6 +3374,75 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	}
 }
 
+/**
+ * Function to filter emm by cardsystem.
+ * Every cardsystem can export a function "get_emm_filter"
+ *
+ * the emm is checked against it an returns TRUE for a valid emm or FALSE if not
+ */
+int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs, EMM_PACKET *ep)
+{
+	//copied and enhanced from module-dvbapi.c
+	//dvbapi_start_emm_filter()
+
+	int32_t i, j, k, match;
+	uchar flt, mask;
+	uchar dmx_filter[342]; // 10 filter + 2 byte header
+
+
+	memset(dmx_filter, 0, sizeof(dmx_filter));
+	dmx_filter[0]=0xFF;
+	dmx_filter[1]=0;
+
+	//Call cardsystems emm filter
+        cs->get_emm_filter(rdr, dmx_filter);
+
+	//only check matching emmtypes:
+	uchar org_emmtype;
+	if (ep->type == UNKNOWN)
+	    org_emmtype = EMM_UNKNOWN;
+	else
+	    org_emmtype = 1 << (ep->type-1);
+
+
+	//Now check all filter values
+
+	//dmx_filter has 2 bytes header:
+	//first byte is always 0xFF
+	//second byte is filter count
+	//all the other datas are the filter count * 34 bytes filter
+
+	//every filter is 34 bytes
+	//2 bytes emmtype+count
+	//16 bytes filter data
+	//16 bytes filter mask
+
+	int32_t filter_count=dmx_filter[1];
+	for (j=1;j<=filter_count && j <= 10;j++) {
+		int32_t startpos=2+(34*(j-1));
+
+		if (dmx_filter[startpos+1] != 0x00)
+			continue;
+
+		uchar emmtype=dmx_filter[startpos];
+		if (emmtype != org_emmtype)
+			continue;
+
+                match = 1;
+		for (i=0,k=0; i<10 && k<ep->l && match; i++,k++) {
+			flt = dmx_filter[startpos+2+i];
+			mask = dmx_filter[startpos+2+16+i];
+			if (!mask) break;	
+                        match = (flt == (ep->emm[k]&mask));
+                        if (k==0) k+=2; //skip len
+		}
+		if (match)
+		    return 1; //valid emm 
+		
+	}
+	return 0; //emm filter does not match, illegal emm, return
+}
+
 void do_emm(struct s_client * client, EMM_PACKET *ep)
 {
 	char *typtext[]={"unknown", "unique", "shared", "global"};
@@ -3441,6 +3508,17 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 				first_client->emmnok++;
 				continue;
 			}
+		}
+
+		if (cs && cs->get_emm_filter) {
+			if (!do_simple_emm_filter(aureader, cs, ep)) {
+			        cs_debug_mask(D_EMM, "emm skipped, emm_filter() returns invalid, reader %s", aureader->label);
+				client->emmnok++;
+				if (client->account)
+					client->account->emmnok++;
+				first_client->emmnok++;
+				continue;
+                        }
 		}
 
 		cs_debug_mask(D_EMM, "emmtype %s. Reader %s has serial %s.", typtext[ep->type], aureader->label, cs_hexdump(0, aureader->hexserial, 8, tmp, sizeof(tmp)));
@@ -3538,8 +3616,8 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		ep->client = client;
 
 		for (i=0; i<CS_EMMCACHESIZE; i++) {
-	       	if (!memcmp(au_cl->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE)) {
-	       		cs_debug_mask(D_EMM, "emm found in cache: reader %s count %d rewrite %d", aureader->label, au_cl->emmcache[i].count, aureader->rewritemm);
+		        if (!memcmp(au_cl->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE)) {
+	       		        cs_debug_mask(D_EMM, "emm found in cache: reader %s count %d rewrite %d", aureader->label, au_cl->emmcache[i].count, aureader->rewritemm);
 				if (aureader->cachemm && (au_cl->emmcache[i].count > aureader->rewritemm)) {
 					reader_log_emm(aureader, ep, i, 2, NULL);
 					return;
