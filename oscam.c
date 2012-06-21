@@ -4361,6 +4361,7 @@ void * reader_check(void) {
 		cs_readunlock(&readerlist_lock);
 		cs_sleepms(1000);
 	}
+	return NULL;
 }
 
 int32_t accept_connection(int32_t i, int32_t j) {
