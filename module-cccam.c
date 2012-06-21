@@ -713,7 +713,7 @@ int32_t cc_send_srv_data(struct s_client *cl) {
 	
 	memcpy(buf, cc->node_id, 8);
 		
-	char cc_build[7]; tmp_dbg(17);
+	char cc_build[7], tmp_dbg[17];
 	memset(cc_build, 0, sizeof(cc_build));
 	cc_check_version((char *) cfg.cc_version, cc_build);
 	memcpy(buf + 8, cfg.cc_version, sizeof(cfg.cc_version)); // cccam version (ascii)
@@ -1006,7 +1006,7 @@ void set_au_data(struct s_client *cl, struct s_reader *rdr, struct cc_card *card
 		return;
 		
 	struct cc_data *cc = cl->cc;
-	tmp_dbg(17);	
+	char tmp_dbg[17];
 	cc->last_emm_card = card;
 
 	cc_UA_cccam2oscam(card->hexserial, rdr->hexserial, rdr->caid);
@@ -1528,7 +1528,7 @@ int32_t cc_send_emm(EMM_PACKET *ep) {
 
 	if (!emm_card) {
 		uint8_t hs[8];
-		tmp_dbg(17);
+		char tmp_dbg[17];
 		cc_UA_oscam2cccam(ep->hexserial, hs, caid);
 		cs_debug_mask(D_EMM,
 			"%s au info: searching card for caid %04X oscam-UA: %s",
@@ -2116,7 +2116,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
 	int32_t ret = buf[1];
 	struct cc_data *cc = cl->cc;
-	tmp_dbg(33);
+	char tmp_dbg[33];
 	if (!cc || cl->kill)
 		return -1;
 
@@ -3107,7 +3107,7 @@ int32_t cc_srv_wakeup_readers(struct s_client *cl) {
 int32_t cc_srv_connect(struct s_client *cl) {
 	int32_t i;
 	uint8_t data[16];
-	char usr[21], pwd[65]; tmp_dbg(17);
+	char usr[21], pwd[65], tmp_dbg[17];
 	struct s_auth *account;
 	struct cc_data *cc;
 

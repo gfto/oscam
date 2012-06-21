@@ -141,7 +141,7 @@ static void Signature(unsigned char *sig, const unsigned char *vkey,const unsign
 static int32_t CamStateRequest(struct s_reader * reader)
 {
 	def_resp;
-	tmp_dbg(10);
+	char tmp_dbg[10];
 	if(do_cmd(reader, 0xC0,0x02,0xB0,0x06,NULL,cta_res,&cta_lr))
 	{
 		memcpy(reader->cam_state,cta_res+3,3);
@@ -440,7 +440,7 @@ static void decryptDT08(struct s_reader * reader, unsigned char * cta_res)
 	unsigned char sign2[8];
 	unsigned char static_dt08[73];
 	unsigned char camid[4];
-	tmp_dbg(13);
+	char tmp_dbg[13];
 	int32_t i, n;
 	BN_CTX *ctx;
 	BIGNUM *bn_mod, *bn_exp, *bn_data, *bn_res;
@@ -625,7 +625,7 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR *newatr)
 {
 	get_atr;
 	def_resp;
-	tmp_dbg(13);
+	char tmp_dbg[13];
 	memset(reader->rom, 0, 15);
 	reader->is_pure_nagra = 0; 
 	reader->is_tiger = 0; 

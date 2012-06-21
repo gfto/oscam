@@ -3896,7 +3896,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
   if (!strcmp(token, "mg-encrypted")) {
     uchar key[16];
     uchar mac[6];
-    tmp_dbg(13);
+    char tmp_dbg[13];
     uchar *buf = NULL;
     int32_t len = 0;
 

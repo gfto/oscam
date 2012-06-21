@@ -283,7 +283,7 @@ static int32_t seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //return
 {
     cs_debug_mask(D_EMM, "Entered seca_get_emm_type ep->emm[0]=%i",ep->emm[0]);
     int32_t i;
-    tmp_dbg(25);//patch size
+    char tmp_dbg[25];
     switch (ep->emm[0])
     {
     case 0x82:

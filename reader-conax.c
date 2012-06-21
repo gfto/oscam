@@ -283,7 +283,7 @@ static int32_t conax_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, str
 static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
 	int32_t i, ok = 0;
-	tmp_dbg(17);
+	char tmp_dbg[17];
 
 	cs_debug_mask(D_EMM, "Entered conax_get_emm_type ep->emm[2]=%02x", ep->emm[2]);
 

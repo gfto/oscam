@@ -102,7 +102,7 @@ static int32_t dre_set_provider_info (struct s_reader * reader)
   cmd59[1] = reader->provider;
   if ((dre_cmd (cmd59))) {	//ask subscription packages, returns error on 0x11 card
     uchar pbm[32];
-    tmp_dbg(65);
+    char tmp_dbg[65];
     memcpy (pbm, cta_res + 3, cta_lr - 6);
     cs_debug_mask(D_READER, "[dre-reader] pbm: %s", cs_hexdump(0, pbm, 32, tmp_dbg, sizeof(tmp_dbg)));
 
@@ -293,7 +293,7 @@ static void DREover(const unsigned char *ECMdata, unsigned char *DW)
 static int32_t dre_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
   def_resp;
-  tmp_dbg(256);
+  char tmp_dbg[256];
   if (reader->caid == 0x4ae0) {  	
     uchar ecmcmd41[] = { 0x41,
       0x58, 0x1f, 0x00,		//fixed part, dont change 

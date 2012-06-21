@@ -311,7 +311,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 	cs_ri_log(reader, "detect irdeto card");
 	if(check_filled(reader->rsa_mod, 64) > 0 && (!reader->force_irdeto || reader->acs57)) // we use rsa from config as camkey
 	{
-		tmp_dbg(65);
+		char tmp_dbg[65];
 		cs_debug_mask(D_READER, "[irdeto-reader] using camkey data from config");
 		cs_debug_mask(D_READER, "[irdeto-reader]      camkey: %s", cs_hexdump(0, reader->nagra_boxkey, 8, tmp_dbg, sizeof(tmp_dbg)));
 		if (reader->acs57==1) {
