@@ -248,27 +248,14 @@ extern int32_t ac_init_log(void);
 
 extern void cs_log_int(uint16_t mask, int8_t lock, const uchar *buf, int32_t n, const char *fmt, ...) __attribute__ ((format (printf, 5, 6)));
 
-#define cs_log(args...)				cs_log_int(0, 1, NULL, 0, ##args)
-#define cs_log_nolock(args...)			cs_log_int(0, 0, NULL, 0, ##args)
-#define cs_dump(buf, n, args...)			cs_log_int(0, 1, buf, n, ##args)
+#define cs_log(...)          cs_log_int(0, 1, NULL, 0, ##__VA_ARGS__)
+#define cs_log_nolock(...)   cs_log_int(0, 0, NULL, 0, ##__VA_ARGS__)
+#define cs_dump(buf, n, ...) cs_log_int(0, 1, buf,  n, ##__VA_ARGS__)
 
-#ifdef WITH_DEBUG
-#define cs_debug_mask(mask, args...)		cs_log_int(mask, 1, NULL, 0, ##args)
-#define cs_debug_mask_nolock(mask, args...)	cs_log_int(mask, 0, NULL, 0, ##args)
-#define cs_ddump_mask(mask, buf, n, args...)	cs_log_int(mask, 1, buf, n, ##args)
-#else
-#if (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#endif
-#if (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-#endif
-#define nop() asm volatile("nop")
-#define cs_debug_mask(...) nop()
-#define cs_debug_mask_nolock(...) nop()
-#define cs_ddump_mask(...) nop()
-#endif
+#define cs_debug_mask(mask, ...)         do { if (config_WITH_DEBUG()) cs_log_int(mask, 1, NULL, 0, ##__VA_ARGS__); } while(0)
+#define cs_debug_mask_nolock(mask, ...)  do { if (config_WITH_DEBUG()) cs_log_int(mask, 0, NULL, 0, ##__VA_ARGS__); } while(0)
+#define cs_ddump_mask(mask, buf, n, ...) do { if (config_WITH_DEBUG()) cs_log_int(mask, 1, buf , n, ##__VA_ARGS__); } while(0)
+
 extern void log_emm_request(struct s_reader *);
 extern void logCWtoFile(ECM_REQUEST *er, uchar *cw);
 extern void cs_log_config(void);
