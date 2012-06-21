@@ -265,10 +265,8 @@ extern void cs_log_int(uint16_t mask, int8_t lock, const uchar *buf, int32_t n, 
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
 #define nop() asm volatile("nop")
-#define cs_debug(...) nop()
 #define cs_debug_mask(...) nop()
 #define cs_debug_mask_nolock(...) nop()
-#define cs_ddump(...) nop()
 #define cs_ddump_mask(...) nop()
 #endif
 extern void log_emm_request(struct s_reader *);
