@@ -205,8 +205,9 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader){
 			while((read = fread(&buffer,sizeof(char),1024,fp)) > 0){
 				offset = 0;
 				if(size == 0 && removeHeader){
-					if(strncmp(buffer,"<!--OSCam", 9) == 0){
-						char *pch = strstr(buffer,"-->");
+					char *pch = strstr(buffer,"<!--OSCam");
+					if(pch != NULL){
+						pch = strstr(buffer,"-->");
 						if(pch != NULL){
 							offset = pch - buffer + 4;
 							read -= offset;
@@ -321,8 +322,9 @@ void tpl_checkDiskRevisions(void) {
 				int8_t error = 1;
 				char *tplorg = tpl_getUnparsedTpl(tpl[i], 0);
 				unsigned long curchecksum = crc32(0L, (unsigned char*)tplmap[i], strlen(tplmap[i]));
-				if(strncmp(tplorg,"<!--OSCam;", 10) == 0){
-					char *pch = tplorg + 10;
+				char *pch = strstr(tplorg, "<!--OSCam;");
+				if(pch != NULL){
+					pch = pch + 10;
 					unsigned long checksum = strtoul(pch, NULL, 10);					
 					if(checksum != curchecksum){
 						pch = strchr(pch, ';');
