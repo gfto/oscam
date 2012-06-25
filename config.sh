@@ -6,6 +6,41 @@ addons="WEBIF HAVE_DVBAPI IRDETO_GUESSING CS_ANTICASC WITH_DEBUG MODULE_MONITOR 
 protocols="MODULE_CAMD33 MODULE_CAMD35 MODULE_CAMD35_TCP MODULE_NEWCAMD MODULE_CCCAM MODULE_GBOX MODULE_RADEGAST MODULE_SERIAL MODULE_CONSTCW MODULE_PANDORA"
 readers="WITH_CARDREADER READER_NAGRA READER_IRDETO READER_CONAX READER_CRYPTOWORKS READER_SECA READER_VIACCESS READER_VIDEOGUARD READER_DRE READER_TONGFANG READER_BULCRYPT"
 
+defconfig="
+CONFIG_WEBIF=y
+CONFIG_HAVE_DVBAPI=y
+CONFIG_IRDETO_GUESSING=y
+CONFIG_CS_ANTICASC=y
+CONFIG_WITH_DEBUG=y
+CONFIG_MODULE_MONITOR=y
+# CONFIG_WITH_SSL=n
+CONFIG_WITH_LB=y
+CONFIG_CS_CACHEEX=y
+# CONFIG_LCDSUPPORT=n
+# CONFIG_IPV6SUPPORT=n
+# CONFIG_MODULE_CAMD33=n
+CONFIG_MODULE_CAMD35=y
+CONFIG_MODULE_CAMD35_TCP=y
+CONFIG_MODULE_NEWCAMD=y
+CONFIG_MODULE_CCCAM=y
+CONFIG_MODULE_GBOX=y
+CONFIG_MODULE_RADEGAST=y
+CONFIG_MODULE_SERIAL=y
+CONFIG_MODULE_CONSTCW=y
+CONFIG_MODULE_PANDORA=y
+CONFIG_WITH_CARDREADER=y
+CONFIG_READER_NAGRA=y
+CONFIG_READER_IRDETO=y
+CONFIG_READER_CONAX=y
+CONFIG_READER_CRYPTOWORKS=y
+CONFIG_READER_SECA=y
+CONFIG_READER_VIACCESS=y
+CONFIG_READER_VIDEOGUARD=y
+CONFIG_READER_DRE=y
+CONFIG_READER_TONGFANG=y
+CONFIG_READER_BULCRYPT=y
+"
+
 list_options() {
 	PREFIX="$1"
 	shift
@@ -243,6 +278,19 @@ case "$1" in
 		done
 		$0 --make-config.mak
 		;;
+	'-R'|'--restore')
+		echo $defconfig | sed -e 's|# ||g' | xargs printf "%s\n" | grep "=y$" | sed -e 's|^CONFIG_||g;s|=.*||g' |
+		while read OPT
+		do
+			enable_opt "$OPT"
+		done
+		echo $defconfig | sed -e 's|# ||g' | xargs printf "%s\n" | grep "=n$" | sed -e 's|^CONFIG_||g;s|=.*||g' |
+		while read OPT
+		do
+			disable_opt "$OPT"
+		done
+		$0 --make-config.mak
+		;;
 	'-e'|'--enabled')
 		grep "^\#define $2$" oscam-config.h >/dev/null 2>/dev/null
 		if [ $? = 0 ]; then
@@ -314,6 +362,8 @@ Usage: `basename $0` [parameters]
 
  -E, --enable [option]     Enable config option.
  -D, --disable [option]    Disable config option.
+
+ -R, --restore             Restore default config.
 
  -v, --oscam-version       Display OSCam version.
  -r, --oscam-revision      Display OSCam SVN revision.
