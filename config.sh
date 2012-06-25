@@ -110,17 +110,20 @@ enable_package() {
 print_components() {
 	clear
 	echo "You have selected the following components:"
-	echo -e "\nAdd-ons:"
+	echo
+	echo "Add-ons:"
 	for i in $addons; do
 		printf "\t%-20s: %s\n" $i $(check_test "$i")
 	done
 
-	echo -e "\nProtocols:"
+	echo
+	echo "Protocols:"
 	for i in $protocols; do
 		printf "\t%-20s: %s\n" $i $(check_test "$i")
 	done
 
-	echo -e "\nReaders:"
+	echo
+	echo "Readers:"
 	for i in $readers; do
 		printf "\t%-20s: %s\n" $i $(check_test "$i")
 	done
