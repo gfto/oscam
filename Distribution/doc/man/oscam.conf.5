@@ -459,7 +459,19 @@ path for external CSS file, default:none
 .PP
 \fBhttptpl\fP = \fBpath\fP
 .RS 3n
-path for external templates and picons, default:none
+path for external templates and picons, multiple simultaneously templates and 
+picons are possible by creating sub folders (maximum length of 32 alphanumeric 
+characters), sub folders naming is corresponding to sub folder in URL, default:none
+
+ example: httptpl = /this/is/my/path
+
+          folder with multiple templates:
+            /this/is/my/path/template1
+            /this/is/my/path/template2
+
+          valid URLs:
+           http://host:port/template1
+           http://host:port/template2
 .RE
 .PP
 \fBhttpjscript\fP = \fBpath\fP

@@ -619,7 +619,19 @@ path for external CSS file, default:none
 
 <B>httptpl</B> = <B>path</B>
 <DL COMPACT><DT><DD>
-path for external templates and picons, default:none
+path for external templates and picons, multiple simultaneously templates and 
+picons are possible by creating sub folders (maximum length of 32 alphanumeric 
+characters), sub folders naming is corresponding to sub folder in URL, default:none
+<P>
+<BR>&nbsp;example:&nbsp;httptpl&nbsp;=&nbsp;/this/is/my/path
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;folder&nbsp;with&nbsp;multiple&nbsp;templates:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/this/is/my/path/template1
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/this/is/my/path/template2
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;valid&nbsp;URLs:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="http://host:port/template1">http://host:port/template1</A>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="http://host:port/template2">http://host:port/template2</A>
 </DL>
 
 <P>

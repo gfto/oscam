@@ -322,7 +322,19 @@ DESCRIPTIONS
 	  1 = embedded CSS will be added before external CSS , default:0
 
        httptpl = path
-	  path for external templates and picons, default:none
+	  path for external templates and picons, multiple simultaneously templates and picons are possible by creat‐
+	  ing sub folders (maximum length of 32 alphanumeric characters), sub folders naming is corresponding to  sub
+	  folder in URL, default:none
+
+	   example: httptpl = /this/is/my/path
+
+		    folder with multiple templates:
+		      /this/is/my/path/template1
+		      /this/is/my/path/template2
+
+		    valid URLs:
+		     http://host:port/template1
+		     http://host:port/template2
 
        httpjscript = path
 	  path for oscam.js javascript, default:none
