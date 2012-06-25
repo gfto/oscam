@@ -3,12 +3,6 @@
 #include "reader-common.h"
 #include "reader-videoguard-common.h"
 
-// Redefine logging funtion to include reader name
-#ifdef WITH_DEBUG
-  #undef cs_debug_mask
-  #define cs_debug_mask(x,y...) cs_log_int(x, 1, NULL, 0, "[videoguard2-reader] "y)
-#endif
-
 static void dimeno_PostProcess_Decrypt(struct s_reader * reader, unsigned char *rxbuff, unsigned char *cw)
 {
   unsigned char tag,len,len2;
@@ -291,7 +285,7 @@ static void vg2_read_tiers(struct s_reader * reader)
       cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), tier_id, 0, 0, mktime(&timeinfo), 4);
 
       if(!stopemptytier){
-        cs_debug_mask(D_READER, "tier: %04x, tier-number: 0x%02x",tier_id,i);
+        cs_ri_debug_mask(reader, D_READER, "tier: %04x, tier-number: 0x%02x",tier_id,i);
       }
       cs_ri_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s",tier_id,y,m,d,H,M,S,get_tiername(tier_id, reader->caid, tiername));
     }
@@ -302,10 +296,10 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR *newatr)
 {
   get_hist;
   if ((hist_size < 7) || (hist[1] != 0xB0) || (hist[4] != 0xFF) || (hist[5] != 0x4A) || (hist[6] != 0x50)){
-    cs_debug_mask(D_READER, "failed history check");
+    cs_ri_debug_mask(reader, D_READER, "failed history check");
     return ERROR;
   }
-  cs_debug_mask(D_READER, "passed history check");
+  cs_ri_debug_mask(reader, D_READER, "passed history check");
 
   get_atr;
   def_resp;
@@ -321,9 +315,9 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR *newatr)
     return ERROR;
   }
 
-  cs_debug_mask(D_READER, "type: %s, baseyear: %i", reader->card_desc, reader->card_baseyear);
+  cs_ri_debug_mask(reader, D_READER, "type: %s, baseyear: %i", reader->card_desc, reader->card_baseyear);
   if(reader->ndsversion == NDS2){
-    cs_debug_mask(D_READER, "forced to NDS2");
+    cs_ri_debug_mask(reader, D_READER, "forced to NDS2");
   }
 
   //a non videoguard2/NDS2 card will fail on read_cmd_len(ins7401)

@@ -28,7 +28,7 @@ int32_t reader_device_type(struct s_reader * reader)
               case 0: rc=R_DB2COM1; break;
               case 1: rc=R_DB2COM2; break;
             }
-          cs_debug_mask(D_READER, "device is major: %d, minor: %d, typ=%d", dev_major, dev_minor, rc);
+          cs_ri_debug_mask(reader, D_READER, "device is major: %d, minor: %d, typ=%d", dev_major, dev_minor, rc);
         }
       }
   }
@@ -175,7 +175,7 @@ static void do_emm_from_file(struct s_reader * reader)
 
    struct s_cardsystem *cs = get_cardsystem_by_caid(reader->caid);
    if (cs && cs->get_emm_type && !cs->get_emm_type(eptmp, reader)) {
-      cs_debug_mask(D_EMM, "emm skipped, get_emm_type() returns error, reader %s", reader->label);
+      cs_ri_debug_mask(reader, D_EMM, "emm skipped, get_emm_type() returns error, reader %s", reader->label);
       free(eptmp);
       return;
    }
@@ -313,7 +313,7 @@ int32_t reader_reset(struct s_reader * reader)
 
 #ifdef WITH_COOLAPI
 	if (reader->typ == R_INTERNAL) {
-		cs_debug_mask(D_DEVICE,"%s init done - modifying timeout for coolstream internal device %s", reader->label, reader->device);
+		cs_ri_debug_mask(reader, D_DEVICE, "%s init done - modifying timeout for coolstream internal device %s", reader->label, reader->device);
 		call(Cool_Set_Transmit_Timeout(reader, 1));
 	}
 #endif
@@ -398,7 +398,7 @@ int32_t reader_ecm(struct s_reader * reader, ECM_REQUEST *er, struct s_ecm_answe
 
 int32_t reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs from calling reader!
 {
-	cs_debug_mask(D_EMM, "Entered reader_get_emm_type cardsystem %s", rdr->csystem.desc);
+	cs_ri_debug_mask(rdr, D_EMM, "Entered %s", __func__);
 	int32_t rc;
 
 	if (rdr->csystem.active && rdr->csystem.get_emm_type) 

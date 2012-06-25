@@ -312,16 +312,16 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 	if(check_filled(reader->rsa_mod, 64) > 0 && (!reader->force_irdeto || reader->acs57)) // we use rsa from config as camkey
 	{
 		char tmp_dbg[65];
-		cs_debug_mask(D_READER, "[irdeto-reader] using camkey data from config");
-		cs_debug_mask(D_READER, "[irdeto-reader]      camkey: %s", cs_hexdump(0, reader->nagra_boxkey, 8, tmp_dbg, sizeof(tmp_dbg)));
+		cs_ri_debug_mask(reader, D_READER, "using camkey data from config");
+		cs_ri_debug_mask(reader, D_READER, "     camkey: %s", cs_hexdump(0, reader->nagra_boxkey, 8, tmp_dbg, sizeof(tmp_dbg)));
 		if (reader->acs57==1) {
 			memcpy(&sc_Acs57CamKey[5], reader->rsa_mod, 0x40);
-			cs_debug_mask(D_READER, "[irdeto-reader] camkey-data: %s", cs_hexdump(0, &sc_Acs57CamKey[5], 32, tmp_dbg, sizeof(tmp_dbg)));
-			cs_debug_mask(D_READER, "[irdeto-reader] camkey-data: %s", cs_hexdump(0, &sc_Acs57CamKey[37], 32, tmp_dbg, sizeof(tmp_dbg)));
+			cs_ri_debug_mask(reader, D_READER, "camkey-data: %s", cs_hexdump(0, &sc_Acs57CamKey[5], 32, tmp_dbg, sizeof(tmp_dbg)));
+			cs_ri_debug_mask(reader, D_READER, "camkey-data: %s", cs_hexdump(0, &sc_Acs57CamKey[37], 32, tmp_dbg, sizeof(tmp_dbg)));
 		} else {
 			memcpy(&sc_GetCamKey383C[5], reader->rsa_mod, 0x40);
-			cs_debug_mask(D_READER, "[irdeto-reader] camkey-data: %s", cs_hexdump(0, &sc_GetCamKey383C[5], 32, tmp_dbg, sizeof(tmp_dbg)));
-			cs_debug_mask(D_READER, "[irdeto-reader] camkey-data: %s", cs_hexdump(0, &sc_GetCamKey383C[37], 32, tmp_dbg, sizeof(tmp_dbg)));
+			cs_ri_debug_mask(reader, D_READER, "camkey-data: %s", cs_hexdump(0, &sc_GetCamKey383C[5], 32, tmp_dbg, sizeof(tmp_dbg)));
+			cs_ri_debug_mask(reader, D_READER, "camkey-data: %s", cs_hexdump(0, &sc_GetCamKey383C[37], 32, tmp_dbg, sizeof(tmp_dbg)));
 		}
 	} else {
 		if(reader->acs57==1) {
@@ -422,7 +422,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 		sc_Acs57CamKey[2] = 0;
 	}
 
-	cs_debug_mask(D_READER, "[irdeto-reader] set camkey for type=%d", camkey);
+	cs_ri_debug_mask(reader, D_READER, "set camkey for type=%d", camkey);
 
 	switch (camkey)
 	{
@@ -549,14 +549,14 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 	int32_t base = (ep->emm[3]>>3);
 	char dumprdrserial[l*3], dumpemmserial[l*3];
 
-	cs_debug_mask(D_EMM, "Entered irdeto_get_emm_type ep->emm[3]=%02x",ep->emm[3]);
+	cs_ri_debug_mask(rdr, D_EMM, "Entered irdeto_get_emm_type ep->emm[3]=%02x",ep->emm[3]);
 
 	switch (l) {
 
 		case 0:
 			// global emm, 0 bytes addressed
 			ep->type = GLOBAL;
-			cs_debug_mask(D_EMM, "IRDETO EMM: GLOBAL base = %02x", base);
+			cs_ri_debug_mask(rdr, D_EMM, "GLOBAL base = %02x", base);
 			return TRUE;
 
 		case 2:
@@ -566,7 +566,7 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			memcpy(ep->hexserial, ep->emm + 4, l);
 			cs_hexdump(1, rdr->hexserial, l, dumprdrserial, sizeof(dumprdrserial));
 			cs_hexdump(1, ep->hexserial, l, dumpemmserial, sizeof(dumpemmserial));
-			cs_debug_mask(D_EMM, "IRDETO EMM: SHARED l = %d ep = %s rdr = %s base = %02x", l, 
+			cs_ri_debug_mask(rdr, D_EMM, "SHARED l = %d ep = %s rdr = %s base = %02x", l, 
 					dumpemmserial, dumprdrserial, base);
 
 			if (base & 0x10) {
@@ -582,7 +582,7 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 					if (base == rdr->prid[i][0] && !memcmp(ep->emm + 4, &rdr->prid[i][1], l))
 						return TRUE;
 			}
-			cs_debug_mask(D_EMM, "IRDETO EMM: neither hex nor provider addressed or unknown provider id");
+			cs_ri_debug_mask(rdr, D_EMM, "neither hex nor provider addressed or unknown provider id");
 			return FALSE;
 
 		case 3:
@@ -592,7 +592,7 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			memcpy(ep->hexserial, ep->emm + 4, l);
 			cs_hexdump(1, rdr->hexserial, l, dumprdrserial, sizeof(dumprdrserial));
 			cs_hexdump(1, ep->hexserial, l, dumpemmserial, sizeof(dumpemmserial));
-			cs_debug_mask(D_EMM, "IRDETO EMM: UNIQUE l = %d ep = %s rdr = %s base = %02x", l, 
+			cs_ri_debug_mask(rdr, D_EMM, "UNIQUE l = %d ep = %s rdr = %s base = %02x", l, 
 					dumpemmserial, dumprdrserial, base);
 
 			if (base & 0x10)
@@ -607,12 +607,12 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 					if (base == rdr->prid[i][0] && !memcmp(ep->emm + 4, &rdr->prid[i][1], l))
 						return TRUE;
 			}
-			cs_debug_mask(D_EMM, "IRDETO EMM: neither hex nor provider addressed or unknown provider id");
+			cs_ri_debug_mask(rdr, D_EMM, "neither hex nor provider addressed or unknown provider id");
 			return FALSE;
 
 		default:
 			ep->type = UNKNOWN;
-			cs_debug_mask(D_EMM, "IRDETO EMM: UNKNOWN");
+			cs_ri_debug_mask(rdr, D_EMM, "UNKNOWN");
 			return TRUE;
 	}
 
@@ -709,7 +709,7 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
 	uchar cta_cmd[272];
 	if (ep->emm[0] != 0x82) {
-		cs_debug_mask(D_EMM, "[irdeto-reader] Invalid EMM: Has to start with 0x82, but starts with %02x!", ep->emm[0]);
+		cs_ri_debug_mask(reader, D_EMM, "Invalid EMM: Has to start with 0x82, but starts with %02x!", ep->emm[0]);
 		return ERROR;
 	}
 
@@ -741,7 +741,7 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 					dataLen=ep->emm[2];
 				}
 				if(dataLen < 7 || dataLen > (int32_t)sizeof(ep->emm) - 6 || dataLen > (int32_t)sizeof(cta_cmd) - 9) {
-					cs_debug_mask(D_EMM, "[irdeto-reader] dataLen %d seems wrong, faulty EMM?", dataLen);
+					cs_ri_debug_mask(reader, D_EMM, "dataLen %d seems wrong, faulty EMM?", dataLen);
 					return ERROR;
 				}
 				if (ep->type==GLOBAL && (reader->caid==0x0624 || reader->caid==0x0648 || reader->caid == 0x0666)) dataLen+=2;
@@ -775,7 +775,7 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 			} else {
 				const int32_t dataLen = SCT_LEN(emm) - 5 - l;		// sizeof of emm bytes (nanos)
 				if(dataLen < 1 || dataLen > (int32_t)sizeof(ep->emm) - 5 - l || dataLen > (int32_t)sizeof(cta_cmd) - (int32_t)sizeof(sc_EmmCmd) - ADDRLEN) {
-					cs_debug_mask(D_EMM, "[irdeto-reader] dataLen %d seems wrong, faulty EMM?", dataLen);
+					cs_ri_debug_mask(reader, D_EMM, "dataLen %d seems wrong, faulty EMM?", dataLen);
 					return ERROR;
 				}
 				uchar *ptr = cta_cmd;
@@ -789,7 +789,7 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 				return(irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr) ? 0 : 1); // TODO: this always returns success cause return code cant be 0
 			}
 		} else
- 			cs_debug_mask(D_EMM, "[irdeto-reader] addrlen %d > %d", l, ADDRLEN);
+ 			cs_ri_debug_mask(reader, D_EMM, "addrlen %d > %d", l, ADDRLEN);
  	}
  	return ERROR;
 }
@@ -822,7 +822,7 @@ static int32_t irdeto_card_info(struct s_reader * reader)
 
 	if (((cta_lr>9) && !(cta_res[cta_lr-2]|cta_res[cta_lr-1])) || (reader->acs57==1))
 	{
-		cs_debug_mask(D_READER, "[irdeto-reader] max chids: %d, %d, %d, %d", cta_res[6+acspadd], cta_res[7+acspadd], cta_res[8+acspadd], cta_res[9+acspadd]);
+		cs_ri_debug_mask(reader, D_READER, "max chids: %d, %d, %d, %d", cta_res[6+acspadd], cta_res[7+acspadd], cta_res[8+acspadd], cta_res[9+acspadd]);
 
 		/*
 		 * Provider 2

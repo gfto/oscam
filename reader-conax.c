@@ -15,7 +15,7 @@ static void ReverseMem(unsigned char *vIn, int32_t len)
   }
 }
 
-static void RSA_CNX(byte *msg, byte *mod, byte *exp, unsigned int modbytes, unsigned int expbytes) 
+static void RSA_CNX(struct s_reader * reader, byte *msg, byte *mod, byte *exp, unsigned int modbytes, unsigned int expbytes) 
 {
   int32_t n = 0;
   BN_CTX *ctx;
@@ -29,7 +29,7 @@ static void RSA_CNX(byte *msg, byte *mod, byte *exp, unsigned int modbytes, unsi
     bn_res = BN_new ();
     ctx= BN_CTX_new();
     if (ctx == NULL) { 
-      cs_debug_mask(D_READER, "[conax-reader] RSA Error in RSA_CNX");
+      cs_ri_debug_mask(reader, D_READER, "RSA Error in RSA_CNX");
     }
     BN_bin2bn (mod, modbytes, bn_mod); // rsa modulus
     BN_bin2bn (exp, expbytes, bn_exp); // exponent
@@ -146,7 +146,7 @@ static int32_t conax_send_pin(struct s_reader * reader)
   memcpy(insPIN+8,reader->pincode,4);
 
   write_cmd(insPIN, insPIN+5);
-  cs_debug_mask(D_READER, "Sent pincode to card.");
+  cs_ri_debug_mask(reader, D_READER, "Sent pincode to card.");
 
   return OK;
 }
@@ -205,7 +205,7 @@ static int32_t conax_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, str
                }
                while ( l != 64 );
                // decrypt dw
-               RSA_CNX(edw, reader->rsa_mod /*mod*/, exp, 64u, 3u);
+               RSA_CNX(reader, edw, reader->rsa_mod /*mod*/, exp, 64u, 3u);
                if ( edw[61] == 0x0D && edw[62] == 0x25 &&
                     edw[46] == 0x0D && edw[47] == 0x25)
                {
@@ -285,7 +285,7 @@ static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 	int32_t i, ok = 0;
 	char tmp_dbg[17];
 
-	cs_debug_mask(D_EMM, "Entered conax_get_emm_type ep->emm[2]=%02x", ep->emm[2]);
+	cs_ri_debug_mask(rdr, D_EMM, "Entered conax_get_emm_type ep->emm[2]=%02x", ep->emm[2]);
 
 	for (i = 0; i < rdr->nprov; i++) {
 		ok = (!memcmp(&ep->emm[6], rdr->sa[i], 4));
@@ -296,7 +296,7 @@ static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 		ep->type = SHARED;
 		memset(ep->hexserial, 0, 8);
 		memcpy(ep->hexserial, &ep->emm[6], 4);
-		cs_debug_mask(D_EMM, "CONAX EMM: SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
+		cs_ri_debug_mask(rdr, D_EMM, "SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
 		return TRUE;
 	}
 	else {
@@ -304,12 +304,12 @@ static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 			ep->type = UNIQUE;
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial+2, &ep->emm[6], 4);
-			cs_debug_mask(D_EMM, "CONAX EMM: UNIQUE, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
+			cs_ri_debug_mask(rdr, D_EMM, "UNIQUE, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
 			return TRUE;
 		}
 		else {
 			ep->type = GLOBAL;
-			cs_debug_mask(D_EMM, "CONAX EMM: GLOBAL");
+			cs_ri_debug_mask(rdr, D_EMM, "GLOBAL");
 			memset(ep->hexserial, 0, 8);
 			return TRUE;
 		}

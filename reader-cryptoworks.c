@@ -36,20 +36,20 @@ static int32_t Input(BIGNUM *d, unsigned char *in, int32_t n, int32_t LE)
     return(BN_bin2bn(in,n,d)!=0);
 }
 
-static int32_t Output(unsigned char *out, int32_t n, BIGNUM *r, int32_t LE)
+static int32_t Output(struct s_reader * reader, unsigned char *out, int32_t n, BIGNUM *r, int32_t LE)
 {
   int32_t s=BN_num_bytes(r);
   if (s>n)
   {
     unsigned char buff[s];
-    cs_debug_mask(D_READER, "[cryptoworks-reader] rsa: RSA len %d > %d, truncating", s, n);
+    cs_ri_debug_mask(reader, D_READER, "rsa: RSA len %d > %d, truncating", s, n);
     BN_bn2bin(r,buff);
     memcpy(out,buff+s-n,n);
   }
   else if (s<n)
   {
     int32_t l=n-s;
-    cs_debug_mask(D_READER, "[cryptoworks-reader] rsa: RSA len %d < %d, padding", s, n);
+    cs_ri_debug_mask(reader, D_READER, "rsa: RSA len %d < %d, padding", s, n);
     memset(out,0,l);
     BN_bn2bin(r,out+l);
   }
@@ -71,7 +71,7 @@ static int32_t cw_RSA(struct s_reader * reader, unsigned char *out, unsigned cha
   if (Input(d,in,n,LE))
   {
     if(BN_mod_exp(r,d,exp,mod,ctx))
-      rc=Output(out,n,r,LE);
+      rc=Output(reader, out,n,r,LE);
     else
       cs_ri_log(reader, "rsa: mod-exp failed");
   }
@@ -135,7 +135,7 @@ int32_t cryptoworks_send_pin(struct s_reader * reader)
 	  memcpy(insPIN+5,reader->pincode,4);
 	
 	  write_cmd(insPIN, insPIN+5);
-	  cs_debug_mask(D_READER, "Sent pincode to card.");  
+	  cs_ri_debug_mask(reader, D_READER, "Sent pincode to card.");
 	  if((cta_res[0]==0x98)&&(cta_res[1]==0x04)) cs_ri_log(reader, "bad pincode on reader %s", reader->label);
 	  	 
 	  return OK;
@@ -310,16 +310,16 @@ static int32_t cryptoworks_do_ecm(struct s_reader * reader, const ECM_REQUEST *e
         switch(cta_res[i])
 	{
           case 0x80:
-            cs_debug_mask(D_READER, "[cryptoworks-reader] nano 80 (serial)");
+            cs_ri_debug_mask(reader, D_READER, "nano 80 (serial)");
             break;
           case 0xD4:
-            cs_debug_mask(D_READER, "[cryptoworks-reader] nano D4 (rand)");
+            cs_ri_debug_mask(reader, D_READER, "nano D4 (rand)");
             if(n<8 || memcmp(&cta_res[i],nanoD4,sizeof(nanoD4))){
-              cs_debug_mask(D_READER, "[cryptoworks-reader] random data check failed after decrypt");
+              cs_ri_debug_mask(reader, D_READER, "random data check failed after decrypt");
             }
             break;
           case 0xDB: // CW
-            cs_debug_mask(D_READER, "[cryptoworks-reader] nano DB (cw)");
+            cs_ri_debug_mask(reader, D_READER, "nano DB (cw)");
             if(n==0x10)
             {
               memcpy(ea->cw, &cta_res[i+2], 16);
@@ -327,7 +327,7 @@ static int32_t cryptoworks_do_ecm(struct s_reader * reader, const ECM_REQUEST *e
             }
             break;
           case 0xDF: // signature
-            cs_debug_mask(D_READER, "[cryptoworks-reader] nano DF %02x (sig)", n);
+            cs_ri_debug_mask(reader, D_READER, "nano DF %02x (sig)", n);
             if (n==0x08)
             {
               if((cta_res[i+2]&0x50)==0x50 && !(cta_res[i+3]&0x01) && (cta_res[i+5]&0x80))
@@ -338,7 +338,7 @@ static int32_t cryptoworks_do_ecm(struct s_reader * reader, const ECM_REQUEST *e
               if(reader->ucpk_valid)
               {
                 cw_RSA(reader, &cta_res[i+2],&cta_res[i+2], n, &reader->exp, &reader->ucpk, 0);
-                cs_debug_mask(D_READER, "[cryptoworks-reader] after camcrypt ");
+                cs_ri_debug_mask(reader, D_READER, "after camcrypt");
                 r=0; secLen=n-4; n=4;
               }
               else
@@ -349,7 +349,7 @@ static int32_t cryptoworks_do_ecm(struct s_reader * reader, const ECM_REQUEST *e
             }
             break;
           default:
-            cs_debug_mask(D_READER, "[cryptoworks-reader] nano %02x (unhandled)",cta_res[i]);
+            cs_ri_debug_mask(reader, D_READER, "nano %02x (unhandled)", cta_res[i]);
             break;
         }
         i+=n+2;
@@ -382,7 +382,7 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
   char dumprdrserial[16], dumpemmserial[16];
 
-  cs_debug_mask(D_EMM, "Entered cryptoworks_get_emm_type ep->emm[0]=%02x",ep->emm[0]);
+  cs_ri_debug_mask(rdr, D_EMM, "Entered cryptoworks_get_emm_type ep->emm[0]=%02x",ep->emm[0]);
   switch (ep->emm[0]) {
 		case 0x82:
   	 		if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[13]==0x80 && ep->emm[14]==0x05) {
@@ -392,7 +392,7 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				cs_hexdump(1, rdr->hexserial, 5, dumprdrserial, sizeof(dumprdrserial));
 				cs_hexdump(1, ep->hexserial, 5, dumpemmserial, sizeof(dumpemmserial));
 				i2b_buf(4, cryptoworks_get_emm_provid(ep->emm+12, ep->l-12), ep->provid);
-				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: UNIQUE, ep = %s rdr = %s", dumpemmserial, dumprdrserial);
+				cs_ri_debug_mask(rdr, D_EMM, "UNIQUE, ep = %s rdr = %s", dumpemmserial, dumprdrserial);
 				return (!memcmp(ep->emm + 5, rdr->hexserial, 5)); // check for serial
 			}
 			break;
@@ -404,14 +404,14 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				cs_hexdump(1, rdr->hexserial, 4, dumprdrserial, sizeof(dumprdrserial));
 				cs_hexdump(1, ep->hexserial, 4, dumpemmserial, sizeof(dumpemmserial));
 				i2b_buf(4, cryptoworks_get_emm_provid(ep->emm+12, ep->l-12), ep->provid);
-				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: SHARED, ep = %s rdr = %s", dumpemmserial, dumprdrserial);
+				cs_ri_debug_mask(rdr, D_EMM, "SHARED, ep = %s rdr = %s", dumpemmserial, dumprdrserial);
 				return (!memcmp(ep->emm + 5, rdr->hexserial, 4)); // check for SA
 			}
 			break;
 		case 0x86:
 			if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[5]==0x83 
 			   && ep->emm[6]==0x01 && ep->emm[8]==0x85) {
-				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: SHARED (Header)");
+				cs_ri_debug_mask(rdr, D_EMM, "SHARED (Header)");
 				ep->type = SHARED;
 				i2b_buf(4, cryptoworks_get_emm_provid(ep->emm+8, ep->l-8), ep->provid);
 				return FALSE;
@@ -420,7 +420,7 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 		case 0x88:
 		case 0x89:
   	 		if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[8]==0x83 && ep->emm[9]==0x01) {
-				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: GLOBAL");
+				cs_ri_debug_mask(rdr, D_EMM, "GLOBAL");
 				ep->type = GLOBAL;
 				i2b_buf(4, cryptoworks_get_emm_provid(ep->emm+8, ep->l-8), ep->provid);
 				return TRUE;
@@ -428,7 +428,7 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 			break;
 		case 0x8F:
 			ep->type = UNKNOWN;
-			cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: 0x8F via camd3");
+			cs_ri_debug_mask(rdr, D_EMM, "0x8F via camd3");
 
 			switch(ep->emm[4]) {
 				case 0x44:
@@ -446,11 +446,11 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 		/* FIXME: Seems to be that all other EMM types are rejected by the card */
 		default: 
 			ep->type = UNKNOWN;
-			cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: UNKNOWN");
+			cs_ri_debug_mask(rdr, D_EMM, "UNKNOWN");
 			return FALSE; // skip emm
 	}
 
-	cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: invaild");
+	cs_ri_debug_mask(rdr, D_EMM, "invaild");
 	return FALSE;
 }
 
@@ -564,7 +564,7 @@ static int32_t cryptoworks_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   }
 
   if (!rc)
-    cs_debug_mask(D_EMM, "cryptoworks_do_emm(): type %d - %02X %02X", ep->type, cta_res[0], cta_res[1]);
+    cs_ri_debug_mask(reader, D_EMM, "%s(): type %d - %02X %02X", __func__, ep->type, cta_res[0], cta_res[1]);
 
   return(rc);
 }
@@ -682,18 +682,18 @@ int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len) {
 	
 	switch (buffer[0]) {
 		case 0x82 : // emm-u
-			cs_debug_mask(D_READER, "cryptoworks unique emm (EMM-U): %s" , cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
+			cs_debug_mask(D_DVBAPI, "[cryptoworks] unique emm (EMM-U): %s" , cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
 			break;
 
 		case 0x84: // emm-sh
-			cs_debug_mask(D_READER, "cryptoworks shared emm (EMM-SH): %s" , cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
+			cs_debug_mask(D_DVBAPI, "[cryptoworks] shared emm (EMM-SH): %s" , cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
 			if (!memcmp(emm_global, buffer, *len)) return 0;
 			memcpy(emm_global, buffer, *len);
 			emm_global_len=*len;
 			return 0;
 
 		case 0x86: // emm-sb
-			cs_debug_mask(D_READER, "cryptoworks shared emm (EMM-SB): %s" , cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
+			cs_debug_mask(D_DVBAPI, "[cryptoworks] shared emm (EMM-SB): %s" , cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
 			if (!emm_global_len) return 0;
 
 			// we keep the first 12 bytes of the 0x84 emm (EMM-SH)
@@ -730,17 +730,17 @@ int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len) {
 
 			emm_global_len=0;
 
-			cs_debug_mask(D_READER, "cryptoworks shared emm (assembled): %s" , cs_hexdump(0, buffer, emm_len+12, dumpbuf, sizeof(dumpbuf)));
+			cs_debug_mask(D_DVBAPI, "[cryptoworks] shared emm (assembled): %s", cs_hexdump(0, buffer, emm_len+12, dumpbuf, sizeof(dumpbuf)));
 			if(assembled_EMM[11]!=emm_len) { // sanity check
 				// error in emm assembly
-				cs_debug_mask(D_READER, "Error assembling Cryptoworks EMM-S");
+				cs_debug_mask(D_DVBAPI, "[cryptoworks] Error assembling Cryptoworks EMM-S");
 				return 0;
 			}
 			break;
 				
 		case 0x88: // emm-g
 		case 0x89: // emm-g
-			cs_debug_mask(D_READER, "cryptoworks global emm (EMM-G): %s" , cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
+			cs_debug_mask(D_DVBAPI, "[cryptoworks] global emm (EMM-G): %s", cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
 			break;
 	}
 	return 1;
