@@ -9,7 +9,6 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include <sys/socket.h>
 #include "oscam-http-helpers.c"
 #include "module-cccam.h"
 #include "module-cccshare.h"
@@ -4568,7 +4567,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 		char expectednonce[(MD5_DIGEST_LENGTH * 2) + 1];
 	
 		char *method, *path, *protocol, *str1, *saveptr1=NULL, *authheader = NULL, *filebuf = NULL;
-		char *pch, *tmp, *buf;
+		char *pch, *tmp, *buf, *nameInUrl, subdir[32];
 		/* List of possible pages */
 		char *pages[]= {
 			"/config.html",
@@ -4637,9 +4636,40 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 			++pch;
 		}
 	
+		nameInUrl = pch-1;
+		while(nameInUrl != path && nameInUrl[0] != '/') --nameInUrl;
+
+		/* allow only alphanumeric sub-folders */
+		int32_t subdirLen = nameInUrl-path;
+		subdir[0] = '\0';
+		if (subdirLen > 0 && subdirLen < 32) {
+			cs_strncpy(subdir, path+1, subdirLen);
+
+			int32_t invalidSubdir = 0;
+			for (i=0; i < subdirLen-1; i++) {
+				if (!( (subdir[i] >= '0' && subdir[i] <= '9')
+					|| (subdir[i] >= 'a' && subdir[i] <= 'z')
+					|| (subdir[i] >= 'A' && subdir[i] <= 'Z'))) {
+
+					invalidSubdir = 1;
+					subdir[0] = '\0';
+					break;
+				}
+			}
+
+			if (!invalidSubdir) {
+				subdir[subdirLen] = '\0';
+				#ifdef WIN32
+				subdir[subdirLen-1] = '\\';
+				#else
+				subdir[subdirLen-1] = '/';
+				#endif
+			}
+		}
+
 		/* Map page to our static page definitions */
 		for (i=0; i<pagescnt; i++) {
-			if (!strcmp(path, pages[i])) pgidx = i;
+			if (!strcmp(nameInUrl, pages[i])) pgidx = i;
 		}
 	
 		parseParams(&params, pch);
@@ -4695,9 +4725,9 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 	
 		/*build page*/
 		if(pgidx == 8) {
-			send_file(f, "CSS", modifiedheader, etagheader);
+			send_file(f, "CSS", subdir, modifiedheader, etagheader);
 		} else if (pgidx == 17) {
-			send_file(f, "JS", modifiedheader, etagheader);
+			send_file(f, "JS", subdir, modifiedheader, etagheader);
 		} else {
 			time_t t;
 			struct templatevars *vars = tpl_create();
@@ -4706,6 +4736,9 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 				free(filebuf);
 				return 0;
 			}
+
+			tpl_addVar(vars, TPLADD, "SUBDIR", subdir);
+
 			struct tm lt, st;
 			time(&t);
 	

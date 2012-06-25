@@ -171,20 +171,21 @@ void tpl_clear(struct templatevars *vars){
 }
 
 /* Creates a path to a template file. You need to set the resultsize to the correct size of result. */
-char *tpl_getTplPath(const char *name, const char *path, char *result, uint32_t resultsize){
-	char *pch;
-	if((strlen(path) + strlen(name) + 6) <= resultsize){
-		snprintf(result, resultsize, "%s%s.tpl", path, name);
-		for(pch = result + strlen(path); pch[0] != '\0'; ++pch){
-			if(pch[0] == '/' || pch[0] == '\\') pch[0] = ' ';
-		}
+char *tpl_getFilePathInSubdir(const char *path, const char* subdir, const char *name, const char* ext, char *result, uint32_t resultsize){
+	if(strlen(path) + strlen(name) + strlen(subdir) + strlen(ext) < resultsize){
+		snprintf(result, resultsize, "%s%s%s%s", path, subdir, name, ext);
 	} else result[0] = '\0';
+
 	return result;
+}
+
+char *tpl_getTplPath(const char *name, const char *path, char *result, uint32_t resultsize){
+	return tpl_getFilePathInSubdir(path, "", name, ".tpl", result,  resultsize);
 }
 
 /* Returns an unparsed template either from disk or from internal templates.
    Note: You must free() the result after using it and you may get NULL if an error occured!*/
-static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader){
+static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const char* subdir){
   int32_t i;
   int32_t tplcnt = sizeof(tpl)/sizeof(char *);
   int32_t tplmapcnt = sizeof(tplmap)/sizeof(char *);
@@ -196,7 +197,9 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader){
 
   if(strlen(cfg.http_tpl) > 0){
   	char path[255];
-  	if(strlen(tpl_getTplPath(name, cfg.http_tpl, path, 255)) > 0 && file_exists(path)){
+  	if ( (strlen(tpl_getFilePathInSubdir(cfg.http_tpl, subdir, name, ".tpl", path, 255)) > 0 && file_exists(path))
+      || (strlen(subdir) > 0
+       && strlen(tpl_getFilePathInSubdir(cfg.http_tpl, ""    , name, ".tpl", path, 255)) > 0 && file_exists(path))) {
 			FILE *fp;
 			char buffer[1024];
 			int32_t read, allocated = 1025, offset, size = 0;
@@ -242,7 +245,8 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader){
    empty string if the template doesn't exist. Do not free the result yourself, it 
    will get automatically cleaned up! */
 char *tpl_getTpl(struct templatevars *vars, const char* name){
-	char *tplorg = tpl_getUnparsedTpl(name, 1);
+
+	char *tplorg = tpl_getUnparsedTpl(name, 1, tpl_getVar(vars, "SUBDIR"));
 	if(!tplorg) return "";
 	char *tplend = tplorg + strlen(tplorg);
 	char *pch, *pch2, *tpl=tplorg;
@@ -312,15 +316,19 @@ int32_t tpl_saveIncludedTpls(const char *path){
 	return cnt;
 }
 
-/* Checks all disk templates if they are still current or may need upgrade! */
-void tpl_checkDiskRevisions(void) {
-	if(strlen(cfg.http_tpl) > 0){
-		int32_t i, tplcnt = sizeof(tpl)/sizeof(char *);
+/* Checks all disk templates in a directory if they are still current or may need upgrade! */
+void tpl_checkOneDirDiskRevisions(const char* subdir) {
+	char dirpath[255] = "\0";
+	if (strlen(subdir) > 0) {
+		snprintf(dirpath, 255, "%s%s", cfg.http_tpl, subdir);
+	}
+
+	int32_t i, tplcnt = sizeof(tpl)/sizeof(char *);
 		char path[255];
 		for(i = 0; i < tplcnt; ++i){
-			if(tpl[i][0] != 'I' && tpl[i][1] != 'C' && strlen(tpl_getTplPath(tpl[i], cfg.http_tpl, path, 255)) > 0 && file_exists(path)){	
+			if(tpl[i][0] != 'I' && tpl[i][1] != 'C' && strlen(tpl_getTplPath(tpl[i], dirpath, path, 255)) > 0 && file_exists(path)){
 				int8_t error = 1;
-				char *tplorg = tpl_getUnparsedTpl(tpl[i], 0);
+				char *tplorg = tpl_getUnparsedTpl(tpl[i], 0, subdir);
 				unsigned long curchecksum = crc32(0L, (unsigned char*)tplmap[i], strlen(tplmap[i]));
 				char *pch = strstr(tplorg, "<!--OSCam;");
 				if(pch != NULL){
@@ -345,7 +353,41 @@ void tpl_checkDiskRevisions(void) {
 				if(error) cs_log("If you are sure that it is current, add the following line at the beginning of the template to suppress this warning: <!--OSCam;%lu;%s;%s-->", curchecksum, CS_VERSION, CS_SVN_VERSION);
 				free(tplorg);
 			}
-		}		
+		}
+}
+
+/* Checks whether disk templates need upgrade - including sub-directories */
+void tpl_checkDiskRevisions(void) {
+	char subdir[255];
+	char dirpath[255];
+	if(strlen(cfg.http_tpl) > 0) {
+		tpl_checkOneDirDiskRevisions("");
+
+		DIR *hdir;
+		struct dirent entry;
+		struct dirent *result;
+		struct stat s;
+		if((hdir = opendir(cfg.http_tpl)) != NULL) {
+			while(cs_readdir_r(hdir, &entry, &result) == 0 && result != NULL) {
+				if (strcmp(".", entry.d_name) == 0 || strcmp("..", entry.d_name) == 0) {
+					continue;
+				}
+				snprintf(dirpath, 255, "%s%s", cfg.http_tpl, entry.d_name);
+				if (stat(dirpath, &s) == 0) {
+					if (s.st_mode & S_IFDIR) {
+						snprintf(subdir, 255,
+						#ifdef WIN32
+									"%s\\"
+						#else
+									"%s/"
+						#endif
+								, entry.d_name);
+						tpl_checkOneDirDiskRevisions(subdir);
+					}
+				}
+			}
+			closedir(hdir);
+		}
 	}
 }
 
@@ -564,7 +606,6 @@ void send_headers(FILE *f, int32_t status, char *title, char *extra, char *mime,
 	else webif_write(buf, f);
 }
 
-
 void send_error(FILE *f, int32_t status, char *title, char *extra, char *text, int8_t forcePlain){
 	char buf[(2* strlen(title)) + strlen(text) + 128];
 	char *pos = buf;
@@ -588,18 +629,25 @@ void send_header304(FILE *f){
 /*
  * function for sending files.
  */
-void send_file(FILE *f, char *filename, time_t modifiedheader, uint32_t etagheader){
+void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uint32_t etagheader){
 	int8_t fileno = 0;
 	int32_t size = 0;
 	char* mimetype = "", *result = " ", *allocated = NULL;
 	time_t moddate;
+  	char path[255];
 
 	if (!strcmp(filename, "CSS")){
 		filename = cfg.http_css;
+		if (subdir && strlen(subdir) > 0) {
+			filename = tpl_getFilePathInSubdir(cfg.http_tpl, subdir, "site", ".css", path, 255);
+		}
 		mimetype = "text/css";
 		fileno = 1;
 	} else if (!strcmp(filename, "JS")){
 		filename = cfg.http_jscript;
+		if (subdir && strlen(subdir) > 0) {
+			filename = tpl_getFilePathInSubdir(cfg.http_tpl, subdir, "oscam", ".js", path, 255);
+		}
 		mimetype = "text/javascript";
 		fileno = 2;
 	}
