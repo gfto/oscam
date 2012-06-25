@@ -107,7 +107,7 @@ static int32_t dre_set_provider_info (struct s_reader * reader)
     cs_debug_mask(D_READER, "[dre-reader] pbm: %s", cs_hexdump(0, pbm, 32, tmp_dbg, sizeof(tmp_dbg)));
 
     if (pbm[0] == 0xff)
-      cs_ri_log (reader, "[dre-reader] no active packages");
+      cs_ri_log (reader, "no active packages");
     else
       for (i = 0; i < 32; i++)
 	if (pbm[i] != 0xff) {
@@ -130,7 +130,7 @@ static int32_t dre_set_provider_info (struct s_reader * reader)
 	  int32_t endyear = temp.tm_year + 1900;
 	  int32_t endmonth = temp.tm_mon + 1;
 	  int32_t endday = temp.tm_mday;
-	  cs_ri_log (reader, "[dre-reader] active package %i valid from %04i/%02i/%02i to %04i/%02i/%02i", i, startyear, startmonth, startday,
+	  cs_ri_log (reader, "active package %i valid from %04i/%02i/%02i to %04i/%02i/%02i", i, startyear, startmonth, startday,
 		  endyear, endmonth, endday);
 	  cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), 0, 0, start, end, 1);
 	}
@@ -234,17 +234,16 @@ FE 48 */
     dre_chksum += buf[i] - 48;
   }
 
-  //cs_ri_log("[dre-reader] type: DRE Crypt, caid: %04X, serial: %llu, card: v%x",
-  cs_ri_log (reader, "[dre-reader] type: DRE Crypt, caid: %04X, serial: %s, dre id: %i%i%i%08i, geocode %i, card: %s v%i.%i",
+  cs_ri_log (reader, "type: DRE Crypt, caid: %04X, serial: %s, dre id: %i%i%i%08i, geocode %i, card: %s v%i.%i",
 	  reader->caid, cs_hexdump(0, reader->hexserial + 2, 4, tmp, sizeof(tmp)), dre_chksum, reader->provider - 16,
 	  major_version + 1, low_dre_id, geocode, card, major_version, minor_version);
-  cs_ri_log (reader, "[dre-reader] Provider name:%s.", provname);
+  cs_ri_log (reader, "Provider name:%s.", provname);
 
 
   memset (reader->sa, 0, sizeof (reader->sa));
   memcpy (reader->sa[0], reader->hexserial + 2, 1);	//copy first byte of unique address also in shared address, because we dont know what it is...
 
-  cs_ri_log (reader, "[dre-reader] SA = %02X%02X%02X%02X, UA = %s", reader->sa[0][0], reader->sa[0][1], reader->sa[0][2],
+  cs_ri_log (reader, "SA = %02X%02X%02X%02X, UA = %s", reader->sa[0][0], reader->sa[0][1], reader->sa[0][2],
 	  reader->sa[0][3], cs_hexdump(0, reader->hexserial + 2, 4, tmp, sizeof(tmp)));
 
   reader->nprov = 1;

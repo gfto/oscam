@@ -51,7 +51,7 @@ static int32_t tongfang_card_init(struct s_reader *reader, ATR *newatr)
   reader->nprov = 1;
   memset(reader->prid, 0x00, sizeof(reader->prid));
 
-  cs_ri_log(reader, "[reader-tongfang] Tongfang card detected");
+  cs_ri_log(reader, "Tongfang card detected");
 
   write_cmd(begin_cmd, begin_cmd + 5);
   if((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00)) return ERROR;
@@ -198,7 +198,7 @@ static int32_t tongfang_card_info(struct s_reader * reader)
 
   for(i = 0; i < 4; i++)
   {
-    cs_ri_log(reader, "[reader-tongfang] Provider:%02x%02x", cta_res[i * 2], cta_res[i * 2 + 1]);
+    cs_ri_log(reader, "Provider:%02x%02x", cta_res[i * 2], cta_res[i * 2 + 1]);
   }
   return OK;
 }

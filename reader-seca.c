@@ -16,14 +16,14 @@ static uint64_t get_pbm(struct s_reader * reader, uint8_t idx)
 
   switch (cta_res[0]) {
   case 0x04:
-    cs_ri_log(reader, "[seca-reader] no PBM for provider %u", idx + 1);
+    cs_ri_log(reader, "no PBM for provider %u", idx + 1);
     break;
   case 0x83:
     pbm = b2ll(8, cta_res + 1);
-    cs_ri_log(reader, "[seca-reader] PBM for provider %u: %08llx", idx + 1, (unsigned long long) pbm);
+    cs_ri_log(reader, "PBM for provider %u: %08llx", idx + 1, (unsigned long long) pbm);
     break;
   default:
-    cs_log("[seca-reader] ERROR: PBM returns unknown byte %02x", cta_res[0]);
+    cs_ri_log(reader, "ERROR: PBM returns unknown byte %02x", cta_res[0]);
   }
   return pbm;
 }
@@ -70,11 +70,11 @@ static int32_t set_provider_info(struct s_reader * reader, int32_t i)
   if (l_name[8])
 	  add_provider(0x0100, provid, l_name + 8, "", "");
   reader->availkeys[i][0]=valid; //misusing availkeys to register validity of provider
-  cs_ri_log (reader, "[seca-reader] provider %d: %04X, valid: %i%s, expiry date: %4d/%02d/%02d",
+  cs_ri_log (reader, "provider %d: %04X, valid: %i%s, expiry date: %4d/%02d/%02d",
          i+1, provid, valid, l_name, year, month, day);
   memcpy(&reader->sa[i][0], cta_res+18, 4);
   if (valid==1) //if not expired
-    cs_ri_log (reader, "[seca-reader] SA: %s", cs_hexdump(0, cta_res+18, 4, tmp, sizeof(tmp)));
+    cs_ri_log (reader, "SA: %s", cs_hexdump(0, cta_res+18, 4, tmp, sizeof(tmp)));
 
   // add entitlement to list
   memset(&lt, 0, sizeof(struct tm));
@@ -195,7 +195,7 @@ static int32_t seca_card_init(struct s_reader * reader, ATR *newatr)
   if( cfg.ulparent != 0 ){
     unlock_parental(reader);
   }else {
-	  cs_ri_log (reader, "[seca-reader] parental locked");
+	  cs_ri_log (reader, "parental locked");
   }	
   cs_log("[seca-reader] ready for requests");
   return OK;

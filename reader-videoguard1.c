@@ -86,7 +86,7 @@ static void read_tiers(struct s_reader *reader)
     cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), tier_id, 0, 0, mktime(&timeinfo), 4);
 
     char tiername[83];
-    cs_ri_log(reader, "[videoguard1-reader] tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s", tier_id, y, m, d, H, M, S, get_tiername(tier_id, reader->caid, tiername));
+    cs_ri_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s", tier_id, y, m, d, H, M, S, get_tiername(tier_id, reader->caid, tiername));
   }
 }
 
@@ -113,7 +113,7 @@ static int32_t videoguard1_card_init(struct s_reader *reader, ATR *newatr)
     return ERROR;
   }
 
-  cs_ri_log(reader, "[videoguard1-reader] type: %s, baseyear: %i", reader->card_desc, reader->card_baseyear);
+  cs_ri_log(reader, "type: %s, baseyear: %i", reader->card_desc, reader->card_baseyear);
   if(reader->ndsversion == NDS1){
     cs_log("[videoguard1-reader] forced to NDS1+");
   }
@@ -259,9 +259,9 @@ static int32_t videoguard1_card_init(struct s_reader *reader, ATR *newatr)
   reader->nprov = 1;
   memset(reader->prid, 0x00, sizeof(reader->prid));
 
-  cs_ri_log(reader,
-	    "[videoguard1-reader] type: VideoGuard, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
-	    reader->caid, reader->hexserial[2], reader->hexserial[3], reader->hexserial[4], reader->hexserial[5], boxID[0], boxID[1], boxID[2], boxID[3]);
+  cs_ri_log(reader, "type: VideoGuard, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
+    reader->caid, reader->hexserial[2], reader->hexserial[3], reader->hexserial[4], reader->hexserial[5],
+    boxID[0], boxID[1], boxID[2], boxID[3]);
   cs_log("[videoguard1-reader] ready for requests - this is in testing please send -d 255 logs");
 
   return OK;
