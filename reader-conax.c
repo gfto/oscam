@@ -272,8 +272,8 @@ static int32_t conax_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, str
       }
     }
   }
- if( rc == -1) cs_log("[conax-reader] unknown pairing algo - wrong encCW size");
- else if( rc == -2) cs_log("[conax-reader] conax decode ECM problem - RSA key is probably faulty");
+ if( rc == -1) cs_ri_log(reader, "unknown pairing algo - wrong encCW size");
+ else if( rc == -2) cs_ri_log(reader, "conax decode ECM problem - RSA key is probably faulty");
   if (rc==3)
     return OK;
   else
@@ -448,7 +448,7 @@ static int32_t conax_card_info(struct s_reader * reader)
 			}
 		}
 	}
-	cs_log("[conax-reader] ready for requests");
+	cs_ri_log(reader, "ready for requests");
 	return OK;
 }
 

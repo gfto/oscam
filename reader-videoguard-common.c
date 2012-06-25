@@ -532,7 +532,7 @@ static void cCamCryptVG_RotateRightAndHash(unsigned char *p)
 
 int32_t status_ok(const unsigned char *status)
 {
-    //cs_log("[videoguard-reader] check status %02x%02x", status[0],status[1]);
+    //cs_ri_log(reader, "check status %02x%02x", status[0],status[1]);
     return (status[0] == 0x90 || status[0] == 0x91)
            && (status[1] == 0x00 || status[1] == 0x01
                || status[1] == 0x20 || status[1] == 0x21
@@ -852,12 +852,12 @@ static MAILMSG *find_msg(uint16_t caid, uint32_t serial, uint16_t date, uint16_t
    return 0;
 }
 
-static void write_msg(MAILMSG *msg, uint32_t baseyear)
+static void write_msg(struct s_reader *reader, MAILMSG *msg, uint32_t baseyear)
 {
    FILE *fp = fopen(cfg.mailfile, "a");
    if (fp == 0)
    {
-      cs_log("Cannot open mailfile %s", cfg.mailfile);
+      cs_ri_log(reader, "Cannot open mailfile %s", cfg.mailfile);
       return;
    }
 
@@ -960,6 +960,6 @@ void videoguard_mail_msg(struct s_reader *rdr, uint8_t *data)
       memcpy(&msg->message[submsg_idx], &data[15], submsg_len);
    }
    if (msg->mask == (1 << msg->nsubs) - 1)
-      write_msg(msg, rdr->card_baseyear);
+      write_msg(rdr, msg, rdr->card_baseyear);
 }
 #endif

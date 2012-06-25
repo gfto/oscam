@@ -39,8 +39,8 @@ static int32_t dre_command (struct s_reader * reader, const uchar * cmd, int32_t
   reader_cmd2icc (reader, command, cmdlen, cta_res, p_cta_lr);
 
   if ((*p_cta_lr != 2) || (cta_res[0] != OK_RESPONSE)) {
-    cs_log ("[dre-reader] command sent to card: %s", cs_hexdump(0, command, cmdlen, tmp, sizeof(tmp)));
-    cs_log ("[dre-reader] unexpected answer from card: %s", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+    cs_ri_log(reader, "command sent to card: %s", cs_hexdump(0, command, cmdlen, tmp, sizeof(tmp)));
+    cs_ri_log(reader, "unexpected answer from card: %s", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
     return ERROR;			//error
   }
 
@@ -48,22 +48,22 @@ static int32_t dre_command (struct s_reader * reader, const uchar * cmd, int32_t
   reader_cmd2icc (reader, reqans, 5, cta_res, p_cta_lr);
 
   if (cta_res[0] != CMD_BYTE) {
-    cs_log ("[dre-reader] unknown response: cta_res[0] expected to be %02x, is %02x", CMD_BYTE, cta_res[0]);
+    cs_ri_log(reader, "unknown response: cta_res[0] expected to be %02x, is %02x", CMD_BYTE, cta_res[0]);
     return ERROR;
   }
   if ((cta_res[1] == 0x03) && (cta_res[2] == 0xe2)) {
     switch (cta_res[3]) {
     case 0xe1:
-      cs_log ("[dre-reader] checksum error: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+      cs_ri_log(reader, "checksum error: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
       break;
     case 0xe2:
-      cs_log ("[dre-reader] wrong provider: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+      cs_ri_log(reader, "wrong provider: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
       break;
     case 0xe3:
-      cs_log ("[dre-reader] illegal command: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));  
+      cs_ri_log(reader, "illegal command: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));  
       break;
     case 0xec:
-      cs_log ("[dre-reader] wrong signature: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
+      cs_ri_log(reader, "wrong signature: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
       break;
     default:
       cs_debug_mask(D_READER, "[dre-reader] unknown error: %s.", cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
@@ -78,7 +78,7 @@ static int32_t dre_command (struct s_reader * reader, const uchar * cmd, int32_t
   checksum = ~xor (cta_res + 2, length_excl_leader - 3);
 
   if (cta_res[length_excl_leader - 1] != checksum) {
-    cs_log ("[dre-reader] checksum does not match, expected %02x received %02x:%s", checksum,
+    cs_ri_log(reader, "checksum does not match, expected %02x received %02x:%s", checksum,
 	    cta_res[length_excl_leader - 1], cs_hexdump(0, cta_res, *p_cta_lr, tmp, sizeof(tmp)));
     return ERROR;			//error
   }
@@ -158,7 +158,7 @@ static int32_t dre_card_init (struct s_reader * reader, ATR *newatr)
   uchar checksum = xor (atr + 1, 6);
 
   if (checksum != atr[7])
-    cs_log ("[dre-reader] warning: expected ATR checksum %02x, smartcard reports %02x", checksum, atr[7]);
+    cs_ri_log(reader, "warning: expected ATR checksum %02x, smartcard reports %02x", checksum, atr[7]);
 
   switch (atr[6]) {
   case 0x11:
@@ -251,7 +251,7 @@ FE 48 */
   if (!dre_set_provider_info (reader))
     return ERROR;			//fatal error
 
-  cs_log ("[dre-reader] ready for requests");
+  cs_ri_log(reader, "ready for requests");
   return OK;
 }
 

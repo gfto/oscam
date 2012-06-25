@@ -60,7 +60,7 @@ static int32_t Output(unsigned char *out, int32_t n, BIGNUM *r, int32_t LE)
   return(s);
 }
 
-static int32_t cw_RSA(unsigned char *out, unsigned char *in, int32_t n, BIGNUM *exp, BIGNUM *mod, int32_t LE)
+static int32_t cw_RSA(struct s_reader * reader, unsigned char *out, unsigned char *in, int32_t n, BIGNUM *exp, BIGNUM *mod, int32_t LE)
 {
   int32_t rc=0;
   BN_CTX *ctx;
@@ -73,7 +73,7 @@ static int32_t cw_RSA(unsigned char *out, unsigned char *in, int32_t n, BIGNUM *
     if(BN_mod_exp(r,d,exp,mod,ctx))
       rc=Output(out,n,r,LE);
     else
-      cs_log("[cryptoworks-reader] rsa: mod-exp failed");
+      cs_ri_log(reader, "rsa: mod-exp failed");
   }
   BN_CTX_free(ctx);
   BN_free(d);
@@ -136,7 +136,7 @@ int32_t cryptoworks_send_pin(struct s_reader * reader)
 	
 	  write_cmd(insPIN, insPIN+5);
 	  cs_debug_mask(D_READER, "Sent pincode to card.");  
-	  if((cta_res[0]==0x98)&&(cta_res[1]==0x04)) cs_log("bad pincode on reader %s", reader->label);
+	  if((cta_res[0]==0x98)&&(cta_res[1]==0x04)) cs_ri_log(reader, "bad pincode on reader %s", reader->label);
 	  	 
 	  return OK;
   }
@@ -177,8 +177,8 @@ static int32_t cryptoworks_card_init(struct s_reader * reader, ATR *newatr)
 
   if ((atr[6]!=0xC4) || (atr[9]!=0x8F) || (atr[10]!=0xF1)) return ERROR;
 
-  cs_log("[cryptoworks-reader] card detected");
-  cs_log("[cryptoworks-reader] type: CryptoWorks");
+  cs_ri_log(reader, "card detected");
+  cs_ri_log(reader, "type: CryptoWorks");
 
   reader->caid=0xD00;
   reader->nprov=0;
@@ -223,7 +223,7 @@ static int32_t cryptoworks_card_init(struct s_reader * reader, ATR *newatr)
       ipk=BN_new();
       BN_bin2bn(cwexp, sizeof(cwexp), &reader->exp);
       BN_bin2bn(keybuf, 64, ipk);
-      cw_RSA(cta_res+2, cta_res+2, 0x40, &reader->exp, ipk, 0);
+      cw_RSA(reader, cta_res+2, cta_res+2, 0x40, &reader->exp, ipk, 0);
       BN_free(ipk);
       reader->ucpk_valid =(cta_res[2]==((mfid & 0xFF)>>1));
       if (reader->ucpk_valid)
@@ -241,7 +241,7 @@ static int32_t cryptoworks_card_init(struct s_reader * reader, ATR *newatr)
           cs_ddump_mask(D_READER, keybuf, 0x40, "session-key found:");
         }
         else
-          cs_log("[cryptoworks-reader] invalid IPK or session-key for CAID %04X !", reader->caid);
+          cs_ri_log(reader, "invalid IPK or session-key for CAID %04X !", reader->caid);
       }
     }
   }
@@ -337,13 +337,13 @@ static int32_t cryptoworks_do_ecm(struct s_reader * reader, const ECM_REQUEST *e
             {
               if(reader->ucpk_valid)
               {
-                cw_RSA(&cta_res[i+2],&cta_res[i+2], n, &reader->exp, &reader->ucpk, 0);
+                cw_RSA(reader, &cta_res[i+2],&cta_res[i+2], n, &reader->exp, &reader->ucpk, 0);
                 cs_debug_mask(D_READER, "[cryptoworks-reader] after camcrypt ");
                 r=0; secLen=n-4; n=4;
               }
               else
               {
-                cs_log("[cryptoworks-reader] valid UCPK needed for camcrypt!");
+                cs_ri_log(reader, "valid UCPK needed for camcrypt!");
                 return ERROR;
               }
             }
@@ -639,7 +639,7 @@ static int32_t cryptoworks_card_info(struct s_reader * reader)
 			}
 		}
 	}
-	cs_log("[cryptoworks-reader] ready for requests");
+	cs_ri_log(reader, "ready for requests");
 	return OK;
 }
 

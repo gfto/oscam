@@ -92,13 +92,13 @@ static int32_t reader_card_inserted(struct s_reader * reader)
 
 	int32_t card;
 	if (ICC_Async_GetStatus (reader, &card)) {
-		cs_log("Error getting status of terminal.");
+		cs_ri_log(reader, "Error getting status of terminal.");
 
 		reader->fd_error++;
 		struct s_client *cl = reader->client;
 		if (reader->fd_error>5 && cl) {
 			cl->init_done = 0;
-			cs_log("WARNING: reader %s was disabled because of too many errors", reader->label);
+			cs_ri_log(reader, "WARNING: reader %s was disabled because of too many errors", reader->label);
 		}
  
 		return 0; //corresponds with no card inside!!
@@ -118,7 +118,7 @@ static int32_t reader_activate_card(struct s_reader * reader, ATR * atr, uint16_
 		ret = ICC_Async_Activate(reader, atr, deprecated);
 		if (!ret)
 			break;
-		cs_log("Error activating card.");
+		cs_ri_log(reader, "Error activating card.");
 #ifdef QBOXHD
 		if(cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_MEDIUM);
 #endif
@@ -149,7 +149,7 @@ static void do_emm_from_file(struct s_reader * reader)
       snprintf (token, sizeof(token), "%s%s", cs_confdir, reader->emmfile); //only file specified, look in confdir for this file
 
    if (!(fp = fopen (token, "rb"))) {
-      cs_log ("ERROR: Cannot open EMM file '%s' (errno=%d %s)\n", token, errno, strerror(errno));
+      cs_ri_log(reader, "ERROR: Cannot open EMM file '%s' (errno=%d %s)\n", token, errno, strerror(errno));
       return;
    }
    EMM_PACKET *eptmp;
@@ -160,7 +160,7 @@ static void do_emm_from_file(struct s_reader * reader)
 
    size_t ret = fread(eptmp, sizeof(EMM_PACKET), 1, fp);
    if (ret < 1 && ferror(fp)) {
-        cs_log("ERROR: Can't read EMM from file '%s' (errno=%d %s)", token, errno, strerror(errno));
+        cs_ri_log(reader, "ERROR: Can't read EMM from file '%s' (errno=%d %s)", token, errno, strerror(errno));
         free(eptmp);
         fclose(fp);
         return;
@@ -190,9 +190,9 @@ static void do_emm_from_file(struct s_reader * reader)
 
    int32_t rc = reader_emm(reader, eptmp);
    if (rc == OK)
-      cs_log ("EMM from file %s was successful written.", token);
+      cs_ri_log(reader, "EMM from file %s was successful written.", token);
    else
-      cs_log ("ERROR: EMM read from file %s NOT processed correctly! (rc=%d)", token, rc);
+      cs_ri_log(reader, "ERROR: EMM read from file %s NOT processed correctly! (rc=%d)", token, rc);
 
    //restore old block/save settings
    reader->s_nano = save_s_nano; 
@@ -225,7 +225,7 @@ static int32_t reader_get_cardsystem(struct s_reader * reader, ATR *atr)
 	for (i=0; i<CS_MAX_MOD; i++) {
 		if (cardsystem[i].card_init) {
 			if (cardsystem[i].card_init(reader, atr)) {
-				cs_log("found cardsystem %s", cardsystem[i].desc);
+				cs_ri_log(reader, "found cardsystem %s", cardsystem[i].desc);
 				reader->csystem=cardsystem[i];
 				reader->csystem.active=1;
 #ifdef QBOXHD
@@ -283,7 +283,7 @@ int32_t reader_reset(struct s_reader * reader)
 		if (ret)
 			break;
 		if (!deprecated)
-			cs_log("Normal mode failed, reverting to Deprecated Mode");
+			cs_ri_log(reader, "Normal mode failed, reverting to Deprecated Mode");
 	}
 #ifdef WITH_AZBOX
   }
@@ -292,7 +292,7 @@ int32_t reader_reset(struct s_reader * reader)
  if (!ret) 
       {
         reader->card_status = CARD_FAILURE;
-        cs_log("card initializing error");
+        cs_ri_log(reader, "card initializing error");
         if (reader->typ == R_SC8in1 && reader->sc8in1_config->mcr_type) {
         	char text[] = {'S', (char)reader->slot+0x30, 'A', 'E', 'R'};
         	MCR_DisplayText(reader, text, 5, 400, 0);
@@ -329,7 +329,7 @@ int32_t reader_device_init(struct s_reader * reader)
 	if (!stat(DEV_MULTICAM, &st))
 		reader->typ = reader_device_type(reader);
 	if (ICC_Async_Device_Init(reader))
-		cs_log("Cannot open device: %s", reader->device);
+		cs_ri_log(reader, "Cannot open device: %s", reader->device);
 	else
 		rc = OK;
   return((rc!=OK) ? 2 : 0); //exit code 2 means keep retrying, exit code 0 means all OK
@@ -340,7 +340,7 @@ int32_t reader_checkhealth(struct s_reader * reader)
 	struct s_client *cl = reader->client;
 	if (reader_card_inserted(reader)) {
 		if (reader->card_status == NO_CARD || reader->card_status == UNKNOWN) {
-			cs_log("%s card detected", reader->label);
+			cs_ri_log(reader, "%s card detected", reader->label);
 #ifdef QBOXHD
 			if(cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_SLOW);
 #endif
@@ -355,7 +355,7 @@ int32_t reader_checkhealth(struct s_reader * reader)
 				cl->lastemm = 0;
 				cl->lastecm = 0;
 			}
-			cs_log("card ejected");
+			cs_ri_log(reader, "card ejected");
 #ifdef QBOXHD 
  			if(cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_SLOW);
 #endif

@@ -115,26 +115,26 @@ static int32_t unlock_parental(struct s_reader * reader)
     def_resp;
 
     if (strcmp(reader->pincode, "none")) {
-        cs_log("[seca-reader] Using PIN %s",reader->pincode);
+        cs_ri_log(reader, "Using PIN %s",reader->pincode);
         // the pin need to be coded in bcd, so we need to convert from ascii to bcd, so '1234' -> 0x12 0x34
         ins30data[6]=((reader->pincode[0]-0x30)<<4) | ((reader->pincode[1]-0x30) & 0x0f);
         ins30data[7]=((reader->pincode[2]-0x30)<<4) | ((reader->pincode[3]-0x30) & 0x0f);
     }
     else {
-        cs_log("[seca-reader] Using PIN 0000!");
+        cs_ri_log(reader, "Using PIN 0000!");
     }
 
     write_cmd(ins30, ins30data); 
     if( !(cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0) ) {
         if (strcmp(reader->pincode, "none")) {
-            cs_log("[seca-reader] Can't disable parental lock. Wrong PIN? OSCam used %s!",reader->pincode);
+            cs_ri_log(reader, "Can't disable parental lock. Wrong PIN? OSCam used %s!",reader->pincode);
         }
         else {
-            cs_log("[seca-reader] Can't disable parental lock. Wrong PIN? OSCam used 0000!");
+            cs_ri_log(reader, "Can't disable parental lock. Wrong PIN? OSCam used 0000!");
         }
     }
     else
-        cs_log("[seca-reader] Parental lock disabled");
+        cs_ri_log(reader, "Parental lock disabled");
     
     cs_debug_mask(D_READER, "[seca-reader] ins30_answer: %02x%02x",cta_res[0], cta_res[1]);
     return 0;
@@ -197,7 +197,7 @@ static int32_t seca_card_init(struct s_reader * reader, ATR *newatr)
   }else {
 	  cs_ri_log (reader, "parental locked");
   }	
-  cs_log("[seca-reader] ready for requests");
+  cs_ri_log(reader, "ready for requests");
   return OK;
 }
 
@@ -376,7 +376,7 @@ static void seca_get_emm_filter(struct s_reader * rdr, uchar *filter)
 		idx += 32;
 
 		if (filter[1]>=10) {
-			cs_log("seca_get_emm_filter: could not start all emm filter");
+			cs_ri_log(rdr, "%s: could not start all emm filter", __func__);
 			break;
 		}
 	}
@@ -415,8 +415,8 @@ static int32_t seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 			break;			
 
 		default:
-			cs_log("[seca-reader] EMM: Congratulations, you have discovered a new EMM on SECA.");
-			cs_log("This has not been decoded yet, so send this output to authors:");
+			cs_ri_log(reader, "EMM: Congratulations, you have discovered a new EMM on SECA.");
+			cs_ri_log(reader, "This has not been decoded yet, so send this output to authors:");
 			cs_dump (ep->emm, emm_length + 3, "EMM:");
 			return ERROR;
   }
@@ -424,7 +424,7 @@ static int32_t seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   i=get_prov_index(reader, prov_id_ptr);
   if (i==-1) 
   {
-      cs_log("[seca-reader] EMM: provider id not found.");
+      cs_ri_log(reader, "EMM: provider id not found.");
     return ERROR;
   }
 
@@ -434,7 +434,7 @@ static int32_t seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 	 if (!(cta_res[1] & 4)) // date updated
 	 	set_provider_info(reader, i);
 	 else
-	 	cs_log("[seca-reader] EMM: Update not necessary.");
+	 	cs_ri_log(reader, "EMM: Update not necessary.");
 	 return OK; //Update not necessary
   }
 	if ((cta_res[0] == 0x90) && ((cta_res[1] == 0x00) || (cta_res[1] == 0x19))) {

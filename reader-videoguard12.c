@@ -4,8 +4,6 @@
 #include "reader-videoguard-common.h"
 
 // Redefine logging funtion to include reader name
-#undef cs_log
-#define cs_log(x...)  cs_log_int(0, 1, NULL, 0, "[videoguard12-reader] "x)
 #ifdef WITH_DEBUG
   #undef cs_debug_mask
   #define cs_debug_mask(x,y...) cs_log_int(x, 1, NULL, 0, "[videoguard12-reader] "y)
@@ -50,7 +48,7 @@ static void read_tiers(struct s_reader *reader)
   int32_t l;
 
   if (!write_cmd_vg(ins2A,NULL) || !status_ok(cta_res+cta_lr-2)) {
-    cs_log("class48 ins2A: failed");
+    cs_ri_log(reader, "class48 ins2A: failed");
     return;
   }
 
@@ -123,7 +121,7 @@ static int32_t videoguard12_card_init(struct s_reader *reader, ATR *newatr)
 
   cs_ri_log(reader, "type: %s, baseyear: %i", reader->card_desc, reader->card_baseyear);
   if(reader->ndsversion == NDS12){
-    cs_log("forced to NDS12");
+    cs_ri_log(reader, "forced to NDS12");
   }
 
   /* NDS12 Class 48/49/4A/4B cards only need a very basic initialisation
@@ -134,11 +132,11 @@ static int32_t videoguard12_card_init(struct s_reader *reader, ATR *newatr)
 
   static const unsigned char ins4852[5] = { 0x48, 0x52, 0x00, 0x00, 0x14 };
   if (!write_cmd_vg(ins4852,NULL) || !status_ok(cta_res+cta_lr-2)) {
-    cs_log("class48 ins52: failed");
+    cs_ri_log(reader, "class48 ins52: failed");
     //return ERROR;
   }
   if (!write_cmd_vg(ins4852,NULL) || !status_ok(cta_res+cta_lr-2)) {
-    cs_log("class48 ins52: failed");
+    cs_ri_log(reader, "class48 ins52: failed");
     //return ERROR;
   }
 
@@ -152,7 +150,7 @@ static int32_t videoguard12_card_init(struct s_reader *reader, ATR *newatr)
   // get the length of ins36
   static const unsigned char ins38[5] = { 0x48, 0x38, 0x80, 0x00, 0x02 };
   if (!write_cmd_vg(ins38,NULL) || !status_ok(cta_res+cta_lr-2)) {
-    cs_log("class48 ins38: failed");
+    cs_ri_log(reader, "class48 ins38: failed");
     //return ERROR;
   } else {
     ins36[3] = cta_res[0];
@@ -161,12 +159,12 @@ static int32_t videoguard12_card_init(struct s_reader *reader, ATR *newatr)
 
 
   if (!write_cmd_vg(ins36,NULL) || !status_ok(cta_res+cta_lr-2)) {
-    cs_log("class48 ins36: failed");
+    cs_ri_log(reader, "class48 ins36: failed");
     //return ERROR;
   }
 
   if (cta_res[2] > 0x0F) {
-    cs_log("class48 ins36: encrypted - therefore not an NDS12 card");
+    cs_ri_log(reader, "class48 ins36: encrypted - therefore not an NDS12 card");
     // return ERROR;
   } else {
     // skipping the initial fixed fields: encr/rev++ (4)
@@ -238,7 +236,7 @@ static int32_t videoguard12_card_init(struct s_reader *reader, ATR *newatr)
             }
           default:		// default to assume a length byte
             {
-              cs_log("class48 ins36: returned unknown type=0x%02X - parsing may fail", cta_res[i]);
+              cs_ri_log(reader, "class48 ins36: returned unknown type=0x%02X - parsing may fail", cta_res[i]);
               i += cta_res[i + 1] + 2;
             }
           } //switch
@@ -259,7 +257,7 @@ static int32_t videoguard12_card_init(struct s_reader *reader, ATR *newatr)
   }
 
   if (!boxidOK) {
-    cs_log("no boxID available");
+    cs_ri_log(reader, "no boxID available");
     return ERROR;
   }
 
@@ -268,13 +266,13 @@ static int32_t videoguard12_card_init(struct s_reader *reader, ATR *newatr)
   unsigned char payload4C[9] = { 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x02 };
   memcpy(payload4C, boxID, 4);
   if (!write_cmd_vg(ins484C,payload4C) || !status_ok(cta_res+cta_lr-2)) {
-    cs_log("class48 ins4C: sending boxid failed");
+    cs_ri_log(reader, "class48 ins4C: sending boxid failed");
     //return ERROR;
   }
 
   static const unsigned char ins4858[5] = { 0x48, 0x58, 0x00, 0x00, 0x35 };
   if (!write_cmd_vg(ins4858,NULL) || !status_ok(cta_res+cta_lr-2)) {
-    cs_log("class48 ins58: failed");
+    cs_ri_log(reader, "class48 ins58: failed");
     return ERROR;
   }
 
@@ -289,39 +287,39 @@ static int32_t videoguard12_card_init(struct s_reader *reader, ATR *newatr)
 
   static const unsigned char insBE[5] = { 0x4B, 0xBE, 0x00, 0x00, 0x12 };
   if (!write_cmd_vg(insBE,NULL) || !status_ok(cta_res+cta_lr-2)) {
-    cs_log("class4B ins52: failed");
+    cs_ri_log(reader, "class4B ins52: failed");
     //return ERROR;
   }
 
   static const unsigned char ins4952[5] = { 0x49, 0x52, 0x00, 0x00, 0x14 };
   if (!write_cmd_vg(ins4952,NULL) || !status_ok(cta_res+cta_lr-2)) {
-    cs_log("class49 ins52: failed");
+    cs_ri_log(reader, "class49 ins52: failed");
     //return ERROR;
   }
 
   static const unsigned char ins4958[5] = { 0x49, 0x58, 0x00, 0x00, 0x35 };
   if (!write_cmd_vg(ins4958,NULL) || !status_ok(cta_res+cta_lr-2)) {
-    cs_log("class49 ins58: failed");
+    cs_ri_log(reader, "class49 ins58: failed");
     //return ERROR;
   }
 
   // Send BoxID class 49
   static const unsigned char ins494C[5] = { 0x49, 0x4C, 0x00, 0x00, 0x09 };
   if (!write_cmd_vg(ins494C,payload4C) || !status_ok(cta_res+cta_lr-2)) {
-    cs_log("class49 ins4C: sending boxid failed");
+    cs_ri_log(reader, "class49 ins4C: sending boxid failed");
     //return ERROR;
   }
 
   static const unsigned char ins0C[5] = { 0x49, 0x0C, 0x00, 0x00, 0x0A };
   if (!write_cmd_vg(ins0C,NULL) || !status_ok(cta_res+cta_lr-2)) {
-    cs_log("class49 ins0C: failed");
+    cs_ri_log(reader, "class49 ins0C: failed");
     //return ERROR;
   }
 
   cs_ri_log(reader,
             "type: VideoGuard, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
             reader->caid, reader->hexserial[2], reader->hexserial[3], reader->hexserial[4], reader->hexserial[5], boxID[0], boxID[1], boxID[2], boxID[3]);
-  cs_log("ready for requests - this is in testing please send -d 255 logs to rebdog");
+  cs_ri_log(reader, "ready for requests - this is in testing please send -d 255 logs to rebdog");
 
   return OK;
 }
@@ -344,7 +342,7 @@ static int32_t videoguard12_do_ecm(struct s_reader * reader, const ECM_REQUEST *
     if (l > 0 && status_ok(cta_res + l)) {
       if (!cw_is_valid(rbuff+5))    //sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
       {
-        cs_log("class4B ins54 status 90 00 but cw=00 -> channel not subscribed");
+        cs_ri_log(reader, "class4B ins54 status 90 00 but cw=00 -> channel not subscribed");
         return ERROR;
       }
 
@@ -358,7 +356,7 @@ static int32_t videoguard12_do_ecm(struct s_reader * reader, const ECM_REQUEST *
       return OK;
     }
   }
-  cs_log("class4B ins54 (%d) status not ok %02x %02x", l, cta_res[0], cta_res[1]);
+  cs_ri_log(reader, "class4B ins54 (%d) status not ok %02x %02x", l, cta_res[0], cta_res[1]);
   return ERROR;
 }
 
@@ -370,8 +368,8 @@ static int32_t videoguard12_do_emm(struct s_reader *reader, EMM_PACKET * ep)
 static int32_t videoguard12_card_info(struct s_reader *reader)
 {
   /* info is displayed in init, or when processing info */
-  cs_log("%s card detected", reader->label);
-  cs_log("type: %s", reader->card_desc);
+  cs_ri_log(reader, "%s card detected", reader->label);
+  cs_ri_log(reader, "type: %s", reader->card_desc);
   read_tiers(reader);
   return OK;
 }

@@ -325,7 +325,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 		}
 	} else {
 		if(reader->acs57==1) {
-			cs_log("WARNING: ACS57 card can require the CamKey from config");
+			cs_ri_log(reader, "WARNING: ACS57 card can require the CamKey from config");
 		} else {
 			memcpy(reader->nagra_boxkey, "\x11\x22\x33\x44\x55\x66\x77\x88", 8);
 		}
@@ -446,7 +446,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 			if ((reader->caid == 0x0648) || (reader->caid == 0x0666) || (reader->caid == 0x0624)) {
 				sc_Acs57CamKey[69] = XorSum(sc_Acs57CamKey, 69) ^ 0x3f ^ (sc_Acs57CamKey[0]&0xf0) ^ 0x1b;
 				if (irdeto_do_cmd(reader, sc_Acs57CamKey, 0x9011, cta_res, &cta_lr)) {
-					cs_log("[reader-irdeto] You have a bad Cam Key set");
+					cs_ri_log(reader, "You have a bad Cam Key set");
 					return ERROR;
 				}
 			} else
@@ -472,7 +472,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 		break;
 	}
 	if (reader->cardmhz != 600)
-		cs_log("WARNING: For Irdeto cards you will have to set 'cardmhz = 600' in oscam.server");
+		cs_ri_log(reader, "WARNING: For Irdeto cards you will have to set 'cardmhz = 600' in oscam.server");
 
 	return irdeto_card_init_provider(reader);
 }
@@ -506,10 +506,10 @@ int32_t irdeto_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_
 		if(acslength!=0x1F){
 			switch(acslength){
 				case 0x09:
-					cs_log("[reader-irdeto] Maybe you don't have the entitlements for this channel");
+					cs_ri_log(reader, "Maybe you don't have the entitlements for this channel");
 					break;
 				default:
-					cs_log("[reader-irdeto] Maybe you have a bad Cam Key set it from config file");
+					cs_ri_log(reader, "Maybe you have a bad Cam Key set it from config file");
 					break;
 			}
 			return ERROR; 
@@ -692,7 +692,7 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 		idx += 32;
 
 		if (filter[1]>=10) {
-			cs_log("irdeto_get_emm_filter: could not start all emm filter");
+			cs_ri_log(rdr, "irdeto_get_emm_filter: could not start all emm filter");
 			break;
 		}
 	}
@@ -770,7 +770,7 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 				sc_Acs57_Cmd[4]=acslength;
 				reader_chk_cmd(sc_Acs57_Cmd, acslength+2);
 				if (cta_res[2] != 0)
-					cs_log("[irdeto-reader] EMM write error %02X", cta_res[2]);
+					cs_ri_log(reader, "EMM write error %02X", cta_res[2]);
 				return OK;
 			} else {
 				const int32_t dataLen = SCT_LEN(emm) - 5 - l;		// sizeof of emm bytes (nanos)
@@ -892,7 +892,7 @@ static int32_t irdeto_card_info(struct s_reader * reader)
 			}
 		}
 	}
-	cs_log("[irdeto-reader] ready for requests");
+	cs_ri_log(reader, "ready for requests");
 	return OK;
 }
 

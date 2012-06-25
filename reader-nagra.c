@@ -723,7 +723,7 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR *newatr)
 		return ERROR;
 	}
 	if ((reader->cardmhz != 368) && (reader->is_pure_nagra==0))
-			cs_log("WARNING: For NAGRA2 cards you will have to set 'cardmhz = 368' in oscam.server");
+			cs_ri_log(reader, "WARNING: For NAGRA2 cards you will have to set 'cardmhz = 368' in oscam.server");
 	
 	return OK;
 }
@@ -953,7 +953,7 @@ static int32_t nagra2_card_info(struct s_reader * reader)
                 cs_ri_log(reader, "Credit : %3d euro", balance);
            }
         }
-	cs_log("[nagra-reader] ready for requests"); 
+	cs_ri_log(reader, "ready for requests");
 	return OK;
 }
 
