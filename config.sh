@@ -16,6 +16,41 @@ list_options() {
 	done
 }
 
+valid_opt() {
+	[ "$1" = "" ] && return 0
+	echo $addons $protocols $readers | grep -w "$1" >/dev/null
+	[ $? = 0 ] && return 1
+	return 0
+}
+
+enable_opt() {
+	OPT="$1"
+	valid_opt $OPT
+	if [ $? ]
+	then
+		grep "^\//#define $OPT$" oscam-config.h >/dev/null 2>/dev/null
+		if [ $? = 0 ]
+		then
+			sed -i.bak -e "s|//#define $OPT$|#define $OPT|g" oscam-config.h && rm oscam-config.h.bak
+			echo "Enable $OPT"
+		fi
+	fi
+}
+
+disable_opt() {
+	OPT="$1"
+	valid_opt "$OPT"
+	if [ $? ]
+	then
+		grep "^\#define $OPT$" oscam-config.h >/dev/null 2>/dev/null
+		if [ $? = 0 ]
+		then
+			sed -i.bak -e "s|#define $OPT$|//#define $OPT|g" oscam-config.h && rm oscam-config.h.bak
+			echo "Disable $OPT"
+		fi
+	fi
+}
+
 check_test() {
 	if [ "$(cat $tempfileconfig | grep "^#define $1$")" != "" ]; then
 		echo "on"
@@ -190,6 +225,24 @@ case "$1" in
 			;;
 		esac
 		;;
+	'-E'|'--enable')
+		shift
+		while [ "$1" != "" ]
+		do
+			enable_opt "$1"
+			shift
+		done
+		$0 --make-config.mak
+		;;
+	'-D'|'--disable')
+		shift
+		while [ "$1" != "" ]
+		do
+			disable_opt "$1"
+			shift
+		done
+		$0 --make-config.mak
+		;;
 	'-e'|'--enabled')
 		grep "^\#define $2$" oscam-config.h >/dev/null 2>/dev/null
 		if [ $? = 0 ]; then
@@ -251,15 +304,38 @@ case "$1" in
 Usage: `basename $0` [parameters]
 
  -g, --gui                 Start interactive configuration
+
  -s, --show [param]        Show enabled configuration options.
                            Possible params: all, addons, protocols, readers
+
+ -l, --list-config         List active configuration variables.
  -e, --enabled [option]    Check if certain option is enabled.
  -d, --disabled [option]   Check if certain option is disabled.
+
+ -E, --enable [option]     Enable config option.
+ -D, --disable [option]    Disable config option.
+
  -v, --oscam-version       Display OSCam version.
  -r, --oscam-revision      Display OSCam SVN revision.
- -l, --list-config         List active configuration variables.
+
  -m, --make-config.mak     Create or update config.mak
+
  -h, --help                Display this help text.
+
+Examples:
+  # Enable WEBIF and SSL
+  ./config.sh --enable WEBIF WITH_SSL
+
+  # Disable SSL
+  ./config.sh --disable WITH_SSL
+
+  # Disable some readers
+  ./config.sh --disable MODULE_GBOX MODULE_RADEGAST
+
+Available options:
+    addons: $addons
+ protocols: $protocols
+   readers: $readers
 "
 		exit 1
 	;;
