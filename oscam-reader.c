@@ -70,7 +70,7 @@ void cs_ri_debug_mask(struct s_reader * reader, uint16_t mask, char *fmt, ...)
 		else
 			desc = reader_get_type_desc(reader, 1);
 
-		cs_log("%s [%s] %s%s", reader->label, desc, dbg_prefix, txt);
+		cs_debug_mask(mask, "%s [%s] %s%s", reader->label, desc, dbg_prefix, txt);
 	}
 }
 
