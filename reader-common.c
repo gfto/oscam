@@ -38,7 +38,7 @@ int32_t reader_device_type(struct s_reader * reader)
 
 void reader_nullcard(struct s_reader * reader)
 {
-  reader->csystem.active=0;
+  memset(&reader->csystem , 0   , sizeof(reader->csystem));
   memset(reader->hexserial, 0   , sizeof(reader->hexserial));
   memset(reader->prid     , 0xFF, sizeof(reader->prid     ));
   reader->caid=0;
@@ -350,12 +350,12 @@ int32_t reader_checkhealth(struct s_reader * reader)
 		}
 	} else {
 		if (reader->card_status == CARD_INSERTED || reader->card_status == CARD_NEED_INIT) {
+			cs_ri_log(reader, "card ejected");
 			reader_nullcard(reader);
 			if (cl) {
 				cl->lastemm = 0;
 				cl->lastecm = 0;
 			}
-			cs_ri_log(reader, "card ejected");
 #ifdef QBOXHD 
  			if(cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_SLOW);
 #endif
