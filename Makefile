@@ -100,6 +100,7 @@ STAPI_CFLAGS = $(DEFAULT_STAPI_FLAGS)
 STAPI_LDFLAGS = $(DEFAULT_STAPI_FLAGS)
 STAPI_LIB = $(DEFAULT_STAPI_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-stapi
+CONFIG_WITH_STAPI=y
 endif
 
 DEFAULT_COOLAPI_FLAGS = -DWITH_COOLAPI
@@ -110,6 +111,7 @@ COOLAPI_CFLAGS = $(DEFAULT_COOLAPI_FLAGS)
 COOLAPI_LDFLAGS = $(DEFAULT_COOLAPI_FLAGS)
 COOLAPI_LIB = $(DEFAULT_COOLAPI_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-coolapi
+CONFIG_WITH_COOLAPI=y
 endif
 
 DEFAULT_AZBOX_FLAGS = -DWITH_AZBOX
@@ -120,6 +122,7 @@ AZBOX_CFLAGS = $(DEFAULT_AZBOX_FLAGS)
 AZBOX_LDFLAGS = $(DEFAULT_AZBOX_FLAGS)
 AZBOX_LIB = $(DEFAULT_AZBOX_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-azbox
+CONFIG_WITH_AZBOX=y
 endif
 
 DEFAULT_LIBCRYPTO_FLAGS = -DWITH_LIBCRYPTO
@@ -129,6 +132,8 @@ LIBCRYPTO_FLAGS = $(DEFAULT_LIBCRYPTO_FLAGS)
 LIBCRYPTO_CFLAGS = $(DEFAULT_LIBCRYPTO_FLAGS)
 LIBCRYPTO_LDFLAGS = $(DEFAULT_LIBCRYPTO_FLAGS)
 LIBCRYPTO_LIB = $(DEFAULT_LIBCRYPTO_LIB)
+else
+CONFIG_WITHOUT_LIBCRYPTO=y
 endif
 
 DEFAULT_SSL_FLAGS = -DWITH_SSL
@@ -153,6 +158,7 @@ LIBUSB_CFLAGS = $(DEFAULT_LIBUSB_FLAGS)
 LIBUSB_LDFLAGS = $(DEFAULT_LIBUSB_FLAGS)
 LIBUSB_LIB = $(DEFAULT_LIBUSB_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-libusb
+CONFIG_WITH_LIBUSB=y
 endif
 
 ifeq ($(uname_S),Darwin)
@@ -168,6 +174,7 @@ PCSC_CFLAGS = $(DEFAULT_PCSC_FLAGS)
 PCSC_LDFLAGS = $(DEFAULT_PCSC_FLAGS)
 PCSC_LIB = $(DEFAULT_PCSC_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-pcsc
+CONFIG_WITH_PCSC=y
 endif
 
 ifdef DEBUG
@@ -198,6 +205,16 @@ override LIBS    += $(USE_LIBS) $(EXTRA_LIBS) $(STD_LIBS)
 
 override STD_DEFS += -D'CS_TARGET="$(TARGET)"'
 
+# This is a *HACK* to enable config variables based on defines
+# given in EXTRA_CFLAGS/EXTRA_LDFLAGS/EXTRA_FLAGS variables.
+#
+# -DXXXXXX is parsed and CONFIG_XXXXXX=y variable is set.
+#
+# *NOTE*: This is not the proper way to enable features.
+#         Use `make config` or `./config --enable CONFIG_VAR`
+conf_enabled := $(subst -D,CONFIG_,$(subst =,,$(subst =1,,$(filter -D%,$(sort $(CFLAGS) $(LDFLAGS))))))
+$(foreach conf,$(conf_enabled),$(eval override $(conf)=y))
+
 # Setup quiet build
 Q =
 SAY = @true
@@ -221,101 +238,106 @@ GLOBAL_DEP = Makefile
 
 ALGO_LIB = $(LIBDIR)/libminilzo-$(TARGET).a
 ALGO_DEP = $(GLOBAL_DEP) algo/minilzo.h
-ALGO_OBJ_y += $(ALGO_LIB)(algo/minilzo.o)
-ALGO_OBJ = $(ALGO_OBJ_y)
+ALGO_OBJ-$(CONFIG_MODULE_GBOX) += $(ALGO_LIB)(algo/minilzo.o)
+ALGO_OBJ = $(ALGO_OBJ-y)
+ifeq "$(ALGO_OBJ)" ""
+ALGO_LIB =
+endif
 
 CSCRYPT_LIB = $(LIBDIR)/libcscrypt-$(TARGET).a
 CSCRYPT_DEP = $(GLOBAL_DEP) cscrypt/cscrypt.h cscrypt/des.h cscrypt/bn.h
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/aes.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/bn_add.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/bn_asm.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/bn_ctx.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/bn_div.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/bn_exp.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/bn_lib.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/bn_mul.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/bn_print.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/bn_shift.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/bn_sqr.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/bn_word.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/crc32.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/des.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/i_cbc.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/i_ecb.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/i_skey.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/md5.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/mem.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/rc6.o)
-CSCRYPT_OBJ_y += $(CSCRYPT_LIB)(cscrypt/sha1.o)
-CSCRYPT_OBJ = $(CSCRYPT_OBJ_y)
+CSCRYPT_OBJ-$(CONFIG_WITHOUT_LIBCRYPTO) += $(CSCRYPT_LIB)(cscrypt/aes.o)
+CSCRYPT_OBJ-$(CONFIG_WITHOUT_LIBCRYPTO) += $(CSCRYPT_LIB)(cscrypt/bn_add.o)
+CSCRYPT_OBJ-$(CONFIG_WITHOUT_LIBCRYPTO) += $(CSCRYPT_LIB)(cscrypt/bn_asm.o)
+CSCRYPT_OBJ-$(CONFIG_WITHOUT_LIBCRYPTO) += $(CSCRYPT_LIB)(cscrypt/bn_ctx.o)
+CSCRYPT_OBJ-$(CONFIG_WITHOUT_LIBCRYPTO) += $(CSCRYPT_LIB)(cscrypt/bn_div.o)
+CSCRYPT_OBJ-$(CONFIG_WITHOUT_LIBCRYPTO) += $(CSCRYPT_LIB)(cscrypt/bn_exp.o)
+CSCRYPT_OBJ-$(CONFIG_WITHOUT_LIBCRYPTO) += $(CSCRYPT_LIB)(cscrypt/bn_lib.o)
+CSCRYPT_OBJ-$(CONFIG_WITHOUT_LIBCRYPTO) += $(CSCRYPT_LIB)(cscrypt/bn_mul.o)
+CSCRYPT_OBJ-$(CONFIG_WITHOUT_LIBCRYPTO) += $(CSCRYPT_LIB)(cscrypt/bn_print.o)
+CSCRYPT_OBJ-$(CONFIG_WITHOUT_LIBCRYPTO) += $(CSCRYPT_LIB)(cscrypt/bn_shift.o)
+CSCRYPT_OBJ-$(CONFIG_WITHOUT_LIBCRYPTO) += $(CSCRYPT_LIB)(cscrypt/bn_sqr.o)
+CSCRYPT_OBJ-$(CONFIG_WITHOUT_LIBCRYPTO) += $(CSCRYPT_LIB)(cscrypt/bn_word.o)
+CSCRYPT_OBJ-y += $(CSCRYPT_LIB)(cscrypt/crc32.o)
+CSCRYPT_OBJ-y += $(CSCRYPT_LIB)(cscrypt/des.o)
+CSCRYPT_OBJ-y += $(CSCRYPT_LIB)(cscrypt/i_cbc.o)
+CSCRYPT_OBJ-y += $(CSCRYPT_LIB)(cscrypt/i_ecb.o)
+CSCRYPT_OBJ-y += $(CSCRYPT_LIB)(cscrypt/i_skey.o)
+CSCRYPT_OBJ-y += $(CSCRYPT_LIB)(cscrypt/md5.o)
+CSCRYPT_OBJ-$(CONFIG_WITHOUT_LIBCRYPTO) += $(CSCRYPT_LIB)(cscrypt/mem.o)
+CSCRYPT_OBJ-y += $(CSCRYPT_LIB)(cscrypt/rc6.o)
+CSCRYPT_OBJ-$(CONFIG_WITHOUT_LIBCRYPTO) += $(CSCRYPT_LIB)(cscrypt/sha1.o)
+CSCRYPT_OBJ = $(CSCRYPT_OBJ-y)
 
 CSCTAPI_LIB = $(LIBDIR)/libcsctapi-$(TARGET).a
 CSCTAPI_DEP = $(GLOBAL_DEP) csctapi/defines.h csctapi/atr.h
-CSCTAPI_OBJ_y += $(CSCTAPI_LIB)(csctapi/atr.o)
-CSCTAPI_OBJ_y += $(CSCTAPI_LIB)(csctapi/icc_async.o)
-CSCTAPI_OBJ_y += $(CSCTAPI_LIB)(csctapi/ifd_azbox.o)
-CSCTAPI_OBJ_y += $(CSCTAPI_LIB)(csctapi/ifd_cool.o)
-CSCTAPI_OBJ_y += $(CSCTAPI_LIB)(csctapi/ifd_mp35.o)
-CSCTAPI_OBJ_y += $(CSCTAPI_LIB)(csctapi/ifd_pcsc.o)
-CSCTAPI_OBJ_y += $(CSCTAPI_LIB)(csctapi/ifd_phoenix.o)
-CSCTAPI_OBJ_y += $(CSCTAPI_LIB)(csctapi/ifd_sc8in1.o)
-CSCTAPI_OBJ_y += $(CSCTAPI_LIB)(csctapi/ifd_sci.o)
-CSCTAPI_OBJ_y += $(CSCTAPI_LIB)(csctapi/ifd_smargo.o)
-CSCTAPI_OBJ_y += $(CSCTAPI_LIB)(csctapi/ifd_smartreader.o)
-CSCTAPI_OBJ_y += $(CSCTAPI_LIB)(csctapi/ifd_stapi.o)
-CSCTAPI_OBJ_y += $(CSCTAPI_LIB)(csctapi/io_serial.o)
-CSCTAPI_OBJ_y += $(CSCTAPI_LIB)(csctapi/protocol_t0.o)
-CSCTAPI_OBJ_y += $(CSCTAPI_LIB)(csctapi/protocol_t1.o)
-CSCTAPI_OBJ_y += $(CSCTAPI_LIB)(csctapi/t1_block.o)
-CSCTAPI_OBJ = $(CSCTAPI_OBJ_y)
+CSCTAPI_OBJ-$(CONFIG_WITH_CARDREADER) += $(CSCTAPI_LIB)(csctapi/atr.o)
+CSCTAPI_OBJ-$(CONFIG_WITH_CARDREADER) += $(CSCTAPI_LIB)(csctapi/icc_async.o)
+CSCTAPI_OBJ-$(CONFIG_WITH_AZBOX) += $(CSCTAPI_LIB)(csctapi/ifd_azbox.o)
+CSCTAPI_OBJ-$(CONFIG_WITH_COOLAPI) += $(CSCTAPI_LIB)(csctapi/ifd_cool.o)
+CSCTAPI_OBJ-$(CONFIG_WITH_CARDREADER) += $(CSCTAPI_LIB)(csctapi/ifd_mp35.o)
+CSCTAPI_OBJ-$(CONFIG_WITH_PCSC) += $(CSCTAPI_LIB)(csctapi/ifd_pcsc.o)
+CSCTAPI_OBJ-$(CONFIG_WITH_CARDREADER) += $(CSCTAPI_LIB)(csctapi/ifd_phoenix.o)
+CSCTAPI_OBJ-$(CONFIG_WITH_CARDREADER) += $(CSCTAPI_LIB)(csctapi/ifd_sc8in1.o)
+CSCTAPI_OBJ-$(CONFIG_WITH_CARDREADER) += $(CSCTAPI_LIB)(csctapi/ifd_sci.o)
+CSCTAPI_OBJ-$(CONFIG_WITH_CARDREADER) += $(CSCTAPI_LIB)(csctapi/ifd_smargo.o)
+CSCTAPI_OBJ-$(CONFIG_WITH_LIBUSB) += $(CSCTAPI_LIB)(csctapi/ifd_smartreader.o)
+CSCTAPI_OBJ-$(CONFIG_WITH_STAPI) += $(CSCTAPI_LIB)(csctapi/ifd_stapi.o)
+CSCTAPI_OBJ-$(CONFIG_WITH_CARDREADER) += $(CSCTAPI_LIB)(csctapi/io_serial.o)
+CSCTAPI_OBJ-$(CONFIG_WITH_CARDREADER) += $(CSCTAPI_LIB)(csctapi/protocol_t0.o)
+CSCTAPI_OBJ-$(CONFIG_WITH_CARDREADER) += $(CSCTAPI_LIB)(csctapi/protocol_t1.o)
+CSCTAPI_OBJ-$(CONFIG_WITH_CARDREADER) += $(CSCTAPI_LIB)(csctapi/t1_block.o)
+CSCTAPI_OBJ = $(CSCTAPI_OBJ-y)
+ifeq "$(CSCTAPI_OBJ)" ""
+CSCTAPI_LIB =
+endif
 
 OSCAM_LIB = $(LIBDIR)/libcs-$(TARGET).a
 OSCAM_DEP = $(GLOBAL_DEP) globals.h oscam-config.h
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-camd33.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-camd35.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-cccam.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-cccshare.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-constcw.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-csp.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-datastruct-llist.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-dvbapi-azbox.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-dvbapi-coolapi.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-dvbapi-stapi.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-dvbapi.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-gbox.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-lcd.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-monitor.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-newcamd.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-pandora.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-pandora.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-radegast.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-serial.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(module-stat.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(oscam-ac.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(oscam-chk.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(oscam-config.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(oscam-garbage.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(oscam-http-helpers.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(oscam-http.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(oscam-log.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(oscam-reader.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(oscam-simples.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(reader-bulcrypt.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(reader-common.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(reader-conax.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(reader-cryptoworks.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(reader-dre.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(reader-irdeto.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(reader-nagra.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(reader-nds.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(reader-seca.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(reader-tongfang.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(reader-viaccess.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(reader-videoguard-common.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(reader-videoguard1.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(reader-videoguard12.o)
-OSCAM_OBJ_y += $(OSCAM_LIB)(reader-videoguard2.o)
-OSCAM_OBJ = $(OSCAM_OBJ_y)
+OSCAM_OBJ-y += $(OSCAM_LIB)(module-datastruct-llist.o)
+OSCAM_OBJ-$(CONFIG_MODULE_CAMD33) += $(OSCAM_LIB)(module-camd33.o)
+OSCAM_OBJ-$(sort $(CONFIG_MODULE_CAMD35) $(CONFIG_MODULE_CAMD35_TCP)) += $(OSCAM_LIB)(module-camd35.o)
+OSCAM_OBJ-$(CONFIG_MODULE_CCCAM) += $(OSCAM_LIB)(module-cccam.o)
+OSCAM_OBJ-$(CONFIG_MODULE_CCCAM) += $(OSCAM_LIB)(module-cccshare.o)
+OSCAM_OBJ-$(CONFIG_MODULE_CONSTCW) += $(OSCAM_LIB)(module-constcw.o)
+OSCAM_OBJ-$(CONFIG_CS_CACHEEX) += $(OSCAM_LIB)(module-csp.o)
+OSCAM_OBJ-$(CONFIG_WITH_AZBOX) += $(OSCAM_LIB)(module-dvbapi-azbox.o)
+OSCAM_OBJ-$(CONFIG_WITH_COOLAPI) += $(OSCAM_LIB)(module-dvbapi-coolapi.o)
+OSCAM_OBJ-$(CONFIG_WITH_STAPI) += $(OSCAM_LIB)(module-dvbapi-stapi.o)
+OSCAM_OBJ-$(CONFIG_HAVE_DVBAPI) += $(OSCAM_LIB)(module-dvbapi.o)
+OSCAM_OBJ-$(CONFIG_MODULE_GBOX) += $(OSCAM_LIB)(module-gbox.o)
+OSCAM_OBJ-$(CONFIG_LCDSUPPORT) += $(OSCAM_LIB)(module-lcd.o)
+OSCAM_OBJ-$(CONFIG_MODULE_MONITOR) += $(OSCAM_LIB)(module-monitor.o)
+OSCAM_OBJ-$(CONFIG_MODULE_NEWCAMD) += $(OSCAM_LIB)(module-newcamd.o)
+OSCAM_OBJ-$(CONFIG_MODULE_PANDORA) += $(OSCAM_LIB)(module-pandora.o)
+OSCAM_OBJ-$(CONFIG_MODULE_RADEGAST) += $(OSCAM_LIB)(module-radegast.o)
+OSCAM_OBJ-$(CONFIG_MODULE_SERIAL) += $(OSCAM_LIB)(module-serial.o)
+OSCAM_OBJ-$(CONFIG_WITH_LB) += $(OSCAM_LIB)(module-stat.o)
+OSCAM_OBJ-$(CONFIG_WEBIF) += $(OSCAM_LIB)(oscam-http-helpers.o)
+OSCAM_OBJ-$(CONFIG_WEBIF) += $(OSCAM_LIB)(oscam-http.o)
+OSCAM_OBJ-$(CONFIG_CS_ANTICASC) += $(OSCAM_LIB)(oscam-ac.o)
+OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-chk.o)
+OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-config.o)
+OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-garbage.o)
+OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-log.o)
+OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-reader.o)
+OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-simples.o)
+
+OSCAM_OBJ-y += $(OSCAM_LIB)(reader-common.o)
+OSCAM_OBJ-$(CONFIG_READER_BULCRYPT) += $(OSCAM_LIB)(reader-bulcrypt.o)
+OSCAM_OBJ-$(CONFIG_READER_CONAX) += $(OSCAM_LIB)(reader-conax.o)
+OSCAM_OBJ-$(CONFIG_READER_CRYPTOWORKS) += $(OSCAM_LIB)(reader-cryptoworks.o)
+OSCAM_OBJ-$(CONFIG_READER_DRE) += $(OSCAM_LIB)(reader-dre.o)
+OSCAM_OBJ-$(CONFIG_READER_IRDETO) += $(OSCAM_LIB)(reader-irdeto.o)
+OSCAM_OBJ-$(CONFIG_READER_NAGRA) += $(OSCAM_LIB)(reader-nagra.o)
+OSCAM_OBJ-$(CONFIG_READER_SECA) += $(OSCAM_LIB)(reader-seca.o)
+OSCAM_OBJ-$(CONFIG_READER_TONGFANG) += $(OSCAM_LIB)(reader-tongfang.o)
+OSCAM_OBJ-$(CONFIG_READER_VIACCESS) += $(OSCAM_LIB)(reader-viaccess.o)
+OSCAM_OBJ-$(CONFIG_READER_VIDEOGUARD) += $(OSCAM_LIB)(reader-videoguard-common.o)
+OSCAM_OBJ-$(CONFIG_READER_VIDEOGUARD) += $(OSCAM_LIB)(reader-videoguard1.o)
+OSCAM_OBJ-$(CONFIG_READER_VIDEOGUARD) += $(OSCAM_LIB)(reader-videoguard12.o)
+OSCAM_OBJ-$(CONFIG_READER_VIDEOGUARD) += $(OSCAM_LIB)(reader-videoguard2.o)
+OSCAM_OBJ = $(OSCAM_OBJ-y)
 
 # The default build target
 all: prepare $(OSCAM_BIN) $(LIST_SMARGO_BIN)
