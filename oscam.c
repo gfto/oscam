@@ -2846,6 +2846,14 @@ void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto)
 					er->ocaid, caidto, er->srvid);
 }
 
+uint16_t get_betatunnel_caid_to(uint16_t caid)
+{
+	if (caid == 0x1801) return 0x1722;
+	if (caid == 0x1833) return 0x1702;
+	if (caid == 0x1834) return 0x1722;
+	if (caid == 0x1835) return 0x1722;
+	return 0;
+}
 
 void cs_betatunnel(ECM_REQUEST *er)
 {
