@@ -500,7 +500,8 @@ do
 		echo "[WARN] Unknown parameter: $1" >&2
 	;;
 	esac
-	shift
+	# Some shells complain when there are no more parameters to shift
+	test $# -gt 0 && shift
 done
 
 exit 0
