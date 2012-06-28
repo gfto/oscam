@@ -84,10 +84,10 @@ Examples:
   ./config.sh --restore --disable WEBIF READER_NAGRA
 
   # Use default config with only one enabled reader
-  ./config.sh --restore --disable readers --enable WITH_CARDREADER READER_BULCRYPT
+  ./config.sh --restore --disable readers --enable READER_BULCRYPT
 
   # Disable everything and enable webif one module and one card reader
-  ./config.sh --disable all --enable WEBIF MODULE_NEWCAMD WITH_CARDREADER READER_BULCRYPT
+  ./config.sh --disable all --enable WEBIF MODULE_NEWCAMD READER_BULCRYPT
 
 Available options:
     addons: $addons
@@ -467,6 +467,7 @@ do
 		break
 	;;
 	'-l'|'--list-config')
+		enabled_any $(get_opts readers) && enable_opt WITH_CARDREADER >/dev/null
 		for OPT in $addons $protocols $readers
 		do
 			enabled $OPT && echo "CONFIG_$OPT=y" || echo "# CONFIG_$OPT=n"
