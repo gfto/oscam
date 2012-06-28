@@ -39,6 +39,49 @@ CONFIG_READER_TONGFANG=y
 CONFIG_READER_BULCRYPT=y
 "
 
+usage() {
+	echo \
+"OSCam config
+Usage: `basename $0` [parameters]
+
+ -g, --gui                 Start interactive configuration
+
+ -s, --show [param]        Show enabled configuration options.
+                           Possible params: all, addons, protocols, readers
+
+ -l, --list-config         List active configuration variables.
+ -e, --enabled [option]    Check if certain option is enabled.
+ -d, --disabled [option]   Check if certain option is disabled.
+
+ -E, --enable [option]     Enable config option.
+ -D, --disable [option]    Disable config option.
+
+ -R, --restore             Restore default config.
+
+ -v, --oscam-version       Display OSCam version.
+ -r, --oscam-revision      Display OSCam SVN revision.
+
+ -m, --make-config.mak     Create or update config.mak
+
+ -h, --help                Display this help text.
+
+Examples:
+  # Enable WEBIF and SSL
+  ./config.sh --enable WEBIF WITH_SSL
+
+  # Disable SSL
+  ./config.sh --disable WITH_SSL
+
+  # Disable some readers
+  ./config.sh --disable MODULE_GBOX MODULE_RADEGAST
+
+Available options:
+    addons: $addons
+ protocols: $protocols
+   readers: $readers
+"
+}
+
 list_options() {
 	PREFIX="$1"
 	shift
@@ -243,6 +286,12 @@ config_dialog() {
 # Change working directory to the directory where the script is
 cd $(dirname $0)
 
+if [ $# = 0 ]
+then
+	usage
+	exit 1
+fi
+
 case "$1" in
 	'-g'|'--gui'|'--config'|'--menuconfig')
 		config_dialog
@@ -350,47 +399,11 @@ case "$1" in
 		fi
 		exit 0
 	;;
+	'-h'|'--help')
+		usage
+		break
+	;;
 	*)
-		echo \
-"OSCam config
-Usage: `basename $0` [parameters]
-
- -g, --gui                 Start interactive configuration
-
- -s, --show [param]        Show enabled configuration options.
-                           Possible params: all, addons, protocols, readers
-
- -l, --list-config         List active configuration variables.
- -e, --enabled [option]    Check if certain option is enabled.
- -d, --disabled [option]   Check if certain option is disabled.
-
- -E, --enable [option]     Enable config option.
- -D, --disable [option]    Disable config option.
-
- -R, --restore             Restore default config.
-
- -v, --oscam-version       Display OSCam version.
- -r, --oscam-revision      Display OSCam SVN revision.
-
- -m, --make-config.mak     Create or update config.mak
-
- -h, --help                Display this help text.
-
-Examples:
-  # Enable WEBIF and SSL
-  ./config.sh --enable WEBIF WITH_SSL
-
-  # Disable SSL
-  ./config.sh --disable WITH_SSL
-
-  # Disable some readers
-  ./config.sh --disable MODULE_GBOX MODULE_RADEGAST
-
-Available options:
-    addons: $addons
- protocols: $protocols
-   readers: $readers
-"
-		exit 1
+		echo "[WARN] Unknown parameter: $1" >&2
 	;;
 esac
