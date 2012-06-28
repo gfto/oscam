@@ -364,9 +364,9 @@ prepare:
 |  LDFLAGS  = $(LDFLAGS)\n\
 |  LIBS     = $(LIBS)\n\
 | Config:\n\
-|  Addons   : $(shell ./config.sh --show addons)\n\
-|  Protocols: $(shell ./config.sh --show protocols)\n\
-|  Readers  : $(shell ./config.sh --show readers)\n\
+|  Addons   : $(shell ./config.sh --show-enabled addons)\n\
+|  Protocols: $(shell ./config.sh --show-enabled protocols | sed -e 's|MODULE_||g')\n\
+|  Readers  : $(shell ./config.sh --show-enabled readers | sed -e 's|READER_||g')\n\
 |  Compiler : $(shell $(CC) --version 2>/dev/null | head -n 1)\n\
 |  Binary   : $(OSCAM_BIN)\n\
 +-------------------------------------------------------------------------------\n"
