@@ -47,6 +47,7 @@ Usage: `basename $0` [parameters]
  -g, --gui                 Start interactive configuration
 
  -s, --show [param]        Show enabled configuration options.
+ -S, --show-valid [param]  Show valid configuration options.
                            Possible params: all, addons, protocols, readers
 
  -l, --list-config         List active configuration variables.
@@ -352,6 +353,14 @@ do
 				list_options "" $addons $protocols $readers
 			;;
 		esac
+		;;
+	'-S'|'--show-valid')
+		shift
+		for OPT in $(get_opts $1)
+		do
+			echo $OPT
+		done
+		break
 		;;
 	'-E'|'--enable')
 		shift
