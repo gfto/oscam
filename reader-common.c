@@ -1,15 +1,17 @@
 #include "globals.h"
+
+#ifdef WITH_CARDREADER
+
 #include "reader-common.h"
 #include "csctapi/defines.h"
-#include "csctapi/atr.h" 
+#include "csctapi/atr.h"
 #include "csctapi/icc_async.h"
 #include "csctapi/ifd_azbox.h"
 #include "csctapi/ifd_cool.h"
-
 #include "csctapi/ifd_sc8in1.h"
-
 #include "csctapi/mc_global.h"
-int32_t reader_device_type(struct s_reader * reader)
+
+static int32_t reader_device_type(struct s_reader * reader)
 {
   int32_t rc=reader->typ;
   struct stat sb;
@@ -36,7 +38,7 @@ int32_t reader_device_type(struct s_reader * reader)
   return(rc);
 }
 
-void reader_nullcard(struct s_reader * reader)
+static void reader_nullcard(struct s_reader * reader)
 {
   memset(&reader->csystem , 0   , sizeof(reader->csystem));
   memset(reader->hexserial, 0   , sizeof(reader->hexserial));
@@ -47,7 +49,6 @@ void reader_nullcard(struct s_reader * reader)
   reader->nprov=0;
 }
 
-#ifdef WITH_CARDREADER
 int32_t reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int32_t l, uchar * cta_res, uint16_t * p_cta_lr)
 {
 	int32_t rc;
@@ -72,19 +73,7 @@ int32_t card_write(struct s_reader * reader, const uchar *cmd, const uchar *data
   else
     return(reader_cmd2icc(reader, buf, CMD_LEN, response, response_length));
 }
-#endif
 
-int32_t check_sct_len(const uchar *data, int32_t off)
-{
-	int32_t l = SCT_LEN(data);
-	if (l+off > MAX_LEN) {
-		cs_debug_mask(D_READER, "check_sct_len(): smartcard section too long %d > %d", l, MAX_LEN-off);
-		l = -1;
-	}
-	return(l);
-}
-
-#ifdef WITH_CARDREADER
 static int32_t reader_card_inserted(struct s_reader * reader)
 {
 	if (!use_gpio(reader) && (reader->detect & 0x7f) > 3)
@@ -201,7 +190,6 @@ static void do_emm_from_file(struct s_reader * reader)
                
    free(eptmp);
 }
-#endif
 
 void reader_card_info(struct s_reader * reader)
 {
@@ -218,7 +206,6 @@ void reader_card_info(struct s_reader * reader)
 	}
 }
 
-#ifdef WITH_CARDREADER
 static int32_t reader_get_cardsystem(struct s_reader * reader, ATR *atr)
 {
 	int32_t i;
@@ -364,7 +351,6 @@ int32_t reader_checkhealth(struct s_reader * reader)
 	}
 	return reader->card_status == CARD_INSERTED;
 }
-#endif
 
 void reader_post_process(struct s_reader * reader)
 {
@@ -375,7 +361,6 @@ void reader_post_process(struct s_reader * reader)
 	}
 }
 
-#ifdef WITH_CARDREADER
 int32_t reader_ecm(struct s_reader * reader, ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
   int32_t rc=-1;
@@ -394,38 +379,7 @@ int32_t reader_ecm(struct s_reader * reader, ECM_REQUEST *er, struct s_ecm_answe
 	}
 	return(rc);
 }
-#endif
 
-int32_t reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs from calling reader!
-{
-	cs_ri_debug_mask(rdr, D_EMM, "Entered %s", __func__);
-	int32_t rc;
-
-	if (rdr->csystem.active && rdr->csystem.get_emm_type) 
-		rc=rdr->csystem.get_emm_type(ep, rdr);
-	else
-		rc=0;
-
-	return rc;
-}
-
-struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid) {
-	int32_t i,j; 
-	for (i=0; i<CS_MAX_MOD; i++) { 
-		if (cardsystem[i].caids) { 
-			for (j=0;j<2;j++) { 
-				if (cardsystem[i].caids[j] == caid)
-					return &cardsystem[i];
-				if ((cardsystem[i].caids[j]==caid >> 8)) { 
-					return &cardsystem[i];
-				} 
-			} 
-		} 
-	} 
-	return NULL;
-} 
-
-#ifdef WITH_CARDREADER
 int32_t reader_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   int32_t rc=-1;
@@ -442,15 +396,5 @@ int32_t reader_emm(struct s_reader * reader, EMM_PACKET *ep)
   }
   return(rc);
 }
+
 #endif
-
-int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int16_t len)
-{
-	int8_t i;
-
-	for( i = 0; i < CS_MAXEMMBLOCKBYLEN; i++ )
-		if(rdr->blockemmbylen[i] == len)
-			return 1;
-
-	return 0;
-}

@@ -316,7 +316,7 @@ OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-llist.o)
 OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-reader.o)
 OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-simples.o)
 
-OSCAM_OBJ-y += $(OSCAM_LIB)(reader-common.o)
+OSCAM_OBJ-$(CONFIG_WITH_CARDREADER) += $(OSCAM_LIB)(reader-common.o)
 OSCAM_OBJ-$(CONFIG_READER_BULCRYPT) += $(OSCAM_LIB)(reader-bulcrypt.o)
 OSCAM_OBJ-$(CONFIG_READER_CONAX) += $(OSCAM_LIB)(reader-conax.o)
 OSCAM_OBJ-$(CONFIG_READER_CRYPTOWORKS) += $(OSCAM_LIB)(reader-cryptoworks.o)

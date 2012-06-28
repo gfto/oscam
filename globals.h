@@ -463,6 +463,11 @@ struct s_arm_led {
 #define DEFAULT_AC_PENALTY -1 // Use global cfg
 #endif
 
+// Return MPEG section length
+#define SCT_LEN(sct) (3+((sct[1]&0x0f)<<8)+sct[2])
+// Used by readers
+#define MAX_LEN      256
+
 /* ===========================
  *      global structures
  * =========================== */

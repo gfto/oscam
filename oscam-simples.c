@@ -1509,3 +1509,38 @@ int8_t cs_cacheex_maxhop(struct s_client *cl)
 }
 #endif
 
+int32_t check_sct_len(const uchar *data, int32_t off)
+{
+	int32_t len = SCT_LEN(data);
+	if (len + off > MAX_LEN) {
+		cs_debug_mask(D_READER, "check_sct_len(): smartcard section too long %d > %d", len, MAX_LEN - off);
+		len = -1;
+	}
+	return len;
+}
+
+int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int16_t len)
+{
+	int i;
+	for (i = 0; i < CS_MAXEMMBLOCKBYLEN; i++)
+		if (rdr->blockemmbylen[i] == len)
+			return 1;
+	return 0;
+}
+
+struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid) {
+	int32_t i, j;
+	for (i = 0; i < CS_MAX_MOD; i++) {
+		if (cardsystem[i].caids) {
+			for (j = 0; j < 2; j++) {
+				if (cardsystem[i].caids[j] == caid)
+					return &cardsystem[i];
+				if ((cardsystem[i].caids[j]==caid >> 8)) {
+					return &cardsystem[i];
+				}
+			}
+		}
+	}
+	return NULL;
+}
+
