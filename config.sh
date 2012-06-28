@@ -56,6 +56,12 @@ Usage: `basename $0` [parameters]
  -E, --enable [option]     Enable config option.
  -D, --disable [option]    Disable config option.
 
+    The following [option]s enable or disable multiple settings.
+      all       - Everything.
+      addons    - All addons.
+      protocols - All protocols.
+      readers   - All readers.
+
  -R, --restore             Restore default config.
 
  -v, --oscam-version       Display OSCam version.
@@ -74,6 +80,12 @@ Examples:
 
   # Restore defaults and disable WEBIF and READER_NAGRA
   ./config.sh --restore --disable WEBIF READER_NAGRA
+
+  # Use default config with only one enabled reader
+  ./config.sh --restore --disable readers --enable WITH_CARDREADER READER_BULCRYPT
+
+  # Disable everything and enable webif one module and one card reader
+  ./config.sh --disable all --enable WEBIF MODULE_NEWCAMD WITH_CARDREADER READER_BULCRYPT
 
 Available options:
     addons: $addons
@@ -113,6 +125,13 @@ enable_opt() {
 	fi
 }
 
+enable_opts() {
+	for OPT in $@
+	do
+		enable_opt $OPT
+	done
+}
+
 disable_opt() {
 	OPT="$1"
 	valid_opt "$OPT"
@@ -125,6 +144,24 @@ disable_opt() {
 			echo "Disable $OPT"
 		fi
 	fi
+}
+
+disable_opts() {
+	for OPT in $@
+	do
+		disable_opt $OPT
+	done
+}
+
+get_opts() {
+	OPTS=""
+	case "$1" in
+	'addons')    OPTS="$addons" ; ;;
+	'protocols') OPTS="$protocols" ; ;;
+	'readers')   OPTS="$readers" ; ;;
+	*)           OPTS="$addons $protocols $readers" ; ;;
+	esac
+	echo $OPTS
 }
 
 check_test() {
@@ -325,6 +362,9 @@ do
 				$0 --make-config.mak
 				continue 2
 				;;
+			all|addons|protocols|readers)
+				enable_opts $(get_opts $1)
+				;;
 			*)
 				enable_opt "$1"
 				;;
@@ -341,6 +381,9 @@ do
 			-*)
 				$0 --make-config.mak
 				continue 2
+				;;
+			all|addons|protocols|readers)
+				disable_opts $(get_opts $1)
 				;;
 			*)
 				disable_opt "$1"
