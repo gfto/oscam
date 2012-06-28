@@ -414,6 +414,18 @@ config:
 
 menuconfig: config
 
+allyesconfig:
+	@echo "Enabling all config options."
+	@-$(SHELL) ./config.sh --enable all
+
+allnoconfig:
+	@echo "Disabling all config options."
+	@-$(SHELL) ./config.sh --disable all
+
+defconfig:
+	@echo "Restoring default config."
+	@-$(SHELL) ./config.sh --restore
+
 clean:
 	@-rm -rfv lib
 
@@ -574,8 +586,11 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
    EXTRA_LIBS     - Add text to LIBS (affects linking).\n\
                     Example: 'make EXTRA_LIBS=-L./stapi -loscam_stapi'\n\
 \n\
- Config target:\n\
-   make config    - Start configuration utility.\n\
+ Config targets:\n\
+   make config        - Start configuration utility.\n\
+   make allyesconfig  - Enable all configuration options.\n\
+   make allnoconfig   - Disable all configuration options.\n\
+   make defconfig     - Restore default configuration options.\n\
 \n\
  Cleaning targets:\n\
    make clean     - Remove lib/ directory which contains built object files.\n\
