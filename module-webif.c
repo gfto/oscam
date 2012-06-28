@@ -1,4 +1,5 @@
 #include "globals.h"
+
 #ifdef WEBIF
 //
 // OSCam HTTP server module
@@ -9,11 +10,71 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include "oscam-http-helpers.c"
+
 #include "module-cccam.h"
 #include "module-cccshare.h"
+#include "module-webif.h"
 
-#ifdef IPV6SUPPORT 
+extern char *tplmap[];
+extern char *tpl[];
+extern char *CSS;
+
+int32_t ssl_active = 0;
+char noncekey[33];
+pthread_key_t getkeepalive;
+pthread_key_t getip;
+pthread_key_t getssl;
+CS_MUTEX_LOCK http_lock;
+CS_MUTEX_LOCK *lock_cs;
+
+static int8_t running = 1;
+static pthread_t httpthread;
+
+/* constants for menuactivating */
+#define MNU_STATUS 0
+#define MNU_CONFIG 1
+#define MNU_READERS 2
+#define MNU_USERS 3
+#define MNU_SERVICES 4
+#define MNU_FILES 5
+#define MNU_FAILBAN 6
+#define MNU_CACHEEX 7
+#define MNU_SCRIPT 8
+#define MNU_SHUTDOWN 9
+#define MNU_TOTAL_ITEMS 10 // sum of items above
+/* constants for submenuactivating */
+#define MNU_CFG_GLOBAL 0
+#define MNU_CFG_LOADBAL 1
+#define MNU_CFG_CAMD33 2
+#define MNU_CFG_CAMD35 3
+#define MNU_CFG_CAMD35TCP 4
+#define MNU_CFG_NEWCAMD 5
+#define MNU_CFG_RADEGAST 6
+#define MNU_CFG_CCCAM 7
+#define MNU_CFG_ANTICASC 8
+#define MNU_CFG_MONITOR 9
+#define MNU_CFG_SERIAL 10
+#define MNU_CFG_DVBAPI 11
+
+#define MNU_CFG_FVERSION 12
+#define MNU_CFG_FCONF 13
+#define MNU_CFG_FUSER 14
+#define MNU_CFG_FSERVER 15
+#define MNU_CFG_FSERVICES 16
+#define MNU_CFG_FSRVID 17
+#define MNU_CFG_FPROVID 18
+#define MNU_CFG_FTIERS 19
+#define MNU_CFG_FLOGFILE 20
+#define MNU_CFG_FUSERFILE 21
+#define MNU_CFG_FACLOG 22
+#define MNU_CFG_FDVBAPI 23
+#define MNU_CFG_CSP 24
+#define MNU_CFG_WHITELIST 25
+#define MNU_CFG_TOTAL_ITEMS 26 // sum of items above. Use it for "All inactive" in function calls too.
+
+#ifdef IPV6SUPPORT
+
+#define GET_IP() *(struct in6_addr *)pthread_getspecific(getip)
 char *cs_inet6_ntoa(struct in6_addr addr)
 {
 	static char buff[40];
@@ -31,18 +92,13 @@ char *cs_inet6_ntoa(struct in6_addr addr)
 	}
 	return buff;
 }
+
 #else
+
+#define GET_IP() *(in_addr_t *)pthread_getspecific(getip)
 #define cs_inet6_ntoa	cs_inet_ntoa
+
 #endif
-
-
-extern void restart_cardreader(struct s_reader *rdr, int32_t restart);
-
-static int8_t running = 1;
-static pthread_t httpthread;
-CS_MUTEX_LOCK http_lock;
-
-pthread_key_t getip;
 
 static void refresh_oscam(enum refreshtypes refreshtype) {
 
@@ -5130,4 +5186,5 @@ void http_srv(void) {
 	close(sock);
 	//exit(SIGQUIT);
 }
+
 #endif

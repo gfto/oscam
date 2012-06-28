@@ -53,6 +53,8 @@ extern void clear_account_stats(struct s_auth *account);
 extern void clear_all_account_stats(void);
 extern void clear_system_stats(void);
 
+int32_t restart_cardreader(struct s_reader *rdr, int32_t restart);
+
 extern int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line);
 extern void global_whitelist_read(void);
 extern struct s_cacheex_matcher *is_cacheex_matcher_matching(ECM_REQUEST *er, ECM_REQUEST *ecm);
@@ -214,7 +216,7 @@ extern void start_garbage_collector(int32_t);
 extern void stop_garbage_collector(void);
 
 /* ===========================
- *         oscam-http
+ *         module-webif
  * =========================== */
 extern void http_srv(void);
 

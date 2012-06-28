@@ -1,12 +1,21 @@
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
 #ifdef WEBIF
-#ifdef WITH_SSL
-#include <openssl/crypto.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#endif
-#include "oscam-http.h"
+
+#include "module-webif.h"
+
+extern char *tplmap[];
+extern char *tpl[];
+extern char *JSCRIPT;
+extern char *CSS;
+
+extern int32_t ssl_active;
+extern pthread_key_t getkeepalive;
+extern pthread_key_t getssl;
+extern CS_MUTEX_LOCK *lock_cs;
+extern char noncekey[33];
+
+static int8_t b64decoder[256];
 
 /* Adds a name->value-mapping or appends to it. You will get a reference back which you may freely
    use (but you should not call free/realloc on this!)*/
@@ -187,8 +196,8 @@ char *tpl_getTplPath(const char *name, const char *path, char *result, uint32_t 
    Note: You must free() the result after using it and you may get NULL if an error occured!*/
 static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const char* subdir){
   int32_t i;
-  int32_t tplcnt = sizeof(tpl)/sizeof(char *);
-  int32_t tplmapcnt = sizeof(tplmap)/sizeof(char *);
+  int32_t tplcnt = tpl_count();
+  int32_t tplmapcnt = tplmap_count();
   char *result;
 
   for(i = 0; i < tplcnt; ++i){
@@ -297,8 +306,8 @@ char *tpl_getTpl(struct templatevars *vars, const char* name){
 
 /* Saves all templates to the specified paths. Existing files will be overwritten! */
 int32_t tpl_saveIncludedTpls(const char *path){
-	int32_t tplcnt = sizeof(tpl)/sizeof(char *);
-  int32_t tplmapcnt = sizeof(tplmap)/sizeof(char *);
+  int32_t tplcnt = tpl_count();
+  int32_t tplmapcnt = tplmap_count();
   int32_t i, cnt = 0;
   char tmp[256];
   FILE *fp;
@@ -323,7 +332,7 @@ void tpl_checkOneDirDiskRevisions(const char* subdir) {
 		snprintf(dirpath, 255, "%s%s", cfg.http_tpl, subdir);
 	}
 
-	int32_t i, tplcnt = sizeof(tpl)/sizeof(char *);
+	int32_t i, tplcnt = tpl_count();
 		char path[255];
 		for(i = 0; i < tplcnt; ++i){
 			if(tpl[i][0] != 'I' && tpl[i][1] != 'C' && strlen(tpl_getTplPath(tpl[i], dirpath, path, 255)) > 0 && file_exists(path)){
@@ -925,13 +934,11 @@ char *getParam(struct uriparams *params, char *name){
 
 
 #ifdef WITH_SSL
-pthread_key_t getssl;
 SSL * cur_ssl(void){
 	return (SSL *) pthread_getspecific(getssl);
 }
 
 /* Locking functions for SSL multithreading */
-static CS_MUTEX_LOCK *lock_cs;
 struct CRYPTO_dynlock_value{
     pthread_mutex_t mutex;
 };
@@ -1054,4 +1061,5 @@ SSL_CTX *SSL_Webif_Init(void) {
 	return ctx;
 }
 #endif
+
 #endif

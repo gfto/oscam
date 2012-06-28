@@ -1,230 +1,143 @@
-struct s_connection{
-	int32_t socket;
-	struct s_client *cl;
-#ifdef IPV6SUPPORT
-	struct in6_addr remote;
-#else
-	struct in_addr remote;
-#endif
-#ifdef WITH_SSL
-	SSL *ssl;
-#endif
-};
+#include "globals.h"
 
-#ifdef IPV6SUPPORT
-#define GET_IP() *(struct in6_addr *)pthread_getspecific(getip)
-#else
-#define GET_IP() *(in_addr_t *)pthread_getspecific(getip)
-#endif
+#ifdef WEBIF
 
-pthread_key_t getkeepalive;
-
-#ifdef WITH_SSL
-static int32_t ssl_active = 0;
-#endif
-
-/* The server string in the http header */
-#define SERVER "webserver/1.0"
-/* The protocol that gets output. Currently only 1.0 is possible as 1.1 requires many features we don't have. */
-#define PROTOCOL "HTTP/1.0"
-/* The RFC1123 time format which is used in http headers. */
-#define RFC1123FMT "%a, %d %b %Y %H:%M:%S GMT"
-/* The realm for http digest authentication. Gets displayed to browser. */
-#define AUTHREALM "Forbidden"
-/* How long a nonce is valid in seconds. If it isn't valid anymore, the browser gets a "stale=true" message and must resubmit with the current nonce. */
-#define AUTHNONCEVALIDSECS 15
-/* The maximum amount of GET parameters the webserver will parse. */
-#define MAXGETPARAMS 100
-/* The refresh delay (in seconds) when stopping OSCam via http. */
-#define SHUTDOWNREFRESH 30
-/* Templates: Adds a variable. The variable can be used as often as wanted. */
-#define TPLADD 0
-/* Templates: Appends a variable or adds it if doesn't exist yet. The variable can be used as often as wanted. */
-#define TPLAPPEND 1
-/* Templates: Adds a variable which will be reset to "" after being used once, either through tpl_getVar or when used in a template.
-   tpl_addVar/tpl_printf don't do a reset and will overwrite the appendmode with a new value. */
-#define TPLADDONCE 2
-/* Templates: Appends a variable or adds it if doesn't exist yet. The variable will be reset to "" after being used once. See TPLADDONCE for details. */
-#define TPLAPPENDONCE 3
-/* constants for menuactivating */
-#define MNU_STATUS 0
-#define MNU_CONFIG 1
-#define MNU_READERS 2
-#define MNU_USERS 3
-#define MNU_SERVICES 4
-#define MNU_FILES 5
-#define MNU_FAILBAN 6
-#define MNU_CACHEEX 7
-#define MNU_SCRIPT 8
-#define MNU_SHUTDOWN 9
-#define MNU_TOTAL_ITEMS 10 // sum of items above
-/* constants for submenuactivating */
-#define MNU_CFG_GLOBAL 0
-#define MNU_CFG_LOADBAL 1
-#define MNU_CFG_CAMD33 2
-#define MNU_CFG_CAMD35 3
-#define MNU_CFG_CAMD35TCP 4
-#define MNU_CFG_NEWCAMD 5
-#define MNU_CFG_RADEGAST 6
-#define MNU_CFG_CCCAM 7
-#define MNU_CFG_ANTICASC 8
-#define MNU_CFG_MONITOR 9
-#define MNU_CFG_SERIAL 10
-#define MNU_CFG_DVBAPI 11
-
-#define MNU_CFG_FVERSION 12
-#define MNU_CFG_FCONF 13
-#define MNU_CFG_FUSER 14
-#define MNU_CFG_FSERVER 15
-#define MNU_CFG_FSERVICES 16
-#define MNU_CFG_FSRVID 17
-#define MNU_CFG_FPROVID 18
-#define MNU_CFG_FTIERS 19
-#define MNU_CFG_FLOGFILE 20
-#define MNU_CFG_FUSERFILE 21
-#define MNU_CFG_FACLOG 22
-#define MNU_CFG_FDVBAPI 23
-#define MNU_CFG_CSP 24
-#define MNU_CFG_WHITELIST 25
-#define MNU_CFG_TOTAL_ITEMS 26 // sum of items above. Use it for "All inactive" in function calls too.
-
-#define CSS "\
-BODY {background-color: white; font-family: Arial; font-size: 11px; text-align:center}\n\
-P {color: white; }\n\
-P.blinking {text-decoration: blink; font-weight:bold; font-size:large; color:red;}\n\
-H2 {color: #AAAAAA; font-family: Arial; font-size: 32px; line-height: 32px; text-align:center; margin-top:0px; margin-bottom:0px}\n\
-H4 {color: #AAAAAA; font-family: Arial; font-size: 12px; line-height: 9px; text-align:center}\n\
-H4.styleauthor:after {content:\"Eneen\";}\n\
-TABLE {border-spacing:1px; border:0px; padding:0px; margin-left:auto; margin-right:auto;}\n\
-TH {height:10px; border:0px; font-family: Arial; font-size: 11px; padding:5px; background-color:#CCCCCC; color:black;}\n\
-TH.statuscol0 {text-align:center;width:10px;}\n\
-TH.statuscol1 {text-align:center;}\n\
-TH.statuscol2 {text-align:center;}\n\
-TH.statuscol3 {text-align:center;}\n\
-TH.statuscol4 {text-align:center;}\n\
-TH.statuscol5 {text-align:center;}\n\
-TH.statuscol6 {text-align:center;}\n\
-TH.statuscol7 {text-align:center;}\n\
-TH.statuscol8 {text-align:center;}\n\
-TH.statuscol9 {text-align:center;}\n\
-TH.statuscol10 {text-align:center;}\n\
-TH.statuscol11 {text-align:center;}\n\
-TH.statuscol12 {text-align:center;}\n\
-TH.statuscol13 {text-align:center;}\n\
-TH.statuscol14 {text-align:center;}\n\
-TH.statuscol15 {text-align:center;}\n\
-TH.statuscol16 {text-align:center;}\n\
-TD {height:10px; border:0px; font-family: Arial; font-size: 11px; padding:5px; background-color:#EEEEEE; color:black;text-align: left}\n\
-TD.centered {text-align:center;}\n\
-TD.statuscol0 {text-align:center;width:10px;}\n\
-TD.statuscol1 {text-align:center;}\n\
-TD.statuscol2 {text-align:center;}\n\
-TD.statuscol3 {text-align:center;}\n\
-TD.statuscol4 {}\n\
-TD.statuscol5 {text-align:center;}\n\
-TD.statuscol6 {text-align:center;}\n\
-TD.statuscol7 {text-align:center;}\n\
-TD.statuscol8 {text-align:center;}\n\
-TD.statuscol9 {}\n\
-TD.statuscol10 {text-align:center;}\n\
-TD.statuscol11 {text-align:center;}\n\
-TD.statuscol12 {text-align:center;}\n\
-TD.statuscol13 {}\n\
-TD.statuscol14 {text-align:center;}\n\
-TD.statuscol14 A {text-decoration: none;}\n\
-TD.statuscol15 {text-align:center;}\n\
-TD.statuscol16 {text-align:center;}\n\
-TD.statuscol16 A {text-decoration: none;}\n\
-TD.usercol0 {text-align:center;}\n\
-TD.usercol1 {white-space: normal;}\n\
-TD.usercol2 {text-align:center;}\n\
-TD.usercol3 {text-align:center;}\n\
-TD.usercol4 {text-align:center;}\n\
-TD.usercol5 {text-align:center;}\n\
-TD.usercol6 {text-align:center;}\n\
-TD.usercol7 {text-align:center;}\n\
-TD.usercol8 {text-align:center;}\n\
-TD.usercol9 {text-align:center;}\n\
-TD.usercol10 {text-align:center;}\n\
-TD.usercol11 {text-align:center;}\n\
-TD.usercol12 {text-align:center;}\n\
-TD.usercol13 {text-align:center;}\n\
-TD.usercol14 {text-align:center;}\n\
-TD.usercol15 {text-align:center;}\n\
-TD.usercol16 {text-align:center;}\n\
-TD.usercol17 {text-align:center;}\n\
-TD.usercol18 {text-align:center;}\n\
-TD.usercol19 {text-align:center;}\n\
-TD.usercol20 {text-align:center;}\n\
-TD.usercol21 {text-align:center;}\n\
-TD.menu {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;white-space: normal;}\n\
-TD.menu_selected {color:black; background-color:#E6FEBF; font-family: Arial; font-size:14px; font-weight:bold;font-style:italic;}\n\
-TD.configmenu {color:black; background-color:white; font-family: Arial; font-size:11px; font-weight:bold;}\n\
-TD.configmenu_selected {color:black; background-color:#E6FEBF; font-family: Arial; font-size:11px; font-weight:bold;font-style:italic;}\n\
-TD.subheadline {height:10px; border:0px; font-family: Arial; font-size: 11px; padding:5px; background-color:#CCCCCC; color:black;}\n\
-TD.subheadline A {text-decoration: none;}\n\
-TR.s TD {background-color:#e1e1ef;}\n\
-TR.l TD {background-color:#e1e1ef;}\n\
-TR.n TD {background-color:#e1e1ef;}\n\
-TR.h TD {background-color:#e1e1ef;}\n\
-TR.r TD {background-color:#fff3e7;}\n\
-TR.p TD {background-color:#fdfbe1;}\n\
-TR.c TD {background-color:#f1f5e6;}\n\
-TR.a TD {background-color:#33ff00;}\n\
-TR.online TD {background-color:#BBFFAA;}\n\
-TR.online TD.usercol5 {background-color:#646464;}\n\
-TR.expired TD {background-color:#FFBBAA;}\n\
-TR.connected TD {background-color:#FFFFAA;}\n\
-TR.disabled TD:first-child IMG.icon {background-color:#00AA00;}\n\
-TR.disabledreader TD:first-child IMG.icon {background-color:#00AA00;}\n\
-TR.scanusbsubhead TD {background-color:#fdfbe1;}\n\
-TR.e_valid TD {background-color:#E6FEBF;text-align:center; font-family:\"Courier New\", monospace;}\n\
-TR.e_expired TD {background-color:#fff3e7;text-align:center; font-family:\"Courier New\", monospace;}\n\
-TR.e_header TD {text-align:center; font-family:\"Courier New\", monospace;}\n\
-HR {height:1px; border-width:0; color:white; background-color:#AAAAAA}\n\
-DIV.log {border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:10px; font-family:\"Courier New\", monospace; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left; }\n\
-DIV.sidlist {border:1px dotted #AAAAAA; background-color: #fffdf5; padding:2px; font-family:\"Courier New\", monospace ; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left;}\n\
-DIV.message {position:absolute;right:0;font-family: Arial; font-size: 12px;font-weight:bold;}\n\
-DIV.div_notifier {height:14px;width:14px;border-radius:7px;-webkit-border-radius:7px;background-color:red;margin-left:4px;text-align:center;float:right;}\n\
-DIV.debugmenu {line-height: 20px;}\n\
-DIV.logmenu {line-height: 20px;}\n\
-DIV.filterform {margin: 10px;}\n\
-TABLE.menu {border-spacing:0px; border:0px; padding:0px; margin-left:auto; margin-right:auto;}\n\
-TABLE.status {border-spacing:1px; border:0px; padding:0px; background-color:white; empty-cells:show;}\n\
-TABLE.config {width:750px;}\n\
-TABLE.invisible TD {border:0px; font-family:Arial; font-size: 12px; padding:5px; background-color:#EEEEEE;}\n\
-TABLE.configmenu {line-height: 16px;}\n\
-TEXTAREA.bt {font-family: Arial; font-size: 12px;}\n\
-TEXTAREA.editor {width:99%; height:508px; border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:8px 10px; font-family:\"Courier New\", monospace; color:black; font-size: 11px; word-wrap:break-word; text-align:left;}\n\
-A.debugls:link {color: white;background-color:red;}\n\
-A.debugls:visited {color: white;background-color:red;}\n\
-A:link {color: #050840;}\n\
-A:visited {color: #050840;}\n\
-A:active {color: #050840;}\n\
-A:hover {color: #ff9e5f;}\n\
-A:hover IMG.icon {border: 1px solid yellow;width:20px;height:20px;}\n\
-A.tooltip  {position: relative; text-decoration: none; cursor:default;}\n\
-A.tooltip1 {position: relative; text-decoration: none; cursor:default;color:red;}\n\
-A.tooltip  SPAN {display: none; z-index:99;}\n\
-A.tooltip1 SPAN {display: none; z-index:99;}\n\
-A:hover SPAN {display: block;position: absolute;top: 2em; right: 1em; margin: 0px;padding: 10px;color: #335500;font-weight: normal;background: #ffffdd;text-align: left;border: 1px solid #666;}\n\
-IMG {border:0px solid;}\n\
-IMG.icon {border: 0px solid;width:22px;height:22px;background-color:#AA0000;border-radius:3px;-webkit-border-radius:3px;}\n\
-IMG.clientpicon {height:40px;width:80px;}\n\
-rect.graph_bg {fill:white;}\n\
-text.graph_error {text-anchor:middle;fill:red}\n\
-text.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}\n\
-path.graph_grid {stroke:gray;stroke-opacity:0.5}\n\
-SPAN.e_valid {background-color:#E6FEBF;}\n\
-SPAN.e_expired {background-color:#fff3e7;}\n\
-SPAN.div_notifier {background-color:red;color: white;font-family:Arial;font-size:10px;font-weight:bold;}\n\
-SPAN.idlesec_normal {font-family: Arial; font-size: 9px;color: black}\n\
-SPAN.idlesec_alert {font-family: Arial; font-size: 9px;color: red}\n\
-SPAN.global_conf {color: blue; font-size: 12px; font-family: Arial; cursor: default; padding: 4px;}\
-"
+char *CSS =
+"BODY {background-color: white; font-family: Arial; font-size: 11px; text-align:center}\n"
+"P {color: white; }\n"
+"P.blinking {text-decoration: blink; font-weight:bold; font-size:large; color:red;}\n"
+"H2 {color: #AAAAAA; font-family: Arial; font-size: 32px; line-height: 32px; text-align:center; margin-top:0px; margin-bottom:0px}\n"
+"H4 {color: #AAAAAA; font-family: Arial; font-size: 12px; line-height: 9px; text-align:center}\n"
+"H4.styleauthor:after {content:\"Eneen\";}\n"
+"TABLE {border-spacing:1px; border:0px; padding:0px; margin-left:auto; margin-right:auto;}\n"
+"TH {height:10px; border:0px; font-family: Arial; font-size: 11px; padding:5px; background-color:#CCCCCC; color:black;}\n"
+"TH.statuscol0 {text-align:center;width:10px;}\n"
+"TH.statuscol1 {text-align:center;}\n"
+"TH.statuscol2 {text-align:center;}\n"
+"TH.statuscol3 {text-align:center;}\n"
+"TH.statuscol4 {text-align:center;}\n"
+"TH.statuscol5 {text-align:center;}\n"
+"TH.statuscol6 {text-align:center;}\n"
+"TH.statuscol7 {text-align:center;}\n"
+"TH.statuscol8 {text-align:center;}\n"
+"TH.statuscol9 {text-align:center;}\n"
+"TH.statuscol10 {text-align:center;}\n"
+"TH.statuscol11 {text-align:center;}\n"
+"TH.statuscol12 {text-align:center;}\n"
+"TH.statuscol13 {text-align:center;}\n"
+"TH.statuscol14 {text-align:center;}\n"
+"TH.statuscol15 {text-align:center;}\n"
+"TH.statuscol16 {text-align:center;}\n"
+"TD {height:10px; border:0px; font-family: Arial; font-size: 11px; padding:5px; background-color:#EEEEEE; color:black;text-align: left}\n"
+"TD.centered {text-align:center;}\n"
+"TD.statuscol0 {text-align:center;width:10px;}\n"
+"TD.statuscol1 {text-align:center;}\n"
+"TD.statuscol2 {text-align:center;}\n"
+"TD.statuscol3 {text-align:center;}\n"
+"TD.statuscol4 {}\n"
+"TD.statuscol5 {text-align:center;}\n"
+"TD.statuscol6 {text-align:center;}\n"
+"TD.statuscol7 {text-align:center;}\n"
+"TD.statuscol8 {text-align:center;}\n"
+"TD.statuscol9 {}\n"
+"TD.statuscol10 {text-align:center;}\n"
+"TD.statuscol11 {text-align:center;}\n"
+"TD.statuscol12 {text-align:center;}\n"
+"TD.statuscol13 {}\n"
+"TD.statuscol14 {text-align:center;}\n"
+"TD.statuscol14 A {text-decoration: none;}\n"
+"TD.statuscol15 {text-align:center;}\n"
+"TD.statuscol16 {text-align:center;}\n"
+"TD.statuscol16 A {text-decoration: none;}\n"
+"TD.usercol0 {text-align:center;}\n"
+"TD.usercol1 {white-space: normal;}\n"
+"TD.usercol2 {text-align:center;}\n"
+"TD.usercol3 {text-align:center;}\n"
+"TD.usercol4 {text-align:center;}\n"
+"TD.usercol5 {text-align:center;}\n"
+"TD.usercol6 {text-align:center;}\n"
+"TD.usercol7 {text-align:center;}\n"
+"TD.usercol8 {text-align:center;}\n"
+"TD.usercol9 {text-align:center;}\n"
+"TD.usercol10 {text-align:center;}\n"
+"TD.usercol11 {text-align:center;}\n"
+"TD.usercol12 {text-align:center;}\n"
+"TD.usercol13 {text-align:center;}\n"
+"TD.usercol14 {text-align:center;}\n"
+"TD.usercol15 {text-align:center;}\n"
+"TD.usercol16 {text-align:center;}\n"
+"TD.usercol17 {text-align:center;}\n"
+"TD.usercol18 {text-align:center;}\n"
+"TD.usercol19 {text-align:center;}\n"
+"TD.usercol20 {text-align:center;}\n"
+"TD.usercol21 {text-align:center;}\n"
+"TD.menu {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;white-space: normal;}\n"
+"TD.menu_selected {color:black; background-color:#E6FEBF; font-family: Arial; font-size:14px; font-weight:bold;font-style:italic;}\n"
+"TD.configmenu {color:black; background-color:white; font-family: Arial; font-size:11px; font-weight:bold;}\n"
+"TD.configmenu_selected {color:black; background-color:#E6FEBF; font-family: Arial; font-size:11px; font-weight:bold;font-style:italic;}\n"
+"TD.subheadline {height:10px; border:0px; font-family: Arial; font-size: 11px; padding:5px; background-color:#CCCCCC; color:black;}\n"
+"TD.subheadline A {text-decoration: none;}\n"
+"TR.s TD {background-color:#e1e1ef;}\n"
+"TR.l TD {background-color:#e1e1ef;}\n"
+"TR.n TD {background-color:#e1e1ef;}\n"
+"TR.h TD {background-color:#e1e1ef;}\n"
+"TR.r TD {background-color:#fff3e7;}\n"
+"TR.p TD {background-color:#fdfbe1;}\n"
+"TR.c TD {background-color:#f1f5e6;}\n"
+"TR.a TD {background-color:#33ff00;}\n"
+"TR.online TD {background-color:#BBFFAA;}\n"
+"TR.online TD.usercol5 {background-color:#646464;}\n"
+"TR.expired TD {background-color:#FFBBAA;}\n"
+"TR.connected TD {background-color:#FFFFAA;}\n"
+"TR.disabled TD:first-child IMG.icon {background-color:#00AA00;}\n"
+"TR.disabledreader TD:first-child IMG.icon {background-color:#00AA00;}\n"
+"TR.scanusbsubhead TD {background-color:#fdfbe1;}\n"
+"TR.e_valid TD {background-color:#E6FEBF;text-align:center; font-family:\"Courier New\", monospace;}\n"
+"TR.e_expired TD {background-color:#fff3e7;text-align:center; font-family:\"Courier New\", monospace;}\n"
+"TR.e_header TD {text-align:center; font-family:\"Courier New\", monospace;}\n"
+"HR {height:1px; border-width:0; color:white; background-color:#AAAAAA}\n"
+"DIV.log {border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:10px; font-family:\"Courier New\", monospace; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left; }\n"
+"DIV.sidlist {border:1px dotted #AAAAAA; background-color: #fffdf5; padding:2px; font-family:\"Courier New\", monospace ; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left;}\n"
+"DIV.message {position:absolute;right:0;font-family: Arial; font-size: 12px;font-weight:bold;}\n"
+"DIV.div_notifier {height:14px;width:14px;border-radius:7px;-webkit-border-radius:7px;background-color:red;margin-left:4px;text-align:center;float:right;}\n"
+"DIV.debugmenu {line-height: 20px;}\n"
+"DIV.logmenu {line-height: 20px;}\n"
+"DIV.filterform {margin: 10px;}\n"
+"TABLE.menu {border-spacing:0px; border:0px; padding:0px; margin-left:auto; margin-right:auto;}\n"
+"TABLE.status {border-spacing:1px; border:0px; padding:0px; background-color:white; empty-cells:show;}\n"
+"TABLE.config {width:750px;}\n"
+"TABLE.invisible TD {border:0px; font-family:Arial; font-size: 12px; padding:5px; background-color:#EEEEEE;}\n"
+"TABLE.configmenu {line-height: 16px;}\n"
+"TEXTAREA.bt {font-family: Arial; font-size: 12px;}\n"
+"TEXTAREA.editor {width:99%; height:508px; border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:8px 10px; font-family:\"Courier New\", monospace; color:black; font-size: 11px; word-wrap:break-word; text-align:left;}\n"
+"A.debugls:link {color: white;background-color:red;}\n"
+"A.debugls:visited {color: white;background-color:red;}\n"
+"A:link {color: #050840;}\n"
+"A:visited {color: #050840;}\n"
+"A:active {color: #050840;}\n"
+"A:hover {color: #ff9e5f;}\n"
+"A:hover IMG.icon {border: 1px solid yellow;width:20px;height:20px;}\n"
+"A.tooltip  {position: relative; text-decoration: none; cursor:default;}\n"
+"A.tooltip1 {position: relative; text-decoration: none; cursor:default;color:red;}\n"
+"A.tooltip  SPAN {display: none; z-index:99;}\n"
+"A.tooltip1 SPAN {display: none; z-index:99;}\n"
+"A:hover SPAN {display: block;position: absolute;top: 2em; right: 1em; margin: 0px;padding: 10px;color: #335500;font-weight: normal;background: #ffffdd;text-align: left;border: 1px solid #666;}\n"
+"IMG {border:0px solid;}\n"
+"IMG.icon {border: 0px solid;width:22px;height:22px;background-color:#AA0000;border-radius:3px;-webkit-border-radius:3px;}\n"
+"IMG.clientpicon {height:40px;width:80px;}\n"
+"rect.graph_bg {fill:white;}\n"
+"text.graph_error {text-anchor:middle;fill:red}\n"
+"text.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}\n"
+"path.graph_grid {stroke:gray;stroke-opacity:0.5}\n"
+"SPAN.e_valid {background-color:#E6FEBF;}\n"
+"SPAN.e_expired {background-color:#fff3e7;}\n"
+"SPAN.div_notifier {background-color:red;color: white;font-family:Arial;font-size:10px;font-weight:bold;}\n"
+"SPAN.idlesec_normal {font-family: Arial; font-size: 9px;color: black}\n"
+"SPAN.idlesec_alert {font-family: Arial; font-size: 9px;color: red}\n"
+"SPAN.global_conf {color: blue; font-size: 12px; font-family: Arial; cursor: default; padding: 4px;}\n";
 
 // minimized and optimized JS based on http://en.hasheminezhad.com/scrollsaver to retain scroll position.
-#define JSCRIPT "function addUnloadHandler(){var a,e;if(window.attachEvent){a=window.attachEvent;e='on';}else{a=window.addEventListener;e='';}a(e+'load',function(){loadScroll();if(typeof Sys!='undefined' && typeof Sys.WebForms!='undefined')Sys.WebForms.PageRequestManager.getInstance().add_endRequest(loadScroll);},false);}function loadScroll(){var c=document.cookie.split(';');for(var i=0;i<c.length;i++){var p=c[i].split('=');if(p[0]=='scrollPosition'){p=unescape(p[1]).split('/');for(var j=0;j<p.length;j++){var e=p[j].split(',');try{if(e[0]=='window'){window.scrollTo(e[1],e[2]);}}catch(ex){}}return;}}}function saveScroll(){var s='scrollPosition=';var l,t;if(window.pageXOffset!==undefined){l=window.pageXOffset;t=window.pageYOffset;}else if(document.documentElement&&document.documentElement.scrollLeft!==undefined){l=document.documentElement.scrollLeft;t=document.documentElement.scrollTop;}else{l=document.body.scrollLeft;t=document.body.scrollTop;}if(l||t){s+='window,'+l+','+t+'/';}document.cookie=s+';';}"
+char *JSCRIPT = "function addUnloadHandler(){var a,e;if(window.attachEvent){a=window.attachEvent;e='on';}else{a=window.addEventListener;e='';}a(e+'load',function(){loadScroll();if(typeof Sys!='undefined' && typeof Sys.WebForms!='undefined')Sys.WebForms.PageRequestManager.getInstance().add_endRequest(loadScroll);},false);}function loadScroll(){var c=document.cookie.split(';');for(var i=0;i<c.length;i++){var p=c[i].split('=');if(p[0]=='scrollPosition'){p=unescape(p[1]).split('/');for(var j=0;j<p.length;j++){var e=p[j].split(',');try{if(e[0]=='window'){window.scrollTo(e[1],e[2]);}}catch(ex){}}return;}}}function saveScroll(){var s='scrollPosition=';var l,t;if(window.pageXOffset!==undefined){l=window.pageXOffset;t=window.pageYOffset;}else if(document.documentElement&&document.documentElement.scrollLeft!==undefined){l=document.documentElement.scrollLeft;t=document.documentElement.scrollTop;}else{l=document.body.scrollLeft;t=document.body.scrollTop;}if(l||t){s+='window,'+l+','+t+'/';}document.cookie=s+';';}";
 
 #define ICMAI "data:image/x-icon;base64,\
 AAABAAEAEBAAAAEACABoBQAAFgAAACgAAAAQAAAAIAAAAAEACAAAAAAAQAEAAAAAAAAAAAAAAAAA\
@@ -2383,9 +2296,7 @@ function isNumber(a) {\n\
 #define TPLCACHEEXTABLEROW "			<TR><TD>&nbsp;&nbsp;##DIRECTIONIMG##&nbsp;&nbsp;</TD><TD>##TYPE##</TD><TD>##NAME##</TD><TD>##LEVEL##</TD><TD>##PUSH##</TD><TD>##GOT##</TD><TD>##HIT##</TD></TR>\n"
 #endif
 
-enum refreshtypes {REFR_ACCOUNTS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REFR_SERVICES};
-
-char *tpl[]={
+char *tpl[] = {
 	"HEADER",
 	"APIHEADER",
 	"JSONHEADER",
@@ -2562,7 +2473,7 @@ char *tpl[]={
 	,"ICSPAC"
 };
 
-char *tplmap[]={
+char *tplmap[] = {
 	TPLHEADER,
 	TPLAPIHEADER,
 	TPLJSONHEADER,
@@ -2739,25 +2650,8 @@ char *tplmap[]={
 	,ICSPAC
 };
 
-struct templatevars {
-	uint32_t varscnt;
-	uint32_t varsalloc;
-	uint32_t tmpcnt;
-	uint32_t tmpalloc;
-	char **names;
-	char **values;
-	uint8_t *vartypes;
-	char **tmp;
-};
+int32_t tpl_count(void) { return sizeof(tpl) / sizeof(char *); }
+int32_t tplmap_count(void) { return sizeof(tplmap) / sizeof(char *); }
+int32_t cv(void) { return 91789605==crc32(0L,(unsigned char*)ICMAI,strlen(ICMAI))/2?1:0; }
 
-struct uriparams {
-	int32_t paramcount;
-	char *params[MAXGETPARAMS];
-	char *values[MAXGETPARAMS];
-};
-
-static int8_t b64decoder[256];
-static char noncekey[33];
-
-int32_t cv(void){return 91789605==crc32(0L,(unsigned char*)ICMAI,strlen(ICMAI))/2?1:0;} 
-
+#endif
