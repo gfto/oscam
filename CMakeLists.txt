@@ -163,32 +163,19 @@ add_definitions ("-DCS_CONFDIR=\\\"${CS_CONFDIR}\\\"")
 # Manage oscam-config.h based on command line parameters
 # Manipulate config file based on given parameters and read unset parameters
 
-# Available options
-set(addons WEBIF HAVE_DVBAPI IRDETO_GUESSING CS_ANTICASC WITH_DEBUG WITH_SSL CS_CACHEEX LCDSUPPORT)
-set(protocols MODULE_CAMD33 MODULE_CAMD35 MODULE_CAMD35_TCP MODULE_NEWCAMD MODULE_CCCAM MODULE_CCCSHARE MODULE_RADEGAST MODULE_SERIAL MODULE_MONITOR MODULE_CONSTCW)
-set(readers WITH_CARDREADER READER_NAGRA READER_IRDETO READER_CONAX READER_CRYPTOWORKS READER_SECA READER_VIACCESS READER_VIDEOGUARD READER_DRE READER_TONGFANG READER_BULCRYPT)
+execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --show-valid OUTPUT_VARIABLE config_vars_string OUTPUT_STRIP_TRAILING_WHITESPACE)
+string(REGEX MATCHALL "[A-Z0-9_]+" config_vars ${config_vars_string})
 
 MACRO(GENERATE_OSCAM_CONFIG fullpath)
-	file(READ ${fullpath} config)
-	foreach(option ${addons} ${protocols} ${readers})
+	foreach(option ${config_vars})
 		if(DEFINED ${option})
-			# Note: cmake does not read the file as individual lines but as a long
-			#		string, hence we use \n instead of ^ to determine where a line begins
-
 			if(${option})
-				string(REGEX REPLACE "\n//#define ${option}" "\n#define ${option}" config ${config})
+				execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --enable ${option})
 			else(${option})
-				string(REGEX REPLACE "\n#define ${option}" "\n//#define ${option}" config ${config})
+				execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --disable ${option})
 			endif(${option})
-		else(DEFINED ${option})
-			# read value from current oscam-config.h
-
-			if(${config} MATCHES "\n#define ${option}")
-				SET(${option} TRUE)
-			endif(${config} MATCHES "\n#define ${option}")
 		endif(DEFINED ${option})
 	endforeach(option)
-	file(WRITE ${fullpath} ${config})
 ENDMACRO(GENERATE_OSCAM_CONFIG fullpath)
 
 #----------------------- subdirectories ------------------------------
@@ -208,6 +195,11 @@ check_include_file ("openssl/aes.h" HAVE_LIBCRYPTO)
 if (HAVE_LIBCRYPTO)
     add_definitions ("-DWITH_LIBCRYPTO")
 endif (HAVE_LIBCRYPTO)
+
+execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --enabled WITH_SSL OUTPUT_VARIABLE CONFIG_WITH_SSL OUTPUT_STRIP_TRAILING_WHITESPACE)
+if (CONFIG_WITH_SSL MATCHES "Y")
+    set (WITH_SSL TRUE)
+endif (CONFIG_WITH_SSL MATCHES "Y")
 
 find_package(OpenSSL QUIET)
 if (OPENSSL_FOUND)
