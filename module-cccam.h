@@ -11,7 +11,6 @@
 
 #ifdef MODULE_CCCAM
 
-#include "module-datastruct-llist.h"
 #include "cscrypt/rc6.h"
 #include "cscrypt/idea.h"
 

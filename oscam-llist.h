@@ -1,8 +1,8 @@
 
 /* singularly linked-list */
 
-#ifndef DATASTRUCT_LLIST_H_
-#define DATASTRUCT_LLIST_H_
+#ifndef OSCAM_LLIST_H_
+#define OSCAM_LLIST_H_
 
 typedef struct llnode LL_NODE;
 struct llnode {

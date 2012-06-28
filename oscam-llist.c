@@ -2,7 +2,6 @@
 /* singularly linked-list */
 
 #include "globals.h"
-#include "module-datastruct-llist.h"
 
 /*
   Locking rules:

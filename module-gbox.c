@@ -5,7 +5,6 @@
 #include <time.h>
 #include <sys/time.h>
 
-#include "module-datastruct-llist.h"
 #include "algo/minilzo.h"
 
 enum {

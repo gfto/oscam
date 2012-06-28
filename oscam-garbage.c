@@ -1,5 +1,4 @@
 #include "globals.h"
-#include "module-datastruct-llist.h"
 #define HASH_BUCKETS 16
 
 struct cs_garbage {

@@ -1,7 +1,6 @@
 #include "globals.h"
 #include <syslog.h>
 #include <stdlib.h>
-#include "module-datastruct-llist.h"
 
 char *LOG_LIST = "log_list";
 

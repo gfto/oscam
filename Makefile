@@ -294,7 +294,6 @@ endif
 
 OSCAM_LIB = $(LIBDIR)/libcs-$(TARGET).a
 OSCAM_DEP = $(GLOBAL_DEP) globals.h oscam-config.h
-OSCAM_OBJ-y += $(OSCAM_LIB)(module-datastruct-llist.o)
 OSCAM_OBJ-$(CONFIG_MODULE_CAMD33) += $(OSCAM_LIB)(module-camd33.o)
 OSCAM_OBJ-$(sort $(CONFIG_MODULE_CAMD35) $(CONFIG_MODULE_CAMD35_TCP)) += $(OSCAM_LIB)(module-camd35.o)
 OSCAM_OBJ-$(CONFIG_MODULE_CCCAM) += $(OSCAM_LIB)(module-cccam.o)
@@ -320,6 +319,7 @@ OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-chk.o)
 OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-config.o)
 OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-garbage.o)
 OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-log.o)
+OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-llist.o)
 OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-reader.o)
 OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-simples.o)
 

@@ -479,7 +479,7 @@ typedef struct cs_mutexlock {
 	int16_t		writelock, readlock;
 } CS_MUTEX_LOCK;
 
-#include "module-datastruct-llist.h"
+#include "oscam-llist.h"
 
 typedef struct s_caidvaluetab {
 	uint16_t		n;
