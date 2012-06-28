@@ -467,3 +467,5 @@ do
 	esac
 	shift
 done
+
+exit 0
