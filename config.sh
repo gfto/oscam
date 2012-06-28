@@ -69,11 +69,11 @@ Examples:
   # Enable WEBIF and SSL
   ./config.sh --enable WEBIF WITH_SSL
 
-  # Disable SSL
-  ./config.sh --disable WITH_SSL
+  # Disable WEBIF but enable WITH_SSL
+  ./config.sh --disable WEBIF --enable WITH_SSL
 
-  # Disable some readers
-  ./config.sh --disable MODULE_GBOX MODULE_RADEGAST
+  # Restore defaults and disable WEBIF and READER_NAGRA
+  ./config.sh --restore --disable WEBIF READER_NAGRA
 
 Available options:
     addons: $addons
@@ -292,9 +292,12 @@ then
 	exit 1
 fi
 
-case "$1" in
+while [ $# -gt 0 ]
+do
+	case "$1" in
 	'-g'|'--gui'|'--config'|'--menuconfig')
 		config_dialog
+		break
 	;;
 	'-s'|'--show')
 		shift
@@ -317,7 +320,15 @@ case "$1" in
 		shift
 		while [ "$1" != "" ]
 		do
-			enable_opt "$1"
+			case "$1" in
+			-*)
+				$0 --make-config.mak
+				continue 2
+				;;
+			*)
+				enable_opt "$1"
+				;;
+			esac
 			shift
 		done
 		$0 --make-config.mak
@@ -326,7 +337,15 @@ case "$1" in
 		shift
 		while [ "$1" != "" ]
 		do
-			disable_opt "$1"
+			case "$1" in
+			-*)
+				$0 --make-config.mak
+				continue 2
+				;;
+			*)
+				disable_opt "$1"
+				;;
+			esac
 			shift
 		done
 		$0 --make-config.mak
@@ -351,6 +370,7 @@ case "$1" in
 		else
 			echo "N" && exit 1
 		fi
+		break
 	;;
 	'-d'|'--disabled')
 		grep "^\#define $2$" oscam-config.h >/dev/null 2>/dev/null
@@ -359,12 +379,15 @@ case "$1" in
 		else
 			echo "N" && exit 1
 		fi
+		break
 	;;
 	'-v'|'--oscam-version')
 		grep CS_VERSION globals.h | cut -d\" -f2
+		break
 	;;
 	'-r'|'--oscam-revision')
 		(svnversion -n . 2>/dev/null || echo -n 0) | sed 's/.*://; s/[^0-9]*$//; s/^$/0/'
+		break
 	;;
 	'--detect-osx-sdk-version')
 		shift
@@ -378,6 +401,7 @@ case "$1" in
 			fi
 		done
 		echo /Developer/SDKs/MacOSX$(OSX_VER).sdk
+		break
 	;;
 	'-l'|'--list-config')
 		for OPT in $addons $protocols $readers
@@ -406,4 +430,6 @@ case "$1" in
 	*)
 		echo "[WARN] Unknown parameter: $1" >&2
 	;;
-esac
+	esac
+	shift
+done
