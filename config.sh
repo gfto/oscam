@@ -1,7 +1,5 @@
 #!/bin/sh
 
-WD=$(dirname $0)
-
 addons="WEBIF HAVE_DVBAPI IRDETO_GUESSING CS_ANTICASC WITH_DEBUG MODULE_MONITOR WITH_SSL WITH_LB CS_CACHEEX LCDSUPPORT IPV6SUPPORT"
 protocols="MODULE_CAMD33 MODULE_CAMD35 MODULE_CAMD35_TCP MODULE_NEWCAMD MODULE_CCCAM MODULE_GBOX MODULE_RADEGAST MODULE_SERIAL MODULE_CONSTCW MODULE_PANDORA"
 readers="WITH_CARDREADER READER_NAGRA READER_IRDETO READER_CONAX READER_CRYPTOWORKS READER_SECA READER_VIACCESS READER_VIDEOGUARD READER_DRE READER_TONGFANG READER_BULCRYPT"
@@ -242,6 +240,9 @@ config_dialog() {
 	done
 }
 
+# Change working directory to the directory where the script is
+cd $(dirname $0)
+
 case "$1" in
 	'-g'|'--gui'|'--config'|'--menuconfig')
 		config_dialog
@@ -311,10 +312,10 @@ case "$1" in
 		fi
 	;;
 	'-v'|'--oscam-version')
-		grep CS_VERSION $WD/globals.h | cut -d\" -f2
+		grep CS_VERSION globals.h | cut -d\" -f2
 	;;
 	'-r'|'--oscam-revision')
-		(svnversion -n $WD 2>/dev/null || echo -n 0) | sed 's/.*://; s/[^0-9]*$//; s/^$/0/'
+		(svnversion -n . 2>/dev/null || echo -n 0) | sed 's/.*://; s/[^0-9]*$//; s/^$/0/'
 	;;
 	'--detect-osx-sdk-version')
 		shift
