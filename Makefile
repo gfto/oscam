@@ -287,6 +287,7 @@ endif
 
 OSCAM_LIB = $(LIBDIR)/libcs-$(TARGET).a
 OSCAM_DEP = $(GLOBAL_DEP) globals.h oscam-config.h
+OSCAM_OBJ-$(CONFIG_CS_ANTICASC) += $(OSCAM_LIB)(module-anticasc.o)
 OSCAM_OBJ-$(CONFIG_MODULE_CAMD33) += $(OSCAM_LIB)(module-camd33.o)
 OSCAM_OBJ-$(sort $(CONFIG_MODULE_CAMD35) $(CONFIG_MODULE_CAMD35_TCP)) += $(OSCAM_LIB)(module-camd35.o)
 OSCAM_OBJ-$(CONFIG_MODULE_CCCAM) += $(OSCAM_LIB)(module-cccam.o)
@@ -307,7 +308,6 @@ OSCAM_OBJ-$(CONFIG_MODULE_SERIAL) += $(OSCAM_LIB)(module-serial.o)
 OSCAM_OBJ-$(CONFIG_WITH_LB) += $(OSCAM_LIB)(module-stat.o)
 OSCAM_OBJ-$(CONFIG_WEBIF) += $(OSCAM_LIB)(oscam-http-helpers.o)
 OSCAM_OBJ-$(CONFIG_WEBIF) += $(OSCAM_LIB)(oscam-http.o)
-OSCAM_OBJ-$(CONFIG_CS_ANTICASC) += $(OSCAM_LIB)(oscam-ac.o)
 OSCAM_OBJ-$(CONFIG_WITH_CARDREADER) += $(OSCAM_LIB)(reader-common.o)
 OSCAM_OBJ-$(CONFIG_READER_BULCRYPT) += $(OSCAM_LIB)(reader-bulcrypt.o)
 OSCAM_OBJ-$(CONFIG_READER_CONAX) += $(OSCAM_LIB)(reader-conax.o)

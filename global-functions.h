@@ -121,7 +121,7 @@ extern void cs_debug_level(void);
 extern void cs_add_cache(struct s_client *cl, ECM_REQUEST *er, int8_t csp);
 
 /* ===========================
- *           oscam-ac
+ *       module-anticasc
  * =========================== */
 extern void init_ac(void);
 extern void ac_init_stat(void);
