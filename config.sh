@@ -47,6 +47,7 @@ Usage: `basename $0` [parameters]
  -g, --gui                 Start interactive configuration
 
  -s, --show-enabled [param] Show enabled configuration options.
+ -Z, --show-disabled [param] Show disabled configuration options.
  -S, --show-valid [param]  Show valid configuration options.
                            Possible params: all, addons, protocols, readers
 
@@ -100,6 +101,14 @@ list_enabled() {
 	do
 		grep "^\#define $OPT$" oscam-config.h >/dev/null 2>/dev/null
 		[ $? = 0 ] && echo $OPT
+	done
+}
+
+list_disabled() {
+	for OPT in $@
+	do
+		grep "^\#define $OPT$" oscam-config.h >/dev/null 2>/dev/null
+		[ $? = 1 ] && echo $OPT
 	done
 }
 
@@ -338,6 +347,11 @@ do
 	'-s'|'--show-enabled'|'--show')
 		shift
 		list_enabled $(get_opts $1)
+		break
+		;;
+	'-Z'|'--show-disabled')
+		shift
+		list_disabled $(get_opts $1)
 		break
 		;;
 	'-S'|'--show-valid')
