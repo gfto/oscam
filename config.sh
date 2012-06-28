@@ -107,6 +107,34 @@ disabled() {
 	return 0
 }
 
+enabled_all() {
+	for opt ; do
+		enabled $opt || return 1
+	done
+	return 0
+}
+
+disabled_all() {
+	for opt ; do
+		disabled $opt || return 1
+	done
+	return 0
+}
+
+enabled_any() {
+	for opt ; do
+		enabled $opt && return 0
+	done
+	return 1
+}
+
+disabled_any() {
+	for opt ; do
+		disabled $opt && return 0
+	done
+	return 1
+}
+
 list_enabled() {
 	for OPT in $@
 	do
@@ -443,7 +471,13 @@ do
 		do
 			enabled $OPT && echo "CONFIG_$OPT=y" || echo "# CONFIG_$OPT=n"
 		done
-		echo "CONFIG_INCLUDED=Yes"
+		# Calculate dependencies
+		enabled MODULE_GBOX && echo "CONFIG_LIB_MINILZO=y" || echo "# CONFIG_LIB_MINILZO=n"
+		enabled MODULE_CCCAM && echo "CONFIG_LIB_RC6=y" || echo "# CONFIG_LIB_RC6=n"
+		enabled MODULE_CCCAM && echo "CONFIG_LIB_SHA1=y" || echo "# CONFIG_LIB_SHA1=n"
+		enabled_any MODULE_NEWCAMD READER_DRE && echo "CONFIG_LIB_DES=y" || echo "# CONFIG_LIB_DES=n"
+		enabled_any MODULE_CCCAM READER_NAGRA && echo "CONFIG_LIB_IDEA=y" || echo "# CONFIG_LIB_IDEA=n"
+		enabled_any READER_CONAX READER_CRYPTOWORKS READER_NAGRA && echo "CONFIG_LIB_BIGNUM=y" || echo "# CONFIG_LIB_BIGNUM=n"
 		exit 0
 	;;
 	'-m'|'--make-config.mak')
