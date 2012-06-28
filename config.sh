@@ -96,41 +96,41 @@ Available options:
 "
 }
 
+enabled() {
+	grep "^\#define $1$" oscam-config.h >/dev/null 2>/dev/null
+	return $?
+}
+
+disabled() {
+	grep "^\#define $1$" oscam-config.h >/dev/null 2>/dev/null
+	test $? = 0 && return 1
+	return 0
+}
+
 list_enabled() {
 	for OPT in $@
 	do
-		grep "^\#define $OPT$" oscam-config.h >/dev/null 2>/dev/null
-		[ $? = 0 ] && echo $OPT
+		enabled $OPT && echo $OPT
 	done
 }
 
 list_disabled() {
 	for OPT in $@
 	do
-		grep "^\#define $OPT$" oscam-config.h >/dev/null 2>/dev/null
-		[ $? = 1 ] && echo $OPT
+		disabled $OPT && echo $OPT
 	done
 }
 
 valid_opt() {
-	[ "$1" = "" ] && return 0
 	echo $addons $protocols $readers | grep -w "$1" >/dev/null
-	[ $? = 0 ] && return 1
-	return 0
+	return $?
 }
 
 enable_opt() {
-	OPT="$1"
-	valid_opt $OPT
-	if [ $? ]
-	then
-		grep "^\//#define $OPT$" oscam-config.h >/dev/null 2>/dev/null
-		if [ $? = 0 ]
-		then
-			sed -i.bak -e "s|//#define $OPT$|#define $OPT|g" oscam-config.h && rm oscam-config.h.bak
-			echo "Enable $OPT"
-		fi
-	fi
+	valid_opt $1 && disabled $1 && {
+		sed -i.bak -e "s|//#define $1$|#define $1|g" oscam-config.h && rm oscam-config.h.bak
+		echo "Enable $1"
+	}
 }
 
 enable_opts() {
@@ -141,17 +141,10 @@ enable_opts() {
 }
 
 disable_opt() {
-	OPT="$1"
-	valid_opt "$OPT"
-	if [ $? ]
-	then
-		grep "^\#define $OPT$" oscam-config.h >/dev/null 2>/dev/null
-		if [ $? = 0 ]
-		then
-			sed -i.bak -e "s|#define $OPT$|//#define $OPT|g" oscam-config.h && rm oscam-config.h.bak
-			echo "Disable $OPT"
-		fi
-	fi
+	valid_opt $1 && enabled $1 && {
+		sed -i.bak -e "s|#define $1$|//#define $1|g" oscam-config.h && rm oscam-config.h.bak
+		echo "Disable $1"
+	}
 }
 
 disable_opts() {
@@ -416,21 +409,11 @@ do
 		$0 --make-config.mak
 		;;
 	'-e'|'--enabled')
-		grep "^\#define $2$" oscam-config.h >/dev/null 2>/dev/null
-		if [ $? = 0 ]; then
-			echo "Y" && exit 0
-		else
-			echo "N" && exit 1
-		fi
+		enabled $2 && echo "Y" && exit 0 || echo "N" && exit 1
 		break
 	;;
 	'-d'|'--disabled')
-		grep "^\#define $2$" oscam-config.h >/dev/null 2>/dev/null
-		if [ $? = 1 ]; then
-			echo "Y" && exit 0
-		else
-			echo "N" && exit 1
-		fi
+		disabled $2 && echo "Y" && exit 0 || echo "N" && exit 1
 		break
 	;;
 	'-v'|'--oscam-version')
@@ -458,8 +441,7 @@ do
 	'-l'|'--list-config')
 		for OPT in $addons $protocols $readers
 		do
-			grep "^\#define $OPT$" oscam-config.h >/dev/null 2>/dev/null
-			[ $? = 0 ] && echo "CONFIG_$OPT=y" || echo "# CONFIG_$OPT=n"
+			enabled $OPT && echo "CONFIG_$OPT=y" || echo "# CONFIG_$OPT=n"
 		done
 		echo "CONFIG_INCLUDED=Yes"
 		exit 0
