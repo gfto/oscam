@@ -10,6 +10,7 @@ static FILE *fps=(FILE *)0;
 static FILE *fpa=(FILE *)0;
 #endif
 static int8_t logStarted = 0;
+static int8_t logThreadRunning = 0;
 LLIST *log_list;
 char *vbuf;
 
@@ -537,9 +538,9 @@ void cs_statistics(struct s_client * client)
 void log_list_thread(void)
 {
 	char buf[LOG_BUF_SIZE];
-
+	logThreadRunning = 1;
 	int last_count=ll_count(log_list), count, grow_count=0, write_count;
-	while (1) {
+	do {
 		LL_ITER it = ll_iter_create(log_list);
 		struct s_log *log;
 		write_count = 0;
@@ -583,7 +584,8 @@ void log_list_thread(void)
 		}
 
 		cs_sleepms(250);
-	}
+	} while(!cfg.disablelog);
+	logThreadRunning = 0;
 }
 
 int32_t cs_init_log(void)
@@ -607,9 +609,20 @@ void cs_disable_log(int8_t disabled)
 		cfg.disablelog = disabled;
 		if (disabled) {
 			if (logStarted) {
-				cs_sleepms(100);
-				log_list_thread(); //Clean log
+				while(logThreadRunning == 1){
+					cs_sleepms(5);
+				}
+				if(ll_count(log_list) > 0) log_list_thread(); //Clean log
 				cs_close_log();
+			}
+		} else {
+			if(logStarted == 0){
+				cs_init_log();
+			} else {
+				cs_open_logfiles();
+				if(logThreadRunning == 0){
+					start_thread((void*)&log_list_thread, "log_list_thread");
+				}
 			}
 		}
 	}

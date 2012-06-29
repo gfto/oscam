@@ -328,9 +328,7 @@ int32_t tpl_saveIncludedTpls(const char *path){
 /* Checks all disk templates in a directory if they are still current or may need upgrade! */
 void tpl_checkOneDirDiskRevisions(const char* subdir) {
 	char dirpath[255] = "\0";
-	if (strlen(subdir) > 0) {
-		snprintf(dirpath, 255, "%s%s", cfg.http_tpl, subdir);
-	}
+	snprintf(dirpath, 255, "%s%s", cfg.http_tpl, subdir);
 
 	int32_t i, tplcnt = tpl_count();
 		char path[255];
