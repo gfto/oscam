@@ -167,8 +167,10 @@ char *get_ecm_historystring(struct s_client *cl){
 			}
 			k++;
 		}
-
-		return (value);
+		if(strlen(value) == 0){
+			free(value);
+			return "";
+		} else return value;
 
 	} else {
 		return "";
