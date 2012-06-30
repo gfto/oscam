@@ -50,11 +50,6 @@ void add_garbage(void *data) {
 #endif
 	
 	struct cs_garbage *garbage = malloc(sizeof(struct cs_garbage));
-	if (!garbage) {
-		free(data);
-		cs_writeunlock(&garbage_lock[bucket]);
-		return;
-	}
 	garbage->time = time(NULL);
 	garbage->data = data;
 	garbage->next = garbage_first[bucket];
