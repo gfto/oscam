@@ -1,7 +1,7 @@
 #include "globals.h"
 #ifdef READER_CONAX 
 #include "reader-common.h"
-#include "cscrypt/idea.h"
+#include "cscrypt/bn.h"
 
 static void ReverseMem(unsigned char *vIn, int32_t len)
 {
