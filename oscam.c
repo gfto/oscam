@@ -644,6 +644,29 @@ static void cleanup_ecmtasks(struct s_client *cl)
 	cs_readunlock(&readerlist_lock);
 }
 
+/**
+ * removes a reader from ecm cache queue - data
+ **/
+void remove_reader_from_ecm(struct s_reader *rdr)
+{
+        ECM_REQUEST *ecm;
+        struct s_ecm_answer *ea_list, *ea_prev;
+        
+	cs_readlock(&ecmcache_lock);
+	for (ecm = ecmcwcache; ecm; ecm = ecm->next) { 
+		for(ea_list = ecm->matching_rdr, ea_prev=NULL; ea_list; ea_prev = ea_list, ea_list = ea_list->next) {
+			if (ea_list->reader == rdr) {
+				if (ea_prev)
+					ea_prev->next = ea_list->next;
+				else
+					ecm->matching_rdr = ea_list->next;
+				add_garbage(ea_list);
+			}
+		}
+	} 
+	cs_readunlock(&ecmcache_lock);
+}
+
 void cleanup_thread(void *var)
 {
 	struct s_client *cl = var;
@@ -663,6 +686,8 @@ void cleanup_thread(void *var)
 		
 	// Clean reader. The cleaned structures should be only used by the reader thread, so we should be save without waiting
 	if (rdr){
+	        remove_reader_from_ecm(rdr);
+	        
 		remove_reader_from_active(rdr);
 		if(rdr->ph.cleanup)
 			rdr->ph.cleanup(cl);
