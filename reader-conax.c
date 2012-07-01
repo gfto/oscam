@@ -75,6 +75,34 @@ static int32_t read_record(struct s_reader * reader, const uchar *cmd, const uch
   return(cta_lr-2);
 }
 
+static uint8_t PairingECMRotation(struct s_reader * reader, const ECM_REQUEST *er, int32_t n)
+{
+  unsigned char cta_res[CTA_RES_LEN] = {0x00};
+  uchar ins26[] = {0xDD, 0x26, 0x00, 0x00, 0x03, 0x10, 0x01, 0x00};
+  uint8_t cnxcurrecm = 0;
+  
+  if(0x0 != reader->rsa_mod[0] && n > 3 &&
+     0x54 == er->ecm[n-3] &&
+     0x02 == er->ecm[n-2] &&
+     0x00 == er->ecm[n-1])
+  {
+    cnxcurrecm = 1;
+  }
+
+  if((0 == reader->cnxlastecm) != (0 == cnxcurrecm))
+  {
+    if(0 == cnxcurrecm) // not paired
+      ins26[7] = 0x30;
+    else
+      ins26[7] = 0x40;
+    
+    if(read_record(reader, ins26, ins26+5, cta_res)<=0)
+      cs_ri_log(reader, "PairingECMRotation - ERROR");
+  }
+  reader->cnxlastecm = cnxcurrecm;
+  return cnxcurrecm;
+}
+
 static int32_t conax_card_init(struct s_reader * reader, ATR *newatr)
 {
   unsigned char cta_res[CTA_RES_LEN];
@@ -167,7 +195,7 @@ static int32_t conax_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, str
 
   buf[0]=0x14;
   buf[1]=n+1;
-  if(0x0 != reader->rsa_mod[0])
+  if(0x0 != PairingECMRotation(reader, er, n))
     buf[2]=2; // card will answer with encrypted dw
   else 
     buf[2]=0;

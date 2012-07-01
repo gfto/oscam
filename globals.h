@@ -1268,6 +1268,8 @@ struct s_reader  									//contains device info, reader info and card info
 #ifdef MODULE_PANDORA
 	int8_t			pand_send_ecm;
 #endif
+  uint8_t cnxlastecm; // == 0 - las ecm has not been paired ecm, > 0 last ecm has been paired ecm
+
 	struct s_reader *next;
 };
 
