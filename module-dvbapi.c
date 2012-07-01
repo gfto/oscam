@@ -2329,7 +2329,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				default:
 					if (cfg.dvbapi_boxtype == BOXTYPE_NEUMO) {
 						int32_t idx=0;
-						sscanf(demux[i].pmt_file, "pmt%d.tmp", &idx);
+						sscanf(demux[i].pmt_file, "pmt%3d.tmp", &idx);
 						dvbapi_write_cw(i, er->cw, idx);
 						break;
 					}

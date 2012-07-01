@@ -76,6 +76,7 @@ void coolapi_read_data(dmx_t * dmx, int32_t len)
 static void dmx_callback(void * unk, dmx_t * dmx, int32_t type, void * data)
 {
 	dmx_callback_data_t * cdata = (dmx_callback_data_t *) data;
+	//FIXME
 	unk = unk;
 
 	if(!dmx) {

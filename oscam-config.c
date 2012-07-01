@@ -2068,7 +2068,7 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 			account->allowedtimeframe[1] = 0;
 		} else {
 			int32_t allowed[4];
-			if (sscanf(value, "%d:%d-%d:%d", &allowed[0], &allowed[1], &allowed[2], &allowed[3]) != 4) {
+			if (sscanf(value, "%2d:%2d-%2d:%2d", &allowed[0], &allowed[1], &allowed[2], &allowed[3]) != 4) {
 				account->allowedtimeframe[0] = 0;
 				account->allowedtimeframe[1] = 0;
 				fprintf(stderr, "Warning: value '%s' is not valid for allowedtimeframe (hh:mm-hh:mm)\n", value);
@@ -5848,7 +5848,7 @@ static struct s_global_whitelist *global_whitelist_read_int(void) {
 		uint32_t caid=0, provid=0, srvid=0, pid=0, chid=0, ecmlen=0, mapcaid=0, mapprovid=0;
 		memset(str1, 0, sizeof(str1));
 
-		ret = sscanf(token, "%c:%4x:%6x:%4x:%4x:%4x:%1024s", &type, &caid, &provid, &srvid, &pid, &chid, str1);
+		ret = sscanf(token, "%c:%4x:%6x:%4x:%4x:%4x:%1023s", &type, &caid, &provid, &srvid, &pid, &chid, str1);
 
 		type = tolower(type);
 
@@ -6017,7 +6017,7 @@ static struct s_cacheex_matcher *cacheex_matcher_read_int(void) {
 		uint32_t to_caid=0, to_provid=0, to_srvid=0, to_pid=0, to_chid=0, to_ecmlen=0;
 		int32_t valid_from=-2000, valid_to=4000;
 
-		ret = sscanf(token, "%c:%4x:%6x:%4x:%4x:%4x:%4X=%4x:%6x:%4x:%4x:%4x:%4X,%d,%d",
+		ret = sscanf(token, "%c:%4x:%6x:%4x:%4x:%4x:%4X=%4x:%6x:%4x:%4x:%4x:%4X,%4d,%4d",
 				&type,
 				&caid, &provid, &srvid, &pid, &chid, &ecmlen,
 				&to_caid, &to_provid, &to_srvid, &to_pid, &to_chid, &to_ecmlen,

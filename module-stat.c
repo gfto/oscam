@@ -164,7 +164,7 @@ void load_stat_from_file(void)
 				stat->ecmlen = a2i(split[10], 2);
 			}
 		} else { //Old format - keep for compatibility:
-			i = sscanf(line, "%s rc %d caid %04hX prid %06X srvid %04hX time avg %dms ecms %d last %ld fail %d len %02hX\n",
+			i = sscanf(line, "%255s rc %04d caid %04hX prid %06X srvid %04hX time avg %dms ecms %d last %ld fail %d len %02hX\n",
 				buf, &stat->rc, &stat->caid, &stat->prid, &stat->srvid, 
 				&stat->time_avg, &stat->ecm_count, &stat->last_received, &stat->fail_factor, &stat->ecmlen);
 			valid = i>5;
