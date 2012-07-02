@@ -245,7 +245,7 @@ void __md5_Final(unsigned char digest[MD5_DIGEST_LENGTH], struct MD5Context *ctx
 	byteReverse((unsigned char *) ctx->buf, 4);
 
 	memcpy(digest, ctx->buf, 16);
-	memset(ctx, 0, sizeof(*ctx)); /* In case it's sensitive */
+	memset(ctx, 0, sizeof(ctx)); /* In case it's sensitive */
 }
 
 /* This string is magic for this algorithm.  Having
