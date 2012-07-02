@@ -275,7 +275,6 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 
 	if (cfg.cwlogdir != NULL) tpl_addVar(vars, TPLADD, "CWLOGDIR", cfg.cwlogdir);
 	if (cfg.emmlogdir != NULL) tpl_addVar(vars, TPLADD, "EMMLOGDIR", cfg.emmlogdir);
-	if (cfg.saveinithistory == 1)	tpl_addVar(vars, TPLADD, "SAVEINITHISTORYCHECKED", "selected");
 	tpl_printf(vars, TPLADD, "LOGHISTORYSIZE", "%u", cfg.loghistorysize);
 
 	tpl_printf(vars, TPLADD, "CLIENTTIMEOUT", "%u", cfg.ctimeout);
@@ -2758,7 +2757,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 	int32_t offset = atoi(getParam(params, "offset")); //should be 0 if parameter is missed on very first call
 
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
-	if (show_global_list || (cfg.saveinithistory && strlen(reader_) > 0) || (rdr && rdr->typ == R_CCCAM)) {
+	if (show_global_list || strlen(reader_) || (rdr && rdr->typ == R_CCCAM)) {
 
 		if (show_global_list || (rdr && rdr->typ == R_CCCAM && rdr->enable)) {
 
@@ -2805,7 +2804,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 
 		} else {
 #else
-	if (cfg.saveinithistory && strlen(reader_) > 0) {
+	if (strlen(reader_)) {
 		{
 			struct s_reader *rdr;
 #endif
@@ -2907,8 +2906,6 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 		}
 
 	} else {
-		tpl_addVar(vars, TPLADD, "LOGHISTORY",
-				"You have to set saveinithistory=1 in your config to see Entitlements!<BR>\n");
 		tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
 	}
 

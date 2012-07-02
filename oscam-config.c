@@ -621,11 +621,6 @@ void chk_t_global(const char *token, char *value)
 		return;
 	}
 
-	if( !strcmp(token, "saveinithistory")) {
-		cfg.saveinithistory = strToIntVal(value, 0);
-		return;
-	}
-
 	if (!strcmp(token, "readerrestartseconds")) {
 		cfg.reader_restart_seconds = strToIntVal(value, 5);
 		return;
@@ -2243,8 +2238,6 @@ int32_t write_config(void)
 		fprintf_conf(f, "waitforcards_extra_delay", "%d\n", cfg.waitforcards_extra_delay);
 	if (cfg.preferlocalcards || cfg.http_full_cfg)
 		fprintf_conf(f, "preferlocalcards", "%d\n", cfg.preferlocalcards);
-	if (cfg.saveinithistory || cfg.http_full_cfg)
-		fprintf_conf(f, "saveinithistory", "%d\n", cfg.saveinithistory);
 	if (cfg.reader_restart_seconds != 5 || cfg.http_full_cfg)
 		fprintf_conf(f, "readerrestartseconds", "%d\n", cfg.reader_restart_seconds);
 	if (cfg.dropdups || cfg.http_full_cfg)

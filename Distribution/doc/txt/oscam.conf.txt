@@ -82,9 +82,6 @@ DESCRIPTIONS
 	    0 = only client logon/logoff will be logged in usrfile (default)
 	    1 = each zapping of a client will be logged in usrfile
 
-       saveinithistory = 0|1
-	  1 = save SC init history to /tmp/.oscam/reader<number>, default:0
-
        disablemail = 0|1
 	  1 = disable saving NDS Videoguard mail messages from provider, default:1
 

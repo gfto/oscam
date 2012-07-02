@@ -1540,7 +1540,6 @@ struct s_config
 	int8_t			waitforcards;
 	int32_t			waitforcards_extra_delay;
 	int8_t			preferlocalcards;
-	int8_t			saveinithistory;
 	int32_t     	reader_restart_seconds;			// schlocke: reader restart auf x seconds, disable = 0
 	int8_t			dropdups;						// drop duplicate logins
 
