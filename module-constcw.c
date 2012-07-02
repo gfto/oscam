@@ -32,7 +32,7 @@ int32_t constcw_analyse_file(uint16_t c_caid, uint32_t c_prid, uint16_t c_sid, u
 	while (fgets(token, sizeof(token), fp)){
 		if (token[0]=='#') continue;
 		
-		sscanf(token, "%4x:%4x:%4x:%4x:%4x::%2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x", &caid, &provid, &sid, &pmt, &pid, 
+		sscanf(token, "%4x:%6x:%4x:%4x:%4x::%2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x", &caid, &provid, &sid, &pmt, &pid, 
 			&cw[0], &cw[1], &cw[2],	&cw[3],	&cw[4], &cw[5], &cw[6], &cw[7], 
 			&cw[8], &cw[9], &cw[10], &cw[11], &cw[12], &cw[13], &cw[14], &cw[15]);
 		
