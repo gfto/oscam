@@ -18,6 +18,7 @@
 extern char *tplmap[];
 extern char *tpl[];
 extern char *CSS;
+extern char *entitlement_type[];
 
 int32_t ssl_active = 0;
 char noncekey[33];
@@ -2817,7 +2818,6 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				struct s_client *cl = rdr->client;
 				if (rdr->ll_entitlements) {
 
-					char *typetxt[] = {"", "package", "PPV-Event", "chid", "tier", "class", "PBM", "admin" };
 					time_t now = (time((time_t*)0)/84600)*84600;
 
 					struct tm start_t, end_t;
@@ -2848,7 +2848,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 						tpl_printf(vars, TPLADD, "ENTPROVID", "%06X", item->provid);
 						tpl_printf(vars, TPLADD, "ENTID", "%08X%08X", (uint32_t)(item->id >> 32), (uint32_t)item->id);
 						tpl_printf(vars, TPLADD, "ENTCLASS", "%08X", item->class);
-						tpl_addVar(vars, TPLADD, "ENTTYPE", typetxt[item->type]);
+						tpl_addVar(vars, TPLADD, "ENTTYPE", entitlement_type[item->type]);
 
 						char *entresname;
 						entresname = xml_encode(vars, get_tiername((uint16_t)(item->id & 0xFFFF), item->caid, tbuffer));

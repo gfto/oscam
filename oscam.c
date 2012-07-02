@@ -20,6 +20,8 @@ char *RDR_CD_TXT[] = {
 	NULL
 };
 
+char *entitlement_type[] = {"", "package", "PPV-Event", "chid", "tier", "class", "PBM", "admin" };
+
 int32_t exit_oscam=0;
 struct s_module 	ph[CS_MAX_MOD]; // Protocols
 struct s_cardsystem	cardsystem[CS_MAX_MOD];

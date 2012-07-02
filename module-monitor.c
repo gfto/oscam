@@ -1,6 +1,8 @@
 #include "globals.h"
 #ifdef MODULE_MONITOR
 
+extern char *entitlement_type[];
+
 static int8_t monitor_check_ip(void)
 {
 	int32_t ok=0;
@@ -416,19 +418,68 @@ static void monitor_process_details_master(char *buf, uint32_t pid){
 
 
 static void monitor_process_details_reader(struct s_client *cl) {
-
-	if (cfg.saveinithistory) {
-		if (cl->reader->init_history) {
-			char *ptr,*ptr1 = NULL;
-			for (ptr=strtok_r(cl->reader->init_history, "\n", &ptr1); ptr; ptr=strtok_r(NULL, "\n", &ptr1)) {
-				monitor_send_details(ptr, cl->tid);
-				ptr1[-1]='\n';
-			}
-		}
-	} else {
-		monitor_send_details("Missing reader index or entitlement not saved!", cl->tid);
+	char tbuffer1[64], tbuffer2[64], buf[256] = { 0 }, tmpbuf[256] = { 0 }, valid_to[32] = { 0 };
+	struct s_reader *rdr = cl->reader;
+	if (!rdr) {
+		monitor_send_details("Reader do not exist or it is not started.", cl->tid);
+		return;
 	}
 
+	if (rdr->card_valid_to) {
+		struct tm vto_t;
+		localtime_r(&rdr->card_valid_to, &vto_t);
+		strftime(valid_to, sizeof(valid_to) - 1, "%Y-%m-%d", &vto_t);
+	} else {
+		strncpy(valid_to, "n/a", 3);
+	}
+
+	snprintf(tmpbuf, sizeof(tmpbuf) - 1, "Cardsystem: %s Reader: %s ValidTo: %s HexSerial: %s ATR: %s",
+		rdr->csystem.desc,
+		rdr->label,
+		valid_to,
+		cs_hexdump(1, rdr->hexserial, 8, tbuffer2, sizeof(tbuffer2)),
+		rdr->card_atr_length
+			? cs_hexdump(1, rdr->card_atr, rdr->card_atr_length, buf, sizeof(buf))
+			: ""
+	);
+	monitor_send_details(tmpbuf, cl->tid);
+
+	if (!rdr->ll_entitlements) {
+		monitor_send_details("No entitlements for the reader.", cl->tid);
+		return;
+	}
+
+	S_ENTITLEMENT *item;
+	LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
+	time_t now = (time(NULL) / 84600) * 84600;
+
+	while ((item = ll_iter_next(&itr))) {
+		struct tm start_t, end_t;
+
+		localtime_r(&item->start, &start_t);
+		localtime_r(&item->end  , &end_t);
+
+		strftime(tbuffer1, sizeof(tbuffer1) - 1, "%Y-%m-%d %H:%M %z", &start_t);
+		strftime(tbuffer2, sizeof(tbuffer2) - 1, "%Y-%m-%d %H:%M %z", &end_t);
+
+		char *entresname = get_tiername(item->id & 0xFFFF, item->caid, buf);
+		if (!entresname[0])
+			entresname = get_provider(item->caid, item->provid, buf, sizeof(buf));
+
+		snprintf(tmpbuf, sizeof(tmpbuf) - 1, "%s Type: %s CAID: %04X Provid: %06X ID: %08X%08X Class: %08X StartDate: %s ExpireDate: %s Name: %s",
+			item->end > now ? "active " : "expired",
+			entitlement_type[item->type],
+			item->caid,
+			item->provid,
+			(uint32_t)(item->id >> 32),
+			(uint32_t)(item->id),
+			item->class,
+			tbuffer1,
+			tbuffer2,
+			entresname
+		);
+		monitor_send_details(tmpbuf, cl->tid);
+	}
 }
 
 
