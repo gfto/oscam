@@ -678,7 +678,7 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
 	MD5(ep->emm, ep->emm[2], md5tmp);
 
-        for (i=ecs=0; (i<CS_EMMCACHESIZE) && (!ecs); i++) { 
+        for (i=ecs=0; (i<CS_EMMCACHESIZE) ; i++) {
        	if (!memcmp(cl->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE)) {
 			cl->emmcache[i].count++;
 			if (reader->cachemm){
@@ -688,7 +688,7 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 				else
 					ecs=1; //rewrite emm
 			}
-		i--; 
+		break; 
 		}
 	}
 

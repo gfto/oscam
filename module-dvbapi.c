@@ -1102,7 +1102,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 							}
 						}
 					}
-					if (!matching) {
+					if (!matching_reader(er, rdr)) {
 						demux[demux_index].ECMpids[n].status = -1;
 						cs_debug_mask(D_DVBAPI,
 								"[IGNORE PID %d] %04X:%06X:%04X (no matching reader)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,demux[demux_index].ECMpids[n].ECM_PID);
