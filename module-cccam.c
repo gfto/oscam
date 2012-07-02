@@ -2973,7 +2973,7 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 	uchar buf[16];
 	struct cc_data *cc = cl->cc;
 
-	memset(buf, 0, sizeof(*buf));
+	memset(buf, 0, sizeof(buf));
 
 	struct cc_extended_ecm_idx *eei = get_extended_ecm_idx_by_idx(cl, er->idx,
 			TRUE);

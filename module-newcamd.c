@@ -1191,7 +1191,7 @@ static void newcamd_server_init(struct s_client *client) {
 static void newcamd_send_version(struct s_client *client)
 {
 	uchar buf[30];
-	memset(buf, 0, sizeof(*buf));
+	memset(buf, 0, sizeof(buf));
 	buf[0] = MSG_SERVER_2_CLIENT_GET_VERSION;
 	buf[1] = EXT_VERSION_LEN>>8;
 	buf[2] = EXT_VERSION_LEN & 0xFF;

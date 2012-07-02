@@ -196,11 +196,11 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
               /* Save inf field */
               bytes = T1_Block_GetLen (block);
       	      buffer = (BYTE *) realloc(buffer, counter + bytes);
-	      if (buffer == NULL) {
-	      free(buffer);
-	      }
-	      
-              memcpy (buffer + counter, T1_Block_GetInf (block), bytes);
+	          // False Common realloc mistake: in this case parameter "buffer" nulled but not freed upon failure
+			  if (buffer == NULL) 
+	          free(buffer);
+	          else
+	          memcpy (buffer + counter, T1_Block_GetInf (block), bytes);
               counter += bytes;
 
               /* See if chaining is requested */
