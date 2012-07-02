@@ -1155,8 +1155,6 @@ struct s_reader  									//contains device info, reader info and card info
 	FTAB			ftab;
 	CLASSTAB		cltab;
 	struct s_ecmWhitelist *ecmWhitelist;
-	char			*init_history;
-	int32_t			init_history_pos;
 	int32_t			brk_pos;
 	int32_t			msg_idx;
 #if defined(WEBIF) || defined(LCDSUPPORT)

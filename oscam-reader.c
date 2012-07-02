@@ -4,14 +4,6 @@
 
 int32_t logfd = 0;
 
-void cs_ri_brk(struct s_reader * reader, int32_t flag)
-{
-  if (flag)
-    reader->brk_pos=reader->init_history_pos;
-  else
-    reader->init_history_pos=reader->brk_pos;
-}
-
 void rdr_log(struct s_reader * reader, char *fmt,...)
 {
 	char txt[256];
@@ -32,18 +24,6 @@ void rdr_log(struct s_reader * reader, char *fmt,...)
 		desc = reader_get_type_desc(reader, 1);
 
 	cs_log("%s [%s] %s", reader->label, desc, txt);
-
-	if (cfg.saveinithistory) {
-		int32_t size = reader->init_history_pos+strlen(txt)+2;
-
-		cs_realloc(&reader->init_history, size, -1);
-
-		if (!reader->init_history)
-			return;
-
-		snprintf(reader->init_history+reader->init_history_pos, strlen(txt)+2, "%s\n", txt);
-		reader->init_history_pos+=strlen(txt)+1;
-	}
 }
 
 void rdr_debug_mask(struct s_reader * reader, uint16_t mask, char *fmt, ...)

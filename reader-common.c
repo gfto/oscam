@@ -115,8 +115,6 @@ static int32_t reader_activate_card(struct s_reader * reader, ATR * atr, uint16_
 	}
   if (ret) return(0);
 
-  reader->init_history_pos=0;
-
 //  rdr_log("ATR: %s", cs_hexdump(1, atr, atr_size, tmp, sizeof(tmp)));//FIXME
   cs_sleepms(1000);
   return(1);
@@ -198,8 +196,6 @@ void reader_card_info(struct s_reader * reader)
 		if (cl)
 			cl->last=time((time_t*)0);
 
-		cs_ri_brk(reader, 0);
-
 		if (reader->csystem.active && reader->csystem.card_info) {
 			reader->csystem.card_info(reader);
 		}
@@ -235,7 +231,6 @@ static int32_t reader_get_cardsystem(struct s_reader * reader, ATR *atr)
 		if(cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_MEDIUM);
 #endif
 	}
-	cs_ri_brk(reader, 1);
 
 	return(reader->csystem.active);
 }

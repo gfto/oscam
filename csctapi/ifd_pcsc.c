@@ -172,7 +172,6 @@ int32_t pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, uint16_t *a
         cs_debug_mask(D_DEVICE, "PCSC Protocol (T=%d)",( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1));
         memcpy(atr, pbAtr, dwAtrLen);
         *atr_size=dwAtrLen;
-        pcsc_reader->init_history_pos=0;
 
         cs_log("%s ATR: %s",pcsc_reader->label, cs_hexdump(1, (uchar *)pbAtr, dwAtrLen, tmp, sizeof(tmp)));
     	memcpy(pcsc_reader->card_atr, pbAtr, dwAtrLen);
