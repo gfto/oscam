@@ -260,7 +260,7 @@ static int32_t irdeto_card_init_provider(struct s_reader * reader)
 			reader->prid[i][0] = 0xf;
 	}
 	if (p)
-		cs_ri_log(reader, "active providers: %d (%s)", p, buf + 1);
+		rdr_log(reader, "active providers: %d (%s)", p, buf + 1);
 
 	return OK;
 }
@@ -303,29 +303,29 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 		if ((!memcmp(atr+5, "IRDETO", 6)) || ((atr[6]==0xC4 && atr[9]==0x8F && atr[10]==0xF1) && reader->force_irdeto)) {
 			reader->acs57=1;
 			acspadd=8;
-			cs_ri_log(reader, "Hist. Bytes: %s",atr+5);
+			rdr_log(reader, "Hist. Bytes: %s",atr+5);
 		} else {
 			return ERROR;
 		}
 	}
-	cs_ri_log(reader, "detect irdeto card");
+	rdr_log(reader, "detect irdeto card");
 	if(check_filled(reader->rsa_mod, 64) > 0 && (!reader->force_irdeto || reader->acs57)) // we use rsa from config as camkey
 	{
 		char tmp_dbg[65];
-		cs_ri_debug_mask(reader, D_READER, "using camkey data from config");
-		cs_ri_debug_mask(reader, D_READER, "     camkey: %s", cs_hexdump(0, reader->nagra_boxkey, 8, tmp_dbg, sizeof(tmp_dbg)));
+		rdr_debug_mask(reader, D_READER, "using camkey data from config");
+		rdr_debug_mask(reader, D_READER, "     camkey: %s", cs_hexdump(0, reader->nagra_boxkey, 8, tmp_dbg, sizeof(tmp_dbg)));
 		if (reader->acs57==1) {
 			memcpy(&sc_Acs57CamKey[5], reader->rsa_mod, 0x40);
-			cs_ri_debug_mask(reader, D_READER, "camkey-data: %s", cs_hexdump(0, &sc_Acs57CamKey[5], 32, tmp_dbg, sizeof(tmp_dbg)));
-			cs_ri_debug_mask(reader, D_READER, "camkey-data: %s", cs_hexdump(0, &sc_Acs57CamKey[37], 32, tmp_dbg, sizeof(tmp_dbg)));
+			rdr_debug_mask(reader, D_READER, "camkey-data: %s", cs_hexdump(0, &sc_Acs57CamKey[5], 32, tmp_dbg, sizeof(tmp_dbg)));
+			rdr_debug_mask(reader, D_READER, "camkey-data: %s", cs_hexdump(0, &sc_Acs57CamKey[37], 32, tmp_dbg, sizeof(tmp_dbg)));
 		} else {
 			memcpy(&sc_GetCamKey383C[5], reader->rsa_mod, 0x40);
-			cs_ri_debug_mask(reader, D_READER, "camkey-data: %s", cs_hexdump(0, &sc_GetCamKey383C[5], 32, tmp_dbg, sizeof(tmp_dbg)));
-			cs_ri_debug_mask(reader, D_READER, "camkey-data: %s", cs_hexdump(0, &sc_GetCamKey383C[37], 32, tmp_dbg, sizeof(tmp_dbg)));
+			rdr_debug_mask(reader, D_READER, "camkey-data: %s", cs_hexdump(0, &sc_GetCamKey383C[5], 32, tmp_dbg, sizeof(tmp_dbg)));
+			rdr_debug_mask(reader, D_READER, "camkey-data: %s", cs_hexdump(0, &sc_GetCamKey383C[37], 32, tmp_dbg, sizeof(tmp_dbg)));
 		}
 	} else {
 		if(reader->acs57==1) {
-			cs_ri_log(reader, "WARNING: ACS57 card can require the CamKey from config");
+			rdr_log(reader, "WARNING: ACS57 card can require the CamKey from config");
 		} else {
 			memcpy(reader->nagra_boxkey, "\x11\x22\x33\x44\x55\x66\x77\x88", 8);
 		}
@@ -335,7 +335,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 	 */
 	if(reader->acs57==0) {
 		if(!irdeto_do_cmd(reader,sc_GetSCDetails,0,cta_res, &cta_lr))
-			cs_ri_log(reader,"Irdeto SC %0x version %0x revision %0x, patch level %0x",cta_res[0+acspadd],
+			rdr_log(reader,"Irdeto SC %0x version %0x revision %0x, patch level %0x",cta_res[0+acspadd],
 				cta_res[1+acspadd],cta_res[2+acspadd],cta_res[5+acspadd]);
 	}
 	/*
@@ -352,7 +352,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 	reader->acs = (cta_res[0+acspadd] << 8) | cta_res[1+acspadd];
 	reader->caid = (cta_res[5+acspadd] << 8) | cta_res[6+acspadd];
 	memcpy(reader->country_code,cta_res + 13 + acspadd, 3);
-	cs_ri_log(reader, "caid: %04X, acs: %x.%02x, country code: %c%c%c",
+	rdr_log(reader, "caid: %04X, acs: %x.%02x, country code: %c%c%c",
 			reader->caid, cta_res[0+acspadd], cta_res[1+acspadd], cta_res[13+acspadd], cta_res[14+acspadd], cta_res[15+acspadd]);
 
 	/*
@@ -379,7 +379,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 	reader->nprov = cta_res[10+acspadd];
 	memcpy(reader->hexserial, cta_res+12+acspadd, 4);
 	
-	cs_ri_log(reader, "providers: %d, ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
+	rdr_log(reader, "providers: %d, ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
 		reader->nprov, buf, reader->hexserial[0], reader->hexserial[1], reader->hexserial[2], reader->hexserial[3]);
 
 	/*
@@ -422,7 +422,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 		sc_Acs57CamKey[2] = 0;
 	}
 
-	cs_ri_debug_mask(reader, D_READER, "set camkey for type=%d", camkey);
+	rdr_debug_mask(reader, D_READER, "set camkey for type=%d", camkey);
 
 	switch (camkey)
 	{
@@ -446,7 +446,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 			if ((reader->caid == 0x0648) || (reader->caid == 0x0666) || (reader->caid == 0x0624)) {
 				sc_Acs57CamKey[69] = XorSum(sc_Acs57CamKey, 69) ^ 0x3f ^ (sc_Acs57CamKey[0]&0xf0) ^ 0x1b;
 				if (irdeto_do_cmd(reader, sc_Acs57CamKey, 0x9011, cta_res, &cta_lr)) {
-					cs_ri_log(reader, "You have a bad Cam Key set");
+					rdr_log(reader, "You have a bad Cam Key set");
 					return ERROR;
 				}
 			} else
@@ -472,7 +472,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 		break;
 	}
 	if (reader->cardmhz != 600)
-		cs_ri_log(reader, "WARNING: For Irdeto cards you will have to set 'cardmhz = 600' in oscam.server");
+		rdr_log(reader, "WARNING: For Irdeto cards you will have to set 'cardmhz = 600' in oscam.server");
 
 	return irdeto_card_init_provider(reader);
 }
@@ -506,10 +506,10 @@ int32_t irdeto_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_
 		if(acslength!=0x1F){
 			switch(acslength){
 				case 0x09:
-					cs_ri_log(reader, "Maybe you don't have the entitlements for this channel");
+					rdr_log(reader, "Maybe you don't have the entitlements for this channel");
 					break;
 				default:
-					cs_ri_log(reader, "Maybe you have a bad Cam Key set it from config file");
+					rdr_log(reader, "Maybe you have a bad Cam Key set it from config file");
 					break;
 			}
 			return ERROR; 
@@ -549,14 +549,14 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 	int32_t base = (ep->emm[3]>>3);
 	char dumprdrserial[l*3], dumpemmserial[l*3];
 
-	cs_ri_debug_mask(rdr, D_EMM, "Entered irdeto_get_emm_type ep->emm[3]=%02x",ep->emm[3]);
+	rdr_debug_mask(rdr, D_EMM, "Entered irdeto_get_emm_type ep->emm[3]=%02x",ep->emm[3]);
 
 	switch (l) {
 
 		case 0:
 			// global emm, 0 bytes addressed
 			ep->type = GLOBAL;
-			cs_ri_debug_mask(rdr, D_EMM, "GLOBAL base = %02x", base);
+			rdr_debug_mask(rdr, D_EMM, "GLOBAL base = %02x", base);
 			return TRUE;
 
 		case 2:
@@ -566,7 +566,7 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			memcpy(ep->hexserial, ep->emm + 4, l);
 			cs_hexdump(1, rdr->hexserial, l, dumprdrserial, sizeof(dumprdrserial));
 			cs_hexdump(1, ep->hexserial, l, dumpemmserial, sizeof(dumpemmserial));
-			cs_ri_debug_mask(rdr, D_EMM, "SHARED l = %d ep = %s rdr = %s base = %02x", l, 
+			rdr_debug_mask(rdr, D_EMM, "SHARED l = %d ep = %s rdr = %s base = %02x", l, 
 					dumpemmserial, dumprdrserial, base);
 
 			if (base & 0x10) {
@@ -582,7 +582,7 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 					if (base == rdr->prid[i][0] && !memcmp(ep->emm + 4, &rdr->prid[i][1], l))
 						return TRUE;
 			}
-			cs_ri_debug_mask(rdr, D_EMM, "neither hex nor provider addressed or unknown provider id");
+			rdr_debug_mask(rdr, D_EMM, "neither hex nor provider addressed or unknown provider id");
 			return FALSE;
 
 		case 3:
@@ -592,7 +592,7 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			memcpy(ep->hexserial, ep->emm + 4, l);
 			cs_hexdump(1, rdr->hexserial, l, dumprdrserial, sizeof(dumprdrserial));
 			cs_hexdump(1, ep->hexserial, l, dumpemmserial, sizeof(dumpemmserial));
-			cs_ri_debug_mask(rdr, D_EMM, "UNIQUE l = %d ep = %s rdr = %s base = %02x", l, 
+			rdr_debug_mask(rdr, D_EMM, "UNIQUE l = %d ep = %s rdr = %s base = %02x", l, 
 					dumpemmserial, dumprdrserial, base);
 
 			if (base & 0x10)
@@ -607,12 +607,12 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 					if (base == rdr->prid[i][0] && !memcmp(ep->emm + 4, &rdr->prid[i][1], l))
 						return TRUE;
 			}
-			cs_ri_debug_mask(rdr, D_EMM, "neither hex nor provider addressed or unknown provider id");
+			rdr_debug_mask(rdr, D_EMM, "neither hex nor provider addressed or unknown provider id");
 			return FALSE;
 
 		default:
 			ep->type = UNKNOWN;
-			cs_ri_debug_mask(rdr, D_EMM, "UNKNOWN");
+			rdr_debug_mask(rdr, D_EMM, "UNKNOWN");
 			return TRUE;
 	}
 
@@ -692,7 +692,7 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 		idx += 32;
 
 		if (filter[1]>=10) {
-			cs_ri_log(rdr, "irdeto_get_emm_filter: could not start all emm filter");
+			rdr_log(rdr, "irdeto_get_emm_filter: could not start all emm filter");
 			break;
 		}
 	}
@@ -709,7 +709,7 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
 	uchar cta_cmd[272];
 	if (ep->emm[0] != 0x82) {
-		cs_ri_debug_mask(reader, D_EMM, "Invalid EMM: Has to start with 0x82, but starts with %02x!", ep->emm[0]);
+		rdr_debug_mask(reader, D_EMM, "Invalid EMM: Has to start with 0x82, but starts with %02x!", ep->emm[0]);
 		return ERROR;
 	}
 
@@ -741,7 +741,7 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 					dataLen=ep->emm[2];
 				}
 				if(dataLen < 7 || dataLen > (int32_t)sizeof(ep->emm) - 6 || dataLen > (int32_t)sizeof(cta_cmd) - 9) {
-					cs_ri_debug_mask(reader, D_EMM, "dataLen %d seems wrong, faulty EMM?", dataLen);
+					rdr_debug_mask(reader, D_EMM, "dataLen %d seems wrong, faulty EMM?", dataLen);
 					return ERROR;
 				}
 				if (ep->type==GLOBAL && (reader->caid==0x0624 || reader->caid==0x0648 || reader->caid == 0x0666)) dataLen+=2;
@@ -770,12 +770,12 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 				sc_Acs57_Cmd[4]=acslength;
 				reader_chk_cmd(sc_Acs57_Cmd, acslength+2);
 				if (cta_res[2] != 0)
-					cs_ri_log(reader, "EMM write error %02X", cta_res[2]);
+					rdr_log(reader, "EMM write error %02X", cta_res[2]);
 				return OK;
 			} else {
 				const int32_t dataLen = SCT_LEN(emm) - 5 - l;		// sizeof of emm bytes (nanos)
 				if(dataLen < 1 || dataLen > (int32_t)sizeof(ep->emm) - 5 - l || dataLen > (int32_t)sizeof(cta_cmd) - (int32_t)sizeof(sc_EmmCmd) - ADDRLEN) {
-					cs_ri_debug_mask(reader, D_EMM, "dataLen %d seems wrong, faulty EMM?", dataLen);
+					rdr_debug_mask(reader, D_EMM, "dataLen %d seems wrong, faulty EMM?", dataLen);
 					return ERROR;
 				}
 				uchar *ptr = cta_cmd;
@@ -789,7 +789,7 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 				return(irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr) ? 0 : 1); // TODO: this always returns success cause return code cant be 0
 			}
 		} else
- 			cs_ri_debug_mask(reader, D_EMM, "addrlen %d > %d", l, ADDRLEN);
+ 			rdr_debug_mask(reader, D_EMM, "addrlen %d > %d", l, ADDRLEN);
  	}
  	return ERROR;
 }
@@ -822,7 +822,7 @@ static int32_t irdeto_card_info(struct s_reader * reader)
 
 	if (((cta_lr>9) && !(cta_res[cta_lr-2]|cta_res[cta_lr-1])) || (reader->acs57==1))
 	{
-		cs_ri_debug_mask(reader, D_READER, "max chids: %d, %d, %d, %d", cta_res[6+acspadd], cta_res[7+acspadd], cta_res[8+acspadd], cta_res[9+acspadd]);
+		rdr_debug_mask(reader, D_READER, "max chids: %d, %d, %d, %d", cta_res[6+acspadd], cta_res[7+acspadd], cta_res[8+acspadd], cta_res[9+acspadd]);
 
 		/*
 		 * Provider 2
@@ -881,10 +881,10 @@ static int32_t irdeto_card_info(struct s_reader * reader)
 
 							if (first)
 							{
-								cs_ri_log(reader, "entitlements for provider: %d, id: %06X", p, b2i(3, &reader->prid[i][1]));
+								rdr_log(reader, "entitlements for provider: %d, id: %06X", p, b2i(3, &reader->prid[i][1]));
 								first=0;
 							}
-							cs_ri_log(reader, "chid: %04X, date: %s - %s", chid, t, t+16);
+							rdr_log(reader, "chid: %04X, date: %s - %s", chid, t, t+16);
 						}
 					}
 					j++;
@@ -892,7 +892,7 @@ static int32_t irdeto_card_info(struct s_reader * reader)
 			}
 		}
 	}
-	cs_ri_log(reader, "ready for requests");
+	rdr_log(reader, "ready for requests");
 	return OK;
 }
 

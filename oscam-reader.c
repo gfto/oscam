@@ -12,7 +12,7 @@ void cs_ri_brk(struct s_reader * reader, int32_t flag)
     reader->init_history_pos=reader->brk_pos;
 }
 
-void cs_ri_log(struct s_reader * reader, char *fmt,...)
+void rdr_log(struct s_reader * reader, char *fmt,...)
 {
 	char txt[256];
 	char *desc;
@@ -46,7 +46,7 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 	}
 }
 
-void cs_ri_debug_mask(struct s_reader * reader, uint16_t mask, char *fmt, ...)
+void rdr_debug_mask(struct s_reader * reader, uint16_t mask, char *fmt, ...)
 {
 	if (config_WITH_DEBUG()) {
 		char txt[2048], *desc, *dbg_prefix;

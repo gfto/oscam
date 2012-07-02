@@ -51,7 +51,7 @@ static int32_t tongfang_card_init(struct s_reader *reader, ATR *newatr)
   reader->nprov = 1;
   memset(reader->prid, 0x00, sizeof(reader->prid));
 
-  cs_ri_log(reader, "Tongfang card detected");
+  rdr_log(reader, "Tongfang card detected");
 
   write_cmd(begin_cmd, begin_cmd + 5);
   if((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00)) return ERROR;
@@ -77,7 +77,7 @@ static int32_t tongfang_card_init(struct s_reader *reader, ATR *newatr)
   memcpy(pairing_cmd + 5, boxID, sizeof(boxID));
   write_cmd(pairing_cmd, pairing_cmd + 5);
 
-  cs_ri_log(reader, "type: Tongfang, caid: %04X, serial: %llu, hex serial: %02x%02x%02x%02x, BoxID: %02X%02X%02X%02X",
+  rdr_log(reader, "type: Tongfang, caid: %04X, serial: %llu, hex serial: %02x%02x%02x%02x, BoxID: %02X%02X%02X%02X",
             reader->caid, (unsigned long long) b2ll(6, reader->hexserial), reader->hexserial[2],
             reader->hexserial[3], reader->hexserial[4], reader->hexserial[5],
             boxID[0], boxID[1], boxID[2], boxID[3]);
@@ -111,7 +111,7 @@ static int32_t tongfang_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
   
   if((ecm_len = check_sct_len(er->ecm, 3)) < 0) return ERROR;
 	if(cs_malloc(&tmp, ecm_len * 3 + 1, -1)){
-		cs_ri_debug_mask(reader, D_IFD, "ECM: %s", cs_hexdump(1, er->ecm, ecm_len, tmp, ecm_len * 3 + 1));
+		rdr_debug_mask(reader, D_IFD, "ECM: %s", cs_hexdump(1, er->ecm, ecm_len, tmp, ecm_len * 3 + 1));
 		free(tmp);
 	}
 
@@ -198,7 +198,7 @@ static int32_t tongfang_card_info(struct s_reader * reader)
 
   for(i = 0; i < 4; i++)
   {
-    cs_ri_log(reader, "Provider:%02x%02x", cta_res[i * 2], cta_res[i * 2 + 1]);
+    rdr_log(reader, "Provider:%02x%02x", cta_res[i * 2], cta_res[i * 2 + 1]);
   }
   return OK;
 }

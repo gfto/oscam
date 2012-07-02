@@ -532,7 +532,7 @@ static void cCamCryptVG_RotateRightAndHash(unsigned char *p)
 
 int32_t status_ok(const unsigned char *status)
 {
-    //cs_ri_log(reader, "check status %02x%02x", status[0],status[1]);
+    //rdr_log(reader, "check status %02x%02x", status[0],status[1]);
     return (status[0] == 0x90 || status[0] == 0x91)
            && (status[1] == 0x00 || status[1] == 0x01
                || status[1] == 0x20 || status[1] == 0x21
@@ -581,7 +581,7 @@ int32_t read_cmd_len(struct s_reader * reader, const unsigned char *cmd)
   // some card reply with L 91 00 (L being the command length).
 
   if(!write_cmd_vg(cmd2,NULL) || !status_ok(cta_res+1)) {
-    cs_ri_debug_mask(reader, D_READER, "failed to read %02x%02x cmd length (%02x %02x)",cmd[1],cmd[2],cta_res[1],cta_res[2]);
+    rdr_debug_mask(reader, D_READER, "failed to read %02x%02x cmd length (%02x %02x)",cmd[1],cmd[2],cta_res[1],cta_res[2]);
     return -1;
   }
   return cta_res[0];
@@ -668,13 +668,13 @@ xx xx xx xx xx xx xx xx xx xx xx xx xx xx xx
 
 	switch(emmtype) {
 		case VG_EMMTYPE_G:
-			cs_ri_debug_mask(rdr, D_EMM, "GLOBAL");
+			rdr_debug_mask(rdr, D_EMM, "GLOBAL");
 			ep->type=GLOBAL;
 			return TRUE;
 
 		case VG_EMMTYPE_U:
 		case VG_EMMTYPE_S:
-			cs_ri_debug_mask(rdr, D_EMM, "%s", (emmtype == VG_EMMTYPE_U) ? "UNIQUE" : "SHARED");
+			rdr_debug_mask(rdr, D_EMM, "%s", (emmtype == VG_EMMTYPE_U) ? "UNIQUE" : "SHARED");
 			ep->type=emmtype;
 			if (ep->emm[1] == 0) // detected UNIQUE EMM from cccam (there is no serial)
 				return TRUE;
@@ -689,7 +689,7 @@ xx xx xx xx xx xx xx xx xx xx xx xx xx xx xx
 
 		default:
 			//remote emm without serial
-			cs_ri_debug_mask(rdr, D_EMM, "UNKNOWN");
+			rdr_debug_mask(rdr, D_EMM, "UNKNOWN");
 			ep->type=UNKNOWN;
 			return TRUE;
 	}
@@ -774,7 +774,7 @@ int32_t videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned cha
                ins42[4] = ep->emm[offs];
                int32_t l = (*docmd)(reader, ins42, &ep->emm[offs+1], NULL, cta_res);
                rc = (l > 0 && status_ok(cta_res)) ? OK : ERROR;
-               cs_ri_debug_mask(reader, D_EMM, "request return code : %02X%02X", cta_res[0], cta_res[1]);
+               rdr_debug_mask(reader, D_EMM, "request return code : %02X%02X", cta_res[0], cta_res[1]);
                if (status_ok(cta_res) && (cta_res[1] & 0x01))
                   (*read_tiers)(reader);
             }
@@ -857,7 +857,7 @@ static void write_msg(struct s_reader *reader, MAILMSG *msg, uint32_t baseyear)
    FILE *fp = fopen(cfg.mailfile, "a");
    if (fp == 0)
    {
-      cs_ri_log(reader, "Cannot open mailfile %s", cfg.mailfile);
+      rdr_log(reader, "Cannot open mailfile %s", cfg.mailfile);
       return;
    }
 

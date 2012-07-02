@@ -273,8 +273,8 @@ extern int32_t reader_cmd2icc(struct s_reader * reader, const uchar *buf, const 
 extern int32_t card_write(struct s_reader * reader, const uchar *, const uchar *, uchar *, uint16_t *);
 extern int32_t check_sct_len(const unsigned char *data, int32_t off);
 extern void cs_ri_brk(struct s_reader * reader, int32_t);
-extern void cs_ri_log(struct s_reader * reader, char *,...) __attribute__ ((format (printf, 2, 3)));
-extern void cs_ri_debug_mask(struct s_reader * reader, uint16_t mask, char *fmt, ...) __attribute__ ((format (printf, 3, 4)));
+extern void rdr_log(struct s_reader * reader, char *,...) __attribute__ ((format (printf, 2, 3)));
+extern void rdr_debug_mask(struct s_reader * reader, uint16_t mask, char *fmt, ...) __attribute__ ((format (printf, 3, 4)));
 extern void * start_cardreader(void *);
 extern void reader_card_info(struct s_reader * reader);
 extern int32_t hostResolve(struct s_reader * reader);

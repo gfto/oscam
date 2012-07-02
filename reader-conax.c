@@ -29,7 +29,7 @@ static void RSA_CNX(struct s_reader * reader, byte *msg, byte *mod, byte *exp, u
     bn_res = BN_new ();
     ctx= BN_CTX_new();
     if (ctx == NULL) { 
-      cs_ri_debug_mask(reader, D_READER, "RSA Error in RSA_CNX");
+      rdr_debug_mask(reader, D_READER, "RSA Error in RSA_CNX");
     }
     BN_bin2bn (mod, modbytes, bn_mod); // rsa modulus
     BN_bin2bn (exp, expbytes, bn_exp); // exponent
@@ -97,7 +97,7 @@ static uint8_t PairingECMRotation(struct s_reader * reader, const ECM_REQUEST *e
       ins26[7] = 0x40;
     
     if(read_record(reader, ins26, ins26+5, cta_res)<=0)
-      cs_ri_log(reader, "PairingECMRotation - ERROR");
+      rdr_log(reader, "PairingECMRotation - ERROR");
   }
   reader->cnxlastecm = cnxcurrecm;
   return cnxcurrecm;
@@ -152,16 +152,16 @@ static int32_t conax_card_init(struct s_reader * reader, ATR *newatr)
   reader->nprov = 1;
   memset(reader->prid, 0x00, sizeof(reader->prid));
 
-  cs_ri_log(reader, "type: Conax, caid: %04X, serial: %llu, hex serial: %02x%02x%02x%02x, card: v%d",
+  rdr_log(reader, "type: Conax, caid: %04X, serial: %llu, hex serial: %02x%02x%02x%02x, card: v%d",
          reader->caid, (unsigned long long) b2ll(6, reader->hexserial), reader->hexserial[2], 
          reader->hexserial[3], reader->hexserial[4], reader->hexserial[5], cardver);
 
-  cs_ri_log(reader, "Providers: %d", reader->nprov);
+  rdr_log(reader, "Providers: %d", reader->nprov);
 
   for (j=0; j<reader->nprov; j++)
   {
-    cs_ri_log(reader, "Provider: %d  Provider-Id: %06X", j+1, b2i(4, reader->prid[j]));
-    cs_ri_log(reader, "Provider: %d  SharedAddress: %08X", j+1, b2i(4, reader->sa[j]));
+    rdr_log(reader, "Provider: %d  Provider-Id: %06X", j+1, b2i(4, reader->prid[j]));
+    rdr_log(reader, "Provider: %d  SharedAddress: %08X", j+1, b2i(4, reader->sa[j]));
   }
 
   return OK;
@@ -174,7 +174,7 @@ static int32_t conax_send_pin(struct s_reader * reader)
   memcpy(insPIN+8,reader->pincode,4);
 
   write_cmd(insPIN, insPIN+5);
-  cs_ri_debug_mask(reader, D_READER, "Sent pincode to card.");
+  rdr_debug_mask(reader, D_READER, "Sent pincode to card.");
 
   return OK;
 }
@@ -300,8 +300,8 @@ static int32_t conax_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, str
       }
     }
   }
- if( rc == -1) cs_ri_log(reader, "unknown pairing algo - wrong encCW size");
- else if( rc == -2) cs_ri_log(reader, "conax decode ECM problem - RSA key is probably faulty");
+ if( rc == -1) rdr_log(reader, "unknown pairing algo - wrong encCW size");
+ else if( rc == -2) rdr_log(reader, "conax decode ECM problem - RSA key is probably faulty");
   if (rc==3)
     return OK;
   else
@@ -313,7 +313,7 @@ static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 	int32_t i, ok = 0;
 	char tmp_dbg[17];
 
-	cs_ri_debug_mask(rdr, D_EMM, "Entered conax_get_emm_type ep->emm[2]=%02x", ep->emm[2]);
+	rdr_debug_mask(rdr, D_EMM, "Entered conax_get_emm_type ep->emm[2]=%02x", ep->emm[2]);
 
 	for (i = 0; i < rdr->nprov; i++) {
 		ok = (!memcmp(&ep->emm[6], rdr->sa[i], 4));
@@ -324,7 +324,7 @@ static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 		ep->type = SHARED;
 		memset(ep->hexserial, 0, 8);
 		memcpy(ep->hexserial, &ep->emm[6], 4);
-		cs_ri_debug_mask(rdr, D_EMM, "SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
+		rdr_debug_mask(rdr, D_EMM, "SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
 		return TRUE;
 	}
 	else {
@@ -332,12 +332,12 @@ static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 			ep->type = UNIQUE;
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial+2, &ep->emm[6], 4);
-			cs_ri_debug_mask(rdr, D_EMM, "UNIQUE, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
+			rdr_debug_mask(rdr, D_EMM, "UNIQUE, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
 			return TRUE;
 		}
 		else {
 			ep->type = GLOBAL;
-			cs_ri_debug_mask(rdr, D_EMM, "GLOBAL");
+			rdr_debug_mask(rdr, D_EMM, "GLOBAL");
 			memset(ep->hexserial, 0, 8);
 			return TRUE;
 		}
@@ -449,7 +449,7 @@ static int32_t conax_card_info(struct s_reader * reader)
 								break;
 							case 0x30:
 								if (k > 1) {
-									cs_ri_log(reader, "%s: %d, id: %04X%s, date: %s - %s, name: %s", txt[type], ++n, provid, chid, pdate, pdate+16, trim(provname));
+									rdr_log(reader, "%s: %d, id: %04X%s, date: %s - %s, name: %s", txt[type], ++n, provid, chid, pdate, pdate+16, trim(provname));
 
 									// add entitlements to list
 									cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), provid, cxclass, start_t, end_t, type + 1);
@@ -468,7 +468,7 @@ static int32_t conax_card_info(struct s_reader * reader)
 								break;
 						}
 					}
-					cs_ri_log(reader, "%s: %d, id: %04X%s, date: %s - %s, name: %s", txt[type], ++n, provid, chid, pdate, pdate+16, trim(provname));
+					rdr_log(reader, "%s: %d, id: %04X%s, date: %s - %s, name: %s", txt[type], ++n, provid, chid, pdate, pdate+16, trim(provname));
 
 					// add entitlements to list
 					cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), provid, cxclass, start_t, end_t, type + 1);
@@ -476,7 +476,7 @@ static int32_t conax_card_info(struct s_reader * reader)
 			}
 		}
 	}
-	cs_ri_log(reader, "ready for requests");
+	rdr_log(reader, "ready for requests");
 	return OK;
 }
 

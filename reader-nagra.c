@@ -79,7 +79,7 @@ static int32_t do_cmd(struct s_reader * reader, unsigned char cmd, int32_t ilen,
 	msg[dlen+7] = rlen;
 	if (dlen<0)
 	{
-		cs_ri_debug_mask(reader, D_READER, "invalid data length encountered");
+		rdr_debug_mask(reader, D_READER, "invalid data length encountered");
     		return ERROR;
     	}
     	if (reader->is_pure_nagra==1)
@@ -91,12 +91,12 @@ static int32_t do_cmd(struct s_reader * reader, unsigned char cmd, int32_t ilen,
   		cs_sleepms(5);
 		if(cta_res[0]!=res) 
 	      	{
-	      		cs_ri_debug_mask(reader, D_READER, "result not expected (%02x != %02x)",cta_res[0],res);
+	      		rdr_debug_mask(reader, D_READER, "result not expected (%02x != %02x)",cta_res[0],res);
 	      		return ERROR;
 	      	}
 	      	if((*p_cta_lr-2)!=rlen) 
 	      	{
-	      		cs_ri_debug_mask(reader, D_READER, "result length expected (%d != %d)",(*p_cta_lr-2),rlen);
+	      		rdr_debug_mask(reader, D_READER, "result length expected (%d != %d)",(*p_cta_lr-2),rlen);
 	      		return ERROR;
 	      	}
       		return *p_cta_lr;
@@ -145,11 +145,11 @@ static int32_t CamStateRequest(struct s_reader * reader)
 	if(do_cmd(reader, 0xC0,0x02,0xB0,0x06,NULL,cta_res,&cta_lr))
 	{
 		memcpy(reader->cam_state,cta_res+3,3);
-		cs_ri_debug_mask(reader, D_READER, "Camstate: %s", cs_hexdump(1, reader->cam_state, 3, tmp_dbg, sizeof(tmp_dbg)));
+		rdr_debug_mask(reader, D_READER, "Camstate: %s", cs_hexdump(1, reader->cam_state, 3, tmp_dbg, sizeof(tmp_dbg)));
 	}
 	else
 	{
-		cs_ri_debug_mask(reader, D_READER, "CamStateRequest failed");
+		rdr_debug_mask(reader, D_READER, "CamStateRequest failed");
 		return ERROR;
 	}
 	return OK;
@@ -160,7 +160,7 @@ static void DateTimeCMD(struct s_reader * reader)
 	def_resp;
 	if (!do_cmd(reader, 0xC8,0x02,0xB8,0x06,NULL,cta_res,&cta_lr))
 	{
-		cs_ri_debug_mask(reader, D_READER, "DateTimeCMD failed!");
+		rdr_debug_mask(reader, D_READER, "DateTimeCMD failed!");
 	}
 		
 }
@@ -182,7 +182,7 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader * reader)
 					 
 	if(!do_cmd(reader, 0xd1,0x02,0x51,0xd2,NULL,cta_res,&cta_lr))
 	{
-		cs_ri_debug_mask(reader, D_READER, "CMD$D1 failed");
+		rdr_debug_mask(reader, D_READER, "CMD$D1 failed");
 		return ERROR;
 	}
 	
@@ -203,21 +203,21 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader * reader)
 	BN_CTX_end(ctx);
 	BN_CTX_free (ctx);
 	
-	cs_ri_debug_mask(reader, D_READER, "---------- SIG CHECK ---------------------");
+	rdr_debug_mask(reader, D_READER, "---------- SIG CHECK ---------------------");
 	memset(tmp,0, 104);
 	memcpy(tmp+4, parte_fija+11, 100);
 	memset(idea_sig, 0x37, 16);
 	Signature(sign1, idea_sig, tmp, 104);
-	cs_ri_debug_mask(reader, D_READER, "sign1: %s", cs_hexdump(0, sign1, 8, tmp2, sizeof(tmp2)));
-	cs_ri_debug_mask(reader, D_READER, "sign2: %s", cs_hexdump(0, parte_fija+111, 8, tmp2, sizeof(tmp2)));
+	rdr_debug_mask(reader, D_READER, "sign1: %s", cs_hexdump(0, sign1, 8, tmp2, sizeof(tmp2)));
+	rdr_debug_mask(reader, D_READER, "sign2: %s", cs_hexdump(0, parte_fija+111, 8, tmp2, sizeof(tmp2)));
 	if (!memcmp (parte_fija+111, sign1, 8)==0)
 	{
-		cs_ri_debug_mask(reader, D_READER, "signature check nok");
-		cs_ri_debug_mask(reader, D_READER, "------------------------------------------");
+		rdr_debug_mask(reader, D_READER, "signature check nok");
+		rdr_debug_mask(reader, D_READER, "------------------------------------------");
 		return ERROR;
 	}
-	cs_ri_debug_mask(reader, D_READER, "signature check ok");
-	cs_ri_debug_mask(reader, D_READER, "------------------------------------------");
+	rdr_debug_mask(reader, D_READER, "signature check ok");
+	rdr_debug_mask(reader, D_READER, "------------------------------------------");
 	
 	memcpy(reader->hexserial+2, parte_fija+15, 4);
 	memcpy(reader->sa[0], parte_fija+15, 2);
@@ -255,8 +255,8 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader * reader)
 	reader->caid =(SYSTEM_NAGRA|parte_variable[76]);
 	memcpy(sk,&parte_variable[79],8);                                                                           
 	memcpy(sk+8,&parte_variable[79],8); 
-  	cs_ri_log(reader, "type: NAGRA, caid: %04X, IRD ID: %s",reader->caid, cs_hexdump(1,reader->irdId,4, tmp2, sizeof(tmp2)));
-  	cs_ri_log(reader, "ProviderID: %s", cs_hexdump(1,reader->prid[0],4, tmp2, sizeof(tmp2)));
+  	rdr_log(reader, "type: NAGRA, caid: %04X, IRD ID: %s",reader->caid, cs_hexdump(1,reader->irdId,4, tmp2, sizeof(tmp2)));
+  	rdr_log(reader, "ProviderID: %s", cs_hexdump(1,reader->prid[0],4, tmp2, sizeof(tmp2)));
 
 	memset(random, 0, 88);
 	memcpy(random, sk,16);
@@ -283,7 +283,7 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader * reader)
 
 	if(!do_cmd(reader, 0xd2,0x5a,0x52,0x03, d2_data,cta_res,&cta_lr)) 
 	{
-		cs_ri_debug_mask(reader, D_READER, "CMD$D2 failed");
+		rdr_debug_mask(reader, D_READER, "CMD$D2 failed");
 		return ERROR;
 	}
 	if (cta_res[2] == 0x00)
@@ -292,10 +292,10 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader * reader)
 		IDEA_KEY_SCHEDULE ks;
 		idea_set_encrypt_key(reader->sessi,&ks);
 		idea_set_decrypt_key(&ks,&reader->ksSession);
-		cs_ri_debug_mask(reader, D_READER, "Tiger session key negotiated");
+		rdr_debug_mask(reader, D_READER, "Tiger session key negotiated");
 		return OK;
 	}
-	cs_ri_log(reader, "Negotiate sessionkey was not successfull! Please check tivusat rsa key");
+	rdr_log(reader, "Negotiate sessionkey was not successfull! Please check tivusat rsa key");
 	return ERROR;
 		
 }
@@ -325,7 +325,7 @@ static int32_t NegotiateSessionKey(struct s_reader * reader)
 	{
 		if (!NegotiateSessionKey_Tiger(reader))
 		{
-			cs_ri_debug_mask(reader, D_READER, "NegotiateSessionKey_Tiger failed");
+			rdr_debug_mask(reader, D_READER, "NegotiateSessionKey_Tiger failed");
 			return ERROR;
 		}
 		return OK;
@@ -345,13 +345,13 @@ static int32_t NegotiateSessionKey(struct s_reader * reader)
 
 	if (!reader->is_n3_na) {
 		if (!do_cmd(reader, 0x2a,0x02,0xaa,0x42,NULL,cta_res,&cta_lr)) {
-			cs_ri_debug_mask(reader, D_READER, "CMD$2A failed");
+			rdr_debug_mask(reader, D_READER, "CMD$2A failed");
 			return ERROR;
 		}
 	}
 	else
 		if (!do_cmd(reader, 0x26,0x07,0xa6, 0x42, tmp,cta_res,&cta_lr)) {
-			cs_ri_debug_mask(reader, D_READER, "CMD$26 failed");
+			rdr_debug_mask(reader, D_READER, "CMD$26 failed");
 			return ERROR;
 		}
 
@@ -405,27 +405,27 @@ static int32_t NegotiateSessionKey(struct s_reader * reader)
 
 	if (!reader->is_n3_na) {
 		if(!do_cmd(reader, 0x2b,0x42,0xab,0x02, cmd2b+10,cta_res,&cta_lr)) {
-			cs_ri_debug_mask(reader, D_READER, "CMD$2B failed");
+			rdr_debug_mask(reader, D_READER, "CMD$2B failed");
 			return ERROR;
 		}
 	}
 	else if(!do_cmd(reader, 0x27,0x47,0xa7,0x02,cmd2b+10,cta_res,&cta_lr)) {
-		cs_ri_debug_mask(reader, D_READER, "CMD$27 failed");
+		rdr_debug_mask(reader, D_READER, "CMD$27 failed");
 		return ERROR;
 	}
 	
-	cs_ri_debug_mask(reader, D_READER, "session key negotiated");
+	rdr_debug_mask(reader, D_READER, "session key negotiated");
 	
 	DateTimeCMD(reader);
 	
 	if (!CamStateRequest(reader))
 	{
-		cs_ri_debug_mask(reader, D_READER, "CamStateRequest failed");
+		rdr_debug_mask(reader, D_READER, "CamStateRequest failed");
 		return ERROR;
 	}
 	if RENEW_SESSIONKEY()
 	{
-		cs_ri_log(reader, "Negotiate sessionkey was not successfull! Please check rsa key and boxkey");
+		rdr_log(reader, "Negotiate sessionkey was not successfull! Please check rsa key and boxkey");
 		return ERROR;
 	}
 
@@ -453,7 +453,7 @@ static void decryptDT08(struct s_reader * reader, unsigned char * cta_res)
   	bn_res = BN_new ();
   	ctx= BN_CTX_new();
 	if (ctx == NULL) { 
-	  cs_ri_debug_mask(reader, D_READER, "RSA Error in dt08 decrypt");
+	  rdr_debug_mask(reader, D_READER, "RSA Error in dt08 decrypt");
 	}
   	ReverseMem(static_dt08+1, 64);
   	BN_bin2bn (reader->rsa_mod, 64, bn_mod); // rsa modulus
@@ -492,7 +492,7 @@ static void decryptDT08(struct s_reader * reader, unsigned char * cta_res)
   	{
   		memcpy(camid, reader->hexserial+2,4);
   	}
-  	cs_ri_debug_mask(reader, D_READER, "using camid %s for dt08 calc", cs_hexdump(1, camid, 4, tmp_dbg, sizeof(tmp_dbg)));
+  	rdr_debug_mask(reader, D_READER, "using camid %s for dt08 calc", cs_hexdump(1, camid, 4, tmp_dbg, sizeof(tmp_dbg)));
   	
 	// Calculate reader->signature
   	memcpy (reader->signature, static_dt08, 8);
@@ -504,12 +504,12 @@ static void decryptDT08(struct s_reader * reader, unsigned char * cta_res)
 	{
 		reader->has_dt08=1;
 		memcpy (reader->plainDT08RSA, static_dt08+8, 64);
-		cs_ri_debug_mask(reader, D_READER, "DT08 signature check ok");
+		rdr_debug_mask(reader, D_READER, "DT08 signature check ok");
 	}
 	else
 	{
 		reader->has_dt08=0;
-		cs_ri_debug_mask(reader, D_READER, "DT08 signature check nok");
+		rdr_debug_mask(reader, D_READER, "DT08 signature check nok");
 	}  	
 	
 	BN_free( bn_mod );
@@ -554,7 +554,7 @@ static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigne
   			reader->prid[0][3]=cta_res[8];
   			if ( ((cta_res[7] == 0x34) && (cta_res[8] == 0x11)) || ((cta_res[7] == 0x04) && (cta_res[8] == 0x01))) //provider 3411, 0401 needs cw swap
   			{
-  				cs_ri_debug_mask(reader, D_READER, "detect provider with swap cw!");
+  				rdr_debug_mask(reader, D_READER, "detect provider with swap cw!");
   				reader->swapCW=1;
   			}
   			
@@ -567,10 +567,10 @@ static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigne
  					
 			reader->caid =(SYSTEM_NAGRA|cta_res[11]);
 			memcpy(reader->irdId,cta_res+14,4);
-			cs_ri_log(reader, "type: NAGRA, caid: %04X, IRD ID: %s",reader->caid, cs_hexdump(1, reader->irdId, 4, ds, sizeof(ds)));
-			cs_ri_log(reader, "ProviderID: %s", cs_hexdump(1, reader->prid[0], 4, ds, sizeof(ds)));
+			rdr_log(reader, "type: NAGRA, caid: %04X, IRD ID: %s",reader->caid, cs_hexdump(1, reader->irdId, 4, ds, sizeof(ds)));
+			rdr_log(reader, "ProviderID: %s", cs_hexdump(1, reader->prid[0], 4, ds, sizeof(ds)));
 			nagra_datetime(reader, cta_res+24, 0, ds, &reader->card_valid_to);
-			cs_ri_log(reader, "active to: %s", ds);
+			rdr_log(reader, "active to: %s", ds);
 			return OK;
      		}
    		case TIERS:
@@ -591,7 +591,7 @@ static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigne
 
         			// tier_date(b2i(2, cta_res+20)-0x7f7, ds, 15);
         			// tier_date(b2i(2, cta_res+13)-0x7f7, de, 15);
-        			cs_ri_log(reader, "|%04X|%04X    |%s  |%s  |", id,chid, ds, de);
+        			rdr_log(reader, "|%04X|%04X    |%s  |%s  |", id,chid, ds, de);
         			addProvider(reader, cta_res); 
         		}
        	case 0x08:
@@ -610,7 +610,7 @@ static int32_t GetDataType(struct s_reader * reader, unsigned char dt, int32_t l
   	{
   		if(!do_cmd(reader, 0x22,0x03,0xA2,len,&dt,cta_res,&cta_lr))
   		{
-  			cs_ri_debug_mask(reader, D_READER, "failed to get datatype %02X",dt);
+  			rdr_debug_mask(reader, D_READER, "failed to get datatype %02X",dt);
   			return ERROR;
   		}
     		if(((cta_res[2] ==0) && (dt != 0x08)) || ((cta_res[2] ==0) && (dt != 0x88))) return OK;
@@ -638,39 +638,39 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR *newatr)
 	cs_clear_entitlement(reader); // reset the entitlements
 
 	if(memcmp(atr+11,"DNASP240",8)==0 || memcmp(atr+11,"DNASP241", 8)==0) {
-		cs_ri_log(reader, "detect nagra 3 NA card");
+		rdr_log(reader, "detect nagra 3 NA card");
 		memcpy(reader->rom,atr+11,15);
 		reader->is_n3_na=1;
 	}
 	else if (memcmp(atr+11, "DNASP", 5)==0)
 	{
-		cs_ri_log(reader, "detect native nagra card");
+		rdr_log(reader, "detect native nagra card");
 		memcpy(reader->rom,atr+11,15);
 	}
 	else if (memcmp(atr+11, "TIGER", 5)==0 || (memcmp(atr+11, "NCMED", 5)==0))
 	{
-		cs_ri_log(reader, "detect nagra tiger card");
+		rdr_log(reader, "detect nagra tiger card");
 		memcpy(reader->rom,atr+11,15);
 		reader->is_tiger=1;
 	}
 	else if ((!memcmp(atr+4, "IRDETO", 6)) && ((atr[14]==0x03) && (atr[15]==0x84) && (atr[16]==0x55)))
 	{
-		cs_ri_log(reader, "detect irdeto tunneled nagra card");
+		rdr_log(reader, "detect irdeto tunneled nagra card");
 		if(check_filled(reader->rsa_mod, 64) == 0)
 		{
-			cs_ri_log(reader, "no rsa key configured -> using irdeto mode");
+			rdr_log(reader, "no rsa key configured -> using irdeto mode");
 			return ERROR;
 		}
 		if(reader->force_irdeto)
 		{
-			cs_ri_log(reader, "rsa key configured but irdeto mode forced -> using irdeto mode");
+			rdr_log(reader, "rsa key configured but irdeto mode forced -> using irdeto mode");
 			return ERROR;
 		}
-		cs_ri_log(reader, "rsa key configured -> using nagra mode");
+		rdr_log(reader, "rsa key configured -> using nagra mode");
 		reader->is_pure_nagra=1;
 		if(!do_cmd(reader, 0x10,0x02,0x90,0x11,0,cta_res,&cta_lr))
 		{
-			cs_ri_debug_mask(reader, D_READER, "get rom version failed");
+			rdr_debug_mask(reader, D_READER, "get rom version failed");
 			return ERROR;
 		}
 		memcpy(reader->rom,cta_res+2,15);
@@ -684,46 +684,46 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR *newatr)
 		CamStateRequest(reader);
 		if(!do_cmd(reader, 0x12,0x02,0x92,0x06,0,cta_res,&cta_lr)) 
 		{
-			cs_ri_debug_mask(reader, D_READER, "get serial failed");
+			rdr_debug_mask(reader, D_READER, "get serial failed");
 			return ERROR;
 		}
 		memcpy(reader->hexserial+2, cta_res+2, 4);
-		cs_ri_debug_mask(reader, D_READER, "SER:  %s", cs_hexdump(1, reader->hexserial+2, 4, tmp_dbg, sizeof(tmp_dbg)));
+		rdr_debug_mask(reader, D_READER, "SER:  %s", cs_hexdump(1, reader->hexserial+2, 4, tmp_dbg, sizeof(tmp_dbg)));
 		memcpy(reader->sa[0], cta_res+2, 2);
 		
 		if(!GetDataType(reader, DT01,0x0E,MAX_REC)) return ERROR;
-		cs_ri_debug_mask(reader, D_READER, "DT01 DONE");
+		rdr_debug_mask(reader, D_READER, "DT01 DONE");
 		CamStateRequest(reader);
 		if(!GetDataType(reader, IRDINFO,0x39,MAX_REC)) return ERROR;
-		cs_ri_debug_mask(reader, D_READER, "IRDINFO DONE");
+		rdr_debug_mask(reader, D_READER, "IRDINFO DONE");
 		CamStateRequest(reader);
 		if(!GetDataType(reader, CAMDATA,0x55,10)) return ERROR;
-		cs_ri_debug_mask(reader, D_READER, "CAMDATA Done");
+		rdr_debug_mask(reader, D_READER, "CAMDATA Done");
 		if(!GetDataType(reader, 0x04,0x44,MAX_REC)) return ERROR;
-		cs_ri_debug_mask(reader, D_READER, "DT04 DONE");
+		rdr_debug_mask(reader, D_READER, "DT04 DONE");
 		CamStateRequest(reader);
 		
 		if (!memcmp(reader->rom+5, "181", 3)==0) //dt05 is not supported by rom181
 		{
-			cs_ri_log(reader, "-----------------------------------------");
-			cs_ri_log(reader, "|id  |tier    |valid from  |valid to    |");
-		  	cs_ri_log(reader, "+----+--------+------------+------------+");
+			rdr_log(reader, "-----------------------------------------");
+			rdr_log(reader, "|id  |tier    |valid from  |valid to    |");
+		  	rdr_log(reader, "+----+--------+------------+------------+");
 			if(!GetDataType(reader, TIERS,0x57,MAX_REC)) return ERROR;
-			cs_ri_log(reader, "-----------------------------------------");
+			rdr_log(reader, "-----------------------------------------");
 			CamStateRequest(reader);
 		}
 		
 		if(!GetDataType(reader, DT06,0x16,MAX_REC)) return ERROR;
-		cs_ri_debug_mask(reader, D_READER, "DT06 DONE");
+		rdr_debug_mask(reader, D_READER, "DT06 DONE");
 		CamStateRequest(reader);
 	}
 	if (!NegotiateSessionKey(reader))
 	{
-		cs_ri_debug_mask(reader, D_READER, "NegotiateSessionKey failed");
+		rdr_debug_mask(reader, D_READER, "NegotiateSessionKey failed");
 		return ERROR;
 	}
 	if ((reader->cardmhz != 368) && (reader->is_pure_nagra==0))
-			cs_ri_log(reader, "WARNING: For NAGRA2 cards you will have to set 'cardmhz = 368' in oscam.server");
+			rdr_log(reader, "WARNING: For NAGRA2 cards you will have to set 'cardmhz = 368' in oscam.server");
 	
 	return OK;
 }
@@ -780,19 +780,19 @@ static int32_t nagra2_card_info(struct s_reader * reader)
 {
 	int32_t i;
         char currdate[11], tmp[13];
-	cs_ri_log(reader, "ROM:    %c %c %c %c %c %c %c %c", reader->rom[0], reader->rom[1], reader->rom[2],reader->rom[3], reader->rom[4], reader->rom[5], reader->rom[6], reader->rom[7]);
-	cs_ri_log(reader, "REV:    %c %c %c %c %c %c", reader->rom[9], reader->rom[10], reader->rom[11], reader->rom[12], reader->rom[13], reader->rom[14]);
-	cs_ri_log(reader, "SER:    %s", cs_hexdump(1, reader->hexserial+2, 4, tmp, sizeof(tmp)));
-	cs_ri_log(reader, "CAID:   %04X",reader->caid);
-	cs_ri_log(reader, "Prv.ID: %s(sysid)",cs_hexdump(1, reader->prid[0], 4, tmp, sizeof(tmp)));
+	rdr_log(reader, "ROM:    %c %c %c %c %c %c %c %c", reader->rom[0], reader->rom[1], reader->rom[2],reader->rom[3], reader->rom[4], reader->rom[5], reader->rom[6], reader->rom[7]);
+	rdr_log(reader, "REV:    %c %c %c %c %c %c", reader->rom[9], reader->rom[10], reader->rom[11], reader->rom[12], reader->rom[13], reader->rom[14]);
+	rdr_log(reader, "SER:    %s", cs_hexdump(1, reader->hexserial+2, 4, tmp, sizeof(tmp)));
+	rdr_log(reader, "CAID:   %04X",reader->caid);
+	rdr_log(reader, "Prv.ID: %s(sysid)",cs_hexdump(1, reader->prid[0], 4, tmp, sizeof(tmp)));
 	for (i=1; i<reader->nprov; i++)
 	{
-          cs_ri_log(reader, "Prv.ID: %s",cs_hexdump(1, reader->prid[i], 4, tmp, sizeof(tmp)));
+          rdr_log(reader, "Prv.ID: %s",cs_hexdump(1, reader->prid[i], 4, tmp, sizeof(tmp)));
 	}
         if(reader->is_tiger)
         {
-	  cs_ri_log(reader, "Activation Date : %s", nagra_datetime(reader, reader->ActivationDate, 0, currdate, 0));
-	  cs_ri_log(reader, "Expiry Date : %s", nagra_datetime(reader, reader->ExpiryDate, 0, currdate, &reader->card_valid_to));
+	  rdr_log(reader, "Activation Date : %s", nagra_datetime(reader, reader->ActivationDate, 0, currdate, 0));
+	  rdr_log(reader, "Expiry Date : %s", nagra_datetime(reader, reader->ExpiryDate, 0, currdate, &reader->card_valid_to));
         }
         if (reader->nagra_read && reader->is_tiger && memcmp(reader->rom, "NCMED", 5) == 0)
         {
@@ -845,7 +845,7 @@ static int32_t nagra2_card_info(struct s_reader * reader)
                                 break;
 
                              default:
-                                cs_ri_log(reader, "Unknown record : %s", cs_hexdump(1, &cta_res[j], 17, tmp, sizeof(tmp)));
+                                rdr_log(reader, "Unknown record : %s", cs_hexdump(1, &cta_res[j], 17, tmp, sizeof(tmp)));
                           }
                           if (val_offs > 0)
                           {
@@ -880,12 +880,12 @@ static int32_t nagra2_card_info(struct s_reader * reader)
                        if (reccmp(records[i].date2,currdate) >= 0)
                        {
                           if (reader->nagra_read == 2)
-                             cs_ri_log(reader, "Tier : %04X, expiry date: %s %s",
+                             rdr_log(reader, "Tier : %04X, expiry date: %s %s",
                                        records[i].value, records[i].date2, get_tiername(records[i].value, reader->caid, tiername));
                           else if (reader->nagra_read == 1)
                           {
                              euro = (records[i].price / 100);
-                             cs_ri_log(reader, "Activation     : ( %04X ) from %s to %s  (%3d euro) %s",
+                             rdr_log(reader, "Activation     : ( %04X ) from %s to %s  (%3d euro) %s",
                                        records[i].value, records[i].date1, records[i].date2, euro, get_tiername(records[i].value, reader->caid, tiername));
                           }
                           cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), records[i].value, 0, tiger_date2time(records[i].date1), tiger_date2time(records[i].date2), 4);
@@ -898,7 +898,7 @@ static int32_t nagra2_card_info(struct s_reader * reader)
                        {
                           if (reader->nagra_read == 2)
                           {                         
-                             cs_ri_log(reader, "Tier : %04X, expiry date: %s %s",
+                             rdr_log(reader, "Tier : %04X, expiry date: %s %s",
                                        records[i].value, records[i].date2, get_tiername(records[i].value, reader->caid, tiername));
                           }
                           cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), records[i].value, 0, tiger_date2time(records[i].date1), tiger_date2time(records[i].date2), 4);
@@ -923,7 +923,7 @@ static int32_t nagra2_card_info(struct s_reader * reader)
                          credit += euro;
                          prepaid += euro;
                          if(euro)
-                           cs_ri_log(reader, "Recharge       :               %s                (%3d euro)",
+                           rdr_log(reader, "Recharge       :               %s                (%3d euro)",
                                      records[i].date2, euro);
                        }
                        break;
@@ -934,7 +934,7 @@ static int32_t nagra2_card_info(struct s_reader * reader)
                        {
                          euro = records[i].price / 100;
                          credit -= euro;
-                         cs_ri_log(reader, "Subscription   : ( %04X ) from %s to %s  (%3d euro) %s",
+                         rdr_log(reader, "Subscription   : ( %04X ) from %s to %s  (%3d euro) %s",
                                    records[i].value, records[i].date1, records[i].date2, euro, get_tiername(records[i].value, reader->caid, tiername));
                        }
                        break;
@@ -942,18 +942,18 @@ static int32_t nagra2_card_info(struct s_reader * reader)
                     case 0x29:
                        euro = records[i].price / 100;
                        if(reader->nagra_read == 1) credit -= euro;
-                       cs_ri_log(reader, "Event purchase : ( %04X ) from %s to %s  (%3d euro)",
+                       rdr_log(reader, "Event purchase : ( %04X ) from %s to %s  (%3d euro)",
                                  records[i].value, records[i].date1, records[i].date2, euro);
                        break;
                  }
               }
               if(reader->nagra_read == 1)
-                cs_ri_log(reader, "Credit         :                                          %3d euro", credit);
+                rdr_log(reader, "Credit         :                                          %3d euro", credit);
               else
-                cs_ri_log(reader, "Credit : %3d euro", balance);
+                rdr_log(reader, "Credit : %3d euro", balance);
            }
         }
-	cs_ri_log(reader, "ready for requests");
+	rdr_log(reader, "ready for requests");
 	return OK;
 }
 
@@ -980,9 +980,9 @@ static int32_t nagra2_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, st
 			
 			while (!do_cmd(reader, er->ecm[3]+1,er->ecm[4]+5+2,0x88,0x04, ecm_pkt,cta_res,&cta_lr)) {
 				if (retry == 0)
-					cs_ri_debug_mask(reader, D_READER, "nagra2_do_ecm (N3_NA) failed, retry");
+					rdr_debug_mask(reader, D_READER, "nagra2_do_ecm (N3_NA) failed, retry");
 				else {
-					cs_ri_debug_mask(reader, D_READER, "nagra2_do_ecm (N3_NA) failed, retry failed!");
+					rdr_debug_mask(reader, D_READER, "nagra2_do_ecm (N3_NA) failed, retry failed!");
 					return ERROR;
 				}
 				retry++;
@@ -993,9 +993,9 @@ static int32_t nagra2_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, st
 			while (!do_cmd(reader, er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2,cta_res,&cta_lr))
 			{
 				if (retry == 0)
-					cs_ri_debug_mask(reader, D_READER, "nagra2_do_ecm failed, retry");
+					rdr_debug_mask(reader, D_READER, "nagra2_do_ecm failed, retry");
 				else {
-					cs_ri_debug_mask(reader, D_READER, "nagra2_do_ecm failed, retry failed!");
+					rdr_debug_mask(reader, D_READER, "nagra2_do_ecm failed, retry failed!");
 					return ERROR;
 				}
 				retry++;
@@ -1007,7 +1007,7 @@ static int32_t nagra2_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, st
 		retry=0;
 		while(!CamStateRequest(reader) && retry < 3)
 		{
-			cs_ri_debug_mask(reader, D_READER, "CamStateRequest failed, try: %d", retry);
+			rdr_debug_mask(reader, D_READER, "CamStateRequest failed, try: %d", retry);
 			retry++;
 	                cs_sleepms(10);
 		}
@@ -1020,7 +1020,7 @@ static int32_t nagra2_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, st
 			idea_cbc_encrypt(&cta_res[4],ea->cw+8,8,&reader->ksSession,v,IDEA_DECRYPT);
 			if (reader->swapCW==1)
 		  	{
-		  		cs_ri_debug_mask(reader, D_READER, "swap cws");
+		  		rdr_debug_mask(reader, D_READER, "swap cws");
 		    		unsigned char tt[8];
 		    		memcpy(&tt[0],&ea->cw[0],8);
 		    		memcpy(&ea->cw[0],&ea->cw[8],8);
@@ -1052,7 +1052,7 @@ static int32_t nagra2_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, st
 				idea_cbc_encrypt(&cta_res[6],ea->cw+8,8,&reader->ksSession,v,IDEA_DECRYPT);
 				return OK;
 			}
-			cs_ri_debug_mask(reader, D_READER, "can't decode ecm");
+			rdr_debug_mask(reader, D_READER, "can't decode ecm");
 			return ERROR;
 		}
 	}
@@ -1133,7 +1133,7 @@ static int32_t nagra2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 	{
 		if(!do_cmd(reader, ep->emm[8],ep->emm[9]+2,0x84,0x02,ep->emm+8+2,cta_res,&cta_lr))
 		{
-			cs_ri_debug_mask(reader, D_READER, "nagra2_do_emm failed");
+			rdr_debug_mask(reader, D_READER, "nagra2_do_emm failed");
 			return ERROR;
 		}
 		// for slow t14 nagra cards, we must do additional timeout
@@ -1156,7 +1156,7 @@ static int32_t nagra2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 		memcpy(&emm_trim[5], ep->emm+3+5+2+2, ep->emm[9]+2);
 		if(!do_cmd(reader, ep->emm[8],ep->emm[9]+5,0x53,0x16, emm_trim,cta_res,&cta_lr))
 		{
-			cs_ri_debug_mask(reader, D_READER, "nagra2_do_emm failed");
+			rdr_debug_mask(reader, D_READER, "nagra2_do_emm failed");
 			return ERROR;
 		}
 		cs_sleepms(300); 

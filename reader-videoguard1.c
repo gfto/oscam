@@ -86,7 +86,7 @@ static void read_tiers(struct s_reader *reader)
     cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), tier_id, 0, 0, mktime(&timeinfo), 4);
 
     char tiername[83];
-    cs_ri_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s", tier_id, y, m, d, H, M, S, get_tiername(tier_id, reader->caid, tiername));
+    rdr_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s", tier_id, y, m, d, H, M, S, get_tiername(tier_id, reader->caid, tiername));
   }
 }
 
@@ -113,9 +113,9 @@ static int32_t videoguard1_card_init(struct s_reader *reader, ATR *newatr)
     return ERROR;
   }
 
-  cs_ri_log(reader, "type: %s, baseyear: %i", reader->card_desc, reader->card_baseyear);
+  rdr_log(reader, "type: %s, baseyear: %i", reader->card_desc, reader->card_baseyear);
   if(reader->ndsversion == NDS1){
-    cs_ri_log(reader, "forced to NDS1+");
+    rdr_log(reader, "forced to NDS1+");
   }
 
   /* NDS1 Class 48 only cards only need a very basic initialisation
@@ -136,7 +136,7 @@ static int32_t videoguard1_card_init(struct s_reader *reader, ATR *newatr)
   int32_t boxidOK = 0;
   l = vg1_do_cmd(reader, ins36, NULL, buff, cta_res);
   if (buff[7] > 0x0F) {
-    cs_ri_log(reader, "class48 ins36: encrypted - therefore not an NDS1 card");
+    rdr_log(reader, "class48 ins36: encrypted - therefore not an NDS1 card");
     return ERROR;
   } else {
     /* skipping the initial fixed fields: cmdecho (4) + length (1) + encr/rev++ (4) */
@@ -208,7 +208,7 @@ static int32_t videoguard1_card_init(struct s_reader *reader, ATR *newatr)
 	  }
 	default:		/* default to assume a length byte */
 	  {
-	    cs_ri_log(reader, "class48 ins36: returned unknown type=0x%02X - parsing may fail", buff[i]);
+	    rdr_log(reader, "class48 ins36: returned unknown type=0x%02X - parsing may fail", buff[i]);
 	    i += buff[i + 1] + 2;
 	  }
 	}
@@ -216,7 +216,7 @@ static int32_t videoguard1_card_init(struct s_reader *reader, ATR *newatr)
     }
   }
 
-  // cs_ri_log(reader, "calculated BoxID: %02X%02X%02X%02X", boxID[0], boxID[1], boxID[2], boxID[3]);
+  // rdr_log(reader, "calculated BoxID: %02X%02X%02X%02X", boxID[0], boxID[1], boxID[2], boxID[3]);
 
   /* the boxid is specified in the config */
   if (reader->boxid > 0) {
@@ -224,11 +224,11 @@ static int32_t videoguard1_card_init(struct s_reader *reader, ATR *newatr)
     for (i = 0; i < 4; i++) {
       boxID[i] = (reader->boxid >> (8 * (3 - i))) % 0x100;
     }
-    // cs_ri_log(reader, "config BoxID: %02X%02X%02X%02X", boxID[0], boxID[1], boxID[2], boxID[3]);
+    // rdr_log(reader, "config BoxID: %02X%02X%02X%02X", boxID[0], boxID[1], boxID[2], boxID[3]);
   }
 
   if (!boxidOK) {
-    cs_ri_log(reader, "no boxID available");
+    rdr_log(reader, "no boxID available");
     return ERROR;
   } 
 
@@ -237,14 +237,14 @@ static int32_t videoguard1_card_init(struct s_reader *reader, ATR *newatr)
   unsigned char payload4C[9] = { 0, 0, 0, 0, 3, 0, 0, 0, 4 };
   memcpy(payload4C, boxID, 4);
   if (!write_cmd_vg(ins4C, payload4C) || !status_ok(cta_res + l)) {
-    cs_ri_log(reader, "class48 ins4C: sending boxid failed");
+    rdr_log(reader, "class48 ins4C: sending boxid failed");
     return ERROR;
   }
 
   static const unsigned char ins58[5] = { 0x48, 0x58, 0x00, 0x00, 0x17 };
   l = vg1_do_cmd(reader, ins58, NULL, buff, cta_res);
   if (l < 0) {
-    cs_ri_log(reader, "class48 ins58: failed");
+    rdr_log(reader, "class48 ins58: failed");
     return ERROR;
   }
 
@@ -259,10 +259,10 @@ static int32_t videoguard1_card_init(struct s_reader *reader, ATR *newatr)
   reader->nprov = 1;
   memset(reader->prid, 0x00, sizeof(reader->prid));
 
-  cs_ri_log(reader, "type: VideoGuard, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
+  rdr_log(reader, "type: VideoGuard, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
     reader->caid, reader->hexserial[2], reader->hexserial[3], reader->hexserial[4], reader->hexserial[5],
     boxID[0], boxID[1], boxID[2], boxID[3]);
-  cs_ri_log(reader, "ready for requests - this is in testing please send -d 255 logs");
+  rdr_log(reader, "ready for requests - this is in testing please send -d 255 logs");
 
   return OK;
 }
@@ -285,7 +285,7 @@ static int32_t videoguard1_do_ecm(struct s_reader * reader, const ECM_REQUEST *e
     if (l > 0 && status_ok(cta_res + l)) {
       if (!cw_is_valid(rbuff+5))    //sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
       {
-        cs_ri_log(reader, "class48 ins54 status 90 00 but cw=00 -> channel not subscribed");
+        rdr_log(reader, "class48 ins54 status 90 00 but cw=00 -> channel not subscribed");
         return ERROR;
       }
 
@@ -299,7 +299,7 @@ static int32_t videoguard1_do_ecm(struct s_reader * reader, const ECM_REQUEST *e
       return OK;
     }
   }
-  cs_ri_log(reader, "class48 ins54 (%d) status not ok %02x %02x", l, cta_res[0], cta_res[1]);
+  rdr_log(reader, "class48 ins54 (%d) status not ok %02x %02x", l, cta_res[0], cta_res[1]);
   return ERROR;
 }
 
@@ -311,8 +311,8 @@ static int32_t videoguard1_do_emm(struct s_reader *reader, EMM_PACKET * ep)
 static int32_t videoguard1_card_info(struct s_reader *reader)
 {
   /* info is displayed in init, or when processing info */
-  cs_ri_log(reader, "card detected");
-  cs_ri_log(reader, "type: %s", reader->card_desc);
+  rdr_log(reader, "card detected");
+  rdr_log(reader, "type: %s", reader->card_desc);
   read_tiers(reader);
   return OK;
 }

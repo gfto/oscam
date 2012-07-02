@@ -131,13 +131,13 @@ static int32_t bulcrypt_card_init(struct s_reader *reader, ATR *newatr)
 	if (memcmp(atr, atr_carpet, MIN(sizeof(atr_carpet), atr_size)) != 0)
 	{
 		if (atr_size == 3) {
-			cs_ri_log(reader, "ATR_len=3 but ATR is unknown: %s",
+			rdr_log(reader, "ATR_len=3 but ATR is unknown: %s",
 				cs_hexdump(1, atr, atr_size, tmp, sizeof(tmp)));
 		}
 		return ERROR;
 	}
 
-	cs_ri_log(reader, "Card detected.");
+	rdr_log(reader, "Card detected.");
 
 	reader->nprov = 1;
 	memset(reader->prid, 0, sizeof(reader->prid));
@@ -148,7 +148,7 @@ static int32_t bulcrypt_card_init(struct s_reader *reader, ATR *newatr)
 	write_cmd(cmd_set_key, cmd_set_key + 5);
 	if (cta_lr < 2 || (cta_res[0] != 0x90 && cta_res[1] != 0x00))
 	{
-		cs_ri_log(reader, "(cmd_set_key) Unexpected card answer: %s",
+		rdr_log(reader, "(cmd_set_key) Unexpected card answer: %s",
 			cs_hexdump(1, cta_res, cta_lr, tmp, sizeof(tmp)));
 		return ERROR;
 	}
@@ -158,7 +158,7 @@ static int32_t bulcrypt_card_init(struct s_reader *reader, ATR *newatr)
 	write_cmd(cmd_cardtype2, NULL);
 	if (cta_lr < 5 || (cta_res[0] != 0x01 && cta_res[1] != 0x01))
 	{
-		cs_ri_log(reader, "(cmd_cardtype) Unexpected card answer: %s",
+		rdr_log(reader, "(cmd_cardtype) Unexpected card answer: %s",
 			cs_hexdump(1, cta_res, cta_lr, tmp, sizeof(tmp)));
 		return ERROR;
 	}
@@ -173,7 +173,7 @@ static int32_t bulcrypt_card_init(struct s_reader *reader, ATR *newatr)
 	write_cmd(cmd_cardsn2, NULL);
 	if (cta_lr < 6 || (cta_res[0] != 0x02 && cta_res[1] != 0x04))
 	{
-		cs_ri_log(reader, "(card_sn) Unexpected card answer: %s",
+		rdr_log(reader, "(card_sn) Unexpected card answer: %s",
 			cs_hexdump(1, cta_res, cta_lr, tmp, sizeof(tmp)));
 		return ERROR;
 	}
@@ -184,7 +184,7 @@ static int32_t bulcrypt_card_init(struct s_reader *reader, ATR *newatr)
 	write_cmd(cmd_ascsn2, NULL);
 	if (cta_lr < 15 || (cta_res[0] != 0x05 && cta_res[1] != 0x0d))
 	{
-		cs_ri_log(reader, "(asc_sn) Unexpected card answer: %s",
+		rdr_log(reader, "(asc_sn) Unexpected card answer: %s",
 			cs_hexdump(1, cta_res, cta_lr, tmp, sizeof(tmp)));
 		return ERROR;
 	}
@@ -204,12 +204,12 @@ static int32_t bulcrypt_card_init(struct s_reader *reader, ATR *newatr)
 
 	// The HEX serial have nothing to do with Serial (they do not match)
 	// *FIXME* is this a problem? Probably not.
-	cs_ri_log(reader, "CAID: 0x4AEE|0x5581, CardType: 0x%02x, Serial: %s, HexSerial: %02X %02X %02X",
+	rdr_log(reader, "CAID: 0x4AEE|0x5581, CardType: 0x%02x, Serial: %s, HexSerial: %02X %02X %02X",
 		card_type,
 		card_serial,
 		reader->hexserial[0], reader->hexserial[1], reader->hexserial[2]);
 
-	cs_ri_log(reader, "Ready for requests.");
+	rdr_log(reader, "Ready for requests.");
 
 	return OK;
 }
@@ -224,7 +224,7 @@ static int cw_is_valid(struct s_reader * reader, unsigned char *cw)
 
 	if (cnt == 8)
 	{
-		cs_ri_log(reader, "Invalid CW (all zeroes)");
+		rdr_log(reader, "Invalid CW (all zeroes)");
 		return ERROR;
 	}
 
@@ -233,9 +233,9 @@ static int cw_is_valid(struct s_reader * reader, unsigned char *cw)
 	if (cksum1 != cw[3] || cksum2 != cw[7])
 	{
 		if (cksum1 != cw[3])
-			cs_ri_log(reader, "Invalid CW (cksum1 mismatch expected 0x%02x got 0x%02x)", cksum1, cw[3]);
+			rdr_log(reader, "Invalid CW (cksum1 mismatch expected 0x%02x got 0x%02x)", cksum1, cw[3]);
 		if (cksum2 != cw[7])
-			cs_ri_log(reader, "Invalid CW (cksum2 mismatch expected 0x%02x got 0x%02x)", cksum2, cw[7]);
+			rdr_log(reader, "Invalid CW (cksum2 mismatch expected 0x%02x got 0x%02x)", cksum2, cw[7]);
 		return ERROR;
 	}
 
@@ -266,7 +266,7 @@ static int32_t bulcrypt_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 	int32_t ecm_len = check_sct_len(er->ecm, 3);
 	if (ecm_len < 64 || ecm_len > 188)
 	{
-		cs_ri_log(reader, "Wrong ECM length: %d", ecm_len);
+		rdr_log(reader, "Wrong ECM length: %d", ecm_len);
 		return ERROR;
 	}
 
@@ -279,20 +279,20 @@ static int32_t bulcrypt_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 	write_cmd(ecm_cmd, ecm_cmd + 5);
 	if (cta_lr != 2)
 	{
-		cs_ri_log(reader, "(ecm_cmd) Unexpected card answer: %s",
+		rdr_log(reader, "(ecm_cmd) Unexpected card answer: %s",
 			cs_hexdump(1, cta_res, cta_lr, tmp, sizeof(tmp)));
 		return ERROR;
 	}
 
 	if (cta_res[0] == 0x90 && cta_res[1] == 0x03)
 	{
-		cs_ri_log(reader, "No active subscription.");
+		rdr_log(reader, "No active subscription.");
 		return ERROR;
 	}
 
 	if ( !(cta_res[0] == 0x90 && cta_res[1] == 0x13) )
 	{
-		cs_ri_log(reader, "(ecm_cmd) Unexpected card answer: %s",
+		rdr_log(reader, "(ecm_cmd) Unexpected card answer: %s",
 			cs_hexdump(1, cta_res, cta_lr, tmp, sizeof(tmp)));
 		return ERROR;
 	}
@@ -300,10 +300,10 @@ static int32_t bulcrypt_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 	// Call get_cw
 	write_cmd(cmd_ecm_get_cw, NULL);
 
-	// cs_ri_log(reader, "CW_LOG: %s", cs_hexdump(1, cta_res, cta_lr, tmp, sizeof(tmp)));
+	// rdr_log(reader, "CW_LOG: %s", cs_hexdump(1, cta_res, cta_lr, tmp, sizeof(tmp)));
 	if (cta_lr < 20 || (cta_res[0] != 0x0a && cta_res[1] != 0x11))
 	{
-		cs_ri_log(reader, "(get_cw) Unexpected card answer: %s",
+		rdr_log(reader, "(get_cw) Unexpected card answer: %s",
 			cs_hexdump(1, cta_res, cta_lr, tmp, sizeof(tmp)));
 		return ERROR;
 	}
@@ -313,7 +313,7 @@ static int32_t bulcrypt_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 	//   0xc0 (ver 2) is *NOT* supported currently
 	if (cta_res[2] == 0xc0)
 	{
-		cs_ri_log(reader, "Possibly unsupported codeword (bulcrypt v2): %s",
+		rdr_log(reader, "Possibly unsupported codeword (bulcrypt v2): %s",
 			cs_hexdump(1, cta_res, cta_lr, tmp, sizeof(tmp)));
 		// *FIXME* commented for testing, this really should be an error
 		//return ERROR;
@@ -420,7 +420,7 @@ static int32_t bulcrypt_get_emm_type(EMM_PACKET *ep, struct s_reader *reader)
 
 	if (emm_len < 176)
 	{
-		cs_ri_debug_mask(reader, D_EMM, "emm_len < 176 (%u): %s",
+		rdr_debug_mask(reader, D_EMM, "emm_len < 176 (%u): %s",
 			emm_len, cs_hexdump(1, ep->emm, 12, dump_emm_sn, sizeof(dump_emm_sn)));
 		ep->type = UNKNOWN;
 		return FALSE;
@@ -452,28 +452,28 @@ static int32_t bulcrypt_get_emm_type(EMM_PACKET *ep, struct s_reader *reader)
 		ep->type = UNIQUE;
 		check_serial(3);
 		if (ret)
-			cs_ri_log(reader, "EMM_UNIQUE-%02x-%02x, emm_sn = %s, card_sn = %s",
+			rdr_log(reader, "EMM_UNIQUE-%02x-%02x, emm_sn = %s, card_sn = %s",
 				ep->emm[0], ep->emm[6], dump_emm_sn, dump_card_sn);
 		break;
 	case BULCRYPT_EMM_SHARED_84:
 		ep->type = SHARED;
 		check_serial(2);
 		if (ret)
-			cs_ri_log(reader, "EMM_SHARED-%02x-%02x-%02x, emm_sn = %s, card_sn = %s",
+			rdr_log(reader, "EMM_SHARED-%02x-%02x-%02x, emm_sn = %s, card_sn = %s",
 				ep->emm[0], ep->emm[5], ep->emm[6], dump_emm_sn, dump_card_sn);
 		break;
 	case BULCRYPT_EMM_8a:
 		ep->type = UNKNOWN;
 		check_serial_skip_first(2);
 		if (ret)
-			cs_ri_log(reader, "EMM_UNKNOWN-%02x-%02x-%02x, emm_sn = %s, card_sn = %s",
+			rdr_log(reader, "EMM_UNKNOWN-%02x-%02x-%02x, emm_sn = %s, card_sn = %s",
 				ep->emm[0], ep->emm[5], ep->emm[6], dump_emm_sn, dump_card_sn);
 		break;
 	case BULCRYPT_EMM_8b:
 		ep->type = GLOBAL;
 		check_serial_skip_first(1);
 		if (ret)
-			cs_ri_log(reader, "EMM_GLOBAL-%02x-%02x-%02x, emm_sn = %s, card_sn = %s",
+			rdr_log(reader, "EMM_GLOBAL-%02x-%02x-%02x, emm_sn = %s, card_sn = %s",
 				ep->emm[0], ep->emm[5], ep->emm[6], dump_emm_sn, dump_card_sn);
 		break;
 	case BULCRYPT_EMM_FILLER:
@@ -481,7 +481,7 @@ static int32_t bulcrypt_get_emm_type(EMM_PACKET *ep, struct s_reader *reader)
 		break;
 	default:
 		ep->type = UNKNOWN;
-		cs_ri_log(reader, "UNKNOWN_EMM len: %u, %s..", emm_len,
+		rdr_log(reader, "UNKNOWN_EMM len: %u, %s..", emm_len,
 			cs_hexdump(1, ep->emm, 12, dump_emm_sn, sizeof(dump_emm_sn)));
 		break;
 	}
@@ -589,13 +589,13 @@ static int32_t bulcrypt_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	write_cmd(emm_cmd, emm_cmd + 5);
 	if (cta_lr != 2 || cta_res[0] != 0x90 || (cta_res[1] != 0x00 && cta_res[1] != 0x0a))
 	{
-		cs_ri_log(reader, "(emm_cmd) Unexpected card answer: %s",
+		rdr_log(reader, "(emm_cmd) Unexpected card answer: %s",
 			cs_hexdump(1, cta_res, cta_lr, tmp, sizeof(tmp)));
 		return ERROR;
 	}
 
 	if (ep->emm[0] == BULCRYPT_EMM_UNIQUE_82 && cta_res[0] == 0x90 && cta_res[1] == 0x0a)
-		cs_ri_log(reader, "Your subscription data was updated.");
+		rdr_log(reader, "Your subscription data was updated.");
 
 	return OK;
 }
@@ -616,7 +616,7 @@ static int32_t bulcrypt_card_info(struct s_reader *reader)
 	struct tm tm;
 	def_resp
 
-	cs_ri_log(reader, "Reading subscription info.");
+	rdr_log(reader, "Reading subscription info.");
 
 	cs_clear_entitlement(reader);
 
@@ -625,7 +625,7 @@ static int32_t bulcrypt_card_info(struct s_reader *reader)
 
 	if (cta_lr < 45)
 	{
-		cs_ri_log(reader, "(info_cmd) Unexpected card answer: %s",
+		rdr_log(reader, "(info_cmd) Unexpected card answer: %s",
 			cs_hexdump(1, cta_res, cta_lr, tmp, sizeof(tmp)));
 		return ERROR;
 	}
@@ -645,23 +645,23 @@ static int32_t bulcrypt_card_info(struct s_reader *reader)
 	gmtime_r(&last_upd_ts, &tm);
 	memset(tmp, 0, sizeof(tmp));
 	strftime(tmp, sizeof(tmp), "%Y-%m-%d %H:%M:%S %Z", &tm);
-	cs_ri_log(reader, "Subscription data last update    : %s", tmp);
+	rdr_log(reader, "Subscription data last update    : %s", tmp);
 
 	gmtime_r(&subs_end_ts, &tm);
 	memset(tmp, 0, sizeof(tmp));
 	strftime(tmp, sizeof(tmp), "%Y-%m-%d %H:%M:%S %Z", &tm);
-	cs_ri_log(reader, "Subscription should be active to : %s", tmp);
+	rdr_log(reader, "Subscription should be active to : %s", tmp);
 
 	unsigned int subs1 = b2i(2, cta_res + 3 + 4 + 16);
 	unsigned int subs2 = b2i(2, cta_res + 3 + 4 + 16 + 18);
 
 	if (subs1 == 0xffff) {
-		cs_ri_log(reader, "No active subscriptions (0x%04x, 0x%04x)", subs1, subs2);
+		rdr_log(reader, "No active subscriptions (0x%04x, 0x%04x)", subs1, subs2);
 	} else {
 		unsigned int i;
-		cs_ri_log(reader, "Subscription data 1 (0x%04x): %s",
+		rdr_log(reader, "Subscription data 1 (0x%04x): %s",
 			subs1, dec2bin_str(subs1, tmp));
-		cs_ri_log(reader, "Subscription data 2 (0x%04x): %s",
+		rdr_log(reader, "Subscription data 2 (0x%04x): %s",
 			subs2, dec2bin_str(subs2, tmp));
 
 		// Configure your tiers to get subscription packets name resolution
@@ -696,7 +696,7 @@ static int32_t bulcrypt_card_info(struct s_reader *reader)
 				get_tiername(i, 0x4aee, tmp);
 				if (tmp[0] == 0x00)
 					get_tiername(i, 0x5581, tmp);
-				cs_ri_log(reader, "  Package %02x is active: %s", i, tmp);
+				rdr_log(reader, "  Package %02x is active: %s", i, tmp);
 			}
 		}
 	}

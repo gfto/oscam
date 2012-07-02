@@ -16,14 +16,14 @@ static uint64_t get_pbm(struct s_reader * reader, uint8_t idx)
 
   switch (cta_res[0]) {
   case 0x04:
-    cs_ri_log(reader, "no PBM for provider %u", idx + 1);
+    rdr_log(reader, "no PBM for provider %u", idx + 1);
     break;
   case 0x83:
     pbm = b2ll(8, cta_res + 1);
-    cs_ri_log(reader, "PBM for provider %u: %08llx", idx + 1, (unsigned long long) pbm);
+    rdr_log(reader, "PBM for provider %u: %08llx", idx + 1, (unsigned long long) pbm);
     break;
   default:
-    cs_ri_log(reader, "ERROR: PBM returns unknown byte %02x", cta_res[0]);
+    rdr_log(reader, "ERROR: PBM returns unknown byte %02x", cta_res[0]);
   }
   return pbm;
 }
@@ -70,11 +70,11 @@ static int32_t set_provider_info(struct s_reader * reader, int32_t i)
   if (l_name[8])
 	  add_provider(0x0100, provid, l_name + 8, "", "");
   reader->availkeys[i][0]=valid; //misusing availkeys to register validity of provider
-  cs_ri_log (reader, "provider %d: %04X, valid: %i%s, expiry date: %4d/%02d/%02d",
+  rdr_log (reader, "provider %d: %04X, valid: %i%s, expiry date: %4d/%02d/%02d",
          i+1, provid, valid, l_name, year, month, day);
   memcpy(&reader->sa[i][0], cta_res+18, 4);
   if (valid==1) //if not expired
-    cs_ri_log (reader, "SA: %s", cs_hexdump(0, cta_res+18, 4, tmp, sizeof(tmp)));
+    rdr_log (reader, "SA: %s", cs_hexdump(0, cta_res+18, 4, tmp, sizeof(tmp)));
 
   // add entitlement to list
   memset(&lt, 0, sizeof(struct tm));
@@ -115,28 +115,28 @@ static int32_t unlock_parental(struct s_reader * reader)
     def_resp;
 
     if (strcmp(reader->pincode, "none")) {
-        cs_ri_log(reader, "Using PIN %s",reader->pincode);
+        rdr_log(reader, "Using PIN %s",reader->pincode);
         // the pin need to be coded in bcd, so we need to convert from ascii to bcd, so '1234' -> 0x12 0x34
         ins30data[6]=((reader->pincode[0]-0x30)<<4) | ((reader->pincode[1]-0x30) & 0x0f);
         ins30data[7]=((reader->pincode[2]-0x30)<<4) | ((reader->pincode[3]-0x30) & 0x0f);
     }
     else {
-        cs_ri_log(reader, "Using PIN 0000!");
+        rdr_log(reader, "Using PIN 0000!");
     }
 
     write_cmd(ins30, ins30data); 
     if( !(cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0) ) {
         if (strcmp(reader->pincode, "none")) {
-            cs_ri_log(reader, "Can't disable parental lock. Wrong PIN? OSCam used %s!",reader->pincode);
+            rdr_log(reader, "Can't disable parental lock. Wrong PIN? OSCam used %s!",reader->pincode);
         }
         else {
-            cs_ri_log(reader, "Can't disable parental lock. Wrong PIN? OSCam used 0000!");
+            rdr_log(reader, "Can't disable parental lock. Wrong PIN? OSCam used 0000!");
         }
     }
     else
-        cs_ri_log(reader, "Parental lock disabled");
+        rdr_log(reader, "Parental lock disabled");
     
-    cs_ri_debug_mask(reader, D_READER, "ins30_answer: %02x%02x",cta_res[0], cta_res[1]);
+    rdr_debug_mask(reader, D_READER, "ins30_answer: %02x%02x",cta_res[0], cta_res[1]);
     return 0;
 }
 
@@ -174,7 +174,7 @@ static int32_t seca_card_init(struct s_reader * reader, ATR *newatr)
   write_cmd(ins0e, NULL); // read unique id
   memcpy(reader->hexserial, cta_res+2, 6);
   serial = b2ll(5, cta_res+3) ;
-  cs_ri_log (reader, "type: SECA, caid: %04X, serial: %llu, card: %s v%d.%d",
+  rdr_log (reader, "type: SECA, caid: %04X, serial: %llu, card: %s v%d.%d",
          reader->caid, (unsigned long long) serial, card, atr[9]&0x0F, atr[9]>>4);
   write_cmd(ins16, NULL); // read nr of providers
   pmap=cta_res[2]<<8|cta_res[3];
@@ -190,14 +190,14 @@ static int32_t seca_card_init(struct s_reader * reader, ATR *newatr)
 	snprintf((char *) buf+strlen((char *)buf), sizeof(buf)-strlen((char *)buf), ",%04X", b2i(2, &reader->prid[i][2])); 
     }
 
-  cs_ri_log (reader, "providers: %d (%s)", reader->nprov, buf+1);
+  rdr_log (reader, "providers: %d (%s)", reader->nprov, buf+1);
 // Unlock parental control
   if( cfg.ulparent != 0 ){
     unlock_parental(reader);
   }else {
-	  cs_ri_log (reader, "parental locked");
+	  rdr_log (reader, "parental locked");
   }	
-  cs_ri_log(reader, "ready for requests");
+  rdr_log(reader, "ready for requests");
   return OK;
 }
 
@@ -281,7 +281,7 @@ static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, stru
 
 static int32_t seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
 {
-    cs_ri_debug_mask(rdr, D_EMM, "Entered seca_get_emm_type ep->emm[0]=%i",ep->emm[0]);
+    rdr_debug_mask(rdr, D_EMM, "Entered seca_get_emm_type ep->emm[0]=%i",ep->emm[0]);
     int32_t i;
     char tmp_dbg[25];
     switch (ep->emm[0])
@@ -290,8 +290,8 @@ static int32_t seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //return
         ep->type = UNIQUE;
         memset(ep->hexserial,0,8);
         memcpy(ep->hexserial, ep->emm + 3, 6);
-        cs_ri_debug_mask(rdr, D_EMM, "UNIQUE , ep->hexserial  = %s", cs_hexdump(1, ep->hexserial, 6, tmp_dbg, sizeof(tmp_dbg)));
-        cs_ri_debug_mask(rdr, D_EMM, "UNIQUE , rdr->hexserial = %s", cs_hexdump(1, rdr->hexserial, 6, tmp_dbg, sizeof(tmp_dbg)));
+        rdr_debug_mask(rdr, D_EMM, "UNIQUE , ep->hexserial  = %s", cs_hexdump(1, ep->hexserial, 6, tmp_dbg, sizeof(tmp_dbg)));
+        rdr_debug_mask(rdr, D_EMM, "UNIQUE , rdr->hexserial = %s", cs_hexdump(1, rdr->hexserial, 6, tmp_dbg, sizeof(tmp_dbg)));
         return (!memcmp (rdr->hexserial, ep->hexserial, 6));
         break;
 
@@ -300,10 +300,10 @@ static int32_t seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //return
         memset(ep->hexserial,0,8);
         memcpy(ep->hexserial, ep->emm + 5, 3); //dont include custom byte; this way the network also knows SA
         i=get_prov_index(rdr, ep->emm+3);
-        cs_ri_debug_mask(rdr, D_EMM, "SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 3, tmp_dbg, sizeof(tmp_dbg)));
+        rdr_debug_mask(rdr, D_EMM, "SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 3, tmp_dbg, sizeof(tmp_dbg)));
         if (i== -1) //provider not found on this card
             return FALSE; //do not pass this EMM
-        cs_ri_debug_mask(rdr, D_EMM, "SHARED, rdr->sa[%i] = %s", i, cs_hexdump(1, rdr->sa[i], 3, tmp_dbg, sizeof(tmp_dbg)));
+        rdr_debug_mask(rdr, D_EMM, "SHARED, rdr->sa[%i] = %s", i, cs_hexdump(1, rdr->sa[i], 3, tmp_dbg, sizeof(tmp_dbg)));
         return (!memcmp (rdr->sa[i], ep->hexserial, 3));
         break;
 
@@ -311,7 +311,7 @@ static int32_t seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //return
         // FIXME: Drop EMM's until there are implemented
     case 0x83:
         ep->type = GLOBAL;
-        cs_ri_debug_mask(rdr, D_EMM, "GLOBAL, PROVID: %04X",(ep->emm[3]<<8) | ep->emm[4]);
+        rdr_debug_mask(rdr, D_EMM, "GLOBAL, PROVID: %04X",(ep->emm[3]<<8) | ep->emm[4]);
         return (TRUE);
         /* 	EMM-G manadge ppv by provid
          83 00 74 33 41 04 70 00 BF 20 A1 15 48 1B 88 FF
@@ -376,7 +376,7 @@ static void seca_get_emm_filter(struct s_reader * rdr, uchar *filter)
 		idx += 32;
 
 		if (filter[1]>=10) {
-			cs_ri_log(rdr, "%s: could not start all emm filter", __func__);
+			rdr_log(rdr, "%s: could not start all emm filter", __func__);
 			break;
 		}
 	}
@@ -415,8 +415,8 @@ static int32_t seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 			break;			
 
 		default:
-			cs_ri_log(reader, "EMM: Congratulations, you have discovered a new EMM on SECA.");
-			cs_ri_log(reader, "This has not been decoded yet, so send this output to authors:");
+			rdr_log(reader, "EMM: Congratulations, you have discovered a new EMM on SECA.");
+			rdr_log(reader, "This has not been decoded yet, so send this output to authors:");
 			cs_dump (ep->emm, emm_length + 3, "EMM:");
 			return ERROR;
   }
@@ -424,7 +424,7 @@ static int32_t seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   i=get_prov_index(reader, prov_id_ptr);
   if (i==-1) 
   {
-      cs_ri_log(reader, "EMM: provider id not found.");
+      rdr_log(reader, "EMM: provider id not found.");
     return ERROR;
   }
 
@@ -434,7 +434,7 @@ static int32_t seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 	 if (!(cta_res[1] & 4)) // date updated
 	 	set_provider_info(reader, i);
 	 else
-	 	cs_ri_log(reader, "EMM: Update not necessary.");
+	 	rdr_log(reader, "EMM: Update not necessary.");
 	 return OK; //Update not necessary
   }
 	if ((cta_res[0] == 0x90) && ((cta_res[1] == 0x00) || (cta_res[1] == 0x19))) {
