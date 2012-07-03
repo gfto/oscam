@@ -83,6 +83,9 @@ OPTIONS
 	     1 = restart activated, web interface can restart oscam (default)
 	     2 = like 1, but also restart on segmentation faults
 
+       -S
+	  prevent sensitive info (card serials) from reaching the logs
+
        -s
 	  capture segmentation faults
 

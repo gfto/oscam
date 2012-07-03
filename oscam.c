@@ -299,7 +299,7 @@ static void usage(void)
 	printf(" Usage: oscam [-a] [-b] [-c <config dir>] [-d <level>] [-g <mode>] [-h] [-p <num>] ");
 	if (config_WEBIF())
 		printf("[-r <level>] ");
-	printf("[-s] [-t <tmp dir>] ");
+	printf("[-S] [-s] [-t <tmp dir>] ");
 	if (config_WEBIF())
 		printf("[-u] ");
 	printf("[-w <secs>]\n");
@@ -331,6 +331,7 @@ static void usage(void)
 		printf("\t               1 = restart activated, web interface can restart oscam (default)\n");
 		printf("\t               2 = like 1, but also restart on segmentation faults\n\n");
 	}
+	printf("\t-S         : prevent sensitive info (card serials) from reaching the logs\n\n");
 	printf("\t-s         : capture segmentation faults\n\n");
 	printf("\t-t <dir>   : tmp dir <dir>\n");
 #if defined(__CYGWIN__)
@@ -4709,7 +4710,7 @@ int32_t main (int32_t argc, char *argv[])
 	0
   };
 
-  while ((i=getopt(argc, argv, "g:bsauc:t:d:r:w:hm:xp:"))!=EOF)
+  while ((i=getopt(argc, argv, "g:bsauc:t:d:r:w:hm:xp:S"))!=EOF)
   {
 	  switch(i) {
 		  case 'g':
@@ -4760,6 +4761,9 @@ int32_t main (int32_t argc, char *argv[])
 				break;
 		  case 'p':
 			  max_pending = MAX(atoi(optarg), 1);
+			  break;
+		  case 'S':
+			  log_remove_sensitive = !log_remove_sensitive;
 			  break;
 		  case 'h':
 			  usage();
