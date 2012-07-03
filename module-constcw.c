@@ -14,7 +14,7 @@ int32_t constcw_file_available(void)
     return (1);
 }
 
-int32_t constcw_analyse_file(uint16_t c_caid, uint32_t c_prid, uint16_t c_sid, uchar *dcw)
+int32_t constcw_analyse_file(uint16_t c_caid, uint32_t UNUSED(c_prid), uint16_t c_sid, uchar *dcw)
 {
 	//CAID:PROVIDER:SID:PMT:PID::XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX
 	
@@ -22,9 +22,6 @@ int32_t constcw_analyse_file(uint16_t c_caid, uint32_t c_prid, uint16_t c_sid, u
 	char token[512];
 	uint32_t caid, provid, sid, pmt, pid;
 	int32_t cw[16];
-	
-	// FIXME
-	c_prid = c_prid;
 	
 	fp=fopen(cur_client()->reader->device, "r");
 	if (!fp) return (0);
@@ -98,14 +95,11 @@ int32_t constcw_client_init(struct s_client *client)
 	return (0);
 }
 
-static int32_t constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *msgbuf)
+static int32_t constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *UNUSED(msgbuf))
 {
     time_t t;
     struct s_reader *rdr = client->reader;
     uchar cw[16];
-
-    // FIXME
-    msgbuf = msgbuf;
 
     t = time(NULL);
     // Check if DCW exist in the files
@@ -122,10 +116,8 @@ static int32_t constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar 
     return(0);
 }
 
-static int32_t constcw_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t n)
+static int32_t constcw_recv_chk(struct s_client *UNUSED(client), uchar *dcw, int32_t *rc, uchar *buf, int32_t n)
 {
-    // FIXME
-    *client = *client;
     dcw = dcw;
     n = n;
     buf = buf;
