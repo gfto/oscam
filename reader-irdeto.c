@@ -379,7 +379,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 	reader->nprov = cta_res[10+acspadd];
 	memcpy(reader->hexserial, cta_res+12+acspadd, 4);
 	
-	rdr_log(reader, "providers: %d, ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
+	rdr_log_sensitive(reader, "providers: %d, ascii serial: {%s}, hex serial: {%02X%02X%02X}, hex base: {%02X}",
 		reader->nprov, buf, reader->hexserial[0], reader->hexserial[1], reader->hexserial[2], reader->hexserial[3]);
 
 	/*
@@ -566,7 +566,7 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			memcpy(ep->hexserial, ep->emm + 4, l);
 			cs_hexdump(1, rdr->hexserial, l, dumprdrserial, sizeof(dumprdrserial));
 			cs_hexdump(1, ep->hexserial, l, dumpemmserial, sizeof(dumpemmserial));
-			rdr_debug_mask(rdr, D_EMM, "SHARED l = %d ep = %s rdr = %s base = %02x", l, 
+			rdr_debug_mask_sensitive(rdr, D_EMM, "SHARED l = %d ep = {%s} rdr = {%s} base = %02x", l,
 					dumpemmserial, dumprdrserial, base);
 
 			if (base & 0x10) {
@@ -592,7 +592,7 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			memcpy(ep->hexserial, ep->emm + 4, l);
 			cs_hexdump(1, rdr->hexserial, l, dumprdrserial, sizeof(dumprdrserial));
 			cs_hexdump(1, ep->hexserial, l, dumpemmserial, sizeof(dumpemmserial));
-			rdr_debug_mask(rdr, D_EMM, "UNIQUE l = %d ep = %s rdr = %s base = %02x", l, 
+			rdr_debug_mask(rdr, D_EMM, "UNIQUE l = %d ep = {%s} rdr = {%s} base = %02x", l,
 					dumpemmserial, dumprdrserial, base);
 
 			if (base & 0x10)

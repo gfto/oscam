@@ -68,6 +68,8 @@ uint32_t ecmcwcache_size = 0;
 
 struct  s_config  cfg;
 
+int log_remove_sensitive = 0;
+
 char    *prog_name = NULL;
 char    *processUsername = NULL;
 #if defined(WEBIF) || defined(MODULE_MONITOR) 

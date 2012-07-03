@@ -4,6 +4,33 @@
 
 int32_t logfd = 0;
 
+static char *vsnprintf_sensitive(char *result, int result_size, int remove_sensitive, char *fmt, va_list args)
+{
+	// Get the resulting string
+	vsnprintf(result, result_size, fmt, args);
+	// Filter sensitive information
+	int i, n = strlen(result), p = 0;
+	if (remove_sensitive) {
+		int in_sens = 0;
+		for (i = 0; i < n; i++) {
+			switch(result[i]) {
+				case '{': in_sens = 1; continue;
+				case '}': in_sens = 0; break;
+			}
+			if (in_sens)
+				result[i] = '#';
+		}
+	}
+	// Filter sensitive markers
+	for (i = 0; i < n; i++) {
+		if (result[i] == '{' || result[i] == '}')
+			continue;
+		result[p++] = result[i];
+	}
+	result[p] = '\0';
+	return result;
+}
+
 void rdr_log(struct s_reader * reader, char *fmt,...)
 {
 	char txt[256];
@@ -24,6 +51,14 @@ void rdr_log(struct s_reader * reader, char *fmt,...)
 		desc = reader_get_type_desc(reader, 1);
 
 	cs_log("%s [%s] %s", reader->label, desc, txt);
+}
+
+void rdr_log_sensitive(struct s_reader * reader, char *fmt, ...) {
+	char txt[256];
+	va_list args;
+	va_start(args, fmt);
+	rdr_log(reader, "%s", vsnprintf_sensitive(txt, sizeof(txt), log_remove_sensitive, fmt, args));
+	va_end(args);
 }
 
 void rdr_debug_mask(struct s_reader * reader, uint16_t mask, char *fmt, ...)
@@ -52,6 +87,14 @@ void rdr_debug_mask(struct s_reader * reader, uint16_t mask, char *fmt, ...)
 
 		cs_debug_mask(mask, "%s [%s] %s%s", reader->label, desc, dbg_prefix, txt);
 	}
+}
+
+void rdr_debug_mask_sensitive(struct s_reader * reader, uint16_t mask, char *fmt, ...) {
+	char txt[2048];
+	va_list args;
+	va_start(args, fmt);
+	rdr_debug_mask(reader, mask, "%s", vsnprintf_sensitive(txt, sizeof(txt), log_remove_sensitive, fmt, args));
+	va_end(args);
 }
 
 /**

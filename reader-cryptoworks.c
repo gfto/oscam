@@ -211,7 +211,7 @@ static int32_t cryptoworks_card_init(struct s_reader * reader, ATR *newatr)
 
   if (read_record(reader, 0x80, cta_res)>=7)		// read serial
     memcpy(reader->hexserial, cta_res+2, 5);
-  rdr_log (reader, "type: CryptoWorks, caid: %04X, ascii serial: %llu, hex serial: %s",
+  rdr_log_sensitive(reader, "type: CryptoWorks, caid: %04X, ascii serial: {%llu}, hex serial: {%s}",
             reader->caid, (unsigned long long) b2ll(5, reader->hexserial),cs_hexdump(0, reader->hexserial, 5, tmp, sizeof(tmp)));
 
   if (read_record(reader, 0x9E, cta_res)>=66)	// read ISK
@@ -392,7 +392,7 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				cs_hexdump(1, rdr->hexserial, 5, dumprdrserial, sizeof(dumprdrserial));
 				cs_hexdump(1, ep->hexserial, 5, dumpemmserial, sizeof(dumpemmserial));
 				i2b_buf(4, cryptoworks_get_emm_provid(ep->emm+12, ep->l-12), ep->provid);
-				rdr_debug_mask(rdr, D_EMM, "UNIQUE, ep = %s rdr = %s", dumpemmserial, dumprdrserial);
+				rdr_debug_mask_sensitive(rdr, D_EMM, "UNIQUE, ep = {%s} rdr = {%s}", dumpemmserial, dumprdrserial);
 				return (!memcmp(ep->emm + 5, rdr->hexserial, 5)); // check for serial
 			}
 			break;
@@ -404,7 +404,7 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				cs_hexdump(1, rdr->hexserial, 4, dumprdrserial, sizeof(dumprdrserial));
 				cs_hexdump(1, ep->hexserial, 4, dumpemmserial, sizeof(dumpemmserial));
 				i2b_buf(4, cryptoworks_get_emm_provid(ep->emm+12, ep->l-12), ep->provid);
-				rdr_debug_mask(rdr, D_EMM, "SHARED, ep = %s rdr = %s", dumpemmserial, dumprdrserial);
+				rdr_debug_mask_sensitive(rdr, D_EMM, "SHARED, ep = {%s} rdr = {%s}", dumpemmserial, dumprdrserial);
 				return (!memcmp(ep->emm + 5, rdr->hexserial, 4)); // check for SA
 			}
 			break;

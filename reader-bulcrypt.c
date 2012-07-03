@@ -204,7 +204,7 @@ static int32_t bulcrypt_card_init(struct s_reader *reader, ATR *newatr)
 
 	// The HEX serial have nothing to do with Serial (they do not match)
 	// *FIXME* is this a problem? Probably not.
-	rdr_log(reader, "CAID: 0x4AEE|0x5581, CardType: 0x%02x, Serial: %s, HexSerial: %02X %02X %02X",
+	rdr_log_sensitive(reader, "CAID: 0x4AEE|0x5581, CardType: 0x%02x, Serial: {%s}, HexSerial: {%02X %02X %02X}",
 		card_type,
 		card_serial,
 		reader->hexserial[0], reader->hexserial[1], reader->hexserial[2]);
@@ -452,28 +452,28 @@ static int32_t bulcrypt_get_emm_type(EMM_PACKET *ep, struct s_reader *reader)
 		ep->type = UNIQUE;
 		check_serial(3);
 		if (ret)
-			rdr_log(reader, "EMM_UNIQUE-%02x-%02x, emm_sn = %s, card_sn = %s",
+			rdr_log_sensitive(reader, "EMM_UNIQUE-%02x-{%02x}, emm_sn = {%s}, card_sn = {%s}",
 				ep->emm[0], ep->emm[6], dump_emm_sn, dump_card_sn);
 		break;
 	case BULCRYPT_EMM_SHARED_84:
 		ep->type = SHARED;
 		check_serial(2);
 		if (ret)
-			rdr_log(reader, "EMM_SHARED-%02x-%02x-%02x, emm_sn = %s, card_sn = %s",
+			rdr_log_sensitive(reader, "EMM_SHARED-%02x-{%02x-%02x}, emm_sn = {%s}, card_sn = {%s}",
 				ep->emm[0], ep->emm[5], ep->emm[6], dump_emm_sn, dump_card_sn);
 		break;
 	case BULCRYPT_EMM_8a:
 		ep->type = UNKNOWN;
 		check_serial_skip_first(2);
 		if (ret)
-			rdr_log(reader, "EMM_UNKNOWN-%02x-%02x-%02x, emm_sn = %s, card_sn = %s",
+			rdr_log_sensitive(reader, "EMM_UNKNOWN-%02x-{%02x-%02x}, emm_sn = {%s}, card_sn = {%s}",
 				ep->emm[0], ep->emm[5], ep->emm[6], dump_emm_sn, dump_card_sn);
 		break;
 	case BULCRYPT_EMM_8b:
 		ep->type = GLOBAL;
 		check_serial_skip_first(1);
 		if (ret)
-			rdr_log(reader, "EMM_GLOBAL-%02x-%02x-%02x, emm_sn = %s, card_sn = %s",
+			rdr_log_sensitive(reader, "EMM_GLOBAL-%02x-{%02x-%02x}, emm_sn = {%s}, card_sn = {%s}",
 				ep->emm[0], ep->emm[5], ep->emm[6], dump_emm_sn, dump_card_sn);
 		break;
 	case BULCRYPT_EMM_FILLER:

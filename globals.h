@@ -1744,6 +1744,8 @@ extern CS_MUTEX_LOCK sr_lock;
 
 extern pid_t server_pid;							// PID of server - set while startup
 extern LLIST *log_list;				// log list
+
+extern int log_remove_sensitive;
 /* ===========================
  *      global functions
  * =========================== */

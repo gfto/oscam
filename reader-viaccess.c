@@ -262,7 +262,7 @@ static int32_t viaccess_card_init(struct s_reader * reader, ATR *newatr)
 	insb8[4]=0x07; write_cmd(insb8, NULL); // read unique id
 	memcpy(reader->hexserial, cta_res+2, 5);
 	//  rdr_log(reader, "[viaccess-reader] type: Viaccess, ver: %s serial: %llu", ver, b2ll(5, cta_res+2));
-	rdr_log(reader, "type: Viaccess (%sstandard atr), caid: %04X, serial: %llu",
+	rdr_log_sensitive(reader, "type: Viaccess (%sstandard atr), caid: %04X, serial: {%llu}",
 		atr[9]==0x68?"":"non-",reader->caid, (unsigned long long) b2ll(5, cta_res+2));
 
 	i=0;
@@ -919,7 +919,7 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 
 	insac[2]=0xa4; write_cmd(insac, NULL); // request unique id
 	insb8[4]=0x07; write_cmd(insb8, NULL); // read unique id
-	rdr_log(reader, "serial: %llu", (unsigned long long) b2ll(5, cta_res+2));
+	rdr_log_sensitive(reader, "serial: {%llu}", (unsigned long long) b2ll(5, cta_res+2));
 
 	insa4[2]=0x00; write_cmd(insa4, NULL); // select issuer 0
 	for (i=1; (cta_res[cta_lr-2]==0x90) && (cta_res[cta_lr-1]==0); i++)

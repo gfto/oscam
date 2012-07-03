@@ -259,7 +259,7 @@ static int32_t videoguard1_card_init(struct s_reader *reader, ATR *newatr)
   reader->nprov = 1;
   memset(reader->prid, 0x00, sizeof(reader->prid));
 
-  rdr_log(reader, "type: VideoGuard, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
+  rdr_log_sensitive(reader, "type: VideoGuard, caid: %04X, serial: {%02X%02X%02X%02X}, BoxID: {%02X%02X%02X%02X}",
     reader->caid, reader->hexserial[2], reader->hexserial[3], reader->hexserial[4], reader->hexserial[5],
     boxID[0], boxID[1], boxID[2], boxID[3]);
   rdr_log(reader, "ready for requests - this is in testing please send -d 255 logs");

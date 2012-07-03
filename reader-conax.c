@@ -152,7 +152,7 @@ static int32_t conax_card_init(struct s_reader * reader, ATR *newatr)
   reader->nprov = 1;
   memset(reader->prid, 0x00, sizeof(reader->prid));
 
-  rdr_log(reader, "type: Conax, caid: %04X, serial: %llu, hex serial: %02x%02x%02x%02x, card: v%d",
+  rdr_log_sensitive(reader, "type: Conax, caid: %04X, serial: {%llu}, hex serial: {%02x%02x%02x%02x}, card: v%d",
          reader->caid, (unsigned long long) b2ll(6, reader->hexserial), reader->hexserial[2], 
          reader->hexserial[3], reader->hexserial[4], reader->hexserial[5], cardver);
 
@@ -324,7 +324,7 @@ static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 		ep->type = SHARED;
 		memset(ep->hexserial, 0, 8);
 		memcpy(ep->hexserial, &ep->emm[6], 4);
-		rdr_debug_mask(rdr, D_EMM, "SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
+		rdr_debug_mask_sensitive(rdr, D_EMM, "SHARED, ep->hexserial = {%s}", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
 		return TRUE;
 	}
 	else {
@@ -332,7 +332,7 @@ static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 			ep->type = UNIQUE;
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial+2, &ep->emm[6], 4);
-			rdr_debug_mask(rdr, D_EMM, "UNIQUE, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
+			rdr_debug_mask_sensitive(rdr, D_EMM, "UNIQUE, ep->hexserial = {%s}", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
 			return TRUE;
 		}
 		else {

@@ -592,7 +592,7 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR *newatr)
   rdr_log(reader, "type: %s, caid: %04X",
          reader->card_desc,
          reader->caid);
-  rdr_log(reader, "serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X, baseyear: %i",
+  rdr_log_sensitive(reader, "serial: {%02X%02X%02X%02X}, BoxID: {%02X%02X%02X%02X}, baseyear: %i",
          reader->hexserial[2],reader->hexserial[3],reader->hexserial[4],reader->hexserial[5],
          boxID[0],boxID[1],boxID[2],boxID[3],
          reader->card_baseyear);

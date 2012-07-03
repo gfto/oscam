@@ -688,7 +688,7 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR *newatr)
 			return ERROR;
 		}
 		memcpy(reader->hexserial+2, cta_res+2, 4);
-		rdr_debug_mask(reader, D_READER, "SER:  %s", cs_hexdump(1, reader->hexserial+2, 4, tmp_dbg, sizeof(tmp_dbg)));
+		rdr_debug_mask_sensitive(reader, D_READER, "SER:  {%s}", cs_hexdump(1, reader->hexserial+2, 4, tmp_dbg, sizeof(tmp_dbg)));
 		memcpy(reader->sa[0], cta_res+2, 2);
 		
 		if(!GetDataType(reader, DT01,0x0E,MAX_REC)) return ERROR;
@@ -782,7 +782,7 @@ static int32_t nagra2_card_info(struct s_reader * reader)
         char currdate[11], tmp[13];
 	rdr_log(reader, "ROM:    %c %c %c %c %c %c %c %c", reader->rom[0], reader->rom[1], reader->rom[2],reader->rom[3], reader->rom[4], reader->rom[5], reader->rom[6], reader->rom[7]);
 	rdr_log(reader, "REV:    %c %c %c %c %c %c", reader->rom[9], reader->rom[10], reader->rom[11], reader->rom[12], reader->rom[13], reader->rom[14]);
-	rdr_log(reader, "SER:    %s", cs_hexdump(1, reader->hexserial+2, 4, tmp, sizeof(tmp)));
+	rdr_log_sensitive(reader, "SER:    {%s}", cs_hexdump(1, reader->hexserial+2, 4, tmp, sizeof(tmp)));
 	rdr_log(reader, "CAID:   %04X",reader->caid);
 	rdr_log(reader, "Prv.ID: %s(sysid)",cs_hexdump(1, reader->prid[0], 4, tmp, sizeof(tmp)));
 	for (i=1; i<reader->nprov; i++)

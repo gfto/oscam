@@ -234,7 +234,7 @@ FE 48 */
     dre_chksum += buf[i] - 48;
   }
 
-  rdr_log (reader, "type: DRE Crypt, caid: %04X, serial: %s, dre id: %i%i%i%08i, geocode %i, card: %s v%i.%i",
+  rdr_log (reader, "type: DRE Crypt, caid: %04X, serial: {%s}, dre id: %i%i%i%08i, geocode %i, card: %s v%i.%i",
 	  reader->caid, cs_hexdump(0, reader->hexserial + 2, 4, tmp, sizeof(tmp)), dre_chksum, reader->provider - 16,
 	  major_version + 1, low_dre_id, geocode, card, major_version, minor_version);
   rdr_log (reader, "Provider name:%s.", provname);
@@ -243,7 +243,7 @@ FE 48 */
   memset (reader->sa, 0, sizeof (reader->sa));
   memcpy (reader->sa[0], reader->hexserial + 2, 1);	//copy first byte of unique address also in shared address, because we dont know what it is...
 
-  rdr_log (reader, "SA = %02X%02X%02X%02X, UA = %s", reader->sa[0][0], reader->sa[0][1], reader->sa[0][2],
+  rdr_log_sensitive(reader, "SA = %02X%02X%02X%02X, UA = {%s}", reader->sa[0][0], reader->sa[0][1], reader->sa[0][2],
 	  reader->sa[0][3], cs_hexdump(0, reader->hexserial + 2, 4, tmp, sizeof(tmp)));
 
   reader->nprov = 1;

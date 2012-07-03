@@ -174,7 +174,7 @@ static int32_t seca_card_init(struct s_reader * reader, ATR *newatr)
   write_cmd(ins0e, NULL); // read unique id
   memcpy(reader->hexserial, cta_res+2, 6);
   serial = b2ll(5, cta_res+3) ;
-  rdr_log (reader, "type: SECA, caid: %04X, serial: %llu, card: %s v%d.%d",
+  rdr_log_sensitive(reader, "type: SECA, caid: %04X, serial: {%llu}, card: %s v%d.%d",
          reader->caid, (unsigned long long) serial, card, atr[9]&0x0F, atr[9]>>4);
   write_cmd(ins16, NULL); // read nr of providers
   pmap=cta_res[2]<<8|cta_res[3];
@@ -290,8 +290,8 @@ static int32_t seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //return
         ep->type = UNIQUE;
         memset(ep->hexserial,0,8);
         memcpy(ep->hexserial, ep->emm + 3, 6);
-        rdr_debug_mask(rdr, D_EMM, "UNIQUE , ep->hexserial  = %s", cs_hexdump(1, ep->hexserial, 6, tmp_dbg, sizeof(tmp_dbg)));
-        rdr_debug_mask(rdr, D_EMM, "UNIQUE , rdr->hexserial = %s", cs_hexdump(1, rdr->hexserial, 6, tmp_dbg, sizeof(tmp_dbg)));
+        rdr_debug_mask_sensitive(rdr, D_EMM, "UNIQUE , ep->hexserial  = {%s}", cs_hexdump(1, ep->hexserial, 6, tmp_dbg, sizeof(tmp_dbg)));
+        rdr_debug_mask_sensitive(rdr, D_EMM, "UNIQUE , rdr->hexserial = {%s}", cs_hexdump(1, rdr->hexserial, 6, tmp_dbg, sizeof(tmp_dbg)));
         return (!memcmp (rdr->hexserial, ep->hexserial, 6));
         break;
 
@@ -300,10 +300,10 @@ static int32_t seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //return
         memset(ep->hexserial,0,8);
         memcpy(ep->hexserial, ep->emm + 5, 3); //dont include custom byte; this way the network also knows SA
         i=get_prov_index(rdr, ep->emm+3);
-        rdr_debug_mask(rdr, D_EMM, "SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 3, tmp_dbg, sizeof(tmp_dbg)));
+        rdr_debug_mask_sensitive(rdr, D_EMM, "SHARED, ep->hexserial = {%s}", cs_hexdump(1, ep->hexserial, 3, tmp_dbg, sizeof(tmp_dbg)));
         if (i== -1) //provider not found on this card
             return FALSE; //do not pass this EMM
-        rdr_debug_mask(rdr, D_EMM, "SHARED, rdr->sa[%i] = %s", i, cs_hexdump(1, rdr->sa[i], 3, tmp_dbg, sizeof(tmp_dbg)));
+        rdr_debug_mask_sensitive(rdr, D_EMM, "SHARED, rdr->sa[%i] = {%s}", i, cs_hexdump(1, rdr->sa[i], 3, tmp_dbg, sizeof(tmp_dbg)));
         return (!memcmp (rdr->sa[i], ep->hexserial, 3));
         break;
 
