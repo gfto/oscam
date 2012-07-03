@@ -84,7 +84,7 @@ OPTIONS
 	     2 = like 1, but also restart on segmentation faults
 
        -S
-	  prevent sensitive info (card serials) from reaching the logs
+	  do not filter sensitive info (card serial numbers) in the logs
 
        -s
 	  capture segmentation faults

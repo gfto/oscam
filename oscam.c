@@ -68,7 +68,7 @@ uint32_t ecmcwcache_size = 0;
 
 struct  s_config  cfg;
 
-int log_remove_sensitive = 0;
+int log_remove_sensitive = 1;
 
 char    *prog_name = NULL;
 char    *processUsername = NULL;
@@ -331,7 +331,7 @@ static void usage(void)
 		printf("\t               1 = restart activated, web interface can restart oscam (default)\n");
 		printf("\t               2 = like 1, but also restart on segmentation faults\n\n");
 	}
-	printf("\t-S         : prevent sensitive info (card serials) from reaching the logs\n\n");
+	printf("\t-S         : do not filter sensitive info (card serial numbers) from the logs\n\n");
 	printf("\t-s         : capture segmentation faults\n\n");
 	printf("\t-t <dir>   : tmp dir <dir>\n");
 #if defined(__CYGWIN__)
