@@ -498,15 +498,21 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 		
 		//USAGELEVEL:
 		int32_t ule = rdr->lb_usagelevel_ecmcount;
-		if (ule > 0 && ((ule / cfg.lb_min_ecmcount) > 0)) //update every MIN_ECM_COUNT usagelevel:
+		if (ule > 0 && (ule >= cfg.lb_min_ecmcount) ) //update every MIN_ECM_COUNT usagelevel:
 		{
 			time_t t = (ctime-rdr->lb_usagelevel_time);
 			rdr->lb_usagelevel = 1000/(t<1?1:t);
 			ule = 0;
 		}
+		else
+		{
+			//rdr->lb_usagelevel_time = ctime;
+			rdr->lb_usagelevel_ecmcount++;
+		}
+
 		if (ule == 0)
 			rdr->lb_usagelevel_time = ctime;
-		rdr->lb_usagelevel_ecmcount = ule+1;
+		rdr->lb_usagelevel_ecmcount = 1;
 	}
 	else if (rc < E_NOTFOUND ) { //cache1+2+3
 		//no increase of statistics here, cachetime is not real time
