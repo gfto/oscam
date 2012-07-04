@@ -103,7 +103,6 @@ void rdr_debug_mask_sensitive(struct s_reader * reader, uint16_t mask, char *fmt
 void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, uint64_t id, uint32_t class, time_t start, time_t end, uint8_t type)
 {
 	if (!rdr->ll_entitlements) rdr->ll_entitlements = ll_create("ll_entitlements");
-    if (!cfg.dvbapi_checking_entitlements)
     LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
 
 	S_ENTITLEMENT *item;
