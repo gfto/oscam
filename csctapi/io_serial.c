@@ -699,7 +699,8 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_ms, 
    if(reader->typ == R_INTERNAL) // needed for ppc, otherwise error!
 	return OK;
 #endif
-   cs_sleepms (delay_ms); // all not pll readers do wait in ms
+   if (delay_ms > 0)
+      cs_sleepms (delay_ms); // all not pll readers do wait in ms
    out_fd=reader->handle;
     
    FD_ZERO(&wfds);
