@@ -255,7 +255,7 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader * reader)
 	reader->caid =(SYSTEM_NAGRA|parte_variable[76]);
 	memcpy(sk,&parte_variable[79],8);                                                                           
 	memcpy(sk+8,&parte_variable[79],8); 
-  	rdr_log(reader, "type: NAGRA, caid: %04X, IRD ID: %s",reader->caid, cs_hexdump(1,reader->irdId,4, tmp2, sizeof(tmp2)));
+	rdr_log_sensitive(reader, "type: NAGRA, caid: %04X, IRD ID: {%s}",reader->caid, cs_hexdump(1,reader->irdId,4, tmp2, sizeof(tmp2)));
   	rdr_log(reader, "ProviderID: %s", cs_hexdump(1,reader->prid[0],4, tmp2, sizeof(tmp2)));
 
 	memset(random, 0, 88);
@@ -567,7 +567,7 @@ static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigne
  					
 			reader->caid =(SYSTEM_NAGRA|cta_res[11]);
 			memcpy(reader->irdId,cta_res+14,4);
-			rdr_log(reader, "type: NAGRA, caid: %04X, IRD ID: %s",reader->caid, cs_hexdump(1, reader->irdId, 4, ds, sizeof(ds)));
+			rdr_log_sensitive(reader, "type: NAGRA, caid: %04X, IRD ID: {%s}",reader->caid, cs_hexdump(1, reader->irdId, 4, ds, sizeof(ds)));
 			rdr_log(reader, "ProviderID: %s", cs_hexdump(1, reader->prid[0], 4, ds, sizeof(ds)));
 			nagra_datetime(reader, cta_res+24, 0, ds, &reader->card_valid_to);
 			rdr_log(reader, "active to: %s", ds);

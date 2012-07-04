@@ -951,7 +951,7 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 		l=cta_res[1];
 		char tmp[l*3+1];
 		insb8[4]=l; write_cmd(insb8, NULL); // read geo
-		rdr_log(reader, "provider: %d, id: %06X%s, sa: %08X, geo: %s",
+		rdr_log_sensitive(reader, "provider: %d, id: {%06X%s}, sa: {%08X}, geo: %s",
 			i, l_provid, l_name, l_sa, (l<4) ? "empty" : cs_hexdump(1, cta_res, l, tmp, sizeof(tmp)));
 
 		// read classes subscription
