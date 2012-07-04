@@ -103,6 +103,8 @@ void rdr_debug_mask_sensitive(struct s_reader * reader, uint16_t mask, char *fmt
 void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, uint64_t id, uint32_t class, time_t start, time_t end, uint8_t type)
 {
 	if (!rdr->ll_entitlements) rdr->ll_entitlements = ll_create("ll_entitlements");
+    if (!cfg.dvbapi_checking_entitlements)
+    LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
 
 	S_ENTITLEMENT *item;
 	if(cs_malloc(&item,sizeof(S_ENTITLEMENT), -1)){
@@ -117,8 +119,10 @@ void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, ui
 		item->type = type;
 
 		//add item
+		if (cfg.dvbapi_checking_entitlements)
 		ll_append(rdr->ll_entitlements, item);
-
+        else
+        ll_iter_insert(&itr, item);
 		// cs_debug_mask(D_TRACE, "entitlement: Add caid %4X id %4X %s - %s ", item->caid, item->id, item->start, item->end);
 	}
 
@@ -143,8 +147,8 @@ void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw
 	ECM_REQUEST *ecm;
 	struct s_client *cl = reader->client;
 
-	if(!cl) return; 
-  
+	if(!cl) return;
+
 	for (i = 0; i < cfg.max_pending; i++) {
 		ecm = &cl->ecmtask[i];
 		if ((ecm->rc>=10) && ecm->caid == cl->ecmtask[idx].caid && (!memcmp(ecm->ecmd5, cl->ecmtask[idx].ecmd5, CS_ECMSTORESIZE))) {
@@ -175,13 +179,13 @@ void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw
 
 int32_t hostResolve(struct s_reader *rdr){
    struct s_client *cl = rdr->client;
-   
+
    if(!cl) return 0;
-    
+
    in_addr_t last_ip = cl->ip;
    cl->ip = cs_getIPfromHost(rdr->device);
    cl->udp_sa.sin_addr.s_addr = cl->ip;
-   
+
    if (cl->ip != last_ip) {
      cs_log("%s: resolved ip=%s", rdr->device, cs_inet_ntoa(cl->ip));
    }
@@ -217,7 +221,7 @@ int32_t is_connect_blocked(struct s_reader *rdr) {
   }
   return blocked;
 }
-                
+
 int32_t network_tcp_connection_open(struct s_reader *rdr)
 {
 	if (!rdr) return -1;
@@ -291,7 +295,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 		rdr->tcp_connected = 1;
 		return client->udp_fd;
 	}
-  
+
        int32_t fl = fcntl(client->udp_fd, F_GETFL);
 	fcntl(client->udp_fd, F_SETFL, O_NONBLOCK);
 
@@ -375,7 +379,7 @@ void casc_do_sock_log(struct s_reader * reader)
   uint16_t caid, srvid;
   uint32_t provid;
   struct s_client *cl = reader->client;
-  
+
   if(!cl) return;
 
   idx=reader->ph.c_recv_log(&caid, &provid, &srvid);
@@ -406,12 +410,12 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	int32_t rc, n, i, sflag, pending=0;
 	time_t t;//, tls;
 	struct s_client *cl = reader->client;
-  
+
 	if(!cl || !cl->ecmtask) {
 		cs_log("WARNING: casc_process_ecm: ecmtask not a available");
 		return -1;
 	}
-  
+
 	uchar buf[512];
 
 	t=time((time_t *)0);
@@ -435,8 +439,8 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		// ... this level at least
 		if ((ecm->rc>=10) &&  er->caid == ecm->caid && (!memcmp(er->ecmd5, ecm->ecmd5, CS_ECMSTORESIZE)) && (er->level<=ecm->level))
 			sflag=0;
-      
-		if (ecm->rc >=10) 
+
+		if (ecm->rc >=10)
 			pending++;
 	}
 	cl->pending=pending;
@@ -506,7 +510,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		cs_debug_mask(D_TRACE, "skip ecm %04X reader=%s, rc=%d", er->checksum, reader->label, er->rc);
 		return;
 	}
-  
+
 	if (!chk_bcaid(er, &reader->ctab)) {
 		cs_debug_mask(D_READER, "caid %04X filtered", er->caid);
 		write_ecm_answer(reader, er, E_NOTFOUND, E2_CAID, NULL, NULL);
@@ -561,7 +565,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 				foundspace=h;
 				cs_debug_mask(D_READER, "ratelimit found srvid in use at pos: %d",h);
 				break;
-			} 
+			}
 		}
 		if (foundspace<0) {
 			for (h=0;h<reader->ratelimitecm;h++) {
@@ -569,14 +573,14 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 					foundspace=h;
 					cs_debug_mask(D_READER, "ratelimit found space at pos: %d old seconds %ld",h,reader->rlecmh[h].last);
 					break;
-				} 
+				}
 			}
 		}
 		#ifdef HAVE_DVBAPI
 		//overide ratelimit priority for dvbapi request
 		if ((foundspace < 0) && (cfg.dvbapi_enabled == 1) && (strcmp(er->client->account->usr,cfg.dvbapi_usr) == 0)) {
 			if(reader->lastdvbapirateoverride < time(NULL) - reader->ratelimitseconds){
-				time_t minecmtime = time(NULL);			
+				time_t minecmtime = time(NULL);
 				for (h=0;h<reader->ratelimitecm;h++) {
 					if(reader->rlecmh[h].last < minecmtime){
 						foundspace = h;
@@ -588,7 +592,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 			} else cs_debug_mask(D_READER, "DVBAPI User %s is switching too fast for ratelimit and can't be prioritized on reader %s.",er->client->account->usr, reader->label);
 		}
 		#endif
-		
+
 		if (foundspace<0) {
 			//drop
 			cs_debug_mask(D_READER, "ratelimit could not find space for srvid %04X. Dropping.",er->srvid);
@@ -609,10 +613,10 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	memset(&ea, 0, sizeof(struct s_ecm_answer));
 
 	int32_t rc = reader_ecm(reader, er, &ea);
-	
+
 	ea.rc = E_FOUND; //default assume found
 	ea.rcEx = 0; //no special flag
-	
+
 	if(rc == ERROR ){
 		char buf[32];
 		cs_debug_mask(D_TRACE, "Error processing ecm for caid %04X, srvid %04X (servicename: %s) on reader %s.", er->caid, er->srvid, get_servicename(cl, er->srvid, er->caid, buf), reader->label);
@@ -694,9 +698,9 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   unsigned char md5tmp[MD5_DIGEST_LENGTH];
   struct timeb tps;
   struct s_client *cl = reader->client;
-  
+
   if(!cl) return 0;
-  
+
     cs_ftime(&tps);
 
 	MD5(ep->emm, ep->emm[2], md5tmp);
@@ -711,7 +715,7 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 				else
 					ecs=1; //rewrite emm
 			}
-		break; 
+		break;
 		}
 	}
 
@@ -751,7 +755,7 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 void reader_do_card_info(struct s_reader * reader)
 {
 #ifdef WITH_CARDREADER
-      reader_card_info(reader); 
+      reader_card_info(reader);
 #endif
       if (reader->ph.c_card_info)
       	reader->ph.c_card_info();
@@ -815,7 +819,7 @@ int32_t reader_init(struct s_reader *reader) {
 			} while (i < 30);
 		}
 		if (reader->mhz > 2000) {
-			
+
 			cs_log("Reader %s initialized (device=%s, detect=%s%s, pll max=%.2f Mhz, wanted cardmhz=%.2f Mhz", reader->label, reader->device,
 				reader->detect&0x80 ? "!" : "",RDR_CD_TXT[reader->detect&0x7f], (float) reader->mhz /100, (float) reader->cardmhz / 100);
 		}

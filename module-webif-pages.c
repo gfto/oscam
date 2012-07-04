@@ -901,7 +901,7 @@ SFRTIFJFU0VSVkVEADs="
 													</select>\n\
 												</TD></TR>\n\
 							<TR><TD>##TPLHELPPREFIX##user#cacheex_maxhop##TPLHELPSUFFIX##Cache-EX Maxhop:</A></TD><TD><input name=\"cacheex_maxhop\" type=\"text\" size=\"4\" maxlength=\"4\" value=\"##CACHEEX_MAXHOP##\"></TD></TR>\n"
-							
+
 
 #define TPLREADEREDITCACHEEXBIT "			<TR><TD>##TPLHELPPREFIX##server#cacheex##TPLHELPSUFFIX##Cache-EX-Mode:</A></TD>\n\
 												<TD><select name=\"cacheex\">\n\
@@ -1575,7 +1575,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	</form>\n\
 ##TPLFOOTER##"
 
-#ifdef WITH_SSL	
+#ifdef WITH_SSL
 #define TPLHTTPFORCESSLV3 "\
 			<TR><TD>##TPLHELPPREFIX##conf#httpforcesslv3##TPLHELPSUFFIX##Force more secure v3 of ssl:</A></TD><TD><SELECT NAME=\"httpforcesslv3\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##HTTPFORCESSLV3SELECT##>YES</OPTION></SELECT></TD></TR>\n"
 #endif
@@ -1721,7 +1721,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#enableled##TPLHELPSUFFIX##Enable LED:</A></TD><TD><SELECT NAME=\"enableled\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##ENABLELEDSELECTED1##>For Router</OPTION><OPTION VALUE=\"2\" ##ENABLELEDSELECTED2##>For QboxHD</OPTION></SELECT></TD></TR>\n"
 #endif
 
-#if defined(QBOXHD_LED) || defined(CS_LED) 
+#if defined(QBOXHD_LED) || defined(CS_LED)
 #define TPLENABLELEDBIT "\
 			<TR><TD>##TPLHELPPREFIX##conf#enableled##TPLHELPSUFFIX##Enable LED:</A></TD><TD><SELECT NAME=\"enableled\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##ENABLELEDSELECTED1##>For Router</OPTION><OPTION VALUE=\"2\" ##ENABLELEDSELECTED2##>For QboxHD</OPTION></SELECT></TD></TR>\n"
 #endif
@@ -1901,6 +1901,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
 	<input name=\"enabled\" type=\"hidden\" value=\"0\">\n\
 	<input name=\"reopenonzap\" type=\"hidden\" value=\"0\">\n\
+    <input name=\"checking_entitlements\" type=\"hidden\" value=\"0\">\n\
 	<input name=\"au\" type=\"hidden\" value=\"0\">\n\
 	<TABLE class=\"config\">\n\
 		<TR><TH COLSPAN=\"2\">Edit DVB Api Config</TH></TR>\n\
@@ -1908,6 +1909,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		<TR><TD>##TPLHELPPREFIX##conf#au##TPLHELPSUFFIX##AU:</A></TD><TD><input name=\"au\" type=\"checkbox\" value=\"1\" ##AUCHECKED##>\n\
 		<TR><TD>##TPLHELPPREFIX##conf#boxtype##TPLHELPSUFFIX##Boxtype:</A></TD><TD><SELECT name=\"boxtype\">##BOXTYPE##</select></TD></TR>\n\
 		<TR><TD>##TPLHELPPREFIX##conf#reopenonzap##TPLHELPSUFFIX##ReopenOnZap:</A></TD><TD><input name=\"reopenonzap\" type=\"checkbox\" value=\"1\" ##REOPENONZAPCHECKED##>\n\
+        <TR><TD>##TPLHELPPREFIX##conf#checking_entitlements##TPLHELPSUFFIX##CheckingEntitlements:</A></TD><TD><input name=\"checking_entitlements\" type=\"checkbox\" value=\"1\" ##CHECKINGENTITLEMENTSCHECKED##>\n\
 		<TR><TD>##TPLHELPPREFIX##conf#user_2##TPLHELPSUFFIX##User:</A></TD><TD><input name=\"user\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##USER##\"></TD></TR>\n\
 		<TR><TD>##TPLHELPPREFIX##conf#pmt_mode##TPLHELPSUFFIX##PMT Mode:</A></TD><TD><select name=\"pmt_mode\">\n\
 			<option value=\"0\" ##PMTMODESELECTED0##>0 - use camd.socket and PMT file</option>\n\
@@ -2290,7 +2292,7 @@ function isNumber(a) {\n\
 		<TR><TD class=\"centered\">##TOTAL_CACHEXPUSH##</TD><TD class=\"centered\">##TOTAL_CACHEXGOT##</TD><TD class=\"centered\">##TOTAL_CACHEXHIT## (##REL_CACHEXHIT##%)</TD><TD class=\"centered\">##TOTAL_CACHESIZE##</TD></TR>\n\
 	</TABLE>\n\
 	<BR><BR>\n\
-##TPLFOOTER##" 
+##TPLFOOTER##"
 
 #define TPLCACHEEXTABLEROW "			<TR><TD>&nbsp;&nbsp;##DIRECTIONIMG##&nbsp;&nbsp;</TD><TD>##TYPE##</TD><TD>##NAME##</TD><TD>##LEVEL##</TD><TD>##PUSH##</TD><TD>##GOT##</TD><TD>##HIT##</TD></TR>\n"
 #endif
@@ -2395,7 +2397,7 @@ char *tpl[] = {
 #if defined(QBOXHD) || defined(__arm__)
 	,"ENABLELEDBIT"
 #endif
-#if defined(QBOXHD_LED) || defined(CS_LED) 
+#if defined(QBOXHD_LED) || defined(CS_LED)
 	,"ENABLELEDBIT"
 #endif
 #ifdef WITH_LIBUSB
@@ -2572,7 +2574,7 @@ char *tplmap[] = {
 #if defined(QBOXHD) || defined(__arm__)
 	,TPLENABLELEDBIT
 #endif
-#if defined(QBOXHD_LED) || defined(CS_LED) 
+#if defined(QBOXHD_LED) || defined(CS_LED)
 	,TPLENABLELEDBIT
 #endif
 #ifdef WITH_LIBUSB

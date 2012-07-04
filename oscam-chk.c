@@ -35,16 +35,16 @@ static int32_t chk_class(ECM_REQUEST *er, CLASSTAB *clstab, const char *type, co
     ecm_class = er->ecm[j+l];
     cs_debug_mask(D_CLIENT, "ecm class=%02X", ecm_class);
     for( i=0; i<clstab->bn; i++ )  // search in blocked
-      if( ecm_class==clstab->bclass[i] ) 
+      if( ecm_class==clstab->bclass[i] )
       {
-        cs_debug_mask(D_CLIENT, "class %02X rejected by %s '%s' !%02X filter", 
+        cs_debug_mask(D_CLIENT, "class %02X rejected by %s '%s' !%02X filter",
                  ecm_class, type, name, ecm_class);
         return 0;
       }
 
     cl_n++;
     for( i=0; i<clstab->an; i++ )  // search in allowed
-      if( ecm_class==clstab->aclass[i] ) 
+      if( ecm_class==clstab->aclass[i] )
       {
         an++;
         break;
@@ -54,7 +54,7 @@ static int32_t chk_class(ECM_REQUEST *er, CLASSTAB *clstab, const char *type, co
 
   if( cl_n && clstab->an )
   {
-    if( an ) 
+    if( an )
       cs_debug_mask(D_CLIENT, "ECM classes allowed by %s '%s' filter", type, name);
     else {
       cs_debug_mask(D_CLIENT, "ECM classes don't match %s '%s' filter, rejecting", type, name);
@@ -119,7 +119,7 @@ int32_t has_srvid(struct s_client *cl, ECM_REQUEST *er) {
 
   int32_t nr;
   SIDTAB *sidtab;
-      
+
   for (nr=0, sidtab=cfg.sidtab; sidtab; sidtab=sidtab->next, nr++)
     if (sidtab->num_srvid)
     {
@@ -204,7 +204,7 @@ int32_t chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
 
   if (!ptab) return(1);
   struct s_client *cur_cl = cur_client();
-  
+
   caid = er->caid;
   prid = er->prid;
   pi = cur_cl->port_idx;
@@ -258,12 +258,12 @@ static int32_t chk_chid(ECM_REQUEST *er, FTAB *fchid, char *type, char *name)
       found_caid=1;
       for( j=0; (!rc) && j<fchid->filts[i].nprids; j++ )
       {
-        cs_debug_mask(D_CLIENT, "trying %s '%s' CHID filter %04X:%04X", 
+        cs_debug_mask(D_CLIENT, "trying %s '%s' CHID filter %04X:%04X",
                  type, name, fchid->filts[i].caid, fchid->filts[i].prids[j]);
         if( er->chid == fchid->filts[i].prids[j] )
         {
           cs_debug_mask(D_CLIENT, "%04X:%04X allowed by %s '%s' CHID filter %04X:%04X",
-                   er->caid, er->chid, type, name, fchid->filts[i].caid, 
+                   er->caid, er->chid, type, name, fchid->filts[i].caid,
                    fchid->filts[i].prids[j]);
           rc=1;
         }
@@ -273,7 +273,7 @@ static int32_t chk_chid(ECM_REQUEST *er, FTAB *fchid, char *type, char *name)
   if( !rc )
   {
     if (found_caid)
-    	cs_debug_mask(D_CLIENT, "no match, %04X:%04X rejected by %s '%s' CHID filter(s)", 
+    	cs_debug_mask(D_CLIENT, "no match, %04X:%04X rejected by %s '%s' CHID filter(s)",
                       er->caid, er->chid, type, name);
     else {
     	rc=1;
@@ -290,7 +290,7 @@ int32_t chk_ufilters(ECM_REQUEST *er)
   uint16_t ucaid;
   uint32_t  uprid;
   struct s_client *cur_cl = cur_client();
-  
+
   rc=1;
   if( cur_cl->ftab.nfilts )
   {
@@ -343,7 +343,7 @@ int32_t chk_rsfilter(struct s_reader * reader, ECM_REQUEST *er)
   uint32_t prid;
 
   if( reader->ncd_disable_server_filt )
-  { 
+  {
     cs_debug_mask(D_CLIENT, "%04X:%06X allowed - server filters disabled",
               er->caid, er->prid);
     return 1;
@@ -358,7 +358,7 @@ int32_t chk_rsfilter(struct s_reader * reader, ECM_REQUEST *er)
       prid = (uint32_t)((reader->prid[i][1]<<16) |
                      (reader->prid[i][2]<<8) |
                      (reader->prid[i][3]));
-      cs_debug_mask(D_CLIENT, "trying server '%s' filter %04X:%06X", 
+      cs_debug_mask(D_CLIENT, "trying server '%s' filter %04X:%06X",
                 reader->device, caid, prid);
       if( prid==er->prid )
       {
@@ -385,12 +385,12 @@ int32_t chk_rfilter2(uint16_t rcaid, uint32_t rprid, struct s_reader *rdr)
   uint32_t prid=0;
 
   if( rdr->ftab.nfilts )
-  { 
+  {
     for( rc=i=0; (!rc) && (i<rdr->ftab.nfilts); i++ )
     {
       caid = rdr->ftab.filts[i].caid;
       if( (caid!=0 && caid==rcaid) || caid==0 )
-      { 
+      {
         for( j=0; (!rc) && (j<rdr->ftab.filts[i].nprids); j++)
         {
           prid = rdr->ftab.filts[i].prids[j];
@@ -424,7 +424,7 @@ static int32_t chk_rfilter(ECM_REQUEST *er, struct s_reader *rdr)
 int32_t chk_ctab(uint16_t caid, CAIDTAB *ctab) {
   if (!caid || !ctab->caid[0])
     return 1;
-    
+
   int32_t i;
   for (i=0;i<CS_MAXCAIDTAB;i++)
   {
@@ -441,19 +441,19 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   //simple checks first:
   if (!er || !rdr)
     return(0);
-    
+
   //reader active?
   struct s_client *cl = rdr->client;
   if (!cl || !rdr->enable)
     return(0);
-  
-  // if physical reader a card needs to be inserted 
-  if ((!(rdr->typ & R_IS_NETWORK)) && (rdr->card_status != CARD_INSERTED)) 
-    return(0); 
+
+  // if physical reader a card needs to be inserted
+  if ((!(rdr->typ & R_IS_NETWORK)) && (rdr->card_status != CARD_INSERTED))
+    return(0);
 
   //Checking connected & group valid:
   struct s_client *cur_cl = er->client; //cur_client();
-  
+
 #ifdef CS_CACHEEX
   //To avoid cascading, a incoming cache request should not invoke a outgoing cache request:
   if (rdr->cacheex == 1 && cur_cl->auth && cur_cl->account->cacheex == 1)
@@ -507,13 +507,13 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
 
   //Check ECM nanos:
   if (!chk_class(er, &rdr->cltab, "reader", rdr->label)) {
-    cs_debug_mask(D_TRACE, "class filter reader %s", rdr->label);    
+    cs_debug_mask(D_TRACE, "class filter reader %s", rdr->label);
     return(0);
   }
 
   //Checking chid:
   if (!chk_chid(er, &rdr->fchid, "reader", rdr->label)) {
-    cs_debug_mask(D_TRACE, "chid filter reader %s", rdr->label);    
+    cs_debug_mask(D_TRACE, "chid filter reader %s", rdr->label);
     return(0);
   }
 
@@ -522,11 +522,11 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
     cs_debug_mask(D_TRACE, "reader unavailable %s", rdr->label);
     return 0;
   }
-  
+
   // Checking ratelimit
   if ((!(rdr->typ & R_IS_NETWORK)) && ((rdr->ratelimitecm && !rdr->cooldown[0]) || rdr->cooldownstate == 1 )){
 	int32_t free_slots=0, h=0;
-  
+
 	for (h=0;h<rdr->ratelimitecm;h++) {
 		if ((rdr->rlecmh[h].last ==- 1) || ((time(NULL)-rdr->rlecmh[h].last) > rdr->ratelimitseconds)) {
 		        free_slots++;
@@ -542,7 +542,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
 	}
   }
   //Checking entitlements:
-  if (ll_count(rdr->ll_entitlements) > 0) {
+  if (cfg.dvbapi_checking_entitlements && ll_count(rdr->ll_entitlements) > 0) {
 		LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
 		S_ENTITLEMENT *item;
 		int8_t found = 0;
@@ -577,21 +577,21 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
 			  		}
 			  	}
 			  }
-	  	}  		
+	  	}
   	}
   	if(foundident == 1 && ok == 0){
   		cs_debug_mask(D_READER, "ECM is not in ecmwhitelist of reader %s.",rdr->label);
   		return(0);
   	}
   }
- 
+
   //All checks done, reader is matching!
   return(1);
 }
 
 int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid) {
 	int32_t i;
-	
+
 	// if physical reader a card needs to be inserted
 	if ((!(reader->typ & R_IS_NETWORK)) && (reader->card_status != CARD_INSERTED)) {
 		return(0);
