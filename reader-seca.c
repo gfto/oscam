@@ -391,7 +391,6 @@ static int32_t seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   int32_t emm_length = ((ep->emm[1] & 0x0f) << 8) + ep->emm[2];
   uint8_t *prov_id_ptr;
 
-  cs_ddump_mask (D_EMM, ep->emm, emm_length + 3, "EMM:");
   switch (ep->type) {
 		case SHARED:
 			ins40[3]=ep->emm[9];

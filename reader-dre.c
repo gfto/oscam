@@ -405,8 +405,6 @@ static int32_t dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
 {
   def_resp;
 
-  cs_ddump_mask(D_READER, ep->emm, ((ep->emm[1] & 0x0f) << 8) + ep->emm[2] + 3, "EMM:");
-
   if (reader->caid == 0x4ae1) {
     if(ep->type == UNIQUE && ep->emm[39] == 0x3d)
     { /* For new package activation. */
