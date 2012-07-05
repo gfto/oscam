@@ -1435,6 +1435,7 @@ struct s_config
 	uint32_t		cmaxidle;
 	int32_t			ulparent;
 	uint32_t		delay;
+    int8_t          dvbapi_checking_entitlements;
 	int32_t			bindwait;
 	int32_t			tosleep;
 	in_addr_t		srvip;
