@@ -782,7 +782,7 @@ static void cs_cleanup(void)
 	for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 		cl = rdr->client;
 		if(cl){
-			cs_log("killing reader %s", rdr->label);
+			rdr_log(rdr, "Killing reader");
 			kill_thread(cl);
 			// Stop MCR reader display thread
 			if (cl->typ == 'r' && cl->reader && cl->reader->typ == R_SC8in1
@@ -1407,7 +1407,7 @@ void kill_thread(struct s_client *cl) {
 /* Removes a reader from the list of active readers so that no ecms can be requested anymore. */
 void remove_reader_from_active(struct s_reader *rdr) {
 	struct s_reader *rdr2, *prv = NULL;
-	//cs_log("CHECK: REMOVE READER %s FROM ACTIVE", rdr->label);
+	//rdr_log(rdr, "CHECK: REMOVE READER FROM ACTIVE");
 	cs_writelock(&readerlist_lock);
 	for (rdr2=first_active_reader; rdr2 ; prv=rdr2, rdr2=rdr2->next) {
 		if (rdr2==rdr) {
@@ -1428,7 +1428,7 @@ void add_reader_to_active(struct s_reader *rdr) {
 	if (rdr->next)
 		remove_reader_from_active(rdr);
 
-	//cs_log("CHECK: ADD READER %s TO ACTIVE", rdr->label);
+	//rdr_log(rdr, "CHECK: ADD READER TO ACTIVE");
 	cs_writelock(&readerlist_lock);
 	cs_writelock(&clientlist_lock);
 
@@ -1501,7 +1501,7 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 	while (restart && is_valid_client(cl)) {
 		//If we quick disable+enable a reader (webif), remove_reader_from_active is called from
 		//cleanup. this could happen AFTER reader is restarted, so oscam crashes or reader is hidden
-		//cs_log("CHECK: WAITING FOR CLEANUP READER %s", rdr->label);
+		//rdr_log(rdr, "CHECK: WAITING FOR CLEANUP");
 		cs_sleepms(500);
 	}
 
@@ -1513,10 +1513,10 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 
 	if (rdr->device[0] && (rdr->typ & R_IS_CASCADING)) {
 		if (!rdr->ph.num) {
-			cs_log("Protocol Support missing. (typ=%d)", rdr->typ);
+			rdr_log(rdr, "Protocol Support missing. (typ=%d)", rdr->typ);
 			return 0;
 		}
-		cs_debug_mask(D_TRACE, "reader %s protocol: %s", rdr->label, rdr->ph.desc);
+		rdr_debug_mask(rdr, D_TRACE, "protocol: %s", rdr->ph.desc);
 	}
 
 	if (!rdr->enable)
@@ -1524,12 +1524,12 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 
 	if (rdr->device[0]) {
 		if (restart) {
-			cs_log("restarting reader %s", rdr->label);
+			rdr_log(rdr, "Restarting reader");
 		}
 		cl = create_client(first_client->ip);
 		if (cl == NULL) return 0;
 		cl->reader=rdr;
-		cs_log("creating thread for device %s", rdr->device);
+		rdr_log(rdr, "creating thread for device %s", rdr->device);
 
 		cl->sidtabok=rdr->sidtabok;
 		cl->sidtabno=rdr->sidtabno;
@@ -2218,7 +2218,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 		reader->resetcounter++;
 		if (reader->resetcounter > reader->resetcycle) {
 			reader->resetcounter = 0;
-			cs_log("resetting reader %s resetcyle of %d ecms reached", reader->label, reader->resetcycle);
+			rdr_log(reader, "Resetting reader, resetcyle of %d ecms reached", reader->resetcycle);
 			reader->card_status = CARD_NEED_INIT;
 #ifdef WITH_CARDREADER
 			reader_reset(reader);
@@ -2610,11 +2610,11 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 		return;
 
 	if (eardr) {
-		cs_debug_mask(D_TRACE, "ecm answer from reader %s for ecm %04X rc=%d", eardr->label, htons(ert->checksum), ea->rc);
-		//cs_ddump_mask(D_TRACE, ea->cw, sizeof(ea->cw), "received cw from %s caid=%04X srvid=%04X hash=%08X",
-		//		eardr->label, ert->caid, ert->srvid, ert->csp_hash);
-		//cs_ddump_mask(D_TRACE, ert->ecm, ert->l, "received cw for ecm from %s caid=%04X srvid=%04X hash=%08X",
-		//		eardr->label, ert->caid, ert->srvid, ert->csp_hash);
+		rdr_debug_mask(eardr, D_TRACE, "ecm answer for ecm %04X rc=%d", htons(ert->checksum), ea->rc);
+		//rdr_ddump_mask(eardr, D_TRACE, ea->cw, sizeof(ea->cw), "received cw caid=%04X srvid=%04X hash=%08X",
+		//		ert->caid, ert->srvid, ert->csp_hash);
+		//rdr_ddump_mask(eardr, D_TRACE, ert->ecm, ert->l, "received cw for ecm caid=%04X srvid=%04X hash=%08X",
+		//		ert->caid, ert->srvid, ert->csp_hash);
 	}
 
 	ea->status |= REQUEST_ANSWERED;
@@ -3498,22 +3498,21 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		uint32_t provid = b2i(4, ep->provid);
 
 		if (aureader->audisabled) {
-			cs_debug_mask(D_EMM, "AU is disabled for reader %s", aureader->label);
+			rdr_debug_mask(aureader, D_EMM, "AU is disabled");
 			/* we have to write the log for blocked EMM here because
 	  		 this EMM never reach the reader module where the rest
 			 of EMM log is done. */
 			if (aureader->logemm & 0x10)  {
-				cs_log("%s emmtype=%s, len=%d, idx=0, cnt=1: audisabled (0 ms) by %s",
+				rdr_log(aureader, "%s emmtype=%s, len=%d, idx=0, cnt=1: audisabled (0 ms)",
 						client->account->usr,
 						typtext[ep->type],
-						ep->emm[2],
-						aureader->label);
+						ep->emm[2]);
 			}
 			continue;
 		}
 
 		if (!(aureader->grp & client->grp)) {
-			cs_debug_mask(D_EMM, "skip emm reader %s group mismatch", aureader->label);
+			rdr_debug_mask(aureader, D_EMM, "skip emm, group mismatch");
 			continue;
 		}
 
@@ -3529,7 +3528,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 
 			cs = get_cardsystem_by_caid(caid);
 			if (!cs) {
-				cs_debug_mask(D_EMM, "unable to find cardsystem for caid %04X, reader %s", caid, aureader->label);
+				rdr_debug_mask(aureader, D_EMM, "unable to find cardsystem for caid %04X", caid);
 				continue;
 			}
 		} else { // local reader
@@ -3539,7 +3538,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 
 		if (cs && cs->get_emm_type) {
 			if(!cs->get_emm_type(ep, aureader)) {
-				cs_debug_mask(D_EMM, "emm skipped, get_emm_type() returns error, reader %s", aureader->label);
+				rdr_debug_mask(aureader, D_EMM, "emm skipped, get_emm_type() returns error");
 				client->emmnok++;
 				if (client->account)
 					client->account->emmnok++;
@@ -3550,17 +3549,19 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 
 		if (cs && cs->get_emm_filter) {
 			if (!do_simple_emm_filter(aureader, cs, ep)) {
-			        cs_debug_mask(D_EMM, "emm skipped, emm_filter() returns invalid, reader %s", aureader->label);
+				rdr_debug_mask(aureader, D_EMM, "emm skipped, emm_filter() returns invalid");
 				client->emmnok++;
 				if (client->account)
 					client->account->emmnok++;
 				first_client->emmnok++;
 				continue;
-                        }
+			}
 		}
 
-		cs_debug_mask(D_EMM, "emmtype %s. Reader %s has serial %s.", typtext[ep->type], aureader->label, cs_hexdump(0, aureader->hexserial, 8, tmp, sizeof(tmp)));
-		cs_ddump_mask(D_EMM, ep->hexserial, 8, "emm UA/SA:");
+		rdr_debug_mask_sensitive(aureader, D_EMM, "emmtype %s. Reader serial {%s}.", typtext[ep->type],
+			cs_hexdump(0, aureader->hexserial, 8, tmp, sizeof(tmp)));
+		rdr_debug_mask_sensitive(aureader, D_EMM, "emm UA/SA: {%s}.",
+			cs_hexdump(0, ep->hexserial, 8, tmp, sizeof(tmp)));
 
 		uint32_t emmtype;
 		if (ep->type == UNKNOWN)
@@ -3628,12 +3629,11 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 	  		 this EMM never reach the reader module where the rest
 			 of EMM log is done. */
 			if (aureader->logemm & 0x08)  {
-				cs_log("%s emmtype=%s, len=%d, idx=0, cnt=%d: blocked (0 ms) by %s",
+				rdr_log(aureader, "%s emmtype=%s, len=%d, idx=0, cnt=%d: blocked (0 ms)",
 						client->account->usr,
 						typtext[ep->type],
 						ep->emm[2],
-						is_blocked,
-						aureader->label);
+						is_blocked);
 			}
 			continue;
 		}
@@ -3654,8 +3654,9 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		ep->client = client;
 
 		for (i=0; i<CS_EMMCACHESIZE; i++) {
-		        if (!memcmp(au_cl->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE)) {
-	       		        cs_debug_mask(D_EMM, "emm found in cache: reader %s count %d rewrite %d", aureader->label, au_cl->emmcache[i].count, aureader->rewritemm);
+			if (!memcmp(au_cl->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE)) {
+				rdr_debug_mask(aureader, D_EMM, "emm found in cache: count %d rewrite %d",
+					au_cl->emmcache[i].count, aureader->rewritemm);
 				if (aureader->cachemm && (au_cl->emmcache[i].count > aureader->rewritemm)) {
 					reader_log_emm(aureader, ep, i, 2, NULL);
 					return;
@@ -3663,7 +3664,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			}
 		}
 
-		cs_debug_mask(D_EMM, "emm is being sent to reader %s.", aureader->label);
+		rdr_debug_mask(aureader, D_EMM, "emm is being sent to reader");
 
 		EMM_PACKET *emm_pack = cs_malloc(&emm_pack, sizeof(EMM_PACKET), -1);
 		memcpy(emm_pack, ep, sizeof(EMM_PACKET));
@@ -4439,7 +4440,7 @@ void * client_check(void) {
 					//connection to remote proxy was closed
 					//oscam should check for rdr->tcp_connected and reconnect on next ecm request sent to the proxy
 					network_tcp_connection_close(rdr, "closed");
-					cs_debug_mask(D_READER, "connection to %s closed.", rdr->label);
+					rdr_debug_mask(rdr, D_READER, "connection closed");
 				}
 				if (cl2->pfd && pfd[i].fd == cl2->pfd && (pfd[i].revents & (POLLIN | POLLPRI))) {
 					add_job(cl2, ACTION_READER_REMOTE, NULL, 0);
