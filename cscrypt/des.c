@@ -1,10 +1,17 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "des.h"
 
-static byte  PC2[8][6] = 
+#define CRYPT           0
+#define HASH            1
+
+#define F_EURO_S2       0
+#define F_TRIPLE_DES    1
+
+#define TestBit(addr, bit) ((addr) & (1 << bit))
+
+static unsigned char PC2[8][6] =
 {
     { 14, 17, 11, 24,  1,  5 },
     {  3, 28, 15,  6, 21, 10 },
@@ -17,7 +24,7 @@ static byte  PC2[8][6] =
 };
 
 
-static byte  E[8][6] =
+static unsigned char E[8][6] =
 {
     { 32,  1,  2,  3,  4,  5 },
     {  4,  5,  6,  7,  8,  9 },
@@ -31,14 +38,14 @@ static byte  E[8][6] =
 
 
 
-static byte  P[32] =
+static unsigned char P[32] =
 {
     16,  7, 20, 21, 29, 12, 28, 17,  1, 15, 23, 26,  5, 18, 31, 10,
      2,  8, 24, 14, 32, 27,  3,  9, 19, 13, 30,  6, 22, 11,  4, 25
 };
                                
 
-static byte  SBOXES[4][64] =
+static unsigned char SBOXES[4][64] =
 {
     {
         0x2e, 0xe0, 0xc4, 0xbf, 0x4d, 0x27, 0x11, 0xc4,
@@ -84,9 +91,9 @@ static byte  SBOXES[4][64] =
 
 
 
-static byte  PC1[][8] = 
+static unsigned char PC1[][8] =
 {
-  {57, 49, 41, 33, 25, 17,  9, 1}, 
+  {57, 49, 41, 33, 25, 17,  9, 1},
   {58, 50, 42, 34, 26, 18, 10, 2},
   {59, 51, 43, 35, 27, 19, 11, 3},
   {60, 52, 44, 36, 63, 55, 47,39},
@@ -96,16 +103,16 @@ static byte  PC1[][8] =
 };
 
 
-void doPC1(byte data[])
+void doPC1(unsigned char data[])
 {
-  byte buf[8];
-  byte i, j;
+  unsigned char buf[8];
+  unsigned char i, j;
 
   memset(buf, 0, 8);
 
 	for(j=0; j<7; j++) {
 		for(i=0; i<8; i++) {
-			byte lookup = PC1[j][i];
+			unsigned char lookup = PC1[j][i];
 			buf[j] |= ((data[(lookup>>3)]>>(8-(lookup & 7))) & 1) << (7-i);
 		}
 	}
@@ -113,13 +120,13 @@ void doPC1(byte data[])
 	memcpy(data, buf, 8);
 }
 
-static void doIp(byte data[])
+static void doIp(unsigned char data[])
 {
   unsigned char j, k;
-  byte val;
-  byte buf[8];
-  byte *p;
-  byte i = 8;
+  unsigned char val;
+  unsigned char buf[8];
+  unsigned char *p;
+  unsigned char i = 8;
 
   for(i=0; i<8; i++)
   {
@@ -142,13 +149,13 @@ static void doIp(byte data[])
   memcpy(data, buf, 8);
 }
 
-static void doIp_1(byte data[])
+static void doIp_1(unsigned char data[])
 {
   unsigned char j, k;
-  byte r = 0;
-  byte buf[8];
-  byte *p;
-  byte i = 8;
+  unsigned char r = 0;
+  unsigned char buf[8];
+  unsigned char *p;
+  unsigned char i = 8;
 
   for(i=0; i<8; i++)
   {
@@ -173,11 +180,11 @@ static void doIp_1(byte data[])
 
 
 
-static void makeK(byte *left, byte *right, byte *K)
+static void makeK(unsigned char *left, unsigned char *right, unsigned char *K)
 {
-  byte i, j;
-  byte bit, val;
-  byte *p;
+  unsigned char i, j;
+  unsigned char bit, val;
+  unsigned char *p;
 
   for(i=0; i<8; i++)
   {
@@ -203,11 +210,11 @@ static void makeK(byte *left, byte *right, byte *K)
   }
 }
 
-static void rightRot(byte key[])
+static void rightRot(unsigned char key[])
 {         
-  byte *p     = key;
-  byte  i     = 3;
-  byte  carry = 0;
+  unsigned char *p     = key;
+  unsigned char  i     = 3;
+  unsigned char  carry = 0;
 
   carry = 0;
 
@@ -221,31 +228,31 @@ static void rightRot(byte key[])
   *p = (*p >> 1) | carry;
 }
 
-static void rightRotKeys(byte left[], byte right[])
+static void rightRotKeys(unsigned char left[], unsigned char right[])
 {
   rightRot(left);
   rightRot(right);
 }
 
-static void leftRot(byte key[])
+static void leftRot(unsigned char key[])
 {
-  byte i = 27;
+  unsigned char i = 27;
 
   do {
     rightRot(key);
   } while(--i);
 }
 
-static void leftRotKeys(byte left[], byte right[])
+static void leftRotKeys(unsigned char left[], unsigned char right[])
 {
   leftRot(left);
   leftRot(right);
 }
 
-static void desCore(byte data[], byte K[], byte result[])
+static void desCore(unsigned char data[], unsigned char K[], unsigned char result[])
 {
-  byte i, j;
-  byte bit, val;
+  unsigned char i, j;
+  unsigned char bit, val;
 
   memset(result, 0, 4);
 
@@ -269,12 +276,12 @@ static void desCore(byte data[], byte K[], byte result[])
   }
 }
 
-static void permut32(byte data[])
+static void permut32(unsigned char data[])
 {
-  byte i, j;
-  byte bit;
-  byte r[4];
-  byte *p;
+  unsigned char i, j;
+  unsigned char bit;
+  unsigned char r[4];
+  unsigned char *p;
 
   for(i=0; i<32; i++)
   {
@@ -292,21 +299,21 @@ static void permut32(byte data[])
   memcpy(data, r, 4);
 }
 
-static void swap(byte left[], byte right[])
+static void swap(unsigned char left[], unsigned char right[])
 {
-  byte x[4];
+  unsigned char x[4];
 
   memcpy(x, right, 4);
   memcpy(right, left, 4);
   memcpy(left, x, 4);
 }
 
-static void desRound(byte left[], byte right[], byte data[], byte mode, byte k8)
+static void desRound(unsigned char left[], unsigned char right[], unsigned char data[], unsigned char mode, unsigned char k8)
 {
-  byte i;
-  byte K[8];
-  byte r[4];
-  byte tempr[4];
+  unsigned char i;
+  unsigned char K[8];
+  unsigned char r[4];
+  unsigned char tempr[4];
   unsigned short temp;
 
   memcpy(tempr, data+4, 4);
@@ -337,12 +344,12 @@ static void desRound(byte left[], byte right[], byte data[], byte mode, byte k8)
   swap(data-4, data);
 }
 
-void des(byte key[], byte mode, byte data[])
+void des(unsigned char key[], unsigned char mode, unsigned char data[])
 {    
-  byte i; 
-  byte left[8];
-  byte right[8];
-  byte *p = left;
+  unsigned char i; 
+  unsigned char left[8];
+  unsigned char right[8];
+  unsigned char *p = left;
 
   short DESShift = (mode & DES_RIGHT) ? 0x8103 : 0xc081;
 
@@ -380,9 +387,9 @@ void des(byte key[], byte mode, byte data[])
 
 }
 
-static byte getmask(byte *OutData, byte *Mask, byte I, byte J) 
+static unsigned char getmask(unsigned char *OutData, unsigned char *Mask, unsigned char I, unsigned char J) 
 {
-  byte K, B, M, M1 , D, DI, MI;
+  unsigned char K, B, M, M1 , D, DI, MI;
 
   K = I ^ J;
   DI = 7;
@@ -414,7 +421,7 @@ static byte getmask(byte *OutData, byte *Mask, byte I, byte J)
   return D ^ M1;
 }
 
-static void v2mask(byte *cw, byte *mask) 
+static void v2mask(unsigned char *cw, unsigned char *mask) 
 {
 	int i, j;
 
@@ -427,9 +434,9 @@ static void v2mask(byte *cw, byte *mask)
 }                                                                                
 
 
-void EuroDes(byte key1[], byte key2[], byte desMode, byte operatingMode, byte data[])
+static void EuroDes(unsigned char key1[], unsigned char key2[], unsigned char desMode, unsigned char operatingMode, unsigned char data[])
 {                   
-  byte mode;
+  unsigned char mode;
 
  if(key1[7]) { /* Viaccess */
    mode = (operatingMode == HASH) ? DES_ECM_HASH : DES_ECM_CRYPT;
@@ -444,13 +451,13 @@ void EuroDes(byte key1[], byte key2[], byte desMode, byte operatingMode, byte da
  {
    /* Eurocrypt 3-DES */
    mode = (operatingMode == HASH) ?  0 : DES_RIGHT;
-   des(key1, (byte)(DES_IP | mode), data);
+   des(key1, (unsigned char)(DES_IP | mode), data);
 
    mode ^= DES_RIGHT;
    des(key2, mode, data);
 
    mode ^= DES_RIGHT;
-   des(key1, (byte)(mode | DES_IP_1), data);
+   des(key1, (unsigned char)(mode | DES_IP_1), data);
  }
  else
  {
@@ -469,9 +476,9 @@ void EuroDes(byte key1[], byte key2[], byte desMode, byte operatingMode, byte da
 }
 
 /*------------------------------------------------------------------------*/
-static void des_key_parity_adjust(byte *key, byte len)
+static void des_key_parity_adjust(unsigned char *key, unsigned char len)
 {
-  byte i, j, parity;
+  unsigned char i, j, parity;
 
   for (i = 0; i < len; i++)
   {
@@ -481,7 +488,7 @@ static void des_key_parity_adjust(byte *key, byte len)
   }
 }
 
-static byte *des_key_spread(byte *normal, byte *spread)
+static unsigned char *des_key_spread(unsigned char *normal, unsigned char *spread)
 {
   spread[ 0] = normal[ 0] & 0xfe;
   spread[ 1] = ((normal[ 0] << 7) | (normal[ 1] >> 1)) & 0xfe;
@@ -504,9 +511,9 @@ static byte *des_key_spread(byte *normal, byte *spread)
   return spread;
 }
 
-static void des_random_get(byte *buffer, byte len)
+static void des_random_get(unsigned char *buffer, unsigned char len)
 {
-  byte idx = 0;
+  unsigned char idx = 0;
   int randomNo = 0;
 
   for (idx = 0; idx < len; idx++)
@@ -518,11 +525,11 @@ static void des_random_get(byte *buffer, byte len)
 
 #define CWS_NETMSGSIZE 272
 
-int des_encrypt(byte *buffer, int len, byte *deskey)
+int des_encrypt(unsigned char *buffer, int len, unsigned char *deskey)
 {
-  byte checksum = 0;
-  byte noPadBytes;
-  byte padBytes[7];
+  unsigned char checksum = 0;
+  unsigned char noPadBytes;
+  unsigned char padBytes[7];
   char ivec[8];
   short i;
 
@@ -533,26 +540,26 @@ int des_encrypt(byte *buffer, int len, byte *deskey)
   for (i = 0; i < noPadBytes; i++) buffer[len++] = padBytes[i];
   for (i = 2; i < len; i++) checksum ^= buffer[i];
   buffer[len++] = checksum;
-  des_random_get((byte *)ivec, 8);
+  des_random_get((unsigned char *)ivec, 8);
   memcpy(buffer+len, ivec, 8);
   for (i = 2; i < len; i += 8)
   {
-    byte j;
-    const byte flags = (1 << F_EURO_S2) | (1 << F_TRIPLE_DES);
+    unsigned char j;
+    const unsigned char flags = (1 << F_EURO_S2) | (1 << F_TRIPLE_DES);
     for(j=0; j<8; j++) buffer[i+j] ^= ivec[j];
-    EuroDes(deskey, deskey+8, flags, 1, buffer+i);
+    EuroDes(deskey, deskey+8, flags, HASH, buffer+i);
     memcpy(ivec, buffer+i, 8);
   }
   len += 8;
   return len;
 }
 
-int des_decrypt(byte *buffer, int len, byte *deskey)
+int des_decrypt(unsigned char *buffer, int len, unsigned char *deskey)
 {
   char ivec[8];
   char nextIvec[8];
   int i;
-  byte checksum = 0;
+  unsigned char checksum = 0;
 
   if (!deskey) return len;
   if ((len-2) % 8 || (len-2) < 16) return -1;
@@ -560,12 +567,12 @@ int des_decrypt(byte *buffer, int len, byte *deskey)
   memcpy(nextIvec, buffer+len, 8);
   for (i = 2; i < len; i += 8)
   {
-    byte j;
-    const byte flags = (1 << F_EURO_S2) | (1 << F_TRIPLE_DES);
+    unsigned char j;
+    const unsigned char flags = (1 << F_EURO_S2) | (1 << F_TRIPLE_DES);
 
     memcpy(ivec, nextIvec, 8);
     memcpy(nextIvec, buffer+i, 8);
-    EuroDes(deskey, deskey+8, flags, 0, buffer+i);
+    EuroDes(deskey, deskey+8, flags, CRYPT, buffer+i);
     for(j=0; j<8; j++)
       buffer[i+j] ^= ivec[j];
   } 
@@ -574,9 +581,9 @@ int des_decrypt(byte *buffer, int len, byte *deskey)
   return len;
 }
 
-byte *des_login_key_get(byte *key1, byte *key2, int len, byte *des16)
+unsigned char *des_login_key_get(unsigned char *key1, unsigned char *key2, int len, unsigned char *des16)
 {
-  byte des14[14];
+  unsigned char des14[14];
   int i;
 
   memcpy(des14, key1, sizeof(des14));

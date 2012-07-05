@@ -15,7 +15,7 @@ static void ReverseMem(unsigned char *vIn, int32_t len)
   }
 }
 
-static void RSA_CNX(struct s_reader * reader, byte *msg, byte *mod, byte *exp, unsigned int modbytes, unsigned int expbytes) 
+static void RSA_CNX(struct s_reader *reader, unsigned char *msg, unsigned char *mod, unsigned char *exp, unsigned int modbytes, unsigned int expbytes)
 {
   int32_t n = 0;
   BN_CTX *ctx;
