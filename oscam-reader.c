@@ -4,10 +4,28 @@
 
 int32_t logfd = 0;
 
-static char *vsnprintf_sensitive(char *result, int result_size, int remove_sensitive, char *fmt, va_list args)
-{
-	// Get the resulting string
-	vsnprintf(result, result_size, fmt, args);
+static char *debug_mask_txt(int mask) {
+	switch (mask) {
+		case D_EMM    : return "EMM: ";
+		case D_IFD    : return "IFD: ";
+		case D_TRACE  : return "TRACE: ";
+		case D_DEVICE : return "IO: ";
+		default       : return "";
+	}
+}
+
+static char *reader_desc_txt(struct s_reader *reader) {
+	if (reader->csystem.desc)
+		return reader->csystem.desc;
+	else if (reader->crdr.desc)
+		return reader->crdr.desc;
+	else if (reader->ph.desc)
+		return reader->ph.desc;
+	else
+		return reader_get_type_desc(reader, 1);
+}
+
+static char *format_sensitive(char *result, int remove_sensitive) {
 	// Filter sensitive information
 	int i, n = strlen(result), p = 0;
 	if (remove_sensitive) {
@@ -31,70 +49,46 @@ static char *vsnprintf_sensitive(char *result, int result_size, int remove_sensi
 	return result;
 }
 
-void rdr_log(struct s_reader * reader, char *fmt,...)
-{
+void rdr_log(struct s_reader * reader, char *fmt, ...) {
 	char txt[256];
-	char *desc;
-
-	va_list params;
-	va_start(params, fmt);
-	vsnprintf(txt, sizeof(txt), fmt, params);
-	va_end(params);
-
-	if (reader->csystem.desc)
-		desc = reader->csystem.desc;
-	else if (reader->crdr.desc)
-		desc = reader->crdr.desc;
-	else if (reader->ph.desc)
-		desc = reader->ph.desc;
-	else
-		desc = reader_get_type_desc(reader, 1);
-
-	cs_log("%s [%s] %s", reader->label, desc, txt);
+	va_list args;
+	va_start(args, fmt);
+	vsnprintf(txt, sizeof(txt), fmt, args);
+	va_end(args);
+	cs_log("%s [%s] %s", reader->label, reader_desc_txt(reader), txt);
 }
 
 void rdr_log_sensitive(struct s_reader * reader, char *fmt, ...) {
 	char txt[256];
 	va_list args;
 	va_start(args, fmt);
-	rdr_log(reader, "%s", vsnprintf_sensitive(txt, sizeof(txt), log_remove_sensitive, fmt, args));
+	vsnprintf(txt, sizeof(txt), fmt, args);
 	va_end(args);
+	format_sensitive(txt, log_remove_sensitive);
+	rdr_log(reader, "%s", txt);
 }
 
-void rdr_debug_mask(struct s_reader * reader, uint16_t mask, char *fmt, ...)
-{
+void rdr_debug_mask(struct s_reader * reader, uint16_t mask, char *fmt, ...) {
 	if (config_WITH_DEBUG()) {
-		char txt[2048], *desc, *dbg_prefix;
-
-		va_list params;
-		va_start(params, fmt);
-		vsnprintf(txt, sizeof(txt), fmt, params);
-		va_end(params);
-
-		if (mask == D_EMM)
-			dbg_prefix = "EMM: ";
-		else
-			dbg_prefix = "";
-
-		if (reader->csystem.desc)
-			desc = reader->csystem.desc;
-		else if (reader->crdr.desc)
-			desc = reader->crdr.desc;
-		else if (reader->ph.desc)
-			desc = reader->ph.desc;
-		else
-			desc = reader_get_type_desc(reader, 1);
-
-		cs_debug_mask(mask, "%s [%s] %s%s", reader->label, desc, dbg_prefix, txt);
+		char txt[2048];
+		va_list args;
+		va_start(args, fmt);
+		vsnprintf(txt, sizeof(txt), fmt, args);
+		va_end(args);
+		cs_debug_mask(mask, "%s [%s] %s%s", reader->label, reader_desc_txt(reader), debug_mask_txt(mask), txt);
 	}
 }
 
 void rdr_debug_mask_sensitive(struct s_reader * reader, uint16_t mask, char *fmt, ...) {
-	char txt[2048];
-	va_list args;
-	va_start(args, fmt);
-	rdr_debug_mask(reader, mask, "%s", vsnprintf_sensitive(txt, sizeof(txt), log_remove_sensitive, fmt, args));
-	va_end(args);
+	if (config_WITH_DEBUG()) {
+		char txt[2048];
+		va_list args;
+		va_start(args, fmt);
+		vsnprintf(txt, sizeof(txt), fmt, args);
+		va_end(args);
+		format_sensitive(txt, log_remove_sensitive);
+		rdr_debug_mask(reader, mask, "%s", txt);
+	}
 }
 
 /**
