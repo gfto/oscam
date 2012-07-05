@@ -30,7 +30,7 @@ static void set_gpio(struct s_reader * reader, int32_t level)
 		reader->gpio &= ~GPIO_PIN;
 	ret |= write(reader->gpio_out, &reader->gpio, sizeof(reader->gpio));
 
-	cs_debug_mask(D_IFD, "%s: rdr: %s level: %d ret: %d", __func__, reader->label, level, ret);
+	rdr_debug_mask(reader, D_IFD, "%s level: %d ret: %d", __func__, level, ret);
 }
 
 static void set_gpio_input(struct s_reader * reader)
@@ -39,7 +39,7 @@ static void set_gpio_input(struct s_reader * reader)
 	ret |= read(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio));
 	reader->gpio &= ~GPIO_PIN;
 	ret |= write(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio));
-	cs_debug_mask(D_IFD, "%s: rdr: %s ret:%d", __func__, reader->label, ret);
+	rdr_debug_mask(reader, D_IFD, "%s ret:%d", __func__, ret);
 }
 
 static int32_t get_gpio(struct s_reader * reader)
@@ -47,7 +47,7 @@ static int32_t get_gpio(struct s_reader * reader)
 	int ret = 0;
 	set_gpio_input(reader);
 	ret = read(reader->gpio_in, &reader->gpio, sizeof(reader->gpio));
-	cs_debug_mask(D_IFD, "%s: rdr: %s ok:%d ret:%d", __func__, reader->label, reader->gpio & GPIO_PIN, ret);
+	rdr_debug_mask(reader, D_IFD, "%s ok:%d ret:%d", __func__, reader->gpio & GPIO_PIN, ret);
 	if (reader->gpio & GPIO_PIN)
 		return OK;
 	else
@@ -65,12 +65,12 @@ int32_t Phoenix_Init (struct s_reader * reader)
 		reader->gpio_outen = open("/dev/gpio/outen", O_RDWR);
 		reader->gpio_out   = open("/dev/gpio/out",   O_RDWR);
 		reader->gpio_in    = open("/dev/gpio/in",    O_RDWR);
-		cs_debug_mask(D_IFD, "%s: rdr: %s gpio_outen:%d gpio_out:%d gpio_in:%d", __func__, reader->label,
+		rdr_debug_mask(reader, D_IFD, "init gpio_outen:%d gpio_out:%d gpio_in:%d",
 			reader->gpio_outen, reader->gpio_out, reader->gpio_in);
 		set_gpio_input(reader);
 	}
 	
-	cs_debug_mask (D_IFD, "IFD: Initializing reader %s type=%d\n",  reader->label, reader->typ);
+	rdr_debug_mask(reader, D_IFD, "Initializing reader type=%d", reader->typ);
 	
 	/* Default serial port settings */
 	if (reader->atr[0] == 0) {
@@ -89,7 +89,7 @@ int32_t Phoenix_GetStatus (struct s_reader * reader, int32_t * status)
 	{
 		uint32_t modembits=0;
 	        if (ioctl(reader->handle, TIOCMGET, &modembits) < 0) {
-	                cs_log("ERROR Phoenix_GetStatus: ioctl error in card detection for %s", reader->label);
+	                rdr_log(reader, "ERROR: %s: ioctl error in card detection", __func__);
 	                return ERROR;
 	        }
 		switch(reader->detect&0x7f)
@@ -108,7 +108,7 @@ int32_t Phoenix_GetStatus (struct s_reader * reader, int32_t * status)
 
 int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 {	
-		cs_debug_mask (D_IFD, "IFD: Resetting card:\n");
+		rdr_debug_mask(reader, D_IFD, "Resetting card");
 		int32_t ret;
 		int32_t i;
 		unsigned char buf[ATR_MAX_SIZE];
@@ -118,7 +118,7 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 			call (Phoenix_SetBaudrate (reader, DEFAULT_BAUDRATE));
 		}
 		else {
-			cs_log("Doing fast reset");
+			rdr_log(reader, "Doing fast reset");
 		}
 
 		for(i=0; i<3; i++) {
@@ -223,7 +223,7 @@ int32_t Phoenix_Receive (struct s_reader * reader, BYTE * buffer, uint32_t size,
 
 int32_t Phoenix_SetBaudrate (struct s_reader * reader, uint32_t baudrate)
 {
-	cs_debug_mask (D_IFD, "IFD: Phoenix Setting baudrate to %u\n", baudrate);
+	rdr_debug_mask(reader, D_IFD, "Phoenix setting baudrate to %u", baudrate);
 
 	/* Get current settings */
 	struct termios tio;
@@ -250,7 +250,7 @@ int32_t Phoenix_SetBaudrate (struct s_reader * reader, uint32_t baudrate)
 
 int32_t Phoenix_Close (struct s_reader * reader)
 {
-	cs_debug_mask (D_IFD, "IFD: Closing phoenix device %s", reader->device);
+	rdr_debug_mask(reader, D_IFD, "Closing phoenix device %s", reader->device);
 	if (use_gpio(reader))
 	{
 		if (reader->gpio_outen > -1)
@@ -291,14 +291,15 @@ int32_t Phoenix_FastReset (struct s_reader * reader, int32_t delay)
 }
 
 static int32_t mouse_init(struct s_reader *reader) {
-	cs_log("mouse_test init");
+	rdr_log(reader, "mouse_test init");
 	reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 	if (reader->handle < 0) {
-		cs_log("ERROR opening device %s (errno=%d %s)",reader->device, errno, strerror(errno));
+		rdr_log(reader, "ERROR: Opening device %s (errno=%d %s)",
+			reader->device, errno, strerror(errno));
 		return ERROR;
 	}
 	if (Phoenix_Init(reader)) {
-		cs_log("ERROR: Phoenix_Init returns error");
+		rdr_log(reader, "ERROR: Phoenix_Init returns error");
 		Phoenix_Close (reader);
 		return ERROR;
 	}

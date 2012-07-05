@@ -17,22 +17,22 @@ int32_t _GetStatus(struct s_reader *reader, int32_t *UNUSED(in))
 
 int32_t Azbox_Init(struct s_reader *reader)
 {
-  cs_debug_mask(D_DEVICE, "openxcas sc: init");
+  rdr_debug_mask(reader, D_DEVICE, "openxcas sc: init");
 
   if ((reader->handle = openxcas_get_smartcard_device(0)) < 0) {
-    cs_debug_mask(D_DEVICE, "openxcas sc: init failed (%d)", reader->handle);
+    rdr_debug_mask(reader, D_DEVICE, "openxcas sc: init failed (%d)", reader->handle);
     return FALSE;
   }
 
-  cs_debug_mask(D_DEVICE, "openxcas sc: init succeeded");
+  rdr_debug_mask(reader, D_DEVICE, "openxcas sc: init succeeded");
 
   return OK;
 }
 
-void Azbox_SetMode(int32_t mode)
+void Azbox_SetMode(struct s_reader *reader, int32_t mode)
 {
   sc_mode = mode;
-  cs_log("openxcas sc: set mode %d", sc_mode);
+  rdr_log(reader, "openxcas sc: set mode %d", sc_mode);
 }
 
 int32_t Azbox_GetStatus(struct s_reader *reader, int32_t *in)
@@ -48,7 +48,7 @@ int32_t Azbox_GetStatus(struct s_reader *reader, int32_t *in)
     else
       *in = 1;
 
-    //cs_debug_mask(D_DEVICE, "openxcas sc: get status = %d", *in);
+    //rdr_debug_mask(reader, D_DEVICE, "openxcas sc: get status = %d", *in);
   }
 
   return OK;

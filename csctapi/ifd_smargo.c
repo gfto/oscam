@@ -32,7 +32,8 @@ static int32_t smargo_set_settings(struct s_reader *reader, int32_t freq, unsign
 
 	cs_sleepms(DELAY);
 
-	cs_debug_mask(D_DEVICE, "Smargo: sending F=%04X (%d), D=%02X (%d), Freq=%04X (%d), N=%02X (%d), T=%02X (%d), inv=%02X (%d) to smartreader",Fi, Fi, Di, Di, freqk, freqk, Ni, Ni, T, T, inv, inv);
+	rdr_debug_mask(reader, D_DEVICE, "Smargo: sending F=%04X (%d), D=%02X (%d), Freq=%04X (%d), N=%02X (%d), T=%02X (%d), inv=%02X (%d)",
+		Fi, Fi, Di, Di, freqk, freqk, Ni, Ni, T, T, inv, inv);
 
 	if (T!=14 || freq == 369) {
 		data[0]=0x01;
@@ -76,10 +77,10 @@ static int32_t smargo_writesettings(struct s_reader *reader, uint32_t UNUSED(ETU
 
 
 static int32_t smargo_init(struct s_reader *reader) {
-	cs_log("smargo init");
+	rdr_log(reader, "smargo init");
 	reader->handle = open (reader->device,  O_RDWR);
 	if (reader->handle < 0) {
-		cs_log("ERROR opening device %s (errno=%d %s)",reader->device, errno, strerror(errno));
+		rdr_log(reader, "ERROR: Opening device %s (errno=%d %s)",reader->device, errno, strerror(errno));
 		return ERROR;
 	}
 
@@ -98,27 +99,28 @@ int32_t smargo_Serial_Read(struct s_reader * reader, uint32_t timeout, uint32_t 
 		{
 			if (read (reader->handle, &c, 1) != 1)
 			{
-				cs_ddump_mask(D_DEVICE, data, count, "IO: Receiving:");
-				cs_log("ERROR in smargo_Serial_Read (errno=%d %s)", errno, strerror(errno));
+				int saved_errno = errno;
+				rdr_ddump_mask(reader, D_DEVICE, data, count, "Receiving:");
+				rdr_log(reader, "ERROR: %s (errno=%d %s)", __func__, saved_errno, strerror(saved_errno));
 				return ERROR;
 			}
 		}
 		else
 		{
-			cs_ddump_mask(D_DEVICE, data, count, "IO: Receiving:");
-			cs_debug_mask(D_DEVICE, "TIMEOUT in IO_Serial_Read");
+			rdr_ddump_mask(reader, D_DEVICE, data, count, "Receiving:");
+			rdr_debug_mask(reader, D_DEVICE, "TIMEOUT in IO_Serial_Read");
 			*read_bytes=count;
 			return ERROR;
 		}
 		data[count] = c;
 	}
-	cs_ddump_mask(D_DEVICE, data, count, "IO: Receiving:");
+	rdr_ddump_mask(reader, D_DEVICE, data, count, "Receiving:");
 	return OK;
 }
 
 
 static int32_t smargo_reset(struct s_reader *reader, ATR *atr) {
-	cs_debug_mask(D_IFD, "Smargo: Resetting card:");
+	rdr_debug_mask(reader, D_IFD, "Smargo: Resetting card");
 	int32_t ret=ERROR;
 	int32_t i;
 	unsigned char buf[ATR_MAX_SIZE];
@@ -155,7 +157,7 @@ static int32_t smargo_reset(struct s_reader *reader, ATR *atr) {
 		if(n==0 || buf[0]==0)
 			continue;
 
-		cs_ddump_mask(D_IFD, buf, n, "Smargo ATR: %d bytes", n);
+		rdr_ddump_mask(reader, D_IFD, buf, n, "Smargo ATR: %d bytes", n);
 
 		if((buf[0]!=0x3B && buf[0]!=0x03 && buf[0]!=0x3F) || (buf[1]==0xFF && buf[2]==0x00))
 			continue; // this is not a valid ATR

@@ -56,7 +56,7 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
 
     /* Create an IFS request S-Block */
     block = T1_Block_NewSBlock (T1_BLOCK_S_IFS_REQ, 1, &inf);
-    cs_debug_mask (D_IFD, "Protocol: Sending block S(IFS request, %d)", inf);
+    rdr_debug_mask(reader, D_IFD, "Protocol: Sending block S(IFS request, %d)", inf);
 
     /* Send IFSD request */
     ret = Protocol_T1_SendBlock (reader, block);
@@ -73,7 +73,7 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
           {
             /* Update IFSD value */
             inf = (*T1_Block_GetInf (block));
-            cs_debug_mask (D_IFD, "Protocol: Received block S(IFS response, %d)", inf);
+            rdr_debug_mask(reader, D_IFD, "Protocol: Received block S(IFS response, %d)", inf);
           }
         T1_Block_Delete (block);
       }
@@ -85,7 +85,7 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
   {
     /* Create an Resynch request S-Block */
     block = T1_Block_NewSBlock (T1_BLOCK_S_RESYNCH_REQ, 0, NULL);
-    cs_debug_mask (D_IFD, "Protocol: Sending block S(RESYNCH request)");
+    rdr_debug_mask(reader, D_IFD, "Protocol: Sending block S(RESYNCH request)");
 
     /* Send request */
     ret = Protocol_T1_SendBlock (reader, block);
@@ -99,7 +99,7 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
 
         /* Positive IFS Response S-Block received */
         if (rsp_type == T1_BLOCK_S_RESYNCH_RES) {
-            cs_debug_mask (D_IFD, "Protocol: Received block S(RESYNCH response)");
+            rdr_debug_mask(reader, D_IFD, "Protocol: Received block S(RESYNCH response)");
 						reader->ns = 0;
 				}
 		T1_Block_Delete (block);
@@ -120,7 +120,7 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
 
   /* Create an I-Block */
   block = T1_Block_NewIBlock (bytes, command, reader->ns, more);
-  cs_debug_mask (D_IFD, "Sending block I(%d,%d)", reader->ns, more);
+  rdr_debug_mask(reader, D_IFD, "Sending block I(%d,%d)", reader->ns, more);
 
   /* Send a block */
   call (Protocol_T1_SendBlock (reader, block));
@@ -132,7 +132,7 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
 
       /* Positive ACK R-Block received */
       if (rsp_type == T1_BLOCK_R_OK) {
-          cs_debug_mask (D_IFD, "Protocol: Received block R(%d)", T1_Block_GetNR (block));
+          rdr_debug_mask(reader, D_IFD, "Protocol: Received block R(%d)", T1_Block_GetNR (block));
           /* Delete block */
           T1_Block_Delete (block);
  
@@ -148,7 +148,7 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
 
           /* Create an I-Block */
           block = T1_Block_NewIBlock (bytes, command + counter, reader->ns, more);
-          cs_debug_mask (D_IFD, "Protocol: Sending block I(%d,%d)", reader->ns, more);
+          rdr_debug_mask(reader, D_IFD, "Protocol: Sending block I(%d,%d)", reader->ns, more);
 
           /* Send a block */
           call (Protocol_T1_SendBlock (reader, block));
@@ -156,7 +156,7 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
       else {
           /* Delete block */
           T1_Block_Delete (block);
-          cs_debug_mask(D_TRACE, "ERROR T1 Command %02X not implemented in SendBlock", rsp_type);
+          rdr_debug_mask(reader, D_TRACE, "ERROR: T1 Command %02X not implemented in SendBlock", rsp_type);
           return ERROR;
       }
   }
@@ -188,7 +188,7 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
 
           if (rsp_type == T1_BLOCK_I)
             {
-              cs_debug_mask (D_IFD, "Protocol: Received block I(%d,%d)", 
+              rdr_debug_mask (reader, D_IFD, "Protocol: Received block I(%d,%d)", 
               T1_Block_GetNS(block), T1_Block_GetMore (block));
               /* Calculate nr */
               nr = (T1_Block_GetNS (block) + 1) % 2;
@@ -209,7 +209,7 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
                 {
                   /* Create an R-Block */
                   block = T1_Block_NewRBlock (T1_BLOCK_R_OK, nr);
-                  cs_debug_mask (D_IFD, "Protocol: Sending block R(%d)", nr);
+                  rdr_debug_mask(reader, D_IFD, "Protocol: Sending block R(%d)", nr);
 
                   /* Send R-Block */
                   ret = Protocol_T1_SendBlock (reader, block);
@@ -221,14 +221,14 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
             {
               /* Get wtx multiplier */
               wtx = (*T1_Block_GetInf (block));
-              cs_debug_mask (D_IFD, "Protocol: Received block S(WTX request, %d)", wtx);
+              rdr_debug_mask(reader, D_IFD, "Protocol: Received block S(WTX request, %d)", wtx);
 
               /* Delete block */
               T1_Block_Delete (block);
              
               /* Create an WTX response S-Block */
               block = T1_Block_NewSBlock (T1_BLOCK_S_WTX_RES, 1, &wtx);
-              cs_debug_mask (D_IFD, "Protocol: Sending block S(WTX response, %d)", wtx);
+              rdr_debug_mask(reader, D_IFD, "Protocol: Sending block S(WTX response, %d)", wtx);
 
               /* Send WTX response */
               ret = Protocol_T1_SendBlock (reader, block);
@@ -236,7 +236,7 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
 
           else
             {
-              cs_debug_mask(D_TRACE, "ERROR T1 Command %02X not implemented in Receive Block", rsp_type);
+              rdr_debug_mask(reader, D_TRACE, "ERROR: T1 Command %02X not implemented in Receive Block", rsp_type);
               ret = ERROR;//not implemented
             }
         }

@@ -39,7 +39,7 @@ int32_t Cool_Init (struct s_reader *reader)
 		reader_nb=atoi((const char *)device);
 	if(reader_nb>1) {
 		// there are only 2 readers in the coolstream : 0 or 1
-		cs_log("Coolstream reader device can only be 0 or 1");
+		rdr_log(reader, "Coolstream reader device can only be 0 or 1");
 		return FALSE;
 	}
 	reader->spec_dev=malloc(sizeof(struct s_coolstream_reader));
@@ -51,10 +51,11 @@ int32_t Cool_Init (struct s_reader *reader)
 
 	specdev()->cardbuflen = 0;
 	if (reader->cool_timeout_init > 0) {
-		cs_debug_mask(D_DEVICE,"%s init timeout set to cool_timeout_init = %i", reader->label, reader->cool_timeout_init);
+		rdr_debug_mask(reader, D_DEVICE, "init timeout set to cool_timeout_init = %i", reader->cool_timeout_init);
 		specdev()->read_write_transmit_timeout = reader->cool_timeout_init;
 	} else {
-		cs_debug_mask(D_DEVICE,"No init timeout for reader %s specified - using default init timeout (%i). If you encounter any problems while card init try to use the reader parameter cool_timeout_init = 500", reader->label, READ_WRITE_TRANSMIT_TIMEOUT);
+		rdr_debug_mask(reader, D_DEVICE, "No init timeout specified - using default init timeout (%i). If you encounter any problems while card init try to use the reader parameter cool_timeout_init = 500",
+			READ_WRITE_TRANSMIT_TIMEOUT);
 		specdev()->read_write_transmit_timeout = READ_WRITE_TRANSMIT_TIMEOUT;
 	}
 	return OK;
@@ -90,7 +91,8 @@ int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
 	ret = cnxt_smc_get_clock_freq (specdev()->handle, &clk);
 	coolapi_check_error("cnxt_smc_get_clock_freq", ret);
 	if (clk/10000 != (uint32_t)reader->cardmhz) {
-		cs_debug_mask(D_DEVICE,"COOL: %s clock freq: %i, scheduling change to %i for card reset", reader->label, clk, reader->cardmhz*10000);
+		rdr_debug_mask(reader, D_DEVICE, "COOL: clock freq: %i, scheduling change to %i for card reset",
+			clk, reader->cardmhz*10000);
 		call (Cool_SetClockrate(reader, reader->cardmhz));
 	} 
 
@@ -117,7 +119,7 @@ int32_t Cool_Transmit (struct s_reader *reader, BYTE * sent, uint32_t size)
 	int32_t ret = cnxt_smc_read_write(specdev()->handle, FALSE, sent, size, specdev()->cardbuffer, &specdev()->cardbuflen, specdev()->read_write_transmit_timeout, 0);
 	coolapi_check_error("cnxt_smc_read_write", ret);
 
-	cs_ddump_mask(D_DEVICE, sent, size, "COOL IO: Transmit: ");	
+	rdr_ddump_mask(reader, D_DEVICE, sent, size, "COOL Transmit:");
 	return OK;
 }
 
@@ -127,14 +129,14 @@ int32_t Cool_Set_Transmit_Timeout(struct s_reader *reader, uint32_t set)
 	if (set) {
 		if (reader->cool_timeout_after_init > 0) {
 			specdev()->read_write_transmit_timeout = reader->cool_timeout_after_init;
-			cs_debug_mask(D_DEVICE,"%s timeout set to cool_timeout_after_init = %i", reader->label, reader->cool_timeout_after_init);
+			rdr_debug_mask(reader, D_DEVICE, "timeout set to cool_timeout_after_init = %i", reader->cool_timeout_after_init);
 		} else {
 			if (reader->read_timeout > 50) {
-				cs_log("ATTENTION: The calculated timeout after init value (%i) is greater than 50 which probably leads to a slow card response. We are going to use the reader parameter cool_timeout_after_init = 50.", reader->read_timeout);
-				cs_log("If you encounter any problems try a higher value. If you have no problems try a value below to get a faster card response.");
+				rdr_log(reader, "ATTENTION: The calculated timeout after init value (%i) is greater than 50 which probably leads to a slow card response. We are going to use the reader parameter cool_timeout_after_init = 50.", reader->read_timeout);
+				rdr_log(reader, "If you encounter any problems try a higher value. If you have no problems try a value below to get a faster card response.");
 				specdev()->read_write_transmit_timeout = 50;
 			} else {
-				cs_debug_mask(D_DEVICE,"no timeout for reader %s specified - using calculated timeout after init (%i)", reader->label, reader->read_timeout);
+				rdr_debug_mask(reader, D_DEVICE, "no timeout specified - using calculated timeout after init (%i)", reader->read_timeout);
 				specdev()->read_write_transmit_timeout = reader->read_timeout;
 			}
 		}
@@ -155,7 +157,7 @@ int32_t Cool_Receive (struct s_reader *reader, BYTE * data, uint32_t size)
 	memcpy(data, specdev()->cardbuffer, size);
 	specdev()->cardbuflen -= size;
 	memmove(specdev()->cardbuffer, specdev()->cardbuffer+size, specdev()->cardbuflen);
-	cs_ddump_mask(D_DEVICE, data, size, "COOL IO: Receive: ");
+	rdr_ddump_mask(reader, D_DEVICE, data, size, "COOL Receive:");
 	return OK;
 }	
 
@@ -166,7 +168,7 @@ int32_t Cool_SetClockrate (struct s_reader *reader, int32_t mhz)
 	int32_t ret = cnxt_smc_set_clock_freq (specdev()->handle, clk);
 	coolapi_check_error("cnxt_smc_set_clock_freq", ret);
 	call (Cool_FastReset(reader));
-	cs_debug_mask(D_DEVICE, "COOL: %s clock succesfully set to %i",reader->label, clk);
+	rdr_debug_mask(reader, D_DEVICE, "COOL: clock succesfully set to %i", clk);
 	return OK;
 }
 
@@ -189,14 +191,14 @@ int32_t Cool_WriteSettings (struct s_reader *reader, uint32_t UNUSED(BWT), uint3
 	params.EGT = EGT;
 	params.BGT = BGT;
 	call (cnxt_smc_set_config_timeout(specdev()->handle, params));
-	cs_debug_mask(D_DEVICE, "COOL WriteSettings OK");*/
+	rdr_debug_mask(reader, D_DEVICE, "COOL WriteSettings OK");*/
 
 	//set freq back to reader->mhz if necessary
 	uint32_t clk;
 	int32_t ret = cnxt_smc_get_clock_freq (specdev()->handle, &clk);
 	coolapi_check_error("cnxt_smc_get_clock_freq", ret);
 	if (clk/10000 != (uint32_t)reader->mhz) {
-		cs_debug_mask(D_DEVICE,"COOL: %s clock freq: %i, scheduling change to %i", reader->label, clk, reader->mhz*10000);
+		rdr_debug_mask(reader, D_DEVICE, "COOL: clock freq: %i, scheduling change to %i", clk, reader->mhz * 10000);
 		call (Cool_SetClockrate(reader, reader->mhz));
 	} 
 

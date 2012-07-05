@@ -30,7 +30,7 @@ int32_t Sci_GetStatus (struct s_reader * reader, int32_t * status)
 
 int32_t Sci_Reset (struct s_reader * reader, ATR * atr)
 {
-	cs_debug_mask(D_IFD,"IFD: Reset internal cardreader!");
+	rdr_debug_mask(reader, D_IFD, "Reset internal cardreader!");
 	unsigned char buf[SCI_MAX_ATR_SIZE];
 	int32_t n = 0;
 	SCI_PARAMETERS params;
@@ -68,7 +68,7 @@ int32_t Sci_Reset (struct s_reader * reader, ATR * atr)
 	call (ioctl(reader->handle, IOCTL_SET_RESET)<0);
 #if defined(__powerpc__)
     // looks like PPC box need a delay here. From the data provided we need at least 140ms at 3.57MHz so I'll chose 150ms to be safe
-    cs_debug_mask(D_IFD,"IFD: Extra delay for PPC box between reset and IO_Serial_Read for the ATR");
+    rdr_debug_mask(reader, D_IFD, "Extra delay for PPC box between reset and IO_Serial_Read for the ATR");
     cs_sleepms(150);
 #endif
 	uint32_t timeout = ATR_TIMEOUT;
@@ -84,7 +84,7 @@ int32_t Sci_Reset (struct s_reader * reader, ATR * atr)
 		buf[0] = 0x3B;
 	
 	if(n==0) {
-		cs_debug_mask(D_IFD,"IFD: ERROR: 0 characters found in ATR");
+		rdr_debug_mask(reader, D_IFD, "ERROR: 0 characters found in ATR");
 		return ERROR;
 	}
 	call(!ATR_InitFromArray (atr, buf, n) == ATR_OK);
@@ -117,7 +117,11 @@ int32_t Sci_WriteSettings (struct s_reader * reader, BYTE T, uint32_t fs, uint32
 	if (I)
 		params.I = I;
 
-	cs_debug_mask(D_IFD, "IFD: Setting reader %s: T=%d fs=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d", reader->label, (int)params.T, params.fs, (int)params.ETU, (int)params.WWT, (int)params.CWT, (int)params.BWT, (int)params.EGT, (int)params.clock_stop_polarity, (int)params.check, (int)params.P, (int)params.I, (int)params.U);
+	rdr_debug_mask(reader, D_IFD, "Setting reader T=%d fs=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d",
+		(int)params.T, params.fs, (int)params.ETU, (int)params.WWT,
+		(int)params.CWT, (int)params.BWT, (int)params.EGT,
+		(int)params.clock_stop_polarity, (int)params.check,
+		(int)params.P, (int)params.I, (int)params.U);
 
 	call (ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params)!=0);
 	return OK;
@@ -125,16 +129,16 @@ int32_t Sci_WriteSettings (struct s_reader * reader, BYTE T, uint32_t fs, uint32
 
 int32_t Sci_Activate (struct s_reader * reader)
 {
-		cs_debug_mask(D_IFD, "IFD: Activating card");
+		rdr_debug_mask(reader, D_IFD, "Activating card");
 		uint32_t in = 1;
 
-	cs_debug_mask(D_IFD, "IFD: Is card activated?");
+	rdr_debug_mask(reader, D_IFD, "Is card activated?");
 	if (ioctl(reader->handle, IOCTL_GET_IS_CARD_ACTIVATED, &in) < 0) {
-		cs_debug_mask(D_IFD, "IFD: ioctl returned: %u", in);
-		cs_debug_mask(D_IFD, "IFD: Is card present?");
+		rdr_debug_mask(reader, D_IFD, "ioctl returned: %u", in);
+		rdr_debug_mask(reader, D_IFD, "Is card present?");
 		call(ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in) < 0);
 	}
-	cs_debug_mask(D_IFD, "IFD: ioctl returned: %u", in);
+	rdr_debug_mask(reader, D_IFD, "ioctl returned: %u", in);
 
 		if(in)
 			cs_sleepms(50);
@@ -145,7 +149,7 @@ int32_t Sci_Activate (struct s_reader * reader)
 
 int32_t Sci_Deactivate (struct s_reader * reader)
 {
-	cs_debug_mask(D_IFD, "IFD: Deactivating card");
+	rdr_debug_mask(reader, D_IFD, "Deactivating card");
 	int32_t in;
 		
 	if (ioctl(reader->handle, IOCTL_GET_IS_CARD_ACTIVATED, &in) < 0)

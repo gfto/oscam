@@ -244,12 +244,12 @@ int32_t reader_reset(struct s_reader * reader)
   int32_t i;
   if (reader->typ == R_INTERNAL) {
     if (reader->mode != -1) {
-      Azbox_SetMode(reader->mode);
+      Azbox_SetMode(reader, reader->mode);
       if (!reader_activate_card(reader, &atr, 0)) return(0);
       ret = reader_get_cardsystem(reader, &atr);
     } else {
       for (i = 0; i < AZBOX_MODES; i++) {
-        Azbox_SetMode(i);
+        Azbox_SetMode(reader, i);
         if (!reader_activate_card(reader, &atr, 0)) return(0);
         ret = reader_get_cardsystem(reader, &atr);
         if (ret)

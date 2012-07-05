@@ -45,7 +45,7 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 	uint32_t currentBaudrate = 0;
 
 	if ( ! reader->handle ) {
-		cs_log("ERROR: SC8in1 Command no valid handle\n");
+		rdr_log(reader, "ERROR: SC8in1 Command no valid handle");
 		return ERROR;
 	}
 
@@ -74,16 +74,16 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 
 	// Do we need to set the baudrate?
 	if (Sc8in1_NeedBaudrateChange(reader, 9600, &termiobackup, &termio, 1)) {
-		cs_debug_mask(D_TRACE, "Sc8in1_NeedBaudrateChange for SC8in1 command");
+		rdr_debug_mask(reader, D_TRACE, "Sc8in1_NeedBaudrateChange for SC8in1 command");
 		// save current baudrate for later restore
 		currentBaudrate = reader->sc8in1_config->current_baudrate;
 		reader->sc8in1_config->current_baudrate = 9600;
 		cfsetospeed(&termio, B9600);
 		cfsetispeed(&termio, B9600);
-		cs_debug_mask(D_DEVICE, "standard baudrate: cardmhz=%d mhz=%d -> effective baudrate %u", reader->cardmhz, reader->mhz, 9600);
+		rdr_debug_mask(reader, D_DEVICE, "standard baudrate: cardmhz=%d mhz=%d -> effective baudrate %u", reader->cardmhz, reader->mhz, 9600);
 	}
 	if (tcsetattr(reader->handle, TCSANOW, &termio) < 0) {
-		cs_log("ERROR: SC8in1 Command error in set RS232 attributes\n");
+		rdr_log(reader, "ERROR: SC8in1 Command error in set RS232 attributes");
 		return ERROR;
 	}
 	if (reader->sc8in1_dtrrts_patch == 1) {
@@ -97,20 +97,20 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 		eepromBuff[0] = 0x70;
 		eepromBuff[1] = 0xab;
 		eepromBuff[2] = 0xba;
-		cs_ddump_mask(D_DEVICE, eepromBuff, 3, "IO: Sending: ");
+		rdr_ddump_mask(reader, D_DEVICE, eepromBuff, 3, "Sending:");
 		if (!write(reader->handle, eepromBuff, 3)) {
-			cs_log("SC8in1 Command write EEPROM error");
+			rdr_log(reader, "SC8in1 Command write EEPROM error");
 			return ERROR;
 		}
 		tcflush(reader->handle, TCIOFLUSH);
 	}
 	// write cmd
-	cs_ddump_mask(D_DEVICE, buff, lenwrite, "IO: Sending: ");
+	rdr_ddump_mask(reader, D_DEVICE, buff, lenwrite, "Sending:");
 	int32_t dataWritten = 0, dataToWrite = lenwrite;
 	while (dataWritten < lenwrite) {
 		int32_t written = write(reader->handle, buff, dataToWrite);
 		if (written == -1) {
-			cs_log("SC8in1 Command write error");
+			rdr_log(reader, "SC8in1 Command write error");
 			return ERROR;
 		}
 		if (written == lenwrite) {
@@ -125,25 +125,25 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 	sc8in1_tcdrain(reader);
 
 	if (IO_Serial_Read(reader, 1000, lenread, buff) == ERROR) {
-		cs_log("SC8in1 Command read error");
+		rdr_log(reader, "SC8in1 Command read error");
 		return ERROR;
 	}
 
 	// Workaround for systems where tcdrain doesnt work properly
 	if (lenread <= 0 && reader->sc8in1_config->mcr_type) {
 		unsigned char buff_echo_hack[2] = { 0x65, 'A' };
-		cs_ddump_mask(D_DEVICE, &buff_echo_hack[0], 2, "IO: Sending: ");
+		rdr_ddump_mask(reader, D_DEVICE, &buff_echo_hack[0], 2, "Sending:");
 		if (write(reader->handle, &buff_echo_hack[0], 2) != 2) {
-			cs_log("SC8in1 Echo command write error");
+			rdr_log(reader, "SC8in1 Echo command write error");
 			return ERROR;
 		}
 		sc8in1_tcdrain(reader);
 		if (IO_Serial_Read(reader, 1000, 1, &buff_echo_hack[0]) == ERROR) {
-			cs_log("SC8in1 Echo command read error");
+			rdr_log(reader, "SC8in1 Echo command read error");
 			return ERROR;
 		}
 		if (buff_echo_hack[0] != 'A') {
-			cs_log("SC8in1 Echo command read wrong character");
+			rdr_log(reader, "SC8in1 Echo command read wrong character");
 		}
 	}
 
@@ -151,15 +151,15 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 		memcpy(&termiobackup, &reader->sc8in1_config->stored_termio[selectSlotMode - 1],
 				sizeof(termiobackup));
 		if (Sc8in1_NeedBaudrateChange(reader, reader->current_baudrate, &termio, &termiobackup, 1)) {
-			cs_debug_mask(D_TRACE, "Sc8in1_SetTermioForSlot for select slot");
+			rdr_debug_mask(reader, D_TRACE, "Sc8in1_SetTermioForSlot for select slot");
 			if (Sc8in1_SetBaudrate(reader, reader->current_baudrate, &termiobackup, 0)) {
-				cs_log("ERROR: SC8in1 Command Sc8in1_SetBaudrate\n");
+				rdr_log(reader, "ERROR: SC8in1 Command Sc8in1_SetBaudrate");
 				return ERROR;
 			}
 		}
 		else {
 			if (tcsetattr(reader->handle, TCSANOW, &termiobackup) < 0) {
-				cs_log("ERROR: SC8in1 Command error in set RS232 attributes\n");
+				rdr_log(reader, "ERROR: SC8in1 Command error in set RS232 attributes");
 				return ERROR;
 			}
 		}
@@ -168,14 +168,14 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 		// restore baudrate only if changed
 		if (currentBaudrate) {
 			if (Sc8in1_SetBaudrate(reader, currentBaudrate, &termiobackup, 1)) {
-				cs_log("ERROR: SC8in1 selectslot restore Bitrate attributes\n");
+				rdr_log(reader, "ERROR: SC8in1 selectslot restore Bitrate attributes");
 				return ERROR;
 			}
 		}
 		else {
 			// restore data
 			if (tcsetattr(reader->handle, TCSANOW, &termiobackup) < 0) {
-				cs_log("ERROR: SC8in1 Command error in restore RS232 attributes\n");
+				rdr_log(reader, "ERROR: SC8in1 Command error in restore RS232 attributes");
 				return ERROR;
 			}
 		}
@@ -204,7 +204,7 @@ static int32_t sc8in1_tcdrain(struct s_reader *reader) {
 				//try again in case of Interrupted system call
 				continue;
 			} else
-				cs_log("ERROR in sc8in1_tcdrain - (errno=%d %s)", errno, strerror(errno));
+				rdr_log(reader, "ERROR: %s: (errno=%d %s)", __func__, errno, strerror(errno));
 				return ERROR;
 		}
 		break;
@@ -410,7 +410,7 @@ static void* mcr_update_display_thread(void *param) {
 	time_t lastStatisticUpdateTime = time((time_t*)0);
 
 	if (reader->typ != R_SC8in1 ||  ! reader->sc8in1_config->mcr_type) {
-		cs_log("Error: mcr_update_display_thread reader no MCR8in1 reader");
+		rdr_log(reader, "Error: mcr_update_display_thread reader no MCR8in1 reader");
 		pthread_exit(NULL);
 	}
 
@@ -421,7 +421,7 @@ static void* mcr_update_display_thread(void *param) {
 		time_t currentTime = time((time_t*)0);
 		if (currentTime - lastStatisticUpdateTime >= STATISTICS_UPDATE_SECONDS) {
 			if (mcr_generateStatisticsForDisplay(reader)) {
-				cs_log("ERROR: mcr_generateStatisticsForDisplay");
+				rdr_log(reader, "ERROR: mcr_generateStatisticsForDisplay");
 			}
 			lastStatisticUpdateTime = currentTime;
 		}
@@ -439,7 +439,7 @@ static void* mcr_update_display_thread(void *param) {
 				for (i = 0; i < reader->sc8in1_config->display->text_length; i++) {
 					if (mcrWriteDisplayAscii(reader->sc8in1_config->current_reader,
 							reader->sc8in1_config->display->text[++reader->sc8in1_config->display->last_char - 1], 0xFF)) {
-						cs_log("SC8in1: Error in mcr_update_display_thread write");
+						rdr_log(reader, "SC8in1: Error in mcr_update_display_thread write");
 					}
 					cs_sleepms(display_sleep);
 				}
@@ -447,7 +447,7 @@ static void* mcr_update_display_thread(void *param) {
 			else {
 				if (mcrWriteDisplayAscii(reader->sc8in1_config->current_reader,
 						reader->sc8in1_config->display->text[++reader->sc8in1_config->display->last_char - 1], 0xFF)) {
-					cs_log("SC8in1: Error in mcr_update_display_thread write");
+					rdr_log(reader, "SC8in1: Error in mcr_update_display_thread write");
 				}
 			}
 			cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
@@ -475,7 +475,7 @@ int32_t MCR_DisplayText(struct s_reader *reader, char* text, uint16_t text_len, 
 	struct s_sc8in1_display *display;
 	if (cs_malloc(&display, sizeof(struct s_sc8in1_display), -1)) {
 		if ( ! cs_malloc(&display->text, text_len, -1) ) {
-			cs_log("MCR_DisplayText: Out of memory.");
+			rdr_log(reader, "MCR_DisplayText: Out of memory.");
 			free(display);
 			return ERROR;
 		}
@@ -503,7 +503,7 @@ int32_t MCR_DisplayText(struct s_reader *reader, char* text, uint16_t text_len, 
 		}
 		cs_writeunlock(&reader->sc8in1_config->sc8in1_display_lock);
 	} else {
-		cs_log("MCR_DisplayText: Out of memory.");
+		rdr_log(reader, "MCR_DisplayText: Out of memory.");
 		return ERROR;
 	}
 	return OK;
@@ -536,8 +536,9 @@ int32_t Sc8in1_SetBaudrate (struct s_reader * reader, uint32_t baudrate, struct 
 			}
 		}
 	}
-	cs_debug_mask (D_IFD, "IFD: Sc8in1 Setting baudrate to %u\n", baudrate);
-	cs_debug_mask(D_TRACE, "IFD: Sc8in1 Setting baudrate to %u, reader br=%u, currentBaudrate=%u, cmdMode=%u\n", baudrate, reader->current_baudrate, reader->sc8in1_config->current_baudrate, cmdMode);
+	rdr_debug_mask(reader, D_IFD, "Sc8in1 Setting baudrate to %u", baudrate);
+	rdr_debug_mask(reader, D_TRACE, "Sc8in1 Setting baudrate to %u, reader br=%u, currentBaudrate=%u, cmdMode=%u",
+		baudrate, reader->current_baudrate, reader->sc8in1_config->current_baudrate, cmdMode);
 	call (IO_Serial_SetBitrate (reader, baudrate, &tio));
 	call (IO_Serial_SetProperties(reader, tio));
 	if (cmdMode == 0) {
@@ -560,7 +561,7 @@ int32_t Sc8in1_Selectslot(struct s_reader * reader, uint16_t slot) {
 	//
 	if (slot == reader->sc8in1_config->current_slot)
 		return OK;
-	cs_debug_mask(D_TRACE, "SC8in1: select slot %i", slot);
+	rdr_debug_mask(reader, D_TRACE, "SC8in1: select slot %i", slot);
 
 #ifdef WITH_DEBUG
 	struct timeval tv_start, tv_end;
@@ -582,7 +583,7 @@ int32_t Sc8in1_Selectslot(struct s_reader * reader, uint16_t slot) {
 #ifdef WITH_DEBUG
 	gettimeofday(&tv_end,0);
 	uint32_t elapsed = (tv_end.tv_sec-tv_start.tv_sec)*1000000 + tv_end.tv_usec-tv_start.tv_usec;
-	cs_debug_mask(D_DEVICE, "SC8in1 Selectslot in %ums", elapsed/1000);
+	rdr_debug_mask(reader, D_DEVICE, "SC8in1 Selectslot in %ums", elapsed/1000);
 #endif
 	return status;
 }
@@ -618,33 +619,33 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 	if ( ! mcrReadType(reader, &mcrType[0]) ) {
 		if (mcrType[0] == 4 || mcrType[0] == 8) {
 			reader->sc8in1_config->mcr_type = mcrType[0];
-			cs_log("SC8in1: MCR%u detected for device %s", reader->sc8in1_config->mcr_type, reader->device);
+			rdr_log(reader, "SC8in1: MCR%u detected for device %s", reader->sc8in1_config->mcr_type, reader->device);
 
 			unsigned char version[1]; version[0] = 0;
 			if ( ! mcrReadVersion(reader, &version[0])) {
-				cs_log("SC8in1: Version %u for device %s", (unsigned char)version[0], reader->device);
+				rdr_log(reader, "SC8in1: Version %u for device %s", (unsigned char)version[0], reader->device);
 			}
 
 			unsigned char serial[2]; serial[0] = 0; serial[1] = 0;
 			if ( ! mcrReadSerial(reader, &serial[0])) {
-				cs_log("SC8in1: Serial %u for device %s", (uint16_t)serial[0], reader->device);
+				rdr_log(reader, "SC8in1: Serial %u for device %s", (uint16_t)serial[0], reader->device);
 			}
 
 			//now work-around the problem that timeout of MCR has to be 0 in case of USB
 			unsigned char timeout[2]; timeout[0] = 0; timeout[1] = 0;
 			retval = mcrReadTimeout(reader, &timeout[0]);
 			if (retval) {
-				cs_log("SC8in1: Error reading timeout.");
+				rdr_log(reader, "SC8in1: Error reading timeout.");
 			}
 			else {
-				cs_log("SC8in1: Timeout %u for device %s", (uint16_t)timeout[0], reader->device);
+				rdr_log(reader, "SC8in1: Timeout %u for device %s", (uint16_t)timeout[0], reader->device);
 			}
 			if ((strstr(reader->device, "USB"))
 					&& (retval == ERROR || timeout[0] != 0 || timeout[1] != 0)) { //assuming we are connected thru USB and timeout is undetected or not zero
-				cs_log("SC8in1: Detected Sc8in1 device connected with USB, setting timeout to 0 and writing to EEPROM");
+				rdr_log(reader, "SC8in1: Detected Sc8in1 device connected with USB, setting timeout to 0 and writing to EEPROM");
 				timeout[0] = 0; timeout[1] = 0;
 				if (mcrWriteTimeout(reader, timeout)) {
-					cs_log("SC8in1: Error writing timeout.");
+					rdr_log(reader, "SC8in1: Error writing timeout.");
 				}
 			}
 
@@ -654,9 +655,9 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 			pthread_attr_init(&attr);
 			pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 			if (pthread_create(&reader->sc8in1_config->display_thread, &attr, mcr_update_display_thread, (void *)(reader)))
-				cs_log("ERROR: can't create MCR_DISPLAY_THREAD thread");
+				rdr_log(reader, "ERROR: can't create MCR_DISPLAY_THREAD thread");
 			else {
-				cs_log("MCR_DISPLAY_THREAD thread started");
+				rdr_log(reader, "MCR_DISPLAY_THREAD thread started");
 			}
 			pthread_attr_destroy(&attr);
 		}
@@ -675,7 +676,7 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 			//check slot boundaries
 			int32_t upper_slot = (reader->sc8in1_config->mcr_type) ? reader->sc8in1_config->mcr_type : 8; //set upper limit to 8 for non MCR readers
 			if (rdr->slot <= 0 || rdr->slot > upper_slot) {
-				cs_log("ERROR: device %s has invalid slot number %i", rdr->device, rdr->slot);
+				rdr_log(reader, "ERROR: device %s has invalid slot number %i", rdr->device, rdr->slot);
 				return ERROR;
 			}
 
@@ -708,7 +709,7 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 					break;
 				default:
 					speed = 0;
-					cs_log("ERROR Sc8in1, cannot set clockspeed to %i", rdr->mhz);
+					rdr_log(reader, "ERROR: Sc8in1 cannot set clockspeed to %d", rdr->mhz);
 					break;
 				}
 				sc8in1_clock |= (speed << ((rdr->slot - 1) * 2));
@@ -722,7 +723,7 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 		unsigned char clockspeed[2];
 		memcpy(&clockspeed, &sc8in1_clock, 2);
 		if (mcrWriteClock(reader, 0, clockspeed)) {
-			cs_log("ERROR Sc8in1, cannot set clockspeed %d", (uint16_t)clockspeed[0]);
+			rdr_log(reader, "ERROR: Sc8in1 cannot set clockspeed to %d", (uint16_t)clockspeed[0]);
 		}
 
 		// Clear RTS again
@@ -745,12 +746,12 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 
 		//DEBUG get clockspeeds
 		if (mcrReadClock(reader, &clockspeed[0])) {
-			cs_log("ERROR Sc8in1, cannot read clockspeed");
+			rdr_log(reader, "ERROR: Sc8in1 cannot read clockspeed");
 		}
 		static char * clock[] = { "3,57", "3,68", "6,00", "8,00" };
 		uint16_t result = clockspeed[0] << 8 | clockspeed[1];
 		for (i = 0; i < 8; i++) {
-			cs_log("Slot %i is clocked with %s mhz", i+1, clock[(result>>(i*2))&0X0003]);
+			rdr_log(reader, "Slot %i is clocked with %s mhz", i+1, clock[(result>>(i*2))&0X0003]);
 		}
 	}
 
@@ -771,7 +772,8 @@ int32_t Sc8in1_DebugSignals(struct s_reader *reader, uint16_t slot, const char *
 	uint32_t msr;
 	if (ioctl(reader->handle, TIOCMGET, &msr) < 0)
 		  return ERROR;
-	cs_debug_mask(D_DEVICE, "SC8in1: Signals(%s): Slot: %i, DTR: %u, RTS: %u", extra, slot, msr & TIOCM_DTR ? 1 : 0, msr & TIOCM_RTS ? 1 : 0);
+	rdr_debug_mask(reader, D_DEVICE, "SC8in1: Signals(%s): Slot: %i, DTR: %u, RTS: %u",
+		extra, slot, msr & TIOCM_DTR ? 1 : 0, msr & TIOCM_RTS ? 1 : 0);
 	return OK;
 }
 #endif
@@ -796,11 +798,11 @@ int32_t Sc8in1_GetStatus(struct s_reader * reader, int32_t * in) {
 	if ((reader->sc8in1_config->current_slot == reader->slot && Sc8in1_Card_Changed(reader)) || *in == -1) {
 		int32_t i = readSc8in1Status(reader); //read cardstatus
 		if (i < 0) {
-			cs_log("Sc8in1_GetStatus Error");
+			rdr_log(reader, "Sc8in1_GetStatus Error");
 			return ERROR;
 		}
 		reader->sc8in1_config->cardstatus = i;
-		cs_debug_mask(D_TRACE, "SC8in1: Card status changed; cardstatus=0x%X", reader->sc8in1_config->cardstatus);
+		rdr_debug_mask(reader, D_TRACE, "SC8in1: Card status changed; cardstatus=0x%X", reader->sc8in1_config->cardstatus);
 	}
 	*in = (reader->sc8in1_config->cardstatus & 1 << (reader->slot - 1));
 	return OK;
@@ -826,11 +828,11 @@ int32_t Sc8in1_GetActiveHandle(struct s_reader *reader, uint8_t onlyEnabledReade
 int32_t Sc8in1_Close(struct s_reader *reader) {
 	// Check if we are the last active slot for the reader,
 	// then close the serial port. Otherwise select next acive slot.
-	cs_debug_mask(D_IFD, "IFD: Closing SC8in1 device %s", reader->device);
+	rdr_debug_mask(reader, D_IFD, "Closing SC8in1 device %s", reader->device);
 	bool status = ERROR;
 
 	if (Sc8in1_GetActiveHandle(reader, TRUE)) {
-		cs_debug_mask(D_IFD, "IFD: Just deactivating SC8in1 device %s", reader->device);
+		rdr_debug_mask(reader, D_IFD, "Just deactivating SC8in1 device %s", reader->device);
 		reader->written = 0;
 		status = OK;
 		// select next active reader slot, so getstatus still works
@@ -892,7 +894,7 @@ int32_t Sc8in1_InitLocks(struct s_reader * reader) {
 		return ERROR;
 	}
 	if (reader->device[pos] != 0x3a) //0x3a = ":"
-		cs_log("ERROR: Sc8in1_InitLocks: '%c' detected instead of slot separator `:` at second to last position of device %s", reader->device[pos], reader->device);
+		rdr_log(reader, "ERROR: Sc8in1_InitLocks: '%c' detected instead of slot separator `:` at second to last position of device %s", reader->device[pos], reader->device);
 	unsigned char savePos = reader->device[pos];
 	reader->device[pos] = 0;
 
@@ -910,7 +912,7 @@ int32_t Sc8in1_InitLocks(struct s_reader * reader) {
 				if (rdr->sc8in1_config) {
 					reader->sc8in1_config = rdr->sc8in1_config;
 					reader_config_exists = TRUE;
-					cs_debug_mask(D_DEVICE, "Sc8in1_InitLocks: Found config for %s", reader->device);
+					rdr_debug_mask(reader, D_DEVICE, "Sc8in1_InitLocks: Found config for %s", reader->device);
 				}
 			}
 			else {
@@ -923,7 +925,7 @@ int32_t Sc8in1_InitLocks(struct s_reader * reader) {
 	}
 
 	if (!reader_config_exists) {
-		cs_debug_mask(D_DEVICE, "Sc8in1_InitLocks: Creating new config for %s", reader->device);
+		rdr_debug_mask(reader, D_DEVICE, "Sc8in1_InitLocks: Creating new config for %s", reader->device);
 		// Create SC8in1_Config for reader
 		struct s_sc8in1_config *sc8in1_config;
 		if (cs_malloc(&sc8in1_config, sizeof(struct s_sc8in1_config), -1)) {
@@ -936,7 +938,7 @@ int32_t Sc8in1_InitLocks(struct s_reader * reader) {
 			cs_lock_create(&reader->sc8in1_config->sc8in1_display_lock, 10, buff2);
 		} else {
 			reader->device[pos] = savePos;
-			cs_log("sc8in1: Out of memory.");
+			rdr_log(reader, "sc8in1: Out of memory.");
 			return ERROR;
 		}
 	}
@@ -950,7 +952,7 @@ int32_t Sc8in1_SetSlotForReader(struct s_reader *reader) {
 	// Sets the slot for the reader if it is not set already
 	int32_t pos = strlen(reader->device)-2; //this is where : should be located; is also valid length of physical device name
 	if (reader->device[pos] != 0x3a) //0x3a = ":"
-		cs_log("ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", reader->device[pos], reader->device);
+		rdr_log(reader, "ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", reader->device[pos], reader->device);
 	reader->slot=(uint16_t)reader->device[pos+1] - 0x30;
 	return OK;
 }

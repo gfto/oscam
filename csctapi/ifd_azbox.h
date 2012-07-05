@@ -12,7 +12,7 @@
 #define AZBOX_MODES 16
 
 int32_t Azbox_Init(struct s_reader *reader);
-void Azbox_SetMode(int32_t mode);
+void Azbox_SetMode(struct s_reader *reader, int32_t mode);
 int32_t Azbox_GetStatus(struct s_reader *reader, int32_t *in);
 int32_t Azbox_Reset(struct s_reader *reader, ATR *atr);
 int32_t Azbox_Transmit(struct s_reader *reader, BYTE *buffer, uint32_t size);
