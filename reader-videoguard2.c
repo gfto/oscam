@@ -36,7 +36,7 @@ static void dimeno_PostProcess_Decrypt(struct s_reader * reader, unsigned char *
   }
 }
 
-static void do_post_dw_hash(unsigned char *cw, const unsigned char *ecm_header_data)
+static void do_post_dw_hash(struct s_reader *reader, unsigned char *cw, const unsigned char *ecm_header_data)
 {
   int32_t i, ecmi, ecm_header_count;
   unsigned char buffer[0x80];
@@ -193,7 +193,7 @@ static void do_post_dw_hash(unsigned char *cw, const unsigned char *ecm_header_d
           }
           cw[3] = (cw[0] + cw[1] + cw[2]) & 0xFF;
           cw[7] = (cw[4] + cw[5] + cw[6]) & 0xFF;
-          cs_ddump_mask(D_READER, cw, 8, "[videoguard2-reader] Postprocessed Case 1 DW:");
+          rdr_ddump_mask(reader, D_READER, cw, 8, "Postprocessed Case 1 DW:");
           break;
         }
       case 3:
@@ -203,7 +203,7 @@ static void do_post_dw_hash(unsigned char *cw, const unsigned char *ecm_header_d
           memcpy(buffer + 8, &ecm_header_data[ecmi + 3], ecm_header_data[ecmi] - 2);
           MD5(buffer, 8 + ecm_header_data[ecmi] - 2, md5tmp);
           memcpy(cw, md5tmp, 8);
-          cs_ddump_mask(D_READER, cw, 8, "[videoguard2-reader] Postprocessed Case 3 DW:");
+          rdr_ddump_mask(reader, D_READER, cw, 8, "Postprocessed Case 3 DW:");
           break;
         }
       case 2:
@@ -670,8 +670,8 @@ static int32_t videoguard2_do_ecm(struct s_reader * reader, const ECM_REQUEST *e
     } else {
 
       // Log decrypted INS54
-      cs_ddump_mask(D_READER, rbuff, 5, "[videoguard2-reader] INS54:");
-      cs_ddump_mask(D_READER, rbuff + 5, rbuff[4], "Decrypted payload");
+      rdr_ddump_mask(reader, D_READER, rbuff, 5, "INS54:");
+      rdr_ddump_mask(reader, D_READER, rbuff + 5, rbuff[4], "Decrypted payload");
 
       if (!cw_is_valid(rbuff+5)){ //sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
         rdr_log(reader, "classD3 ins54: status 90 00 = ok but cw=00 -> channel not subscribed " );
@@ -720,8 +720,8 @@ static int32_t videoguard2_do_ecm(struct s_reader * reader, const ECM_REQUEST *e
         }
       }
       if (posB0 != -1) {
-        do_post_dw_hash( ea->cw+0, &er->ecm[posB0-2]);
-        do_post_dw_hash( ea->cw+8, &er->ecm[posB0-2]);
+        do_post_dw_hash(reader, ea->cw+0, &er->ecm[posB0-2]);
+        do_post_dw_hash(reader, ea->cw+8, &er->ecm[posB0-2]);
       }
 
       if (reader->caid == 0x0907) { //quickfix: cw2 is not a valid cw, something went wrong before

@@ -91,6 +91,17 @@ void rdr_debug_mask_sensitive(struct s_reader * reader, uint16_t mask, char *fmt
 	}
 }
 
+void rdr_ddump_mask(struct s_reader * reader, uint16_t mask, const uint8_t * buf, int n, char *fmt, ...) {
+	if (config_WITH_DEBUG()) {
+		char txt[2048];
+		va_list args;
+		va_start(args, fmt);
+		vsnprintf(txt, sizeof(txt), fmt, args);
+		va_end(args);
+		cs_ddump_mask(mask, buf, n, "%s [%s] %s%s", reader->label, reader_desc_txt(reader), debug_mask_txt(mask), txt);
+	}
+}
+
 /**
  * add one entitlement item to entitlements of reader.
  **/

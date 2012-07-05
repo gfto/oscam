@@ -230,7 +230,7 @@ static int32_t cryptoworks_card_init(struct s_reader * reader, ATR *newatr)
       {
         cta_res[2]|=0x80;
         BN_bin2bn(cta_res+2, 0x40, &reader->ucpk);
-        cs_ddump_mask(D_READER, cta_res+2, 0x40, "IPK available -> session-key:");
+        rdr_ddump_mask(reader, D_READER, cta_res+2, 0x40, "IPK available -> session-key:");
       }
       else
       {
@@ -238,7 +238,7 @@ static int32_t cryptoworks_card_init(struct s_reader * reader, ATR *newatr)
         if (reader->ucpk_valid)
         {
           BN_bin2bn(keybuf, 0x40, &reader->ucpk);
-          cs_ddump_mask(D_READER, keybuf, 0x40, "session-key found:");
+          rdr_ddump_mask(reader, D_READER, keybuf, 0x40, "session-key found:");
         }
         else
           rdr_log(reader, "invalid IPK or session-key for CAID %04X !", reader->caid);

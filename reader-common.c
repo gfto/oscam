@@ -53,7 +53,7 @@ int32_t reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int32_t
 {
 	int32_t rc;
 	*p_cta_lr=CTA_RES_LEN-1; //FIXME not sure whether this one is necessary 
-	cs_ddump_mask(D_READER, buf, l, "write to cardreader %s:",reader->label);
+	rdr_ddump_mask(reader, D_READER, buf, l, "write to cardreader");
 	rc=ICC_Async_CardWrite(reader, (uchar *)buf, (uint16_t)l, cta_res, p_cta_lr);
 	return rc;
 }
