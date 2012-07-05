@@ -752,7 +752,7 @@ static int32_t videoguard2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 static int32_t videoguard2_card_info(struct s_reader * reader)
 {
   /* info is displayed in init, or when processing info */
-  rdr_log(reader, "%s card detected", reader->label);
+  rdr_log(reader, "card detected");
   rdr_log(reader, "type: %s", reader->card_desc);
   if (reader->ins7e11_fast_reset != 1) {
 	  vg2_read_tiers(reader);

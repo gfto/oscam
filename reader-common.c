@@ -87,7 +87,7 @@ static int32_t reader_card_inserted(struct s_reader * reader)
 		struct s_client *cl = reader->client;
 		if (reader->fd_error>5 && cl) {
 			cl->init_done = 0;
-			rdr_log(reader, "WARNING: reader %s was disabled because of too many errors", reader->label);
+			rdr_log(reader, "WARNING: The reader was disabled because of too many errors");
 		}
  
 		return 0; //corresponds with no card inside!!
@@ -162,7 +162,7 @@ static void do_emm_from_file(struct s_reader * reader)
 
    struct s_cardsystem *cs = get_cardsystem_by_caid(reader->caid);
    if (cs && cs->get_emm_type && !cs->get_emm_type(eptmp, reader)) {
-      rdr_debug_mask(reader, D_EMM, "emm skipped, get_emm_type() returns error, reader %s", reader->label);
+      rdr_debug_mask(reader, D_EMM, "emm skipped, get_emm_type() returns error");
       free(eptmp);
       return;
    }
@@ -295,7 +295,7 @@ int32_t reader_reset(struct s_reader * reader)
 
 #ifdef WITH_COOLAPI
 	if (reader->typ == R_INTERNAL) {
-		rdr_debug_mask(reader, D_DEVICE, "%s init done - modifying timeout for coolstream internal device %s", reader->label, reader->device);
+		rdr_debug_mask(reader, D_DEVICE, "init done - modifying timeout for coolstream internal device %s", reader->device);
 		call(Cool_Set_Transmit_Timeout(reader, 1));
 	}
 #endif
@@ -322,7 +322,7 @@ int32_t reader_checkhealth(struct s_reader * reader)
 	struct s_client *cl = reader->client;
 	if (reader_card_inserted(reader)) {
 		if (reader->card_status == NO_CARD || reader->card_status == UNKNOWN) {
-			rdr_log(reader, "%s card detected", reader->label);
+			rdr_log(reader, "card detected");
 #ifdef QBOXHD
 			if(cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_SLOW);
 #endif

@@ -136,7 +136,7 @@ int32_t cryptoworks_send_pin(struct s_reader * reader)
 	
 	  write_cmd(insPIN, insPIN+5);
 	  rdr_debug_mask(reader, D_READER, "Sent pincode to card.");
-	  if((cta_res[0]==0x98)&&(cta_res[1]==0x04)) rdr_log(reader, "bad pincode on reader %s", reader->label);
+	  if((cta_res[0]==0x98)&&(cta_res[1]==0x04)) rdr_log(reader, "bad pincode");
 	  	 
 	  return OK;
   }
