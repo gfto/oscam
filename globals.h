@@ -1435,7 +1435,6 @@ struct s_config
 	uint32_t		cmaxidle;
 	int32_t			ulparent;
 	uint32_t		delay;
-    int8_t          dvbapi_checking_entitlements;
 	int32_t			bindwait;
 	int32_t			tosleep;
 	in_addr_t		srvip;
@@ -1582,9 +1581,9 @@ struct s_config
 	SIDTABBITS	dvbapi_sidtabok;					// positiv services
 	SIDTABBITS	dvbapi_sidtabno;					// negative services
 	int8_t          dvbapi_reopenonzap;
-	int8_t          dvbapi_checking_entitlements;
 	int32_t         dvbapi_delayer;                                         // delayer ms, minimum time to write cw
 #endif
+	int8_t		dvbapi_checking_entitlements;
 
 #ifdef CS_ANTICASC
 	char		ac_enabled;
