@@ -543,18 +543,18 @@ static void remove_ecm_from_reader(ECM_REQUEST *ecm) {
 	
 	ea = ecm->matching_rdr;
 	while (ea) {
-	    if (!(ea->status & REQUEST_ANSWERED)) {
+	    if ((ea->status & REQUEST_SENT) && !(ea->status & REQUEST_ANSWERED)) {
 	        //we found a outstanding reader, clean it:
-                rdr = ea->reader;
-                if (rdr->client && rdr->client->ecmtask) {
+            rdr = ea->reader;
+            if (rdr && rdr->client && rdr->client->ecmtask) {
 	            for (i = 0; i < cfg.max_pending; i++) {
-                        er = &rdr->client->ecmtask[i];
-                        if (er->parent == ecm) {
-                            er->parent = NULL;
-                            er->client = NULL;
-                        }
-                    }	        
-                }
+	            	er = &rdr->client->ecmtask[i];
+	            	if (er->parent == ecm) {
+	            		er->parent = NULL;
+	            		er->client = NULL;
+	            	}
+	            }
+            }
 	    }
 	    ea = ea->next;
 	}
@@ -2221,7 +2221,8 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 			rdr_log(reader, "Resetting reader, resetcyle of %d ecms reached", reader->resetcycle);
 			reader->card_status = CARD_NEED_INIT;
 #ifdef WITH_CARDREADER
-			reader_reset(reader);
+      			//reader_reset(reader);
+      			add_job(cl, ACTION_READER_RESET, NULL, 0);
 #endif
 		}
 	}
@@ -3277,7 +3278,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				er->rc = E_99;
 #ifdef CS_CACHEEX
 				//to support cache without ecms we store the first client ecm request here
-				//when we go a cache ecm from cacheex
+				//when we got a cache ecm from cacheex
 				if (!ecm->l && er->l && !ecm->matching_rdr) {
 					ecm->matching_rdr = er->matching_rdr;
 					er->matching_rdr = NULL;
