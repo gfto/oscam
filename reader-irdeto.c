@@ -1,5 +1,5 @@
 #include "globals.h"
-#ifdef READER_IRDETO 
+#ifdef READER_IRDETO
 #include "reader-common.h"
 
 static const uchar CryptTable[256] =
@@ -43,23 +43,23 @@ static const uchar
 
 static const uchar
   sc_GetCountryCode2[]= { 0x02, 0x0B, 0x00, 0x00, 0x00 },
-  sc_GetCamKey384CZ[] = { 0x02, 0x09, 0x03, 0x00, 0x40, 
-                          0x18, 0xD7, 0x55, 0x14, 0xC0, 0x83, 0xF1, 0x38, 
-                          0x39, 0x6F, 0xF2, 0xEC, 0x4F, 0xE3, 0xF1, 0x85, 
-                          0x01, 0x46, 0x06, 0xCE, 0x7D, 0x08, 0x2C, 0x74, 
-                          0x46, 0x8F, 0x72, 0xC4, 0xEA, 0xD7, 0x9C, 0xE0, 
-                          0xE1, 0xFF, 0x58, 0xE7, 0x70, 0x0C, 0x92, 0x45, 
-                          0x26, 0x18, 0x4F, 0xA0, 0xE2, 0xF5, 0x9E, 0x46, 
-                          0x6F, 0xAE, 0x95, 0x35, 0xB0, 0x49, 0xB2, 0x0E, 
+  sc_GetCamKey384CZ[] = { 0x02, 0x09, 0x03, 0x00, 0x40,
+                          0x18, 0xD7, 0x55, 0x14, 0xC0, 0x83, 0xF1, 0x38,
+                          0x39, 0x6F, 0xF2, 0xEC, 0x4F, 0xE3, 0xF1, 0x85,
+                          0x01, 0x46, 0x06, 0xCE, 0x7D, 0x08, 0x2C, 0x74,
+                          0x46, 0x8F, 0x72, 0xC4, 0xEA, 0xD7, 0x9C, 0xE0,
+                          0xE1, 0xFF, 0x58, 0xE7, 0x70, 0x0C, 0x92, 0x45,
+                          0x26, 0x18, 0x4F, 0xA0, 0xE2, 0xF5, 0x9E, 0x46,
+                          0x6F, 0xAE, 0x95, 0x35, 0xB0, 0x49, 0xB2, 0x0E,
                           0xA4, 0x1F, 0x8E, 0x47, 0xD0, 0x24, 0x11, 0xD0 },
-  sc_GetCamKey384DZ[] = { 0x02, 0x09, 0x03, 0x00, 0x40, 
-                          0x27, 0xF2, 0xD6, 0xCD, 0xE6, 0x88, 0x62, 0x46, 
-                          0x81, 0xB0, 0xF5, 0x3E, 0x6F, 0x13, 0x4D, 0xCC, 
-                          0xFE, 0xD0, 0x67, 0xB1, 0x93, 0xDD, 0xF4, 0xDE, 
-                          0xEF, 0xF5, 0x3B, 0x04, 0x1D, 0xE5, 0xC3, 0xB2, 
-                          0x54, 0x38, 0x57, 0x7E, 0xC8, 0x39, 0x07, 0x2E, 
-                          0xD2, 0xF4, 0x05, 0xAA, 0x15, 0xB5, 0x55, 0x24, 
-                          0x90, 0xBB, 0x9B, 0x00, 0x96, 0xF0, 0xCB, 0xF1, 
+  sc_GetCamKey384DZ[] = { 0x02, 0x09, 0x03, 0x00, 0x40,
+                          0x27, 0xF2, 0xD6, 0xCD, 0xE6, 0x88, 0x62, 0x46,
+                          0x81, 0xB0, 0xF5, 0x3E, 0x6F, 0x13, 0x4D, 0xCC,
+                          0xFE, 0xD0, 0x67, 0xB1, 0x93, 0xDD, 0xF4, 0xDE,
+                          0xEF, 0xF5, 0x3B, 0x04, 0x1D, 0xE5, 0xC3, 0xB2,
+                          0x54, 0x38, 0x57, 0x7E, 0xC8, 0x39, 0x07, 0x2E,
+                          0xD2, 0xF4, 0x05, 0xAA, 0x15, 0xB5, 0x55, 0x24,
+                          0x90, 0xBB, 0x9B, 0x00, 0x96, 0xF0, 0xCB, 0xF1,
                           0x8A, 0x08, 0x7F, 0x0B, 0xB8, 0x79, 0xC3, 0x5D },
   sc_GetCamKey384FZ[] = { 0x02, 0x09, 0x03, 0x00, 0x40,
                           0x62, 0xFE, 0xD8, 0x4F, 0x44, 0x86, 0x2C, 0x21,
@@ -68,7 +68,7 @@ static const uchar
                           0x64, 0x90, 0x14, 0xDB, 0xFF, 0xC3, 0xFE, 0x03,
                           0x97, 0xFA, 0x75, 0x08, 0x12, 0xF9, 0x8F, 0x84,
                           0x83, 0x17, 0xAA, 0x6F, 0xEF, 0x2C, 0x10, 0x1B,
-                          0xBF, 0x31, 0x41, 0xC3, 0x54, 0x2F, 0x65, 0x50, 
+                          0xBF, 0x31, 0x41, 0xC3, 0x54, 0x2F, 0x65, 0x50,
                           0x95, 0xA9, 0x64, 0x22, 0x5E, 0xA4, 0xAF, 0xA9 };
 
 /* some variables for acs57 (Dahlia for ITA dvb-t) */
@@ -119,7 +119,7 @@ static void ReverseSessionKeyCrypt(const uchar *camkey, uchar *key)
       key[7] = tmp1 ^ tmp2 ;
     }
     XRotateLeft8Byte(localkey);
-  } 
+  }
 }
 
 static unsigned char XorSum(const unsigned char *mem, int len) {
@@ -137,7 +137,7 @@ static time_t chid_date(struct s_reader * reader, uint32_t date, char *buf, int3
     // The above might not be true for all Irdeto card
     // we need to find a way to identify cards to set the base date
     // like we did for NDS
-    // 
+    //
     // this is the known default value.
     uint32_t date_base=870393600L; // this is actually 01.08.1997, 00:00
                                 // CAID, ACS, Country, base date       D . M.   Y, h : m
@@ -186,7 +186,7 @@ static time_t chid_date(struct s_reader * reader, uint32_t date, char *buf, int3
         i++;
     }
 
-    time_t ut=date_base+date*(24*3600);  
+    time_t ut=date_base+date*(24*3600);
     if (buf) {
 	struct tm t;
 	cs_gmtime_r(&ut, &t);
@@ -231,7 +231,7 @@ static int32_t irdeto_card_init_provider(struct s_reader * reader)
           		sc_Acs57Prov[3]=i;
           		irdeto_do_cmd(reader, sc_Acs57Prov, 0x9021, cta_res, &cta_lr);
           		int32_t acslength = cta_res[cta_lr-1];
-	  		sc_Acs57_Cmd[4]=acslength;	 
+	  		sc_Acs57_Cmd[4]=acslength;
           		reader_chk_cmd(sc_Acs57_Cmd, acslength+2);
           		sc_Acs57Prov[5]++;
           		sc_Acs57_Cmd[3]++;
@@ -362,7 +362,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 		irdeto_do_cmd(reader, sc_Acs57Ascii, 0x901D, cta_res, &cta_lr);
 		int32_t acslength=cta_res[cta_lr-1];
 		sc_Acs57_Cmd[4]=acslength;
-		reader_chk_cmd(sc_Acs57_Cmd, acslength+2);   
+		reader_chk_cmd(sc_Acs57_Cmd, acslength+2);
 	} else {
 		reader_chk_cmd(sc_GetASCIISerial, 22);
 	}
@@ -372,13 +372,13 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 		irdeto_do_cmd(reader, sc_Acs57Hex, 0x903E, cta_res, &cta_lr);
 		int32_t acslength=cta_res[cta_lr-1];
 		sc_Acs57_Cmd[4]=acslength;
-		reader_chk_cmd(sc_Acs57_Cmd, acslength+2);   
+		reader_chk_cmd(sc_Acs57_Cmd, acslength+2);
 	} else {
 		reader_chk_cmd(sc_GetHEXSerial, 18);
 	}
 	reader->nprov = cta_res[10+acspadd];
 	memcpy(reader->hexserial, cta_res+12+acspadd, 4);
-	
+
 	rdr_log_sensitive(reader, "providers: %d, ascii serial: {%s}, hex serial: {%02X%02X%02X}, hex base: {%02X}",
 		reader->nprov, buf, reader->hexserial[0], reader->hexserial[1], reader->hexserial[2], reader->hexserial[3]);
 
@@ -485,7 +485,7 @@ int32_t irdeto_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_
 	uchar sc_Acs57_Cmd[]={ ACS57ECM, 0xFE, 0x00, 0x00, 0x00 };
 	uchar cta_cmd[272];
 
-	int32_t i=0, acspadd=0; 
+	int32_t i=0, acspadd=0;
 	if(reader->acs57==1) {
 		int32_t crc=63;
 		sc_Acs57Ecm[4]=er->ecm[2]-2;
@@ -494,7 +494,7 @@ int32_t irdeto_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_
 		for(i=6;i<er->ecm[3]-5;i++)
 			crc^=er->ecm[i];
 		memcpy(cta_cmd,sc_Acs57Ecm,sizeof(sc_Acs57Ecm));
-		memcpy(cta_cmd+5,er->ecm+6,er->ecm[2]-1); 
+		memcpy(cta_cmd+5,er->ecm+6,er->ecm[2]-1);
 		cta_cmd[er->ecm[2]+2]=crc;
 
 		if ((reader->caid == 0x0648) || (reader->caid == 0x0666) || (reader->caid == 0x0624))
@@ -512,7 +512,7 @@ int32_t irdeto_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_
 					rdr_log(reader, "Maybe you have a bad Cam Key set it from config file");
 					break;
 			}
-			return ERROR; 
+			return ERROR;
 		}
 		sc_Acs57_Cmd[4]=acslength;
 		cta_lr=0;
@@ -663,7 +663,7 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	memset(filter+idx+2+16, 0xFF, 3);
 	filter[1]++;
 	idx += 32;
-	
+
 	filter[idx++]=EMM_SHARED;
 	filter[idx++]=0;
 	filter[idx+0]    = 0x82;
@@ -755,7 +755,7 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 				} else {
 					if (ep->type==GLOBAL && (reader->caid==0x0624 || reader->caid==0x0648 || reader->caid == 0x0666)) {
 						memcpy(&cta_cmd[9],&ep->emm[6],1);
-						memcpy(&cta_cmd[10],&ep->emm[7],dataLen-6);					
+						memcpy(&cta_cmd[10],&ep->emm[7],dataLen-6);
 //						cta_cmd[9]=0x00;
 					} else {
 						memcpy(&cta_cmd[10],&ep->emm[9],dataLen-6);
@@ -896,7 +896,7 @@ static int32_t irdeto_card_info(struct s_reader * reader)
 	return OK;
 }
 
-void reader_irdeto(struct s_cardsystem *ph) 
+void reader_irdeto(struct s_cardsystem *ph)
 {
 	ph->do_emm=irdeto_do_emm;
 	ph->do_ecm=irdeto_do_ecm;

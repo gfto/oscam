@@ -107,7 +107,7 @@ void gbox_decrypt8(unsigned char *buffer,unsigned char *pass)
  unsigned char temp;
  int bufcounter;
  int passcounter;
-  for( passcounter=3; passcounter>=0; passcounter--) 
+  for( passcounter=3; passcounter>=0; passcounter--)
   for( bufcounter=0; bufcounter<=7; bufcounter++) {
     buffer[(bufcounter+1)&7] = pass[bufcounter&3] + buffer[(bufcounter+1)&7];
     temp = buffer[bufcounter] -  pass[(bufcounter+1)&3];
@@ -147,7 +147,7 @@ void gbox_encryptA(unsigned char *buffer, unsigned char *pass)
   int counter;
   unsigned char temp;
   for (counter=0x1F; counter>=0; counter--) {
-    temp = pass[3]&1; 
+    temp = pass[3]&1;
     pass[3] = ((pass[2]&1)<<7) + (pass[3]>>1);
     pass[2] = ((pass[1]&1)<<7) + (pass[2]>>1);
     pass[1] = ((pass[0]&1)<<7) + (pass[1]>>1);
@@ -997,7 +997,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
   send_buf[15] = er->idx;
   send_buf[16] = 0; // number of cards
   send_buf[17] = 0; // distance */
-  
+
   memcpy(send_buf + 18, er->ecm, er->l);
   ptr = send_buf + 18 + er->l;
   *(ptr) = gbox->id >> 8;

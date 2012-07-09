@@ -2,7 +2,7 @@
 // Common videoguard functions.
 //
 #include "globals.h"
-#ifdef READER_VIDEOGUARD 
+#ifdef READER_VIDEOGUARD
 #include "reader-common.h"
 #include "reader-videoguard-common.h"
 
@@ -182,7 +182,7 @@ void set_known_card_info(struct s_reader * reader, const unsigned char * atr, co
   while(nds_atr_table[i].desc) {
     ATR_InitFromArray(&tableatr, nds_atr_table[i].atr, nds_atr_table[i].atr_len);
     ATR_GetHistoricalBytes(&tableatr, table_hist, &table_hist_size);
-    
+
     if ((hist_size == table_hist_size)
           && (memcmp (hist, table_hist, hist_size) == 0)) {
         reader->card_baseyear=nds_atr_table[i].base_year;
@@ -345,7 +345,7 @@ static void cCamCryptVG_Process_D0(struct s_reader * reader, const unsigned char
       memcpy( (unsigned char*)&iidata, data, 64 );
       for(count2=0; count2<32; count2++) {
         uint32_t rem=0, div=key1[count2];
-        int8_t i;        
+        int8_t i;
         for(i=31; i>=0; i--) {
           uint32_t x=iidata[i] | (rem<<16);
           rem=(x%div)&0xffff;
@@ -605,7 +605,7 @@ int32_t do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigne
      ins2[4]+=16;
      }
   len=ins2[4];
-    unsigned char tmp[264];  
+    unsigned char tmp[264];
   	if(rxbuff == NULL) rxbuff=tmp;
   if(mode>1) {
     if(!write_cmd_vg(ins2,NULL) || !status_ok(cta_res+len)) return -1;
@@ -621,7 +621,7 @@ int32_t do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigne
     }
 cCamCryptVG_PostProcess_Decrypt(reader,rxbuff);
   return len;
-  
+
 }
 
 void rev_date_calc(const unsigned char *Date, int32_t *year, int32_t *mon, int32_t *day, int32_t *hh, int32_t *mm, int32_t *ss, int32_t base_year)

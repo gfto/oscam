@@ -134,7 +134,7 @@ void parse_aes_entry(AES_ENTRY **list, char *label, char *value) {
     caid=a2i(tmp,2);
     tmp=strtok_r(NULL,":",&save);
     ident=a2i(tmp,3);
-    
+
     // now we need to split the key and add the entry to the reader.
     nb_keys=0;
     key_id=0;
@@ -164,7 +164,7 @@ void parse_aes_entry(AES_ENTRY **list, char *label, char *value) {
         add_aes_entry(list,caid,ident,key_id,aes_key);
         key_id++;
     }
-    
+
     cs_log("%d AES key(s) added on reader %s for %04x:%06x", nb_keys, label, caid, ident);
 }
 
@@ -193,8 +193,8 @@ void parse_aes_keys(struct s_reader *rdr, char *value){
         parse_aes_entry(&newlist, rdr->label, entry);
     }
     rdr->aes_list = newlist;
-    aes_clear_entries(&savelist);    
-    
+    aes_clear_entries(&savelist);
+
     /*
     AES_ENTRY *current;
     current=rdr->aes_list;
@@ -260,7 +260,7 @@ int32_t aes_present(AES_ENTRY *list, uint16_t caid, uint32_t provid,int32_t keyi
         cs_log("AES Decrypt : key id %d not found for CAID %04X , provider %06x",keyid,caid,provid);
         return error; // we don't have the key to decode this buffer.
         }
-    
+
     return ok;
 }
 
@@ -534,14 +534,14 @@ static int8_t is_leap(unsigned y){
 time_t cs_timegm(struct tm *tm){
 	time_t result = 0;
 	int32_t i;
-	
+
 	if (tm->tm_mon > 12 || tm->tm_mon < 0 || tm->tm_mday > 31 || tm->tm_min > 60 ||	tm->tm_sec > 60 || tm->tm_hour > 24) {
 		return 0;
 	}
-	
+
 	for (i = 70; i < tm->tm_year; ++i)
 		result += is_leap(i + 1900) ? 366 : 365;
-	
+
 	for (i = 0; i < tm->tm_mon; ++i){
 		if(i == 0 || i == 2 || i == 4 || i == 6 || i == 7 || i == 9 || i == 11) result += 31;
 		else if(i == 3 || i == 5 || i == 8 || i == 10) result += 30;
@@ -622,7 +622,7 @@ void cs_ftime(struct timeb *tp)
 
 /* Drop-in replacement for readdir_r as some plattforms strip the function from their libc.
    Furthermore, there are some security issues, see http://womble.decadent.org.uk/readdir_r-advisory.html */
-int32_t cs_readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result){ 
+int32_t cs_readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result){
 /* According to POSIX the buffer readdir uses is not shared between directory streams.
    However readdir is not guaranteed to be thread-safe and some implementations may use global state.
    Thus we use a lock as we have many plattforms... */
@@ -697,7 +697,7 @@ int32_t check_filled(uchar *value, int32_t length){
 	return j;
 }
 
-/* This function encapsulates malloc. It automatically adds an error message to the log if it failed and calls cs_exit(quiterror) if quiterror > -1. 
+/* This function encapsulates malloc. It automatically adds an error message to the log if it failed and calls cs_exit(quiterror) if quiterror > -1.
    result will be automatically filled with the new memory position or NULL on failure. */
 void *cs_malloc(void *result, size_t size, int32_t quiterror){
 	void **tmp = (void *)result;
@@ -791,7 +791,7 @@ void clear_ptab(struct s_ptab *ptab){
 	for (; i >= 0; --i) {
 		ptab->ports[i].ftab.nfilts = 0;
 		ptab->ports[i].ftab.filts[0].nprids = 0;
-	}	
+	}
 }
 
 /* Clears given caidtab */
@@ -894,10 +894,10 @@ char *strtolower(char *txt){
 char *strnew(char *str){
   if (!str)
     return NULL;
-    
+
   char *newstr = cs_malloc(&newstr, strlen(str)+1, 1);
   cs_strncpy(newstr, str, strlen(str)+1);
-  
+
   return newstr;
 }
 
@@ -955,7 +955,7 @@ char *get_provider(uint16_t caid, uint32_t provid, char *buf, uint32_t buflen){
 
 	for (buf[0] = 0; this && (!buf[0]); this = this->next) {
 		if (this->caid == caid && this->provid == provid) {
-			snprintf(buf, buflen, "%s%s%s%s%s", this->prov, 
+			snprintf(buf, buflen, "%s%s%s%s%s", this->prov,
 					this->sat[0] ? " / " : "", this->sat,
 					this->lang[0] ? " / " : "", this->lang);
 		}
@@ -989,7 +989,7 @@ void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *
 
 uint32_t seed;
 
-/* A fast random number generator. Depends on initialization of seed from init_rnd(). 
+/* A fast random number generator. Depends on initialization of seed from init_rnd().
    Only use this if you don't need good random numbers (so don't use in security critical situations). */
 uchar fast_rnd(void) {
 	uint32_t offset = 12923;
@@ -1286,7 +1286,7 @@ int8_t cs_try_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 	return status;
 }
 
-/* Returns the ip from the given hostname. If gethostbyname is configured in the config file, a lock 
+/* Returns the ip from the given hostname. If gethostbyname is configured in the config file, a lock
    will be held until the ip has been resolved. */
 uint32_t cs_getIPfromHost(const char *hostname){
 	uint32_t result = 0;

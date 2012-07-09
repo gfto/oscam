@@ -7,7 +7,7 @@ int32_t pserver = 0;
 int32_t constcw_file_available(void)
 {
     FILE *fp;
-    
+
     fp=fopen(cur_client()->reader->device, "r");
     if (!fp) return (0);
     fclose(fp);
@@ -17,22 +17,22 @@ int32_t constcw_file_available(void)
 int32_t constcw_analyse_file(uint16_t c_caid, uint32_t UNUSED(c_prid), uint16_t c_sid, uchar *dcw)
 {
 	//CAID:PROVIDER:SID:PMT:PID::XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX
-	
+
 	FILE *fp;
 	char token[512];
 	uint32_t caid, provid, sid, pmt, pid;
 	int32_t cw[16];
-	
+
 	fp=fopen(cur_client()->reader->device, "r");
 	if (!fp) return (0);
-	
+
 	while (fgets(token, sizeof(token), fp)){
 		if (token[0]=='#') continue;
-		
-		sscanf(token, "%4x:%6x:%4x:%4x:%4x::%2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x", &caid, &provid, &sid, &pmt, &pid, 
-			&cw[0], &cw[1], &cw[2],	&cw[3],	&cw[4], &cw[5], &cw[6], &cw[7], 
+
+		sscanf(token, "%4x:%6x:%4x:%4x:%4x::%2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x", &caid, &provid, &sid, &pmt, &pid,
+			&cw[0], &cw[1], &cw[2],	&cw[3],	&cw[4], &cw[5], &cw[6], &cw[7],
 			&cw[8], &cw[9], &cw[10], &cw[11], &cw[12], &cw[13], &cw[14], &cw[15]);
-		
+
 		//cs_log("Line found: %s", token);
 		if (c_caid == caid && c_sid == sid){
 			fclose(fp);
@@ -43,7 +43,7 @@ int32_t constcw_analyse_file(uint16_t c_caid, uint32_t UNUSED(c_prid), uint16_t 
 			return 1;
 		}
 	}
-	
+
 	fclose(fp);
 	return 0;
 }
@@ -67,7 +67,7 @@ static int32_t constcw_recv(struct s_client *client, uchar *buf, int32_t l)
 int32_t constcw_client_init(struct s_client *client)
 {
     int32_t fdp[2];
-    
+
     client->pfd = 0;
     if (socketpair(PF_LOCAL, SOCK_STREAM, 0, fdp))
     {
@@ -86,7 +86,7 @@ int32_t constcw_client_init(struct s_client *client)
     cs_log("local reader: %s (file: %s) constant cw", client->reader->label, client->reader->device);
 
     client->pfd = client->udp_fd;
-    
+
     if (constcw_file_available()) {
 		client->reader->tcp_connected = 2;
 		client->reader->card_status = CARD_INSERTED;
@@ -104,13 +104,13 @@ static int32_t constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar 
     t = time(NULL);
     // Check if DCW exist in the files
     //cs_log("Searching ConstCW for ECM: %04X:%06X:%04X (%d)", er->caid, er->prid, er->srvid, er->l);
-   
+
     if (constcw_analyse_file(er->caid, er->prid, er->srvid, cw)==0) {
         write_ecm_answer(rdr, er, E_NOTFOUND, (E1_READER<<4 | E2_SID), NULL, NULL);
     } else {
         write_ecm_answer(rdr, er, E_FOUND, 0, cw, NULL);
     }
-    
+
     client->last = t;
     rdr->last_g = t;
     return(0);
@@ -133,7 +133,7 @@ void module_constcw(struct s_module *ph)
   ph->listenertype = LIS_CONSTCW;
   ph->multi = 0;
   ph->recv = constcw_recv;
-  
+
   ph->c_multi = 1;
   ph->c_init = constcw_client_init;
   ph->c_recv_chk = constcw_recv_chk;

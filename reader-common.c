@@ -52,7 +52,7 @@ static void reader_nullcard(struct s_reader * reader)
 int32_t reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int32_t l, uchar * cta_res, uint16_t * p_cta_lr)
 {
 	int32_t rc;
-	*p_cta_lr=CTA_RES_LEN-1; //FIXME not sure whether this one is necessary 
+	*p_cta_lr=CTA_RES_LEN-1; //FIXME not sure whether this one is necessary
 	rdr_ddump_mask(reader, D_READER, buf, l, "write to cardreader");
 	rc=ICC_Async_CardWrite(reader, (uchar *)buf, (uint16_t)l, cta_res, p_cta_lr);
 	return rc;
@@ -63,8 +63,8 @@ int32_t reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int32_t
 int32_t card_write(struct s_reader * reader, const uchar *cmd, const uchar *data, uchar *response, uint16_t * response_length)
 {
   uchar buf[260];
-  // always copy to be able to be able to use const buffer without changing all code  
-  memcpy(buf, cmd, CMD_LEN); 
+  // always copy to be able to be able to use const buffer without changing all code
+  memcpy(buf, cmd, CMD_LEN);
 
   if (data) {
     if (cmd[4]) memcpy(buf+CMD_LEN, data, cmd[4]);
@@ -89,7 +89,7 @@ static int32_t reader_card_inserted(struct s_reader * reader)
 			cl->init_done = 0;
 			rdr_log(reader, "WARNING: The reader was disabled because of too many errors");
 		}
- 
+
 		return 0; //corresponds with no card inside!!
 	}
 	return (card);
@@ -129,7 +129,7 @@ static void do_emm_from_file(struct s_reader * reader)
    //handling emmfile
    char token[256];
    FILE *fp;
-	
+
    if ((reader->emmfile[0] == '/'))
       snprintf (token, sizeof(token), "%s", reader->emmfile); //pathname included
    else
@@ -167,7 +167,7 @@ static void do_emm_from_file(struct s_reader * reader)
       return;
    }
    //save old b_nano value
-   //clear lsb and lsb+1, so no blocking, and no saving for this nano  
+   //clear lsb and lsb+1, so no blocking, and no saving for this nano
    uint16_t save_s_nano = reader->s_nano;
    uint16_t save_b_nano = reader->b_nano;
    uint32_t save_saveemm = reader->saveemm;
@@ -182,10 +182,10 @@ static void do_emm_from_file(struct s_reader * reader)
       rdr_log(reader, "ERROR: EMM read from file %s NOT processed correctly! (rc=%d)", token, rc);
 
    //restore old block/save settings
-   reader->s_nano = save_s_nano; 
+   reader->s_nano = save_s_nano;
    reader->b_nano = save_b_nano;
    reader->saveemm = save_saveemm;
-               
+
    free(eptmp);
 }
 
@@ -224,10 +224,10 @@ static int32_t reader_get_cardsystem(struct s_reader * reader, ATR *atr)
 		}
 	}
 
-	if (reader->csystem.active==0) 
+	if (reader->csystem.active==0)
 	{
 		rdr_log(reader, "card system not supported");
-#ifdef QBOXHD		
+#ifdef QBOXHD
 		if(cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_MEDIUM);
 #endif
 	}
@@ -271,7 +271,7 @@ int32_t reader_reset(struct s_reader * reader)
   }
 #endif
 
- if (!ret) 
+ if (!ret)
       {
         reader->card_status = CARD_FAILURE;
         rdr_log(reader, "card initializing error");
@@ -279,7 +279,7 @@ int32_t reader_reset(struct s_reader * reader)
         	char text[] = {'S', (char)reader->slot+0x30, 'A', 'E', 'R'};
         	MCR_DisplayText(reader, text, 5, 400, 0);
         }
-#ifdef QBOXHD 
+#ifdef QBOXHD
         if(cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_MEDIUM);
 #endif
       }
@@ -338,7 +338,7 @@ int32_t reader_checkhealth(struct s_reader * reader)
 				cl->lastemm = 0;
 				cl->lastecm = 0;
 			}
-#ifdef QBOXHD 
+#ifdef QBOXHD
  			if(cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_SLOW);
 #endif
 		}
@@ -367,7 +367,7 @@ int32_t reader_ecm(struct s_reader * reader, ECM_REQUEST *er, struct s_ecm_answe
 			cl->last=time((time_t*)0);
 		}
 
-		if (reader->csystem.active && reader->csystem.do_ecm) 
+		if (reader->csystem.active && reader->csystem.do_ecm)
 			rc=reader->csystem.do_ecm(reader, er, ea);
 		else
 			rc=0;
@@ -384,7 +384,7 @@ int32_t reader_emm(struct s_reader * reader, EMM_PACKET *ep)
 	if ((1<<(ep->emm[0] % 0x80)) & reader->b_nano)
 		return 3;
 
-	if (reader->csystem.active && reader->csystem.do_emm) 
+	if (reader->csystem.active && reader->csystem.do_emm)
 		rc=reader->csystem.do_emm(reader, ep);
 	else
 		rc=0;

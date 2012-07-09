@@ -157,7 +157,7 @@ struct cc_data {
 	char *prefix;
 
 	struct cc_crypt_block block[2]; // crypto state blocks
-	
+
 	uint8_t node_id[8], // client node id
 		peer_node_id[8], // server node id
 		peer_version[8], // server version
@@ -181,7 +181,7 @@ struct cc_data {
 
 	uint8_t receive_buffer[CC_MAXMSGSIZE];
 	uint8_t send_buffer[CC_MAXMSGSIZE];
-	
+
 	LLIST *cards; // cards list
 
 	int32_t max_ecms;
@@ -192,13 +192,13 @@ struct cc_data {
 	uint8_t key_table; //key for CMD 0B
 
 	LLIST *pending_emms; //pending emm list
-	
+
 	uint32_t recv_ecmtask;
 
 	struct cc_card *last_emm_card;
 	int32_t server_ecm_pending;                    //initialized by server
 	uint16_t server_ecm_idx;
-	
+
 	CS_MUTEX_LOCK lockcmd;
 	int8_t ecm_busy;
 	CS_MUTEX_LOCK cards_busy;
@@ -214,17 +214,17 @@ struct cc_data {
 	uint8_t cccam220;
 	uint32_t remote_build_nr;
 	uint8_t sleepsend;
-		
+
 	//Extended Mode for SPECIAL clients:
 	uint8_t extended_mode;
 	LLIST *extended_ecm_idx;
-	
+
 	//stats:
 	int32_t num_hop1;
 	int32_t num_hop2;
 	int32_t num_hopx;
 
-	int32_t num_reshare0;	
+	int32_t num_reshare0;
 	int32_t num_reshare1;
 	int32_t num_reshare2;
 	int32_t num_resharex;

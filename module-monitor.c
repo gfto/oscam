@@ -7,7 +7,7 @@ static int8_t monitor_check_ip(void)
 {
 	int32_t ok=0;
 	struct s_client *cur_cl = cur_client();
-	
+
 	if (cur_cl->auth) return 0;
 	ok = check_ip(cfg.mon_allowed, cur_cl->ip);
 	if (!ok)
@@ -22,7 +22,7 @@ static int8_t monitor_auth_client(char *usr, char *pwd)
 {
 	struct s_auth *account;
 	struct s_client *cur_cl = cur_client();
-	
+
 	if (cur_cl->auth) return 0;
 	if ((!usr) || (!pwd))
 	{
@@ -52,7 +52,7 @@ static int32_t secmon_auth_client(uchar *ucrc)
 	struct s_auth *account;
 	struct s_client *cur_cl = cur_client();
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
-	
+
 	if (cur_cl->auth)
 	{
 		int32_t s=memcmp(cur_cl->ucrc, ucrc, 4);
@@ -320,7 +320,7 @@ static void monitor_process_info(void) {
 	char sbuf[256];
 
 	struct s_client *cl, *cur_cl = cur_client();
-	
+
 	for (cl=first_client; cl ; cl=cl->next) {
 		if	((cfg.mon_hideclient_to <= 0) ||
 				( now-cl->lastecm < cfg.mon_hideclient_to) ||
@@ -850,7 +850,7 @@ static int32_t monitor_process_request(char *req)
 static void * monitor_server(struct s_client * client, uchar *mbuf, int32_t UNUSED(n)) {
 	client->typ='m';
 	monitor_process_request((char *)mbuf);
-	
+
 	return NULL;
 }
 

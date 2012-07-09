@@ -9,7 +9,7 @@
 */
 #ifndef MODULECCCSHARE_H_
 #define MODULECCCSHARE_H_
-    
+
 #include <string.h>
 #include <stdlib.h>
 #include "module-cccam.h"
@@ -25,7 +25,7 @@ void remove_share(struct cc_card *card);
 LLIST **get_and_lock_sharelist(void);
 void unlock_sharelist(void);
 void refresh_shares(void);
-                        
+
 int32_t chk_ident(FTAB *ftab, struct cc_card *card);
 int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card);
 

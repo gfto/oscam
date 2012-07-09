@@ -619,7 +619,7 @@ static int32_t videoguard2_do_ecm(struct s_reader * reader, const ECM_REQUEST *e
     rdr_log(reader, "Not a valid ecm");
     return ERROR;
   }
-  
+
   memcpy(tbuff+1,er->ecm+posECMpart2+1,lenECMpart2-1);
 
 /*
@@ -760,7 +760,7 @@ static int32_t videoguard2_card_info(struct s_reader * reader)
   return OK;
 }
 
-void reader_videoguard2(struct s_cardsystem *ph) 
+void reader_videoguard2(struct s_cardsystem *ph)
 {
   ph->do_emm=videoguard2_do_emm;
   ph->do_ecm=videoguard2_do_ecm;

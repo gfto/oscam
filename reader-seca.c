@@ -99,7 +99,7 @@ static int32_t set_provider_info(struct s_reader * reader, int32_t i)
   }
   else
     // add entitlement info
-    cs_add_entitlement(reader, reader->caid, provid, get_pbm(reader, i), 0, 0, mktime(&lt), (i)?6:7); 
+    cs_add_entitlement(reader, reader->caid, provid, get_pbm(reader, i), 0, 0, mktime(&lt), (i)?6:7);
 
   return OK;
 }
@@ -124,7 +124,7 @@ static int32_t unlock_parental(struct s_reader * reader)
         rdr_log(reader, "Using PIN 0000!");
     }
 
-    write_cmd(ins30, ins30data); 
+    write_cmd(ins30, ins30data);
     if( !(cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0) ) {
         if (strcmp(reader->pincode, "none")) {
             rdr_log(reader, "Can't disable parental lock. Wrong PIN? OSCam used %s!",reader->pincode);
@@ -135,7 +135,7 @@ static int32_t unlock_parental(struct s_reader * reader)
     }
     else
         rdr_log(reader, "Parental lock disabled");
-    
+
     rdr_debug_mask(reader, D_READER, "ins30_answer: %02x%02x",cta_res[0], cta_res[1]);
     return 0;
 }
@@ -180,14 +180,14 @@ static int32_t seca_card_init(struct s_reader * reader, ATR *newatr)
   pmap=cta_res[2]<<8|cta_res[3];
   for (reader->nprov=0, i=pmap; i; i>>=1)
     reader->nprov+=i&1;
- 
+
   for (i=0; i<16; i++)
     if (pmap&(1<<i))
     {
       if (set_provider_info(reader, i) == ERROR)
         return ERROR;
       else
-	snprintf((char *) buf+strlen((char *)buf), sizeof(buf)-strlen((char *)buf), ",%04X", b2i(2, &reader->prid[i][2])); 
+	snprintf((char *) buf+strlen((char *)buf), sizeof(buf)-strlen((char *)buf), ",%04X", b2i(2, &reader->prid[i][2]));
     }
 
   rdr_log (reader, "providers: %d (%s)", reader->nprov, buf+1);
@@ -196,7 +196,7 @@ static int32_t seca_card_init(struct s_reader * reader, ATR *newatr)
     unlock_parental(reader);
   }else {
 	  rdr_log (reader, "parental locked");
-  }	
+  }
   rdr_log(reader, "ready for requests");
   return OK;
 }
@@ -209,13 +209,13 @@ static int32_t get_prov_index(struct s_reader * rdr, const uint8_t *provid)	//re
       return(prov);
   return(-1);
 }
-	
+
 
 static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
-	if (er->ecm[3] == 0x00 && er->ecm[4] == 0x6a) { //provid 006A = CDNL uses seca2/seca3 simulcrypt on same caid 
+	if (er->ecm[3] == 0x00 && er->ecm[4] == 0x6a) { //provid 006A = CDNL uses seca2/seca3 simulcrypt on same caid
 		int seca_version = reader->card_atr[9]&0X0F; //Get seca cardversion from cardatr
-		if ((seca_version == 7) || (seca_version == 10)) { // we only proces V7 or V10 cards from CDS NL  
+		if ((seca_version == 7) || (seca_version == 10)) { // we only proces V7 or V10 cards from CDS NL
 			int ecm_type = seca_version; //assume ecm type same as card in reader
 			if (er->ecm[8] == 0x00) { //this is a mediaguard3 ecm request
 				ecm_type = 10; //flag it!
@@ -224,7 +224,7 @@ static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, stru
 				ecm_type = 7; //flag it!
 			}
 			if (ecm_type != seca_version){ //only accept ecmrequest for right card!
-				return ERROR; 
+				return ERROR;
 			}
 		}
 	}
@@ -272,7 +272,7 @@ static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, stru
   } while ((try < 3) && (ret));
   if (ret)
     return ERROR;
-  
+
   write_cmd(ins3a, NULL); //get cw's
   if ((cta_res[16] != 0x90) || (cta_res[17] != 0x00)) { snprintf( ea->msglog, MSGLOGSIZE, "ins3a card response: %02x %02x", cta_res[16] , cta_res[17] ); return ERROR; };//exit if response is not 90 00 //TODO: if response is 9027 ppv mode is possible!
   memcpy(ea->cw,cta_res,16);
@@ -382,7 +382,7 @@ static void seca_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	}
 	return;
 }
-	
+
 static int32_t seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   def_resp;
@@ -399,19 +399,19 @@ static int32_t seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 			prov_id_ptr = ep->emm+3;
 			break;
 
-		case UNIQUE:	
+		case UNIQUE:
 			ins40[3]=ep->emm[12];
 			ins40[4]= emm_length - 0x0A;
 			ins40data_offset = 13;
 			prov_id_ptr = ep->emm+9;
 			break;
-			
+
 		case GLOBAL:
 			ins40[3]=ep->emm[6];
 			ins40[4]= emm_length - 0x04;
 			ins40data_offset = 7;
 			prov_id_ptr = ep->emm+3;
-			break;			
+			break;
 
 		default:
 			rdr_log(reader, "EMM: Congratulations, you have discovered a new EMM on SECA.");
@@ -421,7 +421,7 @@ static int32_t seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   }
 
   i=get_prov_index(reader, prov_id_ptr);
-  if (i==-1) 
+  if (i==-1)
   {
       rdr_log(reader, "EMM: provider id not found.");
     return ERROR;
@@ -455,7 +455,7 @@ static int32_t seca_card_info (struct s_reader * reader)
   return OK;
 }
 
-void reader_seca(struct s_cardsystem *ph) 
+void reader_seca(struct s_cardsystem *ph)
 {
 	ph->do_emm=seca_do_emm;
 	ph->do_ecm=seca_do_ecm;

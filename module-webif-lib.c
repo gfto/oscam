@@ -19,7 +19,7 @@ static int8_t b64decoder[256];
 
 /* Adds a name->value-mapping or appends to it. You will get a reference back which you may freely
    use (but you should not call free/realloc on this!)*/
-char *tpl_addVar(struct templatevars *vars, uint8_t addmode, char *name, char *value){	
+char *tpl_addVar(struct templatevars *vars, uint8_t addmode, char *name, char *value){
 	if(name == NULL || value == NULL) return "";
 	int32_t i;
 	char *tmp,*result = NULL;
@@ -40,7 +40,7 @@ char *tpl_addVar(struct templatevars *vars, uint8_t addmode, char *name, char *v
 		if(!cs_malloc(&tmp, len * sizeof(char), -1)) return "";
 		memcpy(tmp, name, len);
 		(*vars).names[(*vars).varscnt] = tmp;
-		
+
 		len = strlen(value) + 1;
 		if(!cs_malloc(&tmp, len * sizeof(char), -1)){
 			free((*vars).names[(*vars).varscnt]);
@@ -65,7 +65,7 @@ char *tpl_addVar(struct templatevars *vars, uint8_t addmode, char *name, char *v
   it after having added the array here! */
 char *tpl_addTmp(struct templatevars *vars, char *value){
 	if(value == NULL) return "";
-	if((*vars).tmpalloc <= (*vars).tmpcnt){		
+	if((*vars).tmpalloc <= (*vars).tmpcnt){
 		if(!cs_realloc (&(*vars).tmp, (*vars).tmpalloc * 2 * sizeof(char**), -1)) return value;
 		(*vars).tmpalloc = (*vars).tmpcnt * 2;
 	}
@@ -76,7 +76,7 @@ char *tpl_addTmp(struct templatevars *vars, char *value){
 
 /* Allows to do a dynamic printf without knowing and defining the needed memory size. If you specify
    varname, the printf-result will be added/appended to the varlist, if varname=NULL it will only be returned.
-   In either case you will always get a reference back which you may freely use (but you should not call 
+   In either case you will always get a reference back which you may freely use (but you should not call
    free/realloc on this as it will be automatically cleaned!)*/
 char *tpl_printf(struct templatevars *vars, uint8_t addmode, char *varname, char *fmtstring, ...){
 	uint32_t needed;
@@ -86,7 +86,7 @@ char *tpl_printf(struct templatevars *vars, uint8_t addmode, char *varname, char
 	va_start(argptr,fmtstring);
 	needed = vsnprintf(test, 1, fmtstring, argptr);
 	va_end(argptr);
-	
+
 	char *result;
 	if(!cs_malloc(&result, (needed + 1) * sizeof(char), -1)) return "";
 	va_start(argptr,fmtstring);
@@ -251,7 +251,7 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
 }
 
 /* Returns the specified template with all variables/other templates replaced or an
-   empty string if the template doesn't exist. Do not free the result yourself, it 
+   empty string if the template doesn't exist. Do not free the result yourself, it
    will get automatically cleaned up! */
 char *tpl_getTpl(struct templatevars *vars, const char* name){
 
@@ -316,7 +316,7 @@ int32_t tpl_saveIncludedTpls(const char *path){
   		int32_t len = strlen(tplmap[i]);
   		if(!(tpl[i][0] == 'I' && tpl[i][1] == 'C')){
   			fprintf(fp, "<!--OSCam;%lu;%s;%s-->\n", crc32(0L, (unsigned char*)tplmap[i], len), CS_VERSION, CS_SVN_VERSION);
-  		} 
+  		}
 			fwrite(tplmap[i], sizeof(char), len, fp);
 			fclose (fp);
 			++cnt;
@@ -340,7 +340,7 @@ void tpl_checkOneDirDiskRevisions(const char* subdir) {
 				char *pch = strstr(tplorg, "<!--OSCam;");
 				if(pch != NULL){
 					pch = pch + 10;
-					unsigned long checksum = strtoul(pch, NULL, 10);					
+					unsigned long checksum = strtoul(pch, NULL, 10);
 					if(checksum != curchecksum){
 						pch = strchr(pch, ';');
 						char *version = "", *revision = "";
@@ -436,12 +436,12 @@ time_t parse_modifiedsince(char * value){
 				case 2:
 					day = atoi(str);
 					break;
-				
+
 				case 4:
 					if(str[0] != 'G')
 						year = atoi(str);
 					break;
-					
+
 				case 8:
 					if(str[2] == ':' && str[5] == ':'){
 						hour = atoi(str);
@@ -449,7 +449,7 @@ time_t parse_modifiedsince(char * value){
 						seconds = atoi(str + 6);
 					}
 					break;
-					
+
 				case 9:
 					if(str[2] == '-' && str[6] == '-'){
 						day = atoi(str);
@@ -469,7 +469,7 @@ time_t parse_modifiedsince(char * value){
 			timeinfo.tm_sec = seconds;
 			modifiedheader = cs_timegm(&timeinfo);
 		}
-	}	
+	}
 	return modifiedheader;
 }
 
@@ -511,7 +511,7 @@ int32_t check_auth(char *authstring, char *method, char *path, char *expectednon
 	  	uri=parse_auth_value(pch2);
 	  } else if (strncmp(pch2, "username", 8) == 0){
 	  	username=parse_auth_value(pch2);
-	  }	  
+	  }
 	}
 
 	if(strncmp(uri, path, strlen(path)) == 0) uriok = 1;
@@ -528,15 +528,15 @@ int32_t check_auth(char *authstring, char *method, char *path, char *expectednon
 		unsigned char md5tmp[MD5_DIGEST_LENGTH];
 		snprintf(A1tmp, sizeof(A1tmp), "%s:%s:%s", username, AUTHREALM, expectedPassword);
 		char_to_hex(MD5((unsigned char*)A1tmp, strlen(A1tmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)A1);
-		
+
 		char A2tmp[2 + strlen(method) + strlen(uri)];
-		snprintf(A2tmp, sizeof(A2tmp), "%s:%s", method, uri);		
+		snprintf(A2tmp, sizeof(A2tmp), "%s:%s", method, uri);
 		char_to_hex(MD5((unsigned char*)A2tmp, strlen(A2tmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)A2);
-		
+
 		char A3tmp[10 + strlen(A1) + strlen(A2) + strlen(authnonce) + strlen(authnc) + strlen(authcnonce)];
 		snprintf(A3tmp, sizeof(A3tmp), "%s:%s:%s:%s:auth:%s", A1, authnonce, authnc, authcnonce, A2);
 		char_to_hex(MD5((unsigned char*)A3tmp, strlen(A3tmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)A3);
-		
+
 		if(strcmp(A3, authresponse) == 0) {
 			if(strcmp(expectednonce, authnonce) == 0) authok = 1;
 			else authok = 2;
@@ -575,7 +575,7 @@ void send_headers(FILE *f, int32_t status, char *title, char *extra, char *mime,
   char buf[sizeof(PROTOCOL) + sizeof(SERVER) + strlen(title) + (extra == NULL?0:strlen(extra)+2) + (mime == NULL?0:strlen(mime)+2) + 350];
   char *pos = buf;
   struct tm timeinfo;
-	
+
   pos += snprintf(pos, sizeof(buf)-(pos-buf), "%s %d %s\r\n", PROTOCOL, status, title);
   pos += snprintf(pos, sizeof(buf)-(pos-buf), "Server: %s\r\n", SERVER);
 
@@ -660,9 +660,9 @@ void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uin
 	}
 
 	if(strlen(filename) > 0 && file_exists(filename) == 1){
-		struct stat st;		
+		struct stat st;
 		stat(filename, &st);
-		moddate = st.st_mtime;		
+		moddate = st.st_mtime;
 		// We need at least size 1 or keepalive gets problems on some browsers...
 		if(st.st_size > 0){
 			FILE *fp;
@@ -809,7 +809,7 @@ void b64prepare(void) {
 	for (i = sizeof(b64decoder) - 1; i >= 0; --i) {
 		b64decoder[i] = -1;
 	}
-	
+
 	for (i = sizeof(alphabet) - 1; i >= 0; --i) {
 		b64decoder[alphabet[i]] = i;
 	}
@@ -818,7 +818,7 @@ void b64prepare(void) {
 /* Decodes a base64-encoded string. The given array will be used directly for output and is thus modified! */
 int32_t b64decode(unsigned char *result){
 	int32_t i, len = strlen((char *)result), j = 0, bits = 0, char_count = 0;
-	
+
 	for(i = 0; i < len; ++i){
 		if (result[i] == '=') break;
 		int8_t tmp = b64decoder[result[i]];
@@ -1001,21 +1001,21 @@ SSL_CTX *SSL_Webif_Init(void) {
 	if (pthread_key_create(&getssl, NULL)) {
 		cs_log("Could not create getssl");
 	}
-	
+
 	// set locking callbacks for SSL
 	int32_t i, num = CRYPTO_num_locks();
 	lock_cs = (CS_MUTEX_LOCK*) OPENSSL_malloc(num * sizeof(CS_MUTEX_LOCK));
-	
+
 	for (i = 0; i < num; ++i) {
 		cs_lock_create(&lock_cs[i], 10, "ssl_lock_cs");
 	}
-	/* static lock callbacks */ 
+	/* static lock callbacks */
 	CRYPTO_set_id_callback(SSL_id_function);
 	CRYPTO_set_locking_callback(SSL_locking_function);
 	/* dynamic lock callbacks */
 	CRYPTO_set_dynlock_create_callback(SSL_dyn_create_function);
 	CRYPTO_set_dynlock_lock_callback(SSL_dyn_lock_function);
-	CRYPTO_set_dynlock_destroy_callback(SSL_dyn_destroy_function); 
+	CRYPTO_set_dynlock_destroy_callback(SSL_dyn_destroy_function);
 
 	if(cfg.http_force_sslv3){
 		ctx = SSL_CTX_new(SSLv3_server_method());

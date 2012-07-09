@@ -108,7 +108,7 @@ static int32_t tongfang_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
   uchar data[100];
   int32_t data_len = 0;
   uint16_t status = 0;
-  
+
   if((ecm_len = check_sct_len(er->ecm, 3)) < 0) return ERROR;
 	if(cs_malloc(&tmp, ecm_len * 3 + 1, -1)){
 		rdr_debug_mask(reader, D_IFD, "ECM: %s", cs_hexdump(1, er->ecm, ecm_len, tmp, ecm_len * 3 + 1));
@@ -203,7 +203,7 @@ static int32_t tongfang_card_info(struct s_reader * reader)
   return OK;
 }
 
-void reader_tongfang(struct s_cardsystem *ph) 
+void reader_tongfang(struct s_cardsystem *ph)
 {
 	ph->do_emm=tongfang_do_emm;
 	ph->do_ecm=tongfang_do_ecm;

@@ -59,7 +59,7 @@ static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen)
 			if (status == -1) cs_disconnect_client(cl);
 		}
 	}
-	return status;		
+	return status;
 }
 
 static int32_t camd35_auth_client(struct s_client *cl, uchar *ucrc)
@@ -395,12 +395,12 @@ static int32_t tcp_connect(struct s_client *cl)
 		cl->pfd = cl->udp_fd = handle;
 	}
 	if (!cl->udp_fd) return(0);
-	
+
 	if (cl->reader->last_s-cl->reader->last_g > cl->reader->tcp_rto) {
 		network_tcp_connection_close(cl->reader, "rto");
 		return 0;
 	}
-	
+
 	return(1);
 }
 
@@ -785,7 +785,7 @@ static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *
 			client->stopped = 0;
 		}
 	}
-	
+
 	client->lastsrvid = er->srvid;
 	client->lastcaid = er->caid;
 	client->lastpid = er->pid;
@@ -793,9 +793,9 @@ static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *
 
 
 	if (!tcp_connect(client)) return -1;
-       	
+
 	client->reader->card_status = CARD_INSERTED; //for udp
-	
+
 	memset(buf, 0, 20);
 	memset(buf + 20, 0xff, er->l+15);
 	buf[1]=er->l;
@@ -815,10 +815,10 @@ static int32_t camd35_send_emm(EMM_PACKET *ep)
 {
 	uchar buf[512];
 	struct s_client *cl = cur_client();
-	
+
 
 	if (!tcp_connect(cl)) return -1;
-	
+
 	memset(buf, 0, 20);
 	memset(buf+20, 0xff, ep->l+15);
 
@@ -991,7 +991,7 @@ void module_camd35(struct s_module *ph)
 }
 #endif
 
-#ifdef MODULE_CAMD35_TCP 
+#ifdef MODULE_CAMD35_TCP
 void module_camd35_tcp(struct s_module *ph)
 {
   ph->desc="cs378x";

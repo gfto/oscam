@@ -183,7 +183,7 @@ static int32_t oscam_ser_parse_url(char *url, struct s_serial_client *serialdata
 {
   char *service, *usr, *dev, *baud=NULL, *dummy, *para;
   char cltype;
-  
+
     cltype = pcltype?(*pcltype):cur_client()->typ;
 
   serialdata->oscam_ser_proto=P_AUTO;
@@ -406,10 +406,10 @@ static int32_t oscam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
 		    oscam_ser_selrec(buf, 2, l, &n); // get rest 2 bytes to buffor
 	        p=(-4);
 		have_lb=0;
-		break; 
+		break;
 	    }
 	    else {
-	
+
             p=(-2);
         	if (client->typ == 'c')		 // HERE IS SERVER
         	{
@@ -436,7 +436,7 @@ static int32_t oscam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
             		case 0x81: p=P_BOMBA; break;
         	    }
         	}
-         
+
         	else				// HERE IS CLIENT
         	{
         	    job=IS_DCW;		// assume DCW
@@ -520,7 +520,7 @@ static int32_t oscam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
           if( client->typ == 'c' && p==P_DSR95 && serialdata->dsr9500type==P_DSR_AUTO )
           {
             serialdata->tpe.millitm+=20;
-            if( oscam_ser_selrec(buf, 2, l, &n) ) 
+            if( oscam_ser_selrec(buf, 2, l, &n) )
             {
               if( cs_atoi((char *)buf+n-2, 1, 1)==0xFFFFFFFF )
               {
@@ -542,12 +542,12 @@ static int32_t oscam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
                 }
               }
             }
-            else 
+            else
               serialdata->dsr9500type=P_DSR_GNUSMAS;
             if( p )
-              cs_log("detected dsr9500-%s type receiver", 
+              cs_log("detected dsr9500-%s type receiver",
                       dsrproto_txt[serialdata->dsr9500type]);
-          } 
+          }
           // gbox
           if( client->typ == 'c' && p==P_GBOX )
           {
@@ -563,12 +563,12 @@ static int32_t oscam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
                   break;
                 case 1: // PMT + ECM header
                   serialdata->gbox_lens.pmt_len=((buf[n-2]&0xf)<<8)|buf[n-1];
-                  if( !oscam_ser_selrec(buf, serialdata->gbox_lens.pmt_len+3, l, &n) ) 
+                  if( !oscam_ser_selrec(buf, serialdata->gbox_lens.pmt_len+3, l, &n) )
                     p=(-1);
                   break;
                 case 2: // ECM + ECM PID
                   serialdata->gbox_lens.ecm_len=((buf[n-2]&0xf)<<8)|buf[n-1];
-                  if( !oscam_ser_selrec(buf, serialdata->gbox_lens.ecm_len+4, l, &n) ) 
+                  if( !oscam_ser_selrec(buf, serialdata->gbox_lens.ecm_len+4, l, &n) )
                     p=(-1);
               }
           } // gbox
@@ -600,11 +600,11 @@ static int32_t oscam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
                else {
             	    if(client->typ == 'c' && buf[0] == 0x1 && buf[1] == 0x08 && buf[2] == 0x20 && buf[3] == 0x08) {
             		oscam_ser_disconnect();
-                	cs_log("ferguson powered on");	// this is nice to ;) 
+                	cs_log("ferguson powered on");	// this is nice to ;)
     		    }
-    		    else    	    
+    		    else
                 	cs_log(incomplete, n);
-		}    
+		}
                break;
     case (-2): cs_debug_mask(D_CLIENT, "unknown request or garbage");
                break;
@@ -777,7 +777,7 @@ static void oscam_ser_process_pmt(uchar *buf, int32_t l)
       serialdata->sssp_srvid=b2i(2, buf+3);
       serialdata->sssp_num=0;
 
-	    
+
       for (i=9; (i<l) && (serialdata->sssp_num<SSSP_MAX_PID); i+=7)
       {
 	if(chk_ser_srvid(cur_client(), b2i(2, buf+i), b2i(2, buf+3), b2i(3, buf+i+4))) { // check support for pid (caid, sid and provid in oscam.services)
@@ -918,7 +918,7 @@ static void oscam_ser_server(void)
 {
   int32_t n;
   uchar mbuf[1024];
-  
+
   int32_t * pserial_errors = &cur_client()->serialdata->serial_errors;
 
   cur_client()->serialdata->connected=0;
@@ -1012,16 +1012,16 @@ static void * oscam_ser_fork(void *pthreadparam)
   struct s_client *cl=create_client(0);
   pthread_setspecific(getclient, cl);
   cl->thread=pthread_self();
-  cl->typ='c';  
+  cl->typ='c';
   cl->ctyp = pparam->ctyp;
   cl->account=first_client->account;
 
   if(!cl->serialdata){
   	if(!cs_malloc(&cl->serialdata,sizeof(struct s_serial_client), -1)) return NULL;
   }
-  oscam_init_serialdata(cl->serialdata);  
+  oscam_init_serialdata(cl->serialdata);
   oscam_copy_serialdata(cl->serialdata, &pparam->serialdata);
-  cs_log("serial: initialized (%s@%s)", cl->serialdata->oscam_ser_proto>P_MAX ? 
+  cs_log("serial: initialized (%s@%s)", cl->serialdata->oscam_ser_proto>P_MAX ?
          "auto" : proto_txt[cl->serialdata->oscam_ser_proto], cl->serialdata->oscam_ser_device);
 
   pthread_mutex_lock(&mutex);
@@ -1103,7 +1103,7 @@ static int32_t oscam_ser_client_init(struct s_client *client)
   	if(!cs_malloc(&client->serialdata,sizeof(struct s_serial_client), -1)) return 1;
   }
   oscam_init_serialdata(client->serialdata);
-  
+
   if ((!client->reader->device[0])) cs_disconnect_client(client);
   if (!oscam_ser_parse_url(client->reader->device, client->serialdata, NULL)) cs_disconnect_client(client);
   client->pfd=init_oscam_ser_device(client->serialdata->oscam_ser_device, client->serialdata->oscam_ser_baud);
@@ -1128,7 +1128,7 @@ static int32_t oscam_ser_send_ecm(struct s_client *client, ECM_REQUEST *er, ucha
     case P_BOMBA:
       oscam_ser_send(client, er->ecm, er->l);
       break;
-    case P_DSR95:    	
+    case P_DSR95:
     	if(cs_malloc(&tmp, er->l * 2 + 1, -1)){
 	      if( client->serialdata->dsr9500type==P_DSR_WITHSID )
 	      {

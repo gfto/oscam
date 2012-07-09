@@ -50,10 +50,10 @@ void add_good_bad_sids(struct s_sidtab *ptr, SIDTABBITS sidtabno, struct cc_card
 
         //bad sids:
         if (!sidtabno) return;
-        
+
         struct s_sidtab *ptr_no;
         int32_t n;
-        
+
         for (n=0,ptr_no=cfg.sidtab; ptr_no; ptr_no=ptr_no->next,n++) {
 				if (sidtabno&((SIDTABBITS)1<<n)) {
                 		int32_t m;
@@ -82,7 +82,7 @@ void add_good_bad_sids(struct s_sidtab *ptr, SIDTABBITS sidtabno, struct cc_card
 void add_good_bad_sids_by_rdr(struct s_reader *rdr, struct cc_card *card) {
 
 	if (!rdr->sidtabok) return;
-	
+
 	struct s_sidtab *ptr;
 	int32_t n,i;
 	for (n=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,n++) {
@@ -99,7 +99,7 @@ void add_good_bad_sids_by_rdr(struct s_reader *rdr, struct cc_card *card) {
 int32_t can_use_ext(struct cc_card *card) {
 	if (card->card_type == CT_REMOTECARD)
 		return card->is_ext;
-		
+
 	if (card->sidtab)
 		return (card->sidtab->num_srvid>0);
 	else
@@ -182,7 +182,7 @@ int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32
 						if (buf[22] >= 240)
 							break;
 				}
-				
+
     	} else {
 		        //assigned sids:
 		        it = ll_iter_create(card->goodsids);
@@ -195,7 +195,7 @@ int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32
 		            if (buf[21] >= 200)
 		                break;
 		        }
-		
+
 		        //reject sids:
 		        it = ll_iter_create(card->badsids);
 		        while ((srvid = ll_iter_next(&it))) {
@@ -245,7 +245,7 @@ int32_t send_card_to_clients(struct cc_card *card, struct s_client *one_client) 
 								if (usr_reshare == -1) usr_reshare = cfg.cc_reshare;
                                 int8_t ignorereshare = cl->account->cccignorereshare;
                                 if (ignorereshare == -1) ignorereshare = cfg.cc_ignore_reshare;
-                                
+
                                 int8_t reader_reshare = card->origin_reader ? card->rdr_reshare : usr_reshare;
                                 if (reader_reshare == -1) reader_reshare = cfg.cc_reshare;
                                 int8_t reshare = (reader_reshare < usr_reshare) ? reader_reshare : usr_reshare;
@@ -284,7 +284,7 @@ int32_t send_card_to_clients(struct cc_card *card, struct s_client *one_client) 
 void send_remove_card_to_clients(struct cc_card *card) {
 		if (!card || !card->id)
 				return;
-				
+
 		uint8_t buf[4];
 		buf[0] = card->id >> 24;
 		buf[1] = card->id >> 16;
@@ -363,7 +363,7 @@ int32_t cc_clear_reported_carddata(LLIST *reported_carddatas, LLIST *except,
 
                 if (!card2 && ll_iter_remove(&it)) { //check result of ll_iter_remove, because another thread could removed it
                         if (send_removed) {
-                        		cs_debug_mask(D_TRACE, "s-card removed: id %8X remoteid %8X caid %4X hop %d reshare %d originid %8X cardtype %d", 
+                        		cs_debug_mask(D_TRACE, "s-card removed: id %8X remoteid %8X caid %4X hop %d reshare %d originid %8X cardtype %d",
 									card->id, card->remote_id, card->caid, card->hop, card->reshare, card->origin_id, card->card_type);
 
                         		send_remove_card_to_clients(card);
@@ -390,14 +390,14 @@ int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card) {
         //Check group:
         if (card->grp && !(card->grp & cl->grp))
                 return 0;
-                
+
 		if (card->aufilter) { //aufilter (0=any, 1=au clients only, 2=nonau clients only)
 			int8_t cl_au = ll_count(cl->aureader_list) > 0; //client has au allowed
 			int8_t card_au = card->aufilter == 1;
-			if (card_au != cl_au) 
+			if (card_au != cl_au)
 				return 0;
 		}
-		
+
 		//Check idents:
         if (!chk_ident(&cl->ftab, card))
                 return 0;
@@ -413,7 +413,7 @@ int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card) {
 			if (!ignorereshare && !card->reshare)
         		return 0;
 		}
-        		
+
 		//Check account maxhops:
 		if (cl->account->cccmaxhops < card->hop)
 				return 0;
@@ -446,7 +446,7 @@ int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card) {
         	if (!chk_srvid_by_caid_prov(cl, card->caid, 0))
         		return 0;
 		}
-		
+
         //Check Card created by Service:
         if (card->sidtab) {
         		struct s_sidtab *ptr;
@@ -455,7 +455,7 @@ int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card) {
         		if (!ok) {
         				if (!cl->sidtabok) // no positive services, so ok by default if no negative found
         						ok=1;
-        						
+
 		        		for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
         						if (ptr == card->sidtab) {
 										if (cl->sidtabno&((SIDTABBITS)1<<j))
@@ -469,7 +469,7 @@ int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card) {
                 if (!ok)
                 		return 0;
 		}
-                        				
+
         return 1;
 }
 
@@ -564,7 +564,7 @@ void set_card_timeout(struct cc_card *card)
 {
 	card->timeout = time(NULL)+TIMEOUT_SECONDS+(fast_rnd()-128)*2;
 }
-    
+
 struct cc_card *create_card(struct cc_card *card) {
     struct cc_card *card2 = cs_malloc(&card2, sizeof(struct cc_card), QUITERROR);
     if (card)
@@ -677,8 +677,8 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t fre
     	//card keeps their hexserial, set aufilter (0=any, 1=au clients only, 2=nonau clients only)
     	card->aufilter = 1;
     	struct cc_card *card3 = create_card(card);
-		add_card_providers(card3, card, 1); //copy providers to new card. Copy remote nodes to new card    	
-		
+		add_card_providers(card3, card, 1); //copy providers to new card. Copy remote nodes to new card
+
     	//create a copy of the card, set aufilter to 2 and remove hexserial:
     	card3->aufilter = 2;
     	memset(card3->hexserial, 0, sizeof(card3->hexserial));
@@ -687,7 +687,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t fre
 
     LL_ITER it = ll_iter_create(cardlist);
     struct cc_card *card2;
-    
+
     //Minimize all, transmit just CAID, merge providers:
     if (cfg.cc_minimize_cards == MINIMIZE_CAID && !cfg.cc_forward_origin_card) {
         while ((card2 = ll_iter_next(&it))) {
@@ -704,7 +704,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t fre
                     break;
             }
 		}
-		
+
         if (!card2) { //Not found->add it:
         	if (free_card) { //Use this card
         		free_card = FALSE;
@@ -735,7 +735,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t fre
                 break;
             }
         }
-        
+
         if (card2 && card2->hop > card->hop) { //hop is smaller, drop old card
             ll_iter_remove(&it);
             cc_free_card(card2);
@@ -747,7 +747,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t fre
         	if (free_card) { //use this card
         		free_card = FALSE;
         		ll_iter_insert(&it, card);
-			} else { 
+			} else {
             	card2 = create_card(card); //copy card
             	ll_iter_insert(&it, card2);
             	add_card_providers(card2, card, 1); //copy providers to new card. Copy remote nodes to new card
@@ -769,7 +769,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t fre
             if (same_card(card, card2))
                 break;
         }
-        
+
         if (card2 && card2->hop > card->hop) { //same card, if hop greater drop card
             ll_iter_remove(&it);
             cc_free_card(card2);
@@ -790,10 +790,10 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t fre
         	card_dup_count++;
 		}
     }
-    
+
     if (free_card)
     	cc_free_card(card);
-    	
+
     return modified;
 }
 
@@ -810,7 +810,7 @@ int32_t card_timed_out(struct cc_card *card)
 		cs_debug_mask(D_TRACE, "card %08X timed out! refresh forced", card->id?card->id:card->origin_id);
     return res;
 }
-            
+
 /**
  * returns true if card1 is already reported.
  * "reported" means, we already have this card1 in our sharelist.
@@ -839,8 +839,8 @@ int32_t find_reported_card(struct cc_card *card1)
 */
 void cc_add_reported_carddata(LLIST *reported_carddatas, struct cc_card *card) {
 		ll_append(reported_carddatas, card);
-}       
-       
+}
+
 /**
  * adds the card to the list of the new reported carddatas - this is the new sharelist
  * if this card is not already reported, we send them to the clients
@@ -850,10 +850,10 @@ void cc_add_reported_carddata(LLIST *reported_carddatas, struct cc_card *card) {
 void report_card(struct cc_card *card, LLIST *new_reported_carddatas, LLIST *new_cards)
 {
     if (!find_reported_card(card)) { //Add new card:
-    	
-    	cs_debug_mask(D_TRACE, "s-card added: id %8X remoteid %8X caid %4X hop %d reshare %d originid %8X cardtype %d", 
+
+    	cs_debug_mask(D_TRACE, "s-card added: id %8X remoteid %8X caid %4X hop %d reshare %d originid %8X cardtype %d",
     		card->id, card->remote_id, card->caid, card->hop, card->reshare, card->origin_id, card->card_type);
-    		
+
         ll_append(new_cards, card);
 
         card_added_count++;
@@ -928,9 +928,9 @@ void update_card_list(void) {
             flt = 0;
 
             int8_t reshare = rdr->cc_reshare > -1 ? rdr->cc_reshare : cfg.cc_reshare;
-            
+
             //Reader-Services:
-            if ((cfg.cc_reshare_services==1||cfg.cc_reshare_services==2||(!rdr->caid && rdr->typ != R_CCCAM && cfg.cc_reshare_services!=4 )) && 
+            if ((cfg.cc_reshare_services==1||cfg.cc_reshare_services==2||(!rdr->caid && rdr->typ != R_CCCAM && cfg.cc_reshare_services!=4 )) &&
             		cfg.sidtab && (rdr->sidtabno || rdr->sidtabok)) {
                 struct s_sidtab *ptr;
                 for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
@@ -948,11 +948,11 @@ void update_card_list(void) {
                             if (chk_ident(&rdr->ftab, card) && chk_ctab(card->caid, &rdr->ctab)) {
                             	if (!rdr->audisabled)
 									cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, card->caid);
-                        
+
 	                            add_card_to_serverlist(get_cardlist(card->caid, server_cards), card, TRUE);
 	                    	    flt=1;
 							}
-							else 
+							else
 								cc_free_card(card);
 						}
                     }
@@ -966,7 +966,7 @@ void update_card_list(void) {
                     if (caid) {
                         card = create_card2(rdr, j, caid, reshare);
                         card->card_type = CT_LOCALCARD;
-                        
+
                         //Setting UA: (Unique Address):
                         if (!rdr->audisabled)
 								cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, caid);
@@ -1019,14 +1019,14 @@ void update_card_list(void) {
                 //cs_log("tcp_connected: %d card_status: %d ", rdr->tcp_connected, rdr->card_status);
                 int32_t c;
    		        if (rdr->tcp_connected || rdr->card_status == CARD_INSERTED) {
-	                for (c=0;c<CS_MAXCAIDTAB;c++) 
+	                for (c=0;c<CS_MAXCAIDTAB;c++)
 	                {
 						uint16_t caid = rdr->ctab.caid[c];
 						if (!caid) break;
-						
+
 						card = create_card2(rdr, c, caid, reshare);
 						card->card_type = CT_CARD_BY_CAID2;
-	                
+
 	    		        if (!rdr->audisabled)
 	    		        	cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, caid);
 						for (j = 0; j < rdr->nprov; j++) {
@@ -1055,7 +1055,7 @@ void update_card_list(void) {
                 	uint16_t caid = rdr->caid;
                 	card = create_card2(rdr, 1, caid, reshare);
                 	card->card_type = CT_CARD_BY_CAID3;
-                
+
 	                if (!rdr->audisabled)
 	                    cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, caid);
 	                for (j = 0; j < rdr->nprov; j++) {
@@ -1086,7 +1086,7 @@ void update_card_list(void) {
                 int32_t count = 0;
                 if (rcc && rcc->cards && !rc->kill) {
                 	cs_readlock(&rcc->cards_busy);
-				
+
               		it = ll_iter_create(rcc->cards);
                     while ((card = ll_iter_next(&it))) {
                     	if (chk_ctab(card->caid, &rdr->ctab)) {
@@ -1118,7 +1118,7 @@ void update_card_list(void) {
     }
 
     LLIST *new_cards = ll_create("new_cards"); //List of new (added) cards
-    
+
 	cs_writelock(&cc_shares_lock);
 
     //report reshare cards:
@@ -1126,7 +1126,7 @@ void update_card_list(void) {
 	for (i = 0; i < CAID_KEY; i++) {
 		if (server_cards[i]) {
 			it = ll_iter_create(server_cards[i]);
-    
+
 			//we compare every card of our new list (server_cards) with the last list.
 			while ((card = ll_iter_next(&it))) {
 					//cs_debug_mask(D_TRACE, "%s card %d caid %04X hop %d", getprefix(), card->id, card->caid, card->hop);
@@ -1145,7 +1145,7 @@ void update_card_list(void) {
 		card_count += ll_count(reported_carddatas[i]);
 		//cs_debug_mask(D_TRACE, "CARDS FOR INDEX %d=%d", i, ll_count(reported_carddatas[i]));
 	}
-    
+
     //now send new cards. Always remove first, then add new:
     it = ll_iter_create(new_cards);
     while ((card = ll_iter_next(&it))) {
@@ -1153,7 +1153,7 @@ void update_card_list(void) {
 	}
 	ll_destroy_NULL(new_cards);
 
-    
+
     cs_writeunlock(&cc_shares_lock);
 
 	cs_debug_mask(D_TRACE, "reported/updated +%d/-%d/dup %d of %d cards to sharelist",
@@ -1176,7 +1176,7 @@ int32_t cc_srv_report_cards(struct s_client *cl) {
 	}
 	cs_readunlock(&cc_shares_lock);
 	cs_debug_mask(D_TRACE, "reported %d cards for %s", count, username(cl));
-	
+
 	return cl->cc && !cl->kill;
 }
 
@@ -1214,7 +1214,7 @@ void share_updater(void)
 						cs_debug_mask(D_TRACE, "share-updater mode=interval t=%ds", cfg.cc_update_interval);
 						cs_sleepms(cfg.cc_update_interval*1000);
 				}
-				
+
 				uint32_t cur_check = 0;
 				uint32_t cur_card_check = 0;
 				int8_t rdroptionchange = 0;
@@ -1230,42 +1230,42 @@ void share_updater(void)
 						}
 						cur_check = crc32(cur_check, (uint8_t*)&rdr->tcp_connected, sizeof(rdr->tcp_connected));
 						cur_check = crc32(cur_check, (uint8_t*)&rdr->card_status, sizeof(rdr->card_status));
-						
+
 						//Check hexserial/UA changes only on lokal readers:
 						if (!(rdr->typ & R_IS_NETWORK)) {
 							cur_check = crc32(cur_check, (uint8_t*)&rdr->hexserial, 8); //check hexserial
 							cur_check = crc32(cur_check, (uint8_t*)&rdr->prid, rdr->nprov * sizeof(rdr->prid[0])); //check providers
 							cur_check = crc32(cur_check, (uint8_t*)&rdr->sa, rdr->nprov * sizeof(rdr->sa[0])); //check provider-SA
 						}
-						
+
 						if(rdr->changes_since_shareupdate){
 							rdr->changes_since_shareupdate = 0;
-							rdroptionchange = 1;		
+							rdroptionchange = 1;
 						}
 				}
 				if(rdroptionchange){
 					cur_check_rdroptions = 0;
 					for (rdr=first_active_reader; rdr; rdr=rdr->next) {
-						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->ftab, sizeof(FTAB)); //check reader 
+						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->ftab, sizeof(FTAB)); //check reader
 						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->ctab, sizeof(CAIDTAB)); //check caidtab
 						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->fchid, sizeof(FTAB)); //check chids
 						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->sidtabok, sizeof(rdr->sidtabok)); //check assigned ok services
-						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->sidtabno, sizeof(rdr->sidtabno)); //check assigned no services	
+						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->sidtabno, sizeof(rdr->sidtabno)); //check assigned no services
 					}
-				}				
-				
+				}
+
 				//update cardlist if reader config has changed, also set interval to 1s / 30times
 				if (cur_check != last_check || last_sidtab_generation != cfg_sidtab_generation || last_check_rdroptions != cur_check_rdroptions) {
 						last_sidtab_generation = cfg_sidtab_generation;
 						i = DEFAULT_INTERVAL;
-						cs_debug_mask(D_TRACE, "share-update [1] %u %u", cur_check, last_check); 
+						cs_debug_mask(D_TRACE, "share-update [1] %u %u", cur_check, last_check);
 						refresh_shares();
 						last_check = cur_check;
 						last_card_check = cur_card_check;
 				}
 				//update cardlist if cccam cards has changed:
 				else if (cur_card_check != last_card_check) {
-						cs_debug_mask(D_TRACE, "share-update [2] %u %u", cur_card_check, last_card_check); 
+						cs_debug_mask(D_TRACE, "share-update [2] %u %u", cur_card_check, last_card_check);
 						refresh_shares();
 						last_card_check = cur_card_check;
 				}
@@ -1276,7 +1276,7 @@ void share_updater(void)
 int32_t compare_cards_by_hop(struct cc_card **pcard1, struct cc_card **pcard2)
 {
 	struct cc_card *card1 = (*pcard1), *card2 = (*pcard2);
-	
+
 	int32_t res = card1->hop - card2->hop;
 	if (res) return res;
 	res = card1->caid - card2->caid;
@@ -1284,7 +1284,7 @@ int32_t compare_cards_by_hop(struct cc_card **pcard1, struct cc_card **pcard2)
 	res = card1->reshare - card2->reshare;
 	if (res) return res;
 	res = card1->id - card2->id;
-	return res; 
+	return res;
 }
 
 int32_t compare_cards_by_hop_r(struct cc_card **pcard1, struct cc_card **pcard2)
@@ -1319,7 +1319,7 @@ void init_share(void) {
         		share_updater_thread = temp;
         }
         pthread_attr_destroy(&attr);
-}            
+}
 
 void done_share(void) {
 		if (share_updater_thread) {

@@ -341,12 +341,12 @@ void *stapi_read_thread(void *sparam) {
 				//cs_log("timeout %d", dev_index);
 				//TODO: if pidindex == -1 try next
 				continue;
-				break;		
+				break;
 			default:
-				if (QueryBufferHandle != 0) { 
+				if (QueryBufferHandle != 0) {
 					cs_log("SignalWaitBuffer error: %d", ErrorCode);
-					oscam_stapi_BufferFlush(QueryBufferHandle); 
-					continue; 
+					oscam_stapi_BufferFlush(QueryBufferHandle);
+					continue;
 				}
 				cs_log("SignalWaitBuffer: index %d ErrorCode: %d - QueryBuffer: %x", dev_index, ErrorCode, QueryBufferHandle);
 				error_count++;
@@ -385,7 +385,7 @@ void *stapi_read_thread(void *sparam) {
 
 						dvbapi_process_input(demux_id, filter_num, buf, DataSize);
 					}
-				}	
+				}
 			}
 		}
 		pthread_mutex_unlock(&filter_lock);
@@ -468,7 +468,7 @@ void stapi_startdescrambler(int32_t demux_id, int32_t dev_index, int32_t mode) {
 
 		if (ErrorCode != 0)
 			cs_log("DescramblerDeallocate: ErrorCode: %d", ErrorCode);
-				
+
 		demux[demux_id].DescramblerHandle[dev_index]=0;
 	}
 
@@ -487,7 +487,7 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t UNUSED(num), int32_t index, uint
 			memset(demux[demux_id].slot_assc[n], 0, sizeof(demux[demux_id].slot_assc[n]));
 		}
 	}
-	
+
 	return TRUE;
 }
 

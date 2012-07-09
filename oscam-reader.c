@@ -120,12 +120,8 @@ void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, ui
 		item->type = type;
 
 		//add item
-		if (cfg.dvbapi_checking_entitlements)
 		ll_append(rdr->ll_entitlements, item);
-        else {
-                LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
-     	        ll_iter_insert(&itr, item);
-             }
+
 	  // cs_debug_mask(D_TRACE, "entitlement: Add caid %4X id %4X %s - %s ", item->caid, item->id, item->start, item->end);
 	}
 

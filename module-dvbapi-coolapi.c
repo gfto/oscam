@@ -63,10 +63,10 @@ void coolapi_read_data(dmx_t * dmx, int32_t len)
 	}
 
 	int32_t ret;
-	
+
 	pthread_setspecific(getclient, dvbapi_client);
 	pthread_mutex_lock(&dmx->mutex);
-	memset(dmx->buffer,0,4096);	
+	memset(dmx->buffer,0,4096);
 	ret = coolapi_read(dmx, len);
 	pthread_mutex_unlock(&dmx->mutex);
 	if (!ret)
@@ -303,7 +303,7 @@ int32_t coolapi_write_cw(int32_t mask, uint16_t *STREAMpids, int32_t count, ca_d
 
 	cs_debug_mask(D_DVBAPI, "cw%d: mask %d index %d pid count %d", ca_descr->parity, mask, index, count);
 	for(i = 0; i < count; i++) {
-		int32_t pid = STREAMpids[i]; 
+		int32_t pid = STREAMpids[i];
 		int32_t j;
 		for(j = 0; j < 3; j++) {
 			if(mask & (1 << j))
@@ -365,7 +365,7 @@ int32_t coolapi_read(dmx_t * dmx, uint32_t len)
 
 	result = cnxt_cbuf_get_used(dmx->buffer2, &bytes_used);
 	coolapi_check_error("cnxt_cbuf_get_used", result);
-	if(bytes_used == 0) 
+	if(bytes_used == 0)
 		return -1;
 
 	result = cnxt_cbuf_read_data(dmx->buffer2, buff, 3, &done);
@@ -405,7 +405,7 @@ void coolapi_open(void)
 	int32_t result = 0;
 	device_open_arg_t devarg;
 
-        if(!dmx_opened) { 
+        if(!dmx_opened) {
                 int32_t i;
 
 		cs_log("Open coolstream dmx api");

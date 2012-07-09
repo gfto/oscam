@@ -23,7 +23,7 @@ struct s_log {
 	char *cl_text;
 };
 
-#if defined(WEBIF) || defined(MODULE_MONITOR) 
+#if defined(WEBIF) || defined(MODULE_MONITOR)
 CS_MUTEX_LOCK loghistory_lock;
 #endif
 
@@ -37,7 +37,7 @@ static void switch_log(char* file, FILE **f, int32_t (*pfinit)(void))
 		if(*f != NULL && ftell(*f) >= cfg.max_log_size*1024) {
 			int32_t rc;
 			char prev_log[strlen(file) + 6];
-			snprintf(prev_log, sizeof(prev_log), "%s-prev", file);			
+			snprintf(prev_log, sizeof(prev_log), "%s-prev", file);
 			fprintf(*f, "switch log file\n");
 			fflush(*f);
 			fclose(*f);
@@ -92,7 +92,7 @@ static void cs_write_log_int(char *txt)
 		log->txt = strnew(txt);
 		log->header_len = 0;
 		log->direct_log = 1;
-		ll_append(log_list, log);		
+		ll_append(log_list, log);
 	}
 }
 
@@ -122,7 +122,7 @@ int32_t cs_open_logfiles(void)
 	// according to syslog docu: calling closelog is not necessary and calling openlog multiple times is safe
 	// We use openlog to set the default syslog settings so that it's possible to allow switching syslog on and off
 	openlog("oscam", LOG_NDELAY, LOG_DAEMON);
-	
+
 	cs_log_nolock(">> OSCam <<  cardserver %s, version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_TARGET ")", starttext);
 	cs_log_config();
 	return(fp <= (FILE *)0);
@@ -147,8 +147,8 @@ int32_t ac_init_log(void){
 }
 #endif
 
-#if defined(WEBIF) || defined(MODULE_MONITOR) 
-/* 
+#if defined(WEBIF) || defined(MODULE_MONITOR)
+/*
  This function allows to reinit the in-memory loghistory with a new size.
 */
 void cs_reinit_loghist(uint32_t size)
@@ -171,10 +171,10 @@ void cs_reinit_loghist(uint32_t size)
 				} else loghistptr = tmp;
 				loghist = tmp;
 				cs_sleepms(20);	// Monitor or webif may be currently outputting the loghistory but don't use locking so we sleep a bit...
-				cfg.loghistorysize = size;						
+				cfg.loghistorysize = size;
 			}
 			cs_writeunlock(&loghistory_lock);
-			if(tmp2 != NULL) add_garbage(tmp2);			
+			if(tmp2 != NULL) add_garbage(tmp2);
 		}
 	}
 }
@@ -219,21 +219,21 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 	}
 	cs_write_log(txt + 8, do_flush);
 
-#if defined(WEBIF) || defined(MODULE_MONITOR) 
+#if defined(WEBIF) || defined(MODULE_MONITOR)
 	if (loghist && exit_oscam != 1) {
 		char *usrtxt = log->cl_text;
 		char *target_ptr = NULL;
 		int32_t target_len = strlen(usrtxt) + (strlen(txt) - 8) + 1;
-		
+
 		cs_writelock(&loghistory_lock);
-		char *lastpos = loghist + (cfg.loghistorysize) - 1;	
+		char *lastpos = loghist + (cfg.loghistorysize) - 1;
 		if(loghist + target_len + 1 >= lastpos){
 			strncpy(txt + 39, "Log entry too long!", strlen(txt) - 39);	// we can assume that the min loghistorysize is always 1024 so we don't need to check if this new string fits into it!
 			target_len = strlen(usrtxt) + (strlen(txt) - 8) + 1;
-		}	
+		}
 		if (!loghistptr)
 			loghistptr = loghist;
-		
+
 		if (loghistptr + target_len + 1 > lastpos) {
 			*loghistptr='\0';
 			loghistptr=loghist + target_len + 1;
@@ -252,7 +252,7 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 
 	struct s_client *cl;
 	for (cl=first_client; cl ; cl=cl->next) {
-		if ((cl->typ == 'm') && (cl->monlvl>0) && cl->log) //this variable is only initialized for cl->typ = 'm' 
+		if ((cl->typ == 'm') && (cl->monlvl>0) && cl->log) //this variable is only initialized for cl->typ = 'm'
 		{
 			if (cl->monlvl<2) {
 				if (log->cl_typ != 'c' && log->cl_typ != 'm')
@@ -284,7 +284,7 @@ static void write_to_log_int(char *txt, int8_t header_len)
 	log->cl_usr = "";
 	if (!cl){
 		log->cl_text = "undef";
-		log->cl_typ = ' ';		
+		log->cl_typ = ' ';
 	} else {
 		switch(cl->typ) {
 			case 'c':
@@ -312,7 +312,7 @@ static void write_to_log_int(char *txt, int8_t header_len)
 		free(log->txt);
 		free(log);
 	} else
-		ll_append(log_list, log);	
+		ll_append(log_list, log);
 }
 
 void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar *buf, int32_t n, const char *fmt, ...)
@@ -442,7 +442,7 @@ void cs_log_config(void)
     snprintf((char *)buf, sizeof(buf), "%d Kb", cfg.max_log_size);
   else
     cs_strncpy((char *)buf, "unlimited", sizeof(buf));
-#if defined(WEBIF) || defined(MODULE_MONITOR) 
+#if defined(WEBIF) || defined(MODULE_MONITOR)
   cs_log_nolock("max. logsize=%s, loghistorysize=%d bytes", buf, cfg.loghistorysize);
 #else
 	cs_log_nolock("max. logsize=%s bytes", buf);
@@ -451,7 +451,7 @@ void cs_log_config(void)
          cfg.ctimeout, cfg.ftimeout, cfg.delay);
 }
 
-int32_t cs_init_statistics(void) 
+int32_t cs_init_statistics(void)
 {
 	if ((!fps) && (cfg.usrfile != NULL))
 	{
@@ -591,7 +591,7 @@ void log_list_thread(void)
 int32_t cs_init_log(void)
 {
 	if(logStarted == 0){
-#if defined(WEBIF) || defined(MODULE_MONITOR) 
+#if defined(WEBIF) || defined(MODULE_MONITOR)
 		cs_lock_create(&loghistory_lock, 5, "loghistory_lock");
 #endif
 

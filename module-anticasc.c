@@ -10,13 +10,13 @@ void ac_clear(void)
 {
 	struct s_client *client;
 	struct s_auth *account;
-	
+
 	for (client=first_client;client;client=client->next)
 	{
   		if (client->typ != 'c') continue;
   		memset(&client->acasc, 0, sizeof(client->acasc));
 	}
-  	
+
 	for (account=cfg.account;account;account=account->next)
 		memset(&account->ac_stat, 0, sizeof(account->ac_stat));
 }
@@ -37,7 +37,7 @@ void ac_do_stat(void)
   for (client=first_client;client;client=client->next)
   {
   	if (client->typ != 'c') continue;
-  	
+
   	struct s_acasc *ac_stat = &client->account->ac_stat;
   	struct s_acasc_shm *acasc = &client->acasc;
 
@@ -53,7 +53,7 @@ void ac_do_stat(void)
       }
       else
       {
-        for(j=exceeds=maxval=0; j<cfg.ac_samples; j++) 
+        for(j=exceeds=maxval=0; j<cfg.ac_samples; j++)
         {
           if (ac_stat->stat[j] > maxval)
             maxval=ac_stat->stat[j];
@@ -61,9 +61,9 @@ void ac_do_stat(void)
         }
         prev_deny=acasc->ac_deny;
         acasc->ac_deny = (exceeds >= cfg.ac_denysamples);
-        
+
         cs_debug_mask(D_CLIENT, "acasc: %s limit=%d, max=%d, samples=%d, dsamples=%d, [idx=%d]:",
-          client->account->usr, client->ac_limit, maxval, 
+          client->account->usr, client->ac_limit, maxval,
           cfg.ac_samples, cfg.ac_denysamples, idx);
         cs_debug_mask(D_CLIENT, "acasc: %d %d %d %d %d %d %d %d %d %d ", ac_stat->stat[0],
           ac_stat->stat[1], ac_stat->stat[2], ac_stat->stat[3],

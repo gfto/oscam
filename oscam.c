@@ -72,7 +72,7 @@ int log_remove_sensitive = 1;
 
 char    *prog_name = NULL;
 char    *processUsername = NULL;
-#if defined(WEBIF) || defined(MODULE_MONITOR) 
+#if defined(WEBIF) || defined(MODULE_MONITOR)
 char    *loghist = NULL;     // ptr of log-history
 char    *loghistptr = NULL;
 #endif
@@ -158,7 +158,7 @@ int32_t cs_check_v(uint32_t ip, int32_t port, int32_t add, char *info) {
 					v_ban_entry->info = cs_malloc(&v_ban_entry->info, size, -1);
 					strncpy(v_ban_entry->info, info, size);
 				}
-				
+
 				if (!add) {
 					if (v_ban_entry->v_count >= cfg.failbancount) {
 						cs_debug_mask(D_TRACE, "failban: banned ip %s:%d - %ld seconds left%s%s",
@@ -193,7 +193,7 @@ int32_t cs_check_v(uint32_t ip, int32_t port, int32_t add, char *info) {
 				ll_iter_insert(&itr, v_ban_entry);
 
 				cs_debug_mask(D_TRACE, "failban: ban ip %s:%d with timestamp %ld%s%s",
-						cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, v_ban_entry->v_time, 
+						cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, v_ban_entry->v_time,
 						info?", info: ":"", info?info:"");
 			}
 		}
@@ -540,7 +540,7 @@ static void remove_ecm_from_reader(ECM_REQUEST *ecm) {
 	struct s_reader *rdr;
 	ECM_REQUEST *er;
 	int i;
-	
+
 	ea = ecm->matching_rdr;
 	while (ea) {
 	    if ((ea->status & REQUEST_SENT) && !(ea->status & REQUEST_ANSWERED)) {
@@ -598,17 +598,17 @@ static void cleanup_ecmtasks(struct s_client *cl)
 		add_garbage(cl->ecmtask);
 		cl->ecmtask = NULL;
 	}
-	
+
 	if (cl->cascadeusers) {
 		ll_destroy_data(cl->cascadeusers);
 		cl->cascadeusers = NULL;
 	}
-	
-	//remove this clients ecm from queue. because of cache, just null the client: 
+
+	//remove this clients ecm from queue. because of cache, just null the client:
 	cs_readlock(&ecmcache_lock);
-	for (ecm = ecmcwcache; ecm; ecm = ecm->next) { 
+	for (ecm = ecmcwcache; ecm; ecm = ecm->next) {
 		if (ecm->client == cl)
-			ecm->client = NULL; 
+			ecm->client = NULL;
 #ifdef CS_CACHEEX
 		if (ecm->cacheex_src == cl)
 			ecm->cacheex_src = NULL;
@@ -626,7 +626,7 @@ static void cleanup_ecmtasks(struct s_client *cl)
 
 		//if cl is a client, remove ecm from reader queue:
 		remove_ecm_from_reader(ecm);
-	} 
+	}
 	cs_readunlock(&ecmcache_lock);
 
 	//remove client from rdr ecm-queue:
@@ -656,9 +656,9 @@ void remove_reader_from_ecm(struct s_reader *rdr)
 {
         ECM_REQUEST *ecm;
         struct s_ecm_answer *ea_list, *ea_prev;
-        
+
 	cs_readlock(&ecmcache_lock);
-	for (ecm = ecmcwcache; ecm; ecm = ecm->next) { 
+	for (ecm = ecmcwcache; ecm; ecm = ecm->next) {
 		for(ea_list = ecm->matching_rdr, ea_prev=NULL; ea_list; ea_prev = ea_list, ea_list = ea_list->next) {
 			if (ea_list->reader == rdr) {
 				if (ea_prev)
@@ -668,7 +668,7 @@ void remove_reader_from_ecm(struct s_reader *rdr)
 				add_garbage(ea_list);
 			}
 		}
-	} 
+	}
 	cs_readunlock(&ecmcache_lock);
 }
 
@@ -688,11 +688,11 @@ void cleanup_thread(void *var)
 	if (cl == cl2)
 		prev->next = cl2->next; //remove client from list
 	cs_writeunlock(&clientlist_lock);
-		
+
 	// Clean reader. The cleaned structures should be only used by the reader thread, so we should be save without waiting
 	if (rdr){
 	        remove_reader_from_ecm(rdr);
-	        
+
 		remove_reader_from_active(rdr);
 		if(rdr->ph.cleanup)
 			rdr->ph.cleanup(cl);
@@ -711,17 +711,17 @@ void cleanup_thread(void *var)
 		cl->last_caid = 0xFFFF;
 		cl->last_srvid = 0xFFFF;
 		cs_statistics(cl);
-	    
+
 		cs_sleepms(500); //just wait a bit that really really nobody is accessing client data
 
 		if(ph[cl->ctyp].cleanup)
 			ph[cl->ctyp].cleanup(cl);
 	}
-		
+
 	// Close network socket if not already cleaned by previous cleanup functions
 	if(cl->pfd)
-		close(cl->pfd); 
-			
+		close(cl->pfd);
+
 	// Clean all remaining structures
 
 	pthread_mutex_trylock(&cl->thread_lock);
@@ -923,7 +923,7 @@ void cs_reload_config(void)
 		#endif
 }
 
-/* Sets signal handlers to ignore for early startup of OSCam because for example log 
+/* Sets signal handlers to ignore for early startup of OSCam because for example log
    could cause SIGPIPE errors and the normal signal handlers can't be used at this point. */
 static void init_signal_pre(void)
 {
@@ -1136,7 +1136,7 @@ struct s_client * create_client(in_addr_t ip) {
 		pthread_mutex_init(&cl->thread_lock, NULL);
 
 		cl->login=cl->last=time((time_t *)0);
-		
+
 		cl->tid = (uint32_t)(uintptr_t)cl;	// Use pointer adress of client as threadid (for monitor and log)
 
 		//Now add new client to the list:
@@ -1351,7 +1351,7 @@ static int32_t start_listener(struct s_module *ph, int32_t port_idx)
 		int32_t j, pos=0;
 		char buf[30 + (8*ph->ptab->ports[port_idx].ftab.filts[i].nprids)];
 		pos += snprintf(buf, sizeof(buf), "-> CAID: %04X PROVID: ", ph->ptab->ports[port_idx].ftab.filts[i].caid );
-		
+
 		for( j=0; j<ph->ptab->ports[port_idx].ftab.filts[i].nprids; j++ )
 			pos += snprintf(buf+pos, sizeof(buf)-pos, "%06X, ", ph->ptab->ports[port_idx].ftab.filts[i].prids[j]);
 
@@ -1370,7 +1370,7 @@ void cs_user_resolve(struct s_auth *account){
 	if (account->dyndns[0]){
 		in_addr_t lastip = account->dynip;
 		account->dynip = cs_getIPfromHost((char*)account->dyndns);
-		
+
 		if (lastip != account->dynip)  {
 			cs_log("%s: resolved ip=%s", (char*)account->dyndns, cs_inet_ntoa(account->dynip));
 		}
@@ -2056,7 +2056,7 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 
         	update_chid(er);
         }
-	
+
 	struct ecm_request_t *ecm = check_cwcache(er, cl);
 
 	if (!ecm) {
@@ -2583,7 +2583,7 @@ static void request_cw(ECM_REQUEST *er)
 			ea->status |= REQUEST_SENT;
 			er->reader_requested++;
 
-			//set sent=1 only if reader is active/connected. If not, switch to next stage!			
+			//set sent=1 only if reader is active/connected. If not, switch to next stage!
 			if (!sent && rdr) {
 				struct s_client *rcl = rdr->client;
 				if(rcl){
@@ -3471,13 +3471,13 @@ int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs, EMM_P
 		for (i=0,k=0; i<10 && k<ep->l && match; i++,k++) {
 			flt = dmx_filter[startpos+2+i];
 			mask = dmx_filter[startpos+2+16+i];
-			if (!mask) break;	
+			if (!mask) break;
                         match = (flt == (ep->emm[k]&mask));
                         if (k==0) k+=2; //skip len
 		}
 		if (match)
-		    return 1; //valid emm 
-		
+		    return 1; //valid emm
+
 	}
 	return 0; //emm filter does not match, illegal emm, return
 }
@@ -3582,7 +3582,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			char buf[80];
 			strftime (buf, sizeof(buf), "%Y/%m/%d %H:%M:%S", &timeinfo);
 			snprintf (token, sizeof(token), "%s%s_emm.log", cfg.emmlogdir?cfg.emmlogdir:cs_confdir, aureader->label);
-			
+
 			if (!(fp = fopen (token, "a"))) {
 				cs_log ("ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
 			} else if(cs_malloc(&tmp2, (emm_length + 3)*2 + 1, -1)){
@@ -3818,7 +3818,7 @@ void * work_thread(void *ptr) {
 				cs_debug_mask(D_TRACE, "ending thread (kill)");
 				if (data && data!=&tmp_data)
 					free(data);
-	
+
 				data = NULL;
 				cleanup_thread(cl);
 				if (restart_reader)
@@ -3827,10 +3827,10 @@ void * work_thread(void *ptr) {
 				pthread_exit(NULL);
 				return NULL;
 			}
-			
+
 			if (data)
 				cs_debug_mask(D_TRACE, "data from add_job action=%d client %c %s", data->action, cl->typ, username(cl));
-	
+
 			if (!data) {
 				if (!cl->kill && cl->typ != 'r') check_status(cl);	// do not call for physical readers as this might cause an endless job loop
 				pthread_mutex_lock(&cl->thread_lock);
@@ -3841,7 +3841,7 @@ void * work_thread(void *ptr) {
 				}
 				pthread_mutex_unlock(&cl->thread_lock);
 			}
-	
+
 			if (!data) {
 	            /* for serial client cl->pfd is file descriptor for serial port not socket
 	               for example: pfd=open("/dev/ttyUSB0"); */
@@ -3849,7 +3849,7 @@ void * work_thread(void *ptr) {
 					break;
 				pfd[0].fd = cl->pfd;
 				pfd[0].events = POLLIN | POLLPRI | POLLHUP;
-				
+
 				pthread_mutex_lock(&cl->thread_lock);
 				cl->thread_active = 2;
 				pthread_mutex_unlock(&cl->thread_lock);
@@ -3857,15 +3857,15 @@ void * work_thread(void *ptr) {
 				pthread_mutex_lock(&cl->thread_lock);
 				cl->thread_active = 1;
 				pthread_mutex_unlock(&cl->thread_lock);
-	
+
 				if (rc == -1)
 					cs_debug_mask(D_TRACE, "poll wakeup");
-	
+
 				if (rc>0) {
 					cs_debug_mask(D_TRACE, "data on socket");
 					data=&tmp_data;
 					data->ptr = NULL;
-					
+
 					if (reader)
 						data->action = ACTION_READER_REMOTE;
 					else {
@@ -3881,20 +3881,20 @@ void * work_thread(void *ptr) {
 					}
 				}
 			}
-	
+
 			if (!data)
 				continue;
-	
+
 			if (data->action < 20 && !reader) {
 				if (data!=&tmp_data)
 					free(data);
 				data = NULL;
 				break;
 			}
-	
+
 			if (!data->action)
 				break;
-		
+
 			now = time(NULL);
 			time_t diff = (time_t)(cfg.ctimeout/1000)+1;
 			if (data != &tmp_data && data->time < now-diff) {
@@ -3903,38 +3903,38 @@ void * work_thread(void *ptr) {
 				data = NULL;
 				continue;
 			}
-	
+
 			switch(data->action) {
 				case ACTION_READER_IDLE:
 					reader_do_idle(reader);
 					break;
 				case ACTION_READER_REMOTE:
 					s = check_fd_for_data(cl->pfd);
-					
+
 					if (s == 0) // no data, another thread already read from fd?
 						break;
-	
+
 					if (s < 0) {
 						if (reader->ph.type==MOD_CONN_TCP)
 							network_tcp_connection_close(reader, "disconnect");
 						break;
 					}
-	
+
 					rc = reader->ph.recv(cl, mbuf, bufsize);
 					if (rc < 0) {
 						if (reader->ph.type==MOD_CONN_TCP)
 							network_tcp_connection_close(reader, "disconnect on receive");
 						break;
 					}
-	
+
 					cl->last=now;
 					idx=reader->ph.c_recv_chk(cl, dcw, &rc, mbuf, rc);
-	
+
 					if (idx<0) break;  // no dcw received
 					if (!idx) idx=cl->last_idx;
-	
+
 					reader->last_g=now; // for reconnect timeout
-	
+
 					for (i = 0, n = 0; i < cfg.max_pending && n == 0; i++) {
 						if (cl->ecmtask[i].idx==idx) {
 							cl->pending--;
@@ -3997,14 +3997,14 @@ void * work_thread(void *ptr) {
 						cl->kill=1; // kill client on next run
 						continue;
 					}
-	
+
 					n = ph[cl->ctyp].recv(cl, mbuf, bufsize);
 					if (n < 0) {
 						cl->kill=1; // kill client on next run
 						continue;
 					}
 					ph[cl->ctyp].s_handler(cl, mbuf, n);
-		
+
 					break;
 				case ACTION_CLIENT_ECM_ANSWER:
 					chk_dcw(cl, data->ptr);
@@ -4026,7 +4026,7 @@ void * work_thread(void *ptr) {
 	#ifdef CS_CACHEEX
 				case ACTION_CACHE_PUSH_OUT: {
 					ECM_REQUEST *er = data->ptr;
-	
+
 					int32_t res=0, stats = -1;
 					if (reader) {
 						struct s_client *cl = reader->client;
@@ -4037,15 +4037,15 @@ void * work_thread(void *ptr) {
 					}
 					else
 						res = ph[cl->ctyp].c_cache_push(cl, er);
-	
+
 					debug_ecm(D_CACHEEX, "pushed ECM %s to %s res %d stats %d", buf, username(cl), res, stats);
 					free(data->ptr);
-	
+
 					cl->cwcacheexpush++;
 					if (cl->account)
 						cl->account->cwcacheexpush++;
 					first_client->cwcacheexpush++;
-	
+
 					break;
 				}
 	#endif
@@ -4053,24 +4053,24 @@ void * work_thread(void *ptr) {
 					cl->kill = 1;
 					break;
 			}
-	
+
 			if (data!=&tmp_data)
 				free(data);
-	
+
 			data = NULL;
 		}
-	
+
 		if (thread_pipe[1]){
 			if(write(thread_pipe[1], mbuf, 1) == -1){ //wakeup client check
 				cs_debug_mask(D_TRACE, "Writing to pipe failed (errno=%d %s)", errno, strerror(errno));
 			}
 		}
-		
+
 		// Check for some race condition where while we ended, another thread added a job
 		pthread_mutex_lock(&cl->thread_lock);
 		if (cl->joblist && ll_count(cl->joblist)>0) {
 			pthread_mutex_unlock(&cl->thread_lock);
-			cs_debug_mask(D_TRACE, "resuming thread");	
+			cs_debug_mask(D_TRACE, "resuming thread");
 			continue;
 		} else {
 			cl->thread_active = 0;
@@ -4078,7 +4078,7 @@ void * work_thread(void *ptr) {
 			break;
 		}
 	}
-	cs_debug_mask(D_TRACE, "ending thread");	
+	cs_debug_mask(D_TRACE, "ending thread");
 	free(mbuf);
 	pthread_exit(NULL);
 	return NULL;
@@ -4216,7 +4216,7 @@ static void * check_thread(void) {
 						debug_ecm(D_TRACE, "timeout for %s %s", username(er->client), buf);
 						write_ecm_answer(NULL, er, E_TIMEOUT, 0, NULL, NULL);
 					}
-#ifdef WITH_LB		
+#ifdef WITH_LB
 					if (!er->ecmcacheptr) { //do not add stat for cache entries:
 						//because of lb, send E_TIMEOUT for all readers:
 						struct s_ecm_answer *ea_list;
@@ -4232,7 +4232,7 @@ static void * check_thread(void) {
 				}
 			}
 			if (!next_check || (time_to_check > 0 && time_to_check < next_check))
-				next_check = time_to_check;		
+				next_check = time_to_check;
 		}
 		cs_readunlock(&ecmcache_lock);
 
@@ -4559,7 +4559,7 @@ int32_t accept_connection(int32_t i, int32_t j) {
 			cl->pfd=pfd3;
 			cl->port=ntohs(cad.sin_port);
 			cl->typ='c';
-			
+
 			add_job(cl, ACTION_CLIENT_INIT, NULL, 0);
 		}
 	}
@@ -4702,7 +4702,7 @@ int32_t main (int32_t argc, char *argv[])
 
   void (*cardreader_def[])(struct s_cardreader *)=
   {
-#ifdef WITH_CARDREADER 
+#ifdef WITH_CARDREADER
 	cardreader_mouse,
 	cardreader_smargo,
 #ifdef WITH_STAPI
@@ -4734,10 +4734,10 @@ int32_t main (int32_t argc, char *argv[])
 			  cs_dblevel=atoi(optarg);
 			  break;
 		  case 'r':
-		  
-#ifdef WEBIF		  
+
+#ifdef WEBIF
 			  cs_restart_mode=atoi(optarg);
-#endif			
+#endif
 			break;
 		  case 't':
 			  mkdir(optarg, S_IRWXU);
@@ -4752,7 +4752,7 @@ int32_t main (int32_t argc, char *argv[])
 			case 'w':
 				cs_waittime=strtoul(optarg, NULL, 10);
 				break;
-#ifdef WEBIF 
+#ifdef WEBIF
 			case 'u':
 				cs_http_use_utf8 = 1;
 				printf("WARNING: Web interface UTF-8 mode enabled. Carefully read documentation as bugs may arise.\n");
@@ -4889,8 +4889,8 @@ int32_t main (int32_t argc, char *argv[])
 	else
 		start_thread((void *) &http_srv, "http");
 #endif
-	start_thread((void *) &reader_check, "reader check"); 
-	start_thread((void *) &check_thread, "check"); 
+	start_thread((void *) &reader_check, "reader check");
+	start_thread((void *) &check_thread, "check");
 
 	start_lcd_thread();
 

@@ -1,5 +1,5 @@
 #include "globals.h"
-#ifdef READER_CONAX 
+#ifdef READER_CONAX
 #include "reader-common.h"
 #include "cscrypt/bn.h"
 
@@ -20,26 +20,26 @@ static void RSA_CNX(struct s_reader *reader, unsigned char *msg, unsigned char *
   int32_t n = 0;
   BN_CTX *ctx;
   BIGNUM *bn_mod, *bn_exp, *bn_data, *bn_res;
-  
+
   ReverseMem(msg, modbytes);
-  
+
     bn_mod = BN_new ();
     bn_exp = BN_new ();
     bn_data = BN_new ();
     bn_res = BN_new ();
     ctx= BN_CTX_new();
-    if (ctx == NULL) { 
+    if (ctx == NULL) {
       rdr_debug_mask(reader, D_READER, "RSA Error in RSA_CNX");
     }
     BN_bin2bn (mod, modbytes, bn_mod); // rsa modulus
     BN_bin2bn (exp, expbytes, bn_exp); // exponent
     BN_bin2bn (msg, modbytes, bn_data);
     BN_mod_exp (bn_res, bn_data, bn_exp, bn_mod, ctx);
-    
+
     memset (msg, 0, modbytes);
     n = BN_bn2bin (bn_res, msg);
     BN_CTX_free (ctx);
-    
+
    ReverseMem(msg, n);
 
 }
@@ -48,7 +48,7 @@ static time_t chid_date(const uchar *ptr, char *buf, int32_t l)
 {
 	time_t rc = 0;
 	struct tm timeinfo;
-	memset(&timeinfo, 0, sizeof(struct tm));	
+	memset(&timeinfo, 0, sizeof(struct tm));
   if (buf){
 		timeinfo.tm_year = 90 + (ptr[1]>>4)+(((ptr[0]>>5)&7)*10);
 		timeinfo.tm_mon = (ptr[1]&0xf) - 1;
@@ -67,7 +67,7 @@ static int32_t read_record(struct s_reader * reader, const uchar *cmd, const uch
   write_cmd(cmd, data);		// select record
   if (cta_res[0]!=0x98)
     return(-1);
-    
+
   insCA[4]=cta_res[1];		// get len
   write_cmd(insCA, NULL);	// read record
   if ((cta_res[cta_lr-2]!=0x90) || (cta_res[cta_lr-1]))
@@ -80,7 +80,7 @@ static uint8_t PairingECMRotation(struct s_reader * reader, const ECM_REQUEST *e
   unsigned char cta_res[CTA_RES_LEN] = {0x00};
   uchar ins26[] = {0xDD, 0x26, 0x00, 0x00, 0x03, 0x10, 0x01, 0x00};
   uint8_t cnxcurrecm = 0;
-  
+
   if(0x0 != reader->rsa_mod[0] && n > 3 &&
      0x54 == er->ecm[n-3] &&
      0x02 == er->ecm[n-2] &&
@@ -95,7 +95,7 @@ static uint8_t PairingECMRotation(struct s_reader * reader, const ECM_REQUEST *e
       ins26[7] = 0x30;
     else
       ins26[7] = 0x40;
-    
+
     if(read_record(reader, ins26, ins26+5, cta_res)<=0)
       rdr_log(reader, "PairingECMRotation - ERROR");
   }
@@ -153,7 +153,7 @@ static int32_t conax_card_init(struct s_reader * reader, ATR *newatr)
   memset(reader->prid, 0x00, sizeof(reader->prid));
 
   rdr_log_sensitive(reader, "type: Conax, caid: %04X, serial: {%llu}, hex serial: {%02x%02x%02x%02x}, card: v%d",
-         reader->caid, (unsigned long long) b2ll(6, reader->hexserial), reader->hexserial[2], 
+         reader->caid, (unsigned long long) b2ll(6, reader->hexserial), reader->hexserial[2],
          reader->hexserial[3], reader->hexserial[4], reader->hexserial[5], cardver);
 
   rdr_log(reader, "Providers: %d", reader->nprov);
@@ -197,7 +197,7 @@ static int32_t conax_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, str
   buf[1]=n+1;
   if(0x0 != PairingECMRotation(reader, er, n))
     buf[2]=2; // card will answer with encrypted dw
-  else 
+  else
     buf[2]=0;
 
   memcpy(buf+3, er->ecm, n);
@@ -442,7 +442,7 @@ static int32_t conax_card_info(struct s_reader * reader)
 					chid[0] = '\0';
 					for (k=0, i=j+4+type; (i<j+cta_res[j+1]); i+=cta_res[i+1]+2) {
 						switch(cta_res[i]) {
-							case 0x01: 
+							case 0x01:
 								l=(cta_res[i+1]<(sizeof(provname)-1)) ? cta_res[i+1] : sizeof(provname)-1;
 								memcpy(provname, cta_res+i+2, l);
 								provname[l]='\0';
@@ -480,7 +480,7 @@ static int32_t conax_card_info(struct s_reader * reader)
 	return OK;
 }
 
-void reader_conax(struct s_cardsystem *ph) 
+void reader_conax(struct s_cardsystem *ph)
 {
 	ph->do_emm=conax_do_emm;
 	ph->do_ecm=conax_do_ecm;

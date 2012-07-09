@@ -12,7 +12,7 @@ static int32_t vg1_do_cmd(struct s_reader *reader, const unsigned char *ins, con
   unsigned char len = 0;
   len = ins2[4];
 
-  
+
 
   if (txbuff == NULL) {
     if (!write_cmd_vg(ins2, NULL) || !status_ok(cta_res + len)) {
@@ -121,7 +121,7 @@ static int32_t videoguard1_card_init(struct s_reader *reader, ATR *newatr)
   /* NDS1 Class 48 only cards only need a very basic initialisation
      NDS1 Class 48 only cards do not respond to vg1_do_cmd(ins7416)
      nor do they return list of valid command therefore do not even try
-     NDS1 Class 48 only cards need to be told the length as (48, ins, 00, 80, 01) 
+     NDS1 Class 48 only cards need to be told the length as (48, ins, 00, 80, 01)
      does not return the length */
 
   int32_t l = 0;
@@ -230,7 +230,7 @@ static int32_t videoguard1_card_init(struct s_reader *reader, ATR *newatr)
   if (!boxidOK) {
     rdr_log(reader, "no boxID available");
     return ERROR;
-  } 
+  }
 
   // Send BoxID
   static const unsigned char ins4C[5] = { 0x48, 0x4C, 0x00, 0x00, 0x09 };
@@ -317,7 +317,7 @@ static int32_t videoguard1_card_info(struct s_reader *reader)
   return OK;
 }
 
-void reader_videoguard1(struct s_cardsystem *ph) 
+void reader_videoguard1(struct s_cardsystem *ph)
 {
 	ph->do_emm=videoguard1_do_emm;
 	ph->do_ecm=videoguard1_do_ecm;

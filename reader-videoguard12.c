@@ -121,7 +121,7 @@ static int32_t videoguard12_card_init(struct s_reader *reader, ATR *newatr)
   /* NDS12 Class 48/49/4A/4B cards only need a very basic initialisation
      NDS12 Class 48/49/4A/4B cards do not respond to ins7416
      nor do they return list of valid command therefore do not even try
-     NDS12 Class 48/49/4A/4B cards need to be told the length as (48, ins, 00, 80, 01) 
+     NDS12 Class 48/49/4A/4B cards need to be told the length as (48, ins, 00, 80, 01)
      does not return the length */
 
   static const unsigned char ins4852[5] = { 0x48, 0x52, 0x00, 0x00, 0x14 };
@@ -138,7 +138,7 @@ static int32_t videoguard12_card_init(struct s_reader *reader, ATR *newatr)
   int32_t boxidOK = 0;
 
 /*
-  // Try to get the boxid from the card, even if BoxID specified in the config file 
+  // Try to get the boxid from the card, even if BoxID specified in the config file
   unsigned char ins36[5] = { 0x48, 0x36, 0x00, 0x00, 0x53 };
 
   // get the length of ins36
@@ -368,7 +368,7 @@ static int32_t videoguard12_card_info(struct s_reader *reader)
   return OK;
 }
 
-void reader_videoguard12(struct s_cardsystem *ph) 
+void reader_videoguard12(struct s_cardsystem *ph)
 {
   ph->do_emm=videoguard12_do_emm;
   ph->do_ecm=videoguard12_do_ecm;

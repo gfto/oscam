@@ -542,7 +542,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
 	}
   }
   //Checking entitlements:
-  if (cfg.dvbapi_checking_entitlements && ll_count(rdr->ll_entitlements) > 0) {
+  if (ll_count(rdr->ll_entitlements) > 0) {
 		LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
 		S_ENTITLEMENT *item;
 		int8_t found = 0;
