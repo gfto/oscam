@@ -2,8 +2,6 @@
 #include "reader-common.h"
 #include "csctapi/ifd_sc8in1.h"
 
-int32_t logfd = 0;
-
 static char *debug_mask_txt(int mask) {
 	switch (mask) {
 		case D_EMM    : return "EMM: ";

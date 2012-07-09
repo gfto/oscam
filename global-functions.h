@@ -268,11 +268,9 @@ extern void cs_disable_log(int8_t disabled);
 /* ===========================
  *        oscam-reader
  * =========================== */
-extern int32_t logfd;
 extern int32_t reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int32_t l, uchar *response, uint16_t *response_length);
 extern int32_t card_write(struct s_reader * reader, const uchar *, const uchar *, uchar *, uint16_t *);
 extern int32_t check_sct_len(const unsigned char *data, int32_t off);
-extern void cs_ri_brk(struct s_reader * reader, int32_t);
 extern void rdr_log(struct s_reader * reader, char *,...) __attribute__ ((format (printf, 2, 3)));
 extern void rdr_log_sensitive(struct s_reader * reader, char *,...) __attribute__ ((format (printf, 2, 3)));
 extern void rdr_debug_mask(struct s_reader * reader, uint16_t mask, char *fmt, ...) __attribute__ ((format (printf, 3, 4)));

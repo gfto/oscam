@@ -1,6 +1,8 @@
 #include "globals.h"
 #if defined MODULE_CAMD35 || defined MODULE_CAMD35_TCP
 
+static int32_t logfd = 0;
+
 //CMD00 - ECM (request)
 //CMD01 - ECM (response)
 //CMD02 - EMM (in clientmode - set EMM, in server mode - EMM data) - obsolete
