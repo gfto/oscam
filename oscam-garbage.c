@@ -24,15 +24,15 @@ void add_garbage(void *data) {
 #endif
 	if (!data)
 		return;
-
+	
 	if (!garbage_collector_active || garbage_debug == 1) {
 		free(data);
 		return;
 	}
-
+	
 	int32_t bucket = (uintptr_t)data/16 % HASH_BUCKETS;
 	cs_writelock(&garbage_lock[bucket]);
-
+	
 #ifdef WITH_DEBUG
 	if(garbage_debug == 2){
 		struct cs_garbage *garbagecheck = garbage_first[bucket];
@@ -40,7 +40,7 @@ void add_garbage(void *data) {
 			if(garbagecheck->data == data) {
 				cs_log("Found a try to add garbage twice. Not adding the element to garbage list...");
 				cs_log("Current garbage addition: %s, line %d.", file, line);
-				cs_log("Original garbage addition: %s, line %d.", garbagecheck->file, garbagecheck->line);
+				cs_log("Original garbage addition: %s, line %d.", garbagecheck->file, garbagecheck->line);				
 				cs_writeunlock(&garbage_lock[bucket]);
 				return;
 			}
@@ -48,13 +48,9 @@ void add_garbage(void *data) {
 		}
 	}
 #endif
-
-	struct cs_garbage *garbage = malloc(sizeof(struct cs_garbage));
-	    if (!garbage) {
-	                free(data);
-	                cs_writeunlock(&garbage_lock[bucket]);
-	                return;
-	        }
+	
+	struct cs_garbage *garbage;
+	if (!cs_malloc(&garbage, sizeof(struct cs_garbage), -1)) return;
 	garbage->time = time(NULL);
 	garbage->data = data;
 	garbage->next = garbage_first[bucket];
@@ -63,7 +59,7 @@ void add_garbage(void *data) {
 	garbage->line = line;
 	#endif
 	garbage_first[bucket] = garbage;
-
+	
 	cs_writeunlock(&garbage_lock[bucket]);
 }
 
@@ -71,20 +67,20 @@ void garbage_collector(void) {
         time_t now;
         int8_t i;
         struct cs_garbage *garbage, *next, *prev;
-
+        
         while (garbage_collector_active) {
-
+                
                 for(i = 0; i < HASH_BUCKETS; ++i){
 	                cs_writelock(&garbage_lock[i]);
 	                now = time(NULL);
-
+	
 	                prev = NULL;
-	                garbage = garbage_first[i];
+	                garbage = garbage_first[i];  
 	                while (garbage) {
 	                        next = garbage->next;
 	                        if (now > (time_t)(garbage->time+cfg.ctimeout/1000+1)) { //clienttimeout +1 second
 	                                free(garbage->data);
-
+	                                
 	                                if (prev)
 	                                        prev->next = next;
 	                                else
@@ -131,14 +127,14 @@ void stop_garbage_collector(void)
 {
 	if (garbage_collector_active) {
 		int8_t i;
-
+		
 		garbage_collector_active = 0;
 		for(i = 0; i < HASH_BUCKETS; ++i)
 			cs_writelock(&garbage_lock[i]);
-
+		
 		pthread_cancel(garbage_thread);
 		cs_sleepms(100);
-
+		
 		for(i = 0; i < HASH_BUCKETS; ++i){
 			while (garbage_first[i]) {
 				struct cs_garbage *next = garbage_first[i]->next;
