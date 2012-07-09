@@ -1,6 +1,10 @@
 #ifndef HEADER_CSCRYPT_H
 #define HEADER_CSCRYPT_H
 
+#include <sys/types.h>
+#include <stdint.h>
+#include <stddef.h>
+
 #include "../oscam-config.h"
 #include "../oscam-config-funcs.h"
 
