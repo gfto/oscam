@@ -542,6 +542,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
 	}
   }
   //Checking entitlements:
+  /*
   if (ll_count(rdr->ll_entitlements) > 0) {
 		LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
 		S_ENTITLEMENT *item;
@@ -557,7 +558,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
 			return 0;
 		}
   }
-
+*/
   //Checking ecmlength:
   if (rdr->ecmWhitelist && er->l){
   	struct s_ecmWhitelist *tmp;
