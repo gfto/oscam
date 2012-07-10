@@ -474,7 +474,7 @@ static void* mcr_update_display_thread(void *param) {
 int32_t MCR_DisplayText(struct s_reader *reader, char* text, uint16_t text_len, uint16_t time, uint8_t blocking) {
 	struct s_sc8in1_display *display;
 	if (cs_malloc(&display, sizeof(struct s_sc8in1_display), -1)) {
-		if ( ! cs_malloc(&display->text, text_len, -1) ) {
+		if (!cs_malloc(&display->text, text_len, -1)) {
 			rdr_log(reader, "MCR_DisplayText: Out of memory.");
 			free(display);
 			return ERROR;

@@ -5092,11 +5092,8 @@ void arm_led_stop_thread(void) {
 }
 
 void cs_switch_led(int32_t led, int32_t action) {
-	struct s_arm_led *arm_led = (struct s_arm_led *)malloc(sizeof(struct s_arm_led));
-	if (arm_led == NULL) {
-		cs_log("ERROR: cs_switch_led out of memory");
-		return;
-	}
+	struct s_arm_led *arm_led;
+    if(!cs_malloc(&arm_led,sizeof(struct s_arm_led), -1)) return 0;
 	arm_led->start_time = time((time_t)0);
 	arm_led->led = led;
 	arm_led->action = action;

@@ -713,7 +713,8 @@ int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len) {
 				free(tmp);
 				return 0;
 			}
-			unsigned char *assembled_EMM=malloc(emm_len+12);
+			unsigned char *assembled_EMM;
+			if(!cs_malloc(&assembled_EMM,emm_len+12, -1)) return 0;
 			memcpy(tmp,&buffer[5], *len-5);
 			memcpy(tmp+*len-5,&emm_global[12],emm_global_len-12);
 			memcpy(assembled_EMM,emm_global,12);

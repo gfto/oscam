@@ -1089,7 +1089,8 @@ static void newcamd_process_emm(uchar *buf)
 static void newcamd_report_cards(struct s_client *client) {
 	int32_t j, k, l;
 	uint8_t buf[512];
-	custom_data_t *cd = malloc(sizeof(struct custom_data));
+	custom_data_t *cd;
+    if(!cs_malloc(&cd,sizeof(struct custom_data), -1)) return;
 	memset(cd, 0, sizeof(struct custom_data));
 	memset(buf, 0, sizeof(buf));
 

@@ -42,7 +42,7 @@ int32_t Cool_Init (struct s_reader *reader)
 		rdr_log(reader, "Coolstream reader device can only be 0 or 1");
 		return FALSE;
 	}
-	reader->spec_dev=malloc(sizeof(struct s_coolstream_reader));
+    if(!cs_malloc(&reader->spec_dev,sizeof(struct s_coolstream_reader), -1)) return 0;
 	if (cnxt_smc_open (&specdev()->handle, &reader_nb, NULL, NULL))
 		return FALSE;
 
@@ -94,7 +94,7 @@ int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
 		rdr_debug_mask(reader, D_DEVICE, "COOL: clock freq: %i, scheduling change to %i for card reset",
 			clk, reader->cardmhz*10000);
 		call (Cool_SetClockrate(reader, reader->cardmhz));
-	} 
+	}
 
 	//reset card
 	ret = cnxt_smc_reset_card (specdev()->handle, ATR_TIMEOUT, NULL, NULL);
@@ -104,7 +104,7 @@ int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
 	unsigned char buf[40];
 	ret = cnxt_smc_get_atr (specdev()->handle, buf, &n);
 	coolapi_check_error("cnxt_smc_get_atr", ret);
-		
+
 	call (!ATR_InitFromArray (atr, buf, n) == ATR_OK);
 	{
 		cs_sleepms(50);
@@ -113,7 +113,7 @@ int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
 }
 
 int32_t Cool_Transmit (struct s_reader *reader, BYTE * sent, uint32_t size)
-{ 
+{
 	specdev()->cardbuflen = 256;//it needs to know max buffer size to respond?
 
 	int32_t ret = cnxt_smc_read_write(specdev()->handle, FALSE, sent, size, specdev()->cardbuffer, &specdev()->cardbuflen, specdev()->read_write_transmit_timeout, 0);
@@ -124,7 +124,7 @@ int32_t Cool_Transmit (struct s_reader *reader, BYTE * sent, uint32_t size)
 }
 
 int32_t Cool_Set_Transmit_Timeout(struct s_reader *reader, uint32_t set)
-{ 
+{
 	//set=0 (init), set=1(after init)
 	if (set) {
 		if (reader->cool_timeout_after_init > 0) {
@@ -151,7 +151,7 @@ int32_t Cool_Set_Transmit_Timeout(struct s_reader *reader, uint32_t set)
 }
 
 int32_t Cool_Receive (struct s_reader *reader, BYTE * data, uint32_t size)
-{ 
+{
 	if (size > specdev()->cardbuflen)
 		size = specdev()->cardbuflen; //never read past end of buffer
 	memcpy(data, specdev()->cardbuffer, size);
@@ -159,7 +159,7 @@ int32_t Cool_Receive (struct s_reader *reader, BYTE * data, uint32_t size)
 	memmove(specdev()->cardbuffer, specdev()->cardbuffer+size, specdev()->cardbuflen);
 	rdr_ddump_mask(reader, D_DEVICE, data, size, "COOL Receive:");
 	return OK;
-}	
+}
 
 int32_t Cool_SetClockrate (struct s_reader *reader, int32_t mhz)
 {
@@ -200,7 +200,7 @@ int32_t Cool_WriteSettings (struct s_reader *reader, uint32_t UNUSED(BWT), uint3
 	if (clk/10000 != (uint32_t)reader->mhz) {
 		rdr_debug_mask(reader, D_DEVICE, "COOL: clock freq: %i, scheduling change to %i", clk, reader->mhz * 10000);
 		call (Cool_SetClockrate(reader, reader->mhz));
-	} 
+	}
 
 	return OK;
 }

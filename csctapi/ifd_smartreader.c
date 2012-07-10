@@ -103,11 +103,8 @@ int32_t SR_Init (struct s_reader *reader)
         rdr_log(reader, "Wrong device format (%s), it should be Device=bus:dev",reader->device);
         return ERROR;
     }
-    if(!reader->sr_config) reader->sr_config=malloc(sizeof(struct s_sr_config));
-    if(!reader->sr_config) {
-        rdr_log(reader, "Couldn't allocate memory for Device=%s config",reader->device);
-        return ERROR;
-    }
+    if(!reader->sr_config)
+    if(!cs_malloc(&reader->sr_config,sizeof(struct s_sr_config), -1)) return ERROR;
     memset(reader->sr_config, 0, sizeof(struct s_sr_config));
     cs_writelock(&sr_lock);
     rdr_debug_mask(reader, D_DEVICE, "SR: Looking for device %s on bus %s",devname,busname);
@@ -172,7 +169,7 @@ int32_t SR_Init (struct s_reader *reader)
 
     //Disable flow control
     ret=smartreader_setflowctrl(reader, 0);
-    
+
     cs_writeunlock(&sr_lock);
 
     // start the reading thread
