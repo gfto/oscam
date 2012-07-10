@@ -62,7 +62,7 @@ static int pandora_recv(struct s_client *cl, uchar *buf, int32_t l) {
 	else {
 		uint32_t clilen = sizeof(cl->udp_sa);
 		ret = recvfrom(cl->udp_fd, buf, l, 0, (struct sockaddr *) &cl->udp_sa,
-				&clilen);
+				(socklen_t *)&clilen);
 	}
 	if (ret < 1)
 		return (-1);

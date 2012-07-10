@@ -5803,7 +5803,7 @@ int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line)
 static struct s_global_whitelist *global_whitelist_read_int(void) {
 	FILE *fp;
 	char token[1024], str1[1024];
-	char type;
+	unsigned char type;
 	int32_t i, ret, count=0;
 	struct s_global_whitelist *new_whitelist = NULL, *entry, *last=NULL;
 	uint32_t line = 0;
@@ -5973,7 +5973,7 @@ struct s_cacheex_matcher *is_cacheex_matcher_matching(ECM_REQUEST *from_er, ECM_
 static struct s_cacheex_matcher *cacheex_matcher_read_int(void) {
 	FILE *fp;
 	char token[1024];
-	char type;
+	unsigned char type;
 	int32_t i, ret, count=0;
 	struct s_cacheex_matcher *new_cacheex_matcher = NULL, *entry, *last=NULL;
 	uint32_t line = 0;
