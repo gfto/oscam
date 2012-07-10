@@ -462,7 +462,7 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, BYTE * data)
 
 	if (reader->crdr.active==1) {
 		if (reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.need_inverse==1) {
-            if(!cs_malloc(&buffer,sizeof (BYTE),size)) return -1; 
+            if(!cs_malloc(&buffer,sizeof (BYTE)*size,-1)) return -1;
 			memcpy (buffer, data, size);
 			ICC_Async_InvertBuffer (size, buffer);
 			sent = buffer;

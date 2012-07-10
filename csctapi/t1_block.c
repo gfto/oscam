@@ -55,7 +55,7 @@ T1_Block * T1_Block_New (unsigned char * buffer, uint32_t length)
         block->length = T1_BLOCK_MAX_SIZE;
       else
         block->length = length;
-          if(cs_malloc(&block->data,block->length,sizeof(unsigned char)))
+          if(cs_malloc(&block->data,sizeof (unsigned char)*block->length,-1))
           memcpy (block->data, buffer, block->length);
       else {
           free (block);
@@ -71,7 +71,7 @@ T1_Block * T1_Block_NewIBlock (unsigned char len, unsigned char * inf, unsigned 
    if(cs_malloc(&block,sizeof(T1_Block), -1))
      {
       block->length = len + 4;
-            if(cs_malloc(&block->data, block->length ,sizeof(unsigned char))) {
+        if(cs_malloc(&block->data,sizeof (unsigned char)*block->length,-1))  {
           block->data[0] = T1_BLOCK_NAD;
           block->data[1] = T1_BLOCK_I | ((ns << 6) & 0x40);
           if (more)
@@ -95,7 +95,7 @@ T1_Block * T1_Block_NewRBlock (unsigned char type, unsigned char nr)
      if(cs_malloc(&block,sizeof(T1_Block), -1))
 {
       block->length = 4;
-            if(cs_malloc(&block->data,block->length ,sizeof(unsigned char))) {
+            if(cs_malloc(&block->data,sizeof (unsigned char)*block->length,-1))  {
           block->data[0] = T1_BLOCK_NAD;
           block->data[1] = type | ((nr << 4) & 0x10);
           block->data[2] = 0x00;
@@ -115,7 +115,7 @@ T1_Block * T1_Block_NewSBlock (unsigned char type, unsigned char len, unsigned c
      if(cs_malloc(&block,sizeof(T1_Block), -1))
 {
       block->length = 4 + len;
-            if(cs_malloc(&block->data,block->length ,sizeof(unsigned char))) {
+            if(cs_malloc(&block->data,sizeof (unsigned char)*block->length,-1))  {
           block->data[0] = T1_BLOCK_NAD;
           block->data[1] = type;
           block->data[2] = len;
