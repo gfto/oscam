@@ -30,14 +30,14 @@
 /*
  * Not exported constants definition
  */
- 
+
 #define T1_BLOCK_NAD        0x00
 
 /*
  * Not exported functions declaration
  */
 static unsigned char T1_Block_LRC (unsigned char * data, uint32_t length);
- 
+
 /*
  * Exported functions definition
  */
@@ -45,20 +45,17 @@ static unsigned char T1_Block_LRC (unsigned char * data, uint32_t length);
 T1_Block * T1_Block_New (unsigned char * buffer, uint32_t length)
 {
   T1_Block * block;
-  
+
   if (length < 4)
     return NULL;
-  
-  block = (T1_Block *) malloc (sizeof (T1_Block));
-  
-  if (block != NULL) {
+
+  if(cs_malloc(&block,sizeof(T1_Block), -1))
+ {
       if (length > T1_BLOCK_MAX_SIZE)
         block->length = T1_BLOCK_MAX_SIZE;
       else
         block->length = length;
-      block->data = (unsigned char *) calloc (block->length, sizeof (unsigned char));
-      
-      if (block->data != NULL)
+          if(cs_malloc(&block->data,block->length,sizeof(unsigned char)))
           memcpy (block->data, buffer, block->length);
       else {
           free (block);
@@ -71,11 +68,10 @@ T1_Block * T1_Block_New (unsigned char * buffer, uint32_t length)
 T1_Block * T1_Block_NewIBlock (unsigned char len, unsigned char * inf, unsigned char ns, int32_t more)
 {
   T1_Block * block;
-  block = (T1_Block *) malloc (sizeof (T1_Block));
-  if (block != NULL) {
+   if(cs_malloc(&block,sizeof(T1_Block), -1))
+     {
       block->length = len + 4;
-      block->data = (unsigned char *) calloc (block->length, sizeof (unsigned char));
-      if (block->data != NULL) {
+            if(cs_malloc(&block->data, block->length ,sizeof(unsigned char))) {
           block->data[0] = T1_BLOCK_NAD;
           block->data[1] = T1_BLOCK_I | ((ns << 6) & 0x40);
           if (more)
@@ -96,11 +92,10 @@ T1_Block * T1_Block_NewIBlock (unsigned char len, unsigned char * inf, unsigned 
 T1_Block * T1_Block_NewRBlock (unsigned char type, unsigned char nr)
 {
   T1_Block * block;
-  block = (T1_Block *) malloc (sizeof (T1_Block));
-  if (block != NULL) {
+     if(cs_malloc(&block,sizeof(T1_Block), -1))
+{
       block->length = 4;
-      block->data = (unsigned char *) calloc (block->length, sizeof (unsigned char));
-      if (block->data != NULL) {
+            if(cs_malloc(&block->data,block->length ,sizeof(unsigned char))) {
           block->data[0] = T1_BLOCK_NAD;
           block->data[1] = type | ((nr << 4) & 0x10);
           block->data[2] = 0x00;
@@ -117,11 +112,10 @@ T1_Block * T1_Block_NewRBlock (unsigned char type, unsigned char nr)
 T1_Block * T1_Block_NewSBlock (unsigned char type, unsigned char len, unsigned char * inf)
 {
   T1_Block * block;
-  block = (T1_Block *) malloc (sizeof (T1_Block));
-  if (block != NULL) {
+     if(cs_malloc(&block,sizeof(T1_Block), -1))
+{
       block->length = 4 + len;
-      block->data = (unsigned char *) calloc (block->length, sizeof (unsigned char));
-      if (block->data != NULL) {
+            if(cs_malloc(&block->data,block->length ,sizeof(unsigned char))) {
           block->data[0] = T1_BLOCK_NAD;
           block->data[1] = type;
           block->data[2] = len;
@@ -188,6 +182,6 @@ static unsigned char T1_Block_LRC (unsigned char * data, uint32_t length)
   lrc = 0x00;
   for (i = 0; i < length; i++)
       lrc ^= data[i];
-  return lrc;       
+  return lrc;
 }
 #endif
