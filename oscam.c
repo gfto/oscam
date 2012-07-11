@@ -5096,7 +5096,7 @@ void cs_switch_led(int32_t led, int32_t action) {
     if(cs_malloc(&arm_led,sizeof(struct s_arm_led), -1)) {
 	arm_led->start_time = time((time_t)0);
 	arm_led->led = led;
-	arm_led->action = action;
+	arm_led->action = action; }
 	if ( ! arm_led_actions ) {
 		arm_led_actions = ll_create("arm_led_actions");
 	}
@@ -5106,7 +5106,7 @@ void cs_switch_led(int32_t led, int32_t action) {
 		// when first cs_switch_led calls happen
 		pthread_kill(arm_led_thread, OSCAM_SIGNAL_WAKEUP);
 	}
-}
+
 }
 #endif
 

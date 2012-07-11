@@ -2193,7 +2193,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			demux[i].rdr=er->selected_reader;
 
 			for (j=0; j<demux[i].ECMpidcount; j++)
-				if ((demux[i].ECMpids[j].CAID == er->caid || demux[i].ECMpids[j].CAID == er->ocaid) && demux[i].ECMpids[j].ECM_PID == er->pid)
+				if ((demux[i].ECMpids[j].CAID == er->caid || demux[i].ECMpids[j].CAID == er->ocaid) && demux[i].ECMpids[j].ECM_PID == er->pid && demux[i].ECMpids[j].PROVID == er->prid)
 						break;
 			if (j==demux[i].ECMpidcount) continue;
 
@@ -2294,7 +2294,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 								demux[i].ECMpids[t].checked = 0;
 								demux[i].ECMpids[t].status = 0;
 							}
-							demux[i].tries = 0;
+							demux[i].tries = 3;
 							demux[i].curindex = 0;
 							demux[i].pidindex = -1;
 

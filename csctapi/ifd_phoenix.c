@@ -69,9 +69,9 @@ int32_t Phoenix_Init (struct s_reader * reader)
 			reader->gpio_outen, reader->gpio_out, reader->gpio_in);
 		set_gpio_input(reader);
 	}
-	
+
 	rdr_debug_mask(reader, D_IFD, "Initializing reader type=%d", reader->typ);
-	
+
 	/* Default serial port settings */
 	if (reader->atr[0] == 0) {
         call (IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW));
@@ -107,7 +107,7 @@ int32_t Phoenix_GetStatus (struct s_reader * reader, int32_t * status)
 }
 
 int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
-{	
+{
 		rdr_debug_mask(reader, D_IFD, "Resetting card");
 		int32_t ret;
 		int32_t i;
@@ -123,7 +123,7 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 
 		for(i=0; i<3; i++) {
 #if !defined(__CYGWIN__)
-			/* 
+			/*
 			* Pause for 200ms as this might help with the PL2303.
 			* Some users reporting that this breaks cygwin, so we exclude this.
 			*/
@@ -140,7 +140,7 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 			else
 				IO_Serial_RTS_Set(reader);
 #if defined(__CYGWIN__)
-			/* 
+			/*
 			* Pause for 200ms as this might help with the PL2303.
 			* Some users reporting that this breaks cygwin, so we went back to 50ms.
 			*/
@@ -182,7 +182,7 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 		ATR_InitFromArray (atr, atr_test, sizeof(atr_test));
 		//END OF PLAYGROUND
 */
-		
+
 		return ret;
 }
 
@@ -194,7 +194,7 @@ int32_t Phoenix_Transmit (struct s_reader * reader, BYTE * buffer, uint32_t size
 	{
 		/* Calculate number of bytes to send */
 		to_send = MIN(size, MAX_TRANSMIT);
-				
+
 		/* Send data */
 		if ((sent == 0) && (block_delay != char_delay))
 		{
@@ -230,7 +230,7 @@ int32_t Phoenix_SetBaudrate (struct s_reader * reader, uint32_t baudrate)
 	call (tcgetattr (reader->handle, &tio) != 0);
 	call (IO_Serial_SetBitrate (reader, baudrate, &tio));
 #if !defined(__CYGWIN__)
-	/* 
+	/*
 	* Pause for 200ms as this might help with the PL2303.
 	* Some users reporting that this breaks cygwin, so we exclude this.
 	*/
@@ -238,7 +238,7 @@ int32_t Phoenix_SetBaudrate (struct s_reader * reader, uint32_t baudrate)
 #endif
 	call (IO_Serial_SetProperties(reader, tio));
 #if !defined(__CYGWIN__)
-	/* 
+	/*
 	* Pause for 200ms as this might help with the PL2303.
 	* Some users reporting that this breaks cygwin, so we exclude this.
 	*/
@@ -264,7 +264,7 @@ int32_t Phoenix_Close (struct s_reader * reader)
 	return OK;
 }
 
-
+/*
 int32_t Phoenix_FastReset (struct s_reader * reader, int32_t delay)
 {
     IO_Serial_Ioctl_Lock(reader, 1);
@@ -282,14 +282,14 @@ int32_t Phoenix_FastReset (struct s_reader * reader, int32_t delay)
         IO_Serial_RTS_Clr(reader);
 
     IO_Serial_Ioctl_Lock(reader, 0);
-    
+
     cs_sleepms(50);
 
     IO_Serial_Flush(reader);
     return 0;
 
 }
-
+*/
 static int32_t mouse_init(struct s_reader *reader) {
 	rdr_log(reader, "mouse_test init");
 	reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
@@ -314,7 +314,7 @@ static int32_t mouse_transmit(struct s_reader *reader, unsigned char *sent, uint
 	return Phoenix_Transmit(reader, sent, size, reader->block_delay, reader->char_delay);
 }
 
-void cardreader_mouse(struct s_cardreader *crdr) 
+void cardreader_mouse(struct s_cardreader *crdr)
 {
 	crdr->desc		= "mouse_test";
 	crdr->reader_init	= mouse_init;
