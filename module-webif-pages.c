@@ -957,8 +957,8 @@ SFRTIFJFU0VSVkVEADs="
 			<TR><TD>##TPLHELPPREFIX##user#cccstealth##TPLHELPSUFFIX##CCC stealth:</A></TD><TD>\
 			<SELECT NAME=\"cccstealth\">\
 				<OPTION VALUE=\"-1\" ##CCCSTEALTHSELECTED-1##>GLOBAL: Use Global CCcam Stealth value</OPTION>\
-				<OPTION VALUE=\"0\"  ##CCCSTEALTHSELECTED0## >ENABLE: Use extended OSCam<->CCcam Protocol</OPTION>\
-				<OPTION VALUE=\"1\"  ##CCCSTEALTHSELECTED1## >DISABLE: Behaviour like the original CCcam Protocol</OPTION>\
+				<OPTION VALUE=\"0\"  ##CCCSTEALTHSELECTED0## >DISABLE: Use extended OSCam<->CCcam Protocol</OPTION>\
+				<OPTION VALUE=\"1\"  ##CCCSTEALTHSELECTED1## >ENABLE: Behaviour like the original CCcam Protocol</OPTION>\
 			</SELECT>\
 			&nbsp;Global CCcam Stealth value:<SPAN CLASS=\"global_conf\"><A HREF=\"config.html?part=cccam\">##STEALTH##</A></SPAN>\
 			</TD></TR>\n"
