@@ -50,7 +50,9 @@ int32_t pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
             free(mszReaders);
             return  2;
         }
-        if(!cs_malloc(&readers,sizeof(char *), -1)) return 2;
+
+        if (!cs_malloc(&readers,nbReaders * sizeof(char *), -1))
+            return 2;
 
         /* fill the readers table */
         nbReaders = 0;
