@@ -105,7 +105,6 @@ int32_t SR_Init (struct s_reader *reader)
     }
     if(!reader->sr_config)
     if(!cs_malloc(&reader->sr_config,sizeof(struct s_sr_config), -1)) return ERROR;
-    memset(reader->sr_config, 0, sizeof(struct s_sr_config));
     cs_writelock(&sr_lock);
     rdr_debug_mask(reader, D_DEVICE, "SR: Looking for device %s on bus %s",devname,busname);
 
