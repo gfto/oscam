@@ -2197,12 +2197,12 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 						break;
 			if (j==demux[i].ECMpidcount) continue;
 
-			if (er->rc < E_NOTFOUND && cfg.dvbapi_requestmode==0 && (demux[i].pidindex==-1) && er->caid!=0) {
+			if (er->rc < E_NOTFOUND && cfg.dvbapi_requestmode==0 && (demux[i].pidindex==-1) && (er->caid!=0 || er->ocaid!=0)) {
 			                delayer(er);
 			                dvbapi_start_descrambling(i);
 			}
 
-			if (er->rc < E_NOTFOUND && cfg.dvbapi_requestmode==1 && er->caid!=0 && demux[i].ECMpids[j].checked != 2) { //FOUND
+			if (er->rc < E_NOTFOUND && cfg.dvbapi_requestmode==1 && (er->caid!=0 || er->ocaid!=0) && demux[i].ECMpids[j].checked != 2) { //FOUND
 
                                         int32_t num_pids=0, last_idx=j;
 
@@ -2247,7 +2247,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 			if (er->rc >= E_NOTFOUND) {
 				edit_channel_cache(i, j, 0);
-				if ((er->caid >> 8) == 0x06 && demux[i].ECMpids[j].irdeto_chids < (((0xFFFF<<(demux[i].ECMpids[j].irdeto_numchids)) ^ 0xFFFF) & 0xFFFF)) {
+				if (((er->caid >> 8) == 0x06 || (er->ocaid >> 8) == 0x06) && demux[i].ECMpids[j].irdeto_chids < (((0xFFFF<<(demux[i].ECMpids[j].irdeto_numchids)) ^ 0xFFFF) & 0xFFFF)) {
 					demux[i].ECMpids[j].irdeto_curchid++;
 					demux[i].ECMpids[j].table=0;
 					cs_log("trying irdeto chid index: %d", demux[i].ECMpids[j].irdeto_curchid);
