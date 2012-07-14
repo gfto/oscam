@@ -127,13 +127,19 @@ int32_t Sci_WriteSettings (struct s_reader * reader, BYTE T, uint32_t fs, uint32
 	return OK;
 }
 
+#if defined(__SH4__)
+#define __IOCTL_CARD_ACTIVATED IOCTL_GET_IS_CARD_PRESENT
+#else
+#define __IOCTL_CARD_ACTIVATED IOCTL_GET_IS_CARD_ACTIVATED
+#endif
+
 int32_t Sci_Activate (struct s_reader * reader)
 {
 		rdr_debug_mask(reader, D_IFD, "Activating card");
 		uint32_t in = 1;
 
 	rdr_debug_mask(reader, D_IFD, "Is card activated?");
-	if (ioctl(reader->handle, IOCTL_GET_IS_CARD_ACTIVATED, &in) < 0) {
+	if (ioctl(reader->handle, __IOCTL_CARD_ACTIVATED, &in) < 0) {
 		rdr_debug_mask(reader, D_IFD, "ioctl returned: %u", in);
 		rdr_debug_mask(reader, D_IFD, "Is card present?");
 		call(ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in) < 0);
@@ -152,7 +158,7 @@ int32_t Sci_Deactivate (struct s_reader * reader)
 	rdr_debug_mask(reader, D_IFD, "Deactivating card");
 	int32_t in;
 		
-	if (ioctl(reader->handle, IOCTL_GET_IS_CARD_ACTIVATED, &in) < 0)
+	if (ioctl(reader->handle, __IOCTL_CARD_ACTIVATED, &in) < 0)
 		call(ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in) < 0);
 			
 	if(in)
