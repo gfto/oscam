@@ -884,7 +884,7 @@ void chk_t_monitor(char *token, char *value)
 	}
 
 	if (!strcmp(token, "hideclient_to")) {
-		cfg.mon_hideclient_to = strToIntVal(value, 0);
+		cfg.mon_hideclient_to = strToIntVal(value, 15);
 		return;
 	}
 
@@ -1677,16 +1677,6 @@ int32_t init_config(void)
 	char *value=NULL, *token;
 	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 1;
 
-#ifdef PRIO_PROCESS
-// FIXME: On WRT54G calling getpriority() results in OSCam not starting.
-//        This needs additional debugging by somebody who has WRT54G in
-//        front of him and can debug this.
-#if !defined(__UCLIBC__)
-	errno=0;
-	if ((cfg.nice = getpriority(PRIO_PROCESS, 0)) == (-1))
-	if (errno)
-#endif
-#endif
 	cfg.nice = 99;
 	cfg.ctimeout = CS_CLIENT_TIMEOUT;
 	cfg.ftimeout = CS_CLIENT_TIMEOUT / 2;
@@ -1694,7 +1684,7 @@ int32_t init_config(void)
 	cfg.delay = CS_DELAY;
 	cfg.bindwait = CS_BIND_TIMEOUT;
 	cfg.mon_level = 2;
-	cfg.mon_hideclient_to = 0;
+	cfg.mon_hideclient_to = 15;
 	cfg.srtimeout = 1500;
 	cfg.ulparent = 0;
 	cfg.logfile = NULL;
@@ -1720,7 +1710,6 @@ int32_t init_config(void)
 	cs_strncpy(cfg.http_help_lang, "en", sizeof(cfg.http_help_lang));
 	cfg.http_refresh = 0;
 	cfg.http_hide_idle_clients = 0;
-	cfg.mon_hideclient_to = 15;
 	cs_strncpy(cfg.http_tpl, "", sizeof(cfg.http_tpl));
 #endif
 	cfg.ncd_keepalive = DEFAULT_NCD_KEEPALIVE;
@@ -2317,7 +2306,7 @@ int32_t write_config(void)
 	fputc((int)'\n', f);
 
 	/*monitor settings*/
-	if(cfg.mon_port || cfg.mon_appendchaninfo || cfg.mon_hideclient_to != 0 || cfg.mon_aulow != 30) {
+	if(cfg.mon_port || cfg.mon_appendchaninfo || cfg.mon_hideclient_to != 15 || cfg.mon_aulow != 30) {
 		fprintf(f,"[monitor]\n");
 		if (cfg.mon_port != 0 || cfg.http_full_cfg)
 			fprintf_conf(f, "port", "%d\n", cfg.mon_port);
@@ -2329,11 +2318,11 @@ int32_t write_config(void)
 		free_mk_t(value);
 		if(cfg.mon_aulow != 30 || cfg.http_full_cfg)
 			fprintf_conf(f, "aulow", "%d\n", cfg.mon_aulow);
-		if(cfg.mon_hideclient_to != 0 || cfg.http_full_cfg)
+		if(cfg.mon_hideclient_to != 15 || cfg.http_full_cfg)
 			fprintf_conf(f, "hideclient_to", "%d\n", cfg.mon_hideclient_to);
 		if(cfg.mon_level != 2 || cfg.http_full_cfg)
 			fprintf_conf(f, "monlevel", "%d\n", cfg.mon_level);
-		if(cfg.mon_appendchaninfo != 2 || cfg.http_full_cfg)
+		if(cfg.mon_appendchaninfo != 0 || cfg.http_full_cfg)
 			fprintf_conf(f, "appendchaninfo", "%d\n", cfg.mon_appendchaninfo);
 		fputc((int)'\n', f);
 	}
@@ -2908,7 +2897,7 @@ int32_t write_server(void)
 				fprintf_conf(f, "services", "%s\n", value);
 			free_mk_t(value);
 
-			if ((rdr->tcp_ito != DEFAULT_INACTIVITYTIMEOUT || cfg.http_full_cfg) && !isphysical)
+			if (((rdr->typ != R_CCCAM && rdr->tcp_ito != DEFAULT_INACTIVITYTIMEOUT) || (rdr->typ == R_CCCAM && rdr->tcp_ito != 30) || cfg.http_full_cfg) && !isphysical)
 				fprintf_conf(f, "inactivitytimeout", "%d\n", rdr->tcp_ito);
 
 			if ((rdr->resetcycle != 0 || cfg.http_full_cfg) && isphysical)
@@ -4062,7 +4051,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "inactivitytimeout")) {
-		rdr->tcp_ito  = strToIntVal(value, DEFAULT_INACTIVITYTIMEOUT);
+		rdr->tcp_ito  = strToIntVal(value, rdr->typ == R_CCCAM?30:DEFAULT_INACTIVITYTIMEOUT);
 		return;
 	}
 
@@ -4974,6 +4963,7 @@ int32_t init_readerdb(void)
 			memset(rdr->rom, 0, sizeof(rdr->rom));
 			rdr->enable = 1;
 			rdr->tcp_rto = DEFAULT_TCP_RECONNECT_TIMEOUT;
+			rdr->tcp_ito = DEFAULT_INACTIVITYTIMEOUT;
 			rdr->nagra_read = 0;
 			rdr->mhz = 357;
 			rdr->cardmhz = 357;

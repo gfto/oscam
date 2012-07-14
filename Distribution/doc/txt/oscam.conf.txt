@@ -291,7 +291,7 @@ DESCRIPTIONS
 	  monlevel can be overwritten per user in oscam.user
 
        hideclient_to = seconds
-	  time to hide clients in the monitor if not sending requests, 0 = disabled, default:0
+	  time to hide clients in the monitor if not sending requests, 0 = disabled, default:15
 
        appendchaninfo = 0|1
 	  1 = append channel name on log messages, default:0

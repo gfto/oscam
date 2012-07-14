@@ -224,7 +224,7 @@ DESCRIPTIONS
 	  1 = ignore caid and provid settings of reader due faulty clients, default:0
 
        inactivitytimeout = seconds
-	  inactivity timeout for all TCP based remote readers, default:0
+	  inactivity timeout for all TCP based remote readers, default:30 for CCCam, 0 for all others
 
        reconnecttimeout = seconds
 	  reconnect if missing answers for all TCP based remote readers, default:30
