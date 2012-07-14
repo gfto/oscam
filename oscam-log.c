@@ -10,7 +10,6 @@ static FILE *fps=(FILE *)0;
 static FILE *fpa=(FILE *)0;
 #endif
 static int8_t logStarted = 0;
-static int8_t logThreadRunning = 0;
 LLIST *log_list;
 char *vbuf;
 
@@ -342,17 +341,16 @@ void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar 
 
 void cs_close_log(void)
 {
-	if (!fp) return;
-
 	//Wait for log close:
-	int8_t i = 2;
-	while (ll_count(log_list) > 0 && i) {
-		cs_sleepms(500);
-		i--;
+	int32_t i = 0;
+	while (ll_count(log_list) > 0 && i < 200) {
+		cs_sleepms(5);
+		++i;
 	}
-
-	fclose(fp);
-	fp=(FILE *)0;
+	if(fp){
+		fclose(fp);
+		fp=(FILE *)0;
+	}
 }
 
 void log_emm_request(struct s_reader *rdr){
@@ -538,7 +536,6 @@ void cs_statistics(struct s_client * client)
 void log_list_thread(void)
 {
 	char buf[LOG_BUF_SIZE];
-	logThreadRunning = 1;
 	int last_count=ll_count(log_list), count, grow_count=0, write_count;
 	do {
 		LL_ITER it = ll_iter_create(log_list);
@@ -582,10 +579,8 @@ void log_list_thread(void)
 				last_count = count;
 			}
 		}
-
 		cs_sleepms(250);
-	} while(!cfg.disablelog);
-	logThreadRunning = 0;
+	} while(1);
 }
 
 int32_t cs_init_log(void)
@@ -598,7 +593,8 @@ int32_t cs_init_log(void)
 		log_list = ll_create(LOG_LIST);
 		start_thread((void*)&log_list_thread, "log_list_thread");
 	}
-	int32_t rc = cs_open_logfiles();
+	int32_t rc = 0;
+	if(!cfg.disablelog) rc = cs_open_logfiles();
 	logStarted = 1;
 	return rc;
 }
@@ -606,24 +602,22 @@ int32_t cs_init_log(void)
 void cs_disable_log(int8_t disabled)
 {
 	if (cfg.disablelog != disabled) {
+		if(disabled && logStarted) {
+			cs_log("Stopping log...");
+			int32_t i = 0;
+			while(ll_count(log_list) > 0 && i < 200){
+				cs_sleepms(5);
+				++i;
+			}
+		}
 		cfg.disablelog = disabled;
-		if (disabled) {
-			if (logStarted) {
-				while(logThreadRunning == 1){
-					cs_sleepms(5);
-				}
-				if(ll_count(log_list) > 0) log_list_thread(); //Clean log
+		if (disabled){
+			if(logStarted) {
+				cs_sleepms(20);
 				cs_close_log();
 			}
 		} else {
-			if(logStarted == 0){
-				cs_init_log();
-			} else {
-				cs_open_logfiles();
-				if(logThreadRunning == 0){
-					start_thread((void*)&log_list_thread, "log_list_thread");
-				}
-			}
+			cs_open_logfiles();
 		}
 	}
 }
