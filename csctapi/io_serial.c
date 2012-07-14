@@ -453,8 +453,11 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t timeout, uint32_t size, 
 			
 		
 		while (readed <0 && errorcount < 10) {
+AGAIN:
 			readed = read (reader->handle, &c, 1);
 			if (readed < 0) {
+				if (errno == EAGAIN || errno == EINTR)
+					goto AGAIN;
 				int saved_errno = errno;
 				rdr_log(reader, "ERROR: %s (errno=%d %s)", __func__, errno, strerror(errno));
 				if (saved_errno == 11) {
@@ -508,7 +511,7 @@ bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t size, c
 				rdr_ddump_mask(reader, D_DEVICE, data_w+(to_send-to_do), to_do, "Sending:");
 				int32_t u = write (reader->handle, data_w+(to_send-to_do), to_do);
 				if (u < 1) {
-					if (errno==EINTR) continue; //try again in case of Interrupted system call
+					if (errno==EINTR || errno==EAGAIN) continue; //try again in case of Interrupted system call
 					errorcount++;
 					//tcflush (reader->handle, TCIFLUSH);
 					int16_t written = count + to_send - to_do;
