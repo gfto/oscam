@@ -453,17 +453,10 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t timeout, uint32_t size, 
 			
 		
 		while (readed <0 && errorcount < 10) {
-AGAIN:
 			readed = read (reader->handle, &c, 1);
 			if (readed < 0) {
-				if (errno == EAGAIN || errno == EINTR)
-					goto AGAIN;
-				int saved_errno = errno;
+				//if (errno == EAGAIN || errno == EINTR) continue;
 				rdr_log(reader, "ERROR: %s (errno=%d %s)", __func__, errno, strerror(errno));
-				if (saved_errno == 11) {
-					rdr_ddump_mask(reader, D_DEVICE, data, count, "Receiving:");
-					return ERROR; // fix for ET boxes otherwise they have very long timeout on cardinit
-				}
 				errorcount++;
 				//tcflush (reader->handle, TCIFLUSH);
 			}
@@ -511,7 +504,7 @@ bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t size, c
 				rdr_ddump_mask(reader, D_DEVICE, data_w+(to_send-to_do), to_do, "Sending:");
 				int32_t u = write (reader->handle, data_w+(to_send-to_do), to_do);
 				if (u < 1) {
-					if (errno==EINTR || errno==EAGAIN) continue; //try again in case of Interrupted system call
+					//if (errno==EINTR || errno==EAGAIN) continue; //try again in case of Interrupted system call or if read was blocked
 					errorcount++;
 					//tcflush (reader->handle, TCIFLUSH);
 					int16_t written = count + to_send - to_do;
