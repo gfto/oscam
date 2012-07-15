@@ -1103,14 +1103,17 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 			#endif
 
 				// Set CWT = (2^CWI + 11) work etu
-				reader->CWT = (uint16_t) (((1<<cwi) + 11L)); // in ETU
+				if (reader->mhz > 2000)
+					reader->CWT = (uint16_t) (((1<<cwi) + 11L)); // in ETU
+				else
+					reader->CWT = (uint16_t) (((1<<cwi) + 11)); // in ETU
 
 				// Set BWT = (2^BWI * 960 * 372 / clockspeed) seconds + 11 work etu  (in seconds)
 				// 1 worketu = 1 / baudrate *1000*1000 us
 				if (reader->mhz > 2000 && reader->mhz != 8300)
 					reader->BWT = (uint32_t) ((((1<<bwi) * 960L * 372L / ((double)reader->mhz / (double) reader->divider / 100L)) * (double) reader->current_baudrate / 1000L / 1000L)+ 11L); // BWT in ETU
 				else
-					reader->BWT = (uint32_t)((1<<bwi) * 960L * 372L * 9600L / (double) ICC_Async_GetClockRate(reader->cardmhz))	+ 11L ;
+					reader->BWT = (uint32_t)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate(reader->cardmhz)) + 11 ;
 
 				// Set BGT = 22 * work etu
 				BGT = 22L; //in ETU
