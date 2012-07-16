@@ -2068,16 +2068,16 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 		er->selected_reader = cl->reader;
 
 		cs_cache_push(er);  //cascade push!
-
+#ifdef CS_CACHEEX
 		if (er->rc < E_NOTFOUND)
-			cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 1);
+        cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 1);
 
 		cl->cwcacheexgot++;
 		if (cl->account)
-			cl->account->cwcacheexgot++;
+        cl->account->cwcacheexgot++;
 		first_client->cwcacheexgot++;
-
 		debug_ecm(D_CACHEEX, "got pushed ECM %s from %s", buf, csp ? "csp" : username(cl));
+#endif
 		return 1;
 	}
 	else {
@@ -2094,15 +2094,19 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 			cs_cache_push(ecm);  //cascade push!
 
 			if (er->rc < E_NOTFOUND) {
-				ecm->selected_reader = cl->reader;
+#ifdef CS_CACHEEX
 				cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 1);
-			}
+#else
+				ecm->selected_reader = cl->reader;
+#endif
 
+			}
+#ifdef CS_CACHEEX
 			cl->cwcacheexgot++;
 			if (cl->account)
-				cl->account->cwcacheexgot++;
+            cl->account->cwcacheexgot++;
 			first_client->cwcacheexgot++;
-
+#endif
 			debug_ecm(D_CACHEEX, "replaced pushed ECM %s from %s", buf, csp ? "csp" : username(cl));
 		} else {
 			debug_ecm(D_CACHEEX, "ignored duplicate pushed ECM %s from %s", buf, csp ? "csp" : username(cl));
