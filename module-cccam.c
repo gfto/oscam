@@ -2291,8 +2291,6 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 
 			if (!old_card) {
 			    card->card_type = CT_REMOTECARD;
-				//if(card->reshare == 0)card->reshare = 1; ???
-					card->hop++; //inkrementing hop
 				ll_append(cc->cards, card);
 				set_au_data(cl, rdr, card, NULL);
 				cc->card_added_count++;
