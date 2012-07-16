@@ -1854,8 +1854,8 @@ void cc_card_removed(struct s_client *cl, uint32_t shareid) {
 						getprefix(), card->id);
 			}
 			free_extended_ecm_idx_by_card(cl, card, 1);
-
-			if (card->hop == 1) cc->num_hop1--;
+            if (card->hap == 0) card->hop++;
+			else if (card->hop == 1) cc->num_hop1--;
 			else if (card->hop == 2) cc->num_hop2--;
 			else cc->num_hopx--;
 
@@ -2294,8 +2294,8 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				ll_append(cc->cards, card);
 				set_au_data(cl, rdr, card, NULL);
 				cc->card_added_count++;
-
-				if (card->hop == 1) cc->num_hop1++;
+                if (card->hop == 0) card->hop++;
+				else if (card->hop == 1) cc->num_hop1++;
 				else if (card->hop == 2) cc->num_hop2++;
 				else cc->num_hopx++;
 
