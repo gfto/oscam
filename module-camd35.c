@@ -428,6 +428,8 @@ void cacheex_set_peer_id(uint8_t *id)
 void camd35_cache_push_send_own_id(struct s_client *cl, uint8_t *mbuf) {
 	uint8_t rbuf[32]; //minimal size
 
+	if (!cl->crypted) return;
+
 	cs_debug_mask(D_CACHEEX, "cacheex: received id request from node %llX %s", cnode(mbuf+20), username(cl));
 
 	memset(rbuf, 0, sizeof(rbuf));
@@ -444,6 +446,9 @@ void camd35_cache_push_send_own_id(struct s_client *cl, uint8_t *mbuf) {
  */
 void camd35_cache_push_request_remote_id(struct s_client *cl) {
 	uint8_t rbuf[32];//minimal size
+
+	if (!cl->crypted) return;
+
 	memset(rbuf, 0, sizeof(rbuf));
 	rbuf[0] = 0x3d;
 	rbuf[1] = 12;
@@ -457,6 +462,9 @@ void camd35_cache_push_request_remote_id(struct s_client *cl) {
  * store received remote id
  */
 void camd35_cache_push_receive_remote_id(struct s_client *cl, uint8_t *buf) {
+
+	if (!cl->crypted) return;
+
 	memcpy(cl->ncd_skey, buf+20, 8);
 	cl->ncd_skey[8] = 1;
 	cs_debug_mask(D_CACHEEX, "cacheex: received id answer from %s: %llX", username(cl), cnode(cl->ncd_skey));
@@ -474,7 +482,7 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 	if (cl->reader) {
 		tcp_connect(cl);
 	}
-	if (!cl->udp_fd) {
+	if (!cl->udp_fd || !cl->crypted) {
 		cs_debug_mask(D_CACHEEX, "cacheex: not connected %s -> no push", username(cl));
 		return 0;
 	}
@@ -533,7 +541,7 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 			}
 		}
 	}
-	if (!cl->udp_fd) return(-1);
+	if (!cl->udp_fd || !cl->crypted) return(-1);
 	cl->last = now;
 
 	uint32_t size = sizeof(er->ecmd5)+sizeof(er->csp_hash)+sizeof(er->cw)+sizeof(uint8_t) +

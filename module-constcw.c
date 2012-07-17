@@ -116,11 +116,11 @@ static int32_t constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar 
     return(0);
 }
 
-static int32_t constcw_recv_chk(struct s_client *UNUSED(client), uchar *dcw, int32_t *rc, uchar *buf, int32_t n)
+static int32_t constcw_recv_chk(struct s_client *UNUSED(client), uchar *UNUSED(dcw), int32_t *rc, uchar *UNUSED(buf), int32_t UNUSED(n))
 {
-    dcw = dcw;
-    n = n;
-    buf = buf;
+    //dcw = dcw;
+    //n = n;
+    //buf = buf;
 
     *rc = 0;
     return(-1);
