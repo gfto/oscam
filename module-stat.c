@@ -1,4 +1,4 @@
-#include "globals.h"
+	#include "globals.h"
 
 #ifdef WITH_LB
 #include "module-cccam.h"
@@ -929,6 +929,9 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		nreaders = -1;
 	else if (nreaders <= cfg.lb_nbest_readers)
 		nreaders = cfg.lb_nbest_readers+1;
+	int32_t nmaxreopen = nreaders-nbest_readers;
+	if (nmaxreopen < 0)
+		nmaxreopen = 5;
 
 #ifdef WITH_DEBUG
 	if (cs_dblevel & 0x01) {
@@ -962,7 +965,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		ea->status &= ~(READER_ACTIVE|READER_FALLBACK);
 		ea->value = 0;
 	}
-
+	
 	for(ea = er->matching_rdr; ea && nreaders; ea = ea->next) {
 			rdr = ea->reader;
 #ifdef CS_CACHEEX
@@ -978,19 +981,21 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			int32_t weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
 
 			stat = get_stat(rdr, &q);
-			if (!stat) {
+			if (nmaxreopen>0 && !stat) {
 				cs_debug_mask(D_LB, "loadbalancer: starting statistics for reader %s", rdr->label);
 				ea->status |= READER_ACTIVE; //no statistics, this reader is active (now) but we need statistics first!
 				new_stats = 1;
 				nreaders--;
+				nmaxreopen--;
 				continue;
 			}
 
-			if (stat->ecm_count < 0||(stat->ecm_count > cfg.lb_max_ecmcount && stat->time_avg > retrylimit)) {
+			if (nmaxreopen>0 && (stat->ecm_count < 0||(stat->ecm_count > cfg.lb_max_ecmcount && stat->time_avg > retrylimit))) {
 				cs_debug_mask(D_LB, "loadbalancer: max ecms (%d) reached by reader %s, resetting statistics", cfg.lb_max_ecmcount, rdr->label);
 				reset_stat(&q);
 				ea->status |= READER_ACTIVE; //max ecm reached, get new statistics
 				nreaders--;
+				nmaxreopen--;
 				continue;
 			}
 
@@ -1008,11 +1013,12 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			else
 				hassrvid = 0;
 
-			if (stat->rc == E_FOUND && stat->ecm_count < cfg.lb_min_ecmcount) {
+			if (nmaxreopen>0 && stat->rc == E_FOUND && stat->ecm_count < cfg.lb_min_ecmcount) {
 				cs_debug_mask(D_LB, "loadbalancer: reader %s needs more statistics", rdr->label);
 				ea->status |= READER_ACTIVE; //need more statistics!
 				new_stats = 1;
 				nreaders--;
+				nmaxreopen--;
 				continue;
 			}
 
