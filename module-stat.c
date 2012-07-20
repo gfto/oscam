@@ -981,12 +981,14 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			int32_t weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
 
 			stat = get_stat(rdr, &q);
-			if (nmaxreopen>0 && !stat) {
-				cs_debug_mask(D_LB, "loadbalancer: starting statistics for reader %s", rdr->label);
-				ea->status |= READER_ACTIVE; //no statistics, this reader is active (now) but we need statistics first!
-				new_stats = 1;
-				nreaders--;
-				nmaxreopen--;
+			if (!stat) {
+				if (nmaxreopen>0) {
+					cs_debug_mask(D_LB, "loadbalancer: starting statistics for reader %s", rdr->label);
+					ea->status |= READER_ACTIVE; //no statistics, this reader is active (now) but we need statistics first!
+					new_stats = 1;
+					nreaders--;
+					nmaxreopen--;
+				}
 				continue;
 			}
 
