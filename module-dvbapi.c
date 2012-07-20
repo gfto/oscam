@@ -176,7 +176,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 		case COOLAPI:
 			demux[demux_id].demux_fd[n].fd = coolapi_open_device(demux[demux_id].demux_index, demux_id);
 			if(demux[demux_id].demux_fd[n].fd > 0)
-				ret = coolapi_set_filter(demux[demux_id].demux_fd[n].fd, n, pid, filt, mask);
+				ret = coolapi_set_filter(demux[demux_id].demux_fd[n].fd, n, pid, filt, mask, type);
 			break;
 #endif
 		default:

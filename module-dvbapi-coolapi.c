@@ -17,6 +17,8 @@ static dmx_t cdemuxes[MAX_CA_DEVICES][MAX_FILTER];
 
 extern void * dvbapi_client;
 
+LLIST		*ll_cool_filter = NULL;
+
 #define COOLDEMUX_FD(device, num) (('O' << 24) | ('S' << 16) | (device << 8) | num)
 #define COOLDEMUX_DMX_DEV(fd) (((fd) >> 8) & 0xFF)
 #define COOLDEMUX_DMX(fd) ((fd) & 0xFF)
@@ -69,15 +71,13 @@ void coolapi_read_data(dmx_t * dmx, int32_t len)
 	memset(dmx->buffer,0,4096);
 	ret = coolapi_read(dmx, len);
 	pthread_mutex_unlock(&dmx->mutex);
-	if (!ret)
+	if (ret > -1)
 		dvbapi_process_input(dmx->demux_id, dmx->filter_num, dmx->buffer, len);
 }
 
-static void dmx_callback(void * unk, dmx_t * dmx, int32_t type, void * data)
+static void dmx_callback(void * UNUSED(unk), dmx_t * dmx, int32_t type, void * data)
 {
 	dmx_callback_data_t * cdata = (dmx_callback_data_t *) data;
-	//FIXME
-	unk = unk;
 
 	if(!dmx) {
 		cs_debug_mask(D_DVBAPI, "wrong dmx pointer !!!");
@@ -98,7 +98,7 @@ static void dmx_callback(void * unk, dmx_t * dmx, int32_t type, void * data)
 	}
 }
 
-int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char * flt, unsigned char * mask)
+int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char * flt, unsigned char * mask, int32_t type)
 {
 	int32_t result;
 	filter_set_t filter;
@@ -111,12 +111,27 @@ int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char 
 	}
 
 	dmx->filter_num = num;
+	dmx->type = type;
 	cs_debug_mask(D_DVBAPI, "fd %08x demux %d channel %x num %d pid %x flt %x mask %x", fd, dmx->demux_index, (int) dmx->channel, num, pid, flt[0], mask[0]);
 
-	memset(&filter, 0, sizeof(filter));
 
-	memcpy(dmx->filter16, flt, 16);
-	memcpy(dmx->mask16, mask, 16);
+	if (type==TYPE_EMM && pid != 0x001) {
+		if (!ll_cool_filter)
+			ll_cool_filter = ll_create("ll_cool_filter");
+
+		S_COOL_FILTER *filter_item;
+		if(cs_malloc(&filter_item,sizeof(S_COOL_FILTER), -1)){
+			// fill filter item
+			filter_item->fd = fd;
+			memcpy(filter_item->filter16, flt, 16);
+			memcpy(filter_item->mask16, mask, 16);
+
+			//add filter item
+			ll_append(ll_cool_filter, filter_item);
+		}
+	}
+
+	memset(&filter, 0, sizeof(filter));
 	filter.length = 12;
 	memcpy(filter.filter, flt, 12);
 	memcpy(filter.mask, mask, 12);
@@ -170,7 +185,7 @@ int32_t coolapi_remove_filter (int32_t fd, int32_t num)
 	if(dmx->pid <= 0)
 		return -1;
 
-        cs_debug_mask(D_DVBAPI, "fd %08x channel %x num %d pid %x opened %s", fd, (int) dmx->channel, num, dmx->pid, dmx->opened ? "yes" : "no");
+    cs_debug_mask(D_DVBAPI, "fd %08x channel %x num %d pid %x opened %s", fd, (int) dmx->channel, num, dmx->pid, dmx->opened ? "yes" : "no");
 
 	pthread_mutex_lock(&dmx->mutex);
 	result = cnxt_dmx_channel_ctrl(dmx->channel, 0, 0);
@@ -184,6 +199,15 @@ int32_t coolapi_remove_filter (int32_t fd, int32_t num)
 	result = cnxt_cbuf_flush (dmx->buffer2, 0);
 	coolapi_check_error("cnxt_cbuf_flush", result);
 	pthread_mutex_unlock(&dmx->mutex);
+
+	if (dmx->type == TYPE_EMM && dmx->pid != 0x001 && ll_count(ll_cool_filter) > 0) {
+		LL_ITER itr = ll_iter_create(ll_cool_filter);
+		S_COOL_FILTER *filter_item;
+		while ((filter_item=ll_iter_next(&itr))) {
+			if (filter_item->fd == fd)
+				ll_iter_remove_data(&itr);
+		}
+	}
 
 	dmx->pid = -1;
 	return 0;
@@ -320,33 +344,32 @@ int32_t coolapi_write_cw(int32_t mask, uint16_t *STREAMpids, int32_t count, ca_d
 			}
 		}
 	}
-        return 0;
+    return 0;
 }
 
 int32_t pattern_matching(unsigned char * buff, int32_t len, dmx_t * dmx)
 {
 	if(!dmx) {
 		cs_debug_mask(D_DVBAPI, "dmx is NULL!");
-		return 0;
+		return -1;
 	}
 
 	int32_t i,j,found;
 
-	if (((buff[0] ^ dmx->filter16[0]) & dmx->mask16[0]) != 0)
-		return 0;
-
-	for (i = 0; i < len; i++) {
-		if (len - i >= 16) {
+	if (ll_count(ll_cool_filter) > 0) {
+		LL_ITER itr = ll_iter_create(ll_cool_filter);
+		S_COOL_FILTER *filter_item;
+		while ((filter_item=ll_iter_next(&itr))) {
 			found = 1;
-			for (j = 1; j < 16 && found == 1; j++) {
-				if (((buff[i+j] ^ dmx->filter16[j]) & dmx->mask16[j]) != 0)
-					found = 0;
+			for (i=0,j=0; i < 16 && i < len && found; i++,j++) {
+				found = (filter_item->filter16[j] == (buff[i]&filter_item->mask16[j]));
+				if (i==0) i+=2;
 			}
+			if (found)
+				return 0;
 		}
-		if (found)
-			return 1;
 	}
-	return 0;
+	return -1;
 }
 
 int32_t coolapi_read(dmx_t * dmx, uint32_t len)
@@ -386,7 +409,7 @@ int32_t coolapi_read(dmx_t * dmx, uint32_t len)
 	//cs_debug_mask(D_DVBAPI, "bytes read %d\n", done);
 
 	//coolstream supports only a 12 bytes demux filter so we need to compare all 16 bytes
-	if (pattern_matching(buff,len,dmx))
+	if (dmx->type == TYPE_ECM || dmx->pid == 0x001 || pattern_matching(buff,len,dmx) > -1)
 		return 0;
 	else
 		return -1;

@@ -3,6 +3,12 @@
 
 #define MAX_CA_DEVICES 4
 
+typedef struct s_cool_filter {	
+	int32_t		fd;
+	unsigned char   filter16[16];
+	unsigned char   mask16[16];
+} S_COOL_FILTER;
+
 struct cool_dmx
 {
 	int32_t		opened;
@@ -13,14 +19,13 @@ struct cool_dmx
 	void *		buffer2;
 	void *	 	channel;
 	void *		filter;
-	unsigned char   filter16[16];
-	unsigned char   mask16[16];
 	void *		device;
 	int32_t		pid;
 	pthread_mutex_t	mutex;
 	int32_t 	demux_id;
 	int32_t 	demux_index;
 	int32_t 	filter_num;
+	int32_t 	type;
 };
 typedef struct cool_dmx dmx_t;
 
@@ -76,7 +81,7 @@ int32_t cnxt_dmx_set_filter(void * handle, filter_set_t * arg, void *);
 
 /* Local coolapi functions */
 void coolapi_open(void);
-int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char * flt, unsigned char * mask);
+int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char * flt, unsigned char * mask, int32_t type);
 int32_t coolapi_remove_filter (int32_t fd, int32_t num);
 int32_t coolapi_open_device (int32_t demux_index, int32_t demux_id);
 int32_t coolapi_close_device(int32_t fd);
