@@ -2060,25 +2060,31 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 	struct ecm_request_t *ecm = check_cwcache(er, cl);
 
 	if (!ecm) {
-		cs_writelock(&ecmcache_lock);
-		er->next = ecmcwcache;
-		ecmcwcache = er;
-		cs_writeunlock(&ecmcache_lock);
+	        if (er->rc < E_NOTFOUND) { // Do NOT add cacheex - not founds!
+	            cs_writelock(&ecmcache_lock);
+	            er->next = ecmcwcache;
+	            ecmcwcache = er;
+	            cs_writeunlock(&ecmcache_lock);
 
-		er->selected_reader = cl->reader;
+	            er->selected_reader = cl->reader;
+                }
 
 		cs_cache_push(er);  //cascade push!
-#ifdef CS_CACHEEX
+
 		if (er->rc < E_NOTFOUND)
-        cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 1);
+		    cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 1);
 
 		cl->cwcacheexgot++;
 		if (cl->account)
-        cl->account->cwcacheexgot++;
+		    cl->account->cwcacheexgot++;
 		first_client->cwcacheexgot++;
+		
 		debug_ecm(D_CACHEEX, "got pushed ECM %s from %s", buf, csp ? "csp" : username(cl));
-#endif
-		return 1;
+
+                if (er->rc < E_NOTFOUND && er->l)
+                    return 0;
+                else
+                    return 1;
 	}
 	else {
 		if(er->rc < ecm->rc) {
@@ -2094,19 +2100,14 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 			cs_cache_push(ecm);  //cascade push!
 
 			if (er->rc < E_NOTFOUND) {
-#ifdef CS_CACHEEX
 				cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 1);
-#else
 				ecm->selected_reader = cl->reader;
-#endif
-
 			}
-#ifdef CS_CACHEEX
 			cl->cwcacheexgot++;
 			if (cl->account)
-            cl->account->cwcacheexgot++;
+                                cl->account->cwcacheexgot++;
 			first_client->cwcacheexgot++;
-#endif
+
 			debug_ecm(D_CACHEEX, "replaced pushed ECM %s from %s", buf, csp ? "csp" : username(cl));
 		} else {
 			debug_ecm(D_CACHEEX, "ignored duplicate pushed ECM %s from %s", buf, csp ? "csp" : username(cl));
@@ -3274,9 +3275,9 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 		if (ecm) {
 			if (ecm->rc < E_99) {
-				memcpy(er->cw, ecm->cw, 16);
-				er->selected_reader = ecm->selected_reader;
-				er->rc = (ecm->rc == E_FOUND)?E_CACHE1:ecm->rc;
+                                memcpy(er->cw, ecm->cw, 16);
+                                er->selected_reader = ecm->selected_reader;
+                                er->rc = (ecm->rc == E_FOUND)?E_CACHE1:ecm->rc;
 			} else { //E_UNHANDLED
 				er->ecmcacheptr = ecm;
 				er->rc = E_99;
