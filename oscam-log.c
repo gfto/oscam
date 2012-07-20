@@ -407,7 +407,7 @@ void logCWtoFile(ECM_REQUEST *er, uchar *cw){
 	}
 	if (writeheader) {
 		/* no global macro for cardserver name :( */
-		fprintf(pfCWL, "# OSCam cardserver v%s - http://streamboard.gmc.to/oscam/\n", CS_VERSION);
+		fprintf(pfCWL, "# OSCam cardserver v%s - http://streamboard.de.vu/oscam/\n", CS_VERSION);
 		fprintf(pfCWL, "# control word log file for use with tsdec offline decrypter\n");
 		strftime(buf, sizeof(buf),"DATE %Y-%m-%d, TIME %H:%M:%S, TZ %Z\n", &timeinfo);
 		fprintf(pfCWL, "# %s", buf);

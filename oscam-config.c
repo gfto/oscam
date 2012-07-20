@@ -2109,7 +2109,7 @@ int32_t write_services(void)
 	}
 	setvbuf(f, NULL, _IOFBF, 16*1024);
 	fprintf(f,"# oscam.services generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
-	fprintf(f,"# Read more: http://streamboard.gmc.to/svn/oscam/trunk/Distribution/doc/txt/oscam.services.txt\n\n");
+	fprintf(f,"# Read more: http://streamboard.de.vu/svn/oscam/trunk/Distribution/doc/txt/oscam.services.txt\n\n");
 
 	while(sidtab != NULL){
 		ptr = sidtab->label;
@@ -2162,7 +2162,7 @@ int32_t write_config(void)
 	}
 	setvbuf(f, NULL, _IOFBF, 16*1024);
 	fprintf(f,"# oscam.conf generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
-	fprintf(f,"# Read more: http://streamboard.gmc.to/svn/oscam/trunk/Distribution/doc/txt/oscam.conf.txt\n\n");
+	fprintf(f,"# Read more: http://streamboard.de.vu/svn/oscam/trunk/Distribution/doc/txt/oscam.conf.txt\n\n");
 
 	/*global settings*/
 	fprintf(f,"[global]\n");
@@ -2653,7 +2653,7 @@ int32_t write_userdb(void)
   }
   setvbuf(f, NULL, _IOFBF, 16*1024);
   fprintf(f,"# oscam.user generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
-  fprintf(f,"# Read more: http://streamboard.gmc.to/svn/oscam/trunk/Distribution/doc/txt/oscam.user.txt\n\n");
+  fprintf(f,"# Read more: http://streamboard.de.vu/svn/oscam/trunk/Distribution/doc/txt/oscam.user.txt\n\n");
 
   //each account
 	for (account=cfg.account; (account) ; account=account->next){
@@ -2834,7 +2834,7 @@ int32_t write_server(void)
 	}
 	setvbuf(f, NULL, _IOFBF, 16*1024);
 	fprintf(f,"# oscam.server generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
-	fprintf(f,"# Read more: http://streamboard.gmc.to/svn/oscam/trunk/Distribution/doc/txt/oscam.server.txt\n\n");
+	fprintf(f,"# Read more: http://streamboard.de.vu/svn/oscam/trunk/Distribution/doc/txt/oscam.server.txt\n\n");
 
 	struct s_reader *rdr;
 	LL_ITER itr = ll_iter_create(configured_readers);
@@ -3700,7 +3700,7 @@ int32_t init_srvid(void)
 		cs_log("%d service-id's loaded in %dms", nr, time);
 		if (nr > 2000) {
 			cs_log("WARNING: You risk high CPU load and high ECM times with more than 2000 service-id�s!");
-			cs_log("HINT: --> use optimized lists from http://streamboard.gmc.to/wiki/index.php/Srvid");
+			cs_log("HINT: --> use optimized lists from http://streamboard.de.vu/wiki/index.php/Srvid");
 		}
 	} else {
 		cs_log("oscam.srvid loading failed, old format");

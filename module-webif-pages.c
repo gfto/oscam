@@ -344,7 +344,7 @@ SFRTIFJFU0VSVkVEADs="
 	//-->\n\
 	</script>\n"
 
-#define TPLHELPPREFIX "<A HREF=\"http://streamboard.gmc.to/wiki/OSCam/##LANGUAGE##/Config/oscam."
+#define TPLHELPPREFIX "<A HREF=\"http://streamboard.de.vu/wiki/OSCam/##LANGUAGE##/Config/oscam."
 
 #define TPLHELPSUFFIX "\" TARGET=\"_blank\">"
 
