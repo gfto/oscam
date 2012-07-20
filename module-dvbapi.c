@@ -194,7 +194,7 @@ static int32_t dvbapi_detect_api(void) {
 	selected_api=COOLAPI;
 	selected_box = 5;
 	disable_pmt_files = 1;
-	cs_debug_mask(D_DVBAPI, "Detected coolstream Api");
+	cs_debug_mask(D_DVBAPI, "Detected Coolstream API");
 	return 1;
 #else
 	int32_t i,devnum=-1, dmx_fd=0, ret=-1, boxnum = sizeof(devices)/sizeof(struct box_devices);

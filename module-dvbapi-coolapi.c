@@ -17,7 +17,7 @@ static dmx_t cdemuxes[MAX_CA_DEVICES][MAX_FILTER];
 
 extern void * dvbapi_client;
 
-LLIST		*ll_cool_filter = NULL;
+LLIST	*ll_cool_filter = NULL;
 
 #define COOLDEMUX_FD(device, num) (('O' << 24) | ('S' << 16) | (device << 8) | num)
 #define COOLDEMUX_DMX_DEV(fd) (((fd) >> 8) & 0xFF)
@@ -25,14 +25,14 @@ LLIST		*ll_cool_filter = NULL;
 
 static dmx_t *find_demux(int32_t fd, int32_t dmx_dev_num)
 {
-	int32_t i, idx;
-
 	if(dmx_dev_num < 0 || dmx_dev_num >= MAX_CA_DEVICES) {
 		cs_log("Invalid demux %d", dmx_dev_num);
 		return NULL;
 	}
-	idx = dmx_dev_num;
 
+	int32_t i, idx;
+
+	idx = dmx_dev_num;
 	if(fd == 0) {
 		for(i = 0; i < MAX_FILTER; i++) {
 			if (!cdemuxes[idx][i].opened) {
@@ -77,12 +77,13 @@ void coolapi_read_data(dmx_t * dmx, int32_t len)
 
 static void dmx_callback(void * UNUSED(unk), dmx_t * dmx, int32_t type, void * data)
 {
-	dmx_callback_data_t * cdata = (dmx_callback_data_t *) data;
-
 	if(!dmx) {
 		cs_debug_mask(D_DVBAPI, "wrong dmx pointer !!!");
 		return;
 	}
+
+	dmx_callback_data_t * cdata = (dmx_callback_data_t *) data;
+
 	if(cdata != NULL) {
 		switch(type) {
 			case 0xE:
@@ -100,20 +101,19 @@ static void dmx_callback(void * UNUSED(unk), dmx_t * dmx, int32_t type, void * d
 
 int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char * flt, unsigned char * mask, int32_t type)
 {
-	int32_t result;
-	filter_set_t filter;
-
 	dmx_t * dmx =  find_demux(fd, 0);
-
 	if(!dmx) {
 		cs_debug_mask(D_DVBAPI, "dmx is NULL!");
 		return -1;
 	}
 
-	dmx->filter_num = num;
-	dmx->type = type;
+	int32_t result;
+	filter_set_t filter;
+
 	cs_debug_mask(D_DVBAPI, "fd %08x demux %d channel %x num %d pid %x flt %x mask %x", fd, dmx->demux_index, (int) dmx->channel, num, pid, flt[0], mask[0]);
 
+	dmx->filter_num = num;
+	dmx->type = type;
 
 	if (type==TYPE_EMM && pid != 0x001) {
 		if (!ll_cool_filter)
@@ -175,7 +175,6 @@ int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char 
 
 int32_t coolapi_remove_filter (int32_t fd, int32_t num)
 {
-	int32_t result;
 	dmx_t * dmx = find_demux(fd, 0);
 	if(!dmx) {
 		 cs_debug_mask(D_DVBAPI, "dmx is NULL!");
@@ -184,6 +183,8 @@ int32_t coolapi_remove_filter (int32_t fd, int32_t num)
 
 	if(dmx->pid <= 0)
 		return -1;
+
+	int32_t result;
 
     cs_debug_mask(D_DVBAPI, "fd %08x channel %x num %d pid %x opened %s", fd, (int) dmx->channel, num, dmx->pid, dmx->opened ? "yes" : "no");
 
@@ -276,12 +277,14 @@ int32_t coolapi_open_device (int32_t demux_index, int32_t demux_id)
 
 int32_t coolapi_close_device(int32_t fd)
 {
-	int32_t result;
 	dmx_t * dmx = find_demux(fd, 0);
 	if(!dmx) {
 		cs_debug_mask(D_DVBAPI, "dmx is NULL!");
 		return -1;
 	}
+
+	int32_t result;
+
   	cs_debug_mask(D_DVBAPI, "fd %08x channel %x pid %x", fd, (int) dmx->channel, dmx->pid);
 
 	pthread_mutex_lock(&dmx->mutex);
@@ -321,9 +324,9 @@ int32_t coolapi_close_device(int32_t fd)
 /* write cw to all demuxes in mask with passed index */
 int32_t coolapi_write_cw(int32_t mask, uint16_t *STREAMpids, int32_t count, ca_descr_t * ca_descr)
 {
-        int32_t i, index = ca_descr->index;
-        int32_t result;
-        void * channel;
+    int32_t i, index = ca_descr->index;
+    int32_t result;
+    void * channel;
 
 	cs_debug_mask(D_DVBAPI, "cw%d: mask %d index %d pid count %d", ca_descr->parity, mask, index, count);
 	for(i = 0; i < count; i++) {
@@ -347,13 +350,9 @@ int32_t coolapi_write_cw(int32_t mask, uint16_t *STREAMpids, int32_t count, ca_d
     return 0;
 }
 
-int32_t pattern_matching(unsigned char * buff, int32_t len, dmx_t * dmx)
+//coolstream supports only a 12 bytes demux filter so we need to compare all 16 bytes
+int32_t emm_pattern_matching(unsigned char * buff, int32_t len)
 {
-	if(!dmx) {
-		cs_debug_mask(D_DVBAPI, "dmx is NULL!");
-		return -1;
-	}
-
 	int32_t i,j,found;
 
 	if (ll_count(ll_cool_filter) > 0) {
@@ -408,8 +407,7 @@ int32_t coolapi_read(dmx_t * dmx, uint32_t len)
 
 	//cs_debug_mask(D_DVBAPI, "bytes read %d\n", done);
 
-	//coolstream supports only a 12 bytes demux filter so we need to compare all 16 bytes
-	if (dmx->type == TYPE_ECM || dmx->pid == 0x001 || pattern_matching(buff,len,dmx) > -1)
+	if (dmx->type == TYPE_ECM || dmx->pid == 0x001 || emm_pattern_matching(buff,len) > -1)
 		return 0;
 	else
 		return -1;
@@ -428,33 +426,33 @@ void coolapi_open(void)
 	int32_t result = 0;
 	device_open_arg_t devarg;
 
-        if(!dmx_opened) {
-                int32_t i;
+    if(!dmx_opened) {
+		int32_t i;
 
-		cs_log("Open coolstream dmx api");
-                cnxt_cbuf_init(NULL);
-                cnxt_dmx_init(NULL);
+		cs_debug_mask(D_DVBAPI, "Open Coolstream DMX API");
+		cnxt_cbuf_init(NULL);
+		cnxt_dmx_init(NULL);
 
-                memset(&devarg, 0, sizeof(device_open_arg_t));
+		memset(&devarg, 0, sizeof(device_open_arg_t));
 
-                devarg.unknown1 = 1;
-                devarg.unknown3 = 3;
-                devarg.unknown6 = 1;
-                for(i = 0; i < MAX_CA_DEVICES; i++) {
-                        devarg.number = i;
-                        result = cnxt_dmx_open (&dmx_device[i], &devarg, NULL, NULL);
-                        coolapi_check_error("cnxt_dmx_open", result);
-                }
-                dmx_opened = 1;
-        }
+		devarg.unknown1 = 1;
+		devarg.unknown3 = 3;
+		devarg.unknown6 = 1;
+		for(i = 0; i < MAX_CA_DEVICES; i++) {
+		        devarg.number = i;
+		        result = cnxt_dmx_open (&dmx_device[i], &devarg, NULL, NULL);
+		        coolapi_check_error("cnxt_dmx_open", result);
+		}
+		dmx_opened = 1;
+    }
 }
 
 void coolapi_close_all(void)
 {
-	int32_t result;
-	int32_t i, j;
-
 	if(dmx_opened) {
+		int32_t result;
+		int32_t i, j;
+
 		for(i = 0; i < MAX_CA_DEVICES; i++) {
 			for(j = 0; j < MAX_FILTER; j++) {
 				if(cdemuxes[i][j].fd > 0) {
