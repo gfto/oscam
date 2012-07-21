@@ -2576,7 +2576,10 @@ static void request_cw(ECM_REQUEST *er)
 				if ((ea->status & REQUEST_SENT) ||
 						(ea->status & READER_ACTIVE) != READER_ACTIVE)
 				{
-					if (er->reader_avail > 1) //do not resend to the same reader(s) if we have more than one reader
+				        if (ea->reader && ea->reader->client && ea->reader->client->is_udp) //Always resend on udp
+				                break;
+				                
+					if (er->reader_count > 1) //do not resend to the same reader(s) if we have more than one reader
 						continue;
 				}
 				break;
