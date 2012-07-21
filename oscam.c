@@ -2081,10 +2081,10 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 		
 		debug_ecm(D_CACHEEX, "got pushed ECM %s from %s", buf, csp ? "csp" : username(cl));
 
-                if (er->rc < E_NOTFOUND && er->l)
-                    return 0;
-                else
+                if (er->rc < E_NOTFOUND)
                     return 1;
+                else
+                    return 0;
 	}
 	else {
 		if(er->rc < ecm->rc) {
