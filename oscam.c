@@ -2587,9 +2587,10 @@ static void request_cw(ECM_REQUEST *er)
 
 			struct s_reader *rdr = ea->reader;
 			cs_debug_mask(D_TRACE, "request_cw stage=%d to reader %s ecm=%04X", er->stage, rdr?rdr->label:"", htons(er->checksum));
-			write_ecm_request(ea->reader, er);
+			
 			ea->status |= REQUEST_SENT;
 			er->reader_requested++;
+			write_ecm_request(ea->reader, er);
 
 			//set sent=1 only if reader is active/connected. If not, switch to next stage!
 			if (!sent && rdr) {
