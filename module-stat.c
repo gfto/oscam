@@ -930,7 +930,9 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	else if (nreaders <= cfg.lb_nbest_readers)
 		nreaders = cfg.lb_nbest_readers+1;
 	int32_t nmaxreopen = nreaders-nbest_readers;
-	if (nmaxreopen < 0)
+	if (nmaxreopen < 1)
+		nmaxreopen = 1;
+	if (nmaxreopen > 5)
 		nmaxreopen = 5;
 
 #ifdef WITH_DEBUG
@@ -966,7 +968,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		ea->value = 0;
 	}
 	
-	for(ea = er->matching_rdr; ea && nreaders; ea = ea->next) {
+	for(ea = er->matching_rdr; ea; ea = ea->next) {
 			rdr = ea->reader;
 #ifdef CS_CACHEEX
 			int8_t cacheex = rdr->cacheex;
