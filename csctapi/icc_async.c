@@ -896,9 +896,8 @@ static uint32_t ETU_to_ms(struct s_reader * reader, uint32_t WWT)
 		WWT -= CHAR_LEN;
 	else
 		WWT = 0;
-	double timeoutfix = 150L; // Dirty: extra delay of 150ms needed for eg HD+ smartcards
 	double work_etu = 1000 / (double)reader->current_baudrate;
-	return (uint32_t) (WWT * work_etu * reader->cardmhz / reader->mhz) + timeoutfix; // in ms
+	return (uint32_t) (WWT * work_etu * reader->cardmhz / reader->mhz); // in ms
 }
 
 static int32_t ICC_Async_SetParity (struct s_reader * reader, uint16_t parity)
