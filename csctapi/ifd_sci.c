@@ -80,13 +80,8 @@ int32_t Sci_Reset (struct s_reader * reader, ATR * atr)
 			rdr_debug_mask(reader, D_IFD, "Got a timeout!");
 			break;   // read atr response to end
 		}
-		if (n > 1){
-			if ((buf[(n-1)]==0x90) && (buf[n]==0x00) && (buf[n-2]!=0xF1)){  // added 0xF1 condition for ORF 0D05
-				rdr_debug_mask(reader, D_IFD, "Reached end of ATR");
-				break; // if we receive a 0x90 followed by 0x00 also stop reading
-			}
-		}
-		n++;
+		
+	n++;
 	}
 
 	if ((buf[0] !=0x3B) && (buf[0] != 0x3F) && (n>9 && !memcmp(buf+4, "IRDETO", 6))) //irdeto S02 reports FD as first byte on dreambox SCI, not sure about SH4 or phoenix
