@@ -427,7 +427,7 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, ui
 				//try to resync
 				unsigned char resync[] = { 0x21, 0xC0, 0x00, 0xE1 };
 				Protocol_T1_Command (reader, resync, sizeof(resync), rsp, lr);
-				reader->ifsc = DEFAULT_IFSC;
+				// reader->ifsc = DEFAULT_IFSC; why returning to default IFSC? Might be causing timeouts forever on first needed resync request.
 			}
 			break;
 		case ATR_PROTOCOL_TYPE_T14:
