@@ -932,8 +932,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	int32_t nmaxreopen = nreaders-nbest_readers;
 	if (nmaxreopen < 1)
 		nmaxreopen = 1;
-	if (nmaxreopen > 5)
-		nmaxreopen = 5;
 
 #ifdef WITH_DEBUG
 	if (cs_dblevel & 0x01) {
@@ -988,8 +986,9 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					cs_debug_mask(D_LB, "loadbalancer: starting statistics for reader %s", rdr->label);
 					ea->status |= READER_ACTIVE; //no statistics, this reader is active (now) but we need statistics first!
 					new_stats = 1;
-					nreaders--;
-					nmaxreopen--;
+					//nreaders--;
+					if (!cfg.lb_reopen_mode)
+						nmaxreopen--;
 				}
 				continue;
 			}
