@@ -2330,7 +2330,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 			"fake", "invalid", "corrupt", "no card", "expdate", "disabled", "stopped"};
 	static const char *stxtEx[16]={"", "group", "caid", "ident", "class", "chid", "queue", "peer", "sid", "", "", "", "", "", "", ""};
 	static const char *stxtWh[16]={"", "user ", "reader ", "server ", "lserver ", "", "", "", "", "", "", "", "" ,"" ,"", ""};
-	char sby[32]="", sreason[32]="", schaninfo[32]="";
+	char sby[100]="", sreason[32]="", schaninfo[32]="";
 	char erEx[32]="";
 	char uname[38]="";
 	char channame[32];
@@ -2349,6 +2349,16 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 			snprintf(sby, sizeof(sby)-1, " by %s(btun %04X)", er_reader->label, er->ocaid);
 		else
 			snprintf(sby, sizeof(sby)-1, " by %s", er_reader->label);
+	} else if (er->rc == E_TIMEOUT) {
+                struct s_ecm_answer *ea_list;
+                int32_t ofs = 0;
+	        for(ea_list = er->matching_rdr; ea_list; ea_list = ea_list->next) {
+	                if (ea_list->reader && ofs < (int32_t)sizeof(sby) && (ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED)) == REQUEST_SENT) { //Request send, but no answer!
+	                        ofs += snprintf(sby+ofs, sizeof(sby)-ofs-1, "%s%s", ofs?",":" by ", ea_list->reader->label);
+                        }
+                }
+                if(er->ocaid && ofs < (int32_t)sizeof(sby))
+	                ofs += snprintf(sby+ofs, sizeof(sby)-ofs-1, "(btun %04X)", er->ocaid);
 	}
 
 	if (er->rc < E_NOTFOUND) er->rcEx=0;
@@ -4222,6 +4232,7 @@ static void * check_thread(void) {
 					time_to_check = add_ms_to_timeb(&tbc, cfg.ctimeout);
 				} else {
 					if (er->client) {
+					        er->selected_reader = NULL;
 						debug_ecm(D_TRACE, "timeout for %s %s", username(er->client), buf);
 						write_ecm_answer(NULL, er, E_TIMEOUT, 0, NULL, NULL);
 					}
