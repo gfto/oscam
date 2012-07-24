@@ -411,15 +411,18 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, ui
 	LOCK_SC8IN1;
 
 	int32_t try = 1;
+	uint16_t type = 0;
 	do {
 	 switch (reader->protocol_type) {
 		if (try > 1)
 			rdr_log(reader, "Warning: needed try nr %i, next ECM has some delay", try);
 		case ATR_PROTOCOL_TYPE_T0:
 			ret = Protocol_T0_Command (reader, command, command_len, rsp, lr);
+			type = 0;
 			break;
 		case ATR_PROTOCOL_TYPE_T1:
 			ret = Protocol_T1_Command (reader, command, command_len, rsp, lr);
+			type = 1;
 			if (ret != OK) {
 				//try to resync
 				unsigned char resync[] = { 0x21, 0xC0, 0x00, 0xE1 };
@@ -429,9 +432,11 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, ui
 			break;
 		case ATR_PROTOCOL_TYPE_T14:
 			ret = Protocol_T14_ExchangeTPDU (reader, command, command_len, rsp, lr);
+			type = 14;
 			break;
 		default:
 			rdr_log(reader, "ERROR: Unknown protocol type %i", reader->protocol_type);
+			type = 99; // use 99 for unknown.
 			ret = ERROR;
 	 }
 	try++;
@@ -440,7 +445,7 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, ui
 	UNLOCK_SC8IN1;
 
 	if (ret) {
-		rdr_debug_mask(reader, D_TRACE, "ERROR: Protocol_T0_Command returns error");
+		rdr_debug_mask(reader, D_TRACE, "ERROR: Protocol_T%d_Command returns error", type);
 		return ERROR;
 	}
 
