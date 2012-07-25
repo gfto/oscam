@@ -184,7 +184,7 @@ static void camd35_request_emm(ECM_REQUEST *er)
 	struct s_client *cl = cur_client();
 	struct s_reader *aureader = NULL, *rdr = NULL;
 
-	if (ll_contains(cl->aureader_list, er->selected_reader) && !er->selected_reader->audisabled)
+	if (er->selected_reader && !er->selected_reader->audisabled && ll_contains(cl->aureader_list, er->selected_reader))
 		aureader = er->selected_reader;
 
 	if (!aureader && cl->aureader_list) {
