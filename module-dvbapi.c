@@ -1734,16 +1734,16 @@ void event_handler(int32_t UNUSED(signal)) {
 		}
 
 		for(j2=0,j1=0;j2<len;j2+=2,j1++) {
-			if (sscanf((char*)mbuf+j2, "%02X", dest+j1) != 1) {
+			if (sscanf((char*)mbuf+j2, "%02X", (unsigned int*)dest+j1) != 1) {
 				cs_log("error parsing QboxHD pmt.tmp, data not valid in position %d",j2);
 				pthread_mutex_unlock(&event_handler_lock);
 				return;
 			}
 		}
 
-		cs_ddump_mask(D_DVBAPI, dest,len/2,"QboxHD pmt.tmp:");
+		cs_ddump_mask(D_DVBAPI, (unsigned char *)dest, len/2, "QboxHD pmt.tmp:");
 
-		pmt_id = dvbapi_parse_capmt(dest+4, (len/2)-4, -1, dp->d_name);
+		pmt_id = dvbapi_parse_capmt((unsigned char *)dest+4, (len/2)-4, -1, dp->d_name);
 #else
 		if (len>sizeof(dest)) {
 			cs_log("event_handler() dest buffer is to small for pmt data!");
@@ -2198,7 +2198,6 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			if (j==demux[i].ECMpidcount) continue;
 
 			if (er->rc < E_NOTFOUND && cfg.dvbapi_requestmode==0 && (demux[i].pidindex==-1) && (er->caid!=0 || er->ocaid!=0)) {
-			                delayer(er);
 			                dvbapi_start_descrambling(i);
 			}
 
@@ -2234,13 +2233,11 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
                                         if (demux[i].pidindex==-1) {
                                                 demux[i].curindex = j;
-                                                delayer(er);
                                                 dvbapi_start_descrambling(i);
                                         } else if (demux[i].curindex != j) {
                                                 demux[i].curindex = j;
                                                 //I hope this trick works for all: adjust the index to write the right cw:
                                                 demux[i].ECMpids[j].index = demux[i].ECMpids[demux[i].pidindex].index;
-                                                delayer(er);
                                                 dvbapi_start_descrambling(i);
                                         }
 			}
@@ -2313,6 +2310,8 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 					cs_sleepms(delayentry->delay);
 				}
 			}
+			
+			delayer(er);
 
 			switch (selected_api) {
 #ifdef WITH_STAPI
