@@ -81,7 +81,7 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
     return ret;
   }
 
-  if (command[1] == T1_BLOCK_S_RESYNCH_REQ)
+  if (command[1] == T1_BLOCK_S_RESYNCH_REQ && command[2] != 0x00 && command[3] != 0xE1) // tryfix HD+ timeout after resync request
   {
     /* Create an Resynch request S-Block */
     block = T1_Block_NewSBlock (T1_BLOCK_S_RESYNCH_REQ, 0, NULL);
