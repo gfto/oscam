@@ -1832,6 +1832,9 @@ void cs_cache_push(ECM_REQUEST *er)
 	if (er->cacheex_pushed || (er->ecmcacheptr && er->ecmcacheptr->cacheex_pushed))
 		return;
 
+        if (er->selected_reader)
+            er->grp = er->selected_reader->grp;
+            
 	//cacheex=2 mode: push (server->remote)
 	struct s_client *cl;
 	for (cl=first_client->next; cl; cl=cl->next) {
@@ -2097,12 +2100,14 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 
 			write_ecm_answer(cl->reader, ecm, er->rc, er->rcEx, er->cw, ecm->msglog);
 
+			if (er->rc < E_NOTFOUND)
+				ecm->selected_reader = cl->reader;
+			
 			cs_cache_push(ecm);  //cascade push!
 
-			if (er->rc < E_NOTFOUND) {
+			if (er->rc < E_NOTFOUND)
 				cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 1);
-				ecm->selected_reader = cl->reader;
-			}
+
 			cl->cwcacheexgot++;
 			if (cl->account)
                                 cl->account->cwcacheexgot++;
