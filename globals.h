@@ -1622,6 +1622,9 @@ struct s_config
 	uint32_t	max_cache_time;  //seconds
 	uint32_t	max_cache_count; //count ecms
 
+	int8_t		block_same_ip;   //0=allow all, 1=block client requests to reader with same ip   (default=1)
+	int8_t		block_same_name; //0=allow all, 1=block client requests to reader with same name (default=1)
+	
 #ifdef CS_CACHEEX
 	in_addr_t	csp_srvip;
 	int32_t		csp_port;

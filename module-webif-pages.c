@@ -1663,6 +1663,8 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#waitforcards_extra_delay##TPLHELPSUFFIX##Extra delay:</A></TD><TD><input name=\"waitforcards_extra_delay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##EXTRADELAY##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#preferlocalcards##TPLHELPSUFFIX##Prefer local cards:</A></TD><TD><SELECT NAME=\"preferlocalcards\"><OPTION VALUE=\"0\">0 - local cards like proxied</OPTION><OPTION VALUE=\"1\" ##PREFERLOCALCARDSCHECKED##>1 - prefer local cards</OPTION></SELECT></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#unlockparental##TPLHELPSUFFIX##Unlock parental:</A></TD><TD><SELECT NAME=\"unlockparental\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##UNLOCKPARENTALCHECKED##>YES</OPTION></SELECT></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#blocksameip##TPLHELPSUFFIX##Simple block same ip:</A></TD><TD><SELECT NAME=\"block_same_ip\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##BLOCKSAMEIPCHECKED##>YES</OPTION></SELECT></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#blocksamename##TPLHELPSUFFIX##Simple block same name:</A></TD><TD><SELECT NAME=\"block_same_name\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##BLOCKSAMENAMECHECKED##>YES</OPTION></SELECT></TD></TR>\n\
 			<TR><TH COLSPAN=\"2\">Logging</TH></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#disableuserfile##TPLHELPSUFFIX##Usr file:</A></TD>\n\
 				<TD>\n\

@@ -283,7 +283,10 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	tpl_printf(vars, TPLADD, "CACHEDELAY", "%u", cfg.delay);
 
 	tpl_printf(vars, TPLADD, "SLEEP", "%d", cfg.tosleep);
-	if (cfg.ulparent == 1) tpl_addVar(vars, TPLADD, "UNLOCKPARENTALCHECKED", "selected");
+	if (cfg.ulparent) tpl_addVar(vars, TPLADD, "UNLOCKPARENTALCHECKED", "selected");
+
+	if (cfg.block_same_ip)   tpl_addVar(vars, TPLADD, "BLOCKSAMEIPCHECKED", "selected");
+	if (cfg.block_same_name) tpl_addVar(vars, TPLADD, "BLOCKSAMENAMECHECKED", "selected");
 
 	tpl_printf(vars, TPLADD, "SERIALTIMEOUT", "%d", cfg.srtimeout);
 

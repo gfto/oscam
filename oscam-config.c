@@ -643,6 +643,16 @@ void chk_t_global(const char *token, char *value)
 		}
 #endif
 
+	if (!strcmp(token, "block_same_ip")) {
+		cfg.block_same_ip = strToIntVal(value, 1);
+		return;
+	}
+
+	if (!strcmp(token, "block_same_name")) {
+		cfg.block_same_name = strToIntVal(value, 1);
+		return;
+	}
+
 #ifdef WITH_LB
 	if (!strcmp(token, "readerautoloadbalance") || !strcmp(token, "lb_mode")) {
 		cfg.lb_mode = strToIntVal(value, DEFAULT_LB_MODE);
@@ -1746,6 +1756,8 @@ int32_t init_config(void)
 	cfg.cacheex_wait_time = DEFAULT_CACHEEX_WAIT_TIME;
 	cfg.cacheex_enable_stats = 0;
 #endif
+	cfg.block_same_ip = 1;
+	cfg.block_same_name = 1;
 
 #ifdef LCDSUPPORT
 	cfg.lcd_hide_idle = 0;
@@ -2237,6 +2249,11 @@ int32_t write_config(void)
 	if (cfg.cacheex_enable_stats != 0 || cfg.http_full_cfg)
 		fprintf_conf(f, "cacheexenablestats", "%d\n", cfg.cacheex_enable_stats);
 #endif
+	if (cfg.block_same_ip || cfg.http_full_cfg)
+		fprintf_conf(f, "block_same_ip", "%d\n", cfg.block_same_ip);
+	if (cfg.block_same_name || cfg.http_full_cfg)
+		fprintf_conf(f, "block_same_name", "%d\n", cfg.block_same_name);
+
 #if defined(QBOXHD) || defined(__arm__)
 	if (cfg.enableled || cfg.http_full_cfg)
 		fprintf_conf(f, "enableled", "%d\n", cfg.enableled);

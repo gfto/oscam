@@ -581,9 +581,22 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
 	  	}
   	}
   	if(foundident == 1 && ok == 0){
-  		cs_debug_mask(D_READER, "ECM is not in ecmwhitelist of reader %s.",rdr->label);
+  		cs_debug_mask(D_TRACE, "ECM is not in ecmwhitelist of reader %s.",rdr->label);
   		return(0);
   	}
+  }
+
+  //Simple ring connection check:
+    
+  //Check ip source+dest:
+  if (cfg.block_same_ip && cur_cl->ip == rdr->client->ip) {
+  	cs_debug_mask(D_TRACE, "ECMs origin %s has same ip like reader %s, blocked!", username(cur_cl), rdr->label);
+  	return 0;
+  }
+  
+  if (cfg.block_same_name && strcmp(username(cur_cl), rdr->label) == 0) {
+  	cs_debug_mask(D_TRACE, "ECMs origin %s has same name like reader %s, blocked!", username(cur_cl), rdr->label);
+  	return 0;
   }
 
   //All checks done, reader is matching!
