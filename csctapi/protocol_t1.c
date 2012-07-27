@@ -60,6 +60,9 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
 
     /* Send IFSD request */
     ret = Protocol_T1_SendBlock (reader, block);
+	
+	/* Delete block */
+    T1_Block_Delete (block);
 
     /* Receive a block */
     ret = Protocol_T1_ReceiveBlock (reader, &block);
@@ -81,7 +84,7 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
     return ret;
   }
 
-  if (command[1] == T1_BLOCK_S_RESYNCH_REQ && command[2] != 0x00 && command[3] != 0xE1) // tryfix HD+ timeout after resync request
+  if (command[1] == T1_BLOCK_S_RESYNCH_REQ)
   {
     /* Create an Resynch request S-Block */
     block = T1_Block_NewSBlock (T1_BLOCK_S_RESYNCH_REQ, 0, NULL);
@@ -89,6 +92,9 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
 
     /* Send request */
     ret = Protocol_T1_SendBlock (reader, block);
+	
+	/* Delete I-block */
+	T1_Block_Delete (block);
 
     /* Receive a block */
     ret = Protocol_T1_ReceiveBlock (reader, &block);
@@ -123,42 +129,56 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
   rdr_debug_mask(reader, D_IFD, "Sending block I(%d,%d)", reader->ns, more);
 
   /* Send a block */
-  call (Protocol_T1_SendBlock (reader, block));
+  ret = Protocol_T1_SendBlock (reader, block);
+  
+  /* Delete I-block */
+  T1_Block_Delete (block);
 
-  while (more) {
-      /* Receive a block */
-      call (Protocol_T1_ReceiveBlock (reader, &block));
-      rsp_type = T1_Block_GetType (block);
+  while ((ret == OK) && more) {
+  
+				/* Receive a block */
+				ret = Protocol_T1_ReceiveBlock (reader, &block);
+				
+				if (ret == OK){
+					rsp_type = T1_Block_GetType (block);
 
-      /* Positive ACK R-Block received */
-      if (rsp_type == T1_BLOCK_R_OK) {
-          rdr_debug_mask(reader, D_IFD, "Protocol: Received block R(%d)", T1_Block_GetNR (block));
-          /* Delete block */
-          T1_Block_Delete (block);
+					/* Positive ACK R-Block received */
+					if (rsp_type == T1_BLOCK_R_OK) {
+						rdr_debug_mask(reader, D_IFD, "Protocol: Received block R(%d)", T1_Block_GetNR (block));
+						/* Delete block */
+						T1_Block_Delete (block);
  
-          /* Increment ns  */
-          reader->ns = (reader->ns == 1) ? 0:1; //toggle from 0 to 1 and back
+						/* Increment ns  */
+						reader->ns = (reader->ns == 1) ? 0:1; //toggle from 0 to 1 and back
 
-          /* Calculate the number of bytes to send */
-          counter += bytes;
-          bytes = MIN (command_len - counter, reader->ifsc);
+						/* Calculate the number of bytes to send */
+						counter += bytes;
+						bytes = MIN (command_len - counter, reader->ifsc);
 
-          /* See if chaining is needed */
-          more = (command_len - counter > reader->ifsc);
+						/* See if chaining is needed */
+						more = (command_len - counter > reader->ifsc);
 
-          /* Create an I-Block */
-          block = T1_Block_NewIBlock (bytes, command + counter, reader->ns, more);
-          rdr_debug_mask(reader, D_IFD, "Protocol: Sending block I(%d,%d)", reader->ns, more);
+						/* Create an I-Block */
+						block = T1_Block_NewIBlock (bytes, command + counter, reader->ns, more);
+						rdr_debug_mask(reader, D_IFD, "Protocol: Sending block I(%d,%d)", reader->ns, more);
 
-          /* Send a block */
-          call (Protocol_T1_SendBlock (reader, block));
-      }
-      else {
-          /* Delete block */
-          T1_Block_Delete (block);
-          rdr_debug_mask(reader, D_TRACE, "ERROR: T1 Command %02X not implemented in SendBlock", rsp_type);
-          return ERROR;
-      }
+						/* Send a block */
+						ret = Protocol_T1_SendBlock (reader, block);
+		  
+						/* Delete I-block */
+						T1_Block_Delete (block);
+					}
+					else {
+						/* Delete block */
+						T1_Block_Delete (block);
+						rdr_debug_mask(reader, D_TRACE, "ERROR: T1 Command %02X not implemented in SendBlock", rsp_type);
+						return ERROR;
+					}
+				}
+				else {
+					rdr_debug_mask(reader, D_TRACE, "ERROR: T1 Command returned error");
+					return ERROR;
+				}
   }
 
   /* Reset counter */
@@ -213,6 +233,9 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
 
                   /* Send R-Block */
                   ret = Protocol_T1_SendBlock (reader, block);
+				  
+				  /* Delete I-block */
+				  T1_Block_Delete (block);
                 }
             }
 
@@ -232,6 +255,9 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
 
               /* Send WTX response */
               ret = Protocol_T1_SendBlock (reader, block);
+			  
+			  /* Delete block */
+              T1_Block_Delete (block);
             }
 
           else
@@ -259,9 +285,9 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
 
 static int32_t Protocol_T1_SendBlock (struct s_reader *reader, T1_Block * block)
 {
-	int32_t ret;
+  int32_t ret;
   ret = ICC_Async_Transmit (reader, block->length, block->data);
-	T1_Block_Delete(block);
+
   return ret;
 }
 

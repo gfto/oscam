@@ -42,7 +42,7 @@
 #define DEFAULT_WI		10
 // Default T1 settings
 #define DEFAULT_IFSC	32
-#define MAX_IFSC			251  /* Cannot send > 255 buffer */
+#define MAX_IFSC		254  /* Cannot send > 255 buffer */
 #define DEFAULT_CWI		13
 #define DEFAULT_BWI		4
 #define EDC_LRC				0
@@ -427,7 +427,7 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, ui
 				//try to resync
 				unsigned char resync[] = { 0x21, 0xC0, 0x00, 0xE1 };
 				Protocol_T1_Command (reader, resync, sizeof(resync), rsp, lr);
-				// reader->ifsc = DEFAULT_IFSC; why returning to default IFSC? Might be causing timeouts forever on first needed resync request.
+				reader->ifsc = DEFAULT_IFSC;
 			}
 			break;
 		case ATR_PROTOCOL_TYPE_T14:
@@ -892,9 +892,8 @@ static uint32_t ETU_to_ms(struct s_reader * reader, uint32_t WWT)
 #define CHAR_LEN 10L //character length in ETU, perhaps should be 9 when parity = none?
 	
 	if (reader->mhz>2000){
-		double timeoutfix = 150000L; // Dirty: extra delay of 150ms needed for eg HD+ smartcards
 		double work_etu = 1000L*1000L / (double) reader->current_baudrate; 
-		return (uint32_t) ((double) WWT * work_etu) + timeoutfix; // in us
+		return (uint32_t) ((double) WWT * work_etu); // in us
 	}
 
 	if (WWT > CHAR_LEN)
@@ -1091,6 +1090,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 				else
 					// Towitoko does not allow IFSC > 251
 					//FIXME not sure whether this limitation still exists
+					//tryfix HD+ cards setting MAX_IFSC to 254
 					reader->ifsc = MIN (reader->ifsc, MAX_IFSC);
 
 			#ifndef PROTOCOL_T1_USE_DEFAULT_TIMINGS
