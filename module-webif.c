@@ -3545,6 +3545,7 @@ static char *send_oscam_services(struct templatevars *vars, struct uriparams *pa
 		} else {
 			struct s_sidtab *sidtab_prev = NULL;
 			int32_t sidtablength = -1;
+			int32_t position = 0;
 			sidtab=cfg.sidtab;
 
 			// Calculate sidtablength before deletion so that updating sidtabs is faster
@@ -3557,33 +3558,34 @@ static char *send_oscam_services(struct templatevars *vars, struct uriparams *pa
 					struct s_client *cl;
 					struct s_reader *rdr;
 
-					if(sidtab_prev == NULL)
+					if(!sidtab_prev)
 						cfg.sidtab = sidtab->next;
 					else
 						sidtab_prev->next = sidtab->next;
-					free_sidtab(sidtab);
 
 					for (account = cfg.account; (account); account = account->next) {
-						delete_from_SIDTABBITS(&account->sidtabok, counter, sidtablength);
-						delete_from_SIDTABBITS(&account->sidtabno, counter, sidtablength);
-					}
-
-					for (cl=first_client->next; cl ; cl=cl->next){
-						if(account == cl->account){
-							cl->sidtabok = account->sidtabok;
-							cl->sidtabno = account->sidtabok;
+						delete_from_SIDTABBITS(&account->sidtabok, position, sidtablength);
+						delete_from_SIDTABBITS(&account->sidtabno, position, sidtablength);
+					
+						for (cl=first_client->next; cl ; cl=cl->next){
+							if(account == cl->account){
+								cl->sidtabok = account->sidtabok;
+								cl->sidtabno = account->sidtabno;
+							}
 						}
 					}
 
 					LL_ITER itr = ll_iter_create(configured_readers);
 					while((rdr = ll_iter_next(&itr))){
-						delete_from_SIDTABBITS(&rdr->sidtabok, counter, sidtablength);
-						delete_from_SIDTABBITS(&rdr->sidtabno, counter, sidtablength);
+						delete_from_SIDTABBITS(&rdr->sidtabok, position, sidtablength);
+						delete_from_SIDTABBITS(&rdr->sidtabno, position, sidtablength);
 					}
+					free_sidtab(sidtab);
 					++counter;
 					break;
 				}
 				sidtab_prev = sidtab;
+				position++;
 			}
 			if (counter > 0) {
 				++cfg_sidtab_generation;
