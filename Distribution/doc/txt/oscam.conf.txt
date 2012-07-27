@@ -110,6 +110,12 @@ DESCRIPTIONS
        readerrestartseconds = seconds
 	  seconds beetween restarts, 0 = disable reader restart, default:5
 
+       block_same_ip = 0|1
+	  1 = reject looping ECMs from clients to readers with the same IP address, default:1
+
+       block_same_name = 0|1
+	  1 = reject looping ECMs from clients to readers with the same name, default:1
+
        cachedelay = milli-seconds
 	  value to delay cached requests, default:0
 

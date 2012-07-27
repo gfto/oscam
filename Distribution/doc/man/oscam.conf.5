@@ -146,6 +146,16 @@ additional delay in milli-seconds after waiting for local SCs on startup before 
 seconds beetween restarts, 0 = disable reader restart, default:5
 .RE
 .PP
+\fBblock_same_ip\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = reject looping ECMs from clients to readers with the same IP address, default:1
+.RE
+.PP
+\fBblock_same_name\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = reject looping ECMs from clients to readers with the same name, default:1
+.RE
+.PP
 \fBcachedelay\fP = \fBmilli-seconds\fP
 .RS 3n
 value to delay cached requests, default:0

@@ -199,6 +199,20 @@ seconds beetween restarts, 0 = disable reader restart, default:5
 
 <P>
 
+<B>block_same_ip</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = reject looping ECMs from clients to readers with the same IP address, default:1
+</DL>
+
+<P>
+
+<B>block_same_name</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = reject looping ECMs from clients to readers with the same name, default:1
+</DL>
+
+<P>
+
 <B>cachedelay</B> = <B>milli-seconds</B>
 <DL COMPACT><DT><DD>
 value to delay cached requests, default:0
