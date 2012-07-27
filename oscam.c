@@ -1832,8 +1832,11 @@ void cs_cache_push(ECM_REQUEST *er)
 	if (er->cacheex_pushed || (er->ecmcacheptr && er->ecmcacheptr->cacheex_pushed))
 		return;
 
+        int64_t grp;
         if (er->selected_reader)
-            er->grp = er->selected_reader->grp;
+            grp = er->selected_reader->grp;
+        else
+            grp = er->grp;
             
 	//cacheex=2 mode: push (server->remote)
 	struct s_client *cl;
@@ -1841,7 +1844,7 @@ void cs_cache_push(ECM_REQUEST *er)
 		if (er->cacheex_src != cl) {
 			if (cl->typ == 'c' && !cl->dup && cl->account && cl->account->cacheex == 2) { //send cache over user
 				if (ph[cl->ctyp].c_cache_push // cache-push able
-						&& (!er->grp || (cl->grp & er->grp)) //Group-check
+						&& (!grp || (cl->grp & grp)) //Group-check
 						&& chk_srvid(cl, er) //Service-check
 						&& (chk_caid(er->caid, &cl->ctab) > 0))  //Caid-check
 				{
@@ -1865,7 +1868,7 @@ void cs_cache_push(ECM_REQUEST *er)
 		struct s_client *cl = rdr->client;
 		if (cl && er->cacheex_src != cl && rdr->cacheex == 3) { //send cache over reader
 			if (rdr->ph.c_cache_push
-				&& (!er->grp || (rdr->grp & er->grp)) //Group-check
+				&& (!grp || (rdr->grp & grp)) //Group-check
 				&& chk_srvid(cl, er) //Service-check
 				&& chk_ctab(er->caid, &rdr->ctab))  //Caid-check
 			{
