@@ -907,7 +907,7 @@ char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *
 	struct s_srvid *this;
 	buf[0] = '\0';
 
-	if (!srvid)
+	if (!srvid || (srvid>>12) >= 16) //cfg.srvid[16]
 		return(buf);
 
 	if (cl && cl->last_srvidptr && cl->last_srvidptr->srvid==srvid)
