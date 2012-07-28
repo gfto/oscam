@@ -4922,6 +4922,40 @@ int32_t main (int32_t argc, char *argv[])
 
 	start_lcd_thread();
 
+#ifndef WITH_CARDREADER
+	cs_log("Binary without Cardreader Support! No EMM processing possible!");
+#endif
+#ifndef READER_NAGRA
+	cs_log("Binary without Nagra Module - no EMM processing for Nagra possible!");
+#endif
+#ifndef READER_IRDETO
+	cs_log("Binary without Irdeto Module - no EMM processing for Irdeto possible!");
+#endif
+#ifndef READER_CONAX
+	cs_log("Binary without Conax Module - no EMM processing for Conax possible!");
+#endif
+#ifndef READER_CRYPTOWORKS
+	cs_log("Binary without Cryptoworks Module - no EMM processing for Cryptoworks possible!");
+#endif
+#ifndef READER_SECA
+	cs_log("Binary without Seca Module - no EMM processing for Seca possible!");
+#endif
+#ifndef READER_VIACCESS
+	cs_log("Binary without Viaaccess Module - no EMM processing for Viaaccess possible!");
+#endif
+#ifndef READER_VIDEOGUARD
+	cs_log("Binary without Videoguard Module - no EMM processing for Videoguard possible!");
+#endif
+#ifndef READER_DRE
+	cs_log("Binary without Dre Module - no EMM processing for Dre possible!");
+#endif
+#ifndef READER_TONGFANG
+	cs_log("Binary without Tongfang Module - no EMM processing for Tongfang possible!");
+#endif
+#ifndef READER_BULCRYPT
+	cs_log("Binary without Bulcrypt Module - no EMM processing for Bulcrypt possible!");
+#endif
+
 	init_cardreader();
 
 	cs_waitforcardinit();
