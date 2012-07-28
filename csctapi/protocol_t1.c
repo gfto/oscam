@@ -182,7 +182,6 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
   }
 
   /* Reset counter */
-	ret = OK;
   buffer = NULL;
   counter = 0;      
   more = TRUE;
