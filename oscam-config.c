@@ -3187,6 +3187,9 @@ int32_t write_server(void)
 #define write_conf(CONFIG_VAR, text) \
 	fprintf(fp, "%-27s %s\n", text ":", config_##CONFIG_VAR() ? "yes" : "no")
 
+#define write_readerconf(CONFIG_VAR, text) \
+	fprintf(fp, "%-27s %s\n", text ":", config_##CONFIG_VAR() ? "yes" : "no - no EMM support!")
+
 void write_versionfile(void) {
 #if defined(__CYGWIN__)
 	return;
@@ -3236,16 +3239,18 @@ void write_versionfile(void) {
 	write_conf(MODULE_CONSTCW, "constant CW");
 	write_conf(WITH_CARDREADER, "Cardreader");
 	if (config_WITH_CARDREADER()) {
-		write_conf(READER_NAGRA, "Nagra");
-		write_conf(READER_IRDETO, "Irdeto");
-		write_conf(READER_CONAX, "Conax");
-		write_conf(READER_CRYPTOWORKS, "Cryptoworks");
-		write_conf(READER_SECA, "Seca");
-		write_conf(READER_VIACCESS, "Viaccess");
-		write_conf(READER_VIDEOGUARD, "NDS Videoguard");
-		write_conf(READER_DRE, "DRE Crypt");
-		write_conf(READER_TONGFANG, "TONGFANG");
-		write_conf(READER_BULCRYPT, "Bulcrypt");
+		write_readerconf(READER_NAGRA, "Nagra");
+		write_readerconf(READER_IRDETO, "Irdeto");
+		write_readerconf(READER_CONAX, "Conax");
+		write_readerconf(READER_CRYPTOWORKS, "Cryptoworks");
+		write_readerconf(READER_SECA, "Seca");
+		write_readerconf(READER_VIACCESS, "Viaccess");
+		write_readerconf(READER_VIDEOGUARD, "NDS Videoguard");
+		write_readerconf(READER_DRE, "DRE Crypt");
+		write_readerconf(READER_TONGFANG, "TONGFANG");
+		write_readerconf(READER_BULCRYPT, "Bulcrypt");
+	} else {
+		write_readerconf(WITH_CARDREADER, "Reader Support");
 	}
 	fclose(fp);
 }
