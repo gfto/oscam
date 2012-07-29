@@ -741,10 +741,13 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 	tpl_addVar(vars, TPLADD, "HTTPPASSWORD", cfg.http_pwd);
 
 	// css style selector
-	if(strlen(cfg.http_css) == 0) {
-		tpl_addVar(vars, TPLADD, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"\" selected>embedded</option>\n");
-	} else {
-		tpl_addVar(vars, TPLADD, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"\">embedded</option>\n");
+	tpl_printf(vars, TPLADD, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"\"%s>embedded</option>\n", strlen(cfg.http_css) == 0?" selected" : "");
+		
+	if(strlen(cfg.http_tpl) > 0) {
+		char path[255];
+		tpl_getFilePathInSubdir(cfg.http_tpl, "", "style", ".css", path, 255);
+		if(file_exists(path))
+			tpl_printf(vars, TPLAPPEND, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"%s\"%s>%s (template)</option>\n", path, strstr(cfg.http_css, path)? " selected" : "", path);
 	}
 
 	DIR *hdir;
@@ -754,9 +757,7 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 		while(cs_readdir_r(hdir, &entry, &result) == 0 && result != NULL){
 			if (strstr(entry.d_name, ".css")) {
 				if (strstr(cfg.http_css, entry.d_name)) {
-					tpl_printf(vars, TPLAPPEND, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"%s%s\" selected>%s%s</option>\n",cs_confdir,entry.d_name,cs_confdir,entry.d_name);
-				} else {
-					tpl_printf(vars, TPLAPPEND, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"%s%s\">%s%s</option>\n",cs_confdir,entry.d_name,cs_confdir,entry.d_name);
+					tpl_printf(vars, TPLAPPEND, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"%s%s\"%s>%s%s</option>\n",cs_confdir,entry.d_name,strstr(cfg.http_css, entry.d_name)?" selected" : "", cs_confdir,entry.d_name);
 				}
 			}
 		}

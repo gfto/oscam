@@ -396,12 +396,13 @@ void tpl_checkOneDirDiskRevisions(const char* subdir) {
 					char *pch2 = strstr(pch1,"-->");
 					if(pch2 != NULL){
 						pch2[0] = '\0';
+						int32_t j;
 						char *ptr1, *saveptr1 = NULL;
-						for (i = 0, ptr1 = strtok_r(pch1 + 10, ";", &saveptr1); (ptr1) && i < 4 ; ptr1 = strtok_r(NULL, ";", &saveptr1), i++){
-							if(i == 0) checksum = strtoul(ptr1, NULL, 10);
-							else if(i == 1) version = ptr1;
-							else if(i == 2) revision = ptr1;
-							else if(i == 3) ifdefs = ptr1;
+						for (j = 0, ptr1 = strtok_r(pch1 + 10, ";", &saveptr1); (ptr1) && j < 4 ; ptr1 = strtok_r(NULL, ";", &saveptr1), j++){
+							if(j == 0) checksum = strtoul(ptr1, NULL, 10);
+							else if(j == 1) version = ptr1;
+							else if(j == 2) revision = ptr1;
+							else if(j == 3) ifdefs = ptr1;
 						}
 					}
 					if(checksum != curchecksum){			
