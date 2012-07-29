@@ -3,9 +3,9 @@
 #ifdef WEBIF
 
 #include "module-webif.h"
+#include "oscam-config-funcs.h"
 
-extern char *tplmap[];
-extern char *tpl[];
+extern const char *tpl[][3];
 extern char *JSCRIPT;
 extern char *CSS;
 
@@ -192,16 +192,18 @@ char *tpl_getTplPath(const char *name, const char *path, char *result, uint32_t 
 	return tpl_getFilePathInSubdir(path, "", name, ".tpl", result,  resultsize);
 }
 
+#define check_conf(CONFIG_VAR, text) \
+	if(config_##CONFIG_VAR() && strncmp(#CONFIG_VAR, text, len) == 0) {ok = 1; break;}
+
 /* Returns an unparsed template either from disk or from internal templates.
    Note: You must free() the result after using it and you may get NULL if an error occured!*/
 static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const char* subdir){
   int32_t i;
   int32_t tplcnt = tpl_count();
-  int32_t tplmapcnt = tplmap_count();
   char *result;
 
   for(i = 0; i < tplcnt; ++i){
-  	if(strcmp(name, tpl[i]) == 0) break;
+  	if(strcmp(name, tpl[i][0]) == 0) break;
   }
 
   if(strlen(cfg.http_tpl) > 0){
@@ -211,18 +213,70 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
        && strlen(tpl_getFilePathInSubdir(cfg.http_tpl, ""    , name, ".tpl", path, 255)) > 0 && file_exists(path))) {
 			FILE *fp;
 			char buffer[1024];
+			memset(buffer, 0, sizeof(buffer));
 			int32_t read, allocated = 1025, offset, size = 0;
 			if(!cs_malloc(&result, allocated * sizeof(char), -1)) return NULL;
 			if((fp = fopen(path,"r"))!=NULL){
 			while((read = fread(&buffer,sizeof(char),1024,fp)) > 0){
 				offset = 0;
 				if(size == 0 && removeHeader){
-					char *pch = strstr(buffer,"<!--OSCam");
-					if(pch != NULL){
-						pch = strstr(buffer,"-->");
-						if(pch != NULL){
-							offset = pch - buffer + 4;
+					/* Remove version string from output and check if it is valid for output */
+					char *pch1 = strstr(buffer,"<!--OSCam");
+					if(pch1 != NULL){
+						char *pch2 = strstr(pch1,"-->");
+						if(pch2 != NULL){
+							offset = pch2 - buffer + 4;
 							read -= offset;
+							pch2[0] = '\0';
+							char *ptr1, *ptr2, *saveptr1 = NULL, *saveptr2 = NULL;
+							for (i = 0, ptr1 = strtok_r(pch1 + 10, ";", &saveptr1); (ptr1) && i < 4 ; ptr1 = strtok_r(NULL, ";", &saveptr1), i++){
+								if(i == 3 && strlen(ptr1) > 2){
+									int8_t ok = 0;
+									for (ptr2 = strtok_r(ptr1, ",", &saveptr2); (ptr2) && ok == 0 ; ptr2 = strtok_r(NULL, ",", &saveptr2)){
+										size_t len = strlen(ptr2);
+										check_conf(ARM, ptr2);
+										check_conf(CS_ANTICASC, ptr2);
+										check_conf(CS_CACHEEX, ptr2);
+										check_conf(HAVE_DVBAPI, ptr2);
+										check_conf(IPV6SUPPORT, ptr2);
+										check_conf(IRDETO_GUESSING, ptr2);
+										check_conf(LCDSUPPORT, ptr2);
+										check_conf(MODULE_CAMD33, ptr2);
+										check_conf(MODULE_CAMD35, ptr2);
+										check_conf(MODULE_CAMD35_TCP, ptr2);
+										check_conf(MODULE_CCCAM, ptr2);
+										check_conf(MODULE_CCCSHARE, ptr2);
+										check_conf(MODULE_CONSTCW, ptr2);
+										check_conf(MODULE_GBOX, ptr2);
+										check_conf(MODULE_MONITOR, ptr2);
+										check_conf(MODULE_NEWCAMD, ptr2);
+										check_conf(MODULE_PANDORA, ptr2);
+										check_conf(MODULE_RADEGAST, ptr2);
+										check_conf(MODULE_SERIAL, ptr2);
+										check_conf(QBOXHD, ptr2);
+										check_conf(READER_BULCRYPT, ptr2);
+										check_conf(READER_CONAX, ptr2);
+										check_conf(READER_CRYPTOWORKS, ptr2);
+										check_conf(READER_DRE, ptr2);
+										check_conf(READER_IRDETO, ptr2);
+										check_conf(READER_NAGRA, ptr2);
+										check_conf(READER_SECA, ptr2);
+										check_conf(READER_TONGFANG, ptr2);
+										check_conf(READER_VIACCESS, ptr2);
+										check_conf(READER_VIDEOGUARD, ptr2);
+										check_conf(WITH_CARDREADER, ptr2);
+										check_conf(WITH_DEBUG, ptr2);
+										check_conf(WITH_LB, ptr2);
+										check_conf(WITH_LIBCRYPTO, ptr2);
+										check_conf(WITH_LIBUSB, ptr2);
+										check_conf(WITH_PCSC, ptr2);
+										check_conf(WITH_SSL, ptr2);
+										check_conf(WITH_STAPI, ptr2);
+									}
+									if(ok == 0) return result;
+									break;
+								}
+							}
 						}
 					}
 				}
@@ -239,10 +293,10 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
 			}
 	  }
   }
- 	if(i >= 0 && i < tplmapcnt){
- 		int32_t len = (strlen(tplmap[i])) + 1;
+ 	if(i >= 0 && i < tplcnt){
+ 		int32_t len = (strlen(tpl[i][1])) + 1;
  		if(!cs_malloc(&result, len * sizeof(char), -1)) return NULL;
- 		memcpy(result, tplmap[i], len);
+ 		memcpy(result, tpl[i][1], len);
  	} else {
  		if(!cs_malloc(&result, 1 * sizeof(char), -1)) return NULL;
  		result[0] = '\0';
@@ -307,17 +361,16 @@ char *tpl_getTpl(struct templatevars *vars, const char* name){
 /* Saves all templates to the specified paths. Existing files will be overwritten! */
 int32_t tpl_saveIncludedTpls(const char *path){
   int32_t tplcnt = tpl_count();
-  int32_t tplmapcnt = tplmap_count();
   int32_t i, cnt = 0;
   char tmp[256];
   FILE *fp;
-  for(i = 0; i < tplcnt && i < tplmapcnt; ++i){
-  	if(strlen(tpl_getTplPath(tpl[i], path, tmp, 256)) > 0 && (fp = fopen(tmp,"w")) != NULL){
-  		int32_t len = strlen(tplmap[i]);
-  		if(!(tpl[i][0] == 'I' && tpl[i][1] == 'C')){
-  			fprintf(fp, "<!--OSCam;%lu;%s;%s-->\n", crc32(0L, (unsigned char*)tplmap[i], len), CS_VERSION, CS_SVN_VERSION);
+  for(i = 0; i < tplcnt; ++i){
+  	if(strlen(tpl_getTplPath(tpl[i][0], path, tmp, 256)) > 0 && (fp = fopen(tmp,"w")) != NULL){
+  		int32_t len = strlen(tpl[i][1]);
+  		if(strncmp(tpl[i][0], "IC", 2) != 0){
+  			fprintf(fp, "<!--OSCam;%lu;%s;%s;%s-->\n", crc32(0L, (unsigned char*)tpl[i][1], len), CS_VERSION, CS_SVN_VERSION, tpl[i][2]);
   		}
-			fwrite(tplmap[i], sizeof(char), len, fp);
+			fwrite(tpl[i][1], sizeof(char), len, fp);
 			fclose (fp);
 			++cnt;
 		}
@@ -333,31 +386,29 @@ void tpl_checkOneDirDiskRevisions(const char* subdir) {
 	int32_t i, tplcnt = tpl_count();
 		char path[255];
 		for(i = 0; i < tplcnt; ++i){
-			if(tpl[i][0] != 'I' && tpl[i][1] != 'C' && strlen(tpl_getTplPath(tpl[i], dirpath, path, 255)) > 0 && file_exists(path)){
+			if(strncmp(tpl[i][0], "IC", 2) != 0 && strlen(tpl_getTplPath(tpl[i][0], dirpath, path, 255)) > 0 && file_exists(path)){
 				int8_t error = 1;
-				char *tplorg = tpl_getUnparsedTpl(tpl[i], 0, subdir);
-				unsigned long curchecksum = crc32(0L, (unsigned char*)tplmap[i], strlen(tplmap[i]));
-				char *pch = strstr(tplorg, "<!--OSCam;");
-				if(pch != NULL){
-					pch = pch + 10;
-					unsigned long checksum = strtoul(pch, NULL, 10);
-					if(checksum != curchecksum){
-						pch = strchr(pch, ';');
-						char *version = "", *revision = "";
-						if(pch != NULL){
-							version = pch + 1;
-							pch = strchr(version, ';');
-							if(pch != NULL){
-								pch[0] = '\0';
-								revision = pch + 1;
-								pch = strstr(revision, "-->");
-								if(pch != NULL) pch[0] = '\0';
-							}
+				char *tplorg = tpl_getUnparsedTpl(tpl[i][0], 0, subdir);
+				unsigned long checksum = 0, curchecksum = crc32(0L, (unsigned char*)tpl[i][1], strlen(tpl[i][1]));
+				char *ifdefs = "", *pch1 = strstr(tplorg,"<!--OSCam");
+				if(pch1 != NULL){
+					char *version = "?", *revision = "?";
+					char *pch2 = strstr(pch1,"-->");
+					if(pch2 != NULL){
+						pch2[0] = '\0';
+						char *ptr1, *saveptr1 = NULL;
+						for (i = 0, ptr1 = strtok_r(pch1 + 10, ";", &saveptr1); (ptr1) && i < 4 ; ptr1 = strtok_r(NULL, ";", &saveptr1), i++){
+							if(i == 0) checksum = strtoul(ptr1, NULL, 10);
+							else if(i == 1) version = ptr1;
+							else if(i == 2) revision = ptr1;
+							else if(i == 3) ifdefs = ptr1;
 						}
+					}
+					if(checksum != curchecksum){			
 						cs_log("WARNING: Your http disk template %s was created for an older revision of OSCam and was changed in original OSCam (%s,r%s). Please consider upgrading it!", path, version, revision);
 					} else error = 0;
 				} else cs_log("WARNING: Your http disk template %s is in the old template format without revision info. Please consider upgrading it!", path);
-				if(error) cs_log("If you are sure that it is current, add the following line at the beginning of the template to suppress this warning: <!--OSCam;%lu;%s;%s-->", curchecksum, CS_VERSION, CS_SVN_VERSION);
+				if(error) cs_log("If you are sure that it is current, add the following line at the beginning of the template to suppress this warning: <!--OSCam;%lu;%s;%s;%s-->", curchecksum, CS_VERSION, CS_SVN_VERSION, ifdefs);
 				free(tplorg);
 			}
 		}

@@ -107,7 +107,6 @@ extern SSL_CTX *SSL_Webif_Init(void);
 #endif
 
 extern int32_t tpl_count(void);
-extern int32_t tplmap_count(void);
 extern int32_t cv(void);
 
 #endif

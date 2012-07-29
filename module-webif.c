@@ -15,8 +15,6 @@
 #include "module-cccshare.h"
 #include "module-webif.h"
 
-extern char *tplmap[];
-extern char *tpl[];
 extern char *CSS;
 extern char *entitlement_type[];
 

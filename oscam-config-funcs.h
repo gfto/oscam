@@ -113,6 +113,14 @@ static inline int config_CS_ANTICASC(void) {
 	#endif
 }
 
+static inline int config_WITH_COOLAPI(void) {
+	#ifdef WITH_COOLAPI
+	return 1;
+	#else
+	return 0;
+	#endif
+}
+
 static inline int config_WITH_DEBUG(void) {
 	#ifdef WITH_DEBUG
 	return 1;
@@ -331,6 +339,22 @@ static inline int config_READER_BULCRYPT(void) {
 
 static inline int config_CS_CACHEEX(void) {
 	#ifdef CS_CACHEEX
+	return 1;
+	#else
+	return 0;
+	#endif
+}
+
+static inline int config_QBOXHD(void) {
+	#ifdef QBOXHD
+	return 1;
+	#else
+	return 0;
+	#endif
+}
+
+static inline int config_ARM(void) {
+	#ifdef __arm__
 	return 1;
 	#else
 	return 0;
