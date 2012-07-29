@@ -16,6 +16,7 @@ extern CS_MUTEX_LOCK *lock_cs;
 extern char noncekey[33];
 
 static int8_t b64decoder[256];
+static int8_t *tplchksum;
 
 /* Adds a name->value-mapping or appends to it. You will get a reference back which you may freely
    use (but you should not call free/realloc on this!)*/
@@ -198,13 +199,9 @@ char *tpl_getTplPath(const char *name, const char *path, char *result, uint32_t 
 /* Returns an unparsed template either from disk or from internal templates.
    Note: You must free() the result after using it and you may get NULL if an error occured!*/
 static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const char* subdir){
-  int32_t i;
+  int32_t i;  
   int32_t tplcnt = tpl_count();
   char *result;
-
-  for(i = 0; i < tplcnt; ++i){
-  	if(strcmp(name, tpl[i][0]) == 0) break;
-  }
 
   if(strlen(cfg.http_tpl) > 0){
   	char path[255];
@@ -293,6 +290,18 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
 			}
 	  }
   }
+  
+  int8_t chksum = 0;
+  for(i = strlen(name); i > 0; --i){
+		chksum += name[i];
+	}
+
+  for(i = 0; i < tplcnt; ++i){
+  	if(chksum == tplchksum[i] && name[0] == tpl[i][0][0]){	// basic check to save strcmp calls as we are doing this hundreds of times per page in some cases
+  		if(strcmp(name, tpl[i][0]) == 0) break;
+  	}
+  }
+  
  	if(i >= 0 && i < tplcnt){
  		int32_t len = (strlen(tpl[i][1])) + 1;
  		if(!cs_malloc(&result, len * sizeof(char), -1)) return NULL;
@@ -448,6 +457,20 @@ void tpl_checkDiskRevisions(void) {
 			closedir(hdir);
 		}
 	}
+}
+
+/* Create some easy checksums (but they should be sufficient for our needs) in order to speedup lookup of templates. */
+void prepareTplChecksums(void) {
+	int32_t i, j;
+  int32_t tplcnt = tpl_count();
+  cs_malloc(&tplchksum,sizeof(int8_t) * tplcnt, SIGINT);
+
+  for(i = 0; i < tplcnt; ++i){
+  	tplchksum[i] = 0;
+  	for(j = strlen(tpl[i][0]); j > 0; --j){
+  		tplchksum[i] += tpl[i][0][j];
+  	}
+  }
 }
 
 /* Parses a value in an authentication string by removing all quotes/whitespace. Note that the original array is modified. */

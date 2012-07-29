@@ -75,6 +75,7 @@ extern char *tpl_getTpl(struct templatevars *vars, const char* name);
 extern int32_t tpl_saveIncludedTpls(const char *path);
 extern void tpl_checkOneDirDiskRevisions(const char* subdir);
 extern void tpl_checkDiskRevisions(void);
+extern void prepareTplChecksums(void);
 extern char *parse_auth_value(char *value);
 extern time_t parse_modifiedsince(char * value);
 extern void calculate_nonce(char *result);

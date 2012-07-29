@@ -5017,6 +5017,7 @@ void http_srv(void) {
 
 	/* Prepare base64 decoding array */
 	b64prepare();
+	prepareTplChecksums();
 
 	tpl_checkDiskRevisions();
 
