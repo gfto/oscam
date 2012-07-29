@@ -2291,7 +2291,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 								demux[i].ECMpids[t].checked = 0;
 								demux[i].ECMpids[t].status = 0;
 							}
-							demux[i].tries = 3;
+							demux[i].tries = 0;
 							demux[i].curindex = 0;
 							demux[i].pidindex = -1;
 
@@ -2310,7 +2310,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 					cs_sleepms(delayentry->delay);
 				}
 			}
-			
+
 			delayer(er);
 
 			switch (selected_api) {
