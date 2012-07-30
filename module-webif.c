@@ -3954,17 +3954,12 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 
 		tpl_addVar(vars, TPLAPPEND, "LOGMENU", "<A HREF=\"files.html?file=userfile&amp;clear=usrfile\">Clear Log</A>");
 
-		tpl_addVar(vars, TPLADD,    "FILTERFORM", "<FORM ACTION=\"files.html\" method=\"get\">\n");
-		tpl_addVar(vars, TPLAPPEND, "FILTERFORM", "<INPUT name=\"file\" type=\"hidden\" value=\"userfile\">\n");
-		tpl_addVar(vars, TPLAPPEND, "FILTERFORM", "<SELECT name=\"filter\">\n");
-		tpl_printf(vars, TPLAPPEND, "FILTERFORM", "<OPTION value=\"%s\">%s</OPTION>\n", "all", "all");
-
+		tpl_printf(vars, TPLADD, "FILTERFORMOPTIONS", "<OPTION value=\"%s\">%s</OPTION>\n", "all", "all");
 		struct s_auth *account;
 		for (account = cfg.account; (account); account = account->next) {
-			tpl_printf(vars, TPLAPPEND, "FILTERFORM", "<OPTION value=\"%s\" %s>%s</OPTION>\n", account->usr, strcmp(getParam(params, "filter"), account->usr) ? "":"selected", account->usr);
+			tpl_printf(vars, TPLAPPEND, "FILTERFORMOPTIONS", "<OPTION value=\"%s\" %s>%s</OPTION>\n", account->usr, strcmp(getParam(params, "filter"), account->usr) ? "":"selected", account->usr);
 		}
-		tpl_addVar(vars, TPLAPPEND, "FILTERFORM", "</SELECT><input type=\"submit\" name=\"action\" value=\"Filter\" title=\"Filter for a specific user\"></FORM>");
-
+		tpl_addVar(vars, TPLADD, "FILTERFORM", tpl_getTpl(vars, "FILTERFORM"));
 	}
 #ifdef CS_ANTICASC
 	else if (!apicall && strcmp(getParam(params, "file"), "anticasc") == 0){

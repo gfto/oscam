@@ -421,6 +421,12 @@ SFRTIFJFU0VSVkVEADs="
 	</FORM>\n\
 ##TPLFOOTER##"
 
+#define TPLFILTERFORM "<FORM ACTION=\"files.html\" method=\"get\">\n\
+<INPUT name=\"file\" type=\"hidden\" value=\"userfile\">\n\
+<SELECT name=\"filter\">\n\
+##FILTERFORMOPTIONS##\
+</SELECT><input type=\"submit\" name=\"action\" value=\"Filter\" title=\"Filter for a specific user\"></FORM>"
+
 #define TPLAPIFILE "##TPLAPIHEADER##\n\
 	<file filename=\"##APIFILENAME##\" writable=\"##APIWRITABLE##\">\n\
 	<![CDATA[##FILECONTENT##]]>\n\
@@ -2369,6 +2375,7 @@ const char *tpl[][3] = {
 	,{"CONFIGMENU", TPLCONFIGMENU, ""}
 	,{"FILEMENU", TPLFILEMENU, ""}
 	,{"FILE", TPLFILE, ""}
+	,{"FILTERFORM", TPLFILTERFORM, ""}
 	,{"APIFILE", TPLAPIFILE, ""}
 	,{"FAILBAN", TPLFAILBAN, ""}
 	,{"APIFAILBAN", TPLAPIFAILBAN, ""}
