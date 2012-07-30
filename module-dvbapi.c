@@ -2197,11 +2197,11 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 						break;
 			if (j==demux[i].ECMpidcount) continue;
 
-			if (er->rc < E_NOTFOUND && cfg.dvbapi_requestmode==0 && (demux[i].pidindex==-1) && (er->caid!=0 || er->ocaid!=0)) {
+			if (er->rc < E_NOTFOUND && cfg.dvbapi_requestmode==0 && (demux[i].pidindex==-1) && er->caid!=0) {
 			                dvbapi_start_descrambling(i);
 			}
 
-			if (er->rc < E_NOTFOUND && cfg.dvbapi_requestmode==1 && (er->caid!=0 || er->ocaid!=0) && demux[i].ECMpids[j].checked != 2) { //FOUND
+			if (er->rc < E_NOTFOUND && cfg.dvbapi_requestmode==1 && (demux[i].pidindex==-1) && er->caid!=0 && demux[i].ECMpids[j].checked != 2) { //FOUND
 
                                         int32_t num_pids=0, last_idx=j;
 
@@ -2218,33 +2218,29 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
                                                 }
                                         }
 
-                                        if (num_pids <= 1) { //Only one left, activate it:
                                                 int32_t o;
                                                 for (o = 0; o < MAX_FILTER; o++) {
                                                         if (demux[i].demux_fd[o].fd > 0) { //TESTME: ocaid for betatunnel added!
-                                                                if ((demux[i].demux_fd[o].pid == demux[i].ECMpids[last_idx].ECM_PID) && ((demux[i].demux_fd[o].caid == demux[i].ECMpids[last_idx].CAID ) || (demux[i].demux_fd[o].caid == er->ocaid)))
+                                                                if ((demux[i].demux_fd[o].pid == er->pid) && ((demux[i].demux_fd[o].caid == demux[i].ECMpids[last_idx].CAID ) || (demux[i].demux_fd[o].caid == er->ocaid)))
                                                                         demux[i].demux_fd[o].count = 0; //activate last_idx
-                                                                else if (demux[i].demux_fd[o].type == TYPE_ECM)
-                                                                        dvbapi_stop_filternum(i, o); //only drop ECMTYPE Filters
-                                                        }													//otherwise no EMM updates for 0100:00006a
+                                                                      else
+                                                                        dvbapi_stop_filternum(i, o);
+                                                        }
                                                 }
                                                 edit_channel_cache(i, j, 1);
-                                        }
 
-                                        if (demux[i].pidindex==-1) {
                                                 demux[i].curindex = j;
                                                 dvbapi_start_descrambling(i);
-                                        } else if (demux[i].curindex != j) {
+                            }
+                                        if (demux[i].pidindex != -1 && demux[i].curindex != j) {
                                                 demux[i].curindex = j;
                                                 //I hope this trick works for all: adjust the index to write the right cw:
                                                 demux[i].ECMpids[j].index = demux[i].ECMpids[demux[i].pidindex].index;
                                                 dvbapi_start_descrambling(i);
                                         }
-			}
-
 			if (er->rc >= E_NOTFOUND) {
 				edit_channel_cache(i, j, 0);
-				if (((er->caid >> 8) == 0x06 || (er->ocaid >> 8) == 0x06) && demux[i].ECMpids[j].irdeto_chids < (((0xFFFF<<(demux[i].ECMpids[j].irdeto_numchids)) ^ 0xFFFF) & 0xFFFF)) {
+				if ((er->caid >> 8) == 0x06 && demux[i].ECMpids[j].irdeto_chids < (((0xFFFF<<(demux[i].ECMpids[j].irdeto_numchids)) ^ 0xFFFF) & 0xFFFF)) {
 					demux[i].ECMpids[j].irdeto_curchid++;
 					demux[i].ECMpids[j].table=0;
 					cs_log("trying irdeto chid index: %d", demux[i].ECMpids[j].irdeto_curchid);
