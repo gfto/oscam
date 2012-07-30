@@ -98,7 +98,7 @@ char *CSS =
 "HR {height:1px; border-width:0; color:white; background-color:#AAAAAA}\n"
 "DIV.log {border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:10px; font-family:\"Courier New\", monospace; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left; }\n"
 "DIV.sidlist {border:1px dotted #AAAAAA; background-color: #fffdf5; padding:2px; font-family:\"Courier New\", monospace ; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left;}\n"
-"DIV.message {position:absolute;right:0;font-family: Arial; font-size: 12px;font-weight:bold;}\n"
+"DIV.message {font-family: Arial; font-size: 12px;font-weight:bold;}\n"
 "DIV.div_notifier {height:14px;width:14px;border-radius:7px;-webkit-border-radius:7px;background-color:red;margin-left:4px;text-align:center;float:right;}\n"
 "DIV.debugmenu {line-height: 20px;}\n"
 "DIV.logmenu {line-height: 20px;}\n"
@@ -409,6 +409,7 @@ SFRTIFJFU0VSVkVEADs="
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLFILEMENU##\n\
+##TPLMESSAGE##\
 	<DIV CLASS=\"debugmenu\">##SDEBUG##</DIV>\
 	<DIV CLASS=\"logmenu\">##LOGMENU##</DIV>\
 	<DIV CLASS=\"filterform\">##FILTERFORM##</DIV>\
@@ -447,6 +448,7 @@ SFRTIFJFU0VSVkVEADs="
 #define TPLFAILBAN "\
 ##TPLHEADER##\
 ##TPLMENU##\
+##TPLMESSAGE##\
 		<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"failban.html?action=delete&intip=all\">Clear all</TD>\n\
@@ -683,7 +685,7 @@ SFRTIFJFU0VSVkVEADs="
 #define TPLUSERCONFIGLIST "\
 ##TPLHEADER##\
 ##TPLMENU##\
-##MESSAGE##\
+##TPLMESSAGE##\
 	<TABLE CLASS=\"configmenu\">\n\
 		<TR>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?part=adduser\">Add User</A></TD>\n\
@@ -824,7 +826,7 @@ SFRTIFJFU0VSVkVEADs="
 #define TPLUSEREDIT "\
 ##TPLHEADER##\
 ##TPLMENU##\
-	<DIV CLASS=\"message\">##MESSAGE##</DIV>\
+##TPLMESSAGE##\
 	<BR><BR>\n\
 	<form action=\"user_edit.html\" method=\"get\">\n\
 		<input name=\"user\" type=\"hidden\" value=\"##USERNAME##\">\n\
@@ -981,6 +983,7 @@ SFRTIFJFU0VSVkVEADs="
 #define TPLREADERS "\
 ##TPLHEADER##\
 ##TPLMENU##\
+##TPLMESSAGE##\
 	<TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD><TD CLASS=\"configmenu\"><A TARGET=\"_blank\" HREF=\"graph.svg?type=servers\">Show Graphs</A></TD></TR></TABLE>\n\
 	<form action=\"readerconfig.html\" method=\"get\">\n\
 		<TABLE CLASS=\"readers\">\n\
@@ -1054,7 +1057,7 @@ SFRTIFJFU0VSVkVEADs="
 #define TPLREADERSTATS "\
 ##TPLHEADER##\
 ##TPLMENU##\
-	<DIV CLASS=\"message\">##MESSAGE##</DIV>\
+##TPLMESSAGE##\
 	<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##ENCODEDLABEL##&amp;hide=-1\">show all</A></TD>\n\
@@ -1090,7 +1093,7 @@ SFRTIFJFU0VSVkVEADs="
 #define TPLSCANUSB "\
 ##TPLHEADER##\
 ##TPLMENU##\
-	<DIV CLASS=\"message\">##MESSAGE##</DIV>\
+##TPLMESSAGE##\
 	<BR><BR>\n\
 	<TABLE cellpadding=\"10\">\n\
 		<TR><TH>USB Devices</TH></TR>\n\
@@ -1103,7 +1106,7 @@ SFRTIFJFU0VSVkVEADs="
 #define TPLENTITLEMENTS "\
 ##TPLHEADER##\
 ##TPLMENU##\
-	<DIV CLASS=\"message\">##MESSAGE##</DIV>\
+##TPLMESSAGE##\
 	<BR><BR>Entitlements for ##READERNAME##<BR><BR>\n\
 ##ENTITLEMENTCONTENT##\
 ##TPLFOOTER##"
@@ -1185,8 +1188,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 #define TPLREADERCONFIG "\
 ##TPLHEADER##\
 ##TPLMENU##\
-	<BR><BR>\n\
-##MESSAGE##\n\
+##TPLMESSAGE##\n\
 	<form action=\"readerconfig.html?action=execute\" method=\"get\">\n\
 		<input name=\"label\" type=\"hidden\" value=\"##READERNAME##\">\n\
 		<input name=\"protocol\" type=\"hidden\" value=\"##PROTOCOL##\">\n\
@@ -1385,7 +1387,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-	<DIV CLASS=\"message\">##MESSAGE##</DIV>\
+##TPLMESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"gbox\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1407,7 +1409,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-##MESSAGE##\
+##TPLMESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"anticasc\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1441,7 +1443,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-##MESSAGE##\
+##TPLMESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"cccam\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1519,7 +1521,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-##MESSAGE##\
+##TPLMESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"monitor\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1595,7 +1597,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-##MESSAGE##\
+##TPLMESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"radegast\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1616,7 +1618,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-##MESSAGE##\
+##TPLMESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"newcamd\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1640,7 +1642,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-##MESSAGE##\
+##TPLMESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"global\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1728,7 +1730,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-##MESSAGE##\
+##TPLMESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"loadbalancer\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1786,7 +1788,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-##MESSAGE##\
+##TPLMESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"camd33\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1808,7 +1810,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-##MESSAGE##\
+##TPLMESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"camd35\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1829,7 +1831,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-##MESSAGE##\
+##TPLMESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"camd35tcp\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1850,7 +1852,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-##MESSAGE##\
+##TPLMESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"csp\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1870,7 +1872,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-##MESSAGE##\
+##TPLMESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"serial\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1892,7 +1894,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
-##MESSAGE##\
+##TPLMESSAGE##\
 <form action=\"config.html\" method=\"get\">\n\
 	<input name=\"part\" type=\"hidden\" value=\"dvbapi\">\n\
 	<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1928,7 +1930,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 #define TPLSERVICECONFIGLIST "\
 ##TPLHEADER##\
 ##TPLMENU##\
-##MESSAGE##\
+##TPLMESSAGE##\
 	<FORM action=\"services_edit.html\" method=\"get\"><INPUT TYPE=\"hidden\" NAME=\"action\" VALUE=\"add\">\n\
 		<TABLE CLASS=\"stats\">\n\
 			<TR>\n\
@@ -1960,7 +1962,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 #define TPLSERVICEEDIT "\
 ##TPLHEADER##\
 ##TPLMENU##\
-##MESSAGE##\
+##TPLMESSAGE##\
 	<BR><BR>\n\
 	<form action=\"services_edit.html\" method=\"get\">\n\
 		<input name=\"service\" type=\"hidden\" value=\"##LABEL##\">\n\
@@ -2006,10 +2008,16 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	<br><P CLASS=\"blinking\">OSCam Shutdown - Try Reconnect in ##SECONDS## Seconds</p><br><br>\n\
 ##TPLFOOTER##"
 
+#define TPLWRITEPROTECTION "You cannot change the content of this file!"
+
+#define TPLMESSAGEBIT "##MESSAGE##<BR>"
+
+#define TPLMESSAGE "<DIV CLASS=\"message\">##MESSAGES##</DIV>\n"
+
 #define TPLSCRIPT "\
 ##TPLHEADER##\
 ##TPLMENU##\
-##MESSAGE##\
+##TPLMESSAGE##\
 	<br><br><b>OSCam execute script: ##SCRIPTNAME## --> Status: ##SCRIPTRESULT## --> Returncode: ##CODE##</b><br>\n\
 ##TPLFOOTER##"
 
@@ -2272,7 +2280,7 @@ function isNumber(a) {\n\
 #define TPLCACHEEXPAGE "\
 ##TPLHEADER##\
 ##TPLMENU##\
-##MESSAGE##\
+##TPLMESSAGE##\
 	<BR><BR>\n\
 	<TABLE CLASS=\"stats\">\n\
 			<TR><TH COLSPAN=\"7\">CacheEX Stats</TH></TR>\n\
@@ -2376,6 +2384,9 @@ const char *tpl[][3] = {
 	,{"SERVICEEDIT", TPLSERVICEEDIT, ""}
 	,{"PRESHUTDOWN", TPLPRESHUTDOWN, ""}
 	,{"SHUTDOWN", TPLSHUTDOWN, ""}
+	,{"WRITEPROTECTION", TPLWRITEPROTECTION, ""}
+	,{"MESSAGE", TPLMESSAGE, ""}
+	,{"MESSAGEBIT", TPLMESSAGEBIT, ""}
 	,{"SCRIPT", TPLSCRIPT, ""}
 	,{"GRAPH", TPLGRAPH, ""}
 #ifdef HAVE_DVBAPI

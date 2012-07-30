@@ -61,6 +61,13 @@ char *tpl_addVar(struct templatevars *vars, uint8_t addmode, char *name, char *v
 	return tmp;
 }
 
+/* Adds a message to be output on the page using the TPLMESSAGE template. */
+char *tpl_addMsg(struct templatevars *vars, char *value){
+	tpl_addVar(vars, TPLADDONCE, "MESSAGE", value);
+	(*vars).messages++;
+	return tpl_addVar(vars, TPLAPPEND, "MESSAGES", tpl_getTpl(vars, "MESSAGEBIT"));
+}
+
 /* Allows to add a char array which has been allocated by malloc. It will automatically get
   freed when calling tpl_clear(). Please do NOT free the memory yourself or realloc
   it after having added the array here! */
@@ -338,7 +345,9 @@ char *tpl_getTpl(struct templatevars *vars, const char* name){
 				memcpy(varname, pch2 + 2, pch - pch2 - 2);
 				varname[pch - pch2 - 2] = '\0';
 				if(strncmp(varname, "TPL", 3) == 0){
-					pch2 = tpl_getTpl(vars, varname + 3);
+					if((*vars).messages > 0 || strncmp(varname, "TPLMESSAGE", 10) != 0)
+						pch2 = tpl_getTpl(vars, varname + 3);
+					else pch2 = "";
 				} else {
 					pch2 = tpl_getVar(vars, varname);
 				}
