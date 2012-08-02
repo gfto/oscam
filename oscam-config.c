@@ -2249,9 +2249,9 @@ int32_t write_config(void)
 	if (cfg.cacheex_enable_stats != 0 || cfg.http_full_cfg)
 		fprintf_conf(f, "cacheexenablestats", "%d\n", cfg.cacheex_enable_stats);
 #endif
-	if (cfg.block_same_ip || cfg.http_full_cfg)
+	if (cfg.block_same_ip == 0 || cfg.http_full_cfg)
 		fprintf_conf(f, "block_same_ip", "%d\n", cfg.block_same_ip);
-	if (cfg.block_same_name || cfg.http_full_cfg)
+	if (cfg.block_same_name == 0 || cfg.http_full_cfg)
 		fprintf_conf(f, "block_same_name", "%d\n", cfg.block_same_name);
 
 #if defined(QBOXHD) || defined(__arm__)
