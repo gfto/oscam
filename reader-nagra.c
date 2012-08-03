@@ -987,6 +987,33 @@ static int32_t nagra2_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, st
 			}
 		}
 		else {
+			if (reader->ecmcommand < 5 ){ // cache ecm commands until ecmcommand cache is full
+				reader->ecmcommandcache[reader->ecmcommand] = er->ecm[3];
+				reader->ecmcommand++;
+				if (reader->ecmcommand == 5){ // cache is full, comparing!
+					int32_t t = 0;
+					int32_t matchfound = 0;
+					reader->ecmcommand++; // No more caching of ecm commands, next ecms will be compared! 
+					while (t < 5){
+						if (reader->ecmcommandcache[t] == er->ecm[3]) matchfound++;
+						t++;
+					}
+					if (matchfound != 5){
+						reader->ecmcommand = 0; // reset ecm filter, start a new auto filter attempt
+						rdr_debug_mask(reader, D_READER, "Auto ecm command filter caid %04X failed!", reader->caid);
+					}
+					else {
+						reader->ecmcommandcache[0] = er->ecm[3]; // Passed the filter, store the normal ecm command for this reader!
+						rdr_debug_mask(reader, D_READER, "Auto ecm command filter caid %04X set to command %02X", reader->caid, er->ecm[3]);
+					}
+				}
+			}
+			else if (reader->ecmcommandcache[0] != er->ecm[3]){
+                    rdr_debug_mask(reader, D_READER, "Warning: received an abnominal ecm command %02X for caid: %04X, ignoring!", er->ecm[3], reader->caid);
+                    memset(ea, 0, sizeof(ea)); // give it back 00000000 to not disturb the loadbalancer for valid ecm requests on this channel.
+                    return OK;
+                }
+				
 			while (!do_cmd(reader, er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2,cta_res,&cta_lr))
 			{
 				if (retry == 0)

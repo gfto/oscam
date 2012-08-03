@@ -426,8 +426,17 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, ui
 			if (ret != OK) {
 				//try to resync
 				unsigned char resync[] = { 0x21, 0xC0, 0x00, 0xE1 };
-				Protocol_T1_Command (reader, resync, sizeof(resync), rsp, lr);
-				reader->ifsc = DEFAULT_IFSC;
+				ret = Protocol_T1_Command (reader, resync, sizeof(resync), rsp, lr);
+				if (ret == OK) {
+					reader->ifsc = DEFAULT_IFSC;
+					rdr_log(reader, "T1 Resync command succesfull new ifsc = %i", reader->ifsc);
+				}
+				else {
+					rdr_log(reader, "T1 Resync command error, trying to reactivate!");
+					ATR atr;
+					ICC_Async_Activate(reader, &atr, reader->deprecated);
+					return ERROR;
+				}
 			}
 			break;
 		case ATR_PROTOCOL_TYPE_T14:
@@ -462,6 +471,7 @@ int32_t ICC_Async_SetTimings (struct s_reader * reader, uint32_t wait_etu)
 
 int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, BYTE * data)
 {
+	int32_t ret;
 	rdr_ddump_mask(reader, D_IFD, data, size, "Transmit:");
 	BYTE *buffer = NULL, *sent;
 
@@ -496,20 +506,20 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, BYTE * data)
 		case R_DB2COM2:
 		case R_SC8in1:
 		case R_MOUSE:
-			call (Phoenix_Transmit (reader, sent, size, reader->block_delay, reader->char_delay));
+			ret = Phoenix_Transmit (reader, sent, size, reader->block_delay, reader->char_delay);
 			break;
 #if defined(WITH_LIBUSB)
 		case R_SMART:
-			call (SR_Transmit(reader, sent, size));
+			ret = SR_Transmit(reader, sent, size);
 			break;
 #endif
 		case R_INTERNAL:
 #if defined(WITH_COOLAPI)
-			call (Cool_Transmit(reader, sent, size));
+			ret = Cool_Transmit(reader, sent, size);
 #elif defined(WITH_AZBOX)
-			call (Azbox_Transmit(reader, sent, size));
+			ret = Azbox_Transmit(reader, sent, size);
 #else
-			call (Phoenix_Transmit (reader, sent, size, 0, 0)); //the internal reader will provide the delay
+			ret = Phoenix_Transmit (reader, sent, size, 0, 0); //the internal reader will provide the delay
 #endif
 			break;
 		default:
@@ -517,15 +527,16 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, BYTE * data)
 			return ERROR;
 	}
 
-	if (buffer)
-		free (buffer);
-	rdr_debug_mask(reader, D_IFD, "Transmit succesful");
-	return OK;
+	if (ret) rdr_debug_mask(reader, D_IFD, "Transmit error!");
+	else rdr_debug_mask(reader, D_IFD, "Transmit succesful"); 
+	if (buffer)	free (buffer);
+	return ret;
 }
 
 int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, BYTE * data)
 {
 
+	int32_t ret;
 	if (reader->crdr.active==1) {
 		call(reader->crdr.receive(reader, data, size));
 
@@ -542,20 +553,20 @@ int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, BYTE * data)
 		case R_DB2COM2:
 		case R_SC8in1:
 		case R_MOUSE:
-			call (Phoenix_Receive (reader, data, size, reader->read_timeout));
+			ret = Phoenix_Receive (reader, data, size, reader->read_timeout);
 			break;
 #if defined(WITH_LIBUSB)
 		case R_SMART:
-			call (SR_Receive(reader, data, size));
+			ret = SR_Receive(reader, data, size);
 			break;
 #endif
 		case R_INTERNAL:
 #if defined(WITH_COOLAPI)
-			call (Cool_Receive(reader, data, size));
+			ret = Cool_Receive(reader, data, size);
 #elif defined(WITH_AZBOX)
-			call (Azbox_Receive(reader, data, size));
+			ret = Azbox_Receive(reader, data, size);
 #else
-			call (Phoenix_Receive (reader, data, size, reader->read_timeout));
+			ret = Phoenix_Receive (reader, data, size, reader->read_timeout);
 #endif
 			break;
 		default:
@@ -565,9 +576,10 @@ int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, BYTE * data)
 
 	if (reader->convention == ATR_CONVENTION_INVERSE && reader->typ <= R_MOUSE)
 		ICC_Async_InvertBuffer (size, data);
-
-	rdr_ddump_mask(reader, D_IFD, data, size, "Received:");
-	return OK;
+	
+	if (ret) rdr_debug_mask(reader, D_IFD, "Receive error!");
+	else rdr_ddump_mask(reader, D_IFD, data, size, "Received:");
+	return ret;
 }
 
 int32_t ICC_Async_Close (struct s_reader *reader)

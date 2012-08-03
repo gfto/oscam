@@ -56,7 +56,7 @@ static int32_t get_gpio(struct s_reader * reader)
 
 int32_t Phoenix_Init (struct s_reader * reader)
 {
-		call (IO_Serial_InitPnP (reader));
+		if (IO_Serial_InitPnP (reader)) return ERROR;
 		IO_Serial_Flush(reader);
 
 	// define reader->gpio number used for card detect and reset. ref to globals.h
@@ -74,7 +74,7 @@ int32_t Phoenix_Init (struct s_reader * reader)
 
 	/* Default serial port settings */
 	if (reader->atr[0] == 0) {
-        call (IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW));
+        if(IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW)) return ERROR;
 		IO_Serial_Flush(reader);
 	}
 	return OK;
@@ -198,11 +198,11 @@ int32_t Phoenix_Transmit (struct s_reader * reader, BYTE * buffer, uint32_t size
 		/* Send data */
 		if ((sent == 0) && (block_delay != char_delay))
 		{
-			call (IO_Serial_Write (reader, block_delay, 1, buffer));
-			call (IO_Serial_Write (reader, char_delay, to_send-1, buffer+1));
+			if(IO_Serial_Write (reader, block_delay, 1, buffer)) return ERROR;
+			if(IO_Serial_Write (reader, char_delay, to_send-1, buffer+1)) return ERROR;
 		}
 		else
-			call (IO_Serial_Write (reader, char_delay, to_send, buffer+sent));
+			if (IO_Serial_Write (reader, char_delay, to_send, buffer+sent)) return ERROR;
 	}
 	return OK;
 }
@@ -213,10 +213,10 @@ int32_t Phoenix_Receive (struct s_reader * reader, BYTE * buffer, uint32_t size,
 
 	/* Read all data bytes with the same timeout */
 	if (reader->mhz >2000){
-		call (IO_Serial_Read (reader, timeout + reader->read_timeout, size, buffer));
+		if(IO_Serial_Read (reader, timeout + reader->read_timeout, size, buffer)) return ERROR;
 	}
 	else{
-		call (IO_Serial_Read (reader, timeout + IFD_TOWITOKO_TIMEOUT, size, buffer));
+		if(IO_Serial_Read (reader, timeout + IFD_TOWITOKO_TIMEOUT, size, buffer)) return ERROR;
 	}
 	return OK;
 }
