@@ -155,7 +155,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 	#if defined(__SH4__) || defined(STB04SCI)
 			reader->handle = open (reader->device, O_RDWR|O_NONBLOCK|O_NOCTTY);
 	#else
-			reader->handle = open (reader->device, O_RDWR|O_NONBLOCK|O_NOCTTY);
+			reader->handle = open (reader->device, O_RDWR|O_NOCTTY);
 	#endif
 			if (reader->handle < 0) {
 				rdr_log(reader, "ERROR: Opening device %s (errno:%d %s)", reader->device, errno, strerror(errno));
