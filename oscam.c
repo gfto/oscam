@@ -2327,6 +2327,22 @@ static void add_cascade_data(struct s_client *client, ECM_REQUEST *er)
 	}
 }
 
+int32_t is_double_check_caid(ECM_REQUEST *er)
+{
+        if (!cfg.double_check_caid.caid[0]) //no caids defined: Check all
+            return 1;
+            
+        int32_t i;
+        for (i=0;i<CS_MAXCAIDTAB;i++) {
+            uint16_t tcaid = cfg.double_check_caid.caid[i];
+            if (!tcaid) break;
+            if ((tcaid == er->caid) || (tcaid < 0x0100 && (er->caid >> 8) == tcaid)) {
+                return 1;
+            }
+        }
+        return 0;
+}
+
 int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 {
 	if (!client || client->kill || client->typ != 'c')
@@ -2474,7 +2490,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		er->rc=E_FOUND;
 	}
 
-	if (cfg.double_check && er->rc < E_NOTFOUND && er->selected_reader) {
+	if (cfg.double_check &&  er->rc < E_NOTFOUND && er->selected_reader && is_double_check_caid(er)) {
 	  if (er->checked == 0) {//First CW, save it and wait for next one
 	    er->checked = 1;
 	    er->origin_reader = er->selected_reader;

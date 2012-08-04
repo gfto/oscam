@@ -712,11 +712,11 @@ void chk_t_global(const char *token, char *value)
 
 	if (!strcmp(token, "lb_noproviderforcaid")) {
 		if(strlen(value) == 0)
-        	clear_caidtab(&cfg.lb_noproviderforcaid);
-    	else
+        		clear_caidtab(&cfg.lb_noproviderforcaid);
+		else
 			chk_caidtab(value, &cfg.lb_noproviderforcaid);
-        return;
-    }
+		return;
+	}
 
 	if (!strcmp(token, "lb_savepath")) {
 		NULLFREE(cfg.lb_savepath);
@@ -777,6 +777,14 @@ void chk_t_global(const char *token, char *value)
 
 	if (!strcmp(token, "double_check")) {
 		cfg.double_check = strToIntVal(value, 0);
+		return;
+	}
+
+	if (!strcmp(token, "double_check_caid")) {
+		if(strlen(value) == 0)
+	        	clear_caidtab(&cfg.double_check_caid);
+		else
+			chk_caidtab(value, &cfg.double_check_caid);
 		return;
 	}
 
@@ -2292,6 +2300,8 @@ int32_t write_config(void)
 		fprintf_conf(f, "lb_noproviderforcaid", "%s\n", value);
 		free_mk_t(value);
 	}
+	
+	
 
 	if (cfg.lb_savepath || cfg.http_full_cfg)
 		fprintf_conf(f, "lb_savepath", "%s\n", cfg.lb_savepath?cfg.lb_savepath:"");
@@ -2314,6 +2324,12 @@ int32_t write_config(void)
 
 	if (cfg.double_check ||(!cfg.double_check && cfg.http_full_cfg))
 		fprintf_conf(f, "double_check", "%d\n", cfg.double_check);
+
+	if (cfg.double_check_caid.caid[0] || cfg.http_full_cfg) {
+		value = mk_t_caidtab(&cfg.double_check_caid);
+		fprintf_conf(f, "double_check_caid", "%s\n", value);
+		free_mk_t(value);
+	}
 
 	if (cfg.max_cache_time != DEFAULT_MAX_CACHE_TIME || cfg.http_full_cfg)
 		fprintf_conf(f, "max_cache_time", "%d\n", cfg.max_cache_time);

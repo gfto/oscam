@@ -1568,6 +1568,7 @@ struct s_config
 #endif
 	int32_t			resolve_gethostbyname;
 	int8_t double_check;							// schlocke: Double checks each ecm+dcw from two (or more) readers
+	CAIDTAB			double_check_caid;			// do not store loadbalancer stats with providers for this caid
 
 #ifdef IRDETO_GUESSING
 	struct s_irdeto_quess *itab[0xff];

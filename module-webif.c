@@ -320,6 +320,10 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 
 	if(cfg.double_check == 1)
 		tpl_addVar(vars, TPLADD, "DCHECKCSELECTED", "selected");
+	value = mk_t_caidtab(&cfg.double_check_caid);
+	tpl_addVar(vars, TPLADD, "DOUBLECHECKCAID", value);
+	free_mk_t(value);
+		
 #if defined(QBOXHD) || defined(__arm__)
 	if(cfg.enableled == 1)
 		tpl_addVar(vars, TPLADD, "ENABLELEDSELECTED1", "selected");
