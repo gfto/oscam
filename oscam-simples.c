@@ -917,7 +917,7 @@ char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *
 				return(buf);
 			}
 
-	for (this = cfg.srvid[srvid>>12]; this && (!buf[0]); this = this->next)
+	for (this = cfg.srvid[srvid>>12]; this; this = this->next)
 		if (this->srvid == srvid)
 			for (i=0; i < this->ncaid; i++)
 				if (this->caid[i] == caid && this->name) {

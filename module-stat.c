@@ -634,6 +634,7 @@ void reset_stat(STAT_QUERY *q)
 {
 	//cs_debug_mask(D_LB, "loadbalance: resetting ecm count");
 	struct s_reader *rdr;
+	cs_readlock(&readerlist_lock);
 	for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 		if (rdr->lb_stat && rdr->client) {
 			READER_STAT *stat = get_stat(rdr, q);
@@ -645,6 +646,7 @@ void reset_stat(STAT_QUERY *q)
 			}
 		}
 	}
+	cs_readunlock(&readerlist_lock);
 }
 
 int32_t clean_stat_by_rc(struct s_reader *rdr, int8_t rc, int8_t inverse)
@@ -1248,8 +1250,9 @@ void housekeeping_stat_thread(void)
 	time_t cleanup_time = time(NULL) - (cfg.lb_stat_cleanup*60*60);
 	int32_t cleaned = 0;
 	struct s_reader *rdr;
-    LL_ITER itr = ll_iter_create(configured_readers);
-    while ((rdr = ll_iter_next(&itr))) {
+	LL_ITER itr = ll_iter_create(configured_readers);
+	cs_readlock(&readerlist_lock); //this avoids cleaning a reading during writing
+	while ((rdr = ll_iter_next(&itr))) {
 		if (rdr->lb_stat) {
 			cs_writelock(&rdr->lb_stat_lock);
 			LL_ITER it = ll_iter_create(rdr->lb_stat);
@@ -1264,6 +1267,7 @@ void housekeeping_stat_thread(void)
 			cs_writeunlock(&rdr->lb_stat_lock);
 		}
 	}
+	cs_readunlock(&readerlist_lock);
 	cs_debug_mask(D_LB, "loadbalancer cleanup: removed %d entries", cleaned);
 }
 
@@ -1400,13 +1404,17 @@ int32_t lb_valid_btun(ECM_REQUEST *er, uint16_t caidto)
 	get_stat_query(er, &q);
 	q.caid = caidto;
 
+	cs_readlock(&readerlist_lock);
 	for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 		if (rdr->lb_stat && rdr->client) {
 			stat = get_stat(rdr, &q);
-			if (stat && stat->rc == E_FOUND)
+			if (stat && stat->rc == E_FOUND) {
+				cs_readunlock(&readerlist_lock);
 				return 1;
+			}
 		}
 	}
+	cs_readunlock(&readerlist_lock);
 	return 0;
 }
 

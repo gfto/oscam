@@ -3778,6 +3778,13 @@ static void check_status(struct s_client *cl) {
 		return;
 
 	struct s_reader *rdr = cl->reader;
+	if (rdr) {
+	    //check for valid reader:
+	    struct s_reader *r;
+	    for (r=first_active_reader; r; r=r->next)
+	        if (r==rdr) break;
+            if (!r) return; //reader is restarting at this moment
+	}
 
 	switch (cl->typ) {
 		case 'm':
