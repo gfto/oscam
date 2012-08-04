@@ -340,7 +340,7 @@ void save_stat_to_file_thread(void)
 	while ((rdr=ll_iter_next(&itr))) {
 
 		if (rdr->lb_stat) {
-			cs_readlock(&rdr->lb_stat_lock);
+			cs_writelock(&rdr->lb_stat_lock);
 			LL_ITER it = ll_iter_create(rdr->lb_stat);
 			READER_STAT *stat;
 			while ((stat = ll_iter_next(&it))) {
@@ -367,7 +367,7 @@ void save_stat_to_file_thread(void)
 //					cs_readlock(&rdr->lb_stat_lock);
 //				}
 			}
-			cs_readunlock(&rdr->lb_stat_lock);
+			cs_writeunlock(&rdr->lb_stat_lock);
 		}
 	}
 
