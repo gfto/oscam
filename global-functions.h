@@ -310,6 +310,7 @@ extern int32_t aes_present(AES_ENTRY *list, uint16_t caid, uint32_t provid,int32
 extern void parse_aes_keys(struct s_reader *rdr,char *value);
 extern char *remote_txt(void);
 extern char *trim(char *);
+extern int8_t strCmpSuffix(const char *str, const char *suffix);
 extern char *strtolower(char *);
 extern int32_t gethexval(char);
 extern int32_t comp_timeb(struct timeb *tpa, struct timeb *tpb);

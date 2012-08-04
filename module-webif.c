@@ -801,10 +801,8 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 	struct dirent *result;
 	if((hdir = opendir(cs_confdir)) != NULL){
 		while(cs_readdir_r(hdir, &entry, &result) == 0 && result != NULL){
-			if (strstr(entry.d_name, ".css")) {
-				if (strstr(cfg.http_css, entry.d_name)) {
-					tpl_printf(vars, TPLAPPEND, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"%s%s\"%s>%s%s</option>\n",cs_confdir,entry.d_name,strstr(cfg.http_css, entry.d_name)?" selected" : "", cs_confdir,entry.d_name);
-				}
+			if (strCmpSuffix(entry.d_name, ".css")) {
+				tpl_printf(vars, TPLAPPEND, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"%s%s\"%s>%s%s</option>\n",cs_confdir,entry.d_name,strstr(cfg.http_css, entry.d_name)?" selected" : "", cs_confdir,entry.d_name);
 			}
 		}
 		closedir(hdir);
@@ -2577,7 +2575,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "DESCRIPTION", xml_encode(vars, account->description?account->description:""));
 		tpl_addVar(vars, TPLADD, "STATUS", status);
 		tpl_addVar(vars, TPLAPPEND, "STATUS", expired);
-		if(nrclients > 1) tpl_printf(vars, TPLADDONCE, "CLIENTCOUNTNOTIFIER", "<DIV CLASS=\"div_notifier\"><SPAN CLASS=\"span_notifier\">%d</SPAN></DIV>", nrclients);
+		if(nrclients > 1) tpl_printf(vars, TPLADDONCE, "CLIENTCOUNTNOTIFIER", "<SPAN CLASS=\"span_notifier\">%d</SPAN>", nrclients);
 
 		// append row to table template
 		if (!apicall)
@@ -4887,7 +4885,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 				tpl_addVar(vars, TPLAPPEND, "BTNDISABLED", "DISABLED");
 
 			i = ll_count(cfg.v_list);
-			if(i > 0)tpl_printf(vars, TPLADD, "FAILBANNOTIFIER", "<DIV CLASS=\"div_notifier\"><SPAN CLASS=\"span_notifier\">%d</SPAN></DIV>", i);
+			if(i > 0)tpl_printf(vars, TPLADD, "FAILBANNOTIFIER", "<SPAN CLASS=\"span_notifier\">%d</SPAN>", i);
 
 			char *result = NULL;
 
