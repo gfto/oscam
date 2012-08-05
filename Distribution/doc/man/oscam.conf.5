@@ -266,6 +266,11 @@ mode for duplicate client connections (requirement: uniq > 0):
 1 = ECM will be send to two or more readers with the same SC and the CWs will be verified against each other, \fBlb_nbest_readers\fP must be set to 2 or higher, default:0
 .RE
 .PP
+\fBdouble_check_caid\fP = [CAID1|first two digits of CAID1],[CAID2|first two digits of CAID2]...
+.RS 3n
+ECM will be send to two or more readers with the same SC and the CWs will be verified against each other for defined CAID or first two bytes of CAID, \fBlb_nbest_readers\fP must be set to 2 or higher, default:none
+.RE
+.PP
 \fBlb_mode\fP = \fBmode\fP
 .RS 3n
 load balancing mode:

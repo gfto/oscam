@@ -363,6 +363,13 @@ mode for duplicate client connections (requirement: uniq &gt; 0):
 
 <P>
 
+<B>double_check_caid</B> = [CAID1|first two digits of CAID1],[CAID2|first two digits of CAID2]...
+<DL COMPACT><DT><DD>
+ECM will be send to two or more readers with the same SC and the CWs will be verified against each other for defined CAID or first two bytes of CAID, <B>lb_nbest_readers</B> must be set to 2 or higher, default:none
+</DL>
+
+<P>
+
 <B>lb_mode</B> = <B>mode</B>
 <DL COMPACT><DT><DD>
 load balancing mode:
