@@ -798,7 +798,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			struct cc_card *card = er->origin_card;
 			struct s_ecm_answer *eab = NULL;
 			for(ea = er->matching_rdr; ea; ea = ea->next) {
-				ea->status &= !(READER_ACTIVE|READER_FALLBACK);
+				ea->status &= ~(READER_ACTIVE|READER_FALLBACK);
 				if (card->origin_reader == ea->reader)
 					eab = ea;
 			}
@@ -958,8 +958,11 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		if (nr>5)
 			snprintf(rptr, 20, "...(%d more)", nr - 5);
 
-		cs_debug_mask(D_LB, "loadbalancer: client %s for %04X&%06X/%04X:%04X/%02hX: n=%d valid readers: %s",
-			username(er->client), q.caid, q.prid, q.srvid, q.chid, q.ecmlen, nr, buf);
+                char ecmbuf[ECM_FMT_LEN];
+		format_ecm(er, ecmbuf, ECM_FMT_LEN);
+                                
+		cs_debug_mask(D_LB, "loadbalancer: client %s for %s: n=%d valid readers: %s",
+			username(er->client), ecmbuf, nr, buf);
 	}
 #endif
 
@@ -1218,8 +1221,11 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		if (nr>5)
 			snprintf(rptr, 20, "...(%d more)", nr - 5);
 
-		cs_debug_mask(D_LB, "loadbalancer: client %s for %04X&%06X/%04X:%04X/%02hX: n=%d selected readers: %s",
-			username(er->client), q.caid, q.prid, q.srvid, q.chid, q.ecmlen, nr, buf);
+                char ecmbuf[ECM_FMT_LEN];
+		format_ecm(er, ecmbuf, ECM_FMT_LEN);
+                                
+		cs_debug_mask(D_LB, "loadbalancer: client %s for %s: n=%d selected readers: %s",
+			username(er->client), ecmbuf, nr, buf);
 	}
 #endif
 	return 1;

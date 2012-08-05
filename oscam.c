@@ -2607,8 +2607,10 @@ static void request_cw(ECM_REQUEST *er)
 
 			default:
 				// only fallbacks
-				if ((ea->status & REQUEST_SENT) ||
-						(ea->status & READER_ACTIVE) != READER_ACTIVE)
+				if (!(ea->status & (READER_ACTIVE|READER_FALLBACK)))
+				    continue;
+				    
+				if (ea->status & REQUEST_SENT)
 				{
 				        if (ea->reader && ea->reader->client && ea->reader->client->is_udp) //Always resend on udp
 				                break;
