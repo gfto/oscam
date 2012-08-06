@@ -179,22 +179,27 @@ void cs_reinit_loghist(uint32_t size)
 }
 #endif
 
+static time_t log_ts = 0;
+
 static int32_t get_log_header(int32_t m, char *txt)
 {
 	struct s_client *cl = cur_client();
-	time_t t;
 	struct tm lt;
 	int32_t pos;
 
-	time(&t);
-	localtime_r(&t, &lt);
+	time(&log_ts);
+	localtime_r(&log_ts, &lt);
 
 	pos = snprintf(txt, LOG_BUF_SIZE,  "[LOG000]%4d/%02d/%02d %02d:%02d:%02d ", lt.tm_year+1900, lt.tm_mon+1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec);
 
-	if(m)
+	switch (m) {
+	case 1: // Add thread id and reader type
 		return pos + snprintf(txt+pos, LOG_BUF_SIZE-pos, "%8X %c ", cl?cl->tid:0, cl?cl->typ:' ');
-	else
+	case 0: // Add thread id
 		return pos + snprintf(txt+pos, LOG_BUF_SIZE-pos, "%8X%-3.3s ", cl?cl->tid:0, "");
+	default: // Add empty thread id
+		return pos + snprintf(txt+pos, LOG_BUF_SIZE-pos, "%8X%-3.3s ", 0, "");
+	}
 }
 
 static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
@@ -314,19 +319,45 @@ static void write_to_log_int(char *txt, int8_t header_len)
 		ll_append(log_list, log);
 }
 
+static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
+static char last_log_txt[LOG_BUF_SIZE] = { 0 };
+static time_t last_log_ts = 0;
+static unsigned int last_log_duplicates = 0;
+
 void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar *buf, int32_t n, const char *fmt, ...)
 {
 	va_list params;
 
 	char log_txt[LOG_BUF_SIZE];
 	int32_t i, len = 0;
+	pthread_mutex_lock(&log_mutex);
 	if (((mask & cs_dblevel) || !mask) && (fmt))
 	{
 		va_start(params, fmt);
 		len = get_log_header(1, log_txt);
 		vsnprintf(log_txt + len, sizeof(log_txt) - len, fmt, params);
-		write_to_log_int(log_txt, len);
 		va_end(params);
+		int repeated_line = strcmp(last_log_txt, log_txt + len) == 0;
+		if (last_log_duplicates > 0) {
+			if (!last_log_ts) // Must be initialized once
+				last_log_ts = log_ts;
+			// Report duplicated lines when the new log line is different
+			// than the old or 60 seconds have passed.
+			if (!repeated_line || log_ts - last_log_ts >= 60) {
+				char dupl[len + 32];
+				len = get_log_header(2, dupl);
+				snprintf(dupl + len - 1, len + 32, "--- Skipped %d duplicated log lines ---", last_log_duplicates);
+				write_to_log_int(dupl, 0);
+				last_log_duplicates = 0;
+				last_log_ts = log_ts;
+			}
+		}
+		if (!repeated_line) {
+			memcpy(last_log_txt, log_txt + len, LOG_BUF_SIZE);
+			write_to_log_int(log_txt, len);
+		} else {
+			last_log_duplicates++;
+		}
 	}
 	if (buf && ((mask & cs_dblevel) || !mask))
 	{
@@ -337,6 +368,7 @@ void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar 
 			write_to_log_int(log_txt, len);
 		}
 	}
+	pthread_mutex_unlock(&log_mutex);
 }
 
 void cs_close_log(void)
