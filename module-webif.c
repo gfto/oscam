@@ -1093,8 +1093,8 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 
 	if (strcmp(getParam(params, "action"), "reread") == 0) {
 		rdr = get_reader_by_label(getParam(params, "label"));
-		struct s_client *cl = rdr->client;
 		if (rdr) {
+			struct s_client *cl = rdr->client;
 			//reset the counters
 			for (i = 0; i < 4; i++) {
 				rdr->emmerror[i] = 0;
@@ -1307,6 +1307,8 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	}
 
 	rdr = get_reader_by_label(reader_);
+	if (!rdr)
+		return NULL;
 
 	tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
 	tpl_addVar(vars, TPLADD, "DESCRIPTION", rdr->description?rdr->description:"");
