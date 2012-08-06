@@ -356,6 +356,9 @@ int32_t ll_iter_move_first(LL_ITER *it)
 	if (it) {
 		LL_NODE *move = it->cur;
 		if (move) {
+		        if (move == it->l->initial) //Can't move self to first
+		                return 1;
+		                
 			LL_NODE *prv = it->prv;
 			cs_writelock(&it->l->lock);
 			if(it->ll_version != it->l->version || !prv){		// List has been modified so it->prv might be wrong!

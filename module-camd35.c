@@ -31,7 +31,7 @@ static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen)
 	int32_t l;
 	unsigned char rbuf[REQ_SIZE+15+4], *sbuf = rbuf + 4;
 
-	if (!cl->udp_fd) return(-1);
+	if (!cl->udp_fd || !cl->crypted) return(-1); //exit if no fd or aes key not set!
 
 	//Fix ECM len > 255
 	if (buflen <= 0)

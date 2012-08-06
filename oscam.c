@@ -1400,8 +1400,8 @@ void start_thread(void * startroutine, char * nameroutine) {
   If the own thread has to be cancelled, cs_exit or cs_disconnect_client has to be used. */
 void kill_thread(struct s_client *cl) {
 	if (!cl || cl->kill) return;
-	cl->kill=1;
-	add_job(cl, ACTION_CLIENT_KILL, NULL, 0);
+	add_job(cl, ACTION_CLIENT_KILL, NULL, 0); //add kill job, ...
+	cl->kill=1;                               //then set kill flag!
 }
 
 /* Removes a reader from the list of active readers so that no ecms can be requested anymore. */
@@ -4138,8 +4138,8 @@ void * work_thread(void *ptr) {
 
 void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 
-	if (!cl) {
-		cs_log("WARNING: add_job failed.");
+	if (!cl || cl->kill) {
+		if (!cl) cs_log("WARNING: add_job failed."); //Ignore jobs for killed clients
 		if (len && ptr) free(ptr);
 		return;
 	}
