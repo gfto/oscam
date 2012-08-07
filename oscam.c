@@ -583,6 +583,18 @@ static void free_ecm(ECM_REQUEST *ecm) {
 }
 
 
+/**
+ * free() data from job queue. Only releases data with len != 0
+ **/
+static void free_data(struct s_data *data)
+{
+    if (data) {
+        if (data->len && data->ptr)
+            free(data->ptr);
+	free(data);
+    }
+}
+
 static void cleanup_ecmtasks(struct s_client *cl)
 {
 	ECM_REQUEST *ecm;
@@ -730,11 +742,7 @@ void cleanup_thread(void *var)
 	LL_ITER it = ll_iter_create(cl->joblist);
 	struct s_data *data;
 	while ((data=ll_iter_next(&it)))
-	{
-		if (data->ptr && data->len)
-			free(data->ptr);
-		free(data);
-	}
+            free_data(data);
 	ll_destroy(cl->joblist);
 	cl->joblist = NULL;
 	cl->account = NULL;
@@ -3856,7 +3864,7 @@ void * work_thread(void *ptr) {
 	pthread_setspecific(getclient, cl);
 	cl->thread=pthread_self();
 
-	uint16_t bufsize = cl?ph[cl->ctyp].bufsize:1024; //CCCam needs more than 1024bytes!
+	uint16_t bufsize = ph[cl->ctyp].bufsize; //CCCam needs more than 1024bytes!
 	if (!bufsize) bufsize = 1024;
 	uchar *mbuf = cs_malloc(&mbuf, bufsize, 0);
 	int32_t n=0, rc=0, i, idx, s;
@@ -3868,9 +3876,7 @@ void * work_thread(void *ptr) {
 			if (!cl || cl->kill || !is_valid_client(cl)) {
 				cl->thread_active=0;
 				cs_debug_mask(D_TRACE, "ending thread (kill)");
-				if (data && data!=&tmp_data)
-					free(data);
-
+				if (data && data!=&tmp_data) free_data(data);
 				data = NULL;
 				cleanup_thread(cl);
 				if (restart_reader)
@@ -3938,8 +3944,7 @@ void * work_thread(void *ptr) {
 				continue;
 
 			if (data->action < 20 && !reader) {
-				if (data!=&tmp_data)
-					free(data);
+				if (data!=&tmp_data) free_data(data);
 				data = NULL;
 				break;
 			}
@@ -3951,7 +3956,7 @@ void * work_thread(void *ptr) {
 			time_t diff = (time_t)(cfg.ctimeout/1000)+1;
 			if (data != &tmp_data && data->time < now-diff) {
 				cs_log("dropping client data for %s time %ds", username(cl), (int32_t)(now-data->time));
-				free(data);
+				free_data(data);
 				data = NULL;
 				continue;
 			}
@@ -4008,7 +4013,6 @@ void * work_thread(void *ptr) {
 					break;
 				case ACTION_READER_EMM:
 					reader_do_emm(reader, data->ptr);
-					free(data->ptr); // allocated in do_emm()
 					break;
 				case ACTION_READER_CARDINFO:
 					reader_do_card_info(reader);
@@ -4032,14 +4036,8 @@ void * work_thread(void *ptr) {
 	#endif
 				case ACTION_CLIENT_UDP:
 					n = ph[cl->ctyp].recv(cl, data->ptr, data->len);
-					if (n<0) {
-						if (data->ptr != mbuf)
-							free(data->ptr);
-						break;
-					}
+					if (n<0) break;
 					ph[cl->ctyp].s_handler(cl, data->ptr, n);
-					if (data->ptr != mbuf)
-						free(data->ptr); // allocated in accept_connection()
 					break;
 				case ACTION_CLIENT_TCP:
 					s = check_fd_for_data(cl->pfd);
@@ -4060,7 +4058,6 @@ void * work_thread(void *ptr) {
 					break;
 				case ACTION_CLIENT_ECM_ANSWER:
 					chk_dcw(cl, data->ptr);
-					free(data->ptr);
 					break;
 				case ACTION_CLIENT_INIT:
 					if (ph[cl->ctyp].s_init)
@@ -4091,7 +4088,6 @@ void * work_thread(void *ptr) {
 						res = ph[cl->ctyp].c_cache_push(cl, er);
 
 					debug_ecm(D_CACHEEX, "pushed ECM %s to %s res %d stats %d", buf, username(cl), res, stats);
-					free(data->ptr);
 
 					cl->cwcacheexpush++;
 					if (cl->account)
@@ -4106,9 +4102,7 @@ void * work_thread(void *ptr) {
 					break;
 			}
 
-			if (data!=&tmp_data)
-				free(data);
-
+			if (data!=&tmp_data) free_data(data);
 			data = NULL;
 		}
 
@@ -4136,6 +4130,11 @@ void * work_thread(void *ptr) {
 	return NULL;
 }
 
+/**
+ * adds a job to the job queue
+ * if ptr should be free() after use, set len to the size
+ * else set size to 0
+**/
 void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 
 	if (!cl || cl->kill) {
@@ -4182,9 +4181,7 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 	int32_t ret = pthread_create(&cl->thread, &attr, work_thread, (void *)data);
 	if (ret) {
 		cs_log("ERROR: can't create thread for %s (errno=%d %s)", action > ACTION_CLIENT_FIRST ? "client" : "reader", ret, strerror(ret));
-		if (data->ptr && len>0)
-			free(data->ptr);
-		free(data);
+		free_data(data);
 	} else
 		pthread_detach(cl->thread);
 
