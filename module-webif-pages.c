@@ -131,7 +131,7 @@ char *CSS =
 "path.graph_grid {stroke:gray;stroke-opacity:0.5}\n"
 "SPAN.e_valid {background-color:#E6FEBF;}\n"
 "SPAN.e_expired {background-color:#fff3e7;}\n"
-"SPAN.span_notifier {background-color:red;color: white;font-family:Arial;font-size:10px;font-weight:bold;}\n"
+"SPAN.span_notifier {background-color:red;color: white;font-family:Arial;font-size:10px;font-weight:bold;text-align:center;float:right;}\n"
 "SPAN.idlesec_normal {font-family: Arial; font-size: 9px;color: black}\n"
 "SPAN.idlesec_alert {font-family: Arial; font-size: 9px;color: red}\n"
 "SPAN.global_conf {color: blue; font-size: 12px; font-family: Arial; cursor: default; padding: 4px;}\n";
