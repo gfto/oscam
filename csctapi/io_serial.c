@@ -445,17 +445,18 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t timeout, uint32_t size, 
 		}
 #else
 		int16_t readed = -1, errorcount=0;
+		AGAIN:
 		if(IO_Serial_WaitToRead (reader, 0, timeout)) {
 			rdr_debug_mask(reader, D_DEVICE, "Timeout in IO_Serial_WaitToRead, timeout=%d ms", timeout);
 			//tcflush (reader->handle, TCIFLUSH);
 			return ERROR;
 		}
 			
-		
 		while (readed <0 && errorcount < 10) {
 			readed = read (reader->handle, &c, 1);
 			if (readed < 0) {
-				if (errno == EAGAIN || errno == EINTR) continue;
+				if (errno == EINTR) continue; // try again in case of interrupt
+				if (errno == EAGAIN) goto AGAIN; //EAGAIN needs select procedure again
 				rdr_log(reader, "ERROR: %s (errno=%d %s)", __func__, errno, strerror(errno));
 				errorcount++;
 				//tcflush (reader->handle, TCIFLUSH);
@@ -497,14 +498,15 @@ bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t size, c
 		
 		for (i_w=0; i_w < to_send; i_w++)
 				data_w [i_w] = data [count + i_w];
-				
+		AGAIN:		
 		if (!IO_Serial_WaitToWrite (reader, delay, timeout))
 		{
 			while (to_do !=0){
 				rdr_ddump_mask(reader, D_DEVICE, data_w+(to_send-to_do), to_do, "Sending:");
 				int32_t u = write (reader->handle, data_w+(to_send-to_do), to_do);
 				if (u < 1) {
-					if (errno==EINTR || errno==EAGAIN) continue; //try again in case of Interrupted system call or if read was blocked
+					if (errno==EINTR) continue; //try again in case of Interrupted system call
+					if (errno==EAGAIN) goto AGAIN; //EAGAIN needs a select procedure again
 					errorcount++;
 					//tcflush (reader->handle, TCIFLUSH);
 					int16_t written = count + to_send - to_do;
