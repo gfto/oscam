@@ -227,7 +227,7 @@ DESCRIPTIONS
 	  inactivity timeout for all TCP based remote readers, default:30 for CCCam, 0 for all others
 
        reconnecttimeout = seconds
-	  reconnect if missing answers for all TCP based remote readers, default:30
+	  reconnect if missing answers from a remote reader, default:30
 
        fallback = 0|1
 	  1 = define reader as fallback, standard and fallback reader must have the same group, default:0
