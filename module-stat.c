@@ -925,7 +925,10 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		nreaders = cfg.lb_nbest_readers+1;
 	int32_t nmaxreopen = nreaders-nbest_readers;
 	if (nmaxreopen < 1)
-		nmaxreopen = 1;
+	{
+		if (nreaders > 0) nmaxreopen = 1;
+		else nmaxreopen = er->reader_avail;
+	}
 
 #ifdef WITH_DEBUG
 	if (cs_dblevel & D_LB) {
