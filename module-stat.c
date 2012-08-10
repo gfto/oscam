@@ -243,11 +243,11 @@ READER_STAT *get_stat_lock(struct s_reader *rdr, STAT_QUERY *q, int8_t lock)
 	if (lock) cs_readunlock(&rdr->lb_stat_lock);
 
 	//Move stat to list start for faster access:
-	if (i > 10 && stat) {
-		if (lock) cs_writelock(&rdr->lb_stat_lock);
-		ll_iter_move_first(&it);
-		if (lock) cs_writeunlock(&rdr->lb_stat_lock);
-	}
+//	if (i > 10 && stat) {
+//		if (lock) cs_writelock(&rdr->lb_stat_lock);
+//		ll_iter_move_first(&it);
+//		if (lock) cs_writeunlock(&rdr->lb_stat_lock);
+//	} Corsair removed, could cause crashes!
 
 	return stat;
 }
@@ -477,6 +477,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	get_stat_query(er, &q);
 
 	time_t ctime = time(NULL);
+	cs_ftime(&rdr->lb_last);
 
 	if (rc == E_FOUND) { //found
 		stat = get_add_stat(rdr, &q);
