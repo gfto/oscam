@@ -552,6 +552,9 @@ static void remove_ecm_from_reader(ECM_REQUEST *ecm) {
 	            	if (er->parent == ecm) {
 	            		er->parent = NULL;
 	            		er->client = NULL;
+#ifdef CS_CACHEEX
+	            		er->csp_lastnodes = NULL;
+#endif
 	            	}
 	            }
             }

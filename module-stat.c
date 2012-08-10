@@ -312,8 +312,7 @@ void save_stat_to_file_thread(void)
 	stat_load_save = 0;
 	char buf[256];
 
-	char *fname;
-	if (!cfg.lb_savepath || !cfg.lb_savepath[0]) {
+	char *fname;	if (!cfg.lb_savepath || !cfg.lb_savepath[0]) {
 		snprintf(buf, sizeof(buf), "%s/stat", get_tmp_dir());
 		fname = buf;
 	}
@@ -730,13 +729,6 @@ int32_t has_ident(FTAB *ftab, ECM_REQUEST *er) {
     return 0; //No match!
 }
 
-#ifdef WITH_DEBUG
-static char *strend(char *c) {
-	while (c && *c) c++;
-	return c;
-}
-#endif
-
 static int32_t get_retrylimit(ECM_REQUEST *er) {
 		int32_t i;
 		for (i = 0; i < cfg.lb_retrylimittab.n; i++) {
@@ -936,10 +928,11 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		nmaxreopen = 1;
 
 #ifdef WITH_DEBUG
-	if (cs_dblevel & 0x01) {
+	if (cs_dblevel & D_LB) {
 		//loadbalancer debug output:
 		int32_t nr = 0;
 		char buf[512];
+		int n, l=512;
 		char *rptr = buf;
 		*rptr = 0;
 
@@ -949,14 +942,15 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			if (nr>5) continue;
 
 			if (!(ea->status & READER_FALLBACK))
-				snprintf(rptr, 32, "%s%s%s ", ea->reader->label, (ea->status&READER_CACHEEX)?"*":"", (ea->status&READER_LOCAL)?"L":"");
+				n = snprintf(rptr, l, "%s%s%s ", ea->reader->label, (ea->status&READER_CACHEEX)?"*":"", (ea->status&READER_LOCAL)?"L":"");
 			else
-				snprintf(rptr, 32, "[%s%s%s] ", ea->reader->label, (ea->status&READER_CACHEEX)?"*":"", (ea->status&READER_LOCAL)?"L":"");
-			rptr = strend(rptr);
+				n = snprintf(rptr, l, "[%s%s%s] ", ea->reader->label, (ea->status&READER_CACHEEX)?"*":"", (ea->status&READER_LOCAL)?"L":"");
+			rptr+=n;
+			l-=n;
 		}
 
 		if (nr>5)
-			snprintf(rptr, 20, "...(%d more)", nr - 5);
+			snprintf(rptr, l, "...(%d more)", nr - 5);
 
                 char ecmbuf[ECM_FMT_LEN];
 		format_ecm(er, ecmbuf, ECM_FMT_LEN);
@@ -1196,10 +1190,11 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		nulltime = new_nulltime;
 
 #ifdef WITH_DEBUG
-	if (cs_dblevel & 0x01) {
+	if (cs_dblevel & D_LB) {
 		//loadbalancer debug output:
 		int32_t nr = 0;
 		char buf[512];
+		int32_t n, l=512;
 		char *rptr = buf;
 		*rptr = 0;
 
@@ -1212,14 +1207,15 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			if (nr>5) continue;
 
 			if (!(ea->status & READER_FALLBACK))
-				snprintf(rptr, 32, "%s%s%s ", ea->reader->label, (ea->status&READER_CACHEEX)?"*":"", (ea->status&READER_LOCAL)?"L":"");
+				n = snprintf(rptr, l, "%s%s%s ", ea->reader->label, (ea->status&READER_CACHEEX)?"*":"", (ea->status&READER_LOCAL)?"L":"");
 			else
-				snprintf(rptr, 32, "[%s%s%s] ", ea->reader->label, (ea->status&READER_CACHEEX)?"*":"", (ea->status&READER_LOCAL)?"L":"");
-			rptr = strend(rptr);
+				n = snprintf(rptr, l, "[%s%s%s] ", ea->reader->label, (ea->status&READER_CACHEEX)?"*":"", (ea->status&READER_LOCAL)?"L":"");
+			rptr+=n;
+			l-=n;
 		}
 
 		if (nr>5)
-			snprintf(rptr, 20, "...(%d more)", nr - 5);
+			snprintf(rptr, l, "...(%d more)", nr - 5);
 
                 char ecmbuf[ECM_FMT_LEN];
 		format_ecm(er, ecmbuf, ECM_FMT_LEN);
