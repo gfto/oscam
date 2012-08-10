@@ -412,12 +412,12 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 		case 0x1702: camkey = 1; break;
 		case 0x1722: camkey = 2; break;
 		case 0x1762: camkey = 3; break;
-		case 0x0624: camkey = 4; break;
+//		case 0x0624: camkey = 4; break;	//ice 0D96/0624 has short ATR
 		default    : camkey = 5; break;
 		}
 	}
 
-	if ((reader->caid == 0x0648) || (reader->caid == 0x0666)) { // acs 6.08
+	if ((reader->caid == 0x0648) || (reader->caid == 0x0666) || (reader->caid == 0x0624)) { // acs 6.08 and ice 0D96/0624
 		camkey = 4;
 		sc_Acs57CamKey[2] = 0;
 	}
@@ -489,16 +489,20 @@ int32_t irdeto_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_
 	if(reader->acs57==1) {
 		int32_t crc=63;
 		sc_Acs57Ecm[4]=er->ecm[2]-2;
-		sc_Acs57Ecm[2]=er->ecm[6];
-		crc^=0x01;crc^=0x05;crc^=sc_Acs57Ecm[2];crc^=sc_Acs57Ecm[3];crc^=(sc_Acs57Ecm[4]-1);
-		for(i=6;i<er->ecm[3]-5;i++)
-			crc^=er->ecm[i];
+		if ((reader->caid == 0x0648) || (reader->caid == 0x0666) || (reader->caid == 0x0624)) {	//crc for orf, cslink, skylink
+			sc_Acs57Ecm[2]=0;
+			crc^=0x01;crc^=0x05;crc^=sc_Acs57Ecm[2];crc^=sc_Acs57Ecm[3];crc^=(sc_Acs57Ecm[4]-1);
+			for(i=6;i<er->ecm[2]+4;i++)
+				crc^=er->ecm[i];
+		} else {
+			sc_Acs57Ecm[2]=er->ecm[6];
+			crc^=0x01;crc^=0x05;crc^=sc_Acs57Ecm[2];crc^=sc_Acs57Ecm[3];crc^=(sc_Acs57Ecm[4]-1);
+			for(i=6;i<er->ecm[3]-5;i++)
+				crc^=er->ecm[i];
+		}
 		memcpy(cta_cmd,sc_Acs57Ecm,sizeof(sc_Acs57Ecm));
 		memcpy(cta_cmd+5,er->ecm+6,er->ecm[2]-1);
 		cta_cmd[er->ecm[2]+2]=crc;
-
-		if ((reader->caid == 0x0648) || (reader->caid == 0x0666) || (reader->caid == 0x0624))
-			cta_cmd[er->ecm[2]+2]=XorSum(cta_cmd, (er->ecm[2]+2)) ^ 0x3f ^ (cta_cmd[0]&0xf0);
 
 		irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr);
 		int32_t acslength=cta_res[cta_lr-1];
@@ -757,6 +761,8 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 						memcpy(&cta_cmd[9],&ep->emm[6],1);
 						memcpy(&cta_cmd[10],&ep->emm[7],dataLen-6);
 //						cta_cmd[9]=0x00;
+					} else if (reader->caid==0x0624 || reader->caid==0x0648 || reader->caid == 0x0666) {	//only orf, cslink, skylink
+						memcpy(&cta_cmd[9],&ep->emm[8],dataLen-4);
 					} else {
 						memcpy(&cta_cmd[10],&ep->emm[9],dataLen-6);
 					}
