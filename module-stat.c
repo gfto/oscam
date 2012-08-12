@@ -18,12 +18,10 @@
 #define DEFAULT_LOCK_TIMEOUT 1000
 
 static int32_t stat_load_save;
-static struct timeb nulltime;
 static time_t last_housekeeping = 0;
 
 void init_stat(void)
 {
-	cs_ftime(&nulltime);
 	stat_load_save = -100;
 
 	//checking config
@@ -908,8 +906,8 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	}
 
 
-	struct timeb new_nulltime;
-	memset(&new_nulltime, 0, sizeof(new_nulltime));
+	struct timeb check_time;
+        cs_ftime(&check_time);
 	time_t current_time = time(NULL);
 	int32_t current = -1;
 	READER_STAT *stat = NULL;
@@ -1049,14 +1047,11 @@ int32_t get_best_reader(ECM_REQUEST *er)
 
 					case LB_OLDEST_READER_FIRST:
 						if (!rdr->lb_last.time)
-							rdr->lb_last = nulltime;
+							rdr->lb_last = check_time;
 							
                                                 //current is negative here! the older, the bigger is the difference
-						current = 1000*(nulltime.time-rdr->lb_last.time) + (nulltime.millitm-rdr->lb_last.millitm);
-						
-						if (!new_nulltime.time || (1000*(rdr->lb_last.time-new_nulltime.time)+
-							rdr->lb_last.millitm-new_nulltime.millitm) < 0)
-							new_nulltime = rdr->lb_last;
+						current = 1000*(rdr->lb_last.time-check_time.time) + (rdr->lb_last.millitm-check_time.millitm) - 10;
+						cs_debug_mask(D_LB, "rdr %s lbvalue=%d", rdr->label, current);
 						break;
 
 					case LB_LOWEST_USAGELEVEL:
@@ -1188,9 +1183,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			}
 		}
 	}
-
-	if (new_nulltime.time)
-		nulltime = new_nulltime;
 
 #ifdef WITH_DEBUG
 	if (cs_dblevel & D_LB) {
