@@ -1050,8 +1050,10 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					case LB_OLDEST_READER_FIRST:
 						if (!rdr->lb_last.time)
 							rdr->lb_last = nulltime;
-						current = (1000*(rdr->lb_last.time-nulltime.time)+
-							rdr->lb_last.millitm-nulltime.millitm);
+							
+                                                //current is negative here! the older, the bigger is the difference
+						current = 1000*(nulltime.time-rdr->lb_last.time) + (nulltime.millitm-rdr->lb_last.millitm);
+						
 						if (!new_nulltime.time || (1000*(rdr->lb_last.time-new_nulltime.time)+
 							rdr->lb_last.millitm-new_nulltime.millitm) < 0)
 							new_nulltime = rdr->lb_last;
@@ -1062,7 +1064,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 						break;
 				}
 #if defined(WEBIF) || defined(LCDSUPPORT)
-				rdr->lbvalue = current;
+				rdr->lbvalue = abs(current);
 #endif
 				if (cfg.lb_mode == LB_FASTEST_READER_FIRST) { //Adjust selection to reader load:
 					if (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_LOADBALANCE, er)) {
@@ -1075,10 +1077,9 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					if (stat->rc >= E_NOTFOUND) { //when reader has service this is possible
 						current=current*(stat->fail_factor+2); //Mark als slow
 					}
+        				if (current < 1)
+	        				current=1;
 				}
-
-				if (current < 1)
-					current=1;
 
 				ea->value = current;
 				ea->time = stat->time_avg;
