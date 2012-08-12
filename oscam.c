@@ -3452,6 +3452,9 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	}
 #endif
 
+#ifdef WITH_LB
+        lb_mark_last_reader(er);
+#endif
 	er->rcEx = 0;
 	request_cw(er);
 

@@ -418,6 +418,7 @@ READER_STAT *get_add_stat(struct s_reader *rdr, STAT_QUERY *q)
 			stat->ecmlen = q->ecmlen;
 			stat->time_avg = UNDEF_AVG_TIME; //dummy placeholder
 			stat->rc = E_NOTFOUND;
+			stat->last_received = time(NULL);
 			ll_append(rdr->lb_stat, stat);
 		}
 	}
@@ -477,7 +478,6 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	get_stat_query(er, &q);
 
 	time_t ctime = time(NULL);
-	cs_ftime(&rdr->lb_last);
 
 	if (rc == E_FOUND) { //found
 		stat = get_add_stat(rdr, &q);
@@ -1064,15 +1064,17 @@ int32_t get_best_reader(ECM_REQUEST *er)
 #if defined(WEBIF) || defined(LCDSUPPORT)
 				rdr->lbvalue = current;
 #endif
-				if (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_LOADBALANCE, er)) {
-					current=current*2;
-				}
+				if (cfg.lb_mode == LB_FASTEST_READER_FIRST) { //Adjust selection to reader load:
+					if (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_LOADBALANCE, er)) {
+						current=current*2;
+					}
 
-				if (cl && cl->pending)
-					current=current*cl->pending;
+					if (cl && cl->pending)
+						current=current*cl->pending;
 
-				if (stat->rc >= E_NOTFOUND) { //when reader has service this is possible
-					current=current*(stat->fail_factor+2); //Mark als slow
+					if (stat->rc >= E_NOTFOUND) { //when reader has service this is possible
+						current=current*(stat->fail_factor+2); //Mark als slow
+					}
 				}
 
 				if (current < 1)
@@ -1121,15 +1123,11 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			nlocal_readers--;
 			nreaders--;
 			best->status |= READER_ACTIVE;
-			//OLDEST_READER:
-			cs_ftime(&best_rdri->lb_last);
 		}
 		else if (nbest_readers) {//primary readers, other
 			nbest_readers--;
 			nreaders--;
 			best->status |= READER_ACTIVE;
-			//OLDEST_READER:
-			cs_ftime(&best_rdri->lb_last);
 		}
 		else if (nfb_readers) { //fallbacks:
 			nfb_readers--;
@@ -1422,6 +1420,19 @@ int32_t lb_valid_btun(ECM_REQUEST *er, uint16_t caidto)
 	}
 	cs_readunlock(&readerlist_lock);
 	return 0;
+}
+
+/**
+ * mark as last reader after checked for cache requests:
+ **/
+void lb_mark_last_reader(ECM_REQUEST *er)
+{
+	 //OLDEST_READER: set lb_last 
+	 struct s_ecm_answer *ea;
+	 for (ea=er->matching_rdr; ea; ea=ea->next) {
+	 	if ((ea->status&(READER_ACTIVE|READER_FALLBACK)) == READER_ACTIVE)
+                         cs_ftime(&ea->reader->lb_last);
+	}
 }
 
 #endif

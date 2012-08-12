@@ -424,6 +424,7 @@ extern int32_t clean_stat_by_id(struct s_reader *rdr, uint16_t caid, uint32_t pr
 extern void update_ecmlen_from_stat(struct s_reader *rdr);
 extern int32_t clean_all_stats_by_rc(int8_t rc, int8_t inverse);
 extern int32_t lb_valid_btun(ECM_REQUEST *er, uint16_t caidto);
+extern void lb_mark_last_reader(ECM_REQUEST *er);
 
 /* ===========================
  *       reader-common
