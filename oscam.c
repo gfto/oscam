@@ -3892,7 +3892,7 @@ void * work_thread(void *ptr) {
 				return NULL;
 			}
 
-			if (data)
+			if (data && data->action != ACTION_READER_CHECK_HEALTH)
 				cs_debug_mask(D_TRACE, "data from add_job action=%d client %c %s", data->action, cl->typ, username(cl));
 
 			if (!data) {
@@ -4122,7 +4122,6 @@ void * work_thread(void *ptr) {
 		pthread_mutex_lock(&cl->thread_lock);
 		if (cl->joblist && ll_count(cl->joblist)>0) {
 			pthread_mutex_unlock(&cl->thread_lock);
-			cs_debug_mask(D_TRACE, "resuming thread");
 			continue;
 		} else {
 			cl->thread_active = 0;
@@ -4130,7 +4129,6 @@ void * work_thread(void *ptr) {
 			break;
 		}
 	}
-	cs_debug_mask(D_TRACE, "ending thread");
 	free(mbuf);
 	pthread_exit(NULL);
 	return NULL;
@@ -4182,7 +4180,8 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 	if(cl->typ != 'r' || !rdr || rdr->typ != R_PCSC)
 		pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 
-	cs_debug_mask(D_TRACE, "start %s thread action %d", action > ACTION_CLIENT_FIRST ? "client" : "reader", action);
+	if (action != ACTION_READER_CHECK_HEALTH)
+		cs_debug_mask(D_TRACE, "start %s thread action %d", action > ACTION_CLIENT_FIRST ? "client" : "reader", action);
 
 	int32_t ret = pthread_create(&cl->thread, &attr, work_thread, (void *)data);
 	if (ret) {
