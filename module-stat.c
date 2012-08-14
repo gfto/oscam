@@ -1051,6 +1051,8 @@ int32_t get_best_reader(ECM_REQUEST *er)
 							
                                                 //current is negative here! the older, the bigger is the difference
 						current = 1000*(rdr->lb_last.time-check_time.time) + (rdr->lb_last.millitm-check_time.millitm) - 10;
+						if (!current)
+						        current = -1;
 						cs_debug_mask(D_LB, "rdr %s lbvalue=%d", rdr->label, current);
 						break;
 
@@ -1061,7 +1063,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 #if defined(WEBIF) || defined(LCDSUPPORT)
 				rdr->lbvalue = abs(current);
 #endif
-				if (cfg.lb_mode == LB_FASTEST_READER_FIRST) { //Adjust selection to reader load:
+				if (cfg.lb_mode != LB_OLDEST_READER_FIRST) { //Adjust selection to reader load:
 					if (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_LOADBALANCE, er)) {
 						current=current*2;
 					}
