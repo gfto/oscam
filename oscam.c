@@ -1,4 +1,4 @@
-  //FIXME Not checked on threadsafety yet; after checking please remove this line
+      //FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
 #include "csctapi/icc_async.h"
 #ifdef MODULE_CCCAM
@@ -768,6 +768,8 @@ static void cs_cleanup(void)
 #ifdef WITH_LB
 	if (cfg.lb_mode && cfg.lb_save) {
 		save_stat_to_file(0);
+		if (cfg.lb_savepath)
+		    cs_log("stats saved to file %s", cfg.lb_savepath);
 		cfg.lb_save = 0; //this is for avoiding duplicate saves
 	}
 #endif
@@ -4078,7 +4080,7 @@ void * work_thread(void *ptr) {
 						cl->kill = 1;
 					}
 					break;
-	#ifdef CS_CACHEEX
+#ifdef CS_CACHEEX
 				case ACTION_CACHE_PUSH_OUT: {
 					ECM_REQUEST *er = data->ptr;
 
@@ -4102,7 +4104,7 @@ void * work_thread(void *ptr) {
 
 					break;
 				}
-	#endif
+#endif
 				case ACTION_CLIENT_KILL:
 					cl->kill = 1;
 					break;
@@ -4622,17 +4624,30 @@ int32_t accept_connection(int32_t i, int32_t j) {
 }
 
 #ifdef WEBIF
+pid_t pid;
+
+
+void fwd_sig(int32_t sig)
+{
+    kill(pid, sig);
+}
+
 static void restart_daemon(void)
 {
   while (1) {
 
     //start client process:
-    pid_t pid = fork();
+    pid = fork();
     if (!pid)
       return; //client process=oscam process
     if (pid < 0)
       exit(1);
 
+    //set signal handler for the restart daemon:
+    set_signal_handler(SIGTERM, 0, fwd_sig);
+    set_signal_handler(SIGQUIT, 0, fwd_sig);
+    set_signal_handler(SIGHUP , 0, fwd_sig);
+                                                                                                                                                
     //restart control process:
     int32_t res=0;
     int32_t status=0;
