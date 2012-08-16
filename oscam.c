@@ -1046,7 +1046,7 @@ void cs_exit(int32_t sig)
 
 	// this is very important - do not remove
 	if (cl->typ != 's') {
-		cs_log("thread %8lX ended!", (unsigned long)pthread_self());
+		cs_debug_mask(D_TRACE, "thread %8lX ended!", (unsigned long)pthread_self());
 
 		cleanup_thread(cl);
 

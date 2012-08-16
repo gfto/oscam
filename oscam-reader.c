@@ -216,7 +216,7 @@ int32_t is_connect_blocked(struct s_reader *rdr) {
   if (blocked) {
 		int32_t time = 1000*(rdr->tcp_block_connect_till.time-cur_time.time)
 				+rdr->tcp_block_connect_till.millitm-cur_time.millitm;
-		rdr_log(rdr, "connection blocked, retrying in %ds", time/1000);
+		rdr_debug_mask(rdr, D_TRACE, "connection blocked, retrying in %ds", time/1000);
   }
   return blocked;
 }
@@ -288,7 +288,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 	client->udp_sa.sin_family = AF_INET;
 	client->udp_sa.sin_port = htons((uint16_t)client->reader->r_port);
 
-	rdr_log(rdr, "socket open for %s fd=%d", rdr->ph.desc, client->udp_fd);
+	rdr_debug_mask(rdr, D_TRACE, "socket open for %s fd=%d", rdr->ph.desc, client->udp_fd);
 
 	if (client->is_udp) {
 		rdr->tcp_connected = 1;
@@ -317,7 +317,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 			}
 		}
 		if (r != 0) {
-			rdr_log(rdr, "connect(fd=%d) failed: (errno=%d %s)", client->udp_fd, errno, strerror(errno));
+			rdr_log(rdr, "connect failed: %s", strerror(errno));
 			block_connect(rdr); //connect has failed. Block connect for a while
 			close(client->udp_fd);
 			client->udp_fd = 0;
@@ -333,7 +333,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 	client->last_caid=client->last_srvid=0;
 	client->pfd = client->udp_fd;
 	rdr->tcp_connected = 1;
-	rdr_log(rdr, "connect succesfull %s fd=%d", rdr->ph.desc, client->udp_fd);
+	rdr_debug_mask(rdr, D_TRACE, "connect succesfull fd=%d", client->udp_fd);
 	return client->udp_fd;
 }
 
@@ -341,7 +341,7 @@ void network_tcp_connection_close(struct s_reader *reader, char *reason)
 {
 	if (!reader) {
 		//only proxy reader should call this, client connections are closed on thread cleanup
-		cs_log("WARNING: invalid client tcp_conn_close()");
+		cs_log("WARNING: invalid client");
 		cs_disconnect_client(cur_client());
 		return;
 	}
@@ -353,8 +353,7 @@ void network_tcp_connection_close(struct s_reader *reader, char *reason)
 	int32_t i;
 
 	if (fd) {
-		rdr_log(reader, "tcp_conn_close(): fd=%d, cl->typ == '%c' is_udp %d reason %s",
-			fd, cl->typ, cl->is_udp, reason ? reason : "undef");
+		rdr_log(reader, "disconnected: reason %s", reason ? reason : "undef");
 		close(fd);
 
 		cl->udp_fd = 0;
@@ -386,7 +385,7 @@ void casc_do_sock_log(struct s_reader * reader)
   if (idx<0) return;        // no dcw-msg received
 
   if(!cl->ecmtask) {
-    rdr_log(reader, "WARNING: casc_do_sock_log: ecmtask not a available");
+    rdr_log(reader, "WARNING: ecmtask not a available");
     return;
   }
 
@@ -411,7 +410,7 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	struct s_client *cl = reader->client;
 
 	if(!cl || !cl->ecmtask) {
-		rdr_log(reader, "WARNING: casc_process_ecm: ecmtask not a available");
+		rdr_log(reader, "WARNING: ecmtask not a available");
 		return -1;
 	}
 
