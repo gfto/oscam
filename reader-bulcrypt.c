@@ -30,16 +30,15 @@
  *     that report CardType: 0x4c and 0x75.
  *   - Cards return valid code words for subscribed channels.
  *      - Tested with channels encrypted with CAID 0x5581 and 0x4aee on
- *         Hellas 39E. Both MPEG2 (SD) and H.264 (SD) channels were decrypted.
+ *         Hellas 39E. Both MPEG2 (SD) and H.264 (SD and HD) channels were
+ *         decrypted.
  *   - Brand new cards were inited without ever being put into providers STBs.
- *   - AU was working (subscription dates and packages were updated).
+ *     as long the protocol you are using is sending EMMs to the card.
+ *   - AU was working (subscription dates and packages were updated)
+ *     as long the protocol you are using is sending EMMs to the card.
  *
- * WHAT WAS NOT TESTED (presumed not working):
- *   - Bulcrypt v2 codeword deobfuscation (we need v2 card).
- *     Bulsatcom do not enable HD packages on v1 cards, v2 cards is rumored
- *     to have different CW obfuscation routine.
- *   - Unfortunately there is no easy to know if you have v1 or v2 card. If
- *     there is a way to detect them please notify us.
+ * WHAT WE DON'T KNOW (YET!):
+ *   - How to deobfuscate v2 codewords.
  *
  * PERSONAL MESSAGES:
  *   - Many thanks to ilian_71 @ satfriends forum for the protocol info.
@@ -66,7 +65,16 @@ static const uchar cmd_set_key[]   = { 0xDE, 0x1C, 0x00, 0x00, 0x0A,
                                        0x12, 0x08,
                                        0x56, 0x47, 0x38, 0x29,
                                        0x10, 0xAF, 0xBE, 0xCD };
+
+static const uchar cmd_set_key_v2[]= { 0xDE, 0x1C, 0x00, 0x00, 0x0A,
+                                       0x12, 0x08,
+                                       0x00, 0x00, 0x00, 0x00,
+                                       0x00, 0x00, 0x00, 0x00 };
 // Response: 90 00
+
+// V2
+static const uchar cmd_card_v2_key1[] = { 0xDE, 0x12, 0x00, 0x00, 0x00, 0x00 };
+static const uchar cmd_card_v2_key2[] = { 0xDE, 0x1E, 0x00, 0x00, 0x12, 0x00 };
 
 static const uchar cmd_cardtype1[] = { 0xDE, 0x16, 0x00, 0x00, 0x00, 0x00 };
 static const uchar cmd_cardtype2[] = { 0xDE, 0x1E, 0x00, 0x00, 0x03, 0x00 };
@@ -123,10 +131,13 @@ static int32_t bulcrypt_card_init(struct s_reader *reader, ATR *newatr)
 	int i;
 	char tmp[1024];
 	char card_serial[16];
+	const uchar *set_key_command;
 	uchar card_type;
 
 	get_atr
 	def_resp
+
+	reader->bulcrypt_version = 0;
 
 	if (memcmp(atr, atr_carpet, MIN(sizeof(atr_carpet), atr_size)) != 0)
 	{
@@ -137,21 +148,38 @@ static int32_t bulcrypt_card_init(struct s_reader *reader, ATR *newatr)
 		return ERROR;
 	}
 
-	rdr_log(reader, "Card detected.");
-
 	reader->nprov = 1;
 	memset(reader->prid, 0, sizeof(reader->prid));
 	memset(reader->hexserial, 0, sizeof(reader->hexserial));
 	memset(card_serial, 0, sizeof(card_serial));
 
+	rdr_log(reader, "Bulcrypt card detected, checking card version.");
+
+	// Do we have Bulcrypt V2 card?
+	write_cmd(cmd_card_v2_key1, NULL);
+	write_cmd(cmd_card_v2_key2, NULL);
+	if (cta_lr < 18 || (cta_res[0] != 0x11 && cta_res[1] != 0x10))
+	{
+		// The card is v1
+		reader->bulcrypt_version = 1;
+		set_key_command = cmd_set_key;
+	} else {
+		// The card is v2
+		reader->bulcrypt_version = 2;
+		set_key_command = cmd_set_key_v2;
+	}
+
 	// Set CW obfuscation key
-	write_cmd(cmd_set_key, cmd_set_key + 5);
+	write_cmd(set_key_command, set_key_command + 5);
 	if (cta_lr < 2 || (cta_res[0] != 0x90 && cta_res[1] != 0x00))
 	{
 		rdr_log(reader, "(cmd_set_key) Unexpected card answer: %s",
 			cs_hexdump(1, cta_res, cta_lr, tmp, sizeof(tmp)));
 		return ERROR;
 	}
+
+	rdr_log(reader, "Bulcrypt v%d card detected.%s", reader->bulcrypt_version,
+		reader->bulcrypt_version != 1 ? " *UNSUPPORTED CARD VERSION*" : "");
 
 	// Read card type
 	write_cmd(cmd_cardtype1, NULL);
@@ -257,7 +285,6 @@ Bulcrypt ECM structure:
 */
 static int32_t bulcrypt_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
-	int i;
 	char tmp[512];
 	uchar ecm_cmd[256];
 
@@ -321,8 +348,11 @@ static int32_t bulcrypt_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 
 	// Remove code word obfuscation
 	uchar *cw = cta_res + 3;
-	for (i = 0 ; i < 16; i++) {
-		cw[i] = cw[i] ^ sess_key[i];
+	if (reader->bulcrypt_version == 1) {
+		int i;
+		for (i = 0 ; i < 16; i++) {
+			cw[i] = cw[i] ^ sess_key[i];
+		}
 	}
 
 	if (er->ecm[0] == 0x81)
