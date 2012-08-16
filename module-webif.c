@@ -765,7 +765,7 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 					}
 				}
 			}
-			tpl_addMsg(vars, "Configuration Monitor done. You should restart OSCam now.");
+			tpl_addMsg(vars, "Configuration was saved. You should restart OSCam now.");
 			if(write_config()==0) refresh_oscam(REFR_SERVER);
 			else tpl_addMsg(vars, "Write Config failed!");
 		}

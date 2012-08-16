@@ -380,7 +380,7 @@ SFRTIFJFU0VSVkVEADs="
 ##TPLCONFIGMENUGBOX##\
 ##TPLCONFIGMENUCSP##\
 ##TPLCONFIGMENUANTICASC##\
-			<TD CLASS=\"##CMENUACTIVE9##\"><A HREF=\"config.html?part=monitor\">Monitor/WebIf</A></TD>\n\
+##TPLCONFIGMENUMONITOR##\
 ##TPLCONFIGMENUSERIAL##\
 ##TPLCONFIGMENUDVBAPI##\
 		</TR>\n\
@@ -489,6 +489,12 @@ SFRTIFJFU0VSVkVEADs="
 #ifdef CS_ANTICASC
 #define TPLCONFIGMENUANTICASC "			<TD CLASS=\"##CMENUACTIVE8##\"><A HREF=\"config.html?part=anticasc\">Anticascading</A></TD>\n"
 #define TPLFILEMENUANTICASC "			<TD CLASS=\"##CMENUACTIVE22##\"><A HREF=\"files.html?file=anticasc\">AC Log</A></TD>\n"
+#endif
+
+#ifdef MODULE_MONITOR
+#define TPLCONFIGMENUMONITOR "			<TD CLASS=\"##CMENUACTIVE9##\"><A HREF=\"config.html?part=monitor\">WebIf/Monitor</A></TD>\n"
+#else
+#define TPLCONFIGMENUMONITOR "			<TD CLASS=\"##CMENUACTIVE9##\"><A HREF=\"config.html?part=monitor\">WebIf</A></TD>\n"
 #endif
 
 #ifdef HAVE_DVBAPI
@@ -1536,25 +1542,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		<input name=\"httpshowpicons\" type=\"hidden\" value=\"0\">\n\
 		<input name=\"appendchaninfo\" type=\"hidden\" value=\"0\">\n\
 		<TABLE class=\"config\">\n\
-			<TR><TH COLSPAN=\"2\">Edit Monitor Config</TH></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#port##TPLHELPSUFFIX##Port:</A></TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MONPORT##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#serverip_2##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"serverip\" type=\"text\" size=\"15\" maxlength=\"15\" value=\"##SERVERIP##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#nocrypt##TPLHELPSUFFIX##No crypt:</A></TD><TD><input name=\"nocrypt\" type=\"text\" size=\"63\" maxlength=\"200\" value=\"##NOCRYPT##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#aulow##TPLHELPSUFFIX##Au low:</A></TD><TD><input name=\"aulow\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##AULOW##\"> min</TD></TR>\n\
-			<TR>\n\
-				<TD>##TPLHELPPREFIX##conf#monlevel##TPLHELPSUFFIX##Monlevel:</A></TD>\n\
-				<TD><select name=\"monlevel\">\n\
-					<option value=\"0\" ##MONSELECTED0##>0 - no access to monitor</option>\n\
-					<option value=\"1\" ##MONSELECTED1##>1 - only server and own procs</option>\n\
-					<option value=\"2\" ##MONSELECTED2##>2 - all procs, but viewing only, default</option>\n\
-					<option value=\"3\" ##MONSELECTED3##>3 - all procs, reload of oscam.user possible</option>\n\
-					<option value=\"4\" ##MONSELECTED4##>4 - complete access</option>\n\
-					</select>\n\
-				</TD>\n\
-			</TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#hideclient_to##TPLHELPSUFFIX##Hide client to:</A></TD><TD><input name=\"hideclient_to\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##HIDECLIENTTO##\"> s</TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#appendchaninfo##TPLHELPSUFFIX##Append channel info:</A></TD><TD><input name=\"appendchaninfo\" type=\"checkbox\" value=\"1\" ##APPENDCHANINFO##></TD></TR>\n\
-			<TR><TH COLSPAN=\"2\">Webinterface Config</TH></TR>\n\
+			<TR><TH COLSPAN=\"2\">Edit WebIf Config</TH></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#httpport##TPLHELPSUFFIX##Http port:</A></TD><TD><input name=\"httpport\" type=\"text\" size=\"6\" maxlength=\"6\" value=\"##HTTPPORT##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#httpuser##TPLHELPSUFFIX##Http user:</A></TD><TD><input name=\"httpuser\" type=\"text\" size=\"63\" maxlength=\"64\" value=\"##HTTPUSER##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#httppwd##TPLHELPSUFFIX##Http pwd:</A></TD><TD><input name=\"httppwd\" type=\"text\" size=\"63\" maxlength=\"64\" value=\"##HTTPPASSWORD##\"></TD></TR>\n\
@@ -1578,10 +1566,36 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#httpsavefullcfg##TPLHELPSUFFIX##Http save full config:</A></TD><TD><SELECT NAME=\"httpsavefullcfg\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##HTTPSAVEFULLSELECT##>YES</OPTION></SELECT></TD></TR>\n\
 ##TPLHTTPFORCESSLV3##\
 ##TPLLCDOPTIONS##\
+##TPLCONFIGMONITOR_CONF##\
+			<TR><TH COLSPAN=\"2\">Edit WebIf / Monitor Config</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#hideclient_to##TPLHELPSUFFIX##Hide client to:</A></TD><TD><input name=\"hideclient_to\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##HIDECLIENTTO##\"> s</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#appendchaninfo##TPLHELPSUFFIX##Append channel info:</A></TD><TD><input name=\"appendchaninfo\" type=\"checkbox\" value=\"1\" ##APPENDCHANINFO##></TD></TR>\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
+
+#ifdef MODULE_MONITOR
+#define TPLCONFIGMONITOR_CONF "\
+			<TR><TH COLSPAN=\"2\">Edit Monitor Config</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#port##TPLHELPSUFFIX##Port:</A></TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MONPORT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#serverip_2##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"serverip\" type=\"text\" size=\"15\" maxlength=\"15\" value=\"##SERVERIP##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#nocrypt##TPLHELPSUFFIX##No crypt:</A></TD><TD><input name=\"nocrypt\" type=\"text\" size=\"63\" maxlength=\"200\" value=\"##NOCRYPT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#aulow##TPLHELPSUFFIX##Au low:</A></TD><TD><input name=\"aulow\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##AULOW##\"> min</TD></TR>\n\
+			<TR>\n\
+				<TD>##TPLHELPPREFIX##conf#monlevel##TPLHELPSUFFIX##Monlevel:</A></TD>\n\
+				<TD><select name=\"monlevel\">\n\
+					<option value=\"0\" ##MONSELECTED0##>0 - no access to monitor</option>\n\
+					<option value=\"1\" ##MONSELECTED1##>1 - only server and own procs</option>\n\
+					<option value=\"2\" ##MONSELECTED2##>2 - all procs, but viewing only, default</option>\n\
+					<option value=\"3\" ##MONSELECTED3##>3 - all procs, reload of oscam.user possible</option>\n\
+					<option value=\"4\" ##MONSELECTED4##>4 - complete access</option>\n\
+					</select>\n\
+				</TD>\n\
+			</TR>\n"
+#else
+#define TPLCONFIGMONITOR_CONF ""
+#endif
 
 #ifdef WITH_SSL
 #define TPLHTTPFORCESSLV3 "\
@@ -2384,6 +2398,7 @@ const char *tpl[][3] = {
 	,{"APIFAILBANBIT", TPLAPIFAILBANBIT, ""}
 	,{"CONFIGGBOX", TPLCONFIGGBOX, ""}
 	,{"CONFIGMONITOR", TPLCONFIGMONITOR, ""}
+	,{"CONFIGMONITOR_CONF", TPLCONFIGMONITOR_CONF, ""}
 	,{"CONFIGGLOBAL", TPLCONFIGGLOBAL, ""}
 	,{"CONFIGSERIALDEVICEBIT", TPLCONFIGSERIALDEVICEBIT, ""}
 	,{"SERVICECONFIGLIST", TPLSERVICECONFIGLIST, ""}
@@ -2408,6 +2423,7 @@ const char *tpl[][3] = {
 	,{"CONFIGMENUANTICASC", TPLCONFIGMENUANTICASC, "CS_ANTICASC"}
 	,{"FILEMENUANTICASC", TPLFILEMENUANTICASC, "CS_ANTICASC"}
 #endif
+	,{"CONFIGMENUMONITOR", TPLCONFIGMENUMONITOR, "" }
 #if defined(QBOXHD) || defined(__arm__)
 	,{"ENABLELEDBIT", TPLENABLELEDBIT, "QBOXHD,ARM"}
 #endif
