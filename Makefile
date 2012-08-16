@@ -218,15 +218,16 @@ NP = --no-print-directory
 SAY = @echo
 endif
 
-OSCAM_BIN := Distribution/oscam-$(VER)$(SVN_REV)-$(subst cygwin,cygwin.exe,$(TARGET))
-LIST_SMARGO_BIN := Distribution/list_smargo-$(VER)$(SVN_REV)-$(subst cygwin,cygwin.exe,$(TARGET))
+BINDIR := Distribution
+LIBDIR := lib
+
+OSCAM_BIN := $(BINDIR)/oscam-$(VER)$(SVN_REV)-$(subst cygwin,cygwin.exe,$(TARGET))
+LIST_SMARGO_BIN := $(BINDIR)/list_smargo-$(VER)$(SVN_REV)-$(subst cygwin,cygwin.exe,$(TARGET))
 
 # Build list_smargo-.... only when WITH_LIBUSB build is requested.
 ifndef USE_LIBUSB
 override LIST_SMARGO_BIN =
 endif
-
-LIBDIR = lib
 
 GLOBAL_DEP = Makefile
 
@@ -423,10 +424,10 @@ defconfig:
 	@-$(SHELL) ./config.sh --restore
 
 clean:
-	@-rm -rfv lib
+	@-rm -rfv $(LIBDIR)/*.a
 
 distclean: clean
-	@-rm -rfv Distribution/oscam-* Distribution/list_smargo-* config.mak
+	@-rm -rfv $(BINDIR)/oscam-$(VER)* $(BINDIR)/list_smargo-* config.mak
 
 help:
 	@-printf "\
@@ -589,9 +590,9 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
    make defconfig     - Restore default configuration options.\n\
 \n\
  Cleaning targets:\n\
-   make clean     - Remove lib/ directory which contains built object files.\n\
+   make clean     - Remove $(LIBDIR)/ directory which contains built object files.\n\
    make distclean - Executes clean target and also removes binary files\n\
-                    located in Distribution/ directory.\n\
+                    located in $(BINDIR)/ directory.\n\
 \n\
  Build system files:\n\
    config.sh      - OSCam configuration. Run 'config.sh --help' to see\n\
