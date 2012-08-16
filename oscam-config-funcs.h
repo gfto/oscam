@@ -5,11 +5,7 @@
 #  define WITH_LIBCRYPTO
 #endif
 
-#if defined(__arm__) || defined(__SH4__) || defined(__MIPS__) || defined(__MIPSEL__) || defined(__powerpc__)
-#  define CS_EMBEDDED 1
-#endif
-
-#if defined(__CYGWIN__) || defined(CS_EMBEDDED)
+#if defined(__CYGWIN__) || defined(__arm__) || defined(__SH4__) || defined(__MIPS__) || defined(__MIPSEL__) || defined(__powerpc__)
 #  define CS_LOGFILE "/dev/tty"
 #endif
 
