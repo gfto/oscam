@@ -3280,7 +3280,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				else if (rdr->cacheex == 1)
 					ea->status |= READER_CACHEEX;
 #endif
-				else if (rdr->fallback)
+				if (rdr->fallback)
 					ea->status |= READER_FALLBACK;
 
 #ifdef WITH_LB
