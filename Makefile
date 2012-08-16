@@ -572,7 +572,7 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
                     Example: 'make EXTRA_TARGET=-private'\n\
 \n\
    EXTRA_CFLAGS   - Add text to CFLAGS (affects compilation).\n\
-                    Example: 'make EXTRA_CFLAGS=-DBLAH=1 -I/opt/local'\n\
+                    Example: 'make EXTRA_CFLAGS=\"-DBLAH=1 -I/opt/local\"'\n\
 \n\
    EXTRA_LDLAGS   - Add text to LDLAGS (affects linking).\n\
                     Example: 'make EXTRA_LDLAGS=-Llibdir'\n\
@@ -581,7 +581,7 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
                     Example: 'make EXTRA_FLAGS=-DWEBIF=1'\n\
 \n\
    EXTRA_LIBS     - Add text to LIBS (affects linking).\n\
-                    Example: 'make EXTRA_LIBS=-L./stapi -loscam_stapi'\n\
+                    Example: 'make EXTRA_LIBS=\"-L./stapi -loscam_stapi\"'\n\
 \n\
  Config targets:\n\
    make config        - Start configuration utility.\n\
