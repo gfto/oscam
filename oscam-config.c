@@ -2349,7 +2349,7 @@ int32_t write_config(void)
 		if(strlen(value) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, "nocrypt", "%s\n", value);
 		free_mk_t(value);
-		if((cfg.mon_aulow < 1 && cfg.mon_aulow != 30) || cfg.http_full_cfg)
+		if((cfg.mon_aulow > 0 && cfg.mon_aulow != 30) || cfg.http_full_cfg)
 			fprintf_conf(f, "aulow", "%d\n", cfg.mon_aulow);
 		if(cfg.mon_hideclient_to != 15 || cfg.http_full_cfg)
 			fprintf_conf(f, "hideclient_to", "%d\n", cfg.mon_hideclient_to);
