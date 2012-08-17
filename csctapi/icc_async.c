@@ -42,7 +42,7 @@
 #define DEFAULT_WI		10
 // Default T1 settings
 #define DEFAULT_IFSC	32
-#define MAX_IFSC		254  /* Cannot send > 255 buffer */
+#define MAX_IFSC		251  /* Cannot send > 255 buffer */
 #define DEFAULT_CWI		13
 #define DEFAULT_BWI		4
 #define EDC_LRC				0
@@ -1100,9 +1100,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 				if (reader->smargopatch == 1)
 					reader->ifsc = MIN (reader->ifsc, 28);
 				else
-					// Towitoko does not allow IFSC > 251
-					//FIXME not sure whether this limitation still exists
-					//tryfix HD+ cards setting MAX_IFSC to 254
+					// Towitoko and smartreaders dont allow IFSC > 251
 					reader->ifsc = MIN (reader->ifsc, MAX_IFSC);
 
 			#ifndef PROTOCOL_T1_USE_DEFAULT_TIMINGS
