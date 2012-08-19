@@ -809,6 +809,8 @@ static void cs_cleanup(void)
 	init_free_userdb(cfg.account);
 	cfg.account = NULL;
 	init_free_sidtab();
+
+	cs_close_log();
 }
 
 /*
@@ -1059,7 +1061,6 @@ void cs_exit(int32_t sig)
 	}
 
 	cs_log("cardserver down");
-	cs_close_log();
 
 	if (sig == SIGINT)
 		exit(sig);
