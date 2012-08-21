@@ -2303,7 +2303,7 @@ int32_t write_config(void)
 	
 	
 
-	if (strlen(cfg.lb_savepath) > 0 || cfg.http_full_cfg)
+	if ((cfg.lb_savepath && strlen(cfg.lb_savepath) > 0) || cfg.http_full_cfg)
 		fprintf_conf(f, "lb_savepath", "%s\n", cfg.lb_savepath?cfg.lb_savepath:"");
 	if (cfg.lb_stat_cleanup != DEFAULT_LB_STAT_CLEANUP || cfg.http_full_cfg)
 		fprintf_conf(f, "lb_stat_cleanup", "%d\n", cfg.lb_stat_cleanup);
