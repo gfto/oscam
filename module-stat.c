@@ -1146,7 +1146,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					rdr = ea->reader;
    	     			stat = get_stat(rdr, &q);
    		     		if (stat && stat->rc != E_FOUND && stat->last_received+get_reopen_seconds(stat) < current_time) {
-	   	     			if (!ea->status && nreaders) {
+	   	     			if (nreaders) {
    	     					ea->status |= READER_ACTIVE;
    	     					nreaders--;
    	     					cs_debug_mask(D_LB, "loadbalancer: reopened reader %s", rdr->label);
@@ -1175,11 +1175,9 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					if (stat && stat->rc != E_FOUND) { //retrylimit reached:
 						if (cfg.lb_reopen_mode || stat->last_received+get_reopen_seconds(stat) < current_time) { //Retrying reader every (900/conf) seconds
 							stat->last_received = current_time;
-							if (!ea->status) {
-								ea->status |= READER_ACTIVE;
-								nreaders--;
-								cs_debug_mask(D_LB, "loadbalancer: retrying reader %s (fail %d)", rdr->label, stat->fail_factor);
-							}
+							ea->status |= READER_ACTIVE;
+							nreaders--;
+							cs_debug_mask(D_LB, "loadbalancer: retrying reader %s (fail %d)", rdr->label, stat->fail_factor);
 						}
 					}
 				}
