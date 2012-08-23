@@ -347,6 +347,25 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR *newatr)
     return ERROR;
   }
 
+  static const unsigned char ins02[5] = { 0xD0,0x02,0x00,0x00,0x08 };
+  l = do_cmd(reader, ins02, NULL, NULL, cta_res);
+  if (l < 8) {
+    rdr_log(reader, "Unable to get NDS ROM version.");
+  } else {
+    int i;
+    for (i = 0; i < 8; i++) {
+      if (cta_res[i] <= 0x09) {
+        cta_res[i] = cta_res[i] + 0x30;
+      } else if (!isalnum(cta_res[i])) {
+        cta_res[i] = '*';
+      }
+    }
+    memset(reader->rom, 0, sizeof(reader->rom));
+    memcpy(reader->rom, cta_res, 4);
+    reader->rom[4] = '-';
+    memcpy(reader->rom + 5, cta_res + 4, 4);
+  }
+
   unsigned char ins36[5] = { 0xD0,0x36,0x00,0x00,0x00 };
   static const unsigned char ins5e[5] = { 0xD0,0x5E,0x00,0x0C,0x02 };
   unsigned char boxID [4];
