@@ -61,8 +61,6 @@ else (CMAKE_CROSSCOMPILING)
         set (DEFAULT_CS_CONFDIR "/etc/oscam")
     elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         set (OSCamOperatingSystem "Mac OS X")
-        SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32" )
-        SET( CMAKE_CFLAGS "${CMAKE_CFLAGS} -m32" )
     elseif (${CYGWIN})
         set (OSCamOperatingSystem "Windows/Cygwin")
         set (CMAKE_SYSTEM_PROCESSOR "i386")
@@ -165,32 +163,19 @@ add_definitions ("-DCS_CONFDIR=\\\"${CS_CONFDIR}\\\"")
 # Manage oscam-config.h based on command line parameters
 # Manipulate config file based on given parameters and read unset parameters
 
-# Available options
-set(addons WEBIF HAVE_DVBAPI IRDETO_GUESSING CS_ANTICASC WITH_DEBUG WITH_SSL CS_CACHEEX LCDSUPPORT)
-set(protocols MODULE_CAMD33 MODULE_CAMD35 MODULE_CAMD35_TCP MODULE_NEWCAMD MODULE_CCCAM MODULE_CCCSHARE MODULE_RADEGAST MODULE_SERIAL MODULE_MONITOR MODULE_CONSTCW)
-set(readers WITH_CARDREADER READER_NAGRA READER_IRDETO READER_CONAX READER_CRYPTOWORKS READER_SECA READER_VIACCESS READER_VIDEOGUARD READER_DRE READER_TONGFANG READER_BULCRYPT)
+execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --show-valid OUTPUT_VARIABLE config_vars_string OUTPUT_STRIP_TRAILING_WHITESPACE)
+string(REGEX MATCHALL "[A-Z0-9_]+" config_vars ${config_vars_string})
 
 MACRO(GENERATE_OSCAM_CONFIG fullpath)
-	file(READ ${fullpath} config)
-	foreach(option ${addons} ${protocols} ${readers})
+	foreach(option ${config_vars})
 		if(DEFINED ${option})
-			# Note: cmake does not read the file as individual lines but as a long
-			#		string, hence we use \n instead of ^ to determine where a line begins
-
 			if(${option})
-				string(REGEX REPLACE "\n//#define ${option}" "\n#define ${option}" config ${config})
+				execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --enable ${option})
 			else(${option})
-				string(REGEX REPLACE "\n#define ${option}" "\n//#define ${option}" config ${config})
+				execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --disable ${option})
 			endif(${option})
-		else(DEFINED ${option})
-			# read value from current oscam-config.h
-
-			if(${config} MATCHES "\n#define ${option}")
-				SET(${option} TRUE)
-			endif(${config} MATCHES "\n#define ${option}")
 		endif(DEFINED ${option})
 	endforeach(option)
-	file(WRITE ${fullpath} ${config})
 ENDMACRO(GENERATE_OSCAM_CONFIG fullpath)
 
 #----------------------- subdirectories ------------------------------
@@ -210,6 +195,11 @@ check_include_file ("openssl/aes.h" HAVE_LIBCRYPTO)
 if (HAVE_LIBCRYPTO)
     add_definitions ("-DWITH_LIBCRYPTO")
 endif (HAVE_LIBCRYPTO)
+
+execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --enabled WITH_SSL OUTPUT_VARIABLE CONFIG_WITH_SSL OUTPUT_STRIP_TRAILING_WHITESPACE)
+if (CONFIG_WITH_SSL MATCHES "Y")
+    set (WITH_SSL TRUE)
+endif (CONFIG_WITH_SSL MATCHES "Y")
 
 find_package(OpenSSL QUIET)
 if (OPENSSL_FOUND)
@@ -519,7 +509,7 @@ if (CMAKE_COMPILER_IS_GNUCC)
 endif (CMAKE_COMPILER_IS_GNUCC)
 # some optimisations
 if (OSCamOperatingSystem MATCHES "Mac OS X")
-    add_definitions ("-m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk")
+    add_definitions("-isysroot /Developer/SDKs/MacOSX10.6.sdk")
 endif (OSCamOperatingSystem MATCHES "Mac OS X")
 
 # we don't want the '-rdynamic' in the link command
@@ -528,10 +518,10 @@ set (CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 # we want to strip if not Debug build
 if (OSCamOperatingSystem MATCHES "Mac OS X")
   if (NOT CMAKE_BUILD_TYPE STREQUAL Debug)
-    set (CMAKE_EXE_LINKER_FLAGS "-s -m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk")
+    set (CMAKE_EXE_LINKER_FLAGS "-s -isysroot /Developer/SDKs/MacOSX10.6.sdk")
   else (NOT CMAKE_BUILD_TYPE STREQUAL Debug)
     message (STATUS "  building with debug")
-    set (CMAKE_EXE_LINKER_FLAGS "-ggdb -m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk")
+    set (CMAKE_EXE_LINKER_FLAGS "-ggdb -isysroot /Developer/SDKs/MacOSX10.6.sdk")
   endif (NOT CMAKE_BUILD_TYPE STREQUAL Debug)
 else (OSCamOperatingSystem MATCHES "Mac OS X")
   if (NOT CMAKE_BUILD_TYPE STREQUAL Debug)
