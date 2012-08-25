@@ -42,7 +42,7 @@ static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen)
 	memset(sbuf + l, 0xff, 15);	// set unused space to 0xff for newer camd3's
 	i2b_buf(4, crc32(0L, sbuf+20, buflen), sbuf + 4);
 	l = boundary(4, l);
-	cs_ddump_mask(cl->typ == 'c'?D_CLIENT:D_READER, sbuf, l, "send %d bytes to %s", l, remote_txt());
+	cs_ddump_mask(cl->typ == 'c'?D_CLIENT:D_READER, sbuf, l, "send %d bytes to %s", l, username(cl));
 	aes_encrypt_idx(cl, sbuf, l);
 
 	int32_t status;
@@ -404,6 +404,24 @@ static int32_t tcp_connect(struct s_client *cl)
 	return(1);
 }
 
+/*
+ *	client functions
+ */
+int32_t camd35_client_init(struct s_client *client)
+{
+
+	unsigned char md5tmp[MD5_DIGEST_LENGTH];
+	struct s_client *cl = client;
+	cs_strncpy((char *)cl->upwd, cl->reader->r_pwd, sizeof(cl->upwd));
+	i2b_buf(4, crc32(0L, MD5((unsigned char *)cl->reader->r_usr, strlen(cl->reader->r_usr), md5tmp), 16), cl->ucrc);
+	aes_set_key((char *)MD5(cl->upwd, strlen((char *)cl->upwd), md5tmp));
+	cl->crypted=1;
+
+	cs_log("camd35 proxy %s:%d", client->reader->device, client->reader->r_port);
+
+	return(0);
+}
+
 #ifdef CS_CACHEEX
 
 #define cnode(x) *(unsigned long long*)x
@@ -494,8 +512,8 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 	}
 
 	if (!cl->ncd_skey[8]) { // We have no remote node, so push out
-		cs_debug_mask(D_CACHEEX, "cacheex: push without remote node %s", username(cl));
-		return 1;
+		cs_debug_mask(D_CACHEEX, "cacheex: push without remote node %s - ignored", username(cl));
+		return 0;
 	}
 
 	uint8_t *remote_node = cl->ncd_skey;
@@ -532,6 +550,7 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	time_t now = time((time_t*)0);
 	if (cl->reader) {
 		tcp_connect(cl);
+		if (!cl->crypted) camd35_client_init(cl);
 		cl->reader->last_s = cl->reader->last_g = now;
 		if (cl->is_udp) { //resolve ip every 30 cache push:
 			cl->ncd_skey[10]++;
@@ -541,7 +560,10 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 			}
 		}
 	}
-	if (!cl->udp_fd || !cl->crypted) return(-1);
+	if (!cl->udp_fd || !cl->crypted) {
+	  cs_debug_mask(D_CACHEEX, "not pushed, %s not %s", username(cl), cl->udp_fd?"authenticated":"connected");
+	  return(-1);
+        }
 	cl->last = now;
 
 	uint32_t size = sizeof(er->ecmd5)+sizeof(er->csp_hash)+sizeof(er->cw)+sizeof(uint8_t) +
@@ -724,24 +746,6 @@ static void * camd35_server(struct s_client *client __attribute__((unused)), uch
 	}
 
 	return NULL; //to prevent compiler message
-}
-
-/*
- *	client functions
- */
-int32_t camd35_client_init(struct s_client *client)
-{
-
-	unsigned char md5tmp[MD5_DIGEST_LENGTH];
-	struct s_client *cl = client;
-	cs_strncpy((char *)cl->upwd, cl->reader->r_pwd, sizeof(cl->upwd));
-	i2b_buf(4, crc32(0L, MD5((unsigned char *)cl->reader->r_usr, strlen(cl->reader->r_usr), md5tmp), 16), cl->ucrc);
-	aes_set_key((char *)MD5(cl->upwd, strlen((char *)cl->upwd), md5tmp));
-	cl->crypted=1;
-
-	cs_log("camd35 proxy %s:%d", client->reader->device, client->reader->r_port);
-
-	return(0);
 }
 
 int32_t camd35_client_init_log(void)

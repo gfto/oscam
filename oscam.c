@@ -1,4 +1,4 @@
-      //FIXME Not checked on threadsafety yet; after checking please remove this line
+
 #include "globals.h"
 #include "csctapi/icc_async.h"
 #ifdef MODULE_CCCAM
@@ -3872,6 +3872,7 @@ void * work_thread(void *ptr) {
 
 	pthread_setspecific(getclient, cl);
 	cl->thread=pthread_self();
+	cl->thread_active = 1;
 
 	uint16_t bufsize = ph[cl->ctyp].bufsize; //CCCam needs more than 1024bytes!
 	if (!bufsize) bufsize = 1024;
@@ -3880,8 +3881,8 @@ void * work_thread(void *ptr) {
 	uchar dcw[16];
 	time_t now;
 	int8_t restart_reader=0;
-	while (1) {
-		while (1) {
+	while (cl->thread_active) {
+		while (cl->thread_active) {
 			if (!cl || cl->kill || !is_valid_client(cl)) {
 				cl->thread_active=0;
 				cs_debug_mask(D_TRACE, "ending thread (kill)");
@@ -4087,11 +4088,8 @@ void * work_thread(void *ptr) {
 
 					int32_t res=0, stats = -1;
 					if (reader) {
-						struct s_client *cl = reader->client;
-						if(cl){
-							res = reader->ph.c_cache_push(cl, er);
-							stats = cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 0);
-						}
+						res = reader->ph.c_cache_push(cl, er);
+						stats = cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 0);
 					}
 					else
 						res = ph[cl->ctyp].c_cache_push(cl, er);
@@ -4134,6 +4132,7 @@ void * work_thread(void *ptr) {
 	}
 	free(mbuf);
 	pthread_exit(NULL);
+	cl->thread_active = 0;
 	return NULL;
 }
 
@@ -4171,7 +4170,7 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 		if(cl->thread_active == 2)
 			pthread_kill(cl->thread, OSCAM_SIGNAL_WAKEUP);
 		pthread_mutex_unlock(&cl->thread_lock);
-		cs_debug_mask(D_TRACE, "add %s job action %d", action > ACTION_CLIENT_FIRST ? "client" : "reader", action);
+		cs_debug_mask(D_TRACE, "add %s job action %d queue length %d %s", action > ACTION_CLIENT_FIRST ? "client" : "reader", action, ll_count(cl->joblist), username(cl));
 		return;
 	}
 
@@ -4572,7 +4571,8 @@ int32_t accept_connection(int32_t i, int32_t j) {
 				return 0;
 			}
 
-			cs_debug_mask(D_TRACE, "got %d bytes from ip %s:%d", n, cs_inet_ntoa(cad.sin_addr.s_addr), cad.sin_port);
+			cs_debug_mask(D_TRACE, "got %d bytes on port %d from ip %s:%d client %s", 
+			    n, ph[i].ptab->ports[j].s_port, cs_inet_ntoa(cad.sin_addr.s_addr), cad.sin_port, username(cl));
 
 			if (!cl) {
 				cl = create_client(cad.sin_addr.s_addr);
