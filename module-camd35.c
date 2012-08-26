@@ -18,11 +18,10 @@ static int32_t logfd = 0;
 //CMD0x3e - CACHEEX Cache-push id answer
 //CMD0x3f - CACHEEX cache-push
 
-//used variable ncd_skey for storing remote node id:
-//ncd_skey[0..7] : 8 bytes node id
-//ncd_skey[8]    : 1=valid node id
-//ncd_skey[9]    : 1=remote node id already requested
-//ncd_skey[10]   : counter to check for ip changes, >30 do dns resolve
+//used variable ncd_skey for storing remote node id: ncd_skey[0..7] : 8
+//bytes node id ncd_skey[8] : 1=valid node id ncd_skey[9] : 1=remote node id
+//already requested ncd_skey[10] : counter to check for ip changes, >30 do
+//dns resolve ncd_skey[11] : renew remote node every 256 cache pushs
 
 #define REQ_SIZE	584		// 512 + 20 + 0x34
 
@@ -465,8 +464,6 @@ void camd35_cache_push_send_own_id(struct s_client *cl, uint8_t *mbuf) {
 void camd35_cache_push_request_remote_id(struct s_client *cl) {
 	uint8_t rbuf[32];//minimal size
 
-	if (!cl->crypted) return;
-
 	memset(rbuf, 0, sizeof(rbuf));
 	rbuf[0] = 0x3d;
 	rbuf[1] = 12;
@@ -480,8 +477,6 @@ void camd35_cache_push_request_remote_id(struct s_client *cl) {
  * store received remote id
  */
 void camd35_cache_push_receive_remote_id(struct s_client *cl, uint8_t *buf) {
-
-	if (!cl->crypted) return;
 
 	memcpy(cl->ncd_skey, buf+20, 8);
 	cl->ncd_skey[8] = 1;
@@ -505,12 +500,16 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 		return 0;
 	}
 
+	//Update remote id every 256 pushs:
+	if (!++cl->ncd_skey[11]) {
+	        camd35_cache_push_request_remote_id(cl);
+        }
+	        
 	//Update remote id:
 	if (!cl->ncd_skey[8] && !cl->ncd_skey[9]) {
-		cl->ncd_skey[9] = 1; //remeber request
+		cl->ncd_skey[9] = 1; //remember request
 		camd35_cache_push_request_remote_id(cl);
 	}
-
 	if (!cl->ncd_skey[8]) { // We have no remote node, so push out
 		cs_debug_mask(D_CACHEEX, "cacheex: push without remote node %s - ignored", username(cl));
 		return 0;

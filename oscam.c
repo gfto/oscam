@@ -3884,7 +3884,9 @@ void * work_thread(void *ptr) {
 	while (cl->thread_active) {
 		while (cl->thread_active) {
 			if (!cl || cl->kill || !is_valid_client(cl)) {
+			        pthread_mutex_lock(&cl->thread_lock);
 				cl->thread_active=0;
+				pthread_mutex_unlock(&cl->thread_lock);
 				cs_debug_mask(D_TRACE, "ending thread (kill)");
 				if (data && data!=&tmp_data) free_data(data);
 				data = NULL;
