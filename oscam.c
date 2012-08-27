@@ -3384,7 +3384,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	if (er->rc >= E_99) {
 #ifdef CS_CACHEEX
-		if (cacheex == 0 || er->rc == E_99) { //Cacheex should not add to the ecmcache:
+		if (cacheex != 1 || er->rc == E_99) { //Cacheex should not add to the ecmcache:
 #endif
 			cs_writelock(&ecmcache_lock);
 			er->next = ecmcwcache;
@@ -3413,7 +3413,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	if (er->rc < E_99) {
 #ifdef CS_CACHEEX
-		if (cfg.delay && cacheex == 0) //No delay on cacheexchange!
+		if (cfg.delay && cacheex != 1) //No delay on cacheexchange!
 			cs_sleepms(cfg.delay);
 
 		if (cacheex == 1 && er->rc < E_NOTFOUND) {
@@ -4149,6 +4149,35 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 		if (!cl) cs_log("WARNING: add_job failed."); //Ignore jobs for killed clients
 		if (len && ptr) free(ptr);
 		return;
+	}
+	
+	//Avoid full running queues:
+	if (action == ACTION_CACHE_PUSH_OUT && ll_count(cl->joblist) > 10) {
+                cs_log("WARNING: job queue %s %s has more than 10 jobs! count=%d, dropped!", 
+                    cl->typ=='c'?"client":"reader",
+                    username(cl),
+                    ll_count(cl->joblist));
+                if (len && ptr) free(ptr);
+                return;                
+	}
+	
+	// I know this is very ugly but and could cause segfaults, it's untested and I does not like this
+	// but at the moment I have no idea why the queues are running full, consuming all the memory:
+	if (cl->thread_active && ll_count(cl->joblist) > 20) {
+                cs_log("WARNING: job queue %s %s has more than 20 jobs! count=%d, restarting!", 
+                    cl->typ=='c'?"client":"reader",
+                    username(cl),
+                    ll_count(cl->joblist));
+                if (len && ptr) free(ptr);
+                struct s_reader *rdr = cl->reader;
+                pthread_kill(cl->thread, SIGKILL);
+                cleanup_thread(cl);
+                if (rdr) {
+                    rdr->client = NULL;
+                    restart_cardreader(rdr, 1);
+                }
+                return;                
+	        
 	}
 
 	struct s_data *data = cs_malloc(&data, sizeof(struct s_data), -1);
