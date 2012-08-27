@@ -181,7 +181,7 @@ DESCRIPTIONS
 	    1 = drop duplicate connections instead of marking as duplicate
 
        unlockparental = 0|1
-	  1 = unlock parental mode option to disable Seca pin code request for adult movie, default:0
+	  1 = unlock parental mode option to disable Seca and Viaccess pin code request for adult movie, default:0
 
        double_check = 0|1
 	  1  =	ECM  will  be  send to two or more readers with the same SC and the CWs will be verified against each
