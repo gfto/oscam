@@ -428,8 +428,8 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, ui
 				unsigned char resync[] = { 0x21, 0xC0, 0x00, 0xE1 };
 				ret = Protocol_T1_Command (reader, resync, sizeof(resync), rsp, lr);
 				if (ret == OK) {
-					reader->ifsc = DEFAULT_IFSC;
-					rdr_log(reader, "T1 Resync command succesfull new ifsc = %i", reader->ifsc);
+					//reader->ifsc = DEFAULT_IFSC; //tryfix cardtimeouts: ifsc is setup at card init, on resync it should not return to default_ifsc
+					rdr_log(reader, "T1 Resync command succesfull ifsc = %i", reader->ifsc);
 				}
 				else {
 					rdr_log(reader, "T1 Resync command error, trying to reactivate!");
