@@ -348,24 +348,26 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR *newatr)
   }
 
   static const unsigned char ins02[5] = { 0xD0,0x02,0x00,0x00,0x08 };
-  if(cmd_exists(reader,ins02)) {
-    l = do_cmd(reader, ins02, NULL, NULL, cta_res);
-    if (l < 8) {
-      rdr_log(reader, "Unable to get NDS ROM version.");
-    } else {
-      int i;
-      for (i = 0; i < 8; i++) {
-        if (cta_res[i] <= 0x09) {
-          cta_res[i] = cta_res[i] + 0x30;
-        } else if (!isalnum(cta_res[i])) {
-          cta_res[i] = '*';
-        }
+  // D0 02 command is not always present in command table but should be supported
+  // on most cards so do not use do_cmd()
+  if(!write_cmd_vg(ins02,NULL) || !status_ok(cta_res+8)){
+    rdr_log(reader, "Unable to get NDS ROM version.");
+  } else {
+    int i;
+    for (i = 0; i < 8; i++) {
+      if (cta_res[i] <= 0x09) {
+        cta_res[i] = cta_res[i] + 0x30;
+      } else if (!isalnum(cta_res[i])) {
+        cta_res[i] = '*';
       }
-      memset(reader->rom, 0, sizeof(reader->rom));
-      memcpy(reader->rom, cta_res, 4);
-      reader->rom[4] = '-';
-      memcpy(reader->rom + 5, cta_res + 4, 4);
     }
+    memset(reader->rom, 0, sizeof(reader->rom));
+    memcpy(reader->rom, cta_res, 4);
+    reader->rom[4] = '-';
+    memcpy(reader->rom + 5, cta_res + 4, 4);
+
+    rdr_log(reader, "Card type:   %c%c%c%c", reader->rom[0], reader->rom[1], reader->rom[2],reader->rom[3]);
+    rdr_log(reader, "Rom version: %c%c%c%c", reader->rom[5], reader->rom[6], reader->rom[7], reader->rom[8]);
   }
 
 
