@@ -4037,7 +4037,7 @@ void * work_thread(void *ptr) {
 					cl->kill = 1;
 					restart_reader = 1;
 					break;
-	#ifdef WITH_CARDREADER
+#ifdef WITH_CARDREADER
 				case ACTION_READER_RESET_FAST:
 					reader->card_status = CARD_NEED_INIT;
 					reader_reset(reader);
@@ -4045,7 +4045,7 @@ void * work_thread(void *ptr) {
 				case ACTION_READER_CHECK_HEALTH:
 					reader_checkhealth(reader);
 					break;
-	#endif
+#endif
 				case ACTION_CLIENT_UDP:
 					n = ph[cl->ctyp].recv(cl, data->ptr, data->len);
 					if (n<0) break;
@@ -4152,34 +4152,27 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 	}
 	
 	//Avoid full running queues:
-	if (action == ACTION_CACHE_PUSH_OUT && ll_count(cl->joblist) > 10) {
-                cs_log("WARNING: job queue %s %s has more than 10 jobs! count=%d, dropped!", 
+	if (action == ACTION_CACHE_PUSH_OUT && ll_count(cl->joblist) > 20) {
+                cs_log("WARNING: job queue %s %s has more than 20 jobs! count=%d, dropped!", 
                     cl->typ=='c'?"client":"reader",
                     username(cl),
                     ll_count(cl->joblist));
                 if (len && ptr) free(ptr);
+                
+                //Thread down???
+                pthread_mutex_lock(&cl->thread_lock);
+                if (cl->thread_active) {
+                    clockid_t clock_id;
+                    //Just test for invalid thread id:
+                    if (pthread_getcpuclockid(cl->thread, &clock_id) == ESRCH) {
+                        cl->thread_active = 0;
+                        cs_log("WARNING: %s %s thread died!",  cl->typ=='c'?"client":"reader", username(cl));
+                    }
+                }
+                pthread_mutex_unlock(&cl->thread_lock);
                 return;                
 	}
 	
-	// I know this is very ugly but and could cause segfaults, it's untested and I does not like this
-	// but at the moment I have no idea why the queues are running full, consuming all the memory:
-	if (cl->thread_active && ll_count(cl->joblist) > 20) {
-                cs_log("WARNING: job queue %s %s has more than 20 jobs! count=%d, restarting!", 
-                    cl->typ=='c'?"client":"reader",
-                    username(cl),
-                    ll_count(cl->joblist));
-                if (len && ptr) free(ptr);
-                struct s_reader *rdr = cl->reader;
-                pthread_kill(cl->thread, SIGKILL);
-                cleanup_thread(cl);
-                if (rdr) {
-                    rdr->client = NULL;
-                    restart_cardreader(rdr, 1);
-                }
-                return;                
-	        
-	}
-
 	struct s_data *data = cs_malloc(&data, sizeof(struct s_data), -1);
 	if (!data && len && ptr) {
 		free(ptr);
