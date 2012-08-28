@@ -4162,9 +4162,8 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
                 //Thread down???
                 pthread_mutex_lock(&cl->thread_lock);
                 if (cl->thread_active) {
-                    clockid_t clock_id;
                     //Just test for invalid thread id:
-                    if (pthread_getcpuclockid(cl->thread, &clock_id) == ESRCH) {
+                    if (pthread_detach(cl->thread) == ESRCH) {
                         cl->thread_active = 0;
                         cs_log("WARNING: %s %s thread died!",  cl->typ=='c'?"client":"reader", username(cl));
                     }
