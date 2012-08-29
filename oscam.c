@@ -4153,7 +4153,7 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 	
 	//Avoid full running queues:
 	if (action == ACTION_CACHE_PUSH_OUT && ll_count(cl->joblist) > 20) {
-                cs_log("WARNING: job queue %s %s has more than 20 jobs! count=%d, dropped!", 
+                cs_debug_mask(D_TRACE, "WARNING: job queue %s %s has more than 20 jobs! count=%d, dropped!", 
                     cl->typ=='c'?"client":"reader",
                     username(cl),
                     ll_count(cl->joblist));
@@ -4165,7 +4165,7 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
                     //Just test for invalid thread id:
                     if (pthread_detach(cl->thread) == ESRCH) {
                         cl->thread_active = 0;
-                        cs_log("WARNING: %s %s thread died!",  cl->typ=='c'?"client":"reader", username(cl));
+                        cs_debug_mask(D_TRACE, "WARNING: %s %s thread died!",  cl->typ=='c'?"client":"reader", username(cl));
                     }
                 }
                 pthread_mutex_unlock(&cl->thread_lock);
