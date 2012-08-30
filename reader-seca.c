@@ -166,7 +166,7 @@ static int32_t seca_card_init(struct s_reader * reader, ATR *newatr)
     case 0x5284:
     case 0x5842:
     case 0x6060: card="Siemens"; break;
-    case 0x7070: card="Canal+ NL"; break;
+    case 0x7070: card="Mediaguard"; break;
     default:     card="Unknown"; break;
   }
   reader->caid=0x0100;
