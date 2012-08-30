@@ -1231,14 +1231,22 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 		unsigned char rsp[CTA_RES_LEN];
 		uint16_t lr=0;
 		int32_t ret;
+		uint16_t count=0;
 		unsigned char tmp[] = { 0x21, 0xC1, 0x01, 0x00, 0x00 };
+		AGAIN:
 		tmp[3] = reader->ifsc; // Information Field size
 		tmp[4] = reader->ifsc ^ 0xE1;
 		ret = Protocol_T1_Command (reader, tmp, sizeof(tmp), rsp, &lr);
 		if (ret != OK){
 			rdr_log(reader, "Card returned error on setting ifsc value to %d, returning to default ifsc %d", reader->ifsc, DEFAULT_IFSC);
 			reader->ifsc = DEFAULT_IFSC;
-			return ERROR;
+			count++;
+			if (count >3) { // lets retry it 3 times... then give up!
+				rdr_log(reader, "Card returned error on setting ifsc value to %d retry #%d -> abort!",reader->ifsc, count);
+				return ERROR; 
+			}
+			rdr_log(reader, "Card returned error on setting ifsc value to %d retry #%d -> retry!",reader->ifsc, count);
+			goto AGAIN;
 		}
 		else rdr_log(reader, "Card responded ok for ifsc request and returned value %d", reader->ifsc);
 		
