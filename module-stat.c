@@ -356,7 +356,7 @@ void save_stat_to_file_thread(void)
 				//New version:
 				fprintf(file, "%s,%d,%04hX,%06X,%04hX,%04hX,%d,%d,%ld,%d,%02hX\n",
 					rdr->label, stat->rc, stat->caid, stat->prid,
-					stat->srvid, stat->chid, stat->time_avg, stat->ecm_count, stat->last_received, stat->fail_factor, stat->ecmlen);
+					stat->srvid, (uint16_t)stat->chid, stat->time_avg, stat->ecm_count, stat->last_received, stat->fail_factor, stat->ecmlen);
 
 				count++;
 //				if (count % 500 == 0) { //Saving stats is using too much cpu and causes high file load. so we need a break
