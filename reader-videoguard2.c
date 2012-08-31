@@ -325,12 +325,9 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR *newatr)
 
   unsigned char ins7401[5] = { 0xD0,0x74,0x01,0x00,0x00 };
   int32_t l;
-  ins7401[3]=0x80;  // from newcs log
-  ins7401[4]=0x01;
   if((l=read_cmd_len(reader,ins7401))<0){ //not a videoguard2/NDS card or communication error
    return ERROR;
   }
-  ins7401[3]=0x00;
   ins7401[4]=l;
   if(!write_cmd_vg(ins7401,NULL) || !status_ok(cta_res+l)) {
     rdr_log(reader, "classD0 ins7401: failed - cmd list not read");
@@ -540,67 +537,70 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR *newatr)
     if(l<0 || !status_ok(cta_res)) {
       rdr_log(reader, "classD1 ins7E: failed");
       return ERROR;
-      }
+    }
   }
 
-  if (reader->ins7E11[0x01])
-  {
-    unsigned char ins742b[5] = { 0xD0,0x74,0x2b,0x80,0x01 };
-      l=do_cmd(reader,ins742b,NULL,NULL,cta_res);     //get command len for ins742b
-      if(l<0 || cta_res[0]==0x00){
-        rdr_log(reader, "No TA1 change for this card is possible by ins7E11");
+  if (reader->ins7E11[0x01]) {
+    unsigned char ins742b[5] = { 0xD0,0x74,0x2b,0x00,0x00 };
+  
+    l=read_cmd_len(reader,ins742b);     //get command len for ins742b
+  
+    if(l<2){
+      rdr_log(reader, "No TA1 change for this card is possible by ins7E11");
+    } else {
+      ins742b[4]=l;
+      bool ta1ok=FALSE;
+
+      if(!write_cmd_vg(ins742b,NULL) || !status_ok(cta_res+ins742b[4])) {  //get supported TA1 bytes
+        rdr_log(reader, "classD0 ins742b: failed");
         return ERROR;
+      } else {
+        int32_t i;
+  
+        for (i=2; i < l; i++) {
+          if (cta_res[i]==reader->ins7E11[0x00]) {
+            ta1ok=TRUE;
+            break;
+          }
+        }
       }
-      else{
-        ins742b[3]=0x00;
-        ins742b[4]=cta_res[0];
-        bool ta1ok=0;
-        l=do_cmd(reader,ins742b,NULL,NULL,cta_res);  //get supported TA1 bytes
-            if(l<ins742b[4]) {
-              rdr_log(reader, "classD0 ins742b: failed");
-              return ERROR;
+      if(ta1ok==FALSE) {
+        rdr_log(reader, "The value %02X of ins7E11 is not supported,try one between %02X and %02X",reader->ins7E11[0x00],cta_res[2],cta_res[ins742b[4]-1]);
+      } else {
+        static const uint8_t ins7E11[5] = { 0xD0,0x7E,0x11,0x00,0x01 };
+    
+        reader->ins7e11_fast_reset = 0;
+    
+        l=do_cmd(reader,ins7E11,reader->ins7E11,NULL,cta_res);
+    
+        if(l<0 || !status_ok(cta_res)) {
+          rdr_log(reader, "classD0 ins7E11: failed");
+          return ERROR;
+        }
+        else {
+          BYTE TA1;
+    
+          if (ATR_GetInterfaceByte (newatr, 1, ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
+            if (TA1 != reader->ins7E11[0x00]) {
+              rdr_log(reader, "classD0 ins7E11: Scheduling card reset for TA1 change from %02X to %02X", TA1, reader->ins7E11[0x00]);
+              reader->ins7e11_fast_reset = 1;
+    #ifdef WITH_COOLAPI
+              if (reader->typ == R_MOUSE || reader->typ == R_SC8in1 || reader->typ == R_SMART || reader->typ == R_PCSC || reader->typ == R_INTERNAL) {
+    #else
+              if (reader->typ == R_MOUSE || reader->typ == R_SC8in1 || reader->typ == R_SMART || reader->typ == R_PCSC ) {
+    #endif
+                add_job(reader->client, ACTION_READER_RESET_FAST, NULL, 0);
+              }
+              else {
+                add_job(reader->client, ACTION_READER_RESTART, NULL, 0);
+              }
+              return OK; // Skip the rest of the init since the card will be reset anyway
             }
-            else{
-              int32_t i;
-              for (i=2; i < ins742b[4]; i++) {
-                if (cta_res[i]==reader->ins7E11[0x00]) {
-                  ta1ok=1;
-                }
-                }
-              if(ta1ok==0){
-                rdr_log(reader, "The value %02X of ins7E11 is not supported,try one between %02X and %02X",reader->ins7E11[0x00],cta_res[2],cta_res[ins742b[4]-1]);
-                return ERROR;
-                }
-            }
-          reader->ins7e11_fast_reset = 0;
-          static const uint8_t ins7E11[5] = { 0xD0,0x7E,0x11,0x00,0x01 };
-          l=do_cmd(reader,ins7E11,reader->ins7E11,NULL,cta_res);
-            if(l<0 || !status_ok(cta_res)) {
-              rdr_log(reader, "classD0 ins7E11: failed");
-              return ERROR;
-            }
-            else {
-              BYTE TA1;
-                if (ATR_GetInterfaceByte (newatr, 1, ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
-                    if (TA1 != reader->ins7E11[0x00]) {
-                      rdr_log(reader, "classD0 ins7E11: Scheduling card reset for TA1 change from %02X to %02X", TA1, reader->ins7E11[0x00]);
-                      reader->ins7e11_fast_reset = 1;
-#ifdef WITH_COOLAPI
-          if (reader->typ == R_MOUSE || reader->typ == R_SC8in1 || reader->typ == R_SMART || reader->typ == R_PCSC || reader->typ == R_INTERNAL) {
-#else
-          if (reader->typ == R_MOUSE || reader->typ == R_SC8in1 || reader->typ == R_SMART || reader->typ == R_PCSC ) {
-#endif
-                            add_job(reader->client, ACTION_READER_RESET_FAST, NULL, 0);
-                        }
-                    else {
-                      add_job(reader->client, ACTION_READER_RESTART, NULL, 0);
-                    }
-                    return OK; // Skip the rest of the init since the card will be reset anyway
-                    }
-            }
+          }
         }
       }
     }
+  }
 
   /* get parental lock settings */
   static const unsigned char ins74e[5] = {0xD0,0x74,0x0E,0x00,0x00};
