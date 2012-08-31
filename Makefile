@@ -22,6 +22,7 @@ ifeq ($(uname_S),Darwin)
 # './config.sh --detect-osx-sdk-version' returns the newest SDK if
 # SDK_VER is not set.
 OSX_SDK := $(shell ./config.sh --detect-osx-sdk-version $(OSX_VER))
+override CONFIG_HAVE_DVBAPI:=
 endif
 
 ifeq "$(shell ./config.sh --enabled WITH_SSL)" "Y"
