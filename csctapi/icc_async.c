@@ -1059,7 +1059,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 			if( reader->mhz > 2000){
 				EGT = 2;
 				if (n != 255) //Extra Guard Time
-					EGT =+ n;  // T0 protocol, if TC1 = 255 then dont add extra guardtime
+					EGT += n;  // T0 protocol, if TC1 = 255 then dont add extra guardtime
 				GT = 0;
 				gt_ms = ETU_to_ms(reader, GT);
 				reader->CWT = 0; // T0 protocol doesnt have char_delay, block_delay.
