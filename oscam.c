@@ -1851,9 +1851,10 @@ void cs_cache_push(ECM_REQUEST *er)
             grp = er->selected_reader->grp;
         else
             grp = er->grp;
-            
+
 	//cacheex=2 mode: push (server->remote)
 	struct s_client *cl;
+	cs_readlock(&clientlist_lock);
 	for (cl=first_client->next; cl; cl=cl->next) {
 		if (er->cacheex_src != cl) {
 			if (cl->typ == 'c' && !cl->dup && cl->account && cl->account->cacheex == 2) { //send cache over user
@@ -1871,6 +1872,7 @@ void cs_cache_push(ECM_REQUEST *er)
 			}
 		}
 	}
+	cs_readunlock(&clientlist_lock);
 
 	//cacheex=3 mode: reverse push (reader->server)
 
