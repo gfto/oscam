@@ -74,7 +74,7 @@ static int32_t set_provider_info(struct s_reader * reader, int32_t i)
          i+1, provid, valid, l_name, year, month, day);
   memcpy(&reader->sa[i][0], cta_res+18, 4);
   if (valid==1) //if not expired
-    rdr_log (reader, "SA: %s", cs_hexdump(0, cta_res+18, 4, tmp, sizeof(tmp)));
+    rdr_log_sensitive(reader, "SA: {%s}", cs_hexdump(0, cta_res+18, 4, tmp, sizeof(tmp)));
 
   // add entitlement to list
   memset(&lt, 0, sizeof(struct tm));
