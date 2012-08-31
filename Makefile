@@ -332,6 +332,7 @@ OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-log.o)
 OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-llist.o)
 OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-reader.o)
 OSCAM_OBJ-y += $(OSCAM_LIB)(oscam-simples.o)
+OSCAM_OBJ-y += $(OSCAM_LIB)(oscam.o)
 OSCAM_OBJ = $(OSCAM_OBJ-y)
 
 # The default build target rebuilds the config.mak if needed and then
@@ -384,9 +385,9 @@ $(OSCAM_OBJ): $(OSCAM_DEP)
 $(OSCAM_LIB): $(OSCAM_OBJ)
 	-@$(RANLIB) $@
 
-$(OSCAM_BIN): oscam.c $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(OSCAM_LIB)
+$(OSCAM_BIN): $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(OSCAM_LIB)
 	$(SAY) "LINK	$@"
-	$(Q)$(CC) $(STD_DEFS) $(CC_OPTS) $(CC_WARN) $(LDFLAGS) oscam.c $(OSCAM_LIB) $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(LIBS) -o $@
+	$(Q)$(CC) $(STD_DEFS) $(CC_OPTS) $(CC_WARN) $(LDFLAGS) $(OSCAM_LIB) $(ALGO_LIB) $(CSCRYPT_LIB) $(CSCTAPI_LIB) $(LIBS) -o $@
 ifndef DEBUG
 	$(SAY) "STRIP	$@"
 	$(Q)$(STRIP) $@
