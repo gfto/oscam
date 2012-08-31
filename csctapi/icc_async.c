@@ -1161,7 +1161,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 					if (n == 255) //Extra Guard Time T1
 						EGT--;  // T1 protocol, if TC1 = 255 then substract 1 ETU from guardtime
 					else
-						EGT =+n;
+						EGT +=n;
 				CGT = GT + EGT; // otherwise break T1 timings on MIPS, PPC ok
 				}
 				reader->read_timeout = ETU_to_ms(reader, reader->BWT);
@@ -1226,30 +1226,17 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 			atr_fs_table[FI] / 1000000,
 				(float) reader->mhz / 100);
 
-	//IFS setting in case of T1
+	//Communicate to T1 card IFSD -> we use same as IFSC
 	if ((reader->protocol_type == ATR_PROTOCOL_TYPE_T1) && (reader->ifsc != DEFAULT_IFSC)) {
 		unsigned char rsp[CTA_RES_LEN];
 		uint16_t lr=0;
 		int32_t ret;
-		uint16_t count=0;
 		unsigned char tmp[] = { 0x21, 0xC1, 0x01, 0x00, 0x00 };
-		AGAIN:
 		tmp[3] = reader->ifsc; // Information Field size
 		tmp[4] = reader->ifsc ^ 0xE1;
 		ret = Protocol_T1_Command (reader, tmp, sizeof(tmp), rsp, &lr);
-		if (ret != OK){
-			rdr_log(reader, "Card returned error on setting ifsc value to %d, returning to default ifsc %d", reader->ifsc, DEFAULT_IFSC);
-			reader->ifsc = DEFAULT_IFSC;
-			count++;
-			if (count >3) { // lets retry it 3 times... then give up!
-				rdr_log(reader, "Card returned error on setting ifsc value to %d retry #%d -> abort!",reader->ifsc, count);
-				return ERROR; 
-			}
-			rdr_log(reader, "Card returned error on setting ifsc value to %d retry #%d -> retry!",reader->ifsc, count);
-			goto AGAIN;
-		}
-		else rdr_log(reader, "Card responded ok for ifsc request and returned value %d", reader->ifsc);
-		
+		if (ret != OK) rdr_log(reader, "Warning: Card returned error on setting ifsd value to %d", reader->ifsc);
+		else rdr_log(reader, "Card responded ok for ifsd request of %d", reader->ifsc);
 	}
  return OK;
 }

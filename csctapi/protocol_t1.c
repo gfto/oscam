@@ -56,14 +56,14 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
 
     /* Create an IFS request S-Block */
     block = T1_Block_NewSBlock (T1_BLOCK_S_IFS_REQ, 1, &inf);
-    rdr_debug_mask(reader, D_IFD, "Protocol: Sending block S(IFSC request, %d)", inf);
+    rdr_debug_mask(reader, D_IFD, "Protocol: Sending block S(IFS request, %d)", inf);
 
-    /* Send IFSC request */
+    /* Send IFSD request */
     ret = Protocol_T1_SendBlock (reader, block);
 	
 	/* Delete block */
-    T1_Block_Delete (block);
-
+	T1_Block_Delete (block);
+	
     /* Receive a block */
     ret = Protocol_T1_ReceiveBlock (reader, &block);
 
@@ -74,10 +74,9 @@ int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, u
         /* Positive IFS Response S-Block received */
         if (rsp_type == T1_BLOCK_S_IFS_RES)
           {
-            /* Update IFSC value */
+            /* Update IFSD value */
             inf = (*T1_Block_GetInf (block));
-            rdr_debug_mask(reader, D_IFD, "Protocol: Received block S(IFSC response, %d)", inf);
-			if (inf != 0) reader->ifsc=inf;
+            rdr_debug_mask(reader, D_IFD, "Protocol: Received block S(IFS response, %d)", inf);
           }
         T1_Block_Delete (block);
       }
