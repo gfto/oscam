@@ -463,7 +463,7 @@ do
 				exit 0
 			fi
 		done
-		echo /Developer/SDKs/MacOSX$(OSX_VER).sdk
+		echo /Developer/SDKs/MacOSX${OSX_VER}.sdk
 		break
 	;;
 	'-l'|'--list-config')
