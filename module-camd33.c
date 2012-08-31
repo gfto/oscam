@@ -166,7 +166,7 @@ void module_camd33(struct s_module *ph)
   ph->listenertype = LIS_CAMD33TCP;
   ph->logtxt=cfg.c33_crypted ? ", crypted" : ", UNCRYPTED!";
   ph->multi=1;
-  ph->s_ip=cfg.c33_srvip;
+  IP_ASSIGN(ph->s_ip, cfg.c33_srvip);
   ph->s_handler=camd33_server;
   ph->s_init=camd33_server_init;
   ph->recv=camd33_recv;

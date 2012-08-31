@@ -169,7 +169,7 @@ void module_csp(struct s_module *ph)
   ph->large_ecm_support = 1;
   ph->listenertype = LIS_CSPUDP;
   ph->multi=1;
-  ph->s_ip=cfg.csp_srvip;
+  IP_ASSIGN(ph->s_ip, cfg.csp_srvip);
   ph->s_handler=csp_server;
   ph->s_init=csp_server_init;
   ph->recv=csp_recv;

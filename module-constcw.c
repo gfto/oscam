@@ -78,7 +78,7 @@ int32_t constcw_client_init(struct s_client *client)
     pserver = fdp[1];
 
     memset((char *) &client->udp_sa, 0, sizeof(client->udp_sa));
-    client->udp_sa.sin_family = AF_INET;
+    SIN_GET_FAMILY(client->udp_sa) = AF_INET;
 
     // Oscam has no reader.au in s_reader like ki's mpcs ;)
     // reader[ridx].au = 0;

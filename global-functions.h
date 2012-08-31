@@ -77,7 +77,7 @@ extern int32_t recv_from_udpipe(uchar *);
 extern char* username(struct s_client *);
 extern int32_t chk_bcaid(ECM_REQUEST *, CAIDTAB *);
 extern void cs_exit(int32_t sig);
-extern struct s_client * create_client(in_addr_t);
+extern struct s_client * create_client(IN_ADDR_T);
 extern int32_t cs_auth_client(struct s_client *, struct s_auth *, const char*);
 extern void cs_disconnect_client(struct s_client *);
 extern struct ecm_request_t *check_cwcache(ECM_REQUEST *, struct s_client *);
@@ -116,7 +116,7 @@ extern void cleanup_thread(void *var);
 extern void kill_thread(struct s_client *cl);
 extern void remove_reader_from_active(struct s_reader *rdr);
 extern void add_reader_to_active(struct s_reader *rdr);
-extern void cs_add_violation_by_ip(uint32_t ip, int32_t port, char *info);
+extern void cs_add_violation_by_ip(IN_ADDR_T ip, int32_t port, char *info);
 extern void cs_add_violation(struct s_client *cl, char *info);
 extern void cs_card_info(void);
 extern void cs_debug_level(void);
@@ -323,8 +323,36 @@ extern int32_t key_atob_l(char *, uchar *, int32_t);
 extern char *key_btoa(char *, uchar *);
 extern char *cs_hexdump(int32_t, const uchar *, int32_t, char *target, int32_t len);
 extern in_addr_t cs_inet_order(in_addr_t);
-extern char *cs_inet_ntoa(in_addr_t);
-extern in_addr_t cs_inet_addr(char *txt);
+extern char *cs_inet_ntoa(IN_ADDR_T addr);
+extern void cs_inet_addr(char *txt, IN_ADDR_T *out);
+extern IN_ADDR_T get_null_ip(void);
+extern void set_null_ip(IN_ADDR_T *ip);
+extern void set_localhost_ip(IN_ADDR_T *ip);
+
+#ifdef IPV6SUPPORT
+#define GET_IP() *(struct in6_addr *)pthread_getspecific(getip)
+#define IP_ISSET(a) !cs_in6addr_isnull(&a)
+#define IP_EQUAL(a, b) cs_in6addr_equal(&a, &b)
+#define IP_ASSIGN(a, b) cs_in6addr_copy(&a, &b)
+#define SIN_GET_ADDR(a) ((struct sockaddr_in6 *)&a)->sin6_addr
+#define SIN_GET_PORT(a) ((struct sockaddr_in6 *)&a)->sin6_port
+#define SIN_GET_FAMILY(a) ((struct sockaddr_in6 *)&a)->sin6_family
+extern int32_t cs_in6addr_equal(struct in6_addr *a1, struct in6_addr *a2);
+extern int32_t cs_in6addr_isnull(struct in6_addr *addr);
+extern int32_t cs_in6addr_lt(struct in6_addr *a, struct in6_addr *b);
+extern void cs_in6addr_copy(struct in6_addr *dst, struct in6_addr *src);
+extern void cs_in6addr_ipv4map(struct in6_addr *dst, in_addr_t src);
+extern void cs_getIPv6fromHost(const char *hostname, struct in6_addr *addr, struct sockaddr_storage *sa);
+#else
+#define GET_IP() *(in_addr_t *)pthread_getspecific(getip)
+#define IP_ISSET(a) (a)
+#define IP_EQUAL(a, b) (a == b)
+#define IP_ASSIGN(a, b) (a = b)
+#define SIN_GET_ADDR(a) (a.sin_addr.s_addr)
+#define SIN_GET_PORT(a) (a.sin_port)
+#define SIN_GET_FAMILY(a) (a.sin_family)
+#endif
+
 extern uint32_t b2i(int32_t, const uchar *);
 extern uint64_t b2ll(int32_t, uchar *);
 extern uchar *i2b_buf(int32_t n, uint32_t i, uchar *b);
@@ -368,7 +396,7 @@ extern int32_t cs_strnicmp(const char * str1, const char * str2, size_t num);
 extern char *strnew(char *str);
 extern void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid);
 extern void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid);
-extern int32_t check_ip(struct s_ip *ip, in_addr_t n);
+extern int32_t check_ip(struct s_ip *ip, IN_ADDR_T n);
 
 extern void cs_lock_create(CS_MUTEX_LOCK *l, int16_t timeout, const char *name);
 extern void cs_lock_destroy(CS_MUTEX_LOCK *l);

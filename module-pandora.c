@@ -95,10 +95,14 @@ static void pandora_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 			sizeof(cl->udp_sa));
 }
 
-int pandora_auth_client(struct s_client *cl, in_addr_t ip) {
+int pandora_auth_client(struct s_client *cl, IN_ADDR_T ip) {
 	int ok;
 	struct s_auth *account;
 
+#ifdef IPV6SUPPORT
+	// FIXME: Add IPv6 support
+	(void)ip; // Prevent warning about unused var "ip"
+#else
 	if (!cl->pand_ignore_ecm && cfg.pand_allowed) {
 		struct s_ip *p_ip;
 		for (ok = 0, p_ip = cfg.pand_allowed; (p_ip) && (!ok); p_ip
@@ -110,6 +114,7 @@ int pandora_auth_client(struct s_client *cl, in_addr_t ip) {
 			cs_exit(0);
 		}
 	}
+#endif
 
 	for (ok = 0, account = cfg.account; (cfg.pand_usr[0]) && (account) && (!ok); account
 			= account->next)
@@ -158,12 +163,12 @@ int pandora_client_init(struct s_client *cl) {
 	}
 	p_proto = IPPROTO_UDP;
 
-	cl->ip = 0;
+	set_null_ip(&cl->ip);
 	memset((char *) &loc_sa, 0, sizeof(loc_sa));
 	loc_sa.sin_family = AF_INET;
 
-	if (cfg.srvip)
-		loc_sa.sin_addr.s_addr = cfg.srvip;
+	if (IP_ISSET(cfg.srvip))
+		IP_ASSIGN(SIN_GET_ADDR(loc_sa), cfg.srvip);
 	else
 		loc_sa.sin_addr.s_addr = INADDR_ANY;
 	loc_sa.sin_port = htons(rdr->l_port);
@@ -193,8 +198,13 @@ int pandora_client_init(struct s_client *cl) {
 
 	cl->pand_send_ecm = rdr->pand_send_ecm;
 	memset((char *) &cl->udp_sa, 0, sizeof(cl->udp_sa));
+#ifdef IPV6SUPPORT
+	((struct sockaddr_in *)(&cl->udp_sa))->sin_family = AF_INET;
+	((struct sockaddr_in *)(&cl->udp_sa))->sin_port = htons((u_short) rdr->r_port);
+#else
 	cl->udp_sa.sin_family = AF_INET;
 	cl->udp_sa.sin_port = htons((u_short) rdr->r_port);
+#endif
 
 	cs_log("proxy %s:%d pandora %s (%s)", rdr->device, rdr->r_port, rdr->pand_send_ecm?"with ECM support":"", ptxt );
 
@@ -257,7 +267,7 @@ void module_pandora(struct s_module *ph) {
 	ph->large_ecm_support = 1;
 	ph->multi = 0;
 	//ph->watchdog = 1;
-	ph->s_ip = cfg.pand_srvip;
+	IP_ASSIGN(ph->s_ip, cfg.pand_srvip);
 	ph->s_handler = pandora_server;
 	ph->recv = pandora_recv;
 	ph->send_dcw = pandora_send_dcw;

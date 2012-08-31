@@ -43,7 +43,7 @@ static int32_t radegast_recv_chk(struct s_client *client, uchar *dcw, int32_t *r
   return (-1);
 }
 
-static void radegast_auth_client(in_addr_t ip)
+static void radegast_auth_client(IN_ADDR_T ip)
 {
   int32_t ok;
   struct s_auth *account;
@@ -221,7 +221,7 @@ int32_t radegast_cli_init(struct s_client *cl)
 
 static void radegast_server_init(struct s_client *cl) {
 	if (!cl->init_done) {
-		if (cl->ip)
+		if (IP_ISSET(cl->ip))
 			cs_log("radegast: new connection from %s", cs_inet_ntoa(cl->ip));
 		radegast_auth_client(cur_client()->ip);
 		cl->init_done=1;
@@ -240,7 +240,7 @@ void module_radegast(struct s_module *ph)
   ph->type=MOD_CONN_TCP;
   ph->listenertype = LIS_RADEGAST;
   ph->multi=0;
-  ph->s_ip=cfg.rad_srvip;
+  IP_ASSIGN(ph->s_ip, cfg.rad_srvip);
   ph->s_handler=radegast_server;
   ph->s_init=radegast_server_init;
   ph->recv=radegast_recv;

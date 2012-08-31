@@ -542,7 +542,7 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
 	  if (memcmp(data + 6, gbox->peer.key, 4) && gbox_decode_cmd(data) != MSG_CW) {
 		  cs_log("gbox: INTRUDER ALERT (peer key)!");
 
-		  cs_add_violation_by_ip((uint)cli->ip, cfg.gbox_port, cli->account->usr);
+		  cs_add_violation_by_ip(cli->ip, cfg.gbox_port, cli->account->usr);
 
 		  cs_writeunlock(&gbox->lock);
 		  return -1;
@@ -550,7 +550,7 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
   } else {
     cs_log("gbox: INTRUDER ALERT!");
 
-    cs_add_violation_by_ip((uint)cli->ip, cfg.gbox_port, cli->account->usr);
+    cs_add_violation_by_ip(cli->ip, cfg.gbox_port, cli->account->usr);
 
     cs_writeunlock(&gbox->lock);
 	  return -1;
@@ -559,8 +559,9 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
   switch (gbox_decode_cmd(data)) {
     case MSG_HELLO:
       {
-        int32_t ip_clien_gbox = cs_inet_addr(cli->reader->device);
-        cli->ip = ip_clien_gbox;
+        IN_ADDR_T ip_clien_gbox;
+        cs_inet_addr(cli->reader->device, &ip_clien_gbox);
+        IP_ASSIGN(cli->ip, ip_clien_gbox);
 	if (!gbox->peer.online) {
 	  gbox_send_boxinfo(cli);
 	}
@@ -870,7 +871,7 @@ static int32_t gbox_client_init(struct s_client *cli)
   struct sockaddr_in loc_sa;
   cli->pfd=0;
   cli->is_udp = 1;
-	cli->ip=0;
+	set_null_ip(&cli->ip);
 	memset((char *)&loc_sa,0,sizeof(loc_sa));
 	loc_sa.sin_family = AF_INET;
   loc_sa.sin_addr.s_addr = INADDR_ANY;
@@ -902,8 +903,8 @@ static int32_t gbox_client_init(struct s_client *cli)
   if (!hostResolve(rdr))
   	return 1;
 
-  cli->udp_sa.sin_family=AF_INET;
-  cli->udp_sa.sin_port=htons((uint16_t)rdr->r_port);
+  SIN_GET_FAMILY(cli->udp_sa) = AF_INET;
+  SIN_GET_PORT(cli->udp_sa) = htons((uint16_t)rdr->r_port);
 
   cs_log("proxy %s:%d (fd=%d, peer id=%04x, my id=%04x, my hostname=%s, listen port=%d)",
     rdr->device, rdr->r_port, cli->udp_fd, gbox->peer.id, gbox->id, cfg.gbox_hostname, cfg.gbox_port);

@@ -435,25 +435,116 @@ in_addr_t cs_inet_order(in_addr_t n)
   return(n);
 }
 
-char *cs_inet_ntoa(in_addr_t n)
+char *cs_inet_ntoa(IN_ADDR_T addr)
 {
-  struct in_addr in;
-  in.s_addr=n;
-  return((char *)inet_ntoa(in));
+#ifdef IPV6SUPPORT
+	static char buff[INET6_ADDRSTRLEN];
+	if (IN6_IS_ADDR_V4MAPPED(&addr) || IN6_IS_ADDR_V4COMPAT(&addr)) {
+		snprintf(buff, sizeof(buff), "%d.%d.%d.%d",
+			addr.s6_addr[12], addr.s6_addr[13], addr.s6_addr[14], addr.s6_addr[15]);
+	} else {
+		inet_ntop(AF_INET6, &(addr.s6_addr), buff, INET6_ADDRSTRLEN);
+	}
+	return buff;
+#else
+	struct in_addr in;
+	in.s_addr=addr;
+	return((char *)inet_ntoa(in));
+#endif
 }
 
-in_addr_t cs_inet_addr(char *txt)
+void cs_inet_addr(char *txt, IN_ADDR_T *out)
 {
-    return(inet_addr(txt));
+#ifdef IPV6SUPPORT
+	inet_pton(AF_INET6, txt, out->s6_addr);
+#else
+	*out = inet_addr(txt);
+#endif
 }
 
+#ifdef IPV6SUPPORT
+int32_t cs_in6addr_equal(struct in6_addr *a1, struct in6_addr *a2)
+{
+	return memcmp(a1, a2, 16) == 0;
+}
 
-int32_t check_ip(struct s_ip *ip, in_addr_t n)
+int32_t cs_in6addr_lt(struct in6_addr *a, struct in6_addr *b)
+{
+	int i;
+	for (i=0; i<4; i++) {
+		if (a->s6_addr32[i] != b->s6_addr32[i])
+			return ntohl(a->s6_addr32[i]) < ntohl(b->s6_addr32[i]);
+	}
+
+	return 0;
+}
+
+int32_t cs_in6addr_isnull(struct in6_addr *addr)
+{
+	int i;
+	for (i=0; i<16; i++)
+		if (addr->s6_addr[i])
+			return 0;
+	return 1;
+}
+
+void cs_in6addr_copy(struct in6_addr *dst, struct in6_addr *src)
+{
+	memcpy(dst, src, 16);
+}
+
+void cs_in6addr_ipv4map(struct in6_addr *dst, in_addr_t src)
+{
+	memset(dst->s6_addr, 0, 16);
+	dst->s6_addr[10] = 0xff;
+	dst->s6_addr[11] = 0xff;
+	memcpy(dst->s6_addr + 12, &src, 4);
+}
+#endif
+
+IN_ADDR_T get_null_ip(void)
+{
+	IN_ADDR_T ip;
+#ifdef IPV6SUPPORT
+	cs_inet_addr("::", &ip);
+#else
+	ip = 0;
+#endif
+	return ip;
+}
+
+void set_null_ip(IN_ADDR_T *ip)
+{
+#ifdef IPV6SUPPORT
+	cs_inet_addr("::", ip);
+#else
+	*ip = 0;
+#endif
+}
+
+void set_localhost_ip(IN_ADDR_T *ip)
+{
+#ifdef IPV6SUPPORT
+	cs_inet_addr("::1", ip);
+#else
+	cs_inet_addr("127.0.0.1", ip);
+#endif
+}
+
+int32_t check_ip(struct s_ip *ip, IN_ADDR_T n)
 {
 	struct s_ip *p_ip;
 	int32_t ok = 0;
+
+#ifdef IPV6SUPPORT
+	for (p_ip=ip; (p_ip) && (!ok); p_ip=p_ip->next) {
+		ok  = cs_in6addr_lt(&n, &p_ip->ip[0]);
+		ok |= cs_in6addr_lt(&p_ip->ip[1], &n);
+	}
+#else
 	for (p_ip=ip; (p_ip) && (!ok); p_ip=p_ip->next)
 		ok=((cs_inet_order(n)>=cs_inet_order(p_ip->ip[0])) && (cs_inet_order(n)<=cs_inet_order(p_ip->ip[1])));
+#endif
 
 	return ok;
 }
@@ -1323,6 +1414,33 @@ uint32_t cs_getIPfromHost(const char *hostname){
 	}
 	return result;
 }
+
+#ifdef IPV6SUPPORT
+void cs_getIPv6fromHost(const char *hostname, struct in6_addr *addr, struct sockaddr_storage *sa){
+	uint32_t ipv4addr = 0;
+	struct addrinfo hints, *res = NULL;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_protocol = IPPROTO_TCP;
+
+	int32_t err = getaddrinfo(hostname, NULL, &hints, &res);
+	if (err != 0 || !res || !res->ai_addr) {
+		cs_log("can't resolve %s, error: %s", hostname, err ? gai_strerror(err) : "unknown");
+	} else {
+		ipv4addr = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
+		if (res->ai_family == AF_INET)
+		{
+			cs_in6addr_ipv4map(addr, ipv4addr);
+			if (sa)
+				memcpy(sa, res->ai_addr, res->ai_addrlen);
+		}
+		else
+			IP_ASSIGN(*addr, SIN_GET_ADDR(*res->ai_addr));
+	}
+	if (res) freeaddrinfo(res);
+}
+#endif
 
 int set_socket_priority(int fd, int priority) {
 #ifdef SO_PRIORITY

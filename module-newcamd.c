@@ -683,7 +683,7 @@ static FILTER mk_user_ftab(void)
   return filt;
 }
 
-static int8_t newcamd_auth_client(in_addr_t ip, uint8_t *deskey)
+static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 {
     int32_t i, ok, rc, sid_list;
     uchar *usr = NULL, *pwd = NULL;
@@ -1360,7 +1360,7 @@ void module_newcamd(struct s_module *ph)
   ph->listenertype = LIS_NEWCAMD;
   ph->logtxt = ", crypted";
   ph->multi=1;
-  ph->s_ip=cfg.ncd_srvip;
+  IP_ASSIGN(ph->s_ip, cfg.ncd_srvip);
   ph->s_handler=newcamd_server;
   ph->s_init=newcamd_server_init;
   ph->recv=newcamd_recv;

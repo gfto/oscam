@@ -3314,7 +3314,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 
 void cc_srv_init2(struct s_client *cl) {
 	if (!cl->init_done && !cl->kill) {
-		if (cl->ip)
+		if (IP_ISSET(cl->ip))
 			cs_debug_mask(D_CLIENT, "cccam: new connection from %s", cs_inet_ntoa(cl->ip));
 
 		cl->pfd = cl->udp_fd;
@@ -3699,7 +3699,7 @@ void module_cccam(struct s_module *ph) {
 	ph->c_send_ecm = cc_send_ecm;
 	ph->c_send_emm = cc_send_emm;
 #ifdef MODULE_CCCSHARE
-	ph->s_ip = cfg.cc_srvip;
+	IP_ASSIGN(ph->s_ip, cfg.cc_srvip);
 	ph->s_handler = cc_srv_init;
 	ph->s_init = cc_srv_init2;
 	ph->s_idle = cc_s_idle;

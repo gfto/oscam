@@ -589,7 +589,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   //Simple ring connection check:
     
   //Check ip source+dest:
-  if (cfg.block_same_ip && cur_cl->ip == rdr->client->ip && 
+  if (cfg.block_same_ip && IP_EQUAL(cur_cl->ip, rdr->client->ip) &&
   	ph[cur_cl->ctyp].listenertype != LIS_DVBAPI &&
   	(rdr->typ & R_IS_NETWORK)) {
   	cs_debug_mask(D_TRACE, "ECMs origin %s has the same ip as reader %s, blocked!", username(cur_cl), rdr->label);

@@ -865,7 +865,7 @@ void module_monitor(struct s_module *ph){
 	ph->desc = "monitor";
 	ph->type=MOD_CONN_UDP;
 	ph->multi = 0;
-	ph->s_ip = cfg.mon_srvip;
+	IP_ASSIGN(ph->s_ip, cfg.mon_srvip);
 	ph->s_handler = monitor_server;
 	ph->recv = monitor_recv;
 	//  ph->send_dcw=NULL;

@@ -49,7 +49,7 @@ static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen)
 		status = sendto(cl->udp_fd, rbuf, l+4, 0,
 				           (struct sockaddr *)&cl->udp_sa,
 				            sizeof(cl->udp_sa));
-		if (status == -1) cl->udp_sa.sin_addr.s_addr = 0;
+		if (status == -1) set_null_ip(&SIN_GET_ADDR(cl->udp_sa));
 	} else {
 		status = send(cl->udp_fd, rbuf, l + 4, 0);
 		if (cl->typ == 'p' && cl->reader) {
@@ -377,7 +377,7 @@ static void camd35_server_init(struct s_client * client) {
 static int32_t tcp_connect(struct s_client *cl)
 {
 	if (cl->is_udp) {
-	   if (!cl->udp_sa.sin_addr.s_addr || cl->reader->last_s-cl->reader->last_g > cl->reader->tcp_rto)
+	   if (!IP_ISSET(SIN_GET_ADDR(cl->udp_sa)) || cl->reader->last_s-cl->reader->last_g > cl->reader->tcp_rto)
 	      if (!hostResolve(cl->reader)) return 0;
 	}
 
@@ -982,7 +982,7 @@ void module_camd35(struct s_module *ph)
   ph->large_ecm_support = 1;
   ph->listenertype = LIS_CAMD35UDP;
   ph->multi=1;
-  ph->s_ip=cfg.c35_srvip;
+  IP_ASSIGN(ph->s_ip, cfg.c35_srvip);
   ph->s_handler=camd35_server;
   ph->s_init=camd35_server_init;
   ph->recv=camd35_recv;
@@ -1013,7 +1013,7 @@ void module_camd35_tcp(struct s_module *ph)
   ph->ptab=&cfg.c35_tcp_ptab;
   if (ph->ptab->nports==0)
     ph->ptab->nports=1; // show disabled in log
-  ph->s_ip=cfg.c35_tcp_srvip;
+  IP_ASSIGN(ph->s_ip, cfg.c35_tcp_srvip);
   ph->s_handler=camd35_server;
   ph->s_init=camd35_server_init;
   ph->recv=camd35_recv;

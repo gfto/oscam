@@ -2361,7 +2361,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 static void * dvbapi_handler(struct s_client * cl, uchar* UNUSED(mbuf), int32_t len) {
 	//cs_log("dvbapi loaded fd=%d", idx);
 	if (cfg.dvbapi_enabled == 1) {
-		cl = create_client(0);
+		cl = create_client(get_null_ip());
 		cl->ctyp = len;
 		cl->typ='c';
 		int32_t ret = pthread_create(&cl->thread, NULL, dvbapi_main_local, (void*) cl);
