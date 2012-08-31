@@ -566,7 +566,7 @@ int32_t cmd_table_get_info(struct s_reader * reader, const unsigned char *cmd, u
       *rlen=pcte->len;
       *rmode=pcte->mode;
       return 1;
-      }
+    }
   return 0;
 }
 
@@ -577,7 +577,7 @@ int32_t cmd_exists(struct s_reader * reader, const unsigned char *cmd)
   for(i=0; i< reader->cmd_table->Nentries; i++,pcte++)
     if(cmd[1]==pcte->cmd) {
       return 1;
-      }
+    }
   return 0;
 }
 
@@ -586,14 +586,18 @@ int32_t read_cmd_len(struct s_reader * reader, const unsigned char *cmd)
   def_resp;
   unsigned char cmd2[5];
   memcpy(cmd2,cmd,5);
-  if (cmd2[0] == 0xD3)
+  if (cmd2[0] == 0xD3){
      cmd2[0] = 0xD0;
+  }
   cmd2[3]=0x80;
   cmd2[4]=1;
   // some card reply with L 91 00 (L being the command length).
-
-  if(!write_cmd_vg(cmd2,NULL) || !status_ok(cta_res+1)) {
-    rdr_debug_mask(reader, D_READER, "failed to read %02x%02x cmd length (%02x %02x)",cmd[1],cmd[2],cta_res[1],cta_res[2]);
+  if(!write_cmd_vg(cmd2,NULL) || !status_ok(cta_res+1)|| cta_res[0]==0) {
+    if (cta_res[0]==0) {        //some cards reply len=0x00 for not supported ins
+      rdr_debug_mask(reader, D_READER, "failed to read %02x%02x cmd length (%02x %02x)",cmd[1],cmd[2],cta_res[1],cta_res[2]);
+    } else {                    //others reply only status byte
+      rdr_debug_mask(reader, D_READER, "failed to read %02x%02x cmd length (%02x %02x)",cmd[1],cmd[2],cta_res[0],cta_res[1]);
+    }
     return -1;
   }
   return cta_res[0];
@@ -609,31 +613,31 @@ int32_t do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigne
   if(cmd_table_get_info(reader,ins2,&len,&mode)) {
     if(len==0xFF && mode==2) {
       if(ins2[4]==0) ins2[4]=len=read_cmd_len(reader,ins2);
-      }
-    else if(mode!=0) ins2[4]=len;
     }
+    else if(mode!=0) ins2[4]=len;
+  }
   if(ins2[0]==0xd3) {
-     if (ins2[4] == 0) return 0;
-     ins2[4]+=16;
-     }
+    if (ins2[4] == 0) return 0;
+    ins2[4]+=16;
+  }
   len=ins2[4];
-    unsigned char tmp[264];
-  	if(rxbuff == NULL) rxbuff=tmp;
+  unsigned char tmp[264];
+  if(rxbuff == NULL) rxbuff=tmp;
   if(mode>1) {
     if(!write_cmd_vg(ins2,NULL) || !status_ok(cta_res+len)) return -1;
     memcpy(rxbuff,ins2,5);
     memcpy(rxbuff+5,cta_res,len);
     memcpy(rxbuff+5+len,cta_res+len,2);
-    }
+  }
   else {
     if(!write_cmd_vg(ins2,txbuff) || !status_ok(cta_res)) return -2;
     memcpy(rxbuff,ins2,5);
     memcpy(rxbuff+5,txbuff,len);
     memcpy(rxbuff+5+len,cta_res,2);
-    }
-cCamCryptVG_PostProcess_Decrypt(reader,rxbuff);
-  return len;
+  }
+  cCamCryptVG_PostProcess_Decrypt(reader,rxbuff);
 
+  return len;
 }
 
 void rev_date_calc(const unsigned char *Date, int32_t *year, int32_t *mon, int32_t *day, int32_t *hh, int32_t *mm, int32_t *ss, int32_t base_year)
