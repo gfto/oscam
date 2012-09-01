@@ -457,7 +457,7 @@ do
 	'-O'|'--detect-osx-sdk-version')
 		shift
 		OSX_VER=${1:-10.8}
-		for DIR in /Developer/SDKs/MacOSX{$OSX_VER,10.7,10.6,10.5}.sdk
+		for DIR in /Developer/SDKs/MacOSX{$OSX_VER,10.6,10.5}.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX{10.7,10,8,$OSX_VER}.sdk
 		do
 			if test -d $DIR
 			then
@@ -465,7 +465,7 @@ do
 				exit 0
 			fi
 		done
-		echo /Developer/SDKs/MacOSX${OSX_VER}.sdk
+		echo Cant_find_OSX_SDK
 		break
 	;;
 	'-l'|'--list-config')
