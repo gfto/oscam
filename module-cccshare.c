@@ -912,6 +912,9 @@ void update_card_list(void) {
     {
         struct s_reader *rdr;
         int32_t r = 0;
+        
+        cs_readlock(&readerlist_lock);
+        
         for (rdr = first_active_reader; rdr; rdr = rdr->next) {
             //Generate a uniq reader id:
             if (!rdr->cc_id) {
@@ -1115,6 +1118,7 @@ void update_card_list(void) {
                 cs_debug_mask(D_TRACE, "got %d cards from %s", count, rdr->label);
             }
         }
+        cs_readunlock(&readerlist_lock);
     }
 
     LLIST *new_cards = ll_create("new_cards"); //List of new (added) cards
@@ -1221,6 +1225,9 @@ void share_updater(void)
 				card_count = 0;
 				struct s_reader *rdr;
 				struct cc_data *cc;
+				
+				cs_readlock(&readerlist_lock);
+				
 				for (rdr=first_active_reader; rdr; rdr=rdr->next) {
 						struct s_client *cl = rdr->client;
 						if (cl && (cc=cl->cc)) { //check cccam-cardlist:
@@ -1253,6 +1260,8 @@ void share_updater(void)
 						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->sidtabno, sizeof(rdr->sidtabno)); //check assigned no services
 					}
 				}
+				
+				cs_readunlock(&readerlist_lock);
 
 				//update cardlist if reader config has changed, also set interval to 1s / 30times
 				if (cur_check != last_check || last_sidtab_generation != cfg_sidtab_generation || last_check_rdroptions != cur_check_rdroptions) {
