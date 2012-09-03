@@ -456,7 +456,13 @@ char *cs_inet_ntoa(IN_ADDR_T addr)
 void cs_inet_addr(char *txt, IN_ADDR_T *out)
 {
 #ifdef IPV6SUPPORT
-	inet_pton(AF_INET6, txt, out->s6_addr);
+	static char buff[INET6_ADDRSTRLEN];
+	//trying as IPv6 address
+	if (inet_pton(AF_INET6, txt, out->s6_addr) == 0) {
+		//now trying as mapped IPv4
+		snprintf(buff, sizeof(buff), "::ffff:%s", txt);
+		inet_pton(AF_INET6, buff, out->s6_addr);
+	}
 #else
 	*out = inet_addr(txt);
 #endif
