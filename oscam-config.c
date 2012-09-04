@@ -629,6 +629,22 @@ static void check_caid_fn(const char *token, char *value, void *setting, FILE *f
 	}
 }
 
+#ifdef WITH_LB
+static void caidvaluetab_fn(const char *token, char *value, void *setting, FILE *f) {
+	CAIDVALUETAB *caid_value_table = setting;
+	int limit = streq(token, "lb_retrylimits") ? 50 : 1;
+	if (value) {
+		chk_caidvaluetab(value, caid_value_table, limit);
+		return;
+	}
+	if (caid_value_table->n > 0 || cfg.http_full_cfg) {
+		value = mk_t_caidvaluetab(caid_value_table);
+		fprintf_conf(f, token, "%s\n", value);
+		free_mk_t(value);
+	}
+}
+#endif
+
 #define OFS(X) \
 	offsetof(struct s_config, X)
 
@@ -686,6 +702,8 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_INT("lb_auto_betatunnel"		, OFS(lb_auto_betatunnel),	DEFAULT_LB_AUTO_BETATUNNEL ),
 	DEF_OPT_INT("lb_auto_betatunnel_prefer_beta", OFS(lb_auto_betatunnel_prefer_beta), DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA ),
 	DEF_OPT_STR("lb_savepath"				, OFS(lb_savepath) ),
+	DEF_OPT_FUNC("lb_retrylimits"			, OFS(lb_retrylimittab), caidvaluetab_fn ),
+	DEF_OPT_FUNC("lb_nbest_percaid"			, OFS(lb_nbest_readers_tab), caidvaluetab_fn ),
 	DEF_OPT_FUNC("lb_noproviderforcaid"		, OFS(lb_noproviderforcaid), check_caid_fn ),
 #endif
 	DEF_OPT_FUNC("double_check_caid"		, OFS(double_check_caid),	check_caid_fn ),
@@ -706,19 +724,6 @@ void chk_t_global(const char *token, char *value)
 {
 	if (config_list_parse(global_opts, token, value, &cfg))
 		return;
-
-#ifdef WITH_LB
-	if (!strcmp(token, "lb_retrylimits")) {
-		chk_caidvaluetab(value, &cfg.lb_retrylimittab, 50);
-		return;
-	}
-
-	if (!strcmp(token, "lb_nbest_percaid")) {
-		chk_caidvaluetab(value, &cfg.lb_nbest_readers_tab, 1);
-		return;
-	}
-#endif
-
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in global section not recognized\n", token);
 }
@@ -2145,19 +2150,6 @@ int32_t write_config(void)
 	/*global settings*/
 	fprintf(f,"[global]\n");
 	config_list_save(f, global_opts, &cfg, cfg.http_full_cfg);
-
-#ifdef WITH_LB
-	if (cfg.lb_retrylimittab.n > 0 || cfg.http_full_cfg) {
-		char *value = mk_t_caidvaluetab(&cfg.lb_retrylimittab);
-		fprintf_conf(f, "lb_retrylimits", "%s\n", value);
-		free_mk_t(value);
-	}
-	if (cfg.lb_nbest_readers_tab.n > 0 || cfg.http_full_cfg) {
-		char *value = mk_t_caidvaluetab(&cfg.lb_nbest_readers_tab);
-		fprintf_conf(f, "lb_nbest_percaid", "%s\n", value);
-		free_mk_t(value);
-	}
-#endif
 
 	fputc((int)'\n', f);
 
