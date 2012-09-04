@@ -427,6 +427,9 @@ extern int32_t ecmfmt(uint16_t caid, uint32_t prid, uint16_t chid, uint16_t pid,
 extern int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size);
 extern int32_t format_cxm(struct s_cacheex_matcher *entry, char *result, size_t size);
 extern int8_t cs_cacheex_maxhop(struct s_client *cl);
+
+extern int streq(const char *s1, const char *s2);
+
 /* ===========================
  *       module-cccshare
  * =========================== */
