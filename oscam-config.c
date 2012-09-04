@@ -581,6 +581,22 @@ static void serverip_fn(const char *token, char *value, void *setting, FILE *f) 
 		fprintf_conf(f, token, "%s\n", cs_inet_ntoa(srvip));
 }
 
+static void iprange_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_ip **ip = setting;
+	if (value) {
+		if(strlen(value) == 0) {
+			clear_sip(ip);
+		} else {
+			chk_iprange(value, ip);
+		}
+		return;
+	}
+	value = mk_t_iprange(*ip);
+	if (strlen(value) > 0 || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%s\n", value);
+	free_mk_t(value);
+}
+
 static void logfile_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
 	if (value) {
 		char *saveptr1 = NULL;
@@ -748,53 +764,21 @@ void chk_t_ac(char *token, char *value)
 }
 #endif
 
+static const struct config_list monitor_opts[] = {
+	DEF_OPT_INT("port"						, OFS(mon_port),				0 ),
+	DEF_OPT_FUNC("serverip"					, OFS(mon_srvip),				serverip_fn ),
+	DEF_OPT_FUNC("nocrypt"					, OFS(mon_allowed),				iprange_fn ),
+	DEF_OPT_INT("aulow"						, OFS(mon_aulow),				30 ),
+	DEF_OPT_INT("monlevel"					, OFS(mon_level),				2 ),
+	DEF_OPT_INT("hideclient_to"				, OFS(mon_hideclient_to),		15 ),
+	DEF_OPT_INT("appendchaninfo"			, OFS(mon_appendchaninfo),		0 ),
+	{ OPT_UNKNOWN } /* The end */
+};
+
 void chk_t_monitor(char *token, char *value)
 {
-	if (!strcmp(token, "port")) {
-		cfg.mon_port = strToIntVal(value, 0);
+	if (config_list_parse(monitor_opts, token, value, &cfg))
 		return;
-	}
-
-	if (!strcmp(token, "serverip")) {
-		if(strlen(value) == 0) {
-			set_null_ip(&cfg.mon_srvip);
-			return;
-		} else {
-			cs_inet_addr(value, &cfg.mon_srvip);
-			return;
-		}
-	}
-
-	if (!strcmp(token, "nocrypt")) {
-		if(strlen(value) == 0) {
-			clear_sip(&cfg.mon_allowed);
-			return;
-		} else {
-			chk_iprange(value, &cfg.mon_allowed);
-			return;
-		}
-	}
-
-	if (!strcmp(token, "aulow")) {
-		cfg.mon_aulow = strToIntVal(value, 30);
-		return;
-	}
-
-	if (!strcmp(token, "monlevel")) {
-		cfg.mon_level = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "hideclient_to")) {
-		cfg.mon_hideclient_to = strToIntVal(value, 15);
-		return;
-	}
-
-	if (!strcmp(token, "appendchaninfo")) {
-		cfg.mon_appendchaninfo = strToIntVal(value, 0);
-		return;
-	}
-
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in monitor section not recognized\n",token);
 }
@@ -2127,28 +2111,12 @@ int32_t write_config(void)
 	/*global settings*/
 	fprintf(f,"[global]\n");
 	config_list_save(f, global_opts, &cfg, cfg.http_full_cfg);
-
 	fputc((int)'\n', f);
 
 	/*monitor settings*/
-	if(cfg.mon_port || cfg.mon_appendchaninfo || cfg.mon_hideclient_to != 15 || cfg.mon_aulow != 30) {
+	if (cfg.mon_port) {
 		fprintf(f,"[monitor]\n");
-		if (cfg.mon_port != 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "port", "%d\n", cfg.mon_port);
-		if (IP_ISSET(cfg.mon_srvip) || cfg.http_full_cfg)
-			fprintf_conf(f, "serverip", "%s\n", cs_inet_ntoa(cfg.mon_srvip));
-		value = mk_t_iprange(cfg.mon_allowed);
-		if(strlen(value) > 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "nocrypt", "%s\n", value);
-		free_mk_t(value);
-		if((cfg.mon_aulow > 0 && cfg.mon_aulow != 30) || cfg.http_full_cfg)
-			fprintf_conf(f, "aulow", "%d\n", cfg.mon_aulow);
-		if(cfg.mon_hideclient_to != 15 || cfg.http_full_cfg)
-			fprintf_conf(f, "hideclient_to", "%d\n", cfg.mon_hideclient_to);
-		if(cfg.mon_level != 2 || cfg.http_full_cfg)
-			fprintf_conf(f, "monlevel", "%d\n", cfg.mon_level);
-		if(cfg.mon_appendchaninfo != 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "appendchaninfo", "%d\n", cfg.mon_appendchaninfo);
+		config_list_save(f, monitor_opts, &cfg, cfg.http_full_cfg);
 		fputc((int)'\n', f);
 	}
 
