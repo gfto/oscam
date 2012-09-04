@@ -131,6 +131,7 @@ enum opt_types {
 	OPT_UNKNOWN = 0,
 	OPT_INT     = 1 << 1,
 	OPT_UINT    = 1 << 2,
+	OPT_STRING  = 1 << 3,
 };
 
 struct config_list {
@@ -156,6 +157,13 @@ struct config_list {
 		.default_value	= __default \
 	}
 
+#define DEF_OPT_STR(__name, __var_ofs) \
+	{ \
+		.opt_type		= OPT_STRING, \
+		.config_name	= __name, \
+		.var_offset		= __var_ofs \
+	}
+
 static int config_list_parse(const struct config_list *clist, const char *token, char *value, void *config_data) {
 	const struct config_list *c;
 	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
@@ -169,6 +177,13 @@ static int config_list_parse(const struct config_list *clist, const char *token,
 		}
 		case OPT_UINT: {
 			*(uint32_t *)cfg = strToUIntVal(value, c->default_value);
+			return 1;
+		}
+		case OPT_STRING: {
+			char **scfg = cfg;
+			NULLFREE(*scfg);
+			if (strlen(value))
+				*scfg = strdup(value);
 			return 1;
 		}
 		case OPT_UNKNOWN: {
@@ -195,6 +210,14 @@ static void config_list_save(FILE *f, const struct config_list *clist, void *con
 			uint32_t val = *(uint32_t *)cfg;
 			if (save_all || val != (uint32_t)c->default_value)
 				fprintf_conf(f, c->config_name, "%u\n", val);
+			continue;
+		}
+		case OPT_STRING: {
+			char **val = cfg;
+			if (*val || save_all) {
+				if (*val && strlen(*val))
+					fprintf_conf(f, c->config_name, "%s\n", *val);
+			}
 			continue;
 		}
 		case OPT_UNKNOWN:
