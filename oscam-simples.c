@@ -546,6 +546,7 @@ int32_t check_ip(struct s_ip *ip, IN_ADDR_T n)
 	for (p_ip=ip; (p_ip) && (!ok); p_ip=p_ip->next) {
 		ok  = cs_in6addr_lt(&n, &p_ip->ip[0]);
 		ok |= cs_in6addr_lt(&p_ip->ip[1], &n);
+		ok = !ok;
 	}
 #else
 	for (p_ip=ip; (p_ip) && (!ok); p_ip=p_ip->next)
