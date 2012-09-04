@@ -509,6 +509,8 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_UINT("disableuserfile"			, OFS(disableuserfile),		1 ),
 	DEF_OPT_INT("disablemail"				, OFS(disablemail),			1 ),
 	DEF_OPT_INT("usrfileflag"				, OFS(usrfileflag),			0 ),
+	DEF_OPT_UINT("clienttimeout"			, OFS(ctimeout),			CS_CLIENT_TIMEOUT ),
+	DEF_OPT_UINT("fallbacktimeout"			, OFS(ftimeout),			CS_CLIENT_TIMEOUT / 2 ),
 	DEF_OPT_UINT("clientmaxidle"			, OFS(cmaxidle),			CS_CLIENT_MAXIDLE ),
 	DEF_OPT_UINT("cachedelay"				, OFS(delay),				CS_DELAY ),
 	DEF_OPT_INT("bindwait"					, OFS(bindwait),			CS_BIND_TIMEOUT ),
@@ -560,6 +562,16 @@ void chk_t_global(const char *token, char *value)
 	if (config_list_parse(global_opts, token, value, &cfg))
 	{
 		// Apply the needed fixups
+		if (streq(token, "clienttimeout")) {
+			if (cfg.ctimeout < 100)
+				cfg.ctimeout *= 1000;
+			return;
+		}
+		if (streq(token, "fallbacktimeout")) {
+			if (cfg.ftimeout < 100)
+				cfg.ftimeout *= 1000;
+			return;
+		}
 #ifdef WITH_LB
 		if (streq(token, "lb_save")) {
 			if (cfg.lb_save > 0 && cfg.lb_save < 100) {
@@ -662,18 +674,6 @@ void chk_t_global(const char *token, char *value)
 			if(!cs_malloc(&(cfg.emmlogdir), strlen(value) + 1, -1)) return;
 			memcpy(cfg.emmlogdir, value, strlen(value) + 1);
 		}
-		return;
-	}
-
-	if (!strcmp(token, "clienttimeout")) {
-		cfg.ctimeout = strToUIntVal(value, CS_CLIENT_TIMEOUT);
-		if (cfg.ctimeout < 100) cfg.ctimeout *= 1000;
-		return;
-	}
-
-	if (!strcmp(token, "fallbacktimeout")) {
-		cfg.ftimeout = strToUIntVal(value, (CS_CLIENT_TIMEOUT / 2));
-		if (cfg.ftimeout < 100) cfg.ftimeout *= 1000;
 		return;
 	}
 
@@ -2157,10 +2157,6 @@ int32_t write_config(void)
 	if ((cfg.loghistorysize != 4096) || cfg.http_full_cfg)
 		fprintf_conf(f, "loghistorysize", "%u\n", cfg.loghistorysize);
 #endif
-	if (cfg.ctimeout != CS_CLIENT_TIMEOUT || cfg.http_full_cfg)
-		fprintf_conf(f, "clienttimeout", "%u\n", cfg.ctimeout);
-	if ((cfg.ftimeout && cfg.ftimeout != (CS_CLIENT_TIMEOUT /2)) || cfg.http_full_cfg)
-		fprintf_conf(f, "fallbacktimeout", "%u\n", cfg.ftimeout);
 	if (cfg.nice != 99 || cfg.http_full_cfg)
 		fprintf_conf(f, "nice", "%d\n", cfg.nice);
 	if (cfg.srtimeout != 1500 || cfg.http_full_cfg)
