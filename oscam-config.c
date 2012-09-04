@@ -581,6 +581,38 @@ static void serverip_fn(const char *token, char *value, void *setting, FILE *f) 
 		fprintf_conf(f, token, "%s\n", cs_inet_ntoa(srvip));
 }
 
+static void logfile_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
+	if (value) {
+		char *saveptr1 = NULL;
+		cfg.logtostdout = 0;
+		cfg.logtosyslog = 0;
+		NULLFREE(cfg.logfile);
+		if (strlen(value) > 0) {
+			char *pch;
+			for(pch = strtok_r(value, ";", &saveptr1); pch != NULL; pch = strtok_r(NULL, ";", &saveptr1)){
+				pch=trim(pch);
+				if(!strcmp(pch, "stdout")) cfg.logtostdout = 1;
+				else if(!strcmp(pch, "syslog")) cfg.logtosyslog = 1;
+				else {
+					NULLFREE(cfg.logfile);
+					if(!cs_malloc(&(cfg.logfile), strlen(pch) + 1, -1)) continue;
+					else memcpy(cfg.logfile, pch, strlen(pch) + 1);
+				}
+			}
+		} else {
+			if(cs_malloc(&(cfg.logfile), strlen(CS_LOGFILE) + 1, -1))
+				memcpy(cfg.logfile, CS_LOGFILE, strlen(CS_LOGFILE) + 1);
+			else cfg.logtostdout = 1;
+		}
+		return;
+	}
+	if (cfg.logfile || cfg.logtostdout == 1 || cfg.logtosyslog == 1 || cfg.http_full_cfg) {
+		value = mk_t_logfile();
+		fprintf_conf(f, token, "%s\n", value);
+		free_mk_t(value);
+	}
+}
+
 #define OFS(X) \
 	offsetof(struct s_config, X)
 
@@ -593,6 +625,7 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_FUNC("loghistorysize"			, OFS(loghistorysize),		loghistorysize_fn ),
 #endif
 	DEF_OPT_FUNC("serverip"					, OFS(srvip),				serverip_fn ),
+	DEF_OPT_FUNC("logfile"					, OFS(logfile),				logfile_fn ),
 	DEF_OPT_UINT("disableuserfile"			, OFS(disableuserfile),		1 ),
 	DEF_OPT_INT("disablemail"				, OFS(disablemail),			1 ),
 	DEF_OPT_INT("usrfileflag"				, OFS(usrfileflag),			0 ),
@@ -653,34 +686,8 @@ static const struct config_list global_opts[] = {
 
 void chk_t_global(const char *token, char *value)
 {
-	char *saveptr1 = NULL;
-
 	if (config_list_parse(global_opts, token, value, &cfg))
 		return;
-
-	if (!strcmp(token, "logfile")) {
-		cfg.logtostdout = 0;
-		cfg.logtosyslog = 0;
-		NULLFREE(cfg.logfile);
-		if (strlen(value) > 0) {
-			char *pch;
-			for(pch = strtok_r(value, ";", &saveptr1); pch != NULL; pch = strtok_r(NULL, ";", &saveptr1)){
-				pch=trim(pch);
-				if(!strcmp(pch, "stdout")) cfg.logtostdout = 1;
-				else if(!strcmp(pch, "syslog")) cfg.logtosyslog = 1;
-				else {
-					NULLFREE(cfg.logfile);
-					if(!cs_malloc(&(cfg.logfile), strlen(pch) + 1, -1)) continue;
-					else memcpy(cfg.logfile, pch, strlen(pch) + 1);
-				}
-			}
-		} else {
-			if(cs_malloc(&(cfg.logfile), strlen(CS_LOGFILE) + 1, -1))
-				memcpy(cfg.logfile, CS_LOGFILE, strlen(CS_LOGFILE) + 1);
-			else cfg.logtostdout = 1;
-		}
-		return;
-	}
 
 #ifdef WITH_LB
 	if (!strcmp(token, "lb_retrylimits")) {
@@ -2136,12 +2143,6 @@ int32_t write_config(void)
 	/*global settings*/
 	fprintf(f,"[global]\n");
 	config_list_save(f, global_opts, &cfg, cfg.http_full_cfg);
-
-	if (cfg.logfile || cfg.logtostdout == 1 || cfg.logtosyslog == 1 || cfg.http_full_cfg){
-		value = mk_t_logfile();
-		fprintf_conf(f, "logfile", "%s\n", value);
-		free_mk_t(value);
-	}
 
 #ifdef WITH_LB
 	if (cfg.lb_retrylimittab.n > 0 || cfg.http_full_cfg) {
