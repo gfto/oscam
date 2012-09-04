@@ -174,6 +174,11 @@ struct config_list {
 		.process_fn		= __process_fn \
 	}
 
+#define DEF_LAST_OPT \
+	{ \
+		.opt_type		= OPT_UNKNOWN \
+	}
+
 static int config_list_parse(const struct config_list *clist, const char *token, char *value, void *config_data) {
 	const struct config_list *c;
 	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
@@ -731,7 +736,7 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_INT("double_check"				, OFS(double_check),		0 ),
 	DEF_OPT_INT("max_cache_time"			, OFS(max_cache_time),		DEFAULT_MAX_CACHE_TIME ),
 	DEF_OPT_INT("max_cache_count"			, OFS(max_cache_count),		DEFAULT_MAX_CACHE_COUNT ),
-	{ OPT_UNKNOWN } /* The end */
+	DEF_LAST_OPT
 };
 
 void chk_t_global(const char *token, char *value)
@@ -752,7 +757,7 @@ static const struct config_list anticasc_opts[] = {
 	DEF_OPT_STR("aclogfile"					, OFS(ac_logfile) ),
 	DEF_OPT_INT("fakedelay"					, OFS(ac_fakedelay),			3000 ),
 	DEF_OPT_INT("denysamples"				, OFS(ac_denysamples),			8 ),
-	{ OPT_UNKNOWN } /* The end */
+	DEF_LAST_OPT
 };
 
 void chk_t_ac(char *token, char *value)
@@ -772,7 +777,7 @@ static const struct config_list monitor_opts[] = {
 	DEF_OPT_INT("monlevel"					, OFS(mon_level),				2 ),
 	DEF_OPT_INT("hideclient_to"				, OFS(mon_hideclient_to),		15 ),
 	DEF_OPT_INT("appendchaninfo"			, OFS(mon_appendchaninfo),		0 ),
-	{ OPT_UNKNOWN } /* The end */
+	DEF_LAST_OPT
 };
 
 void chk_t_monitor(char *token, char *value)
