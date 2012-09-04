@@ -957,28 +957,17 @@ void chk_t_camd33(char *token, char *value)
 }
 
 #ifdef CS_CACHEEX
+static const struct config_list csp_opts[] = {
+	DEF_OPT_INT("port"						, OFS(csp_port),				0 ),
+	DEF_OPT_FUNC("serverip"					, OFS(csp_srvip),				serverip_fn ),
+	DEF_OPT_INT("wait_time"					, OFS(csp_wait_time),			0 ),
+	DEF_LAST_OPT
+};
+
 void chk_t_csp(char *token, char *value)
 {
-	if (!strcmp(token, "port")) {
-		cfg.csp_port = strToIntVal(value, 0);
+	if (config_list_parse(csp_opts, token, value, &cfg))
 		return;
-	}
-
-	if (!strcmp(token, "serverip")) {
-		if(strlen(value) == 0) {
-			set_null_ip(&cfg.csp_srvip);
-			return;
-		} else {
-			cs_inet_addr(value, &cfg.csp_srvip);
-			return;
-		}
-	}
-
-	if (!strcmp(token, "wait_time")) {
-		cfg.csp_wait_time = strToIntVal(value, 0);
-		return;
-	}
-
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in csp section not recognized\n", token);
 }
@@ -2144,13 +2133,9 @@ int32_t write_config(void)
 
 	/*camd3.5*/
 #ifdef CS_CACHEEX
-	if ( cfg.csp_port > 0) {
+	if (cfg.csp_port > 0) {
 		fprintf(f,"[csp]\n");
-		fprintf_conf(f, "port", "%d\n", cfg.csp_port);
-		if (IP_ISSET(cfg.csp_srvip))
-			fprintf_conf(f, "serverip", "%s\n", cs_inet_ntoa(cfg.csp_srvip));
-		if (cfg.csp_wait_time > 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "wait_time", "%d\n", cfg.csp_wait_time);
+		config_list_save(f, csp_opts, &cfg, cfg.http_full_cfg);
 		fprintf(f,"\n");
 	}
 #endif
