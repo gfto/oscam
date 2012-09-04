@@ -973,28 +973,17 @@ void chk_t_csp(char *token, char *value)
 }
 #endif
 
+static const struct config_list camd35_opts[] = {
+	DEF_OPT_INT("port"						, OFS(c35_port),				0 ),
+	DEF_OPT_FUNC("serverip"					, OFS(c35_srvip),				serverip_fn ),
+	DEF_OPT_INT("suppresscmd08"				, OFS(c35_udp_suppresscmd08),	0 ),
+	DEF_LAST_OPT
+};
+
 void chk_t_camd35(char *token, char *value)
 {
-	if (!strcmp(token, "port")) {
-		cfg.c35_port = strToIntVal(value, 0);
+	if (config_list_parse(camd35_opts, token, value, &cfg))
 		return;
-	}
-
-	if (!strcmp(token, "serverip")) {
-		if(strlen(value) == 0) {
-			set_null_ip(&cfg.c35_srvip);
-			return;
-		} else {
-			cs_inet_addr(value, &cfg.c35_srvip);
-			return;
-		}
-	}
-
-	if (!strcmp(token, "suppresscmd08")) {
-		cfg.c35_udp_suppresscmd08 = strToIntVal(value, 0);
-		return;
-	}
-
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in camd35 section not recognized\n", token);
 }
@@ -2141,13 +2130,9 @@ int32_t write_config(void)
 #endif
 
 	/*camd3.5*/
-	if ( cfg.c35_port > 0) {
+	if (cfg.c35_port > 0) {
 		fprintf(f,"[cs357x]\n");
-		fprintf_conf(f, "port", "%d\n", cfg.c35_port);
-		if (IP_ISSET(cfg.c35_srvip))
-			fprintf_conf(f, "serverip", "%s\n", cs_inet_ntoa(cfg.c35_srvip));
-		if (cfg.c35_udp_suppresscmd08 || cfg.http_full_cfg)
-			fprintf_conf(f, "suppresscmd08", "%d\n", cfg.c35_udp_suppresscmd08);
+		config_list_save(f, camd35_opts, &cfg, cfg.http_full_cfg);
 		fprintf(f,"\n");
 	}
 
