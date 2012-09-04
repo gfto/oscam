@@ -542,12 +542,41 @@ static void chk_srvip(char *value, in_addr_t *ip)
 }
 #endif
 
+static void disablelog_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
+	if (value) {
+		cs_disable_log(strToIntVal(value, 0));
+		return;
+	}
+	if (cfg.disablelog || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%d\n", cfg.disablelog);
+}
+
+#if defined(WEBIF) || defined(MODULE_MONITOR)
+static void loghistorysize_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
+	if (value) {
+		uint32_t newsize = strToUIntVal(value, 4096);
+		if (newsize < 1024 && newsize != 0) {
+			fprintf(stderr, "WARNING: loghistorysize is too small, adjusted to 1024\n");
+			newsize = 1024;
+		}
+		cs_reinit_loghist(newsize);
+		return;
+	}
+	if (cfg.loghistorysize != 4096 || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%u\n", cfg.loghistorysize);
+}
+#endif
+
 #define OFS(X) \
 	offsetof(struct s_config, X)
 
 static const struct config_list global_opts[] = {
 #if defined(QBOXHD) || defined(__arm__)
 	DEF_OPT_INT("enableled"					, OFS(enableled),			0 ),
+#endif
+	DEF_OPT_FUNC("disablelog"				, OFS(disablelog),			disablelog_fn ),
+#if defined(WEBIF) || defined(MODULE_MONITOR)
+	DEF_OPT_FUNC("loghistorysize"			, OFS(loghistorysize),		loghistorysize_fn ),
 #endif
 	DEF_OPT_UINT("disableuserfile"			, OFS(disableuserfile),		1 ),
 	DEF_OPT_INT("disablemail"				, OFS(disablemail),			1 ),
@@ -613,23 +642,6 @@ void chk_t_global(const char *token, char *value)
 
 	if (config_list_parse(global_opts, token, value, &cfg))
 		return;
-
-	if (!strcmp(token, "disablelog")) {
-		cs_disable_log(strToIntVal(value, 0));
-		return;
-	}
-
-#if defined(WEBIF) || defined(MODULE_MONITOR)
-	if (!strcmp(token, "loghistorysize")) {
-		uint32_t newsize = strToUIntVal(value, 4096);
-		if (newsize < 1024 && newsize != 0) {
-			fprintf(stderr, "WARNING: loghistorysize is too small, adjusted to 1024\n");
-			newsize = 1024;
-		}
-		cs_reinit_loghist(newsize);
-		return;
-	}
-#endif
 
 	if (!strcmp(token, "serverip")) {
 		if (strlen(value) == 0) {
@@ -2127,12 +2139,6 @@ int32_t write_config(void)
 		fprintf_conf(f, "logfile", "%s\n", value);
 		free_mk_t(value);
 	}
-	if (cfg.disablelog || cfg.http_full_cfg)
-		fprintf_conf(f, "disablelog", "%d\n", cfg.disablelog);
-#if defined(WEBIF) || defined(MODULE_MONITOR)
-	if ((cfg.loghistorysize != 4096) || cfg.http_full_cfg)
-		fprintf_conf(f, "loghistorysize", "%u\n", cfg.loghistorysize);
-#endif
 
 #ifdef WITH_LB
 	if (cfg.lb_retrylimittab.n > 0 || cfg.http_full_cfg) {
