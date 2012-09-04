@@ -554,6 +554,10 @@ static const struct config_list global_opts[] = {
 #endif
 	DEF_OPT_INT("block_same_ip"				, OFS(block_same_ip),		1 ),
 	DEF_OPT_INT("block_same_name"			, OFS(block_same_name),		1 ),
+	DEF_OPT_STR("usrfile"					, OFS(usrfile) ),
+	DEF_OPT_STR("mailfile"					, OFS(mailfile) ),
+	DEF_OPT_STR("cwlogdir"					, OFS(cwlogdir) ),
+	DEF_OPT_STR("emmlogdir"					, OFS(emmlogdir) ),
 #ifdef WITH_LB
 	DEF_OPT_INT("lb_mode"					, OFS(lb_mode),				DEFAULT_LB_MODE ),
 	DEF_OPT_INT("lb_save"					, OFS(lb_save),				0 ),
@@ -568,6 +572,7 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_INT("lb_max_readers"			, OFS(lb_max_readers),		0 ),
 	DEF_OPT_INT("lb_auto_betatunnel"		, OFS(lb_auto_betatunnel),	DEFAULT_LB_AUTO_BETATUNNEL ),
 	DEF_OPT_INT("lb_auto_betatunnel_prefer_beta", OFS(lb_auto_betatunnel_prefer_beta), DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA ),
+	DEF_OPT_STR("lb_savepath"				, OFS(lb_savepath) ),
 #endif
 	DEF_OPT_INT("resolvegethostbyname"		, OFS(resolve_gethostbyname), 0 ),
 	DEF_OPT_INT("failbantime"				, OFS(failbantime),			0 ),
@@ -639,42 +644,6 @@ void chk_t_global(const char *token, char *value)
 		return;
 	}
 
-	if (!strcmp(token, "usrfile")) {
-		NULLFREE(cfg.usrfile);
-		if (strlen(value) > 0) {
-			if(!cs_malloc(&(cfg.usrfile), strlen(value) + 1, -1)) return;
-			memcpy(cfg.usrfile, value, strlen(value) + 1);
-		} else cfg.disableuserfile = 1;
-		return;
-	}
-
-	if (!strcmp(token, "mailfile")) {
-		NULLFREE(cfg.mailfile);
-		if (strlen(value) > 0) {
-			if(!cs_malloc(&(cfg.mailfile), strlen(value) + 1, -1)) return;
-			memcpy(cfg.mailfile, value, strlen(value) + 1);
-		} else cfg.disablemail = 1;
-		return;
-	}
-
-	if (!strcmp(token, "cwlogdir")) {
-		NULLFREE(cfg.cwlogdir);
-		if (strlen(value) > 0) {
-			if(!cs_malloc(&(cfg.cwlogdir), strlen(value) + 1, -1)) return;
-			memcpy(cfg.cwlogdir, value, strlen(value) + 1);
-		}
-		return;
-	}
-
-	if (!strcmp(token, "emmlogdir")) {
-		NULLFREE(cfg.emmlogdir);
-		if (strlen(value) > 0) {
-			if(!cs_malloc(&(cfg.emmlogdir), strlen(value) + 1, -1)) return;
-			memcpy(cfg.emmlogdir, value, strlen(value) + 1);
-		}
-		return;
-	}
-
 #ifdef WITH_LB
 	if (!strcmp(token, "lb_retrylimits")) {
 		chk_caidvaluetab(value, &cfg.lb_retrylimittab, 50);
@@ -693,13 +662,6 @@ void chk_t_global(const char *token, char *value)
 			chk_caidtab(value, &cfg.lb_noproviderforcaid);
 		return;
 	}
-
-	if (!strcmp(token, "lb_savepath")) {
-		NULLFREE(cfg.lb_savepath);
-		cfg.lb_savepath = strnew(value);
-		return;
-	}
-
 #endif
 
 	if (!strcmp(token, "ecmfmt")) {
@@ -2144,19 +2106,11 @@ int32_t write_config(void)
 
 	if (IP_ISSET(cfg.srvip) || cfg.http_full_cfg)
 		fprintf_conf(f, "serverip", "%s\n", cs_inet_ntoa(cfg.srvip));
-	if (cfg.usrfile != NULL || cfg.http_full_cfg)
-		fprintf_conf(f, "usrfile", "%s\n", cfg.usrfile?cfg.usrfile:"");
-	if (cfg.mailfile != NULL || cfg.http_full_cfg)
-		fprintf_conf(f, "mailfile", "%s\n", cfg.mailfile?cfg.mailfile:"");
 	if (cfg.logfile || cfg.logtostdout == 1 || cfg.logtosyslog == 1 || cfg.http_full_cfg){
 		value = mk_t_logfile();
 		fprintf_conf(f, "logfile", "%s\n", value);
 		free_mk_t(value);
 	}
-	if (cfg.cwlogdir != NULL || cfg.http_full_cfg)
-		fprintf_conf(f, "cwlogdir", "%s\n", cfg.cwlogdir?cfg.cwlogdir:"");
-	if (cfg.emmlogdir != NULL || cfg.http_full_cfg)
-		fprintf_conf(f, "emmlogdir", "%s\n", cfg.emmlogdir?cfg.emmlogdir:"");
 	if (cfg.disablelog || cfg.http_full_cfg)
 		fprintf_conf(f, "disablelog", "%d\n", cfg.disablelog);
 #if defined(WEBIF) || defined(MODULE_MONITOR)
@@ -2181,11 +2135,6 @@ int32_t write_config(void)
 		fprintf_conf(f, "lb_noproviderforcaid", "%s\n", value);
 		free_mk_t(value);
 	}
-	
-	
-
-	if ((cfg.lb_savepath && strlen(cfg.lb_savepath) > 0) || cfg.http_full_cfg)
-		fprintf_conf(f, "lb_savepath", "%s\n", cfg.lb_savepath?cfg.lb_savepath:"");
 #endif
 
 	if (cfg.ecmfmt[0] || cfg.http_full_cfg)
