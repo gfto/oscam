@@ -733,36 +733,26 @@ void chk_t_ac(char *token, char *value)
 {
 	if (!strcmp(token, "enabled")) {
 		cfg.ac_enabled = strToIntVal(value, 0);
-		if( cfg.ac_enabled > 0 )
-			cfg.ac_enabled = 1;
 		return;
 	}
 
 	if (!strcmp(token, "numusers")) {
 		cfg.ac_users = strToIntVal(value, 0);
-		if ( cfg.ac_users < 0 )
-			cfg.ac_users = 0;
 		return;
 	}
 
 	if (!strcmp(token, "sampletime")) {
 		cfg.ac_stime = strToIntVal(value, 2);
-		if( cfg.ac_stime < 0 )
-			cfg.ac_stime = 2;
 		return;
 	}
 
 	if (!strcmp(token, "samples")) {
 		cfg.ac_samples = strToIntVal(value, 10);
-		if( cfg.ac_samples < 2 || cfg.ac_samples > 10)
-			cfg.ac_samples = 10;
 		return;
 	}
 
 	if (!strcmp(token, "penalty")) {
 		cfg.ac_penalty = strToIntVal(value, 0);
-		if( cfg.ac_penalty < 0  || cfg.ac_penalty > 3 )
-			cfg.ac_penalty = 0;
 		return;
 	}
 
@@ -773,15 +763,11 @@ void chk_t_ac(char *token, char *value)
 
 	if( !strcmp(token, "fakedelay") ) {
 		cfg.ac_fakedelay = strToIntVal(value, 3000);
-		if( cfg.ac_fakedelay < 100 || cfg.ac_fakedelay > 3000 )
-			cfg.ac_fakedelay = 1000;
 		return;
 	}
 
 	if( !strcmp(token, "denysamples") ) {
 		cfg.ac_denysamples = strToIntVal(value, 8);
-		if( cfg.ac_denysamples < 2 || cfg.ac_denysamples > cfg.ac_samples - 1 )
-			cfg.ac_denysamples=cfg.ac_samples-1;
 		return;
 	}
 
@@ -1788,7 +1774,26 @@ int32_t init_config(void)
 		cfg.max_cache_time = cfg.ctimeout/1000+2;
 
 #ifdef CS_ANTICASC
-	if( cfg.ac_denysamples+1 > cfg.ac_samples ) {
+	// Anticascating config fixups
+	if (cfg.ac_users < 0)
+		cfg.ac_users = 0;
+
+	if (cfg.ac_stime < 0)
+		cfg.ac_stime = 2;
+
+	if (cfg.ac_samples < 2 || cfg.ac_samples > 10)
+		cfg.ac_samples = 10;
+
+	if (cfg.ac_penalty < 0 || cfg.ac_penalty > 3)
+		cfg.ac_penalty = 0;
+
+	if (cfg.ac_fakedelay < 100 || cfg.ac_fakedelay > 3000)
+		cfg.ac_fakedelay = 1000;
+
+	if (cfg.ac_denysamples < 2 || cfg.ac_denysamples > cfg.ac_samples - 1)
+		cfg.ac_denysamples = cfg.ac_samples - 1;
+
+	if (cfg.ac_denysamples + 1 > cfg.ac_samples) {
 		cfg.ac_denysamples = cfg.ac_samples - 1;
 		cs_log("WARNING: DenySamples adjusted to %d", cfg.ac_denysamples);
 	}
