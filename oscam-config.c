@@ -563,54 +563,7 @@ void chk_t_global(const char *token, char *value)
 	char *saveptr1 = NULL;
 
 	if (config_list_parse(global_opts, token, value, &cfg))
-	{
-		// Apply the needed fixups
-		if (streq(token, "clienttimeout")) {
-			if (cfg.ctimeout < 100)
-				cfg.ctimeout *= 1000;
-			return;
-		}
-		if (streq(token, "fallbacktimeout")) {
-			if (cfg.ftimeout < 100)
-				cfg.ftimeout *= 1000;
-			return;
-		}
-		if (streq(token, "nice")) {
-			if (cfg.nice < -20 || cfg.nice > 20)
-				cfg.nice = 99;
-			if (cfg.nice != 99)
-				cs_setpriority(cfg.nice);
-			return;
-		}
-		if (streq(token, "serialreadertimeout")) {
-			if (cfg.srtimeout <= 0)
-				cfg.srtimeout = 1500;
-			if (cfg.srtimeout < 100)
-				cfg.srtimeout *= 1000;
-			return;
-		}
-		if (streq(token, "maxlogsize")) {
-			if (cfg.max_log_size != 0 && cfg.max_log_size <= 10)
-				cfg.max_log_size = 10;
-			return;
-		}
-#ifdef WITH_LB
-		if (streq(token, "lb_save")) {
-			if (cfg.lb_save > 0 && cfg.lb_save < 100) {
-				fprintf(stderr, "WARNING: %s (%d) was corrected to the minimum: %d\n",
-					token, cfg.lb_save, 100);
-				cfg.lb_save = 100;
-			}
-			return;
-		}
-		if (streq(token, "lb_nbest_readers")) {
-			if (cfg.lb_nbest_readers < 2)
-				cfg.lb_nbest_readers = DEFAULT_NBEST;
-			return;
-		}
-#endif
 		return;
-	}
 
 	if (!strcmp(token, "disablelog")) {
 		cs_disable_log(strToIntVal(value, 0));
@@ -1740,13 +1693,50 @@ int32_t init_config(void)
 	free(token);
 	fclose(fp);
 
+	// Apply configuration fixups
+
 	if (!cfg.logfile && cfg.logtostdout == 0 && cfg.logtosyslog == 0) {
 		if(cs_malloc(&(cfg.logfile), strlen(CS_LOGFILE) + 1, -1))
 			memcpy(cfg.logfile, CS_LOGFILE, strlen(CS_LOGFILE) + 1);
 		else cfg.logtostdout = 1;
 	}
-	if(cfg.usrfile == NULL) cfg.disableuserfile = 1;
-	if(cfg.mailfile == NULL) cfg.disablemail = 1;
+
+	if (!cfg.usrfile)
+		cfg.disableuserfile = 1;
+
+	if (!cfg.mailfile)
+		cfg.disablemail = 1;
+
+	if (cfg.ctimeout < 100)
+		cfg.ctimeout *= 1000;
+
+	if (cfg.ftimeout < 100)
+		cfg.ftimeout *= 1000;
+
+	if (cfg.nice < -20 || cfg.nice > 20)
+		cfg.nice = 99;
+
+	if (cfg.nice != 99)
+		cs_setpriority(cfg.nice);
+
+	if (cfg.srtimeout <= 0)
+		cfg.srtimeout = 1500;
+	if (cfg.srtimeout < 100)
+		cfg.srtimeout *= 1000;
+
+	if (cfg.max_log_size != 0 && cfg.max_log_size <= 10)
+		cfg.max_log_size = 10;
+
+#ifdef WITH_LB
+	if (cfg.lb_save > 0 && cfg.lb_save < 100) {
+		fprintf(stderr, "WARNING: %s (%d) was corrected to the minimum: %d\n",
+			token, cfg.lb_save, 100);
+		cfg.lb_save = 100;
+	}
+
+	if (cfg.lb_nbest_readers < 2)
+		cfg.lb_nbest_readers = DEFAULT_NBEST;
+#endif
 
 	cs_init_log();
 	cs_init_statistics();
