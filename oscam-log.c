@@ -134,7 +134,7 @@ int32_t ac_init_log(void){
 	if(tmp)
 		fclose(tmp);
 
-	if(cfg.ac_logfile[0]) {
+	if(cfg.ac_logfile) {
 		if( (fpa=fopen(cfg.ac_logfile, "a+"))<=(FILE *)0 ) {
 			fpa=(FILE *)0;
 			fprintf(stderr, "can't open anti-cascading logfile: %s\n", cfg.ac_logfile);

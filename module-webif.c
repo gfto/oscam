@@ -964,7 +964,8 @@ static char *send_oscam_config_anticasc(struct templatevars *vars, struct uripar
 	tpl_printf(vars, TPLADD, "TMP", "PENALTY%d", cfg.ac_penalty);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
-	tpl_addVar(vars, TPLADD, "ACLOGFILE", cfg.ac_logfile);
+	if (cfg.ac_logfile)
+		tpl_addVar(vars, TPLADD, "ACLOGFILE", cfg.ac_logfile);
 	tpl_printf(vars, TPLADD, "FAKEDELAY", "%d", cfg.ac_fakedelay);
 	tpl_printf(vars, TPLADD, "DENYSAMPLES", "%d", cfg.ac_denysamples);
 	return tpl_getTpl(vars, "CONFIGANTICASC");
@@ -3940,7 +3941,7 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 #ifdef CS_ANTICASC
 	else if (!apicall && strcmp(getParam(params, "file"), "anticasc") == 0){
 		setActiveSubMenu(vars, MNU_CFG_FACLOG);
-		snprintf(targetfile, 255,"%s", cfg.ac_logfile);
+		snprintf(targetfile, 255, "%s", cfg.ac_logfile ? cfg.ac_logfile : "");
 	}
 #endif
 

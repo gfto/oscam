@@ -718,8 +718,6 @@ static const struct config_list global_opts[] = {
 	{ OPT_UNKNOWN } /* The end */
 };
 
-#undef OFS
-
 void chk_t_global(const char *token, char *value)
 {
 	if (config_list_parse(global_opts, token, value, &cfg))
@@ -729,48 +727,22 @@ void chk_t_global(const char *token, char *value)
 }
 
 #ifdef CS_ANTICASC
+static const struct config_list anticasc_opts[] = {
+	DEF_OPT_INT("enabled"					, OFS(ac_enabled),				0 ),
+	DEF_OPT_INT("numusers"					, OFS(ac_users),				0 ),
+	DEF_OPT_INT("sampletime"				, OFS(ac_stime),				2 ),
+	DEF_OPT_INT("samples"					, OFS(ac_samples),				10 ),
+	DEF_OPT_INT("penalty"					, OFS(ac_penalty),				0 ),
+	DEF_OPT_STR("aclogfile"					, OFS(ac_logfile) ),
+	DEF_OPT_INT("fakedelay"					, OFS(ac_fakedelay),			3000 ),
+	DEF_OPT_INT("denysamples"				, OFS(ac_denysamples),			8 ),
+	{ OPT_UNKNOWN } /* The end */
+};
+
 void chk_t_ac(char *token, char *value)
 {
-	if (!strcmp(token, "enabled")) {
-		cfg.ac_enabled = strToIntVal(value, 0);
+	if (config_list_parse(anticasc_opts, token, value, &cfg))
 		return;
-	}
-
-	if (!strcmp(token, "numusers")) {
-		cfg.ac_users = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "sampletime")) {
-		cfg.ac_stime = strToIntVal(value, 2);
-		return;
-	}
-
-	if (!strcmp(token, "samples")) {
-		cfg.ac_samples = strToIntVal(value, 10);
-		return;
-	}
-
-	if (!strcmp(token, "penalty")) {
-		cfg.ac_penalty = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "aclogfile")) {
-		cs_strncpy(cfg.ac_logfile, value, sizeof(cfg.ac_logfile));
-		return;
-	}
-
-	if( !strcmp(token, "fakedelay") ) {
-		cfg.ac_fakedelay = strToIntVal(value, 3000);
-		return;
-	}
-
-	if( !strcmp(token, "denysamples") ) {
-		cfg.ac_denysamples = strToIntVal(value, 8);
-		return;
-	}
-
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in anticascading section not recognized\n",token);
 }
@@ -1650,7 +1622,7 @@ int32_t init_config(void)
 	cfg.ac_samples = 10;
 	cfg.ac_denysamples = 8;
 	cfg.ac_fakedelay = 1000;
-	cs_strncpy(cfg.ac_logfile, "./oscam_ac.log", sizeof(cfg.ac_logfile));
+	cfg.ac_logfile = NULL;
 #endif
 #ifdef MODULE_CCCAM
 	cfg.cc_update_interval = DEFAULT_UPDATEINTERVAL;
@@ -2449,21 +2421,7 @@ int32_t write_config(void)
 #ifdef CS_ANTICASC
 	if(cfg.ac_enabled) {
 		fprintf(f,"[anticasc]\n");
-		fprintf_conf(f, "enabled", "%d\n", cfg.ac_enabled);
-		if(cfg.ac_users != 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "numusers", "%d\n", cfg.ac_users);
-		if(cfg.ac_stime != 2 || cfg.http_full_cfg)
-			fprintf_conf(f, "sampletime", "%d\n", cfg.ac_stime);
-		if(cfg.ac_samples != 10 || cfg.http_full_cfg)
-			fprintf_conf(f, "samples", "%d\n", cfg.ac_samples);
-		if(cfg.ac_penalty != 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "penalty", "%d\n", cfg.ac_penalty);
-		if(cfg.ac_logfile || cfg.http_full_cfg)
-			fprintf_conf(f, "aclogfile", "%s\n", cfg.ac_logfile);
-		if(cfg.ac_denysamples != 8 || cfg.http_full_cfg)
-			fprintf_conf(f, "denysamples", "%d\n", cfg.ac_denysamples);
-		if(cfg.ac_fakedelay != 1000 || cfg.http_full_cfg)
-			fprintf_conf(f, "fakedelay", "%d\n", cfg.ac_fakedelay);
+		config_list_save(f, anticasc_opts, &cfg, cfg.http_full_cfg);
 		fputc((int)'\n', f);
 	}
 #endif

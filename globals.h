@@ -1597,7 +1597,7 @@ struct s_config
 	int8_t		ac_penalty;							// 0 - write to log
 	int32_t		ac_fakedelay;						// 100-1000 ms
 	int32_t		ac_denysamples;
-	char		ac_logfile[128];
+	char		*ac_logfile;
 	struct		s_cpmap *cpmap;
 #endif
 
