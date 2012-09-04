@@ -517,6 +517,7 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_INT("netprio"					, OFS(netprio),				0 ),
 	DEF_OPT_INT("sleep"						, OFS(tosleep),				0 ),
 	DEF_OPT_INT("unlockparental"			, OFS(ulparent),			0 ),
+	DEF_OPT_INT("nice"						, OFS(nice),				99 ),
 	DEF_OPT_INT("waitforcards"				, OFS(waitforcards),		1 ),
 	DEF_OPT_INT("waitforcards_extra_delay"	, OFS(waitforcards_extra_delay), 500 ),
 	DEF_OPT_INT("preferlocalcards"			, OFS(preferlocalcards),	0 ),
@@ -570,6 +571,13 @@ void chk_t_global(const char *token, char *value)
 		if (streq(token, "fallbacktimeout")) {
 			if (cfg.ftimeout < 100)
 				cfg.ftimeout *= 1000;
+			return;
+		}
+		if (streq(token, "nice")) {
+			if (cfg.nice < -20 || cfg.nice > 20)
+				cfg.nice = 99;
+			if (cfg.nice != 99)
+				cs_setpriority(cfg.nice);
 			return;
 		}
 #ifdef WITH_LB
@@ -676,19 +684,6 @@ void chk_t_global(const char *token, char *value)
 		}
 		return;
 	}
-
-	if (!strcmp(token, "nice")) {
-		if (strlen(value) == 0) {
-			cfg.nice = 99;
-			return;
-		} else {
-			cfg.nice = atoi(value);
-			if ((cfg.nice<-20) || (cfg.nice>20)) cfg.nice = 99;
-			if (cfg.nice != 99) cs_setpriority(cfg.nice);  // ignore errors
-			return;
-		}
-	}
-
 	if (!strcmp(token, "serialreadertimeout")) {
 		if (cfg.srtimeout < 100)
 			cfg.srtimeout = strtoul(value, NULL, 10) * 1000;
@@ -2157,8 +2152,6 @@ int32_t write_config(void)
 	if ((cfg.loghistorysize != 4096) || cfg.http_full_cfg)
 		fprintf_conf(f, "loghistorysize", "%u\n", cfg.loghistorysize);
 #endif
-	if (cfg.nice != 99 || cfg.http_full_cfg)
-		fprintf_conf(f, "nice", "%d\n", cfg.nice);
 	if (cfg.srtimeout != 1500 || cfg.http_full_cfg)
 		fprintf_conf(f, "serialreadertimeout", "%u\n", cfg.srtimeout);
 	if (cfg.max_log_size != 10 || cfg.http_full_cfg)
