@@ -988,35 +988,34 @@ void chk_t_camd35(char *token, char *value)
 		fprintf(stderr, "Warning: keyword '%s' in camd35 section not recognized\n", token);
 }
 
-void chk_t_camd35_tcp(char *token, char *value)
-{
-	if (!strcmp(token, "port")) {
+static void porttab_cs378x_fn(const char *token, char *value, void *setting, FILE *f) {
+	PTAB *ptab = setting;
+	if (value) {
 		if(strlen(value) == 0) {
-			clear_ptab(&cfg.c35_tcp_ptab);
-			return;
+			clear_ptab(ptab);
 		} else {
-			chk_port_tab(value, &cfg.c35_tcp_ptab);
-			return;
+			chk_port_tab(value, ptab);
 		}
-	}
-
-	if (!strcmp(token, "serverip")) {
-		if(strlen(value) == 0) {
-			set_null_ip(&cfg.c35_tcp_srvip);
-			return;
-		} else {
-			cs_inet_addr(value, &cfg.c35_tcp_srvip);
-			return;
-		}
-	}
-
-	if (!strcmp(token, "suppresscmd08")) {
-		cfg.c35_tcp_suppresscmd08 = strToIntVal(value, 0);
 		return;
 	}
+	value = mk_t_camd35tcp_port();
+	fprintf_conf(f, token, "%s\n", value);
+	free_mk_t(value);
+}
 
+static const struct config_list cs378x_opts[] = {
+	DEF_OPT_FUNC("port"						, OFS(c35_tcp_ptab),			porttab_cs378x_fn ),
+	DEF_OPT_FUNC("serverip"					, OFS(c35_tcp_srvip),			serverip_fn ),
+	DEF_OPT_INT("suppresscmd08"				, OFS(c35_tcp_suppresscmd08),	0 ),
+	DEF_LAST_OPT
+};
+
+void chk_t_camd35_tcp(char *token, char *value)
+{
+	if (config_list_parse(cs378x_opts, token, value, &cfg))
+		return;
 	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in CSP section not recognized\n", token);
+		fprintf(stderr, "Warning: keyword '%s' in cs378x section not recognized\n", token);
 }
 
 void chk_t_newcamd(char *token, char *value)
@@ -2137,17 +2136,9 @@ int32_t write_config(void)
 	}
 
 	/*camd3.5 TCP*/
-	if ((cfg.c35_tcp_ptab.nports > 0) && (cfg.c35_tcp_ptab.ports[0].s_port > 0)) {
+	if (cfg.c35_tcp_ptab.nports > 0 && cfg.c35_tcp_ptab.ports[0].s_port > 0) {
 		fprintf(f,"[cs378x]\n");
-
-		value = mk_t_camd35tcp_port();
-		fprintf_conf(f, "port", "%s\n", value);
-		free_mk_t(value);
-
-		if (IP_ISSET(cfg.c35_tcp_srvip))
-			fprintf_conf(f, "serverip", "%s\n", cs_inet_ntoa(cfg.c35_tcp_srvip));
-		if (cfg.c35_tcp_suppresscmd08 || cfg.http_full_cfg)
-			fprintf_conf(f, "suppresscmd08", "%d\n", cfg.c35_tcp_suppresscmd08);
+		config_list_save(f, cs378x_opts, &cfg, cfg.http_full_cfg);
 		fputc((int)'\n', f);
 	}
 
