@@ -518,6 +518,7 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_INT("sleep"						, OFS(tosleep),				0 ),
 	DEF_OPT_INT("unlockparental"			, OFS(ulparent),			0 ),
 	DEF_OPT_INT("nice"						, OFS(nice),				99 ),
+	DEF_OPT_INT("serialreadertimeout"		, OFS(srtimeout),			1500 ),
 	DEF_OPT_INT("waitforcards"				, OFS(waitforcards),		1 ),
 	DEF_OPT_INT("waitforcards_extra_delay"	, OFS(waitforcards_extra_delay), 500 ),
 	DEF_OPT_INT("preferlocalcards"			, OFS(preferlocalcards),	0 ),
@@ -578,6 +579,13 @@ void chk_t_global(const char *token, char *value)
 				cfg.nice = 99;
 			if (cfg.nice != 99)
 				cs_setpriority(cfg.nice);
+			return;
+		}
+		if (streq(token, "serialreadertimeout")) {
+			if (cfg.srtimeout <= 0)
+				cfg.srtimeout = 1500;
+			if (cfg.srtimeout < 100)
+				cfg.srtimeout *= 1000;
 			return;
 		}
 #ifdef WITH_LB
@@ -682,15 +690,6 @@ void chk_t_global(const char *token, char *value)
 			if(!cs_malloc(&(cfg.emmlogdir), strlen(value) + 1, -1)) return;
 			memcpy(cfg.emmlogdir, value, strlen(value) + 1);
 		}
-		return;
-	}
-	if (!strcmp(token, "serialreadertimeout")) {
-		if (cfg.srtimeout < 100)
-			cfg.srtimeout = strtoul(value, NULL, 10) * 1000;
-		else
-			cfg.srtimeout = strtoul(value, NULL, 10);
-		if (cfg.srtimeout <= 0)
-			cfg.srtimeout = 1500;
 		return;
 	}
 
@@ -2152,8 +2151,6 @@ int32_t write_config(void)
 	if ((cfg.loghistorysize != 4096) || cfg.http_full_cfg)
 		fprintf_conf(f, "loghistorysize", "%u\n", cfg.loghistorysize);
 #endif
-	if (cfg.srtimeout != 1500 || cfg.http_full_cfg)
-		fprintf_conf(f, "serialreadertimeout", "%u\n", cfg.srtimeout);
 	if (cfg.max_log_size != 10 || cfg.http_full_cfg)
 		fprintf_conf(f, "maxlogsize", "%d\n", cfg.max_log_size);
 
