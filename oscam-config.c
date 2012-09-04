@@ -574,6 +574,7 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_INT("lb_auto_betatunnel_prefer_beta", OFS(lb_auto_betatunnel_prefer_beta), DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA ),
 	DEF_OPT_STR("lb_savepath"				, OFS(lb_savepath) ),
 #endif
+	DEF_OPT_STR("ecmfmt"					, OFS(ecmfmt) ),
 	DEF_OPT_INT("resolvegethostbyname"		, OFS(resolve_gethostbyname), 0 ),
 	DEF_OPT_INT("failbantime"				, OFS(failbantime),			0 ),
 	DEF_OPT_INT("failbancount"				, OFS(failbancount),		0 ),
@@ -663,11 +664,6 @@ void chk_t_global(const char *token, char *value)
 		return;
 	}
 #endif
-
-	if (!strcmp(token, "ecmfmt")) {
-		strncpy(cfg.ecmfmt, value, sizeof(cfg.ecmfmt));
-		return;
-	}
 
 	if (!strcmp(token, "double_check_caid")) {
 		if(strlen(value) == 0)
@@ -2136,9 +2132,6 @@ int32_t write_config(void)
 		free_mk_t(value);
 	}
 #endif
-
-	if (cfg.ecmfmt[0] || cfg.http_full_cfg)
-		fprintf_conf(f, "ecmfmt", "%s\n", cfg.ecmfmt);
 
 	if (cfg.double_check_caid.caid[0] || cfg.http_full_cfg) {
 		value = mk_t_caidtab(&cfg.double_check_caid);

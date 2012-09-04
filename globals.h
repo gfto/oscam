@@ -1646,7 +1646,7 @@ struct s_config
 	int8_t global_whitelist_use_l;
 	int8_t global_whitelist_use_m;
 
-	char ecmfmt[ECM_FMT_LEN];
+	char		*ecmfmt;
 
 	uint8_t max_pending;
 };
