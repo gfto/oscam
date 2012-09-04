@@ -1018,60 +1018,53 @@ void chk_t_camd35_tcp(char *token, char *value)
 		fprintf(stderr, "Warning: keyword '%s' in cs378x section not recognized\n", token);
 }
 
-void chk_t_newcamd(char *token, char *value)
-{
-	if (!strcmp(token, "port")) {
+static void porttab_newcamd_fn(const char *token, char *value, void *setting, FILE *f) {
+	PTAB *ptab = setting;
+	if (value) {
 		if(strlen(value) == 0) {
-			clear_ptab(&cfg.ncd_ptab);
-			return;
+			clear_ptab(ptab);
 		} else {
-			chk_port_tab(value, &cfg.ncd_ptab);
-			return;
+			chk_port_tab(value, ptab);
 		}
+		return;
 	}
+	value = mk_t_newcamd_port();
+	fprintf_conf(f, token, "%s\n", value);
+	free_mk_t(value);
+}
 
-	if (!strcmp(token, "serverip")) {
-		if(strlen(value) == 0) {
-			set_null_ip(&cfg.ncd_srvip);
-			return;
-		} else {
-			cs_inet_addr(value, &cfg.ncd_srvip);
-			return;
-		}
-	}
-
-	if (!strcmp(token, "allowed")) {
-		if(strlen(value) == 0) {
-			clear_sip(&cfg.ncd_allowed);
-			return;
-		} else {
-			chk_iprange(value, &cfg.ncd_allowed);
-			return;
-		}
-	}
-
-	if (!strcmp(token, "key")) {
-		if(strlen(value) == 0){
+static void newcamd_key_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
+	if (value) {
+		if (strlen(value) == 0) {
 			memset(cfg.ncd_key, 0, sizeof(cfg.ncd_key));
-			return;
-		}
-		if (key_atob_l(value, cfg.ncd_key, 28)) {
+		} else if (key_atob_l(value, cfg.ncd_key, 28)) {
 			fprintf(stderr, "Configuration newcamd: Error in Key\n");
 			memset(cfg.ncd_key, 0, sizeof(cfg.ncd_key));
 		}
 		return;
 	}
-
-	if (!strcmp(token, "keepalive")) {
-		cfg.ncd_keepalive = strToIntVal(value, DEFAULT_NCD_KEEPALIVE);
-		return;
+	fprintf_conf(f, token, "");
+	unsigned int i;
+	for (i = 0; i < 14; i++) {
+		fprintf(f,"%02X", cfg.ncd_key[i]);
 	}
+	fprintf(f,"\n");
+}
 
-	if (!strcmp(token, "mgclient")) {
-		cfg.ncd_mgclient = strToIntVal(value, 0);
+static const struct config_list newcamd_opts[] = {
+	DEF_OPT_FUNC("port"						, OFS(ncd_ptab),			porttab_newcamd_fn ),
+	DEF_OPT_FUNC("serverip"					, OFS(ncd_srvip),			serverip_fn ),
+	DEF_OPT_FUNC("allowed"					, OFS(ncd_allowed),			iprange_fn ),
+	DEF_OPT_FUNC("key"						, OFS(ncd_key),				newcamd_key_fn ),
+	DEF_OPT_INT("keepalive"					, OFS(ncd_keepalive),		DEFAULT_NCD_KEEPALIVE ),
+	DEF_OPT_INT("mgclient"					, OFS(ncd_mgclient),		0 ),
+	DEF_LAST_OPT
+};
+
+void chk_t_newcamd(char *token, char *value)
+{
+	if (config_list_parse(newcamd_opts, token, value, &cfg))
 		return;
-	}
-
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in newcamd section not recognized\n", token);
 }
@@ -2088,27 +2081,9 @@ int32_t write_config(void)
 	}
 
 	/*newcamd*/
-	if ((cfg.ncd_ptab.nports > 0) && (cfg.ncd_ptab.ports[0].s_port > 0)){
-
+	if (cfg.ncd_ptab.nports > 0 && cfg.ncd_ptab.ports[0].s_port > 0) {
 		fprintf(f,"[newcamd]\n");
-
-		value = mk_t_newcamd_port();
-		fprintf_conf(f, "port", "%s\n", value);
-		free_mk_t(value);
-
-		if (IP_ISSET(cfg.ncd_srvip))
-			fprintf_conf(f, "serverip", "%s\n", cs_inet_ntoa(cfg.ncd_srvip));
-		fprintf_conf(f, "key", "");
-		for (i = 0; i < 14; i++) fprintf(f,"%02X", cfg.ncd_key[i]);
-		fprintf(f,"\n");
-		value = mk_t_iprange(cfg.ncd_allowed);
-		if(strlen(value) > 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "allowed", "%s\n", value);
-		free_mk_t(value);
-		if(cfg.ncd_keepalive != DEFAULT_NCD_KEEPALIVE || cfg.http_full_cfg)
-			fprintf_conf(f, "keepalive", "%d\n", cfg.ncd_keepalive);
-		if(cfg.ncd_mgclient != 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "mgclient", "%d\n", cfg.ncd_mgclient);
+		config_list_save(f, newcamd_opts, &cfg, cfg.http_full_cfg);
 		fprintf(f,"\n");
 	}
 
