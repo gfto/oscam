@@ -567,6 +567,20 @@ static void loghistorysize_fn(const char *token, char *value, void *UNUSED(setti
 }
 #endif
 
+static void serverip_fn(const char *token, char *value, void *setting, FILE *f) {
+	IN_ADDR_T srvip = *(IN_ADDR_T *)setting;
+	if (value) {
+		if (strlen(value) == 0) {
+			set_null_ip(&srvip);
+		} else {
+			cs_inet_addr(value, &srvip);
+		}
+		return;
+	}
+	if (IP_ISSET(srvip) || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%s\n", cs_inet_ntoa(srvip));
+}
+
 #define OFS(X) \
 	offsetof(struct s_config, X)
 
@@ -578,6 +592,7 @@ static const struct config_list global_opts[] = {
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 	DEF_OPT_FUNC("loghistorysize"			, OFS(loghistorysize),		loghistorysize_fn ),
 #endif
+	DEF_OPT_FUNC("serverip"					, OFS(srvip),				serverip_fn ),
 	DEF_OPT_UINT("disableuserfile"			, OFS(disableuserfile),		1 ),
 	DEF_OPT_INT("disablemail"				, OFS(disablemail),			1 ),
 	DEF_OPT_INT("usrfileflag"				, OFS(usrfileflag),			0 ),
@@ -642,16 +657,6 @@ void chk_t_global(const char *token, char *value)
 
 	if (config_list_parse(global_opts, token, value, &cfg))
 		return;
-
-	if (!strcmp(token, "serverip")) {
-		if (strlen(value) == 0) {
-			set_null_ip(&cfg.srvip);
-			return;
-		} else {
-			cs_inet_addr(value, &cfg.srvip);
-			return;
-		}
-	}
 
 	if (!strcmp(token, "logfile")) {
 		cfg.logtostdout = 0;
@@ -2132,8 +2137,6 @@ int32_t write_config(void)
 	fprintf(f,"[global]\n");
 	config_list_save(f, global_opts, &cfg, cfg.http_full_cfg);
 
-	if (IP_ISSET(cfg.srvip) || cfg.http_full_cfg)
-		fprintf_conf(f, "serverip", "%s\n", cs_inet_ntoa(cfg.srvip));
 	if (cfg.logfile || cfg.logtostdout == 1 || cfg.logtosyslog == 1 || cfg.http_full_cfg){
 		value = mk_t_logfile();
 		fprintf_conf(f, "logfile", "%s\n", value);
