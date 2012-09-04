@@ -368,8 +368,6 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR *newatr)
   }
 
 
-  unsigned char ins36[5] = { 0xD0,0x36,0x00,0x00,0x00 };
-  static const unsigned char ins5e[5] = { 0xD0,0x5E,0x00,0x0C,0x02 };
   unsigned char boxID [4];
 
   if (reader->boxid > 0) {
@@ -379,9 +377,12 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR *newatr)
         boxID[i] = (reader->boxid >> (8 * (3 - i))) % 0x100;
     }
   } else {
+    unsigned char ins36[5] = { 0xD0,0x36,0x00,0x00,0x00 };
+    static const unsigned char ins5e[5] = { 0xD0,0x5E,0x00,0x0C,0x02 };
+
     /* we can try to get the boxid from the card */
     int32_t boxidOK=0;
-    if((ins36[4]=read_cmd_len(reader,ins36))==0 && cmd_exists(reader,ins5e)) {
+    if(((ins36[4]=read_cmd_len(reader,ins36)) < 1) && cmd_exists(reader,ins5e)) {
         if(!write_cmd_vg(ins5e,NULL) || !status_ok(cta_res+2)){
           rdr_log(reader, "classD0 ins5e: failed");
         } else {
@@ -423,8 +424,8 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR *newatr)
               i+=5;
               break;
             case 0xF3: /* boxID */
-                  memcpy(boxID,buff+i+1,sizeof(boxID));
-                  boxidOK=1;
+              memcpy(boxID,buff+i+1,sizeof(boxID));
+              boxidOK=1;
               i+=5;
               break;
             case 0xF6:
