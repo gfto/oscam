@@ -919,54 +919,39 @@ void chk_t_webif(char *token, char *value)
 }
 #endif
 
+static void camd33_key_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
+	if (value) {
+		cfg.c33_crypted = 1;
+		if (!strlen(value))
+			cfg.c33_crypted = 0;
+		else if (key_atob_l(value, cfg.c33_key, 32)) {
+			cfg.c33_crypted = 0;
+			memset(cfg.c33_key, 0, sizeof(cfg.c33_key));
+			fprintf(stderr, "ERROR: camd3.3 config error in 'key'.\n");
+		}
+		return;
+	}
+	unsigned int i;
+	fprintf_conf(f, token, "");
+	for (i = 0; i < sizeof(cfg.c33_key); i++) {
+		fprintf(f, "%02X", cfg.c33_key[i]);
+	}
+	fprintf(f, "\n");
+}
+
+static const struct config_list camd33_opts[] = {
+	DEF_OPT_INT("port"						, OFS(c33_port),				0 ),
+	DEF_OPT_FUNC("serverip"					, OFS(c33_srvip),				serverip_fn ),
+	DEF_OPT_FUNC("nocrypt"					, OFS(c33_plain),				iprange_fn ),
+	DEF_OPT_INT("passive"					, OFS(c33_passive),				0 ),
+	DEF_OPT_FUNC("key"						, OFS(c33_key),					camd33_key_fn ),
+	DEF_LAST_OPT
+};
 
 void chk_t_camd33(char *token, char *value)
 {
-	if (!strcmp(token, "port")) {
-		cfg.c33_port = strToIntVal(value, 0);
+	if (config_list_parse(camd33_opts, token, value, &cfg))
 		return;
-	}
-
-	if (!strcmp(token, "serverip")) {
-		if(strlen(value) == 0) {
-			set_null_ip(&cfg.c33_srvip);
-			return;
-		} else {
-			cs_inet_addr(value, &cfg.c33_srvip);
-			return;
-		}
-	}
-
-	if (!strcmp(token, "nocrypt")) {
-		if(strlen(value) == 0) {
-			clear_sip(&cfg.c33_plain);
-			return;
-		} else {
-			chk_iprange(value, &cfg.c33_plain);
-			return;
-		}
-	}
-
-	if (!strcmp(token, "passive")) {
-		cfg.c33_passive = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "key")) {
-		if(strlen(value) == 0) {
-			cfg.c33_crypted = 0;
-			return;
-		}
-		if (key_atob_l(value, cfg.c33_key, 32)) {
-			fprintf(stderr, "Configuration camd3.3x: Error in Key\n");
-			cfg.c33_crypted = 0;
-			memset(cfg.c33_key, 0, sizeof(cfg.c33_key));
-			return;
-		}
-		cfg.c33_crypted=1;
-		return;
-	}
-
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in camd33 section not recognized\n",token);
 }
@@ -2151,18 +2136,9 @@ int32_t write_config(void)
 	}
 
 	/*camd3.3*/
-	if ( cfg.c33_port > 0) {
+	if (cfg.c33_port > 0) {
 		fprintf(f,"[camd33]\n");
-		fprintf_conf(f, "port", "%d\n", cfg.c33_port);
-		if (IP_ISSET(cfg.c33_srvip))
-			fprintf_conf(f, "serverip", "%s\n", cs_inet_ntoa(cfg.c33_srvip));
-		if(cfg.c33_passive != 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "passive", "%d\n", cfg.c33_passive);
-		fprintf_conf(f, "key", ""); for (i = 0; i < (int) sizeof(cfg.c33_key); ++i) fprintf(f,"%02X", cfg.c33_key[i]); fputc((int)'\n', f);
-		value = mk_t_iprange(cfg.c33_plain);
-		if(strlen(value) > 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "nocrypt", "%s\n", value);
-		free_mk_t(value);
+		config_list_save(f, camd33_opts, &cfg, cfg.http_full_cfg);
 		fprintf(f,"\n");
 	}
 
