@@ -528,6 +528,8 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_INT("block_same_name"			, OFS(block_same_name),		1 ),
 #ifdef WITH_LB
 	DEF_OPT_INT("lb_mode"					, OFS(lb_mode),				DEFAULT_LB_MODE ),
+	DEF_OPT_INT("lb_save"					, OFS(lb_save),				0 ),
+	DEF_OPT_INT("lb_nbest_readers"			, OFS(lb_nbest_readers),	DEFAULT_NBEST ),
 	DEF_OPT_INT("lb_nfb_readers"			, OFS(lb_nfb_readers),		DEFAULT_NFB ),
 	DEF_OPT_INT("lb_min_ecmcount"			, OFS(lb_min_ecmcount),		DEFAULT_MIN_ECM_COUNT ),
 	DEF_OPT_INT("lb_max_ecmcount"			, OFS(lb_max_ecmcount),		DEFAULT_MAX_ECM_COUNT ),
@@ -556,7 +558,25 @@ void chk_t_global(const char *token, char *value)
 	char *saveptr1 = NULL;
 
 	if (config_list_parse(global_opts, token, value, &cfg))
+	{
+		// Apply the needed fixups
+#ifdef WITH_LB
+		if (streq(token, "lb_save")) {
+			if (cfg.lb_save > 0 && cfg.lb_save < 100) {
+				fprintf(stderr, "WARNING: %s (%d) was corrected to the minimum: %d\n",
+					token, cfg.lb_save, 100);
+				cfg.lb_save = 100;
+			}
+			return;
+		}
+		if (streq(token, "lb_nbest_readers")) {
+			if (cfg.lb_nbest_readers < 2)
+				cfg.lb_nbest_readers = DEFAULT_NBEST;
+			return;
+		}
+#endif
 		return;
+	}
 
 	if (!strcmp(token, "disablelog")) {
 		cs_disable_log(strToIntVal(value, 0));
@@ -687,22 +707,6 @@ void chk_t_global(const char *token, char *value)
 
 
 #ifdef WITH_LB
-	if (!strcmp(token, "readerautoloadbalance_save") || !strcmp(token, "lb_save")) {
-		cfg.lb_save = strToIntVal(value, 0);
-		if (cfg.lb_save  > 0 && cfg.lb_save  < 100) {
-			cfg.lb_save = 100;
-			fprintf(stderr, "Warning: '%s' corrected to the minimum -> 100\n", token);
-		}
-		return;
-	}
-
-	if (!strcmp(token, "lb_nbest_readers")) {
-		cfg.lb_nbest_readers = strToIntVal(value, DEFAULT_NBEST);
-		if (cfg.lb_nbest_readers < 2)
-			cfg.lb_nbest_readers = DEFAULT_NBEST;
-		return;
-	}
-
 	if (!strcmp(token, "lb_retrylimits")) {
 		chk_caidvaluetab(value, &cfg.lb_retrylimittab, 50);
 		return;
@@ -2165,10 +2169,6 @@ int32_t write_config(void)
 		fprintf_conf(f, "maxlogsize", "%d\n", cfg.max_log_size);
 
 #ifdef WITH_LB
-	if (cfg.lb_save || cfg.http_full_cfg)
-		fprintf_conf(f, "lb_save", "%d\n", cfg.lb_save);
-	if (cfg.lb_nbest_readers != DEFAULT_NBEST || cfg.http_full_cfg)
-		fprintf_conf(f, "lb_nbest_readers", "%d\n", cfg.lb_nbest_readers);
 	if (cfg.lb_retrylimittab.n > 0 || cfg.http_full_cfg) {
 		char *value = mk_t_caidvaluetab(&cfg.lb_retrylimittab);
 		fprintf_conf(f, "lb_retrylimits", "%s\n", value);
