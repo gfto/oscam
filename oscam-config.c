@@ -127,6 +127,81 @@ static void fprintf_conf(FILE *f, const char *varname, const char *fmtstring, ..
 	}
 }
 
+enum opt_types {
+	OPT_UNKNOWN = 0,
+	OPT_INT     = 1 << 1,
+	OPT_UINT    = 1 << 2,
+};
+
+struct config_list {
+	enum opt_types	opt_type;
+	char			*config_name;
+	size_t			var_offset;
+	long			default_value;
+};
+
+#define DEF_OPT_INT(__name, __var_ofs, __default) \
+	{ \
+		.opt_type		= OPT_INT, \
+		.config_name	= __name, \
+		.var_offset		= __var_ofs, \
+		.default_value	= __default \
+	}
+
+#define DEF_OPT_UINT(__name, __var_ofs, __default) \
+	{ \
+		.opt_type		= OPT_UINT, \
+		.config_name	= __name, \
+		.var_offset		= __var_ofs, \
+		.default_value	= __default \
+	}
+
+static int config_list_parse(const struct config_list *clist, const char *token, char *value, void *config_data) {
+	const struct config_list *c;
+	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
+		if (strcasecmp(token, c->config_name) != 0)
+			continue;
+		void *cfg = config_data + c->var_offset;
+		switch (c->opt_type) {
+		case OPT_INT: {
+			*(int32_t *)cfg = strToIntVal(value, c->default_value);
+			return 1;
+		}
+		case OPT_UINT: {
+			*(uint32_t *)cfg = strToUIntVal(value, c->default_value);
+			return 1;
+		}
+		case OPT_UNKNOWN: {
+			fprintf(stderr, "Unknown config type (%s = %s).", token, value);
+			break;
+		}
+		}
+	}
+	return 0;
+}
+
+static void config_list_save(FILE *f, const struct config_list *clist, void *config_data, int save_all) {
+	const struct config_list *c;
+	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
+		void *cfg = config_data + c->var_offset;
+		switch (c->opt_type) {
+		case OPT_INT: {
+			int32_t val = *(int32_t *)cfg;
+			if (save_all || val != c->default_value)
+				fprintf_conf(f, c->config_name, "%d\n", val);
+			continue;
+		}
+		case OPT_UINT: {
+			uint32_t val = *(uint32_t *)cfg;
+			if (save_all || val != (uint32_t)c->default_value)
+				fprintf_conf(f, c->config_name, "%u\n", val);
+			continue;
+		}
+		case OPT_UNKNOWN:
+			break;
+		}
+	}
+}
 
 #ifdef DEBUG_SIDTAB
 static void show_sidtab(struct s_sidtab *sidtab)
@@ -424,9 +499,16 @@ static void chk_srvip(char *value, in_addr_t *ip)
 }
 #endif
 
+static const struct config_list global_opts[] = {
+	{ OPT_UNKNOWN } /* The end */
+};
+
 void chk_t_global(const char *token, char *value)
 {
 	char *saveptr1 = NULL;
+
+	if (config_list_parse(global_opts, token, value, &cfg))
+		return;
 
 #if defined(QBOXHD) || defined(__arm__)
 	if (!strcmp(token, "enableled")) {
@@ -2187,6 +2269,8 @@ int32_t write_config(void)
 
 	/*global settings*/
 	fprintf(f,"[global]\n");
+	config_list_save(f, global_opts, &cfg, cfg.http_full_cfg);
+
 	if (IP_ISSET(cfg.srvip) || cfg.http_full_cfg)
 		fprintf_conf(f, "serverip", "%s\n", cs_inet_ntoa(cfg.srvip));
 	if (cfg.usrfile != NULL || cfg.http_full_cfg)
