@@ -132,6 +132,7 @@ enum opt_types {
 	OPT_INT     = 1 << 1,
 	OPT_UINT    = 1 << 2,
 	OPT_STRING  = 1 << 3,
+	OPT_FUNC    = 1 << 4,
 };
 
 struct config_list {
@@ -139,6 +140,7 @@ struct config_list {
 	char			*config_name;
 	size_t			var_offset;
 	long			default_value;
+	void			(*process_fn)(const char *token, char *value, void *setting, FILE *config_file);
 };
 
 #define DEF_OPT_INT(__name, __var_ofs, __default) \
@@ -164,6 +166,14 @@ struct config_list {
 		.var_offset		= __var_ofs \
 	}
 
+#define DEF_OPT_FUNC(__name, __var_ofs, __process_fn) \
+	{ \
+		.opt_type		= OPT_FUNC, \
+		.config_name	= __name, \
+		.var_offset		= __var_ofs, \
+		.process_fn		= __process_fn \
+	}
+
 static int config_list_parse(const struct config_list *clist, const char *token, char *value, void *config_data) {
 	const struct config_list *c;
 	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
@@ -184,6 +194,11 @@ static int config_list_parse(const struct config_list *clist, const char *token,
 			NULLFREE(*scfg);
 			if (strlen(value))
 				*scfg = strdup(value);
+			return 1;
+		}
+		case OPT_FUNC: {
+			if (c->process_fn)
+				c->process_fn(token, value, cfg, NULL);
 			return 1;
 		}
 		case OPT_UNKNOWN: {
@@ -218,6 +233,11 @@ static void config_list_save(FILE *f, const struct config_list *clist, void *con
 				if (*val && strlen(*val))
 					fprintf_conf(f, c->config_name, "%s\n", *val);
 			}
+			continue;
+		}
+		case OPT_FUNC: {
+			if (c->process_fn)
+				c->process_fn((const char *)c->config_name, NULL, cfg, f);
 			continue;
 		}
 		case OPT_UNKNOWN:
