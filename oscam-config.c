@@ -519,6 +519,7 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_INT("unlockparental"			, OFS(ulparent),			0 ),
 	DEF_OPT_INT("nice"						, OFS(nice),				99 ),
 	DEF_OPT_INT("serialreadertimeout"		, OFS(srtimeout),			1500 ),
+	DEF_OPT_INT("maxlogsize"				, OFS(max_log_size),		10 ),
 	DEF_OPT_INT("waitforcards"				, OFS(waitforcards),		1 ),
 	DEF_OPT_INT("waitforcards_extra_delay"	, OFS(waitforcards_extra_delay), 500 ),
 	DEF_OPT_INT("preferlocalcards"			, OFS(preferlocalcards),	0 ),
@@ -586,6 +587,11 @@ void chk_t_global(const char *token, char *value)
 				cfg.srtimeout = 1500;
 			if (cfg.srtimeout < 100)
 				cfg.srtimeout *= 1000;
+			return;
+		}
+		if (streq(token, "maxlogsize")) {
+			if (cfg.max_log_size != 0 && cfg.max_log_size <= 10)
+				cfg.max_log_size = 10;
 			return;
 		}
 #ifdef WITH_LB
@@ -692,13 +698,6 @@ void chk_t_global(const char *token, char *value)
 		}
 		return;
 	}
-
-	if (!strcmp(token, "maxlogsize")) {
-		cfg.max_log_size = strToIntVal(value, 10);
-		if(cfg.max_log_size != 0 && cfg.max_log_size <= 10) cfg.max_log_size = 10;
-		return;
-	}
-
 
 #ifdef WITH_LB
 	if (!strcmp(token, "lb_retrylimits")) {
@@ -2151,8 +2150,6 @@ int32_t write_config(void)
 	if ((cfg.loghistorysize != 4096) || cfg.http_full_cfg)
 		fprintf_conf(f, "loghistorysize", "%u\n", cfg.loghistorysize);
 #endif
-	if (cfg.max_log_size != 10 || cfg.http_full_cfg)
-		fprintf_conf(f, "maxlogsize", "%d\n", cfg.max_log_size);
 
 #ifdef WITH_LB
 	if (cfg.lb_retrylimittab.n > 0 || cfg.http_full_cfg) {
