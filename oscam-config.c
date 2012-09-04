@@ -613,6 +613,22 @@ static void logfile_fn(const char *token, char *value, void *UNUSED(setting), FI
 	}
 }
 
+static void check_caid_fn(const char *token, char *value, void *setting, FILE *f) {
+	CAIDTAB *caid_table = setting;
+	if (value) {
+		if (strlen(value) == 0)
+			clear_caidtab(caid_table);
+		else
+			chk_caidtab(value, caid_table);
+		return;
+	}
+	if (caid_table->caid[0] || cfg.http_full_cfg) {
+		value = mk_t_caidtab(caid_table);
+		fprintf_conf(f, token, "%s\n", value);
+		free_mk_t(value);
+	}
+}
+
 #define OFS(X) \
 	offsetof(struct s_config, X)
 
@@ -670,7 +686,9 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_INT("lb_auto_betatunnel"		, OFS(lb_auto_betatunnel),	DEFAULT_LB_AUTO_BETATUNNEL ),
 	DEF_OPT_INT("lb_auto_betatunnel_prefer_beta", OFS(lb_auto_betatunnel_prefer_beta), DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA ),
 	DEF_OPT_STR("lb_savepath"				, OFS(lb_savepath) ),
+	DEF_OPT_FUNC("lb_noproviderforcaid"		, OFS(lb_noproviderforcaid), check_caid_fn ),
 #endif
+	DEF_OPT_FUNC("double_check_caid"		, OFS(double_check_caid),	check_caid_fn ),
 	DEF_OPT_STR("ecmfmt"					, OFS(ecmfmt) ),
 	DEF_OPT_INT("resolvegethostbyname"		, OFS(resolve_gethostbyname), 0 ),
 	DEF_OPT_INT("failbantime"				, OFS(failbantime),			0 ),
@@ -699,23 +717,7 @@ void chk_t_global(const char *token, char *value)
 		chk_caidvaluetab(value, &cfg.lb_nbest_readers_tab, 1);
 		return;
 	}
-
-	if (!strcmp(token, "lb_noproviderforcaid")) {
-		if(strlen(value) == 0)
-        		clear_caidtab(&cfg.lb_noproviderforcaid);
-		else
-			chk_caidtab(value, &cfg.lb_noproviderforcaid);
-		return;
-	}
 #endif
-
-	if (!strcmp(token, "double_check_caid")) {
-		if(strlen(value) == 0)
-	        	clear_caidtab(&cfg.double_check_caid);
-		else
-			chk_caidtab(value, &cfg.double_check_caid);
-		return;
-	}
 
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in global section not recognized\n", token);
@@ -2155,19 +2157,7 @@ int32_t write_config(void)
 		fprintf_conf(f, "lb_nbest_percaid", "%s\n", value);
 		free_mk_t(value);
 	}
-
-	if (cfg.lb_noproviderforcaid.caid[0] || cfg.http_full_cfg) {
-		value = mk_t_caidtab(&cfg.lb_noproviderforcaid);
-		fprintf_conf(f, "lb_noproviderforcaid", "%s\n", value);
-		free_mk_t(value);
-	}
 #endif
-
-	if (cfg.double_check_caid.caid[0] || cfg.http_full_cfg) {
-		value = mk_t_caidtab(&cfg.double_check_caid);
-		fprintf_conf(f, "double_check_caid", "%s\n", value);
-		free_mk_t(value);
-	}
 
 	fputc((int)'\n', f);
 
