@@ -1207,34 +1207,18 @@ void chk_t_dvbapi(char *token, char *value)
 #endif
 
 #ifdef LCDSUPPORT
+static const struct config_list lcd_opts[] = {
+	DEF_OPT_INT("enablelcd"					, OFS(enablelcd),			0 ),
+	DEF_OPT_STR("lcd_outputpath"			, OFS(lcd_output_path) ),
+	DEF_OPT_INT("lcd_hideidle"				, OFS(lcd_hide_idle),		0 ),
+	DEF_OPT_INT("lcd_writeintervall"		, OFS(lcd_write_intervall),	10 ),
+	DEF_LAST_OPT
+};
+
 void chk_t_lcd(char *token, char *value)
 {
-	if (!strcmp(token, "enablelcd")) {
-		cfg.enablelcd = strToIntVal(value, 0);
+	if (config_list_parse(lcd_opts, token, value, &cfg))
 		return;
-	}
-
-	if (!strcmp(token, "lcd_outputpath")) {
-		NULLFREE(cfg.lcd_output_path);
-		if (strlen(value) > 0) {
-			if(!cs_malloc(&(cfg.lcd_output_path), strlen(value) + 1, -1)) return;
-			memcpy(cfg.lcd_output_path, value, strlen(value) + 1);
-		}
-		return;
-	}
-
-	if (!strcmp(token, "lcd_hideidle")) {
-		cfg.lcd_hide_idle = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "lcd_writeintervall")) {
-		cfg.lcd_write_intervall = strToIntVal(value, 10);
-		if (cfg.lcd_write_intervall < 5)
-			cfg.lcd_write_intervall = 5;
-		return;
-	}
-
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in lcd section not recognized\n",token);
 }
@@ -1516,6 +1500,11 @@ int32_t init_config(void)
 
 	if (cfg.lb_nbest_readers < 2)
 		cfg.lb_nbest_readers = DEFAULT_NBEST;
+#endif
+
+#ifdef LCDSUPPORT
+	if (cfg.lcd_write_intervall < 5)
+		cfg.lcd_write_intervall = 5;
 #endif
 
 	cs_init_log();
@@ -2041,17 +2030,11 @@ int32_t write_config(void)
 #endif
 
 #ifdef LCDSUPPORT
-	fprintf(f,"[lcd]\n");
-	if (cfg.enablelcd || cfg.http_full_cfg)
-		fprintf_conf(f, "enablelcd", "%d\n", cfg.enablelcd);
-	if(cfg.lcd_output_path != NULL) {
-		if(strlen(cfg.lcd_output_path) > 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "lcd_outputpath", "%s\n", cfg.lcd_output_path);
+	if(cfg.enablelcd) {
+		fprintf(f,"[lcd]\n");
+		config_list_save(f, lcd_opts, &cfg, cfg.http_full_cfg);
+		fputc((int)'\n', f);
 	}
-	if(cfg.lcd_hide_idle != 0 || cfg.http_full_cfg)
-		fprintf_conf(f, "lcd_hideidle", "%d\n", cfg.lcd_hide_idle);
-	if(cfg.lcd_write_intervall != 10 || cfg.http_full_cfg)
-		fprintf_conf(f, "lcd_writeintervall", "%d\n", cfg.lcd_write_intervall);
 #endif
 
 	fclose(f);

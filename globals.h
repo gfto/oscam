@@ -1602,11 +1602,9 @@ struct s_config
 #if defined(QBOXHD) || defined(__arm__)
 	int32_t		enableled;							// 0=disabled led, 1=enable led for routers, 2=enable qboxhd led
 #endif
-#ifdef LCDSUPPORT
-	int8_t enablelcd;
-#endif
 
 #ifdef LCDSUPPORT
+	int32_t		enablelcd;
 	char		*lcd_output_path;
 	int32_t		lcd_hide_idle;
 	int32_t		lcd_write_intervall;
