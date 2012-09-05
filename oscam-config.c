@@ -1147,77 +1147,60 @@ void chk_t_gbox(char *token, char *value)
 }
 
 #ifdef HAVE_DVBAPI
-void chk_t_dvbapi(char *token, char *value)
-{
-	if (!strcmp(token, "enabled")) {
-		cfg.dvbapi_enabled = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "au")) {
-		cfg.dvbapi_au = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "pmt_mode")) {
-		cfg.dvbapi_pmtmode = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "request_mode")) {
-		cfg.dvbapi_requestmode = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "boxtype")) {
-		int32_t i;
-		for (i=1;i<=BOXTYPES;i++) {
-			if (strcmp(value, boxdesc[i])==0) {
-				cfg.dvbapi_boxtype=i;
-				return;
+static void dvbapi_boxtype_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
+	if (value) {
+		int i;
+		cfg.dvbapi_boxtype = 0;
+		for (i = 1; i <= BOXTYPES; i++) {
+			if (streq(value, boxdesc[i])) {
+				cfg.dvbapi_boxtype = i;
+				break;
 			}
 		}
-
-		cfg.dvbapi_boxtype=0;
 		return;
 	}
+	if (cfg.dvbapi_boxtype)
+		fprintf_conf(f, token, "%s\n", boxdesc[cfg.dvbapi_boxtype]);
+}
 
-	if (!strcmp(token, "user")) {
-		cs_strncpy(cfg.dvbapi_usr, value, sizeof(cfg.dvbapi_usr));
-		return;
-	}
-
-	if(!strcmp(token, "services")) {
+static void dvbapi_services_fn(const char *UNUSED(token), char *value, void *UNUSED(setting), FILE *UNUSED(f)) {
+	if (value)
 		chk_services(value, &cfg.dvbapi_sidtabok, &cfg.dvbapi_sidtabno);
-		return;
-	}
+	// THIS OPTION IS NOT SAVED
+}
 
-	//obsolete
-	if (!strcmp(token, "priority")) {
-		dvbapi_chk_caidtab(value, 'p');
-		return;
-	}
+static void dvbapi_caidtab_fn(const char *token, char *value, void *UNUSED(setting), FILE *UNUSED(f)) {
+	char cmd = ' ';
+	if (streq(token, "priority")) cmd = 'p';
+	if (streq(token, "ignore"))   cmd = 'i';
+	if (streq(token, "cw_delay")) cmd = 'd';
+	if (value && cmd != ' ')
+		dvbapi_chk_caidtab(value, cmd);
+	// THIS OPTION IS NOT SAVED
+}
 
-	if (!strcmp(token, "ignore")) {
-		dvbapi_chk_caidtab(value, 'i');
-		return;
-	}
+static const struct config_list dvbapi_opts[] = {
+	DEF_OPT_INT("enabled"					, OFS(dvbapi_enabled),		0 ),
+	DEF_OPT_INT("au"						, OFS(dvbapi_au),			0 ),
+	DEF_OPT_INT("pmt_mode"					, OFS(dvbapi_pmtmode),		0 ),
+	DEF_OPT_INT("request_mode"				, OFS(dvbapi_requestmode),	0 ),
+	DEF_OPT_INT("request_mode"				, OFS(dvbapi_requestmode),	0 ),
+	DEF_OPT_INT("reopenonzap"				, OFS(dvbapi_reopenonzap),	0 ),
+	DEF_OPT_INT("delayer"					, OFS(dvbapi_delayer),		0 ),
+	DEF_OPT_STR("user"						, OFS(dvbapi_usr) ),
+	DEF_OPT_FUNC("boxtype"					, OFS(dvbapi_boxtype),		dvbapi_boxtype_fn ),
+	DEF_OPT_FUNC("services"					, OFS(dvbapi_sidtabok),		dvbapi_services_fn ),
+	// OBSOLETE OPTIONS
+	DEF_OPT_FUNC("priority"					, 0,						dvbapi_caidtab_fn ),
+	DEF_OPT_FUNC("ignore"					, 0,						dvbapi_caidtab_fn ),
+	DEF_OPT_FUNC("cw_delay"					, 0,						dvbapi_caidtab_fn ),
+	DEF_LAST_OPT
+};
 
-	if (!strcmp(token, "cw_delay")) {
-		dvbapi_chk_caidtab(value, 'd');
+void chk_t_dvbapi(char *token, char *value)
+{
+	if (config_list_parse(dvbapi_opts, token, value, &cfg))
 		return;
-	}
-
-	if (!strcmp(token, "reopenonzap")) {
-		cfg.dvbapi_reopenonzap = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "delayer")) {
-		cfg.dvbapi_delayer = strToIntVal(value, 0);
-		return;
-	}
-
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in dvbapi section not recognized\n",token);
 }
@@ -2035,19 +2018,7 @@ int32_t write_config(void)
 	/*dvb-api*/
 	if (cfg.dvbapi_enabled > 0) {
 		fprintf(f,"[dvbapi]\n");
-		fprintf_conf(f, "enabled", "%d\n", cfg.dvbapi_enabled);
-		if(cfg.dvbapi_au != 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "au", "%d\n", cfg.dvbapi_au);
-		fprintf_conf(f, "boxtype", "%s\n", boxdesc[cfg.dvbapi_boxtype]);
-		fprintf_conf(f, "user", "%s\n", cfg.dvbapi_usr);
-		if(cfg.dvbapi_pmtmode != 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "pmt_mode", "%d\n", cfg.dvbapi_pmtmode);
-		if(cfg.dvbapi_requestmode != 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "request_mode", "%d\n", cfg.dvbapi_requestmode);
-		if(cfg.dvbapi_reopenonzap != 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "reopenonzap", "%d\n", cfg.dvbapi_reopenonzap);
-		if(cfg.dvbapi_delayer != 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "delayer", "%d\n", cfg.dvbapi_delayer);
+		config_list_save(f, dvbapi_opts, &cfg, cfg.http_full_cfg);
 		fputc((int)'\n', f);
 	}
 #endif

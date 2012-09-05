@@ -1575,16 +1575,16 @@ struct s_config
 #endif
 
 #ifdef HAVE_DVBAPI
-	int8_t		dvbapi_enabled;
-	int8_t		dvbapi_au;
-	char		dvbapi_usr[64];
+	int32_t		dvbapi_enabled;
+	int32_t		dvbapi_au;
+	char		*dvbapi_usr;
 	int8_t		dvbapi_boxtype;
-	int8_t		dvbapi_pmtmode;
-	int8_t		dvbapi_requestmode;
+	int32_t		dvbapi_pmtmode;
+	int32_t		dvbapi_requestmode;
 	SIDTABBITS	dvbapi_sidtabok;					// positiv services
 	SIDTABBITS	dvbapi_sidtabno;					// negative services
-	int8_t          dvbapi_reopenonzap;
-	int32_t         dvbapi_delayer;                                         // delayer ms, minimum time to write cw
+	int32_t		dvbapi_reopenonzap;
+	int32_t		dvbapi_delayer;						// delayer ms, minimum time to write cw
 #endif
 
 #ifdef CS_ANTICASC

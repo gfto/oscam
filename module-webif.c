@@ -917,8 +917,7 @@ static char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparam
 		tpl_printf(vars, TPLAPPEND, "BOXTYPE", "<option%s>%s</option>\n", cfg.dvbapi_boxtype == i ? " selected" : "", boxdesc[i]);
 	}
 
-	if(cfg.dvbapi_usr[0])
-		tpl_addVar(vars, TPLADD, "USER", cfg.dvbapi_usr);
+	tpl_addVar(vars, TPLADD, "USER", cfg.dvbapi_usr);
 
 	//PMT Mode
 	tpl_printf(vars, TPLADD, "TMP", "PMTMODESELECTED%d", cfg.dvbapi_pmtmode);

@@ -1969,9 +1969,10 @@ static void * dvbapi_main_local(void *cli) {
 
 	struct s_auth *account;
 	int32_t ok=0;
-	for (ok=0, account=cfg.account; (account) && (!ok); account=account->next)
-		if( (ok=!strcmp(cfg.dvbapi_usr, account->usr)) )
+	for (account = cfg.account; account; account=account->next) {
+		if ((ok = streq(cfg.dvbapi_usr, account->usr)))
 			break;
+	}
 	cs_auth_client(client, ok ? account : (struct s_auth *)(-1), "dvbapi");
 
 	memset(demux, 0, sizeof(struct demux_s) * MAX_DEMUX);
