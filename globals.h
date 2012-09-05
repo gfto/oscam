@@ -1613,11 +1613,11 @@ struct s_config
 #endif
 
 #ifdef MODULE_PANDORA
-	int8_t		pand_skip_send_dw;
+	int32_t		pand_skip_send_dw;
 	struct s_ip	*pand_allowed;
-	char        pand_usr[64];
-	char		pand_pass[64];
-	int8_t		pand_ecm;
+	char		*pand_usr;
+	char		*pand_pass;
+	int32_t		pand_ecm;
 	int32_t		pand_port;
 	IN_ADDR_T	pand_srvip;
 #endif

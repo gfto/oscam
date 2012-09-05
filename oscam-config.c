@@ -1081,48 +1081,21 @@ void chk_t_cccam(char *token, char *value)
 #endif
 
 #ifdef MODULE_PANDORA
+static const struct config_list pandora_opts[] = {
+	DEF_OPT_INT("pand_port"					, OFS(pand_port),			0 ),
+	DEF_OPT_FUNC("pand_srvid"				, OFS(pand_srvip),			serverip_fn ),
+	DEF_OPT_STR("pand_usr"					, OFS(pand_usr) ),
+	DEF_OPT_STR("pand_pass"					, OFS(pand_pass) ),
+	DEF_OPT_INT("pand_ecm"					, OFS(pand_ecm),			0 ),
+	DEF_OPT_INT("pand_skip_send_dw"			, OFS(pand_skip_send_dw),	0 ),
+	DEF_OPT_FUNC("pand_allowed"				, OFS(pand_allowed),		iprange_fn ),
+	DEF_LAST_OPT
+};
+
 void chk_t_pandora(char *token, char *value)
 {
-	if (!strcmp(token, "pand_skip_send_dw")) {
-		cfg.pand_skip_send_dw = strToIntVal(value, 0);
+	if (config_list_parse(pandora_opts, token, value, &cfg))
 		return;
-	}
-
-	if (!strcmp(token, "pand_allowed")) {
-		if (strlen(value) == 0) {
-			clear_sip(&cfg.pand_allowed);
-			return;
-		} else {
-			chk_iprange(value, &cfg.pand_allowed);
-			return;
-		}
-	}
-
-	if (!strcmp(token, "pand_usr")) {
-		cs_strncpy(cfg.pand_usr, value, sizeof(cfg.pand_usr));
-		return;
-	}
-
-	if (!strcmp(token, "pand_pass")) {
-		cs_strncpy(cfg.pand_pass, value, sizeof(cfg.pand_pass));
-		return;
-	}
-
-	if (!strcmp(token, "pand_ecm")) {
-		cfg.pand_ecm = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "pand_port")) {
-		cfg.pand_port = strToIntVal(value, 0);
-		return;
-	}
-
-	if(!strcmp(token, "pand_srvid")) {
-		cs_inet_addr(token, &cfg.pand_srvip);
-		return;
-	}
-
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in pandora section not recognized\n",token);
 }
@@ -2098,32 +2071,9 @@ int32_t write_config(void)
 
 #ifdef MODULE_PANDORA
 	/*pandora*/
-	if ( cfg.pand_port > 0) {
+	if (cfg.pand_port > 0) {
 		fprintf(f,"[pandora]\n");
-
-		if (cfg.pand_skip_send_dw || cfg.http_full_cfg)
-			fprintf_conf(f, "pand_skip_send_dw", "%d\n", cfg.pand_skip_send_dw);
-
-		value = mk_t_iprange(cfg.pand_allowed);
-		if(strlen(value) > 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "pand_allowed", "%s\n", value);
-		free_mk_t(value);
-
-		if (cfg.pand_usr[0] || cfg.http_full_cfg)
-			fprintf_conf(f, "pand_usr", "%s\n", cfg.pand_usr);
-
-		if (cfg.pand_pass[0] || cfg.http_full_cfg)
-			fprintf_conf(f, "pand_pass", "%s\n", cfg.pand_pass);
-
-		if (cfg.pand_ecm || cfg.http_full_cfg)
-			fprintf_conf(f, "pand_ecm", "%d\n", cfg.pand_ecm);
-
-		if (cfg.pand_port || cfg.http_full_cfg)
-			fprintf_conf(f, "pand_port", "%d\n", cfg.pand_port);
-
-		if (IP_ISSET(cfg.pand_srvip) || cfg.http_full_cfg)
-			fprintf_conf(f, "pand_srvip", "%s\n", cs_inet_ntoa(cfg.pand_srvip));
-
+		config_list_save(f, pandora_opts, &cfg, cfg.http_full_cfg);
 		fprintf(f,"\n");
 	}
 #endif

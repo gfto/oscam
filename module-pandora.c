@@ -116,11 +116,11 @@ int pandora_auth_client(struct s_client *cl, IN_ADDR_T ip) {
 	}
 #endif
 
-	for (ok = 0, account = cfg.account; (cfg.pand_usr[0]) && (account) && (!ok); account
-			= account->next)
-		if ((ok = (!strcmp(cfg.pand_usr, account->usr))))
-			if (cs_auth_client(cl, account, NULL))
-				cs_exit(0);
+	for (ok = 0, account = cfg.account; cfg.pand_usr && account && !ok; account = account->next) {
+		ok = streq(cfg.pand_usr, account->usr);
+		if (ok && cs_auth_client(cl, account, NULL))
+			cs_disconnect_client(cl);
+	}
 	if (!ok)
 		cs_auth_client(cl, (struct s_auth *) (-1), NULL);
 	return ok;
@@ -130,7 +130,7 @@ static void * pandora_server(struct s_client *cl, uchar *UNUSED(mbuf),
 		int32_t UNUSED(len)) {
 	uchar md5tmp[MD5_DIGEST_LENGTH];
 	if (!cl->init_done) {
-		if (cfg.pand_pass[0]) {
+		if (cfg.pand_pass) {
 			cl->pand_autodelay = 150000;
 			memcpy(cl->pand_md5_key,
 					MD5((uchar*)cfg.pand_pass, strlen(cfg.pand_pass), md5tmp), 16);
