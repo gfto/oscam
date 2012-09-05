@@ -567,16 +567,6 @@ static void chk_cccam_ports(char *value)
 }
 #endif
 
-#ifdef NOTUSED
-static void chk_srvip(char *value, in_addr_t *ip)
-{
-	int32_t i;
-	char *ptr, *saveptr1 = NULL;
-	for (i=0, ptr=strtok_r(value, ",", &saveptr1); ptr; ptr=strtok_r(NULL, ",", &saveptr1))
-		if (i<8) ip[i++] = inet_addr(ptr);
-}
-#endif
-
 static void disablelog_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
 	if (value) {
 		cs_disable_log(strToIntVal(value, 0));
