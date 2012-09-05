@@ -721,7 +721,7 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_INT("lb_reopen_mode"			, OFS(lb_reopen_mode),		DEFAULT_LB_REOPEN_MODE ),
 	DEF_OPT_INT("lb_max_readers"			, OFS(lb_max_readers),		0 ),
 	DEF_OPT_INT("lb_auto_betatunnel"		, OFS(lb_auto_betatunnel),	DEFAULT_LB_AUTO_BETATUNNEL ),
-	DEF_OPT_INT("lb_auto_betatunnel_prefer_beta", OFS(lb_auto_betatunnel_prefer_beta), DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA ),
+	DEF_OPT_INT("lb_auto_betatunnel_prefer_beta"	, OFS(lb_auto_betatunnel_prefer_beta), DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA ),
 	DEF_OPT_STR("lb_savepath"				, OFS(lb_savepath) ),
 	DEF_OPT_FUNC("lb_retrylimits"			, OFS(lb_retrylimittab), caidvaluetab_fn ),
 	DEF_OPT_FUNC("lb_nbest_percaid"			, OFS(lb_nbest_readers_tab), caidvaluetab_fn ),
