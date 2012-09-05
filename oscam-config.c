@@ -1130,31 +1130,18 @@ void chk_t_serial(char *token, char *value)
 		fprintf(stderr, "Warning: keyword '%s' in serial section not recognized\n", token);
 }
 
+static const struct config_list gbox_opts[] = {
+	DEF_OPT_INT("port"						, OFS(gbox_port),			0 ),
+	DEF_OPT_STR("gsmsfile"					, OFS(gbox_gsms_path) ),
+	DEF_OPT_STR("hostname"					, OFS(gbox_hostname) ),
+	DEF_OPT_STR("password"					, OFS(gbox_key) ),
+	DEF_LAST_OPT
+};
+
 void chk_t_gbox(char *token, char *value)
 {
-	if (!strcmp(token, "gsmsfile")) {
-		memset(cfg.gbox_gsms_path, 0, sizeof(cfg.gbox_gsms_path));
-		cs_strncpy(cfg.gbox_gsms_path, value, sizeof(cfg.gbox_gsms_path) - 1);
+	if (config_list_parse(gbox_opts, token, value, &cfg))
 		return;
-	}
-
-	if (!strcmp(token, "hostname")) {
-		memset(cfg.gbox_hostname, 0, sizeof(cfg.gbox_hostname));
-		cs_strncpy(cfg.gbox_hostname, value, sizeof(cfg.gbox_hostname) - 1);
-		return;
-	}
-
-	if (!strcmp(token, "password")) {
-		memset(cfg.gbox_key, 0, sizeof(cfg.gbox_key));
-		cs_strncpy(cfg.gbox_key, value, sizeof(cfg.gbox_key) - 1);
-		return;
-	}
-
-	if (!strcmp(token, "port")) {
-		cfg.gbox_port = strToIntVal(value, 0);
-		return;
-	}
-
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in gbox section not recognized\n",token);
 }
@@ -2022,9 +2009,7 @@ int32_t write_config(void)
 	/*gbox*/
 	if ( cfg.gbox_port > 0) {
 		fprintf(f,"[gbox]\n");
-		fprintf_conf(f, "hostname", "%s\n", cfg.gbox_hostname);
-		fprintf_conf(f, "port", "%d\n", cfg.gbox_port);
-		fprintf_conf(f, "password", "%s\n", cfg.gbox_key);
+		config_list_save(f, gbox_opts, &cfg, cfg.http_full_cfg);
 		fprintf(f,"\n");
 	}
 

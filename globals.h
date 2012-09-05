@@ -1530,9 +1530,9 @@ struct s_config
 	int32_t			cc_use_fixed_nodeid;
 	uint8_t			cc_fixed_nodeid[8];
 #endif
-	char			gbox_hostname[128];
-	char			gbox_key[10];
-	char			gbox_gsms_path[200];
+	char			*gbox_hostname;
+	char			*gbox_key;
+	char			*gbox_gsms_path;
 	int32_t			gbox_port;
 	struct s_ip 	*rad_allowed;
 	char			*rad_usr;

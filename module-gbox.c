@@ -305,7 +305,7 @@ static void gbox_handle_gsms(uint16_t peerid, char *gsms)
 {
 	cs_log("gbox: gsms received from peer %04x: %s", peerid, gsms);
 
-	if (strlen(cfg.gbox_gsms_path)) {
+	if (cfg.gbox_gsms_path) {
 		FILE *f = fopen(cfg.gbox_gsms_path, "a");
 		if (f) {
 			f//printf(f, "FROM %04X: %s\n", peerid, gsms);
@@ -824,13 +824,15 @@ static void gbox_send_dcw(struct s_client *cli, ECM_REQUEST *er)
 
 static int32_t gbox_client_init(struct s_client *cli)
 {
-	if (!strlen(cfg.gbox_hostname)) {
-		cs_log("gbox: error, no hostname configured in oscam.conf!");
+	if (!cfg.gbox_hostname || strlen(cfg.gbox_hostname) > 128) {
+		cs_log("gbox: error, no/invalid hostname '%s' configured in oscam.conf!",
+			cfg.gbox_hostname ? cfg.gbox_hostname : "");
 		return -1;
 	}
 
-	if (strlen(cfg.gbox_key) != 8) {
-		cs_log("gbox: error, no/invalid password '%s' configured in oscam.conf!", cfg.gbox_key);
+	if (!cfg.gbox_key || strlen(cfg.gbox_key) != 8) {
+		cs_log("gbox: error, no/invalid password '%s' configured in oscam.conf!",
+			cfg.gbox_key ? cfg.gbox_key : "");
 		return -1;
 	}
 
