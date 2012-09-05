@@ -551,22 +551,6 @@ static void chk_port_tab(char *portasc, PTAB *ptab)
 	free(newptab);
 }
 
-#ifdef MODULE_CCCAM
-static void chk_cccam_ports(char *value)
-{
-	int32_t i;
-	char *ptr, *saveptr1 = NULL;
-	uint16_t newcc_port[CS_MAXPORTS];
-	memset(newcc_port, 0, sizeof(newcc_port));
-
-	for (i=0, ptr=strtok_r(value, ",", &saveptr1); ptr && i<CS_MAXPORTS; ptr=strtok_r(NULL, ",", &saveptr1)) {
-		newcc_port[i] = atoi(ptr);
-		if (newcc_port[i]) i++;
-	}
-	memcpy(cfg.cc_port, newcc_port, sizeof(cfg.cc_port));
-}
-#endif
-
 static void disablelog_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
 	if (value) {
 		cs_disable_log(strToIntVal(value, 0));
@@ -1037,7 +1021,14 @@ void chk_t_newcamd(char *token, char *value)
 #ifdef MODULE_CCCAM
 static void cccam_port_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
 	if (value) {
-		chk_cccam_ports(value);
+		int i;
+		char *ptr, *saveptr1 = NULL;
+		memset(cfg.cc_port, 0, sizeof(cfg.cc_port));
+		for (i = 0, ptr = strtok_r(value, ",", &saveptr1); ptr && i < CS_MAXPORTS; ptr = strtok_r(NULL, ",", &saveptr1)) {
+			cfg.cc_port[i] = strtoul(ptr, NULL, 10);
+			if (cfg.cc_port[i])
+				i++;
+		}
 		return;
 	}
 	value = mk_t_cccam_port();
