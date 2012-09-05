@@ -382,7 +382,11 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR *newatr)
 
     /* we can try to get the boxid from the card */
     int32_t boxidOK=0;
-    if(((ins36[4]=read_cmd_len(reader,ins36)) < 1) && cmd_exists(reader,ins5e)) {
+    l=read_cmd_len(reader,ins36);
+    if(l > 0) {
+      ins36[4] = l;
+    }
+    else if(cmd_exists(reader,ins5e)) {
         if(!write_cmd_vg(ins5e,NULL) || !status_ok(cta_res+2)){
           rdr_log(reader, "classD0 ins5e: failed");
         } else {
