@@ -58,9 +58,9 @@ static void radegast_auth_client(IN_ADDR_T ip)
     cs_disconnect_client(cl);
   }
 
-  for (ok=0, account=cfg.account; (cfg.rad_usr[0]) && (account) && (!ok); account=account->next)
+  for (ok = 0, account = cfg.account; cfg.rad_usr && account && !ok; account = account->next)
   {
-    ok=(!strcmp(cfg.rad_usr, account->usr));
+    ok = streq(cfg.rad_usr, account->usr);
     if (ok && cs_auth_client(cl, account, NULL))
        cs_disconnect_client(cl);
   }

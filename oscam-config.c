@@ -1101,38 +1101,18 @@ void chk_t_pandora(char *token, char *value)
 }
 #endif
 
+static const struct config_list radegast_opts[] = {
+	DEF_OPT_INT("port"						, OFS(rad_port),			0 ),
+	DEF_OPT_FUNC("serverip"					, OFS(rad_srvip),			serverip_fn ),
+	DEF_OPT_FUNC("allowed"					, OFS(rad_allowed),			iprange_fn ),
+	DEF_OPT_STR("user"						, OFS(rad_usr) ),
+	DEF_LAST_OPT
+};
+
 void chk_t_radegast(char *token, char *value)
 {
-	if (!strcmp(token, "port")) {
-		cfg.rad_port = strToIntVal(value, 0);
+	if (config_list_parse(radegast_opts, token, value, &cfg))
 		return;
-	}
-
-	if (!strcmp(token, "serverip")) {
-		if(strlen(value) == 0) {
-			set_null_ip(&cfg.rad_srvip);
-			return;
-		} else {
-			cs_inet_addr(value, &cfg.rad_srvip);
-			return;
-		}
-	}
-
-	if (!strcmp(token, "allowed")) {
-		if(strlen(value) == 0) {
-			clear_sip(&cfg.rad_allowed);
-			return;
-		} else {
-			chk_iprange(value, &cfg.rad_allowed);
-			return;
-		}
-	}
-
-	if (!strcmp(token, "user")) {
-		cs_strncpy(cfg.rad_usr, value, sizeof(cfg.rad_usr));
-		return;
-	}
-
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in radegast section not recognized\n", token);
 }
@@ -2024,16 +2004,9 @@ int32_t write_config(void)
 	}
 
 	/*Radegast*/
-	if ( cfg.rad_port > 0) {
+	if (cfg.rad_port > 0) {
 		fprintf(f,"[radegast]\n");
-		fprintf_conf(f, "port", "%d\n", cfg.rad_port);
-		if (IP_ISSET(cfg.rad_srvip))
-			fprintf_conf(f, "serverip", "%s\n", cs_inet_ntoa(cfg.rad_srvip));
-		fprintf_conf(f, "user", "%s\n", cfg.rad_usr);
-		value = mk_t_iprange(cfg.rad_allowed);
-		if(strlen(value) > 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "allowed", "%s\n", value);
-		free_mk_t(value);
+		config_list_save(f, radegast_opts, &cfg, cfg.http_full_cfg);
 		fprintf(f,"\n");
 	}
 
