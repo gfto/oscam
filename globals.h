@@ -1142,7 +1142,7 @@ struct s_reader  									//contains device info, reader info and card info
 	uint32_t		cc_id;
 	int8_t			cc_keepalive;
 	int8_t			cc_hop;							// For non-cccam reader: hop for virtual cards
-	int8_t			cc_reshare;
+	int32_t			cc_reshare;
 	int32_t			cc_reconnect;					//reconnect on ecm-request timeout
 #endif
 	int8_t			tcp_connected;
@@ -1517,17 +1517,17 @@ struct s_config
 	IN_ADDR_T		rad_srvip;
 #ifdef MODULE_CCCAM
 	uint16_t		cc_port[CS_MAXPORTS];
-	int8_t			cc_reshare;
-	int8_t			cc_ignore_reshare;
+	int32_t			cc_reshare;
+	int32_t			cc_ignore_reshare;
 	int32_t			cc_update_interval;
 	IN_ADDR_T		cc_srvip;
 	char			cc_version[7];
-	int8_t			cc_minimize_cards;
-	int8_t			cc_keep_connected;
-	int8_t			cc_stealth;
-	int8_t			cc_reshare_services;
-	int8_t     		cc_forward_origin_card;
-	int8_t			cc_use_fixed_nodeid;
+	int32_t			cc_minimize_cards;
+	int32_t			cc_keep_connected;
+	int32_t			cc_stealth;
+	int32_t			cc_reshare_services;
+	int32_t			cc_forward_origin_card;
+	int32_t			cc_use_fixed_nodeid;
 	uint8_t			cc_fixed_nodeid[8];
 #endif
 	char			gbox_hostname[128];

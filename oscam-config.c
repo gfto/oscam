@@ -1045,82 +1045,55 @@ void chk_t_newcamd(char *token, char *value)
 }
 
 #ifdef MODULE_CCCAM
-void chk_t_cccam(char *token, char *value)
-{
-	if (!strcmp(token, "port")) {
+static void cccam_port_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
+	if (value) {
 		chk_cccam_ports(value);
 		return;
 	}
-	//if (!strcmp(token, "serverip")) { cfg.cc_srvip=cs_inet_addr(value); return; }
+	value = mk_t_cccam_port();
+	fprintf_conf(f, token, "%s\n", value);
+	free_mk_t(value);
+}
 
-	if (!strcmp(token, "reshare")) {
-		cfg.cc_reshare = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "stealth")) {
-		cfg.cc_stealth = strToIntVal(value, 1);
-		return;
-	}
-
-	if (!strcmp(token, "nodeid")) {
-		int8_t i, valid=0;
+static void cccam_nodeid_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
+	if (value) {
+		int i, valid = 0;
 		memset(cfg.cc_fixed_nodeid, 0, 8);
-		for (i=0;i<8 && value[i] != 0;i++) {
+		for (i = 0; i < 8 && value[i] != 0; i++) {
 			cfg.cc_fixed_nodeid[i] = gethexval(value[i*2]) << 4 | gethexval(value[i*2+1]);
 			if (cfg.cc_fixed_nodeid[i])
-				valid=1;
+				valid = 1;
 		}
 		cfg.cc_use_fixed_nodeid = valid && i == 8;
 		return;
 	}
-
-	if (!strcmp(token, "reshare_mode")) {
-		cfg.cc_reshare_services = strToIntVal(value, 0);
-		return;
+	if (cfg.cc_use_fixed_nodeid || cfg.http_full_cfg) {
+		fprintf_conf(f, token, "%02X%02X%02X%02X%02X%02X%02X%02X\n",
+			cfg.cc_fixed_nodeid[0], cfg.cc_fixed_nodeid[1], cfg.cc_fixed_nodeid[2], cfg.cc_fixed_nodeid[3],
+			cfg.cc_fixed_nodeid[4], cfg.cc_fixed_nodeid[5], cfg.cc_fixed_nodeid[6], cfg.cc_fixed_nodeid[7]);
 	}
+}
 
-	if (!strcmp(token, "ignorereshare")) {
-		cfg.cc_ignore_reshare = strToIntVal(value, 0);
+
+static const struct config_list cccam_opts[] = {
+	DEF_OPT_FUNC("port"						, OFS(cc_port),				cccam_port_fn ),
+	DEF_OPT_FUNC("nodeid"					, OFS(cc_fixed_nodeid),		cccam_nodeid_fn ),
+	DEF_OPT_SSTR("version"					, OFS(cc_version),			SIZEOF(cc_version) ),
+	DEF_OPT_INT("reshare"					, OFS(cc_reshare),			10 ),
+	DEF_OPT_INT("reshare_mode"				, OFS(cc_reshare_services),	0 ),
+	DEF_OPT_INT("ignorereshare"				, OFS(cc_ignore_reshare),	0 ),
+	DEF_OPT_INT("forward_origin_card"		, OFS(cc_forward_origin_card), 0 ),
+	DEF_OPT_INT("stealth"					, OFS(cc_stealth),			0 ),
+	DEF_OPT_INT("updateinterval"			, OFS(cc_update_interval),	DEFAULT_UPDATEINTERVAL ),
+	DEF_OPT_INT("minimizecards"				, OFS(cc_minimize_cards),	0 ),
+	DEF_OPT_INT("keepconnected"				, OFS(cc_keep_connected),	1 ),
+	DEF_LAST_OPT
+};
+
+void chk_t_cccam(char *token, char *value)
+{
+	if (config_list_parse(cccam_opts, token, value, &cfg))
 		return;
-	}
-
-	if (!strcmp(token, "forward_origin_card")) {
-		cfg.cc_forward_origin_card = strToIntVal(value, 0);
-		return;
-	}
-
-	// cccam version
-	if (!strcmp(token, "version")) {
-		memset(cfg.cc_version, 0, sizeof(cfg.cc_version));
-		if (strlen(value) > sizeof(cfg.cc_version) - 1) {
-			fprintf(stderr, "cccam config: version too long\n");
-		} else
-			cs_strncpy((char*)cfg.cc_version, value, sizeof(cfg.cc_version));
-		return;
-	}
-	// cccam: Update cards interval
-	if (!strcmp(token, "updateinterval")) {
-		if (value[0] == '-')
-			cfg.cc_update_interval = DEFAULT_UPDATEINTERVAL;
-		else
-			cfg.cc_update_interval = strToIntVal(value, DEFAULT_UPDATEINTERVAL);
-		return;
-	}
-
-	// cccam: Kind of card updates
-	if (!strcmp(token, "minimizecards")) {
-		cfg.cc_minimize_cards = strToIntVal(value, 0);
-		return;
-	}
-
-	// cccam: keep clients connected
-	if (!strcmp(token, "keepconnected")) {
-		cfg.cc_keep_connected = strToIntVal(value, 0);
-		return;
-	}
-
-
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in cccam section not recognized\n",token);
 }
@@ -2135,34 +2108,9 @@ int32_t write_config(void)
 
 #ifdef MODULE_CCCAM
 	/*cccam*/
-	if ( cfg.cc_port[0] > 0) {
+	if (cfg.cc_port[0] > 0) {
 		fprintf(f,"[cccam]\n");
-		value = mk_t_cccam_port();
-		fprintf_conf(f, "port", "%s\n", value);
-		free_mk_t(value);
-
-		if(cfg.cc_reshare != 10 || cfg.http_full_cfg)
-			fprintf_conf(f, "reshare", "%d\n", cfg.cc_reshare);
-		if(cfg.cc_ignore_reshare != 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "ignorereshare", "%d\n", cfg.cc_ignore_reshare);
-		if(cfg.cc_forward_origin_card != 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "forward_origin_card", "%d\n", cfg.cc_forward_origin_card);
-		if(cfg.cc_version || cfg.http_full_cfg)
-			fprintf_conf(f, "version", "%s\n", cfg.cc_version);
-		if(cfg.cc_update_interval != DEFAULT_UPDATEINTERVAL || cfg.http_full_cfg)
-			fprintf_conf(f, "updateinterval", "%d\n", cfg.cc_update_interval);
-		if(cfg.cc_minimize_cards != 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "minimizecards", "%d\n", cfg.cc_minimize_cards);
-		if(cfg.cc_keep_connected != 1 || cfg.http_full_cfg)
-			fprintf_conf(f, "keepconnected", "%d\n", cfg.cc_keep_connected);
-		if(cfg.cc_stealth != 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "stealth", "%d\n", cfg.cc_stealth);
-		if(cfg.cc_use_fixed_nodeid || cfg.http_full_cfg)
-			fprintf_conf(f, "nodeid", "%02X%02X%02X%02X%02X%02X%02X%02X\n",
-				cfg.cc_fixed_nodeid[0], cfg.cc_fixed_nodeid[1], cfg.cc_fixed_nodeid[2], cfg.cc_fixed_nodeid[3],
-				cfg.cc_fixed_nodeid[4], cfg.cc_fixed_nodeid[5], cfg.cc_fixed_nodeid[6], cfg.cc_fixed_nodeid[7]);
-		if(cfg.cc_reshare_services != 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "reshare_mode", "%d\n", cfg.cc_reshare_services);
+		config_list_save(f, cccam_opts, &cfg, cfg.http_full_cfg);
 		fprintf(f,"\n");
 	}
 #endif
