@@ -1052,7 +1052,10 @@ void * init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int32_t 
 	pthread_attr_init(&attr);
 	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
   oscam_init_serialdata(&param.serialdata);
-	cs_strncpy(sdevice, cfg.ser_device, sizeof(sdevice));
+	if (cfg.ser_device)
+		cs_strncpy(sdevice, cfg.ser_device, sizeof(sdevice));
+	else
+		memset(sdevice, 0, sizeof(sdevice));
 	param.ctyp=len;
 	char *p;
 	pthread_t temp;
