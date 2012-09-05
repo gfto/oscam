@@ -132,7 +132,8 @@ enum opt_types {
 	OPT_INT     = 1 << 1,
 	OPT_UINT    = 1 << 2,
 	OPT_STRING  = 1 << 3,
-	OPT_FUNC    = 1 << 4,
+	OPT_SSTRING = 1 << 4,
+	OPT_FUNC    = 1 << 5,
 };
 
 struct config_list {
@@ -140,6 +141,7 @@ struct config_list {
 	char			*config_name;
 	size_t			var_offset;
 	long			default_value;
+	unsigned int	str_size;
 	void			(*process_fn)(const char *token, char *value, void *setting, FILE *config_file);
 };
 
@@ -164,6 +166,14 @@ struct config_list {
 		.opt_type		= OPT_STRING, \
 		.config_name	= __name, \
 		.var_offset		= __var_ofs \
+	}
+
+#define DEF_OPT_SSTR(__name, __var_ofs, __str_size) \
+	{ \
+		.opt_type		= OPT_SSTRING, \
+		.config_name	= __name, \
+		.var_offset		= __var_ofs, \
+		.str_size		= __str_size \
 	}
 
 #define DEF_OPT_FUNC(__name, __var_ofs, __process_fn) \
@@ -199,6 +209,19 @@ static int config_list_parse(const struct config_list *clist, const char *token,
 			NULLFREE(*scfg);
 			if (strlen(value))
 				*scfg = strdup(value);
+			return 1;
+		}
+		case OPT_SSTRING: {
+			char *scfg = cfg;
+			scfg[0] = '\0';
+			unsigned int len = strlen(value);
+			if (len) {
+				strncpy(scfg, value, c->str_size - 1);
+				if (len > c->str_size) {
+					fprintf(stderr, "WARNING: Config value for '%s' (%s, len=%d) exceeds max length: %d (%s)\n",
+						token, value, len, c->str_size - 1, scfg);
+				}
+			}
 			return 1;
 		}
 		case OPT_FUNC: {
@@ -237,6 +260,13 @@ static void config_list_save(FILE *f, const struct config_list *clist, void *con
 			if (*val || save_all) {
 				if (*val && strlen(*val))
 					fprintf_conf(f, c->config_name, "%s\n", *val);
+			}
+			continue;
+		}
+		case OPT_SSTRING: {
+			char *val = cfg;
+			if (val[0] || save_all) {
+				fprintf_conf(f, c->config_name, "%s\n", val);
 			}
 			continue;
 		}
@@ -668,6 +698,9 @@ static void caidvaluetab_fn(const char *token, char *value, void *setting, FILE 
 
 #define OFS(X) \
 	offsetof(struct s_config, X)
+
+#define SIZEOF(X) \
+	sizeof(((struct s_config *)0)->X)
 
 static const struct config_list global_opts[] = {
 #if defined(QBOXHD) || defined(__arm__)
