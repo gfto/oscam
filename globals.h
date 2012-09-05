@@ -821,9 +821,9 @@ struct s_client {
 	time_t			lastecm;
 	time_t			expirationdate;
 	int32_t			allowedtimeframe[2];
-	int8_t			c35_suppresscmd08;
+	int32_t			c35_suppresscmd08;
 	uint8_t			c35_sleepsend;
-	int8_t			ncd_keepalive;
+	int32_t			ncd_keepalive;
 	int8_t			disabled;
 	uint64_t		grp;
 	int8_t			crypted;
@@ -896,7 +896,7 @@ struct s_client {
 
 #ifdef CS_ANTICASC
 	uint16_t		ac_limit;
-	int8_t          ac_penalty;
+	int32_t			ac_penalty;
 	struct s_acasc_shm acasc;
 #endif
 
@@ -1314,7 +1314,7 @@ struct s_auth
 	TUNTAB			ttab;
 #ifdef CS_ANTICASC
 	int32_t			ac_users;						// 0 - unlimited
-	int8_t			ac_penalty;						// 0 - log, >0 - fake dw
+	int32_t			ac_penalty;						// 0 - log, >0 - fake dw
 	struct s_acasc	ac_stat;
 #endif
 	IN_ADDR_T		dynip;
@@ -1322,9 +1322,9 @@ struct s_auth
 	time_t			expirationdate;
 	time_t			firstlogin;
 	int32_t			allowedtimeframe[2];
-	int8_t			c35_suppresscmd08;
+	int32_t			c35_suppresscmd08;
 	uint8_t			c35_sleepsend;
-	int8_t			ncd_keepalive;
+	int32_t			ncd_keepalive;
 #ifdef MODULE_CCCAM
 	int32_t			cccmaxhops;
 	int8_t			cccreshare;
@@ -1452,10 +1452,10 @@ struct s_config
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 	uint32_t		loghistorysize;
 #endif
-	int8_t			disablelog;
-	int8_t			disablemail;
-	int8_t			disableuserfile;
-	int8_t			usrfileflag;
+	int32_t			disablelog;
+	int32_t			disablemail;
+	int32_t			disableuserfile;
+	int32_t			usrfileflag;
 	struct s_auth 	*account;
 	struct s_srvid 	*srvid[16];
 	struct s_tierid *tierid;
@@ -1479,10 +1479,10 @@ struct s_config
 	char			*http_tpl;
 	char			*http_script;
 	int32_t			http_refresh;
-	int8_t			http_hide_idle_clients;
-	int8_t			http_showpicons;
+	int32_t			http_hide_idle_clients;
+	int32_t			http_showpicons;
 	struct s_ip 	*http_allowed;
-	int8_t			http_readonly;
+	int32_t			http_readonly;
 	IN_ADDR_T		http_dynip[MAX_HTTP_DYNDNS];
 	uchar			http_dyndns[MAX_HTTP_DYNDNS][64];
 	int32_t			http_use_ssl;
@@ -1490,7 +1490,7 @@ struct s_config
 	char			*http_cert;
 	char			*http_help_lang;
 #endif
-	int8_t			http_full_cfg;
+	int32_t			http_full_cfg;
 	int32_t			failbantime;
 	int32_t			failbancount;
 	LLIST 			*v_list;						//failban list
@@ -1502,16 +1502,16 @@ struct s_config
 	struct s_ip 	*c33_plain;
 	int32_t			c35_port;
 	IN_ADDR_T		c35_srvip;
-	int8_t			c35_suppresscmd08;
-	int8_t			c35_tcp_suppresscmd08;
-	int8_t			c35_udp_suppresscmd08;
+	int32_t			c35_suppresscmd08;
+	int32_t			c35_tcp_suppresscmd08;
+	int32_t			c35_udp_suppresscmd08;
 	PTAB			c35_tcp_ptab;
 	IN_ADDR_T		c35_tcp_srvip;
 	PTAB			ncd_ptab;
 	IN_ADDR_T		ncd_srvip;
 	uchar			ncd_key[16];
-	int8_t			ncd_keepalive;
-	int8_t			ncd_mgclient;
+	int32_t			ncd_keepalive;
+	int32_t			ncd_mgclient;
 	struct s_ip 	*ncd_allowed;
 	int32_t			rad_port;
 	IN_ADDR_T		rad_srvip;
@@ -1539,11 +1539,11 @@ struct s_config
 	char			ser_device[512];
 	uint32_t		srtimeout;						// SerialReaderTimeount in millisec
 	int32_t			max_log_size;
-	int8_t			waitforcards;
+	int32_t			waitforcards;
 	int32_t			waitforcards_extra_delay;
-	int8_t			preferlocalcards;
+	int32_t			preferlocalcards;
 	int32_t     	reader_restart_seconds;			// schlocke: reader restart auf x seconds, disable = 0
-	int8_t			dropdups;						// drop duplicate logins
+	int32_t			dropdups;						// drop duplicate logins
 
 
 //Loadbalancer-Config:
@@ -1567,7 +1567,7 @@ struct s_config
 	int32_t			lb_auto_betatunnel_prefer_beta; // prefer-beta-over-nagra factor
 #endif
 	int32_t			resolve_gethostbyname;
-	int8_t double_check;							// schlocke: Double checks each ecm+dcw from two (or more) readers
+	int32_t			double_check;					// schlocke: Double checks each ecm+dcw from two (or more) readers
 	CAIDTAB			double_check_caid;			// do not store loadbalancer stats with providers for this caid
 
 #ifdef IRDETO_GUESSING
@@ -1588,11 +1588,11 @@ struct s_config
 #endif
 
 #ifdef CS_ANTICASC
-	char		ac_enabled;
+	int32_t		ac_enabled;
 	int32_t		ac_users;							// num of users for account (0 - default)
 	int32_t		ac_stime;							// time to collect AC statistics (3 min - default)
 	int32_t		ac_samples;							// qty of samples
-	int8_t		ac_penalty;							// 0 - write to log
+	int32_t		ac_penalty;							// 0 - write to log
 	int32_t		ac_fakedelay;						// 100-1000 ms
 	int32_t		ac_denysamples;
 	char		*ac_logfile;
@@ -1600,7 +1600,7 @@ struct s_config
 #endif
 
 #if defined(QBOXHD) || defined(__arm__)
-	int8_t enableled; 						// 0=disabled led, 1=enable led for routers, 2=enable qboxhd led
+	int32_t		enableled;							// 0=disabled led, 1=enable led for routers, 2=enable qboxhd led
 #endif
 #ifdef LCDSUPPORT
 	int8_t enablelcd;
@@ -1625,8 +1625,8 @@ struct s_config
 	uint32_t	max_cache_time;  //seconds
 	uint32_t	max_cache_count; //count ecms
 
-	int8_t		block_same_ip;   //0=allow all, 1=block client requests to reader with same ip   (default=1)
-	int8_t		block_same_name; //0=allow all, 1=block client requests to reader with same name (default=1)
+	int32_t		block_same_ip;   //0=allow all, 1=block client requests to reader with same ip   (default=1)
+	int32_t		block_same_name; //0=allow all, 1=block client requests to reader with same name (default=1)
 	
 #ifdef CS_CACHEEX
 	IN_ADDR_T	csp_srvip;
@@ -1634,7 +1634,7 @@ struct s_config
 	uint32_t 	csp_wait_time;
 
 	uint32_t	cacheex_wait_time; 		//cache wait time in ms
-	uint8_t		cacheex_enable_stats;	//enable stats
+	int32_t		cacheex_enable_stats;	//enable stats
 
 	struct s_cacheex_matcher *cacheex_matcher;
 #endif

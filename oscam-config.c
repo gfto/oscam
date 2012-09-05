@@ -679,7 +679,7 @@ static const struct config_list global_opts[] = {
 #endif
 	DEF_OPT_FUNC("serverip"					, OFS(srvip),				serverip_fn ),
 	DEF_OPT_FUNC("logfile"					, OFS(logfile),				logfile_fn ),
-	DEF_OPT_UINT("disableuserfile"			, OFS(disableuserfile),		1 ),
+	DEF_OPT_INT("disableuserfile"			, OFS(disableuserfile),		1 ),
 	DEF_OPT_INT("disablemail"				, OFS(disablemail),			1 ),
 	DEF_OPT_INT("usrfileflag"				, OFS(usrfileflag),			0 ),
 	DEF_OPT_UINT("clienttimeout"			, OFS(ctimeout),			CS_CLIENT_TIMEOUT ),
@@ -687,11 +687,11 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_UINT("clientmaxidle"			, OFS(cmaxidle),			CS_CLIENT_MAXIDLE ),
 	DEF_OPT_UINT("cachedelay"				, OFS(delay),				CS_DELAY ),
 	DEF_OPT_INT("bindwait"					, OFS(bindwait),			CS_BIND_TIMEOUT ),
-	DEF_OPT_INT("netprio"					, OFS(netprio),				0 ),
+	DEF_OPT_UINT("netprio"					, OFS(netprio),				0 ),
 	DEF_OPT_INT("sleep"						, OFS(tosleep),				0 ),
 	DEF_OPT_INT("unlockparental"			, OFS(ulparent),			0 ),
 	DEF_OPT_INT("nice"						, OFS(nice),				99 ),
-	DEF_OPT_INT("serialreadertimeout"		, OFS(srtimeout),			1500 ),
+	DEF_OPT_UINT("serialreadertimeout"		, OFS(srtimeout),			1500 ),
 	DEF_OPT_INT("maxlogsize"				, OFS(max_log_size),		10 ),
 	DEF_OPT_INT("waitforcards"				, OFS(waitforcards),		1 ),
 	DEF_OPT_INT("waitforcards_extra_delay"	, OFS(waitforcards_extra_delay), 500 ),
@@ -699,7 +699,7 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_INT("readerrestartseconds"		, OFS(reader_restart_seconds), 5 ),
 	DEF_OPT_INT("dropdups"					, OFS(dropdups),			0 ),
 #ifdef CS_CACHEEX
-	DEF_OPT_INT("cacheexwaittime"			, OFS(cacheex_wait_time),	DEFAULT_CACHEEX_WAIT_TIME ),
+	DEF_OPT_UINT("cacheexwaittime"			, OFS(cacheex_wait_time),	DEFAULT_CACHEEX_WAIT_TIME ),
 	DEF_OPT_INT("cacheexenablestats"		, OFS(cacheex_enable_stats), 0 ),
 #endif
 	DEF_OPT_INT("block_same_ip"				, OFS(block_same_ip),		1 ),
@@ -734,8 +734,8 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_INT("failbancount"				, OFS(failbancount),		0 ),
 	DEF_OPT_INT("suppresscmd08"				, OFS(c35_suppresscmd08),	0 ),
 	DEF_OPT_INT("double_check"				, OFS(double_check),		0 ),
-	DEF_OPT_INT("max_cache_time"			, OFS(max_cache_time),		DEFAULT_MAX_CACHE_TIME ),
-	DEF_OPT_INT("max_cache_count"			, OFS(max_cache_count),		DEFAULT_MAX_CACHE_COUNT ),
+	DEF_OPT_UINT("max_cache_time"			, OFS(max_cache_time),		DEFAULT_MAX_CACHE_TIME ),
+	DEF_OPT_UINT("max_cache_count"			, OFS(max_cache_count),		DEFAULT_MAX_CACHE_COUNT ),
 	DEF_LAST_OPT
 };
 
@@ -902,7 +902,7 @@ void chk_t_camd33(char *token, char *value)
 static const struct config_list csp_opts[] = {
 	DEF_OPT_INT("port"						, OFS(csp_port),				0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(csp_srvip),				serverip_fn ),
-	DEF_OPT_INT("wait_time"					, OFS(csp_wait_time),			0 ),
+	DEF_OPT_UINT("wait_time"				, OFS(csp_wait_time),			0 ),
 	DEF_LAST_OPT
 };
 
