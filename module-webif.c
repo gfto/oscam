@@ -750,26 +750,23 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 	if(cfg.mon_appendchaninfo)
 		tpl_addVar(vars, TPLADD, "APPENDCHANINFO", "checked");
 
-#ifdef WITH_SSL
-	if(cfg.http_use_ssl)
-		tpl_printf(vars, TPLADD, "HTTPPORT", "+%d", cfg.http_port);
-	else
-		tpl_printf(vars, TPLADD, "HTTPPORT", "%d", cfg.http_port);
-#else
-	tpl_printf(vars, TPLADD, "HTTPPORT", "%d", cfg.http_port);
-#endif
+	tpl_printf(vars, TPLADD, "HTTPPORT", "%s%d", cfg.http_use_ssl ? "+" : "", cfg.http_port);
 
 	tpl_addVar(vars, TPLADD, "HTTPUSER", cfg.http_user);
 	tpl_addVar(vars, TPLADD, "HTTPPASSWORD", cfg.http_pwd);
 
 	// css style selector
-	tpl_printf(vars, TPLADD, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"\"%s>embedded</option>\n", strlen(cfg.http_css) == 0?" selected" : "");
+	tpl_printf(vars, TPLADD, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"\"%s>embedded</option>\n",
+		cfg.http_css ? " selected" : "");
 		
-	if(strlen(cfg.http_tpl) > 0) {
+	if(cfg.http_tpl) {
 		char path[255];
 		tpl_getFilePathInSubdir(cfg.http_tpl, "", "style", ".css", path, 255);
 		if(file_exists(path))
-			tpl_printf(vars, TPLAPPEND, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"%s\"%s>%s (template)</option>\n", path, strstr(cfg.http_css, path)? " selected" : "", path);
+			tpl_printf(vars, TPLAPPEND, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"%s\"%s>%s (template)</option>\n",
+				path,
+				cfg.http_css && strstr(cfg.http_css, path) ? " selected" : "",
+				path);
 	}
 
 	DIR *hdir;
@@ -778,7 +775,11 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 	if((hdir = opendir(cs_confdir)) != NULL){
 		while(cs_readdir_r(hdir, &entry, &result) == 0 && result != NULL){
 			if (strCmpSuffix(entry.d_name, ".css")) {
-				tpl_printf(vars, TPLAPPEND, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"%s%s\"%s>%s%s</option>\n",cs_confdir,entry.d_name,strstr(cfg.http_css, entry.d_name)?" selected" : "", cs_confdir,entry.d_name);
+				tpl_printf(vars, TPLAPPEND, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"%s%s\"%s>%s%s</option>\n",
+					cs_confdir,
+					entry.d_name,
+					cfg.http_css && strstr(cfg.http_css, entry.d_name) ? " selected" : "",
+					cs_confdir,entry.d_name);
 			}
 		}
 		closedir(hdir);
@@ -787,11 +788,7 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 	if(cfg.http_prepend_embedded_css)
 		tpl_addVar(vars, TPLADD, "HTTPPREPENDEMBEDDEDCSS", "checked");
 
-	if (cfg.http_help_lang[0])
-		tpl_addVar(vars, TPLADD, "HTTPHELPLANG", cfg.http_help_lang);
-	else
-		tpl_addVar(vars, TPLADD, "HTTPHELPLANG", "en");
-
+	tpl_addVar(vars, TPLADD, "HTTPHELPLANG", cfg.http_help_lang);
 	tpl_printf(vars, TPLADD, "HTTPREFRESH", "%d", cfg.http_refresh);
 	tpl_addVar(vars, TPLADD, "HTTPTPL", cfg.http_tpl);
 	tpl_addVar(vars, TPLADD, "HTTPSCRIPT", cfg.http_script);
@@ -3650,7 +3647,7 @@ static char *send_oscam_services(struct templatevars *vars, struct uriparams *pa
 }
 
 static char *send_oscam_savetpls(struct templatevars *vars) {
-	if(strlen(cfg.http_tpl) > 0) {
+	if(cfg.http_tpl) {
 		tpl_printf(vars, TPLADD, "CNT", "%d", tpl_saveIncludedTpls(cfg.http_tpl));
 		tpl_addVar(vars, TPLADD, "PATH", cfg.http_tpl);
 	} else tpl_addVar(vars, TPLADD, "CNT", "0");
@@ -3720,7 +3717,7 @@ static char *send_oscam_script(struct templatevars *vars) {
 	char *result = "not found";
 	int32_t rc = 0;
 	if(!cfg.http_readonly) {
-		if(cfg.http_script[0]) {
+		if (cfg.http_script) {
 			tpl_addVar(vars, TPLADD, "SCRIPTNAME",cfg.http_script);
 			rc = system(cfg.http_script);
 			if(rc == -1) {
@@ -4252,7 +4249,7 @@ static char *send_oscam_image(struct templatevars *vars, FILE *f, struct uripara
 	if(strlen(wanted) > 3 && wanted[0] == 'I' && wanted[1] == 'C'){
 		if(etagheader == 0){
 			int8_t disktpl = 0;
-			if(strlen(cfg.http_tpl) > 0){
+			if (cfg.http_tpl) {
 		  	char path[255];
 		  	if(strlen(tpl_getTplPath(wanted, cfg.http_tpl, path, 255)) > 0 && file_exists(path)){
 		  		struct stat st;
@@ -4712,8 +4709,10 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 
 		parseParams(&params, pch);
 
-		if(strlen(cfg.http_user) == 0 || strlen(cfg.http_pwd) == 0) authok = 1;
-		else calculate_nonce(expectednonce);
+		if (!cfg.http_user || !cfg.http_pwd)
+			authok = 1;
+		else
+			calculate_nonce(expectednonce);
 
 		for (str1=strtok_r(tmp, "\n", &saveptr1); str1; str1=strtok_r(NULL, "\n", &saveptr1)) {
 			len = strlen(str1);
@@ -4813,11 +4812,7 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 			}
 
 			// language code in helplink
-			if (cfg.http_help_lang[0])
-				tpl_addVar(vars, TPLADD, "LANGUAGE", cfg.http_help_lang);
-			else
-				tpl_addVar(vars, TPLADD, "LANGUAGE", "en");
-
+			tpl_addVar(vars, TPLADD, "LANGUAGE", cfg.http_help_lang);
 			tpl_addVar(vars, TPLADD, "UPTIME", sec2timeformat(vars, (now - first_client->login)));
 			tpl_addVar(vars, TPLADD, "CURIP", cs_inet_ntoa(addr));
 			if(cfg.http_readonly)

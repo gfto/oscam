@@ -210,7 +210,7 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
   int32_t tplcnt = tpl_count();
   char *result;
 
-  if(strlen(cfg.http_tpl) > 0){
+  if (cfg.http_tpl) {
   	char path[255];
   	if ( (strlen(tpl_getFilePathInSubdir(cfg.http_tpl, subdir, name, ".tpl", path, 255)) > 0 && file_exists(path))
       || (strlen(subdir) > 0
@@ -399,7 +399,7 @@ int32_t tpl_saveIncludedTpls(const char *path){
 /* Checks all disk templates in a directory if they are still current or may need upgrade! */
 void tpl_checkOneDirDiskRevisions(const char* subdir) {
 	char dirpath[255] = "\0";
-	snprintf(dirpath, 255, "%s%s", cfg.http_tpl, subdir);
+	snprintf(dirpath, 255, "%s%s", cfg.http_tpl ? cfg.http_tpl : "", subdir);
 
 	int32_t i, tplcnt = tpl_count();
 		char path[255];
@@ -437,7 +437,7 @@ void tpl_checkOneDirDiskRevisions(const char* subdir) {
 void tpl_checkDiskRevisions(void) {
 	char subdir[255];
 	char dirpath[255];
-	if(strlen(cfg.http_tpl) > 0) {
+	if (cfg.http_tpl) {
 		tpl_checkOneDirDiskRevisions("");
 
 		DIR *hdir;
@@ -606,7 +606,7 @@ int32_t check_auth(char *authstring, char *method, char *path, char *expectednon
 		}
 		if(strncmp(pch2, path, strlen(path)) == 0) uriok = 1;
 	}
-	if(uriok == 1 && strcmp(username, cfg.http_user) == 0){
+	if (uriok == 1 && streq(username, cfg.http_user)) {
 		char A1tmp[3 + strlen(username) + strlen(AUTHREALM) + strlen(expectedPassword)];
 		char A1[(MD5_DIGEST_LENGTH * 2) + 1], A2[(MD5_DIGEST_LENGTH * 2) + 1], A3[(MD5_DIGEST_LENGTH * 2) + 1];
 		unsigned char md5tmp[MD5_DIGEST_LENGTH];
@@ -728,16 +728,16 @@ void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uin
   	char path[255];
 
 	if (!strcmp(filename, "CSS")){
-		filename = cfg.http_css;
+		filename = cfg.http_css ? cfg.http_css : "";
 		if (subdir && strlen(subdir) > 0) {
-			filename = tpl_getFilePathInSubdir(cfg.http_tpl, subdir, "site", ".css", path, 255);
+			filename = tpl_getFilePathInSubdir(cfg.http_tpl ? cfg.http_tpl : "", subdir, "site", ".css", path, 255);
 		}
 		mimetype = "text/css";
 		fileno = 1;
 	} else if (!strcmp(filename, "JS")){
-		filename = cfg.http_jscript;
+		filename = cfg.http_jscript ? cfg.http_jscript : "";
 		if (subdir && strlen(subdir) > 0) {
-			filename = tpl_getFilePathInSubdir(cfg.http_tpl, subdir, "oscam", ".js", path, 255);
+			filename = tpl_getFilePathInSubdir(cfg.http_tpl ? cfg.http_tpl : "", subdir, "oscam", ".js", path, 255);
 		}
 		mimetype = "text/javascript";
 		fileno = 2;
@@ -1115,7 +1115,7 @@ SSL_CTX *SSL_Webif_Init(void) {
 
 	char path[128];
 
-	if (cfg.http_cert[0]==0)
+	if (!cfg.http_cert)
 		snprintf(path, sizeof(path), "%s%s", cs_confdir, cs_cert);
 	else
 		cs_strncpy(path, cfg.http_cert, sizeof(path));

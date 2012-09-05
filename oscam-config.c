@@ -789,131 +789,73 @@ void chk_t_monitor(char *token, char *value)
 }
 
 #ifdef WEBIF
-void chk_t_webif(char *token, char *value)
-{
-	if (!strcmp(token, "httpport")) {
-		if(strlen(value) == 0) {
-			cfg.http_port = 0;
-			return;
-		} else {
-			if (value[0]=='+') {
-#ifdef WITH_SSL
-				cfg.http_use_ssl=1;
-#else
-				fprintf(stderr, "Warning: OSCam compiled without SSL support.\n");
-#endif
-				cfg.http_port = atoi(value+1);
+static void http_port_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
+	if (value) {
+		cfg.http_port = 0;
+		if (value[0]) {
+			if (value[0] == '+') {
+				if (config_WITH_SSL()) {
+					cfg.http_use_ssl = 1;
+				} else {
+					fprintf(stderr, "Warning: OSCam compiled without SSL support.\n");
+				}
+				cfg.http_port = strtoul(value + 1, NULL, 10);
 			} else {
-				cfg.http_port = atoi(value);
-			}
-			return;
-		}
-	}
-
-	if (!strcmp(token, "httpuser")) {
-		cs_strncpy(cfg.http_user, value, sizeof(cfg.http_user));
-		return;
-	}
-
-	if (!strcmp(token, "httppwd")) {
-		cs_strncpy(cfg.http_pwd, value, sizeof(cfg.http_pwd));
-		return;
-	}
-
-	if (!strcmp(token, "httpcss")) {
-		cs_strncpy(cfg.http_css, value, sizeof(cfg.http_css));
-		return;
-	}
-
-	if (!strcmp(token, "http_prepend_embedded_css")) {
-		cfg.http_prepend_embedded_css = strToIntVal(value, 0);
-		return;
-	}
-	if (!strcmp(token, "httpjscript")) {
-		cs_strncpy(cfg.http_jscript, value, sizeof(cfg.http_jscript));
-		return;
-	}
-
-	if (!strcmp(token, "httpscript")) {
-		cs_strncpy(cfg.http_script, value, sizeof(cfg.http_script));
-		return;
-	}
-
-	if (!strcmp(token, "httphelplang")) {
-		cs_strncpy(cfg.http_help_lang, value, sizeof(cfg.http_help_lang));
-		return;
-	}
-
-	if (!strcmp(token, "httpcert")) {
-		cs_strncpy(cfg.http_cert, value, sizeof(cfg.http_cert));
-		return;
-	}
-
-	if (!strcmp(token, "httptpl")) {
-		cfg.http_tpl[0] = '\0';
-		cs_strncpy(cfg.http_tpl, value, sizeof(cfg.http_tpl));
-		if(strlen(value) != 0) {
-			if(strlen(cfg.http_tpl) < (sizeof(cfg.http_tpl)-2) && cfg.http_tpl[strlen(cfg.http_tpl)-1] != '/') {
-				cfg.http_tpl[strlen(cfg.http_tpl)] = '/';
-				cfg.http_tpl[strlen(cfg.http_tpl)] = '\0';
+				cfg.http_port = strtoul(value, NULL, 10);
 			}
 		}
 		return;
 	}
+	fprintf_conf(f, token, "%s%d\n", cfg.http_use_ssl ? "+" : "", cfg.http_port);
+}
 
-	if (!strcmp(token, "httprefresh")) {
-		cfg.http_refresh = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "httphideidleclients")) {
-		cfg.http_hide_idle_clients = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "httpshowpicons")) {
-		cfg.http_showpicons = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "httpallowed")) {
-		if(strlen(value) == 0) {
-			clear_sip(&cfg.http_allowed);
-			return;
-		} else {
-			chk_iprange(value, &cfg.http_allowed);
-			return;
-		}
-	}
-
-	if (!strcmp(token, "httpreadonly")) {
-		cfg.http_readonly = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "httpdyndns")) {
-		int32_t i;
+static void http_dyndns_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
+	int i;
+	if (value) {
 		char *ptr, *saveptr1 = NULL;
-
 		for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < MAX_HTTP_DYNDNS) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
 			trim(ptr);
 			cs_strncpy((char *)cfg.http_dyndns[i], ptr, sizeof(cfg.http_dyndns[i]));
 		}
 		return;
 	}
-
-	if (!strcmp(token, "httpsavefullcfg")) {
-		cfg.http_full_cfg = strToIntVal(value, 0);
-		return;
+	if (strlen((const char *)(cfg.http_dyndns[0])) > 0 || cfg.http_full_cfg) {
+		fprintf_conf(f, token, "%s", "");
+		for (i = 0; i < MAX_HTTP_DYNDNS; i++) {
+			if (cfg.http_dyndns[i][0]) {
+				fprintf(f, "%s%s", i > 0 ? "," : "", cfg.http_dyndns[i]);
+			}
+		}
+		fprintf(f, "\n");
 	}
+}
 
-#ifdef WITH_SSL
-	if (!strcmp(token, "httpforcesslv3")) {
-		cfg.http_force_sslv3 = strToIntVal(value, 0);
+static const struct config_list webif_opts[] = {
+	DEF_OPT_FUNC("httpport"					, OFS(http_port),				http_port_fn ),
+	DEF_OPT_STR("httpuser"					, OFS(http_user) ),
+	DEF_OPT_STR("httppwd"					, OFS(http_pwd) ),
+	DEF_OPT_STR("httpcss"					, OFS(http_css) ),
+	DEF_OPT_STR("httpjscript"				, OFS(http_jscript) ),
+	DEF_OPT_STR("httpscript"				, OFS(http_script) ),
+	DEF_OPT_STR("httptpl"					, OFS(http_tpl) ),
+	DEF_OPT_STR("httphelplang"				, OFS(http_help_lang) ),
+	DEF_OPT_STR("httpcert"					, OFS(http_cert) ),
+	DEF_OPT_INT("http_prepend_embedded_css"	, OFS(http_prepend_embedded_css), 0 ),
+	DEF_OPT_INT("httprefresh"				, OFS(http_refresh),			0 ),
+	DEF_OPT_INT("httphideidleclients"		, OFS(http_hide_idle_clients),	0 ),
+	DEF_OPT_INT("httpshowpicons"			, OFS(http_showpicons),			0 ),
+	DEF_OPT_FUNC("httpallowed"				, OFS(http_allowed),			iprange_fn ),
+	DEF_OPT_INT("httpreadonly"				, OFS(http_readonly),			0 ),
+	DEF_OPT_INT("httpsavefullcfg"			, OFS(http_full_cfg),			0 ),
+	DEF_OPT_INT("httpforcesslv3"			, OFS(http_force_sslv3),		0 ),
+	DEF_OPT_FUNC("httpdyndns"				, OFS(http_dyndns),				http_dyndns_fn ),
+	DEF_LAST_OPT
+};
+
+void chk_t_webif(char *token, char *value)
+{
+	if (config_list_parse(webif_opts, token, value, &cfg))
 		return;
-	}
-#endif
-
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in webif section not recognized\n",token);
 }
@@ -1549,15 +1491,6 @@ int32_t init_config(void)
 	cfg.waitforcards = 1;
 	cfg.waitforcards_extra_delay = 500;
 
-#ifdef WEBIF
-	cs_strncpy(cfg.http_user, "", sizeof(cfg.http_user));
-	cs_strncpy(cfg.http_pwd, "", sizeof(cfg.http_pwd));
-	cs_strncpy(cfg.http_css, "", sizeof(cfg.http_css));
-	cs_strncpy(cfg.http_help_lang, "en", sizeof(cfg.http_help_lang));
-	cfg.http_refresh = 0;
-	cfg.http_hide_idle_clients = 0;
-	cs_strncpy(cfg.http_tpl, "", sizeof(cfg.http_tpl));
-#endif
 	cfg.ncd_keepalive = DEFAULT_NCD_KEEPALIVE;
 #ifdef CS_ANTICASC
 	cfg.ac_enabled = 0;
@@ -1688,6 +1621,20 @@ int32_t init_config(void)
 	}
 	if (cfg.max_cache_time < (cfg.ctimeout/1000+1))
 		cfg.max_cache_time = cfg.ctimeout/1000+2;
+
+	if (config_WEBIF()) {
+		if (cfg.http_tpl) {
+			int len = strlen(cfg.http_tpl);
+			if (cfg.http_tpl[len - 1] != '/') {
+				cfg.http_tpl = realloc(cfg.http_tpl, len + 2);
+				cfg.http_tpl[len + 0] = '/';
+				cfg.http_tpl[len + 1] = '\0';
+			}
+		}
+		if (!cfg.http_help_lang) {
+			cfg.http_help_lang = strdup("en");
+		}
+	}
 
 #ifdef CS_ANTICASC
 	// Anticascating config fixups
@@ -2049,7 +1996,6 @@ int32_t write_services(void)
 
 int32_t write_config(void)
 {
-	int32_t i;
 	FILE *f;
 	char *value, *saveptr1 = NULL;
 	char tmpfile[256];
@@ -2245,60 +2191,7 @@ int32_t write_config(void)
 	/*webinterface*/
 	if (cfg.http_port > 0) {
 		fprintf(f,"[webif]\n");
-#ifdef WITH_SSL
-		if (cfg.http_use_ssl) {
-			fprintf_conf(f, "httpport", "+%d\n", cfg.http_port);
-		} else
-#endif
-			fprintf_conf(f, "httpport", "%d\n", cfg.http_port);
-
-		if(strcmp(cfg.http_help_lang, "en") != 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "httphelplang", "%s\n", cfg.http_help_lang);
-		if(strlen(cfg.http_user) > 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "httpuser", "%s\n", cfg.http_user);
-		if(strlen(cfg.http_pwd) > 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "httppwd", "%s\n", cfg.http_pwd);
-		if(strlen(cfg.http_cert) > 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "httpcert", "%s\n", cfg.http_cert);
-		if(cfg.http_prepend_embedded_css != 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "http_prepend_embedded_css", "%d\n", cfg.http_prepend_embedded_css);
-		if(strlen(cfg.http_css) > 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "httpcss", "%s\n", cfg.http_css);
-		if(strlen(cfg.http_jscript) > 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "httpjscript", "%s\n", cfg.http_jscript);
-		if(strlen(cfg.http_tpl) > 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "httptpl", "%s\n", cfg.http_tpl);
-		if(strlen(cfg.http_script) > 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "httpscript", "%s\n", cfg.http_script);
-		if(cfg.http_refresh > 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "httprefresh", "%d\n", cfg.http_refresh);
-		value = mk_t_iprange(cfg.http_allowed);
-		if(strlen(value) > 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "httpallowed", "%s\n", value);
-		free_mk_t(value);
-		if(strlen((const char *) (cfg.http_dyndns[0])) > 0 || cfg.http_full_cfg){
-			fprintf_conf(f, "httpdyndns", "%s", "");
-			for(i = 0; i < MAX_HTTP_DYNDNS; i++){
-				if(cfg.http_dyndns[i][0]){
-					fprintf(f, "%s", i > 0 ? "," : "");
-					fprintf(f,  "%s", cfg.http_dyndns[i]);
-				}
-			}
-			fputc((int)'\n', f);
-		}
-		if(cfg.http_hide_idle_clients || cfg.http_full_cfg)
-			fprintf_conf(f, "httphideidleclients", "%d\n", cfg.http_hide_idle_clients);
-		if(cfg.http_showpicons || cfg.http_full_cfg)
-			fprintf_conf(f, "httpshowpicons", "%d\n", cfg.http_showpicons);
-		if(cfg.http_readonly || cfg.http_full_cfg)
-			fprintf_conf(f, "httpreadonly", "%d\n", cfg.http_readonly);
-		if(cfg.http_full_cfg)
-			fprintf_conf(f, "httpsavefullcfg", "%d\n", cfg.http_full_cfg);
-#ifdef WITH_SSL
-		if(cfg.http_force_sslv3 || cfg.http_full_cfg)
-			fprintf_conf(f, "httpforcesslv3", "%d\n", cfg.http_force_sslv3);
-#endif
-
+		config_list_save(f, webif_opts, &cfg, cfg.http_full_cfg);
 		fputc((int)'\n', f);
 	}
 #endif

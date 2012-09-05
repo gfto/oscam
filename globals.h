@@ -1471,13 +1471,13 @@ struct s_config
 	int32_t			mon_appendchaninfo;
 #ifdef WEBIF
 	int32_t			http_port;
-	char			http_user[65];
-	char			http_pwd[65];
-	char			http_css[128];
+	char			*http_user;
+	char			*http_pwd;
+	char			*http_css;
 	int32_t			http_prepend_embedded_css;
-	char			http_jscript[128];
-	char			http_tpl[128];
-	char			http_script[128];
+	char			*http_jscript;
+	char			*http_tpl;
+	char			*http_script;
 	int32_t			http_refresh;
 	int8_t			http_hide_idle_clients;
 	int8_t			http_showpicons;
@@ -1485,12 +1485,10 @@ struct s_config
 	int8_t			http_readonly;
 	IN_ADDR_T		http_dynip[MAX_HTTP_DYNDNS];
 	uchar			http_dyndns[MAX_HTTP_DYNDNS][64];
-#ifdef WITH_SSL
-	int8_t			http_use_ssl;
-	int8_t			http_force_sslv3;
-#endif
-	char			http_cert[128];
-	char			http_help_lang[3];
+	int32_t			http_use_ssl;
+	int32_t			http_force_sslv3;
+	char			*http_cert;
+	char			*http_help_lang;
 #endif
 	int8_t			http_full_cfg;
 	int32_t			failbantime;
