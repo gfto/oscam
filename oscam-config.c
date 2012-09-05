@@ -1524,19 +1524,19 @@ int32_t init_config(void)
 	if (cfg.max_cache_time < (cfg.ctimeout/1000+1))
 		cfg.max_cache_time = cfg.ctimeout/1000+2;
 
-	if (config_WEBIF()) {
-		if (cfg.http_tpl) {
-			int len = strlen(cfg.http_tpl);
-			if (cfg.http_tpl[len - 1] != '/') {
-				cfg.http_tpl = realloc(cfg.http_tpl, len + 2);
-				cfg.http_tpl[len + 0] = '/';
-				cfg.http_tpl[len + 1] = '\0';
-			}
-		}
-		if (!cfg.http_help_lang) {
-			cfg.http_help_lang = strdup("en");
+#ifdef WEBIF
+	if (cfg.http_tpl) {
+		int len = strlen(cfg.http_tpl);
+		if (cfg.http_tpl[len - 1] != '/') {
+			cfg.http_tpl = realloc(cfg.http_tpl, len + 2);
+			cfg.http_tpl[len + 0] = '/';
+			cfg.http_tpl[len + 1] = '\0';
 		}
 	}
+	if (!cfg.http_help_lang) {
+		cfg.http_help_lang = strdup("en");
+	}
+#endif
 
 #ifdef CS_ANTICASC
 	// Anticascating config fixups
