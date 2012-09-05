@@ -1536,7 +1536,7 @@ struct s_config
 	int32_t			gbox_port;
 	struct s_ip 	*rad_allowed;
 	char			*rad_usr;
-	char			ser_device[512];
+	char			*ser_device;
 	uint32_t		srtimeout;						// SerialReaderTimeount in millisec
 	int32_t			max_log_size;
 	int32_t			waitforcards;

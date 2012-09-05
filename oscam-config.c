@@ -1117,12 +1117,15 @@ void chk_t_radegast(char *token, char *value)
 		fprintf(stderr, "Warning: keyword '%s' in radegast section not recognized\n", token);
 }
 
+static const struct config_list serial_opts[] = {
+	DEF_OPT_STR("device"						, OFS(ser_device) ),
+	DEF_LAST_OPT
+};
+
 void chk_t_serial(char *token, char *value)
 {
-	if (!strcmp(token, "device")) {
-		cs_strncpy(cfg.ser_device, value, sizeof(cfg.ser_device));
+	if (config_list_parse(serial_opts, token, value, &cfg))
 		return;
-	}
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in serial section not recognized\n", token);
 }
@@ -1937,7 +1940,6 @@ int32_t write_services(void)
 int32_t write_config(void)
 {
 	FILE *f;
-	char *value, *saveptr1 = NULL;
 	char tmpfile[256];
 	char destfile[256];
 	char bakfile[256];
@@ -2011,16 +2013,9 @@ int32_t write_config(void)
 	}
 
 	/*serial*/
-	if (cfg.ser_device[0]){
+	if (cfg.ser_device) {
 		fprintf(f,"[serial]\n");
-		char sdevice[512];
-		cs_strncpy(sdevice, cfg.ser_device, sizeof(sdevice));
-		char *ptr;
-		char delimiter[2]; delimiter[0] = 1; delimiter[1] = '\0';
-
-		for(ptr = strtok_r(sdevice, delimiter, &saveptr1); ptr != NULL; ptr = strtok_r(NULL, delimiter, &saveptr1)) {
-			fprintf_conf(f, "device", "%s\n", ptr);
-		}
+		config_list_save(f, serial_opts, &cfg, cfg.http_full_cfg);
 		fprintf(f,"\n");
 	}
 

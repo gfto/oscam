@@ -860,8 +860,8 @@ static char *send_oscam_config_serial(struct templatevars *vars, struct uriparam
 		}
 	}
 
-	if (cfg.ser_device[0]){
-		char sdevice[512];
+	if (cfg.ser_device) {
+		char sdevice[strlen(cfg.ser_device)];
 		cs_strncpy(sdevice, cfg.ser_device, sizeof(sdevice));
 		char *ptr;
 		char delimiter[2]; delimiter[0] = 1; delimiter[1] = '\0';
