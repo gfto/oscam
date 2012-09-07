@@ -1,7 +1,14 @@
 project (csctapi)
-
+if (OSCamOperatingSystem MATCHES "Mac OS X")
+file (GLOB csctapi_mac "ifd_azbox*" "ifd_cool*" "ifd_stapi*")
+file (GLOB csctapi_srcs "*.c")
+list(REMOVE_ITEM csctapi_srcs ${csctapi_mac})
+file (GLOB csctapi_hdrs "*.h")
+list(REMOVE_ITEM csctapi_hdrs ${csctapi_mac})
+else (OSCamOperatingSystem MATCHES "Mac OS X")
 file (GLOB csctapi_srcs "*.c")
 file (GLOB csctapi_hdrs "*.h")
+endif (OSCamOperatingSystem MATCHES "Mac OS X")
 
 if (NOT OSCamOperatingSystem MATCHES "Mac OS X")
    if (LIBRTDIR)
