@@ -580,9 +580,9 @@ static void serverip_fn(const char *token, char *value, void *setting, FILE *f) 
 	IN_ADDR_T srvip = *(IN_ADDR_T *)setting;
 	if (value) {
 		if (strlen(value) == 0) {
-			set_null_ip(&srvip);
+			set_null_ip((IN_ADDR_T *)setting);
 		} else {
-			cs_inet_addr(value, &srvip);
+			cs_inet_addr(value, (IN_ADDR_T *)setting);
 		}
 		return;
 	}
