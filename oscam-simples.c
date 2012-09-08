@@ -478,6 +478,10 @@ int32_t cs_in6addr_lt(struct in6_addr *a, struct in6_addr *b)
 {
 	int i;
 	for (i=0; i<4; i++) {
+		if ((i == 2) && ((IN6_IS_ADDR_V4COMPAT(a) && IN6_IS_ADDR_V4MAPPED(b)) ||
+				 (IN6_IS_ADDR_V4COMPAT(b) && IN6_IS_ADDR_V4MAPPED(a))))
+			continue;	//skip comparing this part
+
 		if (a->s6_addr32[i] != b->s6_addr32[i])
 			return ntohl(a->s6_addr32[i]) < ntohl(b->s6_addr32[i]);
 	}
