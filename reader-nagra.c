@@ -1010,7 +1010,7 @@ static int32_t nagra2_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, st
 			}
 			else if (reader->ecmcommandcache[0] != er->ecm[3]){
                     rdr_debug_mask(reader, D_READER, "Warning: received an abnominal ecm command %02X for caid: %04X, ignoring!", er->ecm[3], reader->caid);
-                    memset(ea, 0, sizeof(ea)); // give it back 00000000 to not disturb the loadbalancer for valid ecm requests on this channel.
+                    memset(ea, 0, sizeof(struct s_ecm_answer)); // give it back 00000000 to not disturb the loadbalancer for valid ecm requests on this channel.
                     return OK;
                 }
 				
