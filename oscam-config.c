@@ -412,7 +412,7 @@ static void camd33_key_fn(const char *token, char *value, void *UNUSED(setting),
 		return;
 	}
 	unsigned int i;
-	fprintf_conf(f, token, "");
+	fprintf_conf_n(f, token);
 	for (i = 0; i < sizeof(cfg.c33_key); i++) {
 		fprintf(f, "%02X", cfg.c33_key[i]);
 	}
@@ -523,7 +523,7 @@ static void newcamd_key_fn(const char *token, char *value, void *UNUSED(setting)
 		}
 		return;
 	}
-	fprintf_conf(f, token, "");
+	fprintf_conf_n(f, token);
 	unsigned int i;
 	for (i = 0; i < 14; i++) {
 		fprintf(f,"%02X", cfg.ncd_key[i]);
@@ -1361,19 +1361,19 @@ int32_t write_services(void)
 			ptr++;
 		}
 		fprintf(f,"[%s]\n", sidtab->label);
-		fprintf_conf(f, "caid", "");
+		fprintf_conf_n(f, "caid");
 		for (i=0; i<sidtab->num_caid; i++){
 			if (i==0) fprintf(f,"%04X", sidtab->caid[i]);
 			else fprintf(f,",%04X", sidtab->caid[i]);
 		}
 		fputc((int)'\n', f);
-		fprintf_conf(f, "provid", "");
+		fprintf_conf_n(f, "provid");
 		for (i=0; i<sidtab->num_provid; i++){
 			if (i==0) fprintf(f,"%06X", sidtab->provid[i]);
 			else fprintf(f,",%06X", sidtab->provid[i]);
 		}
 		fputc((int)'\n', f);
-		fprintf_conf(f, "srvid", "");
+		fprintf_conf_n(f, "srvid");
 		for (i=0; i<sidtab->num_srvid; i++){
 			if (i==0) fprintf(f,"%04X", sidtab->srvid[i]);
 			else fprintf(f,",%04X", sidtab->srvid[i]);
@@ -1769,7 +1769,7 @@ int32_t write_server(void)
 #endif
 
 			if (rdr->ncd_key[0] || rdr->ncd_key[13] || cfg.http_full_cfg) {
-				fprintf_conf(f, "key", "");
+				fprintf_conf_n(f, "key");
 				if(rdr->ncd_key[0] || rdr->ncd_key[13]){
 					for (j = 0; j < 14; j++) {
 						fprintf(f, "%02X", rdr->ncd_key[j]);
@@ -1879,7 +1879,7 @@ int32_t write_server(void)
 			}
 
 			if ((rdr->atr[0] || cfg.http_full_cfg) && isphysical) {
-				fprintf_conf(f, "atr", "");
+				fprintf_conf_n(f, "atr");
 				if(rdr->atr[0]){
 					for (j=0; j < rdr->atrlen/2; j++) {
 						fprintf(f, "%02X", rdr->atr[j]);
@@ -2041,7 +2041,7 @@ int32_t write_server(void)
 				fprintf_conf(f, "audisabled", "%d\n", rdr->audisabled);
 
 			if (rdr->auprovid)
-				fprintf_conf(f, "auprovid", "%06lX\n", rdr->auprovid);
+				fprintf_conf(f, "auprovid", "%06X\n", rdr->auprovid);
 			else if (cfg.http_full_cfg)
 				fprintf_conf(f, "auprovid", "\n");
 
