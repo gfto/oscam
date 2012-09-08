@@ -807,44 +807,6 @@ static void chk_token(char *token, char *value, int32_t tag)
 	}
 }
 
-void init_len4caid(void)
-{
-	int32_t nr;
-	FILE *fp;
-	char *value, *token;
-	if(!cs_malloc(&token, MAXLINESIZE, -1)) return;
-
-	memset(len4caid, 0, sizeof(uint16_t)<<8);
-	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_l4ca);
-	if (!(fp = fopen(token, "r"))){
-		free(token);
-		return;
-	}
-	for(nr = 0; fgets(token, MAXLINESIZE, fp);) {
-		int32_t i, c;
-		char *ptr;
-		if (!(value=strchr(token, ':')))
-			continue;
-		*value++ ='\0';
-		if( (ptr = strchr(value, '#')) )
-			*ptr = '\0';
-		if (strlen(trim(token)) != 2)
-			continue;
-		if (strlen(trim(value)) != 4)
-			continue;
-		if ((i = byte_atob(token)) < 0)
-			continue;
-		if ((c = word_atob(value)) < 0)
-			continue;
-		len4caid[i] = c;
-		nr++;
-	}
-	free(token);
-	fclose(fp);
-	cs_log("%d lengths for caid guessing loaded", nr);
-	return;
-}
-
 int32_t init_config(void)
 {
 	int32_t tag=TAG_GLOBAL;
@@ -1054,6 +1016,152 @@ int32_t init_config(void)
 	}
 #endif
 	return 0;
+}
+
+int32_t write_config(void)
+{
+	FILE *f;
+	char tmpfile[256];
+	char destfile[256];
+	char bakfile[256];
+
+	snprintf(destfile, sizeof(destfile),"%s%s", cs_confdir, cs_conf);
+	snprintf(tmpfile, sizeof(tmpfile), "%s%s.tmp", cs_confdir, cs_conf);
+	snprintf(bakfile, sizeof(bakfile),"%s%s.bak", cs_confdir, cs_conf);
+
+	if (!(f=fopen(tmpfile, "w"))){
+		cs_log("Cannot open file \"%s\" (errno=%d %s)", tmpfile, errno, strerror(errno));
+		return(1);
+	}
+	setvbuf(f, NULL, _IOFBF, 16*1024);
+	fprintf(f,"# oscam.conf generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
+	fprintf(f,"# Read more: http://streamboard.de.vu/svn/oscam/trunk/Distribution/doc/txt/oscam.conf.txt\n\n");
+
+	/*global settings*/
+	fprintf(f,"[global]\n");
+	config_list_save(f, global_opts, &cfg, cfg.http_full_cfg);
+	fputc((int)'\n', f);
+
+	/*monitor settings*/
+	if (cfg.mon_port) {
+		fprintf(f,"[monitor]\n");
+		config_list_save(f, monitor_opts, &cfg, cfg.http_full_cfg);
+		fputc((int)'\n', f);
+	}
+
+	/*newcamd*/
+	if (cfg.ncd_ptab.nports > 0 && cfg.ncd_ptab.ports[0].s_port > 0) {
+		fprintf(f,"[newcamd]\n");
+		config_list_save(f, newcamd_opts, &cfg, cfg.http_full_cfg);
+		fprintf(f,"\n");
+	}
+
+	/*camd3.3*/
+	if (cfg.c33_port > 0) {
+		fprintf(f,"[camd33]\n");
+		config_list_save(f, camd33_opts, &cfg, cfg.http_full_cfg);
+		fprintf(f,"\n");
+	}
+
+	/*camd3.5*/
+#ifdef CS_CACHEEX
+	if (cfg.csp_port > 0) {
+		fprintf(f,"[csp]\n");
+		config_list_save(f, csp_opts, &cfg, cfg.http_full_cfg);
+		fprintf(f,"\n");
+	}
+#endif
+
+	/*camd3.5*/
+	if (cfg.c35_port > 0) {
+		fprintf(f,"[cs357x]\n");
+		config_list_save(f, camd35_opts, &cfg, cfg.http_full_cfg);
+		fprintf(f,"\n");
+	}
+
+	/*camd3.5 TCP*/
+	if (cfg.c35_tcp_ptab.nports > 0 && cfg.c35_tcp_ptab.ports[0].s_port > 0) {
+		fprintf(f,"[cs378x]\n");
+		config_list_save(f, cs378x_opts, &cfg, cfg.http_full_cfg);
+		fputc((int)'\n', f);
+	}
+
+	/*Radegast*/
+	if (cfg.rad_port > 0) {
+		fprintf(f,"[radegast]\n");
+		config_list_save(f, radegast_opts, &cfg, cfg.http_full_cfg);
+		fprintf(f,"\n");
+	}
+
+	/*serial*/
+	if (cfg.ser_device) {
+		fprintf(f,"[serial]\n");
+		config_list_save(f, serial_opts, &cfg, cfg.http_full_cfg);
+		fprintf(f,"\n");
+	}
+
+	/*gbox*/
+	if ( cfg.gbox_port > 0) {
+		fprintf(f,"[gbox]\n");
+		config_list_save(f, gbox_opts, &cfg, cfg.http_full_cfg);
+		fprintf(f,"\n");
+	}
+
+#ifdef MODULE_CCCAM
+	/*cccam*/
+	if (cfg.cc_port[0] > 0) {
+		fprintf(f,"[cccam]\n");
+		config_list_save(f, cccam_opts, &cfg, cfg.http_full_cfg);
+		fprintf(f,"\n");
+	}
+#endif
+
+#ifdef MODULE_PANDORA
+	/*pandora*/
+	if (cfg.pand_port > 0) {
+		fprintf(f,"[pandora]\n");
+		config_list_save(f, pandora_opts, &cfg, cfg.http_full_cfg);
+		fprintf(f,"\n");
+	}
+#endif
+
+#ifdef HAVE_DVBAPI
+	/*dvb-api*/
+	if (cfg.dvbapi_enabled > 0) {
+		fprintf(f,"[dvbapi]\n");
+		config_list_save(f, dvbapi_opts, &cfg, cfg.http_full_cfg);
+		fputc((int)'\n', f);
+	}
+#endif
+
+#ifdef WEBIF
+	/*webinterface*/
+	if (cfg.http_port > 0) {
+		fprintf(f,"[webif]\n");
+		config_list_save(f, webif_opts, &cfg, cfg.http_full_cfg);
+		fputc((int)'\n', f);
+	}
+#endif
+
+#ifdef CS_ANTICASC
+	if(cfg.ac_enabled) {
+		fprintf(f,"[anticasc]\n");
+		config_list_save(f, anticasc_opts, &cfg, cfg.http_full_cfg);
+		fputc((int)'\n', f);
+	}
+#endif
+
+#ifdef LCDSUPPORT
+	if(cfg.enablelcd) {
+		fprintf(f,"[lcd]\n");
+		config_list_save(f, lcd_opts, &cfg, cfg.http_full_cfg);
+		fputc((int)'\n', f);
+	}
+#endif
+
+	fclose(f);
+
+	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
 }
 
 void chk_account(const char *token, char *value, struct s_auth *account)
@@ -1383,152 +1491,6 @@ int32_t write_services(void)
 	}
 
 	fclose(f);
-	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
-}
-
-int32_t write_config(void)
-{
-	FILE *f;
-	char tmpfile[256];
-	char destfile[256];
-	char bakfile[256];
-
-	snprintf(destfile, sizeof(destfile),"%s%s", cs_confdir, cs_conf);
-	snprintf(tmpfile, sizeof(tmpfile), "%s%s.tmp", cs_confdir, cs_conf);
-	snprintf(bakfile, sizeof(bakfile),"%s%s.bak", cs_confdir, cs_conf);
-
-	if (!(f=fopen(tmpfile, "w"))){
-		cs_log("Cannot open file \"%s\" (errno=%d %s)", tmpfile, errno, strerror(errno));
-		return(1);
-	}
-	setvbuf(f, NULL, _IOFBF, 16*1024);
-	fprintf(f,"# oscam.conf generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
-	fprintf(f,"# Read more: http://streamboard.de.vu/svn/oscam/trunk/Distribution/doc/txt/oscam.conf.txt\n\n");
-
-	/*global settings*/
-	fprintf(f,"[global]\n");
-	config_list_save(f, global_opts, &cfg, cfg.http_full_cfg);
-	fputc((int)'\n', f);
-
-	/*monitor settings*/
-	if (cfg.mon_port) {
-		fprintf(f,"[monitor]\n");
-		config_list_save(f, monitor_opts, &cfg, cfg.http_full_cfg);
-		fputc((int)'\n', f);
-	}
-
-	/*newcamd*/
-	if (cfg.ncd_ptab.nports > 0 && cfg.ncd_ptab.ports[0].s_port > 0) {
-		fprintf(f,"[newcamd]\n");
-		config_list_save(f, newcamd_opts, &cfg, cfg.http_full_cfg);
-		fprintf(f,"\n");
-	}
-
-	/*camd3.3*/
-	if (cfg.c33_port > 0) {
-		fprintf(f,"[camd33]\n");
-		config_list_save(f, camd33_opts, &cfg, cfg.http_full_cfg);
-		fprintf(f,"\n");
-	}
-
-	/*camd3.5*/
-#ifdef CS_CACHEEX
-	if (cfg.csp_port > 0) {
-		fprintf(f,"[csp]\n");
-		config_list_save(f, csp_opts, &cfg, cfg.http_full_cfg);
-		fprintf(f,"\n");
-	}
-#endif
-
-	/*camd3.5*/
-	if (cfg.c35_port > 0) {
-		fprintf(f,"[cs357x]\n");
-		config_list_save(f, camd35_opts, &cfg, cfg.http_full_cfg);
-		fprintf(f,"\n");
-	}
-
-	/*camd3.5 TCP*/
-	if (cfg.c35_tcp_ptab.nports > 0 && cfg.c35_tcp_ptab.ports[0].s_port > 0) {
-		fprintf(f,"[cs378x]\n");
-		config_list_save(f, cs378x_opts, &cfg, cfg.http_full_cfg);
-		fputc((int)'\n', f);
-	}
-
-	/*Radegast*/
-	if (cfg.rad_port > 0) {
-		fprintf(f,"[radegast]\n");
-		config_list_save(f, radegast_opts, &cfg, cfg.http_full_cfg);
-		fprintf(f,"\n");
-	}
-
-	/*serial*/
-	if (cfg.ser_device) {
-		fprintf(f,"[serial]\n");
-		config_list_save(f, serial_opts, &cfg, cfg.http_full_cfg);
-		fprintf(f,"\n");
-	}
-
-	/*gbox*/
-	if ( cfg.gbox_port > 0) {
-		fprintf(f,"[gbox]\n");
-		config_list_save(f, gbox_opts, &cfg, cfg.http_full_cfg);
-		fprintf(f,"\n");
-	}
-
-#ifdef MODULE_CCCAM
-	/*cccam*/
-	if (cfg.cc_port[0] > 0) {
-		fprintf(f,"[cccam]\n");
-		config_list_save(f, cccam_opts, &cfg, cfg.http_full_cfg);
-		fprintf(f,"\n");
-	}
-#endif
-
-#ifdef MODULE_PANDORA
-	/*pandora*/
-	if (cfg.pand_port > 0) {
-		fprintf(f,"[pandora]\n");
-		config_list_save(f, pandora_opts, &cfg, cfg.http_full_cfg);
-		fprintf(f,"\n");
-	}
-#endif
-
-#ifdef HAVE_DVBAPI
-	/*dvb-api*/
-	if (cfg.dvbapi_enabled > 0) {
-		fprintf(f,"[dvbapi]\n");
-		config_list_save(f, dvbapi_opts, &cfg, cfg.http_full_cfg);
-		fputc((int)'\n', f);
-	}
-#endif
-
-#ifdef WEBIF
-	/*webinterface*/
-	if (cfg.http_port > 0) {
-		fprintf(f,"[webif]\n");
-		config_list_save(f, webif_opts, &cfg, cfg.http_full_cfg);
-		fputc((int)'\n', f);
-	}
-#endif
-
-#ifdef CS_ANTICASC
-	if(cfg.ac_enabled) {
-		fprintf(f,"[anticasc]\n");
-		config_list_save(f, anticasc_opts, &cfg, cfg.http_full_cfg);
-		fputc((int)'\n', f);
-	}
-#endif
-
-#ifdef LCDSUPPORT
-	if(cfg.enablelcd) {
-		fprintf(f,"[lcd]\n");
-		config_list_save(f, lcd_opts, &cfg, cfg.http_full_cfg);
-		fputc((int)'\n', f);
-	}
-#endif
-
-	fclose(f);
-
 	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
 }
 
@@ -2064,6 +2026,8 @@ int32_t write_server(void)
 
 	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
 }
+
+
 
 #define write_conf(CONFIG_VAR, text) \
 	fprintf(fp, "%-27s %s\n", text ":", config_##CONFIG_VAR() ? "yes" : "no")
@@ -4996,3 +4960,41 @@ void cacheex_matcher_read(void) {
 	}
 }
 #endif
+
+void init_len4caid(void)
+{
+	int32_t nr;
+	FILE *fp;
+	char *value, *token;
+	if(!cs_malloc(&token, MAXLINESIZE, -1)) return;
+
+	memset(len4caid, 0, sizeof(uint16_t)<<8);
+	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_l4ca);
+	if (!(fp = fopen(token, "r"))){
+		free(token);
+		return;
+	}
+	for(nr = 0; fgets(token, MAXLINESIZE, fp);) {
+		int32_t i, c;
+		char *ptr;
+		if (!(value=strchr(token, ':')))
+			continue;
+		*value++ ='\0';
+		if( (ptr = strchr(value, '#')) )
+			*ptr = '\0';
+		if (strlen(trim(token)) != 2)
+			continue;
+		if (strlen(trim(value)) != 4)
+			continue;
+		if ((i = byte_atob(token)) < 0)
+			continue;
+		if ((c = word_atob(value)) < 0)
+			continue;
+		len4caid[i] = c;
+		nr++;
+	}
+	free(token);
+	fclose(fp);
+	cs_log("%d lengths for caid guessing loaded", nr);
+	return;
+}
