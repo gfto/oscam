@@ -4174,9 +4174,11 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 				shown = 0;
 				if (strcmp(getParam(params, "label"),"") == 0) {
 					if (strcmp(getParam(params, "type"),"servers") == 0) {
-						if ( (cl->typ=='p') || (cl->typ=='r') ) shown = 1;
+						if (cl->typ == 'p' || cl->typ=='r')
+							shown = 1;
 					} else if (strcmp(getParam(params, "type"),"users") == 0) {
-						if ( (cl->typ=='c') ) shown = 1;
+						if (cl->typ == 'c')
+							shown = 1;
 					} else {
 						shown = 1;
 					}
