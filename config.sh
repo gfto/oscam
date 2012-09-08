@@ -301,7 +301,7 @@ menu_reader() {
 
 	menuitem=`cat $tempfile`
 	if [ "$menuitem" != "" ]; then
-		echo -n " \"WITH_CARDREADER\"" >> ${tempfile}
+		printf " \"WITH_CARDREADER\"" >> ${tempfile}
 	fi
 	disable_all "$readers"
 	enable_package
@@ -451,7 +451,7 @@ do
 		break
 	;;
 	'-r'|'--oscam-revision')
-		(svnversion -n . 2>/dev/null || echo -n 0) | sed 's/.*://; s/[^0-9]*$//; s/^$/0/'
+		(svnversion -n . 2>/dev/null || printf 0) | sed 's/.*://; s/[^0-9]*$//; s/^$/0/'
 		break
 	;;
 	'-O'|'--detect-osx-sdk-version')
