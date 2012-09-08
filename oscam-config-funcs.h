@@ -29,6 +29,10 @@
 #  define _XOPEN_SOURCE_EXTENDED
 #endif
 
+#if defined(__APPLE__) && !defined(s6_addr32)
+#define s6_addr32 __u6_addr.__u6_addr32
+#endif
+
 /*
  * These functions allow checking of configuration variables in
  * the C code without using #ifdefs's. The dead code elimination
