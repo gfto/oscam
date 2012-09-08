@@ -37,51 +37,6 @@ static const char *cs_ird="oscam.ird";
 #endif
 uint32_t cfg_sidtab_generation = 1;
 
-typedef enum cs_proto_type
-{
-	TAG_GLOBAL,	// must be first !
-	TAG_MONITOR,	// monitor
-	TAG_CAMD33,	// camd 3.3x
-	TAG_CAMD35,	// camd 3.5x UDP
-	TAG_NEWCAMD,	// newcamd
-	TAG_RADEGAST,	// radegast
-	TAG_SERIAL,	// serial (static)
-	TAG_CS357X,	// camd 3.5x UDP
-	TAG_CS378X,	// camd 3.5x TCP
-	TAG_GBOX,	// gbox
-#ifdef MODULE_CCCAM
-	TAG_CCCAM,	// cccam
-#endif
-#ifdef MODULE_PANDORA
-	TAG_PANDORA,	// pandora
-#endif
-#ifdef CS_CACHEEX
-	TAG_CSP,	// CSP
-#endif
-	TAG_CONSTCW,	// constcw
-	TAG_DVBAPI,	// dvbapi
-	TAG_WEBIF,	// webif
-	TAG_ANTICASC,	// anti-cascading
-	TAG_LCD		// LCD
-} cs_proto_type_t;
-
-static const char *cctag[]={"global", "monitor", "camd33", "camd35", "newcamd", "radegast", "serial",
-		      "cs357x", "cs378x", "gbox",
-#ifdef MODULE_CCCAM
-		      "cccam",
-#endif
-#ifdef MODULE_PANDORA
-		      "pandora",
-#endif
-#ifdef CS_CACHEEX
-		      "csp",
-#endif
-		      "constcw", "dvbapi", "webif", "anticasc",
-#ifdef LCDSUPPORT
-		      "lcd",
-#endif
-		      NULL};
-
 static void disablelog_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
 	if (value) {
 		cs_disable_log(strToIntVal(value, 0));
@@ -277,14 +232,6 @@ static const struct config_list global_opts[] = {
 	DEF_LAST_OPT
 };
 
-void chk_t_global(const char *token, char *value)
-{
-	if (config_list_parse(global_opts, token, value, &cfg))
-		return;
-	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in global section not recognized\n", token);
-}
-
 #ifdef CS_ANTICASC
 static const struct config_list anticasc_opts[] = {
 	DEF_OPT_INT("enabled"					, OFS(ac_enabled),				0 ),
@@ -297,16 +244,11 @@ static const struct config_list anticasc_opts[] = {
 	DEF_OPT_INT("denysamples"				, OFS(ac_denysamples),			8 ),
 	DEF_LAST_OPT
 };
-
-void chk_t_ac(char *token, char *value)
-{
-	if (config_list_parse(anticasc_opts, token, value, &cfg))
-		return;
-	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in anticascading section not recognized\n",token);
-}
+#else
+static const struct config_list anticasc_opts[] = { DEF_LAST_OPT };
 #endif
 
+#ifdef MODULE_MONITOR
 static const struct config_list monitor_opts[] = {
 	DEF_OPT_INT("port"						, OFS(mon_port),				0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(mon_srvip),				serverip_fn ),
@@ -317,14 +259,9 @@ static const struct config_list monitor_opts[] = {
 	DEF_OPT_INT("appendchaninfo"			, OFS(mon_appendchaninfo),		0 ),
 	DEF_LAST_OPT
 };
-
-void chk_t_monitor(char *token, char *value)
-{
-	if (config_list_parse(monitor_opts, token, value, &cfg))
-		return;
-	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in monitor section not recognized\n",token);
-}
+#else
+static const struct config_list monitor_opts[] = { DEF_LAST_OPT };
+#endif
 
 #ifdef WEBIF
 static void http_port_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
@@ -389,16 +326,11 @@ static const struct config_list webif_opts[] = {
 	DEF_OPT_FUNC("httpdyndns"				, OFS(http_dyndns),				http_dyndns_fn ),
 	DEF_LAST_OPT
 };
-
-void chk_t_webif(char *token, char *value)
-{
-	if (config_list_parse(webif_opts, token, value, &cfg))
-		return;
-	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in webif section not recognized\n",token);
-}
+#else
+static const struct config_list webif_opts[] = { DEF_LAST_OPT };
 #endif
 
+#ifdef MODULE_CAMD33
 static void camd33_key_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
 	if (value) {
 		cfg.c33_crypted = 1;
@@ -427,14 +359,9 @@ static const struct config_list camd33_opts[] = {
 	DEF_OPT_FUNC("key"						, OFS(c33_key),					camd33_key_fn ),
 	DEF_LAST_OPT
 };
-
-void chk_t_camd33(char *token, char *value)
-{
-	if (config_list_parse(camd33_opts, token, value, &cfg))
-		return;
-	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in camd33 section not recognized\n",token);
-}
+#else
+static const struct config_list camd33_opts[] = { DEF_LAST_OPT };
+#endif
 
 #ifdef CS_CACHEEX
 static const struct config_list csp_opts[] = {
@@ -443,31 +370,22 @@ static const struct config_list csp_opts[] = {
 	DEF_OPT_UINT("wait_time"				, OFS(csp_wait_time),			0 ),
 	DEF_LAST_OPT
 };
-
-void chk_t_csp(char *token, char *value)
-{
-	if (config_list_parse(csp_opts, token, value, &cfg))
-		return;
-	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in csp section not recognized\n", token);
-}
+#else
+static const struct config_list csp_opts[] = { DEF_LAST_OPT };
 #endif
 
+#ifdef MODULE_CAMD35
 static const struct config_list camd35_opts[] = {
 	DEF_OPT_INT("port"						, OFS(c35_port),				0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(c35_srvip),				serverip_fn ),
 	DEF_OPT_INT("suppresscmd08"				, OFS(c35_udp_suppresscmd08),	0 ),
 	DEF_LAST_OPT
 };
+#else
+static const struct config_list camd35_opts[] = { DEF_LAST_OPT };
+#endif
 
-void chk_t_camd35(char *token, char *value)
-{
-	if (config_list_parse(camd35_opts, token, value, &cfg))
-		return;
-	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in camd35 section not recognized\n", token);
-}
-
+#ifdef MODULE_CAMD35_TCP
 static void porttab_cs378x_fn(const char *token, char *value, void *setting, FILE *f) {
 	PTAB *ptab = setting;
 	if (value) {
@@ -489,15 +407,11 @@ static const struct config_list cs378x_opts[] = {
 	DEF_OPT_INT("suppresscmd08"				, OFS(c35_tcp_suppresscmd08),	0 ),
 	DEF_LAST_OPT
 };
+#else
+static const struct config_list cs378x_opts[] = { DEF_LAST_OPT };
+#endif
 
-void chk_t_camd35_tcp(char *token, char *value)
-{
-	if (config_list_parse(cs378x_opts, token, value, &cfg))
-		return;
-	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in cs378x section not recognized\n", token);
-}
-
+#ifdef MODULE_NEWCAMD
 static void porttab_newcamd_fn(const char *token, char *value, void *setting, FILE *f) {
 	PTAB *ptab = setting;
 	if (value) {
@@ -540,14 +454,9 @@ static const struct config_list newcamd_opts[] = {
 	DEF_OPT_INT("mgclient"					, OFS(ncd_mgclient),		0 ),
 	DEF_LAST_OPT
 };
-
-void chk_t_newcamd(char *token, char *value)
-{
-	if (config_list_parse(newcamd_opts, token, value, &cfg))
-		return;
-	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in newcamd section not recognized\n", token);
-}
+#else
+static const struct config_list newcamd_opts[] = { DEF_LAST_OPT };
+#endif
 
 #ifdef MODULE_CCCAM
 static void cccam_port_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
@@ -586,7 +495,6 @@ static void cccam_nodeid_fn(const char *token, char *value, void *UNUSED(setting
 	}
 }
 
-
 static const struct config_list cccam_opts[] = {
 	DEF_OPT_FUNC("port"						, OFS(cc_port),				cccam_port_fn ),
 	DEF_OPT_FUNC("nodeid"					, OFS(cc_fixed_nodeid),		cccam_nodeid_fn ),
@@ -601,14 +509,8 @@ static const struct config_list cccam_opts[] = {
 	DEF_OPT_INT("keepconnected"				, OFS(cc_keep_connected),	1 ),
 	DEF_LAST_OPT
 };
-
-void chk_t_cccam(char *token, char *value)
-{
-	if (config_list_parse(cccam_opts, token, value, &cfg))
-		return;
-	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in cccam section not recognized\n",token);
-}
+#else
+static const struct config_list cccam_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef MODULE_PANDORA
@@ -622,16 +524,11 @@ static const struct config_list pandora_opts[] = {
 	DEF_OPT_FUNC("pand_allowed"				, OFS(pand_allowed),		iprange_fn ),
 	DEF_LAST_OPT
 };
-
-void chk_t_pandora(char *token, char *value)
-{
-	if (config_list_parse(pandora_opts, token, value, &cfg))
-		return;
-	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in pandora section not recognized\n",token);
-}
+#else
+static const struct config_list pandora_opts[] = { DEF_LAST_OPT };
 #endif
 
+#ifdef MODULE_RADEGAST
 static const struct config_list radegast_opts[] = {
 	DEF_OPT_INT("port"						, OFS(rad_port),			0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(rad_srvip),			serverip_fn ),
@@ -639,28 +536,20 @@ static const struct config_list radegast_opts[] = {
 	DEF_OPT_STR("user"						, OFS(rad_usr) ),
 	DEF_LAST_OPT
 };
+#else
+static const struct config_list radegast_opts[] = { DEF_LAST_OPT };
+#endif
 
-void chk_t_radegast(char *token, char *value)
-{
-	if (config_list_parse(radegast_opts, token, value, &cfg))
-		return;
-	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in radegast section not recognized\n", token);
-}
-
+#ifdef MODULE_SERIAL
 static const struct config_list serial_opts[] = {
 	DEF_OPT_STR("device"						, OFS(ser_device) ),
 	DEF_LAST_OPT
 };
+#else
+static const struct config_list serial_opts[] = { DEF_LAST_OPT };
+#endif
 
-void chk_t_serial(char *token, char *value)
-{
-	if (config_list_parse(serial_opts, token, value, &cfg))
-		return;
-	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in serial section not recognized\n", token);
-}
-
+#ifdef MODULE_GBOX
 static const struct config_list gbox_opts[] = {
 	DEF_OPT_INT("port"						, OFS(gbox_port),			0 ),
 	DEF_OPT_STR("gsmsfile"					, OFS(gbox_gsms_path) ),
@@ -668,14 +557,9 @@ static const struct config_list gbox_opts[] = {
 	DEF_OPT_STR("password"					, OFS(gbox_key) ),
 	DEF_LAST_OPT
 };
-
-void chk_t_gbox(char *token, char *value)
-{
-	if (config_list_parse(gbox_opts, token, value, &cfg))
-		return;
-	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in gbox section not recognized\n",token);
-}
+#else
+static const struct config_list gbox_opts[] = { DEF_LAST_OPT };
+#endif
 
 #ifdef HAVE_DVBAPI
 static void dvbapi_boxtype_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
@@ -727,14 +611,8 @@ static const struct config_list dvbapi_opts[] = {
 	DEF_OPT_FUNC("cw_delay"					, 0,						dvbapi_caidtab_fn ),
 	DEF_LAST_OPT
 };
-
-void chk_t_dvbapi(char *token, char *value)
-{
-	if (config_list_parse(dvbapi_opts, token, value, &cfg))
-		return;
-	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in dvbapi section not recognized\n",token);
-}
+#else
+static const struct config_list dvbapi_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef LCDSUPPORT
@@ -745,17 +623,28 @@ static const struct config_list lcd_opts[] = {
 	DEF_OPT_INT("lcd_writeintervall"		, OFS(lcd_write_intervall),	10 ),
 	DEF_LAST_OPT
 };
-
-void chk_t_lcd(char *token, char *value)
-{
-	if (config_list_parse(lcd_opts, token, value, &cfg))
-		return;
-	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in lcd section not recognized\n",token);
-}
+#else
+static const struct config_list lcd_opts[] = { DEF_LAST_OPT };
 #endif
 
 static const struct config_sections oscam_conf[] = {
+	{ "global",   global_opts }, // *** MUST BE FIRST ***
+	{ "anticasc", anticasc_opts },
+	{ "csp",      csp_opts },
+	{ "lcd",      lcd_opts },
+	{ "camd33",   camd33_opts },
+	{ "camd35",   camd35_opts },
+	{ "cs357x",   camd35_opts },
+	{ "cs378x",   cs378x_opts },
+	{ "newcamd",  newcamd_opts },
+	{ "radegast", radegast_opts },
+	{ "serial",   serial_opts },
+	{ "gbox",     gbox_opts },
+	{ "cccam",    cccam_opts },
+	{ "pandora",  pandora_opts },
+	{ "dvbapi",   dvbapi_opts },
+	{ "monitor",  monitor_opts },
+	{ "webif",    webif_opts },
 	{ NULL, NULL }
 };
 
@@ -793,63 +682,12 @@ void config_set(char *section, const char *token, char *value) {
 	}
 }
 
-static void chk_token(char *token, char *value, int32_t tag)
-{
-	switch(tag) {
-		case TAG_GLOBAL  : chk_t_global(token, value); break;
-		case TAG_MONITOR : chk_t_monitor(token, value); break;
-		case TAG_CAMD33  : chk_t_camd33(token, value); break;
-		case TAG_CAMD35  :
-		case TAG_CS357X  : chk_t_camd35(token, value); break;
-		case TAG_NEWCAMD : chk_t_newcamd(token, value); break;
-		case TAG_RADEGAST: chk_t_radegast(token, value); break;
-		case TAG_SERIAL  : chk_t_serial(token, value); break;
-		case TAG_CS378X  : chk_t_camd35_tcp(token, value); break;
-#ifdef MODULE_CCCAM
-		case TAG_CCCAM   : chk_t_cccam(token, value); break;
-#endif
-#ifdef MODULE_PANDORA
-		case TAG_PANDORA : chk_t_pandora(token, value); break;
-#endif
-#ifdef CS_CACHEEX
-		case TAG_CSP     : chk_t_csp(token, value); break;
-#endif
-		case TAG_GBOX    : chk_t_gbox(token, value); break;
-
-#ifdef HAVE_DVBAPI
-		case TAG_DVBAPI  : chk_t_dvbapi(token, value); break;
-#else
-		case TAG_DVBAPI  : fprintf(stderr, "OSCam compiled without DVB API support. Parameter %s ignored\n", token); break;
-#endif
-
-
-#ifdef WEBIF
-		case TAG_WEBIF   : chk_t_webif(token, value); break;
-#else
-		case TAG_WEBIF   : fprintf(stderr, "OSCam compiled without Webinterface support. Parameter %s ignored\n", token); break;
-#endif
-
-
-#ifdef CS_ANTICASC
-		case TAG_ANTICASC: chk_t_ac(token, value); break;
-#else
-		case TAG_ANTICASC: fprintf(stderr, "OSCam compiled without Anticascading support. Parameter %s ignored\n", token); break;
-#endif
-
-#ifdef LCDSUPPORT
-		case TAG_LCD: chk_t_lcd(token, value); break;
-#else
-		case TAG_LCD: fprintf(stderr, "OSCam compiled without LCD support. Parameter %s ignored\n", token); break;
-#endif
-
-	}
-}
-
 int32_t init_config(void)
 {
-	int32_t tag=TAG_GLOBAL;
+	const struct config_sections *cur_section = oscam_conf; // Global
 	FILE *fp;
-	char *value=NULL, *token;
+	char *token;
+
 	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 1;
 
 	cfg.nice = 99;
@@ -928,21 +766,47 @@ int32_t init_config(void)
 		fprintf(stderr, "Cannot open config file '%s' (errno=%d %s)\n", token, errno, strerror(errno));
 		exit(1);
 	}
+
+	int line = 0;
+	int valid_section = 1;
 	while (fgets(token, MAXLINESIZE, fp)) {
-		int32_t i, l;
-		//void *ptr;
-		if ((l = strlen(trim(token))) < 3)
+		++line;
+		int len = strlen(trim(token));
+		if (len < 3) // a=b or [a] are at least 3 chars
 			continue;
-		if ((token[0] == '[') && (token[l-1] == ']')) {
-			for (token[l-1] = 0, tag = -1, i = TAG_GLOBAL; cctag[i]; i++)
-				if (!strcmp(cctag[i], strtolower(token+1)))
-					tag = i;
+		if (token[0] == '#') // Skip comments
+			continue;
+		if (token[0] == '[' && token[len - 1] == ']') {
+			token[len - 1] = '\0';
+			valid_section = 0;
+			const struct config_sections *newconf = config_find_section(token + 1);
+			if (config_section_is_active(newconf)) {
+				cur_section = newconf;
+				valid_section = 1;
+			}
+			if (!newconf) {
+				fprintf(stderr, "WARNING: %s line %d unknown section [%s].\n",
+					cs_conf, line, token + 1);
+				continue;
+			}
+			if (!config_section_is_active(newconf)) {
+				fprintf(stderr, "WARNING: %s line %d section [%s] is ignorred (support not compiled in).\n",
+					cs_conf, line, newconf->section);
+			}
 			continue;
 		}
-		if (!(value=strchr(token, '=')))
+		if (!valid_section)
+			continue;
+		char *value = strchr(token, '=');
+		if (!value) // No = found, well go on
 			continue;
 		*value++ ='\0';
-		chk_token(trim(strtolower(token)), trim(value), tag);
+		char *tvalue = trim(value);
+		char *ttoken = trim(strtolower(token));
+		if (!config_list_parse(cur_section->config, ttoken, tvalue, &cfg)) {
+			fprintf(stderr, "WARNING: %s line %d section [%s] contains unknown setting '%s=%s'\n",
+				cs_conf, line, cur_section->section, ttoken, tvalue);
+		}
 	}
 	free(token);
 	fclose(fp);

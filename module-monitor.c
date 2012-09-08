@@ -743,7 +743,7 @@ static void monitor_set_server(char *args){
 		if (!strcmp(argarray[0], token[i]))	break;
 
 	if (i < 13){
-		chk_t_global(token[i],argarray[1]);
+		config_set("global", token[i], argarray[1]);
 		snprintf(buf, sizeof(buf), "[S-0000]setserver done - param %s set to %s\n", argarray[0], argarray[1]);
 		monitor_send_info(buf, 1);
 	} else {

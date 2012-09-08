@@ -218,7 +218,7 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 			for(i = 0; i < (*params).paramcount; ++i) {
 				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 					//we use the same function as used for parsing the config tokens
-					chk_t_global((*params).params[i], (*params).values[i]);
+					config_set("global", (*params).params[i], (*params).values[i]);
 				}
 			}
 			if(cfg.usrfile == NULL) cfg.disableuserfile = 1;
@@ -359,7 +359,7 @@ static char *send_oscam_config_loadbalancer(struct templatevars *vars, struct ur
 			for(i = 0; i < (*params).paramcount; ++i) {
 				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 					//we use the same function as used for parsing the config tokens
-					chk_t_global((*params).params[i], (*params).values[i]);
+					config_set("global", (*params).params[i], (*params).values[i]);
 				}
 			}
 			tpl_addMsg(vars, "Configuration Loadbalancer done.");
@@ -416,7 +416,7 @@ static char *send_oscam_config_camd33(struct templatevars *vars, struct uriparam
 			for(i = 0; i < (*params).paramcount; ++i) {
 				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 					//we use the same function as used for parsing the config tokens
-					chk_t_camd33((*params).params[i], (*params).values[i]);
+					config_set("camd33", (*params).params[i], (*params).values[i]);
 				}
 			}
 			tpl_addMsg(vars, "Configuration camd33 done. You should restart OSCam now.");
@@ -453,7 +453,7 @@ static char *send_oscam_config_camd35(struct templatevars *vars, struct uriparam
 			for(i = 0; i < (*params).paramcount; ++i) {
 				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 					//we use the same function as used for parsing the config tokens
-					chk_t_camd35((*params).params[i], (*params).values[i]);
+					config_set("camd35", (*params).params[i], (*params).values[i]);
 				}
 			}
 			tpl_addMsg(vars, "Configuration camd35 done. You should restart OSCam now.");
@@ -488,7 +488,7 @@ static char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uripa
 			for(i = 0; i < (*params).paramcount; ++i) {
 				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 					//we use the same function as used for parsing the config tokens
-					chk_t_camd35_tcp((*params).params[i], (*params).values[i]);
+					config_set("cs378x", (*params).params[i], (*params).values[i]);
 				}
 			}
 			tpl_addMsg(vars, "Configuration camd35 TCP done. You should restart OSCam now.");
@@ -526,7 +526,7 @@ static char *send_oscam_config_csp(struct templatevars *vars, struct uriparams *
 			for(i = 0; i < (*params).paramcount; ++i) {
 				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 					//we use the same function as used for parsing the config tokens
-					chk_t_csp((*params).params[i], (*params).values[i]);
+					config_set("csp", (*params).params[i], (*params).values[i]);
 				}
 			}
 			tpl_addMsg(vars, "Configuration CSP done. You should restart OSCam now.");
@@ -561,7 +561,7 @@ static char *send_oscam_config_newcamd(struct templatevars *vars, struct uripara
 			for(i = 0; i < (*params).paramcount; ++i) {
 				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 					//we use the same function as used for parsing the config tokens
-					chk_t_newcamd((*params).params[i], (*params).values[i]);
+					config_set("newcamd", (*params).params[i], (*params).values[i]);
 				}
 			}
 			tpl_addMsg(vars, "Configuration Newcamd done. You should restart OSCam now.");
@@ -607,7 +607,7 @@ static char *send_oscam_config_radegast(struct templatevars *vars, struct uripar
 			for(i = 0; i < (*params).paramcount; ++i) {
 				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 					//we use the same function as used for parsing the config tokens
-					chk_t_radegast((*params).params[i], (*params).values[i]);
+					config_set("radegast", (*params).params[i], (*params).values[i]);
 				}
 			}
 			tpl_addMsg(vars, "Configuration Radegast done. You should restart OSCam now.");
@@ -650,7 +650,7 @@ static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams
 			for(i = 0; i < (*params).paramcount; ++i) {
 				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 					//we use the same function as used for parsing the config tokens
-					chk_t_cccam((*params).params[i], (*params).values[i]);
+					config_set("cccam", (*params).params[i], (*params).values[i]);
 				}
 			}
 			tpl_addMsg(vars, "Configuration CCCam done. You should restart OSCam now.");
@@ -725,15 +725,15 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 					//we use the same function as used for parsing the config tokens
 					if (strstr((*params).params[i], "http")) {
-						chk_t_webif((*params).params[i], (*params).values[i]);
+						config_set("webif", (*params).params[i], (*params).values[i]);
 					}
 #ifdef LCDSUPPORT
 					else if (strstr((*params).params[i], "lcd")) {
-						chk_t_lcd((*params).params[i], (*params).values[i]);
+						config_set("lcd", (*params).params[i], (*params).values[i]);
 					}
 #endif
 					else {
-						chk_t_monitor((*params).params[i], (*params).values[i]);
+						config_set("monitor", (*params).params[i], (*params).values[i]);
 					}
 				}
 			}
@@ -851,7 +851,7 @@ static char *send_oscam_config_serial(struct templatevars *vars, struct uriparam
 			for(i = 0; i < (*params).paramcount; ++i) {
 				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 					//we use the same function as used for parsing the config tokens
-					chk_t_serial((*params).params[i], (*params).values[i]);
+					config_set("serial", (*params).params[i], (*params).values[i]);
 				}
 			}
 			tpl_addMsg(vars, "Configuration Serial done. You should restart OSCam now.");
@@ -891,7 +891,7 @@ static char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparam
 			for(i = 0; i < (*params).paramcount; ++i) {
 				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 					//we use the same function as used for parsing the config tokens
-					chk_t_dvbapi((*params).params[i], (*params).values[i]);
+					config_set("dvbapi", (*params).params[i], (*params).values[i]);
 				}
 			}
 			tpl_addMsg(vars, "Configuration DVB Api done. You should restart OSCam now.");
@@ -944,7 +944,7 @@ static char *send_oscam_config_anticasc(struct templatevars *vars, struct uripar
 			for(i = 0; i < (*params).paramcount; ++i) {
 				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 					//we use the same function as used for parsing the config tokens
-					chk_t_ac((*params).params[i], (*params).values[i]);
+					config_set("anticasc", (*params).params[i], (*params).values[i]);
 				}
 			}
 			tpl_addMsg(vars, "Configuration Anticascading done.");
@@ -2998,7 +2998,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 		}
 		else {
 			int32_t oldval = cfg.http_hide_idle_clients;
-			chk_t_webif("httphideidleclients", hideidle);
+			config_set("webif", "httphideidleclients", hideidle);
 			if(oldval != cfg.http_hide_idle_clients) {
 				refresh_oscam(REFR_SERVER);
 			}

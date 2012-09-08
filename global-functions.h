@@ -152,29 +152,11 @@ extern int32_t  init_srvid(void);
 extern int32_t  init_tierid(void);
 extern void init_len4caid(void);
 extern int32_t  init_irdeto_guess_tab(void);
-extern void chk_t_ac(char *token, char *value);
-extern void chk_t_camd33(char *token, char *value);
-extern void chk_t_camd35(char *token, char *value);
-extern void chk_t_camd35_tcp(char *token, char *value);
-extern void chk_t_newcamd(char *token, char *value);
-extern void chk_t_radegast(char *token, char *value);
-extern void chk_t_serial(char *token, char *value);
-extern void chk_t_gbox(char *token, char *value);
-extern void chk_t_cccam(char *token, char *value);
-extern void chk_t_csp(char *token, char *value);
 extern int32_t csp_ecm_hash(ECM_REQUEST *er);
-
-extern void chk_t_global(const char *token, char *value);
-extern void chk_t_monitor(char *token, char *value);
 extern void chk_reader(char *token, char *value, struct s_reader *rdr);
 
-extern void chk_t_dvbapi(char *token, char *value);
 extern void dvbapi_chk_caidtab(char *caidasc, char type);
 extern void dvbapi_read_priority(void);
-
-extern void chk_t_webif(char *token, char *value);
-
-extern void chk_t_lcd(char *token, char *value);
 
 extern void cs_accounts_chk(void);
 extern void chk_account(const char *token, char *value, struct s_auth *account);
