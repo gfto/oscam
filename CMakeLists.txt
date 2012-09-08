@@ -329,7 +329,6 @@ if( HAVE_LIBRT OR HAVE_LIBRT_STATIC)
     endif (LIBUSBDIR)
 endif( HAVE_LIBRT OR HAVE_LIBRT_STATIC)
 
-if (NOT OSCamOperatingSystem MATCHES "Mac OS X")
 check_include_file ("PCSC/wintypes.h" HAVE_PCSC)
 if (HAVE_PCSC)
 		if(OPTIONAL_INCLUDE_DIR AND EXISTS ${OPTIONAL_INCLUDE_DIR}/PCSC/wintypes.h)
@@ -358,7 +357,6 @@ if (OSCamOperatingSystem MATCHES "Windows/Cygwin")
     set (HAVE_PCSC "1")
 endif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
 endif (HAVE_PCSC)
-endif (NOT OSCamOperatingSystem MATCHES "Mac OS X")
 
 #----------------------- subdirectories ------------------------------
 
