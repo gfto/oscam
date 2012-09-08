@@ -146,6 +146,8 @@ extern void free_sidtab(struct s_sidtab *sidtab);
 extern void init_free_sidtab(void);
 extern int32_t init_provid(void);
 
+extern void config_set(char *section, const char *token, char *value);
+
 extern int32_t  init_srvid(void);
 extern int32_t  init_tierid(void);
 extern void init_len4caid(void);

@@ -121,7 +121,7 @@ static void serverip_fn(const char *token, char *value, void *setting, FILE *f) 
 		fprintf_conf(f, token, "%s\n", cs_inet_ntoa(srvip));
 }
 
-static void iprange_fn(const char *token, char *value, void *setting, FILE *f) {
+void iprange_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_ip **ip = setting;
 	if (value) {
 		if(strlen(value) == 0) {
@@ -754,6 +754,44 @@ void chk_t_lcd(char *token, char *value)
 		fprintf(stderr, "Warning: keyword '%s' in lcd section not recognized\n",token);
 }
 #endif
+
+static const struct config_sections oscam_conf[] = {
+	{ NULL, NULL }
+};
+
+static int config_section_is_active(const struct config_sections *sec) {
+	if (!sec)
+		return 0;
+	if (sec->config[0].opt_type == OPT_UNKNOWN)
+		return 0;
+	return 1;
+}
+
+static const struct config_sections *config_find_section(char *section_name) {
+	const struct config_sections *sec;
+	for (sec = oscam_conf; sec && sec->section; sec++) {
+		if (streq(section_name, sec->section)) {
+			return sec;
+		}
+	}
+	return NULL;
+}
+
+void config_set(char *section, const char *token, char *value) {
+	const struct config_sections *sec = config_find_section(section);
+	if (!sec) {
+		fprintf(stderr, "WARNING: Unknown section '%s'.\n", section);
+		return;
+	}
+	if (config_section_is_active(sec)) {
+		if (!config_list_parse(sec->config, token, value, &cfg)) {
+			fprintf(stderr, "WARNING: In section [%s] unknown setting '%s=%s' tried.\n",
+				section, token, value);
+		}
+	} else {
+		fprintf(stderr, "WARNING: Section is not active '%s'.\n", section);
+	}
+}
 
 static void chk_token(char *token, char *value, int32_t tag)
 {

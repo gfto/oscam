@@ -66,6 +66,11 @@ struct config_list {
 		.opt_type		= OPT_UNKNOWN \
 	}
 
+struct config_sections {
+	const char					*section;
+	const struct config_list	*config;
+};
+
 int32_t  strToIntVal(char *value, int32_t defaultvalue);
 uint32_t strToUIntVal(char *value, uint32_t defaultvalue);
 
