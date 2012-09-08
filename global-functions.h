@@ -148,7 +148,6 @@ extern int32_t init_provid(void);
 
 extern int32_t  init_srvid(void);
 extern int32_t  init_tierid(void);
-extern int32_t  search_boxkey(uint16_t, char *);
 extern void init_len4caid(void);
 extern int32_t  init_irdeto_guess_tab(void);
 extern void chk_t_ac(char *token, char *value);

@@ -13,10 +13,6 @@
 #include <net/if.h>
 #endif
 
-#ifdef CS_WITH_BOXKEYS
-#  include "oscam-boxkeys.np"
-#endif
-
 #define CONFVARWIDTH 30
 #define MAXLINESIZE 16384
 
@@ -26,7 +22,6 @@ static const char *cs_srvr="oscam.server";
 static const char *cs_srid="oscam.srvid";
 static const char *cs_trid="oscam.tiers";
 static const char *cs_l4ca="oscam.guess";
-static const char *cs_cert="oscam.cert";
 static const char *cs_sidt="oscam.services";
 #ifdef CS_ANTICASC
 static const char *cs_ac="oscam.ac";
@@ -1287,47 +1282,6 @@ void init_len4caid(void)
 	fclose(fp);
 	cs_log("%d lengths for caid guessing loaded", nr);
 	return;
-}
-
-int32_t search_boxkey(uint16_t caid, char *key)
-{
-	int32_t i, rc = 0;
-	FILE *fp;
-	char c_caid[512];
-
-	snprintf(c_caid, sizeof(c_caid), "%s%s", cs_confdir, cs_cert);
-	fp = fopen(c_caid, "r");
-	if (fp) {
-		for (; (!rc) && fgets(c_caid, sizeof(c_caid), fp);) {
-			char *c_provid, *c_key;
-
-			c_provid = strchr(c_caid, '#');
-			if (c_provid)
-				*c_provid = '\0';
-			if (!(c_provid = strchr(c_caid, ':')))
-				continue;
-			*c_provid++ ='\0';
-			if (!(c_key = strchr(c_provid, ':')))
-				continue;
-			*c_key++ ='\0';
-			if (word_atob(trim(c_caid))!=caid)
-				continue;
-			if ((i=(strlen(trim(c_key))>>1)) > 256)
-				continue;
-			if (cs_atob((uchar *)key, c_key, i) < 0) {
-				cs_log("wrong key in \"%s\"", cs_cert);
-				continue;
-			}
-			rc = 1;
-		}
-		fclose(fp);
-	}
-#ifdef OSCAM_INBUILD_KEYS
-	for(i=0; (!rc) && (npkey[i].keylen); i++)
-		if (rc=((caid==npkey[i].caid) && (npkey[i].provid==0)))
-			memcpy(key, npkey[i].key, npkey[i].keylen);
-#endif
-	return(rc);
 }
 
 int32_t init_config(void)

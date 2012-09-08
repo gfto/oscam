@@ -3,6 +3,44 @@
 
 #define CMD_LEN 5
 
+static const char *cs_cert = "oscam.cert";
+
+static int search_boxkey(uint16_t caid, char *key)
+{
+	int i, rc = 0;
+	FILE *fp;
+	char c_caid[512];
+
+	snprintf(c_caid, sizeof(c_caid), "%s%s", cs_confdir, cs_cert);
+	fp = fopen(c_caid, "r");
+	if (fp) {
+		for (; (!rc) && fgets(c_caid, sizeof(c_caid), fp);) {
+			char *c_provid, *c_key;
+
+			c_provid = strchr(c_caid, '#');
+			if (c_provid)
+				*c_provid = '\0';
+			if (!(c_provid = strchr(c_caid, ':')))
+				continue;
+			*c_provid++ ='\0';
+			if (!(c_key = strchr(c_provid, ':')))
+				continue;
+			*c_key++ ='\0';
+			if (word_atob(trim(c_caid))!=caid)
+				continue;
+			if ((i=(strlen(trim(c_key))>>1)) > 256)
+				continue;
+			if (cs_atob((uchar *)key, c_key, i) < 0) {
+				cs_log("wrong key in \"%s\"", cs_cert);
+				continue;
+			}
+			rc = 1;
+		}
+		fclose(fp);
+	}
+	return rc;
+}
+
 static void RotateBytes1(unsigned char *out, unsigned char *in, int32_t n)
 {
   // loop is executed atleast once, so it's not a good idea to
