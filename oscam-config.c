@@ -281,31 +281,6 @@ static void config_list_save(FILE *f, const struct config_list *clist, void *con
 	}
 }
 
-#ifdef DEBUG_SIDTAB
-static void show_sidtab(struct s_sidtab *sidtab)
-{
-  for (; sidtab; sidtab=sidtab->next)
-  {
-    int32_t i;
-    char buf[1024];
-    char *saveptr = buf;
-    cs_log("label=%s", sidtab->label);
-    snprintf(buf, sizeof(buf), "caid(%d)=", sidtab->num_caid);
-    for (i=0; i<sidtab->num_caid; i++)
-      snprintf(buf+strlen(buf), 1024-(buf-saveptr), "%04X ", sidtab->caid[i]);
-    cs_log("%s", buf);
-    snprintf(buf, sizeof(buf), "provider(%d)=", sidtab->num_provid);
-    for (i=0; i<sidtab->num_provid; i++)
-      snprintf(buf+strlen(buf), 1024-(buf-saveptr), "%08X ", sidtab->provid[i]);
-    cs_log("%s", buf);
-    snprintf(buf, sizeof(buf), "services(%d)=", sidtab->num_srvid);
-    for (i=0; i<sidtab->num_srvid; i++)
-      snprintf(buf+strlen(buf), 1024-(buf-saveptr), "%04X ", sidtab->srvid[i]);
-    cs_log("%s", buf);
-  }
-}
-#endif
-
 static void chk_iprange(char *value, struct s_ip **base)
 {
 	int32_t i = 0;
@@ -2838,6 +2813,31 @@ void init_free_sidtab(void) {
 		cfg.sidtab = NULL;
 		++cfg_sidtab_generation;
 }
+
+#ifdef DEBUG_SIDTAB
+static void show_sidtab(struct s_sidtab *sidtab)
+{
+  for (; sidtab; sidtab=sidtab->next)
+  {
+    int32_t i;
+    char buf[1024];
+    char *saveptr = buf;
+    cs_log("label=%s", sidtab->label);
+    snprintf(buf, sizeof(buf), "caid(%d)=", sidtab->num_caid);
+    for (i=0; i<sidtab->num_caid; i++)
+      snprintf(buf+strlen(buf), 1024-(buf-saveptr), "%04X ", sidtab->caid[i]);
+    cs_log("%s", buf);
+    snprintf(buf, sizeof(buf), "provider(%d)=", sidtab->num_provid);
+    for (i=0; i<sidtab->num_provid; i++)
+      snprintf(buf+strlen(buf), 1024-(buf-saveptr), "%08X ", sidtab->provid[i]);
+    cs_log("%s", buf);
+    snprintf(buf, sizeof(buf), "services(%d)=", sidtab->num_srvid);
+    for (i=0; i<sidtab->num_srvid; i++)
+      snprintf(buf+strlen(buf), 1024-(buf-saveptr), "%04X ", sidtab->srvid[i]);
+    cs_log("%s", buf);
+  }
+}
+#endif
 
 int32_t init_sidtab(void) {
 	int32_t nr, nro, nrr;
