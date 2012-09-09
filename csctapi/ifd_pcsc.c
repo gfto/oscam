@@ -194,7 +194,7 @@ int32_t pcsc_check_card_inserted(struct s_reader *pcsc_reader)
     if (!pcsc_reader->pcsc_has_card && !(SCARDHANDLE)(pcsc_reader->hCard)) {
         // try connecting to the card
         rv = SCardConnect(pcsc_reader->hContext, pcsc_reader->pcsc_name, SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, &pcsc_reader->hCard, &pcsc_reader->dwActiveProtocol);
-        if (rv==SCARD_E_NO_SMARTCARD) {
+        if (rv == (long)SCARD_E_NO_SMARTCARD) {
             // no card in pcsc_reader
             pcsc_reader->pcsc_has_card=0;
             if((SCARDHANDLE)(pcsc_reader->hCard)) {
@@ -204,7 +204,7 @@ int32_t pcsc_check_card_inserted(struct s_reader *pcsc_reader)
             // rdr_debug_mask(pcsc_reader, D_DEVICE, "PCSC card in %s removed / absent [dwstate=%lx rv=(%lx)]", pcsc_reader->pcsc_name, dwState, (unsigned long)rv );
             return 0;
         }
-        else if( rv == SCARD_W_UNRESPONSIVE_CARD ) {
+        else if (rv == (long)SCARD_W_UNRESPONSIVE_CARD) {
             // there is a problem with the card in the pcsc_reader
             pcsc_reader->pcsc_has_card=0;
             pcsc_reader->hCard=0;
