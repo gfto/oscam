@@ -19,8 +19,11 @@ struct config_list {
 	enum opt_types	opt_type;
 	char			*config_name;
 	size_t			var_offset;
-	long			default_value;
 	unsigned int	str_size;
+	union {
+		int32_t			d_int;
+		uint32_t		d_uint;
+	} def;
 	union {
 		void			(*process_fn)(const char *token, char *value, void *setting, FILE *config_file);
 		bool			(*should_save_fn)(void);
@@ -32,7 +35,7 @@ struct config_list {
 		.opt_type		= OPT_INT, \
 		.config_name	= __name, \
 		.var_offset		= __var_ofs, \
-		.default_value	= __default \
+		.def.d_int		= __default \
 	}
 
 #define DEF_OPT_UINT(__name, __var_ofs, __default) \
@@ -40,7 +43,7 @@ struct config_list {
 		.opt_type		= OPT_UINT, \
 		.config_name	= __name, \
 		.var_offset		= __var_ofs, \
-		.default_value	= __default \
+		.def.d_uint		= __default \
 	}
 
 #define DEF_OPT_STR(__name, __var_ofs) \

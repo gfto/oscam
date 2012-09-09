@@ -58,11 +58,11 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 		void *cfg = config_data + c->var_offset;
 		switch (c->opt_type) {
 		case OPT_INT: {
-			*(int32_t *)cfg = strToIntVal(value, c->default_value);
+			*(int32_t *)cfg = strToIntVal(value, c->def.d_int);
 			return 1;
 		}
 		case OPT_UINT: {
-			*(uint32_t *)cfg = strToUIntVal(value, c->default_value);
+			*(uint32_t *)cfg = strToUIntVal(value, c->def.d_uint);
 			return 1;
 		}
 		case OPT_STRING: {
@@ -108,13 +108,13 @@ void config_list_save(FILE *f, const struct config_list *clist, void *config_dat
 		switch (c->opt_type) {
 		case OPT_INT: {
 			int32_t val = *(int32_t *)cfg;
-			if (save_all || val != c->default_value)
+			if (save_all || val != c->def.d_int)
 				fprintf_conf(f, c->config_name, "%d\n", val);
 			continue;
 		}
 		case OPT_UINT: {
 			uint32_t val = *(uint32_t *)cfg;
-			if (save_all || val != (uint32_t)c->default_value)
+			if (save_all || val != c->def.d_uint)
 				fprintf_conf(f, c->config_name, "%u\n", val);
 			continue;
 		}
