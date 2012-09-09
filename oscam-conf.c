@@ -51,7 +51,7 @@ void fprintf_conf_n(FILE *f, const char *varname) {
 int config_list_parse(const struct config_list *clist, const char *token, char *value, void *config_data) {
 	const struct config_list *c;
 	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
-		if (c->opt_type == OPT_SAVE_FUNC)
+		if (c->opt_type == OPT_SAVE_FUNC || c->opt_type == OPT_FIXUP_FUNC)
 			continue;
 		if (strcasecmp(token, c->config_name) != 0)
 			continue;
@@ -90,10 +90,10 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 			return 1;
 		}
 		case OPT_FUNC: {
-			if (c->ops.process_fn)
-				c->ops.process_fn(token, value, cfg, NULL);
+			c->ops.process_fn(token, value, cfg, NULL);
 			return 1;
 		}
+		case OPT_FIXUP_FUNC:
 		case OPT_SAVE_FUNC:
 			return 1;
 		case OPT_UNKNOWN: {
@@ -137,10 +137,10 @@ void config_list_save(FILE *f, const struct config_list *clist, void *config_dat
 			continue;
 		}
 		case OPT_FUNC: {
-			if (c->ops.process_fn)
-				c->ops.process_fn((const char *)c->config_name, NULL, cfg, f);
+			c->ops.process_fn((const char *)c->config_name, NULL, cfg, f);
 			continue;
 		}
+		case OPT_FIXUP_FUNC:
 		case OPT_SAVE_FUNC:
 			continue;
 		case OPT_UNKNOWN:
@@ -152,11 +152,21 @@ void config_list_save(FILE *f, const struct config_list *clist, void *config_dat
 bool config_list_should_be_saved(const struct config_list *clist) {
 	const struct config_list *c;
 	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
-		if (c->opt_type == OPT_SAVE_FUNC && c->ops.should_save_fn) {
+		if (c->opt_type == OPT_SAVE_FUNC) {
 			return c->ops.should_save_fn();
 		}
 	}
 	return true;
+}
+
+void config_list_apply_fixups(const struct config_list *clist) {
+	const struct config_list *c;
+	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
+		if (c->opt_type == OPT_FIXUP_FUNC) {
+			c->ops.fixup_fn();
+			break;
+		}
+	}
 }
 
 void config_list_set_defaults(const struct config_list *clist, void *config_data) {
@@ -191,6 +201,7 @@ void config_list_set_defaults(const struct config_list *clist, void *config_data
 			break;
 		}
 		case OPT_SAVE_FUNC:
+		case OPT_FIXUP_FUNC:
 		case OPT_UNKNOWN:
 			continue;
 		}
@@ -221,6 +232,7 @@ void config_sections_save(const struct config_sections *conf, FILE *f) {
 	for (sec = conf; sec && sec->section; sec++) {
 		if (config_section_is_active(sec) && config_list_should_be_saved(sec->config)) {
 			fprintf(f, "[%s]\n", sec->section);
+			config_list_apply_fixups(sec->config);
 			config_list_save(f, sec->config, &cfg, cfg.http_full_cfg);
 			fprintf(f, "\n");
 		}

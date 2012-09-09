@@ -13,6 +13,7 @@ enum opt_types {
 	OPT_SSTRING = 1 << 4,
 	OPT_FUNC    = 1 << 5,
 	OPT_SAVE_FUNC = 1 << 6,
+	OPT_FIXUP_FUNC = 1 << 7,
 };
 
 struct config_list {
@@ -28,6 +29,7 @@ struct config_list {
 	union {
 		void			(*process_fn)(const char *token, char *value, void *setting, FILE *config_file);
 		bool			(*should_save_fn)(void);
+		void			(*fixup_fn)(void);
 	} ops;
 };
 
@@ -78,6 +80,12 @@ struct config_list {
 		.ops.should_save_fn	= __fn \
 	}
 
+#define DEF_OPT_FIXUP_FUNC(__fn) \
+	{ \
+		.opt_type		= OPT_FIXUP_FUNC, \
+		.ops.fixup_fn	= __fn \
+	}
+
 #define DEF_LAST_OPT \
 	{ \
 		.opt_type		= OPT_UNKNOWN \
@@ -96,6 +104,7 @@ void fprintf_conf_n(FILE *f, const char *varname);
 
 int  config_list_parse(const struct config_list *clist, const char *token, char *value, void *config_data);
 void config_list_save(FILE *f, const struct config_list *clist, void *config_data, int save_all);
+void config_list_apply_fixups(const struct config_list *clist);
 bool config_list_should_be_saved(const struct config_list *clist);
 void config_list_set_defaults(const struct config_list *clist, void *config_data);
 

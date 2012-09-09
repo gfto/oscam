@@ -221,8 +221,6 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 					config_set("global", (*params).params[i], (*params).values[i]);
 				}
 			}
-			if(cfg.usrfile == NULL) cfg.disableuserfile = 1;
-			if(cfg.mailfile == NULL) cfg.disablemail = 1;
 			tpl_addMsg(vars, "Configuration Global done. You should restart OSCam now.");
 			if(write_config()==0) refresh_oscam(REFR_SERVER);
 			else tpl_addMsg(vars, "Write Config failed!");

@@ -156,6 +156,26 @@ static void caidvaluetab_fn(const char *token, char *value, void *setting, FILE 
 }
 #endif
 
+void global_fixups_fn(void) {
+	if (!cfg.usrfile) cfg.disableuserfile = 1;
+	if (!cfg.mailfile) cfg.disablemail = 1;
+	if (cfg.ctimeout < 100) cfg.ctimeout *= 1000;
+	if (cfg.ftimeout < 100) cfg.ftimeout *= 1000;
+	if (cfg.nice < -20 || cfg.nice > 20) cfg.nice = 99;
+	if (cfg.nice != 99) cs_setpriority(cfg.nice);
+	if (cfg.srtimeout <= 0) cfg.srtimeout = 1500;
+	if (cfg.srtimeout < 100) cfg.srtimeout *= 1000;
+	if (cfg.max_log_size != 0 && cfg.max_log_size <= 10) cfg.max_log_size = 10;
+	if (cfg.ftimeout >= cfg.ctimeout) cfg.ftimeout = cfg.ctimeout - 100;
+	if (cfg.ftimeout < cfg.srtimeout) cfg.ftimeout = cfg.srtimeout + 100;
+	if (cfg.ctimeout < cfg.srtimeout) cfg.ctimeout = cfg.srtimeout + 100;
+	if (cfg.max_cache_time < (cfg.ctimeout / 1000 + 1)) cfg.max_cache_time = cfg.ctimeout / 1000 + 2;
+#ifdef WITH_LB
+	if (cfg.lb_save > 0 && cfg.lb_save < 100) cfg.lb_save = 100;
+	if (cfg.lb_nbest_readers < 2) cfg.lb_nbest_readers = DEFAULT_NBEST;
+#endif
+}
+
 #define OFS(X) \
 	offsetof(struct s_config, X)
 
@@ -163,6 +183,7 @@ static void caidvaluetab_fn(const char *token, char *value, void *setting, FILE 
 	sizeof(((struct s_config *)0)->X)
 
 static const struct config_list global_opts[] = {
+	DEF_OPT_FIXUP_FUNC(global_fixups_fn),
 #if defined(QBOXHD) || defined(__arm__)
 	DEF_OPT_INT("enableled"					, OFS(enableled),			0 ),
 #endif
@@ -233,10 +254,21 @@ static const struct config_list global_opts[] = {
 };
 
 #ifdef CS_ANTICASC
+static void anticasc_fixups_fn(void) {
+	if (cfg.ac_users < 0) cfg.ac_users = 0;
+	if (cfg.ac_stime < 0) cfg.ac_stime = 2;
+	if (cfg.ac_samples < 2 || cfg.ac_samples > 10) cfg.ac_samples = 10;
+	if (cfg.ac_penalty < 0 || cfg.ac_penalty > 3) cfg.ac_penalty = 0;
+	if (cfg.ac_fakedelay < 100 || cfg.ac_fakedelay > 3000) cfg.ac_fakedelay = 1000;
+	if (cfg.ac_denysamples < 2 || cfg.ac_denysamples > cfg.ac_samples - 1) cfg.ac_denysamples = cfg.ac_samples - 1;
+	if (cfg.ac_denysamples + 1 > cfg.ac_samples) cfg.ac_denysamples = cfg.ac_samples - 1;
+}
+
 static bool anticasc_should_save_fn(void) { return cfg.ac_enabled; }
 
 static const struct config_list anticasc_opts[] = {
 	DEF_OPT_SAVE_FUNC(anticasc_should_save_fn),
+	DEF_OPT_FIXUP_FUNC(anticasc_fixups_fn),
 	DEF_OPT_INT("enabled"					, OFS(ac_enabled),				0 ),
 	DEF_OPT_INT("numusers"					, OFS(ac_users),				0 ),
 	DEF_OPT_INT("sampletime"				, OFS(ac_stime),				2 ),
@@ -658,10 +690,15 @@ static const struct config_list dvbapi_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef LCDSUPPORT
+static void lcd_fixups_fn(void) {
+	if (cfg.lcd_write_intervall < 5) cfg.lcd_write_intervall = 5;
+}
+
 static bool lcd_should_save_fn(void) { return cfg.enablelcd; }
 
 static const struct config_list lcd_opts[] = {
 	DEF_OPT_SAVE_FUNC(lcd_should_save_fn),
+	DEF_OPT_FIXUP_FUNC(lcd_fixups_fn),
 	DEF_OPT_INT("enablelcd"					, OFS(enablelcd),			0 ),
 	DEF_OPT_STR("lcd_outputpath"			, OFS(lcd_output_path),		NULL ),
 	DEF_OPT_INT("lcd_hideidle"				, OFS(lcd_hide_idle),		0 ),
@@ -726,6 +763,7 @@ int32_t init_config(void)
 			valid_section = 0;
 			const struct config_sections *newconf = config_find_section(oscam_conf, token + 1);
 			if (config_section_is_active(newconf)) {
+				config_list_apply_fixups(cur_section->config);
 				cur_section = newconf;
 				valid_section = 1;
 			}
@@ -755,92 +793,7 @@ int32_t init_config(void)
 	}
 	free(token);
 	fclose(fp);
-
-	// Apply configuration fixups
-	if (!cfg.usrfile)
-		cfg.disableuserfile = 1;
-
-	if (!cfg.mailfile)
-		cfg.disablemail = 1;
-
-	if (cfg.ctimeout < 100)
-		cfg.ctimeout *= 1000;
-
-	if (cfg.ftimeout < 100)
-		cfg.ftimeout *= 1000;
-
-	if (cfg.nice < -20 || cfg.nice > 20)
-		cfg.nice = 99;
-
-	if (cfg.nice != 99)
-		cs_setpriority(cfg.nice);
-
-	if (cfg.srtimeout <= 0)
-		cfg.srtimeout = 1500;
-	if (cfg.srtimeout < 100)
-		cfg.srtimeout *= 1000;
-
-	if (cfg.max_log_size != 0 && cfg.max_log_size <= 10)
-		cfg.max_log_size = 10;
-
-#ifdef WITH_LB
-	if (cfg.lb_save > 0 && cfg.lb_save < 100) {
-		fprintf(stderr, "WARNING: %s (%d) was corrected to the minimum: %d\n",
-			token, cfg.lb_save, 100);
-		cfg.lb_save = 100;
-	}
-
-	if (cfg.lb_nbest_readers < 2)
-		cfg.lb_nbest_readers = DEFAULT_NBEST;
-#endif
-
-#ifdef LCDSUPPORT
-	if (cfg.lcd_write_intervall < 5)
-		cfg.lcd_write_intervall = 5;
-#endif
-
-	cs_init_log();
-	cs_init_statistics();
-	if (cfg.ftimeout >= cfg.ctimeout) {
-		cfg.ftimeout = cfg.ctimeout - 100;
-		cs_log("WARNING: fallbacktimeout adjusted to %u ms (must be smaller than clienttimeout (%u ms))", cfg.ftimeout, cfg.ctimeout);
-	}
-	if(cfg.ftimeout < cfg.srtimeout) {
-		cfg.ftimeout = cfg.srtimeout + 100;
-		cs_log("WARNING: fallbacktimeout adjusted to %u ms (must be greater than serialreadertimeout (%u ms))", cfg.ftimeout, cfg.srtimeout);
-	}
-	if(cfg.ctimeout < cfg.srtimeout) {
-		cfg.ctimeout = cfg.srtimeout + 100;
-		cs_log("WARNING: clienttimeout adjusted to %u ms (must be greater than serialreadertimeout (%u ms))", cfg.ctimeout, cfg.srtimeout);
-	}
-	if (cfg.max_cache_time < (cfg.ctimeout/1000+1))
-		cfg.max_cache_time = cfg.ctimeout/1000+2;
-
-#ifdef CS_ANTICASC
-	// Anticascating config fixups
-	if (cfg.ac_users < 0)
-		cfg.ac_users = 0;
-
-	if (cfg.ac_stime < 0)
-		cfg.ac_stime = 2;
-
-	if (cfg.ac_samples < 2 || cfg.ac_samples > 10)
-		cfg.ac_samples = 10;
-
-	if (cfg.ac_penalty < 0 || cfg.ac_penalty > 3)
-		cfg.ac_penalty = 0;
-
-	if (cfg.ac_fakedelay < 100 || cfg.ac_fakedelay > 3000)
-		cfg.ac_fakedelay = 1000;
-
-	if (cfg.ac_denysamples < 2 || cfg.ac_denysamples > cfg.ac_samples - 1)
-		cfg.ac_denysamples = cfg.ac_samples - 1;
-
-	if (cfg.ac_denysamples + 1 > cfg.ac_samples) {
-		cfg.ac_denysamples = cfg.ac_samples - 1;
-		cs_log("WARNING: DenySamples adjusted to %d", cfg.ac_denysamples);
-	}
-#endif
+	config_list_apply_fixups(cur_section->config);
 	return 0;
 }
 

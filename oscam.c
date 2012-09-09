@@ -4926,6 +4926,8 @@ int32_t main (int32_t argc, char *argv[])
   init_signal_pre(); // because log could cause SIGPIPE errors, init a signal handler first
   init_first_client();
   init_config();
+  cs_init_log();
+  cs_init_statistics();
   init_check();
 #ifdef WITH_LB
   init_stat();
