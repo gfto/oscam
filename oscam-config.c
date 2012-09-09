@@ -18,25 +18,19 @@
 
 #define MAXLINESIZE 16384
 
-static const char *cs_conf="oscam.conf";
-static const char *cs_user="oscam.user";
-static const char *cs_srvr="oscam.server";
-static const char *cs_srid="oscam.srvid";
-static const char *cs_trid="oscam.tiers";
-static const char *cs_l4ca="oscam.guess";
-static const char *cs_sidt="oscam.services";
-#ifdef CS_ANTICASC
-static const char *cs_ac="oscam.ac";
-#endif
-static const char *cs_whitelist="oscam.whitelist";
-static const char *cs_cacheex_matcher="oscam.cacheex";
+#define cs_conf				"oscam.conf"
+#define cs_user				"oscam.user"
+#define cs_srvr				"oscam.server"
+#define cs_srid				"oscam.srvid"
+#define cs_trid				"oscam.tiers"
+#define cs_l4ca				"oscam.guess"
+#define cs_sidt				"oscam.services"
+#define cs_ac				"oscam.ac"
+#define cs_whitelist		"oscam.whitelist"
+#define cs_cacheex_matcher	"oscam.cacheex"
+#define cs_provid			"oscam.provid"
+#define cs_ird				"oscam.ird"
 
-//Todo #ifdef CCCAM
-static const char *cs_provid="oscam.provid";
-
-#ifdef IRDETO_GUESSING
-static const char *cs_ird="oscam.ird";
-#endif
 uint32_t cfg_sidtab_generation = 1;
 
 static void disablelog_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
