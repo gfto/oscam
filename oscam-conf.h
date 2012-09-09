@@ -114,6 +114,8 @@ void config_sections_save(const struct config_sections *conf, FILE *f);
 void config_sections_set_defaults(const struct config_sections *conf);
 void config_set_value(const struct config_sections *conf, char *section, const char *token, char *value, void *var);
 
+FILE *open_config_file(const char *conf_filename);
+FILE *open_config_file_or_die(const char *conf_filename);
 FILE *create_config_file(const char *conf_filename);
 bool flush_config_file(FILE *f, const char *conf_filename);
 

@@ -28,6 +28,8 @@ static const char *cs_sidt="oscam.services";
 #ifdef CS_ANTICASC
 static const char *cs_ac="oscam.ac";
 #endif
+static const char *cs_whitelist="oscam.whitelist";
+static const char *cs_cacheex_matcher="oscam.cacheex";
 
 //Todo #ifdef CCCAM
 static const char *cs_provid="oscam.provid";
@@ -735,19 +737,14 @@ void config_set(char *section, const char *token, char *value) {
 
 int32_t init_config(void)
 {
+	FILE *fp = open_config_file_or_die(cs_conf);
+
 	const struct config_sections *cur_section = oscam_conf; // Global
-	FILE *fp;
 	char *token;
 
 	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 1;
 
 	config_sections_set_defaults(oscam_conf);
-
-	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_conf);
-	if (!(fp = fopen(token, "r"))) {
-		fprintf(stderr, "Cannot open config file '%s' (errno=%d %s)\n", token, errno, strerror(errno));
-		exit(1);
-	}
 
 	int line = 0;
 	int valid_section = 1;
@@ -1716,21 +1713,16 @@ int32_t init_free_userdb(struct s_auth *ptr) {
 
 struct s_auth *init_userdb(void)
 {
+	FILE *fp = open_config_file(cs_user);
+	if (!fp)
+		return NULL;
+
 	struct s_auth *authptr = NULL;
 	int32_t tag = 0, nr = 0, expired = 0, disabled = 0;
-	//int32_t first=1;
-	FILE *fp;
 	char *value, *token;
 	struct s_auth *account = NULL;
 	struct s_auth *probe = NULL;
 	if(!cs_malloc(&token, MAXLINESIZE, -1)) return authptr;
-
-	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_user);
-	if (!(fp = fopen(token, "r"))) {
-		cs_log("Cannot open file \"%s\" (errno=%d %s)", token, errno, strerror(errno));
-		free(token);
-		return authptr;
-	}
 
 	while (fgets(token, MAXLINESIZE, fp)) {
 		int32_t i, l;
@@ -1917,20 +1909,16 @@ static void show_sidtab(struct s_sidtab *sidtab)
 #endif
 
 int32_t init_sidtab(void) {
+	FILE *fp = open_config_file(cs_sidt);
+	if (!fp)
+		return 1;
+
 	int32_t nr, nro, nrr;
-	FILE *fp;
 	char *value, *token;
 	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 1;
 	struct s_sidtab *ptr;
 	struct s_sidtab *sidtab=(struct s_sidtab *)0;
 
-	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_sidt);
-	if (!(fp=fopen(token, "r")))
-	{
-		cs_log("Cannot open file \"%s\" (errno=%d %s)", token, errno, strerror(errno));
-		free(token);
-		return(1);
-	}
 	for (nro=0, ptr=cfg.sidtab; ptr; nro++)
 	{
 		struct s_sidtab *ptr_next;
@@ -1984,18 +1972,15 @@ int32_t init_sidtab(void) {
 
 //Todo #ifdef CCCAM
 int32_t init_provid(void) {
+	FILE *fp = open_config_file(cs_provid);
+	if (!fp)
+		return 0;
+
 	int32_t nr;
-	FILE *fp;
 	char *payload, *saveptr1 = NULL, *token;
 	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 0;
 	static struct s_provid *provid=(struct s_provid *)0;
-	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_provid);
 
-	if (!(fp=fopen(token, "r"))) {
-		cs_log("can't open file \"%s\" (err=%d %s), no provids's loaded", token, errno, strerror(errno));
-		free(token);
-		return(0);
-	}
 	nr=0;
 	while (fgets(token, MAXLINESIZE, fp)) {
 
@@ -2056,12 +2041,14 @@ int32_t init_provid(void) {
 
 int32_t init_srvid(void)
 {
+	FILE *fp = open_config_file(cs_srid);
+	if (!fp)
+		return 0;
+
 	int32_t nr = 0, i;
-	FILE *fp;
 	char *payload, *tmp, *saveptr1 = NULL, *token;
 	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 0;
 	struct s_srvid *srvid=NULL, *new_cfg_srvid[16], *last_srvid[16];
-	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_srid);
 	// A cache for strings within srvids. A checksum is calculated which is the start point in the array (some kind of primitive hash algo).
 	// From this point, a sequential search is done. This greatly reduces the amount of string comparisons.
 	char **stringcache[1024];
@@ -2072,12 +2059,6 @@ int32_t init_srvid(void)
 
 	memset(last_srvid, 0, sizeof(last_srvid));
 	memset(new_cfg_srvid, 0, sizeof(new_cfg_srvid));
-
-	if (!(fp=fopen(token, "r"))) {
-		cs_log("can't open file \"%s\" (err=%d %s), no service-id's loaded", token, errno, strerror(errno));
-		free(token);
-		return(0);
-	}
 
 	while (fgets(token, MAXLINESIZE, fp)) {
 		int32_t l, j, len=0, len2, srvidtmp;
@@ -2219,18 +2200,14 @@ int32_t init_srvid(void)
 
 int32_t init_tierid(void)
 {
+	FILE *fp = open_config_file(cs_trid);
+	if (!fp)
+		return 0;
+
 	int32_t nr;
-	FILE *fp;
 	char *payload, *saveptr1 = NULL, *token;
 	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 0;
 	static struct s_tierid *tierid=NULL, *new_cfg_tierid=NULL;
-	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_trid);
-
-	if (!(fp=fopen(token, "r"))) {
-		cs_log("can't open file \"%s\" (err=%d %s), no tier-id's loaded", token, errno, strerror(errno));
-		free(token);
-		return(0);
-	}
 
 	nr=0;
 	while (fgets(token, MAXLINESIZE, fp)) {
@@ -3305,9 +3282,12 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 #ifdef IRDETO_GUESSING
 int32_t init_irdeto_guess_tab(void)
 {
+  FILE *fp = open_config_file(cs_ird);
+  if (!fp)
+    return 1;
+
   int32_t i, j, skip;
   int32_t b47;
-  FILE *fp;
   char token[128], *ptr, *saveptr1 = NULL;
   char zSid[5];
   uchar b3;
@@ -3315,13 +3295,7 @@ int32_t init_irdeto_guess_tab(void)
   struct s_irdeto_quess *ird_row, *head;
 
   memset(cfg.itab, 0, sizeof(cfg.itab));
-  snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_ird);
-  if (!(fp=fopen(token, "r")))
-  {
-    cs_log("can't open file \"%s\" (errno=%d %s) irdeto guessing not loaded",
-           token, errno, strerror(errno));
-    return(1);
-  }
+
   while (fgets(token, sizeof(token), fp))
   {
     if( strlen(token)<20 ) continue;
@@ -3419,18 +3393,17 @@ void free_reader(struct s_reader *rdr)
 
 int32_t init_readerdb(void)
 {
-	int32_t tag = 0;
-	FILE *fp;
-	char *value, *token;
-	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 1;
 	configured_readers = ll_create("configured_readers");
 
-	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_srvr);
-	if (!(fp=fopen(token, "r"))) {
-		cs_log("can't open file \"%s\" (errno=%d %s)\n", token, errno, strerror(errno));
-		free(token);
-		return(1);
-	}
+	FILE *fp = open_config_file(cs_srvr);
+	if (!fp)
+		return 1;
+
+	int32_t tag = 0;
+	char *value, *token;
+
+	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 1;
+
 	struct s_reader *rdr;
 	cs_malloc(&rdr, sizeof(struct s_reader), SIGINT);
 
@@ -3505,20 +3478,13 @@ int32_t init_readerdb(void)
 #ifdef CS_ANTICASC
 void init_ac(void)
 {
+  FILE *fp = open_config_file(cs_ac);
+  if (!fp)
+    return;
+
   int32_t nr;
-  FILE *fp;
   char *saveptr1 = NULL, *token;
   if(!cs_malloc(&token, MAXLINESIZE, -1)) return;
-
-  snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_ac);
-  if (!(fp=fopen(token, "r")))
-  {
-    cs_log("can't open file \"%s\" (errno=%d %s) anti-cascading table not loaded",
-            token, errno, strerror(errno));
-    free(token);
-    return;
-  }
-
   struct s_cpmap *cur_cpmap, *first_cpmap = NULL, *last_cpmap = NULL;
 
   for(nr=0; fgets(token, MAXLINESIZE, fp);)
@@ -3694,24 +3660,18 @@ int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line)
 //m:caid:prov:srvid:pid:chid:ecmlen caidto:provto
 
 static struct s_global_whitelist *global_whitelist_read_int(void) {
-	FILE *fp;
+	FILE *fp = open_config_file(cs_whitelist);
+	if (!fp)
+		return NULL;
+
 	char token[1024], str1[1024];
 	unsigned char type;
 	int32_t i, ret, count=0;
 	struct s_global_whitelist *new_whitelist = NULL, *entry, *last=NULL;
 	uint32_t line = 0;
 
-	const char *cs_whitelist="oscam.whitelist";
 	cfg.global_whitelist_use_l = 0;
 	cfg.global_whitelist_use_m = 0;
-
-	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_whitelist);
-	fp=fopen(token, "r");
-
-	if (!fp) {
-		cs_log("can't open whitelist file %s", token);
-		return NULL;
-	}
 
 	while (fgets(token, sizeof(token), fp)) {
 		line++;
@@ -3864,22 +3824,15 @@ struct s_cacheex_matcher *is_cacheex_matcher_matching(ECM_REQUEST *from_er, ECM_
 //validto: default=4000
 //valid time if found in cache
 static struct s_cacheex_matcher *cacheex_matcher_read_int(void) {
-	FILE *fp;
+	FILE *fp = open_config_file(cs_cacheex_matcher);
+	if (!fp)
+		return NULL;
+
 	char token[1024];
 	unsigned char type;
 	int32_t i, ret, count=0;
 	struct s_cacheex_matcher *new_cacheex_matcher = NULL, *entry, *last=NULL;
 	uint32_t line = 0;
-
-	const char *cs_cacheex_matcher="oscam.cacheex";
-
-	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_cacheex_matcher);
-	fp=fopen(token, "r");
-
-	if (!fp) {
-		cs_log("can't open cacheex-matcher file %s", token);
-		return NULL;
-	}
 
 	while (fgets(token, sizeof(token), fp)) {
 		line++;
@@ -3974,17 +3927,16 @@ void cacheex_matcher_read(void) {
 
 void init_len4caid(void)
 {
+	FILE *fp = open_config_file(cs_l4ca);
+	if (!fp)
+		return;
+
 	int32_t nr;
-	FILE *fp;
 	char *value, *token;
+
 	if(!cs_malloc(&token, MAXLINESIZE, -1)) return;
 
 	memset(len4caid, 0, sizeof(uint16_t)<<8);
-	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_l4ca);
-	if (!(fp = fopen(token, "r"))){
-		free(token);
-		return;
-	}
 	for(nr = 0; fgets(token, MAXLINESIZE, fp);) {
 		int32_t i, c;
 		char *ptr;

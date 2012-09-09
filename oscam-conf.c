@@ -263,6 +263,33 @@ void config_set_value(const struct config_sections *conf, char *section, const c
 	}
 }
 
+static FILE *__open_config_file(const char *conf_filename, bool die_on_err) {
+	unsigned int len = strlen(cs_confdir) + strlen(conf_filename) + 8;
+	char filename[len];
+	snprintf(filename,  len, "%s%s", cs_confdir, conf_filename);
+	FILE *f = fopen(filename, "r");
+	if (!f) {
+		if (die_on_err) {
+			fprintf(stderr, "ERROR: Cannot open file \"%s\" (errno=%d %s)", filename, errno, strerror(errno));
+			fprintf(stderr, "\n");
+			exit(1);
+		} else {
+			cs_log("ERROR: Cannot open file \"%s\" (errno=%d %s)", filename, errno, strerror(errno));
+		}
+		return NULL;
+	}
+	return f;
+}
+
+FILE *open_config_file(const char *conf_filename) {
+	return __open_config_file(conf_filename, false);
+}
+
+FILE *open_config_file_or_die(const char *conf_filename) {
+	return __open_config_file(conf_filename, true);
+}
+
+
 FILE *create_config_file(const char *conf_filename) {
 	unsigned int len = strlen(cs_confdir) + strlen(conf_filename) + 8;
 	char tmpfile[len];
