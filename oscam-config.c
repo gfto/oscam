@@ -692,57 +692,8 @@ static const struct config_sections oscam_conf[] = {
 	{ NULL, NULL }
 };
 
-static int config_section_is_active(const struct config_sections *sec) {
-	if (!sec)
-		return 0;
-	if (sec->config[0].opt_type == OPT_UNKNOWN)
-		return 0;
-	return 1;
-}
-
-static const struct config_sections *config_find_section(char *section_name) {
-	const struct config_sections *sec;
-	for (sec = oscam_conf; sec && sec->section; sec++) {
-		if (streq(section_name, sec->section)) {
-			return sec;
-		}
-	}
-	return NULL;
-}
-
 void config_set(char *section, const char *token, char *value) {
-	const struct config_sections *sec = config_find_section(section);
-	if (!sec) {
-		fprintf(stderr, "WARNING: Unknown section '%s'.\n", section);
-		return;
-	}
-	if (config_section_is_active(sec)) {
-		if (!config_list_parse(sec->config, token, value, &cfg)) {
-			fprintf(stderr, "WARNING: In section [%s] unknown setting '%s=%s' tried.\n",
-				section, token, value);
-		}
-	} else {
-		fprintf(stderr, "WARNING: Section is not active '%s'.\n", section);
-	}
-}
-
-static void config_sections_save(FILE *f, const struct config_sections *conf) {
-	const struct config_sections *sec;
-	for (sec = conf; sec && sec->section; sec++) {
-		if (config_section_is_active(sec) && config_list_should_be_saved(sec->config)) {
-			fprintf(f, "[%s]\n", sec->section);
-			config_list_save(f, sec->config, &cfg, cfg.http_full_cfg);
-			fprintf(f, "\n");
-		}
-	}
-}
-
-static void config_sections_set_defaults(const struct config_sections *conf) {
-	const struct config_sections *sec;
-	for (sec = conf; sec && sec->section; sec++) {
-		if (config_section_is_active(sec))
-			config_list_set_defaults(sec->config, &cfg);
-	}
+	config_set_value(oscam_conf, section, token, value, &cfg);
 }
 
 int32_t init_config(void)
@@ -773,7 +724,7 @@ int32_t init_config(void)
 		if (token[0] == '[' && token[len - 1] == ']') {
 			token[len - 1] = '\0';
 			valid_section = 0;
-			const struct config_sections *newconf = config_find_section(token + 1);
+			const struct config_sections *newconf = config_find_section(oscam_conf, token + 1);
 			if (config_section_is_active(newconf)) {
 				cur_section = newconf;
 				valid_section = 1;
@@ -922,7 +873,7 @@ int32_t write_config(void)
 	setvbuf(f, NULL, _IOFBF, 16*1024);
 	fprintf(f,"# oscam.conf generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
 	fprintf(f,"# Read more: http://streamboard.de.vu/svn/oscam/trunk/Distribution/doc/txt/oscam.conf.txt\n\n");
-	config_sections_save(f, oscam_conf);
+	config_sections_save(oscam_conf, f);
 	fclose(f);
 
 	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));

@@ -197,3 +197,56 @@ void config_list_set_defaults(const struct config_list *clist, void *config_data
 	}
 	return;
 }
+
+int config_section_is_active(const struct config_sections *sec) {
+	if (!sec)
+		return 0;
+	if (sec->config[0].opt_type == OPT_UNKNOWN)
+		return 0;
+	return 1;
+}
+
+const struct config_sections *config_find_section(const struct config_sections *conf, char *section_name) {
+	const struct config_sections *sec;
+	for (sec = conf; sec && sec->section; sec++) {
+		if (streq(section_name, sec->section)) {
+			return sec;
+		}
+	}
+	return NULL;
+}
+
+void config_sections_save(const struct config_sections *conf, FILE *f) {
+	const struct config_sections *sec;
+	for (sec = conf; sec && sec->section; sec++) {
+		if (config_section_is_active(sec) && config_list_should_be_saved(sec->config)) {
+			fprintf(f, "[%s]\n", sec->section);
+			config_list_save(f, sec->config, &cfg, cfg.http_full_cfg);
+			fprintf(f, "\n");
+		}
+	}
+}
+
+void config_sections_set_defaults(const struct config_sections *conf) {
+	const struct config_sections *sec;
+	for (sec = conf; sec && sec->section; sec++) {
+		if (config_section_is_active(sec))
+			config_list_set_defaults(sec->config, &cfg);
+	}
+}
+
+void config_set_value(const struct config_sections *conf, char *section, const char *token, char *value, void *var) {
+	const struct config_sections *sec = config_find_section(conf, section);
+	if (!sec) {
+		fprintf(stderr, "WARNING: Unknown section '%s'.\n", section);
+		return;
+	}
+	if (config_section_is_active(sec)) {
+		if (!config_list_parse(sec->config, token, value, var)) {
+			fprintf(stderr, "WARNING: In section [%s] unknown setting '%s=%s' tried.\n",
+				section, token, value);
+		}
+	} else {
+		fprintf(stderr, "WARNING: Section is not active '%s'.\n", section);
+	}
+}
