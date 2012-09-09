@@ -84,8 +84,8 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 			return 1;
 		}
 		case OPT_FUNC: {
-			if (c->process_fn)
-				c->process_fn(token, value, cfg, NULL);
+			if (c->ops.process_fn)
+				c->ops.process_fn(token, value, cfg, NULL);
 			return 1;
 		}
 		case OPT_UNKNOWN: {
@@ -130,8 +130,8 @@ void config_list_save(FILE *f, const struct config_list *clist, void *config_dat
 			continue;
 		}
 		case OPT_FUNC: {
-			if (c->process_fn)
-				c->process_fn((const char *)c->config_name, NULL, cfg, f);
+			if (c->ops.process_fn)
+				c->ops.process_fn((const char *)c->config_name, NULL, cfg, f);
 			continue;
 		}
 		case OPT_UNKNOWN:

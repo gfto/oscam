@@ -19,7 +19,9 @@ struct config_list {
 	size_t			var_offset;
 	long			default_value;
 	unsigned int	str_size;
-	void			(*process_fn)(const char *token, char *value, void *setting, FILE *config_file);
+	union {
+		void			(*process_fn)(const char *token, char *value, void *setting, FILE *config_file);
+	} ops;
 };
 
 #define DEF_OPT_INT(__name, __var_ofs, __default) \
@@ -58,7 +60,7 @@ struct config_list {
 		.opt_type		= OPT_FUNC, \
 		.config_name	= __name, \
 		.var_offset		= __var_ofs, \
-		.process_fn		= __process_fn \
+		.ops.process_fn	= __process_fn \
 	}
 
 #define DEF_LAST_OPT \
