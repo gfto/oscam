@@ -197,10 +197,10 @@ static const struct config_list global_opts[] = {
 #endif
 	DEF_OPT_INT("block_same_ip"				, OFS(block_same_ip),		1 ),
 	DEF_OPT_INT("block_same_name"			, OFS(block_same_name),		1 ),
-	DEF_OPT_STR("usrfile"					, OFS(usrfile) ),
-	DEF_OPT_STR("mailfile"					, OFS(mailfile) ),
-	DEF_OPT_STR("cwlogdir"					, OFS(cwlogdir) ),
-	DEF_OPT_STR("emmlogdir"					, OFS(emmlogdir) ),
+	DEF_OPT_STR("usrfile"					, OFS(usrfile),				NULL ),
+	DEF_OPT_STR("mailfile"					, OFS(mailfile),			NULL ),
+	DEF_OPT_STR("cwlogdir"					, OFS(cwlogdir),			NULL ),
+	DEF_OPT_STR("emmlogdir"					, OFS(emmlogdir),			NULL ),
 #ifdef WITH_LB
 	DEF_OPT_INT("lb_mode"					, OFS(lb_mode),				DEFAULT_LB_MODE ),
 	DEF_OPT_INT("lb_save"					, OFS(lb_save),				0 ),
@@ -215,13 +215,13 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_INT("lb_max_readers"			, OFS(lb_max_readers),		0 ),
 	DEF_OPT_INT("lb_auto_betatunnel"		, OFS(lb_auto_betatunnel),	DEFAULT_LB_AUTO_BETATUNNEL ),
 	DEF_OPT_INT("lb_auto_betatunnel_prefer_beta"	, OFS(lb_auto_betatunnel_prefer_beta), DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA ),
-	DEF_OPT_STR("lb_savepath"				, OFS(lb_savepath) ),
+	DEF_OPT_STR("lb_savepath"				, OFS(lb_savepath),			NULL ),
 	DEF_OPT_FUNC("lb_retrylimits"			, OFS(lb_retrylimittab), caidvaluetab_fn ),
 	DEF_OPT_FUNC("lb_nbest_percaid"			, OFS(lb_nbest_readers_tab), caidvaluetab_fn ),
 	DEF_OPT_FUNC("lb_noproviderforcaid"		, OFS(lb_noproviderforcaid), check_caid_fn ),
 #endif
 	DEF_OPT_FUNC("double_check_caid"		, OFS(double_check_caid),	check_caid_fn ),
-	DEF_OPT_STR("ecmfmt"					, OFS(ecmfmt) ),
+	DEF_OPT_STR("ecmfmt"					, OFS(ecmfmt),				NULL ),
 	DEF_OPT_INT("resolvegethostbyname"		, OFS(resolve_gethostbyname), 0 ),
 	DEF_OPT_INT("failbantime"				, OFS(failbantime),			0 ),
 	DEF_OPT_INT("failbancount"				, OFS(failbancount),		0 ),
@@ -242,7 +242,7 @@ static const struct config_list anticasc_opts[] = {
 	DEF_OPT_INT("sampletime"				, OFS(ac_stime),				2 ),
 	DEF_OPT_INT("samples"					, OFS(ac_samples),				10 ),
 	DEF_OPT_INT("penalty"					, OFS(ac_penalty),				0 ),
-	DEF_OPT_STR("aclogfile"					, OFS(ac_logfile) ),
+	DEF_OPT_STR("aclogfile"					, OFS(ac_logfile),				NULL ),
 	DEF_OPT_INT("fakedelay"					, OFS(ac_fakedelay),			3000 ),
 	DEF_OPT_INT("denysamples"				, OFS(ac_denysamples),			8 ),
 	DEF_LAST_OPT
@@ -316,14 +316,14 @@ static bool webif_should_save_fn(void) { return cfg.http_port; }
 static const struct config_list webif_opts[] = {
 	DEF_OPT_SAVE_FUNC(webif_should_save_fn),
 	DEF_OPT_FUNC("httpport"					, OFS(http_port),				http_port_fn ),
-	DEF_OPT_STR("httpuser"					, OFS(http_user) ),
-	DEF_OPT_STR("httppwd"					, OFS(http_pwd) ),
-	DEF_OPT_STR("httpcss"					, OFS(http_css) ),
-	DEF_OPT_STR("httpjscript"				, OFS(http_jscript) ),
-	DEF_OPT_STR("httpscript"				, OFS(http_script) ),
-	DEF_OPT_STR("httptpl"					, OFS(http_tpl) ),
-	DEF_OPT_STR("httphelplang"				, OFS(http_help_lang) ),
-	DEF_OPT_STR("httpcert"					, OFS(http_cert) ),
+	DEF_OPT_STR("httpuser"					, OFS(http_user),				NULL ),
+	DEF_OPT_STR("httppwd"					, OFS(http_pwd),				NULL ),
+	DEF_OPT_STR("httpcss"					, OFS(http_css),				NULL ),
+	DEF_OPT_STR("httpjscript"				, OFS(http_jscript),			NULL ),
+	DEF_OPT_STR("httpscript"				, OFS(http_script),				NULL ),
+	DEF_OPT_STR("httptpl"					, OFS(http_tpl),				NULL ),
+	DEF_OPT_STR("httphelplang"				, OFS(http_help_lang),			"en" ),
+	DEF_OPT_STR("httpcert"					, OFS(http_cert),				NULL ),
 	DEF_OPT_INT("http_prepend_embedded_css"	, OFS(http_prepend_embedded_css), 0 ),
 	DEF_OPT_INT("httprefresh"				, OFS(http_refresh),			0 ),
 	DEF_OPT_INT("httphideidleclients"		, OFS(http_hide_idle_clients),	0 ),
@@ -525,7 +525,7 @@ static const struct config_list cccam_opts[] = {
 	DEF_OPT_SAVE_FUNC(cccam_should_save_fn),
 	DEF_OPT_FUNC("port"						, OFS(cc_port),				cccam_port_fn ),
 	DEF_OPT_FUNC("nodeid"					, OFS(cc_fixed_nodeid),		cccam_nodeid_fn ),
-	DEF_OPT_SSTR("version"					, OFS(cc_version),			SIZEOF(cc_version) ),
+	DEF_OPT_SSTR("version"					, OFS(cc_version),			"", SIZEOF(cc_version) ),
 	DEF_OPT_INT("reshare"					, OFS(cc_reshare),			10 ),
 	DEF_OPT_INT("reshare_mode"				, OFS(cc_reshare_services),	0 ),
 	DEF_OPT_INT("ignorereshare"				, OFS(cc_ignore_reshare),	0 ),
@@ -547,8 +547,8 @@ static const struct config_list pandora_opts[] = {
 	DEF_OPT_SAVE_FUNC(pandora_should_save_fn),
 	DEF_OPT_INT("pand_port"					, OFS(pand_port),			0 ),
 	DEF_OPT_FUNC("pand_srvid"				, OFS(pand_srvip),			serverip_fn ),
-	DEF_OPT_STR("pand_usr"					, OFS(pand_usr) ),
-	DEF_OPT_STR("pand_pass"					, OFS(pand_pass) ),
+	DEF_OPT_STR("pand_usr"					, OFS(pand_usr),			NULL ),
+	DEF_OPT_STR("pand_pass"					, OFS(pand_pass),			NULL ),
 	DEF_OPT_INT("pand_ecm"					, OFS(pand_ecm),			0 ),
 	DEF_OPT_INT("pand_skip_send_dw"			, OFS(pand_skip_send_dw),	0 ),
 	DEF_OPT_FUNC("pand_allowed"				, OFS(pand_allowed),		iprange_fn ),
@@ -566,7 +566,7 @@ static const struct config_list radegast_opts[] = {
 	DEF_OPT_INT("port"						, OFS(rad_port),			0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(rad_srvip),			serverip_fn ),
 	DEF_OPT_FUNC("allowed"					, OFS(rad_allowed),			iprange_fn ),
-	DEF_OPT_STR("user"						, OFS(rad_usr) ),
+	DEF_OPT_STR("user"						, OFS(rad_usr),				NULL ),
 	DEF_LAST_OPT
 };
 #else
@@ -578,7 +578,7 @@ static bool serial_should_save_fn(void) { return cfg.ser_device != NULL; }
 
 static const struct config_list serial_opts[] = {
 	DEF_OPT_SAVE_FUNC(serial_should_save_fn),
-	DEF_OPT_STR("device"						, OFS(ser_device) ),
+	DEF_OPT_STR("device"						, OFS(ser_device),		NULL ),
 	DEF_LAST_OPT
 };
 #else
@@ -591,9 +591,9 @@ static bool gbox_should_save_fn(void) { return cfg.gbox_port; }
 static const struct config_list gbox_opts[] = {
 	DEF_OPT_SAVE_FUNC(gbox_should_save_fn),
 	DEF_OPT_INT("port"						, OFS(gbox_port),			0 ),
-	DEF_OPT_STR("gsmsfile"					, OFS(gbox_gsms_path) ),
-	DEF_OPT_STR("hostname"					, OFS(gbox_hostname) ),
-	DEF_OPT_STR("password"					, OFS(gbox_key) ),
+	DEF_OPT_STR("gsmsfile"					, OFS(gbox_gsms_path),		NULL ),
+	DEF_OPT_STR("hostname"					, OFS(gbox_hostname),		NULL ),
+	DEF_OPT_STR("password"					, OFS(gbox_key),			NULL ),
 	DEF_LAST_OPT
 };
 #else
@@ -644,7 +644,7 @@ static const struct config_list dvbapi_opts[] = {
 	DEF_OPT_INT("request_mode"				, OFS(dvbapi_requestmode),	0 ),
 	DEF_OPT_INT("reopenonzap"				, OFS(dvbapi_reopenonzap),	0 ),
 	DEF_OPT_INT("delayer"					, OFS(dvbapi_delayer),		0 ),
-	DEF_OPT_STR("user"						, OFS(dvbapi_usr) ),
+	DEF_OPT_STR("user"						, OFS(dvbapi_usr),			NULL ),
 	DEF_OPT_FUNC("boxtype"					, OFS(dvbapi_boxtype),		dvbapi_boxtype_fn ),
 	DEF_OPT_FUNC("services"					, OFS(dvbapi_sidtabok),		dvbapi_services_fn ),
 	// OBSOLETE OPTIONS
@@ -663,7 +663,7 @@ static bool lcd_should_save_fn(void) { return cfg.enablelcd; }
 static const struct config_list lcd_opts[] = {
 	DEF_OPT_SAVE_FUNC(lcd_should_save_fn),
 	DEF_OPT_INT("enablelcd"					, OFS(enablelcd),			0 ),
-	DEF_OPT_STR("lcd_outputpath"			, OFS(lcd_output_path) ),
+	DEF_OPT_STR("lcd_outputpath"			, OFS(lcd_output_path),		NULL ),
 	DEF_OPT_INT("lcd_hideidle"				, OFS(lcd_hide_idle),		0 ),
 	DEF_OPT_INT("lcd_writeintervall"		, OFS(lcd_write_intervall),	10 ),
 	DEF_LAST_OPT

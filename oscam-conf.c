@@ -67,6 +67,8 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 		}
 		case OPT_STRING: {
 			char **scfg = cfg;
+			if (c->def.d_char && strlen(value) == 0) // Set default
+				value = c->def.d_char;
 			NULLFREE(*scfg);
 			if (strlen(value))
 				*scfg = strdup(value);
@@ -74,6 +76,8 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 		}
 		case OPT_SSTRING: {
 			char *scfg = cfg;
+			if (c->def.d_char && strlen(value) == 0) // Set default
+				value = c->def.d_char;
 			scfg[0] = '\0';
 			unsigned int len = strlen(value);
 			if (len) {
@@ -120,16 +124,15 @@ void config_list_save(FILE *f, const struct config_list *clist, void *config_dat
 		}
 		case OPT_STRING: {
 			char **val = cfg;
-			if (*val || save_all) {
-				if (*val && strlen(*val))
-					fprintf_conf(f, c->config_name, "%s\n", *val);
+			if (save_all || !streq(*val, c->def.d_char)) {
+				fprintf_conf(f, c->config_name, "%s\n", *val ? *val : "");
 			}
 			continue;
 		}
 		case OPT_SSTRING: {
 			char *val = cfg;
-			if (val[0] || save_all) {
-				fprintf_conf(f, c->config_name, "%s\n", val);
+			if (save_all || !streq(val, c->def.d_char)) {
+				fprintf_conf(f, c->config_name, "%s\n", val[0] ? val : "");
 			}
 			continue;
 		}

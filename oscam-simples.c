@@ -1688,5 +1688,6 @@ struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid) {
 int streq(const char *s1, const char *s2) {
 	if (!s1 && s2) return 0;
 	if (s1 && !s2) return 0;
+	if (!s1 && !s2) return 1;
 	return strcmp(s1, s2) == 0;
 }

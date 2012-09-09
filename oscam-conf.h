@@ -23,6 +23,7 @@ struct config_list {
 	union {
 		int32_t			d_int;
 		uint32_t		d_uint;
+		char			*d_char;
 	} def;
 	union {
 		void			(*process_fn)(const char *token, char *value, void *setting, FILE *config_file);
@@ -46,19 +47,21 @@ struct config_list {
 		.def.d_uint		= __default \
 	}
 
-#define DEF_OPT_STR(__name, __var_ofs) \
+#define DEF_OPT_STR(__name, __var_ofs, __default) \
 	{ \
 		.opt_type		= OPT_STRING, \
 		.config_name	= __name, \
-		.var_offset		= __var_ofs \
+		.var_offset		= __var_ofs, \
+		.def.d_char		= __default \
 	}
 
-#define DEF_OPT_SSTR(__name, __var_ofs, __str_size) \
+#define DEF_OPT_SSTR(__name, __var_ofs, __default, __str_size) \
 	{ \
 		.opt_type		= OPT_SSTRING, \
 		.config_name	= __name, \
 		.var_offset		= __var_ofs, \
-		.str_size		= __str_size \
+		.str_size		= __str_size, \
+		.def.d_char		= __default \
 	}
 
 #define DEF_OPT_FUNC(__name, __var_ofs, __process_fn) \
