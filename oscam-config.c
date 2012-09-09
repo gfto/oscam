@@ -233,7 +233,10 @@ static const struct config_list global_opts[] = {
 };
 
 #ifdef CS_ANTICASC
+static bool anticasc_should_save_fn(void) { return cfg.ac_enabled; }
+
 static const struct config_list anticasc_opts[] = {
+	DEF_OPT_SAVE_FUNC(anticasc_should_save_fn),
 	DEF_OPT_INT("enabled"					, OFS(ac_enabled),				0 ),
 	DEF_OPT_INT("numusers"					, OFS(ac_users),				0 ),
 	DEF_OPT_INT("sampletime"				, OFS(ac_stime),				2 ),
@@ -249,7 +252,10 @@ static const struct config_list anticasc_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef MODULE_MONITOR
+static bool monitor_should_save_fn(void) { return cfg.mon_port; }
+
 static const struct config_list monitor_opts[] = {
+	DEF_OPT_SAVE_FUNC(monitor_should_save_fn),
 	DEF_OPT_INT("port"						, OFS(mon_port),				0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(mon_srvip),				serverip_fn ),
 	DEF_OPT_FUNC("nocrypt"					, OFS(mon_allowed),				iprange_fn ),
@@ -305,7 +311,10 @@ static void http_dyndns_fn(const char *token, char *value, void *UNUSED(setting)
 	}
 }
 
+static bool webif_should_save_fn(void) { return cfg.http_port; }
+
 static const struct config_list webif_opts[] = {
+	DEF_OPT_SAVE_FUNC(webif_should_save_fn),
 	DEF_OPT_FUNC("httpport"					, OFS(http_port),				http_port_fn ),
 	DEF_OPT_STR("httpuser"					, OFS(http_user) ),
 	DEF_OPT_STR("httppwd"					, OFS(http_pwd) ),
@@ -351,7 +360,10 @@ static void camd33_key_fn(const char *token, char *value, void *UNUSED(setting),
 	fprintf(f, "\n");
 }
 
+static bool camd33_should_save_fn(void) { return cfg.c33_port; }
+
 static const struct config_list camd33_opts[] = {
+	DEF_OPT_SAVE_FUNC(camd33_should_save_fn),
 	DEF_OPT_INT("port"						, OFS(c33_port),				0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(c33_srvip),				serverip_fn ),
 	DEF_OPT_FUNC("nocrypt"					, OFS(c33_plain),				iprange_fn ),
@@ -364,7 +376,10 @@ static const struct config_list camd33_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef CS_CACHEEX
+static bool csp_should_save_fn(void) { return cfg.csp_port; }
+
 static const struct config_list csp_opts[] = {
+	DEF_OPT_SAVE_FUNC(csp_should_save_fn),
 	DEF_OPT_INT("port"						, OFS(csp_port),				0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(csp_srvip),				serverip_fn ),
 	DEF_OPT_UINT("wait_time"				, OFS(csp_wait_time),			0 ),
@@ -375,7 +390,10 @@ static const struct config_list csp_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef MODULE_CAMD35
+static bool camd35_should_save_fn(void) { return cfg.c35_port; }
+
 static const struct config_list camd35_opts[] = {
+	DEF_OPT_SAVE_FUNC(camd35_should_save_fn),
 	DEF_OPT_INT("port"						, OFS(c35_port),				0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(c35_srvip),				serverip_fn ),
 	DEF_OPT_INT("suppresscmd08"				, OFS(c35_udp_suppresscmd08),	0 ),
@@ -401,7 +419,10 @@ static void porttab_cs378x_fn(const char *token, char *value, void *setting, FIL
 	free_mk_t(value);
 }
 
+static bool cs378x_should_save_fn(void) { return cfg.c35_tcp_ptab.nports && cfg.c35_tcp_ptab.ports[0].s_port; }
+
 static const struct config_list cs378x_opts[] = {
+	DEF_OPT_SAVE_FUNC(cs378x_should_save_fn),
 	DEF_OPT_FUNC("port"						, OFS(c35_tcp_ptab),			porttab_cs378x_fn ),
 	DEF_OPT_FUNC("serverip"					, OFS(c35_tcp_srvip),			serverip_fn ),
 	DEF_OPT_INT("suppresscmd08"				, OFS(c35_tcp_suppresscmd08),	0 ),
@@ -445,7 +466,10 @@ static void newcamd_key_fn(const char *token, char *value, void *UNUSED(setting)
 	fprintf(f,"\n");
 }
 
+static bool newcamd_should_save_fn(void) { return cfg.ncd_ptab.nports && cfg.ncd_ptab.ports[0].s_port; }
+
 static const struct config_list newcamd_opts[] = {
+	DEF_OPT_SAVE_FUNC(newcamd_should_save_fn),
 	DEF_OPT_FUNC("port"						, OFS(ncd_ptab),			porttab_newcamd_fn ),
 	DEF_OPT_FUNC("serverip"					, OFS(ncd_srvip),			serverip_fn ),
 	DEF_OPT_FUNC("allowed"					, OFS(ncd_allowed),			iprange_fn ),
@@ -495,7 +519,10 @@ static void cccam_nodeid_fn(const char *token, char *value, void *UNUSED(setting
 	}
 }
 
+static bool cccam_should_save_fn(void) { return cfg.cc_port[0]; }
+
 static const struct config_list cccam_opts[] = {
+	DEF_OPT_SAVE_FUNC(cccam_should_save_fn),
 	DEF_OPT_FUNC("port"						, OFS(cc_port),				cccam_port_fn ),
 	DEF_OPT_FUNC("nodeid"					, OFS(cc_fixed_nodeid),		cccam_nodeid_fn ),
 	DEF_OPT_SSTR("version"					, OFS(cc_version),			SIZEOF(cc_version) ),
@@ -514,7 +541,10 @@ static const struct config_list cccam_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef MODULE_PANDORA
+static bool pandora_should_save_fn(void) { return cfg.pand_port; }
+
 static const struct config_list pandora_opts[] = {
+	DEF_OPT_SAVE_FUNC(pandora_should_save_fn),
 	DEF_OPT_INT("pand_port"					, OFS(pand_port),			0 ),
 	DEF_OPT_FUNC("pand_srvid"				, OFS(pand_srvip),			serverip_fn ),
 	DEF_OPT_STR("pand_usr"					, OFS(pand_usr) ),
@@ -529,7 +559,10 @@ static const struct config_list pandora_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef MODULE_RADEGAST
+static bool radegast_should_save_fn(void) { return cfg.rad_port; }
+
 static const struct config_list radegast_opts[] = {
+	DEF_OPT_SAVE_FUNC(radegast_should_save_fn),
 	DEF_OPT_INT("port"						, OFS(rad_port),			0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(rad_srvip),			serverip_fn ),
 	DEF_OPT_FUNC("allowed"					, OFS(rad_allowed),			iprange_fn ),
@@ -541,7 +574,10 @@ static const struct config_list radegast_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef MODULE_SERIAL
+static bool serial_should_save_fn(void) { return cfg.ser_device != NULL; }
+
 static const struct config_list serial_opts[] = {
+	DEF_OPT_SAVE_FUNC(serial_should_save_fn),
 	DEF_OPT_STR("device"						, OFS(ser_device) ),
 	DEF_LAST_OPT
 };
@@ -550,7 +586,10 @@ static const struct config_list serial_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef MODULE_GBOX
+static bool gbox_should_save_fn(void) { return cfg.gbox_port; }
+
 static const struct config_list gbox_opts[] = {
+	DEF_OPT_SAVE_FUNC(gbox_should_save_fn),
 	DEF_OPT_INT("port"						, OFS(gbox_port),			0 ),
 	DEF_OPT_STR("gsmsfile"					, OFS(gbox_gsms_path) ),
 	DEF_OPT_STR("hostname"					, OFS(gbox_hostname) ),
@@ -594,7 +633,10 @@ static void dvbapi_caidtab_fn(const char *token, char *value, void *UNUSED(setti
 	// THIS OPTION IS NOT SAVED
 }
 
+static bool dvbapi_should_save_fn(void) { return cfg.dvbapi_enabled; }
+
 static const struct config_list dvbapi_opts[] = {
+	DEF_OPT_SAVE_FUNC(dvbapi_should_save_fn),
 	DEF_OPT_INT("enabled"					, OFS(dvbapi_enabled),		0 ),
 	DEF_OPT_INT("au"						, OFS(dvbapi_au),			0 ),
 	DEF_OPT_INT("pmt_mode"					, OFS(dvbapi_pmtmode),		0 ),
@@ -616,7 +658,10 @@ static const struct config_list dvbapi_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef LCDSUPPORT
+static bool lcd_should_save_fn(void) { return cfg.enablelcd; }
+
 static const struct config_list lcd_opts[] = {
+	DEF_OPT_SAVE_FUNC(lcd_should_save_fn),
 	DEF_OPT_INT("enablelcd"					, OFS(enablelcd),			0 ),
 	DEF_OPT_STR("lcd_outputpath"			, OFS(lcd_output_path) ),
 	DEF_OPT_INT("lcd_hideidle"				, OFS(lcd_hide_idle),		0 ),
@@ -633,7 +678,6 @@ static const struct config_sections oscam_conf[] = {
 	{ "csp",      csp_opts },
 	{ "lcd",      lcd_opts },
 	{ "camd33",   camd33_opts },
-	{ "camd35",   camd35_opts },
 	{ "cs357x",   camd35_opts },
 	{ "cs378x",   cs378x_opts },
 	{ "newcamd",  newcamd_opts },
@@ -679,6 +723,17 @@ void config_set(char *section, const char *token, char *value) {
 		}
 	} else {
 		fprintf(stderr, "WARNING: Section is not active '%s'.\n", section);
+	}
+}
+
+static void config_sections_save(FILE *f, const struct config_sections *conf) {
+	const struct config_sections *sec;
+	for (sec = conf; sec && sec->section; sec++) {
+		if (config_section_is_active(sec) && config_list_should_be_saved(sec->config)) {
+			fprintf(f, "[%s]\n", sec->section);
+			config_list_save(f, sec->config, &cfg, cfg.http_full_cfg);
+			fprintf(f, "\n");
+		}
 	}
 }
 
@@ -938,129 +993,7 @@ int32_t write_config(void)
 	setvbuf(f, NULL, _IOFBF, 16*1024);
 	fprintf(f,"# oscam.conf generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
 	fprintf(f,"# Read more: http://streamboard.de.vu/svn/oscam/trunk/Distribution/doc/txt/oscam.conf.txt\n\n");
-
-	/*global settings*/
-	fprintf(f,"[global]\n");
-	config_list_save(f, global_opts, &cfg, cfg.http_full_cfg);
-	fputc((int)'\n', f);
-
-	/*monitor settings*/
-	if (cfg.mon_port) {
-		fprintf(f,"[monitor]\n");
-		config_list_save(f, monitor_opts, &cfg, cfg.http_full_cfg);
-		fputc((int)'\n', f);
-	}
-
-	/*newcamd*/
-	if (cfg.ncd_ptab.nports > 0 && cfg.ncd_ptab.ports[0].s_port > 0) {
-		fprintf(f,"[newcamd]\n");
-		config_list_save(f, newcamd_opts, &cfg, cfg.http_full_cfg);
-		fprintf(f,"\n");
-	}
-
-	/*camd3.3*/
-	if (cfg.c33_port > 0) {
-		fprintf(f,"[camd33]\n");
-		config_list_save(f, camd33_opts, &cfg, cfg.http_full_cfg);
-		fprintf(f,"\n");
-	}
-
-	/*camd3.5*/
-#ifdef CS_CACHEEX
-	if (cfg.csp_port > 0) {
-		fprintf(f,"[csp]\n");
-		config_list_save(f, csp_opts, &cfg, cfg.http_full_cfg);
-		fprintf(f,"\n");
-	}
-#endif
-
-	/*camd3.5*/
-	if (cfg.c35_port > 0) {
-		fprintf(f,"[cs357x]\n");
-		config_list_save(f, camd35_opts, &cfg, cfg.http_full_cfg);
-		fprintf(f,"\n");
-	}
-
-	/*camd3.5 TCP*/
-	if (cfg.c35_tcp_ptab.nports > 0 && cfg.c35_tcp_ptab.ports[0].s_port > 0) {
-		fprintf(f,"[cs378x]\n");
-		config_list_save(f, cs378x_opts, &cfg, cfg.http_full_cfg);
-		fputc((int)'\n', f);
-	}
-
-	/*Radegast*/
-	if (cfg.rad_port > 0) {
-		fprintf(f,"[radegast]\n");
-		config_list_save(f, radegast_opts, &cfg, cfg.http_full_cfg);
-		fprintf(f,"\n");
-	}
-
-	/*serial*/
-	if (cfg.ser_device) {
-		fprintf(f,"[serial]\n");
-		config_list_save(f, serial_opts, &cfg, cfg.http_full_cfg);
-		fprintf(f,"\n");
-	}
-
-	/*gbox*/
-	if ( cfg.gbox_port > 0) {
-		fprintf(f,"[gbox]\n");
-		config_list_save(f, gbox_opts, &cfg, cfg.http_full_cfg);
-		fprintf(f,"\n");
-	}
-
-#ifdef MODULE_CCCAM
-	/*cccam*/
-	if (cfg.cc_port[0] > 0) {
-		fprintf(f,"[cccam]\n");
-		config_list_save(f, cccam_opts, &cfg, cfg.http_full_cfg);
-		fprintf(f,"\n");
-	}
-#endif
-
-#ifdef MODULE_PANDORA
-	/*pandora*/
-	if (cfg.pand_port > 0) {
-		fprintf(f,"[pandora]\n");
-		config_list_save(f, pandora_opts, &cfg, cfg.http_full_cfg);
-		fprintf(f,"\n");
-	}
-#endif
-
-#ifdef HAVE_DVBAPI
-	/*dvb-api*/
-	if (cfg.dvbapi_enabled > 0) {
-		fprintf(f,"[dvbapi]\n");
-		config_list_save(f, dvbapi_opts, &cfg, cfg.http_full_cfg);
-		fputc((int)'\n', f);
-	}
-#endif
-
-#ifdef WEBIF
-	/*webinterface*/
-	if (cfg.http_port > 0) {
-		fprintf(f,"[webif]\n");
-		config_list_save(f, webif_opts, &cfg, cfg.http_full_cfg);
-		fputc((int)'\n', f);
-	}
-#endif
-
-#ifdef CS_ANTICASC
-	if(cfg.ac_enabled) {
-		fprintf(f,"[anticasc]\n");
-		config_list_save(f, anticasc_opts, &cfg, cfg.http_full_cfg);
-		fputc((int)'\n', f);
-	}
-#endif
-
-#ifdef LCDSUPPORT
-	if(cfg.enablelcd) {
-		fprintf(f,"[lcd]\n");
-		config_list_save(f, lcd_opts, &cfg, cfg.http_full_cfg);
-		fputc((int)'\n', f);
-	}
-#endif
-
+	config_sections_save(f, oscam_conf);
 	fclose(f);
 
 	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));

@@ -51,6 +51,8 @@ void fprintf_conf_n(FILE *f, const char *varname) {
 int config_list_parse(const struct config_list *clist, const char *token, char *value, void *config_data) {
 	const struct config_list *c;
 	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
+		if (c->opt_type == OPT_SAVE_FUNC)
+			continue;
 		if (strcasecmp(token, c->config_name) != 0)
 			continue;
 		void *cfg = config_data + c->var_offset;
@@ -88,6 +90,8 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 				c->ops.process_fn(token, value, cfg, NULL);
 			return 1;
 		}
+		case OPT_SAVE_FUNC:
+			return 1;
 		case OPT_UNKNOWN: {
 			fprintf(stderr, "Unknown config type (%s = %s).", token, value);
 			break;
@@ -134,8 +138,20 @@ void config_list_save(FILE *f, const struct config_list *clist, void *config_dat
 				c->ops.process_fn((const char *)c->config_name, NULL, cfg, f);
 			continue;
 		}
+		case OPT_SAVE_FUNC:
+			continue;
 		case OPT_UNKNOWN:
 			break;
 		}
 	}
+}
+
+bool config_list_should_be_saved(const struct config_list *clist) {
+	const struct config_list *c;
+	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
+		if (c->opt_type == OPT_SAVE_FUNC && c->ops.should_save_fn) {
+			return c->ops.should_save_fn();
+		}
+	}
+	return true;
 }
