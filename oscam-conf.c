@@ -262,3 +262,30 @@ void config_set_value(const struct config_sections *conf, char *section, const c
 		fprintf(stderr, "WARNING: Section is not active '%s'.\n", section);
 	}
 }
+
+FILE *create_config_file(const char *conf_filename) {
+	unsigned int len = strlen(cs_confdir) + strlen(conf_filename) + 8;
+	char tmpfile[len];
+	snprintf(tmpfile,  len, "%s%s.tmp", cs_confdir, conf_filename);
+	FILE *f = fopen(tmpfile, "w");
+	if (!f) {
+		cs_log("ERROR: Cannot create file \"%s\" (errno=%d %s)", tmpfile, errno, strerror(errno));
+		return NULL;
+	}
+	setvbuf(f, NULL, _IOFBF, 16 * 1024);
+	fprintf(f, "# %s generated automatically by Streamboard OSCAM %s SVN r%s\n",
+		conf_filename, CS_VERSION, CS_SVN_VERSION);
+	fprintf(f, "# Read more: http://www.streamboard.tv/svn/oscam/trunk/Distribution/doc/txt/%s.txt\n\n",
+		conf_filename);
+	return f;
+}
+
+bool flush_config_file(FILE *f, const char *conf_filename) {
+	unsigned int len = strlen(cs_confdir) + strlen(conf_filename) + 8;
+	char tmpfile[len], destfile[len], bakfile[len];
+	snprintf(destfile, len, "%s%s"    , cs_confdir, conf_filename);
+	snprintf(tmpfile,  len, "%s%s.tmp", cs_confdir, conf_filename);
+	snprintf(bakfile,  len, "%s%s.bak", cs_confdir, conf_filename);
+	fclose(f);
+	return safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0);
+}

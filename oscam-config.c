@@ -799,26 +799,11 @@ int32_t init_config(void)
 
 int32_t write_config(void)
 {
-	FILE *f;
-	char tmpfile[256];
-	char destfile[256];
-	char bakfile[256];
-
-	snprintf(destfile, sizeof(destfile),"%s%s", cs_confdir, cs_conf);
-	snprintf(tmpfile, sizeof(tmpfile), "%s%s.tmp", cs_confdir, cs_conf);
-	snprintf(bakfile, sizeof(bakfile),"%s%s.bak", cs_confdir, cs_conf);
-
-	if (!(f=fopen(tmpfile, "w"))){
-		cs_log("Cannot open file \"%s\" (errno=%d %s)", tmpfile, errno, strerror(errno));
-		return(1);
-	}
-	setvbuf(f, NULL, _IOFBF, 16*1024);
-	fprintf(f,"# oscam.conf generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
-	fprintf(f,"# Read more: http://streamboard.de.vu/svn/oscam/trunk/Distribution/doc/txt/oscam.conf.txt\n\n");
+	FILE *f = create_config_file(cs_conf);
+	if (!f)
+		return 1;
 	config_sections_save(oscam_conf, f);
-	fclose(f);
-
-	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
+	return flush_config_file(f, cs_conf);
 }
 
 void chk_account(const char *token, char *value, struct s_auth *account)
@@ -1100,24 +1085,11 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 int32_t write_services(void)
 {
 	int32_t i;
-	FILE *f;
 	struct s_sidtab *sidtab = cfg.sidtab;
-	char tmpfile[256];
-	char destfile[256];
-	char bakfile[256];
 	char *ptr;
-
-	snprintf(destfile, sizeof(destfile),"%s%s", cs_confdir, cs_sidt);
-	snprintf(tmpfile, sizeof(tmpfile), "%s%s.tmp", cs_confdir, cs_sidt);
-	snprintf(bakfile, sizeof(bakfile),"%s%s.bak", cs_confdir, cs_sidt);
-
-	if (!(f=fopen(tmpfile, "w"))){
-		cs_log("Cannot open file \"%s\" (errno=%d %s)", tmpfile, errno, strerror(errno));
-		return(1);
-	}
-	setvbuf(f, NULL, _IOFBF, 16*1024);
-	fprintf(f,"# oscam.services generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
-	fprintf(f,"# Read more: http://streamboard.de.vu/svn/oscam/trunk/Distribution/doc/txt/oscam.services.txt\n\n");
+	FILE *f = create_config_file(cs_sidt);
+	if (!f)
+		return 1;
 
 	while(sidtab != NULL){
 		ptr = sidtab->label;
@@ -1147,31 +1119,16 @@ int32_t write_services(void)
 		sidtab=sidtab->next;
 	}
 
-	fclose(f);
-	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
+	return flush_config_file(f, cs_sidt);
 }
 
 int32_t write_userdb(void)
 {
-	FILE *f;
 	struct s_auth *account;
 	char *value;
-	char tmpfile[256];
-	char destfile[256];
-	char bakfile[256];
-
-	snprintf(destfile, sizeof(destfile),"%s%s", cs_confdir, cs_user);
-	snprintf(tmpfile, sizeof(tmpfile), "%s%s.tmp", cs_confdir, cs_user);
-	snprintf(bakfile, sizeof(bakfile),"%s%s.bak", cs_confdir, cs_user);
-
-  if (!(f=fopen(tmpfile, "w"))){
-    cs_log("Cannot open file \"%s\" (errno=%d %s)", tmpfile, errno, strerror(errno));
-    return(1);
-  }
-  setvbuf(f, NULL, _IOFBF, 16*1024);
-  fprintf(f,"# oscam.user generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
-  fprintf(f,"# Read more: http://streamboard.de.vu/svn/oscam/trunk/Distribution/doc/txt/oscam.user.txt\n\n");
-
+	FILE *f = create_config_file(cs_user);
+	if (!f)
+		return 1;
   //each account
 	for (account=cfg.account; (account) ; account=account->next){
 		fprintf(f,"[account]\n");
@@ -1326,32 +1283,17 @@ int32_t write_userdb(void)
 #endif
 		fputc((int)'\n', f);
 	}
-  fclose(f);
 
-  return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
+	return flush_config_file(f, cs_user);
 }
 
 int32_t write_server(void)
 {
 	int32_t j;
 	char *value;
-	FILE *f;
-
-	char tmpfile[256];
-	char destfile[256];
-	char bakfile[256];
-
-	snprintf(destfile, sizeof(destfile),"%s%s", cs_confdir, cs_srvr);
-	snprintf(tmpfile, sizeof(tmpfile), "%s%s.tmp", cs_confdir, cs_srvr);
-	snprintf(bakfile, sizeof(bakfile),"%s%s.bak", cs_confdir, cs_srvr);
-
-	if (!(f=fopen(tmpfile, "w"))){
-		cs_log("Cannot open file \"%s\" (errno=%d %s)", tmpfile, errno, strerror(errno));
-		return(1);
-	}
-	setvbuf(f, NULL, _IOFBF, 16*1024);
-	fprintf(f,"# oscam.server generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
-	fprintf(f,"# Read more: http://streamboard.de.vu/svn/oscam/trunk/Distribution/doc/txt/oscam.server.txt\n\n");
+	FILE *f = create_config_file(cs_srvr);
+	if (!f)
+		return 1;
 
 	struct s_reader *rdr;
 	LL_ITER itr = ll_iter_create(configured_readers);
@@ -1679,9 +1621,8 @@ int32_t write_server(void)
 			fprintf(f, "\n");
 		}
 	}
-	fclose(f);
 
-	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
+	return flush_config_file(f, cs_srvr);
 }
 
 
