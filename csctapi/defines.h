@@ -53,9 +53,6 @@ typedef unsigned char BYTE;
 #endif
 #endif
 
-#ifndef __cplusplus
-typedef int bool;
-#endif
 typedef char *STR;
 #ifndef WITH_PCSC
 typedef uint16_t USHORT;
