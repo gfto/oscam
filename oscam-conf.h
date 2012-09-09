@@ -97,5 +97,6 @@ void fprintf_conf_n(FILE *f, const char *varname);
 int  config_list_parse(const struct config_list *clist, const char *token, char *value, void *config_data);
 void config_list_save(FILE *f, const struct config_list *clist, void *config_data, int save_all);
 bool config_list_should_be_saved(const struct config_list *clist);
+void config_list_set_defaults(const struct config_list *clist, void *config_data);
 
 #endif

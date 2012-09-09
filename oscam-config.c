@@ -737,6 +737,14 @@ static void config_sections_save(FILE *f, const struct config_sections *conf) {
 	}
 }
 
+static void config_sections_set_defaults(const struct config_sections *conf) {
+	const struct config_sections *sec;
+	for (sec = conf; sec && sec->section; sec++) {
+		if (config_section_is_active(sec))
+			config_list_set_defaults(sec->config, &cfg);
+	}
+}
+
 int32_t init_config(void)
 {
 	const struct config_sections *cur_section = oscam_conf; // Global
@@ -745,76 +753,7 @@ int32_t init_config(void)
 
 	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 1;
 
-	cfg.nice = 99;
-	cfg.ctimeout = CS_CLIENT_TIMEOUT;
-	cfg.ftimeout = CS_CLIENT_TIMEOUT / 2;
-	cfg.cmaxidle = CS_CLIENT_MAXIDLE;
-	cfg.delay = CS_DELAY;
-	cfg.bindwait = CS_BIND_TIMEOUT;
-	cfg.mon_level = 2;
-	cfg.mon_hideclient_to = 15;
-	cfg.srtimeout = 1500;
-	cfg.ulparent = 0;
-	cfg.logfile = NULL;
-	cfg.usrfile = NULL;
-	cfg.mailfile = NULL;
-	cfg.max_log_size = 10;
-	cfg.disableuserfile = 1;
-	cfg.disablemail = 1;
-#if defined(WEBIF) || defined(MODULE_MONITOR)
-	cfg.loghistorysize = 0;
-	cs_reinit_loghist(4096);
-#endif
-	cfg.cwlogdir = NULL;
-	cfg.emmlogdir = NULL;
-	cfg.reader_restart_seconds = 5;
-	cfg.waitforcards = 1;
-	cfg.waitforcards_extra_delay = 500;
-
-	cfg.ncd_keepalive = DEFAULT_NCD_KEEPALIVE;
-#ifdef CS_ANTICASC
-	cfg.ac_enabled = 0;
-	cfg.ac_users = 0;
-	cfg.ac_stime = 2;
-	cfg.ac_samples = 10;
-	cfg.ac_denysamples = 8;
-	cfg.ac_fakedelay = 1000;
-	cfg.ac_logfile = NULL;
-#endif
-#ifdef MODULE_CCCAM
-	cfg.cc_update_interval = DEFAULT_UPDATEINTERVAL;
-	cfg.cc_keep_connected = 1;
-	cfg.cc_reshare = 10;
-#endif
-
-#ifdef WITH_LB
-	//loadbalancer defaults:
-	cfg.lb_mode = DEFAULT_LB_MODE;
-	cfg.lb_nbest_readers = DEFAULT_NBEST;
-	cfg.lb_nfb_readers = DEFAULT_NFB;
-	cfg.lb_min_ecmcount = DEFAULT_MIN_ECM_COUNT;
-	cfg.lb_max_ecmcount = DEFAULT_MAX_ECM_COUNT;
-	cfg.lb_reopen_seconds = DEFAULT_REOPEN_SECONDS;
-	cfg.lb_retrylimit = DEFAULT_RETRYLIMIT;
-	cfg.lb_stat_cleanup = DEFAULT_LB_STAT_CLEANUP;
-	cfg.lb_auto_betatunnel = DEFAULT_LB_AUTO_BETATUNNEL;
-	cfg.lb_auto_betatunnel_prefer_beta = DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA;
-	//end loadbalancer defaults
-#endif
-#ifdef CS_CACHEEX
-	cfg.cacheex_wait_time = DEFAULT_CACHEEX_WAIT_TIME;
-	cfg.cacheex_enable_stats = 0;
-#endif
-	cfg.block_same_ip = 1;
-	cfg.block_same_name = 1;
-
-#ifdef LCDSUPPORT
-	cfg.lcd_hide_idle = 0;
-	cfg.lcd_write_intervall = 10;
-#endif
-
-	cfg.max_cache_time = DEFAULT_MAX_CACHE_TIME;
-	cfg.max_cache_count = DEFAULT_MAX_CACHE_COUNT;
+	config_sections_set_defaults(oscam_conf);
 
 	snprintf(token, MAXLINESIZE, "%s%s", cs_confdir, cs_conf);
 	if (!(fp = fopen(token, "r"))) {
@@ -867,13 +806,6 @@ int32_t init_config(void)
 	fclose(fp);
 
 	// Apply configuration fixups
-
-	if (!cfg.logfile && cfg.logtostdout == 0 && cfg.logtosyslog == 0) {
-		if(cs_malloc(&(cfg.logfile), strlen(CS_LOGFILE) + 1, -1))
-			memcpy(cfg.logfile, CS_LOGFILE, strlen(CS_LOGFILE) + 1);
-		else cfg.logtostdout = 1;
-	}
-
 	if (!cfg.usrfile)
 		cfg.disableuserfile = 1;
 
@@ -941,9 +873,6 @@ int32_t init_config(void)
 			cfg.http_tpl[len + 0] = '/';
 			cfg.http_tpl[len + 1] = '\0';
 		}
-	}
-	if (!cfg.http_help_lang) {
-		cfg.http_help_lang = strdup("en");
 	}
 #endif
 

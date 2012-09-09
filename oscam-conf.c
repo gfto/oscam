@@ -158,3 +158,42 @@ bool config_list_should_be_saved(const struct config_list *clist) {
 	}
 	return true;
 }
+
+void config_list_set_defaults(const struct config_list *clist, void *config_data) {
+	const struct config_list *c;
+	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
+		void *cfg = config_data + c->var_offset;
+		switch (c->opt_type) {
+		case OPT_INT: {
+			*(int32_t *)cfg = c->def.d_int;
+			break;
+		}
+		case OPT_UINT: {
+			*(uint32_t *)cfg = c->def.d_uint;
+			break;
+		}
+		case OPT_STRING: {
+			char **scfg = cfg;
+			NULLFREE(*scfg);
+			if (c->def.d_char)
+				*scfg = strdup(c->def.d_char);
+			break;
+		}
+		case OPT_SSTRING: {
+			char *scfg = cfg;
+			scfg[0] = '\0';
+			if (c->def.d_char && strlen(c->def.d_char))
+				cs_strncpy(scfg, c->def.d_char, c->str_size - 1);
+			break;
+		}
+		case OPT_FUNC: {
+			c->ops.process_fn((const char *)c->config_name, "", cfg, NULL);
+			break;
+		}
+		case OPT_SAVE_FUNC:
+		case OPT_UNKNOWN:
+			continue;
+		}
+	}
+	return;
+}
