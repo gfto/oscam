@@ -157,8 +157,8 @@ CONFIG_WITH_LIBUSB=y
 endif
 
 ifeq ($(uname_S),Darwin)
-DEFAULT_PCSC_FLAGS = -isysroot $(OSX_SDK) -DWITH_PCSC
-DEFAULT_PCSC_LIB = -syslibroot,$(OSX_SDK) -framework IOKit -framework CoreFoundation -framework PCSC
+DEFAULT_PCSC_FLAGS = -isysroot $(OSX_SDK) -DWITH_PCSC -I/usr/local/include
+DEFAULT_PCSC_LIB = -syslibroot,$(OSX_SDK) -framework IOKit -framework CoreFoundation -framework PCSC -L/usr/local/lib
 else
 DEFAULT_PCSC_FLAGS = -DWITH_PCSC -I/usr/include/PCSC
 DEFAULT_PCSC_LIB = -lpcsclite
