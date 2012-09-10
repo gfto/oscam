@@ -444,7 +444,7 @@ static char *send_oscam_config_camd35(struct templatevars *vars, struct uriparam
 
 	setActiveSubMenu(vars, MNU_CFG_CAMD35);
 
-	if ((strcmp(getParam(params, "action"),"execute") == 0) && (getParam(params, "port"))[0]) {
+	if (streq(getParam(params, "action"),"execute")) {
 		if(cfg.http_readonly) {
 			tpl_addMsg(vars, "WebIf is in readonly mode. No changes are possible!");
 		} else {
@@ -479,7 +479,7 @@ static char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uripa
 
 	setActiveSubMenu(vars, MNU_CFG_CAMD35TCP);
 
-	if ((strcmp(getParam(params, "action"),"execute") == 0) && (getParam(params, "port"))[0]) {
+	if (streq(getParam(params, "action"),"execute")) {
 		if(cfg.http_readonly) {
 			tpl_addMsg(vars, "WebIf is in readonly mode. No changes are possible!");
 		} else {
@@ -517,7 +517,7 @@ static char *send_oscam_config_csp(struct templatevars *vars, struct uriparams *
 
 	setActiveSubMenu(vars, MNU_CFG_CSP);
 
-	if ((strcmp(getParam(params, "action"),"execute") == 0) && (getParam(params, "port"))[0]) {
+	if (streq(getParam(params, "action"),"execute")) {
 		if(cfg.http_readonly) {
 			tpl_addMsg(vars, "WebIf is in readonly mode. No changes are possible!");
 		} else {
