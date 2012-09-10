@@ -2435,7 +2435,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		snprintf(erEx, sizeof(erEx)-1, "rejected %s%s", stxtWh[er->rcEx>>4],
 				stxtEx[er->rcEx&0xf]);
 
-	if(cfg.mon_appendchaninfo)
+	if (cfg.appendchaninfo)
 		snprintf(schaninfo, sizeof(schaninfo)-1, " - %s", get_servicename(client, er->srvid, er->caid, channame));
 
 	if(er->msglog[0])

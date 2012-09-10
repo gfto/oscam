@@ -253,9 +253,9 @@ static char *monitor_client_info(char id, struct s_client *cl, char *sbuf){
 		struct tm lt;
 		now=time((time_t*)0);
 
-		if	((cfg.mon_hideclient_to <= 0) ||
-				(now-cl->lastecm < cfg.mon_hideclient_to) ||
-				(now-cl->lastemm < cfg.mon_hideclient_to) ||
+		if	((cfg.hideclient_to <= 0) ||
+				(now-cl->lastecm < cfg.hideclient_to) ||
+				(now-cl->lastemm < cfg.hideclient_to) ||
 				(cl->typ != 'c'))
 		{
 			lsec = now - cl->login;
@@ -276,7 +276,7 @@ static char *monitor_client_info(char id, struct s_client *cl, char *sbuf){
 						((cl->typ == 'p' || cl->typ == 'r') && cl->reader->audisabled))
 					cau = 0;
 
-				else if ((now-cl->lastemm) / 60 > cfg.mon_aulow)
+				else if ((now-cl->lastemm) / 60 > cfg.aulow)
 					cau = (-1);
 
 				else
@@ -322,9 +322,9 @@ static void monitor_process_info(void) {
 	struct s_client *cl, *cur_cl = cur_client();
 
 	for (cl=first_client; cl ; cl=cl->next) {
-		if	((cfg.mon_hideclient_to <= 0) ||
-				( now-cl->lastecm < cfg.mon_hideclient_to) ||
-				( now-cl->lastemm < cfg.mon_hideclient_to) ||
+		if	((cfg.hideclient_to <= 0) ||
+				( now-cl->lastecm < cfg.hideclient_to) ||
+				( now-cl->lastemm < cfg.hideclient_to) ||
 				( cl->typ != 'c')){
 			if ((cur_cl->monlvl < 2) && (cl->typ != 's')) {
 					if ((cur_cl->account && cl->account && strcmp(cur_cl->account->usr, cl->account->usr)) ||
@@ -859,9 +859,6 @@ void module_monitor(struct s_module *ph){
 	ptab.ports[0].s_port = cfg.mon_port;
 	ph->ptab = &ptab;
 	ph->ptab->nports = 1;
-
-	if (cfg.mon_aulow < 1)
-		cfg.mon_aulow = 30;
 	ph->desc = "monitor";
 	ph->type=MOD_CONN_UDP;
 	ph->multi = 0;

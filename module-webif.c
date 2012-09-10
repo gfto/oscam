@@ -722,16 +722,27 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 			for(i = 0; i < (*params).paramcount; ++i) {
 				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 					//we use the same function as used for parsing the config tokens
-					if (strstr((*params).params[i], "http")) {
-						config_set("webif", (*params).params[i], (*params).values[i]);
-					}
-#ifdef LCDSUPPORT
-					else if (strstr((*params).params[i], "lcd")) {
+					if (strstr((*params).params[i], "lcd")) {
 						config_set("lcd", (*params).params[i], (*params).values[i]);
-					}
+					} else {
+						// FIXME: The following is A HACK! It must be removed when monitor/webif/lcd
+						// options are split.
+						// The hack is added so we don't get such errors when saving webif:
+						//     WARNING: In section [webif] unknown setting 'port=1122' tried.
+						int r, ok = 1;
+						const char *monitor_hack[4] = { "port", "serverip", "nocrypt", "monlevel" };
+						for (r = 0; r < 4; r++) {
+							if (streq(monitor_hack[r], (*params).params[i])) {
+								ok = 0;
+								break;
+							}
+						}
+						if (ok)
+							config_set("webif", (*params).params[i], (*params).values[i]);
+#ifdef MODULE_MONITOR
+						if (!strstr((*params).params[i], "http"))
+							config_set("monitor", (*params).params[i], (*params).values[i]);
 #endif
-					else {
-						config_set("monitor", (*params).params[i], (*params).values[i]);
 					}
 				}
 			}
@@ -743,9 +754,10 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 	tpl_printf(vars, TPLADD, "MONPORT", "%d", cfg.mon_port);
 	if (IP_ISSET(cfg.mon_srvip))
 	tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.mon_srvip));
-	tpl_printf(vars, TPLADD, "AULOW", "%d", cfg.mon_aulow);
-	tpl_printf(vars, TPLADD, "HIDECLIENTTO", "%d", cfg.mon_hideclient_to);
-	if(cfg.mon_appendchaninfo)
+
+	tpl_printf(vars, TPLADD, "AULOW", "%d", cfg.aulow);
+	tpl_printf(vars, TPLADD, "HIDECLIENTTO", "%d", cfg.hideclient_to);
+	if (cfg.appendchaninfo)
 		tpl_addVar(vars, TPLADD, "APPENDCHANINFO", "checked");
 
 	tpl_printf(vars, TPLADD, "HTTPPORT", "%s%d", cfg.http_use_ssl ? "+" : "", cfg.http_port);
@@ -2450,7 +2462,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		if(latestactivity > 0){
 			isec = now - latestactivity;
 			chsec = latestclient->lastswitch ? now - latestclient->lastswitch : 0;
-			if(isec < cfg.mon_hideclient_to) {
+			if (isec < cfg.hideclient_to) {
 				isactive = 1;
 				status = (!apicall) ? "<b>online</b>" : "online";
 				if(account->expirationdate && account->expirationdate < now) classname = "expired";
@@ -3038,12 +3050,10 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 
 		shown = 0;
 		if (cl->wihidden != 1) {
-
-			if((cfg.http_hide_idle_clients != 1) || (cl->typ != 'c') || ((now - cl->lastecm) <= cfg.mon_hideclient_to)) {
-
+			if (cfg.http_hide_idle_clients != 1 || cl->typ != 'c' || (now - cl->lastecm) <= cfg.hideclient_to) {
 				if (cl->typ=='c'){
 					user_count_shown++;
-					if (cfg.http_hide_idle_clients != 1 && cfg.mon_hideclient_to > 0 && (now - cl->lastecm) <= cfg.mon_hideclient_to){
+					if (cfg.http_hide_idle_clients != 1 && cfg.hideclient_to > 0 && (now - cl->lastecm) <= cfg.hideclient_to) {
 						user_count_active++;
 						tpl_addVar(vars, TPLADD, "CLIENTTYPE", "a");
 					} else tpl_addVar(vars, TPLADD, "CLIENTTYPE", "c");
@@ -3073,7 +3083,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 				// no AU reader == 0 / AU ok == 1 / Last EMM > aulow == -1
 				if(cl->typ == 'c' || cl->typ == 'p' || cl->typ == 'r'){
 					if ((cl->typ == 'c' && ll_count(cl->aureader_list) == 0) || ((cl->typ == 'p' || cl->typ == 'r') && cl->reader->audisabled)) cau = 0;
-					else if ((now-cl->lastemm)/60 > cfg.mon_aulow) cau = -1;
+					else if ((now-cl->lastemm) / 60 > cfg.aulow) cau = -1;
 					else cau = 1;
 
 					if (!apicall){
@@ -3187,8 +3197,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 				tpl_addVar(vars, TPLADD, "CLIENTLASTRESPONSETIMEHIST", value);
 				free_mk_t(value);
 
-				if (isec < cfg.mon_hideclient_to || cfg.mon_hideclient_to == 0) {
-
+				if (isec < cfg.hideclient_to || cfg.hideclient_to == 0) {
 					if (((cl->typ!='r') || (cl->typ!='p')) && (cl->lastreader[0])) {
 						tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "by %s", cl->lastreader);
 						tpl_printf(vars, TPLAPPEND, "CLIENTLBVALUE", "&nbsp;(%dms)", cl->cwlastresptime);
@@ -3200,7 +3209,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 					tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", cl->last_srvid);
 					tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime?cl->cwlastresptime:1);
 
-					if(!cfg.mon_appendchaninfo){
+					if (!cfg.appendchaninfo) {
 						char channame[32];
 						get_servicename(cl, cl->last_srvid, cl->last_caid, channame);
 					}
@@ -3360,10 +3369,13 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 			// select right suborder
 			if (cl->typ == 'c') {
 				if (shown) tpl_addVar(vars, TPLAPPEND, "CLIENTSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
-				if(cfg.http_hide_idle_clients == 1 || cfg.mon_hideclient_to < 1) tpl_printf(vars, TPLADD, "CLIENTHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"17\">Clients %d/%d</TD></TR>\n",
+				if (cfg.http_hide_idle_clients == 1 || cfg.hideclient_to < 1) {
+					tpl_printf(vars, TPLADD, "CLIENTHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"17\">Clients %d/%d</TD></TR>\n",
 						user_count_shown, user_count_all);
-				else tpl_printf(vars, TPLADD, "CLIENTHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"17\">Clients %d/%d (%d with ECM within last %d seconds)</TD></TR>\n",
-						user_count_shown, user_count_all, user_count_active, cfg.mon_hideclient_to);
+				} else {
+					tpl_printf(vars, TPLADD, "CLIENTHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"17\">Clients %d/%d (%d with ECM within last %d seconds)</TD></TR>\n",
+						user_count_shown, user_count_all, user_count_active, cfg.hideclient_to);
+				}
 			}
 			else if (cl->typ == 'r') {
 				if (shown) tpl_addVar(vars, TPLAPPEND, "READERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));

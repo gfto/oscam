@@ -1466,10 +1466,10 @@ struct s_config
 	int32_t			mon_port;
 	IN_ADDR_T		mon_srvip;
 	struct s_ip 	*mon_allowed;
-	int32_t			mon_aulow;
-	int32_t			mon_hideclient_to;
 	int32_t			mon_level;
-	int32_t			mon_appendchaninfo;
+	int32_t			aulow;
+	int32_t			hideclient_to;
+	int32_t			appendchaninfo;
 #ifdef WEBIF
 	int32_t			http_port;
 	char			*http_user;

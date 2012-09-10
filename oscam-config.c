@@ -287,10 +287,10 @@ static const struct config_list monitor_opts[] = {
 	DEF_OPT_INT("port"						, OFS(mon_port),				0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(mon_srvip),				serverip_fn ),
 	DEF_OPT_FUNC("nocrypt"					, OFS(mon_allowed),				iprange_fn ),
-	DEF_OPT_INT("aulow"						, OFS(mon_aulow),				30 ),
+	DEF_OPT_INT("aulow"						, OFS(aulow),					30 ),
 	DEF_OPT_INT("monlevel"					, OFS(mon_level),				2 ),
-	DEF_OPT_INT("hideclient_to"				, OFS(mon_hideclient_to),		15 ),
-	DEF_OPT_INT("appendchaninfo"			, OFS(mon_appendchaninfo),		0 ),
+	DEF_OPT_INT("hideclient_to"				, OFS(hideclient_to),			15 ),
+	DEF_OPT_INT("appendchaninfo"			, OFS(appendchaninfo),			0 ),
 	DEF_LAST_OPT
 };
 #else
@@ -361,6 +361,9 @@ static const struct config_list webif_opts[] = {
 	DEF_OPT_INT("httpsavefullcfg"			, OFS(http_full_cfg),			0 ),
 	DEF_OPT_INT("httpforcesslv3"			, OFS(http_force_sslv3),		0 ),
 	DEF_OPT_FUNC("httpdyndns"				, OFS(http_dyndns),				http_dyndns_fn ),
+	DEF_OPT_INT("aulow"						, OFS(aulow),					30 ),
+	DEF_OPT_INT("hideclient_to"				, OFS(hideclient_to),			15 ),
+	DEF_OPT_INT("appendchaninfo"			, OFS(appendchaninfo),			0 ),
 	DEF_LAST_OPT
 };
 #else
