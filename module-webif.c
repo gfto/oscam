@@ -451,7 +451,7 @@ static char *send_oscam_config_camd35(struct templatevars *vars, struct uriparam
 			for(i = 0; i < (*params).paramcount; ++i) {
 				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 					//we use the same function as used for parsing the config tokens
-					config_set("camd35", (*params).params[i], (*params).values[i]);
+					config_set("cs357x", (*params).params[i], (*params).values[i]);
 				}
 			}
 			tpl_addMsg(vars, "Configuration camd35 done. You should restart OSCam now.");
