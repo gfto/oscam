@@ -149,21 +149,21 @@ void config_list_save(FILE *f, const struct config_list *clist, void *config_dat
 	}
 }
 
-bool config_list_should_be_saved(const struct config_list *clist) {
+bool config_list_should_be_saved(const struct config_list *clist, void *var) {
 	const struct config_list *c;
 	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
 		if (c->opt_type == OPT_SAVE_FUNC) {
-			return c->ops.should_save_fn();
+			return c->ops.should_save_fn(var);
 		}
 	}
 	return true;
 }
 
-void config_list_apply_fixups(const struct config_list *clist) {
+void config_list_apply_fixups(const struct config_list *clist, void *var) {
 	const struct config_list *c;
 	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
 		if (c->opt_type == OPT_FIXUP_FUNC) {
-			c->ops.fixup_fn();
+			c->ops.fixup_fn(var);
 			break;
 		}
 	}
@@ -227,23 +227,23 @@ const struct config_sections *config_find_section(const struct config_sections *
 	return NULL;
 }
 
-void config_sections_save(const struct config_sections *conf, FILE *f) {
+void config_sections_save(const struct config_sections *conf, FILE *f, void *var) {
 	const struct config_sections *sec;
 	for (sec = conf; sec && sec->section; sec++) {
-		if (config_section_is_active(sec) && config_list_should_be_saved(sec->config)) {
+		if (config_section_is_active(sec) && config_list_should_be_saved(sec->config, var)) {
 			fprintf(f, "[%s]\n", sec->section);
-			config_list_apply_fixups(sec->config);
-			config_list_save(f, sec->config, &cfg, cfg.http_full_cfg);
+			config_list_apply_fixups(sec->config, var);
+			config_list_save(f, sec->config, var, cfg.http_full_cfg);
 			fprintf(f, "\n");
 		}
 	}
 }
 
-void config_sections_set_defaults(const struct config_sections *conf) {
+void config_sections_set_defaults(const struct config_sections *conf, void *var) {
 	const struct config_sections *sec;
 	for (sec = conf; sec && sec->section; sec++) {
 		if (config_section_is_active(sec))
-			config_list_set_defaults(sec->config, &cfg);
+			config_list_set_defaults(sec->config, var);
 	}
 }
 

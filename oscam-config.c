@@ -152,7 +152,7 @@ static void caidvaluetab_fn(const char *token, char *value, void *setting, FILE 
 }
 #endif
 
-void global_fixups_fn(void) {
+void global_fixups_fn(void *UNUSED(var)) {
 	if (!cfg.usrfile) cfg.disableuserfile = 1;
 	if (!cfg.mailfile) cfg.disablemail = 1;
 	if (cfg.ctimeout < 100) cfg.ctimeout *= 1000;
@@ -250,7 +250,7 @@ static const struct config_list global_opts[] = {
 };
 
 #ifdef CS_ANTICASC
-static void anticasc_fixups_fn(void) {
+static void anticasc_fixups_fn(void *UNUSED(var)) {
 	if (cfg.ac_users < 0) cfg.ac_users = 0;
 	if (cfg.ac_stime < 0) cfg.ac_stime = 2;
 	if (cfg.ac_samples < 2 || cfg.ac_samples > 10) cfg.ac_samples = 10;
@@ -260,7 +260,7 @@ static void anticasc_fixups_fn(void) {
 	if (cfg.ac_denysamples + 1 > cfg.ac_samples) cfg.ac_denysamples = cfg.ac_samples - 1;
 }
 
-static bool anticasc_should_save_fn(void) { return cfg.ac_enabled; }
+static bool anticasc_should_save_fn(void *UNUSED(var)) { return cfg.ac_enabled; }
 
 static const struct config_list anticasc_opts[] = {
 	DEF_OPT_SAVE_FUNC(anticasc_should_save_fn),
@@ -280,7 +280,7 @@ static const struct config_list anticasc_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef MODULE_MONITOR
-static bool monitor_should_save_fn(void) { return cfg.mon_port; }
+static bool monitor_should_save_fn(void *UNUSED(var)) { return cfg.mon_port; }
 
 static const struct config_list monitor_opts[] = {
 	DEF_OPT_SAVE_FUNC(monitor_should_save_fn),
@@ -339,7 +339,7 @@ static void http_dyndns_fn(const char *token, char *value, void *UNUSED(setting)
 	}
 }
 
-static bool webif_should_save_fn(void) { return cfg.http_port; }
+static bool webif_should_save_fn(void *UNUSED(var)) { return cfg.http_port; }
 
 static const struct config_list webif_opts[] = {
 	DEF_OPT_SAVE_FUNC(webif_should_save_fn),
@@ -388,7 +388,7 @@ static void camd33_key_fn(const char *token, char *value, void *UNUSED(setting),
 	fprintf(f, "\n");
 }
 
-static bool camd33_should_save_fn(void) { return cfg.c33_port; }
+static bool camd33_should_save_fn(void *UNUSED(var)) { return cfg.c33_port; }
 
 static const struct config_list camd33_opts[] = {
 	DEF_OPT_SAVE_FUNC(camd33_should_save_fn),
@@ -404,7 +404,7 @@ static const struct config_list camd33_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef CS_CACHEEX
-static bool csp_should_save_fn(void) { return cfg.csp_port; }
+static bool csp_should_save_fn(void *UNUSED(var)) { return cfg.csp_port; }
 
 static const struct config_list csp_opts[] = {
 	DEF_OPT_SAVE_FUNC(csp_should_save_fn),
@@ -418,7 +418,7 @@ static const struct config_list csp_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef MODULE_CAMD35
-static bool camd35_should_save_fn(void) { return cfg.c35_port; }
+static bool camd35_should_save_fn(void *UNUSED(var)) { return cfg.c35_port; }
 
 static const struct config_list camd35_opts[] = {
 	DEF_OPT_SAVE_FUNC(camd35_should_save_fn),
@@ -447,7 +447,7 @@ static void porttab_cs378x_fn(const char *token, char *value, void *setting, FIL
 	free_mk_t(value);
 }
 
-static bool cs378x_should_save_fn(void) { return cfg.c35_tcp_ptab.nports && cfg.c35_tcp_ptab.ports[0].s_port; }
+static bool cs378x_should_save_fn(void *UNUSED(var)) { return cfg.c35_tcp_ptab.nports && cfg.c35_tcp_ptab.ports[0].s_port; }
 
 static const struct config_list cs378x_opts[] = {
 	DEF_OPT_SAVE_FUNC(cs378x_should_save_fn),
@@ -494,7 +494,7 @@ static void newcamd_key_fn(const char *token, char *value, void *UNUSED(setting)
 	fprintf(f,"\n");
 }
 
-static bool newcamd_should_save_fn(void) { return cfg.ncd_ptab.nports && cfg.ncd_ptab.ports[0].s_port; }
+static bool newcamd_should_save_fn(void *UNUSED(var)) { return cfg.ncd_ptab.nports && cfg.ncd_ptab.ports[0].s_port; }
 
 static const struct config_list newcamd_opts[] = {
 	DEF_OPT_SAVE_FUNC(newcamd_should_save_fn),
@@ -547,7 +547,7 @@ static void cccam_nodeid_fn(const char *token, char *value, void *UNUSED(setting
 	}
 }
 
-static bool cccam_should_save_fn(void) { return cfg.cc_port[0]; }
+static bool cccam_should_save_fn(void *UNUSED(var)) { return cfg.cc_port[0]; }
 
 static const struct config_list cccam_opts[] = {
 	DEF_OPT_SAVE_FUNC(cccam_should_save_fn),
@@ -569,7 +569,7 @@ static const struct config_list cccam_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef MODULE_PANDORA
-static bool pandora_should_save_fn(void) { return cfg.pand_port; }
+static bool pandora_should_save_fn(void *UNUSED(var)) { return cfg.pand_port; }
 
 static const struct config_list pandora_opts[] = {
 	DEF_OPT_SAVE_FUNC(pandora_should_save_fn),
@@ -587,7 +587,7 @@ static const struct config_list pandora_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef MODULE_RADEGAST
-static bool radegast_should_save_fn(void) { return cfg.rad_port; }
+static bool radegast_should_save_fn(void *UNUSED(var)) { return cfg.rad_port; }
 
 static const struct config_list radegast_opts[] = {
 	DEF_OPT_SAVE_FUNC(radegast_should_save_fn),
@@ -602,7 +602,7 @@ static const struct config_list radegast_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef MODULE_SERIAL
-static bool serial_should_save_fn(void) { return cfg.ser_device != NULL; }
+static bool serial_should_save_fn(void *UNUSED(var)) { return cfg.ser_device != NULL; }
 
 static const struct config_list serial_opts[] = {
 	DEF_OPT_SAVE_FUNC(serial_should_save_fn),
@@ -614,7 +614,7 @@ static const struct config_list serial_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef MODULE_GBOX
-static bool gbox_should_save_fn(void) { return cfg.gbox_port; }
+static bool gbox_should_save_fn(void *UNUSED(var)) { return cfg.gbox_port; }
 
 static const struct config_list gbox_opts[] = {
 	DEF_OPT_SAVE_FUNC(gbox_should_save_fn),
@@ -661,7 +661,7 @@ static void dvbapi_caidtab_fn(const char *token, char *value, void *UNUSED(setti
 	// THIS OPTION IS NOT SAVED
 }
 
-static bool dvbapi_should_save_fn(void) { return cfg.dvbapi_enabled; }
+static bool dvbapi_should_save_fn(void *UNUSED(var)) { return cfg.dvbapi_enabled; }
 
 static const struct config_list dvbapi_opts[] = {
 	DEF_OPT_SAVE_FUNC(dvbapi_should_save_fn),
@@ -686,11 +686,11 @@ static const struct config_list dvbapi_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef LCDSUPPORT
-static void lcd_fixups_fn(void) {
+static void lcd_fixups_fn(void *UNUSED(var)) {
 	if (cfg.lcd_write_intervall < 5) cfg.lcd_write_intervall = 5;
 }
 
-static bool lcd_should_save_fn(void) { return cfg.enablelcd; }
+static bool lcd_should_save_fn(void *UNUSED(var)) { return cfg.enablelcd; }
 
 static const struct config_list lcd_opts[] = {
 	DEF_OPT_SAVE_FUNC(lcd_should_save_fn),
@@ -738,7 +738,7 @@ int32_t init_config(void)
 
 	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 1;
 
-	config_sections_set_defaults(oscam_conf);
+	config_sections_set_defaults(oscam_conf, &cfg);
 
 	int line = 0;
 	int valid_section = 1;
@@ -754,7 +754,7 @@ int32_t init_config(void)
 			valid_section = 0;
 			const struct config_sections *newconf = config_find_section(oscam_conf, token + 1);
 			if (config_section_is_active(newconf)) {
-				config_list_apply_fixups(cur_section->config);
+				config_list_apply_fixups(cur_section->config, &cfg);
 				cur_section = newconf;
 				valid_section = 1;
 			}
@@ -784,7 +784,7 @@ int32_t init_config(void)
 	}
 	free(token);
 	fclose(fp);
-	config_list_apply_fixups(cur_section->config);
+	config_list_apply_fixups(cur_section->config, &cfg);
 	return 0;
 }
 
@@ -793,7 +793,7 @@ int32_t write_config(void)
 	FILE *f = create_config_file(cs_conf);
 	if (!f)
 		return 1;
-	config_sections_save(oscam_conf, f);
+	config_sections_save(oscam_conf, f, &cfg);
 	return flush_config_file(f, cs_conf);
 }
 
