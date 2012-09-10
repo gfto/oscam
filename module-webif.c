@@ -206,26 +206,37 @@ static void setActiveSubMenu(struct templatevars *vars, int8_t active)
 	}
 }
 
-static char *send_oscam_config_global(struct templatevars *vars, struct uriparams *params) {
-	int32_t i;
+static void webif_save_config(char *section, struct templatevars *vars, struct uriparams *params) {
+	if (!streq(getParam(params, "action"), "execute"))
+		return;
+	if (cfg.http_readonly) {
+		tpl_addMsg(vars, "WebIf is in readonly mode. No changes are possible!");
+		return;
+	}
+	int i;
+	int cnt = (*params).paramcount;
+	for (i = 0; i < cnt; i++) {
+		char *token = (*params).params[i];
+		char *value = (*params).values[i];
+		if (!streq(token, "part") && !streq(token, "action"))
+			config_set(section, token, value);
+	}
+	if (write_config() == 0) {
+		tpl_addMsg(vars, "Configuration was saved. You should restart OSCam now.");
+		enum refreshtypes ref_type = REFR_SERVER;
+		if (streq(getParam(params, "part"), "anticasc"))
+			ref_type = REFR_ANTICASC;
+		refresh_oscam(ref_type);
+	} else {
+		tpl_addMsg(vars, "ERROR: Failed to write config file!!!");
+	}
+}
 
+static char *send_oscam_config_global(struct templatevars *vars, struct uriparams *params) {
 	setActiveSubMenu(vars, MNU_CFG_GLOBAL);
 
-	if (strcmp(getParam(params, "action"), "execute") == 0) {
-		if(cfg.http_readonly) {
-			tpl_addMsg(vars, "WebIf is in readonly mode. No changes are possible!");
-		} else {
-			for(i = 0; i < (*params).paramcount; ++i) {
-				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-					//we use the same function as used for parsing the config tokens
-					config_set("global", (*params).params[i], (*params).values[i]);
-				}
-			}
-			tpl_addMsg(vars, "Configuration Global done. You should restart OSCam now.");
-			if(write_config()==0) refresh_oscam(REFR_SERVER);
-			else tpl_addMsg(vars, "Write Config failed!");
-		}
-	}
+	webif_save_config("global", vars, params);
+
 	if (IP_ISSET(cfg.srvip))
 	tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.srvip));
 	tpl_printf(vars, TPLADD, "NICE", "%d", cfg.nice);
@@ -314,8 +325,6 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 
 #ifdef WITH_LB
 static char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams *params) {
-	int32_t i;
-
 	setActiveSubMenu(vars, MNU_CFG_LOADBAL);
 	
 	if(strlen(getParam(params, "button")) > 0){
@@ -350,21 +359,7 @@ static char *send_oscam_config_loadbalancer(struct templatevars *vars, struct ur
 		}
 	}
 
-	if (strcmp(getParam(params, "action"),"execute") == 0) {
-		if(cfg.http_readonly) {
-			tpl_addMsg(vars, "WebIf is in readonly mode. No changes are possible!");
-		} else {
-			for(i = 0; i < (*params).paramcount; ++i) {
-				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-					//we use the same function as used for parsing the config tokens
-					config_set("global", (*params).params[i], (*params).values[i]);
-				}
-			}
-			tpl_addMsg(vars, "Configuration Loadbalancer done.");
-			if(write_config()==0) refresh_oscam(REFR_SERVER);
-			else tpl_addMsg(vars, "Write Config failed!");
-		}
-	}
+	webif_save_config("global", vars, params);
 
 	tpl_printf(vars, TPLADD, "TMP", "LBMODE%d", cfg.lb_mode);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
@@ -407,21 +402,7 @@ static char *send_oscam_config_camd33(struct templatevars *vars, struct uriparam
 
 	setActiveSubMenu(vars, MNU_CFG_CAMD33);
 
-	if (strcmp(getParam(params, "action"), "execute") == 0) {
-		if(cfg.http_readonly) {
-			tpl_addMsg(vars, "WebIf is in readonly mode. No changes are possible!");
-		} else {
-			for(i = 0; i < (*params).paramcount; ++i) {
-				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-					//we use the same function as used for parsing the config tokens
-					config_set("camd33", (*params).params[i], (*params).values[i]);
-				}
-			}
-			tpl_addMsg(vars, "Configuration camd33 done. You should restart OSCam now.");
-			if(write_config()==0) refresh_oscam(REFR_SERVER);
-			else tpl_addMsg(vars, "Write Config failed!");
-		}
-	}
+	webif_save_config("camd33", vars, params);
 
 	if (cfg.c33_port) {
 		tpl_printf(vars, TPLADD, "PORT", "%d", cfg.c33_port);
@@ -440,25 +421,9 @@ static char *send_oscam_config_camd33(struct templatevars *vars, struct uriparam
 
 #ifdef MODULE_CAMD35
 static char *send_oscam_config_camd35(struct templatevars *vars, struct uriparams *params) {
-	int32_t i;
-
 	setActiveSubMenu(vars, MNU_CFG_CAMD35);
 
-	if (streq(getParam(params, "action"),"execute")) {
-		if(cfg.http_readonly) {
-			tpl_addMsg(vars, "WebIf is in readonly mode. No changes are possible!");
-		} else {
-			for(i = 0; i < (*params).paramcount; ++i) {
-				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-					//we use the same function as used for parsing the config tokens
-					config_set("cs357x", (*params).params[i], (*params).values[i]);
-				}
-			}
-			tpl_addMsg(vars, "Configuration camd35 done. You should restart OSCam now.");
-			if(write_config()==0) refresh_oscam(REFR_SERVER);
-			else tpl_addMsg(vars, "Write Config failed!");
-		}
-	}
+	webif_save_config("cs357x", vars, params);
 
 	if (cfg.c35_port) {
 		tpl_printf(vars, TPLADD, "PORT", "%d", cfg.c35_port);
@@ -475,25 +440,9 @@ static char *send_oscam_config_camd35(struct templatevars *vars, struct uriparam
 
 #ifdef MODULE_CAMD35_TCP
 static char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uriparams *params) {
-	int32_t i;
-
 	setActiveSubMenu(vars, MNU_CFG_CAMD35TCP);
 
-	if (streq(getParam(params, "action"),"execute")) {
-		if(cfg.http_readonly) {
-			tpl_addMsg(vars, "WebIf is in readonly mode. No changes are possible!");
-		} else {
-			for(i = 0; i < (*params).paramcount; ++i) {
-				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-					//we use the same function as used for parsing the config tokens
-					config_set("cs378x", (*params).params[i], (*params).values[i]);
-				}
-			}
-			tpl_addMsg(vars, "Configuration camd35 TCP done. You should restart OSCam now.");
-			if(write_config()==0) refresh_oscam(REFR_SERVER);
-			else tpl_addMsg(vars, "Write Config failed!");
-		}
-	}
+	webif_save_config("cs378x", vars, params);
 
 	if ((cfg.c35_tcp_ptab.nports > 0) && (cfg.c35_tcp_ptab.ports[0].s_port > 0)) {
 
@@ -513,25 +462,9 @@ static char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uripa
 
 #ifdef CS_CACHEEX
 static char *send_oscam_config_csp(struct templatevars *vars, struct uriparams *params) {
-	int32_t i;
-
 	setActiveSubMenu(vars, MNU_CFG_CSP);
 
-	if (streq(getParam(params, "action"),"execute")) {
-		if(cfg.http_readonly) {
-			tpl_addMsg(vars, "WebIf is in readonly mode. No changes are possible!");
-		} else {
-			for(i = 0; i < (*params).paramcount; ++i) {
-				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-					//we use the same function as used for parsing the config tokens
-					config_set("csp", (*params).params[i], (*params).values[i]);
-				}
-			}
-			tpl_addMsg(vars, "Configuration CSP done. You should restart OSCam now.");
-			if(write_config()==0) refresh_oscam(REFR_SERVER);
-			else tpl_addMsg(vars, "Write Config failed!");
-		}
-	}
+	webif_save_config("csp", vars, params);
 
 	if (IP_ISSET(cfg.csp_srvip))
 		tpl_addVar(vars, TPLAPPEND, "SERVERIP", cs_inet_ntoa(cfg.csp_srvip));
@@ -552,21 +485,7 @@ static char *send_oscam_config_newcamd(struct templatevars *vars, struct uripara
 
 	setActiveSubMenu(vars, MNU_CFG_NEWCAMD);
 
-	if (strcmp(getParam(params, "action"),"execute") == 0) {
-		if(cfg.http_readonly) {
-			tpl_addMsg(vars, "WebIf is in readonly mode. No changes are possible!");
-		} else {
-			for(i = 0; i < (*params).paramcount; ++i) {
-				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-					//we use the same function as used for parsing the config tokens
-					config_set("newcamd", (*params).params[i], (*params).values[i]);
-				}
-			}
-			tpl_addMsg(vars, "Configuration Newcamd done. You should restart OSCam now.");
-			if(write_config()==0) refresh_oscam(REFR_SERVER);
-			else tpl_addMsg(vars, "Write Config failed!");
-		}
-	}
+	webif_save_config("newcamd", vars, params);
 
 	if ((cfg.ncd_ptab.nports > 0) && (cfg.ncd_ptab.ports[0].s_port > 0)) {
 
@@ -594,25 +513,10 @@ static char *send_oscam_config_newcamd(struct templatevars *vars, struct uripara
 
 #ifdef MODULE_RADEGAST
 static char *send_oscam_config_radegast(struct templatevars *vars, struct uriparams *params) {
-	int32_t i;
-
 	setActiveSubMenu(vars, MNU_CFG_RADEGAST);
 
-	if (strcmp(getParam(params, "action"),"execute") == 0) {
-		if(cfg.http_readonly) {
-			tpl_addMsg(vars, "WebIf is in readonly mode. No changes are possible!");
-		} else {
-			for(i = 0; i < (*params).paramcount; ++i) {
-				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-					//we use the same function as used for parsing the config tokens
-					config_set("radegast", (*params).params[i], (*params).values[i]);
-				}
-			}
-			tpl_addMsg(vars, "Configuration Radegast done. You should restart OSCam now.");
-			if(write_config()==0) refresh_oscam(REFR_SERVER);
-			else tpl_addMsg(vars, "Write Config failed!");
-		}
-	}
+	webif_save_config("radegast", vars, params);
+
 	tpl_printf(vars, TPLADD, "PORT", "%d", cfg.rad_port);
 	if (IP_ISSET(cfg.rad_srvip))
 	tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.rad_srvip));
@@ -640,23 +544,10 @@ static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams
 		tpl_addMsg(vars, "Refresh Shares started");
 	}
 
-	int32_t i;
-	if (strcmp(getParam(params, "action"),"execute") == 0) {
-		if(cfg.http_readonly) {
-			tpl_addMsg(vars, "WebIf is in readonly mode. No changes are possible!");
-		} else {
-			for(i = 0; i < (*params).paramcount; ++i) {
-				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-					//we use the same function as used for parsing the config tokens
-					config_set("cccam", (*params).params[i], (*params).values[i]);
-				}
-			}
-			tpl_addMsg(vars, "Configuration CCCam done. You should restart OSCam now.");
-			if(write_config()==0) refresh_oscam(REFR_SERVER);
-			else tpl_addMsg(vars, "Write Config failed!");
-			cc_update_nodeid();
-		}
-	}
+	webif_save_config("cccam", vars, params);
+
+	if (streq(getParam(params, "action"), "execute") && !cfg.http_readonly)
+		cc_update_nodeid();
 
 	char *value = mk_t_cccam_port();
 	tpl_addVar(vars, TPLAPPEND, "PORT", value);
@@ -849,31 +740,14 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 
 #ifdef MODULE_SERIAL
 static char *send_oscam_config_serial(struct templatevars *vars, struct uriparams *params) {
-	int32_t i;
-
 	setActiveSubMenu(vars, MNU_CFG_SERIAL);
 
-	char *saveptr1 = NULL;
-	if (strcmp(getParam(params, "action"),"execute") == 0) {
-		if(cfg.http_readonly) {
-			tpl_addMsg(vars, "WebIf is in readonly mode. No changes are possible!");
-		} else {
-			for(i = 0; i < (*params).paramcount; ++i) {
-				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-					//we use the same function as used for parsing the config tokens
-					config_set("serial", (*params).params[i], (*params).values[i]);
-				}
-			}
-			tpl_addMsg(vars, "Configuration Serial done. You should restart OSCam now.");
-			if(write_config()==0) refresh_oscam(REFR_SERVER);
-			else tpl_addMsg(vars, "Write Config failed!");
-		}
-	}
+	webif_save_config("serial", vars, params);
 
 	if (cfg.ser_device) {
 		char sdevice[strlen(cfg.ser_device)];
 		cs_strncpy(sdevice, cfg.ser_device, sizeof(sdevice));
-		char *ptr;
+		char *ptr, *saveptr1 = NULL;
 		char delimiter[2]; delimiter[0] = 1; delimiter[1] = '\0';
 		for(ptr = strtok_r(sdevice, delimiter, &saveptr1); ptr; ptr = strtok_r(NULL, delimiter, &saveptr1)){
 			tpl_addVar(vars, TPLADD, "SERIALDEVICE", ptr);
@@ -894,21 +768,7 @@ static char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparam
 
 	setActiveSubMenu(vars, MNU_CFG_DVBAPI);
 
-	if (strcmp(getParam(params, "action"),"execute") == 0) {
-		if(cfg.http_readonly) {
-			tpl_addMsg(vars, "WebIf is in readonly mode. No changes are possible!");
-		} else {
-			for(i = 0; i < (*params).paramcount; ++i) {
-				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-					//we use the same function as used for parsing the config tokens
-					config_set("dvbapi", (*params).params[i], (*params).values[i]);
-				}
-			}
-			tpl_addMsg(vars, "Configuration DVB Api done. You should restart OSCam now.");
-			if(write_config()==0) refresh_oscam(REFR_SERVER);
-			else tpl_addMsg(vars, "Write Config failed!");
-		}
-	}
+	webif_save_config("dvbapi", vars, params);
 
 	if (cfg.dvbapi_enabled > 0)
 		tpl_addVar(vars, TPLADD, "ENABLEDCHECKED", "checked");
@@ -943,25 +803,10 @@ static char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparam
 
 #ifdef CS_ANTICASC
 static char *send_oscam_config_anticasc(struct templatevars *vars, struct uriparams *params) {
-	int32_t i;
-
 	setActiveSubMenu(vars, MNU_CFG_ANTICASC);
 
-	if (strcmp(getParam(params, "action"),"execute") == 0) {
-		if(cfg.http_readonly) {
-			tpl_addMsg(vars, "WebIf is in readonly mode. No changes are possible!");
-		} else {
-			for(i = 0; i < (*params).paramcount; ++i) {
-				if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-					//we use the same function as used for parsing the config tokens
-					config_set("anticasc", (*params).params[i], (*params).values[i]);
-				}
-			}
-			tpl_addMsg(vars, "Configuration Anticascading done.");
-			refresh_oscam(REFR_ANTICASC);
-			if(write_config()!=0) tpl_addMsg(vars, "Write Config failed!");
-		}
-	}
+	webif_save_config("anticasc", vars, params);
+
 	if (cfg.ac_enabled > 0) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
 	tpl_printf(vars, TPLADD, "NUMUSERS", "%d", cfg.ac_users);
 	tpl_printf(vars, TPLADD, "SAMPLETIME", "%d", cfg.ac_stime);
