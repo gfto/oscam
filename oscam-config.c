@@ -120,7 +120,7 @@ static void logfile_fn(const char *token, char *value, void *UNUSED(setting), FI
 	}
 }
 
-static void check_caid_fn(const char *token, char *value, void *setting, FILE *f) {
+static void check_caidtab_fn(const char *token, char *value, void *setting, FILE *f) {
 	CAIDTAB *caid_table = setting;
 	if (value) {
 		if (strlen(value) == 0)
@@ -235,9 +235,9 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_STR("lb_savepath"				, OFS(lb_savepath),			NULL ),
 	DEF_OPT_FUNC("lb_retrylimits"			, OFS(lb_retrylimittab), caidvaluetab_fn ),
 	DEF_OPT_FUNC("lb_nbest_percaid"			, OFS(lb_nbest_readers_tab), caidvaluetab_fn ),
-	DEF_OPT_FUNC("lb_noproviderforcaid"		, OFS(lb_noproviderforcaid), check_caid_fn ),
+	DEF_OPT_FUNC("lb_noproviderforcaid"		, OFS(lb_noproviderforcaid), check_caidtab_fn ),
 #endif
-	DEF_OPT_FUNC("double_check_caid"		, OFS(double_check_caid),	check_caid_fn ),
+	DEF_OPT_FUNC("double_check_caid"		, OFS(double_check_caid),	check_caidtab_fn ),
 	DEF_OPT_STR("ecmfmt"					, OFS(ecmfmt),				NULL ),
 	DEF_OPT_INT("resolvegethostbyname"		, OFS(resolve_gethostbyname), 0 ),
 	DEF_OPT_INT("failbantime"				, OFS(failbantime),			0 ),
