@@ -3,7 +3,7 @@ SHELL = /bin/sh
 .SUFFIXES:
 .SUFFIXES: .o .c .a
 .NOTPARALLEL: all
-.PHONY: all prepare build-programs help
+.PHONY: all prepare build-programs help README.build
 
 # Include config.mak which contains variables for all enabled modules
 # These variables will be used to select only needed files for compilation
@@ -434,9 +434,19 @@ clean:
 distclean: clean
 	@-rm -rfv $(BINDIR)/oscam-$(VER)* $(BINDIR)/list_smargo-* config.mak
 
+README.build:
+	@echo "Extracting 'make help' into $@ file."
+	@-printf "\
+** This file is generated from 'make help' output, do not edit it. **\n\
+\n\
+" > $@
+	@-make --no-print-directory help >> $@
+	@echo "Done."
+
 help:
 	@-printf "\
-OSCam ver: $(VER) rev: $(SVN_REV)\n\
+OSCam build system documentation\n\
+================================\n\
 \n\
  Build variables:\n\
    The build variables are set on the make command line and control the build\n\
@@ -478,6 +488,32 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
                     default the only messages that are shown are simple info\n\
                     what is being compiled. To request verbose build run:\n\
                     'make V=1'\n\
+\n\
+ Extra build variables:\n\
+   These variables add text to build variables. They are useful if you want\n\
+   to add additional options to already set variables without overwriting them\n\
+   Currently defined EXTRA_xxx variables are:\n\
+\n\
+   EXTRA_CC_OPTS  - Add text to CC_OPTS.\n\
+                    Example: 'make EXTRA_CC_OPTS=-Os'\n\
+\n\
+   EXTRA_CC_WARN  - Add text to CC_WARN.\n\
+                    Example: 'make EXTRA_CC_WARN=-Wshadow'\n\
+\n\
+   EXTRA_TARGET   - Add text to TARGET.\n\
+                    Example: 'make EXTRA_TARGET=-private'\n\
+\n\
+   EXTRA_CFLAGS   - Add text to CFLAGS (affects compilation).\n\
+                    Example: 'make EXTRA_CFLAGS=\"-DBLAH=1 -I/opt/local\"'\n\
+\n\
+   EXTRA_LDLAGS   - Add text to LDLAGS (affects linking).\n\
+                    Example: 'make EXTRA_LDLAGS=-Llibdir'\n\
+\n\
+   EXTRA_FLAGS    - Add text to both EXTRA_CFLAGS and EXTRA_LDFLAGS.\n\
+                    Example: 'make EXTRA_FLAGS=-DWEBIF=1'\n\
+\n\
+   EXTRA_LIBS     - Add text to LIBS (affects linking).\n\
+                    Example: 'make EXTRA_LIBS=\"-L./stapi -loscam_stapi\"'\n\
 \n\
  Use flags:\n\
    Use flags are used to request additional libraries or features to be used\n\
@@ -556,43 +592,23 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
  Automatically intialized variables:\n\
 \n\
    TARGET=text     - This variable is auto detected by using the compiler's\n\
-                    -dumpmachine output. On your machine the target is set to\n\
-                    '$(TARGET)'\n\
+                    -dumpmachine output. To see the target on your machine run:\n\
+                     'gcc -dumpmachine'\n\
 \n\
    PLUS_TARGET     - This variable is added to TARGET and it is set depending\n\
                      on the chosen USE_xxx (or DEBUG) flags. To disable adding\n\
                      PLUS_TARGET to TARGET, set NO_PLUS_TARGET=1\n\
 \n\
+   BINDIR          - The directory where final oscam binary would be put. The\n\
+                     default is: $(BINDIR)\n\
+\n\
    OSCAM_BIN=text  - This variable controls how the oscam binary will be named.\n\
                      Default OSCAM_BIN value is:\n\
-                     '$(OSCAM_BIN)'\n\
+                      'BINDIR/oscam-VERSVN_REV-TARGET'\n\
+                     Once the variables (BINDIR, VER, SVN_REV and TARGET) are\n\
+                     replaced, the resulting filename can look like this:\n\
+                      'Distribution/oscam-1.20-unstable_svn7404-i486-slackware-linux-static'\n\
                      For example you can run: 'make OSCAM_BIN=my-oscam'\n\
-\n\
- Extra build variables:\n\
-   These variables add text to build variables. They are useful if you want\n\
-   to add additional options to already set variables without overwriting them\n\
-   Currently defined EXTRA_xxx variables are:\n\
-\n\
-   EXTRA_CC_OPTS  - Add text to CC_OPTS.\n\
-                    Example: 'make EXTRA_CC_OPTS=-Os'\n\
-\n\
-   EXTRA_CC_WARN  - Add text to CC_WARN.\n\
-                    Example: 'make EXTRA_CC_WARN=-Wshadow'\n\
-\n\
-   EXTRA_TARGET   - Add text to TARGET.\n\
-                    Example: 'make EXTRA_TARGET=-private'\n\
-\n\
-   EXTRA_CFLAGS   - Add text to CFLAGS (affects compilation).\n\
-                    Example: 'make EXTRA_CFLAGS=\"-DBLAH=1 -I/opt/local\"'\n\
-\n\
-   EXTRA_LDLAGS   - Add text to LDLAGS (affects linking).\n\
-                    Example: 'make EXTRA_LDLAGS=-Llibdir'\n\
-\n\
-   EXTRA_FLAGS    - Add text to both EXTRA_CFLAGS and EXTRA_LDFLAGS.\n\
-                    Example: 'make EXTRA_FLAGS=-DWEBIF=1'\n\
-\n\
-   EXTRA_LIBS     - Add text to LIBS (affects linking).\n\
-                    Example: 'make EXTRA_LIBS=\"-L./stapi -loscam_stapi\"'\n\
 \n\
  Config targets:\n\
    make config        - Start configuration utility.\n\
@@ -601,9 +617,10 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
    make defconfig     - Restore default configuration options.\n\
 \n\
  Cleaning targets:\n\
-   make clean     - Remove $(LIBDIR)/ directory which contains built object files.\n\
+   make clean     - Remove '$(LIBDIR)' directory which contains compiled\n\
+                    object files.\n\
    make distclean - Executes clean target and also removes binary files\n\
-                    located in $(BINDIR)/ directory.\n\
+                    located in '$(BINDIR)' directory.\n\
 \n\
  Build system files:\n\
    config.sh      - OSCam configuration. Run 'config.sh --help' to see\n\
@@ -615,7 +632,6 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
    Makefile.local - This file is included in Makefile and allows creation\n\
                     of local build system targets. See Makefile.extra for\n\
                     examples.\n\
-   CMakeLists.txt - These files are used by 'cmake' build system.\n\
 \n\
  Here are some of the interesting predefined targets in Makefile.extra.\n\
  To use them run 'make target ...' where ... can be any extra flag. For\n\
