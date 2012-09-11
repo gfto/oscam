@@ -126,11 +126,8 @@ DESCRIPTIONS
        max_cache_count = count
 	  maximum CWs in cache, default:1000
 
-       cacheexwaittime = milli-seconds
-	  cache waiting time in milli-seconds for cache exchange, default:50
-
        cacheexwaittime = delay
-	  maximum wait time for a cache exchange entry in milli-seconds, default:50
+	  wait time for a cache exchange entry in milli-seconds, default:50
 
        cacheexenablestats = 0|1
 	  1 = enable statistics for cache exchange mode, default:0
