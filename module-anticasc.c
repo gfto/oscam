@@ -23,10 +23,10 @@ void ac_clear(void)
 
 void ac_init_stat(void)
 {
+  if (!cfg.ac_enabled)
+    return;
   ac_clear();
-
-  if( ac_init_log() )
-    cs_exit(0);
+  ac_init_log();
 }
 
 void ac_do_stat(void)

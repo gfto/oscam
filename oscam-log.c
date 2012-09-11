@@ -6,9 +6,6 @@ char *LOG_LIST = "log_list";
 
 static FILE *fp=(FILE *)0;
 static FILE *fps=(FILE *)0;
-#ifdef CS_ANTICASC
-static FILE *fpa=(FILE *)0;
-#endif
 static int8_t logStarted = 0;
 LLIST *log_list;
 char *vbuf;
@@ -128,21 +125,23 @@ int32_t cs_open_logfiles(void)
 }
 
 #ifdef CS_ANTICASC
-int32_t ac_init_log(void){
-	FILE *tmp = fpa;
-	fpa=(FILE *)0;
-	if(tmp)
-		fclose(tmp);
+static FILE *ac_log = NULL;
 
-	if(cfg.ac_logfile) {
-		if( (fpa=fopen(cfg.ac_logfile, "a+"))<=(FILE *)0 ) {
-			fpa=(FILE *)0;
-			fprintf(stderr, "can't open anti-cascading logfile: %s\n", cfg.ac_logfile);
-		} else
-			cs_log("anti-cascading log initialized");
+int32_t ac_init_log(void) {
+	if (ac_log)
+		return 1;
+	if (!cfg.ac_logfile) {
+		cs_log("ERROR: anticasc is enabled but ac_logfile is not set.");
+		return 0;
 	}
-
-	return(fpa<=(FILE *)0);
+	ac_log = fopen(cfg.ac_logfile, "a+");
+	if (!ac_log) {
+		cs_log("ERROR: Can't open anti-cascading logfile: %s (errno=%d %s)",
+			cfg.ac_logfile, errno, strerror(errno));
+		return 0;
+	}
+	cs_log("anti-cascading log initialized");
+	return 1;
 }
 #endif
 
@@ -207,13 +206,10 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 	char sbuf[16];
 
 #ifdef CS_ANTICASC
-	if (!strncmp(txt + log->header_len, "acasc:", 6)) {
+	if (!strncmp(txt + log->header_len, "acasc:", 6) && ac_log) {
 		strcat(txt, "\n");
-		switch_log(cfg.ac_logfile, &fpa, ac_init_log);
-		if (fpa) {
-			fputs(txt + 8, fpa);
-			if (do_flush) fflush(fpa);
-		}
+		fputs(txt + 8, ac_log);
+		fflush(ac_log);
 	} else
 #endif
 	{
