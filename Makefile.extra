@@ -226,3 +226,31 @@ dockstar:
 		PLUS_TARGET=-dockstar \
 		CONF_DIR=/jffs/etc/config/oscam \
 		$(MAKEFLAGS)
+
+static:
+	$(MAKE) --no-print-directory \
+		EXTRA_FLAGS=-static \
+		EXTRA_TARGET=-static \
+		$(MAKEFLAGS)
+
+static-libusb:
+	$(MAKE) --no-print-directory \
+		USE_LIBUSB=1 \
+		LIBUSB_LIB=/usr/lib/libusb-1.0.a \
+		EXTRA_TARGET=-static \
+		$(MAKEFLAGS)
+
+static-libcrypto:
+	$(MAKE) --no-print-directory \
+		USE_LIBCRYPTO=1 \
+		LIBCRYPTO_LIB=/usr/lib/libcrypto.a \
+		EXTRA_TARGET=-static \
+		$(MAKEFLAGS)
+
+static-ssl:
+	$(MAKE) --no-print-directory \
+		USE_SSL=1 \
+		SSL_LIB=/usr/lib/libssl.a \
+		LIBCRYPTO_LIB=/usr/lib/libcrypto.a \
+		EXTRA_TARGET=-static \
+		$(MAKEFLAGS)
