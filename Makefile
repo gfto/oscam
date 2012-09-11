@@ -490,6 +490,9 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
                          LIBUSB_LDFLAGS='$(DEFAULT_LIBUSB_FLAGS)'\n\
                          LIBUSB_LIB='$(DEFAULT_LIBUSB_LIB)'\n\
                      Using USE_LIBUSB=1 adds to '-libusb' to PLUS_TARGET.\n\
+                     To build with static libusb, set the variable LIBUSB_LIB\n\
+                     to contain full path of libusb library. For example:\n\
+                      make USR_LIBUSB=1 LIBUSB_LIB=/usr/lib/libusb-1.0.a\n\
 \n\
    USE_PCSC=1      - Request linking with PCSC. The variables that control\n\
                      USE_PCSC=1 build are:\n\
@@ -498,6 +501,9 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
                          PCSC_LDFLAGS='$(DEFAULT_PCSC_FLAGS)'\n\
                          PCSC_LIB='$(DEFAULT_PCSC_LIB)'\n\
                      Using USE_PCSC=1 adds to '-pcsc' to PLUS_TARGET.\n\
+                     To build with static PCSC, set the variable PCSC_LIB\n\
+                     to contain full path of PCSC library. For example:\n\
+                      make USE_PCSC=1 PCSC_LIB=/usr/local/lib/libpcsclite.a\n\
 \n\
    USE_STAPI=1    - Request linking with STAPI. The variables that control\n\
                      USE_STAPI=1 build are:\n\
@@ -604,18 +610,45 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
                     available parameters or 'make config' to start GUI\n\
                     configuratior.\n\
    Makefile       - Main build system file.\n\
-   Makefile.extra - Contains predefined targets.\n\
+   Makefile.extra - Contains predefined targets. You can use this file\n\
+                    as example on how to use the build system.\n\
    Makefile.local - This file is included in Makefile and allows creation\n\
                     of local build system targets. See Makefile.extra for\n\
                     examples.\n\
    CMakeLists.txt - These files are used by 'cmake' build system.\n\
 \n\
+ Here are some of the interesting predefined targets in Makefile.extra.\n\
+ To use them run 'make target ...' where ... can be any extra flag. For\n\
+ example if you want to compile OSCam for Dreambox (DM500) but do not\n\
+ have the compilers in the path, you can run:\n\
+    make dm500 CROSS_DIR=/opt/cross/dm500/cdk/bin/\n\
+\n\
+ Predefined targets in Makefile.extra:\n\
+\n\
+    make libusb        - Builds OSCam with libusb support\n\
+    make pcsc          - Builds OSCam with PCSC support\n\
+    make pcsc-libusb   - Builds OSCam with PCSC and libusb support\n\
+    make dm500         - Builds OSCam for Dreambox (DM500)\n\
+    make sh4           - Builds OSCam for SH4 boxes\n\
+    make azbox         - Builds OSCam for AZBox STBs\n\
+    make coolstream    - Builds OSCam for Coolstream\n\
+    make dockstar      - Builds OSCam for Dockstar\n\
+    make opensolaris   - Builds OSCam for OpenSolaris\n\
+\n\
+ Predefined targets for static builds:\n\
+    make static        - Builds OSCam statically\n\
+    make static-libusb - Builds OSCam with libusb linked statically\n\
+    make static-libcrypto - Builds OSCam with libcrypto linked statically\n\
+    make static-ssl    - Builds OSCam with SSL support linked statically\n\
+\n\
  Examples:\n\
+   Build OSCam with debugging information:\n\
+     make DEBUG=1\n\n\
    Build OSCam for SH4 (the compilers are in the path):\n\
      make CROSS=sh4-linux-\n\n\
    Build OSCam for SH4 (the compilers are in not in the path):\n\
-     make sh4 CROSS_DIR=/opt/STM/STLinux-2.3/devkit/sh4/bin/\n\n\
-     make CROSS_DIR=/opt/STM/STLinux-2.3/devkit/sh4/bin/ CROSS=sh4-linux-\n\n\
+     make sh4 CROSS_DIR=/opt/STM/STLinux-2.3/devkit/sh4/bin/\n\
+     make CROSS_DIR=/opt/STM/STLinux-2.3/devkit/sh4/bin/ CROSS=sh4-linux-\n\
      make CROSS=/opt/STM/STLinux-2.3/devkit/sh4/bin/sh4-linux-\n\n\
    Build OSCam for SH4 with STAPI:\n\
      make CROSS=sh4-linux- USE_STAPI=1\n\n\
@@ -628,9 +661,11 @@ OSCam ver: $(VER) rev: $(SVN_REV)\n\
    Build OSCam with libusb and PCSC:\n\
      make USE_LIBUSB=1 USE_PCSC=1\n\n\
    Build OSCam with static libusb:\n\
-     make USE_LIBUSB=1 LIBUSB_LIB=\"-Llibusb-directory -llibusb.a\"\n\n\
+     make USE_LIBUSB=1 LIBUSB_LIB=\"/usr/lib/libusb-1.0.a\"\n\n\
    Build OSCam with static libcrypto:\n\
-     make USE_LIBCRYPTO=1 LIBCRYPTO_LIB=\"-Lopenssl-build -llibcrypto.a\"\n\n\
+     make USE_LIBCRYPTO=1 LIBCRYPTO_LIB=\"/usr/lib/libcrypto.a\"\n\n\
+   Build OSCam with static libssl and libcrypto:\n\
+     make USE_SSL=1 SSL_LIB=\"/usr/lib/libssl.a\" LIBCRYPTO_LIB=\"/usr/lib/libcrypto.a\"\n\n\
    Build with verbose messages and size optimizations:\n\
      make V=1 CC_OPTS=-Os\n\n\
    Build and set oscam file name:\n\
