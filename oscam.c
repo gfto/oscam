@@ -3674,7 +3674,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			int32_t emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
 			char buf[80];
 			strftime (buf, sizeof(buf), "%Y/%m/%d %H:%M:%S", &timeinfo);
-			snprintf (token, sizeof(token), "%s%s_emm.log", cfg.emmlogdir?cfg.emmlogdir:cs_confdir, aureader->label);
+			snprintf (token, sizeof(token), "%s/%s_emm.log", cfg.emmlogdir?cfg.emmlogdir:cs_confdir, aureader->label);
 
 			if (!(fp = fopen (token, "a"))) {
 				cs_log ("ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
@@ -3686,7 +3686,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 				cs_log ("Successfully added EMM to %s.", token);
 			}
 
-			snprintf (token, sizeof(token), "%s%s_emm.bin", cfg.emmlogdir?cfg.emmlogdir:cs_confdir, aureader->label);
+			snprintf (token, sizeof(token), "%s/%s_emm.bin", cfg.emmlogdir?cfg.emmlogdir:cs_confdir, aureader->label);
 			if (!(fp = fopen (token, "ab"))) {
 				cs_log ("ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
 			} else {
