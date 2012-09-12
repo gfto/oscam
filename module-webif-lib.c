@@ -189,8 +189,12 @@ void tpl_clear(struct templatevars *vars){
 
 /* Creates a path to a template file. You need to set the resultsize to the correct size of result. */
 char *tpl_getFilePathInSubdir(const char *path, const char* subdir, const char *name, const char* ext, char *result, uint32_t resultsize){
-	if(strlen(path) + strlen(name) + strlen(subdir) + strlen(ext) < resultsize){
-		snprintf(result, resultsize, "%s%s%s%s", path, subdir, name, ext);
+	int path_len = strlen(path);
+	const char *path_fixup = "";
+	if (path_len && path[path_len - 1] != '/')
+		path_fixup = "/";
+	if (path_len + strlen(path_fixup) + strlen(name) + strlen(subdir) + strlen(ext) < resultsize) {
+		snprintf(result, resultsize, "%s%s%s%s%s", path, path_fixup, subdir, name, ext);
 	} else result[0] = '\0';
 
 	return result;
