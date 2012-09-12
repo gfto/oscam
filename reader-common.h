@@ -19,7 +19,7 @@
 
 #define get_hist \
 		unsigned char hist[ATR_MAX_HISTORICAL]; \
-		uint32_t hist_size; \
+		uint32_t hist_size = 0; \
 		ATR_GetHistoricalBytes(newatr, hist, &hist_size);
 
 #define def_resp \
