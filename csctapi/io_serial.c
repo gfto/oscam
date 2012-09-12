@@ -193,6 +193,11 @@ bool IO_Serial_SetBitrate (struct s_reader * reader, uint32_t bitrate, struct te
   { //over or underclocking
     /* these structures are only available on linux */
     struct serial_struct nuts;
+    // This makes valgrind happy, because it doesn't know what TIOCGSERIAL does
+    // Without this there are lots of misleading errors of type:
+    // "Conditional jump or move depends on uninitialised value(s)"
+    nuts.baud_base = 0;
+    nuts.custom_divisor = 0;
     ioctl(reader->handle, TIOCGSERIAL, &nuts);
     int32_t custom_baud_asked = bitrate * reader->mhz / reader->cardmhz;
     nuts.custom_divisor = (nuts.baud_base + (custom_baud_asked/2))/ custom_baud_asked;
