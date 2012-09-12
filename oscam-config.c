@@ -339,9 +339,21 @@ static void http_dyndns_fn(const char *token, char *value, void *UNUSED(setting)
 	}
 }
 
+void webif_fixups_fn(void *UNUSED(var)) {
+	if (cfg.http_tpl) {
+		int len = strlen(cfg.http_tpl);
+		if (cfg.http_tpl[len - 1] != '/') {
+			cfg.http_tpl = realloc(cfg.http_tpl, len + 2);
+			cfg.http_tpl[len + 0] = '/';
+			cfg.http_tpl[len + 1] = '\0';
+		}
+	}
+}
+
 static bool webif_should_save_fn(void *UNUSED(var)) { return cfg.http_port; }
 
 static const struct config_list webif_opts[] = {
+	DEF_OPT_FIXUP_FUNC(webif_fixups_fn),
 	DEF_OPT_SAVE_FUNC(webif_should_save_fn),
 	DEF_OPT_FUNC("httpport"					, OFS(http_port),				http_port_fn ),
 	DEF_OPT_STR("httpuser"					, OFS(http_user),				NULL ),
