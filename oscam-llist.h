@@ -28,6 +28,13 @@ struct lliter {
     uint32_t ll_version;
 };
 
+typedef struct llistlockiter LL_LOCKITER;
+struct llistlockiter {
+    LLIST *l;
+    int32_t writelock;
+    LL_ITER it;
+};
+
 LLIST *ll_create(const char *name); // create llist, return ptr to llist
 void ll_destroy(LLIST *l);      // same as ll_clear_abstract() but frees up LLIST mem as well
 void ll_destroy_data(LLIST *l); // same as ll_clear_data() but frees up obj allocations as well
@@ -41,6 +48,12 @@ void **ll_sort(const LLIST *l, void *compare, int32_t *size); // sorts the list,
 LL_NODE *ll_append(LLIST *l, void *obj);                // append obj to llist
 LL_NODE *ll_prepend(LLIST *l, void *obj);               // prepend obj to llist
 
+//New type of lock, list is locked during iterate! create=lock, destroy=unlock
+LL_LOCKITER *ll_li_create(LLIST *l, int32_t writelock);
+void ll_li_destroy(LL_LOCKITER *li);
+void *ll_li_next(LL_LOCKITER *li);
+
+//Old Iterators:
 LL_ITER ll_iter_create(LLIST *l);               // return ptr to iterator obj
 void *ll_iter_next(LL_ITER *it);                // iterate to and return next llnode obj, returns NULL at end
 void *ll_iter_next_remove(LL_ITER *it);                // iterate to and return next llnode obj, returns NULL at end, removing it

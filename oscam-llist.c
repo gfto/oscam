@@ -24,6 +24,9 @@ static void _destroy(LLIST *l)
 {
 	if (!l) return;
 	if (!l->flag++) {
+	        cs_writelock(&l->lock); //just getting sure noone is using it
+	        cs_writeunlock(&l->lock);
+	        
 		cs_lock_destroy(&l->lock);
 		add_garbage(l);
 	}
@@ -38,7 +41,7 @@ LLIST *ll_create(const char *name)
 
 void ll_destroy(LLIST *l)
 {
-    if (!l) return;
+    if (!l || l->flag) return;
     ll_clear(l);
 
     _destroy(l);
@@ -99,7 +102,7 @@ static void *ll_iter_next_nolock(LL_ITER *it)
 
 static void ll_clear_int(LLIST *l, int32_t clear_data)
 {
-    if (!l) return;
+    if (!l||l->flag) return;
 
     cs_writelock(&l->lock);
 
@@ -132,7 +135,7 @@ void ll_clear_data(LLIST *l)
 /* Appends to the list. Do not call this from outside without having a lock! */
 static LL_NODE* ll_append_nolock(LLIST *l, void *obj)
 {
-    if (l && obj) {
+    if (l && obj && !l->flag) {
         LL_NODE *new;
         if(!cs_malloc(&new,sizeof(LL_NODE), -1)) return NULL;
         new->obj = obj;
@@ -152,7 +155,7 @@ static LL_NODE* ll_append_nolock(LLIST *l, void *obj)
 
 LL_NODE* ll_append(LLIST *l, void *obj)
 {
-    if (l && obj) {
+    if (l && obj && !l->flag) {
         cs_writelock(&l->lock);
 
         LL_NODE *n = ll_append_nolock(l, obj);
@@ -164,7 +167,7 @@ LL_NODE* ll_append(LLIST *l, void *obj)
 
 LL_NODE *ll_prepend(LLIST *l, void *obj)
 {
-    if (l && obj) {
+    if (l && obj && !l->flag) {
         LL_NODE *new;
         if(!cs_malloc(&new,sizeof(LL_NODE), -1)) return NULL;
 				new->obj = obj;
@@ -198,7 +201,7 @@ LL_ITER ll_iter_create(LLIST *l)
 
 void *ll_iter_next(LL_ITER *it)
 {
-	if (it && it->l) {
+	if (it && it->l && !it->l->flag) {
 		cs_readlock(&it->l->lock);
 		void *res = ll_iter_next_nolock(it);
 		cs_readunlock(&it->l->lock);
@@ -255,7 +258,7 @@ void *ll_iter_remove_nolock(LL_ITER *it)
 
 void *ll_iter_next_remove(LL_ITER *it)
 {
-	if (it && it->l) {
+	if (it && it->l && !it->l->flag) {
 		cs_writelock(&it->l->lock);
 		void *res = ll_iter_next_nolock(it);
 		ll_iter_remove_nolock(it);
@@ -267,7 +270,7 @@ void *ll_iter_next_remove(LL_ITER *it)
 
 void *ll_iter_move(LL_ITER *it, int32_t offset)
 {
-	if (it && it->l) {
+	if (it && it->l && !it->l->flag) {
 		int32_t i;
 		void *res = NULL;
 		for (i=0; i<offset; i++) {
@@ -282,7 +285,7 @@ void *ll_iter_move(LL_ITER *it, int32_t offset)
 
 void *ll_iter_peek(const LL_ITER *it, int32_t offset)
 {
-	if (it && it->l) {
+	if (it && it->l && !it->l->flag) {
 		cs_readlock(&((LL_ITER*)it)->l->lock);
 
 		LL_NODE *n = it->cur;
@@ -313,8 +316,8 @@ void ll_iter_reset(LL_ITER *it)
 
 void ll_iter_insert(LL_ITER *it, void *obj)
 {
-    if (it && obj) {
-	   	cs_writelock(&it->l->lock);
+    if (it && obj && !it->l->flag) {
+	cs_writelock(&it->l->lock);
 
         if (!it->cur || !it->cur->nxt)
             ll_append_nolock(it->l, obj);
@@ -337,7 +340,7 @@ void ll_iter_insert(LL_ITER *it, void *obj)
 void *ll_iter_remove(LL_ITER *it)
 {
 	void *obj = NULL;
-	if (it) {
+	if (it && it->l && !it->l->flag) {
 		LL_NODE *del = it->cur;
 		if (del) {
 			cs_writelock(&it->l->lock);
@@ -353,7 +356,7 @@ void *ll_iter_remove(LL_ITER *it)
 int32_t ll_iter_move_first(LL_ITER *it)
 {
 	int32_t moved = 0;
-	if (it) {
+	if (it && it->l && !it->l->flag) {
 		LL_NODE *move = it->cur;
 		if (move) {
 		        if (move == it->l->initial) //Can't move self to first
@@ -401,21 +404,21 @@ void ll_iter_remove_data(LL_ITER *it)
 
 int32_t ll_count(const LLIST *l)
 {
-    if (!l)
+    if (!l || l->flag)
       return 0;
 
     return l->count;
 }
 
 void *ll_has_elements(const LLIST *l) {
-  if (!l || !l->initial)
+  if (!l || !l->initial || l->flag)
     return NULL;
   return l->initial->obj;
 }
 
 int32_t ll_contains(const LLIST *l, const void *obj)
 {
-    if (!l || !obj)
+    if (!l || !obj || l->flag)
       return 0;
     LL_ITER it = ll_iter_create((LLIST *) l);
     const void *data;
@@ -427,7 +430,7 @@ int32_t ll_contains(const LLIST *l, const void *obj)
 }
 
 const void *ll_contains_data(const LLIST *l, const void *obj, uint32_t size) {
-    if (!l || !obj)
+    if (!l || !obj || l->flag)
       return NULL;
     LL_ITER it = ll_iter_create((LLIST*) l);
     const void *data;
@@ -440,7 +443,7 @@ const void *ll_contains_data(const LLIST *l, const void *obj, uint32_t size) {
 
 int32_t ll_remove(LLIST *l, const void *obj)
 {
-	int32_t n = 0;
+    int32_t n = 0;
     LL_ITER it = ll_iter_create(l);
     void *data;
     while ((data=ll_iter_next(&it))) {
@@ -519,3 +522,40 @@ void ll_putall(LLIST *dest, LLIST *src)
 		ll_append(dest, data);
 	}
 }
+
+//New Iterator:
+LL_LOCKITER *ll_li_create(LLIST *l, int32_t writelock)
+{
+        if (!l||l->flag) return NULL;
+        
+        LL_LOCKITER *li = cs_malloc(&li, sizeof(LL_LOCKITER), 0);
+        li->l = l;
+        li->writelock = writelock;
+        if (writelock)
+                cs_writelock(&l->lock);
+        else
+                cs_readlock(&l->lock);
+        li->it = ll_iter_create(l);
+        return li;
+}
+
+void ll_li_destroy(LL_LOCKITER *li)
+{
+        if (li && li->l) {
+                if (li->writelock)
+                        cs_writeunlock(&li->l->lock);
+                else
+                        cs_readunlock(&li->l->lock);
+                li->l = NULL;
+                add_garbage(li);
+        }
+}
+
+void *ll_li_next(LL_LOCKITER *li)
+{
+        if (li && li->l) {
+                return ll_iter_next_nolock(&li->it);
+        }
+        return NULL;
+}
+

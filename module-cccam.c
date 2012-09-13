@@ -1949,14 +1949,15 @@ int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 	}
 
 	//search existing peer nodes:
-	LL_ITER it = ll_iter_create(er->csp_lastnodes);
+	LL_LOCKITER *li = ll_li_create(er->csp_lastnodes, 0);
 	uint8_t *node;
-	while ((node = ll_iter_next(&it))) {
+	while ((node = ll_li_next(li))) {
 		cs_debug_mask(D_CACHEEX, "cacheex: check node %llX == %llX ?", cnode(node), cnode(cc->peer_node_id));
 		if (memcmp(node, cc->peer_node_id, 8) == 0) {
 			break;
 		}
 	}
+	ll_li_destroy(li);
 
 	//node found, so we got it from there, do not push:
 	if (node) {
@@ -2024,12 +2025,13 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	ofs+=8;
 
 	//Write lastnodes:
-	LL_ITER it = ll_iter_create(er->csp_lastnodes);
+	LL_LOCKITER *li = ll_li_create(er->csp_lastnodes, 0);
 	uint8_t *node;
-	while ((node=ll_iter_next(&it))) {
+	while ((node=ll_li_next(li))) {
 		memcpy(ofs, node, 8);
 		ofs+=8;
 	}
+	ll_li_destroy(li);
 
 	int32_t res = cc_cmd_send(cl, ecmbuf, size, MSG_CACHE_PUSH);
 	free(ecmbuf);

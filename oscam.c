@@ -2410,6 +2410,25 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	if (er->rc < E_NOTFOUND)
 		checkCW(er);
 
+#ifdef WITH_DEBUG
+        if (cs_dblevel & D_CLIENTECM) {		
+                char buf[ECM_FMT_LEN];
+                format_ecm(er, buf, ECM_FMT_LEN);
+
+                char ecmd5[17*3];                
+                cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5));
+                char cwstr[17*3];
+                cs_hexdump(0, er->cw, 16, cwstr, sizeof(cwstr));
+#ifdef CS_CACHEEX
+                char csphash[5*3];
+                cs_hexdump(0, (void*)&er->csp_hash, 4, csphash, sizeof(csphash));
+                cs_debug_mask(D_CLIENTECM, "Client %s hash %s csp %s cw %s rc %d %s", username(client), ecmd5, csphash, cwstr, er->rc, buf);
+#else            
+                cs_debug_mask(D_CLIENTECM, "Client %s hash %s cw %s rc %d %s", username(client), ecmd5, cwstr, er->rc, buf);
+#endif
+        }
+#endif
+
 	struct s_reader *er_reader = er->selected_reader; //responding reader
 
 	if (er_reader) {

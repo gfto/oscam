@@ -46,12 +46,13 @@ static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen)
 
 	int32_t status;
 	if (cl->is_udp) {
-		status = sendto(cl->udp_fd, rbuf, l+4, 0,
+       		status = sendto(cl->udp_fd, rbuf, l+4, 0,
 				           (struct sockaddr *)&cl->udp_sa,
-				            sizeof(cl->udp_sa));
+				            sizeof(struct sockaddr_in));
 		if (status == -1) set_null_ip(&SIN_GET_ADDR(cl->udp_sa));
 	} else {
-		status = send(cl->udp_fd, rbuf, l + 4, 0);
+       		status = send(cl->udp_fd, rbuf, l + 4, 0);
+                  
 		if (cl->typ == 'p' && cl->reader) {
 			if (status == -1) network_tcp_connection_close(cl->reader, "can't send");
 		} else if (cl->typ=='c') {
@@ -518,14 +519,15 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 	uint8_t *remote_node = cl->ncd_skey;
 
 	//search existing peer nodes:
-	LL_ITER it = ll_iter_create(er->csp_lastnodes);
+	LL_LOCKITER *li = ll_li_create(er->csp_lastnodes, 0);
 	uint8_t *node;
-	while ((node = ll_iter_next(&it))) {
+	while ((node = ll_li_next(li))) {
 		cs_debug_mask(D_CACHEEX, "cacheex: check node %llX == %llX ?", cnode(node), cnode(remote_node));
 		if (memcmp(node, remote_node, 8) == 0) {
 			break;
 		}
 	}
+	ll_li_destroy(li);
 
 	//node found, so we got it from there, do not push:
 	if (node) {
@@ -549,7 +551,10 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	time_t now = time((time_t*)0);
 	if (cl->reader) {
 		tcp_connect(cl);
-		if (!cl->crypted) camd35_client_init(cl);
+		if (!cl->crypted) {
+		  camd35_client_init(cl);
+		  tcp_connect(cl);
+                }
 		cl->reader->last_s = cl->reader->last_g = now;
 		if (cl->is_udp) { //resolve ip every 30 cache push:
 			cl->ncd_skey[10]++;
@@ -602,12 +607,13 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	ofs += 8;
 
 	//write other nodes:
-	LL_ITER it = ll_iter_create(er->csp_lastnodes);
+	LL_LOCKITER *li = ll_li_create(er->csp_lastnodes, 0);
 	uint8_t *node;
-	while ((node=ll_iter_next(&it))) {
+	while ((node=ll_li_next(li))) {
 		memcpy(ofs, node, 8);
 		ofs+=8;
 	}
+	ll_li_destroy(li);
 
 	int32_t res = camd35_send(cl, buf, size);
 	free(buf);
