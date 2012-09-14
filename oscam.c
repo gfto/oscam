@@ -810,6 +810,8 @@ static void cs_cleanup(void)
 	cfg.account = NULL;
 	init_free_sidtab();
 
+	config_free();
+
 	cs_close_log();
 }
 

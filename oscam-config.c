@@ -732,6 +732,10 @@ void config_set(char *section, const char *token, char *value) {
 	config_set_value(oscam_conf, section, token, value, &cfg);
 }
 
+void config_free(void) {
+	config_sections_free(oscam_conf, &cfg);
+}
+
 int32_t init_config(void)
 {
 	FILE *fp = open_config_file_or_die(cs_conf);

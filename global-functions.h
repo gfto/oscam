@@ -147,6 +147,7 @@ extern void init_free_sidtab(void);
 extern int32_t init_provid(void);
 
 extern void config_set(char *section, const char *token, char *value);
+extern void config_free(void);
 
 extern int32_t  init_srvid(void);
 extern int32_t  init_tierid(void);

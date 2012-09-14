@@ -107,11 +107,14 @@ void config_list_save(FILE *f, const struct config_list *clist, void *config_dat
 void config_list_apply_fixups(const struct config_list *clist, void *var);
 bool config_list_should_be_saved(const struct config_list *clist, void *var);
 void config_list_set_defaults(const struct config_list *clist, void *config_data);
+void config_list_free_values(const struct config_list *clist, void *config_data);
 
 int config_section_is_active(const struct config_sections *sec);
 const struct config_sections *config_find_section(const struct config_sections *conf, char *section_name);
 void config_sections_save(const struct config_sections *conf, FILE *f, void *var);
 void config_sections_set_defaults(const struct config_sections *conf, void *var);
+void config_sections_free(const struct config_sections *conf, void *var);
+
 void config_set_value(const struct config_sections *conf, char *section, const char *token, char *value, void *var);
 
 FILE *open_config_file(const char *conf_filename);

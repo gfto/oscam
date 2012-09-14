@@ -209,6 +209,19 @@ void config_list_set_defaults(const struct config_list *clist, void *config_data
 	return;
 }
 
+void config_list_free_values(const struct config_list *clist, void *config_data) {
+	const struct config_list *c;
+	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
+		void *cfg = config_data + c->var_offset;
+		if (c->opt_type == OPT_STRING) {
+			char **scfg = cfg;
+			NULLFREE(*scfg);
+		}
+	}
+	return;
+}
+
+
 int config_section_is_active(const struct config_sections *sec) {
 	if (!sec)
 		return 0;
@@ -244,6 +257,15 @@ void config_sections_set_defaults(const struct config_sections *conf, void *var)
 	for (sec = conf; sec && sec->section; sec++) {
 		if (config_section_is_active(sec))
 			config_list_set_defaults(sec->config, var);
+	}
+}
+
+void config_sections_free(const struct config_sections *conf, void *var) {
+	const struct config_sections *sec;
+	for (sec = conf; sec && sec->section; sec++) {
+		if (config_section_is_active(sec)) {
+			config_list_free_values(sec->config, var);
+		}
 	}
 }
 
