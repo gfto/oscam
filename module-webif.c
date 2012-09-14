@@ -2292,7 +2292,10 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			if(account->expirationdate && account->expirationdate < now) classname = "expired";
 			else classname = "connected";
 			proto = monitor_get_proto(latestclient);
-			lastchan = xml_encode(vars, get_servicename(latestclient, latestclient->last_srvid, latestclient->last_caid, channame));
+			if (latestclient->last_srvid != NO_SRVID_VALUE || latestclient->last_caid != NO_CAID_VALUE)
+				lastchan = xml_encode(vars, get_servicename(latestclient, latestclient->last_srvid, latestclient->last_caid, channame));
+			else
+				lastchan = "";
 			lastresponsetm = latestclient->cwlastresptime;
 			tpl_addVar(vars, TPLADDONCE, "CLIENTIP", cs_inet_ntoa(latestclient->ip));
 			connected_users++;
@@ -3050,8 +3053,14 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 							tpl_addVar(vars, TPLADD, "LASTREADER", cl->lastreader);
 					}
 
-					tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", cl->last_caid);
-					tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", cl->last_srvid);
+					if (cl->last_caid != NO_CAID_VALUE)
+						tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", cl->last_caid);
+					else
+						tpl_addVar(vars, TPLADD, "CLIENTCAID", "none");
+					if (cl->last_srvid != NO_SRVID_VALUE)
+						tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", cl->last_srvid);
+					else
+						tpl_printf(vars, TPLADD, "CLIENTSRVID", "none", cl->last_srvid);
 					tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime?cl->cwlastresptime:1);
 
 					if (!cfg.appendchaninfo) {

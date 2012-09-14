@@ -469,6 +469,9 @@ struct s_arm_led {
 // Used by readers
 #define MAX_LEN      256
 
+#define NO_CAID_VALUE  0xfffe
+#define NO_SRVID_VALUE 0xfffe
+
 /* ===========================
  *      global structures
  * =========================== */

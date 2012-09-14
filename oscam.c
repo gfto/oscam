@@ -1757,8 +1757,8 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 				client->pcrc = crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), md5tmp), MD5_DIGEST_LENGTH);
 			if (client->typ=='c')
 			{
-				client->last_caid = 0xFFFE;
-				client->last_srvid = 0xFFFE;
+				client->last_caid = NO_CAID_VALUE;
+				client->last_srvid = NO_SRVID_VALUE;
 				client->expirationdate = account->expirationdate;
 				client->disabled = account->disabled;
 				client->allowedtimeframe[0] = account->allowedtimeframe[0];
