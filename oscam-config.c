@@ -804,18 +804,60 @@ int32_t write_config(void)
 	return flush_config_file(f, cs_conf);
 }
 
+#undef OFS
+#define OFS(X) \
+	offsetof(struct s_auth, X)
+
+#undef SIZEOF
+#define SIZEOF(X) \
+	sizeof(((struct s_auth *)0)->X)
+
+static void account_fixups_fn(void *var) {
+	struct s_auth *account = var;
+	if (account->c35_sleepsend > 0xFF) account->c35_sleepsend = 0xFF;
+#ifdef CS_ANTICASC
+	if (account->ac_users < -1) account->ac_users = DEFAULT_AC_USERS;
+	if (account->ac_penalty < -1) account->ac_penalty = DEFAULT_AC_PENALTY;
+#endif
+}
+
+static const struct config_list account_opts[] = {
+	DEF_OPT_FIXUP_FUNC(account_fixups_fn),
+	DEF_OPT_INT("disabled"				, OFS(disabled),				0 ),
+	DEF_OPT_SSTR("user"					, OFS(usr),						"", SIZEOF(usr) ),
+	DEF_OPT_SSTR("pwd"					, OFS(pwd),						"", SIZEOF(pwd) ),
+#ifdef WEBIF
+	DEF_OPT_STR("description"			, OFS(description),				NULL ),
+#endif
+	DEF_OPT_SSTR("hostname"				, OFS(dyndns),					"", SIZEOF(dyndns) ),
+	DEF_OPT_FUNC("caid"					, OFS(ctab),					check_caidtab_fn ),
+	DEF_OPT_INT("uniq"					, OFS(uniq),					0 ),
+	DEF_OPT_UINT("sleepsend"			, OFS(c35_sleepsend),			0 ),
+	DEF_OPT_INT("failban"				, OFS(failban),					0 ),
+#ifdef CS_CACHEEX
+	DEF_OPT_INT("cacheex"				, OFS(cacheex),					0 ),
+	DEF_OPT_INT("cacheex_maxhop"		, OFS(cacheex_maxhop),			0 ),
+#endif
+#ifdef MODULE_CCCAM
+	DEF_OPT_INT("cccmaxhops"			, OFS(cccmaxhops),				DEFAULT_CC_MAXHOP ),
+	DEF_OPT_INT("cccreshare"			, OFS(cccreshare),				DEFAULT_CC_RESHARE ),
+	DEF_OPT_INT("cccignorereshare"		, OFS(cccignorereshare),		DEFAULT_CC_IGNRSHR ),
+	DEF_OPT_INT("cccstealth"			, OFS(cccstealth),				DEFAULT_CC_STEALTH ),
+#endif
+#ifdef CS_ANTICASC
+	DEF_OPT_INT("numusers"				, OFS(ac_users),				DEFAULT_AC_USERS ),
+	DEF_OPT_INT("penalty"				, OFS(ac_penalty),				DEFAULT_AC_PENALTY ),
+#endif
+	DEF_LAST_OPT
+};
+
 void chk_account(const char *token, char *value, struct s_auth *account)
 {
 	int32_t i;
 	char *ptr1, *saveptr1 = NULL;
 
-	if (!strcmp(token, "user")) {
-		cs_strncpy(account->usr, value, sizeof(account->usr));
-		return;
-	}
-
-	if (!strcmp(token, "pwd")) {
-		cs_strncpy(account->pwd, value, sizeof(account->pwd));
+	if (config_list_parse(account_opts, token, value, account)) {
+		config_list_apply_fixups(account_opts, account);
 		return;
 	}
 
@@ -842,21 +884,6 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		return;
 	}
 
-#ifdef WEBIF
-	if (!strcmp(token, "description")) {
-		NULLFREE(account->description);
-		if(strlen(value) > 0 && cs_malloc(&account->description, strlen(value)+1, -1)){
-			cs_strncpy(account->description, value, strlen(value)+1);
-		}
-		return;
-	}
-#endif
-
-	if (!strcmp(token, "hostname")) {
-		cs_strncpy((char *)account->dyndns, value, sizeof(account->dyndns));
-		return;
-	}
-
 	if (!strcmp(token, "betatunnel")) {
 		if(strlen(value) == 0) {
 			clear_tuntab(&account->ttab);
@@ -867,33 +894,8 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		}
 	}
 
-	if (!strcmp(token, "uniq")) {
-		account->uniq = strToIntVal(value, 0);
-		return;
-	}
-
-#ifdef CS_CACHEEX
-	if (!strcmp(token, "cacheex")) {
-		account->cacheex = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "cacheex_maxhop")) {
-		account->cacheex_maxhop = strToIntVal(value, 0);
-		return;
-	}
-#endif
-
 	if (!strcmp(token, "sleep")) {
 		account->tosleep = strToIntVal(value, cfg.tosleep);
-		return;
-	}
-
-	if (!strcmp(token, "sleepsend")) {
-		uint32_t tmp = strToUIntVal(value, 0);
-		if (tmp > 0xFF)
-			account->c35_sleepsend = 0xFF;
-		else account->c35_sleepsend = tmp;
 		return;
 	}
 
@@ -902,50 +904,13 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		return;
 	}
 
-	if (!strcmp(token, "caid")) {
-		if(strlen(value) == 0) {
-			clear_caidtab(&account->ctab);
-			return;
-		} else {
-			chk_caidtab(value, &account->ctab);
-			return;
-		}
-	}
-
-	if (!strcmp(token, "disabled")) {
-		account->disabled = strToIntVal(value, 0);
-		return;
-	}
-
 	if (!strcmp(token, "suppresscmd08")) {
 		account->c35_suppresscmd08 = strToIntVal(value, 0);
 		return;
 	}
 
-#ifdef MODULE_CCCAM
-	if (!strcmp(token, "cccmaxhops")) {
-		account->cccmaxhops = strToIntVal(value, DEFAULT_CC_MAXHOP);
-		return;
-	}
-
-	if (!strcmp(token, "cccreshare")) {
-		account->cccreshare = strToIntVal(value, DEFAULT_CC_RESHARE);
-		return;
-	}
-
-	if (!strcmp(token, "cccignorereshare")) {
-		account->cccignorereshare = strToIntVal(value, DEFAULT_CC_IGNRSHR);
-		return;
-	}
-
-	if (!strcmp(token, "cccstealth")) {
-		account->cccstealth = strToIntVal(value, DEFAULT_CC_STEALTH);
-		return;
-	}
-#endif
-
 	if (!strcmp(token, "keepalive")) {
-		account->ncd_keepalive = strToIntVal(value, DEFAULT_NCD_KEEPALIVE);
+		account->ncd_keepalive = strToIntVal(value, cfg.ncd_keepalive);
 		return;
 	}
 	/*
@@ -1055,27 +1020,6 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		return;
 	}
 
-	if (!strcmp(token, "failban")) {
-		account->failban = strToIntVal(value, 0);
-		return;
-	}
-
-#ifdef CS_ANTICASC
-	if( !strcmp(token, "numusers") ) {
-		account->ac_users = strToIntVal(value, DEFAULT_AC_USERS);
-		if ( account->ac_users < -1 )
-			account->ac_users = DEFAULT_AC_USERS;
-		return;
-	}
-
-	if( !strcmp(token, "penalty") ) {
-		account->ac_penalty = strToIntVal(value, DEFAULT_AC_PENALTY);
-		if ( account->ac_penalty < -1 )
-			account->ac_penalty = DEFAULT_AC_PENALTY;
-		return;
-	}
-#endif
-
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in account section not recognized\n",token);
 }
@@ -1130,14 +1074,8 @@ int32_t write_userdb(void)
   //each account
 	for (account=cfg.account; (account) ; account=account->next){
 		fprintf(f,"[account]\n");
-		fprintf_conf(f, "user", "%s\n", account->usr);
-		fprintf_conf(f, "pwd", "%s\n", account->pwd);
-#ifdef WEBIF
-		if (account->description || cfg.http_full_cfg)
-			fprintf_conf(f, "description", "%s\n", account->description?account->description:"");
-#endif
-		if (account->disabled || cfg.http_full_cfg)
-			fprintf_conf(f, "disabled", "%d\n", account->disabled);
+		config_list_apply_fixups(account_opts, account);
+		config_list_save(f, account_opts, account, cfg.http_full_cfg);
 
 		if (account->expirationdate || cfg.http_full_cfg) {
 			struct tm timeinfo;
@@ -1169,20 +1107,6 @@ int32_t write_userdb(void)
 			free_mk_t(value);
 		}
 
-		if (account->dyndns[0] || cfg.http_full_cfg)
-			fprintf_conf(f, "hostname", "%s\n", account->dyndns);
-
-		if (account->uniq || cfg.http_full_cfg)
-			fprintf_conf(f, "uniq", "%d\n", account->uniq);
-
-#ifdef CS_CACHEEX
-		if (account->cacheex || cfg.http_full_cfg)
-			fprintf_conf(f, "cacheex", "%d\n", account->cacheex);
-
-		if (account->cacheex_maxhop || cfg.http_full_cfg)
-			fprintf_conf(f, "cacheex_maxhop", "%d\n", account->cacheex_maxhop);
-#endif
-
 		if (account->tosleep != cfg.tosleep || cfg.http_full_cfg)
 			fprintf_conf(f, "sleep", "%d\n", account->tosleep);
 
@@ -1209,13 +1133,6 @@ int32_t write_userdb(void)
 		if (account->allowedprotocols || cfg.http_full_cfg ){
 			value = mk_t_allowedprotocols(account);
 			fprintf_conf(f, "allowedprotocols", "%s\n", value);
-			free_mk_t(value);
-		}
-
-		//CAID
-		if (account->ctab.caid[0] || cfg.http_full_cfg) {
-			value = mk_t_caidtab(&account->ctab);
-			fprintf_conf(f, "caid", "%s\n", value);
 			free_mk_t(value);
 		}
 
@@ -1250,35 +1167,6 @@ int32_t write_userdb(void)
 		if ((account->c35_suppresscmd08 != cfg.c35_suppresscmd08) || cfg.http_full_cfg)
 			fprintf_conf(f, "suppresscmd08", "%d\n", account->c35_suppresscmd08);
 
-#ifdef MODULE_CCCAM
-		if (account->cccmaxhops != DEFAULT_CC_MAXHOP || cfg.http_full_cfg)
-			fprintf_conf(f, "cccmaxhops", "%d\n", account->cccmaxhops);
-
-		if (account->cccreshare != DEFAULT_CC_RESHARE || cfg.http_full_cfg)
-			fprintf_conf(f, "cccreshare", "%d\n", account->cccreshare);
-
-		if (account->cccignorereshare != DEFAULT_CC_IGNRSHR || cfg.http_full_cfg)
-			fprintf_conf(f, "cccignorereshare", "%d\n", account->cccignorereshare);
-
-		if (account->cccstealth != DEFAULT_CC_STEALTH || cfg.http_full_cfg)
-			fprintf_conf(f, "cccstealth", "%d\n", account->cccstealth);
-#endif
-
-		if (account->c35_sleepsend || cfg.http_full_cfg)
-			fprintf_conf(f, "sleepsend", "%u\n", account->c35_sleepsend);
-
-		if (account->failban || cfg.http_full_cfg)
-			fprintf_conf(f, "failban", "%d\n", account->failban);
-
-		if ((account->ncd_keepalive != DEFAULT_NCD_KEEPALIVE) || cfg.http_full_cfg)
-			fprintf_conf(f, "keepalive", "%d\n", account->ncd_keepalive);
-
-#ifdef CS_ANTICASC
-		if (account->ac_users != DEFAULT_AC_USERS || cfg.http_full_cfg)
-			fprintf_conf(f, "numusers", "%d\n", account->ac_users);
-		if (account->ac_penalty != DEFAULT_AC_PENALTY || cfg.http_full_cfg)
-			fprintf_conf(f, "penalty", "%d\n", account->ac_penalty);
-#endif
 		fputc((int)'\n', f);
 	}
 
@@ -1746,6 +1634,7 @@ struct s_auth *init_userdb(void)
 				authptr = ptr;
 
 			account = ptr;
+			config_list_set_defaults(account_opts, account);
 			account->allowedtimeframe[0] = 0;
 			account->allowedtimeframe[1] = 0;
 			account->aureader_list = NULL;
@@ -1754,16 +1643,6 @@ struct s_auth *init_userdb(void)
 			account->c35_suppresscmd08 = cfg.c35_suppresscmd08;
 			account->ncd_keepalive = cfg.ncd_keepalive;
 			account->firstlogin = 0;
-#ifdef MODULE_CCCAM
-			account->cccmaxhops = DEFAULT_CC_MAXHOP;
-			account->cccreshare = DEFAULT_CC_RESHARE; // default: use global cfg
-			account->cccignorereshare = DEFAULT_CC_IGNRSHR; // default: use global cfg
-			account->cccstealth = DEFAULT_CC_STEALTH; // default: use global cfg
-#endif
-#ifdef CS_ANTICASC
-			account->ac_users   = DEFAULT_AC_USERS;   // use ac_users global value
-			account->ac_penalty = DEFAULT_AC_PENALTY; // use ac_penalty global value
-#endif
 			for (i = 1; i < CS_MAXCAIDTAB; account->ctab.mask[i++] = 0xffff);
 			for (i = 1; i < CS_MAXTUNTAB; account->ttab.bt_srvid[i++] = 0x0000);
 			nr++;

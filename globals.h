@@ -1298,10 +1298,10 @@ struct s_auth
 #ifdef WEBIF
 	char			*description;
 #endif
-	int8_t			uniq;
+	int32_t			uniq;
 #ifdef CS_CACHEEX
-	int8_t			cacheex;
-	int8_t          cacheex_maxhop;
+	int32_t			cacheex;
+	int32_t			cacheex_maxhop;
 #endif
 	int16_t			allowedprotocols;
 	LLIST			*aureader_list;
@@ -1327,15 +1327,15 @@ struct s_auth
 	time_t			firstlogin;
 	int32_t			allowedtimeframe[2];
 	int32_t			c35_suppresscmd08;
-	uint8_t			c35_sleepsend;
+	uint32_t		c35_sleepsend;
 	int32_t			ncd_keepalive;
 #ifdef MODULE_CCCAM
 	int32_t			cccmaxhops;
-	int8_t			cccreshare;
-	int8_t			cccignorereshare;
-	int8_t			cccstealth;
+	int32_t			cccreshare;
+	int32_t			cccignorereshare;
+	int32_t			cccstealth;
 #endif
-	int8_t			disabled;
+	int32_t			disabled;
 	int32_t			failban;
 
 	int32_t			cwfound;
