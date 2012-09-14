@@ -4609,7 +4609,9 @@ static int32_t process_request(FILE *f, struct in_addr in) {
 			char temp[sizeof(AUTHREALM) + sizeof(expectednonce) + 100];
 			snprintf(temp, sizeof(temp), "WWW-Authenticate: Digest algorithm=\"MD5\", realm=\"%s\", qop=\"auth\", opaque=\"\", nonce=\"%s\"", AUTHREALM, expectednonce);
 			if(authok == 2) strncat(temp, ", stale=true", sizeof(temp));
-			send_headers(f, 401, "Unauthorized", temp, "text/html", 0, 0, NULL, 0);
+			char *msg = "Access denied.\n";
+			send_headers(f, 401, "Unauthorized", temp, "text/html", 0, strlen(msg), msg, 0);
+			webif_write(msg, f);
 			NULLFREE(authheader);
 			free(filebuf);
 			if(*keepalive) continue;
