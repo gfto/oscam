@@ -1948,7 +1948,7 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	free_mk_t(value);
 
 	//Hostname
-	tpl_addVar(vars, TPLADD, "DYNDNS", (char *)account->dyndns);
+	tpl_addVar(vars, TPLADD, "DYNDNS", account->dyndns);
 
 	//Uniq
 	if(!apicall) {

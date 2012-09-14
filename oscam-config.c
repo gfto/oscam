@@ -829,7 +829,7 @@ static const struct config_list account_opts[] = {
 #ifdef WEBIF
 	DEF_OPT_STR("description"			, OFS(description),				NULL ),
 #endif
-	DEF_OPT_SSTR("hostname"				, OFS(dyndns),					"", SIZEOF(dyndns) ),
+	DEF_OPT_STR("hostname"				, OFS(dyndns),					NULL ),
 	DEF_OPT_FUNC("caid"					, OFS(ctab),					check_caidtab_fn ),
 	DEF_OPT_INT("uniq"					, OFS(uniq),					0 ),
 	DEF_OPT_UINT("sleepsend"			, OFS(c35_sleepsend),			0 ),
@@ -1590,6 +1590,7 @@ int32_t init_free_userdb(struct s_auth *ptr) {
 	for (nro = 0; ptr; nro++) {
 		struct s_auth *ptr_next;
 		ptr_next = ptr->next;
+		config_list_free_values(account_opts, &ptr);
 		ll_destroy(ptr->aureader_list);
 		ptr->next = NULL;
 		add_garbage(ptr);

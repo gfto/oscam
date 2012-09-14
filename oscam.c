@@ -1407,17 +1407,17 @@ static int32_t start_listener(struct s_module *ph, int32_t port_idx)
 /* Resolves the ip of the hostname of the specified account and saves it in account->dynip.
    If the hostname is not configured, the ip is set to 0. */
 void cs_user_resolve(struct s_auth *account){
-	if (account->dyndns[0]){
+	if (account->dyndns) {
 		IN_ADDR_T lastip;
 		IP_ASSIGN(lastip, account->dynip);
 #ifdef IPV6SUPPORT
-		cs_getIPv6fromHost((char*)account->dyndns, &account->dynip, NULL);
+		cs_getIPv6fromHost(account->dyndns, &account->dynip, NULL);
 #else
-		account->dynip = cs_getIPfromHost((char*)account->dyndns);
+		account->dynip = cs_getIPfromHost(account->dyndns);
 #endif
 
 		if (!IP_EQUAL(lastip, account->dynip))  {
-			cs_log("%s: resolved ip=%s", (char*)account->dyndns, cs_inet_ntoa(account->dynip));
+			cs_log("%s: resolved ip=%s", account->dyndns, cs_inet_ntoa(account->dynip));
 		}
 	} else set_null_ip(&account->dynip);
 }
@@ -1739,7 +1739,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 				e_txt ? e_txt : t_msg[rc]);
 		break;
 	default:            // grant/check access
-		if (IP_ISSET(client->ip) && account->dyndns[0]) {
+		if (IP_ISSET(client->ip) && account->dyndns) {
 			if (!IP_EQUAL(client->ip, account->dynip))
 				cs_user_resolve(account);
 			if (!IP_EQUAL(client->ip, account->dynip)) {

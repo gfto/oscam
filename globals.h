@@ -1322,7 +1322,7 @@ struct s_auth
 	struct s_acasc	ac_stat;
 #endif
 	IN_ADDR_T		dynip;
-	uchar			dyndns[64];
+	char			*dyndns;
 	time_t			expirationdate;
 	time_t			firstlogin;
 	int32_t			allowedtimeframe[2];
