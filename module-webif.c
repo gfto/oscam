@@ -1861,24 +1861,11 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 			for (ptr = cfg.account; ptr != NULL && ptr->next != NULL; ptr = ptr->next);
 			ptr->next = account;
 		}
+		account_set_defaults(account);
 		account->disabled = 1;
 		cs_strncpy((char *)account->usr, user, sizeof(account->usr));
-		account->monlvl=cfg.mon_level;
-		account->tosleep=cfg.tosleep;
 		if (!account->grp)
 			account->grp = 1;
-		for (i=1; i<CS_MAXCAIDTAB; account->ctab.mask[i++]=0xffff);
-		for (i=1; i<CS_MAXTUNTAB; account->ttab.bt_srvid[i++]=0x0000);
-		account->expirationdate=(time_t)NULL;
-#ifdef MODULE_CCCAM
-		account->cccmaxhops = DEFAULT_CC_MAXHOP;  // default value
-		account->cccreshare = DEFAULT_CC_RESHARE; // default use global conf
-		account->cccstealth = DEFAULT_CC_STEALTH; // default use global conf
-#endif
-#ifdef CS_ANTICASC
-		account->ac_users   = DEFAULT_AC_USERS;   // by default create the new user with global ac_users value
-		account->ac_penalty = DEFAULT_AC_PENALTY; // by default create the new user with global penality value
-#endif
 		tpl_addMsg(vars, "New user has been added with default settings");
 
 		if (write_userdb()!=0) tpl_addMsg(vars, "Write Config failed!");

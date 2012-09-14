@@ -1601,6 +1601,16 @@ int32_t init_free_userdb(struct s_auth *ptr) {
 	return nro;
 }
 
+void account_set_defaults(struct s_auth *account) {
+	int i;
+	config_list_set_defaults(account_opts, account);
+	account->monlvl = cfg.mon_level;
+	account->tosleep = cfg.tosleep;
+	account->c35_suppresscmd08 = cfg.c35_suppresscmd08;
+	account->ncd_keepalive = cfg.ncd_keepalive;
+	for (i = 1; i < CS_MAXCAIDTAB; account->ctab.mask[i++] = 0xffff);
+}
+
 struct s_auth *init_userdb(void)
 {
 	FILE *fp = open_config_file(cs_user);
@@ -1615,7 +1625,7 @@ struct s_auth *init_userdb(void)
 	if(!cs_malloc(&token, MAXLINESIZE, -1)) return authptr;
 
 	while (fgets(token, MAXLINESIZE, fp)) {
-		int32_t i, l;
+		int32_t l;
 		void *ptr;
 
 		if ((l=strlen(trim(token))) < 3)
@@ -1635,17 +1645,7 @@ struct s_auth *init_userdb(void)
 				authptr = ptr;
 
 			account = ptr;
-			config_list_set_defaults(account_opts, account);
-			account->allowedtimeframe[0] = 0;
-			account->allowedtimeframe[1] = 0;
-			account->aureader_list = NULL;
-			account->monlvl = cfg.mon_level;
-			account->tosleep = cfg.tosleep;
-			account->c35_suppresscmd08 = cfg.c35_suppresscmd08;
-			account->ncd_keepalive = cfg.ncd_keepalive;
-			account->firstlogin = 0;
-			for (i = 1; i < CS_MAXCAIDTAB; account->ctab.mask[i++] = 0xffff);
-			for (i = 1; i < CS_MAXTUNTAB; account->ttab.bt_srvid[i++] = 0x0000);
+			account_set_defaults(account);
 			nr++;
 
 			continue;
