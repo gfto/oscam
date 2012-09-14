@@ -71,8 +71,8 @@ int32_t constcw_client_init(struct s_client *client)
     client->pfd = 0;
     if (socketpair(PF_LOCAL, SOCK_STREAM, 0, fdp))
     {
-	cs_log("Socket creation failed (%s)", strerror(errno));
-	cs_exit(1);
+        cs_log("constcw: Socket creation failed (%s)", strerror(errno));
+        return 1;
     }
     client->udp_fd =fdp[0];
     pserver = fdp[1];
