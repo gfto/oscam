@@ -111,7 +111,7 @@ int pandora_auth_client(struct s_client *cl, IN_ADDR_T ip) {
 
 		if (!ok) {
 			cs_auth_client(cl, (struct s_auth *) 0, "IP not allowed");
-			cs_exit(0);
+			return 0;
 		}
 	}
 #endif
@@ -140,7 +140,6 @@ static void * pandora_server(struct s_client *cl, uchar *UNUSED(mbuf),
 			cl->init_done = 1;
 		} else {
 			cs_log("Password for Pandora share MUST be set !!!");
-			cs_exit(1);
 		}
 	}
 	return NULL;
@@ -175,7 +174,7 @@ int pandora_client_init(struct s_client *cl) {
 
 	if ((cl->udp_fd = socket(PF_INET, SOCK_DGRAM, p_proto)) < 0) {
 		cs_log("Socket creation failed (errno=%d)", errno);
-		cs_exit(1);
+		return 1;
 	}
 
 	set_socket_priority(cl->udp_fd, cfg.netprio);
