@@ -1592,7 +1592,9 @@ int32_t init_free_userdb(struct s_auth *ptr) {
 		ptr_next = ptr->next;
 		ll_destroy(ptr->aureader_list);
 		ptr->next = NULL;
+#ifdef WEBIF
 		add_garbage(ptr->description);
+#endif
 		add_garbage(ptr->dyndns);
 		add_garbage(ptr);
 		ptr = ptr_next;
