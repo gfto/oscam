@@ -555,14 +555,7 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 		  camd35_client_init(cl);
 		  tcp_connect(cl);
                 }
-		cl->reader->last_s = cl->reader->last_g = now;
-		if (cl->is_udp) { //resolve ip every 30 cache push:
-			cl->ncd_skey[10]++;
-			if (cl->ncd_skey[10] > 30) {
-				cl->ncd_skey[10] = 0;
-				hostResolve(cl->reader);
-			}
-		}
+		cl->reader->last_s = now;
 	}
 	if (!cl->udp_fd || !cl->crypted) {
 	  cs_debug_mask(D_CACHEEX, "not pushed, %s not %s", username(cl), cl->udp_fd?"authenticated":"connected");
@@ -629,7 +622,7 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 
 	time_t now = time((time_t*)0);
 	if (cl->reader)
-		cl->reader->last_s = cl->reader->last_g = now;
+                cl->reader->last_g = now;
 	cl->last = now;
 
 	ECM_REQUEST *er;
