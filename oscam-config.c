@@ -1590,9 +1590,10 @@ int32_t init_free_userdb(struct s_auth *ptr) {
 	for (nro = 0; ptr; nro++) {
 		struct s_auth *ptr_next;
 		ptr_next = ptr->next;
-		config_list_free_values(account_opts, &ptr);
 		ll_destroy(ptr->aureader_list);
 		ptr->next = NULL;
+		add_garbage(ptr->description);
+		add_garbage(ptr->dyndns);
 		add_garbage(ptr);
 		ptr = ptr_next;
 	}
