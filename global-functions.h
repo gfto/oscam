@@ -139,6 +139,7 @@ extern void ac_chk(struct s_client *,ECM_REQUEST*, int32_t);
 extern int32_t  init_config(void);
 extern int32_t  init_free_userdb(struct s_auth *auth);
 extern void     account_set_defaults(struct s_auth *auth);
+extern void     reader_set_defaults(struct s_reader *rdr);
 extern struct s_auth *init_userdb(void);
 extern int32_t  init_readerdb(void);
 extern void free_reader(struct s_reader *rdr);

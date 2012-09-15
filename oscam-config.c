@@ -3275,6 +3275,28 @@ void free_reader(struct s_reader *rdr)
 	add_garbage(rdr);
 }
 
+void reader_set_defaults(struct s_reader *rdr) {
+	int i;
+	rdr->enable = 1;
+	rdr->tcp_rto = DEFAULT_TCP_RECONNECT_TIMEOUT;
+	rdr->tcp_ito = DEFAULT_INACTIVITYTIMEOUT;
+	rdr->mhz = 357;
+	rdr->cardmhz = 357;
+#ifdef WITH_AZBOX
+	rdr->mode = -1;
+#endif
+#ifdef MODULE_CCCAM
+	rdr->cc_reshare = DEFAULT_CC_RESHARE;
+	rdr->cc_maxhop  = DEFAULT_CC_MAXHOP;
+	rdr->cc_reconnect = DEFAULT_CC_RECONNECT;
+#endif
+#ifdef WITH_LB
+	rdr->lb_weight = 100;
+#endif
+	cs_strncpy(rdr->pincode, "none", sizeof(rdr->pincode));
+	for (i=1; i<CS_MAXCAIDTAB; rdr->ctab.mask[i++]=0xffff);
+}
+
 int32_t init_readerdb(void)
 {
 	configured_readers = ll_create("configured_readers");
@@ -3293,7 +3315,7 @@ int32_t init_readerdb(void)
 
 	ll_append(configured_readers, rdr);
 	while (fgets(token, MAXLINESIZE, fp)) {
-		int32_t i, l;
+		int32_t l;
 		if ((l = strlen(trim(token))) < 3)
 			continue;
 		if ((token[0] == '[') && (token[l-1] == ']')) {
@@ -3306,32 +3328,7 @@ int32_t init_readerdb(void)
 					rdr = newreader;
 				}
 			}
-			memset(rdr->hexserial, 0, sizeof(rdr->hexserial));
-			memset(rdr->rom, 0, sizeof(rdr->rom));
-			rdr->enable = 1;
-			rdr->tcp_rto = DEFAULT_TCP_RECONNECT_TIMEOUT;
-			rdr->tcp_ito = DEFAULT_INACTIVITYTIMEOUT;
-			rdr->nagra_read = 0;
-			rdr->mhz = 357;
-			rdr->cardmhz = 357;
-#ifdef WITH_AZBOX
-			rdr->mode = -1;
-#endif
-			rdr->deprecated = 0;
-			rdr->force_irdeto = 0;
-#ifdef MODULE_CCCAM
-			rdr->cc_reshare = DEFAULT_CC_RESHARE;
-			rdr->cc_maxhop  = DEFAULT_CC_MAXHOP;
-			rdr->cc_mindown = 0;
-			rdr->cc_reconnect = DEFAULT_CC_RECONNECT;
-#endif
-#ifdef WITH_LB
-			rdr->lb_weight = 100;
-#endif
-			cs_strncpy(rdr->pincode, "none", sizeof(rdr->pincode));
-			rdr->ndsversion = 0;
-			rdr->ecmWhitelist = NULL;
-			for (i=1; i<CS_MAXCAIDTAB; rdr->ctab.mask[i++]=0xffff);
+			reader_set_defaults(rdr);
 			continue;
 		}
 

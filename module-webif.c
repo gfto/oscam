@@ -1081,11 +1081,6 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		// Add new reader
 		struct s_reader *newrdr;
 		if(!cs_malloc(&newrdr,sizeof(struct s_reader), -1)) return "0";
-		newrdr->next = NULL; // terminate list
-		newrdr->enable = 0; // do not start the reader because must configured before
-		ll_append(configured_readers, newrdr);
-		cs_strncpy(newrdr->pincode, "none", sizeof(newrdr->pincode));
-		for (i = 1; i < CS_MAXCAIDTAB; newrdr->ctab.mask[i++] = 0xffff);
 		for (i = 0; i < (*params).paramcount; ++i) {
 			if (strcmp((*params).params[i], "action"))
 				chk_reader((*params).params[i], (*params).values[i], newrdr);
@@ -1099,11 +1094,9 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 			}
 		}
 		reader_ = newrdr->label;
-		newrdr->tcp_rto = DEFAULT_TCP_RECONNECT_TIMEOUT; // default value
-#ifdef MODULE_CCCAM
-		newrdr->cc_maxhop  = DEFAULT_CC_MAXHOP;  // default value
-		newrdr->cc_reshare = DEFAULT_CC_RESHARE; // default value
-#endif
+		reader_set_defaults(newrdr);
+		newrdr->enable = 0; // do not start the reader because must configured before
+		ll_append(configured_readers, newrdr);
 	} else if(strcmp(getParam(params, "action"), "Save") == 0) {
 
 		rdr = get_reader_by_label(getParam(params, "label"));
