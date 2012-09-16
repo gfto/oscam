@@ -1167,6 +1167,9 @@ int32_t write_userdb(void)
 		if ((account->c35_suppresscmd08 != cfg.c35_suppresscmd08) || cfg.http_full_cfg)
 			fprintf_conf(f, "suppresscmd08", "%d\n", account->c35_suppresscmd08);
 
+		if ((account->ncd_keepalive != DEFAULT_NCD_KEEPALIVE) || cfg.http_full_cfg)
+			fprintf_conf(f, "keepalive", "%d\n", account->ncd_keepalive);
+
 		fputc((int)'\n', f);
 	}
 
