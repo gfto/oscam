@@ -221,6 +221,17 @@ void config_list_free_values(const struct config_list *clist, void *config_data)
 	return;
 }
 
+void config_list_gc_values(const struct config_list *clist, void *config_data) {
+	const struct config_list *c;
+	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
+		void *cfg = config_data + c->var_offset;
+		if (c->opt_type == OPT_STRING) {
+			char **scfg = cfg;
+			add_garbage(*scfg);
+		}
+	}
+	return;
+}
 
 int config_section_is_active(const struct config_sections *sec) {
 	if (!sec)

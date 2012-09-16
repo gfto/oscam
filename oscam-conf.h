@@ -108,6 +108,7 @@ void config_list_apply_fixups(const struct config_list *clist, void *var);
 bool config_list_should_be_saved(const struct config_list *clist, void *var);
 void config_list_set_defaults(const struct config_list *clist, void *config_data);
 void config_list_free_values(const struct config_list *clist, void *config_data);
+void config_list_gc_values(const struct config_list *clist, void *config_data);
 
 int config_section_is_active(const struct config_sections *sec);
 const struct config_sections *config_find_section(const struct config_sections *conf, char *section_name);
