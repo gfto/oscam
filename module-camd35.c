@@ -554,13 +554,13 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 		if (!cl->crypted) {
 		  camd35_client_init(cl);
 		  tcp_connect(cl);
-                }
+        }
 		cl->reader->last_s = now;
 	}
 	if (!cl->udp_fd || !cl->crypted) {
 	  cs_debug_mask(D_CACHEEX, "not pushed, %s not %s", username(cl), cl->udp_fd?"authenticated":"connected");
 	  return(-1);
-        }
+    }
 	cl->last = now;
 
 	uint32_t size = sizeof(er->ecmd5)+sizeof(er->csp_hash)+sizeof(er->cw)+sizeof(uint8_t) +

@@ -1894,10 +1894,6 @@ void cs_cache_push(ECM_REQUEST *er)
 						&& chk_srvid(cl, er) //Service-check
 						&& (chk_caid(er->caid, &cl->ctab) > 0))  //Caid-check
 				{
-					if(ph[cl->ctyp].c_cache_push_chk)
-						if (!ph[cl->ctyp].c_cache_push_chk(cl, er))
-							continue;
-
 					cs_cache_push_to_client(cl, er);
 				}
 			}
@@ -1919,11 +1915,6 @@ void cs_cache_push(ECM_REQUEST *er)
 				&& chk_srvid(cl, er) //Service-check
 				&& chk_ctab(er->caid, &rdr->ctab))  //Caid-check
 			{
-				// cc-nodeid-list-check
-				if(rdr->ph.c_cache_push_chk)
-					if (!rdr->ph.c_cache_push_chk(cl, er))
-						continue;
-
 				cs_cache_push_to_client(cl, er);
 			}
 		}
@@ -4139,14 +4130,19 @@ void * work_thread(void *ptr) {
 #ifdef CS_CACHEEX
 				case ACTION_CACHE_PUSH_OUT: {
 					ECM_REQUEST *er = data->ptr;
-
 					int32_t res=0, stats = -1;
+
+					// cc-nodeid-list-check
 					if (reader) {
+						if (reader->ph.c_cache_push_chk && !reader->ph.c_cache_push_chk(cl, er))
+							break;
 						res = reader->ph.c_cache_push(cl, er);
 						stats = cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 0);
-					}
-					else
+					} else  {
+						if (ph[cl->ctyp].c_cache_push_chk && !ph[cl->ctyp].c_cache_push_chk(cl, er))
+							break;
 						res = ph[cl->ctyp].c_cache_push(cl, er);
+					}
 
 					debug_ecm(D_CACHEEX, "pushed ECM %s to %s res %d stats %d", buf, username(cl), res, stats);
 
@@ -4204,8 +4200,8 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 	}
 	
 	//Avoid full running queues:
-	if (action == ACTION_CACHE_PUSH_OUT && ll_count(cl->joblist) > 20) {
-                cs_debug_mask(D_TRACE, "WARNING: job queue %s %s has more than 20 jobs! count=%d, dropped!", 
+	if (action == ACTION_CACHE_PUSH_OUT && ll_count(cl->joblist) > 2000) {
+                cs_debug_mask(D_TRACE, "WARNING: job queue %s %s has more than 2000 jobs! count=%d, dropped!",
                     cl->typ=='c'?"client":"reader",
                     username(cl),
                     ll_count(cl->joblist));
