@@ -747,7 +747,7 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
       cs_debug_mask(D_CLIENT, "account->usr=%s", account->usr);
       if (strcmp((char *)usr, account->usr) == 0)
       {
-        __md5_crypt(account->pwd, "$1$abcdefgh$", (char *)passwdcrypt);
+        __md5_crypt(ESTR(account->pwd), "$1$abcdefgh$", (char *)passwdcrypt);
         cs_debug_mask(D_CLIENT, "account->pwd=%s", passwdcrypt);
         if (strcmp((char *)pwd, (const char *)passwdcrypt) == 0)
         {

@@ -3204,7 +3204,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 		while (account) {
 			if (strncmp(usr, account->usr, 20) == 0) {
 				memset(pwd, 0, sizeof(pwd));
-				strncpy(pwd, account->pwd, sizeof(pwd));
+				cs_strncpy(pwd, account->pwd, sizeof(pwd));
 				found=1;
 				break;
 			}

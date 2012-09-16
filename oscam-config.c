@@ -825,7 +825,7 @@ static const struct config_list account_opts[] = {
 	DEF_OPT_FIXUP_FUNC(account_fixups_fn),
 	DEF_OPT_INT("disabled"				, OFS(disabled),				0 ),
 	DEF_OPT_SSTR("user"					, OFS(usr),						"", SIZEOF(usr) ),
-	DEF_OPT_SSTR("pwd"					, OFS(pwd),						"", SIZEOF(pwd) ),
+	DEF_OPT_STR("pwd"					, OFS(pwd),						NULL ),
 #ifdef WEBIF
 	DEF_OPT_STR("description"			, OFS(description),				NULL ),
 #endif

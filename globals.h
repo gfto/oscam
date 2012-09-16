@@ -472,6 +472,9 @@ struct s_arm_led {
 #define NO_CAID_VALUE  0xfffe
 #define NO_SRVID_VALUE 0xfffe
 
+// If NULL return empty string
+#define ESTR(x) ((x) ? (x) : "")
+
 /* ===========================
  *      global structures
  * =========================== */
@@ -1294,7 +1297,7 @@ struct s_cpmap
 struct s_auth
 {
 	char			usr[64];
-	char			pwd[64];
+	char			*pwd;
 #ifdef WEBIF
 	char			*description;
 #endif

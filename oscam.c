@@ -1085,7 +1085,7 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 				if (!strcmp(cl->account->usr, account->usr))
 					break;
 
-			if (account && !account->disabled && cl->pcrc == crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), md5tmp), MD5_DIGEST_LENGTH)) {
+			if (account && !account->disabled && cl->pcrc == crc32(0L, MD5((uchar *)ESTR(account->pwd), strlen(ESTR(account->pwd)), md5tmp), MD5_DIGEST_LENGTH)) {
 				cl->account = account;
 				if(cl->typ == 'c'){
 					cl->grp	= account->grp;
@@ -1754,7 +1754,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 		{
 			client->dup=0;
 			if (client->typ=='c' || client->typ=='m')
-				client->pcrc = crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), md5tmp), MD5_DIGEST_LENGTH);
+				client->pcrc = crc32(0L, MD5((uchar *)(ESTR(account->pwd)), strlen(ESTR(account->pwd)), md5tmp), MD5_DIGEST_LENGTH);
 			if (client->typ=='c')
 			{
 				client->last_caid = NO_CAID_VALUE;

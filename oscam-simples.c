@@ -973,6 +973,10 @@ int32_t safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, in
 /* Ordinary strncpy does not terminate the string if the source is exactly as long or longer as the specified size. This can raise security issues.
    This function is a replacement which makes sure that a \0 is always added. num should be the real size of char array (do not subtract -1). */
 void cs_strncpy(char * destination, const char * source, size_t num){
+	if (!source) {
+		destination[0] = '\0';
+		return;
+	}
 	uint32_t l, size = strlen(source);
 	if(size > num - 1) l = num - 1;
 	else l = size;

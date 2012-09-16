@@ -32,7 +32,7 @@ static int8_t monitor_auth_client(char *usr, char *pwd)
 	for (account=cfg.account, cur_cl->auth=0; (account) && (!cur_cl->auth);)
 	{
 		if (account->monlvl)
-			cur_cl->auth=!(strcmp(usr, account->usr) | strcmp(pwd, account->pwd));
+			cur_cl->auth = streq(usr, account->usr) && streq(pwd, account->pwd);
 		if (!cur_cl->auth)
 			account=account->next;
 	}
@@ -67,7 +67,7 @@ static int32_t secmon_auth_client(uchar *ucrc)
 				(crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), md5tmp), MD5_DIGEST_LENGTH)))
 		{
 			memcpy(cur_cl->ucrc, ucrc, 4);
-			aes_set_key((char *)MD5((unsigned char *)account->pwd, strlen(account->pwd), md5tmp));
+			aes_set_key((char *)MD5((unsigned char *)ESTR(account->pwd), strlen(ESTR(account->pwd)), md5tmp));
 			if (cs_auth_client(cur_cl, account, NULL))
 				return -1;
 			cur_cl->auth=1;

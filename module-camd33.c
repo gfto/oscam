@@ -86,7 +86,7 @@ static void camd33_auth_client(uchar *camdbug)
       memcpy(camdbug+1, mbuf, camdbug[0]=i);
   }
   for (rc=-1, account=cfg.account; (usr) && (account) && (rc<0); account=account->next)
-    if ((!strcmp((char *)usr, account->usr)) && (!strcmp((char *)pwd, account->pwd)))
+    if (streq(usr, account->usr) && streq(pwd, account->pwd))
       rc=cs_auth_client(cur_client(), account, NULL);
   if (!rc)
     camd33_request_emm();
