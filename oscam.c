@@ -593,11 +593,13 @@ static void free_data(struct s_data *data)
 {
     if (data) {
         if (data->len && data->ptr) {
+#ifdef CS_CACHEEX        
             if (data->action == ACTION_CACHE_PUSH_OUT) {
                 ECM_REQUEST *er = data->ptr;
                 ll_destroy(er->csp_lastnodes);
                 er->csp_lastnodes = NULL;
             }
+#endif
             free(data->ptr);
         }
 	free(data);
