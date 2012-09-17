@@ -4140,6 +4140,34 @@ static char *send_oscam_graph(struct templatevars *vars) {
 }
 
 #ifdef CS_CACHEEX
+static uint64_t get_cacheex_node(struct s_client *cl) {
+	uint64_t node = 0x00;
+	struct s_module *p;
+	if (cl->reader) p = &cl->reader->ph;
+	else p = &ph[cl->ctyp];
+#ifdef MODULE_CCCAM
+	if (p->num == R_CCCAM && cl->cc) {
+		struct cc_data *cc = cl->cc;
+		memcpy(&node, cc->node_id, 8);
+	}
+	else
+#endif
+#ifdef MODULE_CAMD35
+	if (p->num == R_CAMD35) {
+		memcpy(&node, cl->ncd_skey, 8);
+	}
+	else
+#endif
+#ifdef MODULE_CAMD35_TCP
+	if (p->num == R_CS378X) {
+		memcpy(&node, cl->ncd_skey, 8);
+	} else
+#endif
+	{}
+	return node;
+}	
+
+
 static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *params, int8_t apicall) {
 
 	if(!apicall) setActiveMenu(vars, MNU_CACHEEX);
@@ -4158,11 +4186,11 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 	time_t now = time((time_t*)0);
 
 	for (i = 0, cl = first_client; cl ; cl = cl->next, i++) {
-
 		if (cl->typ=='c' && cl->account && cl->account->cacheex){
 			tpl_addVar(vars, TPLADD, "TYPE", "Client");
 			tpl_addVar(vars, TPLADD, "NAME", cl->account->usr);
 			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));
+			tpl_printf(vars, TPLADD, "NODE", "%llX", get_cacheex_node(cl));
 			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->account->cacheex]);
 			tpl_printf(vars, TPLADD, "PUSH", "%ld", cl->account->cwcacheexpush);
 			tpl_printf(vars, TPLADD, "GOT", "%ld", cl->account->cwcacheexgot);
@@ -4175,6 +4203,7 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 			tpl_addVar(vars, TPLADD, "TYPE", "Reader");
 			tpl_addVar(vars, TPLADD, "NAME", cl->reader->label);
 			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));
+			tpl_printf(vars, TPLADD, "NODE", "%llX", get_cacheex_node(cl));
 			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->reader->cacheex]);
 			tpl_printf(vars, TPLADD, "PUSH", "%ld", cl->cwcacheexpush);
 			tpl_printf(vars, TPLADD, "GOT", "%ld", cl->cwcacheexgot);
@@ -4187,6 +4216,7 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 			tpl_addVar(vars, TPLADD, "TYPE", "csp");
 			tpl_addVar(vars, TPLADD, "NAME", "csp");
 			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));
+			tpl_addVar(vars, TPLADD, "NODE", "csp");
 			tpl_addVar(vars, TPLADD, "LEVEL", "csp");
 			tpl_printf(vars, TPLADD, "PUSH", "%ld", cl->cwcacheexpush);
 			tpl_printf(vars, TPLADD, "GOT", "%ld", cl->cwcacheexgot);

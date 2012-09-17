@@ -593,13 +593,6 @@ static void free_data(struct s_data *data)
 {
     if (data) {
         if (data->len && data->ptr) {
-#ifdef CS_CACHEEX        
-            if (data->action == ACTION_CACHE_PUSH_OUT) {
-                ECM_REQUEST *er = data->ptr;
-                ll_destroy(er->csp_lastnodes);
-                er->csp_lastnodes = NULL;
-            }
-#endif
             free(data->ptr);
         }
 	free(data);
@@ -1848,11 +1841,7 @@ void cs_disconnect_client(struct s_client * client)
 #ifdef CS_CACHEEX
 static void cs_cache_push_to_client(struct s_client *cl, ECM_REQUEST *er)
 {
-	ECM_REQUEST *erc = cs_malloc(&erc, sizeof(ECM_REQUEST), 0);
-	memcpy(erc, er, sizeof(ECM_REQUEST));
-	erc->csp_lastnodes = ll_clone(er->csp_lastnodes, 8); //because er could be disposed before erc is processed, duplicate csp nodes. solves deadlocks
-	if (!add_job(cl, ACTION_CACHE_PUSH_OUT, erc, sizeof(ECM_REQUEST)))
-	    ll_destroy(erc->csp_lastnodes);
+	add_job(cl, ACTION_CACHE_PUSH_OUT, er, 0);
 }
 
 /**
