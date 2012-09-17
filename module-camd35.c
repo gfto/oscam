@@ -457,6 +457,11 @@ void camd35_cache_push_send_own_id(struct s_client *cl, uint8_t *mbuf) {
 	memcpy(rbuf+20, camd35_node_id, 12);
 	cs_debug_mask(D_CACHEEX, "cacheex: sending own id %llX request %s", cnode(camd35_node_id), username(cl));
 	camd35_send(cl, rbuf, 12); //send adds +20
+
+        time_t now = time((time_t*)0);
+        if (cl->reader)
+            cl->reader->last_s = now;
+        cl->last = now;
 }
 
 /**
@@ -472,6 +477,11 @@ void camd35_cache_push_request_remote_id(struct s_client *cl) {
 	memcpy(rbuf+20, camd35_node_id, 12);
 	cs_debug_mask(D_CACHEEX, "cacheex: sending id request to %s", username(cl));
 	camd35_send(cl, rbuf, 12); //send adds +20
+
+        time_t now = time((time_t*)0);
+        if (cl->reader)
+            cl->reader->last_s = cl->reader->last_g = now;
+        cl->last = now;
 }
 
 /**
@@ -482,6 +492,11 @@ void camd35_cache_push_receive_remote_id(struct s_client *cl, uint8_t *buf) {
 	memcpy(cl->ncd_skey, buf+20, 8);
 	cl->ncd_skey[8] = 1;
 	cs_debug_mask(D_CACHEEX, "cacheex: received id answer from %s: %llX", username(cl), cnode(cl->ncd_skey));
+
+        time_t now = time((time_t*)0);
+        if (cl->reader)
+            cl->reader->last_g = now;
+        cl->last = now;
 }
 
 

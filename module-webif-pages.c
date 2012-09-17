@@ -2312,7 +2312,7 @@ function isNumber(a) {\n\
 	<BR><BR>\n\
 	<TABLE CLASS=\"stats\">\n\
 			<TR><TH COLSPAN=\"7\">CacheEX Stats</TH></TR>\n\
-			<TR><TH>Direction</TH><TH>Type</TH><TH>Name</TH><TH>Cache EX Mode</TH><TH>Push</TH><TH>Got</TH><TH>Hit</TH></TR>\n\
+			<TR><TH>Direction</TH><TH>Type</TH><TH>Name</TH><TH>IP</TH><TH>Cache EX Mode</TH><TH>Push</TH><TH>Got</TH><TH>Hit</TH></TR>\n\
 ##TABLECLIENTROWS##\
 ##TABLEREADERROWS##\
 	</TABLE>\n\
@@ -2325,7 +2325,7 @@ function isNumber(a) {\n\
 	<BR><BR>\n\
 ##TPLFOOTER##"
 
-#define TPLCACHEEXTABLEROW "			<TR><TD>&nbsp;&nbsp;##DIRECTIONIMG##&nbsp;&nbsp;</TD><TD>##TYPE##</TD><TD>##NAME##</TD><TD>##LEVEL##</TD><TD>##PUSH##</TD><TD>##GOT##</TD><TD>##HIT##</TD></TR>\n"
+#define TPLCACHEEXTABLEROW "			<TR><TD>&nbsp;&nbsp;##DIRECTIONIMG##&nbsp;&nbsp;</TD><TD>##TYPE##</TD><TD>##NAME##</TD><TD>##IP##</TD><TD>##LEVEL##</TD><TD>##PUSH##</TD><TD>##GOT##</TD><TD>##HIT##</TD></TR>\n"
 #endif
 
 const char *tpl[][3] = {

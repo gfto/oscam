@@ -4162,6 +4162,7 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 		if (cl->typ=='c' && cl->account && cl->account->cacheex){
 			tpl_addVar(vars, TPLADD, "TYPE", "Client");
 			tpl_addVar(vars, TPLADD, "NAME", cl->account->usr);
+			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));
 			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->account->cacheex]);
 			tpl_printf(vars, TPLADD, "PUSH", "%ld", cl->account->cwcacheexpush);
 			tpl_printf(vars, TPLADD, "GOT", "%ld", cl->account->cwcacheexgot);
@@ -4173,6 +4174,7 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 		else if ((cl->typ=='p' || cl->typ=='r') && (cl->reader && cl->reader->cacheex)) {
 			tpl_addVar(vars, TPLADD, "TYPE", "Reader");
 			tpl_addVar(vars, TPLADD, "NAME", cl->reader->label);
+			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));
 			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->reader->cacheex]);
 			tpl_printf(vars, TPLADD, "PUSH", "%ld", cl->cwcacheexpush);
 			tpl_printf(vars, TPLADD, "GOT", "%ld", cl->cwcacheexgot);
@@ -4184,6 +4186,7 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 		else if (ph[cl->ctyp].listenertype == LIS_CSPUDP) {
 			tpl_addVar(vars, TPLADD, "TYPE", "csp");
 			tpl_addVar(vars, TPLADD, "NAME", "csp");
+			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));
 			tpl_addVar(vars, TPLADD, "LEVEL", "csp");
 			tpl_printf(vars, TPLADD, "PUSH", "%ld", cl->cwcacheexpush);
 			tpl_printf(vars, TPLADD, "GOT", "%ld", cl->cwcacheexgot);
