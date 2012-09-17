@@ -1317,7 +1317,17 @@ static int32_t start_listener(struct s_module *ph, int32_t port_idx)
   if ((ph->ptab->ports[port_idx].fd = socket(s_domain, s_type, s_proto)) < 0)
   {
     cs_log("%s: Cannot create socket (errno=%d: %s)", ph->desc, errno, strerror(errno));
+#ifdef IPV6SUPPORT
+    cs_log("%s: Trying fallback to IPv4", ph->desc);
+    s_domain = PF_INET;
+    if ((ph->ptab->ports[port_idx].fd = socket(s_domain, s_type, s_proto)) < 0)
+    {
+      cs_log("%s: Cannot create socket (errno=%d: %s)", ph->desc, errno, strerror(errno));
+      return(0);
+    }
+#else
     return(0);
+#endif
   }
 
 #ifdef IPV6SUPPORT
@@ -1326,9 +1336,6 @@ static int32_t start_listener(struct s_module *ph, int32_t port_idx)
   if (setsockopt(ph->ptab->ports[port_idx].fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&val, sizeof(val))<0)
   {
     cs_log("%s: setsockopt(IPV6_V6ONLY) failed (errno=%d: %s)", ph->desc, errno, strerror(errno));
-    close(ph->ptab->ports[port_idx].fd);
-    ph->ptab->ports[port_idx].fd = 0;
-    return 0;
   }
 #endif
 
