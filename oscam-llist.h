@@ -48,6 +48,9 @@ void **ll_sort(const LLIST *l, void *compare, int32_t *size); // sorts the list,
 LL_NODE *ll_append(LLIST *l, void *obj);                // append obj to llist
 LL_NODE *ll_prepend(LLIST *l, void *obj);               // prepend obj to llist
 
+//clones a list, duplicates data
+LLIST *ll_clone(LLIST *l, uint32_t copysize);
+
 //New type of lock, list is locked during iterate! create=lock, destroy=unlock
 LL_LOCKITER *ll_li_create(LLIST *l, int32_t writelock);
 void ll_li_destroy(LL_LOCKITER *li);

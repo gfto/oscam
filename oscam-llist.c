@@ -559,3 +559,18 @@ void *ll_li_next(LL_LOCKITER *li)
         return NULL;
 }
 
+LLIST *ll_clone(LLIST *l, uint32_t copysize)
+{
+        if (!l||l->flag) return NULL;
+
+        LLIST *clone = ll_create(l->lock.name);
+        LL_LOCKITER *li = ll_li_create(l, 0);
+        void *data, *new_data;
+        while ((data=ll_li_next(li))) {
+                new_data = cs_malloc(&new_data, copysize, 0);
+                memcpy(new_data, data, copysize);
+                ll_append_nolock(clone, new_data);
+        }
+        ll_li_destroy(li);
+        return clone;
+}

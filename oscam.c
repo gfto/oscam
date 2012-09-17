@@ -592,8 +592,14 @@ static void free_ecm(ECM_REQUEST *ecm) {
 static void free_data(struct s_data *data)
 {
     if (data) {
-        if (data->len && data->ptr)
+        if (data->len && data->ptr) {
+            if (data->action == ACTION_CACHE_PUSH_OUT) {
+                ECM_REQUEST *er = data->ptr;
+                ll_destroy(er->csp_lastnodes);
+                er->csp_lastnodes = NULL;
+            }
             free(data->ptr);
+        }
 	free(data);
     }
 }
@@ -1842,7 +1848,9 @@ static void cs_cache_push_to_client(struct s_client *cl, ECM_REQUEST *er)
 {
 	ECM_REQUEST *erc = cs_malloc(&erc, sizeof(ECM_REQUEST), 0);
 	memcpy(erc, er, sizeof(ECM_REQUEST));
-	add_job(cl, ACTION_CACHE_PUSH_OUT, erc, sizeof(ECM_REQUEST));
+	erc->csp_lastnodes = ll_clone(er->csp_lastnodes, 8); //because er could be disposed before erc is processed, duplicate csp nodes. solves deadlocks
+	if (!add_job(cl, ACTION_CACHE_PUSH_OUT, erc, sizeof(ECM_REQUEST)))
+	    ll_destroy(erc->csp_lastnodes);
 }
 
 /**
@@ -4150,7 +4158,6 @@ void * work_thread(void *ptr) {
 							break;
 						res = ph[cl->ctyp].c_cache_push(cl, er);
 					}
-
 					debug_ecm(D_CACHEEX, "pushed ECM %s to %s res %d stats %d", buf, username(cl), res, stats);
 
 					cl->cwcacheexpush++;
@@ -4198,12 +4205,12 @@ void * work_thread(void *ptr) {
  * if ptr should be free() after use, set len to the size
  * else set size to 0
 **/
-void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
+int32_t add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 
 	if (!cl || cl->kill) {
 		if (!cl) cs_log("WARNING: add_job failed."); //Ignore jobs for killed clients
 		if (len && ptr) free(ptr);
-		return;
+		return 0;
 	}
 	
 	//Avoid full running queues:
@@ -4224,13 +4231,13 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
                     }
                 }
                 pthread_mutex_unlock(&cl->thread_lock);
-                return;                
+                return 0;                
 	}
 	
 	struct s_data *data = cs_malloc(&data, sizeof(struct s_data), -1);
 	if (!data && len && ptr) {
 		free(ptr);
-		return;
+		return 0;
 	}
 
 	data->action = action;
@@ -4249,7 +4256,7 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 			pthread_kill(cl->thread, OSCAM_SIGNAL_WAKEUP);
 		pthread_mutex_unlock(&cl->thread_lock);
 		cs_debug_mask(D_TRACE, "add %s job action %d queue length %d %s", action > ACTION_CLIENT_FIRST ? "client" : "reader", action, ll_count(cl->joblist), username(cl));
-		return;
+		return 1;
 	}
 
 
@@ -4274,6 +4281,7 @@ void add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 
 	cl->thread_active = 1;
 	pthread_mutex_unlock(&cl->thread_lock);
+	return 1;
 }
 
 static void * check_thread(void) {
