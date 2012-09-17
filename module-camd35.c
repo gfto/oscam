@@ -454,7 +454,7 @@ void camd35_cache_push_send_own_id(struct s_client *cl, uint8_t *mbuf) {
 	rbuf[0] = 0x3e;
 	rbuf[1] = 12;
 	rbuf[2] = 0;
-	memcpy(rbuf+20, camd35_node_id, 12);
+	memcpy(rbuf+20, camd35_node_id, 8);
 	cs_debug_mask(D_CACHEEX, "cacheex: sending own id %llX request %s", cnode(camd35_node_id), username(cl));
 	camd35_send(cl, rbuf, 12); //send adds +20
 
@@ -474,7 +474,7 @@ void camd35_cache_push_request_remote_id(struct s_client *cl) {
 	rbuf[0] = 0x3d;
 	rbuf[1] = 12;
 	rbuf[2] = 0;
-	memcpy(rbuf+20, camd35_node_id, 12);
+	memcpy(rbuf+20, camd35_node_id, 8);
 	cs_debug_mask(D_CACHEEX, "cacheex: sending id request to %s", username(cl));
 	camd35_send(cl, rbuf, 12); //send adds +20
 
@@ -517,7 +517,8 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 	}
 
 	//Update remote id every 256 pushs:
-	if (!++cl->ncd_skey[11]) {
+	//cs_debug_mask(D_CACHEEX, "ncd[8]=%d [9]=%d [10]=%d [11]=%d", cl->ncd_skey[8], cl->ncd_skey[9], cl->ncd_skey[10], cl->ncd_skey[11]);
+	if (!(cl->ncd_skey[11]++)) {
 	        camd35_cache_push_request_remote_id(cl);
         }
 	        
