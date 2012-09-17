@@ -4148,7 +4148,7 @@ static uint64_t get_cacheex_node(struct s_client *cl) {
 #ifdef MODULE_CCCAM
 	if (p->num == R_CCCAM && cl->cc) {
 		struct cc_data *cc = cl->cc;
-		memcpy(&node, cc->node_id, 8);
+		memcpy(&node, cc->peer_node_id, 8);
 	}
 	else
 #endif
