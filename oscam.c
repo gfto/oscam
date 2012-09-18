@@ -566,6 +566,11 @@ static void remove_ecm_from_reader(ECM_REQUEST *ecm) {
 static void free_ecm(ECM_REQUEST *ecm) {
 	struct s_ecm_answer *ea, *nxt;
 
+#ifdef CS_CACHEEX
+        LLIST *l = ecm->csp_lastnodes;
+        ecm->csp_lastnodes = NULL;
+	ll_destroy_data(l);
+#endif
 	//remove this ecm from reader queue to avoid segfault on very late answers (when ecm is already disposed)
 	//first check for outstanding answers:
 	remove_ecm_from_reader(ecm);
@@ -578,10 +583,6 @@ static void free_ecm(ECM_REQUEST *ecm) {
 		add_garbage(ea);
 		ea = nxt;
 	}
-#ifdef CS_CACHEEX
-	ll_destroy_data(ecm->csp_lastnodes);
-	ecm->csp_lastnodes = NULL;
-#endif
 	add_garbage(ecm);
 }
 

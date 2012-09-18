@@ -1281,6 +1281,11 @@ void cs_lock_create(CS_MUTEX_LOCK *l, int16_t timeout, const char *name)
 void cs_lock_destroy(CS_MUTEX_LOCK *l)
 {
 	l->name = NULL;
+	
+	//Do not destroy when having pending locks!
+	int32_t n = 100;
+	while ((--n>0) && (l->writelock || l->readlock)) cs_sleepms(10);
+	
 	pthread_mutex_destroy(&l->lock);
 	pthread_cond_destroy(&l->writecond);
 	pthread_cond_destroy(&l->readcond);
