@@ -476,6 +476,52 @@ char *mk_t_ecmwhitelist(struct s_ecmWhitelist *whitelist) {
 }
 
 /*
+ * Creates a string ready to write as a token into config or WebIf for the ECM Headerwhitelist. You must free the returned value through free_mk_t().
+ */
+char *mk_t_ecmheaderwhitelist(struct s_ecmHeaderwhitelist *headerlist){  
+	int32_t needed = 1, pos = 0;	
+	struct s_ecmHeaderwhitelist *cip;
+	for (cip = headerlist; cip; cip = cip->next) needed += 51;
+	char *value, *dot = "";
+	char tmp[needed];
+	int16_t i;
+	int16_t ccache = 0;
+	uint32_t pcache = 0;
+	for (cip = headerlist; cip; cip = cip->next){
+		dot = "";
+		if (ccache == cip->caid && pcache == cip->provid){
+			pos -= 1;
+			pos += snprintf(tmp + pos, needed - pos, ",");
+		} else {
+			if (cip->header != NULL && cip->caid != 0 && cip->provid == 0) {
+				pos += snprintf(tmp + pos, needed - pos, "%s%04X:", dot, cip->caid);
+				ccache = cip->caid;
+				pcache = 0;
+			}
+
+			if (cip->header != NULL && cip->caid != 0 && cip->provid != 0) {
+				pos += snprintf(tmp + pos, needed - pos, "%s%04X@%06X:", dot, cip->caid, cip->provid);
+				ccache = cip->caid;
+				pcache = cip->provid;				
+			}
+		}
+		if(cip->header != NULL) {
+			for (i=0; i < cip->len/2; i++) {
+				pos += snprintf(tmp + pos, needed - pos, "%s%02X", dot, cip->header[i]);
+				if (i == cip->len/2-1) pos += snprintf(tmp + pos, needed - pos, ",");
+				ccache = cip->caid;
+				pcache = cip->provid;
+			}
+		}
+		pos -=1;
+		pos += snprintf(tmp + pos, needed - pos, ";");
+	}
+	if(pos == 0 || !cs_malloc(&value, (pos + 1) * sizeof(char), -1)) return "";
+	memcpy(value, tmp, pos-1);
+	return value; 
+}
+
+/*
  * Creates a string ready to write as a token into config or WebIf for an iprange. You must free the returned value through free_mk_t().
  */
 char *mk_t_iprange(struct s_ip *range) {

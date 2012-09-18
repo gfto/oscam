@@ -1003,6 +1003,14 @@ struct s_ecmWhitelistLen {
 	struct s_ecmWhitelistLen 	*next;
 };
 
+struct s_ecmHeaderwhitelist {
+	uint16_t				caid;
+	uint32_t				provid;
+	uchar					header[20];
+	int16_t					len;
+	struct s_ecmHeaderwhitelist		*next;
+}; 
+
 //ratelimit
 struct ecmrl {
 	uint16_t		srvid;
@@ -1165,6 +1173,7 @@ struct s_reader  									//contains device info, reader info and card info
 	FTAB			ftab;
 	CLASSTAB		cltab;
 	struct s_ecmWhitelist *ecmWhitelist;
+	struct s_ecmHeaderwhitelist *ecmHeaderwhitelist;			// ECM Header Whitelist
 	int32_t			brk_pos;
 	int32_t			msg_idx;
 #if defined(WEBIF) || defined(LCDSUPPORT)
@@ -1260,6 +1269,8 @@ struct s_reader  									//contains device info, reader info and card info
 	time_t			lastdvbapirateoverride;
 	int32_t			ecmsok;
 	int32_t			ecmsnok;
+	int32_t			ecmsfilteredhead;					// count filtered ECM's by ECM Headerwhitelist
+	int32_t			ecmsfilteredlen;					// count filtered ECM's by ECM Whitelist
 	float			ecmshealthok;
 	float			ecmshealthnok;
 	int32_t			cooldown[2];

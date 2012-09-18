@@ -582,9 +582,74 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   	}
   	if(foundident == 1 && ok == 0){
   		cs_debug_mask(D_TRACE, "ECM is not in ecmwhitelist of reader %s.",rdr->label);
-  		return(0);
+		rdr->ecmsfilteredlen += 1;  		
+		return(0);
   	}
   }
+
+  // ECM Header Check
+  if (rdr->ecmHeaderwhitelist && er->l){ 
+	int8_t byteok = 0;
+	int8_t entryok = 0;
+	int8_t foundcaid = 0;
+	int8_t foundprovid = 0;
+	int16_t len = 0;
+	int32_t i = 0;
+	int8_t skip = 0;
+	struct s_ecmHeaderwhitelist *tmp;
+	for(tmp = rdr->ecmHeaderwhitelist; tmp; tmp = tmp->next){
+		skip = 0;
+		byteok = 0;
+		entryok = 0;
+		len = 0;
+		if (tmp->caid == 0 || tmp->caid == er->caid){
+			foundcaid = 1; //-> caid was in list
+			//rdr_debug_mask(rdr, D_READER, "Headerwhitelist: found matching CAID: %04X in list", tmp->caid);
+			if (tmp->provid == 0 || tmp->provid == er->prid) {
+				foundprovid = 1; //-> provid was in list
+				//rdr_debug_mask(rdr, D_READER, "Headerwhitelist: found matching Provid: %06X in list", tmp->provid);
+				len = tmp->len;
+				for (i=0; i < len/2; i++){
+					if (tmp->header[i] == er->ecm[i]){ 
+						byteok = 1;
+						//rdr_debug_mask(rdr, D_READER, "ECM Byte: %i of ECMHeaderwhitelist is correct. (%02X = %02X Headerlen: %i)", i, er->ecm[i], tmp->header[i], len/2);
+					}
+					else { 
+						byteok = 0;
+						//rdr_debug_mask(rdr, D_READER, "ECM Byte: %i of ECMHeaderwhitelist is not valid. (%02X != %02X Headerlen: %i)", i, er->ecm[i], tmp->header[i], len/2);
+						entryok = 0;						
+						break;
+					}
+					if (i == len/2-1 && byteok == 1){
+						entryok = 1;
+					}
+				
+				}
+			} else {
+				//rdr_debug_mask(rdr, D_READER, "ECMHeaderwhitelist: Provid: %06X not found in List-Entry -> skipping check", er->prid);
+				skip = 1; 	
+				continue;
+			}
+		} else {
+			//rdr_debug_mask(rdr, D_READER, "ECMHeaderwhitelist: CAID: %04X not found in List-Entry -> skipping check", er->caid);
+			skip = 1;
+			continue;
+		}
+		if (entryok == 1){
+			break;
+		}			
+			
+	}	
+	if (foundcaid == 1 && foundprovid == 1 && byteok == 1 && entryok == 1){
+		//cs_log("ECM for %04X:%06X:%04X is valid for ECMHeaderwhitelist of reader %s.", er->caid, er->prid, er->srvid, rdr->label);
+	} else {
+		if (skip == 0 || (foundcaid == 1 && foundprovid == 1 && entryok == 0 && skip == 1)) {
+			cs_dump(er->ecm, er->l, "following ECM %04X:%06X:%04X was filtered by ECMHeaderwhitelist of Reader %s because of not matching Header:",er->caid, er->prid, er->srvid, rdr->label);			
+			rdr->ecmsfilteredhead += 1;	
+			return(0);
+		}
+	}
+   } 
 
   //Simple ring connection check:
     

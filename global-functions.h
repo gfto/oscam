@@ -184,6 +184,7 @@ extern char *mk_t_service( uint64_t sidtabok, uint64_t sidtabno);
 extern char *mk_t_logfile(void);
 extern char *mk_t_iprange(struct s_ip *range);
 extern char *mk_t_ecmwhitelist(struct s_ecmWhitelist *whitelist);
+extern char *mk_t_ecmheaderwhitelist(struct s_ecmHeaderwhitelist *headerlist);
 extern char *mk_t_cltab(CLASSTAB *clstab);
 extern char *mk_t_emmbylen(struct s_reader *rdr);
 extern char *mk_t_allowedprotocols(struct s_auth *account);

@@ -1009,6 +1009,7 @@ SFRTIFJFU0VSVkVEADs="
 				<TH>EMM blocked<br><span title=\"unknown EMM\"> UK </span>/<span title=\"global EMM\"> G </span>/<span title=\"shared EMM\"> S </span>/<span title=\"unique EMM\"> UQ </span></TH>\n\
 				<TH>ECMs OK</TH>\n\
 				<TH>ECMs NOK</TH>\n\
+				<TH>ECMs Filtered<br><span title=\"filtered by ECM Header Whitelist\"> Head </span>/<span title=\"filtered by ECM Whitelist\"> Len </span></TH>\n\
 				<TH>LB Weight</TH>\n\
 				<TH COLSPAN=\"5\">Action</TH>\n\
 			</TR>\n\
@@ -1054,6 +1055,7 @@ SFRTIFJFU0VSVkVEADs="
 				<TD class=\"centered\">##EMMBLOCKEDUK## / ##EMMBLOCKEDG## / ##EMMBLOCKEDS## / ##EMMBLOCKEDUQ##</TD>\n\
 				<TD class=\"centered\">##ECMSOK##</TD>\n\
 				<TD class=\"centered\">##ECMSNOK##</TD>\n\
+				<TD class=\"centered\">##ECMSFILTEREDHEAD## / ##ECMSFILTEREDLEN## </TD>\n\
 				<TD class=\"centered\">##LBWEIGHT##</TD>\n\
 				<TD class=\"centered\"><A HREF=\"readerconfig.html?label=##READERNAMEENC##\" TITLE=\"Edit this Reader\"><IMG CLASS=\"icon\" SRC=\"image?i=ICEDI\" ALT=\"Edit Reader\"></A></TD>\n\
 				<TD class=\"centered\">##ENTITLEMENT##</TD>\n\
@@ -1228,6 +1230,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##server#auprovid##TPLHELPSUFFIX##AU Provid:</A></TD><TD><input name=\"auprovid\" type=\"text\" size=\"10\" maxlength=\"6\" value=\"##AUPROVID##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#emmcache##TPLHELPSUFFIX##Emmcache:</A></TD><TD><input name=\"emmcache\" type=\"text\" size=\"10\" maxlength=\"10\" value=\"##EMMCACHE##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#ecmwhitelist##TPLHELPSUFFIX##ECM whitelist:</A></TD><TD><textarea name=\"ecmwhitelist\" cols=\"58\" rows=\"2\" class=\"bt\">##ECMWHITELIST##</textarea></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#ecmheaderwhitelist##TPLHELPSUFFIX##ECM HeaderWhitelist:</A></TD><TD><textarea name=\"ecmheaderwhitelist\" cols=\"58\" rows=\"2\" class=\"bt\">##ECMHEADERWHITELIST##</textarea></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#blockemm-u##TPLHELPSUFFIX##Blockemm:</A></TD>\n\
 			<TD>\n\
 				<TABLE class=\"invisible\">\n\
