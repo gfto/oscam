@@ -2065,8 +2065,10 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 
 	if (er->rc < E_NOTFOUND) { //=FOUND Check CW:
 		uint8_t i, c;
+		uint8_t null=0;
 		for (i = 0; i < 16; i += 4) {
 			c = ((er->cw[i] + er->cw[i + 1] + er->cw[i + 2]) & 0xff);
+			null |= (er->cw[i] | er->cw[i + 1] | er->cw[i + 2]);
 			if (er->cw[i + 3] != c) {
 				cs_ddump_mask(D_CACHEEX, er->cw, 16,
 						"push received cw with chksum error from %s", csp?"csp":username(cl));
@@ -2074,11 +2076,7 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 			}
 		}
 
-		//Check for NULL CWs:
-		for (c=i=0; !c && i < 16; i++) {
-			c = er->cw[i];
-		}
-		if (!c) {
+		if (null==0) {
 			cs_ddump_mask(D_CACHEEX, er->cw, 16,
 					"push received null cw from %s", csp?"csp":username(cl));
 			return 0;
@@ -2163,7 +2161,35 @@ static int8_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 
 			debug_ecm(D_CACHEEX, "replaced pushed ECM %s from %s", buf, csp ? "csp" : username(cl));
 		} else {
-			debug_ecm(D_CACHEEX, "ignored duplicate pushed ECM %s from %s", buf, csp ? "csp" : username(cl));
+		        if (er->rc < E_NOTFOUND && memcmp(er->cw, ecm->cw, sizeof(er->cw)) != 0) {
+		                char cw1[16*3+2], cw2[16*3+2];
+		                cs_hexdump(0, er->cw, 16, cw1, sizeof(cw1));
+		                cs_hexdump(0, ecm->cw, 16, cw2, sizeof(cw2));
+		                
+        			debug_ecm(D_TRACE, "WARNING: Different CWs %s from %s<>%s: %s<>%s", buf, 
+        			    csp ? "csp" : username(cl),
+        			    ecm->cacheex_src?username(ecm->cacheex_src):"unknown/csp",
+        			    cw1, cw2);
+		                //char ecmd51[17*3];                
+		                //cs_hexdump(0, er->ecmd5, 16, ecmd51, sizeof(ecmd51));
+		                //char csphash1[5*3];
+		                //cs_hexdump(0, (void*)&er->csp_hash, 4, csphash1, sizeof(csphash1));
+		                
+		                //char ecmd52[17*3];                
+		                //cs_hexdump(0, ecm->ecmd5, 16, ecmd52, sizeof(ecmd52));
+		                //char csphash2[5*3];
+		                //cs_hexdump(0, (void*)&ecm->csp_hash, 4, csphash2, sizeof(csphash2));
+		                
+        			//debug_ecm(D_TRACE, "WARNING: Different CWs %s from %s<>%s: %s<>%s %s<>%s %s<>%s", buf, 
+        			//    csp ? "csp" : username(cl),
+        			//    ecm->cacheex_src?username(ecm->cacheex_src):"unknown/csp",
+        			//    cw1, cw2,
+        			//    ecmd51, ecmd52,
+        			//    csphash1, csphash2
+        			//    );
+                        }
+                        else
+        			debug_ecm(D_CACHEEX, "ignored duplicate pushed ECM %s from %s", buf, csp ? "csp" : username(cl));
 		}
 
 		return 0;
