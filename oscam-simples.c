@@ -1280,12 +1280,28 @@ void cs_lock_create(CS_MUTEX_LOCK *l, int16_t timeout, const char *name)
 
 void cs_lock_destroy(CS_MUTEX_LOCK *l)
 {
-	l->name = NULL;
+        if (!l || !l->name || l->flag) return;
+
+	cs_rwlock_int(l, WRITELOCK);
+#ifdef WITH_DEBUG
+	const char *old_name = l->name;
+#endif
+	l->name = NULL; //No new locks!
+	cs_rwunlock_int(l, WRITELOCK);
 	
 	//Do not destroy when having pending locks!
-	int32_t n = 100;
+	int32_t n = (l->timeout/10)+2;
 	while ((--n>0) && (l->writelock || l->readlock)) cs_sleepms(10);
+
+	cs_rwlock_int(l, WRITELOCK);
+	l->flag++; //No new unlocks!
+	cs_rwunlock_int(l, WRITELOCK);
 	
+#ifdef WITH_DEBUG
+	if (!n && old_name != LOG_LIST)
+		cs_log_nolock("WARNING lock %s destroy timed out.", old_name);
+#endif
+
 	pthread_mutex_destroy(&l->lock);
 	pthread_cond_destroy(&l->writecond);
 	pthread_cond_destroy(&l->readcond);
@@ -1298,7 +1314,7 @@ void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 	struct timespec ts;
 	int8_t ret = 0;
 
-	if (!l || !l->name)
+	if (!l || !l->name || l->flag)
 		return;
 
 	ts.tv_sec = time(NULL) + l->timeout;
@@ -1338,8 +1354,7 @@ void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 
 void cs_rwunlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 
-	if (!l || !l->name)
-		return;
+	if (!l || l->flag) return;
 
 	pthread_mutex_lock(&l->lock);
 
@@ -1371,7 +1386,7 @@ void cs_rwunlock_int(CS_MUTEX_LOCK *l, int8_t type) {
 }
 
 int8_t cs_try_rwlock_int(CS_MUTEX_LOCK *l, int8_t type) {
-	if (!l || !l->name)
+	if (!l || !l->name || l->flag)
 		return 0;
 
 	int8_t status = 0;

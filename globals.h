@@ -488,6 +488,7 @@ typedef struct cs_mutexlock {
 	pthread_mutex_t	lock;
 	pthread_cond_t	writecond, readcond;
 	const char	*name;
+	int8_t		flag;
 	int16_t		writelock, readlock;
 } CS_MUTEX_LOCK;
 
