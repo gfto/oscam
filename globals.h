@@ -388,12 +388,12 @@ struct s_arm_led {
 #define SIDTABBITS		uint64_t	// 64bit type for services, if a system does not support this type,
 									// please use a define and define it as uint32_t / MAX_SIDBITS 32
 
-#define BAN_UNKNOWN		1			// failban mask for anonymous/ unknown contact
-#define BAN_DISABLED	2			// failban mask for disabled user
-#define BAN_SLEEPING	4			// failban mask for sleeping user
-#define BAN_DUPLICATE	8			// failban mask for duplicate user
+#define BAN_UNKNOWN		1			// Failban mask for anonymous/ unknown contact
+#define BAN_DISABLED	2			// Failban mask for Disabled user
+#define BAN_SLEEPING	4			// Failban mask for sleeping user
+#define BAN_DUPLICATE	8			// Failban mask for duplicate user
 
-#define MAX_HTTP_DYNDNS 3			// maximum allowed dyndns addresses for webif access
+#define MAX_HTTP_DYNDNS 3			// maximum allowed Dyndns addresses for webif access
 
 #define ACTION_READER_IDLE		1
 #define ACTION_READER_REMOTE	2
@@ -580,7 +580,7 @@ struct s_emm {
 	int32_t			count;
 };
 
-typedef struct v_ban {					// failban listmember
+typedef struct v_ban {					// Failban listmember
 	int32_t 		v_count;
 	IN_ADDR_T		v_ip;
 	int32_t			v_port;
@@ -589,7 +589,7 @@ typedef struct v_ban {					// failban listmember
 } V_BAN;
 
 #ifdef CS_CACHEEX
-typedef struct s_cacheex_stat_entry {	// cacheex stats listmember
+typedef struct s_cacheex_stat_entry {	// Cacheex stats listmember
 	int32_t 		cache_count;
 	time_t 			cache_last;
 	uint16_t		cache_caid;
@@ -758,10 +758,10 @@ typedef struct ecm_request_t {
 	struct ecm_request_t	*ecmcacheptr;		// Pointer to ecm-cw-rc-cache!
 #ifdef CS_CACHEEX
 	uchar			cacheex_done;
-	struct s_client *cacheex_src;               // cacheex origin
+	struct s_client *cacheex_src;               // Cacheex origin
 	int8_t          cacheex_pushed;             // to avoid duplicate pushs
 	int32_t			csp_hash; 					// csp has its own hash
-	LLIST			*csp_lastnodes;				// last 10 cacheex nodes atm cc-proto-only
+	LLIST			*csp_lastnodes;				// last 10 Cacheex nodes atm cc-proto-only
 #endif
 	char			msglog[MSGLOGSIZE];
 	uint16_t		checksum;
@@ -872,7 +872,7 @@ struct s_client {
 	int32_t			cwcacheexpush;		// count pushed ecms/cws
 	int32_t         cwcacheexgot;		// count got ecms/cws
 	int32_t         cwcacheexhit;		// count hit ecms/cws
-	LLIST			*ll_cacheex_stats;	// List for cacheex statistics
+	LLIST			*ll_cacheex_stats;	// List for Cacheex statistics
 	int8_t          cacheex_maxhop;
 #endif
 
@@ -884,12 +884,12 @@ struct s_client {
 #endif
 
 	uchar			ucrc[4];    		// needed by monitor and used by camd35
-	uint32_t		pcrc;        		// pwd crc
+	uint32_t		pcrc;        		// password crc
 	AES_KEY			aeskey;      		// encryption key needed by monitor and used by camd33, camd35
 	AES_KEY			aeskey_decrypt;		// decryption key needed by monitor and used by camd33, camd35
     uint16_t        ncd_msgid;
 	char			ncd_client_id[5];
-	uchar			ncd_skey[16];       //Also used for camd35 cacheex to store remote node id
+	uchar			ncd_skey[16];       //Also used for camd35 Cacheex to store remote node id
 
 #ifdef MODULE_CCCAM
 	void			*cc;
@@ -948,7 +948,7 @@ struct s_client {
 	//oscam.c
 	struct timeval	tv;
 
-	//failban value set bitwise - compared with BAN_
+	// Failban value set bitwise - compared with BAN_
 	int32_t			failban;
 	int8_t			cleaned;
 
@@ -1108,7 +1108,7 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t			log_port;
 	CAIDTAB			ctab;
 	uint32_t		boxid;
-	int8_t			nagra_read;						// read nagra ncmed records: 0 disabled (default), 1 read all records, 2 read valid records only
+	int8_t			nagra_read;						// read nagra ncmed records: 0 Disabled (default), 1 read all records, 2 read valid records only
 	uchar			nagra_boxkey[16];				// n3 boxkey 8byte  or tiger idea key 16byte
 	char			country_code[3];				// irdeto country code.
 	int8_t			force_irdeto;
@@ -1426,7 +1426,7 @@ struct s_global_whitelist
 #ifdef CS_CACHEEX
 struct s_cacheex_matcher
 {
-	uint32_t line; //linenr of oscam.cacheex file, starting with 1
+	uint32_t line; //linenr of oscam.Cacheex file, starting with 1
 	char type; // m
 	uint16_t caid;
 	uint32_t provid;
@@ -1512,7 +1512,7 @@ struct s_config
 	int32_t			http_full_cfg;
 	int32_t			failbantime;
 	int32_t			failbancount;
-	LLIST 			*v_list;						//failban list
+	LLIST 			*v_list;						// Failban list
 	int32_t			c33_port;
 	IN_ADDR_T		c33_srvip;
 	uchar			c33_key[16];
