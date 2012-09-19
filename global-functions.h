@@ -161,6 +161,8 @@ extern void chk_reader(char *token, char *value, struct s_reader *rdr);
 extern void dvbapi_chk_caidtab(char *caidasc, char type);
 extern void dvbapi_read_priority(void);
 
+void check_caidtab_fn(const char *token, char *value, void *setting, FILE *f);
+
 extern void cs_accounts_chk(void);
 extern void chk_account(const char *token, char *value, struct s_auth *account);
 extern void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab);

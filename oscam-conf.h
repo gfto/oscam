@@ -5,6 +5,8 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#define MAXLINESIZE 16384
+
 enum opt_types {
 	OPT_UNKNOWN = 0,
 	OPT_INT     = 1 << 1,
