@@ -342,7 +342,7 @@ void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar 
 			if (!repeated_line || log_ts - last_log_ts >= 60) {
 				char dupl[len + 32];
 				len = get_log_header(2, dupl);
-				snprintf(dupl + len - 1, len + 32, "--- Skipped %d duplicated log lines ---", last_log_duplicates);
+				snprintf(dupl + len - 1, len + 32, "--- Skipped %u duplicated log lines ---", last_log_duplicates);
 				write_to_log_int(dupl, 0);
 				last_log_duplicates = 0;
 				last_log_ts = log_ts;

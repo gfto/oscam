@@ -83,7 +83,7 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 			if (len) {
 				strncpy(scfg, value, c->str_size - 1);
 				if (len > c->str_size) {
-					fprintf(stderr, "WARNING: Config value for '%s' (%s, len=%d) exceeds max length: %d (%s)\n",
+					fprintf(stderr, "WARNING: Config value for '%s' (%s, len=%u) exceeds max length: %d (%s)\n",
 						token, value, len, c->str_size - 1, scfg);
 				}
 			}
