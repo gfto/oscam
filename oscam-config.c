@@ -1024,44 +1024,101 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		fprintf(stderr, "Warning: keyword '%s' in account section not recognized\n",token);
 }
 
-int32_t write_services(void)
-{
-	int32_t i;
-	struct s_sidtab *sidtab = cfg.sidtab;
-	char *ptr;
-	FILE *f = create_config_file(cs_sidt);
-	if (!f)
-		return 1;
+void account_set_defaults(struct s_auth *account) {
+	int i;
+	config_list_set_defaults(account_opts, account);
+	account->monlvl = cfg.mon_level;
+	account->tosleep = cfg.tosleep;
+	account->c35_suppresscmd08 = cfg.c35_suppresscmd08;
+	account->ncd_keepalive = cfg.ncd_keepalive;
+	for (i = 1; i < CS_MAXCAIDTAB; account->ctab.mask[i++] = 0xffff);
+}
 
-	while(sidtab != NULL){
-		ptr = sidtab->label;
-		while (*ptr) {
-			if (*ptr == ' ') *ptr = '_';
-			ptr++;
+struct s_auth *init_userdb(void)
+{
+	FILE *fp = open_config_file(cs_user);
+	if (!fp)
+		return NULL;
+
+	struct s_auth *authptr = NULL;
+	int32_t tag = 0, nr = 0, expired = 0, disabled = 0;
+	char *token;
+	struct s_auth *account = NULL;
+	struct s_auth *probe = NULL;
+	if(!cs_malloc(&token, MAXLINESIZE, -1)) return authptr;
+
+	while (fgets(token, MAXLINESIZE, fp)) {
+		int32_t l;
+		void *ptr;
+
+		if ((l=strlen(trim(token))) < 3)
+			continue;
+		if (token[0] == '[' && token[l-1] == ']') {
+			token[l - 1] = 0;
+			tag = streq("account", strtolower(token + 1));
+			if (!cs_malloc(&ptr, sizeof(struct s_auth), -1))
+				break;
+			if (account)
+				account->next = ptr;
+			else
+				authptr = ptr;
+
+			account = ptr;
+			account_set_defaults(account);
+			nr++;
+
+			continue;
 		}
-		fprintf(f,"[%s]\n", sidtab->label);
-		fprintf_conf_n(f, "caid");
-		for (i=0; i<sidtab->num_caid; i++){
-			if (i==0) fprintf(f,"%04X", sidtab->caid[i]);
-			else fprintf(f,",%04X", sidtab->caid[i]);
+
+		if (!tag)
+			continue;
+		char *value = strchr(token, '=');
+		if (!value)
+			continue;
+
+		*value++ = '\0';
+
+		// check for duplicate useraccounts and make the name unique
+		if (streq(trim(strtolower(token)), "user")) {
+			for(probe = authptr; probe; probe = probe->next){
+				if (!strcmp(probe->usr, trim(value))){
+					fprintf(stderr, "Warning: duplicate account '%s'\n", value);
+					strncat(value, "_x", sizeof(probe->usr) - strlen(value) - 1);
+				}
+			}
 		}
-		fputc((int)'\n', f);
-		fprintf_conf_n(f, "provid");
-		for (i=0; i<sidtab->num_provid; i++){
-			if (i==0) fprintf(f,"%06X", sidtab->provid[i]);
-			else fprintf(f,",%06X", sidtab->provid[i]);
-		}
-		fputc((int)'\n', f);
-		fprintf_conf_n(f, "srvid");
-		for (i=0; i<sidtab->num_srvid; i++){
-			if (i==0) fprintf(f,"%04X", sidtab->srvid[i]);
-			else fprintf(f,",%04X", sidtab->srvid[i]);
-		}
-		fprintf(f,"\n");
-		sidtab=sidtab->next;
+
+		chk_account(trim(strtolower(token)), trim(value), account);
+	}
+	free(token);
+	fclose(fp);
+
+	for(account = authptr; account; account = account->next){
+		if(account->expirationdate && account->expirationdate < time(NULL))
+			++expired;
+
+		if(account->disabled)
+			++disabled;
 	}
 
-	return flush_config_file(f, cs_sidt);
+	cs_log("userdb reloaded: %d accounts loaded, %d expired, %d disabled", nr, expired, disabled);
+	return authptr;
+}
+
+int32_t init_free_userdb(struct s_auth *ptr) {
+	int32_t nro;
+	for (nro = 0; ptr; nro++) {
+		struct s_auth *ptr_next;
+		ptr_next = ptr->next;
+		ll_destroy(ptr->aureader_list);
+		ptr->next = NULL;
+		config_list_gc_values(account_opts, ptr);
+		add_garbage(ptr);
+		ptr = ptr_next;
+	}
+	cs_log("userdb %d accounts freed", nro);
+
+	return nro;
 }
 
 int32_t write_userdb(void)
@@ -1071,9 +1128,8 @@ int32_t write_userdb(void)
 	FILE *f = create_config_file(cs_user);
 	if (!f)
 		return 1;
-  //each account
-	for (account=cfg.account; (account) ; account=account->next){
-		fprintf(f,"[account]\n");
+	for (account = cfg.account; account; account = account->next) {
+		fprintf(f, "[account]\n");
 		config_list_apply_fixups(account_opts, account);
 		config_list_save(f, account_opts, account, cfg.http_full_cfg);
 
@@ -1174,6 +1230,47 @@ int32_t write_userdb(void)
 	}
 
 	return flush_config_file(f, cs_user);
+}
+
+
+int32_t write_services(void)
+{
+	int32_t i;
+	struct s_sidtab *sidtab = cfg.sidtab;
+	char *ptr;
+	FILE *f = create_config_file(cs_sidt);
+	if (!f)
+		return 1;
+
+	while(sidtab != NULL){
+		ptr = sidtab->label;
+		while (*ptr) {
+			if (*ptr == ' ') *ptr = '_';
+			ptr++;
+		}
+		fprintf(f,"[%s]\n", sidtab->label);
+		fprintf_conf_n(f, "caid");
+		for (i=0; i<sidtab->num_caid; i++){
+			if (i==0) fprintf(f,"%04X", sidtab->caid[i]);
+			else fprintf(f,",%04X", sidtab->caid[i]);
+		}
+		fputc((int)'\n', f);
+		fprintf_conf_n(f, "provid");
+		for (i=0; i<sidtab->num_provid; i++){
+			if (i==0) fprintf(f,"%06X", sidtab->provid[i]);
+			else fprintf(f,",%06X", sidtab->provid[i]);
+		}
+		fputc((int)'\n', f);
+		fprintf_conf_n(f, "srvid");
+		for (i=0; i<sidtab->num_srvid; i++){
+			if (i==0) fprintf(f,"%04X", sidtab->srvid[i]);
+			else fprintf(f,",%04X", sidtab->srvid[i]);
+		}
+		fprintf(f,"\n");
+		sidtab=sidtab->next;
+	}
+
+	return flush_config_file(f, cs_sidt);
 }
 
 int32_t write_server(void)
@@ -1593,107 +1690,6 @@ void write_versionfile(void) {
 	fclose(fp);
 }
 #undef write_conf
-
-int32_t init_free_userdb(struct s_auth *ptr) {
-	int32_t nro;
-	for (nro = 0; ptr; nro++) {
-		struct s_auth *ptr_next;
-		ptr_next = ptr->next;
-		ll_destroy(ptr->aureader_list);
-		ptr->next = NULL;
-		config_list_gc_values(account_opts, ptr);
-		add_garbage(ptr);
-		ptr = ptr_next;
-	}
-	cs_log("userdb %d accounts freed", nro);
-
-	return nro;
-}
-
-void account_set_defaults(struct s_auth *account) {
-	int i;
-	config_list_set_defaults(account_opts, account);
-	account->monlvl = cfg.mon_level;
-	account->tosleep = cfg.tosleep;
-	account->c35_suppresscmd08 = cfg.c35_suppresscmd08;
-	account->ncd_keepalive = cfg.ncd_keepalive;
-	for (i = 1; i < CS_MAXCAIDTAB; account->ctab.mask[i++] = 0xffff);
-}
-
-struct s_auth *init_userdb(void)
-{
-	FILE *fp = open_config_file(cs_user);
-	if (!fp)
-		return NULL;
-
-	struct s_auth *authptr = NULL;
-	int32_t tag = 0, nr = 0, expired = 0, disabled = 0;
-	char *value, *token;
-	struct s_auth *account = NULL;
-	struct s_auth *probe = NULL;
-	if(!cs_malloc(&token, MAXLINESIZE, -1)) return authptr;
-
-	while (fgets(token, MAXLINESIZE, fp)) {
-		int32_t l;
-		void *ptr;
-
-		if ((l=strlen(trim(token))) < 3)
-			continue;
-
-		if ((token[0] == '[') && (token[l-1] == ']')) {
-			token[l - 1] = 0;
-			tag = (!strcmp("account", strtolower(token + 1)));
-
-			if(!cs_malloc(&ptr, sizeof(struct s_auth), -1)){
-				free(token);
-				return authptr;
-			}
-			if (account)
-				account->next = ptr;
-			else
-				authptr = ptr;
-
-			account = ptr;
-			account_set_defaults(account);
-			nr++;
-
-			continue;
-		}
-
-		if (!tag)
-			continue;
-
-		if (!(value=strchr(token, '=')))
-			continue;
-
-		*value++ = '\0';
-
-		// check for duplicate useraccounts and make the name unique
-		if (!strcmp(trim(strtolower(token)), "user")) {
-			for(probe = authptr; probe; probe = probe->next){
-				if (!strcmp(probe->usr, trim(value))){
-					fprintf(stderr, "Warning: duplicate account '%s'\n", value);
-					strncat(value, "_x", sizeof(probe->usr) - strlen(value) - 1);
-				}
-			}
-		}
-
-		chk_account(trim(strtolower(token)), trim(value), account);
-	}
-	free(token);
-	fclose(fp);
-
-	for(account = authptr; account; account = account->next){
-		if(account->expirationdate && account->expirationdate < time(NULL))
-			++expired;
-
-		if(account->disabled)
-			++disabled;
-	}
-
-	cs_log("userdb reloaded: %d accounts loaded, %d expired, %d disabled", nr, expired, disabled);
-	return authptr;
-}
 
 void free_sidtab(struct s_sidtab *ptr)
 {
