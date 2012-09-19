@@ -1321,7 +1321,7 @@ struct s_auth
 	int16_t			allowedprotocols;
 	LLIST			*aureader_list;
 	int8_t			autoau;
-	int8_t			monlvl;
+	int32_t			monlvl;
 	uint64_t		grp;
 	int32_t			tosleep;
 	CAIDTAB			ctab;

@@ -812,6 +812,266 @@ int32_t write_config(void)
 #define SIZEOF(X) \
 	sizeof(((struct s_auth *)0)->X)
 
+static void account_tosleep_fn(const char *token, char *value, void *setting, FILE *f) {
+	int32_t *tosleep = setting;
+	if (value) {
+		*tosleep = strToIntVal(value, cfg.tosleep);
+		return;
+	}
+	if (*tosleep != cfg.tosleep || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%d\n", *tosleep);
+}
+
+static void account_c35_suppresscmd08_fn(const char *token, char *value, void *setting, FILE *f) {
+	int32_t *c35_suppresscmd08 = setting;
+	if (value) {
+		*c35_suppresscmd08 = strToIntVal(value, cfg.c35_suppresscmd08);
+		return;
+	}
+	if (*c35_suppresscmd08 != cfg.c35_suppresscmd08 || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%d\n", *c35_suppresscmd08);
+}
+
+static void account_ncd_keepalive_fn(const char *token, char *value, void *setting, FILE *f) {
+	int32_t *ncd_keepalive = setting;
+	if (value) {
+		*ncd_keepalive = strToIntVal(value, cfg.ncd_keepalive);
+		return;
+	}
+	if (*ncd_keepalive != cfg.ncd_keepalive || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%d\n", *ncd_keepalive);
+}
+
+static void account_allowedprotocols_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_auth *account = setting;
+	if (value) {
+		account->allowedprotocols = 0;
+		if (strlen(value) > 3) {
+			int i;
+			char *ptr, *saveptr1 = NULL;
+			for (i = 0, ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1), i++) {
+				if		(streq(ptr, "camd33"))   account->allowedprotocols |= LIS_CAMD33TCP;
+				else if (streq(ptr, "camd35"))   account->allowedprotocols |= LIS_CAMD35UDP;
+				else if (streq(ptr, "cs357x"))   account->allowedprotocols |= LIS_CAMD35UDP;
+				else if (streq(ptr, "cs378x"))   account->allowedprotocols |= LIS_CAMD35TCP;
+				else if (streq(ptr, "newcamd"))  account->allowedprotocols |= LIS_NEWCAMD;
+				else if (streq(ptr, "cccam"))    account->allowedprotocols |= LIS_CCCAM;
+				else if (streq(ptr, "csp"))      account->allowedprotocols |= LIS_CSPUDP;
+				else if (streq(ptr, "gbox"))     account->allowedprotocols |= LIS_GBOX;
+				else if (streq(ptr, "radegast")) account->allowedprotocols |= LIS_RADEGAST;
+				// these have no listener ports so it doesn't make sense
+				else if (streq(ptr, "dvbapi"))   account->allowedprotocols |= LIS_DVBAPI;
+				else if (streq(ptr, "constcw"))  account->allowedprotocols |= LIS_CONSTCW;
+				else if (streq(ptr, "serial"))   account->allowedprotocols |= LIS_SERIAL;
+			}
+		}
+		return;
+	}
+	if (account->allowedprotocols || cfg.http_full_cfg ){
+		value = mk_t_allowedprotocols(account);
+		fprintf_conf(f, token, "%s\n", value);
+		free_mk_t(value);
+	}
+}
+
+static void account_au_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_auth *account = setting;
+	if (value) {
+		strtolower(value);
+
+		// set default values for usage during runtime from Webif
+		account->autoau = 0;
+		if (!account->aureader_list)
+			account->aureader_list = ll_create("aureader_list");
+
+		if(value && value[0] == '1') {
+			account->autoau = 1;
+		}
+		ll_clear(account->aureader_list);
+
+		// exit if invalid or no value
+		if ((strlen(value) == 0) || (value[0] == '0'))
+			return;
+
+		LL_ITER itr = ll_iter_create(configured_readers);
+		struct s_reader *rdr;
+		char *pch, *saveptr1 = NULL;
+		for (pch = strtok_r(value, ",", &saveptr1); pch != NULL; pch = strtok_r(NULL, ",", &saveptr1)) {
+			ll_iter_reset(&itr);
+			while ((rdr = ll_iter_next(&itr))) {
+				if (((rdr->label[0]) && (!strcmp(rdr->label, pch))) || account->autoau) {
+					ll_append(account->aureader_list, rdr);
+				}
+			}
+		}
+		return;
+	}
+	if (account->autoau == 1) {
+		fprintf_conf(f, token, "%d\n", account->autoau);
+	} else if (account->aureader_list) {
+		value = mk_t_aureader(account);
+		if (strlen(value) > 0)
+			fprintf_conf(f, token, "%s\n", value);
+		free_mk_t(value);
+	} else if (cfg.http_full_cfg) {
+		fprintf_conf_n(f, token);
+	}
+}
+
+static void account_expdate_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_auth *account = setting;
+	if (value) {
+		if (!value[0]) {
+			account->expirationdate = (time_t)NULL;
+			return;
+		}
+		int i;
+		struct tm cstime;
+		char *ptr1, *saveptr1 = NULL;
+		memset(&cstime,0,sizeof(cstime));
+		for (i = 0, ptr1 = strtok_r(value, "-/", &saveptr1); i < 3 && ptr1; ptr1 = strtok_r(NULL, "-/", &saveptr1), i++) {
+			switch(i) {
+				case 0: cstime.tm_year = atoi(ptr1) - 1900; break;
+				case 1: cstime.tm_mon  = atoi(ptr1) - 1;    break;
+				case 2: cstime.tm_mday = atoi(ptr1);        break;
+			}
+		}
+		cstime.tm_hour  = 23;
+		cstime.tm_min   = 59;
+		cstime.tm_sec   = 59;
+		cstime.tm_isdst = -1;
+		account->expirationdate = mktime(&cstime);
+		return;
+	}
+	if (account->expirationdate || cfg.http_full_cfg) {
+		char buf[16];
+		struct tm timeinfo;
+		localtime_r(&account->expirationdate, &timeinfo);
+		strftime(buf, 16, "%Y-%m-%d", &timeinfo);
+		if (!streq(buf, "1970-01-01"))
+			fprintf_conf(f, token, "%s\n", buf);
+		else
+			fprintf_conf_n(f, token);
+	}
+}
+
+static void account_allowedtimeframe_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_auth *account = setting;
+	if (value) {
+		account->allowedtimeframe[0] = 0;
+		account->allowedtimeframe[1] = 0;
+		if (strlen(value)) {
+			int32_t allowed[4];
+			if (sscanf(value, "%2d:%2d-%2d:%2d", &allowed[0], &allowed[1], &allowed[2], &allowed[3]) == 4) {
+				account->allowedtimeframe[0] = allowed[0] * 60 + allowed[1];
+				account->allowedtimeframe[1] = allowed[2] * 60 + allowed[3];
+			} else {
+				fprintf(stderr, "WARNING: Value '%s' is not valid for allowedtimeframe (hh:mm-hh:mm)\n", value);
+			}
+		}
+		return;
+	}
+	if (account->allowedtimeframe[0] && account->allowedtimeframe[1]) {
+		fprintf_conf(f, token, "%02d:%02d-%02d:%02d\n",
+			account->allowedtimeframe[0] / 60, account->allowedtimeframe[0] % 60,
+			account->allowedtimeframe[1] / 60, account->allowedtimeframe[1] % 60 );
+	} else if (cfg.http_full_cfg) {
+		fprintf_conf_n(f, token);
+	}
+}
+
+static void account_tuntab_fn(const char *token, char *value, void *setting, FILE *f) {
+	TUNTAB *ttab = setting;
+	if (value) {
+		if (strlen(value) == 0) {
+			clear_tuntab(ttab);
+		} else {
+			chk_tuntab(value, ttab);
+		}
+		return;
+	}
+	if (ttab->bt_caidfrom[0] || cfg.http_full_cfg) {
+		value = mk_t_tuntab(ttab);
+		fprintf_conf(f, token, "%s\n", value);
+		free_mk_t(value);
+	}
+}
+
+static void account_group_fn(const char *token, char *value, void *setting, FILE *f) {
+	uint64_t *grp = setting;
+	if (value) {
+		char *ptr1, *saveptr1 = NULL;
+		*grp = 0;
+		for (ptr1 = strtok_r(value, ",", &saveptr1); ptr1; ptr1 = strtok_r(NULL, ",", &saveptr1)) {
+			int32_t g;
+			g = atoi(ptr1);
+			if (g > 0 && g < 65)
+				*grp |= (((uint64_t)1) << (g-1));
+		}
+		return;
+	}
+	if (*grp || cfg.http_full_cfg) {
+		value = mk_t_group(*grp);
+		fprintf_conf(f, token, "%s\n", value);
+		free_mk_t(value);
+	}
+}
+
+static void account_services_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_auth *account = setting;
+	if (value) {
+		strtolower(value);
+		chk_services(value, &account->sidtabok, &account->sidtabno);
+		return;
+	}
+	value = mk_t_service((uint64_t)account->sidtabok, (uint64_t)account->sidtabno);
+	if (strlen(value) > 0 || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%s\n", value);
+	free_mk_t(value);
+}
+
+static void account_ident_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_auth *account = setting;
+	if (value) { // TODO: ftab clear
+		strtolower(value);
+		chk_ftab(value, &account->ftab, "user", account->usr, "provid");
+		return;
+	}
+	if (account->ftab.nfilts || cfg.http_full_cfg) {
+		value = mk_t_ftab(&account->ftab);
+		fprintf_conf(f, token, "%s\n", value);
+		free_mk_t(value);
+	}
+}
+
+static void account_chid_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_auth *account = setting;
+	if (value) {
+		strtolower(value);
+		chk_ftab(value, &account->fchid, "user", account->usr, "chid");
+		return;
+	}
+	if (account->fchid.nfilts || cfg.http_full_cfg) {
+		value = mk_t_ftab(&account->fchid);
+		fprintf_conf(f, token, "%s\n", value);
+		free_mk_t(value);
+	}
+}
+
+static void account_class_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_auth *account = setting;
+	if (value) {
+		strtolower(value);
+		chk_cltab(value, &account->cltab);
+		return;
+	}
+	if ((account->cltab.bn > 0 || account->cltab.an > 0) || cfg.http_full_cfg) {
+		value = mk_t_cltab(&account->cltab);
+		fprintf_conf(f, token, "%s\n", value);
+		free_mk_t(value);
+	}
+}
+
 static void account_fixups_fn(void *var) {
 	struct s_auth *account = var;
 	if (account->c35_sleepsend > 0xFF) account->c35_sleepsend = 0xFF;
@@ -834,6 +1094,20 @@ static const struct config_list account_opts[] = {
 	DEF_OPT_INT("uniq"					, OFS(uniq),					0 ),
 	DEF_OPT_UINT("sleepsend"			, OFS(c35_sleepsend),			0 ),
 	DEF_OPT_INT("failban"				, OFS(failban),					0 ),
+	DEF_OPT_INT("monlevel"				, OFS(monlvl),					0 ),
+	DEF_OPT_FUNC("sleep"				, OFS(tosleep),					account_tosleep_fn ),
+	DEF_OPT_FUNC("suppresscmd08"		, OFS(c35_suppresscmd08),		account_c35_suppresscmd08_fn ),
+	DEF_OPT_FUNC("keepalive"			, OFS(ncd_keepalive),			account_ncd_keepalive_fn ),
+	DEF_OPT_FUNC("au"					, 0,							account_au_fn ),
+	DEF_OPT_FUNC("expdate"				, 0,							account_expdate_fn ),
+	DEF_OPT_FUNC("allowedprotocols"		, 0,							account_allowedprotocols_fn ),
+	DEF_OPT_FUNC("allowedtimeframe"		, 0,							account_allowedtimeframe_fn ),
+	DEF_OPT_FUNC("betatunnel"			, OFS(ttab),					account_tuntab_fn ),
+	DEF_OPT_FUNC("group"				, OFS(grp),						account_group_fn ),
+	DEF_OPT_FUNC("services"				, 0,							account_services_fn ),
+	DEF_OPT_FUNC("ident"				, 0,							account_ident_fn ),
+	DEF_OPT_FUNC("chid"					, 0,							account_chid_fn ),
+	DEF_OPT_FUNC("class"				, 0,							account_class_fn ),
 #ifdef CS_CACHEEX
 	DEF_OPT_INT("cacheex"				, OFS(cacheex),					0 ),
 	DEF_OPT_INT("cacheex_maxhop"		, OFS(cacheex_maxhop),			0 ),
@@ -853,185 +1127,14 @@ static const struct config_list account_opts[] = {
 
 void chk_account(const char *token, char *value, struct s_auth *account)
 {
-	int32_t i;
-	char *ptr1, *saveptr1 = NULL;
-
-	if (config_list_parse(account_opts, token, value, account)) {
-		config_list_apply_fixups(account_opts, account);
+	if (config_list_parse(account_opts, token, value, account))
 		return;
-	}
-
-	if (!strcmp(token, "allowedprotocols")) {
-		account->allowedprotocols = 0;
-		if(strlen(value) > 3) {
-			char *ptr;
-			for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++){
-				if		(!strcmp(ptr, "camd33"))	account->allowedprotocols |= LIS_CAMD33TCP;
-				else if (!strcmp(ptr, "camd35"))	account->allowedprotocols |= LIS_CAMD35UDP;
-				else if (!strcmp(ptr, "cs357x"))	account->allowedprotocols |= LIS_CAMD35UDP;
-				else if (!strcmp(ptr, "cs378x"))	account->allowedprotocols |= LIS_CAMD35TCP;
-				else if (!strcmp(ptr, "newcamd"))	account->allowedprotocols |= LIS_NEWCAMD;
-				else if (!strcmp(ptr, "cccam"))		account->allowedprotocols |= LIS_CCCAM;
-				else if (!strcmp(ptr, "csp"))		account->allowedprotocols |= LIS_CSPUDP;
-				else if (!strcmp(ptr, "gbox"))		account->allowedprotocols |= LIS_GBOX;
-				else if (!strcmp(ptr, "radegast"))	account->allowedprotocols |= LIS_RADEGAST;
-				// these have no listener ports so it doesn't make sense
-				else if (!strcmp(ptr, "dvbapi"))	account->allowedprotocols |= LIS_DVBAPI;
-				else if (!strcmp(ptr, "constcw"))	account->allowedprotocols |= LIS_CONSTCW;
-				else if (!strcmp(ptr, "serial"))	account->allowedprotocols |= LIS_SERIAL;
-			}
-		}
-		return;
-	}
-
-	if (!strcmp(token, "betatunnel")) {
-		if(strlen(value) == 0) {
-			clear_tuntab(&account->ttab);
-			return;
-		} else {
-			chk_tuntab(value, &account->ttab);
-			return;
-		}
-	}
-
-	if (!strcmp(token, "sleep")) {
-		account->tosleep = strToIntVal(value, cfg.tosleep);
-		return;
-	}
-
-	if (!strcmp(token, "monlevel")) {
-		account->monlvl = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "suppresscmd08")) {
-		account->c35_suppresscmd08 = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "keepalive")) {
-		account->ncd_keepalive = strToIntVal(value, cfg.ncd_keepalive);
-		return;
-	}
-	/*
-	*  case insensitive
-	*/
-	strtolower(value);
-
-	if (!strcmp(token, "au")) {
-
-		// set default values for usage during runtime from Webif
-		account->autoau = 0;
-
-		if (!account->aureader_list)
-			account->aureader_list = ll_create("aureader_list");
-
-		if(value && value[0] == '1') {
-			account->autoau = 1;
-		}
-		ll_clear(account->aureader_list);
-
-		// exit if invalid or no value
-		if ((strlen(value) == 0) || (value[0] == '0'))
-			return;
-
-		LL_ITER itr = ll_iter_create(configured_readers);
-		struct s_reader *rdr;
-		char *pch;
-
-		for (pch = strtok_r(value, ",", &saveptr1); pch != NULL; pch = strtok_r(NULL, ",", &saveptr1)) {
-			ll_iter_reset(&itr);
-			while ((rdr = ll_iter_next(&itr))) {
-				if (((rdr->label[0]) && (!strcmp(rdr->label, pch))) || account->autoau) {
-					ll_append(account->aureader_list, rdr);
-				}
-			}
-		}
-		return;
-	}
-
-	if (!strcmp(token, "group")) {
-		account->grp = 0;
-		for (ptr1=strtok_r(value, ",", &saveptr1); ptr1; ptr1=strtok_r(NULL, ",", &saveptr1)) {
-			int32_t g;
-			g = atoi(ptr1);
-			if ((g>0) && (g < 65)) account->grp|=(((uint64_t)1)<<(g-1));
-		}
-		return;
-	}
-
-	if(!strcmp(token, "services")) {
-		chk_services(value, &account->sidtabok, &account->sidtabno);
-		return;
-	}
-
-	if(!strcmp(token, "ident")) { /*ToDo ftab clear*/
-		chk_ftab(value, &account->ftab, "user", account->usr, "provid");
-		return;
-	}
-
-	if(!strcmp(token, "class")) {
-		chk_cltab(value, &account->cltab);
-		return;
-	}
-
-	if(!strcmp(token, "chid")) {
-		chk_ftab(value, &account->fchid, "user", account->usr, "chid");
-		return;
-	}
-
-	if (!strcmp(token, "expdate")) {
-		if (!value[0]) {
-			account->expirationdate=(time_t)NULL;
-			return;
-		}
-		struct tm cstime;
-		memset(&cstime,0,sizeof(cstime));
-		for (i=0, ptr1=strtok_r(value, "-/", &saveptr1); (i<3)&&(ptr1); ptr1=strtok_r(NULL, "-/", &saveptr1), i++) {
-			switch(i) {
-				case 0: cstime.tm_year=atoi(ptr1)-1900; break;
-				case 1: cstime.tm_mon =atoi(ptr1)-1;    break;
-				case 2: cstime.tm_mday=atoi(ptr1);      break;
-			}
-		}
-		cstime.tm_hour=23;
-		cstime.tm_min=59;
-		cstime.tm_sec=59;
-		cstime.tm_isdst=-1;
-		account->expirationdate=mktime(&cstime);
-		return;
-	}
-
-	if (!strcmp(token, "allowedtimeframe")) {
-		if(strlen(value) == 0) {
-			account->allowedtimeframe[0] = 0;
-			account->allowedtimeframe[1] = 0;
-		} else {
-			int32_t allowed[4];
-			if (sscanf(value, "%2d:%2d-%2d:%2d", &allowed[0], &allowed[1], &allowed[2], &allowed[3]) != 4) {
-				account->allowedtimeframe[0] = 0;
-				account->allowedtimeframe[1] = 0;
-				fprintf(stderr, "Warning: value '%s' is not valid for allowedtimeframe (hh:mm-hh:mm)\n", value);
-			} else {
-				account->allowedtimeframe[0] = (allowed[0]*60) + allowed[1];
-				account->allowedtimeframe[1] = (allowed[2]*60) + allowed[3];
-			}
-		}
-		return;
-	}
-
-	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in account section not recognized\n",token);
+	else if (token[0] != '#')
+		fprintf(stderr, "Warning: keyword '%s' in account section not recognized\n", token);
 }
 
 void account_set_defaults(struct s_auth *account) {
-	int i;
 	config_list_set_defaults(account_opts, account);
-	account->monlvl = cfg.mon_level;
-	account->tosleep = cfg.tosleep;
-	account->c35_suppresscmd08 = cfg.c35_suppresscmd08;
-	account->ncd_keepalive = cfg.ncd_keepalive;
-	for (i = 1; i < CS_MAXCAIDTAB; account->ctab.mask[i++] = 0xffff);
 }
 
 struct s_auth *init_userdb(void)
@@ -1124,7 +1227,6 @@ int32_t init_free_userdb(struct s_auth *ptr) {
 int32_t write_userdb(void)
 {
 	struct s_auth *account;
-	char *value;
 	FILE *f = create_config_file(cs_user);
 	if (!f)
 		return 1;
@@ -1132,101 +1234,7 @@ int32_t write_userdb(void)
 		fprintf(f, "[account]\n");
 		config_list_apply_fixups(account_opts, account);
 		config_list_save(f, account_opts, account, cfg.http_full_cfg);
-
-		if (account->expirationdate || cfg.http_full_cfg) {
-			struct tm timeinfo;
-			localtime_r(&account->expirationdate, &timeinfo);
-			char buf [80];
-			strftime (buf,80,"%Y-%m-%d",&timeinfo);
-			if(strcmp(buf,"1970-01-01"))
-				fprintf_conf(f, "expdate", "%s\n", buf);
-			else
-				fprintf_conf(f, "expdate", "\n");
-		}
-
-
-		if(account->allowedtimeframe[0] && account->allowedtimeframe[1]) {
-			fprintf_conf(f, "allowedtimeframe", "%02d:%02d-%02d:%02d\n",
-					account->allowedtimeframe[0]/60,
-					account->allowedtimeframe[0]%60,
-					account->allowedtimeframe[1]/60,
-					account->allowedtimeframe[1]%60 );
-		} else {
-			if (cfg.http_full_cfg)
-				fprintf_conf(f, "allowedtimeframe", "\n");
-		}
-
-		//group
-		if (account->grp || cfg.http_full_cfg) {
-			value = mk_t_group(account->grp);
-			fprintf_conf(f, "group", "%s\n", value);
-			free_mk_t(value);
-		}
-
-		if (account->tosleep != cfg.tosleep || cfg.http_full_cfg)
-			fprintf_conf(f, "sleep", "%d\n", account->tosleep);
-
-		if (account->monlvl != cfg.mon_level || cfg.http_full_cfg)
-			fprintf_conf(f, "monlevel", "%d\n", account->monlvl);
-
-		if (account->autoau == 1)
-			fprintf_conf(f, "au", "1\n");
-		else if (account->aureader_list) {
-
-			value = mk_t_aureader(account);
-			if (strlen(value) > 0)
-				fprintf_conf(f, "au", "%s\n", value);
-			free_mk_t(value);
-
-		} else if (cfg.http_full_cfg) fprintf_conf(f, "au", "\n");
-
-		value = mk_t_service((uint64_t)account->sidtabok, (uint64_t)account->sidtabno);
-		if (strlen(value) > 0 || cfg.http_full_cfg)
-			fprintf_conf(f, "services", "%s\n", value);
-		free_mk_t(value);
-
-		// allowed protocols
-		if (account->allowedprotocols || cfg.http_full_cfg ){
-			value = mk_t_allowedprotocols(account);
-			fprintf_conf(f, "allowedprotocols", "%s\n", value);
-			free_mk_t(value);
-		}
-
-		//betatunnel
-		if (account->ttab.bt_caidfrom[0] || cfg.http_full_cfg) {
-			value = mk_t_tuntab(&account->ttab);
-			fprintf_conf(f, "betatunnel", "%s\n", value);
-			free_mk_t(value);
-		}
-
-		//ident
-		if (account->ftab.nfilts || cfg.http_full_cfg) {
-			value = mk_t_ftab(&account->ftab);
-			fprintf_conf(f, "ident", "%s\n", value);
-			free_mk_t(value);
-		}
-
-		//CHID
-		if (account->fchid.nfilts || cfg.http_full_cfg) {
-			value = mk_t_ftab(&account->fchid);
-			fprintf_conf(f, "chid", "%s\n", value);
-			free_mk_t(value);
-		}
-
-		//class
-		if ((account->cltab.bn > 0 || account->cltab.an > 0) || cfg.http_full_cfg) {
-			value = mk_t_cltab(&account->cltab);
-			fprintf_conf(f, "class", "%s\n", value);
-			free_mk_t(value);
-		}
-
-		if ((account->c35_suppresscmd08 != cfg.c35_suppresscmd08) || cfg.http_full_cfg)
-			fprintf_conf(f, "suppresscmd08", "%d\n", account->c35_suppresscmd08);
-
-		if ((account->ncd_keepalive != DEFAULT_NCD_KEEPALIVE) || cfg.http_full_cfg)
-			fprintf_conf(f, "keepalive", "%d\n", account->ncd_keepalive);
-
-		fputc((int)'\n', f);
+		fprintf(f, "\n");
 	}
 
 	return flush_config_file(f, cs_user);
