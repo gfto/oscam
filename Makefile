@@ -326,7 +326,7 @@ OBJ := $(addprefix $(OBJDIR)/,$(subst .c,.o,$(SRC)))
 # starts the compilation.
 all:
 	$(shell ./config.sh --make-config.mak)
-	@-mkdir -p $(OBJDIR)/{algo,cscrypt,csctapi}
+	@-mkdir -p $(OBJDIR)/algo $(OBJDIR)/cscrypt $(OBJDIR)/csctapi
 	@-printf "\
 +-------------------------------------------------------------------------------\n\
 | OSCam ver: $(VER) rev: $(SVN_REV) target: $(TARGET)\n\
