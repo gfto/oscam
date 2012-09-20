@@ -290,6 +290,7 @@ static void http_dyndns_fn(const char *token, char *value, void *UNUSED(setting)
 	int i;
 	if (value) {
 		char *ptr, *saveptr1 = NULL;
+		memset(cfg.http_dyndns, 0, sizeof(cfg.http_dyndns));
 		for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < MAX_HTTP_DYNDNS) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
 			trim(ptr);
 			cs_strncpy((char *)cfg.http_dyndns[i], ptr, sizeof(cfg.http_dyndns[i]));
