@@ -748,11 +748,11 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 #ifdef WITH_COOLAPI
 	if (!strcmp(token, "cool_timeout_init")) {
-		rdr->cool_timeout_init  = strToIntVal(value, 0);
+		rdr->cool_timeout_init  = strToIntVal(value, 50);
 		return;
 	}
 	if (!strcmp(token, "cool_timeout_after_init")) {
-		rdr->cool_timeout_after_init  = strToIntVal(value, 0);
+		rdr->cool_timeout_after_init  = strToIntVal(value, 150);
 		return;
 	}
 #endif
@@ -1342,9 +1342,9 @@ int32_t write_server(void)
 #endif
 
 #ifdef WITH_COOLAPI
-			if (rdr->cool_timeout_init || cfg.http_full_cfg)
+			if (rdr->cool_timeout_init != 50 || cfg.http_full_cfg)
 				fprintf_conf(f, "cool_timeout_init", "%d\n", rdr->cool_timeout_init);
-			if (rdr->cool_timeout_after_init || cfg.http_full_cfg)
+			if (rdr->cool_timeout_after_init != 150 || cfg.http_full_cfg)
 				fprintf_conf(f, "cool_timeout_after_init", "%d\n", rdr->cool_timeout_after_init);
 #endif
 			if (rdr->log_port || cfg.http_full_cfg)
