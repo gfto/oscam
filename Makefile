@@ -2,7 +2,6 @@ SHELL = /bin/sh
 
 .SUFFIXES:
 .SUFFIXES: .o .c
-.NOTPARALLEL: all
 .PHONY: all help README.build simple default debug config menuconfig allyesconfig allnoconfig defconfig clean distclean
 
 # Include config.mak which contains variables for all enabled modules
