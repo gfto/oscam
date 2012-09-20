@@ -220,7 +220,7 @@ SAY = @echo
 endif
 
 BINDIR := Distribution
-LIBDIR := lib
+BUILD_DIR := build
 
 OSCAM_BIN := $(BINDIR)/oscam-$(VER)$(SVN_REV)-$(subst cygwin,cygwin.exe,$(TARGET))
 LIST_SMARGO_BIN := $(BINDIR)/list_smargo-$(VER)$(SVN_REV)-$(subst cygwin,cygwin.exe,$(TARGET))
@@ -232,7 +232,7 @@ endif
 
 GLOBAL_DEP = Makefile
 
-ALGO_LIB = $(LIBDIR)/libminilzo-$(TARGET).a
+ALGO_LIB = $(BUILD_DIR)/libminilzo-$(TARGET).a
 ALGO_DEP = $(GLOBAL_DEP) algo/minilzo.h
 ALGO_OBJ-$(CONFIG_LIB_MINILZO) += $(ALGO_LIB)(algo/minilzo.o)
 ALGO_OBJ = $(ALGO_OBJ-y)
@@ -240,7 +240,7 @@ ifeq "$(ALGO_OBJ)" ""
 ALGO_LIB =
 endif
 
-CSCRYPT_LIB = $(LIBDIR)/libcscrypt-$(TARGET).a
+CSCRYPT_LIB = $(BUILD_DIR)/libcscrypt-$(TARGET).a
 CSCRYPT_DEP = $(GLOBAL_DEP) cscrypt/cscrypt.h cscrypt/des.h cscrypt/bn.h
 CSCRYPT_OBJ-$(CONFIG_WITHOUT_LIBCRYPTO) += $(CSCRYPT_LIB)(cscrypt/aes.o)
 CSCRYPT_OBJ-$(CONFIG_LIB_BIGNUM) += $(CSCRYPT_LIB)(cscrypt/bn_add.o)
@@ -265,7 +265,7 @@ CSCRYPT_OBJ-$(CONFIG_LIB_RC6) += $(CSCRYPT_LIB)(cscrypt/rc6.o)
 CSCRYPT_OBJ-$(CONFIG_LIB_SHA1) += $(CSCRYPT_LIB)(cscrypt/sha1.o)
 CSCRYPT_OBJ = $(CSCRYPT_OBJ-y)
 
-CSCTAPI_LIB = $(LIBDIR)/libcsctapi-$(TARGET).a
+CSCTAPI_LIB = $(BUILD_DIR)/libcsctapi-$(TARGET).a
 CSCTAPI_DEP = $(GLOBAL_DEP) csctapi/defines.h csctapi/atr.h
 CSCTAPI_OBJ-$(CONFIG_WITH_CARDREADER) += $(CSCTAPI_LIB)(csctapi/atr.o)
 CSCTAPI_OBJ-$(CONFIG_WITH_CARDREADER) += $(CSCTAPI_LIB)(csctapi/icc_async.o)
@@ -288,7 +288,7 @@ ifeq "$(CSCTAPI_OBJ)" ""
 CSCTAPI_LIB =
 endif
 
-OSCAM_LIB = $(LIBDIR)/libcs-$(TARGET).a
+OSCAM_LIB = $(BUILD_DIR)/libcs-$(TARGET).a
 OSCAM_DEP = $(GLOBAL_DEP) globals.h oscam-config.h
 OSCAM_OBJ-$(CONFIG_CS_ANTICASC) += $(OSCAM_LIB)(module-anticasc.o)
 OSCAM_OBJ-$(CONFIG_MODULE_CAMD33) += $(OSCAM_LIB)(module-camd33.o)
@@ -351,7 +351,7 @@ all:
 build-programs: prepare $(OSCAM_BIN) $(LIST_SMARGO_BIN)
 
 prepare:
-	@-test -d "$(LIBDIR)" || mkdir "$(LIBDIR)"
+	@-test -d "$(BUILD_DIR)" || mkdir "$(BUILD_DIR)"
 	@-printf "\
 +-------------------------------------------------------------------------------\n\
 | OSCam ver: $(VER) rev: $(SVN_REV) target: $(TARGET)\n\
@@ -433,10 +433,17 @@ defconfig:
 	@-$(SHELL) ./config.sh --restore
 
 clean:
-	@-rm -rfv $(LIBDIR)/*.a
+	@-for FILE in $(BUILD_DIR)/*; do \
+		echo "RM	$$FILE"; \
+		rm -rf $$FILE; \
+	done
+	@-rm -rf $(BUILD_DIR) lib
 
 distclean: clean
-	@-rm -rfv $(BINDIR)/oscam-$(VER)* $(BINDIR)/list_smargo-* config.mak
+	@-for FILE in config.mak $(BINDIR)/list_smargo-* $(BINDIR)/oscam-$(VER)*; do \
+		echo "RM	$$FILE"; \
+		rm -rf $$FILE; \
+	done
 
 README.build:
 	@echo "Extracting 'make help' into $@ file."
@@ -621,7 +628,7 @@ OSCam build system documentation\n\
    make defconfig     - Restore default configuration options.\n\
 \n\
  Cleaning targets:\n\
-   make clean     - Remove '$(LIBDIR)' directory which contains compiled\n\
+   make clean     - Remove '$(BUILD_DIR)' directory which contains compiled\n\
                     object files.\n\
    make distclean - Executes clean target and also removes binary files\n\
                     located in '$(BINDIR)' directory.\n\

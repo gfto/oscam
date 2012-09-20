@@ -172,7 +172,7 @@ OSCam build system documentation
    make defconfig     - Restore default configuration options.
 
  Cleaning targets:
-   make clean     - Remove 'lib' directory which contains compiled
+   make clean     - Remove 'build' directory which contains compiled
                     object files.
    make distclean - Executes clean target and also removes binary files
                     located in 'Distribution' directory.
