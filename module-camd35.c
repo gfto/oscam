@@ -428,11 +428,12 @@ int32_t camd35_client_init(struct s_client *client)
 
 uint8_t camd35_node_id[8];
 
-void cacheex_update_peer_id(void)
+uint8_t *cacheex_update_peer_id(void)
 {
 	int8_t i;
 	for (i=0; i<8; i++)
 		camd35_node_id[i] = fast_rnd();
+        return camd35_node_id;
 }
 
 void cacheex_set_peer_id(uint8_t *id)

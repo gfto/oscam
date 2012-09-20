@@ -874,6 +874,8 @@ struct s_client {
 	int32_t         cwcacheexhit;		// count hit ecms/cws
 	LLIST			*ll_cacheex_stats;	// List for Cacheex statistics
 	int8_t          cacheex_maxhop;
+	int32_t		cwcacheexerr;   //cw=00 or chksum wrong
+	int32_t		cwcacheexerrcw; //Same Hex, different CW
 #endif
 
 #ifdef WEBIF
@@ -1365,6 +1367,8 @@ struct s_auth
 	int32_t			cwcacheexpush;		// count pushed ecms/cws
 	int32_t         cwcacheexgot;		// count got ecms/cws
 	int32_t         cwcacheexhit;		// count hit ecms/cws
+	int32_t         cwcacheexerr; //cw=00 or chksum wrong
+	int32_t         cwcacheexerrcw; //Same Hex, different CW
 #endif
 	struct s_auth	*next;
 };
@@ -1763,6 +1767,10 @@ extern CS_MUTEX_LOCK gethostbyname_lock;
 extern CS_MUTEX_LOCK readdir_lock;
 #if defined(WITH_LIBUSB)
 extern CS_MUTEX_LOCK sr_lock;
+#endif
+
+#ifdef CS_CACHEEX
+extern uint8_t cacheex_peer_id[8];
 #endif
 
 extern pid_t server_pid;							// PID of server - set while startup

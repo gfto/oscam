@@ -83,7 +83,7 @@ void garbage_collector(void) {
 	                garbage = garbage_first[i];
 	                while (garbage) {
 	                        next = garbage->next;
-	                        if (now > (time_t)(garbage->time+cfg.ctimeout/1000+1)) { //clienttimeout +1 second
+	                        if (now > (time_t)(garbage->time+2*cfg.ctimeout/1000+1)) { //clienttimeout +1 second
 	                                free(garbage->data);
 
 	                                if (prev)

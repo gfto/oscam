@@ -416,6 +416,12 @@ void *ll_has_elements(const LLIST *l) {
   return l->initial->obj;
 }
 
+void *ll_last_element(const LLIST *l) {
+  if (!l || !l->last || l->flag)
+    return NULL;
+  return l->last->obj;
+}
+
 int32_t ll_contains(const LLIST *l, const void *obj)
 {
     if (!l || !obj || l->flag)
@@ -573,4 +579,19 @@ LLIST *ll_clone(LLIST *l, uint32_t copysize)
         }
         ll_li_destroy(li);
         return clone;
+}
+
+void *ll_remove_first(LLIST *l) {
+        if (l && !l->flag) {
+                LL_ITER it = ll_iter_create(l);
+                void *data = ll_iter_next(&it);
+                if (data) ll_iter_remove(&it);
+                return data;
+        }
+        return NULL;
+}
+
+void ll_remove_first_data(LLIST *l) {
+        void *data = ll_remove_first(l);
+        if (data) free(data);
 }

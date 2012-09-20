@@ -69,7 +69,7 @@ void *ll_iter_move(LL_ITER *it, int32_t offset);// moves the iterator position
 int32_t ll_iter_move_first(LL_ITER *it);        // moves an entry to top
 int32_t ll_count(const LLIST *l);               // return number of items in list
 void *ll_has_elements(const LLIST *l);          // returns first obj if has one
-
+void *ll_last_element(const LLIST *l);
 int32_t ll_contains(const LLIST *l, const void *obj);
 const void *ll_contains_data(const LLIST *l, const void *obj, uint32_t size); 
 int32_t ll_remove(LLIST *l, const void *obj);
@@ -78,4 +78,7 @@ int32_t ll_remove_all(LLIST *l, const LLIST *elements_to_remove); // removes all
 
 void ll_putall(LLIST *dest, LLIST *src);
 
+void *ll_remove_first(LLIST *l);
+void ll_remove_first_data(LLIST *l);
+                                                                                        
 #endif

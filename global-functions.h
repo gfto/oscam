@@ -60,7 +60,7 @@ extern void global_whitelist_read(void);
 extern struct s_cacheex_matcher *is_cacheex_matcher_matching(ECM_REQUEST *er, ECM_REQUEST *ecm);
 extern void cacheex_matcher_read(void);
 
-extern void cacheex_update_peer_id(void);
+extern uint8_t *cacheex_update_peer_id(void);
 extern void cacheex_set_peer_id(uint8_t *id);
 extern uint8_t *cc_get_cccam_node_id(void);
 

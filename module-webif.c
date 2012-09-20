@@ -4191,6 +4191,8 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 	struct s_client *cl;
 	time_t now = time((time_t*)0);
 
+	tpl_printf(vars, TPLADD, "OWN_CACHEEX_NODEID", "%llX", *((uint64_t*)cacheex_peer_id));
+	
 	for (i = 0, cl = first_client; cl ; cl = cl->next, i++) {
 		if (cl->typ=='c' && cl->account && cl->account->cacheex){
 			tpl_addVar(vars, TPLADD, "TYPE", "Client");
@@ -4201,6 +4203,8 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 			tpl_printf(vars, TPLADD, "PUSH", "%ld", cl->account->cwcacheexpush);
 			tpl_printf(vars, TPLADD, "GOT", "%ld", cl->account->cwcacheexgot);
 			tpl_printf(vars, TPLADD, "HIT", "%ld", cl->account->cwcacheexhit);
+			tpl_printf(vars, TPLADD, "ERR", "%ld", cl->account->cwcacheexerr);
+			tpl_printf(vars, TPLADD, "ERRCW", "%ld", cl->account->cwcacheexerrcw);
 			tpl_addVar(vars, TPLADD, "DIRECTIONIMG", (cl->account->cacheex == 3) ? getting : pushing);
 			rowvariable = "TABLECLIENTROWS";
 			write = 1;
@@ -4214,6 +4218,8 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 			tpl_printf(vars, TPLADD, "PUSH", "%ld", cl->cwcacheexpush);
 			tpl_printf(vars, TPLADD, "GOT", "%ld", cl->cwcacheexgot);
 			tpl_printf(vars, TPLADD, "HIT", "%ld", cl->cwcacheexhit);
+			tpl_printf(vars, TPLADD, "ERR", "%ld", cl->cwcacheexerr);
+			tpl_printf(vars, TPLADD, "ERRCW", "%ld", cl->cwcacheexerrcw);
 			tpl_addVar(vars, TPLADD, "DIRECTIONIMG", (cl->reader->cacheex == 3) ? pushing : getting);
 			rowvariable = "TABLEREADERROWS";
 			write = 1;
