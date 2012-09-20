@@ -696,7 +696,7 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 			ofs+=8;
 			ll_append(er->csp_lastnodes, data);
 			count--;
-			cs_debug_mask(D_CACHEEX, "cacheex: received lasnode %llX %s", cnode(data), username(cl));
+			cs_debug_mask(D_CACHEEX, "cacheex: received node %llX %s", cnode(data), username(cl));
 		}
 	}
 	else {

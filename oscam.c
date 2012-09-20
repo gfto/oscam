@@ -2145,8 +2145,18 @@ static int32_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp
 
         	update_chid(er);
         }
+	else
+		er->checksum = er->csp_hash;
 
 	struct ecm_request_t *ecm = check_cwcache(er, cl);
+
+//	{
+//		char h1[20];
+//		char h2[10];
+//		cs_hexdump(0, er->ecmd5, sizeof(er->ecmd5), h1, sizeof(h1));
+//		cs_hexdump(0, (const uchar*)&er->csp_hash, sizeof(er->csp_hash), h2, sizeof(h2));
+//		debug_ecm(D_TRACE, "cache push check %s: %s %s %s rc=%d found cache: %s", username(cl), buf, h1, h2, er->rc, ecm==NULL?"no":"yes");
+//	}
 
 	if (!ecm) {
 	        if (er->rc < E_NOTFOUND) { // Do NOT add cacheex - not founds!
@@ -2156,9 +2166,8 @@ static int32_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp
 	            cs_writeunlock(&ecmcache_lock);
 
 	            er->selected_reader = cl->reader;
-                }
 
-		cs_cache_push(er);  //cascade push!
+	            cs_cache_push(er);  //cascade push!
 
 		if (er->rc < E_NOTFOUND)
 		    cs_add_cacheex_stats(cl, er->caid, er->srvid, er->prid, 1);
@@ -2167,7 +2176,8 @@ static int32_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp
 		if (cl->account)
 		    cl->account->cwcacheexgot++;
 		first_client->cwcacheexgot++;
-		
+	        }
+
 		debug_ecm(D_CACHEEX, "got pushed ECM %s from %s", buf, csp ? "csp" : username(cl));
 
                 if (er->rc < E_NOTFOUND)
