@@ -368,9 +368,12 @@ ifndef DEBUG
 	$(Q)$(STRIP) $@
 endif
 
-$(OBJDIR)/%.o: %.c
+$(OBJDIR)/%.o: %.c Makefile
+	@$(CC) -MM -MT $@ -o $(subst .o,.d,$@) $<
 	$(SAY) "CC	$<"
 	$(Q)$(CC) $(STD_DEFS) $(CC_OPTS) $(CC_WARN) $(CFLAGS) -c $< -o $@
+
+-include $(subst .o,.d,$(OBJ))
 
 config:
 	$(SHELL) ./config.sh --gui
