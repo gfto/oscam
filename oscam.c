@@ -2242,7 +2242,11 @@ static int32_t cs_add_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp
         			debug_ecm(D_TRACE, "WARNING: Different CWs %s from %s(%s)<>%s(%s): %s<>%s nodes %llX %llX %llX %llX", buf, 
         			    csp ? "csp" : username(cl), ip1, 
         			    ecm->cacheex_src?username(ecm->cacheex_src):(ecm->selected_reader?ecm->selected_reader->label:"unknown/csp"), ip2,
-        			    cw1, cw2, node1, node2, node3, node4);
+        			    cw1, cw2, 
+        			    (long long unsigned int)node1, 
+        			    (long long unsigned int)node2, 
+        			    (long long unsigned int)node3, 
+        			    (long long unsigned int)node4);
 		                
 		                //char ecmd51[17*3];                
 		                //cs_hexdump(0, er->ecmd5, 16, ecmd51, sizeof(ecmd51));
