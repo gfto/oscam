@@ -3,7 +3,7 @@ SHELL = /bin/sh
 .SUFFIXES:
 .SUFFIXES: .o .c .a
 .NOTPARALLEL: all
-.PHONY: all prepare build-programs help README.build
+.PHONY: all prepare build-programs help README.build simple default debug config menuconfig allyesconfig allnoconfig defconfig clean distclean
 
 # Include config.mak which contains variables for all enabled modules
 # These variables will be used to select only needed files for compilation
