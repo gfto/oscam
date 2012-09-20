@@ -487,11 +487,14 @@ char *mk_t_ecmheaderwhitelist(struct s_ecmHeaderwhitelist *headerlist){
 	int16_t i;
 	int16_t ccache = 0;
 	uint32_t pcache = 0;
+	tmp[0] = '\0';
 	for (cip = headerlist; cip; cip = cip->next){
 		dot = "";
 		if (ccache == cip->caid && pcache == cip->provid){
-			pos -= 1;
-			pos += snprintf(tmp + pos, needed - pos, ",");
+			if (pos)
+				pos -= 1;
+			if (strlen(tmp))
+				pos += snprintf(tmp + pos, needed - pos, ",");
 		} else {
 			if (cip->header != NULL && cip->caid != 0 && cip->provid == 0) {
 				pos += snprintf(tmp + pos, needed - pos, "%s%04X:", dot, cip->caid);
@@ -513,7 +516,8 @@ char *mk_t_ecmheaderwhitelist(struct s_ecmHeaderwhitelist *headerlist){
 				pcache = cip->provid;
 			}
 		}
-		pos -=1;
+		if (pos)
+			pos -= 1;
 		pos += snprintf(tmp + pos, needed - pos, ";");
 	}
 	if(pos == 0 || !cs_malloc(&value, (pos + 1) * sizeof(char), -1)) return "";
