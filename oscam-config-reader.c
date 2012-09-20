@@ -1074,7 +1074,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
 #ifdef WITH_AZBOX
 	if (!strcmp(token, "mode")) {
-		rdr->mode = strToIntVal(value, -1);
+		rdr->azbox_mode = strToIntVal(value, -1);
 		return;
 	}
 #endif
@@ -1133,7 +1133,7 @@ void reader_set_defaults(struct s_reader *rdr) {
 	rdr->mhz = 357;
 	rdr->cardmhz = 357;
 #ifdef WITH_AZBOX
-	rdr->mode = -1;
+	rdr->azbox_mode = -1;
 #endif
 #ifdef MODULE_CCCAM
 	rdr->cc_reshare = DEFAULT_CC_RESHARE;
@@ -1433,8 +1433,8 @@ int32_t write_server(void)
 				fprintf_conf(f, "cardmhz", "%d\n", rdr->cardmhz);
 
 #ifdef WITH_AZBOX
-			if ((rdr->mode != -1 || cfg.http_full_cfg) && isphysical)
-				fprintf_conf(f, "mode", "%d\n", rdr->mode);
+			if ((rdr->azbox_mode != -1 || cfg.http_full_cfg) && isphysical)
+				fprintf_conf(f, "mode", "%d\n", rdr->azbox_mode);
 #endif
 
 			value = mk_t_ftab(&rdr->ftab);

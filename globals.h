@@ -1195,7 +1195,7 @@ struct s_reader  									//contains device info, reader info and card info
 	struct s_sr_config *sr_config;
 #endif
 #ifdef WITH_AZBOX
-	int32_t			mode;
+	int32_t			azbox_mode;
 #endif
 	int32_t			use_gpio;						// Should this reader use GPIO functions
 	int				gpio_outen;						// fd of opened /dev/gpio/outen
