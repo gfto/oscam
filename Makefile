@@ -373,6 +373,7 @@ prepare:
 |  Protocols: $(shell ./config.sh --show-enabled protocols | sed -e 's|MODULE_||g')\n\
 |  Readers  : $(shell ./config.sh --show-enabled readers | sed -e 's|READER_||g')\n\
 |  Compiler : $(shell $(CC) --version 2>/dev/null | head -n 1)\n\
+|  Linker   : $(shell $(CC) -Wl,-v 2>&1 | head -n 1)\n\
 |  Binary   : $(OSCAM_BIN)\n\
 +-------------------------------------------------------------------------------\n"
 
