@@ -363,11 +363,11 @@ prepare:
 |  RANLIB   = $(RANLIB)\n\
 | Settings:\n\
 |  CONF_DIR = $(CONF_DIR)\n\
-|  CC_OPTS  = $(CC_OPTS)\n\
-|  CC_WARN  = $(CC_WARN)\n\
-|  CFLAGS   = $(CFLAGS)\n\
-|  LDFLAGS  = $(LDFLAGS)\n\
-|  LIBS     = $(LIBS)\n\
+|  CC_OPTS  = $(strip $(CC_OPTS))\n\
+|  CC_WARN  = $(strip $(CC_WARN))\n\
+|  CFLAGS   = $(strip $(CFLAGS))\n\
+|  LDFLAGS  = $(strip $(LDFLAGS))\n\
+|  LIBS     = $(strip $(LIBS))\n\
 | Config:\n\
 |  Addons   : $(shell ./config.sh --show-enabled addons)\n\
 |  Protocols: $(shell ./config.sh --show-enabled protocols | sed -e 's|MODULE_||g')\n\
