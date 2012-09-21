@@ -368,6 +368,11 @@ example: ecmwhitelist = 10,20,0a,0b
 \fIIn normal operation mode this parameter is not required.\fR
 .RE
 .PP
+\fBecmheaderwhitelist\fP = [\fBCAID\fP[@\fBprovid\fP]:]\fBheader\fP[,\fBheader\fP]...[;[\fBCAID\fP[@\fBprovid\fP]:]\fBheader\fP[,\fBheader\fP]...]...
+.RS 3n
+set vaild ECM header per CAID and provid in hex, default:none,provid=000000
+.RE
+.PP
 \fBratelimitecm\fP = \fBcount\fP
 .RS 3n
 number of different SIDs in ECMs allowed for an interval, default:0
