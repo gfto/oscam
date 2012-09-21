@@ -69,7 +69,12 @@ static void account_allowedprotocols_fn(const char *token, char *value, void *se
 static void account_au_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_auth *account = setting;
 	if (value) {
-		strtolower(value);
+		
+		// exit if invalid or no value
+		if ((strlen(value) == 0) || (value[0] == '0'))
+			return;
+
+     	strtolower(value);
 
 		// set default values for usage during runtime from Webif
 		account->autoau = 0;
@@ -81,9 +86,6 @@ static void account_au_fn(const char *token, char *value, void *setting, FILE *f
 		}
 		ll_clear(account->aureader_list);
 
-		// exit if invalid or no value
-		if ((strlen(value) == 0) || (value[0] == '0'))
-			return;
 
 		LL_ITER itr = ll_iter_create(configured_readers);
 		struct s_reader *rdr;

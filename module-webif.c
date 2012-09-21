@@ -1580,7 +1580,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 	rdr = get_reader_by_label(getParam(params, "label"));
 	error = (rdr ? 0 : 1);
 
-	if(!error){
+	if(!error && rdr){
 		cl = rdr->client;
 		error = (cl ? 0 : 1);
 	}
