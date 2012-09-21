@@ -2293,7 +2293,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 					casc_users2++;
 			}
 		}
-		if(latestactivity > 0){
+		if(latestactivity > 0 && latestclient != NULL){
 			isec = now - latestactivity;
 			chsec = latestclient->lastswitch ? now - latestclient->lastswitch : 0;
 			if (isec < cfg.hideclient_to) {
