@@ -9,7 +9,6 @@
 #define cs_trid				"oscam.tiers"
 #define cs_l4ca				"oscam.guess"
 #define cs_sidt				"oscam.services"
-#define cs_ac				"oscam.ac"
 #define cs_whitelist		"oscam.whitelist"
 #define cs_cacheex_matcher	"oscam.cacheex"
 #define cs_provid			"oscam.provid"
@@ -672,110 +671,6 @@ int32_t init_irdeto_guess_tab(void)
     }
   }
   return(0);
-}
-#endif
-
-#ifdef CS_ANTICASC
-void init_ac(void)
-{
-  FILE *fp = open_config_file(cs_ac);
-  if (!fp)
-    return;
-
-  int32_t nr;
-  char *saveptr1 = NULL, *token;
-  if(!cs_malloc(&token, MAXLINESIZE, -1)) return;
-  struct s_cpmap *cur_cpmap, *first_cpmap = NULL, *last_cpmap = NULL;
-
-  for(nr=0; fgets(token, MAXLINESIZE, fp);)
-  {
-    int32_t i, skip;
-    uint16_t caid, sid, chid, dwtime;
-    uint32_t  provid;
-    char *ptr, *ptr1;
-
-    if( strlen(token)<4 ) continue;
-
-    caid=sid=chid=dwtime=0;
-    provid=0;
-    skip=0;
-    ptr1=0;
-    for( i=0, ptr=strtok_r(token, "=", &saveptr1); (i<2)&&(ptr); ptr=strtok_r(NULL, "=", &saveptr1), i++ )
-    {
-      trim(ptr);
-      if( *ptr==';' || *ptr=='#' || *ptr=='-' ) {
-        skip=1;
-        break;
-      }
-      switch( i )
-      {
-        case 0:
-          ptr1=ptr;
-          break;
-        case 1:
-          dwtime = atoi(ptr);
-          break;
-      }
-    }
-
-    if( !skip )
-    {
-      for( i=0, ptr=strtok_r(ptr1, ":", &saveptr1); (i<4)&&(ptr); ptr=strtok_r(NULL, ":", &saveptr1), i++ )
-      {
-        trim(ptr);
-        switch( i )
-        {
-        case 0:
-          if( *ptr=='*' ) caid = 0;
-          else caid = a2i(ptr, 4);
-          break;
-        case 1:
-          if( *ptr=='*' ) provid = 0;
-          else provid = a2i(ptr, 6);
-          break;
-        case 2:
-          if( *ptr=='*' ) sid = 0;
-          else sid = a2i(ptr, 4);
-          break;
-        case 3:
-          if( *ptr=='*' ) chid = 0;
-          else chid = a2i(ptr, 4);
-          break;
-        }
-      }
-      if (!cs_malloc(&cur_cpmap, sizeof(struct s_cpmap), -1)){
-      	for(cur_cpmap = first_cpmap; cur_cpmap; cur_cpmap = cur_cpmap->next)
-      		free(cur_cpmap);
-      	free(token);
-      	return;
-      }
-      if(last_cpmap)
-        last_cpmap->next=cur_cpmap;
-      else
-        first_cpmap=cur_cpmap;
-      last_cpmap=cur_cpmap;
-
-      cur_cpmap->caid   = caid;
-      cur_cpmap->provid = provid;
-      cur_cpmap->sid    = sid;
-      cur_cpmap->chid   = chid;
-      cur_cpmap->dwtime = dwtime;
-      cur_cpmap->next   = 0;
-
-      cs_debug_mask(D_CLIENT, "nr=%d, caid=%04X, provid=%06X, sid=%04X, chid=%04X, dwtime=%d",
-                nr, caid, provid, sid, chid, dwtime);
-      nr++;
-    }
-  }
-  free(token);
-  fclose(fp);
-
-  last_cpmap = cfg.cpmap;
-  cfg.cpmap = first_cpmap;
-  for(cur_cpmap = last_cpmap; cur_cpmap; cur_cpmap = cur_cpmap->next)
-    add_garbage(cur_cpmap);
-  //cs_log("%d lengths for caid guessing loaded", nr);
-  return;
 }
 #endif
 
