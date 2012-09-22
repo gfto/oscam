@@ -353,8 +353,8 @@ $(OSCAM_BIN): $(OSCAM_BIN).debug
 	$(Q)$(STRIP) $(OSCAM_BIN)
 
 $(LIST_SMARGO_BIN): utils/list_smargo.c
-	$(SAY) "LINK	$@"
-	$(Q)$(CC) $(STD_DEFS) $(LDFLAGS) utils/list_smargo.c $(LIBS) -o $@
+	$(SAY) "BUILD	$@"
+	$(Q)$(CC) $(STD_DEFS) $(CC_OPTS) $(CC_WARN) $(CFLAGS) $(LDFLAGS) utils/list_smargo.c $(LIBS) -o $@
 
 $(OBJDIR)/%.o: %.c Makefile
 	@$(CC) -MM -MT $@ -o $(subst .o,.d,$@) $<
