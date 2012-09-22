@@ -26,12 +26,9 @@ OSCam build system documentation
                     directory to /etc run: 'make CONF_DIR=/etc'
                     The default config directory is: '/usr/local/etc'
 
-   DEBUG=1        - Compile OScam with debug information.
-                    Using DEBUG=1 adds '-debug' to PLUS_TARGET.
-
    CC_OPTS=text   - This variable holds compiler optimization parameters.
                     Default CC_OPTS value is:
-                    '-O2 -ffunction-sections -fdata-sections '
+                    '-O2 -ggdb -ffunction-sections -fdata-sections '
                     To add text to this variable set EXTRA_CC_OPTS=text.
 
    CC_WARN=text   - This variable holds compiler warning parameters.
@@ -151,7 +148,7 @@ OSCam build system documentation
                      'gcc -dumpmachine'
 
    PLUS_TARGET     - This variable is added to TARGET and it is set depending
-                     on the chosen USE_xxx (or DEBUG) flags. To disable adding
+                     on the chosen USE_xxx flags. To disable adding
                      PLUS_TARGET to TARGET, set NO_PLUS_TARGET=1
 
    BINDIR          - The directory where final oscam binary would be put. The
@@ -213,9 +210,6 @@ OSCam build system documentation
     make static-ssl    - Builds OSCam with SSL support linked statically
 
  Examples:
-   Build OSCam with debugging information:
-     make DEBUG=1
-
    Build OSCam for SH4 (the compilers are in the path):
      make CROSS=sh4-linux-
 

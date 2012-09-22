@@ -48,11 +48,7 @@ override STD_DEFS += -D'CS_CONFDIR="$(CONF_DIR)"'
 CC_WARN = -W -Wall -fno-strict-aliasing -Wredundant-decls -Wstrict-prototypes -Wold-style-definition
 
 # Compiler optimizations
-ifndef DEBUG
-CC_OPTS = -O2 -ffunction-sections -fdata-sections
-else
-CC_OPTS = -O0 -ggdb
-endif
+CC_OPTS = -O2 -ggdb -ffunction-sections -fdata-sections
 
 CC = $(CROSS_DIR)$(CROSS)gcc
 STRIP = $(CROSS_DIR)$(CROSS)strip
@@ -166,10 +162,6 @@ PCSC_LDFLAGS = $(DEFAULT_PCSC_FLAGS)
 PCSC_LIB = $(DEFAULT_PCSC_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-pcsc
 CONFIG_WITH_PCSC=y
-endif
-
-ifdef DEBUG
-override PLUS_TARGET := $(PLUS_TARGET)-debug
 endif
 
 # Add PLUS_TARGET and EXTRA_TARGET to TARGET
@@ -351,21 +343,18 @@ all:
 +-------------------------------------------------------------------------------\n"
 	@$(MAKE) --no-print-directory $(OSCAM_BIN) $(LIST_SMARGO_BIN)
 
-$(OSCAM_BIN): $(OBJ)
+$(OSCAM_BIN).debug: $(OBJ)
 	$(SAY) "LINK	$@"
 	$(Q)$(CC) $(LDFLAGS) $(OBJ) $(LIBS) -o $@
-ifndef DEBUG
+
+$(OSCAM_BIN): $(OSCAM_BIN).debug
 	$(SAY) "STRIP	$@"
-	$(Q)$(STRIP) $@
-endif
+	$(Q)cp $(OSCAM_BIN).debug $(OSCAM_BIN)
+	$(Q)$(STRIP) $(OSCAM_BIN)
 
 $(LIST_SMARGO_BIN): utils/list_smargo.c
 	$(SAY) "LINK	$@"
 	$(Q)$(CC) $(STD_DEFS) $(LDFLAGS) utils/list_smargo.c $(LIBS) -o $@
-ifndef DEBUG
-	$(SAY) "STRIP	$@"
-	$(Q)$(STRIP) $@
-endif
 
 $(OBJDIR)/%.o: %.c Makefile
 	@$(CC) -MM -MT $@ -o $(subst .o,.d,$@) $<
@@ -440,9 +429,6 @@ OSCam build system documentation\n\
    CONF_DIR=/dir  - Set OSCam config directory. For example to change config\n\
                     directory to /etc run: 'make CONF_DIR=/etc'\n\
                     The default config directory is: '$(CONF_DIR)'\n\
-\n\
-   DEBUG=1        - Compile OScam with debug information.\n\
-                    Using DEBUG=1 adds '-debug' to PLUS_TARGET.\n\
 \n\
    CC_OPTS=text   - This variable holds compiler optimization parameters.\n\
                     Default CC_OPTS value is:\n\
@@ -566,7 +552,7 @@ OSCam build system documentation\n\
                      'gcc -dumpmachine'\n\
 \n\
    PLUS_TARGET     - This variable is added to TARGET and it is set depending\n\
-                     on the chosen USE_xxx (or DEBUG) flags. To disable adding\n\
+                     on the chosen USE_xxx flags. To disable adding\n\
                      PLUS_TARGET to TARGET, set NO_PLUS_TARGET=1\n\
 \n\
    BINDIR          - The directory where final oscam binary would be put. The\n\
@@ -628,8 +614,6 @@ OSCam build system documentation\n\
     make static-ssl    - Builds OSCam with SSL support linked statically\n\
 \n\
  Examples:\n\
-   Build OSCam with debugging information:\n\
-     make DEBUG=1\n\n\
    Build OSCam for SH4 (the compilers are in the path):\n\
      make CROSS=sh4-linux-\n\n\
    Build OSCam for SH4 (the compilers are in not in the path):\n\
@@ -662,11 +646,7 @@ OSCam build system documentation\n\
 
 simple: all
 default: all
-
-debug:
-	$(MAKE) --no-print-directory \
-		DEBUG=1 \
-		$(MAKEFLAGS)
+debug: all
 
 -include Makefile.extra
 -include Makefile.local
