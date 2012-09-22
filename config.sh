@@ -484,14 +484,10 @@ do
 		exit 0
 	;;
 	'-m'|'--make-config.mak')
-		$0 --list-config > config.mak.tmp
-		cmp config.mak.tmp config.mak >/dev/null 2>/dev/null
-		if [ $? != 0 ]
-		then
-			mv config.mak.tmp config.mak
-		else
-			rm config.mak.tmp
-		fi
+		TMPFILE=$(mktemp -t config.mak.XXXXXX) || exit 1
+		$0 --list-config > $TMPFILE
+		cmp $TMPFILE config.mak >/dev/null 2>/dev/null
+		test $? = 0 && rm $TMPFILE || cat $TMPFILE > config.mak
 		exit 0
 	;;
 	'-h'|'--help')
