@@ -67,7 +67,7 @@ struct uriparams {
 extern char *tpl_addVar(struct templatevars *vars, uint8_t addmode, char *name, char *value);
 extern char *tpl_addMsg(struct templatevars *vars, char *value);
 extern char *tpl_addTmp(struct templatevars *vars, char *value);
-extern char *tpl_printf(struct templatevars *vars, uint8_t addmode, char *varname, char *fmtstring, ...);
+extern char *tpl_printf(struct templatevars *vars, uint8_t addmode, char *varname, char *fmtstring, ...) __attribute__ ((format (printf, 4, 5)));
 extern char *tpl_getVar(struct templatevars *vars, char *name);
 extern struct templatevars *tpl_create(void);
 extern void tpl_clear(struct templatevars *vars);
