@@ -424,8 +424,6 @@ int32_t camd35_client_init(struct s_client *client)
 
 #ifdef CS_CACHEEX
 
-#define cnode(x) *(unsigned long long*)x
-
 uint8_t camd35_node_id[8];
 
 uint8_t *cacheex_update_peer_id(void)

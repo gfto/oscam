@@ -1930,8 +1930,6 @@ static void chk_peer_node_for_oscam(struct cc_data *cc)
 
 #ifdef CS_CACHEEX
 
-#define cnode(x) *(unsigned long long*)x
-
 int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 {
 	if (!cl->cc) {

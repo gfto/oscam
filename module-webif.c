@@ -4191,7 +4191,7 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 	struct s_client *cl;
 	time_t now = time((time_t*)0);
 
-	tpl_printf(vars, TPLADD, "OWN_CACHEEX_NODEID", "%llX", *((uint64_t*)cacheex_peer_id));
+	tpl_printf(vars, TPLADD, "OWN_CACHEEX_NODEID", "%llX", cnode(cacheex_peer_id));
 	
 	for (i = 0, cl = first_client; cl ; cl = cl->next, i++) {
 		if (cl->typ=='c' && cl->account && cl->account->cacheex){

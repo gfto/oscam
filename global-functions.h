@@ -62,6 +62,7 @@ extern void cacheex_matcher_read(void);
 
 extern uint8_t *cacheex_update_peer_id(void);
 extern void cacheex_set_peer_id(uint8_t *id);
+static inline uint64_t cnode(void *var) { uint64_t *x = var; return *x; }
 extern uint8_t *cc_get_cccam_node_id(void);
 
 extern void qboxhd_led_blink(int32_t color, int32_t duration);

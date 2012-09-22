@@ -45,7 +45,7 @@ override STD_DEFS := -D'CS_SVN_VERSION="$(SVN_REV)"'
 override STD_DEFS += -D'CS_CONFDIR="$(CONF_DIR)"'
 
 # Compiler warnings
-CC_WARN = -W -Wall -fno-strict-aliasing -Wredundant-decls -Wstrict-prototypes -Wold-style-definition
+CC_WARN = -W -Wall -Wredundant-decls -Wstrict-prototypes -Wold-style-definition
 
 # Compiler optimizations
 CC_OPTS = -O2 -ggdb -ffunction-sections -fdata-sections
