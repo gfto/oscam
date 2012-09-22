@@ -1574,7 +1574,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 	if(!apicall) setActiveMenu(vars, MNU_READERS);
 
 	int8_t error;
-	struct s_client *cl;
+	struct s_client *cl = NULL;
 	struct s_reader *rdr;
 
 	rdr = get_reader_by_label(getParam(params, "label"));
