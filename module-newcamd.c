@@ -1377,6 +1377,7 @@ const char *newcamd_get_client_name(char *client_id)
 		{ "5342", "SBCL" },
 		{ "5456", "Tecview" },
 		{ "5644", "vdr-sc" },
+		{ "5743", "WiCard" },
 		{ "6378", "cx" },
 		{ "6502", "Tvheadend" },
 		{ "6576", "evocamd" },
