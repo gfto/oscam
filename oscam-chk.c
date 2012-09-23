@@ -523,7 +523,6 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
     return 0;
   }
 
-
   // Checking ratelimit
   if ((!(rdr->typ & R_IS_NETWORK)) && (rdr->ratelimitecm || rdr->cooldownstate == 1)) {
     int32_t free_slots = 0, h = 0;
@@ -551,25 +550,6 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
     }
   }
 
-
-  // Checking ratelimit
-  if ((!(rdr->typ & R_IS_NETWORK)) && ((rdr->ratelimitecm && !rdr->cooldown[0]) || rdr->cooldownstate == 1 )){
-	int32_t free_slots=0, h=0;
-
-	for (h=0;h<rdr->ratelimitecm;h++) {
-		if ((rdr->rlecmh[h].last ==- 1) || ((time(NULL)-rdr->rlecmh[h].last) > rdr->ratelimitseconds)) {
-		        free_slots++;
-		}
-		if (rdr->rlecmh[h].srvid == er->srvid) {
-		        free_slots++;
-		}
-	}
-
-	if(free_slots == 0){
-		cs_debug_mask(D_TRACE, "ratelimit - no free slot on reader %s", rdr->label);
-		return(0);
-	}
-  }
   //Checking entitlements:
   /*
   if (ll_count(rdr->ll_entitlements) > 0) {
