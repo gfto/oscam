@@ -1391,6 +1391,7 @@ const char *newcamd_get_client_name(char *client_id)
 		{ "7264", "radegast" },
 		{ "7363", "Scam" },
 		{ "7763", "WinCSC" },
+		{ "7878", "tsdecrypt" },
 		{ "8888", "OSCam" },
 		{ "9911", "ACamd" },
 		{ NULL, NULL } };
