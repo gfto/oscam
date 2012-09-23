@@ -3937,7 +3937,7 @@ static char *send_oscam_failban(struct templatevars *vars, struct uriparams *par
 		else
 			tpl_printf(vars, TPLADD, "LEFTTIME", "%ld", (cfg.failbantime * 60) - (now - v_ban_entry->v_time));
 
-		tpl_printf(vars, TPLADD, "INTIP", "%u", v_ban_entry->v_ip);
+		tpl_printf(vars, TPLADD, "INTIP", "%s", cs_inet_ntoa(v_ban_entry->v_ip));
 
 		if (!apicall)
 			tpl_addVar(vars, TPLAPPEND, "FAILBANROW", tpl_getTpl(vars, "FAILBANBIT"));
