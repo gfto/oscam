@@ -381,7 +381,6 @@ extern void init_rnd(void);
 extern int32_t hexserialset(struct s_reader *rdr);
 extern char *monitor_get_proto(struct s_client *);
 extern char *reader_get_type_desc(struct s_reader * rdr, int32_t extended);
-extern char *get_ncd_client_name(char *client_id);
 extern int32_t cs_strnicmp(const char * str1, const char * str2, size_t num);
 extern char *strnew(char *str);
 extern void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid);
@@ -419,6 +418,11 @@ extern int32_t format_cxm(struct s_cacheex_matcher *entry, char *result, size_t 
 extern int8_t cs_cacheex_maxhop(struct s_client *cl);
 
 extern int streq(const char *s1, const char *s2);
+
+/* ===========================
+ *       module-newcamd
+ * =========================== */
+extern const char *newcamd_get_client_name(char *client_id);
 
 /* ===========================
  *       module-cccshare

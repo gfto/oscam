@@ -2092,6 +2092,28 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 
 }
 
+static void webif_add_client_proto(struct templatevars *vars, struct s_client *cl, char *proto) {
+#ifdef MODULE_NEWCAMD
+	if (streq(proto, "newcamd") && cl->typ == 'c') {
+		tpl_printf(vars, TPLADDONCE, "CLIENTPROTO","%s (%s)", proto, newcamd_get_client_name(cl->ncd_client_id));
+		return;
+	}
+#endif
+#ifdef MODULE_CCCAM
+	if (streq(proto,"cccam")) {
+		struct cc_data *cc = cl->cc;
+		if (cc && cc->remote_version && cc->remote_build) {
+			tpl_printf(vars, TPLADDONCE, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
+			tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", cc->extended_mode ? cc->remote_oscam : "");
+			return;
+		}
+	}
+#endif
+	(void)cl; // Prevent warning when NEWCAMD and CCCAM are both disabled
+	tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", proto);
+	tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
+}
+
 static char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
 	struct s_auth *account;
 	struct s_client *cl;
@@ -2363,29 +2385,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				tpl_addVar(vars, TPLADD, "CLIENTPICON", "");
 			}
 
-			if ((strcmp(proto,"newcamd") == 0) && (latestclient->typ == 'c'))
-				tpl_printf(vars, TPLADDONCE, "CLIENTPROTO","%s (%s)", proto, get_ncd_client_name(latestclient->ncd_client_id));
-#ifdef MODULE_CCCAM
-			else if ((strncmp(proto,"cccam", 5) == 0)) {
-				struct cc_data *cc = latestclient->cc;
-				if(cc && cc->remote_version && cc->remote_build) {
-					tpl_printf(vars, TPLADDONCE, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
-					if(cc->extended_mode)
-						tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", cc->remote_oscam);
-					else
-						tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", ""); //unset tpl var
-				}
-				else
-				{
-					tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", proto);
-					tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
-				}
-			}
-#endif
-			else {
-				tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", proto);
-				tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
-			}
+			webif_add_client_proto(vars, latestclient, proto);
 		}
 
 		tpl_addVar(vars, TPLADD, "CLASSNAME", classname);
@@ -2986,30 +2986,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 				tpl_addVar(vars, TPLADD, "CLIENTIP", cs_inet_ntoa(cl->ip));
 				tpl_printf(vars, TPLADD, "CLIENTPORT", "%d", cl->port);
 				char *proto = monitor_get_proto(cl);
-
-				if ((strcmp(proto,"newcamd") == 0) && (cl->typ == 'c'))
-					tpl_printf(vars, TPLADD, "CLIENTPROTO","%s (%s)", proto, get_ncd_client_name(cl->ncd_client_id));
-#ifdef MODULE_CCCAM
-				else if ((strncmp(proto,"cccam", 5) == 0)) {
-					struct cc_data *cc = cl->cc;
-					if(cc && cc->remote_version && cc->remote_build) {
-						tpl_printf(vars, TPLADD, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
-						if(cc->extended_mode)
-							tpl_addVar(vars, TPLADD, "CLIENTPROTOTITLE", cc->remote_oscam);
-						else
-							tpl_addVar(vars, TPLADD, "CLIENTPROTOTITLE", ""); //unset tpl var
-					}
-					else
-					{
-						tpl_addVar(vars, TPLADD, "CLIENTPROTO", proto);
-						tpl_addVar(vars, TPLADD, "CLIENTPROTOTITLE", "");
-					}
-				}
-#endif
-				else {
-					tpl_addVar(vars, TPLADD, "CLIENTPROTO", proto);
-					tpl_addVar(vars, TPLADD, "CLIENTPROTOTITLE", "");
-				}
+				webif_add_client_proto(vars, cl, proto);
 
 				if (!apicall) {
 					if((cl->typ != 'p' && cl->typ != 'r') || cl->reader->card_status == CARD_INSERTED){

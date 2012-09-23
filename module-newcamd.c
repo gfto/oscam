@@ -687,7 +687,6 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 {
     int32_t i, ok, rc, sid_list;
     uchar *usr = NULL, *pwd = NULL;
-    char *client_name = NULL;
     struct s_auth *account;
     uchar buf[14];
     uchar key[16];
@@ -734,7 +733,7 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
     }
 
     snprintf(cl->ncd_client_id, sizeof(cl->ncd_client_id), "%02X%02X", mbuf[0], mbuf[1]);
-    client_name = get_ncd_client_name(cl->ncd_client_id);
+    const char *client_name = newcamd_get_client_name(cl->ncd_client_id);
 
     if(cl->ncd_proto==NCD_525 && 0x6D == mbuf[0]
        && 0x67 == mbuf[1] && 0x11 == cl->ncd_header[11])
@@ -1351,6 +1350,60 @@ static int32_t newcamd_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc
       return -1;
   }
   return(idx);
+}
+
+/*
+ * resolve client type for newcamd protocol
+ */
+const char *newcamd_get_client_name(char *client_id)
+{
+	// When adding new entries keep the list sorted!
+	static const char const *ncd_service_ids[][2] = {
+		{ "0000", "generic" },
+		{ "0665", "rq-sssp-client/CS" },
+		{ "0666", "rqcamd" },
+		{ "0667", "rq-echo-client" },
+		{ "0669", "rq-sssp-client/CW" },
+		{ "0769", "JlsRq" },
+		{ "414C", "AlexCS" },
+		{ "4333", "camd3" },
+		{ "4343", "CCcam" },
+		{ "434C", "Cardlink" },
+		{ "4453", "DiabloCam/UW" },
+		{ "4543", "eyetvCamd" },
+		{ "4765", "Octagon" },
+		{ "4C43", "LCE" },
+		{ "4E58", "NextYE2k" },
+		{ "5342", "SBCL" },
+		{ "5456", "Tecview" },
+		{ "5644", "vdr-sc" },
+		{ "6378", "cx" },
+		{ "6502", "Tvheadend" },
+		{ "6576", "evocamd" },
+		{ "6762", "gbox2CS" },
+		{ "6B61", "Kaffeine" },
+		{ "6B63", "kpcs" },
+		{ "6D63", "mpcs" },
+		{ "6D67", "mgcamd" },
+		{ "6E65", "NextYE2k" },
+		{ "6E73", "NewCS" },
+		{ "7264", "radegast" },
+		{ "7363", "Scam" },
+		{ "7763", "WinCSC" },
+		{ "8888", "OSCam" },
+		{ "9911", "ACamd" },
+		{ NULL, NULL } };
+
+	int i = 0;
+	while (1) {
+		const char *id = ncd_service_ids[i][0];
+		if (!id)
+			break;
+		if (streq(id, client_id))
+			return ncd_service_ids[i][1];
+		i++;
+	}
+	return "unknown - please report";
 }
 
 void module_newcamd(struct s_module *ph)
