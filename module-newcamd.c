@@ -732,7 +732,7 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
       return -1;
     }
 
-    snprintf(cl->ncd_client_id, sizeof(cl->ncd_client_id), "%02X%02X", mbuf[0], mbuf[1]);
+    cl->ncd_client_id = (mbuf[0] << 8) | mbuf[1];
     const char *client_name = newcamd_get_client_name(cl->ncd_client_id);
 
     if(cl->ncd_proto==NCD_525 && 0x6D == mbuf[0]
@@ -1355,54 +1355,55 @@ static int32_t newcamd_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc
 /*
  * resolve client type for newcamd protocol
  */
-const char *newcamd_get_client_name(char *client_id)
+const char *newcamd_get_client_name(uint16_t client_id)
 {
 	// When adding new entries keep the list sorted!
-	static const char const *ncd_service_ids[][2] = {
-		{ "0000", "generic" },
-		{ "0665", "rq-sssp-client/CS" },
-		{ "0666", "rqcamd" },
-		{ "0667", "rq-echo-client" },
-		{ "0669", "rq-sssp-client/CW" },
-		{ "0769", "JlsRq" },
-		{ "414C", "AlexCS" },
-		{ "4333", "camd3" },
-		{ "4343", "CCcam" },
-		{ "434C", "Cardlink" },
-		{ "4453", "DiabloCam/UW" },
-		{ "4543", "eyetvCamd" },
-		{ "4765", "Octagon" },
-		{ "4C43", "LCE" },
-		{ "4E58", "NextYE2k" },
-		{ "5342", "SBCL" },
-		{ "5456", "Tecview" },
-		{ "5644", "vdr-sc" },
-		{ "5743", "WiCard" },
-		{ "6378", "cx" },
-		{ "6502", "Tvheadend" },
-		{ "6576", "evocamd" },
-		{ "6762", "gbox2CS" },
-		{ "6B61", "Kaffeine" },
-		{ "6B63", "kpcs" },
-		{ "6D63", "mpcs" },
-		{ "6D67", "mgcamd" },
-		{ "6E65", "NextYE2k" },
-		{ "6E73", "NewCS" },
-		{ "7264", "radegast" },
-		{ "7363", "Scam" },
-		{ "7763", "WinCSC" },
-		{ "7878", "tsdecrypt" },
-		{ "8888", "OSCam" },
-		{ "9911", "ACamd" },
-		{ NULL, NULL } };
-
+	static const struct {
+		uint16_t id;
+		const char *client;
+	} ncd_service_ids[] = {
+		{ 0x0000, "generic" },
+		{ 0x0665, "rq-sssp-client/CS" },
+		{ 0x0666, "rqcamd" },
+		{ 0x0667, "rq-echo-client" },
+		{ 0x0669, "rq-sssp-client/CW" },
+		{ 0x0769, "JlsRq" },
+		{ 0x414C, "AlexCS" },
+		{ 0x4333, "camd3" },
+		{ 0x4343, "CCcam" },
+		{ 0x434C, "Cardlink" },
+		{ 0x4453, "DiabloCam/UW" },
+		{ 0x4543, "eyetvCamd" },
+		{ 0x4765, "Octagon" },
+		{ 0x4C43, "LCE" },
+		{ 0x4E58, "NextYE2k" },
+		{ 0x5342, "SBCL" },
+		{ 0x5456, "Tecview" },
+		{ 0x5644, "vdr-sc" },
+		{ 0x5743, "WiCard" },
+		{ 0x6378, "cx" },
+		{ 0x6502, "Tvheadend" },
+		{ 0x6576, "evocamd" },
+		{ 0x6762, "gbox2CS" },
+		{ 0x6B61, "Kaffeine" },
+		{ 0x6B63, "kpcs" },
+		{ 0x6D63, "mpcs" },
+		{ 0x6D67, "mgcamd" },
+		{ 0x6E65, "NextYE2k" },
+		{ 0x6E73, "NewCS" },
+		{ 0x7264, "radegast" },
+		{ 0x7363, "Scam" },
+		{ 0x7763, "WinCSC" },
+		{ 0x7878, "tsdecrypt" },
+		{ 0x8888, "OSCam" },
+		{ 0x9911, "ACamd" },
+		{ 0xFFFF, NULL } };
 	int i = 0;
 	while (1) {
-		const char *id = ncd_service_ids[i][0];
-		if (!id)
+		if (!ncd_service_ids[i].client)
 			break;
-		if (streq(id, client_id))
-			return ncd_service_ids[i][1];
+		if (ncd_service_ids[i].id == client_id)
+			return ncd_service_ids[i].client;
 		i++;
 	}
 	return "unknown - please report";

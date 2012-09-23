@@ -890,7 +890,7 @@ struct s_client {
 	AES_KEY			aeskey;      		// encryption key needed by monitor and used by camd33, camd35
 	AES_KEY			aeskey_decrypt;		// decryption key needed by monitor and used by camd33, camd35
     uint16_t        ncd_msgid;
-	char			ncd_client_id[5];
+	uint16_t		ncd_client_id;
 	uchar			ncd_skey[16];       //Also used for camd35 Cacheex to store remote node id
 
 #ifdef MODULE_CCCAM

@@ -422,7 +422,7 @@ extern int streq(const char *s1, const char *s2);
 /* ===========================
  *       module-newcamd
  * =========================== */
-extern const char *newcamd_get_client_name(char *client_id);
+extern const char *newcamd_get_client_name(uint16_t client_id);
 
 /* ===========================
  *       module-cccshare
