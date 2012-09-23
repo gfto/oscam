@@ -518,6 +518,103 @@ static int32_t reader_store_emm(uchar type, uchar *emmd5)
   return(rc);
 }
 
+static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er, int32_t maxloop)
+{
+	int32_t h;
+
+	for(h = 0; h < maxloop; h++) {
+		if (reader->rlecmh[h].srvid == er->srvid) {
+			cs_debug_mask(D_READER, "ratelimit found srvid in use at pos: %d", h);
+			return h;
+		}
+	}
+
+	for (h = 0; h < maxloop; h++) {
+		if ((reader->rlecmh[h].last ==- 1) || ((time(NULL)-reader->rlecmh[h].last) > reader->ratelimitseconds)) {
+			cs_debug_mask(D_READER, "ratelimit found space at pos: %d old seconds %ld", h, reader->rlecmh[h].last);
+			return h;
+		}
+	}
+
+	#ifdef HAVE_DVBAPI
+	/* Overide ratelimit priority for dvbapi request */
+	if((cfg.dvbapi_enabled == 1) && (strcmp(er->client->account->usr,cfg.dvbapi_usr) == 0)) {
+		if(reader->lastdvbapirateoverride < time(NULL) - reader->ratelimitseconds) {
+			int32_t foundspace = -1;
+			time_t minecmtime = time(NULL);
+			for (h = 0; h < maxloop; h++) {
+				if(reader->rlecmh[h].last < minecmtime) {
+					foundspace = h;
+					minecmtime = reader->rlecmh[h].last;
+				}
+			}
+			reader->lastdvbapirateoverride = time(NULL);
+			cs_debug_mask(D_READER, "Prioritizing DVBAPI User %s over other watching client on reader %s.", er->client->account->usr, reader->label);
+			return foundspace;
+		} else cs_debug_mask(D_READER, "DVBAPI User %s is switching too fast for ratelimit and can't be prioritized on reader %s.",
+			er->client->account->usr, reader->label);
+	}
+	#endif
+
+	return (-1);
+}
+
+static int32_t ecm_ratelimit_check(struct s_reader * reader, ECM_REQUEST *er)
+{
+	int32_t foundspace, h, count = 0;
+
+	if(!reader->ratelimitecm) return OK; /* no rate limit set */
+
+	if(reader->cooldown[0]) {
+		if (!reader->cooldowntime)
+			reader->cooldowntime = time(NULL);
+
+		if (reader->cooldownstate == 1) {
+			if (time(NULL) - reader->cooldowntime >= reader->cooldown[1]) {
+				reader->cooldownstate = 0;
+				cs_log("%s cooldown OFF", reader->label);
+			}
+		}
+                else if(reader->cooldownstate == 2) {
+			if (time(NULL) - reader->cooldowntime >= reader->cooldown[0]) {
+				reader->cooldownstate = 1;
+				cs_log("%s cooldown ON", reader->label);
+			}
+		}
+	}
+
+	if (!reader->cooldown[0] || reader->cooldownstate == 1) {
+		cs_debug_mask(D_READER, "ratelimit idx:%d rc:%d caid:%04X srvid:%04X", er->idx, er->rc, er->caid, er->srvid);
+		foundspace = ecm_ratelimit_findspace(reader, er, reader->ratelimitecm);
+	} else {
+		cs_debug_mask(D_READER, "ratelimit idx:%d rc:%d caid:%04X srvid:%04X", er->idx, er->rc, er->caid, er->srvid);
+		foundspace = ecm_ratelimit_findspace(reader, er, reader->ratelimitecm);
+	}
+
+	if (foundspace < 0) { /* Dropping this ECM request no space due to ratelimit */
+		cs_debug_mask(D_READER, "ratelimit could not find space for srvid %04X. Dropping.", er->srvid);
+		write_ecm_answer(reader, er, E_NOTFOUND, E2_RATELIMIT, NULL, "ECMratelimit no space for srvid");
+		return ERROR;
+	} else {
+		reader->rlecmh[foundspace].last=time(NULL);
+		reader->rlecmh[foundspace].srvid=er->srvid;
+		if (reader->cooldown[0] && reader->cooldownstate != 1) {
+			for (h = 0; h < MAXECMRATELIMIT; h++) {
+				if ((reader->rlecmh[h].last !=- 1) && ((time(NULL)-reader->rlecmh[h].last) <= reader->ratelimitseconds)) {
+					count++;
+					if(count >= reader->ratelimitecm) {
+						reader->cooldownstate = 2; /* Heating the card */
+						reader->cooldowntime = time(NULL);
+						cs_log("%s is heated AUCH", reader->label);
+						break;
+					}
+				}
+			}
+		}
+		return OK;
+	}
+}
+
 void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
 	struct s_client *cl = reader->client;
@@ -557,78 +654,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 #ifdef WITH_CARDREADER
 
-	if (reader->cooldown[0] && reader->ratelimitecm){
-		if (!reader->cooldowntime)
-			reader->cooldowntime = time((time_t*)0);
-
-		time_t now = time((time_t*)0);
-
-		if (reader->cooldownstate == 1) {
-			if (now - reader->cooldowntime >= reader->cooldown[1]) {
-				reader->cooldownstate = 0;
-				reader->cooldowntime = now;
-				rdr_log(reader, "cooldown OFF");
-			}
-		} else {
-			if (now - reader->cooldowntime >= reader->cooldown[0]) {
-				reader->cooldownstate = 1;
-				reader->cooldowntime = now;
-				rdr_log(reader, "cooldown ON");
-			}
-		}
-	}
-
-	if ((reader->ratelimitecm && !reader->cooldown[0]) || reader->cooldownstate == 1 ) {
-		cs_debug_mask(D_READER, "ratelimit idx:%d rc:%d caid:%04X srvid:%04X",er->idx,er->rc,er->caid,er->srvid);
-		int32_t foundspace=-1;
-		int32_t h;
-		for (h=0;h<reader->ratelimitecm;h++) {
-			if (reader->rlecmh[h].srvid == er->srvid) {
-				foundspace=h;
-				cs_debug_mask(D_READER, "ratelimit found srvid in use at pos: %d",h);
-				break;
-			}
-		}
-		if (foundspace<0) {
-			for (h=0;h<reader->ratelimitecm;h++) {
-				if ((reader->rlecmh[h].last ==- 1) || ((time(NULL)-reader->rlecmh[h].last) > reader->ratelimitseconds)) {
-					foundspace=h;
-					cs_debug_mask(D_READER, "ratelimit found space at pos: %d old seconds %ld",h,reader->rlecmh[h].last);
-					break;
-				}
-			}
-		}
-		#ifdef HAVE_DVBAPI
-		//overide ratelimit priority for dvbapi request
-		if (foundspace < 0 && cfg.dvbapi_enabled && streq(er->client->account->usr, cfg.dvbapi_usr)) {
-			if(reader->lastdvbapirateoverride < time(NULL) - reader->ratelimitseconds){
-				time_t minecmtime = time(NULL);
-				for (h=0;h<reader->ratelimitecm;h++) {
-					if(reader->rlecmh[h].last < minecmtime){
-						foundspace = h;
-						minecmtime = reader->rlecmh[h].last;
-					}
-				}
-				reader->lastdvbapirateoverride = time(NULL);
-				rdr_debug_mask(reader, D_READER, "Prioritizing DVBAPI User %s over other watching client",
-					er->client->account->usr);
-			} else {
-				rdr_debug_mask(reader, D_READER, "DVBAPI User %s is switching too fast for ratelimit and can't be prioritized",
-					er->client->account->usr);
-			}
-		}
-		#endif
-
-		if (foundspace<0) {
-			//drop
-			cs_debug_mask(D_READER, "ratelimit could not find space for srvid %04X. Dropping.",er->srvid);
-			write_ecm_answer(reader, er, E_NOTFOUND, E2_RATELIMIT, NULL, "ECMratelimit no space for srvid");
-			return;
-		} else {
-			reader->rlecmh[foundspace].last=time(NULL);
-			reader->rlecmh[foundspace].srvid=er->srvid;
-		}
-	}
+	if(ecm_ratelimit_check(reader, er) != OK) return;
 
 	cs_ddump_mask(D_ATR, er->ecm, er->l, "ecm:");
 
