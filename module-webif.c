@@ -3897,16 +3897,13 @@ static char *send_oscam_failban(struct templatevars *vars, struct uriparams *par
 
 		} else {
 			//we have a single IP
-			//FIXME: Add IPv6 support
-#ifndef IPV6SUPPORT
-			sscanf(getParam(params, "intip"), "%u", &ip2delete);
+			cs_inet_addr(getParam(params, "intip"), &ip2delete);
 			while ((v_ban_entry=ll_iter_next(&itr))) {
 				if (IP_EQUAL(v_ban_entry->v_ip, ip2delete)) {
 					ll_iter_remove_data(&itr);
 					break;
 				}
 			}
-#endif
 		}
 	}
 	ll_iter_reset(&itr);
