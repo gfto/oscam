@@ -1,4 +1,4 @@
-	#include "globals.h"
+#include "globals.h"
 
 #ifdef WITH_LB
 #include "module-cccam.h"
@@ -496,22 +496,21 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 
 
 		//USAGELEVEL:
-		int32_t ule = rdr->lb_usagelevel_ecmcount;
-		if (ule > 0 && (ule >= cfg.lb_min_ecmcount) ) //update every MIN_ECM_COUNT usagelevel:
+		/* Assign a value to rdr->lb_usagelevel_ecmcount,
+		because no determined value was assigned before. */
+		if (rdr->lb_usagelevel_ecmcount < 0)
+			rdr->lb_usagelevel_ecmcount = 0;
+
+		rdr->lb_usagelevel_ecmcount++; /* ecm is found so counter should increase */
+		if ((rdr->lb_usagelevel_ecmcount % cfg.lb_min_ecmcount) == 0) //update every MIN_ECM_COUNT usagelevel:
 		{
-			time_t t = (ctime-rdr->lb_usagelevel_time);
-			rdr->lb_usagelevel = 1000/(t<1?1:t);
-			ule = 0;
-		}
-		else
-		{
-			//rdr->lb_usagelevel_time = ctime;
-			rdr->lb_usagelevel_ecmcount++;
+			time_t t = (ctime - rdr->lb_usagelevel_time);
+			rdr->lb_usagelevel = 1000 / (t<1?1:t);
+			/* Reset of usagelevel time and counter */
+			rdr->lb_usagelevel_time = ctime;
+			rdr->lb_usagelevel_ecmcount = 0; 
 		}
 
-		if (ule == 0)
-			rdr->lb_usagelevel_time = ctime;
-		rdr->lb_usagelevel_ecmcount = 1;
 	}
 	else if (rc < E_NOTFOUND ) { //cache1+2+3
 		//no increase of statistics here, cachetime is not real time
@@ -710,12 +709,12 @@ int32_t has_ident(FTAB *ftab, ECM_REQUEST *er) {
 
 	int32_t j, k;
 
-    for (j = 0; j < ftab->nfilts; j++) {
+	for (j = 0; j < ftab->nfilts; j++) {
 		if (ftab->filts[j].caid) {
 			if (ftab->filts[j].caid==er->caid) { //caid matches!
 				int32_t nprids = ftab->filts[j].nprids;
 				if (!nprids) // No Provider ->Ok
-               		return 1;
+					return 1;
 
 				for (k = 0; k < nprids; k++) {
 					uint32_t prid = ftab->filts[j].prids[k];
@@ -1052,21 +1051,24 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					case LB_OLDEST_READER_FIRST:
 						if (!rdr->lb_last.time)
 							rdr->lb_last = check_time;
-							
-                                                //current is negative here! the older, the bigger is the difference
-						current = 1000*(rdr->lb_last.time-check_time.time) + (rdr->lb_last.millitm-check_time.millitm) - 10;
+
+						//current is negative here! the older, the bigger is the difference
+						current = 1000 * (rdr->lb_last.time - check_time.time) + (rdr->lb_last.millitm - check_time.millitm) - 10;
+						// current /= weight; /* The others are divided by weight only OLDEST not??*/
 						if (!current)
 						        current = -1;
-						cs_debug_mask(D_LB, "rdr %s lbvalue=%d", rdr->label, current);
 						break;
 
 					case LB_LOWEST_USAGELEVEL:
 						current = rdr->lb_usagelevel * 100 / weight;
 						break;
 				}
+				cs_debug_mask(D_LB, "rdr %s lbvalue = %d", rdr->label, abs(current));
+
 #if defined(WEBIF) || defined(LCDSUPPORT)
 				rdr->lbvalue = abs(current);
 #endif
+
 				if (cfg.lb_mode != LB_OLDEST_READER_FIRST) { //Adjust selection to reader load:
 					if (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_LOADBALANCE, er)) {
 						current=current*2;
@@ -1092,7 +1094,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		nbest_readers = 0;
 	}
 	else
-		nbest_readers = nbest_readers-nlocal_readers;
+		nbest_readers = nbest_readers - nlocal_readers;
 
 	struct s_reader *best_rdr = NULL;
 	struct s_reader *best_rdri = NULL;
