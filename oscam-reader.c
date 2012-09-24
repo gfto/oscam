@@ -518,6 +518,7 @@ static int32_t reader_store_emm(uchar type, uchar *emmd5)
   return(rc);
 }
 
+#ifdef WITH_CARDREADER
 static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er, int32_t maxloop)
 {
 	int32_t h;
@@ -614,6 +615,7 @@ static int32_t ecm_ratelimit_check(struct s_reader * reader, ECM_REQUEST *er)
 		return OK;
 	}
 }
+#endif
 
 void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
