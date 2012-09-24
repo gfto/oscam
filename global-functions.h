@@ -87,7 +87,6 @@ extern int32_t read_from_pipe(struct s_client *, uchar **);
 extern int32_t write_ecm_answer(struct s_reader *, ECM_REQUEST *, int8_t, uint8_t, uchar *, char *);
 extern uint32_t chk_provid(uchar *, uint16_t);
 extern void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto);
-extern void guess_irdeto(ECM_REQUEST *);
 extern void get_cw(struct s_client *, ECM_REQUEST *);
 extern void do_emm(struct s_client *, EMM_PACKET *);
 extern ECM_REQUEST *get_ecmtask(void);
@@ -155,7 +154,6 @@ extern void config_free(void);
 extern int32_t  init_srvid(void);
 extern int32_t  init_tierid(void);
 extern void init_len4caid(void);
-extern int32_t  init_irdeto_guess_tab(void);
 extern int32_t csp_ecm_hash(ECM_REQUEST *er);
 extern void chk_reader(char *token, char *value, struct s_reader *rdr);
 

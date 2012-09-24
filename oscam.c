@@ -7,6 +7,7 @@
 #if defined(WITH_AZBOX) && defined(HAVE_DVBAPI)
 #include "openxcas/openxcas_api.h"
 #endif
+#include "module-ird-guess.h"
 
 static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_ADDR_T ip);
 static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea);
@@ -3039,45 +3040,6 @@ uint32_t chk_provid(uchar *ecm, uint16_t caid) {
 	return(provid);
 }
 
-#ifdef IRDETO_GUESSING
-void guess_irdeto(ECM_REQUEST *er)
-{
-  uchar  b3;
-  int32_t    b47;
-  //uint16_t chid;
-  struct s_irdeto_quess *ptr;
-
-  b3  = er->ecm[3];
-  ptr = cfg.itab[b3];
-  if( !ptr ) {
-    cs_debug_mask(D_TRACE, "unknown irdeto byte 3: %02X", b3);
-    return;
-  }
-  b47  = b2i(4, er->ecm+4);
-  //chid = b2i(2, er->ecm+6);
-  //cs_debug_mask(D_TRACE, "ecm: b47=%08X, ptr->b47=%08X, ptr->caid=%04X", b47, ptr->b47, ptr->caid);
-  while( ptr )
-  {
-    if( b47==ptr->b47 )
-    {
-      if( er->srvid && (er->srvid!=ptr->sid) )
-      {
-        cs_debug_mask(D_TRACE, "sid mismatched (ecm: %04X, guess: %04X), wrong oscam.ird file?",
-                  er->srvid, ptr->sid);
-        return;
-      }
-      er->caid=ptr->caid;
-      er->srvid=ptr->sid;
-      er->chid=(uint16_t)ptr->b47;
-//      cs_debug_mask(D_TRACE, "quess_irdeto() found caid=%04X, sid=%04X, chid=%04X",
-//               er->caid, er->srvid, er->chid);
-      return;
-    }
-    ptr=ptr->next;
-  }
-}
-#endif
-
 void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto)
 {
 	static uchar headerN3[10] = {0xc7, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x87, 0x12};
@@ -3167,10 +3129,8 @@ static void guess_cardsystem(ECM_REQUEST *er)
       (!er->ecm[5]) && (!er->ecm[6]) && (er->ecm[7]==er->ecm[2]-5))
     last_hope=0xd00;
 
-#ifdef IRDETO_GUESSING
   if (!er->caid && er->ecm[2]==0x31 && er->ecm[0x0b]==0x28)
     guess_irdeto(er);
-#endif
 
   if (!er->caid)    // guess by len ..
     er->caid=len4caid[er->ecm[2]+3];
@@ -5126,9 +5086,7 @@ int32_t main (int32_t argc, char *argv[])
 #endif
 
   init_len4caid();
-#ifdef IRDETO_GUESSING
   init_irdeto_guess_tab();
-#endif
 
   write_versionfile();
   server_pid = getpid();
