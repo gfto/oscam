@@ -39,8 +39,36 @@
 #include "oscam-config.h"
 #include "oscam-config-funcs.h"
 
-#include "oscam-types.h"
 #include "cscrypt/cscrypt.h"
+
+#ifndef uchar
+typedef unsigned char uchar;
+#endif
+
+#ifdef IPV6SUPPORT
+#define IN_ADDR_T struct in6_addr
+#define SOCKADDR sockaddr_storage
+#else
+#define IN_ADDR_T in_addr_t
+#define SOCKADDR sockaddr_in
+#endif
+
+#ifndef NO_ENDIAN_H
+ #if defined(__APPLE__)
+    #include <machine/endian.h>
+    #define __BYTE_ORDER __DARWIN_BYTE_ORDER
+    #define __BIG_ENDIAN    __DARWIN_BIG_ENDIAN
+    #define __LITTLE_ENDIAN __DARWIN_LITTLE_ENDIAN
+ #elif defined(__FreeBSD__)
+    #include <sys/endian.h>
+    #define __BYTE_ORDER _BYTE_ORDER
+    #define __BIG_ENDIAN    _BIG_ENDIAN
+    #define __LITTLE_ENDIAN _LITTLE_ENDIAN
+ #else
+    #include <endian.h>
+    #include <byteswap.h>
+ #endif
+#endif
 
 #ifdef WITH_PCSC
   #if defined(__CYGWIN__)
