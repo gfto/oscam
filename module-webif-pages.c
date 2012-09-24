@@ -275,7 +275,6 @@ SLmGxAAAAABJRU5ErkJggg=="
 #define ICSPAC "data:image/gif;base64,\
 R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAQAIBRAA7"
 
-#ifdef CS_CACHEEX
 #define ICARRR "data:image/gif;base64,\
 R0lGODlhJAALALMAAAUtBRB9DxKLERB9Dxe4FpPykhaxFUjpR4Pwgh3kHHXudLD1r+L84vj++P//\
 /////yH/C05FVFNDQVBFMi4wAwEAAAAh+QQJDwAFACwAAAAAJAALAAAEarDISau9OGsNeu1gKI6k\
@@ -299,7 +298,6 @@ HhEAIfkECQ8ABQAsAAAAACQACwAABG2wyEmrvZiCnbuXWyiOZDlOoXKsyOK8L8Msq8q6cLwARar8\
 CxlstvgZgUJdUSFKOBMHl2y6IBgMT6h0OrMaeKHrVbFYIM6Ig8AQEI/L6LQgEOD1Nlg64RAvK9wJ\
 enxofl8oJoiJIhUhH46PkB4RACH+L0NvcHlyaWdodCBNYXJ5IEdhcnJlbiAxOTk4DQpBTEwgUklH\
 SFRTIFJFU0VSVkVEADs="
-#endif
 
 #define TPLHEADER "\
 <!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\
@@ -446,7 +444,6 @@ SFRTIFJFU0VSVkVEADs="
 	</file>\n\
 ##TPLAPIFOOTER##"
 
-#ifdef WITH_DEBUG
 #define TPLDEBUGSELECT "\
 	<SPAN CLASS=\"debugt\"> Switch Debug from&nbsp;##ACTDEBUG## to&nbsp;</SPAN>\n\
 	<SPAN CLASS=\"debugl\"><A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=0##CUSTOMPARAM##\" title=\"no debugging (default)\">&nbsp;0&nbsp;</A></SPAN>\n\
@@ -462,7 +459,6 @@ SFRTIFJFU0VSVkVEADs="
 	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS512##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL512####CUSTOMPARAM##\" title=\"CACHEEX logging\">&nbsp;512&nbsp;</A></SPAN>\n\
 	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS1024##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL1024####CUSTOMPARAM##\" title=\"Client ECM logging\">&nbsp;1024&nbsp;</A></SPAN>\n\
 	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS65535##\" HREF=\"##NEXTPAGE##?debug=65535##CUSTOMPARAM##\" title=\"debug all\">&nbsp;ALL&nbsp;</A></SPAN>\n"
-#endif
 
 #define TPLFAILBAN "\
 ##TPLHEADER##\
@@ -499,10 +495,8 @@ SFRTIFJFU0VSVkVEADs="
 #define TPLAPIFAILBANBIT "\
 		<ip ipinteger=\"##INTIP##\" user=\"##VIOLATIONUSER##\" count=\"##VIOLATIONCOUNT##\" date=\"##VIOLATIONDATE##\" secondsleft=\"\">##IPADDRESS##</ip>\n"
 
-#ifdef CS_ANTICASC
 #define TPLCONFIGMENUANTICASC "			<TD CLASS=\"##CMENUACTIVE8##\"><A HREF=\"config.html?part=anticasc\">Anticascading</A></TD>\n"
 #define TPLFILEMENUANTICASC "			<TD CLASS=\"##CMENUACTIVE22##\"><A HREF=\"files.html?file=anticasc\">AC Log</A></TD>\n"
-#endif
 
 #ifdef MODULE_MONITOR
 #define TPLCONFIGMENUMONITOR "			<TD CLASS=\"##CMENUACTIVE9##\"><A HREF=\"config.html?part=monitor\">WebIf/Monitor</A></TD>\n"
@@ -510,46 +504,26 @@ SFRTIFJFU0VSVkVEADs="
 #define TPLCONFIGMENUMONITOR "			<TD CLASS=\"##CMENUACTIVE9##\"><A HREF=\"config.html?part=monitor\">WebIf</A></TD>\n"
 #endif
 
-#ifdef HAVE_DVBAPI
 #define TPLCONFIGMENUDVBAPI "			<TD CLASS=\"##CMENUACTIVE11##\"><A HREF=\"config.html?part=dvbapi\">DVB-Api</A></TD>\n"
 #define TPLFILEMENUDVBAPI "			<TD CLASS=\"##CMENUACTIVE23##\"><A HREF=\"files.html?file=dvbapi\">oscam.dvbapi</A></TD>\n"
-#endif
 
-#ifdef WITH_LB
 #define TPLCONFIGMENULB "			<TD CLASS=\"##CMENUACTIVE1##\"><A HREF=\"config.html?part=loadbalancer\">Loadbalancer</A></TD>\n"
-#endif
 
-#ifdef MODULE_CAMD33
 #define TPLCONFIGMENUCAMD33 "			<TD CLASS=\"##CMENUACTIVE2##\"><A HREF=\"config.html?part=camd33\">Camd3.3</A></TD>\n"
-#endif
 
-#ifdef MODULE_CAMD35
 #define TPLCONFIGMENUCAMD35 "			<TD CLASS=\"##CMENUACTIVE3##\"><A HREF=\"config.html?part=camd35\">Camd3.5</A></TD>\n"
-#endif
 
-#ifdef MODULE_CAMD35_TCP
 #define TPLCONFIGMENUCAMD35TCP "			<TD CLASS=\"##CMENUACTIVE4##\"><A HREF=\"config.html?part=camd35tcp\">Camd3.5 TCP</A></TD>\n"
-#endif
 
-#ifdef CS_CACHEEX
 #define TPLCONFIGMENUCSP "			<TD CLASS=\"##CMENUACTIVE24##\"><A HREF=\"config.html?part=csp\">CSP</A></TD>\n"
-#endif
 
-#ifdef MODULE_CCCAM
 #define TPLCONFIGMENUCCCAM "			<TD CLASS=\"##CMENUACTIVE7##\"><A HREF=\"config.html?part=cccam\">CCcam</A></TD>\n"
-#endif
 
-#ifdef MODULE_NEWCAMD
 #define TPLCONFIGMENUNEWCAMD "			<TD CLASS=\"##CMENUACTIVE5##\"><A HREF=\"config.html?part=newcamd\">Newcamd</A></TD>\n"
-#endif
 
-#ifdef MODULE_RADEGAST
 #define TPLCONFIGMENURADEGAST "			<TD CLASS=\"##CMENUACTIVE6##\"><A HREF=\"config.html?part=radegast\">Radegast</A></TD>\n"
-#endif
 
-#ifdef MODULE_SERIAL
 #define TPLCONFIGMENUSERIAL "			<TD CLASS=\"##CMENUACTIVE10##\"><A HREF=\"config.html?part=serial\">Serial</A></TD>\n"
-#endif
 
 #define TPLSTATUS "\
 ##TPLHEADER##\
@@ -918,7 +892,6 @@ SFRTIFJFU0VSVkVEADs="
 
 #define TPLUSEREDITRDRSELECTED "						<option value=\"##READERNAME##\" ##SELECTED##>##READERNAME##</option>"
 
-#ifdef CS_CACHEEX
 #define TPLUSEREDITCACHEEXBIT "				<TR><TD>##TPLHELPPREFIX##user#cacheex##TPLHELPSUFFIX##Cache-EX-Mode:</A></TD>\n\
 												<TD><select name=\"cacheex\">\n\
 														<option value=\"0\" ##CACHEEXSELECTED0##>0 - No CacheEX</option>\n\
@@ -939,7 +912,6 @@ SFRTIFJFU0VSVkVEADs="
 													</select>\n\
 												</TD></TR>\n\
 							<TR><TD>##TPLHELPPREFIX##server#cacheex_maxhop##TPLHELPSUFFIX##Cache-EX Maxhop:</A></TD><TD><input name=\"cacheex_maxhop\" type=\"text\" size=\"4\" maxlength=\"4\" value=\"##CACHEEX_MAXHOP##\"></TD></TR>\n"
-#endif
 
 #define TPLUSEREDITSIDOKBIT "\
 						<TR>\n\
@@ -949,7 +921,6 @@ SFRTIFJFU0VSVkVEADs="
 							<TD><INPUT NAME=\"services\" TYPE=\"CHECKBOX\" VALUE=\"!##SIDLABEL##\" ##CHECKED##> !##SIDLABEL##</TD>\n\
 						</TR>\n"
 
-#ifdef CS_ANTICASC
 # define TPLUSEREDITANTICASC "\
 			<TR><TD>##TPLHELPPREFIX##user#numusers##TPLHELPSUFFIX##Anticascading numusers:</A></TD>\
 				<TD><input name=\"numusers\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##AC_USERS##\">\
@@ -966,9 +937,7 @@ SFRTIFJFU0VSVkVEADs="
 				</select>\n\
 				&nbsp;Global Penalty level:<SPAN CLASS=\"global_conf\"><A HREF=\"config.html?part=anticasc\" TITLE=\"This value is used if Anticascading penalty = -1\">##CFGPENALTY##</A></SPAN>\n\
 			</TD></TR>\n"
-#endif
 
-#ifdef MODULE_CCCAM
 # define TPLUSEREDITCCCAM "\
 			<TR><TD>##TPLHELPPREFIX##user#cccmaxhops##TPLHELPSUFFIX##CCC Maxhops:</A></TD><TD><input name=\"cccmaxhops\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCMAXHOPS##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##user#cccreshare##TPLHELPSUFFIX##CCC Reshare:</A></TD><TD><input name=\"cccreshare\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCRESHARE##\">\
@@ -989,7 +958,6 @@ SFRTIFJFU0VSVkVEADs="
 			</SELECT>\
 			&nbsp;Global CCcam Stealth value:<SPAN CLASS=\"global_conf\"><A HREF=\"config.html?part=cccam\">##STEALTH##</A></SPAN>\
 			</TD></TR>\n"
-#endif
 
 #define TPLSIDTAB "\
 ##TPLHEADER##\
@@ -1338,21 +1306,17 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 				<TR><TD>##TPLHELPPREFIX##server#device_out_endpoint##TPLHELPSUFFIX##Device Out Endpoint:</A></TD><TD>##DEVICEEP##</TD></TR>\n\
 				##TPLREADERCOOLSTREAMBIT##"
 
-#ifdef WITH_LIBUSB
 #define TPLREADERCONFIGDEVICEEPBIT "\
 				<SELECT name=\"device_out_endpoint\">\n\
 					<OPTION value=\"\" ##DEVICEOUTEP0##>default</OPTION>\n\
 					<OPTION value=\"0x82\" ##DEVICEOUTEP1##>0x82 - Smargo+</OPTION>\n\
 					<OPTION value=\"0x81\" ##DEVICEOUTEP2##>0x81 - Infinity USB Smart</OPTION>\n\
 				</SELECT>\n"
-#endif
 
-#ifdef WITH_COOLAPI
 #define TPLREADERCOOLSTREAMBIT "\
 		<TR><TH>&nbsp;</TH><TH>Reader specific settings for Coolstream STB</TH></TR>\n\
 		<TR><TD>##TPLHELPPREFIX##server#cool_timeout_init##TPLHELPSUFFIX##Cool Timeout Init:</A></TD><TD><input name=\"cool_timeout_init\" type=\"text\" size=\"20\" maxlength=\"16\" value=\"##COOLTIMEOUTINIT##\"></TD></TR>\n\
 		<TR><TD>##TPLHELPPREFIX##server#cool_timeout_after_init##TPLHELPSUFFIX##Cool Timeout after Init:</A></TD><TD><input name=\"cool_timeout_after_init\" type=\"text\" size=\"20\" maxlength=\"16\" value=\"##COOLTIMEOUTAFTERINIT##\"></TD></TR>\n"
-#endif
 
 #define TPLREADERCONFIGHOPBIT "\
 			<TR><TD>##TPLHELPPREFIX##server#ccchop##TPLHELPSUFFIX##CCC Hop:</A></TD><TD><input name=\"ccchop\" type=\"text\" size=\"2\" maxlength=\"1\" value=\"##CCCHOP##\"></TD></TR>\n"
@@ -1432,7 +1396,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	</form>\n\
 ##TPLFOOTER##"
 
-#ifdef CS_ANTICASC
 #define TPLCONFIGANTICASC "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1464,9 +1427,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
-#endif
 
-#ifdef MODULE_CCCAM
 #define TPLCONFIGCCCAM "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1543,7 +1504,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		</TR>\n\
 	</TABLE>\n\
 ##TPLFOOTER##"
-#endif
 
 #define TPLCONFIGMONITOR "\
 ##TPLHEADER##\
@@ -1612,12 +1572,9 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 #define TPLCONFIGMONITOR_CONF ""
 #endif
 
-#ifdef WITH_SSL
 #define TPLHTTPFORCESSLV3 "\
 			<TR><TD>##TPLHELPPREFIX##conf#httpforcesslv3##TPLHELPSUFFIX##Force more secure v3 of ssl:</A></TD><TD><SELECT NAME=\"httpforcesslv3\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##HTTPFORCESSLV3SELECT##>YES</OPTION></SELECT></TD></TR>\n"
-#endif
 
-#ifdef LCDSUPPORT
 #define TPLLCDOPTIONS "\
 			<TR><TH COLSPAN=\"2\">LCD Config</TH></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#enablelcd##TPLHELPSUFFIX##Enable LCD:</A></TD><TD><SELECT NAME=\"enablelcd\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##ENABLELCDSELECTED##>YES</OPTION></SELECT></TD></TR>\n\
@@ -1625,9 +1582,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#lcd_writeintervall##TPLHELPSUFFIX##LCD Write Interval:</A></TD><TD><input name=\"lcd_writeintervall\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##LCDREFRESHINTERVAL##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#lcd_hideidle##TPLHELPSUFFIX##LCD Hide idle Readers:</A></TD><TD><SELECT NAME=\"lcd_hideidle\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##LCDHIDEIDLE##>YES</OPTION></SELECT></TD></TR>\n"
 
-#endif
 
-#ifdef MODULE_RADEGAST
 #define TPLCONFIGRADEGAST "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1646,9 +1601,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
-#endif
 
-#ifdef MODULE_NEWCAMD
 #define TPLCONFIGNEWCAMD "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1671,7 +1624,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
-#endif
 
 #define TPLCONFIGGLOBAL "\
 ##TPLHEADER##\
@@ -1752,24 +1704,17 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	</form>\n\
 ##TPLFOOTER##"
 
-#ifdef CS_CACHEEX
 #define TPLCACHEEXWAITTIME "\
 			<TR><TH COLSPAN=\"2\">CacheEX</TH></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#cacheexwaittime##TPLHELPSUFFIX##Cacheex wait time:</A></TD><TD><input name=\"cacheexwaittime\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CACHEEXWAITTIME##\"> ms max waittime for a cache entry</TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#cacheexenablestats##TPLHELPSUFFIX##Cacheex write statistic:</A></TD><TD><SELECT NAME=\"cacheexenablestats\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##CACHEEXSTATSSELECTED##>ON</OPTION></SELECT></TD></TR>\n"
-#endif
 
-#if defined(QBOXHD) || defined(__arm__)
 #define TPLENABLELEDBIT "\
 			<TR><TD>##TPLHELPPREFIX##conf#enableled##TPLHELPSUFFIX##Enable LED:</A></TD><TD><SELECT NAME=\"enableled\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##ENABLELEDSELECTED1##>For Router</OPTION><OPTION VALUE=\"2\" ##ENABLELEDSELECTED2##>For QboxHD</OPTION></SELECT></TD></TR>\n"
-#endif
 
-#if defined(MODULE_CAMD35) || defined(MODULE_CAMD35_TCP)
 #define TPLSUPPRESSCMD08 "\
 			<TR><TD>##TPLHELPPREFIX##conf#suppresscmd08##TPLHELPSUFFIX##Suppress cmd08:</A></TD><TD><input name=\"suppresscmd08\" type=\"checkbox\" value=\"1\" ##SUPPRESSCMD08##></TD></TR>\n"
-#endif
 
-#ifdef WITH_LB
 #define TPLCONFIGLOADBALANCER "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1825,9 +1770,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
-#endif
 
-#ifdef MODULE_CAMD33
 #define TPLCONFIGCAMD33 "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1847,9 +1790,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
-#endif
 
-#ifdef MODULE_CAMD35
 #define TPLCONFIGCAMD35 "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1868,9 +1809,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
-#endif
 
-#ifdef MODULE_CAMD35_TCP
 #define TPLCONFIGCAMD35TCP "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1889,9 +1828,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
-#endif
 
-#ifdef CS_CACHEEX
 #define TPLCONFIGCSP "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1909,9 +1846,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
-#endif
 
-#ifdef MODULE_SERIAL
 #define TPLCONFIGSERIAL "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1928,12 +1863,10 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	</form>\n\
 	<BR><BR>\n\
 ##TPLFOOTER##"
-#endif
 
 #define TPLCONFIGSERIALDEVICEBIT "\
 			<TR><TD>##TPLHELPPREFIX##conf#device##TPLHELPSUFFIX##Device:</A></TD><TD><input name=\"device\" type=\"text\" size=\"63\" maxlength=\"511\" value=\"##SERIALDEVICE##\"></TD></TR>\n"
 
-#ifdef HAVE_DVBAPI
 #define TPLCONFIGDVBAPI "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1969,7 +1902,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	</TABLE>\n\
 </form>\n\
 ##TPLFOOTER##"
-#endif
 
 #define TPLSERVICECONFIGLIST "\
 ##TPLHEADER##\
@@ -2320,7 +2252,6 @@ function isNumber(a) {\n\
 </script>\
 </svg>"
 
-#ifdef CS_CACHEEX
 #define TPLCACHEEXPAGE "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -2342,7 +2273,6 @@ function isNumber(a) {\n\
 ##TPLFOOTER##"
 
 #define TPLCACHEEXTABLEROW "			<TR><TD>&nbsp;&nbsp;##DIRECTIONIMG##&nbsp;&nbsp;</TD><TD>##TYPE##</TD><TD>##NAME##</TD><TD>##IP##</TD><TD>##NODE##</TD><TD>##LEVEL##</TD><TD>##PUSH##</TD><TD>##GOT##</TD><TD>##HIT##</TD><TD>##ERR##</TD><TD>##ERRCW##</TD></TR>\n"
-#endif
 
 const char *tpl[][3] = {
 	{"HEADER", TPLHEADER, ""}
