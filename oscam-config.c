@@ -493,8 +493,8 @@ int32_t init_srvid(void)
 	if (nr > 0) {
 		cs_log("%d service-id's loaded in %dms", nr, time);
 		if (nr > 2000) {
-			cs_log("WARNING: You risk high CPU load and high ECM times with more than 2000 service-id�s!");
-			cs_log("HINT: --> use optimized lists from http://streamboard.de.vu/wiki/index.php/Srvid");
+			cs_log("WARNING: You risk high CPU load and high ECM times with more than 2000 service-id's!");
+			cs_log("HINT: --> use optimized lists from http://www.streamboard.tv/wiki/Srvid");
 		}
 	} else {
 		cs_log("oscam.srvid loading failed, old format");

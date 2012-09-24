@@ -252,7 +252,7 @@ static void usage(void)
 	printf("Copyright (C) 2009-2012 OSCam developers.\n");
 	printf("This program is distributed under GPLv3.\n");
 	printf("OSCam is based on Streamboard mp-cardserver v0.9d written by dukat\n");
-	printf("Visit http://streamboard.de.vu/oscam/ for more details.\n\n");
+	printf("Visit http://www.streamboard.tv/oscam/ for more details.\n\n");
 
 	printf(" Features  :");
 	_check(WEBIF, "webif");
