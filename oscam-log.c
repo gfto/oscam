@@ -324,8 +324,8 @@ void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar 
 {
 	va_list params;
 
-	char log_txt[LOG_BUF_SIZE];
-	int32_t i, len = 0;
+	static char log_txt[LOG_BUF_SIZE], dupl[LOG_BUF_SIZE/4];
+	int32_t dupl_header_len, repeated_line, i, len = 0;
 	pthread_mutex_lock(&log_mutex);
 	if (((mask & cs_dblevel) || !mask) && (fmt))
 	{
@@ -333,16 +333,15 @@ void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar 
 		len = get_log_header(1, log_txt);
 		vsnprintf(log_txt + len, sizeof(log_txt) - len, fmt, params);
 		va_end(params);
-		int repeated_line = strcmp(last_log_txt, log_txt + len) == 0;
+		repeated_line = strcmp(last_log_txt, log_txt + len) == 0;
 		if (last_log_duplicates > 0) {
 			if (!last_log_ts) // Must be initialized once
 				last_log_ts = log_ts;
 			// Report duplicated lines when the new log line is different
 			// than the old or 60 seconds have passed.
 			if (!repeated_line || log_ts - last_log_ts >= 60) {
-				char dupl[len + 32];
-				len = get_log_header(2, dupl);
-				snprintf(dupl + len - 1, len + 32, "--- Skipped %u duplicated log lines ---", last_log_duplicates);
+				dupl_header_len = get_log_header(2, dupl);
+				snprintf(dupl + dupl_header_len - 1, sizeof(dupl) - dupl_header_len, "--- Skipped %u duplicated log lines ---", last_log_duplicates);
 				write_to_log_int(dupl, 0);
 				last_log_duplicates = 0;
 				last_log_ts = log_ts;
