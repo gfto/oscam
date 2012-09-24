@@ -2100,7 +2100,7 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 	}
 #endif
 #ifdef MODULE_CCCAM
-	if (streq(proto,"cccam")) {
+	if (strncmp(proto, "cccam", 5) == 0) {
 		struct cc_data *cc = cl->cc;
 		if (cc && cc->remote_version && cc->remote_build) {
 			tpl_printf(vars, TPLADDONCE, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
