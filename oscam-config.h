@@ -9,6 +9,10 @@
 #define WEBIF
 #endif
 
+#ifndef TOUCH
+#define TOUCH
+#endif
+
 #ifndef WITH_SSL
 //#define WITH_SSL
 #endif

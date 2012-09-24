@@ -9,6 +9,13 @@ extern const char *tpl[][3];
 extern char *JSCRIPT;
 extern char *CSS;
 
+#ifdef TOUCH
+#define TOUCH_SUBDIR "touch/"
+extern char *TOUCH_JSCRIPT;
+extern char *TOUCH_CSS;
+extern char *TOUCH_TPLSTATUS;
+#endif
+
 extern int32_t ssl_active;
 extern pthread_key_t getkeepalive;
 extern pthread_key_t getssl;
@@ -314,9 +321,14 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
   }
   
  	if(i >= 0 && i < tplcnt){
- 		int32_t len = (strlen(tpl[i][1])) + 1;
+#ifdef TOUCH
+		const char* tpl_res = (!strcmp(subdir, TOUCH_SUBDIR) && i == 12) ? TOUCH_TPLSTATUS : tpl[i][1];
+#else
+		const char* tpl_res = tpl[i][1];
+#endif
+		int32_t len = strlen(tpl_res) + 1;
  		if(!cs_malloc(&result, len * sizeof(char), -1)) return NULL;
- 		memcpy(result, tpl[i][1], len);
+ 		memcpy(result, tpl_res, len);
  	} else {
  		if(!cs_malloc(&result, 1 * sizeof(char), -1)) return NULL;
  		result[0] = '\0';
@@ -785,12 +797,19 @@ void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uin
 		if (allocated) result = allocated;
 
 	} else {
-		moddate = first_client->login;
+#ifdef TOUCH
+		char* res_tpl = strcmp(subdir, TOUCH_SUBDIR)
+			? (fileno == 1 ? CSS : JSCRIPT)
+			: (fileno == 1 ? TOUCH_CSS : TOUCH_JSCRIPT);
+		if (strlen(res_tpl) > 0) result = res_tpl;
+#else
 		if (fileno == 1 && strlen(CSS) > 0){
 			result = CSS;
 		} else if (fileno == 2 && strlen(JSCRIPT) > 0){
 			result = JSCRIPT;
 		}
+#endif
+		moddate = first_client->login;
 	}
 
 	size = strlen(result);
