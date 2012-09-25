@@ -1105,6 +1105,26 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		}
 	}
 
+	// cooldown
+	if (!strcmp(token, "cooldowndelay")) {
+		if (strlen(value) == 0) {
+			rdr->cooldown[0] = 0;
+			return;
+		} else {
+			rdr->cooldown[0] = atoi(value);
+			return;
+		}
+	}
+	if (!strcmp(token, "cooldowntime")) {
+		if (strlen(value) == 0) {
+			rdr->cooldown[1] = 0; 
+			return;
+		} else {
+			rdr->cooldown[1] = atoi(value);
+			return;
+		}
+	}
+	
 	if (!strcmp(token, "dropbadcws")) {
 		rdr->dropbadcws = strToIntVal(value, 0);
 		return;
