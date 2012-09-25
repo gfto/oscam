@@ -49,6 +49,14 @@ static inline int config_WEBIF(void) {
 	#endif
 }
 
+static inline int config_TOUCH(void) {
+	#if defined(WEBIF) && defined(TOUCH)
+	return 1;
+	#else
+	return 0;
+	#endif
+}
+
 static inline int config_WITH_SSL(void) {
 	#ifdef WITH_SSL
 	return 1;

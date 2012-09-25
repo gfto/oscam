@@ -257,6 +257,7 @@ static void usage(void)
 
 	printf(" Features  :");
 	_check(WEBIF, "webif");
+	_check(TOUCH, "touch");
 	_check(MODULE_MONITOR, "monitor");
 	_check(WITH_SSL, "ssl");
 	if (!config_WITH_STAPI())

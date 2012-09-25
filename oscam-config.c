@@ -86,6 +86,7 @@ void write_versionfile(void) {
 	fprintf(fp, "Active modules:\n");
 
 	write_conf(WEBIF, "Web interface support");
+	write_conf(TOUCH, "Touch interface support");
 	write_conf(WITH_SSL, "SSL support");
 	write_conf(HAVE_DVBAPI, "DVB API support");
 	if (config_HAVE_DVBAPI())
