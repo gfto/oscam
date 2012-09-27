@@ -57,12 +57,12 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 			continue;
 		void *cfg = config_data + c->var_offset;
 		switch (c->opt_type) {
-		case OPT_INT: {
-			*(int32_t *)cfg = strToIntVal(value, c->def.d_int);
+		case OPT_INT32: {
+			*(int32_t *)cfg = strToIntVal(value, c->def.d_int32);
 			return 1;
 		}
-		case OPT_UINT: {
-			*(uint32_t *)cfg = strToUIntVal(value, c->def.d_uint);
+		case OPT_UINT32: {
+			*(uint32_t *)cfg = strToUIntVal(value, c->def.d_uint32);
 			return 1;
 		}
 		case OPT_STRING: {
@@ -110,15 +110,15 @@ void config_list_save(FILE *f, const struct config_list *clist, void *config_dat
 	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
 		void *cfg = config_data + c->var_offset;
 		switch (c->opt_type) {
-		case OPT_INT: {
+		case OPT_INT32: {
 			int32_t val = *(int32_t *)cfg;
-			if (save_all || val != c->def.d_int)
+			if (save_all || val != c->def.d_int32)
 				fprintf_conf(f, c->config_name, "%d\n", val);
 			continue;
 		}
-		case OPT_UINT: {
+		case OPT_UINT32: {
 			uint32_t val = *(uint32_t *)cfg;
-			if (save_all || val != c->def.d_uint)
+			if (save_all || val != c->def.d_uint32)
 				fprintf_conf(f, c->config_name, "%u\n", val);
 			continue;
 		}
@@ -174,12 +174,12 @@ void config_list_set_defaults(const struct config_list *clist, void *config_data
 	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
 		void *cfg = config_data + c->var_offset;
 		switch (c->opt_type) {
-		case OPT_INT: {
-			*(int32_t *)cfg = c->def.d_int;
+		case OPT_INT32: {
+			*(int32_t *)cfg = c->def.d_int32;
 			break;
 		}
-		case OPT_UINT: {
-			*(uint32_t *)cfg = c->def.d_uint;
+		case OPT_UINT32: {
+			*(uint32_t *)cfg = c->def.d_uint32;
 			break;
 		}
 		case OPT_STRING: {

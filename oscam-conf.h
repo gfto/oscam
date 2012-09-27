@@ -9,8 +9,8 @@
 
 enum opt_types {
 	OPT_UNKNOWN = 0,
-	OPT_INT     = 1 << 1,
-	OPT_UINT    = 1 << 2,
+	OPT_INT32   = 1 << 1,
+	OPT_UINT32  = 1 << 2,
 	OPT_STRING  = 1 << 3,
 	OPT_SSTRING = 1 << 4,
 	OPT_FUNC    = 1 << 5,
@@ -24,8 +24,8 @@ struct config_list {
 	size_t			var_offset;
 	unsigned int	str_size;
 	union {
-		int32_t			d_int;
-		uint32_t		d_uint;
+		int32_t			d_int32;
+		uint32_t		d_uint32;
 		char			*d_char;
 	} def;
 	union {
@@ -35,20 +35,20 @@ struct config_list {
 	} ops;
 };
 
-#define DEF_OPT_INT(__name, __var_ofs, __default) \
+#define DEF_OPT_INT32(__name, __var_ofs, __default) \
 	{ \
-		.opt_type		= OPT_INT, \
+		.opt_type		= OPT_INT32, \
 		.config_name	= __name, \
 		.var_offset		= __var_ofs, \
-		.def.d_int		= __default \
+		.def.d_int32	= __default \
 	}
 
-#define DEF_OPT_UINT(__name, __var_ofs, __default) \
+#define DEF_OPT_UINT32(__name, __var_ofs, __default) \
 	{ \
-		.opt_type		= OPT_UINT, \
+		.opt_type		= OPT_UINT32, \
 		.config_name	= __name, \
 		.var_offset		= __var_ofs, \
-		.def.d_uint		= __default \
+		.def.d_uint32	= __default \
 	}
 
 #define DEF_OPT_STR(__name, __var_ofs, __default) \

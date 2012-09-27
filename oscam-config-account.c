@@ -280,7 +280,7 @@ static void account_fixups_fn(void *var) {
 
 static const struct config_list account_opts[] = {
 	DEF_OPT_FIXUP_FUNC(account_fixups_fn),
-	DEF_OPT_INT("disabled"				, OFS(disabled),				0 ),
+	DEF_OPT_INT32("disabled"			, OFS(disabled),				0 ),
 	DEF_OPT_SSTR("user"					, OFS(usr),						"", SIZEOF(usr) ),
 	DEF_OPT_STR("pwd"					, OFS(pwd),						NULL ),
 #ifdef WEBIF
@@ -288,10 +288,10 @@ static const struct config_list account_opts[] = {
 #endif
 	DEF_OPT_STR("hostname"				, OFS(dyndns),					NULL ),
 	DEF_OPT_FUNC("caid"					, OFS(ctab),					check_caidtab_fn ),
-	DEF_OPT_INT("uniq"					, OFS(uniq),					0 ),
-	DEF_OPT_UINT("sleepsend"			, OFS(c35_sleepsend),			0 ),
-	DEF_OPT_INT("failban"				, OFS(failban),					0 ),
-	DEF_OPT_INT("monlevel"				, OFS(monlvl),					0 ),
+	DEF_OPT_INT32("uniq"				, OFS(uniq),					0 ),
+	DEF_OPT_UINT32("sleepsend"			, OFS(c35_sleepsend),			0 ),
+	DEF_OPT_INT32("failban"				, OFS(failban),					0 ),
+	DEF_OPT_INT32("monlevel"			, OFS(monlvl),					0 ),
 	DEF_OPT_FUNC("sleep"				, OFS(tosleep),					account_tosleep_fn ),
 	DEF_OPT_FUNC("suppresscmd08"		, OFS(c35_suppresscmd08),		account_c35_suppresscmd08_fn ),
 	DEF_OPT_FUNC("keepalive"			, OFS(ncd_keepalive),			account_ncd_keepalive_fn ),
@@ -306,18 +306,18 @@ static const struct config_list account_opts[] = {
 	DEF_OPT_FUNC("chid"					, 0,							account_chid_fn ),
 	DEF_OPT_FUNC("class"				, 0,							account_class_fn ),
 #ifdef CS_CACHEEX
-	DEF_OPT_INT("cacheex"				, OFS(cacheex),					0 ),
-	DEF_OPT_INT("cacheex_maxhop"		, OFS(cacheex_maxhop),			0 ),
+	DEF_OPT_INT32("cacheex"				, OFS(cacheex),					0 ),
+	DEF_OPT_INT32("cacheex_maxhop"		, OFS(cacheex_maxhop),			0 ),
 #endif
 #ifdef MODULE_CCCAM
-	DEF_OPT_INT("cccmaxhops"			, OFS(cccmaxhops),				DEFAULT_CC_MAXHOPS ),
-	DEF_OPT_INT("cccreshare"			, OFS(cccreshare),				DEFAULT_CC_RESHARE ),
-	DEF_OPT_INT("cccignorereshare"		, OFS(cccignorereshare),		DEFAULT_CC_IGNRSHR ),
-	DEF_OPT_INT("cccstealth"			, OFS(cccstealth),				DEFAULT_CC_STEALTH ),
+	DEF_OPT_INT32("cccmaxhops"			, OFS(cccmaxhops),				DEFAULT_CC_MAXHOPS ),
+	DEF_OPT_INT32("cccreshare"			, OFS(cccreshare),				DEFAULT_CC_RESHARE ),
+	DEF_OPT_INT32("cccignorereshare"	, OFS(cccignorereshare),		DEFAULT_CC_IGNRSHR ),
+	DEF_OPT_INT32("cccstealth"			, OFS(cccstealth),				DEFAULT_CC_STEALTH ),
 #endif
 #ifdef CS_ANTICASC
-	DEF_OPT_INT("numusers"				, OFS(ac_users),				DEFAULT_AC_USERS ),
-	DEF_OPT_INT("penalty"				, OFS(ac_penalty),				DEFAULT_AC_PENALTY ),
+	DEF_OPT_INT32("numusers"			, OFS(ac_users),				DEFAULT_AC_USERS ),
+	DEF_OPT_INT32("penalty"				, OFS(ac_penalty),				DEFAULT_AC_PENALTY ),
 #endif
 	DEF_LAST_OPT
 };

@@ -149,7 +149,7 @@ void global_fixups_fn(void *UNUSED(var)) {
 static const struct config_list global_opts[] = {
 	DEF_OPT_FIXUP_FUNC(global_fixups_fn),
 #if defined(QBOXHD) || defined(__arm__)
-	DEF_OPT_INT("enableled"					, OFS(enableled),			0 ),
+	DEF_OPT_INT32("enableled"				, OFS(enableled),			0 ),
 #endif
 	DEF_OPT_FUNC("disablelog"				, OFS(disablelog),			disablelog_fn ),
 #if defined(WEBIF) || defined(MODULE_MONITOR)
@@ -157,49 +157,49 @@ static const struct config_list global_opts[] = {
 #endif
 	DEF_OPT_FUNC("serverip"					, OFS(srvip),				serverip_fn ),
 	DEF_OPT_FUNC("logfile"					, OFS(logfile),				logfile_fn ),
-	DEF_OPT_INT("disableuserfile"			, OFS(disableuserfile),		1 ),
-	DEF_OPT_INT("disablemail"				, OFS(disablemail),			1 ),
-	DEF_OPT_INT("usrfileflag"				, OFS(usrfileflag),			0 ),
-	DEF_OPT_UINT("clienttimeout"			, OFS(ctimeout),			CS_CLIENT_TIMEOUT ),
-	DEF_OPT_UINT("fallbacktimeout"			, OFS(ftimeout),			CS_CLIENT_TIMEOUT / 2 ),
-	DEF_OPT_UINT("clientmaxidle"			, OFS(cmaxidle),			CS_CLIENT_MAXIDLE ),
-	DEF_OPT_UINT("cachedelay"				, OFS(delay),				CS_DELAY ),
-	DEF_OPT_INT("bindwait"					, OFS(bindwait),			CS_BIND_TIMEOUT ),
-	DEF_OPT_UINT("netprio"					, OFS(netprio),				0 ),
-	DEF_OPT_INT("sleep"						, OFS(tosleep),				0 ),
-	DEF_OPT_INT("unlockparental"			, OFS(ulparent),			0 ),
-	DEF_OPT_INT("nice"						, OFS(nice),				99 ),
-	DEF_OPT_UINT("serialreadertimeout"		, OFS(srtimeout),			1500 ),
-	DEF_OPT_INT("maxlogsize"				, OFS(max_log_size),		10 ),
-	DEF_OPT_INT("waitforcards"				, OFS(waitforcards),		1 ),
-	DEF_OPT_INT("waitforcards_extra_delay"	, OFS(waitforcards_extra_delay), 500 ),
-	DEF_OPT_INT("preferlocalcards"			, OFS(preferlocalcards),	0 ),
-	DEF_OPT_INT("readerrestartseconds"		, OFS(reader_restart_seconds), 5 ),
-	DEF_OPT_INT("dropdups"					, OFS(dropdups),			0 ),
+	DEF_OPT_INT32("disableuserfile"			, OFS(disableuserfile),		1 ),
+	DEF_OPT_INT32("disablemail"				, OFS(disablemail),			1 ),
+	DEF_OPT_INT32("usrfileflag"				, OFS(usrfileflag),			0 ),
+	DEF_OPT_UINT32("clienttimeout"			, OFS(ctimeout),			CS_CLIENT_TIMEOUT ),
+	DEF_OPT_UINT32("fallbacktimeout"		, OFS(ftimeout),			CS_CLIENT_TIMEOUT / 2 ),
+	DEF_OPT_UINT32("clientmaxidle"			, OFS(cmaxidle),			CS_CLIENT_MAXIDLE ),
+	DEF_OPT_UINT32("cachedelay"				, OFS(delay),				CS_DELAY ),
+	DEF_OPT_INT32("bindwait"				, OFS(bindwait),			CS_BIND_TIMEOUT ),
+	DEF_OPT_UINT32("netprio"				, OFS(netprio),				0 ),
+	DEF_OPT_INT32("sleep"					, OFS(tosleep),				0 ),
+	DEF_OPT_INT32("unlockparental"			, OFS(ulparent),			0 ),
+	DEF_OPT_INT32("nice"					, OFS(nice),				99 ),
+	DEF_OPT_UINT32("serialreadertimeout"	, OFS(srtimeout),			1500 ),
+	DEF_OPT_INT32("maxlogsize"				, OFS(max_log_size),		10 ),
+	DEF_OPT_INT32("waitforcards"			, OFS(waitforcards),		1 ),
+	DEF_OPT_INT32("waitforcards_extra_delay"	, OFS(waitforcards_extra_delay), 500 ),
+	DEF_OPT_INT32("preferlocalcards"		, OFS(preferlocalcards),	0 ),
+	DEF_OPT_INT32("readerrestartseconds"	, OFS(reader_restart_seconds), 5 ),
+	DEF_OPT_INT32("dropdups"				, OFS(dropdups),			0 ),
 #ifdef CS_CACHEEX
-	DEF_OPT_UINT("cacheexwaittime"			, OFS(cacheex_wait_time),	DEFAULT_CACHEEX_WAIT_TIME ),
-	DEF_OPT_INT("cacheexenablestats"		, OFS(cacheex_enable_stats), 0 ),
+	DEF_OPT_UINT32("cacheexwaittime"		, OFS(cacheex_wait_time),	DEFAULT_CACHEEX_WAIT_TIME ),
+	DEF_OPT_INT32("cacheexenablestats"		, OFS(cacheex_enable_stats), 0 ),
 #endif
-	DEF_OPT_INT("block_same_ip"				, OFS(block_same_ip),		1 ),
-	DEF_OPT_INT("block_same_name"			, OFS(block_same_name),		1 ),
+	DEF_OPT_INT32("block_same_ip"			, OFS(block_same_ip),		1 ),
+	DEF_OPT_INT32("block_same_name"			, OFS(block_same_name),		1 ),
 	DEF_OPT_STR("usrfile"					, OFS(usrfile),				NULL ),
 	DEF_OPT_STR("mailfile"					, OFS(mailfile),			NULL ),
 	DEF_OPT_STR("cwlogdir"					, OFS(cwlogdir),			NULL ),
 	DEF_OPT_STR("emmlogdir"					, OFS(emmlogdir),			NULL ),
 #ifdef WITH_LB
-	DEF_OPT_INT("lb_mode"					, OFS(lb_mode),				DEFAULT_LB_MODE ),
-	DEF_OPT_INT("lb_save"					, OFS(lb_save),				0 ),
-	DEF_OPT_INT("lb_nbest_readers"			, OFS(lb_nbest_readers),	DEFAULT_NBEST ),
-	DEF_OPT_INT("lb_nfb_readers"			, OFS(lb_nfb_readers),		DEFAULT_NFB ),
-	DEF_OPT_INT("lb_min_ecmcount"			, OFS(lb_min_ecmcount),		DEFAULT_MIN_ECM_COUNT ),
-	DEF_OPT_INT("lb_max_ecmcount"			, OFS(lb_max_ecmcount),		DEFAULT_MAX_ECM_COUNT ),
-	DEF_OPT_INT("lb_reopen_seconds"			, OFS(lb_reopen_seconds),	DEFAULT_REOPEN_SECONDS ),
-	DEF_OPT_INT("lb_retrylimit"				, OFS(lb_retrylimit),		DEFAULT_RETRYLIMIT ),
-	DEF_OPT_INT("lb_stat_cleanup"			, OFS(lb_stat_cleanup),		DEFAULT_LB_STAT_CLEANUP ),
-	DEF_OPT_INT("lb_reopen_mode"			, OFS(lb_reopen_mode),		DEFAULT_LB_REOPEN_MODE ),
-	DEF_OPT_INT("lb_max_readers"			, OFS(lb_max_readers),		0 ),
-	DEF_OPT_INT("lb_auto_betatunnel"		, OFS(lb_auto_betatunnel),	DEFAULT_LB_AUTO_BETATUNNEL ),
-	DEF_OPT_INT("lb_auto_betatunnel_prefer_beta"	, OFS(lb_auto_betatunnel_prefer_beta), DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA ),
+	DEF_OPT_INT32("lb_mode"					, OFS(lb_mode),				DEFAULT_LB_MODE ),
+	DEF_OPT_INT32("lb_save"					, OFS(lb_save),				0 ),
+	DEF_OPT_INT32("lb_nbest_readers"		, OFS(lb_nbest_readers),	DEFAULT_NBEST ),
+	DEF_OPT_INT32("lb_nfb_readers"			, OFS(lb_nfb_readers),		DEFAULT_NFB ),
+	DEF_OPT_INT32("lb_min_ecmcount"			, OFS(lb_min_ecmcount),		DEFAULT_MIN_ECM_COUNT ),
+	DEF_OPT_INT32("lb_max_ecmcount"			, OFS(lb_max_ecmcount),		DEFAULT_MAX_ECM_COUNT ),
+	DEF_OPT_INT32("lb_reopen_seconds"		, OFS(lb_reopen_seconds),	DEFAULT_REOPEN_SECONDS ),
+	DEF_OPT_INT32("lb_retrylimit"			, OFS(lb_retrylimit),		DEFAULT_RETRYLIMIT ),
+	DEF_OPT_INT32("lb_stat_cleanup"			, OFS(lb_stat_cleanup),		DEFAULT_LB_STAT_CLEANUP ),
+	DEF_OPT_INT32("lb_reopen_mode"			, OFS(lb_reopen_mode),		DEFAULT_LB_REOPEN_MODE ),
+	DEF_OPT_INT32("lb_max_readers"			, OFS(lb_max_readers),		0 ),
+	DEF_OPT_INT32("lb_auto_betatunnel"		, OFS(lb_auto_betatunnel),	DEFAULT_LB_AUTO_BETATUNNEL ),
+	DEF_OPT_INT32("lb_auto_betatunnel_prefer_beta"	, OFS(lb_auto_betatunnel_prefer_beta), DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA ),
 	DEF_OPT_STR("lb_savepath"				, OFS(lb_savepath),			NULL ),
 	DEF_OPT_FUNC("lb_retrylimits"			, OFS(lb_retrylimittab), caidvaluetab_fn ),
 	DEF_OPT_FUNC("lb_nbest_percaid"			, OFS(lb_nbest_readers_tab), caidvaluetab_fn ),
@@ -207,13 +207,13 @@ static const struct config_list global_opts[] = {
 #endif
 	DEF_OPT_FUNC("double_check_caid"		, OFS(double_check_caid),	check_caidtab_fn ),
 	DEF_OPT_STR("ecmfmt"					, OFS(ecmfmt),				NULL ),
-	DEF_OPT_INT("resolvegethostbyname"		, OFS(resolve_gethostbyname), 0 ),
-	DEF_OPT_INT("failbantime"				, OFS(failbantime),			0 ),
-	DEF_OPT_INT("failbancount"				, OFS(failbancount),		0 ),
-	DEF_OPT_INT("suppresscmd08"				, OFS(c35_suppresscmd08),	0 ),
-	DEF_OPT_INT("double_check"				, OFS(double_check),		0 ),
-	DEF_OPT_UINT("max_cache_time"			, OFS(max_cache_time),		DEFAULT_MAX_CACHE_TIME ),
-	DEF_OPT_UINT("max_cache_count"			, OFS(max_cache_count),		DEFAULT_MAX_CACHE_COUNT ),
+	DEF_OPT_INT32("resolvegethostbyname"	, OFS(resolve_gethostbyname), 0 ),
+	DEF_OPT_INT32("failbantime"				, OFS(failbantime),			0 ),
+	DEF_OPT_INT32("failbancount"			, OFS(failbancount),		0 ),
+	DEF_OPT_INT32("suppresscmd08"			, OFS(c35_suppresscmd08),	0 ),
+	DEF_OPT_INT32("double_check"			, OFS(double_check),		0 ),
+	DEF_OPT_UINT32("max_cache_time"			, OFS(max_cache_time),		DEFAULT_MAX_CACHE_TIME ),
+	DEF_OPT_UINT32("max_cache_count"		, OFS(max_cache_count),		DEFAULT_MAX_CACHE_COUNT ),
 	DEF_LAST_OPT
 };
 
@@ -233,14 +233,14 @@ static bool anticasc_should_save_fn(void *UNUSED(var)) { return cfg.ac_enabled; 
 static const struct config_list anticasc_opts[] = {
 	DEF_OPT_SAVE_FUNC(anticasc_should_save_fn),
 	DEF_OPT_FIXUP_FUNC(anticasc_fixups_fn),
-	DEF_OPT_INT("enabled"					, OFS(ac_enabled),				0 ),
-	DEF_OPT_INT("numusers"					, OFS(ac_users),				0 ),
-	DEF_OPT_INT("sampletime"				, OFS(ac_stime),				2 ),
-	DEF_OPT_INT("samples"					, OFS(ac_samples),				10 ),
-	DEF_OPT_INT("penalty"					, OFS(ac_penalty),				0 ),
+	DEF_OPT_INT32("enabled"					, OFS(ac_enabled),				0 ),
+	DEF_OPT_INT32("numusers"				, OFS(ac_users),				0 ),
+	DEF_OPT_INT32("sampletime"				, OFS(ac_stime),				2 ),
+	DEF_OPT_INT32("samples"					, OFS(ac_samples),				10 ),
+	DEF_OPT_INT32("penalty"					, OFS(ac_penalty),				0 ),
 	DEF_OPT_STR("aclogfile"					, OFS(ac_logfile),				NULL ),
-	DEF_OPT_INT("fakedelay"					, OFS(ac_fakedelay),			3000 ),
-	DEF_OPT_INT("denysamples"				, OFS(ac_denysamples),			8 ),
+	DEF_OPT_INT32("fakedelay"				, OFS(ac_fakedelay),			3000 ),
+	DEF_OPT_INT32("denysamples"				, OFS(ac_denysamples),			8 ),
 	DEF_LAST_OPT
 };
 #else
@@ -252,13 +252,13 @@ static bool monitor_should_save_fn(void *UNUSED(var)) { return cfg.mon_port; }
 
 static const struct config_list monitor_opts[] = {
 	DEF_OPT_SAVE_FUNC(monitor_should_save_fn),
-	DEF_OPT_INT("port"						, OFS(mon_port),				0 ),
+	DEF_OPT_INT32("port"					, OFS(mon_port),				0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(mon_srvip),				serverip_fn ),
 	DEF_OPT_FUNC("nocrypt"					, OFS(mon_allowed),				iprange_fn ),
-	DEF_OPT_INT("aulow"						, OFS(aulow),					30 ),
-	DEF_OPT_INT("monlevel"					, OFS(mon_level),				2 ),
-	DEF_OPT_INT("hideclient_to"				, OFS(hideclient_to),			15 ),
-	DEF_OPT_INT("appendchaninfo"			, OFS(appendchaninfo),			0 ),
+	DEF_OPT_INT32("aulow"					, OFS(aulow),					30 ),
+	DEF_OPT_INT32("monlevel"				, OFS(mon_level),				2 ),
+	DEF_OPT_INT32("hideclient_to"			, OFS(hideclient_to),			15 ),
+	DEF_OPT_INT32("appendchaninfo"			, OFS(appendchaninfo),			0 ),
 	DEF_LAST_OPT
 };
 #else
@@ -321,18 +321,18 @@ static const struct config_list webif_opts[] = {
 	DEF_OPT_STR("httptpl"					, OFS(http_tpl),				NULL ),
 	DEF_OPT_STR("httphelplang"				, OFS(http_help_lang),			"en" ),
 	DEF_OPT_STR("httpcert"					, OFS(http_cert),				NULL ),
-	DEF_OPT_INT("http_prepend_embedded_css"	, OFS(http_prepend_embedded_css), 0 ),
-	DEF_OPT_INT("httprefresh"				, OFS(http_refresh),			0 ),
-	DEF_OPT_INT("httphideidleclients"		, OFS(http_hide_idle_clients),	0 ),
-	DEF_OPT_INT("httpshowpicons"			, OFS(http_showpicons),			0 ),
+	DEF_OPT_INT32("http_prepend_embedded_css"	, OFS(http_prepend_embedded_css), 0 ),
+	DEF_OPT_INT32("httprefresh"				, OFS(http_refresh),			0 ),
+	DEF_OPT_INT32("httphideidleclients"		, OFS(http_hide_idle_clients),	0 ),
+	DEF_OPT_INT32("httpshowpicons"			, OFS(http_showpicons),			0 ),
 	DEF_OPT_FUNC("httpallowed"				, OFS(http_allowed),			iprange_fn ),
-	DEF_OPT_INT("httpreadonly"				, OFS(http_readonly),			0 ),
-	DEF_OPT_INT("httpsavefullcfg"			, OFS(http_full_cfg),			0 ),
-	DEF_OPT_INT("httpforcesslv3"			, OFS(http_force_sslv3),		0 ),
+	DEF_OPT_INT32("httpreadonly"			, OFS(http_readonly),			0 ),
+	DEF_OPT_INT32("httpsavefullcfg"			, OFS(http_full_cfg),			0 ),
+	DEF_OPT_INT32("httpforcesslv3"			, OFS(http_force_sslv3),		0 ),
 	DEF_OPT_FUNC("httpdyndns"				, OFS(http_dyndns),				http_dyndns_fn ),
-	DEF_OPT_INT("aulow"						, OFS(aulow),					30 ),
-	DEF_OPT_INT("hideclient_to"				, OFS(hideclient_to),			15 ),
-	DEF_OPT_INT("appendchaninfo"			, OFS(appendchaninfo),			0 ),
+	DEF_OPT_INT32("aulow"					, OFS(aulow),					30 ),
+	DEF_OPT_INT32("hideclient_to"			, OFS(hideclient_to),			15 ),
+	DEF_OPT_INT32("appendchaninfo"			, OFS(appendchaninfo),			0 ),
 	DEF_LAST_OPT
 };
 #else
@@ -364,10 +364,10 @@ static bool camd33_should_save_fn(void *UNUSED(var)) { return cfg.c33_port; }
 
 static const struct config_list camd33_opts[] = {
 	DEF_OPT_SAVE_FUNC(camd33_should_save_fn),
-	DEF_OPT_INT("port"						, OFS(c33_port),				0 ),
+	DEF_OPT_INT32("port"					, OFS(c33_port),				0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(c33_srvip),				serverip_fn ),
 	DEF_OPT_FUNC("nocrypt"					, OFS(c33_plain),				iprange_fn ),
-	DEF_OPT_INT("passive"					, OFS(c33_passive),				0 ),
+	DEF_OPT_INT32("passive"					, OFS(c33_passive),				0 ),
 	DEF_OPT_FUNC("key"						, OFS(c33_key),					camd33_key_fn ),
 	DEF_LAST_OPT
 };
@@ -380,9 +380,9 @@ static bool csp_should_save_fn(void *UNUSED(var)) { return cfg.csp_port; }
 
 static const struct config_list csp_opts[] = {
 	DEF_OPT_SAVE_FUNC(csp_should_save_fn),
-	DEF_OPT_INT("port"						, OFS(csp_port),				0 ),
+	DEF_OPT_INT32("port"					, OFS(csp_port),				0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(csp_srvip),				serverip_fn ),
-	DEF_OPT_UINT("wait_time"				, OFS(csp_wait_time),			0 ),
+	DEF_OPT_UINT32("wait_time"				, OFS(csp_wait_time),			0 ),
 	DEF_LAST_OPT
 };
 #else
@@ -394,9 +394,9 @@ static bool camd35_should_save_fn(void *UNUSED(var)) { return cfg.c35_port; }
 
 static const struct config_list camd35_opts[] = {
 	DEF_OPT_SAVE_FUNC(camd35_should_save_fn),
-	DEF_OPT_INT("port"						, OFS(c35_port),				0 ),
+	DEF_OPT_INT32("port"						, OFS(c35_port),				0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(c35_srvip),				serverip_fn ),
-	DEF_OPT_INT("suppresscmd08"				, OFS(c35_udp_suppresscmd08),	0 ),
+	DEF_OPT_INT32("suppresscmd08"				, OFS(c35_udp_suppresscmd08),	0 ),
 	DEF_LAST_OPT
 };
 #else
@@ -425,7 +425,7 @@ static const struct config_list cs378x_opts[] = {
 	DEF_OPT_SAVE_FUNC(cs378x_should_save_fn),
 	DEF_OPT_FUNC("port"						, OFS(c35_tcp_ptab),			porttab_cs378x_fn ),
 	DEF_OPT_FUNC("serverip"					, OFS(c35_tcp_srvip),			serverip_fn ),
-	DEF_OPT_INT("suppresscmd08"				, OFS(c35_tcp_suppresscmd08),	0 ),
+	DEF_OPT_INT32("suppresscmd08"			, OFS(c35_tcp_suppresscmd08),	0 ),
 	DEF_LAST_OPT
 };
 #else
@@ -474,8 +474,8 @@ static const struct config_list newcamd_opts[] = {
 	DEF_OPT_FUNC("serverip"					, OFS(ncd_srvip),			serverip_fn ),
 	DEF_OPT_FUNC("allowed"					, OFS(ncd_allowed),			iprange_fn ),
 	DEF_OPT_FUNC("key"						, OFS(ncd_key),				newcamd_key_fn ),
-	DEF_OPT_INT("keepalive"					, OFS(ncd_keepalive),		DEFAULT_NCD_KEEPALIVE ),
-	DEF_OPT_INT("mgclient"					, OFS(ncd_mgclient),		0 ),
+	DEF_OPT_INT32("keepalive"				, OFS(ncd_keepalive),		DEFAULT_NCD_KEEPALIVE ),
+	DEF_OPT_INT32("mgclient"				, OFS(ncd_mgclient),		0 ),
 	DEF_LAST_OPT
 };
 #else
@@ -526,14 +526,14 @@ static const struct config_list cccam_opts[] = {
 	DEF_OPT_FUNC("port"						, OFS(cc_port),				cccam_port_fn ),
 	DEF_OPT_FUNC("nodeid"					, OFS(cc_fixed_nodeid),		cccam_nodeid_fn ),
 	DEF_OPT_SSTR("version"					, OFS(cc_version),			"", SIZEOF(cc_version) ),
-	DEF_OPT_INT("reshare"					, OFS(cc_reshare),			10 ),
-	DEF_OPT_INT("reshare_mode"				, OFS(cc_reshare_services),	0 ),
-	DEF_OPT_INT("ignorereshare"				, OFS(cc_ignore_reshare),	0 ),
-	DEF_OPT_INT("forward_origin_card"		, OFS(cc_forward_origin_card), 0 ),
-	DEF_OPT_INT("stealth"					, OFS(cc_stealth),			0 ),
-	DEF_OPT_INT("updateinterval"			, OFS(cc_update_interval),	DEFAULT_UPDATEINTERVAL ),
-	DEF_OPT_INT("minimizecards"				, OFS(cc_minimize_cards),	0 ),
-	DEF_OPT_INT("keepconnected"				, OFS(cc_keep_connected),	1 ),
+	DEF_OPT_INT32("reshare"					, OFS(cc_reshare),			10 ),
+	DEF_OPT_INT32("reshare_mode"			, OFS(cc_reshare_services),	0 ),
+	DEF_OPT_INT32("ignorereshare"			, OFS(cc_ignore_reshare),	0 ),
+	DEF_OPT_INT32("forward_origin_card"		, OFS(cc_forward_origin_card), 0 ),
+	DEF_OPT_INT32("stealth"					, OFS(cc_stealth),			0 ),
+	DEF_OPT_INT32("updateinterval"			, OFS(cc_update_interval),	DEFAULT_UPDATEINTERVAL ),
+	DEF_OPT_INT32("minimizecards"			, OFS(cc_minimize_cards),	0 ),
+	DEF_OPT_INT32("keepconnected"			, OFS(cc_keep_connected),	1 ),
 	DEF_LAST_OPT
 };
 #else
@@ -545,12 +545,12 @@ static bool pandora_should_save_fn(void *UNUSED(var)) { return cfg.pand_port; }
 
 static const struct config_list pandora_opts[] = {
 	DEF_OPT_SAVE_FUNC(pandora_should_save_fn),
-	DEF_OPT_INT("pand_port"					, OFS(pand_port),			0 ),
+	DEF_OPT_INT32("pand_port"				, OFS(pand_port),			0 ),
 	DEF_OPT_FUNC("pand_srvid"				, OFS(pand_srvip),			serverip_fn ),
 	DEF_OPT_STR("pand_usr"					, OFS(pand_usr),			NULL ),
 	DEF_OPT_STR("pand_pass"					, OFS(pand_pass),			NULL ),
-	DEF_OPT_INT("pand_ecm"					, OFS(pand_ecm),			0 ),
-	DEF_OPT_INT("pand_skip_send_dw"			, OFS(pand_skip_send_dw),	0 ),
+	DEF_OPT_INT32("pand_ecm"				, OFS(pand_ecm),			0 ),
+	DEF_OPT_INT32("pand_skip_send_dw"		, OFS(pand_skip_send_dw),	0 ),
 	DEF_OPT_FUNC("pand_allowed"				, OFS(pand_allowed),		iprange_fn ),
 	DEF_LAST_OPT
 };
@@ -563,7 +563,7 @@ static bool radegast_should_save_fn(void *UNUSED(var)) { return cfg.rad_port; }
 
 static const struct config_list radegast_opts[] = {
 	DEF_OPT_SAVE_FUNC(radegast_should_save_fn),
-	DEF_OPT_INT("port"						, OFS(rad_port),			0 ),
+	DEF_OPT_INT32("port"					, OFS(rad_port),			0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(rad_srvip),			serverip_fn ),
 	DEF_OPT_FUNC("allowed"					, OFS(rad_allowed),			iprange_fn ),
 	DEF_OPT_STR("user"						, OFS(rad_usr),				NULL ),
@@ -578,7 +578,7 @@ static bool serial_should_save_fn(void *UNUSED(var)) { return cfg.ser_device != 
 
 static const struct config_list serial_opts[] = {
 	DEF_OPT_SAVE_FUNC(serial_should_save_fn),
-	DEF_OPT_STR("device"						, OFS(ser_device),		NULL ),
+	DEF_OPT_STR("device"					, OFS(ser_device),			NULL ),
 	DEF_LAST_OPT
 };
 #else
@@ -590,7 +590,7 @@ static bool gbox_should_save_fn(void *UNUSED(var)) { return cfg.gbox_port; }
 
 static const struct config_list gbox_opts[] = {
 	DEF_OPT_SAVE_FUNC(gbox_should_save_fn),
-	DEF_OPT_INT("port"						, OFS(gbox_port),			0 ),
+	DEF_OPT_INT32("port"					, OFS(gbox_port),			0 ),
 	DEF_OPT_STR("gsmsfile"					, OFS(gbox_gsms_path),		NULL ),
 	DEF_OPT_STR("hostname"					, OFS(gbox_hostname),		NULL ),
 	DEF_OPT_STR("password"					, OFS(gbox_key),			NULL ),
@@ -637,13 +637,13 @@ static bool dvbapi_should_save_fn(void *UNUSED(var)) { return cfg.dvbapi_enabled
 
 static const struct config_list dvbapi_opts[] = {
 	DEF_OPT_SAVE_FUNC(dvbapi_should_save_fn),
-	DEF_OPT_INT("enabled"					, OFS(dvbapi_enabled),		0 ),
-	DEF_OPT_INT("au"						, OFS(dvbapi_au),			0 ),
-	DEF_OPT_INT("pmt_mode"					, OFS(dvbapi_pmtmode),		0 ),
-	DEF_OPT_INT("request_mode"				, OFS(dvbapi_requestmode),	0 ),
-	DEF_OPT_INT("request_mode"				, OFS(dvbapi_requestmode),	0 ),
-	DEF_OPT_INT("reopenonzap"				, OFS(dvbapi_reopenonzap),	0 ),
-	DEF_OPT_INT("delayer"					, OFS(dvbapi_delayer),		0 ),
+	DEF_OPT_INT32("enabled"					, OFS(dvbapi_enabled),		0 ),
+	DEF_OPT_INT32("au"						, OFS(dvbapi_au),			0 ),
+	DEF_OPT_INT32("pmt_mode"				, OFS(dvbapi_pmtmode),		0 ),
+	DEF_OPT_INT32("request_mode"			, OFS(dvbapi_requestmode),	0 ),
+	DEF_OPT_INT32("request_mode"			, OFS(dvbapi_requestmode),	0 ),
+	DEF_OPT_INT32("reopenonzap"				, OFS(dvbapi_reopenonzap),	0 ),
+	DEF_OPT_INT32("delayer"					, OFS(dvbapi_delayer),		0 ),
 	DEF_OPT_STR("user"						, OFS(dvbapi_usr),			NULL ),
 	DEF_OPT_FUNC("boxtype"					, OFS(dvbapi_boxtype),		dvbapi_boxtype_fn ),
 	DEF_OPT_FUNC("services"					, OFS(dvbapi_sidtabok),		dvbapi_services_fn ),
@@ -667,10 +667,10 @@ static bool lcd_should_save_fn(void *UNUSED(var)) { return cfg.enablelcd; }
 static const struct config_list lcd_opts[] = {
 	DEF_OPT_SAVE_FUNC(lcd_should_save_fn),
 	DEF_OPT_FIXUP_FUNC(lcd_fixups_fn),
-	DEF_OPT_INT("enablelcd"					, OFS(enablelcd),			0 ),
+	DEF_OPT_INT32("enablelcd"				, OFS(enablelcd),			0 ),
 	DEF_OPT_STR("lcd_outputpath"			, OFS(lcd_output_path),		NULL ),
-	DEF_OPT_INT("lcd_hideidle"				, OFS(lcd_hide_idle),		0 ),
-	DEF_OPT_INT("lcd_writeintervall"		, OFS(lcd_write_intervall),	10 ),
+	DEF_OPT_INT32("lcd_hideidle"			, OFS(lcd_hide_idle),		0 ),
+	DEF_OPT_INT32("lcd_writeintervall"		, OFS(lcd_write_intervall),	10 ),
 	DEF_LAST_OPT
 };
 #else
