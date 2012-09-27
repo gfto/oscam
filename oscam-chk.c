@@ -527,14 +527,14 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   if ((!(rdr->typ & R_IS_NETWORK)) && (rdr->ratelimitecm || rdr->cooldownstate == 1)) { // do we have ratelimitecm and are we in cooling downstate?
     int32_t free_slots = 0, h = 0;
 
-    for (h = 0; h < MAXECMRATELIMIT; h++) {
-		if ((rdr->rlecmh[h].srvid == er->srvid) || (rdr->rlecmh[h].last == -1) || ((time(NULL) - rdr->rlecmh[h].last) > rdr->ratelimitseconds)) {
-          free_slots++;
-          break; /* one free slot should be enough, right? */
-        }
+    for (h = 0; h < rdr->ratelimitecm; h++) { /* Ratelimit IS enabled. So a free slot should be found in the first ratelimitecm slots */
+      if ((rdr->rlecmh[h].srvid == er->srvid) || (rdr->rlecmh[h].last == -1) || ((time(NULL) - rdr->rlecmh[h].last) > rdr->ratelimitseconds)) {
+        free_slots++;
+        break; /* one free slot should be enough, right? */
+      }
     }
-	
-    if(free_slots == 0){
+
+    if (free_slots == 0) {
       cs_debug_mask(D_TRACE, "ratelimit - no free slot on reader %s", rdr->label);
       return(0);
     }
