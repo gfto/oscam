@@ -57,6 +57,15 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 			continue;
 		void *cfg = config_data + c->var_offset;
 		switch (c->opt_type) {
+		case OPT_INT8: {
+			*(int8_t *)cfg = (int8_t)strToIntVal(value, c->def.d_int8);
+			return 1;
+		}
+		case OPT_UINT8: {
+			uint32_t tmp = strToUIntVal(value, c->def.d_uint8);
+			*(uint8_t *)cfg = (uint8_t)(tmp <= 0xff ? tmp : 0xff);
+			return 1;
+		}
 		case OPT_INT32: {
 			*(int32_t *)cfg = strToIntVal(value, c->def.d_int32);
 			return 1;
@@ -110,6 +119,18 @@ void config_list_save(FILE *f, const struct config_list *clist, void *config_dat
 	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
 		void *cfg = config_data + c->var_offset;
 		switch (c->opt_type) {
+		case OPT_INT8: {
+			int8_t val = *(int8_t *)cfg;
+			if (save_all || val != c->def.d_int8)
+				fprintf_conf(f, c->config_name, "%d\n", val);
+			continue;
+		}
+		case OPT_UINT8: {
+			uint8_t val = *(uint8_t *)cfg;
+			if (save_all || val != c->def.d_uint8)
+				fprintf_conf(f, c->config_name, "%u\n", val);
+			continue;
+		}
 		case OPT_INT32: {
 			int32_t val = *(int32_t *)cfg;
 			if (save_all || val != c->def.d_int32)
@@ -174,6 +195,14 @@ void config_list_set_defaults(const struct config_list *clist, void *config_data
 	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
 		void *cfg = config_data + c->var_offset;
 		switch (c->opt_type) {
+		case OPT_INT8: {
+			*(int8_t *)cfg = c->def.d_int8;
+			break;
+		}
+		case OPT_UINT8: {
+			*(uint8_t *)cfg = c->def.d_uint8;
+			break;
+		}
 		case OPT_INT32: {
 			*(int32_t *)cfg = c->def.d_int32;
 			break;

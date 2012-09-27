@@ -9,13 +9,15 @@
 
 enum opt_types {
 	OPT_UNKNOWN = 0,
-	OPT_INT32   = 1 << 1,
-	OPT_UINT32  = 1 << 2,
-	OPT_STRING  = 1 << 3,
-	OPT_SSTRING = 1 << 4,
-	OPT_FUNC    = 1 << 5,
-	OPT_SAVE_FUNC = 1 << 6,
-	OPT_FIXUP_FUNC = 1 << 7,
+	OPT_INT8,
+	OPT_UINT8,
+	OPT_INT32,
+	OPT_UINT32,
+	OPT_STRING,
+	OPT_SSTRING,
+	OPT_FUNC,
+	OPT_SAVE_FUNC,
+	OPT_FIXUP_FUNC,
 };
 
 struct config_list {
@@ -24,6 +26,8 @@ struct config_list {
 	size_t			var_offset;
 	unsigned int	str_size;
 	union {
+		int8_t			d_int8;
+		uint8_t			d_uint8;
 		int32_t			d_int32;
 		uint32_t		d_uint32;
 		char			*d_char;
@@ -34,6 +38,22 @@ struct config_list {
 		void			(*fixup_fn)(void *var);
 	} ops;
 };
+
+#define DEF_OPT_INT8(__name, __var_ofs, __default) \
+	{ \
+		.opt_type		= OPT_INT8, \
+		.config_name	= __name, \
+		.var_offset		= __var_ofs, \
+		.def.d_int8		= __default \
+	}
+
+#define DEF_OPT_UINT8(__name, __var_ofs, __default) \
+	{ \
+		.opt_type		= OPT_UINT8, \
+		.config_name	= __name, \
+		.var_offset		= __var_ofs, \
+		.def.d_uint8	= __default \
+	}
 
 #define DEF_OPT_INT32(__name, __var_ofs, __default) \
 	{ \
