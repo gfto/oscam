@@ -2,7 +2,7 @@ SHELL = /bin/sh
 
 .SUFFIXES:
 .SUFFIXES: .o .c
-.PHONY: all help README.build simple default debug config menuconfig allyesconfig allnoconfig defconfig clean distclean
+.PHONY: all help README.build README.config simple default debug config menuconfig allyesconfig allnoconfig defconfig clean distclean
 
 # Include config.mak which contains variables for all enabled modules
 # These variables will be used to select only needed files for compilation
@@ -401,6 +401,15 @@ README.build:
 \n\
 " > $@
 	@-make --no-print-directory help >> $@
+	@echo "Done."
+
+README.config:
+	@echo "Extracting 'config.sh --help' into $@ file."
+	@-printf "\
+** This file is generated from 'config.sh --help' output, do not edit it. **\n\
+\n\
+" > $@
+	@-./config.sh --help >> $@
 	@echo "Done."
 
 help:

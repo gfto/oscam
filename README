@@ -58,7 +58,7 @@ Building OSCam from source
  - Run `make` to compile OSCam.
 
 For more information and examples on using the build system, please
-see README.build file.
+see README.build and README.config files.
 
 
 Building OScam for different CPUs (cross-compilation)
