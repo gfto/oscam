@@ -15,9 +15,9 @@ static void account_tosleep_fn(const char *token, char *value, void *setting, FI
 }
 
 static void account_c35_suppresscmd08_fn(const char *token, char *value, void *setting, FILE *f) {
-	int32_t *c35_suppresscmd08 = setting;
+	int8_t *c35_suppresscmd08 = setting;
 	if (value) {
-		*c35_suppresscmd08 = strToIntVal(value, cfg.c35_suppresscmd08);
+		*c35_suppresscmd08 = (int8_t)strToIntVal(value, cfg.c35_suppresscmd08);
 		return;
 	}
 	if (*c35_suppresscmd08 != cfg.c35_suppresscmd08 || cfg.http_full_cfg)
@@ -25,9 +25,9 @@ static void account_c35_suppresscmd08_fn(const char *token, char *value, void *s
 }
 
 static void account_ncd_keepalive_fn(const char *token, char *value, void *setting, FILE *f) {
-	int32_t *ncd_keepalive = setting;
+	int8_t *ncd_keepalive = setting;
 	if (value) {
-		*ncd_keepalive = strToIntVal(value, cfg.ncd_keepalive);
+		*ncd_keepalive = (int8_t)strToIntVal(value, cfg.ncd_keepalive);
 		return;
 	}
 	if (*ncd_keepalive != cfg.ncd_keepalive || cfg.http_full_cfg)
@@ -268,7 +268,6 @@ static void account_class_fn(const char *token, char *value, void *setting, FILE
 
 static void account_fixups_fn(void *var) {
 	struct s_auth *account = var;
-	if (account->c35_sleepsend > 0xFF) account->c35_sleepsend = 0xFF;
 #ifdef CS_ANTICASC
 	if (account->ac_users < -1) account->ac_users = DEFAULT_AC_USERS;
 	if (account->ac_penalty < -1) account->ac_penalty = DEFAULT_AC_PENALTY;
@@ -280,7 +279,7 @@ static void account_fixups_fn(void *var) {
 
 static const struct config_list account_opts[] = {
 	DEF_OPT_FIXUP_FUNC(account_fixups_fn),
-	DEF_OPT_INT32("disabled"			, OFS(disabled),				0 ),
+	DEF_OPT_INT8("disabled"				, OFS(disabled),				0 ),
 	DEF_OPT_SSTR("user"					, OFS(usr),						"", SIZEOF(usr) ),
 	DEF_OPT_STR("pwd"					, OFS(pwd),						NULL ),
 #ifdef WEBIF
@@ -288,10 +287,10 @@ static const struct config_list account_opts[] = {
 #endif
 	DEF_OPT_STR("hostname"				, OFS(dyndns),					NULL ),
 	DEF_OPT_FUNC("caid"					, OFS(ctab),					check_caidtab_fn ),
-	DEF_OPT_INT32("uniq"				, OFS(uniq),					0 ),
-	DEF_OPT_UINT32("sleepsend"			, OFS(c35_sleepsend),			0 ),
+	DEF_OPT_INT8("uniq"					, OFS(uniq),					0 ),
+	DEF_OPT_UINT8("sleepsend"			, OFS(c35_sleepsend),			0 ),
 	DEF_OPT_INT32("failban"				, OFS(failban),					0 ),
-	DEF_OPT_INT32("monlevel"			, OFS(monlvl),					0 ),
+	DEF_OPT_INT8("monlevel"				, OFS(monlvl),					0 ),
 	DEF_OPT_FUNC("sleep"				, OFS(tosleep),					account_tosleep_fn ),
 	DEF_OPT_FUNC("suppresscmd08"		, OFS(c35_suppresscmd08),		account_c35_suppresscmd08_fn ),
 	DEF_OPT_FUNC("keepalive"			, OFS(ncd_keepalive),			account_ncd_keepalive_fn ),
@@ -306,18 +305,18 @@ static const struct config_list account_opts[] = {
 	DEF_OPT_FUNC("chid"					, 0,							account_chid_fn ),
 	DEF_OPT_FUNC("class"				, 0,							account_class_fn ),
 #ifdef CS_CACHEEX
-	DEF_OPT_INT32("cacheex"				, OFS(cacheex),					0 ),
-	DEF_OPT_INT32("cacheex_maxhop"		, OFS(cacheex_maxhop),			0 ),
+	DEF_OPT_INT8("cacheex"				, OFS(cacheex),					0 ),
+	DEF_OPT_INT8("cacheex_maxhop"		, OFS(cacheex_maxhop),			0 ),
 #endif
 #ifdef MODULE_CCCAM
 	DEF_OPT_INT32("cccmaxhops"			, OFS(cccmaxhops),				DEFAULT_CC_MAXHOPS ),
-	DEF_OPT_INT32("cccreshare"			, OFS(cccreshare),				DEFAULT_CC_RESHARE ),
-	DEF_OPT_INT32("cccignorereshare"	, OFS(cccignorereshare),		DEFAULT_CC_IGNRSHR ),
-	DEF_OPT_INT32("cccstealth"			, OFS(cccstealth),				DEFAULT_CC_STEALTH ),
+	DEF_OPT_INT8("cccreshare"			, OFS(cccreshare),				DEFAULT_CC_RESHARE ),
+	DEF_OPT_INT8("cccignorereshare"		, OFS(cccignorereshare),		DEFAULT_CC_IGNRSHR ),
+	DEF_OPT_INT8("cccstealth"			, OFS(cccstealth),				DEFAULT_CC_STEALTH ),
 #endif
 #ifdef CS_ANTICASC
 	DEF_OPT_INT32("numusers"			, OFS(ac_users),				DEFAULT_AC_USERS ),
-	DEF_OPT_INT32("penalty"				, OFS(ac_penalty),				DEFAULT_AC_PENALTY ),
+	DEF_OPT_INT8("penalty"				, OFS(ac_penalty),				DEFAULT_AC_PENALTY ),
 #endif
 	DEF_LAST_OPT
 };
