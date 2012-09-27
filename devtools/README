@@ -1,0 +1,4 @@
+The idea of devtools directory is to collect tools that are useful for
+OSCam coders during development or tools used in the oscam build.
+
+These tools are not meant to be used by OSCam users.
