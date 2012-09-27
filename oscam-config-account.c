@@ -310,7 +310,7 @@ static const struct config_list account_opts[] = {
 	DEF_OPT_INT("cacheex_maxhop"		, OFS(cacheex_maxhop),			0 ),
 #endif
 #ifdef MODULE_CCCAM
-	DEF_OPT_INT("cccmaxhops"			, OFS(cccmaxhops),				DEFAULT_CC_MAXHOP ),
+	DEF_OPT_INT("cccmaxhops"			, OFS(cccmaxhops),				DEFAULT_CC_MAXHOPS ),
 	DEF_OPT_INT("cccreshare"			, OFS(cccreshare),				DEFAULT_CC_RESHARE ),
 	DEF_OPT_INT("cccignorereshare"		, OFS(cccignorereshare),		DEFAULT_CC_IGNRSHR ),
 	DEF_OPT_INT("cccstealth"			, OFS(cccstealth),				DEFAULT_CC_STEALTH ),

@@ -997,7 +997,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
 	if (!strcmp(token, "cccmaxhop") || !strcmp(token, "cccmaxhops")) { //Schlocke: cccmaxhops is better!
 		// cccam max card distance
-		rdr->cc_maxhop  = strToIntVal(value, DEFAULT_CC_MAXHOP);
+		rdr->cc_maxhops = strToIntVal(value, DEFAULT_CC_MAXHOPS);
 		return;
 	}
 
@@ -1157,7 +1157,7 @@ void reader_set_defaults(struct s_reader *rdr) {
 #endif
 #ifdef MODULE_CCCAM
 	rdr->cc_reshare = DEFAULT_CC_RESHARE;
-	rdr->cc_maxhop  = DEFAULT_CC_MAXHOP;
+	rdr->cc_maxhops = DEFAULT_CC_MAXHOPS;
 	rdr->cc_reconnect = DEFAULT_CC_RECONNECT;
 #endif
 #ifdef WITH_LB
@@ -1547,8 +1547,8 @@ int32_t write_server(void)
 				if (rdr->cc_version[0] || cfg.http_full_cfg)
 					fprintf_conf(f, "cccversion", "%s\n", rdr->cc_version);
 
-				if (rdr->cc_maxhop != DEFAULT_CC_MAXHOP || cfg.http_full_cfg)
-					fprintf_conf(f, "cccmaxhops", "%d\n", rdr->cc_maxhop);
+				if (rdr->cc_maxhops != DEFAULT_CC_MAXHOPS || cfg.http_full_cfg)
+					fprintf_conf(f, "cccmaxhops", "%d\n", rdr->cc_maxhops);
 
 				if (rdr->cc_mindown > 0 || cfg.http_full_cfg)
 					fprintf_conf(f, "cccmindown", "%d\n", rdr->cc_mindown);

@@ -479,7 +479,7 @@ struct s_arm_led {
 #define DEFAULT_NCD_KEEPALIVE 0
 
 #ifdef MODULE_CCCAM
-#define DEFAULT_CC_MAXHOP   10
+#define DEFAULT_CC_MAXHOPS  10
 #define DEFAULT_CC_RESHARE  -1 // Use global cfg
 #define DEFAULT_CC_IGNRSHR  -1 // Use global cfg
 #define DEFAULT_CC_STEALTH  -1 // Use global cfg
@@ -1181,7 +1181,7 @@ struct s_reader  									//contains device info, reader info and card info
 #ifdef MODULE_CCCAM
 	char			cc_version[7];					// cccam version
 	char			cc_build[7];					// cccam build number
-	int8_t			cc_maxhop;						// cccam max distance
+	int8_t			cc_maxhops;						// cccam max distance
 	int8_t			cc_mindown;						// cccam min downhops
 	int8_t			cc_currenthops;					// number of hops for CCCam
 	int8_t			cc_want_emu;					// Schlocke: Client want to have EMUs, 0 - NO; 1 - YES

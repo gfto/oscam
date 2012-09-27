@@ -2234,7 +2234,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 	case MSG_NEW_CARD: {
 		uint16_t caid = b2i(2, buf + 12);
 		//filter caid==0 and maxhop:
-		if (!caid || buf[14] >= rdr->cc_maxhop+1)
+		if (!caid || buf[14] >= rdr->cc_maxhops + 1)
 			break;
 
 		//filter mindown:
@@ -3519,16 +3519,16 @@ int32_t cc_cli_init_int(struct s_client *cl) {
 
     if (rdr->tcp_ito < 1)
 		rdr->tcp_ito = 30;
-	if (rdr->cc_maxhop < 0)
-		rdr->cc_maxhop = DEFAULT_CC_MAXHOP;
+	if (rdr->cc_maxhops < 0)
+		rdr->cc_maxhops = DEFAULT_CC_MAXHOPS;
 
 	if (rdr->tcp_rto <= 2)
 		rdr->tcp_rto = 2; // timeout to 120s
 	cs_debug_mask(D_READER, "cccam: timeout set to: %d", rdr->tcp_rto);
 	cc_check_version(rdr->cc_version, rdr->cc_build);
-	cs_debug_mask(D_READER, "proxy reader: %s (%s:%d) cccam v%s build %s, maxhop: %d",
+	cs_debug_mask(D_READER, "proxy reader: %s (%s:%d) cccam v%s build %s, maxhops: %d",
 		rdr->label, rdr->device, rdr->r_port, rdr->cc_version,
-		rdr->cc_build, rdr->cc_maxhop);
+		rdr->cc_build, rdr->cc_maxhops);
 
 	return 0;
 }
