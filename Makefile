@@ -13,6 +13,8 @@ SVN_REV := $(shell ./config.sh --oscam-revision)
 
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 
+LINKER_VER_OPT:=-Wl,--version
+
 # Find OSX SDK
 ifeq ($(uname_S),Darwin)
 # Setting OSX_VER allows you to choose prefered version if you have
@@ -22,6 +24,7 @@ ifeq ($(uname_S),Darwin)
 # SDK_VER is not set.
 OSX_SDK := $(shell ./config.sh --detect-osx-sdk-version $(OSX_VER))
 override CONFIG_HAVE_DVBAPI:=
+LINKER_VER_OPT:=-Wl,-v
 endif
 
 ifeq "$(shell ./config.sh --enabled WITH_SSL)" "Y"
@@ -59,7 +62,7 @@ LDFLAGS = -Wl,--gc-sections
 # Check for the linker version and if it matches disable --gc-sections
 # For more information about the bug see:
 #   http://cygwin.com/ml/binutils/2005-01/msg00103.html
-LINKER_VER := $(shell $(CC) -Wl,--version 2>&1 | head -1 | cut -d' ' -f5)
+LINKER_VER := $(shell $(CC) $(LINKER_VER_OPT) 2>&1 | head -1 | cut -d' ' -f5)
 # dm500 toolchain
 ifeq "$(LINKER_VER)" "20040727"
 LDFLAGS :=
@@ -340,7 +343,7 @@ all:
 |  Protocols: $(shell ./config.sh --show-enabled protocols | sed -e 's|MODULE_||g')\n\
 |  Readers  : $(shell ./config.sh --show-enabled readers | sed -e 's|READER_||g')\n\
 |  Compiler : $(shell $(CC) --version 2>/dev/null | head -n 1)\n\
-|  Linker   : $(shell $(CC) -Wl,-v 2>&1 | head -n 1)\n\
+|  Linker   : $(shell $(CC) $(LINKER_VER_OPT) 2>&1 | head -n 1)\n\
 |  Binary   : $(OSCAM_BIN)\n\
 +-------------------------------------------------------------------------------\n"
 	@$(MAKE) --no-print-directory $(OSCAM_BIN) $(LIST_SMARGO_BIN)
