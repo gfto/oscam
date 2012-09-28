@@ -1425,12 +1425,7 @@ void cs_user_resolve(struct s_auth *account){
 	if (account->dyndns) {
 		IN_ADDR_T lastip;
 		IP_ASSIGN(lastip, account->dynip);
-#ifdef IPV6SUPPORT
-		cs_getIPv6fromHost(account->dyndns, &account->dynip, NULL);
-#else
-		account->dynip = cs_getIPfromHost(account->dyndns);
-#endif
-
+		cs_resolve(account->dyndns, &account->dynip, NULL);
 		if (!IP_EQUAL(lastip, account->dynip))  {
 			cs_log("%s: resolved ip=%s", account->dyndns, cs_inet_ntoa(account->dynip));
 		}

@@ -183,11 +183,7 @@ int32_t hostResolve(struct s_reader *rdr){
 
    IN_ADDR_T last_ip;
    IP_ASSIGN(last_ip, cl->ip);
-#ifdef IPV6SUPPORT
-   cs_getIPv6fromHost(rdr->device, &cl->ip, &cl->udp_sa);
-#else
-   cl->ip = cs_getIPfromHost(rdr->device);
-#endif
+   cs_resolve(rdr->device, &cl->ip, &cl->udp_sa);
    IP_ASSIGN(SIN_GET_ADDR(cl->udp_sa), cl->ip);
 
    if (!IP_EQUAL(cl->ip, last_ip)) {

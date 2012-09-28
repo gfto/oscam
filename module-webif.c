@@ -4306,11 +4306,7 @@ static int8_t check_httpdyndns(IN_ADDR_T addr) {
 		int8_t i = 0;
 		for(i = 0; i < MAX_HTTP_DYNDNS; i++) {
 			if(cfg.http_dyndns[i][0]){
-#ifdef IPV6SUPPORT
-				cs_getIPv6fromHost((char*)cfg.http_dyndns[i], &cfg.http_dynip[i], NULL);
-#else
-				cfg.http_dynip[i] = cs_getIPfromHost((char*)cfg.http_dyndns[i]);
-#endif
+				cs_resolve((const char *)cfg.http_dyndns[i], &cfg.http_dynip[i], NULL);
 				cs_debug_mask(D_TRACE, "WebIf: httpdyndns [%d] resolved %s to %s ", i, (char*)cfg.http_dyndns[i], cs_inet_ntoa(cfg.http_dynip[i]));
 			}
 		}
@@ -4363,11 +4359,7 @@ static int8_t check_request(char *result, int32_t read) {
 	return 0;
 }
 
-#ifdef IPV6SUPPORT
-static int32_t readRequest(FILE *f, struct in6_addr in, char **result, int8_t forcePlain)
-#else
-static int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t forcePlain)
-#endif
+static int32_t readRequest(FILE *f, IN_ADDR_T in, char **result, int8_t forcePlain)
 {
 	int32_t n, bufsize=0, errcount = 0;
 	char buf2[1024];
@@ -4417,11 +4409,7 @@ static int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t for
 
 		//max request size 100kb
 		if (bufsize>102400) {
-#ifdef IPV6SUPPORT
 			cs_log("error: too much data received from %s", cs_inet_ntoa(in));
-#else
-			cs_log("error: too much data received from %s", inet_ntoa(in));
-#endif
 			free(*result);
 			return -1;
 		}
@@ -4450,18 +4438,10 @@ static int32_t readRequest(FILE *f, struct in_addr in, char **result, int8_t for
 	}
 	return bufsize;
 }
-#ifdef IPV6SUPPORT
-static int32_t process_request(FILE *f, struct in6_addr in) {
-#else
-static int32_t process_request(FILE *f, struct in_addr in) {
-#endif
+static int32_t process_request(FILE *f, IN_ADDR_T in) {
 	int32_t ok=0,v=cv();
 	int8_t *keepalive = (int8_t *)pthread_getspecific(getkeepalive);
-#ifdef IPV6SUPPORT
-	struct in6_addr addr = GET_IP();
-#else
-	in_addr_t addr = GET_IP();
-#endif
+	IN_ADDR_T addr = GET_IP();
 
 	do {
 #ifdef WITH_SSL
@@ -4766,22 +4746,16 @@ static void *serve_process(void *conn){
 	struct s_connection *myconn = (struct s_connection*)conn;
 	int32_t s = myconn->socket;
 	struct s_client *cl = myconn->cl;
-#ifdef IPV6SUPPORT
-	struct in6_addr in = myconn->remote;
-#else
-	struct in_addr in = myconn->remote;
-#endif
+	IN_ADDR_T in;
+	IP_ASSIGN(in, myconn->remote);
 
 #ifdef WITH_SSL
 	SSL *ssl = myconn->ssl;
 	pthread_setspecific(getssl, ssl);
 #endif
 	free(myconn);
-#ifdef IPV6SUPPORT
-	pthread_setspecific(getip, &in.s6_addr);
-#else
-	pthread_setspecific(getip, &in.s_addr);
-#endif
+
+	pthread_setspecific(getip, &in);
 	pthread_setspecific(getclient, cl);
 
 	int8_t keepalive = 0;

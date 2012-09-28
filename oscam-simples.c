@@ -468,6 +468,15 @@ void cs_inet_addr(char *txt, IN_ADDR_T *out)
 #endif
 }
 
+void cs_resolve(const char *hostname, IN_ADDR_T *ip, struct SOCKADDR *sock) {
+#ifdef IPV6SUPPORT
+	cs_getIPv6fromHost(hostname, ip, sock);
+#else
+	(void)sock;
+	*ip = cs_getIPfromHost(hostname);
+#endif
+}
+
 #ifdef IPV6SUPPORT
 int32_t cs_in6addr_equal(struct in6_addr *a1, struct in6_addr *a2)
 {

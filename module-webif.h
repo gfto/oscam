@@ -34,11 +34,7 @@
 struct s_connection {
 	int32_t socket;
 	struct s_client *cl;
-#ifdef IPV6SUPPORT
-	struct in6_addr remote;
-#else
-	struct in_addr remote;
-#endif
+	IN_ADDR_T remote;
 #ifdef WITH_SSL
 	SSL *ssl;
 #endif

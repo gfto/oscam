@@ -316,6 +316,7 @@ extern void cs_inet_addr(char *txt, IN_ADDR_T *out);
 extern IN_ADDR_T get_null_ip(void);
 extern void set_null_ip(IN_ADDR_T *ip);
 extern void set_localhost_ip(IN_ADDR_T *ip);
+void cs_resolve(const char *hostname, IN_ADDR_T *ip, struct SOCKADDR *sock);
 
 #ifdef IPV6SUPPORT
 #define GET_IP() *(struct in6_addr *)pthread_getspecific(getip)
