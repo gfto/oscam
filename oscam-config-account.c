@@ -266,19 +266,21 @@ static void account_class_fn(const char *token, char *value, void *setting, FILE
 	}
 }
 
+#ifdef CS_ANTICASC
 static void account_fixups_fn(void *var) {
 	struct s_auth *account = var;
-#ifdef CS_ANTICASC
 	if (account->ac_users < -1) account->ac_users = DEFAULT_AC_USERS;
 	if (account->ac_penalty < -1) account->ac_penalty = DEFAULT_AC_PENALTY;
-#endif
 }
+#endif
 
 #define OFS(X) offsetof(struct s_auth, X)
 #define SIZEOF(X) sizeof(((struct s_auth *)0)->X)
 
 static const struct config_list account_opts[] = {
+#ifdef CS_ANTICASC
 	DEF_OPT_FIXUP_FUNC(account_fixups_fn),
+#endif
 	DEF_OPT_INT8("disabled"				, OFS(disabled),				0 ),
 	DEF_OPT_SSTR("user"					, OFS(usr),						"", SIZEOF(usr) ),
 	DEF_OPT_STR("pwd"					, OFS(pwd),						NULL ),
