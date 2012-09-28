@@ -9,6 +9,7 @@
 #endif
 #include "module-cacheex.h"
 #include "module-ird-guess.h"
+#include "module-lcd.h"
 
 static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_ADDR_T ip);
 static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea);
@@ -974,7 +975,7 @@ void cs_exit(int32_t sig)
 	  }
 #endif
 
-	end_lcd_thread();
+	lcd_thread_stop();
 
 #if !defined(__CYGWIN__)
 	char targetfile[256];
@@ -4688,7 +4689,7 @@ int32_t main (int32_t argc, char *argv[])
 	start_thread((void *) &reader_check, "reader check");
 	start_thread((void *) &check_thread, "check");
 
-	start_lcd_thread();
+	lcd_thread_start();
 
 #ifndef WITH_CARDREADER
 	cs_log("Binary without Cardreader Support! No EMM processing possible!");

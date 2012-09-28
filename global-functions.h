@@ -213,17 +213,6 @@ extern void stop_garbage_collector(void);
 extern void http_srv(void);
 
 /* ===========================
- *         oscam-lcd
- * =========================== */
-#ifdef LCDSUPPORT
-extern void start_lcd_thread(void);
-extern void end_lcd_thread(void);
-#else
-static inline void start_lcd_thread(void) { }
-static inline void end_lcd_thread(void) { }
-#endif
-
-/* ===========================
  *         arm-led
  * =========================== */
 extern void cs_switch_led(int32_t led, int32_t action);

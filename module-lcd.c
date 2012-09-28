@@ -1,4 +1,5 @@
 #include "globals.h"
+
 #ifdef LCDSUPPORT
 /*
  * module-lcd.c
@@ -6,12 +7,6 @@
  *  Created on: 24.05.2011
  *      Author: alno
  */
-
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
-#include <sys/stat.h>
-#include <dirent.h>
 
 #ifdef MODULE_CCCAM
 #include "module-cccam.h"
@@ -237,14 +232,14 @@ static void refresh_lcd_file(void) {
 
 }
 
-void start_lcd_thread(void) {
+void lcd_thread_start(void) {
 	if (cfg.enablelcd) {
 		running = 1;
 		start_thread((void *) &refresh_lcd_file, "LCD");
 	}
 }
 
-void end_lcd_thread(void) {
+void lcd_thread_stop(void) {
 	running = 0;
 }
 
