@@ -211,7 +211,7 @@ SAY = @echo
 endif
 
 BINDIR := Distribution
-BUILD_DIR := build
+override BUILD_DIR := build
 OBJDIR := $(BUILD_DIR)/$(TARGET)
 
 OSCAM_BIN := $(BINDIR)/oscam-$(VER)$(SVN_REV)-$(subst cygwin,cygwin.exe,$(TARGET))
