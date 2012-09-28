@@ -726,3 +726,12 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 	cs_debug_mask(D_EMM, "emm reader %s skip provider %04X:%06X", reader->label, caid, provid);
 	return 0;
 }
+
+int32_t chk_caid(uint16_t caid, CAIDTAB *ctab)
+{
+	int32_t n, rc;
+	for (rc = -1, n=0; (n < CS_MAXCAIDTAB) && (rc < 0); n++)
+		if ((caid & ctab->mask[n]) == ctab->caid[n])
+			rc = ctab->cmap[n] ? ctab->cmap[n] : caid;
+	return rc;
+}

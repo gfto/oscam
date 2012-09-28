@@ -1633,30 +1633,6 @@ int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 	return ecmfmt(ecm->caid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->l, ecm->checksum, result, size);
 }
 
-#ifdef CS_CACHEEX
-int32_t format_cxm(struct s_cacheex_matcher *entry, char *result, size_t size)
-{
-	int32_t s;
-
-	s = ecmfmt(entry->caid, entry->provid, entry->chid, entry->pid, entry->srvid, entry->ecmlen, 0, result, size);
-	s += snprintf(result+s, size-s, " = ");
-	s += ecmfmt(entry->to_caid, entry->to_provid, entry->to_chid, entry->to_pid, entry->to_srvid, entry->to_ecmlen, 0, result+s, size-s);
-	s += snprintf(result+s, size-s, " valid %d/%d", entry->valid_from, entry->valid_to);
-
-	return s;
-}
-
-int8_t cs_cacheex_maxhop(struct s_client *cl)
-{
-	int maxhop = 10;
-	if (cl->reader && cl->reader->cacheex_maxhop)
-		maxhop = cl->reader->cacheex_maxhop;
-	else if (cl->account && cl->account->cacheex_maxhop)
-		maxhop = cl->account->cacheex_maxhop;
-	return maxhop;
-}
-#endif
-
 int32_t check_sct_len(const uchar *data, int32_t off)
 {
 	int32_t len = SCT_LEN(data);

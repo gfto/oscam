@@ -1805,10 +1805,6 @@ extern CS_MUTEX_LOCK readdir_lock;
 extern CS_MUTEX_LOCK sr_lock;
 #endif
 
-#ifdef CS_CACHEEX
-extern uint8_t cacheex_peer_id[8];
-#endif
-
 extern pid_t server_pid;							// PID of server - set while startup
 extern LLIST *log_list;				// log list
 

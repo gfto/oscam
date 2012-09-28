@@ -2,11 +2,9 @@
 
 #ifdef MODULE_CCCAM
 
-#include <stdlib.h>
+#include "module-cacheex.h"
 #include "module-cccam.h"
-#include <time.h>
 #include "reader-common.h"
-#include <poll.h>
 #include "module-cccshare.h"
 
 //Mode names for CMD_05 command:
@@ -1941,8 +1939,8 @@ int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 	if (!cc || !cl->udp_fd) return 0;
 
 	//check max 10 nodes to push:
-	if (ll_count(er->csp_lastnodes) >= cs_cacheex_maxhop(cl)) {
-		cs_debug_mask(D_CACHEEX, "cacheex: nodelist reached %d nodes, no push", cs_cacheex_maxhop(cl));
+	if (ll_count(er->csp_lastnodes) >= cacheex_maxhop(cl)) {
+		cs_debug_mask(D_CACHEEX, "cacheex: nodelist reached %d nodes, no push", cacheex_maxhop(cl));
 		return 0;
 	}
 
@@ -1950,7 +1948,7 @@ int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 	LL_LOCKITER *li = ll_li_create(er->csp_lastnodes, 0);
 	uint8_t *node;
 	while ((node = ll_li_next(li))) {
-		cs_debug_mask(D_CACHEEX, "cacheex: check node %" PRIu64 "X == %" PRIu64 "X ?", cnode(node), cnode(cc->peer_node_id));
+		cs_debug_mask(D_CACHEEX, "cacheex: check node %" PRIu64 "X == %" PRIu64 "X ?", cacheex_node_id(node), cacheex_node_id(cc->peer_node_id));
 		if (memcmp(node, cc->peer_node_id, 8) == 0) {
 			break;
 		}
@@ -1960,7 +1958,7 @@ int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 	//node found, so we got it from there, do not push:
 	if (node) {
 		cs_debug_mask(D_CACHEEX,
-				"cacheex: node %" PRIu64 "X found in list => skip push!", cnode(node));
+				"cacheex: node %" PRIu64 "X found in list => skip push!", cacheex_node_id(node));
 		return 0;
 	}
 
@@ -2082,8 +2080,8 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 	ofs++;
 
 	//check max nodes:
-	if (count > cs_cacheex_maxhop(cl)) {
-		cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes (max=%d), ignored!", (int32_t)count, cs_cacheex_maxhop(cl));
+	if (count > cacheex_maxhop(cl)) {
+		cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes (max=%d), ignored!", (int32_t)count, cacheex_maxhop(cl));
 		free(er);
 		return;
 	}
@@ -2104,10 +2102,10 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 		data = cs_malloc(&data, 8, 0);
 		memcpy(data, cc->peer_node_id, 8);
 		ll_append(er->csp_lastnodes, data);
-		cs_debug_mask(D_CACHEEX, "cacheex: added missing remote node id %" PRIu64 "X", cnode(data));
+		cs_debug_mask(D_CACHEEX, "cacheex: added missing remote node id %" PRIu64 "X", cacheex_node_id(data));
 	}
 
-	cs_add_cache(cl, er, 0);
+	cacheex_add_to_cache(cl, er);
 }
 #endif
 

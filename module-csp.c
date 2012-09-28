@@ -9,6 +9,8 @@
 
 #ifdef CS_CACHEEX
 
+#include "module-cacheex.h"
+
 #define TYPE_REQUEST   1
 #define TYPE_REPLY     2
 #define TYPE_PINGREQ   3
@@ -73,7 +75,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 			memcpy(er->cw, buf+13, sizeof(er->cw));
 
 			cs_ddump_mask(D_TRACE, er->cw, sizeof(er->cw), "received cw from csp caid=%04X srvid=%04X hash=%08X", caid, srvid, hash);
-			cs_add_cache(client, er, 1);
+			cacheex_add_to_cache_from_csp(client, er);
     	  }
         break;
 
@@ -95,7 +97,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 			er->rc = E_UNHANDLED;
 
 			cs_ddump_mask(D_TRACE, buf, l, "received ecm request from csp caid=%04X srvid=%04X hash=%08X", caid, srvid, hash);
-			cs_add_cache(client, er, 1);
+			cacheex_add_to_cache_from_csp(client, er);
     	  }
         break;
 

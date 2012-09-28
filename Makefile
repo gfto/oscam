@@ -261,6 +261,7 @@ SRC-$(CONFIG_WITH_CARDREADER) += csctapi/protocol_t1.c
 SRC-$(CONFIG_WITH_CARDREADER) += csctapi/t1_block.c
 
 SRC-$(CONFIG_CS_ANTICASC) += module-anticasc.c
+SRC-$(CONFIG_CS_CACHEEX) += module-cacheex.c
 SRC-$(CONFIG_MODULE_CAMD33) += module-camd33.c
 SRC-$(sort $(CONFIG_MODULE_CAMD35) $(CONFIG_MODULE_CAMD35_TCP)) += module-camd35.c
 SRC-$(CONFIG_MODULE_CCCAM) += module-cccam.c
