@@ -58,8 +58,6 @@ int32_t restart_cardreader(struct s_reader *rdr, int32_t restart);
 extern int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line);
 extern void global_whitelist_read(void);
 
-extern void qboxhd_led_blink(int32_t color, int32_t duration);
-
 extern int32_t accept_connection(int32_t i, int32_t j);
 extern void start_thread(void * startroutine, char * nameroutine);
 extern int32_t add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len);
@@ -211,13 +209,6 @@ extern void stop_garbage_collector(void);
  *         module-webif
  * =========================== */
 extern void http_srv(void);
-
-/* ===========================
- *         arm-led
- * =========================== */
-extern void cs_switch_led(int32_t led, int32_t action);
-extern void arm_led_start_thread(void);
-extern void arm_led_stop_thread(void);
 
 /* ===========================
  *         oscam-log

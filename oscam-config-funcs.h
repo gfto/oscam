@@ -153,6 +153,14 @@ static inline int config_LCDSUPPORT(void) {
 	#endif
 }
 
+static inline int config_LEDSUPPORT(void) {
+	#ifdef LEDSUPPORT
+	return 1;
+	#else
+	return 0;
+	#endif
+}
+
 static inline int config_IPV6SUPPORT(void) {
 	#ifdef IPV6SUPPORT
 	return 1;
@@ -347,22 +355,6 @@ static inline int config_READER_BULCRYPT(void) {
 
 static inline int config_CS_CACHEEX(void) {
 	#ifdef CS_CACHEEX
-	return 1;
-	#else
-	return 0;
-	#endif
-}
-
-static inline int config_QBOXHD(void) {
-	#ifdef QBOXHD
-	return 1;
-	#else
-	return 0;
-	#endif
-}
-
-static inline int config_ARM(void) {
-	#ifdef __arm__
 	return 1;
 	#else
 	return 0;

@@ -148,7 +148,7 @@ void global_fixups_fn(void *UNUSED(var)) {
 
 static const struct config_list global_opts[] = {
 	DEF_OPT_FIXUP_FUNC(global_fixups_fn),
-#if defined(QBOXHD) || defined(__arm__)
+#ifdef LEDSUPPORT
 	DEF_OPT_INT8("enableled"				, OFS(enableled),			0 ),
 #endif
 	DEF_OPT_FUNC("disablelog"				, OFS(disablelog),			disablelog_fn ),

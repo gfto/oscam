@@ -43,6 +43,10 @@
 //#define LCDSUPPORT
 #endif
 
+#ifndef LEDSUPPORT
+//#define LEDSUPPORT
+#endif
+
 #ifndef IPV6SUPPORT
 //#define IPV6SUPPORT
 #endif

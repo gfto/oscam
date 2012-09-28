@@ -10,6 +10,7 @@
 #include "module-cacheex.h"
 #include "module-ird-guess.h"
 #include "module-lcd.h"
+#include "module-led.h"
 
 static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_ADDR_T ip);
 static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea);
@@ -49,10 +50,6 @@ char  cs_tmpdir[200]={0x00};
 pid_t server_pid=0;
 #if defined(WITH_LIBUSB)
 CS_MUTEX_LOCK sr_lock;
-#endif
-#if defined(__arm__)
-pthread_t	arm_led_thread = 0;
-LLIST		*arm_led_actions = NULL;
 #endif
 CS_MUTEX_LOCK system_lock;
 CS_MUTEX_LOCK gethostbyname_lock;
@@ -218,6 +215,7 @@ static void usage(void)
 	_check(WITH_PCSC, "pcsc");
 	_check(WITH_LB, "loadbalancing");
 	_check(LCDSUPPORT, "lcd");
+	_check(LEDSUPPORT, "led");
 	printf("\n");
 
 	printf(" Protocols :");
@@ -955,27 +953,10 @@ void cs_exit(int32_t sig)
   if (!cl)
   	return;
 
-  if(cl->typ == 'h' || cl->typ == 's'){
-#if defined(__arm__)
-		if(cfg.enableled == 1){
-			cs_switch_led(LED1B, LED_OFF);
-			cs_switch_led(LED2, LED_OFF);
-			cs_switch_led(LED3, LED_OFF);
-			cs_switch_led(LED1A, LED_ON);
-		}
-		arm_led_stop_thread();
-#endif
-#ifdef QBOXHD
-		if(cfg.enableled == 2){
-	    qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_FAST);
-	    qboxhd_led_blink(QBOXHD_LED_COLOR_RED,QBOXHD_LED_BLINK_FAST);
-	    qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN,QBOXHD_LED_BLINK_FAST);
-	    qboxhd_led_blink(QBOXHD_LED_COLOR_BLUE,QBOXHD_LED_BLINK_FAST);
-	    qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_FAST);
-	  }
-#endif
-
-	lcd_thread_stop();
+	if (cl->typ == 'h' || cl->typ == 's') {
+		led_status_stopping();
+		led_stop();
+		lcd_thread_stop();
 
 #if !defined(__CYGWIN__)
 	char targetfile[256];
@@ -2271,19 +2252,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 
 	cs_ddump_mask (D_ATR, er->cw, 16, "cw:");
 
-#if defined(__arm__)
-	if(!er->rc &&cfg.enableled == 1) cs_switch_led(LED2, LED_BLINK_OFF);
-#endif
-
-#ifdef QBOXHD
-	if(cfg.enableled == 2){
-    if (er->rc < E_NOTFOUND) {
-        qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN, QBOXHD_LED_BLINK_MEDIUM);
-    } else if (er->rc <= E_STOPPED) {
-        qboxhd_led_blink(QBOXHD_LED_COLOR_RED, QBOXHD_LED_BLINK_MEDIUM);
-    }
-  }
-#endif
+	led_status_cw_not_found(er);
 
 	return 0;
 }
@@ -4408,7 +4377,21 @@ static void restart_daemon(void)
     }
   }
 }
+
+void cs_restart_oscam(void) {
+	exit_oscam=99;
+	cs_log("restart oscam requested");
+}
+
+int32_t cs_get_restartmode(void) {
+	return cs_restart_mode;
+}
 #endif
+
+void cs_exit_oscam(void) {
+	exit_oscam = 1;
+	cs_log("exit oscam requested");
+}
 
 int32_t main (int32_t argc, char *argv[])
 {
@@ -4420,10 +4403,7 @@ int32_t main (int32_t argc, char *argv[])
 		exit(1);
 	}
 
-#if defined(__arm__)
-	cs_switch_led(LED1A, LED_DEFAULT);
-	cs_switch_led(LED1A, LED_ON);
-#endif
+	led_status_default();
 
 	int32_t      i, j, bg=0, gbdb=0;
 
@@ -4651,9 +4631,7 @@ int32_t main (int32_t argc, char *argv[])
   write_versionfile();
   server_pid = getpid();
 
-#if defined(__arm__)
-  arm_led_start_thread();
-#endif
+  led_init();
 
 #if defined(WITH_AZBOX) && defined(HAVE_DVBAPI)
   openxcas_debug_message_onoff(1);  // debug
@@ -4729,23 +4707,7 @@ int32_t main (int32_t argc, char *argv[])
 
 	cs_waitforcardinit();
 
-#if defined(__arm__)
-	if(cfg.enableled == 1){
-		cs_switch_led(LED1A, LED_OFF);
-		cs_switch_led(LED1B, LED_ON);
-	}
-#endif
-
-#ifdef QBOXHD
-	if(cfg.enableled == 2){
-		cs_log("QboxHD LED enabled");
-    qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_FAST);
-    qboxhd_led_blink(QBOXHD_LED_COLOR_RED,QBOXHD_LED_BLINK_FAST);
-    qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN,QBOXHD_LED_BLINK_FAST);
-    qboxhd_led_blink(QBOXHD_LED_COLOR_BLUE,QBOXHD_LED_BLINK_FAST);
-    qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_FAST);
-  }
-#endif
+	led_status_starting();
 
 #ifdef CS_ANTICASC
 	if( !cfg.ac_enabled )
@@ -4778,235 +4740,3 @@ int32_t main (int32_t argc, char *argv[])
 
 	return exit_oscam;
 }
-
-void cs_exit_oscam(void)
-{
-  exit_oscam=1;
-  cs_log("exit oscam requested");
-}
-
-#ifdef WEBIF
-void cs_restart_oscam(void)
-{
-  exit_oscam=99;
-  cs_log("restart oscam requested");
-}
-
-int32_t cs_get_restartmode(void) {
-	return cs_restart_mode;
-}
-
-#endif
-
-#if defined(__arm__)
-static void cs_switch_led_from_thread(int32_t led, int32_t action) {
-
-	if(action < 2) { // only LED_ON and LED_OFF
-		char ledfile[256];
-		FILE *f;
-
-		#ifdef DOCKSTAR
-			switch(led){
-			case LED1A:snprintf(ledfile, 255, "/sys/class/leds/dockstar:orange:misc/brightness");
-			break;
-			case LED1B:snprintf(ledfile, 255, "/sys/class/leds/dockstar:green:health/brightness");
-			break;
-			case LED2:snprintf(ledfile, 255, "/sys/class/leds/dockstar:green:health/brightness");
-			break;
-			case LED3:snprintf(ledfile, 255, "/sys/class/leds/dockstar:orange:misc/brightness");
-			break;
-			}
-		#elif WRT350NV2
-			switch(led){
-			case LED1A:snprintf(ledfile, 255, "/sys/class/leds/wrt350nv2:orange:power/brightness");
-			break;
-			case LED1B:snprintf(ledfile, 255, "/sys/class/leds/wrt350nv2:green:power/brightness");
-			break;
-			case LED2:snprintf(ledfile, 255, "/sys/class/leds/wrt350nv2:green:wireless/brightness");
-			break;
-			case LED3:snprintf(ledfile, 255, "/sys/class/leds/wrt350nv2:green:security/brightness");
-			break;
-			}
-		#else
-			switch(led){
-			case LED1A:snprintf(ledfile, 255, "/sys/class/leds/nslu2:red:status/brightness");
-			break;
-			case LED1B:snprintf(ledfile, 255, "/sys/class/leds/nslu2:green:ready/brightness");
-			break;
-			case LED2:snprintf(ledfile, 255, "/sys/class/leds/nslu2:green:disk-1/brightness");
-			break;
-			case LED3:snprintf(ledfile, 255, "/sys/class/leds/nslu2:green:disk-2/brightness");
-			break;
-			}
-		#endif
-
-		if (!(f=fopen(ledfile, "w"))){
-			// FIXME: sometimes cs_log was not available when calling cs_switch_led -> signal 11
-			// cs_log("Cannot open file \"%s\" (errno=%d %s)", ledfile, errno, strerror(errno));
-			return;
-		}
-		fprintf(f,"%d", action);
-		fclose(f);
-	} else { // LED Macros
-		switch(action){
-		case LED_DEFAULT:
-			cs_switch_led_from_thread(LED1A, LED_OFF);
-			cs_switch_led_from_thread(LED1B, LED_OFF);
-			cs_switch_led_from_thread(LED2, LED_ON);
-			cs_switch_led_from_thread(LED3, LED_OFF);
-			break;
-		case LED_BLINK_OFF:
-			cs_switch_led_from_thread(led, LED_OFF);
-			cs_sleepms(100);
-			cs_switch_led_from_thread(led, LED_ON);
-			break;
-		case LED_BLINK_ON:
-			cs_switch_led_from_thread(led, LED_ON);
-			cs_sleepms(300);
-			cs_switch_led_from_thread(led, LED_OFF);
-			break;
-		}
-	}
-}
-
-static void* arm_led_thread_main(void *UNUSED(thread_data)) {
-	uint8_t running = 1;
-	while (running) {
-		LL_ITER iter = ll_iter_create(arm_led_actions);
-		struct s_arm_led *arm_led;
-		while ((arm_led = ll_iter_next(&iter))) {
-			int32_t led, action;
-			time_t now, start;
-			led = arm_led->led;
-			action = arm_led->action;
-			now = time((time_t)0);
-			start = arm_led->start_time;
-			ll_iter_remove_data(&iter);
-			if (action == LED_STOP_THREAD) {
-				running = 0;
-				break;
-			}
-			if (now - start < ARM_LED_TIMEOUT) {
-				cs_switch_led_from_thread(led, action);
-			}
-		}
-		if (running) {
-			sleep(60);
-		}
-	}
-	ll_clear_data(arm_led_actions);
-	pthread_exit(NULL);
-	return NULL;
-}
-
-void arm_led_start_thread(void) {
-	// call this after signal handling is done
-	if ( ! arm_led_actions ) {
-		arm_led_actions = ll_create("arm_led_actions");
-	}
-	pthread_attr_t attr;
-	pthread_attr_init(&attr);
-	cs_log("starting thread arm_led_thread");
-	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
-	int32_t ret = pthread_create(&arm_led_thread, &attr, arm_led_thread_main, NULL);
-	if (ret)
-		cs_log("ERROR: can't create arm_led_thread thread (errno=%d %s)", ret, strerror(ret));
-	else {
-		cs_log("arm_led_thread thread started");
-		pthread_detach(arm_led_thread);
-	}
-	pthread_attr_destroy(&attr);
-}
-
-void arm_led_stop_thread(void) {
-	cs_switch_led(0, LED_STOP_THREAD);
-}
-
-void cs_switch_led(int32_t led, int32_t action) {
-	struct s_arm_led *arm_led;
-    if(cs_malloc(&arm_led,sizeof(struct s_arm_led), -1)) {
-	arm_led->start_time = time((time_t)0);
-	arm_led->led = led;
-	arm_led->action = action; }
-	if ( ! arm_led_actions ) {
-		arm_led_actions = ll_create("arm_led_actions");
-	}
-	ll_append(arm_led_actions, (void *)arm_led);
-	if (arm_led_thread) {
-		// arm_led_thread_main is not started at oscam startup
-		// when first cs_switch_led calls happen
-		pthread_kill(arm_led_thread, OSCAM_SIGNAL_WAKEUP);
-	}
-
-}
-#endif
-
-#ifdef QBOXHD
-void qboxhd_led_blink(int32_t color, int32_t duration) {
-    int32_t f;
-
-    // try QboxHD-MINI first
-    if ( (f = open ( QBOXHDMINI_LED_DEVICE,  O_RDWR |O_NONBLOCK )) > -1 ) {
-        qboxhdmini_led_color_struct qbminiled;
-        uint32_t qboxhdmini_color = 0x000000;
-
-        if (color != QBOXHD_LED_COLOR_OFF) {
-            switch(color) {
-                case QBOXHD_LED_COLOR_RED:
-                    qboxhdmini_color = QBOXHDMINI_LED_COLOR_RED;
-                    break;
-                case QBOXHD_LED_COLOR_GREEN:
-                    qboxhdmini_color = QBOXHDMINI_LED_COLOR_GREEN;
-                    break;
-                case QBOXHD_LED_COLOR_BLUE:
-                    qboxhdmini_color = QBOXHDMINI_LED_COLOR_BLUE;
-                    break;
-                case QBOXHD_LED_COLOR_YELLOW:
-                    qboxhdmini_color = QBOXHDMINI_LED_COLOR_YELLOW;
-                    break;
-                case QBOXHD_LED_COLOR_MAGENTA:
-                    qboxhdmini_color = QBOXHDMINI_LED_COLOR_MAGENTA;
-                    break;
-            }
-
-            // set LED on with color
-            qbminiled.red = (uchar)((qboxhdmini_color&0xFF0000)>>16);  // R
-            qbminiled.green = (uchar)((qboxhdmini_color&0x00FF00)>>8); // G
-            qbminiled.blue = (uchar)(qboxhdmini_color&0x0000FF);       // B
-
-            ioctl(f,QBOXHDMINI_IOSET_RGB,&qbminiled);
-            cs_sleepms(duration);
-        }
-
-        // set LED off
-        qbminiled.red = 0;
-        qbminiled.green = 0;
-        qbminiled.blue = 0;
-
-        ioctl(f,QBOXHDMINI_IOSET_RGB,&qbminiled);
-        close(f);
-
-    } else if ( (f = open ( QBOXHD_LED_DEVICE,  O_RDWR |O_NONBLOCK )) > -1 ) {
-
-        qboxhd_led_color_struct qbled;
-
-        if (color != QBOXHD_LED_COLOR_OFF) {
-            // set LED on with color
-            qbled.H = color;
-            qbled.S = 99;
-            qbled.V = 99;
-            ioctl(f,QBOXHD_SET_LED_ALL_PANEL_COLOR, &qbled);
-            cs_sleepms(duration);
-        }
-
-        // set LED off
-        qbled.H = 0;
-        qbled.S = 0;
-        qbled.V = 0;
-        ioctl(f,QBOXHD_SET_LED_ALL_PANEL_COLOR, &qbled);
-        close(f);
-    }
-
-    return;
-}
-#endif

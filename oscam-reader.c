@@ -1,4 +1,5 @@
 #include "globals.h"
+#include "module-led.h"
 #include "reader-common.h"
 #include "csctapi/ifd_sc8in1.h"
 
@@ -721,12 +722,10 @@ void reader_log_emm(struct s_reader * reader, EMM_PACKET *ep, int32_t i, int32_t
 				1000 * (tpe.time - tps->time) + tpe.millitm - tps->millitm);
 	}
 
-	if (rc)
+	if (rc) {
 		cl->lastemm = time((time_t*) 0);
-
-#if defined(__arm__)
-	if (rc && cfg.enableled == 1) cs_switch_led(LED3, LED_BLINK_ON);
-#endif
+		led_status_emm_ok();
+	}
 
 #if defined(WEBIF) || defined(LCDSUPPORT)
 	//counting results
@@ -744,10 +743,6 @@ void reader_log_emm(struct s_reader * reader, EMM_PACKET *ep, int32_t i, int32_t
 		reader->emmblocked[ep->type]++;
 		break;
 	}
-#endif
-
-#ifdef QBOXHD
-	if (rc && cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_BLUE,QBOXHD_LED_BLINK_MEDIUM);
 #endif
 }
 

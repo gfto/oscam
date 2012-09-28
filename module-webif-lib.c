@@ -249,13 +249,13 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
 									int8_t ok = 0;
 									for (ptr2 = strtok_r(ptr1, ",", &saveptr2); (ptr2) && ok == 0 ; ptr2 = strtok_r(NULL, ",", &saveptr2)){
 										size_t len = strlen(ptr2);
-										check_conf(ARM, ptr2);
 										check_conf(CS_ANTICASC, ptr2);
 										check_conf(CS_CACHEEX, ptr2);
 										check_conf(HAVE_DVBAPI, ptr2);
 										check_conf(IPV6SUPPORT, ptr2);
 										check_conf(IRDETO_GUESSING, ptr2);
 										check_conf(LCDSUPPORT, ptr2);
+										check_conf(LEDSUPPORT, ptr2);
 										check_conf(MODULE_CAMD33, ptr2);
 										check_conf(MODULE_CAMD35, ptr2);
 										check_conf(MODULE_CAMD35_TCP, ptr2);
@@ -268,7 +268,6 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
 										check_conf(MODULE_PANDORA, ptr2);
 										check_conf(MODULE_RADEGAST, ptr2);
 										check_conf(MODULE_SERIAL, ptr2);
-										check_conf(QBOXHD, ptr2);
 										check_conf(READER_BULCRYPT, ptr2);
 										check_conf(READER_CONAX, ptr2);
 										check_conf(READER_CRYPTOWORKS, ptr2);

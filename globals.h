@@ -373,46 +373,6 @@ enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE, E2_
 
 #define CTA_RES_LEN 512
 
-#define  LED1A 		0
-#define  LED1B 		1
-#define  LED2 		2
-#define  LED3 		3
-#define  LED_OFF	0
-#define  LED_ON		1
-#define  LED_BLINK_ON 	2
-#define  LED_BLINK_OFF 	3
-#define  LED_DEFAULT 	10
-#define  LED_STOP_THREAD 100
-#define  ARM_LED_TIMEOUT 3 //Dont blink for actions which are < ARM_LED_TIMEOUT seconds ago
-
-struct s_arm_led {
-	int32_t led;
-	int32_t action;
-	time_t start_time;
-};
-
-#define QBOXHD_LED_DEVICE               "/dev/sw0"
-#define QBOXHD_SET_LED_ALL_PANEL_COLOR	_IO(0xBC, 13)    // payload = 3byte [H][S][V]
-#define QBOXHD_LED_COLOR_RED        359  // only H value, S and V values are always == 99
-#define QBOXHD_LED_COLOR_GREEN      120
-#define QBOXHD_LED_COLOR_BLUE       230
-#define QBOXHD_LED_COLOR_YELLOW     55
-#define QBOXHD_LED_COLOR_MAGENTA    290
-
-#define QBOXHDMINI_LED_DEVICE       "/dev/lpc_0"
-#define	QBOXHDMINI_IOSET_RGB        _IOWR('L', 6, qboxhdmini_led_color_struct)
-#define QBOXHDMINI_LED_COLOR_RED     0x1F0000               // 3 bytes RGB , 5 bit used for each color
-#define QBOXHDMINI_LED_COLOR_GREEN   0x001F00
-#define QBOXHDMINI_LED_COLOR_BLUE    0x00001F
-#define QBOXHDMINI_LED_COLOR_YELLOW  0x1F1F00
-#define QBOXHDMINI_LED_COLOR_MAGENTA 0x1F001F
-
-#define QBOXHD_LED_COLOR_OFF        -1   // all colors H,S,V and/or R,G,B == 0,0,0
-
-#define QBOXHD_LED_BLINK_FAST       100  // blink milliseconds
-#define QBOXHD_LED_BLINK_MEDIUM     200
-#define QBOXHD_LED_BLINK_SLOW       400
-
 #define MAX_ATR_LEN		33			// max. ATR length
 #define MAX_HIST		15			// max. number of historical characters
 
@@ -1658,7 +1618,7 @@ struct s_config
 	struct		s_cpmap *cpmap;
 #endif
 
-#if defined(QBOXHD) || defined(__arm__)
+#ifdef LEDSUPPORT
 	int8_t		enableled;							// 0=disabled led, 1=enable led for routers, 2=enable qboxhd led
 #endif
 
@@ -1759,19 +1719,6 @@ typedef struct emm_packet_t
 	uchar			type;
 	struct s_client *client;
 } EMM_PACKET;
-
-// QBOX led structures
-typedef struct {
-	uint16_t H;										// range 0-359
-	unsigned char S;								// range 0-99
-	unsigned char V;								// range 0-99
-} qboxhd_led_color_struct;
-
-typedef struct {
-	unsigned char red;								// first 5 bit used (&0x1F)
-	unsigned char green;							// first 5 bit used (&0x1F)
-	unsigned char blue;								// first 5 bit used (&0x1F)
-} qboxhdmini_led_color_struct;
 
 
 /* ===========================

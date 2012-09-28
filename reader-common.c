@@ -2,6 +2,7 @@
 
 #ifdef WITH_CARDREADER
 
+#include "module-led.h"
 #include "reader-common.h"
 #include "csctapi/defines.h"
 #include "csctapi/atr.h"
@@ -108,10 +109,8 @@ static int32_t reader_activate_card(struct s_reader * reader, ATR * atr, uint16_
 		if (!ret)
 			break;
 		rdr_log(reader, "Error activating card.");
-#ifdef QBOXHD
-		if(cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_MEDIUM);
-#endif
-  	cs_sleepms(500);
+		led_status_card_activation_error();
+		cs_sleepms(500);
 	}
   if (ret) return(0);
 
@@ -211,14 +210,7 @@ static int32_t reader_get_cardsystem(struct s_reader * reader, ATR *atr)
 				rdr_log(reader, "found cardsystem %s", cardsystem[i].desc);
 				reader->csystem=cardsystem[i];
 				reader->csystem.active=1;
-#ifdef QBOXHD
-				if(cfg.enableled == 2){
-					qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_MEDIUM);
-					qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN,QBOXHD_LED_BLINK_MEDIUM);
-					qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_MEDIUM);
-					qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN,QBOXHD_LED_BLINK_MEDIUM);
-				}
-#endif
+				led_status_found_cardsystem();
 				break;
 			}
 		}
@@ -227,9 +219,7 @@ static int32_t reader_get_cardsystem(struct s_reader * reader, ATR *atr)
 	if (reader->csystem.active==0)
 	{
 		rdr_log(reader, "card system not supported");
-#ifdef QBOXHD
-		if(cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_MEDIUM);
-#endif
+		led_status_unsupported_card_system();
 	}
 
 	return(reader->csystem.active);
@@ -279,9 +269,7 @@ int32_t reader_reset(struct s_reader * reader)
         	char text[] = {'S', (char)reader->slot+0x30, 'A', 'E', 'R'};
         	MCR_DisplayText(reader, text, 5, 400, 0);
         }
-#ifdef QBOXHD
-        if(cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_MEDIUM);
-#endif
+		led_status_card_activation_error();
       }
       else
       {
@@ -323,9 +311,7 @@ int32_t reader_checkhealth(struct s_reader * reader)
 	if (reader_card_inserted(reader)) {
 		if (reader->card_status == NO_CARD || reader->card_status == UNKNOWN) {
 			rdr_log(reader, "card detected");
-#ifdef QBOXHD
-			if(cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_SLOW);
-#endif
+			led_status_card_detected();
 			reader->card_status = CARD_NEED_INIT;
 			//reader_reset(reader);
 			add_job(cl, ACTION_READER_RESET, NULL, 0);
@@ -338,9 +324,7 @@ int32_t reader_checkhealth(struct s_reader * reader)
 				cl->lastemm = 0;
 				cl->lastecm = 0;
 			}
-#ifdef QBOXHD
- 			if(cfg.enableled == 2) qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_SLOW);
-#endif
+			led_status_card_ejected();
 		}
 		reader->card_status = NO_CARD;
 	}

@@ -96,6 +96,7 @@ void write_versionfile(void) {
 	write_conf(MODULE_MONITOR, "Monitor");
 	write_conf(WITH_LB, "Loadbalancing support");
 	write_conf(LCDSUPPORT, "LCD support");
+	write_conf(LEDSUPPORT, "LED support");
 	write_conf(IPV6SUPPORT, "IPv6 support");
 	write_conf(CS_CACHEEX, "Cache exchange support");
 	write_conf(MODULE_CAMD33, "camd 3.3x");
