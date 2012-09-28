@@ -4365,6 +4365,7 @@ int32_t add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 }
 
 static uint32_t auto_timeout(ECM_REQUEST *er, uint32_t timeout) {
+        (void)er; // Prevent warning about unused er, when WITH_LB is disabled
 #ifdef WITH_LB
         if (cfg.lb_auto_timeout)
                 return lb_auto_timeout(er, timeout);
