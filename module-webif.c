@@ -700,6 +700,7 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 	tpl_addVar(vars, TPLADD, "HTTPJSCRIPT", cfg.http_jscript);
 
 	if (cfg.http_hide_idle_clients > 0) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
+	tpl_addVar(vars, TPLADD, "HTTPHIDETYPE", cfg.http_hide_type);
 	if (cfg.http_showpicons > 0) tpl_addVar(vars, TPLADD, "SHOWPICONSCHECKED", "checked");
 
 	char *value = mk_t_iprange(cfg.mon_allowed);
@@ -2866,6 +2867,8 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 	int32_t shown;
 
 	struct s_client *cl;
+	int8_t filtered;
+	
 	cs_readlock(&readerlist_lock);
 	cs_readlock(&clientlist_lock);
 	for (i=0, cl=first_client; cl ; cl=cl->next, i++) {
@@ -2892,7 +2895,15 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 
 		shown = 0;
 		if (cl->wihidden != 1) {
-			if (cfg.http_hide_idle_clients != 1 || cl->typ != 'c' || (now - cl->lastecm) <= cfg.hideclient_to) {
+			filtered = !(cfg.http_hide_idle_clients != 1 || cl->typ != 'c' || (now - cl->lastecm) <= cfg.hideclient_to);
+			if (!filtered && cfg.http_hide_type) {
+				char *p = cfg.http_hide_type;
+			        while (*p && !filtered) {
+			        	filtered = (*p++ == cl->typ);
+				}
+			}
+			
+                        if (!filtered) {
 				if (cl->typ=='c'){
 					user_count_shown++;
 					if (cfg.http_hide_idle_clients != 1 && cfg.hideclient_to > 0 && (now - cl->lastecm) <= cfg.hideclient_to) {

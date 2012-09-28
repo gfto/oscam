@@ -643,7 +643,9 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
 		//cs_log("ECM for %04X:%06X:%04X is valid for ECMHeaderwhitelist of reader %s.", er->caid, er->prid, er->srvid, rdr->label);
 	} else {
 		if (skip == 0 || (foundcaid == 1 && foundprovid == 1 && entryok == 0 && skip == 1)) {
-			cs_dump(er->ecm, er->l, "following ECM %04X:%06X:%04X was filtered by ECMHeaderwhitelist of Reader %s because of not matching Header:",er->caid, er->prid, er->srvid, rdr->label);			
+			cs_ddump_mask(D_TRACE, er->ecm, er->l, 
+				"following ECM %04X:%06X:%04X was filtered by ECMHeaderwhitelist of Reader %s from User %s because of not matching Header:",
+				er->caid, er->prid, er->srvid, rdr->label, username(er->client));
 			rdr->ecmsfilteredhead += 1;	
 			return(0);
 		}

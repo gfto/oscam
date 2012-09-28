@@ -327,6 +327,7 @@ static const struct config_list webif_opts[] = {
 	DEF_OPT_INT32("http_prepend_embedded_css"	, OFS(http_prepend_embedded_css), 0 ),
 	DEF_OPT_INT32("httprefresh"				, OFS(http_refresh),			0 ),
 	DEF_OPT_INT8("httphideidleclients"		, OFS(http_hide_idle_clients),	0 ),
+	DEF_OPT_STR("httphidetype"				, OFS(http_hide_type),				NULL ),
 	DEF_OPT_INT8("httpshowpicons"			, OFS(http_showpicons),			0 ),
 	DEF_OPT_FUNC("httpallowed"				, OFS(http_allowed),			iprange_fn ),
 	DEF_OPT_INT8("httpreadonly"				, OFS(http_readonly),			0 ),

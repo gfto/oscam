@@ -1535,6 +1535,7 @@ struct s_config
 	char			*http_script;
 	int32_t			http_refresh;
 	int8_t			http_hide_idle_clients;
+	char			*http_hide_type;
 	int8_t			http_showpicons;
 	struct s_ip 	*http_allowed;
 	int8_t			http_readonly;
