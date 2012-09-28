@@ -14,7 +14,7 @@ const char *cmd05_mode_name[] = { "UNKNOWN", "PLAIN", "AES", "CC_CRYPT", "RC4",
 //Mode names for CMD_0C command:
 const char *cmd0c_mode_name[] = { "NONE", "RC6", "RC4", "CC_CRYPT", "AES", "IDEA" };
 
-static uint8_t cc_node_id[8];
+uint8_t cc_node_id[8];
 
 #define getprefix() (!cl?"":(!cl->cc?"":(((struct cc_data *)(cl->cc))->prefix)))
 
@@ -3622,11 +3622,6 @@ void cc_cleanup(struct s_client *cl) {
 		cc_cli_close(cl, TRUE); // we need to close open fd's
 	}
 	cc_free(cl);
-}
-
-uint8_t *cc_get_cccam_node_id(void)
-{
-	return cc_node_id;
 }
 
 void cc_update_nodeid(void)

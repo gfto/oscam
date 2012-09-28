@@ -425,21 +425,7 @@ int32_t camd35_client_init(struct s_client *client)
 }
 
 #ifdef CS_CACHEEX
-
 uint8_t camd35_node_id[8];
-
-uint8_t *cacheex_update_peer_id(void)
-{
-	int8_t i;
-	for (i=0; i<8; i++)
-		camd35_node_id[i] = fast_rnd();
-        return camd35_node_id;
-}
-
-void cacheex_set_peer_id(uint8_t *id)
-{
-	memcpy(camd35_node_id, id, 8);
-}
 
 /**
  * send own id

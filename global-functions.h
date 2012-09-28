@@ -58,10 +58,6 @@ int32_t restart_cardreader(struct s_reader *rdr, int32_t restart);
 extern int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line);
 extern void global_whitelist_read(void);
 
-extern uint8_t *cacheex_update_peer_id(void);
-extern void cacheex_set_peer_id(uint8_t *id);
-extern uint8_t *cc_get_cccam_node_id(void);
-
 extern void qboxhd_led_blink(int32_t color, int32_t duration);
 
 extern int32_t accept_connection(int32_t i, int32_t j);

@@ -13,10 +13,12 @@ extern int8_t cacheex_match_alias(struct s_client *cl, ECM_REQUEST *er, ECM_REQU
 extern void cacheex_add_to_cache(struct s_client *cl, ECM_REQUEST *er);
 extern void cacheex_add_to_cache_from_csp(struct s_client *cl, ECM_REQUEST *er);
 #ifdef CS_CACHEEX
+extern void cacheex_init(void);
 extern void cacheex_clear_account_stats(struct s_auth *account);
 extern void cacheex_clear_client_stats(struct s_client *client);
 extern void cacheex_load_config_file(void);
 #else
+static inline void cacheex_init(void) { };
 static inline void cacheex_clear_account_stats(struct s_auth *UNUSED(account)) { };
 static inline void cacheex_clear_client_stats(struct s_client *UNUSED(client)) { };
 static inline void cacheex_load_config_file(void) { };

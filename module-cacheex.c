@@ -7,11 +7,26 @@
 
 #define cs_cacheex_matcher "oscam.cacheex"
 
+extern uint8_t cc_node_id[8];
+extern uint8_t camd35_node_id[8];
 extern CS_MUTEX_LOCK ecmcache_lock;
 extern struct ecm_request_t *ecmcwcache;
 
 uint8_t cacheex_peer_id[8];
 static LLIST *invalid_cws;
+
+void cacheex_init(void) {
+	// Init random node id
+	int i;
+	for (i = 0; i < 8; i++)
+		cacheex_peer_id[i] = fast_rnd();
+#ifdef MODULE_CCCAM
+	memcpy(cacheex_peer_id, cc_node_id, 8);
+#endif
+#ifdef MODULE_CAMD35_TCP
+	memcpy(camd35_node_id, cacheex_peer_id, 8);
+#endif
+}
 
 void cacheex_clear_account_stats(struct s_auth *account) {
 	account->cwcacheexgot = 0;

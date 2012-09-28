@@ -4654,17 +4654,7 @@ int32_t main (int32_t argc, char *argv[])
 
   start_garbage_collector(gbdb);
 
-  //set cacheex cccam+camd35 node id:
-#ifdef CS_CACHEEX
-#if defined MODULE_CAMD35 || defined MODULE_CAMD35_TCP
-#ifdef MODULE_CCCAM
-  memcpy(cacheex_peer_id, cc_get_cccam_node_id(), sizeof(cacheex_peer_id));
-  cacheex_set_peer_id(cacheex_peer_id);
-#else
-  memcpy(cacheex_peer_id, cacheex_update_peer_id(), sizeof(cacheex_peer_id));
-#endif
-#endif
-#endif
+  cacheex_init();
 
   init_len4caid();
   init_irdeto_guess_tab();
