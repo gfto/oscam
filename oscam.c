@@ -1981,13 +1981,8 @@ ECM_REQUEST *get_ecmtask(void)
 #ifdef WITH_LB
 void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, struct s_ecm_answer *ea, int8_t rc)
 {
-#ifdef CS_CACHEEX
-	if (!rdr || rc>=E_99 || rdr->cacheex==1)
+	if (!rdr || rc >= E_99 || cacheex_reader(rdr))
 		return;
-#else
-	if (!rdr || rc>=E_99)
-		return;
-#endif
 	if (er->ecmcacheptr) //ignore cache answer
 		return;
 
@@ -2407,8 +2402,8 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 		if (ea->rc == E_FOUND) {
 			eardr->ecmsok++;
 #ifdef CS_CACHEEX
-			struct s_client *eacl = eardr?eardr->client:NULL; //reader is null on timeouts
-			if (eardr->cacheex == 1 && !ert->cacheex_done && eacl) {
+			struct s_client *eacl = eardr->client;
+			if (cacheex_reader(eardr) && !ert->cacheex_done && eacl) {
 				eacl->cwcacheexgot++;
 				cacheex_add_stats(eacl, ea->er->caid, ea->er->srvid, ea->er->prid, 1);
 				first_client->cwcacheexgot++;
@@ -2980,10 +2975,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				ea->status = READER_ACTIVE;
 				if (!(rdr->typ & R_IS_NETWORK))
 					ea->status |= READER_LOCAL;
-#ifdef CS_CACHEEX
-				else if (rdr->cacheex == 1)
+				else if (cacheex_reader(rdr))
 					ea->status |= READER_CACHEEX;
-#endif
 				if (rdr->fallback)
 					ea->status |= READER_FALLBACK;
 

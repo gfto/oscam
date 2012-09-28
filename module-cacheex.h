@@ -18,12 +18,14 @@ extern void cacheex_clear_account_stats(struct s_auth *account);
 extern void cacheex_clear_client_stats(struct s_client *client);
 extern void cacheex_load_config_file(void);
 extern void cacheex_update_hash(ECM_REQUEST *er);
+static inline bool cacheex_reader(struct s_reader *rdr) { return rdr->cacheex == 1; };
 #else
 static inline void cacheex_init(void) { };
 static inline void cacheex_clear_account_stats(struct s_auth *UNUSED(account)) { };
 static inline void cacheex_clear_client_stats(struct s_client *UNUSED(client)) { };
 static inline void cacheex_load_config_file(void) { };
 static inline void cacheex_update_hash(ECM_REQUEST *UNUSED(er)) { };
+static inline bool cacheex_reader(struct s_reader *UNUSED(rdr)) { return false; };
 #endif
 
 #endif
