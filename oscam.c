@@ -1792,26 +1792,23 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl)
 
 #ifdef CS_CACHEEX
 		if (!cacheex_match_alias(cl, er, ecm)) {
-#endif
 			if (!(ecm->caid == er->caid || (ecm->ocaid && er->ocaid && ecm->ocaid == er->ocaid)))
 				continue;
-				
-#ifdef CS_CACHEEX
+
 			//CWs from csp have no ecms, so ecm->l=0. ecmd5 is invalid, so do not check!
 			if (ecm->csp_hash != er->csp_hash)
 				continue;
 
 			if (ecm->l > 0 && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
 				continue;
-
-#else
-			if (memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
-				continue;
-#endif
-#ifdef CS_CACHEEX
 		}
-#endif
+#else
+		if (!(ecm->caid == er->caid || (ecm->ocaid && er->ocaid && ecm->ocaid == er->ocaid)))
+			continue;
 
+		if (memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
+			continue;
+#endif
 		if (ecm->rc != E_99)
 			break;
 	}
