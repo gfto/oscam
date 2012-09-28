@@ -201,6 +201,7 @@ OSCam build system documentation
     make azbox         - Builds OSCam for AZBox STBs
     make coolstream    - Builds OSCam for Coolstream
     make dockstar      - Builds OSCam for Dockstar
+    make qboxhd        - Builds OSCam for QBoxHD STBs
     make opensolaris   - Builds OSCam for OpenSolaris
 
  Predefined targets for static builds:

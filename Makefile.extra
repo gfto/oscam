@@ -227,6 +227,14 @@ dockstar:
 		CONF_DIR=/jffs/etc/config/oscam \
 		$(MAKEFLAGS)
 
+qboxhd:
+	$(MAKE) --no-print-directory \
+		CROSS=sh4-linux- \
+		EXTRA_FLAGS=-DQBOXHD \
+		PLUS_TARGET=-qboxhd \
+		CONF_DIR=/var/tuxbox/config \
+		$(MAKEFLAGS)
+
 static:
 	$(MAKE) --no-print-directory \
 		EXTRA_FLAGS=-static \
