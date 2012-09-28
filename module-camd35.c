@@ -479,7 +479,7 @@ void camd35_cache_push_request_remote_id(struct s_client *cl) {
 
         time_t now = time((time_t*)0);
         if (cl->reader)
-            cl->reader->last_s = cl->reader->last_g = now;
+            cl->reader->last_s = now;
         cl->last = now;
 }
 
@@ -517,7 +517,7 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 
 	//Update remote id every 256 pushs:
 	//cs_debug_mask(D_CACHEEX, "ncd[8]=%d [9]=%d [10]=%d [11]=%d", cl->ncd_skey[8], cl->ncd_skey[9], cl->ncd_skey[10], cl->ncd_skey[11]);
-	if (!(cl->ncd_skey[11]++)) {
+	if (!(++cl->ncd_skey[11])) {
 	        camd35_cache_push_request_remote_id(cl);
         }
 	        
