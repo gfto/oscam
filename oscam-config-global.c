@@ -204,6 +204,9 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_FUNC("lb_retrylimits"			, OFS(lb_retrylimittab), caidvaluetab_fn ),
 	DEF_OPT_FUNC("lb_nbest_percaid"			, OFS(lb_nbest_readers_tab), caidvaluetab_fn ),
 	DEF_OPT_FUNC("lb_noproviderforcaid"		, OFS(lb_noproviderforcaid), check_caidtab_fn ),
+	DEF_OPT_INT32("lb_auto_timeout"			, OFS(lb_auto_timeout),	DEFAULT_LB_AUTO_TIMEOUT ),
+	DEF_OPT_INT32("lb_auto_timeout_p"		, OFS(lb_auto_timeout_p), DEFAULT_LB_AUTO_TIMEOUT_P ),
+	DEF_OPT_INT32("lb_auto_timeout_t"		, OFS(lb_auto_timeout_t), DEFAULT_LB_AUTO_TIMEOUT_T ),
 #endif
 	DEF_OPT_FUNC("double_check_caid"		, OFS(double_check_caid),	check_caidtab_fn ),
 	DEF_OPT_STR("ecmfmt"					, OFS(ecmfmt),				NULL ),

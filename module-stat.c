@@ -1434,4 +1434,42 @@ void lb_mark_last_reader(ECM_REQUEST *er)
 	}
 }
 
+/**
+ * Automatic timeout feature depending on statistik values
+ **/
+uint32_t lb_auto_timeout(ECM_REQUEST *er, uint32_t ctimeout) {
+        STAT_QUERY q;
+        READER_STAT *stat = NULL;
+        
+        struct s_reader *rdr = NULL;
+        struct s_ecm_answer *ea;
+        
+        for (ea = er->matching_rdr; ea; ea = ea->next) {
+                if ((ea->status&(READER_ACTIVE|READER_FALLBACK)) == READER_ACTIVE) {
+                        rdr = ea->reader;
+                        get_stat_query(er, &q);
+                        stat = get_stat(rdr, &q);
+                        if (stat) break;
+                }
+        }        
+        if (!stat) return ctimeout;
+        
+        uint32_t t;
+        if (stat->rc == E_TIMEOUT)
+                t = ctimeout/2; //timeout known, early timeout!
+        else {
+                if (stat->ecm_count < cfg.lb_min_ecmcount) return ctimeout;
+                
+                t = stat->time_avg*(100+cfg.lb_auto_timeout_p)/100;
+                if ((int32_t)(t-stat->time_avg) < cfg.lb_auto_timeout_t) t = stat->time_avg+cfg.lb_auto_timeout_t;
+        }
+        if (t > ctimeout) t = ctimeout;
+        
+        char buf[ECM_FMT_LEN];
+        format_ecm(er, buf, ECM_FMT_LEN); 
+        cs_debug_mask(D_TRACE, "auto-timeout for %s %s set rdr %s to %d", username(er->client), buf, rdr->label, t); 
+        
+        return t;
+}
+
 #endif

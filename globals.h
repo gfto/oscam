@@ -357,6 +357,10 @@ extern const char *boxdesc[];
 #define DEFAULT_MAX_CACHE_TIME 15
 #define DEFAULT_MAX_CACHE_COUNT 1000
 
+#define DEFAULT_LB_AUTO_TIMEOUT 0
+#define DEFAULT_LB_AUTO_TIMEOUT_P 30
+#define DEFAULT_LB_AUTO_TIMEOUT_T 300
+
 enum {E1_GLOBAL=0, E1_USER, E1_READER, E1_SERVER, E1_LSERVER};
 
 //LB blocking events:
@@ -1616,6 +1620,9 @@ struct s_config
 	int32_t			lb_max_readers;					// limit the amount of readers during learning
 	int32_t			lb_auto_betatunnel;				// automatic selection of betatunnel convertion based on learned data
 	int32_t			lb_auto_betatunnel_prefer_beta; // prefer-beta-over-nagra factor
+	int32_t			lb_auto_timeout;		// Automatic timeout by loadbalancer statistics
+	int32_t			lb_auto_timeout_p;		// percent added to avg time as timeout time
+	int32_t			lb_auto_timeout_t;		// minimal time added to avg time as timeout time
 #endif
 	int32_t			resolve_gethostbyname;
 	int8_t			double_check;					// schlocke: Double checks each ecm+dcw from two (or more) readers

@@ -448,6 +448,7 @@ extern void update_ecmlen_from_stat(struct s_reader *rdr);
 extern int32_t clean_all_stats_by_rc(int8_t rc, int8_t inverse);
 extern int32_t lb_valid_btun(ECM_REQUEST *er, uint16_t caidto);
 extern void lb_mark_last_reader(ECM_REQUEST *er);
+extern uint32_t lb_auto_timeout(ECM_REQUEST *er, uint32_t ctimeout);
 
 /* ===========================
  *       reader-common

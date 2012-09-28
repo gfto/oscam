@@ -1754,6 +1754,9 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#lb_noproviderforcaid##TPLHELPSUFFIX##Ignore provider for:</A></TD><TD><input name=\"lb_noproviderforcaid\" type=\"text\" size=\"63\" maxlength=\"160\" value=\"##LBNOPROVIDERFORCAID##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#lb_auto_betatunnel##TPLHELPSUFFIX##Auto Betatunnel:</A></TD><TD><SELECT NAME=\"lb_auto_betatunnel\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##LBAUTOBETATUNNEL##>YES</OPTION></SELECT></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#lb_auto_betatunnel_prefer_beta##TPLHELPSUFFIX##Prefer Beta over Nagra:</A></TD><TD><input name=\"lb_auto_betatunnel_prefer_beta\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBPREFERBETA##\"> %</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#lb_auto_timeout##TPLHELPSUFFIX##Auto timeout:</A></TD><TD><SELECT NAME=\"lb_auto_timeout\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##LBAUTOTIMEOUT##>YES</OPTION></SELECT></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#lb_auto_timeout_p##TPLHELPSUFFIX##Auto timeout percent:</A></TD><TD><input name=\"lb_auto_timeout_p\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBAUTOTIMEOUTP##\"> %</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#lb_auto_timeout_t##TPLHELPSUFFIX##Auto timeout time:</A></TD><TD><input name=\"lb_auto_timeout_t\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBAUTOTIMEOUTT##\"> ms</TD></TR>\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\

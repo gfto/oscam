@@ -392,6 +392,10 @@ static char *send_oscam_config_loadbalancer(struct templatevars *vars, struct ur
 	if (cfg.lb_auto_betatunnel) tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNEL", "selected");
 	tpl_printf(vars, TPLADD, "LBPREFERBETA", "%d", cfg.lb_auto_betatunnel_prefer_beta);
 
+	if (cfg.lb_auto_timeout) tpl_addVar(vars, TPLADD, "LBAUTOTIMEOUT", "selected");
+	tpl_printf(vars, TPLADD, "LBAUTOTIMEOUTP", "%d", cfg.lb_auto_timeout_p);
+	tpl_printf(vars, TPLADD, "LBAUTOTIMEOUTT", "%d", cfg.lb_auto_timeout_t);
+	
 	return tpl_getTpl(vars, "CONFIGLOADBALANCER");
 }
 #endif

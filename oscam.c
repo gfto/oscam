@@ -4364,6 +4364,15 @@ int32_t add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 	return 1;
 }
 
+static uint32_t auto_timeout(ECM_REQUEST *er, uint32_t timeout) {
+#ifdef WITH_LB
+        if (cfg.lb_auto_timeout)
+                return lb_auto_timeout(er, timeout);
+#endif
+        return timeout;
+}
+
+
 static void * check_thread(void) {
 	int32_t time_to_check, next_check, ecmc_next, msec_wait = 3000;
 	struct timeb t_now, tbc, ecmc_time;
@@ -4419,9 +4428,9 @@ static void * check_thread(void) {
 
 			tbc = er->tps;
 #ifdef CS_CACHEEX
-			time_to_check = add_ms_to_timeb(&tbc, (er->stage < 2) ? cfg.cacheex_wait_time:((er->stage < 4) ? cfg.ftimeout : cfg.ctimeout));
+			time_to_check = add_ms_to_timeb(&tbc, (er->stage < 2) ? cfg.cacheex_wait_time:((er->stage < 4) ? auto_timeout(er, cfg.ftimeout) : auto_timeout(er, cfg.ctimeout)));
 #else
-			time_to_check = add_ms_to_timeb(&tbc, ((er->stage < 4) ? cfg.ftimeout : cfg.ctimeout));
+			time_to_check = add_ms_to_timeb(&tbc, ((er->stage < 4) ? auto_timeout(er, cfg.ftimeout) : auto_timeout(er, cfg.ctimeout)));
 #endif
 
 			if (comp_timeb(&t_now, &tbc) >= 0) {
@@ -4432,7 +4441,7 @@ static void * check_thread(void) {
 						request_cw(er);
 
 					tbc = er->tps;
-					time_to_check = add_ms_to_timeb(&tbc, cfg.ctimeout);
+					time_to_check = add_ms_to_timeb(&tbc, auto_timeout(er, cfg.ctimeout));
 				} else {
 					if (er->client) {
 					        er->selected_reader = NULL;
