@@ -17,21 +17,6 @@
 #define TYPE_PINGRPL   4
 #define TYPE_RESENDREQ 5
 
-int32_t csp_ecm_hash_calc(uchar *buf, int32_t n)
-{
-	int32_t i = 0;
-	int32_t h = 0;
-    for (i = 0; i < n; i++) {
-    	h = 31*h + buf[i];
-    }
-    return h;
-}
-
-int32_t csp_ecm_hash(ECM_REQUEST *er)
-{
-	return csp_ecm_hash_calc(er->ecm+3, er->l-3);
-}
-
 static void * csp_server(struct s_client *client __attribute__((unused)), uchar *mbuf __attribute__((unused)), int32_t n __attribute__((unused)))
 {
 	return NULL;

@@ -17,11 +17,13 @@ extern void cacheex_init(void);
 extern void cacheex_clear_account_stats(struct s_auth *account);
 extern void cacheex_clear_client_stats(struct s_client *client);
 extern void cacheex_load_config_file(void);
+extern void cacheex_update_hash(ECM_REQUEST *er);
 #else
 static inline void cacheex_init(void) { };
 static inline void cacheex_clear_account_stats(struct s_auth *UNUSED(account)) { };
 static inline void cacheex_clear_client_stats(struct s_client *UNUSED(client)) { };
 static inline void cacheex_load_config_file(void) { };
+static inline void cacheex_update_hash(ECM_REQUEST *UNUSED(er)) { };
 #endif
 
 #endif

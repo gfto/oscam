@@ -2937,9 +2937,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		unsigned char md5tmp[MD5_DIGEST_LENGTH];
 		// store ECM in cache
 		memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, md5tmp), CS_ECMSTORESIZE);
-#ifdef CS_CACHEEX
-		er->csp_hash = csp_ecm_hash(er);
-#endif
+		cacheex_update_hash(er);
 
 #ifdef CS_ANTICASC
 		ac_chk(client, er, 0);

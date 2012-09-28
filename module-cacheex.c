@@ -335,7 +335,7 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 			offset = 13;
 		unsigned char md5tmp[MD5_DIGEST_LENGTH];
 		memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, md5tmp), CS_ECMSTORESIZE);
-		er->csp_hash = csp_ecm_hash(er);
+		cacheex_update_hash(er);
 		//csp has already initialized these hashcode
 
 		update_chid(er);
@@ -581,6 +581,18 @@ void cacheex_load_config_file(void) {
 		free(old_list);
 		old_list = entry;
 	}
+}
+
+static int32_t cacheex_ecm_hash_calc(uchar *buf, int32_t n) {
+	int32_t i, h = 0;
+	for (i = 0; i < n; i++) {
+		h = 31 * h + buf[i];
+	}
+	return h;
+}
+
+void cacheex_update_hash(ECM_REQUEST *er) {
+	er->csp_hash = cacheex_ecm_hash_calc(er->ecm+3, er->l-3);
 }
 
 #endif
