@@ -125,7 +125,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 	for (i=0; i<MAX_FILTER && demux[demux_id].demux_fd[i].fd>0; i++);
 
 	if (i>=MAX_FILTER) {
-		cs_log("no free filter");
+		cs_debug_mask(D_DVBAPI,"no free filter");
 		return -1;
 	}
 	n=i;
@@ -222,7 +222,7 @@ static int32_t dvbapi_detect_api(void) {
 #ifdef WITH_STAPI
 	if (devnum==4) {
 		if (stapi_open()==FALSE) {
-			cs_log("stapi: setting up stapi failed.");
+			cs_debug_mask(D_DVBAPI,"stapi: setting up stapi failed.");
 			return 0;
 		}
 		close(dmx_fd);
@@ -258,14 +258,14 @@ static int32_t dvbapi_read_device(int32_t dmx_fd, unsigned char *buf, int32_t le
 
 	rc = poll(pfd, 1, 7000);
 	if (rc<1) {
-		cs_log("read on %d timed out", dmx_fd);
+		cs_debug_mask(D_DVBAPI,"read on %d timed out", dmx_fd);
 		return -1;
 	}
 
 	len = read(dmx_fd, buf, length);
 
 	if (len==-1)
-		cs_log("read error on fd %d (errno=%d %s)", dmx_fd, errno, strerror(errno));
+		cs_debug_mask(D_DVBAPI,"read error on fd %d (errno=%d %s)", dmx_fd, errno, strerror(errno));
 
 	return len;
 }
@@ -521,7 +521,7 @@ void dvbapi_add_ecmpid(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_
 	if (stream>-1)
 		demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].streams |= (1 << stream);
 
-	cs_log("[ADD PID %d] CAID: %04X\tECM_PID: %04X\tPROVID: %06X", demux[demux_id].ECMpidcount, caid, ecmpid, provid);
+	cs_debug_mask(D_DVBAPI,"[ADD PID %d] CAID: %04X\tECM_PID: %04X\tPROVID: %06X", demux[demux_id].ECMpidcount, caid, ecmpid, provid);
 	demux[demux_id].ECMpidcount++;
 }
 
@@ -730,7 +730,7 @@ void dvbapi_start_descrambling(int32_t demux_id) {
 		}
 	}
 
-	cs_log("Start descrambling PID #%d (CAID: %04X) %d", demux[demux_id].curindex, demux[demux_id].ECMpids[demux[demux_id].curindex].CAID, streamcount);
+	cs_debug_mask(D_DVBAPI,"Start descrambling PID #%d (CAID: %04X) %d", demux[demux_id].curindex, demux[demux_id].ECMpids[demux[demux_id].curindex].CAID, streamcount);
 
 	if (cfg.dvbapi_au>0 && last_pidindex != demux[demux_id].pidindex) {
 		if (last_pidindex != -1)
@@ -1272,7 +1272,7 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 	int32_t num=-1, n, j;
 
 	if (demux[demux_id].tries > 2) {
-		cs_log("can't decode channel");
+		cs_debug_mask(D_DVBAPI,"can't decode channel");
 		dvbapi_stop_filter(demux_id, TYPE_ECM);
 		return;
 	}
@@ -1301,7 +1301,7 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 			return;
 
 		demux[demux_id].tries++;
-		cs_log("try pids again #%d", demux[demux_id].tries);
+		cs_debug_mask(D_DVBAPI,"try pids again #%d", demux[demux_id].tries);
 		for (n=0; n<demux[demux_id].ECMpidcount; n++) {
 			demux[demux_id].ECMpids[n].checked=0;
 			demux[demux_id].ECMpids[n].irdeto_curchid=0;
@@ -1411,7 +1411,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		for (demux_id=0; demux_id<MAX_DEMUX && demux[demux_id].program_number>0; demux_id++);
 
 	if (demux_id>=MAX_DEMUX) {
-		cs_log("error no free id (MAX_DEMUX)");
+		cs_debug_mask(D_DVBAPI,"error no free id (MAX_DEMUX)");
 		return -1;
 	}
 
@@ -1471,7 +1471,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 
 	char channame[32];
 	get_servicename(dvbapi_client, demux[demux_id].program_number, demux[demux_id].ECMpidcount>0 ? demux[demux_id].ECMpids[0].CAID : 0, channame);
-	cs_log("new program number: %04X (%s) [pmt_list_management %d]", program_number, channame, ca_pmt_list_management);
+	cs_debug_mask(D_DVBAPI,"new program number: %04X (%s) [pmt_list_management %d]", program_number, channame, ca_pmt_list_management);
 
 #ifdef WITH_AZBOX
 	openxcas_sid = program_number;
@@ -1504,12 +1504,12 @@ void dvbapi_handlesockmsg (unsigned char *buffer, uint32_t len, int32_t connfd) 
 	//cs_dump(buffer, len, "handlesockmsg:");
 	for (k = 0; k < len; k += 3 + size + val) {
 		if (buffer[0+k] != 0x9F || buffer[1+k] != 0x80) {
-			cs_log("unknown socket command: %02x", buffer[0+k]);
+			cs_debug_mask(D_DVBAPI,"unknown socket command: %02x", buffer[0+k]);
 			return;
 		}
 
 		if (k>0) {
-			cs_log("Unsupported capmt. Please report");
+			cs_debug_mask(D_DVBAPI,"Unsupported capmt. Please report");
 			cs_dump(buffer, len, "capmt:");
 		}
 
@@ -1553,7 +1553,7 @@ void dvbapi_handlesockmsg (unsigned char *buffer, uint32_t len, int32_t connfd) 
 				}
 				break;
 			default:
-				cs_log("handlesockmsg() unknown command");
+				cs_debug_mask(D_DVBAPI,"handlesockmsg() unknown command");
 				cs_dump(buffer, len, "unknown command:");
 				break;
 		}
@@ -1663,14 +1663,14 @@ void event_handler(int32_t UNUSED(signal)) {
 				}
 
 				if (pmt_info.st_mtime != demux[i].pmt_time) {
-					cs_log("stopping demux for pmt file %s", dest);
+					cs_debug_mask(D_DVBAPI,"stopping demux for pmt file %s", dest);
 				 	dvbapi_stop_descrambling(i);
 				}
 
 				close(pmt_fd);
 				continue;
 			} else {
-				cs_log("stopping demux for pmt file %s", dest);
+				cs_debug_mask(D_DVBAPI,"stopping demux for pmt file %s", dest);
 				dvbapi_stop_descrambling(i);
 			}
 		}
@@ -1683,7 +1683,7 @@ void event_handler(int32_t UNUSED(signal)) {
 
 	dirp = opendir(TMPDIR);
 	if (!dirp) {
-		cs_log("opendir failed (errno=%d %s)", errno, strerror(errno));
+		cs_debug_mask(D_DVBAPI,"opendir failed (errno=%d %s)", errno, strerror(errno));
 		pthread_mutex_unlock(&event_handler_lock);
 		return;
 	}
@@ -1717,14 +1717,14 @@ void event_handler(int32_t UNUSED(signal)) {
 		if (found)
 			{ close(pmt_fd); continue; }
 
-		cs_log("found pmt file %s", dest);
+		cs_debug_mask(D_DVBAPI,"found pmt file %s", dest);
 		cs_sleepms(100);
 
 		uint32_t len = read(pmt_fd,mbuf,sizeof(mbuf));
 		close(pmt_fd);
 
 		if (len < 1) {
-			cs_log("pmt file %s have invalid len!", dest);
+			cs_debug_mask(D_DVBAPI,"pmt file %s have invalid len!", dest);
 			continue;
 		}
 
@@ -1734,13 +1734,13 @@ void event_handler(int32_t UNUSED(signal)) {
 		// QboxHD pmt.tmp is the full capmt written as a string of hex values
 		// pmt.tmp must be longer than 3 bytes (6 hex chars) and even length
 		if ((len<6) || ((len%2) != 0) || ((len/2)>sizeof(dest))) {
-			cs_log("error parsing QboxHD pmt.tmp, incorrect length");
+			cs_debug_mask(D_DVBAPI,"error parsing QboxHD pmt.tmp, incorrect length");
 			continue;
 		}
 
 		for(j2=0,j1=0;j2<len;j2+=2,j1++) {
 			if (sscanf((char*)mbuf+j2, "%02X", (unsigned int*)dest+j1) != 1) {
-				cs_log("error parsing QboxHD pmt.tmp, data not valid in position %d",j2);
+				cs_debug_mask(D_DVBAPI,"error parsing QboxHD pmt.tmp, data not valid in position %d",j2);
 				pthread_mutex_unlock(&event_handler_lock);
 				return;
 			}
@@ -1751,7 +1751,7 @@ void event_handler(int32_t UNUSED(signal)) {
 		pmt_id = dvbapi_parse_capmt((unsigned char *)dest+4, (len/2)-4, -1, dp->d_name);
 #else
 		if (len>sizeof(dest)) {
-			cs_log("event_handler() dest buffer is to small for pmt data!");
+			cs_debug_mask(D_DVBAPI,"event_handler() dest buffer is to small for pmt data!");
 			continue;
 		}
 		cs_ddump_mask(D_DVBAPI, mbuf,len,"pmt:");
@@ -1835,7 +1835,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 			//80 70 39 53 04 05 00 88
 			if (buffer[5]>20) return;
 			if (curpid->irdeto_numchids != buffer[5]+1) {
-				cs_log("Found %d IRDETO ECM CHIDs", buffer[5]+1);
+				cs_debug_mask(D_DVBAPI,"Found %d IRDETO ECM CHIDs", buffer[5]+1);
 				curpid->irdeto_numchids = buffer[5]+1;
 				curpid->irdeto_curchid = 0;
 				curpid->irdeto_cycle = 0;
@@ -1982,7 +1982,7 @@ static void * dvbapi_main_local(void *cli) {
 	dvbapi_detect_api();
 
 	if (selected_box == -1 || selected_api==-1) {
-		cs_log("could not detect api version");
+		cs_debug_mask(D_DVBAPI,"could not detect api version");
 		return NULL;
 	}
 
@@ -1993,7 +1993,7 @@ static void * dvbapi_main_local(void *cli) {
 	if (cfg.dvbapi_boxtype != BOXTYPE_IPBOX_PMT && cfg.dvbapi_pmtmode != 2 && cfg.dvbapi_pmtmode != 5) {
 		listenfd = dvbapi_init_listenfd();
 		if (listenfd < 1) {
-			cs_log("could not init camd.socket.");
+			cs_debug_mask(D_DVBAPI,"could not init camd.socket.");
 			return NULL;
 		}
 	}
@@ -2017,7 +2017,7 @@ static void * dvbapi_main_local(void *cli) {
 		pthread_t event_thread;
 		int32_t ret = pthread_create(&event_thread, NULL, dvbapi_event_thread, (void*) dvbapi_client);
 		if(ret){
-			cs_log("ERROR: can't create dvbapi event thread (errno=%d %s)", ret, strerror(ret));
+			cs_debug_mask(D_DVBAPI,"ERROR: can't create dvbapi event thread (errno=%d %s)", ret, strerror(ret));
 			return NULL;
 		} else
 			pthread_detach(event_thread);
@@ -2091,7 +2091,7 @@ static void * dvbapi_main_local(void *cli) {
 						disable_pmt_files=1;
 
 						if (connfd <= 0) {
-							cs_log("accept() returns error on fd event %d (errno=%d %s)", pfd2[i].revents, errno, strerror(errno));
+							cs_debug_mask(D_DVBAPI,"accept() returns error on fd event %d (errno=%d %s)", pfd2[i].revents, errno, strerror(errno));
 							continue;
 						}
 					} else {
@@ -2254,7 +2254,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				if ((er->caid >> 8) == 0x06 && demux[i].ECMpids[j].irdeto_chids < (((0xFFFF<<(demux[i].ECMpids[j].irdeto_numchids)) ^ 0xFFFF) & 0xFFFF)) {
 					demux[i].ECMpids[j].irdeto_curchid++;
 					demux[i].ECMpids[j].table=0;
-					cs_log("trying irdeto chid index: %d", demux[i].ECMpids[j].irdeto_curchid);
+					cs_debug_mask(D_DVBAPI,"trying irdeto chid index: %d", demux[i].ECMpids[j].irdeto_curchid);
 					return;
 				}
 				demux[i].ECMpids[j].irdeto_chids = 0;
@@ -2377,7 +2377,7 @@ static void * dvbapi_handler(struct s_client * cl, uchar* UNUSED(mbuf), int32_t 
 		cl->typ='c';
 		int32_t ret = pthread_create(&cl->thread, NULL, dvbapi_main_local, (void*) cl);
 		if(ret){
-			cs_log("ERROR: can't create dvbapi handler thread (errno=%d %s)", ret, strerror(ret));
+			cs_debug_mask(D_DVBAPI,"ERROR: can't create dvbapi handler thread (errno=%d %s)", ret, strerror(ret));
 			return NULL;
 		} else
 			pthread_detach(cl->thread);
