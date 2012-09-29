@@ -14,40 +14,79 @@ struct s_arm_led {
 static pthread_t arm_led_thread;
 static LLIST *arm_led_actions;
 
+#define ARM_LED_TYPES 3
+#define ARM_LED_FILES 4
+
+struct arm_leds {
+	char *machine;
+	struct led_file {
+		uint8_t	id;
+		char	*file;
+	} leds[ARM_LED_FILES];
+};
+
+static const struct arm_leds arm_leds[ARM_LED_TYPES] = {
+	{ "nslu2", {
+		{ LED1A, "red:status" },
+		{ LED1B, "green:ready" },
+		{ LED2,  "green:disk-1" },
+		{ LED3,  "green:disk-2" } },
+	},
+	{ "dockstar", {
+		{ LED1A, "orange:misc" },
+		{ LED1B, "green:health" },
+		{ LED2,  "green:health" },
+		{ LED3,  "orange:misc" } },
+	},
+	{ "wrt350nv2", {
+		{ LED1A, "orange:power" },
+		{ LED1B, "green:power" },
+		{ LED2,  "green:wireless" },
+		{ LED3,  "green:security" } },
+	}
+};
+
+static int32_t arm_init_led_file(uint8_t led_type, uint8_t led_no, char *buf, int32_t buflen) {
+	uint8_t i;
+	if (led_type >= ARM_LED_TYPES) return 0;
+	if (led_no >= ARM_LED_FILES) return 0;
+	for (i = 0; i < ARM_LED_FILES; i++) {
+		if (arm_leds[led_type].leds[i].id == led_no) {
+			return snprintf(buf, buflen, "/sys/class/leds/%s:%s/brightness",
+				arm_leds[led_type].machine, arm_leds[led_type].leds[i].file);
+		}
+	}
+	return 0;
+}
+
+#define LED_TYPE_UNKNOWN 0xff
+static uint8_t arm_led_type = LED_TYPE_UNKNOWN;
+
+static void arm_detect_led_type(void) {
+	uint8_t i;
+	char led_file[256];
+	for (i = 0; i < ARM_LED_TYPES; i++) {
+		if (!arm_init_led_file(i, 0, led_file, sizeof(led_file)))
+			break;
+		if (access(led_file, W_OK) == 0) {
+			arm_led_type = i;
+			cs_log("LED support for %s is activated.", arm_leds[arm_led_type].machine);
+			break;
+		}
+	}
+	if (arm_led_type == LED_TYPE_UNKNOWN)
+		cs_log("LED support is not active. Can't detect machine type.");
+}
+
 static void arm_switch_led_from_thread(int32_t led, int32_t action) {
 	if (action < 2) { // only LED_ON and LED_OFF
-		char ledfile[256];
-		FILE *f;
-
-		#ifdef DOCKSTAR
-			switch(led) {
-			case LED1A:snprintf(ledfile, 255, "/sys/class/leds/dockstar:orange:misc/brightness"); break;
-			case LED1B:snprintf(ledfile, 255, "/sys/class/leds/dockstar:green:health/brightness"); break;
-			case LED2:snprintf(ledfile, 255, "/sys/class/leds/dockstar:green:health/brightness"); break;
-			case LED3:snprintf(ledfile, 255, "/sys/class/leds/dockstar:orange:misc/brightness"); break;
-			}
-		#elif WRT350NV2
-			switch(led){
-			case LED1A:snprintf(ledfile, 255, "/sys/class/leds/wrt350nv2:orange:power/brightness"); break;
-			case LED1B:snprintf(ledfile, 255, "/sys/class/leds/wrt350nv2:green:power/brightness"); break;
-			case LED2:snprintf(ledfile, 255, "/sys/class/leds/wrt350nv2:green:wireless/brightness"); break;
-			case LED3:snprintf(ledfile, 255, "/sys/class/leds/wrt350nv2:green:security/brightness"); break;
-			}
-		#else
-			switch(led){
-			case LED1A:snprintf(ledfile, 255, "/sys/class/leds/nslu2:red:status/brightness"); break;
-			case LED1B:snprintf(ledfile, 255, "/sys/class/leds/nslu2:green:ready/brightness"); break;
-			case LED2:snprintf(ledfile, 255, "/sys/class/leds/nslu2:green:disk-1/brightness"); break;
-			case LED3:snprintf(ledfile, 255, "/sys/class/leds/nslu2:green:disk-2/brightness"); break;
-			}
-		#endif
-
-		if (!(f=fopen(ledfile, "w"))){
-			// FIXME: sometimes cs_log was not available when calling arm_led -> signal 11
-			// cs_log("Cannot open file \"%s\" (errno=%d %s)", ledfile, errno, strerror(errno));
+		char led_file[256];
+		if (!arm_init_led_file(arm_led_type, led, led_file, sizeof(led_file)))
 			return;
-		}
-		fprintf(f,"%d", action);
+		FILE *f = fopen(led_file, "w");
+		if (!f)
+			return;
+		fprintf(f, "%d", action);
 		fclose(f);
 	} else { // LED Macros
 		switch(action){
@@ -102,7 +141,8 @@ static void *arm_led_thread_main(void *UNUSED(thread_data)) {
 }
 
 static void arm_led_start_thread(void) {
-	if (cfg.enableled != 1)
+	arm_detect_led_type();
+	if (!cfg.enableled || arm_led_type == LED_TYPE_UNKNOWN)
 		return;
 	// call this after signal handling is done
 	if (!arm_led_actions) {
@@ -124,7 +164,7 @@ static void arm_led_start_thread(void) {
 
 static void arm_led(int32_t led, int32_t action) {
 	struct s_arm_led *arm_led;
-	if (cfg.enableled != 1)
+	if (!cfg.enableled || arm_led_type == LED_TYPE_UNKNOWN)
 		return;
 	if (!arm_led_actions) {
 		arm_led_actions = ll_create("arm_led_actions");
@@ -143,7 +183,7 @@ static void arm_led(int32_t led, int32_t action) {
 }
 
 static void arm_led_stop_thread(void) {
-	if (cfg.enableled != 1)
+	if (!cfg.enableled || arm_led_type == LED_TYPE_UNKNOWN)
 		return;
 	arm_led(0, LED_STOP_THREAD);
 }

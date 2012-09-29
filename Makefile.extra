@@ -222,8 +222,6 @@ coolstream: cool
 dockstar:
 	$(MAKE) --no-print-directory \
 		CROSS=arm-openwrt-linux-uclibcgnueabi- \
-		EXTRA_FLAGS=-DDOCKSTAR \
-		PLUS_TARGET=-dockstar \
 		CONF_DIR=/jffs/etc/config/oscam \
 		$(MAKEFLAGS)
 

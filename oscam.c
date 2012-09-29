@@ -4403,8 +4403,6 @@ int32_t main (int32_t argc, char *argv[])
 		exit(1);
 	}
 
-	led_status_default();
-
 	int32_t      i, j, bg=0, gbdb=0;
 
   void (*mod_def[])(struct s_module *)=
@@ -4632,6 +4630,7 @@ int32_t main (int32_t argc, char *argv[])
   server_pid = getpid();
 
   led_init();
+  led_status_default();
 
 #if defined(WITH_AZBOX) && defined(HAVE_DVBAPI)
   openxcas_debug_message_onoff(1);  // debug
