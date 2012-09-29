@@ -60,9 +60,7 @@ static int pandora_recv(struct s_client *cl, uchar *buf, int32_t l) {
 	if (cl->typ != 'c')
 		ret = recv_from_udpipe(buf);
 	else {
-		uint32_t clilen = sizeof(cl->udp_sa);
-		ret = recvfrom(cl->udp_fd, buf, l, 0, (struct sockaddr *) &cl->udp_sa,
-				(socklen_t *)&clilen);
+		ret = recvfrom(cl->udp_fd, buf, l, 0, (struct sockaddr *)&cl->udp_sa, &cl->udp_sa_len);
 	}
 	if (ret < 1)
 		return (-1);
@@ -91,8 +89,7 @@ static void pandora_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 			cl->pand_autodelay += 100000;
 	}
 	simple_crypt(msgbuf, len, cl->pand_md5_key, 16);
-	sendto(cl->udp_fd, msgbuf, len, 0, (struct sockaddr *) &cl->udp_sa,
-			sizeof(cl->udp_sa));
+	sendto(cl->udp_fd, msgbuf, len, 0, (struct sockaddr *) &cl->udp_sa, cl->udp_sa_len);
 }
 
 int pandora_auth_client(struct s_client *cl, IN_ADDR_T ip) {
@@ -240,8 +237,7 @@ static int pandora_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *UNUSED(
 		len += er->l + 2;
 	}
 	simple_crypt(msgbuf, len, cl->pand_md5_key, 16);
-	ret = sendto(cl->pfd, msgbuf, len, 0, (struct sockaddr *) &cl->udp_sa,
-			sizeof(cl->udp_sa));
+	ret = sendto(cl->pfd, msgbuf, len, 0, (struct sockaddr *) &cl->udp_sa, cl->udp_sa_len);
 	return ((ret < len) ? (-1) : 0);
 }
 

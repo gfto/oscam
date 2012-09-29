@@ -848,6 +848,7 @@ struct s_client {
 	uint16_t		pipecnt;
 	CS_MUTEX_LOCK 	pipelock;
 	struct SOCKADDR	udp_sa;
+	socklen_t		udp_sa_len;
 	int8_t			log;
 	int32_t			logcounter;
 	int32_t			cwfound;     		// count found ECMs per client

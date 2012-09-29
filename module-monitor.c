@@ -91,9 +91,7 @@ int32_t monitor_send_idx(struct s_client *cl, char *txt)
 	req_ts.tv_nsec = 500000;
 	nanosleep (&req_ts, NULL);//avoid lost udp-pakkets
 	if (!cl->crypted)
-		return(sendto(cl->udp_fd, txt, strlen(txt), 0,
-				(struct sockaddr *)&cl->udp_sa,
-				sizeof(cl->udp_sa)));
+		return sendto(cl->udp_fd, txt, strlen(txt), 0, (struct sockaddr *)&cl->udp_sa, cl->udp_sa_len);
 	buf[0]='&';
 	buf[9]=l=strlen(txt);
 	l=boundary(4, l+5)+5;
@@ -102,9 +100,7 @@ int32_t monitor_send_idx(struct s_client *cl, char *txt)
 	uchar tmp[10];
 	memcpy(buf+5, i2b_buf(4, crc32(0L, buf+10, l-10), tmp), 4);
 	aes_encrypt_idx(cl, buf+5, l-5);
-	return(sendto(cl->udp_fd, buf, l, 0,
-			(struct sockaddr *)&cl->udp_sa,
-			sizeof(cl->udp_sa)));
+	return sendto(cl->udp_fd, buf, l, 0, (struct sockaddr *)&cl->udp_sa, cl->udp_sa_len);
 }
 
 #define monitor_send(t) monitor_send_idx(cur_client(), t)

@@ -4307,7 +4307,7 @@ static int8_t check_httpdyndns(IN_ADDR_T addr) {
 		int8_t i = 0;
 		for(i = 0; i < MAX_HTTP_DYNDNS; i++) {
 			if(cfg.http_dyndns[i][0]){
-				cs_resolve((const char *)cfg.http_dyndns[i], &cfg.http_dynip[i], NULL);
+				cs_resolve((const char *)cfg.http_dyndns[i], &cfg.http_dynip[i], NULL, NULL);
 				cs_debug_mask(D_TRACE, "WebIf: httpdyndns [%d] resolved %s to %s ", i, (char*)cfg.http_dyndns[i], cs_inet_ntoa(cfg.http_dynip[i]));
 			}
 		}

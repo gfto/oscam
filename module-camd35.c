@@ -48,9 +48,7 @@ static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen)
 
 	int32_t status;
 	if (cl->is_udp) {
-       		status = sendto(cl->udp_fd, rbuf, l+4, 0,
-				           (struct sockaddr *)&cl->udp_sa,
-				            sizeof(struct sockaddr_in));
+		status = sendto(cl->udp_fd, rbuf, l+4, 0, (struct sockaddr *)&cl->udp_sa, cl->udp_sa_len);
 		if (status == -1) set_null_ip(&SIN_GET_ADDR(cl->udp_sa));
 	} else {
        		status = send(cl->udp_fd, rbuf, l + 4, 0);

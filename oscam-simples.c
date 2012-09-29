@@ -468,12 +468,13 @@ void cs_inet_addr(char *txt, IN_ADDR_T *out)
 #endif
 }
 
-void cs_resolve(const char *hostname, IN_ADDR_T *ip, struct SOCKADDR *sock) {
+void cs_resolve(const char *hostname, IN_ADDR_T *ip, struct SOCKADDR *sock, socklen_t *sa_len) {
 #ifdef IPV6SUPPORT
-	cs_getIPv6fromHost(hostname, ip, sock);
+	cs_getIPv6fromHost(hostname, ip, sock, sa_len);
 #else
-	(void)sock;
 	*ip = cs_getIPfromHost(hostname);
+	if (sa_len)
+		*sa_len = sizeof(*sock);
 #endif
 }
 
@@ -1432,7 +1433,7 @@ uint32_t cs_getIPfromHost(const char *hostname){
 }
 
 #ifdef IPV6SUPPORT
-void cs_getIPv6fromHost(const char *hostname, struct in6_addr *addr, struct sockaddr_storage *sa){
+void cs_getIPv6fromHost(const char *hostname, struct in6_addr *addr, struct sockaddr_storage *sa, socklen_t *sa_len) {
 	uint32_t ipv4addr = 0;
 	struct addrinfo hints, *res = NULL;
 	memset(&hints, 0, sizeof(hints));
@@ -1446,13 +1447,13 @@ void cs_getIPv6fromHost(const char *hostname, struct in6_addr *addr, struct sock
 	} else {
 		ipv4addr = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
 		if (res->ai_family == AF_INET)
-		{
 			cs_in6addr_ipv4map(addr, ipv4addr);
-			if (sa)
-				memcpy(sa, res->ai_addr, res->ai_addrlen);
-		}
 		else
 			IP_ASSIGN(*addr, SIN_GET_ADDR(*res->ai_addr));
+		if (sa)
+			memcpy(sa, res->ai_addr, res->ai_addrlen);
+		if (sa_len)
+			*sa_len = res->ai_addrlen;
 	}
 	if (res) freeaddrinfo(res);
 }

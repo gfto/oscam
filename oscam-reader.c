@@ -184,7 +184,7 @@ int32_t hostResolve(struct s_reader *rdr){
 
    IN_ADDR_T last_ip;
    IP_ASSIGN(last_ip, cl->ip);
-   cs_resolve(rdr->device, &cl->ip, &cl->udp_sa);
+   cs_resolve(rdr->device, &cl->ip, &cl->udp_sa, &cl->udp_sa_len);
    IP_ASSIGN(SIN_GET_ADDR(cl->udp_sa), cl->ip);
 
    if (!IP_EQUAL(cl->ip, last_ip)) {
@@ -319,7 +319,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
        int32_t fl = fcntl(client->udp_fd, F_GETFL);
 	fcntl(client->udp_fd, F_SETFL, O_NONBLOCK);
 
-	int32_t res = connect(client->udp_fd, (struct sockaddr *)&client->udp_sa, sizeof(client->udp_sa));
+	int32_t res = connect(client->udp_fd, (struct sockaddr *)&client->udp_sa, client->udp_sa_len);
 	if (res == -1) {
 		int32_t r = -1;
 		if (errno == EINPROGRESS || errno == EALREADY) {

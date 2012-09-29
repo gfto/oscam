@@ -381,7 +381,7 @@ static void gbox_send(struct s_client *cli, uchar *buf, int32_t l)
 //  cs_ddump_mask(D_READER, gbox->key, 4, "gbox: key before encrypt:");
 
   gbox_encrypt(buf, l, gbox->peer.key);
-  sendto(cli->udp_fd, buf, l, 0, (struct sockaddr *)&cli->udp_sa, sizeof(cli->udp_sa));
+  sendto(cli->udp_fd, buf, l, 0, (struct sockaddr *)&cli->udp_sa, cli->udp_sa_len);
 
 //  cs_ddump_mask(D_READER, gbox->key, 4, "gbox: key after encrypt:");
   cs_ddump_mask(D_READER, buf, l, "gbox: encrypted data send (%d bytes):", l);
