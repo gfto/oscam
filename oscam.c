@@ -4288,6 +4288,7 @@ int32_t accept_connection(int32_t i, int32_t j) {
 				cl->port_idx=j;
 				cl->udp_fd=ph[i].ptab->ports[j].fd;
 				cl->udp_sa=cad;
+				cl->udp_sa_len = sizeof(cl->udp_sa);
 
 				cl->port=ntohs(SIN_GET_PORT(cad));
 				cl->typ='c';
