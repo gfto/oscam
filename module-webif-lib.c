@@ -618,8 +618,8 @@ int32_t check_auth(char *authstring, char *method, char *path, char *expectednon
 		pch2 = uri;
 		for(pch = uri; pch[0] != '\0'; ++pch) {
 			if(pch[0] == '/') pch2 = pch;
+			if(strncmp(pch2, path, strlen(path)) == 0) uriok = 1;
 		}
-		if(strncmp(pch2, path, strlen(path)) == 0) uriok = 1;
 	}
 	if (uriok == 1 && streq(username, cfg.http_user)) {
 		char A1tmp[3 + strlen(username) + strlen(AUTHREALM) + strlen(expectedPassword)];
