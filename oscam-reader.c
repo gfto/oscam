@@ -518,18 +518,25 @@ static int32_t reader_store_emm(uchar type, uchar *emmd5)
 #ifdef WITH_CARDREADER
 static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er, int32_t maxloop)
 {
-	int32_t h;
-
-	for (h = 0; h < maxloop; h++) {
+	int32_t h, foundspace = -1;
+	for (h = 0; h < maxloop; h++) { // release all slots that are overtime
+		if ((time(NULL)-reader->rlecmh[h].last) > reader->ratelimitseconds && reader->rlecmh[h].last !=-1) {
+			rdr_debug_mask(reader, D_READER, "ratelimiter released slot #%d of %d (srvid %04X was no longer in use)", h+1, reader->ratelimitecm, reader->rlecmh[h].srvid);
+			reader->rlecmh[h].last = -1;
+			reader->rlecmh[h].srvid = -1;
+		}
+	}
+	
+	for (h = 0; h < maxloop; h++) { // check if srvid is already in a slot
 		if (reader->rlecmh[h].srvid == er->srvid) {
-			cs_debug_mask(D_READER, "ratelimit found srvid in use at pos: %d", h);
+			rdr_debug_mask(reader, D_READER, "ratelimiter srvid present in slot #%d of %d", h+1, reader->ratelimitecm);
 			return h;
 		}
 	}
 
-	for (h = 0; h < maxloop; h++) {
-		if ((reader->rlecmh[h].last ==- 1) || ((time(NULL)-reader->rlecmh[h].last) > reader->ratelimitseconds)) {
-			cs_debug_mask(D_READER, "ratelimit found space at pos: %d old seconds %ld", h, reader->rlecmh[h].last);
+	for (h = 0; h < maxloop; h++) { // check for free slot
+		if ((reader->rlecmh[h].last ==- 1)) {
+			rdr_debug_mask(reader, D_READER, "ratelimiter assigned to slot #%d of %d", h+1, reader->ratelimitecm);
 			return h;
 		}
 	}
@@ -537,20 +544,20 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 	#ifdef HAVE_DVBAPI
 	/* Overide ratelimit priority for dvbapi request */
 	if ((cfg.dvbapi_enabled == 1) && (strcmp(er->client->account->usr,cfg.dvbapi_usr) == 0)) {
-		if (reader->lastdvbapirateoverride < time(NULL) - reader->ratelimitseconds) {
-			int32_t foundspace = -1;
+		if ((reader->lastdvbapirateoverride) < (time(NULL) - reader->ratelimitseconds)) {
 			time_t minecmtime = time(NULL);
 			for (h = 0; h < maxloop; h++) {
 				if(reader->rlecmh[h].last < minecmtime) {
-					foundspace = h;
 					minecmtime = reader->rlecmh[h].last;
+					foundspace = h;
 				}
 			}
 			reader->lastdvbapirateoverride = time(NULL);
-			cs_debug_mask(D_READER, "Prioritizing DVBAPI User %s over other watching client on reader %s.", er->client->account->usr, reader->label);
+			rdr_debug_mask(reader, D_READER, "prioritizing DVBAPI user %s over other watching client", er->client->account->usr);
+			rdr_debug_mask(reader, D_READER, "ratelimiter reassigning slot: #%d of %d", foundspace+1, reader->ratelimitecm);
 			return foundspace;
-		} else cs_debug_mask(D_READER, "DVBAPI User %s is switching too fast for ratelimit and can't be prioritized on reader %s.",
-			er->client->account->usr, reader->label);
+		} else rdr_debug_mask(reader, D_READER, "DVBAPI User %s is switching too fast for ratelimit and can't be prioritized!",
+			er->client->account->usr);
 	}
 	#endif
 
@@ -559,61 +566,48 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 
 static int32_t ecm_ratelimit_check(struct s_reader * reader, ECM_REQUEST *er)
 {
-	int32_t foundspace = 0, h, count = 0;
+	int32_t foundspace = 0;
 
 	if (!reader->ratelimitecm) return OK; /* no rate limit set */
 
-	if (reader->cooldown[0]) {
-		if (reader->cooldownstate == 1) {
+	if (reader->cooldown[0]) { // Do we use cooldown?
+		if (reader->cooldownstate == 1) { // Cooldown in ratelimit phase
 			if (time(NULL) - reader->cooldowntime >= reader->cooldown[1]) { // check if cooldowntime is elapsed
 				reader->cooldownstate = 0; // set cooldown setup phase
 				reader->cooldowntime = 0; // reset cooldowntime
-				cs_debug_mask(D_READER,"Reader:%s Ratelimiter: Cooldown is OFF", reader->label);
+				rdr_debug_mask(reader, D_READER, "ratelimiter *OFF* since cooling down period of %d seconds is done!", reader->cooldown[1]);
 			}
 		}
-        	else if (reader->cooldownstate == 2) { // check if cooldowndelay is elapsed
+        
+		if (reader->cooldownstate == 2) { // check if cooldowndelay is elapsed
 			if (time(NULL) - reader->cooldowntime >= reader->cooldown[0]) {
 				reader->cooldownstate = 1; // set cooldown ratelimitseconds
 				reader->cooldowntime = time(NULL); // set time to enforce ecmratelimit for defined cooldowntime
-				cs_debug_mask(D_READER,"Reader:%s Ratelimiter: Cooldown is ON for %d seconds", reader->label, reader->cooldown[1]);
+				rdr_debug_mask(reader, D_READER, "ratelimiter starting cooling down period of %d seconds!", reader->cooldown[1]);
 			}
 		}
 	}
 
-	if (!reader->cooldown[0] || reader->cooldownstate != 2) { // no cooldown, or cooldown in ratelimitdelay phase
-		cs_debug_mask(D_READER, "Reader:%s ratelimit idx:%d rc:%d caid:%04X srvid:%04X", reader->label, er->idx, er->rc, er->caid, er->srvid);
+	if (!reader->cooldown[0] || reader->cooldownstate != 2) { // no cooldown or cooldown in setup phase or ratelimit phase
+		rdr_debug_mask(reader, D_READER, "ratelimiter requesting an ecmslot for srvid %04X", er->srvid);
 		foundspace = ecm_ratelimit_findspace(reader, er, reader->ratelimitecm);
-	}
-
-	if (foundspace < 0) { /* No space due to ratelimit */
-		if (reader->cooldown[0] && reader->cooldownstate == 0){ // we are in setup phase of cooldown
-			cs_debug_mask(D_READER, "Reader:%s Detected max ecmratelimit of %d!", reader->label, reader->ratelimitecm);
-			foundspace = MAXECMRATELIMIT - 1; /*one less, otherwise buffer overflow*/
-		}
-		else { // Ratelimit and cooldown in ratelimitseconds
-			cs_debug_mask(D_READER, "Reader:%s Ratelimit could not find space for srvid %04X. Dropping.", reader->label, er->srvid);
-			write_ecm_answer(reader, er, E_NOTFOUND, E2_RATELIMIT, NULL, "ECMratelimit no space for srvid");
+		if (foundspace < 0) { /* No space due to ratelimit */
+			if (reader->cooldown[0] && reader->cooldownstate == 0){ // we are in setup phase of cooldown
+				rdr_debug_mask(reader, D_READER, "ratelimiter detected overrun ecmratelimit of %d during setup phase!", reader->ratelimitecm);
+				reader->cooldownstate = 2; /* Entering cooldowndelay phase */
+				reader->cooldowntime = time(NULL); // set cooldowntime to calculate delay
+				rdr_debug_mask(reader, D_READER, "ratelimiter cooldowndelaying %d seconds before enforcing ratelimit during %d seconds cooldowntime", reader->cooldown[0], reader->cooldown[1]);
+				return OK; 
+			}
+			// Ratelimit and cooldown in ratelimitseconds
+			rdr_debug_mask(reader, D_READER, "ratelimiter no free slot for srvid %04X -> dropping!", er->srvid);
+			write_ecm_answer(reader, er, E_NOTFOUND, E2_RATELIMIT, NULL, "Ratelimiter: no slots free!");
 			return ERROR;
 		}
+		reader->rlecmh[foundspace].last=time(NULL);
+		reader->rlecmh[foundspace].srvid=er->srvid;
 	}
-	reader->rlecmh[foundspace].last=time(NULL);
-	reader->rlecmh[foundspace].srvid=er->srvid;
-	if ((reader->cooldown[0]) && (reader->cooldownstate != 2)) { // cooldown set and cooldown not in delay mode
-		for (h = 0; h < reader->ratelimitecm; h++) {
-			if ((reader->rlecmh[h].last !=- 1) && ((time(NULL)-reader->rlecmh[h].last) <= reader->ratelimitseconds)) {
-				count++;
-			}
-		}
-		if ((reader->rlecmh[MAXECMRATELIMIT - 1].last !=- 1) && ((time(NULL)-reader->rlecmh[MAXECMRATELIMIT - 1].last) <= reader->ratelimitseconds)) {
-			count++;
-		}
-		cs_debug_mask(D_READER, "Reader: %s Ratelimiter assigned slot #%d of %d", reader->label, count, reader->ratelimitecm);
-		if(count >= reader->ratelimitecm && reader->cooldownstate == 0) {
-			reader->cooldownstate = 2; /* Entering cooldowndelay phase */
-			reader->cooldowntime = time(NULL); // set cooldowntime to calculate delay
-			cs_debug_mask(D_READER,"Reader:%s Ratelimiter: Cooldown entered %d seconds cooldowndelay", reader->label, reader->cooldown[0]);
-		}
-	}
+	
 	return OK;
 }
 #endif
