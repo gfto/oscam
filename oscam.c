@@ -2922,7 +2922,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		cs_readlock(&clientlist_lock);
 
 		for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
-			int8_t match = matching_reader(er, rdr);
+			int8_t match = matching_reader(er, rdr, 1); // include ratelimitercheck
 #ifdef WITH_LB
 			//if this reader does not match, check betatunnel for it
 			if (!match && cfg.lb_auto_betatunnel) {
@@ -2930,7 +2930,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				if (caid) {
 					uint16_t save_caid = er->caid;
 					er->caid = caid;
-					match = matching_reader(er, rdr); //matching
+					match = matching_reader(er, rdr, 1); //matching (including ratelimitercheck)
 					er->caid = save_caid;
 				}
 			}

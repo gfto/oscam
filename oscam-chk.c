@@ -20,7 +20,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 		if (reader->rlecmh[h].srvid == er->srvid) {
 			if (h > 0){
 				for (foundspace = 0; foundspace < h; foundspace++) { // check for free lower slot
-					if (reader->rlecmh[foundspace].last == -1) {
+					if (reader->rlecmh[foundspace].last ==- 1) {
 						reader->rlecmh[h].srvid = -1;
 						reader->rlecmh[h].last = -1;
 						cs_debug_mask(D_TRACE, "ratelimiter old srvid %04X moving to slot #%d of %d",er->srvid, foundspace+1, maxloop);
@@ -34,7 +34,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 	} // srvid not found in slots!
 
 	for (h = 0; h < maxloop; h++) { // check for free slot
-		if (reader->rlecmh[h].last == -1) {
+		if (reader->rlecmh[h].last ==- 1) {
 			cs_debug_mask(D_TRACE, "ratelimiter new srvid %04X assigned to slot #%d of %d", er->srvid, h+1, maxloop);
 			return h; // free slot found -> assign it!
 		}
@@ -568,7 +568,7 @@ int32_t chk_ctab(uint16_t caid, CAIDTAB *ctab) {
   return 0;
 }
 
-int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
+int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
   //simple checks first:
   if (!er || !rdr)
     return(0);
@@ -781,7 +781,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   	return 0;
   }
   #ifdef WITH_CARDREADER
-  if (!(rdr->typ & R_IS_NETWORK)) {
+  if (!(rdr->typ & R_IS_NETWORK) && slot == 1) {
 	  if(ecm_ratelimit_check(rdr, er) != OK) return 0; //check ratelimiter & cooldown
   }
   #endif
