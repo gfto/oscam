@@ -122,7 +122,6 @@ int32_t  strToIntVal(char *value, int32_t defaultvalue);
 uint32_t strToUIntVal(char *value, uint32_t defaultvalue);
 
 void fprintf_conf(FILE *f, const char *varname, const char *fmt, ...) __attribute__ ((format (printf, 3, 4)));
-void fprintf_conf_n(FILE *f, const char *varname);
 
 int  config_list_parse(const struct config_list *clist, const char *token, char *value, void *config_data);
 void config_list_save(FILE *f, const struct config_list *clist, void *config_data, int save_all);

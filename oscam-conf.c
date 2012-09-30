@@ -44,10 +44,6 @@ void fprintf_conf(FILE *f, const char *varname, const char *fmtstring, ...){
 	}
 }
 
-void fprintf_conf_n(FILE *f, const char *varname) {
-	fprintf_conf(f, varname, "%s", "\n");
-}
-
 int config_list_parse(const struct config_list *clist, const char *token, char *value, void *config_data) {
 	const struct config_list *c;
 	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {

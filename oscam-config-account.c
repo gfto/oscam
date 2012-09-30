@@ -108,7 +108,7 @@ static void account_au_fn(const char *token, char *value, void *setting, FILE *f
 			fprintf_conf(f, token, "%s\n", value);
 		free_mk_t(value);
 	} else if (cfg.http_full_cfg) {
-		fprintf_conf_n(f, token);
+		fprintf_conf(f, token, "%s\n", "");
 	}
 }
 
@@ -142,10 +142,7 @@ static void account_expdate_fn(const char *token, char *value, void *setting, FI
 		struct tm timeinfo;
 		localtime_r(&account->expirationdate, &timeinfo);
 		strftime(buf, 16, "%Y-%m-%d", &timeinfo);
-		if (!streq(buf, "1970-01-01"))
-			fprintf_conf(f, token, "%s\n", buf);
-		else
-			fprintf_conf_n(f, token);
+		fprintf_conf(f, token, "%s\n", streq(buf, "1970-01-01") ? "" : buf);
 	}
 }
 
@@ -170,7 +167,7 @@ static void account_allowedtimeframe_fn(const char *token, char *value, void *se
 			account->allowedtimeframe[0] / 60, account->allowedtimeframe[0] % 60,
 			account->allowedtimeframe[1] / 60, account->allowedtimeframe[1] % 60 );
 	} else if (cfg.http_full_cfg) {
-		fprintf_conf_n(f, token);
+		fprintf_conf(f, token, "%s\n", "");
 	}
 }
 

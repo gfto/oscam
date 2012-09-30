@@ -1306,7 +1306,7 @@ int32_t write_server(void)
 #endif
 
 			if (rdr->ncd_key[0] || rdr->ncd_key[13] || cfg.http_full_cfg) {
-				fprintf_conf_n(f, "key");
+				fprintf_conf(f, "%s", "key");
 				if(rdr->ncd_key[0] || rdr->ncd_key[13]){
 					for (j = 0; j < 14; j++) {
 						fprintf(f, "%02X", rdr->ncd_key[j]);
@@ -1416,7 +1416,7 @@ int32_t write_server(void)
 			}
 
 			if ((rdr->atr[0] || cfg.http_full_cfg) && isphysical) {
-				fprintf_conf_n(f, "atr");
+				fprintf_conf(f, "%s", "atr");
 				if(rdr->atr[0]){
 					for (j=0; j < rdr->atrlen/2; j++) {
 						fprintf(f, "%02X", rdr->atr[j]);
