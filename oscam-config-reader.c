@@ -1294,7 +1294,7 @@ int32_t write_server(void)
 				fprintf_conf(f, "enable", "%d\n", rdr->enable);
 
 			fprintf_conf(f, "protocol", "%s\n", ctyp);
-			fprintf_conf(f, "device", "%s", rdr->device);
+			fprintf_conf(f, "device", "%s", rdr->device); // it should not have \n at the end
 
 			if ((rdr->r_port || cfg.http_full_cfg) && !isphysical)
 				fprintf(f, ",%d", rdr->r_port);
@@ -1309,7 +1309,7 @@ int32_t write_server(void)
 #endif
 
 			if (rdr->ncd_key[0] || rdr->ncd_key[13] || cfg.http_full_cfg) {
-				fprintf_conf(f, "%s", "key");
+				fprintf_conf(f, "key", "%s", ""); // it should not have \n at the end
 				if(rdr->ncd_key[0] || rdr->ncd_key[13]){
 					for (j = 0; j < 14; j++) {
 						fprintf(f, "%02X", rdr->ncd_key[j]);
@@ -1419,7 +1419,7 @@ int32_t write_server(void)
 			}
 
 			if ((rdr->atr[0] || cfg.http_full_cfg) && isphysical) {
-				fprintf_conf(f, "%s", "atr");
+				fprintf_conf(f, "atr", "%s", ""); // it should not have \n at the end
 				if(rdr->atr[0]){
 					for (j=0; j < rdr->atrlen/2; j++) {
 						fprintf(f, "%02X", rdr->atr[j]);

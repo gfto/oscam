@@ -30,19 +30,19 @@ int32_t write_services(void)
 			ptr++;
 		}
 		fprintf(f,"[%s]\n", sidtab->label);
-		fprintf_conf(f, "caid", "%s", "");
+		fprintf_conf(f, "caid", "%s", ""); // it should not have \n at the end
 		for (i=0; i<sidtab->num_caid; i++){
 			if (i==0) fprintf(f,"%04X", sidtab->caid[i]);
 			else fprintf(f,",%04X", sidtab->caid[i]);
 		}
 		fputc((int)'\n', f);
-		fprintf_conf(f, "provid", "%s", "");
+		fprintf_conf(f, "provid", "%s", ""); // it should not have \n at the end
 		for (i=0; i<sidtab->num_provid; i++){
 			if (i==0) fprintf(f,"%06X", sidtab->provid[i]);
 			else fprintf(f,",%06X", sidtab->provid[i]);
 		}
 		fputc((int)'\n', f);
-		fprintf_conf(f, "srvid", "%s", "");
+		fprintf_conf(f, "srvid", "%s", ""); // it should not have \n at the end
 		for (i=0; i<sidtab->num_srvid; i++){
 			if (i==0) fprintf(f,"%04X", sidtab->srvid[i]);
 			else fprintf(f,",%04X", sidtab->srvid[i]);

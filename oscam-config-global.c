@@ -301,7 +301,7 @@ static void http_dyndns_fn(const char *token, char *value, void *UNUSED(setting)
 		return;
 	}
 	if (strlen((const char *)(cfg.http_dyndns[0])) > 0 || cfg.http_full_cfg) {
-		fprintf_conf(f, token, "%s", "");
+		fprintf_conf(f, token, "%s", ""); // it should not have \n at the end
 		for (i = 0; i < MAX_HTTP_DYNDNS; i++) {
 			if (cfg.http_dyndns[i][0]) {
 				fprintf(f, "%s%s", i > 0 ? "," : "", cfg.http_dyndns[i]);
@@ -357,7 +357,7 @@ static void camd33_key_fn(const char *token, char *value, void *UNUSED(setting),
 		return;
 	}
 	unsigned int i;
-	fprintf_conf(f, "%s", token);
+	fprintf_conf(f, token, "%s", ""); // it should not have \n at the end
 	for (i = 0; i < sizeof(cfg.c33_key); i++) {
 		fprintf(f, "%02X", cfg.c33_key[i]);
 	}
@@ -462,7 +462,7 @@ static void newcamd_key_fn(const char *token, char *value, void *UNUSED(setting)
 		}
 		return;
 	}
-	fprintf_conf(f, token, "%s", "");
+	fprintf_conf(f, token, "%s", ""); // it should not have \n at the end
 	unsigned int i;
 	for (i = 0; i < 14; i++) {
 		fprintf(f,"%02X", cfg.ncd_key[i]);
