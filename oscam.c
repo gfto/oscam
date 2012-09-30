@@ -1188,6 +1188,7 @@ static int32_t start_listener(struct s_module *ph, int32_t port_idx)
   int32_t ov=1, timeout, is_udp, i;
   char ptxt[2][32];
   struct SOCKADDR sad;     /* structure to hold server's address */
+  socklen_t sad_len;
   cs_log("Starting listener %d", port_idx);
 
   ptxt[0][0]=ptxt[1][0]='\0';
@@ -1202,8 +1203,10 @@ static int32_t start_listener(struct s_module *ph, int32_t port_idx)
 #ifdef IPV6SUPPORT
   SIN_GET_FAMILY(sad) = AF_INET6;            /* set family to Internet     */
   SIN_GET_ADDR(sad) = in6addr_any;
+  sad_len = sizeof(struct sockaddr_in6);
 #else
   sad.sin_family = AF_INET;            /* set family to Internet     */
+  sad_len = sizeof(struct sockaddr);
   if (!ph->s_ip)
     ph->s_ip=cfg.srvip;
   if (ph->s_ip)
@@ -1282,17 +1285,17 @@ static int32_t start_listener(struct s_module *ph, int32_t port_idx)
 
   while (timeout--)
   {
-    if (bind(ph->ptab->ports[port_idx].fd, (struct sockaddr *)&sad, sizeof (sad))<0)
+    if (bind(ph->ptab->ports[port_idx].fd, (struct sockaddr *)&sad, sad_len) < 0)
     {
       if (timeout)
       {
-        cs_log("%s: Bind request failed, waiting another %d seconds",
-               ph->desc, timeout);
+        cs_log("%s: Bind request failed (%s), waiting another %d seconds",
+               ph->desc, strerror(errno), timeout);
         cs_sleepms(1000);
       }
       else
       {
-        cs_log("%s: Bind request failed, giving up", ph->desc);
+        cs_log("%s: Bind request failed (%s), giving up", ph->desc, strerror(errno));
         close(ph->ptab->ports[port_idx].fd);
         return(ph->ptab->ports[port_idx].fd=0);
       }
