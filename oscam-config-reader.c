@@ -1087,8 +1087,11 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		} else {
 			rdr->ratelimitecm = atoi(value);
 			int32_t h;
-			for (h=0; h < MAXECMRATELIMIT; h++) rdr->rlecmh[h].last = -1;
-			return;
+			for (h=0; h < MAXECMRATELIMIT; h++) { // reset all slots
+				rdr->rlecmh[h].srvid = -1;
+				rdr->rlecmh[h].last = -1;
+				return;
+			}
 		}
 	}
 	if (!strcmp(token, "ratelimitseconds")) {
