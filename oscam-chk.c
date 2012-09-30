@@ -20,7 +20,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 		if (reader->rlecmh[h].srvid == er->srvid) {
 			if (h > 0){
 				for (foundspace = 0; foundspace < h; foundspace++) { // check for free lower slot
-					if ((reader->rlecmh[foundspace].last ==- 1)) {
+					if (reader->rlecmh[foundspace].last == -1) {
 						reader->rlecmh[h].srvid = -1;
 						reader->rlecmh[h].last = -1;
 						cs_debug_mask(D_TRACE, "ratelimiter old srvid %04X moving to slot #%d of %d",er->srvid, foundspace+1, maxloop);
@@ -34,7 +34,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 	} // srvid not found in slots!
 
 	for (h = 0; h < maxloop; h++) { // check for free slot
-		if ((reader->rlecmh[h].last ==- 1)) {
+		if (reader->rlecmh[h].last == -1) {
 			cs_debug_mask(D_TRACE, "ratelimiter new srvid %04X assigned to slot #%d of %d", er->srvid, h+1, maxloop);
 			return h; // free slot found -> assign it!
 		}
