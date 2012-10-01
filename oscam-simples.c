@@ -1148,7 +1148,7 @@ char *reader_get_type_desc(struct s_reader * rdr, int32_t extended __attribute__
 	if (rdr->crdr.active==1)
 		return rdr->crdr.desc;
 
-	if ((rdr->typ & R_IS_NETWORK) || rdr->typ == R_SERIAL) {
+	if (is_network_reader(rdr) || rdr->typ == R_SERIAL) {
 		if (rdr->ph.desc)
 			desc = rdr->ph.desc;
 	} else if (rdr->typ >= 0 && rdr->typ < (int32_t)(sizeof(typtxt)/sizeof(char *))){

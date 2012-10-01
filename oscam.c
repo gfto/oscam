@@ -2946,7 +2946,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				prv = ea;
 
 				ea->status = READER_ACTIVE;
-				if (!(rdr->typ & R_IS_NETWORK))
+				if (!is_network_reader(rdr))
 					ea->status |= READER_LOCAL;
 				else if (cacheex_reader(rdr))
 					ea->status |= READER_CACHEEX;

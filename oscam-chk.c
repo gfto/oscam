@@ -579,7 +579,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
     return(0);
 
   // if physical reader a card needs to be inserted
-  if ((!(rdr->typ & R_IS_NETWORK)) && (rdr->card_status != CARD_INSERTED))
+  if (!is_network_reader(rdr) && rdr->card_status != CARD_INSERTED)
     return(0);
 
   //Checking connected & group valid:
@@ -604,7 +604,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
     return 0;
   }
 
-  if ((!(rdr->typ & R_IS_NETWORK)) && ((rdr->caid >> 8) != ((er->caid >> 8) & 0xFF) && (rdr->caid >> 8) != ((er->ocaid >> 8) & 0xFF)))
+  if (!is_network_reader(rdr) && ((rdr->caid >> 8) != ((er->caid >> 8) & 0xFF) && (rdr->caid >> 8) != ((er->ocaid >> 8) & 0xFF)))
   {
     int i, caid_found = 0;
     for (i = 0; i < 2; i++) {
@@ -618,7 +618,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
   }
 
   //Supports long ecms?
-  if (er->l > 255 && (rdr->typ & R_IS_NETWORK) && !rdr->ph.large_ecm_support) {
+  if (er->l > 255 && is_network_reader(rdr) && !rdr->ph.large_ecm_support) {
 	  cs_debug_mask(D_TRACE, "no large ecm support (l=%d) for reader %s", er->l, rdr->label);
 	  return 0;
   }
@@ -769,19 +769,20 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
   //Simple ring connection check:
     
   //Check ip source+dest:
-  if (cfg.block_same_ip && IP_EQUAL(cur_cl->ip, rdr->client->ip) &&
-  	ph[cur_cl->ctyp].listenertype != LIS_DVBAPI &&
-  	(rdr->typ & R_IS_NETWORK)) {
-  	cs_debug_mask(D_TRACE, "ECMs origin %s has the same ip as reader %s, blocked!", username(cur_cl), rdr->label);
-  	return 0;
-  }
+	if (cfg.block_same_ip && IP_EQUAL(cur_cl->ip, rdr->client->ip) &&
+		ph[cur_cl->ctyp].listenertype != LIS_DVBAPI &&
+		is_network_reader(rdr))
+	{
+		cs_debug_mask(D_TRACE, "ECMs origin %s has the same ip as reader %s, blocked!", username(cur_cl), rdr->label);
+		return 0;
+	}
   
   if (cfg.block_same_name && strcmp(username(cur_cl), rdr->label) == 0) {
   	cs_debug_mask(D_TRACE, "ECMs origin %s has the same name as reader %s, blocked!", username(cur_cl), rdr->label);
   	return 0;
   }
   #ifdef WITH_CARDREADER
-  if (!(rdr->typ & R_IS_NETWORK) && slot == 1) {
+  if (!is_network_reader(rdr) && slot == 1) {
 	  if(ecm_ratelimit_check(rdr, er) != OK) return 0; //check ratelimiter & cooldown
   }
   #endif
@@ -794,7 +795,7 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 	int32_t i;
 
 	// if physical reader a card needs to be inserted
-	if ((!(reader->typ & R_IS_NETWORK)) && (reader->card_status != CARD_INSERTED)) {
+	if (!is_network_reader(reader) && reader->card_status != CARD_INSERTED) {
 		return(0);
 	}
 

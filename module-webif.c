@@ -990,7 +990,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 #ifdef WITH_LB
 				tpl_printf(vars, TPLADD, "LBWEIGHT", "%d", rdr->lb_weight);
 #endif
-				if (!(rdr->typ & R_IS_NETWORK)) { //reader is physical
+				if (!is_network_reader(rdr)) { //reader is physical
 					tpl_addVar(vars, TPLADD, "REFRICO", "image?i=ICREF");
 					tpl_addVar(vars, TPLADD, "READERREFRESH", tpl_getTpl(vars, "READERREFRESHBIT"));
 					tpl_addVar(vars, TPLADD, "ENTICO", "image?i=ICENT");
@@ -1107,7 +1107,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	} else if(strcmp(getParam(params, "action"), "Save") == 0) {
 
 		rdr = get_reader_by_label(getParam(params, "label"));
-		//if (rdr->typ & R_IS_NETWORK)
+		//if (is_network_reader(rdr))
 		//	inactivate_reader(rdr); //Stop reader before reinitialization
 		char servicelabels[1024]="";
 
@@ -1123,7 +1123,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		}
 		chk_reader("services", servicelabels, rdr);
 
-		if (rdr->typ & R_IS_NETWORK) { //physical readers make trouble if re-started
+		if (is_network_reader(rdr)) { //physical readers make trouble if re-started
 			restart_cardreader(rdr, 1);
 		}
 

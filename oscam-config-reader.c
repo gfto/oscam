@@ -1278,7 +1278,7 @@ int32_t write_server(void)
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr))) {
 		if ( rdr->label[0]) {
-			int32_t isphysical = (rdr->typ & R_IS_NETWORK)?0:1;
+			int32_t isphysical = !is_network_reader(rdr);
 			char *ctyp = reader_get_type_desc(rdr, 0);
 
 			fprintf(f,"[reader]\n");
@@ -1303,7 +1303,7 @@ int32_t write_server(void)
 			fprintf(f, "\n");
 
 #ifdef WITH_LIBUSB
-			if (!(rdr->typ & R_IS_NETWORK))
+			if (isphysical)
 				if (rdr->device_endpoint || cfg.http_full_cfg)
 					fprintf_conf(f, "device_out_endpoint", "0x%2X\n", rdr->device_endpoint);
 #endif

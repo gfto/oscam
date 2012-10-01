@@ -1085,7 +1085,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 
 					for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 						if (cfg.preferlocalcards
-								&& !(rdr->typ & R_IS_NETWORK)
+								&& !is_network_reader(rdr)
 								&& rdr->card_status == CARD_INSERTED) { // cfg.preferlocalcards = 1 local reader
 							if (matching_reader(er, rdr, 0)) {
 								demux[demux_index].ECMpids[n].status = (prio * demux[demux_index].ECMpidcount) + (p_order--); //priority*ECMpidcount should overrule network reader
@@ -1141,7 +1141,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 			}
 
 			for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
-				if (!(rdr->typ & R_IS_NETWORK) && rdr->card_status==CARD_INSERTED) { // cfg.preferlocalcards = 1 local reader
+				if (!is_network_reader(rdr) && rdr->card_status==CARD_INSERTED) { // cfg.preferlocalcards = 1 local reader
 					if (matching_reader(er, rdr, 0)) {
 						demux[demux_index].ECMpids[n].status = prio*2; //priority
 						cs_debug_mask(D_DVBAPI,

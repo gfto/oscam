@@ -633,7 +633,7 @@ static FILTER mk_user_ftab(void)
       for (rdr=first_active_reader; rdr ; rdr=rdr->next)
         if (rdr->grp & cl->grp) {
           if (!rdr->ftab.nfilts) {
-            if (rdr->typ & R_IS_NETWORK) add = 1;
+            if (is_network_reader(rdr)) add = 1;
             for (j=0; !add && j<rdr->nprov; j++)
               if (b2i(3, &rdr->prid[j][1]) == psfilt->prids[i]) add = 1;
           } else {

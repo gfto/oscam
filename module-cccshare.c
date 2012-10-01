@@ -1239,7 +1239,7 @@ void share_updater(void)
 						cur_check = crc32(cur_check, (uint8_t*)&rdr->card_status, sizeof(rdr->card_status));
 
 						//Check hexserial/UA changes only on lokal readers:
-						if (!(rdr->typ & R_IS_NETWORK)) {
+						if (!is_network_reader(rdr)) {
 							cur_check = crc32(cur_check, (uint8_t*)&rdr->hexserial, 8); //check hexserial
 							cur_check = crc32(cur_check, (uint8_t*)&rdr->prid, rdr->nprov * sizeof(rdr->prid[0])); //check providers
 							cur_check = crc32(cur_check, (uint8_t*)&rdr->sa, rdr->nprov * sizeof(rdr->sa[0])); //check provider-SA
