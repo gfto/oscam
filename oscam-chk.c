@@ -8,9 +8,10 @@
 static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er, int32_t maxloop, int32_t slot)
 {
 	int32_t h, foundspace = -1;
-	for (h = 0; h < maxloop; h++) { // release all slots that are overtime and not assigned to same srvid
-		if ((time(NULL)-reader->rlecmh[h].last) > reader->ratelimitseconds && reader->rlecmh[h].last !=-1 && ((reader->rlecmh[h].srvid != er->srvid) && slot==2)) {
-			cs_debug_mask(D_TRACE, "ratelimiter old srvid %04X released from slot #%d/%d of reader %s (%d>%d ratelimitsec!)", reader->rlecmh[h].srvid, h+1, maxloop, reader->label, (int) (time(NULL)-reader->rlecmh[h].last), reader->ratelimitseconds);
+	time_t actualtime = time(NULL);
+	for (h = 0; h < maxloop; h++) { // always release slots with srvid that are overtime, even if not called from reader module to maximize available slots!
+		if ((actualtime - reader->rlecmh[h].last > reader->ratelimitseconds) && (reader->rlecmh[h].last !=-1)){
+			cs_debug_mask(D_TRACE, "ratelimiter old srvid %04X released from slot #%d/%d of reader %s (%d>%d ratelimitsec!)", reader->rlecmh[h].srvid, h+1, maxloop, reader->label, (int) (actualtime - reader->rlecmh[h].last), reader->ratelimitseconds);
 			reader->rlecmh[h].last = -1;
 			reader->rlecmh[h].srvid = -1;
 		}
@@ -28,7 +29,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 					}
 				}
 			}
-			cs_debug_mask(D_TRACE, "ratelimiter found srvid %04X for %d sec in slot #%d/%d of reader %s",er->srvid, (int) (time(NULL)-reader->rlecmh[h].last), h+1, maxloop,reader->label);
+			cs_debug_mask(D_TRACE, "ratelimiter found srvid %04X for %d sec in slot #%d/%d of reader %s",er->srvid, (int) (actualtime - reader->rlecmh[h].last), h+1, maxloop,reader->label);
 			return h; // Found but cant move to lower slot!
 		} 
 	} // srvid not found in slots!
@@ -38,7 +39,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 			cs_debug_mask(D_TRACE, "ratelimiter added srvid %04X to slot #%d/%d of reader %s", er->srvid, h+1, maxloop, reader->label);
 			return h; // free slot found -> assign it!
 		}
-		else cs_debug_mask(D_TRACE, "ratelimiter srvid %04X for %d seconds present in slot #%d/%d of reader %s", reader->rlecmh[h].srvid, (int) (time(NULL)-reader->rlecmh[h].last), h+1, maxloop, reader->label); //occupied slots
+		else cs_debug_mask(D_TRACE, "ratelimiter srvid %04X for %d seconds present in slot #%d/%d of reader %s", reader->rlecmh[h].srvid, (int) (actualtime - reader->rlecmh[h].last), h+1, maxloop, reader->label); //occupied slots
 	}
 
 	#ifdef HAVE_DVBAPI

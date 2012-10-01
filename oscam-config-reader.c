@@ -1090,8 +1090,8 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			for (h=0; h < MAXECMRATELIMIT; h++) { // reset all slots
 				rdr->rlecmh[h].srvid = -1;
 				rdr->rlecmh[h].last = -1;
-				return;
 			}
+			return;
 		}
 	}
 	if (!strcmp(token, "ratelimitseconds")) {
