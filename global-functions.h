@@ -93,6 +93,7 @@ extern int32_t chk_ufilters(ECM_REQUEST *);
 extern int32_t chk_rsfilter(struct s_reader * reader, ECM_REQUEST *);
 extern int32_t chk_caid(uint16_t caid, CAIDTAB *ctab);
 extern int32_t matching_reader(ECM_REQUEST *, struct s_reader *, int32_t slot); // slot=1, do also ratelimiter check, 0= no ratelimiter check
+extern int32_t ecm_ratelimit_check(struct s_reader * reader, ECM_REQUEST *er, int32_t slot); // use slot=2 if called from reader so it can replace srvid
 extern int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid);
 extern void set_signal_handler(int32_t , int32_t , void (*));
 extern void cs_waitforcardinit(void);

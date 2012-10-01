@@ -553,7 +553,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	}
 
 #ifdef WITH_CARDREADER
-
+	if(ecm_ratelimit_check(reader, er, 2) != OK) return; // slot = 2: checkout ratelimiter in reader mode so srvid can be replaced
 	cs_ddump_mask(D_ATR, er->ecm, er->l, "ecm:");
 
 	struct timeb tps, tpe;
