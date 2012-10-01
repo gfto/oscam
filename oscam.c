@@ -1,5 +1,6 @@
-
 #include "globals.h"
+
+#include "coolapi.h"
 #include "csctapi/icc_async.h"
 #ifdef MODULE_CCCAM
 #include "module-cccam.h"

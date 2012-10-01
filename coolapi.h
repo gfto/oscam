@@ -169,4 +169,12 @@ do { \
 	} \
 } while(0)
 
+#ifdef WITH_COOLAPI
+extern void coolapi_open_all(void);
+extern void coolapi_close_all(void);
+#else
+static inline void coolapi_open_all(void) { }
+static inline void coolapi_close_all(void) { }
+#endif
+
 #endif
