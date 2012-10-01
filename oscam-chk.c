@@ -10,7 +10,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 	int32_t h, foundspace = -1;
 	for (h = 0; h < maxloop; h++) { // release all slots that are overtime and not assigned to same srvid
 		if ((time(NULL)-reader->rlecmh[h].last) > reader->ratelimitseconds && reader->rlecmh[h].last !=-1 && ((reader->rlecmh[h].srvid != er->srvid) && slot==2)) {
-			cs_debug_mask(D_TRACE, "ratelimiter old srvid %04X released from slot #%d of %d (>ratelimittime)", reader->rlecmh[h].srvid, h+1, maxloop);
+			cs_debug_mask(D_TRACE, "ratelimiter old srvid %04X released from slot #%d/%d of reader %s (%d>%d ratelimitsec!)", reader->rlecmh[h].srvid, h+1, maxloop, reader->label, (int) (time(NULL)-reader->rlecmh[h].last), reader->ratelimitseconds);
 			reader->rlecmh[h].last = -1;
 			reader->rlecmh[h].srvid = -1;
 		}
@@ -23,22 +23,22 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 					if (reader->rlecmh[foundspace].last ==- 1) {
 						reader->rlecmh[h].srvid = -1;
 						reader->rlecmh[h].last = -1;
-						cs_debug_mask(D_TRACE, "ratelimiter old srvid %04X moving to slot #%d of %d",er->srvid, foundspace+1, maxloop);
+						cs_debug_mask(D_TRACE, "ratelimiter moving srvid %04X to slot #%d/%d of reader %s",er->srvid, foundspace+1, maxloop, reader->label);
 						return foundspace; // moving to lower free slot!
 					}
 				}
 			}
-			cs_debug_mask(D_TRACE, "ratelimiter found srvid %04X in slot #%d of %d",er->srvid, h+1, maxloop);
+			cs_debug_mask(D_TRACE, "ratelimiter found srvid %04X in slot #%d/%d of reader %s",er->srvid, h+1, maxloop,reader->label);
 			return h; // Found but cant move to lower slot!
 		} 
 	} // srvid not found in slots!
 	if (slot !=2) return -1; // who's calling us? reader or some stat prober?  If reader then register otherwise just report!
 	for (h = 0; h < maxloop; h++) { // check for free slot
 		if (reader->rlecmh[h].last ==- 1) {
-			cs_debug_mask(D_TRACE, "ratelimiter new srvid %04X assigned to slot #%d of %d", er->srvid, h+1, maxloop);
+			cs_debug_mask(D_TRACE, "ratelimiter added srvid %04X to slot #%d/%d of reader %s", er->srvid, h+1, maxloop, reader->label);
 			return h; // free slot found -> assign it!
 		}
-		else cs_debug_mask(D_TRACE, "ratelimiter old srvid %04X assigned to slot #%d of %d", reader->rlecmh[h].srvid, h+1, maxloop); //occupied slots
+		else cs_debug_mask(D_TRACE, "ratelimiter srvid %04X for %d seconds present in slot #%d/%d of reader %s", reader->rlecmh[h].srvid, (int) (time(NULL)-reader->rlecmh[h].last), h+1, maxloop, reader->label); //occupied slots
 	}
 
 	#ifdef HAVE_DVBAPI
@@ -55,7 +55,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 			}
 			reader->lastdvbapirateoverride = time(NULL);
 			cs_debug_mask(D_TRACE, "prioritizing DVBAPI user %s over other watching client", er->client->account->usr);
-			cs_debug_mask(D_TRACE, "ratelimiter reassigning slot: #%d of %d", foundspace+1, maxloop);
+			cs_debug_mask(D_TRACE, "ratelimiter forcing srvid %04X into slot #%d/%d of reader %s", er->srvid, foundspace+1, maxloop, reader->label);
 			return foundspace;
 		} else cs_debug_mask(D_TRACE, "DVBAPI User %s is switching too fast for ratelimit and can't be prioritized!",
 			er->client->account->usr);
@@ -83,7 +83,7 @@ int32_t ecm_ratelimit_check(struct s_reader * reader, ECM_REQUEST *er, int32_t s
 		}
 	}
 	
-	cs_debug_mask(D_TRACE, "ratelimiter find a slot for srvid %04X", er->srvid);
+	cs_debug_mask(D_TRACE, "ratelimiter find a slot for srvid %04X on reader %s", er->srvid, reader->label);
 	foundspace = ecm_ratelimit_findspace(reader, er, maxslots, slot);
 	if (foundspace < 0 || foundspace >= reader->ratelimitecm) { /* No space due to ratelimit */
 		if (slot !=2) return OK; // who's calling us? reader or some stat prober?  If reader then register otherwise just report!
@@ -120,7 +120,7 @@ int32_t ecm_ratelimit_check(struct s_reader * reader, ECM_REQUEST *er, int32_t s
 		}
 		// Ratelimit and cooldown in ratelimitseconds
 		if (slot != 2) return ERROR; //who's calling us? reader or some stat prober?  If reader then register otherwise just report!
-		cs_debug_mask(D_TRACE, "ratelimiter no free slot for srvid %04X -> dropping!", er->srvid);
+		cs_debug_mask(D_TRACE, "ratelimiter no free slot for srvid %04X on reader %s -> dropping!", er->srvid, reader->label);
 		write_ecm_answer(reader, er, E_NOTFOUND, E2_RATELIMIT, NULL, "Ratelimiter: no slots free!");
 		return ERROR;
 	}
