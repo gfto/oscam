@@ -2137,7 +2137,7 @@ static void clear_account_stats(struct s_auth *account) {
 	cacheex_clear_account_stats(account);
 }
 
-void clear_all_account_stats(void) {
+static void clear_all_account_stats(void) {
 	struct s_auth *account = cfg.account;
 	while (account) {
 		clear_account_stats(account);
@@ -2145,7 +2145,7 @@ void clear_all_account_stats(void) {
 	}
 }
 
-void clear_system_stats(void) {
+static void clear_system_stats(void) {
 	first_client->cwfound = 0;
 	first_client->cwcache = 0;
 	first_client->cwnot = 0;
