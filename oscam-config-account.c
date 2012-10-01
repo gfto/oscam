@@ -69,31 +69,21 @@ static void account_allowedprotocols_fn(const char *token, char *value, void *se
 static void account_au_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_auth *account = setting;
 	if (value) {
-		
-		// exit if invalid or no value
-		if ((strlen(value) == 0) || (value[0] == '0'))
-			return;
-
-     	strtolower(value);
-
 		// set default values for usage during runtime from Webif
 		account->autoau = 0;
 		if (!account->aureader_list)
 			account->aureader_list = ll_create("aureader_list");
-
-		if(value && value[0] == '1') {
+		if (streq(value, "1"))
 			account->autoau = 1;
-		}
+		strtolower(value);
 		ll_clear(account->aureader_list);
-
-
 		LL_ITER itr = ll_iter_create(configured_readers);
 		struct s_reader *rdr;
 		char *pch, *saveptr1 = NULL;
 		for (pch = strtok_r(value, ",", &saveptr1); pch != NULL; pch = strtok_r(NULL, ",", &saveptr1)) {
 			ll_iter_reset(&itr);
 			while ((rdr = ll_iter_next(&itr))) {
-				if (((rdr->label[0]) && (!strcmp(rdr->label, pch))) || account->autoau) {
+				if (streq(rdr->label, pch) || account->autoau) {
 					ll_append(account->aureader_list, rdr);
 				}
 			}
