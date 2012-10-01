@@ -28,7 +28,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 					}
 				}
 			}
-			cs_debug_mask(D_TRACE, "ratelimiter found srvid %04X in slot #%d/%d of reader %s",er->srvid, h+1, maxloop,reader->label);
+			cs_debug_mask(D_TRACE, "ratelimiter found srvid %04X for %d sec in slot #%d/%d of reader %s",er->srvid, (int) (time(NULL)-reader->rlecmh[h].last), h+1, maxloop,reader->label);
 			return h; // Found but cant move to lower slot!
 		} 
 	} // srvid not found in slots!
