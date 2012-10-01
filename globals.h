@@ -445,19 +445,15 @@ enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE, E2_
 #define DEFAULT_TCP_RECONNECT_TIMEOUT 30
 #define DEFAULT_NCD_KEEPALIVE 0
 
-#ifdef MODULE_CCCAM
 #define DEFAULT_CC_MAXHOPS  10
 #define DEFAULT_CC_RESHARE  -1 // Use global cfg
 #define DEFAULT_CC_IGNRSHR  -1 // Use global cfg
 #define DEFAULT_CC_STEALTH  -1 // Use global cfg
 #define DEFAULT_CC_KEEPALIVE 0
 #define DEFAULT_CC_RECONNECT 12000
-#endif
 
-#ifdef CS_ANTICASC
 #define DEFAULT_AC_USERS   -1 // Use global cfg
 #define DEFAULT_AC_PENALTY -1 // Use global cfg
-#endif
 
 // Return MPEG section length
 #define SCT_LEN(sct) (3+((sct[1]&0x0f)<<8)+sct[2])
@@ -583,7 +579,6 @@ typedef struct v_ban {					// Failban listmember
 	char            *info;
 } V_BAN;
 
-#ifdef CS_CACHEEX
 typedef struct s_cacheex_stat_entry {	// Cacheex stats listmember
 	int32_t 		cache_count;
 	time_t 			cache_last;
@@ -592,7 +587,6 @@ typedef struct s_cacheex_stat_entry {	// Cacheex stats listmember
 	uint32_t 		cache_prid;
 	int8_t          cache_direction;	// 0 = push / 1 = got
 } S_CACHEEX_STAT_ENTRY;
-#endif
 
 typedef struct s_entitlement {			// contains entitlement Info
 	uint64_t		id;				// the element ID
@@ -698,14 +692,12 @@ struct s_cardsystem {
 	uint16_t		caids[2];
 };
 
-#ifdef IRDETO_GUESSING
 struct s_irdeto_quess {
 	int32_t			b47;
 	uint16_t		caid;
 	uint16_t		sid;
 	struct s_irdeto_quess *next;
 };
-#endif
 
 #define MAX_ECM_SIZE 512
 
@@ -780,7 +772,6 @@ struct s_ecm_answer {
 	struct s_ecm_answer	*next;
 };
 
-#ifdef CS_ANTICASC
 struct s_acasc_shm {
 	uint16_t		ac_count : 15;
 	uint16_t		ac_deny  : 1;
@@ -790,15 +781,12 @@ struct s_acasc {
 	uint16_t		stat[10];
 	uchar			idx;			// current active index in stat[]
 };
-#endif
 
-#ifdef WEBIF
 struct s_cwresponse {
 	int32_t			duration;
 	time_t			timestamp;
 	int32_t			rc;
 };
-#endif
 
 struct s_cascadeuser {
 	uint16_t		caid;
@@ -1292,7 +1280,6 @@ struct s_reader  									//contains device info, reader info and card info
 	struct s_reader *next;
 };
 
-#ifdef CS_ANTICASC
 struct s_cpmap
 {
 	uint16_t		caid;
@@ -1302,7 +1289,6 @@ struct s_cpmap
 	uint16_t		dwtime;
 	struct s_cpmap	*next;
 };
-#endif
 
 struct s_auth
 {
@@ -1391,7 +1377,6 @@ struct s_tierid
 	struct s_tierid *next;
 };
 
-//Todo #ifdef CCCAM
 struct s_provid
 {
 	uint16_t		caid;
@@ -1423,7 +1408,6 @@ struct s_global_whitelist
 	struct s_global_whitelist *next;
 };
 
-#ifdef CS_CACHEEX
 struct s_cacheex_matcher
 {
 	uint32_t line; //linenr of oscam.Cacheex file, starting with 1
@@ -1447,7 +1431,6 @@ struct s_cacheex_matcher
 
 	struct s_cacheex_matcher *next;
 };
-#endif
 
 struct s_config
 {
