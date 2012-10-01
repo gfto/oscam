@@ -576,6 +576,7 @@ int32_t chk_ctab(uint16_t caid, CAIDTAB *ctab) {
 }
 
 int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
+  (void)slot; // Prevent warning about unused param slot, when WITH_CARDREADER is disabled
   //simple checks first:
   if (!er || !rdr)
     return(0);
