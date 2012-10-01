@@ -124,27 +124,6 @@ int32_t cs_open_logfiles(void)
 	return(fp <= (FILE *)0);
 }
 
-#ifdef CS_ANTICASC
-static FILE *ac_log = NULL;
-
-int32_t ac_init_log(void) {
-	if (ac_log)
-		return 1;
-	if (!cfg.ac_logfile) {
-		cs_log("ERROR: anticasc is enabled but ac_logfile is not set.");
-		return 0;
-	}
-	ac_log = fopen(cfg.ac_logfile, "a+");
-	if (!ac_log) {
-		cs_log("ERROR: Can't open anti-cascading logfile: %s (errno=%d %s)",
-			cfg.ac_logfile, errno, strerror(errno));
-		return 0;
-	}
-	cs_log("anti-cascading log initialized");
-	return 1;
-}
-#endif
-
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 /*
  This function allows to reinit the in-memory loghistory with a new size.
@@ -206,6 +185,7 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 	char sbuf[16];
 
 #ifdef CS_ANTICASC
+	extern FILE *ac_log;
 	if (!strncmp(txt + log->header_len, "acasc:", 6) && ac_log) {
 		strcat(txt, "\n");
 		fputs(txt + 8, ac_log);

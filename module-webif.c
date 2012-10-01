@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
+#include "module-anticasc.h"
 #include "module-cacheex.h"
 #include "module-cccam.h"
 #include "module-cccshare.h"

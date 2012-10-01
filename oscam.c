@@ -7,6 +7,7 @@
 #if defined(WITH_AZBOX) && defined(HAVE_DVBAPI)
 #include "openxcas/openxcas_api.h"
 #endif
+#include "module-anticasc.h"
 #include "module-cacheex.h"
 #include "module-ird-guess.h"
 #include "module-lcd.h"
@@ -427,21 +428,14 @@ void cs_accounts_chk(void)
         account2->emmok = account1->emmok;
         account2->emmnok = account1->emmnok;
         account2->firstlogin = account1->firstlogin;
-#ifdef CS_ANTICASC
-		account2->ac_users = account1->ac_users;
-		account2->ac_penalty = account1->ac_penalty;
-		account2->ac_stat = account1->ac_stat;
-#endif
+        ac_copy_vars(account1, account2);
       }
     }
   }
   cs_reinit_clients(new_accounts);
   cfg.account = new_accounts;
   init_free_userdb(old_accounts);
-
-#ifdef CS_ANTICASC
   ac_clear();
-#endif
 }
 
 static void remove_ecm_from_reader(ECM_REQUEST *ecm) {
@@ -847,9 +841,7 @@ void cs_reload_config(void)
 		cs_accounts_chk();
 		init_srvid();
 		init_tierid();
-		#ifdef CS_ANTICASC
 		ac_init_stat();
-		#endif
 }
 
 /* Sets signal handlers to ignore for early startup of OSCam because for example log
@@ -1011,9 +1003,7 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 					cs_reset_lastresponsetime(cl);
 					if (account->uniq)
 						cs_fake_client(cl, account->usr, (account->uniq == 1 || account->uniq == 2)?account->uniq+2:account->uniq, cl->ip);
-#ifdef CS_ANTICASC
 					ac_init_client(cl, account);
-#endif
 				}
 			} else {
 				if (ph[cl->ctyp].type & MOD_CONN_NET) {
@@ -1674,9 +1664,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 				client->sidtabok= account->sidtabok;   // services
 				client->sidtabno= account->sidtabno;   // services
 				memcpy(&client->ttab, &account->ttab, sizeof(client->ttab));
-#ifdef CS_ANTICASC
 				ac_init_client(client, account);
-#endif
 			}
 		}
 	case -1:            // anonymous grant access
@@ -2162,9 +2150,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 			first_client->cwignored++;
 	}
 
-#ifdef CS_ANTICASC
 	ac_chk(client, er, 1);
-#endif
 
 	int32_t is_fake = 0;
 	if (er->rc==E_FAKE) {
@@ -2868,10 +2854,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		// store ECM in cache
 		memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, md5tmp), CS_ECMSTORESIZE);
 		cacheex_update_hash(er);
-
-#ifdef CS_ANTICASC
 		ac_chk(client, er, 0);
-#endif
 	}
 
 	struct s_ecm_answer *ea, *prv = NULL;
@@ -3873,10 +3856,6 @@ static uint32_t auto_timeout(ECM_REQUEST *er, uint32_t timeout) {
 static void * check_thread(void) {
 	int32_t time_to_check, next_check, ecmc_next, msec_wait = 3000;
 	struct timeb t_now, tbc, ecmc_time;
-#ifdef CS_ANTICASC
-	int32_t ac_next;
-	struct timeb ac_time;
-#endif
 	ECM_REQUEST *er = NULL;
 	time_t ecm_timeout;
 	time_t ecm_mintimeout;
@@ -3891,6 +3870,8 @@ static void * check_thread(void) {
 	timecheck_client = cl;
 
 #ifdef CS_ANTICASC
+	int32_t ac_next;
+	struct timeb ac_time;
 	cs_ftime(&ac_time);
 	add_ms_to_timeb(&ac_time, cfg.ac_stime*60*1000);
 #endif
@@ -4677,14 +4658,7 @@ int32_t main (int32_t argc, char *argv[])
 
 	led_status_starting();
 
-#ifdef CS_ANTICASC
-	if( !cfg.ac_enabled )
-		cs_log("anti cascading disabled");
-	else {
-		init_ac();
-		ac_init_stat();
-	}
-#endif
+	ac_init();
 
 	for (i=0; i<CS_MAX_MOD; i++)
 		if (ph[i].type & MOD_CONN_SERIAL)   // for now: oscam_ser only

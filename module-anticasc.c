@@ -3,12 +3,33 @@
 
 #ifdef CS_ANTICASC
 
+#include "module-anticasc.h"
 #include "oscam-conf.h"
 
 #define cs_ac "oscam.ac"
 
+FILE *ac_log = NULL;
+
 //static time_t ac_last_chk;
 static uchar  ac_ecmd5[CS_ECMSTORESIZE];
+
+static int32_t ac_init_log(void) {
+	if (ac_log)
+		return 1;
+	if (!cfg.ac_logfile) {
+		cs_log("ERROR: anti cascading is enabled but ac_logfile is not set.");
+		return 0;
+	}
+	ac_log = fopen(cfg.ac_logfile, "a+");
+	if (!ac_log) {
+		cs_log("ERROR: Can't open anti cascading logfile: %s (errno=%d %s)",
+			cfg.ac_logfile, errno, strerror(errno));
+		return 0;
+	}
+	cs_log("anti cascading log initialized");
+	return 1;
+}
+
 
 void ac_clear(void)
 {
@@ -167,7 +188,7 @@ void ac_chk(struct s_client *cl, ECM_REQUEST *er, int32_t level)
 	}
 }
 
-void init_ac(void)
+static void ac_load_config(void)
 {
   FILE *fp = open_config_file(cs_ac);
   if (!fp)
@@ -267,6 +288,22 @@ void init_ac(void)
     add_garbage(cur_cpmap);
   //cs_log("%d lengths for caid guessing loaded", nr);
   return;
+}
+
+void ac_copy_vars(struct s_auth *src, struct s_auth *dst) {
+	dst->ac_users   = src->ac_users;
+	dst->ac_penalty = src->ac_penalty;
+	dst->ac_stat    = src->ac_stat;
+}
+
+void ac_init(void) {
+	if (!cfg.ac_enabled) {
+		cs_log("anti cascading disabled");
+		return;
+	}
+
+	ac_load_config();
+	ac_init_stat();
 }
 
 #endif

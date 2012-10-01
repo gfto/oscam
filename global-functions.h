@@ -123,17 +123,6 @@ extern void free_ecm(ECM_REQUEST *ecm);
 	} while(0)
 
 /* ===========================
- *       module-anticasc
- * =========================== */
-extern void init_ac(void);
-extern void ac_init_stat(void);
-extern void ac_clear(void);
-extern void ac_done_stat(void);
-extern void ac_do_stat(void);
-extern void ac_init_client(struct s_client *, struct s_auth *);
-extern void ac_chk(struct s_client *,ECM_REQUEST*, int32_t);
-
-/* ===========================
  *        oscam-config
  * =========================== */
 extern int32_t  init_config(void);
@@ -215,7 +204,6 @@ extern char *LOG_LIST;
 extern int32_t  cs_init_log(void);
 extern void cs_reinit_loghist(uint32_t size);
 extern int32_t cs_open_logfiles(void);
-extern int32_t ac_init_log(void);
 
 extern void cs_log_int(uint16_t mask, int8_t lock, const uchar *buf, int32_t n, const char *fmt, ...) __attribute__ ((format (printf, 5, 6)));
 
