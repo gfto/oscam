@@ -161,9 +161,22 @@ void cs_add_violation(struct s_client *cl, char *info) {
 	cs_add_violation_by_ip(cl->ip, ph[cl->ctyp].ptab ? ph[cl->ctyp].ptab->ports[cl->port_idx].s_port : 0, info);
 }
 
+static void cs_reset_lastresponsetime(struct s_client *cl) {
+	(void)cl;
 #ifdef WEBIF
-void cs_add_lastresponsetime(struct s_client *cl, int32_t ltime, time_t timestamp, int32_t rc){
+	int32_t i;
+	for(i = 0; i < CS_ECM_RINGBUFFER_MAX; i++) {
+		cl->cwlastresptimes[i].duration = 0;
+		cl->cwlastresptimes[i].timestamp = time((time_t*)0);
+		cl->cwlastresptimes[i].rc = 0;
+	}
+	cl->cwlastresptimes_last = 0;
+#endif
+}
 
+static void cs_add_lastresponsetime(struct s_client *cl, int32_t ltime, time_t timestamp, int32_t rc){
+	(void)cl; (void)ltime; (void)timestamp; (void)rc;
+#ifdef WEBIF
 	if(cl->cwlastresptimes_last == CS_ECM_RINGBUFFER_MAX - 1){
 		cl->cwlastresptimes_last = 0;
 	} else {
@@ -172,8 +185,8 @@ void cs_add_lastresponsetime(struct s_client *cl, int32_t ltime, time_t timestam
 	cl->cwlastresptimes[cl->cwlastresptimes_last].duration = ltime > 9999 ? 9999 : ltime;
 	cl->cwlastresptimes[cl->cwlastresptimes_last].timestamp = timestamp;
 	cl->cwlastresptimes[cl->cwlastresptimes_last].rc = rc;
-}
 #endif
+}
 
 /*****************************************************************************
         Statics
@@ -396,43 +409,6 @@ int32_t chk_bcaid(ECM_REQUEST *er, CAIDTAB *ctab)
   er->caid=caid;
   return(1);
 }
-
-#ifdef WEBIF
-void clear_account_stats(struct s_auth *account)
-{
-  account->cwfound = 0;
-  account->cwcache = 0;
-  account->cwnot = 0;
-  account->cwtun = 0;
-  account->cwignored  = 0;
-  account->cwtout = 0;
-  account->emmok = 0;
-  account->emmnok = 0;
-  cacheex_clear_account_stats(account);
-}
-
-void clear_all_account_stats(void)
-{
-  struct s_auth *account = cfg.account;
-  while (account) {
-    clear_account_stats(account);
-    account = account->next;
-  }
-}
-
-void clear_system_stats(void)
-{
-  first_client->cwfound = 0;
-  first_client->cwcache = 0;
-  first_client->cwnot = 0;
-  first_client->cwtun = 0;
-  first_client->cwignored  = 0;
-  first_client->cwtout = 0;
-  first_client->emmok = 0;
-  first_client->emmnok = 0;
-  cacheex_clear_client_stats(first_client);
-}
-#endif
 
 void cs_accounts_chk(void)
 {
@@ -1031,15 +1007,8 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 
 					memcpy(&cl->ctab, &account->ctab, sizeof(cl->ctab));
 					memcpy(&cl->ttab, &account->ttab, sizeof(cl->ttab));
-#ifdef WEBIF
-					int32_t i;
-					for(i = 0; i < CS_ECM_RINGBUFFER_MAX; i++) {
-						cl->cwlastresptimes[i].duration = 0;
-						cl->cwlastresptimes[i].timestamp = time((time_t*)0);
-						cl->cwlastresptimes[i].rc = 0;
-					}
-					cl->cwlastresptimes_last = 0;
-#endif
+
+					cs_reset_lastresponsetime(cl);
 					if (account->uniq)
 						cs_fake_client(cl, account->usr, (account->uniq == 1 || account->uniq == 2)?account->uniq+2:account->uniq, cl->ip);
 #ifdef CS_ANTICASC
@@ -2116,17 +2085,13 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	cs_ftime(&tpe);
 	client->cwlastresptime = 1000 * (tpe.time-er->tps.time) + tpe.millitm-er->tps.millitm;
 
-#ifdef WEBIF
 	cs_add_lastresponsetime(client, client->cwlastresptime,time((time_t*)0) ,er->rc); // add to ringbuffer
-#endif
 
 	if (er_reader){
 		struct s_client *er_cl = er_reader->client;
 		if(er_cl){
 			er_cl->cwlastresptime = client->cwlastresptime;
-#ifdef WEBIF
 			cs_add_lastresponsetime(er_cl, client->cwlastresptime,time((time_t*)0) ,er->rc);
-#endif
 			er_cl->last_srvidptr=client->last_srvidptr;
 		}
 	}

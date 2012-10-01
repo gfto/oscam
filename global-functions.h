@@ -49,9 +49,6 @@ extern void pcsc_close(struct s_reader *pcsc_reader);
 extern void cs_exit_oscam(void);
 extern void cs_restart_oscam(void);
 extern int32_t cs_get_restartmode(void);
-extern void clear_account_stats(struct s_auth *account);
-extern void clear_all_account_stats(void);
-extern void clear_system_stats(void);
 
 int32_t restart_cardreader(struct s_reader *rdr, int32_t restart);
 

@@ -2124,6 +2124,38 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 	tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
 }
 
+static void clear_account_stats(struct s_auth *account) {
+	account->cwfound = 0;
+	account->cwcache = 0;
+	account->cwnot = 0;
+	account->cwtun = 0;
+	account->cwignored  = 0;
+	account->cwtout = 0;
+	account->emmok = 0;
+	account->emmnok = 0;
+	cacheex_clear_account_stats(account);
+}
+
+void clear_all_account_stats(void) {
+	struct s_auth *account = cfg.account;
+	while (account) {
+		clear_account_stats(account);
+		account = account->next;
+	}
+}
+
+void clear_system_stats(void) {
+	first_client->cwfound = 0;
+	first_client->cwcache = 0;
+	first_client->cwnot = 0;
+	first_client->cwtun = 0;
+	first_client->cwignored  = 0;
+	first_client->cwtout = 0;
+	first_client->emmok = 0;
+	first_client->emmnok = 0;
+	cacheex_clear_client_stats(first_client);
+}
+
 static char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
 	struct s_auth *account;
 	struct s_client *cl;
