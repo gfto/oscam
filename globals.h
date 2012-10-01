@@ -246,6 +246,7 @@ typedef unsigned char uchar;
 #define R_IS_CASCADING  0xE0
 
 #define is_network_reader(__X) (__X->typ & R_IS_NETWORK)
+#define is_cascading_reader(__X) (__X->typ & R_IS_CASCADING)
 
 //ECM rc codes:
 #define E_FOUND			0

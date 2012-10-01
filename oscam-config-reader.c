@@ -1216,7 +1216,7 @@ int32_t init_readerdb(void)
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr))) { //build active readers list
 		int32_t i;
-		if (rdr->typ & R_IS_CASCADING) {
+		if (is_cascading_reader(rdr)) {
 			for (i=0; i<CS_MAX_MOD; i++) {
 				if (ph[i].num && rdr->typ==ph[i].num) {
 					rdr->ph=ph[i];

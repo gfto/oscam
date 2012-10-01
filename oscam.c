@@ -1480,7 +1480,7 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 	rdr->tcp_block_delay = 100;
 	cs_ftime(&rdr->tcp_block_connect_till);
 
-	if (rdr->device[0] && (rdr->typ & R_IS_CASCADING)) {
+	if (rdr->device[0] && is_cascading_reader(rdr)) {
 		if (!rdr->ph.num) {
 			rdr_log(rdr, "Protocol Support missing. (typ=%d)", rdr->typ);
 			return 0;
@@ -3254,7 +3254,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 
 		struct s_cardsystem *cs = NULL;
 
-		if (aureader->typ & R_IS_CASCADING) { // network reader (R_CAMD35 R_NEWCAMD R_CS378X R_CCCAM)
+		if (is_cascading_reader(aureader)) { // network reader (R_CAMD35 R_NEWCAMD R_CS378X R_CCCAM)
 			if (!aureader->ph.c_send_emm) // no emm support
 				continue;
 
@@ -3461,7 +3461,7 @@ void cs_waitforcardinit(void)
 			struct s_reader *rdr;
 			LL_ITER itr = ll_iter_create(configured_readers);
 			while((rdr = ll_iter_next(&itr))) {
-				if (rdr->enable && (!(rdr->typ & R_IS_CASCADING)) && (rdr->card_status == CARD_NEED_INIT || rdr->card_status == UNKNOWN)) {
+				if (rdr->enable && !is_cascading_reader(rdr) && (rdr->card_status == CARD_NEED_INIT || rdr->card_status == UNKNOWN)) {
 					card_init_done = 0;
 					break;
 				}
@@ -3512,7 +3512,7 @@ static void check_status(struct s_client *cl) {
 			//disconnect when no keepalive available
 			if (!rdr || !rdr->enable)
 				break;
-			if (rdr->tcp_ito && (rdr->typ & R_IS_CASCADING)) {
+			if (rdr->tcp_ito && is_cascading_reader(rdr)) {
 				int32_t time_diff;
 				time_diff = abs(time(NULL) - rdr->last_check);
 

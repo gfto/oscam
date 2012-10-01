@@ -544,7 +544,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		return;
 	}
 
-	if (reader->typ & R_IS_CASCADING) {
+	if (is_cascading_reader(reader)) {
 		cl->last_srvid=er->srvid;
 		cl->last_caid=er->caid;
 		casc_process_ecm(reader, er);
@@ -600,7 +600,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 void reader_log_emm(struct s_reader * reader, EMM_PACKET *ep, int32_t i, int32_t rc, struct timeb *tps) {
 	char *rtxt[] = { "error",
-			(reader->typ & R_IS_CASCADING) ? "sent" : "written", "skipped",
+			is_cascading_reader(reader) ? "sent" : "written", "skipped",
 			"blocked" };
 	char *typedesc[] = { "unknown", "unique", "shared", "global" };
 	struct s_client *cl = reader->client;
@@ -674,7 +674,7 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
   if ((rc=ecs)<2)
   {
-          if (reader->typ & R_IS_CASCADING) {
+          if (is_cascading_reader(reader)) {
                   rdr_debug_mask(reader, D_READER, "network emm reader");
 
                   if (reader->ph.c_send_emm) {
@@ -733,7 +733,7 @@ void reader_do_idle(struct s_reader * reader)
 int32_t reader_init(struct s_reader *reader) {
 	struct s_client *client = reader->client;
 
-	if (reader->typ & R_IS_CASCADING) {
+	if (is_cascading_reader(reader)) {
 		client->typ='p';
 		client->port=reader->r_port;
 		set_null_ip(&client->ip);

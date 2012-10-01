@@ -1092,7 +1092,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 			if (strcmp((*params).params[i], "action"))
 				chk_reader((*params).params[i], (*params).values[i], newrdr);
 		}
-		if (newrdr->typ & R_IS_CASCADING) {
+		if (is_cascading_reader(newrdr)) {
 			for (i=0; i<CS_MAX_MOD; i++) {
 				if (ph[i].num && newrdr->typ==ph[i].num) {
 					newrdr->ph=ph[i];

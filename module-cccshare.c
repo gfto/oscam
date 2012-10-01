@@ -478,7 +478,7 @@ uint32_t get_reader_prid(struct s_reader *rdr, int32_t j) {
 }
 //uint32_t get_reader_prid(struct s_reader *rdr, int32_t j) {
 //  uint32_t prid;
-//  if (!(rdr->typ & R_IS_CASCADING)) { // Real cardreaders have 4-byte Providers
+//  if (!is_cascading_reader(rdr)) { // Real cardreaders have 4-byte Providers
 //      prid = b2i(4, &rdr->prid[j][0]);
 //      //prid = (rdr->prid[j][0] << 24) | (rdr->prid[j][1] << 16)
 //      //      | (rdr->prid[j][2] << 8) | (rdr->prid[j][3] & 0xFF);
