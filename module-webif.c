@@ -2110,7 +2110,7 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 
 }
 
-static void webif_add_client_proto(struct templatevars *vars, struct s_client *cl, char *proto) {
+static void webif_add_client_proto(struct templatevars *vars, struct s_client *cl, const char *proto) {
 #ifdef MODULE_NEWCAMD
 	if (streq(proto, "newcamd") && cl->typ == 'c') {
 		tpl_printf(vars, TPLADDONCE, "CLIENTPROTO","%s (%s)", proto, newcamd_get_client_name(cl->ncd_client_id));
@@ -2128,7 +2128,7 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 	}
 #endif
 	(void)cl; // Prevent warning when NEWCAMD and CCCAM are both disabled
-	tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", proto);
+	tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", (char *)proto);
 	tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
 }
 
@@ -2320,7 +2320,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			active_users++;
 
 		int32_t lastresponsetm = 0, latestactivity=0;
-		char *proto = "";
+		const char *proto = "";
 		double cwrate = 0.0, cwrate2 = 0.0;
 
 		//search account in active clients
@@ -2349,7 +2349,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			status = (!apicall) ? "<b>connected</b>" : "connected";
 			if(account->expirationdate && account->expirationdate < now) classname = "expired";
 			else classname = "connected";
-			proto = monitor_get_proto(latestclient);
+			proto = client_get_proto(latestclient);
 			if (latestclient->last_srvid != NO_SRVID_VALUE || latestclient->last_caid != NO_CAID_VALUE)
 				lastchan = xml_encode(vars, get_servicename(latestclient, latestclient->last_srvid, latestclient->last_caid, channame));
 			else
@@ -3045,7 +3045,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 				} else tpl_printf(vars, TPLADD, "CLIENTCRYPTED", "%d", cl->crypted);
 				tpl_addVar(vars, TPLADD, "CLIENTIP", cs_inet_ntoa(cl->ip));
 				tpl_printf(vars, TPLADD, "CLIENTPORT", "%d", cl->port);
-				char *proto = monitor_get_proto(cl);
+				const char *proto = client_get_proto(cl);
 				webif_add_client_proto(vars, cl, proto);
 
 				if (!apicall) {

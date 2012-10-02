@@ -1,6 +1,7 @@
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
 #ifdef MODULE_CONSTCW
+#include "oscam-client.h"
 
 int32_t pserver = 0;
 

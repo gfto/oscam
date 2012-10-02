@@ -12,6 +12,7 @@
 #include "module-cccam.h"
 #include "module-cccshare.h"
 #endif
+#include "oscam-client.h"
 
 static int8_t running;
 
@@ -99,11 +100,9 @@ static void refresh_lcd_file(void) {
 
 					else if (cl->typ == 'p'){
 						type = "P";
-						iscccam = 0;
+						iscccam = strncmp(client_get_proto(cl), "cccam", 5) == 0;
 						idx = count_p;
 						label = cl->reader->label;
-						if ((strncmp(monitor_get_proto(cl), "cccam", 5) == 0))
-							iscccam = 1;
 
 						if (cl->reader->card_status == CARD_INSERTED)
 							status = "CON";

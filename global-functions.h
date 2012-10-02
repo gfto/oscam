@@ -196,10 +196,7 @@ extern void reader_do_card_info(struct s_reader * reader);
 /* ===========================
  *        oscam-simples
  * =========================== */
-extern struct s_client *cur_client(void);
-extern int32_t get_threadnum(struct s_client *client);
 extern char *get_tmp_dir(void);
-extern int8_t check_client(struct s_client *client);
 extern void aes_set_key(char *);
 extern void aes_encrypt_idx(struct s_client *, uchar *, int32_t);
 extern void aes_decrypt(struct s_client *, uchar *, int32_t);
@@ -285,7 +282,6 @@ void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *
 extern uchar fast_rnd(void);
 extern void init_rnd(void);
 extern int32_t hexserialset(struct s_reader *rdr);
-extern char *monitor_get_proto(struct s_client *);
 extern char *reader_get_type_desc(struct s_reader * rdr, int32_t extended);
 extern int32_t cs_strnicmp(const char * str1, const char * str2, size_t num);
 extern char *strnew(char *str);
@@ -310,9 +306,6 @@ extern uint32_t cs_getIPfromHost(const char *hostname);
 extern int set_socket_priority(int fd, int priority);
 extern void setTCPTimeouts(int32_t socket);
 extern struct s_reader *get_reader_by_label(char *lbl);
-extern struct s_client *get_client_by_name(char *name);
-extern struct s_auth *get_account_by_name(char *name);
-extern int8_t is_valid_client(struct s_client *client);
 extern int8_t check_fd_for_data(int32_t fd);
 
 extern void add_ms_to_timespec(struct timespec *timeout, int32_t msec);

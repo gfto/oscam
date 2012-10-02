@@ -1,12 +1,86 @@
 #include "globals.h"
 
 #include "module-anticasc.h"
+#include "module-cccam.h"
 #include "module-webif.h"
 #include "oscam-client.h"
 #include "oscam-failban.h"
 
 extern char *processUsername;
 extern CS_MUTEX_LOCK fakeuser_lock;
+
+/* Gets the client associated to the calling thread. */
+struct s_client *cur_client(void) {
+	return (struct s_client *)pthread_getspecific(getclient);
+}
+
+/* Gets the unique thread number from the client. Used in monitor and newcamd. */
+int32_t get_threadnum(struct s_client *client) {
+	struct s_client *cl;
+	int32_t count=0;
+
+	for (cl=first_client->next; cl ; cl=cl->next) {
+		if (cl->typ==client->typ)
+			count++;
+		if(cl==client)
+			return count;
+	}
+	return 0;
+}
+
+/* Checks if the client still exists or has been cleaned. Returns 1 if it is ok, else 0. */
+int8_t check_client(struct s_client *client) {
+	struct s_client *cl;
+	for (cl = first_client->next; cl; cl = cl->next) {
+		if (client == cl)
+			break;
+	}
+	if (cl != client || client->cleaned)
+		return 0;
+	else
+		return 1;
+}
+
+struct s_auth *get_account_by_name(char *name) {
+	struct s_auth *account;
+	for (account=cfg.account; (account); account=account->next) {
+		if (streq(name, account->usr))
+			return account;
+	}
+	return NULL;
+}
+
+int8_t is_valid_client(struct s_client *client) {
+	struct s_client *cl;
+	for (cl = first_client; cl; cl = cl->next) {
+		if (cl==client)
+			return 1;
+	}
+	return 0;
+}
+
+const char *client_get_proto(struct s_client *cl)
+{
+	char *ctyp;
+	switch (cl->typ) {
+	case 's': ctyp = "server"; break;
+	case 'h': ctyp = "http"; break;
+	case 'p':
+	case 'r': ctyp = reader_get_type_desc(cl->reader, 1); break;
+#ifdef CS_ANTICASC
+	case 'a': ctyp = "anticascader"; break;
+#endif
+#ifdef MODULE_CCCAM
+	case 'c':
+		if (cl->cc && ((struct cc_data *)cl->cc)->extended_mode) {
+			ctyp = "cccam ext";
+			break;
+		}
+#endif
+	default: ctyp = ph[cl->ctyp].desc;
+	}
+	return ctyp;
+}
 
 static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_ADDR_T ip)
 {
