@@ -498,6 +498,27 @@ restrict the reader count to limit during load balancing learning:
 
 <P>
 
+<B>lb_auto_timeout</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = enable automatic timeout based on load balancing statistics, default:0
+</DL>
+
+<P>
+
+<B>lb_auto_timeout_p</B> = <B>percent</B>
+<DL COMPACT><DT><DD>
+percent added to average time as timeout time, default:30
+</DL>
+
+<P>
+
+<B>lb_auto_timeout_t</B> = <B>milli seconds</B>
+<DL COMPACT><DT><DD>
+minimal time added to average time as timeout time, default:300
+</DL>
+
+<P>
+
 <B>lb_auto_betatunnel</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
 1 = enable automatic Betacrypt tunneling detection for CAIDs 1801, 1833, 1834, and 1835 for load balancing, Betacrypt defintion in <B>oscam.user</B> with <B>betatunnel</B> will be prefered, default:1
@@ -507,7 +528,7 @@ restrict the reader count to limit during load balancing learning:
 
 <B>lb_auto_betatunnel_prefer_beta</B> = <B>time factor</B>
 <DL COMPACT><DT><DD>
-set automatic Betacrypt tunneling time factor prefering Betacrypt over Nagravision in percent, 0 = always Betacrypt, 100 = always Nagravision, default: 50
+set automatic Betacrypt tunneling time factor prefering Betacrypt over Nagravision in percent, 0 = always Betacrypt, 100 = always Nagravision, default:50
 </DL>
 
 <A NAME="lbAF">&nbsp;</A>

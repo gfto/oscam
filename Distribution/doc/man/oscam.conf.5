@@ -371,6 +371,21 @@ restrict the reader count to limit during load balancing learning:
  \fBlimit\fP = restrict load balancer readers to limit
 .RE
 .PP
+\fBlb_auto_timeout\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = enable automatic timeout based on load balancing statistics, default:0
+.RE
+.PP
+\fBlb_auto_timeout_p\fP = \fBpercent\fP
+.RS 3n
+percent added to average time as timeout time, default:30
+.RE
+.PP
+\fBlb_auto_timeout_t\fP = \fBmilli seconds\fP
+.RS 3n
+minimal time added to average time as timeout time, default:300
+.RE
+.PP
 \fBlb_auto_betatunnel\fP = \fB0\fP|\fB1\fP
 .RS 3n
 1 = enable automatic Betacrypt tunneling detection for CAIDs 1801, 1833, 1834, and 1835 for load balancing, Betacrypt defintion in \fBoscam.user\fR with \fBbetatunnel\fR will be prefered, default:1
@@ -378,7 +393,7 @@ restrict the reader count to limit during load balancing learning:
 .PP
 \fBlb_auto_betatunnel_prefer_beta\fP = \fBtime factor\fP
 .RS 3n
-set automatic Betacrypt tunneling time factor prefering Betacrypt over Nagravision in percent, 0 = always Betacrypt, 100 = always Nagravision, default: 50
+set automatic Betacrypt tunneling time factor prefering Betacrypt over Nagravision in percent, 0 = always Betacrypt, 100 = always Nagravision, default:50
 .RE
 .SS "The [monitor] section"
 .PP
