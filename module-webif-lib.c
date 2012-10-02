@@ -573,6 +573,25 @@ time_t parse_modifiedsince(char * value){
 	return modifiedheader;
 }
 
+/* Converts a char to it's hex representation. See urlencode and char_to_hex on how to use it.*/
+static char to_hex(char code) {
+	static const char hex[] = "0123456789abcdef";
+	return hex[(int)code & 15];
+}
+
+/* Converts a char array to a char array with hex values (needed for example for md5).
+	Note that result needs to be at least (p_array_len * 2) + 1 large. */
+static void char_to_hex(const unsigned char* p_array, uint32_t p_array_len, unsigned char *result) {
+	result[p_array_len * 2] = '\0';
+	const unsigned char *p_end = p_array + p_array_len;
+	uint32_t pos = 0;
+	const unsigned char* p;
+	for (p = p_array; p != p_end; p++, pos+=2 ) {
+		result[pos    ] = to_hex(*p >> 4);
+		result[pos + 1] = to_hex(*p & 15);
+	}
+}
+
 /* Calculates the currently valid nonce value and copies it to result. Please note that result needs to be at least (MD5_DIGEST_LENGTH * 2) + 1 large. */
 void calculate_nonce(char *result){
   char noncetmp[128];

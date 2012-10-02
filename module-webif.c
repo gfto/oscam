@@ -4882,6 +4882,15 @@ static void *serve_process(void *conn){
 	return NULL;
 }
 
+/* Creates a random string with specified length. Note that dst must be one larger than size to hold the trailing \0*/
+static void create_rand_str(char *dst, int32_t size) {
+	int32_t i;
+	for (i = 0; i < size; ++i){
+		dst[i] = (rand() % 94) + 32;
+	}
+	dst[i] = '\0';
+}
+
 static void *http_srv(void) {
 	pthread_t workthread;
 	pthread_attr_t attr;

@@ -844,36 +844,6 @@ void *cs_realloc(void *result, size_t size, int32_t quiterror){
 	return *tmp;
 }
 
-#ifdef WEBIF
-/* Converts a char to it's hex representation. See urlencode and char_to_hex on how to use it.*/
-char to_hex(char code){
-	static const char hex[] = "0123456789abcdef";
-	return hex[(int)code & 15];
-}
-
-/* Converts a char array to a char array with hex values (needed for example for md5).
-	Note that result needs to be at least (p_array_len * 2) + 1 large. */
-void char_to_hex(const unsigned char* p_array, uint32_t p_array_len, unsigned char *result) {
-	result[p_array_len*2] = '\0';
-	const unsigned char* p_end = p_array + p_array_len;
-	uint32_t pos=0;
-	const unsigned char* p;
-	for( p = p_array; p != p_end; p++, pos+=2 ) {
-		result[pos] = to_hex(*p >> 4);
-		result[pos+1] = to_hex(*p & 15);
-	}
-}
-
-/* Creates a random string with specified length. Note that dst must be one larger than size to hold the trailing \0*/
-void create_rand_str(char *dst, int32_t size){
-	int32_t i;
-	for (i = 0; i < size; ++i){
-		dst[i] = (rand() % 94) + 32;
-	}
-	dst[i] = '\0';
-}
-#endif
-
 /* Return 1 if the file exists, else 0 */
 int32_t file_exists(const char * filename){
 	FILE *file;
