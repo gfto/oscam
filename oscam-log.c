@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "oscam-client.h"
 #include "oscam-garbage.h"
+#include "oscam-lock.h"
 #include "oscam-net.h"
 
 char *LOG_LIST = "log_list";

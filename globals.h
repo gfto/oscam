@@ -316,10 +316,6 @@ extern const char *boxdesc[];
 #define SHARED	2
 #define GLOBAL	3
 
-//Lock types
-#define WRITELOCK 1
-#define READLOCK 2
-
 #define PIP_ID_ECM    0
 #define PIP_ID_EMM    1
 #define PIP_ID_CIN    2  // CARD_INFO

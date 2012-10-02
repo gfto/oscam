@@ -1,6 +1,7 @@
 #include "globals.h"
 
 #include "oscam-files.h"
+#include "oscam-lock.h"
 
 extern CS_MUTEX_LOCK readdir_lock;
 

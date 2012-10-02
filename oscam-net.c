@@ -1,4 +1,5 @@
 #include "globals.h"
+#include "oscam-lock.h"
 #include "oscam-net.h"
 
 extern CS_MUTEX_LOCK gethostbyname_lock;

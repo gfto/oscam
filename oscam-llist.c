@@ -3,6 +3,7 @@
 
 #include "globals.h"
 #include "oscam-garbage.h"
+#include "oscam-lock.h"
 
 /*
   Locking rules:

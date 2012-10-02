@@ -315,6 +315,7 @@ SRC-y += oscam-config.c
 SRC-y += oscam-failban.c
 SRC-y += oscam-files.c
 SRC-y += oscam-garbage.c
+SRC-y += oscam-lock.c
 SRC-y += oscam-log.c
 SRC-y += oscam-net.c
 SRC-y += oscam-llist.c

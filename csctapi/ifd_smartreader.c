@@ -6,6 +6,7 @@
 #include "../globals.h"
 
 #if defined(WITH_CARDREADER) && defined(WITH_LIBUSB)
+#include "../oscam-lock.h"
 #include "ifd_smartreader.h"
 
 #if defined(__CYGWIN__)

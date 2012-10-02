@@ -5,6 +5,7 @@
 #include "module-webif.h"
 #include "oscam-client.h"
 #include "oscam-failban.h"
+#include "oscam-lock.h"
 #include "oscam-net.h"
 
 extern char *processUsername;

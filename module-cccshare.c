@@ -7,6 +7,7 @@
 #include "module-cccshare.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
+#include "oscam-lock.h"
 
 static uint32_t cc_share_id = 0x64;
 static LLIST *reported_carddatas[CAID_KEY];

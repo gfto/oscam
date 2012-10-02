@@ -8,6 +8,7 @@
 #include "algo/minilzo.h"
 #include "oscam-failban.h"
 #include "oscam-client.h"
+#include "oscam-lock.h"
 #include "oscam-net.h"
 
 enum {

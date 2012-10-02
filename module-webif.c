@@ -23,6 +23,7 @@
 #include "oscam-files.h"
 #include "oscam-garbage.h"
 #include "oscam-client.h"
+#include "oscam-lock.h"
 #include "oscam-net.h"
 
 extern char *CSS;

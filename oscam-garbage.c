@@ -1,5 +1,6 @@
 #include "globals.h"
 #include "oscam-garbage.h"
+#include "oscam-lock.h"
 
 #define HASH_BUCKETS 16
 

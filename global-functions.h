@@ -244,19 +244,6 @@ extern char *strnew(char *str);
 extern void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid);
 extern void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid);
 
-extern void cs_lock_create(CS_MUTEX_LOCK *l, int16_t timeout, const char *name);
-extern void cs_lock_destroy(CS_MUTEX_LOCK *l);
-extern void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type);
-extern void cs_rwunlock_int(CS_MUTEX_LOCK *l, int8_t type);
-extern int8_t cs_try_rwlock_int(CS_MUTEX_LOCK *l, int8_t type);
-
-#define cs_writelock(l)	cs_rwlock_int(l, WRITELOCK)
-#define cs_readlock(l)	cs_rwlock_int(l, READLOCK)
-#define cs_writeunlock(l)	cs_rwunlock_int(l, WRITELOCK)
-#define cs_readunlock(l)	cs_rwunlock_int(l, READLOCK)
-#define cs_try_writelock(l)	cs_try_rwlock_int(l, WRITELOCK)
-#define cs_try_readlock(l)	cs_try_rwlock_int(l, READLOCK)
-
 extern struct s_reader *get_reader_by_label(char *lbl);
 
 extern void add_ms_to_timespec(struct timespec *timeout, int32_t msec);

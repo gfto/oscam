@@ -2,11 +2,12 @@
 
 #ifdef CS_CACHEEX
 
+#include "module-cacheex.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
 #include "oscam-conf.h"
+#include "oscam-lock.h"
 #include "oscam-net.h"
-#include "module-cacheex.h"
 
 #define cs_cacheex_matcher "oscam.cacheex"
 
