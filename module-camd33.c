@@ -1,5 +1,6 @@
 #include "globals.h"
 #ifdef MODULE_CAMD33
+#include "oscam-aes.h"
 #include "oscam-client.h"
 
 #define REQ_SIZE	4

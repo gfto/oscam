@@ -302,6 +302,7 @@ SRC-$(CONFIG_READER_VIDEOGUARD) += reader-videoguard-common.c
 SRC-$(CONFIG_READER_VIDEOGUARD) += reader-videoguard1.c
 SRC-$(CONFIG_READER_VIDEOGUARD) += reader-videoguard12.c
 SRC-$(CONFIG_READER_VIDEOGUARD) += reader-videoguard2.c
+SRC-y += oscam-aes.c
 SRC-y += oscam-chk.c
 SRC-y += oscam-client.c
 SRC-y += oscam-conf.c

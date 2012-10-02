@@ -11,6 +11,7 @@
 #include <net/if.h>
 #endif
 
+#include "oscam-aes.h"
 #include "oscam-conf.h"
 #include "oscam-conf-chk.h"
 #include "oscam-conf-mk.h"

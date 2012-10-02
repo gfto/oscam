@@ -2,6 +2,7 @@
 #if defined MODULE_CAMD35 || defined MODULE_CAMD35_TCP
 
 #include "module-cacheex.h"
+#include "oscam-aes.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
 

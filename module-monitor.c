@@ -1,5 +1,6 @@
 #include "globals.h"
 #ifdef MODULE_MONITOR
+#include "oscam-aes.h"
 #include "oscam-client.h"
 
 extern char *entitlement_type[];

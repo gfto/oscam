@@ -1,5 +1,6 @@
 #include "globals.h"
 #ifdef READER_VIACCESS
+#include "oscam-aes.h"
 #include "reader-common.h"
 
 struct via_date {
