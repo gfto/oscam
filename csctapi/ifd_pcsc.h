@@ -30,5 +30,6 @@ int32_t pcsc_reader_init(struct s_reader *pcsc_reader, char *device);
 int32_t pcsc_reader_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar *cta_res, uint16_t *cta_lr,int32_t l);
 int32_t pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, uint16_t *atr_size);
 int32_t pcsc_check_card_inserted(struct s_reader *pcsc_reader);
+void pcsc_close(struct s_reader *pcsc_reader);
 
 #endif

@@ -41,7 +41,6 @@ extern void reader_bulcrypt(struct s_cardsystem *);
 extern void cardreader_mouse(struct s_cardreader *crdr);
 extern void cardreader_smargo(struct s_cardreader *crdr);
 extern void cardreader_stapi(struct s_cardreader *crdr);
-extern void pcsc_close(struct s_reader *pcsc_reader);
 
 /* ===========================
  *           oscam
