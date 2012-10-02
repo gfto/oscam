@@ -105,8 +105,6 @@ extern void cleanup_thread(void *var);
 extern void kill_thread(struct s_client *cl);
 extern void remove_reader_from_active(struct s_reader *rdr);
 extern void add_reader_to_active(struct s_reader *rdr);
-extern void cs_add_violation_by_ip(IN_ADDR_T ip, int32_t port, char *info);
-extern void cs_add_violation(struct s_client *cl, char *info);
 extern void cs_card_info(void);
 extern void cs_debug_level(void);
 extern void update_chid(ECM_REQUEST *ecm);

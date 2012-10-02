@@ -4,8 +4,9 @@
 
 #include "module-cacheex.h"
 #include "module-cccam.h"
-#include "reader-common.h"
 #include "module-cccshare.h"
+#include "reader-common.h"
+#include "oscam-failban.h"
 
 //Mode names for CMD_05 command:
 const char *cmd05_mode_name[] = { "UNKNOWN", "PLAIN", "AES", "CC_CRYPT", "RC4",

@@ -6,6 +6,7 @@
 #include <sys/time.h>
 
 #include "algo/minilzo.h"
+#include "oscam-failban.h"
 
 enum {
   MSG_ECM = 0x445c,

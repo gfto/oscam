@@ -310,6 +310,7 @@ SRC-y += oscam-config-account.c
 SRC-y += oscam-config-global.c
 SRC-y += oscam-config-reader.c
 SRC-y += oscam-config.c
+SRC-y += oscam-failban.c
 SRC-y += oscam-garbage.c
 SRC-y += oscam-log.c
 SRC-y += oscam-llist.c
