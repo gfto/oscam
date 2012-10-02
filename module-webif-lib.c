@@ -499,7 +499,7 @@ void prepareTplChecksums(void) {
 }
 
 /* Parses a value in an authentication string by removing all quotes/whitespace. Note that the original array is modified. */
-char *parse_auth_value(char *value){
+static char *parse_auth_value(char *value){
 	char *pch = value;
 	char *pch2;
 	value = strstr(value, "=");
@@ -1049,11 +1049,11 @@ struct CRYPTO_dynlock_value{
 };
 
 /* function really needs unsigned long to prevent compiler warnings... */
-unsigned long SSL_id_function(void){
+static unsigned long SSL_id_function(void){
 	return ((unsigned long) pthread_self());
 }
 
-void SSL_locking_function(int32_t mode, int32_t type, const char *file, int32_t line){
+static void SSL_locking_function(int32_t mode, int32_t type, const char *file, int32_t line) {
 	if (mode & CRYPTO_LOCK) {
 		cs_writelock(&lock_cs[type]);
 	} else {
@@ -1063,7 +1063,7 @@ void SSL_locking_function(int32_t mode, int32_t type, const char *file, int32_t 
 	if(file || line) return;
 }
 
-struct CRYPTO_dynlock_value *SSL_dyn_create_function(const char *file, int32_t line){
+static struct CRYPTO_dynlock_value *SSL_dyn_create_function(const char *file, int32_t line) {
     struct CRYPTO_dynlock_value *l;
     if(!cs_malloc(&l, sizeof(struct CRYPTO_dynlock_value), -1)) return (NULL);
 		if(pthread_mutex_init(&l->mutex, NULL)) {
@@ -1077,7 +1077,7 @@ struct CRYPTO_dynlock_value *SSL_dyn_create_function(const char *file, int32_t l
     return l;
 }
 
-void SSL_dyn_lock_function(int32_t mode, struct CRYPTO_dynlock_value *l, const char *file, int32_t line){
+static void SSL_dyn_lock_function(int32_t mode, struct CRYPTO_dynlock_value *l, const char *file, int32_t line) {
 	if (mode & CRYPTO_LOCK) {
 		pthread_mutex_lock(&l->mutex);
 	} else {
@@ -1087,7 +1087,7 @@ void SSL_dyn_lock_function(int32_t mode, struct CRYPTO_dynlock_value *l, const c
 	if(file || line) return;
 }
 
-void SSL_dyn_destroy_function(struct CRYPTO_dynlock_value *l, const char *file, int32_t line){
+static void SSL_dyn_destroy_function(struct CRYPTO_dynlock_value *l, const char *file, int32_t line) {
 	pthread_mutex_destroy(&l->mutex);
 	free(l);
 	// just to remove compiler warnings...

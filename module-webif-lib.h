@@ -74,7 +74,6 @@ extern int32_t tpl_saveIncludedTpls(const char *path);
 extern void tpl_checkOneDirDiskRevisions(const char* subdir);
 extern void tpl_checkDiskRevisions(void);
 extern void prepareTplChecksums(void);
-extern char *parse_auth_value(char *value);
 extern time_t parse_modifiedsince(char * value);
 extern void calculate_nonce(char *result);
 extern int32_t check_auth(char *authstring, char *method, char *path, char *expectednonce);
@@ -97,11 +96,6 @@ extern char *getParam(struct uriparams *params, char *name);
 
 #ifdef WITH_SSL
 extern SSL * cur_ssl(void);
-extern unsigned long SSL_id_function(void);
-extern void SSL_locking_function(int32_t mode, int32_t type, const char *file, int32_t line);
-extern struct CRYPTO_dynlock_value *SSL_dyn_create_function(const char *file, int32_t line);
-extern void SSL_dyn_lock_function(int32_t mode, struct CRYPTO_dynlock_value *l, const char *file, int32_t line);
-extern void SSL_dyn_destroy_function(struct CRYPTO_dynlock_value *l, const char *file, int32_t line);
 extern SSL_CTX *SSL_Webif_Init(void);
 #endif
 
