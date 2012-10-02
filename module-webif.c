@@ -16,6 +16,8 @@
 #include "module-cccam.h"
 #include "module-cccshare.h"
 #include "module-webif.h"
+#include "module-webif-lib.h"
+#include "module-webif-pages.h"
 #include "oscam-conf-mk.h"
 #include "oscam-garbage.h"
 
@@ -121,7 +123,7 @@ static void refresh_oscam(enum refreshtypes refreshtype) {
  * load historical values from ringbuffer and return it in the right order
  * as string. Value should be freed with free_mk_t()
  */
-char *get_ecm_historystring(struct s_client *cl){
+static char *get_ecm_historystring(struct s_client *cl){
 
 	if(cl){
 		int32_t k, i, pos = 0, needed = 1, v;
@@ -151,7 +153,8 @@ char *get_ecm_historystring(struct s_client *cl){
 		return "";
 	}
 }
-char *get_ecm_fullhistorystring(struct s_client *cl){
+
+static char *get_ecm_fullhistorystring(struct s_client *cl){
 
 	if(cl){
 		int32_t k, i, pos = 0, needed = 1, v;
@@ -4877,11 +4880,11 @@ static void *serve_process(void *conn){
 	return NULL;
 }
 
-void http_srv(void) {
+static void *http_srv(void) {
 	pthread_t workthread;
 	pthread_attr_t attr;
 	struct s_client * cl = create_client(first_client->ip);
-	if (cl == NULL) return;
+	if (cl == NULL) return NULL;
 	httpthread = cl->thread = pthread_self();
 	pthread_setspecific(getclient, cl);
 	cl->typ = 'h';
@@ -4901,11 +4904,11 @@ void http_srv(void) {
 
 	if (pthread_key_create(&getip, NULL)) {
 		cs_log("Could not create getip");
-		return;
+		return NULL;
 	}
 	if (pthread_key_create(&getkeepalive, NULL)) {
 		cs_log("Could not create getkeepalive");
-		return;
+		return NULL;
 	}
 
 #ifdef IPV6SUPPORT
@@ -4926,7 +4929,7 @@ void http_srv(void) {
 		cs_log("HTTP Server: Trying fallback to IPv4.");
 		if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
 			cs_log("HTTP Server: Creating socket failed! (errno=%d %s)", errno, strerror(errno));
-			return;
+			return NULL;
 		}
 		ipv4fallback = 1;
 	}
@@ -4943,7 +4946,7 @@ void http_srv(void) {
 	if((bind(sock, &sin, sizeof(struct sockaddr_in6))) < 0) {
 		cs_log("HTTP Server couldn't bind on port %d (errno=%d %s). Not starting HTTP!", cfg.http_port, errno, strerror(errno));
 		close(sock);
-		return;
+		return NULL;
 	}
 #else
 	struct sockaddr_in sin;
@@ -4955,7 +4958,7 @@ void http_srv(void) {
 	/* Startup server */
 	if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
 		cs_log("HTTP Server: Creating socket failed! (errno=%d %s)", errno, strerror(errno));
-		return;
+		return NULL;
 	}
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
 		cs_log("HTTP Server: Setting SO_REUSEADDR via setsockopt failed! (errno=%d %s)", errno, strerror(errno));
@@ -4968,13 +4971,13 @@ void http_srv(void) {
 	if((bind(sock, (struct sockaddr *) &sin, sizeof(sin))) < 0) {
 		cs_log("HTTP Server couldn't bind on port %d (errno=%d %s). Not starting HTTP!", cfg.http_port, errno, strerror(errno));
 		close(sock);
-		return;
+		return NULL;
 	}
 #endif
 	if (listen(sock, SOMAXCONN) < 0) {
 		cs_log("HTTP Server: Call to listen() failed! (errno=%d %s)", errno, strerror(errno));
 		close(sock);
-		return;
+		return NULL;
 	}
 
 #ifdef WITH_SSL
@@ -5065,6 +5068,7 @@ void http_srv(void) {
 	cs_log("HTTP Server: Shutdown requested.");
 	close(sock);
 	//exit(SIGQUIT);
+	return NULL;
 }
 
 void webif_client_reset_lastresponsetime(struct s_client *cl) {
@@ -5108,7 +5112,7 @@ void webif_init(void) {
 		cs_log("http disabled");
 		return;
 	}
-	start_thread((void *)&http_srv, "http");
+	start_thread(http_srv, "http");
 }
 
 #endif

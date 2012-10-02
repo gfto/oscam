@@ -2,6 +2,8 @@
 
 #ifdef WEBIF
 
+#include "module-webif-pages.h"
+
 char *CSS =
 "BODY {background-color: white; font-family: Arial; font-size: 11px; text-align:center}\n"
 "P {color: white; }\n"

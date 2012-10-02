@@ -2,7 +2,8 @@
 #include "globals.h"
 #ifdef WEBIF
 
-#include "module-webif.h"
+#include "module-webif-lib.h"
+#include "module-webif-pages.h"
 #include "oscam-config-funcs.h"
 
 extern const char *tpl[][3];

@@ -158,11 +158,6 @@ extern int32_t write_server(void);
 extern void write_versionfile(void);
 
 /* ===========================
- *         module-webif
- * =========================== */
-extern void http_srv(void);
-
-/* ===========================
  *         oscam-log
  * =========================== */
 extern char *LOG_LIST;
