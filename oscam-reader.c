@@ -1,6 +1,7 @@
 #include "globals.h"
 #include "module-led.h"
 #include "module-stat.h"
+#include "oscam-chk.h"
 #include "reader-common.h"
 #include "csctapi/ifd_sc8in1.h"
 

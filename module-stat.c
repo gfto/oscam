@@ -3,6 +3,7 @@
 #ifdef WITH_LB
 #include "module-cacheex.h"
 #include "module-cccam.h"
+#include "oscam-chk.h"
 
 #define UNDEF_AVG_TIME 80000
 #define MAX_ECM_SEND_CACHE 16

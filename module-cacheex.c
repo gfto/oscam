@@ -3,6 +3,7 @@
 #ifdef CS_CACHEEX
 
 #include "oscam-conf.h"
+#include "oscam-chk.h"
 #include "module-cacheex.h"
 
 #define cs_cacheex_matcher "oscam.cacheex"

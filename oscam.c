@@ -15,6 +15,7 @@
 #include "module-led.h"
 #include "module-stat.h"
 #include "module-webif.h"
+#include "oscam-chk.h"
 #include "oscam-failban.h"
 #include "oscam-garbage.h"
 

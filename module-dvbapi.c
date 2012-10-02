@@ -7,6 +7,7 @@
 #include "module-dvbapi-coolapi.h"
 #include "module-dvbapi-stapi.h"
 #include "module-stat.h"
+#include "oscam-chk.h"
 
 // These are declared in module-dvbapi-azbox.c
 extern int32_t openxcas_provid;

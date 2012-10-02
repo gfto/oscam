@@ -80,26 +80,11 @@ extern void do_emm(struct s_client *, EMM_PACKET *);
 extern ECM_REQUEST *get_ecmtask(void);
 extern int32_t send_dcw(struct s_client *, ECM_REQUEST *);
 extern int32_t process_input(uchar *, int32_t, int32_t);
-extern int32_t has_srvid(struct s_client *cl, ECM_REQUEST *er);
-extern int32_t chk_srvid(struct s_client *, ECM_REQUEST *);
-extern int32_t chk_srvid_match(ECM_REQUEST *, SIDTAB *);
-extern int32_t chk_srvid_match_by_caid_prov(uint16_t, uint32_t, SIDTAB *);
-extern int32_t chk_sfilter(ECM_REQUEST *, PTAB*);
-extern int32_t chk_ufilters(ECM_REQUEST *);
-extern int32_t chk_rsfilter(struct s_reader * reader, ECM_REQUEST *);
-extern int32_t chk_caid(uint16_t caid, CAIDTAB *ctab);
-extern int32_t matching_reader(ECM_REQUEST *, struct s_reader *, int32_t slot); // slot=1, do also ratelimiter check, 0= no ratelimiter check
-extern int32_t ecm_ratelimit_check(struct s_reader * reader, ECM_REQUEST *er, int32_t slot); // use slot=2 if called from reader so it can replace srvid
-extern int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid);
 extern void set_signal_handler(int32_t , int32_t , void (*));
 extern void cs_waitforcardinit(void);
 extern void cs_reinit_clients(struct s_auth *new_accounts);
 extern int32_t process_client_pipe(struct s_client *cl, uchar *buf, int32_t l);
 extern void update_reader_config(uchar *ptr);
-extern int32_t chk_ctab(uint16_t caid, CAIDTAB *ctab);
-extern int32_t chk_srvid_by_caid_prov(struct s_client *, uint16_t caid, uint32_t provid);
-extern int32_t chk_srvid_by_caid_prov_rdr(struct s_reader *, uint16_t caid, uint32_t provid);
-extern int32_t chk_rfilter2(uint16_t rcaid, uint32_t rprid, struct s_reader *rdr);
 extern void *clientthread_init(void * init);
 extern void cleanup_thread(void *var);
 extern void kill_thread(struct s_client *cl);
