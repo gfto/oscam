@@ -73,11 +73,11 @@ extern int32_t write_to_pipe(struct s_client *, int32_t, uchar *, int32_t);
 extern int32_t read_from_pipe(struct s_client *, uchar **);
 extern int32_t write_ecm_answer(struct s_reader *, ECM_REQUEST *, int8_t, uint8_t, uchar *, char *);
 extern uint32_t chk_provid(uchar *, uint16_t);
+extern uint16_t get_betatunnel_caid_to(uint16_t caid);
 extern void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto);
 extern void get_cw(struct s_client *, ECM_REQUEST *);
 extern void do_emm(struct s_client *, EMM_PACKET *);
 extern ECM_REQUEST *get_ecmtask(void);
-extern void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, struct s_ecm_answer *ea, int8_t rc);
 extern int32_t send_dcw(struct s_client *, ECM_REQUEST *);
 extern int32_t process_input(uchar *, int32_t, int32_t);
 extern int32_t has_srvid(struct s_client *cl, ECM_REQUEST *er);
@@ -356,28 +356,6 @@ extern const char *newcamd_get_client_name(uint16_t client_id);
  * =========================== */
 extern void init_share(void);
 extern void done_share(void);
-
-/* ===========================
- *         module-stat
- * =========================== */
-extern void init_stat(void);
-extern int32_t get_best_reader(ECM_REQUEST *er);
-extern void clear_reader_stat(struct s_reader *reader);
-extern void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t rc);
-extern void load_stat_from_file(void);
-extern READER_STAT *get_stat(struct s_reader *rdr, STAT_QUERY *q);
-extern void save_stat_to_file(int32_t);
-extern void clear_all_stat(void);
-extern uint16_t get_betatunnel_caid_to(uint16_t);
-extern void housekeeping_stat(int32_t force);
-extern READER_STAT **get_sorted_stat_copy(struct s_reader *rdr, int32_t reverse, int32_t *size);
-extern int32_t clean_stat_by_rc(struct s_reader *rdr, int8_t rc, int8_t inverse);
-extern int32_t clean_stat_by_id(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16_t srvid, uint16_t chid, uint16_t ecmlen);
-extern void update_ecmlen_from_stat(struct s_reader *rdr);
-extern int32_t clean_all_stats_by_rc(int8_t rc, int8_t inverse);
-extern int32_t lb_valid_btun(ECM_REQUEST *er, uint16_t caidto);
-extern void lb_mark_last_reader(ECM_REQUEST *er);
-extern uint32_t lb_auto_timeout(ECM_REQUEST *er, uint32_t ctimeout);
 
 /* ===========================
  *       reader-common

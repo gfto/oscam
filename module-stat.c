@@ -43,10 +43,6 @@ void init_stat(void)
 }
 
 #define LINESIZE 1024
-#endif
-
-#ifdef WITH_LB
-
 
 static uint32_t get_prid(uint16_t caid, uint32_t prid)
 {
@@ -83,7 +79,7 @@ static uint32_t get_subid(ECM_REQUEST *er)
 }
 
 
-void get_stat_query(ECM_REQUEST *er, STAT_QUERY *q)
+static void get_stat_query(ECM_REQUEST *er, STAT_QUERY *q)
 {
 	memset(q, 0, sizeof(STAT_QUERY));
 
@@ -214,7 +210,7 @@ void load_stat_from_file(void)
 /**
  * get statistic values for reader ridx and caid/prid/srvid/ecmlen
  **/
-READER_STAT *get_stat_lock(struct s_reader *rdr, STAT_QUERY *q, int8_t lock)
+static READER_STAT *get_stat_lock(struct s_reader *rdr, STAT_QUERY *q, int8_t lock)
 {
 	if (!rdr->lb_stat) {
 		rdr->lb_stat = ll_create("lb_stat");
@@ -254,41 +250,15 @@ READER_STAT *get_stat_lock(struct s_reader *rdr, STAT_QUERY *q, int8_t lock)
 /**
  * get statistic values for reader ridx and caid/prid/srvid/ecmlen
  **/
-READER_STAT *get_stat(struct s_reader *rdr, STAT_QUERY *q)
+static READER_STAT *get_stat(struct s_reader *rdr, STAT_QUERY *q)
 {
 	return get_stat_lock(rdr, q, 1);
 }
 
 /**
- * removes caid/prid/srvid/ecmlen from stat-list of reader ridx
- */
-int32_t remove_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16_t srvid, uint16_t chid, int16_t ecmlen)
-{
-	if (!rdr->lb_stat)
-		return 0;
-
-	prid = get_prid(caid, prid);
-
-	cs_writelock(&rdr->lb_stat_lock);
-	int32_t c = 0;
-	LL_ITER it = ll_iter_create(rdr->lb_stat);
-	READER_STAT *stat;
-	while ((stat = ll_iter_next(&it))) {
-		if (stat->caid==caid && stat->prid==prid && stat->srvid==srvid && stat->chid==chid) {
-			if (!stat->ecmlen || stat->ecmlen == ecmlen) {
-				ll_iter_remove_data(&it);
-				c++;
-			}
-		}
-	}
-	cs_writeunlock(&rdr->lb_stat_lock);
-	return c;
-}
-
-/**
  * Calculates average time
  */
-void calc_stat(READER_STAT *stat)
+static void calc_stat(READER_STAT *stat)
 {
 	int32_t i, c=0, t = 0;
 	for (i = 0; i < LB_MAX_STAT_TIME; i++) {
@@ -306,7 +276,7 @@ void calc_stat(READER_STAT *stat)
 /**
  * Saves statistik to /tmp/.oscam/stat.n where n is reader-index
  */
-void save_stat_to_file_thread(void)
+static void save_stat_to_file_thread(void)
 {
 	stat_load_save = 0;
 	char buf[256];
@@ -391,7 +361,7 @@ void save_stat_to_file(int32_t thread)
 /**
  * fail_factor is multiplied to the reopen_time. This function increases the fail_factor
  **/
-void inc_fail(READER_STAT *stat)
+static void inc_fail(READER_STAT *stat)
 {
 	if (stat->fail_factor <= 0)
 		stat->fail_factor = 1;
@@ -399,7 +369,7 @@ void inc_fail(READER_STAT *stat)
 		stat->fail_factor *= 2;
 }
 
-READER_STAT *get_add_stat(struct s_reader *rdr, STAT_QUERY *q)
+static READER_STAT *get_add_stat(struct s_reader *rdr, STAT_QUERY *q)
 {
 	if (!rdr->lb_stat) {
 		rdr->lb_stat = ll_create("lb_stat");
@@ -431,10 +401,12 @@ READER_STAT *get_add_stat(struct s_reader *rdr, STAT_QUERY *q)
 	return stat;
 }
 
+static void housekeeping_stat(int32_t force);
+
 /**
  * Adds caid/prid/srvid/ecmlen to stat-list for reader ridx with time/rc
  */
-void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t rc)
+static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t rc)
 {
 	if (!rdr || !er || !cfg.lb_mode ||!er->l || !er->client)
 		return;
@@ -509,7 +481,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 			rdr->lb_usagelevel = 1000 / (t<1?1:t);
 			/* Reset of usagelevel time and counter */
 			rdr->lb_usagelevel_time = ctime;
-			rdr->lb_usagelevel_ecmcount = 0; 
+			rdr->lb_usagelevel_ecmcount = 0;
 		}
 
 	}
@@ -629,7 +601,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	}
 }
 
-void reset_stat(STAT_QUERY *q)
+static void reset_stat(STAT_QUERY *q)
 {
 	//cs_debug_mask(D_LB, "loadbalance: resetting ecm count");
 	struct s_reader *rdr;
@@ -703,7 +675,7 @@ int32_t clean_stat_by_id(struct s_reader *rdr, uint16_t caid, uint32_t prid, uin
 }
 
 
-int32_t has_ident(FTAB *ftab, ECM_REQUEST *er) {
+static int32_t has_ident(FTAB *ftab, ECM_REQUEST *er) {
 
 	if (!ftab || !ftab->filts)
 		return 0;
@@ -758,7 +730,7 @@ static time_t get_reopen_seconds(READER_STAT *stat)
 		return (time_t)stat->fail_factor * (time_t)cfg.lb_reopen_seconds;
 }
 
-void convert_to_beta_int(ECM_REQUEST *er, uint16_t caid_to)
+static void convert_to_beta_int(ECM_REQUEST *er, uint16_t caid_to)
 {
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
 	convert_to_beta(er->client, er, caid_to);
@@ -774,10 +746,13 @@ void convert_to_beta_int(ECM_REQUEST *er, uint16_t caid_to)
  * Also the reader is asked if he is "available"
  * returns ridx when found or -1 when not found
  */
-int32_t get_best_reader(ECM_REQUEST *er)
+void stat_get_best_reader(ECM_REQUEST *er)
 {
 	if (!cfg.lb_mode || cfg.lb_mode==LB_LOG_ONLY)
-		return 0;
+		return;
+
+	if (!er->reader_avail)
+		return;
 
 	struct s_reader *rdr;
 	struct s_ecm_answer *ea;
@@ -795,7 +770,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			if (eab) {
 				cs_debug_mask(D_LB, "loadbalancer: forward card: forced by card %d to reader %s", card->id, eab->reader->label);
 				eab->status |= READER_ACTIVE;
-				return 1;
+				return;
 			}
 	}
 #endif
@@ -1224,7 +1199,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			username(er->client), ecmbuf, nr, buf);
 	}
 #endif
-	return 1;
+	return;
 }
 
 /**
@@ -1247,7 +1222,7 @@ void clear_all_stat(void)
 	}
 }
 
-void housekeeping_stat_thread(void)
+static void housekeeping_stat_thread(void)
 {
 	time_t cleanup_time = time(NULL) - (cfg.lb_stat_cleanup*60*60);
 	int32_t cleaned = 0;
@@ -1273,7 +1248,7 @@ void housekeeping_stat_thread(void)
 	cs_debug_mask(D_LB, "loadbalancer cleanup: removed %d entries", cleaned);
 }
 
-void housekeeping_stat(int32_t force)
+static void housekeeping_stat(int32_t force)
 {
 	time_t now = time(NULL);
 	if (!force && last_housekeeping + 60*60 > now) //only clean once in an hour
@@ -1313,7 +1288,7 @@ READER_STAT **get_sorted_stat_copy(struct s_reader *rdr, int32_t reverse, int32_
 		return (READER_STAT **)ll_sort(rdr->lb_stat, compare_stat, size);
 }
 
-int8_t stat_in_ecmlen(struct s_reader *rdr, READER_STAT *stat)
+static int8_t stat_in_ecmlen(struct s_reader *rdr, READER_STAT *stat)
 {
 	struct s_ecmWhitelist *tmp;
 	struct s_ecmWhitelistIdent *tmpIdent;
@@ -1334,7 +1309,7 @@ int8_t stat_in_ecmlen(struct s_reader *rdr, READER_STAT *stat)
 	return 0;
 }
 
-int8_t add_to_ecmlen(struct s_reader *rdr, READER_STAT *stat)
+static int8_t add_to_ecmlen(struct s_reader *rdr, READER_STAT *stat)
 {
 	struct s_ecmWhitelist *tmp;
 	struct s_ecmWhitelistIdent *tmpIdent;
@@ -1469,6 +1444,34 @@ uint32_t lb_auto_timeout(ECM_REQUEST *er, uint32_t ctimeout) {
         cs_debug_mask(D_TRACE, "auto-timeout for %s %s set rdr %s to %d", username(er->client), buf, rdr->label, t); 
         
         return t;
+}
+
+void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, struct s_ecm_answer *ea, int8_t rc)
+{
+	if (!rdr || rc >= E_99 || cacheex_reader(rdr))
+		return;
+	if (er->ecmcacheptr) //ignore cache answer
+		return;
+
+	struct timeb tpe;
+	cs_ftime(&tpe);
+	int32_t time = 1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm;
+	if (time < 1)
+	        time = 1;
+
+	if (ea && (ea->status & READER_FALLBACK) && time > (int32_t)cfg.ftimeout)
+		time = time - cfg.ftimeout;
+
+	add_stat(rdr, er, time, rc);
+}
+
+void stat_finish(void) {
+	if (cfg.lb_mode && cfg.lb_save) {
+		save_stat_to_file(0);
+		if (cfg.lb_savepath)
+			cs_log("stats saved to file %s", cfg.lb_savepath);
+		cfg.lb_save = 0; //this is for avoiding duplicate saves
+	}
 }
 
 #endif

@@ -1,5 +1,6 @@
 #include "globals.h"
 #include "module-led.h"
+#include "module-stat.h"
 #include "reader-common.h"
 #include "csctapi/ifd_sc8in1.h"
 
@@ -166,9 +167,7 @@ void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw
 
 		if (ecm->rc>=10 && (t-(uint32_t)ecm->tps.time > ((cfg.ctimeout + 500) / 1000) + 1)) { // drop timeouts
 			ecm->rc=0;
-#ifdef WITH_LB
 			send_reader_stat(reader, ecm, NULL, E_TIMEOUT);
-#endif
 		}
 
 		if (ecm->rc >= 10)
@@ -443,9 +442,7 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		ecm = &cl->ecmtask[i];
 		if ((ecm->rc>=10) && (t-(uint32_t)ecm->tps.time > ((cfg.ctimeout + 500) / 1000) + 1)) { // drop timeouts
 			ecm->rc=0;
-#ifdef WITH_LB
 			send_reader_stat(reader, ecm, NULL, E_TIMEOUT);
-#endif
 		}
 	}
 

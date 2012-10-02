@@ -13,6 +13,7 @@
 #include "module-ird-guess.h"
 #include "module-lcd.h"
 #include "module-led.h"
+#include "module-stat.h"
 #include "module-webif.h"
 #include "oscam-failban.h"
 #include "oscam-garbage.h"
@@ -564,14 +565,7 @@ void cleanup_thread(void *var)
 
 static void cs_cleanup(void)
 {
-#ifdef WITH_LB
-	if (cfg.lb_mode && cfg.lb_save) {
-		save_stat_to_file(0);
-		if (cfg.lb_savepath)
-		    cs_log("stats saved to file %s", cfg.lb_savepath);
-		cfg.lb_save = 0; //this is for avoiding duplicate saves
-	}
-#endif
+	stat_finish();
 
 #ifdef MODULE_CCCAM
 #ifdef MODULE_CCCSHARE
@@ -1395,9 +1389,7 @@ static void init_cardreader(void) {
 		}
 	}
 
-#ifdef WITH_LB
 	load_stat_from_file();
-#endif
 	cs_writeunlock(&system_lock);
 }
 
@@ -1706,10 +1698,8 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 		er->idx = 0;
 		er = er->parent; //Now er is "original" ecm, before it was the reader-copy
 
-        	if (er->rc < E_99) {
-#ifdef WITH_LB
+		if (er->rc < E_99) {
 			send_reader_stat(reader, er, NULL, rc);
-#endif
 			return 0;  //Already done
 		}
 	}
@@ -1812,27 +1802,6 @@ ECM_REQUEST *get_ecmtask(void)
 
 	return(er);
 }
-
-#ifdef WITH_LB
-void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, struct s_ecm_answer *ea, int8_t rc)
-{
-	if (!rdr || rc >= E_99 || cacheex_reader(rdr))
-		return;
-	if (er->ecmcacheptr) //ignore cache answer
-		return;
-
-	struct timeb tpe;
-	cs_ftime(&tpe);
-	int32_t time = 1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm;
-	if (time < 1)
-	        time = 1;
-
-	if (ea && (ea->status & READER_FALLBACK) && time > (int32_t)cfg.ftimeout)
-		time = time - cfg.ftimeout;
-
-	add_stat(rdr, er, time, rc);
-}
-#endif
 
 /**
  * Check for NULL CWs
@@ -2245,9 +2214,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 	}
 
 	if (ert->rc<E_99) {
-#ifdef WITH_LB
 		send_reader_stat(eardr, ert, ea, ea->rc);
-#endif
 #ifdef CS_CACHEEX
 		        if (ea && ert->rc < E_NOTFOUND && ea->rc < E_NOTFOUND && memcmp(ea->cw, ert->cw, sizeof(ert->cw)) != 0) {
 		                char cw1[16*3+2], cw2[16*3+2];
@@ -2338,9 +2305,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 		ert->rc=E_NOTFOUND; //so we set the return code
 	}
 
-#ifdef WITH_LB
 	send_reader_stat(eardr, ert, ea, ea->rc);
-#endif
 
 #ifdef CS_CACHEEX
 	if (ea->rc < E_NOTFOUND && !ert->ecmcacheptr)
@@ -2795,12 +2760,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		cs_readunlock(&clientlist_lock);
 		cs_readunlock(&readerlist_lock);
 
-#ifdef WITH_LB
-		if (cfg.lb_mode && er->reader_avail) {
-			debug_ecm(D_TRACE, "requesting client %s best reader for %s", username(client), buf);
-			get_best_reader(er);
-		}
-#endif
+		stat_get_best_reader(er);
 
 		int32_t fallback_reader_count = 0;
 		er->reader_count = 0;
@@ -2954,9 +2914,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	}
 #endif
 
-#ifdef WITH_LB
-        lb_mark_last_reader(er);
-#endif
+	lb_mark_last_reader(er);
+
 	er->rcEx = 0;
 	request_cw(er);
 
@@ -4420,9 +4379,7 @@ int32_t main (int32_t argc, char *argv[])
   cs_init_log();
   cs_init_statistics();
   init_check();
-#ifdef WITH_LB
   init_stat();
-#endif
 
   for (i=0; mod_def[i]; i++)  // must be later BEFORE init_config()
   {
