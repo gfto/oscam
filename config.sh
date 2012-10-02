@@ -474,7 +474,6 @@ do
 	;;
 	'-l'|'--list-config')
 		enabled_any $(get_opts readers) && enable_opt WITH_CARDREADER >/dev/null
-		disabled WEBIF && disable_opt TOUCH >/dev/null
 		for OPT in $addons $protocols $readers
 		do
 			enabled $OPT && echo "CONFIG_$OPT=y" || echo "# CONFIG_$OPT=n"
