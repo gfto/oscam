@@ -13,6 +13,7 @@
 #include "module-cccshare.h"
 #endif
 #include "oscam-client.h"
+#include "oscam-files.h"
 
 static int8_t running;
 

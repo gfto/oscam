@@ -113,7 +113,6 @@ typedef unsigned char uchar;
 #define ctermid(a) UNSAFE_CTERMID_NOT_THREADSAFE_USE_CTERMID_R
 #define tmpnam(a) UNSAFE_TMPNAM_NOT_THREADSAFE
 #define tempnam(a,b) UNSAFE_TEMPNAM_NOT_THREADSAFE
-//#define readdir(a) UNSAFE_READDIR_NOT_THREADSAFE_USE_CS_READDIR_R
 #define getlogin() UNSAFE_GETLOGIN_NOT_THREADSAFE_USE_GETLOGIN_R
 #define getpwnam(a) UNSAFE_GETPWNAM_NOT_THREADSAFE_USE_GETPWNAM_R
 #define getpwent() UNSAFE_GETPWENT_NOT_THREADSAFE_USE_GETPWENT_R
@@ -1734,7 +1733,6 @@ extern struct s_module ph[CS_MAX_MOD];
 extern struct s_cardsystem cardsystem[CS_MAX_MOD];
 extern struct s_cardreader cardreader[CS_MAX_MOD];
 extern CS_MUTEX_LOCK gethostbyname_lock;
-extern CS_MUTEX_LOCK readdir_lock;
 #if defined(WITH_LIBUSB)
 extern CS_MUTEX_LOCK sr_lock;
 #endif

@@ -5,6 +5,7 @@
 #include "module-cccam.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
+#include "oscam-files.h"
 
 #define UNDEF_AVG_TIME 80000
 #define MAX_ECM_SEND_CACHE 16

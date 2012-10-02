@@ -5,6 +5,7 @@
 #include "module-dvbapi.h"
 #include "module-dvbapi-stapi.h"
 #include "oscam-client.h"
+#include "oscam-files.h"
 
 // These variables are declared in module-dvbapi.c
 extern int32_t disable_pmt_files;

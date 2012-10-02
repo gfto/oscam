@@ -18,6 +18,7 @@
 #include "oscam-chk.h"
 #include "oscam-client.h"
 #include "oscam-failban.h"
+#include "oscam-files.h"
 #include "oscam-garbage.h"
 
 static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea);

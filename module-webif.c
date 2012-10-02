@@ -20,6 +20,7 @@
 #include "module-webif-lib.h"
 #include "module-webif-pages.h"
 #include "oscam-conf-mk.h"
+#include "oscam-files.h"
 #include "oscam-garbage.h"
 #include "oscam-client.h"
 

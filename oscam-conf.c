@@ -1,5 +1,6 @@
 #include "globals.h"
 #include "oscam-conf.h"
+#include "oscam-files.h"
 #include "oscam-garbage.h"
 
 #define CONFVARWIDTH 30

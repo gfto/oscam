@@ -4,34 +4,6 @@
 #include "oscam-client.h"
 #include "oscam-garbage.h"
 
-/* Gets the tmp dir */
-char *get_tmp_dir(void) {
-  if (cs_tmpdir[0])
-    return cs_tmpdir;
-
-#if defined(__CYGWIN__)
-  char *d = getenv("TMPDIR");
-  if (!d || !d[0])
-    d = getenv("TMP");
-  if (!d || !d[0])
-    d = getenv("TEMP");
-  if (!d || !d[0])
-    getcwd(cs_tmpdir, sizeof(cs_tmpdir)-1);
-
-  cs_strncpy(cs_tmpdir, d, sizeof(cs_tmpdir));
-  char *p = cs_tmpdir;
-  while(*p) p++;
-  p--;
-  if (*p != '/' && *p != '\\')
-    strcat(cs_tmpdir, "/");
-  strcat(cs_tmpdir, "_oscam");
-#else
-  cs_strncpy(cs_tmpdir, "/tmp/.oscam", sizeof(cs_tmpdir));
-#endif
-  mkdir(cs_tmpdir, S_IRWXU);
-  return cs_tmpdir;
-}
-
 void aes_set_key(char *key)
 {
   AES_set_decrypt_key((const unsigned char *)key, 128, &cur_client()->aeskey_decrypt);
@@ -712,25 +684,6 @@ void cs_ftime(struct timeb *tp)
   tp->millitm=tv.tv_usec/1000;
 }
 
-/* Drop-in replacement for readdir_r as some plattforms strip the function from their libc.
-   Furthermore, there are some security issues, see http://womble.decadent.org.uk/readdir_r-advisory.html */
-int32_t cs_readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result){
-/* According to POSIX the buffer readdir uses is not shared between directory streams.
-   However readdir is not guaranteed to be thread-safe and some implementations may use global state.
-   Thus we use a lock as we have many plattforms... */
-   int32_t rc;
-   cs_writelock(&readdir_lock);
-   errno=0;
-   *result = readdir(dirp);
-   rc = errno;
-   if(errno == 0 && *result != NULL){
-   	memcpy(entry, *result, sizeof(struct dirent));
-   	*result = entry;
-   }
-   cs_writeunlock(&readdir_lock);
-   return rc;
-}
-
 void cs_sleepms(uint32_t msec)
 {
 	//does not interfere with signals like sleep and usleep do
@@ -816,16 +769,6 @@ void *cs_realloc(void *result, size_t size, int32_t quiterror){
 	return *tmp;
 }
 
-/* Return 1 if the file exists, else 0 */
-int32_t file_exists(const char * filename){
-	FILE *file;
-	if ((file = fopen(filename, "r"))){
-		fclose(file);
-		return 1;
-	}
-	return 0;
-}
-
 /* Clears the s_ip structure provided. The pointer will be set to NULL so everything is cleared.*/
 void clear_sip(struct s_ip **sip){
 	struct s_ip *cip = *sip;
@@ -866,61 +809,6 @@ void clear_caidtab(struct s_caidtab *ctab){
 /* Clears given tuntab */
 void clear_tuntab(struct s_tuntab *ttab){
 	memset(ttab, 0, sizeof(struct s_tuntab));
-}
-
-/* Copies a file from srcfile to destfile. If an error occured before writing, -1 is returned, else -2. On success, 0 is returned.*/
-int32_t file_copy(char *srcfile, char *destfile){
-	FILE *src, *dest;
-  int32_t ch;
-  if((src = fopen(srcfile, "r"))==NULL) {
-  	cs_log("Error opening file %s for reading (errno=%d %s)!", srcfile, errno, strerror(errno));
-    return(-1);
-  }
-  if((dest = fopen(destfile, "w"))==NULL) {
-  	cs_log("Error opening file %s for writing (errno=%d %s)!", destfile, errno, strerror(errno));
-  	fclose(src);
-    return(-1);
-  }
-
-	while(1){
-		ch = fgetc(src);
-		if(ch==EOF){
-			break;
-		}	else {
-			fputc(ch, dest);
-			if(ferror(dest)) {
-				cs_log("Error while writing to file %s (errno=%d %s)!", destfile, errno, strerror(errno));
-				fclose(src);
-				fclose(dest);
-				return(-2);
-			}
-		}
-	}
-	fclose(src);
-	fclose(dest);
-	return(0);
-}
-
-/* Overwrites destfile with tmpfile. If forceBakOverWrite = 0, the bakfile will not be overwritten if it exists, else it will be.*/
-int32_t safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, int32_t forceBakOverWrite){
-	int32_t rc;
-	if (file_exists(destfile)) {
-		if(forceBakOverWrite != 0 || !file_exists(bakfile)){
-			if(file_copy(destfile, bakfile) < 0){
-				cs_log("Error copying original config file %s to %s. The original config will be left untouched!", destfile, bakfile);
-				if(remove(tmpfile) < 0) cs_log("Error removing temp config file %s (errno=%d %s)!", tmpfile, errno, strerror(errno));
-				return(1);
-			}
-		}
-	}
-	if((rc = file_copy(tmpfile, destfile)) < 0){
-		cs_log("An error occured while writing the new config file %s.", destfile);
-		if(rc == -2) cs_log("The config will be missing or only partly filled upon next startup as this is a non-recoverable error! Please restore from backup or try again.");
-		if(remove(tmpfile) < 0) cs_log("Error removing temp config file %s (errno=%d %s)!", tmpfile, errno, strerror(errno));
-		return(1);
-	}
-	if(remove(tmpfile) < 0) cs_log("Error removing temp config file %s (errno=%d %s)!", tmpfile, errno, strerror(errno));
-	return(0);
 }
 
 /* Ordinary strncpy does not terminate the string if the source is exactly as long or longer as the specified size. This can raise security issues.

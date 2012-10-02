@@ -196,7 +196,6 @@ extern void reader_do_card_info(struct s_reader * reader);
 /* ===========================
  *        oscam-simples
  * =========================== */
-extern char *get_tmp_dir(void);
 extern void aes_set_key(char *);
 extern void aes_encrypt_idx(struct s_client *, uchar *, int32_t);
 extern void aes_decrypt(struct s_client *, uchar *, int32_t);
@@ -258,7 +257,6 @@ extern time_t cs_timegm(struct tm *tm);
 extern struct tm *cs_gmtime_r(const time_t *timep, struct tm *r);
 extern char *cs_ctime_r(const time_t *timep, char* buf);
 extern void cs_ftime(struct timeb *);
-extern int32_t cs_readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result);
 extern void cs_sleepms(uint32_t);
 extern void cs_sleepus(uint32_t);
 extern void cs_setpriority(int32_t);
@@ -266,14 +264,11 @@ extern struct s_auth *find_user(char *);
 extern int32_t check_filled(uchar *value, int32_t length);
 extern void *cs_malloc(void *result, size_t size, int32_t quiterror);
 extern void *cs_realloc(void *result, size_t size, int32_t quiterror);
-extern int32_t file_exists(const char * filename);
 extern void clear_sip(struct s_ip **sip);
 extern void clear_ptab(struct s_ptab *ptab);
 extern void clear_ftab(struct s_ftab *ftab);
 extern void clear_caidtab(struct s_caidtab *ctab);
 extern void clear_tuntab(struct s_tuntab *ttab);
-extern int32_t file_copy(char *srcfile, char *destfile);
-extern int32_t safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, int32_t forceBakOverWrite);
 extern void cs_strncpy(char * destination, const char * source, size_t num);
 extern char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf);
 extern char *get_tiername(uint16_t tierid, uint16_t caid, char *buf);
