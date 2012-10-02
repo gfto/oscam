@@ -65,14 +65,15 @@ static void camd33_auth_client(uchar *camdbug)
   uchar *usr=NULL, *pwd=NULL;
   struct s_auth *account;
   uchar mbuf[1024];
+  struct s_client *cl = cur_client();
 
-  cur_client()->crypted=cfg.c33_crypted;
+  cl->crypted=cfg.c33_crypted;
 
-  if (cur_client()->crypted)
-    cur_client()->crypted = check_ip(cfg.c33_plain, cur_client()->ip) ? 0 : 1;
+  if (cl->crypted)
+    cl->crypted = !check_ip(cfg.c33_plain, cl->ip);
 
-  if (cur_client()->crypted)
-    aes_set_key((char *) cfg.c33_key);
+  if (cl->crypted)
+    aes_set_key(cl, (char *)cfg.c33_key);
 
   mbuf[0]=0;
   camd33_send(mbuf, 1);	// send login-request
@@ -90,13 +91,13 @@ static void camd33_auth_client(uchar *camdbug)
   }
   for (rc=-1, account=cfg.account; (usr) && (account) && (rc<0); account=account->next)
     if (streq((char *)usr, account->usr) && streq((char *)pwd, account->pwd))
-      rc=cs_auth_client(cur_client(), account, NULL);
+      rc = cs_auth_client(cl, account, NULL);
   if (!rc)
     camd33_request_emm();
   else
   {
-    if (rc<0) cs_auth_client(cur_client(), 0, usr ? "invalid account" : "no user given");
-    cs_disconnect_client(cur_client());
+    if (rc<0) cs_auth_client(cl, 0, usr ? "invalid account" : "no user given");
+    cs_disconnect_client(cl);
   }
 }
 

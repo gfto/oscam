@@ -1,7 +1,7 @@
 #ifndef OSCAM_AES_H_
 #define OSCAM_AES_H_
 
-void aes_set_key(char *key);
+void aes_set_key(struct s_client *cl, char *key);
 void aes_decrypt(struct s_client *cl, uchar *buf, int32_t n);
 void aes_encrypt_idx(struct s_client *cl, uchar *buf, int32_t n);
 void add_aes_entry(AES_ENTRY **list, uint16_t caid, uint32_t ident, int32_t keyid, uchar *aesKey);

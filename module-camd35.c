@@ -84,7 +84,7 @@ static int32_t camd35_auth_client(struct s_client *cl, uchar *ucrc)
       if (!rc) {
       	memcpy(cl->ucrc, ucrc, 4);
       	cs_strncpy((char *)cl->upwd, account->pwd, sizeof(cl->upwd));
-      	aes_set_key((char *) MD5(cl->upwd, strlen((char *)cl->upwd), md5tmp));
+      	aes_set_key(cl, (char *) MD5(cl->upwd, strlen((char *)cl->upwd), md5tmp));
       	return 0;
 	  }
     }
@@ -411,17 +411,16 @@ static int32_t tcp_connect(struct s_client *cl)
 /*
  *	client functions
  */
-int32_t camd35_client_init(struct s_client *client)
+int32_t camd35_client_init(struct s_client *cl)
 {
 
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
-	struct s_client *cl = client;
 	cs_strncpy((char *)cl->upwd, cl->reader->r_pwd, sizeof(cl->upwd));
 	i2b_buf(4, crc32(0L, MD5((unsigned char *)cl->reader->r_usr, strlen(cl->reader->r_usr), md5tmp), 16), cl->ucrc);
-	aes_set_key((char *)MD5(cl->upwd, strlen((char *)cl->upwd), md5tmp));
+	aes_set_key(cl, (char *)MD5(cl->upwd, strlen((char *)cl->upwd), md5tmp));
 	cl->crypted=1;
 
-	cs_log("camd35 proxy %s:%d", client->reader->device, client->reader->r_port);
+	cs_log("camd35 proxy %s:%d", cl->reader->device, cl->reader->r_port);
 
 	return(0);
 }

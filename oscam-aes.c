@@ -1,12 +1,11 @@
 #include "globals.h"
 #include "oscam-aes.h"
-#include "oscam-client.h"
 #include "oscam-garbage.h"
 
-void aes_set_key(char *key)
+void aes_set_key(struct s_client *cl, char *key)
 {
-	AES_set_decrypt_key((const unsigned char *)key, 128, &cur_client()->aeskey_decrypt);
-	AES_set_encrypt_key((const unsigned char *)key, 128, &cur_client()->aeskey);
+	AES_set_decrypt_key((const unsigned char *)key, 128, &cl->aeskey_decrypt);
+	AES_set_encrypt_key((const unsigned char *)key, 128, &cl->aeskey);
 }
 
 void aes_decrypt(struct s_client *cl, uchar *buf, int32_t n)
@@ -155,50 +154,41 @@ void parse_aes_keys(struct s_reader *rdr, char *value)
 	*/
 }
 
-int32_t aes_decrypt_from_list(AES_ENTRY *list, uint16_t caid, uint32_t provid, int32_t keyid, uchar *buf, int32_t n)
+static AES_ENTRY *aes_list_find(AES_ENTRY *list, uint16_t caid, uint32_t provid, int32_t keyid)
 {
-	AES_ENTRY *current;
-
-	current = list;
+	AES_ENTRY *current = list;
 	while (current) {
 		if (current->caid == caid && current->ident == provid && current->keyid == keyid)
 			break;
 		current = current->next;
 	}
-
 	if (!current) {
 		cs_log("AES Decrypt : key id %d not found for CAID %04X , provider %06x", keyid, caid, provid);
-		return 0; // we don't have the key to decode this buffer.
-	} else {
-		AES_KEY dummy;
-		int32_t i;
-		// hack for card that do the AES decrypt themsleves
-		memset(&dummy,0,sizeof(AES_KEY));
-		if (!memcmp(&current->key,&dummy,sizeof(AES_KEY))) {
-			return 1;
-		}
-		// decode the key
-		for (i = 0; i < n; i += 16)
-			AES_decrypt(buf + i, buf + i, &(current->key));
+		return NULL;
 	}
+	return current;
+}
+
+
+int32_t aes_decrypt_from_list(AES_ENTRY *list, uint16_t caid, uint32_t provid, int32_t keyid, uchar *buf, int32_t n)
+{
+	AES_ENTRY *current = aes_list_find(list, caid, provid, keyid);
+	if (!current)
+		return 0;
+	AES_KEY dummy;
+	int32_t i;
+	// hack for card that do the AES decrypt themsleves
+	memset(&dummy, 0, sizeof(AES_KEY));
+	if (!memcmp(&current->key, &dummy, sizeof(AES_KEY))) {
+		return 1;
+	}
+	// decode the key
+	for (i = 0; i < n; i += 16)
+		AES_decrypt(buf + i, buf + i, &(current->key));
 	return 1; // all ok, key decoded.
 }
 
 int32_t aes_present(AES_ENTRY *list, uint16_t caid, uint32_t provid, int32_t keyid)
 {
-	AES_ENTRY *current;
-
-	current = list;
-	while (current) {
-		if (current->caid == caid && current->ident == provid && current->keyid == keyid)
-			break;
-		current = current->next;
-	}
-
-	if (!current) {
-		cs_log("AES Decrypt : key id %d not found for CAID %04X , provider %06x", keyid, caid, provid);
-		return 0; // we don't have the key to decode this buffer.
-	}
-
-	return 1;
+	return aes_list_find(list, caid, provid, keyid) != NULL;
 }
