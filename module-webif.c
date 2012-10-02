@@ -16,6 +16,7 @@
 #include "module-cccam.h"
 #include "module-cccshare.h"
 #include "module-webif.h"
+#include "oscam-conf-mk.h"
 
 extern char *CSS;
 extern char *entitlement_type[];

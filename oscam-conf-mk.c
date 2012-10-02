@@ -11,6 +11,8 @@
 #include <net/if.h>
 #endif
 
+#include "oscam-conf-mk.h"
+
 /*
  * Creates a string ready to write as a token into config or WebIf for CAIDs. You must free the returned value through free_mk_t().
  */

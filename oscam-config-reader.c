@@ -13,6 +13,7 @@
 
 #include "oscam-conf.h"
 #include "oscam-conf-chk.h"
+#include "oscam-conf-mk.h"
 
 #define cs_srvr "oscam.server"
 
