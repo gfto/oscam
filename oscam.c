@@ -14,6 +14,7 @@
 #include "module-lcd.h"
 #include "module-led.h"
 #include "oscam-failban.h"
+#include "oscam-garbage.h"
 
 static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_ADDR_T ip);
 static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea);

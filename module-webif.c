@@ -17,6 +17,7 @@
 #include "module-cccshare.h"
 #include "module-webif.h"
 #include "oscam-conf-mk.h"
+#include "oscam-garbage.h"
 
 extern char *CSS;
 extern char *entitlement_type[];

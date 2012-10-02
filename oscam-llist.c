@@ -2,6 +2,7 @@
 /* singularly linked-list */
 
 #include "globals.h"
+#include "oscam-garbage.h"
 
 /*
   Locking rules:

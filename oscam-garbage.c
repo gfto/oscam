@@ -1,4 +1,6 @@
 #include "globals.h"
+#include "oscam-garbage.h"
+
 #define HASH_BUCKETS 16
 
 struct cs_garbage {

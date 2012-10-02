@@ -1,6 +1,7 @@
 #include "globals.h"
 #include <syslog.h>
 #include <stdlib.h>
+#include "oscam-garbage.h"
 
 char *LOG_LIST = "log_list";
 

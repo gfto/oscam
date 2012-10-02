@@ -1,6 +1,7 @@
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
 #include "module-cccam.h"
+#include "oscam-garbage.h"
 
 /* Gets the client associated to the calling thread. */
 struct s_client *cur_client(void){

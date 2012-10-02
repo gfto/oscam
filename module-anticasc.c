@@ -5,6 +5,7 @@
 
 #include "module-anticasc.h"
 #include "oscam-conf.h"
+#include "oscam-garbage.h"
 
 #define cs_ac "oscam.ac"
 

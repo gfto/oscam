@@ -2,6 +2,7 @@
 #include "oscam-conf.h"
 #include "oscam-conf-chk.h"
 #include "oscam-conf-mk.h"
+#include "oscam-garbage.h"
 
 #define cs_user "oscam.user"
 
