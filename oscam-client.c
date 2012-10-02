@@ -5,6 +5,7 @@
 #include "module-webif.h"
 #include "oscam-client.h"
 #include "oscam-failban.h"
+#include "oscam-net.h"
 
 extern char *processUsername;
 extern CS_MUTEX_LOCK fakeuser_lock;

@@ -4,6 +4,7 @@
 #include "module-stat.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
+#include "oscam-net.h"
 #include "reader-common.h"
 
 static char *debug_mask_txt(int mask) {

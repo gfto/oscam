@@ -2,6 +2,7 @@
 #include "globals.h"
 #ifdef MODULE_CONSTCW
 #include "oscam-client.h"
+#include "oscam-net.h"
 
 int32_t pserver = 0;
 

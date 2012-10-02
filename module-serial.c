@@ -2,6 +2,7 @@
 #ifdef MODULE_SERIAL
 #include <termios.h>
 #include "oscam-client.h"
+#include "oscam-net.h"
 
 #define HSIC_CRC 0xA5
 #define SSSP_MAX_PID 8

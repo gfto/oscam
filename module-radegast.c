@@ -1,6 +1,7 @@
 #include "globals.h"
 #ifdef MODULE_RADEGAST
 #include "oscam-client.h"
+#include "oscam-net.h"
 
 static int32_t radegast_send(struct s_client * client, uchar *buf)
 {

@@ -210,38 +210,6 @@ extern int32_t dyn_word_atob(char *asc);
 extern int32_t key_atob_l(char *, uchar *, int32_t);
 extern char *key_btoa(char *, uchar *);
 extern char *cs_hexdump(int32_t, const uchar *, int32_t, char *target, int32_t len);
-extern in_addr_t cs_inet_order(in_addr_t);
-extern char *cs_inet_ntoa(IN_ADDR_T addr);
-extern void cs_inet_addr(char *txt, IN_ADDR_T *out);
-extern IN_ADDR_T get_null_ip(void);
-extern void set_null_ip(IN_ADDR_T *ip);
-extern void set_localhost_ip(IN_ADDR_T *ip);
-void cs_resolve(const char *hostname, IN_ADDR_T *ip, struct SOCKADDR *sock, socklen_t *sa_len);
-
-#ifdef IPV6SUPPORT
-#define GET_IP() *(struct in6_addr *)pthread_getspecific(getip)
-#define IP_ISSET(a) !cs_in6addr_isnull(&a)
-#define IP_EQUAL(a, b) cs_in6addr_equal(&a, &b)
-#define IP_ASSIGN(a, b) cs_in6addr_copy(&a, &b)
-#define SIN_GET_ADDR(a) ((struct sockaddr_in6 *)&a)->sin6_addr
-#define SIN_GET_PORT(a) ((struct sockaddr_in6 *)&a)->sin6_port
-#define SIN_GET_FAMILY(a) ((struct sockaddr_in6 *)&a)->sin6_family
-extern int32_t cs_in6addr_equal(struct in6_addr *a1, struct in6_addr *a2);
-extern int32_t cs_in6addr_isnull(struct in6_addr *addr);
-extern int32_t cs_in6addr_lt(struct in6_addr *a, struct in6_addr *b);
-extern void cs_in6addr_copy(struct in6_addr *dst, struct in6_addr *src);
-extern void cs_in6addr_ipv4map(struct in6_addr *dst, in_addr_t src);
-extern void cs_getIPv6fromHost(const char *hostname, struct in6_addr *addr, struct sockaddr_storage *sa, socklen_t *sa_len);
-#else
-#define GET_IP() *(in_addr_t *)pthread_getspecific(getip)
-#define IP_ISSET(a) (a)
-#define IP_EQUAL(a, b) (a == b)
-#define IP_ASSIGN(a, b) (a = b)
-#define SIN_GET_ADDR(a) (a.sin_addr.s_addr)
-#define SIN_GET_PORT(a) (a.sin_port)
-#define SIN_GET_FAMILY(a) (a.sin_family)
-#endif
-
 extern uint32_t b2i(int32_t, const uchar *);
 extern uint64_t b2ll(int32_t, uchar *);
 extern uchar *i2b_buf(int32_t n, uint32_t i, uchar *b);
@@ -254,7 +222,6 @@ extern void cs_ftime(struct timeb *);
 extern void cs_sleepms(uint32_t);
 extern void cs_sleepus(uint32_t);
 extern void cs_setpriority(int32_t);
-extern struct s_auth *find_user(char *);
 extern int32_t check_filled(uchar *value, int32_t length);
 extern void *cs_malloc(void *result, size_t size, int32_t quiterror);
 extern void *cs_realloc(void *result, size_t size, int32_t quiterror);
@@ -276,7 +243,6 @@ extern int32_t cs_strnicmp(const char * str1, const char * str2, size_t num);
 extern char *strnew(char *str);
 extern void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid);
 extern void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid);
-extern int32_t check_ip(struct s_ip *ip, IN_ADDR_T n);
 
 extern void cs_lock_create(CS_MUTEX_LOCK *l, int16_t timeout, const char *name);
 extern void cs_lock_destroy(CS_MUTEX_LOCK *l);
@@ -291,11 +257,7 @@ extern int8_t cs_try_rwlock_int(CS_MUTEX_LOCK *l, int8_t type);
 #define cs_try_writelock(l)	cs_try_rwlock_int(l, WRITELOCK)
 #define cs_try_readlock(l)	cs_try_rwlock_int(l, READLOCK)
 
-extern uint32_t cs_getIPfromHost(const char *hostname);
-extern int set_socket_priority(int fd, int priority);
-extern void setTCPTimeouts(int32_t socket);
 extern struct s_reader *get_reader_by_label(char *lbl);
-extern int8_t check_fd_for_data(int32_t fd);
 
 extern void add_ms_to_timespec(struct timespec *timeout, int32_t msec);
 extern int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms);

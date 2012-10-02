@@ -10,6 +10,7 @@
 #ifdef CS_CACHEEX
 
 #include "module-cacheex.h"
+#include "oscam-net.h"
 
 #define TYPE_REQUEST   1
 #define TYPE_REPLY     2

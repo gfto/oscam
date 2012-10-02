@@ -10,6 +10,7 @@
 #include "oscam-chk.h"
 #include "oscam-client.h"
 #include "oscam-files.h"
+#include "oscam-net.h"
 
 // These are declared in module-dvbapi-azbox.c
 extern int32_t openxcas_provid;

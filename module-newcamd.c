@@ -2,6 +2,7 @@
 #ifdef MODULE_NEWCAMD
 #include "oscam-chk.h"
 #include "oscam-client.h"
+#include "oscam-net.h"
 
 #define CWS_NETMSGSIZE 362
 #define NCD_CLIENT_ID 0x8888

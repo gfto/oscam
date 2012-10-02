@@ -8,6 +8,7 @@
 #include "algo/minilzo.h"
 #include "oscam-failban.h"
 #include "oscam-client.h"
+#include "oscam-net.h"
 
 enum {
   MSG_ECM = 0x445c,

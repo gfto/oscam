@@ -1,5 +1,6 @@
 #include "globals.h"
 #include "oscam-conf-chk.h"
+#include "oscam-net.h"
 
 void chk_iprange(char *value, struct s_ip **base)
 {

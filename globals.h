@@ -1732,7 +1732,6 @@ extern char *loghist, *loghistptr;
 extern struct s_module ph[CS_MAX_MOD];
 extern struct s_cardsystem cardsystem[CS_MAX_MOD];
 extern struct s_cardreader cardreader[CS_MAX_MOD];
-extern CS_MUTEX_LOCK gethostbyname_lock;
 #if defined(WITH_LIBUSB)
 extern CS_MUTEX_LOCK sr_lock;
 #endif

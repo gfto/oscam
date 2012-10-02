@@ -2,6 +2,7 @@
 #ifdef MODULE_CAMD33
 #include "oscam-aes.h"
 #include "oscam-client.h"
+#include "oscam-net.h"
 
 #define REQ_SIZE	4
 

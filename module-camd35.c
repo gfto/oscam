@@ -5,6 +5,7 @@
 #include "oscam-aes.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
+#include "oscam-net.h"
 
 static int32_t logfd = 0;
 

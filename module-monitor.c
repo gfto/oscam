@@ -2,6 +2,7 @@
 #ifdef MODULE_MONITOR
 #include "oscam-aes.h"
 #include "oscam-client.h"
+#include "oscam-net.h"
 
 extern char *entitlement_type[];
 

@@ -2,6 +2,7 @@
 #include "oscam-conf.h"
 #include "oscam-conf-chk.h"
 #include "oscam-conf-mk.h"
+#include "oscam-net.h"
 
 #define cs_conf "oscam.conf"
 

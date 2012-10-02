@@ -10,6 +10,7 @@
 #include "oscam-client.h"
 #include "oscam-failban.h"
 #include "oscam-garbage.h"
+#include "oscam-net.h"
 
 //Mode names for CMD_05 command:
 const char *cmd05_mode_name[] = { "UNKNOWN", "PLAIN", "AES", "CC_CRYPT", "RC4",
