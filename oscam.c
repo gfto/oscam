@@ -13,6 +13,7 @@
 #include "module-ird-guess.h"
 #include "module-lcd.h"
 #include "module-led.h"
+#include "module-webif.h"
 #include "oscam-failban.h"
 #include "oscam-garbage.h"
 
@@ -80,33 +81,6 @@ char    *processUsername = NULL;
 char    *loghist = NULL;     // ptr of log-history
 char    *loghistptr = NULL;
 #endif
-
-static void cs_reset_lastresponsetime(struct s_client *cl) {
-	(void)cl;
-#ifdef WEBIF
-	int32_t i;
-	for(i = 0; i < CS_ECM_RINGBUFFER_MAX; i++) {
-		cl->cwlastresptimes[i].duration = 0;
-		cl->cwlastresptimes[i].timestamp = time((time_t*)0);
-		cl->cwlastresptimes[i].rc = 0;
-	}
-	cl->cwlastresptimes_last = 0;
-#endif
-}
-
-static void cs_add_lastresponsetime(struct s_client *cl, int32_t ltime, time_t timestamp, int32_t rc){
-	(void)cl; (void)ltime; (void)timestamp; (void)rc;
-#ifdef WEBIF
-	if(cl->cwlastresptimes_last == CS_ECM_RINGBUFFER_MAX - 1){
-		cl->cwlastresptimes_last = 0;
-	} else {
-		cl->cwlastresptimes_last++;
-	}
-	cl->cwlastresptimes[cl->cwlastresptimes_last].duration = ltime > 9999 ? 9999 : ltime;
-	cl->cwlastresptimes[cl->cwlastresptimes_last].timestamp = timestamp;
-	cl->cwlastresptimes[cl->cwlastresptimes_last].rc = rc;
-#endif
-}
 
 /*****************************************************************************
         Statics
@@ -919,7 +893,7 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 					memcpy(&cl->ctab, &account->ctab, sizeof(cl->ctab));
 					memcpy(&cl->ttab, &account->ttab, sizeof(cl->ttab));
 
-					cs_reset_lastresponsetime(cl);
+					webif_client_reset_lastresponsetime(cl);
 					if (account->uniq)
 						cs_fake_client(cl, account->usr, (account->uniq == 1 || account->uniq == 2)?account->uniq+2:account->uniq, cl->ip);
 					ac_init_client(cl, account);
@@ -1992,32 +1966,21 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	cs_ftime(&tpe);
 	client->cwlastresptime = 1000 * (tpe.time-er->tps.time) + tpe.millitm-er->tps.millitm;
 
-	cs_add_lastresponsetime(client, client->cwlastresptime,time((time_t*)0) ,er->rc); // add to ringbuffer
+	time_t now = time(NULL);
+	webif_client_add_lastresponsetime(client, client->cwlastresptime, now, er->rc); // add to ringbuffer
 
 	if (er_reader){
 		struct s_client *er_cl = er_reader->client;
 		if(er_cl){
 			er_cl->cwlastresptime = client->cwlastresptime;
-			cs_add_lastresponsetime(er_cl, client->cwlastresptime,time((time_t*)0) ,er->rc);
+			webif_client_add_lastresponsetime(er_cl, client->cwlastresptime, now, er->rc);
 			er_cl->last_srvidptr=client->last_srvidptr;
 		}
 	}
 
-#ifdef WEBIF
-	if (er_reader) {
-		if(er->rc == E_FOUND)
-			cs_strncpy(client->lastreader, er_reader->label, sizeof(client->lastreader));
-		else if (er->rc == E_CACHEEX)
-			cs_strncpy(client->lastreader, "cache3", sizeof(client->lastreader));
-		else if (er->rc < E_NOTFOUND)
-			snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s (cache)", er_reader->label);
-		else
-			cs_strncpy(client->lastreader, stxt[er->rc], sizeof(client->lastreader));
-	}
-	else
-		cs_strncpy(client->lastreader, stxt[er->rc], sizeof(client->lastreader));
-#endif
-	client->last = time((time_t*)0);
+	webif_client_init_lastreader(client, er, er_reader, stxt);
+
+	client->last = now;
 
 	//cs_debug_mask(D_TRACE, "CHECK rc=%d er->cacheex_src=%s", er->rc, username(er->cacheex_src));
 	switch(er->rc) {
@@ -4526,12 +4489,8 @@ int32_t main (int32_t argc, char *argv[])
 	//set time for server to now to avoid 0 in monitor/webif
 	first_client->last=time((time_t *)0);
 
-#ifdef WEBIF
-	if(cfg.http_port == 0)
-		cs_log("http disabled");
-	else
-		start_thread((void *) &http_srv, "http");
-#endif
+	webif_init();
+
 	start_thread((void *) &reader_check, "reader check");
 	start_thread((void *) &check_thread, "check");
 

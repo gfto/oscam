@@ -5067,4 +5067,48 @@ void http_srv(void) {
 	//exit(SIGQUIT);
 }
 
+void webif_client_reset_lastresponsetime(struct s_client *cl) {
+	int32_t i;
+	for (i = 0; i < CS_ECM_RINGBUFFER_MAX; i++) {
+		cl->cwlastresptimes[i].duration = 0;
+		cl->cwlastresptimes[i].timestamp = time((time_t*)0);
+		cl->cwlastresptimes[i].rc = 0;
+	}
+	cl->cwlastresptimes_last = 0;
+}
+
+void webif_client_add_lastresponsetime(struct s_client *cl, int32_t ltime, time_t timestamp, int32_t rc) {
+	if (cl->cwlastresptimes_last == CS_ECM_RINGBUFFER_MAX - 1) {
+		cl->cwlastresptimes_last = 0;
+	} else {
+		cl->cwlastresptimes_last++;
+	}
+	cl->cwlastresptimes[cl->cwlastresptimes_last].duration = ltime > 9999 ? 9999 : ltime;
+	cl->cwlastresptimes[cl->cwlastresptimes_last].timestamp = timestamp;
+	cl->cwlastresptimes[cl->cwlastresptimes_last].rc = rc;
+}
+
+void webif_client_init_lastreader(struct s_client *client, ECM_REQUEST *er, struct s_reader *er_reader, const char *stxt[]) {
+	if (er_reader) {
+		if (er->rc == E_FOUND)
+			cs_strncpy(client->lastreader, er_reader->label, sizeof(client->lastreader));
+		else if (er->rc == E_CACHEEX)
+			cs_strncpy(client->lastreader, "cache3", sizeof(client->lastreader));
+		else if (er->rc < E_NOTFOUND)
+			snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s (cache)", er_reader->label);
+		else
+			cs_strncpy(client->lastreader, stxt[er->rc], sizeof(client->lastreader));
+	} else {
+		cs_strncpy(client->lastreader, stxt[er->rc], sizeof(client->lastreader));
+	}
+}
+
+void webif_init(void) {
+	if (cfg.http_port == 0) {
+		cs_log("http disabled");
+		return;
+	}
+	start_thread((void *)&http_srv, "http");
+}
+
 #endif
