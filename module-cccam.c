@@ -893,6 +893,7 @@ int32_t get_UA_ofs(uint16_t caid) {
 	case 0x09: //VIDEOGUARD:
 	case 0x0B: //CONAX:
 	case 0x18: //NAGRA:
+	case 0x01: //SECA:
 	case 0x17: //BETACRYPT
 	case 0x06: //IRDETO:
 		ofs = 2;
