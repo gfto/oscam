@@ -2,7 +2,7 @@
 
 #ifdef MODULE_PANDORA
 
-#include "global-functions.h"
+#include "oscam-client.h"
 
 #define CWS_NETMSGSIZE 320
 #define START_TIME 150000

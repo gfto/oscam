@@ -3,6 +3,7 @@
 
 #include "module-cacheex.h"
 #include "oscam-chk.h"
+#include "oscam-client.h"
 
 static int32_t logfd = 0;
 

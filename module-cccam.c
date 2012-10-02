@@ -7,6 +7,7 @@
 #include "module-cccshare.h"
 #include "reader-common.h"
 #include "oscam-chk.h"
+#include "oscam-client.h"
 #include "oscam-failban.h"
 #include "oscam-garbage.h"
 

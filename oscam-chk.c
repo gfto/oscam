@@ -1,5 +1,6 @@
 #include "globals.h"
 #include "oscam-chk.h"
+#include "oscam-client.h"
 
 #define CS_NANO_CLASS 0xE2
 #define OK		1

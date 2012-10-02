@@ -1,9 +1,10 @@
 #include "globals.h"
+#include "csctapi/ifd_sc8in1.h"
 #include "module-led.h"
 #include "module-stat.h"
 #include "oscam-chk.h"
+#include "oscam-client.h"
 #include "reader-common.h"
-#include "csctapi/ifd_sc8in1.h"
 
 static char *debug_mask_txt(int mask) {
 	switch (mask) {

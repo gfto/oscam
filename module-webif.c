@@ -21,6 +21,7 @@
 #include "module-webif-pages.h"
 #include "oscam-conf-mk.h"
 #include "oscam-garbage.h"
+#include "oscam-client.h"
 
 extern char *CSS;
 extern char *entitlement_type[];
