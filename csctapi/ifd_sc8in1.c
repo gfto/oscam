@@ -932,12 +932,13 @@ int32_t Sc8in1_InitLocks(struct s_reader * reader) {
 		struct s_sc8in1_config *sc8in1_config;
 		if (cs_malloc(&sc8in1_config, sizeof(struct s_sc8in1_config), -1)) {
 			reader->sc8in1_config = sc8in1_config;
-			char *buff = cs_malloc(&buff, 128, 1);
-			snprintf(buff, 128, "sc8in1_lock_%s", reader->device);
-			cs_lock_create(&reader->sc8in1_config->sc8in1_lock, 40, buff);
-			char *buff2 = cs_malloc(&buff2, 128, 1);
-			snprintf(buff2, 128, "display_sc8in1_lock_%s", reader->device);
-			cs_lock_create(&reader->sc8in1_config->sc8in1_display_lock, 10, buff2);
+			char *buff = NULL, *buff2 = NULL;
+			if (cs_malloc(&buff, 128, -1))
+				snprintf(buff, 128, "sc8in1_lock_%s", reader->device);
+			if (cs_malloc(&buff2, 128, -1))
+				snprintf(buff2, 128, "display_sc8in1_lock_%s", reader->device);
+			cs_lock_create(&reader->sc8in1_config->sc8in1_lock, 40, ESTR(buff));
+			cs_lock_create(&reader->sc8in1_config->sc8in1_display_lock, 10, ESTR(buff2));
 		} else {
 			reader->device[pos] = savePos;
 			rdr_log(reader, "sc8in1: Out of memory.");

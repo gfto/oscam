@@ -571,7 +571,9 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 
 	uint32_t size = sizeof(er->ecmd5)+sizeof(er->csp_hash)+sizeof(er->cw)+sizeof(uint8_t) +
 			(ll_count(er->csp_lastnodes)+1)*8;
-	unsigned char *buf = cs_malloc(&buf, size+20, 0); //camd35_send() adds +20
+	unsigned char *buf;
+	if (!cs_malloc(&buf, size + 20, -1)) //camd35_send() adds +20
+		return -1;
 
 	buf[0]=0x3f; //New Command: Cache-push
 	buf[1]=size & 0xff;
@@ -680,7 +682,8 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 		cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes %s", (int32_t)count, username(cl));
 		er->csp_lastnodes = ll_create("csp_lastnodes");
 		while (count) {
-			data = cs_malloc(&data, 8, 0);
+			if (!cs_malloc(&data, 8, -1))
+				break;
 			memcpy(data, ofs, 8);
 			ofs+=8;
 			ll_append(er->csp_lastnodes, data);
@@ -703,14 +706,16 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 
 	//for compatibility: add peer node if no node received (not working now, maybe later):
 	if (!ll_count(er->csp_lastnodes) && cl->ncd_skey[8]) {
-		data = cs_malloc(&data, 8, 0);
+		if (!cs_malloc(&data, 8, -1))
+			return;
 		memcpy(data, cl->ncd_skey, 8);
 		ll_append(er->csp_lastnodes, data);
 		cs_debug_mask(D_CACHEEX, "cacheex: added missing remote node id %" PRIu64 "X", cacheex_node_id(data));
 	}
 
 //	if (!ll_count(er->csp_lastnodes)) {
-//		data = cs_malloc(&data, 8, 0);
+//		if (!cs_malloc(&data, 8, -1))
+//			break;
 //		memcpy(data, &cl->ip, 4);
 //		memcpy(data+4, &cl->port, 2);
 //		memcpy(data+6, &cl->is_udp, 1);

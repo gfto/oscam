@@ -102,6 +102,10 @@ void load_stat_from_file(void)
 	char *line;
 	char *fname;
 	FILE *file;
+
+	if (!cs_malloc(&line, LINESIZE, -1))
+		return;
+
 	if (!cfg.lb_savepath) {
 		snprintf(buf, sizeof(buf), "%s/stat", get_tmp_dir());
 		fname = buf;
@@ -124,7 +128,6 @@ void load_stat_from_file(void)
 
 	struct s_reader *rdr = NULL;
 	READER_STAT *stat;
-	line = cs_malloc(&line, LINESIZE, 0);
 
 	int32_t i=1;
 	int32_t valid=0;
@@ -865,8 +868,8 @@ void stat_get_best_reader(ECM_REQUEST *er)
 //					converted_er->prid = er->prid;
 //					if (er->src_data) { //camd35:
 //						int size = 0x34 + 20 + er->l;
-//						cs_malloc(&converted_er->src_data, size, 0);
-//						memcpy(converted_er->src_data, er->src_data, size);
+//						if (cs_malloc(&converted_er->src_data, size, -1))
+//							memcpy(converted_er->src_data, er->src_data, size);
 //					}
 //					convert_to_beta_int(converted_er, caid_to);
 //					get_cw(converted_er->client, converted_er);
@@ -1337,24 +1340,27 @@ static int8_t add_to_ecmlen(struct s_reader *rdr, READER_STAT *stat)
 	}
 
 	if (!tmp) {
-		tmp = cs_malloc(&tmp, sizeof(struct s_ecmWhitelist), 0);
-		tmp->caid = stat->caid;
-		tmp->next = rdr->ecmWhitelist;
-		rdr->ecmWhitelist = tmp;
+		if (cs_malloc(&tmp, sizeof(struct s_ecmWhitelist), -1)) {
+			tmp->caid = stat->caid;
+			tmp->next = rdr->ecmWhitelist;
+			rdr->ecmWhitelist = tmp;
+		}
 	}
 
-	if (!tmpIdent) {
-		tmpIdent = cs_malloc(&tmpIdent, sizeof(struct s_ecmWhitelistIdent), 0);
-		tmpIdent->ident = stat->prid;
-		tmpIdent->next = tmp->idents;
-		tmp->idents = tmpIdent;
+	if (!tmpIdent && tmp) {
+		if (cs_malloc(&tmpIdent, sizeof(struct s_ecmWhitelistIdent), -1)) {
+			tmpIdent->ident = stat->prid;
+			tmpIdent->next = tmp->idents;
+			tmp->idents = tmpIdent;
+		}
 	}
 
-	if (!tmpLen) {
-		tmpLen = cs_malloc(&tmpLen, sizeof(struct s_ecmWhitelistLen), 0);
-		tmpLen->len = stat->ecmlen;
-		tmpLen->next = tmpIdent->lengths;
-		tmpIdent->lengths =  tmpLen;
+	if (!tmpLen && tmpIdent) {
+		if (cs_malloc(&tmpLen, sizeof(struct s_ecmWhitelistLen), -1)) {
+			tmpLen->len = stat->ecmlen;
+			tmpLen->next = tmpIdent->lengths;
+			tmpIdent->lengths =  tmpLen;
+		}
 	}
 
 	return 0;

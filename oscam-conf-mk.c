@@ -582,7 +582,9 @@ char *mk_t_caidvaluetab(CAIDVALUETAB *tab)
 {
 		if (!tab->n) return "";
 		int32_t i, size = 2 + tab->n * (4 + 1 + 5 + 1); //caid + ":" + time + ","
-		char *buf = cs_malloc(&buf, size, SIGINT);
+		char *buf;
+		if (!cs_malloc(&buf, size, -1))
+			return "";
 		char *ptr = buf;
 
 		for (i = 0; i < tab->n; i++) {

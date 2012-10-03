@@ -1311,9 +1311,10 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 			ea_org = ea_list;
 	}
 
-	if (!ea_org)
-		ea = cs_malloc(&ea, sizeof(struct s_ecm_answer), 0); //Free by ACTION_CLIENT_ECM_ANSWER!
-	else
+	if (!ea_org) {
+		if (!cs_malloc(&ea, sizeof(struct s_ecm_answer), -1)) // Freed by ACTION_CLIENT_ECM_ANSWER
+			return 0;
+	} else
 		ea = ea_org;
 
 	if (cw)
@@ -1359,7 +1360,8 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	struct s_client *cl = er->client;
 	if (cl && !cl->kill) {
 		if (ea_org) { //duplicate for queue
-			ea = cs_malloc(&ea, sizeof(struct s_ecm_answer), 0);
+			if (!cs_malloc(&ea, sizeof(struct s_ecm_answer), -1))
+				return 0;
 			memcpy(ea, ea_org, sizeof(struct s_ecm_answer));
 		}
 		add_job(cl, ACTION_CLIENT_ECM_ANSWER, ea, sizeof(struct s_ecm_answer));
@@ -1437,7 +1439,8 @@ static void add_cascade_data(struct s_client *client, ECM_REQUEST *er)
 			ll_iter_remove_data(&it);
 	}
 	if (!found) { //add it if not found
-		cu = cs_malloc(&cu, sizeof(struct s_cascadeuser), 0);
+		if (!cs_malloc(&cu, sizeof(struct s_cascadeuser), -1))
+			return;
 		cu->caid = er->caid;
 		cu->prid = er->prid;
 		cu->srvid = er->srvid;
@@ -2789,11 +2792,12 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			}
 		}
 
-		rdr_debug_mask(aureader, D_EMM, "emm is being sent to reader");
-
-		EMM_PACKET *emm_pack = cs_malloc(&emm_pack, sizeof(EMM_PACKET), -1);
-		memcpy(emm_pack, ep, sizeof(EMM_PACKET));
-		add_job(aureader->client, ACTION_READER_EMM, emm_pack, sizeof(EMM_PACKET));
+		EMM_PACKET *emm_pack;
+		if (cs_malloc(&emm_pack, sizeof(EMM_PACKET), -1)) {
+			rdr_debug_mask(aureader, D_EMM, "emm is being sent to reader");
+			memcpy(emm_pack, ep, sizeof(EMM_PACKET));
+			add_job(aureader->client, ACTION_READER_EMM, emm_pack, sizeof(EMM_PACKET));
+		}
 	}
 }
 
@@ -2938,7 +2942,9 @@ void * work_thread(void *ptr) {
 
 	uint16_t bufsize = ph[cl->ctyp].bufsize; //CCCam needs more than 1024bytes!
 	if (!bufsize) bufsize = 1024;
-	uchar *mbuf = cs_malloc(&mbuf, bufsize, 0);
+	uchar *mbuf;
+	if (!cs_malloc(&mbuf, bufsize, -1))
+		return NULL;
 	int32_t n=0, rc=0, i, idx, s;
 	uchar dcw[16];
 	time_t now;
@@ -3238,9 +3244,10 @@ int32_t add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
                 return 0;                
 	}
 	
-	struct s_data *data = cs_malloc(&data, sizeof(struct s_data), -1);
-	if (!data && len && ptr) {
-		free(ptr);
+	struct s_data *data;
+	if (!cs_malloc(&data, sizeof(struct s_data), -1)) {
+		if (len && ptr)
+			free(ptr);
 		return 0;
 	}
 
@@ -3454,8 +3461,15 @@ static void * check_thread(void) {
 
 static uint32_t resize_pfd_cllist(struct pollfd **pfd, struct s_client ***cl_list, uint32_t old_size, uint32_t new_size) {
 	if (old_size != new_size) {
-		struct pollfd *pfd_new = cs_malloc(&pfd_new, new_size*sizeof(struct pollfd), 0);
-		struct s_client **cl_list_new = cs_malloc(&cl_list_new, new_size*sizeof(cl_list), 0);
+		struct pollfd *pfd_new;
+		if (!cs_malloc(&pfd_new, new_size * sizeof(struct pollfd), -1)) {
+			return old_size;
+		}
+		struct s_client **cl_list_new;
+		if (!cs_malloc(&cl_list_new, new_size * sizeof(cl_list), -1)) {
+			free(pfd_new);
+			return old_size;
+		}
 		if (old_size > 0) {
 			memcpy(pfd_new, *pfd, old_size*sizeof(struct pollfd));
 			memcpy(cl_list_new, *cl_list, old_size*sizeof(cl_list));
@@ -3655,7 +3669,9 @@ int32_t accept_connection(int32_t i, int32_t j) {
 	struct s_client *cl;
 
 	if (ph[i].type==MOD_CONN_UDP) {
-		uchar *buf = cs_malloc(&buf, 1024, -1);
+		uchar *buf;
+		if (!cs_malloc(&buf, 1024, -1))
+			return -1;
 		if ((n=recvfrom(ph[i].ptab->ports[j].fd, buf+3, 1024-3, 0, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
 			cl=idx_from_ip(SIN_GET_ADDR(cad), ntohs(SIN_GET_PORT(cad)));
 

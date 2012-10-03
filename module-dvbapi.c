@@ -99,7 +99,8 @@ int32_t edit_channel_cache(int32_t demux_id, int32_t pidindex, uint8_t add)
 	}
 
 	if (add) {
-		c = cs_malloc(&c, sizeof(struct s_channel_cache), 0);
+		if (!cs_malloc(&c, sizeof(struct s_channel_cache), -1))
+			return count;
 		c->srvid = demux[demux_id].program_number;
 		c->caid = p->CAID;
 		c->pid = p->ECM_PID;
@@ -1050,7 +1051,9 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 
 	if (dvbapi_priority) {
 		struct s_reader *rdr;
-		ECM_REQUEST *er = cs_malloc(&er, sizeof(ECM_REQUEST), 0);
+		ECM_REQUEST *er;
+		if (!cs_malloc(&er, sizeof(ECM_REQUEST), -1))
+			return;
 
 		int32_t p_order = demux[demux_index].ECMpidcount; // reverse order! makes sure that user defined p: values are in the right order
 		highest_prio = (prio * demux[demux_index].ECMpidcount) + p_order;
@@ -1125,7 +1128,9 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 		free(er);
 	} else if (cfg.preferlocalcards) { //works if there is cfg.preferlocalcards=1 but no oscam.dvbapi
 		struct s_reader *rdr;
-		ECM_REQUEST *er = cs_malloc(&er, sizeof(ECM_REQUEST), 0);
+		ECM_REQUEST *er;
+		if (!cs_malloc(&er, sizeof(ECM_REQUEST), -1))
+			return;
 
 		highest_prio = prio*2;
 

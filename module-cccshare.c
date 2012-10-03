@@ -509,7 +509,8 @@ void copy_sids(LLIST *dst, LLIST *src) {
                 break;
         }
         if (!srvid_dst) {
-            srvid_dst = cs_malloc(&srvid_dst, sizeof(struct cc_srvid), QUITERROR);
+            if (!cs_malloc(&srvid_dst, sizeof(struct cc_srvid), -1))
+                    break;
             memcpy(srvid_dst, srvid_src, sizeof(struct cc_srvid));
             ll_iter_insert(&it_dst, srvid_dst);
         }
@@ -534,7 +535,9 @@ int32_t add_card_providers(struct cc_card *dest_card, struct cc_card *card,
                 break;
         }
         if (!prov_info) {
-            struct cc_provider *prov_new = cs_malloc(&prov_new, sizeof(struct cc_provider), QUITERROR);
+            struct cc_provider *prov_new;
+            if (!cs_malloc(&prov_new, sizeof(struct cc_provider), -1))
+                break;
             memcpy(prov_new, provider, sizeof(struct cc_provider));
             ll_iter_insert(&it_dst, prov_new);
             modified = 1;
@@ -554,7 +557,9 @@ int32_t add_card_providers(struct cc_card *dest_card, struct cc_card *card,
                     break;
             }
             if (!remote_node2) {
-                uint8_t* remote_node_new = cs_malloc(&remote_node_new, 8, QUITERROR);
+                uint8_t* remote_node_new;
+                if (!cs_malloc(&remote_node_new, 8, -1))
+                    break;
                 memcpy(remote_node_new, remote_node, 8);
                 ll_iter_insert(&it_dst, remote_node_new);
                 modified = 1;
@@ -572,7 +577,9 @@ void set_card_timeout(struct cc_card *card)
 }
 
 struct cc_card *create_card(struct cc_card *card) {
-    struct cc_card *card2 = cs_malloc(&card2, sizeof(struct cc_card), QUITERROR);
+    struct cc_card *card2;
+    if (!cs_malloc(&card2, sizeof(struct cc_card), -1))
+       return NULL;
     if (card)
         memcpy(card2, card, sizeof(struct cc_card));
     else
@@ -596,6 +603,8 @@ struct cc_card *create_card(struct cc_card *card) {
 struct cc_card *create_card2(struct s_reader *rdr, int32_t j, uint16_t caid, uint8_t reshare) {
 
     struct cc_card *card = create_card(NULL);
+    if (!card)
+        return NULL;
     card->remote_id = (rdr?(rdr->cc_id << 16):0x7F7F8000)|j;
     card->caid = caid;
     card->reshare = reshare;
@@ -683,6 +692,8 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t fre
     	//card keeps their hexserial, set aufilter (0=any, 1=au clients only, 2=nonau clients only)
     	card->aufilter = 1;
     	struct cc_card *card3 = create_card(card);
+        if (!card)
+            return modified;
 		add_card_providers(card3, card, 1); //copy providers to new card. Copy remote nodes to new card
 
     	//create a copy of the card, set aufilter to 2 and remove hexserial:
@@ -717,6 +728,8 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t fre
         		ll_iter_insert(&it, card);
 			} else {
             	card2 = create_card(card); //Copy card
+                if (!card2)
+                    return modified;
             	card2->hop = 0;
 			    ll_iter_insert(&it, card2);
 			    add_card_providers(card2, card, 1); //copy providers to new card. Copy remote nodes to new card
@@ -755,6 +768,8 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t fre
         		ll_iter_insert(&it, card);
 			} else {
             	card2 = create_card(card); //copy card
+                if (!card2)
+                    return modified;
             	ll_iter_insert(&it, card2);
             	add_card_providers(card2, card, 1); //copy providers to new card. Copy remote nodes to new card
 			}
@@ -788,6 +803,8 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t fre
         		ll_iter_insert(&it, card);
         	} else {
             	card2 = create_card(card);
+                if (!card2)
+                    return modified;
             	ll_iter_insert(&it, card2);
             	add_card_providers(card2, card, 1);
 			}
@@ -900,10 +917,14 @@ void update_card_list(void) {
         for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
                 for (k=0;k<ptr->num_caid;k++) {
                     card = create_card2(NULL, (j<<8)|k, ptr->caid[k], cfg.cc_reshare);
+                    if (!card)
+                        return;
                     card->card_type = CT_CARD_BY_SERVICE_USER;
                     card->sidtab = ptr;
                     for (l=0;l<ptr->num_provid;l++) {
-                        struct cc_provider *prov = cs_malloc(&prov, sizeof(struct cc_provider), QUITERROR);
+                        struct cc_provider *prov;
+                        if (!cs_malloc(&prov, sizeof(struct cc_provider), -1))
+                            return;
                         memset(prov, 0, sizeof(struct cc_provider));
                         prov->prov = ptr->provid[l];
                         ll_append(card->providers, prov);
@@ -946,10 +967,14 @@ void update_card_list(void) {
                     if (!(rdr->sidtabno&((SIDTABBITS)1<<j)) && (rdr->sidtabok&((SIDTABBITS)1<<j))) {
                         for (k=0;k<ptr->num_caid;k++) {
                             card = create_card2(rdr, (j<<8)|k, ptr->caid[k], reshare);
+                            if (!card)
+                                return;
                             card->card_type = CT_CARD_BY_SERVICE_READER;
                             card->sidtab = ptr;
                             for (l=0;l<ptr->num_provid;l++) {
-                                struct cc_provider *prov = cs_malloc(&prov, sizeof(struct cc_provider), QUITERROR);
+                                struct cc_provider *prov;
+                                if (!cs_malloc(&prov, sizeof(struct cc_provider), -1))
+                                    return;
                                 prov->prov = ptr->provid[l];
                                 ll_append(card->providers, prov);
                             }
@@ -974,6 +999,8 @@ void update_card_list(void) {
                 	uint16_t caid = rdr->ftab.filts[j].caid;
                     if (caid) {
                         card = create_card2(rdr, j, caid, reshare);
+                        if (!card)
+                            return;
                         card->card_type = CT_LOCALCARD;
 
                         //Setting UA: (Unique Address):
@@ -981,7 +1008,9 @@ void update_card_list(void) {
 								cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, caid);
                         //cs_log("Ident CCcam card report caid: %04X readr %s subid: %06X", rdr->ftab.filts[j].caid, rdr->label, rdr->cc_id);
                         for (k = 0; k < rdr->ftab.filts[j].nprids; k++) {
-                            struct cc_provider *prov = cs_malloc(&prov, sizeof(struct cc_provider), QUITERROR);
+                            struct cc_provider *prov;
+                            if (!cs_malloc(&prov, sizeof(struct cc_provider), -1))
+                                return;
                             prov->prov = rdr->ftab.filts[j].prids[k];
 
                             //cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
@@ -1013,6 +1042,8 @@ void update_card_list(void) {
 
                     if (lcaid && (lcaid != 0xFFFF)) {
                         card = create_card2(rdr, j, lcaid, reshare);
+                        if (!card)
+                            return;
                         card->card_type = CT_CARD_BY_CAID1;
                         if (!rdr->audisabled)
                             cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, lcaid);
@@ -1034,13 +1065,17 @@ void update_card_list(void) {
 						if (!caid) break;
 
 						card = create_card2(rdr, c, caid, reshare);
+						if (!card)
+							break;
 						card->card_type = CT_CARD_BY_CAID2;
 
 	    		        if (!rdr->audisabled)
 	    		        	cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, caid);
 						for (j = 0; j < rdr->nprov; j++) {
 	        	        	uint32_t prid = get_reader_prid(rdr, j);
-                		    struct cc_provider *prov = cs_malloc(&prov, sizeof(struct cc_provider), QUITERROR);
+                		    struct cc_provider *prov;
+							if (!cs_malloc(&prov, sizeof(struct cc_provider), -1))
+								return;
 		                    prov->prov = prid;
 		                    //cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
 			                if (!rdr->audisabled) {
@@ -1063,13 +1098,17 @@ void update_card_list(void) {
                 if (rdr->tcp_connected || rdr->card_status == CARD_INSERTED) {
                 	uint16_t caid = rdr->caid;
                 	card = create_card2(rdr, 1, caid, reshare);
+                	if (!card)
+						return;
                 	card->card_type = CT_CARD_BY_CAID3;
 
 	                if (!rdr->audisabled)
 	                    cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, caid);
 	                for (j = 0; j < rdr->nprov; j++) {
 	                    uint32_t prid = get_reader_prid(rdr, j);
-	                    struct cc_provider *prov = cs_malloc(&prov, sizeof(struct cc_provider), QUITERROR);
+	                    struct cc_provider *prov;
+						if (!cs_malloc(&prov, sizeof(struct cc_provider), -1))
+							return;
 	                    prov->prov = prid;
 	                    //cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
 	                    if (!rdr->audisabled) {
