@@ -6,7 +6,6 @@ void *cs_realloc(void *result, size_t size, int32_t quiterror);
 char *strnew(char *str);
 
 void cs_strncpy(char *destination, const char *source, size_t num);
-int32_t cs_strnicmp(const char * str1, const char * str2, size_t num);
 char *strtolower(char *txt);
 char *trim(char *txt);
 bool streq(const char *s1, const char *s2);

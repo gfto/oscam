@@ -4650,18 +4650,18 @@ static int32_t process_request(FILE *f, IN_ADDR_T in) {
 				}
 				break;
 			}
-			if(authok == 0 && len > 50 && cs_strnicmp(str1, "Authorization:", 14) == 0 && strstr(str1, "Digest") != NULL) {
+			if (!authok && len > 50 && strncmp(str1, "Authorization:", 14) == 0 && strstr(str1, "Digest") != NULL) {
 				if (cs_dblevel & D_CLIENT){
 					if(cs_realloc(&authheader, len + 1, -1))
 						cs_strncpy(authheader, str1, len);
 				}
 				authok = check_auth(str1, method, path, expectednonce);
-			} else if (len > 40 && cs_strnicmp(str1, "If-Modified-Since:", 18) == 0){
+			} else if (len > 40 && strncmp(str1, "If-Modified-Since:", 18) == 0){
 				modifiedheader = parse_modifiedsince(str1);
-			} else if (len > 20 && cs_strnicmp(str1, "If-None-Match:", 14) == 0){
+			} else if (len > 20 && strncmp(str1, "If-None-Match:", 14) == 0){
 				for(pch = str1 + 14; pch[0] != '"' && pch[0] != '\0'; ++pch);
 				if(strlen(pch) > 5) etagheader = (uint32_t)strtoul(++pch, NULL, 10);
-			} else if (len > 12 && cs_strnicmp(str1, "Connection: Keep-Alive", 22) == 0 && strcmp(method, "POST")){
+			} else if (len > 12 && strncmp(str1, "Connection: Keep-Alive", 22) == 0 && strcmp(method, "POST")){
 				*keepalive = 1;
 			}
 		}

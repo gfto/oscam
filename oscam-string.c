@@ -66,17 +66,6 @@ void cs_strncpy(char *destination, const char *source, size_t num)
 	destination[l] = '\0';
 }
 
-/* This function is similar to strncpy but is case insensitive when comparing. */
-int32_t cs_strnicmp(const char * str1, const char * str2, size_t num) {
-	uint32_t i, len1 = strlen(str1), len2 = strlen(str2);
-	int32_t diff;
-	for(i = 0; i < len1 && i < len2 && i < num; ++i) {
-		diff = toupper(str1[i]) - toupper(str2[i]);
-		if (diff != 0) return diff;
-	}
-	return 0;
-}
-
 /* Converts the string txt to it's lower case representation. */
 char *strtolower(char *txt) {
 	char *p;
