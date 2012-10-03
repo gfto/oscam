@@ -9,7 +9,6 @@ void cs_strncpy(char *destination, const char *source, size_t num);
 int32_t cs_strnicmp(const char * str1, const char * str2, size_t num);
 char *strtolower(char *txt);
 char *trim(char *txt);
-int8_t strCmpSuffix(const char *str, const char *suffix);
 bool streq(const char *s1, const char *s2);
 
 char *cs_hexdump(int32_t m, const uchar *buf, int32_t n, char *target, int32_t len);

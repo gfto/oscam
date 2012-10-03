@@ -618,6 +618,15 @@ static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams
 }
 #endif
 
+static bool is_ext(const char *path, const char *ext)
+{
+	size_t lenpath = strlen(path);
+	size_t lenext = strlen(ext);
+	if (lenext > lenpath)
+		return 0;
+	return memcmp(path + lenpath - lenext, ext, lenext) == 0;
+}
+
 static char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
 
@@ -692,7 +701,7 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 	struct dirent *result;
 	if((hdir = opendir(cs_confdir)) != NULL){
 		while(cs_readdir_r(hdir, &entry, &result) == 0 && result != NULL){
-			if (strCmpSuffix(entry.d_name, ".css")) {
+			if (is_ext(entry.d_name, ".css")) {
 				tpl_printf(vars, TPLAPPEND, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"%s%s\"%s>%s%s</option>\n",
 					cs_confdir,
 					entry.d_name,
