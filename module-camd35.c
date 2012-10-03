@@ -355,7 +355,8 @@ static void camd35_process_ecm(uchar *buf)
 //	er->l = buf[1];
 	//fix ECM LEN issue
 	er->l =(((buf[21]&0x0f)<< 8) | buf[22])+3;
-	cs_malloc(&er->src_data, 0x34 + 20 + er->l, 0);
+	if (!cs_malloc(&er->src_data, 0x34 + 20 + er->l, -1))
+		return;
 	memcpy(er->src_data, buf, 0x34 + 20 + er->l);	// save request
 	er->srvid = b2i(2, buf+ 8);
 	er->caid = b2i(2, buf+10);

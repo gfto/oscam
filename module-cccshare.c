@@ -44,7 +44,8 @@ void add_good_bad_sids(struct s_sidtab *ptr, SIDTABBITS sidtabno, struct cc_card
         int32_t l;
         for (l=0;l<ptr->num_srvid;l++) {
                 struct cc_srvid *srvid;
-                cs_malloc(&srvid,sizeof(struct cc_srvid), QUITERROR);
+                if (!cs_malloc(&srvid, sizeof(struct cc_srvid), -1))
+                   return;
                 srvid->sid = ptr->srvid[l];
                 srvid->chid = 0;
                 srvid->ecmlen = 0; //0=undefined, also not used with "O" CCcam
@@ -71,7 +72,8 @@ void add_good_bad_sids(struct s_sidtab *ptr, SIDTABBITS sidtabno, struct cc_card
                         if (ok_caid) {
                         		for (l=0;l<ptr_no->num_srvid;l++) {
                                         struct cc_srvid *srvid;
-                                        cs_malloc(&srvid,sizeof(struct cc_srvid), QUITERROR);
+                                        if (!cs_malloc(&srvid,sizeof(struct cc_srvid), -1))
+                                                return;
                                         srvid->sid = ptr_no->srvid[l];
                                         srvid->chid = 0;
                                         srvid->ecmlen = 0; //0=undefined, also not used with "O" CCcam

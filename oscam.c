@@ -2333,7 +2333,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			}
 #endif
 			if (match) {
-				cs_malloc(&ea, sizeof(struct s_ecm_answer), 0);
+				if (!cs_malloc(&ea, sizeof(struct s_ecm_answer), -1))
+					goto OUT;
 				ea->reader = rdr;
 				if (prv)
 					prv->next = ea;
@@ -2359,6 +2360,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			}
 		}
 
+OUT:
 		cs_readunlock(&clientlist_lock);
 		cs_readunlock(&readerlist_lock);
 

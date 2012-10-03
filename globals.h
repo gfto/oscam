@@ -142,6 +142,10 @@ typedef unsigned char uchar;
 # define UNUSED(x) x
 #endif
 
+#if __GNUC__ >= 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4)
+# define MUST_CHECK_RESULT __attribute__((warn_unused_result))
+#endif
+
 #ifdef WITH_DEBUG
 # define call(arg) \
 	if (arg) { \

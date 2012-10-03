@@ -752,7 +752,8 @@ int32_t reader_init(struct s_reader *reader) {
 		if ((reader->log_port) && (reader->ph.c_init_log))
 			reader->ph.c_init_log();
 
-		cs_malloc(&client->ecmtask, cfg.max_pending * sizeof(ECM_REQUEST), 1);
+		if (!cs_malloc(&client->ecmtask, cfg.max_pending * sizeof(ECM_REQUEST), -1))
+			return 0;
 
 		rdr_log(reader, "proxy initialized, server %s:%d", reader->device, reader->r_port);
 	}
@@ -787,7 +788,10 @@ int32_t reader_init(struct s_reader *reader) {
 
 #endif
 
-	cs_malloc(&client->emmcache,CS_EMMCACHESIZE*(sizeof(struct s_emm)), 1);
+	if (!cs_malloc(&client->emmcache, CS_EMMCACHESIZE * (sizeof(struct s_emm)), -1)) {
+		NULLFREE(client->ecmtask);
+		return 0;
+	}
 
 	client->login=time((time_t*)0);
 	client->init_done=1;

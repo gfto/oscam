@@ -318,7 +318,7 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
 	}
 
   for(i = 0; i < tplcnt; ++i){
-  	if(chksum == tplchksum[i] && name[0] == tpl[i][0][0]){	// basic check to save strcmp calls as we are doing this hundreds of times per page in some cases
+  	if(tplchksum && chksum == tplchksum[i] && name[0] == tpl[i][0][0]){	// basic check to save strcmp calls as we are doing this hundreds of times per page in some cases
   		if(strcmp(name, tpl[i][0]) == 0) break;
   	}
   }
@@ -491,7 +491,8 @@ void tpl_checkDiskRevisions(void) {
 void prepareTplChecksums(void) {
 	int32_t i, j;
   int32_t tplcnt = tpl_count();
-  cs_malloc(&tplchksum,sizeof(int8_t) * tplcnt, SIGINT);
+  if (!cs_malloc(&tplchksum, sizeof(int8_t) * tplcnt, -1))
+    return;
 
   for(i = 0; i < tplcnt; ++i){
   	tplchksum[i] = 0;

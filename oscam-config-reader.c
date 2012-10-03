@@ -1189,7 +1189,10 @@ int32_t init_readerdb(void)
 	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 1;
 
 	struct s_reader *rdr;
-	cs_malloc(&rdr, sizeof(struct s_reader), SIGINT);
+	if (!cs_malloc(&rdr, sizeof(struct s_reader), -1)) {
+		free(token);
+		return 1;
+	}
 
 	ll_append(configured_readers, rdr);
 	while (fgets(token, MAXLINESIZE, fp)) {

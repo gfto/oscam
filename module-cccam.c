@@ -2393,8 +2393,8 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				size_t msg_size = l-4;
 				char last_char = msg[msg_size-1];
 				if (last_char == 0) { // verify if the payload is a null terminated string
-					cs_realloc(&cc->nok_message, msg_size, -1);
-					memcpy(cc->nok_message, msg, msg_size);
+					if (cs_realloc(&cc->nok_message, msg_size, -1))
+						memcpy(cc->nok_message, msg, msg_size);
 				} else
 					NULLFREE(cc->nok_message);
 			}

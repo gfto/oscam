@@ -9,14 +9,16 @@ void chk_iprange(char *value, struct s_ip **base)
 	char *ptr1, *ptr2, *saveptr1 = NULL;
 	struct s_ip *fip, *lip, *cip;
 
-	cs_malloc(&cip, sizeof(struct s_ip), SIGINT);
+	if (!cs_malloc(&cip, sizeof(struct s_ip), -1))
+		return;
 	fip = cip;
 
 	for (ptr1=strtok_r(value, ",", &saveptr1); ptr1; ptr1=strtok_r(NULL, ",", &saveptr1)) {
 			if (i == 0)
 				++i;
 		else {
-			cs_malloc(&cip, sizeof(struct s_ip), SIGINT);
+			if (!cs_malloc(&cip, sizeof(struct s_ip), -1))
+				break;
 			lip->next = cip;
 		}
 
