@@ -250,20 +250,27 @@ int8_t cacheex_match_alias(struct s_client *cl, ECM_REQUEST *er, ECM_REQUEST *ec
 	return 0;
 }
 
+static pthread_mutex_t invalid_cws_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 static void add_invalid_cw(uint8_t *cw) {
+	pthread_mutex_lock(&invalid_cws_mutex);
 	if (!invalid_cws)
 		invalid_cws = ll_create("invalid cws");
-	uint8_t *cw2 = cs_malloc(&cw2, 16, 0);
-	memcpy(cw2, cw, 16);
-	ll_append(invalid_cws, cw2);
-	while (ll_count(invalid_cws) > 32) {
-		ll_remove_first_data(invalid_cws);
+	uint8_t *cw2;
+	if (cs_malloc(&cw2, 16, -1)) {
+		memcpy(cw2, cw, 16);
+		ll_append(invalid_cws, cw2);
+		while (ll_count(invalid_cws) > 32) {
+			ll_remove_first_data(invalid_cws);
+		}
 	}
+	pthread_mutex_unlock(&invalid_cws_mutex);
 }
 
 static int32_t is_invalid_cw(uint8_t *cw) {
 	if (!invalid_cws) return 0;
 
+	pthread_mutex_lock(&invalid_cws_mutex);
 	LL_LOCKITER *li = ll_li_create(invalid_cws, 0);
 	uint8_t *cw2;
 	int32_t invalid = 0;
@@ -271,6 +278,7 @@ static int32_t is_invalid_cw(uint8_t *cw) {
 		invalid = (memcmp(cw, cw2, 16) == 0);
 	}
 	ll_li_destroy(li);
+	pthread_mutex_unlock(&invalid_cws_mutex);
 	return invalid;
 }
 
