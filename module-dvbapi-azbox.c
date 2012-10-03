@@ -5,6 +5,7 @@
 #include "module-dvbapi.h"
 #include "module-dvbapi-azbox.h"
 #include "oscam-client.h"
+#include "oscam-string.h"
 
 // These variables are declared in module-dvbapi.c
 extern void * dvbapi_client;

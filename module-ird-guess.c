@@ -1,5 +1,6 @@
 #include "globals.h"
 #include "module-ird-guess.h"
+#include "oscam-string.h"
 
 #ifdef IRDETO_GUESSING
 

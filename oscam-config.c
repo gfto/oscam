@@ -6,6 +6,7 @@
 #include "oscam-conf-chk.h"
 #include "oscam-files.h"
 #include "oscam-garbage.h"
+#include "oscam-string.h"
 
 #define cs_srid				"oscam.srvid"
 #define cs_trid				"oscam.tiers"

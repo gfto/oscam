@@ -3,6 +3,7 @@
 #ifdef LEDSUPPORT
 
 #include "module-led.h"
+#include "oscam-string.h"
 
 #if defined(__arm__)
 struct s_arm_led {

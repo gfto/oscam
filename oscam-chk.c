@@ -2,6 +2,7 @@
 #include "oscam-chk.h"
 #include "oscam-client.h"
 #include "oscam-net.h"
+#include "oscam-string.h"
 
 #define CS_NANO_CLASS 0xE2
 #define OK		1

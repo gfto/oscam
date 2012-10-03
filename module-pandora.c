@@ -4,6 +4,7 @@
 
 #include "oscam-client.h"
 #include "oscam-net.h"
+#include "oscam-string.h"
 
 #define CWS_NETMSGSIZE 320
 #define START_TIME 150000

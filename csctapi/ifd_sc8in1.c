@@ -19,6 +19,7 @@
 #include "../globals.h"
 #ifdef WITH_CARDREADER
 #include "../oscam-lock.h"
+#include "../oscam-string.h"
 #include "atr.h"
 #include <termios.h>
 #include "ifd_sc8in1.h"

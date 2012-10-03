@@ -5,6 +5,7 @@
 #include "oscam-garbage.h"
 #include "oscam-lock.h"
 #include "oscam-net.h"
+#include "oscam-string.h"
 
 char *LOG_LIST = "log_list";
 

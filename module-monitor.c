@@ -3,6 +3,7 @@
 #include "oscam-aes.h"
 #include "oscam-client.h"
 #include "oscam-net.h"
+#include "oscam-string.h"
 
 extern char *entitlement_type[];
 

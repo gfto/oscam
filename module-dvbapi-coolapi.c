@@ -8,6 +8,7 @@
 
 #include "module-dvbapi.h"
 #include "module-dvbapi-coolapi.h"
+#include "oscam-string.h"
 
 static int dmx_opened = 0;
 int32_t cool_kal_opened = 0;

@@ -1,6 +1,7 @@
 #include "globals.h"
 #include "oscam-aes.h"
 #include "oscam-garbage.h"
+#include "oscam-string.h"
 
 void aes_set_key(struct s_client *cl, char *key)
 {

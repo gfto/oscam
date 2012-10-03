@@ -197,24 +197,7 @@ extern void reader_do_card_info(struct s_reader * reader);
  *        oscam-simples
  * =========================== */
 extern char *remote_txt(void);
-extern char *trim(char *);
-extern int8_t strCmpSuffix(const char *str, const char *suffix);
-extern char *strtolower(char *);
-extern int32_t gethexval(char);
 extern int32_t comp_timeb(struct timeb *tpa, struct timeb *tpb);
-extern int32_t cs_atob(uchar *, char *, int32_t);
-extern uint32_t cs_atoi(char *, int32_t, int32_t);
-extern int32_t byte_atob(char *);
-extern int32_t word_atob(char *);
-extern int32_t dyn_word_atob(char *asc);
-extern int32_t key_atob_l(char *, uchar *, int32_t);
-extern char *key_btoa(char *, uchar *);
-extern char *cs_hexdump(int32_t, const uchar *, int32_t, char *target, int32_t len);
-extern uint32_t b2i(int32_t, const uchar *);
-extern uint64_t b2ll(int32_t, uchar *);
-extern uchar *i2b_buf(int32_t n, uint32_t i, uchar *b);
-extern uint32_t a2i(char *, int32_t);
-extern int32_t boundary(int32_t, int32_t);
 extern time_t cs_timegm(struct tm *tm);
 extern struct tm *cs_gmtime_r(const time_t *timep, struct tm *r);
 extern char *cs_ctime_r(const time_t *timep, char* buf);
@@ -223,14 +206,11 @@ extern void cs_sleepms(uint32_t);
 extern void cs_sleepus(uint32_t);
 extern void cs_setpriority(int32_t);
 extern int32_t check_filled(uchar *value, int32_t length);
-extern void *cs_malloc(void *result, size_t size, int32_t quiterror);
-extern void *cs_realloc(void *result, size_t size, int32_t quiterror);
 extern void clear_sip(struct s_ip **sip);
 extern void clear_ptab(struct s_ptab *ptab);
 extern void clear_ftab(struct s_ftab *ftab);
 extern void clear_caidtab(struct s_caidtab *ctab);
 extern void clear_tuntab(struct s_tuntab *ttab);
-extern void cs_strncpy(char * destination, const char * source, size_t num);
 extern char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf);
 extern char *get_tiername(uint16_t tierid, uint16_t caid, char *buf);
 extern char *get_provider(uint16_t caid, uint32_t provid, char *buf, uint32_t buflen);
@@ -239,8 +219,6 @@ extern uchar fast_rnd(void);
 extern void init_rnd(void);
 extern int32_t hexserialset(struct s_reader *rdr);
 extern char *reader_get_type_desc(struct s_reader * rdr, int32_t extended);
-extern int32_t cs_strnicmp(const char * str1, const char * str2, size_t num);
-extern char *strnew(char *str);
 extern void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid);
 extern void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid);
 
@@ -251,8 +229,6 @@ extern int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms);
 
 extern int32_t ecmfmt(uint16_t caid, uint32_t prid, uint16_t chid, uint16_t pid, uint16_t srvid, uint16_t l, uint16_t checksum, char *result, size_t size);
 extern int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size);
-
-extern int streq(const char *s1, const char *s2);
 
 /* ===========================
  *       module-newcamd

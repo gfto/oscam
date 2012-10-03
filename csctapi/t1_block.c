@@ -23,6 +23,7 @@
 */
 #include "../globals.h"
 #ifdef WITH_CARDREADER
+#include "../oscam-string.h"
 #include "t1_block.h"
 #include <stdlib.h>
 #include <string.h>

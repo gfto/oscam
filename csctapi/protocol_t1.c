@@ -24,6 +24,7 @@
 
 #include "../globals.h"
 #ifdef WITH_CARDREADER
+#include "../oscam-string.h"
 #include "defines.h"
 #include "t1_block.h"
 #include "icc_async.h"

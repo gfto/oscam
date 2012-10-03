@@ -3,6 +3,7 @@
 #include <termios.h>
 #include "oscam-client.h"
 #include "oscam-net.h"
+#include "oscam-string.h"
 
 #define HSIC_CRC 0xA5
 #define SSSP_MAX_PID 8

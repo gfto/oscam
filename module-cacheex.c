@@ -8,6 +8,7 @@
 #include "oscam-conf.h"
 #include "oscam-lock.h"
 #include "oscam-net.h"
+#include "oscam-string.h"
 
 #define cs_cacheex_matcher "oscam.cacheex"
 

@@ -7,6 +7,7 @@
 #include "oscam-config-funcs.h"
 #include "oscam-files.h"
 #include "oscam-lock.h"
+#include "oscam-string.h"
 
 extern const char *tpl[][3];
 extern char *JSCRIPT;

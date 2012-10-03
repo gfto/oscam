@@ -2,6 +2,7 @@
 
 #include "oscam-files.h"
 #include "oscam-lock.h"
+#include "oscam-string.h"
 
 extern CS_MUTEX_LOCK readdir_lock;
 

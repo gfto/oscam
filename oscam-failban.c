@@ -1,5 +1,6 @@
 #include "globals.h"
 #include "oscam-net.h"
+#include "oscam-string.h"
 
 static int32_t cs_check_v(IN_ADDR_T ip, int32_t port, int32_t add, char *info) {
 	int32_t result = 0;

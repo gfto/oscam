@@ -10,6 +10,7 @@
 #include "oscam-client.h"
 #include "oscam-lock.h"
 #include "oscam-net.h"
+#include "oscam-string.h"
 
 enum {
   MSG_ECM = 0x445c,

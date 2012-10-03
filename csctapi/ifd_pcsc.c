@@ -2,6 +2,7 @@
 
 #if defined(WITH_CARDREADER) && defined(WITH_PCSC)
 
+#include "../oscam-string.h"
 #include "ifd_pcsc.h"
 
 int32_t pcsc_reader_init(struct s_reader *pcsc_reader, char *device)

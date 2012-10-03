@@ -25,6 +25,7 @@
 #include "oscam-client.h"
 #include "oscam-lock.h"
 #include "oscam-net.h"
+#include "oscam-string.h"
 
 extern char *CSS;
 extern char *entitlement_type[];

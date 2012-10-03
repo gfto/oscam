@@ -3,6 +3,7 @@
 #ifdef MODULE_CONSTCW
 #include "oscam-client.h"
 #include "oscam-net.h"
+#include "oscam-string.h"
 
 int32_t pserver = 0;
 
