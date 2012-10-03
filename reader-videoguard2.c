@@ -247,12 +247,10 @@ static void vg2_read_tiers(struct s_reader * reader)
 
   // some cards start real tiers info in middle of tier info
   // and have blank tiers between old tiers and real tiers eg 09AC
-  int32_t starttier;
+  int32_t starttier = reader->card_tierstart;
   bool stopemptytier = TRUE;
-  if((starttier = reader->card_tierstart) == -1){
+  if (!starttier)
     stopemptytier = FALSE;
-    starttier = 0;
-  }
 
   // check to see if specified start tier is blank and if blank, start at 0 and ignore blank tiers
   ins76[2]=starttier;
