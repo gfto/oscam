@@ -1093,8 +1093,8 @@ static void newcamd_report_cards(struct s_client *client) {
 	int32_t j, k, l;
 	uint8_t buf[512];
 	custom_data_t *cd;
-    if(!cs_malloc(&cd,sizeof(struct custom_data), -1)) return;
-	memset(cd, 0, sizeof(struct custom_data));
+	if (!cs_malloc(&cd, sizeof(struct custom_data)))
+		return;
 	memset(buf, 0, sizeof(buf));
 
 	cd->sid = cfg.ncd_ptab.ports[client->port_idx].s_port;

@@ -29,7 +29,8 @@ int32_t pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
             rdr_debug_mask(pcsc_reader, D_DEVICE, "PCSC failed listing readers [1] : (%lx)", (unsigned long)rv);
             return  2;
         }
-        if(!cs_malloc(&mszReaders,sizeof(char)*dwReaders, -1)) return 2;
+        if (!cs_malloc(&mszReaders, dwReaders))
+            return 2;
         rv = SCardListReaders(pcsc_reader->hContext, NULL, mszReaders, &dwReaders);
         if( rv != SCARD_S_SUCCESS ) {
             rdr_debug_mask(pcsc_reader, D_DEVICE, "PCSC failed listing readers [2]: (%lx)", (unsigned long)rv);
@@ -52,7 +53,7 @@ int32_t pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
             return  2;
         }
 
-        if (!cs_malloc(&readers,nbReaders * sizeof(char *), -1))
+        if (!cs_malloc(&readers, nbReaders * sizeof(char *)))
             return 2;
 
         /* fill the readers table */

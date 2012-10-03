@@ -198,7 +198,8 @@ static void ac_load_config(void)
 
   int32_t nr;
   char *saveptr1 = NULL, *token;
-  if(!cs_malloc(&token, MAXLINESIZE, -1)) return;
+  if (!cs_malloc(&token, MAXLINESIZE))
+    return;
   struct s_cpmap *cur_cpmap, *first_cpmap = NULL, *last_cpmap = NULL;
 
   for(nr=0; fgets(token, MAXLINESIZE, fp);)
@@ -257,7 +258,7 @@ static void ac_load_config(void)
           break;
         }
       }
-      if (!cs_malloc(&cur_cpmap, sizeof(struct s_cpmap), -1)){
+      if (!cs_malloc(&cur_cpmap, sizeof(struct s_cpmap))) {
         for(cur_cpmap = first_cpmap; cur_cpmap; cur_cpmap = cur_cpmap->next)
           free(cur_cpmap);
         free(token);

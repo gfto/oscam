@@ -199,11 +199,13 @@ static void gbox_compress(struct gbox_data *UNUSED(gbox), uchar *buf, int32_t un
 {
   unsigned char *tmp, *tmp2;
   *packed_len = 0;
-  if(!cs_malloc(&tmp,0x40000, -1)) return;
- 	if(!cs_malloc(&tmp2,0x40000, -1)){
- 		free(tmp);
- 		return;
- 	}
+  if (!cs_malloc(&tmp, 0x40000)) {
+    return;
+  }
+  if (!cs_malloc(&tmp2,0x40000)) {
+    free(tmp);
+    return;
+  }
 
   unpacked_len -= 12;
   memcpy(tmp2, buf + 12, unpacked_len);
@@ -212,11 +214,11 @@ static void gbox_compress(struct gbox_data *UNUSED(gbox), uchar *buf, int32_t un
 
   char work[16384];
   lzo_voidp wrkmem = &work;
-  if(!cs_malloc(&tmp2,unpacked_len * 0x1000, -1)){
- 		free(tmp);
- 		free(tmp2);
- 		return;
- 	}
+  if (!cs_malloc(&tmp2, unpacked_len * 0x1000)) {
+    free(tmp);
+    free(tmp2);
+    return;
+  }
   cs_debug_mask(D_READER, "gbox: wrkmem = %p", wrkmem);
   lzo_uint pl = 0;
   if (lzo1x_1_compress(tmp2, unpacked_len, tmp, &pl, wrkmem) != LZO_E_OK)
@@ -235,7 +237,8 @@ static void gbox_decompress(struct gbox_data *UNUSED(gbox), uchar *buf, int32_t 
 {
   uchar *tmp;
 
-  if(!cs_malloc(&tmp,0x40000, -1)) return;
+  if (!cs_malloc(&tmp, 0x40000))
+    return;
   int err;
   int len = *unpacked_len - 12;
   *unpacked_len = 0x40000;
@@ -446,7 +449,8 @@ static void gbox_send_hello(struct s_client *cli)
         int32_t i;
         for (i = 0; i < rdr->nprov; i++) {
           struct gbox_card *c;
-          if(!cs_malloc(&c,sizeof(struct gbox_card), -1)) continue;
+          if (!cs_malloc(&c, sizeof(struct gbox_card)))
+            continue;
           c->provid = rdr->caid << 16 | rdr->prid[i][0] << 8 | rdr->prid[i][1];
           ll_append(gbox->local_cards, c);
         }
@@ -613,7 +617,8 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
             int32_t i;
             for (i = 0; i < ncards; i++) {
               struct gbox_card *card;
-              if(!cs_malloc(&card,sizeof(struct gbox_card), -1)) continue;
+              if (!cs_malloc(&card, sizeof(struct gbox_card)))
+                continue;
 
               card->provid = provid;
               card->slot = ptr[0];
@@ -635,9 +640,9 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
           }
 
           NULLFREE(gbox->peer.hostname);
-          if(!cs_malloc(&gbox->peer.hostname,hostname_len + 1, -1)){
-          	cs_writeunlock(&gbox->lock);
-          	return -1;
+          if (!cs_malloc(&gbox->peer.hostname, hostname_len + 1)) {
+            cs_writeunlock(&gbox->lock);
+            return -1;
           }
           memcpy(gbox->peer.hostname, data + payload_len - 1 - hostname_len, hostname_len);
           gbox->peer.hostname[hostname_len] = '\0';
@@ -658,7 +663,8 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
             int32_t i;
             for (i = 0; i < ncards; i++) {
               struct gbox_card *card;
-              if(!cs_malloc(&card,sizeof(struct gbox_card), -1)) continue;
+              if (!cs_malloc(&card, sizeof(struct gbox_card)))
+                continue;
 
               card->provid = provid;
               card->slot = ptr[0];
@@ -739,9 +745,9 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
       ECM_REQUEST *er = get_ecmtask();
 
       struct gbox_ecm_info *ei;
-      if(!cs_malloc(&ei,sizeof(struct gbox_ecm_info), -1)){
-      	cs_writeunlock(&gbox->lock);
-      	return -1;
+      if (!cs_malloc(&ei, sizeof(struct gbox_ecm_info))) {
+        cs_writeunlock(&gbox->lock);
+        return -1;
       }
       er->src_data = ei;
 
@@ -845,7 +851,8 @@ static int32_t gbox_client_init(struct s_client *cli)
 		cs_log("gbox: no/invalid port configured in oscam.conf!");
 		return -1;
 	}
-	if(!cs_malloc(&cli->gbox,sizeof(struct gbox_data), -1)) return -1;
+  if (!cs_malloc(&cli->gbox, sizeof(struct gbox_data)))
+    return -1;
 
   struct gbox_data *gbox = cli->gbox;
   struct s_reader *rdr = cli->reader;

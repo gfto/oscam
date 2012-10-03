@@ -137,7 +137,7 @@ static char *get_ecm_historystring(struct s_client *cl){
 		int32_t ptr = cl->cwlastresptimes_last;
 
 		needed = CS_ECM_RINGBUFFER_MAX * 6; //5 digits + delimiter
-		if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
+		if (!cs_malloc(&value, needed)) return "";
 
 		k = ptr + 1;
 		for (i = 0; i < CS_ECM_RINGBUFFER_MAX; i++) {
@@ -168,7 +168,7 @@ static char *get_ecm_fullhistorystring(struct s_client *cl){
 		int32_t ptr = cl->cwlastresptimes_last;
 
 		needed = CS_ECM_RINGBUFFER_MAX * 20; //5 digits + : + returncode(2) + : + time(10) + delimiter
-		if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
+		if (!cs_malloc(&value, needed)) return "";
 
 		k = ptr + 1;
 		for (i = 0; i < CS_ECM_RINGBUFFER_MAX; i++) {
@@ -1108,7 +1108,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	if(strcmp(getParam(params, "action"), "Add") == 0) {
 		// Add new reader
 		struct s_reader *newrdr;
-		if(!cs_malloc(&newrdr,sizeof(struct s_reader), -1)) return "0";
+		if (!cs_malloc(&newrdr, sizeof(struct s_reader))) return "0";
 		for (i = 0; i < (*params).paramcount; ++i) {
 			if (strcmp((*params).params[i], "action"))
 				chk_reader((*params).params[i], (*params).values[i], newrdr);
@@ -1885,7 +1885,7 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 			if(account != NULL) user[0] = '\0';
 			++i;
 		}
-		if (!cs_malloc(&account, sizeof(struct s_auth), -1)) return "0";
+		if (!cs_malloc(&account, sizeof(struct s_auth))) return "0";
 		if(cfg.account == NULL) cfg.account = account;
 		else {
 			for (ptr = cfg.account; ptr != NULL && ptr->next != NULL; ptr = ptr->next);
@@ -3388,7 +3388,7 @@ static char *send_oscam_services_edit(struct templatevars *vars, struct uriparam
 			if(sidtab != NULL) label[0] = '\0';
 			++i;
 		}
-		if (!cs_malloc(&sidtab, sizeof(struct s_sidtab), -1)) return "0";
+		if (!cs_malloc(&sidtab, sizeof(struct s_sidtab))) return "0";
 
 		if(cfg.sidtab == NULL) cfg.sidtab = sidtab;
 		else {
@@ -4460,7 +4460,7 @@ static int32_t readRequest(FILE *f, IN_ADDR_T in, char **result, int8_t forcePla
 #endif
 			return -1;
 		}
-		if(!cs_realloc(result, bufsize+n+1, -1)){
+		if (!cs_realloc(result, bufsize + n + 1)) {
 			send_error500(f);
 			return -1;
 		}
@@ -4652,7 +4652,7 @@ static int32_t process_request(FILE *f, IN_ADDR_T in) {
 			}
 			if (!authok && len > 50 && strncmp(str1, "Authorization:", 14) == 0 && strstr(str1, "Digest") != NULL) {
 				if (cs_dblevel & D_CLIENT){
-					if(cs_realloc(&authheader, len + 1, -1))
+					if (cs_realloc(&authheader, len + 1))
 						cs_strncpy(authheader, str1, len);
 				}
 				authok = check_auth(str1, method, path, expectednonce);
@@ -5028,7 +5028,7 @@ static void *http_srv(void) {
 			continue;
 		} else {
 			getpeername(s, (struct sockaddr *) &remote, &len);
-			if(!cs_malloc(&conn, sizeof(struct s_connection), -1)){
+			if (!cs_malloc(&conn, sizeof(struct s_connection))) {
 				close(s);
 				continue;
 			}

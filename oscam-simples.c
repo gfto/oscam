@@ -288,7 +288,7 @@ void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *
 	}
 
 	struct s_provid *prov;
-	if (!cs_malloc(&prov, sizeof(struct s_provid), -1))
+	if (!cs_malloc(&prov, sizeof(struct s_provid)))
 		return;
 
 	prov->provid = provid;

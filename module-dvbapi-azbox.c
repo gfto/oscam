@@ -157,7 +157,8 @@ void * azbox_main_thread(void *cli) {
 
 					 // parse pmt
 					uchar *dest;
-					if(!cs_malloc(&dest, msg.buf_len + 7 - 12 - 4, -1)) break;
+					if (!cs_malloc(&dest, msg.buf_len + 7 - 12 - 4))
+						break;
 
 					memcpy(dest, "\x00\xFF\xFF\x00\x00\x13\x00", 7);
 

@@ -117,7 +117,7 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 	static uchar *bbuf=NULL;
 	if (!bbuf)
 	{
-		if (!cs_malloc(&bbuf, l, -1))
+		if (!cs_malloc(&bbuf, l))
 			return 0;
 	}
 	if (bpos)
@@ -151,7 +151,7 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 			n=bsize;
 			//write_to_pipe(client->fd_m2c, PIP_ID_UDP, (uchar*)&nbuf, sizeof(nbuf));
 			uchar *nbuf_cpy;
-			if (cs_malloc(&nbuf_cpy, sizeof(nbuf), -1)) {
+			if (cs_malloc(&nbuf_cpy, sizeof(nbuf))) {
 				memcpy(nbuf_cpy, nbuf, sizeof(nbuf));
 				add_job(client, ACTION_CLIENT_UDP, &nbuf_cpy, sizeof(nbuf));
 			}
@@ -185,7 +185,7 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 			n=p-buf;
 			//write_to_pipe(client->fd_m2c, PIP_ID_UDP, (uchar*)&nbuf, sizeof(nbuf));
 			uchar *nbuf_cpy;
-			if (cs_malloc(&nbuf_cpy, sizeof(nbuf), -1)) {
+			if (cs_malloc(&nbuf_cpy, sizeof(nbuf))) {
 				memcpy(nbuf_cpy, nbuf, sizeof(nbuf));
 				add_job(client, ACTION_CLIENT_UDP, &nbuf_cpy, sizeof(nbuf));
 			}

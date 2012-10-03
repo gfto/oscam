@@ -49,7 +49,7 @@ int32_t init_irdeto_guess_tab(void)
     }
     if( !skip )
     {
-      if (!cs_malloc(&ird_row, sizeof(struct s_irdeto_quess), -1)) {
+      if (!cs_malloc(&ird_row, sizeof(struct s_irdeto_quess))) {
         fclose(fp);
         return(1);
       }

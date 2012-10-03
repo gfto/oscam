@@ -121,7 +121,7 @@ int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, unsigned char 
 			ll_cool_filter = ll_create("ll_cool_filter");
 
 		S_COOL_FILTER *filter_item;
-		if(cs_malloc(&filter_item,sizeof(S_COOL_FILTER), -1)){
+		if (cs_malloc(&filter_item,sizeof(S_COOL_FILTER))) {
 			// fill filter item
 			filter_item->fd = fd;
 			memcpy(filter_item->filter16, flt, 16);

@@ -192,7 +192,7 @@ char *username(struct s_client * client)
 
 struct s_client *create_client(IN_ADDR_T ip) {
 	struct s_client *cl;
-	if (!cs_malloc(&cl, sizeof(struct s_client), -1)) {
+	if (!cs_malloc(&cl, sizeof(struct s_client))) {
 		cs_log("max connections reached (out of memory) -> reject client %s", IP_ISSET(ip) ? cs_inet_ntoa(ip) : "with null address");
 		return NULL;
 	}
@@ -237,7 +237,7 @@ void init_first_client(void)
 	struct passwd *pwdbuf;
 
 	if ((getpwuid_r(getuid(), &pwd, buf, sizeof(buf), &pwdbuf)) == 0) {
-		if (cs_malloc(&processUsername, strlen(pwd.pw_name) + 1, -1))
+		if (cs_malloc(&processUsername, strlen(pwd.pw_name) + 1))
 			cs_strncpy(processUsername, pwd.pw_name, strlen(pwd.pw_name) + 1);
 		else
 			processUsername = "root";
@@ -245,7 +245,7 @@ void init_first_client(void)
 		processUsername = "root";
 	}
 
-	if (!cs_malloc(&first_client, sizeof(struct s_client), -1)) {
+	if (!cs_malloc(&first_client, sizeof(struct s_client))) {
 		fprintf(stderr, "Could not allocate memory for master client, exiting...");
 		exit(1);
 	}
@@ -257,7 +257,7 @@ void init_first_client(void)
 	set_localhost_ip(&first_client->ip);
 
 	struct s_auth *null_account;
-	if (!cs_malloc(&null_account, sizeof(struct s_auth), -1)) {
+	if (!cs_malloc(&null_account, sizeof(struct s_auth))) {
 		fprintf(stderr, "Could not allocate memory for master account, exiting...");
 		exit(1);
 	}

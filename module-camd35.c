@@ -355,7 +355,7 @@ static void camd35_process_ecm(uchar *buf)
 //	er->l = buf[1];
 	//fix ECM LEN issue
 	er->l =(((buf[21]&0x0f)<< 8) | buf[22])+3;
-	if (!cs_malloc(&er->src_data, 0x34 + 20 + er->l, -1))
+	if (!cs_malloc(&er->src_data, 0x34 + 20 + er->l))
 		return;
 	memcpy(er->src_data, buf, 0x34 + 20 + er->l);	// save request
 	er->srvid = b2i(2, buf+ 8);
@@ -572,7 +572,7 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	uint32_t size = sizeof(er->ecmd5)+sizeof(er->csp_hash)+sizeof(er->cw)+sizeof(uint8_t) +
 			(ll_count(er->csp_lastnodes)+1)*8;
 	unsigned char *buf;
-	if (!cs_malloc(&buf, size + 20, -1)) //camd35_send() adds +20
+	if (!cs_malloc(&buf, size + 20)) //camd35_send() adds +20
 		return -1;
 
 	buf[0]=0x3f; //New Command: Cache-push
@@ -682,7 +682,7 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 		cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes %s", (int32_t)count, username(cl));
 		er->csp_lastnodes = ll_create("csp_lastnodes");
 		while (count) {
-			if (!cs_malloc(&data, 8, -1))
+			if (!cs_malloc(&data, 8))
 				break;
 			memcpy(data, ofs, 8);
 			ofs+=8;
@@ -706,7 +706,7 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 
 	//for compatibility: add peer node if no node received (not working now, maybe later):
 	if (!ll_count(er->csp_lastnodes) && cl->ncd_skey[8]) {
-		if (!cs_malloc(&data, 8, -1))
+		if (!cs_malloc(&data, 8))
 			return;
 		memcpy(data, cl->ncd_skey, 8);
 		ll_append(er->csp_lastnodes, data);
@@ -714,7 +714,7 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 	}
 
 //	if (!ll_count(er->csp_lastnodes)) {
-//		if (!cs_malloc(&data, 8, -1))
+//		if (!cs_malloc(&data, 8))
 //			break;
 //		memcpy(data, &cl->ip, 4);
 //		memcpy(data+4, &cl->port, 2);

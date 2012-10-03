@@ -105,8 +105,8 @@ int32_t SR_Init (struct s_reader *reader)
         rdr_log(reader, "Wrong device format (%s), it should be Device=bus:dev",reader->device);
         return ERROR;
     }
-    if(!reader->sr_config)
-    if(!cs_malloc(&reader->sr_config,sizeof(struct s_sr_config), -1)) return ERROR;
+    if (!reader->sr_config && !cs_malloc(&reader->sr_config, sizeof(struct s_sr_config)))
+        return ERROR;
     cs_writelock(&sr_lock);
     rdr_debug_mask(reader, D_DEVICE, "SR: Looking for device %s on bus %s",devname,busname);
 

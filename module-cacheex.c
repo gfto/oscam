@@ -72,7 +72,7 @@ int32_t cacheex_add_stats(struct s_client *cl, uint16_t caid, uint16_t srvid, ui
 	}
 
 	// if we land here we have to add a new entry
-	if (cs_malloc(&cacheex_stats_entry, sizeof(S_CACHEEX_STAT_ENTRY), -1)){
+	if (cs_malloc(&cacheex_stats_entry, sizeof(S_CACHEEX_STAT_ENTRY))) {
 		cacheex_stats_entry->cache_caid = caid;
 		cacheex_stats_entry->cache_srvid = srvid;
 		cacheex_stats_entry->cache_prid = prid;
@@ -257,7 +257,7 @@ static void add_invalid_cw(uint8_t *cw) {
 	if (!invalid_cws)
 		invalid_cws = ll_create("invalid cws");
 	uint8_t *cw2;
-	if (cs_malloc(&cw2, 16, -1)) {
+	if (cs_malloc(&cw2, 16)) {
 		memcpy(cw2, cw, 16);
 		ll_append(invalid_cws, cw2);
 		while (ll_count(invalid_cws) > 32) {
@@ -540,7 +540,7 @@ static struct s_cacheex_matcher *cacheex_matcher_read_int(void) {
 		if (ret<7 || type != 'm')
 			continue;
 
-		if(!cs_malloc(&entry,sizeof(struct s_cacheex_matcher), -1)){
+		if (!cs_malloc(&entry, sizeof(struct s_cacheex_matcher))) {
 			fclose(fp);
 			return new_cacheex_matcher;
 		}

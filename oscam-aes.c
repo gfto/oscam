@@ -31,7 +31,8 @@ void add_aes_entry(AES_ENTRY **list, uint16_t caid, uint32_t ident, int32_t keyi
 	AES_ENTRY *new_entry, *next,*current;
 
 	// create the AES key entry for the linked list
-	if(!cs_malloc(&new_entry, sizeof(AES_ENTRY), -1)) return;
+	if (!cs_malloc(&new_entry, sizeof(AES_ENTRY)))
+		return;
 
 	memcpy(new_entry->plainkey, aesKey, 16);
 	new_entry->caid=caid;

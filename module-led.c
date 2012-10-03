@@ -170,7 +170,7 @@ static void arm_led(int32_t led, int32_t action) {
 	if (!arm_led_actions) {
 		arm_led_actions = ll_create("arm_led_actions");
 	}
-	if (cs_malloc(&arm_led,sizeof(struct s_arm_led), -1)) {
+	if (cs_malloc(&arm_led, sizeof(struct s_arm_led))) {
 		arm_led->start_time = time((time_t)0);
 		arm_led->led = led;
 		arm_led->action = action;

@@ -9,7 +9,7 @@ void chk_iprange(char *value, struct s_ip **base)
 	char *ptr1, *ptr2, *saveptr1 = NULL;
 	struct s_ip *fip, *lip, *cip;
 
-	if (!cs_malloc(&cip, sizeof(struct s_ip), -1))
+	if (!cs_malloc(&cip, sizeof(struct s_ip)))
 		return;
 	fip = cip;
 
@@ -17,7 +17,7 @@ void chk_iprange(char *value, struct s_ip **base)
 			if (i == 0)
 				++i;
 		else {
-			if (!cs_malloc(&cip, sizeof(struct s_ip), -1))
+			if (!cs_malloc(&cip, sizeof(struct s_ip)))
 				break;
 			lip->next = cip;
 		}
@@ -197,7 +197,8 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 	char *ptr1, *ptr2, *ptr3, *saveptr1 = NULL;
 	char *ptr[CS_MAXPORTS] = {0};
 	int32_t port[CS_MAXPORTS] = {0};
-	if(!cs_malloc(&newptab, sizeof(PTAB), -1)) return;
+	if (!cs_malloc(&newptab, sizeof(PTAB)))
+		return;
 
 	for (nfilts = i = 0, ptr1 = strtok_r(portasc, ";", &saveptr1); (i < CS_MAXPORTS) && (ptr1); ptr1 = strtok_r(NULL, ";", &saveptr1), i++) {
 		ptr[i] = ptr1;

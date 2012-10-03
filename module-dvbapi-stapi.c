@@ -137,7 +137,8 @@ int32_t stapi_open(void) {
 			continue;
 
 		struct read_thread_param *para;
-		if(!cs_malloc(&para,sizeof(struct read_thread_param), -1)) return FALSE;
+		if (!cs_malloc(&para, sizeof(struct read_thread_param)))
+			return FALSE;
 		para->id=i;
 		para->cli=cur_client();
 

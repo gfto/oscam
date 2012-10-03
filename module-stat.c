@@ -103,7 +103,7 @@ void load_stat_from_file(void)
 	char *fname;
 	FILE *file;
 
-	if (!cs_malloc(&line, LINESIZE, -1))
+	if (!cs_malloc(&line, LINESIZE))
 		return;
 
 	if (!cfg.lb_savepath) {
@@ -141,7 +141,8 @@ void load_stat_from_file(void)
 		if (!line[0] || line[0] == '#' || line[0] == ';')
 			continue;
 
-		if(!cs_malloc(&stat,sizeof(READER_STAT), -1)) continue;
+		if (!cs_malloc(&stat, sizeof(READER_STAT)))
+			continue;
 
 		//get type by evaluating first line:
 		if (type==0) {
@@ -388,7 +389,7 @@ static READER_STAT *get_add_stat(struct s_reader *rdr, STAT_QUERY *q)
 
 	READER_STAT *stat = get_stat_lock(rdr, q, 0);
 	if (!stat) {
-		if(cs_malloc(&stat,sizeof(READER_STAT), -1)){
+		if (cs_malloc(&stat,sizeof(READER_STAT))) {
 			stat->caid = q->caid;
 			stat->prid = q->prid;
 			stat->srvid = q->srvid;
@@ -868,7 +869,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 //					converted_er->prid = er->prid;
 //					if (er->src_data) { //camd35:
 //						int size = 0x34 + 20 + er->l;
-//						if (cs_malloc(&converted_er->src_data, size, -1))
+//						if (cs_malloc(&converted_er->src_data, size))
 //							memcpy(converted_er->src_data, er->src_data, size);
 //					}
 //					convert_to_beta_int(converted_er, caid_to);
@@ -1340,7 +1341,7 @@ static int8_t add_to_ecmlen(struct s_reader *rdr, READER_STAT *stat)
 	}
 
 	if (!tmp) {
-		if (cs_malloc(&tmp, sizeof(struct s_ecmWhitelist), -1)) {
+		if (cs_malloc(&tmp, sizeof(struct s_ecmWhitelist))) {
 			tmp->caid = stat->caid;
 			tmp->next = rdr->ecmWhitelist;
 			rdr->ecmWhitelist = tmp;
@@ -1348,7 +1349,7 @@ static int8_t add_to_ecmlen(struct s_reader *rdr, READER_STAT *stat)
 	}
 
 	if (!tmpIdent && tmp) {
-		if (cs_malloc(&tmpIdent, sizeof(struct s_ecmWhitelistIdent), -1)) {
+		if (cs_malloc(&tmpIdent, sizeof(struct s_ecmWhitelistIdent))) {
 			tmpIdent->ident = stat->prid;
 			tmpIdent->next = tmp->idents;
 			tmp->idents = tmpIdent;
@@ -1356,7 +1357,7 @@ static int8_t add_to_ecmlen(struct s_reader *rdr, READER_STAT *stat)
 	}
 
 	if (!tmpLen && tmpIdent) {
-		if (cs_malloc(&tmpLen, sizeof(struct s_ecmWhitelistLen), -1)) {
+		if (cs_malloc(&tmpLen, sizeof(struct s_ecmWhitelistLen))) {
 			tmpLen->len = stat->ecmlen;
 			tmpLen->next = tmpIdent->lengths;
 			tmpIdent->lengths =  tmpLen;

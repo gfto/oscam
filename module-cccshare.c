@@ -44,7 +44,7 @@ void add_good_bad_sids(struct s_sidtab *ptr, SIDTABBITS sidtabno, struct cc_card
         int32_t l;
         for (l=0;l<ptr->num_srvid;l++) {
                 struct cc_srvid *srvid;
-                if (!cs_malloc(&srvid, sizeof(struct cc_srvid), -1))
+                if (!cs_malloc(&srvid, sizeof(struct cc_srvid)))
                    return;
                 srvid->sid = ptr->srvid[l];
                 srvid->chid = 0;
@@ -72,7 +72,7 @@ void add_good_bad_sids(struct s_sidtab *ptr, SIDTABBITS sidtabno, struct cc_card
                         if (ok_caid) {
                         		for (l=0;l<ptr_no->num_srvid;l++) {
                                         struct cc_srvid *srvid;
-                                        if (!cs_malloc(&srvid,sizeof(struct cc_srvid), -1))
+                                        if (!cs_malloc(&srvid,sizeof(struct cc_srvid)))
                                                 return;
                                         srvid->sid = ptr_no->srvid[l];
                                         srvid->chid = 0;
@@ -509,7 +509,7 @@ void copy_sids(LLIST *dst, LLIST *src) {
                 break;
         }
         if (!srvid_dst) {
-            if (!cs_malloc(&srvid_dst, sizeof(struct cc_srvid), -1))
+            if (!cs_malloc(&srvid_dst, sizeof(struct cc_srvid)))
                     break;
             memcpy(srvid_dst, srvid_src, sizeof(struct cc_srvid));
             ll_iter_insert(&it_dst, srvid_dst);
@@ -536,7 +536,7 @@ int32_t add_card_providers(struct cc_card *dest_card, struct cc_card *card,
         }
         if (!prov_info) {
             struct cc_provider *prov_new;
-            if (!cs_malloc(&prov_new, sizeof(struct cc_provider), -1))
+            if (!cs_malloc(&prov_new, sizeof(struct cc_provider)))
                 break;
             memcpy(prov_new, provider, sizeof(struct cc_provider));
             ll_iter_insert(&it_dst, prov_new);
@@ -558,7 +558,7 @@ int32_t add_card_providers(struct cc_card *dest_card, struct cc_card *card,
             }
             if (!remote_node2) {
                 uint8_t* remote_node_new;
-                if (!cs_malloc(&remote_node_new, 8, -1))
+                if (!cs_malloc(&remote_node_new, 8))
                     break;
                 memcpy(remote_node_new, remote_node, 8);
                 ll_iter_insert(&it_dst, remote_node_new);
@@ -578,7 +578,7 @@ void set_card_timeout(struct cc_card *card)
 
 struct cc_card *create_card(struct cc_card *card) {
     struct cc_card *card2;
-    if (!cs_malloc(&card2, sizeof(struct cc_card), -1))
+    if (!cs_malloc(&card2, sizeof(struct cc_card)))
        return NULL;
     if (card)
         memcpy(card2, card, sizeof(struct cc_card));
@@ -923,7 +923,7 @@ void update_card_list(void) {
                     card->sidtab = ptr;
                     for (l=0;l<ptr->num_provid;l++) {
                         struct cc_provider *prov;
-                        if (!cs_malloc(&prov, sizeof(struct cc_provider), -1))
+                        if (!cs_malloc(&prov, sizeof(struct cc_provider)))
                             return;
                         memset(prov, 0, sizeof(struct cc_provider));
                         prov->prov = ptr->provid[l];
@@ -973,7 +973,7 @@ void update_card_list(void) {
                             card->sidtab = ptr;
                             for (l=0;l<ptr->num_provid;l++) {
                                 struct cc_provider *prov;
-                                if (!cs_malloc(&prov, sizeof(struct cc_provider), -1))
+                                if (!cs_malloc(&prov, sizeof(struct cc_provider)))
                                     return;
                                 prov->prov = ptr->provid[l];
                                 ll_append(card->providers, prov);
@@ -1009,7 +1009,7 @@ void update_card_list(void) {
                         //cs_log("Ident CCcam card report caid: %04X readr %s subid: %06X", rdr->ftab.filts[j].caid, rdr->label, rdr->cc_id);
                         for (k = 0; k < rdr->ftab.filts[j].nprids; k++) {
                             struct cc_provider *prov;
-                            if (!cs_malloc(&prov, sizeof(struct cc_provider), -1))
+                            if (!cs_malloc(&prov, sizeof(struct cc_provider)))
                                 return;
                             prov->prov = rdr->ftab.filts[j].prids[k];
 
@@ -1074,7 +1074,7 @@ void update_card_list(void) {
 						for (j = 0; j < rdr->nprov; j++) {
 	        	        	uint32_t prid = get_reader_prid(rdr, j);
                 		    struct cc_provider *prov;
-							if (!cs_malloc(&prov, sizeof(struct cc_provider), -1))
+							if (!cs_malloc(&prov, sizeof(struct cc_provider)))
 								return;
 		                    prov->prov = prid;
 		                    //cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
@@ -1107,7 +1107,7 @@ void update_card_list(void) {
 	                for (j = 0; j < rdr->nprov; j++) {
 	                    uint32_t prid = get_reader_prid(rdr, j);
 	                    struct cc_provider *prov;
-						if (!cs_malloc(&prov, sizeof(struct cc_provider), -1))
+						if (!cs_malloc(&prov, sizeof(struct cc_provider)))
 							return;
 	                    prov->prov = prid;
 	                    //cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);

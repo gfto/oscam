@@ -114,7 +114,7 @@ void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, ui
 	if (!rdr->ll_entitlements) rdr->ll_entitlements = ll_create("ll_entitlements");
 
 	S_ENTITLEMENT *item;
-	if(cs_malloc(&item,sizeof(S_ENTITLEMENT), -1)){
+	if (cs_malloc(&item, sizeof(S_ENTITLEMENT))) {
 
 		// fill item
 		item->caid = caid;
@@ -752,7 +752,7 @@ int32_t reader_init(struct s_reader *reader) {
 		if ((reader->log_port) && (reader->ph.c_init_log))
 			reader->ph.c_init_log();
 
-		if (!cs_malloc(&client->ecmtask, cfg.max_pending * sizeof(ECM_REQUEST), -1))
+		if (!cs_malloc(&client->ecmtask, cfg.max_pending * sizeof(ECM_REQUEST)))
 			return 0;
 
 		rdr_log(reader, "proxy initialized, server %s:%d", reader->device, reader->r_port);
@@ -788,7 +788,7 @@ int32_t reader_init(struct s_reader *reader) {
 
 #endif
 
-	if (!cs_malloc(&client->emmcache, CS_EMMCACHESIZE * (sizeof(struct s_emm)), -1)) {
+	if (!cs_malloc(&client->emmcache, CS_EMMCACHESIZE * sizeof(struct s_emm))) {
 		NULLFREE(client->ecmtask);
 		return 0;
 	}

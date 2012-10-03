@@ -30,9 +30,7 @@ static int32_t cs_check_v(IN_ADDR_T ip, int32_t port, int32_t add, char *info) {
 			if (!info)
 				info = v_ban_entry->info;
 			else if (!v_ban_entry->info) {
-				int32_t size = strlen(info) + 1;
-				v_ban_entry->info = cs_malloc(&v_ban_entry->info, size, -1);
-				strncpy(v_ban_entry->info, info, size);
+				v_ban_entry->info = cs_strdup(info);
 			}
 
 			if (!add) {
@@ -54,16 +52,13 @@ static int32_t cs_check_v(IN_ADDR_T ip, int32_t port, int32_t add, char *info) {
 	}
 
 	if (add && !result) {
-		if (cs_malloc(&v_ban_entry, sizeof(V_BAN), -1)) {
+		if (cs_malloc(&v_ban_entry, sizeof(V_BAN))) {
 			v_ban_entry->v_time = time((time_t *)0);
 			v_ban_entry->v_ip = ip;
 			v_ban_entry->v_port = port;
 			v_ban_entry->v_count = 1;
-			if (info) {
-				int32_t size = strlen(info)+1;
-				v_ban_entry->info = cs_malloc(&v_ban_entry->info, size, -1);
-				strncpy(v_ban_entry->info, info, size);
-			}
+			if (info)
+				v_ban_entry->info = cs_strdup(info);
 			ll_iter_insert(&itr, v_ban_entry);
 			cs_debug_mask(D_TRACE, "failban: ban ip %s:%d with timestamp %ld%s%s",
 					cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, v_ban_entry->v_time,

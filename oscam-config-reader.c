@@ -83,9 +83,8 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 #ifdef WEBIF
 	if (!strcmp(token, "description")) {
 		NULLFREE(rdr->description);
-		if(strlen(value) > 0 && cs_malloc(&rdr->description, strlen(value)+1, -1)){
-			cs_strncpy(rdr->description, value, strlen(value)+1);
-		}
+		if (strlen(value))
+			rdr->description = cs_strdup(value);
 		return;
 	}
 #endif
@@ -105,7 +104,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
       switch(i) {
         case 0:
           len = strlen(ptr) / 2 + (16 - (strlen(ptr) / 2) % 16);
-          if(!cs_malloc(&buf,len, -1)) return;
+          if (!cs_malloc(&buf, len)) return;
           key_atob_l(ptr, buf, strlen(ptr));
           cs_log("enc %d: %s", len, ptr);
           break;
@@ -235,10 +234,8 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
 	if (!strcmp(token, "readnano")) {
 		NULLFREE(rdr->emmfile);
-		if (strlen(value) > 0) {
-			if(!cs_malloc(&(rdr->emmfile), strlen(value) + 1, -1)) return;
-			memcpy(rdr->emmfile, value, strlen(value) + 1);
-		}
+		if (strlen(value) > 0)
+			rdr->emmfile = cs_strdup(value);
 		return;
 	}
 
@@ -479,7 +476,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 						}
 					}
 					if(tmp == NULL){
-						if (cs_malloc(&tmp, sizeof(struct s_ecmWhitelist), -1)) {
+						if (cs_malloc(&tmp, sizeof(struct s_ecmWhitelist))) {
 							tmp->caid = caid;
 							tmp->idents = NULL;
 							tmp->next = NULL;
@@ -491,7 +488,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 						}
 					}
 					if(tmp != NULL && tmpIdent == NULL){
-						if (cs_malloc(&tmpIdent, sizeof(struct s_ecmWhitelistIdent), -1)) {
+						if (cs_malloc(&tmpIdent, sizeof(struct s_ecmWhitelistIdent))) {
 							tmpIdent->ident = ident;
 							tmpIdent->lengths = NULL;
 							tmpIdent->next = NULL;
@@ -503,7 +500,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 						}
 					}
 					if(tmp != NULL && tmpIdent != NULL && tmpLen == NULL){
-						if (cs_malloc(&tmpLen, sizeof(struct s_ecmWhitelistLen), -1)) {
+						if (cs_malloc(&tmpLen, sizeof(struct s_ecmWhitelistLen))) {
 							tmpLen->len = len;
 							tmpLen->next = NULL;
 							if(lastLen == NULL){
@@ -537,7 +534,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 				ptr3 = strchr(ptr, ':');
 				if (ptr2 == NULL && ptr3 == NULL) { //no Caid no Provid
 					for (ptr4 = strtok_r(ptr, ",", &saveptr4); ptr4; ptr4 = strtok_r(NULL, ",", &saveptr4)) {
-						if (cs_malloc(&tmp, sizeof(struct s_ecmHeaderwhitelist), -1)) { 
+						if (cs_malloc(&tmp, sizeof(struct s_ecmHeaderwhitelist))) {
 							ptr4 = trim(ptr4);						
 							len = strlen(ptr4);
 							key_atob_l(ptr4, tmp->header, len);
@@ -561,7 +558,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 					++ptr3;
 					caid = (int16_t)dyn_word_atob(ptr);
 					for (ptr5 = strtok_r(ptr3, ",", &saveptr5); ptr5; ptr5 = strtok_r(NULL, ",", &saveptr5)) {
-						if (cs_malloc(&tmp, sizeof(struct s_ecmHeaderwhitelist), -1)) { 
+						if (cs_malloc(&tmp, sizeof(struct s_ecmHeaderwhitelist))) {
 							tmp->caid = caid;
 							tmp->provid = 0;
 							ptr5 = trim(ptr5);
@@ -588,7 +585,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 					caid = (int16_t)dyn_word_atob(ptr);
 					provid = (uint32_t)a2i(ptr2, 6);
 					for (ptr6 = strtok_r(ptr3, ",", &saveptr6); ptr6; ptr6 = strtok_r(NULL, ",", &saveptr6)) {
-						if (cs_malloc(&tmp, sizeof(struct s_ecmHeaderwhitelist), -1)) { 
+						if (cs_malloc(&tmp, sizeof(struct s_ecmHeaderwhitelist))) {
 							tmp->caid = caid;
 							tmp->provid = provid;
 							ptr6 = trim(ptr6);
@@ -1186,10 +1183,11 @@ int32_t init_readerdb(void)
 	int32_t tag = 0;
 	char *value, *token;
 
-	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 1;
+	if (!cs_malloc(&token, MAXLINESIZE))
+		return 1;
 
 	struct s_reader *rdr;
-	if (!cs_malloc(&rdr, sizeof(struct s_reader), -1)) {
+	if (!cs_malloc(&rdr, sizeof(struct s_reader))) {
 		free(token);
 		return 1;
 	}
@@ -1204,7 +1202,7 @@ int32_t init_readerdb(void)
 			tag = (!strcmp("reader", strtolower(token+1)));
 			if (rdr->label[0] && rdr->typ) {
 				struct s_reader *newreader;
-				if(cs_malloc(&newreader, sizeof(struct s_reader), -1)){
+				if (cs_malloc(&newreader, sizeof(struct s_reader))) {
 					ll_append(configured_readers, newreader);
 					rdr = newreader;
 				}

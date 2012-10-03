@@ -1312,7 +1312,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	}
 
 	if (!ea_org) {
-		if (!cs_malloc(&ea, sizeof(struct s_ecm_answer), -1)) // Freed by ACTION_CLIENT_ECM_ANSWER
+		if (!cs_malloc(&ea, sizeof(struct s_ecm_answer))) // Freed by ACTION_CLIENT_ECM_ANSWER
 			return 0;
 	} else
 		ea = ea_org;
@@ -1360,7 +1360,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	struct s_client *cl = er->client;
 	if (cl && !cl->kill) {
 		if (ea_org) { //duplicate for queue
-			if (!cs_malloc(&ea, sizeof(struct s_ecm_answer), -1))
+			if (!cs_malloc(&ea, sizeof(struct s_ecm_answer)))
 				return 0;
 			memcpy(ea, ea_org, sizeof(struct s_ecm_answer));
 		}
@@ -1396,7 +1396,8 @@ ECM_REQUEST *get_ecmtask(void)
 	struct s_client *cl = cur_client();
 	if(!cl) return NULL;
 
-	if(!cs_malloc(&er,sizeof(ECM_REQUEST), -1)) return NULL;
+	if (!cs_malloc(&er,sizeof(ECM_REQUEST)))
+		return NULL;
 
 	cs_ftime(&er->tps);
 	er->rc=E_UNHANDLED;
@@ -1439,7 +1440,7 @@ static void add_cascade_data(struct s_client *client, ECM_REQUEST *er)
 			ll_iter_remove_data(&it);
 	}
 	if (!found) { //add it if not found
-		if (!cs_malloc(&cu, sizeof(struct s_cascadeuser), -1))
+		if (!cs_malloc(&cu, sizeof(struct s_cascadeuser)))
 			return;
 		cu->caid = er->caid;
 		cu->prid = er->prid;
@@ -2336,7 +2337,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			}
 #endif
 			if (match) {
-				if (!cs_malloc(&ea, sizeof(struct s_ecm_answer), -1))
+				if (!cs_malloc(&ea, sizeof(struct s_ecm_answer)))
 					goto OUT;
 				ea->reader = rdr;
 				if (prv)
@@ -2712,7 +2713,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 
 			if (!(fp = fopen (token, "a"))) {
 				cs_log ("ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
-			} else if(cs_malloc(&tmp2, (emm_length + 3)*2 + 1, -1)){
+			} else if (cs_malloc(&tmp2, (emm_length + 3) * 2 + 1)) {
 				fprintf (fp, "%s   %s   ", buf, cs_hexdump(0, ep->hexserial, 8, tmp, sizeof(tmp)));
 				fprintf (fp, "%s\n", cs_hexdump(0, ep->emm, emm_length + 3, tmp2, (emm_length + 3)*2 + 1));
 				free(tmp2);
@@ -2793,7 +2794,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		}
 
 		EMM_PACKET *emm_pack;
-		if (cs_malloc(&emm_pack, sizeof(EMM_PACKET), -1)) {
+		if (cs_malloc(&emm_pack, sizeof(EMM_PACKET))) {
 			rdr_debug_mask(aureader, D_EMM, "emm is being sent to reader");
 			memcpy(emm_pack, ep, sizeof(EMM_PACKET));
 			add_job(aureader->client, ACTION_READER_EMM, emm_pack, sizeof(EMM_PACKET));
@@ -2943,7 +2944,7 @@ void * work_thread(void *ptr) {
 	uint16_t bufsize = ph[cl->ctyp].bufsize; //CCCam needs more than 1024bytes!
 	if (!bufsize) bufsize = 1024;
 	uchar *mbuf;
-	if (!cs_malloc(&mbuf, bufsize, -1))
+	if (!cs_malloc(&mbuf, bufsize))
 		return NULL;
 	int32_t n=0, rc=0, i, idx, s;
 	uchar dcw[16];
@@ -3245,7 +3246,7 @@ int32_t add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len) {
 	}
 	
 	struct s_data *data;
-	if (!cs_malloc(&data, sizeof(struct s_data), -1)) {
+	if (!cs_malloc(&data, sizeof(struct s_data))) {
 		if (len && ptr)
 			free(ptr);
 		return 0;
@@ -3462,11 +3463,11 @@ static void * check_thread(void) {
 static uint32_t resize_pfd_cllist(struct pollfd **pfd, struct s_client ***cl_list, uint32_t old_size, uint32_t new_size) {
 	if (old_size != new_size) {
 		struct pollfd *pfd_new;
-		if (!cs_malloc(&pfd_new, new_size * sizeof(struct pollfd), -1)) {
+		if (!cs_malloc(&pfd_new, new_size * sizeof(struct pollfd))) {
 			return old_size;
 		}
 		struct s_client **cl_list_new;
-		if (!cs_malloc(&cl_list_new, new_size * sizeof(cl_list), -1)) {
+		if (!cs_malloc(&cl_list_new, new_size * sizeof(cl_list))) {
 			free(pfd_new);
 			return old_size;
 		}
@@ -3670,7 +3671,7 @@ int32_t accept_connection(int32_t i, int32_t j) {
 
 	if (ph[i].type==MOD_CONN_UDP) {
 		uchar *buf;
-		if (!cs_malloc(&buf, 1024, -1))
+		if (!cs_malloc(&buf, 1024))
 			return -1;
 		if ((n=recvfrom(ph[i].ptab->ports[j].fd, buf+3, 1024-3, 0, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
 			cl=idx_from_ip(SIN_GET_ADDR(cad), ntohs(SIN_GET_PORT(cad)));

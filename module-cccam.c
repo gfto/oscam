@@ -134,7 +134,7 @@ static void SwapLBi(unsigned char *buff, int32_t len)
 void cc_crypt_cmd0c(struct s_client *cl, uint8_t *buf, int32_t len) {
 	struct cc_data *cc = cl->cc;
 	uint8_t *out;
-	if (!cs_malloc(&out, len, -1))
+	if (!cs_malloc(&out, len))
 		return;
 
 	switch (cc->cmd0c_mode) {
@@ -272,7 +272,7 @@ void add_sid_block(struct s_client *cl __attribute__((unused)), struct cc_card *
 		return;
 
 	struct cc_srvid_block *srvid;
-	if (!cs_malloc(&srvid, sizeof(struct cc_srvid_block), -1))
+	if (!cs_malloc(&srvid, sizeof(struct cc_srvid_block)))
 		return;
 	memcpy(srvid, srvid_blocked, sizeof(struct cc_srvid));
 	srvid->blocked_till = time(NULL)+BLOCKING_SECONDS;
@@ -305,7 +305,7 @@ void add_good_sid(struct s_client *cl __attribute__((unused)), struct cc_card *c
 
 	remove_sid_block(card, srvid_good);
 	struct cc_srvid *srvid;
-	if (!cs_malloc(&srvid, sizeof(struct cc_srvid), -1))
+	if (!cs_malloc(&srvid, sizeof(struct cc_srvid)))
 		return;
 	memcpy(srvid, srvid_good, sizeof(struct cc_srvid));
 	ll_append(card->goodsids, srvid);
@@ -347,7 +347,7 @@ struct cc_extended_ecm_idx *add_extended_ecm_idx(struct s_client *cl,
 		struct cc_srvid srvid, int8_t free_card) {
 	struct cc_data *cc = cl->cc;
 	struct cc_extended_ecm_idx *eei;
-	if (!cs_malloc(&eei, sizeof(struct cc_extended_ecm_idx), -1))
+	if (!cs_malloc(&eei, sizeof(struct cc_extended_ecm_idx)))
 		return NULL;
 	eei->send_idx = send_idx;
 	eei->ecm_idx = ecm_idx;
@@ -571,7 +571,7 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
 
 	uint8_t *netbuf;
-	if (!cs_malloc(&netbuf, len + 4, -1))
+	if (!cs_malloc(&netbuf, len + 4))
 		return -1;
 
 	int32_t n;
@@ -1329,7 +1329,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 		if (card) {
 			uint8_t *ecmbuf;
-			if (!cs_malloc(&ecmbuf, cur_er->l + 13, -1))
+			if (!cs_malloc(&ecmbuf, cur_er->l + 13))
 				break;
 
 			// build ecm message
@@ -1568,7 +1568,7 @@ int32_t cc_send_emm(EMM_PACKET *ep) {
 
 	int32_t size = ep->l + 12;
 	uint8_t *emmbuf;
-	if (!cs_malloc(&emmbuf, size, -1))
+	if (!cs_malloc(&emmbuf, size))
 		return 0;
 
 	// build ecm message
@@ -1770,7 +1770,7 @@ void cc_idle(void) {
 
 struct cc_card *read_card(uint8_t *buf, int32_t ext) {
 	struct cc_card *card;
-	if (!cs_malloc(&card, sizeof(struct cc_card), -1))
+	if (!cs_malloc(&card, sizeof(struct cc_card)))
 		return NULL;
 
     int32_t nprov, nassign = 0, nreject = 0, offset = 21;
@@ -1804,7 +1804,7 @@ struct cc_card *read_card(uint8_t *buf, int32_t ext) {
 	int32_t i;
 	for (i = 0; i < nprov; i++) { // providers
 		struct cc_provider *prov;
-		if (!cs_malloc(&prov, sizeof(struct cc_provider), -1))
+		if (!cs_malloc(&prov, sizeof(struct cc_provider)))
 			break;
 		prov->prov = b2i(3, buf + offset);
 		if (prov->prov == 0xFFFFFF && (card->caid >> 8) == 0x17)
@@ -1825,7 +1825,7 @@ struct cc_card *read_card(uint8_t *buf, int32_t ext) {
             //cs_debug_mask(D_CLIENT, "      assigned sid = %04X, added to good sid list", sid);
 
             struct cc_srvid *srvid;
-            if (!cs_malloc(&srvid, sizeof(struct cc_srvid), -1))
+            if (!cs_malloc(&srvid, sizeof(struct cc_srvid)))
                 break;
             srvid->sid = sid;
             srvid->chid = 0;
@@ -1839,7 +1839,7 @@ struct cc_card *read_card(uint8_t *buf, int32_t ext) {
             //cs_debug_mask(D_CLIENT, "      rejected sid = %04X, added to sid block list", sid);
 
             struct cc_srvid_block *srvid;
-            if (!cs_malloc(&srvid, sizeof(struct cc_srvid_block), -1))
+            if (!cs_malloc(&srvid, sizeof(struct cc_srvid_block)))
                 break;
             srvid->sid = sid;
             srvid->chid = 0;
@@ -1854,7 +1854,7 @@ struct cc_card *read_card(uint8_t *buf, int32_t ext) {
 	ptr++;
 	for (i = 0; i < remote_count; i++) {
 		uint8_t *remote_node;
-		if (!cs_malloc(&remote_node, 8, -1))
+		if (!cs_malloc(&remote_node, 8))
 			break;
 		memcpy(remote_node, ptr, 8);
 		ll_append(card->remote_nodes, remote_node);
@@ -2012,7 +2012,7 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 			(ll_count(er->csp_lastnodes)+1)*8; //lastnodes+ownnode
 
 	uint8_t *ecmbuf;
-	if (!cs_malloc(&ecmbuf, size, -1))
+	if (!cs_malloc(&ecmbuf, size))
 		return -1;
 
 	// build ecm message
@@ -2120,7 +2120,7 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 	uint8_t *data;
 	er->csp_lastnodes = ll_create("csp_lastnodes");
 	while (count) {
-		if (!cs_malloc(&data, 8, -1))
+		if (!cs_malloc(&data, 8))
 			break;
 		memcpy(data, ofs, 8);
 		ofs+=8;
@@ -2130,7 +2130,7 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 
 	//for compatibility: add peer node if no node received:
 	if (!ll_count(er->csp_lastnodes)) {
-		if (!cs_malloc(&data, 8, -1))
+		if (!cs_malloc(&data, 8))
 			return;
 		memcpy(data, cc->peer_node_id, 8);
 		ll_append(er->csp_lastnodes, data);
@@ -2419,7 +2419,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				size_t msg_size = l-4;
 				char last_char = msg[msg_size-1];
 				if (last_char == 0) { // verify if the payload is a null terminated string
-					if (cs_realloc(&cc->nok_message, msg_size, -1))
+					if (cs_realloc(&cc->nok_message, msg_size))
 						memcpy(cc->nok_message, msg, msg_size);
 				} else
 					NULLFREE(cc->nok_message);
@@ -2545,7 +2545,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			ECM_REQUEST *er;
 
 			struct cc_card *server_card;
-			if (!cs_malloc(&server_card, sizeof(struct cc_card), -1))
+			if (!cs_malloc(&server_card, sizeof(struct cc_card)))
 				break;
 			memset(server_card, 0, sizeof(struct cc_card));
 			server_card->id = buf[10] << 24 | buf[11] << 16 | buf[12] << 8
@@ -2911,7 +2911,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				}
 
 				EMM_PACKET *emm;
-				if (!cs_malloc(&emm, sizeof(EMM_PACKET), -1))
+				if (!cs_malloc(&emm, sizeof(EMM_PACKET)))
 					break;
 				memset(emm, 0, sizeof(EMM_PACKET));
 				emm->caid[0] = buf[4];
@@ -3144,7 +3144,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	struct s_auth *account;
 	struct cc_data *cc;
 
-	if (!cs_malloc(&cc, sizeof(struct cc_data), -1))
+	if (!cs_malloc(&cc, sizeof(struct cc_data)))
 		return -1;
 
 	memset(usr, 0, sizeof(usr));
@@ -3234,7 +3234,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 
 	account = cfg.account;
 	struct cc_crypt_block *save_block;
-	if (!cs_malloc(&save_block, sizeof(struct cc_crypt_block), -1))
+	if (!cs_malloc(&save_block, sizeof(struct cc_crypt_block)))
 		return -1;
 	memcpy(save_block, cc->block, sizeof(struct cc_crypt_block));
 	int32_t found = 0;
@@ -3291,7 +3291,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	if (account->cccmaxhops == -1)
 		cs_log("account '%s' has cccmaxhops = -1: user will not see any card!", usr);
 
-	if (!cs_malloc(&cc->prefix, strlen(cl->account->usr) + 20, -1))
+	if (!cs_malloc(&cc->prefix, strlen(cl->account->usr) + 20))
 		return -1;
 	snprintf(cc->prefix, strlen(cl->account->usr)+20, "cccam(s) %s:", cl->account->usr);
 
@@ -3387,7 +3387,7 @@ int32_t cc_cli_connect(struct s_client *cl) {
 
 	if (!cc) {
 		// init internals data struct
-		if (!cs_malloc(&cc, sizeof(struct cc_data), -1))
+		if (!cs_malloc(&cc, sizeof(struct cc_data)))
 			return -1;
 		cc_init_locks(cc);
 		cc->cards = ll_create("cards");
@@ -3399,7 +3399,7 @@ int32_t cc_cli_connect(struct s_client *cl) {
 		free_extended_ecm_idx(cc);
 	}
 	if (!cc->prefix) {
-		if (!cs_malloc(&cc->prefix, strlen(cl->reader->label) + 20, -1))
+		if (!cs_malloc(&cc->prefix, strlen(cl->reader->label) + 20))
 			return -1;
 	}
 	snprintf(cc->prefix, strlen(cl->reader->label)+20, "cccam(r) %s:", cl->reader->label);

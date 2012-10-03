@@ -76,14 +76,13 @@ static void logfile_fn(const char *token, char *value, void *UNUSED(setting), FI
 				else if(!strcmp(pch, "syslog")) cfg.logtosyslog = 1;
 				else {
 					NULLFREE(cfg.logfile);
-					if(!cs_malloc(&(cfg.logfile), strlen(pch) + 1, -1)) continue;
-					else memcpy(cfg.logfile, pch, strlen(pch) + 1);
+					if (!(cfg.logfile = cs_strdup(pch)))
+						continue;
 				}
 			}
 		} else {
-			if(cs_malloc(&(cfg.logfile), strlen(CS_LOGFILE) + 1, -1))
-				memcpy(cfg.logfile, CS_LOGFILE, strlen(CS_LOGFILE) + 1);
-			else cfg.logtostdout = 1;
+			if (!(cfg.logfile = cs_strdup(CS_LOGFILE)))
+				cfg.logtostdout = 1;
 		}
 		return;
 	}
@@ -718,7 +717,8 @@ int32_t init_config(void)
 	const struct config_sections *cur_section = oscam_conf; // Global
 	char *token;
 
-	if(!cs_malloc(&token, MAXLINESIZE, -1)) return 1;
+	if (!cs_malloc(&token, MAXLINESIZE))
+		return 1;
 
 	config_sections_set_defaults(oscam_conf, &cfg);
 

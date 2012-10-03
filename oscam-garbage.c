@@ -54,7 +54,7 @@ void add_garbage(void *data) {
 #endif
 
 	struct cs_garbage *garbage;
-	if (!cs_malloc(&garbage, sizeof(struct cs_garbage), -1))
+	if (!cs_malloc(&garbage, sizeof(struct cs_garbage)))
 	{
      free(data);
      cs_writeunlock(&garbage_lock[bucket]);

@@ -93,7 +93,7 @@ static void cs_write_log_int(char *txt)
 		if (!newtxt)
 			return;
 		struct s_log *log;
-		if (!cs_malloc(&log, sizeof(struct s_log), -1)) {
+		if (!cs_malloc(&log, sizeof(struct s_log))) {
 			free(newtxt);
 			return;
 		}
@@ -144,7 +144,7 @@ void cs_reinit_loghist(uint32_t size)
 {
 	char *tmp = NULL, *tmp2;
 	if(size != cfg.loghistorysize){
-		if(size == 0 || cs_malloc(&tmp, size, -1)){
+		if (size == 0 || cs_malloc(&tmp, size)) {
 			cs_writelock(&loghistory_lock);
 			tmp2 = loghist;
 			// On shrinking, the log is not copied and the order is reversed
@@ -271,7 +271,7 @@ static void write_to_log_int(char *txt, int8_t header_len)
 	if (!newtxt)
 		return;
 	struct s_log *log;
-	if (!cs_malloc(&log, sizeof(struct s_log), -1)) {
+	if (!cs_malloc(&log, sizeof(struct s_log))) {
 		free(newtxt);
 		return;
 	}

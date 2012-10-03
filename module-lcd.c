@@ -127,7 +127,7 @@ static void refresh_lcd_file(void) {
 					int16_t written = 0, skipped = 0, blocked = 0, error = 0;
 
 					char *emmtext;
-					if(cs_malloc(&emmtext, 16 * sizeof(char), -1)){
+					if (cs_malloc(&emmtext, 16)) {
 						if(cl->typ == 'r' || !iscccam ){
 							for (i=0; i<4; i++) {
 								error += cl->reader->emmerror[i];

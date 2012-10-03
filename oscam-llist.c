@@ -38,7 +38,7 @@ static void _destroy(LLIST *l)
 LLIST *ll_create(const char *name)
 {
     LLIST *l;
-    if (!cs_malloc(&l, sizeof(LLIST), -1))
+    if (!cs_malloc(&l, sizeof(LLIST)))
         return NULL;
     cs_lock_create(&l->lock, 5, name);
     return l;
@@ -142,7 +142,8 @@ static LL_NODE* ll_append_nolock(LLIST *l, void *obj)
 {
     if (l && obj && !l->flag) {
         LL_NODE *new;
-        if(!cs_malloc(&new,sizeof(LL_NODE), -1)) return NULL;
+        if (!cs_malloc(&new, sizeof(LL_NODE)))
+            return NULL;
         new->obj = obj;
 
         if (l->last)
@@ -174,8 +175,9 @@ LL_NODE *ll_prepend(LLIST *l, void *obj)
 {
     if (l && obj && !l->flag) {
         LL_NODE *new;
-        if(!cs_malloc(&new,sizeof(LL_NODE), -1)) return NULL;
-				new->obj = obj;
+        if (!cs_malloc(&new, sizeof(LL_NODE)))
+            return NULL;
+        new->obj = obj;
 
         cs_writelock(&l->lock);
 
@@ -328,7 +330,10 @@ void ll_iter_insert(LL_ITER *it, void *obj)
             ll_append_nolock(it->l, obj);
         else {
             LL_NODE *n;
-            if(!cs_malloc(&n,sizeof(LL_NODE), -1)) { cs_writeunlock(&it->l->lock); return; }
+            if (!cs_malloc(&n, sizeof(LL_NODE))) {
+                cs_writeunlock(&it->l->lock);
+                return;
+            }
 
             n->obj = obj;
             n->nxt = it->cur->nxt;
@@ -512,7 +517,7 @@ void **ll_sort(const LLIST *l, void *compare, int32_t *size)
 	cs_readlock(&((LLIST*)l)->lock);
 	*size = l->count;
 	void **p;
-	if (!cs_malloc(&p, l->count * sizeof(p[0]), -1)) {
+	if (!cs_malloc(&p, l->count * sizeof(p[0]))) {
 		cs_readunlock(&((LLIST*)l)->lock);
 		return NULL;
 	}
@@ -544,7 +549,7 @@ LL_LOCKITER *ll_li_create(LLIST *l, int32_t writelock)
         if (!l||l->flag) return NULL;
         
         LL_LOCKITER *li;
-        if (!cs_malloc(&li, sizeof(LL_LOCKITER), -1))
+        if (!cs_malloc(&li, sizeof(LL_LOCKITER)))
                 return NULL;
 
         li->l = l;
@@ -586,7 +591,7 @@ LLIST *ll_clone(LLIST *l, uint32_t copysize)
         void *data;
         while ((data=ll_li_next(li))) {
                 void *new_data;
-                if (!cs_malloc(&new_data, copysize, -1))
+                if (!cs_malloc(&new_data, copysize))
                         break;
                 memcpy(new_data, data, copysize);
                 ll_append_nolock(clone, new_data);

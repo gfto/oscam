@@ -1019,9 +1019,9 @@ static void * oscam_ser_fork(void *pthreadparam)
   cl->ctyp = pparam->ctyp;
   cl->account=first_client->account;
 
-  if(!cl->serialdata){
-  	if(!cs_malloc(&cl->serialdata,sizeof(struct s_serial_client), -1)) return NULL;
-  }
+  if (!cl->serialdata && !cs_malloc(&cl->serialdata, sizeof(struct s_serial_client)))
+    return NULL;
+
   oscam_init_serialdata(cl->serialdata);
   oscam_copy_serialdata(cl->serialdata, &pparam->serialdata);
   cs_log("serial: initialized (%s@%s)", cl->serialdata->oscam_ser_proto>P_MAX ?
@@ -1105,9 +1105,9 @@ void * init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int32_t 
 
 static int32_t oscam_ser_client_init(struct s_client *client)
 {
-  if(!client->serialdata){
-  	if(!cs_malloc(&client->serialdata,sizeof(struct s_serial_client), -1)) return 1;
-  }
+  if (!client->serialdata && !cs_malloc(&client->serialdata, sizeof(struct s_serial_client)))
+    return 1;
+
   oscam_init_serialdata(client->serialdata);
 
   if ((!client->reader->device[0])) cs_disconnect_client(client);
@@ -1135,7 +1135,7 @@ static int32_t oscam_ser_send_ecm(struct s_client *client, ECM_REQUEST *er, ucha
       oscam_ser_send(client, er->ecm, er->l);
       break;
     case P_DSR95:
-    	if(cs_malloc(&tmp, er->l * 2 + 1, -1)){
+      if (cs_malloc(&tmp, er->l * 2 + 1)) {
 	      if( client->serialdata->dsr9500type==P_DSR_WITHSID )
 	      {
 	        snprintf((char *)buf, 512, "%c%08X%04X%s%04X\n\r",

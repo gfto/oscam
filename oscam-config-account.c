@@ -336,7 +336,8 @@ struct s_auth *init_userdb(void)
 	char *token;
 	struct s_auth *account = NULL;
 	struct s_auth *probe = NULL;
-	if(!cs_malloc(&token, MAXLINESIZE, -1)) return authptr;
+	if (!cs_malloc(&token, MAXLINESIZE))
+		return NULL;
 
 	while (fgets(token, MAXLINESIZE, fp)) {
 		int32_t l;
@@ -347,7 +348,7 @@ struct s_auth *init_userdb(void)
 		if (token[0] == '[' && token[l-1] == ']') {
 			token[l - 1] = 0;
 			tag = streq("account", strtolower(token + 1));
-			if (!cs_malloc(&ptr, sizeof(struct s_auth), -1))
+			if (!cs_malloc(&ptr, sizeof(struct s_auth)))
 				break;
 			if (account)
 				account->next = ptr;

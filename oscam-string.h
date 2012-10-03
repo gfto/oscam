@@ -1,8 +1,8 @@
 #ifndef OSCAM_STRING_H_
 #define OSCAM_STRING_H_
 
-void *cs_malloc(void *result, size_t size, int32_t quiterror) MUST_CHECK_RESULT;
-void *cs_realloc(void *result, size_t size, int32_t quiterror) MUST_CHECK_RESULT;
+bool cs_malloc(void *result, size_t size) MUST_CHECK_RESULT;
+bool cs_realloc(void *result, size_t size) MUST_CHECK_RESULT;
 char *cs_strdup(const char *str);
 
 void cs_strncpy(char *destination, const char *source, size_t num);

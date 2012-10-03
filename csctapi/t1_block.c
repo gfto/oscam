@@ -50,14 +50,14 @@ T1_Block * T1_Block_New (unsigned char * buffer, uint32_t length)
   if (length < 4)
     return NULL;
 
-  if(cs_malloc(&block,sizeof(T1_Block), -1))
+  if (cs_malloc(&block, sizeof(T1_Block)))
  {
       if (length > T1_BLOCK_MAX_SIZE)
         block->length = T1_BLOCK_MAX_SIZE;
       else
         block->length = length;
-          if(cs_malloc(&block->data,sizeof (unsigned char)*block->length,-1))
-          memcpy (block->data, buffer, block->length);
+          if (cs_malloc(&block->data, block->length))
+              memcpy(block->data, buffer, block->length);
       else {
           free (block);
           block = NULL;
@@ -69,10 +69,10 @@ T1_Block * T1_Block_New (unsigned char * buffer, uint32_t length)
 T1_Block * T1_Block_NewIBlock (unsigned char len, unsigned char * inf, unsigned char ns, int32_t more)
 {
   T1_Block * block;
-   if(cs_malloc(&block,sizeof(T1_Block), -1))
+   if (cs_malloc(&block, sizeof(T1_Block)))
      {
       block->length = len + 4;
-        if(cs_malloc(&block->data,sizeof (unsigned char)*block->length,-1))  {
+        if (cs_malloc(&block->data, block->length)) {
           block->data[0] = T1_BLOCK_NAD;
           block->data[1] = T1_BLOCK_I | ((ns << 6) & 0x40);
           if (more)
@@ -93,10 +93,10 @@ T1_Block * T1_Block_NewIBlock (unsigned char len, unsigned char * inf, unsigned 
 T1_Block * T1_Block_NewRBlock (unsigned char type, unsigned char nr)
 {
   T1_Block * block;
-     if(cs_malloc(&block,sizeof(T1_Block), -1))
+     if (cs_malloc(&block, sizeof(T1_Block)))
 {
       block->length = 4;
-            if(cs_malloc(&block->data,sizeof (unsigned char)*block->length,-1))  {
+      if (cs_malloc(&block->data, block->length)) {
           block->data[0] = T1_BLOCK_NAD;
           block->data[1] = type | ((nr << 4) & 0x10);
           block->data[2] = 0x00;
@@ -113,10 +113,10 @@ T1_Block * T1_Block_NewRBlock (unsigned char type, unsigned char nr)
 T1_Block * T1_Block_NewSBlock (unsigned char type, unsigned char len, unsigned char * inf)
 {
   T1_Block * block;
-     if(cs_malloc(&block,sizeof(T1_Block), -1))
+     if (cs_malloc(&block, sizeof(T1_Block)))
 {
       block->length = 4 + len;
-            if(cs_malloc(&block->data,sizeof (unsigned char)*block->length,-1))  {
+            if (cs_malloc(&block->data, block->length)) {
           block->data[0] = T1_BLOCK_NAD;
           block->data[1] = type;
           block->data[2] = len;

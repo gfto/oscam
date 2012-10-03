@@ -27,7 +27,7 @@ char *mk_t_caidtab(CAIDTAB *ctab) {
 		++i;
 	}
 	char *value;
-	if(needed == 1 || !cs_malloc(&value, needed * sizeof(char), -1)) return "";
+	if (needed == 1 || !cs_malloc(&value, needed)) return "";
 	char *saveptr = value;
 	i = 0;
 	while(ctab->caid[i]) {
@@ -74,7 +74,7 @@ char *mk_t_tuntab(TUNTAB *ttab) {
 		if(ttab->bt_caidto[i]) needed += 5;
 	}
 	char *value;
-	if(needed == 1 || !cs_malloc(&value, needed * sizeof(char), -1)) return "";
+	if (needed == 1 || !cs_malloc(&value, needed)) return "";
 	char *saveptr = value;
 	for (i=0; i<ttab->n; i++) {
 		if(i == 0) {
@@ -110,7 +110,7 @@ char *mk_t_group(uint64_t grp) {
 		}
 	}
 	char *value;
-	if(needed == 1 || !cs_malloc(&value, needed * sizeof(char), -1)) return "";
+	if (needed == 1 || !cs_malloc(&value, needed)) return "";
 	char * saveptr = value;
 	for(i = 0; i < 64; i++) {
 		if (grp&((uint64_t)1<<i)) {
@@ -143,7 +143,7 @@ char *mk_t_ftab(FTAB *ftab) {
 	}
 
 	char *value;
-	if(needed == 1 || !cs_malloc(&value, needed * sizeof(char), -1)) return "";
+	if (needed == 1 || !cs_malloc(&value, needed)) return "";
 	char *saveptr = value;
 	char *dot="";
 	for (i = 0; i < ftab->nfilts; ++i) {
@@ -178,7 +178,7 @@ char *mk_t_camd35tcp_port(void) {
 		}
 	}
 	char *value;
-	if(needed == 1 || !cs_malloc(&value, needed * sizeof(char), -1)) return "";
+	if (needed == 1 || !cs_malloc(&value, needed)) return "";
 	char *saveptr = value;
 	char *dot1 = "", *dot2;
 	for(i = 0; i < cfg.c35_tcp_ptab.nports; ++i) {
@@ -211,7 +211,7 @@ char *mk_t_cccam_port(void) {
 	int32_t i, pos = 0, needed = CS_MAXPORTS*6+8;
 
 	char *value;
-	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
+	if (!cs_malloc(&value, needed)) return "";
 	char *dot = "";
 	for(i = 0; i < CS_MAXPORTS; i++) {
 		if (!cfg.cc_port[i]) break;
@@ -285,7 +285,7 @@ char *mk_t_aeskeys(struct s_reader *rdr) {
 
 	/* copy to result array of correct size */
 	char *value;
-	if(pos == 0 || !cs_malloc(&value, (pos + 1) * sizeof(char), -1)) return "";
+	if (pos == 0 || !cs_malloc(&value, pos + 1)) return "";
 	memcpy(value, tmp, pos + 1);
 	return(value);
 }
@@ -306,7 +306,7 @@ char *mk_t_newcamd_port(void) {
 		}
 	}
 	char *value;
-	if(needed == 1 || !cs_malloc(&value, needed * sizeof(char), -1)) return "";
+	if (needed == 1 || !cs_malloc(&value, needed)) return "";
 	char *dot1 = "", *dot2;
 
 	for(i = 0; i < cfg.ncd_ptab.nports; ++i) {
@@ -342,7 +342,7 @@ char *mk_t_aureader(struct s_auth *account) {
 	char *dot = "";
 
 	char *value;
-	if(ll_count(account->aureader_list) == 0 || !cs_malloc(&value, 256 * sizeof(char), -1)) return "";
+	if (ll_count(account->aureader_list) == 0 || !cs_malloc(&value, 256)) return "";
 	value[0] = '\0';
 
 	struct s_reader *rdr;
@@ -374,10 +374,10 @@ char *mk_t_nano(struct s_reader *rdr, uchar flag) {
 
 	char *value;
 	if (nano == 0xFFFF) {
-		if(!cs_malloc(&value, (3 * sizeof(char)) + 1, -1)) return "";
+		if (!cs_malloc(&value, 4)) return "";
 		snprintf(value, 4, "all");
 	} else {
-		if(needed == 0 || !cs_malloc(&value, (needed * 3 * sizeof(char)) + 1, -1)) return "";
+		if (needed == 0 || !cs_malloc(&value, needed * 3 + 1)) return "";
 		value[0] = '\0';
 		for (i=0; i<16; i++) {
 			if ((1 << i) & nano)
@@ -395,7 +395,7 @@ char *mk_t_service( uint64_t sidtabok, uint64_t sidtabno) {
 	char *dot;
 	char *value;
 	struct s_sidtab *sidtab = cfg.sidtab;
-	if(!sidtab || (!sidtabok && !sidtabno) || !cs_malloc(&value, 1024, -1)) return "";
+	if (!sidtab || (!sidtabok && !sidtabno) || !cs_malloc(&value, 1024)) return "";
 	value[0] = '\0';
 
 	for (i=pos=0,dot=""; sidtab; sidtab=sidtab->next,i++) {
@@ -421,7 +421,7 @@ char *mk_t_logfile(void) {
 	if(cfg.logtostdout == 1) needed += 7;
 	if(cfg.logtosyslog == 1) needed += 7;
 	if(cfg.logfile) needed += strlen(cfg.logfile);
-	if(needed == 1 || !cs_malloc(&value, needed * sizeof(char), -1)) return "";
+	if (needed == 1 || !cs_malloc(&value, needed)) return "";
 
 	if(cfg.logtostdout == 1) {
 		pos += snprintf(value + pos, needed - pos, "stdout");
@@ -474,7 +474,7 @@ char *mk_t_ecmwhitelist(struct s_ecmWhitelist *whitelist) {
 			dot=";";
 		}
 	}
-	if(pos == 0 || !cs_malloc(&value, (pos + 1) * sizeof(char), -1)) return "";
+	if (pos == 0 || !cs_malloc(&value, pos + 1)) return "";
 	memcpy(value, tmp, pos + 1);
 	return value;
 }
@@ -524,7 +524,7 @@ char *mk_t_ecmheaderwhitelist(struct s_ecmHeaderwhitelist *headerlist){
 			pos -= 1;
 		pos += snprintf(tmp + pos, needed - pos, ";");
 	}
-	if(pos == 0 || !cs_malloc(&value, (pos + 1) * sizeof(char), -1)) return "";
+	if (pos == 0 || !cs_malloc(&value, pos + 1)) return "";
 	memcpy(value, tmp, pos-1);
 	return value; 
 }
@@ -545,7 +545,7 @@ char *mk_t_iprange(struct s_ip *range) {
 		if (!IP_EQUAL(cip->ip[0], cip->ip[1]))	pos += snprintf(tmp + pos, needed - pos, "-%s", cs_inet_ntoa(cip->ip[1]));
 		dot=",";
 	}
-	if(pos == 0 || !cs_malloc(&value, (pos + 1) * sizeof(char), -1)) return "";
+	if (pos == 0 || !cs_malloc(&value, pos + 1)) return "";
 	memcpy(value, tmp, pos + 1);
 	return value;
 }
@@ -570,7 +570,7 @@ char *mk_t_cltab(CLASSTAB *clstab) {
 		dot=",";
 	}
 
-	if(pos == 0 || !cs_malloc(&value, (pos + 1) * sizeof(char), -1)) return "";
+	if (pos == 0 || !cs_malloc(&value, pos + 1)) return "";
 	memcpy(value, tmp, pos + 1);
 	return value;
 }
@@ -583,7 +583,7 @@ char *mk_t_caidvaluetab(CAIDVALUETAB *tab)
 		if (!tab->n) return "";
 		int32_t i, size = 2 + tab->n * (4 + 1 + 5 + 1); //caid + ":" + time + ","
 		char *buf;
-		if (!cs_malloc(&buf, size, -1))
+		if (!cs_malloc(&buf, size))
 			return "";
 		char *ptr = buf;
 
@@ -608,7 +608,7 @@ char *mk_t_emmbylen(struct s_reader *rdr) {
 
 	needed = (CS_MAXEMMBLOCKBYLEN * 4) +1;
 
-	if (!cs_malloc(&value, needed, -1)) return "";
+	if (!cs_malloc(&value, needed)) return "";
 
 	for( i = 0; i < CS_MAXEMMBLOCKBYLEN; i++ ) {
 		if(rdr->blockemmbylen[i] != 0) {
@@ -631,7 +631,7 @@ char *mk_t_allowedprotocols(struct s_auth *account) {
 	char *tag[] = {"camd33", "camd35", "cs378x", "newcamd", "cccam", "gbox", "radegast", "dvbapi", "constcw", "serial"};
 	char *value, *dot = "";
 
-	if (!cs_malloc(&value, needed, -1))
+	if (!cs_malloc(&value, needed))
 		return "";
 
 	tagcnt = sizeof(tag)/sizeof(char *);

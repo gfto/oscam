@@ -5,18 +5,16 @@
    to the log if it failed and calls cs_exit(quiterror) if quiterror > -1.
    result will be automatically filled with the new memory position or NULL
    on failure. */
-void *cs_malloc(void *result, size_t size, int32_t quiterror)
+bool cs_malloc(void *result, size_t size)
 {
 	void **tmp = result;
 	*tmp = malloc(size);
 	if (*tmp == NULL) {
-		cs_log("Couldn't allocate memory (errno=%d %s)!", errno, strerror(errno));
-		if (quiterror > -1)
-			cs_exit(quiterror);
+		fprintf(stderr, "%s: ERROR: Can't allocate %Zd bytes!", __func__, size);
 	} else {
 		memset(*tmp, 0, size);
 	}
-	return *tmp;
+	return !!*tmp;
 }
 
 /* This function encapsulates realloc. It automatically adds an error message
@@ -24,17 +22,15 @@ void *cs_malloc(void *result, size_t size, int32_t quiterror)
    result will be automatically filled with the new memory position or NULL
    on failure. If a failure occured, the existing memory in result will
    be freed. */
-void *cs_realloc(void *result, size_t size, int32_t quiterror)
+bool cs_realloc(void *result, size_t size)
 {
 	void **tmp = result, **tmp2 = result;
 	*tmp = realloc(*tmp, size);
 	if (*tmp == NULL) {
-		cs_log("Couldn't allocate memory (errno=%d %s)!", errno, strerror(errno));
+		fprintf(stderr, "%s: ERROR: Can't allocate %Zd bytes!", __func__, size);
 		free(*tmp2);
-		if (quiterror > -1)
-			cs_exit(quiterror);
 	}
-	return *tmp;
+	return !!*tmp;
 }
 
 /* Allocates a new empty string and copies str into it. You need to free() the result. */
@@ -43,7 +39,7 @@ char *cs_strdup(const char *str)
 	char *newstr;
 	if (!str)
 		return NULL;
-	if (cs_malloc(&newstr, strlen(str) + 1, -1)) {
+	if (cs_malloc(&newstr, strlen(str) + 1)) {
 		strncpy(newstr, str, strlen(str));
 		return newstr;
 	}

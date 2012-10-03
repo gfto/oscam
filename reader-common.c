@@ -139,9 +139,9 @@ static void do_emm_from_file(struct s_reader * reader)
       return;
    }
    EMM_PACKET *eptmp;
-   if(!cs_malloc(&eptmp,sizeof(EMM_PACKET), -1)) {
-      	fclose (fp);
-      	return;
+   if (!cs_malloc(&eptmp, sizeof(EMM_PACKET))) {
+      fclose (fp);
+      return;
    }
 
    size_t ret = fread(eptmp, sizeof(EMM_PACKET), 1, fp);

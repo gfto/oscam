@@ -43,7 +43,8 @@ int32_t Cool_Init (struct s_reader *reader)
 		rdr_log(reader, "Coolstream reader device can only be 0 or 1");
 		return FALSE;
 	}
-    if(!cs_malloc(&reader->spec_dev,sizeof(struct s_coolstream_reader), -1)) return 0;
+	if (!cs_malloc(&reader->spec_dev, sizeof(struct s_coolstream_reader)))
+		return 0;
 	if (cnxt_smc_open (&specdev()->handle, &reader_nb, NULL, NULL))
 		return FALSE;
 
