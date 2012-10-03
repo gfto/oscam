@@ -2010,7 +2010,7 @@ void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto)
 	cl->account->cwtun++;
 	first_client->cwtun++;
 
-	cs_debug_mask(D_TRACE, "ECM converted from: 0x%X to BetaCrypt: 0x%X for service id:0x%X",
+	cs_debug_mask(D_TRACE, "ECM converted ocaid from 0x%04X to BetaCrypt caid 0x%04X for service id 0x%04X",
 					er->ocaid, caidto, er->srvid);
 }
 
@@ -2246,7 +2246,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 					if (!chk_bcaid(er, &client->ctab)) {
 						er->rc = E_INVALID;
 						er->rcEx = E2_CAID;
-						snprintf( er->msglog, MSGLOGSIZE, "invalid caid %x",er->caid );
+						snprintf( er->msglog, MSGLOGSIZE, "invalid caid 0x%04X", er->caid );
 						}
 					break;
 
@@ -2276,7 +2276,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 					// corrupt
 					if( (i = er->l - ecm_len) ) {
 						if (i > 0) {
-							cs_debug_mask(D_TRACE, "warning: ecm size adjusted from 0x%X to 0x%X", er->l, ecm_len);
+							cs_debug_mask(D_TRACE, "warning: ecm size adjusted from %d to %d", er->l, ecm_len);
 							er->l = ecm_len;
 						}
 						else
