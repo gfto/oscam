@@ -282,7 +282,7 @@ static const struct config_list account_opts[] = {
 	DEF_OPT_INT8("uniq"					, OFS(uniq),					0 ),
 	DEF_OPT_UINT8("sleepsend"			, OFS(c35_sleepsend),			0 ),
 	DEF_OPT_INT32("failban"				, OFS(failban),					0 ),
-	DEF_OPT_INT8("monlevel"				, OFS(monlvl),					2 ),
+	DEF_OPT_INT8("monlevel"				, OFS(monlvl),					0 ),
 	DEF_OPT_FUNC("sleep"				, OFS(tosleep),					account_tosleep_fn ),
 	DEF_OPT_FUNC("suppresscmd08"		, OFS(c35_suppresscmd08),		account_c35_suppresscmd08_fn ),
 	DEF_OPT_FUNC("keepalive"			, OFS(ncd_keepalive),			account_ncd_keepalive_fn ),
