@@ -921,13 +921,13 @@ void UA_left(uint8_t *in, uint8_t *out, int32_t len) {
 	int32_t maxlen = 8;
 	int32_t orglen = len;
 	while (len) {
-		if (len>maxlen)
-			break;
 		memset(out, 0, orglen);
-		memcpy(out, in+ofs, len-ofs);
+		memcpy(out, in+ofs, len);
 		if (out[0]) break;
 		ofs++;
 		maxlen--;
+		if (len>maxlen)
+				len=maxlen;
 	}
 }
 
