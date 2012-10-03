@@ -913,6 +913,10 @@ static int32_t start_listener(struct s_module *ph, int32_t port_idx)
   }
 
 #ifdef IPV6SUPPORT
+// azbox toolchain do not have this define
+#ifndef IPV6_V6ONLY
+#define IPV6_V6ONLY 26
+#endif
   // set the server socket option to listen on IPv4 and IPv6 simultaneously
   int val = 0;
   if (setsockopt(ph->ptab->ports[port_idx].fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&val, sizeof(val))<0)
