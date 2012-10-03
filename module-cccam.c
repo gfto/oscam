@@ -936,7 +936,7 @@ void UA_right(uint8_t *in, uint8_t *out, int32_t len) {
 		len--;
 		if (out[len]) break;
 		ofs++;
-		out[0]=0;
+		memset(out, 0, len); //out[0]=0;
 	}
 }
 
