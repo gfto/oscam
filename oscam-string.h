@@ -3,7 +3,7 @@
 
 void *cs_malloc(void *result, size_t size, int32_t quiterror);
 void *cs_realloc(void *result, size_t size, int32_t quiterror);
-char *strnew(char *str);
+char *cs_strdup(const char *str);
 
 void cs_strncpy(char *destination, const char *source, size_t num);
 char *strtolower(char *txt);

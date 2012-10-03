@@ -38,13 +38,16 @@ void *cs_realloc(void *result, size_t size, int32_t quiterror)
 }
 
 /* Allocates a new empty string and copies str into it. You need to free() the result. */
-char *strnew(char *str)
+char *cs_strdup(const char *str)
 {
+	char *newstr;
 	if (!str)
 		return NULL;
-	char *newstr = cs_malloc(&newstr, strlen(str) + 1, 1);
-	cs_strncpy(newstr, str, strlen(str) + 1);
-	return newstr;
+	if (cs_malloc(&newstr, strlen(str) + 1, -1)) {
+		strncpy(newstr, str, strlen(str));
+		return newstr;
+	}
+	return NULL;
 }
 
 /* Ordinary strncpy does not terminate the string if the source is exactly

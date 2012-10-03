@@ -79,7 +79,7 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 				value = c->def.d_char;
 			NULLFREE(*scfg);
 			if (strlen(value))
-				*scfg = strdup(value);
+				*scfg = cs_strdup(value);
 			return 1;
 		}
 		case OPT_SSTRING: {
@@ -214,7 +214,7 @@ void config_list_set_defaults(const struct config_list *clist, void *config_data
 			char **scfg = cfg;
 			NULLFREE(*scfg);
 			if (c->def.d_char)
-				*scfg = strdup(c->def.d_char);
+				*scfg = cs_strdup(c->def.d_char);
 			break;
 		}
 		case OPT_SSTRING: {
