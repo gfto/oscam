@@ -10,7 +10,7 @@ bool cs_malloc(void *result, size_t size)
 	void **tmp = result;
 	*tmp = malloc(size);
 	if (*tmp == NULL) {
-		fprintf(stderr, "%s: ERROR: Can't allocate %Zd bytes!", __func__, size);
+		fprintf(stderr, "%s: ERROR: Can't allocate %zu bytes!", __func__, size);
 	} else {
 		memset(*tmp, 0, size);
 	}
@@ -27,7 +27,7 @@ bool cs_realloc(void *result, size_t size)
 	void **tmp = result, **tmp2 = result;
 	*tmp = realloc(*tmp, size);
 	if (*tmp == NULL) {
-		fprintf(stderr, "%s: ERROR: Can't allocate %Zd bytes!", __func__, size);
+		fprintf(stderr, "%s: ERROR: Can't allocate %zu bytes!", __func__, size);
 		free(*tmp2);
 	}
 	return !!*tmp;
