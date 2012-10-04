@@ -776,7 +776,7 @@ static int32_t reccmp2(const void *r1, const void *r2)
 static int32_t nagra2_card_info(struct s_reader * reader)
 {
 	int32_t i;
-        char currdate[11], tmp[13];
+	char currdate[11], tmp[64];
 	rdr_log(reader, "ROM:    %c %c %c %c %c %c %c %c", reader->rom[0], reader->rom[1], reader->rom[2],reader->rom[3], reader->rom[4], reader->rom[5], reader->rom[6], reader->rom[7]);
 	rdr_log(reader, "REV:    %c %c %c %c %c %c", reader->rom[9], reader->rom[10], reader->rom[11], reader->rom[12], reader->rom[13], reader->rom[14]);
 	rdr_log_sensitive(reader, "SER:    {%s}", cs_hexdump(1, reader->hexserial+2, 4, tmp, sizeof(tmp)));
@@ -822,7 +822,6 @@ static int32_t nagra2_card_info(struct s_reader * reader)
                        if (cta_res[j] == 0x80 && cta_res[j+6] != 0x00)
                        {
                           int32_t val_offs = 0;
-                          char tmp[52];
                           nagra_datetime(reader, &cta_res[j+6], 0, records[num_records].date2, 0);
 
                           switch (cta_res[j+1])

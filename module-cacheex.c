@@ -172,7 +172,7 @@ void cacheex_cache_push(ECM_REQUEST *er)
 
 	struct s_reader *rdr;
 	for (rdr = first_active_reader; rdr; rdr = rdr->next) {
-		struct s_client *cl = rdr->client;
+		cl = rdr->client;
 		if (cl && er->cacheex_src != cl && rdr->cacheex == 3) { //send cache over reader
 			if (rdr->ph.c_cache_push
 				&& (!grp || (rdr->grp & grp)) //Group-check

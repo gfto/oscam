@@ -2340,9 +2340,8 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		double cwrate = 0.0, cwrate2 = 0.0;
 
 		//search account in active clients
-		int32_t isactive = 0;
 		int16_t nrclients = 0;
-		struct s_client *cl, *latestclient=NULL;
+		struct s_client *latestclient = NULL;
 		for (cl=first_client->next; cl ; cl=cl->next) {
 			if (cl->account && !strcmp(cl->account->usr, account->usr)) {
 				if(cl->lastecm > latestactivity || cl->login > latestactivity){
@@ -3174,14 +3173,14 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 							S_ENTITLEMENT *ent;
 							uint16_t total_ent = 0;
 							uint16_t active_ent = 0;
-							time_t now = (time((time_t*)0)/84600)*84600;
+							time_t now_day = (now / 84600) * 84600;
 							struct tm end_t;
 
 							tpl_addVar(vars, TPLADD, "TMPSPAN", "<SPAN>");
 							while((ent = ll_iter_next(&itr)))
 							{
 								total_ent++;
-								if ((ent->end > now) && (ent->type != 7))
+								if ((ent->end > now_day) && (ent->type != 7))
 								{
 									if (active_ent) tpl_addVar(vars, TPLAPPEND, "TMPSPAN", "<BR><BR>");
 									active_ent++;

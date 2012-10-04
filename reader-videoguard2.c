@@ -149,14 +149,14 @@ static void do_post_dw_hash(struct s_reader *reader, unsigned char *cw, const un
       {                         //b0 01
       case 1:
         {
-          uint16_t hk[8], i, j, m = 0;
-          for (i = 0; i < 6; i++)
-            hk[2 + i] = Hash3[i];
-          for (i = 0; i < 2; i++)
+          uint16_t hk[8], r, j, m = 0;
+          for (r = 0; r < 6; r++)
+            hk[2 + r] = Hash3[r];
+          for (r = 0; r < 2; r++)
           {
             for (j = 0; j < 0x48; j += 2)
             {
-              if (i)
+              if (r)
               {
                 hk[0] = ((hk[3] & hk[5]) | ((~hk[5]) & hk[4]));
               }
@@ -183,13 +183,13 @@ static void do_post_dw_hash(struct s_reader *reader, unsigned char *cw, const un
               m = (m + 1) & 0x3F;
             }
           }
-          for (i = 0; i < 6; i++)
+          for (r = 0; r < 6; r++)
           {
-            hk[2 + i] += Hash3[i];
+            hk[2 + r] += Hash3[r];
           }
-          for (i = 0; i < 7; i++)
+          for (r = 0; r < 7; r++)
           {
-            cw[i] = hk[2 + (i >> 1)] >> ((i & 1) << 3);
+            cw[r] = hk[2 + (r >> 1)] >> ((r & 1) << 3);
           }
           cw[3] = (cw[0] + cw[1] + cw[2]) & 0xFF;
           cw[7] = (cw[4] + cw[5] + cw[6]) & 0xFF;

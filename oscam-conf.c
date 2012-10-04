@@ -54,27 +54,27 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 			continue;
 		if (strcasecmp(token, c->config_name) != 0)
 			continue;
-		void *cfg = config_data + c->var_offset;
+		void *var = config_data + c->var_offset;
 		switch (c->opt_type) {
 		case OPT_INT8: {
-			*(int8_t *)cfg = (int8_t)strToIntVal(value, c->def.d_int8);
+			*(int8_t *)var = (int8_t)strToIntVal(value, c->def.d_int8);
 			return 1;
 		}
 		case OPT_UINT8: {
 			uint32_t tmp = strToUIntVal(value, c->def.d_uint8);
-			*(uint8_t *)cfg = (uint8_t)(tmp <= 0xff ? tmp : 0xff);
+			*(uint8_t *)var = (uint8_t)(tmp <= 0xff ? tmp : 0xff);
 			return 1;
 		}
 		case OPT_INT32: {
-			*(int32_t *)cfg = strToIntVal(value, c->def.d_int32);
+			*(int32_t *)var = strToIntVal(value, c->def.d_int32);
 			return 1;
 		}
 		case OPT_UINT32: {
-			*(uint32_t *)cfg = strToUIntVal(value, c->def.d_uint32);
+			*(uint32_t *)var = strToUIntVal(value, c->def.d_uint32);
 			return 1;
 		}
 		case OPT_STRING: {
-			char **scfg = cfg;
+			char **scfg = var;
 			if (c->def.d_char && strlen(value) == 0) // Set default
 				value = c->def.d_char;
 			NULLFREE(*scfg);
@@ -83,7 +83,7 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 			return 1;
 		}
 		case OPT_SSTRING: {
-			char *scfg = cfg;
+			char *scfg = var;
 			if (c->def.d_char && strlen(value) == 0) // Set default
 				value = c->def.d_char;
 			scfg[0] = '\0';
@@ -98,7 +98,7 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 			return 1;
 		}
 		case OPT_FUNC: {
-			c->ops.process_fn(token, value, cfg, NULL);
+			c->ops.process_fn(token, value, var, NULL);
 			return 1;
 		}
 		case OPT_FIXUP_FUNC:
@@ -116,48 +116,48 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 void config_list_save(FILE *f, const struct config_list *clist, void *config_data, int save_all) {
 	const struct config_list *c;
 	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
-		void *cfg = config_data + c->var_offset;
+		void *var = config_data + c->var_offset;
 		switch (c->opt_type) {
 		case OPT_INT8: {
-			int8_t val = *(int8_t *)cfg;
+			int8_t val = *(int8_t *)var;
 			if (save_all || val != c->def.d_int8)
 				fprintf_conf(f, c->config_name, "%d\n", val);
 			continue;
 		}
 		case OPT_UINT8: {
-			uint8_t val = *(uint8_t *)cfg;
+			uint8_t val = *(uint8_t *)var;
 			if (save_all || val != c->def.d_uint8)
 				fprintf_conf(f, c->config_name, "%u\n", val);
 			continue;
 		}
 		case OPT_INT32: {
-			int32_t val = *(int32_t *)cfg;
+			int32_t val = *(int32_t *)var;
 			if (save_all || val != c->def.d_int32)
 				fprintf_conf(f, c->config_name, "%d\n", val);
 			continue;
 		}
 		case OPT_UINT32: {
-			uint32_t val = *(uint32_t *)cfg;
+			uint32_t val = *(uint32_t *)var;
 			if (save_all || val != c->def.d_uint32)
 				fprintf_conf(f, c->config_name, "%u\n", val);
 			continue;
 		}
 		case OPT_STRING: {
-			char **val = cfg;
+			char **val = var;
 			if (save_all || !streq(*val, c->def.d_char)) {
 				fprintf_conf(f, c->config_name, "%s\n", *val ? *val : "");
 			}
 			continue;
 		}
 		case OPT_SSTRING: {
-			char *val = cfg;
+			char *val = var;
 			if (save_all || !streq(val, c->def.d_char)) {
 				fprintf_conf(f, c->config_name, "%s\n", val[0] ? val : "");
 			}
 			continue;
 		}
 		case OPT_FUNC: {
-			c->ops.process_fn((const char *)c->config_name, NULL, cfg, f);
+			c->ops.process_fn((const char *)c->config_name, NULL, var, f);
 			continue;
 		}
 		case OPT_FIXUP_FUNC:
@@ -192,40 +192,40 @@ void config_list_apply_fixups(const struct config_list *clist, void *var) {
 void config_list_set_defaults(const struct config_list *clist, void *config_data) {
 	const struct config_list *c;
 	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
-		void *cfg = config_data + c->var_offset;
+		void *var = config_data + c->var_offset;
 		switch (c->opt_type) {
 		case OPT_INT8: {
-			*(int8_t *)cfg = c->def.d_int8;
+			*(int8_t *)var = c->def.d_int8;
 			break;
 		}
 		case OPT_UINT8: {
-			*(uint8_t *)cfg = c->def.d_uint8;
+			*(uint8_t *)var = c->def.d_uint8;
 			break;
 		}
 		case OPT_INT32: {
-			*(int32_t *)cfg = c->def.d_int32;
+			*(int32_t *)var = c->def.d_int32;
 			break;
 		}
 		case OPT_UINT32: {
-			*(uint32_t *)cfg = c->def.d_uint32;
+			*(uint32_t *)var = c->def.d_uint32;
 			break;
 		}
 		case OPT_STRING: {
-			char **scfg = cfg;
+			char **scfg = var;
 			NULLFREE(*scfg);
 			if (c->def.d_char)
 				*scfg = cs_strdup(c->def.d_char);
 			break;
 		}
 		case OPT_SSTRING: {
-			char *scfg = cfg;
+			char *scfg = var;
 			scfg[0] = '\0';
 			if (c->def.d_char && strlen(c->def.d_char))
 				cs_strncpy(scfg, c->def.d_char, c->str_size - 1);
 			break;
 		}
 		case OPT_FUNC: {
-			c->ops.process_fn((const char *)c->config_name, "", cfg, NULL);
+			c->ops.process_fn((const char *)c->config_name, "", var, NULL);
 			break;
 		}
 		case OPT_SAVE_FUNC:
@@ -240,9 +240,9 @@ void config_list_set_defaults(const struct config_list *clist, void *config_data
 void config_list_free_values(const struct config_list *clist, void *config_data) {
 	const struct config_list *c;
 	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
-		void *cfg = config_data + c->var_offset;
+		void *var = config_data + c->var_offset;
 		if (c->opt_type == OPT_STRING) {
-			char **scfg = cfg;
+			char **scfg = var;
 			NULLFREE(*scfg);
 		}
 	}
@@ -252,9 +252,9 @@ void config_list_free_values(const struct config_list *clist, void *config_data)
 void config_list_gc_values(const struct config_list *clist, void *config_data) {
 	const struct config_list *c;
 	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
-		void *cfg = config_data + c->var_offset;
+		void *var = config_data + c->var_offset;
 		if (c->opt_type == OPT_STRING) {
-			char **scfg = cfg;
+			char **scfg = var;
 			add_garbage(*scfg);
 		}
 	}

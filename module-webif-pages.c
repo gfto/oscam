@@ -2282,7 +2282,7 @@ function isNumber(a) {\n\
 
 #define TPLCACHEEXTABLEROW "			<TR><TD>&nbsp;&nbsp;##DIRECTIONIMG##&nbsp;&nbsp;</TD><TD>##TYPE##</TD><TD>##NAME##</TD><TD>##IP##</TD><TD>##NODE##</TD><TD>##LEVEL##</TD><TD>##PUSH##</TD><TD>##GOT##</TD><TD>##HIT##</TD><TD>##ERR##</TD><TD>##ERRCW##</TD></TR>\n"
 
-const char *tpl[][3] = {
+const char *templates[][3] = {
 	{"HEADER", TPLHEADER, ""}
 	,{"APIHEADER", TPLAPIHEADER, ""}
 	,{"JSONHEADER", TPLJSONHEADER, ""}
@@ -2465,7 +2465,7 @@ const char *tpl[][3] = {
 	,{"ICSPAC", ICSPAC, ""}
 };
 
-int32_t tpl_count(void) { return sizeof(tpl) / (3*sizeof(char *)); }
+int32_t tpl_count(void) { return sizeof(templates) / (3*sizeof(char *)); }
 int32_t cv(void) { return 91789605==crc32(0L,(unsigned char*)ICMAI,strlen(ICMAI))/2?1:0; }
 
 #endif

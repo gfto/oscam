@@ -421,14 +421,13 @@ static void cleanup_ecmtasks(struct s_client *cl)
 	struct s_reader *rdr = first_active_reader;
 	while (rdr) {
 		if (rdr->client && rdr->client->ecmtask) {
-			ECM_REQUEST *ecm;
 			int i;
 			for (i = 0; i < cfg.max_pending; i++) {
 				ecm = &rdr->client->ecmtask[i];
 				if (ecm->client == cl) {
 					ecm->client = NULL;
 					ecm->parent = NULL;
-                                }
+				}
 			}
 		}
 		rdr=rdr->next;

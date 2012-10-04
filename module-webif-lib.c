@@ -9,7 +9,7 @@
 #include "oscam-lock.h"
 #include "oscam-string.h"
 
-extern const char *tpl[][3];
+extern const char *templates[][3];
 extern char *JSCRIPT;
 extern char *CSS;
 
@@ -318,14 +318,14 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
 	}
 
   for(i = 0; i < tplcnt; ++i){
-  	if(tplchksum && chksum == tplchksum[i] && name[0] == tpl[i][0][0]){	// basic check to save strcmp calls as we are doing this hundreds of times per page in some cases
-  		if(strcmp(name, tpl[i][0]) == 0) break;
+  	if(tplchksum && chksum == tplchksum[i] && name[0] == templates[i][0][0]){	// basic check to save strcmp calls as we are doing this hundreds of times per page in some cases
+  		if(strcmp(name, templates[i][0]) == 0) break;
   	}
   }
   
  	if(i >= 0 && i < tplcnt){
 #ifdef TOUCH
-		const char* tpl_res = (!strcmp(subdir, TOUCH_SUBDIR) && i == 12) ? TOUCH_TPLSTATUS : tpl[i][1];
+		const char* tpl_res = (!strcmp(subdir, TOUCH_SUBDIR) && i == 12) ? TOUCH_TPLSTATUS : templates[i][1];
 #else
 		const char* tpl_res = tpl[i][1];
 #endif
@@ -402,12 +402,12 @@ int32_t tpl_saveIncludedTpls(const char *path){
   char tmp[256];
   FILE *fp;
   for(i = 0; i < tplcnt; ++i){
-  	if(strlen(tpl_getTplPath(tpl[i][0], path, tmp, 256)) > 0 && (fp = fopen(tmp,"w")) != NULL){
-  		int32_t len = strlen(tpl[i][1]);
-  		if(strncmp(tpl[i][0], "IC", 2) != 0){
-  			fprintf(fp, "<!--OSCam;%lu;%s;%s;%s-->\n", crc32(0L, (unsigned char*)tpl[i][1], len), CS_VERSION, CS_SVN_VERSION, tpl[i][2]);
+  	if(strlen(tpl_getTplPath(templates[i][0], path, tmp, 256)) > 0 && (fp = fopen(tmp,"w")) != NULL){
+  		int32_t len = strlen(templates[i][1]);
+  		if(strncmp(templates[i][0], "IC", 2) != 0){
+  			fprintf(fp, "<!--OSCam;%lu;%s;%s;%s-->\n", crc32(0L, (unsigned char*)templates[i][1], len), CS_VERSION, CS_SVN_VERSION, templates[i][2]);
   		}
-			fwrite(tpl[i][1], sizeof(char), len, fp);
+			fwrite(templates[i][1], sizeof(char), len, fp);
 			fclose (fp);
 			++cnt;
 		}
@@ -423,10 +423,10 @@ void tpl_checkOneDirDiskRevisions(const char* subdir) {
 	int32_t i, tplcnt = tpl_count();
 		char path[255];
 		for(i = 0; i < tplcnt; ++i){
-			if(strncmp(tpl[i][0], "IC", 2) != 0 && strlen(tpl_getTplPath(tpl[i][0], dirpath, path, 255)) > 0 && file_exists(path)){
+			if(strncmp(templates[i][0], "IC", 2) != 0 && strlen(tpl_getTplPath(templates[i][0], dirpath, path, 255)) > 0 && file_exists(path)){
 				int8_t error = 1;
-				char *tplorg = tpl_getUnparsedTpl(tpl[i][0], 0, subdir);
-				unsigned long checksum = 0, curchecksum = crc32(0L, (unsigned char*)tpl[i][1], strlen(tpl[i][1]));
+				char *tplorg = tpl_getUnparsedTpl(templates[i][0], 0, subdir);
+				unsigned long checksum = 0, curchecksum = crc32(0L, (unsigned char*)templates[i][1], strlen(templates[i][1]));
 				char *ifdefs = "", *pch1 = strstr(tplorg,"<!--OSCam");
 				if(pch1 != NULL){
 					char *version = "?", *revision = "?";
@@ -496,8 +496,8 @@ void prepareTplChecksums(void) {
 
   for(i = 0; i < tplcnt; ++i){
   	tplchksum[i] = 0;
-  	for(j = strlen(tpl[i][0]); j > 0; --j){
-  		tplchksum[i] += tpl[i][0][j];
+  	for(j = strlen(templates[i][0]); j > 0; --j){
+  		tplchksum[i] += templates[i][0][j];
   	}
   }
 }

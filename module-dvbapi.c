@@ -1267,14 +1267,14 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 	}
 }
 
-void request_cw(struct s_client *dvbapi_client, ECM_REQUEST *er)
+void request_cw(struct s_client *client, ECM_REQUEST *er)
 {
 #ifdef WITH_DEBUG
 	char buf[ECM_FMT_LEN];
 	format_ecm(er, buf, ECM_FMT_LEN);
 	cs_debug_mask(D_DVBAPI, "dvbapi request cw for %s", buf);
 #endif
-	get_cw(dvbapi_client, er);
+	get_cw(client, er);
 }
 
 void dvbapi_try_next_caid(int32_t demux_id) {

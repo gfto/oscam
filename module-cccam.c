@@ -2577,9 +2577,9 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 									cs_debug_mask(D_TRACE, "%s origin reader not found!", getprefix());
 								else {
 									cs_debug_mask(D_TRACE, "%s forward card: share %d origin reader %s origin id %d", getprefix(), card->id, ordr->label, card->origin_id);
-									struct s_client *cl = ordr->client;
-									if (card->origin_id && cl && cl->cc) { //only if we have a origin from a cccam reader
-										struct cc_data *rcc = cl->cc;
+									struct s_client *cl2 = ordr->client;
+									if (card->origin_id && cl2 && cl2->cc) { //only if we have a origin from a cccam reader
+										struct cc_data *rcc = cl2->cc;
 
 										if(rcc){
 											itr = ll_iter_create(rcc->cards);
@@ -2630,7 +2630,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 		} else { //READER:
 			cs_readlock(&cc->cards_busy);
     		cc->recv_ecmtask = -1;
-			struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cl,
+			eei = get_extended_ecm_idx(cl,
 					cc->extended_mode ? cc->g_flag : 1, TRUE);
 			if (!eei) {
 				cs_debug_mask(D_READER, "%s received extended ecm id %d but not found!",

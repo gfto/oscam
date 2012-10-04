@@ -729,7 +729,7 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 		}
 
 		// Clear RTS again
-		LL_ITER itr = ll_iter_create(configured_readers);
+		itr = ll_iter_create(configured_readers);
 		while ((rdr = ll_iter_next(&itr))) {
 			if (rdr->sc8in1_config == reader->sc8in1_config) {
 				Sc8in1_DebugSignals(reader, rdr->slot, "I4");

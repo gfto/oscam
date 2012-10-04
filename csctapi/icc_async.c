@@ -1196,7 +1196,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d,
 #if defined(WITH_COOLAPI)
 		call (Cool_WriteSettings (reader, reader->BWT, reader->CWT, EGT, BGT));
 #else
-		double F =	(double) atr_f_table[FI];
+		F = (double)atr_f_table[FI];
 		uint32_t ETU = 0;
 		//for Irdeto T14 cards, do not set ETU
 		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14))

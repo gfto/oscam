@@ -1178,7 +1178,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 		//loadbalancer debug output:
 		int32_t nr = 0;
 		char buf[512];
-		int32_t n, l=512;
+		int32_t l=512;
 		char *rptr = buf;
 		*rptr = 0;
 

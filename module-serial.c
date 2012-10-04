@@ -729,7 +729,6 @@ static void oscam_ser_send_dcw(struct s_client *client, ECM_REQUEST *er)
         oscam_ser_send(client, mbuf, 17);
         if( serialdata->dsr9500type==P_DSR_GNUSMAS )
         {
-          int32_t i;
           serialdata->samsung_0a=0;
           for( i=1; i<17; i++ )
             if( mbuf[i]==0x0A )

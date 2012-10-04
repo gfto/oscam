@@ -444,7 +444,8 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		}
 		rdr->ecmWhitelist = NULL;
 		if(strlen(value) > 0){
-			char *saveptr1=NULL, *saveptr2 = NULL;
+			saveptr1 = NULL;
+			char *saveptr2 = NULL;
 			for (ptr = strtok_r(value, ";", &saveptr1); ptr; ptr = strtok_r(NULL, ";", &saveptr1)) {
 				int16_t caid = 0, len;
 				uint32_t ident = 0;

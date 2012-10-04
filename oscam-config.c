@@ -257,7 +257,6 @@ int32_t init_sidtab(void) {
 	while (fgets(token, MAXLINESIZE, fp))
 	{
 		int32_t l;
-		void *ptr;
 		if ((l=strlen(trim(token)))<3) continue;
 		if ((token[0]=='[') && (token[l-1]==']'))
 		{

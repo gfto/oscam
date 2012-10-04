@@ -767,7 +767,6 @@ static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 						memcpy(&cta_cmd[10],&ep->emm[9],dataLen-6);
 					}
 				}
-				int32_t i=0;
 				for(i=5;i<dataLen+4;i++)
 					crc^=cta_cmd[i];
 				cta_cmd[dataLen-1+5]=crc;

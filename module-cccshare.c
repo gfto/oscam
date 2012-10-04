@@ -13,7 +13,7 @@
 extern struct s_module modules[CS_MAX_MOD];
 
 static uint32_t cc_share_id = 0x64;
-static LLIST *reported_carddatas[CAID_KEY];
+static LLIST *reported_carddatas_list[CAID_KEY];
 static CS_MUTEX_LOCK cc_shares_lock;
 
 static int32_t card_added_count = 0;
@@ -33,7 +33,7 @@ LLIST *get_cardlist(uint16_t caid, LLIST **list)
 LLIST **get_and_lock_sharelist(void)
 {
 		cs_readlock(&cc_shares_lock);
-		return reported_carddatas;
+		return reported_carddatas_list;
 }
 
 void unlock_sharelist(void)
@@ -844,7 +844,7 @@ int32_t card_timed_out(struct cc_card *card)
  **/
 int32_t find_reported_card(struct cc_card *card1)
 {
-    LL_ITER it = ll_iter_create(get_cardlist(card1->caid, reported_carddatas));
+    LL_ITER it = ll_iter_create(get_cardlist(card1->caid, reported_carddatas_list));
     struct cc_card *card2;
     while ((card2 = ll_iter_next(&it))) {
         if (same_card(card1, card2) && !card_timed_out(card2)) {
@@ -1191,9 +1191,9 @@ void update_card_list(void) {
 		}
 
 		//remove unsed, remaining cards:
-		card_removed_count += cc_free_reported_carddata(reported_carddatas[i], new_reported_carddatas[i], TRUE);
-		reported_carddatas[i] = new_reported_carddatas[i];
-		card_count += ll_count(reported_carddatas[i]);
+		card_removed_count += cc_free_reported_carddata(reported_carddatas_list[i], new_reported_carddatas[i], TRUE);
+		reported_carddatas_list[i] = new_reported_carddatas[i];
+		card_count += ll_count(reported_carddatas_list[i]);
 		//cs_debug_mask(D_TRACE, "CARDS FOR INDEX %d=%d", i, ll_count(reported_carddatas[i]));
 	}
 
@@ -1218,8 +1218,8 @@ int32_t cc_srv_report_cards(struct s_client *cl) {
 	LL_ITER it;
 	cs_readlock(&cc_shares_lock);
 	for (i=0; i < CAID_KEY; i++) {
-		if (reported_carddatas[i]) {
-			it = ll_iter_create(reported_carddatas[i]);
+		if (reported_carddatas_list[i]) {
+			it = ll_iter_create(reported_carddatas_list[i]);
 			while (cl->cc && !cl->kill && (card = ll_iter_next(&it))) {
 				count += send_card_to_clients(card, cl);
 			}
@@ -1358,7 +1358,7 @@ struct cc_card **get_sorted_card_copy(LLIST *cards, int32_t reverse, int32_t *si
 
 void init_share(void) {
 
-		memset(reported_carddatas, 0, sizeof(reported_carddatas));
+		memset(reported_carddatas_list, 0, sizeof(reported_carddatas_list));
 		cs_lock_create(&cc_shares_lock, 200, "cc_shares_lock");
 
 		share_updater_thread = 0;
@@ -1384,7 +1384,7 @@ void done_share(void) {
 
 				int8_t i;
 				for (i=0;i<CAID_KEY;i++)
-					cc_free_reported_carddata(reported_carddatas[i], NULL, 0);
+					cc_free_reported_carddata(reported_carddatas_list[i], NULL, 0);
 		}
 }
 #endif
