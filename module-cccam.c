@@ -899,6 +899,7 @@ int32_t get_UA_ofs(uint16_t caid) {
 	case 0x0B: //CONAX:
 	case 0x18: //NAGRA:
 	case 0x01: //SECA:
+	case 0x00: //SECAMANAGMENT:
 	case 0x17: //BETACRYPT
 	case 0x06: //IRDETO:
 		ofs = 2;
@@ -915,20 +916,9 @@ int32_t UA_len(uint8_t *ua) {
 		if (ua[i]) len++;
 	return len;
 }
-
-void UA_left(uint8_t *in, uint8_t *out, int32_t len) {
-	int32_t ofs = 0;
-	int32_t maxlen = 8;
-	int32_t orglen = len;
-	while (len) {
-		memset(out, 0, orglen);
-		memcpy(out, in+ofs, len);
-		if (out[0]) break;
-		ofs++;
-		maxlen--;
-		if (len>maxlen)
-				len=maxlen;
-	}
+void UA_left(uint8_t *in, uint8_t *out, int32_t ofs) {
+		memset(out, 0, 8);
+		memcpy(out, in+ofs, 8-ofs);
 }
 
 void UA_right(uint8_t *in, uint8_t *out, int32_t len) {
@@ -985,8 +975,7 @@ void cc_UA_cccam2oscam(uint8_t *in, uint8_t *out, uint16_t caid) {
 	//	//Place here your own adjustments!
 	//}
 	int32_t ofs = get_UA_ofs(caid);
-	int32_t len = 8-ofs;
-	UA_left(in, tmp+ofs, len);
+	UA_left(in, tmp, ofs);
 	newcamd_to_hexserial(tmp, out, caid);
 }
 
