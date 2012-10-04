@@ -496,7 +496,7 @@ static int32_t bulcrypt_get_emm_type(EMM_PACKET *ep, struct s_reader *reader)
 		ep->type = UNKNOWN;
 		check_serial_skip_first(2);
 		if (ret)
-			rdr_log_sensitive(reader, "EMM_GLOBAL-%02x-{%02x-%02x}, emm_sn = {%s}, card_sn = {%s}",
+			rdr_log_sensitive(reader, "EMM_UNKNOWN-%02x-{%02x-%02x}, emm_sn = {%s}, card_sn = {%s}",
 				ep->emm[0], ep->emm[5], ep->emm[6], dump_emm_sn, dump_card_sn);
 		break;
 	case BULCRYPT_EMM_8b:
@@ -577,12 +577,11 @@ static void bulcrypt_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	idx += 32;
 
 	filter[1]++;
-	filter[idx++]			= EMM_GLOBAL;
+	filter[idx++]			= EMM_UNKNOWN;
 	filter[idx++]			= 0;
 	filter[idx + 0]			= 0x8b;
 	filter[idx + 1]			= 0x00;
 	filter[idx + 2]			= rdr->hexserial[0];
-	filter[idx + 3]			= rdr->hexserial[1];
 	filter[idx + 0 + 16]	= 0xFF;
 	filter[idx + 1 + 16]	= 0xFF;
 	filter[idx + 2 + 16]	= 0xFF;
