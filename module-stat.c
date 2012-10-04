@@ -72,7 +72,9 @@ static uint32_t get_subid(ECM_REQUEST *er)
 	uint32_t id = 0;
 	switch (er->caid>>8)
 	{
-		case 0x01: id = b2i(2, er->ecm+7); break;
+		case 0x01: id = b2i(2, er->ecm+7);
+			 if (er->prid==0x00006a) id = er->pid; //fix CDS NL for identical 0100:00006a but different ecmpid on SD Channels 
+			 break;
 		case 0x06: id = b2i(2, er->ecm+6); break;
 		case 0x09: id = b2i(2, er->ecm+11); break;
 		case 0x4A: // DRE-Crypt, Bulcrypt, others?
@@ -1473,7 +1475,7 @@ void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, struct s_ecm_answer
 
 	if (ea && (ea->status & READER_FALLBACK) && time > (int32_t)cfg.ftimeout)
 		time = time - cfg.ftimeout;
-
+	
 	add_stat(rdr, er, time, rc);
 }
 
