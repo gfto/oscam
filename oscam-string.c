@@ -265,9 +265,9 @@ uint32_t a2i(char *asc, int32_t bytes)
 		} else {
 			if (bytes < 0)
 				rc |= 0xf << (i << 2);
-			errno = 0;
 		}
 	}
+	errno = 0;
 	return rc;
 }
 
