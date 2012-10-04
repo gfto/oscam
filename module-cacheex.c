@@ -16,6 +16,7 @@ extern uint8_t cc_node_id[8];
 extern uint8_t camd35_node_id[8];
 extern CS_MUTEX_LOCK ecmcache_lock;
 extern struct ecm_request_t *ecmcwcache;
+extern struct s_module modules[CS_MAX_MOD];
 
 uint8_t cacheex_peer_id[8];
 static LLIST *invalid_cws;
@@ -152,7 +153,7 @@ void cacheex_cache_push(ECM_REQUEST *er)
 	for (cl=first_client->next; cl; cl=cl->next) {
 		if (er->cacheex_src != cl) {
 			if (cl->typ == 'c' && !cl->dup && cl->account && cl->account->cacheex == 2) { //send cache over user
-				if (ph[cl->ctyp].c_cache_push // cache-push able
+				if (modules[cl->ctyp].c_cache_push // cache-push able
 						&& (!grp || (cl->grp & grp)) //Group-check
 						&& chk_srvid(cl, er) //Service-check
 						&& (chk_caid(er->caid, &cl->ctab) > 0))  //Caid-check

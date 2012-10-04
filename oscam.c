@@ -38,9 +38,9 @@ char *RDR_CD_TXT[] = {
 char *entitlement_type[] = {"", "package", "PPV-Event", "chid", "tier", "class", "PBM", "admin" };
 
 int32_t exit_oscam=0;
-struct s_module 	ph[CS_MAX_MOD]; // Protocols
-struct s_cardsystem	cardsystem[CS_MAX_MOD];
-struct s_cardreader	cardreader[CS_MAX_MOD];
+struct s_module modules[CS_MAX_MOD];
+struct s_cardsystem cardsystems[CS_MAX_MOD];
+struct s_cardreader cardreaders[CS_MAX_MOD];
 
 struct s_client * first_client = NULL; //Pointer to clients list, first client is master
 struct s_reader * first_active_reader = NULL; //list of active readers (enable=1 deleted = 0)
@@ -501,8 +501,8 @@ void cleanup_thread(void *var)
 
 		cs_sleepms(500); //just wait a bit that really really nobody is accessing client data
 
-		if(ph[cl->ctyp].cleanup)
-			ph[cl->ctyp].cleanup(cl);
+		if(modules[cl->ctyp].cleanup)
+			modules[cl->ctyp].cleanup(cl);
 	}
 
 	// Close network socket if not already cleaned by previous cleanup functions
@@ -1403,7 +1403,7 @@ ECM_REQUEST *get_ecmtask(void)
 	er->rc=E_UNHANDLED;
 	er->client=cl;
 	er->grp = cl->grp;
-	//cs_log("client %s ECMTASK %d multi %d ctyp %d", username(cl), n, (ph[cl->ctyp].multi)?cfg.max_pending:1, cl->ctyp);
+	//cs_log("client %s ECMTASK %d multi %d ctyp %d", username(cl), n, (modules[cl->ctyp].multi)?cfg.max_pending:1, cl->ctyp);
 
 	return(er);
 }
@@ -1638,7 +1638,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	  }
 	}
 
-	ph[client->ctyp].send_dcw(client, er);
+	modules[client->ctyp].send_dcw(client, er);
 
 	add_cascade_data(client, er);
 
@@ -2090,7 +2090,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	if (client == first_client || !client ->account || client->account == first_client->account) {
 		//DVBApi+serial is allowed to request anonymous accounts:
-		int16_t lt = ph[client->ctyp].listenertype;
+		int16_t lt = modules[client->ctyp].listenertype;
 		if (lt != LIS_DVBAPI && lt != LIS_SERIAL) {
 			er->rc = E_INVALID;
 			er->rcEx = E2_GLOBAL;
@@ -2269,7 +2269,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 				case 4:
 					// invalid (sfilter)
-					if (!chk_sfilter(er, ph[client->ctyp].ptab))
+					if (!chk_sfilter(er, modules[client->ctyp].ptab))
 						er->rc = E_INVALID;
 					break;
 
@@ -2842,7 +2842,7 @@ int32_t process_input(uchar *buf, int32_t l, int32_t timeout)
 				continue;
 
 			if (pfd[i].fd == cl->pfd)
-				return ph[cl->ctyp].recv(cl, buf, l);
+				return modules[cl->ctyp].recv(cl, buf, l);
 		}
 	}
 	return(rc);
@@ -2892,7 +2892,7 @@ static void check_status(struct s_client *cl) {
 		case 'm':
 		case 'c':
 			//check clients for exceeding cmaxidle by checking cl->last
-			if (!(cl->ncd_keepalive && (ph[cl->ctyp].listenertype & LIS_NEWCAMD))  && cl->last && cfg.cmaxidle && (time(NULL) - cl->last) > (time_t)cfg.cmaxidle) {
+			if (!(cl->ncd_keepalive && (modules[cl->ctyp].listenertype & LIS_NEWCAMD))  && cl->last && cfg.cmaxidle && (time(NULL) - cl->last) > (time_t)cfg.cmaxidle) {
 				add_job(cl, ACTION_CLIENT_IDLE, NULL, 0);
 			}
 
@@ -2941,7 +2941,7 @@ void * work_thread(void *ptr) {
 	cl->thread=pthread_self();
 	cl->thread_active = 1;
 
-	uint16_t bufsize = ph[cl->ctyp].bufsize; //CCCam needs more than 1024bytes!
+	uint16_t bufsize = modules[cl->ctyp].bufsize; //CCCam needs more than 1024bytes!
 	if (!bufsize) bufsize = 1024;
 	uchar *mbuf;
 	if (!cs_malloc(&mbuf, bufsize))
@@ -2984,7 +2984,7 @@ void * work_thread(void *ptr) {
 			if (!data) {
 	            /* for serial client cl->pfd is file descriptor for serial port not socket
 	               for example: pfd=open("/dev/ttyUSB0"); */
-				if (!cl->pfd || ph[cl->ctyp].listenertype == LIS_SERIAL)
+				if (!cl->pfd || modules[cl->ctyp].listenertype == LIS_SERIAL)
 					break;
 				pfd[0].fd = cl->pfd;
 				pfd[0].events = POLLIN | POLLPRI | POLLHUP;
@@ -3116,9 +3116,9 @@ void * work_thread(void *ptr) {
 					break;
 #endif
 				case ACTION_CLIENT_UDP:
-					n = ph[cl->ctyp].recv(cl, data->ptr, data->len);
+					n = modules[cl->ctyp].recv(cl, data->ptr, data->len);
 					if (n<0) break;
-					ph[cl->ctyp].s_handler(cl, data->ptr, n);
+					modules[cl->ctyp].s_handler(cl, data->ptr, n);
 					break;
 				case ACTION_CLIENT_TCP:
 					s = check_fd_for_data(cl->pfd);
@@ -3129,25 +3129,25 @@ void * work_thread(void *ptr) {
 						continue;
 					}
 
-					n = ph[cl->ctyp].recv(cl, mbuf, bufsize);
+					n = modules[cl->ctyp].recv(cl, mbuf, bufsize);
 					if (n < 0) {
 						cl->kill=1; // kill client on next run
 						continue;
 					}
-					ph[cl->ctyp].s_handler(cl, mbuf, n);
+					modules[cl->ctyp].s_handler(cl, mbuf, n);
 
 					break;
 				case ACTION_CLIENT_ECM_ANSWER:
 					chk_dcw(cl, data->ptr);
 					break;
 				case ACTION_CLIENT_INIT:
-					if (ph[cl->ctyp].s_init)
-						ph[cl->ctyp].s_init(cl);
+					if (modules[cl->ctyp].s_init)
+						modules[cl->ctyp].s_init(cl);
 					cl->init_done=1;
 					break;
 				case ACTION_CLIENT_IDLE:
-					if (ph[cl->ctyp].s_idle)
-						ph[cl->ctyp].s_idle(cl);
+					if (modules[cl->ctyp].s_idle)
+						modules[cl->ctyp].s_idle(cl);
 					else {
 						cs_log("user %s reached %d sec idle limit.", username(cl), cfg.cmaxidle);
 						cl->kill = 1;
@@ -3165,9 +3165,9 @@ void * work_thread(void *ptr) {
 						res = reader->ph.c_cache_push(cl, er);
 						stats = cacheex_add_stats(cl, er->caid, er->srvid, er->prid, 0);
 					} else  {
-						if (ph[cl->ctyp].c_cache_push_chk && !ph[cl->ctyp].c_cache_push_chk(cl, er))
+						if (modules[cl->ctyp].c_cache_push_chk && !modules[cl->ctyp].c_cache_push_chk(cl, er))
 							break;
-						res = ph[cl->ctyp].c_cache_push(cl, er);
+						res = modules[cl->ctyp].c_cache_push(cl, er);
 					}
 					debug_ecm(D_CACHEEX, "pushed ECM %s to %s res %d stats %d", buf, username(cl), res, stats);
 
@@ -3546,12 +3546,12 @@ void * client_check(void) {
 
 		//server (new tcp connections or udp messages)
 		for (k=0; k < CS_MAX_MOD; k++) {
-			if ( (ph[k].type & MOD_CONN_NET) && ph[k].ptab ) {
-				for (j=0; j<ph[k].ptab->nports; j++) {
-					if (ph[k].ptab->ports[j].fd) {
+			if ( (modules[k].type & MOD_CONN_NET) && modules[k].ptab ) {
+				for (j=0; j<modules[k].ptab->nports; j++) {
+					if (modules[k].ptab->ports[j].fd) {
 						cl_size = chk_resize_cllist(&pfd, &cl_list, cl_size, pfdcount);
 						cl_list[pfdcount] = NULL;
-						pfd[pfdcount].fd = ph[k].ptab->ports[j].fd;
+						pfd[pfdcount].fd = modules[k].ptab->ports[j].fd;
 						pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
 
 					}
@@ -3623,14 +3623,14 @@ void * client_check(void) {
 			// new connection on a tcp listen socket or new message on udp listen socket
 			if (!cl && (pfd[i].revents & (POLLIN | POLLPRI))) {
 				for (k=0; k<CS_MAX_MOD; k++) {
-					if( (ph[k].type & MOD_CONN_NET) && ph[k].ptab ) {
-						for ( j=0; j<ph[k].ptab->nports; j++ ) {
-							if ( ph[k].ptab->ports[j].fd && pfd[i].fd == ph[k].ptab->ports[j].fd ) {
+					if( (modules[k].type & MOD_CONN_NET) && modules[k].ptab ) {
+						for ( j=0; j<modules[k].ptab->nports; j++ ) {
+							if ( modules[k].ptab->ports[j].fd && pfd[i].fd == modules[k].ptab->ports[j].fd ) {
 								accept_connection(k,j);
 							}
 						}
 					}
-				} // if (ph[i].type & MOD_CONN_NET)
+				} // if (modules[i].type & MOD_CONN_NET)
 			}
 		}
 		first_client->last=time((time_t *)0);
@@ -3669,11 +3669,11 @@ int32_t accept_connection(int32_t i, int32_t j) {
 	int32_t scad = sizeof(cad), n;
 	struct s_client *cl;
 
-	if (ph[i].type==MOD_CONN_UDP) {
+	if (modules[i].type==MOD_CONN_UDP) {
 		uchar *buf;
 		if (!cs_malloc(&buf, 1024))
 			return -1;
-		if ((n=recvfrom(ph[i].ptab->ports[j].fd, buf+3, 1024-3, 0, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
+		if ((n=recvfrom(modules[i].ptab->ports[j].fd, buf+3, 1024-3, 0, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
 			cl=idx_from_ip(SIN_GET_ADDR(cad), ntohs(SIN_GET_PORT(cad)));
 
 			uint16_t rl;
@@ -3681,13 +3681,13 @@ int32_t accept_connection(int32_t i, int32_t j) {
 			buf[0]='U';
 			memcpy(buf+1, &rl, 2);
 
-			if (cs_check_violation(SIN_GET_ADDR(cad), ph[i].ptab->ports[j].s_port)) {
+			if (cs_check_violation(SIN_GET_ADDR(cad), modules[i].ptab->ports[j].s_port)) {
 				free(buf);
 				return 0;
 			}
 
 			cs_debug_mask(D_TRACE, "got %d bytes on port %d from ip %s:%d client %s", 
-			    n, ph[i].ptab->ports[j].s_port,
+			    n, modules[i].ptab->ports[j].s_port,
 			    cs_inet_ntoa(SIN_GET_ADDR(cad)), SIN_GET_PORT(cad),
 			    username(cl));
 
@@ -3697,7 +3697,7 @@ int32_t accept_connection(int32_t i, int32_t j) {
 
 				cl->ctyp=i;
 				cl->port_idx=j;
-				cl->udp_fd=ph[i].ptab->ports[j].fd;
+				cl->udp_fd=modules[i].ptab->ports[j].fd;
 				cl->udp_sa=cad;
 				cl->udp_sa_len = sizeof(cl->udp_sa);
 
@@ -3711,9 +3711,9 @@ int32_t accept_connection(int32_t i, int32_t j) {
 			free(buf);
 	} else { //TCP
 		int32_t pfd3;
-		if ((pfd3=accept(ph[i].ptab->ports[j].fd, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
+		if ((pfd3=accept(modules[i].ptab->ports[j].fd, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
 
-			if (cs_check_violation(SIN_GET_ADDR(cad), ph[i].ptab->ports[j].s_port)) {
+			if (cs_check_violation(SIN_GET_ADDR(cad), modules[i].ptab->ports[j].s_port)) {
 				close(pfd3);
 				return 0;
 			}
@@ -4015,19 +4015,19 @@ int32_t main (int32_t argc, char *argv[])
 
   for (i=0; mod_def[i]; i++)  // must be later BEFORE init_config()
   {
-    memset(&ph[i], 0, sizeof(struct s_module));
-    mod_def[i](&ph[i]);
+    memset(&modules[i], 0, sizeof(struct s_module));
+    mod_def[i](&modules[i]);
   }
   for (i=0; cardsystem_def[i]; i++)  // must be later BEFORE init_config()
   {
-    memset(&cardsystem[i], 0, sizeof(struct s_cardsystem));
-    cardsystem_def[i](&cardsystem[i]);
+    memset(&cardsystems[i], 0, sizeof(struct s_cardsystem));
+    cardsystem_def[i](&cardsystems[i]);
   }
 
   for (i=0; cardreader_def[i]; i++)  // must be later BEFORE init_config()
   {
-    memset(&cardreader[i], 0, sizeof(struct s_cardreader));
-    cardreader_def[i](&cardreader[i]);
+    memset(&cardreaders[i], 0, sizeof(struct s_cardreader));
+    cardreader_def[i](&cardreaders[i]);
   }
 
   init_rnd();
@@ -4069,10 +4069,10 @@ int32_t main (int32_t argc, char *argv[])
   cacheex_load_config_file();
 
   for (i=0; i<CS_MAX_MOD; i++)
-    if( (ph[i].type & MOD_CONN_NET) && ph[i].ptab )
-      for(j=0; j<ph[i].ptab->nports; j++)
+    if( (modules[i].type & MOD_CONN_NET) && modules[i].ptab )
+      for(j=0; j<modules[i].ptab->nports; j++)
       {
-        start_listener(&ph[i], j);
+        start_listener(&modules[i], j);
       }
 
 	//set time for server to now to avoid 0 in monitor/webif
@@ -4128,9 +4128,9 @@ int32_t main (int32_t argc, char *argv[])
 	ac_init();
 
 	for (i=0; i<CS_MAX_MOD; i++)
-		if (ph[i].type & MOD_CONN_SERIAL)   // for now: oscam_ser only
-			if (ph[i].s_handler)
-				ph[i].s_handler(NULL, NULL, i);
+		if (modules[i].type & MOD_CONN_SERIAL)   // for now: oscam_ser only
+			if (modules[i].s_handler)
+				modules[i].s_handler(NULL, NULL, i);
 
 	// main loop function
 	client_check();

@@ -4,6 +4,8 @@
 #include "oscam-net.h"
 #include "oscam-string.h"
 
+extern struct s_module modules[CS_MAX_MOD];
+
 #define CS_NANO_CLASS 0xE2
 #define OK		1
 #define ERROR 	0
@@ -783,7 +785,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
     
   //Check ip source+dest:
 	if (cfg.block_same_ip && IP_EQUAL(cur_cl->ip, rdr->client->ip) &&
-		ph[cur_cl->ctyp].listenertype != LIS_DVBAPI &&
+		modules[cur_cl->ctyp].listenertype != LIS_DVBAPI &&
 		is_network_reader(rdr))
 	{
 		cs_debug_mask(D_TRACE, "ECMs origin %s has the same ip as reader %s, blocked!", username(cur_cl), rdr->label);

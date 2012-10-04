@@ -1729,9 +1729,6 @@ extern int32_t exit_oscam;
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 extern char *loghist, *loghistptr;
 #endif
-extern struct s_module ph[CS_MAX_MOD];
-extern struct s_cardsystem cardsystem[CS_MAX_MOD];
-extern struct s_cardreader cardreader[CS_MAX_MOD];
 #if defined(WITH_LIBUSB)
 extern CS_MUTEX_LOCK sr_lock;
 #endif

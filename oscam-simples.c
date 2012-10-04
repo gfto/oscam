@@ -5,6 +5,8 @@
 #include "oscam-garbage.h"
 #include "oscam-string.h"
 
+extern struct s_cardsystem cardsystems[CS_MAX_MOD];
+
 char *remote_txt(void)
 {
   if (cur_client()->typ == 'c')
@@ -517,11 +519,11 @@ int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int16_t len)
 struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid) {
 	int32_t i, j;
 	for (i = 0; i < CS_MAX_MOD; i++) {
-		if (cardsystem[i].caids) {
+		if (cardsystems[i].caids) {
 			for (j = 0; j < 2; j++) {
-				uint16_t cs_caid = cardsystem[i].caids[j];
+				uint16_t cs_caid = cardsystems[i].caids[j];
 				if (cs_caid == caid || cs_caid == caid >> 8)
-					return &cardsystem[i];
+					return &cardsystems[i];
 			}
 		}
 	}

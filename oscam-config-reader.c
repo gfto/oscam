@@ -21,6 +21,9 @@
 
 #define cs_srvr "oscam.server"
 
+extern struct s_module modules[CS_MAX_MOD];
+extern struct s_cardreader cardreaders[CS_MAX_MOD];
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -649,10 +652,10 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	if (!strcmp(token, "protocol")) {
 
 		for (i=0; i<CS_MAX_MOD; i++) {
-			if (cardreader[i].desc && strcmp(value, cardreader[i].desc) == 0) {
-				rdr->crdr = cardreader[i];
+			if (cardreaders[i].desc && strcmp(value, cardreaders[i].desc) == 0) {
+				rdr->crdr = cardreaders[i];
 				rdr->crdr.active = 1;
-				rdr->typ = cardreader[i].typ; //FIXME
+				rdr->typ = cardreaders[i].typ; //FIXME
 				return;
 			}
 		}
@@ -1224,8 +1227,8 @@ int32_t init_readerdb(void)
 		int32_t i;
 		if (is_cascading_reader(rdr)) {
 			for (i=0; i<CS_MAX_MOD; i++) {
-				if (ph[i].num && rdr->typ==ph[i].num) {
-					rdr->ph=ph[i];
+				if (modules[i].num && rdr->typ==modules[i].num) {
+					rdr->ph=modules[i];
 					if(rdr->device[0]) rdr->ph.active=1;
 				}
 			}

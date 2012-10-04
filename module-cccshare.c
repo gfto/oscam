@@ -10,6 +10,8 @@
 #include "oscam-lock.h"
 #include "oscam-string.h"
 
+extern struct s_module modules[CS_MAX_MOD];
+
 static uint32_t cc_share_id = 0x64;
 static LLIST *reported_carddatas[CAID_KEY];
 static CS_MUTEX_LOCK cc_shares_lock;
@@ -243,7 +245,7 @@ int32_t send_card_to_clients(struct cc_card *card, struct s_client *one_client) 
     	cs_readlock(&clientlist_lock);
         for (cl = one_client?one_client:first_client; cl; cl=one_client?NULL:cl->next) {
                 struct cc_data *cc = cl->cc;
-                if (!cl->kill && cl->typ=='c' && cc && (one_client || ph[cl->ctyp].num == R_CCCAM)) { //CCCam-Client!
+                if (!cl->kill && cl->typ=='c' && cc && (one_client || modules[cl->ctyp].num == R_CCCAM)) { //CCCam-Client!
                 		int32_t is_ext = cc->cccam220 && can_use_ext(card);
                 		int32_t msg = is_ext?MSG_NEW_CARD_SIDINFO:MSG_NEW_CARD;
                         if (card_valid_for_client(cl, card)) {
@@ -301,7 +303,7 @@ void send_remove_card_to_clients(struct cc_card *card) {
 		cs_readlock(&clientlist_lock);
 		for (cl = first_client; cl; cl=cl->next) {
 				struct cc_data *cc = cl->cc;
-				if (cl->typ=='c' && cc && ph[cl->ctyp].num == R_CCCAM && !cl->kill) { //CCCam-Client!
+				if (cl->typ=='c' && cc && modules[cl->ctyp].num == R_CCCAM && !cl->kill) { //CCCam-Client!
 						if (card_valid_for_client(cl, card)) {
 								cc_cmd_send(cl, buf, 4, MSG_CARD_REMOVED);
 						}

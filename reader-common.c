@@ -12,6 +12,8 @@
 #include "csctapi/ifd_sc8in1.h"
 #include "csctapi/mc_global.h"
 
+extern struct s_cardsystem cardsystems[CS_MAX_MOD];
+
 static int32_t reader_device_type(struct s_reader * reader)
 {
   int32_t rc=reader->typ;
@@ -205,10 +207,10 @@ static int32_t reader_get_cardsystem(struct s_reader * reader, ATR *atr)
 {
 	int32_t i;
 	for (i=0; i<CS_MAX_MOD; i++) {
-		if (cardsystem[i].card_init) {
-			if (cardsystem[i].card_init(reader, atr)) {
-				rdr_log(reader, "found cardsystem %s", cardsystem[i].desc);
-				reader->csystem=cardsystem[i];
+		if (cardsystems[i].card_init) {
+			if (cardsystems[i].card_init(reader, atr)) {
+				rdr_log(reader, "found card system %s", cardsystems[i].desc);
+				reader->csystem=cardsystems[i];
 				reader->csystem.active=1;
 				led_status_found_cardsystem();
 				break;

@@ -8,6 +8,8 @@
 #include "oscam-net.h"
 #include "oscam-string.h"
 
+extern struct s_module modules[CS_MAX_MOD];
+
 static int32_t logfd = 0;
 
 //CMD00 - ECM (request)
@@ -378,7 +380,7 @@ static void camd35_process_emm(uchar *buf)
 }
 
 static void camd35_server_init(struct s_client * client) {
-	client->is_udp = (ph[client->ctyp].type == MOD_CONN_UDP);
+	client->is_udp = (modules[client->ctyp].type == MOD_CONN_UDP);
 }
 
 static int32_t tcp_connect(struct s_client *cl)

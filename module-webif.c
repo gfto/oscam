@@ -27,6 +27,9 @@
 #include "oscam-net.h"
 #include "oscam-string.h"
 
+extern struct s_module modules[CS_MAX_MOD];
+extern struct s_cardreader cardreaders[CS_MAX_MOD];
+
 extern char *CSS;
 extern char *entitlement_type[];
 
@@ -1086,8 +1089,8 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 #endif
 
 		for (i=0; i<CS_MAX_MOD; i++) {
-			if (cardreader[i].desc)
-				tpl_printf(vars, TPLAPPEND, "ADDPROTOCOL", "<option>%s</option>\n", xml_encode(vars, cardreader[i].desc));
+			if (cardreaders[i].desc)
+				tpl_printf(vars, TPLAPPEND, "ADDPROTOCOL", "<option>%s</option>\n", xml_encode(vars, cardreaders[i].desc));
 		}
 		return tpl_getTpl(vars, "READERS");
 	} else {
@@ -1115,8 +1118,8 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		}
 		if (is_cascading_reader(newrdr)) {
 			for (i=0; i<CS_MAX_MOD; i++) {
-				if (ph[i].num && newrdr->typ==ph[i].num) {
-					newrdr->ph=ph[i];
+				if (modules[i].num && newrdr->typ == modules[i].num) {
+					newrdr->ph = modules[i];
 					if(newrdr->device[0]) newrdr->ph.active=1;
 				}
 			}
@@ -2205,7 +2208,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 					ll_clear(account->aureader_list);
 					for (cl=first_client->next; cl ; cl=cl->next){
 						if(cl->account == account){
-							if (ph[cl->ctyp].type & MOD_CONN_NET) {
+							if (modules[cl->ctyp].type & MOD_CONN_NET) {
 								kill_thread(cl);
 							} else {
 								cl->account = first_client->account;
@@ -2231,7 +2234,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				account->disabled = 1;
 				for (cl=first_client->next; cl ; cl=cl->next){
 					if(cl->account == account){
-						if (ph[cl->ctyp].type & MOD_CONN_NET) {
+						if (modules[cl->ctyp].type & MOD_CONN_NET) {
 							kill_thread(cl);
 						} else {
 							cl->account = first_client->account;
@@ -2928,7 +2931,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 	for (i=0, cl=first_client; cl ; cl=cl->next, i++) {
 		if (cl->kill) continue;
 #ifdef CS_CACHEEX
-		if (ph[cl->ctyp].listenertype != LIS_CSPUDP) {
+		if (modules[cl->ctyp].listenertype != LIS_CSPUDP) {
 #endif
 
 		// Reset template variables
@@ -4204,7 +4207,7 @@ static uint64_t get_cacheex_node(struct s_client *cl) {
 	uint64_t node = 0x00;
 	struct s_module *p;
 	if (cl->reader) p = &cl->reader->ph;
-	else p = &ph[cl->ctyp];
+	else p = &modules[cl->ctyp];
 #ifdef MODULE_CCCAM
 	if (p->num == R_CCCAM && cl->cc) {
 		struct cc_data *cc = cl->cc;
@@ -4278,7 +4281,7 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 			rowvariable = "TABLEREADERROWS";
 			write = 1;
 		}
-		else if (ph[cl->ctyp].listenertype == LIS_CSPUDP) {
+		else if (modules[cl->ctyp].listenertype == LIS_CSPUDP) {
 			tpl_addVar(vars, TPLADD, "TYPE", "csp");
 			tpl_addVar(vars, TPLADD, "NAME", "csp");
 			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));

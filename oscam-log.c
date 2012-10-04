@@ -7,6 +7,8 @@
 #include "oscam-net.h"
 #include "oscam-string.h"
 
+extern struct s_module modules[CS_MAX_MOD];
+
 char *LOG_LIST = "log_list";
 
 static FILE *fp=(FILE *)0;
@@ -549,7 +551,7 @@ void cs_statistics(struct s_client * client)
 				client->login,
 				client->last,
 				fullhours, mins, secs,
-				ph[client->ctyp].desc,
+				modules[client->ctyp].desc,
 				client->last_caid,
 				client->last_srvid,
 				channame);

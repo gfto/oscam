@@ -11,6 +11,7 @@
 
 extern char *processUsername;
 extern CS_MUTEX_LOCK fakeuser_lock;
+extern struct s_module modules[CS_MAX_MOD];
 
 /* Gets the client associated to the calling thread. */
 struct s_client *cur_client(void) {
@@ -80,7 +81,7 @@ const char *client_get_proto(struct s_client *cl)
 			break;
 		}
 #endif
-	default: ctyp = ph[cl->ctyp].desc;
+	default: ctyp = modules[cl->ctyp].desc;
 	}
 	return ctyp;
 }
@@ -131,7 +132,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_
 				cs_log("client(%8lX) duplicate user '%s' from %s (current %s) set to fake (uniq=%d)",
 					(unsigned long)pthread_self(), usr, cs_inet_ntoa(cl->ip), buf, uniq);
 				if (client->failban & BAN_DUPLICATE) {
-					cs_add_violation_by_ip(ip, ph[client->ctyp].ptab->ports[client->port_idx].s_port, usr);
+					cs_add_violation_by_ip(ip, modules[client->ctyp].ptab->ports[client->port_idx].s_port, usr);
 				}
 				if (cfg.dropdups){
 					cs_writeunlock(&fakeuser_lock);		// we need to unlock here as cs_disconnect_client kills the current thread!
@@ -286,7 +287,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 		cs_add_violation(client, account->usr);
 		cs_log("%s %s-client %s%s (%s%sdisabled account)",
 				client->crypted ? t_crypt : t_plain,
-				ph[client->ctyp].desc,
+				modules[client->ctyp].desc,
 				IP_ISSET(client->ip) ? cs_inet_ntoa(client->ip) : "",
 				IP_ISSET(client->ip) ? t_reject : t_reject+1,
 				e_txt ? e_txt : "",
@@ -296,11 +297,11 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 
 	// check whether client comes in over allowed protocol
 	if ((intptr_t)account != 0 && (intptr_t)account != -1 && (intptr_t)account->allowedprotocols &&
-			(((intptr_t)account->allowedprotocols & ph[client->ctyp].listenertype) != ph[client->ctyp].listenertype )) {
+			(((intptr_t)account->allowedprotocols & modules[client->ctyp].listenertype) != modules[client->ctyp].listenertype )) {
 		cs_add_violation(client, account->usr);
 		cs_log("%s %s-client %s%s (%s%sprotocol not allowed)",
 						client->crypted ? t_crypt : t_plain,
-						ph[client->ctyp].desc,
+						modules[client->ctyp].desc,
 						IP_ISSET(client->ip) ? cs_inet_ntoa(client->ip) : "",
 						IP_ISSET(client->ip) ? t_reject : t_reject+1,
 						e_txt ? e_txt : "",
@@ -316,7 +317,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 		cs_add_violation(client, NULL);
 		cs_log("%s %s-client %s%s (%s)",
 				client->crypted ? t_crypt : t_plain,
-				ph[client->ctyp].desc,
+				modules[client->ctyp].desc,
 				IP_ISSET(client->ip) ? cs_inet_ntoa(client->ip) : "",
 				IP_ISSET(client->ip) ? t_reject : t_reject+1,
 				e_txt ? e_txt : t_msg[rc]);
@@ -391,7 +392,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 		}
 		cs_log("%s %s-client %s%s (%s, %s)",
 			client->crypted ? t_crypt : t_plain,
-			e_txt ? e_txt : ph[client->ctyp].desc,
+			e_txt ? e_txt : modules[client->ctyp].desc,
 			IP_ISSET(client->ip) ? cs_inet_ntoa(client->ip) : "",
 			IP_ISSET(client->ip) ? t_grant : t_grant + 1,
 			username(client), t_msg[rc]);
@@ -471,7 +472,7 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 					ac_init_client(cl, account);
 				}
 			} else {
-				if (ph[cl->ctyp].type & MOD_CONN_NET) {
+				if (modules[cl->ctyp].type & MOD_CONN_NET) {
 					cs_debug_mask(D_TRACE, "client '%s', thread=%8lX not found in db (or password changed)", cl->account->usr, (unsigned long)cl->thread);
 					kill_thread(cl);
 				} else {
