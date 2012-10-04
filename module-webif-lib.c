@@ -327,7 +327,7 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
 #ifdef TOUCH
 		const char* tpl_res = (!strcmp(subdir, TOUCH_SUBDIR) && i == 12) ? TOUCH_TPLSTATUS : templates[i][1];
 #else
-		const char* tpl_res = tpl[i][1];
+		const char* tpl_res = templates[i][1];
 #endif
 		int32_t len = strlen(tpl_res) + 1;
 		if (!cs_malloc(&result, len)) return NULL;
