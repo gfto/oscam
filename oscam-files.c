@@ -96,29 +96,29 @@ int32_t file_copy(char *srcfile, char *destfile) {
 	return(0);
 }
 
-/* Overwrites destfile with tmpfile. If forceBakOverWrite = 0, the bakfile will not be overwritten if it exists, else it will be.*/
-int32_t safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, int32_t forceBakOverWrite) {
+/* Overwrites destfile with temp_file. If forceBakOverWrite = 0, the bakfile will not be overwritten if it exists, else it will be.*/
+int32_t safe_overwrite_with_bak(char *destfile, char *temp_file, char *bakfile, int32_t forceBakOverWrite) {
 	int32_t rc;
 	if (file_exists(destfile)) {
 		if (forceBakOverWrite != 0 || !file_exists(bakfile)) {
 			if (file_copy(destfile, bakfile) < 0){
 				cs_log("Error copying original config file %s to %s. The original config will be left untouched!", destfile, bakfile);
-				if (remove(tmpfile) < 0)
-					cs_log("Error removing temp config file %s (errno=%d %s)!", tmpfile, errno, strerror(errno));
+				if (remove(temp_file) < 0)
+					cs_log("Error removing temp config file %s (errno=%d %s)!", temp_file, errno, strerror(errno));
 				return 1;
 			}
 		}
 	}
-	rc = file_copy(tmpfile, destfile);
+	rc = file_copy(temp_file, destfile);
 	if (rc < 0) {
 		cs_log("An error occured while writing the new config file %s.", destfile);
 		if(rc == -2)
 			cs_log("The config will be missing or only partly filled upon next startup as this is a non-recoverable error! Please restore from backup or try again.");
-		if (remove(tmpfile) < 0)
-			cs_log("Error removing temp config file %s (errno=%d %s)!", tmpfile, errno, strerror(errno));
+		if (remove(temp_file) < 0)
+			cs_log("Error removing temp config file %s (errno=%d %s)!", temp_file, errno, strerror(errno));
 		return 1;
 	}
-	if (remove(tmpfile) < 0)
-		cs_log("Error removing temp config file %s (errno=%d %s)!", tmpfile, errno, strerror(errno));
+	if (remove(temp_file) < 0)
+		cs_log("Error removing temp config file %s (errno=%d %s)!", temp_file, errno, strerror(errno));
 	return 0;
 }

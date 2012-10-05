@@ -34,7 +34,7 @@ void set_localhost_ip(IN_ADDR_T *ip);
 int32_t check_ip(struct s_ip *ip, IN_ADDR_T n);
 uint32_t cs_getIPfromHost(const char *hostname);
 int set_socket_priority(int fd, int priority);
-void setTCPTimeouts(int32_t socket);
+void setTCPTimeouts(int32_t sock);
 int8_t check_fd_for_data(int32_t fd);
 
 #endif

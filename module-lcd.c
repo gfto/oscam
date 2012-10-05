@@ -20,15 +20,15 @@ static int8_t running;
 
 static void refresh_lcd_file(void) {
 	char targetfile[256];
-	char tmpfile[256];
+	char temp_file[256];
 	char channame[32];
 
 	if(cfg.lcd_output_path == NULL){
 		snprintf(targetfile, sizeof(targetfile),"%s%s", get_tmp_dir(), "/oscam.lcd");
-		snprintf(tmpfile, sizeof(tmpfile), "%s%s.tmp", get_tmp_dir(), "/oscam.lcd");
+		snprintf(temp_file, sizeof(temp_file), "%s%s.tmp", get_tmp_dir(), "/oscam.lcd");
 	} else {
 		snprintf(targetfile, sizeof(targetfile),"%s%s", cfg.lcd_output_path, "/oscam.lcd");
-		snprintf(tmpfile, sizeof(tmpfile), "%s%s.tmp", cfg.lcd_output_path, "/oscam.lcd");
+		snprintf(temp_file, sizeof(temp_file), "%s%s.tmp", cfg.lcd_output_path, "/oscam.lcd");
 	}
 
 	int8_t iscccam = 0;
@@ -41,7 +41,7 @@ static void refresh_lcd_file(void) {
 		int16_t cnt = 0, idx = 0, count_r = 0, count_p = 0, count_u = 0;
 		FILE *fpsave;
 
-		if((fpsave = fopen(tmpfile, "w"))){
+		if((fpsave = fopen(temp_file, "w"))){
 
 			idx = 0;
 			int16_t i;
@@ -148,9 +148,9 @@ static void refresh_lcd_file(void) {
 							if(rcc){
 								LLIST *cards = rcc->cards;
 								if (cards) {
-									int32_t cnt = ll_count(cards);
+									int32_t ncards = ll_count(cards);
 									int32_t locals = rcc->num_hop1;
-									snprintf(emmtext, 16, " %3d/%3d card%s", locals, cnt, (cnt > 1)? "s ": "  ");
+									snprintf(emmtext, 16, " %3d/%3d card%s", locals, ncards, ncards > 1 ? "s ": "  ");
 								}
 							} else {
 								snprintf(emmtext, 16, "   No cards    ");
@@ -226,7 +226,7 @@ static void refresh_lcd_file(void) {
 		cs_sleepms(cfg.lcd_write_intervall * 1000);
 		cnt++;
 
-		if(rename(tmpfile, targetfile) < 0)
+		if(rename(temp_file, targetfile) < 0)
 			cs_log("An error occured while writing oscam.lcd file %s.", targetfile);
 
 	}

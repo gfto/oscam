@@ -605,7 +605,7 @@ int32_t dvbapi_get_descindex(void) {
 	return idx;
 }
 
-void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t index) {
+void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx) {
 	int32_t i;
 
 	if (demux[demux_id].pidindex == -1) return;
@@ -613,7 +613,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t index) {
 	switch(selected_api) {
 #ifdef WITH_STAPI
 		case STAPI:
-			stapi_set_pid(demux_id, num, index, demux[demux_id].STREAMpids[num], demux[demux_id].pmt_file);
+			stapi_set_pid(demux_id, num, idx, demux[demux_id].STREAMpids[num], demux[demux_id].pmt_file);
 			break;
 #endif
 #ifdef WITH_COOLAPI
@@ -633,7 +633,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t index) {
 						ca_pid_t ca_pid2;
 						memset(&ca_pid2,0,sizeof(ca_pid2));
 						ca_pid2.pid = demux[demux_id].STREAMpids[num];
-						ca_pid2.index = index;
+						ca_pid2.index = idx;
 
 						if (cfg.dvbapi_boxtype == BOXTYPE_PC) {
 							// preparing packet
@@ -2143,7 +2143,7 @@ static void * dvbapi_main_local(void *cli) {
 	return NULL;
 }
 
-void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t index) {
+void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t idx) {
 	int32_t n;
 	unsigned char nullcw[8];
 	memset(nullcw, 0, 8);
@@ -2152,7 +2152,7 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t index) {
 
 	for (n=0;n<2;n++) {
 		if (memcmp(cw+(n*8),demux[demux_id].lastcw[n],8)!=0 && memcmp(cw+(n*8),nullcw,8)!=0) {
-			ca_descr.index = index;
+			ca_descr.index = idx;
 			ca_descr.parity = n;
 			memcpy(demux[demux_id].lastcw[n],cw+(n*8),8);
 			memcpy(ca_descr.cw,cw+(n*8),8);

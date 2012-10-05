@@ -362,13 +362,13 @@ struct cc_extended_ecm_idx *add_extended_ecm_idx(struct s_client *cl,
 }
 
 struct cc_extended_ecm_idx *get_extended_ecm_idx(struct s_client *cl,
-		uint8_t send_idx, int32_t remove) {
+		uint8_t send_idx, int32_t remove_item) {
 	struct cc_data *cc = cl->cc;
 	struct cc_extended_ecm_idx *eei;
 	LL_ITER it = ll_iter_create(cc->extended_ecm_idx);
 	while ((eei = ll_iter_next(&it))) {
 		if (eei->send_idx == send_idx) {
-			if (remove)
+			if (remove_item)
 				ll_iter_remove(&it);
 			//cs_debug_mask(D_TRACE, "%s get by send-idx: %d FOUND: %d",
 			//		getprefix(), send_idx, eei->ecm_idx);
@@ -376,7 +376,7 @@ struct cc_extended_ecm_idx *get_extended_ecm_idx(struct s_client *cl,
 		}
 	}
 #ifdef WITH_DEBUG
-	if (remove)
+	if (remove_item)
 		cs_debug_mask(cl->typ=='c'?D_CLIENT:D_READER, "%s get by send-idx: %d NOT FOUND", getprefix(),
 			send_idx);
 #endif
@@ -384,13 +384,13 @@ struct cc_extended_ecm_idx *get_extended_ecm_idx(struct s_client *cl,
 }
 
 struct cc_extended_ecm_idx *get_extended_ecm_idx_by_idx(struct s_client *cl,
-		uint16_t ecm_idx, int32_t remove) {
+		uint16_t ecm_idx, int32_t remove_item) {
 	struct cc_data *cc = cl->cc;
 	struct cc_extended_ecm_idx *eei;
 	LL_ITER it = ll_iter_create(cc->extended_ecm_idx);
 	while ((eei = ll_iter_next(&it))) {
 		if (eei->ecm_idx == ecm_idx) {
-			if (remove)
+			if (remove_item)
 				ll_iter_remove(&it);
 			//cs_debug_mask(D_TRACE, "%s get by ecm-idx: %d FOUND: %d",
 			//		getprefix(), ecm_idx, eei->send_idx);
@@ -398,7 +398,7 @@ struct cc_extended_ecm_idx *get_extended_ecm_idx_by_idx(struct s_client *cl,
 		}
 	}
 #ifdef WITH_DEBUG
-	if (remove)
+	if (remove_item)
 		cs_debug_mask(cl->typ=='c'?D_CLIENT:D_READER, "%s get by ecm-idx: %d NOT FOUND", getprefix(),
 			ecm_idx);
 #endif

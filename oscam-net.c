@@ -228,36 +228,36 @@ int set_socket_priority(int fd, int priority)
 #endif
 }
 
-void setTCPTimeouts(int32_t socket)
+void setTCPTimeouts(int32_t sock)
 {
 	int32_t flag = 1;
 	// this is not only for a real keepalive but also to detect closed connections so it should not be configurable
-	if(setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, &flag, sizeof(flag)) && errno != EBADF){
+	if(setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &flag, sizeof(flag)) && errno != EBADF){
 		cs_log("Setting SO_KEEPALIVE failed, errno=%d, %s", errno, strerror(errno));
 	}
 #if defined(TCP_KEEPIDLE) && defined(TCP_KEEPCNT) && defined(TCP_KEEPINTVL)
 	flag = 180;
-	if(setsockopt(socket, SOL_TCP, TCP_KEEPIDLE, &flag, sizeof(flag)) && errno != EBADF){	//send first keepalive packet after 3 minutes of last package received (keepalive packets included)
+	if(setsockopt(sock, SOL_TCP, TCP_KEEPIDLE, &flag, sizeof(flag)) && errno != EBADF){	//send first keepalive packet after 3 minutes of last package received (keepalive packets included)
 		cs_log("Setting TCP_KEEPIDLE failed, errno=%d, %s", errno, strerror(errno));
 	}
 	flag = 3;
-	if(setsockopt(socket, SOL_TCP, TCP_KEEPCNT, &flag, sizeof(flag)) && errno != EBADF){		//send up to 3 keepalive packets out (in interval TCP_KEEPINTVL), then disconnect if no response
+	if(setsockopt(sock, SOL_TCP, TCP_KEEPCNT, &flag, sizeof(flag)) && errno != EBADF){		//send up to 3 keepalive packets out (in interval TCP_KEEPINTVL), then disconnect if no response
 		cs_log("Setting TCP_KEEPCNT failed, errno=%d, %s", errno, strerror(errno));
 	}
 	flag = 5;
-	if(setsockopt(socket, SOL_TCP, TCP_KEEPINTVL, &flag, sizeof(flag)) && errno != EBADF){;		//send a keepalive packet out every 5 seconds (until answer has been received or TCP_KEEPCNT has been reached)
+	if(setsockopt(sock, SOL_TCP, TCP_KEEPINTVL, &flag, sizeof(flag)) && errno != EBADF){;		//send a keepalive packet out every 5 seconds (until answer has been received or TCP_KEEPCNT has been reached)
 		cs_log("Setting TCP_KEEPINTVL failed, errno=%d, %s", errno, strerror(errno));
 	}
 #endif
 	struct timeval tv;
 	tv.tv_sec = 60;
 	tv.tv_usec = 0;
-	if(setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(struct timeval)) && errno != EBADF){;
+	if(setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(struct timeval)) && errno != EBADF){;
 		cs_log("Setting SO_SNDTIMEO failed, errno=%d, %s", errno, strerror(errno));
 	}
 	tv.tv_sec = 600;
 	tv.tv_usec = 0;
-	if(setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval)) && errno != EBADF){;
+	if(setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval)) && errno != EBADF){;
 		cs_log("Setting SO_RCVTIMEO failed, errno=%d, %s", errno, strerror(errno));
 	}
 }

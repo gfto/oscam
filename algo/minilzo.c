@@ -1100,9 +1100,9 @@ _lzo_config_check(void)
 static lzo_bool schedule_insns_bug(void)
 {
 #if 1
-    const int clone[] = {1, 2, 0};
+    const int c[] = {1, 2, 0};
     const int *q;
-    q = clone;
+    q = c;
     if (*q)
 	return 0;
     return 1;

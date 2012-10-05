@@ -216,7 +216,7 @@ static void cCamCryptVG_Process_D0(struct s_reader * reader, const unsigned char
 static void cCamCryptVG_Process_D1(struct s_reader * reader, const unsigned char *ins, unsigned char *data, const unsigned char *status);
 static void cCamCryptVG_Decrypt_D3(struct s_reader * reader, unsigned char *ins, unsigned char *data, const unsigned char *status);
 static void cCamCryptVG_PostProcess_Decrypt(struct s_reader * reader, unsigned char *rxbuff);
-static int32_t cAES_Encrypt(struct s_reader * reader, const unsigned char *data, int32_t len, unsigned char *crypt);
+static int32_t cAES_Encrypt(struct s_reader * reader, const unsigned char *data, int32_t len, unsigned char *crypted);
 static void swap_lb (const unsigned char *buff, int32_t len);
 
 int32_t cw_is_valid(unsigned char *cw) // returns 1 if cw_is_valid, returns 0 if cw is all zeros
@@ -234,11 +234,11 @@ void cAES_SetKey(struct s_reader * reader, const unsigned char *key)
   AES_set_encrypt_key(key,128,&(reader->ekey));
 }
 
-int32_t cAES_Encrypt(struct s_reader * reader, const unsigned char *data, int32_t len, unsigned char *crypt)
+int32_t cAES_Encrypt(struct s_reader * reader, const unsigned char *data, int32_t len, unsigned char *crypted)
 {
     len=(len+15)&(~15); // pad up to a multiple of 16
     int32_t i;
-    for(i=0; i<len; i+=16) AES_encrypt(data+i,crypt+i,&(reader->ekey));
+    for(i=0; i<len; i+=16) AES_encrypt(data+i,crypted+i,&(reader->ekey));
     return len;
 }
 
@@ -356,16 +356,16 @@ static void cCamCryptVG_Process_D0(struct s_reader * reader, const unsigned char
       uint16_t iidata[32];
       memcpy( (unsigned char*)&iidata, data, 64 );
       for(count2=0; count2<32; count2++) {
-        uint32_t rem=0, div=key1[count2];
+        uint32_t rem=0, divisor=key1[count2];
         int8_t i;
         for(i=31; i>=0; i--) {
           uint32_t x=iidata[i] | (rem<<16);
-          rem=(x%div)&0xffff;
+          rem=(x%divisor)&0xffff;
           }
-        uint32_t carry=1, t=val_by2on3(div) | 1;
+        uint32_t carry=1, t=val_by2on3(divisor) | 1;
         while(t) {
-          if(t&1) carry=((carry*rem)%div)&0xffff;
-          rem=((rem*rem)%div)&0xffff;
+          if(t&1) carry=((carry*rem)%divisor)&0xffff;
+          rem=((rem*rem)%divisor)&0xffff;
           t>>=1;
           }
         cCamCryptVG_PartialMod(carry,count2,key2,key1);
@@ -936,7 +936,7 @@ void videoguard_mail_msg(struct s_reader *rdr, uint8_t *data)
       return;
 
    uint16_t msg_id = (data[2] << 8) | data[3];
-   uint8_t index = data[4] & 0x0F;
+   uint8_t idx = data[4] & 0x0F;
    int32_t msg_size = data[5] * 10 + 2;
    uint16_t date = (data[9] << 8) | data[10];
    int32_t submsg_len = data[12] - 2;
@@ -954,7 +954,7 @@ void videoguard_mail_msg(struct s_reader *rdr, uint8_t *data)
       msg->date = date;
       msg->id = msg_id;
       msg->nsubs = (data[4] & 0xF0) >> 4;
-      msg->mask = 1 << index;
+      msg->mask = 1 << idx;
       msg->written = 0;
       msg->len = submsg_len;
       if (!cs_malloc(&msg->message, msg_size))
@@ -969,9 +969,9 @@ void videoguard_mail_msg(struct s_reader *rdr, uint8_t *data)
    }
    else
    {
-      if (msg->written == 1 || msg->mask & (1 << index))
+      if (msg->written == 1 || msg->mask & (1 << idx))
          return;
-      msg->mask |= 1 << index;
+      msg->mask |= 1 << idx;
       msg->len += submsg_len;
       memcpy(&msg->message[submsg_idx], &data[15], submsg_len);
    }

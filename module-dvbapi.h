@@ -217,7 +217,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num);
 int32_t dvbapi_stop_filter(int32_t demux_index, int32_t type);
 struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidindex, char type);
 void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er);
-void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t index);
+void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t idx);
 int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connfd, char *pmtfile);
 void request_cw(struct s_client *dvbapi_client, ECM_REQUEST *er);
 void dvbapi_try_next_caid(int32_t demux_id);

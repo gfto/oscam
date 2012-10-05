@@ -481,14 +481,14 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 				uchar *ecm88DataCW = ecm88Data;
 				int32_t cwStart = 0;
 				//int32_t cwStartRes = 0;
-				int32_t exit = 0;
+				int32_t must_exit = 0;
 				// find CW start
-				while(cwStart < curEcm88len -1 && !exit)
+				while(cwStart < curEcm88len -1 && !must_exit)
 				{
 					if(ecm88Data[cwStart] == 0xEA && ecm88Data[cwStart+1] == 0x10)
 					{
 						ecm88DataCW = ecm88DataCW + cwStart + 2;
-						exit = 1;
+						must_exit = 1;
 					}
 					cwStart++;
 				}

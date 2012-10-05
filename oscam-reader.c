@@ -219,9 +219,9 @@ int32_t is_connect_blocked(struct s_reader *rdr) {
   cs_ftime(&cur_time);
   int32_t blocked = (rdr->tcp_block_delay && comp_timeb(&cur_time, &rdr->tcp_block_connect_till) < 0);
   if (blocked) {
-		int32_t time = 1000*(rdr->tcp_block_connect_till.time-cur_time.time)
+		int32_t ts = 1000*(rdr->tcp_block_connect_till.time-cur_time.time)
 				+rdr->tcp_block_connect_till.millitm-cur_time.millitm;
-		rdr_debug_mask(rdr, D_TRACE, "connection blocked, retrying in %ds", time/1000);
+		rdr_debug_mask(rdr, D_TRACE, "connection blocked, retrying in %ds", ts/1000);
   }
   return blocked;
 }

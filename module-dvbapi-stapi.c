@@ -479,10 +479,10 @@ void stapi_startdescrambler(int32_t demux_id, int32_t dev_index, int32_t mode) {
 	return;
 }
 
-int32_t stapi_set_pid(int32_t demux_id, int32_t UNUSED(num), int32_t index, uint16_t UNUSED(pid), char *UNUSED(pmtfile)) {
+int32_t stapi_set_pid(int32_t demux_id, int32_t UNUSED(num), int32_t idx, uint16_t UNUSED(pid), char *UNUSED(pmtfile)) {
 	int32_t n;
 
-	if (index==-1) {
+	if (idx==-1) {
 		for (n=0;n<PTINUM;n++) {
 			if (demux[demux_id].DescramblerHandle[n]==0) continue;
 

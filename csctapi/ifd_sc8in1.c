@@ -314,11 +314,11 @@ static int32_t mcrWriteDisplayAscii(struct s_reader *reader, unsigned char data,
 	return OK;
 }
 
-static int32_t mcrWriteClock(struct s_reader *reader, unsigned char saveClock, unsigned char clock[2]) {
+static int32_t mcrWriteClock(struct s_reader *reader, unsigned char saveClock, unsigned char clock_val[2]) {
 	unsigned char buff[3];
 	buff[0] = 0x63;
-	buff[1] = clock[0];
-	buff[2] = clock[1];
+	buff[1] = clock_val[0];
+	buff[2] = clock_val[1];
 	if (sc8in1_command(reader, buff, 3, 0, 0, 0, 0) < 0)
 		return ERROR;
 	if (saveClock) {
@@ -329,13 +329,13 @@ static int32_t mcrWriteClock(struct s_reader *reader, unsigned char saveClock, u
 	return OK;
 }
 
-static int32_t mcrReadClock(struct s_reader *reader, unsigned char *clock) {
+static int32_t mcrReadClock(struct s_reader *reader, unsigned char *clock_val) {
 	unsigned char buff[2];
 	buff[0] = 0x67;
 	if (sc8in1_command(reader, buff, 1, 2, 0, 0, 0) < 0)
 		return ERROR;
-	clock[0] = buff[0];
-	clock[1] = buff[1];
+	clock_val[0] = buff[0];
+	clock_val[1] = buff[1];
 	return OK;
 }
 
@@ -473,7 +473,7 @@ static void* mcr_update_display_thread(void *param) {
 	return NULL;
 }
 
-int32_t MCR_DisplayText(struct s_reader *reader, char* text, uint16_t text_len, uint16_t time, uint8_t blocking) {
+int32_t MCR_DisplayText(struct s_reader *reader, char* text, uint16_t text_len, uint16_t ch_time, uint8_t blocking) {
 	struct s_sc8in1_display *display;
 	if (cs_malloc(&display, sizeof(struct s_sc8in1_display))) {
 		if (!cs_malloc(&display->text, text_len)) {
@@ -483,7 +483,7 @@ int32_t MCR_DisplayText(struct s_reader *reader, char* text, uint16_t text_len, 
 		}
 		memcpy(display->text, text, text_len);
 		display->text_length = text_len;
-		display->char_change_time = time;
+		display->char_change_time = ch_time;
 		display->last_char = 0;
 		display->blocking = blocking;
 		display->next = NULL;
@@ -750,10 +750,10 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 		if (mcrReadClock(reader, &clockspeed[0])) {
 			rdr_log(reader, "ERROR: Sc8in1 cannot read clockspeed");
 		}
-		static char * clock[] = { "3,57", "3,68", "6,00", "8,00" };
+		static char * clock_mhz[] = { "3,57", "3,68", "6,00", "8,00" };
 		uint16_t result = clockspeed[0] << 8 | clockspeed[1];
 		for (i = 0; i < 8; i++) {
-			rdr_log(reader, "Slot %i is clocked with %s mhz", i+1, clock[(result>>(i*2))&0X0003]);
+			rdr_log(reader, "Slot %i is clocked with %s mhz", i+1, clock_mhz[(result>>(i*2))&0X0003]);
 		}
 	}
 

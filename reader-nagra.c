@@ -38,14 +38,14 @@ static char *nagra_datetime(struct s_reader *rdr, uint8_t *ndays, int32_t offset
 	struct tm tms;
 	memset(&tms, 0, sizeof(tms));
 	int32_t days = (ndays[0] << 8 | ndays[1]) + offset;
-	int32_t time = 0;
+	int32_t sec = 0;
 	if (!rdr->is_tiger)
-		time = (ndays[2] << 8 | ndays[3]);
+		sec = (ndays[2] << 8 | ndays[3]);
 	if (days > 0x41B4 && sizeof(time_t) < 8) // to overcome 32-bit systems limitations
 		days = 0x41A2;                   // 01-01-2038
 	tms.tm_year = 92;
 	tms.tm_mday = days + 1;
-	tms.tm_sec = time;
+	tms.tm_sec = sec;
 	time_t ut = mktime(&tms);
 	if (t)
 		*t = ut;
@@ -177,7 +177,7 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader * reader)
 	unsigned char sk[16];
 	unsigned char tmp[104];
 	unsigned char idea_sig[16];
-	unsigned char random[88];
+	unsigned char rnd[88];
 	char tmp2[17];
 
 	if(!do_cmd(reader, 0xd1,0x02,0x51,0xd2,NULL,cta_res,&cta_lr))
@@ -258,9 +258,9 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader * reader)
 	rdr_log_sensitive(reader, "type: NAGRA, caid: %04X, IRD ID: {%s}",reader->caid, cs_hexdump(1,reader->irdId,4, tmp2, sizeof(tmp2)));
   	rdr_log(reader, "ProviderID: %s", cs_hexdump(1,reader->prid[0],4, tmp2, sizeof(tmp2)));
 
-	memset(random, 0, 88);
-	memcpy(random, sk,16);
-	ReverseMem(random, 88);
+	memset(rnd, 0, 88);
+	memcpy(rnd, sk,16);
+	ReverseMem(rnd, 88);
 
 
 	BN_CTX *ctx3 = BN_CTX_new();
@@ -273,7 +273,7 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader * reader)
 	BIGNUM *bnPT3 = BN_CTX_get(ctx3);
 	BN_bin2bn(d1_rsa_modulo, 88, bnN3);
 	BN_bin2bn(vFixed+4, 1, bnE3);
-	BN_bin2bn(random, 88, bnCT3);
+	BN_bin2bn(rnd, 88, bnCT3);
 	BN_mod_exp(bnPT3, bnCT3, bnE3, bnN3, ctx3);
 	memset(d2_data, 0, 88);
 	BN_bn2bin(bnPT3, d2_data + (88-BN_num_bytes(bnPT3)));

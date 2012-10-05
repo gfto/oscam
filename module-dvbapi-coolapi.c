@@ -325,11 +325,11 @@ int32_t coolapi_close_device(int32_t fd)
 /* write cw to all demuxes in mask with passed index */
 int32_t coolapi_write_cw(int32_t mask, uint16_t *STREAMpids, int32_t count, ca_descr_t * ca_descr)
 {
-    int32_t i, index = ca_descr->index;
+    int32_t i, idx = ca_descr->index;
     int32_t result;
     void * channel;
 
-	cs_debug_mask(D_DVBAPI, "cw%d: mask %d index %d pid count %d", ca_descr->parity, mask, index, count);
+	cs_debug_mask(D_DVBAPI, "cw%d: mask %d index %d pid count %d", ca_descr->parity, mask, idx, count);
 	for(i = 0; i < count; i++) {
 		int32_t pid = STREAMpids[i];
 		int32_t j;

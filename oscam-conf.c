@@ -353,11 +353,11 @@ FILE *open_config_file_or_die(const char *conf_filename) {
 
 FILE *create_config_file(const char *conf_filename) {
 	unsigned int len = strlen(cs_confdir) + strlen(conf_filename) + 8;
-	char tmpfile[len];
-	snprintf(tmpfile,  len, "%s%s.tmp", cs_confdir, conf_filename);
-	FILE *f = fopen(tmpfile, "w");
+	char temp_file[len];
+	snprintf(temp_file,  len, "%s%s.tmp", cs_confdir, conf_filename);
+	FILE *f = fopen(temp_file, "w");
 	if (!f) {
-		cs_log("ERROR: Cannot create file \"%s\" (errno=%d %s)", tmpfile, errno, strerror(errno));
+		cs_log("ERROR: Cannot create file \"%s\" (errno=%d %s)", temp_file, errno, strerror(errno));
 		return NULL;
 	}
 	setvbuf(f, NULL, _IOFBF, 16 * 1024);
@@ -370,10 +370,10 @@ FILE *create_config_file(const char *conf_filename) {
 
 bool flush_config_file(FILE *f, const char *conf_filename) {
 	unsigned int len = strlen(cs_confdir) + strlen(conf_filename) + 8;
-	char tmpfile[len], destfile[len], bakfile[len];
+	char temp_file[len], destfile[len], bakfile[len];
 	snprintf(destfile, len, "%s%s"    , cs_confdir, conf_filename);
-	snprintf(tmpfile,  len, "%s%s.tmp", cs_confdir, conf_filename);
+	snprintf(temp_file,  len, "%s%s.tmp", cs_confdir, conf_filename);
 	snprintf(bakfile,  len, "%s%s.bak", cs_confdir, conf_filename);
 	fclose(f);
-	return safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0);
+	return safe_overwrite_with_bak(destfile, temp_file, bakfile, 0);
 }

@@ -497,11 +497,11 @@ int32_t init_srvid(void)
 	free(token);
 
 	cs_ftime(&te);
-	int32_t time = 1000*(te.time-ts.time)+te.millitm-ts.millitm;
+	int32_t load_time = 1000*(te.time-ts.time)+te.millitm-ts.millitm;
 
 	fclose(fp);
 	if (nr > 0) {
-		cs_log("%d service-id's loaded in %dms", nr, time);
+		cs_log("%d service-id's loaded in %dms", nr, load_time);
 		if (nr > 2000) {
 			cs_log("WARNING: You risk high CPU load and high ECM times with more than 2000 service-id's!");
 			cs_log("HINT: --> use optimized lists from http://www.streamboard.tv/wiki/Srvid");

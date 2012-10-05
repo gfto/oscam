@@ -52,13 +52,13 @@ void openxcas_debug_message_onoff(int bVerbose);
  * -1 : error
  *  >0 : success
  */
-int openxcas_get_smartcard_device(unsigned int index);
+int openxcas_get_smartcard_device(unsigned int idx);
 
 /* RETURN VALUE: status
  * -1 : error
  *  0 : success
  */
-int openxcas_release_smartcard_device(unsigned int index);
+int openxcas_release_smartcard_device(unsigned int idx);
 
 
 /* RETURN VALUE: status
@@ -72,7 +72,7 @@ char * openxcas_get_working_directory(void);
  *  0 : timeout
  *  1 : success
  */
-int openxcas_get_message(openxcas_msg_t * message, int wait);
+int openxcas_get_message(openxcas_msg_t * message, int wait_time);
 
 /* RETURN VALUE: status
  * -1 : error

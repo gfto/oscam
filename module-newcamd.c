@@ -367,7 +367,7 @@ static int32_t connect_newcamd_server(void)
   uint8_t key[16];
   int32_t handle=0;
 
-  uint32_t index;
+  uint32_t idx;
   uchar passwdcrypt[120];
   uint8_t login_answer;
   int32_t bytes_received;
@@ -392,15 +392,15 @@ static int32_t connect_newcamd_server(void)
   des_login_key_get(keymod, cl->reader->ncd_key, 14, key);
 
   // 3. Send login info
-  index = 3;
+  idx = 3;
   buf[0] = MSG_CLIENT_2_SERVER_LOGIN;
   buf[1] = 0;
-  cs_strncpy((char *)buf+index, cl->reader->r_usr, sizeof(buf)-index);
+  cs_strncpy((char *)buf+idx, cl->reader->r_usr, sizeof(buf)-idx);
   __md5_crypt(cl->reader->r_pwd, "$1$abcdefgh$", (char *)passwdcrypt);
-  index += strlen(cl->reader->r_usr)+1;
-  cs_strncpy((char *)buf+index, (const char *)passwdcrypt, sizeof(buf)-index);
+  idx += strlen(cl->reader->r_usr)+1;
+  cs_strncpy((char *)buf+idx, (const char *)passwdcrypt, sizeof(buf)-idx);
 
-  network_message_send(handle, 0, buf, index+strlen((char *)passwdcrypt)+1, key,
+  network_message_send(handle, 0, buf, idx+strlen((char *)passwdcrypt)+1, key,
                        COMMTYPE_CLIENT, NCD_CLIENT_ID, NULL);
 
   // 3.1 Get login answer

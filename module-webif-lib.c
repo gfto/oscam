@@ -233,10 +233,10 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
 			FILE *fp;
 			char buffer[1024];
 			memset(buffer, 0, sizeof(buffer));
-			int32_t read, allocated = 1025, offset, size = 0;
+			int32_t readen, allocated = 1025, offset, size = 0;
 			if (!cs_malloc(&result, allocated)) return NULL;
 			if((fp = fopen(path,"r"))!=NULL){
-			while((read = fread(&buffer,sizeof(char),1024,fp)) > 0){
+			while((readen = fread(&buffer,sizeof(char),1024,fp)) > 0){
 				offset = 0;
 				if(size == 0 && removeHeader){
 					/* Remove version string from output and check if it is valid for output */
@@ -245,7 +245,7 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
 						char *pch2 = strstr(pch1,"-->");
 						if(pch2 != NULL){
 							offset = pch2 - buffer + 4;
-							read -= offset;
+							readen -= offset;
 							pch2[0] = '\0';
 							char *ptr1, *ptr2, *saveptr1 = NULL, *saveptr2 = NULL;
 							for (i = 0, ptr1 = strtok_r(pch1 + 10, ";", &saveptr1); (ptr1) && i < 4 ; ptr1 = strtok_r(NULL, ";", &saveptr1), i++){
@@ -298,12 +298,12 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
 						}
 					}
 				}
-				if(allocated < size + read + 1) {
+				if(allocated < size + readen + 1) {
 					allocated += size + 1024;
 					if (!cs_realloc(&result, allocated)) return NULL;
 				}
-				memcpy(result + size, buffer + offset, read);
-				size += read;
+				memcpy(result + size, buffer + offset, readen);
+				size += readen;
 			}
 			result[size] = '\0';
 			fclose (fp);
@@ -760,7 +760,7 @@ void send_header304(FILE *f){
  * function for sending files.
  */
 void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uint32_t etagheader){
-	int8_t fileno = 0;
+	int8_t filen = 0;
 	int32_t size = 0;
 	char* mimetype = "", *result = " ", *allocated = NULL;
 	time_t moddate;
@@ -772,14 +772,14 @@ void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uin
 			filename = tpl_getFilePathInSubdir(cfg.http_tpl ? cfg.http_tpl : "", subdir, "site", ".css", path, 255);
 		}
 		mimetype = "text/css";
-		fileno = 1;
+		filen = 1;
 	} else if (!strcmp(filename, "JS")){
 		filename = cfg.http_jscript ? cfg.http_jscript : "";
 		if (subdir && strlen(subdir) > 0) {
 			filename = tpl_getFilePathInSubdir(cfg.http_tpl ? cfg.http_tpl : "", subdir, "oscam", ".js", path, 255);
 		}
 		mimetype = "text/javascript";
-		fileno = 2;
+		filen = 2;
 	}
 
 	if(strlen(filename) > 0 && file_exists(filename) == 1){
@@ -789,20 +789,20 @@ void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uin
 		// We need at least size 1 or keepalive gets problems on some browsers...
 		if(st.st_size > 0){
 			FILE *fp;
-			int32_t read;
+			int32_t readen;
 			if((fp = fopen(filename, "r"))==NULL) return;
 			if (!cs_malloc(&allocated, st.st_size + 1)) {
 				send_error500(f);
 				fclose(fp);
 				return;
 			}
-			if((read = fread(allocated, 1, st.st_size, fp)) == st.st_size){
-			  allocated[read] = '\0';
+			if((readen = fread(allocated, 1, st.st_size, fp)) == st.st_size){
+			  allocated[readen] = '\0';
 			}
 			fclose(fp);
 		}
 
-		if (fileno == 1 && cfg.http_prepend_embedded_css) { // Prepend Embedded CSS
+		if (filen == 1 && cfg.http_prepend_embedded_css) { // Prepend Embedded CSS
 			char* separator = "/* External CSS */";
 			char* oldallocated = allocated;
 			int32_t newsize = strlen(CSS) + strlen(separator) + 2;
@@ -822,13 +822,13 @@ void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uin
 	} else {
 #ifdef TOUCH
 		char* res_tpl = strcmp(subdir, TOUCH_SUBDIR)
-			? (fileno == 1 ? CSS : JSCRIPT)
-			: (fileno == 1 ? TOUCH_CSS : TOUCH_JSCRIPT);
+			? (filen == 1 ? CSS : JSCRIPT)
+			: (filen == 1 ? TOUCH_CSS : TOUCH_JSCRIPT);
 		if (strlen(res_tpl) > 0) result = res_tpl;
 #else
-		if (fileno == 1 && strlen(CSS) > 0){
+		if (filen == 1 && strlen(CSS) > 0){
 			result = CSS;
-		} else if (fileno == 2 && strlen(JSCRIPT) > 0){
+		} else if (filen == 2 && strlen(JSCRIPT) > 0){
 			result = JSCRIPT;
 		}
 #endif

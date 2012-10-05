@@ -164,17 +164,17 @@ static void arm_led_start_thread(void) {
 }
 
 static void arm_led(int32_t led, int32_t action) {
-	struct s_arm_led *arm_led;
+	struct s_arm_led *data;
 	if (!cfg.enableled || arm_led_type == LED_TYPE_UNKNOWN)
 		return;
 	if (!arm_led_actions) {
 		arm_led_actions = ll_create("arm_led_actions");
 	}
-	if (cs_malloc(&arm_led, sizeof(struct s_arm_led))) {
-		arm_led->start_time = time((time_t)0);
-		arm_led->led = led;
-		arm_led->action = action;
-		ll_append(arm_led_actions, (void *)arm_led);
+	if (cs_malloc(&data, sizeof(struct s_arm_led))) {
+		data->start_time = time((time_t)0);
+		data->led = led;
+		data->action = action;
+		ll_append(arm_led_actions, (void *)data);
 	}
 	if (arm_led_thread) {
 		// arm_led_thread_main is not started at oscam startup

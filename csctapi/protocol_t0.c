@@ -334,7 +334,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 {
 	BYTE buffer[PROTOCOL_T0_MAX_SHORT_RESPONSE];
 	BYTE *data;
-	int32_t Lc, Le, sent, recv;
+	int32_t Lc, Le, sent, recved;
 	int32_t nulls, cmd_case;
 	*lr = 0; //in case of error this will be returned
 	
@@ -359,7 +359,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 	/* Initialise counters */
 	nulls = 0;
 	sent = 0;
-	recv = 0;
+	recved = 0;
 	
 	/* 
 	* Let's be a bit paranoid with buffer sizes within this loop
@@ -367,30 +367,30 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 	* if card does not strictly respect the protocol
 	*/
 	
-	while (recv < PROTOCOL_T0_MAX_SHORT_RESPONSE)
+	while (recved < PROTOCOL_T0_MAX_SHORT_RESPONSE)
 	{
-		call (ICC_Async_Receive (reader, 1, buffer + recv));				//Read one procedure byte
+		call (ICC_Async_Receive (reader, 1, buffer + recved));				//Read one procedure byte
 		
 		/* NULL byte received */
-		if (buffer[recv] == 0x60) {
+		if (buffer[recved] == 0x60) {
 			nulls++;
 			if (nulls >= PROTOCOL_T0_MAX_NULLS) {								//Maximum number of nulls reached 
 				rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Maximum number of nulls reached: %d", __func__, nulls);
 				return ERROR;
 			}
 		}
-		else if ((buffer[recv] & 0xF0) == 0x60 || (buffer[recv] & 0xF0) == 0x90) /* SW1 byte received */
+		else if ((buffer[recved] & 0xF0) == 0x60 || (buffer[recved] & 0xF0) == 0x90) /* SW1 byte received */
 		{//printf("sw1\n");
-			recv++;
-			if (recv >= PROTOCOL_T0_MAX_SHORT_RESPONSE) {
-				rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Maximum short response exceeded: %d", __func__, recv);
+			recved++;
+			if (recved >= PROTOCOL_T0_MAX_SHORT_RESPONSE) {
+				rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Maximum short response exceeded: %d", __func__, recved);
 				return ERROR;
 			}
-			call (ICC_Async_Receive (reader, 1, buffer + recv));					//Read SW2 byte
-			recv++;
+			call (ICC_Async_Receive (reader, 1, buffer + recved));					//Read SW2 byte
+			recved++;
 			break;
 		}
-		else if ((buffer[recv] & 0x0E) == (command[1] & 0x0E)) /* ACK byte received */
+		else if ((buffer[recved] & 0x0E) == (command[1] & 0x0E)) /* ACK byte received */
 		{//printf("ack\n");
 			/* Reset null's counter */
 			nulls = 0;
@@ -407,8 +407,8 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 			}
 			else /* Case 3 command: receive data */
 			{
-				if (recv >= PROTOCOL_T0_MAX_SHORT_RESPONSE) {
-					rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Case 3 ACK - maximum short response exceeded: %d", __func__, recv);
+				if (recved >= PROTOCOL_T0_MAX_SHORT_RESPONSE) {
+					rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Case 3 ACK - maximum short response exceeded: %d", __func__, recved);
 					return ERROR;
 				}
 				
@@ -417,12 +417,12 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 				*/
 				
 				/* Read remaining data bytes */
-				call (ICC_Async_Receive(reader, MAX (Le - recv, 0), buffer + recv));
-				recv = Le;
+				call (ICC_Async_Receive(reader, MAX (Le - recved, 0), buffer + recved));
+				recved = Le;
 				continue;
 			}
 		}
-		else if ((buffer[recv] & 0x0E) == ((~command[1]) & 0x0E)) /* ~ACK byte received */
+		else if ((buffer[recved] & 0x0E) == ((~command[1]) & 0x0E)) /* ~ACK byte received */
 		{//printf("~ack\n");
 			nulls = 0;																								//Reset null's counter
 			
@@ -437,30 +437,30 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 				continue;
 			}
 			else {/* Case 3 command: receive data */
-				if (recv >= PROTOCOL_T0_MAX_SHORT_RESPONSE) {
-					rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Case 3 ~ACK - maximum short response exceeded: %d", __func__, recv);
+				if (recved >= PROTOCOL_T0_MAX_SHORT_RESPONSE) {
+					rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Case 3 ~ACK - maximum short response exceeded: %d", __func__, recved);
 					return ERROR;
 				}
-				call (ICC_Async_Receive (reader, 1, buffer + recv));						//Read next data byte
-				recv++;
+				call (ICC_Async_Receive (reader, 1, buffer + recved));						//Read next data byte
+				recved++;
 				continue;
 			}
 		}
 		else { /* Anything else received */
-			rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Received unexpected character: %02X", __func__, buffer[recv]);
+			rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Received unexpected character: %02X", __func__, buffer[recved]);
 			return ERROR;
 		}
 	}//while
 		
-	memcpy(rsp, buffer, recv);
-	*lr = recv;
+	memcpy(rsp, buffer, recved);
+	*lr = recved;
 	return OK;
 }
 
 int32_t Protocol_T14_ExchangeTPDU (struct s_reader *reader, unsigned char * cmd_raw, uint16_t command_len, unsigned char * rsp, uint16_t * lr)
 {
 	BYTE buffer[PROTOCOL_T14_MAX_SHORT_RESPONSE];
-	int32_t recv;
+	int32_t recved;
 	int32_t cmd_case;
 	BYTE ixor = 0x3E;
 	BYTE ixor1 = 0x3F;
@@ -497,18 +497,18 @@ int32_t Protocol_T14_ExchangeTPDU (struct s_reader *reader, unsigned char * cmd_
 	if(cmd_raw[0] == 0x02 && cmd_raw[1] == 0x09)
 		cs_sleepms(2500); //FIXME why wait?
 	call (ICC_Async_Receive (reader, 8, buffer));				//Read one procedure byte
-	recv = (int32_t)buffer[7];
-	if(recv)
-		call (ICC_Async_Receive (reader, recv, buffer + 8));
+	recved = (int32_t)buffer[7];
+	if(recved)
+		call (ICC_Async_Receive (reader, recved, buffer + 8));
 	call (ICC_Async_Receive (reader, 1, &ixor));
-	for(i=0; i<8+recv; i++)		
+	for(i=0; i<8+recved; i++)		
 		ixor1^=buffer[i];
 	if(ixor1 != ixor) {
 		rdr_debug_mask(reader, D_TRACE, "ERROR: invalid checksum = %02X expected %02X", ixor1, ixor);
 		return ERROR;
 	}
-	memcpy(buffer + 8 + recv, buffer + 2, 2);
-	*lr = recv + 2;
+	memcpy(buffer + 8 + recved, buffer + 2, 2);
+	*lr = recved + 2;
 	memcpy(rsp, buffer + 8, *lr); 
 	return OK;
 }
