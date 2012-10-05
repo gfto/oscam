@@ -2340,6 +2340,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		double cwrate = 0.0, cwrate2 = 0.0;
 
 		//search account in active clients
+		isactive = 0;
 		int16_t nrclients = 0;
 		struct s_client *latestclient = NULL;
 		for (cl=first_client->next; cl ; cl=cl->next) {
