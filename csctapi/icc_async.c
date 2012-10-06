@@ -476,33 +476,17 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, BYTE * data)
 {
 	int32_t ret;
 	rdr_ddump_mask(reader, D_IFD, data, size, "Transmit:");
-	BYTE *buffer = NULL, *sent;
+	BYTE *sent = data;
+
+	if (reader->convention == ATR_CONVENTION_INVERSE && ((!reader->crdr.active && reader->typ <= R_MOUSE) || (reader->crdr.active && reader->crdr.need_inverse==1))) {
+		ICC_Async_InvertBuffer (size, sent);
+	}
 
 	if (reader->crdr.active==1) {
-		if (reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.need_inverse==1) {
-			if (!cs_malloc(&buffer, size))
-				return -1;
-			memcpy (buffer, data, size);
-			ICC_Async_InvertBuffer (size, buffer);
-			sent = buffer;
-		} else
-			sent = data;
-
 		call(reader->crdr.transmit(reader, sent, size));
-		if (buffer)
-			free (buffer);
 		rdr_debug_mask(reader, D_IFD, "Transmit succesful");
 		return OK;
 	}
-
-	if (reader->convention == ATR_CONVENTION_INVERSE && reader->typ <= R_MOUSE) {
-		buffer = (BYTE *) calloc(sizeof (BYTE), size);
-		memcpy (buffer, data, size);
-		ICC_Async_InvertBuffer (size, buffer);
-		sent = buffer;
-	}
-	else
-		sent = data;
 
 	switch(reader->typ) {
 		case R_MP35:
@@ -533,7 +517,7 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, BYTE * data)
 
 	if (ret) rdr_debug_mask(reader, D_IFD, "Transmit error!");
 	else rdr_debug_mask(reader, D_IFD, "Transmit succesful"); 
-	if (buffer)	free (buffer);
+
 	return ret;
 }
 
