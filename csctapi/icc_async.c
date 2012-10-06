@@ -485,6 +485,10 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, BYTE * data)
 	if (reader->crdr.active==1) {
 		call(reader->crdr.transmit(reader, sent, size));
 		rdr_debug_mask(reader, D_IFD, "Transmit succesful");
+		if (reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.need_inverse) {
+			// revert inversion cause the code in protocol_t0 is accessing buffer after transmit
+			ICC_Async_InvertBuffer (size, sent);
+		}
 		return OK;
 	}
 
@@ -513,6 +517,11 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, BYTE * data)
 		default:
 			rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
 			return ERROR;
+	}
+
+	if (reader->convention == ATR_CONVENTION_INVERSE && reader->typ <= R_MOUSE) {
+		// revert inversion cause the code in protocol_t0 is accessing buffer after transmit
+		ICC_Async_InvertBuffer (size, sent);
 	}
 
 	if (ret) rdr_debug_mask(reader, D_IFD, "Transmit error!");
