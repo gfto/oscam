@@ -530,6 +530,19 @@ void dvbapi_add_ecmpid(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_
 	demux[demux_id].ECMpidcount++;
 }
 
+int32_t checkemmcaid(uint16_t caid, CAIDTAB *ctab) {
+  int32_t found =0;
+  
+  if (!caid || !ctab->caid[0]) return found;
+
+  int32_t i;
+  for (i=0;i<CS_MAXCAIDTAB;i++){
+    if (!ctab->caid[i]) return found;
+    if ((caid & ctab->mask[i]) == ctab->caid[i]) found = 1;
+  }
+  return found;
+}
+
 int32_t checkemmpid (struct s_reader *rdr, uint32_t provid) {
 	int32_t found = 0;
 	if (ll_count(rdr->ll_entitlements) > 0) {
@@ -577,7 +590,7 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len) {
 		uint16_t emm_pid=(((buf[i + 4] & 0x1F) << 8) | buf[i + 5]);
 		uint32_t emm_provider = 0;	
 		for (testrdr=first_active_reader; testrdr ; testrdr=testrdr->next) { // make a list of all active readers
-			if (testrdr->caid != caid || (testrdr->audisabled !=0)) break; // we only want to add matching emmpids others are of no use!
+			if (!checkemmcaid(caid, &testrdr->ctab) || (testrdr->audisabled !=0)) break; // we only want to add matching emmpids others are of no use!
 			else { 
 				switch (caid >> 8) {
 					case 0x01:
