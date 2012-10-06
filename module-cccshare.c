@@ -690,12 +690,16 @@ int32_t is_au_card(struct cc_card *card) {
 int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t free_card) {
 
     int32_t modified = 0;
+	if (!card) 
+    return modified;
+	
+	if (card) {
     if (!card->aufilter && is_au_card(card)) {
+	
     	//card keeps their hexserial, set aufilter (0=any, 1=au clients only, 2=nonau clients only)
-    	card->aufilter = 1;
+		card->aufilter = 1;
     	struct cc_card *card3 = create_card(card);
-        if (!card)
-            return modified;
+
 		add_card_providers(card3, card, 1); //copy providers to new card. Copy remote nodes to new card
 
     	//create a copy of the card, set aufilter to 2 and remove hexserial:
@@ -703,7 +707,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t fre
     	memset(card3->hexserial, 0, sizeof(card3->hexserial));
     	modified = add_card_to_serverlist(cardlist, card3, TRUE);
     }
-
+}
     LL_ITER it = ll_iter_create(cardlist);
     struct cc_card *card2;
 
