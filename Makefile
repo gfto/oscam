@@ -261,7 +261,6 @@ SRC-$(CONFIG_WITH_STAPI) += csctapi/ifd_stapi.c
 SRC-$(CONFIG_WITH_CARDREADER) += csctapi/io_serial.c
 SRC-$(CONFIG_WITH_CARDREADER) += csctapi/protocol_t0.c
 SRC-$(CONFIG_WITH_CARDREADER) += csctapi/protocol_t1.c
-SRC-$(CONFIG_WITH_CARDREADER) += csctapi/t1_block.c
 
 SRC-$(CONFIG_CS_ANTICASC) += module-anticasc.c
 SRC-$(CONFIG_CS_CACHEEX) += module-cacheex.c

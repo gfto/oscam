@@ -24,304 +24,261 @@
 
 #include "../globals.h"
 #ifdef WITH_CARDREADER
-#include "../oscam-string.h"
 #include "defines.h"
-#include "t1_block.h"
 #include "icc_async.h"
 
-/* Timings in ATR are not used in T=1 cards */
-/* #undef PROTOCOL_T1_USE_DEFAULT_TIMINGS */
+/* Buffer sizes */
+#define T1_BLOCK_MAX_SIZE                259
 
-/*
- * Not exported functions declaration
- */
+/* Types of block */
+#define T1_BLOCK_I                0x00
+#define T1_BLOCK_R_OK             0x80
+#define T1_BLOCK_R_EDC_ERR        0x81
+#define T1_BLOCK_R_OTHER_ERR      0x82
+#define T1_BLOCK_S_RESYNCH_REQ    0xC0
+#define T1_BLOCK_S_RESYNCH_RES    0xE0
+#define T1_BLOCK_S_IFS_REQ        0xC1
+#define T1_BLOCK_S_IFS_RES        0xE1
+#define T1_BLOCK_S_ABORT_REQ      0xC2
+#define T1_BLOCK_S_ABORT_RES      0xE2
+#define T1_BLOCK_S_WTX_REQ        0xC3
+#define T1_BLOCK_S_WTX_RES        0xE3
+#define T1_BLOCK_S_VPP_ERR        0xE4
 
-static int32_t Protocol_T1_SendBlock (struct s_reader *reader, T1_Block * block);
+#define T1_BLOCK_NAD        0x00
 
-static int32_t Protocol_T1_ReceiveBlock (struct s_reader *reader, T1_Block ** block);
+#define T1_Block_GetNS(a)	((a[1] >> 6) & 0x01)
+#define T1_Block_GetMore(a)	((a[1] >> 5) & 0x01)
+#define T1_Block_GetNR(a)	((a[1] >> 4) & 0x01)
+#define T1_Block_GetLen(a)	a[2]
 
-/*
- * Exproted funtions definition
- */
 
-int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, uint16_t command_len, unsigned char * rsp, uint16_t * lr)
-{
-  T1_Block *block;
-  BYTE *buffer, rsp_type, bytes, nr, wtx;
-  uint16_t counter;
-  int32_t ret;
-  bool more;
-  if (command[1] == T1_BLOCK_S_IFS_REQ)
-  {
-    BYTE inf = command[3];
+static unsigned char T1_Block_LRC(unsigned char * data, uint32_t length) {
+	unsigned char lrc = 0x00;
+	uint32_t i;
+	for (i = 0; i < length; i++)
+		lrc ^= data[i];
+	return lrc;
+}
 
-    /* Create an IFS request S-Block */
-    block = T1_Block_NewSBlock (T1_BLOCK_S_IFS_REQ, 1, &inf);
-    rdr_debug_mask(reader, D_IFD, "Protocol: Sending block S(IFS request, %d)", inf);
+static int32_t T1_Block_SendIBlock(struct s_reader *reader, uint8_t *block_data, unsigned char len, unsigned char * inf, unsigned char ns, int32_t more) {
+	int length = len + 4;
 
-    /* Send IFSD request */
-    ret = Protocol_T1_SendBlock (reader, block);
-	
-	/* Delete block */
-	T1_Block_Delete (block);
-	
-    /* Receive a block */
-    ret = Protocol_T1_ReceiveBlock (reader, &block);
-
-    if (ret == OK)
-      {
-        rsp_type = T1_Block_GetType (block);
-
-        /* Positive IFS Response S-Block received */
-        if (rsp_type == T1_BLOCK_S_IFS_RES)
-          {
-            /* Update IFSD value */
-            inf = (*T1_Block_GetInf (block));
-            rdr_debug_mask(reader, D_IFD, "Protocol: Received block S(IFS response, %d)", inf);
-          }
-        T1_Block_Delete (block);
-      }
-
-    return ret;
-  }
-
-  if (command[1] == T1_BLOCK_S_RESYNCH_REQ)
-  {
-    /* Create an Resynch request S-Block */
-    block = T1_Block_NewSBlock (T1_BLOCK_S_RESYNCH_REQ, 0, NULL);
-    rdr_debug_mask(reader, D_IFD, "Protocol: Sending block S(RESYNCH request)");
-
-    /* Send request */
-    ret = Protocol_T1_SendBlock (reader, block);
-	
-	/* Delete I-block */
-	T1_Block_Delete (block);
-
-    /* Receive a block */
-    ret = Protocol_T1_ReceiveBlock (reader, &block);
-
-    if (ret == OK)
-      {
-        rsp_type = T1_Block_GetType (block);
-
-        /* Positive IFS Response S-Block received */
-        if (rsp_type == T1_BLOCK_S_RESYNCH_RES) {
-            rdr_debug_mask(reader, D_IFD, "Protocol: Received block S(RESYNCH response)");
-						reader->ns = 0;
-				}
-		T1_Block_Delete (block);
-      }
-
-    return ret;
-  }
-
-  /* Calculate the number of bytes to send */
-  counter = 0;
-  bytes = MIN (command_len, reader->ifsc);
-
-  /* See if chaining is needed */
-  more = (command_len > reader->ifsc);
-
-  /* Increment ns */
-  reader->ns = (reader->ns == 1) ? 0:1; //toggle from 0 to 1 and back
-
-  /* Create an I-Block */
-  block = T1_Block_NewIBlock (bytes, command, reader->ns, more);
-  rdr_debug_mask(reader, D_IFD, "Sending block I(%d,%d)", reader->ns, more);
-
-  /* Send a block */
-  ret = Protocol_T1_SendBlock (reader, block);
-  
-  /* Delete I-block */
-  T1_Block_Delete (block);
-
-  while ((ret == OK) && more) {
-  
-				/* Receive a block */
-				ret = Protocol_T1_ReceiveBlock (reader, &block);
-				
-				if (ret == OK){
-					rsp_type = T1_Block_GetType (block);
-
-					/* Positive ACK R-Block received */
-					if (rsp_type == T1_BLOCK_R_OK) {
-						rdr_debug_mask(reader, D_IFD, "Protocol: Received block R(%d)", T1_Block_GetNR (block));
-						/* Delete block */
-						T1_Block_Delete (block);
- 
-						/* Increment ns  */
-						reader->ns = (reader->ns == 1) ? 0:1; //toggle from 0 to 1 and back
-
-						/* Calculate the number of bytes to send */
-						counter += bytes;
-						bytes = MIN (command_len - counter, reader->ifsc);
-
-						/* See if chaining is needed */
-						more = (command_len - counter > reader->ifsc);
-
-						/* Create an I-Block */
-						block = T1_Block_NewIBlock (bytes, command + counter, reader->ns, more);
-						rdr_debug_mask(reader, D_IFD, "Protocol: Sending block I(%d,%d)", reader->ns, more);
-
-						/* Send a block */
-						ret = Protocol_T1_SendBlock (reader, block);
-		  
-						/* Delete I-block */
-						T1_Block_Delete (block);
-					}
-					else {
-						/* Delete block */
-						T1_Block_Delete (block);
-						rdr_debug_mask(reader, D_TRACE, "ERROR: T1 Command %02X not implemented in SendBlock", rsp_type);
-						return ERROR;
-					}
-				}
-				else {
-					rdr_debug_mask(reader, D_TRACE, "ERROR: T1 Command returned error");
-					return ERROR;
-				}
-  }
-
-  /* Reset counter */
-  buffer = NULL;
-  counter = 0;      
-  more = TRUE;
-  wtx = 0;
+	block_data[0] = T1_BLOCK_NAD;
+	block_data[1] = T1_BLOCK_I | ((ns << 6) & 0x40);
+	if (more)
+		block_data[1] |= 0x20;
+	block_data[2] = len;
+	if (len != 0x00)
+		memcpy (block_data + 3, inf, len);
+	block_data[len+3] = T1_Block_LRC (block_data, len+3);
       
-  while ((ret == OK) && more)
-    {
-      if (wtx > 1)
-        ICC_Async_SetTimings (reader, wtx * reader->BWT);
+	return ICC_Async_Transmit(reader, length, block_data);
+}
 
-      /* Receive a block */
-      ret = Protocol_T1_ReceiveBlock (reader, &block);
+static int32_t T1_Block_SendRBlock(struct s_reader *reader, uint8_t *block_data, unsigned char type, unsigned char nr) {
+	int length = 4;
 
-      if (wtx > 1)
-        {
-          ICC_Async_SetTimings (reader, reader->BWT);          
-          wtx = 0;
-        }
+	block_data[0] = T1_BLOCK_NAD;
+	block_data[1] = type | ((nr << 4) & 0x10);
+	block_data[2] = 0x00;
+	block_data[3] = T1_Block_LRC (block_data, 3);
 
-      if (ret == OK)
-        {
-          rsp_type = T1_Block_GetType (block);
+	return ICC_Async_Transmit(reader, length, block_data);
+}
 
-          if (rsp_type == T1_BLOCK_I)
-            {
-              rdr_debug_mask (reader, D_IFD, "Protocol: Received block I(%d,%d)", 
-              T1_Block_GetNS(block), T1_Block_GetMore (block));
-              /* Calculate nr */
-              nr = (T1_Block_GetNS (block) + 1) % 2;
-                               
-              /* Save inf field */
-              bytes = T1_Block_GetLen (block);
-              if (!cs_realloc(&buffer, counter + bytes))
-                  return -1;
-	          memcpy (buffer + counter, T1_Block_GetInf (block), bytes);
-              counter += bytes;
+static int32_t T1_Block_SendSBlock(struct s_reader *reader, uint8_t *block_data, unsigned char type, unsigned char len, unsigned char * inf) {
+	int length = 4 + len;
 
-              /* See if chaining is requested */
-              more = T1_Block_GetMore (block);
+	block_data[0] = T1_BLOCK_NAD;
+	block_data[1] = type;
+	block_data[2] = len;
+	if (len != 0x00)
+		memcpy (block_data + 3, inf, len);
 
-              /* Delete block */
-              T1_Block_Delete (block);
+	block_data[len+3] = T1_Block_LRC(block_data, len+3);
+      
+	return ICC_Async_Transmit(reader, length, block_data);
+}
 
-              if (more)
-                {
-                  /* Create an R-Block */
-                  block = T1_Block_NewRBlock (T1_BLOCK_R_OK, nr);
-                  rdr_debug_mask(reader, D_IFD, "Protocol: Sending block R(%d)", nr);
+static int32_t Protocol_T1_ReceiveBlock(struct s_reader *reader, uint8_t *block_data, uint32_t *block_length, uint8_t *rsp_type) {
+	int32_t ret, length;
 
-                  /* Send R-Block */
-                  ret = Protocol_T1_SendBlock (reader, block);
-				  
-				  /* Delete I-block */
-				  T1_Block_Delete (block);
-                }
-            }
+	/* Receive four mandatory bytes */
+	if (ICC_Async_Receive (reader, 4, block_data))
+		ret = ERROR;
+	else {
+		length = block_data[2];
+		if (length != 0x00) {
+			*block_length = (length + 4 > T1_BLOCK_MAX_SIZE) ? T1_BLOCK_MAX_SIZE : length + 4;
 
-          /* WTX Request S-Block received */ 
-          else if (rsp_type == T1_BLOCK_S_WTX_REQ)
-            {
-              /* Get wtx multiplier */
-              wtx = (*T1_Block_GetInf (block));
-              rdr_debug_mask(reader, D_IFD, "Protocol: Received block S(WTX request, %d)", wtx);
+			/* Set timings to read the remaining block */
+			ICC_Async_SetTimings(reader, reader->CWT);
 
-              /* Delete block */
-              T1_Block_Delete (block);
-             
-              /* Create an WTX response S-Block */
-              block = T1_Block_NewSBlock (T1_BLOCK_S_WTX_RES, 1, &wtx);
-              rdr_debug_mask(reader, D_IFD, "Protocol: Sending block S(WTX response, %d)", wtx);
+			/* Receive remaining bytes */
+			if (ICC_Async_Receive(reader, *block_length - 4, block_data + 4))
+				ret = ERROR;
+			else
+				ret = OK;
+			/* Restore timings */
+			ICC_Async_SetTimings (reader, reader->BWT);
+		} else {
+			ret = OK;
+			*block_length = 4;
+		}
+	}
+	*rsp_type = ((block_data[1] & 0x80) == T1_BLOCK_I) ? T1_BLOCK_I : (block_data[1] & 0xEF);
 
-              /* Send WTX response */
-              ret = Protocol_T1_SendBlock (reader, block);
-			  
-			  /* Delete block */
-              T1_Block_Delete (block);
-            }
+	return ret;
+}
 
-          else
-            {
-              rdr_debug_mask(reader, D_TRACE, "ERROR: T1 Command %02X not implemented in Receive Block", rsp_type);
-              ret = ERROR;//not implemented
-            }
-        }
-    }
+int32_t Protocol_T1_Command(struct s_reader *reader, unsigned char * command, uint16_t command_len, unsigned char * rsp, uint16_t * lr) {
+	uint8_t block_data[T1_BLOCK_MAX_SIZE];
+	uint8_t rsp_type, bytes, nr, wtx;
+	uint16_t counter;
+	int32_t ret;
+	bool more;
+	uint32_t block_length = 0;
+	if (command[1] == T1_BLOCK_S_IFS_REQ) {
+		uint8_t inf = command[3];
 
-  if (ret == OK) {
-		memcpy(rsp, buffer, counter);
-		*lr = counter;
+		/* Create an IFS request S-Block */
+		ret = T1_Block_SendSBlock(reader, block_data, T1_BLOCK_S_IFS_REQ, 1, &inf);
+		rdr_debug_mask(reader, D_IFD, "Protocol: Sending block S(IFS request, %d)", inf);
+	
+		/* Receive a block */
+		ret = Protocol_T1_ReceiveBlock(reader, block_data, &block_length, &rsp_type);
+
+		if (ret == OK) {
+			/* Positive IFS Response S-Block received */
+			if (rsp_type == T1_BLOCK_S_IFS_RES) {
+				rdr_debug_mask(reader, D_IFD, "Protocol: Received block S(IFS response, %d)", block_data[3]);
+			}
+		}
+
+		return ret;
+	} else if (command[1] == T1_BLOCK_S_RESYNCH_REQ) {
+		/* Create an Resynch request S-Block */
+		ret = T1_Block_SendSBlock(reader, block_data, T1_BLOCK_S_RESYNCH_REQ, 0, NULL);
+		rdr_debug_mask(reader, D_IFD, "Protocol: Sending block S(RESYNCH request)");
+
+		/* Receive a block */
+		ret = Protocol_T1_ReceiveBlock(reader, block_data, &block_length, &rsp_type);
+
+		if (ret == OK) {
+			/* Positive IFS Response S-Block received */
+			if (rsp_type == T1_BLOCK_S_RESYNCH_RES) {
+				rdr_debug_mask(reader, D_IFD, "Protocol: Received block S(RESYNCH response)");
+				reader->ns = 0;
+			}
+		}
+		return ret;
 	}
 
-  if (buffer != NULL)
-    free (buffer);
-  
-  return ret;
-}
+	/* Calculate the number of bytes to send */
+	counter = 0;
+	bytes = MIN (command_len, reader->ifsc);
 
-/*
- * Not exported functions definition
- */
+	/* See if chaining is needed */
+	more = (command_len > reader->ifsc);
 
-static int32_t Protocol_T1_SendBlock (struct s_reader *reader, T1_Block * block)
-{
-  int32_t ret;
-  ret = ICC_Async_Transmit (reader, block->length, block->data);
+	/* Increment ns */
+	reader->ns = (reader->ns == 1) ? 0:1; //toggle from 0 to 1 and back
 
-  return ret;
-}
+	/* Create an I-Block */
+	ret = T1_Block_SendIBlock(reader, block_data, bytes, command, reader->ns, more);
+	rdr_debug_mask(reader, D_IFD, "Sending block I(%d,%d)", reader->ns, more);
 
-static int32_t Protocol_T1_ReceiveBlock (struct s_reader *reader, T1_Block ** block)
-{
-  BYTE buffer[T1_BLOCK_MAX_SIZE];
-  int32_t ret;
+	while ((ret == OK) && more) {
+		/* Receive a block */
+		ret = Protocol_T1_ReceiveBlock(reader, block_data, &block_length, &rsp_type);
+				
+		if (ret == OK){
+			/* Positive ACK R-Block received */
+			if (rsp_type == T1_BLOCK_R_OK) {
+				rdr_debug_mask(reader, D_IFD, "Protocol: Received block R(%d)", T1_Block_GetNR(block_data));
+ 
+				/* Increment ns  */
+				reader->ns = (reader->ns == 1) ? 0:1; //toggle from 0 to 1 and back
 
-  /* Receive four mandatory bytes */
-  if (ICC_Async_Receive (reader, 4, buffer))
-      ret = ERROR;
-  else
-      if (buffer[2] != 0x00) {
-          /* Set timings to read the remaining block */
-          ICC_Async_SetTimings (reader, reader->CWT);
+				/* Calculate the number of bytes to send */
+				counter += bytes;
+				bytes = MIN (command_len - counter, reader->ifsc);
 
-          /* Receive remaining bytes */
-          if (ICC_Async_Receive (reader, buffer[2], buffer + 4))
-              ret = ERROR;
-          else {
-              (*block) = T1_Block_New (buffer, buffer[2] + 4);
-              ret = OK;
-            }
-          /* Restore timings */
-          ICC_Async_SetTimings (reader, reader->BWT);
-        }
-      else {
-          ret = OK;
-          (*block) = T1_Block_New (buffer, 4);
-        }
+				/* See if chaining is needed */
+				more = (command_len - counter > reader->ifsc);
 
-	if (ret == ERROR)
-		(*block) = NULL;
-  return ret;
+				/* Send an I-Block */
+				ret = T1_Block_SendIBlock(reader, block_data, bytes, command + counter, reader->ns, more);
+				rdr_debug_mask(reader, D_IFD, "Protocol: Sending block I(%d,%d)", reader->ns, more);
+
+			} else {
+				rdr_debug_mask(reader, D_TRACE, "ERROR: T1 Command %02X not implemented", rsp_type);
+				return ERROR;
+			}
+		} else {
+			rdr_debug_mask(reader, D_TRACE, "ERROR: T1 Command returned error");
+			return ERROR;
+		}
+	}
+
+	/* Reset counter */
+	counter = 0;      
+	more = TRUE;
+	wtx = 0;
+      
+	while ((ret == OK) && more) {
+		if (wtx > 1)
+			ICC_Async_SetTimings (reader, wtx * reader->BWT);
+
+		/* Receive a block */
+		ret = Protocol_T1_ReceiveBlock(reader, block_data, &block_length, &rsp_type);
+
+		if (wtx > 1) {
+			ICC_Async_SetTimings (reader, reader->BWT);          
+			wtx = 0;
+		}
+
+		if (ret == OK) {
+			if (rsp_type == T1_BLOCK_I) {
+				rdr_debug_mask (reader, D_IFD, "Protocol: Received block I(%d,%d)", T1_Block_GetNS(block_data), T1_Block_GetMore(block_data));
+
+				bytes = T1_Block_GetLen(block_data);
+
+				/* Calculate nr */
+				nr = (T1_Block_GetNS(block_data) + 1) % 2;
+
+				if (counter + bytes > T1_BLOCK_MAX_SIZE) return ERROR;
+
+				memcpy(rsp+counter, block_data+3, bytes);
+				counter += bytes;
+
+				/* See if chaining is requested */
+				more = T1_Block_GetMore(block_data);
+
+				if (more) {
+					/* Send R-Block */
+					ret = T1_Block_SendRBlock(reader, block_data, T1_BLOCK_R_OK, nr);
+					rdr_debug_mask(reader, D_IFD, "Protocol: Sending block R(%d)", nr);
+				}
+			} else if (rsp_type == T1_BLOCK_S_WTX_REQ) { /* WTX Request S-Block received */ 
+				/* Get wtx multiplier */
+				wtx = block_data[3];
+				rdr_debug_mask(reader, D_IFD, "Protocol: Received block S(WTX request, %d)", wtx);
+
+				/* Send an WTX response S-Block */
+				ret = T1_Block_SendSBlock(reader, block_data, T1_BLOCK_S_WTX_RES, 1, &wtx);
+				rdr_debug_mask(reader, D_IFD, "Protocol: Sending block S(WTX response, %d)", wtx);
+			} else {
+				rdr_debug_mask(reader, D_TRACE, "ERROR: T1 Command %02X not implemented in Receive Block", rsp_type);
+				ret = ERROR; //not implemented
+			}
+		}
+	}
+
+	if (ret == OK)
+		*lr = counter;
+
+	return ret;
 }
 #endif
