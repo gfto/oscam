@@ -3806,7 +3806,7 @@ void cs_exit_oscam(void) {
 
 int32_t main (int32_t argc, char *argv[])
 {
-	uint8_t max_pending = 32;
+	int32_t max_pending = 32;
 
 	prog_name = argv[0];
 	if (pthread_key_create(&getclient, NULL)) {
@@ -3959,7 +3959,7 @@ int32_t main (int32_t argc, char *argv[])
 				printf("WARNING: -m parameter is deprecated, ignoring it.\n");
 				break;
 		  case 'p':
-			  max_pending = MAX(atoi(optarg), 1);
+			  max_pending = MAX(MIN(atoi(optarg), 255), 1);
 			  break;
 		  case 'S':
 			  log_remove_sensitive = !log_remove_sensitive;

@@ -1649,7 +1649,7 @@ struct s_config
 
 	char		*ecmfmt;
 
-	uint8_t max_pending;
+	int32_t		max_pending;
 };
 
 struct s_clientinit
