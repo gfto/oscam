@@ -430,7 +430,7 @@ void dvbapi_start_emm_filter(int32_t demux_index) {
 
 	if (demux[demux_index].pidindex==-1) return;
 
-	if (demux[demux_index].EMMpidcount == 0 || !demux[demux_index].rdr || !hexserialset(demux[demux_index].rdr))
+	if (demux[demux_index].EMMpidcount == 0 || !demux[demux_index].rdr) // || !hexserialset(demux[demux_index].rdr)) no serial does not mean no global or shared emms!
 		return;
 
 	if (demux[demux_index].emm_filter==1 && !memcmp(demux[demux_index].rdr->hexserial, demux[demux_index].hexserial, 8))
