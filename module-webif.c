@@ -2513,7 +2513,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 
 #define ENTITLEMENT_PAGE_SIZE 500
 
-#ifdef MODULE_CCCAM
+#ifdef MODULE_CCCSHARE
 static void print_cards(struct templatevars *vars, struct uriparams *params, struct cc_card **cardarray, int32_t cardsize,
 		int8_t show_global_list, struct s_reader *rdr, int32_t offset, int32_t apicall)
 {
@@ -2689,8 +2689,6 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 	char *sharelist_ = getParam(params, "globallist");
 	int32_t show_global_list = sharelist_ && sharelist_[0]=='1';
 
-	int32_t offset = atoi(getParam(params, "offset")); //should be 0 if parameter is missed on very first call
-
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 	if (show_global_list || strlen(reader_) || (rdr && rdr->typ == R_CCCAM)) {
 
@@ -2706,9 +2704,10 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					tpl_printf(vars, TPLADD, "APIHOSTPORT", "%d", rdr->r_port);
 			}
 
+#ifdef MODULE_CCCSHARE
+			int32_t offset = atoi(getParam(params, "offset")); //should be 0 if parameter is missed on very first call
 			int32_t cardsize;
 			if (show_global_list) {
-#ifdef MODULE_CCCSHARE
 				int32_t i;
 				LLIST **sharelist = get_and_lock_sharelist();
 				LLIST *sharelist2 = ll_create("web-sharelist");
@@ -2719,23 +2718,18 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				unlock_sharelist();
 				struct cc_card **cardarray = get_sorted_card_copy(sharelist2, 0, &cardsize);
 				ll_destroy(sharelist2);
-
 				print_cards(vars, params, cardarray, cardsize, 1, NULL, offset, apicall);
-
 				free(cardarray);
-
 			} else {
 				struct s_client *rc = rdr->client;
 				struct cc_data *rcc = (rc)?rc->cc:NULL;
-
 				if (rcc && rcc->cards) {
 					struct cc_card **cardarray = get_sorted_card_copy(rcc->cards, 0, &cardsize);
 					print_cards(vars, params, cardarray, cardsize, 0, rdr, offset, apicall);
 					free(cardarray);
 				}
+			}
 #endif
-				}
-
 
 		} else {
 #else
