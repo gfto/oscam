@@ -34,7 +34,7 @@ static int8_t *tplchksum;
 char *tpl_addVar(struct templatevars *vars, uint8_t addmode, char *name, char *value){
 	if(name == NULL || value == NULL) return "";
 	int32_t i;
-	char *tmp,*result = NULL;
+	char *tmp = NULL, *result = NULL;
 	for(i = (*vars).varscnt-1; i >= 0; --i){
 		if(strcmp((*vars).names[i], name) == 0){
 			result = (*vars).values[i];

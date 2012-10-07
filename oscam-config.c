@@ -799,7 +799,7 @@ static struct s_global_whitelist *global_whitelist_read_int(void) {
 
 void global_whitelist_read(void) {
 
-	struct s_global_whitelist *entry, *old_list = cfg.global_whitelist;
+	struct s_global_whitelist *entry, *old_list;
 
 	old_list = cfg.global_whitelist;
 	cfg.global_whitelist = global_whitelist_read_int();

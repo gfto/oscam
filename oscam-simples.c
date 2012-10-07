@@ -234,7 +234,7 @@ char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *
 	for (this = cfg.srvid[srvid>>12]; this; this = this->next)
 		if (this->srvid == srvid)
 			for (i=0; i < this->ncaid; i++)
-				if (this->caid[i] == caid && this->name) {
+				if (this->caid[i] == caid && this->name && cl) {
 					cs_strncpy(buf, this->name, 32);
 					cl->last_srvidptr = this;
 					return(buf);
@@ -242,7 +242,7 @@ char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *
 
 	if (!buf[0]) {
 		snprintf(buf, 32, "%04X:%04X unknown", caid, srvid);
-		cl->last_srvidptr = NULL;
+		if (cl) cl->last_srvidptr = NULL;
 	}
 	return(buf);
 }

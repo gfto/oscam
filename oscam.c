@@ -1074,7 +1074,7 @@ void add_reader_to_active(struct s_reader *rdr) {
 				if (rdr->client == cl)
 					break;
 
-			if (rdr->client == cl) {
+			if (cl && rdr->client == cl) {
 				prev->next = cl->next; //remove client from list
 				cl->next = first_client->next;
 				first_client->next = cl;
@@ -1094,7 +1094,7 @@ void add_reader_to_active(struct s_reader *rdr) {
 					prev->next != NULL; prev = prev->next, cl = cl->next)
 				if (rdr->client == cl)
 					break;
-			if (rdr->client == cl) {
+			if (cl && rdr->client == cl) {
 				prev->next = cl->next; //remove client from list
 				cl->next = rdr_prv->client->next;
 				rdr_prv->client->next = cl;

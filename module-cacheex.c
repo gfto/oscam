@@ -585,7 +585,7 @@ static struct s_cacheex_matcher *cacheex_matcher_read_int(void) {
 }
 
 void cacheex_load_config_file(void) {
-	struct s_cacheex_matcher *entry, *old_list = cfg.cacheex_matcher;
+	struct s_cacheex_matcher *entry, *old_list;
 
 	old_list = cfg.cacheex_matcher;
 	cfg.cacheex_matcher = cacheex_matcher_read_int();

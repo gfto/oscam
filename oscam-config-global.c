@@ -735,7 +735,7 @@ int32_t init_config(void)
 			token[len - 1] = '\0';
 			valid_section = 0;
 			const struct config_sections *newconf = config_find_section(oscam_conf, token + 1);
-			if (config_section_is_active(newconf)) {
+			if (config_section_is_active(newconf) && cur_section) {
 				config_list_apply_fixups(cur_section->config, &cfg);
 				cur_section = newconf;
 				valid_section = 1;
@@ -759,14 +759,14 @@ int32_t init_config(void)
 		*value++ ='\0';
 		char *tvalue = trim(value);
 		char *ttoken = trim(strtolower(token));
-		if (!config_list_parse(cur_section->config, ttoken, tvalue, &cfg)) {
+		if (cur_section && !config_list_parse(cur_section->config, ttoken, tvalue, &cfg)) {
 			fprintf(stderr, "WARNING: %s line %d section [%s] contains unknown setting '%s=%s'\n",
 				cs_conf, line, cur_section->section, ttoken, tvalue);
 		}
 	}
 	free(token);
 	fclose(fp);
-	config_list_apply_fixups(cur_section->config, &cfg);
+	if (cur_section) config_list_apply_fixups(cur_section->config, &cfg);
 	return 0;
 }
 

@@ -39,7 +39,7 @@ int8_t check_client(struct s_client *client) {
 		if (client == cl)
 			break;
 	}
-	if (cl != client || client->cleaned)
+	if (cl != client || (client && client->cleaned))
 		return 0;
 	else
 		return 1;

@@ -3380,7 +3380,7 @@ static char *send_oscam_services_edit(struct templatevars *vars, struct uriparam
 	setActiveMenu(vars, MNU_SERVICES);
 
 	cs_strncpy(label, strtolower(getParam(params, "service")), sizeof(label));
-++cfg_sidtab_generation;
+	++cfg_sidtab_generation;
 	for (sidtab = cfg.sidtab; sidtab != NULL && strcmp(label, sidtab->label) != 0; sidtab=sidtab->next);
 
 	if (sidtab == NULL) {
@@ -3422,18 +3422,19 @@ static char *send_oscam_services_edit(struct templatevars *vars, struct uriparam
 	tpl_addVar(vars, TPLADD, "LABEL", xml_encode(vars, sidtab->label));
 	tpl_addVar(vars, TPLADD, "LABELENC", urlencode(vars, sidtab->label));
 
-
-	for (i=0; i<sidtab->num_caid; i++) {
-		if (i==0) tpl_printf(vars, TPLADD, "CAIDS", "%04X", sidtab->caid[i]);
-		else tpl_printf(vars, TPLAPPEND, "CAIDS", ",%04X", sidtab->caid[i]);
-	}
-	for (i=0; i<sidtab->num_provid; i++) {
-		if (i==0) tpl_printf(vars, TPLADD, "PROVIDS", "%06X", sidtab->provid[i]);
-		else tpl_printf(vars, TPLAPPEND, "PROVIDS", ",%06X", sidtab->provid[i]);
-	}
-	for (i=0; i<sidtab->num_srvid; i++) {
-		if (i==0) tpl_printf(vars, TPLADD, "SRVIDS", "%04X", sidtab->srvid[i]);
-		else tpl_printf(vars, TPLAPPEND, "SRVIDS", ",%04X", sidtab->srvid[i]);
+	if (sidtab) {
+		for (i=0; i<sidtab->num_caid; i++) {
+			if (i==0) tpl_printf(vars, TPLADD, "CAIDS", "%04X", sidtab->caid[i]);
+			else tpl_printf(vars, TPLAPPEND, "CAIDS", ",%04X", sidtab->caid[i]);
+		}
+		for (i=0; i<sidtab->num_provid; i++) {
+			if (i==0) tpl_printf(vars, TPLADD, "PROVIDS", "%06X", sidtab->provid[i]);
+			else tpl_printf(vars, TPLAPPEND, "PROVIDS", ",%06X", sidtab->provid[i]);
+		}
+		for (i=0; i<sidtab->num_srvid; i++) {
+			if (i==0) tpl_printf(vars, TPLADD, "SRVIDS", "%04X", sidtab->srvid[i]);
+			else tpl_printf(vars, TPLAPPEND, "SRVIDS", ",%04X", sidtab->srvid[i]);
+		}
 	}
 	return tpl_getTpl(vars, "SERVICEEDIT");
 }
@@ -3469,7 +3470,6 @@ static char *send_oscam_services(struct templatevars *vars, struct uriparams *pa
 			struct s_sidtab *sidtab_prev = NULL;
 			int32_t sidtablength = -1;
 			int32_t position = 0;
-			sidtab=cfg.sidtab;
 
 			// Calculate sidtablength before deletion so that updating sidtabs is faster
 			for (sidtab=cfg.sidtab; sidtab; sidtab = sidtab->next)
@@ -4331,18 +4331,18 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 		}
 	}
 
-	float cachesum = first_client->cwcacheexgot;
+	float cachesum = first_client ? first_client->cwcacheexgot : 1;
 	if (cachesum < 1) {
 		cachesum = 1;
 	}
-	tpl_printf(vars, TPLADD, "TOTAL_CACHEXPUSH", "%d", first_client->cwcacheexpush);
+	tpl_printf(vars, TPLADD, "TOTAL_CACHEXPUSH", "%d", first_client ? first_client->cwcacheexpush : 0);
 	tpl_addVar(vars, TPLADD, "TOTAL_CACHEXPUSH_IMG", pushing);
-	tpl_printf(vars, TPLADD, "TOTAL_CACHEXGOT", "%d", first_client->cwcacheexgot);
+	tpl_printf(vars, TPLADD, "TOTAL_CACHEXGOT", "%d", first_client ? first_client->cwcacheexgot : 0);
 	tpl_addVar(vars, TPLADD, "TOTAL_CACHEXGOT_IMG", getting);
-	tpl_printf(vars, TPLADD, "TOTAL_CACHEXHIT", "%d", first_client->cwcacheexhit);
+	tpl_printf(vars, TPLADD, "TOTAL_CACHEXHIT", "%d", first_client ? first_client->cwcacheexhit : 0);
 	tpl_printf(vars, TPLADD, "TOTAL_CACHESIZE", "%d", ecmcwcache_size);
 
-	tpl_printf(vars, TPLADD, "REL_CACHEXHIT", "%.2f", first_client->cwcacheexhit * 100 / cachesum);
+	tpl_printf(vars, TPLADD, "REL_CACHEXHIT", "%.2f", (first_client ? first_client->cwcacheexhit : 0) * 100 / cachesum);
 
 	return tpl_getTpl(vars, "CACHEEXPAGE");
 }

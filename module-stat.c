@@ -1322,9 +1322,9 @@ static int8_t stat_in_ecmlen(struct s_reader *rdr, READER_STAT *s)
 
 static int8_t add_to_ecmlen(struct s_reader *rdr, READER_STAT *s)
 {
-	struct s_ecmWhitelist *tmp;
-	struct s_ecmWhitelistIdent *tmpIdent;
-	struct s_ecmWhitelistLen *tmpLen;
+	struct s_ecmWhitelist *tmp = NULL;
+	struct s_ecmWhitelistIdent *tmpIdent = NULL;
+	struct s_ecmWhitelistLen *tmpLen = NULL;
 
 	for (tmp = rdr->ecmWhitelist; tmp; tmp = tmp->next) {
 		if (tmp->caid == s->caid) {

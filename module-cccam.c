@@ -779,7 +779,7 @@ int32_t cc_get_nxt_ecm(struct s_client *cl) {
 			if (n < 0 || (ern->tps.time - er->tps.time < 0)) {
 
 				//check for already pending:
-				if (cc->extended_mode) {
+				if (cc && cc->extended_mode) {
 					int32_t j,found;
 					ECM_REQUEST *erx;
 					for (found = j = 0; j < cfg.max_pending; j++) {
@@ -3622,11 +3622,11 @@ int32_t cc_available(struct s_reader *rdr, int32_t checktype, ECM_REQUEST *er) {
 			return 0;
 	}
 
-	if (er && er->l > 255 && !cc->extended_mode && (cc->remote_build_nr < 3367))
+	if (er && er->l > 255 && cc && !cc->extended_mode && (cc->remote_build_nr < 3367))
 		return 0; // remote does not support large ecms!
 
 
-	if (checktype == AVAIL_CHECK_LOADBALANCE && cc->ecm_busy) {
+	if (checktype == AVAIL_CHECK_LOADBALANCE && cc && cc->ecm_busy) {
 		if (cc_request_timeout(cl))
 			cc_cycle_connection(cl);
 		if (!rdr->tcp_connected || cc->ecm_busy) {
