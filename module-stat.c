@@ -73,7 +73,7 @@ static uint32_t get_subid(ECM_REQUEST *er)
 	switch (er->caid>>8)
 	{
 		case 0x01: id = b2i(2, er->ecm+7);
-			 if (er->prid==0x00006a) id = er->pid; //fix CDS NL for identical 0100:00006a but different ecmpid on SD Channels 
+			 if (er->prid==0x00006a && er->pid !=0x0000) id = er->pid; //fix CDS NL for identical 0100:00006a but different ecmpid on SD Channels 
 			 break;
 		case 0x06: id = b2i(2, er->ecm+6); break;
 		case 0x09: id = b2i(2, er->ecm+11); break;
