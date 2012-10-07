@@ -107,6 +107,7 @@ void write_versionfile(void) {
 	write_conf(MODULE_CAMD35_TCP, "camd 3.5 TCP");
 	write_conf(MODULE_NEWCAMD, "newcamd");
 	write_conf(MODULE_CCCAM, "CCcam");
+	write_conf(MODULE_CCCSHARE, "CCcam share");
 	write_conf(MODULE_PANDORA, "Pandora");
 	write_conf(MODULE_GBOX, "gbox");
 	write_conf(MODULE_RADEGAST, "radegast");
