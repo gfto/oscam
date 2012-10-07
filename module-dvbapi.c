@@ -558,7 +558,7 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len) {
 		uint16_t emm_pid=(((buf[i + 4] & 0x1F) << 8) | buf[i + 5]);
 		uint32_t emm_provider = 0;	
 		for (testrdr=first_active_reader; testrdr ; testrdr=testrdr->next) { // make a list of all active readers 
-			if (testrdr->audisabled !=0) break; //only add aureaders
+			if (testrdr->audisabled !=0) continue; //only add aureaders
 			else { 
 				switch (caid >> 8) {
 					case 0x01:
