@@ -173,48 +173,6 @@ int32_t check_filled(uchar *value, int32_t length){
 	return j;
 }
 
-/* Clears the s_ip structure provided. The pointer will be set to NULL so everything is cleared.*/
-void clear_sip(struct s_ip **sip){
-	struct s_ip *cip = *sip;
-	for (*sip = NULL; cip != NULL; cip = cip->next){
-		add_garbage(cip);
-	}
-}
-
-/* Clears the s_ftab struct provided by setting nfilts and nprids to zero. */
-void clear_ftab(struct s_ftab *ftab){
-	int32_t i, j;
-	for (i = 0; i < CS_MAXFILTERS; i++) {
-		ftab->filts[i].caid = 0;
-		for (j = 0; j < CS_MAXPROV; j++)
-			ftab->filts[i].prids[j] = 0;
-		ftab->filts[i].nprids = 0;
-	}
-	ftab->nfilts = 0;
-}
-
-/* Clears the s_ptab struct provided by setting nfilts and nprids to zero. */
-void clear_ptab(struct s_ptab *ptab){
-	int32_t i = ptab->nports;
-	ptab->nports = 0;
-	for (; i >= 0; --i) {
-		ptab->ports[i].ftab.nfilts = 0;
-		ptab->ports[i].ftab.filts[0].nprids = 0;
-	}
-}
-
-/* Clears given caidtab */
-void clear_caidtab(struct s_caidtab *ctab){
-	memset(ctab, 0, sizeof(struct s_caidtab));
-	int32_t i;
-	for (i = 1; i < CS_MAXCAIDTAB; ctab->mask[i++] = 0xffff);
-}
-
-/* Clears given tuntab */
-void clear_tuntab(struct s_tuntab *ttab){
-	memset(ttab, 0, sizeof(struct s_tuntab));
-}
-
 /* Gets the servicename. Make sure that buf is at least 32 bytes large. */
 char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf){
 	int32_t i;
