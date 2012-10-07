@@ -8,10 +8,7 @@
  *      Author: alno
  */
 
-#ifdef MODULE_CCCAM
 #include "module-cccam.h"
-#include "module-cccshare.h"
-#endif
 #include "oscam-client.h"
 #include "oscam-files.h"
 #include "oscam-string.h"
@@ -126,8 +123,7 @@ static void refresh_lcd_file(void) {
 
 					int16_t written = 0, skipped = 0, blocked = 0, error = 0;
 
-					char *emmtext;
-					if (cs_malloc(&emmtext, 16)) {
+					char emmtext[16] = "               ";
 						if(cl->typ == 'r' || !iscccam ){
 							for (i=0; i<4; i++) {
 								error += cl->reader->emmerror[i];
@@ -140,28 +136,11 @@ static void refresh_lcd_file(void) {
 									skipped > 999? 999 : skipped,
 									blocked > 999? 999 : blocked,
 									error > 999? 999 : error);
-
 						}
-#ifdef MODULE_CCCAM
 						else if(cl->typ == 'p' && iscccam ){
-							struct cc_data *rcc = cl->cc;
-							if(rcc){
-								LLIST *cards = rcc->cards;
-								if (cards) {
-									int32_t ncards = ll_count(cards);
-									int32_t locals = rcc->num_hop1;
-									snprintf(emmtext, 16, " %3d/%3d card%s", locals, ncards, ncards > 1 ? "s ": "  ");
-								}
-							} else {
+							if (!cccam_snprintf_cards_stat(cl, emmtext, 16))
 								snprintf(emmtext, 16, "   No cards    ");
-							}
 						}
-#endif
-						else {
-							snprintf(emmtext, 16, "               ");
-						}
-
-					}
 
 					if(days == 0) {
 						fprintf(fpsave,"%s%d | %-10.10s |     %02d:%02d:%02d |%s| %s\n",

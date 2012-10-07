@@ -14,7 +14,7 @@
 #include "module-anticasc.h"
 #include "module-cacheex.h"
 #include "module-cccam.h"
-#include "module-cccshare.h"
+#include "module-cccam-data.h"
 #include "module-stat.h"
 #include "module-webif.h"
 #include "module-webif-lib.h"

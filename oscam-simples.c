@@ -348,17 +348,9 @@ char *reader_get_type_desc(struct s_reader * rdr, int32_t extended __attribute__
 
 	if ((rdr->typ == R_NEWCAMD) && (rdr->ncd_proto == NCD_524))
 		desc = "newcamd524";
-
-#ifdef MODULE_CCCAM
-	else if (extended && rdr->typ == R_CCCAM) {
-		struct s_client *cl = rdr->client;
-		if (cl) {
-			struct cc_data *cc = cl->cc;
-			if (cc && cc->extended_mode)
-				desc = "cccam ext";
-		}
+	else if (extended && rdr->typ == R_CCCAM && cccam_client_extended_mode(rdr->client)) {
+		desc = "cccam ext";
 	}
-#endif
 
 	return (desc);
 }

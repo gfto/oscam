@@ -4,6 +4,7 @@
 
 #include "module-cacheex.h"
 #include "module-cccam.h"
+#include "module-cccam-data.h"
 #include "module-cccshare.h"
 #include "reader-common.h"
 #include "oscam-chk.h"
@@ -3696,6 +3697,43 @@ void cc_update_nodeid(void)
 		memcpy(cc_node_id, cfg.cc_fixed_nodeid, 8);
 	else
 		memcpy(cfg.cc_fixed_nodeid, cc_node_id, 8);
+}
+
+bool cccam_forward_origin_card(ECM_REQUEST *er) {
+	if (cfg.cc_forward_origin_card && er->origin_card) {
+		struct cc_card *card = er->origin_card;
+		struct s_ecm_answer *eab = NULL;
+		struct s_ecm_answer *ea;
+		for(ea = er->matching_rdr; ea; ea = ea->next) {
+			ea->status &= ~(READER_ACTIVE|READER_FALLBACK);
+			if (card->origin_reader == ea->reader)
+				eab = ea;
+		}
+		if (eab) {
+			cs_debug_mask(D_LB, "loadbalancer: forward card: forced by card %d to reader %s", card->id, eab->reader->label);
+			eab->status |= READER_ACTIVE;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool cccam_snprintf_cards_stat(struct s_client *cl, char *emmtext, size_t emmtext_sz) {
+	struct cc_data *rcc = cl->cc;
+	if(rcc){
+		LLIST *cards = rcc->cards;
+		if (cards) {
+			int32_t ncards = ll_count(cards);
+			int32_t locals = rcc->num_hop1;
+			snprintf(emmtext, emmtext_sz, " %3d/%3d card%s", locals, ncards, ncards > 1 ? "s ": "  ");
+			return true;
+		}
+	}
+	return false;
+}
+
+bool cccam_client_extended_mode(struct s_client *cl) {
+	return cl && cl->cc && ((struct cc_data *)cl->cc)->extended_mode;
 }
 
 #ifdef MODULE_CCCSHARE

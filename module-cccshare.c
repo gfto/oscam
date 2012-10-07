@@ -3,6 +3,7 @@
 #if defined(MODULE_CCCAM) && defined(MODULE_CCCSHARE)
 
 #include "module-cccam.h"
+#include "module-cccam-data.h"
 #include "module-cccshare.h"
 #include "reader-common.h"
 #include "oscam-chk.h"

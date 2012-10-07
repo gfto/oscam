@@ -74,13 +74,11 @@ const char *client_get_proto(struct s_client *cl)
 #ifdef CS_ANTICASC
 	case 'a': ctyp = "anticascader"; break;
 #endif
-#ifdef MODULE_CCCAM
 	case 'c':
-		if (cl->cc && ((struct cc_data *)cl->cc)->extended_mode) {
+		if (cccam_client_extended_mode(cl)) {
 			ctyp = "cccam ext";
 			break;
 		}
-#endif
 	default: ctyp = modules[cl->ctyp].desc;
 	}
 	return ctyp;
