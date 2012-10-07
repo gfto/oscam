@@ -530,39 +530,8 @@ void dvbapi_add_ecmpid(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_
 	demux[demux_id].ECMpidcount++;
 }
 
-int32_t checkemmcaid(uint16_t caid, struct s_reader *rdr, CAIDTAB *ctab){ //check for matching caids
-  int32_t found =0;
-  int32_t i;
-  if (rdr->caid == 0) found = 1; // no caid available for reader so enable all!
-  if (rdr->caid == caid) found = 1; // caid matches so enable it!
-  for (i=0;i<CS_MAXCAIDTAB;i++){ // check all caids
-    if (!ctab->caid[i]) return found;
-    if ((caid & ctab->mask[i]) == ctab->caid[i]) found = 1;
-  }
-  return found;
-}
-
-int32_t checkemmpid (struct s_reader *rdr, uint32_t provid) {
-	int32_t found = 0;
-	if (ll_count(rdr->ll_entitlements) > 0) {
-		LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
-		S_ENTITLEMENT *item;
-		while ((item=ll_iter_next(&itr))) {
-			if (item->provid == provid){
-				if (item->provid != rdr->auprovid && rdr->auprovid !=0) {
-					cs_debug_mask(D_DVBAPI, "Found emmpid for reader %s but %06X is not in provid au list", rdr->label, provid);
-				break;
-				}
-				found = 1; // found!
-				break;
-			}
-		}
-	}
-	return found;
-}
-
 void dvbapi_add_emmpid(struct s_reader *testrdr, int32_t demux_id, uint16_t caid, uint16_t emmpid, uint32_t provid, uint8_t type) {
-	if(checkemmpid(testrdr, provid)){
+	if (emm_reader_match(testrdr, caid, provid)){
 		demux[demux_id].EMMpids[demux[demux_id].EMMpidcount].PID = emmpid;
 		demux[demux_id].EMMpids[demux[demux_id].EMMpidcount].CAID = caid;
 		demux[demux_id].EMMpids[demux[demux_id].EMMpidcount].PROVID = provid;
@@ -589,7 +558,7 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len) {
 		uint16_t emm_pid=(((buf[i + 4] & 0x1F) << 8) | buf[i + 5]);
 		uint32_t emm_provider = 0;	
 		for (testrdr=first_active_reader; testrdr ; testrdr=testrdr->next) { // make a list of all active readers 
-			if (!checkemmcaid(caid, testrdr, &testrdr->ctab) || testrdr->audisabled !=0) break; //check all caids and au of reader we only want to add matching emmpids others are of no use!
+			if (testrdr->audisabled !=0) break; //only add aureaders
 			else { 
 				switch (caid >> 8) {
 					case 0x01:

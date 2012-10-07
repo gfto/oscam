@@ -831,10 +831,10 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 		}
 	}
 
-	if (!hexserialset(reader)) {
-		cs_debug_mask(D_EMM, "emm reader %s has no serial set", reader->label);
-		return 0;
-	}
+	//if (!hexserialset(reader)) { There are cards without serial, they should get emm of type global and shared!
+	//	cs_debug_mask(D_EMM, "emm reader %s has no serial set", reader->label);
+	//	return 0;
+	//}
 
 	if (!provid) {
 		cs_debug_mask(D_EMM, "emm for reader %s (%04X) has no provider", reader->label, caid);
