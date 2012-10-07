@@ -900,6 +900,7 @@ char *urlencode(struct templatevars *vars, char *str){
 /* XML-Escapes a char array. The returned reference will be automatically cleaned through the templatevars-mechanism tpl_clear().
    Do not call free() or realloc on the returned reference or you will get memory corruption! */
 char *xml_encode(struct templatevars *vars, char *chartoencode) {
+	if (chartoencode == NULL) return "";
 	int32_t i, pos = 0, len = strlen(chartoencode);
 	char *result;
 	/* In worst case, every character could get converted to 6 chars (we only support ASCII, for Unicode it would be 7)*/

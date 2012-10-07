@@ -1928,10 +1928,10 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 		if (write_userdb()!=0) tpl_addMsg(vars, "Write Config failed!");
 	}
 
-	tpl_addVar(vars, TPLADD, "USERNAME", account->usr);
-	tpl_addVar(vars, TPLADD, "PASSWORD", account->pwd);
+	tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, account->usr));
+	tpl_addVar(vars, TPLADD, "PASSWORD", xml_encode(vars, account->pwd));
 	if(account->description)
-		tpl_addVar(vars, TPLADD, "DESCRIPTION", account->description);
+		tpl_addVar(vars, TPLADD, "DESCRIPTION", xml_encode(vars, account->description));
 
 	//Disabled
 	if(!apicall) {
@@ -1968,7 +1968,7 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	free_mk_t(value);
 
 	//Hostname
-	tpl_addVar(vars, TPLADD, "DYNDNS", account->dyndns);
+	tpl_addVar(vars, TPLADD, "DYNDNS", xml_encode(vars, account->dyndns));
 
 	//Uniq
 	if(!apicall) {
