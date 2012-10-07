@@ -5,11 +5,9 @@
 #ifdef MODULE_CCCAM
 #include "module-cccam.h"
 #endif
-#if defined(WITH_AZBOX) && defined(HAVE_DVBAPI)
-#include "openxcas/openxcas_api.h"
-#endif
 #include "module-anticasc.h"
 #include "module-cacheex.h"
+#include "module-dvbapi-azbox.h"
 #include "module-ird-guess.h"
 #include "module-lcd.h"
 #include "module-led.h"
@@ -4052,17 +4050,7 @@ int32_t main (int32_t argc, char *argv[])
   led_init();
   led_status_default();
 
-#if defined(WITH_AZBOX) && defined(HAVE_DVBAPI)
-  openxcas_debug_message_onoff(1);  // debug
-
-#ifdef WITH_CARDREADER
-  if (openxcas_open_with_smartcard("oscamCAS") < 0) {
-#else
-  if (openxcas_open("oscamCAS") < 0) {
-#endif
-    cs_log("openxcas: could not init");
-  }
-#endif
+  azbox_init();
 
   global_whitelist_read();
   cacheex_load_config_file();
@@ -4134,12 +4122,7 @@ int32_t main (int32_t argc, char *argv[])
 	// main loop function
 	client_check();
 
-
-#if defined(WITH_AZBOX) && defined(HAVE_DVBAPI)
-  if (openxcas_close() < 0) {
-    cs_log("openxcas: could not close");
-  }
-#endif
+	azbox_close();
 
 	cs_cleanup();
 	while(ll_count(log_list) > 0)

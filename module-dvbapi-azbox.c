@@ -2,6 +2,9 @@
 
 #if defined(HAVE_DVBAPI) && defined(WITH_AZBOX)
 
+#include "openxcas/openxcas_api.h"
+#include "openxcas/openxcas_message.h"
+
 #include "module-dvbapi.h"
 #include "module-dvbapi-azbox.h"
 #include "oscam-client.h"
@@ -311,6 +314,23 @@ void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 		cs_log("openxcas: set cw failed");
 	else
 		cs_ddump_mask(D_DVBAPI, openxcas_cw, 16, "openxcas: write cws to descrambler");
+}
+
+#ifdef WITH_CARDREADER
+#define __openxcas_open openxcas_open_with_smartcard
+#else
+#define __openxcas_open openxcas_open
+#endif
+
+void azbox_init(void) {
+	openxcas_debug_message_onoff(1);  // debug
+	if (__openxcas_open("oscamCAS") < 0)
+		cs_log("openxcas: could not init");
+}
+
+void azbox_close(void) {
+	if (openxcas_close() < 0)
+		cs_log("openxcas: could not close");
 }
 
 #endif
