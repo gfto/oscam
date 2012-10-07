@@ -2,11 +2,9 @@
 
 #include "coolapi.h"
 #include "csctapi/icc_async.h"
-#ifdef MODULE_CCCAM
-#include "module-cccam.h"
-#endif
 #include "module-anticasc.h"
 #include "module-cacheex.h"
+#include "module-cccam.h"
 #include "module-dvbapi-azbox.h"
 #include "module-ird-guess.h"
 #include "module-lcd.h"
@@ -536,11 +534,7 @@ static void cs_cleanup(void)
 {
 	stat_finish();
 
-#ifdef MODULE_CCCAM
-#ifdef MODULE_CCCSHARE
-	done_share();
-#endif
-#endif
+	cccam_done_share();
 
 	kill_all_clients();
 
@@ -4034,7 +4028,6 @@ int32_t main (int32_t argc, char *argv[])
   init_signal();
   init_srvid();
   init_tierid();
-  //Todo #ifdef CCCAM
   init_provid();
 
   start_garbage_collector(gbdb);

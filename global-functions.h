@@ -236,12 +236,6 @@ extern int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size);
 extern const char *newcamd_get_client_name(uint16_t client_id);
 
 /* ===========================
- *       module-cccshare
- * =========================== */
-extern void init_share(void);
-extern void done_share(void);
-
-/* ===========================
  *       reader-common
  * =========================== */
 extern int32_t reader_device_init(struct s_reader * reader);

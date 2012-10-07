@@ -23,6 +23,9 @@ const char *cmd0c_mode_name[] = { "NONE", "RC6", "RC4", "CC_CRYPT", "AES", "IDEA
 
 uint8_t cc_node_id[8];
 
+int32_t cc_cli_connect(struct s_client *cl);
+int32_t cc_send_pending_emms(struct s_client *cl);
+
 #define getprefix() (!cl?"":(!cl->cc?"":(((struct cc_data *)(cl->cc))->prefix)))
 
 void cc_init_crypt(struct cc_crypt_block *block, uint8_t *key, int32_t len) {
@@ -3754,7 +3757,7 @@ void module_cccam(struct s_module *ph) {
 	ph->ptab = &ptab;
 
 	if (cfg.cc_port[0])
-		init_share();
+		cccam_init_share();
 #endif
 }
 #endif

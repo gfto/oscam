@@ -1,10 +1,10 @@
 #include "globals.h"
 
-#ifdef MODULE_CCCAM
-#ifdef MODULE_CCCSHARE
+#if defined(MODULE_CCCAM) && defined(MODULE_CCCSHARE)
+
 #include "module-cccam.h"
-#include "reader-common.h"
 #include "module-cccshare.h"
+#include "reader-common.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
 #include "oscam-lock.h"
@@ -20,6 +20,8 @@ static int32_t card_added_count = 0;
 static int32_t card_removed_count = 0;
 static int32_t card_dup_count = 0;
 static pthread_t share_updater_thread = 0;
+
+int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card);
 
 LLIST *get_cardlist(uint16_t caid, LLIST **list)
 {
@@ -1360,7 +1362,7 @@ struct cc_card **get_sorted_card_copy(LLIST *cards, int32_t reverse, int32_t *si
 		return (struct cc_card **)ll_sort(cards, compare_cards_by_hop, size);
 }
 
-void init_share(void) {
+void cccam_init_share(void) {
 
 		memset(reported_carddatas_list, 0, sizeof(reported_carddatas_list));
 		cs_lock_create(&cc_shares_lock, 200, "cc_shares_lock");
@@ -1381,7 +1383,7 @@ void init_share(void) {
         pthread_attr_destroy(&attr);
 }
 
-void done_share(void) {
+void cccam_done_share(void) {
 		if (share_updater_thread) {
 				pthread_cancel(share_updater_thread);
 				share_updater_thread = 0;
@@ -1391,5 +1393,4 @@ void done_share(void) {
 					cc_free_reported_carddata(reported_carddatas_list[i], NULL, 0);
 		}
 }
-#endif
 #endif
