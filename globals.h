@@ -1589,6 +1589,7 @@ struct s_config
 	SIDTABBITS	dvbapi_sidtabok;					// positiv services
 	SIDTABBITS	dvbapi_sidtabno;					// negative services
 	int8_t		dvbapi_reopenonzap;
+	int8_t		dvbapi_decodeforever;				// do not stop after 3 tries
 	int32_t		dvbapi_delayer;						// delayer ms, minimum time to write cw
 #endif
 

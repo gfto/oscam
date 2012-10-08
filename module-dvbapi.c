@@ -1283,7 +1283,18 @@ void request_cw(struct s_client *client, ECM_REQUEST *er)
 
 void dvbapi_try_next_caid(int32_t demux_id) {
 	int32_t num=-1, n, j;
-
+	if (cfg.dvbapi_decodeforever && demux[demux_id].tries > 2){
+		for (j = 0; j < demux[demux_id].ECMpidcount; j++) {
+			demux[demux_id].ECMpids[j].checked = 0;
+			demux[demux_id].ECMpids[j].status = 0;
+		}
+		demux[demux_id].tries = 0;
+		demux[demux_id].curindex = 0;
+		demux[demux_id].pidindex = -1;
+		dvbapi_resort_ecmpids(demux_id);
+		dvbapi_try_next_caid(demux_id);
+	}
+		
 	if (demux[demux_id].tries > 2) {
 		cs_log("ERROR: Can't decode channel");
 		dvbapi_stop_filter(demux_id, TYPE_ECM);
