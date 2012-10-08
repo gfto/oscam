@@ -138,6 +138,7 @@ extern int32_t write_server(void);
 extern void write_versionfile(void);
 
 #include "oscam-log.h"
+#include "oscam-log-reader.h"
 
 /* ===========================
  *        oscam-reader
@@ -145,11 +146,6 @@ extern void write_versionfile(void);
 extern int32_t reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int32_t l, uchar *response, uint16_t *response_length);
 extern int32_t card_write(struct s_reader * reader, const uchar *, const uchar *, uchar *, uint16_t *);
 extern int32_t check_sct_len(const unsigned char *data, int32_t off);
-extern void rdr_log(struct s_reader * reader, char *,...) __attribute__ ((format (printf, 2, 3)));
-extern void rdr_log_sensitive(struct s_reader * reader, char *,...) __attribute__ ((format (printf, 2, 3)));
-extern void rdr_debug_mask(struct s_reader * reader, uint16_t mask, char *fmt, ...) __attribute__ ((format (printf, 3, 4)));
-extern void rdr_debug_mask_sensitive(struct s_reader * reader, uint16_t mask, char *fmt, ...) __attribute__ ((format (printf, 3, 4)));
-extern void rdr_ddump_mask(struct s_reader * reader, uint16_t mask, const uint8_t * buf, int n, char *fmt, ...) __attribute__ ((format (printf, 5, 6)));
 extern void * start_cardreader(void *);
 extern void reader_card_info(struct s_reader * reader);
 extern int32_t hostResolve(struct s_reader * reader);
