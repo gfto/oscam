@@ -206,12 +206,8 @@ static void usage(void)
 #undef _check
 
 #ifdef NEED_DAEMON
-#if defined(__APPLE__)
-// this is done because daemon is being deprecated starting with 10.5 and -Werror will always trigger an error
-static int32_t daemon_compat(int32_t nochdir, int32_t noclose)
-#else
-static int32_t daemon(int32_t nochdir, int32_t noclose)
-#endif
+// The compat function is not called daemon() because this may cause problems.
+static int32_t do_daemon(int32_t nochdir, int32_t noclose)
 {
   int32_t fd;
 
@@ -238,6 +234,8 @@ static int32_t daemon(int32_t nochdir, int32_t noclose)
   }
   return(0);
 }
+#else
+#define do_daemon daemon
 #endif
 
 int32_t recv_from_udpipe(uchar *buf)
@@ -3965,12 +3963,7 @@ int32_t main (int32_t argc, char *argv[])
 	  }
   }
 
-
-#if defined(__APPLE__)
-  if (bg && daemon_compat(1,0))
-#else
-  if (bg && daemon(1,0))
-#endif
+  if (bg && do_daemon(1,0))
   {
     printf("Error starting in background (errno=%d: %s)", errno, strerror(errno));
     cs_exit(1);
