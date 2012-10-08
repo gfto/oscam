@@ -72,21 +72,14 @@ static void read_tiers(struct s_reader *reader)
     if (cta_res[2] == 0 && cta_res[3] == 0) {
       break;
     }
-    int32_t y, m, d, H, M, S;
-    rev_date_calc(&cta_res[4], &y, &m, &d, &H, &M, &S, reader->card_baseyear);
     uint16_t tier_id = (cta_res[2] << 8) | cta_res[3];
-
-
     // add entitlements to list
     struct tm timeinfo;
     memset(&timeinfo, 0, sizeof(struct tm));
-    timeinfo.tm_year = y - 1900; //tm year starts with 1900
-    timeinfo.tm_mon = m - 1; //tm month starts with 0
-    timeinfo.tm_mday = d;
-    cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), tier_id, 0, 0, mktime(&timeinfo), 4);
-
+    rev_date_calc_tm(&cta_res[4],&timeinfo,reader->card_baseyear);
     char tiername[83];
-    rdr_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s", tier_id, y, m, d, H, M, S, get_tiername(tier_id, reader->caid, tiername));
+    cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), tier_id, 0, 0, mktime(&timeinfo), 4);
+    rdr_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s",tier_id,timeinfo.tm_year+1900,timeinfo.tm_mon+1,timeinfo.tm_mday,timeinfo.tm_hour,timeinfo.tm_min,timeinfo.tm_sec,get_tiername(tier_id, reader->caid, tiername));
   }
 }
 

@@ -640,21 +640,10 @@ int32_t do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigne
   return len;
 }
 
-void rev_date_calc(const unsigned char *Date, int32_t *year, int32_t *mon, int32_t *day, int32_t *hh, int32_t *mm, int32_t *ss, int32_t base_year)
-{
-  *year=(Date[0]/12)+base_year;
-  *mon=(Date[0]%12)+1;
-  *day=Date[1] & 0x1f;
-  *hh=Date[2]/8;
-  *mm=(0x100*(Date[2]-*hh*8)+Date[3])/32;
-  *ss=(Date[3]-*mm*32)*2;
-}
-
 void rev_date_calc_tm(const unsigned char *Date, struct tm *timeinfo , int32_t base_year)
 {
-	memset(&timeinfo, 0, sizeof(timeinfo));
-	timeinfo->tm_year = (Date[0]/12) + base_year;
-	timeinfo->tm_mon = (Date[0]%12) + 1;
+	timeinfo->tm_year = Date[0] / 12 + base_year - 1900; //tm year starts at 1900
+	timeinfo->tm_mon  = Date[0] % 12; //tm month starts with 0
 	timeinfo->tm_mday = Date[1] & 0x1f;
 	timeinfo->tm_hour = Date[2] / 8;
 	timeinfo->tm_min = (0x100 * (Date[2] - timeinfo->tm_hour * 8) + Date[3]) / 32;
