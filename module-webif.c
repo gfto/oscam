@@ -595,6 +595,7 @@ static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams
 	}
 
 	tpl_printf(vars, TPLADD, "UPDATEINTERVAL", "%d", cfg.cc_update_interval);
+	tpl_printf(vars, TPLADD, "RECV_TIMEOUT", "%u", cfg.cc_recv_timeout);
 	if (cfg.cc_stealth)
 		tpl_addVar(vars, TPLADD, "STEALTH", "selected");
 
