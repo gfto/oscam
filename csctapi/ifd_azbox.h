@@ -4,8 +4,8 @@
 
 #include "../globals.h"
 
-#include "../openxcas/openxcas_api.h"
-#include "../openxcas/openxcas_smartcard.h"
+#include "../extapi/openxcas/openxcas_api.h"
+#include "../extapi/openxcas/openxcas_smartcard.h"
 
 #include "atr.h"
 

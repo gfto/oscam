@@ -103,7 +103,7 @@ CONFIG_WITH_COOLAPI=y
 endif
 
 DEFAULT_AZBOX_FLAGS = -DWITH_AZBOX
-DEFAULT_AZBOX_LIB = -Lopenxcas -lOpenXCASAPI
+DEFAULT_AZBOX_LIB = -Lextapi/openxcas -lOpenXCASAPI
 ifdef USE_AZBOX
 AZBOX_FLAGS = $(DEFAULT_AZBOX_FLAGS)
 AZBOX_CFLAGS = $(DEFAULT_AZBOX_FLAGS)
@@ -547,8 +547,8 @@ OSCam build system documentation\n\
                          AZBOX_LDFLAGS='$(DEFAULT_AZBOX_FLAGS)'\n\
                          AZBOX_LIB='$(DEFAULT_AZBOX_LIB)'\n\
                      Using USE_AZBOX=1 adds to '-azbox' to PLUS_TARGET.\n\
-                     The openxcas/libOpenXCASAPI.a library shipped with OSCam\n\
-                     is compiled for MIPSEL.\n\
+                     extapi/openxcas/libOpenXCASAPI.a library that is shipped\n\
+                     with OSCam is compiled for MIPSEL.\n\
 \n\
    USE_LIBCRYPTO=1 - Request linking with libcrypto instead of using OSCam\n\
                      internal crypto functions. USE_LIBCRYPTO is automatically\n\

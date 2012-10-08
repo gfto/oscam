@@ -118,10 +118,10 @@ OSCam build system documentation
                          AZBOX_FLAGS='-DWITH_AZBOX'
                          AZBOX_CFLAGS='-DWITH_AZBOX'
                          AZBOX_LDFLAGS='-DWITH_AZBOX'
-                         AZBOX_LIB='-Lopenxcas -lOpenXCASAPI'
+                         AZBOX_LIB='-Lextapi/openxcas -lOpenXCASAPI'
                      Using USE_AZBOX=1 adds to '-azbox' to PLUS_TARGET.
-                     The openxcas/libOpenXCASAPI.a library shipped with OSCam
-                     is compiled for MIPSEL.
+                     extapi/openxcas/libOpenXCASAPI.a library that is shipped
+                     with OSCam is compiled for MIPSEL.
 
    USE_LIBCRYPTO=1 - Request linking with libcrypto instead of using OSCam
                      internal crypto functions. USE_LIBCRYPTO is automatically

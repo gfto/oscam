@@ -2,8 +2,8 @@
 
 #if defined(HAVE_DVBAPI) && defined(WITH_AZBOX)
 
-#include "openxcas/openxcas_api.h"
-#include "openxcas/openxcas_message.h"
+#include "extapi/openxcas/openxcas_api.h"
+#include "extapi/openxcas/openxcas_message.h"
 
 #include "module-dvbapi.h"
 #include "module-dvbapi-azbox.h"
