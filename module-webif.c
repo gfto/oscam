@@ -2462,13 +2462,9 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 					if (cfg.http_showpicons) {
 						tpl_printf(vars, TPLADD, "LASTCHANNEL",
 							"<img class=\"clientpicon\" src=\"image?i=IC_%04X_%04X\" alt=\"%s\" title=\"%s\">",
-							latestclient->last_caid,
-							latestclient->last_srvid,
-							xml_encode(vars, lastchan),
-							xml_encode(vars, lastchan)
-						);
+							latestclient->last_caid, latestclient->last_srvid, lastchan, lastchan);
 					} else {
-						tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", xml_encode(vars, lastchan));
+						tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
 					}
 				}
 
@@ -4289,7 +4285,8 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 	for (i = 0, cl = first_client; cl ; cl = cl->next, i++) {
 		if (cl->typ=='c' && cl->account && cl->account->cacheex){
 			tpl_addVar(vars, TPLADD, "TYPE", "Client");
-			tpl_addVar(vars, TPLADD, "NAME", cl->account->usr);
+			if(!apicall) tpl_addVar(vars, TPLADD, "NAME", xml_encode(vars, cl->account->usr));
+			else tpl_addVar(vars, TPLADD, "NAME", cl->account->usr);
 			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));
 			tpl_printf(vars, TPLADD, "NODE", "%" PRIu64 "X", get_cacheex_node(cl));
 			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->account->cacheex]);
@@ -4304,7 +4301,8 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 		}
 		else if ((cl->typ=='p' || cl->typ=='r') && (cl->reader && cl->reader->cacheex)) {
 			tpl_addVar(vars, TPLADD, "TYPE", "Reader");
-			tpl_addVar(vars, TPLADD, "NAME", cl->reader->label);
+			if(!apicall) tpl_addVar(vars, TPLADD, "NAME", xml_encode(vars, cl->reader->label));
+			else tpl_addVar(vars, TPLADD, "NAME", cl->reader->label);
 			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));
 			tpl_printf(vars, TPLADD, "NODE", "%" PRIu64 "X", get_cacheex_node(cl));
 			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->reader->cacheex]);
