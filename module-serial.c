@@ -1220,7 +1220,7 @@ static int32_t oscam_ser_recv_chk(struct s_client *client, uchar *dcw, int32_t *
  *	protocol structure
  */
 
-void module_oscam_ser(struct s_module *ph)
+void module_serial(struct s_module *ph)
 {
   ph->desc="serial";
   ph->type=MOD_CONN_SERIAL;

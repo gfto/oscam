@@ -1,5 +1,9 @@
 #include "globals.h"
 
+#include "csctapi/cardreaders.h"
+#include "modules.h"
+#include "readers.h"
+
 #include "coolapi.h"
 #include "csctapi/icc_async.h"
 #include "module-anticasc.h"
@@ -3843,7 +3847,7 @@ int32_t main (int32_t argc, char *argv[])
            module_radegast,
 #endif
 #ifdef MODULE_SERIAL
-           module_oscam_ser,
+           module_serial,
 #endif
 #ifdef HAVE_DVBAPI
 	   module_dvbapi,
