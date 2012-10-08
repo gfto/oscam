@@ -4,7 +4,7 @@
 #include "modules.h"
 #include "readers.h"
 
-#include "coolapi.h"
+#include "extapi/coolapi.h"
 #include "csctapi/icc_async.h"
 #include "module-anticasc.h"
 #include "module-cacheex.h"

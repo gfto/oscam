@@ -4,7 +4,7 @@
 
 #if defined(HAVE_DVBAPI) && defined(WITH_COOLAPI)
 
-#include "coolapi.h"
+#include "extapi/coolapi.h"
 
 #include "module-dvbapi.h"
 #include "module-dvbapi-coolapi.h"

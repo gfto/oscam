@@ -11,7 +11,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#include"../coolapi.h"
+#include "../extapi/coolapi.h"
 #include "../oscam-string.h"
 #include "../oscam-time.h"
 
