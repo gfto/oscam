@@ -1,6 +1,7 @@
 #include "globals.h"
 #include <syslog.h>
 #include <stdlib.h>
+#include "module-monitor.h"
 #include "oscam-client.h"
 #include "oscam-garbage.h"
 #include "oscam-lock.h"
@@ -259,9 +260,7 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 			snprintf(sbuf, sizeof(sbuf), "%03d", cl->logcounter);
 			cl->logcounter = (cl->logcounter+1) % 1000;
 			memcpy(txt + 4, sbuf, 3);
-#ifdef MODULE_MONITOR
 			monitor_send_idx(cl, txt);
-#endif
 		}
 	}
 }

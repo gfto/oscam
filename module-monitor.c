@@ -1,5 +1,6 @@
 #include "globals.h"
 #ifdef MODULE_MONITOR
+#include "module-monitor.h"
 #include "oscam-aes.h"
 #include "oscam-client.h"
 #include "oscam-conf-chk.h"

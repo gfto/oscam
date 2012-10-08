@@ -1,8 +1,6 @@
 #ifndef GLOBAL_FUNCTIONS_H_
 #define GLOBAL_FUNCTIONS_H_
 
-extern int32_t monitor_send_idx(struct s_client *, char *);
-
 /* ===========================
  *           oscam
  * =========================== */
