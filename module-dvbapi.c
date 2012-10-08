@@ -1188,7 +1188,6 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 		ECM_REQUEST er;
 		er.caid  = demux[demux_index].ECMpids[n].CAID;
 		er.prid  = demux[demux_index].ECMpids[n].PROVID;
-		er.pid = demux[demux_index].ECMpids[n].ECM_PID;
 		er.srvid = demux[demux_index].program_number;
 
 		for (nr=0, sidtab=cfg.sidtab; sidtab; sidtab=sidtab->next, nr++) {
@@ -1856,7 +1855,6 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 
 		uint16_t caid = curpid->CAID;
 		uint32_t provid = curpid->PROVID;
-		uint16_t ecmpid = curpid->ECM_PID;
 
 		if ((caid >> 8) == 0x06) {
 			//80 70 39 53 04 05 00 88
@@ -1937,9 +1935,6 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		if (provid != curpid->PROVID)
 			curpid->PROVID = provid;
 			
-		if (ecmpid != curpid->ECM_PID)
-			curpid->ECM_PID = ecmpid;
-
 		if (cfg.dvbapi_au>0)
 			dvbapi_start_emm_filter(demux_id);
 
@@ -1949,7 +1944,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 
 		er->srvid = demux[demux_id].program_number;
 		er->caid  = caid;
-		er->pid   = ecmpid;
+		er->pid   = curpid->ECM_PID;
 		er->prid  = provid;
 		er->chid  = chid;
 		er->l     = len;
