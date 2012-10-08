@@ -31,17 +31,6 @@ void cs_setpriority(int32_t prio)
 }
 #endif
 
-/* Checks an array if it is filled (a value > 0) and returns the last position (1...length) where something was found.
-   length specifies the maximum length to check for. */
-int32_t check_filled(uchar *value, int32_t length){
-	if(value == NULL) return 0;
-	int32_t i, j = 0;
-	for (i = 0; i < length; ++i){
-		if(value[i] > 0) j = i + 1;
-	}
-	return j;
-}
-
 /* Gets the servicename. Make sure that buf is at least 32 bytes large. */
 char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf){
 	int32_t i;
