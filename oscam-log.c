@@ -382,12 +382,6 @@ void cs_close_log(void)
 	}
 }
 
-void log_emm_request(struct s_reader *rdr){
-	cs_log("%s emm-request sent (reader=%s, caid=%04X, auprovid=%06X)",
-			username(cur_client()), rdr->label, rdr->caid,
-			rdr->auprovid ? rdr->auprovid : b2i(4, rdr->prid[0]));
-}
-
 /*
  * This function writes the current CW from ECM struct to a cwl file.
  * The filename is re-calculated and file re-opened every time.

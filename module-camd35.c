@@ -224,7 +224,9 @@ static void camd35_request_emm(ECM_REQUEST *er)
 	if (au_caid)
 	{
 		cl->disable_counter = 0;
-		log_emm_request(aureader);
+		cs_log("%s emm-request sent (reader=%s, caid=%04X, auprovid=%06X)",
+				username(cur_client()), aureader->label, aureader->caid,
+				aureader->auprovid ? aureader->auprovid : b2i(4, aureader->prid[0]));
 	}
 	else
 		if (cl->disable_counter > 2)

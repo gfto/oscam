@@ -49,7 +49,9 @@ static void camd33_request_emm(void)
 
   if (aureader->hexserial[0])
   {
-    log_emm_request(aureader);
+    cs_log("%s emm-request sent (reader=%s, caid=%04X, auprovid=%06X)",
+      username(cur_client()), aureader->label, aureader->caid,
+      aureader->auprovid ? aureader->auprovid : b2i(4, aureader->prid[0]));
     mbuf[0]=0;
     mbuf[1]=aureader->caid>>8;
     mbuf[2]=aureader->caid&0xff;
