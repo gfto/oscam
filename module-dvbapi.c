@@ -509,12 +509,12 @@ void dvbapi_add_ecmpid(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_
 		if (stream>-1 && demux[demux_id].ECMpids[n].CAID == caid && demux[demux_id].ECMpids[n].ECM_PID == ecmpid) {
 			if (!demux[demux_id].ECMpids[n].streams) {
 				//we already got this caid/ecmpid as global, no need to add the single stream
-				cs_log("[SKIP STREAM %d] CAID: %04X\tECM_PID: %04X\tPROVID: %06X", n, caid, ecmpid, provid);
+				cs_log("[SKIP STREAM %d] CAID: %04X ECM_PID: %04X PROVID: %06X", n, caid, ecmpid, provid);
 				continue;
 			}
 			added=1;
 			demux[demux_id].ECMpids[n].streams |= (1 << stream);
-			cs_log("[ADD STREAM %d] CAID: %04X\tECM_PID: %04X\tPROVID: %06X", n, caid, ecmpid, provid);
+			cs_log("[ADD STREAM %d] CAID: %04X ECM_PID: %04X PROVID: %06X", n, caid, ecmpid, provid);
 		}
 	}
 
@@ -527,7 +527,7 @@ void dvbapi_add_ecmpid(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_
 	if (stream>-1)
 		demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].streams |= (1 << stream);
 
-	cs_log("[ADD PID %d] CAID: %04X\tECM_PID: %04X\tPROVID: %06X", demux[demux_id].ECMpidcount, caid, ecmpid, provid);
+	cs_log("[ADD PID %d] CAID: %04X ECM_PID: %04X PROVID: %06X", demux[demux_id].ECMpidcount, caid, ecmpid, provid);
 	demux[demux_id].ECMpidcount++;
 }
 
@@ -537,10 +537,10 @@ void dvbapi_add_emmpid(struct s_reader *testrdr, int32_t demux_id, uint16_t caid
 		demux[demux_id].EMMpids[demux[demux_id].EMMpidcount].CAID = caid;
 		demux[demux_id].EMMpids[demux[demux_id].EMMpidcount].PROVID = provid;
 		demux[demux_id].EMMpids[demux[demux_id].EMMpidcount++].type = type;
-		cs_log("[ADD EMMPID] CAID: %04X\tEMM_PID: %04X\tPROVID: %06X - (type %d) ENABLED!", caid, emmpid, provid, type);
+		cs_log("[ADD EMMPID] CAID: %04X EMM_PID: %04X PROVID: %06X - (type %d) ENABLED!", caid, emmpid, provid, type);
 	}
 	else {
-		cs_log("[ADD EMMPID] CAID: %04X\tEMM_PID: %04X\tPROVID: %06X - (type %d) DISABLED! (no matching reader)", caid, emmpid, provid, type);
+		cs_log("[ADD EMMPID] CAID: %04X EMM_PID: %04X PROVID: %06X - (type %d) DISABLED! (no matching reader)", caid, emmpid, provid, type);
 	}
 }
 
@@ -1232,7 +1232,7 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 		if (demux[demux_id].ECMpidcount>=ECM_PIDS)
 			break;
 
-		cs_debug_mask(D_DVBAPI, "[pmt] type: %02x\tlength: %d", buffer[j], descriptor_length);
+		cs_debug_mask(D_DVBAPI, "[pmt] type: %02x length: %d", buffer[j], descriptor_length);
 
 		if (buffer[j] != 0x09) continue;
 
@@ -1466,7 +1466,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	demux[demux_id].rdr=NULL;
 	demux[demux_id].pidindex=-1;
 
-	cs_debug_mask(D_DVBAPI, "id: %d\tdemux_index: %d\tca_mask: %02x\tprogram_info_length: %d\tca_pmt_list_management %02x",
+	cs_debug_mask(D_DVBAPI, "id: %2d demux_index: %2d ca_mask: %02x program_info_length: %3d ca_pmt_list_management %02x",
 			demux_id, demux[demux_id].demux_index, demux[demux_id].ca_mask, program_info_length, ca_pmt_list_management);
 
 	if (pmtfile)
@@ -1481,7 +1481,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		uint16_t elementary_pid = ((buffer[i + 1] & 0x1F) << 8) | buffer[i + 2];
 		es_info_length = ((buffer[i + 3] & 0x0F) << 8) | buffer[i + 4];
 
-		cs_debug_mask(D_DVBAPI, "[pmt] stream_type: %02x\tpid: %04x\tlength: %d", stream_type, elementary_pid, es_info_length);
+		cs_debug_mask(D_DVBAPI, "[pmt] stream_type: %02x pid: %04x length: %d", stream_type, elementary_pid, es_info_length);
 
 		if (demux[demux_id].STREAMpidcount >= ECM_PIDS)
 			break;
