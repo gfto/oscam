@@ -152,7 +152,6 @@ static void refresh_lcd_file(void) {
 								type, idx, label, days, hours, mins,
 								secs, emmtext, status);
 					}
-					free(emmtext);
 				}
 			}
 
