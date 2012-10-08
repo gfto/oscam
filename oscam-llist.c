@@ -6,6 +6,8 @@
 #include "oscam-lock.h"
 #include "oscam-string.h"
 
+extern char *LOG_LIST;
+
 /*
   Locking rules:
 

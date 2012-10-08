@@ -4,6 +4,7 @@
 #include "oscam-client.h"
 #include "oscam-garbage.h"
 #include "oscam-lock.h"
+#include "oscam-log.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
 #include "oscam-time.h"

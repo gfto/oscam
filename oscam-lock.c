@@ -2,6 +2,8 @@
 #include "oscam-lock.h"
 #include "oscam-time.h"
 
+extern char *LOG_LIST;
+
 /**
  * creates a lock
  **/

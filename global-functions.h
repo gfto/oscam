@@ -137,31 +137,7 @@ extern int32_t write_config(void);
 extern int32_t write_server(void);
 extern void write_versionfile(void);
 
-/* ===========================
- *         oscam-log
- * =========================== */
-extern char *LOG_LIST;
-extern int32_t  cs_init_log(void);
-extern void cs_reinit_loghist(uint32_t size);
-extern int32_t cs_open_logfiles(void);
-
-extern void cs_log_int(uint16_t mask, int8_t lock, const uchar *buf, int32_t n, const char *fmt, ...) __attribute__ ((format (printf, 5, 6)));
-
-#define cs_log(...)          cs_log_int(0, 1, NULL, 0, ##__VA_ARGS__)
-#define cs_log_nolock(...)   cs_log_int(0, 0, NULL, 0, ##__VA_ARGS__)
-#define cs_dump(buf, n, ...) cs_log_int(0, 1, buf,  n, ##__VA_ARGS__)
-
-#define cs_debug_mask(mask, ...)         do { if (config_WITH_DEBUG()) cs_log_int(mask, 1, NULL, 0, ##__VA_ARGS__); } while(0)
-#define cs_debug_mask_nolock(mask, ...)  do { if (config_WITH_DEBUG()) cs_log_int(mask, 0, NULL, 0, ##__VA_ARGS__); } while(0)
-#define cs_ddump_mask(mask, buf, n, ...) do { if (config_WITH_DEBUG()) cs_log_int(mask, 1, buf , n, ##__VA_ARGS__); } while(0)
-
-extern void log_emm_request(struct s_reader *);
-extern void logCWtoFile(ECM_REQUEST *er, uchar *cw);
-extern void cs_log_config(void);
-extern void cs_close_log(void);
-extern int32_t cs_init_statistics(void);
-extern void cs_statistics(struct s_client * client);
-extern void cs_disable_log(int8_t disabled);
+#include "oscam-log.h"
 
 /* ===========================
  *        oscam-reader
