@@ -196,7 +196,6 @@ extern void reader_do_card_info(struct s_reader * reader);
 /* ===========================
  *        oscam-simples
  * =========================== */
-extern char *remote_txt(void);
 extern int32_t comp_timeb(struct timeb *tpa, struct timeb *tpb);
 extern time_t cs_timegm(struct tm *tm);
 extern struct tm *cs_gmtime_r(const time_t *timep, struct tm *r);

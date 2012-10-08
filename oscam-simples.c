@@ -1,19 +1,10 @@
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
 #include "module-cccam.h"
-#include "oscam-client.h"
 #include "oscam-garbage.h"
 #include "oscam-string.h"
 
 extern struct s_cardsystem cardsystems[CS_MAX_MOD];
-
-char *remote_txt(void)
-{
-  if (cur_client()->typ == 'c')
-    return("client");
-  else
-    return("remote server");
-}
 
 int32_t comp_timeb(struct timeb *tpa, struct timeb *tpb)
 {

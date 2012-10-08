@@ -63,6 +63,11 @@ int8_t is_valid_client(struct s_client *client) {
 	return 0;
 }
 
+const char *remote_txt(void)
+{
+	return cur_client()->typ == 'c' ? "client" : "remote server";
+}
+
 const char *client_get_proto(struct s_client *cl)
 {
 	char *ctyp;
