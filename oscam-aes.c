@@ -75,8 +75,22 @@ void parse_aes_entry(AES_ENTRY **list, char *label, char *value) {
 	char *save = NULL;
 
 	tmp = strtok_r(value,"@",&save);
+
+	//if we got error caid
+	len = strlen(tmp);
+	if (len == 0 || len > 4) return;
+
+	//if there is not value after @
+	len = strlen(save);
+	if(len == 0) return;
+
 	caid = a2i(tmp,2);
 	tmp = strtok_r(NULL,":",&save);
+
+	//if we got error ident
+	len = strlen(tmp);
+	if(len == 0 || len > 6) return;
+
 	ident = a2i(tmp,3);
 
 	// now we need to split the key and add the entry to the reader.
