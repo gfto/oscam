@@ -75,7 +75,7 @@ typedef unsigned char uchar;
     #define __reserved
     #define __nullnullterminated
     #include <specstrings.h>
-    #include "cygwin/WinSCard.h"
+    #include "extapi/cygwin/WinSCard.h"
   #else
     #include <PCSC/pcsclite.h>
     #if defined(__APPLE__)
