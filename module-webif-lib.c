@@ -8,6 +8,7 @@
 #include "oscam-files.h"
 #include "oscam-lock.h"
 #include "oscam-string.h"
+#include "oscam-time.h"
 
 extern const char *templates[][3];
 extern char *JSCRIPT;

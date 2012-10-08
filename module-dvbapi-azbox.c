@@ -9,6 +9,7 @@
 #include "module-dvbapi-azbox.h"
 #include "oscam-client.h"
 #include "oscam-string.h"
+#include "oscam-time.h"
 
 // These variables are declared in module-dvbapi.c
 extern void * dvbapi_client;

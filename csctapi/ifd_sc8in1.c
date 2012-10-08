@@ -20,6 +20,7 @@
 #ifdef WITH_CARDREADER
 #include "../oscam-lock.h"
 #include "../oscam-string.h"
+#include "../oscam-time.h"
 #include "atr.h"
 #include <termios.h>
 #include "ifd_sc8in1.h"

@@ -196,13 +196,6 @@ extern void reader_do_card_info(struct s_reader * reader);
 /* ===========================
  *        oscam-simples
  * =========================== */
-extern int32_t comp_timeb(struct timeb *tpa, struct timeb *tpb);
-extern time_t cs_timegm(struct tm *tm);
-extern struct tm *cs_gmtime_r(const time_t *timep, struct tm *r);
-extern char *cs_ctime_r(const time_t *timep, char* buf);
-extern void cs_ftime(struct timeb *);
-extern void cs_sleepms(uint32_t);
-extern void cs_sleepus(uint32_t);
 extern void cs_setpriority(int32_t);
 extern int32_t check_filled(uchar *value, int32_t length);
 extern char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf);
@@ -217,9 +210,6 @@ extern void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid);
 extern void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid);
 
 extern struct s_reader *get_reader_by_label(char *lbl);
-
-extern void add_ms_to_timespec(struct timespec *timeout, int32_t msec);
-extern int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms);
 
 extern int32_t ecmfmt(uint16_t caid, uint32_t prid, uint16_t chid, uint16_t pid, uint16_t srvid, uint16_t l, uint16_t checksum, char *result, size_t size);
 extern int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size);

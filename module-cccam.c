@@ -14,6 +14,7 @@
 #include "oscam-lock.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
+#include "oscam-time.h"
 
 //Mode names for CMD_05 command:
 const char *cmd05_mode_name[] = { "UNKNOWN", "PLAIN", "AES", "CC_CRYPT", "RC4",

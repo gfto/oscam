@@ -1,5 +1,6 @@
 #include "../globals.h"
 #ifdef WITH_CARDREADER
+#include "../oscam-time.h"
 #include "atr.h"
 #include <termios.h>
 #include "ifd_phoenix.h"

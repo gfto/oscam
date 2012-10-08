@@ -6,6 +6,7 @@
 #include "oscam-client.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
+#include "oscam-time.h"
 #include "reader-common.h"
 
 static char *debug_mask_txt(int mask) {

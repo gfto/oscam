@@ -12,6 +12,7 @@
 #include "oscam-client.h"
 #include "oscam-files.h"
 #include "oscam-string.h"
+#include "oscam-time.h"
 
 static int8_t running;
 

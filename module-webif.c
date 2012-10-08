@@ -26,6 +26,7 @@
 #include "oscam-lock.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
+#include "oscam-time.h"
 
 extern struct s_module modules[CS_MAX_MOD];
 extern struct s_cardreader cardreaders[CS_MAX_MOD];

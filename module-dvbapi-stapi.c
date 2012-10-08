@@ -7,6 +7,7 @@
 #include "oscam-client.h"
 #include "oscam-files.h"
 #include "oscam-string.h"
+#include "oscam-time.h"
 
 // These variables are declared in module-dvbapi.c
 extern int32_t disable_pmt_files;

@@ -1,5 +1,6 @@
 #include "globals.h"
 #ifdef READER_IRDETO
+#include "oscam-time.h"
 #include "reader-common.h"
 
 static const uchar CryptTable[256] =

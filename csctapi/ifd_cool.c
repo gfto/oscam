@@ -13,6 +13,7 @@
 
 #include"../coolapi.h"
 #include "../oscam-string.h"
+#include "../oscam-time.h"
 
 #include"ifd_cool.h"
 #include"icc_async.h"

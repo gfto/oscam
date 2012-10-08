@@ -2,6 +2,7 @@
 #include "oscam-garbage.h"
 #include "oscam-lock.h"
 #include "oscam-string.h"
+#include "oscam-time.h"
 
 #define HASH_BUCKETS 16
 

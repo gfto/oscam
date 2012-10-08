@@ -1,5 +1,6 @@
 #include "globals.h"
 #include "oscam-lock.h"
+#include "oscam-time.h"
 
 /**
  * creates a lock

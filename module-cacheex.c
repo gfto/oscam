@@ -9,6 +9,7 @@
 #include "oscam-lock.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
+#include "oscam-time.h"
 
 #define cs_cacheex_matcher "oscam.cacheex"
 

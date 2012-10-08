@@ -19,6 +19,7 @@
 #include "oscam-lock.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
+#include "oscam-time.h"
 
 static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea);
 

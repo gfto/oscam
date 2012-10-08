@@ -1,5 +1,6 @@
 #include "../globals.h"
 #ifdef WITH_CARDREADER
+#include "../oscam-time.h"
 #include "icc_async.h"
 #include "io_serial.h"
 #include <termios.h>

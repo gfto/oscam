@@ -1,5 +1,6 @@
 #include "globals.h"
 #ifdef READER_NAGRA
+#include "oscam-time.h"
 #include "reader-common.h"
 #include "cscrypt/idea.h"
 #include <termios.h>

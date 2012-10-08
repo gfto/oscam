@@ -4,6 +4,7 @@
 #include "oscam-client.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
+#include "oscam-time.h"
 
 extern struct s_module modules[CS_MAX_MOD];
 

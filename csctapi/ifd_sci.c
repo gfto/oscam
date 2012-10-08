@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <sys/ioctl.h>
+#include "../oscam-time.h"
 #include "sci_global.h"
 #include "sci_ioctl.h"
 #include "string.h"

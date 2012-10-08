@@ -8,6 +8,7 @@
 #if defined(WITH_CARDREADER) && defined(WITH_LIBUSB)
 #include "../oscam-lock.h"
 #include "../oscam-string.h"
+#include "../oscam-time.h"
 #include "ifd_smartreader.h"
 
 #if defined(__CYGWIN__)

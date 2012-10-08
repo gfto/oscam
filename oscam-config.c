@@ -7,6 +7,7 @@
 #include "oscam-files.h"
 #include "oscam-garbage.h"
 #include "oscam-string.h"
+#include "oscam-time.h"
 
 #define cs_srid				"oscam.srvid"
 #define cs_trid				"oscam.tiers"

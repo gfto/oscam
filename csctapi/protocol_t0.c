@@ -24,6 +24,7 @@
 
 #include "../globals.h"
 #ifdef WITH_CARDREADER
+#include "../oscam-time.h"
 #include "defines.h"
 
 #include "protocol_t0.h"

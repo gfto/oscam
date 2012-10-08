@@ -40,7 +40,7 @@
 #if defined(__linux__)
 #include <linux/serial.h>
 #endif
-
+#include "../oscam-time.h"
 #include "defines.h"
 #include "io_serial.h"
 #include "mc_global.h"

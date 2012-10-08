@@ -1,7 +1,7 @@
 #include"../globals.h"
 
 #if defined(WITH_CARDREADER) && defined(WITH_AZBOX)
-
+#include "../oscam-time.h"
 #include "ifd_azbox.h"
 #include "icc_async.h"
 

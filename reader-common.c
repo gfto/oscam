@@ -3,6 +3,7 @@
 #ifdef WITH_CARDREADER
 
 #include "module-led.h"
+#include "oscam-time.h"
 #include "reader-common.h"
 #include "csctapi/defines.h"
 #include "csctapi/atr.h"
