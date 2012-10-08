@@ -129,7 +129,6 @@ extern void reader_do_card_info(struct s_reader * reader);
 /* ===========================
  *        oscam-simples
  * =========================== */
-extern void cs_setpriority(int32_t);
 extern char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf);
 extern char *get_tiername(uint16_t tierid, uint16_t caid, char *buf);
 extern char *get_provider(uint16_t caid, uint32_t provid, char *buf, uint32_t buflen);

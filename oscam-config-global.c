@@ -125,13 +125,32 @@ static void caidvaluetab_fn(const char *token, char *value, void *setting, FILE 
 }
 #endif
 
+#ifdef __CYGWIN__
+#include <windows.h>
+#endif
+
 void global_fixups_fn(void *UNUSED(var)) {
 	if (!cfg.usrfile) cfg.disableuserfile = 1;
 	if (!cfg.mailfile) cfg.disablemail = 1;
 	if (cfg.ctimeout < 100) cfg.ctimeout *= 1000;
 	if (cfg.ftimeout < 100) cfg.ftimeout *= 1000;
 	if (cfg.nice < -20 || cfg.nice > 20) cfg.nice = 99;
-	if (cfg.nice != 99) cs_setpriority(cfg.nice);
+	if (cfg.nice != 99) {
+#ifndef __CYGWIN__
+		setpriority(PRIO_PROCESS, 0, cfg.nice);
+#else
+		HANDLE WinId;
+		uint32_t wprio;
+		switch ((cfg.nice + 20) / 10) {
+		case  0: wprio = REALTIME_PRIORITY_CLASS; break;
+		case  1: wprio = HIGH_PRIORITY_CLASS;     break;
+		case  2: wprio = NORMAL_PRIORITY_CLASS;   break;
+		default: wprio = IDLE_PRIORITY_CLASS;     break;
+		}
+		WinId = GetCurrentProcess();
+		SetPriorityClass(WinId, wprio);
+#endif
+	}
 	if (cfg.srtimeout <= 0) cfg.srtimeout = 1500;
 	if (cfg.srtimeout < 100) cfg.srtimeout *= 1000;
 	if (cfg.max_log_size != 0 && cfg.max_log_size <= 10) cfg.max_log_size = 10;

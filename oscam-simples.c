@@ -6,31 +6,6 @@
 
 extern struct s_cardsystem cardsystems[CS_MAX_MOD];
 
-#if defined(__CYGWIN__)
-#include <windows.h>
-void cs_setpriority(int32_t prio)
-{
-  HANDLE WinId;
-  uint32_t wprio;
-  switch((prio+20)/10)
-  {
-    case  0: wprio=REALTIME_PRIORITY_CLASS;	break;
-    case  1: wprio=HIGH_PRIORITY_CLASS;		break;
-    case  2: wprio=NORMAL_PRIORITY_CLASS;	break;
-    default: wprio=IDLE_PRIORITY_CLASS;		break;
-  }
-  WinId=GetCurrentProcess();
-  SetPriorityClass(WinId, wprio);
-}
-#else
-void cs_setpriority(int32_t prio)
-{
-#ifdef PRIO_PROCESS
-  setpriority(PRIO_PROCESS, 0, prio);  // ignore errors
-#endif
-}
-#endif
-
 /* Gets the servicename. Make sure that buf is at least 32 bytes large. */
 char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf){
 	int32_t i;
