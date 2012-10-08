@@ -912,6 +912,7 @@ char *xml_encode(struct templatevars *vars, char *chartoencode) {
 			case '>': memcpy(encoded + pos, "&gt;", 4); pos+=4; break;
 			case '"': memcpy(encoded + pos, "&quot;", 6); pos+=6; break;
 			case '\'': memcpy(encoded + pos, "&apos;", 6); pos+=6; break;
+			case '\n': memcpy(encoded + pos, "\n", 1); pos+=1; break;
 
 			default:
 				if ( (unsigned int)chartoencode[i] < 32 || (cs_http_use_utf8 != 1 && (unsigned int)chartoencode[i] > 127)) {
