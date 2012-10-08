@@ -3974,6 +3974,8 @@ int32_t main (int32_t argc, char *argv[])
     cs_exit(1);
   }
 
+  get_random_bytes_init();
+
 #ifdef WEBIF
   if (cs_restart_mode)
     restart_daemon();
@@ -4019,7 +4021,6 @@ int32_t main (int32_t argc, char *argv[])
     cardreader_def[i](&cardreaders[i]);
   }
 
-  init_rnd();
   init_sidtab();
   init_readerdb();
   cfg.account = init_userdb();

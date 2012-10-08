@@ -24,9 +24,7 @@ static LLIST *invalid_cws;
 
 void cacheex_init(void) {
 	// Init random node id
-	int i;
-	for (i = 0; i < 8; i++)
-		cacheex_peer_id[i] = fast_rnd();
+	get_random_bytes(cacheex_peer_id, 8);
 #ifdef MODULE_CCCAM
 	memcpy(cacheex_peer_id, cc_node_id, 8);
 #endif

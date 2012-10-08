@@ -579,7 +579,7 @@ int32_t add_card_providers(struct cc_card *dest_card, struct cc_card *card,
 
 void set_card_timeout(struct cc_card *card)
 {
-	card->timeout = time(NULL)+TIMEOUT_SECONDS+(fast_rnd()-128)*2;
+	card->timeout = time(NULL)+TIMEOUT_SECONDS+((rand() & 0xff)-128)*2;
 }
 
 struct cc_card *create_card(struct cc_card *card) {

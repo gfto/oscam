@@ -289,3 +289,32 @@ int32_t check_filled(uchar *value, int32_t length)
 	}
 	return j;
 }
+
+#define RAND_POOL_SIZE 64
+
+// The last bytes are used to init random seed
+static uint8_t rand_pool[RAND_POOL_SIZE + sizeof(uint32_t)];
+
+void get_random_bytes_init(void) {
+	srand(time(NULL));
+	int fd = open("/dev/urandom", O_RDONLY);
+	if (fd < 0) {
+		fd = open("/dev/random", O_RDONLY);
+		if (fd < 0)
+			return;
+	}
+	if (read(fd, rand_pool, RAND_POOL_SIZE + sizeof(uint32_t)) > -1) {
+		uint32_t *pool_seed = (uint32_t *)rand_pool + RAND_POOL_SIZE;
+		srand(*pool_seed);
+	}
+	close(fd);
+}
+
+void get_random_bytes(uint8_t *dst, uint32_t dst_len) {
+	static uint32_t rand_pool_pos; // *MUST* be static
+	uint32_t i;
+	for (i = 0; i < dst_len; i++) {
+		rand_pool_pos++; // Races are welcome...
+		dst[i] = rand() ^ rand_pool[rand_pool_pos % RAND_POOL_SIZE];
+	}
+}

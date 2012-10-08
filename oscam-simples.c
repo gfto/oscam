@@ -117,24 +117,6 @@ void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *
 	*ptr = prov;
 }
 
-uint32_t seed;
-
-/* A fast random number generator. Depends on initialization of seed from init_rnd().
-   Only use this if you don't need good random numbers (so don't use in security critical situations). */
-uchar fast_rnd(void) {
-	uint32_t offset = 12923;
-	uint32_t multiplier = 4079;
-
-	seed = seed * multiplier + offset;
-	return (uchar) (seed % 0xFF);
-}
-
-/* Initializes the random number generator and the seed for the fast_rnd() function. */
-void init_rnd(void) {
-	srand((uint32_t)time((time_t *)NULL));
-	seed = (uint32_t) time((time_t*)0);
-}
-
 int32_t hexserialset(struct s_reader *rdr)
 {
 	int32_t i;
