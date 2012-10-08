@@ -450,6 +450,7 @@ enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE, E2_
 #define DEFAULT_CC_STEALTH  -1 // Use global cfg
 #define DEFAULT_CC_KEEPALIVE 0
 #define DEFAULT_CC_RECONNECT 12000
+#define DEFAULT_CC_RECV_TIMEOUT 2000
 
 #define DEFAULT_AC_USERS   -1 // Use global cfg
 #define DEFAULT_AC_PENALTY -1 // Use global cfg
@@ -1531,6 +1532,7 @@ struct s_config
 	int8_t			cc_forward_origin_card;
 	int8_t			cc_use_fixed_nodeid;
 	uint8_t			cc_fixed_nodeid[8];
+	uint32_t		cc_recv_timeout;				// The poll() timeout parameter in ms. Default: DEFAULT_CC_RECV_TIMEOUT (2000 ms).
 #endif
 	char			*gbox_hostname;
 	char			*gbox_key;

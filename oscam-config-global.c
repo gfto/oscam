@@ -559,6 +559,7 @@ static const struct config_list cccam_opts[] = {
 	DEF_OPT_INT32("updateinterval"			, OFS(cc_update_interval),	DEFAULT_UPDATEINTERVAL ),
 	DEF_OPT_INT8("minimizecards"			, OFS(cc_minimize_cards),	0 ),
 	DEF_OPT_INT8("keepconnected"			, OFS(cc_keep_connected),	1 ),
+	DEF_OPT_UINT32("recv_timeout"			, OFS(cc_recv_timeout),		DEFAULT_CC_RECV_TIMEOUT ),
 	DEF_LAST_OPT
 };
 #else

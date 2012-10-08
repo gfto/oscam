@@ -457,7 +457,7 @@ int32_t cc_recv_to(struct s_client *cl, uint8_t *buf, int32_t len) {
 		pfd.fd = cl->udp_fd;
 		pfd.events = POLLIN | POLLPRI;
 
-		rc = poll(&pfd, 1, 2000);
+		rc = poll(&pfd, 1, cfg.cc_recv_timeout);
 
 		if (rc < 0) {
 			if (errno==EINTR) continue;
