@@ -93,7 +93,7 @@ include_directories (
     ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
     ${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
     ${CMAKE_CURRENT_SOURCE_DIR}/algo
-    ${CMAKE_CURRENT_SOURCE_DIR}/cygwin
+    ${CMAKE_CURRENT_SOURCE_DIR}/extapi/cygwin
     /usr/include/w32api
     ${OPTIONAL_INCLUDE_DIR}
     )
