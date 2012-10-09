@@ -320,9 +320,7 @@ static void remove_ecm_from_reader(ECM_REQUEST *ecm) {
 	            	if (er->parent == ecm) {
 	            		er->parent = NULL;
 	            		er->client = NULL;
-#ifdef CS_CACHEEX
-	            		er->csp_lastnodes = NULL;
-#endif
+	            		cacheex_set_csp_lastnode(NULL);
 	            	}
 	            }
             }
@@ -335,11 +333,8 @@ static void remove_ecm_from_reader(ECM_REQUEST *ecm) {
 void free_ecm(ECM_REQUEST *ecm) {
 	struct s_ecm_answer *ea, *nxt;
 
-#ifdef CS_CACHEEX
-        LLIST *l = ecm->csp_lastnodes;
-        ecm->csp_lastnodes = NULL;
-	ll_destroy_data(l);
-#endif
+	cacheex_free_csp_lastnodes(ecm);
+
 	//remove this ecm from reader queue to avoid segfault on very late answers (when ecm is already disposed)
 	//first check for outstanding answers:
 	remove_ecm_from_reader(ecm);
@@ -395,10 +390,7 @@ static void cleanup_ecmtasks(struct s_client *cl)
 	for (ecm = ecmcwcache; ecm; ecm = ecm->next) {
 		if (ecm->client == cl)
 			ecm->client = NULL;
-#ifdef CS_CACHEEX
-		if (ecm->cacheex_src == cl)
-			ecm->cacheex_src = NULL;
-#endif
+		cacheex_set_cacheex_src(ecm, cl);
 		//if cl is a reader, remove from matching_rdr:
 		for(ea_list = ecm->matching_rdr, ea_prev=NULL; ea_list; ea_prev = ea_list, ea_list = ea_list->next) {
 			if (ea_list->reader->client == cl) {
@@ -1259,10 +1251,7 @@ static void distribute_ecm(ECM_REQUEST *er, int32_t rc)
 	cs_readlock(&ecmcache_lock);
 	for (ecm = ecmcwcache; ecm; ecm = ecm->next) {
 		if (ecm != er && ecm->rc >= E_99 && ecm->ecmcacheptr == er) {
-#ifdef CS_CACHEEX
-			if (!ecm->cacheex_src)
-				ecm->cacheex_src = er->cacheex_src;
-#endif
+			cacheex_init_cacheex_src(ecm, er);
 			write_ecm_answer(er->selected_reader, ecm, rc, 0, er->cw, NULL);
 		}
 	}
@@ -2305,11 +2294,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	}
 
 	struct s_ecm_answer *ea, *prv = NULL;
-#ifdef CS_CACHEEX
 	if(er->rc >= E_99 && !cacheex_is_match_alias(client, er)) {
-#else
-	if(er->rc >= E_99) {
-#endif
 		er->reader_avail=0;
 		struct s_reader *rdr;
 
