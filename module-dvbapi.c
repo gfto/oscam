@@ -649,8 +649,9 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx) {
 							// sending data
 							send(ca_fd[i], &packet, sizeof(packet), 0);
 						} else {
+							// This ioctl fails on dm500 but that is OK.
 							if (ioctl(ca_fd[i], CA_SET_PID, &ca_pid2)==-1)
-								cs_log("ERROR: ioctl(CA_SET_PID) pid=0x%04x index=%d (errno=%d %s)", ca_pid2.pid, ca_pid2.index, errno, strerror(errno));
+								cs_debug_mask(D_TRACE|D_DVBAPI,"ERROR: ioctl(CA_SET_PID) pid=0x%04x index=%d (errno=%d %s)", ca_pid2.pid, ca_pid2.index, errno, strerror(errno));
 							else
 								cs_debug_mask(D_DVBAPI, "CA_SET_PID pid=0x%04x index=%d", ca_pid2.pid, ca_pid2.index);
 						}
