@@ -90,9 +90,9 @@ static const uchar cmd_unkn_0a2[]  = { 0xDE, 0x1E, 0x00, 0x00, 0x03, 0x00 };
 static const uchar cmd_cardsn1[]   = { 0xDE, 0x18, 0x00, 0x00, 0x00, 0x00 };
 static const uchar cmd_cardsn2[]   = { 0xDE, 0x1E, 0x00, 0x00, 0x06, 0x00 };
 // Response1: 90 06
-// Response2: 02 04 xx xx xx yy 90 00
+// Response2: 02 04 xx xx xx xy 90 00
 //   xx - Card HEX serial
-//   yy - Unknown *FIXME*
+//    y - Unknown *FIXME*
 
 static const uchar cmd_ascsn1[]    = { 0xDE, 0x1A, 0x00, 0x00, 0x00, 0x00 };
 static const uchar cmd_ascsn2[]    = { 0xDE, 0x1E, 0x00, 0x00, 0x0F, 0x00 };
@@ -205,7 +205,9 @@ static int32_t bulcrypt_card_init(struct s_reader *reader, ATR *newatr)
 			cs_hexdump(1, cta_res, cta_lr, tmp, sizeof(tmp)));
 		return ERROR;
 	}
-	memcpy(reader->hexserial, cta_res + 2, 3);
+	memcpy(reader->hexserial, cta_res + 2, 4);
+	// Skip bottom four bits (they are 0x0b on our cards)
+	reader->hexserial[3] = reader->hexserial[3] & 0xF0;
 
 	// Read card ASCII serial
 	write_cmd(cmd_ascsn1, NULL);
@@ -231,11 +233,10 @@ static int32_t bulcrypt_card_init(struct s_reader *reader, ATR *newatr)
 	write_cmd(cmd_ecm_empty, NULL);
 
 	// The HEX serial have nothing to do with Serial (they do not match)
-	// *FIXME* is this a problem? Probably not.
-	rdr_log_sensitive(reader, "CAID: 0x4AEE|0x5581, CardType: 0x%02x, Serial: {%s}, HexSerial: {%02X %02X %02X}",
+	rdr_log_sensitive(reader, "CAID: 0x4AEE|0x5581, CardType: 0x%02x, Serial: {%s}, HexSerial: {%02X %02X %02X %02X}",
 		card_type,
 		card_serial,
-		reader->hexserial[0], reader->hexserial[1], reader->hexserial[2]);
+		reader->hexserial[0], reader->hexserial[1], reader->hexserial[2], reader->hexserial[3]);
 
 	rdr_log(reader, "Ready for requests.");
 
@@ -372,13 +373,6 @@ static int32_t bulcrypt_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 	return OK;
 }
 
-#define BULCRYPT_EMM_UNIQUE_82  0x82 // Addressed at single card (updates subscription info)
-#define BULCRYPT_EMM_UNIQUE_85  0x85 // Addressed at single card (updates keys?)
-#define BULCRYPT_EMM_SHARED_84  0x84 // Addressed to 256 cards
-#define BULCRYPT_EMM_8a         0x8a // *FIXME* Another kind of shared EMMs  (they are addressed to 256 cards)
-#define BULCRYPT_EMM_8b         0x8b // *FIXME* Possibly GLOBAL EMMs (they are addressed to 65535 cards)
-#define BULCRYPT_EMM_FILLER     0x8f // Filler to pad the EMM stream
-
 /*
 Bulcrypt EMMs structure
 
@@ -387,64 +381,49 @@ All EMMs are with section length 183 (0xb7)
      7 bytes EMM header
    173 bytes payload
 
-  82 70       - UNUQUE_EMM_82 (updates subscription info)
+  82 70       - UNUQUE_EMM_82|8a
   b4          - Payload length (0xb4 == 180)
-  xx xx xx    - Card HEX SN
-  xx          - ???? (0x00, 0x40, 0x80, 0xc0) Not send to the card
+  xx xx xx xy - Card HEX SN (the last 4 bits (y) must be masked)
   payload
 
-  85 70       - UNIQUE_EMM_85
-  b4          - Payload length  (0xb4 == 180)
-  xx xx xx    - Card HEX SN
-  xx          - EMM Card command
+  85 70       - UNUQUE_EMM_85|8b
+  b4          - Payload length (0xb4 == 180)
+  xx xx xx yy - Card HEX SN (the last 8 bits (y) must be masked)
   payload
 
   84 70       - SHARED_EMM_84
   b4          - Payload length  (0xb4 == 180)
   xx xx       - Card HEX SN Prefix
-  xx          - EMM card command
-  xx          - EMM card command
-  payload
-
-  8a 70       - EMM_8a (we mark these with type = GLOBAL) *FIXME*
-  b4          - Payload length  (0xb4 == 180)
-  00          - ????
-  xx xx       - Card HEX SN Prefix
-  xx          - EMM card command
-  payload
-
-  8b 70       - EMM_8b (we mark these with type = UNKNOWN) *FIXME*
-  b4          - Payload length  (0xb4 == 180)
-  00          - ????
-  xx          - Card HEX SN Prefix
-  xx          - EMM card command
-  xx          - EMM card command
+  yy          -
+  zz          -
   payload
 
  Padding EMM:
   8f 70 b4 ff ff ff ff ff ff ff ff ff .. .. (ff to the end)
-
-Unique 82 EMMs are used to update subscrition info. Bulsat sends updates once
-every hour. All EMMs (except update subscription) are cycling over ~13 minute
-cycle.
 
 Stats for EMMs collected for a period of 1 hours and 24 minutes
 
   2279742 - 82 70 b4 - unique_82
    595309 - 85 70 b4 - unique_85
    199949 - 84 70 b4 - shared_84
-    19051 - 8a 70 b4 - emm_8a (global?)
-     6417 - 8b 70 b4 - emm_8b (unknown?)
+    19051 - 8a 70 b4 - unique_8a (polaris equivallent of 0x82)
+     6417 - 8b 70 b4 - unique_8b (polaris equivallent of 0x85)
     74850 - 8f 70 b4 - filler
 
 Total EMMs for the period: 3175317
 */
 
+#define BULCRYPT_EMM_UNIQUE_82  0x82 // Addressed at single card (updates subscription info)
+#define BULCRYPT_EMM_UNIQUE_8a  0x8a // Addressed at single card (like 0x82) used for Polaris
+#define BULCRYPT_EMM_UNIQUE_85  0x85 // Addressed at 4 cards (updates packages)
+#define BULCRYPT_EMM_UNIQUE_8b  0x8b // Addressed at 4 cards (like 0x85) used for Polaris
+#define BULCRYPT_EMM_SHARED_84  0x84 // Addressed to 1024 cards (update keys)
+#define BULCRYPT_EMM_FILLER     0x8f // Filler to pad the EMM stream
+
 static int32_t bulcrypt_get_emm_type(EMM_PACKET *ep, struct s_reader *reader)
 {
-	char dump_emm_sn[64], dump_card_sn[64];
-	unsigned int emm_len = check_sct_len(ep->emm, 3);
-	int32_t ret = FALSE;
+	char dump_emm_sn[64];
+	int32_t emm_len = check_sct_len(ep->emm, 3);
 
 	memset(ep->hexserial, 0, 8);
 
@@ -453,67 +432,50 @@ static int32_t bulcrypt_get_emm_type(EMM_PACKET *ep, struct s_reader *reader)
 		rdr_debug_mask(reader, D_EMM, "emm_len < 176 (%u): %s",
 			emm_len, cs_hexdump(1, ep->emm, 12, dump_emm_sn, sizeof(dump_emm_sn)));
 		ep->type = UNKNOWN;
-		return FALSE;
+		return 0;
 	}
 
-	cs_hexdump(1, reader->hexserial, 3, dump_card_sn, sizeof(dump_card_sn));
-
-#define compare_hex_serial(serial_len) \
-	do { \
-		cs_hexdump(1, ep->hexserial, serial_len, dump_emm_sn, sizeof(dump_emm_sn)); \
-		ret = memcmp(ep->hexserial, reader->hexserial, serial_len) == 0; \
-	} while(0)
-
-#define check_serial(serial_len) \
-	do { \
-		memcpy(ep->hexserial, ep->emm + 3, serial_len); \
-		compare_hex_serial(serial_len); \
-	} while(0)
-
-#define check_serial_skip_first(serial_len) \
-	do { \
-		memcpy(ep->hexserial, ep->emm + 4, serial_len); \
-		compare_hex_serial(serial_len); \
-	} while(0)
-
+	uint8_t mask_last = 0x00;
+	ep->type = UNKNOWN;
 	switch (ep->emm[0]) {
-	case BULCRYPT_EMM_UNIQUE_82:
-	case BULCRYPT_EMM_UNIQUE_85:
-		ep->type = UNIQUE;
-		check_serial(3);
-		if (ret)
-			rdr_log_sensitive(reader, "EMM_UNIQUE-%02x-{%02x}, emm_sn = {%s}, card_sn = {%s}",
-				ep->emm[0], ep->emm[6], dump_emm_sn, dump_card_sn);
-		break;
-	case BULCRYPT_EMM_SHARED_84:
-		ep->type = SHARED;
-		check_serial(2);
-		if (ret)
-			rdr_log_sensitive(reader, "EMM_SHARED-%02x-{%02x-%02x}, emm_sn = {%s}, card_sn = {%s}",
-				ep->emm[0], ep->emm[5], ep->emm[6], dump_emm_sn, dump_card_sn);
-		break;
-	case BULCRYPT_EMM_8a:
-		ep->type = UNKNOWN;
-		check_serial_skip_first(2);
-		if (ret)
-			rdr_log_sensitive(reader, "EMM_UNKNOWN-%02x-{%02x-%02x}, emm_sn = {%s}, card_sn = {%s}",
-				ep->emm[0], ep->emm[5], ep->emm[6], dump_emm_sn, dump_card_sn);
-		break;
-	case BULCRYPT_EMM_8b:
-		ep->type = GLOBAL;
-		check_serial_skip_first(1);
-		if (ret)
-			rdr_log_sensitive(reader, "EMM_GLOBAL-%02x-{%02x-%02x}, emm_sn = {%s}, card_sn = {%s}",
-				ep->emm[0], ep->emm[5], ep->emm[6], dump_emm_sn, dump_card_sn);
-		break;
-	case BULCRYPT_EMM_FILLER:
-		ep->type = UNKNOWN;
-		break;
-	default:
-		ep->type = UNKNOWN;
-		rdr_log(reader, "UNKNOWN_EMM len: %u, %s..", emm_len,
-			cs_hexdump(1, ep->emm, 12, dump_emm_sn, sizeof(dump_emm_sn)));
-		break;
+	case BULCRYPT_EMM_UNIQUE_82: ep->type = UNIQUE; mask_last = 0xF0; break; // Bulsatcom
+	case BULCRYPT_EMM_UNIQUE_8a: ep->type = UNIQUE; mask_last = 0xF0; break; // Polaris
+	case BULCRYPT_EMM_UNIQUE_85: ep->type = UNIQUE; mask_last = 0x00; break; // Bulsatcom
+	case BULCRYPT_EMM_UNIQUE_8b: ep->type = UNIQUE; mask_last = 0x00; break; // Polaris
+	case BULCRYPT_EMM_SHARED_84: ep->type = SHARED; break;
+	}
+
+	bool ret = false;
+	if (ep->type == UNIQUE) {
+		// The serial numbers looks like this:
+		//   aa bb cc dd
+		// To match EMM_82 and EMM_8a serial we compare (mask_last == 0xf0):
+		//   aa bb cc d-
+		// To match EMM_85 and EMM_8b serial we compare (mask_last == 0x00):
+		//   aa bb cc --
+		memcpy(ep->hexserial, ep->emm + 3, 4);
+		ret = reader->hexserial[0] == ep->hexserial[0] &&
+			  reader->hexserial[1] == ep->hexserial[1] &&
+			  reader->hexserial[2] == ep->hexserial[2] &&
+			  ((reader->hexserial[3] & mask_last) == (ep->hexserial[3] & mask_last));
+	} else if (ep->type == SHARED) {
+		// To match EMM_84
+		//   aa bb -- --
+		memcpy(ep->hexserial, ep->emm + 3, 2);
+		ret = reader->hexserial[0] == ep->hexserial[0] &&
+			  reader->hexserial[1] == ep->hexserial[1];
+	}
+
+	if (ret) {
+		char dump_card_sn[64];
+		cs_hexdump(1, reader->hexserial, 4, dump_card_sn, sizeof(dump_card_sn));
+		cs_hexdump(1, ep->hexserial, 4, dump_emm_sn, sizeof(dump_emm_sn));
+		rdr_log_sensitive(reader, "EMM_%s-%02x, emm_sn = {%s}, card_sn = {%s}",
+			ep->type == UNIQUE ? "UNIQUE" :
+			ep->type == SHARED ? "SHARED" : "??????",
+			ep->emm[0],
+			dump_emm_sn,
+			dump_card_sn);
 	}
 
 	return ret;
@@ -533,6 +495,36 @@ static void bulcrypt_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[idx + 1]			= rdr->hexserial[0];
 	filter[idx + 2]			= rdr->hexserial[1];
 	filter[idx + 3]			= rdr->hexserial[2];
+	filter[idx + 4]			= rdr->hexserial[3];
+	filter[idx + 0 + 16]	= 0xFF;
+	filter[idx + 1 + 16]	= 0xFF;
+	filter[idx + 2 + 16]	= 0xFF;
+	filter[idx + 3 + 16]	= 0xFF;
+	filter[idx + 4 + 16]	= 0xF0;
+	idx += 32;
+
+	filter[1]++;
+	filter[idx++]			= EMM_UNIQUE;
+	filter[idx++]			= 0;
+	filter[idx + 0]			= 0x8a;
+	filter[idx + 1]			= rdr->hexserial[0];
+	filter[idx + 2]			= rdr->hexserial[1];
+	filter[idx + 3]			= rdr->hexserial[2];
+	filter[idx + 4]			= rdr->hexserial[3];
+	filter[idx + 0 + 16]	= 0xFF;
+	filter[idx + 1 + 16]	= 0xFF;
+	filter[idx + 2 + 16]	= 0xFF;
+	filter[idx + 3 + 16]	= 0xFF;
+	filter[idx + 4 + 16]	= 0xF0;
+	idx += 32;
+
+	filter[1]++;
+	filter[idx++]			= EMM_UNIQUE;
+	filter[idx++]			= 0;
+	filter[idx + 0]			= 0x85;
+	filter[idx + 1]			= rdr->hexserial[0];
+	filter[idx + 2]			= rdr->hexserial[1];
+	filter[idx + 3]			= rdr->hexserial[2];
 	filter[idx + 0 + 16]	= 0xFF;
 	filter[idx + 1 + 16]	= 0xFF;
 	filter[idx + 2 + 16]	= 0xFF;
@@ -542,7 +534,7 @@ static void bulcrypt_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[1]++;
 	filter[idx++]			= EMM_UNIQUE;
 	filter[idx++]			= 0;
-	filter[idx + 0]			= 0x85;
+	filter[idx + 0]			= 0x8b;
 	filter[idx + 1]			= rdr->hexserial[0];
 	filter[idx + 2]			= rdr->hexserial[1];
 	filter[idx + 3]			= rdr->hexserial[2];
@@ -563,30 +555,6 @@ static void bulcrypt_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[idx + 2 + 16]	= 0xFF;
 	idx += 32;
 
-	filter[1]++;
-	filter[idx++]			= EMM_GLOBAL;
-	filter[idx++]			= 0;
-	filter[idx + 0]			= 0x8a;
-	filter[idx + 1]			= 0x00;
-	filter[idx + 2]			= rdr->hexserial[0];
-	filter[idx + 3]			= rdr->hexserial[1];
-	filter[idx + 0 + 16]	= 0xFF;
-	filter[idx + 1 + 16]	= 0xFF;
-	filter[idx + 2 + 16]	= 0xFF;
-	filter[idx + 3 + 16]	= 0xFF;
-	idx += 32;
-
-	filter[1]++;
-	filter[idx++]			= EMM_UNKNOWN;
-	filter[idx++]			= 0;
-	filter[idx + 0]			= 0x8b;
-	filter[idx + 1]			= 0x00;
-	filter[idx + 2]			= rdr->hexserial[0];
-	filter[idx + 0 + 16]	= 0xFF;
-	filter[idx + 1 + 16]	= 0xFF;
-	filter[idx + 2 + 16]	= 0xFF;
-	idx += 32;
-
 	return;
 }
 
@@ -597,21 +565,29 @@ static int32_t bulcrypt_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 
 	def_resp
 
+	// DE 04 xx yy B0
+	//  xx == EMM type   (emm[0])
+	//  yy == EMM type2  (emm[5])
+	//  B0 == EMM len    (176)
+	memcpy(emm_cmd, cmd_emm_uniq, sizeof(cmd_emm));
+	memcpy(emm_cmd + sizeof(cmd_emm), ep->emm + 7, 176);
+
 	switch (ep->emm[0]) {
 	case BULCRYPT_EMM_UNIQUE_82:
-		// DE 02 82 00 B0
-		memcpy(emm_cmd, cmd_emm_uniq, sizeof(cmd_emm));
-		memcpy(emm_cmd + sizeof(cmd_emm), ep->emm + 7, 176);
+		emm_cmd[2] = ep->emm[0]; // 0x82
+		break;
+	case BULCRYPT_EMM_UNIQUE_8a: // Polaris equivallent of 0x82
+		emm_cmd[2] = 0x82;
+		emm_cmd[3] = 0x0b;
+		break;
+	case BULCRYPT_EMM_SHARED_84:
+		emm_cmd[2] = ep->emm[0]; // 0x84
+		emm_cmd[3] = ep->emm[5]; // 0x0b
 		break;
 	case BULCRYPT_EMM_UNIQUE_85:
-	case BULCRYPT_EMM_SHARED_84:
-	case BULCRYPT_EMM_8b:
-	case BULCRYPT_EMM_8a:
-		// DE 04 00 00 B0
-		memcpy(emm_cmd, cmd_emm, sizeof(cmd_emm));
-		memcpy(emm_cmd + sizeof(cmd_emm), ep->emm + 7, 176);
-		emm_cmd[2] = ep->emm[5]; // Emm cmd 1
-		emm_cmd[3] = ep->emm[6]; // Emm cmd 2
+	case BULCRYPT_EMM_UNIQUE_8b: // Polaris 0x85 equivallent of 0x85
+		emm_cmd[2] = ep->emm[5]; // 0xXX (Last bytes of the serial)
+		emm_cmd[3] = ep->emm[6]; // 0x0b
 		break;
 	}
 
