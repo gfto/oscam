@@ -577,6 +577,9 @@ DESCRIPTIONS
 	    0 = disconnect client when maximum idle time is reached
 	    1 = keep client connected (default)
 
+       recv_timeout = milli-seconds
+	  set network timeout for receiving data, default:2000
+
        forward_origin_card = 0|1
 	  1 = forward ECM request to reader holding this card, load balancer, fallback and caching will be  disabled,
 	  default:0
