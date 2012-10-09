@@ -2992,10 +2992,9 @@ void * work_thread(void *ptr) {
 				pthread_mutex_unlock(&cl->thread_lock);
 
 				if (rc == -1)
-					cs_debug_mask(D_TRACE, "poll wakeup");
+					cs_debug_mask(D_TRACE, "poll() timeout");
 
 				if (rc>0) {
-					cs_debug_mask(D_TRACE, "data on socket");
 					data=&tmp_data;
 					data->ptr = NULL;
 
