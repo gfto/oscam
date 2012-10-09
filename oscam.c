@@ -320,7 +320,7 @@ static void remove_ecm_from_reader(ECM_REQUEST *ecm) {
 	            	if (er->parent == ecm) {
 	            		er->parent = NULL;
 	            		er->client = NULL;
-	            		cacheex_set_csp_lastnode(NULL);
+	            		cacheex_set_csp_lastnode(er);
 	            	}
 	            }
             }
