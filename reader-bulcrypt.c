@@ -429,7 +429,7 @@ static int32_t bulcrypt_get_emm_type(EMM_PACKET *ep, struct s_reader *reader)
 
 	if (emm_len < 176)
 	{
-		rdr_debug_mask(reader, D_EMM, "emm_len < 176 (%u): %s",
+		rdr_debug_mask(reader, D_TRACE | D_EMM, "emm_len < 176 (%u): %s",
 			emm_len, cs_hexdump(1, ep->emm, 12, dump_emm_sn, sizeof(dump_emm_sn)));
 		ep->type = UNKNOWN;
 		return 0;

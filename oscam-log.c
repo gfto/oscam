@@ -328,7 +328,7 @@ void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar 
 	static char log_txt[LOG_BUF_SIZE], dupl[LOG_BUF_SIZE/4];
 	int32_t dupl_header_len, repeated_line, i, len = 0;
 	pthread_mutex_lock(&log_mutex);
-	if (((mask & cs_dblevel) || !mask) && (fmt))
+	if (fmt && (mask & cs_dblevel) == mask)
 	{
 		va_start(params, fmt);
 		len = get_log_header(1, log_txt);
