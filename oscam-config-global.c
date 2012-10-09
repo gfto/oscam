@@ -127,6 +127,8 @@ static void caidvaluetab_fn(const char *token, char *value, void *setting, FILE 
 
 #ifdef __CYGWIN__
 #include <windows.h>
+#else
+#include <sys/resource.h> // for setpriority
 #endif
 
 void global_fixups_fn(void *UNUSED(var)) {
