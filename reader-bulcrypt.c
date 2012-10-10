@@ -111,12 +111,12 @@ static const uchar cmd_ecm_get_cw[]= { 0xDE, 0x1E, 0x00, 0x00, 0x13, 0x00 };
 //   80 - Returned codeword type? *FIXME*
 //   xx - Obfuscated CW
 
-static const uchar cmd_emm_uniq[]  = { 0xDE, 0x02, 0x82, 0x00, 0xb0 };
+static const uchar cmd_emm1[]      = { 0xDE, 0x02, 0x82, 0x00, 0xb0 };
 // Response: 90 00 (EMM written OK) or
 // Response: 90 0A (Subscription data was updated)
 // The last byte is EMM length (0xb0)
 
-static const uchar cmd_emm[]       = { 0xDE, 0x04, 0x00, 0x00, 0xb0 };
+static const uchar cmd_emm2[]      = { 0xDE, 0x04, 0x00, 0x00, 0xb0 };
 // Response: 90 00 (EMM written OK)
 //   cmd_emm[2] = emm_cmd1
 //   cmd_emm[3] = emm_cmd2
@@ -569,8 +569,8 @@ static int32_t bulcrypt_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	//  xx == EMM type   (emm[0])
 	//  yy == EMM type2  (emm[5])
 	//  B0 == EMM len    (176)
-	memcpy(emm_cmd, cmd_emm_uniq, sizeof(cmd_emm));
-	memcpy(emm_cmd + sizeof(cmd_emm), ep->emm + 7, 176);
+	memcpy(emm_cmd, cmd_emm1, sizeof(cmd_emm1));
+	memcpy(emm_cmd + sizeof(cmd_emm1), ep->emm + 7, 176);
 
 	switch (ep->emm[0]) {
 	case BULCRYPT_EMM_UNIQUE_82:
@@ -586,6 +586,7 @@ static int32_t bulcrypt_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 		break;
 	case BULCRYPT_EMM_UNIQUE_85:
 	case BULCRYPT_EMM_UNIQUE_8b: // Polaris 0x85 equivallent of 0x85
+		memcpy(emm_cmd, cmd_emm2, sizeof(cmd_emm2));
 		emm_cmd[2] = ep->emm[5]; // 0xXX (Last bytes of the serial)
 		emm_cmd[3] = ep->emm[6]; // 0x0b
 		break;
