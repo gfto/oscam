@@ -78,9 +78,13 @@ int32_t card_write(struct s_reader * reader, const uchar *cmd, const uchar *data
     return(reader_cmd2icc(reader, buf, CMD_LEN, response, response_length));
 }
 
+static inline int reader_use_gpio(struct s_reader * reader) {
+	return reader->use_gpio && reader->detect > 4;
+}
+
 static int32_t reader_card_inserted(struct s_reader * reader)
 {
-	if (!use_gpio(reader) && (reader->detect & 0x7f) > 3)
+	if (!reader_use_gpio(reader) && (reader->detect & 0x7f) > 3)
 		return 1;
 
 	int32_t card;

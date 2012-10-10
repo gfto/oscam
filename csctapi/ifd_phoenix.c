@@ -16,6 +16,10 @@
 
 #define GPIO_PIN (1 << (reader->detect - 4))
 
+static inline int reader_use_gpio(struct s_reader * reader) {
+	return reader->use_gpio && reader->detect > 4;
+}
+
 static void set_gpio(struct s_reader * reader, int32_t level)
 {
 	int ret = 0;
@@ -61,7 +65,7 @@ int32_t Phoenix_Init (struct s_reader * reader)
 		IO_Serial_Flush(reader);
 
 	// define reader->gpio number used for card detect and reset. ref to globals.h
-	if (use_gpio(reader))
+	if (reader_use_gpio(reader))
 	{
 		reader->gpio_outen = open("/dev/gpio/outen", O_RDWR);
 		reader->gpio_out   = open("/dev/gpio/out",   O_RDWR);
@@ -84,7 +88,7 @@ int32_t Phoenix_Init (struct s_reader * reader)
 int32_t Phoenix_GetStatus (struct s_reader * reader, int32_t * status)
 {
 	// detect card via defined reader->gpio
-	if (use_gpio(reader))
+	if (reader_use_gpio(reader))
 		*status = !get_gpio(reader);
 	else
 	{
@@ -136,7 +140,7 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 			ret = ERROR;
 			cs_sleepms(500); //smartreader in mouse mode needs this
 			IO_Serial_Ioctl_Lock(reader, 1);
-			if (use_gpio(reader))
+			if (reader_use_gpio(reader))
 				set_gpio(reader, 0);
 			else
 				IO_Serial_RTS_Set(reader);
@@ -151,7 +155,7 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 #endif
 
 			// felix: set card reset hi (inactive)
-			if (use_gpio(reader))
+			if (reader_use_gpio(reader))
 				set_gpio_input(reader);
 			else
 				IO_Serial_RTS_Clr(reader);
@@ -252,7 +256,7 @@ int32_t Phoenix_SetBaudrate (struct s_reader * reader, uint32_t baudrate)
 int32_t Phoenix_Close (struct s_reader * reader)
 {
 	rdr_debug_mask(reader, D_IFD, "Closing phoenix device %s", reader->device);
-	if (use_gpio(reader))
+	if (reader_use_gpio(reader))
 	{
 		if (reader->gpio_outen > -1)
 			close(reader->gpio_outen);
@@ -269,7 +273,7 @@ int32_t Phoenix_Close (struct s_reader * reader)
 int32_t Phoenix_FastReset (struct s_reader * reader, int32_t delay)
 {
     IO_Serial_Ioctl_Lock(reader, 1);
-    if (use_gpio(reader))
+    if (reader_use_gpio(reader))
         set_gpio(reader, 0);
     else
         IO_Serial_RTS_Set(reader);
@@ -277,7 +281,7 @@ int32_t Phoenix_FastReset (struct s_reader * reader, int32_t delay)
     cs_sleepms(delay);
 
     // set card reset hi (inactive)
-    if (use_gpio(reader))
+    if (reader_use_gpio(reader))
         set_gpio_input(reader);
     else
         IO_Serial_RTS_Clr(reader);
