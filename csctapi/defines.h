@@ -36,7 +36,6 @@
  */
 
 #ifndef WITH_PCSC
-typedef unsigned char UCHAR;
 typedef uint32_t ULONG;
 typedef ULONG DWORD;
 #endif

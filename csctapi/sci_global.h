@@ -2,7 +2,6 @@
 #define _sci_global_h_
 
 #define INT int32_t
-#define UCHAR unsigned char
 #define ULONG uint32_t
 
 #define SCI_CLASS_A                 1   /* only 5V Vcc to Smart Card */
@@ -81,7 +80,7 @@ SCI_MODES;
 /* SCI communication parameters */
 typedef struct sci_parameters
 {
-    UCHAR T;
+    unsigned char T;
     ULONG fs;
     ULONG ETU;
     ULONG WWT;
@@ -89,10 +88,10 @@ typedef struct sci_parameters
     ULONG BWT;
     ULONG EGT;
     ULONG clock_stop_polarity;
-    UCHAR check;
-    UCHAR P;
-    UCHAR I;
-    UCHAR U;
+    unsigned char check;
+    unsigned char P;
+    unsigned char I;
+    unsigned char U;
 }
 SCI_PARAMETERS;
 
