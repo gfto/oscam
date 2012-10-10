@@ -23,12 +23,11 @@
 */
 
 #include "../globals.h"
+
 #ifdef WITH_CARDREADER
 #include "../oscam-time.h"
-#include "defines.h"
-
+#include "icc_async.h"
 #include "protocol_t0.h"
-#include "atr.h"
 /*
  * Not exported constants definition
  */

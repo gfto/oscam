@@ -24,27 +24,26 @@
 
 #include "../globals.h"
 #ifdef WITH_CARDREADER
+
 #if defined(__HPUX__)
 #include <sys/modem.h>
 #endif
-#include <unistd.h>
-#include <fcntl.h>
+
 #ifdef HAVE_POLL
 #include <sys/poll.h>
 #else
 #include <sys/signal.h>
 #include <sys/types.h>
 #endif
-#include <sys/ioctl.h>
 
 #if defined(__linux__)
 #include <linux/serial.h>
 #endif
+
 #include "../oscam-time.h"
-#include "defines.h"
+#include "icc_async.h"
 #include "io_serial.h"
 #include "mc_global.h"
-#include "icc_async.h"
 
 #define IO_SERIAL_FILENAME_LENGTH 	32
 

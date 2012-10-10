@@ -5,8 +5,6 @@
 #ifndef CSCTAPI_IFD_COOL_H_
 #define CSCTAPI_IFD_COOL_H_
 
-#include "atr.h"
-
 int32_t Cool_Init (struct s_reader *reader);
 int32_t Cool_Reset (struct s_reader *reader, ATR * atr);
 int32_t Cool_Transmit (struct s_reader *reader, unsigned char * buffer, uint32_t size);

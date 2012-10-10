@@ -24,7 +24,6 @@
 
 #include "../globals.h"
 #ifdef WITH_CARDREADER
-#include "defines.h"
 #include "icc_async.h"
 
 /* Buffer sizes */

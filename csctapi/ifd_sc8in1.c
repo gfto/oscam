@@ -21,11 +21,16 @@
 #include "../oscam-lock.h"
 #include "../oscam-string.h"
 #include "../oscam-time.h"
-#include "atr.h"
-#include <termios.h>
 #include "ifd_sc8in1.h"
 #include "io_serial.h"
-#include "icc_async.h"
+
+#ifndef OK
+#define OK		0
+#endif
+
+#ifndef ERROR
+#define ERROR	1
+#endif
 
 #ifdef WITH_DEBUG
 int32_t Sc8in1_DebugSignals(struct s_reader *reader, uint16_t slot, const char *extra);

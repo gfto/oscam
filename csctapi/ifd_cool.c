@@ -5,18 +5,11 @@
 #include"../globals.h"
 
 #if defined(WITH_CARDREADER) && defined(WITH_COOLAPI)
-
-#include <stdio.h>
-#include <time.h>
-#include <string.h>
-#include <stdint.h>
-
 #include "../extapi/coolapi.h"
 #include "../oscam-string.h"
 #include "../oscam-time.h"
-
-#include"ifd_cool.h"
-#include"icc_async.h"
+#include "icc_async.h"
+#include "ifd_cool.h"
 
 extern int32_t cool_kal_opened;
 

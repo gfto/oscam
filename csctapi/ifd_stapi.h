@@ -1,8 +1,6 @@
 #ifndef CSCTAPI_IFD_STAPI_H_
 #define CSCTAPI_IFD_STAPI_H_
 
-#include "atr.h"
-
 /* These functions are implemented in liboscam_stapi.a */
 extern int32_t STReader_Open(char *device, uint32_t *stsmart_handle);
 extern int32_t STReader_GetStatus(uint32_t stsmart_handle, int32_t *in);

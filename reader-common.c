@@ -5,7 +5,6 @@
 #include "module-led.h"
 #include "oscam-time.h"
 #include "reader-common.h"
-#include "csctapi/defines.h"
 #include "csctapi/atr.h"
 #include "csctapi/icc_async.h"
 #include "csctapi/ifd_azbox.h"

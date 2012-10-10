@@ -3,7 +3,6 @@
 #include "../oscam-time.h"
 #include "icc_async.h"
 #include "io_serial.h"
-#include <termios.h>
 
 #define ACK 0x06
 #define MP35_WRITE_DELAY 100

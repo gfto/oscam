@@ -1,10 +1,8 @@
 #include "../globals.h"
 #ifdef WITH_CARDREADER
 #include "../oscam-time.h"
-#include "atr.h"
-#include <termios.h>
-#include "ifd_phoenix.h"
 #include "icc_async.h"
+#include "ifd_phoenix.h"
 #include "io_serial.h"
 
 #if defined(__CYGWIN__)

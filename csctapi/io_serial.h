@@ -25,8 +25,6 @@
 #ifndef _IO_SERIAL_
 #define _IO_SERIAL_
 
-#include <termios.h>
-
 #define IO_Serial_DTR_Set(reader) {int32_t dtr = 1; IO_Serial_DTR_RTS(reader, &dtr, NULL);}
 #define IO_Serial_DTR_Clr(reader) {int32_t dtr = 0; IO_Serial_DTR_RTS(reader, &dtr, NULL);}
 #define IO_Serial_RTS_Set(reader) {int32_t rts = 1; IO_Serial_DTR_RTS(reader, NULL, &rts);}

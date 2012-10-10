@@ -1,13 +1,8 @@
-
 #ifndef IFD_AZBOX_H_
 #define IFD_AZBOX_H_
 
-#include "../globals.h"
-
 #include "../extapi/openxcas/openxcas_api.h"
 #include "../extapi/openxcas/openxcas_smartcard.h"
-
-#include "atr.h"
 
 #define AZBOX_MODES 16
 

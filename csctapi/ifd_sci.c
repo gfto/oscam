@@ -3,20 +3,17 @@
 		This module provides IFD handling functions for SCI internal reader.
 */
 
-#include "ifd_sci.h"
-#include "io_serial.h"
+#include "../globals.h"
+
 #ifdef WITH_CARDREADER
 
-#include <stdio.h>
-#include <time.h>
-#include <sys/ioctl.h>
 #include "../oscam-time.h"
+
+#include "atr.h"
+#include "ifd_sci.h"
+#include "io_serial.h"
 #include "sci_global.h"
 #include "sci_ioctl.h"
-#include "string.h"
-#if defined(__SH4__)
-#include <fcntl.h> 
-#endif
 
 #define ATR_TIMEOUT   800
 
