@@ -217,12 +217,12 @@ static int32_t dvbapi_detect_api(void) {
 
 		if ((dmx_fd = open(device_path, O_RDWR)) > 0) {
 			devnum=i;
+			close(dmx_fd);
 			break;
 		}
 	}
 
-	if (dmx_fd < 0) return 0;
-	close(dmx_fd);
+	if (devnum == -1) return 0;
 	selected_box = devnum;
 	if (selected_box > -1)
 		selected_api=devices[selected_box].api;
@@ -233,7 +233,6 @@ static int32_t dvbapi_detect_api(void) {
 			cs_log("ERROR: stapi: setting up stapi failed.");
 			return 0;
 		}
-		close(dmx_fd);
 		return 1;
 	}
 #endif
