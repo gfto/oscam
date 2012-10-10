@@ -371,7 +371,7 @@ $(LIST_SMARGO_BIN): utils/list_smargo.c
 	$(Q)$(CC) $(STD_DEFS) $(CC_OPTS) $(CC_WARN) $(CFLAGS) $(LDFLAGS) utils/list_smargo.c $(LIBS) -o $@
 
 $(OBJDIR)/%.o: %.c Makefile
-	@$(CC) -MM -MT $@ -o $(subst .o,.d,$@) $<
+	@$(CC) -MP -MM -MT $@ -o $(subst .o,.d,$@) $<
 	$(SAY) "CC	$<"
 	$(Q)$(CC) $(STD_DEFS) $(CC_OPTS) $(CC_WARN) $(CFLAGS) -c $< -o $@
 
