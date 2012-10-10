@@ -51,15 +51,6 @@ typedef void *PVOID;
 /*
  * Utility macros
  */
-
-#ifndef MAX
-#define MAX(a,b)	((a)>(b)?(a):(b))
-#endif
-
-#ifndef MIN
-#define MIN(a,b)	((a)<(b)?(a):(b))
-#endif
-
 /* Invert order of bits in a byte: b7->b0, b0->b7 */
 #ifndef INVERT_BYTE
 #define INVERT_BYTE(a)		((((a) << 7) & 0x80) | \
