@@ -205,8 +205,7 @@ static int32_t dvbapi_detect_api(void) {
 	cs_log("Detected Coolstream API");
 	return 1;
 #else
-	int32_t i,devnum=-1, dmx_fd=0, ret=-1, boxnum = sizeof(devices)/sizeof(struct box_devices);
-	uchar filter[32];
+	int32_t i,devnum=-1, dmx_fd=0, boxnum = sizeof(devices)/sizeof(struct box_devices);
 	char device_path[128], device_path2[128];
 
 	for (i=0;i<boxnum;i++) {
@@ -228,30 +227,17 @@ static int32_t dvbapi_detect_api(void) {
 		selected_api=devices[selected_box].api;
 
 #ifdef WITH_STAPI
-	if (devnum==4) {
-		if (stapi_open()==FALSE) {
-			cs_log("ERROR: stapi: setting up stapi failed.");
-			return 0;
-		}
-		return 1;
+	if (devnum == 4 && stapi_open() == FALSE) {
+		cs_log("ERROR: stapi: setting up stapi failed.");
+		return 0;
 	}
 #endif
 	if (cfg.dvbapi_boxtype == BOXTYPE_NEUMO) {
 		selected_api=DVBAPI_1;
-		return 1;
 	}
-
-	memset(filter,0,32);
-	filter[0]=0x01;
-	filter[16]=0xFF;
-
-	ret = dvbapi_set_filter(0, selected_api, 0x0001, 0x0001, filter, filter+16, 1, 0, 0, TYPE_ECM);
-	if (ret >= 0) dvbapi_stop_filter(0, TYPE_ECM);
-	else return 0;
 
 	cs_log("Detected %s Api: %d", device_path, selected_api);
 #endif
-
 	return 1;
 }
 
