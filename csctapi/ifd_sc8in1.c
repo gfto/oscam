@@ -517,11 +517,11 @@ int32_t Sc8in1_NeedBaudrateChange(struct s_reader * reader, uint32_t desiredBaud
 	if ((desiredBaudrate != reader->sc8in1_config->current_baudrate)
 			||(reader->mhz != reader->cardmhz)
 			||(cmdMode == 0 && memcmp(current, new, sizeof(struct termios)))) {
-		cs_debug_mask(D_TRACE, "Sc8in1_NeedBaudrateChange TRUE");
-		return TRUE;
+		cs_debug_mask(D_TRACE, "Sc8in1_NeedBaudrateChange 1");
+		return 1;
 	}
-	cs_debug_mask(D_TRACE, "Sc8in1_NeedBaudrateChange FALSE");
-	return FALSE;
+	cs_debug_mask(D_TRACE, "Sc8in1_NeedBaudrateChange 0");
+	return 0;
 }
 
 int32_t Sc8in1_SetBaudrate (struct s_reader * reader, uint32_t baudrate, struct termios *termio, uint8_t cmdMode) {
@@ -653,7 +653,7 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 			}
 
 			// Start display thread
-			reader->sc8in1_config->display_running = TRUE;
+			reader->sc8in1_config->display_running = 1;
 			pthread_attr_t attr;
 			pthread_attr_init(&attr);
 			pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
@@ -834,7 +834,7 @@ int32_t Sc8in1_Close(struct s_reader *reader) {
 	rdr_debug_mask(reader, D_IFD, "Closing SC8in1 device %s", reader->device);
 	bool status = ERROR;
 
-	if (Sc8in1_GetActiveHandle(reader, TRUE)) {
+	if (Sc8in1_GetActiveHandle(reader, 1)) {
 		rdr_debug_mask(reader, D_IFD, "Just deactivating SC8in1 device %s", reader->device);
 		reader->written = 0;
 		status = OK;
@@ -854,7 +854,7 @@ int32_t Sc8in1_Close(struct s_reader *reader) {
 	} else {
 		if (reader->sc8in1_config->mcr_type) {
 			// disable reader threads
-			reader->sc8in1_config->display_running = FALSE;
+			reader->sc8in1_config->display_running = 0;
 			pthread_join(reader->sc8in1_config->display_thread, NULL);
 		}
 		// disable other slots
@@ -914,7 +914,7 @@ int32_t Sc8in1_InitLocks(struct s_reader * reader) {
 				Sc8in1_SetSlotForReader(rdr);
 				if (rdr->sc8in1_config) {
 					reader->sc8in1_config = rdr->sc8in1_config;
-					reader_config_exists = TRUE;
+					reader_config_exists = 1;
 					rdr_debug_mask(reader, D_DEVICE, "Sc8in1_InitLocks: Found config for %s", reader->device);
 				}
 			}

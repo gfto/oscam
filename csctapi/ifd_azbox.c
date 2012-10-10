@@ -21,7 +21,7 @@ int32_t Azbox_Init(struct s_reader *reader)
 
   if ((reader->handle = openxcas_get_smartcard_device(0)) < 0) {
     rdr_debug_mask(reader, D_DEVICE, "openxcas sc: init failed (%d)", reader->handle);
-    return FALSE;
+    return 0;
   }
 
   rdr_debug_mask(reader, D_DEVICE, "openxcas sc: init succeeded");
@@ -79,7 +79,7 @@ int32_t Azbox_Reset(struct s_reader *reader, ATR *atr)
 
   int32_t atr_len = ioctl(reader->handle, SCARD_IOC_CHECKCARD, &tmp);
   if (ATR_InitFromArray(atr, tmp, atr_len) != ATR_OK)
-    return FALSE;
+    return 0;
 
    cs_sleepms(500);
 
@@ -89,7 +89,7 @@ int32_t Azbox_Reset(struct s_reader *reader, ATR *atr)
 int32_t Azbox_Transmit(struct s_reader *reader, BYTE *buffer, uint32_t size)
 {
   if (write(reader->handle, buffer, size) != (ssize_t)size)
-    return FALSE;
+    return 0;
 
   return OK;
 }
@@ -97,7 +97,7 @@ int32_t Azbox_Transmit(struct s_reader *reader, BYTE *buffer, uint32_t size)
 int32_t Azbox_Receive(struct s_reader *reader, BYTE *buffer, uint32_t size)
 {
   if (read(reader->handle, buffer, size) != (ssize_t)size)
-    return FALSE;
+    return 0;
 
   return OK;
  }

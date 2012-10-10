@@ -325,7 +325,7 @@ static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 		memset(ep->hexserial, 0, 8);
 		memcpy(ep->hexserial, &ep->emm[6], 4);
 		rdr_debug_mask_sensitive(rdr, D_EMM, "SHARED, ep->hexserial = {%s}", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
-		return TRUE;
+		return 1;
 	}
 	else {
 		if (!memcmp(&ep->emm[6], rdr->hexserial+2, 4)) {
@@ -333,13 +333,13 @@ static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial+2, &ep->emm[6], 4);
 			rdr_debug_mask_sensitive(rdr, D_EMM, "UNIQUE, ep->hexserial = {%s}", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
-			return TRUE;
+			return 1;
 		}
 		else {
 			ep->type = GLOBAL;
 			rdr_debug_mask(rdr, D_EMM, "GLOBAL");
 			memset(ep->hexserial, 0, 8);
-			return TRUE;
+			return 1;
 		}
 	}
 }

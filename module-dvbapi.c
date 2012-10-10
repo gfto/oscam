@@ -227,7 +227,7 @@ static int32_t dvbapi_detect_api(void) {
 		selected_api=devices[selected_box].api;
 
 #ifdef WITH_STAPI
-	if (devnum == 4 && stapi_open() == FALSE) {
+	if (devnum == 4 && stapi_open() == 0) {
 		cs_log("ERROR: stapi: setting up stapi failed.");
 		return 0;
 	}

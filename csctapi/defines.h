@@ -32,18 +32,6 @@
 #include "../oscam-config-funcs.h"
 
 /*
- * Boolean constants
- */
-
-#ifndef TRUE
-#define TRUE	1
-#endif
-
-#ifndef FALSE
-#define FALSE	0
-#endif
-
-/*
  * Type definitions
  */
 

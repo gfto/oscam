@@ -80,7 +80,7 @@ int32_t ATR_InitFromArray (ATR * atr, const BYTE atr_buffer[ATR_MAX_SIZE], uint3
 	atr->hbn = TDi & 0x0F;
 	
 	/* TCK is not present by default */
-	(atr->TCK).present = FALSE;
+	(atr->TCK).present = 0;
 	
 	/* Extract interface bytes */
 	while (pointer < length)
@@ -96,11 +96,11 @@ int32_t ATR_InitFromArray (ATR * atr, const BYTE atr_buffer[ATR_MAX_SIZE], uint3
 		{
 			pointer++;
 			atr->ib[pn][ATR_INTERFACE_BYTE_TA].value = buffer[pointer];
-			atr->ib[pn][ATR_INTERFACE_BYTE_TA].present = TRUE;
+			atr->ib[pn][ATR_INTERFACE_BYTE_TA].present = 1;
 		}
 		else
 		{
-			atr->ib[pn][ATR_INTERFACE_BYTE_TA].present = FALSE;
+			atr->ib[pn][ATR_INTERFACE_BYTE_TA].present = 0;
 		}
 		
 		/* Check TBi is present */
@@ -108,11 +108,11 @@ int32_t ATR_InitFromArray (ATR * atr, const BYTE atr_buffer[ATR_MAX_SIZE], uint3
 		{
 			pointer++;
 			atr->ib[pn][ATR_INTERFACE_BYTE_TB].value = buffer[pointer];
-			atr->ib[pn][ATR_INTERFACE_BYTE_TB].present = TRUE;
+			atr->ib[pn][ATR_INTERFACE_BYTE_TB].present = 1;
 		}
 		else
 		{
-			atr->ib[pn][ATR_INTERFACE_BYTE_TB].present = FALSE;
+			atr->ib[pn][ATR_INTERFACE_BYTE_TB].present = 0;
 		}
 		
 		/* Check TCi is present */
@@ -120,11 +120,11 @@ int32_t ATR_InitFromArray (ATR * atr, const BYTE atr_buffer[ATR_MAX_SIZE], uint3
 		{
 			pointer++;
 			atr->ib[pn][ATR_INTERFACE_BYTE_TC].value = buffer[pointer];
-			atr->ib[pn][ATR_INTERFACE_BYTE_TC].present = TRUE;
+			atr->ib[pn][ATR_INTERFACE_BYTE_TC].present = 1;
 		}
 		else
 		{
-			atr->ib[pn][ATR_INTERFACE_BYTE_TC].present = FALSE;
+			atr->ib[pn][ATR_INTERFACE_BYTE_TC].present = 0;
 		}
 		
 		/* Read TDi if present */
@@ -132,7 +132,7 @@ int32_t ATR_InitFromArray (ATR * atr, const BYTE atr_buffer[ATR_MAX_SIZE], uint3
 		{
 			pointer++;
 			TDi = atr->ib[pn][ATR_INTERFACE_BYTE_TD].value = buffer[pointer];
-			atr->ib[pn][ATR_INTERFACE_BYTE_TD].present = TRUE;
+			atr->ib[pn][ATR_INTERFACE_BYTE_TD].present = 1;
 			(atr->TCK).present = ((TDi & 0x0F) != ATR_PROTOCOL_TYPE_T0);
 			if (pn >= ATR_MAX_PROTOCOLS)
 				return (ATR_MALFORMED);
@@ -140,7 +140,7 @@ int32_t ATR_InitFromArray (ATR * atr, const BYTE atr_buffer[ATR_MAX_SIZE], uint3
 		}
 		else
 		{
-			atr->ib[pn][ATR_INTERFACE_BYTE_TD].present = FALSE;
+			atr->ib[pn][ATR_INTERFACE_BYTE_TD].present = 0;
 			break;
 		}
 	}
@@ -178,7 +178,7 @@ int32_t ATR_InitFromArray (ATR * atr, const BYTE atr_buffer[ATR_MAX_SIZE], uint3
 	atr->length = pointer + 1;
 	
     // check that TA1, if pn==1 , has a valid value for FI
-    if ( (atr->pn==1) && (atr->ib[pn][ATR_INTERFACE_BYTE_TA].present == TRUE)) {
+    if ( atr->pn == 1 && atr->ib[pn][ATR_INTERFACE_BYTE_TA].present == 1 ) {
         uchar FI;
         cs_debug_mask(D_ATR, "TA1 = %02x",atr->ib[pn][ATR_INTERFACE_BYTE_TA].value);
         FI=(atr->ib[pn][ATR_INTERFACE_BYTE_TA].value & 0xF0)>>4;
@@ -190,7 +190,7 @@ int32_t ATR_InitFromArray (ATR * atr, const BYTE atr_buffer[ATR_MAX_SIZE], uint3
     }
     
     // check that TB1 < 0x80
-    if ( (atr->pn==1) && (atr->ib[pn][ATR_INTERFACE_BYTE_TB].present == TRUE)) {
+    if ( atr->pn == 1 && atr->ib[pn][ATR_INTERFACE_BYTE_TB].present == 1 ) {
         if(atr->ib[pn][ATR_INTERFACE_BYTE_TB].value > 0x80) {
             cs_debug_mask(D_ATR, "Invalid ATR as TB1 has an invalid value");
             return (ATR_MALFORMED);

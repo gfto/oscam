@@ -562,7 +562,7 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			// global emm, 0 bytes addressed
 			ep->type = GLOBAL;
 			rdr_debug_mask(rdr, D_EMM, "GLOBAL base = %02x", base);
-			return TRUE;
+			return 1;
 
 		case 2:
 			// shared emm, 2 bytes addressed
@@ -580,15 +580,15 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			}
 			else {
 				if (!memcmp(ep->emm + 4, rdr->hexserial, l))
-					return TRUE;
+					return 1;
 
 				// provider addressed
 				for(i = 0; i < rdr->nprov; i++)
 					if (base == rdr->prid[i][0] && !memcmp(ep->emm + 4, &rdr->prid[i][1], l))
-						return TRUE;
+						return 1;
 			}
 			rdr_debug_mask(rdr, D_EMM, "neither hex nor provider addressed or unknown provider id");
-			return FALSE;
+			return 0;
 
 		case 3:
 			// unique emm, 3 bytes addressed
@@ -605,20 +605,20 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 				return (base == rdr->hexserial[3] && !memcmp(ep->emm + 4, rdr->hexserial, l));
 			else {
 				if (!memcmp(ep->emm + 4, rdr->hexserial, l))
-					return TRUE;
+					return 1;
 
 				// unique provider addressed
 				for(i = 0; i < rdr->nprov; i++)
 					if (base == rdr->prid[i][0] && !memcmp(ep->emm + 4, &rdr->prid[i][1], l))
-						return TRUE;
+						return 1;
 			}
 			rdr_debug_mask(rdr, D_EMM, "neither hex nor provider addressed or unknown provider id");
-			return FALSE;
+			return 0;
 
 		default:
 			ep->type = UNKNOWN;
 			rdr_debug_mask(rdr, D_EMM, "UNKNOWN");
-			return TRUE;
+			return 1;
 	}
 
 }

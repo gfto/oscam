@@ -97,7 +97,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 				rdr_log(reader, "ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", reader->device[pos], reader->device);
 
 			// Check if serial port is open already
-			reader->handle = Sc8in1_GetActiveHandle(reader, FALSE);
+			reader->handle = Sc8in1_GetActiveHandle(reader, 0);
 			if ( ! reader->handle ) {
 				rdr_debug_mask(reader, D_DEVICE, "%s opening SC8in1", __func__);
 				//open physical device
@@ -225,9 +225,9 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 		call(reader->crdr.get_status(reader, &in));
 
 		if (in)
-			*card = TRUE;
+			*card = 1;
 		else
-			*card = FALSE;
+			*card = 0;
 
 		return OK;
 	}
@@ -281,9 +281,9 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 	}
 
   if (in)
-		*card = TRUE;
+		*card = 1;
 	else
-		*card = FALSE;
+		*card = 0;
 
 	return OK;
 }
@@ -710,7 +710,7 @@ static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecat
 		char txt[50];
 		bool OffersT[3]; //T14 stored as T2
 		for (i = 0; i <= 2; i++)
-			OffersT[i] = FALSE;
+			OffersT[i] = 0;
 		for (i=1; i<= numprot; i++) {
 			point = 0;
 			if (ATR_GetInterfaceByte (atr, i, ATR_INTERFACE_BYTE_TA, &tx) == ATR_OK) {
@@ -731,13 +731,13 @@ static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecat
 				tx &= 0X0F;
 				snprintf((char *)txt+point,sizeof(txt)-point,"(T%i)",tx);
 				if (tx == 14)
-					OffersT[2] = TRUE;
+					OffersT[2] = 1;
 				else
-					OffersT[tx] = TRUE;
+					OffersT[tx] = 1;
 			}
 			else {
 				snprintf((char *)txt+point,sizeof(txt)-point,"no TD%i means T0",i);
-				OffersT[0] = TRUE;
+				OffersT[0] = 1;
 			}
 			rdr_debug_mask(reader, D_ATR, "%s", txt);
 		}
@@ -780,8 +780,8 @@ static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecat
 					reader->read_timeout = 1000000;
 			else
 					reader->read_timeout = 1000; // for all other readers set initial timeout to 1000 ms
-			bool PPS_success = FALSE;
-			bool NeedsPTS = ((reader->protocol_type != ATR_PROTOCOL_TYPE_T14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || n == 255)); //needs PTS according to old ISO 7816
+			bool PPS_success = 0;
+			bool NeedsPTS = ((reader->protocol_type != ATR_PROTOCOL_TYPE_T14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == 1 && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || n == 255)); //needs PTS according to old ISO 7816
 			if (NeedsPTS && deprecated == 0) {
 				//						 PTSS	PTS0	PTS1	PCK
 				BYTE req[6] = { 0xFF, 0x10, 0x00, 0x00 }; //we currently do not support PTS2, standard guardtimes or PTS3,
@@ -796,7 +796,7 @@ static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecat
 					FI = req[2] >> 4;
 					BYTE DI = req[2] & 0x0F;
 					d = (double) (atr_d_table[DI]);
-					PPS_success = TRUE;
+					PPS_success = 1;
 					rdr_debug_mask(reader, D_ATR, "PTS Succesfull, selected protocol: T%i, F=%.0f, D=%.6f, N=%.0f",
 						reader->protocol_type, (double) atr_f_table[FI], d, n);
 				}

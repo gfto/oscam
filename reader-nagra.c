@@ -1083,7 +1083,7 @@ static int32_t nagra2_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, st
 	return ERROR;
 }
 
-int32_t nagra2_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
+int32_t nagra2_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns 1 if shared emm matches SA, unique emm matches serial, or global or unknown
 {
 	switch (ep->emm[0]) {
 		case 0x83:
@@ -1102,10 +1102,10 @@ int32_t nagra2_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRU
 			}
 		case 0x82:
 			ep->type = GLOBAL;
-			return TRUE;
+			return 1;
 		default:
 			ep->type = UNKNOWN;
-			return TRUE;
+			return 1;
 	}
 }
 

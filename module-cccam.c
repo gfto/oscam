@@ -486,7 +486,7 @@ static int8_t cc_cycle_connection(struct s_client *cl)
 	cs_debug_mask(D_TRACE, "%s unlocked-cycleconnection! timeout %dms",
 				getprefix(), cl->reader->cc_reconnect);
 
-	cc_cli_close(cl, FALSE);
+	cc_cli_close(cl, 0);
 	cs_sleepms(50);
 	cc_cli_connect(cl);
 
@@ -614,7 +614,7 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 
 	if (n != len) {
 		if (rdr)
-			cc_cli_close(cl, TRUE);
+			cc_cli_close(cl, 1);
 		else {
 			cs_writeunlock(&cc->cards_busy);
 			cs_disconnect_client(cl);
@@ -1069,7 +1069,7 @@ int32_t same_card2(struct cc_card *card1, struct cc_card *card2, int8_t compare_
 
 int32_t same_card(struct cc_card *card1, struct cc_card *card2) {
 	return (card1->remote_id == card2->remote_id &&
-		same_card2(card1, card2, TRUE) &&
+		same_card2(card1, card2, 1) &&
 		same_first_node(card1, card2));
 }
 
@@ -1350,7 +1350,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 				send_idx = cc->g_flag;
 			}
 
-			struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cl, send_idx, FALSE);
+			struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cl, send_idx, 0);
 			if (eei) {
 				eei->ecm_idx = cur_er->idx;
 				eei->card = card;
@@ -1639,7 +1639,7 @@ void cc_free(struct s_client *cl) {
 	cs_writelock(&cc->lockcmd);
 
 	cs_debug_mask(D_TRACE, "exit cccam1/3");
-	cc_free_cardlist(cc->cards, TRUE);
+	cc_free_cardlist(cc->cards, 1);
 	ll_destroy_data_NULL(cc->pending_emms);
 	free_extended_ecm_idx(cc);
 	ll_destroy_data_NULL(cc->extended_ecm_idx);
@@ -1722,7 +1722,7 @@ void cc_idle(void) {
        struct cc_data *cc = cl->cc;
 
 	if (!cl->udp_fd)
-		cc_cli_close(cl, FALSE);
+		cc_cli_close(cl, 0);
 
 	if (rdr && rdr->cc_keepalive && !rdr->tcp_connected) {
 		cc_cli_connect(cl);
@@ -2158,7 +2158,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 
 		if (l == 0x48) { //72 bytes: normal server data
 			cs_writelock(&cc->cards_busy);
-			cc_free_cardlist(cc->cards, FALSE);
+			cc_free_cardlist(cc->cards, 0);
 			free_extended_ecm_idx(cc);
 			cc->last_emm_card = NULL;
 			cc->num_hop1 = 0;
@@ -2434,7 +2434,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 		cs_readlock(&cc->cards_busy);
 
    		struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cl,
-				cc->extended_mode ? cc->g_flag : 1, TRUE);
+				cc->extended_mode ? cc->g_flag : 1, 1);
 		if (!eei) {
 			cs_debug_mask(D_READER, "%s received extended ecm NOK id %d but not found!",
 					getprefix(), cc->g_flag);
@@ -2635,7 +2635,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			cs_readlock(&cc->cards_busy);
     		cc->recv_ecmtask = -1;
 			eei = get_extended_ecm_idx(cl,
-					cc->extended_mode ? cc->g_flag : 1, TRUE);
+					cc->extended_mode ? cc->g_flag : 1, 1);
 			if (!eei) {
 				cs_debug_mask(D_READER, "%s received extended ecm id %d but not found!",
 						getprefix(), cc->g_flag);
@@ -2986,9 +2986,9 @@ int32_t cc_recv_chk(struct s_client *cl, uchar *dcw, int32_t *rc, uchar *buf, in
 //		case 12:// 12= disabled
 //		case 13:// 13= stopped
 //		case 14:// 100= unhandled
-//			return TRUE;
+//			return 1;
 //	}
-//	return FALSE;
+//	return 0;
 //}
 
 
@@ -3002,7 +3002,7 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 	memset(buf, 0, sizeof(buf));
 
 	struct cc_extended_ecm_idx *eei = get_extended_ecm_idx_by_idx(cl, er->idx,
-			TRUE);
+			1);
 
 	if (er->rc < E_NOTFOUND && eei) { //found:
 		memcpy(buf, er->cw, sizeof(buf));
@@ -3066,7 +3066,7 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 		else {
 			cs_debug_mask(D_CLIENT, "%s connection closed by %s, n=%d.", getprefix(), remote_txt(), n);
 			if (rdr) {
-				cc_cli_close(cl, TRUE);
+				cc_cli_close(cl, 1);
 			} else {
 				//cs_writelock(&cc->cards_busy); maybe uninitialized
 				cs_disconnect_client(cl);
@@ -3088,7 +3088,7 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 
 	if (n == -1) {
 		if (cl->typ != 'c')
-			cc_cli_close(cl, TRUE);
+			cc_cli_close(cl, 1);
 	}
 	cl->last = time((time_t *) 0);
 	return n;
@@ -3319,7 +3319,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 		return -1;
 
 	cc->cccam220 = check_cccam_compat(cc);
-	cc->just_logged_in = TRUE;
+	cc->just_logged_in = 1;
 	cc->answer_on_keepalive = time(NULL);
 
 	//Wait for Partner detection (NOK1 with data) before reporting cards
@@ -3359,7 +3359,7 @@ void cc_srv_init2(struct s_client *cl) {
 			cs_disconnect_client(cl);
 		}
 		else
-			cl->init_done = TRUE;
+			cl->init_done = 1;
 	}
 	return;
 }
@@ -3386,7 +3386,7 @@ int32_t cc_cli_connect(struct s_client *cl) {
 		cc->pending_emms = ll_create("pending_emms");
 		cc->extended_ecm_idx = ll_create("extended_ecm_idx");
 	} else {
-		cc_free_cardlist(cc->cards, FALSE);
+		cc_free_cardlist(cc->cards, 0);
 		free_extended_ecm_idx(cc);
 	}
 	if (!cc->prefix) {
@@ -3415,7 +3415,7 @@ int32_t cc_cli_connect(struct s_client *cl) {
 		return -1;
 	}
 	if (errno == EISCONN) {
-		cc_cli_close(cl, FALSE);
+		cc_cli_close(cl, 0);
 		block_connect(rdr);
 		return -1;
 	}
@@ -3427,7 +3427,7 @@ int32_t cc_cli_connect(struct s_client *cl) {
 		else
 			cs_log("%s server returned %d instead of 16 bytes as init seed (errno=%d %s)",
 				rdr->label, n, errno, strerror(errno));
-		cc_cli_close(cl, FALSE);
+		cc_cli_close(cl, 0);
 		block_connect(rdr);
 		return -2;
 	}
@@ -3497,7 +3497,7 @@ int32_t cc_cli_connect(struct s_client *cl) {
 
 	if ((n = cc_recv_to(cl, data, 20)) != 20) {
 		cs_log("%s login failed, usr/pwd invalid", getprefix());
-		cc_cli_close(cl, FALSE);
+		cc_cli_close(cl, 0);
 		block_connect(rdr);
 		return -2;
 	}
@@ -3506,7 +3506,7 @@ int32_t cc_cli_connect(struct s_client *cl) {
 
 	if (memcmp(data, buf, 5)) { // check server response
 		cs_log("%s login failed, usr/pwd invalid", getprefix());
-		cc_cli_close(cl, FALSE);
+		cc_cli_close(cl, 0);
 		block_connect(rdr);
 		return -2;
 	} else {
@@ -3520,7 +3520,7 @@ int32_t cc_cli_connect(struct s_client *cl) {
 
 	if (cc_send_cli_data(cl) <= 0) {
 		cs_log("%s login failed, could not send client data", getprefix());
-		cc_cli_close(cl, FALSE);
+		cc_cli_close(cl, 0);
 		block_connect(rdr);
 		return -3;
 	}
@@ -3582,7 +3582,7 @@ int32_t cc_cli_init(struct s_client *cl) {
 //				return -1;
 //
 //			if (!reader->tcp_connected) {
-//				cc_cli_close(cl, FALSE);
+//				cc_cli_close(cl, 0);
 //				res = cc_cli_init_int(cl);
 //				if (res)
 //					return res;
@@ -3655,7 +3655,7 @@ void cc_card_info(void) {
 
 void cc_cleanup(struct s_client *cl) {
 	if (cl->typ != 'c') {
-		cc_cli_close(cl, TRUE); // we need to close open fd's
+		cc_cli_close(cl, 1); // we need to close open fd's
 	}
 	cc_free(cl);
 }

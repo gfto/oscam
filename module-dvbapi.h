@@ -27,14 +27,6 @@
 #define ECM_PIDS 30
 #define MAX_FILTER 24
 
-#ifndef FALSE
-#define FALSE 0
-#endif
-
-#ifndef TRUE
-#define TRUE 1
-#endif
-
 #define BOX_COUNT 6
 
 struct box_devices

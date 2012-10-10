@@ -195,11 +195,11 @@ int32_t SR_GetStatus (struct s_reader *reader, int32_t * in)
 {
   int32_t state;
 
-    smart_fastpoll(reader, TRUE);
+    smart_fastpoll(reader, 1);
     pthread_mutex_lock(&reader->sr_config->g_read_mutex);
     state =(reader->sr_config->modem_status & 0x80) == 0x80 ? 0 : 2;
     pthread_mutex_unlock(&reader->sr_config->g_read_mutex);
-    smart_fastpoll(reader, FALSE);
+    smart_fastpoll(reader, 0);
 
   //state = 0 no card, 1 = not ready, 2 = ready
   if (state)
@@ -265,7 +265,7 @@ int32_t SR_Reset (struct s_reader *reader, ATR *atr)
     else
         reader->sr_config->fs = 3690000;
 
-    smart_fastpoll(reader, TRUE);
+    smart_fastpoll(reader, 1);
     smart_flush(reader);
     // set smartreader+ default values
     reader->sr_config->F = 372;
@@ -275,7 +275,7 @@ int32_t SR_Reset (struct s_reader *reader, ATR *atr)
     reader->sr_config->inv = 0;
 
     for(i=0 ; i < 4 ;i++) {
-        reader->sr_config->irdeto=FALSE;
+        reader->sr_config->irdeto=0;
         atr_ok=ERROR;
         memset(data,0,sizeof(data));
         rdr_debug_mask(reader, D_DEVICE, "SR: Trying with parity %s",parity_str[parity[i]]);
@@ -313,7 +313,7 @@ int32_t SR_Reset (struct s_reader *reader, ATR *atr)
 
         // this is to make sure we don't think this 03 FF 00 00 00 00 00 00 00 00 00 00 00 00 00 00  is a valid ATR.
         if((data[0]!=0x3B && data[0]!=0x03 && data[0]!=0x3F) || (data[1]==0xFF && data[2]==0x00)) {
-            reader->sr_config->irdeto=FALSE;
+            reader->sr_config->irdeto=0;
             continue; // this is not a valid ATR.
         }
 
@@ -329,7 +329,7 @@ int32_t SR_Reset (struct s_reader *reader, ATR *atr)
             atr_ok=OK;
             if(i==3) {
                 rdr_debug_mask(reader, D_DEVICE, "SR: Locking F and D for Irdeto mode");
-                reader->sr_config->irdeto=TRUE;
+                reader->sr_config->irdeto=1;
             }
         }
 
@@ -337,7 +337,7 @@ int32_t SR_Reset (struct s_reader *reader, ATR *atr)
             break;
      }
 
-    smart_fastpoll(reader, FALSE);
+    smart_fastpoll(reader, 0);
 
     return atr_ok;
 }
@@ -381,9 +381,9 @@ int32_t SR_Transmit (struct s_reader *reader, BYTE * buffer, uint32_t size)
 {
     uint32_t  ret;
 
-    smart_fastpoll(reader, TRUE);
+    smart_fastpoll(reader, 1);
     ret = smart_write(reader, buffer, size);
-    smart_fastpoll(reader, FALSE);
+    smart_fastpoll(reader, 0);
     if (ret!=size)
         return ERROR;
 
@@ -394,9 +394,9 @@ int32_t SR_Receive (struct s_reader *reader, BYTE * buffer, uint32_t size)
 {
     uint32_t  ret;
 
-    smart_fastpoll(reader, TRUE);
+    smart_fastpoll(reader, 1);
     ret = smart_read(reader, buffer, size, 1);
-    smart_fastpoll(reader, FALSE);
+    smart_fastpoll(reader, 0);
     if (ret!=size)
         return ERROR;
 
@@ -423,13 +423,13 @@ int32_t SR_WriteSettings (struct s_reader *reader, uint16_t  F, BYTE D, BYTE N, 
     if (reader->mhz >=343)  reader->mhz =  343; else
         reader->mhz =  320;
 
-    smart_fastpoll(reader, TRUE);
+    smart_fastpoll(reader, 1);
     EnableSmartReader(reader, reader->mhz, F, D, N, T, reader->sr_config->inv,reader->sr_config->parity);
 
     //baud rate not really used in native mode since
     //it's handled by the card, so just set to maximum 3Mb/s
     smartreader_set_baudrate(reader, 3000000);
-    smart_fastpoll(reader, FALSE);
+    smart_fastpoll(reader, 0);
 
   return OK;
 }
@@ -442,9 +442,9 @@ int32_t SR_SetParity (struct s_reader *reader, uint16_t  parity)
     rdr_debug_mask(reader, D_DEVICE, "SR: Setting parity to %s",parity_str[parity]);
 
     reader->sr_config->parity = parity;
-    smart_fastpoll(reader, TRUE);
+    smart_fastpoll(reader, 1);
     ret = smartreader_set_line_property(reader, (enum smartreader_bits_type) 8, STOP_BIT_2, parity);
-    smart_fastpoll(reader, FALSE);
+    smart_fastpoll(reader, 0);
     if(ret)
         return ERROR;
 
@@ -456,12 +456,12 @@ int32_t SR_Close (struct s_reader *reader)
   if (!reader->sr_config) return OK;
   rdr_debug_mask(reader, D_DEVICE, "SR: Closing smartreader");
 
-    reader->sr_config->running=FALSE;
+    reader->sr_config->running=0;
     if(reader->sr_config->usb_dev_handle){
     	  cs_writelock(&sr_lock);
-	    smart_fastpoll(reader, TRUE);
+	    smart_fastpoll(reader, 1);
 	    pthread_join(reader->sr_config->rt,NULL);
-	    smart_fastpoll(reader, FALSE);
+	    smart_fastpoll(reader, 0);
 	    libusb_release_interface(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
 #if defined(__linux__)
     	libusb_attach_kernel_driver(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
@@ -481,7 +481,7 @@ int32_t SR_FastReset(struct s_reader *reader, int32_t delay)
 {
     unsigned char data[ATR_MAX_SIZE];
 
-    smart_fastpoll(reader, TRUE);
+    smart_fastpoll(reader, 1);
     //Set the DTR HIGH and RTS HIGH
     smartreader_setdtr_rts(reader, 1, 1);
     // A card with an active low reset is reset by maintaining RST in state L for at least 40 000 clock cycles
@@ -494,7 +494,7 @@ int32_t SR_FastReset(struct s_reader *reader, int32_t delay)
 
     //Read the ATR
     smart_read(reader,data, ATR_MAX_SIZE,1);
-    smart_fastpoll(reader, FALSE);
+    smart_fastpoll(reader, 0);
     return 0;
 }
 
@@ -504,7 +504,7 @@ int32_t SR_FastReset_With_ATR(struct s_reader *reader, ATR *atr)
     int32_t ret;
     int32_t atr_ok=ERROR;
 
-    smart_fastpoll(reader, TRUE);
+    smart_fastpoll(reader, 1);
     //Set the DTR HIGH and RTS HIGH
     smartreader_setdtr_rts(reader, 1, 1);
     // A card with an active low reset is reset by maintaining RST in state L for at least 40 000 clock cycles
@@ -524,7 +524,7 @@ int32_t SR_FastReset_With_ATR(struct s_reader *reader, ATR *atr)
 		atr_ok=OK;
 	}
 
-    smart_fastpoll(reader, FALSE);
+    smart_fastpoll(reader, 0);
     return atr_ok;
 }
 
@@ -619,13 +619,13 @@ static bool smartreader_check_endpoint(libusb_device *usb_dev,uint8_t out_endpoi
     ret = libusb_get_device_descriptor(usb_dev, &usbdesc);
     if (ret < 0) {
         cs_log("Smartreader : couldn't read device descriptor, assuming this is not a smartreader");
-        return FALSE;
+        return 0;
     }
     if (usbdesc.bNumConfigurations) {
         ret=libusb_get_active_config_descriptor(usb_dev,&configDesc);
         if(ret) {
             cs_log("Smartreader : couldn't read config descriptor , assuming this is not a smartreader");
-            return FALSE;
+            return 0;
         }
 
         for(j=0; j<configDesc->bNumInterfaces; j++)
@@ -637,8 +637,8 @@ static bool smartreader_check_endpoint(libusb_device *usb_dev,uint8_t out_endpoi
                 }
     }
     if(nb_endpoint_ok!=2)
-        return FALSE;
-    return TRUE;
+        return 0;
+    return 1;
 }
 
 
@@ -658,7 +658,7 @@ static struct libusb_device* find_smartreader(const char *busname,const char *de
     return NULL;
 
   while ((dev = devs[i++]) != NULL) {
-        dev_found=FALSE;
+        dev_found=0;
     ret = libusb_get_device_descriptor(dev, &usbdesc);
     if (ret < 0) {
       cs_log("failed to get device descriptor for device %s on bus %s", dev_name, busname);
@@ -693,7 +693,7 @@ static struct libusb_device* find_smartreader(const char *busname,const char *de
                     if(!strcmp(trim(iserialbuffer),dev_name)) {
                         cs_log("Found reader with serial %s at %03d:%03d",dev_name,libusb_get_bus_number(dev),libusb_get_device_address(dev));
                         if(smartreader_check_endpoint(dev,out_endpoint))
-                            dev_found=TRUE;
+                            dev_found=1;
                     }
                 }
             }
@@ -701,7 +701,7 @@ static struct libusb_device* find_smartreader(const char *busname,const char *de
                 cs_debug_mask(D_DEVICE, "SR: Checking FTDI device: %03d on bus %03d",libusb_get_device_address(dev),libusb_get_bus_number(dev));
                 // check for smargo endpoints.
                 if(smartreader_check_endpoint(dev,out_endpoint))
-                    dev_found=TRUE;
+                    dev_found=1;
             }
             libusb_close(usb_dev_handle);
         }
@@ -1393,7 +1393,7 @@ static void* ReaderThread(void *p)
     int32_t ret,idx;
 
     reader = (struct s_reader *)p;
-    reader->sr_config->running=TRUE;
+    reader->sr_config->running=1;
 
     for(idx=0; idx<NUM_TXFERS; idx++) {
          usbt[idx] = libusb_alloc_transfer(0);

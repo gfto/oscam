@@ -604,13 +604,13 @@ case 0x8A:
 case 0x8B:
 	ep->type=GLOBAL;
 	rdr_debug_mask(rdr, D_EMM, "GLOBAL");
-	return TRUE;
+	return 1;
 
 case 0x8C:
 case 0x8D:
 	ep->type=SHARED;
 	rdr_debug_mask(rdr, D_EMM, "SHARED (part)");
-	return FALSE;
+	return 0;
 
 case 0x8E:
 	ep->type=SHARED;
@@ -622,14 +622,14 @@ case 0x8E:
 	int8_t i;
 	for (i=0;i<rdr->nprov;i++) {
 		if (!memcmp(&rdr->prid[i][1], ep->hexserial, 3))
-			return TRUE;
+			return 1;
 	}
 	return(!memcmp(&rdr->sa[0][0], ep->hexserial, 3));
 
 default:
 	ep->type = UNKNOWN;
 	rdr_debug_mask(rdr, D_EMM, "UNKNOWN");
-	return TRUE;
+	return 1;
 	}
 }
 

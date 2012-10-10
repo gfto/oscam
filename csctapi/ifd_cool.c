@@ -42,12 +42,12 @@ int32_t Cool_Init (struct s_reader *reader)
 	if(reader_nb>1) {
 		// there are only 2 readers in the coolstream : 0 or 1
 		rdr_log(reader, "Coolstream reader device can only be 0 or 1");
-		return FALSE;
+		return 0;
 	}
 	if (!cs_malloc(&reader->spec_dev, sizeof(struct s_coolstream_reader)))
 		return 0;
 	if (cnxt_smc_open (&specdev()->handle, &reader_nb, NULL, NULL))
-		return FALSE;
+		return 0;
 
 	int32_t ret = cnxt_smc_enable_flow_control(specdev()->handle);
 	coolapi_check_error("cnxt_smc_enable_flow_control", ret);
@@ -119,7 +119,7 @@ int32_t Cool_Transmit (struct s_reader *reader, BYTE * sent, uint32_t size)
 {
 	specdev()->cardbuflen = 256;//it needs to know max buffer size to respond?
 
-	int32_t ret = cnxt_smc_read_write(specdev()->handle, FALSE, sent, size, specdev()->cardbuffer, &specdev()->cardbuflen, specdev()->read_write_transmit_timeout, 0);
+	int32_t ret = cnxt_smc_read_write(specdev()->handle, 0, sent, size, specdev()->cardbuffer, &specdev()->cardbuflen, specdev()->read_write_transmit_timeout, 0);
 	coolapi_check_error("cnxt_smc_read_write", ret);
 
 	rdr_ddump_mask(reader, D_DEVICE, sent, size, "COOL Transmit:");

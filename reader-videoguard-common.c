@@ -675,28 +675,28 @@ xx xx xx xx xx xx xx xx xx xx xx xx xx xx xx
 		case VG_EMMTYPE_G:
 			rdr_debug_mask(rdr, D_EMM, "GLOBAL");
 			ep->type=GLOBAL;
-			return TRUE;
+			return 1;
 
 		case VG_EMMTYPE_U:
 		case VG_EMMTYPE_S:
 			rdr_debug_mask(rdr, D_EMM, "%s", (emmtype == VG_EMMTYPE_U) ? "UNIQUE" : "SHARED");
 			ep->type=emmtype;
 			if (ep->emm[1] == 0) // detected UNIQUE EMM from cccam (there is no serial)
-				return TRUE;
+				return 1;
 
 			for (i = 0; i < serial_count; i++) {
 				if (!memcmp(&ep->emm[i * 4 + 4], rdr->hexserial + 2, serial_len)) {
 					memcpy(ep->hexserial, &ep->emm[i * 4 + 4], serial_len);
-					return TRUE;
+					return 1;
 				}
 			}
-			return FALSE; // if UNIQUE or SHARED but no serial match return FALSE
+			return 0; // if UNIQUE or SHARED but no serial match return FALSE
 
 		default:
 			//remote emm without serial
 			rdr_debug_mask(rdr, D_EMM, "UNKNOWN");
 			ep->type=UNKNOWN;
-			return TRUE;
+			return 1;
 	}
 }
 

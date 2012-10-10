@@ -6,7 +6,7 @@
 static void dimeno_PostProcess_Decrypt(struct s_reader * reader, unsigned char *rxbuff, unsigned char *cw)
 {
   unsigned char tag,len,len2;
-  bool valid_0x55=FALSE;
+  bool valid_0x55=0;
   unsigned char *body;
   unsigned char buffer[0x10];
   int32_t a=0x13;
@@ -20,7 +20,7 @@ static void dimeno_PostProcess_Decrypt(struct s_reader * reader, unsigned char *
     {
       case 0x55:{
         if(body[0]==0x84){      //Tag 0x56 has valid data...
-          valid_0x55=TRUE;
+          valid_0x55=1;
         }
       }break;
       case 0x56:{
@@ -248,16 +248,16 @@ static void vg2_read_tiers(struct s_reader * reader)
   // some cards start real tiers info in middle of tier info
   // and have blank tiers between old tiers and real tiers eg 09AC
   int32_t starttier = reader->card_tierstart;
-  bool stopemptytier = TRUE;
+  bool stopemptytier = 1;
   if (!starttier)
-    stopemptytier = FALSE;
+    stopemptytier = 0;
 
   // check to see if specified start tier is blank and if blank, start at 0 and ignore blank tiers
   ins76[2]=starttier;
   l=do_cmd(reader,ins76,NULL,NULL,cta_res);
   if(l<0 || !status_ok(cta_res+l)) return;
   if(cta_res[2]==0 && cta_res[3]==0 ){
-    stopemptytier = FALSE;
+    stopemptytier = 0;
     starttier = 0;
   }
 
@@ -547,7 +547,7 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR *newatr)
       rdr_log(reader, "No TA1 change for this card is possible by ins7E11");
     } else {
       ins742b[4]=l;
-      bool ta1ok=FALSE;
+      bool ta1ok=0;
 
       if(!write_cmd_vg(ins742b,NULL) || !status_ok(cta_res+ins742b[4])) {  //get supported TA1 bytes
         rdr_log(reader, "classD0 ins742b: failed");
@@ -557,12 +557,12 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR *newatr)
   
         for (i=2; i < l; i++) {
           if (cta_res[i]==reader->ins7E11[0x00]) {
-            ta1ok=TRUE;
+            ta1ok=1;
             break;
           }
         }
       }
-      if(ta1ok==FALSE) {
+      if(ta1ok==0) {
         rdr_log(reader, "The value %02X of ins7E11 is not supported,try one between %02X and %02X",reader->ins7E11[0x00],cta_res[2],cta_res[ins742b[4]-1]);
       } else {
         static const uint8_t ins7E11[5] = { 0xD0,0x7E,0x11,0x00,0x01 };

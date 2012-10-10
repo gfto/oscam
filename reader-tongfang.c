@@ -168,7 +168,7 @@ static int32_t tongfang_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 static int32_t tongfang_get_emm_type(EMM_PACKET *ep, struct s_reader *UNUSED(reader))
 {
   ep->type = UNKNOWN;
-  return TRUE;
+  return 1;
 }
 
 static int32_t tongfang_do_emm(struct s_reader *reader, EMM_PACKET *ep)

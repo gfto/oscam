@@ -544,7 +544,7 @@ static void cs_cleanup(void)
 			// Stop MCR reader display thread
 			if (cl->typ == 'r' && cl->reader && cl->reader->typ == R_SC8in1
 					&& cl->reader->sc8in1_config && cl->reader->sc8in1_config->display_running) {
-				cl->reader->sc8in1_config->display_running = FALSE;
+				cl->reader->sc8in1_config->display_running = 0;
 			}
 		}
 	}
@@ -2524,7 +2524,7 @@ OUT:
  * Function to filter emm by cardsystem.
  * Every cardsystem can export a function "get_emm_filter"
  *
- * the emm is checked against it an returns TRUE for a valid emm or FALSE if not
+ * the emm is checked against it an returns 1 for a valid emm or 0 if not
  */
 int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs, EMM_PACKET *ep)
 {

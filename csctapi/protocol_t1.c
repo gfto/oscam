@@ -224,7 +224,7 @@ int32_t Protocol_T1_Command(struct s_reader *reader, unsigned char * command, ui
 
 	/* Reset counter */
 	counter = 0;      
-	more = TRUE;
+	more = 1;
 	wtx = 0;
       
 	while ((ret == OK) && more) {

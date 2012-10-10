@@ -345,7 +345,7 @@ static int32_t dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
   switch (ep->emm[0]) {
 		case 0x87:
 			ep->type = UNIQUE;
-			return TRUE; //FIXME: no filling of ep->hexserial
+			return 1; //FIXME: no filling of ep->hexserial
 
 		case 0x89:
 			ep->type = SHARED;
@@ -356,10 +356,10 @@ static int32_t dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				return (!memcmp(&rdr->sa[0][0], ep->emm + 3, 4));
 			}
 			else
-				return TRUE;
+				return 1;
 		default:
 			ep->type = UNKNOWN;
-			return TRUE;
+			return 1;
 	}
 }
 

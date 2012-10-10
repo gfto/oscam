@@ -27,8 +27,6 @@
 #else
 #include <libusb-1.0/libusb.h>
 #endif
-#define FALSE 0
-#define TRUE 1
 
 int32_t out_endpoint;
 
@@ -46,13 +44,13 @@ static int32_t smartreader_check_endpoint(libusb_device *usb_dev)
     ret = libusb_get_device_descriptor(usb_dev, &usbdesc);
     if (ret < 0) {
         printf("Smartreader : couldn't read device descriptor, assuming this is not a smartreader");
-        return FALSE;        
+        return 0;
     }
     if (usbdesc.bNumConfigurations) {
         ret=libusb_get_active_config_descriptor(usb_dev,&configDesc);
         if(ret) {
             printf("Smartreader : couldn't read config descriptor , assuming this is not a smartreader");
-            return FALSE;
+            return 0;
         }
 
         for(j=0; j<configDesc->bNumInterfaces; j++) 
@@ -70,8 +68,8 @@ static int32_t smartreader_check_endpoint(libusb_device *usb_dev)
     }
     
     if(nb_endpoint_ok!=2)
-        return FALSE;
-    return TRUE;
+        return 0;
+    return 1;
 }
 
 static void print_devs(libusb_device **devs)

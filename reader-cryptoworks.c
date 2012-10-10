@@ -452,7 +452,7 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				rdr_debug_mask(rdr, D_EMM, "SHARED (Header)");
 				ep->type = SHARED;
 				i2b_buf(4, cryptoworks_get_emm_provid(ep->emm+8, ep->l-8), ep->provid);
-				return FALSE;
+				return 0;
 			}
 			break;
 		case 0x88:
@@ -461,7 +461,7 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				rdr_debug_mask(rdr, D_EMM, "GLOBAL");
 				ep->type = GLOBAL;
 				i2b_buf(4, cryptoworks_get_emm_provid(ep->emm+8, ep->l-8), ep->provid);
-				return TRUE;
+				return 1;
 			}
 			break;
 		case 0x8F:
@@ -479,17 +479,17 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 					i2b_buf(4, cryptoworks_get_emm_provid(ep->emm+12, ep->l-12), ep->provid);
 					ep->type = UNIQUE; break;
 			}
-			return TRUE;
+			return 1;
 
 		/* FIXME: Seems to be that all other EMM types are rejected by the card */
 		default:
 			ep->type = UNKNOWN;
 			rdr_debug_mask(rdr, D_EMM, "UNKNOWN");
-			return FALSE; // skip emm
+			return 0; // skip emm
 	}
 
 	rdr_debug_mask(rdr, D_EMM, "invaild");
-	return FALSE;
+	return 0;
 }
 
 static void cryptoworks_get_emm_filter(struct s_reader * rdr, uchar *filter)
