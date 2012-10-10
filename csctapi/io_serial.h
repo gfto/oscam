@@ -73,11 +73,11 @@ void IO_Serial_Ioctl_Lock(struct s_reader * reader, int32_t);
 bool IO_Serial_SetBitrate (struct s_reader * reader, uint32_t bitrate, struct termios * tio);
 bool IO_Serial_SetParams (struct s_reader * reader, uint32_t bitrate, uint32_t bits, int32_t parity, uint32_t stopbits, int32_t dtr, int32_t rts);
 bool IO_Serial_SetProperties (struct s_reader * reader, struct termios newtio);
-int32_t IO_Serial_SetParity (struct s_reader * reader, BYTE parity);
+int32_t IO_Serial_SetParity (struct s_reader * reader, unsigned char parity);
 
 /* Input and output */
-bool IO_Serial_Read (struct s_reader * reader, uint32_t timeout, uint32_t size, BYTE * data);
-bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t size, const BYTE * data);
+bool IO_Serial_Read (struct s_reader * reader, uint32_t timeout, uint32_t size, unsigned char * data);
+bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t size, const unsigned char * data);
 void IO_Serial_Sendbreak (struct s_reader * reader, int32_t duration);
 
 #endif /* IO_SERIAL */

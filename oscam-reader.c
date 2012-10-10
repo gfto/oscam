@@ -704,7 +704,7 @@ int32_t reader_init(struct s_reader *reader) {
 
 #if !defined(WITH_CARDREADER) && defined(WITH_STAPI)
 /* Dummy function stub for stapi compiles without cardreader as libstapi needs it. */
-int32_t ATR_InitFromArray (ATR * atr, const BYTE atr_buffer[ATR_MAX_SIZE], uint32_t length){
+int32_t ATR_InitFromArray(ATR *atr, const unsigned char atr_buffer[ATR_MAX_SIZE], uint32_t length) {
 	return 0;
 }
 #endif

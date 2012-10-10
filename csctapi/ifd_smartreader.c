@@ -20,8 +20,8 @@
 
 #define OK 0
 #define ERROR 1
-#define LOBYTE(w) ((BYTE)((w) & 0xff))
-#define HIBYTE(w) ((BYTE)((w) >> 8))
+#define LOBYTE(w) ((unsigned char)((w) & 0xff))
+#define HIBYTE(w) ((unsigned char)((w) >> 8))
 
 //The number of concurrent bulk reads to queue onto the smartreader
 #define NUM_TXFERS 2
@@ -291,7 +291,7 @@ int32_t SR_Reset (struct s_reader *reader, ATR *atr)
         }
 
         smart_flush(reader);
-        EnableSmartReader(reader, reader->sr_config->fs/10000, reader->sr_config->F, (BYTE)reader->sr_config->D, reader->sr_config->N, reader->sr_config->T, reader->sr_config->inv,parity[i]);
+        EnableSmartReader(reader, reader->sr_config->fs/10000, reader->sr_config->F, (unsigned char)reader->sr_config->D, reader->sr_config->N, reader->sr_config->T, reader->sr_config->inv,parity[i]);
 
         //Reset smartcard
 
@@ -321,7 +321,7 @@ int32_t SR_Reset (struct s_reader *reader, ATR *atr)
             rdr_debug_mask(reader, D_DEVICE, "SR: Inverse convention detected, setting smartreader inv to 1");
 
             reader->sr_config->inv=1;
-            EnableSmartReader(reader, reader->sr_config->fs/10000, reader->sr_config->F, (BYTE)reader->sr_config->D, reader->sr_config->N, reader->sr_config->T, reader->sr_config->inv,parity[i]);
+            EnableSmartReader(reader, reader->sr_config->fs/10000, reader->sr_config->F, (unsigned char)reader->sr_config->D, reader->sr_config->N, reader->sr_config->T, reader->sr_config->inv,parity[i]);
         }
         // parse atr
         if(ATR_InitFromArray (atr, data, ret) == ATR_OK) {
@@ -377,7 +377,7 @@ static int32_t smart_write(S_READER *reader, unsigned char* buff, uint32_t  size
     return total_written;
 }
 
-int32_t SR_Transmit (struct s_reader *reader, BYTE * buffer, uint32_t size)
+int32_t SR_Transmit (struct s_reader *reader, unsigned char * buffer, uint32_t size)
 {
     uint32_t  ret;
 
@@ -390,7 +390,7 @@ int32_t SR_Transmit (struct s_reader *reader, BYTE * buffer, uint32_t size)
   return OK;
 }
 
-int32_t SR_Receive (struct s_reader *reader, BYTE * buffer, uint32_t size)
+int32_t SR_Receive (struct s_reader *reader, unsigned char * buffer, uint32_t size)
 {
     uint32_t  ret;
 
@@ -403,7 +403,7 @@ int32_t SR_Receive (struct s_reader *reader, BYTE * buffer, uint32_t size)
   return OK;
 }
 
-int32_t SR_WriteSettings (struct s_reader *reader, uint16_t  F, BYTE D, BYTE N, BYTE T, uint16_t  convention)
+int32_t SR_WriteSettings (struct s_reader *reader, uint16_t  F, unsigned char D, unsigned char N, unsigned char T, uint16_t  convention)
 {
     // smartreader supports 3.20, 3.43, 3.69, 4.00, 4.36, 4.80, 5.34, 6.00, 6.86, 8.00, 9.61, 12.0, 16.0 Mhz
     reader->sr_config->inv = convention;//FIXME this one is set by icc_async and local smartreader reset routine

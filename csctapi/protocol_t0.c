@@ -70,7 +70,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 
 static int32_t APDU_Cmd_Case (unsigned char * command, uint16_t command_len)
 {
-	BYTE B1;
+	unsigned char B1;
 	uint16_t B2B3;
 	uint32_t L;
 	int32_t res;
@@ -145,7 +145,7 @@ int32_t Protocol_T0_Command (struct s_reader * reader, unsigned char * command, 
 
 static int32_t Protocol_T0_Case2E (struct s_reader * reader, unsigned char * command, uint16_t command_len, unsigned char * rsp, uint16_t * lr)
 {
-	BYTE buffer[PROTOCOL_T0_MAX_SHORT_COMMAND];
+	unsigned char buffer[PROTOCOL_T0_MAX_SHORT_COMMAND];
 	unsigned char tpdu_rsp[CTA_RES_LEN];
 	uint16_t tpdu_lr = 0;
 	uint32_t i;
@@ -155,7 +155,7 @@ static int32_t Protocol_T0_Case2E (struct s_reader * reader, unsigned char * com
 	{
 		/* MAP APDU onto command TPDU */
 		memcpy(buffer, command, 4);
-		buffer[4] = (BYTE) Lc;
+		buffer[4] = (unsigned char) Lc;
 		memcpy (buffer + 5, command + 7, buffer[4]);
 		return Protocol_T0_ExchangeTPDU(reader, buffer, buffer[4] + 5, rsp, lr);
 	}
@@ -197,7 +197,7 @@ static int32_t Protocol_T0_Case2E (struct s_reader * reader, unsigned char * com
 static int32_t Protocol_T0_Case3E (struct s_reader * reader, unsigned char * command, unsigned char * rsp, uint16_t * lr)
 {
 	int32_t ret;
-	BYTE buffer[5];
+	unsigned char buffer[5];
 	unsigned char tpdu_rsp[CTA_RES_LEN];
 	uint16_t tpdu_lr = 0;
 	int32_t Lm, Lx;
@@ -207,7 +207,7 @@ static int32_t Protocol_T0_Case3E (struct s_reader * reader, unsigned char * com
 
 	if (Le <= 256)
 	{
-		buffer[4] = (BYTE)Le;
+		buffer[4] = (unsigned char)Le;
 		return Protocol_T0_ExchangeTPDU(reader, buffer, 5, rsp, lr); //this was Case3S !!!
 	}
 
@@ -241,7 +241,7 @@ static int32_t Protocol_T0_Case3E (struct s_reader * reader, unsigned char * com
 		
 		while (Lm > 0)
 		{
-			buffer[4] = (BYTE) MIN (Lm, Lx);
+			buffer[4] = (unsigned char) MIN (Lm, Lx);
 			call (Protocol_T0_ExchangeTPDU(reader, buffer, 5, tpdu_rsp, &tpdu_lr));
 
 			/* Append response TPDU to APDU  */
@@ -265,7 +265,7 @@ static int32_t Protocol_T0_Case3E (struct s_reader * reader, unsigned char * com
 static int32_t Protocol_T0_Case4E (struct s_reader * reader, unsigned char * command, uint16_t command_len, unsigned char * rsp, uint16_t * lr)
 {
 	int32_t ret;
-	BYTE buffer[PROTOCOL_T0_MAX_SHORT_COMMAND];
+	unsigned char buffer[PROTOCOL_T0_MAX_SHORT_COMMAND];
 	unsigned char tpdu_rsp[CTA_RES_LEN];
 	uint16_t tpdu_lr = 0;
 	int32_t Le;
@@ -275,7 +275,7 @@ static int32_t Protocol_T0_Case4E (struct s_reader * reader, unsigned char * com
 	if (Lc < 256) {
 		/* Map APDU onto command TPDU */
 		memcpy(buffer,command,4);
-		buffer[4] = (BYTE) Lc;
+		buffer[4] = (unsigned char) Lc;
 		memcpy (buffer + 5, command, buffer[4]);
 		ret = Protocol_T0_ExchangeTPDU(reader, buffer, buffer[4] + 5, tpdu_rsp, &tpdu_lr);
 	}
@@ -301,8 +301,8 @@ static int32_t Protocol_T0_Case4E (struct s_reader * reader, unsigned char * com
 			buffer[2] = 0x00;
 			buffer[3] = 0x00;
 			buffer[4] = 0x00;     /* B1 = 0x00 */
-			buffer[5] = (BYTE) (Le >> 8);  /* B2 = BL-1 */
-			buffer[6] = (BYTE) (Le & 0x00FF);      /* B3 = BL */
+			buffer[5] = (unsigned char) (Le >> 8);  /* B2 = BL-1 */
+			buffer[6] = (unsigned char) (Le & 0x00FF);      /* B3 = BL */
 			ret = Protocol_T0_Case3E (reader, buffer, rsp, lr);
 		}
 		else if ((tpdu_rsp[tpdu_lr - 2] & 0xF0) == 0x60)
@@ -322,8 +322,8 @@ static int32_t Protocol_T0_Case4E (struct s_reader * reader, unsigned char * com
 			buffer[2] = 0x00;
 			buffer[3] = 0x00;
 			buffer[4] = 0x00;     /* B1 = 0x00 */
-			buffer[5] = (BYTE) Le >> 8;  /* B2 = BL-1 */
-			buffer[6] = (BYTE) Le & 0x00FF;      /* B3 = BL */
+			buffer[5] = (unsigned char) Le >> 8;  /* B2 = BL-1 */
+			buffer[6] = (unsigned char) Le & 0x00FF;      /* B3 = BL */
 			ret = Protocol_T0_Case3E (reader, buffer, rsp, lr);
 		}
 	}
@@ -333,8 +333,8 @@ static int32_t Protocol_T0_Case4E (struct s_reader * reader, unsigned char * com
 
 static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char * command, uint16_t command_len, unsigned char * rsp, uint16_t * lr)
 {
-	BYTE buffer[PROTOCOL_T0_MAX_SHORT_RESPONSE];
-	BYTE *data;
+	unsigned char buffer[PROTOCOL_T0_MAX_SHORT_RESPONSE];
+	unsigned char *data;
 	int32_t Lc, Le, sent, recved;
 	int32_t nulls, cmd_case;
 	*lr = 0; //in case of error this will be returned
@@ -460,12 +460,12 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 
 int32_t Protocol_T14_ExchangeTPDU (struct s_reader *reader, unsigned char * cmd_raw, uint16_t command_len, unsigned char * rsp, uint16_t * lr)
 {
-	BYTE buffer[PROTOCOL_T14_MAX_SHORT_RESPONSE];
+	unsigned char buffer[PROTOCOL_T14_MAX_SHORT_RESPONSE];
 	int32_t recved;
 	int32_t cmd_case;
-	BYTE ixor = 0x3E;
-	BYTE ixor1 = 0x3F;
-	BYTE b1 = 0x01;
+	unsigned char ixor = 0x3E;
+	unsigned char ixor1 = 0x3F;
+	unsigned char b1 = 0x01;
 	int32_t i;
 	int32_t cmd_len = (int32_t) command_len;
 	*lr = 0; //in case of error this is returned

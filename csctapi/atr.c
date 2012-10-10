@@ -49,10 +49,10 @@ const uint32_t atr_i_table[4] = {25, 50, 100, 0};
  * Exported funcions definition
  */
 #ifdef WITH_CARDREADER
-int32_t ATR_InitFromArray (ATR * atr, const BYTE atr_buffer[ATR_MAX_SIZE], uint32_t length)
+int32_t ATR_InitFromArray (ATR * atr, const unsigned char atr_buffer[ATR_MAX_SIZE], uint32_t length)
 {
-	BYTE TDi;
-	BYTE buffer[ATR_MAX_SIZE];
+	unsigned char TDi;
+	unsigned char buffer[ATR_MAX_SIZE];
 	uint32_t pointer = 0, pn = 0;
 	
 	/* Check size of buffer */
@@ -223,7 +223,7 @@ int32_t ATR_GetNumberOfProtocols (ATR * atr, uint32_t *number_protocols)
 	return (ATR_OK);
 }
 
-int32_t ATR_GetProtocolType (ATR * atr, uint32_t number_protocol, BYTE *protocol_type)
+int32_t ATR_GetProtocolType (ATR * atr, uint32_t number_protocol, unsigned char *protocol_type)
 {
 	if ((number_protocol > atr->pn) || number_protocol < 1)
 		return ATR_NOT_FOUND;
@@ -236,7 +236,7 @@ int32_t ATR_GetProtocolType (ATR * atr, uint32_t number_protocol, BYTE *protocol
 	return (ATR_OK);
 }
 
-int32_t ATR_GetInterfaceByte (ATR * atr, uint32_t number, int32_t character, BYTE * value)
+int32_t ATR_GetInterfaceByte (ATR * atr, uint32_t number, int32_t character, unsigned char * value)
 {
 	if (number > atr->pn || number < 1)
 		return (ATR_NOT_FOUND);
@@ -249,7 +249,7 @@ int32_t ATR_GetInterfaceByte (ATR * atr, uint32_t number, int32_t character, BYT
 	return (ATR_OK);
 }
 
-int32_t ATR_GetIntegerValue (ATR * atr, int32_t name, BYTE * value)
+int32_t ATR_GetIntegerValue (ATR * atr, int32_t name, unsigned char * value)
 {
 	int32_t ret;
 	
@@ -335,7 +335,7 @@ int32_t ATR_GetIntegerValue (ATR * atr, int32_t name, BYTE * value)
 
 int32_t ATR_GetParameter (ATR * atr, int32_t name, double *parameter)
 {
-	BYTE FI, DI, II, PI1, PI2, N;
+	unsigned char FI, DI, II, PI1, PI2, N;
 	
 	if (name == ATR_PARAMETER_F)
 	{
@@ -382,7 +382,7 @@ int32_t ATR_GetParameter (ATR * atr, int32_t name, double *parameter)
 	return (ATR_NOT_FOUND);
 }
 
-int32_t ATR_GetHistoricalBytes (ATR * atr, BYTE hist[ATR_MAX_HISTORICAL], uint32_t *length)
+int32_t ATR_GetHistoricalBytes (ATR * atr, unsigned char hist[ATR_MAX_HISTORICAL], uint32_t *length)
 {
 	if (atr->hbn == 0)
 		return (ATR_NOT_FOUND);
@@ -392,7 +392,7 @@ int32_t ATR_GetHistoricalBytes (ATR * atr, BYTE hist[ATR_MAX_HISTORICAL], uint32
 	return (ATR_OK);
 }
 
-int32_t ATR_GetRaw (ATR * atr, BYTE buffer[ATR_MAX_SIZE], uint32_t *length)
+int32_t ATR_GetRaw (ATR * atr, unsigned char buffer[ATR_MAX_SIZE], uint32_t *length)
 {
 	uint32_t i, j;
 	
@@ -430,7 +430,7 @@ int32_t ATR_GetRaw (ATR * atr, BYTE buffer[ATR_MAX_SIZE], uint32_t *length)
 	return ATR_OK;
 }
 
-int32_t ATR_GetCheckByte (ATR * atr, BYTE * check_byte)
+int32_t ATR_GetCheckByte (ATR * atr, unsigned char * check_byte)
 {
 	if (!((atr->TCK).present))
 		return (ATR_NOT_FOUND);
@@ -441,7 +441,7 @@ int32_t ATR_GetCheckByte (ATR * atr, BYTE * check_byte)
 
 int32_t ATR_GetFsMax (ATR * atr, uint32_t *fsmax)
 {
-	BYTE FI;
+	unsigned char FI;
 	
 	if (ATR_GetIntegerValue (atr, ATR_INTEGER_VALUE_FI, &FI) == ATR_OK)
 		(*fsmax) = atr_fs_table[FI];

@@ -86,7 +86,7 @@ int32_t Azbox_Reset(struct s_reader *reader, ATR *atr)
    return OK;
 }
 
-int32_t Azbox_Transmit(struct s_reader *reader, BYTE *buffer, uint32_t size)
+int32_t Azbox_Transmit(struct s_reader *reader, unsigned char *buffer, uint32_t size)
 {
   if (write(reader->handle, buffer, size) != (ssize_t)size)
     return 0;
@@ -94,7 +94,7 @@ int32_t Azbox_Transmit(struct s_reader *reader, BYTE *buffer, uint32_t size)
   return OK;
 }
 
-int32_t Azbox_Receive(struct s_reader *reader, BYTE *buffer, uint32_t size)
+int32_t Azbox_Receive(struct s_reader *reader, unsigned char *buffer, uint32_t size)
 {
   if (read(reader->handle, buffer, size) != (ssize_t)size)
     return 0;

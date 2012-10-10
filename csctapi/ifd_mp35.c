@@ -12,39 +12,39 @@
 
 typedef struct
 {
-  BYTE current_product;
+  unsigned char current_product;
   uint16_t product_fw_version;
 } MP35_info;
 
 // Common command for AD-Teknik readers
-static const BYTE fw_version[] = {0x2a, 0x41};
+static const unsigned char fw_version[] = {0x2a, 0x41};
 
 // Commands for AD-Teknik MP3.5 and MP3.6
-static const BYTE power_always_on[] = {0x2a, 0x8a};
-static const BYTE set_vpp[] = {0x2a, 0x42};
-static const BYTE set_data[] = {0x2a, 0x43};
-static const BYTE set_oscillator[] = {0x2a, 0x5e};
-static const BYTE terminate_com[] = {0x2a, 0x7b};
-static const BYTE transthrough_mode[] = {0x2a, 0x7c};
-static const BYTE phoenix_mode[] = {0x2a, 0x7d};
-static const BYTE smartmouse_mode[] = {0x2a, 0x7e};
-static const BYTE phoenix_6mhz_mode[] = {0x2a, 0x9a};
-static const BYTE smartmouse_6mhz_mode[] = {0x2a, 0x9b};
-static const BYTE fw_info[] = {0x2a, 0xa2};
+static const unsigned char power_always_on[] = {0x2a, 0x8a};
+static const unsigned char set_vpp[] = {0x2a, 0x42};
+static const unsigned char set_data[] = {0x2a, 0x43};
+static const unsigned char set_oscillator[] = {0x2a, 0x5e};
+static const unsigned char terminate_com[] = {0x2a, 0x7b};
+static const unsigned char transthrough_mode[] = {0x2a, 0x7c};
+static const unsigned char phoenix_mode[] = {0x2a, 0x7d};
+static const unsigned char smartmouse_mode[] = {0x2a, 0x7e};
+static const unsigned char phoenix_6mhz_mode[] = {0x2a, 0x9a};
+static const unsigned char smartmouse_6mhz_mode[] = {0x2a, 0x9b};
+static const unsigned char fw_info[] = {0x2a, 0xa2};
 
 // Commands for AD-Teknik USB Phoenix
-static const BYTE set_mode_osc[] = {0x2a, 0x42};
-static const BYTE exit_program_mode[] = {0x2a, 0x43};
+static const unsigned char set_mode_osc[] = {0x2a, 0x42};
+static const unsigned char exit_program_mode[] = {0x2a, 0x43};
 
-static const struct product { BYTE code; const char* product_name; } product_codes[] = {
+static const struct product { unsigned char code; const char* product_name; } product_codes[] = {
   {0x10, "USB Phoenix"},
   {0x40, "MP3.4"},
   {0x41, "MP3.5"},
   {0x42, "MP3.6 USB"}};
 
-static BYTE current_product;
+static unsigned char current_product;
 
-static int32_t MP35_product_info(struct s_reader *reader, BYTE high, BYTE low, BYTE code, MP35_info *info)
+static int32_t MP35_product_info(struct s_reader *reader, unsigned char high, unsigned char low, unsigned char code, MP35_info *info)
 {
   int32_t i;
 
@@ -65,8 +65,8 @@ static int32_t MP35_product_info(struct s_reader *reader, BYTE high, BYTE low, B
 int32_t MP35_Init(struct s_reader * reader)
 {
   MP35_info reader_info;
-  BYTE rec_buf[32];
-  BYTE parameter;
+  unsigned char rec_buf[32];
+  unsigned char parameter;
   int32_t original_mhz;
 
   rdr_debug_mask(reader, D_IFD, "Initializing MP35 reader");

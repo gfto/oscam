@@ -191,7 +191,7 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 		return ret;
 }
 
-int32_t Phoenix_Transmit (struct s_reader * reader, BYTE * buffer, uint32_t size, uint32_t block_delay, uint32_t char_delay)
+int32_t Phoenix_Transmit (struct s_reader * reader, unsigned char * buffer, uint32_t size, uint32_t block_delay, uint32_t char_delay)
 {
 	uint32_t sent=0, to_send = 0;
 
@@ -212,7 +212,7 @@ int32_t Phoenix_Transmit (struct s_reader * reader, BYTE * buffer, uint32_t size
 	return OK;
 }
 
-int32_t Phoenix_Receive (struct s_reader * reader, BYTE * buffer, uint32_t size, uint32_t timeout)
+int32_t Phoenix_Receive (struct s_reader * reader, unsigned char * buffer, uint32_t size, uint32_t timeout)
 {
 #define IFD_TOWITOKO_TIMEOUT             1000
 

@@ -115,7 +115,7 @@ int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
 	}
 }
 
-int32_t Cool_Transmit (struct s_reader *reader, BYTE * sent, uint32_t size)
+int32_t Cool_Transmit (struct s_reader *reader, unsigned char * sent, uint32_t size)
 {
 	specdev()->cardbuflen = 256;//it needs to know max buffer size to respond?
 
@@ -153,7 +153,7 @@ int32_t Cool_Set_Transmit_Timeout(struct s_reader *reader, uint32_t set)
 	return OK;
 }
 
-int32_t Cool_Receive (struct s_reader *reader, BYTE * data, uint32_t size)
+int32_t Cool_Receive (struct s_reader *reader, unsigned char * data, uint32_t size)
 {
 	if (size > specdev()->cardbuflen)
 		size = specdev()->cardbuflen; //never read past end of buffer

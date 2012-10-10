@@ -35,12 +35,6 @@
  * Type definitions
  */
 
-#ifndef BYTE
-#ifndef __wintypes_h__
-typedef unsigned char BYTE;
-#endif
-#endif
-
 #ifndef WITH_PCSC
 typedef unsigned char UCHAR;
 typedef uint32_t ULONG;

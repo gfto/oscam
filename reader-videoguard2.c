@@ -576,7 +576,7 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR *newatr)
           return ERROR;
         }
         else {
-          BYTE TA1;
+          unsigned char TA1;
     
           if (ATR_GetInterfaceByte (newatr, 1, ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
             if (TA1 != reader->ins7E11[0x00]) {

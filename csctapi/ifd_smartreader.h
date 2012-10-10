@@ -22,13 +22,13 @@
 int32_t SR_Init (struct s_reader *reader);
 int32_t SR_GetStatus (struct s_reader *reader,int32_t * in);
 int32_t SR_Reset (struct s_reader *reader, ATR * atr);
-int32_t SR_Transmit (struct s_reader *reader, BYTE * buffer, uint32_t size);
-int32_t SR_Receive (struct s_reader *reader, BYTE * buffer, uint32_t size);
+int32_t SR_Transmit (struct s_reader *reader, unsigned char * buffer, uint32_t size);
+int32_t SR_Receive (struct s_reader *reader, unsigned char * buffer, uint32_t size);
 int32_t SR_SetBaudrate (struct s_reader *reader);
 int32_t SR_SetParity (struct s_reader *reader, uint16_t parity);
 int32_t SR_Close (struct s_reader *reader);
 int32_t SR_FastReset(struct s_reader *reader, int32_t delay);
 int32_t SR_FastReset_With_ATR(struct s_reader *reader, ATR *atr);
-int32_t SR_WriteSettings (struct s_reader *reader, uint16_t F, BYTE D, BYTE N, BYTE T, uint16_t convention);
+int32_t SR_WriteSettings (struct s_reader *reader, uint16_t F, unsigned char D, unsigned char N, unsigned char T, uint16_t convention);
 
 #endif // __SMARTREADER__

@@ -16,8 +16,8 @@
 
 #define OK 0
 #define ERROR 1
-#define LOBYTE(w) ((BYTE)((w) & 0xff))
-#define HIBYTE(w) ((BYTE)((w) >> 8))
+#define LOBYTE(w) ((unsigned char)((w) & 0xff))
+#define HIBYTE(w) ((unsigned char)((w) >> 8))
 
 #define DELAY 150
 
@@ -89,9 +89,9 @@ static int32_t smargo_init(struct s_reader *reader) {
 }
 
 bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_ms, uint32_t timeout_ms);
-int32_t smargo_Serial_Read(struct s_reader * reader, uint32_t timeout, uint32_t size, BYTE * data, int32_t *read_bytes)
+int32_t smargo_Serial_Read(struct s_reader * reader, uint32_t timeout, uint32_t size, unsigned char * data, int32_t *read_bytes)
 {
-	BYTE c;
+	unsigned char c;
 	uint32_t count = 0;
 	
 	for (count = 0; count < size ; count++)
