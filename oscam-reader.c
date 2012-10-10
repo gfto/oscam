@@ -1,8 +1,6 @@
 #include "globals.h"
-#include "csctapi/ifd_sc8in1.h"
 #include "module-led.h"
 #include "module-stat.h"
-#include "oscam-chk.h"
 #include "oscam-client.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
@@ -456,50 +454,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		return;
 	}
 
-#ifdef WITH_CARDREADER
-	if(ecm_ratelimit_check(reader, er, 2) != OK) return; // slot = 2: checkout ratelimiter in reader mode so srvid can be replaced
-	cs_ddump_mask(D_ATR, er->ecm, er->l, "ecm:");
-
-	struct timeb tps, tpe;
-	cs_ftime(&tps);
-
-	struct s_ecm_answer ea;
-	memset(&ea, 0, sizeof(struct s_ecm_answer));
-
-	int32_t rc = reader_ecm(reader, er, &ea);
-
-	ea.rc = E_FOUND; //default assume found
-	ea.rcEx = 0; //no special flag
-
-	if(rc == ERROR ){
-		char buf[32];
-		rdr_debug_mask(reader, D_TRACE, "Error processing ecm for caid %04X, srvid %04X, servicename: %s",
-			er->caid, er->srvid, get_servicename(cl, er->srvid, er->caid, buf));
-		ea.rc = E_NOTFOUND;
-		ea.rcEx = 0;
-		if (reader->typ == R_SC8in1 && reader->sc8in1_config->mcr_type) {
-			char text[] = {'S', (char)reader->slot+0x30, 'E', 'e', 'r'};
-			MCR_DisplayText(reader, text, 5, 400, 0);
-		}
-	}
-
-	if(rc == E_CORRUPT ){
-		char buf[32];
-		rdr_debug_mask(reader, D_TRACE, "Error processing ecm for caid %04X, srvid %04X, servicename: %s",
-			er->caid, er->srvid, get_servicename(cl, er->srvid, er->caid, buf));
-		ea.rc = E_NOTFOUND;
-		ea.rcEx = E2_WRONG_CHKSUM; //flag it as wrong checksum
-		memcpy (ea.msglog,"Invalid ecm type for card",25);
-	}
-	cs_ftime(&tpe);
-	cl->lastecm=time((time_t*)0);
-
-	rdr_debug_mask(reader, D_TRACE, "ecm: %04X real time: %ld ms",
-		htons(er->checksum), 1000 * (tpe.time - tps.time) + tpe.millitm - tps.millitm);
-
-	write_ecm_answer(reader, er, ea.rc, ea.rcEx, ea.cw, ea.msglog);
-	reader_post_process(reader);
-#endif
+	cardreader_process_ecm(reader, cl, er);
 }
 
 void reader_log_emm(struct s_reader * reader, EMM_PACKET *ep, int32_t i, int32_t rc, struct timeb *tps) {
@@ -589,11 +544,7 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
                   }
           } else {
                   rdr_debug_mask(reader, D_READER, "local emm reader");
-#ifdef WITH_CARDREADER
-                  rc=reader_emm(reader, ep);
-#else
-                  rc=0;
-#endif
+                  rc = cardreader_do_emm(reader, ep);
           }
 
           if (!ecs)
@@ -607,11 +558,9 @@ int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
 void reader_do_card_info(struct s_reader * reader)
 {
-#ifdef WITH_CARDREADER
-      reader_card_info(reader);
-#endif
-      if (reader->ph.c_card_info)
-      	reader->ph.c_card_info();
+	cardreader_get_card_info(reader);
+	if (reader->ph.c_card_info)
+		reader->ph.c_card_info();
 }
 
 void reader_do_idle(struct s_reader * reader)
@@ -659,37 +608,10 @@ int32_t reader_init(struct s_reader *reader) {
 			return 0;
 
 		rdr_log(reader, "proxy initialized, server %s:%d", reader->device, reader->r_port);
+	} else {
+		if (!cardreader_init(reader))
+			return 0;
 	}
-#ifdef WITH_CARDREADER
-	else {
-		client->typ='r';
-		set_localhost_ip(&client->ip);
-		while (reader_device_init(reader)==2){
-			int8_t i = 0;
-			do{
-				cs_sleepms(2000);
-				if(!ll_contains(configured_readers, reader) || !check_client(client) || reader->enable != 1) return 0;
-				++i;
-			} while (i < 30);
-		}
-		if (reader->mhz > 2000) {
-			rdr_log(reader, "Reader initialized (device=%s, detect=%s%s, pll max=%.2f Mhz, wanted cardmhz=%.2f Mhz",
-				reader->device,
-				reader->detect & 0x80 ? "!" : "",
-				RDR_CD_TXT[reader->detect & 0x7f],
-				(float)reader->mhz /100,
-				(float)reader->cardmhz / 100);
-		} else {
-			rdr_log(reader, "Reader initialized (device=%s, detect=%s%s, mhz=%d, cardmhz=%d)",
-				reader->device,
-				reader->detect & 0x80 ? "!" : "",
-				RDR_CD_TXT[reader->detect&0x7f],
-				reader->mhz,
-				reader->cardmhz);
-		}
-	}
-
-#endif
 
 	if (!cs_malloc(&client->emmcache, CS_EMMCACHESIZE * sizeof(struct s_emm))) {
 		NULLFREE(client->ecmtask);

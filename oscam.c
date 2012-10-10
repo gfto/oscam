@@ -5,7 +5,6 @@
 #include "readers.h"
 
 #include "extapi/coolapi.h"
-#include "csctapi/icc_async.h"
 #include "module-anticasc.h"
 #include "module-cacheex.h"
 #include "module-cccam.h"
@@ -24,6 +23,7 @@
 #include "oscam-net.h"
 #include "oscam-string.h"
 #include "oscam-time.h"
+#include "reader-common.h"
 
 static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea);
 
@@ -473,10 +473,8 @@ void cleanup_thread(void *var)
 		remove_reader_from_active(rdr);
 		if(rdr->ph.cleanup)
 			rdr->ph.cleanup(cl);
-#ifdef WITH_CARDREADER
 		if (cl->typ == 'r')
-			ICC_Async_Close(rdr);
-#endif
+			cardreader_close(rdr);
 		if (cl->typ == 'p')
 			network_tcp_connection_close(rdr, "cleanup");
 		cl->reader = NULL;
@@ -1169,9 +1167,7 @@ static void init_cardreader(void) {
 	cs_writelock(&system_lock);
 	struct s_reader *rdr;
 
-#ifdef WITH_CARDREADER
-	ICC_Async_Init_Locks();
-#endif
+	cardreader_init_locks();
 
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr))) {
@@ -1363,10 +1359,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 			reader->resetcounter = 0;
 			rdr_log(reader, "Resetting reader, resetcyle of %d ecms reached", reader->resetcycle);
 			reader->card_status = CARD_NEED_INIT;
-#ifdef WITH_CARDREADER
-      			//reader_reset(reader);
-      			add_job(cl, ACTION_READER_RESET, NULL, 0);
-#endif
+			cardreader_reset(cl);
 		}
 	}
 
@@ -2876,14 +2869,9 @@ static void check_status(struct s_client *cl) {
 			}
 
 			break;
-#ifdef WITH_CARDREADER
 		case 'r':
-			//check for card inserted or card removed on pysical reader
-			if (!rdr || !rdr->enable)
-				break;
-			add_job(cl, ACTION_READER_CHECK_HEALTH, NULL, 0);
+			cardreader_checkhealth(cl, rdr);
 			break;
-#endif
 		case 'p':
 			//execute reader do idle on proxy reader after a certain time (rdr->tcp_ito = inactivitytimeout)
 			//disconnect when no keepalive available
@@ -2902,8 +2890,6 @@ static void check_status(struct s_client *cl) {
 				add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
 				rdr->last_check = time(NULL);
 			}
-			break;
-		default:
 			break;
 	}
 }
@@ -3061,12 +3047,10 @@ void * work_thread(void *ptr) {
 					break;
 				case ACTION_READER_REMOTELOG:
 					casc_do_sock_log(reader);
-	 				break;
-	#ifdef WITH_CARDREADER
+					break;
 				case ACTION_READER_RESET:
-			 		reader_reset(reader);
-	 				break;
-	#endif
+					cardreader_do_reset(reader);
+					break;
 				case ACTION_READER_ECM_REQUEST:
 					reader_get_ecm(reader, data->ptr);
 					break;
@@ -3084,15 +3068,13 @@ void * work_thread(void *ptr) {
 					cl->kill = 1;
 					restart_reader = 1;
 					break;
-#ifdef WITH_CARDREADER
 				case ACTION_READER_RESET_FAST:
 					reader->card_status = CARD_NEED_INIT;
-					reader_reset(reader);
+					cardreader_do_reset(reader);
 					break;
 				case ACTION_READER_CHECK_HEALTH:
-					reader_checkhealth(reader);
+					cardreader_do_checkhealth(reader);
 					break;
-#endif
 				case ACTION_CLIENT_UDP:
 					n = modules[cl->ctyp].recv(cl, data->ptr, data->len);
 					if (n<0) break;

@@ -18,7 +18,6 @@ extern void start_thread(void * startroutine, char * nameroutine);
 extern int32_t add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len);
 extern void add_check(struct s_client *client, int8_t action, void *ptr, int32_t size, int32_t ms_delay);
 extern int32_t reader_init(struct s_reader *);
-extern int reader_reset(struct s_reader * reader);
 extern void cs_reload_config(void);
 extern int32_t recv_from_udpipe(uchar *);
 extern int32_t chk_bcaid(ECM_REQUEST *, CAIDTAB *);
@@ -38,7 +37,6 @@ extern int32_t process_input(uchar *, int32_t, int32_t);
 extern void set_signal_handler(int32_t , int32_t , void (*));
 extern void cs_waitforcardinit(void);
 extern int32_t process_client_pipe(struct s_client *cl, uchar *buf, int32_t l);
-extern void update_reader_config(uchar *ptr);
 extern void *clientthread_init(void * init);
 extern void cleanup_thread(void *var);
 extern void kill_thread(struct s_client *cl);
@@ -102,15 +100,11 @@ extern void write_versionfile(void);
 /* ===========================
  *        oscam-reader
  * =========================== */
-extern int32_t reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int32_t l, uchar *response, uint16_t *response_length);
-extern int32_t card_write(struct s_reader * reader, const uchar *, const uchar *, uchar *, uint16_t *);
 extern int32_t check_sct_len(const unsigned char *data, int32_t off);
 extern void * start_cardreader(void *);
-extern void reader_card_info(struct s_reader * reader);
 extern int32_t hostResolve(struct s_reader * reader);
 extern int32_t network_tcp_connection_open(struct s_reader *);
 extern void network_tcp_connection_close(struct s_reader *, char *);
-extern void clear_reader_pipe(struct s_reader * reader);
 extern void block_connect(struct s_reader *rdr);
 extern int32_t is_connect_blocked(struct s_reader *rdr);
 void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, uint64_t id, uint32_t class, time_t start, time_t end, uint8_t type);
@@ -149,13 +143,7 @@ extern const char *newcamd_get_client_name(uint16_t client_id);
 /* ===========================
  *       reader-common
  * =========================== */
-extern int32_t reader_device_init(struct s_reader * reader);
-extern int32_t reader_checkhealth(struct s_reader * reader);
-extern void reader_post_process(struct s_reader * reader);
-extern int32_t reader_ecm(struct s_reader * reader, ECM_REQUEST *, struct s_ecm_answer *);
-extern int32_t reader_emm(struct s_reader * reader, EMM_PACKET *);
 extern struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid);
-extern void reader_device_close(struct s_reader * reader);
 extern int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int16_t len);
 
 #endif
