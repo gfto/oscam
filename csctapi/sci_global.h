@@ -1,9 +1,6 @@
 #ifndef _sci_global_h_
 #define _sci_global_h_
 
-#define INT int32_t
-#define ULONG uint32_t
-
 #define SCI_CLASS_A                 1   /* only 5V Vcc to Smart Card */
 #define SCI_CLASS_B                 2   /* only 3V Vcc to Smart Card */
 #define SCI_CLASS_AB                3   /* 5V or 3V Vcc to Smart Card */
@@ -70,10 +67,10 @@ SCI_ERROR;
 /* SCI driver modes */
 typedef struct sci_modes
 {
-    INT emv2000;
-    INT dma;
-    INT man_act;
-    INT rw_mode;
+    int32_t emv2000;
+    int32_t dma;
+    int32_t man_act;
+    int32_t rw_mode;
 }
 SCI_MODES;
 
@@ -81,13 +78,13 @@ SCI_MODES;
 typedef struct sci_parameters
 {
     unsigned char T;
-    ULONG fs;
-    ULONG ETU;
-    ULONG WWT;
-    ULONG CWT;
-    ULONG BWT;
-    ULONG EGT;
-    ULONG clock_stop_polarity;
+    uint32_t fs;
+    uint32_t ETU;
+    uint32_t WWT;
+    uint32_t CWT;
+    uint32_t BWT;
+    uint32_t EGT;
+    uint32_t clock_stop_polarity;
     unsigned char check;
     unsigned char P;
     unsigned char I;

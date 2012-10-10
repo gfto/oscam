@@ -32,16 +32,6 @@
 #include "../oscam-config-funcs.h"
 
 /*
- * Type definitions
- */
-
-#ifndef WITH_PCSC
-typedef uint32_t ULONG;
-typedef ULONG DWORD;
-#endif
-typedef void *PVOID;
-
-/*
  * Utility macros
  */
 /* Invert order of bits in a byte: b7->b0, b0->b7 */
