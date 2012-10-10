@@ -53,14 +53,9 @@ typedef unsigned char BYTE;
 #endif
 #endif
 
-typedef char *STR;
 #ifndef WITH_PCSC
-typedef uint16_t USHORT;
 typedef unsigned char UCHAR;
-typedef unsigned char *PUCHAR;
 typedef uint32_t ULONG;
-typedef ULONG RESPONSECODE;
-typedef ULONG *PULONG;
 typedef ULONG DWORD;
 #endif
 typedef void *PVOID;
