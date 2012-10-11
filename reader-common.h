@@ -41,7 +41,7 @@ bool cardreader_init(struct s_reader *reader);
 void cardreader_close(struct s_reader *reader);
 void cardreader_do_reset(struct s_reader *reader);
 void cardreader_reset(struct s_client *cl);
-bool cardreader_do_checkhealth(struct s_reader *reader);
+int32_t cardreader_do_checkhealth(struct s_reader *reader);
 void cardreader_checkhealth(struct s_client *cl, struct s_reader *rdr);
 int32_t cardreader_do_emm(struct s_reader *reader, EMM_PACKET *ep);
 void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_REQUEST *er);
@@ -52,7 +52,7 @@ static inline bool cardreader_init(struct s_reader *UNUSED(reader)) { return tru
 static inline void cardreader_close(struct s_reader *UNUSED(reader)) { }
 static inline void cardreader_do_reset(struct s_reader *UNUSED(reader)) { return; }
 static inline void cardreader_reset(struct s_client *UNUSED(cl)) { }
-static inline bool cardreader_do_checkhealth(struct s_reader *UNUSED(reader)) { return false; }
+static inline int32_t cardreader_do_checkhealth(struct s_reader *UNUSED(reader)) { return false; }
 static inline void cardreader_checkhealth(struct s_client *UNUSED(cl), struct s_reader *UNUSED(rdr)) { }
 static inline int32_t cardreader_do_emm(struct s_reader *UNUSED(reader), EMM_PACKET *UNUSED(ep)) { return 0; }
 static inline void cardreader_process_ecm(struct s_reader *UNUSED(reader), struct s_client *UNUSED(cl), ECM_REQUEST *UNUSED(er)) { }

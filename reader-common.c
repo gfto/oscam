@@ -315,7 +315,7 @@ static int32_t cardreader_device_init(struct s_reader *reader)
   return((rc!=OK) ? 2 : 0); //exit code 2 means keep retrying, exit code 0 means all OK
 }
 
-bool cardreader_do_checkhealth(struct s_reader * reader)
+int32_t cardreader_do_checkhealth(struct s_reader * reader)
 {
 	struct s_client *cl = reader->client;
 	if (reader_card_inserted(reader)) {
@@ -436,8 +436,10 @@ int32_t cardreader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 }
 
 void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_REQUEST *er) {
-	if (ecm_ratelimit_check(reader, er, 2) != OK)
+	if (ecm_ratelimit_check(reader, er, 2) != OK) {
+		rdr_debug_mask(reader, D_TRACE, "%s: ratelimit check failed.", __func__);
 		return; // slot = 2: checkout ratelimiter in reader mode so srvid can be replaced
+	}
 	cs_ddump_mask(D_ATR, er->ecm, er->l, "ecm:");
 
 	struct timeb tps, tpe;
@@ -447,6 +449,7 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 	memset(&ea, 0, sizeof(struct s_ecm_answer));
 
 	int32_t rc = cardreader_do_ecm(reader, er, &ea);
+	rdr_debug_mask(reader, D_TRACE, "%s: cardreader_do_ecm returned rc=%d (ERROR=%d)", __func__, ea.rc, ERROR);
 
 	ea.rc = E_FOUND; //default assume found
 	ea.rcEx = 0; //no special flag
