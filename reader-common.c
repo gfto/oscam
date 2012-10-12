@@ -326,6 +326,7 @@ int32_t cardreader_do_checkhealth(struct s_reader * reader)
 			add_job(cl, ACTION_READER_RESET, NULL, 0);
 		}
 	} else {
+		rdr_debug_mask(reader, D_TRACE, "%s: !reader_card_inserted", __func__);
 		if (reader->card_status == CARD_INSERTED || reader->card_status == CARD_NEED_INIT) {
 			rdr_log(reader, "card ejected");
 			reader_nullcard(reader);
@@ -337,6 +338,8 @@ int32_t cardreader_do_checkhealth(struct s_reader * reader)
 		}
 		reader->card_status = NO_CARD;
 	}
+	rdr_debug_mask(reader, D_TRACE, "%s: reader->card_status = %d, ret = %d", __func__,
+		reader->card_status, reader->card_status == CARD_INSERTED);
 	return reader->card_status == CARD_INSERTED;
 }
 
@@ -403,6 +406,7 @@ int32_t cardreader_do_ecm(struct s_reader *reader, ECM_REQUEST *er, struct s_ecm
 {
   int32_t rc=-1;
 	if( (rc=cardreader_do_checkhealth(reader)) ) {
+		rdr_debug_mask(reader, D_TRACE, "%s: cardreader_do_checkhealth returned rc=%d", __func__, rc);
 		struct s_client *cl = reader->client;
 		if (cl) {
 			cl->last_srvid=er->srvid;
@@ -410,11 +414,13 @@ int32_t cardreader_do_ecm(struct s_reader *reader, ECM_REQUEST *er, struct s_ecm
 			cl->last=time((time_t*)0);
 		}
 
-		if (reader->csystem.active && reader->csystem.do_ecm)
+		if (reader->csystem.active && reader->csystem.do_ecm) {
 			rc=reader->csystem.do_ecm(reader, er, ea);
-		else
+			rdr_debug_mask(reader, D_TRACE, "%s: after csystem.do_ecm rc=%d", __func__, rc);
+		} else
 			rc=0;
 	}
+	rdr_debug_mask(reader, D_TRACE, "%s: ret rc=%d", __func__, rc);
 	return(rc);
 }
 
@@ -449,7 +455,7 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 	memset(&ea, 0, sizeof(struct s_ecm_answer));
 
 	int32_t rc = cardreader_do_ecm(reader, er, &ea);
-	rdr_debug_mask(reader, D_TRACE, "%s: cardreader_do_ecm returned rc=%d (ERROR=%d)", __func__, ea.rc, ERROR);
+	rdr_debug_mask(reader, D_TRACE, "%s: cardreader_do_ecm returned rc=%d (ERROR=%d)", __func__, rc, ERROR);
 
 	ea.rc = E_FOUND; //default assume found
 	ea.rcEx = 0; //no special flag
