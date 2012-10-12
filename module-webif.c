@@ -4910,7 +4910,9 @@ static void *serve_process(void *conn){
 						send_error(f, 200, "Bad Request", NULL, "This web server is running in SSL mode.", 1);
 					fflush(f);
 					fclose(f);
-				} else cs_log("WebIf: Error opening file descriptor using fdopen() (errno=%d %s)", errno, strerror(errno));
+-				} else {
+					cs_debug_mask(D_TRACE, "WebIf: fdopen(%d) failed. (errno=%d %s)", s, errno, strerror(errno));
+				}
 			}
 		} else cs_log("WebIf: Error calling SSL_set_fd().");
 		SSL_shutdown(ssl);
