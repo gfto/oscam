@@ -522,10 +522,10 @@ void dvbapi_add_emmpid(struct s_reader *testrdr, int32_t demux_id, uint16_t caid
 		demux[demux_id].EMMpids[demux[demux_id].EMMpidcount].CAID = caid;
 		demux[demux_id].EMMpids[demux[demux_id].EMMpidcount].PROVID = provid;
 		demux[demux_id].EMMpids[demux[demux_id].EMMpidcount++].type = type;
-		cs_log("[ADD EMMPID] CAID: %04X EMM_PID: %04X PROVID: %06X - (type %d) ENABLED!", caid, emmpid, provid, type);
+		cs_debug_mask(D_DVBAPI,"[ADD EMMPID] CAID: %04X EMM_PID: %04X PROVID: %06X - (type %d) ENABLED!", caid, emmpid, provid, type);
 	}
 	else {
-		cs_log("[ADD EMMPID] CAID: %04X EMM_PID: %04X PROVID: %06X - (type %d) DISABLED! (no matching reader)", caid, emmpid, provid, type);
+		cs_debug_mask(D_DVBAPI,"[ADD EMMPID] CAID: %04X EMM_PID: %04X PROVID: %06X - (type %d) DISABLED! (no matching reader)", caid, emmpid, provid, type);
 	}
 }
 
