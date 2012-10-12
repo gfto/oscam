@@ -127,7 +127,7 @@ int32_t Sci_Reset(struct s_reader * reader, ATR * atr)
 	rdr_debug_mask(reader, D_IFD, "Total ATR Length including %d historical bytes should be: %d",historicalbytes,atrlength);
 	
 	while(n<atrlength){
-		if (IO_Serial_Read(reader, timeout, 1, buf+n)) break; // ppcold always returns timeout on last atr char!	
+		if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;	
 		n++;
 		if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
 	}
@@ -137,8 +137,8 @@ int32_t Sci_Reset(struct s_reader * reader, ATR * atr)
 	if ((buf[0] !=0x3B) && (buf[0] != 0x3F) && (n>9 && !memcmp(buf+4, "IRDETO", 6))) //irdeto S02 reports FD as first byte on dreambox SCI, not sure about SH4 or phoenix
 		buf[0] = 0x3B;
 		
-	if(ATR_InitFromArray (atr, buf, n) == ATR_OK) return OK;
-	return ERROR;
+	ATR_InitFromArray (atr, buf, n); // todo: fix this, with some ATRs this function is softfailing
+	return OK; // just stupid to always return OK but ATR_InitFromArray is reporting Error while it should be OK!
 }
 
 int32_t Sci_WriteSettings (struct s_reader * reader, unsigned char T, uint32_t fs, uint32_t ETU, uint32_t WWT, uint32_t BWT, uint32_t CWT, uint32_t EGT, unsigned char P, unsigned char I)
