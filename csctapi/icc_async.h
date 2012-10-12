@@ -31,20 +31,6 @@
  * Exported constants definition
  */
 
-/* Return codes */
-#if defined(__CYGWIN__)
-#undef Ok
-#undef ERROR
-#endif
-
-#ifndef OK
-#define OK		0
-#endif
-
-#ifndef ERROR
-#define ERROR	1
-#endif
-
 #define ATR_TIMEOUT			1000
 #define DEFAULT_BAUDRATE	9600
 

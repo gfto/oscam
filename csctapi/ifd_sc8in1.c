@@ -24,13 +24,8 @@
 #include "ifd_sc8in1.h"
 #include "io_serial.h"
 
-#ifndef OK
-#define OK		0
-#endif
-
-#ifndef ERROR
-#define ERROR	1
-#endif
+#define OK 0
+#define ERROR 1
 
 #ifdef WITH_DEBUG
 int32_t Sc8in1_DebugSignals(struct s_reader *reader, uint16_t slot, const char *extra);

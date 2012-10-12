@@ -5,6 +5,9 @@
 #include "icc_async.h"
 #include "ifd_azbox.h"
 
+#define OK 0
+#define ERROR 1
+
 static int32_t sc_mode;
 
 int32_t _GetStatus(struct s_reader *reader, int32_t *UNUSED(in))

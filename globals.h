@@ -146,6 +146,14 @@ typedef unsigned char uchar;
 # define MUST_CHECK_RESULT __attribute__((warn_unused_result))
 #endif
 
+#ifdef OK
+#undef OK
+#endif
+
+#ifdef ERROR
+#undef ERROR
+#endif
+
 #ifdef WITH_DEBUG
 # define call(arg) \
 	if (arg) { \

@@ -32,6 +32,9 @@
  * Not exported constants definition
  */
 
+#define OK 0
+#define ERROR 1
+
 #define PROTOCOL_T0_MAX_NULLS          200
 #define PROTOCOL_T0_DEFAULT_WI         10
 #define PROTOCOL_T0_MAX_SHORT_COMMAND  260

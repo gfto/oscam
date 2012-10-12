@@ -45,6 +45,9 @@
 #include "io_serial.h"
 #include "mc_global.h"
 
+#define OK 0
+#define ERROR 1
+
 #define IO_SERIAL_FILENAME_LENGTH 	32
 
 /*

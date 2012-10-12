@@ -5,6 +5,9 @@
 #include "../oscam-string.h"
 #include "ifd_pcsc.h"
 
+#define OK 0
+#define ERROR 1
+
 int32_t pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
 {
     ULONG rv;

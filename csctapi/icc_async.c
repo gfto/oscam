@@ -39,6 +39,9 @@
 #include "ifd_azbox.h"
 #include "ifd_pcsc.h"
 
+#define OK 0
+#define ERROR 1
+
 // Default T0/T14 settings
 #define DEFAULT_WI		10
 // Default T1 settings

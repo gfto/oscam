@@ -4,6 +4,9 @@
 #include "icc_async.h"
 #include "io_serial.h"
 
+#define OK 0
+#define ERROR 1
+
 #define ACK 0x06
 #define MP35_WRITE_DELAY 100
 #define MP35_READ_DELAY 200

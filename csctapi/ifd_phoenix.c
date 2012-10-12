@@ -10,6 +10,9 @@
 #include "ifd_phoenix.h"
 #include "io_serial.h"
 
+#define OK 0
+#define ERROR 1
+
 #define MAX_TRANSMIT			255
 
 #define GPIO_PIN (1 << (reader->detect - 4))

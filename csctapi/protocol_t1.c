@@ -26,6 +26,9 @@
 #ifdef WITH_CARDREADER
 #include "icc_async.h"
 
+#define OK 0
+#define ERROR 1
+
 /* Buffer sizes */
 #define T1_BLOCK_MAX_SIZE                259
 

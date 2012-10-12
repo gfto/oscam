@@ -11,6 +11,9 @@
 #include "icc_async.h"
 #include "ifd_cool.h"
 
+#define OK 0
+#define ERROR 1
+
 extern int32_t cool_kal_opened;
 
 #define READ_WRITE_TRANSMIT_TIMEOUT				50
