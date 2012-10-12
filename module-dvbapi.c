@@ -1272,6 +1272,9 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 	if (cfg.dvbapi_decodeforever && demux[demux_id].tries > 2){
 		demux[demux_id].tries = 0;
 		dvbapi_resort_ecmpids(demux_id);
+		cs_sleepms(150);
+		dvbapi_start_descrambling(demux_id);
+		return;
 	}
 		
 	if (demux[demux_id].tries > 2) {
