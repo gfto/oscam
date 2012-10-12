@@ -127,11 +127,12 @@ int32_t Sci_Reset(struct s_reader * reader, ATR * atr)
 	rdr_debug_mask(reader, D_IFD, "Total ATR Length including %d historical bytes should be: %d",historicalbytes,atrlength);
 	
 	while(n<atrlength){
-		if (IO_Serial_Read(reader, timeout, 1, buf+n)&& (n != atrlength-1)) return ERROR; // ppcold always returns timeout on last atr char!	
+		if (IO_Serial_Read(reader, timeout, 1, buf+n)) break; // ppcold always returns timeout on last atr char!	
 		n++;
 		if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
 	}
 	ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
+	rdr_debug_mask(reader, D_IFD, "Total ATR characters read is: %d",n);
 		
 	if ((buf[0] !=0x3B) && (buf[0] != 0x3F) && (n>9 && !memcmp(buf+4, "IRDETO", 6))) //irdeto S02 reports FD as first byte on dreambox SCI, not sure about SH4 or phoenix
 		buf[0] = 0x3B;
