@@ -19,14 +19,14 @@
 
 #define OK 		0 
 #define ERROR 1
-
+int32_t statusreturn = 0;
 int32_t Sci_GetStatus (struct s_reader * reader, int32_t * status)
 {
-	call (ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, status)<0);
+	ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, status);
 	return OK;
 }
 
-int32_t Sci_Reset (struct s_reader * reader, ATR * atr)
+int32_t Sci_Reset(struct s_reader * reader, ATR * atr)
 {
 	rdr_debug_mask(reader, D_IFD, "Reset internal cardreader!");
 	unsigned char buf[SCI_MAX_ATR_SIZE];
@@ -62,39 +62,82 @@ int32_t Sci_Reset (struct s_reader * reader, ATR * atr)
 		params.fs = 16 for cardmhz = 1.977 MHz */
 		params.T = 0;
 	}
-	call (ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params)!=0);
-	call (ioctl(reader->handle, IOCTL_SET_RESET)<0);
-#if defined(__powerpc__)
-    // looks like PPC box need a delay here. From the data provided we need at least 140ms at 3.57MHz so I'll chose 150ms to be safe
-    rdr_debug_mask(reader, D_IFD, "Extra delay for PPC box between reset and IO_Serial_Read for the ATR");
-    cs_sleepms(150);
-#endif
+	ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params);
+	ioctl(reader->handle, IOCTL_SET_RESET, 1);
 	uint32_t timeout = ATR_TIMEOUT;
+	
+	do {
+		ioctl(reader->handle, IOCTL_GET_ATR_STATUS, &statusreturn);
+		rdr_debug_mask(reader, D_IFD, "Waiting for card ATR Response...");
+	}
+		while (statusreturn);
+	
 	if (reader->mhz > 2000)           // pll readers use timings in us
 		timeout = timeout * 1000;
-	while(n<SCI_MAX_ATR_SIZE)
-	{
-		if (IO_Serial_Read(reader, timeout, 1, buf+n)){
-			rdr_debug_mask(reader, D_IFD, "Got a timeout!");
-			break;   // read atr response to end
-		}
-		
-	n++;
-	}
-
-	if ((buf[0] !=0x3B) && (buf[0] != 0x3F) && (n>9 && !memcmp(buf+4, "IRDETO", 6))) //irdeto S02 reports FD as first byte on dreambox SCI, not sure about SH4 or phoenix
-		buf[0] = 0x3B;
-	
-	if(n==0) {
-		rdr_debug_mask(reader, D_IFD, "ERROR: 0 characters found in ATR");
+	if (IO_Serial_Read(reader, timeout, 1, buf+n)){ //read first char of atr
+		rdr_debug_mask(reader, D_IFD, "ERROR: no characters found in ATR");
 		return ERROR;
 	}
-	call(!ATR_InitFromArray (atr, buf, n) == ATR_OK);
-	{
-		cs_sleepms(50);
-		call (ioctl(reader->handle, IOCTL_SET_ATR_READY)<0);
-		return OK;
+	int32_t inverse = 0; // card is using inversion?
+	if (buf[0] == 0x03){
+		inverse = 1;
+		buf[n] = ~(INVERT_BYTE (buf[n]));
 	}
+	n++;
+	if (IO_Serial_Read(reader, timeout, 1, buf+n)){
+		rdr_debug_mask(reader, D_IFD, "ERROR: only 1 character found in ATR");
+		return ERROR;
+	}
+	if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
+	int32_t TDi = buf[n];
+	int32_t historicalbytes = TDi &0x0F;
+	rdr_debug_mask(reader, D_IFD, "ATR historicalbytes should be: %d", historicalbytes);
+	n++;
+	while (n < SCI_MAX_ATR_SIZE){
+		if ((TDi | 0xEF) == 0xFF){  //TA Present
+			if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;
+			if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
+			rdr_debug_mask(reader, D_IFD, "TA: %02X",buf[n]);
+			n++;
+		}
+		if ((TDi | 0xDF) == 0xFF){	 //TB Present
+			if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;
+			if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
+			rdr_debug_mask(reader, D_IFD, "TB: %02X",buf[n]);
+			n++;
+		}
+		if ((TDi | 0xBF) == 0xFF){	 //TC Present
+			if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;
+			if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
+			rdr_debug_mask(reader, D_IFD, "TC: %02X",buf[n]);
+			n++;
+		}
+		if ((TDi | 0x7F) == 0xFF){	//TD Present, more than 1 protocol?
+			if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;
+			if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
+			rdr_debug_mask(reader, D_IFD, "TDi %02X",buf[n]);
+			TDi = buf[n];
+			n++;
+		}
+		else break;
+	}
+	int32_t atrlength = 0;
+	atrlength += n;
+	atrlength += historicalbytes;
+	rdr_debug_mask(reader, D_IFD, "Total ATR Length including %d historical bytes should be: %d",historicalbytes,atrlength);
+	
+	while(n<atrlength){
+		if (IO_Serial_Read(reader, timeout, 1, buf+n)&& (n != atrlength-1)) return ERROR; // ppcold always returns timeout on last atr char!	
+		n++;
+		if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
+	}
+	ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
+		
+	if ((buf[0] !=0x3B) && (buf[0] != 0x3F) && (n>9 && !memcmp(buf+4, "IRDETO", 6))) //irdeto S02 reports FD as first byte on dreambox SCI, not sure about SH4 or phoenix
+		buf[0] = 0x3B;
+		
+	if(ATR_InitFromArray (atr, buf, n) == ATR_OK) return OK;
+	return ERROR;
 }
 
 int32_t Sci_WriteSettings (struct s_reader * reader, unsigned char T, uint32_t fs, uint32_t ETU, uint32_t WWT, uint32_t BWT, uint32_t CWT, uint32_t EGT, unsigned char P, unsigned char I)
@@ -102,8 +145,7 @@ int32_t Sci_WriteSettings (struct s_reader * reader, unsigned char T, uint32_t f
 	//int32_t n;
 	SCI_PARAMETERS params;
 	//memset(&params,0,sizeof(SCI_PARAMETERS));
-	call (ioctl(reader->handle, IOCTL_GET_PARAMETERS, &params) < 0 );
-
+	ioctl(reader->handle, IOCTL_GET_PARAMETERS, &params);
 	params.T = T;
 	params.fs = fs;
 
@@ -125,7 +167,7 @@ int32_t Sci_WriteSettings (struct s_reader * reader, unsigned char T, uint32_t f
 		(int)params.clock_stop_polarity, (int)params.check,
 		(int)params.P, (int)params.I, (int)params.U);
 
-	call (ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params)!=0);
+	ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params);
 	return OK;
 }
 
@@ -137,34 +179,18 @@ int32_t Sci_WriteSettings (struct s_reader * reader, unsigned char T, uint32_t f
 
 int32_t Sci_Activate (struct s_reader * reader)
 {
-		rdr_debug_mask(reader, D_IFD, "Activating card");
-		uint32_t in = 1;
-
+	rdr_debug_mask(reader, D_IFD, "Activating card");
+	uint32_t in = 1;
 	rdr_debug_mask(reader, D_IFD, "Is card activated?");
-	if (ioctl(reader->handle, __IOCTL_CARD_ACTIVATED, &in) < 0) {
-		rdr_debug_mask(reader, D_IFD, "ioctl returned: %u", in);
-		rdr_debug_mask(reader, D_IFD, "Is card present?");
-		call(ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in) < 0);
-	}
-	rdr_debug_mask(reader, D_IFD, "ioctl returned: %u", in);
-
-		if(in)
-			cs_sleepms(50);
-		else
-			return ERROR;
-		return OK;
+	ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in);
+	ioctl(reader->handle, __IOCTL_CARD_ACTIVATED, &in);
+	return OK;
 }
 
 int32_t Sci_Deactivate (struct s_reader * reader)
 {
 	rdr_debug_mask(reader, D_IFD, "Deactivating card");
-	int32_t in;
-		
-	if (ioctl(reader->handle, __IOCTL_CARD_ACTIVATED, &in) < 0)
-		call(ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in) < 0);
-			
-	if(in)
-		call (ioctl(reader->handle, IOCTL_SET_DEACTIVATE)<0);
+	ioctl(reader->handle, IOCTL_SET_DEACTIVATE);	
 	return OK;
 }
 
@@ -174,10 +200,14 @@ int32_t Sci_FastReset (struct s_reader *reader)
 	unsigned char buf[SCI_MAX_ATR_SIZE];
 	int32_t n = 0;
 
-	call (ioctl(reader->handle, IOCTL_SET_RESET)<0);
-
-    cs_sleepms(50);
-    // flush atr from buffer
+	ioctl(reader->handle, IOCTL_SET_RESET, 1);
+	
+	do {
+		ioctl(reader->handle, IOCTL_GET_ATR_STATUS, &statusreturn);
+		rdr_debug_mask(reader, D_IFD, "Waiting for card ATR Response...");
+	}
+		while (statusreturn);
+	// flush atr from buffer
 	uint32_t timeout = ATR_TIMEOUT;
 	if (reader->mhz > 2000)           // pll readers use timings in us
 		timeout = timeout * 1000;
@@ -185,11 +215,8 @@ int32_t Sci_FastReset (struct s_reader *reader)
 	{
 		n++;
 	}
-
-
-    call (ioctl(reader->handle, IOCTL_SET_ATR_READY)<0);
-
-    return 0;
+    ioctl(reader->handle, IOCTL_SET_ATR_READY);
+    return OK;
 }
 
 #endif

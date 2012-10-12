@@ -674,10 +674,9 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_ms, uint32_t
 	while (1) {
 		select_ret = select(in_fd+1, &rfds, NULL,  &erfds, &tv);
 		if (select_ret==-1) {
-			if (errno==EINTR) {
-				//try again in case of Interrupted system call
-				continue;
-			} else {
+			if (errno==EINTR) continue; //try again in case of Interrupted system call
+			if (errno == EAGAIN) continue; //EAGAIN needs select procedure again
+			else {
 				rdr_log(reader, "ERROR: %s: timeout=%d ms (errno=%d %s)",
 					__func__, timeout_ms, errno, strerror(errno));
 				return ERROR;
@@ -707,9 +706,8 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_ms, 
    int32_t select_ret;
    int32_t out_fd;
 
-#if !defined(WITH_COOLAPI) && !defined(WITH_AZBOX)
-   if(reader->typ == R_INTERNAL) // needed for ppc, otherwise error!
-	return OK;
+#if defined(__powerpc__)
+   if(reader->typ == R_INTERNAL) return OK; // needed for ppc, otherwise error!
 #endif
    if (delay_ms > 0)
       cs_sleepms (delay_ms); // all not pll readers do wait in ms
@@ -723,14 +721,20 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_ms, 
    
    tv.tv_sec = timeout_ms/1000;
    tv.tv_usec = (timeout_ms % 1000) * 1000L;
-
-   select_ret = select(out_fd+1, NULL, &wfds, &ewfds, &tv);
-
-   if(select_ret==-1)
-   {
-		rdr_log(reader, "ERROR: %s: timeout=%d ms, select_ret=%i (errno=%d %s)",
-			__func__, timeout_ms, select_ret, errno, strerror(errno));
-		return ERROR;
+   
+   while (1) {
+		select_ret = select(out_fd+1, NULL, &wfds, &ewfds, &tv);
+		if (select_ret==-1) {
+			if (errno==EINTR) continue; //try again in case of Interrupted system call
+			if (errno == EAGAIN) continue; //EAGAIN needs select procedure again
+			else {
+				rdr_log(reader, "ERROR: %s: timeout=%d ms (errno=%d %s)",
+					__func__, timeout_ms, errno, strerror(errno));
+				return ERROR;
+			}
+		}
+		if (select_ret==0) return ERROR;
+		break;
    }
 
    if (FD_ISSET(out_fd, &ewfds))
