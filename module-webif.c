@@ -4910,7 +4910,7 @@ static void *serve_process(void *conn){
 						send_error(f, 200, "Bad Request", NULL, "This web server is running in SSL mode.", 1);
 					fflush(f);
 					fclose(f);
--				} else {
+				} else {
 					cs_debug_mask(D_TRACE, "WebIf: fdopen(%d) failed. (errno=%d %s)", s, errno, strerror(errno));
 				}
 			}
