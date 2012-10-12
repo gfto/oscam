@@ -4927,7 +4927,9 @@ static void *serve_process(void *conn){
 			process_request(f, in);
 			fflush(f);
 			fclose(f);
-		} else cs_log("WebIf: Error opening file descriptor using fdopen() (errno=%d %s)", errno, strerror(errno));
+		} else {
+			cs_debug_mask(D_TRACE, "WebIf: fdopen(%d) failed. (errno=%d %s)", s, errno, strerror(errno));
+		}
 		shutdown(s, SHUT_WR);
 		close(s);
 	}
