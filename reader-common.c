@@ -294,7 +294,7 @@ void cardreader_do_reset(struct s_reader *reader)
 #ifdef WITH_COOLAPI
 	if (reader->typ == R_INTERNAL) {
 		rdr_debug_mask(reader, D_DEVICE, "init done - modifying timeout for coolstream internal device %s", reader->device);
-		call(Cool_Set_Transmit_Timeout(reader, 1));
+		Cool_Set_Transmit_Timeout(reader, 1);
 	}
 #endif
       }
