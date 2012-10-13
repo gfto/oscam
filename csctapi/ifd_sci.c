@@ -19,7 +19,7 @@
 
 #define OK 		0 
 #define ERROR 1
-int32_t statusreturn = 0;
+
 int32_t Sci_GetStatus (struct s_reader * reader, int32_t * status)
 {
 	ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, status);
@@ -29,8 +29,6 @@ int32_t Sci_GetStatus (struct s_reader * reader, int32_t * status)
 int32_t Sci_Reset(struct s_reader * reader, ATR * atr)
 {
 	rdr_debug_mask(reader, D_IFD, "Reset internal cardreader!");
-	unsigned char buf[SCI_MAX_ATR_SIZE];
-	int32_t n = 0;
 	SCI_PARAMETERS params;
 	
 	memset(&params,0,sizeof(SCI_PARAMETERS));
@@ -64,8 +62,14 @@ int32_t Sci_Reset(struct s_reader * reader, ATR * atr)
 	}
 	ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params);
 	ioctl(reader->handle, IOCTL_SET_RESET, 1);
+	return Sci_Read_ATR(reader, atr);
+}
+
+int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fly: reading and some low levelchecking at the same time
+{
 	uint32_t timeout = ATR_TIMEOUT;
-	
+	unsigned char buf[SCI_MAX_ATR_SIZE];
+	int32_t n = 0, statusreturn =0;
 	do {
 		ioctl(reader->handle, IOCTL_GET_ATR_STATUS, &statusreturn);
 		rdr_debug_mask(reader, D_IFD, "Waiting for card ATR Response...");
@@ -202,29 +206,9 @@ int32_t Sci_Deactivate (struct s_reader * reader)
 	return OK;
 }
 
-
-/*int32_t Sci_FastReset (struct s_reader *reader) // Remark: till now nowhere in oscam used so it can also be removed!
+int32_t Sci_FastReset (struct s_reader *reader, ATR * atr)
 {
-	unsigned char buf[SCI_MAX_ATR_SIZE];
-	int32_t n = 0;
-
 	ioctl(reader->handle, IOCTL_SET_RESET, 1);
-	
-	do {
-		ioctl(reader->handle, IOCTL_GET_ATR_STATUS, &statusreturn);
-		rdr_debug_mask(reader, D_IFD, "Waiting for card ATR Response...");
-	}
-		while (statusreturn);
-	// flush atr from buffer
-	uint32_t timeout = ATR_TIMEOUT;
-	if (reader->mhz > 2000)           // pll readers use timings in us
-		timeout = timeout * 1000;
-	while(n<SCI_MAX_ATR_SIZE && !IO_Serial_Read(reader, ATR_TIMEOUT, 1, buf+n))
-	{
-		n++;
-	}
-    ioctl(reader->handle, IOCTL_SET_ATR_READY);
-    return OK;
+	return Sci_Read_ATR(reader, atr);
 }
-*/
 #endif

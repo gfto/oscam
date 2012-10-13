@@ -344,8 +344,14 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 #elif defined(WITH_AZBOX)
 				call (Azbox_Reset(reader, atr));
 #else
-				call (Sci_Activate(reader));
-				call (Sci_Reset(reader, atr));
+				if (!reader->ins7e11_fast_reset){
+					call (Sci_Activate(reader));
+					call (Sci_Reset(reader, atr));
+				}
+				else {
+					rdr_log(reader, "Doing fast reset");
+					call (Sci_FastReset(reader, atr));
+				}
 #endif
 				break;
 #ifdef WITH_PCSC
