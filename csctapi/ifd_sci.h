@@ -11,6 +11,6 @@ int32_t Sci_GetStatus (struct s_reader *reader, int32_t * status);
 int32_t Sci_Reset (struct s_reader *reader, ATR * atr);
 int32_t Sci_Activate (struct s_reader *reader);
 int32_t Sci_Deactivate (struct s_reader *reader);
-int32_t Sci_FastReset (struct s_reader *reader);
+//int32_t Sci_FastReset (struct s_reader *reader); //nowhere used in oscam!
 
 #endif

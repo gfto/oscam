@@ -132,13 +132,20 @@ int32_t Sci_Reset(struct s_reader * reader, ATR * atr)
 		if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
 	}
 	ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
-	rdr_debug_mask(reader, D_IFD, "Total ATR characters read is: %d",n);
+	if (n!=atrlength) cs_log("Warning reader %s: Total ATR characters received is: %d instead of expected %d", reader->label, n, atrlength);
 		
 	if ((buf[0] !=0x3B) && (buf[0] != 0x3F) && (n>9 && !memcmp(buf+4, "IRDETO", 6))) //irdeto S02 reports FD as first byte on dreambox SCI, not sure about SH4 or phoenix
 		buf[0] = 0x3B;
 		
-	ATR_InitFromArray (atr, buf, n); // todo: fix this, with some ATRs this function is softfailing
-	return OK; // just stupid to always return OK but ATR_InitFromArray is reporting Error while it should be OK!
+	statusreturn = ATR_InitFromArray (atr, buf, n);
+	
+	if (statusreturn == ATR_MALFORMED) cs_log("Warning reader %s: ATR is malformed, you better inspect it with a -d2 log!", reader->label);
+	
+	if (statusreturn == ERROR){
+		cs_log("Warning reader %s: ATR is invalid!", reader->label);
+		return ERROR;
+	}
+	return OK; // return OK but atr might be softfailing!
 }
 
 int32_t Sci_WriteSettings (struct s_reader * reader, unsigned char T, uint32_t fs, uint32_t ETU, uint32_t WWT, uint32_t BWT, uint32_t CWT, uint32_t EGT, unsigned char P, unsigned char I)
@@ -196,7 +203,7 @@ int32_t Sci_Deactivate (struct s_reader * reader)
 }
 
 
-int32_t Sci_FastReset (struct s_reader *reader)
+/*int32_t Sci_FastReset (struct s_reader *reader) // Remark: till now nowhere in oscam used so it can also be removed!
 {
 	unsigned char buf[SCI_MAX_ATR_SIZE];
 	int32_t n = 0;
@@ -219,5 +226,5 @@ int32_t Sci_FastReset (struct s_reader *reader)
     ioctl(reader->handle, IOCTL_SET_ATR_READY);
     return OK;
 }
-
+*/
 #endif

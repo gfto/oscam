@@ -23,7 +23,7 @@
 */
 #include "../globals.h"
 #include "atr.h"
-
+#define ERROR 1
 /* 
  * Not exported variables definition
  */
@@ -55,11 +55,13 @@ int32_t ATR_InitFromArray (ATR * atr, const unsigned char atr_buffer[ATR_MAX_SIZ
 	uint32_t pointer = 0, pn = 0;
 	
 	/* Check size of buffer */
-	if (length < 2)
-		return (ATR_MALFORMED);
+	if (length < 2){
+		cs_debug_mask(D_ATR,"ATR is malformed, its length is %d and minimum length is 2", length);
+		return (ERROR);
+	}
 	
 	/* Check if ATR is from a inverse convention card */
-	if (atr_buffer[0] == 0x03)
+	if (atr_buffer[0] == 0x03) // inverse convention is done on the fly in case ifd_sci.c based reader
 	{
 		for (pointer = 0; pointer < length; pointer++)
 			buffer[pointer] = ~(INVERT_BYTE (atr_buffer[pointer]));
@@ -85,8 +87,8 @@ int32_t ATR_InitFromArray (ATR * atr, const unsigned char atr_buffer[ATR_MAX_SIZ
 	while (pointer < length)
 	{
 		/* Check buffer is long enought */
-		if (pointer + atr_num_ib_table[(0xF0 & TDi) >> 4] >= length)
-		{
+		if (pointer + atr_num_ib_table[(0xF0 & TDi) >> 4] >= length){
+			cs_debug_mask(D_ATR,"ATR is malformed, the %d interface bytes for protocol %d are missing", pointer + atr_num_ib_table[(0xF0 & TDi) >> 4], pn+1);
 			return (ATR_MALFORMED);
 		}
 		
@@ -133,8 +135,10 @@ int32_t ATR_InitFromArray (ATR * atr, const unsigned char atr_buffer[ATR_MAX_SIZ
 			TDi = atr->ib[pn][ATR_INTERFACE_BYTE_TD].value = buffer[pointer];
 			atr->ib[pn][ATR_INTERFACE_BYTE_TD].present = 1;
 			(atr->TCK).present = ((TDi & 0x0F) != ATR_PROTOCOL_TYPE_T0);
-			if (pn >= ATR_MAX_PROTOCOLS)
+			if (pn >= ATR_MAX_PROTOCOLS){
+				cs_debug_mask(D_ATR,"ATR is malformed, this ATR reports %d protocols but the maximum value is %d", pn+1, ATR_MAX_PROTOCOLS+1);
 				return (ATR_MALFORMED);
+			}
 			pn++;
 		}
 		else
@@ -146,10 +150,11 @@ int32_t ATR_InitFromArray (ATR * atr, const unsigned char atr_buffer[ATR_MAX_SIZ
 	
 	/* Store number of protocols */
 	atr->pn = pn + 1;
+	cs_debug_mask(D_ATR,"this ATR reports a total of %d protocols", pn+1);
 	
 	/* Store historical bytes */
 	if (pointer + atr->hbn >= length) {
-		cs_log("ATR is malformed, it reports %i historical bytes but there are only %i",atr->hbn, length-pointer-2);
+		cs_debug_mask(D_ATR, "ATR is malformed, this ATR reports %i historical bytes but there are only %i",atr->hbn, length-pointer-2);
 		if (length-pointer >= 2)
 			atr->hbn = length-pointer-2;
 		else {
@@ -166,9 +171,10 @@ int32_t ATR_InitFromArray (ATR * atr, const unsigned char atr_buffer[ATR_MAX_SIZ
 	/* Store TCK  */
 	if ((atr->TCK).present)
 	{	
-		if (pointer + 1 >= length)
+		if (pointer + 1 >= length){
+			cs_debug_mask(D_ATR,"ATR is malformed, this ATR should have a TCK byte but it was not received!");
 			return (ATR_MALFORMED);
-		
+		}
 		pointer++;
 		
 		(atr->TCK).value = buffer[pointer];
@@ -183,7 +189,7 @@ int32_t ATR_InitFromArray (ATR * atr, const unsigned char atr_buffer[ATR_MAX_SIZ
         FI=(atr->ib[pn][ATR_INTERFACE_BYTE_TA].value & 0xF0)>>4;
         cs_debug_mask(D_ATR, "FI = %02x",FI);
         if(atr_fs_table[FI]==0) {
-            cs_debug_mask(D_ATR, "Invalid ATR as FI is not returning a valid frequency value");
+            cs_debug_mask(D_ATR, "ATR is malformed, this ATR FI for protocol #%d is not returning a valid cardfrequency value",pn+1);
             return (ATR_MALFORMED);
         }
     }
@@ -191,7 +197,7 @@ int32_t ATR_InitFromArray (ATR * atr, const unsigned char atr_buffer[ATR_MAX_SIZ
     // check that TB1 < 0x80
     if ( atr->pn == 1 && atr->ib[pn][ATR_INTERFACE_BYTE_TB].present == 1 ) {
         if(atr->ib[pn][ATR_INTERFACE_BYTE_TB].value > 0x80) {
-            cs_debug_mask(D_ATR, "Invalid ATR as TB1 has an invalid value");
+            cs_debug_mask(D_ATR, "ATR is malformed, this ATR TB1 for protocol #%d has an invalid value", pn+1);
             return (ATR_MALFORMED);
         }
     }
@@ -204,8 +210,10 @@ int32_t ATR_GetConvention (ATR * atr, int32_t *convention)
 		(*convention) = ATR_CONVENTION_DIRECT;
 	else if (atr->TS == 0x3F)
 		(*convention) = ATR_CONVENTION_INVERSE;
-	else
-		return (ATR_MALFORMED);
+	else{
+		cs_debug_mask(D_ATR, "ATR is malformed, this ATR TS byte is %02X and that should be 3B for direct or 3F for inverse convention!", atr->TS);
+		return (ERROR);
+	}
 		
 	return (ATR_OK);
 }
