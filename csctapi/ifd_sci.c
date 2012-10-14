@@ -129,22 +129,22 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 	atrlength += n;
 	atrlength += historicalbytes;
 	rdr_debug_mask(reader, D_IFD, "Total ATR Length including %d historical bytes should be: %d",historicalbytes,atrlength);
-	
+
 	while(n<atrlength){
 		if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;	
-		n++;
 		if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
+		n++;
 	}
 	ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
 	if (n!=atrlength) cs_log("Warning reader %s: Total ATR characters received is: %d instead of expected %d", reader->label, n, atrlength);
-		
+
 	if ((buf[0] !=0x3B) && (buf[0] != 0x3F) && (n>9 && !memcmp(buf+4, "IRDETO", 6))) //irdeto S02 reports FD as first byte on dreambox SCI, not sure about SH4 or phoenix
 		buf[0] = 0x3B;
-		
-	statusreturn = ATR_InitFromArray (atr, buf, n);
-	
+
+	statusreturn = ATR_InitFromArray (atr, buf, atrlength);
+
 	if (statusreturn == ATR_MALFORMED) cs_log("Warning reader %s: ATR is malformed, you better inspect it with a -d2 log!", reader->label);
-	
+
 	if (statusreturn == ERROR){
 		cs_log("Warning reader %s: ATR is invalid!", reader->label);
 		return ERROR;
