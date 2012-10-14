@@ -36,7 +36,6 @@
 #include "ifd_sci.h"
 #include "ifd_smartreader.h"
 #include "ifd_azbox.h"
-#include "ifd_pcsc.h"
 
 #define OK 0
 #define ERROR 1
@@ -165,11 +164,6 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 			}
 #endif
 			break;
-#ifdef WITH_PCSC
-		case R_PCSC:
-			return (pcsc_reader_init(reader, reader->device));
-			break;
-#endif
 		default:
 			rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
 			return ERROR;
@@ -261,11 +255,6 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 			call(Sci_GetStatus(reader, &in));
 #endif
 			break;
-#ifdef WITH_PCSC
-		case R_PCSC:
-			in =  pcsc_check_card_inserted(reader);
-			break;
-#endif
 		default:
 			rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
 			return ERROR;
@@ -342,23 +331,6 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 				}
 #endif
 				break;
-#ifdef WITH_PCSC
-			case R_PCSC:
-				 {
-					unsigned char atrarr[ATR_MAX_SIZE];
-					uint16_t atr_size = 0;
-					if (pcsc_activate_card(reader, atrarr, &atr_size))
-					{
-						if (ATR_InitFromArray (atr, atrarr, atr_size) == ATR_OK)
-							return OK;
-						else
-							return ERROR;
-					}
-					else
-						return ERROR;
-				 }
-				break;
-#endif
 			default:
 				rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
 				return ERROR;
@@ -398,13 +370,11 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 
 int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, uint16_t command_len, unsigned char *rsp, uint16_t *lr)
 {
-#ifdef WITH_PCSC
-	if (reader->typ == R_PCSC)
- 	  return (pcsc_reader_do_api(reader, command, rsp, lr, command_len));
-#endif
-	*lr = 0; //will be returned in case of error
-
 	int32_t ret;
+
+	if (reader->crdr.card_write) {
+		return reader->crdr.card_write(reader, command, rsp, lr, command_len);
+	}
 
 	LOCK_SC8IN1;
 
@@ -613,11 +583,6 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 			call (Phoenix_Close(reader));
 #endif
 			break;
-#ifdef WITH_PCSC
-		case R_PCSC:
-			pcsc_close(reader);
-			break;
-#endif
 		default:
 			rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
 			return ERROR;

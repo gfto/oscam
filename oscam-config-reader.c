@@ -681,13 +681,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		}
 
-#ifdef WITH_PCSC
-		if (!strcmp(value, "pcsc")) {
-			rdr->typ = R_PCSC;
-			return;
-		}
-#endif
-
 		if (!strcmp(value, "serial")) {
 			rdr->typ = R_SERIAL;
 			return;

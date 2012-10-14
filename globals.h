@@ -687,6 +687,11 @@ struct s_cardreader
 										uint32_t len_request);
 	int32_t			(*set_baudrate)(struct s_reader*,
 										uint32_t baud); //set only for readers which need baudrate setting and timings need to be guarded by OSCam
+	int32_t			(*card_write)(struct s_reader *pcsc_reader,
+										const uchar *buf,
+										unsigned char *cta_res,
+										uint16_t *cta_lr,
+										int32_t l);
 	int32_t			typ; 				// fixme: workaround, remove when all old code is converted
 
 	int8_t			max_clock_speed; 	// 1 for reader->typ > R_MOUSE
