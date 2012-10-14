@@ -484,6 +484,21 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 		htons(er->checksum), 1000 * (tpe.time - tps.time) + tpe.millitm - tps.millitm);
 
 	write_ecm_answer(reader, er, ea.rc, ea.rcEx, ea.cw, ea.msglog);
+	
+	
+	if (er->caid == 0x100 && er->prid == 0x00006a && reader->secatype == 0){ //cds nl determine seca card type in reader and set type accordingly
+		int32_t secatype = b2i(2, er->ecm+7);
+		rdr_debug_mask(reader, D_TRACE,"This ecm type %04X, reader is type %d",secatype, reader->secatype); // for debugging purposes left in
+		if (secatype == 0x5C00){
+			if(ea.rc == E_FOUND) reader->secatype = 3; // set type to nagra
+			if(ea.rc == E_NOTFOUND) reader->secatype =2; // set type to seca2
+		}
+		if (secatype == 0xFC10){
+			if(ea.rc == E_FOUND) reader->secatype = 2; // set type to seca2
+			if(ea.rc == E_NOTFOUND) reader->secatype =3; // set type to nagra
+		}
+	}
+	
 	reader_post_process(reader);
 }
 

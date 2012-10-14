@@ -1184,6 +1184,7 @@ struct s_reader  									//contains device info, reader info and card info
 	struct s_ecmHeaderwhitelist *ecmHeaderwhitelist;			// ECM Header Whitelist
 	int32_t			brk_pos;
 	int32_t			msg_idx;
+	int32_t			secatype;						// 0=not determined, 2=seca2, 3=nagra(~seca3) this is only valid for localreaders!
 #if defined(WEBIF) || defined(LCDSUPPORT)
 	int32_t			emmwritten[4];					// count written EMM
 	int32_t			emmskipped[4];					// count skipped EMM

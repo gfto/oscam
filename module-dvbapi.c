@@ -1264,6 +1264,9 @@ void request_cw(struct s_client *client, ECM_REQUEST *er)
 	format_ecm(er, buf, ECM_FMT_LEN);
 	cs_debug_mask(D_DVBAPI, "dvbapi request cw for %s", buf);
 #endif
+	if (er->caid == 0x100 && er->prid == 0x00006a){ // if ecm request for cds nl add fix
+		er->chid = b2i(2, er->ecm+7);
+	}
 	get_cw(client, er);
 }
 
