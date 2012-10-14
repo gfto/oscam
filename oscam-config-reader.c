@@ -661,11 +661,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			}
 		}
 
-		if (!strcmp(value, "mp35")) {
-			rdr->typ = R_MP35;
-			return;
-		}
-
 		if (!strcmp(value, "mouse")) {
 			rdr->typ = R_MOUSE;
 			return;

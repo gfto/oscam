@@ -31,7 +31,6 @@
 #include "protocol_t0.h"
 #include "io_serial.h"
 #include "ifd_cool.h"
-#include "ifd_mp35.h"
 #include "ifd_phoenix.h"
 #include "ifd_sc8in1.h"
 #include "ifd_sci.h"
@@ -121,7 +120,6 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 				return OK;
 			}
 			break;
-		case R_MP35:
 		case R_MOUSE:
 			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 			if (reader->handle < 0) {
@@ -177,15 +175,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 			return ERROR;
 	}
 
-	if (reader->typ == R_MP35)
-	{
-		if (MP35_Init(reader)) {
-				rdr_log(reader, "ERROR: MP35_Init returns error");
-				MP35_Close (reader);
-				return ERROR;
-		}
-	}
-	else if (reader->typ <= R_MOUSE)
+	if (reader->typ <= R_MOUSE)
 		if (Phoenix_Init(reader)) {
 			rdr_log(reader, "ERROR: Phoenix_Init returns error");
 			Phoenix_Close (reader);
@@ -254,7 +244,6 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 			cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
 			if (ret == ERROR) return ERROR;
 			break;
-		case R_MP35:
 		case R_MOUSE:
 			call (Phoenix_GetStatus(reader, &in));
 			break;
@@ -306,7 +295,6 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 		} else {
 
 		switch(reader->typ) {
-			case R_MP35:
 			case R_DB2COM1:
 			case R_DB2COM2:
 			case R_SC8in1:
@@ -501,7 +489,6 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, unsigned cha
 	}
 
 	switch(reader->typ) {
-		case R_MP35:
 		case R_DB2COM1:
 		case R_DB2COM2:
 		case R_SC8in1:
@@ -553,7 +540,6 @@ int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, unsigned char
 	}
 
 	switch(reader->typ) {
-		case R_MP35:
 		case R_DB2COM1:
 		case R_DB2COM2:
 		case R_SC8in1:
@@ -598,9 +584,6 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 	}
 
 	switch(reader->typ) {
-		case R_MP35:
-			call (MP35_Close(reader));
-			break;
 		case R_DB2COM1:
 		case R_DB2COM2:
 		case R_SC8in1:
@@ -930,7 +913,6 @@ static int32_t ICC_Async_SetParity (struct s_reader * reader, uint16_t parity)
 		return OK;
 
 	switch(reader->typ) {
-		case R_MP35:
 		case R_DB2COM1:
 		case R_DB2COM2:
 		case R_SC8in1:
