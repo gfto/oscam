@@ -658,9 +658,11 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
   }
 
   //Checking chid:
-  if (!er->chid && !is_network_reader(rdr)){ //tryfix cds nl
-	if (er->caid == 0x100 && er->prid == 0x00006a) er->chid = b2i(2, er->ecm+7);
-    cs_log("******** CDS NL SECA2/NAGRA fix: Add CHID 0100:%06X to the answering reader(s) ********",er->chid);
+  if (!er->chid && !is_network_reader(rdr)){ //cds nl check if ecm is for nagra or seca2 card
+	if (er->caid == 0x100 && er->prid == 0x00006a){
+		er->chid = b2i(2, er->ecm+7);
+		cs_log("******** CDS NL SECA2/NAGRA fix: Add CHID 0100:%06X to the answering reader(s) ********",er->chid);
+	}
   }
   if (!chk_chid(er, &rdr->fchid, "reader", rdr->label)) {
     cs_debug_mask(D_TRACE, "chid filter reader %s", rdr->label);
