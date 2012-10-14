@@ -25,10 +25,10 @@
 #ifndef _IO_SERIAL_
 #define _IO_SERIAL_
 
-#define IO_Serial_DTR_Set(reader) {int32_t dtr = 1; IO_Serial_DTR_RTS(reader, &dtr, NULL);}
-#define IO_Serial_DTR_Clr(reader) {int32_t dtr = 0; IO_Serial_DTR_RTS(reader, &dtr, NULL);}
-#define IO_Serial_RTS_Set(reader) {int32_t rts = 1; IO_Serial_DTR_RTS(reader, NULL, &rts);}
-#define IO_Serial_RTS_Clr(reader) {int32_t rts = 0; IO_Serial_DTR_RTS(reader, NULL, &rts);}
+#define IO_Serial_DTR_Set(reader) {int32_t _dtr = 1; IO_Serial_DTR_RTS(reader, &_dtr, NULL);}
+#define IO_Serial_DTR_Clr(reader) {int32_t _dtr = 0; IO_Serial_DTR_RTS(reader, &_dtr, NULL);}
+#define IO_Serial_RTS_Set(reader) {int32_t _rts = 1; IO_Serial_DTR_RTS(reader, NULL, &_rts);}
+#define IO_Serial_RTS_Clr(reader) {int32_t _rts = 0; IO_Serial_DTR_RTS(reader, NULL, &_rts);}
 
 //Type of parity of the serial device
 //Chosen to Smartreader definition
@@ -69,7 +69,7 @@ bool IO_Serial_DTR_RTS(struct s_reader * reader, int32_t * dtr, int32_t * rts);
 void IO_Serial_Ioctl_Lock(struct s_reader * reader, int32_t);
 
 bool IO_Serial_SetBitrate (struct s_reader * reader, uint32_t bitrate, struct termios * tio);
-bool IO_Serial_SetParams (struct s_reader * reader, uint32_t bitrate, uint32_t bits, int32_t parity, uint32_t stopbits, int32_t dtr, int32_t rts);
+bool IO_Serial_SetParams (struct s_reader * reader, uint32_t bitrate, uint32_t bits, int32_t parity, uint32_t stopbits, int32_t * dtr, int32_t * rts);
 bool IO_Serial_SetProperties (struct s_reader * reader, struct termios newtio);
 int32_t IO_Serial_SetParity (struct s_reader * reader, unsigned char parity);
 

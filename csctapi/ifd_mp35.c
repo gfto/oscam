@@ -76,8 +76,11 @@ int32_t MP35_Init(struct s_reader * reader)
   current_product = 0;
   original_mhz = reader->mhz; // MP3.5 commands should be always be written using 9600 baud at 3.58MHz
   reader->mhz = 357;
+
+	int32_t dtr = IO_SERIAL_HIGH;
+	int32_t cts = IO_SERIAL_HIGH;
   
-  call(IO_Serial_SetParams(reader, 9600, 8, PARITY_NONE, 1, IO_SERIAL_HIGH, IO_SERIAL_HIGH));
+  call(IO_Serial_SetParams(reader, 9600, 8, PARITY_NONE, 1, &dtr, &cts));
 
   IO_Serial_Sendbreak(reader, MP35_BREAK_LENGTH);
   IO_Serial_DTR_Clr(reader);
@@ -187,7 +190,12 @@ int32_t MP35_Init(struct s_reader * reader)
 
   reader->mhz = original_mhz; // We might have switched oscillator here
   current_product = reader_info.current_product;
-  IO_Serial_Flush(reader);
+
+	/* Default serial port settings */
+  if (reader->atr[0] == 0) {
+    if(IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, NULL, NULL)) return ERROR;
+    IO_Serial_Flush(reader);
+  }
 
   return OK;
 }

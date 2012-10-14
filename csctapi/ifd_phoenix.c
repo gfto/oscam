@@ -80,7 +80,7 @@ int32_t Phoenix_Init (struct s_reader * reader)
 
 	/* Default serial port settings */
 	if (reader->atr[0] == 0) {
-        if(IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW)) return ERROR;
+        if(IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, NULL, NULL)) return ERROR;
 		IO_Serial_Flush(reader);
 	}
 	return OK;
