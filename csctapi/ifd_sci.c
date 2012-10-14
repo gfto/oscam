@@ -28,6 +28,8 @@ int32_t Sci_GetStatus (struct s_reader * reader, int32_t * status)
 
 int32_t Sci_Reset(struct s_reader * reader, ATR * atr)
 {
+	int32_t ret;
+
 	rdr_debug_mask(reader, D_IFD, "Reset internal cardreader!");
 	SCI_PARAMETERS params;
 	
@@ -62,7 +64,9 @@ int32_t Sci_Reset(struct s_reader * reader, ATR * atr)
 	}
 	ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params);
 	ioctl(reader->handle, IOCTL_SET_RESET, 1);
-	return Sci_Read_ATR(reader, atr);
+	ret = Sci_Read_ATR(reader, atr);
+	ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
+	return ret;
 }
 
 int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fly: reading and some low levelchecking at the same time
@@ -135,7 +139,7 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 		if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
 		n++;
 	}
-	ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
+
 	if (n!=atrlength) cs_log("Warning reader %s: Total ATR characters received is: %d instead of expected %d", reader->label, n, atrlength);
 
 	if ((buf[0] !=0x3B) && (buf[0] != 0x3F) && (n>9 && !memcmp(buf+4, "IRDETO", 6))) //irdeto S02 reports FD as first byte on dreambox SCI, not sure about SH4 or phoenix
@@ -208,7 +212,11 @@ int32_t Sci_Deactivate (struct s_reader * reader)
 
 int32_t Sci_FastReset (struct s_reader *reader, ATR * atr)
 {
+	int32_t ret;
 	ioctl(reader->handle, IOCTL_SET_RESET, 1);
-	return Sci_Read_ATR(reader, atr);
+	ret = Sci_Read_ATR(reader, atr);
+	ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
+
+	return ret;
 }
 #endif
