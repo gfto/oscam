@@ -145,7 +145,7 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 	if ((buf[0] !=0x3B) && (buf[0] != 0x3F) && (n>9 && !memcmp(buf+4, "IRDETO", 6))) //irdeto S02 reports FD as first byte on dreambox SCI, not sure about SH4 or phoenix
 		buf[0] = 0x3B;
 
-	statusreturn = ATR_InitFromArray (atr, buf, atrlength);
+	statusreturn = ATR_InitFromArray (atr, buf, n); // n should be same as atrlength but in case of atr read error its less so do not use atrlenght here!
 
 	if (statusreturn == ATR_MALFORMED) cs_log("Warning reader %s: ATR is malformed, you better inspect it with a -d2 log!", reader->label);
 
