@@ -645,7 +645,7 @@ static bool smartreader_check_endpoint(libusb_device *usb_dev,uint8_t out_endpoi
 
 static struct libusb_device* find_smartreader(const char *busname,const char *dev_name, uint8_t out_endpoint)
 {
-    int32_t dev_found;
+  int32_t dev_found = 0;
   libusb_device *dev;
   libusb_device_handle *usb_dev_handle;
   libusb_device **devs;
