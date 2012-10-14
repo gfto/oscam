@@ -1,7 +1,7 @@
 #include "../globals.h"
 #ifdef WITH_CARDREADER
 #include "../oscam-time.h"
-#include "icc_async.h"
+#include "atr.h"
 #include "ifd_phoenix.h"
 #include "io_serial.h"
 
@@ -47,7 +47,7 @@ static const struct product { unsigned char code; const char* product_name; } pr
 
 static unsigned char current_product;
 
-static int32_t MP35_product_info(struct s_reader *reader, unsigned char high, unsigned char low, unsigned char code, MP35_info *info)
+static int32_t mp35_product_info(struct s_reader *reader, unsigned char high, unsigned char low, unsigned char code, MP35_info *info)
 {
   int32_t i;
 
@@ -55,7 +55,7 @@ static int32_t MP35_product_info(struct s_reader *reader, unsigned char high, un
   {
     if(product_codes[i].code == code)
     {
-      rdr_log(reader, "MP35_Init: %s - FW:%02d.%02d", product_codes[i].product_name, high, low);
+      rdr_log(reader, "%s: %s - FW:%02d.%02d", __func__, product_codes[i].product_name, high, low);
       info->current_product = code;
       info->product_fw_version = (high << 8) | low;
       return OK;
@@ -65,7 +65,7 @@ static int32_t MP35_product_info(struct s_reader *reader, unsigned char high, un
   return ERROR;
 }
 
-int32_t MP35_Init(struct s_reader * reader)
+static int32_t mp35_reader_init(struct s_reader * reader)
 {
   MP35_info reader_info;
   unsigned char rec_buf[32];
@@ -73,7 +73,7 @@ int32_t MP35_Init(struct s_reader * reader)
   int32_t original_mhz;
   int32_t original_cardmhz;
 
-  rdr_log(reader, "MP35 init");
+  rdr_log(reader, "%s: started", __func__);
 
   current_product = 0;
   original_mhz = reader->mhz;
@@ -83,8 +83,8 @@ int32_t MP35_Init(struct s_reader * reader)
   reader->mhz = 357;
   reader->cardmhz = 357;
 
-	int32_t dtr = IO_SERIAL_HIGH;
-	int32_t cts = IO_SERIAL_HIGH;
+  int32_t dtr = IO_SERIAL_HIGH;
+  int32_t cts = IO_SERIAL_HIGH;
 
   call(IO_Serial_SetParams(reader, 9600, 8, PARITY_NONE, 1, &dtr, &cts));
 
@@ -103,9 +103,9 @@ int32_t MP35_Init(struct s_reader * reader)
     return ERROR;
   }
 
-  if (MP35_product_info(reader, rec_buf[1], rec_buf[0], rec_buf[2], &reader_info) != OK)
+  if (mp35_product_info(reader, rec_buf[1], rec_buf[0], rec_buf[2], &reader_info) != OK)
   {
-    rdr_log(reader, "MP35_Init: unknown product code");
+    rdr_log(reader, "%s: unknown product code", __func__);
     return ERROR;
   }
 
@@ -113,23 +113,23 @@ int32_t MP35_Init(struct s_reader * reader)
   {
     if(original_mhz == 357)
     {
-      rdr_log(reader, "MP35_Init: Using oscillator 1 (3.57MHz)");
+      rdr_log(reader, "%s: Using oscillator 1 (3.57MHz)", __func__);
       parameter = 0x01;
     }
     else if(original_mhz == 368)
     {
-      rdr_log(reader, "MP35_Init: Using oscillator 2 (3.68MHz)");
+      rdr_log(reader, "%s: Using oscillator 2 (3.68MHz)", __func__);
       parameter = 0x02;
     }
     else if(original_mhz == 600)
     {
-      rdr_log(reader, "MP35_Init: Using oscillator 3 (6.00MHz)");
+      rdr_log(reader, "%s: Using oscillator 3 (6.00MHz)", __func__);
       parameter = 0x03;
     }
     else
     {
-      rdr_log(reader, "MP35_Init: MP35 support only mhz=357, mhz=368 or mhz=600");
-      rdr_log(reader, "MP35_Init: Forced oscillator 1 (3.57MHz)");
+      rdr_log(reader, "%s: MP35 support only mhz=357, mhz=368 or mhz=600", __func__);
+      rdr_log(reader, "%s: Forced oscillator 1 (3.57MHz)", __func__);
       parameter = 0x01;
       original_mhz = 357;
     }
@@ -142,7 +142,7 @@ int32_t MP35_Init(struct s_reader * reader)
       rdr_debug_mask(reader, D_IFD, "Failed MP35 command: set_mode_osc");
       return ERROR;
     }
-    rdr_debug_mask(reader, D_IFD, "MP35_Init: Leaving programming mode");
+    rdr_debug_mask(reader, D_IFD, "%s: Leaving programming mode", __func__);
     memset(rec_buf, 0x00, sizeof(rec_buf));
     call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 2, exit_program_mode));
     call(IO_Serial_Read(reader, MP35_READ_DELAY, 1, rec_buf));
@@ -171,24 +171,24 @@ int32_t MP35_Init(struct s_reader * reader)
       }
       memcpy(info, rec_buf, info_len);
       info[info_len] = '\0';
-      rdr_log(reader, "MP35_Init: FW Info - %s", info);
+      rdr_log(reader, "%s: FW Info - %s", info, __func__);
     }
 
     memset(rec_buf, 0x00, sizeof(rec_buf));
     if(original_mhz == 357)
     {
-      rdr_log(reader, "MP35_Init: Using oscillator 1 (3.57MHz)");
+      rdr_log(reader, "%s: Using oscillator 1 (3.57MHz)", __func__);
       call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 2, phoenix_mode));
     }
     else if(original_mhz == 600)
     {
-      rdr_log(reader, "MP35_Init: Using oscillator 2 (6.00MHz)");
+      rdr_log(reader, "%s: Using oscillator 2 (6.00MHz)", __func__);
       call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 2, phoenix_6mhz_mode));
     }
     else
     {
-      rdr_log(reader, "MP35_Init: MP35 support only mhz=357 or mhz=600");
-      rdr_log(reader, "MP35_Init: Forced oscillator 1 (3.57MHz)");
+      rdr_log(reader, "%s: MP35 support only mhz=357 or mhz=600", __func__);
+      rdr_log(reader, "%s: Forced oscillator 1 (3.57MHz)", __func__);
       call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 2, phoenix_mode));
       original_mhz = 357;
     }
@@ -200,7 +200,7 @@ int32_t MP35_Init(struct s_reader * reader)
 
   current_product = reader_info.current_product;
 
-	/* Default serial port settings */
+  /* Default serial port settings */
   if (reader->atr[0] == 0) {
     call(IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, NULL, NULL));
     IO_Serial_Flush(reader);
@@ -209,9 +209,9 @@ int32_t MP35_Init(struct s_reader * reader)
   return OK;
 }
 
-int32_t MP35_Close(struct s_reader * reader)
+static int32_t mp35_close(struct s_reader * reader)
 {
-	rdr_debug_mask (reader, D_IFD, "Closing MP35 device %s", reader->device);
+  rdr_debug_mask (reader, D_IFD, "Closing MP35 device %s", reader->device);
 
   if(current_product != 0x10) // USB Phoenix
   {
@@ -220,20 +220,20 @@ int32_t MP35_Close(struct s_reader * reader)
 
   IO_Serial_Close(reader);
 
-	return OK;
+  return OK;
 }
 
 static int32_t mp35_init(struct s_reader *reader) {
   reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
   if (reader->handle < 0) {
     rdr_log(reader, "ERROR: Opening device %s (errno=%d %s)",
-    reader->device, errno, strerror(errno));
+      reader->device, errno, strerror(errno));
     return ERROR;
   }
 
-  if (MP35_Init(reader)) {
-    rdr_log(reader, "ERROR: MP35_Init returns error");
-    MP35_Close (reader);
+  if (mp35_reader_init(reader)) {
+    rdr_log(reader, "ERROR: mp35_reader_init returned error");
+    mp35_close (reader);
     return ERROR;
   }
   return OK;
@@ -249,19 +249,19 @@ static int32_t mp35_transmit(struct s_reader *reader, unsigned char *sent, uint3
 
 void cardreader_mp35(struct s_cardreader *crdr)
 {
-  crdr->desc = "mp35";
-  crdr->reader_init	= mp35_init;
-  crdr->get_status = Phoenix_GetStatus;
-  crdr->activate = Phoenix_Reset;
-  crdr->transmit = mp35_transmit;
-  crdr->receive = mp35_receive;
-  crdr->close = MP35_Close;
-  crdr->set_parity = IO_Serial_SetParity;
-  crdr->set_baudrate = Phoenix_SetBaudrate;
-  crdr->typ = R_MOUSE;
-  crdr->flush = 1;
+  crdr->desc         = "mp35";
+  crdr->typ          = R_MOUSE;
+  crdr->flush        = 1;
   crdr->need_inverse = 1;
   crdr->read_written = 1;
+  crdr->reader_init  = mp35_init;
+  crdr->get_status   = Phoenix_GetStatus;
+  crdr->activate     = Phoenix_Reset;
+  crdr->transmit     = mp35_transmit;
+  crdr->receive      = mp35_receive;
+  crdr->close        = mp35_close;
+  crdr->set_parity   = IO_Serial_SetParity;
+  crdr->set_baudrate = Phoenix_SetBaudrate;
 }
 
 #endif

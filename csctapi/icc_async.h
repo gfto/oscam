@@ -28,13 +28,6 @@
 #include "atr.h"
 
 /*
- * Exported constants definition
- */
-
-#define ATR_TIMEOUT			1000
-#define DEFAULT_BAUDRATE	9600
-
-/*
  * Exported types definition
  */
 

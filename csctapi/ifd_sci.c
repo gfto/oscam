@@ -15,6 +15,7 @@
 #include "sci_global.h"
 #include "sci_ioctl.h"
 
+#undef ATR_TIMEOUT
 #define ATR_TIMEOUT   800
 
 #define OK 		0 
