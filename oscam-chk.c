@@ -393,6 +393,10 @@ int32_t chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
 static int32_t chk_chid(ECM_REQUEST *er, FTAB *fchid, char *type, char *name)
 {
   int32_t rc=1, i, j, found_caid=0;
+  if (!er->chid){
+	if (er->caid == 0x100 && er->prid == 0x00006a) er->chid = b2i(2, er->ecm+7);
+    cs_log("******** CDS NL SECA2/NAGRA fix: Add CHID 0100:%06X to the answering reader(s) ********",er->chid);
+  }
 
   //if( (er->caid & 0xFF00)!=0x600 ) return 1; //chid needed for 1722 and other systems!
   if( !er->chid ) return 1;
