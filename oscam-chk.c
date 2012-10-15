@@ -659,7 +659,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
 
 
   // CDS NL: check for right seca type
-  cs_log("er->ecm[8] == %02X, er->ecm[9]= %02X",er->ecm[8], er->ecm[9]);
+  
   if (!is_network_reader(rdr) && er->caid == 0x100 && er->prid == 0x00006a && er->ecm[8] != 0x00 && er->ecm[9] != 0x00){
 		if (er->ecm[8] == 0x00 && rdr->secatype == 2){
 			cs_debug_mask(D_TRACE,"Error: this is a nagra/mediaguard3 ECM and readertype is seca2!");
