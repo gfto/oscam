@@ -230,7 +230,10 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
   	char path[255];
   	if ( (strlen(tpl_getFilePathInSubdir(cfg.http_tpl, subdir, name, ".tpl", path, 255)) > 0 && file_exists(path))
       || (strlen(subdir) > 0
-       && strlen(tpl_getFilePathInSubdir(cfg.http_tpl, ""    , name, ".tpl", path, 255)) > 0 && file_exists(path))) {
+#ifdef TOUCH
+           && strcmp(subdir, TOUCH_SUBDIR)
+#endif
+           && strlen(tpl_getFilePathInSubdir(cfg.http_tpl, ""    , name, ".tpl", path, 255)) > 0 && file_exists(path))) {
 			FILE *fp;
 			char buffer[1024];
 			memset(buffer, 0, sizeof(buffer));
