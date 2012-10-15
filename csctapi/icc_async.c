@@ -373,7 +373,8 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, ui
 	int32_t ret;
 
 	if (reader->crdr.card_write) {
-		return reader->crdr.card_write(reader, command, rsp, lr, command_len);
+		call(reader->crdr.card_write(reader, command, rsp, lr, command_len));
+		return OK;
 	}
 
 	LOCK_SC8IN1;
