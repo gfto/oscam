@@ -278,8 +278,9 @@ static int32_t pcsc_check_card_inserted(struct s_reader *pcsc_reader)
 }
 
 static int32_t pcsc_get_status(struct s_reader *reader, int32_t *in) {
-    *in = pcsc_check_card_inserted(reader) == OK;
-    return *in;
+    int32_t ret = pcsc_check_card_inserted(reader);
+    *in = ret == OK; // *in is returned to reader-common, where ERROR=0, OK=1
+    return ret;
 }
 
 static int32_t pcsc_close(struct s_reader *pcsc_reader)
