@@ -209,7 +209,7 @@ static int32_t pcsc_activate(struct s_reader *reader, struct s_ATR *atr)
 {
     unsigned char atrarr[ATR_MAX_SIZE];
     uint16_t atr_size = 0;
-    if (pcsc_activate_card(reader, atrarr, &atr_size)) {
+    if (pcsc_activate_card(reader, atrarr, &atr_size) == OK) {
         if (ATR_InitFromArray(atr, atrarr, atr_size) == ATR_OK)
             return OK;
         else
