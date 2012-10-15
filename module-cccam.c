@@ -1193,6 +1193,10 @@ static int8_t cc_request_timeout(struct s_client *cl)
  */
 int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	struct s_reader *rdr = cl->reader;
+	
+	if (er->caid == 0x100 && er->prid == 0x00006a){ // cds nl add fix so mismatch between ecm and secatype reader wont set channel on sid blacklist 
+		er->chid = b2i(2, er->ecm+7); // not quite right but good enough to function, its also registered this way in module-stat 
+	}
 
 	//cs_debug_mask(D_TRACE, "%s cc_send_ecm", getprefix());
 	if (!rdr->tcp_connected)

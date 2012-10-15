@@ -213,9 +213,11 @@ static int32_t get_prov_index(struct s_reader * rdr, const uint8_t *provid)	//re
 
 static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
-	if (er->ecm[3] == 0x00 && er->ecm[4] == 0x6a) { //provid 006A = CDNL uses seca2/seca3 simulcrypt on same caid
+	if (er->ecm[3] == 0x00 && er->ecm[4] == 0x6a) { //provid 006A = CDS NL uses seca2 and nagra/mediaguard3 crypt on same caid/provid only ecmpid is different
 		int seca_version = reader->card_atr[9]&0X0F; //Get seca cardversion from cardatr
 		if ((seca_version == 7) || (seca_version == 10)) { // we only proces V7 or V10 cards from CDS NL
+			if (seca_version == 7) reader->secatype = 2; // set the type of this reader to seca2
+			if (seca_version == 10) reader->secatype = 3; // set the type of this reader to nagra/mediaguard3
 			int ecm_type = seca_version; //assume ecm type same as card in reader
 			if (er->ecm[8] == 0x00) { //this is a mediaguard3 ecm request
 				ecm_type = 10; //flag it!
