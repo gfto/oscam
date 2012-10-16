@@ -1165,19 +1165,23 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 	if (reader->typ == R_SMART)
 		SR_WriteSettings(reader, (uint16_t) atr_f_table[FI], (unsigned char)d, (unsigned char)EGT, (unsigned char)reader->protocol_type, reader->convention);
 #endif
-	if (reader->mhz > 2000)
-		if (reader->mhz != 8300)
-			rdr_log(reader, "Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz",
+	if (reader->mhz > 2000){
+		if (reader->mhz != 8300){
+			rdr_log(reader, "PLL reader: cardfrequency advertised by ATR is %i Mhz, so can only clock it to %.2f Mhz (nearest to reader cardmhz setting!)",
 				atr_fs_table[FI] / 1000000,
 				(float) reader->mhz / reader->divider / 100);
-		else
-			rdr_log(reader, "Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz",
+		}
+		else {
+			rdr_log(reader, "DM7025 PLL: cardfrequency advertised by ATR is %i Mhz, so can only clock it to %.2f Mhz (nearest to reader cardmhz setting!)",
 				atr_fs_table[FI] / 1000000,
 				(float) reader->cardmhz / 100);
-	else
-		rdr_log(reader, "Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz",
+		}
+	}
+	else{
+		rdr_log(reader, "Cardfrequency advertised by ATR is %i Mhz, set clock of readerdevice to %.2f Mhz as specified by user in reader MHZ setting",
 			atr_fs_table[FI] / 1000000,
 				(float) reader->mhz / 100);
+	}
 
 	//Communicate to T1 card IFSD -> we use same as IFSC
 	if ((reader->protocol_type == ATR_PROTOCOL_TYPE_T1) && (reader->ifsc != DEFAULT_IFSC)) {
