@@ -325,7 +325,7 @@ int32_t SR_Reset (struct s_reader *reader, ATR *atr)
             EnableSmartReader(reader, reader->sr_config->fs/10000, reader->sr_config->F, (unsigned char)reader->sr_config->D, reader->sr_config->N, reader->sr_config->T, reader->sr_config->inv,parity[i]);
         }
         // parse atr
-        if(ATR_InitFromArray (atr, data, ret) == ATR_OK) {
+        if(ATR_InitFromArray (atr, data, ret) != ERROR) {
             rdr_debug_mask(reader, D_DEVICE, "SR: ATR parsing OK");
             atr_ok=OK;
             if(i==3) {
@@ -520,7 +520,7 @@ int32_t SR_FastReset_With_ATR(struct s_reader *reader, ATR *atr)
     ret = smart_read(reader,data, ATR_MAX_SIZE,1);
 
     // parse atr
-	if(ATR_InitFromArray (atr, data, ret) == ATR_OK) {
+	if(ATR_InitFromArray (atr, data, ret) != ERROR) {
 		rdr_debug_mask(reader, D_DEVICE, "SR: ATR parsing OK");
 		atr_ok=OK;
 	}

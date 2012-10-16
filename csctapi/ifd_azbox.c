@@ -81,7 +81,7 @@ int32_t Azbox_Reset(struct s_reader *reader, ATR *atr)
   tmp[0] = 1;
 
   int32_t atr_len = ioctl(reader->handle, SCARD_IOC_CHECKCARD, &tmp);
-  if (ATR_InitFromArray(atr, tmp, atr_len) != ATR_OK)
+  if (ATR_InitFromArray(atr, tmp, atr_len) == ERROR)
     return 0;
 
    cs_sleepms(500);

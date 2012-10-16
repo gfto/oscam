@@ -104,7 +104,7 @@ int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
 	ret = cnxt_smc_get_atr (specdev()->handle, buf, &n);
 	coolapi_check_error("cnxt_smc_get_atr", ret);
 
-	call (!ATR_InitFromArray (atr, buf, n) == ATR_OK);
+	call (!ATR_InitFromArray (atr, buf, n) != ERROR);
 	{
 		cs_sleepms(50);
 		return OK;

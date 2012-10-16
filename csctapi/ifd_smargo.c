@@ -161,7 +161,7 @@ static int32_t smargo_reset(struct s_reader *reader, ATR *atr) {
 		if((buf[0]!=0x3B && buf[0]!=0x03 && buf[0]!=0x3F) || (buf[1]==0xFF && buf[2]==0x00))
 			continue; // this is not a valid ATR
 
-		if (ATR_InitFromArray (atr, buf, n) == ATR_OK)
+		if (ATR_InitFromArray (atr, buf, n) != ERROR)
 			ret = OK;
 
 		if (ret == OK)
