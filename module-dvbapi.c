@@ -1264,9 +1264,6 @@ void request_cw(struct s_client *client, ECM_REQUEST *er)
 	format_ecm(er, buf, ECM_FMT_LEN);
 	cs_debug_mask(D_DVBAPI, "dvbapi request cw for %s", buf);
 #endif
-	if (er->caid == 0x100 && er->prid == 0x00006a){ // cds nl add fix so mismatch between ecm and secatype reader wont set channel on sid blacklist 
-		er->chid = b2i(2, er->ecm+7); // not quite right but good enough to function, its also registered this way in module-stat 
-	}
 	get_cw(client, er);
 }
 
