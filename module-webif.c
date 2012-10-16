@@ -2210,6 +2210,12 @@ static void clear_system_stats(void) {
 	cacheex_clear_client_stats(first_client);
 }
 
+static bool picon_exists(uint16_t caid, uint16_t srvid) {
+	char picon_name[16], path[255];
+	snprintf(picon_name, sizeof(picon_name) - 1, "IC_%04X_%04X", caid, srvid);
+	return strlen(tpl_getTplPath(picon_name, cfg.http_tpl, path, sizeof(path) - 1)) && file_exists(path);
+}
+
 static char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
 	struct s_auth *account;
 	struct s_client *cl;
@@ -2459,8 +2465,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				if(latestclient){
 					tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", latestclient->last_caid);
 					tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", latestclient->last_srvid);
-
-					if (cfg.http_showpicons) {
+					if (cfg.http_showpicons && picon_exists(latestclient->last_caid, latestclient->last_srvid)) {
 						tpl_printf(vars, TPLADD, "LASTCHANNEL",
 							"<img class=\"clientpicon\" src=\"image?i=IC_%04X_%04X\" alt=\"%s\" title=\"%s\">",
 							latestclient->last_caid, latestclient->last_srvid, lastchan, lastchan);
