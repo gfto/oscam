@@ -4226,7 +4226,11 @@ static char *send_oscam_image(struct templatevars *vars, FILE *f, struct uripara
 			}
 		}
 	}
-	return "0";
+	// Return file not found
+	const char *not_found = "File not found.\n";
+	send_headers(f, 404, "Not Found", NULL, "text/plain", 0, strlen(not_found), (char *)not_found, 0);
+	webif_write_raw((char *)not_found, f, strlen(not_found));
+	return "1";
 }
 
 static char *send_oscam_graph(struct templatevars *vars) {
