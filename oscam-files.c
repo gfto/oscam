@@ -53,13 +53,8 @@ int32_t cs_readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result) {
 }
 
 /* Return 1 if the file exists, else 0 */
-int32_t file_exists(const char *filename) {
-	FILE *file = fopen(filename, "r");
-	if (file) {
-		fclose(file);
-		return 1;
-	}
-	return 0;
+bool file_exists(const char *filename) {
+	return access(filename, R_OK) == 0;
 }
 
 /* Copies a file from srcfile to destfile. If an error occured before writing, -1 is returned, else -2. On success, 0 is returned.*/

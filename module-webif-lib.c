@@ -786,7 +786,7 @@ void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uin
 		filen = 2;
 	}
 
-	if(strlen(filename) > 0 && file_exists(filename) == 1){
+	if (strlen(filename) > 0 && file_exists(filename)) {
 		struct stat st;
 		stat(filename, &st);
 		moddate = st.st_mtime;
