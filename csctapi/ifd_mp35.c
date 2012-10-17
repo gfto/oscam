@@ -45,8 +45,6 @@ static const struct product { unsigned char code; const char* product_name; } pr
   {0x41, "MP3.5"},
   {0x42, "MP3.6 USB"}};
 
-static unsigned char current_product;
-
 static int32_t mp35_product_info(struct s_reader *reader, unsigned char high, unsigned char low, unsigned char code, MP35_info *info)
 {
   int32_t i;
@@ -75,11 +73,10 @@ static int32_t mp35_reader_init(struct s_reader * reader)
 
   rdr_log(reader, "%s: started", __func__);
 
-  current_product = 0;
   original_mhz = reader->mhz;
   original_cardmhz = reader->cardmhz;
 
-  // MP3.5 commands should be always be written using 9600 baud at 3.58MHz
+  // MP3.5 commands should be always be written using 9600 baud at 3.57MHz
   reader->mhz = 357;
   reader->cardmhz = 357;
 
@@ -92,6 +89,7 @@ static int32_t mp35_reader_init(struct s_reader * reader)
   IO_Serial_DTR_Clr(reader);
   IO_Serial_DTR_Set(reader);
   cs_sleepms(200);
+  IO_Serial_RTS_Set(reader);
   IO_Serial_Flush(reader);
 
   memset(rec_buf, 0x00, sizeof(rec_buf));
@@ -171,7 +169,7 @@ static int32_t mp35_reader_init(struct s_reader * reader)
       }
       memcpy(info, rec_buf, info_len);
       info[info_len] = '\0';
-      rdr_log(reader, "%s: FW Info - %s", info, __func__);
+      rdr_log(reader, "%s: FW Info - %s", __func__, info);
     }
 
     memset(rec_buf, 0x00, sizeof(rec_buf));
@@ -192,18 +190,17 @@ static int32_t mp35_reader_init(struct s_reader * reader)
       call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 2, phoenix_mode));
       original_mhz = 357;
     }
+    tcdrain(reader->handle);
   }
 
   // We might have switched oscillator here
   reader->mhz = original_mhz;
   reader->cardmhz = original_cardmhz;
 
-  current_product = reader_info.current_product;
-
   /* Default serial port settings */
   if (reader->atr[0] == 0) {
-    call(IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, NULL, NULL));
     IO_Serial_Flush(reader);
+    call(IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, NULL, NULL));
   }
 
   return OK;
@@ -213,11 +210,7 @@ static int32_t mp35_close(struct s_reader * reader)
 {
   rdr_debug_mask (reader, D_IFD, "Closing MP35 device %s", reader->device);
 
-  if(current_product != 0x10) // USB Phoenix
-  {
-    IO_Serial_DTR_Clr(reader);
-  }
-
+  IO_Serial_DTR_Clr(reader);
   IO_Serial_Close(reader);
 
   return OK;
