@@ -168,7 +168,7 @@ static int32_t pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, uint
 {
     LONG rv;
     DWORD dwState, dwAtrLen, dwReaderLen;
-    unsigned char pbAtr[64];
+    unsigned char pbAtr[ATR_MAX_SIZE];
     char tmp[sizeof(pbAtr)*3+1];
 
     rdr_debug_mask(pcsc_reader, D_DEVICE, "PCSC initializing card in (%s)", pcsc_reader->pcsc_name);
