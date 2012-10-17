@@ -222,7 +222,7 @@ static int32_t pcsc_check_card_inserted(struct s_reader *pcsc_reader)
 {
     DWORD dwState, dwAtrLen, dwReaderLen;
     unsigned char pbAtr[64];
-    LONG rv;
+    SCARDHANDLE rv;
 
     dwAtrLen = sizeof(pbAtr);
     rv=0;
@@ -252,6 +252,7 @@ static int32_t pcsc_check_card_inserted(struct s_reader *pcsc_reader)
         }
         else if( rv == SCARD_S_SUCCESS ) {
             // we have a card
+            pcsc_reader->hCard = rv;
             pcsc_reader->pcsc_has_card=1;
         }
         else {
