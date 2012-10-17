@@ -143,6 +143,7 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 				if((buf[n]&0x80)==0x80) rdr_debug_mask(reader, D_ATR, "Switching between negotiable mode and specific mode is not possible");
 				else { 
 					rdr_debug_mask(reader, D_ATR, "Switching between negotiable mode and specific mode is possible");
+					// int32_t PPS = 1; Stupid compiler, will need it later on eventually
 				}
 				if((buf[n]&0x01)==0x01) rdr_debug_mask(reader, D_ATR, "Transmission parameters implicitly defined in the interface characters.");
 				else rdr_debug_mask(reader, D_ATR, "Transmission parameters explicitly defined in the interface characters.");
@@ -191,7 +192,8 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 			rdr_debug_mask(reader, D_ATR, "TD%d %02X",protocols,buf[n]);
 			TDi = buf[n];
 			protocolnumber = TDi&0x0F;
-			if (protocolnumber != 0x01) tck = 1;
+			if (protocolnumber == 0x00 || protocolnumber == 0x0E) tck = 0; // T0 and T14 protocol do not use tck byte  (TCK = checksum byte!)
+			if (protocolnumber == 0x01) tck = 1; // T1 protocol tck byte is mandatory, BTW: this code doesnt calculate if the TCK is valid jet... 
 			rdr_debug_mask(reader, D_ATR, "Fetching global interface characters for protocol T%d:", (TDi&0x0F)); // lower nibble contains protocol number
 			protocols++; // there is always 1 protocol T0 in every ATR as per iso defined, max is 16 (numbered 0..15)
 			

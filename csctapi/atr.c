@@ -134,7 +134,7 @@ int32_t ATR_InitFromArray (ATR * atr, const unsigned char atr_buffer[ATR_MAX_SIZ
 			pointer++;
 			TDi = atr->ib[pn][ATR_INTERFACE_BYTE_TD].value = buffer[pointer];
 			atr->ib[pn][ATR_INTERFACE_BYTE_TD].present = 1;
-			(atr->TCK).present = ((TDi & 0x0F) != ATR_PROTOCOL_TYPE_T0);
+			(atr->TCK).present = ((TDi & 0x0F) != ATR_PROTOCOL_TYPE_T0 && (TDi & 0x0F) != ATR_PROTOCOL_TYPE_T14); // T14 has also no TCK byte present
 			if (pn >= ATR_MAX_PROTOCOLS){
 				cs_debug_mask(D_ATR,"ATR is malformed, this ATR reports %d protocols but the maximum value is %d", pn+1, ATR_MAX_PROTOCOLS+1);
 				return (ATR_MALFORMED);
