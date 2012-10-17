@@ -99,49 +99,119 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 	}
 	if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
 	int32_t TDi = buf[n];
-	int32_t historicalbytes = TDi &0x0F;
-	rdr_debug_mask(reader, D_IFD, "ATR historicalbytes should be: %d", historicalbytes);
+	int32_t historicalbytes = TDi&0x0F;
+	rdr_debug_mask(reader, D_ATR, "ATR historicalbytes should be: %d", historicalbytes);
+	rdr_debug_mask(reader, D_ATR, "Fetching global interface characters for protocol T0"); // protocol T0 always aboard!
 	n++;
+	
+	int32_t protocols = 1, tck = 0, protocol, protocolnumber;	// protocols = total protocols on card, tck = checksum byte present, protocol = mandatory protocol
+	int32_t D = 0;												// protocolnumber = TDi uses protocolnumber
+	
 	while (n < SCI_MAX_ATR_SIZE){
-		if ((TDi | 0xEF) == 0xFF){  //TA Present
-			if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;
-			if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
-			rdr_debug_mask(reader, D_IFD, "TA: %02X",buf[n]);
-			n++;
+		if (TDi&0x10){  //TA Present: 							   //The value of TA(i) is always interpreted as XI || UI if i > 2 and T = 15 ='F'in TD(i–1)
+			if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;  //In this case, TA(i) contains the clock stop indicator XI, which indicates the logical
+			if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));		   //state the clockline must assume when the clock is stopped, and the class indicator UI,
+			rdr_debug_mask(reader, D_ATR, "TA%d: %02X",protocols,buf[n]);      //which specifies the supply voltage class.
+			if ((protocols >2) && ((TDi&0x0F)==0x0F)){  // Protocol T15 does not exists, it means mandatory on all ATRs
+				if((buf[n]&0xC0) == 0xC0) rdr_debug_mask(reader, D_ATR, "Clockline low or high on clockstop");
+				if((buf[n]&0xC0) == 0x00) rdr_debug_mask(reader, D_ATR, "Clockline not supported on clockstop");
+				if((buf[n]&0xC0) == 0x40) rdr_debug_mask(reader, D_ATR, "Clockline should be low on clockstop");
+				if((buf[n]&0xC0) == 0x80) rdr_debug_mask(reader, D_ATR, "Clockline should be high on clockstop");
+				if((buf[n]&0x3F) == 0x01) rdr_debug_mask(reader, D_ATR, "Voltage class A 4.5~5.5V");
+				if((buf[n]&0x3F) == 0x02) rdr_debug_mask(reader, D_ATR, "Voltage class B 2.7~3.3V");
+				if((buf[n]&0x3F) == 0x03) rdr_debug_mask(reader, D_ATR, "Voltage class A 4.5~5.5V and class B 2.7~3.3V");
+				if((buf[n]&0x3F) == 0x04) rdr_debug_mask(reader, D_ATR, "Voltage RFU");
+			}
+			if ((protocols >2) && ((TDi&0x0F)==0x01)){  // Protocol T1 specfic (There is always an obsolete T0 protocol!)
+				int32_t ifsc = buf[n];
+				if (ifsc == 0x00) ifsc = 32; //default is 32
+				rdr_debug_mask(reader, D_ATR, "Maximum information field length this card can receive is %d bytes (IFSC)", ifsc);
+			}
+			else {
+				int32_t FI = (buf[n]>>4); // FI is high nibble                  ***** work ETU = (1/D)*(Frequencydivider/cardfrequency) (in seconds!)
+				int32_t F = atr_f_table[FI]; // lookup the frequency divider
+				float fmax = atr_fs_table[FI]; // lookup the max frequency      ***** initial ETU = 372 / initial frequency during atr  (in seconds!)
+				
+				int32_t DI = (buf[n]&0x0F); // DI is low nibble
+				D = atr_d_table[DI]; // lookup the bitrate adjustment (yeah there are floats in it, but in iso only integers!?)
+				rdr_debug_mask(reader, D_ATR, "Advertised max cardfrequency is %.2f (Fmax), frequency divider is %d (F)", fmax/1000000L, F); // High nibble TA1 contains cardspeed
+				rdr_debug_mask(reader, D_ATR, "Bitrate adjustment is %d (D)", D); // Low nibble TA1 contains Bitrateadjustment
+				rdr_debug_mask(reader, D_ATR, "Work ETU = %d nanoseconds", (long int) ((1/D)*(F/fmax)*1000000L)); // And display it...
+				rdr_debug_mask(reader, D_ATR, "Initial ETU = %d nanoseconds", (long int) (372/fmax)*1000000L); // And display it... since D=1 and frequency during ATR fetch might be different!
+			} 
+			if (protocols == 2){
+				if((buf[n]&0x80)==0x80) rdr_debug_mask(reader, D_ATR, "Switching between negotiable mode and specific mode is not possible");
+				else { 
+					rdr_debug_mask(reader, D_ATR, "Switching between negotiable mode and specific mode is possible");
+					int32_t PPS = 1;
+				}
+				if((buf[n]&0x01)==0x01) rdr_debug_mask(reader, D_ATR, "Transmission parameters implicitly defined in the interface characters.");
+				else rdr_debug_mask(reader, D_ATR, "Transmission parameters explicitly defined in the interface characters.");
+				
+				protocol = buf[n]&0x0F;
+				if(protocol) rdr_debug_mask(reader, D_ATR, "Protocol T = %d is to be used!", protocol);
+			}
+			n++; // next interface character
 		}
-		if ((TDi | 0xDF) == 0xFF){	 //TB Present
+		if (TDi&0x20){	 //TB Present
 			if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;
 			if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
-			rdr_debug_mask(reader, D_IFD, "TB: %02X",buf[n]);
-			n++;
+			rdr_debug_mask(reader, D_ATR, "TB%d: %02X",protocols,buf[n]);
+			if ((protocols >2) && ((TDi&0x0F)==0x01)){  // Protocol T1 specfic (There is always an obsolete T0 protocol!)
+				int32_t CWI = (buf[n]&0x0F); // low nibble contains CWI code for the character waiting time CWT
+				int32_t BWI = (buf[n]>>4); // high nibble contains BWI code for the block waiting time BWT
+				int32_t CWT = (1<<CWI) + 11; // in work etu  *** 2^CWI + 11 work etu *** 
+				rdr_debug_mask(reader, D_ATR, "Protocol T1: Character waiting time is %d work etu (CWT)", CWT);
+				int32_t BWT = (int) ((1<<BWI) * 960L * 372L); // divided by frequency and add with 11 work etu *** 2^BWI*960*372/f + 11 work etu ***
+				rdr_debug_mask(reader, D_ATR, "Protocol T1: Block waiting time is %d divided by actual cardfrequency + 11 work etu (BWI)", BWI);
+			}
+			
+			n++; // next interface character
 		}
-		if ((TDi | 0xBF) == 0xFF){	 //TC Present
+		if (TDi&0x40){	 //TC Present
 			if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;
 			if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
-			rdr_debug_mask(reader, D_IFD, "TC: %02X",buf[n]);
-			n++;
+			rdr_debug_mask(reader, D_ATR, "TC%d: %02X",protocols, buf[n]);
+			if ((protocols == 2) && ((TDi&0x0F)==0x00)){
+				int32_t WI = buf[n];
+				rdr_debug_mask(reader, D_ATR, "Protocol T0: work wait time is %d work etu (WWT)", (int) (960*D*WI));
+			}
+			if ((protocols == 2) && ((TDi&0x0F)==0x01)){
+				if(buf[n]&0x01) rdr_debug_mask(reader, D_ATR, "Protocol T1: CRC is used to compute the error detection code"); 
+				else rdr_debug_mask(reader, D_ATR, "Protocol T1: LRC is used to compute the error detection code"); 
+			}
+			if(buf[n]<0xFF) rdr_debug_mask(reader, D_ATR, "Extra guardtime of %d ETU (N)", (int) buf[n]);
+			if(buf[n]==0xFF) rdr_debug_mask(reader, D_ATR, "Protocol T1: Standard 2 ETU guardtime is lowered to 1 ETU");
+			
+			n++; // next interface character
 		}
-		if ((TDi | 0x7F) == 0xFF){	//TD Present, more than 1 protocol?
+		if (TDi&0x80){	//TD Present? Get next TDi there will be a next protocol
 			if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;
 			if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
-			rdr_debug_mask(reader, D_IFD, "TDi %02X",buf[n]);
+			rdr_debug_mask(reader, D_ATR, "TD%d %02X",protocols,buf[n]);
 			TDi = buf[n];
-			n++;
+			protocolnumber = TDi&0x0F;
+			if (protocolnumber != 0x01) tck = 1;
+			rdr_debug_mask(reader, D_ATR, "Fetching global interface characters for protocol T%d:", (TDi&0x0F)); // lower nibble contains protocol number
+			protocols++; // there is always 1 protocol T0 in every ATR as per iso defined, max is 16 (numbered 0..15)
+			
+			n++; // next interface character
 		}
 		else break;
 	}
 	int32_t atrlength = 0;
 	atrlength += n;
 	atrlength += historicalbytes;
-	rdr_debug_mask(reader, D_IFD, "Total ATR Length including %d historical bytes should be: %d",historicalbytes,atrlength);
+	rdr_debug_mask(reader, D_ATR, "Total ATR Length including %d historical bytes should be %d",historicalbytes,atrlength);
+	rdr_debug_mask(reader, D_ATR, "Total protocols in this ATR is %d",protocols);
 
-	while(n<atrlength){
+	while(n < atrlength + tck){ // read all the rest and mandatory tck byte if other protocol than T0 is used.
 		if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;	
 		if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
 		n++;
 	}
 
-	if (n!=atrlength) cs_log("Warning reader %s: Total ATR characters received is: %d instead of expected %d", reader->label, n, atrlength);
+	if (n!=atrlength+tck) cs_log("Warning reader %s: Total ATR characters received is: %d instead of expected %d", reader->label, n, atrlength+tck);
 
 	if ((buf[0] !=0x3B) && (buf[0] != 0x3F) && (n>9 && !memcmp(buf+4, "IRDETO", 6))) //irdeto S02 reports FD as first byte on dreambox SCI, not sure about SH4 or phoenix
 		buf[0] = 0x3B;
