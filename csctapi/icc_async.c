@@ -1184,7 +1184,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 	}
 
 	//Communicate to T1 card IFSD -> we use same as IFSC
-	if ((reader->protocol_type == ATR_PROTOCOL_TYPE_T1) && (reader->ifsc != DEFAULT_IFSC)) {
+	if ((reader->protocol_type == ATR_PROTOCOL_TYPE_T1) && (reader->ifsc != DEFAULT_IFSC) && (reader->typ != R_PCSC)) { // dont use for PCSC readers!!
 		unsigned char rsp[CTA_RES_LEN];
 		uint16_t lr=0;
 		int32_t ret;
