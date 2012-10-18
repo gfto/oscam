@@ -51,7 +51,7 @@ int32_t write_services(void)
 			if (i==0) fprintf(f,"%04X", sidtab->srvid[i]);
 			else fprintf(f,",%04X", sidtab->srvid[i]);
 		}
-		fprintf(f,"\n");
+		fprintf(f,"\n\n");
 		sidtab=sidtab->next;
 	}
 
