@@ -297,6 +297,7 @@ static int32_t pcsc_close(struct s_reader *pcsc_reader)
 void cardreader_pcsc(struct s_cardreader *crdr)
 {
     crdr->desc         = "pcsc";
+    crdr->skip_extra_atr_parsing = true;
     crdr->typ          = R_PCSC;
     crdr->reader_init  = pcsc_init;
     crdr->get_status   = pcsc_get_status;

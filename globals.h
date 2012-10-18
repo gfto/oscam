@@ -699,6 +699,7 @@ struct s_cardreader
 	//io_serial config
 	int8_t			flush;
 	int8_t			read_written; 		// 1 = written bytes has to read from device
+	bool			skip_extra_atr_parsing;
 };
 
 struct s_cardsystem {

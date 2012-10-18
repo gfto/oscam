@@ -281,6 +281,9 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 	else {
 		if (reader->crdr.active==1 && reader->crdr.activate) {
 			call(reader->crdr.activate(reader, atr));
+			if (reader->crdr.skip_extra_atr_parsing) {
+				return OK;
+			}
 		} else {
 
 		switch(reader->typ) {
