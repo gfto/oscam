@@ -2212,6 +2212,8 @@ static void clear_system_stats(void) {
 
 static bool picon_exists(uint16_t caid, uint16_t srvid) {
 	char picon_name[16], path[255];
+	if (!cfg.http_tpl)
+		return false;
 	snprintf(picon_name, sizeof(picon_name) - 1, "IC_%04X_%04X", caid, srvid);
 	return strlen(tpl_getTplPath(picon_name, cfg.http_tpl, path, sizeof(path) - 1)) && file_exists(path);
 }
