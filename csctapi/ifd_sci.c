@@ -89,7 +89,7 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 	}
 	int32_t inverse = 0; // card is using inversion?  1=inversion / 0= no inversion
 	if (buf[0] == 0x3F){ // 3F: card is using inverse convention, 3B = card is using direct convention
-		inverse = 1;
+		inverse = 0; // tryfix: inverse convention, does it apply to ATR?
 		rdr_debug_mask(reader, D_IFD, "This card uses inverse convention");
 	}
 	else rdr_debug_mask(reader, D_IFD, "This card uses direct convention");
