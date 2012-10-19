@@ -87,9 +87,7 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 		rdr_debug_mask(reader, D_IFD, "ERROR: no characters found in ATR");
 		return ERROR;
 	}
-	int32_t inverse = 0; // card is using inversion?  1=inversion / 0= no inversion
 	if (buf[0] == 0x3F){ // 3F: card is using inverse convention, 3B = card is using direct convention
-		inverse = 0; // tryfix: inverse convention, does it apply to ATR?
 		rdr_debug_mask(reader, D_IFD, "This card uses inverse convention");
 	}
 	else rdr_debug_mask(reader, D_IFD, "This card uses direct convention");
@@ -98,7 +96,6 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 		rdr_debug_mask(reader, D_IFD, "ERROR: only 1 character found in ATR");
 		return ERROR;
 	}
-	if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
 	int32_t T0= buf[n];
 	int32_t historicalbytes = T0&0x0F; // num of historical bytes in lower nibble of T0 byte
 	rdr_debug_mask(reader, D_ATR, "ATR historicalbytes should be: %d", historicalbytes);
@@ -111,7 +108,7 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 	while (n < SCI_MAX_ATR_SIZE){
 		if (TDi&0x10){  //TA Present: 							   //The value of TA(i) is always interpreted as XI || UI if i > 2 and T = 15 ='F'in TD(i–1)
 			if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;  //In this case, TA(i) contains the clock stop indicator XI, which indicates the logical
-			if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));		   //state the clockline must assume when the clock is stopped, and the class indicator UI,
+																  //state the clockline must assume when the clock is stopped, and the class indicator UI,
 			rdr_debug_mask(reader, D_ATR, "TA%d: %02X",protocols,buf[n]);      //which specifies the supply voltage class.
 			if ((protocols >2) && ((TDi&0x0F)==0x0F)){  // Protocol T15 does not exists, it means mandatory on all ATRs
 				if((buf[n]&0xC0) == 0xC0) rdr_debug_mask(reader, D_ATR, "Clockline low or high on clockstop");
@@ -156,7 +153,6 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 		}
 		if (TDi&0x20){	 //TB Present
 			if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;
-			if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
 			rdr_debug_mask(reader, D_ATR, "TB%d: %02X",protocols,buf[n]);
 			if ((protocols >2) && ((TDi&0x0F)==0x01)){  // Protocol T1 specfic (There is always an obsolete T0 protocol!)
 				int32_t CWI = (buf[n]&0x0F); // low nibble contains CWI code for the character waiting time CWT
@@ -172,7 +168,6 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 		}
 		if (TDi&0x40){	 //TC Present
 			if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;
-			if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
 			rdr_debug_mask(reader, D_ATR, "TC%d: %02X",protocols, buf[n]);
 			if ((protocols == 2) && ((TDi&0x0F)==0x00)){
 				int32_t WI = buf[n];
@@ -182,14 +177,13 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 				if(buf[n]&0x01) rdr_debug_mask(reader, D_ATR, "Protocol T1: CRC is used to compute the error detection code"); 
 				else rdr_debug_mask(reader, D_ATR, "Protocol T1: LRC is used to compute the error detection code"); 
 			}
-			if((protocols == 1) && buf[n]<0xFF) rdr_debug_mask(reader, D_ATR, "Extra guardtime of %d ETU (N)", (int) buf[n]);
-			if((protocols == 1) && buf[n]==0xFF) rdr_debug_mask(reader, D_ATR, "Protocol T1: Standard 2 ETU guardtime is lowered to 1 ETU");
+			if((protocols == 1) && (buf[n]<0xFF)) rdr_debug_mask(reader, D_ATR, "Extra guardtime of %d ETU (N)", (int) buf[n]);
+			if((protocols == 1) && (buf[n]==0xFF)) rdr_debug_mask(reader, D_ATR, "Protocol T1: Standard 2 ETU guardtime is lowered to 1 ETU");
 			
 			n++; // next interface character
 		}
 		if (TDi&0x80){	//TD Present? Get next TDi there will be a next protocol
 			if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;
-			if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
 			rdr_debug_mask(reader, D_ATR, "TD%d %02X",protocols,buf[n]);
 			TDi = buf[n];
 			protocolnumber = TDi&0x0F;
@@ -211,7 +205,6 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 
 	while(n < atrlength + tck){ // read all the rest and mandatory tck byte if other protocol than T0 is used.
 		if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;	
-		if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
 		n++;
 	}
 	
@@ -220,13 +213,6 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 	if ((buf[0] !=0x3B) && (buf[0] != 0x3F) && (n>9 && !memcmp(buf+4, "IRDETO", 6))) //irdeto S02 reports FD as first byte on dreambox SCI, not sure about SH4 or phoenix
 		buf[0] = 0x3B;
 		
-	int32_t t=n; // just a counter	
-	while ((t>0) && inverse){ // in case of inverse atr invert whole readed ATR again for parsing by ATR_InitFromArray
-		buf[t] = ~(INVERT_BYTE (buf[t]));
-		t--;
-	}
-
-
 	statusreturn = ATR_InitFromArray (atr, buf, n); // n should be same as atrlength but in case of atr read error its less so do not use atrlenght here!
 
 	if (statusreturn == ATR_MALFORMED) cs_log("Warning reader %s: ATR is malformed, you better inspect it with a -d2 log!", reader->label);
