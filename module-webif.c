@@ -407,6 +407,19 @@ static char *send_oscam_config_loadbalancer(struct templatevars *vars, struct ur
 	free_mk_t(value);
 
 	if (cfg.lb_auto_betatunnel) tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNEL", "selected");
+	if (cfg.lb_auto_betatunnel_mode == 1) {
+		tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNELMODE1", "selected");
+	} else if (cfg.lb_auto_betatunnel_mode == 2) {
+		tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNELMODE2", "selected");
+	} else if (cfg.lb_auto_betatunnel_mode == 3) {
+		tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNELMODE3", "selected");
+	} else if (cfg.lb_auto_betatunnel_mode == 4) {
+		tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNELMODE4", "selected");
+	} else if (cfg.lb_auto_betatunnel_mode == 5) {
+		tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNELMODE5", "selected");
+	} else if (cfg.lb_auto_betatunnel_mode == 6) {
+		tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNELMODE6", "selected");
+	}
 	tpl_printf(vars, TPLADD, "LBPREFERBETA", "%d", cfg.lb_auto_betatunnel_prefer_beta);
 
 	if (cfg.lb_auto_timeout) tpl_addVar(vars, TPLADD, "LBAUTOTIMEOUT", "selected");

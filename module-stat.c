@@ -750,6 +750,17 @@ static void convert_to_beta_int(ECM_REQUEST *er, uint16_t caid_to)
 	er->btun = 2; //marked as auto-betatunnel converted. Also for fixing recursive lock in get_cw
 }
 
+
+static void convert_to_nagra_int(ECM_REQUEST *er, uint16_t caid_to)
+{
+	unsigned char md5tmp[MD5_DIGEST_LENGTH];
+	convert_to_nagra(er->client, er, caid_to);
+	// update ecmd5 for store ECM in cache
+	memcpy(er->ecmd5, MD5(er->ecm+3, er->l-3, md5tmp), CS_ECMSTORESIZE);
+	cacheex_update_hash(er);
+	er->btun = 2; //marked as auto-betatunnel converted. Also for fixing recursive lock in get_cw
+}
+
 /**
  * Gets best reader for caid/prid/srvid/ecmlen.
  * Best reader is evaluated by lowest avg time but only if ecm_count > cfg.lb_min_ecmcount (5)
@@ -791,16 +802,22 @@ void stat_get_best_reader(ECM_REQUEST *er)
 			int32_t weight;
 			int32_t ntime;
 
-			READER_STAT *stat_nagra;
-			READER_STAT *stat_beta;
+			READER_STAT *stat_nagra = NULL;
+			READER_STAT *stat_beta = NULL;
 
 			//What is faster? nagra or beta?
+			int8_t isn;
+			int8_t isb;
+			int8_t overall_valid = 0;
+			int8_t overall_nvalid = 0;
 			for(ea = er->matching_rdr; ea; ea = ea->next) {
+				isn = 0;
+				isb = 0;
 				rdr = ea->reader;
 				weight = rdr->lb_weight;
 				if (weight <= 0) weight = 1;
 
-				stat_nagra = get_stat(rdr, &q);
+
 
 				//Check if betatunnel is allowed on this reader:
 				int8_t valid = chk_ctab(caid_to, &rdr->ctab) //Check caid
@@ -809,9 +826,20 @@ void stat_get_best_reader(ECM_REQUEST *er)
 					&& (!rdr->caid || rdr->caid==caid_to); //rdr-caid
 				if (valid) {
 					stat_beta = get_stat(rdr, &qbeta);
+					overall_valid = 1;
 				}
-				else
-					stat_beta = NULL;
+				//else
+					//stat_beta = NULL;
+
+				//Check if nagra is allowed on this reader:
+				int8_t nvalid = chk_ctab(er->caid, &rdr->ctab)//Check caid
+					&& chk_rfilter2(er->caid, 0, rdr) //Ident
+					&& chk_srvid_by_caid_prov_rdr(rdr, er->caid, 0) //Services
+					&& (!rdr->caid || rdr->caid==er->caid); //rdr-caid
+				if (nvalid) {
+					stat_nagra = get_stat(rdr, &q);
+					overall_nvalid = 1;
+				}
 
 				//calculate nagra data:
 				if (stat_nagra && stat_nagra->rc == E_FOUND) {
@@ -828,39 +856,33 @@ void stat_get_best_reader(ECM_REQUEST *er)
 				}
 
 				//Uncomplete reader evaluation, we need more stats!
-				if (stat_nagra)
+				if (stat_nagra){
 					needs_stats_nagra = 0;
-				if (stat_beta)
+					isn = 1;
+				}
+				if (stat_beta){
 					needs_stats_beta = 0;
+					isb = 1;
+				}
+				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel valid %d, stat_nagra %d, stat_beta %d, (%04X,%04X)", valid, isn, isb ,rdr->caid,caid_to);
 			}
 
-			if (cfg.lb_auto_betatunnel_prefer_beta) {
+			if (!overall_valid)//we have no valid betatunnel reader also we don't needs stats (converted)
+				needs_stats_beta = 0;
+
+			if (!overall_nvalid) //we have no valid reader also we don't needs stats (unconverted)
+				needs_stats_nagra = 0;
+
+			if (cfg.lb_auto_betatunnel_prefer_beta && time_beta){
 				time_beta = time_beta * cfg.lb_auto_betatunnel_prefer_beta/100;
 				if (time_beta <= 0)
 				        time_beta = 1;
                         }
 
-			//if we needs stats, we send 2 ecm requests: 18xx and 17xx:
 			if (needs_stats_nagra || needs_stats_beta) {
 				cs_debug_mask(D_LB, "loadbalancer-betatunnel %04X:%04X (%d/%d) needs more statistics...", er->caid, caid_to,
 				needs_stats_nagra, needs_stats_beta);
-				if (needs_stats_beta) {
-					//Duplicate Ecms for gettings stats:
-//					ECM_REQUEST *converted_er = get_ecmtask();
-//					memcpy(converted_er->ecm, er->ecm, er->l);
-//					converted_er->l = er->l;
-//					converted_er->caid = er->caid;
-//					converted_er->srvid = er->srvid;
-//					converted_er->chid = er->chid;
-//					converted_er->pid = er->pid;
-//					converted_er->prid = er->prid;
-//					if (er->src_data) { //camd35:
-//						int size = 0x34 + 20 + er->l;
-//						if (cs_malloc(&converted_er->src_data, size))
-//							memcpy(converted_er->src_data, er->src_data, size);
-//					}
-//					convert_to_beta_int(converted_er, caid_to);
-//					get_cw(converted_er->client, converted_er);
+				if (needs_stats_beta) { //try beta first
 
 					convert_to_beta_int(er, caid_to);
 					get_stat_query(er, &q);
@@ -876,8 +898,152 @@ void stat_get_best_reader(ECM_REQUEST *er)
 			}
 			// else nagra is faster or no beta, so continue unmodified
 		}
+	} else
+
+
+	if (cfg.lb_auto_betatunnel && (er->caid == 0x1702 || er->caid == 0x1722) && er->ocaid == 0x0000 && er->l) { //beta
+		uint16_t caid_to = get_betatunnel_caid_to(er->caid);
+		if (caid_to) {
+			int8_t needs_stats_nagra = 1, needs_stats_beta = 1;
+
+			//Clone query parameters for beta:
+			STAT_QUERY qnagra = q;
+			qnagra.caid = caid_to;
+			qnagra.prid = 0;
+			qnagra.ecmlen = er->ecm[2] - 7;
+
+			int32_t time_nagra = 0;
+			int32_t time_beta = 0;
+			int32_t weight;
+			int32_t time;
+
+			READER_STAT *stat_nagra = NULL;
+			READER_STAT *stat_beta = NULL;
+			//What is faster? nagra or beta?
+			int8_t isb;
+			int8_t isn;
+			int8_t overall_valid = 0;
+			int8_t overall_bvalid = 0;
+			for(ea = er->matching_rdr; ea; ea = ea->next) {
+				isb = 0;
+				isn = 0;
+				rdr = ea->reader;
+				weight = rdr->lb_weight;
+				if (weight <= 0) weight = 1;
+
+
+
+				//Check if reverse betatunnel is allowed on this reader:
+				int8_t valid = chk_ctab(caid_to, &rdr->ctab)//, rdr->typ) //Check caid
+					&& chk_rfilter2(caid_to, 0, rdr) //Ident
+					&& chk_srvid_by_caid_prov_rdr(rdr, caid_to, 0) //Services
+					&& (!rdr->caid || rdr->caid==caid_to); //rdr-caid
+				if (valid) {
+					stat_nagra = get_stat(rdr, &qnagra);
+					overall_valid = 1;
+				}
+				//else
+					//stat_nagra = NULL;
+
+				//Check if beta is allowed on this reader:
+				int8_t bvalid = chk_ctab(er->caid, &rdr->ctab)//, rdr->typ) //Check caid
+					&& chk_rfilter2(er->caid, 0, rdr) //Ident
+					&& chk_srvid_by_caid_prov_rdr(rdr, er->caid, 0) //Services
+					&& (!rdr->caid || rdr->caid==er->caid); //rdr-caid
+				if (bvalid) {
+					stat_beta = get_stat(rdr, &q);
+					overall_bvalid = 1;
+				}
+
+				//calculate nagra data:
+				if (stat_nagra && stat_nagra->rc == E_FOUND) {
+					time = stat_nagra->time_avg*100/weight;
+					if (!time_nagra || time < time_nagra)
+						time_nagra = time;
+				}
+
+				//calculate beta data:
+				if (stat_beta && stat_beta->rc == E_FOUND) {
+					time = stat_beta->time_avg*100/weight;
+					if (!time_beta || time < time_beta)
+						time_beta = time;
+				}
+
+				//Uncomplete reader evaluation, we need more stats!
+				if (stat_beta){
+					needs_stats_beta = 0;
+					isb = 1;
+				}
+				if (stat_nagra){
+					needs_stats_nagra = 0;
+					isn = 1;
+				}
+				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel valid %d, stat_beta %d, stat_nagra %d, (%04X,%04X)", valid, isb, isn ,rdr->caid,caid_to);
+			}
+
+			if (!overall_valid)//we have no valid reverse betatunnel reader also we don't needs stats (converted)
+				needs_stats_nagra = 0;
+
+			if (!overall_bvalid) //we have no valid reader also we don't needs stats (unconverted)
+				needs_stats_beta = 0;
+
+			if (cfg.lb_auto_betatunnel_prefer_beta && time_beta) {
+				time_beta = time_beta * cfg.lb_auto_betatunnel_prefer_beta/100;
+				if (time_beta < 0)
+				        time_beta = 0;
+                        }
+
+			//if we needs stats, we send 2 ecm requests: 18xx and 17xx:
+			if (needs_stats_nagra || needs_stats_beta) {
+				cs_debug_mask(D_LB, "loadbalancer-betatunnel %04X:%04X (%d/%d) needs more statistics...", er->caid, caid_to,
+				needs_stats_beta, needs_stats_nagra);
+				if (needs_stats_nagra){// try nagra frist
+
+					convert_to_nagra_int(er, caid_to);
+					get_stat_query(er, &q);
+
+				}
+			}
+			else if (time_nagra && (!time_beta || time_nagra <= time_beta)) {
+				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X selected nagra: b%dms > n%dms", er->caid, caid_to, time_beta, time_nagra);
+				convert_to_nagra_int(er, caid_to);
+				get_stat_query(er, &q);
+			}
+			else {
+				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X selected beta: b%dms < n%dms", er->caid, caid_to, time_beta, time_nagra);
+			}
+
+		}
 	}
 
+	if (cfg.lb_auto_betatunnel) {
+		//check again is caid valied to reader
+		//with both caid on local readers or with proxy
+		//(both caid will setup to reader for make tunnel caid in share (ccc) visible)
+		//make sure dosn't send a beta ecm to nagra reader (or reverse)
+		struct s_ecm_answer *prv = NULL;
+		for(ea = er->matching_rdr; ea; ea = ea->next) {
+			if (is_network_reader(ea->reader)) {
+				prv = ea;
+				continue; // proxy can convert or reject
+			}
+			rdr = ea->reader;
+			cs_debug_mask(D_TRACE, "check again caid %04X on reader %s", er->caid, rdr->label);
+			if ( !ea->reader->caid || ea->reader->caid == er->caid) { // chk_ctab(er->caid, &rdr->ctab)
+				prv = ea;
+			} else {
+				er->reader_avail--;
+				cs_debug_mask(D_TRACE, "caid %04X not found in caidlist, reader %s removed from request reader list", er->caid, rdr->label);
+				if (prv){
+					prv->next = ea->next;
+				} else
+					er->matching_rdr = ea->next;
+			}
+		}
+	}
+
+	if (!er->reader_avail)
+		return;
 
 	struct timeb check_time;
         cs_ftime(&check_time);

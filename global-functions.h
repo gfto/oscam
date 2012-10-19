@@ -29,6 +29,7 @@ extern int32_t write_ecm_answer(struct s_reader *, ECM_REQUEST *, int8_t, uint8_
 extern uint32_t chk_provid(uchar *, uint16_t);
 extern uint16_t get_betatunnel_caid_to(uint16_t caid);
 extern void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto);
+extern void convert_to_nagra(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto);
 extern void get_cw(struct s_client *, ECM_REQUEST *);
 extern void do_emm(struct s_client *, EMM_PACKET *);
 extern ECM_REQUEST *get_ecmtask(void);

@@ -361,6 +361,7 @@ extern const char *boxdesc[];
 #define DEFAULT_LB_REOPEN_MODE 0
 #define DEFAULT_UPDATEINTERVAL 240
 #define DEFAULT_LB_AUTO_BETATUNNEL 1
+#define DEFAULT_LB_AUTO_BETATUNNEL_MODE 0
 #define DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA 50
 #define DEFAULT_CACHEEX_WAIT_TIME 50
 
@@ -1592,6 +1593,7 @@ struct s_config
 	int32_t			lb_reopen_mode;					// reopen readers mode
 	int32_t			lb_max_readers;					// limit the amount of readers during learning
 	int32_t			lb_auto_betatunnel;				// automatic selection of betatunnel convertion based on learned data
+	int32_t			lb_auto_betatunnel_mode;			// automatic selection of betatunnel direction
 	int32_t			lb_auto_betatunnel_prefer_beta; // prefer-beta-over-nagra factor
 	int32_t			lb_auto_timeout;		// Automatic timeout by loadbalancer statistics
 	int32_t			lb_auto_timeout_p;		// percent added to avg time as timeout time

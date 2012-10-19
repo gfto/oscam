@@ -1715,6 +1715,13 @@ static void request_cw(ECM_REQUEST *er)
 			
 			ea->status |= REQUEST_SENT;
 			er->reader_requested++;
+#ifdef WITH_LB
+			if (cfg.lb_auto_betatunnel && ea->reader->caid && ea->reader->caid != er->caid) {
+				cs_debug_mask(D_TRACE, "request_cw stage=%d to reader %s skiped wrong reqwest caid (ra: %04X,rq %04X)", er->stage, rdr?rdr->label:"", er->caid, ea->reader->caid);
+				cs_debug_mask(D_TRACE, "request_cw stage=%d to reader %s, check reader config!", er->stage, rdr?rdr->label:"");
+				continue;
+			}
+#endif
 			write_ecm_request(ea->reader, er);
 
 			//set sent=1 only if reader is active/connected. If not, switch to next stage!
@@ -1991,12 +1998,52 @@ void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto)
 					er->ocaid, caidto, er->srvid);
 }
 
+void convert_to_nagra(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto)
+{
+	cs_debug_mask(D_TRACE, "convert_to_nagra");
+	er->ocaid = er->caid;
+	er->caid = caidto;
+	er->prid = 0;
+	er->l = er->ecm[2] + 3;
+
+	//not sure
+	if (er->l < 0x52) {
+		er->ecm[1]=0x30;
+	}
+
+	memmove(er->ecm + 3, er->ecm + 13, er->l - 3);
+
+	er->l -= 10;
+	er->ecm[2] = er->l - 3;
+	er->btun = 1;
+
+	cl->cwtun++;
+	cl->account->cwtun++;
+	first_client->cwtun++;
+
+	cs_debug_mask(D_TRACE, "ECM converted ocaid from: 0x%04X to Nagra: 0x04%X for service id:0x04%X",
+					er->ocaid, caidto, er->srvid);
+}
+
 uint16_t get_betatunnel_caid_to(uint16_t caid)
 {
-	if (caid == 0x1801) return 0x1722;
-	if (caid == 0x1833) return 0x1702;
-	if (caid == 0x1834) return 0x1722;
-	if (caid == 0x1835) return 0x1722;
+	if (cfg.lb_auto_betatunnel_mode <=3) {
+		if (caid == 0x1801) return 0x1722;
+		if (caid == 0x1833) return 0x1702;
+		if (caid == 0x1834) return 0x1722;
+		if (caid == 0x1835) return 0x1722;
+	}
+	if (cfg.lb_auto_betatunnel_mode >=1) {
+		if (caid == 0x1702) return 0x1833;
+	}
+	if (cfg.lb_auto_betatunnel_mode == 1 || cfg.lb_auto_betatunnel_mode == 4 ) {
+		if (caid == 0x1722) return 0x1801;
+	} else if (cfg.lb_auto_betatunnel_mode == 2 || cfg.lb_auto_betatunnel_mode == 5 ) {
+		if (caid == 0x1722) return 0x1834;
+	} else if (cfg.lb_auto_betatunnel_mode == 3 || cfg.lb_auto_betatunnel_mode == 6 ) {
+		if (caid == 0x1722) return 0x1835;
+	}
+
 	return 0;
 }
 
@@ -2014,8 +2061,11 @@ void cs_betatunnel(ECM_REQUEST *er)
 
 	for (n = 0; n<ttab->n; n++) {
 		if ((er->caid==ttab->bt_caidfrom[n]) && ((er->srvid==ttab->bt_srvid[n]) || (ttab->bt_srvid[n])==mask_all)) {
-
-			convert_to_beta(cl, er, ttab->bt_caidto[n]);
+			if ((er->caid == 0x1702 || er->caid == 0x1722) && er->ocaid == 0x0000){
+				convert_to_nagra(cl, er, ttab->bt_caidto[n]);
+			} else if (er->ocaid == 0x0000){
+				convert_to_beta(cl, er, ttab->bt_caidto[n]);
+			}
 
 			return;
 		}
@@ -2111,8 +2161,34 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		er->prid = 0x030600;
 
 	//betacrypt ecm with nagra header
-	if (er->caid == 0x1702 && er->l == 0x89 && er->ecm[3] == 0x07 && er->ecm[4] == 0x84)
-		er->caid = 0x1833;
+	if ((er->caid == 0x1702 || er->caid == 0x1722) && (er->l == 0x89 || er->l == 0x4A) && er->ecm[3] == 0x07 && (er->ecm[4] == 0x84 || er->ecm[4] == 0x45)){
+		//cs_debug_mask(D_TRACE, "Quickfix remap beta->nagra: 0x%X, 0x%X, 0x%X, 0x%X", er->caid, er->l, er->ecm[3], er->ecm[4]);
+		if (er->caid == 0x1702) {
+			er->caid = 0x1833;
+		} else {
+			int32_t lbbm = cfg.lb_auto_betatunnel_mode;
+			if ( lbbm == 1 || lbbm == 4) {
+				er->caid = 0x1801;
+			} else if ( lbbm == 2 || lbbm == 5) {
+				er->caid = 0x1834;
+			} else if ( lbbm == 3 || lbbm == 6) {
+				er->caid = 0x1835;
+			}
+			////no other way to autodetect is 1801,1834 or 1835
+		}
+		cs_debug_mask(D_TRACE, "Quickfix remap beta->nagra: 0x%X, 0x%X, 0x%X, 0x%X", er->caid, er->l, er->ecm[3], er->ecm[4]);
+	}
+
+	//nagra ecm with betacrypt header 1801, 1833, 1834, 1835
+	if ((er->caid == 0x1801 || er->caid == 0x1833 || er->caid == 0x1834 || er->caid == 0x1835) && (er->l == 0x93 || er->l == 0x54) && er->ecm[13] == 0x07 && (er->ecm[14] == 0x84 || er->ecm[14] == 0x45)){
+		//cs_debug_mask(D_TRACE, "Quickfix remap nagra->beta: 0x%X, 0x%X, 0x%X, 0x%X", er->caid, er->l, er->ecm[13], er->ecm[44]);
+		if (er->caid == 0x1833) {
+			er->caid = 0x1702;
+		} else {
+			er->caid = 0x1722;
+		}
+		cs_debug_mask(D_TRACE, "Quickfix remap nagra->beta: 0x%X, 0x%X, 0x%X, 0x%X", er->caid, er->l, er->ecm[13], er->ecm[44]);
+	}
 
 	//Ariva quickfix (invalid nagra provider)
 	if (((er->caid & 0xFF00) == 0x1800) && er->prid > 0x00FFFF) er->prid=0;

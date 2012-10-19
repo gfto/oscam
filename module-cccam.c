@@ -1095,7 +1095,7 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 						// or system matches if caid ends with 00
 	                    // needed for wantemu
 #ifdef WITH_LB
-				||(chk_only && cfg.lb_mode && cfg.lb_auto_betatunnel && cur_er->caid>>8==0x18 && ncard->caid>>8==0x17) //accept beta card when beta-tunnel is on
+				||(chk_only && cfg.lb_mode && cfg.lb_auto_betatunnel && ((cur_er->caid>>8==0x18 && ncard->caid>>8==0x17 && cfg.lb_auto_betatunnel_mode <= 3) || (cur_er->caid>>8==0x17 && ncard->caid>>8==0x18 && cfg.lb_auto_betatunnel_mode >=1))) //accept beta card when beta-tunnel is on
 #endif
 				) {
 			struct cc_srvid *blocked_sid = is_sid_blocked(ncard, &cur_srvid);
