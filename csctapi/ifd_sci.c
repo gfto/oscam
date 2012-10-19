@@ -182,8 +182,8 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 				if(buf[n]&0x01) rdr_debug_mask(reader, D_ATR, "Protocol T1: CRC is used to compute the error detection code"); 
 				else rdr_debug_mask(reader, D_ATR, "Protocol T1: LRC is used to compute the error detection code"); 
 			}
-			if(buf[n]<0xFF) rdr_debug_mask(reader, D_ATR, "Extra guardtime of %d ETU (N)", (int) buf[n]);
-			if(buf[n]==0xFF) rdr_debug_mask(reader, D_ATR, "Protocol T1: Standard 2 ETU guardtime is lowered to 1 ETU");
+			if((protocols == 1) && buf[n]<0xFF) rdr_debug_mask(reader, D_ATR, "Extra guardtime of %d ETU (N)", (int) buf[n]);
+			if((protocols == 1) && buf[n]==0xFF) rdr_debug_mask(reader, D_ATR, "Protocol T1: Standard 2 ETU guardtime is lowered to 1 ETU");
 			
 			n++; // next interface character
 		}
