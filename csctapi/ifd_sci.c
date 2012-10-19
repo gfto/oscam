@@ -87,26 +87,27 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 		rdr_debug_mask(reader, D_IFD, "ERROR: no characters found in ATR");
 		return ERROR;
 	}
-	int32_t inverse = 0; // card is using inversion?
-	if (buf[0] == 0x03){
+	int32_t inverse = 0; // card is using inversion?  1=inversion / 0= no inversion
+	if (buf[0] == 0x3F){ // 3F: card is using inverse convention, 3B = card is using direct convention
 		inverse = 1;
-		buf[n] = ~(INVERT_BYTE (buf[n]));
+		rdr_debug_mask(reader, D_IFD, "This card uses inverse convention");
 	}
+	else rdr_debug_mask(reader, D_IFD, "This card uses direct convention");
 	n++;
 	if (IO_Serial_Read(reader, timeout, 1, buf+n)){
 		rdr_debug_mask(reader, D_IFD, "ERROR: only 1 character found in ATR");
 		return ERROR;
 	}
 	if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
-	int32_t TDi = buf[n];
-	int32_t historicalbytes = TDi&0x0F;
+	int32_t T0= buf[n];
+	int32_t historicalbytes = T0&0x0F; // num of historical bytes in lower nibble of T0 byte
 	rdr_debug_mask(reader, D_ATR, "ATR historicalbytes should be: %d", historicalbytes);
 	rdr_debug_mask(reader, D_ATR, "Fetching global interface characters for protocol T0"); // protocol T0 always aboard!
 	n++;
 	
-	int32_t protocols = 1, tck = 0, protocol, protocolnumber;	// protocols = total protocols on card, tck = checksum byte present, protocol = mandatory protocol
+	int32_t protocols=1, tck = 0, protocol, protocolnumber;	// protocols = total protocols on card, tck = checksum byte present, protocol = mandatory protocol
 	int32_t D = 0;												// protocolnumber = TDi uses protocolnumber
-	
+	int32_t TDi = T0; // place T0 char into TDi for looped parsing.
 	while (n < SCI_MAX_ATR_SIZE){
 		if (TDi&0x10){  //TA Present: 							   //The value of TA(i) is always interpreted as XI || UI if i > 2 and T = 15 ='F'in TD(i–1)
 			if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;  //In this case, TA(i) contains the clock stop indicator XI, which indicates the logical
@@ -205,6 +206,7 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 	atrlength += n;
 	atrlength += historicalbytes;
 	rdr_debug_mask(reader, D_ATR, "Total ATR Length including %d historical bytes should be %d",historicalbytes,atrlength);
+	if (T0&0x80) protocols--;	// if bit 8 set there was a TD1 and also more protocols, otherwise this is a T0 card: substract 1 from total protocols
 	rdr_debug_mask(reader, D_ATR, "Total protocols in this ATR is %d",protocols);
 
 	while(n < atrlength + tck){ // read all the rest and mandatory tck byte if other protocol than T0 is used.
@@ -212,11 +214,18 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 		if (inverse) buf[n] = ~(INVERT_BYTE (buf[n]));
 		n++;
 	}
-
+	
 	if (n!=atrlength+tck) cs_log("Warning reader %s: Total ATR characters received is: %d instead of expected %d", reader->label, n, atrlength+tck);
 
 	if ((buf[0] !=0x3B) && (buf[0] != 0x3F) && (n>9 && !memcmp(buf+4, "IRDETO", 6))) //irdeto S02 reports FD as first byte on dreambox SCI, not sure about SH4 or phoenix
 		buf[0] = 0x3B;
+		
+	int32_t t=n; // just a counter	
+	while ((t>0) && inverse){ // in case of inverse atr invert whole readed ATR again for parsing by ATR_InitFromArray
+		buf[t] = ~(INVERT_BYTE (buf[t]));
+		t--;
+	}
+
 
 	statusreturn = ATR_InitFromArray (atr, buf, n); // n should be same as atrlength but in case of atr read error its less so do not use atrlenght here!
 
