@@ -915,7 +915,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 			int32_t time_nagra = 0;
 			int32_t time_beta = 0;
 			int32_t weight;
-			int32_t time;
+			int32_t avg_time;
 
 			READER_STAT *stat_nagra = NULL;
 			READER_STAT *stat_beta = NULL;
@@ -957,16 +957,16 @@ void stat_get_best_reader(ECM_REQUEST *er)
 
 				//calculate nagra data:
 				if (stat_nagra && stat_nagra->rc == E_FOUND) {
-					time = stat_nagra->time_avg*100/weight;
-					if (!time_nagra || time < time_nagra)
-						time_nagra = time;
+					avg_time = stat_nagra->time_avg*100/weight;
+					if (!time_nagra || avg_time < time_nagra)
+						time_nagra = avg_time;
 				}
 
 				//calculate beta data:
 				if (stat_beta && stat_beta->rc == E_FOUND) {
-					time = stat_beta->time_avg*100/weight;
-					if (!time_beta || time < time_beta)
-						time_beta = time;
+					avg_time = stat_beta->time_avg*100/weight;
+					if (!time_beta || avg_time < time_beta)
+						time_beta = avg_time;
 				}
 
 				//Uncomplete reader evaluation, we need more stats!
