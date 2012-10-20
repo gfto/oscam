@@ -1715,13 +1715,6 @@ static void request_cw(ECM_REQUEST *er)
 			
 			ea->status |= REQUEST_SENT;
 			er->reader_requested++;
-#ifdef WITH_LB
-			if (cfg.lb_auto_betatunnel && ea->reader->caid && ea->reader->caid != er->caid) {
-				cs_debug_mask(D_TRACE, "request_cw stage=%d to reader %s skiped wrong reqwest caid (ra: %04X,rq %04X)", er->stage, rdr?rdr->label:"", er->caid, ea->reader->caid);
-				cs_debug_mask(D_TRACE, "request_cw stage=%d to reader %s, check reader config!", er->stage, rdr?rdr->label:"");
-				continue;
-			}
-#endif
 			write_ecm_request(ea->reader, er);
 
 			//set sent=1 only if reader is active/connected. If not, switch to next stage!
