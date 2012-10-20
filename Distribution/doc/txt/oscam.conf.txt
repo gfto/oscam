@@ -279,7 +279,7 @@ DESCRIPTIONS
 
 	     0 = disabled (default)
 	     1 = always Betacrypt
-	   105 = represent the middle
+	   105 = represents the middle
 	   200 = always Nagravision
 
    The [monitor] section
