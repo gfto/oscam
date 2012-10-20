@@ -43,7 +43,6 @@
 #include "../oscam-time.h"
 #include "icc_async.h"
 #include "io_serial.h"
-#include "mc_global.h"
 
 #define OK 0
 #define ERROR 1

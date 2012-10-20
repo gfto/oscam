@@ -27,7 +27,6 @@
 #include "../oscam-lock.h"
 #include "../oscam-string.h"
 #include "icc_async.h"
-#include "mc_global.h"
 #include "protocol_t0.h"
 #include "io_serial.h"
 #include "ifd_cool.h"

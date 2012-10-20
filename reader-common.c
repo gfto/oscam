@@ -13,7 +13,6 @@
 #include "csctapi/ifd_azbox.h"
 #include "csctapi/ifd_cool.h"
 #include "csctapi/ifd_sc8in1.h"
-#include "csctapi/mc_global.h"
 
 extern struct s_cardsystem cardsystems[CS_MAX_MOD];
 
