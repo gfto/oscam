@@ -223,7 +223,7 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 			{
 			uint16_t msr=1;
 			IO_Serial_Ioctl_Lock(reader, 1);
-			ioctl(reader->fdmc, GET_PCDAT, &msr);
+			ioctl(reader->fdmc, MULTICAM_GET_PCDAT, &msr);
 			if (reader->typ == R_DB2COM2)
 				in=(!(msr & 1));
 			else

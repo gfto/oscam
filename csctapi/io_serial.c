@@ -85,7 +85,7 @@ static bool IO_Serial_DTR_RTS_dbox2(struct s_reader * reader, int32_t * dtr, int
   uint16_t dtr_bits[2]={0x100,     0};
   int32_t mcport = (reader->typ == R_DB2COM2);
 
-  if ((rc=ioctl(reader->fdmc, GET_PCDAT, &msr))>=0)
+  if ((rc=ioctl(reader->fdmc, MULTICAM_GET_PCDAT, &msr))>=0)
   {
     if (dtr)		// DTR
     {
@@ -96,7 +96,7 @@ static bool IO_Serial_DTR_RTS_dbox2(struct s_reader * reader, int32_t * dtr, int
           msr&=(uint16_t)(~dtr_bits[mcport]);
         else
           msr|=dtr_bits[mcport];
-        rc=ioctl(reader->fdmc, SET_PCDAT, &msr);
+        rc=ioctl(reader->fdmc, MULTICAM_SET_PCDAT, &msr);
       }
       else
         rc=0;		// Dummy, can't handle using multicam.o
@@ -108,7 +108,7 @@ static bool IO_Serial_DTR_RTS_dbox2(struct s_reader * reader, int32_t * dtr, int
         msr&=(uint16_t)(~rts_bits[mcport]);
       else
         msr|=rts_bits[mcport];
-      rc=ioctl(reader->fdmc, SET_PCDAT, &msr);
+      rc=ioctl(reader->fdmc, MULTICAM_SET_PCDAT, &msr);
     }
   }
 	if (rc<0)
