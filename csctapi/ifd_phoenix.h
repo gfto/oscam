@@ -1,7 +1,8 @@
 /*
-    ifd_phoenix.h
-    Header file for Smartmouse/Phoenix reader.
-*/
+ * Header file for Smartmouse/Phoenix reader.
+ */
+#ifndef _CSCTAPI_IFD_PHOENIX_H_
+#define _CSCTAPI_IFD_PHOENIX_H_
 
 int32_t Phoenix_Init (struct s_reader * reader);
 int32_t Phoenix_GetStatus (struct s_reader * reader, int32_t * status);
@@ -11,3 +12,5 @@ int32_t Phoenix_Receive (struct s_reader * reader, unsigned char * buffer, uint3
 int32_t Phoenix_SetBaudrate (struct s_reader * reader, uint32_t baudrate);
 int32_t Phoenix_Close (struct s_reader * reader);
 int32_t Phoenix_FastReset (struct s_reader * reader, int32_t delay);
+
+#endif
