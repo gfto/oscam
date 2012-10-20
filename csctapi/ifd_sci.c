@@ -11,9 +11,9 @@
 
 #include "atr.h"
 #include "ifd_sci.h"
+#include "ifd_sci_global.h"
+#include "ifd_sci_ioctl.h"
 #include "io_serial.h"
-#include "sci_global.h"
-#include "sci_ioctl.h"
 
 #undef ATR_TIMEOUT
 #define ATR_TIMEOUT   800
