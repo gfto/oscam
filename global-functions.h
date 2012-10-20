@@ -27,7 +27,6 @@ extern int32_t write_to_pipe(struct s_client *, int32_t, uchar *, int32_t);
 extern int32_t read_from_pipe(struct s_client *, uchar **);
 extern int32_t write_ecm_answer(struct s_reader *, ECM_REQUEST *, int8_t, uint8_t, uchar *, char *);
 extern uint32_t chk_provid(uchar *, uint16_t);
-extern uint16_t get_betatunnel_caid_to(uint16_t caid);
 extern void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto);
 extern void convert_to_nagra(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto);
 extern void get_cw(struct s_client *, ECM_REQUEST *);

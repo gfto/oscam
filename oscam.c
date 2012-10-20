@@ -2025,28 +2025,6 @@ void convert_to_nagra(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto)
 					er->ocaid, caidto, er->srvid);
 }
 
-uint16_t get_betatunnel_caid_to(uint16_t caid)
-{
-	if (cfg.lb_auto_betatunnel_mode <=3) {
-		if (caid == 0x1801) return 0x1722;
-		if (caid == 0x1833) return 0x1702;
-		if (caid == 0x1834) return 0x1722;
-		if (caid == 0x1835) return 0x1722;
-	}
-	if (cfg.lb_auto_betatunnel_mode >=1) {
-		if (caid == 0x1702) return 0x1833;
-	}
-	if (cfg.lb_auto_betatunnel_mode == 1 || cfg.lb_auto_betatunnel_mode == 4 ) {
-		if (caid == 0x1722) return 0x1801;
-	} else if (cfg.lb_auto_betatunnel_mode == 2 || cfg.lb_auto_betatunnel_mode == 5 ) {
-		if (caid == 0x1722) return 0x1834;
-	} else if (cfg.lb_auto_betatunnel_mode == 3 || cfg.lb_auto_betatunnel_mode == 6 ) {
-		if (caid == 0x1722) return 0x1835;
-	}
-
-	return 0;
-}
-
 void cs_betatunnel(ECM_REQUEST *er)
 {
 	int32_t n;
@@ -2166,15 +2144,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		if (er->caid == 0x1702) {
 			er->caid = 0x1833;
 		} else {
-			int32_t lbbm = cfg.lb_auto_betatunnel_mode;
-			if ( lbbm == 1 || lbbm == 4) {
-				er->caid = 0x1801;
-			} else if ( lbbm == 2 || lbbm == 5) {
-				er->caid = 0x1834;
-			} else if ( lbbm == 3 || lbbm == 6) {
-				er->caid = 0x1835;
-			}
-			////no other way to autodetect is 1801,1834 or 1835
+			check_lb_auto_betatunnel_mode(er);
 		}
 		cs_debug_mask(D_TRACE, "Quickfix remap beta->nagra: 0x%X, 0x%X, 0x%X, 0x%X", er->caid, er->l, er->ecm[3], er->ecm[4]);
 	}
