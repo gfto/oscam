@@ -15,8 +15,6 @@
 #endif
 #endif
 
-#include "smartreader_types.h"
-
 int32_t SR_Init (struct s_reader *reader);
 int32_t SR_GetStatus (struct s_reader *reader,int32_t * in);
 int32_t SR_Reset (struct s_reader *reader, ATR * atr);

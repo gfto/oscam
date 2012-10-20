@@ -11,6 +11,7 @@
 #include "../oscam-time.h"
 #include "atr.h"
 #include "ifd_smartreader.h"
+#include "ifd_smartreader_types.h"
 
 #if defined(__CYGWIN__)
 #undef OK
