@@ -3910,6 +3910,9 @@ int32_t main (int32_t argc, char *argv[])
 	cardreader_pcsc,
 #endif
 	cardreader_smargo,
+#ifdef WITH_LIBUSB
+	cardreader_smartreader,
+#endif
 #ifdef WITH_STAPI
 	cardreader_stapi,
 #endif

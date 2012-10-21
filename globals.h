@@ -1758,9 +1758,6 @@ extern int32_t exit_oscam;
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 extern char *loghist, *loghistptr;
 #endif
-#if defined(WITH_LIBUSB)
-extern CS_MUTEX_LOCK sr_lock;
-#endif
 
 extern pid_t server_pid;							// PID of server - set while startup
 extern LLIST *log_list;				// log list

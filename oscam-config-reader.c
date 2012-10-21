@@ -671,11 +671,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		}
 
-		if (!strcmp(value, "smartreader")) {
-			rdr->typ = R_SMART;
-			return;
-		}
-
 		if (!strcmp(value, "internal")) {
 			rdr->typ = R_INTERNAL;
 			return;

@@ -33,7 +33,6 @@
 #include "ifd_phoenix.h"
 #include "ifd_sc8in1.h"
 #include "ifd_sci.h"
-#include "ifd_smartreader.h"
 #include "ifd_azbox.h"
 
 #define OK 0
@@ -138,14 +137,6 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 				return ERROR;
 			}
 			break;
-		case R_SMART:
-#if defined(WITH_LIBUSB)
-			call (SR_Init(reader));
-			break;
-#else
-			rdr_log(reader, "ERROR: You have specified 'protocol = smartreader' in oscam.server, recompile with libusb support");
-			return ERROR;
-#endif
 		case R_INTERNAL:
 #if defined(WITH_COOLAPI)
 			return Cool_Init(reader);
@@ -240,11 +231,6 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 		case R_MOUSE:
 			call (Phoenix_GetStatus(reader, &in));
 			break;
-#if defined(WITH_LIBUSB)
-		case R_SMART:
-			call (SR_GetStatus(reader, &in));
-			break;
-#endif
 		case R_INTERNAL:
 #if defined(WITH_COOLAPI)
 			call (Cool_GetStatus(reader, &in));
@@ -298,17 +284,6 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 					return ERROR;
 				}
 				break;
-#if defined(WITH_LIBUSB)
-			case R_SMART:
-				if ( ! reader->ins7e11_fast_reset) {
-					call (SR_Reset(reader, atr));
-				}
-				else {
-					rdr_log(reader, "Doing fast reset");
-					call (SR_FastReset_With_ATR(reader, atr));
-				}
-				break;
-#endif
 			case R_INTERNAL:
 #if defined(WITH_COOLAPI)
 				if ( ! reader->ins7e11_fast_reset) {
@@ -469,11 +444,6 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, unsigned cha
 		case R_MOUSE:
 			ret = Phoenix_Transmit (reader, sent, size, reader->block_delay, reader->char_delay);
 			break;
-#if defined(WITH_LIBUSB)
-		case R_SMART:
-			ret = SR_Transmit(reader, sent, size);
-			break;
-#endif
 		case R_INTERNAL:
 #if defined(WITH_COOLAPI)
 			ret = Cool_Transmit(reader, sent, size);
@@ -520,11 +490,6 @@ int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, unsigned char
 		case R_MOUSE:
 			ret = Phoenix_Receive (reader, data, size, reader->read_timeout);
 			break;
-#if defined(WITH_LIBUSB)
-		case R_SMART:
-			ret = SR_Receive(reader, data, size);
-			break;
-#endif
 		case R_INTERNAL:
 #if defined(WITH_COOLAPI)
 			ret = Cool_Receive(reader, data, size);
@@ -571,11 +536,6 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 		case R_MOUSE:
 			call (Phoenix_Close(reader));
 			break;
-#if defined(WITH_LIBUSB)
-		case R_SMART:
-			call (SR_Close(reader));
-			break;
-#endif
 		case R_INTERNAL:
 #if defined(WITH_COOLAPI)
 			call (Cool_Close(reader));
@@ -888,11 +848,6 @@ static int32_t ICC_Async_SetParity (struct s_reader * reader, uint16_t parity)
 		case R_MOUSE:
 			call (IO_Serial_SetParity (reader, parity));
 		break;
-#if defined(WITH_LIBUSB)
-		case R_SMART:
-			call (SR_SetParity(reader, parity));
-			break;
-#endif
 		case R_INTERNAL:
 			return OK;
 		default:
@@ -922,12 +877,16 @@ static int32_t SetRightParity (struct s_reader * reader)
 #if defined(WITH_COOLAPI) || defined(WITH_AZBOX)
 	if (reader->typ != R_INTERNAL)
 #endif
-#if defined(WITH_LIBUSB)
+#if defined(WITH_LIBUSB) // FIXME: Is this necessary???
   if (reader->typ != R_SMART)
 #endif
             IO_Serial_Flush(reader);
 	return OK;
 }
+
+#if defined(WITH_LIBUSB) // FIXME: Move to card reader API
+int32_t SR_WriteSettings (struct s_reader *reader, uint16_t F, unsigned char D, unsigned char N, unsigned char T, uint16_t convention);
+#endif
 
 static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, double d, double n, uint16_t deprecated)
 {
@@ -1163,7 +1122,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 		}
 #endif //WITH_COOLAPI
 	}
-#if defined(WITH_LIBUSB)
+#if defined(WITH_LIBUSB) // FIXME: Move to card reader API
 	if (reader->typ == R_SMART)
 		SR_WriteSettings(reader, (uint16_t) atr_f_table[FI], (unsigned char)d, (unsigned char)EGT, (unsigned char)reader->protocol_type, reader->convention);
 #endif
