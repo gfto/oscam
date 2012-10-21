@@ -79,13 +79,14 @@ level of penalty, default: level of oscam.conf:
  \fB3\fP = send delayed CWs
 .RE
 .PP
-\fBfailban\fP = \fB0\fP|\fB2\fP|\fB4\fP
+\fBfailban\fP = \fB0\fP|\fB2\fP|\fB4\fP|\fB8\fP
 .RS 3n
-mask for IP based blocking:
+mask for IP address based blocking:
 
  \fB0\fP = ignore (default)
- \fB2\fP = block IP of a disabled account on connecting
- \fB4\fP = block IP of a sleeping account while sleeping comes up
+ \fB2\fP = block IP address of a disabled account on connecting
+ \fB4\fP = block IP address of a sleeping account while sleeping comes up
+ \fB8\fP = block duplicate IP address
 .RE
 .PP
 \fBcacheex\fP = \fB0\fP|\fB1\fP|\fB2\fP|\fB3\fP

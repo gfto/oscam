@@ -1,4 +1,4 @@
-oscam.user(5)														   oscam.user(5)
+oscam.user(5)																       oscam.user(5)
 
 
 
@@ -6,8 +6,7 @@ NAME
        oscam.user - user configuration file for OSCam
 
 SYNOPSIS
-       The  user  configuration  file for OSCam contains user definitions. [account] sections in oscam.user are recurring (more than one
-       account).
+       The user configuration file for OSCam contains user definitions. [account] sections in oscam.user are recurring (more than one account).
 
 DESCRIPTIONS
    The [account] section
@@ -61,12 +60,13 @@ DESCRIPTIONS
 	   2 = disbable user temporary
 	   3 = send delayed CWs
 
-       failban = 0|2|4
-	  mask for IP based blocking:
+       failban = 0|2|4|8
+	  mask for IP address based blocking:
 
 	   0 = ignore (default)
-	   2 = block IP of a disabled account on connecting
-	   4 = block IP of a sleeping account while sleeping comes up
+	   2 = block IP address of a disabled account on connecting
+	   4 = block IP address of a sleeping account while sleeping comes up
+	   8 = block duplicate IP address
 
        cacheex = 0|1|2|3
 	  set cache exchange mode
@@ -89,12 +89,11 @@ DESCRIPTIONS
 	  time waiting for inactive user, default:none
 
        sleepsend = 0|255
-	  255 = OSCam client only: stopping requests until next zap, 255 = camd 3.x only: stopping requests until restart  of  camd  3.x
-	  client, default:0
+	  255 = OSCam client only: stopping requests until next zap, 255 = camd 3.x only: stopping requests until restart of camd 3.x client, default:0
 
        suppresscmd08 = 0|1
-	  0  = tell camd 3.5x, 3.57x and 3.78x clients not to request again for rejected CAID, service ID and provider ID combination, 1
-	  =  disable, default:0
+	  0  =	tell  camd  3.5x,  3.57x  and  3.78x  clients  not to request again for rejected CAID, service ID and provider ID combination, 1 =  disable,
+	  default:0
 
        keepalive = 0|1
 	  0 = disable keepalive between server and client for newcamd or CCcam protocol, default:1
@@ -194,9 +193,9 @@ EXAMPLES
 	uniq	   = 1
 
 SEE ALSO
-       list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cacheex(5),  oscam.cert(5),   oscam.conf(5),   oscam.dvbapi(5),	 oscam.guess(5),
-       oscam.ird(5), oscam.provid(5), oscam.server(5), oscam.services(5), oscam.tiers(5), oscam.srvid(5), oscam.whitelist(5)
+       list_smargo(1),	 oscam(1),   oscam.ac(5),   oscam.cacheex(5),	oscam.cert(5),	 oscam.conf(5),   oscam.dvbapi(5),   oscam.guess(5),   oscam.ird(5),
+       oscam.provid(5), oscam.server(5), oscam.services(5), oscam.tiers(5), oscam.srvid(5), oscam.whitelist(5)
 
 
 
-															   oscam.user(5)
+																	       oscam.user(5)
