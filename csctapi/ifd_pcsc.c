@@ -241,7 +241,7 @@ static int32_t pcsc_check_card_inserted(struct s_reader *pcsc_reader)
                 pcsc_reader->hCard=0;
             }
             // rdr_debug_mask(pcsc_reader, D_DEVICE, "PCSC card in %s removed / absent [dwstate=%lx rv=(%lx)]", pcsc_reader->pcsc_name, dwState, (unsigned long)rv );
-            return ERROR;
+            return OK;
         }
         else if (rv == (LONG)SCARD_W_UNRESPONSIVE_CARD) {
             // there is a problem with the card in the pcsc_reader
@@ -280,7 +280,7 @@ static int32_t pcsc_check_card_inserted(struct s_reader *pcsc_reader)
 
 static int32_t pcsc_get_status(struct s_reader *reader, int32_t *in) {
     int32_t ret = pcsc_check_card_inserted(reader);
-    *in = ret == OK; // *in is returned to reader-common, where ERROR=0, OK=1
+    *in = reader->pcsc_has_card;
     return ret;
 }
 
