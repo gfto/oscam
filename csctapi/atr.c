@@ -60,16 +60,7 @@ int32_t ATR_InitFromArray (ATR * atr, const unsigned char atr_buffer[ATR_MAX_SIZ
 		return (ERROR);
 	}
 	
-	/* Check if ATR is from a inverse convention card */
-	if (atr_buffer[0] == 0x03) // inverse convention is done on the fly in case ifd_sci.c based reader
-	{
-		for (pointer = 0; pointer < length; pointer++)
-			buffer[pointer] = ~(INVERT_BYTE (atr_buffer[pointer]));
-	}
-	else
-	{
-		memcpy (buffer, atr_buffer, length);
-	}
+	memcpy (buffer, atr_buffer, length);
 	
 	/* Store T0 and TS */
 	atr->TS = buffer[0];
@@ -150,7 +141,6 @@ int32_t ATR_InitFromArray (ATR * atr, const unsigned char atr_buffer[ATR_MAX_SIZ
 	
 	/* Store number of protocols */
 	atr->pn = pn + 1;
-	cs_debug_mask(D_ATR,"this ATR reports a total of %d protocols", pn+1);
 	
 	/* Store historical bytes */
 	if (pointer + atr->hbn >= length) {

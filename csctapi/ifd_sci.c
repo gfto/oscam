@@ -135,10 +135,10 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 				D = atr_d_table[DI]; // lookup the bitrate adjustment (yeah there are floats in it, but in iso only integers!?)
 				rdr_debug_mask(reader, D_ATR, "Advertised max cardfrequency is %.2f (Fmax), frequency divider is %d (F)", fmax/1000000L, F); // High nibble TA1 contains cardspeed
 				rdr_debug_mask(reader, D_ATR, "Bitrate adjustment is %d (D)", D); // Low nibble TA1 contains Bitrateadjustment
-				rdr_debug_mask(reader, D_ATR, "Work ETU = %ld nanoseconds", (long int) ((1/D)*(F/fmax)*1000000L)); // And display it...
-				rdr_debug_mask(reader, D_ATR, "Initial ETU = %ld nanoseconds", (long int) (372/fmax)*1000000L); // And display it... since D=1 and frequency during ATR fetch might be different!
+				rdr_debug_mask(reader, D_ATR, "Work ETU = %.2f us", (1/D)*(F/fmax)*1000000L); // And display it...
+				rdr_debug_mask(reader, D_ATR, "Initial ETU = %.2f us", 372/fmax*1000000L); // And display it... since D=1 and frequency during ATR fetch might be different!
 			} 
-			if (protocols > 1){
+			if (protocols > 1 && protocols <3){
 				if((buf[n]&0x80)==0x80) rdr_debug_mask(reader, D_ATR, "Switching between negotiable mode and specific mode is not possible");
 				else { 
 					rdr_debug_mask(reader, D_ATR, "Switching between negotiable mode and specific mode is possible");
@@ -160,7 +160,7 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 				int32_t BWI = (buf[n]>>4); // high nibble contains BWI code for the block waiting time BWT
 				int32_t CWT = (1<<CWI) + 11; // in work etu  *** 2^CWI + 11 work etu *** 
 				rdr_debug_mask(reader, D_ATR, "Protocol T1: Character waiting time is %d work etu (CWT)", CWT);
-				int32_t BWT = (int) ((1<<BWI) * 960L * 372L); // divided by frequency and add with 11 work etu *** 2^BWI*960*372/f + 11 work etu ***
+				int32_t BWT = (int) ((1<<BWI) * 960 * 372); // divided by frequency and add with 11 work etu *** 2^BWI*960*372/f + 11 work etu ***
 				rdr_debug_mask(reader, D_ATR, "Protocol T1: Block waiting time is %d divided by actual cardfrequency + 11 work etu (BWI)", BWI);
 				rdr_debug_mask(reader, D_ATR, "Protocol T1: BWT: %d", BWT);
 			}
