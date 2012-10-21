@@ -125,7 +125,8 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 				if (ifsc == 0x00) ifsc = 32; //default is 32
 				rdr_debug_mask(reader, D_ATR, "Maximum information field length this card can receive is %d bytes (IFSC)", ifsc);
 			}
-			if (protocols == 1) {
+			
+			if (protocols < 2) {
 				int32_t FI = (buf[n]>>4); // FI is high nibble                  ***** work ETU = (1/D)*(Frequencydivider/cardfrequency) (in seconds!)
 				int32_t F = atr_f_table[FI]; // lookup the frequency divider
 				float fmax = atr_fs_table[FI]; // lookup the max frequency      ***** initial ETU = 372 / initial frequency during atr  (in seconds!)
@@ -137,7 +138,7 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 				rdr_debug_mask(reader, D_ATR, "Work ETU = %ld nanoseconds", (long int) ((1/D)*(F/fmax)*1000000L)); // And display it...
 				rdr_debug_mask(reader, D_ATR, "Initial ETU = %ld nanoseconds", (long int) (372/fmax)*1000000L); // And display it... since D=1 and frequency during ATR fetch might be different!
 			} 
-			if (protocols == 2){
+			if (protocols > 1){
 				if((buf[n]&0x80)==0x80) rdr_debug_mask(reader, D_ATR, "Switching between negotiable mode and specific mode is not possible");
 				else { 
 					rdr_debug_mask(reader, D_ATR, "Switching between negotiable mode and specific mode is possible");
@@ -169,16 +170,16 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 		if (TDi&0x40){	 //TC Present
 			if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;
 			rdr_debug_mask(reader, D_ATR, "TC%d: %02X",protocols, buf[n]);
-			if ((protocols == 2) && ((TDi&0x0F)==0x00)){
+			if ((protocols > 1) && ((TDi&0x0F)==0x00)){
 				int32_t WI = buf[n];
 				rdr_debug_mask(reader, D_ATR, "Protocol T0: work wait time is %d work etu (WWT)", (int) (960*D*WI));
 			}
-			if ((protocols == 2) && ((TDi&0x0F)==0x01)){
+			if ((protocols > 1) && ((TDi&0x0F)==0x01)){
 				if(buf[n]&0x01) rdr_debug_mask(reader, D_ATR, "Protocol T1: CRC is used to compute the error detection code"); 
 				else rdr_debug_mask(reader, D_ATR, "Protocol T1: LRC is used to compute the error detection code"); 
 			}
-			if((protocols == 1) && (buf[n]<0xFF)) rdr_debug_mask(reader, D_ATR, "Extra guardtime of %d ETU (N)", (int) buf[n]);
-			if((protocols == 1) && (buf[n]==0xFF)) rdr_debug_mask(reader, D_ATR, "Protocol T1: Standard 2 ETU guardtime is lowered to 1 ETU");
+			if((protocols < 2) && (buf[n]<0xFF)) rdr_debug_mask(reader, D_ATR, "Extra guardtime of %d ETU (N)", (int) buf[n]);
+			if((protocols < 2) && (buf[n]==0xFF)) rdr_debug_mask(reader, D_ATR, "Protocol T1: Standard 2 ETU guardtime is lowered to 1 ETU");
 			
 			n++; // next interface character
 		}
