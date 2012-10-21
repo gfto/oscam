@@ -97,15 +97,7 @@ static int32_t reader_card_inserted(struct s_reader * reader)
 
 	int32_t card;
 	if (ICC_Async_GetStatus (reader, &card)) {
-		rdr_log(reader, "Error getting status of terminal.");
-
-		reader->fd_error++;
-		struct s_client *cl = reader->client;
-		if (reader->fd_error>5 && cl) {
-			cl->init_done = 0;
-			rdr_log(reader, "WARNING: The reader was disabled because of too many errors");
-		}
-
+		rdr_log(reader, "Error getting card status.");
 		return 0; //corresponds with no card inside!!
 	}
 	return (card);
