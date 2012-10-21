@@ -913,6 +913,7 @@ struct s_client {
 	int32_t			ncd_server;			// newcamd server
 
 #ifdef CS_ANTICASC
+	int32_t			ac_fakedelay;		// When this is -1, the global ac_fakedelay is used
 	uint16_t		ac_limit;
 	int8_t			ac_penalty;
 	struct s_acasc_shm acasc;
@@ -1341,6 +1342,7 @@ struct s_auth
 	CLASSTAB		cltab;
 	TUNTAB			ttab;
 #ifdef CS_ANTICASC
+	int32_t			ac_fakedelay;					// When this is -1, the global ac_fakedelay is used
 	int32_t			ac_users;						// 0 - unlimited
 	int8_t			ac_penalty;						// 0 - log, >0 - fake dw
 	struct s_acasc	ac_stat;

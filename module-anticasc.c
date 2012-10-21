@@ -120,6 +120,7 @@ void ac_init_client(struct s_client *client, struct s_auth *account)
 {
   client->ac_limit = 0;
   client->ac_penalty = account->ac_penalty == -1 ? cfg.ac_penalty : account->ac_penalty;
+  client->ac_fakedelay = account->ac_fakedelay == -1 ? cfg.ac_fakedelay : account->ac_fakedelay;
   if( cfg.ac_enabled )
   {
 	int32_t numusers = account->ac_users;
@@ -180,13 +181,15 @@ void ac_chk(struct s_client *cl, ECM_REQUEST *er, int32_t level)
 	if( acasc->ac_deny ) {
 		if( cl->ac_penalty ) {
 			if (cl->ac_penalty == 3) {
-				cs_debug_mask(D_CLIENT, "acasc: fake delay %dms", cfg.ac_fakedelay);
+				if (cl->ac_fakedelay > 0)
+					cs_debug_mask(D_CLIENT, "acasc: fake delay %dms", cl->ac_fakedelay);
 			} else {
 				cs_debug_mask(D_CLIENT, "acasc: send fake dw");
 				er->rc = E_FAKE; // fake
 				er->rcEx = 0;
 			}
-			cs_sleepms(cfg.ac_fakedelay);
+			if (cl->ac_fakedelay > 0)
+				cs_sleepms(cl->ac_fakedelay);
 		}
 	}
 }

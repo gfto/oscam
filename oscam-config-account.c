@@ -307,6 +307,7 @@ static const struct config_list account_opts[] = {
 	DEF_OPT_INT8("cccstealth"			, OFS(cccstealth),				DEFAULT_CC_STEALTH ),
 #endif
 #ifdef CS_ANTICASC
+	DEF_OPT_INT32("fakedelay"			, OFS(ac_fakedelay),			-1 ),
 	DEF_OPT_INT32("numusers"			, OFS(ac_users),				DEFAULT_AC_USERS ),
 	DEF_OPT_INT8("penalty"				, OFS(ac_penalty),				DEFAULT_AC_PENALTY ),
 #endif
