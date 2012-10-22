@@ -127,7 +127,7 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 
 	sc8in1_tcdrain(reader);
 
-	if (IO_Serial_Read(reader, 1000, lenread, buff) == ERROR) {
+	if (IO_Serial_Read(reader, 1000000, lenread, buff) == ERROR) {
 		rdr_log(reader, "SC8in1 Command read error");
 		return ERROR;
 	}
@@ -141,7 +141,7 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 			return ERROR;
 		}
 		sc8in1_tcdrain(reader);
-		if (IO_Serial_Read(reader, 1000, 1, &buff_echo_hack[0]) == ERROR) {
+		if (IO_Serial_Read(reader, 1000000, 1, &buff_echo_hack[0]) == ERROR) {
 			rdr_log(reader, "SC8in1 Echo command read error");
 			return ERROR;
 		}
@@ -740,7 +740,7 @@ int32_t Sc8in1_Init(struct s_reader * reader) {
 				Sc8in1_DebugSignals(reader, rdr->slot, "I6");
 				// Discard ATR
 				unsigned char buff[1];
-				while ( ! IO_Serial_Read(reader, 500, 1, &buff[0]) ) {
+				while ( ! IO_Serial_Read(reader, 500000, 1, &buff[0]) ) {
 					cs_sleepms(1);
 				}
 				tcflush(reader->handle, TCIOFLUSH);

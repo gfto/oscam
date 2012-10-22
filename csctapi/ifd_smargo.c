@@ -141,7 +141,7 @@ static int32_t smargo_reset(struct s_reader *reader, ATR *atr) {
 
 		//IO_Serial_Flush(reader);
 
-		IO_Serial_Read(reader, 500, ATR_MAX_SIZE, buf);
+		IO_Serial_Read(reader, 500000, ATR_MAX_SIZE, buf);
 
 		IO_Serial_RTS_Set(reader);
 		cs_sleepms(150);

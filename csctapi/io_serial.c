@@ -398,7 +398,7 @@ void IO_Serial_Flush (struct s_reader * reader)
 	unsigned char b;
 
   tcflush(reader->handle, TCIOFLUSH);
-  while(!IO_Serial_Read(reader, 1000*1000, 1, &b));
+  while(!IO_Serial_Read(reader, 1000000, 1, &b));
 }
 
 void IO_Serial_Sendbreak(struct s_reader * reader, int32_t duration)
@@ -448,7 +448,7 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t timeout, uint32_t size, 
 		int16_t readed = -1, errorcount=0;
 		AGAIN:
 		if(IO_Serial_WaitToRead (reader, 0, timeout)) {
-			rdr_debug_mask(reader, D_DEVICE, "Timeout in IO_Serial_WaitToRead, timeout=%d ms", timeout);
+			rdr_debug_mask(reader, D_DEVICE, "Timeout in IO_Serial_WaitToRead, timeout=%d us", timeout);
 			//tcflush (reader->handle, TCIFLUSH);
 			return ERROR;
 		}
@@ -525,7 +525,7 @@ bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t size, c
 		}
 		else
 		{
-			rdr_log(reader, "Timeout in IO_Serial_WaitToWrite, timeout=%d ms", delay);
+			rdr_log(reader, "Timeout in IO_Serial_WaitToWrite, timeout=%d us", delay);
 			//tcflush (reader->handle, TCIFLUSH);
 			return ERROR;
 		}
@@ -709,7 +709,7 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, 
 			if (errno==EINTR) continue; //try again in case of Interrupted system call
 			if (errno == EAGAIN) continue; //EAGAIN needs select procedure again
 			else {
-				rdr_log(reader, "ERROR: %s: timeout=%d ms (errno=%d %s)",
+				rdr_log(reader, "ERROR: %s: timeout=%d us (errno=%d %s)",
 					__func__, timeout_us, errno, strerror(errno));
 				return ERROR;
 			}
@@ -720,7 +720,7 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, 
 
    if (FD_ISSET(out_fd, &ewfds))
    {
-		rdr_log(reader, "ERROR: %s: timeout=%d ms, fd is in error fds (errno=%d %s)",
+		rdr_log(reader, "ERROR: %s: timeout=%d us, fd is in error fds (errno=%d %s)",
 			__func__, timeout_us, errno, strerror(errno));
 		return ERROR;
    }
@@ -741,7 +741,7 @@ bool IO_Serial_InitPnP (struct s_reader * reader)
   if (IO_Serial_SetParams (reader, 1200, 7, PARITY_NONE, 1, &dtr, &cts))
 		return ERROR;
 
-	while ((PnP_id_size < IO_SERIAL_PNPID_SIZE) && !IO_Serial_Read (reader, 200, 1, &(PnP_id[PnP_id_size])))
+	while ((PnP_id_size < IO_SERIAL_PNPID_SIZE) && !IO_Serial_Read (reader, 200000, 1, &(PnP_id[PnP_id_size])))
       PnP_id_size++;
 
 		return OK;
