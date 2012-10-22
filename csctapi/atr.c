@@ -60,7 +60,16 @@ int32_t ATR_InitFromArray (ATR * atr, const unsigned char atr_buffer[ATR_MAX_SIZ
 		return (ERROR);
 	}
 	
-	memcpy (buffer, atr_buffer, length);
+	/* Check if ATR is from a inverse convention card */
+	if (atr_buffer[0] == 0x03) // Readers of type R_MOUSE need this in case of inverse convention cards!
+	{
+		for (pointer = 0; pointer < length; pointer++)
+			buffer[pointer] = ~(INVERT_BYTE (atr_buffer[pointer]));
+	}
+	else
+	{
+		memcpy (buffer, atr_buffer, length);
+	}
 	
 	/* Store T0 and TS */
 	atr->TS = buffer[0];
