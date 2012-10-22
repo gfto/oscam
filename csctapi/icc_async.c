@@ -116,11 +116,28 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 				cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
 				return OK;
 			}
+			if (Phoenix_Init(reader)) {
+				rdr_log(reader, "ERROR: Phoenix_Init returns error");
+				Phoenix_Close (reader);
+				cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+				return ERROR;
+			}
+			int32_t ret = Sc8in1_Init(reader);
+			cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+			if (ret) {
+				rdr_log(reader, "ERROR: Sc8in1_Init returns error");
+				return ERROR;
+			}
 			break;
 		case R_MOUSE:
 			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 			if (reader->handle < 0) {
 				rdr_log(reader, "ERROR: Opening device %s (errno=%d %s)", reader->device, errno, strerror(errno));
+				return ERROR;
+			}
+			if (Phoenix_Init(reader)) {
+				rdr_log(reader, "ERROR: Phoenix_Init returns error");
+				Phoenix_Close (reader);
 				return ERROR;
 			}
 			break;
@@ -134,6 +151,11 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 			if ((reader->fdmc = open(DEV_MULTICAM, O_RDWR)) < 0) {
 				rdr_log(reader, "ERROR: Opening device %s (errno=%d %s)", DEV_MULTICAM, errno, strerror(errno));
 				close(reader->handle);
+				return ERROR;
+			}
+			if (Phoenix_Init(reader)) {
+				rdr_log(reader, "ERROR: Phoenix_Init returns error");
+				Phoenix_Close (reader);
 				return ERROR;
 			}
 			break;
@@ -157,23 +179,6 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 		default:
 			rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
 			return ERROR;
-	}
-
-	if (reader->typ <= R_MOUSE)
-		if (Phoenix_Init(reader)) {
-			rdr_log(reader, "ERROR: Phoenix_Init returns error");
-			Phoenix_Close (reader);
-			cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
-			return ERROR;
-		}
-
-	if (reader->typ == R_SC8in1) {
-		int32_t ret  = Sc8in1_Init(reader);
-		cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
-		if (ret) {
-			rdr_log(reader, "ERROR: Sc8in1_Init returns error");
-			return ERROR;
-		}
 	}
 
 	rdr_debug_mask(reader, D_IFD, "Device %s succesfully opened", reader->device);
