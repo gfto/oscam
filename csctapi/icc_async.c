@@ -679,88 +679,76 @@ static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecat
 		ATR_GetProtocolType(atr,1,&(reader->protocol_type)); //get protocol from TD1
 		
 		unsigned char TA2;
-		if(ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TA, &TA2) == ATR_OK){ // is TA2 present?
-			bool SpecificMode = TA2&0x80; //negotiable = 0, specific = 1
-			if (SpecificMode) { // specific mode
-				reader->protocol_type = TA2 & 0x0F;
-				if ((TA2 & 0x10) != 0x10) { //bit 5 set to 0 means F and D explicitly defined in interface characters
-					unsigned char TA1;
-					if (ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
-						FI = TA1 >> 4;
-						ATR_GetParameter (atr, ATR_PARAMETER_D, &(d));
-					}
-					else {
-						FI = ATR_DEFAULT_FI;
-						d = ATR_DEFAULT_D;
-					}
+		bool SpecificMode = (ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TA, &TA2) == ATR_OK); //if TA2 present, specific mode, else negotiable mode
+		if (SpecificMode) {
+			reader->protocol_type = TA2 & 0x0F;
+			if ((TA2 & 0x10) != 0x10) { //bit 5 set to 0 means F and D explicitly defined in interface characters
+				unsigned char TA1;
+				if (ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
+					FI = TA1 >> 4;
+					ATR_GetParameter (atr, ATR_PARAMETER_D, &(d));
 				}
 				else {
-					rdr_log(reader, "Specific mode: speed 'implicitly defined', not sure how to proceed, assuming default values");
 					FI = ATR_DEFAULT_FI;
 					d = ATR_DEFAULT_D;
 				}
-				rdr_debug_mask(reader, D_ATR, "Specific mode: T%i, F=%.0f, D=%.6f, N=%.0f",
-					reader->protocol_type, (double) atr_f_table[FI], d, n);
 			}
-			else { //negotiable mode
-				reader->read_timeout = 1000000;
-				bool PPS_success = 0;
-				bool NeedsPTS = ((reader->protocol_type != ATR_PROTOCOL_TYPE_T14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == 1 && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || n == 255)); //needs PTS according to old ISO 7816
-				if (NeedsPTS && deprecated == 0) {
-					//						 PTSS	PTS0	PTS1	PCK
-					unsigned char req[6] = { 0xFF, 0x10, 0x00, 0x00 }; //we currently do not support PTS2, standard guardtimes or PTS3,
-																									//but spare 2 bytes in arrayif card responds with it
-					req[1]=0x10 | reader->protocol_type; //PTS0 always flags PTS1 to be sent always
-					if (ATR_GetInterfaceByte (atr, 1, ATR_INTERFACE_BYTE_TA, &req[2]) != ATR_OK)	//PTS1
-						req[2] = 0x11; //defaults FI and DI to 1
-					uint32_t len = 0;
-					call (SetRightParity (reader));
-					ret = PPS_Exchange (reader, req, &len);
-					if (ret == OK) {
-						FI = req[2] >> 4;
-						unsigned char DI = req[2] & 0x0F;
-						d = (double) (atr_d_table[DI]);
-						PPS_success = 1;
-						rdr_debug_mask(reader, D_ATR, "PTS Succesfull, selected protocol: T%i, F=%.0f, D=%.6f, N=%.0f",
-							reader->protocol_type, (double) atr_f_table[FI], d, n);
-					}
-					else
-						rdr_ddump_mask(reader, D_ATR, req, len,"PTS Failure, response:");
-				}
-
-				//When for SCI, T14 protocol, TA1 is obeyed, this goes OK for mosts devices, but somehow on DM7025 Sky S02 card goes wrong when setting ETU (ok on DM800/DM8000)
-				if (!PPS_success) {//last PPS not succesfull
-					unsigned char TA1;
-					if (ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
-						FI = TA1 >> 4;
-						ATR_GetParameter (atr, ATR_PARAMETER_D, &(d));
-					}
-					else { //do not obey TA1
-						FI = ATR_DEFAULT_FI;
-						d = ATR_DEFAULT_D;
-					}
-					if (NeedsPTS) {
-						if ((d == 32) || (d == 12) || (d == 20)) //those values were RFU in old table
-							d = 0; // viaccess cards that fail PTS need this
-					}
-
-					rdr_debug_mask(reader, D_ATR, "No PTS %s, selected protocol T%i, F=%.0f, D=%.6f, N=%.0f",
-						NeedsPTS ? "happened" : "needed", reader->protocol_type, (double) atr_f_table[FI], d, n);
-				}
-			}//end negotiable mode
+			else {
+				rdr_log(reader, "Specific mode: speed 'implicitly defined', not sure how to proceed, assuming default values");
+				FI = ATR_DEFAULT_FI;
+				d = ATR_DEFAULT_D;
+			}
+			rdr_debug_mask(reader, D_ATR, "Specific mode: T%i, F=%.0f, D=%.6f, N=%.0f",
+				reader->protocol_type, (double) atr_f_table[FI], d, n);
 		}
-		else { // T0 Protocol
+		else { //negotiable mode
+
+			reader->read_timeout = 1000000; // in us
+			bool PPS_success = 0;
+			bool NeedsPTS = ((reader->protocol_type != ATR_PROTOCOL_TYPE_T14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == 1 && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || n == 255)); //needs PTS according to old ISO 7816
+			if (NeedsPTS && deprecated == 0) {
+				//						 PTSS	PTS0	PTS1	PCK
+				unsigned char req[6] = { 0xFF, 0x10, 0x00, 0x00 }; //we currently do not support PTS2, standard guardtimes or PTS3,
+																									//but spare 2 bytes in arrayif card responds with it
+				req[1]=0x10 | reader->protocol_type; //PTS0 always flags PTS1 to be sent always
+				if (ATR_GetInterfaceByte (atr, 1, ATR_INTERFACE_BYTE_TA, &req[2]) != ATR_OK)	//PTS1
+					req[2] = 0x11; //defaults FI and DI to 1
+				uint32_t len = 0;
+				call (SetRightParity (reader));
+				ret = PPS_Exchange (reader, req, &len);
+				if (ret == OK) {
+					FI = req[2] >> 4;
+					unsigned char DI = req[2] & 0x0F;
+					d = (double) (atr_d_table[DI]);
+					PPS_success = 1;
+					rdr_debug_mask(reader, D_ATR, "PTS Succesfull, selected protocol: T%i, F=%.0f, D=%.6f, N=%.0f",
+						reader->protocol_type, (double) atr_f_table[FI], d, n);
+				}
+				else
+					rdr_ddump_mask(reader, D_ATR, req, len,"PTS Failure, response:");
+			}
+
+			//When for SCI, T14 protocol, TA1 is obeyed, this goes OK for mosts devices, but somehow on DM7025 Sky S02 card goes wrong when setting ETU (ok on DM800/DM8000)
+			if (!PPS_success) {//last PPS not succesfull
 				unsigned char TA1;
 				if (ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
-						FI = TA1 >> 4;
-						ATR_GetParameter (atr, ATR_PARAMETER_D, &(d));
+					FI = TA1 >> 4;
+					ATR_GetParameter (atr, ATR_PARAMETER_D, &(d));
 				}
-				else{ //TA1 not present, reverting to defaults
-						FI = ATR_DEFAULT_FI;
-						d = ATR_DEFAULT_D;
+				else { //do not obey TA1
+					FI = ATR_DEFAULT_FI;
+					d = ATR_DEFAULT_D;
 				}
-				rdr_debug_mask(reader, D_ATR, "No TA2 means protocol T0, F=%d, D=%d, N=%d", atr_f_table[FI], (int) d, (int) n);
-		}
+				if (NeedsPTS) {
+					if ((d == 32) || (d == 12) || (d == 20)) //those values were RFU in old table
+						d = 0; // viaccess cards that fail PTS need this
+				}
+
+				rdr_debug_mask(reader, D_ATR, "No PTS %s, selected protocol T%i, F=%.0f, D=%.6f, N=%.0f",
+					NeedsPTS ? "happened" : "needed", reader->protocol_type, (double) atr_f_table[FI], d, n);
+			}
+		}//end negotiable mode
+		
 	//make sure no zero values
 	double F =	(double) atr_f_table[FI];
 	if (!F) {
@@ -1074,8 +1062,8 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 		F = (double)atr_f_table[FI];
 		uint32_t ETU = 0;
 		//for Irdeto T14 cards, do not set ETU
-		//if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14))
-		//	ETU = F / d; //worketu only not divided by the cardfreq, perhaps internal reader code does this automatically? (not sure!) 
+		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14))
+			ETU = F / d; 
 		if (reader->mhz > 2000){ // Extra Guardtime is only slowing card ecm responses down. Although its calculated correct its not needed with internal readers!
 			EGT = 0;
 			call (Sci_WriteSettings (reader, reader->protocol_type, reader->divider, ETU, WWT, reader->CWT, reader->BWT, EGT, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
