@@ -822,8 +822,21 @@ static uint32_t PPS_GetLength (unsigned char * block)
 
 static uint32_t ETU_to_us(struct s_reader * reader, uint32_t ETU)
 {
-	double work_etu = 1000000/ (double) reader->current_baudrate;
-	return (uint32_t) ((double) ETU * work_etu); // in us
+	#define CHAR_LEN 10L //character length in ETU, perhaps should be 9 when parity = none?
+	
+	if (reader->typ == R_INTERNAL){
+		double work_etu = 1000000/ (double) reader->current_baudrate;
+		return (uint32_t) ((double) ETU * work_etu); // in us
+	}
+	else{
+
+		if (ETU > CHAR_LEN)
+			ETU -= CHAR_LEN;
+		else
+			ETU = 0;
+		double work_etu = 1000000 / (double)reader->current_baudrate;
+		return (uint32_t) (ETU * work_etu * reader->cardmhz / reader->mhz); // in us
+	}
 }
 
 static int32_t ICC_Async_SetParity (struct s_reader * reader, uint16_t parity)
@@ -916,7 +929,8 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 	if (deprecated == 0) {
 		uint32_t baud_temp;
 		if (reader->protocol_type != ATR_PROTOCOL_TYPE_T14) { //dont switch for T14
-				baud_temp = (uint32_t) 1/((1/d)*(F/(reader->cardmhz*10000)));
+				if (reader->typ == R_INTERNAL) baud_temp = (uint32_t) 1/((1/d)*(F/(reader->cardmhz*10000)));
+				else baud_temp = d * ICC_Async_GetClockRate (reader->cardmhz) / F;
 			if (reader->crdr.active == 1) {
 				if (reader->crdr.set_baudrate)
 					call (reader->crdr.set_baudrate(reader, baud_temp));
@@ -953,13 +967,12 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 
 			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
 				WWT >>= 1; //is this correct?
-			EGT = 0;
-			if (n != 255) //Extra Guard Time
+			EGT = 2; // standard T0 guardtime is 2 etu, add extra guardtime communicated by ATR.
+			if (n != 255) //Extra Guard Time by ATR
 				EGT += n;  // T0 protocol, if TC1 = 255 then dont add extra guardtime
-			//GT = 2+EGT; // standard T0 guardtime is 2 etu, add extra guardtime communicated by ATR. (unused but left in for quick reverting)
 			reader->CWT = 0; // T0 protocol doesnt have char_delay
 			reader->BWT = 0; // T0 protocol doesnt have block_delay
-			if (reader->mhz >2000)
+			if (reader->typ == R_INTERNAL)
 				rdr_debug_mask(reader, D_IFD, "Protocol: T=%i, WWT=%u, Clockrate=%u",
 					reader->protocol_type, WWT,
 					(reader->cardmhz * 10000));
@@ -1011,7 +1024,8 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 				reader->CWT = (uint16_t) ((1<<cwi) + 11); // in work ETU
 				// Set BWT = (2^BWI * 960 * 372 / clockspeed) seconds + 11 work etu
 				// 1 worketu = 1 / baudrate *1000*1000 us
-				reader->BWT = (uint32_t) ((1<<bwi) * 960 * 372 / (double)reader->cardmhz* 100 * (double) reader->current_baudrate / 1000 / 1000)+11; // BWT in ETU
+				if (reader->typ == R_INTERNAL) reader->BWT = (uint32_t) ((1<<bwi) * 960 * 372 / (double)reader->cardmhz* 100 * (double) reader->current_baudrate / 1000 / 1000)+11; // BWT in ETU
+				else reader->BWT = (uint32_t)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate(reader->cardmhz)) + 11 ;
 				// Set BGT = 22 * work etu
 				BGT = 22L; //in ETU
 
@@ -1077,14 +1091,14 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 	if (reader->typ == R_SMART)
 		SR_WriteSettings(reader, (uint16_t) atr_f_table[FI], (unsigned char)d, (unsigned char)EGT, (unsigned char)reader->protocol_type, reader->convention);
 #endif
-	if (reader->mhz > 2000){
+	if (reader->typ == R_INTERNAL){
 			rdr_log(reader, "ATR Fsmax is: %i Mhz, clocking card to %.2f (nearest possible to wanted user cardspeed of %.2f Mhz)",
 				atr_fs_table[FI] / 1000000,	(float) reader->cardmhz / 100, (float) reader->cardmhz / 100);
 	}
 	else{
-		rdr_log(reader, "ATR Fsmax is: %i Mhz, clocking card to wanted user cardspeed of %.2f Mhz",
+		rdr_log(reader, "ATR Fsmax is: %i Mhz, clocking card to wanted user cardspeed of %.2f Mhz (specified in reader->mhz)",
 			atr_fs_table[FI] / 1000000,
-				(float) reader->cardmhz / 100);
+				(float) reader->mhz / 100);
 	}
 
 	//Communicate to T1 card IFSD -> we use same as IFSC
