@@ -17,5 +17,6 @@ int32_t chk_rsfilter(struct s_reader * reader, ECM_REQUEST *er);
 int32_t chk_rfilter2(uint16_t rcaid, uint32_t rprid, struct s_reader *rdr);
 int32_t chk_ctab(uint16_t caid, CAIDTAB *ctab);
 int32_t chk_caid(uint16_t caid, CAIDTAB *ctab);
+int32_t chk_caid_rdr(struct s_reader *rdr,uint16_t caid);
 
 #endif

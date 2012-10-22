@@ -884,3 +884,12 @@ int32_t chk_caid(uint16_t caid, CAIDTAB *ctab)
 			rc = ctab->cmap[n] ? ctab->cmap[n] : caid;
 	return rc;
 }
+
+int32_t chk_caid_rdr(struct s_reader *rdr,uint16_t caid) {
+  if (is_network_reader(rdr)) {
+	  return 1;
+  } else if (rdr->caid==caid) {
+	  return 1;
+  }
+  return 0;
+}

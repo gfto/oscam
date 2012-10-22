@@ -856,7 +856,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 				int8_t valid = chk_ctab(caid_to, &rdr->ctab) //Check caid
 					&& chk_rfilter2(caid_to, 0, rdr) //Ident
 					&& chk_srvid_by_caid_prov_rdr(rdr, caid_to, 0) //Services
-					&& (!rdr->caid || rdr->caid==caid_to); //rdr-caid
+					&& (!rdr->caid || chk_caid_rdr(rdr,caid_to)); //rdr-caid
 				if (valid) {
 					stat_beta = get_stat(rdr, &qbeta);
 					overall_valid = 1;
@@ -868,7 +868,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 				int8_t nvalid = chk_ctab(er->caid, &rdr->ctab)//Check caid
 					&& chk_rfilter2(er->caid, 0, rdr) //Ident
 					&& chk_srvid_by_caid_prov_rdr(rdr, er->caid, 0) //Services
-					&& (!rdr->caid || rdr->caid==er->caid); //rdr-caid
+					&& (!rdr->caid || chk_caid_rdr(rdr,er->caid)); //rdr-caid
 				if (nvalid) {
 					stat_nagra = get_stat(rdr, &q);
 					overall_nvalid = 1;
@@ -970,7 +970,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 				int8_t valid = chk_ctab(caid_to, &rdr->ctab)//, rdr->typ) //Check caid
 					&& chk_rfilter2(caid_to, 0, rdr) //Ident
 					&& chk_srvid_by_caid_prov_rdr(rdr, caid_to, 0) //Services
-					&& (!rdr->caid || rdr->caid==caid_to); //rdr-caid
+					&& (!rdr->caid || chk_caid_rdr(rdr,caid_to)); //rdr-caid
 				if (valid) {
 					stat_nagra = get_stat(rdr, &qnagra);
 					overall_valid = 1;
@@ -982,7 +982,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 				int8_t bvalid = chk_ctab(er->caid, &rdr->ctab)//, rdr->typ) //Check caid
 					&& chk_rfilter2(er->caid, 0, rdr) //Ident
 					&& chk_srvid_by_caid_prov_rdr(rdr, er->caid, 0) //Services
-					&& (!rdr->caid || rdr->caid==er->caid); //rdr-caid
+					&& (!rdr->caid || chk_caid_rdr(rdr,er->caid)); //rdr-caid
 				if (bvalid) {
 					stat_beta = get_stat(rdr, &q);
 					overall_bvalid = 1;
@@ -1062,7 +1062,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 			}
 			rdr = ea->reader;
 			cs_debug_mask(D_TRACE, "check again caid %04X on reader %s", er->caid, rdr->label);
-			if ( !ea->reader->caid || ea->reader->caid == er->caid) { // chk_ctab(er->caid, &rdr->ctab)
+			if ( !ea->reader->caid || chk_caid_rdr(ea->reader,er->caid)) { // chk_ctab(er->caid, &rdr->ctab)
 				prv = ea;
 			} else {
 				er->reader_avail--;
