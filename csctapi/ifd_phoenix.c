@@ -215,15 +215,10 @@ int32_t Phoenix_Transmit (struct s_reader * reader, unsigned char * buffer, uint
 
 int32_t Phoenix_Receive (struct s_reader * reader, unsigned char * buffer, uint32_t size, uint32_t timeout)
 {
-#define IFD_TOWITOKO_TIMEOUT             1000
+#define IFD_TOWITOKO_TIMEOUT             1000000 //in us
 
 	/* Read all data bytes with the same timeout */
-	if (reader->mhz >2000){
-		if(IO_Serial_Read (reader, timeout + reader->read_timeout, size, buffer)) return ERROR;
-	}
-	else{
-		if(IO_Serial_Read (reader, timeout + IFD_TOWITOKO_TIMEOUT, size, buffer)) return ERROR;
-	}
+	if(IO_Serial_Read (reader, timeout + IFD_TOWITOKO_TIMEOUT, size, buffer)) return ERROR;
 	return OK;
 }
 

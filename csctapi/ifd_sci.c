@@ -16,7 +16,7 @@
 #include "io_serial.h"
 
 #undef ATR_TIMEOUT
-#define ATR_TIMEOUT   800
+#define ATR_TIMEOUT   800000
 
 #define OK 		0 
 #define ERROR 1
@@ -81,8 +81,6 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 	}
 		while (statusreturn);
 	
-	if (reader->mhz > 2000)           // pll readers use timings in us
-		timeout = timeout * 1000;
 	if (IO_Serial_Read(reader, timeout, 1, buf+n)){ //read first char of atr
 		rdr_debug_mask(reader, D_IFD, "ERROR: no characters found in ATR");
 		return ERROR;
@@ -135,8 +133,8 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 				D = atr_d_table[DI]; // lookup the bitrate adjustment (yeah there are floats in it, but in iso only integers!?)
 				rdr_debug_mask(reader, D_ATR, "Advertised max cardfrequency is %.2f (Fmax), frequency divider is %d (F)", fmax/1000000L, F); // High nibble TA1 contains cardspeed
 				rdr_debug_mask(reader, D_ATR, "Bitrate adjustment is %d (D)", D); // Low nibble TA1 contains Bitrateadjustment
-				rdr_debug_mask(reader, D_ATR, "Work ETU = %.2f us", (1/D)*(F/fmax)*1000000L); // And display it...
-				rdr_debug_mask(reader, D_ATR, "Initial ETU = %.2f us", 372/fmax*1000000L); // And display it... since D=1 and frequency during ATR fetch might be different!
+				rdr_debug_mask(reader, D_ATR, "Work ETU = %.2f us", (double) ((1/(double)D)*((double)F/(double)fmax)*1000000)); // And display it...
+				rdr_debug_mask(reader, D_ATR, "Initial ETU = %.2f us", (double)372/(double)fmax*1000000); // And display it... since D=1 and frequency during ATR fetch might be different!
 			} 
 			if (protocols > 1 && protocols <3){
 				if((buf[n]&0x80)==0x80) rdr_debug_mask(reader, D_ATR, "Switching between negotiable mode and specific mode is not possible");

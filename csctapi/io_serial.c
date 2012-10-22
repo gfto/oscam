@@ -55,9 +55,9 @@
 
 static int32_t IO_Serial_Bitrate(int32_t bitrate);
 
-bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_ms, uint32_t timeout_ms);
+bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_us, uint32_t timeout_us);
 
-static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_ms, uint32_t timeout_ms);
+static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, uint32_t timeout_us);
 
 void IO_Serial_Ioctl_Lock(struct s_reader * reader, int32_t flag)
 {
@@ -398,8 +398,7 @@ void IO_Serial_Flush (struct s_reader * reader)
 	unsigned char b;
 
   tcflush(reader->handle, TCIOFLUSH);
-	if (reader->mhz > 2000) while(!IO_Serial_Read(reader, 1000*1000, 1, &b));
-	else while(!IO_Serial_Read(reader, 1000, 1, &b));
+  while(!IO_Serial_Read(reader, 1000*1000, 1, &b));
 }
 
 void IO_Serial_Sendbreak(struct s_reader * reader, int32_t duration)
@@ -482,9 +481,7 @@ bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t size, c
 	uint32_t count, to_send, i_w;
 	unsigned char data_w[512];
 	
-	uint32_t timeout = 1000;
-	if (reader->mhz > 2000)
-		timeout = timeout*1000; // pll readers timings in us
+	uint32_t timeout = 1000000;
 		
 	/* Discard input data from previous commands */
 	//tcflush (reader->handle, TCIFLUSH);
@@ -636,7 +633,7 @@ static int32_t IO_Serial_Bitrate(int32_t bitrate)
 	return B0;
 }
 
-bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_ms, uint32_t timeout_ms)
+bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_us, uint32_t timeout_us)
 {
    fd_set rfds;
    fd_set erfds;
@@ -644,36 +641,25 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_ms, uint32_t
    int32_t select_ret;
    int32_t in_fd;
    
-   if (delay_ms > 0){
-      if (reader->mhz > 2000)
-         cs_sleepus (delay_ms); // for pll readers do wait in us
-      else
-	 cs_sleepms (delay_ms); // all other reader do wait in ms
-   }
+   if (delay_us > 0) cs_sleepus (delay_us); // wait in us
    in_fd=reader->handle;
    
    FD_ZERO(&rfds);
    FD_SET(in_fd, &rfds);
    
    FD_ZERO(&erfds);
-   FD_SET(in_fd, &erfds);
-   if (reader->mhz > 2000){ // calculate timeout in us for pll readers
-		tv.tv_sec = timeout_ms/1000000L;
-		tv.tv_usec = (timeout_ms % 1000000);
-   }
-   else {
-		tv.tv_sec = timeout_ms/1000;
-		tv.tv_usec = (timeout_ms % 1000) * 1000L;
-   }
-
+   FD_SET(in_fd, &erfds); // calculate timeout in us
+   tv.tv_sec = timeout_us/1000000L;
+   tv.tv_usec = (timeout_us % 1000000);
+ 
 	while (1) {
 		select_ret = select(in_fd+1, &rfds, NULL,  &erfds, &tv);
 		if (select_ret==-1) {
 			if (errno==EINTR) continue; //try again in case of Interrupted system call
 			if (errno == EAGAIN) continue; //EAGAIN needs select procedure again
 			else {
-				rdr_log(reader, "ERROR: %s: timeout=%d ms (errno=%d %s)",
-					__func__, timeout_ms, errno, strerror(errno));
+				rdr_log(reader, "ERROR: %s: timeout=%d us (errno=%d %s)",
+					__func__, timeout_us, errno, strerror(errno));
 				return ERROR;
 			}
 		}
@@ -693,7 +679,7 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_ms, uint32_t
 		return ERROR;
 }
 
-static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_ms, uint32_t timeout_ms)
+static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, uint32_t timeout_us)
 {
    fd_set wfds;
    fd_set ewfds;
@@ -704,8 +690,8 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_ms, 
 #if !defined(WITH_COOLAPI) && !defined(WITH_AZBOX)
    if(reader->typ == R_INTERNAL) return OK; // needed for ppc, otherwise error!
 #endif
-   if (delay_ms > 0)
-      cs_sleepms (delay_ms); // all not pll readers do wait in ms
+   if (delay_us > 0)
+      cs_sleepus (delay_us); // wait in us
    out_fd=reader->handle;
     
    FD_ZERO(&wfds);
@@ -714,8 +700,8 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_ms, 
    FD_ZERO(&ewfds);
    FD_SET(out_fd, &ewfds);
    
-   tv.tv_sec = timeout_ms/1000;
-   tv.tv_usec = (timeout_ms % 1000) * 1000L;
+   tv.tv_sec = timeout_us/1000000L;
+   tv.tv_usec = (timeout_us % 1000000);
    
    while (1) {
 		select_ret = select(out_fd+1, NULL, &wfds, &ewfds, &tv);
@@ -724,7 +710,7 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_ms, 
 			if (errno == EAGAIN) continue; //EAGAIN needs select procedure again
 			else {
 				rdr_log(reader, "ERROR: %s: timeout=%d ms (errno=%d %s)",
-					__func__, timeout_ms, errno, strerror(errno));
+					__func__, timeout_us, errno, strerror(errno));
 				return ERROR;
 			}
 		}
@@ -735,7 +721,7 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_ms, 
    if (FD_ISSET(out_fd, &ewfds))
    {
 		rdr_log(reader, "ERROR: %s: timeout=%d ms, fd is in error fds (errno=%d %s)",
-			__func__, timeout_ms, errno, strerror(errno));
+			__func__, timeout_us, errno, strerror(errno));
 		return ERROR;
    }
 

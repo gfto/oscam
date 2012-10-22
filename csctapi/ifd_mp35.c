@@ -9,9 +9,9 @@
 #define ERROR 1
 
 #define ACK 0x06
-#define MP35_WRITE_DELAY 100
-#define MP35_READ_DELAY 200
-#define MP35_BREAK_LENGTH 1200
+#define MP35_WRITE_DELAY 100000
+#define MP35_READ_DELAY 200000
+#define MP35_BREAK_LENGTH 1200000
 
 typedef struct
 {
