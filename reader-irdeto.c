@@ -159,6 +159,7 @@ static time_t chid_date(struct s_reader * reader, uint32_t date, char *buf, int3
                                {0x0666, 0x0006, "SVK", 946598400L},    // 30.12.1999, 16:00    //cslink irdeto
                                {0x0666, 0x0006, "CZE", 946598400L},    // 30.12.1999, 16:00    //cslink irdeto
                                {0x0648, 0x0608, "AUT", 946598400L},    // 31.12.1999, 00:00    //orf ice irdeto
+							   {0x0648, 0x0005, "AUT", 946598400L},    // 31.12.1999, 00:00    //orf ice irdeto
                                {0x0604, 0x0605, "GRC", 1011052800L},   // 15.01.2002, 00:00    //nova irdeto
                                {0x0604, 0x0606, "GRC", 1011052800L},   // 15.01.2002, 00:00    //nova irdeto
                                {0x0604, 0x0607, "GRC", 1011052800L},   // 15.01.2002, 00:00    //nova irdeto
