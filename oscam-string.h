@@ -7,7 +7,9 @@ char *cs_strdup(const char *str);
 
 void cs_strncpy(char *destination, const char *source, size_t num);
 char *strtolower(char *txt);
+char *strtoupper(char *txt);
 char *trim(char *txt);
+char *remove_white_chars(char *txt);
 bool streq(const char *s1, const char *s2);
 
 char *cs_hexdump(int32_t m, const uchar *buf, int32_t n, char *target, int32_t len);

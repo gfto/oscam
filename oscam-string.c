@@ -75,6 +75,16 @@ char *strtolower(char *txt) {
 	return txt;
 }
 
+/* Converts the string txt to it's upper case representation. */
+char *strtoupper(char *txt) {
+  char *p;
+  for (p = txt; *p; p++) {
+    if (islower((uchar)*p))
+      *p = toupper((uchar)*p);
+  }
+  return txt;
+}
+
 char *trim(char *txt)
 {
 	int32_t l;
@@ -90,6 +100,23 @@ char *trim(char *txt)
 	if (l > 0) {
 		for (p1 = txt + l - 1; l > 0 && ((*p1==' ') || (*p1=='\t') || (*p1=='\n') || (*p1=='\r')); *p1--='\0', l--)
 			;
+	}
+	return txt;
+}
+
+char *remove_white_chars(char *txt) {
+
+	char *p1 = txt, *p2 = txt;
+
+	if(NULL != p1) {
+		while('\0' != *p1) {
+			if((' '  != *p1) && ('\t' != *p1) && 
+			   ('\n' != *p1) && ('\r' != *p1)) {
+				*p2++ = *p1;
+			}
+			p1++;
+		}
+			*p2 = '\0';
 	}
 	return txt;
 }

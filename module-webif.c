@@ -4053,6 +4053,156 @@ static char *send_oscam_failban(struct templatevars *vars, struct uriparams *par
 		return tpl_getTpl(vars, "APIFAILBAN");
 }
 
+static bool send_EMM(const struct s_reader *rdr, const unsigned char *emmhex, uint32_t len) {
+
+	if(NULL != rdr && NULL != emmhex && 0 != len ) {
+		EMM_PACKET *emm_pack;
+		
+		if(cs_malloc(&emm_pack, sizeof(EMM_PACKET))) {
+			struct s_client *webif_client = cur_client();
+			webif_client->grp = 0xFF; /* to access to all readers */
+
+			memset(emm_pack, '\0', sizeof(EMM_PACKET));
+			emm_pack->client = webif_client;
+			emm_pack->l = len; 
+			memcpy(emm_pack->emm, emmhex, len);
+
+			cs_debug_mask(D_EMM, "emm is being sent to reader %s.", rdr->label);
+			add_job(rdr->client, ACTION_READER_EMM, emm_pack, sizeof(EMM_PACKET));
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static bool process_single_emm(struct templatevars *vars, const struct s_reader *rdr, const char* ep) {
+
+	if(NULL !=vars && NULL != rdr && NULL != ep)
+	{
+		char emmdata[1025] = {'\0'};	 /*1024 + '\0'*/
+		unsigned char emmhex[513] = {'\0'};
+		char buff[5] = {'\0'};
+		uint32_t len = 0;
+		cs_strncpy(emmdata, ep, sizeof(emmdata));
+		remove_white_chars(emmdata);
+
+		if('\0' != emmdata[0]) {
+			len = strlen(emmdata);
+			tpl_addVar(vars, TPLADD, "EP", strtoupper(emmdata));
+			if (key_atob_l(emmdata, emmhex, len)) {
+				tpl_addMsg(vars, "Single EMM has not been sent due to wrong value!");
+			}
+			else {
+				len /= 2;
+				snprintf(buff, sizeof(buff), "0x%02X", len);
+				tpl_addVar(vars, TPLADD, "EP", strtoupper(emmdata));
+				tpl_addVar(vars, TPLADD, "SIZE", buff);
+				
+				if(send_EMM(rdr, emmhex, len)) {
+					tpl_addMsg(vars, "Single EMM has been sent.");
+					return true;
+				}
+			}
+		}
+	}
+	tpl_addVar(vars, TPLADD, "SIZE", "0x00");
+	return false;
+}
+
+static bool process_emm_file(struct templatevars *vars, const struct s_reader *rdr, const char* sFilePath) {
+
+	bool     bret     = false;
+	uint32_t fsize    = 0;
+	uint32_t rlines   = 0;
+	uint32_t wemms    = 0;
+	uint32_t errsize  = 0;
+	char numerrl[256] = {'\0'};
+	char buff[20]     = {'\0'};
+
+	if(NULL != rdr && NULL != sFilePath && '\0' != sFilePath[0]) {
+		char sMessage[128] = {0};
+		if(true == file_exists(sFilePath)) {
+			FILE *fp;
+			if( (fp = fopen(sFilePath, "r")) ) {
+				char line[2048] = {'\0'};
+				unsigned char emmhex[513] = {'\0'};
+				uint32_t len = 0;
+
+				tpl_addMsg(vars, "EMM file has been processed.");
+				while (fgets(line, sizeof(line), fp)) {
+					++rlines;
+					len = strlen(remove_white_chars(line)); 
+
+					// wrong emm
+					if(len > (sizeof(emmhex) * 2) || 
+					   key_atob_l(line, emmhex, len)) {
+						errsize += snprintf(numerrl + errsize, sizeof(numerrl)-errsize, "%d, ", rlines);
+						continue;
+					}
+					if(send_EMM(rdr, emmhex, len)) {
+						++wemms;
+						/* Give time to process EMM, otherwise, too many jobs can be added*/
+						cs_sleepms(1000); //TODO: use oscam signal to catch reader answer
+					}
+				}
+				fsize = ftell(fp);
+				fclose(fp);
+			}
+			else {
+				snprintf(sMessage, sizeof(sMessage), "Cannot open file '%s' (errno=%d: %s)\n", sFilePath, errno, strerror(errno));
+				tpl_addMsg(vars, sMessage);
+			}
+		}
+		else {
+			snprintf(sMessage, sizeof(sMessage), "FILE \"%s\" not found!", sFilePath);
+			tpl_addMsg(vars, sMessage);
+		}
+		bret = true;
+	}
+
+	snprintf(buff, sizeof(buff), "%d bytes", fsize);
+	tpl_addVar(vars, TPLADD, "FSIZE", buff);
+	snprintf(buff, sizeof(buff), "%d", rlines);
+	tpl_addVar(vars, TPLADD, "NUMRLINE", buff);
+	snprintf(buff, sizeof(buff), "%d", wemms);
+	tpl_addVar(vars, TPLADD, "NUMWEMM", buff);
+	tpl_addVar(vars, TPLADD, "ERRLINE", numerrl);
+	
+	return bret;
+}
+
+static char *send_oscam_EMM_running(struct templatevars *vars, struct uriparams *params) {
+
+	struct s_reader *rdr = NULL;
+	
+	setActiveMenu(vars, MNU_READERS);
+	tpl_addVar(vars, TPLADD, "READER", strtolower(getParam(params, "label")));
+	tpl_addVar(vars, TPLADD, "FNAME", getParam(params, "emmfile"));
+
+	rdr = get_reader_by_label(getParam(params, "label"));
+	if (rdr) {
+		process_single_emm(vars, rdr, getParam(params, "ep"));
+		process_emm_file(vars, rdr, getParam(params, "emmfile"));
+	}
+	else
+	{
+		char sMessage[128] = {0};
+		snprintf(sMessage, sizeof(sMessage), "READER \"%s\" not found!", getParam(params, "label"));
+		tpl_addMsg(vars, sMessage);
+		tpl_addVar(vars, TPLADD, "READER", "reader not found");
+	}
+
+	return tpl_getTpl(vars, "EMM_RUNNING");
+}
+
+static char *send_oscam_EMM(struct templatevars *vars, struct uriparams *params) {
+
+	setActiveMenu(vars, MNU_READERS);
+	tpl_addVar(vars, TPLADD, "READER", strtolower(getParam(params, "label")));
+	return tpl_getTpl(vars, "ASKEMM");
+}
+
 static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *params, int8_t *keepalive, int8_t apicall) {
 	if (strcmp(getParam(params, "part"), "status") == 0) {
 		return send_oscam_status(vars, params, apicall);
@@ -4608,7 +4758,9 @@ static int32_t process_request(FILE *f, IN_ADDR_T in) {
 			"/graph.svg",
 			"/oscamapi.xml",
 			"/cacheex.html",
-			"/oscamapi.json"	};
+			"/oscamapi.json",
+			"/emm.html",
+			"/emm_running.html"	};
 
 		int32_t pagescnt = sizeof(pages)/sizeof(char *); // Calculate the amount of items in array
 		int32_t i, bufsize, len, pgidx = -1;
@@ -4834,6 +4986,8 @@ static int32_t process_request(FILE *f, IN_ADDR_T in) {
 				case 23: result = send_oscam_cacheex(vars, &params, 0); break;
 #endif
 				case 24: result = send_oscam_api(vars, f, &params, keepalive, 2); break; //oscamapi.json
+				case 25: result = send_oscam_EMM(vars, &params); break; //emm.html
+				case 26: result = send_oscam_EMM_running(vars, &params); break; //emm_running.html
 				default: result = send_oscam_status(vars, &params, 0); break;
 			}
 			if(pgidx != 19 && pgidx != 20) cs_writeunlock(&http_lock);

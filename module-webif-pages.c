@@ -301,6 +301,23 @@ CxlstvgZgUJdUSFKOBMHl2y6IBgMT6h0OrMaeKHrVbFYIM6Ig8AQEI/L6LQgEOD1Nlg64RAvK9wJ\
 enxofl8oJoiJIhUhH46PkB4RACH+L0NvcHlyaWdodCBNYXJ5IEdhcnJlbiAxOTk4DQpBTEwgUklH\
 SFRTIFJFU0VSVkVEADs="
 
+#define ICEMM "data:image/png;base64,\
+iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAIAAAAmKNuZAAAAGXRFWHRTb2Z0d2Fy\
+ZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAm9JREFUeNqEVc9LG0EU3tkM+CvQKq5U\
+6krwEHuwFLQiSvHgP6DgRY9evAj+DV4kB/HiSfA/yNWLVEojeJBQMBZd0ZhGgpgt\
+jRXaU2t3Xp+Z3cnszuzmsYT3ZjLffG/eN29Ifnb2L2NGjAFAKAwcFp7A0CSE4vcP\
+mmYYJFhAdIvlUIzwQe57AAzhWHh/kogiD8oLuYeIVASg7JyApRpOpZBdhJH2pCJA\
+cqaRo6RGO1LvVlZejY+j45ZKX/b2jHi+IMPFWWZurndkBJ2uvj4BB7rcMaS8rHGH\
+EqIc6Al0QPhr8rOL0wEoRxkHJEKqraAqBa5pVb3RZLUSkde0cmyH9ZysWuw38/Nd\
+lvVYrbKnp+rRkQDhuEOTk7S7uzeT+Xl7+61QiOD6t4L/cgGOLS+/GB7GsHF1lR4c\
+lDm9XVoaW1x8advoP1QqCCdI+DKGgJfItHxw8H51FZ3+0VH8BFZ/NvshmxWhs7/v\
+SVT8fNVTb1xfF3d3k8V4vLNzf3bGmsURRccvtWDbEL62j7Ua7ex8KJftqSktVmFr\
+C7HqFxfqlCnvIPzayQlyPN7eVhd8yuXc8/Pvl5eR3sHP0ARJZYLzM2Kx+OPm5nMu\
+J2N93NhwHafuOLKkeMPkI1TG4vZ6YmJ6fT09MKBSm1lb485v1z3c3GxUKiBVA7hQ\
+ZCz0PcYsqaCypS1LOB6a8ipQtT2gXL/m8z2WFbR9o+UE63/V68zz1P0oKE/Jfal0\
+d3oKuiYIYaHJU6Q5q0k2rusmYLUuGeh6YVtS6huC99+/FclYah81pMfTVy8hfvvs\
+MM0/4QKpbyMhBP8KMS86p4ZORyr1X4ABAFELHy6c0nVMAAAAAElFTkSuQmCC"
+
 #define TPLHEADER "\
 <!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\
 <HTML>\n\
@@ -994,7 +1011,7 @@ SFRTIFJFU0VSVkVEADs="
 				<TH>ECMs NOK</TH>\n\
 				<TH>ECMs Filtered<br><span title=\"filtered by ECM Header Whitelist\"> Head </span>/<span title=\"filtered by ECM Whitelist\"> Len </span></TH>\n\
 				<TH>LB Weight</TH>\n\
-				<TH COLSPAN=\"5\">Action</TH>\n\
+				<TH COLSPAN=\"6\">Action</TH>\n\
 			</TR>\n\
 ##READERLIST##\n\
 			<TR>\n\
@@ -1011,8 +1028,8 @@ SFRTIFJFU0VSVkVEADs="
 ##ADDPROTOCOL##\n\
 					</select>\n\
 				</TD>\n\
-				<TD COLSPAN=\"5\" class=\"centered\"><input type=\"submit\" name=\"action\" value=\"Add\" ##BTNDISABLED##></TD>\n\
-				<TD COLSPAN=\"5\"></TD>\n\
+				<TD COLSPAN=\"4\" class=\"centered\"><input type=\"submit\" name=\"action\" value=\"Add\" ##BTNDISABLED##></TD>\n\
+				<TD COLSPAN=\"6\"></TD>\n\
 			</TR>\n\
 		</TABLE>\n\
 	</form>\n\
@@ -1043,6 +1060,7 @@ SFRTIFJFU0VSVkVEADs="
 				<TD class=\"centered\"><A HREF=\"readerconfig.html?label=##READERNAMEENC##\" TITLE=\"Edit this Reader\"><IMG CLASS=\"icon\" SRC=\"image?i=ICEDI\" ALT=\"Edit Reader\"></A></TD>\n\
 				<TD class=\"centered\">##ENTITLEMENT##</TD>\n\
 				<TD class=\"centered\">##READERREFRESH##</TD>\n\
+				<TD class=\"centered\"><A HREF=\"emm.html?label=##READERNAMEENC##\" TITLE=\"Write EMM to this Reader\"><IMG CLASS=\"icon\" SRC=\"image?i=ICEMM\" ALT=\"Write EMM\"></A></TD>\n\
 				<TD class=\"centered\"><A HREF=\"readerstats.html?label=##READERNAMEENC##&amp;hide=4\" TITLE=\"Show loadbalancer statistics\"><IMG CLASS=\"icon\" SRC=\"image?i=ICSTA\" ALT=\"Loadbalancer statistics\"></A></TD>\n\
 				<TD class=\"centered\"><A HREF=\"readers.html?label=##READERNAMEENC##&amp;action=delete\" TITLE=\"Delete this Reader\"><IMG CLASS=\"icon\" SRC=\"image?i=ICDEL\" ALT=\"Delete Reader\"></A></TD>\n\
 			</TR>\n"
@@ -1742,7 +1760,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 					</select>\n\
 				</TD>\n\
 			</TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#lb_save##TPLHELPSUFFIX##Loadbalance save every:</A></TD><TD><input name=\"lb_save\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBSAVE##\"> ECM´s</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#lb_save##TPLHELPSUFFIX##Loadbalance save every:</A></TD><TD><input name=\"lb_save\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBSAVE##\"> ECMï¿½s</TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#lb_savepath##TPLHELPSUFFIX##Statistics save path:</A></TD><TD><input name=\"lb_savepath\" type=\"text\" size=\"63\" maxlength=\"128\" value=\"##LBSAVEPATH##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#lb_nbest_readers##TPLHELPSUFFIX##Number of best readers:</A></TD><TD><input name=\"lb_nbest_readers\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBNBESTREADERS##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#lb_nbest_percaid##TPLHELPSUFFIX##Number of best readers per caid:</A></TD><TD><input name=\"lb_nbest_percaid\" type=\"text\" size=\"63\" maxlength=\"320\" value=\"##LBNBESTPERCAID##\"></TD></TR>\n\
@@ -2286,6 +2304,44 @@ function isNumber(a) {\n\
 
 #define TPLCACHEEXTABLEROW "			<TR><TD>&nbsp;&nbsp;##DIRECTIONIMG##&nbsp;&nbsp;</TD><TD>##TYPE##</TD><TD>##NAME##</TD><TD>##IP##</TD><TD>##NODE##</TD><TD>##LEVEL##</TD><TD>##PUSH##</TD><TD>##GOT##</TD><TD>##HIT##</TD><TD>##ERR##</TD><TD>##ERRCW##</TD></TR>\n"
 
+#define TPLASKEMM "\
+##TPLHEADER##\
+##TPLMENU##\
+##TPLMESSAGE##\
+	<BR><BR>\n\
+	<FORM action=\"emm_running.html\" method=\"get\"><INPUT TYPE=\"hidden\" NAME=\"label\" VALUE=\"##READER##\">\n\
+		<TABLE CLASS=\"stats\">\n\
+			<TR><TH COLSPAN=\"2\">Selected reader : ##READER##</TH></TR>\n\
+			<TR><TD>single EMM to write:</TD><TD><textarea name=\"ep\" cols=\"80\" rows=\"7\" maxlength=\"1024\"></textarea></TD></TR>\n\
+			<TR><TD>file path with EMMs:</TD><TD><input name=\"emmfile\" type=\"text\" size=\"70\" maxlength=\"256\"></TD></TR>\n\
+			<TR><TD colspan=\"2\" class=\"centered\"><input name=\"action\" type=\"submit\" value=\"Launch\" ##BTNDISABLED##></TD></TR>\n\
+		</TABLE>\n\
+	</FORM>\n\
+##TPLFOOTER##"
+
+#define TPLEMM_RUNNING "\
+##TPLHEADER##\
+##TPLMENU##\
+	<BR><BR>\n\
+##TPLMESSAGE##\
+	<BR><BR>\n\
+	<form action=\"emm_running.html\" method=\"get\">\n\
+		<input name=\"service\" type=\"hidden\" value=\"##EP##\">\n\
+		<TABLE CLASS=\"stats\">\n\
+			<TR><TH COLSPAN=\"2\">Selected reader : ##READER##</TH></TR>\n\
+			<TR><TH COLSPAN=\"2\">SINGLE EMM</TH></TR>\n\
+			<TR><TD>EMM: </A></TD><TD><textarea name=\"ep\" readonly=\"readonly\" cols=\"80\" rows=\"7\">##EP##</textarea></TD></TR>\n\
+			<TR><TD>size: </A></TD><TD><input name=\"size\" readonly=\"readonly\" type=\"text\" size=\"63\" maxlength=\"160\" value=\"##SIZE##\"></TD></TR>\n\
+			<TR><TH COLSPAN=\"2\">EMM FILE</TH></TR>\n\
+			<TR><TD>file path: </A></TD><TD><input name=\"size\" readonly=\"readonly\" type=\"text\" size=\"63\" maxlength=\"160\" value=\"##FNAME##\"></TD></TR>\n\
+			<TR><TD>file size: </A></TD><TD><input name=\"size\" readonly=\"readonly\" type=\"text\" size=\"63\" maxlength=\"160\" value=\"##FSIZE##\"></TD></TR>\n\
+			<TR><TD>num of <BR>read lines: </A></TD><TD><input name=\"size\" readonly=\"readonly\" type=\"text\" size=\"63\" maxlength=\"160\" value=\"##NUMRLINE##\"></TD></TR>\n\
+			<TR><TD>lines with <BR>errors: </A></TD><TD><input name=\"size\" readonly=\"readonly\" type=\"text\" size=\"63\" maxlength=\"256\" value=\"##ERRLINE##\"></TD></TR>\n\
+			<TR><TD>num of <BR>written EMMs: </A></TD><TD><input name=\"size\" readonly=\"readonly\" type=\"text\" size=\"63\" maxlength=\"160\" value=\"##NUMWEMM##\"></TD></TR>\n\
+		</TABLE>\n\
+	</form>\n\
+##TPLFOOTER##"
+
 const char *templates[][3] = {
 	{"HEADER", TPLHEADER, ""}
 	,{"APIHEADER", TPLAPIHEADER, ""}
@@ -2377,6 +2433,8 @@ const char *templates[][3] = {
 	,{"MESSAGEBIT", TPLMESSAGEBIT, ""}
 	,{"SCRIPT", TPLSCRIPT, ""}
 	,{"GRAPH", TPLGRAPH, ""}
+	,{"ASKEMM", TPLASKEMM, ""}
+	,{"EMM_RUNNING", TPLEMM_RUNNING, ""}
 #ifdef HAVE_DVBAPI
 	,{"CONFIGDVBAPI", TPLCONFIGDVBAPI, "HAVE_DVBAPI"}
 	,{"CONFIGMENUDVBAPI", TPLCONFIGMENUDVBAPI, "HAVE_DVBAPI"}
@@ -2467,6 +2525,7 @@ const char *templates[][3] = {
 	,{"ICHID", ICHID, ""}
 	,{"ICRES", ICRES, ""}
 	,{"ICSPAC", ICSPAC, ""}
+	,{"ICEMM", ICEMM, ""}
 };
 
 int32_t tpl_count(void) { return sizeof(templates) / (3*sizeof(char *)); }
