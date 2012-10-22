@@ -391,6 +391,19 @@ minimal time added to average time as timeout time, default:300
 1 = enable automatic Betacrypt tunneling detection for CAIDs 1801, 1833, 1834, and 1835 for load balancing, Betacrypt defintion in \fBoscam.user\fR with \fBbetatunnel\fR will be prefered, default:1
 .RE
 .PP
+\fBlb_auto_betatunnel_mode\fP = \fB0\fP|\fB1\fP|\fB2\fP
+.RS 3n
+set mode for automatic Betacrypt tunneling:
+
+ \fB0\fP = CAID 18XX tunneling to CAID 17X2 only (default)
+ \fB1\fP = CAID 18XX tunneling to CAID 17X2 and CAID 17X2 tunneling to CAID 18XX (CAID 1833/1801)
+ \fB2\fP = CAID 18XX tunneling to CAID 17X2 and CAID 17X2 tunneling to CAID 18XX (CAID 1833/1834)
+ \fB3\fP = CAID 18XX tunneling to CAID 17X2 and CAID 17X2 tunneling to CAID 18XX (CAID 1833/1835)
+ \fB4\fP = CAID 17X2 tunneling to CAID 18XX (CAID 1833/1801 only)
+ \fB5\fP = CAID 17X2 tunneling to CAID 18XX (CAID 1833/1834 only)
+ \fB6\fP = CAID 17X2 tunneling to CAID 18XX (CAID 1833/1835 only)
+.RE
+.PP
 \fBlb_auto_betatunnel_prefer_beta\fP = \fBdirection\fP
 .RS 3n
 set direction for automatic Betacrypt/Nagravision selection:
