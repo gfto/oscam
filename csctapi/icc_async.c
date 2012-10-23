@@ -1031,9 +1031,9 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 				BGT = 22L; //in ETU
 
 				if (n == 255)
-					CGT = 1; // special case, guardtime is 1 (in ETU)
+					CGT = 11L; // special case, guardtime is 11 (in ETU)
 				else
-					CGT = 2+n; // normal Guardtime is 2 on T1, add GT (in ETU)
+					CGT = 12L+n; // normal Guardtime is 12 on T1, add GT (in ETU)
 
 				// Set the error detection code type
 				if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TC, &tc) == ATR_NOT_FOUND)
@@ -1050,7 +1050,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 					BGT, (edc == EDC_LRC) ? "LRC" : "CRC", CGT);
 				reader->read_timeout = ETU_to_us(reader, reader->BWT);
 				reader->block_delay = ETU_to_us(reader, BGT);
-				reader->char_delay = ETU_to_us(reader, reader->CWT);
+				reader->char_delay = ETU_to_us(reader, CGT);
 				rdr_debug_mask(reader, D_ATR, "Setting timings: reader timeout=%u us, block_delay=%u us, char_delay=%u us",
 					reader->read_timeout, reader->block_delay, reader->char_delay);
 			break;
