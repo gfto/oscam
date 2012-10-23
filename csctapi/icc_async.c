@@ -964,16 +964,22 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 
 			// WWT = 960 * d * WI  work etu
 
-			if(reader->typ == R_INTERNAL) WWT = (uint32_t) 960 * d * wi; //in work ETU
-			else WWT = (uint32_t) 960 * wi; //in work ETU
+			if(reader->typ == R_INTERNAL){ // WWT & guardtime for internal readerdevices
+				WWT = (uint32_t) 960 * d * wi; //in work ETU
+				EGT = 2; // this low guardtime works for internal readers
+			}
+			else{ // WWT & guardtime for external readerdevices
+				WWT = (uint32_t) 960 * wi; //in work ETU
+				EGT = 12; // standard T0 guardtime is 12 etu for external readers
+			}
 			
 			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
 				WWT >>= 1; //is this correct?
-			EGT = 12; // standard T0 guardtime is 12 etu, add extra guardtime communicated by ATR.
-			if (n != 255) //Extra Guard Time by ATR
+			if (n != 255) //add extra Guard Time by ATR
 				EGT += n;  // T0 protocol, if TC1 = 255 then dont add extra guardtime
 			reader->CWT = 0; // T0 protocol doesnt have char_delay
 			reader->BWT = 0; // T0 protocol doesnt have block_delay
+			
 			if (reader->typ == R_INTERNAL)
 				rdr_debug_mask(reader, D_IFD, "Protocol: T=%i, WWT=%u, Clockrate=%u",
 					reader->protocol_type, WWT,
