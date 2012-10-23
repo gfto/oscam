@@ -834,8 +834,9 @@ static uint32_t ETU_to_us(struct s_reader * reader, uint32_t ETU)
 			ETU -= CHAR_LEN;
 		else
 			ETU = 0;
-		double work_etu = 1000000 / (double)reader->current_baudrate;
-		return (uint32_t) (ETU * work_etu * reader->cardmhz / reader->mhz); // in us
+		double work_etu = 1000 / (double)reader->current_baudrate; // ms as base, fixup for readers that previously had timings in ms
+		work_etu = (uint32_t) (ETU * work_etu * reader->cardmhz / reader->mhz); // in ms
+		return (uint32_t) (work_etu * 1000); // return in us
 	}
 }
 
