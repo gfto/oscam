@@ -96,7 +96,7 @@ static int32_t reader_card_inserted(struct s_reader * reader)
 		return 1;
 
 	int32_t card;
-	if (ICC_Async_GetStatus (reader, &card)) {
+	if (ICC_Async_GetStatus (reader, &card) == OK) {
 		rdr_log(reader, "Error getting card status.");
 		return 0; //corresponds with no card inside!!
 	}

@@ -62,8 +62,8 @@ static int32_t get_gpio(struct s_reader * reader)
 
 int32_t Phoenix_Init (struct s_reader * reader)
 {
-		if (IO_Serial_InitPnP (reader)) return ERROR;
-		IO_Serial_Flush(reader);
+//		if (IO_Serial_InitPnP (reader)) return ERROR;
+//		IO_Serial_Flush(reader);
 
 	// define reader->gpio number used for card detect and reset. ref to globals.h
 	if (reader_use_gpio(reader))
@@ -121,47 +121,38 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 		int32_t parity[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
 
 		if ( ! reader->ins7e11_fast_reset ) {
-			call (Phoenix_SetBaudrate (reader, DEFAULT_BAUDRATE));
+			// Put card in reset before messing around with baudrate
+			IO_Serial_Ioctl_Lock(reader, 1);
+			if (reader_use_gpio(reader))
+				set_gpio(reader, 0);
+			else
+				IO_Serial_RTS_Set(reader);
+			IO_Serial_Ioctl_Lock(reader, 0);
+			call(Phoenix_SetBaudrate (reader, DEFAULT_BAUDRATE));
 		}
 		else {
 			rdr_log(reader, "Doing fast reset");
 		}
 
 		for(i=0; i<3; i++) {
-#if !defined(__CYGWIN__)
-			/*
-			* Pause for 200ms as this might help with the PL2303.
-			* Some users reporting that this breaks cygwin, so we exclude this.
-			*/
-			cs_sleepms(200);
-#endif
-			IO_Serial_Flush(reader);
 			call (IO_Serial_SetParity (reader, parity[i]));
+			IO_Serial_Flush(reader);
 
 			ret = ERROR;
-			cs_sleepms(500); //smartreader in mouse mode needs this
+
 			IO_Serial_Ioctl_Lock(reader, 1);
 			if (reader_use_gpio(reader))
 				set_gpio(reader, 0);
 			else
 				IO_Serial_RTS_Set(reader);
-#if defined(__CYGWIN__)
-			/*
-			* Pause for 200ms as this might help with the PL2303.
-			* Some users reporting that this breaks cygwin, so we went back to 50ms.
-			*/
-			cs_sleepms(50);
-#else
-			cs_sleepms(200);
-#endif
 
-			// felix: set card reset hi (inactive)
+			cs_sleepms(50);
+
 			if (reader_use_gpio(reader))
 				set_gpio_input(reader);
 			else
 				IO_Serial_RTS_Clr(reader);
 
-			cs_sleepms(50);
 			IO_Serial_Ioctl_Lock(reader, 0);
 
 			int32_t n=0;
@@ -215,10 +206,8 @@ int32_t Phoenix_Transmit (struct s_reader * reader, unsigned char * buffer, uint
 
 int32_t Phoenix_Receive (struct s_reader * reader, unsigned char * buffer, uint32_t size, uint32_t timeout)
 {
-#define IFD_TOWITOKO_TIMEOUT             1000000 //in us
-
 	/* Read all data bytes with the same timeout */
-	if(IO_Serial_Read (reader, timeout + IFD_TOWITOKO_TIMEOUT, size, buffer)) return ERROR;
+	if(IO_Serial_Read (reader, timeout, size, buffer)) return ERROR;
 	return OK;
 }
 
@@ -230,21 +219,9 @@ int32_t Phoenix_SetBaudrate (struct s_reader * reader, uint32_t baudrate)
 	struct termios tio;
 	call (tcgetattr (reader->handle, &tio) != 0);
 	call (IO_Serial_SetBitrate (reader, baudrate, &tio));
-#if !defined(__CYGWIN__)
-	/*
-	* Pause for 200ms as this might help with the PL2303.
-	* Some users reporting that this breaks cygwin, so we exclude this.
-	*/
-        cs_sleepms(200);
-#endif
+
 	call (IO_Serial_SetProperties(reader, tio));
-#if !defined(__CYGWIN__)
-	/*
-	* Pause for 200ms as this might help with the PL2303.
-	* Some users reporting that this breaks cygwin, so we exclude this.
-	*/
-        cs_sleepms(200);
-#endif
+
 	reader->current_baudrate = baudrate; //so if update fails, reader->current_baudrate is not changed either
 	return OK;
 }
@@ -292,7 +269,7 @@ int32_t Phoenix_FastReset (struct s_reader * reader, int32_t delay)
 }
 */
 static int32_t mouse_init(struct s_reader *reader) {
-	rdr_log(reader, "mouse_test init");
+	rdr_log(reader, "%s", __func__);
 	reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 	if (reader->handle < 0) {
 		rdr_log(reader, "ERROR: Opening device %s (errno=%d %s)",
