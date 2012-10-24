@@ -814,22 +814,7 @@ static uint32_t PPS_GetLength (unsigned char * block)
 
 static uint32_t ETU_to_us(struct s_reader * reader, uint32_t ETU)
 {
-	#define CHAR_LEN 10L //character length in ETU, perhaps should be 9 when parity = none?
-	
-	if (reader->typ == R_INTERNAL){
-		double work_etu = 1000000/ (double) reader->current_baudrate;
-		return (uint32_t) ((double) ETU * work_etu); // in us
-	}
-	else{
-
-		if (ETU > CHAR_LEN)
-			ETU -= CHAR_LEN;
-		else
-			ETU = 0;
-		double work_etu = 1000000 / (double)reader->current_baudrate;
-		work_etu = (uint32_t) (ETU * work_etu * reader->cardmhz / reader->mhz);
-		return (uint32_t) (work_etu); // return in us
-	}
+	return (uint32_t) ((double) ETU * reader->worketu); // in us
 }
 
 static int32_t ICC_Async_SetParity (struct s_reader * reader, uint16_t parity)
@@ -935,9 +920,12 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 					call (Phoenix_SetBaudrate(reader, baud_temp));
 			}
 			reader->current_baudrate = baud_temp; //this is needed for all readers to calculate work_etu for timings
-			rdr_log(reader, "Setting baudrate to %d bps, 1 worketu = %.2f microseconds", reader->current_baudrate, (double) 1/reader->current_baudrate*1000000);
+			rdr_log(reader, "Setting baudrate to %d bps", reader->current_baudrate);
 		}
 	}
+	if (reader->typ == R_INTERNAL) reader->worketu = (double) ((1/(double)d)*((double)F/(double)reader->cardmhz)*100);
+	else reader->worketu = (double) ((1/(double)d)*((double)F/(double)reader->mhz)*100);
+	rdr_log(reader, "Calculated work ETU is %.2f us", reader->worketu);
 
 	//set timings according to ATR
 	reader->read_timeout = 0;
@@ -956,14 +944,9 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 
 			// WWT = 960 * d * WI  work etu
 
-			if(reader->typ == R_INTERNAL){ // WWT & guardtime for internal readerdevices
-				WWT = (uint32_t) 960 * d * wi; //in work ETU
-				EGT = 2; // this low guardtime works for internal readers
-			}
-			else{ // WWT & guardtime for external readerdevices
-				WWT = (uint32_t) 960 * wi; //in work ETU
-				EGT = 12; // standard T0 guardtime is 12 etu for external readers
-			}
+			
+			WWT = (uint32_t) 960 * d * wi; //in work ETU
+			EGT = 2; // standard guardtime
 			
 			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
 				WWT >>= 1; //is this correct?
@@ -978,8 +961,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 					(reader->cardmhz * 10000));
 			else
 				rdr_debug_mask(reader, D_IFD, "Protocol: T=%i, WWT=%u, Clockrate=%u",
-					reader->protocol_type, WWT,
-					ICC_Async_GetClockRate(reader->cardmhz));	
+					reader->protocol_type, WWT, reader->mhz * 10000);	
 			reader->read_timeout = ETU_to_us(reader, WWT);
 			reader->block_delay = ETU_to_us(reader, EGT);
 			reader->char_delay = ETU_to_us(reader, EGT);
@@ -1026,15 +1008,15 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 				reader->CWT = (uint16_t) ((1<<cwi) + 11); // in work ETU
 				// Set BWT = (2^BWI * 960 * 372 / clockspeed) seconds + 11 work etu
 				// 1 worketu = 1 / baudrate *1000*1000 us
-				if (reader->typ == R_INTERNAL) reader->BWT = (uint32_t) ((1<<bwi) * 960 * 372 / (double)reader->cardmhz* 100 * (double) reader->current_baudrate / 1000 / 1000)+11; // BWT in ETU
-				else reader->BWT = (uint32_t)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate(reader->cardmhz)) + 11 ;
+				if (reader->typ == R_INTERNAL) reader->BWT = (uint32_t) ((1<<bwi) * 960 * 372 / (double) reader->cardmhz* 100 / (double) reader->worketu)+11; // BWT in ETU
+				else reader->BWT = (uint32_t) ((1<<bwi) * 960 * 372 / (double)reader->mhz * 100 / (double) reader->worketu) + 11 ; // BWT in ETU
 				// Set BGT = 22 * work etu
 				BGT = 22L; //in ETU
 
 				if (n == 255)
-					CGT = 11L; // special case, guardtime is 11 (in ETU)
+					CGT = 1; // special case, guardtime is 1 (in ETU)
 				else
-					CGT = 12L+n; // normal Guardtime is 12 on T1, add GT (in ETU)
+					CGT = 2+n; // normal Guardtime is 2 on T1, add GT (in ETU)
 
 				// Set the error detection code type
 				if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TC, &tc) == ATR_NOT_FOUND)

@@ -1188,6 +1188,7 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t			brk_pos;
 	int32_t			msg_idx;
 	int32_t			secatype;						// 0=not determined, 2=seca2, 3=nagra(~seca3) this is only valid for localreaders!
+	double			worketu;						// in us for internal and external readers calculated (1/D)*(F/cardclock)*1000000
 #if defined(WEBIF) || defined(LCDSUPPORT)
 	int32_t			emmwritten[4];					// count written EMM
 	int32_t			emmskipped[4];					// count skipped EMM
