@@ -291,15 +291,7 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 				break;
 			case R_INTERNAL:
 #if defined(WITH_COOLAPI)
-				if ( ! reader->ins7e11_fast_reset) {
-					call (Cool_Reset(reader, atr));
-				}
-				else {
-					rdr_debug_mask(reader, D_DEVICE, "fast reset needed, restoring transmit parameter for coolstream device %s", reader->device);
-					call(Cool_Set_Transmit_Timeout(reader, 0));
-					rdr_log(reader, "Doing fast reset");
-					call (Cool_FastReset_With_ATR(reader, atr));
-				}
+				call (Cool_Reset(reader, atr));
 #elif defined(WITH_AZBOX)
 				call (Azbox_Reset(reader, atr));
 #else
