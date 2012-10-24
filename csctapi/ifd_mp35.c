@@ -11,6 +11,7 @@
 #define ACK 0x06
 #define MP35_WRITE_DELAY 100000
 #define MP35_READ_DELAY 200000
+#define MP35_BREAK_LENGTH 1200000
 
 typedef struct
 {
@@ -84,21 +85,7 @@ static int32_t mp35_reader_init(struct s_reader * reader)
 
   call(IO_Serial_SetParams(reader, 9600, 8, PARITY_NONE, 1, &dtr, &cts));
 
-  /*
-   tcsendbreak() transmits a continuous stream of zero-valued bits for a specific duration,
-   if the terminal is using asynchronous serial data transmission. If duration is zero, it
-   transmits zero-valued bits for at least 0.25 seconds, and not more that 0.5 seconds. If
-   duration is not zero, it sends zero-valued bits for some implementation-defined length
-   of time.
-   We want at least 1.2 second, do five calls
-  */
-	tcsendbreak (reader->handle, 1200);
-/*
-	tcsendbreak (reader->handle, 0);
-	tcsendbreak (reader->handle, 0);
-	tcsendbreak (reader->handle, 0);
-	tcsendbreak (reader->handle, 0);
-*/
+  IO_Serial_Sendbreak(reader, MP35_BREAK_LENGTH);
   IO_Serial_DTR_Clr(reader);
   IO_Serial_DTR_Set(reader);
   cs_sleepms(200);

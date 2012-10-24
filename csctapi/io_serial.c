@@ -398,7 +398,12 @@ void IO_Serial_Flush (struct s_reader * reader)
 	unsigned char b;
 
   tcflush(reader->handle, TCIOFLUSH);
-  while(!IO_Serial_Read(reader, 0, 1, &b));
+  while(!IO_Serial_Read(reader, 1000000, 1, &b));
+}
+
+void IO_Serial_Sendbreak(struct s_reader * reader, int32_t duration)
+{
+	tcsendbreak (reader->handle, duration);
 }
 
 bool IO_Serial_Read (struct s_reader * reader, uint32_t timeout, uint32_t size, unsigned char * data)
@@ -532,7 +537,7 @@ bool IO_Serial_Close (struct s_reader * reader)
 {
 	
 	rdr_debug_mask(reader, D_DEVICE, "Closing serial port %s", reader->device);
-
+	cs_sleepms(100); // maybe a dirty fix for the restart problem posted by wonderdoc
 	if(reader->fdmc >= 0) close(reader->fdmc);
 	if (reader->handle >= 0 && close (reader->handle) != 0)
 		return ERROR;
