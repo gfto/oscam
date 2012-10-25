@@ -204,8 +204,10 @@ int32_t Phoenix_Transmit (struct s_reader * reader, unsigned char * buffer, uint
 		/* Send data */
 		if ((sent == 0) && (block_delay != char_delay))
 		{
-			if(IO_Serial_Write (reader, char_delay, 1, buffer)) return ERROR;
-			if(IO_Serial_Write (reader, block_delay, to_send-1, buffer+1)) return ERROR;
+			if(IO_Serial_Write (reader, block_delay, 1, buffer)) return ERROR; // blockdelay used with 1 char on purpose to interspace between blocks on T1 protocol?
+			if (size > 1){ // in case we only have to send 1 char we get into trouble!
+				if(IO_Serial_Write (reader, char_delay, to_send-1, buffer+1)) return ERROR;
+			}
 		}
 		else
 			if (IO_Serial_Write (reader, char_delay, to_send, buffer+sent)) return ERROR;

@@ -947,13 +947,16 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 			
 			WWT = (uint32_t) 960 * d * wi; //in work ETU
 			EGT = 2; // standard guardtime
+			EGT += 1; // start bit
+			EGT += 8; // databits
+			EGT += 1; // parity bit
 			
 			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
 				WWT >>= 1; //is this correct?
 			if (n != 255) //add extra Guard Time by ATR
 				EGT += n;  // T0 protocol, if TC1 = 255 then dont add extra guardtime
-			reader->CWT = 0; // T0 protocol doesnt have char_delay
-			reader->BWT = 0; // T0 protocol doesnt have block_delay
+			reader->CWT = 0; // T0 protocol doesnt have char waiting time (used to detect errors within 1 single block of data)
+			reader->BWT = 0; // T0 protocol doesnt have block waiting time (used to detect unresponsive card, this is max time for starting a block answer)
 			
 			if (reader->typ == R_INTERNAL)
 				rdr_debug_mask(reader, D_IFD, "Protocol: T=%i, WWT=%u, Clockrate=%u",
@@ -962,9 +965,9 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 			else
 				rdr_debug_mask(reader, D_IFD, "Protocol: T=%i, WWT=%u, Clockrate=%u",
 					reader->protocol_type, WWT, reader->mhz * 10000);	
-			reader->read_timeout = ETU_to_us(reader, WWT);
-			reader->block_delay = ETU_to_us(reader, EGT);
-			reader->char_delay = ETU_to_us(reader, EGT);
+			reader->read_timeout = ETU_to_us(reader, WWT); // Work waiting time used in T0 (max time to signal unresponsive card!)
+			reader->block_delay = ETU_to_us(reader, EGT); // Block delay isnt used on T0 but phoenix reader uses it, so we make it same as char delay!
+			reader->char_delay = ETU_to_us(reader, EGT); // Character delay is used on T0
 			rdr_debug_mask(reader, D_ATR, "Setting timings: timeout=%u us, block_delay=%u us, char_delay=%u us",
 				reader->read_timeout, reader->block_delay, reader->char_delay);
 			break;
@@ -1007,16 +1010,20 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 				// Set CWT = (2^CWI + 11) work etu
 				reader->CWT = (uint16_t) ((1<<cwi) + 11); // in work ETU
 				// Set BWT = (2^BWI * 960 * 372 / clockspeed) seconds + 11 work etu
-				// 1 worketu = 1 / baudrate *1000*1000 us
 				if (reader->typ == R_INTERNAL) reader->BWT = (uint32_t) ((1<<bwi) * 960 * 372 / (double) reader->cardmhz* 100 / (double) reader->worketu)+11; // BWT in ETU
 				else reader->BWT = (uint32_t) ((1<<bwi) * 960 * 372 / (double)reader->mhz * 100 / (double) reader->worketu) + 11 ; // BWT in ETU
 				// Set BGT = 22 * work etu
-				BGT = 22L; //in ETU
+				BGT = 22L; // Block Guard Time in ETU used to interspace between block responses
+				
+				CGT = 2; // standard guardtime 
+				CGT += 1; // start bit
+				CGT += 8; // databits
+				CGT += 1; // parity bit
 
 				if (n == 255)
-					CGT = 1; // special case, guardtime is 1 (in ETU)
+					EGT -= 1; // special case, ATR says guardtime is decreased by 1 (in ETU)
 				else
-					CGT = 2+n; // normal Guardtime is 2 on T1, add GT (in ETU)
+					EGT +=n; // ATR says add extra guardtime (in ETU)
 
 				// Set the error detection code type
 				if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TC, &tc) == ATR_NOT_FOUND)
@@ -1062,11 +1069,12 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 		//for Irdeto T14 cards, do not set ETU
 		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14))
 			ETU = F / d; 
-		if (reader->mhz > 2000){ // Extra Guardtime is only slowing card ecm responses down. Although its calculated correct its not needed with internal readers!
-			EGT = 0;
+		if (reader->mhz > 2000){ // only for dreambox internal readers  
+			EGT = 0; // communicating guardtime is only slowing card ecm responses down. its not needed with internal readers, the drivers already take care of this!
 			call (Sci_WriteSettings (reader, reader->protocol_type, reader->divider, ETU, WWT, reader->CWT, reader->BWT, EGT, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
 		}
-		else {
+		else { // all other brand boxes than dreamboxes! 
+			EGT = 0; // dont communicate guardtime -> slowing down card ecm responses!
 			call (Sci_WriteSettings (reader, reader->protocol_type, reader->mhz / 100, ETU, WWT, reader->CWT, reader->BWT, EGT, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
 		}
 #endif //WITH_COOLAPI
