@@ -659,18 +659,18 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
 
 
   // CDS NL: check for right seca type
-  
-  if (!is_network_reader(rdr) && er->caid == 0x100 && er->prid == 0x00006a && (er->ecm[8] != 0x00 && er->ecm[9] != 0x00)){
-		if (er->ecm[8] == 0x00 && rdr->secatype == 2){
-			cs_debug_mask(D_TRACE,"Error: this is a nagra/mediaguard3 ECM and readertype is seca2!");
-			return 0;  // we dont send a nagra/mediaguard3 ecm to a seca2 reader!
-		}
-		if ((er->ecm[8] == 0x10) && (er->ecm[9] == 0x01) && rdr->secatype == 3){
-			cs_debug_mask(D_TRACE,"Error: this is a seca2 ECM and readertype is nagra/mediaguard3!");
-			return 0;  // we dont send a seca2 ecm to a nagra/mediaguard3 reader!
-		}
+  if (!is_network_reader(rdr) && er->caid == 0x100 && er->prid == 0x00006a &&
+	!(er->ecm[8] == 0x00 && er->ecm[9] == 0x00)) { // no empty ecm
+    if (er->ecm[8] == 0x00 && rdr->secatype == 2) {
+      cs_debug_mask(D_TRACE,"Error: this is a nagra/mediaguard3 ECM and readertype is seca2!");
+      return 0;  // we dont send a nagra/mediaguard3 ecm to a seca2 reader!
+    }
+    if ((er->ecm[8] == 0x10) && (er->ecm[9] == 0x01) && rdr->secatype == 3){
+      cs_debug_mask(D_TRACE,"Error: this is a seca2 ECM and readertype is nagra/mediaguard3!");
+      return 0;  // we dont send a seca2 ecm to a nagra/mediaguard3 reader!
+    }
   }
-  
+
   //Checking chid:
   if (!chk_chid(er, &rdr->fchid, "reader", rdr->label)) {
     cs_debug_mask(D_TRACE, "chid filter reader %s", rdr->label);
