@@ -204,8 +204,8 @@ int32_t Phoenix_Transmit (struct s_reader * reader, unsigned char * buffer, uint
 		/* Send data */
 		if ((sent == 0) && (block_delay != char_delay))
 		{
-			if(IO_Serial_Write (reader, block_delay, 1, buffer)) return ERROR;
-			if(IO_Serial_Write (reader, char_delay, to_send-1, buffer+1)) return ERROR;
+			if(IO_Serial_Write (reader, char_delay, 1, buffer)) return ERROR;
+			if(IO_Serial_Write (reader, block_delay, to_send-1, buffer+1)) return ERROR;
 		}
 		else
 			if (IO_Serial_Write (reader, char_delay, to_send, buffer+sent)) return ERROR;
