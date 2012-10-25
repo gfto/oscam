@@ -1021,9 +1021,9 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 				CGT += 1; // parity bit
 
 				if (n == 255)
-					EGT -= 1; // special case, ATR says guardtime is decreased by 1 (in ETU)
+					CGT -= 1; // special case, ATR says guardtime is decreased by 1 (in ETU)
 				else
-					EGT +=n; // ATR says add extra guardtime (in ETU)
+					CGT +=n; // ATR says add extra guardtime (in ETU)
 
 				// Set the error detection code type
 				if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TC, &tc) == ATR_NOT_FOUND)
