@@ -655,6 +655,7 @@ static FILTER mk_user_ftab(void)
         }
       if (add) filt.prids[filt.nprids++] = psfilt->prids[i];
     }
+    memcpy(&filt, psfilt, sizeof(filt));
     return filt;
   }
 
