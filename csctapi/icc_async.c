@@ -60,7 +60,7 @@ static void ICC_Async_InvertBuffer (uint32_t size, unsigned char * buffer);
 static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecated);
 static int32_t PPS_Exchange (struct s_reader * reader, unsigned char * params, uint32_t *length);
 static uint32_t PPS_GetLength (unsigned char * block);
-static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, double d, double n, uint16_t deprecated);
+static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, double d, unsigned char N, uint16_t deprecated);
 static uint32_t ETU_to_us(struct s_reader * reader, uint32_t ETU);
 static unsigned char PPS_GetPCK (unsigned char * block, uint32_t length);
 static int32_t SetRightParity (struct s_reader * reader);
@@ -874,11 +874,10 @@ static int32_t SetRightParity (struct s_reader * reader)
 int32_t SR_WriteSettings (struct s_reader *reader, uint16_t F, unsigned char D, unsigned char N, unsigned char T, uint16_t convention);
 #endif
 
-static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, double d, double n, uint16_t deprecated)
+static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, double d, unsigned char N, uint16_t deprecated)
 {
 	double I;
-	double F;
-	uint32_t BGT, edc, EGT = 0, CGT = 0, WWT = 0;
+	uint32_t F, BGT, edc, GT = 0, WWT = 0, EGT = 0;
 	unsigned char wi = 0;
 
 	//set the amps and the volts according to ATR
@@ -900,14 +899,14 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 
 	//set clock speed/baudrate must be done before timings
 	//because reader->current_baudrate is used in calculation of timings
-	F =	(double) atr_f_table[FI];  //get the frequency divider
+	F =	atr_f_table[FI];  //get the frequency divider
 
 	reader->current_baudrate = DEFAULT_BAUDRATE;
 	
 	if (deprecated == 0) {
 		uint32_t baud_temp;
 		if (reader->protocol_type != ATR_PROTOCOL_TYPE_T14) { //dont switch for T14
-				if (reader->typ == R_INTERNAL) baud_temp = (uint32_t) 1/((1/d)*(F/(reader->cardmhz*10000)));
+				if (reader->typ == R_INTERNAL) baud_temp = (uint32_t) 1/((1/d)*((double)F/(double)(reader->cardmhz*10000)));
 				else baud_temp = d * ICC_Async_GetClockRate (reader->cardmhz) / F;
 			if (reader->crdr.active == 1) {
 				if (reader->crdr.set_baudrate)
@@ -946,15 +945,15 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 
 			
 			WWT = (uint32_t) 960 * d * wi; //in work ETU
-			EGT = 2; // standard guardtime
-			EGT += 1; // start bit
-			EGT += 8; // databits
-			EGT += 1; // parity bit
+			GT = 2; // standard guardtime
+			GT += 1; // start bit
+			GT += 8; // databits
+			GT += 1; // parity bit
 			
 			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
 				WWT >>= 1; //is this correct?
-			if (n != 255) //add extra Guard Time by ATR
-				EGT += n;  // T0 protocol, if TC1 = 255 then dont add extra guardtime
+			if (N != 255) //add extra Guard Time by ATR
+				EGT += N;  // T0 protocol, if TC1 = 255 then dont add extra guardtime
 			reader->CWT = 0; // T0 protocol doesnt have char waiting time (used to detect errors within 1 single block of data)
 			reader->BWT = 0; // T0 protocol doesnt have block waiting time (used to detect unresponsive card, this is max time for starting a block answer)
 			
@@ -966,8 +965,8 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 				rdr_debug_mask(reader, D_IFD, "Protocol: T=%i, WWT=%u, Clockrate=%u",
 					reader->protocol_type, WWT, reader->mhz * 10000);	
 			reader->read_timeout = ETU_to_us(reader, WWT); // Work waiting time used in T0 (max time to signal unresponsive card!)
-			reader->block_delay = ETU_to_us(reader, EGT); // Block delay isnt used on T0 but phoenix reader uses it, so we make it same as char delay!
-			reader->char_delay = ETU_to_us(reader, EGT); // Character delay is used on T0
+			reader->block_delay = ETU_to_us(reader, GT+EGT); // Block delay isnt used on T0 but phoenix reader uses it, so we make it same as char delay!
+			reader->char_delay = ETU_to_us(reader, GT+EGT); // Character delay is used on T0
 			rdr_debug_mask(reader, D_ATR, "Setting timings: timeout=%u us, block_delay=%u us, char_delay=%u us",
 				reader->read_timeout, reader->block_delay, reader->char_delay);
 			break;
@@ -1015,15 +1014,15 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 				// Set BGT = 22 * work etu
 				BGT = 22L; // Block Guard Time in ETU used to interspace between block responses
 				
-				CGT = 2; // standard guardtime 
-				CGT += 1; // start bit
-				CGT += 8; // databits
-				CGT += 1; // parity bit
+				GT = 2; // standard guardtime 
+				GT += 1; // start bit
+				GT += 8; // databits
+				GT += 1; // parity bit
 
-				if (n == 255)
-					CGT -= 1; // special case, ATR says guardtime is decreased by 1 (in ETU)
+				if (N == 255)
+					GT -= 1; // special case, ATR says standard 2 etu guardtime is decreased by 1 (in ETU) EGT remains zero!
 				else
-					CGT +=n; // ATR says add extra guardtime (in ETU)
+					EGT +=N; // ATR says add extra guardtime (in ETU)
 
 				// Set the error detection code type
 				if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TC, &tc) == ATR_NOT_FOUND)
@@ -1037,10 +1036,10 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 				rdr_debug_mask(reader, D_ATR, "Protocol: T=%i: IFSC=%d, CWT=%d etu, BWT=%d etu, BGT=%d etu, EDC=%s, N=%d",
 					reader->protocol_type, reader->ifsc,
 					reader->CWT, reader->BWT,
-					BGT, (edc == EDC_LRC) ? "LRC" : "CRC", CGT);
+					BGT, (edc == EDC_LRC) ? "LRC" : "CRC", N);
 				reader->read_timeout = ETU_to_us(reader, reader->BWT);
 				reader->block_delay = ETU_to_us(reader, BGT);
-				reader->char_delay = ETU_to_us(reader, CGT);
+				reader->char_delay = ETU_to_us(reader, GT+EGT);
 				rdr_debug_mask(reader, D_ATR, "Setting timings: reader timeout=%u us, block_delay=%u us, char_delay=%u us",
 					reader->read_timeout, reader->block_delay, reader->char_delay);
 			break;
@@ -1056,7 +1055,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 		uint32_t ETU = 0; // for Irdeto T14 cards, do not set ETU
 		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14))
 			ETU = F / d;
-		call(reader->crdr.write_settings(reader, ETU, EGT, 5, I, (uint16_t) atr_f_table[FI], (unsigned char)d, n));
+		call(reader->crdr.write_settings(reader, ETU, EGT, 5, I, (uint16_t) atr_f_table[FI], (unsigned char)d, N));
 	}
 
   //write settings to internal device
