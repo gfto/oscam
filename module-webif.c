@@ -4140,6 +4140,7 @@ static bool process_emm_file(struct templatevars *vars, const struct s_reader *r
 						errsize += snprintf(numerrl + errsize, sizeof(numerrl)-errsize, "%d, ", rlines);
 						continue;
 					}
+					len /= 2;
 					if(send_EMM(rdr, emmhex, len)) {
 						++wemms;
 						/* Give time to process EMM, otherwise, too many jobs can be added*/
