@@ -367,7 +367,7 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, ui
 		case ATR_PROTOCOL_TYPE_T1:
 			ret = Protocol_T1_Command (reader, command, command_len, rsp, lr);
 			type = 1;
-			if (ret != OK) {
+			if ((ret != OK) && (reader->ifsc != DEFAULT_IFSC) && (reader->typ != R_PCSC)) { // dont use for PCSC readers!!
 				//try to resync
 				unsigned char resync[] = { 0x21, 0xC0, 0x00, 0xE1 };
 				ret = Protocol_T1_Command (reader, resync, sizeof(resync), rsp, lr);
