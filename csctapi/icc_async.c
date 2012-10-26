@@ -907,7 +907,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 		uint32_t baud_temp;
 		if (reader->protocol_type != ATR_PROTOCOL_TYPE_T14) { //dont switch for T14
 				if (reader->typ == R_INTERNAL) baud_temp = (uint32_t) 1/((1/d)*((double)F/(double)(reader->cardmhz*10000)));
-				else baud_temp = d * ICC_Async_GetClockRate (reader->cardmhz) / F;
+				else baud_temp = d * ICC_Async_GetClockRate (reader->cardmhz) / (double)F;
 			if (reader->crdr.active == 1) {
 				if (reader->crdr.set_baudrate)
 					call (reader->crdr.set_baudrate(reader, baud_temp));
