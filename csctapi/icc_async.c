@@ -965,7 +965,6 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 				rdr_debug_mask(reader, D_IFD, "Protocol: T=%i, WWT=%u, Clockrate=%u",
 					reader->protocol_type, WWT, reader->mhz * 10000);	
 			reader->read_timeout = ETU_to_us(reader, WWT); // Work waiting time used in T0 (max time to signal unresponsive card!)
-			reader->block_delay = ETU_to_us(reader, GT+EGT); // Block delay isnt used on T0 but phoenix reader uses it, so we make it same as char delay!
 			reader->char_delay = ETU_to_us(reader, GT+EGT); // Character delay is used on T0
 			rdr_debug_mask(reader, D_ATR, "Setting timings: timeout=%u us, block_delay=%u us, char_delay=%u us",
 				reader->read_timeout, reader->block_delay, reader->char_delay);
