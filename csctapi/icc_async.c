@@ -369,6 +369,7 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, ui
 			type = 1;
 			if ((ret != OK) && (reader->typ != R_PCSC)) { // dont use for PCSC readers!!
 				//try to resync
+				rdr_log(reader, "Resync error: readtimeouts %d/%d (max/min) us, writetimeouts %d/%d (max/min) us", reader->maxreadtimeout, reader->minreadtimeout, reader->maxwritetimeout, reader->minwritetimeout);
 				unsigned char resync[] = { 0x21, 0xC0, 0x00, 0xE1 };
 				ret = Protocol_T1_Command (reader, resync, sizeof(resync), rsp, lr);
 				if (ret == OK) {
