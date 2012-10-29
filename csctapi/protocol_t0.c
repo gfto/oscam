@@ -357,7 +357,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 			rdr_debug_mask(reader, D_TRACE, "ERROR: invalid cmd_case = %i in Protocol_T0_ExchangeTPDU",cmd_case);
 			return ERROR;
 	}
-	call (ICC_Async_Transmit (reader, 5, command));		//Send header bytes
+	call (ICC_Async_Transmit (reader, 5, command, 0, reader->char_delay));		//Send header bytes
 	
 	/* Initialise counters */
 	nulls = 0;
@@ -372,7 +372,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 	
 	while (recved < PROTOCOL_T0_MAX_SHORT_RESPONSE)
 	{
-		call (ICC_Async_Receive (reader, 1, buffer + recved));				//Read one procedure byte
+		call (ICC_Async_Receive (reader, 1, buffer + recved, 0, reader->read_timeout));//Read one procedure byte
 		
 		/* NULL byte received */
 		if (buffer[recved] == 0x60) {
@@ -389,7 +389,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 				rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Maximum short response exceeded: %d", __func__, recved);
 				return ERROR;
 			}
-			call (ICC_Async_Receive (reader, 1, buffer + recved));					//Read SW2 byte
+			call (ICC_Async_Receive (reader, 1, buffer + recved, 0, reader->read_timeout)); //Read SW2 byte
 			recved++;
 			break;
 		}
@@ -404,7 +404,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 					rdr_debug_mask(reader, D_TRACE, "ERROR: %s: ACK byte: sent=%d exceeds Lc=%d", __func__, sent, Lc);
 					return ERROR;
 				}
-				call (ICC_Async_Transmit(reader, MAX (Lc - sent, 0), data + sent)); /* Send remaining data bytes */
+				call (ICC_Async_Transmit(reader, MAX (Lc - sent, 0), data + sent, 0, reader->char_delay)); /* Send remaining data bytes */
 				sent = Lc;
 				continue;
 			}
@@ -420,7 +420,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 				*/
 				
 				/* Read remaining data bytes */
-				call (ICC_Async_Receive(reader, MAX (Le - recved, 0), buffer + recved));
+				call (ICC_Async_Receive(reader, MAX (Le - recved, 0), buffer + recved, 0, reader->read_timeout));
 				recved = Le;
 				continue;
 			}
@@ -435,7 +435,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 					rdr_debug_mask(reader, D_TRACE, "ERROR: %s: ~ACK byte: sent=%d exceeds Lc=%d", __func__, sent, Lc);
 					return ERROR;
 				}
-				call (ICC_Async_Transmit (reader, 1, data + sent));							//Send next data byte
+				call (ICC_Async_Transmit (reader, 1, data + sent, 0, reader->char_delay));	//Send next data byte
 				sent++;
 				continue;
 			}
@@ -444,7 +444,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 					rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Case 3 ~ACK - maximum short response exceeded: %d", __func__, recved);
 					return ERROR;
 				}
-				call (ICC_Async_Receive (reader, 1, buffer + recved));						//Read next data byte
+				call (ICC_Async_Receive (reader, 1, buffer + recved, 0, reader->read_timeout));//Read next data byte
 				recved++;
 				continue;
 			}
@@ -484,9 +484,9 @@ int32_t Protocol_T14_ExchangeTPDU (struct s_reader *reader, unsigned char * cmd_
 	}
 	
 	if (reader->typ <= R_MOUSE) {
-		call (ICC_Async_Transmit (reader, 1, &b1));						//send 0x01 byte
-		call (ICC_Async_Transmit (reader, cmd_len, cmd_raw));	//send apdu
-		call (ICC_Async_Transmit (reader, 1, &ixor));					//Send xor byte
+		call (ICC_Async_Transmit (reader, 1, &b1, 0, reader->char_delay)); //send 0x01 byte
+		call (ICC_Async_Transmit (reader, cmd_len, cmd_raw, 0, reader->char_delay)); //send apdu
+		call (ICC_Async_Transmit (reader, 1, &ixor, 0, reader->char_delay));	//Send xor byte
 	}
 	else {
 		buffer[0] = 0x01;
@@ -494,16 +494,17 @@ int32_t Protocol_T14_ExchangeTPDU (struct s_reader *reader, unsigned char * cmd_
 		buffer[cmd_len+1] = ixor;
 		
 		/* Send apdu */
-		call (ICC_Async_Transmit (reader, cmd_len+2, buffer));//send apdu
+		call (ICC_Async_Transmit (reader, cmd_len+2, buffer, 0, reader->char_delay));//send apdu
 	}
 	
 	if(cmd_raw[0] == 0x02 && cmd_raw[1] == 0x09)
 		cs_sleepms(2500); //FIXME why wait?
-	call (ICC_Async_Receive (reader, 8, buffer));				//Read one procedure byte
+	call (ICC_Async_Receive (reader, 8, buffer, 0, reader->read_timeout));	//Read one procedure byte
 	recved = (int32_t)buffer[7];
-	if(recved)
-		call (ICC_Async_Receive (reader, recved, buffer + 8));
-	call (ICC_Async_Receive (reader, 1, &ixor));
+	if(recved){
+		call (ICC_Async_Receive (reader, recved, buffer + 8, 0 , reader->read_timeout));
+	}
+	call (ICC_Async_Receive (reader, 1, &ixor, 0, reader->read_timeout));
 	for(i=0; i<8+recved; i++)		
 		ixor1^=buffer[i];
 	if(ixor1 != ixor) {

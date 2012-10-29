@@ -386,7 +386,7 @@ static int32_t smart_write(S_READER *reader, unsigned char* buff, uint32_t  size
     return total_written;
 }
 
-static int32_t SR_Transmit (struct s_reader *reader, unsigned char * buffer, uint32_t size)
+static int32_t SR_Transmit (struct s_reader *reader, unsigned char * buffer, uint32_t size, uint32_t delay, uint32_t timeout)
 {
     uint32_t  ret;
 
@@ -399,7 +399,7 @@ static int32_t SR_Transmit (struct s_reader *reader, unsigned char * buffer, uin
   return OK;
 }
 
-static int32_t SR_Receive (struct s_reader *reader, unsigned char * buffer, uint32_t size)
+static int32_t SR_Receive (struct s_reader *reader, unsigned char * buffer, uint32_t size, uint32_t delay, uint32_t timeout)
 {
     uint32_t  ret;
 

@@ -39,25 +39,25 @@ static int32_t smargo_set_settings(struct s_reader *reader, int32_t freq, unsign
 		data[1]=HIBYTE(Fi);
 		data[2]=LOBYTE(Fi);
 		data[3]=Di;
-		IO_Serial_Write(reader, 0, 4, data);
+		IO_Serial_Write(reader, 0, 1000000, 4, data);
 	}
 
 	data[0]=0x02;
 	data[1]=HIBYTE(freqk);
 	data[2]=LOBYTE(freqk);
-	IO_Serial_Write(reader, 0, 3, data);
+	IO_Serial_Write(reader, 0, 1000000, 3, data);
 
 	data[0]=0x03;
 	data[1]=Ni;
-	IO_Serial_Write(reader, 0, 2, data);
+	IO_Serial_Write(reader, 0, 1000000, 2, data);
 
 	data[0]=0x04;
 	data[1]=T;
-	IO_Serial_Write(reader, 0, 2, data);
+	IO_Serial_Write(reader, 0, 1000000, 2, data);
 
 	data[0]=0x05;
 	data[1]=0; //always done by oscam
-	IO_Serial_Write(reader, 0, 2, data);
+	IO_Serial_Write(reader, 0, 1000000, 2, data);
 
 	cs_sleepms(DELAY);
 
@@ -141,7 +141,7 @@ static int32_t smargo_reset(struct s_reader *reader, ATR *atr) {
 
 		//IO_Serial_Flush(reader);
 
-		IO_Serial_Read(reader, 500000, ATR_MAX_SIZE, buf);
+		IO_Serial_Read(reader, 0, 500000, ATR_MAX_SIZE, buf);
 
 		IO_Serial_RTS_Set(reader);
 		cs_sleepms(150);
@@ -171,12 +171,12 @@ static int32_t smargo_reset(struct s_reader *reader, ATR *atr) {
 	return ret;
 }
 
-static int32_t smargo_receive(struct s_reader *reader, unsigned char *data, uint32_t size) {
-	return Phoenix_Receive(reader, data, size, reader->read_timeout);
+static int32_t smargo_receive(struct s_reader *reader, unsigned char *data, uint32_t size, uint32_t delay, uint32_t timeout) {
+	return Phoenix_Receive(reader, data, size, delay, timeout);
 }
 
-static int32_t smargo_transmit(struct s_reader *reader, unsigned char *sent, uint32_t size) {
-	return Phoenix_Transmit(reader, sent, size, 0, 0);
+static int32_t smargo_transmit(struct s_reader *reader, unsigned char *sent, uint32_t size, uint32_t delay, uint32_t timeout) {
+	return Phoenix_Transmit(reader, sent, size, delay, timeout);
 }
 
 void cardreader_smargo(struct s_cardreader *crdr) 

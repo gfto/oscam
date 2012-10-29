@@ -395,10 +395,9 @@ int32_t IO_Serial_SetParity (struct s_reader * reader, unsigned char parity)
 
 void IO_Serial_Flush (struct s_reader * reader)
 {
-	unsigned char b;
-
+  unsigned char b;
   tcflush(reader->handle, TCIOFLUSH);
-  while(!IO_Serial_Read(reader, 1000000, 1, &b));
+  while(!IO_Serial_Read(reader, 0, 1000000, 1, &b));
 }
 
 void IO_Serial_Sendbreak(struct s_reader * reader, int32_t duration)
@@ -406,36 +405,37 @@ void IO_Serial_Sendbreak(struct s_reader * reader, int32_t duration)
 	tcsendbreak (reader->handle, duration);
 }
 
-bool IO_Serial_Read (struct s_reader * reader, uint32_t timeout, uint32_t size, unsigned char * data)
+bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout, uint32_t size, unsigned char * data)
 {
 	unsigned char c;
 	uint32_t count = 0;
+	rdr_debug_mask(reader, D_DEVICE,"Read timeout %d us, read delay %d us, to read %d char(s), chunksize 1 char(s)", timeout, delay, size);
 #if defined(__SH4__)
 	bool readed;
 	struct timeval tv, tv_spent;
 #endif
 	
-	if((reader->typ != R_INTERNAL) && (reader->written>0))
-	{
+	if (((reader->typ != R_INTERNAL && reader->crdr.active==0) || (reader->crdr.active==1 && reader->crdr.read_written==1)) && reader->written > 0){ // these readers need to read all transmitted chars before they can receive!
 		unsigned char buf[256];
+		rdr_debug_mask(reader, D_DEVICE,"Reading %d echoed transmitted chars...", reader->written); 
 		int32_t n = reader->written;
-		reader->written = 0;
-		
-		if(IO_Serial_Read (reader, timeout, n, buf))
+		reader->written=0;
+		if(IO_Serial_Read (reader, 0, timeout, n, buf))
 			return ERROR;
+		rdr_debug_mask(reader, D_DEVICE,"Reading of echoed transmitted chars done!");
 	}
-	
+
 	for (count = 0; count < size ; count++)
 	{
 #if defined(__SH4__)
 		gettimeofday(&tv,0);
 		memcpy(&tv_spent,&tv,sizeof(struct timeval));
 		readed=0;
-		while( (((tv_spent.tv_sec-tv.tv_sec)*1000000) + ((tv_spent.tv_usec-tv.tv_usec)/1000000L)) < (time_t)timeout )
+		while( (((tv_spent.tv_sec-tv.tv_sec)*1000000) + ((tv_spent.tv_usec-tv.tv_usec)/1000000L)) < (time_t)(timeout))
  		{
  			if (read (reader->handle, &c, 1) == 1)
  			{
-				readed=1;
+				readed =TRUE;
 				break;
  			}
  			gettimeofday(&tv_spent,0);
@@ -447,9 +447,8 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t timeout, uint32_t size, 
 #else
 		int16_t readed = -1, errorcount=0;
 		AGAIN:
-		if(IO_Serial_WaitToRead (reader, 0, timeout)) {
+		if(IO_Serial_WaitToRead (reader, delay, timeout)) {
 			rdr_debug_mask(reader, D_DEVICE, "Timeout in IO_Serial_WaitToRead, timeout=%d us", timeout);
-			//tcflush (reader->handle, TCIFLUSH);
 			return ERROR;
 		}
 			
@@ -460,7 +459,6 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t timeout, uint32_t size, 
 				if (errno == EAGAIN) goto AGAIN; //EAGAIN needs select procedure again
 				rdr_log(reader, "ERROR: %s (errno=%d %s)", __func__, errno, strerror(errno));
 				errorcount++;
-				//tcflush (reader->handle, TCIFLUSH);
 			}
 		} 
 			
@@ -476,57 +474,52 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t timeout, uint32_t size, 
 	return OK;
 }
 
-bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t size, const unsigned char * data)
+bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t timeout, uint32_t size, const unsigned char * data)
 {
 	uint32_t count, to_send, i_w;
 	unsigned char data_w[512];
 	
-	uint32_t timeout = 1000000;
-		
-	/* Discard input data from previous commands */
-	//tcflush (reader->handle, TCIFLUSH);
-	
-	
-	to_send = (delay? 1: size);
+	to_send = (delay? 1: size); // calculate chars to send at one
+	rdr_debug_mask(reader, D_DEVICE,"Write timeout %d us, write delay %d us, to send %d char(s), chunksize %d char(s)", timeout, delay, size, to_send);
 	
 	for (count = 0; count < size; count += to_send)
 	{
-		if (count + to_send > size)
+		if (count + to_send > size){
 			to_send = size - count;
+			}
 		uint16_t errorcount=0, to_do=to_send;
-		
 		for (i_w=0; i_w < to_send; i_w++)
 				data_w [i_w] = data [count + i_w];
+		rdr_ddump_mask(reader, D_DEVICE, data_w+(to_send-to_do), to_do, "Sending:");
 		AGAIN:		
 		if (!IO_Serial_WaitToWrite (reader, delay, timeout))
 		{
 			while (to_do !=0){
-				rdr_ddump_mask(reader, D_DEVICE, data_w+(to_send-to_do), to_do, "Sending:");
 				int32_t u = write (reader->handle, data_w+(to_send-to_do), to_do);
 				if (u < 1) {
 					if (errno==EINTR) continue; //try again in case of Interrupted system call
 					if (errno==EAGAIN) goto AGAIN; //EAGAIN needs a select procedure again
 					errorcount++;
-					//tcflush (reader->handle, TCIFLUSH);
 					int16_t written = count + to_send - to_do;
 					if (u != 0) {
 						rdr_log(reader, "ERROR: %s: Written=%d of %d (errno=%d %s)",
 							__func__, written , size, errno, strerror(errno));
 					}
-					if (errorcount > 10) return ERROR; //exit if more than 10 errors
+					if (errorcount > 10){ //exit if more than 10 errors
+						return ERROR;
 					}
+				}
 				else {
 					to_do -= u;
 					errorcount = 0;
 					if ((reader->typ != R_INTERNAL && reader->crdr.active==0) || (reader->crdr.active==1 && reader->crdr.read_written==1))
-					reader->written += u;
+						reader->written += u; // these readers echo transmitted chars
 					}
 			}
 		}
 		else
 		{
-			rdr_log(reader, "Timeout in IO_Serial_WaitToWrite, timeout=%d us", delay);
-			//tcflush (reader->handle, TCIFLUSH);
+			rdr_log(reader, "Timeout in IO_Serial_WaitToWrite, delay=%d us, timeout=%d us", delay, timeout);
 			return ERROR;
 		}
 	}
@@ -637,9 +630,11 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_us, uint32_t
 {
    fd_set rfds;
    fd_set erfds;
-   struct timeval tv;
+   struct timeval tv, starttime, timenow;
+   
    int32_t select_ret;
    int32_t in_fd;
+   uint32_t timegone;
    
    if (delay_us > 0) cs_sleepus (delay_us); // wait in us
    in_fd=reader->handle;
@@ -651,7 +646,7 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_us, uint32_t
    FD_SET(in_fd, &erfds); // calculate timeout in us
    tv.tv_sec = timeout_us/1000000L;
    tv.tv_usec = (timeout_us % 1000000);
- 
+   gettimeofday(&starttime, NULL);
 	while (1) {
 		select_ret = select(in_fd+1, &rfds, NULL,  &erfds, &tv);
 		if (select_ret==-1) {
@@ -666,7 +661,11 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_us, uint32_t
 		if (select_ret==0) return ERROR;
 		break;
    	}
-
+    gettimeofday(&timenow, NULL);
+	timegone = (int) (timenow.tv_usec - starttime.tv_usec) + (timenow.tv_sec*1000000-starttime.tv_sec*1000000);
+    if (timegone > reader->maxreadtimeout) reader->maxreadtimeout = timegone;
+	if ((timegone < reader->minreadtimeout) || reader->minreadtimeout == 0) reader->minreadtimeout = timegone;
+	rdr_debug_mask(reader, D_DEVICE,"Read timeout %d/%d us (max/min %d/%d us)", timegone,timeout_us, reader->maxreadtimeout, reader->minreadtimeout);
 	if (FD_ISSET(in_fd, &erfds)) {
 		rdr_log(reader, "ERROR: %s: fd is in error fds (errno=%d %s)",
 			__func__, errno, strerror(errno));
@@ -683,11 +682,12 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, 
 {
    fd_set wfds;
    fd_set ewfds;
-   struct timeval tv;
+   struct timeval tv, starttime, timenow;
    int32_t select_ret;
    int32_t out_fd;
+   uint32_t timegone;
 
-#if !defined(WITH_COOLAPI) && !defined(WITH_AZBOX)
+#if !defined(WITH_COOLAPI) && !defined(WITH_AZBOX) && defined(__powerpc__) 
    if(reader->typ == R_INTERNAL) return OK; // needed for ppc, otherwise error!
 #endif
    if (delay_us > 0)
@@ -702,7 +702,7 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, 
    
    tv.tv_sec = timeout_us/1000000L;
    tv.tv_usec = (timeout_us % 1000000);
-   
+   gettimeofday(&starttime, NULL);
    while (1) {
 		select_ret = select(out_fd+1, NULL, &wfds, &ewfds, &tv);
 		if (select_ret==-1) {
@@ -717,6 +717,11 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, 
 		if (select_ret==0) return ERROR;
 		break;
    }
+   gettimeofday(&timenow, NULL);
+   timegone = (int) (timenow.tv_usec - starttime.tv_usec) + (timenow.tv_sec*1000000-starttime.tv_sec*1000000);
+   if (timegone > reader->maxwritetimeout) reader->maxwritetimeout = timegone;
+   if ((timegone < reader->minwritetimeout) || reader->minwritetimeout == 0) reader->minwritetimeout = timegone;
+   rdr_debug_mask(reader, D_DEVICE,"Write timeout %d/%d us (max/min %d/%d us)", timegone,timeout_us, reader->maxwritetimeout, reader->minwritetimeout);
 
    if (FD_ISSET(out_fd, &ewfds))
    {
@@ -741,7 +746,7 @@ bool IO_Serial_InitPnP (struct s_reader * reader)
   if (IO_Serial_SetParams (reader, 1200, 7, PARITY_NONE, 1, &dtr, &cts))
 		return ERROR;
 
-	while ((PnP_id_size < IO_SERIAL_PNPID_SIZE) && !IO_Serial_Read (reader, 200000, 1, &(PnP_id[PnP_id_size])))
+	while ((PnP_id_size < IO_SERIAL_PNPID_SIZE) && !IO_Serial_Read (reader, 0, 200000, 1, &(PnP_id[PnP_id_size])))
       PnP_id_size++;
 
 		return OK;

@@ -81,7 +81,7 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 	}
 		while (statusreturn);
 	
-	if (IO_Serial_Read(reader, timeout, 1, buf+n)){ //read first char of atr
+	if (IO_Serial_Read(reader, 0, timeout, 1, buf+n)){ //read first char of atr
 		rdr_debug_mask(reader, D_IFD, "ERROR: no characters found in ATR");
 		return ERROR;
 	}
@@ -90,7 +90,7 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 	}
 	else rdr_debug_mask(reader, D_IFD, "This card uses direct convention");
 	n++;
-	if (IO_Serial_Read(reader, timeout, 1, buf+n)){
+	if (IO_Serial_Read(reader, 0, timeout, 1, buf+n)){
 		rdr_debug_mask(reader, D_IFD, "ERROR: only 1 character found in ATR");
 		return ERROR;
 	}
@@ -105,7 +105,7 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 	int32_t TDi = T0; // place T0 char into TDi for looped parsing.
 	while (n < SCI_MAX_ATR_SIZE){
 		if (TDi&0x10){  //TA Present: 							   //The value of TA(i) is always interpreted as XI || UI if i > 2 and T = 15 ='F'in TD(i–1)
-			if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;  //In this case, TA(i) contains the clock stop indicator XI, which indicates the logical
+			if (IO_Serial_Read(reader, 0, timeout, 1, buf+n)) break;  //In this case, TA(i) contains the clock stop indicator XI, which indicates the logical
 																  //state the clockline must assume when the clock is stopped, and the class indicator UI,
 			rdr_debug_mask(reader, D_ATR, "TA%d: %02X",protocols,buf[n]);      //which specifies the supply voltage class.
 			if ((protocols >2) && ((TDi&0x0F)==0x0F)){  // Protocol T15 does not exists, it means mandatory on all ATRs
@@ -151,7 +151,7 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 			n++; // next interface character
 		}
 		if (TDi&0x20){	 //TB Present
-			if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;
+			if (IO_Serial_Read(reader, 0, timeout, 1, buf+n)) break;
 			rdr_debug_mask(reader, D_ATR, "TB%d: %02X",protocols,buf[n]);
 			if ((protocols >2) && ((TDi&0x0F)==0x01)){  // Protocol T1 specfic (There is always an obsolete T0 protocol!)
 				int32_t CWI = (buf[n]&0x0F); // low nibble contains CWI code for the character waiting time CWT
@@ -166,7 +166,7 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 			n++; // next interface character
 		}
 		if (TDi&0x40){	 //TC Present
-			if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;
+			if (IO_Serial_Read(reader, 0, timeout, 1, buf+n)) break;
 			rdr_debug_mask(reader, D_ATR, "TC%d: %02X",protocols, buf[n]);
 			if ((protocols > 1) && ((TDi&0x0F)==0x00)){
 				int32_t WI = buf[n];
@@ -182,7 +182,7 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 			n++; // next interface character
 		}
 		if (TDi&0x80){	//TD Present? Get next TDi there will be a next protocol
-			if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;
+			if (IO_Serial_Read(reader, 0, timeout, 1, buf+n)) break;
 			rdr_debug_mask(reader, D_ATR, "TD%d %02X",protocols,buf[n]);
 			TDi = buf[n];
 			protocolnumber = TDi&0x0F;
@@ -203,7 +203,7 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 	rdr_debug_mask(reader, D_ATR, "Total protocols in this ATR is %d",protocols);
 
 	while(n < atrlength + tck){ // read all the rest and mandatory tck byte if other protocol than T0 is used.
-		if (IO_Serial_Read(reader, timeout, 1, buf+n)) break;	
+		if (IO_Serial_Read(reader, 0, timeout, 1, buf+n)) break;	
 		n++;
 	}
 	

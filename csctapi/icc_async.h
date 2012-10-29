@@ -49,8 +49,8 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * has_card);
 
 /* Operations */
 int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *cmd, uint16_t lc, unsigned char *rsp, uint16_t *lr);
-int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, unsigned char * buffer);
-int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, unsigned char * buffer);
+int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, unsigned char * buffer, uint32_t delay, uint32_t timeout);
+int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, unsigned char * buffer, uint32_t delay, uint32_t timeout);
 
 #endif /* _ICC_ASYNC_ */
 

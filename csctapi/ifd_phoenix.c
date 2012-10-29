@@ -165,7 +165,7 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 			IO_Serial_Ioctl_Lock(reader, 0);
 
 			int32_t n=0;
-			while(n<ATR_MAX_SIZE && !IO_Serial_Read(reader, ATR_TIMEOUT, 1, buf+n))
+			while(n<ATR_MAX_SIZE && !IO_Serial_Read(reader, 0, ATR_TIMEOUT, 1, buf+n))
 				n++;
 			if(n==0)
 				continue;
@@ -192,35 +192,25 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 		return ret;
 }
 
-int32_t Phoenix_Transmit (struct s_reader * reader, unsigned char * buffer, uint32_t size, uint32_t block_delay, uint32_t char_delay)
+int32_t Phoenix_Transmit (struct s_reader * reader, unsigned char * buffer, uint32_t size, uint32_t delay, uint32_t timeout)
 {
 	uint32_t sent=0, to_send = 0;
-
 	for (sent = 0; sent < size; sent = sent + to_send)
 	{
 		/* Calculate number of bytes to send */
 		to_send = MIN(size, MAX_TRANSMIT);
 
 		/* Send data */
-		if ((sent == 0) && (block_delay != char_delay) && (block_delay != 0))
-		{
-			if(IO_Serial_Write (reader, block_delay, 1, buffer)) return ERROR; // blockdelay used with 1 char on purpose to interspace between blocks on T1 protocol?
-			if (size > 1){ // in case we only have to send 1 char we get into trouble!
-				if(IO_Serial_Write (reader, char_delay, to_send-1, buffer+1)) return ERROR;
-			}
-		}
-		else
-			if (IO_Serial_Write (reader, char_delay, to_send, buffer+sent)) return ERROR;
+		if (IO_Serial_Write (reader, delay, timeout , to_send, buffer+sent)) return ERROR;
 	}
 	return OK;
 }
 
-int32_t Phoenix_Receive (struct s_reader * reader, unsigned char * buffer, uint32_t size, uint32_t timeout)
+int32_t Phoenix_Receive (struct s_reader * reader, unsigned char * buffer, uint32_t size, uint32_t delay, uint32_t timeout)
 {
-#define IFD_TOWITOKO_TIMEOUT             1000000 //in us
 
 	/* Read all data bytes with the same timeout */
-	if(IO_Serial_Read (reader, timeout + IFD_TOWITOKO_TIMEOUT, size, buffer)) return ERROR;
+	if(IO_Serial_Read (reader, delay, timeout, size, buffer)) return ERROR;
 	return OK;
 }
 
@@ -309,12 +299,12 @@ static int32_t mouse_init(struct s_reader *reader) {
 	return OK;
 }
 
-static int32_t mouse_receive(struct s_reader *reader, unsigned char *data, uint32_t size) {
-	return Phoenix_Receive(reader, data, size, reader->read_timeout);
+static int32_t mouse_receive(struct s_reader *reader, unsigned char *data, uint32_t size, uint32_t delay, uint32_t timeout) {
+	return Phoenix_Receive(reader, data, size, delay, timeout);
 }
 
-static int32_t mouse_transmit(struct s_reader *reader, unsigned char *sent, uint32_t size) {
-	return Phoenix_Transmit(reader, sent, size, reader->block_delay, reader->char_delay);
+static int32_t mouse_transmit(struct s_reader *reader, unsigned char *sent, uint32_t size, uint32_t delay, uint32_t timeout) {
+	return Phoenix_Transmit(reader, sent, size, delay, timeout);
 }
 
 void cardreader_mouse(struct s_cardreader *crdr)

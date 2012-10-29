@@ -93,8 +93,8 @@ static int32_t mp35_reader_init(struct s_reader * reader)
   IO_Serial_Flush(reader);
 
   memset(rec_buf, 0x00, sizeof(rec_buf));
-  call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 2, fw_version));
-  call(IO_Serial_Read(reader, MP35_READ_DELAY, 4, rec_buf));
+  call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 1000000, 2, fw_version));
+  call(IO_Serial_Read(reader, MP35_READ_DELAY, 1000000, 4, rec_buf));
   if(rec_buf[3] != ACK)
   {
     rdr_debug_mask(reader, D_IFD, "Failed MP35 command: fw_version");
@@ -132,9 +132,9 @@ static int32_t mp35_reader_init(struct s_reader * reader)
       original_mhz = 357;
     }
     memset(rec_buf, 0x00, sizeof(rec_buf));
-    call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 2, set_mode_osc));
-    call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 1, &parameter));
-    call(IO_Serial_Read(reader, MP35_READ_DELAY, 1, rec_buf)); // Read ACK from previous command
+    call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 1000000, 2, set_mode_osc));
+    call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 1000000, 1, &parameter));
+    call(IO_Serial_Read(reader, MP35_READ_DELAY, 1000000, 1, rec_buf)); // Read ACK from previous command
     if(rec_buf[0] != ACK)
     {
       rdr_debug_mask(reader, D_IFD, "Failed MP35 command: set_mode_osc");
@@ -142,8 +142,8 @@ static int32_t mp35_reader_init(struct s_reader * reader)
     }
     rdr_debug_mask(reader, D_IFD, "%s: Leaving programming mode", __func__);
     memset(rec_buf, 0x00, sizeof(rec_buf));
-    call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 2, exit_program_mode));
-    call(IO_Serial_Read(reader, MP35_READ_DELAY, 1, rec_buf));
+    call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 1000000, 2, exit_program_mode));
+    call(IO_Serial_Read(reader, MP35_READ_DELAY, 1, 1000000, rec_buf));
     if(rec_buf[0] != ACK)
     {
       rdr_debug_mask(reader, D_IFD, "Failed MP35 command: exit_program_mode");
@@ -158,10 +158,10 @@ static int32_t mp35_reader_init(struct s_reader * reader)
       char info[sizeof(rec_buf) - 2];
 
       memset(rec_buf, 0x00, sizeof(rec_buf));
-      call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 2,  fw_info));
-      call(IO_Serial_Read(reader, MP35_READ_DELAY, 1, rec_buf));
+      call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 1000000, 2,  fw_info));
+      call(IO_Serial_Read(reader, MP35_READ_DELAY, 1000000, 1, rec_buf));
       info_len = rec_buf[0];
-      call(IO_Serial_Read(reader, MP35_READ_DELAY, info_len + 1, rec_buf));
+      call(IO_Serial_Read(reader, MP35_READ_DELAY, 1000000, info_len + 1, rec_buf));
       if(rec_buf[info_len] != ACK)
       {
         rdr_debug_mask(reader, D_IFD, "Failed MP35 command: fw_info");
@@ -176,18 +176,18 @@ static int32_t mp35_reader_init(struct s_reader * reader)
     if(original_mhz == 357)
     {
       rdr_log(reader, "%s: Using oscillator 1 (3.57MHz)", __func__);
-      call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 2, phoenix_mode));
+      call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 1000000, 2, phoenix_mode));
     }
     else if(original_mhz == 600)
     {
       rdr_log(reader, "%s: Using oscillator 2 (6.00MHz)", __func__);
-      call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 2, phoenix_6mhz_mode));
+      call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 1000000, 2, phoenix_6mhz_mode));
     }
     else
     {
       rdr_log(reader, "%s: MP35 support only mhz=357 or mhz=600", __func__);
       rdr_log(reader, "%s: Forced oscillator 1 (3.57MHz)", __func__);
-      call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 2, phoenix_mode));
+      call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 1000000, 2, phoenix_mode));
       original_mhz = 357;
     }
     tcdrain(reader->handle);
@@ -232,12 +232,12 @@ static int32_t mp35_init(struct s_reader *reader) {
   return OK;
 }
 
-static int32_t mp35_receive(struct s_reader *reader, unsigned char *data, uint32_t size) {
-  return Phoenix_Receive(reader, data, size, reader->read_timeout);
+static int32_t mp35_receive(struct s_reader *reader, unsigned char *data, uint32_t size, uint32_t delay, uint32_t timeout) {
+  return Phoenix_Receive(reader, data, size, delay, timeout);
 }
 
-static int32_t mp35_transmit(struct s_reader *reader, unsigned char *sent, uint32_t size) {
-  return Phoenix_Transmit(reader, sent, size, reader->block_delay, reader->char_delay);
+static int32_t mp35_transmit(struct s_reader *reader, unsigned char *sent, uint32_t size, uint32_t delay, uint32_t timeout) {
+  return Phoenix_Transmit(reader, sent, size, delay, timeout);
 }
 
 void cardreader_mp35(struct s_cardreader *crdr)

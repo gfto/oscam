@@ -670,8 +670,8 @@ struct s_cardreader
 	int32_t			(*reader_init)(struct s_reader*);
 	int32_t			(*get_status)(struct s_reader*, int*);
 	int32_t			(*activate)(struct s_reader*, struct s_ATR *);
-	int32_t			(*transmit)(struct s_reader*, unsigned char *sent, uint32_t size);
-	int32_t			(*receive)(struct s_reader*, unsigned char *data, uint32_t size);
+	int32_t			(*transmit)(struct s_reader*, unsigned char *sent, uint32_t size, uint32_t delay, uint32_t timeout);
+	int32_t			(*receive)(struct s_reader*, unsigned char *data, uint32_t size, uint32_t delay, uint32_t timeout);
 	int32_t			(*close)(struct s_reader*);
 	int32_t			(*set_parity)(struct s_reader*, uchar parity);
 	int32_t			(*write_settings)(struct s_reader*,
@@ -1189,6 +1189,10 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t			msg_idx;
 	int32_t			secatype;						// 0=not determined, 2=seca2, 3=nagra(~seca3) this is only valid for localreaders!
 	double			worketu;						// in us for internal and external readers calculated (1/D)*(F/cardclock)*1000000
+	uint32_t		maxreadtimeout;					// in us
+	uint32_t		minreadtimeout;					// in us
+	uint32_t		maxwritetimeout;				// in us
+	uint32_t		minwritetimeout;				// in us
 #if defined(WEBIF) || defined(LCDSUPPORT)
 	int32_t			emmwritten[4];					// count written EMM
 	int32_t			emmskipped[4];					// count skipped EMM

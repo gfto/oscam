@@ -367,7 +367,7 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, ui
 		case ATR_PROTOCOL_TYPE_T1:
 			ret = Protocol_T1_Command (reader, command, command_len, rsp, lr);
 			type = 1;
-			if ((ret != OK) && (reader->ifsc != DEFAULT_IFSC) && (reader->typ != R_PCSC)) { // dont use for PCSC readers!!
+			if ((ret != OK) && (reader->typ != R_PCSC)) { // dont use for PCSC readers!!
 				//try to resync
 				unsigned char resync[] = { 0x21, 0xC0, 0x00, 0xE1 };
 				ret = Protocol_T1_Command (reader, resync, sizeof(resync), rsp, lr);
@@ -414,8 +414,9 @@ int32_t ICC_Async_SetTimings (struct s_reader * reader, uint32_t wait_etu)
 	return OK;
 }
 
-int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, unsigned char * data)
+int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, unsigned char * data, uint32_t delay, uint32_t timeout)
 {
+	rdr_debug_mask(reader, D_IFD, "Transmit size %d bytes, delay %d us, timeout=%d us",size, delay, timeout);
 	int32_t ret;
 	rdr_ddump_mask(reader, D_IFD, data, size, "Transmit:");
 	unsigned char *sent = data;
@@ -425,7 +426,7 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, unsigned cha
 	}
 
 	if (reader->crdr.active==1) {
-		call(reader->crdr.transmit(reader, sent, size));
+		call(reader->crdr.transmit(reader, sent, size, delay, timeout));
 		rdr_debug_mask(reader, D_IFD, "Transmit succesful");
 		if (reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.need_inverse) {
 			// revert inversion cause the code in protocol_t0 is accessing buffer after transmit
@@ -439,7 +440,7 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, unsigned cha
 		case R_DB2COM2:
 		case R_SC8in1:
 		case R_MOUSE:
-			ret = Phoenix_Transmit (reader, sent, size, reader->block_delay, reader->char_delay);
+			ret = Phoenix_Transmit (reader, sent, size, delay, timeout);
 			break;
 		case R_INTERNAL:
 #if defined(WITH_COOLAPI)
@@ -466,12 +467,12 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, unsigned cha
 	return ret;
 }
 
-int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, unsigned char * data)
+int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, unsigned char * data, uint32_t delay, uint32_t timeout)
 {
-
+	rdr_debug_mask(reader, D_IFD, "Receive size %d bytes, delay %d us, timeout=%d us",size, delay, timeout);
 	int32_t ret;
 	if (reader->crdr.active==1) {
-		call(reader->crdr.receive(reader, data, size));
+		call(reader->crdr.receive(reader, data, size, delay, timeout));
 
 		if (reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.need_inverse==1)
 			ICC_Async_InvertBuffer (size, data);
@@ -485,7 +486,7 @@ int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, unsigned char
 		case R_DB2COM2:
 		case R_SC8in1:
 		case R_MOUSE:
-			ret = Phoenix_Receive (reader, data, size, reader->read_timeout);
+			ret = Phoenix_Receive (reader, data, size, delay, timeout);
 			break;
 		case R_INTERNAL:
 #if defined(WITH_COOLAPI)
@@ -493,7 +494,7 @@ int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, unsigned char
 #elif defined(WITH_AZBOX)
 			ret = Azbox_Receive(reader, data, size);
 #else
-			ret = Phoenix_Receive (reader, data, size, reader->read_timeout);
+			ret = Phoenix_Receive (reader, data, size, delay, timeout);
 #endif
 			break;
 		default:
@@ -776,12 +777,12 @@ static int32_t PPS_Exchange (struct s_reader * reader, unsigned char * params, u
 	}
 
 	/* Send PPS request */
-	call (ICC_Async_Transmit (reader, len_request, params));
+	call (ICC_Async_Transmit (reader, len_request, params, 0, 1000000));
 
 	/* Get PPS confirm */
-	call (ICC_Async_Receive (reader, 2, confirm));
+	call (ICC_Async_Receive (reader, 2, confirm, 0, 1000000));
 	len_confirm = PPS_GetLength (confirm);
-	call (ICC_Async_Receive (reader, len_confirm - 2, confirm + 2));
+	call (ICC_Async_Receive (reader, len_confirm - 2, confirm + 2, 0, 1000000));
 
 	rdr_debug_mask(reader, D_IFD, "PTS: Receiving confirm: %s",
 		cs_hexdump(1, confirm, len_confirm, tmp, sizeof(tmp)));
