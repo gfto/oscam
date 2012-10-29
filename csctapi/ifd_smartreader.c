@@ -351,8 +351,11 @@ static int32_t SR_Reset (struct s_reader *reader, ATR *atr)
     return atr_ok;
 }
 
-static int32_t smart_write(S_READER *reader, unsigned char* buff, uint32_t  size)
+static int32_t smart_write(S_READER *reader, unsigned char* buff, uint32_t size, uint32_t delay, uint32_t timeout)  // delay and timeout not used (yet)!
 {
+	(void) delay; // delay not used (yet)!
+	(void) timeout; // timeout not used (yet)!
+	
     int32_t write_size;
     uint32_t  offset = 0;
     int32_t total_written = 0;
@@ -386,9 +389,11 @@ static int32_t smart_write(S_READER *reader, unsigned char* buff, uint32_t  size
     return total_written;
 }
 
-static int32_t SR_Transmit (struct s_reader *reader, unsigned char * buffer, uint32_t size, uint32_t delay, uint32_t timeout)
+static int32_t SR_Transmit (struct s_reader *reader, unsigned char * buffer, uint32_t size, uint32_t delay, uint32_t timeout) // delay and timeout not used (yet)!
 {
-    uint32_t  ret;
+    (void) delay; // delay not used (yet)!
+	(void) timeout; // timeout not used (yet)!
+	uint32_t  ret;
 
     smart_fastpoll(reader, 1);
     ret = smart_write(reader, buffer, size);

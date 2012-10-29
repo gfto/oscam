@@ -435,7 +435,7 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
  		{
  			if (read (reader->handle, &c, 1) == 1)
  			{
-				readed =TRUE;
+				readed = 1;
 				break;
  			}
  			gettimeofday(&tv_spent,0);
