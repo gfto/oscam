@@ -900,8 +900,10 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
   	return 0;
   }
   #ifdef WITH_CARDREADER
+  cs_debug_mask(D_TRACE, "matching_reader became slot attribute of %d", slot);
   if (!is_network_reader(rdr) && slot == 1) {
-	  if(ecm_ratelimit_check(rdr, er, 1) != OK) return 0; //check ratelimiter & cooldown
+	  // just check ratelimiter & cooldown, but no srvid assignment in slot
+	  if(ecm_ratelimit_check(rdr, er, 0) != OK) return 0; //just check ratelimiter & cooldown
   }
   #endif
   //All checks done, reader is matching!
