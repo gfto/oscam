@@ -433,9 +433,9 @@ int32_t cardreader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 }
 
 void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_REQUEST *er) {
-	if (ecm_ratelimit_check(reader, er, 2) != OK) {
+	if (ecm_ratelimit_check(reader, er, 1) != OK) {
 		rdr_debug_mask(reader, D_TRACE, "%s: ratelimit check failed.", __func__);
-		return; // slot = 2: checkout ratelimiter in reader mode so srvid can be replaced
+		return; // reader_mode = 1: checkout ratelimiter in reader mode so srvid can be replaced
 	}
 	cs_ddump_mask(D_ATR, er->ecm, er->l, "ecm:");
 
@@ -475,7 +475,7 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 		htons(er->checksum), 1000 * (tpe.time - tps.time) + tpe.millitm - tps.millitm);
 
 	write_ecm_answer(reader, er, ea.rc, ea.rcEx, ea.cw, ea.msglog);
-		
+
 	reader_post_process(reader);
 }
 

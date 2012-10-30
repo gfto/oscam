@@ -780,36 +780,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "cooldown")) {
-		if(strlen(value) == 0) {
-			rdr->cooldown[0] = 0;
-			rdr->cooldown[1] = 0;
-			return;
-		} else {
-			for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 2) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
-				switch(i) {
-				case 0:
-					rdr->cooldown[0] = atoi(ptr);
-					break;
-
-				case 1:
-					rdr->cooldown[1] = atoi(ptr);
-					break;
-				}
-			}
-
-			if (!rdr->cooldown[0] || !rdr->cooldown[1]) {
-				fprintf(stderr, "cooldown must have 2 values (x,y) set values %d,%d ! cooldown deactivated\n",
-						rdr->cooldown[0], rdr->cooldown[1]);
-
-				rdr->cooldown[0] = 0;
-				rdr->cooldown[1] = 0;
-			}
-
-		}
-		return;
-	}
-
 	if (!strcmp(token, "emmcache")) {
 		if(strlen(value) == 0) {
 			rdr->cachemm = 0;
@@ -1075,10 +1045,9 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		} else {
 			rdr->ratelimitecm = atoi(value);
-			int32_t h;
-			for (h=0; h < MAXECMRATELIMIT; h++) { // reset all slots
-				rdr->rlecmh[h].srvid = -1;
-				rdr->rlecmh[h].last = -1;
+			for (i = 0; i < MAXECMRATELIMIT; i++) { // reset all slots
+				rdr->rlecmh[i].srvid = -1;
+				rdr->rlecmh[i].last = -1;
 			}
 			return;
 		}
@@ -1088,6 +1057,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			if (rdr->ratelimitecm > 0) {
 				rdr->ratelimitseconds = 10;
 			} else {
+				rdr->ratelimitecm = 0; // in case someone set a negative value
 				rdr->ratelimitseconds = 0;
 			}
 			return;
@@ -1097,7 +1067,39 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		}
 	}
 
-	// cooldown
+	// cooldown for readout of oscam.server file
+	if (!strcmp(token, "cooldown")) {
+		if(strlen(value) == 0) {
+			rdr->cooldown[0] = 0;
+			rdr->cooldown[1] = 0;
+			return;
+		} else {
+			for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 2) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
+				rdr->cooldown[i] = atoi(ptr);
+/*				switch(i) {
+				case 0:
+					rdr->cooldown[0] = atoi(ptr);
+					break;
+
+				case 1:
+					rdr->cooldown[1] = atoi(ptr);
+					break;
+				}
+*/			}
+
+			if (rdr->cooldown[0] <= 0 || rdr->cooldown[1] <= 0) {
+				fprintf(stderr, "cooldown must have 2 positive values (x,y) set values %d,%d ! cooldown deactivated\n",
+						rdr->cooldown[0], rdr->cooldown[1]);
+
+				rdr->cooldown[0] = 0;
+				rdr->cooldown[1] = 0;
+			}
+
+		}
+		return;
+	}
+
+	// cooldown setting loading for web interface
 	if (!strcmp(token, "cooldowndelay")) {
 		if (strlen(value) == 0) {
 			rdr->cooldown[0] = 0;
@@ -1109,14 +1111,15 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 	if (!strcmp(token, "cooldowntime")) {
 		if (strlen(value) == 0) {
-			rdr->cooldown[1] = 0; 
+			rdr->cooldown[0] = 0; // no cooling down time means no cooling set
+			rdr->cooldown[1] = 0;
 			return;
 		} else {
 			rdr->cooldown[1] = atoi(value);
 			return;
 		}
 	}
-	
+
 	if (!strcmp(token, "dropbadcws")) {
 		rdr->dropbadcws = strToIntVal(value, 0);
 		return;

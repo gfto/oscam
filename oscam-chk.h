@@ -1,7 +1,7 @@
 #ifndef OSCAM_CHK_H_
 #define OSCAM_CHK_H_
 
-int32_t ecm_ratelimit_check(struct s_reader * reader, ECM_REQUEST *er, int32_t slot);
+int32_t ecm_ratelimit_check(struct s_reader * reader, ECM_REQUEST *er, int32_t reader_mode);
 int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot);
 int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid);
 
