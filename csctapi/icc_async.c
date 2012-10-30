@@ -383,7 +383,6 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, unsigned cha
 	switch(reader->typ) {
 		case R_DB2COM1:
 		case R_DB2COM2:
-		case R_SC8in1:
 		case R_MOUSE:
 			ret = Phoenix_Transmit (reader, sent, size, delay, timeout);
 			break;
@@ -429,7 +428,6 @@ int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, unsigned char
 	switch(reader->typ) {
 		case R_DB2COM1:
 		case R_DB2COM2:
-		case R_SC8in1:
 		case R_MOUSE:
 			ret = Phoenix_Receive (reader, data, size, delay, timeout);
 			break;
@@ -772,7 +770,6 @@ static int32_t ICC_Async_SetParity (struct s_reader * reader, uint16_t parity)
 	switch(reader->typ) {
 		case R_DB2COM1:
 		case R_DB2COM2:
-		case R_SC8in1:
 		case R_MOUSE:
 			rdr_debug_mask(reader, D_ATR, "Setting right parity");
 			call (IO_Serial_SetParity (reader, parity));
