@@ -12,16 +12,8 @@
 #include "csctapi/icc_async.h"
 #include "csctapi/ifd_azbox.h"
 #include "csctapi/ifd_cool.h"
-#include "csctapi/ifd_sc8in1.h"
 
 extern struct s_cardsystem cardsystems[CS_MAX_MOD];
-
-static void sc8in1_display(struct s_reader *reader, char msg[4]) {
-	if (reader->typ == R_SC8in1 && reader->sc8in1_config->mcr_type) {
-		char text[5] = { 'S', (char)reader->slot + 0x30, msg[0], msg[1], msg[2] };
-		MCR_DisplayText(reader, text, sizeof(text), 400, 0);
-	}
-}
 
 static int32_t reader_device_type(struct s_reader * reader)
 {
@@ -272,7 +264,7 @@ void cardreader_do_reset(struct s_reader *reader)
       {
         reader->card_status = CARD_FAILURE;
         rdr_log(reader, "card initializing error");
-		sc8in1_display(reader, "AER");
+		ICC_Async_DisplayMsg(reader, "AER");
 		led_status_card_activation_error();
       }
       else
@@ -280,7 +272,7 @@ void cardreader_do_reset(struct s_reader *reader)
         cardreader_get_card_info(reader);
         reader->card_status = CARD_INSERTED;
         do_emm_from_file(reader);
-		sc8in1_display(reader, "AOK");
+		ICC_Async_DisplayMsg(reader, "AOK");
 
 #ifdef WITH_COOLAPI
 	if (reader->typ == R_INTERNAL) {
@@ -457,7 +449,7 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 			er->caid, er->srvid, get_servicename(cl, er->srvid, er->caid, buf));
 		ea.rc = E_NOTFOUND;
 		ea.rcEx = 0;
-		sc8in1_display(reader, "Eer");
+		ICC_Async_DisplayMsg(reader, "Eer");
 	}
 
 	if (rc == E_CORRUPT) {

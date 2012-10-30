@@ -77,7 +77,12 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 	reader->written = 0;
 
 	if (reader->crdr.reader_init) {
-		return reader->crdr.reader_init(reader);
+		int32_t ret = reader->crdr.reader_init(reader);
+		if (ret == OK)
+			rdr_debug_mask(reader, D_IFD, "Device %s succesfully opened", reader->device);
+		else
+			rdr_debug_mask(reader, D_IFD, "ERROR: Can't open %s device", reader->device);
+		return ret;
 	}
 
 	switch(reader->typ) {
@@ -553,6 +558,11 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 
 	rdr_debug_mask(reader, D_IFD, "Device %s succesfully closed", reader->device);
 	return OK;
+}
+
+void ICC_Async_DisplayMsg(struct s_reader *reader, char *msg) {
+	if (reader->crdr.display_msg)
+		reader->crdr.display_msg(reader, msg);
 }
 
 static uint32_t ICC_Async_GetClockRate (int32_t cardmhz)

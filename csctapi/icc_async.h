@@ -52,5 +52,7 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *cmd, uint16
 int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, unsigned char * buffer, uint32_t delay, uint32_t timeout);
 int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, unsigned char * buffer, uint32_t delay, uint32_t timeout);
 
+void ICC_Async_DisplayMsg(struct s_reader *, char *msg);
+
 #endif /* _ICC_ASYNC_ */
 

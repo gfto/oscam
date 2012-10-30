@@ -4,6 +4,7 @@
 void cardreader_mp35(struct s_cardreader *crdr);
 void cardreader_mouse(struct s_cardreader *crdr);
 void cardreader_pcsc(struct s_cardreader *crdr);
+void cardreader_sc8in1(struct s_cardreader *crdr);
 void cardreader_smargo(struct s_cardreader *crdr);
 void cardreader_smartreader(struct s_cardreader *crdr);
 void cardreader_stapi(struct s_cardreader *crdr);

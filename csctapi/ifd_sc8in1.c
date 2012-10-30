@@ -21,7 +21,8 @@
 #include "../oscam-lock.h"
 #include "../oscam-string.h"
 #include "../oscam-time.h"
-#include "ifd_sc8in1.h"
+#include "atr.h"
+#include "ifd_phoenix.h"
 #include "io_serial.h"
 
 #define OK 0
@@ -40,6 +41,9 @@ int32_t Sc8in1_NeedBaudrateChange(struct s_reader * reader, uint32_t desiredBaud
 static int32_t sc8in1_tcdrain(struct s_reader *reader);
 int32_t Sc8in1_SetSlotForReader(struct s_reader *reader);
 int32_t Sc8in1_Card_Changed (struct s_reader * reader);
+int32_t Sc8in1_SetBaudrate (struct s_reader * reader, uint32_t baudrate, struct termios *termio, uint8_t cmdMode);
+int32_t Sc8in1_GetStatus(struct s_reader * reader, int32_t * in);
+int32_t MCR_DisplayText(struct s_reader *reader, char* text, uint16_t text_len, uint16_t ch_time, uint8_t blocking);
 
 static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 		uint16_t lenwrite, uint16_t lenread, uint8_t enableEepromWrite, unsigned char UNUSED(getStatusMode),
@@ -960,4 +964,42 @@ int32_t Sc8in1_SetSlotForReader(struct s_reader *reader) {
 	reader->slot=(uint16_t)reader->device[pos+1] - 0x30;
 	return OK;
 }
+
+static void sc8in1_lock(struct s_reader *reader) {
+	cs_writelock(&reader->sc8in1_config->sc8in1_lock);
+	rdr_debug_mask(reader, D_ATR, "Locked for access of slot %i", reader->slot);
+	Sc8in1_Selectslot(reader, reader->slot);
+}
+
+static void sc8in1_unlock(struct s_reader *reader) {
+	cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+	rdr_debug_mask(reader, D_ATR, "Unlocked for access of slot %i", reader->slot);
+}
+
+static void sc8in1_display(struct s_reader *reader, char *message) {
+	if (!reader->sc8in1_config->mcr_type)
+		return;
+	char msg[4] = "   ";
+	if (strlen(message) >= 3) {
+		msg[0] = message[0];
+		msg[1] = message[1];
+		msg[2] = message[2];
+	}
+	char text[5] = { 'S', (char)reader->slot + 0x30, msg[0], msg[1], msg[2] };
+	MCR_DisplayText(reader, text, sizeof(text), 400, 0);
+}
+
+void cardreader_sc8in1(struct s_cardreader *crdr)
+{
+	crdr->desc         = "sc8in1";
+	crdr->typ          = R_SC8in1;
+	crdr->flush        = 1;
+	crdr->read_written = 1;
+	crdr->need_inverse = 1;
+	crdr->lock_init    = Sc8in1_InitLocks;
+	crdr->lock         = sc8in1_lock;
+	crdr->unlock       = sc8in1_unlock;
+	crdr->display_msg  = sc8in1_display;
+}
+
 #endif

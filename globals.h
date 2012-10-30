@@ -672,6 +672,9 @@ struct s_cardreader
 	int32_t			(*activate)(struct s_reader*, struct s_ATR *);
 	int32_t			(*transmit)(struct s_reader*, unsigned char *sent, uint32_t size, uint32_t delay, uint32_t timeout);
 	int32_t			(*receive)(struct s_reader*, unsigned char *data, uint32_t size, uint32_t delay, uint32_t timeout);
+	int32_t			(*lock_init)(struct s_reader *);
+	void			(*lock)(struct s_reader *);
+	void			(*unlock)(struct s_reader *);
 	int32_t			(*close)(struct s_reader*);
 	int32_t			(*set_parity)(struct s_reader*, uchar parity);
 	int32_t			(*write_settings)(struct s_reader*,
@@ -693,6 +696,7 @@ struct s_cardreader
 										unsigned char *cta_res,
 										uint16_t *cta_lr,
 										int32_t l);
+	void			(*display_msg)(struct s_reader *, char *msg);
 	int32_t			typ; 				// fixme: workaround, remove when all old code is converted
 
 	int8_t			max_clock_speed; 	// 1 for reader->typ > R_MOUSE
