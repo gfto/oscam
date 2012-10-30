@@ -851,10 +851,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 			if (reader->crdr.set_baudrate) {
 				call (reader->crdr.set_baudrate(reader, baud_temp));
 			} else {
-				if (reader->typ == R_SC8in1) {
-					call (Sc8in1_SetBaudrate(reader, baud_temp, NULL, 0));
-				}
-				else if (reader->typ <= R_MOUSE)
+				if (reader->typ <= R_MOUSE)
 					call (Phoenix_SetBaudrate(reader, baud_temp));
 			}
 			reader->current_baudrate = baud_temp; //this is needed for all readers to calculate work_etu for timings

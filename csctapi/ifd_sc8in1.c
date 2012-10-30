@@ -1064,6 +1064,12 @@ static int32_t sc8in1_activate(struct s_reader *reader, struct s_ATR *atr)
 	return OK;
 }
 
+static int32_t sc8in1_set_baudrate(struct s_reader *reader, uint32_t baudrate)
+{
+	call(Sc8in1_SetBaudrate(reader, baudrate, NULL, 0));
+	return OK;
+}
+
 void cardreader_sc8in1(struct s_cardreader *crdr)
 {
 	crdr->desc         = "sc8in1";
@@ -1082,6 +1088,7 @@ void cardreader_sc8in1(struct s_cardreader *crdr)
 	crdr->transmit     = Phoenix_Transmit;
 	crdr->receive      = Phoenix_Receive;
 	crdr->set_parity   = IO_Serial_SetParity;
+	crdr->set_baudrate = sc8in1_set_baudrate;
 }
 
 #endif
