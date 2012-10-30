@@ -402,7 +402,7 @@ void IO_Serial_Flush (struct s_reader * reader)
 
 void IO_Serial_Sendbreak(struct s_reader * reader, int32_t duration)
 {
-	tcsendbreak (reader->handle, duration);
+	tcsendbreak (reader->handle, duration / 1000);
 }
 
 bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout, uint32_t size, unsigned char * data)
