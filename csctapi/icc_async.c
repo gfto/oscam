@@ -76,7 +76,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 
 	reader->written = 0;
 
-	if (reader->crdr.active==1 && reader->crdr.reader_init) {
+	if (reader->crdr.reader_init) {
 		return reader->crdr.reader_init(reader);
 	}
 
@@ -202,7 +202,7 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 {
 	int32_t in=0;
 
-	if (reader->crdr.active==1 && reader->crdr.get_status) {
+	if (reader->crdr.get_status) {
 		call(reader->crdr.get_status(reader, &in));
 
 		if (in)
@@ -269,7 +269,7 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 		ATR_InitFromArray(atr, reader->atr, ATR_MAX_SIZE);
 	}
 	else {
-		if (reader->crdr.active==1 && reader->crdr.activate) {
+		if (reader->crdr.activate) {
 			call(reader->crdr.activate(reader, atr));
 			if (reader->crdr.skip_extra_atr_parsing) {
 				return OK;
@@ -422,11 +422,11 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, unsigned cha
 	rdr_ddump_mask(reader, D_IFD, data, size, "Transmit:");
 	unsigned char *sent = data;
 
-	if (reader->convention == ATR_CONVENTION_INVERSE && ((!reader->crdr.active && reader->typ <= R_MOUSE) || (reader->crdr.active && reader->crdr.need_inverse==1))) {
+	if (reader->convention == ATR_CONVENTION_INVERSE && ((!reader->crdr.active && reader->typ <= R_MOUSE) || reader->crdr.need_inverse==1)) {
 		ICC_Async_InvertBuffer (size, sent);
 	}
 
-	if (reader->crdr.active==1) {
+	if (reader->crdr.transmit) {
 		call(reader->crdr.transmit(reader, sent, size, delay, timeout));
 		rdr_debug_mask(reader, D_IFD, "Transmit succesful");
 		if (reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.need_inverse) {
@@ -472,7 +472,7 @@ int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, unsigned char
 {
 	rdr_debug_mask(reader, D_IFD, "Receive size %d bytes, delay %d us, timeout=%d us",size, delay, timeout);
 	int32_t ret;
-	if (reader->crdr.active==1) {
+	if (reader->crdr.receive) {
 		call(reader->crdr.receive(reader, data, size, delay, timeout));
 
 		if (reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.need_inverse==1)
@@ -515,7 +515,7 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 {
 	rdr_debug_mask(reader, D_IFD, "Closing device %s", reader->device);
 
-	if (reader->crdr.active && reader->crdr.close) {
+	if (reader->crdr.close) {
 		call(reader->crdr.close(reader));
 		rdr_debug_mask(reader, D_IFD, "Device %s succesfully closed", reader->device);
 		return OK;
@@ -606,7 +606,7 @@ static int32_t ICC_Async_GetPLL_Divider (struct s_reader * reader)
 static void ICC_Async_InvertBuffer (uint32_t size, unsigned char * buffer)
 {
 	uint32_t i;
-
+	cs_debug_mask(D_ATR, "%s: size=%u buf[0]=%02x", __func__, size, buffer[0]);
 	for (i = 0; i < size; i++)
 		buffer[i] = ~(INVERT_BYTE (buffer[i]));
 }
@@ -772,7 +772,7 @@ static int32_t PPS_Exchange (struct s_reader * reader, unsigned char * params, u
 	rdr_debug_mask(reader, D_IFD, "PTS: Sending request: %s",
 		cs_hexdump(1, params, len_request, tmp, sizeof(tmp)));
 
-	if (reader->crdr.active && reader->crdr.set_protocol) {
+	if (reader->crdr.set_protocol) {
 		ret = reader->crdr.set_protocol(reader, params, length, len_request);
 		return ret;
 	}
@@ -887,7 +887,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 		I = 0;
 
 	//set clock speed to max if internal reader
-	if((reader->typ > R_MOUSE && reader->crdr.active == 0) || (reader->crdr.active == 1 && reader->crdr.max_clock_speed==1))
+	if((reader->typ > R_MOUSE && reader->crdr.active == 0) || reader->crdr.max_clock_speed==1)
 		if (reader->mhz == 357 || reader->mhz == 358) //no overclocking
 			reader->mhz = atr_fs_table[FI] / 10000; //we are going to clock the card to this nominal frequency
 
@@ -910,9 +910,8 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 		if (reader->protocol_type != ATR_PROTOCOL_TYPE_T14) { //dont switch for T14
 				if (reader->typ == R_INTERNAL) baud_temp = (uint32_t) 1/((1/d)*((double)F/(double)(reader->cardmhz*10000)));
 				else baud_temp = d * ICC_Async_GetClockRate (reader->cardmhz) / (double)F;
-			if (reader->crdr.active == 1) {
-				if (reader->crdr.set_baudrate)
-					call (reader->crdr.set_baudrate(reader, baud_temp));
+			if (reader->crdr.set_baudrate) {
+				call (reader->crdr.set_baudrate(reader, baud_temp));
 			} else {
 				if (reader->typ == R_SC8in1) {
 					call (Sc8in1_SetBaudrate(reader, baud_temp, NULL, 0));
@@ -1052,7 +1051,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 	}//switch
 	SetRightParity (reader); // some reader devices need to get set the right parity
 
-	if (reader->crdr.active==1 && reader->crdr.write_settings) {
+	if (reader->crdr.write_settings) {
 		uint32_t ETU = 0; // for Irdeto T14 cards, do not set ETU
 		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14))
 			ETU = F / d;
