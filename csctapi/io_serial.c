@@ -697,8 +697,8 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, 
    int32_t out_fd;
    uint32_t timegone;
 
-#if !defined(WITH_COOLAPI) && !defined(WITH_AZBOX) && defined(__powerpc__) 
-   if(reader->typ == R_INTERNAL) return OK; // needed for ppc, otherwise error!
+#if !defined(WITH_COOLAPI) && !defined(WITH_AZBOX) 
+   if(reader->typ == R_INTERNAL) return OK; // needed for internal readers, otherwise error!
 #endif
    if (delay_us > 0)
       cs_sleepus (delay_us); // wait in us
