@@ -143,7 +143,7 @@ static int32_t mp35_reader_init(struct s_reader * reader)
     rdr_debug_mask(reader, D_IFD, "%s: Leaving programming mode", __func__);
     memset(rec_buf, 0x00, sizeof(rec_buf));
     call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 1000000, 2, exit_program_mode));
-    call(IO_Serial_Read(reader, MP35_READ_DELAY, 1, 1000000, rec_buf));
+    call(IO_Serial_Read(reader, MP35_READ_DELAY, 1000000, 1, rec_buf));
     if(rec_buf[0] != ACK)
     {
       rdr_debug_mask(reader, D_IFD, "Failed MP35 command: exit_program_mode");
