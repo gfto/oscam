@@ -1052,7 +1052,7 @@ AAAAAElFTkSuQmCC"
 				<TD class=\"centered\"><A HREF=\"readerconfig.html?label=##READERNAMEENC##\" TITLE=\"Edit this Reader\"><IMG CLASS=\"icon\" SRC=\"image?i=ICEDI\" ALT=\"Edit Reader\"></A></TD>\n\
 				<TD class=\"centered\">##ENTITLEMENT##</TD>\n\
 				<TD class=\"centered\">##READERREFRESH##</TD>\n\
-				<TD class=\"centered\"><A HREF=\"emm.html?label=##READERNAMEENC##\" TITLE=\"Write EMM to this Reader\"><IMG CLASS=\"icon\" SRC=\"image?i=ICEMM\" ALT=\"Write EMM\"></A></TD>\n\
+				<TD class=\"centered\">##WRITEEMM##</TD>\n\
 				<TD class=\"centered\"><A HREF=\"readerstats.html?label=##READERNAMEENC##&amp;hide=4\" TITLE=\"Show loadbalancer statistics\"><IMG CLASS=\"icon\" SRC=\"image?i=ICSTA\" ALT=\"Loadbalancer statistics\"></A></TD>\n\
 				<TD class=\"centered\"><A HREF=\"readers.html?label=##READERNAMEENC##&amp;action=delete\" TITLE=\"Delete this Reader\"><IMG CLASS=\"icon\" SRC=\"image?i=ICDEL\" ALT=\"Delete Reader\"></A></TD>\n\
 			</TR>\n"
@@ -1060,6 +1060,8 @@ AAAAAElFTkSuQmCC"
 #define TPLREADERENTITLEBIT "<A HREF=\"entitlements.html?label=##READERNAMEENC##\" TITLE=\"Show Entitlement\"><IMG CLASS=\"icon\" SRC=\"##ENTICO##\" ALT=\"Show Entitlement\"></A>"
 
 #define TPLREADERREFRESHBIT "<A HREF=\"readers.html?action=reread&amp;label=##READERNAMEENC##\" TITLE=\"Refresh Entitlement\"><IMG CLASS=\"icon\" SRC=\"##REFRICO##\" ALT=\"Reset and reload Entitlement\"></A>"
+
+#define TPLREADERWRITEEMMBIT "<A HREF=\"emm.html?label=##READERNAMEENC##\" TITLE=\"Write EMM to this Reader\"><IMG CLASS=\"icon\" SRC=\"##EMMICO##\" ALT=\"Write EMM\"></A>"
 
 #define TPLREADERSTATS "\
 ##TPLHEADER##\
@@ -2303,7 +2305,8 @@ function isNumber(a) {\n\
 	<BR><BR>\n\
 	<FORM action=\"emm_running.html\" method=\"get\"><INPUT TYPE=\"hidden\" NAME=\"label\" VALUE=\"##READER##\">\n\
 		<TABLE CLASS=\"stats\">\n\
-			<TR><TH COLSPAN=\"2\">Selected reader : ##READER##</TH></TR>\n\
+			<TR><TH colspan=\"2\">Selected reader : ##READER##</TH></TR>\n\
+			<TR><TD>CAID:</TD><TD><input name=\"emmcaid\" type=\"text\" size=\"4\" maxlength=\"4\" value=\"##CAID##\" ##READONLY##></TD></TR>\n\
 			<TR><TD>single EMM to write:</TD><TD><textarea name=\"ep\" cols=\"80\" rows=\"7\" maxlength=\"1024\"></textarea></TD></TR>\n\
 			<TR><TD>file path with EMMs:</TD><TD><input name=\"emmfile\" type=\"text\" size=\"70\" maxlength=\"256\"></TD></TR>\n\
 			<TR><TD colspan=\"2\" class=\"centered\"><input name=\"action\" type=\"submit\" value=\"Launch\" ##BTNDISABLED##></TD></TR>\n\
@@ -2321,15 +2324,17 @@ function isNumber(a) {\n\
 		<input name=\"service\" type=\"hidden\" value=\"##EP##\">\n\
 		<TABLE CLASS=\"stats\">\n\
 			<TR><TH COLSPAN=\"2\">Selected reader : ##READER##</TH></TR>\n\
+			<TR><TD>system:</TD><TD>##SYSTEM##</TD></TR>\n\
+			<TR><TD>CAID:</TD><TD>##CAID##</TD></TR>\n\
 			<TR><TH COLSPAN=\"2\">SINGLE EMM</TH></TR>\n\
-			<TR><TD>EMM: </A></TD><TD><textarea name=\"ep\" readonly=\"readonly\" cols=\"80\" rows=\"7\">##EP##</textarea></TD></TR>\n\
-			<TR><TD>size: </A></TD><TD><input name=\"size\" readonly=\"readonly\" type=\"text\" size=\"63\" maxlength=\"160\" value=\"##SIZE##\"></TD></TR>\n\
+			<TR><TD>EMM: </TD><TD><textarea name=\"ep\" readonly=\"readonly\" cols=\"80\" rows=\"7\">##EP##</textarea></TD></TR>\n\
+			<TR><TD>size: </TD><TD>##SIZE##</TD></TR>\n\
 			<TR><TH COLSPAN=\"2\">EMM FILE</TH></TR>\n\
-			<TR><TD>file path: </A></TD><TD><input name=\"size\" readonly=\"readonly\" type=\"text\" size=\"63\" maxlength=\"160\" value=\"##FNAME##\"></TD></TR>\n\
-			<TR><TD>file size: </A></TD><TD><input name=\"size\" readonly=\"readonly\" type=\"text\" size=\"63\" maxlength=\"160\" value=\"##FSIZE##\"></TD></TR>\n\
-			<TR><TD>num of <BR>read lines: </A></TD><TD><input name=\"size\" readonly=\"readonly\" type=\"text\" size=\"63\" maxlength=\"160\" value=\"##NUMRLINE##\"></TD></TR>\n\
-			<TR><TD>lines with <BR>errors: </A></TD><TD><input name=\"size\" readonly=\"readonly\" type=\"text\" size=\"63\" maxlength=\"256\" value=\"##ERRLINE##\"></TD></TR>\n\
-			<TR><TD>num of <BR>written EMMs: </A></TD><TD><input name=\"size\" readonly=\"readonly\" type=\"text\" size=\"63\" maxlength=\"160\" value=\"##NUMWEMM##\"></TD></TR>\n\
+			<TR><TD>file path: </TD><TD><input name=\"size\" readonly=\"readonly\" type=\"text\" size=\"63\" maxlength=\"256\" value=\"##FNAME##\"></TD></TR>\n\
+			<TR><TD>file size: </TD><TD>##FSIZE##</TD></TR>\n\
+			<TR><TD>num of <BR>read lines: </TD><TD>##NUMRLINE##</TD></TR>\n\
+			<TR><TD>lines with <BR>errors: </TD><TD>##ERRLINE##</TD></TR>\n\
+			<TR><TD>num of <BR>written EMMs: </TD><TD>##NUMWEMM##</TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
@@ -2366,6 +2371,7 @@ const char *templates[][3] = {
 	,{"READERSBIT", TPLREADERSBIT, ""}
 	,{"READERENTITLEBIT", TPLREADERENTITLEBIT, ""}
 	,{"READERREFRESHBIT", TPLREADERREFRESHBIT, ""}
+	,{"READERWRITEEMMBIT", TPLREADERWRITEEMMBIT, ""}
 	,{"READERSTATS", TPLREADERSTATS, ""}
 	,{"READERSTATSBIT", TPLREADERSTATSBIT, ""}
 	,{"SCANUSB", TPLSCANUSB, ""}

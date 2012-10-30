@@ -1046,15 +1046,19 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 						tpl_addVar(vars, TPLADD, "ENTITLEMENT","");
 					}
 				}
-
+				
 				if(rdr->enable == 0) {
 					tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICENA");
 					tpl_addVar(vars, TPLADD, "SWITCHTITLE", "enable this reader");
 					tpl_addVar(vars, TPLADD, "SWITCH", "enable");
+					tpl_addVar(vars, TPLADD, "WRITEEMM", "");
 				} else {
 					tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICDIS");
 					tpl_addVar(vars, TPLADD, "SWITCHTITLE", "disable this reader");
 					tpl_addVar(vars, TPLADD, "SWITCH", "disable");
+					
+					tpl_addVar(vars, TPLADD, "EMMICO", "image?i=ICEMM");
+					tpl_addVar(vars, TPLADD, "WRITEEMM", tpl_getTpl(vars, "READERWRITEEMMBIT"));
 				}
 
 				// Add to WebIf Template
@@ -4053,11 +4057,11 @@ static char *send_oscam_failban(struct templatevars *vars, struct uriparams *par
 		return tpl_getTpl(vars, "APIFAILBAN");
 }
 
-static bool send_EMM(const struct s_reader *rdr, const unsigned char *emmhex, uint32_t len) {
+static bool send_EMM(struct s_reader *rdr, uint16_t caid, struct s_cardsystem *cs, const unsigned char *emmhex, uint32_t len) {
 
 	if(NULL != rdr && NULL != emmhex && 0 != len ) {
-		EMM_PACKET *emm_pack;
-		
+		EMM_PACKET *emm_pack = NULL;
+
 		if(cs_malloc(&emm_pack, sizeof(EMM_PACKET))) {
 			struct s_client *webif_client = cur_client();
 			webif_client->grp = 0xFF; /* to access to all readers */
@@ -4066,6 +4070,15 @@ static bool send_EMM(const struct s_reader *rdr, const unsigned char *emmhex, ui
 			emm_pack->client = webif_client;
 			emm_pack->l = len; 
 			memcpy(emm_pack->emm, emmhex, len);
+
+			emm_pack->caid[0] = (caid >> 8) & 0xFF;
+			emm_pack->caid[1] = caid & 0xFF;
+
+			if (cs && cs->get_emm_type) {
+				if(!cs->get_emm_type(emm_pack, rdr)) {
+					rdr_debug_mask(rdr, D_EMM, "get_emm_type() returns error");
+				}
+			}
 
 			cs_debug_mask(D_EMM, "emm is being sent to reader %s.", rdr->label);
 			add_job(rdr->client, ACTION_READER_EMM, emm_pack, sizeof(EMM_PACKET));
@@ -4076,7 +4089,7 @@ static bool send_EMM(const struct s_reader *rdr, const unsigned char *emmhex, ui
 	return false;
 }
 
-static bool process_single_emm(struct templatevars *vars, const struct s_reader *rdr, const char* ep) {
+static bool process_single_emm(struct templatevars *vars, struct s_reader *rdr, uint16_t caid, struct s_cardsystem *cs, const char* ep) {
 
 	if(NULL !=vars && NULL != rdr && NULL != ep)
 	{
@@ -4099,7 +4112,7 @@ static bool process_single_emm(struct templatevars *vars, const struct s_reader 
 				tpl_addVar(vars, TPLADD, "EP", strtoupper(emmdata));
 				tpl_addVar(vars, TPLADD, "SIZE", buff);
 				
-				if(send_EMM(rdr, emmhex, len)) {
+				if(send_EMM(rdr, caid, cs, emmhex, len)) {
 					tpl_addMsg(vars, "Single EMM has been sent.");
 					return true;
 				}
@@ -4110,7 +4123,7 @@ static bool process_single_emm(struct templatevars *vars, const struct s_reader 
 	return false;
 }
 
-static bool process_emm_file(struct templatevars *vars, const struct s_reader *rdr, const char* sFilePath) {
+static bool process_emm_file(struct templatevars *vars, struct s_reader *rdr, uint16_t caid, struct s_cardsystem *cs, const char* sFilePath) {
 
 	bool     bret     = false;
 	uint32_t fsize    = 0;
@@ -4141,7 +4154,7 @@ static bool process_emm_file(struct templatevars *vars, const struct s_reader *r
 						continue;
 					}
 					len /= 2;
-					if(send_EMM(rdr, emmhex, len)) {
+					if(send_EMM(rdr, caid, cs, emmhex, len)) {
 						++wemms;
 						/* Give time to process EMM, otherwise, too many jobs can be added*/
 						cs_sleepms(1000); //TODO: use oscam signal to catch reader answer
@@ -4183,8 +4196,42 @@ static char *send_oscam_EMM_running(struct templatevars *vars, struct uriparams 
 
 	rdr = get_reader_by_label(getParam(params, "label"));
 	if (rdr) {
-		process_single_emm(vars, rdr, getParam(params, "ep"));
-		process_emm_file(vars, rdr, getParam(params, "emmfile"));
+		int32_t tcaid = dyn_word_atob(getParam(params, "emmcaid"));
+		uint16_t caid = (-1 != tcaid) ? (uint16_t)tcaid : 0;
+		char buff[7] = "";
+		struct s_cardsystem *cs = NULL;
+		int32_t proxy = is_cascading_reader(rdr);
+		
+		if ((proxy || !rdr->csystem.active) && caid) { // network reader (R_CAMD35 R_NEWCAMD R_CS378X R_CCCAM)
+			if (proxy && !rdr->ph.c_send_emm) {
+				tpl_addMsg(vars, "The reader does not support EMMs!");
+				return tpl_getTpl(vars, "EMM_RUNNING");
+			}
+
+			cs = get_cardsystem_by_caid(caid);
+			if (!cs) {
+				rdr_debug_mask(rdr, D_EMM, "unable to find cardsystem for caid %04X", caid);
+				caid = 0;
+			}
+		} else if(!proxy && rdr->csystem.active) { // local active reader
+			cs=&rdr->csystem;
+			caid = rdr->caid;
+		}
+		
+		if(cs) {
+			tpl_addVar(vars, TPLADD, "SYSTEM", cs->desc);
+		} else {
+			tpl_addVar(vars, TPLADD, "SYSTEM", "unknown");
+		}
+		if(caid) {
+			snprintf(buff, sizeof(buff), "0x%04X", caid);
+			tpl_addVar(vars, TPLADD, "CAID", buff);
+		} else {
+			tpl_addVar(vars, TPLADD, "CAID", "unknown");
+		}
+
+		process_single_emm(vars, rdr, caid, cs, getParam(params, "ep"));
+		process_emm_file(vars, rdr, caid, cs, getParam(params, "emmfile"));
 	}
 	else
 	{
@@ -4201,6 +4248,18 @@ static char *send_oscam_EMM(struct templatevars *vars, struct uriparams *params)
 
 	setActiveMenu(vars, MNU_READERS);
 	tpl_addVar(vars, TPLADD, "READER", strtolower(getParam(params, "label")));
+	
+	struct s_reader *rdr = NULL;
+	rdr = get_reader_by_label(getParam(params, "label"));
+	if (rdr && rdr->caid) {
+		char buff[5] = "";
+		snprintf(buff, sizeof(buff), "%04X", rdr->caid);
+		tpl_addVar(vars, TPLADD, "CAID", buff);
+		if(!is_cascading_reader(rdr)) {
+			tpl_addVar(vars, TPLADD, "READONLY", "readonly=\"readonly\"");
+		}
+	}
+		
 	return tpl_getTpl(vars, "ASKEMM");
 }
 
