@@ -409,9 +409,14 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 {
 	unsigned char c;
 	uint32_t count = 0;
+	
+	if (timeout == 0){ // General fix for readers not communicating timeout and delay
+		if (reader->read_timeout != 0) timeout = reader->read_timeout; else timeout = 9990000; // hope 99990000 is long enough!
+		rdr_debug_mask(reader, D_DEVICE,"Warning: read timeout 0 changed to %d us", timeout);
+	}
+	
 	rdr_debug_mask(reader, D_DEVICE,"Read timeout %d us, read delay %d us, to read %d char(s), chunksize 1 char(s)", timeout, delay, size);
 #if defined(__SH4__)
-	if (timeout == 0) timeout = reader->read_timeout;	// temp fix for stapi module not communicating timeout and delay
 	bool readed;
 	struct timeval tv, tv_spent;
 #endif
@@ -477,9 +482,10 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 
 bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t timeout, uint32_t size, const unsigned char * data)
 {
-	#if defined(__SH4__)							// temp fix for stapi module not communicating timeout and delay
-	if (timeout == 0) timeout = reader->char_delay;	// temp fix for stapi module not communicating timeout and delay
-	#endif                         					// temp fix for stapi module not communicating timeout and delay
+	if (timeout == 0){ // General fix for readers not communicating timeout and delay
+		if (reader->char_delay != 0) timeout = reader->char_delay; else timeout = 1000000;
+		rdr_debug_mask(reader, D_DEVICE,"Warning: write timeout 0 changed to %d us", timeout);
+	}
 	uint32_t count, to_send, i_w;
 	unsigned char data_w[512];
 	
