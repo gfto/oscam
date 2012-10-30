@@ -86,54 +86,6 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 	}
 
 	switch(reader->typ) {
-		case R_SC8in1:
-			cs_writelock(&reader->sc8in1_config->sc8in1_lock);
-			if (reader->handle != 0) {//this reader is already initialized
-				rdr_debug_mask(reader, D_DEVICE, "%s Sc8in1 already open", __func__);
-				cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
-				return OK;
-			}
-
-			//get physical device name
-			int32_t pos = strlen(reader->device)-2; //this is where : should be located; is also valid length of physical device name
-			if (pos <= 0 || reader->device[pos] != 0x3a) //0x3a = ":"
-				rdr_log(reader, "ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", reader->device[pos], reader->device);
-
-			// Check if serial port is open already
-			reader->handle = Sc8in1_GetActiveHandle(reader, 0);
-			if ( ! reader->handle ) {
-				rdr_debug_mask(reader, D_DEVICE, "%s opening SC8in1", __func__);
-				//open physical device
-				char deviceName[128];
-				strncpy(deviceName, reader->device, 128);
-				deviceName[pos] = 0;
-				reader->handle = open (deviceName,  O_RDWR | O_NOCTTY| O_NONBLOCK);
-				if (reader->handle < 0) {
-					rdr_log(reader, "ERROR: Opening device %s with real device %s (errno=%d %s)", reader->device, deviceName, errno, strerror(errno));
-					reader->handle = 0;
-					cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
-					return ERROR;
-				}
-			}
-			else {
-				// serial port already initialized
-				rdr_debug_mask(reader, D_DEVICE, "%s another Sc8in1 already open", __func__);
-				cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
-				return OK;
-			}
-			if (Phoenix_Init(reader)) {
-				rdr_log(reader, "ERROR: Phoenix_Init returns error");
-				Phoenix_Close (reader);
-				cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
-				return ERROR;
-			}
-			int32_t ret = Sc8in1_Init(reader);
-			cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
-			if (ret) {
-				rdr_log(reader, "ERROR: Sc8in1_Init returns error");
-				return ERROR;
-			}
-			break;
 		case R_MOUSE:
 			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 			if (reader->handle < 0) {
@@ -529,14 +481,6 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 	switch(reader->typ) {
 		case R_DB2COM1:
 		case R_DB2COM2:
-		case R_SC8in1:
-			cs_writelock(&reader->sc8in1_config->sc8in1_lock);
-			int ret = Sc8in1_Close(reader);
-			cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
-			if (ret) {
-				return 1;
-			}
-			break;
 		case R_MOUSE:
 			call (Phoenix_Close(reader));
 			break;

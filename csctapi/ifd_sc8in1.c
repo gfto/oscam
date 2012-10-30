@@ -989,6 +989,62 @@ static void sc8in1_display(struct s_reader *reader, char *message) {
 	MCR_DisplayText(reader, text, sizeof(text), 400, 0);
 }
 
+static int32_t sc8in1_init(struct s_reader *reader) {
+	cs_writelock(&reader->sc8in1_config->sc8in1_lock);
+	if (reader->handle != 0) {//this reader is already initialized
+		rdr_debug_mask(reader, D_DEVICE, "%s Sc8in1 already open", __func__);
+		cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+		return OK;
+	}
+	//get physical device name
+	int32_t pos = strlen(reader->device)-2; //this is where : should be located; is also valid length of physical device name
+	if (pos <= 0 || reader->device[pos] != 0x3a) //0x3a = ":"
+		rdr_log(reader, "ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", reader->device[pos], reader->device);
+	// Check if serial port is open already
+	reader->handle = Sc8in1_GetActiveHandle(reader, 0);
+	if (!reader->handle) {
+		rdr_debug_mask(reader, D_DEVICE, "%s opening SC8in1", __func__);
+		//open physical device
+		char deviceName[128];
+		strncpy(deviceName, reader->device, 128);
+		deviceName[pos] = 0;
+		reader->handle = open (deviceName,  O_RDWR | O_NOCTTY| O_NONBLOCK);
+		if (reader->handle < 0) {
+			rdr_log(reader, "ERROR: Opening device %s with real device %s (errno=%d %s)", reader->device, deviceName, errno, strerror(errno));
+			reader->handle = 0;
+			cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+			return ERROR;
+		}
+	} else {
+		// serial port already initialized
+		rdr_debug_mask(reader, D_DEVICE, "%s another Sc8in1 already open", __func__);
+		cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+		return OK;
+	}
+	if (Phoenix_Init(reader)) {
+		rdr_log(reader, "ERROR: Phoenix_Init returns error");
+		Phoenix_Close (reader);
+		cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+		return ERROR;
+	}
+	int32_t ret = Sc8in1_Init(reader);
+	cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+	if (ret) {
+		rdr_log(reader, "ERROR: Sc8in1_Init returns error");
+		return ERROR;
+	}
+	return OK;
+}
+
+static int32_t sc8in1_close(struct s_reader *reader) {
+	cs_writelock(&reader->sc8in1_config->sc8in1_lock);
+	int32_t retval = Sc8in1_Close(reader);
+	cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+	if (retval == ERROR)
+		return ERROR;
+	return OK;
+}
+
 void cardreader_sc8in1(struct s_cardreader *crdr)
 {
 	crdr->desc         = "sc8in1";
@@ -1000,6 +1056,8 @@ void cardreader_sc8in1(struct s_cardreader *crdr)
 	crdr->lock         = sc8in1_lock;
 	crdr->unlock       = sc8in1_unlock;
 	crdr->display_msg  = sc8in1_display;
+	crdr->reader_init  = sc8in1_init;
+	crdr->close        = sc8in1_close;
 }
 
 #endif
