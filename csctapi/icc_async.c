@@ -449,7 +449,7 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, unsigned cha
 #elif defined(WITH_AZBOX)
 			ret = Azbox_Transmit(reader, sent, size);
 #else
-			ret = Phoenix_Transmit (reader, sent, size, 0, 0); //the internal reader will provide the delay
+			ret = Phoenix_Transmit (reader, sent, size, delay, timeout);
 #endif
 			break;
 		default:
