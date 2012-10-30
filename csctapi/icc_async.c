@@ -184,12 +184,6 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 			IO_Serial_Ioctl_Lock(reader, 0);
 			}
 			break;
-		case R_SC8in1:
-			cs_writelock(&reader->sc8in1_config->sc8in1_lock);
-			int32_t ret = Sc8in1_GetStatus(reader, &in);
-			cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
-			if (ret == ERROR) return ERROR;
-			break;
 		case R_MOUSE:
 			call (Phoenix_GetStatus(reader, &in));
 			break;
@@ -236,15 +230,8 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 		switch(reader->typ) {
 			case R_DB2COM1:
 			case R_DB2COM2:
-			case R_SC8in1:
 			case R_MOUSE:
-				LOCK_SC8IN1
-				int32_t retval = Phoenix_Reset(reader, atr);
-				UNLOCK_SC8IN1
-				if (retval) {
-					rdr_debug_mask(reader, D_TRACE, "ERROR: Phoenix_Reset returns error");
-					return ERROR;
-				}
+				call(Phoenix_Reset(reader, atr));
 				break;
 			case R_INTERNAL:
 #if defined(WITH_COOLAPI)

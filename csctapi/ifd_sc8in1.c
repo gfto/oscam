@@ -1045,6 +1045,25 @@ static int32_t sc8in1_close(struct s_reader *reader) {
 	return OK;
 }
 
+static int32_t sc8in1_get_status(struct s_reader *reader, int32_t *in) {
+	cs_writelock(&reader->sc8in1_config->sc8in1_lock);
+	int32_t ret = Sc8in1_GetStatus(reader, in);
+	cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+	return ret;
+}
+
+static int32_t sc8in1_activate(struct s_reader *reader, struct s_ATR *atr)
+{
+	LOCK_SC8IN1
+	int32_t retval = Phoenix_Reset(reader, atr);
+	UNLOCK_SC8IN1
+	if (retval == ERROR) {
+		rdr_debug_mask(reader, D_TRACE, "ERROR: Phoenix_Reset returns error");
+		return ERROR;
+	}
+	return OK;
+}
+
 void cardreader_sc8in1(struct s_cardreader *crdr)
 {
 	crdr->desc         = "sc8in1";
@@ -1058,6 +1077,8 @@ void cardreader_sc8in1(struct s_cardreader *crdr)
 	crdr->display_msg  = sc8in1_display;
 	crdr->reader_init  = sc8in1_init;
 	crdr->close        = sc8in1_close;
+	crdr->get_status   = sc8in1_get_status;
+	crdr->activate     = sc8in1_activate;
 }
 
 #endif
