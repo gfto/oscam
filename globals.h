@@ -705,6 +705,8 @@ struct s_cardreader
 	int8_t			flush;
 	int8_t			read_written; 		// 1 = written bytes has to read from device
 	bool			skip_extra_atr_parsing;
+	bool			skip_t1_command_retries;
+	bool			skip_setting_ifsc;
 };
 
 struct s_cardsystem {

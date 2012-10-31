@@ -341,7 +341,7 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, ui
 		case ATR_PROTOCOL_TYPE_T1:
 			ret = Protocol_T1_Command (reader, command, command_len, rsp, lr);
 			type = 1;
-			if ((ret != OK) && (reader->typ != R_PCSC)) { // dont use for PCSC readers!!
+			if (ret != OK && !reader->crdr.skip_t1_command_retries) {
 				//try to resync
 				rdr_log(reader, "Resync error: readtimeouts %d/%d (max/min) us, writetimeouts %d/%d (max/min) us", reader->maxreadtimeout, reader->minreadtimeout, reader->maxwritetimeout, reader->minwritetimeout);
 				unsigned char resync[] = { 0x21, 0xC0, 0x00, 0xE1 };
@@ -1058,7 +1058,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 	}
 
 	//Communicate to T1 card IFSD -> we use same as IFSC
-	if ((reader->protocol_type == ATR_PROTOCOL_TYPE_T1) && (reader->ifsc != DEFAULT_IFSC) && (reader->typ != R_PCSC)) { // dont use for PCSC readers!!
+	if (reader->protocol_type == ATR_PROTOCOL_TYPE_T1 && reader->ifsc != DEFAULT_IFSC && !reader->crdr.skip_setting_ifsc) {
 		unsigned char rsp[CTA_RES_LEN];
 		uint16_t lr=0;
 		int32_t ret;
