@@ -31,7 +31,6 @@
 #include "io_serial.h"
 #include "ifd_cool.h"
 #include "ifd_phoenix.h"
-#include "ifd_sc8in1.h"
 #include "ifd_sci.h"
 #include "ifd_azbox.h"
 
