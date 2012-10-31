@@ -173,9 +173,8 @@ int32_t ICC_Async_Init_Locks (void) {
 	struct s_reader *rdr;
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr))) {
-		if (rdr->typ == R_SC8in1) {
-			Sc8in1_InitLocks(rdr);
-		}
+		if (rdr->crdr.lock_init)
+			rdr->crdr.lock_init(rdr);
 	}
 	return OK;
 }
@@ -299,9 +298,15 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 
 	reader->protocol_type = ATR_PROTOCOL_TYPE_T0;
 
-	LOCK_SC8IN1;
+	// Parse_ATR and InitCard need to be included in lock because they change parity of serial port
+	if (reader->crdr.lock)
+		reader->crdr.lock(reader);
+
 	int32_t ret = Parse_ATR(reader, atr, deprecated);
-	UNLOCK_SC8IN1; //Parse_ATR and InitCard need to be included in lock because they change parity of serial port
+
+	if (reader->crdr.unlock)
+		reader->crdr.unlock(reader);
+
 	if (ret)
 		rdr_log(reader, "ERROR: Parse_ATR returned error");
 	if (ret)
@@ -321,7 +326,8 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, ui
 	}
 	*lr = 0; //will be returned in case of error
 
-	LOCK_SC8IN1;
+	if (reader->crdr.lock)
+		reader->crdr.lock(reader);
 
 	int32_t try = 1;
 	uint16_t type = 0;
@@ -350,6 +356,8 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, ui
 					rdr_log(reader, "T1 Resync command error, trying to reactivate!");
 					ATR atr;
 					ICC_Async_Activate(reader, &atr, reader->deprecated);
+					if (reader->crdr.unlock)
+						reader->crdr.unlock(reader);
 					return ERROR;
 				}
 			}
@@ -366,7 +374,8 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, ui
 	try++;
 	} while ((try < 3) && (ret != OK)); //always do one retry when failing
 
-	UNLOCK_SC8IN1;
+	if (reader->crdr.unlock)
+		reader->crdr.unlock(reader);
 
 	if (ret) {
 		rdr_debug_mask(reader, D_TRACE, "ERROR: Protocol_T%d_Command returns error", type);

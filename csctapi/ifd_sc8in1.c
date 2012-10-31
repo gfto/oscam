@@ -888,11 +888,6 @@ int32_t Sc8in1_InitLocks(struct s_reader * reader) {
 	// same device (means same reader, different slot) then use
 	// its sc8in1_config, otherwise create a new sc8in1_config and return.
 
-	// Only handle Sc8in1 reader
-	if (reader->typ != R_SC8in1) {
-		return OK;
-	}
-
 	Sc8in1_SetSlotForReader(reader);
 
 	// Get device name
@@ -1054,9 +1049,9 @@ static int32_t sc8in1_get_status(struct s_reader *reader, int32_t *in) {
 
 static int32_t sc8in1_activate(struct s_reader *reader, struct s_ATR *atr)
 {
-	LOCK_SC8IN1
+	reader->crdr.lock(reader);
 	int32_t retval = Phoenix_Reset(reader, atr);
-	UNLOCK_SC8IN1
+	reader->crdr.unlock(reader);
 	if (retval == ERROR) {
 		rdr_debug_mask(reader, D_TRACE, "ERROR: Phoenix_Reset returns error");
 		return ERROR;
