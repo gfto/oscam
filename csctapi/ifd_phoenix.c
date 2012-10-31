@@ -284,7 +284,6 @@ int32_t Phoenix_FastReset (struct s_reader * reader, int32_t delay)
 }
 */
 static int32_t mouse_init(struct s_reader *reader) {
-	rdr_log(reader, "mouse_test init");
 	reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 	if (reader->handle < 0) {
 		rdr_log(reader, "ERROR: Opening device %s (errno=%d %s)",
@@ -299,28 +298,20 @@ static int32_t mouse_init(struct s_reader *reader) {
 	return OK;
 }
 
-static int32_t mouse_receive(struct s_reader *reader, unsigned char *data, uint32_t size, uint32_t delay, uint32_t timeout) {
-	return Phoenix_Receive(reader, data, size, delay, timeout);
-}
-
-static int32_t mouse_transmit(struct s_reader *reader, unsigned char *sent, uint32_t size, uint32_t delay, uint32_t timeout) {
-	return Phoenix_Transmit(reader, sent, size, delay, timeout);
-}
-
 void cardreader_mouse(struct s_cardreader *crdr)
 {
-	crdr->desc		= "mouse_test";
-	crdr->reader_init	= mouse_init;
-	crdr->get_status	= Phoenix_GetStatus;
-	crdr->activate	= Phoenix_Reset;
-	crdr->transmit	= mouse_transmit;
-	crdr->receive		= mouse_receive;
-	crdr->close		= Phoenix_Close;
-	crdr->set_parity	= IO_Serial_SetParity;
-	crdr->set_baudrate	= Phoenix_SetBaudrate;
-	crdr->typ		= R_MOUSE;
-	crdr->flush		= 1;
-	crdr->need_inverse	= 1;
-	crdr->read_written	= 1;
+	crdr->desc          = "mouse_test";
+	crdr->typ           = R_MOUSE;
+	crdr->flush         = 1;
+	crdr->need_inverse  = 1;
+	crdr->read_written  = 1;
+	crdr->reader_init   = mouse_init;
+	crdr->get_status    = Phoenix_GetStatus;
+	crdr->activate      = Phoenix_Reset;
+	crdr->transmit      = Phoenix_Transmit;
+	crdr->receive       = Phoenix_Receive;
+	crdr->close         = Phoenix_Close;
+	crdr->set_parity    = IO_Serial_SetParity;
+	crdr->set_baudrate  = Phoenix_SetBaudrate;
 }
 #endif
