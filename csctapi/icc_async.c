@@ -836,9 +836,6 @@ static int32_t SetRightParity (struct s_reader * reader)
 #if defined(WITH_COOLAPI) || defined(WITH_AZBOX)
 	if (reader->typ != R_INTERNAL)
 #endif
-#if defined(WITH_LIBUSB) // FIXME: Is this necessary???
-  if (reader->typ != R_SMART)
-#endif
             IO_Serial_Flush(reader);
 	return OK;
 }
