@@ -65,6 +65,28 @@ static uint32_t ETU_to_us(struct s_reader * reader, uint32_t ETU);
 static unsigned char PPS_GetPCK (unsigned char * block, uint32_t length);
 static int32_t SetRightParity (struct s_reader * reader);
 
+static void detect_db2com_reader(struct s_reader *reader)
+{
+	struct stat sb;
+	if (stat(DEV_MULTICAM, &sb) == -1)
+		return;
+	if (stat(reader->device, &sb) == 0) {
+		if (S_ISCHR(sb.st_mode)) {
+			int32_t dev_major = major(sb.st_rdev);
+			int32_t dev_minor = minor(sb.st_rdev);
+			if (dev_major == 4 || dev_major == 5) {
+				int32_t rc = reader->typ;
+				switch (dev_minor & 0x3F) {
+					case 0: rc = R_DB2COM1; break;
+					case 1: rc = R_DB2COM2; break;
+				}
+				reader->typ = rc;
+			}
+			rdr_debug_mask(reader, D_READER, "device is major: %d, minor: %d, typ=%d", dev_major, dev_minor, reader->typ);
+		}
+	}
+}
+
 /*
  * Exported functions definition
  */
@@ -84,6 +106,9 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 			rdr_debug_mask(reader, D_IFD, "ERROR: Can't open %s device", reader->device);
 		return ret;
 	}
+
+	if (reader->typ == R_MOUSE)
+		detect_db2com_reader(reader);
 
 	switch(reader->typ) {
 		case R_MOUSE:

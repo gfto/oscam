@@ -15,33 +15,6 @@
 
 extern struct s_cardsystem cardsystems[CS_MAX_MOD];
 
-static int32_t reader_device_type(struct s_reader * reader)
-{
-  int32_t rc=reader->typ;
-  struct stat sb;
-  if (reader->typ == R_MOUSE)
-  {
-      if (!stat(reader->device, &sb))
-      {
-        if (S_ISCHR(sb.st_mode))
-        {
-          int32_t dev_major, dev_minor;
-          dev_major=major(sb.st_rdev);
-          dev_minor=minor(sb.st_rdev);
-          if (((dev_major==4) || (dev_major==5)))
-            switch(dev_minor & 0x3F)
-            {
-              case 0: rc=R_DB2COM1; break;
-              case 1: rc=R_DB2COM2; break;
-            }
-          rdr_debug_mask(reader, D_READER, "device is major: %d, minor: %d, typ=%d", dev_major, dev_minor, rc);
-        }
-      }
-  }
-	reader->typ = rc;
-  return(rc);
-}
-
 static void reader_nullcard(struct s_reader * reader)
 {
   memset(&reader->csystem , 0   , sizeof(reader->csystem));
@@ -288,9 +261,6 @@ void cardreader_do_reset(struct s_reader *reader)
 static int32_t cardreader_device_init(struct s_reader *reader)
 {
 	int32_t rc = -1; //FIXME
-	struct stat st;
-	if (!stat(DEV_MULTICAM, &st))
-		reader->typ = reader_device_type(reader);
 	if (ICC_Async_Device_Init(reader))
 		rdr_log(reader, "Cannot open device: %s", reader->device);
 	else
