@@ -794,6 +794,14 @@ void check_lb_auto_betatunnel_mode(ECM_REQUEST *er) {
 	////no other way to autodetect is 1801,1834 or 1835
 }
 
+uint16_t get_rdr_caid(struct s_reader *rdr) {
+	  if (rdr->typ == R_CCCAM) {
+		  return 0; //in case au is on cccam change reader caid
+	  } else {
+		  return rdr->caid;
+	  }
+}
+
 /**
  * Gets best reader for caid/prid/srvid/ecmlen.
  * Best reader is evaluated by lowest avg time but only if ecm_count > cfg.lb_min_ecmcount (5)
@@ -851,12 +859,11 @@ void stat_get_best_reader(ECM_REQUEST *er)
 				if (weight <= 0) weight = 1;
 
 
-
 				//Check if betatunnel is allowed on this reader:
 				int8_t valid = chk_ctab(caid_to, &rdr->ctab) //Check caid
 					&& chk_rfilter2(caid_to, 0, rdr) //Ident
 					&& chk_srvid_by_caid_prov_rdr(rdr, caid_to, 0) //Services
-					&& (!rdr->caid || chk_caid_rdr(rdr,caid_to)); //rdr-caid
+					&& (!get_rdr_caid(rdr) || chk_caid_rdr(rdr,caid_to)); //rdr-caid
 				if (valid) {
 					stat_beta = get_stat(rdr, &qbeta);
 					overall_valid = 1;
@@ -868,7 +875,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 				int8_t nvalid = chk_ctab(er->caid, &rdr->ctab)//Check caid
 					&& chk_rfilter2(er->caid, 0, rdr) //Ident
 					&& chk_srvid_by_caid_prov_rdr(rdr, er->caid, 0) //Services
-					&& (!rdr->caid || chk_caid_rdr(rdr,er->caid)); //rdr-caid
+					&& (!get_rdr_caid(rdr) || chk_caid_rdr(rdr,er->caid)); //rdr-caid
 				if (nvalid) {
 					stat_nagra = get_stat(rdr, &q);
 					overall_nvalid = 1;
@@ -897,7 +904,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 					needs_stats_beta = 0;
 					isb = 1;
 				}
-				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel valid %d, stat_nagra %d, stat_beta %d, (%04X,%04X)", valid, isn, isb ,rdr->caid,caid_to);
+				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel valid %d, stat_nagra %d, stat_beta %d, (%04X,%04X)", valid, isn, isb ,get_rdr_caid(rdr),caid_to);
 			}
 
 			if (!overall_valid)//we have no valid betatunnel reader also we don't needs stats (converted)
@@ -970,7 +977,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 				int8_t valid = chk_ctab(caid_to, &rdr->ctab)//, rdr->typ) //Check caid
 					&& chk_rfilter2(caid_to, 0, rdr) //Ident
 					&& chk_srvid_by_caid_prov_rdr(rdr, caid_to, 0) //Services
-					&& (!rdr->caid || chk_caid_rdr(rdr,caid_to)); //rdr-caid
+					&& (!get_rdr_caid(rdr) || chk_caid_rdr(rdr,caid_to)); //rdr-caid
 				if (valid) {
 					stat_nagra = get_stat(rdr, &qnagra);
 					overall_valid = 1;
@@ -982,7 +989,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 				int8_t bvalid = chk_ctab(er->caid, &rdr->ctab)//, rdr->typ) //Check caid
 					&& chk_rfilter2(er->caid, 0, rdr) //Ident
 					&& chk_srvid_by_caid_prov_rdr(rdr, er->caid, 0) //Services
-					&& (!rdr->caid || chk_caid_rdr(rdr,er->caid)); //rdr-caid
+					&& (!get_rdr_caid(rdr) || chk_caid_rdr(rdr,er->caid)); //rdr-caid
 				if (bvalid) {
 					stat_beta = get_stat(rdr, &q);
 					overall_bvalid = 1;
@@ -1011,7 +1018,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 					needs_stats_nagra = 0;
 					isn = 1;
 				}
-				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel valid %d, stat_beta %d, stat_nagra %d, (%04X,%04X)", valid, isb, isn ,rdr->caid,caid_to);
+				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel valid %d, stat_beta %d, stat_nagra %d, (%04X,%04X)", valid, isb, isn ,get_rdr_caid(rdr),caid_to);
 			}
 
 			if (!overall_valid)//we have no valid reverse betatunnel reader also we don't needs stats (converted)
@@ -1056,13 +1063,13 @@ void stat_get_best_reader(ECM_REQUEST *er)
 		//make sure dosn't send a beta ecm to nagra reader (or reverse)
 		struct s_ecm_answer *prv = NULL;
 		for(ea = er->matching_rdr; ea; ea = ea->next) {
-			if (is_network_reader(ea->reader)) {
-				prv = ea;
-				continue; // proxy can convert or reject
-			}
 			rdr = ea->reader;
+			if (rdr->typ == R_CCCAM) { //is_network_reader(ea->reader)
+				prv = ea;
+				continue; // cccam proxy can convert or reject
+			}
 			cs_debug_mask(D_TRACE, "check again caid %04X on reader %s", er->caid, rdr->label);
-			if ( !ea->reader->caid || chk_caid_rdr(ea->reader,er->caid)) { // chk_ctab(er->caid, &rdr->ctab)
+			if ( !get_rdr_caid(ea->reader) || chk_caid_rdr(ea->reader,er->caid)) {
 				prv = ea;
 			} else {
 				er->reader_avail--;
