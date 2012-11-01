@@ -840,10 +840,6 @@ static int32_t SetRightParity (struct s_reader * reader)
 	return OK;
 }
 
-#if defined(WITH_LIBUSB) // FIXME: Move to card reader API
-int32_t SR_WriteSettings (struct s_reader *reader, uint16_t F, unsigned char D, unsigned char N, unsigned char T, uint16_t convention);
-#endif
-
 static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, double d, unsigned char N, uint16_t deprecated)
 {
 	double I;
@@ -1043,10 +1039,6 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 		}
 #endif //WITH_COOLAPI
 	}
-#if defined(WITH_LIBUSB) // FIXME: Move to card reader API
-	if (reader->typ == R_SMART)
-		SR_WriteSettings(reader, (uint16_t) atr_f_table[FI], (unsigned char)d, (unsigned char)EGT, (unsigned char)reader->protocol_type, reader->convention);
-#endif
 	if (reader->typ == R_INTERNAL){
 			rdr_log(reader, "ATR Fsmax is: %i Mhz, clocking card to %.2f (nearest possible to wanted user cardspeed of %.2f Mhz)",
 				atr_fs_table[FI] / 1000000,	(float) reader->cardmhz / 100, (float) reader->cardmhz / 100);

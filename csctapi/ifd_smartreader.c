@@ -1435,6 +1435,20 @@ int32_t SR_Activate(struct s_reader *reader, struct s_ATR *atr)
     return OK;
 }
 
+int32_t sr_write_settings(struct s_reader *reader,
+                          uint32_t UNUSED(ETU),
+                          uint32_t EGT,
+                          unsigned char UNUSED(P),
+                          unsigned char UNUSED(I),
+                          uint16_t Fi,
+                          unsigned char Di,
+                          unsigned char UNUSED(Ni))
+{
+    SR_WriteSettings(reader, Fi, Di, (unsigned char)EGT, (unsigned char)reader->protocol_type, reader->convention);
+    return OK;
+}
+
+
 void cardreader_smartreader(struct s_cardreader *crdr)
 {
     crdr->desc           = "smartreader";
@@ -1446,6 +1460,7 @@ void cardreader_smartreader(struct s_cardreader *crdr)
     crdr->transmit       = SR_Transmit;
     crdr->receive        = SR_Receive;
     crdr->close          = SR_Close;
+    crdr->write_settings = sr_write_settings;
 }
 
 #endif // WITH_LIBUSB
