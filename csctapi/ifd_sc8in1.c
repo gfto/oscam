@@ -1052,6 +1052,7 @@ void cardreader_sc8in1(struct s_cardreader *crdr)
 	crdr->flush        = 1;
 	crdr->read_written = 1;
 	crdr->need_inverse = 1;
+	crdr->skip_t1_command_retries = 1;
 	crdr->lock_init    = Sc8in1_InitLocks;
 	crdr->lock         = sc8in1_lock;
 	crdr->unlock       = sc8in1_unlock;
