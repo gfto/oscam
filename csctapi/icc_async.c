@@ -912,8 +912,6 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 			GT += 8; // databits
 			GT += 1; // parity bit
 			
-			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
-				WWT >>= 1; //is this correct?
 			if (N != 255) //add extra Guard Time by ATR
 				EGT += N;  // T0 protocol, if TC1 = 255 then dont add extra guardtime
 			reader->CWT = 0; // T0 protocol doesnt have char waiting time (used to detect errors within 1 single block of data)
