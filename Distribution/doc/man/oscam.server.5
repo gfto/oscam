@@ -390,7 +390,16 @@ interval for rate limit, default:0
 .PP
 \fBcooldown\fP = \fBdelay\fP,\fBduration\fP
 .RS 3n
-activate ratelimitecm and ratelimitseconds parameters after specified delay for specified duration in seconds, \fIratelimitecm and ratelimitseconds are required\fR, default:none
+ define cooldown:
+
+ \fBdelay\fP:    delay in seconds for which the reader is allowed to do 
+           more ECM requests than defined by ecmratelimit, 
+           default: none 
+
+ \fBduration\fP: duration in seconds the reader needs to cooldown, 
+           default:none
+
+\fIratelimitecm and ratelimitseconds are required\fR
 .RE
 .PP
 \fBblocknano\fP = \fBnano[,nano]...\fP|\fPall\fP

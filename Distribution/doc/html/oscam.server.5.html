@@ -511,7 +511,16 @@ interval for rate limit, default:0
 
 <B>cooldown</B> = <B>delay</B>,<B>duration</B>
 <DL COMPACT><DT><DD>
-activate ratelimitecm and ratelimitseconds parameters after specified delay for specified duration in seconds, <I>ratelimitecm and ratelimitseconds are required</I>, default:none
+<BR>&nbsp;define&nbsp;cooldown:
+<P>
+<BR>&nbsp;<B>delay</B>:&nbsp;&nbsp;&nbsp;&nbsp;delay&nbsp;in&nbsp;seconds&nbsp;for&nbsp;which&nbsp;the&nbsp;reader&nbsp;is&nbsp;allowed&nbsp;to&nbsp;do&nbsp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;more&nbsp;ECM&nbsp;requests&nbsp;than&nbsp;defined&nbsp;by&nbsp;ecmratelimit,&nbsp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default:&nbsp;none&nbsp;
+<P>
+<BR>&nbsp;<B>duration</B>:&nbsp;duration&nbsp;in&nbsp;seconds&nbsp;the&nbsp;reader&nbsp;needs&nbsp;to&nbsp;cooldown,&nbsp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default:none
+<P>
+<I>ratelimitecm and ratelimitseconds are required</I>
 </DL>
 
 <P>

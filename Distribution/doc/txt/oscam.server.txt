@@ -288,8 +288,16 @@ DESCRIPTIONS
 	  interval for rate limit, default:0
 
        cooldown = delay,duration
-	  activate  ratelimitecm  and  ratelimitseconds parameters after specified delay for specified duration in seconds, ratelimitecm
-	  and ratelimitseconds are required, default:none
+	   define cooldown:
+
+	   delay:    delay in seconds for which the reader is allowed to do
+		     more ECM requests than defined by ecmratelimit,
+		     default: none
+
+	   duration: duration in seconds the reader needs to cooldown,
+		     default:none
+
+	  ratelimitecm and ratelimitseconds are required
 
        blocknano = nano[,nano]...|all
 	  list of EMM-nanos to block (in hex w/o 0x) or all EMM-nanos, valid for physical readers only, default:none
@@ -331,7 +339,7 @@ DESCRIPTIONS
 		    savenano = all
 
        readnano = [path]filename
-	  write file (usually a copy of a file saved by savenano) to your smartcard, if no path is  specified,	the  specified	file  is
+	  write  file  (usually  a  copy  of a file saved by savenano) to your smartcard, if no path is specified, the specified file is
 	  searched for in the configuration directory, only valid for physical readers, default:none
 
 	   example: readnano = write.emm
@@ -393,44 +401,44 @@ OVERCLOCKING
 	  For Dreambox and other internal readers the highest possible clockrate will be auto detected. The mhz parameter lets you over‐
 	  ride the values chosen by OSCam, if it differs from 357 and 358, but usually you will not set any value for mhz.
 
-	  For certain Dreamboxes (especially PPC clones) the default mhz parameter leads to slow ECM times and/or "not found"  ECMs.  By
+	  For  certain	Dreamboxes (especially PPC clones) the default mhz parameter leads to slow ECM times and/or "not found" ECMs. By
 	  setting mhz to values like 200, 300, 400, ... 1600 you can find a value that works for your receiver and your card. The higher
 	  the mhz value, the slower the ECM time (strange enough).
 
-	  If you choose the value too low, your card is not recognized (no ATR or "card not supported"). If you  choose  the  value  too
+	  If  you  choose  the	value too low, your card is not recognized (no ATR or "card not supported"). If you choose the value too
 	  high, you get slow ECM times. Our experience is that either no mhz line, or a line mhz = 1000 works best.
 
        ·  Phoenix / Smartmouse reader
 
-	  Overclocking	does  not work with Windows and Mac OS X.  Set mhz equivalent to the frequency of the reader.  OSCam can not set
+	  Overclocking does not work with Windows and Mac OS X.  Set mhz equivalent to the frequency of the reader.  OSCam can	not  set
 	  the frequency of the reader.
 
        ·  Smargo Smartreader+
 
 	  Set the reader frequency with the native Smargo Smartreader+ tool (srp_tools).  Do not set mhz and cardmhz.
 
-       OSCam tries to set the baudrate automatically.  A standard serial port has limited baudrate settings, so  SC  overclocking  might
+       OSCam  tries  to  set the baudrate automatically.  A standard serial port has limited baudrate settings, so SC overclocking might
        not work.  When using a serial reader the best way for overclocking is connecting it to a FTDI based USB to serial port adapter.
 
-       If  overclocking  does  not  work, verify the effective baudrate in the logfile.  If it deviates too much from the requested bau‐
-       drate, the SC will not be recognized (no ATR) and the value for mhz should be adjusted again.  The higher the baudrate, the  more
+       If overclocking does not work, verify the effective baudrate in the logfile.  If it deviates too much  from  the  requested  bau‐
+       drate,  the SC will not be recognized (no ATR) and the value for mhz should be adjusted again.  The higher the baudrate, the more
        accurate the effective baudrate can be.
 
 CACHE EXCHANGE
        ·  pull mode (on request: cache exchange from remote to local OSCam)
 
-	  ECM  requests  will be forwarded to the remote cache exchange partner. If the CW could not be found in the cache of the remote
+	  ECM requests will be forwarded to the remote cache exchange partner. If the CW could not be found in the cache of  the  remote
 	  exchange partner, a not found will be answered. If the CW could not be found in the cache of the remote exchange partner but a
 	  pending ECM request is open, the request will be re-initiated after the wait time defined in cacheexwaittime.
 
        ·  push mode (continuous: cache exchange from remote to local OSCam)
 
-	  CWs  from  the  remote  cache exchange partner will be forwarded to the local cache. Forwarding only works while the camd camd
+	  CWs from the remote cache exchange partner will be forwarded to the local cache. Forwarding only works  while  the  camd  camd
 	  3.5x / 3.57x or CCcam protocol connection between the local and remote OSCam has been established.
 
        ·  reverse push mode (continuous: cache exchange from local to remote OSCam)
 
-	  CWs from the local cache will be forwarded to the remote cache exchange partner. Forwarding only works  while  the  camd  camd
+	  CWs  from  the  local  cache will be forwarded to the remote cache exchange partner. Forwarding only works while the camd camd
 	  3.5x / 3.57x or CCcam protocol connection between the remote and local OSCam has been established.
 
 EXAMPLES
@@ -547,7 +555,7 @@ EXAMPLES
 	   caid 	= 1100
 
 SEE ALSO
-       list_smargo(1),	 oscam(1),   oscam.ac(5),   oscam.cacheex(5),  oscam.cert(5),  oscam.conf(5),  oscam.dvbapi(5),  oscam.guess(5),
+       list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cacheex(5),  oscam.cert(5),   oscam.conf(5),   oscam.dvbapi(5),	 oscam.guess(5),
        oscam.ird(5), oscam.provid(5), oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5), oscam.whitelist(5)
 
 
