@@ -39,7 +39,7 @@ static void dimeno_PostProcess_Decrypt(struct s_reader * reader, unsigned char *
 static void do_post_dw_hash(struct s_reader *reader, unsigned char *cw, const unsigned char *ecm_header_data)
 {
   int32_t i, ecmi, ecm_header_count;
-  unsigned char buffer[0x80];
+  unsigned char buffer[0x85]; //original 0x80 but with 0x7D mask applied +8 bytes cw it was still to small
   unsigned char md5tmp[MD5_DIGEST_LENGTH];
   static const uint16_t Hash3[] = {0x0123,0x4567,0x89AB,0xCDEF,0xF861,0xCB52};
   static const unsigned char Hash4[] = {0x0B,0x04,0x07,0x08,0x05,0x09,0x0B,0x0A,0x07,0x02,0x0A,0x05,0x04,0x08,0x0D,0x0F};
