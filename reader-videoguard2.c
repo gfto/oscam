@@ -200,12 +200,10 @@ static void do_post_dw_hash(struct s_reader *reader, unsigned char *cw, const un
         {
           memset(buffer, 0, sizeof(buffer));
           memcpy(buffer, cw, 8);
-		  if ((ecm_header_data[ecmi] - 2) >0x00 && (ecm_header_data[ecmi] - 2) <=0x78){
-          memcpy(buffer + 8, &ecm_header_data[ecmi + 3], ecm_header_data[ecmi] - 2);
-          MD5(buffer, 8 + ecm_header_data[ecmi] - 2, md5tmp);
+          memcpy(buffer + 8, &ecm_header_data[ecmi + 3], ecm_header_data[ecmi]&0x7D);
+          MD5(buffer, 8 + (ecm_header_data[ecmi]&0x7D), md5tmp);
           memcpy(cw, md5tmp, 8);
           rdr_ddump_mask(reader, D_READER, cw, 8, "Postprocessed Case 3 DW:");
-		  }
           break;
         }
       case 2:
