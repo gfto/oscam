@@ -761,22 +761,22 @@ static void convert_to_nagra_int(ECM_REQUEST *er, uint16_t caid_to)
 	er->btun = 2; //marked as auto-betatunnel converted. Also for fixing recursive lock in get_cw
 }
 
-uint16_t get_betatunnel_caid_to(uint16_t caid)
-{
-	if (cfg.lb_auto_betatunnel_mode <=3) {
+uint16_t get_betatunnel_caid_to(uint16_t caid){
+	int32_t lbbm = cfg.lb_auto_betatunnel_mode;
+	if (lbbm <=3) {
 		if (caid == 0x1801) return 0x1722;
 		if (caid == 0x1833) return 0x1702;
 		if (caid == 0x1834) return 0x1722;
 		if (caid == 0x1835) return 0x1722;
 	}
-	if (cfg.lb_auto_betatunnel_mode >=1) {
+	if (lbbm >=1) {
 		if (caid == 0x1702) return 0x1833;
 	}
-	if (cfg.lb_auto_betatunnel_mode == 1 || cfg.lb_auto_betatunnel_mode == 4 ) {
+	if (lbbm == 1 || lbbm == 4 ) {
 		if (caid == 0x1722) return 0x1801;
-	} else if (cfg.lb_auto_betatunnel_mode == 2 || cfg.lb_auto_betatunnel_mode == 5 ) {
+	} else if (lbbm == 2 || lbbm == 5 ) {
 		if (caid == 0x1722) return 0x1834;
-	} else if (cfg.lb_auto_betatunnel_mode == 3 || cfg.lb_auto_betatunnel_mode == 6 ) {
+	} else if (lbbm == 3 || lbbm == 6 ) {
 		if (caid == 0x1722) return 0x1835;
 	}
 	return 0;
@@ -795,11 +795,16 @@ void check_lb_auto_betatunnel_mode(ECM_REQUEST *er) {
 }
 
 uint16_t get_rdr_caid(struct s_reader *rdr) {
-	  if (rdr->typ == R_CCCAM) {
-		  return 0; //in case au is on cccam change reader caid
+	  if (is_network_reader(rdr)) {
+		  return 0; //reader caid is not real caid
 	  } else {
 		  return rdr->caid;
 	  }
+}
+
+uint16_t is_betatunnel_caid(uint16_t caid){
+	if (caid == 0x1702 || caid == 0x1722 || caid == 0x1801 || caid == 0x1833 || caid == 0x1834 || caid == 0x1835) return 1;
+	return 0;
 }
 
 /**
@@ -904,7 +909,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 					needs_stats_beta = 0;
 					isb = 1;
 				}
-				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel valid %d, stat_nagra %d, stat_beta %d, (%04X,%04X)", valid, isn, isb ,get_rdr_caid(rdr),caid_to);
+				cs_debug_mask(D_LB, "loadbalancer-betatunnel valid %d, stat_nagra %d, stat_beta %d, (%04X,%04X)", valid, isn, isb ,get_rdr_caid(rdr),caid_to);
 			}
 
 			if (!overall_valid)//we have no valid betatunnel reader also we don't needs stats (converted)
@@ -1018,7 +1023,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 					needs_stats_nagra = 0;
 					isn = 1;
 				}
-				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel valid %d, stat_beta %d, stat_nagra %d, (%04X,%04X)", valid, isb, isn ,get_rdr_caid(rdr),caid_to);
+				cs_debug_mask(D_LB, "loadbalancer-betatunnel valid %d, stat_beta %d, stat_nagra %d, (%04X,%04X)", valid, isb, isn ,get_rdr_caid(rdr),caid_to);
 			}
 
 			if (!overall_valid)//we have no valid reverse betatunnel reader also we don't needs stats (converted)
@@ -1045,18 +1050,18 @@ void stat_get_best_reader(ECM_REQUEST *er)
 				}
 			}
 			else if (time_nagra && (!time_beta || time_nagra <= time_beta)) {
-				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X selected nagra: b%dms > n%dms", er->caid, caid_to, time_beta, time_nagra);
+				cs_debug_mask(D_LB, "loadbalancer-betatunnel %04X:%04X selected nagra: b%dms > n%dms", er->caid, caid_to, time_beta, time_nagra);
 				convert_to_nagra_int(er, caid_to);
 				get_stat_query(er, &q);
 			}
 			else {
-				cs_debug_mask(D_TRACE, "loadbalancer-betatunnel %04X:%04X selected beta: b%dms < n%dms", er->caid, caid_to, time_beta, time_nagra);
+				cs_debug_mask(D_LB, "loadbalancer-betatunnel %04X:%04X selected beta: b%dms < n%dms", er->caid, caid_to, time_beta, time_nagra);
 			}
 
 		}
 	}
 
-	if (cfg.lb_auto_betatunnel) {
+	if (cfg.lb_auto_betatunnel && is_betatunnel_caid(er->caid)) {
 		//check again is caid valied to reader
 		//with both caid on local readers or with proxy
 		//(both caid will setup to reader for make tunnel caid in share (ccc) visible)
@@ -1064,26 +1069,25 @@ void stat_get_best_reader(ECM_REQUEST *er)
 		struct s_ecm_answer *prv = NULL;
 		for(ea = er->matching_rdr; ea; ea = ea->next) {
 			rdr = ea->reader;
-			if (rdr->typ == R_CCCAM) { //is_network_reader(ea->reader)
+			if (is_network_reader(rdr)) { //reader caid is not real caid
 				prv = ea;
-				continue; // cccam proxy can convert or reject
+				continue; // proxy can convert or reject
 			}
-			cs_debug_mask(D_TRACE, "check again caid %04X on reader %s", er->caid, rdr->label);
+			cs_debug_mask(D_LB, "check again caid %04X on reader %s", er->caid, rdr->label);
 			if ( !get_rdr_caid(ea->reader) || chk_caid_rdr(ea->reader,er->caid)) {
 				prv = ea;
 			} else {
-				er->reader_avail--;
-				cs_debug_mask(D_TRACE, "caid %04X not found in caidlist, reader %s removed from request reader list", er->caid, rdr->label);
+				if (!rdr->fallback) er->reader_avail--;
+				cs_debug_mask(D_LB, "caid %04X not found in caidlist, reader %s removed from request reader list", er->caid, rdr->label);
 				if (prv){
 					prv->next = ea->next;
 				} else
 					er->matching_rdr = ea->next;
 			}
 		}
+		if (!er->reader_avail)
+			return;
 	}
-
-	if (!er->reader_avail)
-		return;
 
 	struct timeb check_time;
         cs_ftime(&check_time);
@@ -1354,7 +1358,13 @@ void stat_get_best_reader(ECM_REQUEST *er)
 					s = get_stat(rdr, &q);
 
 					if (s && s->rc != E_FOUND) { //retrylimit reached:
+						if (!cfg.lb_reopen_mode) cs_debug_mask(D_LB, "loadbalancer: reader %s need %ld seconds to reopen", ea->reader->label, (s->last_received+get_reopen_seconds(s))-current_time);
 						if (cfg.lb_reopen_mode || s->last_received+get_reopen_seconds(s) < current_time) { //Retrying reader every (900/conf) seconds
+							if (cfg.lb_reopen_mode) {
+								cs_debug_mask(D_LB, "loadbalancer: reader %s reopen fast", rdr->label);
+							} else {
+								cs_debug_mask(D_LB, "loadbalancer: reader %s reopen after %ld sec.", rdr->label, get_reopen_seconds(s));
+							}
 							s->last_received = current_time;
 							ea->status |= READER_ACTIVE;
 							nreaders--;

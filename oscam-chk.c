@@ -977,8 +977,8 @@ int32_t chk_caid(uint16_t caid, CAIDTAB *ctab)
 }
 
 int32_t chk_caid_rdr(struct s_reader *rdr,uint16_t caid) {
-  if (rdr->typ == R_CCCAM) {
-	  return 1;
+  if (is_network_reader(rdr)) {
+	  return 1; //reader caid is not real caid
   } else if (rdr->caid==caid) {
 	  return 1;
   }
