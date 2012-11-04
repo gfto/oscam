@@ -186,7 +186,8 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 			rdr_debug_mask(reader, D_ATR, "TD%d %02X",protocols,buf[n]);
 			TDi = buf[n];
 			protocolnumber = TDi&0x0F;
-			if (protocolnumber == 0x00 || protocolnumber == 0x0E) tck = 0; // T0 and T14 protocol do not use tck byte  (TCK = checksum byte!)
+			if (protocolnumber == 0x00) tck = 0; // T0 protocol do not use tck byte  (TCK = checksum byte!)
+			if (protocolnumber == 0x0E) tck = 1; // T14 protocol tck byte should be present
 			if (protocolnumber == 0x01) tck = 1; // T1 protocol tck byte is mandatory, BTW: this code doesnt calculate if the TCK is valid jet... 
 			rdr_debug_mask(reader, D_ATR, "Fetching global interface characters for protocol T%d:", (TDi&0x0F)); // lower nibble contains protocol number
 			protocols++; // there is always 1 protocol T0 in every ATR as per iso defined, max is 16 (numbered 0..15)

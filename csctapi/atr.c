@@ -38,7 +38,8 @@ static const uint32_t atr_num_ib_table[16] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3
 
 const uint32_t atr_f_table[16] = {372, 372, 558, 744, 1116, 1488, 1860, 0, 0, 512, 768, 1024, 1536, 2048, 0, 0};
 
-const double atr_d_table[16] = {0, 1, 2, 4, 8, 16, 32, 64, 12, 20, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625};
+const double atr_d_table[16] = {0, 1, 2, 4, 8, 16, 32, 64, 12, 20, 0, 0, 0, 0, 0, 0};
+//const double atr_d_table[16] = {0, 1, 2, 4, 8, 16, 32, 64, 12, 20, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625};
 //old table has 0 for RFU:
 //double atr_d_table[16] = {0, 1, 2, 4, 8, 16, 0, 0, 0, 0, 0.5, 0.25, 125, 0.0625, 0.03125, 0.015625};
 
@@ -89,7 +90,7 @@ int32_t ATR_InitFromArray (ATR * atr, const unsigned char atr_buffer[ATR_MAX_SIZ
 		/* Check buffer is long enought */
 		if (pointer + atr_num_ib_table[(0xF0 & TDi) >> 4] >= length){
 			cs_debug_mask(D_ATR,"ATR is malformed, the %d interface bytes for protocol %d are missing", pointer + atr_num_ib_table[(0xF0 & TDi) >> 4], pn+1);
-			return (ATR_MALFORMED);
+			return (ERROR);
 		}
 		
 		/* Check TAi is present */
@@ -134,7 +135,7 @@ int32_t ATR_InitFromArray (ATR * atr, const unsigned char atr_buffer[ATR_MAX_SIZ
 			pointer++;
 			TDi = atr->ib[pn][ATR_INTERFACE_BYTE_TD].value = buffer[pointer];
 			atr->ib[pn][ATR_INTERFACE_BYTE_TD].present = 1;
-			(atr->TCK).present = ((TDi & 0x0F) != ATR_PROTOCOL_TYPE_T0 && (TDi & 0x0F) != ATR_PROTOCOL_TYPE_T14); // T14 has also no TCK byte present
+			(atr->TCK).present = ((TDi & 0x0F) != ATR_PROTOCOL_TYPE_T0);
 			if (pn >= ATR_MAX_PROTOCOLS){
 				cs_debug_mask(D_ATR,"ATR is malformed, this ATR reports %d protocols but the maximum value is %d", pn+1, ATR_MAX_PROTOCOLS+1);
 				return (ATR_MALFORMED);
@@ -339,7 +340,7 @@ int32_t ATR_GetIntegerValue (ATR * atr, int32_t name, unsigned char * value)
 	return ret;
 }
 
-int32_t ATR_GetParameter (ATR * atr, int32_t name, double *parameter)
+int32_t ATR_GetParameter (ATR * atr, int32_t name, uint32_t *parameter)
 {
 	unsigned char FI, DI, II, PI1, PI2, N;
 	
