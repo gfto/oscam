@@ -117,7 +117,7 @@ int32_t ATR_GetProtocolType (ATR * atr, uint32_t number_protocol, unsigned char 
 /* ATR parameters and integer values */
 int32_t ATR_GetInterfaceByte (ATR * atr, uint32_t number, int32_t character, unsigned char * ib);
 int32_t ATR_GetIntegerValue (ATR * atr, int32_t name, unsigned char * value);
-int32_t ATR_GetParameter (ATR * atr, int32_t name, double *parameter);
+int32_t ATR_GetParameter (ATR * atr, int32_t name, uint32_t *parameter);
 int32_t ATR_GetHistoricalBytes (ATR * atr, unsigned char * hist, uint32_t *length);
 int32_t ATR_GetCheckByte (ATR * atr, unsigned char * check_byte);
 int32_t ATR_GetFsMax (ATR * atr, uint32_t *fsmax);

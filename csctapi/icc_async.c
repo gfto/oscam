@@ -59,7 +59,7 @@ static void ICC_Async_InvertBuffer (uint32_t size, unsigned char * buffer);
 static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecated);
 static int32_t PPS_Exchange (struct s_reader * reader, unsigned char * params, uint32_t *length);
 static uint32_t PPS_GetLength (unsigned char * block);
-static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, double d, unsigned char N, uint16_t deprecated);
+static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, uint32_t D, unsigned char N, uint16_t deprecated);
 static uint32_t ETU_to_us(struct s_reader * reader, uint32_t ETU);
 static unsigned char PPS_GetPCK (unsigned char * block, uint32_t length);
 static int32_t SetRightParity (struct s_reader * reader);
@@ -586,9 +586,8 @@ static void ICC_Async_InvertBuffer (uint32_t size, unsigned char * buffer)
 static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecated)
 {
 	unsigned char FI = ATR_DEFAULT_FI;
-	//unsigned char t = ATR_PROTOCOL_TYPE_T0;
-	double d = ATR_DEFAULT_D;
-	double n = ATR_DEFAULT_N;
+	uint32_t D = ATR_DEFAULT_D;
+	uint32_t N = ATR_DEFAULT_N;
 	int32_t ret;
 	char tmp[256];
 
@@ -641,7 +640,7 @@ static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecat
 		rdr_debug_mask(reader, D_ATR, "%i protocol types detected. Historical bytes: %s",
 			numprottype, cs_hexdump(1,atr->hb,atr->hbn, tmp, sizeof(tmp)));
 
-		ATR_GetParameter (atr, ATR_PARAMETER_N, &(n));
+		ATR_GetParameter (atr, ATR_PARAMETER_N, &(N));
 		ATR_GetProtocolType(atr,1,&(reader->protocol_type)); //get protocol from TD1
 		
 		unsigned char TA2;
@@ -652,26 +651,28 @@ static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecat
 				unsigned char TA1;
 				if (ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
 					FI = TA1 >> 4;
-					ATR_GetParameter (atr, ATR_PARAMETER_D, &(d));
+					ATR_GetParameter (atr, ATR_PARAMETER_D, &(D));
 				}
 				else {
 					FI = ATR_DEFAULT_FI;
-					d = ATR_DEFAULT_D;
+					D = ATR_DEFAULT_D;
 				}
 			}
 			else {
 				rdr_log(reader, "Specific mode: speed 'implicitly defined', not sure how to proceed, assuming default values");
 				FI = ATR_DEFAULT_FI;
-				d = ATR_DEFAULT_D;
+				D = ATR_DEFAULT_D;
 			}
-			rdr_debug_mask(reader, D_ATR, "Specific mode: T%i, F=%.0f, D=%.6f, N=%.0f",
-				reader->protocol_type, (double) atr_f_table[FI], d, n);
+			uint32_t F = atr_f_table[FI];
+			//if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14) F = 512;
+			rdr_debug_mask(reader, D_ATR, "Specific mode: T%i, F=%d, D=%d, N=%d",
+				reader->protocol_type, F, D, N);
 		}
 		else { //negotiable mode
 
 			reader->read_timeout = 1000000; // in us
 			bool PPS_success = 0;
-			bool NeedsPTS = ((reader->protocol_type != ATR_PROTOCOL_TYPE_T14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == 1 && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || n == 255)); //needs PTS according to old ISO 7816
+			bool NeedsPTS = ((reader->protocol_type != ATR_PROTOCOL_TYPE_T14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == 1 && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || N == 255)); //needs PTS according to old ISO 7816
 			if (NeedsPTS && deprecated == 0) {
 				//						 PTSS	PTS0	PTS1	PCK
 				unsigned char req[6] = { 0xFF, 0x10, 0x00, 0x00 }; //we currently do not support PTS2, standard guardtimes or PTS3,
@@ -685,10 +686,12 @@ static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecat
 				if (ret == OK) {
 					FI = req[2] >> 4;
 					unsigned char DI = req[2] & 0x0F;
-					d = (double) (atr_d_table[DI]);
+					D = atr_d_table[DI];
+					uint32_t F = atr_f_table[FI];
+					//if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14) F = 512;
 					PPS_success = 1;
-					rdr_debug_mask(reader, D_ATR, "PTS Succesfull, selected protocol: T%i, F=%.0f, D=%.6f, N=%.0f",
-						reader->protocol_type, (double) atr_f_table[FI], d, n);
+					rdr_debug_mask(reader, D_ATR, "PTS Succesfull, selected protocol: T%i, F=%d, D=%d, N=%d",
+						reader->protocol_type, F, D, N);
 				}
 				else
 					rdr_ddump_mask(reader, D_ATR, req, len,"PTS Failure, response:");
@@ -699,37 +702,39 @@ static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecat
 				unsigned char TA1;
 				if (ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
 					FI = TA1 >> 4;
-					ATR_GetParameter (atr, ATR_PARAMETER_D, &(d));
+					ATR_GetParameter (atr, ATR_PARAMETER_D, &(D));
 				}
 				else { //do not obey TA1
 					FI = ATR_DEFAULT_FI;
-					d = ATR_DEFAULT_D;
+					D = ATR_DEFAULT_D;
 				}
 				if (NeedsPTS) {
-					if ((d == 32) || (d == 12) || (d == 20)) //those values were RFU in old table
-						d = 0; // viaccess cards that fail PTS need this
+					if ((D == 32) || (D == 12) || (D == 20)) //those values were RFU in old table
+						D = 0; // viaccess cards that fail PTS need this
 				}
-
-				rdr_debug_mask(reader, D_ATR, "No PTS %s, selected protocol T%i, F=%.0f, D=%.6f, N=%.0f",
-					NeedsPTS ? "happened" : "needed", reader->protocol_type, (double) atr_f_table[FI], d, n);
+				uint32_t F = atr_f_table[FI];
+				//if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14) F = 512;
+				rdr_debug_mask(reader, D_ATR, "No PTS %s, selected protocol T%i, F=%d, D=%d, N=%d",
+					NeedsPTS ? "happened" : "needed", reader->protocol_type, F, D, N);
 			}
 		}//end negotiable mode
 		
 	//make sure no zero values
-	double F =	(double) atr_f_table[FI];
+	uint32_t F = atr_f_table[FI];
+	//if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14) F = 512;
 	if (!F) {
 		FI = ATR_DEFAULT_FI;
 		rdr_log(reader, "Warning: F=0 is invalid, forcing FI=%d", FI);
 	}
-	if (!d) {
-		d = ATR_DEFAULT_D;
-		rdr_log(reader, "Warning: D=0 is invalid, forcing D=%.0f", d);
+	if (!D) {
+		D = ATR_DEFAULT_D;
+		rdr_log(reader, "Warning: D=0 is invalid, forcing D=%d", D);
 	}
-	
+	rdr_log(reader, "Init card protocol T%i, FI=%d, F=%d, D=%d, N=%d", reader->protocol_type, FI, F, D, N);
 	if (deprecated == 0)
-		return InitCard (reader, atr, FI, d, n, deprecated);
+		return InitCard (reader, atr, FI, D, N, deprecated);
 	else
-		return InitCard (reader, atr, ATR_DEFAULT_FI, ATR_DEFAULT_D, n, deprecated);
+		return InitCard (reader, atr, ATR_DEFAULT_FI, ATR_DEFAULT_D, N, deprecated);
 }
 
 static int32_t PPS_Exchange (struct s_reader * reader, unsigned char * params, uint32_t *length)
@@ -840,10 +845,9 @@ static int32_t SetRightParity (struct s_reader * reader)
 	return OK;
 }
 
-static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, double d, unsigned char N, uint16_t deprecated)
+static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, uint32_t D, unsigned char N, uint16_t deprecated)
 {
-	double I;
-	uint32_t F, BGT, edc, GT = 0, WWT = 0, EGT = 0;
+	uint32_t I, F, BGT, edc, GT = 0, WWT = 0, EGT = 0;
 	unsigned char wi = 0;
 
 	//set the amps and the volts according to ATR
@@ -865,27 +869,27 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 
 	//set clock speed/baudrate must be done before timings
 	//because reader->current_baudrate is used in calculation of timings
-	F =	atr_f_table[FI];  //get the frequency divider
+	F =	atr_f_table[FI];  //get the frequency divider also called clock rate conversion factor
+	//if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14) F = 512;
 
 	reader->current_baudrate = DEFAULT_BAUDRATE;
 	
 	if (deprecated == 0) {
 		uint32_t baud_temp;
-		if (reader->protocol_type != ATR_PROTOCOL_TYPE_T14) { //dont switch for T14
-				if (reader->typ == R_INTERNAL) baud_temp = (uint32_t) 1/((1/d)*((double)F/(double)(reader->cardmhz*10000)));
-				else baud_temp = d * ICC_Async_GetClockRate (reader->cardmhz) / (double)F;
-			if (reader->crdr.set_baudrate) {
-				call (reader->crdr.set_baudrate(reader, baud_temp));
-			} else {
-				if (reader->typ <= R_MOUSE)
-					call (Phoenix_SetBaudrate(reader, baud_temp));
+		if (reader->typ == R_INTERNAL) baud_temp = (uint32_t) 1/((1/(double)D)*((double)F/(double)(reader->cardmhz*10000)));
+		else baud_temp = (double)D * ICC_Async_GetClockRate (reader->cardmhz) / (double)F;
+		if (reader->crdr.set_baudrate) {
+			call (reader->crdr.set_baudrate(reader, baud_temp));
+		} else {
+			if (reader->typ <= R_MOUSE){
+				call (Phoenix_SetBaudrate(reader, baud_temp));
 			}
 			reader->current_baudrate = baud_temp; //this is needed for all readers to calculate work_etu for timings
 			rdr_log(reader, "Setting baudrate to %d bps", reader->current_baudrate);
 		}
 	}
-	if (reader->typ == R_INTERNAL) reader->worketu = (double) ((1/(double)d)*((double)F/(double)reader->cardmhz)*100);
-	else reader->worketu = (double) ((1/(double)d)*((double)F/(double)reader->mhz)*100);
+	if (reader->typ == R_INTERNAL) reader->worketu = (double) ((1/(double)D)*((double)F/(double)reader->cardmhz)*100);
+	else reader->worketu = (double) ((1/(double)D)*((double)F/(double)reader->mhz)*100);
 	rdr_log(reader, "Calculated work ETU is %.2f us", reader->worketu);
 
 	//set timings according to ATR
@@ -906,7 +910,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 			// WWT = 960 * d * WI  work etu
 
 			
-			WWT = (uint32_t) 960 * d * wi; //in work ETU
+			WWT = (uint32_t) 960 * D * wi; //in work ETU
 			GT = 2; // standard guardtime
 			GT += 1; // start bit
 			GT += 8; // databits
@@ -1011,10 +1015,8 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 	SetRightParity (reader); // some reader devices need to get set the right parity
 
 	if (reader->crdr.write_settings) {
-		uint32_t ETU = 0; // for Irdeto T14 cards, do not set ETU
-		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14))
-			ETU = F / d;
-		call(reader->crdr.write_settings(reader, ETU, EGT, 5, I, (uint16_t) atr_f_table[FI], (unsigned char)d, N));
+		uint32_t ETU = F / D;
+		call(reader->crdr.write_settings(reader, ETU, EGT, 5, I, (uint16_t) F, (unsigned char)D, N));
 	}
 
   //write settings to internal device
@@ -1022,18 +1024,14 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 #if defined(WITH_COOLAPI)
 		call (Cool_WriteSettings (reader, reader->BWT, reader->CWT, EGT, BGT));
 #else
-		F = (double)atr_f_table[FI];
-		uint32_t ETU = 0;
-		//for Irdeto T14 cards, do not set ETU
-		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14))
-			ETU = F / d; 
+		uint32_t ETU = F / D; 
 		if (reader->mhz > 2000){ // only for dreambox internal readers  
-			EGT = 0; // communicating guardtime is only slowing card ecm responses down. its not needed with internal readers, the drivers already take care of this!
-			call (Sci_WriteSettings (reader, reader->protocol_type, reader->divider, ETU, WWT, reader->CWT, reader->BWT, EGT, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
+			//EGT = 0; // communicating guardtime is only slowing card ecm responses down. its not needed with internal readers, the drivers already take care of this!
+			call (Sci_WriteSettings (reader, reader->protocol_type, reader->divider, ETU, WWT, reader->CWT, reader->BWT, 0, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
 		}
 		else { // all other brand boxes than dreamboxes! 
-			EGT = 0; // dont communicate guardtime -> slowing down card ecm responses!
-			call (Sci_WriteSettings (reader, reader->protocol_type, reader->mhz / 100, ETU, WWT, reader->CWT, reader->BWT, EGT, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
+			//EGT = 0; // dont communicate guardtime -> slowing down card ecm responses!
+			call (Sci_WriteSettings (reader, reader->protocol_type, reader->mhz / 100, ETU, WWT, reader->CWT, reader->BWT, 0, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
 		}
 #endif //WITH_COOLAPI
 	}
