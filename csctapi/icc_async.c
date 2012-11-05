@@ -664,7 +664,6 @@ static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecat
 				D = ATR_DEFAULT_D;
 			}
 			uint32_t F = atr_f_table[FI];
-			//if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14) F = 512;
 			rdr_debug_mask(reader, D_ATR, "Specific mode: T%i, F=%d, D=%d, N=%d",
 				reader->protocol_type, F, D, N);
 		}
@@ -688,7 +687,6 @@ static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecat
 					unsigned char DI = req[2] & 0x0F;
 					D = atr_d_table[DI];
 					uint32_t F = atr_f_table[FI];
-					//if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14) F = 512;
 					PPS_success = 1;
 					rdr_debug_mask(reader, D_ATR, "PTS Succesfull, selected protocol: T%i, F=%d, D=%d, N=%d",
 						reader->protocol_type, F, D, N);
@@ -713,7 +711,6 @@ static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecat
 						D = 0; // viaccess cards that fail PTS need this
 				}
 				uint32_t F = atr_f_table[FI];
-				//if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14) F = 512;
 				rdr_debug_mask(reader, D_ATR, "No PTS %s, selected protocol T%i, F=%d, D=%d, N=%d",
 					NeedsPTS ? "happened" : "needed", reader->protocol_type, F, D, N);
 			}
@@ -721,7 +718,6 @@ static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecat
 		
 	//make sure no zero values
 	uint32_t F = atr_f_table[FI];
-	//if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14) F = 512;
 	if (!F) {
 		FI = ATR_DEFAULT_FI;
 		rdr_log(reader, "Warning: F=0 is invalid, forcing FI=%d", FI);
@@ -870,22 +866,21 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 	//set clock speed/baudrate must be done before timings
 	//because reader->current_baudrate is used in calculation of timings
 	F =	atr_f_table[FI];  //get the frequency divider also called clock rate conversion factor
-	//if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14) F = 512;
 
 	reader->current_baudrate = DEFAULT_BAUDRATE;
-	
+
 	if (deprecated == 0) {
 		uint32_t baud_temp;
-		if (reader->typ == R_INTERNAL) baud_temp = (uint32_t) 1/((1/(double)D)*((double)F/(double)(reader->cardmhz*10000)));
-		else baud_temp = (double)D * ICC_Async_GetClockRate (reader->cardmhz) / (double)F;
+		if (reader->protocol_type != ATR_PROTOCOL_TYPE_T14) { //dont switch for T14
+			if (reader->typ == R_INTERNAL) baud_temp = (uint32_t) 1/((1/(double)D)*((double)F/(double)(reader->cardmhz*10000)));
+			else baud_temp = (double)D * ICC_Async_GetClockRate (reader->cardmhz) / (double)F;
 		if (reader->crdr.set_baudrate) {
 			call (reader->crdr.set_baudrate(reader, baud_temp));
 		} else {
-			if (reader->typ <= R_MOUSE){
-				call (Phoenix_SetBaudrate(reader, baud_temp));
-			}
-			reader->current_baudrate = baud_temp; //this is needed for all readers to calculate work_etu for timings
-			rdr_log(reader, "Setting baudrate to %d bps", reader->current_baudrate);
+			if (reader->typ <= R_MOUSE)	call (Phoenix_SetBaudrate(reader, baud_temp));
+		}	
+		reader->current_baudrate = baud_temp; //this is needed for all readers to calculate work_etu for timings
+		rdr_log(reader, "Setting baudrate to %d bps", reader->current_baudrate);
 		}
 	}
 	if (reader->typ == R_INTERNAL) reader->worketu = (double) ((1/(double)D)*((double)F/(double)reader->cardmhz)*100);
@@ -920,6 +915,8 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 				EGT += N;  // T0 protocol, if TC1 = 255 then dont add extra guardtime
 			reader->CWT = 0; // T0 protocol doesnt have char waiting time (used to detect errors within 1 single block of data)
 			reader->BWT = 0; // T0 protocol doesnt have block waiting time (used to detect unresponsive card, this is max time for starting a block answer)
+			
+			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14 && reader->mhz > 600) WWT >>= 1;  // fix for overclocked T14 cards
 			
 			if (reader->typ == R_INTERNAL)
 				rdr_debug_mask(reader, D_IFD, "Protocol: T=%i, WWT=%u, Clockrate=%u",
@@ -1015,7 +1012,8 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 	SetRightParity (reader); // some reader devices need to get set the right parity
 
 	if (reader->crdr.write_settings) {
-		uint32_t ETU = F / D;
+		uint32_t ETU = 0; // for Irdeto T14 cards, do not set ETU
+		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14)) ETU = F / D;
 		call(reader->crdr.write_settings(reader, ETU, EGT, 5, I, (uint16_t) F, (unsigned char)D, N));
 	}
 
@@ -1024,7 +1022,8 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 #if defined(WITH_COOLAPI)
 		call (Cool_WriteSettings (reader, reader->BWT, reader->CWT, EGT, BGT));
 #else
-		uint32_t ETU = F / D; 
+		uint32_t ETU = 0; // for Irdeto T14 cards, do not set ETU
+		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14)) ETU = F / D; 
 		if (reader->mhz > 2000){ // only for dreambox internal readers  
 			//EGT = 0; // communicating guardtime is only slowing card ecm responses down. its not needed with internal readers, the drivers already take care of this!
 			call (Sci_WriteSettings (reader, reader->protocol_type, reader->divider, ETU, WWT, reader->CWT, reader->BWT, 0, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
