@@ -11,7 +11,7 @@ extern struct s_module modules[CS_MAX_MOD];
 #define ERROR 	0
 
 #ifdef WITH_CARDREADER
-static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er, int32_t maxloop)
+static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er, int32_t maxloop)
 {
 	int32_t h, foundspace;
 	time_t actualtime = time(NULL);
@@ -93,7 +93,37 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 	return (-1);
 }
 
-int32_t ecm_ratelimit_check(struct s_reader * reader, ECM_REQUEST *er, int32_t reader_mode)
+static void sort_ecmrl(struct s_reader *reader)
+{
+	int32_t i, j, loc;
+	struct ecmrl tmp;
+
+	for(i = 0; i < reader->ratelimitecm; i++) {
+		loc = i;
+		tmp = reader->rlecmh[i];
+
+		for(j = i + 1; j < MAXECMRATELIMIT; j++) {
+			if(reader->rlecmh[j].last > tmp.last) {
+				loc = j;
+				tmp = reader->rlecmh[j];
+			}
+		} // for j
+
+		if(loc != i) {
+			reader->rlecmh[loc] = reader->rlecmh[i];
+			reader->rlecmh[i] = tmp;
+		}
+	} // for i
+
+	// release all slots above ratelimit ecm
+	for (i = reader->ratelimitecm; i < MAXECMRATELIMIT; i++) {
+		reader->rlecmh[i].last = -1;
+		reader->rlecmh[i].srvid = -1;
+	}
+
+}
+
+int32_t ecm_ratelimit_check(struct s_reader *reader, ECM_REQUEST *er, int32_t reader_mode)
 // If reader_mode is 1, ECM_REQUEST need to be assigned to reader and slot.
 // Else just report if a free slot is available.
 {
@@ -147,7 +177,38 @@ int32_t ecm_ratelimit_check(struct s_reader * reader, ECM_REQUEST *er, int32_t r
 			cs_log("Reader: %s ratelimiter returning to setup phase cooling down period of %d seconds is done!",
 				reader->label, reader->cooldown[1]);
 		}
-	}
+	} // if cooldownstate == 1
+
+	if (reader->cooldownstate == 2 && time(NULL) - reader->cooldowntime > reader->cooldown[0]) {
+		// Need to check if the otherslots are not exceeding the ratelimit at the moment that
+		// cooldown[0] time was exceeded!
+		// time_t actualtime = reader->cooldowntime + reader->cooldown[0];
+		maxslots = 0; // maxslots is used as counter
+		for (h = 0; h < MAXECMRATELIMIT; h++) {
+			// how many active slots are registered at end of cooldown delay period
+			if (reader->cooldowntime + reader->cooldown[0] - reader->rlecmh[h].last
+				<= reader->ratelimitseconds) {
+				maxslots++;
+				if (maxslots > reader->ratelimitecm) break; // Need to go cooling down phase
+			}
+		}
+
+		if (maxslots <= reader->ratelimitecm) {
+			reader->cooldownstate = 0; // set cooldown setup phase
+			reader->cooldowntime = 0; // reset cooldowntime
+			maxslots = MAXECMRATELIMIT; // maxslots is maxslots again
+			cs_log("Reader: %s ratelimiter returning to setup phase after %d seconds cooldowndelay!",
+				reader->label, reader->cooldown[0]);
+		}
+		else {
+			reader->cooldownstate = 1; // Entering ratelimit for cooldown ratelimitseconds
+			reader->cooldowntime = time(NULL); // set time to enforce ecmratelimit for defined cooldowntime
+			maxslots = reader->ratelimitecm; // maxslots is maxslots again
+			sort_ecmrl(reader); // keep youngest ecm requests in list + housekeeping
+			cs_log("Reader: %s ratelimiter starting cooling down period of %d seconds!",
+				reader->label, reader->cooldown[1]);
+		}
+	} // if cooldownstate == 2
 
 	cs_debug_mask(D_TRACE, "ratelimiter cooldown find a slot for srvid %04X on reader %s reader_mode = %d",
 		er->srvid, reader->label, reader_mode);
@@ -169,61 +230,6 @@ int32_t ecm_ratelimit_check(struct s_reader * reader, ECM_REQUEST *er, int32_t r
 		reader->cooldownstate = 2; // Entering cooldowndelay phase
 		reader->cooldowntime = time(NULL); // Set cooldowntime to calculate delay
 		cs_debug_mask(D_TRACE, "ratelimiter cooldowndelaying %d seconds", reader->cooldown[0]);
-	}
-
-	if (reader->cooldownstate == 2 && foundspace >= reader->ratelimitecm &&
-			time(NULL) - reader->cooldowntime > reader->cooldown[0]) {
-		if(!reader_mode) return ERROR; // No actual ecm request, just check
-		reader->cooldownstate = 1; // Entering ratelimit for cooldown ratelimitseconds
-		reader->cooldowntime = time(NULL); // set time to enforce ecmratelimit for defined cooldowntime
-		cs_log("Reader: %s ratelimiter starting cooling down period of %d seconds!",
-			reader->label, reader->cooldown[1]);
-
-		// release all slots above ratelimit
-		for (h = reader->ratelimitecm; h < MAXECMRATELIMIT; h++) {
-			reader->rlecmh[h].last = -1;
-			reader->rlecmh[h].srvid = -1;
-		}
-
-		cs_debug_mask(D_TRACE, "ratelimiter no free slot for srvid %04X on reader %s -> dropping!",
-			er->srvid, reader->label);
-		write_ecm_answer(reader, er, E_NOTFOUND, E2_RATELIMIT, NULL, "Ratelimiter: no slots free!");
-		return ERROR; // not even trowing an error... obvious reason ;)
-	}
-	else if (reader->cooldownstate == 2 && time(NULL) - reader->cooldowntime > reader->cooldown[0]) {
-		// Need to check if the otherslots are not exceeding the ratelimit
-		maxslots = 0; // maxslots is used as counter
-		time_t actualtime = time(NULL);
-		for (h = 0; h < MAXECMRATELIMIT; h++) {
-			if (actualtime - reader->rlecmh[h].last <= reader->ratelimitseconds) maxslots++;
-			if (maxslots > reader->ratelimitecm) break;
-		}
-
-		if (maxslots <= reader->ratelimitecm) {
-			if(!reader_mode) return OK; // No actual ecm request, just check
-			reader->cooldownstate = 0; // set cooldown setup phase
-			reader->cooldowntime = 0; // reset cooldowntime
-			cs_log("Reader: %s ratelimiter returning to setup phase after %d seconds cooldowndelay!",
-				reader->label, reader->cooldown[0]);
-		}
-		else {
-			if(!reader_mode) return ERROR; // No actual ecm request, just check
-			reader->cooldownstate = 1; // Entering ratelimit for cooldown ratelimitseconds
-			reader->cooldowntime = time(NULL); // set time to enforce ecmratelimit for defined cooldowntime
-			cs_log("Reader: %s ratelimiter starting cooling down period of %d seconds!",
-				reader->label, reader->cooldown[1]);
-
-			// release all slots above ratelimit
-			for (h = reader->ratelimitecm; h < MAXECMRATELIMIT; h++) {
-				reader->rlecmh[h].last = -1;
-				reader->rlecmh[h].srvid = -1;
-			}
-
-			cs_debug_mask(D_TRACE, "ratelimiter no free slot for srvid %04X on reader %s -> dropping!",
-				er->srvid, reader->label);
-			write_ecm_answer(reader, er, E_NOTFOUND, E2_RATELIMIT, NULL, "Ratelimiter: no slots free!");
-			return ERROR; // not even trowing an error... obvious reason ;)
-		}
 	}
 
 	// Cooldown state housekeeping is done. There is a slot available.
