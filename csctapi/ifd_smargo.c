@@ -56,7 +56,7 @@ static int32_t smargo_set_settings(struct s_reader *reader, int32_t freq, unsign
 	IO_Serial_Write(reader, 0, 1000000, 2, data);
 
 	data[0]=0x05;
-	data[1]=0; //always done by oscam
+	data[1]=inv;
 	IO_Serial_Write(reader, 0, 1000000, 2, data);
 
 	cs_sleepms(DELAY);
@@ -82,6 +82,19 @@ static int32_t smargo_init(struct s_reader *reader) {
 		rdr_log(reader, "ERROR: Opening device %s (errno=%d %s)",reader->device, errno, strerror(errno));
 		return ERROR;
 	}
+
+	// Init the serial port to something valid, if not the smargo_set_settings will not work very well 
+	struct termios newtio;
+	memset (&newtio, 0, sizeof (newtio));
+
+	cfsetospeed(&newtio, B230400);
+	cfsetispeed(&newtio, B230400);
+	
+	newtio.c_cflag &= ~CSIZE;
+	newtio.c_cflag |= CS8;
+
+	if (tcsetattr (reader->handle, TCSANOW, &newtio) < 0)  // set terminal attributes.
+		return ERROR;
 
 	return OK;
 }
@@ -191,6 +204,6 @@ void cardreader_smargo(struct s_cardreader *crdr)
 	crdr->write_settings = smargo_writesettings;
 	crdr->typ		= R_MOUSE;
 
-	crdr->need_inverse	= 1;
+	crdr->max_clock_speed	= 1;
 }
 #endif
