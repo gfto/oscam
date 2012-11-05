@@ -128,13 +128,6 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 		}
 
 		for(i=0; i<3; i++) {
-#if !defined(__CYGWIN__)
-			/*
-			* Pause for 200ms as this might help with the PL2303.
-			* Some users reporting that this breaks cygwin, so we exclude this.
-			*/
-			cs_sleepms(200);
-#endif
 			IO_Serial_Flush(reader);
 			call (IO_Serial_SetParity (reader, parity[i]));
 
@@ -145,15 +138,8 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 				set_gpio(reader, 0);
 			else
 				IO_Serial_RTS_Set(reader);
-#if defined(__CYGWIN__)
-			/*
-			* Pause for 200ms as this might help with the PL2303.
-			* Some users reporting that this breaks cygwin, so we went back to 50ms.
-			*/
+
 			cs_sleepms(50);
-#else
-			cs_sleepms(200);
-#endif
 
 			// felix: set card reset hi (inactive)
 			if (reader_use_gpio(reader))
