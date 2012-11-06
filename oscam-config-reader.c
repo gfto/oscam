@@ -666,11 +666,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		}
 
-		if (!strcmp(value, "internal")) {
-			rdr->typ = R_INTERNAL;
-			return;
-		}
-
 		if (!strcmp(value, "serial")) {
 			rdr->typ = R_SERIAL;
 			return;

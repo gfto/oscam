@@ -140,23 +140,6 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 				return ERROR;
 			}
 			break;
-		case R_INTERNAL:
-#if defined(WITH_COOLAPI)
-			return Cool_Init(reader);
-#elif defined(WITH_AZBOX)
-			return Azbox_Init(reader);
-#else
-	#if defined(__SH4__) || defined(STB04SCI)
-			reader->handle = open (reader->device, O_RDWR|O_NONBLOCK|O_NOCTTY);
-	#else
-			reader->handle = open (reader->device, O_RDWR|O_NOCTTY);
-	#endif
-			if (reader->handle < 0) {
-				rdr_log(reader, "ERROR: Opening device %s (errno:%d %s)", reader->device, errno, strerror(errno));
-				return ERROR;
-			}
-#endif
-			break;
 		default:
 			rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
 			return ERROR;
@@ -808,8 +791,6 @@ static int32_t ICC_Async_SetParity (struct s_reader * reader, uint16_t parity)
 			rdr_debug_mask(reader, D_ATR, "Setting right parity");
 			call (IO_Serial_SetParity (reader, parity));
 		break;
-		case R_INTERNAL:
-			return OK;
 		default:
 			rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
 			return ERROR;
@@ -834,10 +815,8 @@ static int32_t SetRightParity (struct s_reader * reader)
 		return OK;
 	}
 
-#if defined(WITH_COOLAPI) || defined(WITH_AZBOX)
-	if (reader->typ != R_INTERNAL)
-#endif
-            IO_Serial_Flush(reader);
+	// FIXME: Remove when R_MOUSE is converted
+	IO_Serial_Flush(reader);
 	return OK;
 }
 
@@ -851,7 +830,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 		I = 0;
 
 	//set clock speed to max if internal reader
-	if((reader->typ > R_MOUSE && reader->crdr.active == 0) || reader->crdr.max_clock_speed==1)
+	if (reader->crdr.max_clock_speed==1)
 		if (reader->mhz == 357 || reader->mhz == 358) //no overclocking
 			reader->mhz = atr_fs_table[FI] / 10000; //we are going to clock the card to this nominal frequency
 

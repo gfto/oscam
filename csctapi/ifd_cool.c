@@ -236,4 +236,14 @@ int32_t Cool_Close (struct s_reader *reader)
 	NULLFREE(reader->spec_dev);
 	return OK;
 }
+
+void cardreader_internal_cool(struct s_cardreader *crdr)
+{
+	crdr->desc         = "internal";
+	crdr->typ          = R_INTERNAL;
+	crdr->skip_extra_atr_parsing  = 1;
+	crdr->max_clock_speed = 1;
+	crdr->reader_init  = Cool_Init;
+}
+
 #endif

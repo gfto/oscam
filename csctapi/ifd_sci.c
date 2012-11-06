@@ -287,4 +287,27 @@ int32_t Sci_FastReset (struct s_reader *reader, ATR * atr)
 
 	return ret;
 }
+
+static int32_t Sci_Init(struct s_reader *reader) {
+	int flags = O_RDWR | O_NOCTTY;
+#if defined(__SH4__) || defined(STB04SCI)
+	flags |= O_NONBLOCK;
+#endif
+	reader->handle = open (reader->device, flags);
+	if (reader->handle < 0) {
+		rdr_log(reader, "ERROR: Opening device %s (errno=%d %s)", reader->device, errno, strerror(errno));
+		return ERROR;
+	}
+	return OK;
+}
+
+void cardreader_internal_sci(struct s_cardreader *crdr)
+{
+	crdr->desc         = "internal";
+	crdr->typ          = R_INTERNAL;
+	crdr->flush        = 1;
+	crdr->max_clock_speed = 1;
+	crdr->reader_init  = Sci_Init;
+}
+
 #endif
