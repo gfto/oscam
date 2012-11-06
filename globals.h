@@ -702,6 +702,7 @@ struct s_cardreader
 										uint16_t *cta_lr,
 										int32_t l);
 	void			(*display_msg)(struct s_reader *, char *msg);
+	void			(*set_transmit_timeout)(struct s_reader *);
 	int32_t			typ; 				// fixme: workaround, remove when all old code is converted
 
 	int8_t			max_clock_speed; 	// 1 for reader->typ > R_MOUSE

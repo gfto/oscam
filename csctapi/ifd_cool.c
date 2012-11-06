@@ -243,6 +243,12 @@ static int32_t cool_write_settings2(struct s_reader *reader, uint32_t EGT, uint3
 	return OK;
 }
 
+static void cool_set_transmit_timeout(struct s_reader *reader)
+{
+	rdr_debug_mask(reader, D_DEVICE, "init done - modifying timeout for coolstream internal device %s", reader->device);
+	Cool_Set_Transmit_Timeout(reader, 1);
+}
+
 void cardreader_internal_cool(struct s_cardreader *crdr)
 {
 	crdr->desc         = "internal";
@@ -256,6 +262,7 @@ void cardreader_internal_cool(struct s_cardreader *crdr)
 	crdr->receive      = Cool_Receive;
 	crdr->close        = Cool_Close;
 	crdr->write_settings2 = cool_write_settings2;
+	crdr->set_transmit_timeout = cool_set_transmit_timeout;
 }
 
 #endif

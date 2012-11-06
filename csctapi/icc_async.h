@@ -53,6 +53,7 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, unsigned cha
 int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, unsigned char * buffer, uint32_t delay, uint32_t timeout);
 
 void ICC_Async_DisplayMsg(struct s_reader *, char *msg);
+void ICC_Set_Transmit_Timeout(struct s_reader *);
 
 #endif /* _ICC_ASYNC_ */
 

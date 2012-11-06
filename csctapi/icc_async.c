@@ -456,6 +456,12 @@ void ICC_Async_DisplayMsg(struct s_reader *reader, char *msg) {
 		reader->crdr.display_msg(reader, msg);
 }
 
+void ICC_Set_Transmit_Timeout(struct s_reader *reader)
+{
+	if (reader->crdr.set_transmit_timeout)
+		reader->crdr.set_transmit_timeout(reader);
+}
+
 static uint32_t ICC_Async_GetClockRate (int32_t cardmhz)
 {
 	switch (cardmhz) {

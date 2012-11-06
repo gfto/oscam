@@ -246,13 +246,7 @@ void cardreader_do_reset(struct s_reader *reader)
         reader->card_status = CARD_INSERTED;
         do_emm_from_file(reader);
 		ICC_Async_DisplayMsg(reader, "AOK");
-
-#ifdef WITH_COOLAPI
-	if (reader->typ == R_INTERNAL) {
-		rdr_debug_mask(reader, D_DEVICE, "init done - modifying timeout for coolstream internal device %s", reader->device);
-		Cool_Set_Transmit_Timeout(reader, 1);
-	}
-#endif
+		ICC_Set_Transmit_Timeout(reader);
       }
 
 	return;
