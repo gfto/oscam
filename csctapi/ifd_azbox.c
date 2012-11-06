@@ -89,7 +89,7 @@ int32_t Azbox_Reset(struct s_reader *reader, ATR *atr)
    return OK;
 }
 
-int32_t Azbox_Transmit(struct s_reader *reader, unsigned char *buffer, uint32_t size)
+int32_t Azbox_Transmit(struct s_reader *reader, unsigned char *buffer, uint32_t size, uint32_t UNUSED(delay), uint32_t UNUSED(timeout))
 {
   if (write(reader->handle, buffer, size) != (ssize_t)size)
     return 0;
@@ -97,7 +97,7 @@ int32_t Azbox_Transmit(struct s_reader *reader, unsigned char *buffer, uint32_t 
   return OK;
 }
 
-int32_t Azbox_Receive(struct s_reader *reader, unsigned char *buffer, uint32_t size)
+int32_t Azbox_Receive(struct s_reader *reader, unsigned char *buffer, uint32_t size, uint32_t UNUSED(delay), uint32_t UNUSED(timeout))
 {
   if (read(reader->handle, buffer, size) != (ssize_t)size)
     return 0;
@@ -121,5 +121,7 @@ void cardreader_internal_azbox(struct s_cardreader *crdr)
 	crdr->reader_init  = Azbox_Init;
 	crdr->get_status   = Azbox_GetStatus;
 	crdr->activate     = Azbox_Reset;
+	crdr->transmit     = Azbox_Transmit;
+	crdr->receive      = Azbox_Receive;
 }
 #endif

@@ -377,15 +377,6 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, unsigned cha
 		case R_MOUSE:
 			ret = Phoenix_Transmit (reader, sent, size, delay, timeout);
 			break;
-		case R_INTERNAL:
-#if defined(WITH_COOLAPI)
-			ret = Cool_Transmit(reader, sent, size);
-#elif defined(WITH_AZBOX)
-			ret = Azbox_Transmit(reader, sent, size);
-#else
-			ret = Phoenix_Transmit (reader, sent, size, delay, timeout);
-#endif
-			break;
 		default:
 			rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
 			return ERROR;
@@ -421,15 +412,6 @@ int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, unsigned char
 		case R_DB2COM2:
 		case R_MOUSE:
 			ret = Phoenix_Receive (reader, data, size, delay, timeout);
-			break;
-		case R_INTERNAL:
-#if defined(WITH_COOLAPI)
-			ret = Cool_Receive(reader, data, size);
-#elif defined(WITH_AZBOX)
-			ret = Azbox_Receive(reader, data, size);
-#else
-			ret = Phoenix_Receive (reader, data, size, delay, timeout);
-#endif
 			break;
 		default:
 			rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);

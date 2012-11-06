@@ -10,6 +10,7 @@
 #include "../oscam-time.h"
 
 #include "atr.h"
+#include "ifd_phoenix.h"
 #include "ifd_sci.h"
 #include "ifd_sci_global.h"
 #include "ifd_sci_ioctl.h"
@@ -323,6 +324,8 @@ void cardreader_internal_sci(struct s_cardreader *crdr)
 	crdr->reader_init  = Sci_Init;
 	crdr->get_status   = Sci_GetStatus;
 	crdr->activate     = sci_activate;
+	crdr->transmit     = Phoenix_Transmit;
+	crdr->receive      = Phoenix_Receive;
 }
 
 #endif

@@ -172,7 +172,7 @@ int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
 	}
 }
 
-int32_t Cool_Transmit (struct s_reader *reader, unsigned char * sent, uint32_t size)
+int32_t Cool_Transmit (struct s_reader *reader, unsigned char * sent, uint32_t size, uint32_t UNUSED(delay), uint32_t UNUSED(timeout))
 {
 	specdev()->cardbuflen = 256;//it needs to know max buffer size to respond?
 
@@ -183,7 +183,7 @@ int32_t Cool_Transmit (struct s_reader *reader, unsigned char * sent, uint32_t s
 	return OK;
 }
 
-int32_t Cool_Receive (struct s_reader *reader, unsigned char * data, uint32_t size)
+int32_t Cool_Receive (struct s_reader *reader, unsigned char * data, uint32_t size, uint32_t UNUSED(delay), uint32_t UNUSED(timeout))
 {
 	if (size > specdev()->cardbuflen)
 		size = specdev()->cardbuflen; //never read past end of buffer
@@ -246,6 +246,8 @@ void cardreader_internal_cool(struct s_cardreader *crdr)
 	crdr->reader_init  = Cool_Init;
 	crdr->get_status   = Cool_GetStatus;
 	crdr->activate     = Cool_Reset;
+	crdr->transmit     = Cool_Transmit;
+	crdr->receive      = Cool_Receive;
 }
 
 #endif
