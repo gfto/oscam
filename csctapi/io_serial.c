@@ -55,8 +55,6 @@
 
 static int32_t IO_Serial_Bitrate(int32_t bitrate);
 
-bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_us, uint32_t timeout_us);
-
 static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, uint32_t timeout_us);
 
 void IO_Serial_Ioctl_Lock(struct s_reader * reader, int32_t flag)

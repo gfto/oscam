@@ -83,24 +83,17 @@ static int32_t smargo_init(struct s_reader *reader) {
 		return ERROR;
 	}
 
-	// Init the serial port to something valid, if not the smargo_set_settings will not work very well 
-	struct termios newtio;
-	memset (&newtio, 0, sizeof (newtio));
-
-	cfsetospeed(&newtio, B230400);
-	cfsetispeed(&newtio, B230400);
-	
-	newtio.c_cflag &= ~CSIZE;
-	newtio.c_cflag |= CS8;
-
-	if (tcsetattr (reader->handle, TCSANOW, &newtio) < 0)  // set terminal attributes.
-		return ERROR;
+	int32_t mctl;
+	if (ioctl (reader->handle, TIOCMGET, &mctl) >= 0) {  // get reader statusbits
+		mctl &= ~TIOCM_RTS;
+		rdr_debug_mask(reader, D_DEVICE, "Set reader ready to Send");
+		ioctl (reader->handle, TIOCMSET, &mctl);  // set reader ready to send.
+	}
 
 	return OK;
 }
 
-bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_ms, uint32_t timeout_ms);
-int32_t smargo_Serial_Read(struct s_reader * reader, uint32_t timeout, uint32_t size, unsigned char * data, int32_t *read_bytes)
+static int32_t smargo_Serial_Read(struct s_reader * reader, uint32_t timeout, uint32_t size, unsigned char * data, int32_t *read_bytes)
 {
 	unsigned char c;
 	uint32_t count = 0;
@@ -120,7 +113,7 @@ int32_t smargo_Serial_Read(struct s_reader * reader, uint32_t timeout, uint32_t 
 		else
 		{
 			rdr_ddump_mask(reader, D_DEVICE, data, count, "Receiving:");
-			rdr_debug_mask(reader, D_DEVICE, "TIMEOUT in IO_Serial_Read");
+			rdr_debug_mask(reader, D_DEVICE, "Timeout in IO_Serial_Read");
 			*read_bytes=count;
 			return ERROR;
 		}

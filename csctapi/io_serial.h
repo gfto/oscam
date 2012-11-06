@@ -77,5 +77,6 @@ int32_t IO_Serial_SetParity (struct s_reader * reader, unsigned char parity);
 bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout, uint32_t size, unsigned char * data);
 bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t timeout, uint32_t size, const unsigned char * data);
 void IO_Serial_Sendbreak (struct s_reader * reader, int32_t duration);
+bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_us, uint32_t timeout_us);
 
 #endif /* IO_SERIAL */
