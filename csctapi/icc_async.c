@@ -916,7 +916,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 			reader->CWT = 0; // T0 protocol doesnt have char waiting time (used to detect errors within 1 single block of data)
 			reader->BWT = 0; // T0 protocol doesnt have block waiting time (used to detect unresponsive card, this is max time for starting a block answer)
 			
-			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14 && reader->mhz > 600) WWT >>= 1;  // fix for overclocked T14 cards
+			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14 && reader->mhz > 600 && reader->typ != R_INTERNAL) WWT >>= 1;  // fix for overclocked T14 cards on external readers
 			
 			if (reader->typ == R_INTERNAL)
 				rdr_debug_mask(reader, D_IFD, "Protocol: T=%i, WWT=%u, Clockrate=%u",
