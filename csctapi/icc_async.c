@@ -1025,6 +1025,8 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 	if(reader->typ == R_INTERNAL && reader->crdr.active==0) {
 #if defined(WITH_COOLAPI)
 		call (Cool_WriteSettings (reader, reader->BWT, reader->CWT, EGT, BGT));
+#elif defined(WITH_AZBOX)
+		// AZBOX do not have write settings?
 #else
 		uint32_t ETU = 0; // for Irdeto T14 cards, do not set ETU
 		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14)) ETU = F / D; 

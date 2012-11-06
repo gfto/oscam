@@ -91,6 +91,11 @@ override PLUS_TARGET := $(PLUS_TARGET)-stapi
 CONFIG_WITH_STAPI=y
 endif
 
+# FIXME: That is a hack until proper card reader configuration is added
+ifeq ($(CONFIG_WITH_CARDREADER),y)
+CONFIG_WITH_SCI=y
+endif
+
 DEFAULT_COOLAPI_FLAGS = -DWITH_COOLAPI
 DEFAULT_COOLAPI_LIB = -lnxp -lrt
 ifdef USE_COOLAPI
@@ -100,6 +105,7 @@ COOLAPI_LDFLAGS = $(DEFAULT_COOLAPI_FLAGS)
 COOLAPI_LIB = $(DEFAULT_COOLAPI_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-coolapi
 CONFIG_WITH_COOLAPI=y
+CONFIG_WITH_SCI=n
 endif
 
 DEFAULT_AZBOX_FLAGS = -DWITH_AZBOX
@@ -111,6 +117,7 @@ AZBOX_LDFLAGS = $(DEFAULT_AZBOX_FLAGS)
 AZBOX_LIB = $(DEFAULT_AZBOX_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-azbox
 CONFIG_WITH_AZBOX=y
+CONFIG_WITH_SCI=n
 endif
 
 DEFAULT_LIBCRYPTO_FLAGS = -DWITH_LIBCRYPTO
@@ -254,7 +261,7 @@ SRC-$(CONFIG_WITH_CARDREADER) += csctapi/ifd_mp35.c
 SRC-$(CONFIG_WITH_PCSC) += csctapi/ifd_pcsc.c
 SRC-$(CONFIG_WITH_CARDREADER) += csctapi/ifd_phoenix.c
 SRC-$(CONFIG_WITH_CARDREADER) += csctapi/ifd_sc8in1.c
-SRC-$(CONFIG_WITH_CARDREADER) += csctapi/ifd_sci.c
+SRC-$(CONFIG_WITH_SCI) += csctapi/ifd_sci.c
 SRC-$(CONFIG_WITH_CARDREADER) += csctapi/ifd_smargo.c
 SRC-$(CONFIG_WITH_LIBUSB) += csctapi/ifd_smartreader.c
 SRC-$(CONFIG_WITH_STAPI) += csctapi/ifd_stapi.c
