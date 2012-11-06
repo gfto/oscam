@@ -843,7 +843,7 @@ static int32_t SetRightParity (struct s_reader * reader)
 
 static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, uint32_t D, unsigned char N, uint16_t deprecated)
 {
-	uint32_t I, F, BGT, edc, GT = 0, WWT = 0, EGT = 0;
+	uint32_t I, F, BGT = 0, edc, GT = 0, WWT = 0, EGT = 0;
 	unsigned char wi = 0;
 
 	//set the amps and the volts according to ATR
@@ -1011,10 +1011,14 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 	}//switch
 	SetRightParity (reader); // some reader devices need to get set the right parity
 
+	uint32_t ETU = 0; // for Irdeto T14 cards, do not set ETU
+	if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14)) ETU = F / D;
 	if (reader->crdr.write_settings) {
-		uint32_t ETU = 0; // for Irdeto T14 cards, do not set ETU
-		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14)) ETU = F / D;
 		call(reader->crdr.write_settings(reader, ETU, EGT, 5, I, (uint16_t) F, (unsigned char)D, N));
+	} else if (reader->crdr.write_settings2) {
+		call(reader->crdr.write_settings2(reader, EGT, BGT));
+	} else if (reader->crdr.write_settings3) {
+		call(reader->crdr.write_settings3(reader, ETU, WWT, (unsigned char)I));
 	}
 
   //write settings to internal device

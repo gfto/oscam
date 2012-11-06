@@ -677,6 +677,7 @@ struct s_cardreader
 	void			(*unlock)(struct s_reader *);
 	int32_t			(*close)(struct s_reader*);
 	int32_t			(*set_parity)(struct s_reader*, uchar parity);
+	// FIXME: All parameters passed to write_settingsX should be put in a struct
 	int32_t			(*write_settings)(struct s_reader*,
 										uint32_t ETU,
 										uint32_t EGT,
@@ -685,6 +686,10 @@ struct s_cardreader
 										uint16_t Fi,
 										unsigned char Di,
 										unsigned char Ni);
+	// FIXME: write_settings2 is used by coolstream reader
+	int32_t			(*write_settings2)(struct s_reader *, uint32_t EGT, uint32_t BGT);
+	// FIXME: write_settings3 is used by sci reader
+	int32_t			(*write_settings3)(struct s_reader *, uint32_t ETU, uint32_t WWT, uint32_t I);
 	int32_t			(*set_protocol)(struct s_reader*,
 										unsigned char * params,
 										uint32_t *length,
