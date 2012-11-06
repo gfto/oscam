@@ -462,6 +462,15 @@ void ICC_Set_Transmit_Timeout(struct s_reader *reader)
 		reader->crdr.set_transmit_timeout(reader);
 }
 
+int32_t ICC_Async_Reset(struct s_reader *reader, struct s_ATR *atr,
+	int32_t (*rdr_activate_card)(struct s_reader *, struct s_ATR *, uint16_t deprecated),
+	int32_t (*rdr_get_cardsystem)(struct s_reader *, struct s_ATR *))
+{
+	if (!reader->crdr.do_reset)
+		return 0;
+	return reader->crdr.do_reset(reader, atr, rdr_activate_card, rdr_get_cardsystem);
+}
+
 static uint32_t ICC_Async_GetClockRate (int32_t cardmhz)
 {
 	switch (cardmhz) {

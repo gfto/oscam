@@ -54,6 +54,10 @@ int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, unsigned char
 
 void ICC_Async_DisplayMsg(struct s_reader *, char *msg);
 void ICC_Set_Transmit_Timeout(struct s_reader *);
+int32_t ICC_Async_Reset(struct s_reader *, struct s_ATR *,
+	int32_t (*rdr_activate_card)(struct s_reader *, struct s_ATR *, uint16_t deprecated),
+	int32_t (*rdr_get_cardsystem)(struct s_reader *, struct s_ATR *)
+);
 
 #endif /* _ICC_ASYNC_ */
 

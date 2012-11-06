@@ -703,6 +703,11 @@ struct s_cardreader
 										int32_t l);
 	void			(*display_msg)(struct s_reader *, char *msg);
 	void			(*set_transmit_timeout)(struct s_reader *);
+
+	int32_t			(*do_reset)(struct s_reader *, struct s_ATR *,
+										int32_t (*rdr_activate_card)(struct s_reader *, struct s_ATR *, uint16_t deprecated),
+										int32_t (*rdr_get_cardsystem)(struct s_reader *, struct s_ATR *));
+
 	int32_t			typ; 				// fixme: workaround, remove when all old code is converted
 
 	int8_t			max_clock_speed; 	// 1 for reader->typ > R_MOUSE

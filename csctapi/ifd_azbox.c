@@ -112,6 +112,30 @@ int32_t Azbox_Close(struct s_reader *UNUSED(reader))
   return OK;
 }
 
+int32_t Azbox_do_reset(struct s_reader *reader, struct s_ATR *atr,
+	int32_t (*rdr_activate_card)(struct s_reader *, struct s_ATR *, uint16_t deprecated),
+	int32_t (*rdr_get_cardsystem)(struct s_reader *, struct s_ATR *))
+{
+	int32_t ret = 0;
+	int32_t i;
+	if (reader->azbox_mode != -1) {
+		Azbox_SetMode(reader, reader->azbox_mode);
+		if (!rdr_activate_card(reader, atr, 0))
+			return -1;
+		ret = rdr_get_cardsystem(reader, atr);
+	} else {
+		for (i = 0; i < AZBOX_MODES; i++) {
+			Azbox_SetMode(reader, i);
+			if (!rdr_activate_card(reader, atr, 0))
+				return -1;
+			ret = rdr_get_cardsystem(reader, atr);
+			if (ret)
+				break;
+		}
+	}
+	return ret;
+}
+
 void cardreader_internal_azbox(struct s_cardreader *crdr)
 {
 	crdr->desc         = "internal";
@@ -125,5 +149,6 @@ void cardreader_internal_azbox(struct s_cardreader *crdr)
 	crdr->receive      = Azbox_Receive;
 	crdr->close        = Azbox_Close;
 	// crdr->write_settings3 = sci_write_settings3; // FIXME: before conversion Azbox support used Sci_WriteSettings code path
+	crdr->do_reset     = Azbox_do_reset;
 }
 #endif

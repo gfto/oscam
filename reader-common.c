@@ -201,37 +201,24 @@ void cardreader_do_reset(struct s_reader *reader)
 {
   reader_nullcard(reader);
   ATR atr;
-  uint16_t ret = 0;
-#ifdef WITH_AZBOX
-  int32_t i;
-  if (reader->typ == R_INTERNAL) {
-    if (reader->azbox_mode != -1) {
-      Azbox_SetMode(reader, reader->azbox_mode);
-      if (!reader_activate_card(reader, &atr, 0)) return;
-      ret = reader_get_cardsystem(reader, &atr);
-    } else {
-      for (i = 0; i < AZBOX_MODES; i++) {
-        Azbox_SetMode(reader, i);
-        if (!reader_activate_card(reader, &atr, 0)) return;
-        ret = reader_get_cardsystem(reader, &atr);
-        if (ret)
-          break;
-      }
-    }
-  } else {
-#endif
-  uint16_t deprecated;
-	for (deprecated = reader->deprecated; deprecated < 2; deprecated++) {
-		if (!reader_activate_card(reader, &atr, deprecated)) break;
-		ret = reader_get_cardsystem(reader, &atr);
-		if (ret)
-			break;
-		if (!deprecated)
-			rdr_log(reader, "Normal mode failed, reverting to Deprecated Mode");
+	int32_t ret = 0;
+
+	ret = ICC_Async_Reset(reader, &atr, reader_activate_card, reader_get_cardsystem);
+
+	if (ret == -1)
+		return;
+
+	if (ret == 0) {
+		uint16_t deprecated;
+		for (deprecated = reader->deprecated; deprecated < 2; deprecated++) {
+			if (!reader_activate_card(reader, &atr, deprecated)) break;
+			ret = reader_get_cardsystem(reader, &atr);
+			if (ret)
+				break;
+			if (!deprecated)
+				rdr_log(reader, "Normal mode failed, reverting to Deprecated Mode");
+		}
 	}
-#ifdef WITH_AZBOX
-  }
-#endif
 
  if (!ret)
       {
