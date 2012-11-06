@@ -301,6 +301,19 @@ static int32_t Sci_Init(struct s_reader *reader) {
 	return OK;
 }
 
+static int32_t sci_activate(struct s_reader *reader, ATR *atr)
+{
+	if (!reader->ins7e11_fast_reset) {
+		call (Sci_Activate(reader));
+		call (Sci_Reset(reader, atr));
+	} else {
+		rdr_log(reader, "Doing fast reset");
+		call (Sci_FastReset(reader, atr));
+	}
+	return OK;
+}
+
+
 void cardreader_internal_sci(struct s_cardreader *crdr)
 {
 	crdr->desc         = "internal";
@@ -309,6 +322,7 @@ void cardreader_internal_sci(struct s_cardreader *crdr)
 	crdr->max_clock_speed = 1;
 	crdr->reader_init  = Sci_Init;
 	crdr->get_status   = Sci_GetStatus;
+	crdr->activate     = sci_activate;
 }
 
 #endif

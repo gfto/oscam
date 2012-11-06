@@ -230,22 +230,6 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 			case R_MOUSE:
 				call(Phoenix_Reset(reader, atr));
 				break;
-			case R_INTERNAL:
-#if defined(WITH_COOLAPI)
-				call (Cool_Reset(reader, atr));
-#elif defined(WITH_AZBOX)
-				call (Azbox_Reset(reader, atr));
-#else
-				if (!reader->ins7e11_fast_reset){
-					call (Sci_Activate(reader));
-					call (Sci_Reset(reader, atr));
-				}
-				else {
-					rdr_log(reader, "Doing fast reset");
-					call (Sci_FastReset(reader, atr));
-				}
-#endif
-				break;
 			default:
 				rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
 				return ERROR;
