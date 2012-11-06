@@ -308,6 +308,7 @@ void cardreader_internal_sci(struct s_cardreader *crdr)
 	crdr->flush        = 1;
 	crdr->max_clock_speed = 1;
 	crdr->reader_init  = Sci_Init;
+	crdr->get_status   = Sci_GetStatus;
 }
 
 #endif

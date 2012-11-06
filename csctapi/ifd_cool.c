@@ -244,6 +244,7 @@ void cardreader_internal_cool(struct s_cardreader *crdr)
 	crdr->skip_extra_atr_parsing  = 1;
 	crdr->max_clock_speed = 1;
 	crdr->reader_init  = Cool_Init;
+	crdr->get_status   = Cool_GetStatus;
 }
 
 #endif

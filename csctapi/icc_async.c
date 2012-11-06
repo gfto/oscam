@@ -193,15 +193,6 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 		case R_MOUSE:
 			call (Phoenix_GetStatus(reader, &in));
 			break;
-		case R_INTERNAL:
-#if defined(WITH_COOLAPI)
-			call (Cool_GetStatus(reader, &in));
-#elif defined(WITH_AZBOX)
-			call(Azbox_GetStatus(reader, &in));
-#else
-			call(Sci_GetStatus(reader, &in));
-#endif
-			break;
 		default:
 			rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
 			return ERROR;
