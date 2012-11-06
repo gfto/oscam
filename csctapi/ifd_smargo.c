@@ -184,22 +184,14 @@ static int32_t smargo_reset(struct s_reader *reader, ATR *atr) {
 	return ret;
 }
 
-static int32_t smargo_receive(struct s_reader *reader, unsigned char *data, uint32_t size, uint32_t delay, uint32_t timeout) {
-	return Phoenix_Receive(reader, data, size, delay, timeout);
-}
-
-static int32_t smargo_transmit(struct s_reader *reader, unsigned char *sent, uint32_t size, uint32_t delay, uint32_t timeout) {
-	return Phoenix_Transmit(reader, sent, size, delay, timeout);
-}
-
 void cardreader_smargo(struct s_cardreader *crdr) 
 {
 	crdr->desc		= "smargo";
 	crdr->reader_init	= smargo_init;
 	crdr->get_status	= Phoenix_GetStatus;
 	crdr->activate	= smargo_reset;
-	crdr->transmit	= smargo_transmit;
-	crdr->receive		= smargo_receive;
+	crdr->transmit	= Phoenix_Transmit;
+	crdr->receive		= Phoenix_Receive;
 	crdr->close		= Phoenix_Close;
 	crdr->write_settings = smargo_writesettings;
 	crdr->typ		= R_MOUSE;

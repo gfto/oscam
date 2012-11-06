@@ -232,14 +232,6 @@ static int32_t mp35_init(struct s_reader *reader) {
   return OK;
 }
 
-static int32_t mp35_receive(struct s_reader *reader, unsigned char *data, uint32_t size, uint32_t delay, uint32_t timeout) {
-  return Phoenix_Receive(reader, data, size, delay, timeout);
-}
-
-static int32_t mp35_transmit(struct s_reader *reader, unsigned char *sent, uint32_t size, uint32_t delay, uint32_t timeout) {
-  return Phoenix_Transmit(reader, sent, size, delay, timeout);
-}
-
 void cardreader_mp35(struct s_cardreader *crdr)
 {
   crdr->desc         = "mp35";
@@ -250,8 +242,8 @@ void cardreader_mp35(struct s_cardreader *crdr)
   crdr->reader_init  = mp35_init;
   crdr->get_status   = Phoenix_GetStatus;
   crdr->activate     = Phoenix_Reset;
-  crdr->transmit     = mp35_transmit;
-  crdr->receive      = mp35_receive;
+  crdr->transmit     = Phoenix_Transmit;
+  crdr->receive      = Phoenix_Receive;
   crdr->close        = mp35_close;
   crdr->set_parity   = IO_Serial_SetParity;
   crdr->set_baudrate = Phoenix_SetBaudrate;
