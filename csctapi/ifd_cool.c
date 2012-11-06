@@ -248,6 +248,7 @@ void cardreader_internal_cool(struct s_cardreader *crdr)
 	crdr->activate     = Cool_Reset;
 	crdr->transmit     = Cool_Transmit;
 	crdr->receive      = Cool_Receive;
+	crdr->close        = Cool_Close;
 }
 
 #endif

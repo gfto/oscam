@@ -314,6 +314,11 @@ static int32_t sci_activate(struct s_reader *reader, ATR *atr)
 	return OK;
 }
 
+static int32_t Sci_Close(struct s_reader *reader) {
+	Sci_Deactivate(reader);
+	call (Phoenix_Close(reader));
+	return OK;
+}
 
 void cardreader_internal_sci(struct s_cardreader *crdr)
 {
@@ -326,6 +331,7 @@ void cardreader_internal_sci(struct s_cardreader *crdr)
 	crdr->activate     = sci_activate;
 	crdr->transmit     = Phoenix_Transmit;
 	crdr->receive      = Phoenix_Receive;
+	crdr->close        = Sci_Close;
 }
 
 #endif

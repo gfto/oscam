@@ -123,5 +123,6 @@ void cardreader_internal_azbox(struct s_cardreader *crdr)
 	crdr->activate     = Azbox_Reset;
 	crdr->transmit     = Azbox_Transmit;
 	crdr->receive      = Azbox_Receive;
+	crdr->close        = Azbox_Close;
 }
 #endif

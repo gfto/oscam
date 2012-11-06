@@ -442,17 +442,6 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 		case R_MOUSE:
 			call (Phoenix_Close(reader));
 			break;
-		case R_INTERNAL:
-#if defined(WITH_COOLAPI)
-			call (Cool_Close(reader));
-#elif defined(WITH_AZBOX)
-			call (Azbox_Close(reader));
-#else
-			/* Dectivate ICC */
-			Sci_Deactivate(reader);
-			call (Phoenix_Close(reader));
-#endif
-			break;
 		default:
 			rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
 			return ERROR;
