@@ -237,6 +237,12 @@ int32_t Cool_Close (struct s_reader *reader)
 	return OK;
 }
 
+static int32_t cool_write_settings2(struct s_reader *reader, uint32_t EGT, uint32_t BGT)
+{
+	call (Cool_WriteSettings (reader, reader->BWT, reader->CWT, EGT, BGT));
+	return OK;
+}
+
 void cardreader_internal_cool(struct s_cardreader *crdr)
 {
 	crdr->desc         = "internal";
@@ -249,6 +255,7 @@ void cardreader_internal_cool(struct s_cardreader *crdr)
 	crdr->transmit     = Cool_Transmit;
 	crdr->receive      = Cool_Receive;
 	crdr->close        = Cool_Close;
+	crdr->write_settings2 = cool_write_settings2;
 }
 
 #endif

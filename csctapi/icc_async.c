@@ -946,25 +946,6 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 		call(reader->crdr.write_settings3(reader, ETU, WWT, (unsigned char)I));
 	}
 
-  //write settings to internal device
-	if(reader->typ == R_INTERNAL && reader->crdr.active==0) {
-#if defined(WITH_COOLAPI)
-		call (Cool_WriteSettings (reader, reader->BWT, reader->CWT, EGT, BGT));
-#elif defined(WITH_AZBOX)
-		// AZBOX do not have write settings?
-#else
-		uint32_t ETU = 0; // for Irdeto T14 cards, do not set ETU
-		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14)) ETU = F / D; 
-		if (reader->mhz > 2000){ // only for dreambox internal readers  
-			//EGT = 0; // communicating guardtime is only slowing card ecm responses down. its not needed with internal readers, the drivers already take care of this!
-			call (Sci_WriteSettings (reader, reader->protocol_type, reader->divider, ETU, WWT, reader->CWT, reader->BWT, 0, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
-		}
-		else { // all other brand boxes than dreamboxes! 
-			//EGT = 0; // dont communicate guardtime -> slowing down card ecm responses!
-			call (Sci_WriteSettings (reader, reader->protocol_type, reader->mhz / 100, ETU, WWT, reader->CWT, reader->BWT, 0, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
-		}
-#endif //WITH_COOLAPI
-	}
 	if (reader->typ == R_INTERNAL){
 			rdr_log(reader, "ATR Fsmax is: %i Mhz, clocking card to %.2f (nearest possible to wanted user cardspeed of %.2f Mhz)",
 				atr_fs_table[FI] / 1000000,	(float) reader->cardmhz / 100, (float) reader->cardmhz / 100);

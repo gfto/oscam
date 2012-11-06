@@ -124,5 +124,6 @@ void cardreader_internal_azbox(struct s_cardreader *crdr)
 	crdr->transmit     = Azbox_Transmit;
 	crdr->receive      = Azbox_Receive;
 	crdr->close        = Azbox_Close;
+	// crdr->write_settings3 = sci_write_settings3; // FIXME: before conversion Azbox support used Sci_WriteSettings code path
 }
 #endif
