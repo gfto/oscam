@@ -21,13 +21,13 @@
 #define OK 		0 
 #define ERROR 1
 
-int32_t Sci_GetStatus (struct s_reader * reader, int32_t * status)
+static int32_t Sci_GetStatus (struct s_reader * reader, int32_t * status)
 {
 	ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, status);
 	return OK;
 }
 
-int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fly: reading and some low levelchecking at the same time
+static int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fly: reading and some low levelchecking at the same time
 {
 	uint32_t timeout = ATR_TIMEOUT;
 	unsigned char buf[SCI_MAX_ATR_SIZE];
@@ -181,7 +181,7 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 	return OK; // return OK but atr might be softfailing!
 }
 
-int32_t Sci_Reset(struct s_reader * reader, ATR * atr)
+static int32_t Sci_Reset(struct s_reader * reader, ATR * atr)
 {
 	int32_t ret;
 
@@ -224,7 +224,7 @@ int32_t Sci_Reset(struct s_reader * reader, ATR * atr)
 	return ret;
 }
 
-int32_t Sci_WriteSettings (struct s_reader * reader, unsigned char T, uint32_t fs, uint32_t ETU, uint32_t WWT, uint32_t CWT, uint32_t BWT, uint32_t EGT, unsigned char P, unsigned char I)
+static int32_t Sci_WriteSettings (struct s_reader * reader, unsigned char T, uint32_t fs, uint32_t ETU, uint32_t WWT, uint32_t CWT, uint32_t BWT, uint32_t EGT, unsigned char P, unsigned char I)
 {
 	//int32_t n;
 	SCI_PARAMETERS params;
@@ -261,7 +261,7 @@ int32_t Sci_WriteSettings (struct s_reader * reader, unsigned char T, uint32_t f
 #define __IOCTL_CARD_ACTIVATED IOCTL_GET_IS_CARD_ACTIVATED
 #endif
 
-int32_t Sci_Activate (struct s_reader * reader)
+static int32_t Sci_Activate (struct s_reader * reader)
 {
 	rdr_debug_mask(reader, D_IFD, "Activating card");
 	uint32_t in = 1;
@@ -271,14 +271,14 @@ int32_t Sci_Activate (struct s_reader * reader)
 	return OK;
 }
 
-int32_t Sci_Deactivate (struct s_reader * reader)
+static int32_t Sci_Deactivate (struct s_reader * reader)
 {
 	rdr_debug_mask(reader, D_IFD, "Deactivating card");
 	ioctl(reader->handle, IOCTL_SET_DEACTIVATE);	
 	return OK;
 }
 
-int32_t Sci_FastReset (struct s_reader *reader, ATR * atr)
+static int32_t Sci_FastReset (struct s_reader *reader, ATR * atr)
 {
 	int32_t ret;
 	ioctl(reader->handle, IOCTL_SET_RESET, 1);

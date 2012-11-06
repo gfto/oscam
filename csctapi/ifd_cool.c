@@ -27,7 +27,7 @@ struct s_coolstream_reader {
 #define specdev() \
  ((struct s_coolstream_reader *)reader->spec_dev)
 
-int32_t Cool_Init (struct s_reader *reader)
+static int32_t Cool_Init (struct s_reader *reader)
 {
 	char *device = reader->device;
 	int32_t reader_nb = 0;
@@ -85,7 +85,7 @@ static int32_t Cool_SetClockrate (struct s_reader *reader, int32_t mhz)
         return OK;
 }
 
-int32_t Cool_Set_Transmit_Timeout(struct s_reader *reader, uint32_t set)
+static int32_t Cool_Set_Transmit_Timeout(struct s_reader *reader, uint32_t set)
 {
 	//set=0 (init), set=1(after init)
 	if (set) {
@@ -112,7 +112,7 @@ int32_t Cool_Set_Transmit_Timeout(struct s_reader *reader, uint32_t set)
 	return OK;
 }
 
-int32_t Cool_GetStatus (struct s_reader *reader, int32_t * in)
+static int32_t Cool_GetStatus (struct s_reader *reader, int32_t * in)
 {
 	if (cool_kal_opened) {
 		int32_t state;
@@ -132,7 +132,7 @@ int32_t Cool_GetStatus (struct s_reader *reader, int32_t * in)
 	return OK;
 }
 
-int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
+static int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
 {
 	int32_t ret;
 
@@ -171,7 +171,7 @@ int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
 	}
 }
 
-int32_t Cool_Transmit (struct s_reader *reader, unsigned char * sent, uint32_t size, uint32_t UNUSED(delay), uint32_t UNUSED(timeout))
+static int32_t Cool_Transmit (struct s_reader *reader, unsigned char * sent, uint32_t size, uint32_t UNUSED(delay), uint32_t UNUSED(timeout))
 {
 	specdev()->cardbuflen = 256;//it needs to know max buffer size to respond?
 
@@ -182,7 +182,7 @@ int32_t Cool_Transmit (struct s_reader *reader, unsigned char * sent, uint32_t s
 	return OK;
 }
 
-int32_t Cool_Receive (struct s_reader *reader, unsigned char * data, uint32_t size, uint32_t UNUSED(delay), uint32_t UNUSED(timeout))
+static int32_t Cool_Receive (struct s_reader *reader, unsigned char * data, uint32_t size, uint32_t UNUSED(delay), uint32_t UNUSED(timeout))
 {
 	if (size > specdev()->cardbuflen)
 		size = specdev()->cardbuflen; //never read past end of buffer
@@ -193,7 +193,7 @@ int32_t Cool_Receive (struct s_reader *reader, unsigned char * data, uint32_t si
 	return OK;
 }
 
-int32_t Cool_WriteSettings (struct s_reader *reader, uint32_t UNUSED(BWT), uint32_t UNUSED(CWT), uint32_t UNUSED(EGT), uint32_t UNUSED(BGT))
+static int32_t Cool_WriteSettings (struct s_reader *reader, uint32_t UNUSED(BWT), uint32_t UNUSED(CWT), uint32_t UNUSED(EGT), uint32_t UNUSED(BGT))
 {
 	//this code worked with old cnxt_lnx.ko, but prevented nagra cards from working with new cnxt_lnx.ko
 /*	struct
@@ -226,7 +226,7 @@ int32_t Cool_WriteSettings (struct s_reader *reader, uint32_t UNUSED(BWT), uint3
 	return OK;
 }
 
-int32_t Cool_Close (struct s_reader *reader)
+static int32_t Cool_Close (struct s_reader *reader)
 {
 	if (cool_kal_opened) {
 		int32_t ret = cnxt_smc_close (specdev()->handle);
