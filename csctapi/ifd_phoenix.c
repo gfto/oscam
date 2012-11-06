@@ -132,7 +132,7 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 			call (IO_Serial_SetParity (reader, parity[i]));
 
 			ret = ERROR;
-			cs_sleepms(500); //smartreader in mouse mode needs this
+
 			IO_Serial_Ioctl_Lock(reader, 1);
 			if (reader_use_gpio(reader))
 				set_gpio(reader, 0);
@@ -161,19 +161,6 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 			if (ret == OK)
 				break;
 		}
-		IO_Serial_Flush(reader);
-
-/*
-		//PLAYGROUND faking ATR for test purposes only
-		//
-		// sky 919 unsigned char atr_test[] = { 0x3F, 0xFF, 0x13, 0x25, 0x03, 0x10, 0x80, 0x33, 0xB0, 0x0E, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x49, 0x54, 0x02, 0x00, 0x00 };
-		// HD+ unsigned char atr_test[] = { 0x3F, 0xFF, 0x95, 0x00, 0xFF, 0x91, 0x81, 0x71, 0xFE, 0x47, 0x00, 0x44, 0x4E, 0x41, 0x53, 0x50, 0x31, 0x34, 0x32, 0x20, 0x52, 0x65, 0x76, 0x47, 0x43, 0x34, 0x63 };
-		// S02 = irdeto unsigned char atr_test[] = { 0x3B, 0x9F, 0x21, 0x0E, 0x49, 0x52, 0x44, 0x45, 0x54, 0x4F, 0x20, 0x41, 0x43, 0x53, 0x03};
-		// conax unsigned char atr_test[] = { 0x3B, 0x24, 0x00, 0x30, 0x42, 0x30, 0x30 };
-		//cryptoworks 	unsigned char atr_test[] = { 0x3B, 0x78, 0x12, 0x00, 0x00, 0x65, 0xC4, 0x05, 0xFF, 0x8F, 0xF1, 0x90, 0x00 };
-		ATR_InitFromArray (atr, atr_test, sizeof(atr_test));
-		//END OF PLAYGROUND
-*/
 
 		return ret;
 }
@@ -208,21 +195,8 @@ int32_t Phoenix_SetBaudrate (struct s_reader * reader, uint32_t baudrate)
 	struct termios tio;
 	call (tcgetattr (reader->handle, &tio) != 0);
 	call (IO_Serial_SetBitrate (reader, baudrate, &tio));
-#if !defined(__CYGWIN__)
-	/*
-	* Pause for 200ms as this might help with the PL2303.
-	* Some users reporting that this breaks cygwin, so we exclude this.
-	*/
-        cs_sleepms(200);
-#endif
+
 	call (IO_Serial_SetProperties(reader, tio));
-#if !defined(__CYGWIN__)
-	/*
-	* Pause for 200ms as this might help with the PL2303.
-	* Some users reporting that this breaks cygwin, so we exclude this.
-	*/
-        cs_sleepms(200);
-#endif
 	reader->current_baudrate = baudrate; //so if update fails, reader->current_baudrate is not changed either
 	return OK;
 }
