@@ -11,7 +11,6 @@
 
 #include "atr.h"
 #include "ifd_phoenix.h"
-#include "ifd_sci.h"
 #include "ifd_sci_global.h"
 #include "ifd_sci_ioctl.h"
 #include "io_serial.h"
@@ -26,49 +25,6 @@ int32_t Sci_GetStatus (struct s_reader * reader, int32_t * status)
 {
 	ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, status);
 	return OK;
-}
-
-int32_t Sci_Reset(struct s_reader * reader, ATR * atr)
-{
-	int32_t ret;
-
-	rdr_debug_mask(reader, D_IFD, "Reset internal cardreader!");
-	SCI_PARAMETERS params;
-	
-	memset(&params,0,sizeof(SCI_PARAMETERS));
-	
-	params.ETU = 372; //initial ETU (in iso this parameter F)
-	params.EGT = 3; //initial guardtime should be 0 (in iso this is parameter N)
-	params.fs = 5; //initial cardmhz should be 1 (in iso this is parameter D)
-	params.T = 0;
-	if (reader->mhz > 2000) { // PLL based reader
-		params.ETU = 372;
-		params.EGT = 0;
-		params.fs = (int32_t) (reader->mhz / 100.0 + 0.5); /* calculate divider for 1 MHz  */
-		params.T = 0;
-	}
-	if (reader->mhz == 8300) { /* PLL based reader DM7025 */
-		params.ETU = 372;
-		params.EGT = 0;
-		params.fs = 16; /* read from table setting for 1 MHz:
-		params.fs = 6 for cardmhz = 5.188 Mhz
-		params.fs = 7 for cardmhz = 4.611 MHz
-		params.fs = 8 for cardmhz = 3.953 MHz
-		params.fs = 9 for cardmhz = 3.609 MHz
-		params.fs = 10 for cardmhz = 3.192 MHz
-		params.fs = 11 for cardmhz = 2.965 MHz
-		params.fs = 12 for cardmhz = 2.677 MHz
-		params.fs = 13 for cardmhz = 2.441 MHz
-		params.fs = 14 for cardmhz = 2.306 MHz
-		params.fs = 15 for cardmhz = 2.128 MHz
-		params.fs = 16 for cardmhz = 1.977 MHz */
-		params.T = 0;
-	}
-	ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params);
-	ioctl(reader->handle, IOCTL_SET_RESET, 1);
-	ret = Sci_Read_ATR(reader, atr);
-	ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
-	return ret;
 }
 
 int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fly: reading and some low levelchecking at the same time
@@ -223,6 +179,49 @@ int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on the fl
 		return ERROR;
 	}
 	return OK; // return OK but atr might be softfailing!
+}
+
+int32_t Sci_Reset(struct s_reader * reader, ATR * atr)
+{
+	int32_t ret;
+
+	rdr_debug_mask(reader, D_IFD, "Reset internal cardreader!");
+	SCI_PARAMETERS params;
+
+	memset(&params,0,sizeof(SCI_PARAMETERS));
+
+	params.ETU = 372; //initial ETU (in iso this parameter F)
+	params.EGT = 3; //initial guardtime should be 0 (in iso this is parameter N)
+	params.fs = 5; //initial cardmhz should be 1 (in iso this is parameter D)
+	params.T = 0;
+	if (reader->mhz > 2000) { // PLL based reader
+		params.ETU = 372;
+		params.EGT = 0;
+		params.fs = (int32_t) (reader->mhz / 100.0 + 0.5); /* calculate divider for 1 MHz  */
+		params.T = 0;
+	}
+	if (reader->mhz == 8300) { /* PLL based reader DM7025 */
+		params.ETU = 372;
+		params.EGT = 0;
+		params.fs = 16; /* read from table setting for 1 MHz:
+		params.fs = 6 for cardmhz = 5.188 Mhz
+		params.fs = 7 for cardmhz = 4.611 MHz
+		params.fs = 8 for cardmhz = 3.953 MHz
+		params.fs = 9 for cardmhz = 3.609 MHz
+		params.fs = 10 for cardmhz = 3.192 MHz
+		params.fs = 11 for cardmhz = 2.965 MHz
+		params.fs = 12 for cardmhz = 2.677 MHz
+		params.fs = 13 for cardmhz = 2.441 MHz
+		params.fs = 14 for cardmhz = 2.306 MHz
+		params.fs = 15 for cardmhz = 2.128 MHz
+		params.fs = 16 for cardmhz = 1.977 MHz */
+		params.T = 0;
+	}
+	ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params);
+	ioctl(reader->handle, IOCTL_SET_RESET, 1);
+	ret = Sci_Read_ATR(reader, atr);
+	ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
+	return ret;
 }
 
 int32_t Sci_WriteSettings (struct s_reader * reader, unsigned char T, uint32_t fs, uint32_t ETU, uint32_t WWT, uint32_t CWT, uint32_t BWT, uint32_t EGT, unsigned char P, unsigned char I)

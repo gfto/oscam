@@ -10,8 +10,6 @@
 #include "reader-common.h"
 #include "csctapi/atr.h"
 #include "csctapi/icc_async.h"
-#include "csctapi/ifd_azbox.h"
-#include "csctapi/ifd_cool.h"
 
 extern struct s_cardsystem cardsystems[CS_MAX_MOD];
 

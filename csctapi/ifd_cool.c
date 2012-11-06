@@ -8,8 +8,7 @@
 #include "../extapi/coolapi.h"
 #include "../oscam-string.h"
 #include "../oscam-time.h"
-#include "icc_async.h"
-#include "ifd_cool.h"
+#include "atr.h"
 
 #define OK 0
 #define ERROR 1

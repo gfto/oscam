@@ -1,12 +1,15 @@
 #include"../globals.h"
 
 #if defined(WITH_CARDREADER) && defined(WITH_AZBOX)
+#include "../extapi/openxcas/openxcas_api.h"
+#include "../extapi/openxcas/openxcas_smartcard.h"
 #include "../oscam-time.h"
-#include "icc_async.h"
-#include "ifd_azbox.h"
+#include "atr.h"
 
 #define OK 0
 #define ERROR 1
+
+#define AZBOX_MODES 16
 
 static int32_t sc_mode;
 

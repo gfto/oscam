@@ -29,10 +29,7 @@
 #include "icc_async.h"
 #include "protocol_t0.h"
 #include "io_serial.h"
-#include "ifd_cool.h"
 #include "ifd_phoenix.h"
-#include "ifd_sci.h"
-#include "ifd_azbox.h"
 
 #define OK 0
 #define ERROR 1
