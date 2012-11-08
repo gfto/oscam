@@ -61,17 +61,17 @@ static int32_t Cool_Init (struct s_reader *reader)
 
 static int32_t Cool_FastReset (struct s_reader *reader)
 {
-        int32_t n = 40, ret;
-        unsigned char buf[40];
+	int32_t n = ATR_MAX_SIZE, ret;
+	unsigned char buf[ATR_MAX_SIZE];
 
-        //reset card
-        ret = cnxt_smc_reset_card (specdev()->handle, ATR_TIMEOUT, NULL, NULL);
-        coolapi_check_error("cnxt_smc_reset_card", ret);
-        cs_sleepms(50);
-        ret = cnxt_smc_get_atr (specdev()->handle, buf, &n);
-        coolapi_check_error("cnxt_smc_get_atr", ret);
+	//reset card
+	ret = cnxt_smc_reset_card (specdev()->handle, ATR_TIMEOUT, NULL, NULL);
+	coolapi_check_error("cnxt_smc_reset_card", ret);
+	cs_sleepms(50);
+	ret = cnxt_smc_get_atr (specdev()->handle, buf, &n);
+	coolapi_check_error("cnxt_smc_get_atr", ret);
 
-    return 0;
+	return OK;
 }
 
 static int32_t Cool_SetClockrate (struct s_reader *reader, int32_t mhz)
