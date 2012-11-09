@@ -143,7 +143,6 @@ void cardreader_internal_azbox(struct s_cardreader *crdr)
 {
 	crdr->desc         = "internal";
 	crdr->typ          = R_INTERNAL;
-	crdr->skip_extra_atr_parsing  = 1;
 	crdr->max_clock_speed = 1;
 	crdr->reader_init  = Azbox_Init;
 	crdr->get_status   = Azbox_GetStatus;
