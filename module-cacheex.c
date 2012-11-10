@@ -331,7 +331,7 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 		}
 	}
 
-	er->grp = cl->grp;
+	er->grp |= cl->grp; //extend group instead overwriting, this fixes some funny not founds and timeouts when using more cacheex readers with different groups
 //	er->ocaid = er->caid;
 	if (er->rc < E_NOTFOUND) //map FOUND to CACHEEX
 		er->rc = E_CACHEEX;
