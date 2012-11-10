@@ -313,20 +313,12 @@ bool IO_Serial_SetParams (struct s_reader * reader, uint32_t bitrate, uint32_t b
 
 bool IO_Serial_SetProperties (struct s_reader * reader, struct termios newtio)
 {
-   if(reader->typ == R_INTERNAL)
-      return OK;
+	if(reader->typ == R_INTERNAL)
+		return OK;
 
 	if (tcsetattr (reader->handle, TCSANOW, &newtio) < 0)  // set terminal attributes.
 		return ERROR;
-		
-	int32_t mctl;
-	rdr_debug_mask(reader, D_DEVICE, "Getting readerstatus...");
-	if (ioctl (reader->handle, TIOCMGET, &mctl) >= 0) {  // get reader statusbits
-		mctl &= ~TIOCM_RTS;
-		rdr_debug_mask(reader, D_DEVICE, "Set reader ready to Send");
-		ioctl (reader->handle, TIOCMSET, &mctl);  // set reader ready to send.
-	}
-	else rdr_log(reader, "WARNING: Cant get readerstatus!");
+
 	return OK;
 }
 
