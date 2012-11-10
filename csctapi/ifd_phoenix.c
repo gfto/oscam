@@ -62,8 +62,7 @@ static int32_t get_gpio(struct s_reader * reader)
 
 int32_t Phoenix_Init (struct s_reader * reader)
 {
-		if (IO_Serial_InitPnP (reader)) return ERROR;
-		IO_Serial_Flush(reader);
+	IO_Serial_Flush(reader);
 
 	// define reader->gpio number used for card detect and reset. ref to globals.h
 	if (reader_use_gpio(reader))
@@ -80,8 +79,8 @@ int32_t Phoenix_Init (struct s_reader * reader)
 
 	/* Default serial port settings */
 	if (reader->atr[0] == 0) {
-        if(IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, NULL, NULL)) return ERROR;
-		IO_Serial_Flush(reader);
+		if(IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, NULL, NULL)) return ERROR;
+			IO_Serial_Flush(reader);
 	}
 	return OK;
 }
