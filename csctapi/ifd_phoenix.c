@@ -62,6 +62,8 @@ static int32_t get_gpio(struct s_reader * reader)
 
 int32_t Phoenix_Init (struct s_reader * reader)
 {
+	// First set card in reset state, to not change any parameters while communication ongoing
+	IO_Serial_RTS_Set(reader);
 	IO_Serial_Flush(reader);
 
 	// define reader->gpio number used for card detect and reset. ref to globals.h
