@@ -129,9 +129,6 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 		}
 
 		for(i=0; i<3; i++) {
-			IO_Serial_Flush(reader);
-			call (IO_Serial_SetParity (reader, parity[i]));
-
 			ret = ERROR;
 
 			IO_Serial_Ioctl_Lock(reader, 1);
@@ -139,6 +136,9 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 				set_gpio(reader, 0);
 			else
 				IO_Serial_RTS_Set(reader);
+
+			call (IO_Serial_SetParity (reader, parity[i]));
+			IO_Serial_Flush(reader);
 
 			cs_sleepms(50);
 
