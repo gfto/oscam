@@ -387,7 +387,7 @@ void IO_Serial_Flush (struct s_reader * reader)
 {
   unsigned char b;
   tcflush(reader->handle, TCIOFLUSH);
-  while(!IO_Serial_Read(reader, 0, 1000000, 1, &b));
+  while(!IO_Serial_Read(reader, 0, 1, 1, &b));
 }
 
 void IO_Serial_Sendbreak(struct s_reader * reader, int32_t duration)

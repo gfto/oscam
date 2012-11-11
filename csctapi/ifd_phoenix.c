@@ -138,9 +138,9 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 				IO_Serial_RTS_Set(reader);
 
 			call (IO_Serial_SetParity (reader, parity[i]));
-			IO_Serial_Flush(reader);
 
 			cs_sleepms(50);
+			IO_Serial_Flush(reader);
 
 			// felix: set card reset hi (inactive)
 			if (reader_use_gpio(reader))
