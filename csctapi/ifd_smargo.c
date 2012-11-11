@@ -39,25 +39,25 @@ static int32_t smargo_set_settings(struct s_reader *reader, int32_t freq, unsign
 		data[1]=HIBYTE(Fi);
 		data[2]=LOBYTE(Fi);
 		data[3]=Di;
-		IO_Serial_Write(reader, 0, 1000000, 4, data);
+		IO_Serial_Write(reader, 0, 1000, 4, data);
 	}
 
 	data[0]=0x02;
 	data[1]=HIBYTE(freqk);
 	data[2]=LOBYTE(freqk);
-	IO_Serial_Write(reader, 0, 1000000, 3, data);
+	IO_Serial_Write(reader, 0, 1000, 3, data);
 
 	data[0]=0x03;
 	data[1]=Ni;
-	IO_Serial_Write(reader, 0, 1000000, 2, data);
+	IO_Serial_Write(reader, 0, 1000, 2, data);
 
 	data[0]=0x04;
 	data[1]=T;
-	IO_Serial_Write(reader, 0, 1000000, 2, data);
+	IO_Serial_Write(reader, 0, 1000, 2, data);
 
 	data[0]=0x05;
 	data[1]=inv;
-	IO_Serial_Write(reader, 0, 1000000, 2, data);
+	IO_Serial_Write(reader, 0, 1000, 2, data);
 
 	cs_sleepms(DELAY);
 
@@ -78,31 +78,32 @@ static int32_t smargo_writesettings(struct s_reader *reader, uint32_t UNUSED(ETU
 static int32_t smargo_init(struct s_reader *reader) {
 	rdr_log(reader, "smargo init");
 	reader->handle = open (reader->device,  O_RDWR);
+
 	if (reader->handle < 0) {
 		rdr_log(reader, "ERROR: Opening device %s (errno=%d %s)",reader->device, errno, strerror(errno));
 		return ERROR;
 	}
 
-	int32_t mctl;
-	if (ioctl (reader->handle, TIOCMGET, &mctl) >= 0) {  // get reader statusbits
-		mctl &= ~TIOCM_RTS;
-		rdr_debug_mask(reader, D_DEVICE, "Set reader ready to Send");
-		ioctl (reader->handle, TIOCMSET, &mctl);  // set reader ready to send.
-	}
+	if(IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, NULL, NULL))
+		return ERROR;
+	
+	IO_Serial_RTS_Set(reader);
+	IO_Serial_DTR_Set(reader);
+	IO_Serial_Flush(reader);
 
 	return OK;
 }
 
 static int32_t smargo_Serial_Read(struct s_reader * reader, uint32_t timeout, uint32_t size, unsigned char * data, int32_t *read_bytes)
 {
-	unsigned char c;
 	uint32_t count = 0;
-	
-	for (count = 0; count < size ; count++)
+	uint32_t bytes_read = 0;
+
+	for (count = 0; count < size ; count += bytes_read)
 	{
-		if (!IO_Serial_WaitToRead (reader, 0, timeout))
+		if (IO_Serial_WaitToRead (reader, 0, timeout) == OK)
 		{
-			if (read (reader->handle, &c, 1) != 1)
+			if ((bytes_read = read (reader->handle, data + count, size - count)) < 1)
 			{
 				int saved_errno = errno;
 				rdr_ddump_mask(reader, D_DEVICE, data, count, "Receiving:");
@@ -117,12 +118,10 @@ static int32_t smargo_Serial_Read(struct s_reader * reader, uint32_t timeout, ui
 			*read_bytes=count;
 			return ERROR;
 		}
-		data[count] = c;
 	}
 	rdr_ddump_mask(reader, D_DEVICE, data, count, "Receiving:");
 	return OK;
 }
-
 
 static int32_t smargo_reset(struct s_reader *reader, ATR *atr) {
 	rdr_debug_mask(reader, D_IFD, "Smargo: Resetting card");
@@ -172,6 +171,33 @@ static int32_t smargo_reset(struct s_reader *reader, ATR *atr) {
 
 		if (ret == OK)
 			break;
+	}
+
+	int32_t convention;
+
+	ATR_GetConvention (atr, &convention);
+	// If inverse convention, switch here due to if not PTS will fail
+	if (convention == ATR_CONVENTION_INVERSE) {
+		struct termios term;
+		uchar data[4];
+
+		tcgetattr(reader->handle, &term);
+		term.c_cflag &= ~CSIZE;
+		term.c_cflag |= CS5;
+		tcsetattr(reader->handle, TCSANOW, &term);
+
+		cs_sleepms(DELAY);
+
+		data[0]=0x05;
+		data[1]=0x01;
+		IO_Serial_Write(reader, 0, 1000, 2, data);
+
+		cs_sleepms(DELAY);
+
+		tcgetattr(reader->handle, &term);
+		term.c_cflag &= ~CSIZE;
+		term.c_cflag |= CS8;
+		tcsetattr(reader->handle, TCSANOW, &term);
 	}
 
 	return ret;
