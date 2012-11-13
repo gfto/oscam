@@ -1012,11 +1012,6 @@ AAAAAElFTkSuQmCC"
 				<TD COLSPAN=\"2\" class=\"centered\">Label:&nbsp;&nbsp;<input type=\"text\" name=\"label\" value=\"##NEXTREADER##\"></TD>\n\
 				<TD COLSPAN=\"2\" class=\"centered\">Protocol:&nbsp;&nbsp;\n\
 					<select name=\"protocol\">\n\
-						<option>mouse</option>\n\
-						<option>mp35</option>\n\
-						<option>smartreader</option>\n\
-						<option>internal</option>\n\
-						<option>sc8in1</option>\n\
 ##ADDPROTOCOL##\n\
 					</select>\n\
 				</TD>\n\
