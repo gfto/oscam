@@ -423,7 +423,7 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 	struct timeval tv, tv_spent;
 #endif
 	
-	if (((reader->typ != R_INTERNAL && reader->crdr.active==0) || reader->crdr.read_written==1) && reader->written > 0){ // these readers need to read all transmitted chars before they can receive!
+	if (reader->crdr.read_written && reader->written > 0) { // these readers need to read all transmitted chars before they can receive!
 		unsigned char buf[256];
 		rdr_debug_mask(reader, D_DEVICE,"Reading %d echoed transmitted chars...", reader->written); 
 		int32_t n = reader->written;
@@ -524,7 +524,7 @@ bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t timeout
 				else {
 					to_do -= u;
 					errorcount = 0;
-					if ((reader->typ != R_INTERNAL && reader->crdr.active==0) || reader->crdr.read_written==1)
+					if (reader->crdr.read_written)
 						reader->written += u; // these readers echo transmitted chars
 					}
 			}

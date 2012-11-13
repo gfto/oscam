@@ -656,7 +656,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		for (i=0; i<CS_MAX_MOD; i++) {
 			if (cardreaders[i].desc && strcmp(value, cardreaders[i].desc) == 0) {
 				rdr->crdr = cardreaders[i];
-				rdr->crdr.active = 1;
 				rdr->typ = cardreaders[i].typ; //FIXME
 				return;
 			}
