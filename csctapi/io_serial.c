@@ -75,7 +75,7 @@ void IO_Serial_Ioctl_Lock(struct s_reader * reader, int32_t flag)
   }
 }
 
-static bool IO_Serial_DTR_RTS_dbox2(struct s_reader * reader, int32_t * dtr, int32_t * rts)
+bool IO_Serial_DTR_RTS_dbox2(struct s_reader * reader, int32_t * dtr, int32_t * rts)
 {
   int32_t rc;
   uint16_t msr;
@@ -116,6 +116,9 @@ static bool IO_Serial_DTR_RTS_dbox2(struct s_reader * reader, int32_t * dtr, int
 
 bool IO_Serial_DTR_RTS(struct s_reader * reader, int32_t * dtr, int32_t * rts)
 {
+	if (reader->crdr.set_DTS_RTS)
+		return reader->crdr.set_DTS_RTS(reader, dtr, rts);
+	else
 	if ((reader->typ == R_DB2COM1) || (reader->typ == R_DB2COM2))
 		return(IO_Serial_DTR_RTS_dbox2(reader, dtr, rts));
 

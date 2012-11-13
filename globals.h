@@ -708,6 +708,8 @@ struct s_cardreader
 										int32_t (*rdr_activate_card)(struct s_reader *, struct s_ATR *, uint16_t deprecated),
 										int32_t (*rdr_get_cardsystem)(struct s_reader *, struct s_ATR *));
 
+	bool			(*set_DTS_RTS)(struct s_reader *, int32_t *dtr, int32_t *rts);
+
 	int32_t			typ; 				// fixme: workaround, remove when all old code is converted
 
 	int8_t			max_clock_speed; 	// 1 for reader->typ > R_MOUSE
