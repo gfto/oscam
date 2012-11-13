@@ -721,8 +721,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		}
 
-		fprintf(stderr, "WARNING: value '%s' in protocol-line not recognized, assuming MOUSE\n",value);
-		rdr->typ = R_MOUSE;
+		fprintf(stderr, "ERROR: '%s' is unsupported reader protocol!\n", value);
 		return;
 	}
 #ifdef WITH_COOLAPI
