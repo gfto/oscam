@@ -27,11 +27,6 @@
 
 #include "atr.h"
 
-// Multicam defines
-#define DEV_MULTICAM       "/dev/multicam"
-#define MULTICAM_GET_PCDAT 10
-#define MULTICAM_SET_PCDAT 13
-
 /*
  * Exported types definition
  */

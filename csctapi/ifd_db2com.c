@@ -5,6 +5,11 @@
 #include "ifd_phoenix.h"
 #include "io_serial.h"
 
+// Multicam defines
+#define DEV_MULTICAM       "/dev/multicam"
+#define MULTICAM_GET_PCDAT 10
+#define MULTICAM_SET_PCDAT 13
+
 #define OK 0
 #define ERROR 1
 
@@ -32,7 +37,7 @@ bool detect_db2com_reader(struct s_reader *reader)
 	return true;
 }
 
-int32_t db2com_init(struct s_reader *reader)
+static int32_t db2com_init(struct s_reader *reader)
 {
 	if (reader->typ != R_DB2COM1 && reader->typ != R_DB2COM2)
 		detect_db2com_reader(reader);
@@ -55,7 +60,7 @@ int32_t db2com_init(struct s_reader *reader)
 	return OK;
 }
 
-int32_t db2com_get_status(struct s_reader * reader, int32_t *status)
+static int32_t db2com_get_status(struct s_reader * reader, int32_t *status)
 {
 	*status = 0;
 	uint16_t msr=1;
@@ -66,6 +71,45 @@ int32_t db2com_get_status(struct s_reader * reader, int32_t *status)
 	else
 		*status = (msr & 0x0f00) == 0x0f00;
 	IO_Serial_Ioctl_Lock(reader, 0);
+	return OK;
+}
+
+static bool db2com_DTR_RTS(struct s_reader * reader, int32_t * dtr, int32_t * rts)
+{
+	int32_t rc;
+	uint16_t msr;
+	uint16_t rts_bits[2] = { 0x10, 0x800 };
+	uint16_t dtr_bits[2] = {0x100,     0 };
+	int32_t mcport = reader->typ == R_DB2COM2;
+
+	rc = ioctl(reader->fdmc, MULTICAM_GET_PCDAT, &msr);
+	if (rc < 0)
+		return ERROR;
+
+	if (dtr) {
+		rdr_debug_mask(reader, D_DEVICE, "%s DTR:%s", __func__, *dtr ? "set" : "clear");
+		if (dtr_bits[mcport]) {
+			if (*dtr)
+				msr &= (uint16_t)(~dtr_bits[mcport]);
+			else
+				msr |= dtr_bits[mcport];
+			rc = ioctl(reader->fdmc, MULTICAM_SET_PCDAT, &msr);
+		} else {
+			rc = 0; // Dummy, can't handle using multicam.o
+		}
+	}
+
+	if (rts) {
+		rdr_debug_mask(reader, D_DEVICE, "%s RTS:%s", __func__, *rts ? "set" : "clear");
+		if (*rts)
+			msr &= (uint16_t)(~rts_bits[mcport]);
+		else
+			msr |= rts_bits[mcport];
+		rc = ioctl(reader->fdmc, MULTICAM_SET_PCDAT, &msr);
+	}
+
+	if (rc < 0)
+		return ERROR;
 	return OK;
 }
 
@@ -84,6 +128,6 @@ void cardreader_db2com(struct s_cardreader *crdr)
 	crdr->close         = Phoenix_Close;
 	crdr->set_parity    = IO_Serial_SetParity;
 	crdr->set_baudrate  = Phoenix_SetBaudrate;
-	crdr->set_DTS_RTS   = IO_Serial_DTR_RTS_dbox2;
+	crdr->set_DTS_RTS   = db2com_DTR_RTS;
 }
 #endif
