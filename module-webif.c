@@ -1079,9 +1079,6 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 	}
 
 	if(!apicall) {
-#ifdef WITH_PCSC
-		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>pcsc</option>\n");
-#endif
 #ifdef MODULE_CAMD33
 		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>camd33</option>\n");
 #endif
