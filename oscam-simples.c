@@ -104,19 +104,16 @@ int32_t hexserialset(struct s_reader *rdr)
 	return 0;
 }
 
-char *reader_get_type_desc(struct s_reader * rdr, int32_t extended __attribute__((unused)))
+char *reader_get_type_desc(struct s_reader * rdr, int32_t extended)
 {
-	static char *typtxt[] = { "unknown", "mouse", "mouse", "sc8in1", "mp35", "mouse", "internal", "smartreader", "pcsc" };
-	char *desc = typtxt[0];
+	char *desc = "unknown";
 
-	if (rdr->crdr.active==1)
+	if (rdr->crdr.desc)
 		return rdr->crdr.desc;
 
 	if (is_network_reader(rdr) || rdr->typ == R_SERIAL) {
 		if (rdr->ph.desc)
 			desc = rdr->ph.desc;
-	} else if (rdr->typ >= 0 && rdr->typ < (int32_t)(sizeof(typtxt)/sizeof(char *))){
-		desc = typtxt[rdr->typ];
 	}
 
 	if ((rdr->typ == R_NEWCAMD) && (rdr->ncd_proto == NCD_524))
