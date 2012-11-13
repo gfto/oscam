@@ -17,6 +17,7 @@
 #include "oscam-conf-mk.h"
 #include "oscam-garbage.h"
 #include "oscam-lock.h"
+#include "oscam-reader.h"
 #include "oscam-string.h"
 
 #define cs_srvr "oscam.server"

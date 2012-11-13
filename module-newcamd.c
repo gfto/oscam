@@ -3,6 +3,7 @@
 #include "oscam-chk.h"
 #include "oscam-client.h"
 #include "oscam-net.h"
+#include "oscam-reader.h"
 #include "oscam-string.h"
 #include "oscam-time.h"
 

@@ -7,6 +7,7 @@
 #include "oscam-failban.h"
 #include "oscam-lock.h"
 #include "oscam-net.h"
+#include "oscam-reader.h"
 #include "oscam-string.h"
 
 extern char *processUsername;

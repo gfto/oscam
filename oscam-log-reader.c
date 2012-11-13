@@ -2,6 +2,7 @@
 
 #include "oscam-log.h"
 #include "oscam-log-reader.h"
+#include "oscam-reader.h"
 
 static char *debug_mask_txt(int mask) {
 	switch (mask) {

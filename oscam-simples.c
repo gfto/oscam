@@ -1,6 +1,5 @@
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
-#include "module-cccam.h"
 #include "oscam-garbage.h"
 #include "oscam-string.h"
 
@@ -90,96 +89,6 @@ void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *
 	cs_strncpy(prov->sat, sat, sizeof(prov->sat));
 	cs_strncpy(prov->lang, lang, sizeof(prov->lang));
 	*ptr = prov;
-}
-
-int32_t hexserialset(struct s_reader *rdr)
-{
-	int32_t i;
-
-	if (!rdr) return 0;
-
-	for (i = 0; i < 8; i++)
-		if (rdr->hexserial[i])
-			return 1;
-	return 0;
-}
-
-char *reader_get_type_desc(struct s_reader * rdr, int32_t extended)
-{
-	char *desc = "unknown";
-
-	if (rdr->crdr.desc)
-		return rdr->crdr.desc;
-
-	if (is_network_reader(rdr) || rdr->typ == R_SERIAL) {
-		if (rdr->ph.desc)
-			desc = rdr->ph.desc;
-	}
-
-	if ((rdr->typ == R_NEWCAMD) && (rdr->ncd_proto == NCD_524))
-		desc = "newcamd524";
-	else if (extended && rdr->typ == R_CCCAM && cccam_client_extended_mode(rdr->client)) {
-		desc = "cccam ext";
-	}
-
-	return (desc);
-}
-
-void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid)
-{
-  if (caid == 0x5581 || caid == 0x4aee) // Bulcrypt
-  {
-    dest[0] = 0x00;
-    dest[1] = 0x00;
-    memcpy(dest + 2, source, 4);
-    return;
-  }
-  caid = caid >> 8;
-  if ((caid == 0x17) || (caid == 0x06))    // Betacrypt or Irdeto
-  {
-    // only 4 Bytes Hexserial for newcamd clients (Hex Base + Hex Serial)
-    // first 2 Byte always 00
-    dest[0]=0x00; //serial only 4 bytes
-    dest[1]=0x00; //serial only 4 bytes
-    // 1 Byte Hex Base (see reader-irdeto.c how this is stored in "source")
-    dest[2]=source[3];
-    // 3 Bytes Hex Serial (see reader-irdeto.c how this is stored in "source")
-    dest[3]=source[0];
-    dest[4]=source[1];
-    dest[5]=source[2];
-  }
-  else if ((caid == 0x05) || (caid == 0x0D))
-  {
-    dest[0] = 0x00;
-    memcpy(dest+1, source, 5);
-  }
-  else
-    memcpy(dest, source, 6);
-}
-
-void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid)
-{
-  caid = caid >> 8;
-  if ((caid == 0x17) || (caid == 0x06)) {
-    memcpy(dest, source+3, 3);
-    dest[3] = source[2];
-		dest[4] = 0;
-		dest[5] = 0;
-  }
-  else if ((caid == 0x05) || (caid == 0x0D)) {
-    memcpy(dest, source+1, 5);
-		dest[5] = 0;
-	}
-  else
-    memcpy(dest, source, 6);
-}
-
-struct s_reader *get_reader_by_label(char *lbl){
-	struct s_reader *rdr;
-	LL_ITER itr = ll_iter_create(configured_readers);
-	while((rdr = ll_iter_next(&itr)))
-	  if (strcmp(lbl, rdr->label) == 0) break;
-	return rdr;
 }
 
 int32_t ecmfmt(uint16_t caid, uint32_t prid, uint16_t chid, uint16_t pid, uint16_t srvid, uint16_t l, uint16_t checksum, char *result, size_t size)
