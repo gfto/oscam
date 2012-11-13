@@ -7,6 +7,7 @@
 #ifdef WITH_CARDREADER
 #include "../oscam-time.h"
 #include "icc_async.h"
+#include "ifd_db2com.h"
 #include "ifd_phoenix.h"
 #include "io_serial.h"
 
@@ -245,6 +246,11 @@ int32_t Phoenix_FastReset (struct s_reader * reader, int32_t delay)
 }
 */
 static int32_t mouse_init(struct s_reader *reader) {
+	if (detect_db2com_reader(reader)) {
+		cardreader_db2com(&reader->crdr);
+		return reader->crdr.reader_init(reader);
+	}
+
 	reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 	if (reader->handle < 0) {
 		rdr_log(reader, "ERROR: Opening device %s (errno=%d %s)",
