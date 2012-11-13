@@ -267,11 +267,12 @@ static int32_t mouse_init(struct s_reader *reader) {
 
 void cardreader_mouse(struct s_cardreader *crdr)
 {
-	crdr->desc          = "mouse_test";
+	crdr->desc          = "mouse";
 	crdr->typ           = R_MOUSE;
 	crdr->flush         = 1;
 	crdr->need_inverse  = 1;
 	crdr->read_written  = 1;
+	crdr->need_inverse  = 1;
 	crdr->reader_init   = mouse_init;
 	crdr->get_status    = Phoenix_GetStatus;
 	crdr->activate      = Phoenix_Reset;

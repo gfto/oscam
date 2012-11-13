@@ -29,7 +29,6 @@
 #include "icc_async.h"
 #include "protocol_t0.h"
 #include "io_serial.h"
-#include "ifd_db2com.h"
 #include "ifd_phoenix.h"
 
 #define OK 0
@@ -70,45 +69,13 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 {
 	reader->fdmc=-1;
 	rdr_debug_mask(reader, D_IFD, "Opening device %s", reader->device);
-
 	reader->written = 0;
-
-	if (reader->crdr.reader_init) {
-		int32_t ret = reader->crdr.reader_init(reader);
-		if (ret == OK)
-			rdr_debug_mask(reader, D_IFD, "Device %s succesfully opened", reader->device);
-		else
-			rdr_debug_mask(reader, D_IFD, "ERROR: Can't open %s device", reader->device);
-		return ret;
-	}
-
-	if (reader->typ == R_MOUSE)
-		detect_db2com_reader(reader);
-
-	switch(reader->typ) {
-		case R_MOUSE:
-			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
-			if (reader->handle < 0) {
-				rdr_log(reader, "ERROR: Opening device %s (errno=%d %s)", reader->device, errno, strerror(errno));
-				return ERROR;
-			}
-			if (Phoenix_Init(reader)) {
-				rdr_log(reader, "ERROR: Phoenix_Init returns error");
-				Phoenix_Close (reader);
-				return ERROR;
-			}
-			break;
-		case R_DB2COM1:
-		case R_DB2COM2:
-			call(db2com_init(reader));
-			break;
-		default:
-			rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
-			return ERROR;
-	}
-
-	rdr_debug_mask(reader, D_IFD, "Device %s succesfully opened", reader->device);
-	return OK;
+	int32_t ret = reader->crdr.reader_init(reader);
+	if (ret == OK)
+		rdr_debug_mask(reader, D_IFD, "Device %s succesfully opened", reader->device);
+	else
+		rdr_debug_mask(reader, D_IFD, "ERROR: Can't open %s device", reader->device);
+	return ret;
 }
 
 int32_t ICC_Async_Init_Locks (void) {
@@ -126,36 +93,11 @@ int32_t ICC_Async_Init_Locks (void) {
 int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 {
 	int32_t in=0;
-
-	if (reader->crdr.get_status) {
-		call(reader->crdr.get_status(reader, &in));
-
-		if (in)
-			*card = 1;
-		else
-			*card = 0;
-
-		return OK;
-	}
-
-	switch(reader->typ) {
-		case R_DB2COM1:
-		case R_DB2COM2:
-			call (db2com_get_status(reader, &in));
-			break;
-		case R_MOUSE:
-			call (Phoenix_GetStatus(reader, &in));
-			break;
-		default:
-			rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
-			return ERROR;
-	}
-
-  if (in)
+	call(reader->crdr.get_status(reader, &in));
+	if (in)
 		*card = 1;
 	else
 		*card = 0;
-
 	return OK;
 }
 
@@ -164,30 +106,13 @@ int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t depreca
 	rdr_debug_mask(reader, D_IFD, "Activating card");
 
 	reader->current_baudrate = DEFAULT_BAUDRATE; //this is needed for all readers to calculate work_etu for timings
-	
 	if (reader->atr[0] != 0 && !reader->ins7e11_fast_reset) {
 		rdr_log(reader, "Using ATR from reader config");
 		ATR_InitFromArray(atr, reader->atr, ATR_MAX_SIZE);
-	}
-	else {
-		if (reader->crdr.activate) {
-			call(reader->crdr.activate(reader, atr));
-			if (reader->crdr.skip_extra_atr_parsing) {
-				return OK;
-			}
-		} else {
-
-		switch(reader->typ) {
-			case R_DB2COM1:
-			case R_DB2COM2:
-			case R_MOUSE:
-				call(Phoenix_Reset(reader, atr));
-				break;
-			default:
-				rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
-				return ERROR;
-		}
-		}
+	} else {
+		call(reader->crdr.activate(reader, atr));
+		if (reader->crdr.skip_extra_atr_parsing)
+			return OK;
 	}
 
 	unsigned char atrarr[ATR_MAX_SIZE];
@@ -306,100 +231,37 @@ int32_t ICC_Async_SetTimings (struct s_reader * reader, uint32_t wait_etu)
 int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, unsigned char * data, uint32_t delay, uint32_t timeout)
 {
 	rdr_debug_mask(reader, D_IFD, "Transmit size %d bytes, delay %d us, timeout=%d us",size, delay, timeout);
-	int32_t ret;
 	rdr_ddump_mask(reader, D_IFD, data, size, "Transmit:");
 	unsigned char *sent = data;
 
-	if (reader->convention == ATR_CONVENTION_INVERSE && ((!reader->crdr.active && reader->typ <= R_MOUSE) || reader->crdr.need_inverse==1)) {
+	if (reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.need_inverse) {
 		ICC_Async_InvertBuffer (size, sent);
 	}
 
-	if (reader->crdr.transmit) {
-		call(reader->crdr.transmit(reader, sent, size, delay, timeout));
-		rdr_debug_mask(reader, D_IFD, "Transmit succesful");
-		if (reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.need_inverse) {
-			// revert inversion cause the code in protocol_t0 is accessing buffer after transmit
-			ICC_Async_InvertBuffer (size, sent);
-		}
-		return OK;
-	}
-
-	switch(reader->typ) {
-		case R_DB2COM1:
-		case R_DB2COM2:
-		case R_MOUSE:
-			ret = Phoenix_Transmit (reader, sent, size, delay, timeout);
-			break;
-		default:
-			rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
-			return ERROR;
-	}
-
-	if (reader->convention == ATR_CONVENTION_INVERSE && reader->typ <= R_MOUSE) {
+	call(reader->crdr.transmit(reader, sent, size, delay, timeout));
+	rdr_debug_mask(reader, D_IFD, "Transmit succesful");
+	if (reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.need_inverse) {
 		// revert inversion cause the code in protocol_t0 is accessing buffer after transmit
 		ICC_Async_InvertBuffer (size, sent);
 	}
 
-	if (ret) rdr_debug_mask(reader, D_IFD, "Transmit error!");
-	else rdr_debug_mask(reader, D_IFD, "Transmit succesful"); 
-
-	return ret;
+	return OK;
 }
 
 int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, unsigned char * data, uint32_t delay, uint32_t timeout)
 {
 	rdr_debug_mask(reader, D_IFD, "Receive size %d bytes, delay %d us, timeout=%d us",size, delay, timeout);
-	int32_t ret;
-	if (reader->crdr.receive) {
-		call(reader->crdr.receive(reader, data, size, delay, timeout));
-
-		if (reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.need_inverse==1)
-			ICC_Async_InvertBuffer (size, data);
-
-		rdr_ddump_mask(reader, D_IFD, data, size, "Received:");
-		return OK;
-	}
-
-	switch(reader->typ) {
-		case R_DB2COM1:
-		case R_DB2COM2:
-		case R_MOUSE:
-			ret = Phoenix_Receive (reader, data, size, delay, timeout);
-			break;
-		default:
-			rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
-			return ERROR;
-	}
-
-	if (reader->convention == ATR_CONVENTION_INVERSE && reader->typ <= R_MOUSE)
+	call(reader->crdr.receive(reader, data, size, delay, timeout));
+	rdr_debug_mask(reader, D_IFD, "Receive succesful");
+	if (reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.need_inverse==1)
 		ICC_Async_InvertBuffer (size, data);
-	
-	if (ret) rdr_debug_mask(reader, D_IFD, "Receive error!");
-	else rdr_ddump_mask(reader, D_IFD, data, size, "Received:");
-	return ret;
+	return OK;
 }
 
 int32_t ICC_Async_Close (struct s_reader *reader)
 {
 	rdr_debug_mask(reader, D_IFD, "Closing device %s", reader->device);
-
-	if (reader->crdr.close) {
-		call(reader->crdr.close(reader));
-		rdr_debug_mask(reader, D_IFD, "Device %s succesfully closed", reader->device);
-		return OK;
-	}
-
-	switch(reader->typ) {
-		case R_DB2COM1:
-		case R_DB2COM2:
-		case R_MOUSE:
-			call (Phoenix_Close(reader));
-			break;
-		default:
-			rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
-			return ERROR;
-	}
-
+	call(reader->crdr.close(reader));
 	rdr_debug_mask(reader, D_IFD, "Device %s succesfully closed", reader->device);
 	return OK;
 }
@@ -691,23 +553,9 @@ static uint32_t ETU_to_us(struct s_reader * reader, uint32_t ETU)
 
 static int32_t ICC_Async_SetParity (struct s_reader * reader, uint16_t parity)
 {
-	if (reader->crdr.active && reader->crdr.set_parity) {
+	if (reader->crdr.set_parity) {
 		rdr_debug_mask(reader, D_ATR, "Setting right parity");
 		call(reader->crdr.set_parity(reader, parity));
-		return OK;
-	} else if(reader->crdr.active)
-		return OK;
-
-	switch(reader->typ) {
-		case R_DB2COM1:
-		case R_DB2COM2:
-		case R_MOUSE:
-			rdr_debug_mask(reader, D_ATR, "Setting right parity");
-			call (IO_Serial_SetParity (reader, parity));
-		break;
-		default:
-			rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
-			return ERROR;
 	}
 	return OK;
 }
@@ -723,14 +571,9 @@ static int32_t SetRightParity (struct s_reader * reader)
 
 	call (ICC_Async_SetParity(reader, parity));
 
-	if (reader->crdr.active) {
-		if (reader->crdr.flush==1)
-			IO_Serial_Flush(reader);
-		return OK;
-	}
+	if (reader->crdr.flush)
+		IO_Serial_Flush(reader);
 
-	// FIXME: Remove when R_MOUSE is converted
-	IO_Serial_Flush(reader);
 	return OK;
 }
 
@@ -767,13 +610,11 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 		if (reader->protocol_type != ATR_PROTOCOL_TYPE_T14) { //dont switch for T14
 			if (reader->typ == R_INTERNAL) baud_temp = (uint32_t) 1/((1/(double)D)*((double)F/(double)(reader->cardmhz*10000)));
 			else baud_temp = (double)D * ICC_Async_GetClockRate (reader->cardmhz) / (double)F;
-		if (reader->crdr.set_baudrate) {
-			call (reader->crdr.set_baudrate(reader, baud_temp));
-		} else {
-			if (reader->typ <= R_MOUSE)	call (Phoenix_SetBaudrate(reader, baud_temp));
-		}	
-		reader->current_baudrate = baud_temp; //this is needed for all readers to calculate work_etu for timings
-		rdr_log(reader, "Setting baudrate to %d bps", reader->current_baudrate);
+			rdr_log(reader, "Setting baudrate to %d bps", baud_temp);
+			if (reader->crdr.set_baudrate) {
+				call (reader->crdr.set_baudrate(reader, baud_temp));
+			}
+			reader->current_baudrate = baud_temp; //this is needed for all readers to calculate work_etu for timings
 		}
 	}
 	if (reader->typ == R_INTERNAL) reader->worketu = (double) ((1/(double)D)*((double)F/(double)reader->cardmhz)*100);
