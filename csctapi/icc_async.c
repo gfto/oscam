@@ -29,6 +29,7 @@
 #include "icc_async.h"
 #include "protocol_t0.h"
 #include "io_serial.h"
+#include "ifd_db2com.h"
 #include "ifd_phoenix.h"
 
 #define OK 0
@@ -60,28 +61,6 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 static uint32_t ETU_to_us(struct s_reader * reader, uint32_t ETU);
 static unsigned char PPS_GetPCK (unsigned char * block, uint32_t length);
 static int32_t SetRightParity (struct s_reader * reader);
-
-static void detect_db2com_reader(struct s_reader *reader)
-{
-	struct stat sb;
-	if (stat(DEV_MULTICAM, &sb) == -1)
-		return;
-	if (stat(reader->device, &sb) == 0) {
-		if (S_ISCHR(sb.st_mode)) {
-			int32_t dev_major = major(sb.st_rdev);
-			int32_t dev_minor = minor(sb.st_rdev);
-			if (dev_major == 4 || dev_major == 5) {
-				int32_t rc = reader->typ;
-				switch (dev_minor & 0x3F) {
-					case 0: rc = R_DB2COM1; break;
-					case 1: rc = R_DB2COM2; break;
-				}
-				reader->typ = rc;
-			}
-			rdr_debug_mask(reader, D_READER, "device is major: %d, minor: %d, typ=%d", dev_major, dev_minor, reader->typ);
-		}
-	}
-}
 
 /*
  * Exported functions definition
@@ -121,21 +100,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 			break;
 		case R_DB2COM1:
 		case R_DB2COM2:
-			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_SYNC);
-			if (reader->handle < 0) {
-				rdr_log(reader, "ERROR: Opening device %s (errno=%d %s)", reader->device, errno, strerror(errno));
-				return ERROR;
-			}
-			if ((reader->fdmc = open(DEV_MULTICAM, O_RDWR)) < 0) {
-				rdr_log(reader, "ERROR: Opening device %s (errno=%d %s)", DEV_MULTICAM, errno, strerror(errno));
-				close(reader->handle);
-				return ERROR;
-			}
-			if (Phoenix_Init(reader)) {
-				rdr_log(reader, "ERROR: Phoenix_Init returns error");
-				Phoenix_Close (reader);
-				return ERROR;
-			}
+			call(db2com_init(reader));
 			break;
 		default:
 			rdr_log(reader, "ERROR: %s: Unknown reader type: %d", __func__, reader->typ);
@@ -176,16 +141,7 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 	switch(reader->typ) {
 		case R_DB2COM1:
 		case R_DB2COM2:
-			{
-			uint16_t msr=1;
-			IO_Serial_Ioctl_Lock(reader, 1);
-			ioctl(reader->fdmc, MULTICAM_GET_PCDAT, &msr);
-			if (reader->typ == R_DB2COM2)
-				in=(!(msr & 1));
-			else
-				in=((msr & 0x0f00) == 0x0f00);
-			IO_Serial_Ioctl_Lock(reader, 0);
-			}
+			call (db2com_get_status(reader, &in));
 			break;
 		case R_MOUSE:
 			call (Phoenix_GetStatus(reader, &in));

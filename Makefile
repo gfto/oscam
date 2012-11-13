@@ -256,6 +256,7 @@ SRC-$(CONFIG_WITH_CARDREADER) += csctapi/atr.c
 SRC-$(CONFIG_WITH_CARDREADER) += csctapi/icc_async.c
 SRC-$(CONFIG_WITH_AZBOX) += csctapi/ifd_azbox.c
 SRC-$(CONFIG_WITH_COOLAPI) += csctapi/ifd_cool.c
+SRC-$(CONFIG_WITH_CARDREADER) += csctapi/ifd_db2com.c
 SRC-$(CONFIG_WITH_CARDREADER) += csctapi/ifd_mp35.c
 SRC-$(CONFIG_WITH_PCSC) += csctapi/ifd_pcsc.c
 SRC-$(CONFIG_WITH_CARDREADER) += csctapi/ifd_phoenix.c

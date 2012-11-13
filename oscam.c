@@ -3904,6 +3904,7 @@ int32_t main (int32_t argc, char *argv[])
   void (*cardreader_def[])(struct s_cardreader *)=
   {
 #ifdef WITH_CARDREADER
+	cardreader_db2com,
 #if defined(WITH_AZBOX)
 	cardreader_internal_azbox,
 #elif defined(WITH_COOLAPI)
