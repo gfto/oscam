@@ -8,6 +8,7 @@
 #include "module-dvbapi.h"
 #include "module-dvbapi-azbox.h"
 #include "oscam-client.h"
+#include "oscam-reader.h"
 #include "oscam-string.h"
 #include "oscam-time.h"
 
