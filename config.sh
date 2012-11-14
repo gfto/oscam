@@ -495,6 +495,7 @@ do
 		$0 --list-config > $TMPFILE
 		cmp $TMPFILE config.mak >/dev/null 2>/dev/null
 		test $? = 0 && rm $TMPFILE || cat $TMPFILE > config.mak
+		rm -rf $TMPFILE
 		exit 0
 	;;
 	'-h'|'--help')
