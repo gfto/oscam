@@ -33,7 +33,7 @@
 //The number of concurrent bulk reads to queue onto the smartreader
 #define NUM_TXFERS 2
 
-extern CS_MUTEX_LOCK sr_lock;
+static CS_MUTEX_LOCK sr_lock;
 
 struct s_sr_config {
     int32_t F;
@@ -1448,6 +1448,16 @@ int32_t sr_write_settings(struct s_reader *reader,
     return OK;
 }
 
+static pthread_mutex_t init_lock_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static int32_t sr_init_locks(struct s_reader *UNUSED(reader))
+{
+    // Prevent double initalization of sr_lock
+    if (pthread_mutex_trylock(&init_lock_mutex)) {
+        cs_lock_create(&sr_lock, 10, "sr_lock");
+    }
+    return 0;
+}
 
 void cardreader_smartreader(struct s_cardreader *crdr)
 {
@@ -1461,6 +1471,7 @@ void cardreader_smartreader(struct s_cardreader *crdr)
     crdr->receive        = SR_Receive;
     crdr->close          = SR_Close;
     crdr->write_settings = sr_write_settings;
+    crdr->lock_init      = sr_init_locks;
 }
 
 #endif // WITH_LIBUSB

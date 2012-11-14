@@ -60,9 +60,6 @@ int8_t cs_dump_stack=0;
 uint16_t cs_waittime = 60;
 char  cs_tmpdir[200]={0x00};
 pid_t server_pid=0;
-#if defined(WITH_LIBUSB)
-CS_MUTEX_LOCK sr_lock;
-#endif
 CS_MUTEX_LOCK system_lock;
 CS_MUTEX_LOCK gethostbyname_lock;
 CS_MUTEX_LOCK clientlist_lock;
@@ -4030,9 +4027,6 @@ int32_t main (int32_t argc, char *argv[])
   if (cs_confdir[strlen(cs_confdir)]!='/') strcat(cs_confdir, "/");
   init_signal_pre(); // because log could cause SIGPIPE errors, init a signal handler first
   init_first_client();
-#if defined(WITH_LIBUSB)
-  cs_lock_create(&sr_lock, 10, "sr_lock");
-#endif
   cs_lock_create(&system_lock, 5, "system_lock");
   cs_lock_create(&gethostbyname_lock, 10, "gethostbyname_lock");
   cs_lock_create(&clientlist_lock, 5, "clientlist_lock");
