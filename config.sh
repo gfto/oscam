@@ -2,7 +2,7 @@
 
 addons="WEBIF TOUCH HAVE_DVBAPI IRDETO_GUESSING CS_ANTICASC WITH_DEBUG MODULE_MONITOR WITH_SSL WITH_LB CS_CACHEEX LCDSUPPORT LEDSUPPORT IPV6SUPPORT"
 protocols="MODULE_CAMD33 MODULE_CAMD35 MODULE_CAMD35_TCP MODULE_NEWCAMD MODULE_CCCAM MODULE_CCCSHARE MODULE_GBOX MODULE_RADEGAST MODULE_SERIAL MODULE_CONSTCW MODULE_PANDORA"
-readers="WITH_CARDREADER READER_NAGRA READER_IRDETO READER_CONAX READER_CRYPTOWORKS READER_SECA READER_VIACCESS READER_VIDEOGUARD READER_DRE READER_TONGFANG READER_BULCRYPT"
+readers="READER_NAGRA READER_IRDETO READER_CONAX READER_CRYPTOWORKS READER_SECA READER_VIACCESS READER_VIDEOGUARD READER_DRE READER_TONGFANG READER_BULCRYPT"
 
 defconfig="
 CONFIG_WEBIF=y
@@ -155,6 +155,7 @@ list_disabled() {
 }
 
 valid_opt() {
+	[ "$1" = "WITH_CARDREADER" ] && return 0 # Special case
 	echo $addons $protocols $readers | grep -w "$1" >/dev/null
 	return $?
 }
@@ -305,10 +306,6 @@ menu_reader() {
 	opt=${?}
 	if [ $opt != 0 ]; then return; fi
 
-	menuitem=`cat $tempfile`
-	if [ "$menuitem" != "" ]; then
-		printf " \"WITH_CARDREADER\"" >> ${tempfile}
-	fi
 	disable_all "$readers"
 	enable_package
 }
@@ -476,8 +473,9 @@ do
 	;;
 	'-l'|'--list-config')
 		enabled_any $(get_opts readers) && enable_opt WITH_CARDREADER >/dev/null
+		disabled_all $(get_opts readers) && disable_opt WITH_CARDREADER >/dev/null
 		enabled MODULE_CCCSHARE && enable_opt MODULE_CCCAM >/dev/null
-		for OPT in $addons $protocols $readers
+		for OPT in $addons $protocols WITH_CARDREADER $readers
 		do
 			enabled $OPT && echo "CONFIG_$OPT=y" || echo "# CONFIG_$OPT=n"
 		done
