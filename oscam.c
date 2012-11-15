@@ -3900,28 +3900,36 @@ int32_t main (int32_t argc, char *argv[])
 
   void (*cardreader_def[])(struct s_cardreader *)=
   {
-#ifdef WITH_CARDREADER
+#ifdef CARDREADER_DB2COM
 	cardreader_db2com,
-#if defined(WITH_AZBOX)
+#endif
+#if defined(CARDREADER_INTERNAL_AZBOX)
 	cardreader_internal_azbox,
-#elif defined(WITH_COOLAPI)
+#elif defined(CARDREADER_INTERNAL_COOLAPI)
 	cardreader_internal_cool,
-#else
+#elif defined(CARDREADER_INTERNAL_SCI)
 	cardreader_internal_sci,
 #endif
+#ifdef CARDREADER_PHOENIX
 	cardreader_mouse,
+#endif
+#ifdef CARDREADER_MP35
 	cardreader_mp35,
-#ifdef WITH_PCSC
+#endif
+#ifdef CARDREADER_PCSC
 	cardreader_pcsc,
 #endif
+#ifdef CARDREADER_SC8IN1
 	cardreader_sc8in1,
+#endif
+#ifdef CARDREADER_SMARGO
 	cardreader_smargo,
-#ifdef WITH_LIBUSB
+#endif
+#ifdef CARDREADER_SMART
 	cardreader_smartreader,
 #endif
-#ifdef WITH_STAPI
+#ifdef CARDREADER_STAPI
 	cardreader_stapi,
-#endif
 #endif
 	0
   };

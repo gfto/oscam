@@ -1,6 +1,6 @@
 #include"../globals.h"
 
-#if defined(WITH_CARDREADER) && defined(WITH_AZBOX)
+#ifdef CARDREADER_INTERNAL_AZBOX
 #include "../extapi/openxcas/openxcas_api.h"
 #include "../extapi/openxcas/openxcas_smartcard.h"
 #include "../oscam-time.h"

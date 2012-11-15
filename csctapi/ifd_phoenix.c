@@ -4,7 +4,8 @@
 */
 
 #include "../globals.h"
-#ifdef WITH_CARDREADER
+
+#ifdef CARDREADER_PHOENIX
 #include "../oscam-time.h"
 #include "icc_async.h"
 #include "ifd_db2com.h"

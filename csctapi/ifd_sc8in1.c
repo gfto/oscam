@@ -17,7 +17,8 @@
  */
 
 #include "../globals.h"
-#ifdef WITH_CARDREADER
+
+#ifdef CARDREADER_SC8IN1
 #include "../oscam-lock.h"
 #include "../oscam-string.h"
 #include "../oscam-time.h"

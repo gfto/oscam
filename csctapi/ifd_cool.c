@@ -4,7 +4,7 @@
 
 #include"../globals.h"
 
-#if defined(WITH_CARDREADER) && defined(WITH_COOLAPI)
+#ifdef CARDREADER_INTERNAL_COOLAPI
 #include "../extapi/coolapi.h"
 #include "../oscam-string.h"
 #include "../oscam-time.h"

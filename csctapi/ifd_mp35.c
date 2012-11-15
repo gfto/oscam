@@ -1,5 +1,6 @@
 #include "../globals.h"
-#ifdef WITH_CARDREADER
+
+#ifdef CARDREADER_MP35
 #include "../oscam-time.h"
 #include "atr.h"
 #include "ifd_phoenix.h"

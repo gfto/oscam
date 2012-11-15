@@ -1,6 +1,6 @@
 #include "../globals.h"
 
-#if defined(WITH_CARDREADER) && defined(WITH_STAPI)
+#ifdef CARDREADER_STAPI
 #include "atr.h"
 
 /* These functions are implemented in liboscam_stapi.a */

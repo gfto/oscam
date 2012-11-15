@@ -5,7 +5,7 @@
 
 #include "../globals.h"
 
-#if defined(WITH_CARDREADER) && defined(WITH_LIBUSB)
+#ifdef CARDREADER_SMART
 #include <memory.h>
 #if defined(__FreeBSD__)
 #include <libusb.h>
@@ -1474,4 +1474,4 @@ void cardreader_smartreader(struct s_cardreader *crdr)
     crdr->lock_init      = sr_init_locks;
 }
 
-#endif // WITH_LIBUSB
+#endif

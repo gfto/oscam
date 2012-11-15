@@ -5,7 +5,7 @@
 
 #include "../globals.h"
 
-#ifdef WITH_CARDREADER
+#ifdef CARDREADER_INTERNAL_SCI
 
 #include "../oscam-time.h"
 

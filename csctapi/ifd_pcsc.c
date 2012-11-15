@@ -1,6 +1,6 @@
 #include "../globals.h"
 
-#if defined(WITH_CARDREADER) && defined(WITH_PCSC)
+#ifdef CARDREADER_PCSC
 
 #include "atr.h"
 #include "../oscam-string.h"
