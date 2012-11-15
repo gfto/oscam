@@ -1062,8 +1062,8 @@ void cardreader_sc8in1(struct s_cardreader *crdr)
 	crdr->close        = sc8in1_close;
 	crdr->get_status   = sc8in1_get_status;
 	crdr->activate     = sc8in1_activate;
-	crdr->transmit     = Phoenix_Transmit;
-	crdr->receive      = Phoenix_Receive;
+	crdr->transmit     = IO_Serial_Transmit;
+	crdr->receive      = IO_Serial_Receive;
 	crdr->set_parity   = IO_Serial_SetParity;
 	crdr->set_baudrate = sc8in1_set_baudrate;
 }

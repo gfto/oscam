@@ -10,7 +10,6 @@
 #include "../oscam-time.h"
 
 #include "atr.h"
-#include "ifd_phoenix.h"
 #include "ifd_sci_global.h"
 #include "ifd_sci_ioctl.h"
 #include "io_serial.h"
@@ -315,7 +314,7 @@ static int32_t sci_activate(struct s_reader *reader, ATR *atr)
 
 static int32_t Sci_Close(struct s_reader *reader) {
 	Sci_Deactivate(reader);
-	call (Phoenix_Close(reader));
+	IO_Serial_Close(reader);
 	return OK;
 }
 
@@ -342,8 +341,8 @@ void cardreader_internal_sci(struct s_cardreader *crdr)
 	crdr->reader_init  = Sci_Init;
 	crdr->get_status   = Sci_GetStatus;
 	crdr->activate     = sci_activate;
-	crdr->transmit     = Phoenix_Transmit;
-	crdr->receive      = Phoenix_Receive;
+	crdr->transmit     = IO_Serial_Transmit;
+	crdr->receive      = IO_Serial_Receive;
 	crdr->close        = Sci_Close;
 	crdr->write_settings3 = sci_write_settings3;
 }

@@ -440,6 +440,11 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 	return OK;
 }
 
+int32_t IO_Serial_Receive(struct s_reader * reader, unsigned char * buffer, uint32_t size, uint32_t delay, uint32_t timeout)
+{
+	return IO_Serial_Read(reader, delay, timeout, size, buffer);
+}
+
 bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t timeout, uint32_t size, const unsigned char * data)
 {
 	if (timeout == 0){ // General fix for readers not communicating timeout and delay
@@ -492,6 +497,19 @@ bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t timeout
 			rdr_log(reader, "Timeout in IO_Serial_WaitToWrite, delay=%d us, timeout=%d us", delay, timeout);
 			return ERROR;
 		}
+	}
+	return OK;
+}
+
+#define MAX_TRANSMIT 255
+
+int32_t IO_Serial_Transmit(struct s_reader * reader, unsigned char * buffer, uint32_t size, uint32_t delay, uint32_t timeout)
+{
+	uint32_t sent, to_send;
+	for (sent = 0; sent < size; sent = sent + to_send) {
+		to_send = MIN(size, MAX_TRANSMIT);
+		if (IO_Serial_Write(reader, delay, timeout , to_send, buffer+sent))
+			return ERROR;
 	}
 	return OK;
 }

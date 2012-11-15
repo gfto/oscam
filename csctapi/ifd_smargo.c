@@ -210,8 +210,8 @@ void cardreader_smargo(struct s_cardreader *crdr)
 	crdr->reader_init	= smargo_init;
 	crdr->get_status	= Phoenix_GetStatus;
 	crdr->activate	= smargo_reset;
-	crdr->transmit	= Phoenix_Transmit;
-	crdr->receive		= Phoenix_Receive;
+	crdr->transmit	= IO_Serial_Transmit;
+	crdr->receive		= IO_Serial_Receive;
 	crdr->close		= Phoenix_Close;
 	crdr->write_settings = smargo_writesettings;
 	crdr->typ		= R_MOUSE;

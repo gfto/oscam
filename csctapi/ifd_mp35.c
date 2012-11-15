@@ -243,8 +243,8 @@ void cardreader_mp35(struct s_cardreader *crdr)
   crdr->reader_init  = mp35_init;
   crdr->get_status   = Phoenix_GetStatus;
   crdr->activate     = Phoenix_Reset;
-  crdr->transmit     = Phoenix_Transmit;
-  crdr->receive      = Phoenix_Receive;
+  crdr->transmit     = IO_Serial_Transmit;
+  crdr->receive      = IO_Serial_Receive;
   crdr->close        = mp35_close;
   crdr->set_parity   = IO_Serial_SetParity;
   crdr->set_baudrate = Phoenix_SetBaudrate;

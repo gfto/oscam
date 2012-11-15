@@ -15,8 +15,6 @@
 #define OK 0
 #define ERROR 1
 
-#define MAX_TRANSMIT			255
-
 #define GPIO_PIN (1 << (reader->detect - 4))
 
 static inline int reader_use_gpio(struct s_reader * reader) {
@@ -168,28 +166,6 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 		return ret;
 }
 
-int32_t Phoenix_Transmit (struct s_reader * reader, unsigned char * buffer, uint32_t size, uint32_t delay, uint32_t timeout)
-{
-	uint32_t sent=0, to_send = 0;
-	for (sent = 0; sent < size; sent = sent + to_send)
-	{
-		/* Calculate number of bytes to send */
-		to_send = MIN(size, MAX_TRANSMIT);
-
-		/* Send data */
-		if (IO_Serial_Write (reader, delay, timeout , to_send, buffer+sent)) return ERROR;
-	}
-	return OK;
-}
-
-int32_t Phoenix_Receive (struct s_reader * reader, unsigned char * buffer, uint32_t size, uint32_t delay, uint32_t timeout)
-{
-
-	/* Read all data bytes with the same timeout */
-	if(IO_Serial_Read (reader, delay, timeout, size, buffer)) return ERROR;
-	return OK;
-}
-
 int32_t Phoenix_SetBaudrate (struct s_reader * reader, uint32_t baudrate)
 {
 	rdr_debug_mask(reader, D_IFD, "Phoenix setting baudrate to %u", baudrate);
@@ -277,8 +253,8 @@ void cardreader_mouse(struct s_cardreader *crdr)
 	crdr->reader_init   = mouse_init;
 	crdr->get_status    = Phoenix_GetStatus;
 	crdr->activate      = Phoenix_Reset;
-	crdr->transmit      = Phoenix_Transmit;
-	crdr->receive       = Phoenix_Receive;
+	crdr->transmit      = IO_Serial_Transmit;
+	crdr->receive       = IO_Serial_Receive;
 	crdr->close         = Phoenix_Close;
 	crdr->set_parity    = IO_Serial_SetParity;
 	crdr->set_baudrate  = Phoenix_SetBaudrate;

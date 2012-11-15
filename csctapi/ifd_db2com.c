@@ -124,8 +124,8 @@ void cardreader_db2com(struct s_cardreader *crdr)
 	crdr->reader_init   = db2com_init;
 	crdr->get_status    = db2com_get_status;
 	crdr->activate      = Phoenix_Reset;
-	crdr->transmit      = Phoenix_Transmit;
-	crdr->receive       = Phoenix_Receive;
+	crdr->transmit      = IO_Serial_Transmit;
+	crdr->receive       = IO_Serial_Receive;
 	crdr->close         = Phoenix_Close;
 	crdr->set_parity    = IO_Serial_SetParity;
 	crdr->set_baudrate  = Phoenix_SetBaudrate;
