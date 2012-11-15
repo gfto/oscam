@@ -3926,24 +3926,22 @@ int32_t main (int32_t argc, char *argv[])
 #endif
 	0
   };
-
   for (i=0; mod_def[i]; i++)  // must be later BEFORE init_config()
   {
-    memset(&modules[i], 0, sizeof(struct s_module));
-    mod_def[i](&modules[i]);
+	memset(&modules[i], 0, sizeof(struct s_module));
+	mod_def[i](&modules[i]);
   }
   for (i=0; cardsystem_def[i]; i++)  // must be later BEFORE init_config()
   {
-    memset(&cardsystems[i], 0, sizeof(struct s_cardsystem));
-    cardsystem_def[i](&cardsystems[i]);
+	memset(&cardsystems[i], 0, sizeof(struct s_cardsystem));
+	cardsystem_def[i](&cardsystems[i]);
   }
-
   for (i=0; cardreader_def[i]; i++)  // must be later BEFORE init_config()
   {
-    memset(&cardreaders[i], 0, sizeof(struct s_cardreader));
-    cardreader_def[i](&cardreaders[i]);
+	memset(&cardreaders[i], 0, sizeof(struct s_cardreader));
+	cardreader_def[i](&cardreaders[i]);
   }
-
+  
   while ((i=getopt(argc, argv, "g:bsauc:t:d:r:w:hm:xp:S"))!=EOF)
   {
 	  switch(i) {
@@ -4040,7 +4038,21 @@ int32_t main (int32_t argc, char *argv[])
   cs_init_statistics();
   init_check();
   init_stat();
-
+  for (i=0; mod_def[i]; i++)  // must be later BEFORE init_config()
+  {
+	memset(&modules[i], 0, sizeof(struct s_module));
+	mod_def[i](&modules[i]);
+  }
+  for (i=0; cardsystem_def[i]; i++)  // must be later BEFORE init_config()
+  {
+	memset(&cardsystems[i], 0, sizeof(struct s_cardsystem));
+	cardsystem_def[i](&cardsystems[i]);
+  }
+  for (i=0; cardreader_def[i]; i++)  // must be later BEFORE init_config()
+  {
+	memset(&cardreaders[i], 0, sizeof(struct s_cardreader));
+	cardreader_def[i](&cardreaders[i]);
+  }
   init_sidtab();
   init_readerdb();
   cfg.account = init_userdb();
