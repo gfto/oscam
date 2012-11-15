@@ -1027,8 +1027,8 @@ static void newcamd_process_ecm(struct s_client *cl, uchar *buf, int32_t len)
   }
   // save client ncd_msgid
   er->msgid = cl->ncd_msgid;
-  er->l=buf[4]+3;
-  cs_debug_mask(D_CLIENT, "ncd_process_ecm: er->msgid=%d len=%d ecmlen=%d", er->msgid, len, er->l);
+  er->ecmlen = buf[4]+3;
+  cs_debug_mask(D_CLIENT, "ncd_process_ecm: er->msgid=%d len=%d ecmlen=%d", er->msgid, len, er->ecmlen);
   er->srvid = cl->ncd_header[4]<<8 | cl->ncd_header[5];
   er->caid = cl->ncd_header[6]<<8 | cl->ncd_header[7];
   er->prid = cl->ncd_header[8]<<16 | cl->ncd_header[9]<<8 | cl->ncd_header[10];
@@ -1037,7 +1037,7 @@ static void newcamd_process_ecm(struct s_client *cl, uchar *buf, int32_t len)
 	  if( cfg.ncd_ptab.nports && cfg.ncd_ptab.nports >= pi)
 		  er->caid=cfg.ncd_ptab.ports[pi].ftab.filts[0].caid;
   }
-  memcpy(er->ecm, buf+2, er->l);
+  memcpy(er->ecm, buf+2, er->ecmlen);
   get_cw(cl, er);
 }
 
@@ -1050,7 +1050,7 @@ static void newcamd_process_emm(uchar *buf)
 
   memset(&epg, 0, sizeof(epg));
 
-  epg.l=buf[2]+3;
+  epg.emmlen = buf[2]+3;
   caid = cl->ftab.filts[0].caid;
   epg.caid[0] = (uchar)(caid>>8);
   epg.caid[1] = (uchar)(caid);
@@ -1082,7 +1082,7 @@ static void newcamd_process_emm(uchar *buf)
   }
   else*/
 
-  memcpy(epg.emm, buf, epg.l);
+  memcpy(epg.emm, buf, epg.emmlen);
   if( ok )
     do_emm(cl, &epg);
 
@@ -1291,7 +1291,7 @@ static int32_t newcamd_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar 
   if(!chk_rsfilter(rdr, er))
     return(-1);
 
-  memcpy(buf, er->ecm, er->l);
+  memcpy(buf, er->ecm, er->ecmlen);
 
   client->ncd_header[4] = er->srvid >> 8;
   client->ncd_header[5] = er->srvid & 0xFF;
@@ -1301,19 +1301,19 @@ static int32_t newcamd_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar 
   client->ncd_header[9] = er->prid >> 8;
   client->ncd_header[10] = er->prid & 0xFF;
 
-  return((newcamd_send(buf, er->l, er->srvid)<1) ? (-1) : 0);
+  return((newcamd_send(buf, er->ecmlen, er->srvid)<1) ? (-1) : 0);
 }
 
 
 static int32_t newcamd_send_emm(EMM_PACKET *ep)
 {
-  uchar buf[ep->l];
+  uchar buf[ep->emmlen];
 
   if(!newcamd_connect())
     return (-1);
 
-  memcpy(buf, ep->emm, ep->l);
-  return((newcamd_send(buf, ep->l, 0)<1) ? 0 : 1);
+  memcpy(buf, ep->emm, ep->emmlen);
+  return((newcamd_send(buf, ep->emmlen, 0)<1) ? 0 : 1);
 }
 
 static int32_t newcamd_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t n)

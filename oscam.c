@@ -1367,11 +1367,11 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl)
 			if (!(ecm->caid == er->caid || (ecm->ocaid && er->ocaid && ecm->ocaid == er->ocaid)))
 				continue;
 
-			//CWs from csp have no ecms, so ecm->l=0. ecmd5 is invalid, so do not check!
+			//CWs from csp have no ecms, so ecm->ecmlen=0. ecmd5 is invalid, so do not check!
 			if (ecm->csp_hash != er->csp_hash)
 				continue;
 
-			if (ecm->l > 0 && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
+			if (ecm->ecmlen > 0 && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
 				continue;
 		}
 #else
@@ -1417,7 +1417,7 @@ static void distribute_ecm(ECM_REQUEST *er, int32_t rc)
 
 void update_chid(ECM_REQUEST *er)
 {
-	if( (er->caid>>8) == 0x06 && !er->chid && er->l > 7)
+	if( (er->caid>>8) == 0x06 && !er->chid && er->ecmlen > 7)
 		er->chid = (er->ecm[6]<<8)|er->ecm[7];
 }
 
@@ -1909,7 +1909,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 		rdr_debug_mask(eardr, D_TRACE, "ecm answer for ecm %04X rc=%d", htons(ert->checksum), ea->rc);
 		//rdr_ddump_mask(eardr, D_TRACE, ea->cw, sizeof(ea->cw), "received cw caid=%04X srvid=%04X hash=%08X",
 		//		ert->caid, ert->srvid, ert->csp_hash);
-		//rdr_ddump_mask(eardr, D_TRACE, ert->ecm, ert->l, "received cw for ecm caid=%04X srvid=%04X hash=%08X",
+		//rdr_ddump_mask(eardr, D_TRACE, ert->ecm, ert->ecmlen, "received cw for ecm caid=%04X srvid=%04X hash=%08X",
 		//		ert->caid, ert->srvid, ert->csp_hash);
 	}
 
@@ -2125,11 +2125,11 @@ void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto)
 	er->ocaid = er->caid;
 	er->caid = caidto;
 	er->prid = 0;
-	er->l = er->ecm[2] + 3;
+	er->ecmlen = er->ecm[2] + 3;
 
-	memmove(er->ecm + 13, er->ecm + 3, er->l - 3);
+	memmove(er->ecm + 13, er->ecm + 3, er->ecmlen - 3);
 
-	if (er->l > 0x88) {
+	if (er->ecmlen > 0x88) {
 		memcpy(er->ecm + 3, headerN3, 10);
 
 		if (er->ecm[0] == 0x81)
@@ -2140,8 +2140,8 @@ void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto)
 	else
 		memcpy(er->ecm + 3, headerN2, 10);
 
-	er->l += 10;
-	er->ecm[2] = er->l - 3;
+	er->ecmlen += 10;
+	er->ecm[2] = er->ecmlen - 3;
 	er->btun = 1;
 
 	cl->cwtun++;
@@ -2158,17 +2158,17 @@ void convert_to_nagra(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto)
 	er->ocaid = er->caid;
 	er->caid = caidto;
 	er->prid = 0;
-	er->l = er->ecm[2] + 3;
+	er->ecmlen = er->ecm[2] + 3;
 
 	//not sure
-	if (er->l < 0x52) {
+	if (er->ecmlen < 0x52) {
 		er->ecm[1]=0x30;
 	}
 
-	memmove(er->ecm + 3, er->ecm + 13, er->l - 3);
+	memmove(er->ecm + 3, er->ecm + 13, er->ecmlen - 3);
 
-	er->l -= 10;
-	er->ecm[2] = er->l - 3;
+	er->ecmlen -= 10;
+	er->ecm[2] = er->ecmlen - 3;
 	er->btun = 1;
 
 	cl->cwtun++;
@@ -2189,7 +2189,7 @@ void cs_betatunnel(ECM_REQUEST *er)
 	ttab = &cl->ttab;
 
 	if (er->caid>>8 == 0x18)
-		cs_ddump_mask(D_TRACE, er->ecm, 13, "betatunnel? ecmlen=%d", er->l);
+		cs_ddump_mask(D_TRACE, er->ecm, 13, "betatunnel? ecmlen=%d", er->ecmlen);
 
 	for (n = 0; n<ttab->n; n++) {
 		if ((er->caid==ttab->bt_caidfrom[n]) && ((er->srvid==ttab->bt_srvid[n]) || (ttab->bt_srvid[n])==mask_all)) {
@@ -2256,10 +2256,10 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		}
 	}
 
-	if (er->l > MAX_ECM_SIZE) {
+	if (er->ecmlen > MAX_ECM_SIZE) {
 		er->rc = E_INVALID;
 		er->rcEx = E2_GLOBAL;
-		snprintf(er->msglog, sizeof(er->msglog), "ECM size %d > Max Ecm size %d, ignored! client %s", er->l, MAX_ECM_SIZE, username(client));
+		snprintf(er->msglog, sizeof(er->msglog), "ECM size %d > Max Ecm size %d, ignored! client %s", er->ecmlen, MAX_ECM_SIZE, username(client));
 	}
 
 	if (!client->grp) {
@@ -2293,25 +2293,25 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		er->prid = 0x030600;
 
 	//betacrypt ecm with nagra header
-	if ((er->caid == 0x1702 || er->caid == 0x1722) && (er->l == 0x89 || er->l == 0x4A) && er->ecm[3] == 0x07 && (er->ecm[4] == 0x84 || er->ecm[4] == 0x45)){
-		//cs_debug_mask(D_TRACE, "Quickfix remap beta->nagra: 0x%X, 0x%X, 0x%X, 0x%X", er->caid, er->l, er->ecm[3], er->ecm[4]);
+	if ((er->caid == 0x1702 || er->caid == 0x1722) && (er->ecmlen == 0x89 || er->ecmlen == 0x4A) && er->ecm[3] == 0x07 && (er->ecm[4] == 0x84 || er->ecm[4] == 0x45)){
+		//cs_debug_mask(D_TRACE, "Quickfix remap beta->nagra: 0x%X, 0x%X, 0x%X, 0x%X", er->caid, er->ecmlen, er->ecm[3], er->ecm[4]);
 		if (er->caid == 0x1702) {
 			er->caid = 0x1833;
 		} else {
 			check_lb_auto_betatunnel_mode(er);
 		}
-		cs_debug_mask(D_TRACE, "Quickfix remap beta->nagra: 0x%X, 0x%X, 0x%X, 0x%X", er->caid, er->l, er->ecm[3], er->ecm[4]);
+		cs_debug_mask(D_TRACE, "Quickfix remap beta->nagra: 0x%X, 0x%X, 0x%X, 0x%X", er->caid, er->ecmlen, er->ecm[3], er->ecm[4]);
 	}
 
 	//nagra ecm with betacrypt header 1801, 1833, 1834, 1835
-	if ((er->caid == 0x1801 || er->caid == 0x1833 || er->caid == 0x1834 || er->caid == 0x1835) && (er->l == 0x93 || er->l == 0x54) && er->ecm[13] == 0x07 && (er->ecm[14] == 0x84 || er->ecm[14] == 0x45)){
-		//cs_debug_mask(D_TRACE, "Quickfix remap nagra->beta: 0x%X, 0x%X, 0x%X, 0x%X", er->caid, er->l, er->ecm[13], er->ecm[44]);
+	if ((er->caid == 0x1801 || er->caid == 0x1833 || er->caid == 0x1834 || er->caid == 0x1835) && (er->ecmlen == 0x93 || er->ecmlen == 0x54) && er->ecm[13] == 0x07 && (er->ecm[14] == 0x84 || er->ecm[14] == 0x45)){
+		//cs_debug_mask(D_TRACE, "Quickfix remap nagra->beta: 0x%X, 0x%X, 0x%X, 0x%X", er->caid, er->ecmlen, er->ecm[13], er->ecm[44]);
 		if (er->caid == 0x1833) {
 			er->caid = 0x1702;
 		} else {
 			er->caid = 0x1722;
 		}
-		cs_debug_mask(D_TRACE, "Quickfix remap nagra->beta: 0x%X, 0x%X, 0x%X, 0x%X", er->caid, er->l, er->ecm[13], er->ecm[44]);
+		cs_debug_mask(D_TRACE, "Quickfix remap nagra->beta: 0x%X, 0x%X, 0x%X, 0x%X", er->caid, er->ecmlen, er->ecm[13], er->ecm[44]);
 	}
 
 	//Ariva quickfix (invalid nagra provider)
@@ -2455,10 +2455,10 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 				case 5:
 					// corrupt
-					if( (i = er->l - ecm_len) ) {
+					if( (i = er->ecmlen - ecm_len) ) {
 						if (i > 0) {
-							cs_debug_mask(D_TRACE, "warning: ecm size adjusted from %d to %d", er->l, ecm_len);
-							er->l = ecm_len;
+							cs_debug_mask(D_TRACE, "warning: ecm size adjusted from %d to %d", er->ecmlen, ecm_len);
+							er->ecmlen = ecm_len;
 						}
 						else
 							er->rc = E_CORRUPT;
@@ -2485,7 +2485,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			offset = 13;
 		unsigned char md5tmp[MD5_DIGEST_LENGTH];
 		// store ECM in cache
-		memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, md5tmp), CS_ECMSTORESIZE);
+		memcpy(er->ecmd5, MD5(er->ecm + offset, er->ecmlen - offset, md5tmp), CS_ECMSTORESIZE);
 		cacheex_update_hash(er);
 		ac_chk(client, er, 0);
 	}
@@ -2581,10 +2581,10 @@ OUT:
 #ifdef CS_CACHEEX
 				//to support cache without ecms we store the first client ecm request here
 				//when we got a cache ecm from cacheex
-				if (!ecm->l && er->l && !ecm->matching_rdr) {
+				if (!ecm->ecmlen && er->ecmlen && !ecm->matching_rdr) {
 					ecm->matching_rdr = er->matching_rdr;
 					er->matching_rdr = NULL;
-					ecm->l = er->l;
+					ecm->ecmlen = er->ecmlen;
 					ecm->client = er->client;
 					ecm->checksum = er->checksum;
 					er->client = NULL;
@@ -2651,7 +2651,7 @@ OUT:
 	}
 
 	uint16_t *lp;
-	for (lp=(uint16_t *)er->ecm+(er->l>>2), er->checksum=0; lp>=(uint16_t *)er->ecm; lp--)
+	for (lp=(uint16_t *)er->ecm + (er->ecmlen >>2 ), er->checksum=0; lp>=(uint16_t *)er->ecm; lp--)
 		er->checksum^=*lp;
 
 	if (er->rc < E_99) {
@@ -2706,7 +2706,7 @@ OUT:
 #ifdef WITH_DEBUG
 	char buf[ECM_FMT_LEN];
 	format_ecm(er, buf, ECM_FMT_LEN);
-	cs_ddump_mask(D_CLIENTECM, er->ecm, er->l, "Client %s ECM dump %s", username(client), buf);
+	cs_ddump_mask(D_CLIENTECM, er->ecm, er->ecmlen, "Client %s ECM dump %s", username(client), buf);
 #endif
 
 	if(timecheck_client){
@@ -2772,7 +2772,7 @@ int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs, EMM_P
 			continue;
 
                 match = 1;
-		for (i=0,k=0; i<10 && k<ep->l && match; i++,k++) {
+		for (i=0,k=0; i<10 && k < ep->emmlen && match; i++,k++) {
 			flt = dmx_filter[startpos+2+i];
 			mask = dmx_filter[startpos+2+16+i];
 			if (!mask) break;
@@ -2792,7 +2792,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 	char tmp[17];
 
 	struct s_reader *aureader = NULL;
-	cs_ddump_mask(D_EMM, ep->emm, ep->l, "emm:");
+	cs_ddump_mask(D_EMM, ep->emm, ep->emmlen, "emm:");
 
 	LL_ITER itr = ll_iter_create(client->aureader_list);
 	while ((aureader = ll_iter_next(&itr))) {
@@ -3518,7 +3518,7 @@ static void * check_thread(void) {
 		cs_readlock(&ecmcache_lock);
 
 		for (er = ecmcwcache; er; er = er->next) {
-			if (er->rc < E_99 || !er->l || !er->matching_rdr) //ignore CACHEEX pending ECMs
+			if (er->rc < E_99 || !er->ecmlen || !er->matching_rdr) //ignore CACHEEX pending ECMs
 				continue;
 
 			tbc = er->tps;

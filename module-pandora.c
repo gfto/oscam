@@ -35,21 +35,21 @@ static void pandora_process_request(struct s_client *cl, uchar *buf, int32_t l) 
 	if (l > 12 + CS_ECMSTORESIZE + 16) {
 		ecmlen = b2i(2, buf + 12 + CS_ECMSTORESIZE);
 		if ((ecmlen > 320) || cl->pand_ignore_ecm)
-			er->l = 0;
+			er->ecmlen = 0;
 		else {
 			if (!memcmp(buf + 10,
 					MD5(buf + 14 + CS_ECMSTORESIZE, ecmlen, md5tmp),
 					CS_ECMSTORESIZE)) {
-				er->l = ecmlen;
+				er->ecmlen = ecmlen;
 				memcpy(er->ecm, buf + 14 + CS_ECMSTORESIZE, ecmlen);
 				//set_ecmhash(cl, er);
 			} else
-				er->l = 0;
+				er->ecmlen = 0;
 		}
 	} else
-		er->l = 0;
+		er->ecmlen = 0;
 
-	if (!er->l)
+	if (!er->ecmlen)
 		usleep(cl->pand_autodelay);
 	get_cw(cl, er);
 }
@@ -228,15 +228,15 @@ static int pandora_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *UNUSED(
 	msgbuf[7] = er->prid >> 8;
 	msgbuf[8] = er->prid & 0xFF;
 	msgbuf[9] = adel;
-	memcpy(&msgbuf[10], MD5(er->ecm, er->l, md5tmp), CS_ECMSTORESIZE);
+	memcpy(&msgbuf[10], MD5(er->ecm, er->ecmlen, md5tmp), CS_ECMSTORESIZE);
 	msgbuf[10 + CS_ECMSTORESIZE] = er->chid >> 8;
 	msgbuf[11 + CS_ECMSTORESIZE] = er->chid & 0xFF;
 	len = 12 + CS_ECMSTORESIZE;
 	if (cl->pand_send_ecm) {
-		msgbuf[12 + CS_ECMSTORESIZE] = er->l >> 8;
-		msgbuf[13 + CS_ECMSTORESIZE] = er->l & 0xFF;
-		memcpy(&msgbuf[14 + CS_ECMSTORESIZE], er->ecm, er->l);
-		len += er->l + 2;
+		msgbuf[12 + CS_ECMSTORESIZE] = er->ecmlen >> 8;
+		msgbuf[13 + CS_ECMSTORESIZE] = er->ecmlen & 0xFF;
+		memcpy(&msgbuf[14 + CS_ECMSTORESIZE], er->ecm, er->ecmlen);
+		len += er->ecmlen + 2;
 	}
 	simple_crypt(msgbuf, len, cl->pand_md5_key, 16);
 	ret = sendto(cl->pfd, msgbuf, len, 0, (struct sockaddr *) &cl->udp_sa, cl->udp_sa_len);

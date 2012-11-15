@@ -121,9 +121,9 @@ static void camd33_process_ecm(uchar *buf, int32_t l)
   if (!(er=get_ecmtask()))
     return;
   memcpy(&er->msgid, buf+3, 4);	// save pin
-  er->l=l-7;
+  er->ecmlen=l-7;
   er->caid=b2i(2, buf+1);
-  memcpy(er->ecm , buf+7, er->l);
+  memcpy(er->ecm , buf+7, er->ecmlen);
   get_cw(cur_client(), er);
 }
 
@@ -131,10 +131,10 @@ static void camd33_process_emm(uchar *buf, int32_t l)
 {
   EMM_PACKET epg;
   memset(&epg, 0, sizeof(epg));
-  epg.l=l-7;
+  epg.emmlen=l-7;
   memcpy(epg.caid     , buf+1, 2);
   memcpy(epg.hexserial, buf+3, 4);
-  memcpy(epg.emm      , buf+7, epg.l);
+  memcpy(epg.emm      , buf+7, epg.emmlen);
   do_emm(cur_client(), &epg);
 }
 

@@ -747,7 +747,7 @@ typedef struct ecm_request_t {
 	uchar			ecm[MAX_ECM_SIZE];
 	uchar			cw[16];
 	uchar			ecmd5[CS_ECMSTORESIZE];
-	int16_t			l;
+	int16_t			ecmlen;
 	uint16_t		caid;
 	uint16_t		ocaid; 				//original caid, used for betatunneling
 	uint16_t		srvid;
@@ -1735,7 +1735,7 @@ typedef struct cs_stat_query {
 typedef struct emm_packet_t
 {
 	uchar			emm[258];
-	uchar			l;
+	int16_t			emmlen;
 	uchar			caid[2];
 	uchar			provid[4];
 	uchar			hexserial[8];					//contains hexserial or SA of EMM

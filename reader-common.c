@@ -127,7 +127,7 @@ static void do_emm_from_file(struct s_reader * reader)
    eptmp->caid[1] = reader->caid & 0xFF;
    if (reader->nprov > 0)
       memcpy(eptmp->provid, reader->prid[0], sizeof(eptmp->provid));
-   eptmp->l = eptmp->emm[2] + 3;
+   eptmp->emmlen = eptmp->emm[2] + 3;
 
    struct s_cardsystem *cs = get_cardsystem_by_caid(reader->caid);
    if (cs && cs->get_emm_type && !cs->get_emm_type(eptmp, reader)) {
@@ -378,7 +378,7 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 		rdr_debug_mask(reader, D_TRACE, "%s: ratelimit check failed.", __func__);
 		return; // reader_mode = 1: checkout ratelimiter in reader mode so srvid can be replaced
 	}
-	cs_ddump_mask(D_ATR, er->ecm, er->l, "ecm:");
+	cs_ddump_mask(D_ATR, er->ecm, er->ecmlen, "ecm:");
 
 	struct timeb tps, tpe;
 	cs_ftime(&tps);

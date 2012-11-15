@@ -748,7 +748,7 @@ int32_t videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned cha
       emmv2 = ep->emm[offs+1];
       offs += 2 + 1 + emmv2;  // skip sub-emm len (2 bytes sub-emm len if 0x01);
    }
-   for (position = 0; position < nsubs && offs+2 < ep->l; ++position)
+   for (position = 0; position < nsubs && offs+2 < ep->emmlen; ++position)
    {
       if (ep->emm[offs] > 0x07)  // workaround for mgcamd and emmv2
          ++offs;
@@ -764,14 +764,14 @@ int32_t videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned cha
             else
             {
                offs += ep->emm[offs+1] + 2;
-               if (!(offs+1 < ep->l)) return rc;
+               if (!(offs+1 < ep->emmlen)) return rc;
                if (ep->emm[offs] == 0x00 && (ep->emm[offs+1] == 0x00 || ep->emm[offs+1] == 0x01))
                   offs += 2 + 1 + emmv2;
                continue;
             }
          }
          offs += ep->emm[offs+1] + 2;
-         if (!(offs+1 < ep->l)) return rc;
+         if (!(offs+1 < ep->emmlen)) return rc;
          if (ep->emm[offs] != 0)
          {
             if (ep->type == GLOBAL || vdrsc_fix || position == ua_position)
@@ -784,7 +784,7 @@ int32_t videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned cha
                   (*read_tiers)(reader);
             }
             offs += ep->emm[offs] + 1;
-            if (offs < ep->l && ep->emm[offs] == 0x00) ++offs;
+            if (offs < ep->emmlen && ep->emm[offs] == 0x00) ++offs;
          }
          offs += 1 + emmv2;
          if (vdrsc_fix) --position;

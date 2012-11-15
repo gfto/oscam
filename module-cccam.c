@@ -1084,7 +1084,7 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 	struct cc_srvid cur_srvid;
 	cur_srvid.sid = cur_er->srvid;
 	cur_srvid.chid = cur_er->chid;
-	cur_srvid.ecmlen = cur_er->l;
+	cur_srvid.ecmlen = cur_er->ecmlen;
 
 	int32_t best_rating = MIN_RATING-1, rating;
 
@@ -1291,12 +1291,12 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		//sleepsend support end
 
 		if (buf)
-			memcpy(buf, cur_er->ecm, cur_er->l);
+			memcpy(buf, cur_er->ecm, cur_er->ecmlen);
 
 		struct cc_srvid cur_srvid;
 		cur_srvid.sid = cur_er->srvid;
 		cur_srvid.chid = cur_er->chid;
-		cur_srvid.ecmlen = cur_er->l;
+		cur_srvid.ecmlen = cur_er->ecmlen;
 
 		cs_readlock(&cc->cards_busy);
 
@@ -1323,7 +1323,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 		if (card) {
 			uint8_t *ecmbuf;
-			if (!cs_malloc(&ecmbuf, cur_er->l + 13))
+			if (!cs_malloc(&ecmbuf, cur_er->ecmlen + 13))
 				break;
 
 			// build ecm message
@@ -1339,8 +1339,8 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			ecmbuf[9] = card->id & 0xff;
 			ecmbuf[10] = cur_er->srvid >> 8;
 			ecmbuf[11] = cur_er->srvid & 0xff;
-			ecmbuf[12] = cur_er->l & 0xff;
-			memcpy(ecmbuf + 13, cur_er->ecm, cur_er->l);
+			ecmbuf[12] = cur_er->ecmlen & 0xff;
+			memcpy(ecmbuf + 13, cur_er->ecm, cur_er->ecmlen);
 
 			uint8_t send_idx = 1;
 			if (cc->extended_mode) {
@@ -1371,8 +1371,8 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 			cs_debug_mask(
 					D_READER,
-					"%s sending ecm for sid %04X(%d) to card %08x, hop %d, ecmtask %d", getprefix(), cur_er->srvid, cur_er->l, card->id, card->hop, cur_er->idx);
-			cc_cmd_send(cl, ecmbuf, cur_er->l + 13, MSG_CW_ECM); // send ecm
+					"%s sending ecm for sid %04X(%d) to card %08x, hop %d, ecmtask %d", getprefix(), cur_er->srvid, cur_er->ecmlen, card->id, card->hop, cur_er->idx);
+			cc_cmd_send(cl, ecmbuf, cur_er->ecmlen + 13, MSG_CW_ECM); // send ecm
 
 			free(ecmbuf);
 
@@ -1560,7 +1560,7 @@ int32_t cc_send_emm(EMM_PACKET *ep) {
 			"%s emm received for client %8lX caid %04X for card %08X",
 			getprefix(), (unsigned long)ep->client->thread, caid, emm_card->id);
 
-	int32_t size = ep->l + 12;
+	int32_t size = ep->emmlen + 12;
 	uint8_t *emmbuf;
 	if (!cs_malloc(&emmbuf, size))
 		return 0;
@@ -1568,7 +1568,7 @@ int32_t cc_send_emm(EMM_PACKET *ep) {
 	// build ecm message
 	emmbuf[0] = ep->caid[0];
 	emmbuf[1] = ep->caid[1];
-	emmbuf[2] = ep->l>>8; //Support for emm len > 256bytes
+	emmbuf[2] = ep->emmlen>>8; //Support for emm len > 256bytes
 	emmbuf[3] = ep->provid[0];
 	emmbuf[4] = ep->provid[1];
 	emmbuf[5] = ep->provid[2];
@@ -1577,8 +1577,8 @@ int32_t cc_send_emm(EMM_PACKET *ep) {
 	emmbuf[8] = emm_card->id >> 16;
 	emmbuf[9] = emm_card->id >> 8;
 	emmbuf[10] = emm_card->id & 0xff;
-	emmbuf[11] = ep->l&0xFF;
-	memcpy(emmbuf + 12, ep->emm, ep->l);
+	emmbuf[11] = ep->emmlen & 0xff;
+	memcpy(emmbuf + 12, ep->emm, ep->emmlen);
 
 	cs_readunlock(&cc->cards_busy);
 
@@ -2083,7 +2083,7 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 	er->srvid = b2i(2, buf+ 10);
 	er->rc = rc;
 
-	er->l = 0;
+	er->ecmlen = 0;
 
 	uint8_t *ofs = buf+20;
 
@@ -2549,9 +2549,9 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			if ((er = get_ecmtask())) {
 				er->caid = b2i(2, buf + 4);
 				er->srvid = b2i(2, buf + 14);
-				//er->l =(((buf[18]&0x0f)<< 8) | buf[19])+3;
-				er->l = l-17;
-				memcpy(er->ecm, buf + 17, er->l);
+				//er->ecmlen =(((buf[18]&0x0f)<< 8) | buf[19])+3;
+				er->ecmlen = l-17;
+				memcpy(er->ecm, buf + 17, er->ecmlen);
 				er->prid = b2i(4, buf + 6);
 				cc->server_ecm_pending++;
 				er->idx = ++cc->server_ecm_idx;
@@ -2616,12 +2616,12 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				cs_debug_mask(
 						D_CLIENT,
 						"%s ECM request from client: caid %04x srvid %04x(%d) prid %06x",
-						getprefix(), er->caid, er->srvid, er->l, er->prid);
+						getprefix(), er->caid, er->srvid, er->ecmlen, er->prid);
 
 				struct cc_srvid srvid;
 				srvid.sid = er->srvid;
 				srvid.chid = er->chid;
-				srvid.ecmlen = er->l;
+				srvid.ecmlen = er->ecmlen;
 				add_extended_ecm_idx(cl, cc->extended_mode ? cc->g_flag : 1,
 						er->idx, server_card, srvid, 1);
 
@@ -2919,10 +2919,10 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				//emm->hexserial[2] = buf[13];
 				//emm->hexserial[3] = buf[14];
 				if (l <= 0xFF)
-					emm->l = buf[15];
+					emm->emmlen = buf[15];
 				else
-					emm->l = l-16;
-				memcpy(emm->emm, buf + 16, emm->l);
+					emm->emmlen = l-16;
+				memcpy(emm->emm, buf + 16, emm->emmlen);
 				//emm->type = UNKNOWN;
 				//emm->cidx = cs_idx;
 				do_emm(cl, emm);
@@ -3625,7 +3625,7 @@ int32_t cc_available(struct s_reader *rdr, int32_t checktype, ECM_REQUEST *er) {
 			return 0;
 	}
 
-	if (er && er->l > 255 && cc && !cc->extended_mode && (cc->remote_build_nr < 3367))
+	if (er && er->ecmlen > 255 && cc && !cc->extended_mode && (cc->remote_build_nr < 3367))
 		return 0; // remote does not support large ecms!
 
 

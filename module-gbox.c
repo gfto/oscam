@@ -291,14 +291,14 @@ uint32_t gbox_get_ecmchecksum(ECM_REQUEST *er)
   int32_t counter;
 
   uchar ecm[255];
-  memcpy(ecm, er->ecm, er->l);
+  memcpy(ecm, er->ecm, er->ecmlen);
 
   checksum[3] = ecm[0];
   checksum[2] = ecm[1];
   checksum[1] = ecm[2];
   checksum[0] = ecm[3];
 
-  for (counter=1; counter < (er->l/4) - 4; counter++) {
+  for (counter=1; counter < (er->ecmlen/4) - 4; counter++) {
     checksum[3] ^= ecm[counter*4];
     checksum[2] ^= ecm[counter*4+1];
     checksum[1] ^= ecm[counter*4+2];
@@ -757,25 +757,25 @@ static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
       uchar *ecm = data + 18;
 
       er->idx = ++ecm_idx;
-      er->l = ecm[2] + 3;
+      er->ecmlen = ecm[2] + 3;
       er->pid = data[10] << 8 | data[11];
       er->srvid = data[12] << 8 | data[13];
       ei->extra = data[14] << 8 | data[15];
-      memcpy(er->ecm, data + 18, er->l);
+      memcpy(er->ecm, data + 18, er->ecmlen);
 
       ei->ncards = data[16];
 
-      ei->peer = ecm[er->l] << 8 | ecm[er->l + 1];
-      ei->version = ecm[er->l + 2];
-      ei->type = ecm[er->l + 4];
-      er->caid = ecm[er->l + 5] << 8 | ecm[er->l + 6];
-      er->prid = ecm[er->l + 7] << 8 | ecm[er->l + 8];
-      ei->slot = ecm[er->l + 12];
-      ei->unknwn1 = ecm[er->l + 3];
-      ei->unknwn2 = ecm[er->l + 13];
-      memcpy(ei->checksums, ecm + er->l + 14, 14);
+      ei->peer = ecm[er->ecmlen] << 8 | ecm[er->ecmlen + 1];
+      ei->version = ecm[er->ecmlen + 2];
+      ei->type = ecm[er->ecmlen + 4];
+      er->caid = ecm[er->ecmlen + 5] << 8 | ecm[er->ecmlen + 6];
+      er->prid = ecm[er->ecmlen + 7] << 8 | ecm[er->ecmlen + 8];
+      ei->slot = ecm[er->ecmlen + 12];
+      ei->unknwn1 = ecm[er->ecmlen + 3];
+      ei->unknwn2 = ecm[er->ecmlen + 13];
+      memcpy(ei->checksums, ecm + er->ecmlen + 14, 14);
 
-      cs_log("gbox: ecm received, caid=%04x. provid=%x, sid=%04x, len=%d, peer=%04x", er->caid, er->prid, er->srvid, er->l, ei->peer);
+      cs_log("gbox: ecm received, caid=%04x. provid=%x, sid=%04x, len=%d, peer=%04x", er->caid, er->prid, er->srvid, er->ecmlen, ei->peer);
       get_cw(cli, er);
     }
       break;
@@ -995,7 +995,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 
   uchar send_buf[0x2048], *ptr;
 
-  if (!er->l) return -1;
+  if (!er->ecmlen) return -1;
   er->gbox_crc = gbox_get_ecmchecksum(er);
 
   memset(send_buf, 0, sizeof(send_buf));
@@ -1013,8 +1013,8 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
   send_buf[16] = 0; // number of cards
   send_buf[17] = 0; // distance */
 
-  memcpy(send_buf + 18, er->ecm, er->l);
-  ptr = send_buf + 18 + er->l;
+  memcpy(send_buf + 18, er->ecm, er->ecmlen);
+  ptr = send_buf + 18 + er->ecmlen;
   *(ptr) = gbox->id >> 8;
   *(++ptr) = gbox->id;
   *(++ptr) = gbox->ver;

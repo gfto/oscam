@@ -140,7 +140,7 @@ int32_t ecmfmt(uint16_t caid, uint32_t prid, uint16_t chid, uint16_t pid, uint16
 
 int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 {
-	return ecmfmt(ecm->caid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->l, ecm->checksum, result, size);
+	return ecmfmt(ecm->caid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecm->checksum, result, size);
 }
 
 int32_t check_sct_len(const uchar *data, int32_t off)

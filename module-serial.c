@@ -831,12 +831,12 @@ static int32_t oscam_ser_check_ecm(ECM_REQUEST *er, uchar *buf, int32_t l)
   switch(serialdata->connected)
   {
     case P_HSIC:
-      er->l    = l-12;
+      er->ecmlen = l-12;
       er->caid = b2i(2, buf+1 );
       er->prid = b2i(3, buf+3 );
       er->pid  = b2i(2, buf+6 );
       er->srvid= b2i(2, buf+10);
-      memcpy(er->ecm, buf+12, er->l);
+      memcpy(er->ecm, buf+12, er->ecmlen);
       break;
     case P_SSSP:
       er->pid=b2i(2, buf+3);
@@ -846,56 +846,56 @@ static int32_t oscam_ser_check_ecm(ECM_REQUEST *er, uchar *buf, int32_t l)
         cs_debug_mask(D_CLIENT, "illegal request, unknown pid=%04X", er->pid);
         return(2);
       }
-      er->l    = l-5;
+      er->ecmlen = l-5;
       er->srvid= serialdata->sssp_srvid;
       er->caid = serialdata->sssp_tab[i].caid;
       er->prid = serialdata->sssp_tab[i].prid;
-      memcpy(er->ecm, buf+5, er->l);
+      memcpy(er->ecm, buf+5, er->ecmlen);
       break;
     case P_BOMBA:
-      er->l=l;
-      memcpy(er->ecm, buf, er->l);
+      er->ecmlen = l;
+      memcpy(er->ecm, buf, er->ecmlen);
       break;
     case P_DSR95:
       buf[l]='\0';	// prepare for trim
       trim((char *)buf+13);	// strip spc, nl, cr ...
-      er->l=strlen((char *)buf+13)>>1;
+      er->ecmlen = strlen((char *)buf+13)>>1;
       er->prid=cs_atoi((char *)buf+3, 3, 0);	// ignore errors
       er->caid=cs_atoi((char *)buf+9, 2, 0);	// ignore errors
-      if (cs_atob(er->ecm, (char *)buf+13, er->l)<0)
+      if (cs_atob(er->ecm, (char *)buf+13, er->ecmlen)<0)
       {
         cs_log("illegal characters in ecm-request");
         return(1);
       }
       if( serialdata->dsr9500type==P_DSR_WITHSID )
       {
-        er->l-=2;
-        er->srvid=cs_atoi((char *)buf+13+(er->l<<1), 2, 0);
+        er->ecmlen -= 2;
+        er->srvid=cs_atoi((char *)buf+13+(er->ecmlen << 1), 2, 0);
       }
       break;
     case P_GS:
-      er->l     = ((buf[3]<<8)|buf[2]) - 6;
+      er->ecmlen = ((buf[3]<<8)|buf[2]) - 6;
       er->srvid =  (buf[5]<<8)|buf[4]; // sid
       er->caid  =  (buf[7]<<8)|buf[6];
       er->prid  = 0;
-      if (er->l>256) er->l=256;
-      memcpy(er->ecm, buf+10, er->l);
+      if (er->ecmlen > 256) er->ecmlen = 256;
+      memcpy(er->ecm, buf+10, er->ecmlen);
       break;
     case P_ALPHA:
       l=oscam_ser_alpha_convert(buf, l);
-      er->l     = b2i(2, buf+1 )-2;
+      er->ecmlen= b2i(2, buf+1 )-2;
       er->caid  = b2i(2, buf+3 );
-      if ((er->l!=l-5) || (er->l>257))
+      if ((er->ecmlen!=l-5) || (er->ecmlen>257))
       {
         cs_log(incomplete, l);
         return(1);
       }
-      memcpy(er->ecm, buf+5, er->l);
+      memcpy(er->ecm, buf+5, er->ecmlen);
       break;
     case P_GBOX:
       er->srvid = b2i(2, buf+serialdata->gbox_lens.cat_len+3+3);
-      er->l = serialdata->gbox_lens.ecm_len+3;
-      memcpy(er->ecm, buf+serialdata->gbox_lens.cat_len+3+serialdata->gbox_lens.pmt_len+3, er->l);
+      er->ecmlen = serialdata->gbox_lens.ecm_len+3;
+      memcpy(er->ecm, buf+serialdata->gbox_lens.cat_len+3+serialdata->gbox_lens.pmt_len+3, er->ecmlen);
       break;
   }
   return(0);
@@ -1128,35 +1128,35 @@ static int32_t oscam_ser_send_ecm(struct s_client *client, ECM_REQUEST *er, ucha
       i2b_buf(3, er->prid, buf + 3);
       i2b_buf(2, er->pid, buf + 6);
       i2b_buf(2, er->srvid, buf + 10);
-      memcpy(buf+12, er->ecm, er->l);
-      oscam_ser_send(client, buf, 12+er->l);
+      memcpy(buf+12, er->ecm, er->ecmlen);
+      oscam_ser_send(client, buf, 12+er->ecmlen);
       break;
     case P_BOMBA:
-      oscam_ser_send(client, er->ecm, er->l);
+      oscam_ser_send(client, er->ecm, er->ecmlen);
       break;
     case P_DSR95:
-      if (cs_malloc(&tmp, er->l * 2 + 1)) {
+      if (cs_malloc(&tmp, er->ecmlen * 2 + 1)) {
 	      if( client->serialdata->dsr9500type==P_DSR_WITHSID )
 	      {
 	        snprintf((char *)buf, 512, "%c%08X%04X%s%04X\n\r",
-	          3, er->prid, er->caid, cs_hexdump(0, er->ecm, er->l, tmp, er->l * 2 + 1), er->srvid);
-	        oscam_ser_send(client, buf, (er->l<<1)+19); // 1 + 8 + 4 + l*2 + 4 + 2
+	          3, er->prid, er->caid, cs_hexdump(0, er->ecm, er->ecmlen, tmp, er->ecmlen * 2 + 1), er->srvid);
+	        oscam_ser_send(client, buf, (er->ecmlen<<1)+19); // 1 + 8 + 4 + l*2 + 4 + 2
 	      }
 	      else
 	      {
 	        snprintf((char *)buf, 512, "%c%08X%04X%s\n\r",
-	          3, er->prid, er->caid, cs_hexdump(0, er->ecm, er->l, tmp, er->l * 2 + 1));
-	        oscam_ser_send(client, buf, (er->l<<1)+15); // 1 + 8 + 4 + l*2 + 2
+	          3, er->prid, er->caid, cs_hexdump(0, er->ecm, er->ecmlen, tmp, er->ecmlen * 2 + 1));
+	        oscam_ser_send(client, buf, (er->ecmlen<<1)+15); // 1 + 8 + 4 + l*2 + 2
 	      }
 	      free(tmp);
 	    }
       break;
     case P_ALPHA:
       buf[0]=0x80;
-      i2b_buf(2, 2+er->l, buf + 1);
+      i2b_buf(2, 2+er->ecmlen, buf + 1);
       i2b_buf(2, er->caid, buf + 3);
-      memcpy(buf+5, er->ecm, er->l);
-      oscam_ser_send(client, buf, oscam_ser_alpha_convert(buf, 5+er->l));
+      memcpy(buf+5, er->ecm, er->ecmlen);
+      oscam_ser_send(client, buf, oscam_ser_alpha_convert(buf, 5+er->ecmlen));
       break;
   }
   return(0);

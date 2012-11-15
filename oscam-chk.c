@@ -269,7 +269,7 @@ static int32_t chk_class(ECM_REQUEST *er, CLASSTAB *clstab, const char *type, co
   if( !clstab->bn && !clstab->an ) return 1;
 
   j=an=cl_n=l=0;
-  while( (j=find_nano(er->ecm, er->l, CS_NANO_CLASS, j)) > 0 )
+  while( (j=find_nano(er->ecm, er->ecmlen, CS_NANO_CLASS, j)) > 0 )
   {
     l = er->ecm[j];
     ecm_class = er->ecm[j+l];
@@ -728,8 +728,8 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
   }
 
   //Supports long ecms?
-  if (er->l > 255 && is_network_reader(rdr) && !rdr->ph.large_ecm_support) {
-	  cs_debug_mask(D_TRACE, "no large ecm support (l=%d) for reader %s", er->l, rdr->label);
+  if (er->ecmlen > 255 && is_network_reader(rdr) && !rdr->ph.large_ecm_support) {
+	  cs_debug_mask(D_TRACE, "no large ecm support (l=%d) for reader %s", er->ecmlen, rdr->label);
 	  return 0;
   }
 
@@ -797,7 +797,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
   }
 */
   //Checking ecmlength:
-  if (rdr->ecmWhitelist && er->l){
+  if (rdr->ecmWhitelist && er->ecmlen) {
   	struct s_ecmWhitelist *tmp;
   	struct s_ecmWhitelistIdent *tmpIdent;
   	struct s_ecmWhitelistLen *tmpLen;
@@ -808,7 +808,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
   				if(tmpIdent->ident == 0 || tmpIdent->ident == er->prid){
   					foundident = 1;
 			  		for(tmpLen = tmpIdent->lengths; tmpLen; tmpLen = tmpLen->next){
-			  			if(tmpLen->len == er->l){
+			  			if (tmpLen->len == er->ecmlen) {
 				  			ok = 1;
 				  			break;
 				  		}
@@ -825,7 +825,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
   }
 
   // ECM Header Check
-  if (rdr->ecmHeaderwhitelist && er->l){ 
+  if (rdr->ecmHeaderwhitelist && er->ecmlen) {
 	int8_t byteok = 0;
 	int8_t entryok = 0;
 	int8_t foundcaid = 0;
@@ -881,7 +881,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
 		//cs_log("ECM for %04X:%06X:%04X is valid for ECMHeaderwhitelist of reader %s.", er->caid, er->prid, er->srvid, rdr->label);
 	} else {
 		if (skip == 0 || (foundcaid == 1 && foundprovid == 1 && entryok == 0 && skip == 1)) {
-			cs_ddump_mask(D_TRACE, er->ecm, er->l, 
+			cs_ddump_mask(D_TRACE, er->ecm, er->ecmlen,
 				"following ECM %04X:%06X:%04X was filtered by ECMHeaderwhitelist of Reader %s from User %s because of not matching Header:",
 				er->caid, er->prid, er->srvid, rdr->label, username(er->client));
 			rdr->ecmsfilteredhead += 1;	

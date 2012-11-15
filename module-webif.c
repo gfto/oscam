@@ -4066,7 +4066,7 @@ static bool send_EMM(struct s_reader *rdr, uint16_t caid, struct s_cardsystem *c
 
 			memset(emm_pack, '\0', sizeof(EMM_PACKET));
 			emm_pack->client = webif_client;
-			emm_pack->l = len; 
+			emm_pack->emmlen = len;
 			memcpy(emm_pack->emm, emmhex, len);
 
 			emm_pack->caid[0] = (caid >> 8) & 0xFF;

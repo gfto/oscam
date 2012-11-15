@@ -67,7 +67,7 @@ static uint32_t get_prid(uint16_t caid, uint32_t prid)
 
 static uint32_t get_subid(ECM_REQUEST *er)
 {
-	if (!er->l)
+	if (!er->ecmlen)
 		return 0;
 
 	uint32_t id = 0;
@@ -93,7 +93,7 @@ static void get_stat_query(ECM_REQUEST *er, STAT_QUERY *q)
 	q->prid = get_prid(er->caid, er->prid);
 	q->srvid = er->srvid;
 	q->chid = get_subid(er);
-	q->ecmlen = er->l;
+	q->ecmlen = er->ecmlen;
 }
 
 void load_stat_from_file(void)
@@ -418,7 +418,7 @@ static void housekeeping_stat(int32_t force);
  */
 static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t rc)
 {
-	if (!rdr || !er || !cfg.lb_mode ||!er->l || !er->client)
+	if (!rdr || !er || !cfg.lb_mode ||!er->ecmlen || !er->client)
 		return;
 
 	struct s_client *cl = rdr->client;
@@ -745,7 +745,7 @@ static void convert_to_beta_int(ECM_REQUEST *er, uint16_t caid_to)
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
 	convert_to_beta(er->client, er, caid_to);
 	// update ecmd5 for store ECM in cache
-	memcpy(er->ecmd5, MD5(er->ecm+13, er->l-13, md5tmp), CS_ECMSTORESIZE);
+	memcpy(er->ecmd5, MD5(er->ecm+13, er->ecmlen-13, md5tmp), CS_ECMSTORESIZE);
 	cacheex_update_hash(er);
 	er->btun = 2; //marked as auto-betatunnel converted. Also for fixing recursive lock in get_cw
 }
@@ -756,7 +756,7 @@ static void convert_to_nagra_int(ECM_REQUEST *er, uint16_t caid_to)
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
 	convert_to_nagra(er->client, er, caid_to);
 	// update ecmd5 for store ECM in cache
-	memcpy(er->ecmd5, MD5(er->ecm+3, er->l-3, md5tmp), CS_ECMSTORESIZE);
+	memcpy(er->ecmd5, MD5(er->ecm+3, er->ecmlen-3, md5tmp), CS_ECMSTORESIZE);
 	cacheex_update_hash(er);
 	er->btun = 2; //marked as auto-betatunnel converted. Also for fixing recursive lock in get_cw
 }
@@ -832,7 +832,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 	get_stat_query(er, &q);
 
 	//auto-betatunnel: The trick is: "let the loadbalancer decide"!
-	if (cfg.lb_auto_betatunnel && er->caid >> 8 == 0x18 && er->l) { //nagra
+	if (cfg.lb_auto_betatunnel && er->caid >> 8 == 0x18 && er->ecmlen) { //nagra
 		uint16_t caid_to = get_betatunnel_caid_to(er->caid);
 		if (caid_to) {
 			int8_t needs_stats_nagra = 1, needs_stats_beta = 1;
@@ -946,7 +946,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 	} else
 
 
-	if (cfg.lb_auto_betatunnel && (er->caid == 0x1702 || er->caid == 0x1722) && er->ocaid == 0x0000 && er->l) { //beta
+	if (cfg.lb_auto_betatunnel && (er->caid == 0x1702 || er->caid == 0x1722) && er->ocaid == 0x0000 && er->ecmlen) { //beta
 		uint16_t caid_to = get_betatunnel_caid_to(er->caid);
 		if (caid_to) {
 			int8_t needs_stats_nagra = 1, needs_stats_beta = 1;
@@ -1188,7 +1188,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 
 //			if (nreopen_readers && s->rc != E_FOUND && s->last_received+get_reopen_seconds(s) < current_time) {
 //				cs_debug_mask(D_LB, "loadbalancer: reopen reader %s", rdr->label);
-//				reset_stat(er->caid, prid, er->srvid, er->chid, er->l);
+//				reset_stat(er->caid, prid, er->srvid, er->chid, er->ecmlen);
 //				ea->status |= READER_ACTIVE; //max ecm reached, get new statistics
 //				nreopen_readers--;
 //				continue;

@@ -202,7 +202,7 @@ static struct s_cacheex_matcher *is_cacheex_matcher_matching(ECM_REQUEST *from_e
 				&& (!entry->srvid || entry->srvid == from_er->srvid)
 				&& (!entry->chid || entry->chid == from_er->chid)
 				&& (!entry->pid || entry->pid == from_er->pid)
-				&& (!entry->ecmlen || entry->ecmlen == from_er->l))
+				&& (!entry->ecmlen || entry->ecmlen == from_er->ecmlen))
 			ok++;
 
 		if (to_er
@@ -211,7 +211,7 @@ static struct s_cacheex_matcher *is_cacheex_matcher_matching(ECM_REQUEST *from_e
 				&& (!entry->to_srvid || entry->to_srvid == to_er->srvid)
 				&& (!entry->to_chid || entry->to_chid == to_er->chid)
 				&& (!entry->to_pid || entry->to_pid == to_er->pid)
-				&& (!entry->to_ecmlen || entry->to_ecmlen == to_er->l))
+				&& (!entry->to_ecmlen || entry->to_ecmlen == to_er->ecmlen))
 			ok++;
 
 		if (ok == v_ok) {
@@ -338,16 +338,16 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 	er->cacheex_src = cl;
 	er->client = NULL; //No Owner! So no fallback!
 
-	if (er->l) {
+	if (er->ecmlen) {
 		uint16_t *lp;
-		for (lp=(uint16_t *)er->ecm+(er->l>>2), er->checksum=0; lp>=(uint16_t *)er->ecm; lp--)
+		for (lp=(uint16_t *)er->ecm+(er->ecmlen >> 2), er->checksum=0; lp>=(uint16_t *)er->ecm; lp--)
 			er->checksum^=*lp;
 
 		int32_t offset = 3;
 		if ((er->caid >> 8) == 0x17)
 			offset = 13;
 		unsigned char md5tmp[MD5_DIGEST_LENGTH];
-		memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, md5tmp), CS_ECMSTORESIZE);
+		memcpy(er->ecmd5, MD5(er->ecm+offset, er->ecmlen-offset, md5tmp), CS_ECMSTORESIZE);
 		cacheex_update_hash(er);
 		//csp has already initialized these hashcode
 
@@ -605,7 +605,7 @@ static int32_t cacheex_ecm_hash_calc(uchar *buf, int32_t n) {
 }
 
 void cacheex_update_hash(ECM_REQUEST *er) {
-	er->csp_hash = cacheex_ecm_hash_calc(er->ecm+3, er->l-3);
+	er->csp_hash = cacheex_ecm_hash_calc(er->ecm+3, er->ecmlen-3);
 }
 
 #endif

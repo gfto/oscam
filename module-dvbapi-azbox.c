@@ -42,8 +42,8 @@ void azbox_openxcas_ecm_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_
 	er->pid   = openxcas_ecm_pid;
 	er->prid  = openxcas_provid;
 
-	er->l=l;
-	memcpy(er->ecm, ecm_data, er->l);
+	er->ecmlen = l;
+	memcpy(er->ecm, ecm_data, er->ecmlen);
 
 	request_cw(dvbapi_client, er);
 
@@ -92,8 +92,8 @@ void azbox_openxcas_ex_callback(int32_t stream_id, uint32_t seq, int32_t idx, ui
 	er->pid   = openxcas_ecm_pid;
 	er->prid  = openxcas_provid;
 
-	er->l=l;
-	memcpy(er->ecm, ecm_data, er->l);
+	er->ecmlen = l;
+	memcpy(er->ecm, ecm_data, er->ecmlen);
 
 	request_cw(dvbapi_client, er);
 

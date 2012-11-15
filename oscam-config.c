@@ -540,7 +540,7 @@ int32_t match_whitelist(ECM_REQUEST *er, struct s_global_whitelist *entry) {
 			&& (!entry->srvid || entry->srvid == er->srvid)
 			&& (!entry->chid || entry->chid == er->chid)
 			&& (!entry->pid || entry->pid == er->pid)
-			&& (!entry->ecmlen || entry->ecmlen == er->l));
+			&& (!entry->ecmlen || entry->ecmlen == er->ecmlen));
 }
 
 int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line)

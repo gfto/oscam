@@ -358,15 +358,15 @@ static void camd35_process_ecm(uchar *buf)
 		return;
 //	er->l = buf[1];
 	//fix ECM LEN issue
-	er->l =(((buf[21]&0x0f)<< 8) | buf[22])+3;
-	if (!cs_malloc(&er->src_data, 0x34 + 20 + er->l))
+	er->ecmlen =(((buf[21]&0x0f)<< 8) | buf[22])+3;
+	if (!cs_malloc(&er->src_data, 0x34 + 20 + er->ecmlen))
 		return;
-	memcpy(er->src_data, buf, 0x34 + 20 + er->l);	// save request
+	memcpy(er->src_data, buf, 0x34 + 20 + er->ecmlen);	// save request
 	er->srvid = b2i(2, buf+ 8);
 	er->caid = b2i(2, buf+10);
 	er->prid = b2i(4, buf+12);
 	er->pid  = b2i(2, buf+16);
-	memcpy(er->ecm, buf + 20, er->l);
+	memcpy(er->ecm, buf + 20, er->ecmlen);
 	get_cw(cur_client(), er);
 }
 
@@ -374,10 +374,10 @@ static void camd35_process_emm(uchar *buf)
 {
 	EMM_PACKET epg;
 	memset(&epg, 0, sizeof(epg));
-	epg.l = buf[1];
+	epg.emmlen = buf[1];
 	memcpy(epg.caid, buf + 10, 2);
 	memcpy(epg.provid, buf + 12 , 4);
-	memcpy(epg.emm, buf + 20, epg.l);
+	memcpy(epg.emm, buf + 20, epg.emmlen);
 	do_emm(cur_client(), &epg);
 }
 
@@ -653,7 +653,7 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 	er->pid  = b2i(2, buf+16);
 	er->rc = rc;
 
-	er->l = 0;
+	er->ecmlen = 0;
 
 	uint8_t *ofs = buf+20;
 
@@ -822,8 +822,8 @@ static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *
 	client->reader->card_status = CARD_INSERTED; //for udp
 
 	memset(buf, 0, 20);
-	memset(buf + 20, 0xff, er->l+15);
-	buf[1]=er->l;
+	memset(buf + 20, 0xff, er->ecmlen+15);
+	buf[1]=er->ecmlen;
 	i2b_buf(2, er->srvid, buf + 8);
 	i2b_buf(2, er->caid, buf + 10);
 	i2b_buf(4, er->prid, buf + 12);
@@ -832,7 +832,7 @@ static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *
 	i2b_buf(2, er->idx, buf + 16);
 	buf[18] = 0xff;
 	buf[19] = 0xff;
-	memcpy(buf + 20, er->ecm, er->l);
+	memcpy(buf + 20, er->ecm, er->ecmlen);
 	return((camd35_send(client, buf, 0) < 1) ? (-1) : 0);
 }
 
@@ -845,13 +845,13 @@ static int32_t camd35_send_emm(EMM_PACKET *ep)
 	if (!tcp_connect(cl)) return -1;
 
 	memset(buf, 0, 20);
-	memset(buf+20, 0xff, ep->l+15);
+	memset(buf+20, 0xff, ep->emmlen+15);
 
 	buf[0]=0x06;
-	buf[1]=ep->l;
+	buf[1]=ep->emmlen;
 	memcpy(buf+10, ep->caid, 2);
 	memcpy(buf+12, ep->provid, 4);
-	memcpy(buf+20, ep->emm, ep->l);
+	memcpy(buf+20, ep->emm, ep->emmlen);
 
 	return((camd35_send(cl, buf, 0)<1) ? 0 : 1);
 }

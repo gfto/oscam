@@ -782,8 +782,8 @@ void dvbapi_process_emm (int32_t demux_index, int32_t filter_num, unsigned char 
 	i2b_buf(2, caid, epg.caid);
 	i2b_buf(4, provider, epg.provid);
 
-	epg.l=len;
-	memcpy(epg.emm, buffer, epg.l);
+	epg.emmlen=len;
+	memcpy(epg.emm, buffer, epg.emmlen);
 
 	do_emm(dvbapi_client, &epg);
 }
@@ -1345,7 +1345,7 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 		er->pid   = demux[demux_id].ECMpids[num].ECM_PID;
 		er->prid  = demux[demux_id].ECMpids[num].PROVID;
 
-		er->l=5;
+		er->ecmlen=5;
 		er->ecm[1] = 0x00;
 		er->ecm[2] = 0x02;
 		i2b_buf(2, er->srvid, er->ecm+3);
@@ -1353,7 +1353,7 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 		for (j=0, n=5; j<demux[demux_id].STREAMpidcount; j++, n+=2) {
 			i2b_buf(2, demux[demux_id].STREAMpids[j], er->ecm+n);
 			er->ecm[2] += 2;
-			er->l += 2;
+			er->ecmlen += 2;
 		}
 
 		request_cw(dvbapi_client, er);
@@ -1930,8 +1930,8 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		er->pid   = curpid->ECM_PID;
 		er->prid  = provid;
 		er->chid  = chid;
-		er->l     = len;
-		memcpy(er->ecm, buffer, er->l);
+		er->ecmlen= len;
+		memcpy(er->ecm, buffer, er->ecmlen);
 
 		request_cw(dvbapi_client, er);
 	}

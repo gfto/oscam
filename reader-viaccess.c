@@ -787,7 +787,7 @@ static int32_t viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 	}
 
 	if (!nanoF0Data) {
-		cs_dump(ep->emm, ep->l, "can't find 0xf0 in emm...");
+		cs_dump(ep->emm, ep->emmlen, "can't find 0xf0 in emm...");
 		return ERROR; // error
 	}
 
@@ -840,7 +840,7 @@ static int32_t viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 		// send subscription encrypted
 
 		if (!nano81Data) {
-			cs_dump(ep->emm, ep->l, "0x92 found, but can't find 0x81 in emm...");
+			cs_dump(ep->emm, ep->emmlen, "0x92 found, but can't find 0x81 in emm...");
 			return ERROR; // error
 		}
 
