@@ -110,7 +110,7 @@ static void usage(void)
 	printf("OSCam is based on Streamboard mp-cardserver v0.9d written by dukat\n");
 	printf("Visit http://www.streamboard.tv/oscam/ for more details.\n\n");
 
-	printf(" Features  :");
+	printf(" Features   :");
 	_check(WEBIF, "webif");
 	_check(TOUCH, "touch");
 	_check(MODULE_MONITOR, "monitor");
@@ -122,14 +122,12 @@ static void usage(void)
 	_check(IRDETO_GUESSING, "irdeto-guessing");
 	_check(CS_ANTICASC, "anticascading");
 	_check(WITH_DEBUG, "debug");
-	_check(WITH_LIBUSB, "smartreader");
-	_check(WITH_PCSC, "pcsc");
 	_check(WITH_LB, "loadbalancing");
 	_check(LCDSUPPORT, "lcd");
 	_check(LEDSUPPORT, "led");
 	printf("\n");
 
-	printf(" Protocols :");
+	printf(" Protocols  :");
 	_check(MODULE_CAMD33, "camd33");
 	_check(MODULE_CAMD35, "camd35_udp");
 	_check(MODULE_CAMD35_TCP, "camd35_tcp");
@@ -144,7 +142,7 @@ static void usage(void)
 	_check(MODULE_CONSTCW, "constcw");
 	printf("\n");
 
-	printf(" Readers   :");
+	printf(" Readers    :");
 	_check(READER_NAGRA, "nagra");
 	_check(READER_IRDETO, "irdeto");
 	_check(READER_CONAX, "conax");
@@ -155,6 +153,20 @@ static void usage(void)
 	_check(READER_DRE, "dre");
 	_check(READER_TONGFANG, "tongfang");
 	_check(READER_BULCRYPT, "bulcrypt");
+	printf("\n");
+
+	printf(" CardReaders:");
+	_check(CARDREADER_PHOENIX, "phoenix");
+	_check(CARDREADER_INTERNAL_AZBOX, "internal_azbox");
+	_check(CARDREADER_INTERNAL_COOLAPI, "internal_coolapi");
+	_check(CARDREADER_INTERNAL_SCI, "internal_sci");
+	_check(CARDREADER_SC8IN1, "sc8in1");
+	_check(CARDREADER_MP35, "mp35");
+	_check(CARDREADER_SMARGO, "smargo");
+	_check(CARDREADER_PCSC, "pcsc");
+	_check(CARDREADER_SMART, "smartreader");
+	_check(CARDREADER_DB2COM, "db2com");
+	_check(CARDREADER_STAPI, "stapi");
 	printf("\n");
 
 	printf("\n");

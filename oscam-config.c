@@ -64,6 +64,9 @@ int32_t write_services(void)
 #define write_readerconf(CONFIG_VAR, text) \
 	fprintf(fp, "%-30s %s\n", text ":", config_##CONFIG_VAR() ? "yes" : "no - no EMM support!")
 
+#define write_cardreaderconf(CONFIG_VAR, text) \
+	fprintf(fp, "%s%-19s %s\n", "cardreader_", text ":", config_##CONFIG_VAR() ? "yes" : "no")
+
 void write_versionfile(void) {
 #if defined(__CYGWIN__)
 	return;
@@ -106,6 +109,8 @@ void write_versionfile(void) {
 	write_conf(LEDSUPPORT, "LED support");
 	write_conf(IPV6SUPPORT, "IPv6 support");
 	write_conf(CS_CACHEEX, "Cache exchange support");
+
+	fprintf(fp, "\n");
 	write_conf(MODULE_CAMD33, "camd 3.3x");
 	write_conf(MODULE_CAMD35, "camd 3.5 UDP");
 	write_conf(MODULE_CAMD35_TCP, "camd 3.5 TCP");
@@ -117,8 +122,11 @@ void write_versionfile(void) {
 	write_conf(MODULE_RADEGAST, "radegast");
 	write_conf(MODULE_SERIAL, "serial");
 	write_conf(MODULE_CONSTCW, "constant CW");
-	write_conf(WITH_CARDREADER, "Cardreader");
+
+	fprintf(fp, "\n");
+	write_conf(WITH_CARDREADER, "Reader support");
 	if (config_WITH_CARDREADER()) {
+		fprintf(fp, "\n");
 		write_readerconf(READER_NAGRA, "Nagra");
 		write_readerconf(READER_IRDETO, "Irdeto");
 		write_readerconf(READER_CONAX, "Conax");
@@ -129,6 +137,18 @@ void write_versionfile(void) {
 		write_readerconf(READER_DRE, "DRE Crypt");
 		write_readerconf(READER_TONGFANG, "TONGFANG");
 		write_readerconf(READER_BULCRYPT, "Bulcrypt");
+		fprintf(fp, "\n");
+		write_cardreaderconf(CARDREADER_PHOENIX, "phoenix");
+		write_cardreaderconf(CARDREADER_INTERNAL_AZBOX, "internal_azbox");
+		write_cardreaderconf(CARDREADER_INTERNAL_COOLAPI, "internal_coolapi");
+		write_cardreaderconf(CARDREADER_INTERNAL_SCI, "internal_sci");
+		write_cardreaderconf(CARDREADER_SC8IN1, "sc8in1");
+		write_cardreaderconf(CARDREADER_MP35, "mp35");
+		write_cardreaderconf(CARDREADER_SMARGO, "smargo");
+		write_cardreaderconf(CARDREADER_PCSC, "pcsc");
+		write_cardreaderconf(CARDREADER_SMART, "smartreader");
+		write_cardreaderconf(CARDREADER_DB2COM, "db2com");
+		write_cardreaderconf(CARDREADER_STAPI, "stapi");
 	} else {
 		write_readerconf(WITH_CARDREADER, "Reader Support");
 	}

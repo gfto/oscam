@@ -369,4 +369,92 @@ static inline int config_CS_CACHEEX(void) {
 	#endif
 }
 
+static inline int config_CARDREADER_PHOENIX(void) {
+	#ifdef CARDREADER_PHOENIX
+	return config_WITH_CARDREADER() ? 1 : 0;
+	#else
+	return 0;
+	#endif
+}
+
+static inline int config_CARDREADER_INTERNAL_AZBOX(void) {
+	#ifdef CARDREADER_INTERNAL_AZBOX
+	return config_WITH_CARDREADER() ? 1 : 0;
+	#else
+	return 0;
+	#endif
+}
+
+static inline int config_CARDREADER_INTERNAL_COOLAPI(void) {
+	#ifdef CARDREADER_INTERNAL_COOLAPI
+	return config_WITH_CARDREADER() ? 1 : 0;
+	#else
+	return 0;
+	#endif
+}
+
+static inline int config_CARDREADER_INTERNAL_SCI(void) {
+	#ifdef CARDREADER_INTERNAL_SCI
+	return config_WITH_CARDREADER() ? 1 : 0;
+	#else
+	return 0;
+	#endif
+}
+
+static inline int config_CARDREADER_SC8IN1(void) {
+	#ifdef CARDREADER_SC8IN1
+	return config_WITH_CARDREADER() ? 1 : 0;
+	#else
+	return 0;
+	#endif
+}
+
+static inline int config_CARDREADER_MP35(void) {
+	#ifdef CARDREADER_MP35
+	return config_WITH_CARDREADER() ? 1 : 0;
+	#else
+	return 0;
+	#endif
+}
+
+static inline int config_CARDREADER_SMARGO(void) {
+	#ifdef CARDREADER_SMARGO
+	return config_WITH_CARDREADER() ? 1 : 0;
+	#else
+	return 0;
+	#endif
+}
+
+static inline int config_CARDREADER_PCSC(void) {
+	#ifdef CARDREADER_PCSC
+	return config_WITH_CARDREADER() ? 1 : 0;
+	#else
+	return 0;
+	#endif
+}
+
+static inline int config_CARDREADER_SMART(void) {
+	#ifdef CARDREADER_SMART
+	return config_WITH_CARDREADER() ? 1 : 0;
+	#else
+	return 0;
+	#endif
+}
+
+static inline int config_CARDREADER_DB2COM(void) {
+	#ifdef CARDREADER_DB2COM
+	return config_WITH_CARDREADER() ? 1 : 0;
+	#else
+	return 0;
+	#endif
+}
+
+static inline int config_CARDREADER_STAPI(void) {
+	#ifdef CARDREADER_STAPI
+	return config_WITH_CARDREADER() ? 1 : 0;
+	#else
+	return 0;
+	#endif
+}
+
 #endif
