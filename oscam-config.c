@@ -87,10 +87,9 @@ void write_versionfile(void) {
 	fprintf(fp, "Unix starttime: %ld\n", (long)now);
 	fprintf(fp, "Starttime:      %02d.%02d.%04d", st.tm_mday, st.tm_mon + 1, st.tm_year + 1900);
 	fprintf(fp, " %02d:%02d:%02d\n", st.tm_hour, st.tm_min, st.tm_sec);
-	fprintf(fp, "Version:        %s  Rev. %s\n", CS_VERSION, CS_SVN_VERSION);
-	fprintf(fp, "Max PID:        unlimited\n\n\n");
-	fprintf(fp, "Active modules:\n");
+	fprintf(fp, "Version:        oscam-%s-r%s\n", CS_VERSION, CS_SVN_VERSION);
 
+	fprintf(fp, "\n");
 	write_conf(WEBIF, "Web interface support");
 	write_conf(TOUCH, "Touch interface support");
 	write_conf(WITH_SSL, "SSL support");
