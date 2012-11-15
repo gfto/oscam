@@ -88,11 +88,8 @@ STAPI_LDFLAGS = $(DEFAULT_STAPI_FLAGS)
 STAPI_LIB = $(DEFAULT_STAPI_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-stapi
 CONFIG_WITH_STAPI=y
-endif
-
-# FIXME: That is a hack until proper card reader configuration is added
-ifeq ($(CONFIG_WITH_CARDREADER),y)
-CONFIG_WITH_SCI=y
+else
+override CONFIG_CARDREADER_STAPI:=n
 endif
 
 DEFAULT_COOLAPI_FLAGS = -DWITH_COOLAPI
@@ -104,7 +101,11 @@ COOLAPI_LDFLAGS = $(DEFAULT_COOLAPI_FLAGS)
 COOLAPI_LIB = $(DEFAULT_COOLAPI_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-coolapi
 CONFIG_WITH_COOLAPI=y
-CONFIG_WITH_SCI=n
+# If COOLAPI is enabled the internal card reader is the COOLAPI reader
+ifeq "$(CONFIG_CARDREADER_INTERNAL)" "y"
+override CONFIG_CARDREADER_INTERNAL_COOLAPI:=y
+override CONFIG_CARDREADER_INTERNAL:=n
+endif
 endif
 
 DEFAULT_AZBOX_FLAGS = -DWITH_AZBOX
@@ -116,7 +117,16 @@ AZBOX_LDFLAGS = $(DEFAULT_AZBOX_FLAGS)
 AZBOX_LIB = $(DEFAULT_AZBOX_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-azbox
 CONFIG_WITH_AZBOX=y
-CONFIG_WITH_SCI=n
+# If AZBOX is enabled the internal card reader is the AZBOXreader
+ifeq "$(CONFIG_CARDREADER_INTERNAL)" "y"
+override CONFIG_CARDREADER_INTERNAL_AZBOX:=y
+override CONFIG_CARDREADER_INTERNAL:=n
+endif
+endif
+
+# The default internal reader is SCI reader
+ifeq "$(CONFIG_CARDREADER_INTERNAL)" "y"
+override CONFIG_CARDREADER_INTERNAL_SCI:=y
 endif
 
 DEFAULT_LIBCRYPTO_FLAGS = -DWITH_LIBCRYPTO
@@ -154,7 +164,7 @@ LIBUSB_CFLAGS = $(DEFAULT_LIBUSB_FLAGS)
 LIBUSB_LDFLAGS = $(DEFAULT_LIBUSB_FLAGS)
 LIBUSB_LIB = $(DEFAULT_LIBUSB_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-libusb
-CONFIG_WITH_LIBUSB=y
+override CONFIG_CARDREADER_SMART:=y
 endif
 
 ifeq ($(uname_S),Darwin)
@@ -170,7 +180,7 @@ PCSC_CFLAGS = $(DEFAULT_PCSC_FLAGS)
 PCSC_LDFLAGS = $(DEFAULT_PCSC_FLAGS)
 PCSC_LIB = $(DEFAULT_PCSC_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-pcsc
-CONFIG_WITH_PCSC=y
+override CONFIG_CARDREADER_PCSC:=y
 endif
 
 # Add PLUS_TARGET and EXTRA_TARGET to TARGET
@@ -254,20 +264,20 @@ SRC-$(CONFIG_LIB_SHA1) += cscrypt/sha1.c
 
 SRC-$(CONFIG_WITH_CARDREADER) += csctapi/atr.c
 SRC-$(CONFIG_WITH_CARDREADER) += csctapi/icc_async.c
-SRC-$(CONFIG_WITH_AZBOX) += csctapi/ifd_azbox.c
-SRC-$(CONFIG_WITH_COOLAPI) += csctapi/ifd_cool.c
-SRC-$(CONFIG_WITH_CARDREADER) += csctapi/ifd_db2com.c
-SRC-$(CONFIG_WITH_CARDREADER) += csctapi/ifd_mp35.c
-SRC-$(CONFIG_WITH_PCSC) += csctapi/ifd_pcsc.c
-SRC-$(CONFIG_WITH_CARDREADER) += csctapi/ifd_phoenix.c
-SRC-$(CONFIG_WITH_CARDREADER) += csctapi/ifd_sc8in1.c
-SRC-$(CONFIG_WITH_SCI) += csctapi/ifd_sci.c
-SRC-$(CONFIG_WITH_CARDREADER) += csctapi/ifd_smargo.c
-SRC-$(CONFIG_WITH_LIBUSB) += csctapi/ifd_smartreader.c
-SRC-$(CONFIG_WITH_STAPI) += csctapi/ifd_stapi.c
 SRC-$(CONFIG_WITH_CARDREADER) += csctapi/io_serial.c
 SRC-$(CONFIG_WITH_CARDREADER) += csctapi/protocol_t0.c
 SRC-$(CONFIG_WITH_CARDREADER) += csctapi/protocol_t1.c
+SRC-$(CONFIG_CARDREADER_INTERNAL_AZBOX) += csctapi/ifd_azbox.c
+SRC-$(CONFIG_CARDREADER_INTERNAL_COOLAPI) += csctapi/ifd_cool.c
+SRC-$(CONFIG_CARDREADER_DB2COM) += csctapi/ifd_db2com.c
+SRC-$(CONFIG_CARDREADER_MP35) += csctapi/ifd_mp35.c
+SRC-$(CONFIG_CARDREADER_PCSC) += csctapi/ifd_pcsc.c
+SRC-$(CONFIG_CARDREADER_PHOENIX) += csctapi/ifd_phoenix.c
+SRC-$(CONFIG_CARDREADER_SC8IN1) += csctapi/ifd_sc8in1.c
+SRC-$(CONFIG_CARDREADER_INTERNAL_SCI) += csctapi/ifd_sci.c
+SRC-$(CONFIG_CARDREADER_SMARGO) += csctapi/ifd_smargo.c
+SRC-$(CONFIG_CARDREADER_SMART) += csctapi/ifd_smartreader.c
+SRC-$(CONFIG_CARDREADER_STAPI) += csctapi/ifd_stapi.c
 
 SRC-$(CONFIG_CS_ANTICASC) += module-anticasc.c
 SRC-$(CONFIG_CS_CACHEEX) += module-cacheex.c
@@ -358,6 +368,7 @@ all:
 |  Addons   : $(shell ./config.sh --show-enabled addons)\n\
 |  Protocols: $(shell ./config.sh --show-enabled protocols | sed -e 's|MODULE_||g')\n\
 |  Readers  : $(shell ./config.sh --show-enabled readers | sed -e 's|READER_||g')\n\
+|  CardRdrs : $(shell ./config.sh --show-enabled card_readers | sed -e 's|CARDREADER_||g')\n\
 |  Compiler : $(shell $(CC) --version 2>/dev/null | head -n 1)\n\
 |  Linker   : $(shell $(CC) $(LINKER_VER_OPT) 2>&1 | head -n 1)\n\
 |  Binary   : $(OSCAM_BIN)\n\
