@@ -92,7 +92,6 @@ extern int32_t write_services(void);
 extern int32_t write_userdb(void);
 extern int32_t write_config(void);
 extern int32_t write_server(void);
-extern void write_versionfile(void);
 
 #include "oscam-log.h"
 #include "oscam-log-reader.h"

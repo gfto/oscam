@@ -219,6 +219,102 @@ static void usage(void)
 }
 #undef _check
 
+#define write_conf(CONFIG_VAR, text) \
+	fprintf(fp, "%-30s %s\n", text ":", config_##CONFIG_VAR() ? "yes" : "no")
+
+#define write_readerconf(CONFIG_VAR, text) \
+	fprintf(fp, "%-30s %s\n", text ":", config_##CONFIG_VAR() ? "yes" : "no - no EMM support!")
+
+#define write_cardreaderconf(CONFIG_VAR, text) \
+	fprintf(fp, "%s%-19s %s\n", "cardreader_", text ":", config_##CONFIG_VAR() ? "yes" : "no")
+
+static void write_versionfile(void) {
+	struct tm st;
+	char targetfile[256];
+	snprintf(targetfile, sizeof(targetfile) - 1, "%s%s", get_tmp_dir(), "/oscam.version");
+	targetfile[sizeof(targetfile) - 1] = 0;
+	FILE *fp = fopen(targetfile, "w");
+	if (!fp) {
+		cs_log("Cannot open %s (errno=%d %s)", targetfile, errno, strerror(errno));
+		return;
+	}
+
+	time_t now = time(NULL);
+	localtime_r(&now, &st);
+
+	fprintf(fp, "Unix starttime: %ld\n", (long)now);
+	fprintf(fp, "Starttime:      %02d.%02d.%04d", st.tm_mday, st.tm_mon + 1, st.tm_year + 1900);
+	fprintf(fp, " %02d:%02d:%02d\n", st.tm_hour, st.tm_min, st.tm_sec);
+	fprintf(fp, "Version:        oscam-%s-r%s\n", CS_VERSION, CS_SVN_VERSION);
+
+	fprintf(fp, "\n");
+	write_conf(WEBIF, "Web interface support");
+	write_conf(TOUCH, "Touch interface support");
+	write_conf(WITH_SSL, "SSL support");
+	write_conf(HAVE_DVBAPI, "DVB API support");
+	if (config_HAVE_DVBAPI()) {
+		write_conf(WITH_AZBOX, "DVB API with AZBOX support");
+		write_conf(WITH_COOLAPI, "DVB API with COOLAPI support");
+		write_conf(WITH_STAPI, "DVB API with STAPI support");
+	}
+	write_conf(CS_ANTICASC, "Anti-cascading support");
+	write_conf(IRDETO_GUESSING, "Irdeto guessing");
+	write_conf(WITH_DEBUG, "Debug mode");
+	write_conf(MODULE_MONITOR, "Monitor");
+	write_conf(WITH_LB, "Loadbalancing support");
+	write_conf(LCDSUPPORT, "LCD support");
+	write_conf(LEDSUPPORT, "LED support");
+	write_conf(IPV6SUPPORT, "IPv6 support");
+	write_conf(CS_CACHEEX, "Cache exchange support");
+
+	fprintf(fp, "\n");
+	write_conf(MODULE_CAMD33, "camd 3.3x");
+	write_conf(MODULE_CAMD35, "camd 3.5 UDP");
+	write_conf(MODULE_CAMD35_TCP, "camd 3.5 TCP");
+	write_conf(MODULE_NEWCAMD, "newcamd");
+	write_conf(MODULE_CCCAM, "CCcam");
+	write_conf(MODULE_CCCSHARE, "CCcam share");
+	write_conf(MODULE_PANDORA, "Pandora");
+	write_conf(MODULE_GBOX, "gbox");
+	write_conf(MODULE_RADEGAST, "radegast");
+	write_conf(MODULE_SERIAL, "serial");
+	write_conf(MODULE_CONSTCW, "constant CW");
+
+	fprintf(fp, "\n");
+	write_conf(WITH_CARDREADER, "Reader support");
+	if (config_WITH_CARDREADER()) {
+		fprintf(fp, "\n");
+		write_readerconf(READER_NAGRA, "Nagra");
+		write_readerconf(READER_IRDETO, "Irdeto");
+		write_readerconf(READER_CONAX, "Conax");
+		write_readerconf(READER_CRYPTOWORKS, "Cryptoworks");
+		write_readerconf(READER_SECA, "Seca");
+		write_readerconf(READER_VIACCESS, "Viaccess");
+		write_readerconf(READER_VIDEOGUARD, "NDS Videoguard");
+		write_readerconf(READER_DRE, "DRE Crypt");
+		write_readerconf(READER_TONGFANG, "TONGFANG");
+		write_readerconf(READER_BULCRYPT, "Bulcrypt");
+		fprintf(fp, "\n");
+		write_cardreaderconf(CARDREADER_PHOENIX, "phoenix");
+		write_cardreaderconf(CARDREADER_INTERNAL_AZBOX, "internal_azbox");
+		write_cardreaderconf(CARDREADER_INTERNAL_COOLAPI, "internal_coolapi");
+		write_cardreaderconf(CARDREADER_INTERNAL_SCI, "internal_sci");
+		write_cardreaderconf(CARDREADER_SC8IN1, "sc8in1");
+		write_cardreaderconf(CARDREADER_MP35, "mp35");
+		write_cardreaderconf(CARDREADER_SMARGO, "smargo");
+		write_cardreaderconf(CARDREADER_PCSC, "pcsc");
+		write_cardreaderconf(CARDREADER_SMART, "smartreader");
+		write_cardreaderconf(CARDREADER_DB2COM, "db2com");
+		write_cardreaderconf(CARDREADER_STAPI, "stapi");
+	} else {
+		write_readerconf(WITH_CARDREADER, "Reader Support");
+	}
+	fclose(fp);
+}
+#undef write_conf
+#undef write_readerconf
+#undef write_cardreaderconf
+
 #ifdef NEED_DAEMON
 // The compat function is not called daemon() because this may cause problems.
 static int32_t do_daemon(int32_t nochdir, int32_t noclose)
