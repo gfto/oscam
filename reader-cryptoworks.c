@@ -1,6 +1,7 @@
 #include "globals.h"
 #ifdef READER_CRYPTOWORKS
 #include "oscam-config.h"
+#include "oscam-emm.h"
 #include "reader-common.h"
 
 #define CMD_LEN 5
@@ -453,7 +454,9 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				rdr_debug_mask(rdr, D_EMM, "SHARED (Header)");
 				ep->type = SHARED;
 				i2b_buf(4, cryptoworks_get_emm_provid(ep->emm+8, ep->emmlen-8), ep->provid);
-				return 0;
+				// We need those packets to pass otherwise we would never
+				// be able to complete EMM reassembly
+				return 1;
 			}
 			break;
 		case 0x88:
@@ -701,13 +704,11 @@ static uint32_t cryptoworks_get_emm_provid(unsigned char *buffer, int32_t len)
     return provid;
 }
 
-#ifdef HAVE_DVBAPI
-void dvbapi_sort_nanos(unsigned char *dest, const unsigned char *src, int32_t len);
-
-int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len) {
-	static uchar emm_global[512];		// function only called from dvbapi thread, no need to be threadsafe
-	static int32_t emm_global_len = 0;
-	int32_t emm_len = 0;
+static bool cryptoworks_reassemble_emm(struct s_reader *reader, EMM_PACKET *ep)
+{
+	uchar *buffer = ep->emm;
+	int16_t *len = &ep->emmlen;
+	int16_t emm_len = 0;
 
 	// Cryptoworks
 	//   Cryptoworks EMM-S have to be assembled by the client from an EMM-SH with table
@@ -725,14 +726,17 @@ int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len) {
 
 		case 0x84: // emm-sh
 			cs_debug_mask(D_DVBAPI, "[cryptoworks] shared emm (EMM-SH): %s" , cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
-			if (!memcmp(emm_global, buffer, *len)) return 0;
-			memcpy(emm_global, buffer, *len);
-			emm_global_len=*len;
-			return 0;
+			if (!memcmp(reader->reassemble_emm, buffer, *len)) return 0;
+			memcpy(reader->reassemble_emm, buffer, *len);
+			reader->reassemble_emm_len=*len;
+			// If we return 0 (skip packet) and someone send us already
+			// reassembled packet we would miss it. Thats why we return 1 (ok)
+			// and "suffer" couple of wrongly written packets in the card.
+			return 1;
 
 		case 0x86: // emm-sb
 			cs_debug_mask(D_DVBAPI, "[cryptoworks] shared emm (EMM-SB): %s" , cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
-			if (!emm_global_len) return 0;
+			if (!reader->reassemble_emm_len) return 0;
 
 			// we keep the first 12 bytes of the 0x84 emm (EMM-SH)
 			// now we need to append the payload of the 0x86 emm (EMM-SB)
@@ -744,7 +748,7 @@ int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len) {
 			// update the emm len (emmBuf[1:2])
 			//
 
-			emm_len=*len-5 + emm_global_len-12;
+			emm_len=*len-5 + reader->reassemble_emm_len-12;
 			unsigned char *tmp, *assembled;
 			if (!cs_malloc(&tmp, emm_len))
 				return 0;
@@ -759,9 +763,9 @@ int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len) {
 				return 0;
 			}
 			memcpy(tmp,&buffer[5], *len-5);
-			memcpy(tmp+*len-5,&emm_global[12],emm_global_len-12);
-			memcpy(assembled_EMM,emm_global,12);
-			dvbapi_sort_nanos(assembled_EMM+12,tmp,emm_len);
+			memcpy(tmp+*len-5,&reader->reassemble_emm[12],reader->reassemble_emm_len-12);
+			memcpy(assembled_EMM,reader->reassemble_emm,12);
+			emm_sort_nanos(assembled_EMM+12,tmp,emm_len);
 
 			assembled_EMM[1]=((emm_len+9)>>8) | 0x70;
 			assembled_EMM[2]=(emm_len+9) & 0xFF;
@@ -773,7 +777,7 @@ int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len) {
 			free(assembled);
 			free(assembled_EMM);
 
-			emm_global_len=0;
+			reader->reassemble_emm_len = 0;
 
 			cs_debug_mask(D_DVBAPI, "[cryptoworks] shared emm (assembled): %s", cs_hexdump(0, buffer, emm_len+12, dumpbuf, sizeof(dumpbuf)));
 			if(assembled_EMM[11]!=emm_len) { // sanity check
@@ -790,10 +794,10 @@ int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len) {
 	}
 	return 1;
 }
-#endif
 
 void reader_cryptoworks(struct s_cardsystem *ph)
 {
+	ph->do_emm_reassembly=cryptoworks_reassemble_emm;
 	ph->do_emm=cryptoworks_do_emm;
 	ph->do_ecm=cryptoworks_do_ecm;
 	ph->card_info=cryptoworks_card_info;

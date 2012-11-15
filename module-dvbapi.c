@@ -533,30 +533,6 @@ void dvbapi_start_filter(int32_t demux_id, int32_t pidindex, uint16_t pid, uint1
 	dvbapi_set_filter(demux_id, selected_api, pid, caid, 0, filter, filter+16, timeout, pidindex, count, type, 0);
 }
 
-void dvbapi_sort_nanos(unsigned char *dest, const unsigned char *src, int32_t len)
-{
-	int32_t w=0, c=-1, j=0;
-	while(1) {
-		int32_t n=0x100;
-		for(j=0; j<len;) {
-			int32_t l=src[j+1]+2;
-				if(src[j]==c) {
-					if(w+l>len) {
-						cs_debug_mask(D_DVBAPI, "sortnanos: sanity check failed. Exceeding memory area. Probably corrupted nanos!");
-						memset(dest,0,len); // zero out everything
-						return;
-					}
-					memcpy(&dest[w],&src[j],l);
-				w+=l;
-			} else if(src[j]>c && src[j]<n)
-				n=src[j];
-			j+=l;
-		}
-		if(n==0x100) break;
-		c=n;
-	}
-}
-
 static int32_t dvbapi_find_emmpid(int32_t demux_id, uint8_t type, uint16_t caid, uint32_t provid) {
 	int32_t k;
 	int32_t bck = -1;
@@ -1051,13 +1027,6 @@ struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidi
 
 }
 
-#ifdef READER_VIACCESS
-extern int32_t viaccess_reassemble_emm(uchar *buffer, uint32_t *len);
-#endif
-#ifdef READER_CRYPTOWORKS
-extern int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len);
-#endif
-
 void dvbapi_process_emm (int32_t demux_index, int32_t filter_num, unsigned char *buffer, uint32_t len) {
 	EMM_PACKET epg;
 
@@ -1068,22 +1037,6 @@ void dvbapi_process_emm (int32_t demux_index, int32_t filter_num, unsigned char 
 
 	uint32_t provider = filter->provid;
 	uint16_t caid = filter->caid;
-
-	switch (caid >> 8) {
-		case 0x05:
-#ifdef READER_VIACCESS
-			if (!viaccess_reassemble_emm(buffer, &len))
-#endif
-				return;
-			break;
-      		case 0x0d:
-#ifdef READER_CRYPTOWORKS
-			if (!cryptoworks_reassemble_emm(buffer, &len)) 
-#endif
-				return;
-			break;
-	}
-
 
 	cs_debug_mask(D_DVBAPI, "emm from fd %d", demux[demux_index].demux_fd[filter_num].fd); //emm shown with -d64
 
