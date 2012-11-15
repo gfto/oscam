@@ -110,7 +110,7 @@ static void usage(void)
 	printf("OSCam is based on Streamboard mp-cardserver v0.9d written by dukat\n");
 	printf("Visit http://www.streamboard.tv/oscam/ for more details.\n\n");
 
-	printf(" Features   :");
+	printf(" Features  :");
 	_check(WEBIF, "webif");
 	_check(TOUCH, "touch");
 	_check(MODULE_MONITOR, "monitor");
@@ -122,40 +122,39 @@ static void usage(void)
 	_check(IRDETO_GUESSING, "irdeto-guessing");
 	_check(CS_ANTICASC, "anticascading");
 	_check(WITH_DEBUG, "debug");
+	_check(WITH_LIBUSB, "smartreader");
+	_check(WITH_PCSC, "pcsc");
 	_check(WITH_LB, "loadbalancing");
 	_check(LCDSUPPORT, "lcd");
 	_check(LEDSUPPORT, "led");
 	printf("\n");
 
-	printf(" Protocols  :");
-	int i;
-	for (i = 0; i < CS_MAX_MOD; i++) {
-		if (modules[i].desc) {
-			if (streq(modules[i].desc, "monitor") || streq(modules[i].desc, "dvbapi"))
-				continue;
-			if (streq(modules[i].desc, "csp")) {
-				printf(" %s", "cache-exchange");
-				continue;
-			}
-			printf(" %s", modules[i].desc);
-			if (streq(modules[i].desc, "cccam"))
-				_check(MODULE_CCCSHARE, "cccam_share");
-		}
-	}
+	printf(" Protocols :");
+	_check(MODULE_CAMD33, "camd33");
+	_check(MODULE_CAMD35, "camd35_udp");
+	_check(MODULE_CAMD35_TCP, "camd35_tcp");
+	_check(MODULE_NEWCAMD, "newcamd");
+	_check(MODULE_CCCAM, "cccam");
+	_check(MODULE_CCCSHARE, "cccam_share");
+	_check(MODULE_PANDORA, "pandora");
+	_check(CS_CACHEEX, "cache-exchange");
+	_check(MODULE_GBOX, "gbox");
+	_check(MODULE_RADEGAST, "radegast");
+	_check(MODULE_SERIAL, "serial");
+	_check(MODULE_CONSTCW, "constcw");
 	printf("\n");
 
-	printf(" Readers    :");
-	for (i = 0; i < CS_MAX_MOD; i++) {
-		if (cardsystems[i].desc)
-			printf(" %s", cardsystems[i].desc);
-	}
-	printf("\n");
-
-	printf(" CardReaders:");
-	for (i = 0; i < CS_MAX_MOD; i++) {
-		if (cardreaders[i].desc)
-			printf(" %s", cardreaders[i].desc);
-	}
+	printf(" Readers   :");
+	_check(READER_NAGRA, "nagra");
+	_check(READER_IRDETO, "irdeto");
+	_check(READER_CONAX, "conax");
+	_check(READER_CRYPTOWORKS, "cryptoworks");
+	_check(READER_SECA, "seca");
+	_check(READER_VIACCESS, "viaccess");
+	_check(READER_VIDEOGUARD, "videoguard");
+	_check(READER_DRE, "dre");
+	_check(READER_TONGFANG, "tongfang");
+	_check(READER_BULCRYPT, "bulcrypt");
 	printf("\n");
 
 	printf("\n");
@@ -3926,22 +3925,7 @@ int32_t main (int32_t argc, char *argv[])
 #endif
 	0
   };
-  for (i=0; mod_def[i]; i++)  // must be later BEFORE init_config()
-  {
-	memset(&modules[i], 0, sizeof(struct s_module));
-	mod_def[i](&modules[i]);
-  }
-  for (i=0; cardsystem_def[i]; i++)  // must be later BEFORE init_config()
-  {
-	memset(&cardsystems[i], 0, sizeof(struct s_cardsystem));
-	cardsystem_def[i](&cardsystems[i]);
-  }
-  for (i=0; cardreader_def[i]; i++)  // must be later BEFORE init_config()
-  {
-	memset(&cardreaders[i], 0, sizeof(struct s_cardreader));
-	cardreader_def[i](&cardreaders[i]);
-  }
-  
+
   while ((i=getopt(argc, argv, "g:bsauc:t:d:r:w:hm:xp:S"))!=EOF)
   {
 	  switch(i) {
@@ -4038,21 +4022,25 @@ int32_t main (int32_t argc, char *argv[])
   cs_init_statistics();
   init_check();
   init_stat();
-  for (i=0; mod_def[i]; i++)  // must be later BEFORE init_config()
+
+  // These initializations *MUST* be called after init_config()
+  // because modules depend on config values.
+  for (i=0; mod_def[i]; i++)
   {
 	memset(&modules[i], 0, sizeof(struct s_module));
 	mod_def[i](&modules[i]);
   }
-  for (i=0; cardsystem_def[i]; i++)  // must be later BEFORE init_config()
+  for (i=0; cardsystem_def[i]; i++)
   {
 	memset(&cardsystems[i], 0, sizeof(struct s_cardsystem));
 	cardsystem_def[i](&cardsystems[i]);
   }
-  for (i=0; cardreader_def[i]; i++)  // must be later BEFORE init_config()
+  for (i=0; cardreader_def[i]; i++)
   {
 	memset(&cardreaders[i], 0, sizeof(struct s_cardreader));
 	cardreader_def[i](&cardreaders[i]);
   }
+
   init_sidtab();
   init_readerdb();
   cfg.account = init_userdb();
