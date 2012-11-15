@@ -514,7 +514,7 @@ int32_t IO_Serial_Transmit(struct s_reader * reader, unsigned char * buffer, uin
 	return OK;
 }
 
-bool IO_Serial_Close (struct s_reader * reader)
+int32_t IO_Serial_Close (struct s_reader * reader)
 {
 	
 	rdr_debug_mask(reader, D_DEVICE, "Closing serial port %s", reader->device);

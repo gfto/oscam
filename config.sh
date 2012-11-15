@@ -518,7 +518,7 @@ do
 		enabled_any $(get_opts readers) && enable_opt WITH_CARDREADER >/dev/null
 		disabled_all $(get_opts readers) && disable_opt WITH_CARDREADER >/dev/null
 		enabled MODULE_CCCSHARE && enable_opt MODULE_CCCAM >/dev/null
-		enabled_any CARDREADER_DB2COM CARDREADER_MP35 CARDREADER_SC8IN1 CARDREADER_SMARGO && enable_opt CARDREADER_PHOENIX >/dev/null
+		enabled_any CARDREADER_DB2COM CARDREADER_MP35 CARDREADER_SC8IN1 && enable_opt CARDREADER_PHOENIX >/dev/null
 		for OPT in $addons $protocols WITH_CARDREADER $readers $card_readers
 		do
 			enabled $OPT && echo "CONFIG_$OPT=y" || echo "# CONFIG_$OPT=n"

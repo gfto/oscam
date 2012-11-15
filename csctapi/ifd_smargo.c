@@ -3,7 +3,6 @@
 #ifdef CARDREADER_SMARGO
 #include "../oscam-time.h"
 #include "icc_async.h"
-#include "ifd_phoenix.h"
 #include "io_serial.h"
 
 #if defined(__CYGWIN__)
@@ -212,7 +211,7 @@ void cardreader_smargo(struct s_cardreader *crdr)
 	crdr->activate	= smargo_reset;
 	crdr->transmit	= IO_Serial_Transmit;
 	crdr->receive		= IO_Serial_Receive;
-	crdr->close		= Phoenix_Close;
+	crdr->close		= IO_Serial_Close;
 	crdr->write_settings = smargo_writesettings;
 	crdr->typ		= R_MOUSE;
 

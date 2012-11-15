@@ -62,7 +62,7 @@ void IO_Serial_Flush (struct s_reader * reader);
 
 /* Initialization and closing */
 bool IO_Serial_InitPnP (struct s_reader * reader);
-bool IO_Serial_Close (struct s_reader * reader);
+int32_t IO_Serial_Close (struct s_reader * reader);
 
 /* Transmission properties */
 bool IO_Serial_DTR_RTS_dbox2(struct s_reader * reader, int32_t * dtr, int32_t * rts);
