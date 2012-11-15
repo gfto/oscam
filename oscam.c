@@ -51,10 +51,8 @@ uint16_t  len4caid[256];    // table for guessing caid (by len)
 char  cs_confdir[128]=CS_CONFDIR;
 uint16_t cs_dblevel=0;   // Debug Level
 int32_t thread_pipe[2] = {0, 0};
-#ifdef WEBIF
 int8_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)restart fork, restart by webif, 2=like=1, but also restart on segfaults
 uint8_t cs_http_use_utf8 = 0;
-#endif
 int8_t cs_capture_SEGV=0;
 int8_t cs_dump_stack=0;
 uint16_t cs_waittime = 60;
@@ -68,6 +66,9 @@ CS_MUTEX_LOCK fakeuser_lock;
 CS_MUTEX_LOCK ecmcache_lock;
 CS_MUTEX_LOCK readdir_lock;
 pthread_key_t getclient;
+static int32_t bg;
+static int32_t gbdb;
+static int32_t max_pending = 32;
 
 struct s_client *timecheck_client;
 
@@ -96,7 +97,7 @@ char    *loghistptr = NULL;
 	} while(0)
 
 /* Prints usage information and information about the built-in modules. */
-static void usage(void)
+static void show_usage(void)
 {
 	printf("%s",
 "  ___  ____   ___\n"
@@ -220,6 +221,54 @@ static void usage(void)
 	printf("  -V         : Show OSCam binary configuration and version.\n");
 }
 #undef _check
+
+static void write_versionfile(bool use_stdout);
+
+static void parse_cmdline_params(int argc, char **argv) {
+	int i;
+	while ((i = getopt(argc, argv, "g:bsauc:t:d:r:w:p:SVh")) != EOF) {
+		switch(i) {
+		case 'g': gbdb = atoi(optarg); break;
+		case 'b': bg = 1; break;
+		case 's': cs_capture_SEGV = 1; break;
+		case 'a': cs_dump_stack = 1; break;
+		case 'c': cs_strncpy(cs_confdir, optarg, sizeof(cs_confdir)); break;
+		case 'd': cs_dblevel = atoi(optarg); break;
+		case 'r':
+			if (config_WEBIF()) {
+				cs_restart_mode = atoi(optarg);
+			}
+			break;
+		case 'u':
+			if (config_WEBIF()) {
+				cs_http_use_utf8 = 1;
+				printf("WARNING: Web interface UTF-8 mode enabled. Carefully read documentation as bugs may arise.\n");
+			}
+			break;
+		case 't': {
+			mkdir(optarg, S_IRWXU);
+			int j = open(optarg, O_RDONLY);
+			if (j >= 0) {
+				close(j);
+				cs_strncpy(cs_tmpdir, optarg, sizeof(cs_tmpdir));
+			} else {
+				printf("WARNING: tmpdir does not exist. using default value.\n");
+			}
+			break;
+		}
+		case 'w': cs_waittime = strtoul(optarg, NULL, 10); break;
+		case 'p': max_pending = MAX(MIN(atoi(optarg), 255), 1); break;
+		case 'S': log_remove_sensitive = !log_remove_sensitive; break;
+		case 'V':
+			write_versionfile(true);
+			exit(0);
+		case 'h':
+		default :
+			show_usage();
+			exit(0);
+		}
+	}
+}
 
 #define write_conf(CONFIG_VAR, text) \
 	fprintf(fp, "%-30s %s\n", text ":", config_##CONFIG_VAR() ? "yes" : "no")
@@ -3922,15 +3971,12 @@ void cs_exit_oscam(void) {
 
 int32_t main (int32_t argc, char *argv[])
 {
-	int32_t max_pending = 32;
-
+	int32_t i, j;
 	prog_name = argv[0];
 	if (pthread_key_create(&getclient, NULL)) {
 		fprintf(stderr, "Could not create getclient, exiting...");
 		exit(1);
 	}
-
-	int32_t      i, j, bg=0, gbdb=0;
 
   void (*mod_def[])(struct s_module *)=
   {
@@ -4049,72 +4095,7 @@ int32_t main (int32_t argc, char *argv[])
 	0
   };
 
-  while ((i=getopt(argc, argv, "g:bsauc:t:d:r:w:hm:xp:SV"))!=EOF)
-  {
-	  switch(i) {
-		  case 'g':
-			  gbdb=atoi(optarg);
-			  break;
-		  case 'b':
-			  bg=1;
-			  break;
-		  case 's':
-		      cs_capture_SEGV=1;
-		      break;
-		  case 'a':
-		      cs_dump_stack=1;
-		      break;
-		  case 'c':
-			  cs_strncpy(cs_confdir, optarg, sizeof(cs_confdir));
-			  break;
-		  case 'd':
-			  cs_dblevel=atoi(optarg);
-			  break;
-		  case 'r':
-
-#ifdef WEBIF
-			  cs_restart_mode=atoi(optarg);
-#endif
-			break;
-		  case 't':
-			  mkdir(optarg, S_IRWXU);
-			  j = open(optarg, O_RDONLY);
-			  if (j >= 0) {
-			 	close(j);
-			 	cs_strncpy(cs_tmpdir, optarg, sizeof(cs_tmpdir));
-			  } else {
-				printf("WARNING: tmpdir does not exist. using default value.\n");
-			  }
-			  break;
-			case 'w':
-				cs_waittime=strtoul(optarg, NULL, 10);
-				break;
-#ifdef WEBIF
-			case 'u':
-				cs_http_use_utf8 = 1;
-				printf("WARNING: Web interface UTF-8 mode enabled. Carefully read documentation as bugs may arise.\n");
-				break;
-#endif
-		  case 'm':
-				printf("WARNING: -m parameter is deprecated, ignoring it.\n");
-				break;
-		  case 'p':
-			  max_pending = MAX(MIN(atoi(optarg), 255), 1);
-			  break;
-		  case 'S':
-			  log_remove_sensitive = !log_remove_sensitive;
-			  break;
-		  case 'h':
-			  usage();
-			  exit(0);
-		  case 'V':
-			  write_versionfile(true);
-			  exit(0);
-		  default :
-			  usage();
-			  exit(1);
-	  }
-  }
+  parse_cmdline_params(argc, argv);
 
   if (bg && do_daemon(1,0))
   {
