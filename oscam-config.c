@@ -68,9 +68,6 @@ int32_t write_services(void)
 	fprintf(fp, "%s%-19s %s\n", "cardreader_", text ":", config_##CONFIG_VAR() ? "yes" : "no")
 
 void write_versionfile(void) {
-#if defined(__CYGWIN__)
-	return;
-#endif
 	struct tm st;
 	char targetfile[256];
 	snprintf(targetfile, sizeof(targetfile) - 1, "%s%s", get_tmp_dir(), "/oscam.version");
