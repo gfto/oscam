@@ -280,14 +280,14 @@ bool IO_Serial_SetProperties (struct s_reader * reader, struct termios newtio)
 	if (tcsetattr (reader->handle, TCSANOW, &newtio) < 0)  // set terminal attributes.
 		return ERROR;
 	                 
-	int32_t mctl; 
-	rdr_debug_mask(reader, D_DEVICE, "Getting readerstatus..."); 
-	if (ioctl (reader->handle, TIOCMGET, &mctl) >= 0) {  // get reader statusbits 
-		mctl &= ~TIOCM_RTS;
-		rdr_debug_mask(reader, D_DEVICE, "Set reader ready to Send"); 
-		ioctl (reader->handle, TIOCMSET, &mctl);  // set reader ready to send.
-	} 
-	else rdr_log(reader, "WARNING: Cant get readerstatus!"); 
+	//int32_t mctl; *** breaks viaccess... needs investigation see tickets 2951 and 2953
+	//rdr_debug_mask(reader, D_DEVICE, "Getting readerstatus..."); 
+	//if (ioctl (reader->handle, TIOCMGET, &mctl) >= 0) {  // get reader statusbits 
+	//	mctl &= ~TIOCM_RTS;
+	//	rdr_debug_mask(reader, D_DEVICE, "Set reader ready to Send"); 
+	//	ioctl (reader->handle, TIOCMSET, &mctl);  // set reader ready to send.
+	//} 
+	//else rdr_log(reader, "WARNING: Cant get readerstatus!"); 
 
 	return OK;
 }
