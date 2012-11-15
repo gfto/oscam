@@ -247,7 +247,7 @@ void cardreader_mp35(struct s_cardreader *crdr)
   crdr->receive      = IO_Serial_Receive;
   crdr->close        = mp35_close;
   crdr->set_parity   = IO_Serial_SetParity;
-  crdr->set_baudrate = Phoenix_SetBaudrate;
+  crdr->set_baudrate = IO_Serial_SetBaudrate;
 }
 
 #endif

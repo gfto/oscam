@@ -107,7 +107,7 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 		int32_t parity[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
 
 		if ( ! reader->ins7e11_fast_reset ) {
-			call (Phoenix_SetBaudrate (reader, DEFAULT_BAUDRATE));
+			call (IO_Serial_SetBaudrate(reader, DEFAULT_BAUDRATE));
 		}
 		else {
 			rdr_log(reader, "Doing fast reset");
@@ -149,20 +149,6 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 		}
 
 		return ret;
-}
-
-int32_t Phoenix_SetBaudrate (struct s_reader * reader, uint32_t baudrate)
-{
-	rdr_debug_mask(reader, D_IFD, "Phoenix setting baudrate to %u", baudrate);
-
-	/* Get current settings */
-	struct termios tio;
-	call (tcgetattr (reader->handle, &tio) != 0);
-	call (IO_Serial_SetBitrate (reader, baudrate, &tio));
-
-	call (IO_Serial_SetProperties(reader, tio));
-	reader->current_baudrate = baudrate; //so if update fails, reader->current_baudrate is not changed either
-	return OK;
 }
 
 int32_t Phoenix_Close (struct s_reader * reader)
@@ -242,6 +228,6 @@ void cardreader_mouse(struct s_cardreader *crdr)
 	crdr->receive       = IO_Serial_Receive;
 	crdr->close         = Phoenix_Close;
 	crdr->set_parity    = IO_Serial_SetParity;
-	crdr->set_baudrate  = Phoenix_SetBaudrate;
+	crdr->set_baudrate  = IO_Serial_SetBaudrate;
 }
 #endif

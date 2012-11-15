@@ -759,4 +759,17 @@ int32_t IO_Serial_GetStatus(struct s_reader *reader, int32_t *status)
 	return OK;
 }
 
+int32_t IO_Serial_SetBaudrate(struct s_reader * reader, uint32_t baudrate)
+{
+	rdr_debug_mask(reader, D_IFD, "Setting baudrate to %u", baudrate);
+	// Get current settings
+	struct termios tio;
+	call (tcgetattr (reader->handle, &tio) != 0);
+	// Set new baudrate
+	call (IO_Serial_SetBitrate (reader, baudrate, &tio));
+	call (IO_Serial_SetProperties(reader, tio));
+	reader->current_baudrate = baudrate; //so if update fails, reader->current_baudrate is not changed either
+	return OK;
+}
+
 #endif
