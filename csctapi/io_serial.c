@@ -739,4 +739,24 @@ bool IO_Serial_InitPnP (struct s_reader * reader)
 
 		return OK;
 }
+
+int32_t IO_Serial_GetStatus(struct s_reader *reader, int32_t *status)
+{
+	uint32_t modembits = 0;
+	if (ioctl(reader->handle, TIOCMGET, &modembits) < 0) {
+		rdr_log(reader, "ERROR: %s: ioctl(TIOCMGET): %s", __func__, strerror(errno));
+		return ERROR;
+	}
+	*status = 0;
+	switch(reader->detect & 0x7f) {
+	case 0: *status = modembits & TIOCM_CAR; break;
+	case 1: *status = modembits & TIOCM_DSR; break;
+	case 2: *status = modembits & TIOCM_CTS; break;
+	case 3: *status = modembits & TIOCM_RNG; break;
+	}
+	if (!(reader->detect & 0x80))
+		*status = !*status;
+	return OK;
+}
+
 #endif

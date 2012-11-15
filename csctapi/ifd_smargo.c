@@ -208,7 +208,7 @@ void cardreader_smargo(struct s_cardreader *crdr)
 {
 	crdr->desc		= "smargo";
 	crdr->reader_init	= smargo_init;
-	crdr->get_status	= Phoenix_GetStatus;
+	crdr->get_status	= IO_Serial_GetStatus;
 	crdr->activate	= smargo_reset;
 	crdr->transmit	= IO_Serial_Transmit;
 	crdr->receive		= IO_Serial_Receive;

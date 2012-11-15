@@ -90,27 +90,12 @@ int32_t Phoenix_Init (struct s_reader * reader)
 int32_t Phoenix_GetStatus (struct s_reader * reader, int32_t * status)
 {
 	// detect card via defined reader->gpio
-	if (reader_use_gpio(reader))
+	if (reader_use_gpio(reader)) {
 		*status = !get_gpio(reader);
-	else
-	{
-		uint32_t modembits=0;
-	        if (ioctl(reader->handle, TIOCMGET, &modembits) < 0) {
-	                rdr_log(reader, "ERROR: %s: ioctl error in card detection", __func__);
-	                return ERROR;
-	        }
-		switch(reader->detect&0x7f)
-		{
-			case	0: *status=(modembits & TIOCM_CAR);	break;
-			case	1: *status=(modembits & TIOCM_DSR);	break;
-			case	2: *status=(modembits & TIOCM_CTS);	break;
-			case	3: *status=(modembits & TIOCM_RNG);	break;
-			default: *status=0;		// dummy
-		}
-		if (!(reader->detect&0x80))
-			*status=!*status;
+		return OK;
+	} else {
+		return IO_Serial_GetStatus(reader, status);
 	}
-	return OK;
 }
 
 int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
