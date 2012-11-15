@@ -176,7 +176,7 @@ static void usage(void)
 	printf("[-S] [-s] [-t <tmp dir>] ");
 	if (config_WEBIF())
 		printf("[-u] ");
-	printf("[-w <secs>]\n");
+	printf("[-w <secs>] [-V]\n");
 	printf("\n");
 	printf("\t-a         : write oscam.crash on segfault (needs installed GDB and OSCam compiled with debug infos -ggdb)\n\n");
 	printf("\t-b         : start in background\n\n");
@@ -216,6 +216,7 @@ static void usage(void)
 	if (config_WEBIF())
 	    printf("\t-u         : enable output of web interface in UTF-8 charset\n\n");
 	printf("\t-w <secs>  : wait up to <secs> seconds for the system time to be set correctly, default:60\n\n");
+	printf("\t-V         : display oscam version info\n");
 }
 #undef _check
 
@@ -228,23 +229,27 @@ static void usage(void)
 #define write_cardreaderconf(CONFIG_VAR, text) \
 	fprintf(fp, "%s%-19s %s\n", "cardreader_", text ":", config_##CONFIG_VAR() ? "yes" : "no")
 
-static void write_versionfile(void) {
-	struct tm st;
-	char targetfile[256];
-	snprintf(targetfile, sizeof(targetfile) - 1, "%s%s", get_tmp_dir(), "/oscam.version");
-	targetfile[sizeof(targetfile) - 1] = 0;
-	FILE *fp = fopen(targetfile, "w");
-	if (!fp) {
-		cs_log("Cannot open %s (errno=%d %s)", targetfile, errno, strerror(errno));
-		return;
+static void write_versionfile(bool use_stdout) {
+	FILE *fp = stdout;
+	if (!use_stdout) {
+		char targetfile[256];
+		snprintf(targetfile, sizeof(targetfile) - 1, "%s%s", get_tmp_dir(), "/oscam.version");
+		targetfile[sizeof(targetfile) - 1] = 0;
+		fp = fopen(targetfile, "w");
+		if (!fp) {
+			cs_log("Cannot open %s (errno=%d %s)", targetfile, errno, strerror(errno));
+			return;
+		}
+		struct tm st;
+		time_t now = time(NULL);
+		localtime_r(&now, &st);
+
+		fprintf(fp, "Unix starttime: %ld\n", (long)now);
+		fprintf(fp, "Starttime:      %02d.%02d.%04d %02d:%02d:%02d\n",
+			st.tm_mday, st.tm_mon + 1, st.tm_year + 1900,
+			st.tm_hour, st.tm_min, st.tm_sec);
 	}
 
-	time_t now = time(NULL);
-	localtime_r(&now, &st);
-
-	fprintf(fp, "Unix starttime: %ld\n", (long)now);
-	fprintf(fp, "Starttime:      %02d.%02d.%04d", st.tm_mday, st.tm_mon + 1, st.tm_year + 1900);
-	fprintf(fp, " %02d:%02d:%02d\n", st.tm_hour, st.tm_min, st.tm_sec);
 	fprintf(fp, "Version:        oscam-%s-r%s\n", CS_VERSION, CS_SVN_VERSION);
 
 	fprintf(fp, "\n");
@@ -309,7 +314,8 @@ static void write_versionfile(void) {
 	} else {
 		write_readerconf(WITH_CARDREADER, "Reader Support");
 	}
-	fclose(fp);
+	if (!use_stdout)
+		fclose(fp);
 }
 #undef write_conf
 #undef write_readerconf
@@ -4042,7 +4048,7 @@ int32_t main (int32_t argc, char *argv[])
 	0
   };
 
-  while ((i=getopt(argc, argv, "g:bsauc:t:d:r:w:hm:xp:S"))!=EOF)
+  while ((i=getopt(argc, argv, "g:bsauc:t:d:r:w:hm:xp:SV"))!=EOF)
   {
 	  switch(i) {
 		  case 'g':
@@ -4099,6 +4105,9 @@ int32_t main (int32_t argc, char *argv[])
 			  break;
 		  case 'h':
 			  usage();
+			  exit(0);
+		  case 'V':
+			  write_versionfile(true);
 			  exit(0);
 		  default :
 			  usage();
@@ -4172,7 +4181,7 @@ int32_t main (int32_t argc, char *argv[])
   init_len4caid();
   init_irdeto_guess_tab();
 
-  write_versionfile();
+  write_versionfile(false);
   server_pid = getpid();
 
   led_init();
