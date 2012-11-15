@@ -115,6 +115,7 @@
 #endif
 
 #ifdef WITH_CARDREADER
+
 #ifndef READER_NAGRA
 #define READER_NAGRA
 #endif
@@ -154,7 +155,59 @@
 #ifndef READER_BULCRYPT
 #define READER_BULCRYPT
 #endif
+
+#ifndef CARDREADER_PHOENIX
+#define CARDREADER_PHOENIX
 #endif
+
+#ifndef CARDREADER_INTERNAL
+#define CARDREADER_INTERNAL
+#endif
+
+#ifndef CARDREADER_MP35
+#define CARDREADER_MP35
+#endif
+
+#ifndef CARDREADER_SC8IN1
+#define CARDREADER_SC8IN1
+#endif
+
+#ifndef CARDREADER_SMARGO
+#define CARDREADER_SMARGO
+#endif
+
+#ifndef CARDREADER_DB2COM
+#define CARDREADER_DB2COM
+#endif
+
+#ifdef WITH_PCSC
+#ifndef CARDREADER_PCSC
+#define CARDREADER_PCSC
+#endif
+#endif
+
+#ifdef WITH_LIBUSB
+#ifndef CARDREADER_SMART
+#define CARDREADER_SMART
+#endif
+#endif
+
+// CARDREADER_INTERNAL_xxxx are internal variables
+#if defined(WITH_AZBOX)
+#define CARDREADER_INTERNAL_AZBOX
+#elif defined(WITH_COOLAPI)
+#define CARDREADER_INTERNAL_COOLAPI
+#elif defined(CARDREADER_INTERNAL)
+#define CARDREADER_INTERNAL_SCI
+#endif
+
+#ifdef WITH_STAPI
+#ifndef CARDREADER_STAPI
+#define CARDREADER_STAPI
+#endif
+#endif
+
+#endif // WITH_CARDREADER
 
 #ifndef CS_CACHEEX
 #define CS_CACHEEX

@@ -3,6 +3,7 @@
 addons="WEBIF TOUCH HAVE_DVBAPI IRDETO_GUESSING CS_ANTICASC WITH_DEBUG MODULE_MONITOR WITH_SSL WITH_LB CS_CACHEEX LCDSUPPORT LEDSUPPORT IPV6SUPPORT"
 protocols="MODULE_CAMD33 MODULE_CAMD35 MODULE_CAMD35_TCP MODULE_NEWCAMD MODULE_CCCAM MODULE_CCCSHARE MODULE_GBOX MODULE_RADEGAST MODULE_SERIAL MODULE_CONSTCW MODULE_PANDORA"
 readers="READER_NAGRA READER_IRDETO READER_CONAX READER_CRYPTOWORKS READER_SECA READER_VIACCESS READER_VIDEOGUARD READER_DRE READER_TONGFANG READER_BULCRYPT"
+card_readers="CARDREADER_PHOENIX CARDREADER_INTERNAL CARDREADER_SC8IN1 CARDREADER_MP35 CARDREADER_SMARGO CARDREADER_DB2COM CARDREADER_STAPI"
 
 defconfig="
 CONFIG_WEBIF=y
@@ -40,6 +41,13 @@ CONFIG_READER_VIDEOGUARD=y
 CONFIG_READER_DRE=y
 CONFIG_READER_TONGFANG=y
 CONFIG_READER_BULCRYPT=y
+CARDREADER_PHOENIX=y
+CARDREADER_INTERNAL=y
+CARDREADER_SC8IN1=y
+CARDREADER_MP35=y
+CARDREADER_SMARGO=y
+CARDREADER_DB2COM=y
+CARDREADER_STAPI=y
 "
 
 usage() {
@@ -52,7 +60,8 @@ Usage: `basename $0` [parameters]
  -s, --show-enabled [param] Show enabled configuration options.
  -Z, --show-disabled [param] Show disabled configuration options.
  -S, --show-valid [param]  Show valid configuration options.
-                           Possible params: all, addons, protocols, readers
+                           Possible params: all, addons, protocols,
+                                            readers, card_readers
 
  -l, --list-config         List active configuration variables.
  -e, --enabled [option]    Check if certain option is enabled.
@@ -62,10 +71,11 @@ Usage: `basename $0` [parameters]
  -D, --disable [option]    Disable config option.
 
     The following [option]s enable or disable multiple settings.
-      all       - Everything.
-      addons    - All addons.
-      protocols - All protocols.
-      readers   - All readers.
+      all          - Everything.
+      addons       - All addons.
+      protocols    - All protocols.
+      readers      - All readers.
+      card_readers - All card readers.
 
  -R, --restore             Restore default config.
 
@@ -94,10 +104,14 @@ Examples:
   # Disable everything and enable webif one module and one card reader
   ./config.sh --disable all --enable WEBIF MODULE_NEWCAMD READER_BULCRYPT
 
+  # Disable all card readers except INTERNAL
+  ./config.sh -D card_readers -E CARDREADER_INTERNAL
+
 Available options:
-    addons: $addons
- protocols: $protocols
-   readers: $readers
+       addons: $addons
+    protocols: $protocols
+      readers: $readers
+ card_readers: $card_readers
 "
 }
 
@@ -156,7 +170,7 @@ list_disabled() {
 
 valid_opt() {
 	[ "$1" = "WITH_CARDREADER" ] && return 0 # Special case
-	echo $addons $protocols $readers | grep -w "$1" >/dev/null
+	echo $addons $protocols $readers $card_readers | grep -w "$1" >/dev/null
 	return $?
 }
 
@@ -191,10 +205,11 @@ disable_opts() {
 get_opts() {
 	OPTS=""
 	case "$1" in
-	'addons')    OPTS="$addons" ; ;;
-	'protocols') OPTS="$protocols" ; ;;
-	'readers')   OPTS="$readers" ; ;;
-	*)           OPTS="$addons $protocols $readers" ; ;;
+	'addons')       OPTS="$addons" ; ;;
+	'protocols')    OPTS="$protocols" ; ;;
+	'readers')      OPTS="$readers" ; ;;
+	'card_readers') OPTS="$card_readers" ; ;;
+	*)              OPTS="$addons $protocols $readers $card_readers" ; ;;
 	esac
 	echo $OPTS
 }
@@ -240,6 +255,13 @@ print_components() {
 	for i in $readers; do
 		printf "\t%-20s: %s\n" $i $(check_test "$i")
 	done
+
+	echo
+	echo "Card readers:"
+	for i in $card_readers; do
+		printf "\t%-20s: %s\n" $i $(check_test "$i")
+	done
+
 	cp -f $tempfileconfig $configfile
 }
 
@@ -289,8 +311,8 @@ menu_protocols() {
 	enable_package
 }
 
-menu_reader() {
-	${DIALOG} --checklist "\nChoose reader:\n " $height $width $listheight \
+menu_readers() {
+	${DIALOG} --checklist "\nChoose readers (CA systems):\n " $height $width $listheight \
 		READER_NAGRA		"Nagravision"		$(check_test "READER_NAGRA") \
 		READER_IRDETO		"Irdeto"			$(check_test "READER_IRDETO") \
 		READER_CONAX		"Conax"				$(check_test "READER_CONAX") \
@@ -309,6 +331,25 @@ menu_reader() {
 	disable_all "$readers"
 	enable_package
 }
+
+menu_card_readers() {
+	${DIALOG} --checklist "\nChoose card reader drivers:\n " $height $width $listheight \
+		CARDREADER_PHOENIX	"Phoenix/mouse"				$(check_test "CARDREADER_PHOENIX") \
+		CARDREADER_INTERNAL	"Internal (Sci,Azbox,Cool)"	$(check_test "CARDREADER_INTERNAL") \
+		CARDREADER_SC8IN1	"SC8in1"					$(check_test "CARDREADER_SC8IN1") \
+		CARDREADER_MP35		"MP35"						$(check_test "CARDREADER_MP35") \
+		CARDREADER_SMARGO	"Smargo"					$(check_test "CARDREADER_SMARGO") \
+		CARDREADER_DB2COM	"Dreambox2"					$(check_test "CARDREADER_DB2COM") \
+		CARDREADER_STAPI	"STAPI"						$(check_test "CARDREADER_STAPI") \
+	2> ${tempfile}
+
+	opt=${?}
+	if [ $opt != 0 ]; then return; fi
+
+	disable_all "$card_readers"
+	enable_package
+}
+
 
 config_dialog() {
 	tempfile=/tmp/test$$
@@ -329,10 +370,11 @@ config_dialog() {
 
 	while true; do
 		${DIALOG} --menu "\nSelect category:\n " $height $width $listheight \
-			Add-ons		"Add-ons" \
-			Protocols	"Network protocols" \
-			Reader		"Reader" \
-			Save		"Save" \
+			Add-ons			"Add-ons" \
+			Protocols		"Network protocols" \
+			Readers			"Readers (CA systems)" \
+			CardReaders		"Card reader drivers" \
+			Save			"Save" \
 			2> ${tempfile}
 
 		opt=${?}
@@ -342,7 +384,8 @@ config_dialog() {
 		case $menuitem in
 			Add-ons) menu_addons ;;
 			Protocols) menu_protocols ;;
-			Reader) menu_reader ;;
+			Readers) menu_readers ;;
+			CardReaders) menu_card_readers ;;
 			Save)
 				print_components
 				rm $tempfile
@@ -397,7 +440,7 @@ do
 				$0 --make-config.mak
 				continue 2
 				;;
-			all|addons|protocols|readers)
+			all|addons|protocols|readers|card_readers)
 				enable_opts $(get_opts $1)
 				;;
 			*)
@@ -417,7 +460,7 @@ do
 				$0 --make-config.mak
 				continue 2
 				;;
-			all|addons|protocols|readers)
+			all|addons|protocols|readers|card_readers)
 				disable_opts $(get_opts $1)
 				;;
 			*)
@@ -475,7 +518,8 @@ do
 		enabled_any $(get_opts readers) && enable_opt WITH_CARDREADER >/dev/null
 		disabled_all $(get_opts readers) && disable_opt WITH_CARDREADER >/dev/null
 		enabled MODULE_CCCSHARE && enable_opt MODULE_CCCAM >/dev/null
-		for OPT in $addons $protocols WITH_CARDREADER $readers
+		enabled_any CARDREADER_DB2COM CARDREADER_MP35 CARDREADER_SC8IN1 CARDREADER_SMARGO CARDREADER_INTERNAL && enable_opt CARDREADER_PHOENIX >/dev/null
+		for OPT in $addons $protocols WITH_CARDREADER $readers $card_readers
 		do
 			enabled $OPT && echo "CONFIG_$OPT=y" || echo "# CONFIG_$OPT=n"
 		done
