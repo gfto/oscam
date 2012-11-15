@@ -192,10 +192,11 @@
 #endif
 #endif
 
-// CARDREADER_INTERNAL_xxxx are internal variables
-#if defined(WITH_AZBOX)
+// CARDREADER_INTERNAL_{AZBOX,COOLAPI,SCI} are internal variables
+// do not touch them
+#if   defined(CARDREADER_INTERNAL) && defined(WITH_AZBOX)
 #define CARDREADER_INTERNAL_AZBOX
-#elif defined(WITH_COOLAPI)
+#elif defined(CARDREADER_INTERNAL) && defined(WITH_COOLAPI)
 #define CARDREADER_INTERNAL_COOLAPI
 #elif defined(CARDREADER_INTERNAL)
 #define CARDREADER_INTERNAL_SCI
