@@ -59,10 +59,10 @@ int32_t write_services(void)
 }
 
 #define write_conf(CONFIG_VAR, text) \
-	fprintf(fp, "%-27s %s\n", text ":", config_##CONFIG_VAR() ? "yes" : "no")
+	fprintf(fp, "%-30s %s\n", text ":", config_##CONFIG_VAR() ? "yes" : "no")
 
 #define write_readerconf(CONFIG_VAR, text) \
-	fprintf(fp, "%-27s %s\n", text ":", config_##CONFIG_VAR() ? "yes" : "no - no EMM support!")
+	fprintf(fp, "%-30s %s\n", text ":", config_##CONFIG_VAR() ? "yes" : "no - no EMM support!")
 
 void write_versionfile(void) {
 #if defined(__CYGWIN__)
@@ -92,8 +92,11 @@ void write_versionfile(void) {
 	write_conf(TOUCH, "Touch interface support");
 	write_conf(WITH_SSL, "SSL support");
 	write_conf(HAVE_DVBAPI, "DVB API support");
-	if (config_HAVE_DVBAPI())
+	if (config_HAVE_DVBAPI()) {
+		write_conf(WITH_AZBOX, "DVB API with AZBOX support");
+		write_conf(WITH_COOLAPI, "DVB API with COOLAPI support");
 		write_conf(WITH_STAPI, "DVB API with STAPI support");
+	}
 	write_conf(CS_ANTICASC, "Anti-cascading support");
 	write_conf(IRDETO_GUESSING, "Irdeto guessing");
 	write_conf(WITH_DEBUG, "Debug mode");

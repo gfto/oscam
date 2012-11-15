@@ -129,6 +129,14 @@ static inline int config_WITH_COOLAPI(void) {
 	#endif
 }
 
+static inline int config_WITH_AZBOX(void) {
+	#ifdef WITH_AZBOX
+	return 1;
+	#else
+	return 0;
+	#endif
+}
+
 static inline int config_WITH_DEBUG(void) {
 	#ifdef WITH_DEBUG
 	return 1;
