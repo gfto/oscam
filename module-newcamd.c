@@ -1372,6 +1372,7 @@ const char *newcamd_get_client_name(uint16_t client_id)
 		const char *client;
 	} ncd_service_ids[] = {
 		{ 0x0000, "generic" },
+		{ 0x02C2, "Opticum" },
 		{ 0x0665, "rq-sssp-client/CS" },
 		{ 0x0666, "rqcamd" },
 		{ 0x0667, "rq-echo-client" },
