@@ -337,8 +337,8 @@ menu_card_readers() {
 		CARDREADER_PHOENIX	"Phoenix/mouse"				$(check_test "CARDREADER_PHOENIX") \
 		CARDREADER_INTERNAL	"Internal (Sci,Azbox,Cool)"	$(check_test "CARDREADER_INTERNAL") \
 		CARDREADER_SC8IN1	"SC8in1"					$(check_test "CARDREADER_SC8IN1") \
-		CARDREADER_MP35		"MP35"						$(check_test "CARDREADER_MP35") \
-		CARDREADER_SMARGO	"Smargo"					$(check_test "CARDREADER_SMARGO") \
+		CARDREADER_MP35		"AD-Teknik MP 3.6/USB Phoenix"						$(check_test "CARDREADER_MP35") \
+		CARDREADER_SMARGO	"Argolis Smargo Smartreader"					$(check_test "CARDREADER_SMARGO") \
 		CARDREADER_DB2COM	"dbox2"						$(check_test "CARDREADER_DB2COM") \
 		CARDREADER_STAPI	"STAPI"						$(check_test "CARDREADER_STAPI") \
 	2> ${tempfile}
