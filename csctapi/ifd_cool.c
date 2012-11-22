@@ -44,7 +44,7 @@ static int32_t Cool_Init (struct s_reader *reader)
 	if (cnxt_smc_open (&specdev()->handle, &reader_nb, NULL, NULL))
 		return 0;
 
-	int32_t ret = cnxt_smc_enable_flow_control(specdev()->handle);
+	int32_t ret = cnxt_smc_enable_flow_control(specdev()->handle, 1);
 	coolapi_check_error("cnxt_smc_enable_flow_control", ret);
 
 	specdev()->cardbuflen = 0;
@@ -145,8 +145,7 @@ static int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
 		if (clk/10000 != (uint32_t)reader->cardmhz) {
 			rdr_debug_mask(reader, D_DEVICE, "COOL: clock freq: %i, scheduling change to %i for card reset",
 					clk, reader->cardmhz*10000);
-			ret = cnxt_smc_set_clock_freq (specdev()->handle, reader->cardmhz*10000);
-			coolapi_check_error("cnxt_smc_set_clock_freq", ret);
+			call (Cool_SetClockrate(reader, reader->cardmhz));
 		}
 	}
 	else {

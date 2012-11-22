@@ -608,7 +608,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 	if (deprecated == 0) {
 		uint32_t baud_temp;
 		if (reader->protocol_type != ATR_PROTOCOL_TYPE_T14) { //dont switch for T14
-			if (reader->typ == R_INTERNAL) baud_temp = (uint32_t) 1/((1/(double)D)*((double)F/(double)(reader->cardmhz*10000)));
+			if (reader->mhz > 2000 && reader->typ == R_INTERNAL) baud_temp = (uint32_t) 1/((1/(double)D)*((double)F/(double)(reader->cardmhz*10000)));
 			else baud_temp = (double)D * ICC_Async_GetClockRate (reader->cardmhz) / (double)F;
 			rdr_log(reader, "Setting baudrate to %d bps", baud_temp);
 			if (reader->crdr.set_baudrate) {
@@ -617,7 +617,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 			reader->current_baudrate = baud_temp; //this is needed for all readers to calculate work_etu for timings
 		}
 	}
-	if (reader->typ == R_INTERNAL) reader->worketu = (double) ((1/(double)D)*((double)F/(double)reader->cardmhz)*100);
+	if (reader->mhz > 2000 && reader->typ == R_INTERNAL) reader->worketu = (double) ((1/(double)D)*((double)F/(double)reader->cardmhz)*100);
 	else reader->worketu = (double) ((1/(double)D)*((double)F/(double)reader->mhz)*100);
 	rdr_log(reader, "Calculated work ETU is %.2f us", reader->worketu);
 
@@ -650,7 +650,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 			reader->CWT = 0; // T0 protocol doesnt have char waiting time (used to detect errors within 1 single block of data)
 			reader->BWT = 0; // T0 protocol doesnt have block waiting time (used to detect unresponsive card, this is max time for starting a block answer)
 			
-			if (reader->typ == R_INTERNAL)
+			if (reader->mhz > 2000 && reader->typ == R_INTERNAL)
 				rdr_debug_mask(reader, D_IFD, "Protocol: T=%i, WWT=%u, Clockrate=%u",
 					reader->protocol_type, WWT,
 					(reader->cardmhz * 10000));
@@ -701,7 +701,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 				// Set CWT = (2^CWI + 11) work etu
 				reader->CWT = (uint16_t) ((1<<cwi) + 11); // in work ETU
 				// Set BWT = (2^BWI * 960 * 372 / clockspeed) seconds + 11 work etu
-				if (reader->typ == R_INTERNAL) reader->BWT = (uint32_t) ((1<<bwi) * 960 * 372 / (double) reader->cardmhz* 100 / (double) reader->worketu)+11; // BWT in ETU
+				if (reader->mhz > 2000 && reader->typ == R_INTERNAL) reader->BWT = (uint32_t) ((1<<bwi) * 960 * 372 / (double) reader->cardmhz* 100 / (double) reader->worketu)+11; // BWT in ETU
 				else reader->BWT = (uint32_t) ((1<<bwi) * 960 * 372 / (double)reader->mhz * 100 / (double) reader->worketu) + 11 ; // BWT in ETU
 				// Set BGT = 22 * work etu
 				BGT = 22L; // Block Guard Time in ETU used to interspace between block responses
@@ -754,8 +754,13 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 	}
 
 	if (reader->typ == R_INTERNAL){
+		if (reader->mhz > 2000) {
 			rdr_log(reader, "ATR Fsmax is: %i Mhz, clocking card to %.2f (nearest possible to wanted user cardspeed of %.2f Mhz)",
 				atr_fs_table[FI] / 1000000,	(float) reader->cardmhz / 100, (float) reader->cardmhz / 100);
+		} else {
+			rdr_log(reader, "ATR Fsmax is: %i Mhz, clocking card to %.2f",
+				atr_fs_table[FI] / 1000000,	(float) reader->mhz / 100);
+		}
 	}
 	else{
 		rdr_log(reader, "ATR Fsmax is: %i Mhz, clocking card to wanted user cardspeed of %.2f Mhz (specified in reader->mhz)",
