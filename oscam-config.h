@@ -10,7 +10,7 @@
 #endif
 
 #ifndef TOUCH
-//#define TOUCH
+#define TOUCH
 #endif
 
 #ifndef WITH_SSL
@@ -24,11 +24,11 @@
 #endif
 
 #ifndef IRDETO_GUESSING
-//#define IRDETO_GUESSING
+#define IRDETO_GUESSING
 #endif
 
 #ifndef CS_ANTICASC
-//#define CS_ANTICASC
+#define CS_ANTICASC
 #endif
 
 #ifndef WITH_DEBUG
@@ -64,11 +64,11 @@
 #endif
 
 #ifndef MODULE_CAMD35
-//#define MODULE_CAMD35
+#define MODULE_CAMD35
 #endif
 
 #ifndef MODULE_CAMD35_TCP
-//#define MODULE_CAMD35_TCP
+#define MODULE_CAMD35_TCP
 #endif
 
 #ifndef MODULE_NEWCAMD
@@ -76,34 +76,34 @@
 #endif
 
 #ifndef MODULE_CCCAM
-//#define MODULE_CCCAM
+#define MODULE_CCCAM
 #endif
 
 #ifdef MODULE_CCCAM
 #ifndef MODULE_CCCSHARE
-//#define MODULE_CCCSHARE
+#define MODULE_CCCSHARE
 #endif
 #endif
 
 
 #ifndef MODULE_GBOX
-//#define MODULE_GBOX
+#define MODULE_GBOX
 #endif
 
 #ifndef MODULE_RADEGAST
-//#define MODULE_RADEGAST
+#define MODULE_RADEGAST
 #endif
 
 #ifndef MODULE_SERIAL
-//#define MODULE_SERIAL
+#define MODULE_SERIAL
 #endif
 
 #ifndef MODULE_CONSTCW
-//#define MODULE_CONSTCW
+#define MODULE_CONSTCW
 #endif
 
 #ifndef MODULE_PANDORA
-//#define MODULE_PANDORA
+#define MODULE_PANDORA
 #endif
 
 //
@@ -125,19 +125,19 @@
 #endif
 
 #ifndef READER_CONAX
-//#define READER_CONAX
+#define READER_CONAX
 #endif
 
 #ifndef READER_CRYPTOWORKS
-//#define READER_CRYPTOWORKS
+#define READER_CRYPTOWORKS
 #endif
 
 #ifndef READER_SECA
-//#define READER_SECA
+#define READER_SECA
 #endif
 
 #ifndef READER_VIACCESS
-//#define READER_VIACCESS
+#define READER_VIACCESS
 #endif
 
 #ifndef READER_VIDEOGUARD
@@ -145,19 +145,19 @@
 #endif
 
 #ifndef READER_DRE
-//#define READER_DRE
+#define READER_DRE
 #endif
 
 #ifndef READER_TONGFANG
-//#define READER_TONGFANG
+#define READER_TONGFANG
 #endif
 
 #ifndef READER_BULCRYPT
-//#define READER_BULCRYPT
+#define READER_BULCRYPT
 #endif
 
 #ifndef CARDREADER_PHOENIX
-//#define CARDREADER_PHOENIX
+#define CARDREADER_PHOENIX
 #endif
 
 #ifndef CARDREADER_INTERNAL
@@ -165,19 +165,19 @@
 #endif
 
 #ifndef CARDREADER_MP35
-//#define CARDREADER_MP35
+#define CARDREADER_MP35
 #endif
 
 #ifndef CARDREADER_SC8IN1
-//#define CARDREADER_SC8IN1
+#define CARDREADER_SC8IN1
 #endif
 
 #ifndef CARDREADER_SMARGO
-//#define CARDREADER_SMARGO
+#define CARDREADER_SMARGO
 #endif
 
 #ifndef CARDREADER_DB2COM
-//#define CARDREADER_DB2COM
+#define CARDREADER_DB2COM
 #endif
 
 #ifdef WITH_PCSC
@@ -204,14 +204,14 @@
 
 #ifdef WITH_STAPI
 #ifndef CARDREADER_STAPI
-//#define CARDREADER_STAPI
+#define CARDREADER_STAPI
 #endif
 #endif
 
 #endif // WITH_CARDREADER
 
 #ifndef CS_CACHEEX
-//#define CS_CACHEEX
+#define CS_CACHEEX
 #endif
 
 #endif //OSCAM_CONFIG_H_
