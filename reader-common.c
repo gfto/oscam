@@ -411,9 +411,11 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 	}
 	cs_ftime(&tpe);
 	cl->lastecm=time((time_t*)0);
+	char ecmd5[17*3];                
+    cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5));
 
-	rdr_debug_mask(reader, D_TRACE, "ecm: %04X real time: %ld ms",
-		htons(er->checksum), 1000 * (tpe.time - tps.time) + tpe.millitm - tps.millitm);
+	rdr_debug_mask(reader, D_TRACE, "ecm hash: %s real time: %ld ms",
+		ecmd5, 1000 * (tpe.time - tps.time) + tpe.millitm - tps.millitm);
 
 	write_ecm_answer(reader, er, ea.rc, ea.rcEx, ea.cw, ea.msglog);
 

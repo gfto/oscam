@@ -430,7 +430,9 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		// so we could use send_dcw(er->client, er) or write_ecm_answer(reader, er), but send_dcw wont be threadsafe from here cause there may be multiple threads accessing same s_client struct.
 		// maybe rc should be checked before request is sent to reader but i could not find the reason why this is happening now and not in v1.10 (zetack)
 		//send_dcw(cl, er);
-		rdr_debug_mask(reader, D_TRACE, "skip ecm %04X, rc=%d", er->checksum, er->rc);
+		char ecmd5[17*3];                
+        cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5));
+		rdr_debug_mask(reader, D_TRACE, "skip ecmhash %s, rc=%d", ecmd5, er->rc);
 		return;
 	}
 
@@ -443,7 +445,9 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	// cache2
 	struct ecm_request_t *ecm = check_cwcache(er, cl);
 	if (ecm && ecm->rc <= E_NOTFOUND) {
-		rdr_debug_mask(reader, D_TRACE, "ecm %04X answer from cache", er->checksum);
+		char ecmd5[17*3];                
+        cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5));
+		rdr_debug_mask(reader, D_TRACE, "ecmhash %s answer from cache", ecmd5);
 		write_ecm_answer(reader, er, E_CACHE2, 0, ecm->cw, NULL);
 		return;
 	}

@@ -793,7 +793,6 @@ typedef struct ecm_request_t {
 	LLIST			*csp_lastnodes;				// last 10 Cacheex nodes atm cc-proto-only
 #endif
 	char			msglog[MSGLOGSIZE];
-	uint16_t		checksum;
 	struct ecm_request_t	*parent;
 	struct ecm_request_t	*next;
 } ECM_REQUEST;

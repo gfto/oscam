@@ -339,10 +339,6 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 	er->client = NULL; //No Owner! So no fallback!
 
 	if (er->ecmlen) {
-		uint16_t *lp;
-		for (lp=(uint16_t *)er->ecm+(er->ecmlen >> 2), er->checksum=0; lp>=(uint16_t *)er->ecm; lp--)
-			er->checksum^=*lp;
-
 		int32_t offset = 3;
 		if ((er->caid >> 8) == 0x17)
 			offset = 13;
@@ -352,8 +348,6 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 		//csp has already initialized these hashcode
 
 		update_chid(er);
-	} else {
-		er->checksum = er->csp_hash;
 	}
 
 	struct ecm_request_t *ecm = check_cwcache(er, cl);

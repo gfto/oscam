@@ -1637,9 +1637,9 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 #ifdef CS_CACHEEX
                 char csphash[5*3];
                 cs_hexdump(0, (void*)&er->csp_hash, 4, csphash, sizeof(csphash));
-                cs_debug_mask(D_CLIENTECM, "Client %s hash %s csp %s cw %s rc %d %s", username(client), ecmd5, csphash, cwstr, er->rc, buf);
+                cs_debug_mask(D_CLIENTECM, "Client %s csphash %s cw %s rc %d %s", username(client), csphash, cwstr, er->rc, buf);
 #else            
-                cs_debug_mask(D_CLIENTECM, "Client %s hash %s cw %s rc %d %s", username(client), ecmd5, cwstr, er->rc, buf);
+                cs_debug_mask(D_CLIENTECM, "Client %s cw %s rc %d %s", username(client), cwstr, er->rc, buf);
 #endif
         }
 #endif
@@ -1872,7 +1872,9 @@ static void request_cw(ECM_REQUEST *er)
 			}
 
 			struct s_reader *rdr = ea->reader;
-			cs_debug_mask(D_TRACE, "request_cw stage=%d to reader %s ecm=%04X", er->stage, rdr?rdr->label:"", htons(er->checksum));
+			char ecmd5[17*3];                
+            cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5));
+			cs_debug_mask(D_TRACE, "request_cw stage=%d to reader %s ecm hash=%s", er->stage, rdr?rdr->label:"", ecmd5);
 			
 			ea->status |= REQUEST_SENT;
 			er->reader_requested++;
@@ -1906,7 +1908,9 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 		return;
 
 	if (eardr) {
-		rdr_debug_mask(eardr, D_TRACE, "ecm answer for ecm %04X rc=%d", htons(ert->checksum), ea->rc);
+		char ecmd5[17*3];                
+        cs_hexdump(0, ert->ecmd5, 16, ecmd5, sizeof(ecmd5));
+		rdr_debug_mask(eardr, D_TRACE, "ecm answer for ecm hash %s rc=%d", ecmd5, ea->rc);
 		//rdr_ddump_mask(eardr, D_TRACE, ea->cw, sizeof(ea->cw), "received cw caid=%04X srvid=%04X hash=%08X",
 		//		ert->caid, ert->srvid, ert->csp_hash);
 		//rdr_ddump_mask(eardr, D_TRACE, ert->ecm, ert->ecmlen, "received cw for ecm caid=%04X srvid=%04X hash=%08X",
@@ -2586,7 +2590,6 @@ OUT:
 					er->matching_rdr = NULL;
 					ecm->ecmlen = er->ecmlen;
 					ecm->client = er->client;
-					ecm->checksum = er->checksum;
 					er->client = NULL;
 					memcpy(ecm->ecm, er->ecm, sizeof(ecm->ecm));
 					memcpy(ecm->ecmd5, er->ecmd5, sizeof(ecm->ecmd5));
@@ -2649,10 +2652,6 @@ OUT:
 		}
 #endif
 	}
-
-	uint16_t *lp;
-	for (lp=(uint16_t *)er->ecm + (er->ecmlen >>2 ), er->checksum=0; lp>=(uint16_t *)er->ecm; lp--)
-		er->checksum^=*lp;
 
 	if (er->rc < E_99) {
 #ifdef CS_CACHEEX

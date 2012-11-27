@@ -91,10 +91,12 @@ void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *
 	*ptr = prov;
 }
 
-int32_t ecmfmt(uint16_t caid, uint32_t prid, uint16_t chid, uint16_t pid, uint16_t srvid, uint16_t l, uint16_t checksum, char *result, size_t size)
+int32_t ecmfmt(uint16_t caid, uint32_t prid, uint16_t chid, uint16_t pid, uint16_t srvid, uint16_t l, uchar ecmd5[CS_ECMSTORESIZE], char *result, size_t size)
 {
-	if (!cfg.ecmfmt)
-		return snprintf(result, size, "%04X&%06X/%04X/%04X/%02X:%04X", caid, prid, chid, srvid, l, htons(checksum));
+	char ecmd5hex[17*3];                
+    cs_hexdump(0, ecmd5, 16, ecmd5hex, sizeof(ecmd5hex));
+	
+	if (!cfg.ecmfmt) return snprintf(result, size, "%04X&%06X/%04X/%04X/%02X:%s", caid, prid, chid, srvid, l, ecmd5hex);
 
 	uint32_t s=0, zero=0, flen=0, value=0;
 	char *c = cfg.ecmfmt, fmt[5] = "%04X";
@@ -108,7 +110,7 @@ int32_t ecmfmt(uint16_t caid, uint32_t prid, uint16_t chid, uint16_t pid, uint16
 			case 'd': flen=4; value=pid; break;
 			case 's': flen=4; value=srvid; break;
 			case 'l': flen=2; value=l; break;
-			case 'h': flen=4; value=htons(checksum); break;
+			case 'h': flen=CS_ECMSTORESIZE; break;
 			case '\\':
 				c++;
 				flen=0;
@@ -130,8 +132,8 @@ int32_t ecmfmt(uint16_t caid, uint32_t prid, uint16_t chid, uint16_t pid, uint16
 				fmt[1] = 'c';
 				fmt[2] = 0;
 			}
-
-			s += snprintf(result+s, size-s, fmt, value);
+			if (flen == CS_ECMSTORESIZE) s += snprintf(result+s, size-s ,"%s", ecmd5hex);
+			else s += snprintf(result+s, size-s, fmt, value);
 		}
 		c++;
 	}
@@ -140,7 +142,7 @@ int32_t ecmfmt(uint16_t caid, uint32_t prid, uint16_t chid, uint16_t pid, uint16
 
 int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 {
-	return ecmfmt(ecm->caid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecm->checksum, result, size);
+	return ecmfmt(ecm->caid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecm->ecmd5, result, size);
 }
 
 int32_t check_sct_len(const uchar *data, int32_t off)
