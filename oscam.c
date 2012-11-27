@@ -169,6 +169,7 @@ static void show_usage(void)
 	_check(CARDREADER_DB2COM, "db2com");
 	_check(CARDREADER_STAPI, "stapi");
 	printf("\n");
+	printf(" ConfigDir  : %s\n", CS_CONFDIR);
 
 	printf("\n");
 	printf(" Usage: oscam [-a] [-b] [-c <config dir>] [-d <level>] [-g <mode>] [-h]\n");
@@ -182,7 +183,6 @@ static void show_usage(void)
 	printf("               information (run oscam-XXXX.debug binary).\n");
 	printf("  -b         : Start in the background as daemon.\n");
 	printf("  -c <dir>   : Read configuration files from <dir>:\n");
-	printf("                 Default = %s\n", CS_CONFDIR);
 	printf("  -d <level> : Set debug level mask used for logging:\n");
 	printf("                     0 = No debugging (default).\n");
 	printf("                     1 = Detailed error messages.\n");
