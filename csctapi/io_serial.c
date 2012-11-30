@@ -303,25 +303,29 @@ int32_t IO_Serial_SetParity (struct s_reader * reader, unsigned char parity)
 	struct termios tio;
 	int32_t current_parity;
 	// Get current parity
-	if (tcgetattr (reader->handle, &tio) != 0)
-	  return ERROR;
-
-	if (((tio.c_cflag) & PARENB) == PARENB)
-	{
-		if (((tio.c_cflag) & PARODD) == PARODD)
-			current_parity = PARITY_ODD;
-		else
-			current_parity = PARITY_EVEN;
+	if (tcgetattr (reader->handle, &tio) != 0){
+		rdr_log(reader, "ERROR: Could not get current parity, %s (errno=%d %s)", __func__, errno, strerror(errno));
+		current_parity = 5; // set to unknown (5 is not predefined!)
 	}
-	else
-	{
-		current_parity = PARITY_NONE;
+	else {
+		if (((tio.c_cflag) & PARENB) == PARENB)
+		{
+			if (((tio.c_cflag) & PARODD) == PARODD)
+				current_parity = PARITY_ODD;
+			else
+				current_parity = PARITY_EVEN;
+		}
+		else
+		{
+			current_parity = PARITY_NONE;
+		}
 	}
 
 	rdr_debug_mask(reader, D_IFD, "Setting parity from %s to %s",
 		current_parity == PARITY_ODD ? "Odd" :
 		current_parity == PARITY_NONE ? "None" :
-		current_parity == PARITY_EVEN ? "Even" : "Invalid",
+		current_parity == PARITY_EVEN ? "Even" : "Unknown",
+		
 		parity == PARITY_ODD ? "Odd" :
 		parity == PARITY_NONE ? "None" :
 		parity == PARITY_EVEN ? "Even" : "Invalid");
@@ -346,8 +350,10 @@ int32_t IO_Serial_SetParity (struct s_reader * reader, unsigned char parity)
 				tio.c_cflag &= ~PARENB;
 				break;
 		}
-		if (IO_Serial_SetProperties (reader, tio))
+		if (IO_Serial_SetProperties (reader, tio)){
+			rdr_debug_mask(reader, D_IFD, "ERROR: could set parity!");
 			return ERROR;
+		}
 	}
 
 	return OK;
