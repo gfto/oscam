@@ -334,12 +334,15 @@ static int32_t NegotiateSessionKey(struct s_reader * reader)
 
 	if (!reader->has_dt08) // if we have no valid dt08 calc then we use rsa from config and hexserial for calc of sessionkey
 	{
+		rdr_debug_mask(reader, D_READER, "No valid DT08 calc using rsa from config and serial from card");
 		memcpy(reader->plainDT08RSA, reader->rsa_mod, 64);
 		memcpy(reader->signature,reader->nagra_boxkey, 8);
 	}
 
-	if ((reader->is_n3_na) && (!do_cmd(reader, 0x29,0x02,0xA9,0x04, NULL,cta_res,&cta_lr)))
+	if ((reader->is_n3_na) && (!do_cmd(reader, 0x29,0x02,0xA9,0x04, NULL,cta_res,&cta_lr))){
+		rdr_debug_mask(reader, D_READER, "Nagra3: CMD$29 failed");
 		return ERROR;
+	}
 
 	memcpy(tmp, reader->irdId, 4);
 	tmp[4]=0; //keynr 0
