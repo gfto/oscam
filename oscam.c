@@ -1358,34 +1358,38 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl)
 			ecm = NULL;
 			break;
 		}
+		if (ecm->ecmcacheptr)
+			continue;
 
 		if ((grp && ecm->grp && !(grp & ecm->grp)))
 			continue;
 
 #ifdef CS_CACHEEX
 		if (!cacheex_match_alias(cl, er, ecm)) {
-			if (!(ecm->caid == er->caid || (ecm->ocaid && er->ocaid && ecm->ocaid == er->ocaid)))
-				continue;
-
 			//CWs from csp have no ecms, so ecm->ecmlen=0. ecmd5 is invalid, so do not check!
 			if (ecm->csp_hash != er->csp_hash)
-				continue;
+				continue; // no match
 
-			if (ecm->ecmlen > 0 && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
-				continue;
 		}
-#else
-		if (!(ecm->caid == er->caid || (ecm->ocaid && er->ocaid && ecm->ocaid == er->ocaid)))
-			continue;
-
-		if (memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
-			continue;
-#endif
-		if (ecm->rc != E_99)
-			break;
+#endif       
+		if (ecm->caid != er->caid){
+			if(ecm->btun) { // betatunnel in use?
+				if(ecm->ocaid != er->ocaid) // no betatunnel match
+					continue;  // no match
+			}
+			else continue; //no match
+		}
+		
+		if (ecm->ecmlen > 0 && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
+				continue; // no match
+				
+		if (ecm->rc != E_99){
+			cs_readunlock(&ecmcache_lock);
+			return ecm;
+		}
 	}
 	cs_readunlock(&ecmcache_lock);
-	return ecm;
+	return NULL; // nothing found so return null
 }
 
 /*
@@ -1439,6 +1443,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 		er->rc = rc;
 		er->idx = 0;
 		er = er->parent; //Now er is "original" ecm, before it was the reader-copy
+		er->grp = reader->grp; // replace grp by grp of answering reader so clients in other group use cache
 
 		if (er->rc < E_99) {
 			send_reader_stat(reader, er, NULL, rc);
