@@ -294,12 +294,6 @@ bool IO_Serial_SetProperties (struct s_reader * reader, struct termios newtio)
 
 int32_t IO_Serial_SetParity (struct s_reader * reader, unsigned char parity)
 {
-	if(reader->typ == R_INTERNAL)
-		return OK;
-
-	if ((parity != PARITY_EVEN) && (parity != PARITY_ODD) && (parity != PARITY_NONE))
-		return ERROR;
-
 	struct termios tio;
 	int32_t current_parity;
 	// Get current parity
