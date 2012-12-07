@@ -280,14 +280,14 @@ bool IO_Serial_SetProperties (struct s_reader * reader, struct termios newtio)
 	if (tcsetattr (reader->handle, TCSANOW, &newtio) < 0)  // set terminal attributes.
 		return ERROR;
 	                 
-	//int32_t mctl; *** breaks viaccess... needs investigation see tickets 2951 and 2953
-	//rdr_debug_mask(reader, D_DEVICE, "Getting readerstatus..."); 
-	//if (ioctl (reader->handle, TIOCMGET, &mctl) >= 0) {  // get reader statusbits 
-	//	mctl &= ~TIOCM_RTS;
-	//	rdr_debug_mask(reader, D_DEVICE, "Set reader ready to Send"); 
-	//	ioctl (reader->handle, TIOCMSET, &mctl);  // set reader ready to send.
-	//} 
-	//else rdr_log(reader, "WARNING: Cant get readerstatus!"); 
+	int32_t mctl;
+	rdr_debug_mask(reader, D_DEVICE, "Getting readerstatus..."); 
+	if (ioctl (reader->handle, TIOCMGET, &mctl) >= 0) {  // get reader statusbits 
+		mctl &= ~TIOCM_RTS;
+		rdr_debug_mask(reader, D_DEVICE, "Set reader ready to Send"); 
+		ioctl (reader->handle, TIOCMSET, &mctl);  // set reader ready to send.
+	} 
+	else rdr_log(reader, "WARNING: Cant get readerstatus!"); 
 
 	return OK;
 }
@@ -314,8 +314,10 @@ int32_t IO_Serial_SetParity (struct s_reader * reader, unsigned char parity)
 			current_parity = PARITY_NONE;
 		}
 	}
-
-	rdr_debug_mask(reader, D_IFD, "Setting parity from %s to %s",
+	
+	if (current_parity != parity)
+	{
+		rdr_debug_mask(reader, D_IFD, "Setting parity from %s to %s",
 		current_parity == PARITY_ODD ? "Odd" :
 		current_parity == PARITY_NONE ? "None" :
 		current_parity == PARITY_EVEN ? "Even" : "Unknown",
@@ -323,10 +325,7 @@ int32_t IO_Serial_SetParity (struct s_reader * reader, unsigned char parity)
 		parity == PARITY_ODD ? "Odd" :
 		parity == PARITY_NONE ? "None" :
 		parity == PARITY_EVEN ? "Even" : "Invalid");
-	
-	if (current_parity != parity)
-	{
-
+		
 		// Set the parity
 		switch (parity)
 		{
@@ -357,7 +356,7 @@ void IO_Serial_Flush (struct s_reader * reader)
 {
   unsigned char b;
   tcflush(reader->handle, TCIOFLUSH);
-  while(!IO_Serial_Read(reader, 0, 1, 1, &b));
+  while(!IO_Serial_Read(reader, 0, 15000, 1, &b)); // first appears between 9~15ms
 }
 
 void IO_Serial_Sendbreak(struct s_reader * reader, int32_t duration)

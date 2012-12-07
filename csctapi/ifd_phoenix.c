@@ -64,7 +64,7 @@ int32_t Phoenix_Init (struct s_reader * reader)
 {
 	// First set card in reset state, to not change any parameters while communication ongoing
 	IO_Serial_RTS_Set(reader);
-	IO_Serial_Flush(reader);
+	if (reader->crdr.flush) IO_Serial_Flush(reader);
 
 	// define reader->gpio number used for card detect and reset. ref to globals.h
 	if (reader_use_gpio(reader))
@@ -82,7 +82,7 @@ int32_t Phoenix_Init (struct s_reader * reader)
 	/* Default serial port settings */
 	if (reader->atr[0] == 0) {
 		if(IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, NULL, NULL)) return ERROR;
-			IO_Serial_Flush(reader);
+		if (reader->crdr.flush) IO_Serial_Flush(reader);
 	}
 	return OK;
 }
@@ -114,25 +114,24 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 		}
 
 		for(i=0; i<3; i++) {
+			
 			ret = ERROR;
-
+			
 			IO_Serial_Ioctl_Lock(reader, 1);
 			if (reader_use_gpio(reader))
 				set_gpio(reader, 0);
 			else
 				IO_Serial_RTS_Set(reader);
 
-			call (IO_Serial_SetParity (reader, parity[i]));
-
 			cs_sleepms(50);
-			IO_Serial_Flush(reader);
+			if (reader->crdr.flush) IO_Serial_Flush(reader);
+			if (reader->crdr.set_parity) IO_Serial_SetParity (reader, parity[i]);
 
 			// felix: set card reset hi (inactive)
 			if (reader_use_gpio(reader))
 				set_gpio_input(reader);
 			else
 				IO_Serial_RTS_Clr(reader);
-
 			cs_sleepms(50);
 			IO_Serial_Ioctl_Lock(reader, 0);
 
@@ -218,7 +217,6 @@ void cardreader_mouse(struct s_cardreader *crdr)
 	crdr->desc          = "mouse";
 	crdr->typ           = R_MOUSE;
 	crdr->flush         = 1;
-	crdr->need_inverse  = 1;
 	crdr->read_written  = 1;
 	crdr->need_inverse  = 1;
 	crdr->reader_init   = mouse_init;
