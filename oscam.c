@@ -1371,15 +1371,7 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl)
 				continue; // no match
 
 		}
-#endif       
-		if (ecm->caid != er->caid){
-			if(ecm->btun) { // betatunnel in use?
-				if(ecm->ocaid != er->ocaid) // no betatunnel match
-					continue;  // no match
-			}
-			else continue; //no match
-		}
-		
+#endif	
 		if (ecm->ecmlen > 0 && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
 				continue; // no match
 				
