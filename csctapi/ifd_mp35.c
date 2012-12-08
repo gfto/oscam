@@ -224,6 +224,8 @@ static int32_t mp35_init(struct s_reader *reader) {
       reader->device, errno, strerror(errno));
     return ERROR;
   }
+  if(IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, NULL, NULL))
+    return ERROR;
 
   if (mp35_reader_init(reader)) {
     rdr_log(reader, "ERROR: mp35_reader_init returned error");
