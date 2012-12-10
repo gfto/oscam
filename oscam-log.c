@@ -15,9 +15,6 @@ extern struct s_module modules[CS_MAX_MOD];
 char *LOG_LIST = "log_list";
 
 static FILE *fp=(FILE *)0;
-#ifdef WITH_MCA
-static FILE *mdbg=(FILE *)0;
-#endif
 static FILE *fps=(FILE *)0;
 static int8_t logStarted = 0;
 LLIST *log_list;
@@ -88,12 +85,6 @@ static void cs_write_log(char *txt, int8_t do_flush)
 				fputs(txt+11, stdout);
 				if (do_flush) fflush(stdout);
 			}
-#ifdef WITH_MCA
-            if (mdbg) {
-                fputs(txt, mdbg);
-                if (do_flush) fflush(mdbg);
-            }
-#endif
 		}
 	}
 }
@@ -123,14 +114,6 @@ int32_t cs_open_logfiles(void)
 	char *starttext;
 	if(logStarted) starttext = "log switched";
 	else starttext = "started";
-#ifdef WITH_MCA
-    if (!mdbg){
-        if ((mdbg = fopen(MCA_DBG, "a+")) <= (FILE *)0) {
-            mdbg = (FILE *)0;
-			fprintf(stderr, "couldn't open logfile: %s (errno %d %s)\n", MCA_DBG, errno, strerror(errno));
-        }
-    }
-#endif
 	if (!fp && cfg.logfile) {	//log to file
 		if ((fp = fopen(cfg.logfile, "a+")) <= (FILE *)0) {
 			fp = (FILE *)0;
@@ -396,13 +379,6 @@ void cs_close_log(void)
 		fclose(fp);
 		fp=(FILE *)0;
 	}
-#ifdef WITH_MCA
-	if(mdbg){
-		fclose(mdbg);
-		mdbg=(FILE *)0;
-	}
-#endif
-
 }
 
 /*
