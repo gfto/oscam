@@ -4,6 +4,7 @@
 
 #include "module-dvbapi.h"
 #include "module-dvbapi-azbox.h"
+#include "module-dvbapi-mca.h"
 #include "module-dvbapi-coolapi.h"
 #include "module-dvbapi-stapi.h"
 #include "module-stat.h"
@@ -123,7 +124,7 @@ int32_t edit_channel_cache(int32_t demux_id, int32_t pidindex, uint8_t add)
 
 
 int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t caid, uchar *filt, uchar *mask, int32_t timeout, int32_t pidindex, int32_t count, int32_t type) {
-#ifdef WITH_AZBOX
+#if defined WITH_AZBOX || defined WITH_MCA
 	openxcas_caid = demux[demux_id].ECMpids[pidindex].CAID;
 	openxcas_ecm_pid = pid;
 
@@ -1324,7 +1325,7 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 		dvbapi_stop_filter(demux_id, TYPE_ECM);
 
 	cs_debug_mask(D_DVBAPI,"[TRY PID %d] CAID: %04X PROVID: %06X CA_PID: %04X", num, demux[demux_id].ECMpids[num].CAID, demux[demux_id].ECMpids[num].PROVID, demux[demux_id].ECMpids[num].ECM_PID);
-#ifdef WITH_AZBOX
+#if defined WITH_AZBOX || defined WITH_MCA
 	openxcas_provid = demux[demux_id].ECMpids[num].PROVID;
 	openxcas_caid = demux[demux_id].ECMpids[num].CAID;
 	openxcas_ecm_pid = demux[demux_id].ECMpids[num].ECM_PID;
@@ -1375,7 +1376,11 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connfd, char *pmtfile) {
 	uint32_t i;
 	int32_t demux_id=-1;
+#ifdef WITH_MCA
+	uint16_t ca_mask=0x03, demux_index=0x01, adapter_index=0x00;
+#else
 	uint16_t ca_mask=0x01, demux_index=0x00, adapter_index=0x00;
+#endif
 
 #ifdef WITH_COOLAPI
 	int32_t ca_pmt_list_management = 0x03;
@@ -1480,7 +1485,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	get_servicename(dvbapi_client, demux[demux_id].program_number, demux[demux_id].ECMpidcount>0 ? demux[demux_id].ECMpids[0].CAID : 0, channame);
 	cs_log("New program number: %04X (%s) [pmt_list_management %d]", program_number, channame, ca_pmt_list_management);
 
-#ifdef WITH_AZBOX
+#if defined WITH_AZBOX || defined WITH_MCA
 	openxcas_sid = program_number;
 #endif
 
@@ -1960,6 +1965,9 @@ static void * dvbapi_main_local(void *cli) {
 #ifdef WITH_AZBOX
 	return azbox_main_thread(cli);
 #endif
+#ifdef WITH_MCA
+	return mca_main_thread(cli);
+#endif
 
 	struct s_client * client = (struct s_client *) cli;
 	client->thread=pthread_self();
@@ -2205,6 +2213,11 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	azbox_send_dcw(client, er);
 	return;
 #endif
+#ifdef WITH_MCA
+	mca_send_dcw(client, er);
+	return;
+#endif
+    
 	int32_t i,j;
 
 	for (i=0;i<MAX_DEMUX;i++) {

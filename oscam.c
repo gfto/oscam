@@ -9,6 +9,7 @@
 #include "module-cacheex.h"
 #include "module-cccam.h"
 #include "module-dvbapi-azbox.h"
+#include "module-dvbapi-mca.h"
 #include "module-ird-guess.h"
 #include "module-lcd.h"
 #include "module-led.h"
@@ -309,6 +310,7 @@ static void write_versionfile(bool use_stdout) {
 	write_conf(HAVE_DVBAPI, "DVB API support");
 	if (config_HAVE_DVBAPI()) {
 		write_conf(WITH_AZBOX, "DVB API with AZBOX support");
+		write_conf(WITH_MCA, "DVB API with MCA support");
 		write_conf(WITH_COOLAPI, "DVB API with COOLAPI support");
 		write_conf(WITH_STAPI, "DVB API with STAPI support");
 	}
@@ -4167,6 +4169,8 @@ int32_t main (int32_t argc, char *argv[])
 
   azbox_init();
 
+  mca_init();
+
   global_whitelist_read();
   cacheex_load_config_file();
 
@@ -4238,6 +4242,8 @@ int32_t main (int32_t argc, char *argv[])
 	client_check();
 
 	azbox_close();
+
+	mca_close();
 
 	cs_cleanup();
 	while(ll_count(log_list) > 0)

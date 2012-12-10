@@ -137,6 +137,14 @@ static inline int config_WITH_AZBOX(void) {
 	#endif
 }
 
+static inline int config_WITH_MCA(void) {
+	#ifdef WITH_MCA
+	return 1;
+	#else
+	return 0;
+	#endif
+}
+
 static inline int config_WITH_DEBUG(void) {
 	#ifdef WITH_DEBUG
 	return 1;

@@ -209,6 +209,13 @@ azbox:
 		USE_AZBOX=1 \
 		$(MAKEFLAGS)
 
+mca:
+	$(MAKE) --no-print-directory \
+		CROSS=arm-none-linux-gnueabi- \
+		CONF_DIR=/var/mca/d1 \
+		USE_MCA=1 \
+		$(MAKEFLAGS)
+
 cool:
 	$(MAKE) --no-print-directory \
 		CROSS=arm-cx2450x-linux-gnueabi- \

@@ -123,6 +123,13 @@ OSCam build system documentation
                      extapi/openxcas/libOpenXCASAPI.a library that is shipped
                      with OSCam is compiled for MIPSEL.
 
+   USE_MCA=1      - Request support for Matrix Cam Air (MCA).
+                    The variables that control the build are:
+                         MCA_FLAGS='-DWITH_MCA'
+                         MCA_CFLAGS='-DWITH_MCA'
+                         MCA_LDFLAGS='-DWITH_MCA'
+                     Using USE_MCA=1 adds to '-mca' to PLUS_TARGET.
+
    USE_LIBCRYPTO=1 - Request linking with libcrypto instead of using OSCam
                      internal crypto functions. USE_LIBCRYPTO is automatically
                      enabled if the build is configured with SSL support. The
@@ -199,6 +206,7 @@ OSCam build system documentation
     make dm500         - Builds OSCam for Dreambox (DM500)
     make sh4           - Builds OSCam for SH4 boxes
     make azbox         - Builds OSCam for AZBox STBs
+    make mca           - Builds OSCam for Matrix Cam Air (MCA)
     make coolstream    - Builds OSCam for Coolstream
     make dockstar      - Builds OSCam for Dockstar
     make qboxhd        - Builds OSCam for QBoxHD STBs
@@ -230,6 +238,9 @@ OSCam build system documentation
 
    Build OSCam for MIPSEL with AZBOX support:
      make CROSS=mipsel-linux-uclibc- USE_AZBOX=1
+
+   Build OSCam for ARM with MCA support:
+     make CROSS=arm-none-linux-gnueabi- USE_MCA=1
 
    Build OSCam with libusb and PCSC:
      make USE_LIBUSB=1 USE_PCSC=1

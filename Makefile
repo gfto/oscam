@@ -129,6 +129,18 @@ ifeq "$(CONFIG_CARDREADER_INTERNAL)" "y"
 override CONFIG_CARDREADER_INTERNAL_SCI:=y
 endif
 
+DEFAULT_MCA_FLAGS = -DWITH_MCA
+ifdef USE_MCA
+MCA_FLAGS = $(DEFAULT_MCA_FLAGS)
+MCA_CFLAGS = $(DEFAULT_MCA_FLAGS)
+MCA_LDFLAGS = $(DEFAULT_MCA_FLAGS)
+override CONF_DIR = /var/mca/d1
+override STD_DEFS := -D'CS_SVN_VERSION="$(SVN_REV)"'
+override STD_DEFS += -D'CS_CONFDIR="$(CONF_DIR)"'
+override PLUS_TARGET := $(PLUS_TARGET)-mca
+CONFIG_WITH_MCA=y
+endif
+
 DEFAULT_LIBCRYPTO_FLAGS = -DWITH_LIBCRYPTO
 DEFAULT_LIBCRYPTO_LIB = -lcrypto
 ifdef USE_LIBCRYPTO
@@ -191,8 +203,8 @@ override TARGET := $(TARGET)$(PLUS_TARGET)$(EXTRA_TARGET)
 endif
 
 # Set USE_ flags
-override USE_CFLAGS = $(STAPI_CFLAGS) $(COOLAPI_CFLAGS) $(AZBOX_CFLAGS) $(SSL_CFLAGS) $(LIBCRYPTO_CFLAGS) $(LIBUSB_CFLAGS) $(PCSC_CFLAGS)
-override USE_LDFLAGS= $(STAPI_LDFLAGS) $(COOLAPI_LDFLAGS) $(AZBOX_LDFLAGS) $(SSL_LDFLAGS) $(LIBCRYPTO_LDFLAGS) $(LIBUSB_LDFLAGS) $(PCSC_LDFLAGS)
+override USE_CFLAGS = $(STAPI_CFLAGS) $(COOLAPI_CFLAGS) $(AZBOX_CFLAGS) $(MCA_CFLAGS) $(SSL_CFLAGS) $(LIBCRYPTO_CFLAGS) $(LIBUSB_CFLAGS) $(PCSC_CFLAGS)
+override USE_LDFLAGS= $(STAPI_LDFLAGS) $(COOLAPI_LDFLAGS) $(AZBOX_LDFLAGS) $(MCA_LDFLAGS) $(SSL_LDFLAGS) $(LIBCRYPTO_LDFLAGS) $(LIBUSB_LDFLAGS) $(PCSC_LDFLAGS)
 override USE_LIBS   = $(STAPI_LIB) $(COOLAPI_LIB) $(AZBOX_LIB) $(SSL_LIB) $(LIBCRYPTO_LIB) $(LIBUSB_LIB) $(PCSC_LIB)
 
 EXTRA_CFLAGS = $(EXTRA_FLAGS)
@@ -288,6 +300,7 @@ SRC-$(CONFIG_MODULE_CCCSHARE) += module-cccshare.c
 SRC-$(CONFIG_MODULE_CONSTCW) += module-constcw.c
 SRC-$(CONFIG_CS_CACHEEX) += module-csp.c
 SRC-$(CONFIG_WITH_AZBOX) += module-dvbapi-azbox.c
+SRC-$(CONFIG_WITH_MCA) += module-dvbapi-mca.c
 SRC-$(CONFIG_WITH_COOLAPI) += module-dvbapi-coolapi.c
 SRC-$(CONFIG_WITH_STAPI) += module-dvbapi-stapi.c
 SRC-$(CONFIG_HAVE_DVBAPI) += module-dvbapi.c
@@ -568,6 +581,13 @@ OSCam build system documentation\n\
                      extapi/openxcas/libOpenXCASAPI.a library that is shipped\n\
                      with OSCam is compiled for MIPSEL.\n\
 \n\
+   USE_MCA=1      - Request support for Matrix Cam Air (MCA).\n\
+                    The variables that control the build are:\n\
+                         MCA_FLAGS='$(DEFAULT_MCA_FLAGS)'\n\
+                         MCA_CFLAGS='$(DEFAULT_MCA_FLAGS)'\n\
+                         MCA_LDFLAGS='$(DEFAULT_MCA_FLAGS)'\n\
+                     Using USE_MCA=1 adds to '-mca' to PLUS_TARGET.\n\
+\n\
    USE_LIBCRYPTO=1 - Request linking with libcrypto instead of using OSCam\n\
                      internal crypto functions. USE_LIBCRYPTO is automatically\n\
                      enabled if the build is configured with SSL support. The\n\
@@ -644,6 +664,7 @@ OSCam build system documentation\n\
     make dm500         - Builds OSCam for Dreambox (DM500)\n\
     make sh4           - Builds OSCam for SH4 boxes\n\
     make azbox         - Builds OSCam for AZBox STBs\n\
+    make mca           - Builds OSCam for Matrix Cam Air (MCA)\n\
     make coolstream    - Builds OSCam for Coolstream\n\
     make dockstar      - Builds OSCam for Dockstar\n\
     make qboxhd        - Builds OSCam for QBoxHD STBs\n\
@@ -670,6 +691,8 @@ OSCam build system documentation\n\
      make CROSS=arm-cx2450x-linux-gnueabi- USE_COOLAPI=1\n\n\
    Build OSCam for MIPSEL with AZBOX support:\n\
      make CROSS=mipsel-linux-uclibc- USE_AZBOX=1\n\n\
+   Build OSCam for ARM with MCA support:\n\
+     make CROSS=arm-none-linux-gnueabi- USE_MCA=1\n\n\
    Build OSCam with libusb and PCSC:\n\
      make USE_LIBUSB=1 USE_PCSC=1\n\n\
    Build OSCam with static libusb:\n\
