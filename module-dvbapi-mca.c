@@ -20,6 +20,9 @@
 
 #if defined(HAVE_DVBAPI) && defined(WITH_MCA)
 
+//#include "extapi/openxcas/openxcas_api.h"
+//#include "extapi/openxcas/openxcas_message.h"
+
 #include "module-dvbapi.h"
 #include "module-dvbapi-mca.h"
 #include "oscam-client.h"
@@ -29,6 +32,14 @@
 
 #define LOG_PREFIX "mca: "
 #define LOG_PREFIX_MSG "mcamsg: "
+
+#define openxcas_start_filter_ex(...) 0
+#define openxcas_stop_filter_ex(...) 0
+#define openxcas_get_message mca_get_message
+#define azbox_openxcas_ex_callback mca_ex_callback
+#define openxcas_stop_filter(...) do { } while(0)
+#define openxcas_remove_filter(...)  do { } while(0)
+#define openxcas_destory_cipher_ex(...) do { } while(0)
 
 // These variables are declared in module-dvbapi.c
 extern void * dvbapi_client;
@@ -96,7 +107,7 @@ int mca_get_message(openxcas_msg_t * message, int timeout){
 	struct pollfd mdvbi_poll_fd;
 	mdvbi_poll_fd.fd = fd_mdvbi;
 	mdvbi_poll_fd.events = POLLIN | POLLPRI;
-	rval=poll(&mdvbi_poll_fd, 1, timeout);
+	rval=poll(&mdvbi_poll_fd, 1, timeout == 0 ? -1 : timeout);
 	if((rval >= 1) && (mdvbi_poll_fd.revents & (POLLIN | POLLPRI))){
 		rval = read(fd_mdvbi, message, 568);
 	}
@@ -222,8 +233,8 @@ void mca_ecm_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t cipher_in
 
 	request_cw(dvbapi_client, er);
 
-	//openxcas_stop_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
-	//openxcas_remove_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
+	openxcas_stop_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
+	openxcas_remove_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
 
 	openxcas_cipher_idx = cipher_index;
 
@@ -250,6 +261,7 @@ void mca_ecm_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t cipher_in
 	}*/
 }
 
+
 void mca_ex_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t idx, uint32_t pid, unsigned char *ecm_data, int32_t l) {
 	cs_debug_mask(D_DVBAPI, LOG_PREFIX "ex callback received");
 
@@ -271,9 +283,9 @@ void mca_ex_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t idx, uint3
 
 	request_cw(dvbapi_client, er);
 
-	//if (openxcas_stop_filter_ex(stream_id, seq, openxcas_filter_idx) < 0)
-	//	cs_log(LOG_PREFIX "unable to stop ex filter");
-	//else
+	if (openxcas_stop_filter_ex(stream_id, seq, openxcas_filter_idx) < 0)
+		cs_log(LOG_PREFIX "unable to stop ex filter");
+	else
 		cs_debug_mask(D_DVBAPI, LOG_PREFIX "ex filter stopped");
 
 
@@ -286,9 +298,9 @@ void mca_ex_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t idx, uint3
 	mask[0] = 0xff;
 	comp[0] = ecm_data[0] ^ 1;
 
-	//if ((openxcas_filter_idx = openxcas_start_filter_ex(stream_id, seq, openxcas_ecm_pid, mask, comp, (void *)mca_openxcas_ex_callback)) < 0)
-	//	cs_log(LOG_PREFIX "unable to start ex filter");
-	//else
+	if ((openxcas_filter_idx = openxcas_start_filter_ex(stream_id, seq, openxcas_ecm_pid, mask, comp, (void *)azbox_openxcas_ex_callback)) < 0)
+		cs_log(LOG_PREFIX "unable to start ex filter");
+	else
 		cs_debug_mask(D_DVBAPI, LOG_PREFIX "ex filter started, pid = %x", openxcas_ecm_pid);
 }
 
@@ -310,8 +322,7 @@ void * mca_main_thread(void *cli) {
 
 	openxcas_msg_t msg;
 	int32_t ret;
-	//char tmp[1024];
-	while ((ret = mca_get_message(&msg, -1)) >= 0) {
+	while ((ret = openxcas_get_message(&msg, 0)) >= 0) {
 		cs_sleepms(10);
 
 		if (ret) {
@@ -381,12 +392,12 @@ void * mca_main_thread(void *cli) {
 					break;
 				case OPENXCAS_STOP_PMT_ECM:
 					cs_debug_mask(D_DVBAPI, LOG_PREFIX_MSG "OPENXCAS_STOP_PMT_ECM");
+					openxcas_stop_filter(msg.stream_id, OPENXCAS_FILTER_ECM);
+					openxcas_remove_filter(msg.stream_id, OPENXCAS_FILTER_ECM);
+					openxcas_stop_filter_ex(msg.stream_id, msg.sequence, openxcas_filter_idx);
+					openxcas_destory_cipher_ex(msg.stream_id, msg.sequence);
 					memset(&demux, 0, sizeof(demux));
 					memset(&found, 0, sizeof(found));
-					//openxcas_stop_filter(msg.stream_id, OPENXCAS_FILTER_ECM);
-					//openxcas_remove_filter(msg.stream_id, OPENXCAS_FILTER_ECM);
-					//openxcas_stop_filter_ex(msg.stream_id, msg.sequence, openxcas_filter_idx);
-					//openxcas_destory_cipher_ex(msg.stream_id, msg.sequence);
 					break;
 				case OPENXCAS_ECM_CALLBACK:
 					cs_debug_mask(D_DVBAPI, LOG_PREFIX_MSG "OPENXCAS_ECM_CALLBACK");
@@ -458,8 +469,8 @@ void mca_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 			if (demux[i].pidindex==-1)
 			  dvbapi_try_next_caid(i);
 
-			//openxcas_stop_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
-			//openxcas_remove_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
+			openxcas_stop_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
+			openxcas_remove_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
 
 			unsigned char mask[12];
 			unsigned char comp[12];
