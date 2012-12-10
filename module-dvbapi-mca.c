@@ -36,8 +36,7 @@ int32_t openxcas_provid;
 uint16_t openxcas_sid, openxcas_caid, openxcas_ecm_pid;
 
 static unsigned char openxcas_cw[16];
-static int32_t openxcas_seq, UNUSED(openxcas_filter_idx), openxcas_stream_id,
-	openxcas_cipher_idx, openxcas_busy;
+static int32_t openxcas_seq, openxcas_filter_idx, openxcas_stream_id, openxcas_cipher_idx, openxcas_busy;
 static uint16_t openxcas_video_pid, openxcas_audio_pid, openxcas_data_pid;
 static uint8_t found[MAX_DEMUX];
 
@@ -215,7 +214,7 @@ void mca_ecm_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t cipher_in
 	er->pid   = openxcas_ecm_pid;
 	er->prid  = openxcas_provid;
 
-	er->ecmlen=l;
+	er->ecmlen = l;
 	memcpy(er->ecm, ecm_data, er->ecmlen);
 
 	request_cw(dvbapi_client, er);
@@ -264,8 +263,9 @@ void mca_ex_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t idx, uint3
 	er->pid   = openxcas_ecm_pid;
 	er->prid  = openxcas_provid;
 
-	er->ecmlen=l;
+	er->ecmlen = l;
 	memcpy(er->ecm, ecm_data, er->ecmlen);
+
 	request_cw(dvbapi_client, er);
 
 	//if (openxcas_stop_filter_ex(stream_id, seq, openxcas_filter_idx) < 0)
@@ -296,10 +296,11 @@ void * mca_main_thread(void *cli) {
 	dvbapi_client=cli;
 
 	struct s_auth *account;
-	int32_t ok=0;
-	for (ok=0, account=cfg.account; (account) && (!ok); account=account->next)
-		if( (ok=!strcmp(cfg.dvbapi_usr, account->usr)) )
+	int32_t ok = 0;
+	for (account = cfg.account; account; account=account->next) {
+		if ((ok = streq(cfg.dvbapi_usr, account->usr)))
 			break;
+	}
 	cs_auth_client(client, ok ? account : (struct s_auth *)(-1), "dvbapi");
 
 	dvbapi_read_priority();
@@ -424,7 +425,7 @@ void mca_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 		if(er->rc <= E_CACHEEX) {
 			fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\nprov: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
 			fprintf(ecmtxt, "reader: %s\n", er->selected_reader->label);
-			if (er->selected_reader->typ & R_IS_CASCADING)
+			if (is_cascading_reader(er->selected_reader))
 				fprintf(ecmtxt, "from: %s\n", er->selected_reader->device);
 			else
 				fprintf(ecmtxt, "from: local\n");
