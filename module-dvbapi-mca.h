@@ -3,6 +3,10 @@
 
 #include "extapi/openxcas/openxcas_message.h"
 
+#define MCA_DVBI "/tmp/mdvbi"
+#define MCA_DESC "/tmp/mdesc"
+#define MCA_FLT  "/tmp/mflt"
+
 enum eOPENXCAS_FILTER_TYPE {
   OPENXCAS_FILTER_UNKNOWN = 0,
   OPENXCAS_FILTER_ECM,

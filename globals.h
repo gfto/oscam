@@ -446,13 +446,6 @@ enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE, E2_
 #define REQUEST_SENT			0x10
 #define REQUEST_ANSWERED		0x20
 
-#ifdef WITH_MCA
-#define MCA_DBG				"/tmp/mdbg"
-#define MCA_DVBI			"/tmp/mdvbi"
-#define MCA_DESC			"/tmp/mdesc"
-#define MCA_FLT				"/tmp/mflt"
-#endif
-
 /* ===========================
  *      Default Values
  * =========================== */
