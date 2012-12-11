@@ -551,22 +551,24 @@ static void cleanup_ecmtasks(struct s_client *cl)
 	//remove this clients ecm from queue. because of cache, just null the client:
 	cs_readlock(&ecmcache_lock);
 	for (ecm = ecmcwcache; ecm; ecm = ecm->next) {
-		if (ecm->client == cl)
+		if (ecm->client == cl) {
 			ecm->client = NULL;
-		cacheex_set_cacheex_src(ecm, cl);
-		//if cl is a reader, remove from matching_rdr:
-		for(ea_list = ecm->matching_rdr, ea_prev=NULL; ea_list; ea_prev = ea_list, ea_list = ea_list->next) {
-			if (ea_list->reader->client == cl) {
-				if (ea_prev)
-					ea_prev->next = ea_list->next;
-				else
-					ecm->matching_rdr = ea_list->next;
-				add_garbage(ea_list);
+			cacheex_set_cacheex_src(ecm, cl);
+			//if cl is a reader, remove from matching_rdr:
+			for(ea_list = ecm->matching_rdr, ea_prev=NULL; ea_list; ea_prev = ea_list, ea_list = ea_list->next) {
+				if (ea_list->reader->client == cl) {
+					if (ea_prev)
+						ea_prev->next = ea_list->next;
+					else
+						ecm->matching_rdr = ea_list->next;
+					add_garbage(ea_list);
+				}
 			}
-		}
 
-		//if cl is a client, remove ecm from reader queue:
-		remove_ecm_from_reader(ecm);
+			//if cl is a client, remove ecm from reader queue:
+		
+			remove_ecm_from_reader(ecm);
+		}
 	}
 	cs_readunlock(&ecmcache_lock);
 
@@ -1437,7 +1439,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 		er->rc = rc;
 		er->idx = 0;
 		er = er->parent; //Now er is "original" ecm, before it was the reader-copy
-		er->grp = reader->grp; // replace grp by grp of answering reader so clients in other group use cache
+		er->grp |= reader->grp; // extend grp by grp of answering reader so clients in other group use cache
 
 		if (er->rc < E_99) {
 			send_reader_stat(reader, er, NULL, rc);
@@ -2631,22 +2633,21 @@ OUT:
 #ifdef CS_CACHEEX
 		if (cacheex != 1 || er->rc == E_99) { //Cacheex should not add to the ecmcache:
 #endif
-			cs_writelock(&ecmcache_lock);
-			er->next = ecmcwcache;
-			ecmcwcache = er;
-			ecmcwcache_size++;
-			cs_writeunlock(&ecmcache_lock);
-
 			if (er->rc == E_UNHANDLED) {
 				ecm = check_cwcache(er, client);
 				if (ecm && ecm != er) {
 					er->rc = E_99;
-					er->ecmcacheptr = ecm;
+					er->ecmcacheptr = ecm; //Linking ecm to first request
 #ifdef CS_CACHEEX
 					er->cacheex_src = ecm->cacheex_src;
 #endif
 				}
 			}
+			cs_writelock(&ecmcache_lock);
+			er->next = ecmcwcache;
+			ecmcwcache = er;
+			ecmcwcache_size++;
+			cs_writeunlock(&ecmcache_lock);
 #ifdef CS_CACHEEX
 		}
 #endif
