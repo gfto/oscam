@@ -272,10 +272,7 @@ static int32_t chk_class(ECM_REQUEST *er, CLASSTAB *clstab, const char *type, co
   while( (j=find_nano(er->ecm, er->ecmlen, CS_NANO_CLASS, j)) > 0 )
   {
     l = er->ecm[j];
-    if(l+j>er->ecmlen){ // skip, this is not a valid class identifier!
-    j++;
-    continue;
-    }
+    if(l+j>er->ecmlen) continue; // skip, this is not a valid class identifier!
     ecm_class = er->ecm[j+l];
     cs_debug_mask(D_CLIENT, "ecm class=%02X", ecm_class);
     for( i=0; i<clstab->bn; i++ )  // search in blocked
