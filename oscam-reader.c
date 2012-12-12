@@ -60,12 +60,10 @@ void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw
 	for (i = 0; i < cfg.max_pending; i++) {
 		ecm = &cl->ecmtask[i];
 		if ((ecm->rc>=10) && ecm->caid == cl->ecmtask[idx].caid && (!memcmp(ecm->ecmd5, cl->ecmtask[idx].ecmd5, CS_ECMSTORESIZE))) {
-			if (ecm->parent) {
-				if (rc) {
-					write_ecm_answer(reader, ecm->parent, (i==idx) ? E_FOUND : E_CACHE2, 0, cw, NULL); 
-				} else {
-					write_ecm_answer(reader, ecm->parent, E_NOTFOUND, 0 , NULL, NULL);
-				}
+			if (rc) {
+				write_ecm_answer(reader, ecm, (i==idx) ? E_FOUND : E_CACHE2, 0, cw, NULL); 
+			} else {
+				write_ecm_answer(reader, ecm, E_NOTFOUND, 0 , NULL, NULL);
 			}
 			ecm->idx=0;
 			ecm->rc=0;

@@ -1428,8 +1428,8 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	struct s_ecm_answer *ea = NULL, *ea_list, *ea_org = NULL;
 	struct timeb now;
 
-	if (!er->parent && !er->client)
-		return 0;
+	//if (!er->parent && !er->client) //distribute also if no client is set!
+	//	return 0;
 
 	cs_ftime(&now);
 
