@@ -2921,7 +2921,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				if (l <= 0xFF)
 					emm->emmlen = buf[15];
 				else
-					emm->emmlen = l-16;
+					emm->emmlen = MIN(l - 16, (int32_t)sizeof(emm->emm));
 				memcpy(emm->emm, buf + 16, emm->emmlen);
 				//emm->type = UNKNOWN;
 				//emm->cidx = cs_idx;
