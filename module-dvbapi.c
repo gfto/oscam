@@ -890,8 +890,17 @@ void dvbapi_read_priority(void) {
 		char c_srvid[34];
 		c_srvid[0]='\0';
 		uint32_t caid=0, provid=0, srvid=0, ecmpid=0, chid=0;
-		sscanf(str1, "%4x:%6x:%33[^:s]:%4x:%4x", &caid, &provid, c_srvid, &ecmpid, &chid);
-
+		ret = sscanf(str1, "%4x:%6x:%33[^:]:%4x:%4x", &caid, &provid, c_srvid, &ecmpid, &chid);
+		if (ret < 1) {
+			cs_debug_mask(D_DVBAPI, "Error in oscam.dvbapi: ret=%d | %c: %04X %06X %s %04X %04X",
+						ret, type, caid, provid, c_srvid, ecmpid, chid);
+			continue; // skip this entry!
+		}
+		else {
+			cs_debug_mask(D_DVBAPI, "Parsing rule: ret=%d | %c: %04X %06X %s %04X %04X",
+						ret, type, caid, provid, c_srvid, ecmpid, chid);
+		}
+			
 		entry->caid=caid;
 		entry->provid=provid;
 		entry->ecmpid=ecmpid;
@@ -1093,7 +1102,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 				
 					foundptype = 1; // we found a p type entry in dvbapi!
 
-					if (demux[demux_index].ECMpids[n].status == -1) //ignore
+					if (demux[demux_index].ECMpids[n].status == -1) //skip ignores
 						continue;
 
 					for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
@@ -1136,7 +1145,8 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 		highest_prio = prio*2;
 
 		for (n=0; n<demux[demux_index].ECMpidcount; n++) {
-
+			if (demux[demux_index].ECMpids[n].status == -1) //skip ignores
+				continue;
 			er->caid = er->ocaid = demux[demux_index].ECMpids[n].CAID;
 			er->prid = demux[demux_index].ECMpids[n].PROVID;
 			er->pid = demux[demux_index].ECMpids[n].ECM_PID;
@@ -1177,7 +1187,6 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 		}
 		free(er);
 	}
-	else
 	highest_prio++;
 	for (n=demux[demux_index].ECMpidcount; n>-1; n--) { //maintain pid prio order of the pmt.
 		int32_t nr;
