@@ -917,8 +917,12 @@ static char *send_oscam_config(struct templatevars *vars, struct uriparams *para
 static void inactivate_reader(struct s_reader *rdr)
 {
 	struct s_client *cl = rdr->client;
-	if (cl)
-		kill_thread(cl);
+	if (cl){
+		if (cl == cur_client())
+			cs_exit(0);
+		else
+			kill_thread(cl);
+    }
 }
 
 static char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
@@ -2262,7 +2266,10 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 					for (cl=first_client->next; cl ; cl=cl->next){
 						if(cl->account == account){
 							if (modules[cl->ctyp].type & MOD_CONN_NET) {
-								kill_thread(cl);
+								if (cl == cur_client())
+									cs_exit(0);
+								else
+									kill_thread(cl);
 							} else {
 								cl->account = first_client->account;
 							}
@@ -2288,7 +2295,10 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				for (cl=first_client->next; cl ; cl=cl->next){
 					if(cl->account == account){
 						if (modules[cl->ctyp].type & MOD_CONN_NET) {
-							kill_thread(cl);
+							if (cl == cur_client())
+								cs_exit(0);
+							else
+								kill_thread(cl);
 						} else {
 							cl->account = first_client->account;
 						}
@@ -2915,7 +2925,10 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 			sscanf(cptr, "%p", (void**)(void*)&cl);
 
 		if (cl && is_valid_client(cl)) {
-			kill_thread(cl);
+			if (cl == cur_client())
+				cs_exit(0);
+			else
+				kill_thread(cl);
 			cs_log("Client %s killed by WebIF from %s", cl->account->usr, cs_inet_ntoa(GET_IP()));
 		}
 	}

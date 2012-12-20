@@ -126,7 +126,10 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_
 				}
 				if (cfg.dropdups){
 					cs_writeunlock(&fakeuser_lock);
-					kill_thread(cl);
+					if (cl == cur_client())
+						cs_exit(0);
+					else
+						kill_thread(cl);
 					cs_writelock(&fakeuser_lock);
 				}
 			} else {
@@ -141,6 +144,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_
 				if (cfg.dropdups){
 					cs_writeunlock(&fakeuser_lock);		// we need to unlock here as cs_disconnect_client kills the current thread!
 					cs_disconnect_client(client);
+					cs_writelock(&fakeuser_lock);
 				}
 				break;
 			}
@@ -423,9 +427,13 @@ void kill_all_clients(void)
 	struct s_client *cl;
 	for (cl = first_client->next; cl; cl=cl->next) {
 		if (cl->typ == 'c') {
-			if (cl->account && cl->account->usr)
+			if (cl->account && cl->account->usr){
 				cs_log("killing client %s", cl->account->usr);
-			kill_thread(cl);
+				if (cl == cur_client())
+					cs_exit(0);
+				else
+					kill_thread(cl);
+			}
 		}
 	}
 }
@@ -478,7 +486,10 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 			} else {
 				if (modules[cl->ctyp].type & MOD_CONN_NET) {
 					cs_debug_mask(D_TRACE, "client '%s', thread=%8lX not found in db (or password changed)", cl->account->usr, (unsigned long)cl->thread);
-					kill_thread(cl);
+					if (cl == cur_client())
+						cs_exit(0);
+					else
+						kill_thread(cl);
 				} else {
 					cl->account = first_client->account;
 				}

@@ -703,7 +703,10 @@ static void cs_cleanup(void)
 		cl = rdr->client;
 		if(cl){
 			rdr_log(rdr, "Killing reader");
-			kill_thread(cl);
+			if (cl == cur_client())
+				cs_exit(0);
+			else
+				kill_thread(cl);
 			// Stop MCR reader display thread
 			if (cl->typ == 'r' && cl->reader && cl->reader->typ == R_SC8in1
 					&& cl->reader->sc8in1_config && cl->reader->sc8in1_config->display_running) {
@@ -1263,8 +1266,11 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 	struct s_client *cl = rdr->client;
 	if (restart){
 		remove_reader_from_active(rdr);		//remove from list
-    		kill_thread(cl); //kill old thread
-    		cs_sleepms(500);
+		if (cl == cur_client()) //kill old thread
+			cs_exit(0);
+		else
+			kill_thread(cl);
+    	cs_sleepms(500);
 	}
 
 	while (restart && is_valid_client(cl)) {
@@ -3749,7 +3755,10 @@ void * client_check(void) {
 			if (cl && cl->init_done && cl->pfd && (cl->typ == 'c' || cl->typ == 'm')) {
 				if (pfd[i].fd == cl->pfd && (pfd[i].revents & (POLLHUP | POLLNVAL))) {
 					//client disconnects
-					kill_thread(cl);
+					if (cl == cur_client())
+						cs_exit(0);
+					else
+						kill_thread(cl);
 					continue;
 				}
 				if (pfd[i].fd == cl->pfd && (pfd[i].revents & (POLLIN | POLLPRI))) {
