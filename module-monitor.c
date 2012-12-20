@@ -830,14 +830,7 @@ static int32_t monitor_process_request(char *req)
 		if (!strcmp(req, cmd[i])) {
 			switch(i) {
 			case  0:	monitor_login(arg); break;	// login
-			case  1:	{
-						if (cur_cl == cur_client())
-							cs_exit(0);
-						 else
-							kill_thread(cur_cl);
-						rc=0;
-						break;	// exit
-						}
+			case  1:	kill_thread(cur_cl); rc=0; break;	// exit
 			case  2:	monitor_logsend(arg); break;	// log
 			case  3:	monitor_process_info(); break;	// status
 			case  4:	if (cur_cl->monlvl > 3) cs_exit_oscam(); break;	// shutdown
