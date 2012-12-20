@@ -1169,6 +1169,10 @@ void start_thread(void * startroutine, char * nameroutine) {
   If the own thread has to be cancelled, cs_exit or cs_disconnect_client has to be used. */
 void kill_thread(struct s_client *cl) {
 	if (!cl || cl->kill) return;
+	if (cl == cur_client()) {
+		cs_log("Trying to kill myself, exiting.");
+		cs_exit(0);
+	}
 	add_job(cl, ACTION_CLIENT_KILL, NULL, 0); //add kill job, ...
 	cl->kill=1;                               //then set kill flag!
 }
@@ -1263,8 +1267,8 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 	struct s_client *cl = rdr->client;
 	if (restart){
 		remove_reader_from_active(rdr);		//remove from list
-    		kill_thread(cl); //kill old thread
-    		cs_sleepms(500);
+		kill_thread(cl); //kill old thread
+		cs_sleepms(500);
 	}
 
 	while (restart && is_valid_client(cl)) {
