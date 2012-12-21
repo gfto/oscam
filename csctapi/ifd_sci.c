@@ -182,7 +182,7 @@ static int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on
 
 static int32_t Sci_Reset(struct s_reader * reader, ATR * atr)
 {
-	int32_t ret;
+	int32_t ret = ERROR;
 
 	rdr_debug_mask(reader, D_IFD, "Reset internal cardreader!");
 	SCI_PARAMETERS params;
@@ -216,9 +216,16 @@ static int32_t Sci_Reset(struct s_reader * reader, ATR * atr)
 		params.fs = 16 for cardmhz = 1.977 MHz */
 		params.T = 0;
 	}
-	ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params);
-	ioctl(reader->handle, IOCTL_SET_RESET, 1);
-	ret = Sci_Read_ATR(reader, atr);
+	
+	int32_t tries = 0;
+	while (ret == ERROR && tries < 5){
+		ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params);
+		ioctl(reader->handle, IOCTL_SET_RESET, 1);
+		ret = Sci_Read_ATR(reader, atr);
+		params.fs = 0; // fs 0 heals unresponsive readers due to incorrect previous parameters before box needed powercycle (tested working on XP1000 box)
+		tries++; // increase fs
+		if (ret==ERROR) rdr_debug_mask(reader, D_IFD, "Read ATR fail, attempt %d/5 now trying fs = %d to recover", tries, params.fs);
+	}
 	ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
 	return ret;
 }
