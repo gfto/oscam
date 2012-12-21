@@ -740,8 +740,14 @@ OSCam can not set the frequency of the reader.
 <DT>&bull;<DD>
 Smargo Smartreader+
 <P>
+Use protocol = smargo for the kernel drivers (no libusb needed) or (not 
+recommended) use protocol = smartreader for OSCam's driver implementation 
+based on libusb.
+<P>
 Set the reader frequency with the native Smargo Smartreader+ tool (srp_tools). 
-Do not set <B>mhz</B> and <B>cardmhz</B>.
+If not setting <B>mhz</B> and <B>cardmhz</B>, OSCam  tries  to  set the baudrate 
+automatically, according to the maximum speed indicated by ATR. Overclocking 
+is possible.
 </DL>
 <P>
 
