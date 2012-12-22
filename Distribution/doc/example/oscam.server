@@ -91,7 +91,17 @@ aeskey   = 0102030405060708090a0b0c0d0e0f10
 group    = 6
 caid     = 0600
 
-# Smargo Smartreader+
+# Smargo Smartreader+ (Tripplereader as well) using kernel drivers (recommended)
+
+[reader]
+label    = mysmargo
+protocol = smargo
+device   = /dev/ttyUSB0
+aeskey   = 0102030405060708090a0b0c0d0e0f10
+group    = 7
+caid     = 0700
+
+# Smargo Smartreader+ using libusb
 
 [reader]
 label    = mysmartreader
