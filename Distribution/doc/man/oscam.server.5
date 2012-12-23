@@ -26,21 +26,23 @@ description of reader, default:none
 \fBprotocol\fP = \fBreader protocol\fP
 .RS 3n
 reader protocol, \fIrequired\fR:
+
+ \fBcamd35\fP|\fBcs357x\fP
+ \fBcccam\fP
+ \fBcs378x\fP
+ \fBconstcw\fP
+ \fBgbox\fP 
+ \fBinternal\fP
  \fBmouse\fP
  \fBmp35\fP
- \fBsmartreader\fP
- \fBinternal\fP
- \fBserial\fP
- \fBcamd35\fP|\fBcs357x\fP
- \fBcs378x\fP
- \fBgbox\fP
  \fBnewcamd\fP|\fBnewcamd525\fP
  \fBnewcamd524\fP
- \fBcccam\fP
- \fBradegast\fP
- \fBpcsc\fP
- \fBconstcw\fP
+ \fBpcsc\fP 
+ \fBradegast\fP 
  \fBsc8in1\fP
+ \fBserial\fP
+ \fBsmargo\fP 
+ \fBsmartreader\fP
 .RE
 .PP
 \fBdevice\fP = \fB<device|bus:device|device:slot>\fP|Serial:Reader \fBserial\fP|\fB<ip|hostname>,<port>[,<lport>]\fP|\fBpcsc\fP|<\fB0|1\fP>|\fBconstantcw\fP
@@ -572,7 +574,7 @@ OSCam can not set the frequency of the reader.
 \(bu
 Smargo Smartreader+
 
-Use protocol = smargo for the kernel drivers (no libusb needed) or (not 
+Use protocol = smargo for the FDDI kernel drivers (no libusb needed) or (not 
 recommended) use protocol = smartreader for OSCam's driver implementation 
 based on libusb.
 

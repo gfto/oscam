@@ -47,21 +47,23 @@ description of reader, default:none
 <B>protocol</B> = <B>reader protocol</B>
 <DL COMPACT><DT><DD>
 reader protocol, <I>required</I>:
+<P>
+<BR>&nbsp;<B>camd35</B>|<B>cs357x</B>
+<BR>&nbsp;<B>cccam</B>
+<BR>&nbsp;<B>cs378x</B>
+<BR>&nbsp;<B>constcw</B>
+<BR>&nbsp;<B>gbox</B>&nbsp;
+<BR>&nbsp;<B>internal</B>
 <BR>&nbsp;<B>mouse</B>
 <BR>&nbsp;<B>mp35</B>
-<BR>&nbsp;<B>smartreader</B>
-<BR>&nbsp;<B>internal</B>
-<BR>&nbsp;<B>serial</B>
-<BR>&nbsp;<B>camd35</B>|<B>cs357x</B>
-<BR>&nbsp;<B>cs378x</B>
-<BR>&nbsp;<B>gbox</B>
 <BR>&nbsp;<B>newcamd</B>|<B>newcamd525</B>
 <BR>&nbsp;<B>newcamd524</B>
-<BR>&nbsp;<B>cccam</B>
-<BR>&nbsp;<B>radegast</B>
-<BR>&nbsp;<B>pcsc</B>
-<BR>&nbsp;<B>constcw</B>
+<BR>&nbsp;<B>pcsc</B>&nbsp;
+<BR>&nbsp;<B>radegast</B>&nbsp;
 <BR>&nbsp;<B>sc8in1</B>
+<BR>&nbsp;<B>serial</B>
+<BR>&nbsp;<B>smargo</B>&nbsp;
+<BR>&nbsp;<B>smartreader</B>
 </DL>
 
 <P>
@@ -740,7 +742,7 @@ OSCam can not set the frequency of the reader.
 <DT>&bull;<DD>
 Smargo Smartreader+
 <P>
-Use protocol = smargo for the kernel drivers (no libusb needed) or (not 
+Use protocol = smargo for the FDDI kernel drivers (no libusb needed) or (not 
 recommended) use protocol = smartreader for OSCam's driver implementation 
 based on libusb.
 <P>
