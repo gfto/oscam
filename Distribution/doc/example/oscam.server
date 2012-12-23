@@ -107,7 +107,6 @@ caid     = 0700
 label    = mysmartreader
 protocol = smartreader
 device   = 001:002
-aeskey   = 0102030405060708090a0b0c0d0e0f10
 group    = 8
 caid     = 0800
 
