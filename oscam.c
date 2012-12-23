@@ -1378,10 +1378,13 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl)
 			if (ecm->csp_hash != er->csp_hash)
 				continue; // no match
 
+			if (ecm->ecmlen > 0 && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
+				continue; // no match
 		}
-#endif	
+#else
 		if (ecm->ecmlen > 0 && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
 				continue; // no match
+#endif
 				
 		if (ecm->rc != E_99){
 			cs_readunlock(&ecmcache_lock);
