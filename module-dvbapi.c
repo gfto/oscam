@@ -1050,7 +1050,6 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 
 	demux[demux_index].max_status=0;
 	int32_t prio = 1;
-	int32_t foundptype = 0;
 
 	if (dvbapi_priority) {
 		struct s_reader *rdr;
@@ -1099,8 +1098,6 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 				}
 
 				if (p->type == 'p') {
-				
-					foundptype = 1; // we found a p type entry in dvbapi!
 
 					if (demux[demux_index].ECMpids[n].status == -1) //skip ignores
 						continue;
@@ -1136,7 +1133,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 		free(er);
 	} 
 	
-	if (cfg.preferlocalcards && (!dvbapi_priority || !foundptype)) { //works if there is cfg.preferlocalcards=1 and no oscam.dvbapi with p rules
+	if (cfg.preferlocalcards) { //works if there is cfg.preferlocalcards=1
 		struct s_reader *rdr;
 		ECM_REQUEST *er;
 		if (!cs_malloc(&er, sizeof(ECM_REQUEST)))
