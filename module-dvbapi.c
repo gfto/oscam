@@ -1133,7 +1133,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 		free(er);
 	} 
 	
-	if (cfg.preferlocalcards) { //works if there is cfg.preferlocalcards=1
+	else if (cfg.preferlocalcards) { //works if there is cfg.preferlocalcards=1 and no oscam.dvbapi
 		struct s_reader *rdr;
 		ECM_REQUEST *er;
 		if (!cs_malloc(&er, sizeof(ECM_REQUEST)))
