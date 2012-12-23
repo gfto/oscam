@@ -1951,20 +1951,13 @@ static void chk_peer_node_for_oscam(struct cc_data *cc)
 
 int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 {
-	if (!cl->cc) {
-		if (cl->reader && !cl->reader->tcp_connected) {
-			cc_cli_connect(cl);
-		}
-	}
 	struct cc_data *cc = cl->cc;
-	if (!cc || !cl->udp_fd) return 0;
-
 	//check max 10 nodes to push:
 	if (ll_count(er->csp_lastnodes) >= cacheex_maxhop(cl)) {
 		cs_debug_mask(D_CACHEEX, "cacheex: nodelist reached %d nodes, no push", cacheex_maxhop(cl));
 		return 0;
 	}
-
+	
 	//search existing peer nodes:
 	LL_LOCKITER *li = ll_li_create(er->csp_lastnodes, 0);
 	uint8_t *node;
@@ -1982,7 +1975,17 @@ int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 				"cacheex: node %" PRIu64 "X found in list => skip push!", cacheex_node_id(node));
 		return 0;
 	}
-
+	
+	if (!cl->cc) {
+		if (cl->reader && !cl->reader->tcp_connected) {
+			cc_cli_connect(cl);
+		}
+	}
+	
+	if (!cc || !cl->udp_fd){
+		cs_debug_mask(D_CACHEEX, "cacheex: not connected %s -> no push", username(cl)); 
+		return 0;
+	}
 	return 1;
 }
 
@@ -1997,30 +2000,39 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 			cc_cli_connect(cl);
 		cl->reader->last_s = cl->reader->last_g = now;
 	}
-	cl->last = now;
 
 	struct cc_data *cc = cl->cc;
-	if (!cc || !cl->udp_fd) return(-1);
-
+	if (!cc || !cl->udp_fd){
+		cs_debug_mask(D_CACHEEX, "cacheex: not connected %s -> no push", username(cl));
+		return(-1);
+	}
+	cl->last = now;
+	
 	int32_t size = 20 + sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw) + sizeof(uint8_t) +
 			(ll_count(er->csp_lastnodes)+1)*8; //lastnodes+ownnode
 
-	uint8_t *ecmbuf;
+	unsigned char *ecmbuf;
 	if (!cs_malloc(&ecmbuf, size))
 		return -1;
 
 	// build ecm message
-	ecmbuf[0] = er->caid >> 8;
-	ecmbuf[1] = er->caid & 0xff;
-	ecmbuf[2] = er->prid >> 24;
-	ecmbuf[3] = er->prid >> 16;
-	ecmbuf[4] = er->prid >> 8;
-	ecmbuf[5] = er->prid & 0xff;
-	ecmbuf[10] = er->srvid >> 8;
-	ecmbuf[11] = er->srvid & 0xff;
-	ecmbuf[12] = 0;
-	ecmbuf[13] = 0;
+	//ecmbuf[0] = er->caid >> 8;
+	//ecmbuf[1] = er->caid & 0xff;
+	//ecmbuf[2] = er->prid >> 24;
+	//ecmbuf[3] = er->prid >> 16;
+	//ecmbuf[4] = er->prid >> 8;
+	//ecmbuf[5] = er->prid & 0xff;
+	//ecmbuf[10] = er->srvid >> 8;
+	//ecmbuf[11] = er->srvid & 0xff;
+	ecmbuf[12]=(sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw)) & 0xff;
+	ecmbuf[13]=(sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw)) >> 8;
+	//ecmbuf[12] = 0;
+	//ecmbuf[13] = 0;
 	ecmbuf[14] = rc;
+
+	i2b_buf(2, er->caid, ecmbuf + 0);	
+	i2b_buf(4, er->prid, ecmbuf + 2);
+	i2b_buf(2, er->srvid, ecmbuf + 10);
 
 	uint8_t *ofs = ecmbuf + 20;
 
@@ -2029,7 +2041,7 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	ofs += sizeof(er->ecmd5);
 
 	//Write CSP hashcode:
-	memcpy(ofs, &er->csp_hash, sizeof(er->csp_hash)); // 4
+	memcpy(ofs, &er->csp_hash, sizeof(er->csp_hash)); //4
 	ofs += sizeof(er->csp_hash);
 
 	//Write cw:
@@ -2038,7 +2050,7 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 
 	//Write count of lastnodes:
 	*ofs = ll_count(er->csp_lastnodes)+1;
-	ofs ++;
+	ofs++;
 
 	//Write own node:
 	memcpy(ofs, cc->node_id, 8);
@@ -2061,6 +2073,7 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 void cc_cache_push_in(struct s_client *cl, uchar *buf)
 {
 	struct cc_data *cc = cl->cc;
+	ECM_REQUEST *er;
 	if (!cc) return;
 
 	if (cl->reader)
@@ -2069,12 +2082,11 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 	int8_t rc = buf[14];
 	if (rc != E_FOUND && rc != E_UNHANDLED) //Maybe later we could support other rcs
 		return;
-
-	if (buf[12] != 0 || buf[13] != 0) {
-		cs_log("%s received old cash-push format! data ignored!", username(cl));
+	uint16_t size = buf[12] | (buf[13] << 8);
+	if (size != sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw)) {
+		cs_log("%s received wrong cash-push format! data ignored!", username(cl));
 		return;
 	}
-	ECM_REQUEST *er;
 	if (!(er = get_ecmtask()))
 		return;
 
@@ -2109,7 +2121,7 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 		free(er);
 		return;
 	}
-
+	cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes %s", (int32_t)count, username(cl));
 	//Read lastnodes:
 	uint8_t *data;
 	er->csp_lastnodes = ll_create("csp_lastnodes");
@@ -2120,6 +2132,7 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 		ofs+=8;
 		ll_append(er->csp_lastnodes, data);
 		count--;
+		cs_debug_mask(D_CACHEEX, "cacheex: received node %" PRIu64 "X %s", cacheex_node_id(data), username(cl));
 	}
 
 	//for compatibility: add peer node if no node received:
