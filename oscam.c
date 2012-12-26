@@ -856,7 +856,7 @@ static void init_signal_pre(void)
 }
 
 /* Sets the signal handlers.*/
-static void init_signal(void)
+static void init_signal(int8_t isDaemon)
 {
 		set_signal_handler(SIGINT, 3, cs_exit);
 		//set_signal_handler(SIGKILL, 3, cs_exit);
@@ -875,29 +875,30 @@ static void init_signal(void)
 		//  set_signal_handler(SIGALRM , 0, cs_alarm);
 		set_signal_handler(SIGALRM , 0, cs_master_alarm);
 		// set_signal_handler(SIGCHLD , 1, cs_child_chk);
-		set_signal_handler(SIGHUP  , 1, cs_reload_config);
+		set_signal_handler(SIGHUP  , 1, isDaemon?cs_dummy:cs_reload_config);
 		//set_signal_handler(SIGHUP , 1, cs_sighup);
-		set_signal_handler(SIGUSR1, 1, cs_debug_level);
-		set_signal_handler(SIGUSR2, 1, cs_card_info);
-		set_signal_handler(OSCAM_SIGNAL_WAKEUP, 0, cs_dummy);
+		set_signal_handler(SIGUSR1, 1, isDaemon?cs_dummy:cs_debug_level);
+		set_signal_handler(SIGUSR2, 1, isDaemon?cs_dummy:cs_card_info);
+		set_signal_handler(OSCAM_SIGNAL_WAKEUP, 0, isDaemon?cs_dummy:cs_dummy);
 
-		if (cs_capture_SEGV) {
-			set_signal_handler(SIGSEGV, 1, cs_exit);
-			set_signal_handler(SIGBUS, 1, cs_exit);
-		}
-		else if (cs_dump_stack) {
-			set_signal_handler(SIGSEGV, 1, cs_dumpstack);
-			set_signal_handler(SIGBUS, 1, cs_dumpstack);
-		}
+		if(!isDaemon){
+			if (cs_capture_SEGV) {
+				set_signal_handler(SIGSEGV, 1, cs_exit);
+				set_signal_handler(SIGBUS, 1, cs_exit);
+			}
+			else if (cs_dump_stack) {
+				set_signal_handler(SIGSEGV, 1, cs_dumpstack);
+				set_signal_handler(SIGBUS, 1, cs_dumpstack);
+			}
 
-
-		cs_log("signal handling initialized (type=%s)",
+			cs_log("signal handling initialized (type=%s)",
 #ifdef CS_SIGBSD
-		"bsd"
+			"bsd"
 #else
-		"sysv"
+			"sysv"
 #endif
-		);
+			);
+		}
 	return;
 }
 
@@ -4102,6 +4103,7 @@ int32_t main (int32_t argc, char *argv[])
   };
 
   parse_cmdline_params(argc, argv);
+  init_signal(true);
 
   if (bg && do_daemon(1,0))
   {
@@ -4157,7 +4159,7 @@ int32_t main (int32_t argc, char *argv[])
   init_sidtab();
   init_readerdb();
   cfg.account = init_userdb();
-  init_signal();
+  init_signal(false);
   init_srvid();
   init_tierid();
   init_provid();
