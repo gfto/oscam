@@ -279,7 +279,7 @@ static char *monitor_client_info(char id, struct s_client *cl, char *sbuf){
 			// no AU reader == 0 / AU ok == 1 / Last EMM > aulow == -1
 			if(cl->typ == 'c' || cl->typ == 'p' || cl->typ == 'r') {
 
-				if ((cl->typ == 'c' && !cl->aureader_list) ||
+				if ((cl->typ == 'c' && ll_count(cl->aureader_list) == 0) ||
 						((cl->typ == 'p' || cl->typ == 'r') && cl->reader->audisabled))
 					cau = 0;
 
