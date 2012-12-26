@@ -467,7 +467,6 @@ int32_t Protocol_T14_ExchangeTPDU (struct s_reader *reader, unsigned char * cmd_
 	int32_t cmd_case;
 	unsigned char ixor = 0x3E;
 	unsigned char ixor1 = 0x3F;
-	unsigned char b1 = 0x01;
 	int32_t i;
 	int32_t cmd_len = (int32_t) command_len;
 	*lr = 0; //in case of error this is returned
@@ -483,19 +482,12 @@ int32_t Protocol_T14_ExchangeTPDU (struct s_reader *reader, unsigned char * cmd_
 		return ERROR;
 	}
 	
-	if (reader->typ <= R_MOUSE) {
-		if(ICC_Async_Transmit (reader, 1, &b1, 0, reader->char_delay)!=OK) return ERROR; //send 0x01 byte
-		if(ICC_Async_Transmit (reader, cmd_len, cmd_raw, 0, reader->char_delay)!=OK) return ERROR; //send apdu
-		if(ICC_Async_Transmit (reader, 1, &ixor, 0, reader->char_delay)!=OK) return ERROR;	//Send xor byte
-	}
-	else {
-		buffer[0] = 0x01;
-		memcpy(buffer+1, cmd_raw, cmd_len);
-		buffer[cmd_len+1] = ixor;
+	buffer[0] = 0x01; //send 0x01 byte
+	memcpy(buffer+1, cmd_raw, cmd_len); // apdu
+	buffer[cmd_len+1] = ixor; // xor byte
 		
-		/* Send apdu */
-		if(ICC_Async_Transmit (reader, cmd_len+2, buffer, 0, reader->char_delay)!=OK) return ERROR;//send apdu
-	}
+	/* Send apdu */
+	if(ICC_Async_Transmit (reader, cmd_len+2, buffer, 0, reader->char_delay)!=OK) return ERROR;//send apdu
 	if(cmd_raw[0] == 0x02 && cmd_raw[1] == 0x09) cs_sleepms(2500); //FIXME why wait? -> needed for init on overclocked T14 cards
 	if(ICC_Async_Receive (reader, 8, buffer, 0, reader->read_timeout)!=OK) return ERROR;	//Read one procedure byte
 	recved = (int32_t)buffer[7];
