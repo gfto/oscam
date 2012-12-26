@@ -33,7 +33,7 @@
 #define LOG_PREFIX "mca: "
 #define LOG_PREFIX_MSG "mcamsg: "
 
-int8_t dummy(){ return 0;}
+int8_t dummy(void){ return 0;}
 #define openxcas_start_filter_ex(...) dummy()
 #define openxcas_stop_filter_ex(...) dummy()
 #define openxcas_get_message mca_get_message
