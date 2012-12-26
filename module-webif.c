@@ -1561,68 +1561,56 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "KEEPALIVECHECKED", "selected");
 #endif
 
+	tpl_addVar(vars, TPLADD, "PROTOCOL", reader_get_type_desc(rdr, 0));
+
 	// Show only parameters which needed for the reader
 	switch (rdr->typ) {
 		case R_CONSTCW:
-			tpl_addVar(vars, TPLADD, "PROTOCOL", "constcw");
 			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
 			break;
 		case R_DB2COM1:
 		case R_DB2COM2:
 		case R_MOUSE :
-			tpl_addVar(vars, TPLADD, "PROTOCOL", "mouse");
 			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
 			break;
 		case R_MP35:
-			tpl_addVar(vars, TPLADD, "PROTOCOL", "mp35");
 			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
 			break;
 		case R_SC8in1 :
-			tpl_addVar(vars, TPLADD, "PROTOCOL", "sc8in1");
 			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
 			break;
 		case R_SMART :
-			tpl_addVar(vars, TPLADD, "PROTOCOL", "smartreader");
 			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
 			break;
 		case R_INTERNAL:
-			tpl_addVar(vars, TPLADD, "PROTOCOL", "internal");
 			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
 			break;
 		case R_SERIAL :
-			tpl_addVar(vars, TPLADD, "PROTOCOL", "serial");
 			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
 			break;
 		case R_CAMD35 :
-			tpl_addVar(vars, TPLADD, "PROTOCOL", "camd35");
 			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCAMD35BIT"));
 			break;
 		case R_CS378X :
-			tpl_addVar(vars, TPLADD, "PROTOCOL", "cs378x");
 			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCS378XBIT"));
 			break;
 		case R_RADEGAST:
-			tpl_addVar(vars, TPLADD, "PROTOCOL", "radegast");
 			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGRADEGASTBIT"));
 			break;
 		case R_NEWCAMD :
 			if ( rdr->ncd_proto == NCD_525 ){
-				tpl_addVar(vars, TPLADD, "PROTOCOL", "newcamd525");
 				tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGNCD525BIT"));
 			} else if ( rdr->ncd_proto == NCD_524 ) {
-				tpl_addVar(vars, TPLADD, "PROTOCOL", "newcamd524");
 				tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGNCD524BIT"));
 			}
 			break;
 #ifdef MODULE_CCCAM
 		case R_CCCAM :
-			tpl_addVar(vars, TPLADD, "PROTOCOL", "cccam");
 			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCCCAMBIT"));
 			break;
 #endif
 #ifdef WITH_PCSC
 		case R_PCSC :
-			tpl_addVar(vars, TPLADD, "PROTOCOL", "pcsc");
 			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
 			break;
 #endif

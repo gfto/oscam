@@ -770,7 +770,7 @@ int32_t init_config(void)
 				continue;
 			}
 			if (!config_section_is_active(newconf)) {
-				fprintf(stderr, "WARNING: %s line %d section [%s] is ignorred (support not compiled in).\n",
+				fprintf(stderr, "WARNING: %s line %d section [%s] is ignored (support not compiled in).\n",
 					cs_conf, line, newconf->section);
 			}
 			continue;
