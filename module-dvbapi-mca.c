@@ -33,8 +33,9 @@
 #define LOG_PREFIX "mca: "
 #define LOG_PREFIX_MSG "mcamsg: "
 
-#define openxcas_start_filter_ex(...) {}
-#define openxcas_stop_filter_ex(...) {}
+int8_t dummy(){ return 0;}
+#define openxcas_start_filter_ex(...) dummy()
+#define openxcas_stop_filter_ex(...) dummy()
 #define openxcas_get_message mca_get_message
 #define azbox_openxcas_ex_callback mca_ex_callback
 #define openxcas_stop_filter(...) do { } while(0)
