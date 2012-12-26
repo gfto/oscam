@@ -286,6 +286,7 @@ void network_tcp_connection_close(struct s_reader *reader, char *reason)
 
 	reader->tcp_connected = 0;
 	reader->card_status = UNKNOWN;
+	cl->last=time((time_t *)0);
 
 	if (cl->ecmtask) {
 		for (i = 0; i < cfg.max_pending; i++) {
