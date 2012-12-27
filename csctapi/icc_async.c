@@ -337,7 +337,7 @@ static int32_t ICC_Async_GetPLL_Divider (struct s_reader * reader)
 static void ICC_Async_InvertBuffer (uint32_t size, unsigned char * buffer)
 {
 	uint32_t i;
-	cs_debug_mask(D_ATR, "%s: size=%u buf[0]=%02x", __func__, size, buffer[0]);
+	cs_debug_mask(D_IFD, "%s: size=%u buf[0]=%02x", __func__, size, buffer[0]);
 	for (i = 0; i < size; i++)
 		buffer[i] = ~(INVERT_BYTE (buffer[i]));
 }
@@ -554,7 +554,7 @@ static uint32_t ETU_to_us(struct s_reader * reader, uint32_t ETU)
 static int32_t ICC_Async_SetParity (struct s_reader * reader, uint16_t parity)
 {
 	if (reader->crdr.set_parity) {
-		rdr_debug_mask(reader, D_ATR, "Setting right parity");
+		rdr_debug_mask(reader, D_IFD, "Setting right parity");
 		call(reader->crdr.set_parity(reader, parity));
 	}
 	return OK;
@@ -651,11 +651,11 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 			reader->BWT = 0; // T0 protocol doesnt have block waiting time (used to detect unresponsive card, this is max time for starting a block answer)
 			
 			if (reader->mhz > 2000 && reader->typ == R_INTERNAL)
-				rdr_debug_mask(reader, D_IFD, "Protocol: T=%i, WWT=%u, Clockrate=%u",
+				rdr_debug_mask(reader, D_ATR, "Protocol: T=%i, WWT=%u, Clockrate=%u",
 					reader->protocol_type, WWT,
 					(reader->cardmhz * 10000));
 			else
-				rdr_debug_mask(reader, D_IFD, "Protocol: T=%i, WWT=%u, Clockrate=%u",
+				rdr_debug_mask(reader, D_ATR, "Protocol: T=%i, WWT=%u, Clockrate=%u",
 					reader->protocol_type, WWT, reader->mhz * 10000);	
 			reader->read_timeout = ETU_to_us(reader, WWT); // Work waiting time used in T0 (max time to signal unresponsive card!)
 			reader->char_delay = ETU_to_us(reader, GT+EGT); // Character delay is used on T0
