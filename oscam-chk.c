@@ -780,13 +780,13 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
   }
 
   //Checking entitlements:
-  /*
   if (ll_count(rdr->ll_entitlements) > 0) {
 		LL_ITER itr = ll_iter_create(rdr->ll_entitlements);
 		S_ENTITLEMENT *item;
 		int8_t found = 0;
 		while ((item=ll_iter_next(&itr))) {
-			if (item->caid == er->caid && (!er->prid || !item->provid || item->provid == er->prid)) {
+			//if (item->caid == er->caid && (!er->prid || !item->provid || item->provid == er->prid)) {		//provid check causing problems?
+			if (item->caid == er->caid || item->caid == er->ocaid) { 										//... so check at least caid only
 				found =1;
 				break;
 			}
@@ -796,7 +796,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
 			return 0;
 		}
   }
-*/
+
   //Checking ecmlength:
   if (rdr->ecmWhitelist && er->ecmlen) {
   	struct s_ecmWhitelist *tmp;

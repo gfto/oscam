@@ -1397,6 +1397,9 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl)
 		if (memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
 				continue; // no match
 #endif
+
+		if ((er->caid != ecm->caid) && ecm->rc >= E_NOTFOUND)
+			continue; //CW for the cached ECM wasn't found but now the client asks on a different caid so give it another try
 				
 		if (ecm->rc != E_99){
 			cs_readunlock(&ecmcache_lock);
