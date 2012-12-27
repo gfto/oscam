@@ -1398,7 +1398,7 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl)
 				continue; // no match
 #endif
 
-		if ((er->caid != ecm->caid) && ecm->rc >= E_NOTFOUND)
+		if (!is_betatunnel_caid(er->caid) && (er->caid != ecm->caid) && ecm->rc >= E_NOTFOUND)
 			continue; //CW for the cached ECM wasn't found but now the client asks on a different caid so give it another try
 				
 		if (ecm->rc != E_99){
