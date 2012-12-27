@@ -2271,6 +2271,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	uint32_t line = 0;
 
 	er->client = client;
+	if(now - client->lastecm > cfg.hideclient_to) client->lastswitch = 0;		// user was on freetv or didn't request for some time so we reset lastswitch to get correct stats/webif display
 	client->lastecm = now;
 
 	if (client == first_client || !client ->account || client->account == first_client->account) {

@@ -301,8 +301,6 @@ static void ac_load_config(void)
 }
 
 void ac_copy_vars(struct s_auth *src, struct s_auth *dst) {
-	dst->ac_users   = src->ac_users;
-	dst->ac_penalty = src->ac_penalty;
 	dst->ac_stat    = src->ac_stat;
 }
 
