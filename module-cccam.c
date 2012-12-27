@@ -2465,11 +2465,15 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			cs_ftime(&tpe);
 			int32_t cwlastresptime = 1000*(tpe.time-eei->tps.time)+tpe.millitm-eei->tps.millitm;
 
-			free(eei);
+			add_garbage(eei);
 
 			if (card) {
-				if (buf[1] == MSG_CW_NOK1) //MSG_CW_NOK1: share no more available
-					cc_card_removed(cl, card->id);
+				if (buf[1] == MSG_CW_NOK1){ //MSG_CW_NOK1: share no more available
+					cs_debug_mask(D_TRACE, "NOK1: share no more available %d %04X ecm %d %d!", card->id, card->caid, eei->send_idx, eei->ecm_idx);
+					//cc_card_removed(cl, card->id);
+					move_card_to_end(cl, card);
+					add_sid_block(cl, card, &srvid);
+				}
 				//else MSG_CW_NOK2: can't decode
 				else if (cc->cmd05NOK)
 				{
