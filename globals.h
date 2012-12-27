@@ -846,7 +846,8 @@ struct s_client {
 	LLIST			*joblist;
 	IN_ADDR_T		ip;
 	in_port_t		port;
-	time_t			login;
+	time_t			login;		// connection
+	time_t			logout;		// disconnection
 	time_t			last;
 	time_t			lastswitch;
 	time_t			lastemm;

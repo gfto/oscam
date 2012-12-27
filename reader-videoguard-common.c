@@ -840,7 +840,6 @@ void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[idx+1]    = 0x00;
 	filter[idx+1+16] = 0xC0;
 	filter[1]++;
-	idx += 32;
 
 	return;
 }

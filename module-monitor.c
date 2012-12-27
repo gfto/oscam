@@ -64,7 +64,7 @@ static int32_t secmon_auth_client(uchar *ucrc)
 		int32_t s=memcmp(cur_cl->ucrc, ucrc, 4);
 		if (s)
 			cs_log("wrong user-crc or garbage !?");
-		return(!s);
+		return !s;
 	}
 	cur_cl->crypted=1;
 	crc=(ucrc[0]<<24) | (ucrc[1]<<16) | (ucrc[2]<<8) | ucrc[3];
@@ -83,7 +83,7 @@ static int32_t secmon_auth_client(uchar *ucrc)
 		cs_auth_client(cur_cl, (struct s_auth *)0, "invalid user");
 		return -1;
 	}
-	return(cur_cl->auth);
+	return cur_cl->auth;
 }
 
 int32_t monitor_send_idx(struct s_client *cl, char *txt)
@@ -91,7 +91,7 @@ int32_t monitor_send_idx(struct s_client *cl, char *txt)
 	int32_t l;
 	unsigned char buf[256+32];
 	if (!cl->udp_fd)
-		return(-1);
+		return -1;
 	struct timespec req_ts;
 	req_ts.tv_sec = 0;
 	req_ts.tv_nsec = 500000;
@@ -127,14 +127,14 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 	else
 		n=recv_from_udpipe(buf);
 	bpos=0;
-	if (!n) return(buf[0]=0);
+	if (!n) return buf[0]=0;
 	if (buf[0]=='&')
 	{
 		int32_t bsize;
 		if (n<21)	// 5+16 is minimum
 		{
 			cs_log("packet too small!");
-			return(buf[0]=0);
+			return buf[0]=0;
 		}
 		res = secmon_auth_client(buf+1);
 		if (res == -1) {
@@ -142,7 +142,7 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 			return 0;
 		}
 		if (!res)
-			return(buf[0]=0);
+			return buf[0]=0;
 		aes_decrypt(client, buf+5, 16);
 		bsize=boundary(4, buf[9]+5)+5;
 		// cs_log("n=%d bsize=%d", n, bsize);
@@ -161,14 +161,14 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 		else if (n<bsize)
 		{
 			cs_log("packet-size mismatch !");
-			return(buf[0]=0);
+			return buf[0]=0;
 		}
 		aes_decrypt(client, buf+21, n-21);
 		uchar tmp[10];
 		if (memcmp(buf+5, i2b_buf(4, crc32(0L, buf+10, n-10), tmp), 4))
 		{
 			cs_log("CRC error ! wrong password ?");
-			return(buf[0]=0);
+			return buf[0]=0;
 		}
 		n=buf[9];
 		memmove(buf, buf+10, n);
@@ -196,7 +196,7 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 	buf[n]='\0';
 	n=strlen(trim((char *)buf));
 	if (n) client->last=time((time_t *) 0);
-	return(n);
+	return n;
 }
 
 static void monitor_send_info(char *txt, int32_t last)
@@ -319,7 +319,7 @@ static char *monitor_client_info(char id, struct s_client *cl, char *sbuf){
                                         cl->cwtout, cl->emmok, cl->emmnok, lrt);
 		}
 	}
-	return(sbuf);
+	return sbuf;
 }
 
 static void monitor_process_info(void) {
@@ -830,7 +830,7 @@ static int32_t monitor_process_request(char *req)
 		if (!strcmp(req, cmd[i])) {
 			switch(i) {
 			case  0:	monitor_login(arg); break;	// login
-			case  1:	kill_thread(cur_cl); rc=0; break;	// exit
+			case  1:	cs_exit(0); break;	// exit
 			case  2:	monitor_logsend(arg); break;	// log
 			case  3:	monitor_process_info(); break;	// status
 			case  4:	if (cur_cl->monlvl > 3) cs_exit_oscam(); break;	// shutdown
@@ -851,7 +851,7 @@ static int32_t monitor_process_request(char *req)
 			}
 			break;
 		}
-	return(rc);
+	return rc;
 }
 
 static void * monitor_server(struct s_client * client, uchar *mbuf, int32_t UNUSED(n)) {

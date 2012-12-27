@@ -263,8 +263,11 @@ static void ac_load_config(void)
         }
       }
       if (!cs_malloc(&cur_cpmap, sizeof(struct s_cpmap))) {
-        for(cur_cpmap = first_cpmap; cur_cpmap; cur_cpmap = cur_cpmap->next)
-          free(cur_cpmap);
+        for(cur_cpmap = first_cpmap; cur_cpmap; ){
+        	last_cpmap = cur_cpmap;
+        	cur_cpmap = cur_cpmap->next;
+          free(last_cpmap);
+        }
         free(token);
         return;
       }

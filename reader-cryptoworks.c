@@ -545,7 +545,6 @@ static void cryptoworks_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	memcpy(filter+idx+3, rdr->hexserial, 5);
 	memset(filter+idx+3+16, 0xFF, 5);
 	filter[1]++;
-	idx += 32;
 
 	return;
 }

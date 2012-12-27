@@ -2398,6 +2398,15 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				lastchan = xml_encode(vars, get_servicename(latestclient, latestclient->last_srvid, latestclient->last_caid, channame));
 			else
 				lastchan = "";
+			tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", latestclient->last_caid);
+			tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", latestclient->last_srvid);
+			if (cfg.http_showpicons && picon_exists(latestclient->last_caid, latestclient->last_srvid)) {
+				tpl_printf(vars, TPLADD, "LASTCHANNEL",
+					"<img class=\"clientpicon\" src=\"image?i=IC_%04X_%04X\" alt=\"%s\" title=\"%s\">",
+					latestclient->last_caid, latestclient->last_srvid, lastchan, lastchan);
+			} else {
+				tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
+			}
 			lastresponsetm = latestclient->cwlastresptime;
 			tpl_addVar(vars, TPLADDONCE, "CLIENTIP", cs_inet_ntoa(latestclient->ip));
 			connected_users++;
@@ -2408,20 +2417,20 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				if (cu->cwrate > 0)
 					casc_users2++;
 			}
-		}
-		if(latestactivity > 0 && latestclient != NULL){
-			isec = now - latestactivity;
-			chsec = latestclient->lastswitch ? now - latestclient->lastswitch : 0;
-			if (isec < cfg.hideclient_to) {
-				isactive = 1;
-				status = (!apicall) ? "<b>online</b>" : "online";
-				if(account->expirationdate && account->expirationdate < now) classname = "expired";
-				else classname = "online";
-				if (latestclient->cwfound + latestclient->cwnot + latestclient->cwcache > 0) {
-					cwrate2 = now - latestclient->login;
-					cwrate2 /= (latestclient->cwfound + latestclient->cwnot + latestclient->cwcache);
-					tpl_printf(vars, TPLADDONCE, "CWRATE2", " (%.2f)", cwrate2);
-					online_users++;
+			if(latestactivity > 0){
+				isec = now - latestactivity;
+				chsec = latestclient->lastswitch ? now - latestclient->lastswitch : 0;
+				if (isec < cfg.hideclient_to) {
+					isactive = 1;
+					status = (!apicall) ? "<b>online</b>" : "online";
+					if(account->expirationdate && account->expirationdate < now) classname = "expired";
+					else classname = "online";
+					if (latestclient->cwfound + latestclient->cwnot + latestclient->cwcache > 0) {
+						cwrate2 = now - latestclient->login;
+						cwrate2 /= (latestclient->cwfound + latestclient->cwnot + latestclient->cwcache);
+						tpl_printf(vars, TPLADDONCE, "CWRATE2", " (%.2f)", cwrate2);
+						online_users++;
+					}
 				}
 			}
 		}
@@ -2454,26 +2463,11 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 					tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "No sleep defined");
 					tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEPAPI", "undefined");
 				}
-				if(latestclient){
-					tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", latestclient->last_caid);
-					tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", latestclient->last_srvid);
-					if (cfg.http_showpicons && picon_exists(latestclient->last_caid, latestclient->last_srvid)) {
-						tpl_printf(vars, TPLADD, "LASTCHANNEL",
-							"<img class=\"clientpicon\" src=\"image?i=IC_%04X_%04X\" alt=\"%s\" title=\"%s\">",
-							latestclient->last_caid, latestclient->last_srvid, lastchan, lastchan);
-					} else {
-						tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
-					}
-				}
-
 			} else {
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMEONCHANNELAPI", "");
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMEONCHANNEL", "");
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "");
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEPAPI", "");
-				tpl_addVar(vars, TPLADD, "CLIENTCAID", "");
-				tpl_addVar(vars, TPLADD, "CLIENTSRVID", "");
-				tpl_addVar(vars, TPLADD, "CLIENTPICON", "");
 			}
 
 			webif_add_client_proto(vars, latestclient, proto);
@@ -2999,8 +2993,8 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 					tpl_printf(vars, TPLADD, "CLIENTTYPE", "%c", cl->typ);
 				}
 				if(cl->typ == 'c' || cl->typ == 'r' || cl->typ == 'p'){
-					if(cl->lastecm >= cl->login && cl->lastecm >= cl->last) isec = now - cl->lastecm;
-					else if(cl->last >= cl->login) isec = now - cl->last;
+					if(cl->lastecm >= cl->login && cl->lastecm >= cl->logout) isec = now - cl->lastecm;
+					else if(cl->logout >= cl->login) isec = now - cl->logout;
 					else isec = now - cl->login;
 				} else isec = now - cl->last;
 
@@ -4018,7 +4012,7 @@ static char *send_oscam_failban(struct templatevars *vars, struct uriparams *par
 		else
 			tpl_printf(vars, TPLADD, "LEFTTIME", "%ld", (cfg.failbantime * 60) - (now - v_ban_entry->v_time));
 
-		tpl_printf(vars, TPLADD, "INTIP", "%s", cs_inet_ntoa(v_ban_entry->v_ip));
+		tpl_addVar(vars, TPLADD, "INTIP", cs_inet_ntoa(v_ban_entry->v_ip));
 
 		if (!apicall)
 			tpl_addVar(vars, TPLAPPEND, "FAILBANROW", tpl_getTpl(vars, "FAILBANBIT"));
@@ -4917,7 +4911,7 @@ static int32_t process_request(FILE *f, IN_ADDR_T in) {
 				cs_debug_mask(D_CLIENT, "WebIf: Received no auth header from %s.", cs_inet_ntoa(addr));
 			char temp[sizeof(AUTHREALM) + sizeof(expectednonce) + 100];
 			snprintf(temp, sizeof(temp), "WWW-Authenticate: Digest algorithm=\"MD5\", realm=\"%s\", qop=\"auth\", opaque=\"\", nonce=\"%s\"", AUTHREALM, expectednonce);
-			if(authok == 2) strncat(temp, ", stale=true", sizeof(temp));
+			if(authok == 2) strncat(temp, ", stale=true", sizeof(temp) - strlen(temp) - 1);
 			char *msg = "Access denied.\n";
 			send_headers(f, 401, "Unauthorized", temp, "text/html", 0, strlen(msg), msg, 0);
 			webif_write(msg, f);

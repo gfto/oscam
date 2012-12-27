@@ -396,7 +396,6 @@ void dre_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[72+0+16] = 0xFF;
 	//FIXME: No filter for hexserial
 	filter[1]++;
-	idx += 32;
 
 	return;
 }

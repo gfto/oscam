@@ -24,7 +24,7 @@ bool detect_db2com_reader(struct s_reader *reader)
 			int32_t dev_major = major(sb.st_rdev);
 			int32_t dev_minor = minor(sb.st_rdev);
 			if (dev_major == 4 || dev_major == 5) {
-				int32_t rc = reader->typ;
+				int32_t rc;
 				switch (dev_minor & 0x3F) {
 					case 0: rc = R_DB2COM1; break;
 					case 1: rc = R_DB2COM2; break;

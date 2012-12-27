@@ -564,8 +564,8 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 			}
 		}
 		else {
-			ecm88Data=nextEcm;
-			ecm88Len-=curEcm88len;
+			//ecm88Data=nextEcm;
+			//ecm88Len-=curEcm88len;
 			rdr_debug_mask(reader, D_READER, "ECM: Unknown ECM type");
 			snprintf( ea->msglog, MSGLOGSIZE, "Unknown ECM type" );
 			return ERROR; /*Lets interupt the loop and exit, because we don't know this ECM type.*/
@@ -665,7 +665,6 @@ static void viaccess_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	memcpy(filter+idx+1, rdr->hexserial + 1, 4);
 	memset(filter+idx+1+16, 0xFF, 4);
 	filter[1]++;
-	idx += 32;
 
 	return;
 }

@@ -31,7 +31,7 @@ static void refresh_lcd_file(void) {
 
 	int8_t iscccam = 0;
 	int32_t seconds = 0, secs = 0, fullmins = 0, mins = 0, fullhours = 0, hours = 0,	days = 0;
-	time_t now = time((time_t*)0);
+	time_t now;
 
 
 	while(running) {

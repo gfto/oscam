@@ -554,7 +554,6 @@ static void bulcrypt_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[idx + 0 + 16]	= 0xFF;
 	filter[idx + 1 + 16]	= 0xFF;
 	filter[idx + 2 + 16]	= 0xFF;
-	idx += 32;
 
 	return;
 }

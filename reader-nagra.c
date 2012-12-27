@@ -1148,7 +1148,6 @@ static void nagra2_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[idx+5]    = 0x00;
 	memset(filter+idx+0+16, 0xFF, 6);
 	filter[1]++;
-	idx += 32;
 
 	return;
 }

@@ -380,7 +380,6 @@ static void conax_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	memcpy(filter+idx+4, rdr->hexserial + 2, 4);
 	memset(filter+idx+4+16, 0xFF, 4);
 	filter[1]++;
-	idx += 32;
 
 	return;
 }

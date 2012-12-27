@@ -669,7 +669,7 @@ static struct s_global_whitelist *global_whitelist_read_int(void) {
 			str1[0]=0;
 			cfg.global_whitelist_use_m = 1;
 		}
-		strncat(str1, ",", sizeof(str1));
+		strncat(str1, ",", sizeof(str1) - strlen(str1) - 1);
 		char *p = str1, *p2 = str1;
 		while (*p) {
 			if (*p == ',') {
