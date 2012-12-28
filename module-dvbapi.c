@@ -1094,7 +1094,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 		else if (cache==2)
 			add_prio = (prio*2)+1;
 
-		int32_t p_order = demux[demux_index].ECMpidcount+add_prio; // reverse order! makes sure that user defined p: values are in the right order
+		int32_t p_order = demux[demux_index].ECMpidcount; // reverse order! makes sure that user defined p: values are in the right order
 
 		highest_prio = (prio * demux[demux_index].ECMpidcount) + p_order;
 
@@ -1103,7 +1103,11 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 			if (p->type != 'p' && p->type != 'i')
 				continue;
 			for (n = 0; n < demux[demux_index].ECMpidcount; n++) {
-				if (demux[demux_index].ECMpids[n].status == -1)
+				if (!cache && demux[demux_index].ECMpids[n].status != 0)
+					continue;
+				else if (cache==1 && (demux[demux_index].ECMpids[n].status < 0 || demux[demux_index].ECMpids[n].status > 1))
+					continue;
+				else if (cache==2 && (demux[demux_index].ECMpids[n].status < 0 || demux[demux_index].ECMpids[n].status > 2))
 					continue;
 
 				er->caid = er->ocaid = demux[demux_index].ECMpids[n].CAID;
@@ -1146,6 +1150,8 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 								&& !is_network_reader(rdr)
 								&& rdr->card_status == CARD_INSERTED) { // cfg.preferlocalcards = 1 local reader
 							if (matching_reader(er, rdr, 0)) {
+								if (cache && !demux[demux_index].ECMpids[n].status)
+									demux[demux_index].ECMpids[n].status += add_prio;
 								demux[demux_index].ECMpids[n].status += (prio * demux[demux_index].ECMpidcount) + (p_order--); //priority*ECMpidcount should overrule network reader
 								cs_debug_mask(D_DVBAPI,"[PRIORITIZE PID %d] %04X:%06X:%04X (localrdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID,
 										demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, rdr->label, demux[demux_index].ECMpids[n].status);
@@ -1156,6 +1162,8 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 							}
 						} else { // cfg.preferlocalcards = 0 or cfg.preferlocalcards = 1 and no local reader
 							if (matching_reader(er, rdr, 0)) {
+								if (cache && !demux[demux_index].ECMpids[n].status)
+									demux[demux_index].ECMpids[n].status += add_prio;
 								demux[demux_index].ECMpids[n].status += prio + (p_order--);
 								cs_debug_mask(D_DVBAPI,"[PRIORITIZE PID %d] %04X:%06X:%04X (rdr: %s weight: %d)", n, demux[demux_index].ECMpids[n].CAID,
 									demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, rdr->label, demux[demux_index].ECMpids[n].status);
