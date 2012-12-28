@@ -150,7 +150,7 @@ static int32_t smart_write(struct s_reader *reader, unsigned char* buff, uint32_
     return total_written;
 }
 
-static bool smartreader_check_endpoint(libusb_device *usb_dev,uint8_t out_endpoint)
+static bool smartreader_check_endpoint(libusb_device *usb_dev,uint8_t out_endpoint,uint8_t in_endpoint)
 {
     struct libusb_device_descriptor usbdesc;
     struct libusb_config_descriptor *configDesc;
@@ -177,7 +177,7 @@ static bool smartreader_check_endpoint(libusb_device *usb_dev,uint8_t out_endpoi
             for(k=0; k<configDesc->interface[j].num_altsetting; k++)
                 for(l=0; l<configDesc->interface[j].altsetting[k].bNumEndpoints; l++) {
                     tmpEndpointAddress=configDesc->interface[j].altsetting[k].endpoint[l].bEndpointAddress;
-                    if((tmpEndpointAddress == 0x1) || (tmpEndpointAddress == out_endpoint))
+                    if((tmpEndpointAddress == in_endpoint) || (tmpEndpointAddress == out_endpoint))
                         nb_endpoint_ok++;
                 }
     }
@@ -186,7 +186,7 @@ static bool smartreader_check_endpoint(libusb_device *usb_dev,uint8_t out_endpoi
     return 1;
 }
 
-static struct libusb_device* find_smartreader(const char *busname,const char *dev_name, uint8_t out_endpoint)
+static struct libusb_device* find_smartreader(const char *busname,const char *dev_name, uint8_t out_endpoint, uint8_t in_endpoint)
 {
   int32_t dev_found = 0;
   libusb_device *dev;
@@ -209,7 +209,7 @@ static struct libusb_device* find_smartreader(const char *busname,const char *de
       return NULL;
     }
 
-    if (usbdesc.idVendor==0x0403 && usbdesc.idProduct==0x6001) {
+    if (usbdesc.idVendor==0x0403 && (usbdesc.idProduct==0x6001 || usbdesc.idProduct==0x6011)) {
             ret=libusb_open(dev,&usb_dev_handle);
             if (ret) {
                 cs_log ("coulnd't open device %03d:%03d", libusb_get_bus_number(dev), libusb_get_device_address(dev));
@@ -236,7 +236,7 @@ static struct libusb_device* find_smartreader(const char *busname,const char *de
                 if(libusb_get_string_descriptor_ascii(usb_dev_handle,usbdesc.iSerialNumber,(unsigned char *)iserialbuffer,sizeof(iserialbuffer))>0)  {
                     if(!strcmp(trim(iserialbuffer),dev_name)) {
                         cs_log("Found reader with serial %s at %03d:%03d",dev_name,libusb_get_bus_number(dev),libusb_get_device_address(dev));
-                        if(smartreader_check_endpoint(dev,out_endpoint))
+                        if(smartreader_check_endpoint(dev,out_endpoint,in_endpoint))
                             dev_found=1;
                     }
                 }
@@ -244,7 +244,7 @@ static struct libusb_device* find_smartreader(const char *busname,const char *de
             else if(libusb_get_bus_number(dev)==atoi(busname) && libusb_get_device_address(dev)==atoi(dev_name)) {
                 cs_debug_mask(D_DEVICE, "SR: Checking FTDI device: %03d on bus %03d",libusb_get_device_address(dev),libusb_get_bus_number(dev));
                 // check for smargo endpoints.
-                if(smartreader_check_endpoint(dev,out_endpoint))
+                if(smartreader_check_endpoint(dev,out_endpoint,in_endpoint))
                     dev_found=1;
             }
             libusb_close(usb_dev_handle);
@@ -264,7 +264,7 @@ static struct libusb_device* find_smartreader(const char *busname,const char *de
     return dev;
 }
 
-void smartreader_init(struct s_reader *reader,uint8_t out_endpoint)
+void smartreader_init(struct s_reader *reader,uint8_t out_endpoint,uint8_t in_endpoint)
 {
     reader->sr_config->usb_dev = NULL;
     reader->sr_config->usb_dev_handle=NULL;
@@ -280,7 +280,7 @@ void smartreader_init(struct s_reader *reader,uint8_t out_endpoint)
 
     reader->sr_config->interface = INTERFACE_ANY;
     reader->sr_config->index = INTERFACE_A;
-    reader->sr_config->in_ep = 0x02;
+    reader->sr_config->in_ep = in_endpoint;
     reader->sr_config->out_ep = out_endpoint;
 }
 
@@ -1064,6 +1064,7 @@ static void smart_fastpoll(struct s_reader *reader, int32_t on)
 static int32_t SR_Init (struct s_reader *reader)
 {
     uint8_t out_endpoint;
+	uint8_t in_endpoint;
     int32_t ret;
     char device[128];
     char *busname, *dev, *search = ":", *saveptr1 = NULL;
@@ -1096,11 +1097,30 @@ static int32_t SR_Init (struct s_reader *reader)
     else
         out_endpoint = 0x82;
 
-    rdr_log(reader, "Using 0x%2X as endpoint for smartreader hardware detection", out_endpoint);
+     // ToDo in endpoint hard coded, should be configurable
+     switch (out_endpoint) {
+     case 0x82:	// Single smartreader
+ 	in_endpoint = 0x1;
+ 	break;
+     case 0x81:	// Triple reader 1st
+ 	in_endpoint = 0x2;
+ 	break;
+     case 0x83:	// Triple reader 2nd
+ 	in_endpoint = 0x4;
+ 	break;
+     case 0x85:	// Triple reader 3rd
+ 	in_endpoint = 0x6;
+ 	break;
+     default:	// previous default set in smartreader_init()
+ 	in_endpoint = 0x2;
+ 	break;
+     }
 
-    smartreader_init(reader,out_endpoint);
+    rdr_log(reader, "Using 0x%02X/0x%02X as endpoint for smartreader hardware detection", out_endpoint, in_endpoint);
 
-    reader->sr_config->usb_dev=find_smartreader(busname,dev,out_endpoint);
+    smartreader_init(reader,out_endpoint,in_endpoint);
+
+    reader->sr_config->usb_dev=find_smartreader(busname,dev,out_endpoint,in_endpoint);
     if (!reader->sr_config->usb_dev) {
         --init_count;
         if (!init_count)
@@ -1113,17 +1133,17 @@ static int32_t SR_Init (struct s_reader *reader)
     //compared to a real FT232 device, so change them here,
     //also a good way to compare a real FT232 with a smartreader
     //if you enumarate usb devices
-    reader->sr_config->in_ep = 0x1;
-    reader->sr_config->out_ep=out_endpoint;
+    reader->sr_config->in_ep = in_endpoint;
+    reader->sr_config->out_ep = out_endpoint;
 
-    rdr_debug_mask(reader, D_DEVICE, "SR: Opening smartreader device %s on bus %s",dev,busname);
+    rdr_debug_mask(reader, D_DEVICE, "SR: Opening smartreader device %s on bus %s endpoint in 0x%02X out 0x%02X",dev,busname,in_endpoint,out_endpoint);
 
     if ((ret=smartreader_usb_open_dev(reader))) {
         --init_count;
         if (!init_count)
             libusb_exit(NULL);
         cs_writeunlock(&sr_lock);
-        rdr_log(reader, "unable to open smartreader device %s in bus %s (ret=%d)", dev,busname,ret);
+        rdr_log(reader, "unable to open smartreader device %s in bus %s endpoint in 0x%02X out 0x%02X (ret=%d)\n", dev,busname,in_endpoint,out_endpoint,ret);
         return ERROR;
     }
 
