@@ -2147,6 +2147,7 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 }
 
 static void webif_add_client_proto(struct templatevars *vars, struct s_client *cl, const char *proto) {
+	if(!cl) return;
 #ifdef MODULE_NEWCAMD
 	if (streq(proto, "newcamd") && cl->typ == 'c') {
 		tpl_printf(vars, TPLADDONCE, "CLIENTPROTO","%s (%s)", proto, newcamd_get_client_name(cl->ncd_client_id));
@@ -2163,7 +2164,6 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 		}
 	}
 #endif
-	(void)cl; // Prevent warning when NEWCAMD and CCCAM are both disabled
 	tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", (char *)proto);
 	tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
 }
@@ -2329,7 +2329,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		total_users++;
 		isactive=1;
 
-		status = "offline"; lastchan = "&nbsp;", expired = ""; classname = "offline";
+		status = "offline"; expired = ""; classname = "offline";
 		isec = 0;
 		chsec = 0;
 

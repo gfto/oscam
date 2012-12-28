@@ -363,7 +363,7 @@ int32_t init_srvid(void)
 			continue;
 
 		srvid->data=tmpptr;
-		memcpy(tmpptr, tmptxt, len);
+		if(len > 0) memcpy(tmpptr, tmptxt, len);
 
 		for (i=0;i<4;i++) {
 			if (searchptr[i]) {

@@ -825,7 +825,7 @@ void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uin
 
 	} else {
 #ifdef TOUCH
-		char* res_tpl = strcmp(subdir, TOUCH_SUBDIR)
+		char* res_tpl = !subdir || strcmp(subdir, TOUCH_SUBDIR)
 			? (filen == 1 ? CSS : JSCRIPT)
 			: (filen == 1 ? TOUCH_CSS : TOUCH_JSCRIPT);
 		if (strlen(res_tpl) > 0) result = res_tpl;

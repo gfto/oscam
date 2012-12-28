@@ -201,7 +201,6 @@ static void refresh_lcd_file(void) {
 			fclose(fpsave);
 		}
 
-		idx = 0;
 		cs_sleepms(cfg.lcd_write_intervall * 1000);
 		cnt++;
 

@@ -127,6 +127,7 @@ static void doIp(unsigned char data[])
   unsigned char buf[8];
   unsigned char *p;
   unsigned char i = 8;
+  get_random_bytes(buf, sizeof(buf));
 
   for(i=0; i<8; i++)
   {

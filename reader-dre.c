@@ -390,10 +390,10 @@ void dre_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[1]++;
 	idx += 32;
 
-	filter[70]=EMM_UNIQUE;
-	filter[71]=0;
-	filter[72+0]    = 0x87;
-	filter[72+0+16] = 0xFF;
+	filter[idx++]=EMM_UNIQUE;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x87;
+	filter[idx+0+16] = 0xFF;
 	//FIXME: No filter for hexserial
 	filter[1]++;
 
