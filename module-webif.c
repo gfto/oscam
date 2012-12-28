@@ -2993,10 +2993,10 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 					tpl_printf(vars, TPLADD, "CLIENTTYPE", "%c", cl->typ);
 				}
 				if(cl->typ == 'c' || cl->typ == 'r' || cl->typ == 'p'){
-					if(cl->lastecm >= cl->login && cl->lastecm >= cl->logout) isec = now - cl->lastecm;
-					else if(cl->logout >= cl->login) isec = now - cl->logout;
+					if(cl->lastecm >= cl->login && cl->lastecm >= cl->last) isec = now - cl->lastecm;
+					else if(cl->last >= cl->login) isec = now - cl->last;
 					else isec = now - cl->login;
-				} else isec = now - cl->last;
+				} else isec = now - cl->logout;
 
 				shown = 1;
 				lsec = now - cl->login;
