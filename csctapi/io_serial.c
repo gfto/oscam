@@ -615,17 +615,34 @@ static int32_t IO_Serial_Bitrate(int32_t bitrate)
 
 bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_us, uint32_t timeout_us)
 {
+#ifdef HAVE_POLL
+   struct pollfd ufds;
+#else
    fd_set rfds;
    fd_set erfds;
    struct timeval tv, starttime, timenow;
-   
-   int32_t select_ret;
+#endif
+   int32_t ret_val;
    int32_t in_fd;
+#ifndef HAVE_POLL
    uint32_t timegone;
+#endif
    
    if (delay_us > 0) cs_sleepus (delay_us); // wait in us
    in_fd=reader->handle;
-   
+#ifdef HAVE_POLL
+   ufds.fd = in_fd;
+   ufds.events = POLLIN;
+   ufds.revents = 0x0000;
+
+   ret_val = poll(&ufds, 1, timeout_us / 1000);
+   if (ret_val != 1)
+      return ERROR;
+   if (((ufds.revents) & POLLIN) == POLLIN)
+      return OK;
+   else
+      return ERROR;
+#else
    FD_ZERO(&rfds);
    FD_SET(in_fd, &rfds);
    
@@ -635,8 +652,8 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_us, uint32_t
    tv.tv_usec = (timeout_us % 1000000);
    gettimeofday(&starttime, NULL);
 	while (1) {
-		select_ret = select(in_fd+1, &rfds, NULL,  &erfds, &tv);
-		if (select_ret==-1) {
+		ret_val = select(in_fd+1, &rfds, NULL,  &erfds, &tv);
+		if (ret_val==-1) {
 			if (errno==EINTR) continue; //try again in case of Interrupted system call
 			if (errno == EAGAIN) continue; //EAGAIN needs select procedure again
 			else {
@@ -645,7 +662,7 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_us, uint32_t
 				return ERROR;
 			}
 		}
-		if (select_ret==0) return ERROR;
+		if (ret_val==0) return ERROR;
 		break;
    	}
     gettimeofday(&timenow, NULL);
@@ -663,16 +680,23 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_us, uint32_t
 		return OK;
 	else
 		return ERROR;
+#endif
 }
 
 static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, uint32_t timeout_us)
 {
+#ifdef HAVE_POLL
+   struct pollfd ufds;
+#else
    fd_set wfds;
    fd_set ewfds;
    struct timeval tv, starttime, timenow;
-   int32_t select_ret;
+#endif
+   int32_t ret_val;
    int32_t out_fd;
+#ifndef HAVE_POLL
    uint32_t timegone;
+#endif
 
 #if !defined(WITH_COOLAPI) && !defined(WITH_AZBOX) 
    if(reader->typ == R_INTERNAL) return OK; // needed for internal readers, otherwise error!
@@ -681,6 +705,19 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, 
       cs_sleepus (delay_us); // wait in us
    out_fd=reader->handle;
     
+#ifdef HAVE_POLL
+   ufds.fd = out_fd;
+   ufds.events = POLLOUT;
+   ufds.revents = 0x0000;
+    
+   ret_val = poll(&ufds, 1, timeout_us / 1000);
+   if (ret_val != 1)
+	return ERROR;
+   if (((ufds.revents) & POLLOUT) == POLLOUT)
+	return OK;
+   else
+	return ERROR;
+#else
    FD_ZERO(&wfds);
    FD_SET(out_fd, &wfds);
    
@@ -691,8 +728,8 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, 
    tv.tv_usec = (timeout_us % 1000000);
    gettimeofday(&starttime, NULL);
    while (1) {
-		select_ret = select(out_fd+1, NULL, &wfds, &ewfds, &tv);
-		if (select_ret==-1) {
+		ret_val = select(out_fd+1, NULL, &wfds, &ewfds, &tv);
+		if (ret_val==-1) {
 			if (errno==EINTR) continue; //try again in case of Interrupted system call
 			if (errno == EAGAIN) continue; //EAGAIN needs select procedure again
 			else {
@@ -701,7 +738,7 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, 
 				return ERROR;
 			}
 		}
-		if (select_ret==0) return ERROR;
+		if (ret_val==0) return ERROR;
 		break;
    }
    gettimeofday(&timenow, NULL);
@@ -721,6 +758,7 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, 
 		 return OK;
 	 else
 		 return ERROR;
+#endif
 }
 
 bool IO_Serial_InitPnP (struct s_reader * reader)
