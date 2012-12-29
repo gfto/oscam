@@ -584,12 +584,15 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len) {
 	return;
 }
 
+static pthread_mutex_t lockindex = PTHREAD_MUTEX_INITIALIZER;
 int32_t dvbapi_get_descindex(void) {
+	pthread_mutex_lock(&lockindex); // to avoid race when readers become responsive!
 	int32_t i,j,idx=1,fail=1;
 	while (fail) {
 		fail=0;
+		cs_sleepus(0);
 		for (i=0;i<MAX_DEMUX;i++) {
-			for (j=0;j<demux[i].ECMpidcount;j++) {
+			for (j=0;j<demux[i].ECMpidcount;j++) { 
 				if (demux[i].ECMpids[j].index==idx) {
 					idx++;
 					fail=1;
@@ -598,6 +601,7 @@ int32_t dvbapi_get_descindex(void) {
 			}
 		}
 	}
+	pthread_mutex_unlock(&lockindex); // and release it!
 	return idx;
 }
 
@@ -697,16 +701,20 @@ void dvbapi_stop_descrambling(int32_t demux_id) {
 }
 
 void dvbapi_start_descrambling(int32_t demux_id) {
-	int32_t j,k;
+	int32_t j,k,n;
 	int32_t streamcount=0;
 
 	int32_t last_pidindex = demux[demux_id].pidindex;
   	demux[demux_id].pidindex = demux[demux_id].curindex;
-
+	
+	for (n=0; n<demux[demux_id].ECMpidcount; n++) { // cleanout old indexes of pids that have now status ignore (=no decoding possible!) 
+		if (demux[demux_id].ECMpids[n].status == -1) demux[demux_id].ECMpids[n].index = 0; // reset index!
+	}
 	for (j=0; j<demux[demux_id].ECMpidcount; j++) {
 		if (demux[demux_id].curindex == j || (demux[demux_id].ECMpids[demux[demux_id].curindex].CAID == demux[demux_id].ECMpids[j].CAID
 				&& demux[demux_id].ECMpids[demux[demux_id].curindex].PROVID == demux[demux_id].ECMpids[j].PROVID
-				&& demux[demux_id].ECMpids[j].PROVID > 0 && demux[demux_id].ECMpids[demux[demux_id].curindex].ECM_PID == demux[demux_id].ECMpids[j].ECM_PID)) {
+				&& demux[demux_id].ECMpids[j].PROVID > 0 
+				&& demux[demux_id].ECMpids[demux[demux_id].curindex].ECM_PID == demux[demux_id].ECMpids[j].ECM_PID)) {
 
 			if (demux[demux_id].curindex != j) {
 				if (demux[demux_id].ECMpids[j].status < 0 || !demux[demux_id].ECMpids[demux[demux_id].curindex].streams)
@@ -715,7 +723,7 @@ void dvbapi_start_descrambling(int32_t demux_id) {
 				dvbapi_start_filter(demux_id, j, demux[demux_id].ECMpids[j].ECM_PID, demux[demux_id].ECMpids[j].CAID, 0x80, 0xF0, 3000, TYPE_ECM, 0);
 			}
 
-			if (!demux[demux_id].ECMpids[j].index)
+			if (!demux[demux_id].ECMpids[j].index && demux[demux_id].ECMpids[n].status != -1) // status of pid = ignore -> skip!
 				demux[demux_id].ECMpids[j].index=dvbapi_get_descindex();
 
 			if (!demux[demux_id].ECMpids[j].checked)
@@ -1398,8 +1406,9 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 		return;
 	}
 
-	if (cfg.dvbapi_requestmode != 1)
+	if (cfg.dvbapi_requestmode != 1){
 		dvbapi_stop_filter(demux_id, TYPE_ECM);
+    }
 
 	cs_debug_mask(D_DVBAPI,"[TRY PID %d] CAID: %04X PROVID: %06X CA_PID: %04X", num, demux[demux_id].ECMpids[num].CAID, demux[demux_id].ECMpids[num].PROVID, demux[demux_id].ECMpids[num].ECM_PID);
 #if defined WITH_AZBOX || defined WITH_MCA
@@ -2229,9 +2238,14 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t idx) {
 	memset(&ca_descr,0,sizeof(ca_descr));
 
 	for (n=0;n<2;n++) {
-		if (memcmp(cw+(n*8),demux[demux_id].lastcw[n],8)!=0 && memcmp(cw+(n*8),nullcw,8)!=0) {
+		char lastcw[9*3];
+		char newcw[9*3];
+        cs_hexdump(0, demux[demux_id].lastcw[n], 8, lastcw, sizeof(lastcw));
+		cs_hexdump(0, cw+(n*8), 8, newcw, sizeof(newcw));
+		if (memcmp(cw+(n*8),demux[demux_id].lastcw[n],8)!=0 && memcmp(cw+(n*8),nullcw,8)!=0) { // check if already delivered and new cw part is valid!
 			ca_descr.index = idx;
 			ca_descr.parity = n;
+			cs_debug_mask(D_DVBAPI,"writing %s part (%s) of controlword, replacing expired (%s)",(n == 1?"odd":"even"), newcw, lastcw);
 			memcpy(demux[demux_id].lastcw[n],cw+(n*8),8);
 			memcpy(ca_descr.cw,cw+(n*8),8);
 #ifdef WITH_COOLAPI
@@ -2378,7 +2392,8 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				} else {
 					struct s_dvbapi_priority *forceentry=dvbapi_check_prio_match(i, demux[i].curindex, 'p');
 					if (!forceentry) {
-						demux[i].curindex = 0;
+						demux[i].curindex = 0; 
+						demux[i].ECMpids[(demux[i].pidindex)].index = 0; // reset index since ecm request failed
 						demux[i].pidindex = -1;
 						dvbapi_try_next_caid(i);
 					}
