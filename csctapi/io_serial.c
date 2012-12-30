@@ -610,45 +610,69 @@ static int32_t IO_Serial_Bitrate(int32_t bitrate)
 
 bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_us, uint32_t timeout_us)
 {
-   struct pollfd ufds;
-   int32_t ret_val;
-   int32_t in_fd;
-   if (delay_us > 0) cs_sleepus (delay_us); // wait in us
-   in_fd=reader->handle;
-   ufds.fd = in_fd;
-   ufds.events = POLLIN;
-   ufds.revents = 0x0000;
-   ret_val = poll(&ufds, 1, timeout_us/1000);
-   if (ret_val != 1)
-      return ERROR;
-   if (((ufds.revents) & POLLIN) == POLLIN)
-      return OK;
-   else
-      return ERROR;
+	struct pollfd ufds;
+	int32_t ret_val;
+	int32_t in_fd;
+
+	if (delay_us > 0)
+		cs_sleepus (delay_us); // wait in us
+	in_fd = reader->handle;
+
+	ufds.fd = in_fd;
+	ufds.events = POLLIN;
+	ufds.revents = 0x0000;
+
+	while (1){
+		ret_val = poll(&ufds, 1, timeout_us / 1000);
+		switch (ret_val){
+			case -1:
+				if (errno == EINTR || errno == EAGAIN) continue;
+				rdr_log(reader, "ERROR: %s: timeout=%d us (errno=%d %s)",
+				__func__, timeout_us, errno, strerror(errno));
+				return ERROR;
+			default:
+				if (((ufds.revents) & POLLIN) == POLLIN)
+					return OK;
+				else
+					return ERROR;
+		}
+	}
 }
 
 static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, uint32_t timeout_us)
 {
-   struct pollfd ufds;
-   int32_t ret_val;
-   int32_t out_fd;
+	struct pollfd ufds;
+	int32_t ret_val;
+	int32_t out_fd;
 
 #if !defined(WITH_COOLAPI) && !defined(WITH_AZBOX) 
-   if(reader->typ == R_INTERNAL) return OK; // needed for internal readers, otherwise error!
+	if(reader->typ == R_INTERNAL) return OK; // needed for internal readers, otherwise error!
 #endif
-   if (delay_us > 0)
-      cs_sleepus (delay_us); // wait in us
-   out_fd=reader->handle;
-   ufds.fd = out_fd;
-   ufds.events = POLLOUT;
-   ufds.revents = 0x0000;
-   ret_val = poll(&ufds, 1, timeout_us/1000);
-   if (ret_val != 1)
-	return ERROR;
-   if (((ufds.revents) & POLLOUT) == POLLOUT)
-	return OK;
-   else
-	return ERROR;
+	if (delay_us > 0)
+		cs_sleepus (delay_us); // wait in us
+	out_fd = reader->handle;
+
+	ufds.fd = out_fd;
+	ufds.events = POLLOUT;
+	ufds.revents = 0x0000;
+
+	while (1){
+		ret_val = poll(&ufds, 1, timeout_us / 1000);
+		switch (ret_val){
+			case 0:
+				return ERROR;
+			case -1:
+				if (errno == EINTR || errno == EAGAIN) continue;
+				rdr_log(reader, "ERROR: %s: timeout=%d us (errno=%d %s)",
+				__func__, timeout_us, errno, strerror(errno));
+				return ERROR;
+			default:
+				if (((ufds.revents) & POLLOUT) == POLLOUT)
+					return OK;
+				else
+					return ERROR;
+		}
+    }
 }
 
 bool IO_Serial_InitPnP (struct s_reader * reader)
