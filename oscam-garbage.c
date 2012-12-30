@@ -74,7 +74,6 @@ void add_garbage(void *data) {
 }
 
 void garbage_collector(void) {
-        time_t now;
         int8_t i;
         struct cs_garbage *garbage, *next, *prev;
 
