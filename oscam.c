@@ -3226,7 +3226,7 @@ void * work_thread(void *ptr) {
 			now = time(NULL);
 			time_t diff = (time_t)(cfg.ctimeout/1000)+1;
 			if (data != &tmp_data && data->time < now-diff) {
-				cs_log("dropping client data for %s time %ds", username(cl), (int32_t)(now-data->time));
+				cs_debug_mask(D_TRACE, "dropping client data for %s time %ds", username(cl), (int32_t)(now-data->time));
 				free_data(data);
 				data = NULL;
 				continue;

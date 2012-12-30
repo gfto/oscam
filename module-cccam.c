@@ -2084,7 +2084,7 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 		return;
 	uint16_t size = buf[12] | (buf[13] << 8);
 	if (size != sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw)) {
-		cs_log("%s received wrong cash-push format! data ignored!", username(cl));
+		cs_debug_mask(D_CACHEEX,"%s received wrong cache-push format! data ignored!", username(cl));
 		return;
 	}
 	if (!(er = get_ecmtask()))
