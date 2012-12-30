@@ -357,6 +357,8 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 		close(demux[demux_index].demux_fd[num].fd);
 #endif
 #endif
+		if (demux[demux_index].demux_fd[num].type == TYPE_ECM)
+			demux[demux_index].ECMpids[demux[demux_index].demux_fd[num].pidindex].index=0; //filter stopped, reset index
 		demux[demux_index].demux_fd[num].fd=0;
 	}
 	return ret;
@@ -723,7 +725,7 @@ void dvbapi_start_descrambling(int32_t demux_id) {
 				dvbapi_start_filter(demux_id, j, demux[demux_id].ECMpids[j].ECM_PID, demux[demux_id].ECMpids[j].CAID, 0x80, 0xF0, 3000, TYPE_ECM, 0);
 			}
 
-			if (!demux[demux_id].ECMpids[j].index && demux[demux_id].ECMpids[n].status != -1) // status of pid = ignore -> skip!
+			if (!demux[demux_id].ECMpids[j].index && demux[demux_id].ECMpids[j].status != -1) // status of pid = ignore -> skip!
 				demux[demux_id].ECMpids[j].index=dvbapi_get_descindex();
 
 			if (!demux[demux_id].ECMpids[j].checked)
@@ -1113,9 +1115,9 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 			for (n = 0; n < demux[demux_index].ECMpidcount; n++) {
 				if (!cache && demux[demux_index].ECMpids[n].status != 0)
 					continue;
-				else if (cache==1 && (demux[demux_index].ECMpids[n].status < 0 || demux[demux_index].ECMpids[n].status > 1))
+				else if (cache==1 && (demux[demux_index].ECMpids[n].status < 0 || demux[demux_index].ECMpids[n].status > prio))
 					continue;
-				else if (cache==2 && (demux[demux_index].ECMpids[n].status < 0 || demux[demux_index].ECMpids[n].status > 2))
+				else if (cache==2 && (demux[demux_index].ECMpids[n].status < 0 || demux[demux_index].ECMpids[n].status > prio*2))
 					continue;
 
 				er->caid = er->ocaid = demux[demux_index].ECMpids[n].CAID;
@@ -2381,19 +2383,14 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 						return;
 
 					struct s_dvbapi_priority *forceentry=dvbapi_check_prio_match(i, demux[i].curindex, 'p');
-					if (forceentry) {
-						if (forceentry->force>0)
+					if (forceentry && forceentry->force)
 							dvbapi_start_descrambling(i);
-						else
-							dvbapi_try_next_caid(i);
-					} else {
+					else
 						dvbapi_try_next_caid(i);
-					}
 				} else {
 					struct s_dvbapi_priority *forceentry=dvbapi_check_prio_match(i, demux[i].curindex, 'p');
-					if (!forceentry) {
+					if (!forceentry || (forceentry && !forceentry->force)) {
 						demux[i].curindex = 0; 
-						demux[i].ECMpids[(demux[i].pidindex)].index = 0; // reset index since ecm request failed
 						demux[i].pidindex = -1;
 						dvbapi_try_next_caid(i);
 					}
