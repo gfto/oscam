@@ -82,8 +82,7 @@ void garbage_collector(void) {
 
                 for(i = 0; i < HASH_BUCKETS; ++i){
 	                cs_writelock(&garbage_lock[i]);
-	                now = time(NULL);
-					time_t deltime = time((time_t)0) - (2*cfg.ctimeout/1000 + 1); //clienttimeout +1 second
+	                time_t deltime = time((time_t)0) - (2*cfg.ctimeout/1000 + 1); //clienttimeout +1 second
 	                for(garbage = garbage_first[i], prev = NULL; garbage; prev = garbage, garbage = garbage->next) {
 	                	if (deltime < garbage->time) {
 	                		continue;
