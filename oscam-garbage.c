@@ -31,11 +31,24 @@ void add_garbage(void *data) {
 		return;
 
 	if (!garbage_collector_active || garbage_debug == 1) {
+		cs_sleepms(1);
 		free(data);
 		return;
 	}
 
 	int32_t bucket = (uintptr_t)data/16 % HASH_BUCKETS;
+	struct cs_garbage *garbage;
+	if (!cs_malloc(&garbage, sizeof(struct cs_garbage))){
+     cs_sleepms(1);
+     free(data);
+     return;
+  }
+  garbage->time = time(NULL);
+	garbage->data = data;
+#ifdef WITH_DEBUG
+	garbage->file = file;
+	garbage->line = line;
+#endif
 	cs_writelock(&garbage_lock[bucket]);
 
 #ifdef WITH_DEBUG
@@ -47,6 +60,7 @@ void add_garbage(void *data) {
 				cs_log("Current garbage addition: %s, line %d.", file, line);
 				cs_log("Original garbage addition: %s, line %d.", garbagecheck->file, garbagecheck->line);
 				cs_writeunlock(&garbage_lock[bucket]);
+				free(garbage);
 				return;
 			}
 			garbagecheck = garbagecheck->next;
@@ -54,22 +68,8 @@ void add_garbage(void *data) {
 	}
 #endif
 
-	struct cs_garbage *garbage;
-	if (!cs_malloc(&garbage, sizeof(struct cs_garbage)))
-	{
-     free(data);
-     cs_writeunlock(&garbage_lock[bucket]);
-     return;
-    }
-	garbage->time = time(NULL);
-	garbage->data = data;
 	garbage->next = garbage_first[bucket];
-	#ifdef WITH_DEBUG
-	garbage->file = file;
-	garbage->line = line;
-	#endif
 	garbage_first[bucket] = garbage;
-
 	cs_writeunlock(&garbage_lock[bucket]);
 }
 
