@@ -370,7 +370,7 @@ static void camd35_process_ecm(uchar *buf)
 	er->srvid = b2i(2, buf+ 8);
 	er->caid = b2i(2, buf+10);
 	er->prid = b2i(4, buf+12);
-	er->pid  = b2i(2, buf+16);
+	//er->pid  = b2i(2, buf+16); value is ecmtask idx see camd35_recv_chk 941
 	memcpy(er->ecm, buf + 20, er->ecmlen);
 	get_cw(cur_client(), er);
 }
@@ -822,8 +822,6 @@ static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *
 	i2b_buf(2, er->srvid, buf + 8);
 	i2b_buf(2, er->caid, buf + 10);
 	i2b_buf(4, er->prid, buf + 12);
-	//  i2b_buf(2, er->pid,, buf + 16);
-	//  memcpy(buf+16, &er->idx , 2);
 	i2b_buf(2, er->idx, buf + 16);
 	buf[18] = 0xff;
 	buf[19] = 0xff;
