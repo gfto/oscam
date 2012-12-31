@@ -6,6 +6,7 @@
 #include "oscam-conf-chk.h"
 #include "oscam-files.h"
 #include "oscam-garbage.h"
+#include "oscam-lock.h"
 #include "oscam-string.h"
 #include "oscam-time.h"
 
@@ -437,6 +438,7 @@ int32_t init_srvid(void)
 		cs_log("oscam.srvid loading failed, old format");
 	}
 
+	cs_writelock(&config_lock);
 	//this allows reloading of srvids, so cleanup of old data is needed:
 	memcpy(last_srvid, cfg.srvid, sizeof(last_srvid));	//old data
 	memcpy(cfg.srvid, new_cfg_srvid, sizeof(last_srvid));	//assign after loading, so everything is in memory
@@ -454,6 +456,7 @@ int32_t init_srvid(void)
 			last_srvid[i] = ptr;
 		}
 	}
+	cs_writeunlock(&config_lock);
 
 	return(0);
 }
@@ -520,7 +523,7 @@ int32_t init_tierid(void)
 	else{
 		cs_log("%s loading failed", cs_trid);
 	}
-
+	cs_writelock(&config_lock);
 	//reload function:
 	tierid = cfg.tierid;
 	cfg.tierid = new_cfg_tierid;
@@ -530,6 +533,7 @@ int32_t init_tierid(void)
 		free(tierid);
 		tierid = ptr;
 	}
+	cs_writeunlock(&config_lock);
 
 	return(0);
 }

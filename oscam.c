@@ -60,6 +60,7 @@ uint16_t cs_waittime = 60;
 char  cs_tmpdir[200]={0x00};
 pid_t server_pid=0;
 CS_MUTEX_LOCK system_lock;
+CS_MUTEX_LOCK config_lock;
 CS_MUTEX_LOCK gethostbyname_lock;
 CS_MUTEX_LOCK clientlist_lock;
 CS_MUTEX_LOCK readerlist_lock;
@@ -107,7 +108,7 @@ static void show_usage(void)
 "| |_| |___) | |_| (_| | | | | | |\n"
 " \\___/|____/ \\___\\__,_|_| |_| |_|\n\n");
 	printf("OSCam cardserver v%s, build #%s (%s)\n", CS_VERSION, CS_SVN_VERSION, CS_TARGET);
-	printf("Copyright (C) 2009-2012 OSCam developers.\n");
+	printf("Copyright (C) 2009-2013 OSCam developers.\n");
 	printf("This program is distributed under GPLv3.\n");
 	printf("OSCam is based on Streamboard mp-cardserver v0.9d written by dukat\n");
 	printf("Visit http://www.streamboard.tv/oscam/ for more details.\n\n");
@@ -441,9 +442,10 @@ int32_t chk_bcaid(ECM_REQUEST *er, CAIDTAB *ctab)
 
 void cs_accounts_chk(void)
 {
-  struct s_auth *old_accounts = cfg.account;
+	struct s_auth *account1,*account2;
   struct s_auth *new_accounts = init_userdb();
-  struct s_auth *account1,*account2;
+  cs_writelock(&config_lock);
+  struct s_auth *old_accounts = cfg.account;  
   for (account1=cfg.account; account1; account1=account1->next) {
     for (account2=new_accounts; account2; account2=account2->next) {
       if (!strcmp(account1->usr, account2->usr)) {
@@ -464,6 +466,7 @@ void cs_accounts_chk(void)
   cfg.account = new_accounts;
   init_free_userdb(old_accounts);
   ac_clear();
+  cs_writeunlock(&config_lock);
 }
 
 static void remove_ecm_from_reader(ECM_REQUEST *ecm) {
@@ -4140,6 +4143,7 @@ int32_t main (int32_t argc, char *argv[])
   init_signal_pre(); // because log could cause SIGPIPE errors, init a signal handler first
   init_first_client();
   cs_lock_create(&system_lock, 5, "system_lock");
+  cs_lock_create(&config_lock, 10, "config_lock");
   cs_lock_create(&gethostbyname_lock, 10, "gethostbyname_lock");
   cs_lock_create(&clientlist_lock, 5, "clientlist_lock");
   cs_lock_create(&readerlist_lock, 5, "readerlist_lock");
