@@ -33,7 +33,8 @@ static int8_t *tplchksum;
 /* Adds a name->value-mapping or appends to it. You will get a reference back which you may freely
    use (but you should not call free/realloc on this!)*/
 char *tpl_addVar(struct templatevars *vars, uint8_t addmode, char *name, char *value){
-	if(name == NULL || value == NULL) return "";
+	if(name == NULL) return "";
+	if(value == NULL) value = "";
 	int32_t i;
 	char *tmp = NULL, *result = NULL;
 	for(i = (*vars).varscnt-1; i >= 0; --i){
@@ -882,7 +883,8 @@ void urldecode(char *s){
 
 /* Encode values in a http url. Do not call free() or realloc on the returned reference or you will get memory corruption! */
 char *urlencode(struct templatevars *vars, char *str){
-	char buf[strlen(str) * 3 + 1];
+	char *buf;
+	if (!cs_malloc(&buf, strlen(str) * 3 + 1)) return "";
 	char *pstr = str, *pbuf = buf;
 	while (*pstr) {
 		if (isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~') *pbuf++ = *pstr;
@@ -896,9 +898,8 @@ char *urlencode(struct templatevars *vars, char *str){
 	}
 	*pbuf = '\0';
 	/* Allocate the needed memory size and store it in the templatevars */
-	if (!cs_malloc(&pbuf, strlen(buf) + 1)) return "";
-	memcpy(pbuf, buf, strlen(buf) + 1);
-	return tpl_addTmp(vars, pbuf);
+	if (!cs_realloc(&buf, strlen(buf) + 1)) return "";
+	return tpl_addTmp(vars, buf);
 }
 
 /* XML-Escapes a char array. The returned reference will be automatically cleaned through the templatevars-mechanism tpl_clear().
@@ -906,9 +907,10 @@ char *urlencode(struct templatevars *vars, char *str){
 char *xml_encode(struct templatevars *vars, char *chartoencode) {
 	if (chartoencode == NULL) return "";
 	int32_t i, pos = 0, len = strlen(chartoencode);
-	char *result;
+	char *encoded;
+	char buffer[7];
 	/* In worst case, every character could get converted to 6 chars (we only support ASCII, for Unicode it would be 7)*/
-	char encoded[len * 6 + 1], buffer[7];
+	if (!cs_malloc(&encoded, len * 6 + 1)) return "";	
 	for (i = 0; i < len; ++i){
 		switch(chartoencode[i]) {
 			case '&': memcpy(encoded + pos, "&amp;", 5); pos+=5; break;
@@ -931,11 +933,10 @@ char *xml_encode(struct templatevars *vars, char *chartoencode) {
 
 		}
 	}
-	/* Allocate the needed memory size and store it in the templatevars */
-	if (!cs_malloc(&result, pos + 1)) return "";
-	memcpy(result, encoded, pos);
-	result[pos] = '\0';
-	return tpl_addTmp(vars, result);
+	/* Reduce to the really needed memory size and store it in the templatevars */
+	if (!cs_realloc(&encoded, pos + 1)) return "";
+	encoded[pos] = '\0';
+	return tpl_addTmp(vars, encoded);
 }
 
 /* Prepares the base64 decoding array */
