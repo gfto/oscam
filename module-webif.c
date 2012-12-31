@@ -3107,7 +3107,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 				tpl_addVar(vars, TPLADD, "CLIENTLASTRESPONSETIMEHIST", value);
 				free_mk_t(value);
 
-				if (isec < cfg.hideclient_to || cfg.hideclient_to == 0) {
+				if ((isec < cfg.hideclient_to || cfg.hideclient_to == 0) && (cl->typ == 'c' || cl->typ == 'p' || cl->typ == 'r')) {
 					if (((cl->typ!='r') || (cl->typ!='p')) && (cl->lastreader[0])) {
 						tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "by %s", cl->lastreader);
 						tpl_printf(vars, TPLAPPEND, "CLIENTLBVALUE", "&nbsp;(%dms)", cl->cwlastresptime);
