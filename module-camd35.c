@@ -66,6 +66,12 @@ static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen)
 			if (status == -1) cs_disconnect_client(cl);
 		}
 	}
+	if (status != -1){
+		if(cl->reader){
+			cl->reader->last_s = time((time_t *) 0);
+		}
+		cl->last = time((time_t *) 0);
+	}
 	return status;
 }
 
@@ -162,8 +168,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 		cs_ddump_mask(client->typ == 'c'?D_CLIENT:D_READER, buf, rs,
 				"received %d bytes from %s (native)", rs, remote_txt());
 	}
-	client->last=time((time_t *) 0);
-
+	if(rc>=0) client->last = time((time_t *) 0); // last client action is now
 	switch(rc) {
 		//case 0: 	break;
 		case -1:	cs_log("packet to small (received %d bytes, should %d bytes)", rs, l);		break;
@@ -387,31 +392,37 @@ static void camd35_server_init(struct s_client * client) {
 
 static int32_t tcp_connect(struct s_client *cl)
 {
-	if (cl->is_udp) {
-	   if (!IP_ISSET(SIN_GET_ADDR(cl->udp_sa)) || cl->reader->last_s-cl->reader->last_g > cl->reader->tcp_rto)
-	      if (!hostResolve(cl->reader)) return 0;
+	if (cl->is_udp) { // check for udp client
+	   if (!IP_ISSET(SIN_GET_ADDR(cl->udp_sa)) || cl->reader->last_s-cl->reader->last_g > cl->reader->tcp_rto) // check ip or if client reached timeout
+	      if (!hostResolve(cl->reader)) return 0; // could not resolve client
 	}
 
-	if (!cl->reader->tcp_connected) {
+	if (!cl->reader->tcp_connected) { // client not connected
 		int32_t handle=0;
-		handle = network_tcp_connection_open(cl->reader);
-		if (handle<0)  {
+		handle = network_tcp_connection_open(cl->reader); // try to connect
+		if (handle<0)  { // got no handle -> error!
+			cl->reader->last_s = 0; // set last send to zero
+			cl->reader->last_g = 0; // set last receive to zero
+			cl->last = 0; // set last client action to zero
 			return(0);
 		}
 
 		cl->reader->tcp_connected = 1;
 		cl->reader->card_status = CARD_INSERTED;
-		cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
+		cl->reader->last_s = time(NULL); // reset last send
+		cl->reader->last_g = time(NULL); // reset last receive
+		cl->last = time(NULL); // reset last client action
 		cl->pfd = cl->udp_fd = handle;
 	}
-	if (!cl->udp_fd) return(0);
-
-	if (cl->reader->last_s-cl->reader->last_g > cl->reader->tcp_rto) {
+	if (!cl->udp_fd) return(0); // Check if client has no handle -> error
+	if (cl->reader->last_s-cl->reader->last_g > cl->reader->tcp_rto) { // check if client reached timeout, if so disconnect client
+		//cs_log("last_s:%d, last_g:%d, tcp_rto:%d, diff:%d",(int)cl->reader->last_s,(int)cl->reader->last_g,(int)cl->reader->tcp_rto,
+		//	(int)(cl->reader->last_s - cl->reader->last_g));
 		network_tcp_connection_close(cl->reader, "rto");
 		return 0;
 	}
 
-	return(1);
+	return(1); // all ok
 }
 
 /*
@@ -451,11 +462,6 @@ void camd35_cache_push_send_own_id(struct s_client *cl, uint8_t *mbuf) {
 	memcpy(rbuf+20, camd35_node_id, 8);
 	cs_debug_mask(D_CACHEEX, "cacheex: sending own id %" PRIu64 "X request %s", cacheex_node_id(camd35_node_id), username(cl));
 	camd35_send(cl, rbuf, 12); //send adds +20
-
-        time_t now = time((time_t*)0);
-        if (cl->reader)
-            cl->reader->last_s = now;
-        cl->last = now;
 }
 
 /**
@@ -471,11 +477,6 @@ void camd35_cache_push_request_remote_id(struct s_client *cl) {
 	memcpy(rbuf+20, camd35_node_id, 8);
 	cs_debug_mask(D_CACHEEX, "cacheex: sending id request to %s", username(cl));
 	camd35_send(cl, rbuf, 12); //send adds +20
-
-        time_t now = time((time_t*)0);
-        if (cl->reader)
-            cl->reader->last_s = now;
-        cl->last = now;
 }
 
 /**
@@ -486,43 +487,44 @@ void camd35_cache_push_receive_remote_id(struct s_client *cl, uint8_t *buf) {
 	memcpy(cl->ncd_skey, buf+20, 8);
 	cl->ncd_skey[8] = 1;
 	cs_debug_mask(D_CACHEEX, "cacheex: received id answer from %s: %" PRIu64 "X", username(cl), cacheex_node_id(cl->ncd_skey));
-
-        time_t now = time((time_t*)0);
-        if (cl->reader)
-            cl->reader->last_g = now;
-        cl->last = now;
 }
 
 
 int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 {
-	//check max 10 nodes to push:
-	if (ll_count(er->csp_lastnodes) >= cacheex_maxhop(cl)) {
+	uint8_t oldnode = 0; // used to indicate a previous remote node id was present
+	
+	if (ll_count(er->csp_lastnodes) >= cacheex_maxhop(cl)) { //check max 10 nodes to push:
 		cs_debug_mask(D_CACHEEX, "cacheex: nodelist reached %d nodes, no push", cacheex_maxhop(cl));
 		return 0;
 	}
-
+	
 	if (cl->reader) {
-		tcp_connect(cl);
+		if(!tcp_connect(cl)){
+			cs_debug_mask(D_CACHEEX, "cacheex: not connected %s -> no push", username(cl));
+			return 0;
+		}
 	}
-	if (!cl->udp_fd || !cl->crypted) {
-		cs_debug_mask(D_CACHEEX, "cacheex: not connected %s -> no push", username(cl));
-		return 0;
-	}
-
-	//Update remote id every 256 pushs:
 	//cs_debug_mask(D_CACHEEX, "ncd[8]=%d [9]=%d [10]=%d [11]=%d", cl->ncd_skey[8], cl->ncd_skey[9], cl->ncd_skey[10], cl->ncd_skey[11]);
-	if (!(++cl->ncd_skey[11])) {
-	        camd35_cache_push_request_remote_id(cl);
-        }
-	        
+	
+	if(cl->reader){ // check for reader connection (if not exists then in servermode!)
+		if(cl->reader->last_s-cl->reader->last_g > cl->reader->tcp_rto-20) // Cache-ex as clientpusher renew remote nodeid before rto kicks in
+			cl->ncd_skey[9] = 0; //reset requestmemory -> inits a remote node id request
+	}
+	else
+	if (cl->ncd_skey[8]==0 || !(++cl->ncd_skey[11])) // tcp: renew remote id every 256 pushes or if no remote nodeid present: 
+				cl->ncd_skey[9] = 0; //reset requestmemory -> inits a remote node id request
+				
 	//Update remote id:
-	if (!cl->ncd_skey[8] && !cl->ncd_skey[9]) {
+	if (!cl->ncd_skey[9]) {
 		cl->ncd_skey[9] = 1; //remember request
 		camd35_cache_push_request_remote_id(cl);
+		oldnode = cl->ncd_skey[8];  // if we have a previous node store it
+		cl->ncd_skey[8]=0; // reset nodeid
 	}
-	if (!cl->ncd_skey[8]) { // We have no remote node, so push out
+	if (!oldnode && !cl->ncd_skey[8]) { // We have no remote node -> no push
 		cs_debug_mask(D_CACHEEX, "cacheex: push without remote node %s - ignored", username(cl));
+		cl->ncd_skey[9] = 0; //reset requestmemory -> inits a remote node id request
 		return 0;
 	}
 
@@ -558,20 +560,12 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	//E_FOUND     : we have the CW,
 	//E_UNHANDLED : incoming ECM request
 
-	time_t now = time((time_t*)0);
 	if (cl->reader) {
-		tcp_connect(cl);
-		if (!cl->crypted) {
-		  camd35_client_init(cl);
-		  tcp_connect(cl);
-        }
-		cl->reader->last_s = now;
+		if(!tcp_connect(cl)){
+			cs_debug_mask(D_CACHEEX, "cacheex: not connected %s -> no push", username(cl));
+			return (-1);
+		}
 	}
-	if (!cl->udp_fd || !cl->crypted) {
-	  cs_debug_mask(D_CACHEEX, "not pushed, %s not %s", username(cl), cl->udp_fd?"authenticated":"connected");
-	  return(-1);
-        }
-	cl->last = now;
 
 	uint32_t size = sizeof(er->ecmd5)+sizeof(er->csp_hash)+sizeof(er->cw)+sizeof(uint8_t) +
 			(ll_count(er->csp_lastnodes)+1)*8;
@@ -631,11 +625,6 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 	int8_t rc = buf[3];
 	if (rc != E_FOUND && rc != E_UNHANDLED) //Maybe later we could support other rcs
 		return;
-
-	time_t now = time((time_t*)0);
-	if (cl->reader)
-                cl->reader->last_g = now;
-	cl->last = now;
 
 	ECM_REQUEST *er;
 	uint16_t size = buf[1] | (buf[2] << 8);
@@ -734,6 +723,12 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 
 static void * camd35_server(struct s_client *client __attribute__((unused)), uchar *mbuf, int32_t n)
 {
+	if (client->reader){
+		client->reader->last_g = time((time_t *) 0);  // last receive is now
+		cs_log("CAMD35_SERVER last = %d, last_s = %d, last_g = %d", (int) client->last, (int) client->reader->last_s, (int) client->reader->last_g);
+	}
+	client->last= time((time_t *) 0); // last client action is now
+	
 	switch(mbuf[0]) {
 		case  0:	// ECM
 		case  3:	// ECM (cascading)
@@ -858,6 +853,10 @@ static int32_t camd35_send_emm(EMM_PACKET *ep)
 
 static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t rc2 __attribute__((unused)))
 {
+	if (client->reader){
+		client->reader->last_g = time((time_t *) 0);  // last receive is now
+	}
+	
 	uint16_t idx;
 	static const char *typtext[]={"ok", "invalid", "sleeping"};
 	struct s_reader *rdr = client->reader;
