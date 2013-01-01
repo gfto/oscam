@@ -361,7 +361,6 @@ void IO_Serial_Sendbreak(struct s_reader * reader, int32_t duration)
 
 bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout, uint32_t size, unsigned char * data)
 {
-	unsigned char c;
 	uint32_t count = 0;
 	
 	if (timeout == 0){ // General fix for readers not communicating timeout and delay
@@ -369,7 +368,7 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 		rdr_debug_mask(reader, D_DEVICE,"Warning: read timeout 0 changed to %d us", timeout);
 	}
 	
-	rdr_debug_mask(reader, D_DEVICE,"Read timeout %d us, read delay %d us, to read %d char(s), chunksize 1 char(s)", timeout, delay, size);
+	rdr_debug_mask(reader, D_DEVICE,"Read timeout %d us, read delay %d us, to read %d char(s), chunksize %d char(s)", timeout, delay, size, size);
 #if defined(__SH4__)
 	bool readed;
 	struct timeval tv, tv_spent;
@@ -385,25 +384,22 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 		rdr_debug_mask(reader, D_DEVICE,"Reading of echoed transmitted chars done!");
 	}
 
-	for (count = 0; count < size ; count++)
+	while(count < size)
 	{
 #if defined(__SH4__)
 		gettimeofday(&tv,0);
 		memcpy(&tv_spent,&tv,sizeof(struct timeval));
-		readed=0;
+		
 		while( (((tv_spent.tv_sec-tv.tv_sec)*1000000) + ((tv_spent.tv_usec-tv.tv_usec)/1000000L)) < (time_t)(timeout))
  		{
- 			if (read (reader->handle, &c, 1) == 1)
- 			{
-				readed = 1;
-				break;
- 			}
+ 			readed =read(reader->handle, &data[count], size-count)
  			gettimeofday(&tv_spent,0);
 		}
 		if(!readed) {
 			rdr_ddump_mask(reader, D_DEVICE, data, count, "Receiving:");
 			return ERROR;
 		}
+		count +=readed;
 #else
 		int16_t readed = -1, errorcount=0;
 		AGAIN:
@@ -413,7 +409,7 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 		}
 			
 		while (readed <0 && errorcount < 10) {
-			readed = read (reader->handle, &c, 1);
+			readed = read (reader->handle, &data[count], size-count);
 			if (readed < 0) {
 				if (errno == EINTR) continue; // try again in case of interrupt
 				if (errno == EAGAIN) goto AGAIN; //EAGAIN needs select procedure again
@@ -427,8 +423,8 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 			rdr_debug_mask(reader, D_DEVICE, "Received End of transmission");
 			return ERROR;
 		}
+		count +=readed;
 #endif
-		data[count] = c;
 	}
 	rdr_ddump_mask(reader, D_DEVICE, data, count, "Receiving:");
 	return OK;
