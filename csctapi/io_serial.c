@@ -392,7 +392,7 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 		
 		while( (((tv_spent.tv_sec-tv.tv_sec)*1000000) + ((tv_spent.tv_usec-tv.tv_usec)/1000000L)) < (time_t)(timeout))
  		{
- 			readed =read(reader->handle, &data[count], size-count)
+ 			readed =read(reader->handle, &data[count], size-count);
  			gettimeofday(&tv_spent,0);
 		}
 		if(!readed) {
