@@ -1778,7 +1778,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		er->rc=E_FOUND;
 	}
 
-	if (cfg.double_check &&  er->rc < E_NOTFOUND && er->selected_reader && is_double_check_caid(er)) {
+	if (cfg.double_check &&  er->rc == E_FOUND && er->selected_reader && is_double_check_caid(er)) {
 	  if (er->checked == 0) {//First CW, save it and wait for next one
 	    er->checked = 1;
 	    er->origin_reader = er->selected_reader;
@@ -2087,7 +2087,7 @@ static void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 
 	if (ert->rc < E_99) {
 		if (cl) send_dcw(cl, ert);
-		if (!ert->ecmcacheptr)
+		if (!ert->ecmcacheptr && ert->rc != E_UNHANDLED)
 			distribute_ecm(ert, (ert->rc == E_FOUND)?E_CACHE2:ert->rc);
 	}
 
