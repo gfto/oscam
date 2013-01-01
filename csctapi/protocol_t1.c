@@ -142,14 +142,14 @@ int32_t Protocol_T1_Command(struct s_reader *reader, unsigned char * command, ui
 
 		/* Create an IFS request S-Block */
 		ICC_Async_SetTimings (reader, reader->CWT); // we are going to send: CWT timeout
-		cs_sleepus(reader->block_delay); // we were receiving, now sending so wait BGT time
+		//cs_sleepus(reader->block_delay); // we were receiving, now sending so wait BGT time
 		ret = T1_Block_SendSBlock(reader, block_data, T1_BLOCK_S_IFS_REQ, 1, &inf);
 		rdr_debug_mask(reader, D_IFD, "Protocol: Sending block S(IFS request, %d)", inf);
 	
 		/* Receive a block */
 
 		ICC_Async_SetTimings(reader, reader->BWT); // we are going to receive so set Block Waiting Timeout!
-		cs_sleepus(reader->block_delay); // we were sending, now receiving so wait BGT time
+		//cs_sleepus(reader->block_delay); // we were sending, now receiving so wait BGT time
 		ret = Protocol_T1_ReceiveBlock(reader, block_data, &block_length, &rsp_type);
 
 		if (ret == OK) {
@@ -163,13 +163,13 @@ int32_t Protocol_T1_Command(struct s_reader *reader, unsigned char * command, ui
 	} else if (command[1] == T1_BLOCK_S_RESYNCH_REQ) {
 		/* Create an Resynch request S-Block */
 		ICC_Async_SetTimings (reader, reader->CWT); // we are going to send: CWT timeout
-		cs_sleepus(reader->block_delay); // we were receiving, now sending so wait BGT time
+		//cs_sleepus(reader->block_delay); // we were receiving, now sending so wait BGT time
 		ret = T1_Block_SendSBlock(reader, block_data, T1_BLOCK_S_RESYNCH_REQ, 0, NULL);
 		rdr_debug_mask(reader, D_IFD, "Protocol: Sending block S(RESYNCH request)");
 
 		/* Receive a block */
 		ICC_Async_SetTimings(reader, reader->BWT); // we are going to receive so set Block Waiting Timeout!
-		cs_sleepus(reader->block_delay); // we were sending, now receiving so wait BGT time
+		//cs_sleepus(reader->block_delay); // we were sending, now receiving so wait BGT time
 		ret = Protocol_T1_ReceiveBlock(reader, block_data, &block_length, &rsp_type);
 
 		if (ret == OK) {
@@ -194,7 +194,7 @@ int32_t Protocol_T1_Command(struct s_reader *reader, unsigned char * command, ui
 
 	/* Create an I-Block */
 	ICC_Async_SetTimings (reader, reader->CWT); // we are going to send: CWT timeout
-	cs_sleepus(reader->block_delay); // we were receiving, now sending so wait BGT time
+	//cs_sleepus(reader->block_delay); // we were receiving, now sending so wait BGT time
 	ret = T1_Block_SendIBlock(reader, block_data, bytes, command, reader->ns, more);
 	rdr_debug_mask(reader, D_IFD, "Sending block I(%d,%d)", reader->ns, more);
 
@@ -202,7 +202,7 @@ int32_t Protocol_T1_Command(struct s_reader *reader, unsigned char * command, ui
 		/* Receive a block */
 		
 		ICC_Async_SetTimings(reader, reader->BWT); // we are going to receive so set Block Waiting Timeout!
-		cs_sleepus(reader->block_delay); // we were sending, now receiving so wait BGT time
+		//cs_sleepus(reader->block_delay); // we were sending, now receiving so wait BGT time
 		ret = Protocol_T1_ReceiveBlock(reader, block_data, &block_length, &rsp_type);
 				
 		if (ret == OK){
@@ -222,7 +222,7 @@ int32_t Protocol_T1_Command(struct s_reader *reader, unsigned char * command, ui
 
 				/* Send an I-Block */
 				ICC_Async_SetTimings (reader, reader->CWT); // we are going to send: CWT timeout
-				cs_sleepus(reader->block_delay); // we were receiving, now sending so wait BGT time
+				//cs_sleepus(reader->block_delay); // we were receiving, now sending so wait BGT time
 				ret = T1_Block_SendIBlock(reader, block_data, bytes, command + counter, reader->ns, more);
 				rdr_debug_mask(reader, D_IFD, "Protocol: Sending block I(%d,%d)", reader->ns, more);
 
@@ -245,7 +245,7 @@ int32_t Protocol_T1_Command(struct s_reader *reader, unsigned char * command, ui
 
 		/* Receive a block */
 		ICC_Async_SetTimings(reader, wtx*reader->BWT); // we are going to receive so set Block Waiting Timeout!
-		cs_sleepus(reader->block_delay); // we were sending, now receiving so wait BGT time
+		//cs_sleepus(reader->block_delay); // we were sending, now receiving so wait BGT time
 		ret = Protocol_T1_ReceiveBlock(reader, block_data, &block_length, &rsp_type);
 		wtx = 1; // reset WTX value since its only valid for first received I block
 
@@ -269,7 +269,7 @@ int32_t Protocol_T1_Command(struct s_reader *reader, unsigned char * command, ui
 				if (more) {
 					/* Send R-Block */
 					ICC_Async_SetTimings (reader, reader->CWT); // we are going to send: CWT timeout
-					cs_sleepus(reader->block_delay); // we were receiving, now sending so wait BGT time
+					//cs_sleepus(reader->block_delay); // we were receiving, now sending so wait BGT time
 					ret = T1_Block_SendRBlock(reader, block_data, T1_BLOCK_R_OK, nr);
 					rdr_debug_mask(reader, D_IFD, "Protocol: Sending block R(%d)", nr);
 				}
@@ -280,7 +280,7 @@ int32_t Protocol_T1_Command(struct s_reader *reader, unsigned char * command, ui
 
 				/* Send an WTX response S-Block */
 				ICC_Async_SetTimings (reader, reader->CWT); // we are going to send: CWT timeout
-				cs_sleepus(reader->block_delay); // we were receiving, now sending so wait BGT time
+				//cs_sleepus(reader->block_delay); // we were receiving, now sending so wait BGT time
 				ret = T1_Block_SendSBlock(reader, block_data, T1_BLOCK_S_WTX_RES, 1, &wtx);
 				rdr_debug_mask(reader, D_IFD, "Protocol: Sending block S(WTX response, %d)", wtx);
 			} else {
