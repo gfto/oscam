@@ -2242,9 +2242,9 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t idx) {
 	for (n=0;n<2;n++) {
 		char lastcw[9*3];
 		char newcw[9*3];
-        cs_hexdump(0, demux[demux_id].lastcw[n], 8, lastcw, sizeof(lastcw));
+		cs_hexdump(0, demux[demux_id].lastcw[n], 8, lastcw, sizeof(lastcw));
 		cs_hexdump(0, cw+(n*8), 8, newcw, sizeof(newcw));
-		if (memcmp(cw+(n*8),demux[demux_id].lastcw[n],8)!=0 && memcmp(cw+(n*8),nullcw,8)!=0) { // check if already delivered and new cw part is valid!
+		if (memcmp(cw+(n*8),demux[demux_id].lastcw[0],8)!=0 && memcmp(cw+(n*8),demux[demux_id].lastcw[1],8)!=0 && memcmp(cw+(n*8),nullcw,8)!=0) { // check if already delivered and new cw part is valid!
 			ca_descr.index = idx;
 			ca_descr.parity = n;
 			cs_debug_mask(D_DVBAPI,"writing %s part (%s) of controlword, replacing expired (%s)",(n == 1?"odd":"even"), newcw, lastcw);
