@@ -65,5 +65,21 @@ enum smartreader_interface
     INTERFACE_D   = 4
 };
 
+struct s_reader_types {
+	char *name;
+	uint8_t in_ep;
+	uint8_t out_ep;
+	int32_t index;
+	int32_t interface;	
+};
+
+const struct s_reader_types reader_types[] = { 
+    {"SR", 0x01, 0x82, INTERFACE_A, 0}, 
+    {"Infinity", 0x01, 0x81, INTERFACE_A, 0},
+    {"TripleP1", 0x02, 0x81, INTERFACE_A, 0}, 
+    {"TripleP2", 0x04, 0x83, INTERFACE_B, 1},
+    {"TripleP3", 0x06, 0x85, INTERFACE_C, 2}
+};
+
 #endif // __SMARTREADER_TYPES_H__
 // end of FTDI defines

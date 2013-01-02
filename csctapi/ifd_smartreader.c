@@ -72,22 +72,6 @@ struct s_sr_config {
     unsigned char modem_status;
 };
 
-struct s_reader_types {
-	char *name;
-	uint8_t in_ep;
-	uint8_t out_ep;
-	int32_t index;
-	int32_t interface;	
-}
-
-const reader_types[] = { 
-    {"SR", 0x01, 0x82, INTERFACE_A, 0}, 
-    {"Infinity", 0x01, 0x81, INTERFACE_A, 0},
-    {"TripleP1", 0x02, 0x81, INTERFACE_A, 0}, 
-    {"TripleP2", 0x04, 0x83, INTERFACE_B, 1},
-    {"TripleP3", 0x06, 0x85, INTERFACE_C, 2}
-};
-
 static int32_t init_count = 0;
 
 static int32_t smart_read(struct s_reader *reader, unsigned char* buff, uint32_t  size, int32_t timeout_sec)

@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <string.h>
+#include "../globals.h"
+#include "../csctapi/ifd_smartreader_types.h"
 
 #if defined(__FreeBSD__)
 #include <libusb.h>
@@ -28,16 +30,16 @@
 #include <libusb-1.0/libusb.h>
 #endif
 
-int32_t out_endpoint;
-
 static int32_t smartreader_check_endpoint(libusb_device *usb_dev)
 {
   struct libusb_device_descriptor usbdesc;
   struct libusb_config_descriptor *configDesc;
   int32_t ret;
   int32_t j,k,l;
+  uint32_t m;
   uint8_t tmpEndpointAddress;
   int32_t nb_endpoint_ok;
+  int32_t result = -1;
 
   nb_endpoint_ok=0;
 
@@ -57,19 +59,21 @@ static int32_t smartreader_check_endpoint(libusb_device *usb_dev)
       for(k=0; k<configDesc->interface[j].num_altsetting; k++) {
         for(l=0; l<configDesc->interface[j].altsetting[k].bNumEndpoints; l++) {
           tmpEndpointAddress=configDesc->interface[j].altsetting[k].endpoint[l].bEndpointAddress;
-          if((tmpEndpointAddress== 0x1) || (tmpEndpointAddress== 0x81) || (tmpEndpointAddress== 0x82)) {
-            if(tmpEndpointAddress == 0x1 || tmpEndpointAddress==out_endpoint) {
-              nb_endpoint_ok++;
-            }
-          }
+          for(m = 0; m < sizeof(reader_types)/sizeof(struct s_reader_types); ++m){
+						if((tmpEndpointAddress == reader_types[m].in_ep || tmpEndpointAddress == reader_types[m].out_ep)){
+							nb_endpoint_ok++;
+							result = m;
+							break;
+						}
+					}
         }
       }
     }
   }
 
   if(nb_endpoint_ok!=2)
-    return 0;
-  return 1;
+    return -1;
+  return result;
 }
 
 static void print_devs(libusb_device **devs)
@@ -88,21 +92,22 @@ static void print_devs(libusb_device **devs)
       fprintf(stderr, "failed to get device descriptor");
       return;
     }
-    if (usbdesc.idVendor==0x0403 && usbdesc.idProduct==0x6001) {
+    if (usbdesc.idVendor==0x0403 && (usbdesc.idProduct==0x6001 || usbdesc.idProduct==0x6011)) {
       ret=libusb_open(dev,&handle);
       if (ret) {
-        printf ("coulnd't open device %03d:%03d\n", libusb_get_bus_number(dev), libusb_get_device_address(dev));
+        printf ("couldn't open device %03d:%03d\n", libusb_get_bus_number(dev), libusb_get_device_address(dev));
         continue;
       }
       // check for smargo endpoints.
-      if(smartreader_check_endpoint(dev)) {
+      if((ret=smartreader_check_endpoint(dev)) != -1) {
         busid=libusb_get_bus_number(dev);
         devid=libusb_get_device_address(dev);
         libusb_get_string_descriptor_ascii(handle,usbdesc.iSerialNumber,iserialbuffer,sizeof(iserialbuffer));
-        printf("bus %03d, device %03d : %04x:%04x Smartreader (Device=%03d:%03d EndPoint=0x%2X insert in oscam.server 'Device = Serial:%s')\n",
+        printf("bus %03d, device %03d : %04x:%04x Smartreader (in_ep=%d, out_ep=%d; insert in oscam.server 'device = %s%sSerial:%s')\n",
         busid, devid,
         usbdesc.idVendor, usbdesc.idProduct,
-        busid, devid, out_endpoint, iserialbuffer);
+        reader_types[ret].in_ep, reader_types[ret].out_ep,
+        strcmp(reader_types[ret].name, "SR")?reader_types[ret].name:"",strcmp(reader_types[ret].name, "SR")?";":"", iserialbuffer);
       }
 
       libusb_close(handle);
@@ -120,20 +125,11 @@ int32_t main(int32_t argc, char **argv)
   if (r < 0)
     return r;
 
-  out_endpoint=0x82;
-
-  if(argc==2) {
-    sscanf(argv[1],"%x",&out_endpoint);
-  }
-  else
-    out_endpoint=0x82;
-
-  printf("Looking for smartreader with an out endpoint = 0x%02x :\n",out_endpoint);
+  printf("Looking for smartreader compatible devices...\n");
 
   cnt = libusb_get_device_list(NULL, &devs);
   if (cnt < 0)
     return (int32_t) cnt;
-
 
   print_devs(devs);
   libusb_free_device_list(devs, 1);
