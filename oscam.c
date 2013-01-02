@@ -4239,7 +4239,7 @@ int32_t main (int32_t argc, char *argv[])
 	cs_log("Binary without Seca Module - no EMM processing for Seca possible!");
 #endif
 #ifndef READER_VIACCESS
-	cs_log("Binary without Viaaccess Module - no EMM processing for Viaaccess possible!");
+	cs_log("Binary without Viaaccess Module - no EMM processing for Viaccess possible!");
 #endif
 #ifndef READER_VIDEOGUARD
 	cs_log("Binary without Videoguard Module - no EMM processing for Videoguard possible!");

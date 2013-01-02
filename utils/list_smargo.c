@@ -115,7 +115,7 @@ static void print_devs(libusb_device **devs)
   }
 }
 
-int32_t main(int32_t argc, char **argv)
+int32_t main(void)
 {
   libusb_device **devs;
   int32_t r;
