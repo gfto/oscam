@@ -369,10 +369,6 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 	}
 	
 	rdr_debug_mask(reader, D_DEVICE,"Read timeout %d us, read delay %d us, to read %d char(s), chunksize %d char(s)", timeout, delay, size, size);
-#if defined(__SH4__)
-	int16_t readed = -1;
-	struct timeval tv, tv_spent;
-#endif
 	
 	if (reader->crdr.read_written && reader->written > 0) { // these readers need to read all transmitted chars before they can receive!
 		unsigned char buf[256];
@@ -384,23 +380,29 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 		rdr_debug_mask(reader, D_DEVICE,"Reading of echoed transmitted chars done!");
 	}
 
-	while(count < size)
-	{
-#if defined(__SH4__)
+#if defined(__SH4__) //read char one by one for sh4 boxes		
+	bool readed;
+	unsigned char c;
+	struct timeval tv, tv_spent;
+	for (count = 0; count < size ; count++){
 		gettimeofday(&tv,0);
 		memcpy(&tv_spent,&tv,sizeof(struct timeval));
 		
-		while( (((tv_spent.tv_sec-tv.tv_sec)*1000000) + ((tv_spent.tv_usec-tv.tv_usec)/1000000L)) < (time_t)(timeout))
- 		{
- 			readed =read(reader->handle, &data[count], size-count);
- 			gettimeofday(&tv_spent,0);
+		while( (((tv_spent.tv_sec-tv.tv_sec)*1000000) + ((tv_spent.tv_usec-tv.tv_usec)/1000000L)) < (time_t)(timeout)){
+ 			if (read (reader->handle, &c, 1) == 1){
+				readed = 1;
+				break;
+			}
+ 		gettimeofday(&tv_spent,0);
 		}
 		if(!readed) {
 			rdr_ddump_mask(reader, D_DEVICE, data, count, "Receiving:");
 			return ERROR;
 		}
-		count +=readed;
-#else
+		data[count] = c;
+	}
+#else  // read all chars at once for non sh boxes
+	while(count < size){
 		int16_t readed = -1, errorcount=0;
 		AGAIN:
 		if(IO_Serial_WaitToRead (reader, delay, timeout)) {
@@ -423,9 +425,9 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 			rdr_debug_mask(reader, D_DEVICE, "Received End of transmission");
 			return ERROR;
 		}
-		count +=readed;
-#endif
+	count +=readed;
 	}
+#endif
 	rdr_ddump_mask(reader, D_DEVICE, data, count, "Receiving:");
 	return OK;
 }
