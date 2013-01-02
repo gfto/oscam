@@ -2443,18 +2443,42 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 			FILE *ecmtxt;
 			ecmtxt = fopen(ECMINFO_FILE, "w");
-			if(ecmtxt != NULL && er->selected_reader) {
+			if(ecmtxt != NULL && er->rc < E_NOTFOUND) {
 				char tmp[25];
 				fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\nprov: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
-				fprintf(ecmtxt, "reader: %s\n", er->selected_reader->label);
-				if (is_cascading_reader(er->selected_reader))
-					fprintf(ecmtxt, "from: %s\n", er->selected_reader->device);
-				else
-					fprintf(ecmtxt, "from: local\n");
-				fprintf(ecmtxt, "protocol: %s\n", reader_get_type_desc(er->selected_reader, 1));
+				switch (er->rc) {
+					case 0: 
+						if (er->selected_reader) {
+							fprintf(ecmtxt, "reader: %s\n", er->selected_reader->label);
+							if (is_cascading_reader(er->selected_reader))
+								fprintf(ecmtxt, "from: %s\n", er->selected_reader->device);
+							else
+								fprintf(ecmtxt, "from: local\n");
+						fprintf(ecmtxt, "protocol: %s\n", reader_get_type_desc(er->selected_reader, 1));
 #ifdef MODULE_CCCAM
-				fprintf(ecmtxt, "hops: %d\n", er->selected_reader->cc_currenthops);
+						fprintf(ecmtxt, "hops: %d\n", er->selected_reader->cc_currenthops);
 #endif
+						}
+						break;
+
+					case 1:	
+						fprintf(ecmtxt, "reader: none\n");
+						fprintf(ecmtxt, "from: cache1\n");
+						fprintf(ecmtxt, "protocol: none\n");
+						break;
+
+					case 2:	
+						fprintf(ecmtxt, "reader: none\n");
+						fprintf(ecmtxt, "from: cache2\n");
+						fprintf(ecmtxt, "protocol: none\n");
+						break;
+
+					case 3:	
+						fprintf(ecmtxt, "reader: none\n");
+						fprintf(ecmtxt, "from: cache3\n");
+						fprintf(ecmtxt, "protocol: none\n");
+						break;
+				}
 				fprintf(ecmtxt, "ecm time: %.3f\n", (float) client->cwlastresptime/1000);
 				fprintf(ecmtxt, "cw0: %s\n", cs_hexdump(1,demux[i].lastcw[0],8, tmp, sizeof(tmp)));
 				fprintf(ecmtxt, "cw1: %s\n", cs_hexdump(1,demux[i].lastcw[1],8, tmp, sizeof(tmp)));
