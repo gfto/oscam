@@ -8,7 +8,7 @@ extern uint8_t cacheex_peer_id[8];
 extern int32_t cacheex_add_stats(struct s_client *cl, uint16_t caid, uint16_t srvid, uint32_t prid, uint8_t direction);
 extern int8_t cacheex_maxhop(struct s_client *cl);
 void cacheex_cache_push(ECM_REQUEST *er);
-extern int8_t cacheex_match_alias(struct s_client *cl, ECM_REQUEST *er, ECM_REQUEST *ecm);
+extern inline int8_t cacheex_match_alias(struct s_client *cl, ECM_REQUEST *er, ECM_REQUEST *ecm);
 extern void cacheex_add_to_cache(struct s_client *cl, ECM_REQUEST *er);
 extern void cacheex_add_to_cache_from_csp(struct s_client *cl, ECM_REQUEST *er);
 #ifdef CS_CACHEEX

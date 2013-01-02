@@ -227,7 +227,7 @@ bool cacheex_is_match_alias(struct s_client *cl, ECM_REQUEST *er) {
 	return cl && cl->account && cl->account->cacheex == 1 && is_cacheex_matcher_matching(NULL, er);
 }
 
-int8_t cacheex_match_alias(struct s_client *cl, ECM_REQUEST *er, ECM_REQUEST *ecm)
+inline int8_t cacheex_match_alias(struct s_client *cl, ECM_REQUEST *er, ECM_REQUEST *ecm)
 {
 	if (cl && cl->account && cl->account->cacheex == 1) {
 		struct s_cacheex_matcher *entry = is_cacheex_matcher_matching(ecm, er);
