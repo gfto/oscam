@@ -379,7 +379,7 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 		rdr_debug_mask(reader, D_DEVICE,"Reading %d echoed transmitted chars...", reader->written); 
 		int32_t n = reader->written;
 		reader->written=0;
-		if(IO_Serial_Read (reader, 0, timeout, n, buf))
+		if(IO_Serial_Read (reader, 0, 9990000, n, buf)) // use 9990000 = aprox 10 seconds (since written chars could be hughe!)
 			return ERROR;
 		rdr_debug_mask(reader, D_DEVICE,"Reading of echoed transmitted chars done!");
 	}
