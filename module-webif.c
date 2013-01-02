@@ -1530,23 +1530,6 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	}
 #endif
 
-#ifdef WITH_LIBUSB
-	if(!rdr->device_endpoint) {
-		tpl_addVar(vars, TPLADD, "DEVICEOUTEP0", "selected");
-	} else if (rdr->device_endpoint == 0x82) {
-		tpl_addVar(vars, TPLADD, "DEVICEOUTEP1", "selected");
-	} else if (rdr->device_endpoint == 0x81) {
-		tpl_addVar(vars, TPLADD, "DEVICEOUTEP2", "selected");
-	} else if (rdr->device_endpoint == 0x83) {
-	       tpl_addVar(vars, TPLADD, "DEVICEOUTEP3", "selected");
-	} else if (rdr->device_endpoint == 0x85) {
-		tpl_addVar(vars, TPLADD, "DEVICEOUTEP4", "selected");
-	}
-	tpl_addVar(vars, TPLADD, "DEVICEEP", tpl_getTpl(vars, "READERCONFIGDEVICEEPBIT"));
-#else
-	tpl_addVar(vars, TPLADD, "DEVICEEP", "not avail LIBUSB");
-#endif
-
 	tpl_printf(vars, TPLADD, "TMP", "NDSVERSION%d", rdr->ndsversion);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 

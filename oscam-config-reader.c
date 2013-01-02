@@ -52,18 +52,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-#ifdef WITH_LIBUSB
-	if (!strcmp(token, "device_out_endpoint")) {
-		if (strlen(value) > 0) {
-			sscanf(value, "0x%2X", &i);
-			rdr->device_endpoint = i;
-		} else {
-			rdr->device_endpoint = 0;
-		}
-		return;
-	}
-#endif
-
 	if (!strcmp(token, "key")) {
 		if (strlen(value) == 0){
 			return;
@@ -1281,12 +1269,6 @@ int32_t write_server(void)
 			if ((rdr->l_port || cfg.http_full_cfg) && !isphysical && strncmp(ctyp, "cccam", 5))
 				fprintf(f, ",%d", rdr->l_port);
 			fprintf(f, "\n");
-
-#ifdef WITH_LIBUSB
-			if (isphysical)
-				if (rdr->device_endpoint || cfg.http_full_cfg)
-					fprintf_conf(f, "device_out_endpoint", "0x%2X\n", rdr->device_endpoint);
-#endif
 
 			if (rdr->ncd_key[0] || rdr->ncd_key[13] || cfg.http_full_cfg) {
 				fprintf_conf(f, "key", "%s", ""); // it should not have \n at the end

@@ -1207,7 +1207,6 @@ struct s_reader  									//contains device info, reader info and card info
 	DWORD			dwActiveProtocol;
 #endif
 #ifdef WITH_LIBUSB
-	uint8_t			device_endpoint; 				// usb endpoint for Infinity USB Smart in smartreader mode.
 	struct s_sr_config *sr_config;
 #endif
 #ifdef WITH_AZBOX
