@@ -370,7 +370,7 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 	
 	rdr_debug_mask(reader, D_DEVICE,"Read timeout %d us, read delay %d us, to read %d char(s), chunksize %d char(s)", timeout, delay, size, size);
 #if defined(__SH4__)
-	bool readed;
+	int16_t readed = -1;
 	struct timeval tv, tv_spent;
 #endif
 	
