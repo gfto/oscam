@@ -58,8 +58,8 @@ OSCam build system documentation
    EXTRA_CFLAGS   - Add text to CFLAGS (affects compilation).
                     Example: 'make EXTRA_CFLAGS="-DBLAH=1 -I/opt/local"'
 
-   EXTRA_LDLAGS   - Add text to LDLAGS (affects linking).
-                    Example: 'make EXTRA_LDLAGS=-Llibdir'
+   EXTRA_LDFLAGS  - Add text to LDFLAGS (affects linking).
+                    Example: 'make EXTRA_LDFLAGS=-Llibdir'
 
    EXTRA_FLAGS    - Add text to both EXTRA_CFLAGS and EXTRA_LDFLAGS.
                     Example: 'make EXTRA_FLAGS=-DWEBIF=1'
