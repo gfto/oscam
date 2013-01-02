@@ -1082,13 +1082,13 @@ static int32_t SR_Init (struct s_reader *reader)
         rdr_log(reader, "Wrong device format (%s), it should be Device=bus:dev",reader->device);
         return ERROR;
     }
+    
+    cs_writelock(&sr_lock);
     if (!reader->sr_config && !cs_malloc(&reader->sr_config, sizeof(struct s_sr_config)))
         return ERROR;
     
     rdr_debug_mask(reader, D_DEVICE, "SR: Looking for device %s on bus %s",dev,busname);
     smartreader_init(reader, rdrtype);
-
-		cs_writelock(&sr_lock);
 		
     if(!init_count) {
      ret = libusb_init(NULL);
@@ -1136,8 +1136,6 @@ static int32_t SR_Init (struct s_reader *reader)
     //Disable flow control
     ret = smartreader_setflowctrl(reader, 0);
 
-    cs_writeunlock(&sr_lock);
-
     // start the reading thread
     reader->sr_config->g_read_buffer_size = 0;
     reader->sr_config->modem_status = 0 ;
@@ -1145,6 +1143,9 @@ static int32_t SR_Init (struct s_reader *reader)
     pthread_cond_init(&reader->sr_config->g_read_cond,NULL);
     pthread_mutex_init(&reader->sr_config->g_usb_mutex,NULL);
     pthread_cond_init(&reader->sr_config->g_usb_cond,NULL);
+    
+    cs_writeunlock(&sr_lock);
+    
     ret = pthread_create(&reader->sr_config->rt, NULL, ReaderThread, (void *)(reader));
     if (ret) {
         rdr_log(reader, "ERROR: Can't create smartreader thread (errno=%d %s)", ret, strerror(ret));
@@ -1346,10 +1347,10 @@ static int32_t SR_Close (struct s_reader *reader)
 {
   if (!reader->sr_config) return OK;
   rdr_debug_mask(reader, D_DEVICE, "SR: Closing smartreader");
-
-    reader->sr_config->running=0;
+	cs_writelock(&sr_lock);
+    reader->sr_config->running=0;	
     if (reader->sr_config->usb_dev_handle) {
-        cs_writelock(&sr_lock);
+        
         smart_fastpoll(reader, 1);
         pthread_join(reader->sr_config->rt,NULL);
         smart_fastpoll(reader, 0);
@@ -1361,10 +1362,10 @@ static int32_t SR_Close (struct s_reader *reader)
         init_count--;
         if (!init_count)
             libusb_exit(NULL);
-        cs_writeunlock(&sr_lock);
     }
     free(reader->sr_config);
     reader->sr_config = NULL;
+    cs_writeunlock(&sr_lock);
     return OK;
 }
 
