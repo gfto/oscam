@@ -1405,7 +1405,7 @@ struct s_tierid
 	uint16_t    	tierid;
 	int8_t    	 	ncaid;
 	uint16_t   		caid[10];
-	char    		name[33];
+	char    		*name;
 	struct s_tierid *next;
 };
 

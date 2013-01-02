@@ -80,7 +80,7 @@ struct s_reader_types {
 	int32_t interface;	
 }
 
-static const reader_types[] = { 
+const reader_types[] = { 
     {"SR", 0x01, 0x82, INTERFACE_A, 0}, 
     {"Infinity", 0x01, 0x81, INTERFACE_A, 0},
     {"TripleP1", 0x02, 0x81, INTERFACE_A, 0}, 
@@ -282,7 +282,7 @@ static struct libusb_device* find_smartreader(const char *busname,const char *de
 
 void smartreader_init(struct s_reader *reader, char *rdrtype)
 {
-	int32_t i;
+	uint32_t i;
 	reader->sr_config->usb_dev = NULL;
 	reader->sr_config->usb_dev_handle=NULL;
 	reader->sr_config->usb_read_timeout = 10000;
