@@ -259,7 +259,7 @@ static void parse_cmdline_params(int argc, char **argv) {
 			break;
 		}
 		case 'w': cs_waittime = strtoul(optarg, NULL, 10); break;
-		case 'p': max_pending = MAX(MIN(atoi(optarg), 255), 1); break;
+		case 'p': max_pending = atoi(optarg)<=0?32:MIN(atoi(optarg), 255); break;
 		case 'S': log_remove_sensitive = !log_remove_sensitive; break;
 		case 'V':
 			write_versionfile(true);
