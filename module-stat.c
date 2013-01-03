@@ -585,7 +585,7 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 	else
 	{
 #ifdef WITH_DEBUG
-		if (rc >= E_FOUND) {
+		if (rc >= E_FOUND && (D_LB & cs_dblevel)) {
 			char buf[ECM_FMT_LEN];
 			format_ecm(er, buf, ECM_FMT_LEN);
 			cs_debug_mask(D_LB, "loadbalancer: not handled stat for reader %s: rc %d %s time %dms",
@@ -598,10 +598,12 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 	housekeeping_stat(0);
 
 #ifdef WITH_DEBUG
-	char buf[ECM_FMT_LEN];
-	format_ecm(er, buf, ECM_FMT_LEN);
-	cs_debug_mask(D_LB, "loadbalancer: adding stat for reader %s: rc %d %s time %dms fail %d",
-				rdr->label, rc, buf, ecm_time, s->fail_factor);
+	if (D_LB & cs_dblevel) {
+		char buf[ECM_FMT_LEN];
+		format_ecm(er, buf, ECM_FMT_LEN);
+		cs_debug_mask(D_LB, "loadbalancer: adding stat for reader %s: rc %d %s time %dms fail %d",
+					rdr->label, rc, buf, ecm_time, s->fail_factor);
+	}
 #endif
 
 	if (cfg.lb_save) {
@@ -1653,11 +1655,13 @@ uint32_t lb_auto_timeout(ECM_REQUEST *er, uint32_t ctimeout) {
                 if ((int32_t)(t-s->time_avg) < cfg.lb_auto_timeout_t) t = s->time_avg+cfg.lb_auto_timeout_t;
         }
         if (t > ctimeout) t = ctimeout;
-        
-        char buf[ECM_FMT_LEN];
-        format_ecm(er, buf, ECM_FMT_LEN); 
-        cs_debug_mask(D_TRACE, "auto-timeout for %s %s set rdr %s to %d", username(er->client), buf, rdr->label, t); 
-        
+#ifdef WITH_DEBUG
+        if (D_TRACE & cs_dblevel) {        
+	        char buf[ECM_FMT_LEN];
+	        format_ecm(er, buf, ECM_FMT_LEN); 
+	        cs_debug_mask(D_TRACE, "auto-timeout for %s %s set rdr %s to %d", username(er->client), buf, rdr->label, t); 
+        }
+#endif
         return t;
 }
 

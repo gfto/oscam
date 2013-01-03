@@ -414,7 +414,7 @@ void ll_iter_remove_data(LL_ITER *it)
     add_garbage(obj);
 }
 
-int32_t ll_count(const LLIST *l)
+inline int32_t ll_count(const LLIST *l)
 {
     if (!l || l->flag)
       return 0;

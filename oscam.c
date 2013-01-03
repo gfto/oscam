@@ -1375,7 +1375,9 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl)
 	struct ecm_request_t *ecm;
 	uint64_t grp = cl?cl->grp:0;
 #ifdef CS_CACHEEX
+	// precalculate for better performance
 	uint8_t ecmd5chk = checkECMD5(er);
+	bool hasMatchAlias = cacheex_is_match_alias(cl, er);
 #endif
 	cs_readlock(&ecmcache_lock);
 	for (ecm = ecmcwcache; ecm; ecm = ecm->next) {
@@ -1390,7 +1392,7 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl)
 			continue;
 
 #ifdef CS_CACHEEX
-		if (!cacheex_match_alias(cl, er, ecm)) {
+		if (!hasMatchAlias || !cacheex_match_alias(cl, er, ecm)) {
 			//CWs from csp/cacheex have no ecms, csp ecmd5 is invalid, cacheex has ecmd5
 			if (ecmd5chk && checkECMD5(ecm)){
 				if (memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
@@ -2731,9 +2733,11 @@ OUT:
 	request_cw(er);
 
 #ifdef WITH_DEBUG
-	char buf[ECM_FMT_LEN];
-	format_ecm(er, buf, ECM_FMT_LEN);
-	cs_ddump_mask(D_CLIENTECM, er->ecm, er->ecmlen, "Client %s ECM dump %s", username(client), buf);
+	if (D_CLIENTECM & cs_dblevel) {
+		char buf[ECM_FMT_LEN];
+		format_ecm(er, buf, ECM_FMT_LEN);
+		cs_ddump_mask(D_CLIENTECM, er->ecm, er->ecmlen, "Client %s ECM dump %s", username(client), buf);
+  }
 #endif
 
 	if(timecheck_client){

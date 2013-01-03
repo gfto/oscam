@@ -15,7 +15,7 @@ extern CS_MUTEX_LOCK fakeuser_lock;
 extern struct s_module modules[CS_MAX_MOD];
 
 /* Gets the client associated to the calling thread. */
-struct s_client *cur_client(void) {
+inline struct s_client *cur_client(void) {
 	return (struct s_client *)pthread_getspecific(getclient);
 }
 
