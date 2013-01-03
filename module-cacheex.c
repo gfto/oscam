@@ -190,7 +190,7 @@ void cacheex_cache_push(ECM_REQUEST *er)
 	if (er->ecmcacheptr) er->ecmcacheptr->cacheex_pushed = 1;
 }
 
-static struct s_cacheex_matcher *is_cacheex_matcher_matching(ECM_REQUEST *from_er, ECM_REQUEST *to_er)
+static inline struct s_cacheex_matcher *is_cacheex_matcher_matching(ECM_REQUEST *from_er, ECM_REQUEST *to_er)
 {
 	struct s_cacheex_matcher *entry = cfg.cacheex_matcher;
 	int8_t v_ok = (from_er && to_er)?2:1;
@@ -235,13 +235,15 @@ inline int8_t cacheex_match_alias(struct s_client *cl, ECM_REQUEST *er, ECM_REQU
 			int32_t diff = comp_timeb(&er->tps, &ecm->tps);
 			if (diff > entry->valid_from && diff < entry->valid_to) {
 #ifdef WITH_DEBUG
-				char result[CXM_FMT_LEN] = { 0 };
-				int32_t s, size = CXM_FMT_LEN;
-				s = ecmfmt(entry->caid, entry->provid, entry->chid, entry->pid, entry->srvid, entry->ecmlen, 0, result, size);
-				s += snprintf(result+s, size-s, " = ");
-				s += ecmfmt(entry->to_caid, entry->to_provid, entry->to_chid, entry->to_pid, entry->to_srvid, entry->to_ecmlen, 0, result+s, size-s);
-				s += snprintf(result+s, size-s, " valid %d/%d", entry->valid_from, entry->valid_to);
-				cs_debug_mask(D_CACHEEX, "cacheex-matching for: %s", result);
+				if (D_CACHEEX & cs_dblevel){
+					char result[CXM_FMT_LEN] = { 0 };
+					int32_t s, size = CXM_FMT_LEN;
+					s = ecmfmt(entry->caid, entry->provid, entry->chid, entry->pid, entry->srvid, entry->ecmlen, 0, result, size);
+					s += snprintf(result+s, size-s, " = ");
+					s += ecmfmt(entry->to_caid, entry->to_provid, entry->to_chid, entry->to_pid, entry->to_srvid, entry->to_ecmlen, 0, result+s, size-s);
+					s += snprintf(result+s, size-s, " valid %d/%d", entry->valid_from, entry->valid_to);
+					cs_debug_mask(D_CACHEEX, "cacheex-matching for: %s", result);
+				}
 #endif
 				return 1;
 			}
