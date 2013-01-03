@@ -145,8 +145,10 @@ int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 {
 	char ecmd5hex[17*3];                
     cs_hexdump(0, ecm->ecmd5, 16, ecmd5hex, sizeof(ecmd5hex));
-    char csphash[5*3];
-    cs_hexdump(0, (void*)&ecm->csp_hash, 4, csphash, sizeof(csphash));
+    char csphash[5*3] = {0};
+#ifdef CS_CACHEEX	
+    cs_hexdump(0, (void*)&ecm->csp_hash, 4, csphash, sizeof(csphash));	
+#endif
 	char cwhex[17*3];
     cs_hexdump(0, ecm->cw, 16, cwhex, sizeof(cwhex));
 	return ecmfmt(ecm->caid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, result, size);
