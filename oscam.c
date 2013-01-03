@@ -1356,7 +1356,7 @@ static void init_cardreader(void) {
 /**
  * Check for NULL ecmd5
  **/
-uint8_t checkECMD5(ECM_REQUEST *er)
+static inline uint8_t checkECMD5(ECM_REQUEST *er)
 {
 	int8_t i;
 	for (i=0;i<CS_ECMSTORESIZE;i++)
@@ -1374,7 +1374,9 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl)
 	time_t timeout = now-cfg.max_cache_time;
 	struct ecm_request_t *ecm;
 	uint64_t grp = cl?cl->grp:0;
-
+#ifdef CS_CACHEEX
+	uint8_t ecmd5chk = checkECMD5(er);
+#endif
 	cs_readlock(&ecmcache_lock);
 	for (ecm = ecmcwcache; ecm; ecm = ecm->next) {
 		if (ecm->tps.time < timeout) {
@@ -1390,7 +1392,7 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl)
 #ifdef CS_CACHEEX
 		if (!cacheex_match_alias(cl, er, ecm)) {
 			//CWs from csp/cacheex have no ecms, csp ecmd5 is invalid, cacheex has ecmd5
-			if (checkECMD5(ecm) && checkECMD5(er)){
+			if (ecmd5chk && checkECMD5(ecm)){
 				if (memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
 					continue; // no match
 			} else if (ecm->csp_hash != er->csp_hash) //fallback for csp only

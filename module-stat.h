@@ -20,7 +20,7 @@ void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, struct s_ecm_answer
 void stat_get_best_reader(ECM_REQUEST *er);
 void lb_mark_last_reader(ECM_REQUEST *er);
 uint16_t get_betatunnel_caid_to(uint16_t caid);
-uint16_t is_betatunnel_caid(uint16_t caid);
+inline uint16_t is_betatunnel_caid(uint16_t caid);
 void check_lb_auto_betatunnel_mode(ECM_REQUEST *er);
 #else
 static inline void init_stat(void) { }
