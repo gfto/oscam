@@ -68,7 +68,7 @@ reader protocol, <I>required</I>:
 
 <P>
 
-<B>device</B> = <B>&lt;device|bus:device|device:slot&gt;</B>|Serial:Reader <B>serial</B>|<B>&lt;ip|hostname&gt;,&lt;port&gt;[,&lt;lport&gt;]</B>|<B>pcsc</B>|&lt;<B>0|1</B>&gt;|<B>constantcw</B>
+<B>device</B> = <B>&lt;device|bus:device|device:slot&gt;</B>|<B>[&lt;readertype&gt;:]serial</B>|<B>&lt;ip|hostname&gt;,&lt;port&gt;[,&lt;lport&gt;]</B>|<B>pcsc</B>|&lt;<B>0|1</B>&gt;|<B>constantcw</B>
 <DL COMPACT><DT><DD>
 define local or remote reader
 <P>
@@ -80,8 +80,18 @@ define local or remote reader
 <BR>&nbsp;<B>device:slot</B>:&nbsp;device&nbsp;name&nbsp;and&nbsp;slot&nbsp;number&nbsp;sc8in1&nbsp;[1-8]
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<I>(only&nbsp;one&nbsp;SC8in1&nbsp;reader&nbsp;supported)</I>
 <P>
-<BR>&nbsp;<B>serial</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;serial&nbsp;number&nbsp;of&nbsp;Smartreader+
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(get&nbsp;the&nbsp;serial&nbsp;number&nbsp;while&nbsp;starting&nbsp;OSCam)
+<BR>&nbsp;<B>readertype</B>:&nbsp;&nbsp;set&nbsp;reader&nbsp;type
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>SR</B>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Smartreader+&nbsp;(default)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Infinity</B>:&nbsp;Infinity&nbsp;USB
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>TripleP1</B>:&nbsp;Smargo&nbsp;Triple&nbsp;Reader&nbsp;port&nbsp;1
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>TripleP2</B>:&nbsp;Smargo&nbsp;Triple&nbsp;Reader&nbsp;port&nbsp;2
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>TripleP3</B>:&nbsp;Smargo&nbsp;Triple&nbsp;Reader&nbsp;port&nbsp;3
+<P>
+<BR>&nbsp;<B>serial</B>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;serial&nbsp;number&nbsp;of&nbsp;reader
+<P>
+<P>
+<BR>&nbsp;<B>ip</B>|<B>hostname</B>:&nbsp;IP&nbsp;address&nbsp;or&nbsp;host&nbsp;name
 <P>
 <BR>&nbsp;<B>port</B>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TCP/IP&nbsp;port
 <P>
@@ -139,18 +149,6 @@ will remain on normal ATR speed of 9600 baud.
 <B>mode</B> = <B>mode</B>
 <DL COMPACT><DT><DD>
 set card init mode for AzBox internal reader, default:none
-</DL>
-
-<P>
-
-<B>device_out_endpoint</B> = <B>address</B>
-<DL COMPACT><DT><DD>
-set endpoint address for FTDI chips,default:0x82
-<P>
-<BR>&nbsp;<B>0x81</B>:&nbsp;Smargo&nbsp;Triple&nbsp;Reader&nbsp;port&nbsp;1
-<BR>&nbsp;<B>0x82</B>:&nbsp;Smartreader+&nbsp;(default)
-<BR>&nbsp;<B>0x83</B>:&nbsp;Smargo&nbsp;Triple&nbsp;Reader&nbsp;port&nbsp;2
-<BR>&nbsp;<B>0x85</B>:&nbsp;Smargo&nbsp;Triple&nbsp;Reader&nbsp;port&nbsp;3
 </DL>
 
 <P>
@@ -215,9 +213,9 @@ set TA1 byte for NDS Videoguard 2 SCs, valid for physical readers only, default:
 <DL COMPACT><DT><DD>
 read Nagravison records (on NCMED cards only):
 <P>
-<BR>&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;disabled&nbsp;(default)
-<BR>&nbsp;&nbsp;<B>1</B>&nbsp;=&nbsp;read&nbsp;all&nbsp;records&nbsp;with&nbsp;expired&nbsp;rights
-<BR>&nbsp;&nbsp;<B>2</B>&nbsp;=&nbsp;read&nbsp;records&nbsp;with&nbsp;valid&nbsp;rights&nbsp;only
+<BR>&nbsp;<B>0</B>&nbsp;=&nbsp;disabled&nbsp;(default)
+<BR>&nbsp;<B>1</B>&nbsp;=&nbsp;read&nbsp;all&nbsp;records&nbsp;with&nbsp;expired&nbsp;rights
+<BR>&nbsp;<B>2</B>&nbsp;=&nbsp;read&nbsp;records&nbsp;with&nbsp;valid&nbsp;rights&nbsp;only
 </DL>
 
 <P>

@@ -45,7 +45,7 @@ reader protocol, \fIrequired\fR:
  \fBsmartreader\fP
 .RE
 .PP
-\fBdevice\fP = \fB<device|bus:device|device:slot>\fP|Serial:Reader \fBserial\fP|\fB<ip|hostname>,<port>[,<lport>]\fP|\fBpcsc\fP|<\fB0|1\fP>|\fBconstantcw\fP
+\fBdevice\fP = \fB<device|bus:device|device:slot>\fP|\fB[<readertype>:]serial\fP|\fB<ip|hostname>,<port>[,<lport>]\fP|\fBpcsc\fP|<\fB0|1\fP>|\fBconstantcw\fP
 .RS 3n
 define local or remote reader
 
@@ -57,8 +57,18 @@ define local or remote reader
  \fBdevice:slot\fP: device name and slot number sc8in1 [1-8]
               \fI(only one SC8in1 reader supported)\fR
 
- \fBserial\fP       serial number of Smartreader+
-              (get the serial number while starting OSCam)
+ \fBreadertype\fP:  set reader type
+
+                \fBSR\fP:       Smartreader+ (default)
+                \fBInfinity\fP: Infinity USB
+                \fBTripleP1\fP: Smargo Triple Reader port 1
+                \fBTripleP2\fP: Smargo Triple Reader port 2
+                \fBTripleP3\fP: Smargo Triple Reader port 3
+
+ \fBserial\fP:      serial number of reader
+
+
+ \fBip\fP|\fBhostname\fP: IP address or host name
 
  \fBport\fP:        TCP/IP port
 
@@ -152,9 +162,9 @@ set TA1 byte for NDS Videoguard 2 SCs, valid for physical readers only, default:
 .RS 3n
 read Nagravison records (on NCMED cards only):
 
-  \fB0\fP = disabled (default)
-  \fB1\fP = read all records with expired rights
-  \fB2\fP = read records with valid rights only
+ \fB0\fP = disabled (default)
+ \fB1\fP = read all records with expired rights
+ \fB2\fP = read records with valid rights only
 .RE
 .PP
 \fBrsakey\fP = \fBRSA key\fP
