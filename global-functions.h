@@ -49,7 +49,7 @@ extern void free_ecm(ECM_REQUEST *ecm);
 
 #define debug_ecm(mask, args...) \
 	do { \
-		if (config_WITH_DEBUG()) { \
+		if (config_WITH_DEBUG() && (mask & cs_dblevel)) { \
 			char buf[ECM_FMT_LEN]; \
 			format_ecm(er, buf, ECM_FMT_LEN); \
 			cs_debug_mask(mask, ##args); \

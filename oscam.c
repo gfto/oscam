@@ -470,26 +470,28 @@ void cs_accounts_chk(void)
 }
 
 static void remove_ecm_from_reader(ECM_REQUEST *ecm) {
-	struct s_ecm_answer *ea;
-	struct s_reader *rdr;
-	ECM_REQUEST *er;
-	int i;
+	int32_t i;
 
-	ea = ecm->matching_rdr;
+	struct s_ecm_answer *ea = ecm->matching_rdr;
 	while (ea) {
 	    if ((ea->status & REQUEST_SENT) && !(ea->status & REQUEST_ANSWERED)) {
-	        //we found a outstanding reader, clean it:
-            rdr = ea->reader;
-            if (rdr && rdr->client && rdr->client->ecmtask) {
-	            for (i = 0; i < cfg.max_pending; i++) {
-	            	er = &rdr->client->ecmtask[i];
-	            	if (er->parent == ecm) {
-	            		er->parent = NULL;
-	            		er->client = NULL;
-	            		cacheex_set_csp_lastnode(er);
+	      //we found a outstanding reader, clean it:
+        struct s_reader *rdr = ea->reader;
+        if (rdr){
+        	struct s_client *cl = rdr->client;
+        	if(cl) {
+        		ECM_REQUEST *ecmtask = cl->ecmtask;
+        		if(ecmtask){
+	            for (i = 0; i < cfg.max_pending; ++i) {
+	            	if (ecmtask[i].parent == ecm) {
+	            		ecmtask[i].parent = NULL;
+	            		ecmtask[i].client = NULL;
+	            		cacheex_set_csp_lastnode(&ecmtask[i]);
 	            	}
 	            }
-            }
+	          }
+          }
+        }
 	    }
 	    ea = ea->next;
 	}
