@@ -83,7 +83,8 @@ static void print_devs(libusb_device **devs)
   int32_t i = 0;
   int32_t ret;
   int32_t busid, devid;
-  unsigned char iserialbuffer[128];
+  unsigned char iserialbuffer[128], iproductbuffer[128];
+  char *productptr = iproductbuffer;
 
   while ((dev = devs[i++]) != NULL) {
     struct libusb_device_descriptor usbdesc;
@@ -102,12 +103,16 @@ static void print_devs(libusb_device **devs)
       if((ret=smartreader_check_endpoint(dev)) != -1) {
         busid=libusb_get_bus_number(dev);
         devid=libusb_get_device_address(dev);
+        memset(iserialbuffer, 0, sizeof(iserialbuffer));
+        memset(iproductbuffer, 0, sizeof(iproductbuffer));
         libusb_get_string_descriptor_ascii(handle,usbdesc.iSerialNumber,iserialbuffer,sizeof(iserialbuffer));
-        printf("bus %03d, device %03d : %04x:%04x Smartreader (in_ep=%d, out_ep=%d; insert in oscam.server 'device = %s%sSerial:%s')\n",
-        busid, devid,
-        usbdesc.idVendor, usbdesc.idProduct,
-        reader_types[ret].in_ep, reader_types[ret].out_ep,
-        strcmp(reader_types[ret].name, "SR")?reader_types[ret].name:"",strcmp(reader_types[ret].name, "SR")?";":"", iserialbuffer);
+        libusb_get_string_descriptor_ascii(handle,usbdesc.iProduct,iproductbuffer,sizeof(iproductbuffer));
+        printf("bus %03d, device %03d : %04x:%04x %s (type=%s, in_ep=%02x, out_ep=%02x; insert in oscam.server 'device = %s%sSerial:%s')\n",
+        	busid, devid,
+        	usbdesc.idVendor, usbdesc.idProduct, strlen(productptr)>0?productptr:"Smartreader",
+        	reader_types[ret].name, reader_types[ret].in_ep, reader_types[ret].out_ep,
+        	strcmp(reader_types[ret].name, "SR")?reader_types[ret].name:"",strcmp(reader_types[ret].name, "SR")?";":"", iserialbuffer
+        );
       }
 
       libusb_close(handle);
