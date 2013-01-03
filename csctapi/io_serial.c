@@ -387,7 +387,7 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 	for (count = 0; count < size ; count++){
 		gettimeofday(&tv,0);
 		memcpy(&tv_spent,&tv,sizeof(struct timeval));
-		
+		readed=0;
 		while( (((tv_spent.tv_sec-tv.tv_sec)*1000000) + ((tv_spent.tv_usec-tv.tv_usec)/1000000L)) < (time_t)(timeout)){
  			if (read (reader->handle, &c, 1) == 1){
 				readed = 1;
