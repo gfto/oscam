@@ -34,11 +34,13 @@ possible variables:
   \fBd\fP = PID
   \fBs\fP = service ID
   \fBl\fP = length
-  \fBh\fP = checksum
+  \fBh\fP = ecmd5
+  \fBe\fP = csphash
+  \fBw\fP = cw
 
 use a value as prefix to hide variable with this value, control characters will be escaped by "\\"
 
- example: ecmfmt = c&0p/i/d/s/l:h
+ example: ecmfmt = c&0p/i/d/s/l:h.e_w
           (hide provider ID if 0)
 .RE
 .PP

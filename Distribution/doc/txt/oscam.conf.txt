@@ -29,11 +29,13 @@ DESCRIPTIONS
 	    d = PID
 	    s = service ID
 	    l = length
-	    h = checksum
+	    h = ecmd5
+		e = csphash
+		w = cw
 
 	  use a value as prefix to hide variable with this value, control characters will be escaped by "\"
 
-	   example: ecmfmt = c&0p/i/d/s/l:h
+	   example: ecmfmt = c&0p/i/d/s/l:h.e_w
 		    (hide provider ID if 0)
 
        loghistorysize = bytes

@@ -238,9 +238,9 @@ inline int8_t cacheex_match_alias(struct s_client *cl, ECM_REQUEST *er, ECM_REQU
 				if (D_CACHEEX & cs_dblevel){
 					char result[CXM_FMT_LEN] = { 0 };
 					int32_t s, size = CXM_FMT_LEN;
-					s = ecmfmt(entry->caid, entry->provid, entry->chid, entry->pid, entry->srvid, entry->ecmlen, 0, result, size);
+					s = ecmfmt(entry->caid, entry->provid, entry->chid, entry->pid, entry->srvid, entry->ecmlen, 0, 0, 0, result, size);
 					s += snprintf(result+s, size-s, " = ");
-					s += ecmfmt(entry->to_caid, entry->to_provid, entry->to_chid, entry->to_pid, entry->to_srvid, entry->to_ecmlen, 0, result+s, size-s);
+					s += ecmfmt(entry->to_caid, entry->to_provid, entry->to_chid, entry->to_pid, entry->to_srvid, entry->to_ecmlen, 0, 0, 0, result+s, size-s);
 					s += snprintf(result+s, size-s, " valid %d/%d", entry->valid_from, entry->valid_to);
 					cs_debug_mask(D_CACHEEX, "cacheex-matching for: %s", result);
 				}
