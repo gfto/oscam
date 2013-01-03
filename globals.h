@@ -761,17 +761,16 @@ typedef struct ecm_request_t {
 	struct s_client	*client;			//contains pointer to 'c' client while running in 'r' client
 	uint64_t        grp;
 	int32_t			msgid;				// client pending table index
-	int32_t			stage;				// processing stage in server module
-	int32_t			level;				// send-level in client module
+	uint8_t			stage;				// processing stage in server module
 	int8_t			rc;
 	uint8_t			rcEx;
 	struct timeb	tps;				// incoming time stamp
 	uchar			locals_done;
-	int32_t			btun; 				// mark er as betatunneled
+	int8_t			btun; 				// mark er as betatunneled
 	uint16_t			reader_avail; 		// count of available readers
 	uint16_t			reader_count; 		// count of contacted readers
 	uint16_t        	reader_requested;   // count of real requested readers
-	int32_t			checked;				//for doublecheck
+	int8_t			checked;				//for doublecheck
 	uchar			cw_checked[16];		//for doublecheck
 	struct s_reader 	*origin_reader;
 
