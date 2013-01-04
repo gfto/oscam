@@ -829,6 +829,7 @@ int32_t chk_csp_ctab(ECM_REQUEST *er, CECSPVALUETAB *tab) {
 
 uint8_t check_cacheex_filter(struct s_client *cl, ECM_REQUEST *er) {
 	CECSP *ce_csp = NULL;
+	uint8_t ret = 1;
 	if (cl->typ == 'c') {
 		if (cl->account &&	cl->account->cacheex.mode==3) {
 			ce_csp = &cl->account->cacheex;
@@ -841,13 +842,15 @@ uint8_t check_cacheex_filter(struct s_client *cl, ECM_REQUEST *er) {
 
 	if (ce_csp) {
 		if (!chk_csp_ctab(er, &ce_csp->filter_caidtab))
-			return 0;
+			ret = 0;
 		if (er->rc != E_FOUND && !ce_csp->allow_request)
-			return 0;
+			ret = 0;
 		if (ce_csp->drop_csp && !checkECMD5(er))
-			return 0;
+			ret = 0;
 	}
-	return 1;
+	if (!ret)
+		free(er);
+	return ret;
 }
 
 #endif
