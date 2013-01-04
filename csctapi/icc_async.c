@@ -223,7 +223,10 @@ int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, ui
 
 int32_t ICC_Async_SetTimings (struct s_reader * reader, uint32_t wait_etu)
 {
-	reader->read_timeout = ETU_to_us(reader, wait_etu);
+	if (reader->crdr.timings_in_etu)
+		reader->read_timeout = wait_etu;
+	else
+		reader->read_timeout = ETU_to_us(reader, wait_etu);
 	rdr_debug_mask(reader, D_IFD, "Setting timeout to %i ETU (%d us)", wait_etu, reader->read_timeout);
 	return OK;
 }
@@ -656,11 +659,19 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 					(reader->cardmhz * 10000));
 			else
 				rdr_debug_mask(reader, D_ATR, "Protocol: T=%i, WWT=%u, Clockrate=%u",
-					reader->protocol_type, WWT, reader->mhz * 10000);	
-			reader->read_timeout = ETU_to_us(reader, WWT); // Work waiting time used in T0 (max time to signal unresponsive card!)
-			reader->char_delay = ETU_to_us(reader, GT+EGT); // Character delay is used on T0
-			rdr_debug_mask(reader, D_ATR, "Setting timings: timeout=%u us, block_delay=%u us, char_delay=%u us",
-				reader->read_timeout, reader->block_delay, reader->char_delay);
+					reader->protocol_type, WWT, reader->mhz * 10000);
+
+			if (reader->crdr.timings_in_etu) {
+				reader->read_timeout = WWT;
+				reader->char_delay = GT+EGT;
+				rdr_debug_mask(reader, D_ATR, "Setting timings: timeout=%u ETU, block_delay=%u ETU, char_delay=%u ETU",
+					reader->read_timeout, reader->block_delay, reader->char_delay);
+			} else {	
+				reader->read_timeout = ETU_to_us(reader, WWT); // Work waiting time used in T0 (max time to signal unresponsive card!)
+				reader->char_delay = ETU_to_us(reader, GT+EGT); // Character delay is used on T0
+				rdr_debug_mask(reader, D_ATR, "Setting timings: timeout=%u us, block_delay=%u us, char_delay=%u us",
+					reader->read_timeout, reader->block_delay, reader->char_delay);
+			}
 			break;
 		}
 		case ATR_PROTOCOL_TYPE_T1:
@@ -729,11 +740,20 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 					reader->protocol_type, reader->ifsc,
 					reader->CWT, reader->BWT,
 					BGT, (edc == EDC_LRC) ? "LRC" : "CRC", N);
-				reader->read_timeout = ETU_to_us(reader, reader->BWT);
-				reader->block_delay = ETU_to_us(reader, BGT);
-				reader->char_delay = ETU_to_us(reader, GT+EGT);
-				rdr_debug_mask(reader, D_ATR, "Setting timings: reader timeout=%u us, block_delay=%u us, char_delay=%u us",
-					reader->read_timeout, reader->block_delay, reader->char_delay);
+
+				if (reader->crdr.timings_in_etu) {
+					reader->read_timeout = reader->BWT;
+					reader->block_delay = BGT;
+					reader->char_delay = GT+EGT;
+					rdr_debug_mask(reader, D_ATR, "Setting timings: reader timeout=%u ETU, block_delay=%u ETU, char_delay=%u ETU",
+						reader->read_timeout, reader->block_delay, reader->char_delay);
+				} else {
+					reader->read_timeout = ETU_to_us(reader, reader->BWT);
+					reader->block_delay = ETU_to_us(reader, BGT);
+					reader->char_delay = ETU_to_us(reader, GT+EGT);
+					rdr_debug_mask(reader, D_ATR, "Setting timings: reader timeout=%u us, block_delay=%u us, char_delay=%u us",
+						reader->read_timeout, reader->block_delay, reader->char_delay);
+				}
 			break;
 		}
 			

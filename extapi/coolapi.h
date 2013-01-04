@@ -1,6 +1,48 @@
 #ifndef _COOLAPI_H_
 #define _COOLAPI_H_
 
+/* timeouts in ETU */
+typedef struct
+{
+   uint16_t  CardActTime;
+   uint16_t  CardDeactTime;  
+   uint16_t  ATRSTime; 
+   uint16_t  ATRDTime; 
+   uint32_t  BLKTime;
+   uint32_t  CHTime;
+   uint8_t   CHGuardTime;
+   uint8_t   BKGuardTime;  
+} CNXT_SMC_TIMEOUT;
+
+typedef struct
+{
+   uint8_t   		TXRetries;
+   uint8_t   		RXRetries;
+} CNXT_SMC_RETRIES;
+
+typedef enum 
+{
+   CNXT_SMC_CONV_DIRECT = 0,
+   CNXT_SMC_CONV_INVERSE,
+   CNXT_SMC_CONV_LAST = CNXT_SMC_CONV_INVERSE
+} CNXT_SMC_CONVENTION;
+
+typedef struct
+{
+   CNXT_SMC_CONVENTION	convention;
+   uint8_t				protocol;
+   uint8_t				FI;
+   uint8_t				N;
+   uint8_t				DI;
+   uint8_t				PI1;
+   uint8_t				PI2;
+   uint8_t				II;
+   uint8_t				historical[15];
+   uint8_t				length;
+   CNXT_SMC_RETRIES		retries;
+   uint8_t				filterprotocolbytes;
+} CNXT_SMC_COMM;
+
 /* These functions are implemented in libnxp and are used in coolstream */
 int32_t cnxt_cbuf_init(void *);
 int32_t cnxt_cbuf_get_used(void *buffer, uint32_t * bytes_used);
@@ -38,8 +80,12 @@ int32_t cnxt_smc_get_state(void *cool_handle, int32_t *state);
 int32_t cnxt_smc_get_clock_freq(void *cool_handle, uint32_t *clk);
 int32_t cnxt_smc_reset_card(void *cool_handle, int32_t timeout, void *, void *);
 int32_t cnxt_smc_get_atr(void *cool_handle, unsigned char *buf, int32_t *buflen);
-int32_t cnxt_smc_read_write(void *cool_handle, int32_t b, uint8_t *sent, uint32_t size, char *cardbuffer, uint32_t *cardbuflen, int32_t rw_timeout, int);
+int32_t cnxt_smc_get_comm_parameters(void *cool_handle, CNXT_SMC_COMM *comm);
+int32_t cnxt_smc_get_config_timeout(void *cool_handle, CNXT_SMC_TIMEOUT *timeout);
+int32_t cnxt_smc_get_F_D_factors (void *cool_handle, uint16_t *F, uint8_t *D);
+int32_t cnxt_smc_read_write(void *cool_handle, int8_t async, uint8_t *sent, uint32_t size, uint8_t *cardbuffer, uint32_t *cardbuflen, int32_t rw_timeout, void *tag);
 int32_t cnxt_smc_set_clock_freq(void *cool_handle, int32_t clk);
+int32_t cnxt_smc_set_filter_protocol_bytes (void *cool_handle, int32_t enable);
 int32_t cnxt_smc_close(void *cool_handle);
 
 /* Error checking */

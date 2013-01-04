@@ -15,11 +15,9 @@
 
 extern int32_t cool_kal_opened;
 
-#define READ_WRITE_TRANSMIT_TIMEOUT				50
-
 struct s_coolstream_reader {
 	void      *handle; //device handle for coolstream
-	char      cardbuffer[256];
+	uint8_t     cardbuffer[512];
 	uint32_t	cardbuflen;
 	int32_t		read_write_transmit_timeout;
 };
@@ -52,9 +50,8 @@ static int32_t Cool_Init (struct s_reader *reader)
 		rdr_debug_mask(reader, D_DEVICE, "init timeout set to cool_timeout_init = %i", reader->cool_timeout_init);
 		specdev()->read_write_transmit_timeout = reader->cool_timeout_init;
 	} else {
-		rdr_debug_mask(reader, D_DEVICE, "No init timeout specified - using default init timeout (%i). If you encounter any problems while card init try to use the reader parameter cool_timeout_init = 500",
-			READ_WRITE_TRANSMIT_TIMEOUT);
-		specdev()->read_write_transmit_timeout = READ_WRITE_TRANSMIT_TIMEOUT;
+		rdr_debug_mask(reader, D_DEVICE, "No init timeout specified - using value from ATR. If you encounter any problems while card init try to use the reader parameter cool_timeout_init = 500");
+		specdev()->read_write_transmit_timeout = -1;
 	}
 	return OK;
 }
@@ -93,20 +90,16 @@ static int32_t Cool_Set_Transmit_Timeout(struct s_reader *reader, uint32_t set)
 			specdev()->read_write_transmit_timeout = reader->cool_timeout_after_init;
 			rdr_debug_mask(reader, D_DEVICE, "timeout set to cool_timeout_after_init = %i", reader->cool_timeout_after_init);
 		} else {
-			if (reader->read_timeout > 50) {
-				rdr_log(reader, "ATTENTION: The calculated timeout after init value (%i) is greater than 50 which probably leads to a slow card response. We are going to use the reader parameter cool_timeout_after_init = 50.", reader->read_timeout);
-				rdr_log(reader, "If you encounter any problems try a higher value. If you have no problems try a value below to get a faster card response.");
-				specdev()->read_write_transmit_timeout = 50;
-			} else {
-				rdr_debug_mask(reader, D_DEVICE, "no timeout specified - using calculated timeout after init (%i)", reader->read_timeout);
-				specdev()->read_write_transmit_timeout = reader->read_timeout;
-			}
+			specdev()->read_write_transmit_timeout = -1;
+			rdr_debug_mask(reader, D_DEVICE, "no cool_timeout_after_init value set, using value from ATR");
 		}
 	} else {
 		if (reader->cool_timeout_init > 0) {
 			specdev()->read_write_transmit_timeout = reader->cool_timeout_init;
+			rdr_debug_mask(reader, D_DEVICE, "timeout set to cool_timeout_init = %i", reader->cool_timeout_after_init);
 		} else {
-			specdev()->read_write_transmit_timeout = READ_WRITE_TRANSMIT_TIMEOUT;
+			specdev()->read_write_transmit_timeout = -1;
+			rdr_debug_mask(reader, D_DEVICE, "no cool_timeout_init value set, using value from ATR");
 		}
 	}
 	return OK;
@@ -170,11 +163,15 @@ static int32_t Cool_Reset (struct s_reader *reader, ATR * atr)
 	}
 }
 
-static int32_t Cool_Transmit (struct s_reader *reader, unsigned char * sent, uint32_t size, uint32_t UNUSED(delay), uint32_t UNUSED(timeout))
+static int32_t Cool_Transmit (struct s_reader *reader, unsigned char * sent, uint32_t size, uint32_t UNUSED(delay), uint32_t timeout)
 {
-	specdev()->cardbuflen = 256;//it needs to know max buffer size to respond?
+	int32_t ret;
+	specdev()->cardbuflen = 512;//it needs to know max buffer size to respond?
 
-	int32_t ret = cnxt_smc_read_write(specdev()->handle, 0, sent, size, specdev()->cardbuffer, &specdev()->cardbuflen, specdev()->read_write_transmit_timeout, 0);
+	if (specdev()->read_write_transmit_timeout == -1)
+		ret = cnxt_smc_read_write(specdev()->handle, 0, sent, size, specdev()->cardbuffer, &specdev()->cardbuflen, timeout, NULL);
+	else
+		ret = cnxt_smc_read_write(specdev()->handle, 0, sent, size, specdev()->cardbuffer, &specdev()->cardbuflen, specdev()->read_write_transmit_timeout, NULL);
 	coolapi_check_error("cnxt_smc_read_write", ret);
 
 	rdr_ddump_mask(reader, D_DEVICE, sent, size, "COOL Transmit:");
@@ -194,26 +191,7 @@ static int32_t Cool_Receive (struct s_reader *reader, unsigned char * data, uint
 
 static int32_t Cool_WriteSettings (struct s_reader *reader, uint32_t UNUSED(BWT), uint32_t UNUSED(CWT), uint32_t UNUSED(EGT), uint32_t UNUSED(BGT))
 {
-	//this code worked with old cnxt_lnx.ko, but prevented nagra cards from working with new cnxt_lnx.ko
-/*	struct
-	{
-		unsigned short  CardActTime;   //card activation time (in clock cycles = 1/54Mhz)
-		unsigned short  CardDeactTime; //card deactivation time (in clock cycles = 1/54Mhz)
-		unsigned short  ATRSTime;			//ATR first char timeout in clock cycles (1/f)
-		unsigned short  ATRDTime;			//ATR duration in ETU
-		unsigned long	  BWT;
-		unsigned long   CWT;
-		unsigned char   EGT;
-		unsigned char   BGT;
-	} params;
-	params.BWT = BWT;
-	params.CWT = CWT;
-	params.EGT = EGT;
-	params.BGT = BGT;
-	call (cnxt_smc_set_config_timeout(specdev()->handle, params));
-	rdr_debug_mask(reader, D_DEVICE, "COOL WriteSettings OK");*/
-
-	//set freq back to reader->mhz if necessary
+	//first set freq back to reader->mhz if necessary
 	uint32_t clk;
 	int32_t ret = cnxt_smc_get_clock_freq (specdev()->handle, &clk);
 	coolapi_check_error("cnxt_smc_get_clock_freq", ret);
@@ -221,6 +199,32 @@ static int32_t Cool_WriteSettings (struct s_reader *reader, uint32_t UNUSED(BWT)
 		rdr_debug_mask(reader, D_DEVICE, "COOL: clock freq: %i, scheduling change to %i", clk, reader->mhz * 10000);
 		call (Cool_SetClockrate(reader, reader->mhz));
 	}
+
+	//driver sets values in ETU automatically (except read_write_transmit_timeout)
+	//... but lets see what the driver did
+	uint16_t F;
+	uint8_t D;
+	ret = cnxt_smc_get_F_D_factors(specdev()->handle, &F, &D);
+	coolapi_check_error("cnxt_smc_get_F_D_factors", ret);
+	char *protocol;
+	CNXT_SMC_COMM comm;
+	ret = cnxt_smc_get_comm_parameters(specdev()->handle, &comm);
+	coolapi_check_error("cnxt_smc_get_comm_parameters", ret);
+	if (comm.protocol==0x01)
+		protocol = "T0";
+	else if (comm.protocol==0x02)
+		protocol = "T1";
+	else if (comm.protocol==0x04)
+		protocol = "T14";
+	else
+		protocol = "unknown";
+
+	rdr_log(reader, "Driver Settings: Convention=%s, Protocol=%s, FI=%i, F=%i, N=%i, DI=%i, D=%i, PI1=%i, PI2=%i, II=%i, TXRetries=%i, RXRetries=%i, FilterProtocolBytes=%i", comm.convention ? "Inverse" : "Direct", protocol, comm.FI, F, comm.N, comm.DI, D, comm.PI1, comm.PI2, comm.II, comm.retries.TXRetries, comm.retries.RXRetries, comm.filterprotocolbytes);
+
+	CNXT_SMC_TIMEOUT timeout;
+	ret = cnxt_smc_get_config_timeout(specdev()->handle, &timeout);
+	coolapi_check_error("cnxt_smc_get_config_timeout", ret);
+	rdr_log(reader, "Driver Settings: CardActTime=%i, CardDeactTime=%i, ATRSTime=%i, ATRDTime=%i, BLKTime=%i, CHTime=%i, CHGuardTime=%i, BKGuardTime=%i", timeout.CardActTime, timeout.CardDeactTime, timeout.ATRSTime, timeout.ATRDTime, timeout.BLKTime, timeout.CHTime, timeout.CHGuardTime, timeout.BKGuardTime);
 
 	return OK;
 }
@@ -260,6 +264,7 @@ void cardreader_internal_cool(struct s_cardreader *crdr)
 	crdr->close        = Cool_Close;
 	crdr->write_settings2 = cool_write_settings2;
 	crdr->set_transmit_timeout = cool_set_transmit_timeout;
+	crdr->timings_in_etu	= 1;
 }
 
 #endif

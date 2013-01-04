@@ -718,6 +718,7 @@ struct s_cardreader
 	//io_serial config
 	int8_t			flush;
 	int8_t			read_written; 		// 1 = written bytes has to read from device
+	int8_t			timings_in_etu;		// timings in ETU instead of us
 	bool			skip_extra_atr_parsing;
 	bool			skip_t1_command_retries;
 	bool			skip_setting_ifsc;
