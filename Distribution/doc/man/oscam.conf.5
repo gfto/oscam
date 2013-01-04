@@ -605,9 +605,21 @@ TCP port of Cardservproxy for cache exchange, default:none
 IP address of Cardservproxy for cache exchange, default:none
 .RE
 .PP
-\fBwait_time\fP = \fBmilli-seconds\fP
+\fBwait_time\fP = \f[caid][&mask][@provid][$servid][:awtime][:]dwtime,n\fP
 .RS 3n
-wait time for cache exchange before sending ECM to Cardservproxy, default:none
+wait time in milli-seconds for cache exchange (mode 2&3) and CSP before sending ECM to reader/proxy, default:none
+
+ example: wait_time = 0:50:250,0200@00009X:50:150,15:950,0500@000001:150,1602&ffdf:1200
+.RE
+.PP
+\fBcsp_ecm_filter\fP = \fB[caid][&mask][@provid][$servid],n\fP
+.RS 3n
+CSP incoming ecmfilter setting, default:none
+.RE
+.PP
+\fBcsp_allow_request\fP = \fB0\fP|\fB1\fP
+.RS 3n
+allow incoming ecm request, default:1
 .RE
 .SS "The [camd33] section"
 \fBport\fP = \fB0\fP|\fBport\fP

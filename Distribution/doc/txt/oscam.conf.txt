@@ -441,8 +441,16 @@ DESCRIPTIONS
        serverip = IP
 	  IP address of Cardservproxy for cache exchange, default:none
 
-       wait_time = milli-seconds
-	  wait time for cache exchange before sending ECM to Cardservproxy, default:none
+       wait_time = [caid][&mask][@provid][$servid][:awtime][:]dwtime,n
+	  wait time in milli-seconds for cache exchange (mode 2&3) and CSP before sending ECM to reader/proxy, default:none
+
+	   example: wait_time = 0:50:250,0200@00009X:50:150,15:950,0500@000001:150,1602&ffdf:1200
+
+       csp_ecm_filter = [caid][&mask][@provid][$servid],n
+	  CSP incoming ecmfilter setting, default:none
+
+       csp_allow_request = 0|1
+	  allow incoming ecm request, default:1
 
    The [camd33] section
        port = 0|port

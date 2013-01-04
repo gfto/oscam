@@ -464,6 +464,27 @@ define maximum hops for cache exchange, default=10
 
 <P>
 
+<B>cacheex_ecm_filter</B> = <B>[caid][&mask][@provid][$servid],n</B>
+<DL COMPACT><DT><DD>
+cache exchange incoming ecmfilter setting (mode 2), default:none
+</DL>
+
+<P>
+
+<B>cacheex_drop_csp</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+drop incoming CSP cache (mode 2), detection is zero ecmd5, default:0
+</DL>
+
+<P>
+
+<B>cacheex_allow_request</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+allow incoming ecm request (mode 2), default:1
+</DL>
+
+<P>
+
 <B>logport</B> = <B>0</B>|<B>port</B>
 <DL COMPACT><DT><DD>
 camd 3.x reader logport, camd 3.x UDP must be activated, only works if there's no camd 3.x cascading, 0 = disabled, default=0

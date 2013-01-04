@@ -92,6 +92,15 @@ DESCRIPTIONS
        cacheex_maxhop = hops
 	  define maximum hops for cache exchange, default=10
 
+       cacheex_ecm_filter = [caid][&mask][@provid][$servid],n
+	  cache exchange incoming ecmfilter setting (mode 3), default:none
+
+       cacheex_drop_csp = 0|1
+	  drop incoming CSP cache (mode 3), detection is zero ecmd5, default:0
+
+       cacheex_allow_request = 0|1
+	  allow incoming ecm request (mode 3), default:1
+
        sleep = minutes
 	  time waiting for inactive user, default:none
 

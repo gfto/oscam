@@ -163,6 +163,27 @@ define maximum hops for cache exchange, default=10
 
 <P>
 
+<B>cacheex_ecm_filter</B> = <B>[caid][&mask][@provid][$servid],n</B>
+<DL COMPACT><DT><DD>
+cache exchange incoming ecmfilter setting (mode 3), default:none
+</DL>
+
+<P>
+
+<B>cacheex_drop_csp</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+drop incoming CSP cache (mode 3), detection is zero ecmd5, default:0
+</DL>
+
+<P>
+
+<B>cacheex_allow_request</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+allow incoming ecm request (mode 3), default:1
+</DL>
+
+<P>
+
 <B>sleep</B> = <B>minutes</B>
 <DL COMPACT><DT><DD>
 time waiting for inactive user, default:none
