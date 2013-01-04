@@ -389,7 +389,7 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	cl->ecmtask[n].rc=10;
 	cs_debug_mask(D_TRACE, "---- ecm_task %d, idx %d, sflag=%d", n, cl->ecmtask[n].idx, sflag);
 
-	cs_ddump_mask(D_ATR, er->ecm, er->ecmlen, "casc ecm:");
+	cs_ddump_mask(D_ATR, er->ecm, er->ecmlen, "casc ecm (%s):", (reader)?reader->label:"n/a");
 	rc=0;
 	if (sflag) {
 		if ((rc=reader->ph.c_send_ecm(cl, &cl->ecmtask[n], buf)))

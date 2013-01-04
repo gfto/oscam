@@ -597,6 +597,75 @@ char *mk_t_caidvaluetab(CAIDVALUETAB *tab)
 		return buf;
 }
 
+#ifdef CS_CACHEEX
+char *mk_t_cspvaluetab(CECSPVALUETAB *tab){
+	if (!tab->n) return "";
+	int32_t i, size = 2 + tab->n * (4 + 1 + 4 + 1 + 6 + 1 + 4 + 1 + 5 + 1 + 5 + 1); //caid&mask@provid$servid:awtime:dwtime","
+	char *buf;
+	if (!cs_malloc(&buf, size))
+		return "";
+	char *ptr = buf;
+
+	for (i = 0; i < tab->n; i++) {
+		if (i) ptr += snprintf(ptr, size-(ptr-buf), ",");
+		if (tab->caid[i]>=0) {
+			if (tab->caid[i] == 0) {
+				if (tab->awtime[i]>0)
+					ptr += snprintf(ptr, size-(ptr-buf), "%d", tab->caid[i]);
+			} else if(tab->caid[i] < 256) //Do not format 0D as 000D, its a shortcut for 0Dxx:
+				ptr += snprintf(ptr, size-(ptr-buf), "%02X", tab->caid[i]);
+			else
+				ptr += snprintf(ptr, size-(ptr-buf), "%04X", tab->caid[i]);
+		}
+		if (tab->cmask[i]>=0)
+			ptr += snprintf(ptr, size-(ptr-buf), "&%04X", tab->cmask[i]);
+		if (tab->prid[i]>=0)
+			ptr += snprintf(ptr, size-(ptr-buf), "@%06X", tab->prid[i]);
+		if (tab->srvid[i]>=0)
+			ptr += snprintf(ptr, size-(ptr-buf), "$%04X", tab->srvid[i]);
+		if (tab->awtime[i]>0)
+			ptr += snprintf(ptr, size-(ptr-buf), ":%d", tab->awtime[i]);
+			if (!tab->dwtime[i]>0)
+				ptr += snprintf(ptr, size-(ptr-buf), ":0");
+		if (tab->dwtime[i]>0) {
+			if ((tab->caid[i] <= 0) && (tab->prid[i] == -1) &&(tab->srvid[i] == -1) && (tab->srvid[i] == -1) && (tab->awtime[i] <= 0))
+				ptr += snprintf(ptr, size-(ptr-buf), "%d", tab->dwtime[i]);
+			else
+				ptr += snprintf(ptr, size-(ptr-buf), ":%d", tab->dwtime[i]);
+		}
+	}
+	*ptr = 0;
+	return buf;
+}
+
+char *mk_t_hitvaluetab(CECSPVALUETAB *tab){
+	if (!tab->n) return "";
+	int32_t i, size = 2 + tab->n * (4 + 1 + 4 + 1 + 6 + 1 + 4 + 1); //caid&mask@provid$servid","
+	char *buf;
+	if (!cs_malloc(&buf, size))
+		return "";
+	char *ptr = buf;
+
+	for (i = 0; i < tab->n; i++) {
+		if (i) ptr += snprintf(ptr, size-(ptr-buf), ",");
+		if (tab->caid[i]>0) {
+			if(tab->caid[i] < 256) //Do not format 0D as 000D, its a shortcut for 0Dxx:
+				ptr += snprintf(ptr, size-(ptr-buf), "%02X", tab->caid[i]);
+			else
+				ptr += snprintf(ptr, size-(ptr-buf), "%04X", tab->caid[i]);
+			if (tab->cmask[i]>=0)
+				ptr += snprintf(ptr, size-(ptr-buf), "&%04X", tab->cmask[i]);
+			if (tab->prid[i]>=0)
+				ptr += snprintf(ptr, size-(ptr-buf), "@%06X", tab->prid[i]);
+			if (tab->srvid[i]>=0)
+				ptr += snprintf(ptr, size-(ptr-buf), "$%04X", tab->srvid[i]);
+		}
+	}
+	*ptr = 0;
+	return buf;
+}
+#endif
+
 /*
  * returns string of comma separated values
  */

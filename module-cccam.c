@@ -2103,6 +2103,9 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 	memcpy(er->ecmd5, ofs, sizeof(er->ecmd5));
 	ofs += sizeof(er->ecmd5);
 
+	if (!check_cacheex_filter(cl, er))
+		return;
+
 	//Read CSP hashcode:
 	memcpy(&er->csp_hash, ofs, sizeof(er->csp_hash));
 	ofs += sizeof(er->csp_hash);
@@ -2484,7 +2487,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 						card->rating--;
 				}
 #ifdef CS_CACHEEX
-				else if (rdr->cacheex!=1) {
+				else if (rdr->cacheex.mode!=1) {
 #else
 				else {
 #endif

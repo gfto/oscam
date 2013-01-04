@@ -67,6 +67,7 @@ CS_MUTEX_LOCK readerlist_lock;
 CS_MUTEX_LOCK fakeuser_lock;
 CS_MUTEX_LOCK ecmcache_lock;
 CS_MUTEX_LOCK readdir_lock;
+CS_MUTEX_LOCK hitcache_lock;
 pthread_key_t getclient;
 static int32_t bg;
 static int32_t gbdb;
@@ -1358,7 +1359,7 @@ static void init_cardreader(void) {
 /**
  * Check for NULL ecmd5
  **/
-static inline uint8_t checkECMD5(ECM_REQUEST *er)
+inline uint8_t checkECMD5(ECM_REQUEST *er)
 {
 	int8_t i;
 	for (i=0;i<CS_ECMSTORESIZE;i++)
@@ -1906,7 +1907,7 @@ static void request_cw(ECM_REQUEST *er)
 			struct s_reader *rdr = ea->reader;
 			char ecmd5[17*3];                
             cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5));
-			cs_debug_mask(D_TRACE, "request_cw stage=%d to reader %s ecm hash=%s", er->stage, rdr?rdr->label:"", ecmd5);
+			cs_debug_mask(D_TRACE | D_CSPCWC, "request_cw stage=%d to reader %s ecm hash=%s", er->stage, rdr?rdr->label:"", ecmd5);
 			
 			ea->status |= REQUEST_SENT;
 			er->reader_requested++;
@@ -2637,10 +2638,11 @@ OUT:
 	}
 
 #ifdef CS_CACHEEX
-	int8_t cacheex = client->account?client->account->cacheex:0;
-
-	if ((cacheex == 1 || cfg.csp_wait_time) && er->rc == E_UNHANDLED) { //not found in cache, so wait!
-		uint32_t max_wait = (cacheex == 1)?cfg.cacheex_wait_time:cfg.csp_wait_time;
+	int8_t cacheex = client->account?client->account->cacheex.mode:0;
+	uint32_t c_csp_wait_time = get_csp_wait_time(er,client);
+	cs_debug_mask(D_CACHEEX | D_CSPCWC, "[GET_CW] c_csp_wait_time %d caid %04X prov %06X srvid %04X rc %d cacheex %d", c_csp_wait_time, er->caid, er->prid, er->srvid, er->rc, cacheex);
+	if ((cacheex == 1 || c_csp_wait_time) && er->rc == E_UNHANDLED) { //not found in cache, so wait!
+		int32_t max_wait = (cacheex == 1)?cfg.cacheex_wait_time:c_csp_wait_time; // uint32_t can't value <> n/50
 		while (max_wait > 0 && !client->kill) {
 			cs_sleepms(50);
 			max_wait -= 50;
@@ -2658,6 +2660,8 @@ OUT:
 				break;
 			}
 		}
+		if (max_wait <= 0 )
+			cs_debug_mask(D_CACHEEX|D_CSPCWC, "[GET_CW] wait_time over");
 	}
 #endif
 
@@ -3651,6 +3655,8 @@ static void * check_thread(void) {
 
 		if (!msec_wait)
 			msec_wait = 3000;
+
+		cleanup_hitcache();
 	}
 	add_garbage(cl);
 	timecheck_client = NULL;
@@ -4158,6 +4164,7 @@ int32_t main (int32_t argc, char *argv[])
   cs_lock_create(&fakeuser_lock, 5, "fakeuser_lock");
   cs_lock_create(&ecmcache_lock, 5, "ecmcache_lock");
   cs_lock_create(&readdir_lock, 5, "readdir_lock");
+  cs_lock_create(&hitcache_lock, 5, "hitcache_lock");
   coolapi_open_all();
   init_config();
   cs_init_log();

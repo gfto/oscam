@@ -650,6 +650,9 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 	memcpy(er->ecmd5, ofs, sizeof(er->ecmd5)); //16
 	ofs+= sizeof(er->ecmd5);
 
+	if (!check_cacheex_filter(cl, er))
+		return;
+
 	//Read csp_hash:
 	memcpy(&er->csp_hash, ofs, sizeof(er->csp_hash)); //4
 	ofs+=sizeof(er->csp_hash);

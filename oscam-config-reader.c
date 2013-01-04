@@ -306,12 +306,29 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
 #ifdef CS_CACHEEX
 	if (!strcmp(token, "cacheex")) {
-		rdr->cacheex  = strToIntVal(value, 0);
+		rdr->cacheex.mode  = strToIntVal(value, 0);
 		return;
 	}
 
 	if (!strcmp(token, "cacheex_maxhop")) {
-		rdr->cacheex_maxhop  = strToIntVal(value, 0);
+		rdr->cacheex.maxhop  = strToIntVal(value, 0);
+		return;
+	}
+	if (!strcmp(token, "cacheex_ecm_filter")) {
+		if (strlen(value) == 0){
+			clear_csptab(&rdr->cacheex.filter_caidtab);
+			return;
+		} else {
+			chk_hitvaluetab(value, &rdr->cacheex.filter_caidtab);
+			return;
+		}
+	}
+	if (!strcmp(token, "cacheex_allow_request")) {
+		rdr->cacheex.allow_request  = strToIntVal(value, 1);
+		return;
+	}
+	if (!strcmp(token, "cacheex_drop_csp")) {
+		rdr->cacheex.drop_csp  = strToIntVal(value, 0);
 		return;
 	}
 #endif
@@ -1130,6 +1147,9 @@ void reader_set_defaults(struct s_reader *rdr) {
 #ifdef WITH_LB
 	rdr->lb_weight = 100;
 #endif
+#ifdef CS_CACHEEX
+	rdr->cacheex.allow_request = 1;
+#endif
 	cs_strncpy(rdr->pincode, "none", sizeof(rdr->pincode));
 	for (i=1; i<CS_MAXCAIDTAB; rdr->ctab.mask[i++]=0xffff);
 }
@@ -1319,11 +1339,22 @@ int32_t write_server(void)
 				fprintf_conf(f, "fallback", "%d\n", rdr->fallback);
 
 #ifdef CS_CACHEEX
-			if (rdr->cacheex || cfg.http_full_cfg)
-				fprintf_conf(f, "cacheex", "%d\n", rdr->cacheex);
+			if (rdr->cacheex.mode || cfg.http_full_cfg)
+				fprintf_conf(f, "cacheex", "%d\n", rdr->cacheex.mode);
 
-			if (rdr->cacheex_maxhop || cfg.http_full_cfg)
-				fprintf_conf(f, "cacheex_maxhop", "%d\n", rdr->cacheex_maxhop);
+			if (rdr->cacheex.maxhop || cfg.http_full_cfg)
+				fprintf_conf(f, "cacheex_maxhop", "%d\n", rdr->cacheex.maxhop);
+
+			value = mk_t_hitvaluetab(&rdr->cacheex.filter_caidtab);
+			if (strlen(value) > 0 || cfg.http_full_cfg)
+				fprintf_conf(f, "cacheex_ecm_filter", "%s\n", value);
+			free_mk_t(value);
+
+			if (!rdr->cacheex.allow_request || cfg.http_full_cfg)
+							fprintf_conf(f, "cacheex_allow_request", "%d\n", rdr->cacheex.allow_request);
+
+			if (rdr->cacheex.drop_csp || cfg.http_full_cfg)
+							fprintf_conf(f, "cacheex_drop_csp", "%d\n", rdr->cacheex.drop_csp);
 #endif
 
 #ifdef WITH_COOLAPI

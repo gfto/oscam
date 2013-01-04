@@ -92,6 +92,101 @@ void chk_caidvaluetab(char *lbrlt, CAIDVALUETAB *tab, int32_t minvalue)
 	memcpy(tab, &newtab, sizeof(CAIDVALUETAB));
 }
 
+#ifdef CS_CACHEEX
+void chk_cspvaluetab(char *lbrlt, CECSPVALUETAB *tab) {
+	//[caid][&mask][@provid][$servid][:awtime][:]dwtime
+ 	int32_t i;
+ 	char *ptr = NULL, *saveptr1 = NULL;
+ 	CECSPVALUETAB newtab;
+ 	memset(&newtab, 0, sizeof(CECSPVALUETAB));
+
+ 	for (i = 0, ptr = strtok_r(lbrlt, ",", &saveptr1); (i < CS_MAXCAIDTAB) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1),i++) {
+ 		int32_t caid=-1, cmask=-1, srvid = -1;
+ 		int32_t j,provid = -1;
+ 		int16_t awtime=-1, dwtime = -1;
+ 		char *ptr1 = NULL, *ptr2 = NULL, *ptr3 = NULL, *ptr4 = NULL, *ptr5 = NULL, *saveptr2 = NULL;
+
+		if( (ptr4 = strchr(trim(ptr), ':')) ) {
+			//awtime & dwtime
+			*ptr4++ = '\0';
+			for (j = 0, ptr5 = strtok_r(ptr4, ":", &saveptr2); (j < 2) && ptr5; ptr5 = strtok_r(NULL, ":", &saveptr2), j++) {
+				if (!j) {
+					dwtime = atoi(ptr5);
+				}
+				if (j){
+					awtime = dwtime;
+					dwtime = atoi(ptr5);
+				}
+			}
+		}
+		if( (ptr3 = strchr(trim(ptr), '$')) ) {
+				*ptr3++ = '\0';
+				srvid = a2i(ptr3, 4);
+		}
+		if( (ptr2 = strchr(trim(ptr), '@')) ) {
+				*ptr2++ = '\0';
+				provid = a2i(ptr2, 6);
+		}
+		if ( (ptr1 = strchr(ptr, '&')) ) {
+			*ptr1++ = '\0';
+			cmask = a2i(ptr1,-2);
+		}
+		if (!ptr1 && !ptr2 && !ptr3 && !ptr4) //only dwtime
+			dwtime = atoi(ptr);
+				else
+					caid = a2i(ptr, 2);
+		if ((i==0 && (caid <= 0)) || (caid > 0)) {
+			newtab.caid[i] = caid;
+			newtab.cmask[i] = cmask;
+			newtab.prid[i] = provid;
+			newtab.srvid[i] = srvid;
+			newtab.awtime[i] = awtime;
+			newtab.dwtime[i] = dwtime;
+			newtab.n = i + 1;
+		}
+
+ 	}
+ 	memcpy(tab, &newtab, sizeof(CECSPVALUETAB));
+ }
+
+void chk_hitvaluetab(char *lbrlt, CECSPVALUETAB *tab) {
+	//[caid][&mask][@provid][$servid]
+ 	int32_t i;
+ 	char *ptr = NULL, *saveptr1 = NULL;
+ 	CECSPVALUETAB newtab;
+ 	memset(&newtab, 0, sizeof(CECSPVALUETAB));
+
+ 	for (i = 0, ptr = strtok_r(lbrlt, ",", &saveptr1); (i < CS_MAXCAIDTAB) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1),i++) {
+ 		int32_t caid=-1, cmask=-1, srvid = -1;
+ 		int32_t provid = -1;
+  		char *ptr1 = NULL, *ptr2 = NULL, *ptr3 = NULL;
+
+		if( (ptr3 = strchr(trim(ptr), '$')) ) {
+				*ptr3++ = '\0';
+				srvid = a2i(ptr3, 4);
+		}
+		if( (ptr2 = strchr(trim(ptr), '@')) ) {
+				*ptr2++ = '\0';
+				provid = a2i(ptr2, 6);
+		}
+		if ( (ptr1 = strchr(ptr, '&')) ) {
+			*ptr1++ = '\0';
+			cmask = a2i(ptr1,-2);
+		}
+		caid = a2i(ptr, 2);
+		if (caid > 0) {
+			newtab.caid[i] = caid;
+			newtab.cmask[i] = cmask;
+			newtab.prid[i] = provid;
+			newtab.srvid[i] = srvid;
+			newtab.n = i + 1;
+		}
+
+ 	}
+ 	memcpy(tab, &newtab, sizeof(CECSPVALUETAB));
+ }
+#endif
+ 
 void chk_tuntab(char *tunasc, TUNTAB *ttab)
 {
 	int32_t i;
@@ -286,6 +381,14 @@ void clear_caidtab(struct s_caidtab *ctab) {
 	int32_t i;
 	for (i = 1; i < CS_MAXCAIDTAB; ctab->mask[i++] = 0xffff);
 }
+
+#ifdef CS_CACHEEX
+/* Clears given csptab */
+void clear_csptab(CECSPVALUETAB *ctab) {
+	memset(ctab, -1, sizeof(CECSPVALUETAB));
+	ctab->n = 0;
+}
+#endif
 
 /* Clears given tuntab */
 void clear_tuntab(struct s_tuntab *ttab) {

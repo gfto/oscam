@@ -58,10 +58,12 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 			er->srvid = srvid;
 			er->csp_hash = hash;
 			er->rc = E_FOUND;
-			memcpy(er->cw, buf+13, sizeof(er->cw));
+			if (chk_csp_ctab(er, &cfg.csp.filter_caidtab)) {
+				memcpy(er->cw, buf+13, sizeof(er->cw));
 
-			cs_ddump_mask(D_TRACE, er->cw, sizeof(er->cw), "received cw from csp caid=%04X srvid=%04X hash=%08X", caid, srvid, hash);
-			cacheex_add_to_cache_from_csp(client, er);
+				cs_ddump_mask(D_TRACE, er->cw, sizeof(er->cw), "received cw from csp caid=%04X srvid=%04X hash=%08X", caid, srvid, hash);
+				cacheex_add_to_cache_from_csp(client, er);
+			}
     	  }
         break;
 
@@ -81,9 +83,10 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 			er->srvid = srvid;
 			er->csp_hash = hash;
 			er->rc = E_UNHANDLED;
-
-			cs_ddump_mask(D_TRACE, buf, l, "received ecm request from csp caid=%04X srvid=%04X hash=%08X", caid, srvid, hash);
-			cacheex_add_to_cache_from_csp(client, er);
+			if (chk_csp_ctab(er, &cfg.csp.filter_caidtab) && cfg.csp.allow_request) {
+				cs_ddump_mask(D_TRACE, buf, l, "received ecm request from csp caid=%04X srvid=%04X hash=%08X", caid, srvid, hash);
+				cacheex_add_to_cache_from_csp(client, er);
+			}
     	  }
         break;
 

@@ -911,7 +911,18 @@ AAAAAElFTkSuQmCC"
 														<option value=\"3\" ##CACHEEXSELECTED3##>3 - REVERSE CACHE PUSH</option>\n\
 													</select>\n\
 												</TD></TR>\n\
-							<TR><TD>##TPLHELPPREFIX##user#cacheex_maxhop##TPLHELPSUFFIX##Cache-EX Maxhop:</A></TD><TD><input name=\"cacheex_maxhop\" type=\"text\" size=\"4\" maxlength=\"4\" value=\"##CACHEEX_MAXHOP##\"></TD></TR>\n"
+							<TR><TD>##TPLHELPPREFIX##user#cacheex_maxhop##TPLHELPSUFFIX##Cache-EX Maxhop:</A></TD><TD><input name=\"cacheex_maxhop\" type=\"text\" size=\"4\" maxlength=\"4\" value=\"##CACHEEX_MAXHOP##\"></TD></TR>\n\
+							<TR><TD>##TPLHELPPREFIX##user#cacheex_ecm_filter##TPLHELPSUFFIX##Cache-EX 3 ECM filter:</A></TD><TD><input name=\"cacheex_ecm_filter\" type=\"text\" size=\"63\" maxlength=\"320\" value=\"##CACHEEX_ECM_FILTER##\"></TD></TR>\n\
+							<TR><TD>##TPLHELPPREFIX##user#cacheex_filter_adv##TPLHELPSUFFIX##Cache-EX 3 filter adv.:</A></TD>\n\
+								<TD>\n\
+									<TABLE class=\"invisible\">\n\
+										<TR>\n\
+											<TD><input name=\"cacheex_drop_csp\" value=\"0\" type=\"hidden\"><input name=\"cacheex_drop_csp\" value=\"1\" type=\"checkbox\" ##DCCHECKED##>drop csp cache</TD>\n\
+											<TD><input name=\"cacheex_allow_request\" value=\"0\" type=\"hidden\"><input name=\"cacheex_allow_request\" value=\"1\" type=\"checkbox\" ##ARCHECKED##>allow request</TD>\n\
+										</TR>\n\
+									</TABLE>\n\
+								</TD>\n\
+							</TR>\n"
 
 
 #define TPLREADEREDITCACHEEXBIT "			<TR><TD>##TPLHELPPREFIX##server#cacheex##TPLHELPSUFFIX##Cache-EX-Mode:</A></TD>\n\
@@ -922,7 +933,18 @@ AAAAAElFTkSuQmCC"
 														<option value=\"3\" ##CACHEEXSELECTED3##>3 - REVERSE CACHE PUSH</option>\n\
 													</select>\n\
 												</TD></TR>\n\
-							<TR><TD>##TPLHELPPREFIX##server#cacheex_maxhop##TPLHELPSUFFIX##Cache-EX Maxhop:</A></TD><TD><input name=\"cacheex_maxhop\" type=\"text\" size=\"4\" maxlength=\"4\" value=\"##CACHEEX_MAXHOP##\"></TD></TR>\n"
+							<TR><TD>##TPLHELPPREFIX##server#cacheex_maxhop##TPLHELPSUFFIX##Cache-EX Maxhop:</A></TD><TD><input name=\"cacheex_maxhop\" type=\"text\" size=\"4\" maxlength=\"4\" value=\"##CACHEEX_MAXHOP##\"></TD></TR>\n\
+							<TR><TD>##TPLHELPPREFIX##server#cacheex_ecm_filter##TPLHELPSUFFIX##Cache-EX 2 ECM filter:</A></TD><TD><input name=\"cacheex_ecm_filter\" type=\"text\" size=\"63\" maxlength=\"320\" value=\"##CACHEEX_ECM_FILTER##\"></TD></TR>\n\
+							<TR><TD>##TPLHELPPREFIX##server#cacheex_filter_adv##TPLHELPSUFFIX##Cache-EX 2 filter adv.:</A></TD>\n\
+								<TD>\n\
+									<TABLE class=\"invisible\">\n\
+										<TR>\n\
+											<TD><input name=\"cacheex_drop_csp\" value=\"0\" type=\"hidden\"><input name=\"cacheex_drop_csp\" value=\"1\" type=\"checkbox\" ##DCCHECKED##>drop csp cache</TD>\n\
+											<TD><input name=\"cacheex_allow_request\" value=\"0\" type=\"hidden\"><input name=\"cacheex_allow_request\" value=\"1\" type=\"checkbox\" ##ARCHECKED##>allow request</TD>\n\
+										</TR>\n\
+									</TABLE>\n\
+								</TD>\n\
+							</TR>\n"
 
 #define TPLUSEREDITSIDOKBIT "\
 						<TR>\n\
@@ -1851,7 +1873,17 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TH COLSPAN=\"2\">Edit CSP CacheEX Config</TH></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#port_2##TPLHELPSUFFIX##Port:</A></TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##PORT##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#serverip_9##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"serverip\" type=\"text\" size=\"15\" maxlength=\"15\" value=\"##SERVERIP##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#wait_time##TPLHELPSUFFIX##Wait time:</A></TD><TD><input name=\"wait_time\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##WAIT_TIME##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#wait_time##TPLHELPSUFFIX##Wait time:</A></TD><TD><input name=\"wait_time\" type=\"text\" size=\"63\" maxlength=\"320\" value=\"##WAIT_TIME##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#csp_ecm_filter##TPLHELPSUFFIX##ECM filter:</A></TD><TD><input name=\"csp_ecm_filter\" type=\"text\" size=\"63\" maxlength=\"320\" value=\"##CSP_ECM_FILTER##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#csp_filter_adv##TPLHELPSUFFIX##filter adv.:</A></TD>\n\
+				<TD>\n\
+					<TABLE class=\"invisible\">\n\
+						<TR>\n\
+							<TD><input name=\"csp_allow_request\" value=\"0\" type=\"hidden\"><input name=\"csp_allow_request\" value=\"1\" type=\"checkbox\" ##ARCHECKED##>allow request</TD>\n\
+						</TR>\n\
+					</TABLE>\n\
+				</TD>\n\
+			</TR>\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\

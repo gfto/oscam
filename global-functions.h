@@ -84,6 +84,10 @@ extern void dvbapi_chk_caidtab(char *caidasc, char type);
 extern void dvbapi_read_priority(void);
 
 void check_caidtab_fn(const char *token, char *value, void *setting, FILE *f);
+#ifdef CS_CACHEEX
+void cspvaluetab_fn(const char *token, char *value, void *setting, FILE *f);
+void hitvaluetab_fn(const char *token, char *value, void *setting, FILE *f);
+#endif
 
 extern void cs_accounts_chk(void);
 extern void chk_account(const char *token, char *value, struct s_auth *account);

@@ -225,6 +225,8 @@ typedef unsigned char uchar;
 #define D_LB        0x0100  // Debug Loadbalancer
 #define D_CACHEEX   0x0200  // Debug CACHEEX
 #define D_CLIENTECM 0x0400  // Debug Client ECMs
+#define D_CSPCWC    0x0800  // Debug CSP/CWC
+#define D_CSPCWCFUL 0x1000  // Debug CSP/CWC FULL
 #define D_ALL_DUMP  0xFFFF  // dumps all
 
 #define MAX_DEBUG_LEVELS 11
@@ -1068,6 +1070,26 @@ struct s_sc8in1_config {
 	pthread_t display_thread;
 };
 
+#ifdef CS_CACHEEX
+typedef struct ce_csp_tab {
+	uint16_t	n;
+	int32_t		caid[CS_MAXCAIDTAB];
+	int32_t		cmask[CS_MAXCAIDTAB];
+	int32_t		prid[CS_MAXCAIDTAB];
+	int32_t		srvid[CS_MAXCAIDTAB];
+	int16_t		awtime[CS_MAXCAIDTAB];
+	int16_t		dwtime[CS_MAXCAIDTAB];
+} CECSPVALUETAB;
+
+typedef struct ce_csp_t {
+	int8_t			mode;
+	int8_t			maxhop;
+	CECSPVALUETAB	filter_caidtab;
+	uint8_t			allow_request;
+	uint8_t			drop_csp;
+} CECSP;
+#endif
+
 struct s_reader  									//contains device info, reader info and card info
 {
 	uint8_t		changes_since_shareupdate;
@@ -1085,8 +1107,7 @@ struct s_reader  									//contains device info, reader info and card info
 	uint64_t		grp;
 	int8_t			fallback;
 #ifdef CS_CACHEEX
-	int8_t			cacheex;
-	int8_t			cacheex_maxhop;
+	CECSP			cacheex; //CacheEx Settings
 #endif
 	int32_t			typ;
 #ifdef WITH_COOLAPI
@@ -1329,8 +1350,7 @@ struct s_auth
 #endif
 	int8_t			uniq;
 #ifdef CS_CACHEEX
-	int8_t			cacheex;
-	int8_t			cacheex_maxhop;
+	CECSP			cacheex; //CacheEx Settings
 #endif
 	int16_t			allowedprotocols;
 	LLIST			*aureader_list;
@@ -1462,6 +1482,17 @@ struct s_cacheex_matcher
 
 	struct s_cacheex_matcher *next;
 };
+
+typedef struct csp_ce_hit_t {
+	time_t			time;
+	int16_t			ecmlen;
+	uint16_t		caid;
+	uint32_t		prid;
+	uint16_t		srvid;
+	uint64_t		grp;
+	struct csp_ce_hit_t	*prev;
+	struct csp_ce_hit_t	*next;
+} CSPCEHIT;
 
 struct s_config
 {
@@ -1669,11 +1700,10 @@ struct s_config
 #ifdef CS_CACHEEX
 	IN_ADDR_T	csp_srvip;
 	int32_t		csp_port;
-	uint32_t 	csp_wait_time;
-
+	CECSPVALUETAB	csp_wait_timetab;
+	CECSP		csp; //CSP Settings
 	uint32_t	cacheex_wait_time; 		//cache wait time in ms
 	uint8_t		cacheex_enable_stats;	//enable stats
-
 	struct s_cacheex_matcher *cacheex_matcher;
 #endif
 

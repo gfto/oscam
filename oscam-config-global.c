@@ -125,6 +125,40 @@ static void caidvaluetab_fn(const char *token, char *value, void *setting, FILE 
 }
 #endif
 
+#ifdef CS_CACHEEX
+void cspvaluetab_fn(const char *token, char *value, void *setting, FILE *f) {
+	CECSPVALUETAB *csp_value_table = setting;
+	if (value) {
+		if (strlen(value) == 0)
+			clear_csptab(csp_value_table);
+		else
+			chk_cspvaluetab(value, csp_value_table);
+		return;
+	}
+	if (csp_value_table->n || cfg.http_full_cfg) {
+		value = mk_t_cspvaluetab(csp_value_table);
+		fprintf_conf(f, token, "%s\n", value);
+		free_mk_t(value);
+	}
+}
+
+void hitvaluetab_fn(const char *token, char *value, void *setting, FILE *f) {
+	CECSPVALUETAB *csp_value_table = setting;
+	if (value) {
+		if (strlen(value) == 0)
+			clear_csptab(csp_value_table);
+		else
+			chk_hitvaluetab(value, csp_value_table);
+		return;
+	}
+	if (csp_value_table->n || cfg.http_full_cfg) {
+		value = mk_t_hitvaluetab(csp_value_table);
+		fprintf_conf(f, token, "%s\n", value);
+		free_mk_t(value);
+	}
+}
+#endif
+
 #ifdef __CYGWIN__
 #include <windows.h>
 #else
@@ -404,13 +438,15 @@ static const struct config_list camd33_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef CS_CACHEEX
-static bool csp_should_save_fn(void *UNUSED(var)) { return cfg.csp_port; }
+static bool csp_should_save_fn(void *UNUSED(var)) { return cfg.csp_port || cfg.csp_wait_timetab.n || cfg.csp.filter_caidtab.n || cfg.csp.allow_request==0; }
 
 static const struct config_list csp_opts[] = {
 	DEF_OPT_SAVE_FUNC(csp_should_save_fn),
 	DEF_OPT_INT32("port"					, OFS(csp_port),				0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(csp_srvip),				serverip_fn ),
-	DEF_OPT_UINT32("wait_time"				, OFS(csp_wait_time),			0 ),
+	DEF_OPT_FUNC("wait_time"				, OFS(csp_wait_timetab),		cspvaluetab_fn ),
+	DEF_OPT_FUNC("csp_ecm_filter"			, OFS(csp.filter_caidtab),		hitvaluetab_fn ),
+	DEF_OPT_UINT8("csp_allow_request"		, OFS(csp.allow_request),		1 ),
 	DEF_LAST_OPT
 };
 #else

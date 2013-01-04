@@ -3,6 +3,10 @@
 
 extern char *mk_t_caidtab(CAIDTAB *ctab);
 extern char *mk_t_caidvaluetab(CAIDVALUETAB *tab);
+#ifdef CS_CACHEEX
+extern char *mk_t_cspvaluetab(CECSPVALUETAB *tab);
+extern char *mk_t_hitvaluetab(CECSPVALUETAB *tab);
+#endif
 extern char *mk_t_tuntab(TUNTAB *ttab);
 extern char *mk_t_group(uint64_t grp);
 extern char *mk_t_ftab(FTAB *ftab);

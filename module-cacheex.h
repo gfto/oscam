@@ -17,7 +17,7 @@ extern void cacheex_clear_account_stats(struct s_auth *account);
 extern void cacheex_clear_client_stats(struct s_client *client);
 extern void cacheex_load_config_file(void);
 extern void cacheex_update_hash(ECM_REQUEST *er);
-static inline bool cacheex_reader(struct s_reader *rdr) { return rdr->cacheex == 1; };
+static inline bool cacheex_reader(struct s_reader *rdr) { return rdr->cacheex.mode == 1; };
 extern bool cacheex_is_match_alias(struct s_client *cl, ECM_REQUEST *er);
 static inline void cacheex_set_csp_lastnode(ECM_REQUEST *er)
 {
@@ -39,6 +39,12 @@ static inline void cacheex_init_cacheex_src(ECM_REQUEST *ecm, ECM_REQUEST *er)
 	if (!ecm->cacheex_src)
 		ecm->cacheex_src = er->cacheex_src;
 }
+void add_hitcache(struct s_client *cl, ECM_REQUEST *er, ECM_REQUEST *ecm);
+struct csp_ce_hit_t *check_hitcache(ECM_REQUEST *er, struct s_client *cl, uint8_t lock);
+void cleanup_hitcache(void);
+uint32_t get_csp_wait_time(ECM_REQUEST *er, struct s_client *cl);
+int32_t chk_csp_ctab(ECM_REQUEST *er, CECSPVALUETAB *tab);
+uint8_t check_cacheex_filter(struct s_client *cl, ECM_REQUEST *er);
 #else
 static inline void cacheex_init(void) { };
 static inline void cacheex_clear_account_stats(struct s_auth *UNUSED(account)) { };
@@ -51,6 +57,7 @@ static inline void cacheex_set_csp_lastnode(ECM_REQUEST *UNUSED(er)) { }
 static inline void cacheex_free_csp_lastnodes(ECM_REQUEST *UNUSED(er)) { }
 static inline void cacheex_set_cacheex_src(ECM_REQUEST *UNUSED(ecm), struct s_client *UNUSED(cl)) { }
 static inline void cacheex_init_cacheex_src(ECM_REQUEST *UNUSED(ecm), ECM_REQUEST *UNUSED(er)) { }
+static inline void cleanup_hitcache(void){ }
 #endif
 
 #endif

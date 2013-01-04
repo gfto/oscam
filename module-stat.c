@@ -1155,7 +1155,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 	for(ea = er->matching_rdr; ea; ea = ea->next) {
 			rdr = ea->reader;
 #ifdef CS_CACHEEX
-			int8_t cacheex = rdr->cacheex;
+			int8_t cacheex = rdr->cacheex.mode;
 			if (cacheex == 1) {
 				ea->status |= READER_ACTIVE; //no statistics, this reader is a cacheex reader and so always active
 				continue;

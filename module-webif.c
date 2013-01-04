@@ -498,6 +498,7 @@ static char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uripa
 
 #ifdef CS_CACHEEX
 static char *send_oscam_config_csp(struct templatevars *vars, struct uriparams *params) {
+	char *value = NULL;
 	setActiveSubMenu(vars, MNU_CFG_CSP);
 
 	webif_save_config("csp", vars, params);
@@ -508,8 +509,15 @@ static char *send_oscam_config_csp(struct templatevars *vars, struct uriparams *
 	if (cfg.csp_port)
 		tpl_printf(vars, TPLADD, "PORT", "%d", cfg.csp_port);
 
-	if (cfg.csp_wait_time)
-		tpl_printf(vars, TPLADD, "WAIT_TIME", "%d", cfg.csp_wait_time);
+	value = mk_t_cspvaluetab(&cfg.csp_wait_timetab);
+	tpl_addVar(vars, TPLADD, "WAIT_TIME", value);
+	free_mk_t(value);
+
+	value = mk_t_hitvaluetab(&cfg.csp.filter_caidtab);
+	tpl_addVar(vars, TPLADD, "CSP_ECM_FILTER", value);
+	free_mk_t(value);
+
+	tpl_addVar(vars, TPLADD, "ARCHECKED", (cfg.csp.allow_request == 1) ? "checked" : "");
 
 	return tpl_getTpl(vars, "CONFIGCSP");
 }
@@ -1246,12 +1254,19 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 #ifdef CS_CACHEEX
 	// Cacheex
 	if(!apicall) {
-		tpl_printf(vars, TPLADD, "TMP", "CACHEEXSELECTED%d", rdr->cacheex);
+		tpl_printf(vars, TPLADD, "TMP", "CACHEEXSELECTED%d", rdr->cacheex.mode);
 		tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 	} else {
-		tpl_printf(vars, TPLADD, "CACHEEX", "%d", rdr->cacheex);
+		tpl_printf(vars, TPLADD, "CACHEEX", "%d", rdr->cacheex.mode);
 	}
-	tpl_printf(vars, TPLADD, "CACHEEX_MAXHOP", "%d", rdr->cacheex_maxhop);
+	tpl_printf(vars, TPLADD, "CACHEEX_MAXHOP", "%d", rdr->cacheex.maxhop);
+	value = mk_t_hitvaluetab(&rdr->cacheex.filter_caidtab);
+	//if (strlen(value) > 0)
+	tpl_printf(vars, TPLADD, "CACHEEX_ECM_FILTER", "%s", value);
+	free_mk_t(value);
+
+	tpl_addVar(vars, TPLADD, "DCCHECKED", (rdr->cacheex.drop_csp == 1) ? "checked" : "");
+	tpl_addVar(vars, TPLADD, "ARCHECKED", (rdr->cacheex.allow_request == 1) ? "checked" : "");
 #endif
 
 #ifdef WITH_COOLAPI
@@ -2068,13 +2083,22 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 #ifdef CS_CACHEEX
 	// Cacheex
 	if(!apicall) {
-		tpl_printf(vars, TPLADD, "TMP", "CACHEEXSELECTED%d", account->cacheex);
+		tpl_printf(vars, TPLADD, "TMP", "CACHEEXSELECTED%d", account->cacheex.mode);
 		tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
 	} else {
-		tpl_printf(vars, TPLADD, "CACHEEX", "%d", account->cacheex);
+		tpl_printf(vars, TPLADD, "CACHEEX", "%d", account->cacheex.mode);
 	}
-	tpl_printf(vars, TPLADD, "CACHEEX_MAXHOP", "%d", account->cacheex_maxhop);
+	tpl_printf(vars, TPLADD, "CACHEEX_MAXHOP", "%d", account->cacheex.maxhop);
+
+	value = mk_t_hitvaluetab(&account->cacheex.filter_caidtab);
+	//if (strlen(value) > 0)
+	tpl_printf(vars, TPLADD, "CACHEEX_ECM_FILTER", "%s", value);
+	free_mk_t(value);
+
+	tpl_addVar(vars, TPLADD, "DCCHECKED", (account->cacheex.drop_csp == 1) ? "checked" : "");
+	tpl_addVar(vars, TPLADD, "ARCHECKED", (account->cacheex.allow_request == 1) ? "checked" : "");
+
 #endif
 
 	//Keepalive
@@ -4466,35 +4490,35 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 	tpl_printf(vars, TPLADD, "OWN_CACHEEX_NODEID", "%" PRIu64 "X", cacheex_node_id(cacheex_peer_id));
 	
 	for (i = 0, cl = first_client; cl ; cl = cl->next, i++) {
-		if (cl->typ=='c' && cl->account && cl->account->cacheex){
+		if (cl->typ=='c' && cl->account && cl->account->cacheex.mode){
 			tpl_addVar(vars, TPLADD, "TYPE", "Client");
 			if(!apicall) tpl_addVar(vars, TPLADD, "NAME", xml_encode(vars, cl->account->usr));
 			else tpl_addVar(vars, TPLADD, "NAME", cl->account->usr);
 			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));
 			tpl_printf(vars, TPLADD, "NODE", "%" PRIu64 "X", get_cacheex_node(cl));
-			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->account->cacheex]);
+			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->account->cacheex.mode]);
 			tpl_printf(vars, TPLADD, "PUSH", "%d", cl->account->cwcacheexpush);
 			tpl_printf(vars, TPLADD, "GOT", "%d", cl->account->cwcacheexgot);
 			tpl_printf(vars, TPLADD, "HIT", "%d", cl->account->cwcacheexhit);
 			tpl_printf(vars, TPLADD, "ERR", "%d", cl->account->cwcacheexerr);
 			tpl_printf(vars, TPLADD, "ERRCW", "%d", cl->account->cwcacheexerrcw);
-			tpl_addVar(vars, TPLADD, "DIRECTIONIMG", (cl->account->cacheex == 3) ? getting : pushing);
+			tpl_addVar(vars, TPLADD, "DIRECTIONIMG", (cl->account->cacheex.mode == 3) ? getting : pushing);
 			rowvariable = "TABLECLIENTROWS";
 			written = 1;
 		}
-		else if ((cl->typ=='p' || cl->typ=='r') && (cl->reader && cl->reader->cacheex)) {
+		else if ((cl->typ=='p' || cl->typ=='r') && (cl->reader && cl->reader->cacheex.mode)) {
 			tpl_addVar(vars, TPLADD, "TYPE", "Reader");
 			if(!apicall) tpl_addVar(vars, TPLADD, "NAME", xml_encode(vars, cl->reader->label));
 			else tpl_addVar(vars, TPLADD, "NAME", cl->reader->label);
 			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));
 			tpl_printf(vars, TPLADD, "NODE", "%" PRIu64 "X", get_cacheex_node(cl));
-			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->reader->cacheex]);
+			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->reader->cacheex.mode]);
 			tpl_printf(vars, TPLADD, "PUSH", "%d", cl->cwcacheexpush);
 			tpl_printf(vars, TPLADD, "GOT", "%d", cl->cwcacheexgot);
 			tpl_printf(vars, TPLADD, "HIT", "%d", cl->cwcacheexhit);
 			tpl_printf(vars, TPLADD, "ERR", "%d", cl->cwcacheexerr);
 			tpl_printf(vars, TPLADD, "ERRCW", "%d", cl->cwcacheexerrcw);
-			tpl_addVar(vars, TPLADD, "DIRECTIONIMG", (cl->reader->cacheex == 3) ? pushing : getting);
+			tpl_addVar(vars, TPLADD, "DIRECTIONIMG", (cl->reader->cacheex.mode == 3) ? pushing : getting);
 			rowvariable = "TABLEREADERROWS";
 			written = 1;
 		}

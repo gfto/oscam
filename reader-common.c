@@ -258,7 +258,7 @@ int32_t cardreader_do_checkhealth(struct s_reader * reader)
 			add_job(cl, ACTION_READER_RESET, NULL, 0);
 		}
 	} else {
-		rdr_debug_mask(reader, D_TRACE, "%s: !reader_card_inserted", __func__);
+		rdr_debug_mask(reader, D_READER, "%s: !reader_card_inserted", __func__);
 		if (reader->card_status == CARD_INSERTED || reader->card_status == CARD_NEED_INIT) {
 			rdr_log(reader, "card ejected");
 			reader_nullcard(reader);
@@ -270,7 +270,7 @@ int32_t cardreader_do_checkhealth(struct s_reader * reader)
 		}
 		reader->card_status = NO_CARD;
 	}
-	rdr_debug_mask(reader, D_TRACE, "%s: reader->card_status = %d, ret = %d", __func__,
+	rdr_debug_mask(reader, D_READER, "%s: reader->card_status = %d, ret = %d", __func__,
 		reader->card_status, reader->card_status == CARD_INSERTED);
 	return reader->card_status == CARD_INSERTED;
 }
@@ -338,7 +338,7 @@ int32_t cardreader_do_ecm(struct s_reader *reader, ECM_REQUEST *er, struct s_ecm
 {
   int32_t rc=-1;
 	if( (rc=cardreader_do_checkhealth(reader)) ) {
-		rdr_debug_mask(reader, D_TRACE, "%s: cardreader_do_checkhealth returned rc=%d", __func__, rc);
+		rdr_debug_mask(reader, D_READER, "%s: cardreader_do_checkhealth returned rc=%d", __func__, rc);
 		struct s_client *cl = reader->client;
 		if (cl) {
 			cl->last_srvid=er->srvid;
@@ -348,11 +348,11 @@ int32_t cardreader_do_ecm(struct s_reader *reader, ECM_REQUEST *er, struct s_ecm
 
 		if (reader->csystem.active && reader->csystem.do_ecm) {
 			rc=reader->csystem.do_ecm(reader, er, ea);
-			rdr_debug_mask(reader, D_TRACE, "%s: after csystem.do_ecm rc=%d", __func__, rc);
+			rdr_debug_mask(reader, D_READER, "%s: after csystem.do_ecm rc=%d", __func__, rc);
 		} else
 			rc=0;
 	}
-	rdr_debug_mask(reader, D_TRACE, "%s: ret rc=%d", __func__, rc);
+	rdr_debug_mask(reader, D_READER, "%s: ret rc=%d", __func__, rc);
 	return(rc);
 }
 
@@ -375,7 +375,7 @@ int32_t cardreader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 
 void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_REQUEST *er) {
 	if (ecm_ratelimit_check(reader, er, 1) != OK) {
-		rdr_debug_mask(reader, D_TRACE, "%s: ratelimit check failed.", __func__);
+		rdr_debug_mask(reader, D_READER, "%s: ratelimit check failed.", __func__);
 		return; // reader_mode = 1: checkout ratelimiter in reader mode so srvid can be replaced
 	}
 	cs_ddump_mask(D_ATR, er->ecm, er->ecmlen, "ecm:");
@@ -387,14 +387,14 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 	memset(&ea, 0, sizeof(struct s_ecm_answer));
 
 	int32_t rc = cardreader_do_ecm(reader, er, &ea);
-	rdr_debug_mask(reader, D_TRACE, "%s: cardreader_do_ecm returned rc=%d (ERROR=%d)", __func__, rc, ERROR);
+	rdr_debug_mask(reader, D_READER, "%s: cardreader_do_ecm returned rc=%d (ERROR=%d)", __func__, rc, ERROR);
 
 	ea.rc = E_FOUND; //default assume found
 	ea.rcEx = 0; //no special flag
 
 	if (rc == ERROR) {
 		char buf[32];
-		rdr_debug_mask(reader, D_TRACE, "Error processing ecm for caid %04X, srvid %04X, servicename: %s",
+		rdr_debug_mask(reader, D_READER, "Error processing ecm for caid %04X, srvid %04X, servicename: %s",
 			er->caid, er->srvid, get_servicename(cl, er->srvid, er->caid, buf));
 		ea.rc = E_NOTFOUND;
 		ea.rcEx = 0;
@@ -403,7 +403,7 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 
 	if (rc == E_CORRUPT) {
 		char buf[32];
-		rdr_debug_mask(reader, D_TRACE, "Error processing ecm for caid %04X, srvid %04X, servicename: %s",
+		rdr_debug_mask(reader, D_READER, "Error processing ecm for caid %04X, srvid %04X, servicename: %s",
 			er->caid, er->srvid, get_servicename(cl, er->srvid, er->caid, buf));
 		ea.rc = E_NOTFOUND;
 		ea.rcEx = E2_WRONG_CHKSUM; //flag it as wrong checksum
@@ -414,7 +414,7 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 	char ecmd5[17*3];                
     cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5));
 
-	rdr_debug_mask(reader, D_TRACE, "ecm hash: %s real time: %ld ms",
+	rdr_debug_mask(reader, D_READER, "ecm hash: %s real time: %ld ms",
 		ecmd5, 1000 * (tpe.time - tps.time) + tpe.millitm - tps.millitm);
 
 	write_ecm_answer(reader, er, ea.rc, ea.rcEx, ea.cw, ea.msglog);
