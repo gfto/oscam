@@ -45,7 +45,7 @@ reader protocol, \fIrequired\fR:
  \fBsmartreader\fP
 .RE
 .PP
-\fBdevice\fP = \fB<device|bus:device|device:slot>\fP|\fB[<readertype>:]serial\fP|\fB<ip|hostname>,<port>[,<lport>]\fP|\fBpcsc\fP|<\fB0|1\fP>|\fBconstantcw\fP
+\fBdevice\fP = \fB<device|bus:device|device:slot>\fP|\fB[<readertype>:]serial:serialnum\fP|\fB<ip|hostname>,<port>[,<lport>]\fP|\fBpcsc\fP|<\fB0|1\fP>|\fBconstantcw\fP
 .RS 3n
 define local or remote reader
 
@@ -65,7 +65,7 @@ define local or remote reader
                 \fBTripleP2\fP: Smargo Triple Reader port 2
                 \fBTripleP3\fP: Smargo Triple Reader port 3
 
- \fBserial\fP:      serial number of reader
+ \fBserialnum\fP:   serial number of reader
 
 
  \fBip\fP|\fBhostname\fP: IP address or host name

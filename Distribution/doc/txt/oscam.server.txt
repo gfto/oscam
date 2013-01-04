@@ -41,7 +41,7 @@ DESCRIPTIONS
 	   smargo
 	   smartreader
 
-       device		=	   <device|bus:device|device:slot>|[<readertype>:]serial|<ip|host‐
+       device	   =	 <device|bus:device|device:slot>|[<readertype>:]serial:serialnum|<ip|host‐
        name>,<port>[,<lport>]|pcsc|<0|1>|constantcw
 	  define local or remote reader
 
@@ -61,7 +61,7 @@ DESCRIPTIONS
 			  TripleP2: Smargo Triple Reader port 2
 			  TripleP3: Smargo Triple Reader port 3
 
-	   serial:	serial number of reader
+	   serialnum:	serial number of reader
 
 
 	   ip|hostname: IP address or host name
