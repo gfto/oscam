@@ -84,7 +84,7 @@ static void print_devs(libusb_device **devs)
   int32_t ret;
   int32_t busid, devid;
   unsigned char iserialbuffer[128], iproductbuffer[128];
-  char *productptr = iproductbuffer;
+  char *productptr = (char *)iproductbuffer;
 
   while ((dev = devs[i++]) != NULL) {
     struct libusb_device_descriptor usbdesc;
