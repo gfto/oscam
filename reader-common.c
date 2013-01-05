@@ -277,7 +277,7 @@ int32_t cardreader_do_checkhealth(struct s_reader * reader)
 
 // Check for card inserted or card removed on pysical reader
 void cardreader_checkhealth(struct s_client *cl, struct s_reader *rdr) {
-	if (!rdr || !rdr->enable)
+	if (!rdr || !rdr->enable || !rdr->active)
 		return;
 	add_job(cl, ACTION_READER_CHECK_HEALTH, NULL, 0);
 }

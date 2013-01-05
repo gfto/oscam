@@ -36,7 +36,8 @@ int32_t get_threadnum(struct s_client *client) {
 /* Checks if the client still exists or has been cleaned. Returns 1 if it is ok, else 0. */
 int8_t check_client(struct s_client *client) {
 	struct s_client *cl;
-	for (cl = first_client->next; cl; cl = cl->next) {
+	int32_t bucket = (uintptr_t)client/16 % CS_CLIENT_HASHBUCKETS;
+	for (cl = first_client_hashed[bucket]; cl; cl = cl->nexthashed) {
 		if (client == cl)
 			break;
 	}
@@ -57,7 +58,8 @@ struct s_auth *get_account_by_name(char *name) {
 
 int8_t is_valid_client(struct s_client *client) {
 	struct s_client *cl;
-	for (cl = first_client; cl; cl = cl->next) {
+	int32_t bucket = (uintptr_t)client/16 % CS_CLIENT_HASHBUCKETS;
+	for (cl = first_client_hashed[bucket]; cl; cl = cl->nexthashed) {
 		if (cl==client)
 			return 1;
 	}
@@ -230,6 +232,9 @@ struct s_client *create_client(IN_ADDR_T ip) {
 	for (last = first_client; last->next != NULL; last = last->next)
 		; //ends with cl on last client
 	last->next = cl;
+	int32_t bucket = (uintptr_t)cl/16 % CS_CLIENT_HASHBUCKETS;
+	cl->nexthashed = first_client_hashed[bucket];
+	first_client_hashed[bucket] = cl;
 	cs_writeunlock(&clientlist_lock);
 	return cl;
 }
@@ -255,6 +260,9 @@ void init_first_client(void)
 		fprintf(stderr, "Could not allocate memory for master client, exiting...");
 		exit(1);
 	}
+	memset(first_client_hashed, 0, sizeof(first_client_hashed));
+	int32_t bucket = (uintptr_t)first_client/16 % CS_CLIENT_HASHBUCKETS;
+	first_client_hashed[bucket] = first_client;
 
 	first_client->next = NULL; //terminate clients list with NULL
 	first_client->login = time(NULL);

@@ -195,6 +195,7 @@ typedef unsigned char uchar;
 #define CS_MAXPORTS   32  // max server ports
 #define CS_MAXFILTERS   16
 #define CS_MAX_CAIDVALUETAB 16
+#define CS_CLIENT_HASHBUCKETS 32
 
 #define CS_ECMSTORESIZE   16  // use MD5()
 #define CS_EMMSTORESIZE   16  // use MD5()
@@ -993,6 +994,7 @@ struct s_client {
 #endif
 
 	struct s_client	*next; 							//make client a linked list
+	struct s_client	*nexthashed;
 };
 
 struct geo_cache {									//for viaccess var in s_reader:
@@ -1102,6 +1104,7 @@ struct s_reader  									//contains device info, reader info and card info
 	struct s_client *client;						// pointer to 'r'client this reader is running in
 	LLIST			*ll_entitlements;				// entitlements
 	int8_t			enable;
+	int8_t			active;
 	int8_t			dropbadcws;						// Schlocke: 1=drops cw if checksum is wrong. 0=fix checksum (default)
     int8_t          disablecrccws;                  // 1=disable cw checksum test. 0=enable checksum check
     int8_t			fd_error;
@@ -1782,6 +1785,7 @@ extern uint32_t cfg_sidtab_generation;
 extern uint8_t cs_http_use_utf8;
 extern pthread_key_t getclient;
 extern struct s_client *first_client;
+extern struct s_client *first_client_hashed[CS_CLIENT_HASHBUCKETS];
 extern CS_MUTEX_LOCK config_lock;
 extern CS_MUTEX_LOCK clientlist_lock;
 extern CS_MUTEX_LOCK readerlist_lock;

@@ -45,6 +45,7 @@ struct s_cardsystem cardsystems[CS_MAX_MOD];
 struct s_cardreader cardreaders[CS_MAX_MOD];
 
 struct s_client * first_client = NULL; //Pointer to clients list, first client is master
+struct s_client * first_client_hashed[CS_CLIENT_HASHBUCKETS];  // Alternative hashed client list
 struct s_reader * first_active_reader = NULL; //list of active readers (enable=1 deleted = 0)
 LLIST * configured_readers = NULL; //list of all (configured) readers
 
@@ -635,6 +636,17 @@ void cleanup_thread(void *var)
 			break;
 	if (cl == cl2)
 		prev->next = cl2->next; //remove client from list
+	int32_t bucket = (uintptr_t)cl/16 % CS_CLIENT_HASHBUCKETS;
+	//remove client from hashed list
+	if(first_client_hashed[bucket] == cl){
+		first_client_hashed[bucket] = cl->nexthashed;
+	} else {
+		for (prev=first_client_hashed[bucket], cl2=first_client_hashed[bucket]->nexthashed; prev->nexthashed != NULL; prev=prev->nexthashed, cl2=cl2->nexthashed)
+			if (cl == cl2)
+				break;
+		if (cl == cl2)
+			prev->nexthashed = cl2->next;
+	}
 	cs_writeunlock(&clientlist_lock);
 
 	// Clean reader. The cleaned structures should be only used by the reader thread, so we should be save without waiting
@@ -1197,6 +1209,7 @@ void remove_reader_from_active(struct s_reader *rdr) {
 		}
 	}
 	rdr->next = NULL;
+	rdr->active=0;
 	cs_writeunlock(&readerlist_lock);
 }
 
@@ -1263,7 +1276,7 @@ void add_reader_to_active(struct s_reader *rdr) {
 		}
 
 	} else first_active_reader = rdr;
-
+	rdr->active=1;
 	cs_writeunlock(&clientlist_lock);
 	cs_writeunlock(&readerlist_lock);
 }
@@ -3092,15 +3105,6 @@ static void check_status(struct s_client *cl) {
 	if (!cl || cl->kill || !cl->init_done)
 		return;
 
-	struct s_reader *rdr = cl->reader;
-	if (rdr) {
-	    //check for valid reader:
-	    struct s_reader *r;
-	    for (r=first_active_reader; r; r=r->next)
-	        if (r==rdr) break;
-            if (!r) return; //reader is restarting at this moment
-	}
-
 	switch (cl->typ) {
 		case 'm':
 		case 'c':
@@ -3111,25 +3115,24 @@ static void check_status(struct s_client *cl) {
 
 			break;
 		case 'r':
-			cardreader_checkhealth(cl, rdr);
+			cardreader_checkhealth(cl, cl->reader);
 			break;
 		case 'p':
-			//execute reader do idle on proxy reader after a certain time (rdr->tcp_ito = inactivitytimeout)
-			//disconnect when no keepalive available
-			if (!rdr || !rdr->enable)
-				break;
-			if (rdr->tcp_ito && is_cascading_reader(rdr)) {
-				int32_t time_diff;
-				time_diff = abs(time(NULL) - rdr->last_check);
-
-				if (time_diff>60) { //check 1x per minute
-					add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
-					rdr->last_check = time(NULL);
+			{
+				struct s_reader *rdr = cl->reader;
+				if (!rdr || !rdr->enable || !rdr->active)	//reader is disabled or restarting at this moment
+					break;
+				//execute reader do idle on proxy reader after a certain time (rdr->tcp_ito = inactivitytimeout)
+				//disconnect when no keepalive available
+				if ((rdr->tcp_ito && is_cascading_reader(rdr)) || rdr->typ == R_CCCAM) {
+					time_t now = time(NULL);
+					int32_t time_diff = abs(now - rdr->last_check);
+	
+					if (time_diff > 60 || (time_diff > 30 && rdr->typ == R_CCCAM)) { //check 1x per minute or every 30s for cccam
+						add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
+						rdr->last_check = now;
+					}
 				}
-			}
-			if (((time(NULL) - rdr->last_check) > 30) && rdr->typ == R_CCCAM) {
-				add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
-				rdr->last_check = time(NULL);
 			}
 			break;
 	}
