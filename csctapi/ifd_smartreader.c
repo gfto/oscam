@@ -231,7 +231,7 @@ static struct libusb_device* find_smartreader(const char *busname,const char *de
             }
 
             // If the device is specified as "Serial:number", check iSerial
-            if(!strcmp(busname,"Serial")) {
+            if(!strcasecmp(busname,"Serial")) {
                 char iserialbuffer[128];
                 if(libusb_get_string_descriptor_ascii(usb_dev_handle,usbdesc.iSerialNumber,(unsigned char *)iserialbuffer,sizeof(iserialbuffer))>0)  {
                     if(!strcmp(trim(iserialbuffer),dev_name)) {
@@ -280,7 +280,7 @@ void smartreader_init(struct s_reader *reader, char *rdrtype)
 	reader->sr_config->max_packet_size = 0;
 	if(rdrtype){
 		for(i = 0; i < sizeof(reader_types)/sizeof(struct s_reader_types); ++i){
-			if(!strcmp(reader_types[i].name, rdrtype)){
+			if(!strcasecmp(reader_types[i].name, rdrtype)){
 				reader->sr_config->in_ep = reader_types[i].in_ep;
 				reader->sr_config->out_ep = reader_types[i].out_ep;			    
 				reader->sr_config->index = reader_types[i].index;
@@ -833,6 +833,7 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
     // Likely scenario is a static smartreader_sio kernel module.
     if (libusb_detach_kernel_driver(reader->sr_config->usb_dev_handle, reader->sr_config->interface) != 0 && errno != ENODATA) {
         detach_errno = errno;
+        smartreader_usb_close_internal (reader);
         rdr_log(reader, "Couldn't detach interface from kernel. Please unload the FTDI drivers");
         return(LIBUSB_ERROR_NOT_SUPPORTED);
     }
