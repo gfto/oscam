@@ -17,6 +17,7 @@ struct cs_garbage {
 };
 
 struct cs_garbage *garbage_first[HASH_BUCKETS];
+struct cs_garbage *garbage_last[HASH_BUCKETS];
 CS_MUTEX_LOCK garbage_lock[HASH_BUCKETS];
 pthread_t garbage_thread;
 int32_t garbage_collector_active = 0;
@@ -68,33 +69,40 @@ void add_garbage(void *data) {
 	}
 #endif
 
-	garbage->next = garbage_first[bucket];
-	garbage_first[bucket] = garbage;
+	if(garbage_last[bucket]) garbage_last[bucket]->next = garbage;
+	else garbage_first[bucket] = garbage;
+	garbage_last[bucket] = garbage;
 	cs_writeunlock(&garbage_lock[bucket]);
 }
 
 void garbage_collector(void) {
         int8_t i;
-        struct cs_garbage *garbage, *next, *prev;
+        struct cs_garbage *garbage, *next, *prev, *first;
 
         while (garbage_collector_active) {
 
                 for(i = 0; i < HASH_BUCKETS; ++i){
 	                cs_writelock(&garbage_lock[i]);
+	                first = garbage_first[i];
 	                time_t deltime = time((time_t)0) - (2*cfg.ctimeout/1000 + 1); //clienttimeout +1 second
-	                for(garbage = garbage_first[i], prev = NULL; garbage; prev = garbage, garbage = garbage->next) {
-	                	if (deltime < garbage->time) {
-	                		continue;
+	                for(garbage = first, prev = NULL; garbage; prev = garbage, garbage = garbage->next) {
+	                	if (deltime < garbage->time) {	// all following elements are too new
+	                		if(prev){
+		                		garbage_first[i] = garbage;
+		            				prev->next = NULL;
+	                		}
+	                		break;
 	                	}
-	            		if (prev) {
-	            			prev->next  = NULL;
-	            		} else {
-	            			garbage_first[i] = NULL;
-	            		}
-	            		break;
-	            		//all follow older and we can leave lock
 	                }
+	                if(!garbage && garbage_first[i]){		// end of list reached and everything is to be cleaned
+	                	garbage = first;
+	                	garbage_first[i] = NULL;
+	                	garbage_last[i] = NULL;
+	                } else if(prev) garbage = first;		// set back to beginning to cleanup all
+	                else garbage = NULL;		// garbage not old enough yet => nothing to clean
 	                cs_writeunlock(&garbage_lock[i]);
+
+									// list has been taken out before so we don't need a lock here anymore! 
 	                while(garbage){
 	                	next = garbage->next;
 	                	free(garbage->data);
