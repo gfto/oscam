@@ -45,17 +45,9 @@ reader protocol, \fIrequired\fR:
  \fBsmartreader\fP
 .RE
 .PP
-\fBdevice\fP = \fB<device|bus:device|device:slot>\fP|\fB[<readertype>:]serial:serialnum\fP|\fB<ip|hostname>,<port>[,<lport>]\fP|\fBpcsc\fP|<\fB0|1\fP>|\fBconstantcw\fP
+\fBdevice\fP = \fB[<readertype>;]serial:serialnum|bus:device\fP|\fB<device|device:slot>\fP|\fB<ip|hostname>,<port>[,<lport>]\fP|\fBpcsc\fP|<\fB0|1\fP>|\fBconstantcw\fP
 .RS 3n
 define local or remote reader
-
- \fBdevice\fP:      device name
-
- \fBbus:device\fP:  bus name and device name of the Smartreader+
-              (get the names with lsusb 'Bus' and 'Device')
-
- \fBdevice:slot\fP: device name and slot number sc8in1 [1-8]
-              \fI(only one SC8in1 reader supported)\fR
 
  \fBreadertype\fP:  set reader type
 
@@ -65,8 +57,17 @@ define local or remote reader
                 \fBTripleP2\fP: Smargo Triple Reader port 2
                 \fBTripleP3\fP: Smargo Triple Reader port 3
 
- \fBserialnum\fP:   serial number of reader
+ \fBbus:device\fP:  bus name and device name of the Smartreader+ or 
+              Infinity USB (get the names with lsusb 'Bus' 
+              and 'Device')
 
+ \fBserialnum\fP:   serial number of reader of the Smartreader+ or 
+              Infinity USB
+
+ \fBdevice\fP:      device name
+
+ \fBdevice:slot\fP: device name and slot number sc8in1 [1-8]
+              \fI(only one SC8in1 reader supported)\fR
 
  \fBip\fP|\fBhostname\fP: IP address or host name
 

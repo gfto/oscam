@@ -41,17 +41,9 @@ DESCRIPTIONS
 	   smargo
 	   smartreader
 
-       device	   =	 <device|bus:device|device:slot>|[<readertype>:]serial:serialnum|<ip|host‐
+       device	   =	 [<readertype>;]serial:serialnum|bus:device|<device|device:slot>|<ip|host‐
        name>,<port>[,<lport>]|pcsc|<0|1>|constantcw
 	  define local or remote reader
-
-	   device:	device name
-
-	   bus:device:	bus name and device name of the Smartreader+
-			(get the names with lsusb 'Bus' and 'Device')
-
-	   device:slot: device name and slot number sc8in1 [1-8]
-			(only one SC8in1 reader supported)
 
 	   readertype:	set reader type
 
@@ -61,8 +53,17 @@ DESCRIPTIONS
 			  TripleP2: Smargo Triple Reader port 2
 			  TripleP3: Smargo Triple Reader port 3
 
-	   serialnum:	serial number of reader
+	   bus:device:	bus name and device name of the Smartreader+ or
+			Infinity USB (get the names with lsusb 'Bus'
+			and 'Device')
 
+	   serialnum:	serial number of reader of the Smartreader+ or
+			Infinity USB
+
+	   device:	device name
+
+	   device:slot: device name and slot number sc8in1 [1-8]
+			(only one SC8in1 reader supported)
 
 	   ip|hostname: IP address or host name
 
@@ -283,7 +284,7 @@ DESCRIPTIONS
        cacheex_maxhop = hops
 	  define maximum hops for cache exchange, default=10
 
-       cacheex_ecm_filter = [caid][&mask][@provid][$servid],n
+       csp_ecm_filter = [caid][&mask][@provid][$servid],n
 	  cache exchange incoming ecmfilter setting (mode 2), default:none
 
        cacheex_drop_csp = 0|1

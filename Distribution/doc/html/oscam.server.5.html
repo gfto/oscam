@@ -68,17 +68,9 @@ reader protocol, <I>required</I>:
 
 <P>
 
-<B>device</B> = <B>&lt;device|bus:device|device:slot&gt;</B>|<B>[&lt;readertype&gt;:]serial:serialnum</B>|<B>&lt;ip|hostname&gt;,&lt;port&gt;[,&lt;lport&gt;]</B>|<B>pcsc</B>|&lt;<B>0|1</B>&gt;|<B>constantcw</B>
+<B>device</B> = <B>[&lt;readertype&gt;;]serial:serialnum|bus:device</B>|<B>&lt;device|device:slot&gt;</B>|<B>&lt;ip|hostname&gt;,&lt;port&gt;[,&lt;lport&gt;]</B>|<B>pcsc</B>|&lt;<B>0|1</B>&gt;|<B>constantcw</B>
 <DL COMPACT><DT><DD>
 define local or remote reader
-<P>
-<BR>&nbsp;<B>device</B>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;device&nbsp;name
-<P>
-<BR>&nbsp;<B>bus:device</B>:&nbsp;&nbsp;bus&nbsp;name&nbsp;and&nbsp;device&nbsp;name&nbsp;of&nbsp;the&nbsp;Smartreader+
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(get&nbsp;the&nbsp;names&nbsp;with&nbsp;lsusb&nbsp;'Bus'&nbsp;and&nbsp;'Device')
-<P>
-<BR>&nbsp;<B>device:slot</B>:&nbsp;device&nbsp;name&nbsp;and&nbsp;slot&nbsp;number&nbsp;sc8in1&nbsp;[1-8]
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<I>(only&nbsp;one&nbsp;SC8in1&nbsp;reader&nbsp;supported)</I>
 <P>
 <BR>&nbsp;<B>readertype</B>:&nbsp;&nbsp;set&nbsp;reader&nbsp;type
 <P>
@@ -88,8 +80,17 @@ define local or remote reader
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>TripleP2</B>:&nbsp;Smargo&nbsp;Triple&nbsp;Reader&nbsp;port&nbsp;2
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>TripleP3</B>:&nbsp;Smargo&nbsp;Triple&nbsp;Reader&nbsp;port&nbsp;3
 <P>
-<BR>&nbsp;<B>serialnum</B>:&nbsp;&nbsp;&nbsp;serial&nbsp;number&nbsp;of&nbsp;reader
+<BR>&nbsp;<B>bus:device</B>:&nbsp;&nbsp;bus&nbsp;name&nbsp;and&nbsp;device&nbsp;name&nbsp;of&nbsp;the&nbsp;Smartreader+&nbsp;or&nbsp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Infinity&nbsp;USB&nbsp;(get&nbsp;the&nbsp;names&nbsp;with&nbsp;lsusb&nbsp;'Bus'&nbsp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and&nbsp;'Device')
 <P>
+<BR>&nbsp;<B>serialnum</B>:&nbsp;&nbsp;&nbsp;serial&nbsp;number&nbsp;of&nbsp;reader&nbsp;of&nbsp;the&nbsp;Smartreader+&nbsp;or&nbsp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Infinity&nbsp;USB
+<P>
+<BR>&nbsp;<B>device</B>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;device&nbsp;name
+<P>
+<BR>&nbsp;<B>device:slot</B>:&nbsp;device&nbsp;name&nbsp;and&nbsp;slot&nbsp;number&nbsp;sc8in1&nbsp;[1-8]
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<I>(only&nbsp;one&nbsp;SC8in1&nbsp;reader&nbsp;supported)</I>
 <P>
 <BR>&nbsp;<B>ip</B>|<B>hostname</B>:&nbsp;IP&nbsp;address&nbsp;or&nbsp;host&nbsp;name
 <P>
@@ -464,7 +465,7 @@ define maximum hops for cache exchange, default=10
 
 <P>
 
-<B>cacheex_ecm_filter</B> = <B>[caid][&mask][@provid][$servid],n</B>
+<B>csp_ecm_filter</B> = <B>[caid][&amp;mask][@provid][$servid],n</B>
 <DL COMPACT><DT><DD>
 cache exchange incoming ecmfilter setting (mode 2), default:none
 </DL>
