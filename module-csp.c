@@ -63,7 +63,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 
 				cs_ddump_mask(D_TRACE, er->cw, sizeof(er->cw), "received cw from csp caid=%04X srvid=%04X hash=%08X", caid, srvid, hash);
 				cacheex_add_to_cache_from_csp(client, er);
-			}
+			} else free(er);
     	  }
         break;
 
@@ -86,7 +86,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 			if (chk_csp_ctab(er, &cfg.csp.filter_caidtab) && cfg.csp.allow_request) {
 				cs_ddump_mask(D_TRACE, buf, l, "received ecm request from csp caid=%04X srvid=%04X hash=%08X", caid, srvid, hash);
 				cacheex_add_to_cache_from_csp(client, er);
-			}
+			} else free(er);
     	  }
         break;
 
