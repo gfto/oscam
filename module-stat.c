@@ -104,9 +104,6 @@ void load_stat_from_file(void)
 	char *fname;
 	FILE *file;
 
-	if (!cs_malloc(&line, LINESIZE))
-		return;
-
 	if (!cfg.lb_savepath) {
 		snprintf(buf, sizeof(buf), "%s/stat", get_tmp_dir());
 		fname = buf;
@@ -120,6 +117,10 @@ void load_stat_from_file(void)
 		cs_log("loadbalancer: can't read from file %s", fname);
 		return;
 	}
+	
+	if (!cs_malloc(&line, LINESIZE))
+		return;
+	
 	setvbuf(file, NULL, _IOFBF, 128*1024);
 
 	cs_debug_mask(D_LB, "loadbalancer: load statistics from %s", fname);

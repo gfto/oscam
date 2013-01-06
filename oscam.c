@@ -645,7 +645,7 @@ void cleanup_thread(void *var)
 			if (cl == cl2)
 				break;
 		if (cl == cl2)
-			prev->nexthashed = cl2->next;
+			prev->nexthashed = cl2->nexthashed;
 	}
 	cs_writeunlock(&clientlist_lock);
 

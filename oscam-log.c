@@ -373,8 +373,8 @@ void cs_close_log(void)
 {
 	//Wait for log close:
 	int32_t i = 0;
-	while (ll_count(log_list) > 0 && i < 200) {
-		cs_sleepms(5);
+	while (ll_count(log_list) > 0 && i < 1000) {
+		cs_sleepms(1);
 		++i;
 	}
 	if(fp){
