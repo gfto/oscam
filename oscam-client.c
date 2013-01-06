@@ -128,6 +128,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_
 				}
 				if (cfg.dropdups){
 					cs_writeunlock(&fakeuser_lock);
+					cs_sleepms(100); // sleep a bit to prevent against saturation from fast reconnecting clients
 					kill_thread(cl);
 					cs_writelock(&fakeuser_lock);
 				}
@@ -142,6 +143,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_
 				}
 				if (cfg.dropdups){
 					cs_writeunlock(&fakeuser_lock);		// we need to unlock here as cs_disconnect_client kills the current thread!
+					cs_sleepms(100); // sleep a bit to prevent against saturation from fast reconnecting clients
 					cs_disconnect_client(client);
 					cs_writelock(&fakeuser_lock);
 				}
