@@ -380,54 +380,57 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 		rdr_debug_mask(reader, D_DEVICE,"Reading of echoed transmitted chars done!");
 	}
 
-#if defined(__SH4__) //read char one by one for sh4 boxes		
-	bool readed;
-	unsigned char c;
-	struct timeval tv, tv_spent;
-	for (count = 0; count < size ; count++){
+#if defined(WITH_STAPI)	//internal stapi readers need special treatment as they don't respond correctly to poll
+	if(reader->typ == R_INTERNAL){
+		int16_t readed;
+		struct timeval tv, tv_spent;
 		gettimeofday(&tv,0);
 		memcpy(&tv_spent,&tv,sizeof(struct timeval));
 		readed=0;
-		while( (((tv_spent.tv_sec-tv.tv_sec)*1000000) + ((tv_spent.tv_usec-tv.tv_usec)/1000000L)) < (time_t)(timeout)){
- 			if (read (reader->handle, &c, 1) == 1){
-				readed = 1;
-				break;
-			}
- 		gettimeofday(&tv_spent,0);
-		}
-		if(!readed) {
+
+		while((((tv_spent.tv_sec-tv.tv_sec)*1000000) + ((tv_spent.tv_usec-tv.tv_usec)/1000000L)) < (time_t)(timeout))
+		{		
+	 		readed = read(reader->handle, &data[count], size-count);
+	 		gettimeofday(&tv_spent,0);
+			if(readed > 0) count +=readed;
+			if(count < size){
+				cs_sleepus(1);
+				continue;
+			} else break;
+		}	
+		if(count < size) {
 			rdr_ddump_mask(reader, D_DEVICE, data, count, "Receiving:");
 			return ERROR;
 		}
-		data[count] = c;
-	}
-#else  // read all chars at once for non sh boxes
-	while(count < size){
-		int16_t readed = -1, errorcount=0;
-		AGAIN:
-		if(IO_Serial_WaitToRead (reader, delay, timeout)) {
-			rdr_debug_mask(reader, D_DEVICE, "Timeout in IO_Serial_WaitToRead, timeout=%d us", timeout);
-			return ERROR;
-		}
-			
-		while (readed <0 && errorcount < 10) {
-			readed = read (reader->handle, &data[count], size-count);
-			if (readed < 0) {
-				if (errno == EINTR) continue; // try again in case of interrupt
-				if (errno == EAGAIN) goto AGAIN; //EAGAIN needs select procedure again
-				rdr_log(reader, "ERROR: %s (errno=%d %s)", __func__, errno, strerror(errno));
-				errorcount++;
+	} else
+#endif  // read all chars at once for non sh boxes
+	{
+		while(count < size){
+			int16_t readed = -1, errorcount=0;
+			AGAIN:
+			if(IO_Serial_WaitToRead (reader, delay, timeout)) {
+				rdr_debug_mask(reader, D_DEVICE, "Timeout in IO_Serial_WaitToRead, timeout=%d us", timeout);
+				return ERROR;
 			}
-		} 
-			
-		if (readed == 0) {
-			rdr_ddump_mask(reader, D_DEVICE, data, count, "Receiving:");
-			rdr_debug_mask(reader, D_DEVICE, "Received End of transmission");
-			return ERROR;
+				
+			while (readed <0 && errorcount < 10) {
+				readed = read (reader->handle, &data[count], size-count);
+				if (readed < 0) {
+					if (errno == EINTR) continue; // try again in case of interrupt
+					if (errno == EAGAIN) goto AGAIN; //EAGAIN needs select procedure again
+					rdr_log(reader, "ERROR: %s (errno=%d %s)", __func__, errno, strerror(errno));
+					errorcount++;
+				}
+			} 
+				
+			if (readed == 0) {
+				rdr_ddump_mask(reader, D_DEVICE, data, count, "Receiving:");
+				rdr_debug_mask(reader, D_DEVICE, "Received End of transmission");
+				return ERROR;
+			}
+			count +=readed;
 		}
-	count +=readed;
 	}
-#endif
 	rdr_ddump_mask(reader, D_DEVICE, data, count, "Receiving:");
 	return OK;
 }
