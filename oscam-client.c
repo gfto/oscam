@@ -9,6 +9,7 @@
 #include "oscam-net.h"
 #include "oscam-reader.h"
 #include "oscam-string.h"
+#include "oscam-time.h"
 
 extern char *processUsername;
 extern CS_MUTEX_LOCK fakeuser_lock;
