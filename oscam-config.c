@@ -584,8 +584,10 @@ int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line)
 						&& (!entry->provid || entry->provid == er->prid)
 						&& (!entry->srvid || entry->srvid == er->srvid)
 						&& (!entry->chid || entry->chid == er->chid)
-						&& (!entry->pid || entry->pid == er->pid))
+						&& (!entry->pid || entry->pid == er->pid)){
 					caidprov_matches = 1;
+					*line = entry->line;
+				}
 			}
 			entry = entry->next;
 		}
