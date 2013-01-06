@@ -811,25 +811,25 @@ IP address of Cardservproxy for cache exchange, default:none
 
 <P>
 
-<B>wait_time</B> = <B>[caid][&mask][@provid][$servid][:awtime][:]dwtime,n</B>
+<B>wait_time</B> = <B>[caid][&amp;mask][@provid][$servid][:awtime][:]dwtime,n</B>
 <DL COMPACT><DT><DD>
-wait time in milli-seconds for cache exchange (mode 2&3) and CSP before sending ECM to reader/proxy, default:none
+wait time in milli-seconds for cache exchange (mode 2 and 3 only) and Cardservproxy before sending ECMs to reader or proxy, default:none
 <P>
-<BR>&nbsp;example:&nbsp;wait_time&nbsp;=&nbsp;0:50:250,0200@00009X:50:150,15:950,0500@000001:150,1602&ffdf:1200
+<BR>&nbsp;example:&nbsp;wait_time&nbsp;=&nbsp;0:50:250,<A HREF="mailto:0200@00009X">0200@00009X</A>:50:150,15:950,<A HREF="mailto:0500@000001">0500@000001</A>:150,1602&amp;ffdf:1200
 </DL>
 
 <P>
 
-<B>csp_ecm_filter</B> = <B>[caid][&mask][@provid][$servid],n</B>
+<B>csp_ecm_filter</B> = <B>[caid][&amp;mask][@provid][$servid],n</B>
 <DL COMPACT><DT><DD>
-CSP incoming ecmfilter setting, default:none
+Cardservproxy incoming ECM filter setting, default:none
 </DL>
 
 <P>
 
 <B>csp_allow_request</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
-allow incoming ecm request, default:1
+allow incoming ECM request from Cardservproxy, default:1
 </DL>
 
 <A NAME="lbAJ">&nbsp;</A>

@@ -442,15 +442,16 @@ DESCRIPTIONS
 	  IP address of Cardservproxy for cache exchange, default:none
 
        wait_time = [caid][&mask][@provid][$servid][:awtime][:]dwtime,n
-	  wait time in milli-seconds for cache exchange (mode 2&3) and CSP before sending ECM to reader/proxy, default:none
+	  wait time in milli-seconds for cache exchange (mode 2  and  3  only)	and  Cardservproxy
+	  before sending ECMs to reader or proxy, default:none
 
 	   example: wait_time = 0:50:250,0200@00009X:50:150,15:950,0500@000001:150,1602&ffdf:1200
 
        csp_ecm_filter = [caid][&mask][@provid][$servid],n
-	  CSP incoming ecmfilter setting, default:none
+	  Cardservproxy incoming ECM filter setting, default:none
 
        csp_allow_request = 0|1
-	  allow incoming ecm request, default:1
+	  allow incoming ECM request from Cardservproxy, default:1
 
    The [camd33] section
        port = 0|port
@@ -480,8 +481,8 @@ DESCRIPTIONS
 	  bind service to specified IP address, default:all
 
        suppresscmd08 = 0|1
-	  0 = tell camd 3.5x / 3.57x clients not to request again for rejected	CAID,  service	ID
-	  and  provider  ID  combination,  1 = disable, can be overwritten per user in oscam.user,
+	  0  =	tell  camd 3.5x / 3.57x clients not to request again for rejected CAID, service ID
+	  and provider ID combination, 1 = disable, can be overwritten	per  user  in  oscam.user,
 	  default:0
 
    The [cs378x] section
@@ -495,8 +496,8 @@ DESCRIPTIONS
 	  bind service to specified IP address, default:all
 
        suppresscmd08 = 0|1
-	  0 = tell camd 3.78x clients not to request again  for  rejected  CAID,  service  ID  and
-	  provider  ID	combination,  1  =  disable,  can  be  overwritten per user in oscam.user,
+	  0  =	tell  camd  3.78x  clients  not to request again for rejected CAID, service ID and
+	  provider ID combination, 1 =	disable,  can  be  overwritten	per  user  in  oscam.user,
 	  default:0
 
    The [newcamd] section
@@ -505,14 +506,14 @@ DESCRIPTIONS
 
 	   example: key = 0102030405060708091011121314
 
-       port	      = 	   port[{DES		key}]@CAID[:provid][,provid]...[;port[{DES
+       port	       =	    port[{DES		key}]@CAID[:provid][,provid]...[;port[{DES
        key}]@CAID[:provid][,provid]...]...
 	  TCP port/DES key/CAID/provid definitions, default:none
 
 	   example:					port					 =
 	  10000@0100:100000;20000{0102030405060708091011121314}@0200:200000,300000
 
-	  Each CAID requires a separate port. If you don't specify a  DES  key	for  a	port,  the
+	  Each	CAID  requires	a  separate  port.  If you don't specify a DES key for a port, the
 	  default DES key will be used.
 
        serverip = IP address
@@ -568,7 +569,7 @@ DESCRIPTIONS
 	  TCP/IP ports for CCcam clients, 0 = disabled, default:0
 
        version = <main version>.<version>.<sub version>
-	  define CCcam version, minimum CCcam version  2.0.11,	used  with  original  CCcam  only,
+	  define  CCcam  version,  minimum  CCcam  version  2.0.11, used with original CCcam only,
 	  default:none
 
 	   example: version = 1.2.34
@@ -615,7 +616,7 @@ DESCRIPTIONS
 	       will be merged, provider (maximum 32) will be merged, too
 
        updateinterval = seconds
-	  interval to provide share list update to CCcam clients, values <=  10  are  invalid  and
+	  interval  to	provide  share	list update to CCcam clients, values <= 10 are invalid and
 	  will be set to 30, default:240
 
        keepconnected = 0|1
@@ -650,7 +651,7 @@ DESCRIPTIONS
        enabled = 0|1
 	  1 = DVB API enabled, default:0
 
-	  Create file /tmp/.pauseoscam to pause DVB API, e.g. if STB goes into standby	and  OSCam
+	  Create  file	/tmp/.pauseoscam to pause DVB API, e.g. if STB goes into standby and OSCam
 	  remains as SC server only.
 
        user = username
@@ -662,9 +663,9 @@ DESCRIPTIONS
        services = <service ID>[,<service ID>]... (detached by oscam.dvbapi, obsolete)
 	  services to be prioritized, default:none
 
-       priority  =  <CAID>:<provider  ID>[,CAID:<provider ID>]... (detached by oscam.dvbapi, obso‐
+       priority = <CAID>:<provider ID>[,CAID:<provider ID>]... (detached  by  oscam.dvbapi,  obso‐
        lete)
-	  CAIDs and provider IDs to be prioritized, default:CAIDs and provider IDs  of	local  SCs
+	  CAIDs  and  provider	IDs to be prioritized, default:CAIDs and provider IDs of local SCs
 	  will be prioritized
 
        au = 0|1|2
@@ -698,7 +699,7 @@ DESCRIPTIONS
 	  ipbox with camd.socket support, currently only with PGI image version 0.6 or above, ver‐
 	  ified on HD models only
 
-	  ipbox-pmt can be used on any DGS based images (with  or  without  camd.socket  support),
+	  ipbox-pmt  can  be  used  on any DGS based images (with or without camd.socket support),
 	  verified on HD models only
 
 	  pc is for generic pc support (currently supported on VDR with vdr-plugin-dvbapi)
@@ -854,8 +855,8 @@ MONITOR
 WEB INTERFACE
        ·  template system
 
-	  The web interface allows you to create your own template. For developing your  own  tem‐
-	  plate  request  the  orignal template with the non-linked page savetemplates.html. Store
+	  The  web  interface allows you to create your own template. For developing your own tem‐
+	  plate request the orignal template with the non-linked  page	savetemplates.html.  Store
 	  your own template in the directory specified by httptpl.
 
 CACHING
@@ -910,8 +911,8 @@ EXAMPLES
 	password     = password4
 
 SEE ALSO
-       list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cacheex(5), oscam.cert(5), oscam.dvbapi(5),
-       oscam.guess(5),	 oscam.ird(5),	 oscam.provid(5),   oscam.server(5),	oscam.services(5),
+       list_smargo(1), oscam(1), oscam.ac(5),  oscam.cacheex(5),  oscam.cert(5),  oscam.dvbapi(5),
+       oscam.guess(5),	  oscam.ird(5),   oscam.provid(5),   oscam.server(5),	oscam.services(5),
        oscam.srvid(5), oscam.tiers(5), oscam.user(5), oscam.whitelist(5)
 
 

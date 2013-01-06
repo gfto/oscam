@@ -360,17 +360,17 @@ define maximum hops for cache exchange, default=10
 .PP
 \fBcsp_ecm_filter\fP = \fB[caid][&mask][@provid][$servid],n\fP
 .RS 3n
-cache exchange incoming ecmfilter setting (mode 2), default:none
+cache exchange incoming ECM filter setting (mode 2 only) for Cardservproxy, default:none
 .RE
 .PP
 \fBcacheex_drop_csp\fP = \fB0\fP|\fB1\fP
 .RS 3n
-drop incoming CSP cache (mode 2), detection is zero ecmd5, default:0
+drop incoming Cardservproxy cache (mode 2 only), detection is zero ecmd5, default:0
 .RE
 .PP
 \fBcacheex_allow_request\fP = \fB0\fP|\fB1\fP
 .RS 3n
-allow incoming ecm request (mode 2), default:1
+allow incoming ECM request (mode 2), default:1
 .RE
 .PP
 \fBlogport\fP = \fB0\fP|\fBport\fP

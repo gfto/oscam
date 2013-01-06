@@ -285,13 +285,13 @@ DESCRIPTIONS
 	  define maximum hops for cache exchange, default=10
 
        csp_ecm_filter = [caid][&mask][@provid][$servid],n
-	  cache exchange incoming ecmfilter setting (mode 2), default:none
+	  cache exchange incoming ECM filter setting (mode 2 only) for Cardservproxy, default:none
 
        cacheex_drop_csp = 0|1
-	  drop incoming CSP cache (mode 2), detection is zero ecmd5, default:0
+	  drop incoming Cardservproxy cache (mode 2 only), detection is zero ecmd5, default:0
 
        cacheex_allow_request = 0|1
-	  allow incoming ecm request (mode 2), default:1
+	  allow incoming ECM request (mode 2), default:1
 
        logport = 0|port
 	  camd	3.x  reader logport, camd 3.x UDP must be activated, only works if there's no camd

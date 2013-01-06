@@ -1,4 +1,4 @@
-oscam.user(5)												oscam.user(5)
+oscam.user(5)									     oscam.user(5)
 
 
 
@@ -6,8 +6,8 @@ NAME
        oscam.user - user configuration file for OSCam
 
 SYNOPSIS
-       The  user  configuration file for OSCam contains user definitions. [account] sections in oscam.user are recur‐
-       ring (more than one account).
+       The  user  configuration  file  for  OSCam contains user definitions. [account] sections in
+       oscam.user are recurring (more than one account).
 
 DESCRIPTIONS
    The [account] section
@@ -32,7 +32,8 @@ DESCRIPTIONS
 	   example: expdate = 2001-11-21
 		    expdate = 2002/12/22
 
-       allowedprotocols = [camd33][,][camd35][,][cs357x][,][cs378x][,][newcamd][,][cccam][,][gbox][,][radegast]
+       allowedprotocols 	   =		 [camd33][,][camd35][,][cs357x][,][cs378x][,][new‐
+       camd][,][cccam][,][gbox][,][radegast]
 	  list of all allowed connection protocols, default:all connection protocols
 
        allowedtimeframe = hh:mm-hh:mm
@@ -85,32 +86,33 @@ DESCRIPTIONS
 	   3: enable reverse cache exchange push mode for camd 3.5x / 3.57x
 	      and CCcam protocol
 
-	  Identical cache exchange modes must be set on local OSCam user account and remote OSCam server.
+	  Identical  cache exchange modes must be set on local OSCam user account and remote OSCam
+	  server.
 
 	  Please consider memory consumption.
 
        cacheex_maxhop = hops
 	  define maximum hops for cache exchange, default=10
 
-       cacheex_ecm_filter = [caid][&mask][@provid][$servid],n
-	  cache exchange incoming ecmfilter setting (mode 3), default:none
+       csp_ecm_filter = [caid][&mask][@provid][$servid],n
+	  cache exchange incoming ECM filter setting (mode 3 only) for Cardservproxy, default:none
 
        cacheex_drop_csp = 0|1
-	  drop incoming CSP cache (mode 3), detection is zero ecmd5, default:0
+	  drop incoming Cardservproxy cache (mode 3 only), detection is zero ecmd5, default:0
 
        cacheex_allow_request = 0|1
-	  allow incoming ecm request (mode 3), default:1
+	  allow incoming ECM request (mode 3 only), default:1
 
        sleep = minutes
 	  time waiting for inactive user, default:none
 
        sleepsend = 0|255
-	  255 = OSCam client only: stopping requests until next zap, 255 = camd 3.x  only:  stopping  requests	until
-	  restart of camd 3.x client, default:0
+	  255 = OSCam client only: stopping requests until next zap, 255 = camd 3.x only: stopping
+	  requests until restart of camd 3.x client, default:0
 
        suppresscmd08 = 0|1
-	  0 = tell camd 3.5x, 3.57x and 3.78x clients not to request again for rejected CAID, service ID and provider
-	  ID combination, 1 =  disable, default:0
+	  0 = tell camd 3.5x, 3.57x and 3.78x clients not to request again for rejected CAID, ser‐
+	  vice ID and provider ID combination, 1 =  disable, default:0
 
        keepalive = 0|1
 	  0 = disable keepalive between server and client for newcamd or CCcam protocol, default:1
@@ -136,8 +138,8 @@ DESCRIPTIONS
 	  user assingment to reader groups, default:none, required
 
        betatunnel = <CAID>.<ServiceID>:<target CAID>[,<CAID>.<ServiceID>: <target CAID>]...
-	  define Betacrypt tunneling (maximum see CS_MAXTUNTAB in globals.h).  The ServiceID can  also	be  used  for
-	  wildcarded CAIDs.
+	  define Betacrypt tunneling (maximum see CS_MAXTUNTAB in globals.h).  The  ServiceID  can
+	  also be used for wildcarded CAIDs.
 
 	   example: betatunnel = 0100.0001:0200,0300.0004:0500
 		    betatunnel = 0600.FFFF:0700
@@ -211,10 +213,10 @@ EXAMPLES
 	uniq	   = 1
 
 SEE ALSO
-       list_smargo(1),	 oscam(1),  oscam.ac(5),  oscam.cacheex(5),  oscam.cert(5),  oscam.conf(5),  oscam.dvbapi(5),
-       oscam.guess(5),	 oscam.ird(5),	 oscam.provid(5),   oscam.server(5),	oscam.services(5),    oscam.tiers(5),
-       oscam.srvid(5), oscam.whitelist(5)
+       list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cacheex(5),  oscam.cert(5),  oscam.conf(5),
+       oscam.dvbapi(5), oscam.guess(5), oscam.ird(5), oscam.provid(5), oscam.server(5), oscam.ser‐
+       vices(5), oscam.tiers(5), oscam.srvid(5), oscam.whitelist(5)
 
 
 
-													oscam.user(5)
+										     oscam.user(5)
