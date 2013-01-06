@@ -2466,19 +2466,19 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 						break;
 
 					case 1:	
-						fprintf(ecmtxt, "reader: none\n");
+						fprintf(ecmtxt, "reader: Cache\n");
 						fprintf(ecmtxt, "from: cache1\n");
 						fprintf(ecmtxt, "protocol: none\n");
 						break;
 
 					case 2:	
-						fprintf(ecmtxt, "reader: none\n");
+						fprintf(ecmtxt, "reader: Cache\n");
 						fprintf(ecmtxt, "from: cache2\n");
 						fprintf(ecmtxt, "protocol: none\n");
 						break;
 
 					case 3:	
-						fprintf(ecmtxt, "reader: none\n");
+						fprintf(ecmtxt, "reader: Cache\n");
 						fprintf(ecmtxt, "from: cache3\n");
 						fprintf(ecmtxt, "protocol: none\n");
 						break;
