@@ -803,6 +803,7 @@ static int32_t nagra2_card_info(struct s_reader * reader)
            uint8_t tier_cmd2[] = { 0x01, 0x00 };
            def_resp;
            int32_t j;
+           cs_clear_entitlement(reader); //reset the entitlements
            do_cmd(reader, 0xD0, 0x04, 0x50, 0x0A, tier_cmd1, cta_res, &cta_lr);
            if (cta_lr == 0x0C)
            {
