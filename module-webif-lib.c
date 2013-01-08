@@ -912,7 +912,8 @@ char *xml_encode(struct templatevars *vars, char *chartoencode) {
 	/* In worst case, every character could get converted to 6 chars (we only support ASCII, for Unicode it would be 7)*/
 	if (!cs_malloc(&encoded, len * 6 + 1)) return "";	
 	for (i = 0; i < len; ++i){
-		switch(chartoencode[i]) {
+		unsigned char tmp = chartoencode[i];
+		switch(tmp) {
 			case '&': memcpy(encoded + pos, "&amp;", 5); pos+=5; break;
 			case '<': memcpy(encoded + pos, "&lt;", 4); pos+=4; break;
 			case '>': memcpy(encoded + pos, "&gt;", 4); pos+=4; break;
@@ -921,13 +922,13 @@ char *xml_encode(struct templatevars *vars, char *chartoencode) {
 			case '\n': memcpy(encoded + pos, "\n", 1); pos+=1; break;
 
 			default:
-				if ( (unsigned int)chartoencode[i] < 32 || (cs_http_use_utf8 != 1 && (unsigned int)chartoencode[i] > 127)) {
-					snprintf(buffer, 7, "&#%d;", chartoencode[i] + 256);
+				if (tmp < 32 || (cs_http_use_utf8 != 1 && tmp > 127)) {
+					snprintf(buffer, 7, "&#%d;", tmp);
 					memcpy(encoded + pos, buffer, strlen(buffer));
 					pos+=strlen(buffer);
 
 				} else {
-					encoded[pos] = chartoencode[i];
+					encoded[pos] = tmp;
 					++pos;
 				}
 
