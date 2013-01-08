@@ -492,7 +492,7 @@ void dvbapi_start_emm_filter(int32_t demux_index) {
 	demux[demux_index].emm_filter=1;
 }
 
-void dvbapi_add_ecmpid(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_t provid) {
+void dvbapi_add_ecmpid_int(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_t provid) {
 	int32_t n,added=0;
 
 	if (demux[demux_id].ECMpidcount>=ECM_PIDS)
@@ -523,6 +523,20 @@ void dvbapi_add_ecmpid(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_
 
 	cs_log("[ADD PID %d] CAID: %04X ECM_PID: %04X PROVID: %06X", demux[demux_id].ECMpidcount, caid, ecmpid, provid);
 	demux[demux_id].ECMpidcount++;
+}
+
+void dvbapi_add_ecmpid(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_t provid) {
+	dvbapi_add_ecmpid_int(demux_id, caid, ecmpid, provid);
+	struct s_dvbapi_priority *joinentry;
+	for (joinentry=dvbapi_priority; joinentry != NULL; joinentry=joinentry->next) {
+		if (joinentry->type != 'j') continue;
+		if (joinentry->caid 	&& joinentry->caid 	!= caid)	continue;
+		if (joinentry->provid && joinentry->provid 	!= provid)	continue;
+		if (joinentry->ecmpid	&& joinentry->ecmpid 	!= ecmpid)	continue;
+		if (joinentry->srvid	&& joinentry->srvid 	!= demux[demux_id].program_number) continue;
+		cs_debug_mask(D_DVBAPI,"[PMT] Join ECMPID %04X:%06X:%04X to %04X:%06X:%04X", caid, provid, ecmpid, joinentry->mapcaid, joinentry->mapprovid, joinentry->mapecmpid);
+		dvbapi_add_ecmpid_int(demux_id, joinentry->mapcaid, joinentry->mapecmpid, joinentry->mapprovid);
+	}
 }
 
 void dvbapi_add_emmpid(struct s_reader *testrdr, int32_t demux_id, uint16_t caid, uint16_t emmpid, uint32_t provid, uint8_t type) {
@@ -862,7 +876,7 @@ void dvbapi_read_priority(void) {
 #endif
 		type = tolower(type);
 
-		if (ret<1 || (type != 'p' && type != 'i' && type != 'm' && type != 'd' && type != 's' && type != 'l')) {
+		if (ret<1 || (type != 'p' && type != 'i' && type != 'm' && type != 'd' && type != 's' && type != 'l' && type != 'j' && type != 'a')) {
 			//fprintf(stderr, "Warning: line containing %s in %s not recognized, ignoring line\n", token, cs_prio);
 			//fprintf would issue the warning to the command line, which is more consistent with other config warnings
 			//however it takes OSCam a long time (>4 seconds) to reach this part of the program, so the warnings are reaching tty rather late
@@ -921,7 +935,7 @@ void dvbapi_read_priority(void) {
 		entry->ecmpid=ecmpid;
 		entry->chid=chid;
 
-		uint32_t delay=0, force=0, mapcaid=0, mapprovid=0;
+		uint32_t delay=0, force=0, mapcaid=0, mapprovid=0, mapecmpid=0;
 		switch (type) {
 			case 'd':
 				sscanf(str1+64, "%4d", &delay);
@@ -940,6 +954,13 @@ void dvbapi_read_priority(void) {
 				entry->mapcaid=mapcaid;
 				entry->mapprovid=mapprovid;
 				break;
+			case 'a':
+			case 'j':
+				sscanf(str1+64, "%4x:%6x:%4x", &mapcaid, &mapprovid, &mapecmpid);
+				entry->mapcaid=mapcaid;
+				entry->mapprovid=mapprovid;
+				entry->mapecmpid=mapecmpid;
+				break;
 		}
 
 		if (c_srvid[0]=='=') {
@@ -955,8 +976,8 @@ void dvbapi_read_priority(void) {
 
 					entry2->srvid=this->srvid;
 
-					cs_debug_mask(D_DVBAPI, "prio srvid: ret=%d | %c: %04X %06X %04X %04X %04X -> map %04X %06X | prio %d | delay %d",
-						ret, entry2->type, entry2->caid, entry2->provid, entry2->srvid, entry2->ecmpid, entry2->chid, entry2->mapcaid, entry2->mapprovid, entry2->force, entry2->delay);
+					cs_debug_mask(D_DVBAPI, "prio srvid: ret=%d | %c: %04X %06X %04X %04X %04X -> map %04X %06X %04X | prio %d | delay %d",
+						ret, entry2->type, entry2->caid, entry2->provid, entry2->srvid, entry2->ecmpid, entry2->chid, entry2->mapcaid, entry2->mapprovid, entry2->mapecmpid, entry2->force, entry2->delay);
 
 					if (!dvbapi_priority) {
 						dvbapi_priority=entry2;
@@ -974,8 +995,8 @@ void dvbapi_read_priority(void) {
 			entry->srvid=srvid;
 		}
 
-		cs_debug_mask(D_DVBAPI, "prio: ret=%d | %c: %04X %06X %04X %04X %04X -> map %04X %06X | prio %d | delay %d",
-			ret, entry->type, entry->caid, entry->provid, entry->srvid, entry->ecmpid, entry->chid, entry->mapcaid, entry->mapprovid, entry->force, entry->delay);
+		cs_debug_mask(D_DVBAPI, "prio: ret=%d | %c: %04X %06X %04X %04X %04X -> map %04X %06X %04X | prio %d | delay %d",
+			ret, entry->type, entry->caid, entry->provid, entry->srvid, entry->ecmpid, entry->chid, entry->mapcaid, entry->mapprovid, entry->mapecmpid, entry->force, entry->delay);
 
 		if (!dvbapi_priority) {
 			dvbapi_priority=entry;
@@ -1426,9 +1447,9 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 
 	demux[demux_id].ECMpids[num].checked=1;
 
-	//BISS
+	//BISS or FAKE CAID
 	//ecm stream pid is fake, so send out one fake ecm request
-	if ((demux[demux_id].ECMpids[num].CAID >> 8) == 0x26) {
+	if (demux[demux_id].ECMpids[num].CAID == 0xFFFF || (demux[demux_id].ECMpids[num].CAID >> 8) == 0x26) {
 		ECM_REQUEST *er;
 		if (!(er=get_ecmtask()))
 			return;
@@ -1555,6 +1576,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		dvbapi_parse_descriptor(demux_id, program_info_length-1, buffer+7);
 
 	uint32_t es_info_length=0;
+	struct s_dvbapi_priority *addentry;
 	for (i = program_info_length + 6; i < length; i += es_info_length + 5) {
 		int32_t stream_type = buffer[i];
 		uint16_t elementary_pid = ((buffer[i + 1] & 0x1F) << 8) | buffer[i + 2];
@@ -1569,6 +1591,15 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 
 		if (es_info_length != 0 && es_info_length < length) {
 			dvbapi_parse_descriptor(demux_id, es_info_length, buffer+i+5);
+		} else {
+			for (addentry=dvbapi_priority; addentry != NULL; addentry=addentry->next) {
+				if (addentry->type != 'a') continue;
+				if (addentry->ecmpid && addentry->ecmpid 	!= elementary_pid) continue;
+				if (addentry->srvid 	!= demux[demux_id].program_number) continue;
+				cs_debug_mask(D_DVBAPI,"[pmt] Add Fake FFFF:%06x:%04x for unencrypted stream on srvid %04X", addentry->mapprovid, addentry->mapecmpid, demux[demux_id].program_number);
+				dvbapi_add_ecmpid(demux_id, 0xFFFF, addentry->mapecmpid, addentry->mapprovid);
+				break;
+			}
 		}
 	}
 	cs_log("Found %d ECMpids and %d STREAMpids in PMT", demux[demux_id].ECMpidcount, demux[demux_id].STREAMpidcount);
@@ -2238,17 +2269,19 @@ static void * dvbapi_main_local(void *cli) {
 
 void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t idx) {
 	int32_t n;
+	int8_t cwEmpty = 0;
 	unsigned char nullcw[8];
 	memset(nullcw, 0, 8);
 	ca_descr_t ca_descr;
 	memset(&ca_descr,0,sizeof(ca_descr));
+	if(memcmp(demux[demux_id].lastcw[0],nullcw,8)==0 && memcmp(demux[demux_id].lastcw[1],nullcw,8)==0) cwEmpty = 1;		// to make sure that both cws get written on constantcw
 
 	for (n=0;n<2;n++) {
 		char lastcw[9*3];
 		char newcw[9*3];
 		cs_hexdump(0, demux[demux_id].lastcw[n], 8, lastcw, sizeof(lastcw));
 		cs_hexdump(0, cw+(n*8), 8, newcw, sizeof(newcw));
-		if (memcmp(cw+(n*8),demux[demux_id].lastcw[0],8)!=0 && memcmp(cw+(n*8),demux[demux_id].lastcw[1],8)!=0 && memcmp(cw+(n*8),nullcw,8)!=0) { // check if already delivered and new cw part is valid!
+		if (((memcmp(cw+(n*8),demux[demux_id].lastcw[0],8)!=0 && memcmp(cw+(n*8),demux[demux_id].lastcw[1],8)!=0) || cwEmpty) && memcmp(cw+(n*8),nullcw,8)!=0) { // check if already delivered and new cw part is valid!
 			ca_descr.index = idx;
 			ca_descr.parity = n;
 			cs_debug_mask(D_DVBAPI,"writing %s part (%s) of controlword, replacing expired (%s)",(n == 1?"odd":"even"), newcw, lastcw);

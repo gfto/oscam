@@ -122,6 +122,7 @@ struct s_dvbapi_priority
 	uint16_t ecmpid;
 	uint16_t mapcaid;
 	uint32_t mapprovid;
+	uint16_t mapecmpid;
 	int16_t delay;
 	int8_t force;
 #ifdef WITH_STAPI
