@@ -3,45 +3,72 @@
 #include "reader-common.h"
 #include "cscrypt/bn.h"
 
-static void ReverseMem(unsigned char *vIn, int32_t len)
+static int32_t RSA_CNX(struct s_reader *reader, unsigned char *msg, unsigned char *mod, unsigned char *exp, uint32_t cta_lr, uint32_t modbytes, uint32_t expbytes)
 {
-  unsigned char temp;
-  int32_t i;
-  for(i=0; i < (len/2); i++)
-  {
-    temp = vIn[i];
-    vIn[i] = vIn[len-i-1];
-    vIn[len-i-1] = temp;
-  }
-}
-
-static void RSA_CNX(struct s_reader *reader, unsigned char *msg, unsigned char *mod, unsigned char *exp, unsigned int modbytes, unsigned int expbytes)
-{
-  int32_t n = 0;
+  int32_t ret=0;
+  uint32_t n = 0, pre_size=0, size=0;
   BN_CTX *ctx;
   BIGNUM *bn_mod, *bn_exp, *bn_data, *bn_res;
+  unsigned char data[64];
 
-  ReverseMem(msg, modbytes);
+    /*prefix size*/
+    pre_size = 2 + 4 + msg[5]; 
+    /*size of data to decryption*/
+    if(msg[1] > (pre_size-2))
+      size = msg[1] - pre_size + 2; 
+    
+    if(cta_lr > (pre_size + size) &&
+       size >= modbytes && size < 128)
+    {
+        bn_mod = BN_new ();
+        bn_exp = BN_new ();
+        bn_data = BN_new ();
+        bn_res = BN_new ();
+        ctx= BN_CTX_new();
+        if (ctx == NULL) {
+          rdr_debug_mask(reader, D_READER, "RSA Error in RSA_CNX");
+        }
+        
+        /*RSA first round*/
+        BN_bin2bn (mod, modbytes, bn_mod); // rsa modulus
+        BN_bin2bn (exp, expbytes, bn_exp); // exponent
+        BN_bin2bn (msg+pre_size, modbytes, bn_data);
+        BN_mod_exp (bn_res, bn_data, bn_exp, bn_mod, ctx);
 
-    bn_mod = BN_new ();
-    bn_exp = BN_new ();
-    bn_data = BN_new ();
-    bn_res = BN_new ();
-    ctx= BN_CTX_new();
-    if (ctx == NULL) {
-      rdr_debug_mask(reader, D_READER, "RSA Error in RSA_CNX");
+        n = BN_bn2bin (bn_res, data);
+        
+        size -= modbytes; //3
+        pre_size += modbytes;
+        /*Check if second round is needed*/
+        if(0 < size)
+        {
+          /*check if length of data from first RSA round will be enough to padding rest of data*/
+          if((n+size) >= modbytes) 
+          {
+            /*RSA second round*/
+            /*move the remaining data at the beginning of the buffer*/
+            memcpy(msg, msg+pre_size, size); 
+            /*padding buffer with data from first round*/
+            memcpy(msg+size, data+(n - (modbytes-size)), modbytes-size); 
+            
+            BN_bin2bn (msg, modbytes, bn_data);
+            BN_mod_exp (bn_res, bn_data, bn_exp, bn_mod, ctx);
+            n = BN_bn2bin (bn_res, data);
+            if(0x25 !=data[0])
+              ret = -1; /*RSA key is probably wrong*/
+          }
+          else
+            ret = -3; /*wrong size of data for second round*/
+        }
+
+        if(0 == ret)
+          memcpy(msg, data, n);
+        BN_CTX_free (ctx);
     }
-    BN_bin2bn (mod, modbytes, bn_mod); // rsa modulus
-    BN_bin2bn (exp, expbytes, bn_exp); // exponent
-    BN_bin2bn (msg, modbytes, bn_data);
-    BN_mod_exp (bn_res, bn_data, bn_exp, bn_mod, ctx);
-
-    memset (msg, 0, modbytes);
-    n = BN_bn2bin (bn_res, msg);
-    BN_CTX_free (ctx);
-
-   ReverseMem(msg, n);
-
+    else
+      ret = -2; /*wrong size of data*/
+     
+    return ret;
 }
 
 static time_t chid_date(const uchar *ptr, char *buf, int32_t l)
@@ -182,13 +209,12 @@ static int32_t conax_send_pin(struct s_reader * reader)
 static int32_t conax_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
   def_resp;
-  int32_t i,j,n,k,l, rc=0;
+  int32_t i,j,n,num_dw=0, rc=0;
   unsigned char insA2[]  = { 0xDD,0xA2,0x00,0x00,0x00 };
   unsigned char insCA[]  = { 0xDD,0xCA,0x00,0x00,0x00 };
 
   unsigned char exp[] = {0x01, 0x00, 0x01};
   unsigned char buf[256];
-  unsigned char edw[64];
 
   if ((n=check_sct_len(er->ecm, 3))<0)
     return ERROR;
@@ -213,58 +239,26 @@ static int32_t conax_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, str
     if ((cta_res[cta_lr-2]==0x98) ||
     ((cta_res[cta_lr-2]==0x90) ))
     {
-      for(i=0; i<cta_lr-2; i+=cta_res[i+1]+2)
+      /*checks if answer is encrypted with RSA algo and decrypts it if needed*/
+      if(0x81 == cta_res[0] && 2 == cta_res[2] >> 5) /*81 XX 5X*/
+      {
+        if(0x00 == cta_res[cta_lr-1])
+          rc = RSA_CNX(reader, cta_res, reader->rsa_mod, exp, cta_lr, 64u, 3u);
+        else
+          rc = -4; /*card has no right to decode this channel*/
+      }
+      
+      if(0 == rc)
+      for(i = 0;  i < cta_lr-2 && num_dw < 2; i+=cta_res[i+1]+2)
       {
         switch (cta_res[i])
         {
-         // conax paring start
-         case 0x81:
-          if ( cta_res[2] >> 5 == 2 )
-          {
-             k = cta_res[1]+1;
-             l = 0;
-             if(k>64)
-             {
-               // get encrypted dw
-               do
-               {
-                 edw[l] = cta_res[k];
-                 k--; l++;
-               }
-               while ( l != 64 );
-               // decrypt dw
-               RSA_CNX(reader, edw, reader->rsa_mod /*mod*/, exp, 64u, 3u);
-               if ( edw[61] == 0x0D && edw[62] == 0x25 &&
-                    edw[46] == 0x0D && edw[47] == 0x25)
-               {
-                 l = 0;
-                 // get dw0 rev_edw[43] == 0x0
-                 for(k = 40; k >= 33; k--)
-                 {
-                   ea->cw[l] = edw[k];
-                   l++;
-                 }
-                 // get dw1 rev_edw[58] == 0x1
-                 for(k = 55; k >= 48; k--)
-                 {
-                   ea->cw[l] = edw[k];
-                   l++;
-                 }
-                 rc = 3;
-               }
-               else
-                 rc = -2;
-             }
-             else
-               rc = -1;
-          }
-           break;
-         // conax paring end
           case 0x25:
             if ( (cta_res[i+1]>=0xD) && !((n=cta_res[i+4])&0xFE) )
             {
-            rc|=(1<<n);
-            memcpy(ea->cw+(n<<3), cta_res+i+7, 8);
+              rc|=(1<<n);
+              memcpy(ea->cw+(n<<3), cta_res+i+7, 8);
+              ++num_dw;
             }
             break;
           case 0x31:
@@ -291,6 +285,7 @@ static int32_t conax_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, str
                     {
                       rc|=(1<<n);
                       memcpy(ea->cw+(n<<3), cta_res+j+7, 8);
+                      ++num_dw;
                     }
                 }
               }
@@ -300,8 +295,22 @@ static int32_t conax_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, str
       }
     }
   }
- if( rc == -1) rdr_log(reader, "unknown pairing algo - wrong encCW size");
- else if( rc == -2) rdr_log(reader, "conax decode ECM problem - RSA key is probably faulty");
+  
+  switch(rc)
+  {
+    case -1:
+      rdr_log(reader, "conax decode ECM problem - RSA key is probably faulty");
+    break;
+    case -2:
+      rdr_log(reader, "conax RSA pairing - wrong size of data");
+    break;
+    case -3:
+      rdr_log(reader, "conax RSA pairing- wrong size of data for second round");
+    case -4:
+      rdr_log(reader, "card has no right to decode this channel");
+    break;
+  }
+
   if (rc==3)
     return OK;
   else
