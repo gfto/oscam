@@ -1493,6 +1493,12 @@ static void getDemuxOptions(int32_t demux_id, unsigned char *buffer, uint16_t *c
 	*ca_mask=0x01, *demux_index=0x00, *adapter_index=0x00;
 #endif
 
+	if (buffer[17]==0x82 && buffer[18]==0x02) {
+		//enigma2
+		*ca_mask = buffer[19];
+		*demux_index = buffer[20];
+	}
+
 	if (cfg.dvbapi_boxtype == BOXTYPE_IPBOX_PMT) {
 		*ca_mask = demux_id + 1;
 		*demux_index = demux_id;
@@ -1525,17 +1531,11 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	uint32_t program_number = (buffer[1] << 8) | buffer[2];
 	uint32_t program_info_length = ((buffer[4] & 0x0F) << 8) | buffer[5];
 
-	if (buffer[17]==0x82 && buffer[18]==0x02) {
-		//enigma2
-		ca_mask = buffer[19];
-		demux_index = buffer[20];
-	}
-
 	cs_ddump_mask(D_DVBAPI, buffer, length, "capmt:");
 
 	for (i = 0; i < MAX_DEMUX; i++) {
 #ifdef WITH_COOLAPI
-		if (connfd>0 && demux[i].program_number==((buffer[1] << 8) | buffer[2])) {
+		if (connfd>0 && demux[i].program_number==program_number) {
 #else
 		if (connfd>0 && demux[i].socket_fd == connfd) {
 #endif
@@ -1564,7 +1564,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 
 	getDemuxOptions(demux_id, buffer, &ca_mask, &demux_index, &adapter_index);
 
-	demux[demux_id].program_number=((buffer[1] << 8) | buffer[2]);
+	demux[demux_id].program_number=program_number;
 	demux[demux_id].demux_index=demux_index;
 	demux[demux_id].adapter_index=adapter_index;
 	demux[demux_id].ca_mask=ca_mask;
