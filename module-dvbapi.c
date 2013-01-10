@@ -876,7 +876,7 @@ void dvbapi_read_priority(void) {
 #endif
 		type = tolower(type);
 
-		if (ret<1 || (type != 'p' && type != 'i' && type != 'm' && type != 'd' && type != 's' && type != 'l' && type != 'j' && type != 'a')) {
+		if (ret<1 || (type != 'p' && type != 'i' && type != 'm' && type != 'd' && type != 's' && type != 'l' && type != 'j' && type != 'a' && type != 'x')) {
 			//fprintf(stderr, "Warning: line containing %s in %s not recognized, ignoring line\n", token, cs_prio);
 			//fprintf would issue the warning to the command line, which is more consistent with other config warnings
 			//however it takes OSCam a long time (>4 seconds) to reach this part of the program, so the warnings are reaching tty rather late
@@ -1486,14 +1486,36 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 	}
 }
 
+static void getDemuxOptions(int32_t demux_id, unsigned char *buffer, uint16_t *ca_mask, uint16_t *demux_index, uint16_t *adapter_index){
+#ifdef WITH_MCA
+	*ca_mask=0x03, *demux_index=0x01, *adapter_index=0x00;
+#else
+	*ca_mask=0x01, *demux_index=0x00, *adapter_index=0x00;
+#endif
+
+	if (cfg.dvbapi_boxtype == BOXTYPE_IPBOX_PMT) {
+		*ca_mask = demux_id + 1;
+		*demux_index = demux_id;
+	}
+
+	if (cfg.dvbapi_boxtype == BOXTYPE_QBOXHD && buffer[17]==0x82 && buffer[18]==0x03) {
+		//ca_mask = buffer[19];     // with STONE 1.0.4 always 0x01
+		*demux_index = buffer[20];   // with STONE 1.0.4 always 0x00
+		*adapter_index = buffer[21]; // with STONE 1.0.4 adapter index can be 0,1,2
+		*ca_mask = (1 << *adapter_index); // use adapter_index as ca_mask (used as index for ca_fd[] array)
+	}
+
+	if (cfg.dvbapi_boxtype == BOXTYPE_PC && buffer[7]==0x82 && buffer[8]==0x02) {
+		*demux_index = buffer[9];	// it is always 0 but you never know
+		*adapter_index = buffer[10];	// adapter index can be 0,1,2
+		*ca_mask = (1 << *adapter_index);	// use adapter_index as ca_mask (used as index for ca_fd[] array)
+	}
+}
+
 int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connfd, char *pmtfile) {
 	uint32_t i;
 	int32_t demux_id=-1;
-#ifdef WITH_MCA
-	uint16_t ca_mask=0x03, demux_index=0x01, adapter_index=0x00;
-#else
-	uint16_t ca_mask=0x01, demux_index=0x00, adapter_index=0x00;
-#endif
+	uint16_t ca_mask, demux_index, adapter_index;
 
 #ifdef WITH_COOLAPI
 	int32_t ca_pmt_list_management = 0x03;
@@ -1540,23 +1562,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		return -1;
 	}
 
-	if (cfg.dvbapi_boxtype == BOXTYPE_IPBOX_PMT) {
-		ca_mask = demux_id + 1;
-		demux_index = demux_id;
-	}
-
-	if (cfg.dvbapi_boxtype == BOXTYPE_QBOXHD && buffer[17]==0x82 && buffer[18]==0x03) {
-		//ca_mask = buffer[19];     // with STONE 1.0.4 always 0x01
-		demux_index = buffer[20];   // with STONE 1.0.4 always 0x00
-		adapter_index = buffer[21]; // with STONE 1.0.4 adapter index can be 0,1,2
-		ca_mask = (1 << adapter_index); // use adapter_index as ca_mask (used as index for ca_fd[] array)
-	}
-
-	if (cfg.dvbapi_boxtype == BOXTYPE_PC && buffer[7]==0x82 && buffer[8]==0x02) {
-		demux_index = buffer[9];	// it is always 0 but you never know
-		adapter_index = buffer[10];	// adapter index can be 0,1,2
-		ca_mask = (1 << adapter_index);	// use adapter_index as ca_mask (used as index for ca_fd[] array)
-	}
+	getDemuxOptions(demux_id, buffer, &ca_mask, &demux_index, &adapter_index);
 
 	demux[demux_id].program_number=((buffer[1] << 8) | buffer[2]);
 	demux[demux_id].demux_index=demux_index;
@@ -1603,10 +1609,85 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		}
 	}
 	cs_log("Found %d ECMpids and %d STREAMpids in PMT", demux[demux_id].ECMpidcount, demux[demux_id].STREAMpidcount);
-
+	
 	char channame[32];
 	get_servicename(dvbapi_client, demux[demux_id].program_number, demux[demux_id].ECMpidcount>0 ? demux[demux_id].ECMpids[0].CAID : 0, channame);
 	cs_log("New program number: %04X (%s) [pmt_list_management %d]", program_number, channame, ca_pmt_list_management);
+	
+	struct s_dvbapi_priority *xtraentry;
+	int32_t j, k, l, m, xtra_demux_id;
+	for (xtraentry=dvbapi_priority; xtraentry != NULL; xtraentry=xtraentry->next) {
+		if (xtraentry->type != 'x') continue;
+		for(j = 0; j <= demux[demux_id].ECMpidcount; ++j){
+			if (xtraentry->caid	&& xtraentry->caid 	!= demux[demux_id].ECMpids[j].CAID)	continue;
+			if (xtraentry->provid	&& xtraentry->provid 	!= demux[demux_id].ECMpids[j].PROVID) continue;
+			if (xtraentry->ecmpid	&& xtraentry->ecmpid 	!= demux[demux_id].ECMpids[j].ECM_PID)	continue;
+			if (xtraentry->srvid	&& xtraentry->srvid 	!= demux[demux_id].program_number) continue;
+			cs_log("[pmt] Mapping %04X:%06X:%04X:%04X to xtra demuxer/ca-devices", xtraentry->caid, xtraentry->provid, xtraentry->ecmpid, xtraentry->srvid);
+			for (xtra_demux_id=0; xtra_demux_id<MAX_DEMUX && demux[xtra_demux_id].program_number>0; xtra_demux_id++);
+			if (xtra_demux_id>=MAX_DEMUX) {
+				cs_log("Found no free demux device for xtra streams.");
+				continue;
+			}
+			
+			getDemuxOptions(xtra_demux_id, buffer, &ca_mask, &demux_index, &adapter_index);
+						
+			// copy to new demuxer
+			demux[xtra_demux_id].ECMpids[0] = demux[demux_id].ECMpids[j];
+			demux[xtra_demux_id].ECMpidcount = 1;
+			demux[xtra_demux_id].STREAMpidcount = 0;		
+			demux[xtra_demux_id].program_number=demux[demux_id].program_number;
+			demux[xtra_demux_id].demux_index=demux_index;
+			demux[xtra_demux_id].adapter_index=adapter_index;
+			demux[xtra_demux_id].ca_mask=ca_mask;
+			demux[xtra_demux_id].socket_fd=connfd;
+			demux[xtra_demux_id].rdr=NULL;
+			demux[xtra_demux_id].pidindex=-1;
+			
+			//add streams to xtra demux
+			for(k = 0; k < demux[demux_id].STREAMpidcount; ++k){
+				if(!demux[demux_id].ECMpids[j].streams || demux[demux_id].ECMpids[j].streams & (1 << k)){
+					demux[xtra_demux_id].ECMpids[0].streams |= (1 << demux[xtra_demux_id].STREAMpidcount);
+					demux[xtra_demux_id].STREAMpids[demux[xtra_demux_id].STREAMpidcount] = demux[demux_id].STREAMpids[k];
+					++demux[xtra_demux_id].STREAMpidcount;
+					
+					//shift stream associations in normal demux because we will remove the stream entirely
+					for(l = 0; l < demux[demux_id].ECMpidcount; ++l){
+						for(m = k; m < demux[demux_id].STREAMpidcount-1; ++m){
+							if(demux[demux_id].ECMpids[l].streams & (1 << (m+1))){
+								demux[demux_id].ECMpids[l].streams |= (1 << m);
+							} else {
+								demux[demux_id].ECMpids[l].streams &= ~(1 << m);
+							}
+						}
+					}
+					// remove stream association from normal demux device
+					for(l = k; l < demux[demux_id].STREAMpidcount-1; ++l){
+						demux[demux_id].STREAMpids[l] = demux[demux_id].STREAMpids[l+1];
+					}
+					--demux[demux_id].STREAMpidcount;
+					--k;
+				}
+			}
+			
+			//remove ecmpid from normal demuxer
+			for(k = j; k < demux[demux_id].ECMpidcount; ++k){
+				demux[demux_id].ECMpids[k] = demux[demux_id].ECMpids[k+1];
+			}
+			--demux[demux_id].ECMpidcount;			
+			--j;
+			if(demux[xtra_demux_id].STREAMpidcount > 0){
+				dvbapi_start_descrambling(xtra_demux_id);
+				dvbapi_try_next_caid(xtra_demux_id);
+			} else {
+				cs_log("[pmt] Found no streams for xtra demuxer. Not starting additional decoding on it.");
+			}
+			if(demux[demux_id].STREAMpidcount < 1){
+				cs_log("[pmt] Found no streams for normal demuxer. Not starting additional decoding on it.");
+				return xtra_demux_id;
+			}
+		}
+	}
 
 #if defined WITH_AZBOX || defined WITH_MCA
 	openxcas_sid = program_number;
