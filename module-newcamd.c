@@ -743,6 +743,14 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 
     cl->ncd_client_id = (mbuf[0] << 8) | mbuf[1];
     const char *client_name = newcamd_get_client_name(cl->ncd_client_id);
+#if defined(TCP_KEEPIDLE)
+    if(cl->ncd_client_id == 0x4453){	// DiabloWifi has problems with TCPKeepAlive
+    	int32_t flag = 600;
+			if(setsockopt(cl->udp_fd, SOL_TCP, TCP_KEEPIDLE, &flag, sizeof(flag)) && errno != EBADF){	//send first keepalive packet after 600 seconds of last package received (keepalive packets included)
+				cs_log("Setting TCP_KEEPIDLE failed, errno=%d, %s", errno, strerror(errno));
+			} else cs_log("WARNING: Setting TCP_KEEPIDLE to 10 minutes for bugged DiabloWifi. Note that this might lead to not detected broken connections or multiple connections.");
+    }
+#endif
 
     if(cl->ncd_proto==NCD_525 && 0x6D == mbuf[0]
        && 0x67 == mbuf[1] && 0x11 == cl->ncd_header[11])
