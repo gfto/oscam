@@ -742,7 +742,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
   }
 
   //Checking ident:
-  if (!chk_rfilter(er, rdr)) {
+  if (er->prid && !chk_rfilter(er, rdr)) {
     cs_debug_mask(D_TRACE, "r-filter reader %s", rdr->label);
     return(0);
   }
