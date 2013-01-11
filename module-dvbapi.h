@@ -92,6 +92,7 @@ typedef struct demux_s
 	struct s_ecmpids ECMpids[ECM_PIDS];
 	int8_t EMMpidcount;
 	struct s_emmpids EMMpids[ECM_PIDS];
+	uint16_t max_emm_filter;
 	int8_t STREAMpidcount;
 	uint16_t STREAMpids[ECM_PIDS];
 	int16_t pidindex;
