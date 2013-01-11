@@ -316,7 +316,7 @@ int32_t chk_srvid_match(ECM_REQUEST *er, SIDTAB *sidtab)
     for (i=0; (i<sidtab->num_caid) && (!(rc&1)); i++)
       if (er->caid==sidtab->caid[i]) rc|=1;
 
-  if (!sidtab->num_provid)
+  if (!er->prid || !sidtab->num_provid)
     rc|=2;
   else
     for (i=0; (i<sidtab->num_provid) && (!(rc&2)); i++)

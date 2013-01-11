@@ -116,6 +116,7 @@ int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, uchar * flt, u
 		while ((handle_item=ll_iter_next(&itr))) {
 			if (handle_item->demux_index == dmx->demux_index && handle_item->pid == pid) {
 				channel = handle_item->channel;
+				channel_found=1;
 				break;
 			}
 		}
