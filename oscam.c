@@ -2840,6 +2840,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 {
 	char *typtext[]={"unknown", "unique", "shared", "global"};
 	char tmp[17];
+	int32_t emmnok=0;
 
 	struct s_reader *aureader = NULL;
 	cs_ddump_mask(D_EMM, ep->emm, ep->emmlen, "emm:");
@@ -2894,10 +2895,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		if (cs && cs->get_emm_type) {
 			if(!cs->get_emm_type(ep, aureader)) {
 				rdr_debug_mask(aureader, D_EMM, "emm skipped, get_emm_type() returns error");
-				client->emmnok++;
-				if (client->account)
-					client->account->emmnok++;
-				first_client->emmnok++;
+				emmnok++;
 				continue;
 			}
 		}
@@ -2905,10 +2903,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		if (cs && cs->get_emm_filter) {
 			if (!do_simple_emm_filter(aureader, cs, ep)) {
 				rdr_debug_mask(aureader, D_EMM, "emm skipped, emm_filter() returns invalid");
-				client->emmnok++;
-				if (client->account)
-					client->account->emmnok++;
-				first_client->emmnok++;
+				emmnok++;
 				continue;
 			}
 		}
@@ -3025,6 +3020,12 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			memcpy(emm_pack, ep, sizeof(EMM_PACKET));
 			add_job(aureader->client, ACTION_READER_EMM, emm_pack, sizeof(EMM_PACKET));
 		}
+	}
+	if (emmnok == ll_count(client->aureader_list)) {
+		client->emmnok++;
+		if (client->account)
+			client->account->emmnok++;
+		first_client->emmnok++;
 	}
 }
 
