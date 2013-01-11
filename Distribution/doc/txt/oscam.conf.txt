@@ -673,8 +673,6 @@ DESCRIPTIONS
 
 	   0 = disable AU (default)
 	   1 = enable AU
-	   2 = enable AU, override AU settings of client,
-	       set answering reader as AU reader
 
        pmt_mode = 0|1|2|3|4|5
 	  PMT mode:
