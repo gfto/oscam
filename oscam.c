@@ -3021,7 +3021,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			add_job(aureader->client, ACTION_READER_EMM, emm_pack, sizeof(EMM_PACKET));
 		}
 	}
-	if (emmnok == ll_count(client->aureader_list)) {
+	if (emmnok > 0 && emmnok == ll_count(client->aureader_list)) {
 		client->emmnok++;
 		if (client->account)
 			client->account->emmnok++;

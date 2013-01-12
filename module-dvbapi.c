@@ -531,7 +531,11 @@ void dvbapi_start_emm_filter(int32_t demux_index) {
 		dmx_filter[0]=0xFF;
 		dmx_filter[1]=0;
 
-		struct s_cardsystem *cs = get_cardsystem_by_caid(rdr->caid);
+		struct s_cardsystem *cs;
+		if (!rdr->caid)
+			cs = get_cardsystem_by_caid(rdr->csystem.caids[0]);
+		else
+			cs = get_cardsystem_by_caid(rdr->caid);
 
 		if (cs)
 			cs->get_emm_filter(rdr, dmx_filter);
