@@ -170,6 +170,8 @@ typedef unsigned char uchar;
 //checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything
 #define NULLFREE(X) {if (X) {void *tmpX=X; X=NULL; free(tmpX); }}
 
+#define BASE64_LENGTH(inlen) ((((inlen) + 2) / 3) * 4)	
+
 /* ===========================
  *         constants
  * =========================== */
@@ -755,6 +757,9 @@ typedef struct ecm_request_t {
 	uint16_t		caid;
 	uint16_t		ocaid; 				//original caid, used for betatunneling
 	uint16_t		srvid;
+	uint16_t		onid;
+	uint16_t		tsid;
+	uint32_t		ens;
 	uint16_t		chid;
 	uint16_t		pid;
 	uint16_t		idx;

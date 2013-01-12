@@ -100,6 +100,9 @@ typedef struct demux_s
 	int8_t tries;
 	int8_t max_status;
 	uint16_t program_number;
+	uint16_t onid;
+	uint16_t tsid;
+	uint32_t enigma_namespace;
 	unsigned char lastcw[2][8];
 	int8_t emm_filter;
 	uchar hexserial[8];
