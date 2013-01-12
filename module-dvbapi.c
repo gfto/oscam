@@ -666,7 +666,7 @@ void dvbapi_add_emmpid(struct s_reader *testrdr, int32_t demux_id, uint16_t caid
 		cs_debug_mask(D_DVBAPI,"[ADD EMMPID] CAID: %04X EMM_PID: %04X PROVID: %06X - (type %d) ENABLED!", caid, emmpid, provid, type);
 	}
 	else {
-		cs_debug_mask(D_DVBAPI,"[ADD EMMPID] CAID: %04X EMM_PID: %04X PROVID: %06X - (type %d) DISABLED! (no matching reader)", caid, emmpid, provid, type);
+		cs_debug_mask(D_DVBAPI,"[ADD EMMPID] CAID: %04X EMM_PID: %04X PROVID: %06X - (type %d) DISABLED!", caid, emmpid, provid, type);
 	}
 }
 
@@ -676,21 +676,24 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len) {
 	
 	cs_ddump_mask(D_DVBAPI, buf, len, "cat:");
 
-	for (i = 8; i < (((buf[1] & 0x0F) << 8) | buf[2]) - 1; i += buf[i + 1] + 2) {
-		if (buf[i] != 0x09) continue;
-
-		if (demux[demux_id].EMMpidcount >= ECM_PIDS) break;
-
-		uint16_t caid=((buf[i + 2] << 8) | buf[i + 3]);
-		uint16_t emm_pid=(((buf[i + 4] & 0x1F) << 8) | buf[i + 5]);
-		uint32_t emm_provider = 0;	
-
-		struct s_client *cl = cur_client();
-		LL_ITER itr = ll_iter_create(cl->aureader_list);
-		while ((testrdr = ll_iter_next(&itr))) { // make a list of all au readers 
-			if (testrdr->audisabled !=0) 
-				continue; //only add aureaders
-
+	struct s_client *cl = cur_client();
+	LL_ITER itr = ll_iter_create(cl->aureader_list);
+	while ((testrdr = ll_iter_next(&itr))) { // make a list of all readers
+		if ((testrdr->audisabled !=0) || (!testrdr->enable)){ //only parse au enabled readers that are enabled
+			cs_debug_mask(D_DVBAPI,"Reader %s au disabled or not enabled-> skip!", testrdr->label);
+			continue; 
+		} 
+		else cs_debug_mask(D_DVBAPI,"Reader %s au enabled -> parsing cat for emm pids!", testrdr->label);
+		
+		for (i = 8; i < (((buf[1] & 0x0F) << 8) | buf[2]) - 1; i += buf[i + 1] + 2) {
+			if (buf[i] != 0x09) continue;
+			if (demux[demux_id].EMMpidcount >= ECM_PIDS) break;
+			
+			uint16_t caid=((buf[i + 2] << 8) | buf[i + 3]);
+			uint16_t emm_pid=(((buf[i + 4] & 0x1F) << 8) | buf[i + 5]);
+			uint32_t emm_provider = 0;
+			
+			
 			switch (caid >> 8) {
 				case 0x01:
 					dvbapi_add_emmpid(testrdr, demux_id, caid, emm_pid, 0, EMM_UNIQUE|EMM_GLOBAL);
@@ -699,7 +702,7 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len) {
 						emm_pid = (buf[k] & 0x0F) << 8 | buf[k+1];
 						dvbapi_add_emmpid(testrdr,demux_id, caid, emm_pid, emm_provider, EMM_SHARED);
 					}
-					break;
+					continue;
 				case 0x05:
 					for (k = i+6; k < i+buf[i+1]+2; k += buf[k+1]+2) {
 						if (buf[k]==0x14) {
@@ -707,17 +710,18 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len) {
 							dvbapi_add_emmpid(testrdr,demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE|EMM_SHARED|EMM_GLOBAL);
 						}
 					}
-					break;
+					continue;
 				case 0x18:
 					emm_provider = (buf[i+1] == 0x07) ? (buf[i+6] << 16 | (buf[i+7] << 8| (buf[i+8]))) : 0;
 					dvbapi_add_emmpid(testrdr,demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE|EMM_SHARED|EMM_GLOBAL);
-					break;
+					continue;
 				default:
 					dvbapi_add_emmpid(testrdr,demux_id, caid, emm_pid, 0, EMM_UNIQUE|EMM_SHARED|EMM_GLOBAL);
-					break;
+					continue;
 			}
 		}
 	}
+		
 	return;
 }
 
