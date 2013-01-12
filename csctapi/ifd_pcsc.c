@@ -253,7 +253,7 @@ static int32_t pcsc_check_card_inserted(struct s_reader *pcsc_reader)
         else if( rv == SCARD_S_SUCCESS ) {
             // we have a card
             pcsc_reader->pcsc_has_card=1;
-            rdr_log(pcsc_reader, "PCSC was opened with handle: %ld", pcsc_reader->hCard);
+            rdr_log(pcsc_reader, "PCSC was opened with handle: %ld", (long)pcsc_reader->hCard);
         }
         else {
             // if we get here we have a bigger problem -> display status and debug

@@ -805,7 +805,7 @@ uint16_t get_rdr_caid(struct s_reader *rdr) {
 	  }
 }
 
-inline uint16_t is_betatunnel_caid(uint16_t caid){
+uint16_t is_betatunnel_caid(uint16_t caid){
 	if (caid == 0x1702 || caid == 0x1722 || caid == 0x1801 || caid == 0x1833 || caid == 0x1834 || caid == 0x1835) return 1;
 	return 0;
 }

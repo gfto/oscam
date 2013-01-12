@@ -414,14 +414,6 @@ void ll_iter_remove_data(LL_ITER *it)
     add_garbage(obj);
 }
 
-inline int32_t ll_count(const LLIST *l)
-{
-    if (!l || l->flag)
-      return 0;
-
-    return l->count;
-}
-
 void *ll_has_elements(const LLIST *l) {
   if (!l || !l->initial || l->flag)
     return NULL;

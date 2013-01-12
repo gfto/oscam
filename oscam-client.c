@@ -15,11 +15,6 @@ extern char *processUsername;
 extern CS_MUTEX_LOCK fakeuser_lock;
 extern struct s_module modules[CS_MAX_MOD];
 
-/* Gets the client associated to the calling thread. */
-inline struct s_client *cur_client(void) {
-	return (struct s_client *)pthread_getspecific(getclient);
-}
-
 /* Gets the unique thread number from the client. Used in monitor and newcamd. */
 int32_t get_threadnum(struct s_client *client) {
 	struct s_client *cl;
