@@ -39,6 +39,16 @@ static inline void cacheex_init_cacheex_src(ECM_REQUEST *ecm, ECM_REQUEST *er)
 	if (!ecm->cacheex_src)
 		ecm->cacheex_src = er->cacheex_src;
 }
+/**
+ * Check for NULL ecmd5
+ **/
+static inline uint8_t checkECMD5(ECM_REQUEST *er)
+{
+	int8_t i;
+	for (i=0;i<CS_ECMSTORESIZE;i++)
+		if (er->ecmd5[i]) return 1;
+	return 0;
+}
 void add_hitcache(struct s_client *cl, ECM_REQUEST *er, ECM_REQUEST *ecm);
 struct csp_ce_hit_t *check_hitcache(ECM_REQUEST *er, struct s_client *cl, uint8_t lock);
 void cleanup_hitcache(void);

@@ -67,7 +67,7 @@ void *ll_iter_remove(LL_ITER *it);              // remove llnode at iterator, re
 void ll_iter_remove_data(LL_ITER *it);          // remove llnode and free llnode obj
 void *ll_iter_move(LL_ITER *it, int32_t offset);// moves the iterator position
 int32_t ll_iter_move_first(LL_ITER *it);        // moves an entry to top
-inline static int32_t ll_count(const LLIST *l)					// return number of items in list
+static inline int32_t ll_count(const LLIST *l)					// return number of items in list
 {
     if (!l || l->flag)
       return 0;

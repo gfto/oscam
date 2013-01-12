@@ -25,8 +25,6 @@ static LLIST *invalid_cws;
 extern CS_MUTEX_LOCK hitcache_lock;
 struct csp_ce_hit_t *cspec_hitcache = NULL;
 uint32_t cspec_hitcache_size = 0;
-extern inline uint8_t checkECMD5(ECM_REQUEST *er);
-
 
 void cacheex_init(void) {
 	// Init random node id

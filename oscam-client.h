@@ -2,7 +2,7 @@
 #define OSCAM_CLIENT_H_
 
 /* Gets the client associated to the calling thread. */
-inline static struct s_client *cur_client(void) {
+static inline struct s_client *cur_client(void) {
 	return (struct s_client *)pthread_getspecific(getclient);
 }
 int32_t get_threadnum(struct s_client *client);

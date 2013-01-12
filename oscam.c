@@ -1370,17 +1370,6 @@ static void init_cardreader(void) {
 }
 
 /**
- * Check for NULL ecmd5
- **/
-inline uint8_t checkECMD5(ECM_REQUEST *er)
-{
-	int8_t i;
-	for (i=0;i<CS_ECMSTORESIZE;i++)
-		if (er->ecmd5[i]) return 1;
-	return 0;
-}
-
-/**
  * get ecm from ecmcache
  **/
 struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl)
