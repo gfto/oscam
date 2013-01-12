@@ -753,7 +753,6 @@ int32_t dvbapi_get_descindex(void) {
 	int32_t i,j,idx=1,fail=1;
 	while (fail) {
 		fail=0;
-		cs_sleepus(0);
 		for (i=0;i<MAX_DEMUX;i++) {
 			for (j=0;j<demux[i].ECMpidcount;j++) { 
 				if (demux[i].ECMpids[j].index==idx) {
@@ -888,13 +887,14 @@ void dvbapi_start_descrambling(int32_t demux_id) {
 			if (demux[demux_id].curindex != j) {
 				if (demux[demux_id].ECMpids[j].status < 0 || !demux[demux_id].ECMpids[demux[demux_id].curindex].streams)
 					continue;
-
+				demux[demux_id].ECMpids[j].index = 0;
 				dvbapi_start_filter(demux_id, j, demux[demux_id].ECMpids[j].ECM_PID, demux[demux_id].ECMpids[j].CAID, 0x80, 0xF0, 3000, TYPE_ECM, 0);
 			}
-
-			if (!demux[demux_id].ECMpids[j].index && demux[demux_id].ECMpids[j].status != -1) // status of pid = ignore -> skip!
+			if (!demux[demux_id].ECMpids[j].index){ // if no indexer for this pid get one!
 				demux[demux_id].ECMpids[j].index=dvbapi_get_descindex();
-
+				cs_debug_mask(D_DVBAPI,"DEMUXER: #%d PID: #%d CAID: %04X ECMPID: %04X is using index %d", demux_id, j, demux[demux_id].ECMpids[j].CAID, 
+					demux[demux_id].ECMpids[j].ECM_PID, demux[demux_id].ECMpids[j].index-1);
+			}
 			if (!demux[demux_id].ECMpids[j].checked)
 				demux[demux_id].ECMpids[j].checked=1;
 			demux[demux_id].ECMpids[j].irdeto_curchid=demux[demux_id].ECMpids[demux[demux_id].curindex].irdeto_curchid;
@@ -2762,6 +2762,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
                                                 demux[i].curindex = j;
                                                 //I hope this trick works for all: adjust the index to write the right cw:
                                                 demux[i].ECMpids[j].index = demux[i].ECMpids[demux[i].pidindex].index;
+												demux[i].ECMpids[demux[i].pidindex].index = 0; // reset this old index, it wont be used anymore!
                                                 dvbapi_start_descrambling(i);
                                         }
 			if (er->rc >= E_NOTFOUND) {
@@ -2777,6 +2778,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				demux[i].ECMpids[j].irdeto_cycle = 0;
 				int8_t last_checked = demux[i].ECMpids[j].checked;
 				demux[i].ECMpids[j].checked = 2;
+				demux[i].ECMpids[j].index = 0; // since its not found
 
 				if (demux[i].pidindex==-1) {
 					if (cfg.dvbapi_requestmode == 1)
