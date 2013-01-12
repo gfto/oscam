@@ -524,8 +524,8 @@ void dvbapi_start_emm_filter(int32_t demux_index) {
 	LL_ITER itr = ll_iter_create(cl->aureader_list);
 	while ((rdr = ll_iter_next(&itr))) {
 
-		if (rdr->audisabled != 0) 
-			continue;
+		if (rdr->audisabled !=0 || !rdr->enable || (!is_network_reader(rdr) && rdr->card_status != CARD_INSERTED))
+			continue; 
 
 		memset(dmx_filter, 0, sizeof(dmx_filter));
 		dmx_filter[0]=0xFF;
@@ -658,15 +658,35 @@ void dvbapi_add_ecmpid(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_
 }
 
 void dvbapi_add_emmpid(struct s_reader *testrdr, int32_t demux_id, uint16_t caid, uint16_t emmpid, uint32_t provid, uint8_t type) {
+	char typetext[40];
+	cs_strncpy(typetext, ":", sizeof(typetext)); 
+	
+	if (type & 0x01) strcat(typetext, "UNIQUE:");
+	if (type & 0x02) strcat(typetext, "SHARED:");
+	if (type & 0x04) strcat(typetext, "GLOBAL:");
+	if (type & 0xF8) strcat(typetext, "UNKNOWN:");
+
 	if (emm_reader_match(testrdr, caid, provid)){
+		uint16_t i;
+		for (i = 0; i < demux[demux_id].EMMpidcount; i++) {
+			if ((demux[demux_id].EMMpids[i].PID == emmpid)
+				&& (demux[demux_id].EMMpids[i].CAID == caid)
+				&& (demux[demux_id].EMMpids[i].PROVID == provid)
+				&& (demux[demux_id].EMMpids[i].type == type)) {
+					cs_debug_mask(D_DVBAPI,"[SKIP EMMPID] CAID: %04X EMM_PID: %04X PROVID: %06X TYPE %s (same as emmpid #%d)", caid, emmpid, provid,
+						typetext, i);
+					return;
+				}
+		}
 		demux[demux_id].EMMpids[demux[demux_id].EMMpidcount].PID = emmpid;
 		demux[demux_id].EMMpids[demux[demux_id].EMMpidcount].CAID = caid;
 		demux[demux_id].EMMpids[demux[demux_id].EMMpidcount].PROVID = provid;
 		demux[demux_id].EMMpids[demux[demux_id].EMMpidcount++].type = type;
-		cs_debug_mask(D_DVBAPI,"[ADD EMMPID] CAID: %04X EMM_PID: %04X PROVID: %06X - (type %d) ENABLED!", caid, emmpid, provid, type);
+		cs_debug_mask(D_DVBAPI,"[ADD EMMPID #%d] CAID: %04X EMM_PID: %04X PROVID: %06X TYPE %s", demux[demux_id].EMMpidcount-1, caid, emmpid, provid,
+			typetext);
 	}
 	else {
-		cs_debug_mask(D_DVBAPI,"[ADD EMMPID] CAID: %04X EMM_PID: %04X PROVID: %06X - (type %d) DISABLED!", caid, emmpid, provid, type);
+		cs_debug_mask(D_DVBAPI,"[IGNORE EMMPID] CAID: %04X EMM_PID: %04X PROVID: %06X TYPE %s (no match)", caid, emmpid, provid, typetext);
 	}
 }
 
@@ -679,11 +699,13 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len) {
 	struct s_client *cl = cur_client();
 	LL_ITER itr = ll_iter_create(cl->aureader_list);
 	while ((testrdr = ll_iter_next(&itr))) { // make a list of all readers
-		if ((testrdr->audisabled !=0) || (!testrdr->enable)){ //only parse au enabled readers that are enabled
-			cs_debug_mask(D_DVBAPI,"Reader %s au disabled or not enabled-> skip!", testrdr->label);
+		if ((testrdr->audisabled !=0)
+			|| (!testrdr->enable)
+			|| (!is_network_reader(testrdr) && testrdr->card_status != CARD_INSERTED)){
+			cs_debug_mask(D_DVBAPI,"Reader %s au disabled or not enabled-> skip!", testrdr->label); //only parse au enabled readers that are enabled
 			continue; 
 		} 
-		else cs_debug_mask(D_DVBAPI,"Reader %s au enabled -> parsing cat for emm pids!", testrdr->label);
+		cs_debug_mask(D_DVBAPI,"Reader %s au enabled -> parsing cat for emm pids!", testrdr->label);
 		
 		for (i = 8; i < (((buf[1] & 0x0F) << 8) | buf[2]) - 1; i += buf[i + 1] + 2) {
 			if (buf[i] != 0x09) continue;
@@ -702,7 +724,7 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len) {
 						emm_pid = (buf[k] & 0x0F) << 8 | buf[k+1];
 						dvbapi_add_emmpid(testrdr,demux_id, caid, emm_pid, emm_provider, EMM_SHARED);
 					}
-					continue;
+					break;
 				case 0x05:
 					for (k = i+6; k < i+buf[i+1]+2; k += buf[k+1]+2) {
 						if (buf[k]==0x14) {
@@ -710,14 +732,14 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len) {
 							dvbapi_add_emmpid(testrdr,demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE|EMM_SHARED|EMM_GLOBAL);
 						}
 					}
-					continue;
+					break;
 				case 0x18:
 					emm_provider = (buf[i+1] == 0x07) ? (buf[i+6] << 16 | (buf[i+7] << 8| (buf[i+8]))) : 0;
 					dvbapi_add_emmpid(testrdr,demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE|EMM_SHARED|EMM_GLOBAL);
-					continue;
+					break;
 				default:
 					dvbapi_add_emmpid(testrdr,demux_id, caid, emm_pid, 0, EMM_UNIQUE|EMM_SHARED|EMM_GLOBAL);
-					continue;
+					break;
 			}
 		}
 	}
