@@ -571,10 +571,11 @@ static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigne
 
 			reader->caid =(SYSTEM_NAGRA|cta_res[11]);
 			memcpy(reader->irdId,cta_res+14,4);
-			rdr_log_sensitive(reader, "type: NAGRA, caid: %04X, IRD ID: {%s}",reader->caid, cs_hexdump(1, reader->irdId, 4, ds, sizeof(ds)));
-			rdr_log(reader, "ProviderID: %s", cs_hexdump(1, reader->prid[0], 4, ds, sizeof(ds)));
-			nagra_datetime(reader, cta_res+24, 0, ds, &reader->card_valid_to);
-			rdr_log(reader, "active to: %s", ds);
+			if(reader->csystem.active){			// do not output on init but only afterwards in card_info
+				rdr_log_sensitive(reader, "IRD ID: {%s}", cs_hexdump(1, reader->irdId, 4, ds, sizeof(ds)));
+				nagra_datetime(reader, cta_res+24, 0, ds, &reader->card_valid_to);
+				rdr_log(reader, "active to: %s", ds);
+			}
 			return OK;
      		}
    		case TIERS:
@@ -629,7 +630,6 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR *newatr)
 {
 	get_atr;
 	def_resp;
-	char tmp_dbg[13];
 	memset(reader->rom, 0, 15);
 	reader->is_pure_nagra = 0;
 	reader->is_tiger = 0;
@@ -692,7 +692,6 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR *newatr)
 			return ERROR;
 		}
 		memcpy(reader->hexserial+2, cta_res+2, 4);
-		rdr_debug_mask_sensitive(reader, D_READER, "SER:  {%s}", cs_hexdump(1, reader->hexserial+2, 4, tmp_dbg, sizeof(tmp_dbg)));
 		memcpy(reader->sa[0], cta_res+2, 2);
 
 		if(!GetDataType(reader, DT01,0x0E,MAX_REC)) return ERROR;
@@ -706,17 +705,6 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR *newatr)
 		if(!GetDataType(reader, 0x04,0x44,MAX_REC)) return ERROR;
 		rdr_debug_mask(reader, D_READER, "DT04 DONE");
 		CamStateRequest(reader);
-
-		if (!memcmp(reader->rom+5, "181", 3)==0) //dt05 is not supported by rom181
-		{
-			rdr_log(reader, "-----------------------------------------");
-			rdr_log(reader, "|id  |tier    |valid from  |valid to    |");
-		  	rdr_log(reader, "+----+--------+------------+------------+");
-			if(!GetDataType(reader, TIERS,0x57,MAX_REC)) return ERROR;
-			rdr_log(reader, "-----------------------------------------");
-			CamStateRequest(reader);
-		}
-
 		if(!GetDataType(reader, DT06,0x16,MAX_REC)) return ERROR;
 		rdr_debug_mask(reader, D_READER, "DT06 DONE");
 		CamStateRequest(reader);
@@ -790,6 +778,7 @@ static int32_t nagra2_card_info(struct s_reader * reader)
 	{
           rdr_log(reader, "Prv.ID: %s",cs_hexdump(1, reader->prid[i], 4, tmp, sizeof(tmp)));
 	}
+	cs_clear_entitlement(reader); //reset the entitlements
         if(reader->is_tiger)
         {
 	  rdr_log(reader, "Activation Date : %s", nagra_datetime(reader, reader->ActivationDate, 0, currdate, 0));
@@ -803,7 +792,6 @@ static int32_t nagra2_card_info(struct s_reader * reader)
            uint8_t tier_cmd2[] = { 0x01, 0x00 };
            def_resp;
            int32_t j;
-           cs_clear_entitlement(reader); //reset the entitlements
            do_cmd(reader, 0xD0, 0x04, 0x50, 0x0A, tier_cmd1, cta_res, &cta_lr);
            if (cta_lr == 0x0C)
            {
@@ -953,7 +941,33 @@ static int32_t nagra2_card_info(struct s_reader * reader)
               else
                 rdr_log(reader, "Credit : %3d euro", balance);
            }
-        }
+        } else {
+        	def_resp;
+        	char tmp_dbg[13];
+        	CamStateRequest(reader);
+					if(!do_cmd(reader, 0x12,0x02,0x92,0x06,0,cta_res,&cta_lr))
+					{
+						rdr_debug_mask(reader, D_READER, "get serial failed");
+						return ERROR;
+					}
+					memcpy(reader->hexserial+2, cta_res+2, 4);
+					rdr_debug_mask_sensitive(reader, D_READER, "SER:  {%s}", cs_hexdump(1, reader->hexserial+2, 4, tmp_dbg, sizeof(tmp_dbg)));
+					memcpy(reader->sa[0], cta_res+2, 2);
+					reader->nprov = 1;
+					if(!GetDataType(reader, IRDINFO,0x39,MAX_REC)) return ERROR;
+					rdr_debug_mask(reader, D_READER, "IRDINFO DONE");
+					CamStateRequest(reader);
+			
+					if (!memcmp(reader->rom+5, "181", 3)==0) //dt05 is not supported by rom181
+					{
+						rdr_log(reader, "-----------------------------------------");
+						rdr_log(reader, "|id  |tier    |valid from  |valid to    |");
+					  	rdr_log(reader, "+----+--------+------------+------------+");
+						if(!GetDataType(reader, TIERS,0x57,MAX_REC)) return ERROR;
+						rdr_log(reader, "-----------------------------------------");
+						CamStateRequest(reader);
+					}
+	}
 	rdr_log(reader, "ready for requests");
 	return OK;
 }

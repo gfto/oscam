@@ -635,7 +635,7 @@ void calculate_nonce(char *nonce, char *result, char *opaque){
 			foundexpired = noncelist;
 			break;
 		}
-		if(!foundnonce && nonce && !memcmp(noncelist->nonce, nonce, (MD5_DIGEST_LENGTH * 2) + 1)) {
+		if(nonce && !memcmp(noncelist->nonce, nonce, (MD5_DIGEST_LENGTH * 2) + 1)) {
 			memcpy(result, noncelist->nonce, (MD5_DIGEST_LENGTH * 2) + 1);
 			foundnonce = noncelist;
 			if(!noncelist->firstuse) noncelist->firstuse = now;
@@ -645,6 +645,7 @@ void calculate_nonce(char *nonce, char *result, char *opaque){
 					nonce_first[bucket] = noncelist->next;
 				}			
 			}
+			break;
 		} else if (!noncelist->firstuse && !memcmp(noncelist->opaque, opaque, (MD5_DIGEST_LENGTH * 2) + 1)){
 			foundopaque = noncelist;
 		}
