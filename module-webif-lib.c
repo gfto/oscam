@@ -9,6 +9,7 @@
 #include "oscam-lock.h"
 #include "oscam-string.h"
 #include "oscam-time.h"
+#include "oscam-net.h"
 
 extern const char *templates[][3];
 extern char *JSCRIPT;
@@ -29,6 +30,8 @@ extern char noncekey[33];
 
 static int8_t b64decoder[256];
 static int8_t *tplchksum;
+struct s_nonce *nonce_first[AUTHNONCEHASHBUCKETS];
+CS_MUTEX_LOCK nonce_lock[AUTHNONCEHASHBUCKETS];
 
 /* Adds a name->value-mapping or appends to it. You will get a reference back which you may freely
    use (but you should not call free/realloc on this!)*/
@@ -601,19 +604,86 @@ static void char_to_hex(const unsigned char* p_array, uint32_t p_array_len, unsi
 	}
 }
 
-/* Calculates the currently valid nonce value and copies it to result. Please note that result needs to be at least (MD5_DIGEST_LENGTH * 2) + 1 large. */
-void calculate_nonce(char *result){
-  char noncetmp[128];
-  unsigned char md5tmp[MD5_DIGEST_LENGTH];
-  snprintf(noncetmp, sizeof(noncetmp), "%d:%s", (int)time(NULL)/AUTHNONCEVALIDSECS, noncekey);
-  char_to_hex(MD5((unsigned char*)noncetmp, strlen(noncetmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)result);
+/* Calculates a new opaque value. Please note that opaque needs to be at least (MD5_DIGEST_LENGTH * 2) + 1 large. */
+void calculate_opaque(IN_ADDR_T addr, char *opaque){
+	char noncetmp[128];
+	unsigned char md5tmp[MD5_DIGEST_LENGTH];
+  snprintf(noncetmp, sizeof(noncetmp), "%d:%s:%d", (int32_t)time((time_t)NULL), cs_inet_ntoa(addr), (int16_t)rand());
+  char_to_hex(MD5((unsigned char*)noncetmp, strlen(noncetmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)opaque);
+}
+
+void init_noncelocks(){
+	int32_t i;
+	for(i = 0; i < AUTHNONCEHASHBUCKETS; ++i){
+		cs_lock_create(&nonce_lock[i], 5, "nonce_lock");
+		nonce_first[i] = NULL;
+	}
+}
+
+/* Calculates the currently valid nonce value and copies it to result. Please note that nonce (may be NULL), opaque and result needs to be at least (MD5_DIGEST_LENGTH * 2) + 1 large. */
+void calculate_nonce(char *nonce, char *result, char *opaque){
+	struct s_nonce *noncelist, *prev, *foundnonce = NULL, *foundopaque = NULL, *foundexpired = NULL;
+	int32_t bucket = opaque[0] % AUTHNONCEHASHBUCKETS;
+	time_t now = time((time_t)NULL);
+	cs_writelock(&nonce_lock[bucket]);
+	for(noncelist = nonce_first[bucket], prev = NULL; noncelist; prev = noncelist, noncelist = noncelist->next){
+		if(now > noncelist->expirationdate){
+			if(prev) prev->next = NULL;
+			else {
+				nonce_first[bucket] = NULL;
+			}
+			foundexpired = noncelist;
+			break;
+		}
+		if(!foundnonce && nonce && !memcmp(noncelist->nonce, nonce, (MD5_DIGEST_LENGTH * 2) + 1)) {
+			memcpy(result, noncelist->nonce, (MD5_DIGEST_LENGTH * 2) + 1);
+			foundnonce = noncelist;
+			if(!noncelist->firstuse) noncelist->firstuse = now;
+			else if(now - foundnonce->firstuse > AUTHNONCEVALIDSECS){
+				if(prev) prev->next = noncelist->next;
+				else {
+					nonce_first[bucket] = noncelist->next;
+				}			
+			}
+		} else if (!noncelist->firstuse && !memcmp(noncelist->opaque, opaque, (MD5_DIGEST_LENGTH * 2) + 1)){
+			foundopaque = noncelist;
+		}
+	}
+	if(foundnonce && now - foundnonce->firstuse > AUTHNONCEVALIDSECS){
+		free(foundnonce);
+		foundnonce = NULL;
+	}
+	if(!foundnonce && foundopaque)
+		memcpy(result, foundopaque->nonce, (MD5_DIGEST_LENGTH * 2) + 1);
+	if(!foundnonce && !foundopaque){
+		char noncetmp[128], randstr[16];
+	  unsigned char md5tmp[MD5_DIGEST_LENGTH];
+	  get_random_bytes((uint8_t*)randstr, sizeof(randstr)-1);
+	  randstr[sizeof(randstr)-1] = '\0';
+	  snprintf(noncetmp, sizeof(noncetmp), "%d:%s:%s", (int32_t)now, randstr, noncekey);
+	  char_to_hex(MD5((unsigned char*)noncetmp, strlen(noncetmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)result);
+	  if(cs_malloc(&noncelist, sizeof(struct s_nonce))){
+	  	noncelist->expirationdate = now + AUTHNONCEEXPIRATION;
+	  	memcpy(noncelist->nonce, result, (MD5_DIGEST_LENGTH * 2) + 1);
+	  	memcpy(noncelist->opaque, opaque, (MD5_DIGEST_LENGTH * 2) + 1);
+	  	noncelist->next = nonce_first[bucket];
+	  	nonce_first[bucket] = noncelist;	  	
+	  }
+	}
+	cs_writeunlock(&nonce_lock[bucket]);
+	while(foundexpired){
+		prev = foundexpired;
+		foundexpired = foundexpired->next;
+		free(prev);
+	}
 }
 
 /* Checks if authentication is correct. Returns -1 if not correct, 1 if correct and 2 if nonce isn't valid anymore.
    Note that authstring will be modified. */
-int32_t check_auth(char *authstring, char *method, char *path, char *expectednonce){
+int32_t check_auth(char *authstring, char *method, char *path, IN_ADDR_T addr, char *expectednonce, char *opaque){
 	int32_t authok = 0, uriok = 0;
-	char *authnonce = "";
+	char authnonce[(MD5_DIGEST_LENGTH * 2) + 1];
+	memset(authnonce, 0, sizeof(authnonce));
 	char *authnc = "";
 	char *authcnonce = "";
 	char *authresponse = "";
@@ -623,12 +693,13 @@ int32_t check_auth(char *authstring, char *method, char *path, char *expectednon
 	char *pch = authstring + 22;
 	char *pch2;
 	char *saveptr1=NULL;
+	memset(opaque, 0, (MD5_DIGEST_LENGTH * 2) + 1);
 
 	for(pch = strtok_r (pch, ",", &saveptr1); pch; pch = strtok_r (NULL, ",", &saveptr1)){
 		pch2 = pch;
 	  while(pch2[0] == ' ' && pch2[0] != '\0') ++pch2;
 	  if(strncmp(pch2, "nonce", 5) == 0){
-	  	authnonce=parse_auth_value(pch2);
+	  	cs_strncpy(authnonce, parse_auth_value(pch2), sizeof(authnonce));
 	  } else if (strncmp(pch2, "nc", 2) == 0){
 	  	authnc=parse_auth_value(pch2);
 	  } else if (strncmp(pch2, "cnonce", 6) == 0){
@@ -639,6 +710,9 @@ int32_t check_auth(char *authstring, char *method, char *path, char *expectednon
 	  	uri=parse_auth_value(pch2);
 	  } else if (strncmp(pch2, "username", 8) == 0){
 	  	username=parse_auth_value(pch2);
+	  } else if (strncmp(pch2, "opaque", 6) == 0){
+	  	char *tmp=parse_auth_value(pch2);
+	  	cs_strncpy(opaque, tmp, (MD5_DIGEST_LENGTH * 2) + 1);
 	  }
 	}
 
@@ -666,6 +740,8 @@ int32_t check_auth(char *authstring, char *method, char *path, char *expectednon
 		char_to_hex(MD5((unsigned char*)A3tmp, strlen(A3tmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)A3);
 
 		if(strcmp(A3, authresponse) == 0) {
+			if(strlen(opaque) != MD5_DIGEST_LENGTH*2) calculate_opaque(addr, opaque);
+			calculate_nonce(authnonce, expectednonce, opaque);
 			if(strcmp(expectednonce, authnonce) == 0) authok = 1;
 			else authok = 2;
 		}
@@ -757,14 +833,14 @@ void send_error500(FILE *f){
 	send_error(f, 500, "Internal Server Error", NULL, "The server encountered an internal error that prevented it from fulfilling this request.", 0);
 }
 
-void send_header304(FILE *f){
-	send_headers(f, 304, "Not Modified", NULL, NULL, 1, 0, NULL, 0);
+void send_header304(FILE *f, char *extraheader){
+	send_headers(f, 304, "Not Modified", extraheader, NULL, 1, 0, NULL, 0);
 }
 
 /*
  * function for sending files.
  */
-void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uint32_t etagheader){
+void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uint32_t etagheader, char *extraheader){
 	int8_t filen = 0;
 	int32_t size = 0;
 	char* mimetype = "", *result = " ", *allocated = NULL;
@@ -843,7 +919,7 @@ void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uin
 	size = strlen(result);
 
 	if((etagheader == 0 && moddate < modifiedheader) || (etagheader > 0 && (uint32_t)crc32(0L, (uchar *)result, size) == etagheader)){
-		send_header304(f);
+		send_header304(f, extraheader);
 	} else {
 		send_headers(f, 200, "OK", NULL, mimetype, 1, size, result, 0);
 		webif_write(result, f);

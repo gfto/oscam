@@ -3588,7 +3588,7 @@ static char *send_oscam_savetpls(struct templatevars *vars) {
 	return tpl_getTpl(vars, "SAVETEMPLATES");
 }
 
-static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *params, int8_t apicall, int8_t *keepalive) {
+static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *params, int8_t apicall, int8_t *keepalive, char* extraheader) {
 	if(!apicall) setActiveMenu(vars, MNU_SHUTDOWN);
 	if (strcmp(strtolower(getParam(params, "action")), "shutdown") == 0) {
 		*keepalive = 0;
@@ -3599,7 +3599,7 @@ static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct urip
 			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			tpl_printf(vars, TPLADD, "SECONDS", "%d", SHUTDOWNREFRESH);
 			char *result = tpl_getTpl(vars, "SHUTDOWN");
-			send_headers(f, 200, "OK", NULL, "text/html", 0, strlen(result), NULL, 0);
+			send_headers(f, 200, "OK", extraheader, "text/html", 0, strlen(result), NULL, 0);
 			webif_write(result, f);
 			cs_log("Shutdown requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
 		} else {
@@ -3625,7 +3625,7 @@ static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct urip
 			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			tpl_addVar(vars, TPLADD, "SECONDS", "5");
 			char *result = tpl_getTpl(vars, "SHUTDOWN");
-			send_headers(f, 200, "OK", NULL, "text/html", 0,strlen(result), NULL, 0);
+			send_headers(f, 200, "OK", extraheader, "text/html", 0,strlen(result), NULL, 0);
 			webif_write(result, f);
 			cs_log("Restart requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
 		} else {
@@ -4242,7 +4242,7 @@ static char *send_oscam_EMM(struct templatevars *vars, struct uriparams *params)
 	return tpl_getTpl(vars, "ASKEMM");
 }
 
-static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *params, int8_t *keepalive, int8_t apicall) {
+static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *params, int8_t *keepalive, int8_t apicall, char *extraheader) {
 	if (strcmp(getParam(params, "part"), "status") == 0) {
 		return send_oscam_status(vars, params, apicall);
 	}
@@ -4368,7 +4368,7 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 		if ((strcmp(strtolower(getParam(params, "action")), "restart") == 0) ||
 				(strcmp(strtolower(getParam(params, "action")), "shutdown") == 0)){
 			if(!cfg.http_readonly) {
-				return send_oscam_shutdown(vars, f, params, apicall, keepalive);
+				return send_oscam_shutdown(vars, f, params, apicall, keepalive, extraheader);
 			} else {
 				tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "webif readonly mode");
 				return tpl_getTpl(vars, "APIERROR");
@@ -4385,7 +4385,7 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 	}
 }
 
-static char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *params, char *image, time_t modifiedheader, uint32_t etagheader) {
+static char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *params, char *image, time_t modifiedheader, uint32_t etagheader, char* extraheader) {
 	char *wanted;
 	if(image == NULL) wanted = getParam(params, "i");
 	else wanted = image;
@@ -4399,13 +4399,13 @@ static char *send_oscam_image(struct templatevars *vars, FILE *f, struct uripara
 		  		disktpl = 1;
 					stat(path, &st);
 					if(st.st_mtime < modifiedheader){
-						send_header304(f);
+						send_header304(f, extraheader);
 						return "1";
 					}
 		  	}
 	  	}
 	  	if(disktpl == 0 && first_client->login < modifiedheader){
-				send_header304(f);
+				send_header304(f, extraheader);
 				return "1";
 			}
 		}
@@ -4420,9 +4420,9 @@ static char *send_oscam_image(struct templatevars *vars, FILE *f, struct uripara
 				int32_t len = b64decode((uchar *)ptr + 7);
 				if(len > 0){
 					if((uint32_t)crc32(0L, (uchar *)ptr + 7, len) == etagheader){
-						send_header304(f);
+						send_header304(f, extraheader);
 					} else {
-						send_headers(f, 200, "OK", NULL, header + 5, 1, len, ptr + 7, 0);
+						send_headers(f, 200, "OK", extraheader, header + 5, 1, len, ptr + 7, 0);
 						webif_write_raw(ptr + 7, f, len);
 					}
 					return "1";
@@ -4432,7 +4432,7 @@ static char *send_oscam_image(struct templatevars *vars, FILE *f, struct uripara
 	}
 	// Return file not found
 	const char *not_found = "File not found.\n";
-	send_headers(f, 404, "Not Found", NULL, "text/plain", 0, strlen(not_found), (char *)not_found, 0);
+	send_headers(f, 404, "Not Found", extraheader, "text/plain", 0, strlen(not_found), (char *)not_found, 0);
 	webif_write_raw((char *)not_found, f, strlen(not_found));
 	return "1";
 }
@@ -4767,9 +4767,10 @@ static int32_t process_request(FILE *f, IN_ADDR_T in) {
 		}
 
 		int32_t authok = 0;
-		char expectednonce[(MD5_DIGEST_LENGTH * 2) + 1];
+		char expectednonce[(MD5_DIGEST_LENGTH * 2) + 1], opaque[(MD5_DIGEST_LENGTH * 2) + 1];
+		char authheadertmp[sizeof(AUTHREALM) + sizeof(expectednonce) + sizeof(opaque) + 100];
 
-		char *method, *path, *protocol, *str1, *saveptr1=NULL, *authheader = NULL, *filebuf = NULL;
+		char *method, *path, *protocol, *str1, *saveptr1=NULL, *authheader = NULL, *extraheader = NULL, *filebuf = NULL;
 		char *pch, *tmp, *buf, *nameInUrl, subdir[32];
 		/* List of possible pages */
 		char *pages[]= {
@@ -4881,8 +4882,6 @@ static int32_t process_request(FILE *f, IN_ADDR_T in) {
 
 		if (!cfg.http_user || !cfg.http_pwd)
 			authok = 1;
-		else
-			calculate_nonce(expectednonce);
 
 		for (str1=strtok_r(tmp, "\n", &saveptr1); str1; str1=strtok_r(NULL, "\n", &saveptr1)) {
 			len = strlen(str1);
@@ -4901,7 +4900,7 @@ static int32_t process_request(FILE *f, IN_ADDR_T in) {
 					if (cs_realloc(&authheader, len + 1))
 						cs_strncpy(authheader, str1, len);
 				}
-				authok = check_auth(str1, method, path, expectednonce);
+				authok = check_auth(str1, method, path, addr, expectednonce, opaque);
 			} else if (len > 40 && strncmp(str1, "If-Modified-Since:", 18) == 0){
 				modifiedheader = parse_modifiedsince(str1);
 			} else if (len > 20 && strncmp(str1, "If-None-Match:", 14) == 0){
@@ -4912,31 +4911,42 @@ static int32_t process_request(FILE *f, IN_ADDR_T in) {
 			}
 		}
 
-		if(authok != 1) {
+		if (cfg.http_user && cfg.http_pwd){
+			if(!authok || strlen(opaque) != MD5_DIGEST_LENGTH*2) calculate_opaque(addr, opaque);
 			if(authok == 2)
 				cs_debug_mask(D_TRACE, "WebIf: Received stale header from %s.", cs_inet_ntoa(addr));
-			else if(authheader){
-				cs_debug_mask(D_CLIENT, "WebIf: Received wrong auth header from %s:", cs_inet_ntoa(addr));
-				cs_debug_mask(D_CLIENT, "%s", authheader);
-			} else
-				cs_debug_mask(D_CLIENT, "WebIf: Received no auth header from %s.", cs_inet_ntoa(addr));
-			char temp[sizeof(AUTHREALM) + sizeof(expectednonce) + 100];
-			snprintf(temp, sizeof(temp), "WWW-Authenticate: Digest algorithm=\"MD5\", realm=\"%s\", qop=\"auth\", opaque=\"\", nonce=\"%s\"", AUTHREALM, expectednonce);
-			if(authok == 2) strncat(temp, ", stale=true", sizeof(temp) - strlen(temp) - 1);
-			char *msg = "Access denied.\n";
-			send_headers(f, 401, "Unauthorized", temp, "text/html", 0, strlen(msg), msg, 0);
-			webif_write(msg, f);
-			NULLFREE(authheader);
-			free(filebuf);
-			if(*keepalive) continue;
-			else return 0;
+			else {				
+				if(!authok){
+					if(authheader){
+						cs_debug_mask(D_CLIENT, "WebIf: Received wrong auth header from %s:", cs_inet_ntoa(addr));
+						cs_debug_mask(D_CLIENT, "%s", authheader);
+					} else
+						cs_debug_mask(D_CLIENT, "WebIf: Received no auth header from %s.", cs_inet_ntoa(addr));
+				}
+				calculate_nonce(NULL, expectednonce, opaque);
+			}
+			if(authok != 1){
+				snprintf(authheadertmp, sizeof(authheadertmp), "WWW-Authenticate: Digest algorithm=\"MD5\", realm=\"%s\", qop=\"auth\", opaque=\"%s\", nonce=\"%s\"", AUTHREALM, opaque, expectednonce);
+				if(authok == 2) strncat(authheadertmp, ", stale=true", sizeof(authheadertmp) - strlen(authheadertmp) - 1);				
+			} else 
+				snprintf(authheadertmp, sizeof(authheadertmp), "Authentication-Info: nextnonce=\"%s\"", expectednonce);
+			extraheader = authheadertmp;
+			if(authok != 1){
+				char *msg = "Access denied.\n";
+				send_headers(f, 401, "Unauthorized", extraheader, "text/html", 0, strlen(msg), msg, 0);
+				webif_write(msg, f);
+				NULLFREE(authheader);
+				free(filebuf);
+				if(*keepalive) continue;
+				else return 0;
+			} 
 		} else NULLFREE(authheader);
 
 		/*build page*/
 		if(pgidx == 8) {
-			send_file(f, "CSS", subdir, modifiedheader, etagheader);
+			send_file(f, "CSS", subdir, modifiedheader, etagheader, extraheader);
 		} else if (pgidx == 17) {
-			send_file(f, "JS", subdir, modifiedheader, etagheader);
+			send_file(f, "JS", subdir, modifiedheader, etagheader, extraheader);
 		} else {
 			time_t t;
 			struct templatevars *vars = tpl_create();
@@ -5009,22 +5019,22 @@ static int32_t process_request(FILE *f, IN_ADDR_T in) {
 				//case  8: css file
 				case 9: result = send_oscam_services_edit(vars, &params); break;
 				case 10: result = send_oscam_savetpls(vars); break;
-				case 11: result = send_oscam_shutdown(vars, f, &params, 0, keepalive); break;
+				case 11: result = send_oscam_shutdown(vars, f, &params, 0, keepalive, extraheader); break;
 				case 12: result = send_oscam_script(vars); break;
 				case 13: result = send_oscam_scanusb(vars); break;
 				case 14: result = send_oscam_files(vars, &params, 0); break;
 				case 15: result = send_oscam_reader_stats(vars, &params, 0); break;
 				case 16: result = send_oscam_failban(vars, &params, 0); break;
 				//case  17: js file
-				case 18: result = send_oscam_api(vars, f, &params, keepalive, 1); break; //oscamapi.html
-				case 19: result = send_oscam_image(vars, f, &params, NULL, modifiedheader, etagheader); break;
-				case 20: result = send_oscam_image(vars, f, &params, "ICMAI", modifiedheader, etagheader); break;
+				case 18: result = send_oscam_api(vars, f, &params, keepalive, 1, extraheader); break; //oscamapi.html
+				case 19: result = send_oscam_image(vars, f, &params, NULL, modifiedheader, etagheader, extraheader); break;
+				case 20: result = send_oscam_image(vars, f, &params, "ICMAI", modifiedheader, etagheader, extraheader); break;
 				case 21: result = send_oscam_graph(vars); break;
-				case 22: result = send_oscam_api(vars, f, &params, keepalive, 1); break; //oscamapi.xml
+				case 22: result = send_oscam_api(vars, f, &params, keepalive, 1, extraheader); break; //oscamapi.xml
 #ifdef CS_CACHEEX
 				case 23: result = send_oscam_cacheex(vars, &params, 0); break;
 #endif
-				case 24: result = send_oscam_api(vars, f, &params, keepalive, 2); break; //oscamapi.json
+				case 24: result = send_oscam_api(vars, f, &params, keepalive, 2, extraheader); break; //oscamapi.json
 				case 25: result = send_oscam_EMM(vars, &params); break; //emm.html
 				case 26: result = send_oscam_EMM_running(vars, &params); break; //emm_running.html
 				default: result = send_oscam_status(vars, &params, 0); break;
@@ -5035,13 +5045,13 @@ static int32_t process_request(FILE *f, IN_ADDR_T in) {
 			else if (strcmp(result, "1")) {
 				//it doesn't make sense to check for modified etagheader here as standard template has timestamp in output and so site changes on every request
 				if (pgidx == 18)
-					send_headers(f, 200, "OK", NULL, "text/xml", 0, strlen(result), NULL, 0);
+					send_headers(f, 200, "OK", extraheader, "text/xml", 0, strlen(result), NULL, 0);
 				else if (pgidx == 21)
-					send_headers(f, 200, "OK", NULL, "image/svg+xml", 0, strlen(result), NULL, 0);
+					send_headers(f, 200, "OK", extraheader, "image/svg+xml", 0, strlen(result), NULL, 0);
 				else if (pgidx == 24)
-					send_headers(f, 200, "OK", NULL, "text/javascript", 0, strlen(result), NULL, 0);
+					send_headers(f, 200, "OK", extraheader, "text/javascript", 0, strlen(result), NULL, 0);
 				else
-					send_headers(f, 200, "OK", NULL, "text/html", 0, strlen(result), NULL, 0);
+					send_headers(f, 200, "OK", extraheader, "text/html", 0, strlen(result), NULL, 0);
 				webif_write(result, f);
 			}
 			tpl_clear(vars);
@@ -5177,6 +5187,7 @@ static void *http_srv(void) {
 	tpl_checkDiskRevisions();
 
 	cs_lock_create(&http_lock, 10, "http_lock");
+	init_noncelocks();
 
 	if (pthread_key_create(&getip, NULL)) {
 		cs_log("Could not create getip");
