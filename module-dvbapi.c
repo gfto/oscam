@@ -2820,7 +2820,6 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				demux[i].ECMpids[j].irdeto_cycle = 0;
 				int8_t last_checked = demux[i].ECMpids[j].checked;
 				demux[i].ECMpids[j].checked = 2;
-				demux[i].ECMpids[j].index = 0; // since its not found
 
 				if (demux[i].pidindex==-1) {
 					if (cfg.dvbapi_requestmode == 1)
