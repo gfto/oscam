@@ -246,6 +246,32 @@ struct s_emm_filter *get_emmfilter_by_filternum(uint32_t num)
 	return NULL;
 }
 
+int8_t remove_emmfilter_from_list_internal(LLIST *ll, int32_t demux_id, uint16_t caid, uint16_t pid, uint32_t num) 
+{
+	struct s_emm_filter *filter;
+	LL_ITER itr;
+	if (ll_count(ll) > 0) {
+		itr = ll_iter_create(ll);
+		while ((filter=ll_iter_next(&itr))) {
+			if (filter->demux_id == demux_id && filter->caid == caid && filter->pid == pid && filter->num == num) {
+				ll_iter_remove_data(&itr);
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
+void remove_emmfilter_from_list(int32_t demux_id, uint16_t caid, uint16_t pid, uint32_t num) 
+{
+	if (ll_emm_active_filter && remove_emmfilter_from_list_internal(ll_emm_active_filter, demux_id, caid, pid, num))
+		return;
+	if (ll_emm_inactive_filter && remove_emmfilter_from_list_internal(ll_emm_inactive_filter, demux_id, caid, pid, num))
+		return;
+	if (ll_emm_pending_filter && remove_emmfilter_from_list_internal(ll_emm_pending_filter, demux_id, caid, pid, num))
+		return;
+}
+
 int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t caid, uint32_t provid, uchar *filt, uchar *mask, int32_t timeout, int32_t pidindex, int32_t count, int32_t type, int8_t add_to_emm_list) {
 #if defined WITH_AZBOX || defined WITH_MCA
 	openxcas_caid = demux[demux_id].ECMpids[pidindex].CAID;
@@ -480,6 +506,9 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 #endif
 		if (demux[demux_index].demux_fd[num].type == TYPE_ECM)
 			demux[demux_index].ECMpids[demux[demux_index].demux_fd[num].pidindex].index=0; //filter stopped, reset index
+
+		if (demux[demux_index].demux_fd[num].type == TYPE_EMM && demux[demux_index].demux_fd[num].pid != 0x001)
+			remove_emmfilter_from_list(demux_index, demux[demux_index].demux_fd[num].caid, demux[demux_index].demux_fd[num].pid, num);
 
 		demux[demux_index].demux_fd[num].fd=0;
 	}
@@ -867,12 +896,6 @@ void dvbapi_stop_descrambling(int32_t demux_id) {
 
 	dvbapi_stop_filter(demux_id, TYPE_ECM);
 	dvbapi_stop_filter(demux_id, TYPE_EMM);
-	if (ll_emm_active_filter)
-		ll_clear_data(ll_emm_active_filter);
-	if (ll_emm_inactive_filter)
-		ll_clear_data(ll_emm_inactive_filter);
-	if (ll_emm_pending_filter)
-		ll_clear_data(ll_emm_pending_filter);
 
 	for (i=0;i<demux[demux_id].STREAMpidcount;i++) {
 		dvbapi_set_pid(demux_id, i, -1);
@@ -954,12 +977,6 @@ void dvbapi_start_descrambling(int32_t demux_id) {
 		if (last_pidindex != -1) {
 			dvbapi_stop_filter(demux_id, TYPE_EMM);
 			demux[demux_id].emm_filter=0;
-			if (ll_emm_active_filter)
-				ll_clear_data(ll_emm_active_filter);
-			if (ll_emm_inactive_filter)
-				ll_clear_data(ll_emm_inactive_filter);
-			if (ll_emm_pending_filter)
-				ll_clear_data(ll_emm_pending_filter);
 		}
 		dvbapi_start_filter(demux_id, demux[demux_id].pidindex, 0x001, 0x001, 0x01, 0xFF, 0, TYPE_EMM, 0); //CAT
 	}
@@ -2442,7 +2459,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		ll_emm_pending_filter = ll_create("ll_emm_pending_filter");
 
 	uint32_t filter_count = ll_count(ll_emm_active_filter)+ll_count(ll_emm_inactive_filter);
-	if (ll_count(ll_emm_inactive_filter) > 0 && filter_count > demux[demux_id].max_emm_filter) {
+	if (demux[demux_id].max_emm_filter > 0 && ll_count(ll_emm_inactive_filter) > 0 && filter_count > demux[demux_id].max_emm_filter) {
 		int32_t filter_queue = ll_count(ll_emm_inactive_filter);
 		int32_t stopped=0, started=0;
 		time_t now = time((time_t *) 0);
