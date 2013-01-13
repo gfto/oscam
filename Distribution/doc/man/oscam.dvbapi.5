@@ -5,39 +5,39 @@
 DVBAPI settings, first match - first used
 .SH DESCRIPTIONS
 .PP
-\fBP\fP: \fB[CAID]\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP[:]\fB[CHID]\fP \fB[continue]\fP
+\fBP\fP: \fB[CAID]\fP:\fB[provider ID]\fP:\fB[service ID]\fP:\fB[ECM PID]\fP:\fB[CHID]\fP \fB[continue]\fP
 .RS 3n
  set priority, \fBcontinue\fP = \fB1\fP: proceed with priority, recommended for 
  pay-per-view services / EMMs \fI(use carefully)\fR,  \fIalthough local SCs 
  will be prioritised higher\fR, default:none
 .RE
 .PP
-\fBI\fP: \fB[CAID]\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP[:]\fB[CHID]\fP
+\fBI\fP: \fB[CAID]\fP:\fB[provider ID]\fP:\fB[service ID]\fP:\fB[ECM PID]\fP:\fB[CHID]\fP
 .RS 3n
  set ignore
 .RE
 .PP
-\fBJ\fP: \fB[CAID]\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP \fBjoined CAID\fP[:]\fBjoined provider ID\fP[:]\fBjoined ECM PID\fP
+\fBJ\fP: \fB[CAID]\fP:\fB[provider ID]\fP:\fB[service ID]\fP:\fB[ECM PID]\fP \fBjoined CAID\fP:\fBjoined provider ID\fP:\fBjoined ECM PID\fP
 .RS 3n
  join to another ECM PID
 .RE
 .PP
-\fBA\fP: [:][:]\fB[service ID]\fP[:]\fB[PMT PID]\fP[:]\fB[provider ID]\fP[:]\fB[ECM PID]\fP
+\fBA\fP: ::\fBservice ID\fP:\fB[PMT PID] \fP:\fB[provider ID]\fP[:]\fB[ECM PID]\fP
 .RS 3n
  set a dummy ECM request with CAID FFFF for services with a constant CW shown as unencrypted service
 .RE
 .PP
-\fBX\fP: \fB[CAID]\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP
+\fBX\fP: \fB[CAID]\fP:\fB[provider ID]\fP:\fB[service ID]\fP:\fB[ECM PID]\fP
 .RS 3n
  add decoding on an extra demux index on the same CA device (Multi ECM) \fI(not support on all STBs)\fR
 .RE
 .PP
-\fBD\fP: \fB[CAID]\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP \fBdelay\fP
+\fBD\fP: \fB[CAID]\fP:\fB[provider ID]\fP:\fB[service ID]\fP:\fB[ECM PID]\fP \fBdelay\fP
 .RS 3n
  set delay in milli-seconds writing CWs
 .RE
 .PP
-\fBM\fP: \fB[CAID]\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP \fBtarget CAID\fP[:]\fB[target provider ID]\fP
+\fBM\fP: \fB[CAID]\fP:\fB[provider ID]\fP:\fB[service ID]\fP:\fB[ECM PID]\fP \fBtarget CAID\fP[:]\fB[target provider ID]\fP
 .RS 3n
  mapping
 .RE
@@ -47,7 +47,7 @@ DVBAPI settings, first match - first used
  set DVB API device name and PMT file name \fI(valid for STAPI only)\fR
 .RE
 .PP
-\fBL\fP: \fB[CAID]\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP \fBlength\fP
+\fBL\fP: \fB[CAID]\fP:\fB[provider ID]\fP:\fB[service ID]\fP:\fB[ECM PID]\fP \fBlength\fP
 .RS 3n
  set ECM length in hexadecimal
 .RE

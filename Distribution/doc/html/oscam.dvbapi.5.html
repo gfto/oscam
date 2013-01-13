@@ -18,7 +18,7 @@ DVBAPI settings, first match - first used
 
 <P>
 
-<B>P</B>: <B>[CAID]</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B>[:]<B>[CHID]</B> <B>[continue]</B>
+<B>P</B>: <B>[CAID]</B>:<B>[provider ID]</B>:<B>[service ID]</B>:<B>[ECM PID]</B>:<B>[CHID]</B> <B>[continue]</B>
 <DL COMPACT><DT><DD>
 <BR>&nbsp;set&nbsp;priority,&nbsp;<B>continue</B>&nbsp;=&nbsp;<B>1</B>:&nbsp;proceed&nbsp;with&nbsp;priority,&nbsp;recommended&nbsp;for&nbsp;
 <BR>&nbsp;pay-per-view&nbsp;services&nbsp;/&nbsp;EMMs&nbsp;<I>(use&nbsp;carefully)</I>,&nbsp;&nbsp;<I>although&nbsp;local&nbsp;SCs&nbsp;
@@ -27,42 +27,42 @@ DVBAPI settings, first match - first used
 
 <P>
 
-<B>I</B>: <B>[CAID]</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B>[:]<B>[CHID]</B>
+<B>I</B>: <B>[CAID]</B>:<B>[provider ID]</B>:<B>[service ID]</B>:<B>[ECM PID]</B>:<B>[CHID]</B>
 <DL COMPACT><DT><DD>
 <BR>&nbsp;set&nbsp;ignore
 </DL>
 
 <P>
 
-<B>J</B>: <B>[CAID]</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B> <B>joined CAID</B>[:]<B>joined provider ID</B>[:]<B>joined ECM PID</B>
+<B>J</B>: <B>[CAID]</B>:<B>[provider ID]</B>:<B>[service ID]</B>:<B>[ECM PID]</B> <B>joined CAID</B>:<B>joined provider ID</B>:<B>joined ECM PID</B>
 <DL COMPACT><DT><DD>
 <BR>&nbsp;join&nbsp;to&nbsp;another&nbsp;ECM&nbsp;PID
 </DL>
 
 <P>
 
-<B>A</B>: [:][:]<B>[service ID]</B>[:]<B>[PMT PID]</B>[:]<B>[provider ID]</B>[:]<B>[ECM PID]</B>
+<B>A</B>: ::<B>service ID</B>:<B>[PMT PID] </B>:<B>[provider ID]</B>[:]<B>[ECM PID]</B>
 <DL COMPACT><DT><DD>
 <BR>&nbsp;set&nbsp;a&nbsp;dummy&nbsp;ECM&nbsp;request&nbsp;with&nbsp;CAID&nbsp;FFFF&nbsp;for&nbsp;services&nbsp;with&nbsp;a&nbsp;constant&nbsp;CW&nbsp;shown&nbsp;as&nbsp;unencrypted&nbsp;service
 </DL>
 
 <P>
 
-<B>X</B>: <B>[CAID]</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B>
+<B>X</B>: <B>[CAID]</B>:<B>[provider ID]</B>:<B>[service ID]</B>:<B>[ECM PID]</B>
 <DL COMPACT><DT><DD>
 <BR>&nbsp;add&nbsp;decoding&nbsp;on&nbsp;an&nbsp;extra&nbsp;demux&nbsp;index&nbsp;on&nbsp;the&nbsp;same&nbsp;CA&nbsp;device&nbsp;(Multi&nbsp;ECM)&nbsp;<I>(not&nbsp;support&nbsp;on&nbsp;all&nbsp;STBs)</I>
 </DL>
 
 <P>
 
-<B>D</B>: <B>[CAID]</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B> <B>delay</B>
+<B>D</B>: <B>[CAID]</B>:<B>[provider ID]</B>:<B>[service ID]</B>:<B>[ECM PID]</B> <B>delay</B>
 <DL COMPACT><DT><DD>
 <BR>&nbsp;set&nbsp;delay&nbsp;in&nbsp;milli-seconds&nbsp;writing&nbsp;CWs
 </DL>
 
 <P>
 
-<B>M</B>: <B>[CAID]</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B> <B>target CAID</B>[:]<B>[target provider ID]</B>
+<B>M</B>: <B>[CAID]</B>:<B>[provider ID]</B>:<B>[service ID]</B>:<B>[ECM PID]</B> <B>target CAID</B>[:]<B>[target provider ID]</B>
 <DL COMPACT><DT><DD>
 <BR>&nbsp;mapping
 </DL>
@@ -76,7 +76,7 @@ DVBAPI settings, first match - first used
 
 <P>
 
-<B>L</B>: <B>[CAID]</B>[:]<B>[provider ID]</B>[:]<B>[service ID]</B>[:]<B>[ECM PID]</B> <B>length</B>
+<B>L</B>: <B>[CAID]</B>:<B>[provider ID]</B>:<B>[service ID]</B>:<B>[ECM PID]</B> <B>length</B>
 <DL COMPACT><DT><DD>
 <BR>&nbsp;set&nbsp;ECM&nbsp;length&nbsp;in&nbsp;hexadecimal
 </DL>
