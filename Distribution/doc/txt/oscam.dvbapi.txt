@@ -20,6 +20,9 @@ DESCRIPTIONS
        J: [CAID][:][provider ID][:][service ID][:][ECM PID] joined CAID[:]joined provider ID[:]joined ECM PID
 	   join to another ECM PID
 
+       A: [:][:][service ID][:][PMT PID][:][provider ID][:][ECM PID]
+	   set a dummy ECM request with CAID FFFF for services with a constant CW shown as unencrypted service
+
        D: [CAID][:][provider ID][:][service ID][:][ECM PID] delay
 	   set delay in milli-seconds writing CWs
 
