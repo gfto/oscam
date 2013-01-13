@@ -27,6 +27,11 @@ DVBAPI settings, first match - first used
  set a dummy ECM request with CAID FFFF for services with a constant CW shown as unencrypted service
 .RE
 .PP
+\fBX\fP: \fB[CAID]\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP
+.RS 3n
+ add decoding on an extra demux index on the same CA device (Multi ECM) \fI(not support on all STBs)\fR
+.RE
+.PP
 \fBD\fP: \fB[CAID]\fP[:]\fB[provider ID]\fP[:]\fB[service ID]\fP[:]\fB[ECM PID]\fP \fBdelay\fP
 .RS 3n
  set delay in milli-seconds writing CWs

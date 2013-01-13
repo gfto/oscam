@@ -23,6 +23,9 @@ DESCRIPTIONS
        A: [:][:][service ID][:][PMT PID][:][provider ID][:][ECM PID]
 	   set a dummy ECM request with CAID FFFF for services with a constant CW shown as unencrypted service
 
+       X: [CAID][:][provider ID][:][service ID][:][ECM PID]
+	   add decoding on an extra demux index on the same CA device (Multi ECM) (not support on all STBs)
+
        D: [CAID][:][provider ID][:][service ID][:][ECM PID] delay
 	   set delay in milli-seconds writing CWs
 
