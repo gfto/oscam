@@ -88,7 +88,7 @@ extern void tpl_checkDiskRevisions(void);
 extern void prepareTplChecksums(void);
 extern time_t parse_modifiedsince(char * value);
 extern void calculate_opaque(IN_ADDR_T addr, char *opaque);
-extern void init_noncelocks();
+extern void init_noncelocks(void);
 extern void calculate_nonce(char * nonce, char *result, char *opaque);
 extern int32_t check_auth(char *authstring, char *method, char *path, IN_ADDR_T addr, char *expectednonce, char *opaque);
 extern int32_t webif_write_raw(char *buf, FILE* f, int32_t len);
