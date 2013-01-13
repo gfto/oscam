@@ -743,7 +743,10 @@ int32_t check_auth(char *authstring, char *method, char *path, IN_ADDR_T addr, c
 			if(strlen(opaque) != MD5_DIGEST_LENGTH*2) calculate_opaque(addr, opaque);
 			calculate_nonce(authnonce, expectednonce, opaque);
 			if(strcmp(expectednonce, authnonce) == 0) authok = 1;
-			else authok = 2;
+			else {
+				authok = 2;
+				cs_debug_mask(D_TRACE, "WebIf: Received stale header from %s (nonce=%s, expectednonce=%s, opaque=%s).", cs_inet_ntoa(addr), authnonce, expectednonce, opaque);
+			}
 		}
 	}
 	return authok;

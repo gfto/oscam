@@ -4913,9 +4913,7 @@ static int32_t process_request(FILE *f, IN_ADDR_T in) {
 
 		if (cfg.http_user && cfg.http_pwd){
 			if(!authok || strlen(opaque) != MD5_DIGEST_LENGTH*2) calculate_opaque(addr, opaque);
-			if(authok == 2)
-				cs_debug_mask(D_TRACE, "WebIf: Received stale header from %s.", cs_inet_ntoa(addr));
-			else {				
+			if(authok != 2){				
 				if(!authok){
 					if(authheader){
 						cs_debug_mask(D_CLIENT, "WebIf: Received wrong auth header from %s:", cs_inet_ntoa(addr));
