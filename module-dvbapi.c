@@ -207,21 +207,21 @@ int32_t is_emmfilter_in_list(uchar *filter, uint16_t emmpid, uint32_t provid)
 	return 0;
 }
 
-struct s_emm_filter *get_emmfilter_by_filternum_internal(LLIST *ll, uint32_t num) 
+struct s_emm_filter *get_emmfilter_by_filternum_internal(LLIST *ll, int32_t demux_id, uint32_t num) 
 {
 	struct s_emm_filter *filter;
 	LL_ITER itr;
 	if (ll_count(ll) > 0) {
 		itr = ll_iter_create(ll);
 		while ((filter=ll_iter_next(&itr))) {
-			if (filter->num == num)
+			if (filter->demux_id == demux_id && filter->num == num)
 				return filter;
 		}
 	}
 	return NULL;
 }
 
-struct s_emm_filter *get_emmfilter_by_filternum(uint32_t num) 
+struct s_emm_filter *get_emmfilter_by_filternum(int32_t demux_id, uint32_t num) 
 {
 	if (!ll_emm_active_filter)
 		ll_emm_active_filter = ll_create("ll_emm_active_filter");
@@ -233,27 +233,27 @@ struct s_emm_filter *get_emmfilter_by_filternum(uint32_t num)
 		ll_emm_pending_filter = ll_create("ll_emm_pending_filter");
 
 	struct s_emm_filter *emm_filter = NULL;
-	emm_filter = get_emmfilter_by_filternum_internal(ll_emm_active_filter, num);
+	emm_filter = get_emmfilter_by_filternum_internal(ll_emm_active_filter, demux_id, num);
 	if (emm_filter)
 		return emm_filter;
-	emm_filter = get_emmfilter_by_filternum_internal(ll_emm_inactive_filter, num);
+	emm_filter = get_emmfilter_by_filternum_internal(ll_emm_inactive_filter, demux_id, num);
 	if (emm_filter)
 		return emm_filter;
-	emm_filter = get_emmfilter_by_filternum_internal(ll_emm_pending_filter, num);
+	emm_filter = get_emmfilter_by_filternum_internal(ll_emm_pending_filter, demux_id, num);
 	if (emm_filter)
 		return emm_filter;
 
 	return NULL;
 }
 
-int8_t remove_emmfilter_from_list_internal(LLIST *ll, int32_t demux_id, uint16_t caid, uint16_t pid, uint32_t num) 
+int8_t remove_emmfilter_from_list_internal(LLIST *ll, int32_t demux_id, uint16_t caid, uint32_t provid, uint16_t pid, uint32_t num) 
 {
 	struct s_emm_filter *filter;
 	LL_ITER itr;
 	if (ll_count(ll) > 0) {
 		itr = ll_iter_create(ll);
 		while ((filter=ll_iter_next(&itr))) {
-			if (filter->demux_id == demux_id && filter->caid == caid && filter->pid == pid && filter->num == num) {
+			if (filter->demux_id == demux_id && filter->caid == caid && filter->provid == provid && filter->pid == pid && filter->num == num) {
 				ll_iter_remove_data(&itr);
 				return 1;
 			}
@@ -262,13 +262,13 @@ int8_t remove_emmfilter_from_list_internal(LLIST *ll, int32_t demux_id, uint16_t
 	return 0;
 }
 
-void remove_emmfilter_from_list(int32_t demux_id, uint16_t caid, uint16_t pid, uint32_t num) 
+void remove_emmfilter_from_list(int32_t demux_id, uint16_t caid, uint32_t provid, uint16_t pid, uint32_t num) 
 {
-	if (ll_emm_active_filter && remove_emmfilter_from_list_internal(ll_emm_active_filter, demux_id, caid, pid, num))
+	if (ll_emm_active_filter && remove_emmfilter_from_list_internal(ll_emm_active_filter, demux_id, caid, provid, pid, num))
 		return;
-	if (ll_emm_inactive_filter && remove_emmfilter_from_list_internal(ll_emm_inactive_filter, demux_id, caid, pid, num))
+	if (ll_emm_inactive_filter && remove_emmfilter_from_list_internal(ll_emm_inactive_filter, demux_id, caid, provid, pid, num))
 		return;
-	if (ll_emm_pending_filter && remove_emmfilter_from_list_internal(ll_emm_pending_filter, demux_id, caid, pid, num))
+	if (ll_emm_pending_filter && remove_emmfilter_from_list_internal(ll_emm_pending_filter, demux_id, caid, provid, pid, num))
 		return;
 }
 
@@ -292,6 +292,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 	demux[demux_id].demux_fd[n].pidindex = pidindex;
 	demux[demux_id].demux_fd[n].pid      = pid;
 	demux[demux_id].demux_fd[n].caid     = caid;
+	demux[demux_id].demux_fd[n].provid   = provid;
 	demux[demux_id].demux_fd[n].type     = type;
 	demux[demux_id].demux_fd[n].count    = count;
 
@@ -508,7 +509,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 			demux[demux_index].ECMpids[demux[demux_index].demux_fd[num].pidindex].index=0; //filter stopped, reset index
 
 		if (demux[demux_index].demux_fd[num].type == TYPE_EMM && demux[demux_index].demux_fd[num].pid != 0x001)
-			remove_emmfilter_from_list(demux_index, demux[demux_index].demux_fd[num].caid, demux[demux_index].demux_fd[num].pid, num);
+			remove_emmfilter_from_list(demux_index, demux[demux_index].demux_fd[num].caid, demux[demux_index].demux_fd[num].provid, demux[demux_index].demux_fd[num].pid, num);
 
 		demux[demux_index].demux_fd[num].fd=0;
 	}
@@ -587,10 +588,13 @@ void dvbapi_start_emm_filter(int32_t demux_index) {
 
 	struct s_reader *rdr = NULL;
 	struct s_client *cl = cur_client();
+	if (!cl || !cl->aureader_list)
+		return;
+
 	LL_ITER itr = ll_iter_create(cl->aureader_list);
 	while ((rdr = ll_iter_next(&itr))) {
 
-		if (rdr->audisabled !=0 || !rdr->enable || (!is_network_reader(rdr) && rdr->card_status != CARD_INSERTED))
+		if (!rdr->client || rdr->audisabled !=0 || !rdr->enable || (!is_network_reader(rdr) && rdr->card_status != CARD_INSERTED))
 			continue; 
 
 		memset(dmx_filter, 0, sizeof(dmx_filter));
@@ -763,9 +767,13 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len) {
 	cs_ddump_mask(D_DVBAPI, buf, len, "cat:");
 
 	struct s_client *cl = cur_client();
+	if (!cl || !cl->aureader_list)
+		return;
+
 	LL_ITER itr = ll_iter_create(cl->aureader_list);
 	while ((testrdr = ll_iter_next(&itr))) { // make a list of all readers
-		if ((testrdr->audisabled !=0)
+		if (!testrdr->client
+			|| (testrdr->audisabled !=0)
 			|| (!testrdr->enable)
 			|| (!is_network_reader(testrdr) && testrdr->card_status != CARD_INSERTED)){
 			cs_debug_mask(D_DVBAPI,"Reader %s au disabled or not enabled-> skip!", testrdr->label); //only parse au enabled readers that are enabled
@@ -1046,7 +1054,7 @@ void dvbapi_process_emm (int32_t demux_index, int32_t filter_num, unsigned char 
 
 	if (demux[demux_index].pidindex==-1) return;
 
-	struct s_emm_filter *filter = get_emmfilter_by_filternum(filter_num);
+	struct s_emm_filter *filter = get_emmfilter_by_filternum(demux_index, filter_num);
 
 	if (!filter)
 		return;

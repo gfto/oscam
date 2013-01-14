@@ -61,6 +61,7 @@ typedef struct filter_s
 	int32_t pidindex;
 	int32_t pid;
 	uint16_t caid;
+	uint32_t provid;
 	uint16_t type;
 	int32_t count;
 #ifdef WITH_STAPI
