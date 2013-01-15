@@ -223,12 +223,18 @@ static int32_t network_message_receive(int32_t handle, uint16_t *netMsgId, uint8
   cs_debug_mask(D_CLIENT, "nmr(): len=%d, errno=%d", len, (len==-1)?errno:0);
   if (!len) {
     cs_debug_mask(D_CLIENT, "nmr: 1 return 0");
-    network_tcp_connection_close(cl->reader, "receive error1");
+    if(commType == COMMTYPE_CLIENT)
+    	network_tcp_connection_close(cl->reader, "receive error1");
+    else
+    	cs_disconnect_client(cl);
     return 0;
   }
   if (len != 2) {
     cs_debug_mask(D_CLIENT, "nmr: len!=2");
-    network_tcp_connection_close(cl->reader, "receive error2");
+    if(commType == COMMTYPE_CLIENT)
+    	network_tcp_connection_close(cl->reader, "receive error2");
+    else
+    	cs_disconnect_client(cl);
     return -1;
   }
   if (((netbuf[0] << 8) | netbuf[1]) > CWS_NETMSGSIZE - 2) {
