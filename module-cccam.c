@@ -328,9 +328,10 @@ void cc_cli_close(struct s_client *cl, int32_t call_conclose) {
 	if (!rdr || !cc)
 		return;
 
-	rdr->tcp_connected = 0;
-	rdr->card_status = NO_CARD;
-	rdr->last_s = rdr->last_g = 0;
+	if(rdr) rdr->tcp_connected = 0;
+	if(rdr) rdr->card_status = NO_CARD;
+	if(rdr) rdr->last_s = rdr->last_g = 0;
+	if(cl) cl->last = 0;
 
 	if (call_conclose) //clears also pending ecms!
 		network_tcp_connection_close(rdr, "close");
@@ -606,9 +607,8 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 	cc_crypt(&cc->block[ENCRYPT], netbuf, len, ENCRYPT);
 
 	n = send(cl->udp_fd, netbuf, len, 0);
-	if (rdr && cmd == MSG_CW_ECM)
-		rdr->last_s = time(NULL);
-
+	if(rdr) rdr->last_s = time(NULL);
+    if(cl) cl->last = time(NULL);
 	cs_writeunlock(&cc->lockcmd);
 
 	free(netbuf);
@@ -1736,7 +1736,6 @@ void cc_idle(void) {
 	if (rdr->cc_keepalive) {
 		if (cc->answer_on_keepalive + 55 <= now) {
 			if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) > 0) {
-				cl->last = now;
 				cs_debug_mask(D_READER, "cccam: keepalive");
 				cc->answer_on_keepalive = now;
 			}
@@ -1746,15 +1745,15 @@ void cc_idle(void) {
 	else
 	{
 		//check inactivity timeout:
-		if (abs(rdr->last_s - now) > rdr->tcp_ito*60) {
+		if ((abs(rdr->last_s - now) > rdr->tcp_ito) && (abs(rdr->last_g -now > rdr->tcp_ito))) { // inactivity timeout is entered in seconds in webif!
 			cs_debug_mask(D_READER, "%s inactive_timeout, close connection (fd=%d)", rdr->ph.desc, rdr->client->pfd);
 			network_tcp_connection_close(rdr, "inactivity");
 			return;
 		}
 
 		//check read timeout:
-		int32_t rto = abs(rdr->last_s - rdr->last_g);
-		if (rto >= (rdr->tcp_rto*60)) {
+		int32_t rto = abs(rdr->last_g - now);
+		if (rto > (rdr->tcp_rto)) { // this is also entered in seconds, actually its an receive timeout!
 			cs_debug_mask(D_READER, "%s read timeout, close connection (fd=%d)", rdr->ph.desc, rdr->client->pfd);
 			network_tcp_connection_close(rdr, "rto");
 			return;
@@ -1994,11 +1993,9 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	int8_t rc = (er->rc<E_NOTFOUND)?E_FOUND:er->rc;
 	if (rc != E_FOUND && rc != E_UNHANDLED) return -1; //Maybe later we could support other rcs
 
-	time_t now = time((time_t*)0);
 	if (cl->reader) {
 		if (!cl->reader->tcp_connected)
 			cc_cli_connect(cl);
-		cl->reader->last_s = cl->reader->last_g = now;
 	}
 
 	struct cc_data *cc = cl->cc;
@@ -2006,7 +2003,6 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 		cs_debug_mask(D_CACHEEX, "cacheex: not connected %s -> no push", username(cl));
 		return(-1);
 	}
-	cl->last = now;
 	
 	int32_t size = 20 + sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw) + sizeof(uint8_t) +
 			(ll_count(er->csp_lastnodes)+1)*8; //lastnodes+ownnode
@@ -2078,6 +2074,7 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 
 	if (cl->reader)
 		cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
+	if (cl) cl->last = time(NULL);
 
 	int8_t rc = buf[14];
 	if (rc != E_FOUND && rc != E_UNHANDLED) //Maybe later we could support other rcs
@@ -2751,6 +2748,10 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 
 	case MSG_KEEPALIVE:
 		cl->last = time(NULL);
+		if (rdr){
+			rdr->last_g = time(NULL);
+			rdr->last_s = time(NULL);
+		}
 		if (cl->typ != 'c') {
 			cs_debug_mask(D_READER, "cccam: keepalive ack");
 		} else {
@@ -3076,7 +3077,8 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 		return -1;
 
 	n = cc_msg_recv(cl, buf, l); // recv and decrypt msg
-
+	cl->last = time(NULL); // last client action is now
+	if(rdr) rdr->last_g = time(NULL); // last reader receive is now
 	//cs_ddump_mask(D_CLIENT, buf, n, "cccam: received %d bytes from %s", n, remote_txt());
 
 
@@ -3104,14 +3106,12 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 	} else {
 		// parse it and write it back, if we have received something of value
 		n = cc_parse_msg(cl, buf, n);
-		// cl->last = time((time_t *) 0);
 	}
 
 	if (n == -1) {
 		if (cl->typ != 'c')
 			cc_cli_close(cl, 1);
 	}
-	cl->last = time((time_t *) 0);
 	return n;
 }
 
@@ -3577,9 +3577,9 @@ int32_t cc_cli_init_int(struct s_client *cl) {
 	if (rdr->cc_maxhops < 0)
 		rdr->cc_maxhops = DEFAULT_CC_MAXHOPS;
 
-	if (rdr->tcp_rto <= 2)
-		rdr->tcp_rto = 2; // timeout to 120s
-	cs_debug_mask(D_READER, "cccam: timeout set to: %d", rdr->tcp_rto);
+	if (rdr->tcp_rto < 1)
+		rdr->tcp_rto = 30; // timeout to 30s
+	cs_debug_mask(D_READER, "cccam: inactivity timeout: %d seconds, receive timeout: %d seconds", rdr->tcp_ito, rdr->tcp_rto);
 	cc_check_version(rdr->cc_version, rdr->cc_build);
 	cs_debug_mask(D_READER, "proxy reader: %s (%s:%d) cccam v%s build %s, maxhops: %d",
 		rdr->label, rdr->device, rdr->r_port, rdr->cc_version,
@@ -3759,7 +3759,6 @@ static void cc_s_idle(struct s_client *cl) {
 	cs_debug_mask(D_TRACE, "ccc idle %s", username(cl));
 	if (cfg.cc_keep_connected) {
 		cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
-		cl->last = time(NULL);
 	} else {
 		cs_debug_mask(D_CLIENT, "%s keepalive after maxidle is reached", getprefix());
 		cs_disconnect_client(cl);
