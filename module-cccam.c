@@ -2062,6 +2062,11 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	ll_li_destroy(li);
 
 	int32_t res = cc_cmd_send(cl, ecmbuf, size, MSG_CACHE_PUSH);
+	if (res > 0){ // cache-ex is pushing out, so no receive but last_g should be updated otherwise disconnect!
+		if (cl->reader)
+			cl->reader->last_s = cl->reader->last_g = time((time_t *)0); // correct
+		if (cl) cl->last = time(NULL);
+	}	
 	free(ecmbuf);
 	return res;
 }
