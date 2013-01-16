@@ -106,6 +106,10 @@
 #define MODULE_PANDORA
 #endif
 
+#ifndef MODULE_GHTTP
+//#define MODULE_GHTTP
+#endif
+
 //
 // CARDREADER
 //

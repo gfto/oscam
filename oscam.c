@@ -140,6 +140,7 @@ static void show_usage(void)
 	_check(MODULE_CCCAM, "cccam");
 	_check(MODULE_CCCSHARE, "cccam_share");
 	_check(MODULE_PANDORA, "pandora");
+	_check(MODULE_GHTTP, "ghttp");
 	_check(CS_CACHEEX, "cache-exchange");
 	_check(MODULE_GBOX, "gbox");
 	_check(MODULE_RADEGAST, "radegast");
@@ -335,6 +336,7 @@ static void write_versionfile(bool use_stdout) {
 	write_conf(MODULE_CCCAM, "CCcam");
 	write_conf(MODULE_CCCSHARE, "CCcam share");
 	write_conf(MODULE_PANDORA, "Pandora");
+	write_conf(MODULE_GHTTP, "ghttp");
 	write_conf(MODULE_GBOX, "gbox");
 	write_conf(MODULE_RADEGAST, "radegast");
 	write_conf(MODULE_SERIAL, "serial");
@@ -4032,6 +4034,9 @@ int32_t main (int32_t argc, char *argv[])
 #endif
 #ifdef MODULE_PANDORA
            module_pandora,
+#endif
+#ifdef MODULE_GHTTP
+           module_ghttp,
 #endif
 #ifdef CS_CACHEEX
            module_csp,

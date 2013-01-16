@@ -281,6 +281,14 @@ static inline int config_MODULE_PANDORA(void) {
 	#endif
 }
 
+static inline int config_MODULE_GHTTP(void) {
+	#ifdef MODULE_GHTTP
+	return 1;
+	#else
+	return 0;
+	#endif
+}
+
 static inline int config_WITH_CARDREADER(void) {
 	#ifdef WITH_CARDREADER
 	return 1;

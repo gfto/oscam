@@ -708,6 +708,11 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			rdr->typ = R_RADEGAST;
 			return;
 		}
+		
+		if (!strcmp(value, "ghttp")) {
+			rdr->typ = R_GHTTP;
+			return;
+		}		
 
 		if (!strcmp(value, "newcamd") || !strcmp(value, "newcamd525")) {
 			rdr->typ = R_NEWCAMD;

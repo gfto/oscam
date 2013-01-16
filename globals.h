@@ -252,7 +252,8 @@ typedef unsigned char uchar;
 #define R_RADEGAST  0x23  // Reader cascading radegast
 #define R_CS378X    0x24  // Reader cascading camd 3.5x TCP
 #define R_CONSTCW   0x25  // Reader for Constant CW
-#define R_CSP		0x26  // Cache CSP
+#define R_CSP       0x26  // Cache CSP
+#define R_GHTTP     0x27  // Reader ghttp
 /////////////////// peer to peer proxy readers after R_CCCAM
 #define R_GBOX      0x30  // Reader cascading gbox
 #define R_CCCAM     0x35  // Reader cascading cccam
@@ -933,6 +934,10 @@ struct s_client {
 
 #ifdef MODULE_GBOX
 	void			*gbox;
+#endif
+
+#ifdef MODULE_GHTTP
+	void			*ghttp;
 #endif
 
 	int32_t			port_idx;    		// index in server ptab
