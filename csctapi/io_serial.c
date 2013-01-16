@@ -380,9 +380,14 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 		rdr_debug_mask(reader, D_DEVICE,"Reading of echoed transmitted chars done!");
 	}
 
-#if defined(WITH_STAPI)	//internal stapi readers need special treatment as they don't respond correctly to poll
+#if defined(WITH_STAPI) || defined(__SH4__)	//internal stapi and sh4 readers need special treatment as they don't respond correctly to poll and some sh4 boxes only can read 1 byte at once
 	if(reader->typ == R_INTERNAL){
-		int16_t readed;
+		int32_t readed;
+#if defined(WITH_STAPI)
+		const int32_t chunksize = INT_MAX;
+#elif defined(__SH4__)
+		const int32_t chunksize = 1;
+#endif
 		struct timeval tv, tv_spent;
 		gettimeofday(&tv,0);
 		memcpy(&tv_spent,&tv,sizeof(struct timeval));
@@ -390,11 +395,11 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 
 		while((((tv_spent.tv_sec-tv.tv_sec)*1000000) + ((tv_spent.tv_usec-tv.tv_usec)/1000000L)) < (time_t)(timeout))
 		{		
-	 		readed = read(reader->handle, &data[count], size-count);
+	 		readed = read(reader->handle, &data[count], size-count>=chunksize?chunksize:size-count);
 	 		gettimeofday(&tv_spent,0);
 			if(readed > 0) count +=readed;
 			if(count < size){
-				cs_sleepus(1);
+				if(readed < chunksize) cs_sleepus(1);
 				continue;
 			} else break;
 		}	
@@ -402,11 +407,11 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 			rdr_ddump_mask(reader, D_DEVICE, data, count, "Receiving:");
 			return ERROR;
 		}
-	} else
-#endif  // read all chars at once for non sh boxes
+	} else	
+#endif  // read all chars at once for all other boxes
 	{
 		while(count < size){
-			int16_t readed = -1, errorcount=0;
+			int32_t readed = -1, errorcount=0;
 			AGAIN:
 			if(IO_Serial_WaitToRead (reader, delay, timeout)) {
 				rdr_debug_mask(reader, D_DEVICE, "Timeout in IO_Serial_WaitToRead, timeout=%d us", timeout);
