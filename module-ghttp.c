@@ -303,7 +303,6 @@ void module_ghttp(struct s_module *ph)
   ph->type = MOD_CONN_TCP;
   // ph->listenertype = LIS_GHTTP;    
   ph->multi = 0;
-  ph->s_ip = 0;
   ph->recv = ghttp_recv;
   ph->c_multi = 0;
   ph->c_init = ghttp_client_init;
