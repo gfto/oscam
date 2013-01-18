@@ -603,7 +603,7 @@ void dvbapi_start_emm_filter(int32_t demux_index) {
 
 		struct s_cardsystem *cs;
 		if (!rdr->caid)
-			cs = get_cardsystem_by_caid(rdr->csystem.caids[0]);
+			cs = get_cardsystem_by_caid(rdr->csystem.caids[0]); //Bulcrypt
 		else
 			cs = get_cardsystem_by_caid(rdr->caid);
 
@@ -642,11 +642,17 @@ void dvbapi_start_emm_filter(int32_t demux_index) {
 			} else {
 				//.. provid 0 is safe since oscam sets filter with e.g. rdr->sa & doesn't add filter twice (is_emmfilter_in_list)
 				if (!rdr->caid) {
-					l = dvbapi_find_emmpid(demux_index, emmtype, rdr->csystem.caids[0], 0);
+					l = dvbapi_find_emmpid(demux_index, emmtype, rdr->csystem.caids[0], 0); //Bulcrypt
 					if (l<0)
 						l = dvbapi_find_emmpid(demux_index, emmtype, rdr->csystem.caids[1], 0);
 				} else {
-					l = dvbapi_find_emmpid(demux_index, emmtype, rdr->caid, 0);
+					if (rdr->auprovid) {
+						l = dvbapi_find_emmpid(demux_index, emmtype, rdr->caid, rdr->auprovid);
+						if (l<0)
+							l = dvbapi_find_emmpid(demux_index, emmtype, rdr->caid, 0);
+					} else {
+						l = dvbapi_find_emmpid(demux_index, emmtype, rdr->caid, 0);
+					}
 				}
 			}
 			if (l>-1) {
@@ -1043,10 +1049,10 @@ struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidi
 }
 
 #ifdef READER_VIACCESS
-extern int32_t viaccess_reassemble_emm(uchar *buffer, uint32_t *len);
+extern int32_t viaccess_reassemble_emm(uchar *buffer, uint32_t *len, int32_t demux_index, uint16_t caid, uint32_t provid, uint16_t pid);
 #endif
 #ifdef READER_CRYPTOWORKS
-extern int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len);
+extern int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len, int32_t demux_index, uint16_t caid, uint32_t provid, uint16_t pid);
 #endif
 
 void dvbapi_process_emm (int32_t demux_index, int32_t filter_num, unsigned char *buffer, uint32_t len) {
@@ -1065,13 +1071,13 @@ void dvbapi_process_emm (int32_t demux_index, int32_t filter_num, unsigned char 
 	switch (caid >> 8) {
 		case 0x05:
 #ifdef READER_VIACCESS
-			if (!viaccess_reassemble_emm(buffer, &len))
+			if (!viaccess_reassemble_emm(buffer, &len, demux_index, filter->caid, filter->provid, filter->pid))
 #endif
 				return;
 			break;
       		case 0x0d:
 #ifdef READER_CRYPTOWORKS
-			if (!cryptoworks_reassemble_emm(buffer, &len))
+			if (!cryptoworks_reassemble_emm(buffer, &len, demux_index, filter->caid, filter->provid, filter->pid))
 #endif
 				return;
 			break;

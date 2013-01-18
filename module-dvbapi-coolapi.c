@@ -399,29 +399,6 @@ int32_t coolapi_write_cw(int32_t mask, uint16_t *STREAMpids, int32_t count, ca_d
     return 0;
 }
 
-//coolstream supports only a 12 bytes demux filter so we need to compare all 16 bytes
-int32_t emm_pattern_matching(uchar * buff, dmx_callback_data_t * data, int32_t pid)
-{
-	uint32_t i,j,found;
-
-	if (ll_count(ll_cool_filter) > 0) {
-		LL_ITER itr = ll_iter_create(ll_cool_filter);
-		S_COOL_FILTER *filter_item;
-		while ((filter_item=ll_iter_next(&itr))) {
-			if (filter_item->pid != pid || (int32_t) filter_item->channel != (int32_t) data->channel)
-				continue;
-			found = 1;
-			for (i=0,j=0; i < 16 && i < data->len && found; i++,j++) {
-				found = (filter_item->filter16[j] == (buff[i]&filter_item->mask16[j]));
-				if (i==0) i+=2;
-			}
-			if (found)
-				return 0;
-		}
-	}
-	return -1;
-}
-
 int32_t coolapi_read(dmx_t * dmx, dmx_callback_data_t * data)
 {
 	if(!dmx) {
@@ -458,10 +435,7 @@ int32_t coolapi_read(dmx_t * dmx, dmx_callback_data_t * data)
 
 	//cs_debug_mask(D_DVBAPI, "bytes read %d\n", done);
 
-	if (dmx->type == TYPE_ECM || dmx->pid == 0x001 || emm_pattern_matching(buff,data,dmx->pid) > -1)
-		return 0;
-	else
-		return -1;
+	return 0;
 }
 
 void coolapi_open_all(void)
