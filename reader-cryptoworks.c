@@ -703,53 +703,9 @@ static uint32_t cryptoworks_get_emm_provid(unsigned char *buffer, int32_t len)
 #ifdef HAVE_DVBAPI
 void dvbapi_sort_nanos(unsigned char *dest, const unsigned char *src, int32_t len);
 
-struct s_reassemble_cwemm_data {	
-	int32_t 	demux_id;
-	uint16_t 	caid;
-	uint32_t	provid;
-	uint16_t	pid;
-	uchar emm_global[512];
-	uint32_t emm_global_len;
-} S_REASSEMBLE_CWEMM_DATA;
-LLIST	*ll_reassemble_cwemm_data = NULL;
-
-struct s_reassemble_cwemm_data *get_reassemble_cwemm_data(int32_t demux_index, uint16_t caid, uint32_t provid, uint16_t pid) 
-{
-	if (!ll_reassemble_cwemm_data)
-		ll_reassemble_cwemm_data = ll_create("ll_reassemble_cwemm_data");
-
-	struct s_reassemble_cwemm_data *data;
-	LL_ITER itr;
-	if (ll_count(ll_reassemble_cwemm_data) > 0) {
-		itr = ll_iter_create(ll_reassemble_cwemm_data);
-		while ((data=ll_iter_next(&itr))) {
-			if (data->demux_id == demux_index && data->caid == caid && data->provid == provid && data->pid == pid)
-				return data;
-		}
-	}
-	return NULL;
-}
-
-int8_t add_reassemble_cwemm_data(int32_t demux_index, uint16_t caid, uint32_t provid, uint16_t pid, uchar *buffer, uint32_t *len) 
-{
-	if (!ll_reassemble_cwemm_data)
-		ll_reassemble_cwemm_data = ll_create("ll_reassemble_cwemm_data");
-
-	struct s_reassemble_cwemm_data *data;
-	if (!cs_malloc(&data,sizeof(struct s_reassemble_cwemm_data)))
-		return 0;
-
-	data->demux_id 			= demux_index;
-	data->caid				= caid;
-	data->provid			= provid;
-	data->pid				= pid;
-	data->emm_global_len	=*len;
-	memcpy(data->emm_global, buffer, *len);
-	ll_append(ll_reassemble_cwemm_data, data);
-	return 1;
-}
-
-int32_t cryptoworks_reassemble_emm(int32_t demux_index, uint16_t caid, uint32_t provid, uint16_t pid, uchar *buffer, uint32_t *len) {
+int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len) {
+	static uchar emm_global[512];		// function only called from dvbapi thread, no need to be threadsafe
+	static int32_t emm_global_len = 0;
 	int32_t emm_len = 0;
 
 	// Cryptoworks
@@ -761,8 +717,6 @@ int32_t cryptoworks_reassemble_emm(int32_t demux_index, uint16_t caid, uint32_t 
 	if (*len>500) return 0;
 	char dumpbuf[255];
 
-	struct s_reassemble_cwemm_data *data = get_reassemble_cwemm_data(demux_index, caid, provid, pid);
-
 	switch (buffer[0]) {
 		case 0x82 : // emm-u
 			cs_debug_mask(D_DVBAPI, "[cryptoworks] unique emm (EMM-U): %s" , cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
@@ -770,25 +724,14 @@ int32_t cryptoworks_reassemble_emm(int32_t demux_index, uint16_t caid, uint32_t 
 
 		case 0x84: // emm-sh
 			cs_debug_mask(D_DVBAPI, "[cryptoworks] shared emm (EMM-SH): %s" , cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
-
-			if (!data || !data->emm_global) {
-				add_reassemble_cwemm_data(demux_index, caid, provid, pid, buffer, len);
-				return 0;
-			}
-
-			// emm-s part 1
-			if (!memcmp(data->emm_global, buffer, *len))
-				return 0;
-
-			ll_remove(ll_reassemble_cwemm_data, data);
-			// copy first part of the emm-s
-			add_reassemble_cwemm_data(demux_index, caid, provid, pid, buffer, len);
-			//cs_ddump_mask(D_READER, buffer, len, "viaccess global emm:");
+			if (!memcmp(emm_global, buffer, *len)) return 0;
+			memcpy(emm_global, buffer, *len);
+			emm_global_len=*len;
 			return 0;
+
 		case 0x86: // emm-sb
 			cs_debug_mask(D_DVBAPI, "[cryptoworks] shared emm (EMM-SB): %s" , cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
-			if (!data || !data->emm_global_len || !data->emm_global)
-				return 0;
+			if (!emm_global_len) return 0;
 
 			// we keep the first 12 bytes of the 0x84 emm (EMM-SH)
 			// now we need to append the payload of the 0x86 emm (EMM-SB)
@@ -800,7 +743,7 @@ int32_t cryptoworks_reassemble_emm(int32_t demux_index, uint16_t caid, uint32_t 
 			// update the emm len (emmBuf[1:2])
 			//
 
-			emm_len=*len-5 + data->emm_global_len-12;
+			emm_len=*len-5 + emm_global_len-12;
 			unsigned char *tmp, *assembled;
 			if (!cs_malloc(&tmp, emm_len))
 				return 0;
@@ -812,8 +755,8 @@ int32_t cryptoworks_reassemble_emm(int32_t demux_index, uint16_t caid, uint32_t 
 			if (!cs_malloc(&assembled_EMM, emm_len + 12))
 				return 0;
 			memcpy(tmp,&buffer[5], *len-5);
-			memcpy(tmp+*len-5,&data->emm_global[12],data->emm_global_len-12);
-			memcpy(assembled_EMM,data->emm_global,12);
+			memcpy(tmp+*len-5,&emm_global[12],emm_global_len-12);
+			memcpy(assembled_EMM,emm_global,12);
 			dvbapi_sort_nanos(assembled_EMM+12,tmp,emm_len);
 
 			assembled_EMM[1]=((emm_len+9)>>8) | 0x70;
@@ -825,7 +768,7 @@ int32_t cryptoworks_reassemble_emm(int32_t demux_index, uint16_t caid, uint32_t 
 			free(tmp);
 			free(assembled_EMM);
 
-			data->emm_global_len=0;
+			emm_global_len=0;
 
 			cs_debug_mask(D_DVBAPI, "[cryptoworks] shared emm (assembled): %s", cs_hexdump(0, buffer, emm_len+12, dumpbuf, sizeof(dumpbuf)));
 			if(assembled_EMM[11]!=emm_len) { // sanity check
