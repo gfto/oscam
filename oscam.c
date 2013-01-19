@@ -1819,7 +1819,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	if (is_fake)
 		er->rc = E_FAKE;
 
-	if (client->cwlastresptime > 0) {
+	if (!(er->rc == E_SLEEPING && client->cwlastresptime == 0)) {
 		char buf[ECM_FMT_LEN];
 		format_ecm(er, buf, ECM_FMT_LEN);
 		if (er->reader_avail == 1) {
