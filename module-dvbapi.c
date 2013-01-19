@@ -1058,8 +1058,6 @@ extern int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len);
 void dvbapi_process_emm (int32_t demux_index, int32_t filter_num, unsigned char *buffer, uint32_t len) {
 	EMM_PACKET epg;
 
-	if (demux[demux_index].pidindex==-1) return;
-
 	struct s_emm_filter *filter = get_emmfilter_by_filternum(demux_index, filter_num);
 
 	if (!filter)
