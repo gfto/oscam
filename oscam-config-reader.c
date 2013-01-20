@@ -394,10 +394,8 @@ static void protocol_fn(const char *token, char *value, void *setting, FILE *f) 
 				break;
 			}
 		}
-		if (rdr->typ == R_NEWCAMD && streq(value, "newcamd524"))
-			rdr->ncd_proto = NCD_524;
-		if (rdr->typ == R_NEWCAMD && streq(value, "newcamd525"))
-			rdr->ncd_proto = NCD_525;
+		if (rdr->typ == R_NEWCAMD)
+			rdr->ncd_proto = streq(value, "newcamd524") ? NCD_524 : NCD_525;
 		if (!rdr->typ)
 			fprintf(stderr, "ERROR: '%s' is unsupported reader protocol!\n", value);
 		return;
