@@ -404,25 +404,21 @@ static void protocol_fn(const char *token, char *value, void *setting, FILE *f) 
 	fprintf_conf(f, token, "%s\n", reader_get_type_desc(rdr, 0));
 }
 
-void chk_reader(char *token, char *value, struct s_reader *rdr)
-{
-	int32_t i;
-	char *ptr, *saveptr1 = NULL;
-	/*
-	 *  case sensitive first
-	 */
-	if (!strcmp(token, "device")) {
+static void device_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	int32_t isphysical = !is_network_reader(rdr);
+	if (value) {
+		int32_t i;
+		char *ptr, *saveptr1 = NULL;
 		for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 3) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
 			trim(ptr);
 			switch(i) {
 				case 0:
 					cs_strncpy(rdr->device, ptr, sizeof(rdr->device));
 					break;
-
 				case 1:
 					rdr->r_port = atoi(ptr);
 					break;
-
 				case 2:
 					rdr->l_port = atoi(ptr);
 					break;
@@ -430,6 +426,24 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		}
 		return;
 	}
+	fprintf_conf(f, token, "%s", rdr->device); // it should not have \n at the end
+	if ((rdr->r_port || cfg.http_full_cfg) && !isphysical)
+		fprintf(f, ",%d", rdr->r_port);
+	if ((rdr->l_port || cfg.http_full_cfg) && !isphysical && strncmp(reader_get_type_desc(rdr, 0), "cccam", 5))
+		fprintf(f, ",%d", rdr->l_port);
+	fprintf(f, "\n");
+}
+
+void chk_reader(char *token, char *value, struct s_reader *rdr)
+{
+	int32_t i;
+	char *ptr, *saveptr1 = NULL;
+	/*
+	 *  case sensitive first
+	 */
+
+	if (streq(token, "device"))
+		device_fn(token, value, rdr, NULL);
 
 	if (!strcmp(token, "key")) {
 		if (strlen(value) == 0){
@@ -1229,7 +1243,6 @@ int32_t write_server(void)
 	while((rdr = ll_iter_next(&itr))) {
 		if ( rdr->label[0]) {
 			int32_t isphysical = !is_network_reader(rdr);
-			char *ctyp = reader_get_type_desc(rdr, 0);
 
 			fprintf(f,"[reader]\n");
 
@@ -1244,14 +1257,7 @@ int32_t write_server(void)
 				fprintf_conf(f, "enable", "%d\n", rdr->enable);
 
 			protocol_fn("protocol", NULL, rdr, f);
-
-			fprintf_conf(f, "device", "%s", rdr->device); // it should not have \n at the end
-
-			if ((rdr->r_port || cfg.http_full_cfg) && !isphysical)
-				fprintf(f, ",%d", rdr->r_port);
-			if ((rdr->l_port || cfg.http_full_cfg) && !isphysical && strncmp(ctyp, "cccam", 5))
-				fprintf(f, ",%d", rdr->l_port);
-			fprintf(f, "\n");
+			protocol_fn("device", NULL, rdr, f);
 
 			if (rdr->ncd_key[0] || rdr->ncd_key[13] || cfg.http_full_cfg) {
 				fprintf_conf(f, "key", "%s", ""); // it should not have \n at the end
