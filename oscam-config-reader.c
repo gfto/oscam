@@ -366,6 +366,7 @@ static void protocol_fn(const char *token, char *value, void *setting, FILE *f) 
 			{ "camd35",     R_CAMD35 },
 			{ "cs378x",     R_CS378X },
 			{ "cs357x",     R_CAMD35 },
+			{ "camd33",     R_CAMD33 },
 			{ "gbox",       R_GBOX },
 			{ "cccam",      R_CCCAM },
 			{ "cccam ext",  R_CCCAM },
