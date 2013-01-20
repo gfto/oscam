@@ -247,10 +247,118 @@ static void ecmwhitelist_fn(const char *token, char *value, void *setting, FILE 
 	free_mk_t(value);
 }
 
+static void ecmheaderwhitelist_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		char *ptr, *ptr2, *ptr3;
+		struct s_ecmHeaderwhitelist *tmp, *last = NULL;
+
+		if (strlen(value) == 0) {
+			for (tmp = rdr->ecmHeaderwhitelist; tmp; tmp=tmp->next)
+				add_garbage(tmp);
+			rdr->ecmHeaderwhitelist = NULL;
+		} else {
+			char *ptr4, *ptr5, *ptr6, *saveptr = NULL, *saveptr4 = NULL, *saveptr5 = NULL, *saveptr6 = NULL;
+			uint16_t caid = 0;
+			uint32_t provid = 0;
+			int16_t len = 0;
+			for (ptr = strtok_r(value, ";", &saveptr); ptr; ptr = strtok_r(NULL, ";", &saveptr)) {
+				caid = 0;
+				provid = 0;
+				ptr2 = strchr(ptr, '@');
+				ptr3 = strchr(ptr, ':');
+				if (ptr2 == NULL && ptr3 == NULL) { //no Caid no Provid
+					for (ptr4 = strtok_r(ptr, ",", &saveptr4); ptr4; ptr4 = strtok_r(NULL, ",", &saveptr4)) {
+						if (cs_malloc(&tmp, sizeof(struct s_ecmHeaderwhitelist))) {
+							ptr4 = trim(ptr4);
+							len = strlen(ptr4);
+							key_atob_l(ptr4, tmp->header, len);
+							tmp->len = len;
+							tmp->caid = 0;
+							tmp->provid = 0;
+							tmp->next = NULL;
+							if (last == NULL) {
+								rdr->ecmHeaderwhitelist = tmp;
+							} else {
+								last->next = tmp;
+							}
+							last = tmp;
+						}
+					}
+				}
+
+				if (ptr3 != NULL && ptr2 == NULL) { // only with Caid
+					ptr3[0] = '\0';
+					++ptr3;
+					caid = (int16_t)dyn_word_atob(ptr);
+					for (ptr5 = strtok_r(ptr3, ",", &saveptr5); ptr5; ptr5 = strtok_r(NULL, ",", &saveptr5)) {
+						if (cs_malloc(&tmp, sizeof(struct s_ecmHeaderwhitelist))) {
+							tmp->caid = caid;
+							tmp->provid = 0;
+							ptr5 = trim(ptr5);
+							len = strlen(ptr5);
+							key_atob_l(ptr5, tmp->header, len);
+							tmp->len = len;
+							tmp->next = NULL;
+							if (last == NULL) {
+								rdr->ecmHeaderwhitelist = tmp;
+							} else {
+								last->next = tmp;
+							}
+							last = tmp;
+						}
+					}
+				}
+
+				if (ptr3 != NULL && ptr2 != NULL) { // with Caid & Provid
+					ptr2[0] = '\0';
+					++ptr2; // -> provid
+					ptr3[0] = '\0';
+					++ptr3; // -> headers
+					caid = (int16_t)dyn_word_atob(ptr);
+					provid = (uint32_t)a2i(ptr2, 6);
+					for (ptr6 = strtok_r(ptr3, ",", &saveptr6); ptr6; ptr6 = strtok_r(NULL, ",", &saveptr6)) {
+						if (cs_malloc(&tmp, sizeof(struct s_ecmHeaderwhitelist))) {
+							tmp->caid = caid;
+							tmp->provid = provid;
+							ptr6 = trim(ptr6);
+							len = strlen(ptr6);
+							key_atob_l(ptr6, tmp->header, len);
+							tmp->len = len;
+							tmp->next = NULL;
+							if (last == NULL) {
+								rdr->ecmHeaderwhitelist = tmp;
+							} else {
+								last->next = tmp;
+							}
+							last = tmp;
+						}
+					}
+				}
+			}
+		}
+/*	if (rdr->ecmHeaderwhitelist != NULL) { // debug
+		cs_log("**********Begin ECM Header List for Reader: %s **************", rdr->label);
+
+		struct s_ecmHeaderwhitelist *tmp;
+		for(tmp = rdr->ecmHeaderwhitelist; tmp; tmp=tmp->next){
+			cs_log("Caid: %i Provid: %i Header: %02X Len: %i", tmp->caid, tmp->provid, tmp->header[0], tmp->len);
+		}
+		cs_log("***********End ECM Header List for Reader: %s ***************", rdr->label);
+	} */
+		return;
+	}
+
+	value = mk_t_ecmheaderwhitelist(rdr->ecmHeaderwhitelist);
+	if (strlen(value) > 0 || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%s\n", value);
+	free_mk_t(value);
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
-	char *ptr, *ptr2, *ptr3, *saveptr1 = NULL;
+	char *ptr, *saveptr1 = NULL;
 	/*
 	 *  case sensitive first
 	 */
@@ -546,107 +654,8 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	if (streq(token, "ecmwhitelist"))
 		ecmwhitelist_fn(token, value, rdr, NULL);
 
-	if (!strcmp(token, "ecmheaderwhitelist")) {
-                struct s_ecmHeaderwhitelist *tmp, *last = NULL;
-                if(strlen(value) == 0) { 
-                        for(tmp = rdr->ecmHeaderwhitelist; tmp; tmp=tmp->next) add_garbage(tmp); 
-                        rdr->ecmHeaderwhitelist = NULL; 
-                        return; 
-                } else { 
-			char *ptr4, *ptr5, *ptr6, *saveptr = NULL, *saveptr4 = NULL, *saveptr5 = NULL, *saveptr6 = NULL;
-			uint16_t caid = 0;
-			uint32_t provid = 0;
-			int16_t len = 0;
-			for (ptr = strtok_r(value, ";", &saveptr); ptr; ptr = strtok_r(NULL, ";", &saveptr)) { 				
-				caid = 0;
-				provid = 0;
-				ptr2 = strchr(ptr, '@'); 
-				ptr3 = strchr(ptr, ':');
-				if (ptr2 == NULL && ptr3 == NULL) { //no Caid no Provid
-					for (ptr4 = strtok_r(ptr, ",", &saveptr4); ptr4; ptr4 = strtok_r(NULL, ",", &saveptr4)) {
-						if (cs_malloc(&tmp, sizeof(struct s_ecmHeaderwhitelist))) {
-							ptr4 = trim(ptr4);						
-							len = strlen(ptr4);
-							key_atob_l(ptr4, tmp->header, len);
-							tmp->len = len;
-							tmp->caid = 0;
-							tmp->provid = 0;
-							tmp->next = NULL;
-							if(last == NULL){ 
-                                              		rdr->ecmHeaderwhitelist = tmp; 
-                                        		} else { 
-	                                            		last->next = tmp; 
-	                                       		} 
-	                                       		last = tmp;
-						}             
-					}
-				}
-
-
-				if (ptr3 != NULL && ptr2 == NULL) { // only with Caid					
-					ptr3[0] = '\0';
-					++ptr3;
-					caid = (int16_t)dyn_word_atob(ptr);
-					for (ptr5 = strtok_r(ptr3, ",", &saveptr5); ptr5; ptr5 = strtok_r(NULL, ",", &saveptr5)) {
-						if (cs_malloc(&tmp, sizeof(struct s_ecmHeaderwhitelist))) {
-							tmp->caid = caid;
-							tmp->provid = 0;
-							ptr5 = trim(ptr5);
-							len = strlen(ptr5);
-							key_atob_l(ptr5, tmp->header, len);
-							tmp->len = len;
-							tmp->next = NULL;
-							if(last == NULL){ 
-                                       	       			rdr->ecmHeaderwhitelist = tmp; 
-                                       			} else { 
-                                       				last->next = tmp; 
-                                      			} 
-                                      			last = tmp;
-													
-						}
-					}
-				}
-
-				if (ptr3 != NULL && ptr2 != NULL) { // with Caid & Provid
-					ptr2[0] = '\0';
-					++ptr2; // -> provid					
-					ptr3[0] = '\0';
-					++ptr3; // -> headers
-					caid = (int16_t)dyn_word_atob(ptr);
-					provid = (uint32_t)a2i(ptr2, 6);
-					for (ptr6 = strtok_r(ptr3, ",", &saveptr6); ptr6; ptr6 = strtok_r(NULL, ",", &saveptr6)) {
-						if (cs_malloc(&tmp, sizeof(struct s_ecmHeaderwhitelist))) {
-							tmp->caid = caid;
-							tmp->provid = provid;
-							ptr6 = trim(ptr6);
-							len = strlen(ptr6);
-							key_atob_l(ptr6, tmp->header, len);
-							tmp->len = len;
-							tmp->next = NULL;
-							if(last == NULL){ 
-                                       	       			rdr->ecmHeaderwhitelist = tmp; 
-                                       			} else { 
-                                       	      				last->next = tmp; 
-                                      			} 
-                                      			last = tmp;
-						}
-					}
-				}
-			}
-			return;
-		}
-		
-	} 
-
-/*	if (rdr->ecmHeaderwhitelist != NULL) { // debug
-		cs_log("**********Begin ECM Header List for Reader: %s **************", rdr->label);
-
-		struct s_ecmHeaderwhitelist *tmp;
-		for(tmp = rdr->ecmHeaderwhitelist; tmp; tmp=tmp->next){
-			cs_log("Caid: %i Provid: %i Header: %02X Len: %i", tmp->caid, tmp->provid, tmp->header[0], tmp->len);
-		}
-		cs_log("***********End ECM Header List for Reader: %s ***************", rdr->label);
-	} */
+	if (streq(token, "ecmheaderwhitelist"))
+		ecmheaderwhitelist_fn(token, value, rdr, NULL);
 
 	if (!strcmp(token, "detect")) {
 		for (i = 0; RDR_CD_TXT[i]; i++) {
@@ -1447,12 +1456,7 @@ int32_t write_server(void)
 			}
 
 			ecmwhitelist_fn("ecmwhitelist", NULL, rdr, f);
-
-			value = mk_t_ecmheaderwhitelist(rdr->ecmHeaderwhitelist); 
-                        if (strlen(value) > 0 || cfg.http_full_cfg) {
-					fprintf_conf(f, "ecmheaderwhitelist", "%s\n", value);
-			}
-                        free_mk_t(value); 
+			ecmheaderwhitelist_fn("ecmheaderwhitelist", NULL, rdr, f);
 
 			if (isphysical) {
 				if (rdr->detect&0x80)
