@@ -179,9 +179,6 @@ DESCRIPTIONS
        key = DES key
 	  key for newcamd remote reader encryption
 
-       account = user,password (delimiter not allowed, obsolete)
-	  user and password for remote reader, overrides password of password, first come first serve
-
        user = name
 	  user for remote reader, overrides user of account, first come first serve
 
