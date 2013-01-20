@@ -339,6 +339,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 	unsigned char *data;
 	int32_t Lc, Le, sent, recved;
 	int32_t nulls, cmd_case;
+	int32_t timeout;
 	*lr = 0; //in case of error this will be returned
 	
 	cmd_case = APDU_Cmd_Case (command, command_len);
@@ -357,7 +358,8 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 			rdr_debug_mask(reader, D_TRACE, "ERROR: invalid cmd_case = %i in Protocol_T0_ExchangeTPDU",cmd_case);
 			return ERROR;
 	}
-	if (ICC_Async_Transmit (reader, 5, command, 0, reader->char_delay)!=OK) return ERROR;		//Send header bytes
+	timeout = ICC_Async_GetTimings (reader, reader->char_delay); // we are going to send: char delay timeout
+	if (ICC_Async_Transmit (reader, 5, command, 0, timeout)!=OK) return ERROR;		//Send header bytes
 	
 	/* Initialise counters */
 	nulls = 0;
@@ -372,7 +374,8 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 	
 	while (recved < PROTOCOL_T0_MAX_SHORT_RESPONSE)
 	{
-		if (ICC_Async_Receive (reader, 1, buffer + recved, 0, reader->read_timeout) != OK) return ERROR;//Read one procedure byte
+		timeout = ICC_Async_GetTimings (reader, reader->read_timeout); // we are going to receive: WWT timeout
+		if (ICC_Async_Receive (reader, 1, buffer + recved, 0, timeout) != OK) return ERROR;//Read one procedure byte
 		
 		/* NULL byte received */
 		if (buffer[recved] == 0x60) {
@@ -383,13 +386,16 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 			}
 		}
 		else if ((buffer[recved] & 0xF0) == 0x60 || (buffer[recved] & 0xF0) == 0x90) /* SW1 byte received */
-		{//printf("sw1\n");
+		{
+			rdr_debug_mask(reader, D_TRACE, "SW1: %02X", buffer[recved]&0xf0);
 			recved++;
 			if (recved >= PROTOCOL_T0_MAX_SHORT_RESPONSE) {
 				rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Maximum short response exceeded: %d", __func__, recved);
 				return ERROR;
 			}
-			if (ICC_Async_Receive (reader, 1, buffer + recved, 0, reader->read_timeout) !=OK) return ERROR; //Read SW2 byte
+			timeout = ICC_Async_GetTimings (reader, reader->read_timeout); // we are going to receive: WWT timeout
+			if (ICC_Async_Receive (reader, 1, buffer + recved, 0, timeout) !=OK) return ERROR; //Read SW2 byte
+			rdr_debug_mask(reader, D_TRACE, "SW2: %02X", buffer[recved]&0xf0);
 			recved++;
 			break;
 		}
@@ -404,7 +410,8 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 					rdr_debug_mask(reader, D_TRACE, "ERROR: %s: ACK byte: sent=%d exceeds Lc=%d", __func__, sent, Lc);
 					return ERROR;
 				}
-				if(ICC_Async_Transmit(reader, MAX (Lc - sent, 0), data + sent, 0, reader->char_delay)!=OK) return ERROR; /* Send remaining data bytes */
+				timeout = ICC_Async_GetTimings (reader, reader->char_delay); // we are going to send: char delay timeout
+				if(ICC_Async_Transmit(reader, MAX (Lc - sent, 0), data + sent, 0, timeout)!=OK) return ERROR; /* Send remaining data bytes */
 				sent = Lc;
 				continue;
 			}
@@ -420,7 +427,8 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 				*/
 				
 				/* Read remaining data bytes */
-				if (ICC_Async_Receive(reader, MAX (Le - recved, 0), buffer + recved, 0, reader->read_timeout) != OK) return ERROR;
+				timeout = ICC_Async_GetTimings (reader, reader->read_timeout); // we are going to receive: WWT timeout
+				if (ICC_Async_Receive(reader, MAX (Le - recved, 0), buffer + recved, 0, timeout) != OK) return ERROR;
 				recved = Le;
 				continue;
 			}
@@ -435,7 +443,8 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 					rdr_debug_mask(reader, D_TRACE, "ERROR: %s: ~ACK byte: sent=%d exceeds Lc=%d", __func__, sent, Lc);
 					return ERROR;
 				}
-				if(ICC_Async_Transmit (reader, 1, data + sent, 0, reader->char_delay)!=OK) return ERROR;	//Send next data byte
+				timeout = ICC_Async_GetTimings (reader, reader->char_delay); // we are going to send: char delay timeout
+				if(ICC_Async_Transmit (reader, 1, data + sent, 0, timeout)!=OK) return ERROR;	//Send next data byte
 				sent++;
 				continue;
 			}
@@ -444,7 +453,8 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 					rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Case 3 ~ACK - maximum short response exceeded: %d", __func__, recved);
 					return ERROR;
 				}
-				if(ICC_Async_Receive (reader, 1, buffer + recved, 0, reader->read_timeout)!=OK) return ERROR;//Read next data byte
+				timeout = ICC_Async_GetTimings (reader, reader->char_delay); // we are going to send: char delay timeout
+				if(ICC_Async_Receive (reader, 1, buffer + recved, 0, timeout)!=OK) return ERROR;//Read next data byte
 				recved++;
 				continue;
 			}
@@ -465,6 +475,7 @@ int32_t Protocol_T14_ExchangeTPDU (struct s_reader *reader, unsigned char * cmd_
 	unsigned char buffer[PROTOCOL_T14_MAX_SHORT_RESPONSE];
 	int32_t recved;
 	int32_t cmd_case;
+	int32_t timeout;
 	unsigned char ixor = 0x3E;
 	unsigned char ixor1 = 0x3F;
 	int32_t i;
@@ -487,14 +498,19 @@ int32_t Protocol_T14_ExchangeTPDU (struct s_reader *reader, unsigned char * cmd_
 	buffer[cmd_len+1] = ixor; // xor byte
 		
 	/* Send apdu */
-	if(ICC_Async_Transmit (reader, cmd_len+2, buffer, 0, reader->char_delay)!=OK) return ERROR;//send apdu
+	timeout = ICC_Async_GetTimings (reader, reader->char_delay); // we are going to send: char delay timeout
+	if(ICC_Async_Transmit (reader, cmd_len+2, buffer, 0, timeout)!=OK) return ERROR;//send apdu
 	if(cmd_raw[0] == 0x02 && cmd_raw[1] == 0x09) cs_sleepms(2500); //FIXME why wait? -> needed for init on overclocked T14 cards
-	if(ICC_Async_Receive (reader, 8, buffer, 0, reader->read_timeout)!=OK) return ERROR;	//Read one procedure byte
+	
+	timeout = ICC_Async_GetTimings (reader, reader->read_timeout); // we are going to receive: WWT timeout
+	if(ICC_Async_Receive (reader, 8, buffer, 0, timeout)!=OK) return ERROR;	//Read one procedure byte
 	recved = (int32_t)buffer[7];
 	if(recved){
-		if (ICC_Async_Receive (reader, recved, buffer + 8, 0 , reader->read_timeout)!=OK) return ERROR;
+		timeout = ICC_Async_GetTimings (reader, reader->read_timeout); // we are going to receive: WWT timeout
+		if (ICC_Async_Receive (reader, recved, buffer + 8, 0 , timeout)!=OK) return ERROR;
 	}
-	if(ICC_Async_Receive (reader, 1, &ixor, 0, reader->read_timeout)!=OK) return ERROR;
+	timeout = ICC_Async_GetTimings (reader, reader->read_timeout); // we are going to receive: WWT timeout
+	if(ICC_Async_Receive (reader, 1, &ixor, 0, timeout)!=OK) return ERROR;
 	for(i=0; i<8+recved; i++)		
 		ixor1^=buffer[i];
 	if(ixor1 != ixor) {

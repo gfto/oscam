@@ -38,7 +38,7 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader);
 int32_t ICC_Async_Init_Locks (void);
 
 /* Attributes */
-int32_t ICC_Async_SetTimings (struct s_reader * reader, uint32_t wait_etu);
+int32_t ICC_Async_GetTimings (struct s_reader * reader, uint32_t wait_etu);
 int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * has_card);
 
 
