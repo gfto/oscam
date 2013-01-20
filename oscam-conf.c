@@ -113,10 +113,16 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 	return 0;
 }
 
-void config_list_save(FILE *f, const struct config_list *clist, void *config_data, int save_all) {
+void config_list_save_ex(FILE *f, const struct config_list *clist, void *config_data, int save_all,
+	bool (*check_func)(const struct config_list *clist, void *config_data, const char *setting))
+{
 	const struct config_list *c;
 	for (c = clist; c->opt_type != OPT_UNKNOWN; c++) {
 		void *var = config_data + c->var_offset;
+		if (check_func && c->opt_type != OPT_UNKNOWN) {
+			if (!check_func(clist, config_data, c->config_name))
+				continue;
+		}
 		switch (c->opt_type) {
 		case OPT_INT8: {
 			int8_t val = *(int8_t *)var;

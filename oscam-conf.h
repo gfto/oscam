@@ -124,7 +124,12 @@ uint32_t strToUIntVal(char *value, uint32_t defaultvalue);
 void fprintf_conf(FILE *f, const char *varname, const char *fmt, ...) __attribute__ ((format (printf, 3, 4)));
 
 int  config_list_parse(const struct config_list *clist, const char *token, char *value, void *config_data);
-void config_list_save(FILE *f, const struct config_list *clist, void *config_data, int save_all);
+void config_list_save_ex(FILE *f, const struct config_list *clist, void *config_data, int save_all,
+	bool (*check_func)(const struct config_list *clist, void *config_data, const char *setting)
+);
+static inline void config_list_save(FILE *f, const struct config_list *clist, void *config_data, int save_all) {
+	config_list_save_ex(f, clist, config_data, save_all, NULL);
+}
 void config_list_apply_fixups(const struct config_list *clist, void *var);
 bool config_list_should_be_saved(const struct config_list *clist, void *var);
 void config_list_set_defaults(const struct config_list *clist, void *config_data);
