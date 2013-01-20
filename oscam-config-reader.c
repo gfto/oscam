@@ -977,7 +977,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "cccmaxhop") || !strcmp(token, "cccmaxhops")) { //Schlocke: cccmaxhops is better!
+	if (!strcmp(token, "cccmaxhops")) {
 		// cccam max card distance
 		rdr->cc_maxhops = strToIntVal(value, DEFAULT_CC_MAXHOPS);
 		return;
@@ -999,7 +999,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "ccchopsaway") || !strcmp(token, "cccreshar")  || !strcmp(token, "cccreshare")) {
+	if (!strcmp(token, "cccreshare")) {
 		rdr->cc_reshare = strToIntVal(value, DEFAULT_CC_RESHARE);
 		return;
 	}
