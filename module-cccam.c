@@ -608,7 +608,8 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 
 	n = send(cl->udp_fd, netbuf, len, 0);
 	if(rdr) rdr->last_s = time(NULL);
-    if(cl) cl->last = time(NULL);
+	if(cl) cl->last = time(NULL);
+	
 	cs_writeunlock(&cc->lockcmd);
 
 	free(netbuf);
@@ -1744,8 +1745,9 @@ void cc_idle(void) {
 	}
 	else
 	{
+		//cs_log("last_s - now = %d, last_g - now = %d, tcp_ito=%d", abs(rdr->last_s - now), abs(rdr->last_g - now), rdr->tcp_ito);
 		//check inactivity timeout:
-		if ((abs(rdr->last_s - now) > rdr->tcp_ito) && (abs(rdr->last_g -now > rdr->tcp_ito))) { // inactivity timeout is entered in seconds in webif!
+		if ((abs(rdr->last_s - now) > rdr->tcp_ito) && (abs(rdr->last_g -now) > rdr->tcp_ito)) { // inactivity timeout is entered in seconds in webif!
 			cs_debug_mask(D_READER, "%s inactive_timeout, close connection (fd=%d)", rdr->ph.desc, rdr->client->pfd);
 			network_tcp_connection_close(rdr, "inactivity");
 			return;
@@ -1753,6 +1755,7 @@ void cc_idle(void) {
 
 		//check read timeout:
 		int32_t rto = abs(rdr->last_g - now);
+		//cs_log("last_g - now = %d, rto=%d", rto, rdr->tcp_rto);
 		if (rto > (rdr->tcp_rto)) { // this is also entered in seconds, actually its an receive timeout!
 			cs_debug_mask(D_READER, "%s read timeout, close connection (fd=%d)", rdr->ph.desc, rdr->client->pfd);
 			network_tcp_connection_close(rdr, "rto");
@@ -3082,8 +3085,6 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 		return -1;
 
 	n = cc_msg_recv(cl, buf, l); // recv and decrypt msg
-	cl->last = time(NULL); // last client action is now
-	if(rdr) rdr->last_g = time(NULL); // last reader receive is now
 	//cs_ddump_mask(D_CLIENT, buf, n, "cccam: received %d bytes from %s", n, remote_txt());
 
 
@@ -3111,6 +3112,10 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 	} else {
 		// parse it and write it back, if we have received something of value
 		n = cc_parse_msg(cl, buf, n);
+		if (n == MSG_CW_ECM || n == MSG_EMM_ACK){
+			cl->last = time(NULL); // last client action is now
+			if(rdr) rdr->last_g = time(NULL); // last reader receive is now
+		}
 	}
 
 	if (n == -1) {
