@@ -1267,7 +1267,7 @@ int32_t write_server(void)
 				fprintf_conf(f, "enable", "%d\n", rdr->enable);
 
 			protocol_fn("protocol", NULL, rdr, f);
-			protocol_fn("device", NULL, rdr, f);
+			device_fn("device", NULL, rdr, f);
 
 			if (rdr->ncd_key[0] || rdr->ncd_key[13] || cfg.http_full_cfg) {
 				fprintf_conf(f, "key", "%s", ""); // it should not have \n at the end
