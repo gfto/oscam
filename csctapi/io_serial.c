@@ -369,16 +369,6 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 	}
 	
 	rdr_debug_mask(reader, D_DEVICE,"Read timeout %d us, read delay %d us, to read %d char(s), chunksize %d char(s)", timeout, delay, size, size);
-	
-	if (reader->crdr.read_written && reader->written > 0) { // these readers need to read all transmitted chars before they can receive!
-		unsigned char buf[256];
-		rdr_debug_mask(reader, D_DEVICE,"Reading %d echoed transmitted chars...", reader->written); 
-		int32_t n = reader->written;
-		reader->written=0;
-		if(IO_Serial_Read (reader, 0, 9990000, n, buf)) // use 9990000 = aprox 10 seconds (since written chars could be hughe!)
-			return ERROR;
-		rdr_debug_mask(reader, D_DEVICE,"Reading of echoed transmitted chars done!");
-	}
 
 #if defined(WITH_STAPI) || defined(__SH4__)	//internal stapi and sh4 readers need special treatment as they don't respond correctly to poll and some sh4 boxes only can read 1 byte at once
 	if(reader->typ == R_INTERNAL){
@@ -495,8 +485,26 @@ bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t timeout
 		else
 		{
 			rdr_log(reader, "Timeout in IO_Serial_WaitToWrite, delay=%d us, timeout=%d us", delay, timeout);
+			if (reader->crdr.read_written && reader->written > 0) { // these readers need to read all transmitted chars before they can receive!
+				unsigned char buf[256];
+				rdr_debug_mask(reader, D_DEVICE,"Reading %d echoed transmitted chars...", reader->written); 
+				int32_t n = reader->written;
+				if(IO_Serial_Read (reader, 0, 9990000, n, buf)) // use 9990000 = aprox 10 seconds (since written chars could be hughe!)
+					return ERROR;
+				reader->written=0;
+				rdr_debug_mask(reader, D_DEVICE,"Reading of echoed transmitted chars done!");
+			}
 			return ERROR;
 		}
+	}
+	if (reader->crdr.read_written && reader->written > 0) { // these readers need to read all transmitted chars before they can receive!
+		unsigned char buf[256];
+		rdr_debug_mask(reader, D_DEVICE,"Reading %d echoed transmitted chars...", reader->written); 
+		int32_t n = reader->written;
+		if(IO_Serial_Read (reader, 0, 9990000, n, buf)) // use 9990000 = aprox 10 seconds (since written chars could be hughe!)
+			return ERROR;
+		reader->written=0;
+		rdr_debug_mask(reader, D_DEVICE,"Reading of echoed transmitted chars done!");
 	}
 	return OK;
 }
