@@ -414,27 +414,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	if (streq(token, "mg-encrypted"))
 		mgencrypted_fn(token, value, rdr, NULL);
 
-	//legacy parameter containing account=user,pass
-	if (!strcmp(token, "account")) {
-		if (strstr(value, ",")) {
-			for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 2) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
-				trim(ptr);
-				switch(i) {
-					case 0:
-						cs_strncpy(rdr->r_usr, ptr, sizeof(rdr->r_usr));
-						break;
-
-					case 1:
-						cs_strncpy(rdr->r_pwd, ptr, sizeof(rdr->r_pwd));
-						break;
-				}
-			}
-		} else {
-			cs_strncpy(rdr->r_usr, value, sizeof(rdr->r_usr));
-		}
-		return;
-	}
-
 	if (!strcmp(token, "pincode")) {
 		cs_strncpy(rdr->pincode, value, sizeof(rdr->pincode));
 		return;
