@@ -355,6 +355,55 @@ static void ecmheaderwhitelist_fn(const char *token, char *value, void *setting,
 	free_mk_t(value);
 }
 
+static void protocol_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		struct protocol_map {
+			char *name;
+			int typ;
+		} protocols[] = {
+			{ "serial",     R_SERIAL },
+			{ "camd35",     R_CAMD35 },
+			{ "cs378x",     R_CS378X },
+			{ "cs357x",     R_CAMD35 },
+			{ "gbox",       R_GBOX },
+			{ "cccam",      R_CCCAM },
+			{ "cccam ext",  R_CCCAM },
+			{ "constcw",    R_CONSTCW },
+			{ "radegast",   R_RADEGAST },
+			{ "ghttp",      R_GHTTP },
+			{ "newcamd",    R_NEWCAMD },
+			{ "newcamd525", R_NEWCAMD },
+			{ "newcamd524", R_NEWCAMD },
+			{ NULL        , 0 }
+		}, *p;
+		int i;
+		// Parse card readers
+		for (i = 0; i < CS_MAX_MOD; i++) {
+			if (streq(value, cardreaders[i].desc)) {
+				rdr->crdr = cardreaders[i];
+				rdr->typ  = cardreaders[i].typ;
+				return;
+			}
+		}
+		// Parse protocols
+		for(i = 0, p = &protocols[0]; p->name; p = &protocols[++i]) {
+			if (streq(p->name, value)) {
+				rdr->typ = p->typ;
+				break;
+			}
+		}
+		if (rdr->typ == R_NEWCAMD && streq(value, "newcamd524"))
+			rdr->ncd_proto = NCD_524;
+		if (rdr->typ == R_NEWCAMD && streq(value, "newcamd525"))
+			rdr->ncd_proto = NCD_525;
+		if (!rdr->typ)
+			fprintf(stderr, "ERROR: '%s' is unsupported reader protocol!\n", value);
+		return;
+	}
+	fprintf_conf(f, token, "%s\n", reader_get_type_desc(rdr, 0));
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -664,79 +713,9 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "protocol")) {
+	if (streq(token, "protocol"))
+		protocol_fn(token, value, rdr, NULL);
 
-		for (i=0; i<CS_MAX_MOD; i++) {
-			if (cardreaders[i].desc && strcmp(value, cardreaders[i].desc) == 0) {
-				rdr->crdr = cardreaders[i];
-				rdr->typ = cardreaders[i].typ; //FIXME
-				return;
-			}
-		}
-
-		if (!strcmp(value, "serial")) {
-			rdr->typ = R_SERIAL;
-			return;
-		}
-
-		if (!strcmp(value, "camd35")) {
-			rdr->typ = R_CAMD35;
-			return;
-		}
-
-		if (!strcmp(value, "cs378x")) {
-			rdr->typ = R_CS378X;
-			return;
-		}
-
-		if (!strcmp(value, "cs357x")) {
-			rdr->typ = R_CAMD35;
-			return;
-		}
-
-		if (!strcmp(value, "gbox")) {
-			rdr->typ = R_GBOX;
-			return;
-		}
-
-		if (!strcmp(value, "cccam") || !strcmp(value, "cccam ext")) {
-			rdr->typ = R_CCCAM;
-			//strcpy(value, "1");
-			//chk_caidtab(value, &rdr->ctab);
-			//this is a MAJOR hack for auto multiple caid support (not currently working due to ncd table issue)
-			return;
-		}
-
-		if (!strcmp(value, "constcw")) {
-			rdr->typ = R_CONSTCW;
-			return;
-		}
-
-		if (!strcmp(value, "radegast")) {
-			rdr->typ = R_RADEGAST;
-			return;
-		}
-		
-		if (!strcmp(value, "ghttp")) {
-			rdr->typ = R_GHTTP;
-			return;
-		}		
-
-		if (!strcmp(value, "newcamd") || !strcmp(value, "newcamd525")) {
-			rdr->typ = R_NEWCAMD;
-			rdr->ncd_proto = NCD_525;
-			return;
-		}
-
-		if (!strcmp(value, "newcamd524")) {
-			rdr->typ = R_NEWCAMD;
-			rdr->ncd_proto = NCD_524;
-			return;
-		}
-
-		fprintf(stderr, "ERROR: '%s' is unsupported reader protocol!\n", value);
-		return;
-	}
 #ifdef WITH_COOLAPI
 	if (!strcmp(token, "cool_timeout_init")) {
 		rdr->cool_timeout_init  = strToIntVal(value, 50);
@@ -1264,7 +1243,8 @@ int32_t write_server(void)
 			if (rdr->enable == 0 || cfg.http_full_cfg)
 				fprintf_conf(f, "enable", "%d\n", rdr->enable);
 
-			fprintf_conf(f, "protocol", "%s\n", ctyp);
+			protocol_fn("protocol", NULL, rdr, f);
+
 			fprintf_conf(f, "device", "%s", rdr->device); // it should not have \n at the end
 
 			if ((rdr->r_port || cfg.http_full_cfg) && !isphysical)
