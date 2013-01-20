@@ -998,7 +998,7 @@ char *xml_encode(struct templatevars *vars, char *chartoencode) {
 			case '<': memcpy(encoded + pos, "&lt;", 4); pos+=4; break;
 			case '>': memcpy(encoded + pos, "&gt;", 4); pos+=4; break;
 			case '"': memcpy(encoded + pos, "&quot;", 6); pos+=6; break;
-			case '\'': memcpy(encoded + pos, "&apos;", 6); pos+=6; break;
+			case '\'': memcpy(encoded + pos, "&#39;", 5); pos+=5; break;		//&apos; not supported on older IE
 			case '\n': memcpy(encoded + pos, "\n", 1); pos+=1; break;
 
 			default:
