@@ -442,8 +442,10 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	 *  case sensitive first
 	 */
 
-	if (streq(token, "device"))
+	if (streq(token, "device")) {
 		device_fn(token, value, rdr, NULL);
+		return;
+	}
 
 	if (!strcmp(token, "key")) {
 		if (strlen(value) == 0){
@@ -474,8 +476,10 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 #endif
 
-	if (streq(token, "mg-encrypted"))
+	if (streq(token, "mg-encrypted")) {
 		mgencrypted_fn(token, value, rdr, NULL);
+		return;
+	}
 
 	if (!strcmp(token, "pincode")) {
 		cs_strncpy(rdr->pincode, value, sizeof(rdr->pincode));
@@ -693,11 +697,15 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		}
 	}
 
-	if (streq(token, "ecmwhitelist"))
+	if (streq(token, "ecmwhitelist")) {
 		ecmwhitelist_fn(token, value, rdr, NULL);
+		return;
+	}
 
-	if (streq(token, "ecmheaderwhitelist"))
+	if (streq(token, "ecmheaderwhitelist")) {
 		ecmheaderwhitelist_fn(token, value, rdr, NULL);
+		return;
+	}
 
 	if (!strcmp(token, "detect")) {
 		for (i = 0; RDR_CD_TXT[i]; i++) {
@@ -727,8 +735,10 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (streq(token, "protocol"))
+	if (streq(token, "protocol")) {
 		protocol_fn(token, value, rdr, NULL);
+		return;
+	}
 
 #ifdef WITH_COOLAPI
 	if (!strcmp(token, "cool_timeout_init")) {
