@@ -147,6 +147,106 @@ static void mgencrypted_fn(const char *UNUSED(token), char *value, void *setting
 	}
 }
 
+static void ecmwhitelist_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		char *ptr, *ptr2, *ptr3, *saveptr1 = NULL;
+		struct s_ecmWhitelist *tmp, *last;
+		struct s_ecmWhitelistIdent *tmpIdent, *lastIdent;
+		struct s_ecmWhitelistLen *tmpLen, *lastLen;
+		for(tmp = rdr->ecmWhitelist; tmp; tmp=tmp->next){
+			for(tmpIdent = tmp->idents; tmpIdent; tmpIdent=tmpIdent->next){
+				for(tmpLen = tmpIdent->lengths; tmpLen; tmpLen=tmpLen->next){
+					add_garbage(tmpLen);
+				}
+				add_garbage(tmpIdent);
+			}
+			add_garbage(tmp);
+		}
+		rdr->ecmWhitelist = NULL;
+		if(strlen(value) > 0){
+			saveptr1 = NULL;
+			char *saveptr2 = NULL;
+			for (ptr = strtok_r(value, ";", &saveptr1); ptr; ptr = strtok_r(NULL, ";", &saveptr1)) {
+				int16_t caid = 0, len;
+				uint32_t ident = 0;
+				ptr2=strchr(ptr,':');
+				if(ptr2 != NULL){
+					ptr2[0] = '\0';
+					++ptr2;
+					ptr3=strchr(ptr,'@');
+					if(ptr3 != NULL){
+						ptr3[0] = '\0';
+						++ptr3;
+						ident = (uint32_t)a2i(ptr3, 6);
+					}
+					caid = (int16_t)dyn_word_atob(ptr);
+				} else ptr2 = ptr;
+				for (ptr2 = strtok_r(ptr2, ",", &saveptr2); ptr2; ptr2 = strtok_r(NULL, ",", &saveptr2)) {
+					len = (int16_t)dyn_word_atob(ptr2);
+					last = NULL, tmpIdent = NULL, lastIdent = NULL, tmpLen = NULL, lastLen = NULL;
+					for(tmp = rdr->ecmWhitelist; tmp; tmp=tmp->next){
+						last = tmp;
+						if(tmp->caid == caid){
+							for(tmpIdent = tmp->idents; tmpIdent; tmpIdent=tmpIdent->next){
+								lastIdent = tmpIdent;
+								if(tmpIdent->ident == ident){
+									for(tmpLen = tmpIdent->lengths; tmpLen; tmpLen=tmpLen->next){
+										lastLen = tmpLen;
+										if(tmpLen->len == len) break;
+									}
+									break;
+								}
+							}
+						}
+					}
+					if(tmp == NULL){
+						if (cs_malloc(&tmp, sizeof(struct s_ecmWhitelist))) {
+							tmp->caid = caid;
+							tmp->idents = NULL;
+							tmp->next = NULL;
+							if(last == NULL){
+								rdr->ecmWhitelist = tmp;
+							} else {
+								last->next = tmp;
+							}
+						}
+					}
+					if(tmp != NULL && tmpIdent == NULL){
+						if (cs_malloc(&tmpIdent, sizeof(struct s_ecmWhitelistIdent))) {
+							tmpIdent->ident = ident;
+							tmpIdent->lengths = NULL;
+							tmpIdent->next = NULL;
+							if(lastIdent == NULL){
+								tmp->idents = tmpIdent;
+							} else {
+								lastIdent->next = tmpIdent;
+							}
+						}
+					}
+					if(tmp != NULL && tmpIdent != NULL && tmpLen == NULL){
+						if (cs_malloc(&tmpLen, sizeof(struct s_ecmWhitelistLen))) {
+							tmpLen->len = len;
+							tmpLen->next = NULL;
+							if(lastLen == NULL){
+								tmpIdent->lengths = tmpLen;
+							} else {
+								lastLen->next = tmpLen;
+							}
+						}
+					}
+				}
+			}
+		}
+		return;
+	}
+
+	value = mk_t_ecmwhitelist(rdr->ecmWhitelist);
+	if (strlen(value) > 0 || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%s\n", value);
+	free_mk_t(value);
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -443,96 +543,8 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		}
 	}
 
-	if (!strcmp(token, "ecmwhitelist")) {
-		struct s_ecmWhitelist *tmp, *last;
-		struct s_ecmWhitelistIdent *tmpIdent, *lastIdent;
-		struct s_ecmWhitelistLen *tmpLen, *lastLen;
-		for(tmp = rdr->ecmWhitelist; tmp; tmp=tmp->next){
-			for(tmpIdent = tmp->idents; tmpIdent; tmpIdent=tmpIdent->next){
-				for(tmpLen = tmpIdent->lengths; tmpLen; tmpLen=tmpLen->next){
-					add_garbage(tmpLen);
-				}
-				add_garbage(tmpIdent);
-			}
-			add_garbage(tmp);
-		}
-		rdr->ecmWhitelist = NULL;
-		if(strlen(value) > 0){
-			saveptr1 = NULL;
-			char *saveptr2 = NULL;
-			for (ptr = strtok_r(value, ";", &saveptr1); ptr; ptr = strtok_r(NULL, ";", &saveptr1)) {
-				int16_t caid = 0, len;
-				uint32_t ident = 0;
-				ptr2=strchr(ptr,':');
-				if(ptr2 != NULL){
-					ptr2[0] = '\0';
-					++ptr2;
-					ptr3=strchr(ptr,'@');
-					if(ptr3 != NULL){
-						ptr3[0] = '\0';
-						++ptr3;
-						ident = (uint32_t)a2i(ptr3, 6);
-					}
-					caid = (int16_t)dyn_word_atob(ptr);
-				} else ptr2 = ptr;
-				for (ptr2 = strtok_r(ptr2, ",", &saveptr2); ptr2; ptr2 = strtok_r(NULL, ",", &saveptr2)) {
-					len = (int16_t)dyn_word_atob(ptr2);
-					last = NULL, tmpIdent = NULL, lastIdent = NULL, tmpLen = NULL, lastLen = NULL;
-					for(tmp = rdr->ecmWhitelist; tmp; tmp=tmp->next){
-						last = tmp;
-						if(tmp->caid == caid){
-							for(tmpIdent = tmp->idents; tmpIdent; tmpIdent=tmpIdent->next){
-								lastIdent = tmpIdent;
-								if(tmpIdent->ident == ident){
-									for(tmpLen = tmpIdent->lengths; tmpLen; tmpLen=tmpLen->next){
-										lastLen = tmpLen;
-										if(tmpLen->len == len) break;
-									}
-									break;
-								}
-							}
-						}
-					}
-					if(tmp == NULL){
-						if (cs_malloc(&tmp, sizeof(struct s_ecmWhitelist))) {
-							tmp->caid = caid;
-							tmp->idents = NULL;
-							tmp->next = NULL;
-							if(last == NULL){
-								rdr->ecmWhitelist = tmp;
-							} else {
-								last->next = tmp;
-							}
-						}
-					}
-					if(tmp != NULL && tmpIdent == NULL){
-						if (cs_malloc(&tmpIdent, sizeof(struct s_ecmWhitelistIdent))) {
-							tmpIdent->ident = ident;
-							tmpIdent->lengths = NULL;
-							tmpIdent->next = NULL;
-							if(lastIdent == NULL){
-								tmp->idents = tmpIdent;
-							} else {
-								lastIdent->next = tmpIdent;
-							}
-						}
-					}
-					if(tmp != NULL && tmpIdent != NULL && tmpLen == NULL){
-						if (cs_malloc(&tmpLen, sizeof(struct s_ecmWhitelistLen))) {
-							tmpLen->len = len;
-							tmpLen->next = NULL;
-							if(lastLen == NULL){
-								tmpIdent->lengths = tmpLen;
-							} else {
-								lastLen->next = tmpLen;
-							}
-						}
-					}
-				}
-			}
-		}
-		return;
-	}
+	if (streq(token, "ecmwhitelist"))
+		ecmwhitelist_fn(token, value, rdr, NULL);
 
 	if (!strcmp(token, "ecmheaderwhitelist")) {
                 struct s_ecmHeaderwhitelist *tmp, *last = NULL;
@@ -1434,10 +1446,7 @@ int32_t write_server(void)
 				fprintf(f, "\n");
 			}
 
-			value = mk_t_ecmwhitelist(rdr->ecmWhitelist);
-			if (strlen(value) > 0 || cfg.http_full_cfg)
-				fprintf_conf(f, "ecmwhitelist", "%s\n", value);
-			free_mk_t(value);
+			ecmwhitelist_fn("ecmwhitelist", NULL, rdr, f);
 
 			value = mk_t_ecmheaderwhitelist(rdr->ecmHeaderwhitelist); 
                         if (strlen(value) > 0 || cfg.http_full_cfg) {
