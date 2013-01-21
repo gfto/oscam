@@ -1080,7 +1080,16 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		} else {
 			for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 2) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
 				rdr->cooldown[i] = atoi(ptr);
-			}
+/*				switch(i) {
+				case 0:
+					rdr->cooldown[0] = atoi(ptr);
+					break;
+
+				case 1:
+					rdr->cooldown[1] = atoi(ptr);
+					break;
+				}
+*/			}
 
 			if (rdr->cooldown[0] <= 0 || rdr->cooldown[1] <= 0) {
 				fprintf(stderr, "cooldown must have 2 positive values (x,y) set values %d,%d ! cooldown deactivated\n",
@@ -1092,6 +1101,27 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
 		}
 		return;
+	}
+
+	// cooldown setting loading for web interface
+	if (!strcmp(token, "cooldowndelay")) {
+		if (strlen(value) == 0) {
+			rdr->cooldown[0] = 0;
+			return;
+		} else {
+			rdr->cooldown[0] = atoi(value);
+			return;
+		}
+	}
+	if (!strcmp(token, "cooldowntime")) {
+		if (strlen(value) == 0) {
+			rdr->cooldown[0] = 0; // no cooling down time means no cooling set
+			rdr->cooldown[1] = 0;
+			return;
+		} else {
+			rdr->cooldown[1] = atoi(value);
+			return;
+		}
 	}
 
 	if (!strcmp(token, "dropbadcws")) {
