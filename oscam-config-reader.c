@@ -433,6 +433,29 @@ static void device_fn(const char *token, char *value, void *setting, FILE *f) {
 	fprintf(f, "\n");
 }
 
+static void key_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		if (strlen(value) == 0)
+			return;
+		if (key_atob_l(value, rdr->ncd_key, 28)) {
+			fprintf(stderr, "reader key parse error, %s=%s\n", token, value);
+			memset(rdr->ncd_key, 0, sizeof(rdr->ncd_key));
+		}
+		return;
+	}
+	if (rdr->ncd_key[0] || rdr->ncd_key[13] || cfg.http_full_cfg) {
+		fprintf_conf(f, token, "%s", ""); // it should not have \n at the end
+		if (rdr->ncd_key[0] || rdr->ncd_key[13]) {
+			int j;
+			for (j = 0; j < 14; j++) {
+				fprintf(f, "%02X", rdr->ncd_key[j]);
+			}
+		}
+		fprintf(f, "\n");
+	}
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -446,13 +469,8 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "key")) {
-		if (strlen(value) == 0){
-			return;
-		} else if (key_atob_l(value, rdr->ncd_key, 28)) {
-			fprintf(stderr, "Configuration newcamd: Error in Key\n");
-			memset(rdr->ncd_key, 0, sizeof(rdr->ncd_key));
-		}
+	if (streq(token, "key")) {
+		key_fn(token, value, rdr, NULL);
 		return;
 	}
 
@@ -1297,16 +1315,7 @@ int32_t write_server(void)
 
 			protocol_fn("protocol", NULL, rdr, f);
 			device_fn("device", NULL, rdr, f);
-
-			if (rdr->ncd_key[0] || rdr->ncd_key[13] || cfg.http_full_cfg) {
-				fprintf_conf(f, "key", "%s", ""); // it should not have \n at the end
-				if(rdr->ncd_key[0] || rdr->ncd_key[13]){
-					for (j = 0; j < 14; j++) {
-						fprintf(f, "%02X", rdr->ncd_key[j]);
-					}
-				}
-				fprintf(f, "\n");
-			}
+			key_fn("key", NULL, rdr, f);
 
 			if ((rdr->r_usr[0] || cfg.http_full_cfg) && !isphysical)
 				fprintf_conf(f, "user", "%s\n", rdr->r_usr);
