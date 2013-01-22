@@ -474,6 +474,24 @@ static void services_fn(const char *token, char *value, void *setting, FILE *f) 
 	free_mk_t(value);
 }
 
+#ifdef CS_CACHEEX
+static void cacheex_ecm_filter_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		if (strlen(value)) {
+			chk_hitvaluetab(value, &rdr->cacheex.filter_caidtab);
+		} else {
+			clear_csptab(&rdr->cacheex.filter_caidtab);
+		}
+		return;
+	}
+	value = mk_t_hitvaluetab(&rdr->cacheex.filter_caidtab);
+	if (strlen(value) > 0 || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%s\n", value);
+	free_mk_t(value);
+}
+#endif
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -602,14 +620,10 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		rdr->cacheex.maxhop  = strToIntVal(value, 0);
 		return;
 	}
-	if (!strcmp(token, "cacheex_ecm_filter")) {
-		if (strlen(value) == 0){
-			clear_csptab(&rdr->cacheex.filter_caidtab);
-			return;
-		} else {
-			chk_hitvaluetab(value, &rdr->cacheex.filter_caidtab);
-			return;
-		}
+
+	if (streq(token, "cacheex_ecm_filter")) {
+		cacheex_ecm_filter_fn(token, value, rdr, NULL);
+		return;
 	}
 	if (!strcmp(token, "cacheex_allow_request")) {
 		rdr->cacheex.allow_request  = strToIntVal(value, 1);
@@ -1368,10 +1382,7 @@ int32_t write_server(void)
 			if (rdr->cacheex.maxhop || cfg.http_full_cfg)
 				fprintf_conf(f, "cacheex_maxhop", "%d\n", rdr->cacheex.maxhop);
 
-			value = mk_t_hitvaluetab(&rdr->cacheex.filter_caidtab);
-			if (strlen(value) > 0 || cfg.http_full_cfg)
-				fprintf_conf(f, "cacheex_ecm_filter", "%s\n", value);
-			free_mk_t(value);
+			cacheex_ecm_filter_fn("cacheex_ecm_filter", NULL, rdr, f);
 
 			if (!rdr->cacheex.allow_request || cfg.http_full_cfg)
 							fprintf_conf(f, "cacheex_allow_request", "%d\n", rdr->cacheex.allow_request);
