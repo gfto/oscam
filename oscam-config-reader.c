@@ -509,6 +509,19 @@ static void caid_fn(const char *token, char *value, void *setting, FILE *f) {
 	free_mk_t(value);
 }
 
+static void boxid_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		rdr->boxid = strlen(value) ? a2i(value, 4) : 0;
+		return;
+	}
+	int32_t isphysical = !is_network_reader(rdr);
+	if (rdr->boxid && isphysical)
+		fprintf_conf(f, token, "%08X\n", rdr->boxid);
+	else if (cfg.http_full_cfg && isphysical)
+		fprintf_conf(f, token, "\n");
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -662,16 +675,10 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-  if (!strcmp(token, "boxid")) {
-    if(strlen(value) == 0) {
-      rdr->boxid = 0;
-      return;
-    } else {
-      rdr->boxid = a2i(value, 4);
-      return;
-    }
-  }
-
+	if (streq(token, "boxid")) {
+		boxid_fn(token, value, rdr, NULL);
+		return;
+	}
   if (!strcmp(token, "fix9993")) {
     rdr->fix_9993 = strToIntVal(value, 0);
     return;
@@ -1412,10 +1419,7 @@ int32_t write_server(void)
 
 			caid_fn("caid", NULL, rdr, f);
 
-			if (rdr->boxid && isphysical)
-				fprintf_conf(f, "boxid", "%08X\n", rdr->boxid);
-			else if (cfg.http_full_cfg && isphysical)
-				fprintf_conf(f, "boxid", "\n");
+			boxid_fn("boxid", NULL, rdr, f);
 
 			if((rdr->fix_9993 || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, "fix9993", "%d\n", rdr->fix_9993);
