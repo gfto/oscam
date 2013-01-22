@@ -310,6 +310,14 @@ static int32_t conax_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, str
       rdr_log(reader, "card has no right to decode this channel");
     break;
   }
+  
+  /* answer 9011 - conax smart card need reset */
+  if(2<=cta_lr && 0x90==cta_res[cta_lr-2] &&
+     0x11==cta_res[cta_lr-1])
+  {
+    rdr_log(reader, "conax card hangs - reset is required");
+    reader->card_status = UNKNOWN;
+  }
 
   if (rc==3)
     return OK;
