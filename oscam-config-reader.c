@@ -522,6 +522,31 @@ static void boxid_fn(const char *token, char *value, void *setting, FILE *f) {
 		fprintf_conf(f, token, "\n");
 }
 
+static void rsakey_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		int32_t len = strlen(value);
+		if(len != 128 && len != 240) {
+			memset(rdr->rsa_mod, 0, 120);
+		} else {
+			if (key_atob_l(value, rdr->rsa_mod, len)) {
+				fprintf(stderr, "reader rsakey parse error, %s=%s\n", token, value);
+				memset(rdr->rsa_mod, 0, sizeof(rdr->rsa_mod));
+			}
+		}
+		return;
+	}
+	int32_t isphysical = !is_network_reader(rdr);
+	int32_t len = check_filled(rdr->rsa_mod, 120);
+	if (len > 0 && isphysical) {
+		if(len > 64) len = 120;
+		else len = 64;
+		char tmp[len*2+1];
+		fprintf_conf(f, "rsakey", "%s\n", cs_hexdump(0, rdr->rsa_mod, len, tmp, sizeof(tmp)));
+	} else if(cfg.http_full_cfg && isphysical)
+		fprintf_conf(f, "rsakey", "\n");
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -684,20 +709,10 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
     return;
   }
 
-	if (!strcmp(token, "rsakey")) {
-		int32_t len = strlen(value);
-		if(len != 128 && len != 240) {
-			memset(rdr->rsa_mod, 0, 120);
-			return;
-		} else {
-			if (key_atob_l(value, rdr->rsa_mod, len)) {
-				fprintf(stderr, "Configuration reader: Error in rsakey\n");
-				memset(rdr->rsa_mod, 0, sizeof(rdr->rsa_mod));
-			}
-			return;
-		}
+	if (streq(token, "rsakey")) {
+		rsakey_fn(token, value, rdr, NULL);
+		return;
 	}
-
 	if (!strcmp(token, "ins7e")) {
 		int32_t len = strlen(value);
 		if (len != 0x1A*2 || key_atob_l(value, rdr->ins7E, len)) {
@@ -1424,15 +1439,7 @@ int32_t write_server(void)
 			if((rdr->fix_9993 || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, "fix9993", "%d\n", rdr->fix_9993);
 
-			// rsakey
-			int32_t len = check_filled(rdr->rsa_mod, 120);
-			if (len > 0 && isphysical) {
-				if(len > 64) len = 120;
-				else len = 64;
-				char tmp[len*2+1];
-				fprintf_conf(f, "rsakey", "%s\n", cs_hexdump(0, rdr->rsa_mod, len, tmp, sizeof(tmp)));
-			} else if(cfg.http_full_cfg && isphysical)
-				fprintf_conf(f, "rsakey", "\n");
+			rsakey_fn("rsakey", NULL, rdr, f);
 
 			if (rdr->ins7E[0x1A] && isphysical) {
 				char tmp[0x1A*2+1];
@@ -1450,7 +1457,7 @@ int32_t write_server(void)
 				fprintf_conf(f, "force_irdeto", "%d\n", rdr->force_irdeto);
 			}
 
-			len = check_filled(rdr->nagra_boxkey, 8);
+			int32_t len = check_filled(rdr->nagra_boxkey, 8);
 			if ((len > 0 || cfg.http_full_cfg) && isphysical){
 				char tmp[17];
 				fprintf_conf(f, "boxkey", "%s\n", len>0?cs_hexdump(0, rdr->nagra_boxkey, 8, tmp, sizeof(tmp)):"");
