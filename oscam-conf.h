@@ -16,6 +16,7 @@ enum opt_types {
 	OPT_STRING,
 	OPT_SSTRING,
 	OPT_FUNC,
+	OPT_FUNC_EXTRA,
 	OPT_SAVE_FUNC,
 	OPT_FIXUP_FUNC,
 };
@@ -31,9 +32,11 @@ struct config_list {
 		int32_t			d_int32;
 		uint32_t		d_uint32;
 		char			*d_char;
+		long			d_extra;
 	} def;
 	union {
 		void			(*process_fn)(const char *token, char *value, void *setting, FILE *config_file);
+		void			(*process_fn_extra)(const char *token, char *value, void *setting, long extra, FILE *config_file);
 		bool			(*should_save_fn)(void *var);
 		void			(*fixup_fn)(void *var);
 	} ops;
@@ -94,6 +97,15 @@ struct config_list {
 		.config_name	= __name, \
 		.var_offset		= __var_ofs, \
 		.ops.process_fn	= __process_fn \
+	}
+
+#define DEF_OPT_FUNC_X(__name, __var_ofs, __process_fn, __extra) \
+	{ \
+		.opt_type		= OPT_FUNC, \
+		.config_name	= __name, \
+		.var_offset		= __var_ofs, \
+		.ops.process_fn	= __process_fn, \
+		.def.d_extra	= __extra \
 	}
 
 #define DEF_OPT_SAVE_FUNC(__fn) \

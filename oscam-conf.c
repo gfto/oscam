@@ -101,6 +101,10 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 			c->ops.process_fn(token, value, var, NULL);
 			return 1;
 		}
+		case OPT_FUNC_EXTRA: {
+			c->ops.process_fn_extra(token, value, var, c->def.d_extra, NULL);
+			return 1;
+		}
 		case OPT_FIXUP_FUNC:
 		case OPT_SAVE_FUNC:
 			return 1;
@@ -164,6 +168,10 @@ void config_list_save_ex(FILE *f, const struct config_list *clist, void *config_
 		}
 		case OPT_FUNC: {
 			c->ops.process_fn((const char *)c->config_name, NULL, var, f);
+			continue;
+		}
+		case OPT_FUNC_EXTRA: {
+			c->ops.process_fn_extra((const char *)c->config_name, NULL, var, c->def.d_extra, f);
 			continue;
 		}
 		case OPT_FIXUP_FUNC:
@@ -232,6 +240,10 @@ void config_list_set_defaults(const struct config_list *clist, void *config_data
 		}
 		case OPT_FUNC: {
 			c->ops.process_fn((const char *)c->config_name, "", var, NULL);
+			break;
+		}
+		case OPT_FUNC_EXTRA: {
+			c->ops.process_fn_extra((const char *)c->config_name, "", var, c->def.d_extra, NULL);
 			break;
 		}
 		case OPT_SAVE_FUNC:

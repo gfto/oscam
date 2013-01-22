@@ -547,6 +547,20 @@ static void rsakey_fn(const char *token, char *value, void *setting, FILE *f) {
 		fprintf_conf(f, "rsakey", "\n");
 }
 
+static void flags_fn(const char *token, char *value, void *setting, long flag, FILE *f) {
+	uint32_t *var = setting;
+	if (value) {
+		int i = atoi(value);
+		if (!i && (*var & flag))
+			*var -= flag;
+		if (i)
+			*var |= flag;
+		return;
+	}
+	if ((*var & flag) || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%d\n", (*var & flag) ? 1 : 0);
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -925,75 +939,43 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "blockemm-unknown")) {
-		i=atoi(value);
-		if (!i && (rdr->blockemm & EMM_UNKNOWN))
-			rdr->blockemm -= EMM_UNKNOWN;
-		if (i)
-			rdr->blockemm |= EMM_UNKNOWN;
+	if (streq(token, "blockemm-unknown")) {
+		flags_fn(token, value, &rdr->blockemm, EMM_UNKNOWN, NULL);
 		return;
 	}
 
-	if (!strcmp(token, "blockemm-u")) {
-		i=atoi(value);
-		if (!i && (rdr->blockemm & EMM_UNIQUE))
-			rdr->blockemm -= EMM_UNIQUE;
-		if (i)
-			rdr->blockemm |= EMM_UNIQUE;
+	if (streq(token, "blockemm-u")) {
+		flags_fn(token, value, &rdr->blockemm, EMM_UNIQUE, NULL);
 		return;
 	}
 
-	if (!strcmp(token, "blockemm-s")) {
-		i=atoi(value);
-		if (!i && (rdr->blockemm & EMM_SHARED))
-			rdr->blockemm -= EMM_SHARED;
-		if (i)
-			rdr->blockemm |= EMM_SHARED;
+	if (streq(token, "blockemm-s")) {
+		flags_fn(token, value, &rdr->blockemm, EMM_SHARED, NULL);
 		return;
 	}
 
-	if (!strcmp(token, "blockemm-g")) {
-		i=atoi(value);
-		if (!i && (rdr->blockemm & EMM_GLOBAL))
-			rdr->blockemm -= EMM_GLOBAL;
-		if (i)
-			rdr->blockemm |= EMM_GLOBAL;
+	if (streq(token, "blockemm-g")) {
+		flags_fn(token, value, &rdr->blockemm, EMM_GLOBAL, NULL);
 		return;
 	}
 
-	if (!strcmp(token, "saveemm-unknown")) {
-		i=atoi(value);
-		if (!i && (rdr->saveemm & EMM_UNKNOWN))
-			rdr->saveemm -= EMM_UNKNOWN;
-		if (i)
-			rdr->saveemm |= EMM_UNKNOWN;
+	if (streq(token, "saveemm-unknown")) {
+		flags_fn(token, value, &rdr->saveemm, EMM_UNKNOWN, NULL);
 		return;
 	}
 
-	if (!strcmp(token, "saveemm-u")) {
-		i=atoi(value);
-		if (!i && (rdr->saveemm & EMM_UNIQUE))
-			rdr->saveemm -= EMM_UNIQUE;
-		if (i)
-			rdr->saveemm |= EMM_UNIQUE;
+	if (streq(token, "saveemm-u")) {
+		flags_fn(token, value, &rdr->saveemm, EMM_UNIQUE, NULL);
 		return;
 	}
 
-	if (!strcmp(token, "saveemm-s")) {
-		i=atoi(value);
-		if (!i && (rdr->saveemm & EMM_SHARED))
-			rdr->saveemm -= EMM_SHARED;
-		if (i)
-			rdr->saveemm |= EMM_SHARED;
+	if (streq(token, "saveemm-s")) {
+		flags_fn(token, value, &rdr->saveemm, EMM_SHARED, NULL);
 		return;
 	}
 
-	if (!strcmp(token, "saveemm-g")) {
-		i=atoi(value);
-		if (!i && (rdr->saveemm & EMM_GLOBAL))
-			rdr->saveemm -= EMM_GLOBAL;
-		if (i)
-			rdr->saveemm |= EMM_GLOBAL;
+	if (streq(token, "saveemm-g")) {
+		flags_fn(token, value, &rdr->saveemm, EMM_GLOBAL, NULL);
 		return;
 	}
 
@@ -1527,29 +1509,15 @@ int32_t write_server(void)
 			if (rdr->cachemm || cfg.http_full_cfg)
 				fprintf_conf(f, "emmcache", "%d,%d,%d\n", rdr->cachemm, rdr->rewritemm, rdr->logemm);
 
-			if ((rdr->blockemm & EMM_UNKNOWN) || cfg.http_full_cfg)
-				fprintf_conf(f, "blockemm-unknown", "%d\n", (rdr->blockemm & EMM_UNKNOWN) ? 1: 0);
+			flags_fn("blockemm-unknown", NULL, &rdr->blockemm, EMM_UNKNOWN, f);
+			flags_fn("blockemm-u"      , NULL, &rdr->blockemm, EMM_UNIQUE, f);
+			flags_fn("blockemm-s"      , NULL, &rdr->blockemm, EMM_SHARED, f);
+			flags_fn("blockemm-g"      , NULL, &rdr->blockemm, EMM_GLOBAL, f);
 
-			if ((rdr->blockemm & EMM_UNIQUE) || cfg.http_full_cfg)
-				fprintf_conf(f, "blockemm-u", "%d\n", (rdr->blockemm & EMM_UNIQUE) ? 1: 0);
-
-			if ((rdr->blockemm & EMM_SHARED) || cfg.http_full_cfg)
-				fprintf_conf(f, "blockemm-s", "%d\n", (rdr->blockemm & EMM_SHARED) ? 1: 0);
-
-			if ((rdr->blockemm & EMM_GLOBAL) || cfg.http_full_cfg)
-				fprintf_conf(f, "blockemm-g", "%d\n", (rdr->blockemm & EMM_GLOBAL) ? 1: 0);
-
-			if ((rdr->saveemm & EMM_UNKNOWN) || cfg.http_full_cfg)
-				fprintf_conf(f, "saveemm-unknown", "%d\n", (rdr->saveemm & EMM_UNKNOWN) ? 1: 0);
-
-			if ((rdr->saveemm & EMM_UNIQUE) || cfg.http_full_cfg)
-				fprintf_conf(f, "saveemm-u", "%d\n", (rdr->saveemm & EMM_UNIQUE) ? 1: 0);
-
-			if ((rdr->saveemm & EMM_SHARED) || cfg.http_full_cfg)
-				fprintf_conf(f, "saveemm-s", "%d\n", (rdr->saveemm & EMM_SHARED) ? 1: 0);
-
-			if ((rdr->saveemm & EMM_GLOBAL) || cfg.http_full_cfg)
-				fprintf_conf(f, "saveemm-g", "%d\n", (rdr->saveemm & EMM_GLOBAL) ? 1: 0);
+			flags_fn("saveemm-unknown" , NULL, &rdr->saveemm, EMM_UNKNOWN, f);
+			flags_fn("saveemm-u"       , NULL, &rdr->saveemm, EMM_UNIQUE, f);
+			flags_fn("saveemm-s"       , NULL, &rdr->saveemm, EMM_SHARED, f);
+			flags_fn("saveemm-g"       , NULL, &rdr->saveemm, EMM_GLOBAL, f);
 
 			value = mk_t_emmbylen(rdr);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
