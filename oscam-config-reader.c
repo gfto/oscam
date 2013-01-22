@@ -516,7 +516,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "inactivitytimeout")) {
-		rdr->tcp_ito  = strToIntVal(value, rdr->typ == R_CCCAM?30:DEFAULT_INACTIVITYTIMEOUT);
+		rdr->tcp_ito  = strToIntVal(value, DEFAULT_INACTIVITYTIMEOUT);
 		return;
 	}
 
@@ -1325,7 +1325,7 @@ int32_t write_server(void)
 				fprintf_conf(f, "services", "%s\n", value);
 			free_mk_t(value);
 
-			if (((rdr->typ != R_CCCAM && rdr->tcp_ito != DEFAULT_INACTIVITYTIMEOUT) || (rdr->typ == R_CCCAM && rdr->tcp_ito != 30) || cfg.http_full_cfg) && !isphysical)
+			if ((rdr->tcp_ito != DEFAULT_INACTIVITYTIMEOUT || cfg.http_full_cfg) && !isphysical)
 				fprintf_conf(f, "inactivitytimeout", "%d\n", rdr->tcp_ito);
 
 			if ((rdr->resetcycle != 0 || cfg.http_full_cfg) && isphysical)
