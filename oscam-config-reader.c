@@ -492,6 +492,23 @@ static void cacheex_ecm_filter_fn(const char *token, char *value, void *setting,
 }
 #endif
 
+static void caid_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		if (strlen(value)) {
+			chk_caidtab(value, &rdr->ctab);
+		} else {
+			clear_caidtab(&rdr->ctab);
+		}
+		rdr->changes_since_shareupdate = 1;
+		return;
+	}
+	value = mk_t_caidtab(&rdr->ctab);
+	if (strlen(value) > 0 || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%s\n", value);
+	free_mk_t(value);
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -640,16 +657,9 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "caid")) {
-		if(strlen(value) == 0) {
-			clear_caidtab(&rdr->ctab);
-			rdr->changes_since_shareupdate = 1;
-			return;
-		} else {
-			chk_caidtab(value, &rdr->ctab);
-			rdr->changes_since_shareupdate = 1;
-			return;
-		}
+	if (streq(token, "caid")) {
+		caid_fn(token, value, rdr, NULL);
+		return;
 	}
 
   if (!strcmp(token, "boxid")) {
@@ -1400,10 +1410,7 @@ int32_t write_server(void)
 			if (rdr->log_port || cfg.http_full_cfg)
 				fprintf_conf(f, "logport", "%d\n", rdr->log_port);
 
-			value = mk_t_caidtab(&rdr->ctab);
-			if (strlen(value) > 0 || cfg.http_full_cfg)
-				fprintf_conf(f, "caid", "%s\n", value);
-			free_mk_t(value);
+			caid_fn("caid", NULL, rdr, f);
 
 			if (rdr->boxid && isphysical)
 				fprintf_conf(f, "boxid", "%08X\n", rdr->boxid);
