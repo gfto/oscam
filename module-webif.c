@@ -4441,6 +4441,13 @@ static char *send_oscam_image(struct templatevars *vars, FILE *f, struct uripara
 	return "1";
 }
 
+static char *send_oscam_robots_txt(FILE *f) {
+	const char *content = "User-agent: *\nDisallow: /\n";
+	send_headers(f, 200, "OK", NULL, "text/plain", 0, strlen(content), (char *)content, 0);
+	webif_write_raw((char *)content, f, strlen(content));
+	return "1";
+}
+
 static char *send_oscam_graph(struct templatevars *vars) {
 	return tpl_getTpl(vars, "GRAPH");
 }
@@ -4804,7 +4811,9 @@ static int32_t process_request(FILE *f, IN_ADDR_T in) {
 			"/cacheex.html",
 			"/oscamapi.json",
 			"/emm.html",
-			"/emm_running.html"	};
+			"/emm_running.html",
+			"/robots.txt",
+		};
 
 		int32_t pagescnt = sizeof(pages)/sizeof(char *); // Calculate the amount of items in array
 		int32_t i, bufsize, len, pgidx = -1;
@@ -5039,6 +5048,7 @@ static int32_t process_request(FILE *f, IN_ADDR_T in) {
 				case 24: result = send_oscam_api(vars, f, &params, keepalive, 2, extraheader); break; //oscamapi.json
 				case 25: result = send_oscam_EMM(vars, &params); break; //emm.html
 				case 26: result = send_oscam_EMM_running(vars, &params); break; //emm_running.html
+				case 27: result = send_oscam_robots_txt(f); break; //robots.txt
 				default: result = send_oscam_status(vars, &params, 0); break;
 			}
 			if(pgidx != 19 && pgidx != 20) cs_writeunlock(&http_lock);

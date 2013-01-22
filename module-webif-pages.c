@@ -316,6 +316,7 @@ AAAAAElFTkSuQmCC"
 <HEAD>\n\
 	<TITLE>OSCAM ##CS_VERSION## build r##CS_SVN_VERSION##</TITLE>\n\
 	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=##HTTP_CHARSET##\">\n\
+	<meta name=\"robots\" content=\"noindex,nofollow\">\n\
 	<link rel=\"stylesheet\" type=\"text/css\" href=\"site.css\">\n\
 	<link href=\"favicon.ico\" rel=\"icon\" type=\"image/x-icon\">\n\
 	<script type=\"text/javascript\" src=\"oscam.js\"></script>\n\
