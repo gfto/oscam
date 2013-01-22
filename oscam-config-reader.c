@@ -456,6 +456,24 @@ static void key_fn(const char *token, char *value, void *setting, FILE *f) {
 	}
 }
 
+static void services_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		if (strlen(value)) {
+			chk_services(value, &rdr->sidtabok, &rdr->sidtabno);
+		} else {
+			rdr->sidtabok = 0;
+			rdr->sidtabno = 0;
+		}
+		rdr->changes_since_shareupdate = 1;
+		return;
+	}
+	value = mk_t_service((uint64_t)rdr->sidtabok, (uint64_t)rdr->sidtabno);
+	if (strlen(value) > 0 || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%s\n", value);
+	free_mk_t(value);
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -520,19 +538,10 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "services")) {
-		if(strlen(value) == 0) {
-			rdr->sidtabok = 0;
-			rdr->sidtabno = 0;
-			rdr->changes_since_shareupdate = 1;
-			return;
-		} else {
-			chk_services(value, &rdr->sidtabok, &rdr->sidtabno);
-			rdr->changes_since_shareupdate = 1;
-			return;
-		}
+	if (streq(token, "services")) {
+		services_fn(token, value, rdr, NULL);
+		return;
 	}
-
 	if (!strcmp(token, "inactivitytimeout")) {
 		rdr->tcp_ito  = strToIntVal(value, DEFAULT_INACTIVITYTIMEOUT);
 		return;
@@ -1329,10 +1338,7 @@ int32_t write_server(void)
 			if ((rdr->emmfile || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, "readnano", "%s\n", rdr->emmfile?rdr->emmfile:"");
 
-			value = mk_t_service((uint64_t)rdr->sidtabok, (uint64_t)rdr->sidtabno);
-			if (strlen(value) > 0 || cfg.http_full_cfg)
-				fprintf_conf(f, "services", "%s\n", value);
-			free_mk_t(value);
+			services_fn("services", NULL, rdr, f);
 
 			if ((rdr->tcp_ito != DEFAULT_INACTIVITYTIMEOUT || cfg.http_full_cfg) && !isphysical)
 				fprintf_conf(f, "inactivitytimeout", "%d\n", rdr->tcp_ito);
