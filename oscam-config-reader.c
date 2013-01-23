@@ -561,6 +561,27 @@ static void flags_fn(const char *token, char *value, void *setting, long flag, F
 		fprintf_conf(f, token, "%d\n", (*var & flag) ? 1 : 0);
 }
 
+static void ins7E_fn(const char *token, char *value, void *setting, long var_size, FILE *f) {
+	uint8_t *var = setting;
+	var_size -= 1; // var_size contains sizeof(var) which is [X + 1]
+	if (value) {
+		int32_t len = strlen(value);
+		if (len != var_size * 2 || key_atob_l(value, var, len)) {
+			if (len > 0)
+				fprintf(stderr, "reader %s parse error, %s=%s\n", token, token, value);
+			memset(var, 0, var_size + 1);
+		} else {
+			var[var_size] = 1; // found and correct
+		}
+		return;
+	}
+	if (var[var_size]) {
+		char tmp[var_size * 2 + 1];
+		fprintf_conf(f, token, "%s\n", cs_hexdump(0, var, var_size, tmp, sizeof(tmp)));
+	} else if (cfg.http_full_cfg)
+		fprintf_conf(f, token, "\n");
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -727,27 +748,14 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		rsakey_fn(token, value, rdr, NULL);
 		return;
 	}
-	if (!strcmp(token, "ins7e")) {
-		int32_t len = strlen(value);
-		if (len != 0x1A*2 || key_atob_l(value, rdr->ins7E, len)) {
-			if (len > 0)
-				fprintf(stderr, "Configuration reader: Error in ins7E\n");
-			memset(rdr->ins7E, 0, sizeof(rdr->ins7E));
-		}
-		else
-			rdr->ins7E[0x1A] = 1; // found and correct
+
+	if (streq(token, "ins7e")) {
+		ins7E_fn(token, value, rdr->ins7E, sizeof(rdr->ins7E), NULL);
 		return;
 	}
 
-	if (!strcmp(token, "ins7e11")) {
-		int32_t len = strlen(value);
-		if (len != 0x01*2 || key_atob_l(value, rdr->ins7E11, len)) {
-			if (len > 0)
-				fprintf(stderr, "Configuration reader: Error in ins7E11\n");
-			memset(rdr->ins7E11, 0, sizeof(rdr->ins7E11));
-		}
-		else
-			rdr->ins7E11[0x01] = 1; // found and correct
+	if (streq(token, "ins7e11")) {
+		ins7E_fn(token, value, rdr->ins7E11, sizeof(rdr->ins7E11), NULL);
 		return;
 	}
 
@@ -1423,17 +1431,10 @@ int32_t write_server(void)
 
 			rsakey_fn("rsakey", NULL, rdr, f);
 
-			if (rdr->ins7E[0x1A] && isphysical) {
-				char tmp[0x1A*2+1];
-				fprintf_conf(f, "ins7e", "%s\n", cs_hexdump(0, rdr->ins7E, 0x1A, tmp, sizeof(tmp)));
-			} else if (cfg.http_full_cfg && isphysical)
-				fprintf_conf(f, "ins7e", "\n");
-
-			if (rdr->ins7E11[0x01] && isphysical) {
-				char tmp[0x01*2+1];
-				fprintf_conf(f, "ins7e11", "%s\n", cs_hexdump(0, rdr->ins7E11, 0x01, tmp, sizeof(tmp)));
-			} else if (cfg.http_full_cfg && isphysical)
-				fprintf_conf(f, "ins7e11", "\n");
+			if (isphysical) {
+				ins7E_fn("ins7e", NULL, rdr->ins7E, sizeof(rdr->ins7E), f);
+				ins7E_fn("ins7e11", NULL, rdr->ins7E11, sizeof(rdr->ins7E11), f);
+			}
 
 			if ((rdr->force_irdeto || cfg.http_full_cfg) && isphysical) {
 				fprintf_conf(f, "force_irdeto", "%d\n", rdr->force_irdeto);
