@@ -727,6 +727,23 @@ static void emmcache_fn(const char *token, char *value, void *setting, FILE *f) 
 		fprintf_conf(f, token, "%d,%d,%d\n", rdr->cachemm, rdr->rewritemm, rdr->logemm);
 }
 
+static void blockemm_bylen_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		int32_t i;
+		char *ptr, *saveptr1 = NULL;
+		for (i = 0; i < CS_MAXEMMBLOCKBYLEN; i++)
+			rdr->blockemmbylen[i] = 0;
+		for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < CS_MAXEMMBLOCKBYLEN) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++)
+			rdr->blockemmbylen[i] = atoi(ptr);
+		return;
+	}
+	value = mk_t_emmbylen(rdr);
+	if (strlen(value) > 0 || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%s\n", value);
+	free_mk_t(value);
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -1069,12 +1086,8 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "blockemm-bylen")) {
-		for (i = 0; i < CS_MAXEMMBLOCKBYLEN; i++)
-			rdr->blockemmbylen[i] = 0;
-		for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < CS_MAXEMMBLOCKBYLEN) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++)
-			rdr->blockemmbylen[i] = atoi(ptr);
-
+	if (streq(token, "blockemm-bylen")) {
+		blockemm_bylen_fn(token, value, rdr, NULL);
 		return;
 	}
 
@@ -1575,10 +1588,7 @@ int32_t write_server(void)
 			flags_fn("saveemm-s"       , NULL, &rdr->saveemm, EMM_SHARED, f);
 			flags_fn("saveemm-g"       , NULL, &rdr->saveemm, EMM_GLOBAL, f);
 
-			value = mk_t_emmbylen(rdr);
-			if (strlen(value) > 0 || cfg.http_full_cfg)
-				fprintf_conf(f, "blockemm-bylen", "%s\n", value);
-			free_mk_t(value);
+			blockemm_bylen_fn("blockemm-bylen", NULL, rdr, f);
 
 #ifdef WITH_LB
 			if (rdr->lb_weight != 100 || cfg.http_full_cfg)
