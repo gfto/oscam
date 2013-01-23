@@ -640,6 +640,19 @@ static void ident_fn(const char *token, char *value, void *setting, FILE *f) {
 	free_mk_t(value);
 }
 
+static void chid_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		chk_ftab(value, &rdr->fchid, "reader", rdr->label, "chid");
+		rdr->changes_since_shareupdate = 1;
+		return;
+	}
+	value = mk_t_ftab(&rdr->fchid);
+	if (strlen(value) > 0 || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%s\n", value);
+	free_mk_t(value);
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -895,9 +908,8 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "chid")) {
-		chk_ftab(value, &rdr->fchid,"reader",rdr->label,"chid");
-		rdr->changes_since_shareupdate = 1;
+	if (streq(token, "chid")) {
+		chid_fn(token, value, rdr, NULL);
 		return;
 	}
 
@@ -1507,11 +1519,7 @@ int32_t write_server(void)
 
 			//Todo: write reader class
 
-			value = mk_t_ftab(&rdr->fchid);
-			if (strlen(value) > 0 || cfg.http_full_cfg)
-				fprintf_conf(f, "chid", "%s\n", value);
-			free_mk_t(value);
-
+			chid_fn("chid", NULL, rdr, f);
 			value = mk_t_cltab(&rdr->cltab);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, "class", "%s\n", value);
