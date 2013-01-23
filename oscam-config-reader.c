@@ -677,6 +677,26 @@ static void aeskeys_fn(const char *token, char *value, void *setting, FILE *f) {
 	free_mk_t(value);
 }
 
+static void group_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		char *ptr, *saveptr1 = NULL;
+		rdr->grp = 0;
+		for (ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1)) {
+			int32_t g;
+			g = atoi(ptr);
+			if (g > 0 && g < 65) {
+				rdr->grp |= (((uint64_t)1)<<(g-1));
+			}
+		}
+		return;
+	}
+	value = mk_t_group(rdr->grp);
+	if (strlen(value) > 0 || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%s\n", value);
+	free_mk_t(value);
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -937,15 +957,8 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "group")) {
-		rdr->grp = 0;
-		for (ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1)) {
-			int32_t g;
-			g = atoi(ptr);
-			if ((g>0) && (g<65)) {
-				rdr->grp |= (((uint64_t)1)<<(g-1));
-			}
-		}
+	if (streq(token, "group")) {
+		group_fn(token, value, rdr, NULL);
 		return;
 	}
 
@@ -1549,10 +1562,7 @@ int32_t write_server(void)
 
 			aeskeys_fn("aeskeys", NULL, rdr, f);
 
-			value = mk_t_group(rdr->grp);
-			if (strlen(value) > 0 || cfg.http_full_cfg)
-				fprintf_conf(f, "group", "%s\n", value);
-			free_mk_t(value);
+			group_fn("group", NULL, rdr, f);
 
 			if (rdr->cachemm || cfg.http_full_cfg)
 				fprintf_conf(f, "emmcache", "%d,%d,%d\n", rdr->cachemm, rdr->rewritemm, rdr->logemm);
