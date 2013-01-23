@@ -804,6 +804,43 @@ static void auprovid_fn(const char *token, char *value, void *setting, FILE *f) 
 		fprintf_conf(f, token, "\n");
 }
 
+static void ratelimitecm_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		rdr->ratelimitecm = 0;
+		if (strlen(value)) {
+			int i;
+			rdr->ratelimitecm = atoi(value);
+			for (i = 0; i < MAXECMRATELIMIT; i++) { // reset all slots
+				rdr->rlecmh[i].srvid = -1;
+				rdr->rlecmh[i].last = -1;
+			}
+		}
+		return;
+	}
+	if (rdr->ratelimitecm || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%d\n", rdr->ratelimitecm);
+}
+
+static void ratelimitseconds_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		if (strlen(value) == 0) {
+			if (rdr->ratelimitecm > 0) {
+				rdr->ratelimitseconds = 10;
+			} else {
+				rdr->ratelimitecm = 0; // in case someone set a negative value
+				rdr->ratelimitseconds = 0;
+			}
+		} else {
+			rdr->ratelimitseconds = atoi(value);
+		}
+		return;
+	}
+	if (rdr->ratelimitecm || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%d\n", rdr->ratelimitseconds);
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -1225,35 +1262,15 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 #endif
 
-	//ratelimit
-	if (!strcmp(token, "ratelimitecm")) {
-		if (strlen(value) == 0) {
-			rdr->ratelimitecm = 0;
-			return;
-		} else {
-			rdr->ratelimitecm = atoi(value);
-			for (i = 0; i < MAXECMRATELIMIT; i++) { // reset all slots
-				rdr->rlecmh[i].srvid = -1;
-				rdr->rlecmh[i].last = -1;
-			}
-			return;
-		}
-	}
-	if (!strcmp(token, "ratelimitseconds")) {
-		if (strlen(value) == 0) {
-			if (rdr->ratelimitecm > 0) {
-				rdr->ratelimitseconds = 10;
-			} else {
-				rdr->ratelimitecm = 0; // in case someone set a negative value
-				rdr->ratelimitseconds = 0;
-			}
-			return;
-		} else {
-			rdr->ratelimitseconds = atoi(value);
-			return;
-		}
+	if (streq(token, "ratelimitecm")) {
+		ratelimitecm_fn(token, value, rdr, NULL);
+		return;
 	}
 
+	if (streq(token, "ratelimitseconds")) {
+		ratelimitseconds_fn(token, value, rdr, NULL);
+		return;
+	}
 	// cooldown for readout of oscam.server file
 	if (!strcmp(token, "cooldown")) {
 		if(strlen(value) == 0) {
@@ -1675,8 +1692,8 @@ int32_t write_server(void)
 				fprintf_conf(f, "ndsversion", "%d\n", rdr->ndsversion);
 
 			if ((rdr->ratelimitecm || cfg.http_full_cfg) && isphysical) {
-				fprintf_conf(f, "ratelimitecm", "%d\n", rdr->ratelimitecm);
-				fprintf_conf(f, "ratelimitseconds", "%d\n", rdr->ratelimitseconds);
+				ratelimitecm_fn("ratelimitecm", NULL, rdr, f);
+				ratelimitseconds_fn("ratelimitseconds", NULL, rdr, f);
 			}
 
 			if ((rdr->cooldown[0] || cfg.http_full_cfg) && isphysical) {
