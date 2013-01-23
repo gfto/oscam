@@ -606,6 +606,23 @@ static void atr_fn(const char *token, char *value, void *setting, FILE *f) {
 	}
 }
 
+static void detect_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		int i;
+		for (i = 0; RDR_CD_TXT[i]; i++) {
+			if (!strcmp(value, RDR_CD_TXT[i])) {
+				rdr->detect = i;
+			} else {
+				if (value[0] == '!' && streq(value + 1, RDR_CD_TXT[i]))
+					rdr->detect = i | 0x80;
+			}
+		}
+		return;
+	}
+	fprintf_conf(f, token, "%s%s\n", rdr->detect & 0x80 ? "!" : "", RDR_CD_TXT[rdr->detect & 0x7f]);
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -815,16 +832,8 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "detect")) {
-		for (i = 0; RDR_CD_TXT[i]; i++) {
-			if (!strcmp(value, RDR_CD_TXT[i])) {
-				rdr->detect = i;
-			}
-			else {
-				if ((value[0] == '!') && (!strcmp(value+1, RDR_CD_TXT[i])))
-					rdr->detect = i|0x80;
-			}
-		}
+	if (streq(token, "detect")) {
+		detect_fn(token, value, rdr, NULL);
 		return;
 	}
 
@@ -1466,10 +1475,7 @@ int32_t write_server(void)
 			ecmheaderwhitelist_fn("ecmheaderwhitelist", NULL, rdr, f);
 
 			if (isphysical) {
-				if (rdr->detect&0x80)
-					fprintf_conf(f, "detect", "!%s\n", RDR_CD_TXT[rdr->detect&0x7f]);
-				else
-					fprintf_conf(f, "detect", "%s\n", RDR_CD_TXT[rdr->detect&0x7f]);
+				detect_fn("detect", NULL, rdr, f);
 			}
 
 			if ((rdr->nagra_read || cfg.http_full_cfg) && isphysical)
