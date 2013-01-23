@@ -790,6 +790,20 @@ static void boxkey_fn(const char *token, char *value, void *setting, FILE *f) {
 	}
 }
 
+static void auprovid_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		rdr->auprovid = 0;
+		if (strlen(value))
+			rdr->auprovid = a2i(value, 3);
+		return;
+	}
+	if (rdr->auprovid)
+		fprintf_conf(f, token, "%06X\n", rdr->auprovid);
+	else if (cfg.http_full_cfg)
+		fprintf_conf(f, token, "\n");
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -1188,14 +1202,9 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "auprovid")) {
-		if (strlen(value) == 0) {
-			rdr->auprovid = 0;
-			return;
-		} else {
-			rdr->auprovid = a2i(value, 3);
-			return;
-		}
+	if (streq(token, "auprovid")) {
+		auprovid_fn(token, value, rdr, NULL);
+		return;
 	}
 
 	if (streq(token, "aeskeys")) {
@@ -1660,10 +1669,7 @@ int32_t write_server(void)
 			if (rdr->audisabled || cfg.http_full_cfg)
 				fprintf_conf(f, "audisabled", "%d\n", rdr->audisabled);
 
-			if (rdr->auprovid)
-				fprintf_conf(f, "auprovid", "%06X\n", rdr->auprovid);
-			else if (cfg.http_full_cfg)
-				fprintf_conf(f, "auprovid", "\n");
+			auprovid_fn("auprovid", NULL, rdr, f);
 
 			if ((rdr->ndsversion || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, "ndsversion", "%d\n", rdr->ndsversion);
