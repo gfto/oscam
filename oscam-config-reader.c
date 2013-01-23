@@ -623,6 +623,23 @@ static void detect_fn(const char *token, char *value, void *setting, FILE *f) {
 	fprintf_conf(f, token, "%s%s\n", rdr->detect & 0x80 ? "!" : "", RDR_CD_TXT[rdr->detect & 0x7f]);
 }
 
+static void ident_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		if (strlen(value)) {
+			chk_ftab(value, &rdr->ftab, "reader", rdr->label, "provid");
+		} else {
+			clear_ftab(&rdr->ftab);
+		}
+		rdr->changes_since_shareupdate = 1;
+		return;
+	}
+	value = mk_t_ftab(&rdr->ftab);
+	if (strlen(value) > 0 || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%s\n", value);
+	free_mk_t(value);
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -867,16 +884,10 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 #endif
-	if (!strcmp(token, "ident")) {
-		if(strlen(value) == 0) {
-			clear_ftab(&rdr->ftab);
-			rdr->changes_since_shareupdate = 1;
-			return;
-		} else {
-			chk_ftab(value, &rdr->ftab,"reader",rdr->label,"provid");
-			rdr->changes_since_shareupdate = 1;
-			return;
-		}
+
+	if (streq(token, "ident")) {
+		ident_fn(token, value, rdr, NULL);
+		return;
 	}
 
 	if (!strcmp(token, "class")) {
@@ -1492,10 +1503,7 @@ int32_t write_server(void)
 				fprintf_conf(f, "mode", "%d\n", rdr->azbox_mode);
 #endif
 
-			value = mk_t_ftab(&rdr->ftab);
-			if (strlen(value) > 0 || cfg.http_full_cfg)
-				fprintf_conf(f, "ident", "%s\n", value);
-			free_mk_t(value);
+			ident_fn("ident", NULL, rdr, f);
 
 			//Todo: write reader class
 
