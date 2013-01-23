@@ -697,6 +697,36 @@ static void group_fn(const char *token, char *value, void *setting, FILE *f) {
 	free_mk_t(value);
 }
 
+static void emmcache_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		rdr->cachemm   = 0;
+		rdr->rewritemm = 0;
+		rdr->logemm    = 0;
+		if (strlen(value)) {
+			int i;
+			char *ptr, *saveptr1 = NULL;
+			for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 3) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
+				switch(i) {
+				case 0: rdr->cachemm = atoi(ptr);   break;
+				case 1: rdr->rewritemm = atoi(ptr); break;
+				case 2: rdr->logemm = atoi(ptr);    break;
+				}
+			}
+			if (rdr->rewritemm <= 0) {
+				fprintf(stderr, "Setting reader \"emmcache\" to %i,%d,%i instead of %i,%i,%i.",
+						rdr->cachemm, 1, rdr->logemm,
+						rdr->cachemm, rdr->rewritemm, rdr->logemm);
+				fprintf(stderr, "Zero or negative number of rewrites is silly\n");
+				rdr->rewritemm = 1;
+			}
+		}
+		return;
+	}
+	if (rdr->cachemm || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%d,%d,%d\n", rdr->cachemm, rdr->rewritemm, rdr->logemm);
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -962,40 +992,9 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "emmcache")) {
-		if(strlen(value) == 0) {
-			rdr->cachemm = 0;
-			rdr->rewritemm = 0;
-			rdr->logemm = 0;
-			return;
-		} else {
-			for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 3) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
-				switch(i)
-				{
-					case 0:
-						rdr->cachemm = atoi(ptr);
-						break;
-
-					case 1:
-						rdr->rewritemm = atoi(ptr);
-						break;
-
-					case 2: rdr->logemm = atoi(ptr);
-					break;
-				}
-			}
-
-			if (rdr->rewritemm <= 0) {
-				fprintf(stderr, "Notice: Setting EMMCACHE to %i,1,%i instead of %i,%i,%i. ",
-						rdr->cachemm, rdr->logemm,
-						rdr->cachemm, rdr->rewritemm,
-						rdr->logemm);
-
-				fprintf(stderr, "Zero or negative number of rewrites is silly\n");
-				rdr->rewritemm = 1;
-			}
-			return;
-		}
+	if (streq(token, "emmcache")) {
+		emmcache_fn(token, value, rdr, NULL);
+		return;
 	}
 
 	if (!strcmp(token, "blocknano")) {
@@ -1564,8 +1563,7 @@ int32_t write_server(void)
 
 			group_fn("group", NULL, rdr, f);
 
-			if (rdr->cachemm || cfg.http_full_cfg)
-				fprintf_conf(f, "emmcache", "%d,%d,%d\n", rdr->cachemm, rdr->rewritemm, rdr->logemm);
+			emmcache_fn("emmcache", NULL, rdr, f);
 
 			flags_fn("blockemm-unknown", NULL, &rdr->blockemm, EMM_UNKNOWN, f);
 			flags_fn("blockemm-u"      , NULL, &rdr->blockemm, EMM_UNIQUE, f);
