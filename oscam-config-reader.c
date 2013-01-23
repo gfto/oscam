@@ -769,6 +769,27 @@ static void nano_fn(const char *token, char *value, void *setting, FILE *f) {
 	free_mk_t(value);
 }
 
+static void boxkey_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		if (strlen(value) != 16) {
+			memset(rdr->nagra_boxkey, 0, 16);
+		} else {
+			if (key_atob_l(value, rdr->nagra_boxkey, 16)) {
+				fprintf(stderr, "Configuration reader: Error in boxkey\n");
+				memset(rdr->nagra_boxkey, 0, sizeof(rdr->nagra_boxkey));
+			}
+		}
+		return;
+	}
+	int32_t len = check_filled(rdr->nagra_boxkey, 8);
+	if (len > 0 || cfg.http_full_cfg) {
+		char tmp[17];
+		fprintf_conf(f, token, "%s\n", len > 0 ?
+			cs_hexdump(0, rdr->nagra_boxkey, 8, tmp, sizeof(tmp)) : "");
+	}
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -946,17 +967,9 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "boxkey")) {
-		if(strlen(value) != 16 ) {
-			memset(rdr->nagra_boxkey, 0, 16);
-			return;
-		} else {
-			if (key_atob_l(value, rdr->nagra_boxkey, 16)) {
-				fprintf(stderr, "Configuration reader: Error in boxkey\n");
-				memset(rdr->nagra_boxkey, 0, sizeof(rdr->nagra_boxkey));
-			}
-			return;
-		}
+	if (streq(token, "boxkey")) {
+		boxkey_fn(token, value, rdr, NULL);
+		return;
 	}
 
 	if (!strcmp(token, "force_irdeto")) {
@@ -1536,11 +1549,8 @@ int32_t write_server(void)
 				fprintf_conf(f, "force_irdeto", "%d\n", rdr->force_irdeto);
 			}
 
-			int32_t len = check_filled(rdr->nagra_boxkey, 8);
-			if ((len > 0 || cfg.http_full_cfg) && isphysical){
-				char tmp[17];
-				fprintf_conf(f, "boxkey", "%s\n", len>0?cs_hexdump(0, rdr->nagra_boxkey, 8, tmp, sizeof(tmp)):"");
-			}
+			if (isphysical)
+				boxkey_fn("boxkey", NULL, rdr, f);
 
 			if (isphysical)
 				atr_fn("atr", NULL, rdr, f);
