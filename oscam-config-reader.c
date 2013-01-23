@@ -1595,14 +1595,12 @@ int32_t write_server(void)
 				fprintf_conf(f, "lb_weight", "%d\n", rdr->lb_weight);
 #endif
 
-			//savenano
-			value = mk_t_nano(rdr, 0x02);
+			value = mk_t_nano(rdr->s_nano);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, "savenano", "%s\n", value);
 			free_mk_t(value);
 
-			//blocknano
-			value = mk_t_nano(rdr, 0x01);
+			value = mk_t_nano(rdr->b_nano);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, "blocknano", "%s\n", value);
 			free_mk_t(value);

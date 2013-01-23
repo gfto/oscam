@@ -15,7 +15,7 @@ extern char *mk_t_cccam_port(void);
 extern char *mk_t_aeskeys(struct s_reader *rdr);
 extern char *mk_t_newcamd_port(void);
 extern char *mk_t_aureader(struct s_auth *account);
-extern char *mk_t_nano(struct s_reader *rdr, uchar flag);
+extern char *mk_t_nano(uint16_t nano);
 extern char *mk_t_service( uint64_t sidtabok, uint64_t sidtabno);
 extern char *mk_t_logfile(void);
 extern char *mk_t_iprange(struct s_ip *range);

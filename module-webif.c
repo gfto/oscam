@@ -1485,12 +1485,12 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_printf(vars, TPLADD, "EMMCACHE", "%d,%d,%d", rdr->cachemm, rdr->rewritemm, rdr->logemm);
 
 	//savenano
-	value = mk_t_nano(rdr, 0x02);
+	value = mk_t_nano(rdr->s_nano);
 	tpl_addVar(vars, TPLADD, "SAVENANO", value);
 	free_mk_t(value);
 
 	//blocknano
-	value = mk_t_nano(rdr, 0x01);
+	value = mk_t_nano(rdr->b_nano);
 	tpl_addVar(vars, TPLADD, "BLOCKNANO", value);
 	free_mk_t(value);
 

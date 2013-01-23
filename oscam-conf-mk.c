@@ -357,16 +357,9 @@ char *mk_t_aureader(struct s_auth *account) {
 
 /*
  * Creates a string ready to write as a token into config or WebIf for blocknano and savenano. You must free the returned value through free_mk_t().
- * flag 0x01 for blocknano or 0x02 for savenano
  */
-char *mk_t_nano(struct s_reader *rdr, uchar flag) {
+char *mk_t_nano(uint16_t nano) {
 	int32_t i, pos = 0, needed = 0;
-	uint16_t nano = 0;
-
-	if (flag==0x01)
-		nano=rdr->b_nano;
-	else
-		nano=rdr->s_nano;
 
 	for (i=0; i<16; i++)
 		if ((1 << i) & nano)
