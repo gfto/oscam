@@ -582,6 +582,30 @@ static void ins7E_fn(const char *token, char *value, void *setting, long var_siz
 		fprintf_conf(f, token, "\n");
 }
 
+static void atr_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		memset(rdr->atr, 0, sizeof(rdr->atr));
+		rdr->atrlen = strlen(value);
+		if (rdr->atrlen) {
+			if (rdr->atrlen > (int32_t)sizeof(rdr->atr) * 2)
+				rdr->atrlen = (int32_t)sizeof(rdr->atr) * 2;
+			key_atob_l(value, rdr->atr, rdr->atrlen);
+		}
+		return;
+	}
+	if (rdr->atr[0] || cfg.http_full_cfg) {
+		int j;
+		fprintf_conf(f, token, "%s", ""); // it should not have \n at the end
+		if (rdr->atr[0]) {
+			for (j = 0; j < rdr->atrlen / 2; j++) {
+				fprintf(f, "%02X", rdr->atr[j]);
+			}
+		}
+		fprintf(f, "\n");
+	}
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -777,20 +801,10 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-
-	if ((!strcmp(token, "atr"))) {
-		memset(rdr->atr, 0, sizeof(rdr->atr));
-		rdr->atrlen = strlen(value);
-		if(rdr->atrlen == 0) {
-			return;
-		} else {
-			if(rdr->atrlen > (int32_t)sizeof(rdr->atr) * 2)
-				rdr->atrlen = (int32_t)sizeof(rdr->atr) * 2;
-			key_atob_l(value, rdr->atr, rdr->atrlen);
-			return;
-		}
+	if (streq(token, "atr")) {
+		atr_fn(token, value, rdr, NULL);
+		return;
 	}
-
 	if (streq(token, "ecmwhitelist")) {
 		ecmwhitelist_fn(token, value, rdr, NULL);
 		return;
@@ -1334,7 +1348,6 @@ void free_reader(struct s_reader *rdr)
 
 int32_t write_server(void)
 {
-	int32_t j;
 	char *value;
 	FILE *f = create_config_file(cs_srvr);
 	if (!f)
@@ -1446,15 +1459,8 @@ int32_t write_server(void)
 				fprintf_conf(f, "boxkey", "%s\n", len>0?cs_hexdump(0, rdr->nagra_boxkey, 8, tmp, sizeof(tmp)):"");
 			}
 
-			if ((rdr->atr[0] || cfg.http_full_cfg) && isphysical) {
-				fprintf_conf(f, "atr", "%s", ""); // it should not have \n at the end
-				if(rdr->atr[0]){
-					for (j=0; j < rdr->atrlen/2; j++) {
-						fprintf(f, "%02X", rdr->atr[j]);
-					}
-				}
-				fprintf(f, "\n");
-			}
+			if (isphysical)
+				atr_fn("atr", NULL, rdr, f);
 
 			ecmwhitelist_fn("ecmwhitelist", NULL, rdr, f);
 			ecmheaderwhitelist_fn("ecmheaderwhitelist", NULL, rdr, f);
