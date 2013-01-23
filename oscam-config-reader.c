@@ -841,10 +841,60 @@ static void ratelimitseconds_fn(const char *token, char *value, void *setting, F
 		fprintf_conf(f, token, "%d\n", rdr->ratelimitseconds);
 }
 
+static void cooldown_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		if(strlen(value) == 0) {
+			rdr->cooldown[0] = 0;
+			rdr->cooldown[1] = 0;
+		} else {
+			int32_t i;
+			char *ptr, *saveptr1 = NULL;
+			for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 2) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
+				rdr->cooldown[i] = atoi(ptr);
+			}
+			if (rdr->cooldown[0] <= 0 || rdr->cooldown[1] <= 0) {
+				fprintf(stderr, "cooldown must have 2 positive values (x,y) set values %d,%d ! cooldown deactivated\n",
+						rdr->cooldown[0], rdr->cooldown[1]);
+				rdr->cooldown[0] = 0;
+				rdr->cooldown[1] = 0;
+			}
+		}
+		return;
+	}
+	if (rdr->cooldown[0] || cfg.http_full_cfg) {
+		fprintf_conf(f, token, "%d,%d\n", rdr->cooldown[0], rdr->cooldown[1]);
+	}
+}
+
+static void cooldowndelay_fn(const char *UNUSED(token), char *value, void *setting, FILE *UNUSED(f)) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		rdr->cooldown[0] = strlen(value) ? atoi(value) : 0;
+	}
+	// This option is *not* written in the config file.
+	// It is only set by WebIf as convenience
+}
+
+static void cooldowntime_fn(const char *UNUSED(token), char *value, void *setting, FILE *UNUSED(f)) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		if (strlen(value) == 0) {
+			rdr->cooldown[0] = 0; // no cooling down time means no cooling set
+			rdr->cooldown[1] = 0;
+		} else {
+			rdr->cooldown[1] = atoi(value);
+		}
+		return;
+	}
+	// This option is *not* written in the config file.
+	// It is only set by WebIf as convenience
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
-	char *ptr, *saveptr1 = NULL;
+
 	/*
 	 *  case sensitive first
 	 */
@@ -1271,59 +1321,21 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		ratelimitseconds_fn(token, value, rdr, NULL);
 		return;
 	}
-	// cooldown for readout of oscam.server file
-	if (!strcmp(token, "cooldown")) {
-		if(strlen(value) == 0) {
-			rdr->cooldown[0] = 0;
-			rdr->cooldown[1] = 0;
-			return;
-		} else {
-			for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 2) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
-				rdr->cooldown[i] = atoi(ptr);
-/*				switch(i) {
-				case 0:
-					rdr->cooldown[0] = atoi(ptr);
-					break;
 
-				case 1:
-					rdr->cooldown[1] = atoi(ptr);
-					break;
-				}
-*/			}
-
-			if (rdr->cooldown[0] <= 0 || rdr->cooldown[1] <= 0) {
-				fprintf(stderr, "cooldown must have 2 positive values (x,y) set values %d,%d ! cooldown deactivated\n",
-						rdr->cooldown[0], rdr->cooldown[1]);
-
-				rdr->cooldown[0] = 0;
-				rdr->cooldown[1] = 0;
-			}
-
-		}
+	if (streq(token, "cooldown")) {
+		cooldown_fn(token, value, rdr, NULL);
 		return;
 	}
 
-	// cooldown setting loading for web interface
-	if (!strcmp(token, "cooldowndelay")) {
-		if (strlen(value) == 0) {
-			rdr->cooldown[0] = 0;
-			return;
-		} else {
-			rdr->cooldown[0] = atoi(value);
-			return;
-		}
-	}
-	if (!strcmp(token, "cooldowntime")) {
-		if (strlen(value) == 0) {
-			rdr->cooldown[0] = 0; // no cooling down time means no cooling set
-			rdr->cooldown[1] = 0;
-			return;
-		} else {
-			rdr->cooldown[1] = atoi(value);
-			return;
-		}
+	if (streq(token, "cooldowndelay")) {
+		cooldowndelay_fn(token, value, rdr, NULL);
+		return;
 	}
 
+	if (streq(token, "cooldowntime")) {
+		cooldowntime_fn(token, value, rdr, NULL);
+		return;
+	}
 	if (!strcmp(token, "dropbadcws")) {
 		rdr->dropbadcws = strToIntVal(value, 0);
 		return;
@@ -1696,9 +1708,8 @@ int32_t write_server(void)
 				ratelimitseconds_fn("ratelimitseconds", NULL, rdr, f);
 			}
 
-			if ((rdr->cooldown[0] || cfg.http_full_cfg) && isphysical) {
-				fprintf_conf(f, "cooldown", "%d,%d\n", rdr->cooldown[0], rdr->cooldown[1]);
-			}
+			if (isphysical)
+				cooldown_fn("cooldown", NULL, rdr, f);
 
 			fprintf(f, "\n");
 		}
