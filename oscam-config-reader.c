@@ -744,6 +744,31 @@ static void blockemm_bylen_fn(const char *token, char *value, void *setting, FIL
 	free_mk_t(value);
 }
 
+static void nano_fn(const char *token, char *value, void *setting, FILE *f) {
+	uint16_t *nano = setting;
+	if (value) {
+		*nano = 0;
+		if (strlen(value) > 0) {
+			if (streq(value, "all")) {
+				*nano = 0xFFFF;
+			} else {
+				int32_t i;
+				char *ptr, *saveptr1 = NULL;
+				for (ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1)) {
+					i = (byte_atob(ptr) % 0x80);
+					if (i >= 0 && i <= 16)
+						*nano |= (1 << i);
+				}
+			}
+		}
+		return;
+	}
+	value = mk_t_nano(*nano);
+	if (strlen(value) > 0 || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%s\n", value);
+	free_mk_t(value);
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -1014,35 +1039,13 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "blocknano")) {
-		rdr->b_nano = 0;
-		if (strlen(value) > 0) {
-			if (!strcmp(value,"all")) {
-				rdr->b_nano = 0xFFFF;
-			} else {
-				for (ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1)) {
-					i = (byte_atob(ptr) % 0x80);
-					if (i >= 0 && i <= 16)
-						rdr->b_nano |= (1 << i);
-				}
-			}
-		}
+	if (streq(token, "blocknano")) {
+		nano_fn(token, value, &rdr->b_nano, NULL);
 		return;
 	}
 
-	if (!strcmp(token, "savenano")) {
-		rdr->s_nano = 0;
-		if (strlen(value) > 0) {
-			if (!strcmp(value,"all")) {
-				rdr->s_nano = 0xFFFF;
-			} else {
-				for (ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1)) {
-					i = (byte_atob(ptr) % 0x80);
-					if (i >= 0 && i <= 16)
-						rdr->s_nano |= (1 << i);
-				}
-			}
-		}
+	if (streq(token, "savenano")) {
+		nano_fn(token, value, &rdr->s_nano, NULL);
 		return;
 	}
 
@@ -1429,7 +1432,6 @@ void free_reader(struct s_reader *rdr)
 
 int32_t write_server(void)
 {
-	char *value;
 	FILE *f = create_config_file(cs_srvr);
 	if (!f)
 		return 1;
@@ -1595,15 +1597,8 @@ int32_t write_server(void)
 				fprintf_conf(f, "lb_weight", "%d\n", rdr->lb_weight);
 #endif
 
-			value = mk_t_nano(rdr->s_nano);
-			if (strlen(value) > 0 || cfg.http_full_cfg)
-				fprintf_conf(f, "savenano", "%s\n", value);
-			free_mk_t(value);
-
-			value = mk_t_nano(rdr->b_nano);
-			if (strlen(value) > 0 || cfg.http_full_cfg)
-				fprintf_conf(f, "blocknano", "%s\n", value);
-			free_mk_t(value);
+			nano_fn("savenano", NULL, &rdr->s_nano, f);
+			nano_fn("blocknano", NULL, &rdr->b_nano, f);
 
 			if (rdr->dropbadcws)
 				fprintf_conf(f, "dropbadcws", "%d\n", rdr->dropbadcws);
