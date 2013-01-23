@@ -665,6 +665,18 @@ static void class_fn(const char *token, char *value, void *setting, FILE *f) {
 	free_mk_t(value);
 }
 
+static void aeskeys_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		parse_aes_keys(rdr,value);
+		return;
+	}
+	value = mk_t_aeskeys(rdr);
+	if (strlen(value) > 0 || cfg.http_full_cfg)
+		fprintf_conf(f, token, "%s\n", value);
+	free_mk_t(value);
+}
+
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int32_t i;
@@ -1144,9 +1156,9 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		}
 	}
-	// new code for multiple aes key per reader
-	if (!strcmp(token, "aeskeys")) {
-		parse_aes_keys(rdr,value);
+
+	if (streq(token, "aeskeys")) {
+		aeskeys_fn(token, value, rdr, NULL);
 		return;
 	}
 
@@ -1535,10 +1547,7 @@ int32_t write_server(void)
 
 			class_fn("class", NULL, rdr, f);
 
-			value = mk_t_aeskeys(rdr);
-			if (strlen(value) > 0 || cfg.http_full_cfg)
-				fprintf_conf(f, "aeskeys", "%s\n", value);
-			free_mk_t(value);
+			aeskeys_fn("aeskeys", NULL, rdr, f);
 
 			value = mk_t_group(rdr->grp);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
