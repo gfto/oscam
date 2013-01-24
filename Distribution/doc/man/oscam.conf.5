@@ -15,9 +15,14 @@ section is \fIrequired\fR. All other sections are optional.
 system priority, default:99
 .RE
 .PP
+\fBpidfile\fP = \fBfilename\fP
+.RS 3n
+set PID file, default:none
+.RE
+.PP
 \fBlogfile\fP = [\fBfilename\fP][\fB;syslog\fP][\fB;stdout\fP]
 .RS 3n
-logging targets, default: /var/log/oscam.log. You can define a maximum of one filename and 
+logging targets, default:/var/log/oscam.log. You can define a maximum of one filename and 
 additionally to log to stdout or syslog (you can also only log to stdout or syslog and omit 
 the filename).
 .RE
