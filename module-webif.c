@@ -4177,7 +4177,7 @@ static char *send_oscam_EMM_running(struct templatevars *vars, struct uriparams 
 	struct s_reader *rdr = NULL;
 	
 	setActiveMenu(vars, MNU_READERS);
-	tpl_addVar(vars, TPLADD, "READER", strtolower(getParam(params, "label")));
+	tpl_addVar(vars, TPLADD, "READER", getParam(params, "label"));
 	tpl_addVar(vars, TPLADD, "FNAME", getParam(params, "emmfile"));
 
 	rdr = get_reader_by_label(getParam(params, "label"));
@@ -4233,7 +4233,7 @@ static char *send_oscam_EMM_running(struct templatevars *vars, struct uriparams 
 static char *send_oscam_EMM(struct templatevars *vars, struct uriparams *params) {
 
 	setActiveMenu(vars, MNU_READERS);
-	tpl_addVar(vars, TPLADD, "READER", strtolower(getParam(params, "label")));
+	tpl_addVar(vars, TPLADD, "READER", getParam(params, "label"));
 	
 	struct s_reader *rdr = NULL;
 	rdr = get_reader_by_label(getParam(params, "label"));

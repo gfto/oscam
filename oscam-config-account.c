@@ -78,7 +78,6 @@ static void account_au_fn(const char *token, char *value, void *setting, FILE *f
 			account->aureader_list = ll_create("aureader_list");
 		if (streq(value, "1"))
 			account->autoau = 1;
-		strtolower(value);
 		ll_clear(account->aureader_list);
 		LL_ITER itr = ll_iter_create(configured_readers);
 		struct s_reader *rdr;
