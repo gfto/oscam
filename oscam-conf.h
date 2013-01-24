@@ -99,12 +99,12 @@ struct config_list {
 		.ops.process_fn	= __process_fn \
 	}
 
-#define DEF_OPT_FUNC_X(__name, __var_ofs, __process_fn, __extra) \
+#define DEF_OPT_FUNC_X(__name, __var_ofs, __process_fn_extra, __extra) \
 	{ \
-		.opt_type		= OPT_FUNC, \
+		.opt_type		= OPT_FUNC_EXTRA, \
 		.config_name	= __name, \
 		.var_offset		= __var_ofs, \
-		.ops.process_fn	= __process_fn, \
+		.ops.process_fn_extra	= __process_fn_extra, \
 		.def.d_extra	= __extra \
 	}
 

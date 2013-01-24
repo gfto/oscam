@@ -235,7 +235,7 @@ void config_list_set_defaults(const struct config_list *clist, void *config_data
 			char *scfg = var;
 			scfg[0] = '\0';
 			if (c->def.d_char && strlen(c->def.d_char))
-				cs_strncpy(scfg, c->def.d_char, c->str_size - 1);
+				cs_strncpy(scfg, c->def.d_char, c->str_size);
 			break;
 		}
 		case OPT_FUNC: {

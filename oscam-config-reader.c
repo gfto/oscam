@@ -25,6 +25,26 @@
 extern struct s_module modules[CS_MAX_MOD];
 extern struct s_cardreader cardreaders[CS_MAX_MOD];
 
+static void reader_label_fn(const char *token, char *value, void *setting, FILE *f) {
+	struct s_reader *rdr = setting;
+	if (value) {
+		int i, found = 0;
+		if (!strlen(value))
+			return;
+		for (i = 0; i < (int)strlen(value); i++) {
+			if (value[i] == ' ') {
+				value[i] = '_';
+				found++;
+			}
+		}
+		if (found)
+			fprintf(stderr, "Configuration reader: corrected label to %s\n", value);
+		cs_strncpy(rdr->label, value, sizeof(rdr->label));
+		return;
+	}
+	fprintf_conf(f, token, "%s\n", rdr->label);
+}
+
 static void mgencrypted_fn(const char *UNUSED(token), char *value, void *setting, FILE *UNUSED(f)) {
 	struct s_reader *rdr = setting;
 
@@ -358,6 +378,8 @@ static void ecmheaderwhitelist_fn(const char *token, char *value, void *setting,
 static void protocol_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_reader *rdr = setting;
 	if (value) {
+		if (strlen(value) == 0)
+			return;
 		struct protocol_map {
 			char *name;
 			int typ;
@@ -436,6 +458,7 @@ static void device_fn(const char *token, char *value, void *setting, FILE *f) {
 static void key_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_reader *rdr = setting;
 	if (value) {
+		memset(rdr->ncd_key, 0, sizeof(rdr->ncd_key));
 		if (strlen(value) == 0)
 			return;
 		if (key_atob_l(value, rdr->ncd_key, 28)) {
@@ -515,10 +538,9 @@ static void boxid_fn(const char *token, char *value, void *setting, FILE *f) {
 		rdr->boxid = strlen(value) ? a2i(value, 4) : 0;
 		return;
 	}
-	int32_t isphysical = !is_network_reader(rdr);
-	if (rdr->boxid && isphysical)
+	if (rdr->boxid)
 		fprintf_conf(f, token, "%08X\n", rdr->boxid);
-	else if (cfg.http_full_cfg && isphysical)
+	else if (cfg.http_full_cfg)
 		fprintf_conf(f, token, "\n");
 }
 
@@ -536,14 +558,13 @@ static void rsakey_fn(const char *token, char *value, void *setting, FILE *f) {
 		}
 		return;
 	}
-	int32_t isphysical = !is_network_reader(rdr);
 	int32_t len = check_filled(rdr->rsa_mod, 120);
-	if (len > 0 && isphysical) {
+	if (len > 0) {
 		if(len > 64) len = 120;
 		else len = 64;
 		char tmp[len*2+1];
 		fprintf_conf(f, "rsakey", "%s\n", cs_hexdump(0, rdr->rsa_mod, len, tmp, sizeof(tmp)));
-	} else if(cfg.http_full_cfg && isphysical)
+	} else if(cfg.http_full_cfg)
 		fprintf_conf(f, "rsakey", "\n");
 }
 
@@ -891,494 +912,203 @@ static void cooldowntime_fn(const char *UNUSED(token), char *value, void *settin
 	// It is only set by WebIf as convenience
 }
 
-void chk_reader(char *token, char *value, struct s_reader *rdr)
-{
-	int32_t i;
+static void reader_fixups_fn(void *var) {
+	struct s_reader *rdr = var;
+	if (rdr->lb_weight > 1000)
+		rdr->lb_weight = 1000;
+	else if (rdr->lb_weight <= 0)
+		rdr->lb_weight = 100;
+}
 
-	/*
-	 *  case sensitive first
-	 */
+#define OFS(X) offsetof(struct s_reader, X)
+#define SIZEOF(X) sizeof(((struct s_reader *)0)->X)
 
-	if (streq(token, "device")) {
-		device_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (streq(token, "key")) {
-		key_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (!strcmp(token, "password")) {
-		cs_strncpy(rdr->r_pwd, value, sizeof(rdr->r_pwd));
-		return;
-	}
-
-	if (!strcmp(token, "user")) {
-		cs_strncpy(rdr->r_usr, value, sizeof(rdr->r_usr));
-		return;
-	}
-
+static const struct config_list reader_opts[] = {
+	DEF_OPT_FIXUP_FUNC(reader_fixups_fn),
+	DEF_OPT_FUNC("label"				, 0,							reader_label_fn ),
 #ifdef WEBIF
-	if (!strcmp(token, "description")) {
-		NULLFREE(rdr->description);
-		if (strlen(value))
-			rdr->description = cs_strdup(value);
-		return;
-	}
+	DEF_OPT_STR("description"			, OFS(description),				NULL ),
 #endif
-
-	if (streq(token, "mg-encrypted")) {
-		mgencrypted_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (!strcmp(token, "pincode")) {
-		cs_strncpy(rdr->pincode, value, sizeof(rdr->pincode));
-		return;
-	}
-
-	if (!strcmp(token, "readnano")) {
-		NULLFREE(rdr->emmfile);
-		if (strlen(value) > 0)
-			rdr->emmfile = cs_strdup(value);
-		return;
-	}
-
-	/*
-	 *  case insensitive
-	 */
-	strtolower(value);
-
-	if (!strcmp(token, "enable")) {
-		rdr->enable  = strToIntVal(value, 0);
-		return;
-	}
-
-	if (streq(token, "services")) {
-		services_fn(token, value, rdr, NULL);
-		return;
-	}
-	if (!strcmp(token, "inactivitytimeout")) {
-		rdr->tcp_ito  = strToIntVal(value, DEFAULT_INACTIVITYTIMEOUT);
-		return;
-	}
-
-	if (!strcmp(token, "resetcycle")) {
-		rdr->resetcycle  = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "reconnecttimeout")) {
-		rdr->tcp_rto  = strToIntVal(value, DEFAULT_TCP_RECONNECT_TIMEOUT);
-		return;
-	}
-
-	if (!strcmp(token, "disableserverfilter")) {
-		rdr->ncd_disable_server_filt  = strToIntVal(value, 0);
-		return;
-	}
-
-	//FIXME workaround for Smargo until native mode works
-	if (!strcmp(token, "smargopatch")) {
-		rdr->smargopatch  = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "sc8in1_dtrrts_patch")) {
-		rdr->sc8in1_dtrrts_patch  = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "label")) {
-		int32_t found = 0;
-		for(i = 0; i < (int)strlen(value); i++) {
-			if (value[i] == ' ') {
-				value[i] = '_';
-				found++;
-			}
-		}
-
-		if (found) fprintf(stderr, "Configuration reader: corrected label to %s\n",value);
-		cs_strncpy(rdr->label, value, sizeof(rdr->label));
-		return;
-	}
-
-	if (!strcmp(token, "fallback")) {
-		rdr->fallback  = strToIntVal(value, 0);
-		return;
-	}
-
+	DEF_OPT_INT8("enable"				, OFS(enable),					1 ),
+	DEF_OPT_FUNC("protocol"				, 0,							protocol_fn ),
+	DEF_OPT_FUNC("device"				, 0,							device_fn ),
+	DEF_OPT_FUNC("key"					, 0,							key_fn ),
+	DEF_OPT_SSTR("user"					, OFS(r_usr),					"", SIZEOF(r_usr) ),
+	DEF_OPT_SSTR("password"				, OFS(r_pwd),					"", SIZEOF(r_pwd) ),
+	DEF_OPT_SSTR("pincode"				, OFS(pincode),					"none", SIZEOF(pincode) ),
+	DEF_OPT_FUNC("mg-encrypted"			, 0,							mgencrypted_fn ),
+	DEF_OPT_STR("readnano"				, OFS(emmfile),					NULL ),
+	DEF_OPT_FUNC("services"				, 0,							services_fn ),
+	DEF_OPT_INT32("inactivitytimeout"	, OFS(tcp_ito),					DEFAULT_INACTIVITYTIMEOUT ),
+	DEF_OPT_INT32("reconnecttimeout"	, OFS(tcp_rto),					DEFAULT_TCP_RECONNECT_TIMEOUT ),
+	DEF_OPT_INT32("resetcycle"			, OFS(resetcycle),				0 ),
+	DEF_OPT_INT8("disableserverfilter"	, OFS(ncd_disable_server_filt),	0 ),
+	DEF_OPT_INT8("smargopatch"			, OFS(smargopatch),				0 ),
+	DEF_OPT_UINT8("sc8in1_dtrrts_patch"	, OFS(sc8in1_dtrrts_patch),		0 ),
+	DEF_OPT_INT8("fallback"				, OFS(fallback),				0 ),
 #ifdef CS_CACHEEX
-	if (!strcmp(token, "cacheex")) {
-		rdr->cacheex.mode  = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "cacheex_maxhop")) {
-		rdr->cacheex.maxhop  = strToIntVal(value, 0);
-		return;
-	}
-
-	if (streq(token, "cacheex_ecm_filter")) {
-		cacheex_ecm_filter_fn(token, value, rdr, NULL);
-		return;
-	}
-	if (!strcmp(token, "cacheex_allow_request")) {
-		rdr->cacheex.allow_request  = strToIntVal(value, 1);
-		return;
-	}
-	if (!strcmp(token, "cacheex_drop_csp")) {
-		rdr->cacheex.drop_csp  = strToIntVal(value, 0);
-		return;
-	}
+	DEF_OPT_INT8("cacheex"				, OFS(cacheex.mode),			0 ),
+	DEF_OPT_INT8("cacheex_maxhop"		, OFS(cacheex.maxhop),			0 ),
+	DEF_OPT_FUNC("cacheex_ecm_filter"	, 0,							cacheex_ecm_filter_fn ),
+	DEF_OPT_UINT8("cacheex_allow_request"	, OFS(cacheex.allow_request),	1 ),
+	DEF_OPT_UINT8("cacheex_drop_csp"		, OFS(cacheex.drop_csp),		0 ),
 #endif
-
-	if (!strcmp(token, "logport")) {
-		rdr->log_port  = strToIntVal(value, 0);
-		return;
-	}
-
-	if (streq(token, "caid")) {
-		caid_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (streq(token, "boxid")) {
-		boxid_fn(token, value, rdr, NULL);
-		return;
-	}
-  if (!strcmp(token, "fix9993")) {
-    rdr->fix_9993 = strToIntVal(value, 0);
-    return;
-  }
-
-	if (streq(token, "rsakey")) {
-		rsakey_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (streq(token, "ins7e")) {
-		ins7E_fn(token, value, rdr->ins7E, sizeof(rdr->ins7E), NULL);
-		return;
-	}
-
-	if (streq(token, "ins7e11")) {
-		ins7E_fn(token, value, rdr->ins7E11, sizeof(rdr->ins7E11), NULL);
-		return;
-	}
-
-	if (streq(token, "boxkey")) {
-		boxkey_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (!strcmp(token, "force_irdeto")) {
-		rdr->force_irdeto  = strToIntVal(value, 0);
-		return;
-	}
-
-	if (streq(token, "atr")) {
-		atr_fn(token, value, rdr, NULL);
-		return;
-	}
-	if (streq(token, "ecmwhitelist")) {
-		ecmwhitelist_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (streq(token, "ecmheaderwhitelist")) {
-		ecmheaderwhitelist_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (streq(token, "detect")) {
-		detect_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (!strcmp(token, "nagra_read")) {
-		rdr->nagra_read  = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "mhz")) {
-		rdr->mhz  = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "cardmhz")) {
-		rdr->cardmhz  = strToIntVal(value, 0);
-		return;
-	}
-
-	if (streq(token, "protocol")) {
-		protocol_fn(token, value, rdr, NULL);
-		return;
-	}
-
 #ifdef WITH_COOLAPI
-	if (!strcmp(token, "cool_timeout_init")) {
-		rdr->cool_timeout_init  = strToIntVal(value, 50);
-		return;
-	}
-	if (!strcmp(token, "cool_timeout_after_init")) {
-		rdr->cool_timeout_after_init  = strToIntVal(value, 150);
-		return;
-	}
+	DEF_OPT_INT32("cool_timeout_init"			, OFS(cool_timeout_init),			50 ),
+	DEF_OPT_INT32("cool_timeout_after_init"		, OFS(cool_timeout_after_init),		150 ),
 #endif
-
-	if (streq(token, "ident")) {
-		ident_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (streq(token, "class")) {
-		class_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (streq(token, "chid")) {
-		chid_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (streq(token, "group")) {
-		group_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (streq(token, "emmcache")) {
-		emmcache_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (streq(token, "blocknano")) {
-		nano_fn(token, value, &rdr->b_nano, NULL);
-		return;
-	}
-
-	if (streq(token, "savenano")) {
-		nano_fn(token, value, &rdr->s_nano, NULL);
-		return;
-	}
-
-	if (streq(token, "blockemm-unknown")) {
-		flags_fn(token, value, &rdr->blockemm, EMM_UNKNOWN, NULL);
-		return;
-	}
-
-	if (streq(token, "blockemm-u")) {
-		flags_fn(token, value, &rdr->blockemm, EMM_UNIQUE, NULL);
-		return;
-	}
-
-	if (streq(token, "blockemm-s")) {
-		flags_fn(token, value, &rdr->blockemm, EMM_SHARED, NULL);
-		return;
-	}
-
-	if (streq(token, "blockemm-g")) {
-		flags_fn(token, value, &rdr->blockemm, EMM_GLOBAL, NULL);
-		return;
-	}
-
-	if (streq(token, "saveemm-unknown")) {
-		flags_fn(token, value, &rdr->saveemm, EMM_UNKNOWN, NULL);
-		return;
-	}
-
-	if (streq(token, "saveemm-u")) {
-		flags_fn(token, value, &rdr->saveemm, EMM_UNIQUE, NULL);
-		return;
-	}
-
-	if (streq(token, "saveemm-s")) {
-		flags_fn(token, value, &rdr->saveemm, EMM_SHARED, NULL);
-		return;
-	}
-
-	if (streq(token, "saveemm-g")) {
-		flags_fn(token, value, &rdr->saveemm, EMM_GLOBAL, NULL);
-		return;
-	}
-
-	if (streq(token, "blockemm-bylen")) {
-		blockemm_bylen_fn(token, value, rdr, NULL);
-		return;
-	}
-
+	DEF_OPT_INT32("logport"				, OFS(log_port),				0 ),
+	DEF_OPT_FUNC("caid"					, 0,							caid_fn ),
+	DEF_OPT_FUNC("atr"					, 0,							atr_fn ),
+	DEF_OPT_FUNC("boxid"				, 0,							boxid_fn ),
+	DEF_OPT_FUNC("boxkey"				, 0,							boxkey_fn ),
+	DEF_OPT_FUNC("rsakey"				, 0,							rsakey_fn ),
+	DEF_OPT_FUNC_X("ins7e"				, OFS(ins7E),					ins7E_fn, SIZEOF(ins7E) ),
+	DEF_OPT_FUNC_X("ins7e11"			, OFS(ins7E11),					ins7E_fn, SIZEOF(ins7E11) ),
+	DEF_OPT_INT8("fix9993"				, OFS(fix_9993),				0 ),
+	DEF_OPT_INT8("force_irdeto"			, OFS(force_irdeto),			0 ),
+	DEF_OPT_FUNC("ecmwhitelist"			, 0,							ecmwhitelist_fn ),
+	DEF_OPT_FUNC("ecmheaderwhitelist"	, 0,							ecmheaderwhitelist_fn ),
+	DEF_OPT_FUNC("detect"				, 0,							detect_fn ),
+	DEF_OPT_INT8("nagra_read"			, OFS(nagra_read),				0 ),
+	DEF_OPT_INT32("mhz"					, OFS(mhz),						357 ),
+	DEF_OPT_INT32("cardmhz"				, OFS(cardmhz),					357 ),
+#ifdef WITH_AZBOX
+	DEF_OPT_INT32("mode"				, OFS(azbox_mode),				-1 ),
+#endif
+	DEF_OPT_FUNC("ident"				, 0,							ident_fn ),
+	DEF_OPT_FUNC("chid"					, 0,							chid_fn ),
+	DEF_OPT_FUNC("class"				, 0,							class_fn ),
+	DEF_OPT_FUNC("aeskeys"				, 0,							aeskeys_fn ),
+	DEF_OPT_FUNC("group"				, 0,							group_fn ),
+	DEF_OPT_FUNC("emmcache"				, 0,							emmcache_fn ),
+	DEF_OPT_FUNC_X("blockemm-unknown"	, OFS(blockemm),				flags_fn, EMM_UNKNOWN ),
+	DEF_OPT_FUNC_X("blockemm-u"			, OFS(blockemm),				flags_fn, EMM_UNIQUE ),
+	DEF_OPT_FUNC_X("blockemm-s"			, OFS(blockemm),				flags_fn, EMM_SHARED ),
+	DEF_OPT_FUNC_X("blockemm-g"			, OFS(blockemm),				flags_fn, EMM_GLOBAL ),
+	DEF_OPT_FUNC_X("saveemm-unknown"	, OFS(saveemm),					flags_fn, EMM_UNKNOWN ),
+	DEF_OPT_FUNC_X("saveemm-u"			, OFS(saveemm),					flags_fn, EMM_UNIQUE ),
+	DEF_OPT_FUNC_X("saveemm-s"			, OFS(saveemm),					flags_fn, EMM_SHARED ),
+	DEF_OPT_FUNC_X("saveemm-g"			, OFS(saveemm),					flags_fn, EMM_GLOBAL ),
+	DEF_OPT_FUNC("blockemm-bylen"		, 0,							blockemm_bylen_fn ),
 #ifdef WITH_LB
-	if (!strcmp(token, "lb_weight")) {
-		if(strlen(value) == 0) {
-			rdr->lb_weight = 100;
-			return;
-		} else {
-			rdr->lb_weight = atoi(value);
-			if (rdr->lb_weight > 1000) rdr->lb_weight = 1000;
-			else if (rdr->lb_weight <= 0) rdr->lb_weight = 100;
-			return;
-		}
-	}
+	DEF_OPT_INT32("lb_weight"			, OFS(lb_weight),				100 ),
 #endif
+	DEF_OPT_FUNC("savenano"				, OFS(s_nano),					nano_fn ),
+	DEF_OPT_FUNC("blocknano"			, OFS(b_nano),					nano_fn ),
+	DEF_OPT_INT8("dropbadcws"			, OFS(dropbadcws),				0 ),
+	DEF_OPT_INT8("disablecrccws"		, OFS(disablecrccws),			0 ),
+	DEF_OPT_INT32("use_gpio"			, OFS(use_gpio),				0 ),
+#ifdef MODULE_PANDORA
+	DEF_OPT_UINT8("pand_send_ecm"		, OFS(pand_send_ecm),			0 ),
+#endif
+#ifdef MODULE_CCCAM
+	DEF_OPT_SSTR("cccversion"			, OFS(cc_version),				"", SIZEOF(cc_version) ),
+	DEF_OPT_INT8("cccmaxhops"			, OFS(cc_maxhops),				DEFAULT_CC_MAXHOPS ),
+	DEF_OPT_INT8("cccmindown"			, OFS(cc_mindown),				0 ),
+	DEF_OPT_INT8("cccwantemu"			, OFS(cc_want_emu),				0 ),
+	DEF_OPT_INT8("ccckeepalive"			, OFS(cc_keepalive),			DEFAULT_CC_KEEPALIVE ),
+	DEF_OPT_INT8("cccreshare"			, OFS(cc_reshare),				DEFAULT_CC_RESHARE ),
+	DEF_OPT_INT32("cccreconnect"		, OFS(cc_reconnect),			DEFAULT_CC_RECONNECT ),
+	DEF_OPT_INT8("ccchop"				, OFS(cc_hop),					0 ),
+#endif
+	DEF_OPT_INT8("deprecated"			, OFS(deprecated),				0 ),
+	DEF_OPT_INT8("audisabled"			, OFS(audisabled),				0 ),
+	DEF_OPT_FUNC("auprovid"				, 0,							auprovid_fn ),
+	DEF_OPT_INT8("ndsversion"			, OFS(ndsversion),				0 ),
+	DEF_OPT_FUNC("ratelimitecm"			, 0,							ratelimitecm_fn ),
+	DEF_OPT_FUNC("ratelimitseconds"		, 0,							ratelimitseconds_fn ),
+	DEF_OPT_FUNC("cooldown"				, 0,							cooldown_fn ),
+	DEF_OPT_FUNC("cooldowndelay"		, 0,							cooldowndelay_fn ),
+	DEF_OPT_FUNC("cooldowntime"			, 0,							cooldowntime_fn ),
+	DEF_LAST_OPT
+};
+
+static inline bool in_list(const char *token, const char *list[]) {
+	int i;
+	for(i = 0; list[i]; i++) {
+		if (streq(token, list[i]))
+			return true;
+	}
+	return false;
+}
+
+static bool reader_check_setting(const struct config_list *UNUSED(clist), void *config_data, const char *setting)
+{
+	struct s_reader *reader = config_data;
+	// These are written only when the reader is physical reader
+	static const char *hw_only_settings[] = {
+		"readnano", "resetcycle", "smargopatch", "sc8in1_dtrrts_patch", "boxid",
+		"fix9993", "rsakey", "ins7e", "ins7e11", "force_irdeto", "boxkey",
+		"atr", "detect", "nagra_read", "mhz", "cardmhz",
+#ifdef WITH_AZBOX
+		"mode",
+#endif
+		"deprecated", "ndsversion", "ratelimitecm", "ratelimitseconds",
+		"cooldown",
+		0
+	};
+	// These are written only when the reader is network reader
+	static const char *network_only_settings[] = {
+		"user", "inactivitytimeout", "reconnecttimeout",
+		0
+	};
+	if (is_network_reader(reader)) {
+		if (in_list(setting, hw_only_settings))
+			return false;
+	} else {
+		if (in_list(setting, network_only_settings))
+			return false;
+	}
+
+	// These are not written in the config file
+	static const char *deprecated_settings[] = {
+		"cooldowndelay", "cooldowntime", "mg-encrypted",
+		0
+	};
+	if (in_list(setting, deprecated_settings))
+		return false;
+
+	// Special settings for NEWCAMD
+	if (reader->typ != R_NEWCAMD && streq(setting, "disableserverfilter"))
+		return false;
 
 #ifdef MODULE_CCCAM
-	if (!strcmp(token, "cccversion")) {
-		// cccam version
-		memset(rdr->cc_version, 0, sizeof(rdr->cc_version));
-		if (strlen(value) > sizeof(rdr->cc_version) - 1) {
-			fprintf(stderr, "cccam config: version too long.\n");
-		}	else
-			cs_strncpy(rdr->cc_version, value, sizeof(rdr->cc_version));
-		return;
+	// These are written only when the reader is CCCAM
+	static const char *cccam_settings[] = {
+		"cccversion", "cccmaxhops", "cccmindown", "cccwantemu", "ccckeepalive",
+		"cccreshare", "cccreconnect",
+		0
+	};
+	// Special settings for CCCAM
+	if (reader->typ != R_CCCAM) {
+		if (in_list(setting, cccam_settings))
+			return false;
+	} else if (streq(setting, "ccchop")) {
+		return false;
 	}
-
-	if (!strcmp(token, "cccmaxhops")) {
-		// cccam max card distance
-		rdr->cc_maxhops = strToIntVal(value, DEFAULT_CC_MAXHOPS);
-		return;
-	}
-
-	if (!strcmp(token, "cccmindown") ) {
-		// cccam min downhops
-		rdr->cc_mindown  = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "cccwantemu")) {
-		rdr->cc_want_emu  = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "ccckeepalive")) {
-		rdr->cc_keepalive  = strToIntVal(value, DEFAULT_CC_KEEPALIVE);
-		return;
-	}
-
-	if (!strcmp(token, "cccreshare")) {
-		rdr->cc_reshare = strToIntVal(value, DEFAULT_CC_RESHARE);
-		return;
-	}
-
-	if (!strcmp(token, "ccchop")) {
-		rdr->cc_hop = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "cccreconnect")) {
-		rdr->cc_reconnect = strToIntVal(value, DEFAULT_CC_RECONNECT);
-		return;
-	}
-
 #endif
 
 #ifdef MODULE_PANDORA
-	if (!strcmp(token, "pand_send_ecm")) {
-		rdr->pand_send_ecm = strToIntVal(value, 0);
-		return;
-	}
-
-#endif
-	if (!strcmp(token, "deprecated")) {
-		rdr->deprecated  = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "audisabled")) {
-		rdr->audisabled  = strToIntVal(value, 0);
-		return;
-	}
-
-	if (streq(token, "auprovid")) {
-		auprovid_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (streq(token, "aeskeys")) {
-		aeskeys_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (!strcmp(token, "ndsversion")) {
-		rdr->ndsversion = strToIntVal(value, 0);
-		return;
-	}
-
-
-#ifdef WITH_AZBOX
-	if (!strcmp(token, "mode")) {
-		rdr->azbox_mode = strToIntVal(value, -1);
-		return;
-	}
+	// Special settings for PANDORA
+	if (reader->typ != R_PANDORA && streq(setting, "pand_send_ecm"))
+		return false;
 #endif
 
-	if (streq(token, "ratelimitecm")) {
-		ratelimitecm_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (streq(token, "ratelimitseconds")) {
-		ratelimitseconds_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (streq(token, "cooldown")) {
-		cooldown_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (streq(token, "cooldowndelay")) {
-		cooldowndelay_fn(token, value, rdr, NULL);
-		return;
-	}
-
-	if (streq(token, "cooldowntime")) {
-		cooldowntime_fn(token, value, rdr, NULL);
-		return;
-	}
-	if (!strcmp(token, "dropbadcws")) {
-		rdr->dropbadcws = strToIntVal(value, 0);
-		return;
-	}
-
-    if (!strcmp(token, "disablecrccws")) {
-        rdr->disablecrccws = strToIntVal(value, 0);
-        return;
-    }
-
-	if (!strcmp(token, "use_gpio")) {
-		rdr->use_gpio = strToIntVal(value, 0);
-		return;
-	}
-
-	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in reader section not recognized\n",token);
+	return true; // Write the setting
 }
 
 
+void chk_reader(char *token, char *value, struct s_reader *rdr)
+{
+	if (config_list_parse(reader_opts, token, value, rdr))
+		return;
+	else if (token[0] != '#')
+		fprintf(stderr, "Warning: keyword '%s' in reader section not recognized\n", token);
+}
+
 void reader_set_defaults(struct s_reader *rdr) {
-	int i;
-	rdr->enable = 1;
-	rdr->tcp_rto = DEFAULT_TCP_RECONNECT_TIMEOUT;
-	rdr->tcp_ito = DEFAULT_INACTIVITYTIMEOUT;
-	rdr->mhz = 357;
-	rdr->cardmhz = 357;
-#ifdef WITH_AZBOX
-	rdr->azbox_mode = -1;
-#endif
-#ifdef MODULE_CCCAM
-	rdr->cc_reshare = DEFAULT_CC_RESHARE;
-	rdr->cc_maxhops = DEFAULT_CC_MAXHOPS;
-	rdr->cc_reconnect = DEFAULT_CC_RECONNECT;
-#endif
-#ifdef WITH_LB
-	rdr->lb_weight = 100;
-#endif
-#ifdef CS_CACHEEX
-	rdr->cacheex.allow_request = 1;
-#endif
-	cs_strncpy(rdr->pincode, "none", sizeof(rdr->pincode));
-	for (i=1; i<CS_MAXCAIDTAB; rdr->ctab.mask[i++]=0xffff);
+	config_list_set_defaults(reader_opts, rdr);
 }
 
 int32_t init_readerdb(void)
@@ -1486,234 +1216,15 @@ int32_t write_server(void)
 	FILE *f = create_config_file(cs_srvr);
 	if (!f)
 		return 1;
-
 	struct s_reader *rdr;
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr))) {
-		if ( rdr->label[0]) {
-			int32_t isphysical = !is_network_reader(rdr);
-
+		if (rdr->label[0]) {
 			fprintf(f,"[reader]\n");
-
-			fprintf_conf(f, "label", "%s\n", rdr->label);
-
-#ifdef WEBIF
-			if (rdr->description || cfg.http_full_cfg)
-				fprintf_conf(f, "description", "%s\n", rdr->description?rdr->description:"");
-#endif
-
-			if (rdr->enable == 0 || cfg.http_full_cfg)
-				fprintf_conf(f, "enable", "%d\n", rdr->enable);
-
-			protocol_fn("protocol", NULL, rdr, f);
-			device_fn("device", NULL, rdr, f);
-			key_fn("key", NULL, rdr, f);
-
-			if ((rdr->r_usr[0] || cfg.http_full_cfg) && !isphysical)
-				fprintf_conf(f, "user", "%s\n", rdr->r_usr);
-
-			if (strlen(rdr->r_pwd) > 0 || cfg.http_full_cfg)
-				fprintf_conf(f, "password", "%s\n", rdr->r_pwd);
-
-			if(strcmp(rdr->pincode, "none") || cfg.http_full_cfg)
-				fprintf_conf(f, "pincode", "%s\n", rdr->pincode);
-
-			if ((rdr->emmfile || cfg.http_full_cfg) && isphysical)
-				fprintf_conf(f, "readnano", "%s\n", rdr->emmfile?rdr->emmfile:"");
-
-			services_fn("services", NULL, rdr, f);
-
-			if ((rdr->tcp_ito != DEFAULT_INACTIVITYTIMEOUT || cfg.http_full_cfg) && !isphysical)
-				fprintf_conf(f, "inactivitytimeout", "%d\n", rdr->tcp_ito);
-
-			if ((rdr->resetcycle != 0 || cfg.http_full_cfg) && isphysical)
-				fprintf_conf(f, "resetcycle", "%d\n", rdr->resetcycle);
-
-			if ((rdr->tcp_rto != DEFAULT_TCP_RECONNECT_TIMEOUT || cfg.http_full_cfg) && !isphysical)
-				fprintf_conf(f, "reconnecttimeout", "%d\n", rdr->tcp_rto);
-
-			if ((rdr->ncd_disable_server_filt || cfg.http_full_cfg) && rdr->typ == R_NEWCAMD)
-				fprintf_conf(f, "disableserverfilter", "%d\n", rdr->ncd_disable_server_filt);
-
-			if ((rdr->smargopatch || cfg.http_full_cfg) && isphysical)
-				fprintf_conf(f, "smargopatch", "%d\n", rdr->smargopatch);
-
-			if ((rdr->sc8in1_dtrrts_patch || cfg.http_full_cfg) && isphysical)
-				fprintf_conf(f, "sc8in1_dtrrts_patch", "%d\n", rdr->sc8in1_dtrrts_patch);
-
-			if (rdr->fallback || cfg.http_full_cfg)
-				fprintf_conf(f, "fallback", "%d\n", rdr->fallback);
-
-#ifdef CS_CACHEEX
-			if (rdr->cacheex.mode || cfg.http_full_cfg)
-				fprintf_conf(f, "cacheex", "%d\n", rdr->cacheex.mode);
-
-			if (rdr->cacheex.maxhop || cfg.http_full_cfg)
-				fprintf_conf(f, "cacheex_maxhop", "%d\n", rdr->cacheex.maxhop);
-
-			cacheex_ecm_filter_fn("cacheex_ecm_filter", NULL, rdr, f);
-
-			if (!rdr->cacheex.allow_request || cfg.http_full_cfg)
-							fprintf_conf(f, "cacheex_allow_request", "%d\n", rdr->cacheex.allow_request);
-
-			if (rdr->cacheex.drop_csp || cfg.http_full_cfg)
-							fprintf_conf(f, "cacheex_drop_csp", "%d\n", rdr->cacheex.drop_csp);
-#endif
-
-#ifdef WITH_COOLAPI
-			if (rdr->cool_timeout_init != 50 || cfg.http_full_cfg)
-				fprintf_conf(f, "cool_timeout_init", "%d\n", rdr->cool_timeout_init);
-			if (rdr->cool_timeout_after_init != 150 || cfg.http_full_cfg)
-				fprintf_conf(f, "cool_timeout_after_init", "%d\n", rdr->cool_timeout_after_init);
-#endif
-			if (rdr->log_port || cfg.http_full_cfg)
-				fprintf_conf(f, "logport", "%d\n", rdr->log_port);
-
-			caid_fn("caid", NULL, rdr, f);
-
-			boxid_fn("boxid", NULL, rdr, f);
-
-			if((rdr->fix_9993 || cfg.http_full_cfg) && isphysical)
-				fprintf_conf(f, "fix9993", "%d\n", rdr->fix_9993);
-
-			rsakey_fn("rsakey", NULL, rdr, f);
-
-			if (isphysical) {
-				ins7E_fn("ins7e", NULL, rdr->ins7E, sizeof(rdr->ins7E), f);
-				ins7E_fn("ins7e11", NULL, rdr->ins7E11, sizeof(rdr->ins7E11), f);
-			}
-
-			if ((rdr->force_irdeto || cfg.http_full_cfg) && isphysical) {
-				fprintf_conf(f, "force_irdeto", "%d\n", rdr->force_irdeto);
-			}
-
-			if (isphysical)
-				boxkey_fn("boxkey", NULL, rdr, f);
-
-			if (isphysical)
-				atr_fn("atr", NULL, rdr, f);
-
-			ecmwhitelist_fn("ecmwhitelist", NULL, rdr, f);
-			ecmheaderwhitelist_fn("ecmheaderwhitelist", NULL, rdr, f);
-
-			if (isphysical) {
-				detect_fn("detect", NULL, rdr, f);
-			}
-
-			if ((rdr->nagra_read || cfg.http_full_cfg) && isphysical)
-				fprintf_conf(f, "nagra_read", "%d\n", rdr->nagra_read);
-
-			if ((rdr->mhz || cfg.http_full_cfg) && isphysical)
-				fprintf_conf(f, "mhz", "%d\n", rdr->mhz);
-
-			if ((rdr->cardmhz || cfg.http_full_cfg) && isphysical)
-				fprintf_conf(f, "cardmhz", "%d\n", rdr->cardmhz);
-
-#ifdef WITH_AZBOX
-			if ((rdr->azbox_mode != -1 || cfg.http_full_cfg) && isphysical)
-				fprintf_conf(f, "mode", "%d\n", rdr->azbox_mode);
-#endif
-
-			ident_fn("ident", NULL, rdr, f);
-
-			//Todo: write reader class
-
-			chid_fn("chid", NULL, rdr, f);
-
-			class_fn("class", NULL, rdr, f);
-
-			aeskeys_fn("aeskeys", NULL, rdr, f);
-
-			group_fn("group", NULL, rdr, f);
-
-			emmcache_fn("emmcache", NULL, rdr, f);
-
-			flags_fn("blockemm-unknown", NULL, &rdr->blockemm, EMM_UNKNOWN, f);
-			flags_fn("blockemm-u"      , NULL, &rdr->blockemm, EMM_UNIQUE, f);
-			flags_fn("blockemm-s"      , NULL, &rdr->blockemm, EMM_SHARED, f);
-			flags_fn("blockemm-g"      , NULL, &rdr->blockemm, EMM_GLOBAL, f);
-
-			flags_fn("saveemm-unknown" , NULL, &rdr->saveemm, EMM_UNKNOWN, f);
-			flags_fn("saveemm-u"       , NULL, &rdr->saveemm, EMM_UNIQUE, f);
-			flags_fn("saveemm-s"       , NULL, &rdr->saveemm, EMM_SHARED, f);
-			flags_fn("saveemm-g"       , NULL, &rdr->saveemm, EMM_GLOBAL, f);
-
-			blockemm_bylen_fn("blockemm-bylen", NULL, rdr, f);
-
-#ifdef WITH_LB
-			if (rdr->lb_weight != 100 || cfg.http_full_cfg)
-				fprintf_conf(f, "lb_weight", "%d\n", rdr->lb_weight);
-#endif
-
-			nano_fn("savenano", NULL, &rdr->s_nano, f);
-			nano_fn("blocknano", NULL, &rdr->b_nano, f);
-
-			if (rdr->dropbadcws)
-				fprintf_conf(f, "dropbadcws", "%d\n", rdr->dropbadcws);
-
-            if (rdr->disablecrccws)
-                fprintf_conf(f, "disablecrccws", "%d\n", rdr->disablecrccws);
-
-			if (rdr->use_gpio)
-				fprintf_conf(f, "use_gpio", "%d\n", rdr->use_gpio);
-
-#ifdef MODULE_CCCAM
-			if (rdr->typ == R_CCCAM) {
-				if (rdr->cc_version[0] || cfg.http_full_cfg)
-					fprintf_conf(f, "cccversion", "%s\n", rdr->cc_version);
-
-				if (rdr->cc_maxhops != DEFAULT_CC_MAXHOPS || cfg.http_full_cfg)
-					fprintf_conf(f, "cccmaxhops", "%d\n", rdr->cc_maxhops);
-
-				if (rdr->cc_mindown > 0 || cfg.http_full_cfg)
-					fprintf_conf(f, "cccmindown", "%d\n", rdr->cc_mindown);
-
-				if (rdr->cc_want_emu || cfg.http_full_cfg)
-					fprintf_conf(f, "cccwantemu", "%d\n", rdr->cc_want_emu);
-
-				if (rdr->cc_keepalive != DEFAULT_CC_KEEPALIVE || cfg.http_full_cfg)
-					fprintf_conf(f, "ccckeepalive", "%d\n", rdr->cc_keepalive);
-
-				if (rdr->cc_reshare != DEFAULT_CC_RESHARE || cfg.http_full_cfg)
-					fprintf_conf(f, "cccreshare", "%d\n", rdr->cc_reshare);
-
-				if (rdr->cc_reconnect != DEFAULT_CC_RECONNECT || cfg.http_full_cfg)
-					fprintf_conf(f, "cccreconnect", "%d\n", rdr->cc_reconnect);
-			}
-			else if (rdr->cc_hop > 0 || cfg.http_full_cfg)
-				fprintf_conf(f, "ccchop", "%d\n", rdr->cc_hop);
-#endif
-
-#ifdef MODULE_PANDORA
-			if (rdr->typ == R_PANDORA)
-			{
-				if (rdr->pand_send_ecm || cfg.http_full_cfg)
-					fprintf_conf(f, "pand_send_ecm", "%d\n", rdr->pand_send_ecm);
-			}
-#endif
-
-			if ((rdr->deprecated || cfg.http_full_cfg) && isphysical)
-				fprintf_conf(f, "deprecated", "%d\n", rdr->deprecated);
-
-			if (rdr->audisabled || cfg.http_full_cfg)
-				fprintf_conf(f, "audisabled", "%d\n", rdr->audisabled);
-
-			auprovid_fn("auprovid", NULL, rdr, f);
-
-			if ((rdr->ndsversion || cfg.http_full_cfg) && isphysical)
-				fprintf_conf(f, "ndsversion", "%d\n", rdr->ndsversion);
-
-			if ((rdr->ratelimitecm || cfg.http_full_cfg) && isphysical) {
-				ratelimitecm_fn("ratelimitecm", NULL, rdr, f);
-				ratelimitseconds_fn("ratelimitseconds", NULL, rdr, f);
-			}
-
-			if (isphysical)
-				cooldown_fn("cooldown", NULL, rdr, f);
-
+			config_list_apply_fixups(reader_opts, rdr);
+			config_list_save_ex(f, reader_opts, rdr, cfg.http_full_cfg, reader_check_setting);
 			fprintf(f, "\n");
 		}
 	}
-
 	return flush_config_file(f, cs_srvr);
 }

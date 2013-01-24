@@ -998,7 +998,7 @@ struct s_client {
 
 #ifdef MODULE_PANDORA
 	int32_t 			pand_autodelay;
-	uchar 			pand_send_ecm;
+	uint8_t			pand_send_ecm;
 	uchar 			pand_ignore_ecm;
 	uchar 			pand_md5_key[16];
 #endif
