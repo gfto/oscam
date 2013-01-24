@@ -39,6 +39,8 @@ char *RDR_CD_TXT[] = {
 
 char *entitlement_type[] = {"", "package", "PPV-Event", "chid", "tier", "class", "PBM", "admin" };
 
+const char *syslog_ident = "oscam";
+
 int32_t exit_oscam=0;
 struct s_module modules[CS_MAX_MOD];
 struct s_cardsystem cardsystems[CS_MAX_MOD];
@@ -178,9 +180,10 @@ static void show_usage(void)
 
 	printf("\n");
 	printf(" Usage: oscam [-a] [-b] [-c <config dir>] [-d <level>] [-g <mode>] [-h]\n");
-	printf("              [-p <num>] [-S] [-s] [-t <tmp dir>] [-w <secs>] [-V]\n");
+	printf("              [-I <ident>] [-p <num>] [-S] [-s] [-t <tmp dir>]\n");
+	printf("              [-w <secs>] [-V]%s", config_WEBIF() ? " " : "\n");
 	if (config_WEBIF())
-		printf("              [-r <level>] [-u]\n");
+		printf("[-r <level>] [-u]\n");
 	printf("\n");
 	printf(" Options:\n");
 	printf("  -a         : Write oscam.crash file on segfault. This option needs GDB to\n");
@@ -205,6 +208,7 @@ static void show_usage(void)
 	printf("  -g <mode>  : Garbage collector debug mode (DEBUG ONLY OPTION!):\n");
 	printf("                 1 = Immediate free.\n");
 	printf("                 2 = Check for double frees.\n");
+	printf("  -I <ident> : Set syslog ident. Default: oscam\n");
 	printf("  -p <num>   : Maximum number of pending ECM packets. Default: 32 Max: 255\n");
 	if (config_WEBIF()) {
 		printf("  -r <level> : Set restart level:\n");
@@ -231,10 +235,11 @@ static void write_versionfile(bool use_stdout);
 
 static void parse_cmdline_params(int argc, char **argv) {
 	int i;
-	while ((i = getopt(argc, argv, "g:bsauc:t:d:r:w:p:SVh")) != EOF) {
+	while ((i = getopt(argc, argv, "g:I:bsauc:t:d:r:w:p:SVh")) != EOF) {
 		switch(i) {
 		case 'g': gbdb = atoi(optarg); break;
 		case 'b': bg = 1; break;
+		case 'I': syslog_ident = optarg; break;
 		case 's': cs_capture_SEGV = 1; break;
 		case 'a': cs_dump_stack = 1; break;
 		case 'c': cs_strncpy(cs_confdir, optarg, sizeof(cs_confdir)); break;

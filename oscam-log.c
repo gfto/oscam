@@ -11,6 +11,7 @@
 #include "oscam-time.h"
 
 extern struct s_module modules[CS_MAX_MOD];
+extern char *syslog_ident;
 
 char *LOG_LIST = "log_list";
 
@@ -134,7 +135,7 @@ int32_t cs_open_logfiles(void)
 	}
 	// according to syslog docu: calling closelog is not necessary and calling openlog multiple times is safe
 	// We use openlog to set the default syslog settings so that it's possible to allow switching syslog on and off
-	openlog("oscam", LOG_NDELAY, LOG_DAEMON);
+	openlog(syslog_ident, LOG_NDELAY, LOG_DAEMON);
 
 	cs_log_nolock(">> OSCam <<  cardserver %s, version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_TARGET ")", starttext);
 	cs_log_config();
