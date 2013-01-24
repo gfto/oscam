@@ -940,7 +940,7 @@ static const struct config_list reader_opts[] = {
 	DEF_OPT_SSTR("user"					, OFS(r_usr),					"", SIZEOF(r_usr) ),
 	DEF_OPT_SSTR("password"				, OFS(r_pwd),					"", SIZEOF(r_pwd) ),
 	DEF_OPT_SSTR("pincode"				, OFS(pincode),					"none", SIZEOF(pincode) ),
-	DEF_OPT_FUNC("mg-encrypted"			, 0,							mgencrypted_fn ),
+//	DEF_OPT_FUNC("mg-encrypted"			, 0,							mgencrypted_fn ),
 	DEF_OPT_STR("readnano"				, OFS(emmfile),					NULL ),
 	DEF_OPT_FUNC("services"				, 0,							services_fn ),
 	DEF_OPT_INT32("inactivitytimeout"	, OFS(tcp_ito),					DEFAULT_INACTIVITYTIMEOUT ),
