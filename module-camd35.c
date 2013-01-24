@@ -171,7 +171,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 	if(rc>=0) client->last = time((time_t *) 0); // last client action is now
 	switch(rc) {
 		//case 0: 	break;
-		case -1:	cs_log("packet to small (received %d bytes, should %d bytes)", rs, l);		break;
+		case -1: cs_log("packet is too small (received %d bytes, expected %d bytes)", rs, l); break;
 		case -2:
 			if (cs_auth_client(client, 0, "unknown user"))
 				cs_disconnect_client(client);

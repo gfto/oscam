@@ -3107,7 +3107,7 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 		}
 		n = -1;
 	} else if (n < 4) {
-		cs_log("%s packet to small (%d bytes)", getprefix(), n);
+		cs_log("%s packet is too small (%d bytes)", getprefix(), n);
 		n = -1;
 	} else {
 		// parse it and write it back, if we have received something of value

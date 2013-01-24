@@ -541,7 +541,7 @@ static int32_t newcamd_recv(struct s_client *client, uchar *buf, int32_t UNUSED(
   if( rc==-1 )
   {
     if (rs > 0)
-      cs_log("packet to small (%d bytes)", rs);
+      cs_log("packet is too small (%d bytes)", rs);
     else
       cs_log("Connection closed to %s", remote_txt());
   }
