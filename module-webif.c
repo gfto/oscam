@@ -1160,6 +1160,8 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	} else if(strcmp(getParam(params, "action"), "Save") == 0) {
 
 		rdr = get_reader_by_label(getParam(params, "label"));
+		if (!rdr)
+			return NULL;
 		//if (is_network_reader(rdr))
 		//	inactivate_reader(rdr); //Stop reader before reinitialization
 		char servicelabels[1024]="";
