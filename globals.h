@@ -1727,6 +1727,7 @@ struct s_config
 	int8_t global_whitelist_use_m;
 
 	char		*ecmfmt;
+	char		*pidfile;
 
 	int32_t		max_pending;
 };

@@ -737,6 +737,9 @@ static void cs_cleanup(void)
 	cfg.account = NULL;
 	init_free_sidtab();
 
+	if (cfg.pidfile)
+		unlink(cfg.pidfile);
+
 	config_free();
 
 	cs_close_log();
@@ -4003,6 +4006,16 @@ void cs_exit_oscam(void) {
 	cs_log("exit oscam requested");
 }
 
+void pidfile_create(char *pidfile) {
+	FILE *f = fopen(pidfile, "w");
+	if (f) {
+		pid_t my_pid = getpid();
+		cs_log("creating pidfile %s with pid %d", pidfile, my_pid);
+		fprintf(f, "%d\n", my_pid);
+		fclose(f);
+	}
+}
+
 int32_t main (int32_t argc, char *argv[])
 {
 	int32_t i, j;
@@ -4166,6 +4179,7 @@ int32_t main (int32_t argc, char *argv[])
   coolapi_open_all();
   init_config();
   cs_init_log();
+  pidfile_create(cfg.pidfile);
   cs_init_statistics();
   init_check();
   init_stat();

@@ -214,6 +214,7 @@ static const struct config_list global_opts[] = {
 #endif
 	DEF_OPT_FUNC("serverip"					, OFS(srvip),				serverip_fn ),
 	DEF_OPT_FUNC("logfile"					, OFS(logfile),				logfile_fn ),
+	DEF_OPT_STR("pidfile"					, OFS(pidfile),				NULL ),
 	DEF_OPT_INT8("disableuserfile"			, OFS(disableuserfile),		1 ),
 	DEF_OPT_INT8("disablemail"				, OFS(disablemail),			1 ),
 	DEF_OPT_INT8("usrfileflag"				, OFS(usrfileflag),			0 ),
