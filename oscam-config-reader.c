@@ -912,6 +912,7 @@ static void cooldowntime_fn(const char *UNUSED(token), char *value, void *settin
 	// It is only set by WebIf as convenience
 }
 
+#ifdef WITH_LB
 static void reader_fixups_fn(void *var) {
 	struct s_reader *rdr = var;
 	if (rdr->lb_weight > 1000)
@@ -919,12 +920,15 @@ static void reader_fixups_fn(void *var) {
 	else if (rdr->lb_weight <= 0)
 		rdr->lb_weight = 100;
 }
+#endif
 
 #define OFS(X) offsetof(struct s_reader, X)
 #define SIZEOF(X) sizeof(((struct s_reader *)0)->X)
 
 static const struct config_list reader_opts[] = {
+#ifdef WITH_LB
 	DEF_OPT_FIXUP_FUNC(reader_fixups_fn),
+#endif
 	DEF_OPT_FUNC("label"				, 0,							reader_label_fn ),
 #ifdef WEBIF
 	DEF_OPT_STR("description"			, OFS(description),				NULL ),
