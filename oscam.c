@@ -40,6 +40,7 @@ char *RDR_CD_TXT[] = {
 char *entitlement_type[] = {"", "package", "PPV-Event", "chid", "tier", "class", "PBM", "admin" };
 
 const char *syslog_ident = "oscam";
+char *oscam_pidfile = NULL;
 
 int32_t exit_oscam=0;
 struct s_module modules[CS_MAX_MOD];
@@ -179,9 +180,9 @@ static void show_usage(void)
 	printf(" ConfigDir  : %s\n", CS_CONFDIR);
 
 	printf("\n");
-	printf(" Usage: oscam [-a] [-b] [-c <config dir>] [-d <level>] [-g <mode>] [-h]\n");
-	printf("              [-I <ident>] [-p <num>] [-S] [-s] [-t <tmp dir>]\n");
-	printf("              [-w <secs>] [-V]%s", config_WEBIF() ? " " : "\n");
+	printf(" Usage: oscam [-a] [-b] [-B <pidfile>] [-c <config dir>] [-d <level>]\n");
+	printf("              [-g <mode>] [-h] [-I <ident>] [-p <num>] [-S] [-s]\n");
+	printf("              [-t <tmp dir>] [-w <secs>] [-V]%s", config_WEBIF() ? " " : "\n");
 	if (config_WEBIF())
 		printf("[-r <level>] [-u]\n");
 	printf("\n");
@@ -190,6 +191,7 @@ static void show_usage(void)
 	printf("               be installed and OSCam executable to contain the debug\n");
 	printf("               information (run oscam-XXXX.debug binary).\n");
 	printf("  -b         : Start in the background as daemon.\n");
+	printf("  -B <pidfile> : Create pidfile when starting.\n");
 	printf("  -c <dir>   : Read configuration files from <dir>:\n");
 	printf("  -d <level> : Set debug level mask used for logging:\n");
 	printf("                     0 = No debugging (default).\n");
@@ -235,11 +237,12 @@ static void write_versionfile(bool use_stdout);
 
 static void parse_cmdline_params(int argc, char **argv) {
 	int i;
-	while ((i = getopt(argc, argv, "g:I:bsauc:t:d:r:w:p:SVh")) != EOF) {
+	while ((i = getopt(argc, argv, "g:I:bB:sauc:t:d:r:w:p:SVh")) != EOF) {
 		switch(i) {
 		case 'g': gbdb = atoi(optarg); break;
 		case 'b': bg = 1; break;
 		case 'I': syslog_ident = optarg; break;
+		case 'B': oscam_pidfile = optarg; break;
 		case 's': cs_capture_SEGV = 1; break;
 		case 'a': cs_dump_stack = 1; break;
 		case 'c': cs_strncpy(cs_confdir, optarg, sizeof(cs_confdir)); break;
@@ -742,8 +745,8 @@ static void cs_cleanup(void)
 	cfg.account = NULL;
 	init_free_sidtab();
 
-	if (cfg.pidfile)
-		unlink(cfg.pidfile);
+	if (oscam_pidfile)
+		unlink(oscam_pidfile);
 
 	config_free();
 
@@ -4184,7 +4187,9 @@ int32_t main (int32_t argc, char *argv[])
   coolapi_open_all();
   init_config();
   cs_init_log();
-  pidfile_create(cfg.pidfile);
+  if (!oscam_pidfile && cfg.pidfile)
+    oscam_pidfile = cfg.pidfile;
+  pidfile_create(oscam_pidfile);
   cs_init_statistics();
   init_check();
   init_stat();
