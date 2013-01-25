@@ -1336,7 +1336,7 @@ struct s_reader  									//contains device info, reader info and card info
 	uint8_t			sc8in1_dtrrts_patch; // fix for kernel commit 6a1a82df91fa0eb1cc76069a9efe5714d087eccd
 
 #ifdef MODULE_PANDORA
-	int8_t			pand_send_ecm;
+	uint8_t			pand_send_ecm;
 #endif
   uint8_t cnxlastecm; // == 0 - las ecm has not been paired ecm, > 0 last ecm has been paired ecm
 
