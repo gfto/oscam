@@ -45,6 +45,9 @@ OPTIONS
        -b
 	  starts in background, writing oscam.version with starttime and version info in temporary directory
 
+       -B <filename>
+	  set PID file, overrides pidfile of oscam.conf, default:none
+
        -c <directory>
 	  read configuration from <directory>, default:see CS_CONFDIR in globals.h, while starting OSCam prints warnings on invalid key‐
 	  words, comment lines start with # character.

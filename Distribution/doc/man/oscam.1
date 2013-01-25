@@ -57,6 +57,11 @@ write oscam.crash on segfault (needs installed GDB and OSCam compiled with debug
 starts in background, writing oscam.version with starttime and version info in temporary directory
 .RE
 .PP
+\fB-B\fP <filename>
+.RS 3n
+set PID file, overrides pidfile of \fBoscam.conf\fR, default:none
+.RE
+.PP
 \fB-c\fP <directory>
 .RS 3n
 read configuration from <directory>, default:see CS_CONFDIR in \fBglobals.h\fR,
