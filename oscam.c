@@ -42,6 +42,7 @@ char *entitlement_type[] = {"", "package", "PPV-Event", "chid", "tier", "class",
 
 const char *syslog_ident = "oscam";
 char *oscam_pidfile = NULL;
+char default_pidfile[64];
 
 int32_t exit_oscam=0;
 struct s_module modules[CS_MAX_MOD];
@@ -4244,7 +4245,12 @@ int32_t main (int32_t argc, char *argv[])
   cs_init_log();
   if (!oscam_pidfile && cfg.pidfile)
     oscam_pidfile = cfg.pidfile;
-  pidfile_create(oscam_pidfile);
+  if (!oscam_pidfile) {
+    snprintf(default_pidfile, sizeof(default_pidfile) - 1, "%s%s", get_tmp_dir(), "/oscam.pid");
+    oscam_pidfile = default_pidfile;
+  }
+  if (oscam_pidfile)
+    pidfile_create(oscam_pidfile);
   cs_init_statistics();
   init_check();
   init_stat();
