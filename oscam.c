@@ -1,4 +1,5 @@
 #include "globals.h"
+#include <getopt.h>
 
 #include "csctapi/cardreaders.h"
 #include "modules.h"
@@ -178,107 +179,161 @@ static void show_usage(void)
 	_check(CARDREADER_STAPI, "stapi");
 	printf("\n");
 	printf(" ConfigDir  : %s\n", CS_CONFDIR);
-
 	printf("\n");
-	printf(" Usage: oscam [-a] [-b] [-B <pidfile>] [-c <config dir>] [-d <level>]\n");
-	printf("              [-g <mode>] [-h] [-I <ident>] [-p <num>] [-S] [-s]\n");
-	printf("              [-t <tmp dir>] [-w <secs>] [-V]%s", config_WEBIF() ? " " : "\n");
-	if (config_WEBIF())
-		printf("[-r <level>] [-u]\n");
-	printf("\n");
-	printf(" Options:\n");
-	printf("  -a         : Write oscam.crash file on segfault. This option needs GDB to\n");
-	printf("               be installed and OSCam executable to contain the debug\n");
-	printf("               information (run oscam-XXXX.debug binary).\n");
-	printf("  -b         : Start in the background as daemon.\n");
-	printf("  -B <pidfile> : Create pidfile when starting.\n");
-	printf("  -c <dir>   : Read configuration files from <dir>:\n");
-	printf("  -d <level> : Set debug level mask used for logging:\n");
-	printf("                     0 = No debugging (default).\n");
-	printf("                     1 = Detailed error messages.\n");
-	printf("                     2 = ATR parsing info, ECM, EMM and CW dumps.\n");
-	printf("                     4 = Traffic from/to the reader.\n");
-	printf("                     8 = Traffic from/to the clients.\n");
-	printf("                    16 = Traffic to the reader-device on IFD layer.\n");
-	printf("                    32 = Traffic to the reader-device on I/O layer.\n");
-	printf("                    64 = EMM logging.\n");
-	printf("                   128 = DVBAPI logging.\n");
-	printf("                   256 = Loadbalancer logging.\n");
-	printf("                   512 = CACHEEX logging.\n");
-	printf("                  1024 = Client ECM logging.\n");
-	printf("                 65535 = Debug all.\n");
-	printf("  -g <mode>  : Garbage collector debug mode (DEBUG ONLY OPTION!):\n");
-	printf("                 1 = Immediate free.\n");
-	printf("                 2 = Check for double frees.\n");
-	printf("  -I <ident> : Set syslog ident. Default: oscam\n");
-	printf("  -p <num>   : Maximum number of pending ECM packets. Default: 32 Max: 255\n");
-	if (config_WEBIF()) {
-		printf("  -r <level> : Set restart level:\n");
-		printf("                 0 = Restart disabled (request sets exit status 99).\n");
-		printf("                 1 = Restart activated (webif can restart oscam (default)).\n");
-		printf("                 2 = Like 1, but also restart on segmentation faults.\n");
-	    printf("  -u         : Enable output of web interface in UTF-8 charset.\n");
-	}
-	printf("  -S         : Do not filter sensitive info (card serials, boxids) in logs.\n");
-	printf("  -s         : Capture segmentation faults.\n");
-	printf("  -t <dir>   : Set temporary directory to <dir>:\n");
+	printf(" Usage: oscam [parameters]\n");
+	printf("\n Directories:\n");
+	printf(" -c, --config-dir <dir>  | Read configuration files from <dir>.\n");
+	printf("                         . Default: %s\n", CS_CONFDIR);
+	printf(" -t, --temp-dir <dir>    | Set temporary directory to <dir>.\n");
 #if defined(__CYGWIN__)
-	printf("                 Default = (OS-TMP)\n");
+	printf("                         . Default: (OS-TMP)\n");
 #else
-	printf("                 Default = /tmp/.oscam\n");
+	printf("                         . Default: /tmp/.oscam\n");
 #endif
-	printf("  -w <secs>  : Wait <secs> seconds for the system time to be set correctly.\n");
-	printf("  -h         : Show this help text.\n");
-	printf("  -V         : Show OSCam binary configuration and version.\n");
+	printf("\n Startup:\n");
+	printf(" -b, --daemon            | Start in the background as daemon.\n");
+	printf(" -B, --pidfile <pidfile> | Create pidfile when starting.\n");
+	if (config_WEBIF()) {
+	printf(" -r, --restart <level>   | Set restart level:\n");
+	printf("                         .   0 - Restart disabled (exit on restart request).\n");
+	printf("                         .   1 - WebIf restart is active (default).\n");
+	printf("                         .   2 - Like 1, but also restart on segfaults.\n");
+	}
+	printf(" -w, --wait <secs>       | Set how much seconds to wait at startup for the\n");
+	printf("                         . system clock to be set correctly. Default: 60\n");
+	printf("\n Logging:\n");
+	printf(" -I, --syslog-ident <ident> | Set syslog ident. Default: oscam\n");
+	printf(" -S, --show-sensitive    | Do not filter sensitive info (card serials, boxids)\n");
+	printf("                         . from the logs.\n");
+	printf(" -d, --debug <level>     | Set debug level mask used for logging:\n");
+	printf("                         .     0 - No extra debugging (default).\n");
+	printf("                         .     1 - Detailed error messages.\n");
+	printf("                         .     2 - ATR parsing info, ECM, EMM and CW dumps.\n");
+	printf("                         .     4 - Traffic from/to the reader.\n");
+	printf("                         .     8 - Traffic from/to the clients.\n");
+	printf("                         .    16 - Traffic to the reader-device on IFD layer.\n");
+	printf("                         .    32 - Traffic to the reader-device on I/O layer.\n");
+	printf("                         .    64 - EMM logging.\n");
+	printf("                         .   128 - DVBAPI logging.\n");
+	printf("                         .   256 - Loadbalancer logging.\n");
+	printf("                         .   512 - CACHEEX logging.\n");
+	printf("                         .  1024 - Client ECM logging.\n");
+	printf("                         . 65535 - Debug all.\n");
+	printf("\n Settings:\n");
+	printf(" -p, --pending-ecm <num> | Set the maximum number of pending ECM packets.\n");
+	printf("                         . Default: 32 Max: 255\n");
+	if (config_WEBIF()) {
+	printf(" -u, --utf8              | Enable WebIf support for UTF-8 charset.\n");
+	}
+	printf("\n Debug parameters:\n");
+	printf(" -a, --crash-dump        | Write oscam.crash file on segfault. This option\n");
+	printf("                         . needs GDB to be installed and OSCam executable to\n");
+	printf("                         . contain the debug information (run oscam-XXXX.debug)\n");
+	printf(" -s, --capture-segfaults | Capture segmentation faults.\n");
+	printf(" -g, --gcollect <mode>   | Garbage collector debug mode:\n");
+	printf("                         .   1 - Immediate free.\n");
+	printf("                         .   2 - Check for double frees.\n");
+	printf("\n Information:\n");
+	printf(" -h, --help              | Show command line help text.\n");
+	printf(" -V, --build-info        | Show OSCam binary configuration and version.\n");
 }
 #undef _check
+
+/* Keep the options sorted */
+static const char short_options[] = "aB:bc:d:g:hI:p:r:Sst:uVw:";
+
+/* Keep the options sorted by short option */
+static const struct option long_options[] = {
+	{ "crash-dump",			no_argument,       NULL, 'a' },
+	{ "pidfile",			required_argument, NULL, 'B' },
+	{ "daemon",				no_argument,       NULL, 'b' },
+	{ "config-dir",			required_argument, NULL, 'c' },
+	{ "debug",				required_argument, NULL, 'd' },
+	{ "gcollect",			required_argument, NULL, 'g' },
+	{ "help",				no_argument,       NULL, 'h' },
+	{ "syslog-ident",		required_argument, NULL, 'I' },
+	{ "pending-ecm",		required_argument, NULL, 'p' },
+	{ "restart",			required_argument, NULL, 'r' },
+	{ "show-sensitive",		no_argument,       NULL, 'S' },
+	{ "capture-segfaults",	no_argument,       NULL, 's' },
+	{ "temp-dir",			required_argument, NULL, 't' },
+	{ "utf8",				no_argument,       NULL, 'u' },
+	{ "build-info",			no_argument,       NULL, 'V' },
+	{ "wait",				required_argument, NULL, 'w' },
+	{ 0, 0, 0, 0 }
+};
 
 static void write_versionfile(bool use_stdout);
 
 static void parse_cmdline_params(int argc, char **argv) {
 	int i;
-	while ((i = getopt(argc, argv, "g:I:bB:sauc:t:d:r:w:p:SVh")) != EOF) {
+	while ((i = getopt_long(argc, argv, short_options, long_options, NULL)) != EOF) {
+		if (i == '?')
+			fprintf(stderr, "ERROR: Unknown command line parameter: %s\n", argv[optind - 1]);
 		switch(i) {
-		case 'g': gbdb = atoi(optarg); break;
-		case 'b': bg = 1; break;
-		case 'I': syslog_ident = optarg; break;
-		case 'B': oscam_pidfile = optarg; break;
-		case 's': cs_capture_SEGV = 1; break;
-		case 'a': cs_dump_stack = 1; break;
-		case 'c': cs_strncpy(cs_confdir, optarg, sizeof(cs_confdir)); break;
-		case 'd': cs_dblevel = atoi(optarg); break;
-		case 'r':
+		case 'a': // --crash-dump
+			cs_dump_stack = 1;
+			break;
+		case 'B': // --pidfile
+			oscam_pidfile = optarg;
+			break;
+		case 'b': // --daemon
+			bg = 1;
+			break;
+		case 'c': // --config-dir
+			cs_strncpy(cs_confdir, optarg, sizeof(cs_confdir));
+			break;
+		case 'd': // --debug
+			cs_dblevel = atoi(optarg);
+			break;
+		case 'g': // --gcollect
+			gbdb = atoi(optarg);
+			break;
+		case 'h': // --help
+			show_usage();
+			exit(EXIT_SUCCESS);
+			break;
+		case 'I': // --syslog-ident
+			syslog_ident = optarg;
+			break;
+		case 'p': // --pending-ecm
+			max_pending = atoi(optarg) <= 0 ? 32 : MIN(atoi(optarg), 255);
+			break;
+		case 'r': // --restart
 			if (config_WEBIF()) {
 				cs_restart_mode = atoi(optarg);
 			}
 			break;
-		case 'u':
-			if (config_WEBIF()) {
-				cs_http_use_utf8 = 1;
-				printf("WARNING: Web interface UTF-8 mode enabled. Carefully read documentation as bugs may arise.\n");
-			}
+		case 'S': // --show-sensitive
+			log_remove_sensitive = !log_remove_sensitive;
 			break;
-		case 't': {
+		case 's': // --capture-segfaults
+			cs_capture_SEGV = 1;
+			break;
+		case 't': { // --temp-dir
 			mkdir(optarg, S_IRWXU);
 			int j = open(optarg, O_RDONLY);
 			if (j >= 0) {
 				close(j);
 				cs_strncpy(cs_tmpdir, optarg, sizeof(cs_tmpdir));
 			} else {
-				printf("WARNING: tmpdir does not exist. using default value.\n");
+				printf("WARNING: Temp dir does not exist. Using default value.\n");
 			}
 			break;
 		}
-		case 'w': cs_waittime = strtoul(optarg, NULL, 10); break;
-		case 'p': max_pending = atoi(optarg)<=0?32:MIN(atoi(optarg), 255); break;
-		case 'S': log_remove_sensitive = !log_remove_sensitive; break;
-		case 'V':
+		case 'u': // --utf8
+			if (config_WEBIF()) {
+				cs_http_use_utf8 = 1;
+				printf("WARNING: Web interface UTF-8 mode enabled. Carefully read documentation as bugs may arise.\n");
+			}
+			break;
+		case 'V': // --build-info
 			write_versionfile(true);
-			exit(0);
-		case 'h':
-		default :
-			show_usage();
-			exit(0);
+			exit(EXIT_SUCCESS);
+			break;
+		case 'w': // --wait
+			cs_waittime = strtoul(optarg, NULL, 10);
+			break;
 		}
 	}
 }
