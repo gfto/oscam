@@ -1040,13 +1040,13 @@ void cs_exit(int32_t sig)
 
 	cs_log("cardserver down");
 
-	if (sig == SIGINT)
-		exit(sig);
-
 	cs_cleanup();
 
 	if (!exit_oscam)
 	  exit_oscam = sig?sig:1;
+
+	if (sig == SIGINT)
+		exit(sig);
 }
 
 /* Checks if the date of the system is correct and waits if necessary. */
