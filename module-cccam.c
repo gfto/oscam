@@ -3109,6 +3109,9 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l) {
 	} else if (n < 4) {
 		cs_log("%s packet is too small (%d bytes)", getprefix(), n);
 		n = -1;
+	} else if (n > CC_MAXMSGSIZE) {
+		cs_log("%s packet is too big (%d bytes, max: %d)", getprefix(), n, CC_MAXMSGSIZE);
+		n = -1;
 	} else {
 		// parse it and write it back, if we have received something of value
 		n = cc_parse_msg(cl, buf, n);
