@@ -8,3 +8,6 @@ Currently available tools are:
   check_config_tables.sh                This script checks config tables
                                         against variable defintions
                                         in order to find wrong types.
+
+  check_cmdline_opts.sh                 This script checks if all command
+                                        line parameters are properly set.
