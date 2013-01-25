@@ -485,6 +485,7 @@ static void services_fn(const char *token, char *value, void *setting, FILE *f) 
 	struct s_reader *rdr = setting;
 	if (value) {
 		if (strlen(value)) {
+			strtolower(value);
 			chk_services(value, &rdr->sidtabok, &rdr->sidtabno);
 		} else {
 			rdr->sidtabok = 0;
@@ -650,6 +651,7 @@ static void ident_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_reader *rdr = setting;
 	if (value) {
 		if (strlen(value)) {
+			strtolower(value);
 			chk_ftab(value, &rdr->ftab, "reader", rdr->label, "provid");
 		} else {
 			clear_ftab(&rdr->ftab);
@@ -666,6 +668,7 @@ static void ident_fn(const char *token, char *value, void *setting, FILE *f) {
 static void chid_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_reader *rdr = setting;
 	if (value) {
+		strtolower(value);
 		chk_ftab(value, &rdr->fchid, "reader", rdr->label, "chid");
 		rdr->changes_since_shareupdate = 1;
 		return;
@@ -679,6 +682,7 @@ static void chid_fn(const char *token, char *value, void *setting, FILE *f) {
 static void class_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_reader *rdr = setting;
 	if (value) {
+		strtolower(value);
 		chk_cltab(value, &rdr->cltab);
 		return;
 	}
