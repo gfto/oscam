@@ -2570,14 +2570,13 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			server_card->id = buf[10] << 24 | buf[11] << 16 | buf[12] << 8
 					| buf[13];
 			server_card->caid = b2i(2, data);
-
-			if ((er = get_ecmtask()) && l > 17) {
+#define CCMSG_HEADER_LEN 17
+			if ((er = get_ecmtask()) && l > CCMSG_HEADER_LEN && MAX_ECM_SIZE > l - CCMSG_HEADER_LEN) {
 				er->caid = b2i(2, buf + 4);
-				er->srvid = b2i(2, buf + 14);
-				//er->ecmlen =(((buf[18]&0x0f)<< 8) | buf[19])+3;
-				er->ecmlen = l-17;
-				memcpy(er->ecm, buf + 17, er->ecmlen);
 				er->prid = b2i(4, buf + 6);
+				er->srvid = b2i(2, buf + 14);
+				er->ecmlen = l - CCMSG_HEADER_LEN;
+				memcpy(er->ecm, buf + CCMSG_HEADER_LEN, er->ecmlen);
 				cc->server_ecm_pending++;
 				er->idx = ++cc->server_ecm_idx;
 
