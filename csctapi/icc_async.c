@@ -606,22 +606,18 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 			ICC_Async_GetPLL_Divider(reader); // calculate pll divider for target cardmhz.
 		}
 
-	//set clock speed/baudrate must be done before timings
-	//because reader->current_baudrate is used in calculation of timings
 	F =	atr_f_table[FI];  //get the frequency divider also called clock rate conversion factor
+	if (reader->crdr.set_baudrate) {
+		reader->current_baudrate = DEFAULT_BAUDRATE;
 
-	reader->current_baudrate = DEFAULT_BAUDRATE;
-
-	if (deprecated == 0) {
-		uint32_t baud_temp;
-		if (reader->protocol_type != ATR_PROTOCOL_TYPE_T14) { //dont switch for T14
-			if (reader->mhz > 2000 && reader->typ == R_INTERNAL) baud_temp = (uint32_t) 1/((1/(double)D)*((double)F/(double)(reader->cardmhz*10000)));
-			else baud_temp = (double)D * ICC_Async_GetClockRate (reader->cardmhz) / (double)F;
-			rdr_log(reader, "Setting baudrate to %d bps", baud_temp);
-			if (reader->crdr.set_baudrate) {
+		if (deprecated == 0) {
+		
+			if (reader->protocol_type != ATR_PROTOCOL_TYPE_T14) { //dont switch for T14
+				uint32_t baud_temp = (double)D * ICC_Async_GetClockRate (reader->cardmhz) / (double)F;
+				rdr_log(reader, "Setting baudrate to %d bps", baud_temp);
 				call (reader->crdr.set_baudrate(reader, baud_temp));
+				reader->current_baudrate = baud_temp;
 			}
-			reader->current_baudrate = baud_temp; //this is needed for all readers to calculate work_etu for timings
 		}
 	}
 	if (reader->mhz > 2000 && reader->typ == R_INTERNAL) reader->worketu = (double) ((1/(double)D)*((double)F/(double)reader->cardmhz)*100);
