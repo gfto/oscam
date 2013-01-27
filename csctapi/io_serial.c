@@ -374,9 +374,9 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 	if(reader->typ == R_INTERNAL){
 		int32_t readed;
 #if defined(WITH_STAPI)
-		const int32_t chunksize = INT_MAX;
+		const uint32_t chunksize = INT_MAX;
 #elif defined(__SH4__)
-		const int32_t chunksize = 1;
+		const uint32_t chunksize = 1;
 #endif
 		struct timeval tv, tv_spent;
 		gettimeofday(&tv,0);
@@ -389,7 +389,7 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 	 		gettimeofday(&tv_spent,0);
 			if(readed > 0) count +=readed;
 			if(count < size){
-				if(readed < chunksize) cs_sleepus(1);
+				if(readed < (int32_t)chunksize) cs_sleepus(1);
 				continue;
 			} else break;
 		}	
