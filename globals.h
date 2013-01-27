@@ -36,8 +36,8 @@
 //for reader-nagra variables in s_reader:
 #include "cscrypt/idea.h"
 
-#include "oscam-config.h"
-#include "oscam-config-funcs.h"
+#include "config.h"
+#include "config-funcs.h"
 
 #include "cscrypt/cscrypt.h"
 

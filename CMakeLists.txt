@@ -178,7 +178,7 @@ endif (OSCamOperatingSystem MATCHES "Linux")
 set (CS_CONFDIR ${DEFAULT_CS_CONFDIR} CACHE STRING "Default path for the config files")
 add_definitions ("-DCS_CONFDIR=\\\"${CS_CONFDIR}\\\"")
 
-# Manage oscam-config.h based on command line parameters
+# Manage config.h based on command line parameters
 # Manipulate config file based on given parameters and read unset parameters
 
 execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --show-valid OUTPUT_VARIABLE config_vars_string OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -199,7 +199,7 @@ ENDMACRO(GENERATE_OSCAM_CONFIG fullpath)
 #----------------------- subdirectories ------------------------------
 
 include (CheckIncludeFile)
-GENERATE_OSCAM_CONFIG("${CMAKE_CURRENT_SOURCE_DIR}/oscam-config.h")
+GENERATE_OSCAM_CONFIG("${CMAKE_CURRENT_SOURCE_DIR}/config.h")
 
 check_include_file ("pthread.h" HAVE_PTHREAD)
 if (HAVE_PTHREAD)

@@ -1,5 +1,5 @@
-#ifndef OSCAM_CONFIG_H_
-#define OSCAM_CONFIG_H_
+#ifndef CONFIG_H_
+#define CONFIG_H_
 
 //
 // ADDONS

@@ -1,5 +1,5 @@
-#ifndef OSCAM_CONFIG_FUNCS_H_
-#define OSCAM_CONFIG_FUNCS_H_
+#ifndef CONFIG_FUNCS_H_
+#define CONFIG_FUNCS_H_
 
 #if defined(WITH_SSL) && !defined(WITH_LIBCRYPTO)
 #  define WITH_LIBCRYPTO

@@ -117,12 +117,12 @@ Available options:
 }
 
 enabled() {
-	grep "^\#define $1$" oscam-config.h >/dev/null 2>/dev/null
+	grep "^\#define $1$" config.h >/dev/null 2>/dev/null
 	return $?
 }
 
 disabled() {
-	grep "^\#define $1$" oscam-config.h >/dev/null 2>/dev/null
+	grep "^\#define $1$" config.h >/dev/null 2>/dev/null
 	test $? = 0 && return 1
 	return 0
 }
@@ -177,7 +177,7 @@ valid_opt() {
 
 enable_opt() {
 	valid_opt $1 && disabled $1 && {
-		sed -i.bak -e "s|//#define $1$|#define $1|g" oscam-config.h && rm oscam-config.h.bak
+		sed -i.bak -e "s|//#define $1$|#define $1|g" config.h && rm config.h.bak
 		echo "Enable $1"
 	}
 }
@@ -191,7 +191,7 @@ enable_opts() {
 
 disable_opt() {
 	valid_opt $1 && enabled $1 && {
-		sed -i.bak -e "s|#define $1$|//#define $1|g" oscam-config.h && rm oscam-config.h.bak
+		sed -i.bak -e "s|#define $1$|//#define $1|g" config.h && rm config.h.bak
 		echo "Disable $1"
 	}
 }
@@ -355,8 +355,8 @@ menu_card_readers() {
 
 config_dialog() {
 	tempfile=/tmp/test$$
-	tempfileconfig=/tmp/oscam-config.h
-	configfile=oscam-config.h
+	tempfileconfig=/tmp/config.h
+	configfile=config.h
 	DIALOG=${DIALOG:-`which dialog`}
 
 	height=30
