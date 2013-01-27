@@ -294,6 +294,10 @@ void network_tcp_connection_close(struct s_reader *reader, char *reason)
 			cl->ecmtask[i].rc = 0;
 		}
 	}
+	// newcamd message ids are stored as a reference in ecmtask[].idx 
+ 	// so we need to reset them aswell 
+	if (reader->typ == R_NEWCAMD) 
+		cl->ncd_msgid = 0; 
 }
 
 void casc_do_sock_log(struct s_reader * reader)
