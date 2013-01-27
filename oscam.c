@@ -114,7 +114,7 @@ static void show_usage(void)
 "| | | \\___ \\| |  / _` | '_ ` _ \\\n"
 "| |_| |___) | |_| (_| | | | | | |\n"
 " \\___/|____/ \\___\\__,_|_| |_| |_|\n\n");
-	printf("OSCam cardserver v%s, build #%s (%s)\n", CS_VERSION, CS_SVN_VERSION, CS_TARGET);
+	printf("OSCam cardserver v%s, build r%s (%s)\n", CS_VERSION, CS_SVN_VERSION, CS_TARGET);
 	printf("Copyright (C) 2009-2013 OSCam developers.\n");
 	printf("This program is distributed under GPLv3.\n");
 	printf("OSCam is based on Streamboard mp-cardserver v0.9d written by dukat\n");
@@ -898,7 +898,7 @@ void cs_dumpstack(int32_t sig)
 
 	fprintf(stderr, "crashed with signal %d on %swriting oscam.crash\n", sig, buf);
 
-	fprintf(fp, "%sOSCam cardserver v%s, build #%s (%s)\n", buf, CS_VERSION, CS_SVN_VERSION, CS_TARGET);
+	fprintf(fp, "%sOSCam cardserver v%s, build r%s (%s)\n", buf, CS_VERSION, CS_SVN_VERSION, CS_TARGET);
 	fprintf(fp, "FATAL: Signal %d: %s Fault. Logged StackTrace:\n\n", sig, (sig == SIGSEGV) ? "Segmentation" : ((sig == SIGBUS) ? "Bus" : "Unknown"));
 	fclose(fp);
 

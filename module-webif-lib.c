@@ -261,6 +261,17 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
 									int8_t ok = 0;
 									for (ptr2 = strtok_r(ptr1, ",", &saveptr2); (ptr2) && ok == 0 ; ptr2 = strtok_r(NULL, ",", &saveptr2)){
 										size_t len = strlen(ptr2);
+										check_conf(CARDREADER_PHOENIX, ptr2);
+										check_conf(CARDREADER_INTERNAL_AZBOX, ptr2);
+										check_conf(CARDREADER_INTERNAL_COOLAPI, ptr2);
+										check_conf(CARDREADER_INTERNAL_SCI, ptr2);
+										check_conf(CARDREADER_SC8IN1, ptr2);
+										check_conf(CARDREADER_MP35, ptr2);
+										check_conf(CARDREADER_SMARGO, ptr2);
+										check_conf(CARDREADER_PCSC, ptr2);
+										check_conf(CARDREADER_SMART, ptr2);
+										check_conf(CARDREADER_DB2COM, ptr2);
+										check_conf(CARDREADER_STAPI, ptr2);
 										check_conf(CS_ANTICASC, ptr2);
 										check_conf(CS_CACHEEX, ptr2);
 										check_conf(HAVE_DVBAPI, ptr2);
@@ -275,6 +286,7 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
 										check_conf(MODULE_CCCSHARE, ptr2);
 										check_conf(MODULE_CONSTCW, ptr2);
 										check_conf(MODULE_GBOX, ptr2);
+										check_conf(MODULE_GHTTP, ptr2);										
 										check_conf(MODULE_MONITOR, ptr2);
 										check_conf(MODULE_NEWCAMD, ptr2);
 										check_conf(MODULE_PANDORA, ptr2);

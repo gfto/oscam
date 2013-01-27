@@ -137,7 +137,7 @@ int32_t cs_open_logfiles(void)
 	// We use openlog to set the default syslog settings so that it's possible to allow switching syslog on and off
 	openlog(syslog_ident, LOG_NDELAY, LOG_DAEMON);
 
-	cs_log_nolock(">> OSCam <<  cardserver %s, version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_TARGET ")", starttext);
+	cs_log_nolock(">> OSCam <<  cardserver %s, version " CS_VERSION ", build r" CS_SVN_VERSION " (" CS_TARGET ")", starttext);
 	cs_log_config();
 	return(fp <= (FILE *)0);
 }
