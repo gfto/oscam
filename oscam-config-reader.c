@@ -477,24 +477,6 @@ static void services_fn(const char *token, char *value, void *setting, FILE *f) 
 	free_mk_t(value);
 }
 
-#ifdef CS_CACHEEX
-static void cacheex_ecm_filter_fn(const char *token, char *value, void *setting, FILE *f) {
-	struct s_reader *rdr = setting;
-	if (value) {
-		if (strlen(value)) {
-			chk_hitvaluetab(value, &rdr->cacheex.filter_caidtab);
-		} else {
-			clear_csptab(&rdr->cacheex.filter_caidtab);
-		}
-		return;
-	}
-	value = mk_t_hitvaluetab(&rdr->cacheex.filter_caidtab);
-	if (strlen(value) > 0 || cfg.http_full_cfg)
-		fprintf_conf(f, token, "%s\n", value);
-	free_mk_t(value);
-}
-#endif
-
 static void caid_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_reader *rdr = setting;
 	if (value) {
@@ -936,7 +918,7 @@ static const struct config_list reader_opts[] = {
 #ifdef CS_CACHEEX
 	DEF_OPT_INT8("cacheex"				, OFS(cacheex.mode),			0 ),
 	DEF_OPT_INT8("cacheex_maxhop"		, OFS(cacheex.maxhop),			0 ),
-	DEF_OPT_FUNC("cacheex_ecm_filter"	, 0,							cacheex_ecm_filter_fn ),
+	DEF_OPT_FUNC("cacheex_ecm_filter"		, OFS(cacheex.filter_caidtab),	hitvaluetab_fn ),
 	DEF_OPT_UINT8("cacheex_allow_request"	, OFS(cacheex.allow_request),	1 ),
 	DEF_OPT_UINT8("cacheex_drop_csp"		, OFS(cacheex.drop_csp),		0 ),
 #endif
