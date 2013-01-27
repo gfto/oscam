@@ -443,20 +443,21 @@ int32_t init_srvid(void)
 	memcpy(last_srvid, cfg.srvid, sizeof(last_srvid));	//old data
 	memcpy(cfg.srvid, new_cfg_srvid, sizeof(last_srvid));	//assign after loading, so everything is in memory
 
+	cs_writeunlock(&config_lock);
+	
 	struct s_client *cl;
 	for (cl=first_client->next; cl ; cl=cl->next)
 		cl->last_srvidptr=NULL;
 
 	struct s_srvid *ptr;
 	for (i=0; i<16; i++) {
-		while (last_srvid[i]) { //cleanup old data:
+		ptr = last_srvid[i];
+		while (ptr) { //cleanup old data:
 			ptr = last_srvid[i]->next;
-			free(last_srvid[i]->data);
-			free(last_srvid[i]);
-			last_srvid[i] = ptr;
+			add_garbage(last_srvid[i]->data);
+			add_garbage(last_srvid[i]);
 		}
 	}
-	cs_writeunlock(&config_lock);
 
 	return(0);
 }
