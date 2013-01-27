@@ -1268,7 +1268,7 @@ void newcamd_idle(void) {
 	int32_t time_diff;
 	time(&now);
 	time_diff = abs(now - rdr->last_s);
-	if (time_diff>(rdr->tcp_ito*60)) {
+	if (time_diff>(rdr->tcp_ito)) {
 		if (client->ncd_keepalive)
 			newcamd_reply_ka();
 		else
