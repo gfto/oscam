@@ -689,8 +689,11 @@ static void dvbapi_services_fn(const char *UNUSED(token), char *value, void *UNU
 
 extern struct s_dvbapi_priority *dvbapi_priority;
 
-static void dvbapi_chk_caidtab(char *caidasc, char type) {
+static void dvbapi_caidtab_fn(const char *UNUSED(token), char *caidasc, void *UNUSED(setting), long cmd, FILE *UNUSED(f)) {
 	char *ptr1, *ptr3, *saveptr1 = NULL;
+	if (!caidasc)
+		return;
+	char type = (char)cmd;
 	for (ptr1 = strtok_r(caidasc, ",", &saveptr1); (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1)) {
 		uint32_t caid, prov;
 		if ( (ptr3 = strchr(trim(ptr1), ':')) )
@@ -722,15 +725,6 @@ static void dvbapi_chk_caidtab(char *caidasc, char type) {
 			}
 		}
 	}
-}
-
-static void dvbapi_caidtab_fn(const char *token, char *value, void *UNUSED(setting), FILE *UNUSED(f)) {
-	char cmd = ' ';
-	if (streq(token, "priority")) cmd = 'p';
-	if (streq(token, "ignore"))   cmd = 'i';
-	if (streq(token, "cw_delay")) cmd = 'd';
-	if (value && cmd != ' ')
-		dvbapi_chk_caidtab(value, cmd);
 	// THIS OPTION IS NOT SAVED
 }
 
@@ -749,9 +743,9 @@ static const struct config_list dvbapi_opts[] = {
 	DEF_OPT_FUNC("boxtype"					, OFS(dvbapi_boxtype),		dvbapi_boxtype_fn ),
 	DEF_OPT_FUNC("services"					, OFS(dvbapi_sidtabs.ok),		dvbapi_services_fn ),
 	// OBSOLETE OPTIONS
-	DEF_OPT_FUNC("priority"					, 0,						dvbapi_caidtab_fn ),
-	DEF_OPT_FUNC("ignore"					, 0,						dvbapi_caidtab_fn ),
-	DEF_OPT_FUNC("cw_delay"					, 0,						dvbapi_caidtab_fn ),
+	DEF_OPT_FUNC_X("priority"				, 0,						dvbapi_caidtab_fn, 'p' ),
+	DEF_OPT_FUNC_X("ignore"					, 0,						dvbapi_caidtab_fn, 'i' ),
+	DEF_OPT_FUNC_X("cw_delay"				, 0,						dvbapi_caidtab_fn, 'd' ),
 	DEF_LAST_OPT
 };
 #else
