@@ -181,7 +181,7 @@ static void account_tuntab_fn(const char *token, char *value, void *setting, FIL
 	}
 }
 
-static void account_group_fn(const char *token, char *value, void *setting, FILE *f) {
+void group_fn(const char *token, char *value, void *setting, FILE *f) {
 	uint64_t *grp = setting;
 	if (value) {
 		char *ptr1, *saveptr1 = NULL;
@@ -291,7 +291,7 @@ static const struct config_list account_opts[] = {
 	DEF_OPT_FUNC("allowedprotocols"		, 0,							account_allowedprotocols_fn ),
 	DEF_OPT_FUNC("allowedtimeframe"		, 0,							account_allowedtimeframe_fn ),
 	DEF_OPT_FUNC("betatunnel"			, OFS(ttab),					account_tuntab_fn ),
-	DEF_OPT_FUNC("group"				, OFS(grp),						account_group_fn ),
+	DEF_OPT_FUNC("group"				, OFS(grp),						group_fn ),
 	DEF_OPT_FUNC("services"				, 0,							account_services_fn ),
 	DEF_OPT_FUNC("ident"				, 0,							account_ident_fn ),
 	DEF_OPT_FUNC("chid"					, 0,							account_chid_fn ),

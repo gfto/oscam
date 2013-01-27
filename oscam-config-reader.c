@@ -650,26 +650,6 @@ static void aeskeys_fn(const char *token, char *value, void *setting, FILE *f) {
 	free_mk_t(value);
 }
 
-static void group_fn(const char *token, char *value, void *setting, FILE *f) {
-	struct s_reader *rdr = setting;
-	if (value) {
-		char *ptr, *saveptr1 = NULL;
-		rdr->grp = 0;
-		for (ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1)) {
-			int32_t g;
-			g = atoi(ptr);
-			if (g > 0 && g < 65) {
-				rdr->grp |= (((uint64_t)1)<<(g-1));
-			}
-		}
-		return;
-	}
-	value = mk_t_group(rdr->grp);
-	if (strlen(value) > 0 || cfg.http_full_cfg)
-		fprintf_conf(f, token, "%s\n", value);
-	free_mk_t(value);
-}
-
 static void emmcache_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_reader *rdr = setting;
 	if (value) {
@@ -936,7 +916,7 @@ static const struct config_list reader_opts[] = {
 	DEF_OPT_FUNC("chid"					, 0,							chid_fn ),
 	DEF_OPT_FUNC("class"				, OFS(cltab),					class_fn ),
 	DEF_OPT_FUNC("aeskeys"				, 0,							aeskeys_fn ),
-	DEF_OPT_FUNC("group"				, 0,							group_fn ),
+	DEF_OPT_FUNC("group"				, OFS(grp),						group_fn ),
 	DEF_OPT_FUNC("emmcache"				, 0,							emmcache_fn ),
 	DEF_OPT_FUNC_X("blockemm-unknown"	, OFS(blockemm),				flags_fn, EMM_UNKNOWN ),
 	DEF_OPT_FUNC_X("blockemm-u"			, OFS(blockemm),				flags_fn, EMM_UNIQUE ),
