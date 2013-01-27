@@ -88,7 +88,7 @@ char *CSS =
 "TR.c TD {background-color:#f1f5e6;}\n"
 "TR.a TD {background-color:#33ff00;}\n"
 "TR.online TD {background-color:#BBFFAA;}\n"
-"TR.online TD.usercol5 {background-color:#BBFFAA;}\n"
+"TR.online TD.usercol5 {background-color:#646464;}\n"
 "TR.expired TD {background-color:#FFBBAA;}\n"
 "TR.connected TD {background-color:#FFFFAA;}\n"
 "TR.disabled TD:first-child IMG.icon {background-color:#00AA00;}\n"
