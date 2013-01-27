@@ -49,28 +49,28 @@ Mac OS X
 
 <P>
 
-<B>-a</B>
+<B>-a</B>|<B>--crash-dump</B>
 <DL COMPACT><DT><DD>
 write oscam.crash on segfault (needs installed GDB and OSCam compiled with debug infos -ggdb)
 </DL>
 
 <P>
 
-<B>-b</B>
+<B>-b</B>|<B>--daemon</B>
 <DL COMPACT><DT><DD>
 starts in background, writing oscam.version with starttime and version info in temporary directory
 </DL>
 
 <P>
 
-<B>-B</B> &lt;filename&gt;
+<B>-B</B>|<B>--pidfile</B> &lt;filename&gt;
 <DL COMPACT><DT><DD>
 set PID file, overrides pidfile of <B>oscam.conf</B>, default:none
 </DL>
 
 <P>
 
-<B>-c</B> &lt;directory&gt;
+<B>-c</B>|<B>--config-dir</B> &lt;directory&gt;
 <DL COMPACT><DT><DD>
 read configuration from &lt;directory&gt;, default:see CS_CONFDIR in <B>globals.h</B>,
 while starting OSCam prints warnings on invalid keywords, comment lines start with <B>#</B> character.
@@ -78,7 +78,7 @@ while starting OSCam prints warnings on invalid keywords, comment lines start wi
 
 <P>
 
-<B>-d</B> &lt;level&gt;
+<B>-d</B>|<B>--debug</B> &lt;level&gt;
 <DL COMPACT><DT><DD>
 debug level mask:
 <P>
@@ -98,7 +98,7 @@ debug level mask:
 
 <P>
 
-<B>-g</B> &lt;mode&gt;
+<B>-g</B>|<B>--gcollect</B> &lt;mode&gt;
 <DL COMPACT><DT><DD>
 garbage collector debug mode, default:none:
 <P>
@@ -108,28 +108,28 @@ garbage collector debug mode, default:none:
 
 <P>
 
-<B>-h</B>
+<B>-h</B>|<B>--help</B>
 <DL COMPACT><DT><DD>
 usage
 </DL>
 
 <P>
 
-<B>-l</B>
+<B>-I</B>|<B>--syslog-ident</B> &lt;ident&gt;
 <DL COMPACT><DT><DD>
 set syslog ident, default:oscam
 </DL>
 
 <P>
 
-<B>-p</B> &lt;number&gt;
+<B>-p</B>|<B>--pending-ecm</B> &lt;number&gt;
 <DL COMPACT><DT><DD>
 maximum number of pending ECM packets, default:32, maximum:255
 </DL>
 
 <P>
 
-<B>-r</B> &lt;level&gt;
+<B>-r</B>|<B>--restart</B> &lt;level&gt;
 <DL COMPACT><DT><DD>
 restart level:
 <P>
@@ -140,42 +140,42 @@ restart level:
 
 <P>
 
-<B>-S</B>
+<B>-S</B>|<B>--show-sensitive</B>
 <DL COMPACT><DT><DD>
 do not filter sensitive info (card serial numbers) in the logs
 </DL>
 
 <P>
 
-<B>-s</B>
+<B>-s</B>|<B>--capture-segfaults</B>
 <DL COMPACT><DT><DD>
 capture segmentation faults
 </DL>
 
 <P>
 
-<B>-t</B> &lt;directory&gt;
+<B>-t</B>|<B>--temp-dir</B> &lt;directory&gt;
 <DL COMPACT><DT><DD>
 use &lt;directory&gt; for temporary data, default:temporary directory of OS
 </DL>
 
 <P>
 
-<B>-u</B>
+<B>-u</B>|<B>--utf8</B>
 <DL COMPACT><DT><DD>
 enable output of web interface in UTF-8 charset
 </DL>
 
 <P>
 
-<B>-V</B>
+<B>-V</B>|<B>--build-info</B>
 <DL COMPACT><DT><DD>
 show OSCam version info
 </DL>
 
 <P>
 
-<B>-w</B> &lt;seconds&gt;
+<B>-w</B>|<B>--wait</B> &lt;seconds&gt;
 <DL COMPACT><DT><DD>
 time waiting for system time to be set correctly
 </DL>

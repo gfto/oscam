@@ -39,20 +39,20 @@ DESCRIPTIONS
        ·  Mac OS X
 
 OPTIONS
-       -a
+       -a|--crash-dump
 	  write oscam.crash on segfault (needs installed GDB and OSCam compiled with debug infos -ggdb)
 
-       -b
+       -b|--daemon
 	  starts in background, writing oscam.version with starttime and version info in temporary directory
 
-       -B <filename>
+       -B|--pidfile <filename>
 	  set PID file, overrides pidfile of oscam.conf, default:none
 
-       -c <directory>
+       -c|--config-dir <directory>
 	  read configuration from <directory>, default:see CS_CONFDIR in globals.h, while starting OSCam prints warnings on invalid key‐
 	  words, comment lines start with # character.
 
-       -d <level>
+       -d|--debug <level>
 	  debug level mask:
 
 	       0 = no debugging (default)
@@ -68,44 +68,44 @@ OPTIONS
 	    1024 = client ECM logging
 	   65535 = debug all
 
-       -g <mode>
+       -g|--gcollect <mode>
 	  garbage collector debug mode, default:none:
 
 	     1 = immediate free
 	     2 = check for double frees
 
-       -h
+       -h|--help
 	  usage
 
-       -l
+       -I|--syslog-ident <ident>
 	  set syslog ident, default:oscam
 
-       -p <number>
+       -p|--pending-ecm <number>
 	  maximum number of pending ECM packets, default:32, maximum:255
 
-       -r <level>
+       -r|--restart <level>
 	  restart level:
 
 	     0 = disabled, restart request sets exit status to 99
 	     1 = restart activated, web interface can restart oscam (default)
 	     2 = like 1, but also restart on segmentation faults
 
-       -S
+       -S|--show-sensitive
 	  do not filter sensitive info (card serial numbers) in the logs
 
-       -s
+       -s|--capture-segfaults
 	  capture segmentation faults
 
-       -t <directory>
+       -t|--temp-dir <directory>
 	  use <directory> for temporary data, default:temporary directory of OS
 
-       -u
+       -u|--utf8
 	  enable output of web interface in UTF-8 charset
 
-       -V
+       -V|--build-info
 	  show OSCam version info
 
-       -w <seconds>
+       -w|--wait <seconds>
 	  time waiting for system time to be set correctly
 
 SIGNALS

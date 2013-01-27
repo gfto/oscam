@@ -47,28 +47,28 @@ Windows (based on cygwin1.dll)
 Mac OS X
 .SH OPTIONS
 .PP
-\fB-a\fP
+\fB-a\fP|\fB--crash-dump\fP
 .RS 3n
 write oscam.crash on segfault (needs installed GDB and OSCam compiled with debug infos -ggdb)
 .RE
 .PP
-\fB-b\fP
+\fB-b\fP|\fB--daemon\fP
 .RS 3n
 starts in background, writing oscam.version with starttime and version info in temporary directory
 .RE
 .PP
-\fB-B\fP <filename>
+\fB-B\fP|\fB--pidfile\fP <filename>
 .RS 3n
 set PID file, overrides pidfile of \fBoscam.conf\fR, default:none
 .RE
 .PP
-\fB-c\fP <directory>
+\fB-c\fP|\fB--config-dir\fP <directory>
 .RS 3n
 read configuration from <directory>, default:see CS_CONFDIR in \fBglobals.h\fR,
 while starting OSCam prints warnings on invalid keywords, comment lines start with \fB#\fP character.
 .RE
 .PP
-\fB-d\fP <level>
+\fB-d\fP|\fB--debug\fP <level>
 .RS 3n
 debug level mask:
 
@@ -86,7 +86,7 @@ debug level mask:
  \fB65535\fP = debug all
 .RE
 .PP
-\fB-g\fP <mode>
+\fB-g\fP|\fB--gcollect\fP <mode>
 .RS 3n
 garbage collector debug mode, default:none:
 
@@ -94,22 +94,22 @@ garbage collector debug mode, default:none:
    \fB2\fP = check for double frees
 .RE
 .PP
-\fB-h\fP
+\fB-h\fP|\fB--help\fP
 .RS 3n
 usage
 .RE
 .PP
-\fB-l\fP
+\fB-I\fP|\fB--syslog-ident\fP <ident>
 .RS 3n
 set syslog ident, default:oscam
 .RE
 .PP
-\fB-p\fP <number>
+\fB-p\fP|\fB--pending-ecm\fP <number>
 .RS 3n
 maximum number of pending ECM packets, default:32, maximum:255
 .RE
 .PP
-\fB-r\fP <level>
+\fB-r\fP|\fB--restart\fP <level>
 .RS 3n
 restart level:
 
@@ -118,32 +118,32 @@ restart level:
    \fB2\fP = like 1, but also restart on segmentation faults
 .RE
 .PP
-\fB-S\fP
+\fB-S\fP|\fB--show-sensitive\fP
 .RS 3n
 do not filter sensitive info (card serial numbers) in the logs
 .RE
 .PP
-\fB-s\fP
+\fB-s\fP|\fB--capture-segfaults\fP
 .RS 3n
 capture segmentation faults
 .RE
 .PP
-\fB-t\fP <directory>
+\fB-t\fP|\fB--temp-dir\fP <directory>
 .RS 3n
 use <directory> for temporary data, default:temporary directory of OS
 .RE
 .PP
-\fB-u\fP
+\fB-u\fP|\fB--utf8\fP
 .RS 3n
 enable output of web interface in UTF-8 charset
 .RE
 .PP
-\fB-V\fP
+\fB-V\fP|\fB--build-info\fP
 .RS 3n
 show OSCam version info
 .RE
 .PP
-\fB-w\fP <seconds>
+\fB-w\fP|\fB--wait\fP <seconds>
 .RS 3n
 time waiting for system time to be set correctly
 .RE
