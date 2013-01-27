@@ -2210,7 +2210,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			if (cc->is_oscam_cccam) {
 				uint8_t token[256];
 				snprintf((char *)token, sizeof(token),
-						"PARTNER: OSCam v%s, build #%s (%s) [EXT,SID,SLP]", CS_VERSION,
+						"PARTNER: OSCam v%s, build r%s (%s) [EXT,SID,SLP]", CS_VERSION,
 						CS_SVN_VERSION, CS_TARGET);
 				cc_cmd_send(cl, token, strlen((char *)token) + 1, MSG_CW_NOK1);
 			}
@@ -2426,7 +2426,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 
 					uchar token[256];
 					snprintf((char *)token, sizeof(token),
-						"PARTNER: OSCam v%s, build #%s (%s)%s",
+						"PARTNER: OSCam v%s, build r%s (%s)%s",
 						CS_VERSION, CS_SVN_VERSION, CS_TARGET, param);
 					cc_cmd_send(cl, token, strlen((char *)token) + 1, MSG_CW_NOK1);
 				}
