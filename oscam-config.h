@@ -36,5 +36,6 @@ void hitvaluetab_fn(const char *token, char *value, void *setting, FILE *f);
 void newcamd_key_fn(const char *token, char *value, void *setting, FILE *f);
 void class_fn(const char *token, char *value, void *setting, FILE *f);
 void group_fn(const char *token, char *value, void *setting, FILE *f);
+void services_fn(const char *token, char *value, void *setting, FILE *f);
 
 #endif

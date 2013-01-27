@@ -458,23 +458,12 @@ static void device_fn(const char *token, char *value, void *setting, FILE *f) {
 	fprintf(f, "\n");
 }
 
-static void services_fn(const char *token, char *value, void *setting, FILE *f) {
-	struct s_reader *rdr = setting;
+static void reader_services_fn(const char *token, char *value, void *setting, FILE *f) {
+	services_fn(token, value, setting, f);
 	if (value) {
-		if (strlen(value)) {
-			strtolower(value);
-			chk_services(value, &rdr->sidtabs);
-		} else {
-			rdr->sidtabs.ok = 0;
-			rdr->sidtabs.no = 0;
-		}
+		struct s_reader *rdr = container_of(setting, struct s_reader, sidtabs);
 		rdr->changes_since_shareupdate = 1;
-		return;
 	}
-	value = mk_t_service(&rdr->sidtabs);
-	if (strlen(value) > 0 || cfg.http_full_cfg)
-		fprintf_conf(f, token, "%s\n", value);
-	free_mk_t(value);
 }
 
 static void reader_caid_fn(const char *token, char *value, void *setting, FILE *f) {
@@ -865,7 +854,7 @@ static const struct config_list reader_opts[] = {
 	DEF_OPT_SSTR("pincode"				, OFS(pincode),					"none", SIZEOF(pincode) ),
 	DEF_OPT_FUNC("mg-encrypted"			, 0,							mgencrypted_fn ),
 	DEF_OPT_STR("readnano"				, OFS(emmfile),					NULL ),
-	DEF_OPT_FUNC("services"				, 0,							services_fn ),
+	DEF_OPT_FUNC("services"				, OFS(sidtabs),					reader_services_fn ),
 	DEF_OPT_INT32("inactivitytimeout"	, OFS(tcp_ito),					DEFAULT_INACTIVITYTIMEOUT ),
 	DEF_OPT_INT32("reconnecttimeout"	, OFS(tcp_rto),					DEFAULT_TCP_RECONNECT_TIMEOUT ),
 	DEF_OPT_INT32("resetcycle"			, OFS(resetcycle),				0 ),

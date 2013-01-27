@@ -201,14 +201,14 @@ void group_fn(const char *token, char *value, void *setting, FILE *f) {
 	}
 }
 
-static void account_services_fn(const char *token, char *value, void *setting, FILE *f) {
-	struct s_auth *account = setting;
+void services_fn(const char *token, char *value, void *setting, FILE *f) {
+	SIDTABS *sidtabs = setting;
 	if (value) {
 		strtolower(value);
-		chk_services(value, &account->sidtabs);
+		chk_services(value, sidtabs);
 		return;
 	}
-	value = mk_t_service(&account->sidtabs);
+	value = mk_t_service(sidtabs);
 	if (strlen(value) > 0 || cfg.http_full_cfg)
 		fprintf_conf(f, token, "%s\n", value);
 	free_mk_t(value);
@@ -292,7 +292,7 @@ static const struct config_list account_opts[] = {
 	DEF_OPT_FUNC("allowedtimeframe"		, 0,							account_allowedtimeframe_fn ),
 	DEF_OPT_FUNC("betatunnel"			, OFS(ttab),					account_tuntab_fn ),
 	DEF_OPT_FUNC("group"				, OFS(grp),						group_fn ),
-	DEF_OPT_FUNC("services"				, 0,							account_services_fn ),
+	DEF_OPT_FUNC("services"				, OFS(sidtabs),					services_fn ),
 	DEF_OPT_FUNC("ident"				, 0,							account_ident_fn ),
 	DEF_OPT_FUNC("chid"					, 0,							account_chid_fn ),
 	DEF_OPT_FUNC("class"				, OFS(cltab),					class_fn ),
