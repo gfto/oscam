@@ -638,19 +638,6 @@ static void chid_fn(const char *token, char *value, void *setting, FILE *f) {
 	free_mk_t(value);
 }
 
-static void class_fn(const char *token, char *value, void *setting, FILE *f) {
-	struct s_reader *rdr = setting;
-	if (value) {
-		strtolower(value);
-		chk_cltab(value, &rdr->cltab);
-		return;
-	}
-	value = mk_t_cltab(&rdr->cltab);
-	if (strlen(value) > 0 || cfg.http_full_cfg)
-		fprintf_conf(f, token, "%s\n", value);
-	free_mk_t(value);
-}
-
 static void aeskeys_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_reader *rdr = setting;
 	if (value) {
@@ -947,7 +934,7 @@ static const struct config_list reader_opts[] = {
 #endif
 	DEF_OPT_FUNC("ident"				, 0,							ident_fn ),
 	DEF_OPT_FUNC("chid"					, 0,							chid_fn ),
-	DEF_OPT_FUNC("class"				, 0,							class_fn ),
+	DEF_OPT_FUNC("class"				, OFS(cltab),					class_fn ),
 	DEF_OPT_FUNC("aeskeys"				, 0,							aeskeys_fn ),
 	DEF_OPT_FUNC("group"				, 0,							group_fn ),
 	DEF_OPT_FUNC("emmcache"				, 0,							emmcache_fn ),

@@ -242,15 +242,15 @@ static void account_chid_fn(const char *token, char *value, void *setting, FILE 
 	}
 }
 
-static void account_class_fn(const char *token, char *value, void *setting, FILE *f) {
-	struct s_auth *account = setting;
+void class_fn(const char *token, char *value, void *setting, FILE *f) {
+	CLASSTAB *cltab = setting;
 	if (value) {
 		strtolower(value);
-		chk_cltab(value, &account->cltab);
+		chk_cltab(value, cltab);
 		return;
 	}
-	if ((account->cltab.bn > 0 || account->cltab.an > 0) || cfg.http_full_cfg) {
-		value = mk_t_cltab(&account->cltab);
+	value = mk_t_cltab(cltab);
+	if (strlen(value) > 0 || cfg.http_full_cfg) {
 		fprintf_conf(f, token, "%s\n", value);
 		free_mk_t(value);
 	}
@@ -295,7 +295,7 @@ static const struct config_list account_opts[] = {
 	DEF_OPT_FUNC("services"				, 0,							account_services_fn ),
 	DEF_OPT_FUNC("ident"				, 0,							account_ident_fn ),
 	DEF_OPT_FUNC("chid"					, 0,							account_chid_fn ),
-	DEF_OPT_FUNC("class"				, 0,							account_class_fn ),
+	DEF_OPT_FUNC("class"				, OFS(cltab),					class_fn ),
 #ifdef CS_CACHEEX
 	DEF_OPT_INT8("cacheex"				, OFS(cacheex.mode),			0 ),
 	DEF_OPT_INT8("cacheex_maxhop"		, OFS(cacheex.maxhop),			0 ),
