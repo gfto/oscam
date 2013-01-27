@@ -489,6 +489,13 @@ enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE, E2_
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #endif
 
+/*
+  See: http://stackoverflow.com/questions/10269685/kernels-container-of-any-way-to-make-it-iso-conforming
+       http://www.kroah.com/log/linux/container_of.html
+*/
+#define container_of(ptr, type, member) \
+ ((type *) ((char *) (ptr) - offsetof(type, member) + \
+   (&((type *) 0)->member == (ptr)) * 0))
 
 /* ===========================
  *      global structures

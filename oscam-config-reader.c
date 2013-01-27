@@ -477,21 +477,12 @@ static void services_fn(const char *token, char *value, void *setting, FILE *f) 
 	free_mk_t(value);
 }
 
-static void caid_fn(const char *token, char *value, void *setting, FILE *f) {
-	struct s_reader *rdr = setting;
+static void reader_caid_fn(const char *token, char *value, void *setting, FILE *f) {
+	check_caidtab_fn(token, value, setting, f);
 	if (value) {
-		if (strlen(value)) {
-			chk_caidtab(value, &rdr->ctab);
-		} else {
-			clear_caidtab(&rdr->ctab);
-		}
+		struct s_reader *rdr = container_of(setting, struct s_reader, ctab);
 		rdr->changes_since_shareupdate = 1;
-		return;
 	}
-	value = mk_t_caidtab(&rdr->ctab);
-	if (strlen(value) > 0 || cfg.http_full_cfg)
-		fprintf_conf(f, token, "%s\n", value);
-	free_mk_t(value);
 }
 
 static void boxid_fn(const char *token, char *value, void *setting, FILE *f) {
@@ -894,7 +885,7 @@ static const struct config_list reader_opts[] = {
 	DEF_OPT_INT32("cool_timeout_after_init"		, OFS(cool_timeout_after_init),		150 ),
 #endif
 	DEF_OPT_INT32("logport"				, OFS(log_port),				0 ),
-	DEF_OPT_FUNC("caid"					, 0,							caid_fn ),
+	DEF_OPT_FUNC("caid"					, OFS(ctab),					reader_caid_fn ),
 	DEF_OPT_FUNC("atr"					, 0,							atr_fn ),
 	DEF_OPT_FUNC("boxid"				, 0,							boxid_fn ),
 	DEF_OPT_FUNC("boxkey"				, 0,							boxkey_fn ),
