@@ -205,10 +205,10 @@ static void account_services_fn(const char *token, char *value, void *setting, F
 	struct s_auth *account = setting;
 	if (value) {
 		strtolower(value);
-		chk_services(value, &account->sidtabs.ok, &account->sidtabs.no);
+		chk_services(value, &account->sidtabs);
 		return;
 	}
-	value = mk_t_service((uint64_t)account->sidtabs.ok, (uint64_t)account->sidtabs.no);
+	value = mk_t_service(&account->sidtabs);
 	if (strlen(value) > 0 || cfg.http_full_cfg)
 		fprintf_conf(f, token, "%s\n", value);
 	free_mk_t(value);

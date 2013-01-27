@@ -383,20 +383,20 @@ char *mk_t_nano(uint16_t nano) {
 /*
  * Creates a string ready to write as a token into config or WebIf for the sidtab. You must free the returned value through free_mk_t().
  */
-char *mk_t_service( uint64_t sidtabok, uint64_t sidtabno) {
+char *mk_t_service(SIDTABS *sidtabs) {
 	int32_t i, pos;
 	char *dot;
 	char *value;
 	struct s_sidtab *sidtab = cfg.sidtab;
-	if (!sidtab || (!sidtabok && !sidtabno) || !cs_malloc(&value, 1024)) return "";
+	if (!sidtab || (!sidtabs->ok && !sidtabs->no) || !cs_malloc(&value, 1024)) return "";
 	value[0] = '\0';
 
 	for (i=pos=0,dot=""; sidtab; sidtab=sidtab->next,i++) {
-		if (sidtabok&((SIDTABBITS)1<<i)) {
+		if (sidtabs->ok&((SIDTABBITS)1<<i)) {
 			pos += snprintf(value + pos, 1024 - pos, "%s%s", dot, sidtab->label);
 			dot = ",";
 		}
-		if (sidtabno&((SIDTABBITS)1<<i)) {
+		if (sidtabs->no&((SIDTABBITS)1<<i)) {
 			pos += snprintf(value + pos, 1024 - pos, "%s!%s", dot, sidtab->label);
 			dot = ",";
 		}

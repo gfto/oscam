@@ -216,7 +216,7 @@ void chk_tuntab(char *tunasc, TUNTAB *ttab)
 	memcpy(ttab, &newttab, sizeof(TUNTAB));
 }
 
-void chk_services(char *labels, SIDTABBITS *sidok, SIDTABBITS *sidno)
+void chk_services(char *labels, SIDTABS *sidtabs)
 {
 	int32_t i;
 	char *ptr, *saveptr1 = NULL;
@@ -229,8 +229,8 @@ void chk_services(char *labels, SIDTABBITS *sidok, SIDTABBITS *sidno)
 			if ((ptr[0]=='!') && (!strcmp(sidtab->label, ptr+1))) newsidno|=((SIDTABBITS)1<<i);
 		}
 	}
-	*sidok = newsidok;
-	*sidno = newsidno;
+	sidtabs->ok = newsidok;
+	sidtabs->no = newsidno;
 }
 
 void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName, const char *zFiltName)

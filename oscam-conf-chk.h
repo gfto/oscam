@@ -9,7 +9,7 @@ void chk_cspvaluetab(char *lbrlt, CECSPVALUETAB *tab);
 void chk_hitvaluetab(char *lbrlt, CECSPVALUETAB *tab);
 #endif
 void chk_tuntab(char *tunasc, TUNTAB *ttab);
-void chk_services(char *labels, SIDTABBITS *sidok, SIDTABBITS *sidno);
+void chk_services(char *labels, SIDTABS *sidtabs);
 void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName, const char *zFiltName);
 void chk_cltab(char *classasc, CLASSTAB *clstab);
 void chk_port_tab(char *portasc, PTAB *ptab);

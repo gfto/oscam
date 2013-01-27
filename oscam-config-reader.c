@@ -463,7 +463,7 @@ static void services_fn(const char *token, char *value, void *setting, FILE *f) 
 	if (value) {
 		if (strlen(value)) {
 			strtolower(value);
-			chk_services(value, &rdr->sidtabs.ok, &rdr->sidtabs.no);
+			chk_services(value, &rdr->sidtabs);
 		} else {
 			rdr->sidtabs.ok = 0;
 			rdr->sidtabs.no = 0;
@@ -471,7 +471,7 @@ static void services_fn(const char *token, char *value, void *setting, FILE *f) 
 		rdr->changes_since_shareupdate = 1;
 		return;
 	}
-	value = mk_t_service((uint64_t)rdr->sidtabs.ok, (uint64_t)rdr->sidtabs.no);
+	value = mk_t_service(&rdr->sidtabs);
 	if (strlen(value) > 0 || cfg.http_full_cfg)
 		fprintf_conf(f, token, "%s\n", value);
 	free_mk_t(value);

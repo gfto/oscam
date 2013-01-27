@@ -1454,7 +1454,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 			i++;
 		}
 	} else {
-		value = mk_t_service((uint64_t)rdr->sidtabs.ok, (uint64_t)rdr->sidtabs.no);
+		value = mk_t_service(&rdr->sidtabs);
 		if (strlen(value) > 0)
 			tpl_addVar(vars, TPLADD, "SERVICES", value);
 		free_mk_t(value);
@@ -2042,7 +2042,7 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 			i++;
 		}
 	} else {
-		value = mk_t_service((uint64_t)account->sidtabs.ok, (uint64_t)account->sidtabs.no);
+		value = mk_t_service(&account->sidtabs);
 		if (strlen(value) > 0)
 			tpl_addVar(vars, TPLADD, "SERVICES", value);
 		free_mk_t(value);

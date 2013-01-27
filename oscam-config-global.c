@@ -683,7 +683,7 @@ static void dvbapi_boxtype_fn(const char *token, char *value, void *UNUSED(setti
 
 static void dvbapi_services_fn(const char *UNUSED(token), char *value, void *UNUSED(setting), FILE *UNUSED(f)) {
 	if (value)
-		chk_services(value, &cfg.dvbapi_sidtabs.ok, &cfg.dvbapi_sidtabs.no);
+		chk_services(value, &cfg.dvbapi_sidtabs);
 	// THIS OPTION IS NOT SAVED
 }
 
