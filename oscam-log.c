@@ -458,7 +458,7 @@ void cs_log_config(void)
     snprintf((char *)buf, sizeof(buf), ", nice=%d", cfg.nice);
   else
     buf[0]='\0';
-  cs_log_nolock("version=%s, build #%s, system=%s%s", CS_VERSION, CS_SVN_VERSION, CS_TARGET, buf);
+  cs_log_nolock("version=%s, build r%s, system=%s%s", CS_VERSION, CS_SVN_VERSION, CS_TARGET, buf);
   cs_log_nolock("client max. idle=%d sec, debug level=%d, filter_sensitive=%d", cfg.cmaxidle, cs_dblevel, log_remove_sensitive);
 
   if( cfg.max_log_size )
