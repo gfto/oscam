@@ -135,7 +135,7 @@ static int32_t send_sid_list(void)
 {
  struct s_client *cl = cur_client();
 
- if(1 != cl->ftab.nfilts || !cl->sidtabno)
+ if(1 != cl->ftab.nfilts || !cl->sidtabs.no)
  {
    cs_log("SID list will not be send to mgcamd client.");
    return 0;
@@ -154,7 +154,7 @@ static int32_t send_sid_list(void)
  /*memset(mbuf, 0, sizeof(mbuf));*/ // not nessesery
 
  for (nr=0, sidtab=cfg.sidtab; sidtab; sidtab=sidtab->next, nr++)
- if ((cl->sidtabno&((SIDTABBITS)1<<nr)) && (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid))
+ if ((cl->sidtabs.no&((SIDTABBITS)1<<nr)) && (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid))
  {
    for(n = 0; n < pfilts[0].nprids; n++)
    {
@@ -1161,7 +1161,7 @@ static void newcamd_report_cards(struct s_client *client) {
     if (cfg.sidtab && client->account) {
         struct s_sidtab *ptr;
         for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
-        	if (client->account->sidtabok&((SIDTABBITS)1<<j))
+        	if (client->account->sidtabs.ok&((SIDTABBITS)1<<j))
                 for (k=0;k<ptr->num_caid;k++) {
                 	cd->caid = ptr->caid[k];
                 	if (!ptr->num_provid) {

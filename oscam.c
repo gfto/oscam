@@ -1394,8 +1394,8 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 		cl->reader=rdr;
 		rdr_log(rdr, "creating thread for device %s", rdr->device);
 
-		cl->sidtabok=rdr->sidtabok;
-		cl->sidtabno=rdr->sidtabno;
+		cl->sidtabs.ok=rdr->sidtabs.ok;
+		cl->sidtabs.no=rdr->sidtabs.no;
 		cl->grp = rdr->grp;
 
 		rdr->client=cl;

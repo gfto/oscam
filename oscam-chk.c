@@ -336,18 +336,18 @@ int32_t chk_srvid(struct s_client *cl, ECM_REQUEST *er)
   int32_t nr, rc=0;
   SIDTAB *sidtab;
 
-  if (!cl->sidtabok)
+  if (!cl->sidtabs.ok)
   {
-    if (!cl->sidtabno) return(1);
+    if (!cl->sidtabs.no) return(1);
     rc=1;
   }
   for (nr=0, sidtab=cfg.sidtab; sidtab; sidtab=sidtab->next, nr++)
     if (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid)
     {
-      if ((cl->sidtabno&((SIDTABBITS)1<<nr)) &&
+      if ((cl->sidtabs.no&((SIDTABBITS)1<<nr)) &&
           (chk_srvid_match(er, sidtab)))
         return(0);
-      if ((cl->sidtabok&((SIDTABBITS)1<<nr)) &&
+      if ((cl->sidtabs.ok&((SIDTABBITS)1<<nr)) &&
           (chk_srvid_match(er, sidtab)))
         rc=1;
     }
@@ -355,7 +355,7 @@ int32_t chk_srvid(struct s_client *cl, ECM_REQUEST *er)
 }
 
 int32_t has_srvid(struct s_client *cl, ECM_REQUEST *er) {
-  if (!cl->sidtabok)
+  if (!cl->sidtabs.ok)
     return 0;
 
   int32_t nr;
@@ -364,7 +364,7 @@ int32_t has_srvid(struct s_client *cl, ECM_REQUEST *er) {
   for (nr=0, sidtab=cfg.sidtab; sidtab; sidtab=sidtab->next, nr++)
     if (sidtab->num_srvid)
     {
-      if ((cl->sidtabok&((SIDTABBITS)1<<nr)) &&
+      if ((cl->sidtabs.ok&((SIDTABBITS)1<<nr)) &&
           (chk_srvid_match(er, sidtab)))
         return 1;
     }
@@ -395,18 +395,18 @@ int32_t chk_srvid_by_caid_prov(struct s_client *cl, uint16_t caid, uint32_t prov
   int32_t nr, rc=0;
   SIDTAB *sidtab;
 
-  if (!cl->sidtabok)
+  if (!cl->sidtabs.ok)
   {
-    if (!cl->sidtabno) return(1);
+    if (!cl->sidtabs.no) return(1);
     rc=1;
   }
   for (nr=0, sidtab=cfg.sidtab; sidtab; sidtab=sidtab->next, nr++)
     if (sidtab->num_caid | sidtab->num_provid)
     {
-      if ((cl->sidtabno&((SIDTABBITS)1<<nr)) && !sidtab->num_srvid &&
+      if ((cl->sidtabs.no&((SIDTABBITS)1<<nr)) && !sidtab->num_srvid &&
           (chk_srvid_match_by_caid_prov(caid, provid, sidtab)))
         return(0);
-      if ((cl->sidtabok&((SIDTABBITS)1<<nr)) &&
+      if ((cl->sidtabs.ok&((SIDTABBITS)1<<nr)) &&
           (chk_srvid_match_by_caid_prov(caid, provid, sidtab)))
         rc=1;
     }
@@ -417,18 +417,18 @@ int32_t chk_srvid_by_caid_prov_rdr(struct s_reader *rdr, uint16_t caid, uint32_t
   int32_t nr, rc=0;
   SIDTAB *sidtab;
 
-  if (!rdr->sidtabok)
+  if (!rdr->sidtabs.ok)
   {
-    if (!rdr->sidtabno) return(1);
+    if (!rdr->sidtabs.no) return(1);
     rc=1;
   }
   for (nr=0, sidtab=cfg.sidtab; sidtab; sidtab=sidtab->next, nr++)
     if (sidtab->num_caid | sidtab->num_provid)
     {
-      if ((rdr->sidtabno&((SIDTABBITS)1<<nr)) && !sidtab->num_srvid &&
+      if ((rdr->sidtabs.no&((SIDTABBITS)1<<nr)) && !sidtab->num_srvid &&
           (chk_srvid_match_by_caid_prov(caid, provid, sidtab)))
         return(0);
-      if ((rdr->sidtabok&((SIDTABBITS)1<<nr)) &&
+      if ((rdr->sidtabs.ok&((SIDTABBITS)1<<nr)) &&
           (chk_srvid_match_by_caid_prov(caid, provid, sidtab)))
         rc=1;
     }

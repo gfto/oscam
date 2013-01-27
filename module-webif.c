@@ -1444,17 +1444,17 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		i = 0;
 		while(sidtab != NULL) {
 			tpl_addVar(vars, TPLADD, "SIDLABEL", xml_encode(vars, sidtab->label));
-			if(rdr->sidtabok&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
+			if(rdr->sidtabs.ok&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
 			else tpl_addVar(vars, TPLADD, "CHECKED", "");
 			tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, "READERCONFIGSIDOKBIT"));
-			if(rdr->sidtabno&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
+			if(rdr->sidtabs.no&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
 			else tpl_addVar(vars, TPLADD, "CHECKED", "");
 			tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, "READERCONFIGSIDNOBIT"));
 			sidtab=sidtab->next;
 			i++;
 		}
 	} else {
-		value = mk_t_service((uint64_t)rdr->sidtabok, (uint64_t)rdr->sidtabno);
+		value = mk_t_service((uint64_t)rdr->sidtabs.ok, (uint64_t)rdr->sidtabs.no);
 		if (strlen(value) > 0)
 			tpl_addVar(vars, TPLADD, "SERVICES", value);
 		free_mk_t(value);
@@ -2032,17 +2032,17 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 		i=0;
 		while(sidtab != NULL) {
 			tpl_addVar(vars, TPLADD, "SIDLABEL", xml_encode(vars, sidtab->label));
-			if(account->sidtabok&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
+			if(account->sidtabs.ok&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
 			else tpl_addVar(vars, TPLADD, "CHECKED", "");
 			tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, "USEREDITSIDOKBIT"));
-			if(account->sidtabno&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
+			if(account->sidtabs.no&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
 			else tpl_addVar(vars, TPLADD, "CHECKED", "");
 			tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, "USEREDITSIDNOBIT"));
 			sidtab=sidtab->next;
 			i++;
 		}
 	} else {
-		value = mk_t_service((uint64_t)account->sidtabok, (uint64_t)account->sidtabno);
+		value = mk_t_service((uint64_t)account->sidtabs.ok, (uint64_t)account->sidtabs.no);
 		if (strlen(value) > 0)
 			tpl_addVar(vars, TPLADD, "SERVICES", value);
 		free_mk_t(value);
@@ -3441,7 +3441,7 @@ static char *send_oscam_services_edit(struct templatevars *vars, struct uriparam
 		cs_strncpy((char *)sidtab->label, label, sizeof(sidtab->label));
 		++cfg_sidtab_generation;
 		tpl_addMsg(vars, "New service has been added");
-		// Adding is uncritical as the new service is appended to sidtabok/sidtabno and accounts/clients/readers have zeros there
+		// Adding is uncritical as the new service is appended to sidtabs.ok/sidtabs.no and accounts/clients/readers have zeros there
 		if (write_services()!=0) tpl_addMsg(vars, "Writing services to disk failed!");
 	}
 
@@ -3453,7 +3453,7 @@ static char *send_oscam_services_edit(struct templatevars *vars, struct uriparam
 		}
 		++cfg_sidtab_generation;
 		tpl_addMsg(vars, "Services updated");
-		// We don't need any refresh here as accounts/clients/readers sidtabok/sidtabno are unaffected!
+		// We don't need any refresh here as accounts/clients/readers sidtabs.ok/sidtabs.no are unaffected!
 		if (write_services()!=0) tpl_addMsg(vars, "Write Config failed!");
 
 		for (sidtab = cfg.sidtab; sidtab != NULL && strcmp(label, sidtab->label) != 0; sidtab=sidtab->next);
@@ -3527,21 +3527,21 @@ static char *send_oscam_services(struct templatevars *vars, struct uriparams *pa
 						sidtab_prev->next = sidtab->next;
 
 					for (account = cfg.account; (account); account = account->next) {
-						delete_from_SIDTABBITS(&account->sidtabok, position, sidtablength);
-						delete_from_SIDTABBITS(&account->sidtabno, position, sidtablength);
+						delete_from_SIDTABBITS(&account->sidtabs.ok, position, sidtablength);
+						delete_from_SIDTABBITS(&account->sidtabs.no, position, sidtablength);
 					
 						for (cl=first_client->next; cl ; cl=cl->next){
 							if(account == cl->account){
-								cl->sidtabok = account->sidtabok;
-								cl->sidtabno = account->sidtabno;
+								cl->sidtabs.ok = account->sidtabs.ok;
+								cl->sidtabs.no = account->sidtabs.no;
 							}
 						}
 					}
 
 					LL_ITER itr = ll_iter_create(configured_readers);
 					while((rdr = ll_iter_next(&itr))){
-						delete_from_SIDTABBITS(&rdr->sidtabok, position, sidtablength);
-						delete_from_SIDTABBITS(&rdr->sidtabno, position, sidtablength);
+						delete_from_SIDTABBITS(&rdr->sidtabs.ok, position, sidtablength);
+						delete_from_SIDTABBITS(&rdr->sidtabs.no, position, sidtablength);
 					}
 					free_sidtab(sidtab);
 					++counter;

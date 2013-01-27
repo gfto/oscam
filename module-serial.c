@@ -119,18 +119,18 @@ static int32_t chk_ser_srvid(struct s_client *cl, uint16_t caid, uint16_t sid, u
   int32_t nr, rc=0;
   SIDTAB *sidtab;
 
-  if (!cl->sidtabok)
+  if (!cl->sidtabs.ok)
   {
-    if (!cl->sidtabno) return(1);
+    if (!cl->sidtabs.no) return(1);
     rc=1;
   }
   for (nr=0, sidtab=cfg.sidtab; sidtab; sidtab=sidtab->next, nr++)
     if (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid)
     {
-        if ((cl->sidtabno&((SIDTABBITS)1<<nr)) &&
+        if ((cl->sidtabs.no&((SIDTABBITS)1<<nr)) &&
           (chk_ser_srvid_match(caid, sid, provid, sidtab)))
         return(0);
-      if ((cl->sidtabok&((SIDTABBITS)1<<nr)) &&
+      if ((cl->sidtabs.ok&((SIDTABBITS)1<<nr)) &&
           (chk_ser_srvid_match(caid, sid, provid, sidtab)))
         rc=1;
     }

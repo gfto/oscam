@@ -374,8 +374,8 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 				client->ftab  = account->ftab;   // IDENT filter
 				client->cltab = account->cltab;  // CLASS filter
 				client->fchid = account->fchid;  // CHID filter
-				client->sidtabok= account->sidtabok;   // services
-				client->sidtabno= account->sidtabno;   // services
+				client->sidtabs.ok= account->sidtabs.ok;   // services
+				client->sidtabs.no= account->sidtabs.no;   // services
 				memcpy(&client->ttab, &account->ttab, sizeof(client->ttab));
 				ac_init_client(client, account);
 			}
@@ -470,8 +470,8 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 					if (!cl->ncd_server)
 						cl->ftab = account->ftab;   // Ident
 
-					cl->sidtabok = account->sidtabok;   // services
-					cl->sidtabno = account->sidtabno;   // services
+					cl->sidtabs.ok = account->sidtabs.ok;   // services
+					cl->sidtabs.no = account->sidtabs.no;   // services
 					cl->failban = account->failban;
 
 					memcpy(&cl->ctab, &account->ctab, sizeof(cl->ctab));

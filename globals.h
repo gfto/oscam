@@ -853,6 +853,11 @@ struct s_cascadeuser {
 	int8_t          cwrate;
 };
 
+typedef struct sidtabs {
+	SIDTABBITS		ok;			// positive services
+	SIDTABBITS		no;			// negative services
+} SIDTABS;
+
 struct s_client {
 	uint32_t		tid;
 	int8_t			init_done;
@@ -882,8 +887,7 @@ struct s_client {
 	int8_t			monlvl;
 	CAIDTAB			ctab;
 	TUNTAB			ttab;
-	SIDTABBITS		sidtabok; 			// positiv services
-	SIDTABBITS		sidtabno; 			// negative services
+	SIDTABS			sidtabs;
 	int8_t			typ;        		// first s_client is type s=starting (master) thread; type r = physical reader, type p = proxy reader both always have 1 s_reader struct allocated; type c = client (user logging in into oscam) type m = monitor type h = http server a = anticascader
 	int8_t			ctyp;
 	uint16_t		last_srvid;
@@ -1170,8 +1174,7 @@ struct s_reader  									//contains device info, reader info and card info
 	uchar			card_atr[64];					// ATR readed from card
 	int8_t			card_atr_length;				// length of ATR
 	int32_t			atrlen;
-	SIDTABBITS		sidtabok;						// positiv services
-	SIDTABBITS		sidtabno;						// negative services
+	SIDTABS			sidtabs;
 	uchar			hexserial[8];
 	int32_t			nprov;
 	uchar			prid[CS_MAXPROV][8];
@@ -1380,8 +1383,7 @@ struct s_auth
 	uint64_t		grp;
 	int32_t			tosleep;
 	CAIDTAB			ctab;
-	SIDTABBITS		sidtabok;						// positiv services
-	SIDTABBITS		sidtabno;						// negative services
+	SIDTABS			sidtabs;
 	FTAB			fchid;
 	FTAB			ftab;							// user [caid] and ident filter
 	CLASSTAB		cltab;
@@ -1672,8 +1674,7 @@ struct s_config
 	int8_t		dvbapi_boxtype;
 	int8_t		dvbapi_pmtmode;
 	int8_t		dvbapi_requestmode;
-	SIDTABBITS	dvbapi_sidtabok;					// positiv services
-	SIDTABBITS	dvbapi_sidtabno;					// negative services
+	SIDTABS		dvbapi_sidtabs;
 	int8_t		dvbapi_reopenonzap;
 	int8_t		dvbapi_decodeforever;				// do not stop after 3 tries
 	int32_t		dvbapi_delayer;						// delayer ms, minimum time to write cw

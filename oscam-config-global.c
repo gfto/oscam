@@ -683,7 +683,7 @@ static void dvbapi_boxtype_fn(const char *token, char *value, void *UNUSED(setti
 
 static void dvbapi_services_fn(const char *UNUSED(token), char *value, void *UNUSED(setting), FILE *UNUSED(f)) {
 	if (value)
-		chk_services(value, &cfg.dvbapi_sidtabok, &cfg.dvbapi_sidtabno);
+		chk_services(value, &cfg.dvbapi_sidtabs.ok, &cfg.dvbapi_sidtabs.no);
 	// THIS OPTION IS NOT SAVED
 }
 
@@ -747,7 +747,7 @@ static const struct config_list dvbapi_opts[] = {
 	DEF_OPT_INT32("delayer"					, OFS(dvbapi_delayer),		0 ),
 	DEF_OPT_STR("user"						, OFS(dvbapi_usr),			NULL ),
 	DEF_OPT_FUNC("boxtype"					, OFS(dvbapi_boxtype),		dvbapi_boxtype_fn ),
-	DEF_OPT_FUNC("services"					, OFS(dvbapi_sidtabok),		dvbapi_services_fn ),
+	DEF_OPT_FUNC("services"					, OFS(dvbapi_sidtabs.ok),		dvbapi_services_fn ),
 	// OBSOLETE OPTIONS
 	DEF_OPT_FUNC("priority"					, 0,						dvbapi_caidtab_fn ),
 	DEF_OPT_FUNC("ignore"					, 0,						dvbapi_caidtab_fn ),

@@ -92,15 +92,15 @@ void add_good_bad_sids(struct s_sidtab *ptr, SIDTABBITS sidtabno, struct cc_card
 
 void add_good_bad_sids_by_rdr(struct s_reader *rdr, struct cc_card *card) {
 
-	if (!rdr->sidtabok) return;
+	if (!rdr->sidtabs.ok) return;
 
 	struct s_sidtab *ptr;
 	int32_t n,i;
 	for (n=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,n++) {
-		if (rdr->sidtabok&((SIDTABBITS)1<<n)) {
+		if (rdr->sidtabs.ok&((SIDTABBITS)1<<n)) {
 			for (i=0; i<ptr->num_caid;i++) {
 				if (ptr->caid[i] == card->caid)
-					add_good_bad_sids(ptr, rdr->sidtabno, card);
+					add_good_bad_sids(ptr, rdr->sidtabs.no, card);
 			}
 		}
 	}
@@ -170,7 +170,7 @@ int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32
 		        //bad sids:
 		        int32_t n;
 		        for (n=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,n++) {
-						if (cl->sidtabno&((SIDTABBITS)1<<n) || card->sidtabno&((SIDTABBITS)1<<n)) {
+						if (cl->sidtabs.no&((SIDTABBITS)1<<n) || card->sidtabno&((SIDTABBITS)1<<n)) {
                 				int32_t m;
                 				int32_t ok_caid = 0;
                 				for (m=0;m<ptr->num_caid;m++) { //search bad sids for this caid:
@@ -462,16 +462,16 @@ int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card) {
         if (card->sidtab) {
         		struct s_sidtab *ptr;
         		int32_t j;
-        		int32_t ok = !cl->sidtabok && !cl->sidtabno; //default valid if no positive services and no negative services
+        		int32_t ok = !cl->sidtabs.ok && !cl->sidtabs.no; //default valid if no positive services and no negative services
         		if (!ok) {
-        				if (!cl->sidtabok) // no positive services, so ok by default if no negative found
+        				if (!cl->sidtabs.ok) // no positive services, so ok by default if no negative found
         						ok=1;
 
 		        		for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
         						if (ptr == card->sidtab) {
-										if (cl->sidtabno&((SIDTABBITS)1<<j))
+										if (cl->sidtabs.no&((SIDTABBITS)1<<j))
         										return 0;
-										if (cl->sidtabok&((SIDTABBITS)1<<j))
+										if (cl->sidtabs.ok&((SIDTABBITS)1<<j))
         										ok = 1;
 										break;
 								}
@@ -617,7 +617,7 @@ struct cc_card *create_card2(struct s_reader *rdr, int32_t j, uint16_t caid, uin
     if (rdr) {
     	card->grp = rdr->grp;
 		card->rdr_reshare = rdr->cc_reshare > -1 ? rdr->cc_reshare : cfg.cc_reshare; //copy reshare because reader could go offline
-    	card->sidtabno = rdr->sidtabno;
+    	card->sidtabno = rdr->sidtabs.no;
     	card->hop = rdr->cc_hop;
 	}
 	else card->rdr_reshare = reshare;
@@ -970,10 +970,10 @@ void update_card_list(void) {
 
             //Reader-Services:
             if ((cfg.cc_reshare_services==1||cfg.cc_reshare_services==2||(!rdr->caid && rdr->typ != R_CCCAM && cfg.cc_reshare_services!=4 )) &&
-            		cfg.sidtab && (rdr->sidtabno || rdr->sidtabok)) {
+            		cfg.sidtab && (rdr->sidtabs.no || rdr->sidtabs.ok)) {
                 struct s_sidtab *ptr;
                 for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
-                    if (!(rdr->sidtabno&((SIDTABBITS)1<<j)) && (rdr->sidtabok&((SIDTABBITS)1<<j))) {
+                    if (!(rdr->sidtabs.no&((SIDTABBITS)1<<j)) && (rdr->sidtabs.ok&((SIDTABBITS)1<<j))) {
                         for (k=0;k<ptr->num_caid;k++) {
                             card = create_card2(rdr, (j<<8)|k, ptr->caid[k], reshare);
                             if (!card)
@@ -1310,8 +1310,8 @@ void share_updater(void)
 						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->ftab, sizeof(FTAB)); //check reader
 						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->ctab, sizeof(CAIDTAB)); //check caidtab
 						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->fchid, sizeof(FTAB)); //check chids
-						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->sidtabok, sizeof(rdr->sidtabok)); //check assigned ok services
-						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->sidtabno, sizeof(rdr->sidtabno)); //check assigned no services
+						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->sidtabs.ok, sizeof(rdr->sidtabs.ok)); //check assigned ok services
+						cur_check_rdroptions = crc32(cur_check_rdroptions, (uint8_t*)&rdr->sidtabs.no, sizeof(rdr->sidtabs.no)); //check assigned no services
 					}
 				}
 				

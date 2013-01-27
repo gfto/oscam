@@ -463,15 +463,15 @@ static void services_fn(const char *token, char *value, void *setting, FILE *f) 
 	if (value) {
 		if (strlen(value)) {
 			strtolower(value);
-			chk_services(value, &rdr->sidtabok, &rdr->sidtabno);
+			chk_services(value, &rdr->sidtabs.ok, &rdr->sidtabs.no);
 		} else {
-			rdr->sidtabok = 0;
-			rdr->sidtabno = 0;
+			rdr->sidtabs.ok = 0;
+			rdr->sidtabs.no = 0;
 		}
 		rdr->changes_since_shareupdate = 1;
 		return;
 	}
-	value = mk_t_service((uint64_t)rdr->sidtabok, (uint64_t)rdr->sidtabno);
+	value = mk_t_service((uint64_t)rdr->sidtabs.ok, (uint64_t)rdr->sidtabs.no);
 	if (strlen(value) > 0 || cfg.http_full_cfg)
 		fprintf_conf(f, token, "%s\n", value);
 	free_mk_t(value);
