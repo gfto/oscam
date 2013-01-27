@@ -56,46 +56,8 @@ extern void free_ecm(ECM_REQUEST *ecm);
 		} \
 	} while(0)
 
-/* ===========================
- *        oscam-config
- * =========================== */
-extern int32_t  init_config(void);
-extern int32_t  init_free_userdb(struct s_auth *auth);
-extern void     account_set_defaults(struct s_auth *auth);
-extern void     reader_set_defaults(struct s_reader *rdr);
-extern struct s_auth *init_userdb(void);
-extern int32_t  init_readerdb(void);
-extern void free_reader(struct s_reader *rdr);
-extern int32_t  init_sidtab(void);
-extern void free_sidtab(struct s_sidtab *sidtab);
-extern void init_free_sidtab(void);
-extern int32_t init_provid(void);
-
-extern void config_set(char *section, const char *token, char *value);
-extern void config_free(void);
-
-extern int32_t  init_srvid(void);
-extern int32_t  init_tierid(void);
-extern void init_len4caid(void);
-extern int32_t csp_ecm_hash(ECM_REQUEST *er);
-extern void chk_reader(char *token, char *value, struct s_reader *rdr);
-
-extern void dvbapi_chk_caidtab(char *caidasc, char type);
 extern void dvbapi_read_priority(void);
-
-void check_caidtab_fn(const char *token, char *value, void *setting, FILE *f);
-#ifdef CS_CACHEEX
-void cspvaluetab_fn(const char *token, char *value, void *setting, FILE *f);
-void hitvaluetab_fn(const char *token, char *value, void *setting, FILE *f);
-#endif
-
 extern void cs_accounts_chk(void);
-extern void chk_account(const char *token, char *value, struct s_auth *account);
-extern void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab);
-extern int32_t write_services(void);
-extern int32_t write_userdb(void);
-extern int32_t write_config(void);
-extern int32_t write_server(void);
 
 #include "oscam-log.h"
 #include "oscam-log-reader.h"

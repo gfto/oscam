@@ -15,6 +15,7 @@
 #include "oscam-conf.h"
 #include "oscam-conf-chk.h"
 #include "oscam-conf-mk.h"
+#include "oscam-config.h"
 #include "oscam-garbage.h"
 #include "oscam-lock.h"
 #include "oscam-reader.h"

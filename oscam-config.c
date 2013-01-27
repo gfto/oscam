@@ -4,6 +4,7 @@
 
 #include "oscam-conf.h"
 #include "oscam-conf-chk.h"
+#include "oscam-config.h"
 #include "oscam-files.h"
 #include "oscam-garbage.h"
 #include "oscam-lock.h"

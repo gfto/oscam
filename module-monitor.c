@@ -3,6 +3,7 @@
 #include "module-monitor.h"
 #include "oscam-aes.h"
 #include "oscam-client.h"
+#include "oscam-config.h"
 #include "oscam-conf-chk.h"
 #include "oscam-net.h"
 #include "oscam-string.h"

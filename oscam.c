@@ -18,6 +18,7 @@
 #include "module-webif.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
+#include "oscam-config.h"
 #include "oscam-failban.h"
 #include "oscam-files.h"
 #include "oscam-garbage.h"

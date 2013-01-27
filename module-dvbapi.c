@@ -2098,46 +2098,6 @@ int32_t dvbapi_init_listenfd(void) {
        return listenfd;
 }
 
-void dvbapi_chk_caidtab(char *caidasc, char type) {
-	char *ptr1, *ptr3, *saveptr1 = NULL;
-
-	for (ptr1=strtok_r(caidasc, ",", &saveptr1); (ptr1); ptr1=strtok_r(NULL, ",", &saveptr1)) {
-		uint32_t caid, prov;
-		if( (ptr3=strchr(trim(ptr1), ':')) )
-			*ptr3++='\0';
-		else
-			ptr3="";
-
-		if (((caid=a2i(ptr1, 2))|(prov=a2i(ptr3, 3)))) {
-			struct s_dvbapi_priority *entry;
-			if (!cs_malloc(&entry, sizeof(struct s_dvbapi_priority)))
-				return;
-			entry->caid=caid;
-
-			if (type=='d') {
-				char tmp1[5];
-				snprintf(tmp1, sizeof(tmp1), "%04X", (uint)prov);
-				int32_t cw_delay = strtol(tmp1, '\0', 10);
-				entry->delay=cw_delay;
-			} else
-				entry->provid=prov;
-
-			entry->type=type;
-
-			entry->next=NULL;
-
-			if (!dvbapi_priority) {
-				dvbapi_priority=entry;
-			} else {
-	 			struct s_dvbapi_priority *p;
-				for (p = dvbapi_priority; p->next != NULL; p = p->next);
-				p->next = entry;
-			}
-
-		}
-	}
-}
-
 pthread_mutex_t event_handler_lock;
 
 void event_handler(int32_t UNUSED(signal)) {

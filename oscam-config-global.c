@@ -1,7 +1,9 @@
 #include "globals.h"
+#include "module-dvbapi.h"
 #include "oscam-conf.h"
 #include "oscam-conf-chk.h"
 #include "oscam-conf-mk.h"
+#include "oscam-config.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
 
@@ -687,6 +689,43 @@ static void dvbapi_services_fn(const char *UNUSED(token), char *value, void *UNU
 	if (value)
 		chk_services(value, &cfg.dvbapi_sidtabok, &cfg.dvbapi_sidtabno);
 	// THIS OPTION IS NOT SAVED
+}
+
+extern struct s_dvbapi_priority *dvbapi_priority;
+
+static void dvbapi_chk_caidtab(char *caidasc, char type) {
+	char *ptr1, *ptr3, *saveptr1 = NULL;
+	for (ptr1 = strtok_r(caidasc, ",", &saveptr1); (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1)) {
+		uint32_t caid, prov;
+		if ( (ptr3 = strchr(trim(ptr1), ':')) )
+			*ptr3++ = '\0';
+		else
+			ptr3 = "";
+		if ( ((caid = a2i(ptr1, 2)) | (prov = a2i(ptr3, 3))) ) {
+			struct s_dvbapi_priority *entry;
+			if (!cs_malloc(&entry, sizeof(struct s_dvbapi_priority)))
+				return;
+			entry->caid=caid;
+			if (type == 'd') {
+				char tmp1[5];
+				snprintf(tmp1, sizeof(tmp1), "%04X", (uint)prov);
+				int32_t cw_delay = strtol(tmp1, '\0', 10);
+				entry->delay = cw_delay;
+			} else {
+				entry->provid = prov;
+			}
+			entry->type = type;
+			entry->next = NULL;
+			if (!dvbapi_priority) {
+				dvbapi_priority = entry;
+			} else {
+				struct s_dvbapi_priority *p;
+				for (p = dvbapi_priority; p->next != NULL; p = p->next)
+					;
+				p->next = entry;
+			}
+		}
+	}
 }
 
 static void dvbapi_caidtab_fn(const char *token, char *value, void *UNUSED(setting), FILE *UNUSED(f)) {
