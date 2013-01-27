@@ -503,25 +503,32 @@ static const struct config_list cs378x_opts[] = {
 static const struct config_list cs378x_opts[] = { DEF_LAST_OPT };
 #endif
 
-#ifdef MODULE_NEWCAMD
-static void newcamd_key_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
+void newcamd_key_fn(const char *token, char *value, void *setting, FILE *f) {
+	#define ncd_key_len  16 /* sizeof(ncd_key) */
+	#define ncd_key_size 14 /* How much bytes the key have */
+	uint8_t *ncd_key = setting;
 	if (value) {
 		if (strlen(value) == 0) {
-			memset(cfg.ncd_key, 0, sizeof(cfg.ncd_key));
-		} else if (key_atob_l(value, cfg.ncd_key, 28)) {
-			fprintf(stderr, "Configuration newcamd: Error in Key\n");
-			memset(cfg.ncd_key, 0, sizeof(cfg.ncd_key));
+			memset(ncd_key, 0, ncd_key_len);
+		} else if (key_atob_l(value, ncd_key, ncd_key_size * 2)) {
+			fprintf(stderr, "ERROR: Can't parse config setting %s=%s\n", token, value);
+			memset(ncd_key, 0, ncd_key_len);
 		}
 		return;
 	}
-	fprintf_conf(f, token, "%s", ""); // it should not have \n at the end
-	unsigned int i;
-	for (i = 0; i < 14; i++) {
-		fprintf(f,"%02X", cfg.ncd_key[i]);
+	int32_t ok = check_filled(ncd_key, ncd_key_size);
+	if (ok || cfg.http_full_cfg) {
+		fprintf_conf(f, token, "%s", ""); // it should not have \n at the end
+		if (ok) {
+			for (ok = 0; ok < ncd_key_size; ok++) {
+				fprintf(f, "%02X", ncd_key[ok]);
+			}
+		}
+		fprintf(f, "\n");
 	}
-	fprintf(f,"\n");
 }
 
+#ifdef MODULE_NEWCAMD
 static bool newcamd_should_save_fn(void *UNUSED(var)) { return cfg.ncd_ptab.nports && cfg.ncd_ptab.ports[0].s_port; }
 
 static const struct config_list newcamd_opts[] = {

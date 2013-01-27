@@ -458,30 +458,6 @@ static void device_fn(const char *token, char *value, void *setting, FILE *f) {
 	fprintf(f, "\n");
 }
 
-static void key_fn(const char *token, char *value, void *setting, FILE *f) {
-	struct s_reader *rdr = setting;
-	if (value) {
-		memset(rdr->ncd_key, 0, sizeof(rdr->ncd_key));
-		if (strlen(value) == 0)
-			return;
-		if (key_atob_l(value, rdr->ncd_key, 28)) {
-			fprintf(stderr, "reader key parse error, %s=%s\n", token, value);
-			memset(rdr->ncd_key, 0, sizeof(rdr->ncd_key));
-		}
-		return;
-	}
-	if (rdr->ncd_key[0] || rdr->ncd_key[13] || cfg.http_full_cfg) {
-		fprintf_conf(f, token, "%s", ""); // it should not have \n at the end
-		if (rdr->ncd_key[0] || rdr->ncd_key[13]) {
-			int j;
-			for (j = 0; j < 14; j++) {
-				fprintf(f, "%02X", rdr->ncd_key[j]);
-			}
-		}
-		fprintf(f, "\n");
-	}
-}
-
 static void services_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_reader *rdr = setting;
 	if (value) {
@@ -943,7 +919,7 @@ static const struct config_list reader_opts[] = {
 	DEF_OPT_INT8("enable"				, OFS(enable),					1 ),
 	DEF_OPT_FUNC("protocol"				, 0,							protocol_fn ),
 	DEF_OPT_FUNC("device"				, 0,							device_fn ),
-	DEF_OPT_FUNC("key"					, 0,							key_fn ),
+	DEF_OPT_FUNC("key"					, OFS(ncd_key),					newcamd_key_fn ),
 	DEF_OPT_SSTR("user"					, OFS(r_usr),					"", SIZEOF(r_usr) ),
 	DEF_OPT_SSTR("password"				, OFS(r_pwd),					"", SIZEOF(r_pwd) ),
 	DEF_OPT_SSTR("pincode"				, OFS(pincode),					"none", SIZEOF(pincode) ),
