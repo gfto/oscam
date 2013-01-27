@@ -470,8 +470,10 @@ static const struct config_list camd35_opts[] = {
 static const struct config_list camd35_opts[] = { DEF_LAST_OPT };
 #endif
 
-#ifdef MODULE_CAMD35_TCP
-static void porttab_cs378x_fn(const char *token, char *value, void *setting, FILE *f) {
+#if defined(MODULE_CAMD35_TCP) || defined(MODULE_NEWCAMD)
+#define PORTTAB_CS378X  1
+#define PORTTAB_NEWCAMD 2
+static void porttab_fn(const char *token, char *value, void *setting, long type, FILE *f) {
 	PTAB *ptab = setting;
 	if (value) {
 		if(strlen(value) == 0) {
@@ -481,16 +483,18 @@ static void porttab_cs378x_fn(const char *token, char *value, void *setting, FIL
 		}
 		return;
 	}
-	value = mk_t_camd35tcp_port();
+	value = (type == PORTTAB_CS378X) ? mk_t_camd35tcp_port() : mk_t_newcamd_port();
 	fprintf_conf(f, token, "%s\n", value);
 	free_mk_t(value);
 }
+#endif
 
+#ifdef MODULE_CAMD35_TCP
 static bool cs378x_should_save_fn(void *UNUSED(var)) { return cfg.c35_tcp_ptab.nports && cfg.c35_tcp_ptab.ports[0].s_port; }
 
 static const struct config_list cs378x_opts[] = {
 	DEF_OPT_SAVE_FUNC(cs378x_should_save_fn),
-	DEF_OPT_FUNC("port"						, OFS(c35_tcp_ptab),			porttab_cs378x_fn ),
+	DEF_OPT_FUNC_X("port"					, OFS(c35_tcp_ptab),			porttab_fn, PORTTAB_CS378X ),
 	DEF_OPT_FUNC("serverip"					, OFS(c35_tcp_srvip),			serverip_fn ),
 	DEF_OPT_INT8("suppresscmd08"			, OFS(c35_tcp_suppresscmd08),	0 ),
 	DEF_LAST_OPT
@@ -500,21 +504,6 @@ static const struct config_list cs378x_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef MODULE_NEWCAMD
-static void porttab_newcamd_fn(const char *token, char *value, void *setting, FILE *f) {
-	PTAB *ptab = setting;
-	if (value) {
-		if(strlen(value) == 0) {
-			clear_ptab(ptab);
-		} else {
-			chk_port_tab(value, ptab);
-		}
-		return;
-	}
-	value = mk_t_newcamd_port();
-	fprintf_conf(f, token, "%s\n", value);
-	free_mk_t(value);
-}
-
 static void newcamd_key_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
 	if (value) {
 		if (strlen(value) == 0) {
@@ -537,7 +526,7 @@ static bool newcamd_should_save_fn(void *UNUSED(var)) { return cfg.ncd_ptab.npor
 
 static const struct config_list newcamd_opts[] = {
 	DEF_OPT_SAVE_FUNC(newcamd_should_save_fn),
-	DEF_OPT_FUNC("port"						, OFS(ncd_ptab),			porttab_newcamd_fn ),
+	DEF_OPT_FUNC_X("port"					, OFS(ncd_ptab),			porttab_fn, PORTTAB_NEWCAMD ),
 	DEF_OPT_FUNC("serverip"					, OFS(ncd_srvip),			serverip_fn ),
 	DEF_OPT_FUNC("allowed"					, OFS(ncd_allowed),			iprange_fn ),
 	DEF_OPT_FUNC("key"						, OFS(ncd_key),				newcamd_key_fn ),
