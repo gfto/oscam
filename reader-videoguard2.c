@@ -528,7 +528,7 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR *newatr)
     return ERROR;
     }
 
-  if (reader->ins7E[0x1A])
+  if (check_filled(reader->ins7E, sizeof(reader->ins7E)))
   {
     static const uint8_t ins7E[5] = { 0xD1,0x7E,0x10,0x00,0x1A };
     l=do_cmd(reader,ins7E,reader->ins7E,NULL,cta_res);
@@ -538,7 +538,7 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR *newatr)
     }
   }
 
-  if (reader->ins7E11[0x01]) {
+  if (check_filled(reader->ins7E11, sizeof(reader->ins7E11))) {
     unsigned char ins742b[5] = { 0xD0,0x74,0x2b,0x00,0x00 };
   
     l=read_cmd_len(reader,ins742b);     //get command len for ins742b

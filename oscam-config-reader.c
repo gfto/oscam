@@ -524,27 +524,6 @@ static void flags_fn(const char *token, char *value, void *setting, long flag, F
 		fprintf_conf(f, token, "%d\n", (*var & flag) ? 1 : 0);
 }
 
-static void ins7E_fn(const char *token, char *value, void *setting, long var_size, FILE *f) {
-	uint8_t *var = setting;
-	var_size -= 1; // var_size contains sizeof(var) which is [X + 1]
-	if (value) {
-		int32_t len = strlen(value);
-		if (len != var_size * 2 || key_atob_l(value, var, len)) {
-			if (len > 0)
-				fprintf(stderr, "reader %s parse error, %s=%s\n", token, token, value);
-			memset(var, 0, var_size + 1);
-		} else {
-			var[var_size] = 1; // found and correct
-		}
-		return;
-	}
-	if (var[var_size]) {
-		char tmp[var_size * 2 + 1];
-		fprintf_conf(f, token, "%s\n", cs_hexdump(0, var, var_size, tmp, sizeof(tmp)));
-	} else if (cfg.http_full_cfg)
-		fprintf_conf(f, token, "\n");
-}
-
 static void atr_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_reader *rdr = setting;
 	if (value) {
@@ -879,8 +858,8 @@ static const struct config_list reader_opts[] = {
 	DEF_OPT_FUNC("boxid"				, 0,							boxid_fn ),
 	DEF_OPT_FUNC("boxkey"				, 0,							boxkey_fn ),
 	DEF_OPT_FUNC("rsakey"				, 0,							rsakey_fn ),
-	DEF_OPT_FUNC_X("ins7e"				, OFS(ins7E),					ins7E_fn, SIZEOF(ins7E) ),
-	DEF_OPT_FUNC_X("ins7e11"			, OFS(ins7E11),					ins7E_fn, SIZEOF(ins7E11) ),
+	DEF_OPT_HEX("ins7e"					, OFS(ins7E),					SIZEOF(ins7E) ),
+	DEF_OPT_HEX("ins7e11"				, OFS(ins7E11),					SIZEOF(ins7E11) ),
 	DEF_OPT_INT8("fix9993"				, OFS(fix_9993),				0 ),
 	DEF_OPT_INT8("force_irdeto"			, OFS(force_irdeto),			0 ),
 	DEF_OPT_FUNC("ecmwhitelist"			, 0,							ecmwhitelist_fn ),
