@@ -1615,7 +1615,6 @@ struct s_config
 	int8_t			cc_stealth;
 	int8_t			cc_reshare_services;
 	int8_t			cc_forward_origin_card;
-	int8_t			cc_use_fixed_nodeid;
 	uint8_t			cc_fixed_nodeid[8];
 	uint32_t		cc_recv_timeout;				// The poll() timeout parameter in ms. Default: DEFAULT_CC_RECV_TIMEOUT (2000 ms).
 #endif

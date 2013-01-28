@@ -518,31 +518,12 @@ static void cccam_port_fn(const char *token, char *value, void *UNUSED(setting),
 	free_mk_t(value);
 }
 
-static void cccam_nodeid_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
-	if (value) {
-		int i, valid = 0;
-		memset(cfg.cc_fixed_nodeid, 0, 8);
-		for (i = 0; i < 8 && value[i] != 0; i++) {
-			cfg.cc_fixed_nodeid[i] = gethexval(value[i*2]) << 4 | gethexval(value[i*2+1]);
-			if (cfg.cc_fixed_nodeid[i])
-				valid = 1;
-		}
-		cfg.cc_use_fixed_nodeid = valid && i == 8;
-		return;
-	}
-	if (cfg.cc_use_fixed_nodeid || cfg.http_full_cfg) {
-		fprintf_conf(f, token, "%02X%02X%02X%02X%02X%02X%02X%02X\n",
-			cfg.cc_fixed_nodeid[0], cfg.cc_fixed_nodeid[1], cfg.cc_fixed_nodeid[2], cfg.cc_fixed_nodeid[3],
-			cfg.cc_fixed_nodeid[4], cfg.cc_fixed_nodeid[5], cfg.cc_fixed_nodeid[6], cfg.cc_fixed_nodeid[7]);
-	}
-}
-
 static bool cccam_should_save_fn(void *UNUSED(var)) { return cfg.cc_port[0]; }
 
 static const struct config_list cccam_opts[] = {
 	DEF_OPT_SAVE_FUNC(cccam_should_save_fn),
 	DEF_OPT_FUNC("port"						, OFS(cc_port),				cccam_port_fn ),
-	DEF_OPT_FUNC("nodeid"					, OFS(cc_fixed_nodeid),		cccam_nodeid_fn ),
+	DEF_OPT_HEX("nodeid"					, OFS(cc_fixed_nodeid),		SIZEOF(cc_fixed_nodeid) ),
 	DEF_OPT_SSTR("version"					, OFS(cc_version),			"", SIZEOF(cc_version) ),
 	DEF_OPT_INT8("reshare"					, OFS(cc_reshare),			10 ),
 	DEF_OPT_INT8("reshare_mode"				, OFS(cc_reshare_services),	0 ),
