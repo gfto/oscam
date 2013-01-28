@@ -97,6 +97,17 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 			}
 			return 1;
 		}
+		case OPT_HEX_ARRAY: {
+			uint8_t *hex_array = var;
+			if (!strlen(value))
+				memset(hex_array, 0, c->def.array_size);
+			else if (key_atob_l(value, hex_array, c->def.array_size * 2)) {
+				memset(hex_array, 0, c->def.array_size);
+				fprintf(stderr, "WARNING: Config value for '%s' (%s, len=%u) requires %d chars.\n",
+					token, value, strlen(value), c->def.array_size * 2);
+			}
+			return 1;
+		}
 		case OPT_FUNC: {
 			c->ops.process_fn(token, value, var, NULL);
 			return 1;
@@ -163,6 +174,20 @@ void config_list_save_ex(FILE *f, const struct config_list *clist, void *config_
 			char *val = var;
 			if (save_all || !streq(val, c->def.d_char)) {
 				fprintf_conf(f, c->config_name, "%s\n", val[0] ? val : "");
+			}
+			continue;
+		}
+		case OPT_HEX_ARRAY: {
+			uint8_t *hex_array = var;
+			uint32_t ok = check_filled(hex_array, c->def.array_size);
+			if (save_all || ok) {
+				fprintf_conf(f, c->config_name, "%s", ""); // it should not have \n at the end
+				if (ok) {
+					for (ok = 0; ok < c->def.array_size; ok++) {
+						fprintf(f, "%02X", hex_array[ok]);
+					}
+				}
+				fprintf(f, "\n");
 			}
 			continue;
 		}
@@ -236,6 +261,11 @@ void config_list_set_defaults(const struct config_list *clist, void *config_data
 			scfg[0] = '\0';
 			if (c->def.d_char && strlen(c->def.d_char))
 				cs_strncpy(scfg, c->def.d_char, c->str_size);
+			break;
+		}
+		case OPT_HEX_ARRAY: {
+			uint8_t *hex_array = var;
+			memset(hex_array, 0, c->def.array_size);
 			break;
 		}
 		case OPT_FUNC: {

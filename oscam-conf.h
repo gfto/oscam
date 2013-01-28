@@ -15,6 +15,7 @@ enum opt_types {
 	OPT_UINT32,
 	OPT_STRING,
 	OPT_SSTRING,
+	OPT_HEX_ARRAY,
 	OPT_FUNC,
 	OPT_FUNC_EXTRA,
 	OPT_SAVE_FUNC,
@@ -33,6 +34,7 @@ struct config_list {
 		uint32_t		d_uint32;
 		char			*d_char;
 		long			d_extra;
+		uint32_t		array_size;
 	} def;
 	union {
 		void			(*process_fn)(const char *token, char *value, void *setting, FILE *config_file);
@@ -89,6 +91,14 @@ struct config_list {
 		.var_offset		= __var_ofs, \
 		.str_size		= __str_size, \
 		.def.d_char		= __default \
+	}
+
+#define DEF_OPT_HEX(__name, __var_ofs, __array_size) \
+	{ \
+		.opt_type		= OPT_HEX_ARRAY, \
+		.config_name	= __name, \
+		.var_offset		= __var_ofs, \
+		.def.array_size	= __array_size \
 	}
 
 #define DEF_OPT_FUNC(__name, __var_ofs, __process_fn) \

@@ -303,7 +303,7 @@ int32_t boundary(int32_t exp, int32_t n)
 	return (((n-1) >> exp) + 1) << exp;
 }
 
-/* Checks an array if it is filled (a value > 0) and returns the last position (1...length) where something was found.
+/* Checks an array if it is filled (a value > 0) and number of filled bytes.
    length specifies the maximum length to check for. */
 int32_t check_filled(uchar *value, int32_t length)
 {
@@ -312,7 +312,7 @@ int32_t check_filled(uchar *value, int32_t length)
 	int32_t i, j = 0;
 	for (i = 0; i < length; ++i){
 		if (value[i] > 0)
-			j = i + 1;
+			j++;
 	}
 	return j;
 }

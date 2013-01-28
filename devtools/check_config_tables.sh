@@ -36,3 +36,9 @@ for VAR in `cat $FILES | grep DEF_OPT_SSTR | grep OFS | awk '{print $3}' | sed "
 do
 	grep -w $VAR globals.h | grep -vE "(\[|#define)" | grep -w --color $VAR
 done
+
+echo "== Checking DEF_OPT_HEX (arrays) -> Var type must be uint8_t[x]"
+for VAR in `cat $FILES | grep DEF_OPT_HEX | grep OFS | awk '{print $3}' | sed "s|OFS(||;s|)||;s|,||"`
+do
+	grep -w $VAR globals.h | grep -vw uint8_t | grep -w --color $VAR
+done
