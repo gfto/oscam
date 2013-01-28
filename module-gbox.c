@@ -1,11 +1,20 @@
 #include "globals.h"
 #ifdef MODULE_GBOX
-#include <pthread.h>
-//#define _XOPEN_SOURCE 600
-#include <time.h>
-#include <sys/time.h>
+
+// The following headers are used in parsing mg-encrypted parameter
+#if defined(__APPLE__) || defined(__FreeBSD__)
+#include <net/if_dl.h>
+#include <ifaddrs.h>
+#elif defined(__SOLARIS__)
+#include <net/if.h>
+#include <net/if_arp.h>
+#include <sys/sockio.h>
+#else
+#include <net/if.h>
+#endif
 
 #include "algo/minilzo.h"
+#include "module-gbox.h"
 #include "oscam-failban.h"
 #include "oscam-client.h"
 #include "oscam-lock.h"
@@ -1060,6 +1069,132 @@ static int32_t gbox_send_emm(EMM_PACKET *UNUSED(ep))
 
   return 0;
 }
+
+// Parsing of mg-encrypted option in [reader]
+void mgencrypted_fn(const char *UNUSED(token), char *value, void *setting, FILE *UNUSED(f)) {
+	struct s_reader *rdr = setting;
+
+	if (value) {
+		uchar key[16];
+		uchar mac[6];
+		char tmp_dbg[13];
+		uchar *buf = NULL;
+		int32_t i, len = 0;
+		char *ptr, *saveptr1 = NULL;
+
+		memset(&key, 0, 16);
+		memset(&mac, 0, 6);
+
+		for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 2) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++) {
+			trim(ptr);
+			switch(i) {
+			case 0:
+				len = strlen(ptr) / 2 + (16 - (strlen(ptr) / 2) % 16);
+				if (!cs_malloc(&buf, len)) return;
+				key_atob_l(ptr, buf, strlen(ptr));
+				cs_log("enc %d: %s", len, ptr);
+				break;
+
+			case 1:
+				key_atob_l(ptr, mac, 12);
+				cs_log("mac: %s", ptr);
+				break;
+			}
+		}
+		if (!buf)
+			return;
+
+		if (!memcmp(mac, "\x00\x00\x00\x00\x00\x00", 6)) {
+#if defined(__APPLE__) || defined(__FreeBSD__)
+			// no mac address specified so use mac of en0 on local box
+			struct ifaddrs *ifs, *current;
+
+			if (getifaddrs(&ifs) == 0)
+			{
+				for (current = ifs; current != 0; current = current->ifa_next)
+				{
+					if (current->ifa_addr->sa_family == AF_LINK && strcmp(current->ifa_name, "en0") == 0)
+					{
+						struct sockaddr_dl *sdl = (struct sockaddr_dl *)current->ifa_addr;
+						memcpy(mac, LLADDR(sdl), sdl->sdl_alen);
+						break;
+					}
+				}
+				freeifaddrs(ifs);
+			}
+#elif defined(__SOLARIS__)
+			// no mac address specified so use first filled mac
+			int32_t j, sock, niccount;
+			struct ifreq nicnumber[16];
+			struct ifconf ifconf;
+			struct arpreq arpreq;
+
+			if ((sock=socket(AF_INET,SOCK_DGRAM,0)) > -1){
+				ifconf.ifc_buf = (caddr_t)nicnumber;
+				ifconf.ifc_len = sizeof(nicnumber);
+				if (!ioctl(sock,SIOCGIFCONF,(char*)&ifconf)){
+					niccount = ifconf.ifc_len/(sizeof(struct ifreq));
+					for(i = 0; i < niccount, ++i){
+						memset(&arpreq, 0, sizeof(arpreq));
+						((struct sockaddr_in*)&arpreq.arp_pa)->sin_addr.s_addr = ((struct sockaddr_in*)&nicnumber[i].ifr_addr)->sin_addr.s_addr;
+						if (!(ioctl(sock,SIOCGARP,(char*)&arpreq))){
+							for (j = 0; j < 6; ++j)
+								mac[j] = (unsigned char)arpreq.arp_ha.sa_data[j];
+							if(check_filled(mac, 6) > 0) break;
+						}
+					}
+				}
+				close(sock);
+			}
+#else
+			// no mac address specified so use mac of eth0 on local box
+			int32_t fd = socket(PF_INET, SOCK_STREAM, 0);
+
+			struct ifreq ifreq;
+			memset(&ifreq, 0, sizeof(ifreq));
+			snprintf(ifreq.ifr_name, sizeof(ifreq.ifr_name), "eth0");
+
+			ioctl(fd, SIOCGIFHWADDR, &ifreq);
+			memcpy(mac, ifreq.ifr_ifru.ifru_hwaddr.sa_data, 6);
+
+			close(fd);
+#endif
+			cs_debug_mask(D_TRACE, "Determined local mac address for mg-encrypted as %s", cs_hexdump(1, mac, 6, tmp_dbg, sizeof(tmp_dbg)));
+		}
+
+		// decrypt encrypted mgcamd gbox line
+		for (i = 0; i < 6; i++)
+			key[i * 2] = mac[i];
+
+		AES_KEY aeskey;
+		AES_set_decrypt_key(key, 128, &aeskey);
+		for (i = 0; i < len; i+=16)
+			AES_decrypt(buf + i,buf + i, &aeskey);
+
+		// parse d-line
+		for (i = 0, ptr = strtok_r((char *)buf, " {", &saveptr1); (i < 5) && (ptr); ptr = strtok_r(NULL, " {", &saveptr1), i++) {
+			trim(ptr);
+			switch (i) {
+			case 1:    // hostname
+				cs_strncpy(rdr->device, ptr, sizeof(rdr->device));
+				break;
+			case 2:   // local port
+				cfg.gbox_port = atoi(ptr);  // ***WARNING CHANGE OF GLOBAL LISTEN PORT FROM WITHIN READER!!!***
+				break;
+			case 3:   // remote port
+				rdr->r_port = atoi(ptr);
+				break;
+			case 4:   // password
+				cs_strncpy(rdr->r_pwd, ptr, sizeof(rdr->r_pwd));
+				break;
+			}
+		}
+
+		free(buf);
+		return;
+	}
+}
+
 
 void module_gbox(struct s_module *ph)
 {
