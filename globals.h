@@ -1202,6 +1202,7 @@ struct s_reader  									//contains device info, reader info and card info
 	struct s_cardsystem csystem;
 	uint8_t			ncd_key[14];
 	uchar			ncd_skey[16];
+	int8_t			ncd_connect_on_init;
 	int8_t			ncd_disable_server_filt;
 	int8_t			ncd_proto;
 #ifdef MODULE_CCCAM

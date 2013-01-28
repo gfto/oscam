@@ -1239,6 +1239,13 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	// Receive timeout
 	tpl_printf(vars, TPLADD, "RECEIVETIMEOUT", "%d", rdr->tcp_rto);
 
+	// Connect on init (newcamd only)
+	if(!apicall) {
+		tpl_addVar(vars, TPLADD, "CONNECTONINITCHECKED", (rdr->ncd_connect_on_init == 1) ? "checked" : "");
+	} else {
+		tpl_addVar(vars, TPLADD, "CONNECTONINITCHECKED", (rdr->ncd_connect_on_init == 1) ? "1" : "0");
+	}
+
 	// Reset Cycle
 	tpl_printf(vars, TPLADD, "RESETCYCLE", "%d", rdr->resetcycle);
 
