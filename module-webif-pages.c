@@ -1394,20 +1394,17 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 #define TPLREADERCONFIGCS378XBIT "\
 			<TR><TD>##TPLHELPPREFIX##server#user##TPLHELPSUFFIX##User:</A></TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#password##TPLHELPSUFFIX##Password:</A></TD><TD><input name=\"password\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PASSWORD##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##server#inactivitytimeout##TPLHELPSUFFIX##Inactivity timeout:</A></TD><TD><input name=\"inactivitytimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##INACTIVITYTIMEOUT##\">s</TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##server#reconnecttimeout##TPLHELPSUFFIX##Reconnect timeout:</A></TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##RECEIVETIMEOUT##\">s</TD></TR>\n"
+			<TR><TD>##TPLHELPPREFIX##server#inactivitytimeout##TPLHELPSUFFIX##Inactivity timeout:</A></TD><TD><input name=\"inactivitytimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##INACTIVITYTIMEOUT##\">s</TD></TR>\n"
 #define TPLREADERCONFIGRADEGASTBIT "\
 			<TR><TD>##TPLHELPPREFIX##server#user##TPLHELPSUFFIX##User:</A></TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#password##TPLHELPSUFFIX##Password:</A></TD><TD><input name=\"password\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PASSWORD##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##server#inactivitytimeout##TPLHELPSUFFIX##Inactivity timeout:</A></TD><TD><input name=\"inactivitytimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##INACTIVITYTIMEOUT##\">s</TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##server#reconnecttimeout##TPLHELPSUFFIX##Reconnect timeout:</A></TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##RECEIVETIMEOUT##\">s</TD></TR>\n"
+			<TR><TD>##TPLHELPPREFIX##server#inactivitytimeout##TPLHELPSUFFIX##Inactivity timeout:</A></TD><TD><input name=\"inactivitytimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##INACTIVITYTIMEOUT##\">s</TD></TR>\n"
 #define TPLREADERCONFIGNCD525BIT "\
 			<TR><TD>##TPLHELPPREFIX##server#user##TPLHELPSUFFIX##User:</A></TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#password##TPLHELPSUFFIX##Password:</A></TD><TD><input name=\"password\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PASSWORD##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#key##TPLHELPSUFFIX##Key:</A></TD><TD><input name=\"key\" type=\"text\" size=\"40\" maxlength=\"28\" value=\"##NCD_KEY##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#connectoninit##TPLHELPSUFFIX##Connect on init:</A><input name=\"connectoninit\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"connectoninit\" type=\"checkbox\" value=\"1\" ##CONNECTONINITCHECKED##></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#inactivitytimeout##TPLHELPSUFFIX##Inactivity timeout:</A></TD><TD><input name=\"inactivitytimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##INACTIVITYTIMEOUT##\">s</TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##server#reconnecttimeout##TPLHELPSUFFIX##Reconnect timeout:</A></TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##RECEIVETIMEOUT##\">s</TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#disableserverfilter##TPLHELPSUFFIX##Disable server Filter:</A><input name=\"disableserverfilter\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"disableserverfilter\" type=\"checkbox\" value=\"1\" ##DISABLESERVERFILTERCHECKED##></TD></TR>\n"
 #define TPLREADERCONFIGNCD524BIT "\
 			<TR><TD>##TPLHELPPREFIX##server#user##TPLHELPSUFFIX##User:</A></TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
@@ -1415,7 +1412,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##server#key##TPLHELPSUFFIX##Key:</A></TD><TD><input name=\"key\" type=\"text\" size=\"40\" maxlength=\"28\" value=\"##NCD_KEY##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#connectoninit##TPLHELPSUFFIX##Connect on init:</A><input name=\"connectoninit\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"connectoninit\" type=\"checkbox\" value=\"1\" ##CONNECTONINITCHECKED##></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#inactivitytimeout##TPLHELPSUFFIX##Inactivity timeout:</A></TD><TD><input name=\"inactivitytimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##INACTIVITYTIMEOUT##\">s</TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##server#reconnecttimeout##TPLHELPSUFFIX##Reconnect timeout:</A></TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RECEIVETIMEOUT##\">s</TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#disableserverfilter##TPLHELPSUFFIX##Disable server Filter:</A><input name=\"disableserverfilter\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"disableserverfilter\" type=\"checkbox\" value=\"1\" ##DISABLESERVERFILTERCHECKED##></TD></TR>\n"
 #define TPLREADERCONFIGCCCAMBIT "\
 			<TR><TD>##TPLHELPPREFIX##server#inactivitytimeout##TPLHELPSUFFIX##Inactivity timeout:</A></TD><TD><input name=\"inactivitytimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##INACTIVITYTIMEOUT##\">s</TD></TR>\n\
