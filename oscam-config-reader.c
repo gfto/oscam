@@ -681,27 +681,6 @@ static void nano_fn(const char *token, char *value, void *setting, FILE *f) {
 	free_mk_t(value);
 }
 
-static void boxkey_fn(const char *token, char *value, void *setting, FILE *f) {
-	struct s_reader *rdr = setting;
-	if (value) {
-		if (strlen(value) != 16) {
-			memset(rdr->nagra_boxkey, 0, 16);
-		} else {
-			if (key_atob_l(value, rdr->nagra_boxkey, 16)) {
-				fprintf(stderr, "Configuration reader: Error in boxkey\n");
-				memset(rdr->nagra_boxkey, 0, sizeof(rdr->nagra_boxkey));
-			}
-		}
-		return;
-	}
-	int32_t len = check_filled(rdr->nagra_boxkey, 8);
-	if (len > 0 || cfg.http_full_cfg) {
-		char tmp[17];
-		fprintf_conf(f, token, "%s\n", len > 0 ?
-			cs_hexdump(0, rdr->nagra_boxkey, 8, tmp, sizeof(tmp)) : "");
-	}
-}
-
 static void auprovid_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_reader *rdr = setting;
 	if (value) {
@@ -856,7 +835,7 @@ static const struct config_list reader_opts[] = {
 	DEF_OPT_FUNC("caid"					, OFS(ctab),					reader_caid_fn ),
 	DEF_OPT_FUNC("atr"					, 0,							atr_fn ),
 	DEF_OPT_FUNC("boxid"				, 0,							boxid_fn ),
-	DEF_OPT_FUNC("boxkey"				, 0,							boxkey_fn ),
+	DEF_OPT_HEX("boxkey"				, OFS(boxkey),					SIZEOF(boxkey) ),
 	DEF_OPT_FUNC("rsakey"				, 0,							rsakey_fn ),
 	DEF_OPT_HEX("ins7e"					, OFS(ins7E),					SIZEOF(ins7E) ),
 	DEF_OPT_HEX("ins7e11"				, OFS(ins7E11),					SIZEOF(ins7E11) ),

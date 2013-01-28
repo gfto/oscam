@@ -1341,9 +1341,9 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	}
 
 	// BoxKey
-	len = check_filled(rdr->nagra_boxkey, 8);
-	if(len > 0) {
-		for (i = 0; i < 8 ; i++) tpl_printf(vars, TPLAPPEND, "BOXKEY", "%02X", rdr->nagra_boxkey[i]);
+	if (check_filled(rdr->boxkey, sizeof(rdr->boxkey))) {
+		for (i = 0; i < (int32_t)sizeof(rdr->boxkey) ; i++)
+			tpl_printf(vars, TPLAPPEND, "BOXKEY", "%02X", rdr->boxkey[i]);
 	}
 
 	// ins7E

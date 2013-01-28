@@ -315,7 +315,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 	{
 		char tmp_dbg[65];
 		rdr_debug_mask(reader, D_READER, "using camkey data from config");
-		rdr_debug_mask(reader, D_READER, "     camkey: %s", cs_hexdump(0, reader->nagra_boxkey, 8, tmp_dbg, sizeof(tmp_dbg)));
+		rdr_debug_mask(reader, D_READER, "     camkey: %s", cs_hexdump(0, reader->boxkey, sizeof(reader->boxkey), tmp_dbg, sizeof(tmp_dbg)));
 		if (reader->acs57==1) {
 			memcpy(&sc_Acs57CamKey[5], reader->rsa_mod, 0x40);
 			rdr_debug_mask(reader, D_READER, "camkey-data: %s", cs_hexdump(0, &sc_Acs57CamKey[5], 32, tmp_dbg, sizeof(tmp_dbg)));
@@ -329,7 +329,7 @@ static int32_t irdeto_card_init(struct s_reader * reader, ATR *newatr)
 		if(reader->acs57==1) {
 			rdr_log(reader, "WARNING: ACS57 card can require the CamKey from config");
 		} else {
-			memcpy(reader->nagra_boxkey, "\x11\x22\x33\x44\x55\x66\x77\x88", 8);
+			memcpy(reader->boxkey, "\x11\x22\x33\x44\x55\x66\x77\x88", 8);
 		}
 	}
 	/*
@@ -543,8 +543,8 @@ int32_t irdeto_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_
 		if (ret)
 			return ERROR;
 	}
-	ReverseSessionKeyCrypt(reader->nagra_boxkey, cta_res+6+acspadd);
-	ReverseSessionKeyCrypt(reader->nagra_boxkey, cta_res+14+acspadd);
+	ReverseSessionKeyCrypt(reader->boxkey, cta_res+6+acspadd);
+	ReverseSessionKeyCrypt(reader->boxkey, cta_res+14+acspadd);
 	memcpy(ea->cw, cta_res + 6 + acspadd, 16);
 	return OK;
 }

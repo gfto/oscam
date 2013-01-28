@@ -1166,7 +1166,7 @@ struct s_reader  									//contains device info, reader info and card info
 	CAIDTAB			ctab;
 	uint32_t		boxid;
 	int8_t			nagra_read;						// read nagra ncmed records: 0 Disabled (default), 1 read all records, 2 read valid records only
-	uchar			nagra_boxkey[16];				// n3 boxkey 8byte  or tiger idea key 16byte
+	uint8_t			boxkey[8];						// n3 boxkey 8byte
 	char			country_code[3];				// irdeto country code.
 	int8_t			force_irdeto;
 	uchar			rsa_mod[120];					// rsa modulus for nagra cards.
