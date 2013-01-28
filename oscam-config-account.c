@@ -214,34 +214,6 @@ void services_fn(const char *token, char *value, void *setting, FILE *f) {
 	free_mk_t(value);
 }
 
-static void account_ident_fn(const char *token, char *value, void *setting, FILE *f) {
-	struct s_auth *account = setting;
-	if (value) { // TODO: ftab clear
-		strtolower(value);
-		chk_ftab(value, &account->ftab, "user", account->usr, "provid");
-		return;
-	}
-	if (account->ftab.nfilts || cfg.http_full_cfg) {
-		value = mk_t_ftab(&account->ftab);
-		fprintf_conf(f, token, "%s\n", value);
-		free_mk_t(value);
-	}
-}
-
-static void account_chid_fn(const char *token, char *value, void *setting, FILE *f) {
-	struct s_auth *account = setting;
-	if (value) {
-		strtolower(value);
-		chk_ftab(value, &account->fchid, "user", account->usr, "chid");
-		return;
-	}
-	if (account->fchid.nfilts || cfg.http_full_cfg) {
-		value = mk_t_ftab(&account->fchid);
-		fprintf_conf(f, token, "%s\n", value);
-		free_mk_t(value);
-	}
-}
-
 void class_fn(const char *token, char *value, void *setting, FILE *f) {
 	CLASSTAB *cltab = setting;
 	if (value) {
@@ -293,8 +265,8 @@ static const struct config_list account_opts[] = {
 	DEF_OPT_FUNC("betatunnel"			, OFS(ttab),					account_tuntab_fn ),
 	DEF_OPT_FUNC("group"				, OFS(grp),						group_fn ),
 	DEF_OPT_FUNC("services"				, OFS(sidtabs),					services_fn ),
-	DEF_OPT_FUNC("ident"				, 0,							account_ident_fn ),
-	DEF_OPT_FUNC("chid"					, 0,							account_chid_fn ),
+	DEF_OPT_FUNC_X("ident"				, OFS(ftab),					ftab_fn, FTAB_ACCOUNT | FTAB_PROVID ),
+	DEF_OPT_FUNC_X("chid"				, OFS(fchid),					ftab_fn, FTAB_ACCOUNT | FTAB_CHID ),
 	DEF_OPT_FUNC("class"				, OFS(cltab),					class_fn ),
 #ifdef CS_CACHEEX
 	DEF_OPT_INT8("cacheex"				, OFS(cacheex.mode),			0 ),

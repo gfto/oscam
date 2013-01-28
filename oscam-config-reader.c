@@ -430,33 +430,39 @@ static void detect_fn(const char *token, char *value, void *setting, FILE *f) {
 	fprintf_conf(f, token, "%s%s\n", rdr->detect & 0x80 ? "!" : "", RDR_CD_TXT[rdr->detect & 0x7f]);
 }
 
-static void ident_fn(const char *token, char *value, void *setting, FILE *f) {
-	struct s_reader *rdr = setting;
+void ftab_fn(const char *token, char *value, void *setting, long ftab_type, FILE *f) {
+	const char *zType = NULL, *zName = NULL, *zFiltNamef = NULL;
+	struct s_reader *rdr = NULL;
+	FTAB *ftab = setting;
+
+	if (ftab_type & FTAB_ACCOUNT) {
+		struct s_auth *account = NULL;
+		zType = "account";
+		if (ftab_type & FTAB_PROVID) account = container_of(setting, struct s_auth, ftab);
+		if (ftab_type & FTAB_CHID)   account = container_of(setting, struct s_auth, fchid);
+		if (account) zName = account->usr;
+	}
+	if (ftab_type & FTAB_READER) {
+		zType = "reader";
+		if (ftab_type & FTAB_PROVID) rdr = container_of(setting, struct s_reader, ftab);
+		if (ftab_type & FTAB_CHID)   rdr = container_of(setting, struct s_reader, fchid);
+		if (rdr) zName = rdr->label;
+	}
+	if (ftab_type & FTAB_PROVID) zFiltNamef = "provid";
+	if (ftab_type & FTAB_CHID)   zFiltNamef = "chid";
+
 	if (value) {
 		if (strlen(value)) {
 			strtolower(value);
-			chk_ftab(value, &rdr->ftab, "reader", rdr->label, "provid");
+			chk_ftab(value, ftab, zType, zName, zFiltNamef);
 		} else {
-			clear_ftab(&rdr->ftab);
+			clear_ftab(ftab);
 		}
-		rdr->changes_since_shareupdate = 1;
+		if (rdr)
+			rdr->changes_since_shareupdate = 1;
 		return;
 	}
-	value = mk_t_ftab(&rdr->ftab);
-	if (strlen(value) > 0 || cfg.http_full_cfg)
-		fprintf_conf(f, token, "%s\n", value);
-	free_mk_t(value);
-}
-
-static void chid_fn(const char *token, char *value, void *setting, FILE *f) {
-	struct s_reader *rdr = setting;
-	if (value) {
-		strtolower(value);
-		chk_ftab(value, &rdr->fchid, "reader", rdr->label, "chid");
-		rdr->changes_since_shareupdate = 1;
-		return;
-	}
-	value = mk_t_ftab(&rdr->fchid);
+	value = mk_t_ftab(ftab);
 	if (strlen(value) > 0 || cfg.http_full_cfg)
 		fprintf_conf(f, token, "%s\n", value);
 	free_mk_t(value);
@@ -718,8 +724,8 @@ static const struct config_list reader_opts[] = {
 #ifdef WITH_AZBOX
 	DEF_OPT_INT32("mode"				, OFS(azbox_mode),				-1 ),
 #endif
-	DEF_OPT_FUNC("ident"				, 0,							ident_fn ),
-	DEF_OPT_FUNC("chid"					, 0,							chid_fn ),
+	DEF_OPT_FUNC_X("ident"				, OFS(ftab),					ftab_fn, FTAB_READER | FTAB_PROVID ),
+	DEF_OPT_FUNC_X("chid"				, OFS(fchid),					ftab_fn, FTAB_READER | FTAB_CHID ),
 	DEF_OPT_FUNC("class"				, OFS(cltab),					class_fn ),
 	DEF_OPT_FUNC("aeskeys"				, 0,							aeskeys_fn ),
 	DEF_OPT_FUNC("group"				, OFS(grp),						group_fn ),
