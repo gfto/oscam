@@ -315,7 +315,7 @@ char *mk_t_newcamd_port(void) {
 		// separate DES Key for this port
 		if(cfg.ncd_ptab.ports[i].ncd_key_is_set) {
 			pos += snprintf(value + pos, needed-pos, "{");
-			for (k = 0; k < 14; k++)
+			for (k = 0; k < (int32_t)sizeof(cfg.ncd_ptab.ports[i].ncd_key[k]); k++)
 				pos += snprintf(value + pos, needed-pos, "%02X", cfg.ncd_ptab.ports[i].ncd_key[k]);
 			pos += snprintf(value + pos, needed-pos, "}");
 		}

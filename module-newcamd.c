@@ -396,8 +396,8 @@ static int32_t connect_newcamd_server(void)
     network_tcp_connection_close(cl->reader, "connect error");
     return -2;
   }
-  cs_ddump_mask(D_CLIENT, keymod, 14, "server init sequence:");
-  des_login_key_get(keymod, cl->reader->ncd_key, 14, key);
+  cs_ddump_mask(D_CLIENT, keymod, sizeof(cl->reader->ncd_key), "server init sequence:");
+  des_login_key_get(keymod, cl->reader->ncd_key, sizeof(cl->reader->ncd_key), key);
 
   // 3. Send login info
   idx = 3;

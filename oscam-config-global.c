@@ -483,31 +483,6 @@ static const struct config_list cs378x_opts[] = {
 static const struct config_list cs378x_opts[] = { DEF_LAST_OPT };
 #endif
 
-void newcamd_key_fn(const char *token, char *value, void *setting, FILE *f) {
-	#define ncd_key_len  16 /* sizeof(ncd_key) */
-	#define ncd_key_size 14 /* How much bytes the key have */
-	uint8_t *ncd_key = setting;
-	if (value) {
-		if (strlen(value) == 0) {
-			memset(ncd_key, 0, ncd_key_len);
-		} else if (key_atob_l(value, ncd_key, ncd_key_size * 2)) {
-			fprintf(stderr, "ERROR: Can't parse config setting %s=%s\n", token, value);
-			memset(ncd_key, 0, ncd_key_len);
-		}
-		return;
-	}
-	int32_t ok = check_filled(ncd_key, ncd_key_size);
-	if (ok || cfg.http_full_cfg) {
-		fprintf_conf(f, token, "%s", ""); // it should not have \n at the end
-		if (ok) {
-			for (ok = 0; ok < ncd_key_size; ok++) {
-				fprintf(f, "%02X", ncd_key[ok]);
-			}
-		}
-		fprintf(f, "\n");
-	}
-}
-
 #ifdef MODULE_NEWCAMD
 static bool newcamd_should_save_fn(void *UNUSED(var)) { return cfg.ncd_ptab.nports && cfg.ncd_ptab.ports[0].s_port; }
 
@@ -516,7 +491,7 @@ static const struct config_list newcamd_opts[] = {
 	DEF_OPT_FUNC_X("port"					, OFS(ncd_ptab),			porttab_fn, PORTTAB_NEWCAMD ),
 	DEF_OPT_FUNC("serverip"					, OFS(ncd_srvip),			serverip_fn ),
 	DEF_OPT_FUNC("allowed"					, OFS(ncd_allowed),			iprange_fn ),
-	DEF_OPT_FUNC("key"						, OFS(ncd_key),				newcamd_key_fn ),
+	DEF_OPT_HEX("key"						, OFS(ncd_key),				SIZEOF(ncd_key) ),
 	DEF_OPT_INT8("keepalive"				, OFS(ncd_keepalive),		DEFAULT_NCD_KEEPALIVE ),
 	DEF_OPT_INT8("mgclient"					, OFS(ncd_mgclient),		0 ),
 	DEF_LAST_OPT

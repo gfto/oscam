@@ -306,7 +306,7 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 			newptab->ports[i].ncd_key_is_set = 0;   //default to 0
 			if( (ptr3=strchr(trim(ptr1), '{')) ) {
 				*ptr3++='\0';
-				if (key_atob_l(ptr3, newptab->ports[i].ncd_key, 28))
+				if (key_atob_l(ptr3, newptab->ports[i].ncd_key, sizeof(newptab->ports[i].ncd_key)) * 2)
 					fprintf(stderr, "newcamd: error in DES Key for port %s -> ignored\n", ptr1);
 				else
 					newptab->ports[i].ncd_key_is_set = 1;

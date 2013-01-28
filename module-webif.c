@@ -542,7 +542,8 @@ static char *send_oscam_config_newcamd(struct templatevars *vars, struct uripara
 		if (IP_ISSET(cfg.ncd_srvip))
 			tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.ncd_srvip));
 
-		for (i = 0; i < 14; i++) tpl_printf(vars, TPLAPPEND, "KEY", "%02X", cfg.ncd_key[i]);
+		for (i = 0; i < (int32_t)sizeof(cfg.ncd_key); i++)
+			tpl_printf(vars, TPLAPPEND, "KEY", "%02X", cfg.ncd_key[i]);
 
 		value = mk_t_iprange(cfg.ncd_allowed);
 		tpl_addVar(vars, TPLADD, "ALLOWED", value);
@@ -1223,7 +1224,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	}
 
 	// Key Newcamd
-	for (i=0; i<14; i++)
+	for (i = 0; i < (int32_t)sizeof(rdr->ncd_key); i++)
 		tpl_printf(vars, TPLAPPEND, "NCD_KEY", "%02X", rdr->ncd_key[i]);
 
 	// Pincode

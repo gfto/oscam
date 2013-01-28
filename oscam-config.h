@@ -33,7 +33,6 @@ void    init_len4caid(void);
 void check_caidtab_fn(const char *token, char *value, void *setting, FILE *f);
 void cspvaluetab_fn(const char *token, char *value, void *setting, FILE *f);
 void hitvaluetab_fn(const char *token, char *value, void *setting, FILE *f);
-void newcamd_key_fn(const char *token, char *value, void *setting, FILE *f);
 void class_fn(const char *token, char *value, void *setting, FILE *f);
 void group_fn(const char *token, char *value, void *setting, FILE *f);
 void services_fn(const char *token, char *value, void *setting, FILE *f);

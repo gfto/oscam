@@ -568,7 +568,7 @@ typedef struct s_port {
 	int32_t			fd;
 	int32_t			s_port;
 	int32_t			ncd_key_is_set;    //0 or 1
-	uchar			ncd_key[16];
+	uint8_t			ncd_key[14];
 	FTAB			ftab;
 } PORT;
 
@@ -1200,7 +1200,7 @@ struct s_reader  									//contains device info, reader info and card info
 	struct s_module ph;
 	struct s_cardreader crdr;
 	struct s_cardsystem csystem;
-	uchar			ncd_key[16];
+	uint8_t			ncd_key[14];
 	uchar			ncd_skey[16];
 	int8_t			ncd_disable_server_filt;
 	int8_t			ncd_proto;
@@ -1597,7 +1597,7 @@ struct s_config
 	IN_ADDR_T		c35_tcp_srvip;
 	PTAB			ncd_ptab;
 	IN_ADDR_T		ncd_srvip;
-	uchar			ncd_key[16];
+	uint8_t			ncd_key[14];
 	int8_t			ncd_keepalive;
 	int8_t			ncd_mgclient;
 	struct s_ip 	*ncd_allowed;

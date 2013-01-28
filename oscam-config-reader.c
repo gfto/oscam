@@ -848,7 +848,7 @@ static const struct config_list reader_opts[] = {
 	DEF_OPT_INT8("enable"				, OFS(enable),					1 ),
 	DEF_OPT_FUNC("protocol"				, 0,							protocol_fn ),
 	DEF_OPT_FUNC("device"				, 0,							device_fn ),
-	DEF_OPT_FUNC("key"					, OFS(ncd_key),					newcamd_key_fn ),
+	DEF_OPT_HEX("key"					, OFS(ncd_key),					SIZEOF(ncd_key) ),
 	DEF_OPT_SSTR("user"					, OFS(r_usr),					"", SIZEOF(r_usr) ),
 	DEF_OPT_SSTR("password"				, OFS(r_pwd),					"", SIZEOF(r_pwd) ),
 	DEF_OPT_SSTR("pincode"				, OFS(pincode),					"none", SIZEOF(pincode) ),
