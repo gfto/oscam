@@ -162,6 +162,7 @@ static void camd33_server_init(struct s_client *UNUSED(client)) {
 
 void module_camd33(struct s_module *ph)
 {
+  cfg.c33_crypted = check_filled(cfg.c33_key, sizeof(cfg.c33_key));
   static PTAB ptab; //since there is always only 1 camd33 server running, this is threadsafe
   ptab.ports[0].s_port = cfg.c33_port;
   ph->ptab = &ptab;

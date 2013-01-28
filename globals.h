@@ -1584,7 +1584,7 @@ struct s_config
 	LLIST 			*v_list;						// Failban list
 	int32_t			c33_port;
 	IN_ADDR_T		c33_srvip;
-	uchar			c33_key[16];
+	uint8_t			c33_key[16];
 	int32_t			c33_crypted;
 	int32_t			c33_passive;
 	struct s_ip 	*c33_plain;

@@ -405,26 +405,6 @@ static const struct config_list webif_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef MODULE_CAMD33
-static void camd33_key_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
-	if (value) {
-		cfg.c33_crypted = 1;
-		if (!strlen(value))
-			cfg.c33_crypted = 0;
-		else if (key_atob_l(value, cfg.c33_key, 32)) {
-			cfg.c33_crypted = 0;
-			memset(cfg.c33_key, 0, sizeof(cfg.c33_key));
-			fprintf(stderr, "ERROR: camd3.3 config error in 'key'.\n");
-		}
-		return;
-	}
-	unsigned int i;
-	fprintf_conf(f, token, "%s", ""); // it should not have \n at the end
-	for (i = 0; i < sizeof(cfg.c33_key); i++) {
-		fprintf(f, "%02X", cfg.c33_key[i]);
-	}
-	fprintf(f, "\n");
-}
-
 static bool camd33_should_save_fn(void *UNUSED(var)) { return cfg.c33_port; }
 
 static const struct config_list camd33_opts[] = {
@@ -433,7 +413,7 @@ static const struct config_list camd33_opts[] = {
 	DEF_OPT_FUNC("serverip"					, OFS(c33_srvip),				serverip_fn ),
 	DEF_OPT_FUNC("nocrypt"					, OFS(c33_plain),				iprange_fn ),
 	DEF_OPT_INT32("passive"					, OFS(c33_passive),				0 ),
-	DEF_OPT_FUNC("key"						, OFS(c33_key),					camd33_key_fn ),
+	DEF_OPT_HEX("key"						, OFS(c33_key),					SIZEOF(c33_key) ),
 	DEF_LAST_OPT
 };
 #else
