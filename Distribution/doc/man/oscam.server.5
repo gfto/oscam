@@ -312,6 +312,11 @@ inactivity timeout for all TCP based remote readers, default:0
 reconnect if missing answers from a remote reader, default:30
 .RE
 .PP
+\fBconnectoninit\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = allow newcamd connections to be established on startup although there isn't a request yet, default:0
+.RE
+.PP
 \fBfallback\fP = \fB0\fP|\fB1\fP
 .RS 3n
 1 = define reader as fallback, standard and fallback reader must have the same group, default:0

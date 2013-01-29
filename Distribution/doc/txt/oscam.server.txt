@@ -235,6 +235,9 @@ DESCRIPTIONS
        reconnecttimeout = seconds
 	  reconnect if missing answers from a remote reader, default:30
 
+       connectoninit = 0|1
+	  1 = allow newcamd connections to be established on startup although there isn't a request yet, default:0
+
        fallback = 0|1
 	  1 = define reader as fallback, standard and fallback reader must have the same group, default:0
 
