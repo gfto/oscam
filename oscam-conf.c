@@ -103,7 +103,7 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 				memset(hex_array, 0, c->def.array_size);
 			else if (key_atob_l(value, hex_array, c->def.array_size * 2)) {
 				memset(hex_array, 0, c->def.array_size);
-				fprintf(stderr, "WARNING: Config value for '%s' (%s, len=%Zu) requires %d chars.\n",
+				fprintf(stderr, "WARNING: Config value for '%s' (%s, len=%zu) requires %d chars.\n",
 					token, value, strlen(value), c->def.array_size * 2);
 			}
 			return 1;
