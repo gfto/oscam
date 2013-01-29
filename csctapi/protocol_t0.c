@@ -453,7 +453,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 					rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Case 3 ~ACK - maximum short response exceeded: %d", __func__, recved);
 					return ERROR;
 				}
-				timeout = ICC_Async_GetTimings (reader, reader->char_delay); // we are going to send: char delay timeout
+				timeout = ICC_Async_GetTimings (reader, reader->read_timeout); // we are going to receive: WWT timeout
 				if(ICC_Async_Receive (reader, 1, buffer + recved, 0, timeout)!=OK) return ERROR;//Read next data byte
 				recved++;
 				continue;
