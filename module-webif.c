@@ -5395,14 +5395,10 @@ void webif_client_reset_lastresponsetime(struct s_client *cl) {
 }
 
 void webif_client_add_lastresponsetime(struct s_client *cl, int32_t ltime, time_t timestamp, int32_t rc) {
-	if (cl->cwlastresptimes_last == CS_ECM_RINGBUFFER_MAX - 1) {
-		cl->cwlastresptimes_last = 0;
-	} else {
-		cl->cwlastresptimes_last++;
-	}
-	cl->cwlastresptimes[cl->cwlastresptimes_last].duration = ltime > 9999 ? 9999 : ltime;
-	cl->cwlastresptimes[cl->cwlastresptimes_last].timestamp = timestamp;
-	cl->cwlastresptimes[cl->cwlastresptimes_last].rc = rc;
+	int32_t last = cl->cwlastresptimes_last = (cl->cwlastresptimes_last + 1) & CS_ECM_RINGBUFFER_MAX;
+	cl->cwlastresptimes[last].duration = ltime > 9999 ? 9999 : ltime;
+	cl->cwlastresptimes[last].timestamp = timestamp;
+	cl->cwlastresptimes[last].rc = rc;
 }
 
 void webif_client_init_lastreader(struct s_client *client, ECM_REQUEST *er, struct s_reader *er_reader, const char *stxt[]) {

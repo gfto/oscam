@@ -205,7 +205,7 @@ typedef unsigned char uchar;
 #define CS_CLIENT_MAXIDLE 120
 #define CS_BIND_TIMEOUT   120
 #define CS_DELAY          0
-#define CS_ECM_RINGBUFFER_MAX 20 // max size for ECM last responsetimes ringbuffer
+#define CS_ECM_RINGBUFFER_MAX 0x0F // max size for ECM last responsetimes ringbuffer
 
 #ifndef PTHREAD_STACK_MIN
 #define PTHREAD_STACK_MIN 64000
