@@ -118,10 +118,10 @@ DESCRIPTIONS
 	  1 = use GPIO to init the reader. This needs to be set on WRT54G router, default:0
 
        cool_timeout_init = timeout
-	  set timeout for SC init in milli-seconds for Coolstream internal reader only, default:50
+	  set timeout for SC init in milli-seconds for Coolstream internal reader only, default:0
 
        cool_timeout_after_init = timeout
-	  set read/transmit timeout after SC init in milli-seconds for Coolstream internal reader only, default:150
+	  set read/transmit timeout after SC init in milli-seconds for Coolstream internal reader only, default:0
 
        ins7e = payload
 	  add 26 hex-bytes payload for NDS Videoguard 2 SCs, valid for physical readers only, default:none
