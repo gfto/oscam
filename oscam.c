@@ -815,15 +815,6 @@ static void cs_cleanup(void)
  */
 void set_signal_handler(int32_t sig, int32_t flags, void (*sighandler))
 {
-#ifdef CS_SIGBSD
-  if ((signal(sig, sighandler)==SIG_IGN) && (flags & 2))
-  {
-    signal(sig, SIG_IGN);
-    siginterrupt(sig, 0);
-  }
-  else
-    siginterrupt(sig, (flags & 1) ? 0 : 1);
-#else
   struct sigaction sa;
   sigaction(sig, (struct sigaction *) 0, &sa);
   if (!((flags & 2) && (sa.sa_handler==SIG_IGN)))
@@ -833,7 +824,6 @@ void set_signal_handler(int32_t sig, int32_t flags, void (*sighandler))
     sa.sa_handler=sighandler;
     sigaction(sig, &sa, (struct sigaction *) 0);
   }
-#endif
 }
 
 static void cs_master_alarm(void)
@@ -947,24 +937,15 @@ static void init_signal_pre(void)
 static void init_signal(int8_t isDaemon)
 {
 		set_signal_handler(SIGINT, 3, cs_exit);
-		//set_signal_handler(SIGKILL, 3, cs_exit);
 #if defined(__APPLE__)
 		set_signal_handler(SIGEMT, 3, cs_exit);
-#else
-		//set_signal_handler(SIGPOLL, 3, cs_exit);
 #endif
-		//set_signal_handler(SIGPROF, 3, cs_exit);
 		set_signal_handler(SIGTERM, 3, cs_exit);
-		//set_signal_handler(SIGVTALRM, 3, cs_exit);
 
 		set_signal_handler(SIGWINCH, 1, SIG_IGN);
-		//  set_signal_handler(SIGPIPE , 0, SIG_IGN);
 		set_signal_handler(SIGPIPE , 0, cs_sigpipe);
-		//  set_signal_handler(SIGALRM , 0, cs_alarm);
 		set_signal_handler(SIGALRM , 0, cs_master_alarm);
-		// set_signal_handler(SIGCHLD , 1, cs_child_chk);
 		set_signal_handler(SIGHUP  , 1, isDaemon?cs_dummy:cs_reload_config);
-		//set_signal_handler(SIGHUP , 1, cs_sighup);
 		set_signal_handler(SIGUSR1, 1, isDaemon?cs_dummy:cs_debug_level);
 		set_signal_handler(SIGUSR2, 1, isDaemon?cs_dummy:cs_card_info);
 		set_signal_handler(OSCAM_SIGNAL_WAKEUP, 0, isDaemon?cs_dummy:cs_dummy);
@@ -979,13 +960,7 @@ static void init_signal(int8_t isDaemon)
 				set_signal_handler(SIGBUS, 1, cs_dumpstack);
 			}
 
-			cs_log("signal handling initialized (type=%s)",
-#ifdef CS_SIGBSD
-			"bsd"
-#else
-			"sysv"
-#endif
-			);
+			cs_log("signal handling initialized");
 		}
 	return;
 }
