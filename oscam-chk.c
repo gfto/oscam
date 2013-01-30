@@ -914,63 +914,6 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
   return(1);
 }
 
-
-int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid) {
-	int32_t i;
-
-	// if physical reader a card needs to be inserted
-	if (!is_network_reader(reader) && reader->card_status != CARD_INSERTED) {
-		return(0);
-	}
-
-	if (reader->audisabled)
-		return 0;
-
-	if (reader->caid != caid) {
-		int caid_found = 0;
-		for (i = 0; i < 2; i++) {
-			if (reader->csystem.caids[i] == caid) {
-				caid_found = 1;
-				break;
-			}
-		}
-		if (!caid_found) {
-			cs_debug_mask(D_EMM, "emm reader %s reader_caid %04x != caid %04x", reader->label, reader->caid, caid);
-			return 0;
-		}
-	}
-
-	//if (!hexserialset(reader)) { There are cards without serial, they should get emm of type global and shared!
-	//	cs_debug_mask(D_EMM, "emm reader %s has no serial set", reader->label);
-	//	return 0;
-	//}
-
-	if (!provid) {
-		cs_debug_mask(D_EMM, "emm for reader %s (%04X) has no provider", reader->label, caid);
-		return 1;
-	}
-
-	if (reader->auprovid && reader->auprovid == provid) {
-		cs_debug_mask(D_EMM, "emm provider match reader %s auprovid %06X", reader->label, reader->auprovid);
-		return 1;
-	}
-
-	if (!reader->nprov) {
-		cs_debug_mask(D_EMM, "emm reader %s has no provider set", reader->label);
-		return 1;
-	}
-
-	for (i=0; i<reader->nprov; i++) {
-		uint32_t prid = b2i(4, reader->prid[i]);
-		if (prid == provid || ( (reader->typ == R_CAMD35 || reader->typ == R_CS378X) && (prid & 0xFFFF) == (provid & 0xFFFF) )) {
-			cs_debug_mask(D_EMM, "emm reader %s provider match %04X:%06X", reader->label, caid, provid);
-			return 1;
-		}
-	}
-	cs_debug_mask(D_EMM, "emm reader %s skip provider %04X:%06X", reader->label, caid, provid);
-	return 0;
-}
-
 int32_t chk_caid(uint16_t caid, CAIDTAB *ctab)
 {
 	int32_t n, rc;

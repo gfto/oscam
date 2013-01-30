@@ -5,6 +5,7 @@
 #include "module-led.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
+#include "oscam-emm.h"
 #include "oscam-net.h"
 #include "oscam-time.h"
 #include "reader-common.h"
@@ -87,75 +88,6 @@ static int32_t reader_activate_card(struct s_reader * reader, ATR * atr, uint16_
 //  rdr_log("ATR: %s", cs_hexdump(1, atr, atr_size, tmp, sizeof(tmp)));//FIXME
   cs_sleepms(1000);
   return(1);
-}
-
-static void do_emm_from_file(struct s_reader * reader)
-{
-  //now here check whether we have EMM's on file to load and write to card:
-  if (reader->emmfile == NULL)
-     return;
-
-   //handling emmfile
-   char token[256];
-   FILE *fp;
-
-   if (reader->emmfile[0] == '/')
-      snprintf (token, sizeof(token), "%s", reader->emmfile); //pathname included
-   else
-      snprintf (token, sizeof(token), "%s%s", cs_confdir, reader->emmfile); //only file specified, look in confdir for this file
-
-   if (!(fp = fopen (token, "rb"))) {
-      rdr_log(reader, "ERROR: Cannot open EMM file '%s' (errno=%d %s)\n", token, errno, strerror(errno));
-      return;
-   }
-   EMM_PACKET *eptmp;
-   if (!cs_malloc(&eptmp, sizeof(EMM_PACKET))) {
-      fclose (fp);
-      return;
-   }
-
-   size_t ret = fread(eptmp, sizeof(EMM_PACKET), 1, fp);
-   if (ret < 1 && ferror(fp)) {
-        rdr_log(reader, "ERROR: Can't read EMM from file '%s' (errno=%d %s)", token, errno, strerror(errno));
-        free(eptmp);
-        fclose(fp);
-        return;
-   }
-   fclose (fp);
-
-   eptmp->caid[0] = (reader->caid >> 8) & 0xFF;
-   eptmp->caid[1] = reader->caid & 0xFF;
-   if (reader->nprov > 0)
-      memcpy(eptmp->provid, reader->prid[0], sizeof(eptmp->provid));
-   eptmp->emmlen = eptmp->emm[2] + 3;
-
-   struct s_cardsystem *cs = get_cardsystem_by_caid(reader->caid);
-   if (cs && cs->get_emm_type && !cs->get_emm_type(eptmp, reader)) {
-      rdr_debug_mask(reader, D_EMM, "emm skipped, get_emm_type() returns error");
-      free(eptmp);
-      return;
-   }
-   //save old b_nano value
-   //clear lsb and lsb+1, so no blocking, and no saving for this nano
-   uint16_t save_s_nano = reader->s_nano;
-   uint16_t save_b_nano = reader->b_nano;
-   uint32_t save_saveemm = reader->saveemm;
-
-   reader->s_nano = reader->b_nano = 0;
-   reader->saveemm = 0;
-
-   int32_t rc = cardreader_do_emm(reader, eptmp);
-   if (rc == OK)
-      rdr_log(reader, "EMM from file %s was successful written.", token);
-   else
-      rdr_log(reader, "ERROR: EMM read from file %s NOT processed correctly! (rc=%d)", token, rc);
-
-   //restore old block/save settings
-   reader->s_nano = save_s_nano;
-   reader->b_nano = save_b_nano;
-   reader->saveemm = save_saveemm;
-
-   free(eptmp);
 }
 
 void cardreader_get_card_info(struct s_reader *reader)

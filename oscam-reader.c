@@ -408,19 +408,6 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	return(rc);
 }
 
-static int32_t reader_store_emm(uchar type, uchar *emmd5)
-{
-  int32_t rc;
-  struct s_client *cl = cur_client();
-  memcpy(cl->emmcache[cl->rotate].emmd5, emmd5, CS_EMMSTORESIZE);
-  cl->emmcache[cl->rotate].type=type;
-  cl->emmcache[cl->rotate].count=1;
-//  cs_debug_mask(D_READER, "EMM stored (index %d)", rotate);
-  rc=cl->rotate;
-  cl->rotate=(++cl->rotate < CS_EMMCACHESIZE)?cl->rotate:0;
-  return(rc);
-}
-
 void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
 	struct s_client *cl = reader->client;
@@ -463,105 +450,6 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	}
 
 	cardreader_process_ecm(reader, cl, er);
-}
-
-void reader_log_emm(struct s_reader * reader, EMM_PACKET *ep, int32_t i, int32_t rc, struct timeb *tps) {
-	char *rtxt[] = { "error",
-			is_cascading_reader(reader) ? "sent" : "written", "skipped",
-			"blocked" };
-	char *typedesc[] = { "unknown", "unique", "shared", "global" };
-	struct s_client *cl = reader->client;
-	struct timeb tpe;
-
-	if (reader->logemm & (1 << rc)) {
-		cs_ftime(&tpe);
-		if (!tps)
-			tps = &tpe;
-
-		rdr_log(reader, "%s emmtype=%s, len=%d, idx=%d, cnt=%d: %s (%ld ms)",
-				username(ep->client), typedesc[cl->emmcache[i].type], ep->emm[2],
-				i, cl->emmcache[i].count, rtxt[rc],
-				1000 * (tpe.time - tps->time) + tpe.millitm - tps->millitm);
-	}
-
-	if (rc) {
-		cl->lastemm = time((time_t*) 0);
-		led_status_emm_ok();
-	}
-
-#if defined(WEBIF) || defined(LCDSUPPORT)
-	//counting results
-	switch (rc) {
-	case 0:
-		reader->emmerror[ep->type]++;
-		break;
-	case 1:
-		reader->emmwritten[ep->type]++;
-		break;
-	case 2:
-		reader->emmskipped[ep->type]++;
-		break;
-	case 3:
-		reader->emmblocked[ep->type]++;
-		break;
-	}
-#endif
-}
-
-int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
-{
-  int32_t i, rc, ecs;
-  unsigned char md5tmp[MD5_DIGEST_LENGTH];
-  struct timeb tps;
-  struct s_client *cl = reader->client;
-
-  if(!cl) return 0;
-
-    cs_ftime(&tps);
-
-	MD5(ep->emm, ep->emm[2], md5tmp);
-
-        for (i=ecs=0; (i<CS_EMMCACHESIZE) ; i++) {
-       	if (!memcmp(cl->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE)) {
-			cl->emmcache[i].count++;
-			if (reader->cachemm){
-				if (cl->emmcache[i].count > reader->rewritemm){
-					ecs=2; //skip emm
-				}
-				else
-					ecs=1; //rewrite emm
-			}
-		break;
-		}
-	}
-
-	//Ecs=0 not found in cache
-	//Ecs=1 found in cache, rewrite emm
-	//Ecs=2 skip
-
-  if ((rc=ecs)<2)
-  {
-          if (is_cascading_reader(reader)) {
-                  rdr_debug_mask(reader, D_READER, "network emm reader");
-
-                  if (reader->ph.c_send_emm) {
-                          rc=reader->ph.c_send_emm(ep);
-                  } else {
-                          rdr_debug_mask(reader, D_READER, "send_emm() support missing");
-                          rc=0;
-                  }
-          } else {
-                  rdr_debug_mask(reader, D_READER, "local emm reader");
-                  rc = cardreader_do_emm(reader, ep);
-          }
-
-          if (!ecs)
-        	  i=reader_store_emm(ep->type, md5tmp);
-  }
-
-  reader_log_emm(reader, ep, i, rc, &tps);
-
-  return(rc);
 }
 
 void reader_do_card_info(struct s_reader * reader)

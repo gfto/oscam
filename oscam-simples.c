@@ -164,15 +164,6 @@ int32_t check_sct_len(const uchar *data, int32_t off)
 	return len;
 }
 
-int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int16_t len)
-{
-	int i;
-	for (i = 0; i < CS_MAXEMMBLOCKBYLEN; i++)
-		if (rdr->blockemmbylen[i] == len)
-			return 1;
-	return 0;
-}
-
 struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid) {
 	int32_t i, j;
 	for (i = 0; i < CS_MAX_MOD; i++) {

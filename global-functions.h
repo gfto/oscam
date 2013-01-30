@@ -30,7 +30,6 @@ extern uint32_t chk_provid(uchar *, uint16_t);
 extern void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto);
 extern void convert_to_nagra(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto);
 extern void get_cw(struct s_client *, ECM_REQUEST *);
-extern void do_emm(struct s_client *, EMM_PACKET *);
 extern ECM_REQUEST *get_ecmtask(void);
 extern int32_t send_dcw(struct s_client *, ECM_REQUEST *);
 extern int32_t process_input(uchar *, int32_t, int32_t);
@@ -76,8 +75,6 @@ void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, ui
 extern void cs_clear_entitlement(struct s_reader *rdr);
 
 extern void reader_do_idle(struct s_reader * reader);
-extern int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep);
-extern void reader_log_emm(struct s_reader * reader, EMM_PACKET *ep, int32_t i, int32_t rc, struct timeb *tps);
 extern void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er);
 extern void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw);
 extern void casc_do_sock_log(struct s_reader * reader);
@@ -102,6 +99,5 @@ extern const char *newcamd_get_client_name(uint16_t client_id);
  *       reader-common
  * =========================== */
 extern struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid);
-extern int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int16_t len);
 
 #endif

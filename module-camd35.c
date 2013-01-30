@@ -5,6 +5,7 @@
 #include "oscam-aes.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
+#include "oscam-emm.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
 
