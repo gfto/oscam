@@ -41,9 +41,6 @@ Repositories
 SVN repository:
    svn checkout http://www.streamboard.tv/svn/oscam/trunk oscam-svn
 
-SVN mirror:
-   svn checkout http://oscam.to/svn/oscam/trunk oscam-mirror
-
 
 Building OSCam from source
 ==========================
@@ -97,28 +94,17 @@ from: http://www.streamboard.tv/wbb2/thread.php?threadid=28854
 For more information and examples on using the build system, run `make help`.
 
 
-Web links
-=========
-
-Build server for automated builds:
-   http://download.oscam.to/index.php
-
-Configuration wiki:
-   http://www.streamboard.tv/wiki/index.php/OSCam/
-
-
 Help and Support
 ================
 
 man pages and configuration examples are in Distribution/doc directory.
 
+You may visit our Trac system for tracking and filling bug reports.
+   http://www.streamboard.tv/oscam/
+
 If you experience any problems with OSCam, feel free to post in our support
 forum under (mainly German and English language) at:
    http://www.streamboard.tv/wbb2/portal.php
 
-Support for international (mainly French and Italian language) users can be
-found at:
-   http://oscam.to/wbb3/index.php
-
-You may also visit our Trac system for tracking and filling bug reports:
-   http://www.streamboard.tv/oscam/
+Configuration wiki:
+   http://www.streamboard.tv/wiki/index.php/OSCam/
