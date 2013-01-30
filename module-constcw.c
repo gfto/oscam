@@ -2,6 +2,7 @@
 #include "globals.h"
 #ifdef MODULE_CONSTCW
 #include "oscam-client.h"
+#include "oscam-ecm.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
 

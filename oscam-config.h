@@ -24,6 +24,9 @@ void    init_free_sidtab(void);
 void    free_sidtab(struct s_sidtab *sidtab);
 int32_t write_services(void);
 
+int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line);
+void    global_whitelist_read(void);
+
 int32_t init_provid(void);
 int32_t init_srvid(void);
 int32_t init_tierid(void);

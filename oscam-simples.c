@@ -91,69 +91,6 @@ void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *
 	*ptr = prov;
 }
 
-int32_t ecmfmt(uint16_t caid, uint32_t prid, uint16_t chid, uint16_t pid, uint16_t srvid, uint16_t l, char *ecmd5hex, char *csphash, char *cw, char *result, size_t size)
-{	
-	if (!cfg.ecmfmt) return snprintf(result, size, "%04X&%06X/%04X/%04X/%02X:%s", caid, prid, chid, srvid, l, ecmd5hex);
-
-	uint32_t s=0, zero=0, flen=0, value=0;
-	char *c = cfg.ecmfmt, fmt[5] = "%04X";
-	while (*c) {
-		switch(*c)
-		{
-			case '0': zero=1; value=0; break;
-			case 'c': flen=4; value=caid; break;
-			case 'p': flen=6; value=prid; break;
-			case 'i': flen=4; value=chid; break;
-			case 'd': flen=4; value=pid; break;
-			case 's': flen=4; value=srvid; break;
-			case 'l': flen=2; value=l; break;
-			case 'h': flen=CS_ECMSTORESIZE; break;
-			case 'e': flen=5; break;
-			case 'w': flen=17; break;
-			case '\\':
-				c++;
-				flen=0;
-				value=*c;
-				break;
-			default:  flen=0; value=*c; break;
-		}
-		if (value) zero=0;
-
-		if (!zero) {
-			//fmt[0] = '%';
-			if (flen) { //Build %04X / %06X / %02X
-				fmt[1] = '0';
-				fmt[2] = flen+'0';
-				fmt[3] = 'X';
-				fmt[4] = 0;
-			}
-			else {
-				fmt[1] = 'c';
-				fmt[2] = 0;
-			}
-			if (flen == CS_ECMSTORESIZE) s += snprintf(result+s, size-s ,"%s", ecmd5hex);
-			else if (flen == 5) s += snprintf(result+s, size-s ,"%s", csphash);
-			else if (flen == 17) s += snprintf(result+s, size-s ,"%s", cw);
-			else s += snprintf(result+s, size-s, fmt, value);
-		}
-		c++;
-	}
-	return s;
-}
-
-int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
-{
-	char ecmd5hex[17*3];                
-    cs_hexdump(0, ecm->ecmd5, 16, ecmd5hex, sizeof(ecmd5hex));
-    char csphash[5*3] = {0};
-#ifdef CS_CACHEEX	
-    cs_hexdump(0, (void*)&ecm->csp_hash, 4, csphash, sizeof(csphash));	
-#endif
-	char cwhex[17*3];
-    cs_hexdump(0, ecm->cw, 16, cwhex, sizeof(cwhex));
-	return ecmfmt(ecm->caid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, result, size);
-}
-
 int32_t check_sct_len(const uchar *data, int32_t off)
 {
 	int32_t len = SCT_LEN(data);

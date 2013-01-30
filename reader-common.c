@@ -5,6 +5,7 @@
 #include "module-led.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
+#include "oscam-ecm.h"
 #include "oscam-emm.h"
 #include "oscam-net.h"
 #include "oscam-time.h"

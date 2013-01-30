@@ -8,6 +8,7 @@
 #include "module-cccshare.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
+#include "oscam-ecm.h"
 #include "oscam-emm.h"
 #include "oscam-failban.h"
 #include "oscam-garbage.h"

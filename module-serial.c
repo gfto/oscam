@@ -2,6 +2,7 @@
 #ifdef MODULE_SERIAL
 #include <termios.h>
 #include "oscam-client.h"
+#include "oscam-ecm.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
 #include "oscam-time.h"

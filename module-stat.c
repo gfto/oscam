@@ -5,6 +5,7 @@
 #include "module-cccam.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
+#include "oscam-ecm.h"
 #include "oscam-files.h"
 #include "oscam-lock.h"
 #include "oscam-string.h"

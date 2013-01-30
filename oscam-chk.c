@@ -1,5 +1,6 @@
 #include "globals.h"
 #include "oscam-chk.h"
+#include "oscam-ecm.h"
 #include "oscam-client.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
@@ -930,4 +931,14 @@ int32_t chk_caid_rdr(struct s_reader *rdr,uint16_t caid) {
 	  return 1;
   }
   return 0;
+}
+
+int32_t chk_bcaid(ECM_REQUEST *er, CAIDTAB *ctab)
+{
+	int32_t caid;
+	caid = chk_caid(er->caid, ctab);
+	if (caid < 0)
+		return 0;
+	er->caid = caid;
+	return 1;
 }

@@ -339,6 +339,7 @@ SRC-y += oscam-config-account.c
 SRC-y += oscam-config-global.c
 SRC-y += oscam-config-reader.c
 SRC-y += oscam-config.c
+SRC-y += oscam-ecm.c
 SRC-y += oscam-emm.c
 SRC-y += oscam-failban.c
 SRC-y += oscam-files.c

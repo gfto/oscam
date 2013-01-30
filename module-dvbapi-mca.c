@@ -26,6 +26,7 @@
 #include "module-dvbapi.h"
 #include "module-dvbapi-mca.h"
 #include "oscam-client.h"
+#include "oscam-ecm.h"
 #include "oscam-reader.h"
 #include "oscam-string.h"
 #include "oscam-time.h"

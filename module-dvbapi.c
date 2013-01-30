@@ -10,6 +10,7 @@
 #include "module-stat.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
+#include "oscam-ecm.h"
 #include "oscam-emm.h"
 #include "oscam-files.h"
 #include "oscam-net.h"
