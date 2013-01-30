@@ -5395,7 +5395,7 @@ void webif_client_reset_lastresponsetime(struct s_client *cl) {
 }
 
 void webif_client_add_lastresponsetime(struct s_client *cl, int32_t ltime, time_t timestamp, int32_t rc) {
-	int32_t last = cl->cwlastresptimes_last = (cl->cwlastresptimes_last + 1) & CS_ECM_RINGBUFFER_MAX;
+	int32_t last = cl->cwlastresptimes_last = (cl->cwlastresptimes_last + 1) & (CS_ECM_RINGBUFFER_MAX - 1);
 	cl->cwlastresptimes[last].duration = ltime > 9999 ? 9999 : ltime;
 	cl->cwlastresptimes[last].timestamp = timestamp;
 	cl->cwlastresptimes[last].rc = rc;
