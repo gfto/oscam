@@ -453,10 +453,10 @@ int32_t init_srvid(void)
 	struct s_srvid *ptr;
 	for (i=0; i<16; i++) {
 		ptr = last_srvid[i];
-		while (ptr) { //cleanup old data:
-			ptr = last_srvid[i]->next;
-			add_garbage(last_srvid[i]->data);
-			add_garbage(last_srvid[i]);
+		while (ptr) { //cleanup old data:			
+			add_garbage(ptr->data);
+			add_garbage(ptr);
+			ptr = ptr->next;
 		}
 	}
 
