@@ -295,6 +295,7 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
 										check_conf(READER_BULCRYPT, ptr2);
 										check_conf(READER_CONAX, ptr2);
 										check_conf(READER_CRYPTOWORKS, ptr2);
+										check_conf(READER_GRIFFIN, ptr2);
 										check_conf(READER_DRE, ptr2);
 										check_conf(READER_IRDETO, ptr2);
 										check_conf(READER_NAGRA, ptr2);

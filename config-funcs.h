@@ -377,6 +377,14 @@ static inline int config_READER_BULCRYPT(void) {
 	#endif
 }
 
+static inline int config_READER_GRIFFIN(void) {
+	#ifdef READER_GRIFFIN
+	return config_WITH_CARDREADER() ? 1 : 0;
+	#else
+	return 0;
+	#endif
+}
+
 static inline int config_CS_CACHEEX(void) {
 	#ifdef CS_CACHEEX
 	return 1;

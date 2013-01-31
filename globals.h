@@ -1352,6 +1352,7 @@ struct s_reader  									//contains device info, reader info and card info
   uint8_t cnxlastecm; // == 0 - las ecm has not been paired ecm, > 0 last ecm has been paired ecm
 
 	uint8_t			bulcrypt_version;
+	uint8_t			griffin_cmd_base; // Griffin command base, depends on the card
 
 	struct s_reader *next;
 };

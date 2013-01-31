@@ -165,6 +165,7 @@ static void show_usage(void)
 	_check(READER_DRE, "dre");
 	_check(READER_TONGFANG, "tongfang");
 	_check(READER_BULCRYPT, "bulcrypt");
+	_check(READER_GRIFFIN, "griffin");
 	printf("\n");
 
 	printf(" CardReaders:");
@@ -421,6 +422,7 @@ static void write_versionfile(bool use_stdout) {
 		write_readerconf(READER_DRE, "DRE Crypt");
 		write_readerconf(READER_TONGFANG, "TONGFANG");
 		write_readerconf(READER_BULCRYPT, "Bulcrypt");
+		write_readerconf(READER_GRIFFIN, "Griffin");
 		fprintf(fp, "\n");
 		write_cardreaderconf(CARDREADER_PHOENIX, "phoenix");
 		write_cardreaderconf(CARDREADER_INTERNAL_AZBOX, "internal_azbox");
@@ -2351,6 +2353,9 @@ int32_t main (int32_t argc, char *argv[])
 #ifdef READER_BULCRYPT
 	reader_bulcrypt,
 #endif
+#ifdef READER_GRIFFIN
+	reader_griffin,
+#endif
 	0
   };
 
@@ -2531,6 +2536,9 @@ int32_t main (int32_t argc, char *argv[])
 #endif
 #ifndef READER_BULCRYPT
 	cs_log("Binary without Bulcrypt Module - no EMM processing for Bulcrypt possible!");
+#endif
+#ifndef READER_GRIFFIN
+	cs_log("Binary without Griffin Module - no EMM processing for Griffin possible!");
 #endif
 
 	init_cardreader();
