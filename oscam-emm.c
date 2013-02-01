@@ -186,6 +186,53 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 	return 0;
 }
 
+static void saveemm(struct s_reader *aureader, EMM_PACKET *ep)
+{
+	FILE *fp;
+	char tmp[17];
+	char buf[80];
+	char token[256];
+	char *tmp2;
+	time_t rawtime;
+	uint32_t emmtype;
+	struct tm timeinfo;
+	if (ep->type == UNKNOWN)
+		emmtype = EMM_UNKNOWN;
+	else
+		emmtype = 1 << (ep->type - 1);
+	// should this nano be saved?
+	if (((1 << (ep->emm[0] % 0x80)) & aureader->s_nano) || (aureader->saveemm & emmtype))
+	{
+		time(&rawtime);
+		localtime_r(&rawtime, &timeinfo); // to access LOCAL date/time info
+		int32_t emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
+		strftime(buf, sizeof(buf), "%Y/%m/%d %H:%M:%S", &timeinfo);
+		snprintf(token, sizeof(token), "%s/%s_emm.log",
+			cfg.emmlogdir ? cfg.emmlogdir : cs_confdir, aureader->label);
+		if (!(fp = fopen(token, "a"))) {
+			cs_log("ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
+		} else if (cs_malloc(&tmp2, (emm_length + 3) * 2 + 1)) {
+			fprintf(fp, "%s   %s   ", buf, cs_hexdump(0, ep->hexserial, 8, tmp, sizeof(tmp)));
+			fprintf(fp, "%s\n", cs_hexdump(0, ep->emm, emm_length + 3, tmp2, (emm_length + 3) * 2 + 1));
+			free(tmp2);
+			fclose(fp);
+			cs_log("Successfully added EMM to %s.", token);
+		}
+		snprintf(token, sizeof(token), "%s/%s_emm.bin",
+			cfg.emmlogdir ? cfg.emmlogdir : cs_confdir, aureader->label);
+		if (!(fp = fopen (token, "ab"))) {
+			cs_log("ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
+		} else {
+			if ((int)fwrite(ep->emm, 1, emm_length + 3, fp) == emm_length + 3) {
+				cs_log("Successfully added binary EMM to %s.", token);
+			} else {
+				cs_log("ERROR: Cannot write binary EMM to %s (errno=%d: %s)\n", token, errno, strerror(errno));
+			}
+			fclose(fp);
+		}
+	}
+}
+
 void do_emm(struct s_client * client, EMM_PACKET *ep)
 {
 	char *typtext[]={"unknown", "unique", "shared", "global"};
@@ -263,47 +310,8 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		rdr_debug_mask_sensitive(aureader, D_EMM, "emm UA/SA: {%s}.",
 			cs_hexdump(0, ep->hexserial, 8, tmp, sizeof(tmp)));
 
-		uint32_t emmtype;
-		if (ep->type == UNKNOWN)
-			emmtype = EMM_UNKNOWN;
-		else
-			emmtype = 1 << (ep->type-1);
-		client->last=time((time_t*)0);
-		if (((1<<(ep->emm[0] % 0x80)) & aureader->s_nano) || (aureader->saveemm & emmtype)) { //should this nano be saved?
-			char token[256];
-			char *tmp2;
-			FILE *fp;
-			time_t rawtime;
-			time (&rawtime);
-			struct tm timeinfo;
-			localtime_r (&rawtime, &timeinfo);	/* to access LOCAL date/time info */
-			int32_t emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
-			char buf[80];
-			strftime (buf, sizeof(buf), "%Y/%m/%d %H:%M:%S", &timeinfo);
-			snprintf (token, sizeof(token), "%s/%s_emm.log", cfg.emmlogdir?cfg.emmlogdir:cs_confdir, aureader->label);
-
-			if (!(fp = fopen (token, "a"))) {
-				cs_log ("ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
-			} else if (cs_malloc(&tmp2, (emm_length + 3) * 2 + 1)) {
-				fprintf (fp, "%s   %s   ", buf, cs_hexdump(0, ep->hexserial, 8, tmp, sizeof(tmp)));
-				fprintf (fp, "%s\n", cs_hexdump(0, ep->emm, emm_length + 3, tmp2, (emm_length + 3)*2 + 1));
-				free(tmp2);
-				fclose (fp);
-				cs_log ("Successfully added EMM to %s.", token);
-			}
-
-			snprintf (token, sizeof(token), "%s/%s_emm.bin", cfg.emmlogdir?cfg.emmlogdir:cs_confdir, aureader->label);
-			if (!(fp = fopen (token, "ab"))) {
-				cs_log ("ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
-			} else {
-				if ((int)fwrite(ep->emm, 1, emm_length+3, fp) == emm_length+3)	{
-					cs_log ("Successfully added binary EMM to %s.", token);
-				} else {
-					cs_log ("ERROR: Cannot write binary EMM to %s (errno=%d: %s)\n", token, errno, strerror(errno));
-				}
-				fclose (fp);
-			}
-		}
+		client->last = time(NULL);
+		saveemm(aureader, ep);
 
 		int32_t is_blocked = 0;
 		switch (ep->type) {
