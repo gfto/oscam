@@ -578,10 +578,6 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
 
-	uint8_t *netbuf;
-	if (!cs_malloc(&netbuf, len + 4))
-		return -1;
-
 	int32_t n;
 	struct cc_data *cc = cl->cc;
 
@@ -591,6 +587,10 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 		cs_writeunlock(&cc->lockcmd);
 		return -1;
 	}
+
+	uint8_t *netbuf;
+	if (!cs_malloc(&netbuf, len + 4))
+		return -1;
 
   if (cmd == MSG_NO_HEADER) {
 		memcpy(netbuf, buf, len);
