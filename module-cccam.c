@@ -2568,7 +2568,6 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			struct cc_card *server_card;
 			if (!cs_malloc(&server_card, sizeof(struct cc_card)))
 				break;
-			memset(server_card, 0, sizeof(struct cc_card));
 			server_card->id = buf[10] << 24 | buf[11] << 16 | buf[12] << 8
 					| buf[13];
 			server_card->caid = b2i(2, data);
@@ -2937,7 +2936,6 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				EMM_PACKET *emm;
 				if (!cs_malloc(&emm, sizeof(EMM_PACKET)))
 					break;
-				memset(emm, 0, sizeof(EMM_PACKET));
 				emm->caid[0] = buf[4];
 				emm->caid[1] = buf[5];
 				emm->provid[0] = buf[7];
@@ -3180,7 +3178,6 @@ int32_t cc_srv_connect(struct s_client *cl) {
 
 	// init internals data struct
 	cl->cc = cc;
-	memset(cl->cc, 0, sizeof(struct cc_data));
 	cc->extended_ecm_idx = ll_create("extended_ecm_idx");
 
 	cc_init_locks(cc);

@@ -934,7 +934,6 @@ void update_card_list(void) {
                         struct cc_provider *prov;
                         if (!cs_malloc(&prov, sizeof(struct cc_provider)))
                             return;
-                        memset(prov, 0, sizeof(struct cc_provider));
                         prov->prov = ptr->provid[l];
                         ll_append(card->providers, prov);
                     }
