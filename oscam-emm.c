@@ -150,39 +150,39 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 			}
 		}
 		if (!caid_found) {
-			cs_debug_mask(D_EMM, "emm reader %s reader_caid %04x != caid %04x", reader->label, reader->caid, caid);
+			rdr_debug_mask(reader, D_EMM, "reader_caid %04X != caid %04X", reader->caid, caid);
 			return 0;
 		}
 	}
 
 	//if (!hexserialset(reader)) { There are cards without serial, they should get emm of type global and shared!
-	//	cs_debug_mask(D_EMM, "emm reader %s has no serial set", reader->label);
+	//	rdr_debug_mask(reader, D_EMM, "no hexserial is set");
 	//	return 0;
 	//}
 
 	if (!provid) {
-		cs_debug_mask(D_EMM, "emm for reader %s (%04X) has no provider", reader->label, caid);
+		rdr_debug_mask(reader, D_EMM, "caid %04X has no provider", caid);
 		return 1;
 	}
 
 	if (reader->auprovid && reader->auprovid == provid) {
-		cs_debug_mask(D_EMM, "emm provider match reader %s auprovid %06X", reader->label, reader->auprovid);
+		rdr_debug_mask(reader, D_EMM, "matched auprovid %06X", reader->auprovid);
 		return 1;
 	}
 
 	if (!reader->nprov) {
-		cs_debug_mask(D_EMM, "emm reader %s has no provider set", reader->label);
+		rdr_debug_mask(reader, D_EMM, "no provider is set");
 		return 1;
 	}
 
 	for (i=0; i<reader->nprov; i++) {
 		uint32_t prid = b2i(4, reader->prid[i]);
 		if (prid == provid || ( (reader->typ == R_CAMD35 || reader->typ == R_CS378X) && (prid & 0xFFFF) == (provid & 0xFFFF) )) {
-			cs_debug_mask(D_EMM, "emm reader %s provider match %04X:%06X", reader->label, caid, provid);
+			rdr_debug_mask(reader, D_EMM, "provider match %04X:%06X", caid, provid);
 			return 1;
 		}
 	}
-	cs_debug_mask(D_EMM, "emm reader %s skip provider %04X:%06X", reader->label, caid, provid);
+	rdr_debug_mask(reader, D_EMM, "skip provider %04X:%06X", caid, provid);
 	return 0;
 }
 
