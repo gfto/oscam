@@ -78,8 +78,10 @@ static int32_t pcsc_init(struct s_reader *pcsc_reader)
             return ERROR;
         }
 
-        if (!cs_malloc(&readers, nbReaders * sizeof(char *)))
+        if (!cs_malloc(&readers, nbReaders * sizeof(char *))) {
+            free(mszReaders);
             return ERROR;
+        }
 
         /* fill the readers table */
         nbReaders = 0;
