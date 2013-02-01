@@ -60,7 +60,10 @@
  *     34 - unknown command
  *     36 - send_ecm
  *     32 - send_emm
+ *     40 - get subscription info
  *     42 - unknown command
+ *     4a - unknown command
+ *     50 - unknown command
  *
  *   Perform card INIT
  *     DC 20 00 00 00 -- 90 03 (card init /get base/)
@@ -114,6 +117,26 @@
  *     DC 12 00 00 0A -- 1F 04 51 06 B5 B5 16 02 01 00 90 00
  *
  *     DC 32 00 00 AF -- 82 70 AC -- -- -- -- C6 94 A0 54 68 47 D0 3F FB 05 C6 A3 C5 FA 5F F0 A7 56 96 19 A5 F6 31 95 CD F1 8D 71 C3 FE 96 FD 75 2A DE 1F 12 08 8C 53 5D B6 4E FC 34 5D F0 BB 52 84 6C 71 C3 EA CE 4C 8A 08 45 22 E3 74 4A 37 48 39 75 37 0C 4A A9 8B 62 D8 F5 EE EC 28 E2 92 66 2D DA FF 8C 2B BD 97 C5 95 6B A0 6F 8B 82 79 09 79 E6 63 66 77 0A AB 8F EC 65 4F EC 05 75 2B FD DF 78 85 48 6C 2C A0 4D 4C 96 B6 08 21 A1 01 8D 74 CC F3 92 04 D2 15 49 F7 CE 74 6B 38 D9 22 66 2D 7E D6 78 BB 3D 0B 30 A7 64 A1 DC AE 0E 54 90 D0 83 BC 89 9F CA 50 90 00
+ *
+ *   Get subscription info (for base 20 cards - CAID 5504)
+ *     DC 40 00 00 00 -- 90 3C
+ *     DC 12 00 00 3C -- 1B 02 07 FF 1B 02 07 FF 1B 02 07 FF 1B 02 07 FF 1B 02 00 0F 1B 02 00 00 \
+ *                       1B 02 00 00 1B 02 00 00 1B 02 00 00 1B 02 00 00 1B 02 00 00 1B 02 00 00 \
+ *                       1B 02 00 00 1B 02 00 00 1B 02 00 00 90 00
+ *
+ *   Get subscription info (for base 10 cards - CAID 5501)
+ *     DC 30 00 00 00 -- 90 2D
+ *     DC 02 00 00 2D -- 0B 07 30 30 30 30 36 30 00 0B 07 30 30 30 30 36 30 00 \
+ *                       0B 07 30 30 30 30 36 30 00 0B 07 30 30 30 30 36 30 00 \
+ *                       0B 07 30 30 30 30 31 32 00 90 00
+ *
+ *   Unknown commands
+ *     DC 4A 00 00 00 -- 90 06
+ *     DC 12 00 00 06 -- 1D 04 00 00 00 00 90 00
+ *
+ *     DC 50 00 00 00 -- 90 0E
+ *     DC 12 00 00 0E -- 1E 0C 00 0F 42 40 00 3D 09 00 00 1F 01 74 90 00
+ *
  */
 
 #include "globals.h"
@@ -130,6 +153,7 @@
 #define GRIFFIN_CMD_GET_CARD_ADDRESS  0x08
 #define GRIFFIN_CMD_SEND_EMM          0x12
 #define GRIFFIN_CMD_SEND_ECM          0x16
+#define GRIFFIN_CMD_SUBSCRIPTION_INFO 0x20
 
 #define cmd_buf_len  512
 
@@ -242,6 +266,8 @@ static int32_t griffin_card_init(struct s_reader *rdr, ATR *newatr)
 	griffin_cmd(0x22, NULL, 0, 2);
 	griffin_cmd(0x10, NULL, 0, 2);
 	griffin_cmd(0x14, NULL, 0, 2);
+	//griffin_cmd(0x2a, NULL, 0, 2);
+	//griffin_cmd(0x30, NULL, 0, 2);
 
 	for (i = 0 ; i < CS_MAXPROV; i++) {
 		if (check_filled(rdr->sa[i], 4)) {
@@ -337,11 +363,35 @@ static void griffin_get_emm_filter(struct s_reader *rdr, uint8_t *filter)
 	return;
 }
 
+static int32_t griffin_card_info(struct s_reader *rdr)
+{
+	def_resp
+	int i, r = 0;
+	rdr_log(rdr, "Reading subscription info.");
+
+	griffin_cmd(GRIFFIN_CMD_SUBSCRIPTION_INFO, NULL, 0, 16);
+	if (cta_res[0] == 0x0b) { // Old cards
+		for (i = 0; i < cta_lr - 8; i += 9) {
+			rdr_log(rdr, " Subscription stream #%d - %c%c%c%c%c%c",
+				r++, cta_res[i + 2], cta_res[i + 3], cta_res[i + 4],
+				     cta_res[i + 5], cta_res[i + 6], cta_res[i + 7]);
+		}
+	} else if (cta_res[0] == 0x1b) { // Newer cards
+		for (i = 0; i < cta_lr; i += 4) {
+			rdr_log(rdr, " Subscription stream #%02d - 0x%04x",
+				r++, b2i(2, cta_res + i + 2));
+		}
+	}
+
+	rdr_log(rdr, "End subscription info.");
+	return OK;
+}
+
 void reader_griffin(struct s_cardsystem *ph)
 {
 	ph->do_emm         = griffin_do_emm;
 	ph->do_ecm         = griffin_do_ecm;
-//	ph->card_info      = griffin_card_info;
+	ph->card_info      = griffin_card_info;
 	ph->card_init      = griffin_card_init;
 	ph->get_emm_type   = griffin_get_emm_type;
 	ph->get_emm_filter = griffin_get_emm_filter;
