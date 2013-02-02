@@ -446,6 +446,31 @@ static void write_versionfile(bool use_stdout) {
 #undef write_readerconf
 #undef write_cardreaderconf
 
+#define report_emm_support(CONFIG_VAR, text) \
+	do { \
+		if (!config_##CONFIG_VAR()) \
+			cs_log("Binary without %s module - no EMM processing for %s possible!", text, text); \
+	} while(0)
+
+static void do_report_emm_support(void) {
+	if (!config_WITH_CARDREADER()) {
+		cs_log("Binary without Cardreader Support! No EMM processing possible!");
+	} else {
+		report_emm_support(READER_NAGRA, "Nagra");
+		report_emm_support(READER_IRDETO, "Irdeto");
+		report_emm_support(READER_CONAX, "Conax");
+		report_emm_support(READER_CRYPTOWORKS, "Cryptoworks");
+		report_emm_support(READER_SECA, "Seca");
+		report_emm_support(READER_VIACCESS, "Viaccess");
+		report_emm_support(READER_VIDEOGUARD, "NDS Videoguard");
+		report_emm_support(READER_DRE, "DRE Crypt");
+		report_emm_support(READER_TONGFANG, "TONGFANG");
+		report_emm_support(READER_BULCRYPT, "Bulcrypt");
+		report_emm_support(READER_GRIFFIN, "Griffin");
+	}
+}
+#undef report_emm_support
+
 #ifdef NEED_DAEMON
 // The compat function is not called daemon() because this may cause problems.
 static int32_t do_daemon(int32_t nochdir, int32_t noclose)
@@ -2324,42 +2349,7 @@ int32_t main (int32_t argc, char *argv[])
 
 	lcd_thread_start();
 
-#ifndef WITH_CARDREADER
-	cs_log("Binary without Cardreader Support! No EMM processing possible!");
-#endif
-#ifndef READER_NAGRA
-	cs_log("Binary without Nagra Module - no EMM processing for Nagra possible!");
-#endif
-#ifndef READER_IRDETO
-	cs_log("Binary without Irdeto Module - no EMM processing for Irdeto possible!");
-#endif
-#ifndef READER_CONAX
-	cs_log("Binary without Conax Module - no EMM processing for Conax possible!");
-#endif
-#ifndef READER_CRYPTOWORKS
-	cs_log("Binary without Cryptoworks Module - no EMM processing for Cryptoworks possible!");
-#endif
-#ifndef READER_SECA
-	cs_log("Binary without Seca Module - no EMM processing for Seca possible!");
-#endif
-#ifndef READER_VIACCESS
-	cs_log("Binary without Viaccess Module - no EMM processing for Viaccess possible!");
-#endif
-#ifndef READER_VIDEOGUARD
-	cs_log("Binary without Videoguard Module - no EMM processing for Videoguard possible!");
-#endif
-#ifndef READER_DRE
-	cs_log("Binary without Dre Module - no EMM processing for Dre possible!");
-#endif
-#ifndef READER_TONGFANG
-	cs_log("Binary without Tongfang Module - no EMM processing for Tongfang possible!");
-#endif
-#ifndef READER_BULCRYPT
-	cs_log("Binary without Bulcrypt Module - no EMM processing for Bulcrypt possible!");
-#endif
-#ifndef READER_GRIFFIN
-	cs_log("Binary without Griffin Module - no EMM processing for Griffin possible!");
-#endif
+	do_report_emm_support();
 
 	init_cardreader();
 
