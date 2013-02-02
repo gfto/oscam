@@ -6,6 +6,7 @@
 #include "oscam-config.h"
 #include "oscam-conf-chk.h"
 #include "oscam-net.h"
+#include "oscam-reader.h"
 #include "oscam-string.h"
 
 extern char *entitlement_type[];

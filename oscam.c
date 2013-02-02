@@ -26,6 +26,7 @@
 #include "oscam-garbage.h"
 #include "oscam-lock.h"
 #include "oscam-net.h"
+#include "oscam-reader.h"
 #include "oscam-string.h"
 #include "oscam-time.h"
 #include "reader-common.h"
@@ -718,14 +719,6 @@ void cs_debug_level(void) {
 	cs_log("debug_level=%d", cs_dblevel);
 }
 
-void cs_card_info(void)
-{
-	struct s_client *cl;
-	for (cl=first_client->next; cl ; cl=cl->next)
-		if( cl->typ=='r' && cl->reader )
-			add_job(cl, ACTION_READER_CARDINFO, NULL, 0);
-}
-
 /**
  * write stacktrace to oscam.crash. file is always appended
  * Usage:
@@ -1095,179 +1088,6 @@ void kill_thread(struct s_client *cl) {
 	}
 	add_job(cl, ACTION_CLIENT_KILL, NULL, 0); //add kill job, ...
 	cl->kill=1;                               //then set kill flag!
-}
-
-/* Removes a reader from the list of active readers so that no ecms can be requested anymore. */
-void remove_reader_from_active(struct s_reader *rdr) {
-	struct s_reader *rdr2, *prv = NULL;
-	//rdr_log(rdr, "CHECK: REMOVE READER FROM ACTIVE");
-	cs_writelock(&readerlist_lock);
-	for (rdr2=first_active_reader; rdr2 ; prv=rdr2, rdr2=rdr2->next) {
-		if (rdr2==rdr) {
-			if (prv) prv->next = rdr2->next;
-			else first_active_reader = rdr2->next;
-			break;
-		}
-	}
-	rdr->next = NULL;
-	rdr->active=0;
-	cs_writeunlock(&readerlist_lock);
-}
-
-/* Adds a reader to the list of active readers so that it can serve ecms. */
-void add_reader_to_active(struct s_reader *rdr) {
-	struct s_reader *rdr2, *rdr_prv=NULL, *rdr_tmp=NULL;
-	int8_t at_first = 1;
-
-	if (rdr->next)
-		remove_reader_from_active(rdr);
-
-	//rdr_log(rdr, "CHECK: ADD READER TO ACTIVE");
-	cs_writelock(&readerlist_lock);
-	cs_writelock(&clientlist_lock);
-
-	//search configured position:
-	LL_ITER it = ll_iter_create(configured_readers);
-	while ((rdr2=ll_iter_next(&it))) {
-		if(rdr2==rdr) break;
-		if (rdr2->client && rdr2->enable) {
-			rdr_prv = rdr2;
-			at_first = 0;
-		}
-	}
-
-	//insert at configured position:
-	if (first_active_reader) {
-		if (at_first) {
-			rdr->next = first_active_reader;
-			first_active_reader = rdr;
-
-			//resort client list:
-			struct s_client *prev, *cl;
-			for (prev = first_client, cl = first_client->next;
-					prev->next != NULL; prev = prev->next, cl = cl->next)
-				if (rdr->client == cl)
-					break;
-
-			if (cl && rdr->client == cl) {
-				prev->next = cl->next; //remove client from list
-				cl->next = first_client->next;
-				first_client->next = cl;
-			}
-		}
-		else
-		{
-			for (rdr2=first_active_reader; rdr2->next && rdr2 != rdr_prv ; rdr2=rdr2->next) ; //search last element
-			rdr_prv = rdr2;
-			rdr_tmp = rdr2->next;
-			rdr2->next = rdr;
-			rdr->next = rdr_tmp;
-
-			//resort client list:
-			struct s_client *prev, *cl;
-			for (prev = first_client, cl = first_client->next;
-					prev->next != NULL; prev = prev->next, cl = cl->next)
-				if (rdr->client == cl)
-					break;
-			if (cl && rdr->client == cl) {
-				prev->next = cl->next; //remove client from list
-				cl->next = rdr_prv->client->next;
-				rdr_prv->client->next = cl;
-			}
-		}
-
-	} else first_active_reader = rdr;
-	rdr->active=1;
-	cs_writeunlock(&clientlist_lock);
-	cs_writeunlock(&readerlist_lock);
-}
-
-/* Starts or restarts a cardreader without locking. If restart=1, the existing thread is killed before restarting,
-   if restart=0 the cardreader is only started. */
-static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
-	struct s_client *cl = rdr->client;
-	if (restart){
-		remove_reader_from_active(rdr);		//remove from list
-		kill_thread(cl); //kill old thread
-		cs_sleepms(500);
-	}
-
-	while (restart && is_valid_client(cl)) {
-		//If we quick disable+enable a reader (webif), remove_reader_from_active is called from
-		//cleanup. this could happen AFTER reader is restarted, so oscam crashes or reader is hidden
-		//rdr_log(rdr, "CHECK: WAITING FOR CLEANUP");
-		cs_sleepms(500);
-	}
-
-	rdr->client = NULL;
-	rdr->tcp_connected = 0;
-	rdr->card_status = UNKNOWN;
-	rdr->tcp_block_delay = 100;
-	cs_ftime(&rdr->tcp_block_connect_till);
-
-	if (rdr->device[0] && is_cascading_reader(rdr)) {
-		if (!rdr->ph.num) {
-			rdr_log(rdr, "Protocol Support missing. (typ=%d)", rdr->typ);
-			return 0;
-		}
-		rdr_debug_mask(rdr, D_TRACE, "protocol: %s", rdr->ph.desc);
-	}
-
-	if (!rdr->enable)
-		return 0;
-
-	if (rdr->device[0]) {
-		if (restart) {
-			rdr_log(rdr, "Restarting reader");
-		}
-		cl = create_client(first_client->ip);
-		if (cl == NULL) return 0;
-		cl->reader=rdr;
-		rdr_log(rdr, "creating thread for device %s", rdr->device);
-
-		cl->sidtabs.ok=rdr->sidtabs.ok;
-		cl->sidtabs.no=rdr->sidtabs.no;
-		cl->grp = rdr->grp;
-
-		rdr->client=cl;
-
-		cl->typ='r';
-		//client[i].ctyp=99;
-
-		add_job(cl, ACTION_READER_INIT, NULL, 0);
-		add_reader_to_active(rdr);
-
-		return 1;
-	}
-	return 0;
-}
-
-/* Starts or restarts a cardreader with locking. If restart=1, the existing thread is killed before restarting,
-   if restart=0 the cardreader is only started. */
-int32_t restart_cardreader(struct s_reader *rdr, int32_t restart) {
-	cs_writelock(&system_lock);
-	int32_t result = restart_cardreader_int(rdr, restart);
-	cs_writeunlock(&system_lock);
-	return result;
-}
-
-static void init_cardreader(void) {
-
-	cs_debug_mask(D_TRACE, "cardreader: Initializing");
-	cs_writelock(&system_lock);
-	struct s_reader *rdr;
-
-	cardreader_init_locks();
-
-	LL_ITER itr = ll_iter_create(configured_readers);
-	while((rdr = ll_iter_next(&itr))) {
-		if (rdr->enable) {
-			restart_cardreader_int(rdr, 0);
-		}
-	}
-
-	load_stat_from_file();
-	cs_writeunlock(&system_lock);
 }
 
 int32_t process_input(uchar *buf, int32_t l, int32_t timeout)

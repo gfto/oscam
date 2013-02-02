@@ -8,13 +8,10 @@ extern void cs_exit_oscam(void);
 extern void cs_restart_oscam(void);
 extern int32_t cs_get_restartmode(void);
 
-int32_t restart_cardreader(struct s_reader *rdr, int32_t restart);
-
 extern int32_t accept_connection(int32_t i, int32_t j);
 extern void start_thread(void * startroutine, char * nameroutine);
 extern int32_t add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len);
 extern void add_check(struct s_client *client, int8_t action, void *ptr, int32_t size, int32_t ms_delay);
-extern int32_t reader_init(struct s_reader *);
 extern void cs_reload_config(void);
 extern int32_t recv_from_udpipe(uchar *);
 extern void cs_exit(int32_t sig);
@@ -27,9 +24,6 @@ extern int32_t process_client_pipe(struct s_client *cl, uchar *buf, int32_t l);
 extern void *clientthread_init(void * init);
 extern void cleanup_thread(void *var);
 extern void kill_thread(struct s_client *cl);
-extern void remove_reader_from_active(struct s_reader *rdr);
-extern void add_reader_to_active(struct s_reader *rdr);
-extern void cs_card_info(void);
 extern void cs_debug_level(void);
 
 extern void dvbapi_read_priority(void);
