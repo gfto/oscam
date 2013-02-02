@@ -706,6 +706,8 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	return;
 }
 
+#define ADDRLEN 4 // Address length in EMM commands
+
 static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
 	def_resp;

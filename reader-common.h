@@ -1,13 +1,11 @@
 #ifndef READER_COMMON_H_
 #define READER_COMMON_H_
 
-#define ADDRLEN      4    // Address length in EMM commands
-#define MAX_PROV     16
-
 //Warning: OK = 0 and ERROR = 1 in csctapi !!!
 #define SKIPPED 2
-#define OK			1
-#define ERROR 	0
+#define OK      1
+#define ERROR   0
+
 #include "csctapi/atr.h" 
 #include "oscam-string.h"
 
