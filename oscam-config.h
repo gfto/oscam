@@ -11,6 +11,7 @@ void    account_set_defaults(struct s_auth *auth);
 int32_t init_free_userdb(struct s_auth *auth);
 struct s_auth *init_userdb(void);
 int32_t write_userdb(void);
+void    cs_accounts_chk(void);
 
 void    chk_reader(char *token, char *value, struct s_reader *rdr);
 void    reader_set_defaults(struct s_reader *rdr);

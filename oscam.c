@@ -529,35 +529,6 @@ static struct s_client * idx_from_ip(IN_ADDR_T ip, in_port_t port)
   return NULL;
 }
 
-void cs_accounts_chk(void)
-{
-	struct s_auth *account1,*account2;
-  struct s_auth *new_accounts = init_userdb();
-  cs_writelock(&config_lock);
-  struct s_auth *old_accounts = cfg.account;  
-  for (account1=cfg.account; account1; account1=account1->next) {
-    for (account2=new_accounts; account2; account2=account2->next) {
-      if (!strcmp(account1->usr, account2->usr)) {
-        account2->cwfound = account1->cwfound;
-        account2->cwcache = account1->cwcache;
-        account2->cwnot = account1->cwnot;
-        account2->cwtun = account1->cwtun;
-        account2->cwignored  = account1->cwignored;
-        account2->cwtout = account1->cwtout;
-        account2->emmok = account1->emmok;
-        account2->emmnok = account1->emmnok;
-        account2->firstlogin = account1->firstlogin;
-        ac_copy_vars(account1, account2);
-      }
-    }
-  }
-  cs_reinit_clients(new_accounts);
-  cfg.account = new_accounts;
-  init_free_userdb(old_accounts);
-  ac_clear();
-  cs_writeunlock(&config_lock);
-}
-
 void cleanup_thread(void *var)
 {
 	struct s_client *cl = var;
