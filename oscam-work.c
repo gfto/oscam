@@ -79,7 +79,7 @@ void * work_thread(void *ptr) {
 				if (data && data != &tmp_data)
 					free_job_data(data);
 				data = NULL;
-				cleanup_thread(cl);
+				free_client(cl);
 				if (restart_reader)
 					restart_cardreader(reader, 0);
 				free(mbuf);

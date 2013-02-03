@@ -4,7 +4,9 @@
 #include "module-cccam.h"
 #include "module-webif.h"
 #include "oscam-client.h"
+#include "oscam-ecm.h"
 #include "oscam-failban.h"
+#include "oscam-garbage.h"
 #include "oscam-lock.h"
 #include "oscam-net.h"
 #include "oscam-reader.h"
@@ -530,4 +532,82 @@ void client_check_status(struct s_client *cl) {
 		}
 		break;
 	} }
+}
+
+void free_client(struct s_client *cl)
+{
+	if (!cl)
+		return;
+	struct s_reader *rdr = cl->reader;
+
+	// Remove client from client list. kill_thread also removes this client, so here just if client exits itself...
+	struct s_client *prev, *cl2;
+	cs_writelock(&clientlist_lock);
+	cl->kill = 1;
+	for (prev = first_client, cl2 = first_client->next;
+	     prev->next != NULL;
+	     prev = prev->next, cl2 = cl2->next)
+	{
+		if (cl == cl2)
+			break;
+	}
+	if (cl == cl2)
+		prev->next = cl2->next; // Remove client from list
+	int32_t bucket = (uintptr_t)cl / 16 % CS_CLIENT_HASHBUCKETS;
+	// Remove client from hashed list
+	if (first_client_hashed[bucket] == cl){
+		first_client_hashed[bucket] = cl->nexthashed;
+	} else {
+		for (prev = first_client_hashed[bucket], cl2 = first_client_hashed[bucket]->nexthashed;
+		     prev->nexthashed != NULL;
+		     prev = prev->nexthashed, cl2 = cl2->nexthashed)
+		{
+			if (cl == cl2)
+				break;
+		}
+		if (cl == cl2)
+			prev->nexthashed = cl2->nexthashed;
+	}
+	cs_writeunlock(&clientlist_lock);
+
+	// Clean reader. The cleaned structures should be only used by the reader thread, so we should be save without waiting
+	if (rdr) {
+		remove_reader_from_ecm(rdr);
+		remove_reader_from_active(rdr);
+		if(rdr->ph.cleanup)
+			rdr->ph.cleanup(cl);
+		if (cl->typ == 'r')
+			cardreader_close(rdr);
+		if (cl->typ == 'p')
+			network_tcp_connection_close(rdr, "cleanup");
+		cl->reader = NULL;
+	}
+
+	// Clean client specific data
+	if (cl->typ == 'c') {
+		cs_statistics(cl);
+		cl->last_caid = 0xFFFF;
+		cl->last_srvid = 0xFFFF;
+		cs_statistics(cl);
+		cs_sleepms(500); //just wait a bit that really really nobody is accessing client data
+		if (modules[cl->ctyp].cleanup)
+			modules[cl->ctyp].cleanup(cl);
+	}
+
+	// Close network socket if not already cleaned by previous cleanup functions
+	if (cl->pfd)
+		close(cl->pfd);
+
+	// Clean all remaining structures
+	free_joblist(cl);
+
+	cleanup_ecmtasks(cl);
+	add_garbage(cl->emmcache);
+#ifdef MODULE_CCCAM
+	add_garbage(cl->cc);
+#endif
+#ifdef MODULE_SERIAL
+	add_garbage(cl->serialdata);
+#endif
+	add_garbage(cl);
 }

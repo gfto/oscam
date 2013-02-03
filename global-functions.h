@@ -21,7 +21,6 @@ extern void set_signal_handler(int32_t , int32_t , void (*));
 extern void cs_waitforcardinit(void);
 extern int32_t process_client_pipe(struct s_client *cl, uchar *buf, int32_t l);
 extern void *clientthread_init(void * init);
-extern void cleanup_thread(void *var);
 extern void kill_thread(struct s_client *cl);
 extern void cs_debug_level(void);
 
