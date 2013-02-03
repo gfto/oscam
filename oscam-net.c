@@ -1,7 +1,9 @@
 #include "globals.h"
+#include "oscam-client.h"
 #include "oscam-lock.h"
 #include "oscam-net.h"
 
+extern struct s_module modules[CS_MAX_MOD];
 extern CS_MUTEX_LOCK gethostbyname_lock;
 
 #ifndef IPV6SUPPORT
@@ -281,4 +283,63 @@ int8_t check_fd_for_data(int32_t fd)
 		return -2;
 
 	return 1;
+}
+
+int32_t recv_from_udpipe(uint8_t *buf)
+{
+	uint16_t n;
+	if (buf[0]!='U') {
+		cs_log("INTERNAL PIPE-ERROR");
+		cs_exit(1);
+	}
+	memcpy(&n, buf + 1, 2);
+	memmove(buf, buf + 3, n);
+	return n;
+}
+
+int32_t process_input(uint8_t *buf, int32_t buflen, int32_t timeout)
+{
+	int32_t rc, i, pfdcount, polltime;
+	struct pollfd pfd[2];
+	struct s_client *cl = cur_client();
+
+	time_t starttime = time(NULL);
+	while (1) {
+		pfdcount = 0;
+		if (cl->pfd) {
+			pfd[pfdcount].fd = cl->pfd;
+			pfd[pfdcount++].events = POLLIN | POLLPRI;
+		}
+
+		polltime  = timeout - (time(NULL) - starttime);
+		if (polltime < 0) {
+			polltime = 0;
+		}
+
+		int32_t p_rc = poll(pfd, pfdcount, polltime);
+
+		if (p_rc < 0) {
+			if (errno == EINTR)
+				continue;
+			else
+				return 0;
+		}
+
+		if (p_rc == 0 && (starttime+timeout) < time(NULL)) { // client maxidle reached
+			rc = -9;
+			break;
+		}
+
+		for (i = 0; i < pfdcount && p_rc > 0; i++) {
+			if (pfd[i].revents & POLLHUP){ // POLLHUP is only valid in revents so it doesn't need to be set above in events
+				return 0;
+			}
+			if (!(pfd[i].revents & (POLLIN | POLLPRI)))
+				continue;
+
+			if (pfd[i].fd == cl->pfd)
+				return modules[cl->ctyp].recv(cl, buf, buflen);
+		}
+	}
+	return rc;
 }

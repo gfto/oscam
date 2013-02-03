@@ -505,21 +505,6 @@ static int32_t do_daemon(int32_t nochdir, int32_t noclose)
 #define do_daemon daemon
 #endif
 
-int32_t recv_from_udpipe(uchar *buf)
-{
-  uint16_t n;
-  if (buf[0]!='U')
-  {
-    cs_log("INTERNAL PIPE-ERROR");
-    cs_exit(1);
-  }
-  memcpy(&n, buf+1, 2);
-
-  memmove(buf, buf+3, n);
-
-  return n;
-}
-
 static struct s_client * idx_from_ip(IN_ADDR_T ip, in_port_t port)
 {
   struct s_client *cl;
@@ -987,52 +972,6 @@ void kill_thread(struct s_client *cl) {
 	}
 	add_job(cl, ACTION_CLIENT_KILL, NULL, 0); //add kill job, ...
 	cl->kill=1;                               //then set kill flag!
-}
-
-int32_t process_input(uchar *buf, int32_t l, int32_t timeout)
-{
-	int32_t rc, i, pfdcount, polltime;
-	struct pollfd pfd[2];
-	struct s_client *cl = cur_client();
-
-	time_t starttime = time(NULL);
-
-	while (1) {
-		pfdcount = 0;
-		if (cl->pfd) {
-			pfd[pfdcount].fd = cl->pfd;
-			pfd[pfdcount++].events = POLLIN | POLLPRI;
-		}
-
-		polltime  = timeout - (time(NULL) - starttime);
-		if (polltime < 0) {
-			polltime = 0;
-		}
-
-		int32_t p_rc = poll(pfd, pfdcount, polltime);
-
-		if (p_rc < 0) {
-			if (errno==EINTR) continue;
-			else return(0);
-		}
-
-		if (p_rc == 0 && (starttime+timeout) < time(NULL)) { // client maxidle reached
-			rc=(-9);
-			break;
-		}
-
-		for (i=0;i<pfdcount && p_rc > 0;i++) {
-			if (pfd[i].revents & POLLHUP){	// POLLHUP is only valid in revents so it doesn't need to be set above in events
-				return(0);
-			}
-			if (!(pfd[i].revents & (POLLIN | POLLPRI)))
-				continue;
-
-			if (pfd[i].fd == cl->pfd)
-				return modules[cl->ctyp].recv(cl, buf, l);
-		}
-	}
-	return(rc);
 }
 
 void cs_waitforcardinit(void)
