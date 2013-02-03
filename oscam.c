@@ -544,7 +544,7 @@ static void cs_cleanup(void)
 /*
  * flags: 1 = restart, 2 = don't modify if SIG_IGN, may be combined
  */
-void set_signal_handler(int32_t sig, int32_t flags, void (*sighandler))
+static void set_signal_handler(int32_t sig, int32_t flags, void (*sighandler))
 {
   struct sigaction sa;
   sigaction(sig, (struct sigaction *) 0, &sa);
@@ -575,7 +575,7 @@ static void cs_dummy(void) {
 }
 
 /* Switch debuglevel forward one step (called when receiving SIGUSR1). */
-void cs_debug_level(void) {
+static void cs_debug_level(void) {
 	switch (cs_dblevel) {
 		case 0:
 			cs_dblevel = 1;
@@ -600,7 +600,7 @@ void cs_debug_level(void) {
  * 2. you need gdb installed and working on the local machine
  * 3. start oscam with parameter: -a
  */
-void cs_dumpstack(int32_t sig)
+static void cs_dumpstack(int32_t sig)
 {
 	FILE *fp = fopen("oscam.crash", "a+");
 
@@ -638,7 +638,7 @@ void cs_dumpstack(int32_t sig)
  *  - tier ids     (oscam.tiers)
  *  Also clears anticascading stats.
  **/
-void cs_reload_config(void)
+static void cs_reload_config(void)
 {
 		cs_accounts_chk();
 		init_srvid();
@@ -810,7 +810,7 @@ void kill_thread(struct s_client *cl) {
 	cl->kill=1;                               //then set kill flag!
 }
 
-void cs_waitforcardinit(void)
+static void cs_waitforcardinit(void)
 {
 	if (cfg.waitforcards)
 	{
@@ -1035,7 +1035,7 @@ static uint32_t chk_resize_cllist(struct pollfd **pfd, struct s_client ***cl_lis
 	return cur_size;
 }
 
-void * client_check(void) {
+static void * client_check(void) {
 	int32_t i, k, j, rc, pfdcount = 0;
 	struct s_client *cl;
 	struct s_reader *rdr;
@@ -1183,7 +1183,7 @@ void * client_check(void) {
 	return NULL;
 }
 
-void * reader_check(void) {
+static void * reader_check(void) {
 	struct s_client *cl;
 	struct s_reader *rdr;
 	while (1) {
@@ -1211,7 +1211,7 @@ void * reader_check(void) {
 pid_t pid;
 
 
-void fwd_sig(int32_t sig)
+static void fwd_sig(int32_t sig)
 {
     kill(pid, sig);
 }
@@ -1270,7 +1270,7 @@ void cs_exit_oscam(void) {
 	cs_log("exit oscam requested");
 }
 
-void pidfile_create(char *pidfile) {
+static void pidfile_create(char *pidfile) {
 	FILE *f = fopen(pidfile, "w");
 	if (f) {
 		pid_t my_pid = getpid();

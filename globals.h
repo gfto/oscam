@@ -175,8 +175,6 @@ typedef unsigned char uchar;
 /* ===========================
  *         constants
  * =========================== */
-#ifndef CS_GLOBALS
-#define CS_GLOBALS
 #define CS_VERSION    "1.20-unstable_svn"
 #ifndef CS_SVN_VERSION
 #	define CS_SVN_VERSION "test"
@@ -1794,11 +1792,24 @@ extern pid_t server_pid;							// PID of server - set while startup
 extern LLIST *log_list;				// log list
 
 extern int log_remove_sensitive;
-/* ===========================
- *      global functions
- * =========================== */
-#include "global-functions.h"
 
-#endif
+// These are used pretty much everywhere
+#include "oscam-log.h"
+#include "oscam-log-reader.h"
+
+// Add here *only* funcs that are implemented in oscam.c and are called in other places
+void    cs_exit(int32_t sig);
+void    cs_exit_oscam(void);
+void    cs_restart_oscam(void);
+int32_t cs_get_restartmode(void);
+
+void start_thread(void *startroutine, char *nameroutine);
+void kill_thread(struct s_client *cl);
+
+// Until we find a better place for these (they are implemented in oscam-simples.h)
+char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf);
+char *get_tiername(uint16_t tierid, uint16_t caid, char *buf);
+char *get_provider(uint16_t caid, uint32_t provid, char *buf, uint32_t buflen);
+void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *sat, const char *lang);
 
 #endif
