@@ -15,7 +15,7 @@ extern CS_MUTEX_LOCK system_lock;
 extern int32_t thread_pipe[2];
 
 struct job_data {
-	int8_t action;
+	enum actions action;
 	struct s_reader *rdr;
 	struct s_client *cl;
 	void *ptr;
@@ -322,7 +322,7 @@ void * work_thread(void *ptr) {
  * if ptr should be free() after use, set len to the size
  * else set size to 0
 **/
-int32_t add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len)
+int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len)
 {
 	if (!cl || cl->kill) {
 		if (!cl)
@@ -332,6 +332,7 @@ int32_t add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len)
 		return 0;
 	}
 
+#ifdef CS_CACHEEX
 	// Avoid full running queues:
 	if (action == ACTION_CACHE_PUSH_OUT && ll_count(cl->joblist) > 2000) {
 		cs_debug_mask(D_TRACE, "WARNING: job queue %s %s has more than 2000 jobs! count=%d, dropped!",
@@ -352,6 +353,7 @@ int32_t add_job(struct s_client *cl, int8_t action, void *ptr, int32_t len)
 		pthread_mutex_unlock(&cl->thread_lock);
 		return 0;
 	}
+#endif
 
 	struct job_data *data;
 	if (!cs_malloc(&data, sizeof(struct job_data))) {
