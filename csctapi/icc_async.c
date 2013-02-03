@@ -229,8 +229,8 @@ int32_t ICC_Async_GetTimings (struct s_reader * reader, uint32_t wait_etu)
 		rdr_debug_mask(reader, D_IFD, "Setting timeout to %i ETU (%d us)", wait_etu, ETU_to_us(reader, timeout));
 	}
 	else {
-		timeout = ETU_to_us(reader, wait_etu);
-		rdr_debug_mask(reader, D_IFD, "Setting timeout to %i ETU (%d us)", wait_etu, timeout);
+		timeout = wait_etu;
+		rdr_debug_mask(reader, D_IFD, "Setting timeout to %i ETU (%d us)", (int) (timeout/reader->worketu), timeout);
 	}
 	return timeout;
 }
