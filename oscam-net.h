@@ -38,5 +38,7 @@ void setTCPTimeouts(int32_t sock);
 int8_t check_fd_for_data(int32_t fd);
 int32_t recv_from_udpipe(uchar *);
 int32_t process_input(uint8_t *buf, int32_t buflen, int32_t timeout);
+int32_t accept_connection(int32_t i, int32_t j);
+int32_t start_listener(struct s_module *ph, int32_t port_idx);
 
 #endif

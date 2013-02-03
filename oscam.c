@@ -21,7 +21,6 @@
 #include "oscam-config.h"
 #include "oscam-ecm.h"
 #include "oscam-emm.h"
-#include "oscam-failban.h"
 #include "oscam-files.h"
 #include "oscam-garbage.h"
 #include "oscam-lock.h"
@@ -505,15 +504,6 @@ static int32_t do_daemon(int32_t nochdir, int32_t noclose)
 #define do_daemon daemon
 #endif
 
-static struct s_client * idx_from_ip(IN_ADDR_T ip, in_port_t port)
-{
-  struct s_client *cl;
-  for (cl=first_client; cl ; cl=cl->next)
-    if (!cl->kill && (IP_EQUAL(cl->ip, ip)) && (cl->port==port) && ((cl->typ=='c') || (cl->typ=='m')))
-      return cl;
-  return NULL;
-}
-
 static void cs_cleanup(void)
 {
 	stat_finish();
@@ -787,160 +777,6 @@ static void init_check(void){
 	  // adjust login time of first client
 	  if(i > 0) first_client->login=time((time_t *)0);
 	}
-}
-
-static int32_t start_listener(struct s_module *ph, int32_t port_idx)
-{
-  int32_t ov=1, timeout, is_udp, i;
-  char ptxt[2][32];
-  struct SOCKADDR sad;     /* structure to hold server's address */
-  socklen_t sad_len;
-  cs_log("Starting listener %d", port_idx);
-
-  ptxt[0][0]=ptxt[1][0]='\0';
-  if (!ph->ptab->ports[port_idx].s_port)
-  {
-    cs_log("%s: disabled", ph->desc);
-    return(0);
-  }
-  is_udp=(ph->type==MOD_CONN_UDP);
-
-  memset((char  *)&sad,0,sizeof(sad)); /* clear sockaddr structure   */
-#ifdef IPV6SUPPORT
-  SIN_GET_FAMILY(sad) = AF_INET6;            /* set family to Internet     */
-  SIN_GET_ADDR(sad) = in6addr_any;
-  sad_len = sizeof(struct sockaddr_in6);
-#else
-  sad.sin_family = AF_INET;            /* set family to Internet     */
-  sad_len = sizeof(struct sockaddr);
-  if (!ph->s_ip)
-    ph->s_ip=cfg.srvip;
-  if (ph->s_ip)
-  {
-    sad.sin_addr.s_addr=ph->s_ip;
-    snprintf(ptxt[0], sizeof(ptxt[0]), ", ip=%s", inet_ntoa(sad.sin_addr));
-  }
-  else
-    sad.sin_addr.s_addr=INADDR_ANY;
-#endif
-  timeout=cfg.bindwait;
-  //ph->fd=0;
-  ph->ptab->ports[port_idx].fd = 0;
-
-  if (ph->ptab->ports[port_idx].s_port > 0)   /* test for illegal value    */
-    SIN_GET_PORT(sad) = htons((uint16_t)ph->ptab->ports[port_idx].s_port);
-  else
-  {
-    cs_log("%s: Bad port %d", ph->desc, ph->ptab->ports[port_idx].s_port);
-    return(0);
-  }
-
-  int s_domain = PF_INET;
-#ifdef IPV6SUPPORT
-  s_domain = PF_INET6;
-#endif
-  int s_type   = is_udp ? SOCK_DGRAM : SOCK_STREAM;
-  int s_proto  = is_udp ? IPPROTO_UDP : IPPROTO_TCP;
-
-  if ((ph->ptab->ports[port_idx].fd = socket(s_domain, s_type, s_proto)) < 0)
-  {
-    cs_log("%s: Cannot create socket (errno=%d: %s)", ph->desc, errno, strerror(errno));
-#ifdef IPV6SUPPORT
-    cs_log("%s: Trying fallback to IPv4", ph->desc);
-    s_domain = PF_INET;
-    if ((ph->ptab->ports[port_idx].fd = socket(s_domain, s_type, s_proto)) < 0)
-    {
-      cs_log("%s: Cannot create socket (errno=%d: %s)", ph->desc, errno, strerror(errno));
-      return(0);
-    }
-#else
-    return(0);
-#endif
-  }
-
-#ifdef IPV6SUPPORT
-// azbox toolchain do not have this define
-#ifndef IPV6_V6ONLY
-#define IPV6_V6ONLY 26
-#endif
-  // set the server socket option to listen on IPv4 and IPv6 simultaneously
-  int val = 0;
-  if (setsockopt(ph->ptab->ports[port_idx].fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&val, sizeof(val))<0)
-  {
-    cs_log("%s: setsockopt(IPV6_V6ONLY) failed (errno=%d: %s)", ph->desc, errno, strerror(errno));
-  }
-#endif
-
-  ov=1;
-  if (setsockopt(ph->ptab->ports[port_idx].fd, SOL_SOCKET, SO_REUSEADDR, (void *)&ov, sizeof(ov))<0)
-  {
-    cs_log("%s: setsockopt failed (errno=%d: %s)", ph->desc, errno, strerror(errno));
-    close(ph->ptab->ports[port_idx].fd);
-    return(ph->ptab->ports[port_idx].fd=0);
-  }
-
-#ifdef SO_REUSEPORT
-  setsockopt(ph->ptab->ports[port_idx].fd, SOL_SOCKET, SO_REUSEPORT, (void *)&ov, sizeof(ov));
-#endif
-
-  if (set_socket_priority(ph->ptab->ports[port_idx].fd, cfg.netprio) > -1)
-      snprintf(ptxt[1], sizeof(ptxt[1]), ", prio=%d", cfg.netprio);
-
-  if( !is_udp )
-  {
-    int32_t keep_alive = 1;
-    setsockopt(ph->ptab->ports[port_idx].fd, SOL_SOCKET, SO_KEEPALIVE,
-               (void *)&keep_alive, sizeof(keep_alive));
-  }
-
-  while (timeout--)
-  {
-    if (bind(ph->ptab->ports[port_idx].fd, (struct sockaddr *)&sad, sad_len) < 0)
-    {
-      if (timeout)
-      {
-        cs_log("%s: Bind request failed (%s), waiting another %d seconds",
-               ph->desc, strerror(errno), timeout);
-        cs_sleepms(1000);
-      }
-      else
-      {
-        cs_log("%s: Bind request failed (%s), giving up", ph->desc, strerror(errno));
-        close(ph->ptab->ports[port_idx].fd);
-        return(ph->ptab->ports[port_idx].fd=0);
-      }
-    }
-    else timeout=0;
-  }
-
-  if (!is_udp)
-    if (listen(ph->ptab->ports[port_idx].fd, CS_QLEN)<0)
-    {
-      cs_log("%s: Cannot start listen mode (errno=%d: %s)", ph->desc, errno, strerror(errno));
-      close(ph->ptab->ports[port_idx].fd);
-      return(ph->ptab->ports[port_idx].fd=0);
-    }
-
-	cs_log("%s: initialized (fd=%d, port=%d%s%s%s)",
-         ph->desc, ph->ptab->ports[port_idx].fd,
-         ph->ptab->ports[port_idx].s_port,
-         ptxt[0], ptxt[1], ph->logtxt ? ph->logtxt : "");
-
-	for( i=0; i<ph->ptab->ports[port_idx].ftab.nfilts; i++ ) {
-		int32_t j, pos=0;
-		char buf[30 + (8*ph->ptab->ports[port_idx].ftab.filts[i].nprids)];
-		pos += snprintf(buf, sizeof(buf), "-> CAID: %04X PROVID: ", ph->ptab->ports[port_idx].ftab.filts[i].caid );
-
-		for( j=0; j<ph->ptab->ports[port_idx].ftab.filts[i].nprids; j++ )
-			pos += snprintf(buf+pos, sizeof(buf)-pos, "%06X, ", ph->ptab->ports[port_idx].ftab.filts[i].prids[j]);
-
-		if(pos>2 && j>0)
-			buf[pos-2] = '\0';
-
-		cs_log("%s", buf);
-	}
-
-	return(ph->ptab->ports[port_idx].fd);
 }
 
 /* Starts a thread named nameroutine with the start function startroutine. */
@@ -1369,84 +1205,6 @@ void * reader_check(void) {
 		cs_sleepms(1000);
 	}
 	return NULL;
-}
-
-int32_t accept_connection(int32_t i, int32_t j) {
-	struct SOCKADDR cad;
-	int32_t scad = sizeof(cad), n;
-	struct s_client *cl;
-
-	if (modules[i].type==MOD_CONN_UDP) {
-		uchar *buf;
-		if (!cs_malloc(&buf, 1024))
-			return -1;
-		if ((n=recvfrom(modules[i].ptab->ports[j].fd, buf+3, 1024-3, 0, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
-			cl=idx_from_ip(SIN_GET_ADDR(cad), ntohs(SIN_GET_PORT(cad)));
-
-			uint16_t rl;
-			rl=n;
-			buf[0]='U';
-			memcpy(buf+1, &rl, 2);
-
-			if (cs_check_violation(SIN_GET_ADDR(cad), modules[i].ptab->ports[j].s_port)) {
-				free(buf);
-				return 0;
-			}
-
-			cs_debug_mask(D_TRACE, "got %d bytes on port %d from ip %s:%d client %s", 
-			    n, modules[i].ptab->ports[j].s_port,
-			    cs_inet_ntoa(SIN_GET_ADDR(cad)), SIN_GET_PORT(cad),
-			    username(cl));
-
-			if (!cl) {
-				cl = create_client(SIN_GET_ADDR(cad));
-				if (!cl) return 0;
-
-				cl->ctyp=i;
-				cl->port_idx=j;
-				cl->udp_fd=modules[i].ptab->ports[j].fd;
-				cl->udp_sa=cad;
-				cl->udp_sa_len = sizeof(cl->udp_sa);
-
-				cl->port=ntohs(SIN_GET_PORT(cad));
-				cl->typ='c';
-
-				add_job(cl, ACTION_CLIENT_INIT, NULL, 0);
-			}
-			add_job(cl, ACTION_CLIENT_UDP, buf, n+3);
-		} else
-			free(buf);
-	} else { //TCP
-		int32_t pfd3;
-		if ((pfd3=accept(modules[i].ptab->ports[j].fd, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
-
-			if (cs_check_violation(SIN_GET_ADDR(cad), modules[i].ptab->ports[j].s_port)) {
-				close(pfd3);
-				return 0;
-			}
-
-			cl = create_client(SIN_GET_ADDR(cad));
-			if (cl == NULL) {
-				close(pfd3);
-				return 0;
-			}
-
-			int32_t flag = 1;
-			setsockopt(pfd3, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
-			setTCPTimeouts(pfd3);
-
-			cl->ctyp=i;
-			cl->udp_fd=pfd3;
-			cl->port_idx=j;
-
-			cl->pfd=pfd3;
-			cl->port=ntohs(SIN_GET_PORT(cad));
-			cl->typ='c';
-
-			add_job(cl, ACTION_CLIENT_INIT, NULL, 0);
-		}
-	}
-	return 0;
 }
 
 #ifdef WEBIF

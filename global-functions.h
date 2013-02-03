@@ -8,7 +8,6 @@ extern void cs_exit_oscam(void);
 extern void cs_restart_oscam(void);
 extern int32_t cs_get_restartmode(void);
 
-extern int32_t accept_connection(int32_t i, int32_t j);
 extern void start_thread(void * startroutine, char * nameroutine);
 extern void add_check(struct s_client *client, int8_t action, void *ptr, int32_t size, int32_t ms_delay);
 extern void cs_reload_config(void);
