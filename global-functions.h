@@ -58,11 +58,6 @@ extern char *get_provider(uint16_t caid, uint32_t provid, char *buf, uint32_t bu
 void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *sat, const char *lang);
 
 /* ===========================
- *       module-newcamd
- * =========================== */
-extern const char *newcamd_get_client_name(uint16_t client_id);
-
-/* ===========================
  *       reader-common
  * =========================== */
 extern struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid);

@@ -15,6 +15,7 @@
 #include "module-cacheex.h"
 #include "module-cccam.h"
 #include "module-cccam-data.h"
+#include "module-newcamd.h"
 #include "module-stat.h"
 #include "module-webif.h"
 #include "module-webif-lib.h"
