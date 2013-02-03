@@ -15,6 +15,7 @@
 #include "oscam-time.h"
 #include "oscam-lock.h"
 #include "oscam-string.h"
+#include "oscam-work.h"
 #include "reader-common.h"
 
 extern CS_MUTEX_LOCK ecmcache_lock;

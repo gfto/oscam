@@ -1,5 +1,6 @@
 #include "globals.h"
 #ifdef READER_VIDEOGUARD
+#include "oscam-work.h"
 #include "reader-common.h"
 #include "reader-videoguard-common.h"
 

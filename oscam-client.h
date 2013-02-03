@@ -18,5 +18,6 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 void cs_disconnect_client(struct s_client * client);
 void cs_reinit_clients(struct s_auth *new_accounts);
 void kill_all_clients(void);
+void client_check_status(struct s_client *cl);
 
 #endif

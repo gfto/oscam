@@ -354,6 +354,7 @@ SRC-y += oscam-reader.c
 SRC-y += oscam-simples.c
 SRC-y += oscam-string.c
 SRC-y += oscam-time.c
+SRC-y += oscam-work.c
 SRC-y += oscam.c
 
 SRC := $(SRC-y)

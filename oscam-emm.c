@@ -4,6 +4,7 @@
 #include "oscam-emm.h"
 #include "oscam-string.h"
 #include "oscam-time.h"
+#include "oscam-work.h"
 #include "reader-common.h"
 
 static int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int16_t len)

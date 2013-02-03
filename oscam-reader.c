@@ -10,6 +10,7 @@
 #include "oscam-reader.h"
 #include "oscam-string.h"
 #include "oscam-time.h"
+#include "oscam-work.h"
 #include "reader-common.h"
 
 extern CS_MUTEX_LOCK system_lock;

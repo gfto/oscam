@@ -11,6 +11,7 @@
 #include "oscam-net.h"
 #include "oscam-string.h"
 #include "oscam-time.h"
+#include "oscam-work.h"
 
 #define cs_cacheex_matcher "oscam.cacheex"
 

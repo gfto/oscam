@@ -50,6 +50,7 @@
 
 #ifdef READER_BULCRYPT
 #include "oscam-client.h"
+#include "oscam-work.h"
 #include "reader-common.h"
 
 static const uchar atr_carpet[]    = { 0x3b, 0x20, 0x00 };

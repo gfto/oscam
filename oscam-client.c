@@ -10,6 +10,8 @@
 #include "oscam-reader.h"
 #include "oscam-string.h"
 #include "oscam-time.h"
+#include "oscam-work.h"
+#include "reader-common.h"
 
 extern char *processUsername;
 extern CS_MUTEX_LOCK fakeuser_lock;
@@ -494,4 +496,38 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 			cl->account = NULL;
 		}
 	}
+}
+
+void client_check_status(struct s_client *cl) {
+	if (!cl || cl->kill || !cl->init_done)
+		return;
+	switch (cl->typ) {
+	case 'm':
+	case 'c':
+		// Check clients for exceeding cmaxidle by checking cl->last
+		if (!(cl->ncd_keepalive && (modules[cl->ctyp].listenertype & LIS_NEWCAMD)) &&
+		    cl->last && cfg.cmaxidle && (time(NULL) - cl->last) > (time_t)cfg.cmaxidle)
+		{
+			add_job(cl, ACTION_CLIENT_IDLE, NULL, 0);
+		}
+		break;
+	case 'r':
+		cardreader_checkhealth(cl, cl->reader);
+		break;
+	case 'p': {
+		struct s_reader *rdr = cl->reader;
+		if (!rdr || !rdr->enable || !rdr->active) //reader is disabled or restarting at this moment
+			break;
+		// execute reader do idle on proxy reader after a certain time (rdr->tcp_ito = inactivitytimeout)
+		// disconnect when no keepalive available
+		if ((rdr->tcp_ito && is_cascading_reader(rdr)) || rdr->typ == R_CCCAM) {
+			time_t now = time(NULL);
+			int32_t time_diff = abs(now - rdr->last_check);
+			if (time_diff > 60 || (time_diff > 30 && rdr->typ == R_CCCAM)) { //check 1x per minute or every 30s for cccam
+				add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
+				rdr->last_check = now;
+			}
+		}
+		break;
+	} }
 }

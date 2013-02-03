@@ -1747,15 +1747,6 @@ struct s_clientinit
 	struct s_client * client;
 };
 
-struct s_data {
-	int8_t action;
-	struct s_reader *rdr;
-	struct s_client *cl;
-	void *ptr;
-	time_t time;
-	uint16_t len;
-};
-
 typedef struct reader_stat_t
 {
 	int32_t			rc;

@@ -9,6 +9,7 @@
 #include "oscam-emm.h"
 #include "oscam-net.h"
 #include "oscam-time.h"
+#include "oscam-work.h"
 #include "reader-common.h"
 #include "csctapi/atr.h"
 #include "csctapi/icc_async.h"
