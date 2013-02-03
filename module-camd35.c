@@ -9,6 +9,7 @@
 #include "oscam-emm.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
+#include "oscam-reader.h"
 
 extern struct s_module modules[CS_MAX_MOD];
 

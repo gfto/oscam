@@ -4,6 +4,7 @@
 #include "oscam-ecm.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
+#include "oscam-reader.h"
 
 static int32_t radegast_send(struct s_client * client, uchar *buf)
 {

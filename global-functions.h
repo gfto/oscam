@@ -29,18 +29,6 @@ extern void cs_debug_level(void);
  *        oscam-reader
  * =========================== */
 extern void * start_cardreader(void *);
-extern int32_t hostResolve(struct s_reader * reader);
-extern int32_t network_tcp_connection_open(struct s_reader *);
-extern void network_tcp_connection_close(struct s_reader *, char *);
-extern void block_connect(struct s_reader *rdr);
-extern int32_t is_connect_blocked(struct s_reader *rdr);
-void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, uint64_t id, uint32_t class, time_t start, time_t end, uint8_t type);
-extern void cs_clear_entitlement(struct s_reader *rdr);
-
-extern void reader_do_idle(struct s_reader * reader);
-extern void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw);
-extern void casc_do_sock_log(struct s_reader * reader);
-extern void reader_do_card_info(struct s_reader * reader);
 
 /* ===========================
  *        oscam-simples

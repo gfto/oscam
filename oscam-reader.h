@@ -9,6 +9,20 @@ bool hexserialset(struct s_reader *rdr);
 void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid);
 void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid);
 
+void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, uint64_t id, uint32_t class, time_t start, time_t end, uint8_t type);
+void cs_clear_entitlement(struct s_reader *rdr);
+
+int32_t hostResolve(struct s_reader * reader);
+int32_t network_tcp_connection_open(struct s_reader *);
+void    network_tcp_connection_close(struct s_reader *, char *);
+void    block_connect(struct s_reader *rdr);
+int32_t is_connect_blocked(struct s_reader *rdr);
+
+void reader_do_idle(struct s_reader * reader);
+void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw);
+void casc_do_sock_log(struct s_reader * reader);
+void reader_do_card_info(struct s_reader * reader);
+
 void cs_card_info(void);
 int32_t reader_init(struct s_reader *reader);
 void remove_reader_from_active(struct s_reader *rdr);

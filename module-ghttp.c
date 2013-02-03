@@ -3,6 +3,7 @@
 #include "oscam-client.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
+#include "oscam-reader.h"
 
 typedef struct
 {
