@@ -1,9 +1,7 @@
+#ifndef MODULE_DVBAPI_H_
+#define MODULE_DVBAPI_H_
+
 #ifdef HAVE_DVBAPI
-
-#ifndef MODULEDVBAPI_H_
-#define MODULEDVBAPI_H_
-
-
 #include <sys/un.h>
 #include <dirent.h>
 
@@ -219,6 +217,7 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t idx);
 int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connfd, char *pmtfile);
 void request_cw(struct s_client *dvbapi_client, ECM_REQUEST *er);
 void dvbapi_try_next_caid(int32_t demux_id);
+void dvbapi_read_priority(void);
 
 #undef cs_log
 #define cs_log(txt, x...)	cs_log_int(0, 1, NULL, 0, "dvbapi: "txt, ##x)
@@ -227,5 +226,8 @@ void dvbapi_try_next_caid(int32_t demux_id);
 	#define cs_debug_mask(x,txt,y...)	cs_log_int(x, 1, NULL, 0, "dvbapi: "txt, ##y)
 #endif
 
-#endif // MODULEDVBAPI_H_
+#else
+static inline void dvbapi_read_priority(void) { }
 #endif // WITH_DVBAPI
+
+#endif // MODULE_DVBAPI_H_

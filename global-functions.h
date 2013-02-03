@@ -25,7 +25,6 @@ extern void cleanup_thread(void *var);
 extern void kill_thread(struct s_client *cl);
 extern void cs_debug_level(void);
 
-extern void dvbapi_read_priority(void);
 extern void cs_accounts_chk(void);
 
 #include "oscam-log.h"
