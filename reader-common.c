@@ -16,6 +16,16 @@
 
 extern struct s_cardsystem cardsystems[CS_MAX_MOD];
 
+int32_t check_sct_len(const uchar *data, int32_t off)
+{
+	int32_t len = SCT_LEN(data);
+	if (len + off > MAX_LEN) {
+		cs_debug_mask(D_TRACE | D_READER, "check_sct_len(): smartcard section too long %d > %d", len, MAX_LEN - off);
+		len = -1;
+	}
+	return len;
+}
+
 static void reader_nullcard(struct s_reader * reader)
 {
   memset(&reader->csystem , 0   , sizeof(reader->csystem));

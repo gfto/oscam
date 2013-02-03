@@ -14,6 +14,105 @@
 #include "reader-common.h"
 
 extern CS_MUTEX_LOCK system_lock;
+extern struct s_cardsystem cardsystems[CS_MAX_MOD];
+
+struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid) {
+	int32_t i, j;
+	for (i = 0; i < CS_MAX_MOD; i++) {
+		if (cardsystems[i].caids) {
+			for (j = 0; j < 2; j++) {
+				uint16_t cs_caid = cardsystems[i].caids[j];
+				if (cs_caid == caid || cs_caid == caid >> 8)
+					return &cardsystems[i];
+			}
+		}
+	}
+	return NULL;
+}
+
+struct s_reader *get_reader_by_label(char *lbl)
+{
+	struct s_reader *rdr;
+	LL_ITER itr = ll_iter_create(configured_readers);
+	while ((rdr = ll_iter_next(&itr))) {
+		if (streq(lbl, rdr->label))
+			break;
+	}
+	return rdr;
+}
+
+char *reader_get_type_desc(struct s_reader * rdr, int32_t extended)
+{
+	char *desc = "unknown";
+	if (rdr->crdr.desc)
+		return rdr->crdr.desc;
+	if (is_network_reader(rdr) || rdr->typ == R_SERIAL) {
+		if (rdr->ph.desc)
+			desc = rdr->ph.desc;
+	}
+	if (rdr->typ == R_NEWCAMD && rdr->ncd_proto == NCD_524)
+		desc = "newcamd524";
+	else if (extended && rdr->typ == R_CCCAM && cccam_client_extended_mode(rdr->client)) {
+		desc = "cccam ext";
+	}
+	return desc;
+}
+
+bool hexserialset(struct s_reader *rdr)
+{
+	int i;
+	if (!rdr)
+		return false;
+	for (i = 0; i < 8; i++) {
+		if (rdr->hexserial[i])
+			return true;
+	}
+	return false;
+}
+
+void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid)
+{
+	if (caid == 0x5581 || caid == 0x4aee) { // Bulcrypt
+		dest[0] = 0x00;
+		dest[1] = 0x00;
+		memcpy(dest + 2, source, 4);
+		return;
+	}
+	caid = caid >> 8;
+	if (caid == 0x17 || caid == 0x06) { // Betacrypt or Irdeto
+		// only 4 Bytes Hexserial for newcamd clients (Hex Base + Hex Serial)
+		// first 2 Byte always 00
+		dest[0]=0x00; //serial only 4 bytes
+		dest[1]=0x00; //serial only 4 bytes
+		// 1 Byte Hex Base (see reader-irdeto.c how this is stored in "source")
+		dest[2]=source[3];
+		// 3 Bytes Hex Serial (see reader-irdeto.c how this is stored in "source")
+		dest[3]=source[0];
+		dest[4]=source[1];
+		dest[5]=source[2];
+	} else if (caid == 0x05 || caid == 0x0D) {
+		dest[0] = 0x00;
+		memcpy(dest + 1, source, 5);
+	} else {
+		memcpy(dest, source, 6);
+	}
+}
+
+void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid)
+{
+	caid = caid >> 8;
+	if (caid == 0x17 || caid == 0x06) { // Betacrypt or Irdeto
+		memcpy(dest, source+3, 3);
+		dest[3] = source[2];
+		dest[4] = 0;
+		dest[5] = 0;
+	} else if (caid == 0x05 || caid == 0x0D) {
+		memcpy(dest, source+1, 5);
+		dest[5] = 0;
+	} else {
+		memcpy(dest, source, 6);
+	}
+}
 
 /**
  * add one entitlement item to entitlements of reader.
@@ -532,90 +631,6 @@ int32_t ATR_InitFromArray(ATR *atr, const unsigned char atr_buffer[ATR_MAX_SIZE]
 	return 0;
 }
 #endif
-
-char *reader_get_type_desc(struct s_reader * rdr, int32_t extended)
-{
-	char *desc = "unknown";
-	if (rdr->crdr.desc)
-		return rdr->crdr.desc;
-	if (is_network_reader(rdr) || rdr->typ == R_SERIAL) {
-		if (rdr->ph.desc)
-			desc = rdr->ph.desc;
-	}
-	if (rdr->typ == R_NEWCAMD && rdr->ncd_proto == NCD_524)
-		desc = "newcamd524";
-	else if (extended && rdr->typ == R_CCCAM && cccam_client_extended_mode(rdr->client)) {
-		desc = "cccam ext";
-	}
-	return desc;
-}
-
-void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid)
-{
-	if (caid == 0x5581 || caid == 0x4aee) { // Bulcrypt
-		dest[0] = 0x00;
-		dest[1] = 0x00;
-		memcpy(dest + 2, source, 4);
-		return;
-	}
-	caid = caid >> 8;
-	if (caid == 0x17 || caid == 0x06) { // Betacrypt or Irdeto
-		// only 4 Bytes Hexserial for newcamd clients (Hex Base + Hex Serial)
-		// first 2 Byte always 00
-		dest[0]=0x00; //serial only 4 bytes
-		dest[1]=0x00; //serial only 4 bytes
-		// 1 Byte Hex Base (see reader-irdeto.c how this is stored in "source")
-		dest[2]=source[3];
-		// 3 Bytes Hex Serial (see reader-irdeto.c how this is stored in "source")
-		dest[3]=source[0];
-		dest[4]=source[1];
-		dest[5]=source[2];
-	} else if (caid == 0x05 || caid == 0x0D) {
-		dest[0] = 0x00;
-		memcpy(dest + 1, source, 5);
-	} else {
-		memcpy(dest, source, 6);
-	}
-}
-
-void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid)
-{
-	caid = caid >> 8;
-	if (caid == 0x17 || caid == 0x06) { // Betacrypt or Irdeto
-		memcpy(dest, source+3, 3);
-		dest[3] = source[2];
-		dest[4] = 0;
-		dest[5] = 0;
-	} else if (caid == 0x05 || caid == 0x0D) {
-		memcpy(dest, source+1, 5);
-		dest[5] = 0;
-	} else {
-		memcpy(dest, source, 6);
-	}
-}
-
-struct s_reader *get_reader_by_label(char *lbl)
-{
-	struct s_reader *rdr;
-	LL_ITER itr = ll_iter_create(configured_readers);
-	while ((rdr = ll_iter_next(&itr))) {
-		if (streq(lbl, rdr->label))
-			break;
-	}
-	return rdr;
-}
-
-bool hexserialset(struct s_reader *rdr)
-{
-	int i;
-	if (!rdr)
-		return false;
-	for (i = 0; i < 8; i++) {
-		if (rdr->hexserial[i])
-			return true;
-	}
-	return false;
-}
 
 void cs_card_info(void)
 {

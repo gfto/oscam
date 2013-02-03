@@ -1,9 +1,5 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
-#include "oscam-garbage.h"
 #include "oscam-string.h"
-
-extern struct s_cardsystem cardsystems[CS_MAX_MOD];
 
 /* Gets the servicename. Make sure that buf is at least 32 bytes large. */
 char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf){
@@ -89,28 +85,4 @@ void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *
 	cs_strncpy(prov->sat, sat, sizeof(prov->sat));
 	cs_strncpy(prov->lang, lang, sizeof(prov->lang));
 	*ptr = prov;
-}
-
-int32_t check_sct_len(const uchar *data, int32_t off)
-{
-	int32_t len = SCT_LEN(data);
-	if (len + off > MAX_LEN) {
-		cs_debug_mask(D_TRACE | D_READER, "check_sct_len(): smartcard section too long %d > %d", len, MAX_LEN - off);
-		len = -1;
-	}
-	return len;
-}
-
-struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid) {
-	int32_t i, j;
-	for (i = 0; i < CS_MAX_MOD; i++) {
-		if (cardsystems[i].caids) {
-			for (j = 0; j < 2; j++) {
-				uint16_t cs_caid = cardsystems[i].caids[j];
-				if (cs_caid == caid || cs_caid == caid >> 8)
-					return &cardsystems[i];
-			}
-		}
-	}
-	return NULL;
 }

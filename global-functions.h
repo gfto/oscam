@@ -34,7 +34,6 @@ extern void cs_accounts_chk(void);
 /* ===========================
  *        oscam-reader
  * =========================== */
-extern int32_t check_sct_len(const unsigned char *data, int32_t off);
 extern void * start_cardreader(void *);
 extern int32_t hostResolve(struct s_reader * reader);
 extern int32_t network_tcp_connection_open(struct s_reader *);
@@ -56,10 +55,5 @@ extern char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid,
 extern char *get_tiername(uint16_t tierid, uint16_t caid, char *buf);
 extern char *get_provider(uint16_t caid, uint32_t provid, char *buf, uint32_t buflen);
 void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *sat, const char *lang);
-
-/* ===========================
- *       reader-common
- * =========================== */
-extern struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid);
 
 #endif
