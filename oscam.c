@@ -503,8 +503,13 @@ static int32_t do_daemon(int32_t nochdir, int32_t noclose)
 #define do_daemon daemon
 #endif
 
+static bool config_freed;
+
 static void cs_cleanup(void)
 {
+	if (config_freed)
+		return;
+
 	stat_finish();
 
 	cccam_done_share();
@@ -536,6 +541,9 @@ static void cs_cleanup(void)
 		unlink(oscam_pidfile);
 
 	config_free();
+	config_freed = true;
+
+	cs_log("cardserver down");
 
 	cs_close_log();
 }
@@ -735,8 +743,6 @@ void cs_exit(int32_t sig)
 		pthread_exit(NULL);
 		return;
 	}
-
-	cs_log("cardserver down");
 
 	cs_cleanup();
 
