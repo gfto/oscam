@@ -783,14 +783,14 @@ void start_thread(void * startroutine, char * nameroutine) {
 	pthread_t temp;
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
-	cs_log("starting thread %s", nameroutine);
+	cs_debug_mask(D_TRACE, "starting thread %s", nameroutine);
 	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 	cs_writelock(&system_lock);
 	int32_t ret = pthread_create(&temp, &attr, startroutine, NULL);
 	if (ret)
 		cs_log("ERROR: can't create %s thread (errno=%d %s)", nameroutine, ret, strerror(ret));
 	else {
-		cs_log("%s thread started", nameroutine);
+		cs_debug_mask(D_TRACE, "%s thread started", nameroutine);
 		pthread_detach(temp);
 	}
 	pthread_attr_destroy(&attr);
