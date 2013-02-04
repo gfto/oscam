@@ -465,6 +465,8 @@ static void* mcr_update_display_thread(void *param) {
 		pthread_exit(NULL);
 	}
 
+	set_thread_name(__func__);
+
 	while(reader->sc8in1_config->display_running) {
 		uint16_t display_sleep = DEFAULT_SLEEP_TIME;
 

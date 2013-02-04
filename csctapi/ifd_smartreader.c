@@ -1016,6 +1016,8 @@ static void* ReaderThread(void *p)
     reader = (struct s_reader *)p;
     reader->sr_config->running=1;
 
+    set_thread_name(__func__);
+
     for(idx=0; idx<NUM_TXFERS; idx++) {
          usbt[idx] = libusb_alloc_transfer(0);
          libusb_fill_bulk_transfer( usbt[idx],

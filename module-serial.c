@@ -1023,6 +1023,7 @@ static void * oscam_ser_fork(void *pthreadparam)
   if (!cl->serialdata && !cs_malloc(&cl->serialdata, sizeof(struct s_serial_client)))
     return NULL;
 
+  set_thread_name(__func__);
   oscam_init_serialdata(cl->serialdata);
   oscam_copy_serialdata(cl->serialdata, &pparam->serialdata);
   cs_log("serial: initialized (%s@%s)", cl->serialdata->oscam_ser_proto>P_MAX ?

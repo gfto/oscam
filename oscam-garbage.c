@@ -78,7 +78,7 @@ void add_garbage(void *data) {
 void garbage_collector(void) {
         int8_t i;
         struct cs_garbage *garbage, *next, *prev, *first;
-
+        set_thread_name(__func__);
         while (garbage_collector_active) {
 
                 for(i = 0; i < HASH_BUCKETS; ++i){

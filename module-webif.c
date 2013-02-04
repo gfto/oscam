@@ -5098,6 +5098,8 @@ static void *serve_process(void *conn){
 	IN_ADDR_T in;
 	IP_ASSIGN(in, myconn->remote);
 
+	set_thread_name(__func__);
+
 #ifdef WITH_SSL
 	SSL *ssl = myconn->ssl;
 	pthread_setspecific(getssl, ssl);
@@ -5206,6 +5208,8 @@ static void *http_srv(void) {
 	cl->typ = 'h';
 	int32_t sock, s, reuse = 1;
 	struct s_connection *conn;
+
+	set_thread_name(__func__);
 
 	/* Create random string for nonce value generation */
 	create_rand_str(noncekey,32);

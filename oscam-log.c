@@ -537,6 +537,7 @@ void cs_statistics(struct s_client * client)
 void log_list_thread(void)
 {
 	char buf[LOG_BUF_SIZE];
+	set_thread_name(__func__);
 	int last_count=ll_count(log_list), count, grow_count=0, write_count;
 	do {
 		LL_ITER it = ll_iter_create(log_list);

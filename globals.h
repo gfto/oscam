@@ -1796,6 +1796,7 @@ void    cs_exit_oscam(void);
 void    cs_restart_oscam(void);
 int32_t cs_get_restartmode(void);
 
+void set_thread_name(const char *thread_name);
 void start_thread(void *startroutine, char *nameroutine);
 void kill_thread(struct s_client *cl);
 

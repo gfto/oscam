@@ -2259,7 +2259,7 @@ void event_handler(int32_t UNUSED(signal)) {
 void *dvbapi_event_thread(void *cli) {
 	struct s_client * client = (struct s_client *) cli;
 	pthread_setspecific(getclient, client);
-
+	set_thread_name(__func__);
 	while(1) {
 		cs_sleepms(750);
 		event_handler(0);

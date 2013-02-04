@@ -293,6 +293,8 @@ static void save_stat_to_file_thread(void)
 	stat_load_save = 0;
 	char buf[256];
 
+	set_thread_name(__func__);
+
 	char *fname;
 	if (!cfg.lb_savepath) {
 		snprintf(buf, sizeof(buf), "%s/stat", get_tmp_dir());
@@ -1443,6 +1445,7 @@ static void housekeeping_stat_thread(void)
 	time_t cleanup_time = time(NULL) - (cfg.lb_stat_cleanup*60*60);
 	int32_t cleaned = 0;
 	struct s_reader *rdr;
+	set_thread_name(__func__);
 	LL_ITER itr = ll_iter_create(configured_readers);
 	cs_readlock(&readerlist_lock); //this avoids cleaning a reading during writing
 	while ((rdr = ll_iter_next(&itr))) {

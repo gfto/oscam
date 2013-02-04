@@ -114,6 +114,7 @@ static void arm_switch_led_from_thread(int32_t led, int32_t action) {
 
 static void *arm_led_thread_main(void *UNUSED(thread_data)) {
 	uint8_t running = 1;
+	set_thread_name(__func__);
 	while (running) {
 		LL_ITER iter = ll_iter_create(arm_led_actions);
 		struct s_arm_led *arm_led;

@@ -54,6 +54,8 @@ void * work_thread(void *ptr) {
 	struct job_data tmp_data;
 	struct pollfd pfd[1];
 
+	set_thread_name(__func__);
+
 	pthread_setspecific(getclient, cl);
 	cl->thread = pthread_self();
 	cl->thread_active = 1;

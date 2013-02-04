@@ -772,6 +772,16 @@ static void init_check(void){
 	}
 }
 
+#ifdef __linux__
+#include <sys/prctl.h>
+// Set the thread name (comm) under linux (the limit is 16 chars)
+void set_thread_name(const char *thread_name) {
+	prctl(PR_SET_NAME, thread_name, NULL, NULL, NULL);
+}
+#else
+void set_thread_name(const char *UNUSED(thread_name)) { }
+#endif
+
 /* Starts a thread named nameroutine with the start function startroutine. */
 void start_thread(void * startroutine, char * nameroutine) {
 	pthread_t temp;
@@ -1038,6 +1048,8 @@ static void * client_check(void) {
 
 	char buf[10];
 
+	set_thread_name(__func__);
+
 	if (pipe(thread_pipe) == -1) {
 		printf("cannot create pipe, errno=%d\n", errno);
 		exit(1);
@@ -1179,6 +1191,7 @@ static void * client_check(void) {
 static void * reader_check(void) {
 	struct s_client *cl;
 	struct s_reader *rdr;
+	set_thread_name(__func__);
 	while (1) {
 		for (cl=first_client->next; cl ; cl=cl->next) {
 			if (!cl->thread_active)
