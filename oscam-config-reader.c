@@ -727,7 +727,6 @@ static const struct config_list reader_opts[] = {
 	DEF_OPT_INT32("cool_timeout_init"			, OFS(cool_timeout_init),			0 ), //0 = use value from atr
 	DEF_OPT_INT32("cool_timeout_after_init"		, OFS(cool_timeout_after_init),		0 ), //0 = use value from atr
 #endif
-	DEF_OPT_INT32("logport"				, OFS(log_port),				0 ),
 	DEF_OPT_FUNC("caid"					, OFS(ctab),					reader_caid_fn ),
 	DEF_OPT_FUNC("atr"					, 0,							atr_fn ),
 	DEF_OPT_FUNC("boxid"				, 0,							boxid_fn ),

@@ -5,7 +5,6 @@ enum actions {
 	// Reader action
 	ACTION_READER_IDLE         = 1,
 	ACTION_READER_REMOTE       = 2,
-	ACTION_READER_REMOTELOG    = 3,
 	ACTION_READER_RESET        = 4,
 	ACTION_READER_ECM_REQUEST  = 5,
 	ACTION_READER_EMM          = 6,

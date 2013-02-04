@@ -632,8 +632,6 @@ struct s_module {
 	int32_t			(*c_init)(struct s_client*);
 	int32_t			(*c_send_ecm)(struct s_client *, struct ecm_request_t *, uchar *);
 	int32_t			(*c_send_emm)(struct emm_packet_t *);
-	int32_t			(*c_init_log)(void);
-	int32_t			(*c_recv_log)(uint16_t *, uint32_t *, uint16_t *);
 	int32_t			(*c_available)(struct s_reader *, int32_t, struct ecm_request_t *); 	//Schlocke: available check for load-balancing,
 										// params:
 										// rdr (reader to check)
@@ -1138,7 +1136,6 @@ struct s_reader  									//contains device info, reader info and card info
 	char			r_pwd[64];
 	char			l_pwd[64];
 	int32_t			l_port;
-	int32_t			log_port;
 	CAIDTAB			ctab;
 	uint32_t		boxid;
 	int8_t			nagra_read;						// read nagra ncmed records: 0 Disabled (default), 1 read all records, 2 read valid records only

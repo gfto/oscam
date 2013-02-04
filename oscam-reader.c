@@ -411,38 +411,6 @@ void network_tcp_connection_close(struct s_reader *reader, char *reason)
 		cl->ncd_msgid = 0; 
 }
 
-void casc_do_sock_log(struct s_reader * reader)
-{
-  int32_t i, idx;
-  uint16_t caid, srvid;
-  uint32_t provid;
-  struct s_client *cl = reader->client;
-
-  if(!cl) return;
-
-  idx=reader->ph.c_recv_log(&caid, &provid, &srvid);
-  cl->last=time((time_t*)0);
-  if (idx<0) return;        // no dcw-msg received
-
-  if(!cl->ecmtask) {
-    rdr_log(reader, "WARNING: ecmtask not a available");
-    return;
-  }
-
-  for (i = 0; i < cfg.max_pending; i++)
-  {
-    if (  (cl->ecmtask[i].rc>=10)
-       && (cl->ecmtask[i].idx==idx)
-       && (cl->ecmtask[i].caid==caid)
-       && (cl->ecmtask[i].prid==provid)
-       && (cl->ecmtask[i].srvid==srvid))
-    {
-      casc_check_dcw(reader, i, 0, cl->ecmtask[i].cw);  // send "not found"
-      break;
-    }
-  }
-}
-
 int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
 	int32_t rc, n, i, sflag, pending=0;
@@ -607,9 +575,6 @@ int32_t reader_init(struct s_reader *reader) {
 			//proxy reader start failed
 			return 0;
 		}
-
-		if ((reader->log_port) && (reader->ph.c_init_log))
-			reader->ph.c_init_log();
 
 		if (!cs_malloc(&client->ecmtask, cfg.max_pending * sizeof(ECM_REQUEST)))
 			return 0;

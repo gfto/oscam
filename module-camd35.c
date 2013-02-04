@@ -13,8 +13,6 @@
 
 extern struct s_module modules[CS_MAX_MOD];
 
-static int32_t logfd = 0;
-
 //CMD00 - ECM (request)
 //CMD01 - ECM (response)
 //CMD02 - EMM (in clientmode - set EMM, in server mode - EMM data) - obsolete
@@ -762,41 +760,6 @@ static void * camd35_server(struct s_client *client __attribute__((unused)), uch
 	return NULL; //to prevent compiler message
 }
 
-int32_t camd35_client_init_log(void)
-{
-  struct sockaddr_in loc_sa;
-  struct s_client *cl = cur_client();
-
-  if (cl->reader->log_port<=0)
-  {
-    cs_log("invalid port %d for camd3-loghost", cl->reader->log_port);
-    return(1);
-  }
-
-  memset((char *)&loc_sa,0,sizeof(loc_sa));
-  loc_sa.sin_family = AF_INET;
-  loc_sa.sin_addr.s_addr = INADDR_ANY;
-  loc_sa.sin_port = htons(cl->reader->log_port);
-
-  if ((logfd=socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP))<0)
-  {
-    cs_log("Socket creation failed (errno=%d %s)", errno, strerror(errno));
-    return(1);
-  }
-
-  if (bind(logfd, (struct sockaddr *)&loc_sa, sizeof(loc_sa))<0)
-  {
-    cs_log("bind failed (errno=%d %s)", errno, strerror(errno));
-    close(logfd);
-    return(1);
-  }
-
-  cs_log("camd3 loghost initialized (fd=%d, port=%d)",
-         logfd, cl->reader->log_port);
-
-  return(0);
-}
-
 static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *buf)
 {
 	static const char *typtext[]={"ok", "invalid", "sleeping"};
@@ -952,37 +915,6 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 	return(idx);
 }
 
-static int32_t camd35_recv_log(uint16_t *caid, uint32_t *provid, uint16_t *srvid)
-{
-  int32_t i;
-  uchar buf[512], *ptr, *ptr2;
-  char *saveptr1 = NULL;
-  uint16_t idx=0;
-  if (!logfd) return(-1);
-  if ((i=recv(logfd, buf, sizeof(buf), 0))<=0) return(-1);
-  buf[i]=0;
-
-  if (!(ptr=(uchar *)strstr((char *)buf, " -> "))) return(-1);
-  ptr+=4;
-  if (strstr((char *)ptr, " decoded ")) return(-1);	// skip "found"s
-  if (!(ptr2=(uchar *)strchr((char *)ptr, ' '))) return(-1);	// corrupt
-  *ptr2=0;
-
-  for (i=0, ptr2=(uchar *)strtok_r((char *)ptr, ":", &saveptr1); ptr2; i++, ptr2=(uchar *)strtok_r(NULL, ":", &saveptr1))
-  {
-    trim((char *)ptr2);
-    switch(i)
-    {
-      case 0: *caid  =cs_atoi((char *)ptr2, strlen((char *)ptr2)>>1, 0); break;
-      case 1: *provid=cs_atoi((char *)ptr2, strlen((char *)ptr2)>>1, 0); break;
-      case 2: *srvid =cs_atoi((char *)ptr2, strlen((char *)ptr2)>>1, 0); break;
-      case 3: idx    =cs_atoi((char *)ptr2, strlen((char *)ptr2)>>1, 0); break;
-    }
-    if (errno) return(-1);
-  }
-  return(idx&0x1FFF);
-}
-
 /*
  *	module definitions
  */
@@ -1009,8 +941,6 @@ void module_camd35(struct s_module *ph)
   ph->c_recv_chk=camd35_recv_chk;
   ph->c_send_ecm=camd35_send_ecm;
   ph->c_send_emm=camd35_send_emm;
-  ph->c_init_log=camd35_client_init_log;
-  ph->c_recv_log=camd35_recv_log;
 #ifdef CS_CACHEEX
   ph->c_cache_push=camd35_cache_push_out;
   ph->c_cache_push_chk=camd35_cache_push_chk;
@@ -1040,8 +970,6 @@ void module_camd35_tcp(struct s_module *ph)
   ph->c_recv_chk=camd35_recv_chk;
   ph->c_send_ecm=camd35_send_ecm;
   ph->c_send_emm=camd35_send_emm;
-  ph->c_init_log=camd35_client_init_log;
-  ph->c_recv_log=camd35_recv_log;
 #ifdef CS_CACHEEX
   ph->c_cache_push=camd35_cache_push_out;
   ph->c_cache_push_chk=camd35_cache_push_chk;

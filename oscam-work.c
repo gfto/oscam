@@ -197,9 +197,6 @@ void * work_thread(void *ptr) {
 					}
 				}
 				break;
-			case ACTION_READER_REMOTELOG:
-				casc_do_sock_log(reader);
-				break;
 			case ACTION_READER_RESET:
 				cardreader_do_reset(reader);
 				break;

@@ -1292,9 +1292,6 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	tpl_printf(vars, TPLADD, "COOLTIMEOUTAFTERINIT", "%d", rdr->cool_timeout_after_init);
 #endif
 
-	// Logport
-	tpl_printf(vars, TPLADD, "LOGPORT", "%d", rdr->log_port);
-
 	// BoxID
 	if(rdr->boxid)
 		tpl_printf(vars, TPLADD, "BOXID", "%08X", rdr->boxid);
