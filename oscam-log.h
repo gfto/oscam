@@ -3,7 +3,6 @@
 
 int32_t cs_init_log(void);
 int32_t cs_open_logfiles(void);
-void cs_log_config(void);
 void cs_close_log(void);
 
 void cs_disable_log(int8_t disabled);

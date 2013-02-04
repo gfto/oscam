@@ -137,7 +137,6 @@ int32_t cs_open_logfiles(void)
 	openlog(syslog_ident, LOG_NDELAY | LOG_PID, LOG_DAEMON);
 
 	cs_log_nolock(">> OSCam <<  cardserver %s, version " CS_VERSION ", build r" CS_SVN_VERSION " (" CS_TARGET ")", starttext);
-	cs_log_config();
 	return(fp <= (FILE *)0);
 }
 
@@ -447,30 +446,6 @@ void logCWtoFile(ECM_REQUEST *er, uchar *cw){
 	fprintf(pfCWL, "# %s", buf);
 	fflush(pfCWL);
 	fclose(pfCWL);
-}
-
-void cs_log_config(void)
-{
-  uchar buf[20];
-
-  if (cfg.nice!=99)
-    snprintf((char *)buf, sizeof(buf), ", nice=%d", cfg.nice);
-  else
-    buf[0]='\0';
-  cs_log_nolock("version=%s, build r%s, system=%s%s", CS_VERSION, CS_SVN_VERSION, CS_TARGET, buf);
-  cs_log_nolock("client max. idle=%d sec, debug level=%d, filter_sensitive=%d", cfg.cmaxidle, cs_dblevel, log_remove_sensitive);
-
-  if( cfg.max_log_size )
-    snprintf((char *)buf, sizeof(buf), "%d Kb", cfg.max_log_size);
-  else
-    cs_strncpy((char *)buf, "unlimited", sizeof(buf));
-#if defined(WEBIF) || defined(MODULE_MONITOR)
-  cs_log_nolock("max. logsize=%s, loghistorysize=%d bytes", buf, cfg.loghistorysize);
-#else
-	cs_log_nolock("max. logsize=%s bytes", buf);
-#endif
-  cs_log_nolock("client timeout=%u ms, fallback timeout=%u ms, cache delay=%d ms",
-         cfg.ctimeout, cfg.ftimeout, cfg.delay);
 }
 
 int32_t cs_init_statistics(void)
