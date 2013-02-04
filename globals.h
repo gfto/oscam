@@ -1528,10 +1528,12 @@ struct s_config
 	//Todo #ifdef CCCAM
 	struct s_provid *provid;
 	struct s_sidtab *sidtab;
+#ifdef MODULE_MONITOR
 	int32_t			mon_port;
 	IN_ADDR_T		mon_srvip;
 	struct s_ip 	*mon_allowed;
 	uint8_t			mon_level;
+#endif
 	int32_t			aulow;
 	int32_t			hideclient_to;
 	int8_t			appendchaninfo;

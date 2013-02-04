@@ -403,7 +403,9 @@ AAAAAElFTkSuQmCC"
 ##TPLCONFIGMENUGBOX##\
 ##TPLCONFIGMENUCSP##\
 ##TPLCONFIGMENUANTICASC##\
+##TPLCONFIGMENULCD##\
 ##TPLCONFIGMENUMONITOR##\
+##TPLCONFIGMENUWEBIF##\
 ##TPLCONFIGMENUSERIAL##\
 ##TPLCONFIGMENUDVBAPI##\
 		</TR>\n\
@@ -509,12 +511,9 @@ AAAAAElFTkSuQmCC"
 
 #define TPLCONFIGMENUANTICASC "			<TD CLASS=\"##CMENUACTIVE8##\"><A HREF=\"config.html?part=anticasc\">Anticascading</A></TD>\n"
 #define TPLFILEMENUANTICASC "			<TD CLASS=\"##CMENUACTIVE22##\"><A HREF=\"files.html?file=anticasc\">AC Log</A></TD>\n"
-
-#ifdef MODULE_MONITOR
-#define TPLCONFIGMENUMONITOR "			<TD CLASS=\"##CMENUACTIVE9##\"><A HREF=\"config.html?part=monitor\">WebIf/Monitor</A></TD>\n"
-#else
-#define TPLCONFIGMENUMONITOR "			<TD CLASS=\"##CMENUACTIVE9##\"><A HREF=\"config.html?part=monitor\">WebIf</A></TD>\n"
-#endif
+#define TPLCONFIGMENUMONITOR "			<TD CLASS=\"##CMENUACTIVE9##\"><A HREF=\"config.html?part=monitor\">Monitor</A></TD>\n"
+#define TPLCONFIGMENUWEBIF "			<TD CLASS=\"##CMENUACTIVE12##\"><A HREF=\"config.html?part=webif\">WebIf</A></TD>\n"
+#define TPLCONFIGMENULCD "			<TD CLASS=\"##CMENUACTIVE13##\"><A HREF=\"config.html?part=lcd\">LCD</A></TD>\n"
 
 #define TPLCONFIGMENUDVBAPI "			<TD CLASS=\"##CMENUACTIVE11##\"><A HREF=\"config.html?part=dvbapi\">DVB-Api</A></TD>\n"
 #define TPLFILEMENUDVBAPI "			<TD CLASS=\"##CMENUACTIVE23##\"><A HREF=\"files.html?file=dvbapi\">oscam.dvbapi</A></TD>\n"
@@ -1588,6 +1587,39 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"monitor\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
+		<input name=\"appendchaninfo\" type=\"hidden\" value=\"0\">\n\
+		<TABLE class=\"config\">\n\
+			<TR><TH COLSPAN=\"2\">Edit Monitor Config</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#port##TPLHELPSUFFIX##Port:</A></TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MONPORT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#serverip_2##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"serverip\" type=\"text\" size=\"15\" maxlength=\"15\" value=\"##SERVERIP##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#nocrypt##TPLHELPSUFFIX##No crypt:</A></TD><TD><input name=\"nocrypt\" type=\"text\" size=\"63\" maxlength=\"200\" value=\"##NOCRYPT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#aulow##TPLHELPSUFFIX##Au low:</A></TD><TD><input name=\"aulow\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##AULOW##\"> min</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#hideclient_to##TPLHELPSUFFIX##Hide client to:</A></TD><TD><input name=\"hideclient_to\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##HIDECLIENTTO##\"> s</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#appendchaninfo##TPLHELPSUFFIX##Append channel info:</A></TD><TD><input name=\"appendchaninfo\" type=\"checkbox\" value=\"1\" ##APPENDCHANINFO##></TD></TR>\n\
+			<TR>\n\
+				<TD>##TPLHELPPREFIX##conf#monlevel##TPLHELPSUFFIX##Monlevel:</A></TD>\n\
+				<TD><select name=\"monlevel\">\n\
+					<option value=\"0\" ##MONSELECTED0##>0 - no access to monitor</option>\n\
+					<option value=\"1\" ##MONSELECTED1##>1 - only server and own procs</option>\n\
+					<option value=\"2\" ##MONSELECTED2##>2 - all procs, but viewing only, default</option>\n\
+					<option value=\"3\" ##MONSELECTED3##>3 - all procs, reload of oscam.user possible</option>\n\
+					<option value=\"4\" ##MONSELECTED4##>4 - complete access</option>\n\
+					</select>\n\
+				</TD>\n\
+			</TR>\n\
+			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
+		</TABLE>\n\
+	</form>\n\
+##TPLFOOTER##"
+
+#define TPLCONFIGWEBIF "\
+##TPLHEADER##\
+##TPLMENU##\
+##TPLCONFIGMENU##\
+##TPLMESSAGE##\
+	<form action=\"config.html\" method=\"get\">\n\
+		<input name=\"part\" type=\"hidden\" value=\"webif\">\n\
+		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
 		<input name=\"http_prepend_embedded_css\" type=\"hidden\" value=\"0\">\n\
 		<input name=\"httphideidleclients\" type=\"hidden\" value=\"0\">\n\
 		<input name=\"httpshowpicons\" type=\"hidden\" value=\"0\">\n\
@@ -1618,47 +1650,35 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#aulow##TPLHELPSUFFIX##Au low:</A></TD><TD><input name=\"aulow\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##AULOW##\"> min</TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#hideclient_to##TPLHELPSUFFIX##Hide client to:</A></TD><TD><input name=\"hideclient_to\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##HIDECLIENTTO##\"> s</TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#appendchaninfo##TPLHELPSUFFIX##Append channel info:</A></TD><TD><input name=\"appendchaninfo\" type=\"checkbox\" value=\"1\" ##APPENDCHANINFO##></TD></TR>\n\
-##TPLCONFIGMONITOR_CONF##\
 			<TR><TD>##TPLHELPPREFIX##conf#httpsavefullcfg##TPLHELPSUFFIX##Http save full config:</A></TD><TD><SELECT NAME=\"httpsavefullcfg\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##HTTPSAVEFULLSELECT##>YES</OPTION></SELECT></TD></TR>\n\
 ##TPLHTTPFORCESSLV3##\
-##TPLLCDOPTIONS##\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
 
-#ifdef MODULE_MONITOR
-#define TPLCONFIGMONITOR_CONF "\
-			<TR><TH COLSPAN=\"2\">Edit Monitor Config</TH></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#port##TPLHELPSUFFIX##Port:</A></TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MONPORT##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#serverip_2##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"serverip\" type=\"text\" size=\"15\" maxlength=\"15\" value=\"##SERVERIP##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#nocrypt##TPLHELPSUFFIX##No crypt:</A></TD><TD><input name=\"nocrypt\" type=\"text\" size=\"63\" maxlength=\"200\" value=\"##NOCRYPT##\"></TD></TR>\n\
-			<TR>\n\
-				<TD>##TPLHELPPREFIX##conf#monlevel##TPLHELPSUFFIX##Monlevel:</A></TD>\n\
-				<TD><select name=\"monlevel\">\n\
-					<option value=\"0\" ##MONSELECTED0##>0 - no access to monitor</option>\n\
-					<option value=\"1\" ##MONSELECTED1##>1 - only server and own procs</option>\n\
-					<option value=\"2\" ##MONSELECTED2##>2 - all procs, but viewing only, default</option>\n\
-					<option value=\"3\" ##MONSELECTED3##>3 - all procs, reload of oscam.user possible</option>\n\
-					<option value=\"4\" ##MONSELECTED4##>4 - complete access</option>\n\
-					</select>\n\
-				</TD>\n\
-			</TR>\n"
-#else
-#define TPLCONFIGMONITOR_CONF ""
-#endif
-
 #define TPLHTTPFORCESSLV3 "\
 			<TR><TH COLSPAN=\"2\">SSL</TH></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#httpforcesslv3##TPLHELPSUFFIX##Force more secure v3 of ssl:</A></TD><TD><SELECT NAME=\"httpforcesslv3\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##HTTPFORCESSLV3SELECT##>YES</OPTION></SELECT></TD></TR>\n"
 
-#define TPLLCDOPTIONS "\
+#define TPLCONFIGLCD "\
+##TPLHEADER##\
+##TPLMENU##\
+##TPLCONFIGMENU##\
+##TPLMESSAGE##\
+	<form action=\"config.html\" method=\"get\">\n\
+		<input name=\"part\" type=\"hidden\" value=\"lcd\">\n\
+		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
+		<TABLE class=\"config\">\n\
 			<TR><TH COLSPAN=\"2\">LCD Config</TH></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#enablelcd##TPLHELPSUFFIX##Enable LCD:</A></TD><TD><SELECT NAME=\"enablelcd\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##ENABLELCDSELECTED##>YES</OPTION></SELECT></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#lcd_outputpath##TPLHELPSUFFIX##LCD Output Path:</A></TD><TD><input name=\"lcd_outputpath\" type=\"text\" size=\"63\" maxlength=\"200\" value=\"##LCDOUTPUTPATH##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#lcd_writeintervall##TPLHELPSUFFIX##LCD Write Interval:</A></TD><TD><input name=\"lcd_writeintervall\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##LCDREFRESHINTERVAL##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#lcd_hideidle##TPLHELPSUFFIX##LCD Hide idle Readers:</A></TD><TD><SELECT NAME=\"lcd_hideidle\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##LCDHIDEIDLE##>YES</OPTION></SELECT></TD></TR>\n"
-
+			<TR><TD>##TPLHELPPREFIX##conf#lcd_hideidle##TPLHELPSUFFIX##LCD Hide idle Readers:</A></TD><TD><SELECT NAME=\"lcd_hideidle\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##LCDHIDEIDLE##>YES</OPTION></SELECT></TD></TR>\n\
+			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
+		</TABLE>\n\
+	</form>\n\
+##TPLFOOTER##"
 
 #define TPLCONFIGRADEGAST "\
 ##TPLHEADER##\
@@ -2496,7 +2516,8 @@ const char *templates[][3] = {
 	,{"APIFAILBANBIT", TPLAPIFAILBANBIT, ""}
 	,{"CONFIGGBOX", TPLCONFIGGBOX, ""}
 	,{"CONFIGMONITOR", TPLCONFIGMONITOR, ""}
-	,{"CONFIGMONITOR_CONF", TPLCONFIGMONITOR_CONF, ""}
+	,{"CONFIGWEBIF", TPLCONFIGWEBIF, ""}
+	,{"CONFIGLCD", TPLCONFIGLCD, ""}
 	,{"CONFIGGLOBAL", TPLCONFIGGLOBAL, ""}
 	,{"CONFIGSERIALDEVICEBIT", TPLCONFIGSERIALDEVICEBIT, ""}
 	,{"SERVICECONFIGLIST", TPLSERVICECONFIGLIST, ""}
@@ -2526,7 +2547,13 @@ const char *templates[][3] = {
 	,{"CONFIGMENUANTICASC", TPLCONFIGMENUANTICASC, "CS_ANTICASC"}
 	,{"FILEMENUANTICASC", TPLFILEMENUANTICASC, "CS_ANTICASC"}
 #endif
-	,{"CONFIGMENUMONITOR", TPLCONFIGMENUMONITOR, "" }
+#ifdef MODULE_MONITOR
+	,{"CONFIGMENUMONITOR", TPLCONFIGMENUMONITOR, "MODULE_MONITOR" }
+#endif
+	,{"CONFIGMENUWEBIF", TPLCONFIGMENUWEBIF, "MODULE_WEBIF" }
+#ifdef LCDSUPPORT
+	,{"CONFIGMENULCD", TPLCONFIGMENULCD, "LCDSUPPORT" }
+#endif
 #ifdef LEDSUPPORT
 	,{"ENABLELEDBIT", TPLENABLELEDBIT, "LEDSUPPORT"}
 #endif
@@ -2571,9 +2598,6 @@ const char *templates[][3] = {
 #ifdef MODULE_SERIAL
 	,{"CONFIGSERIAL", TPLCONFIGSERIAL, "MODULE_SERIAL"}
 	,{"CONFIGMENUSERIAL", TPLCONFIGMENUSERIAL, "MODULE_SERIAL"}
-#endif
-#ifdef LCDSUPPORT
-	,{"LCDOPTIONS", TPLLCDOPTIONS, "LCDSUPPORT"}
 #endif
 #ifdef WITH_SSL
 	,{"HTTPFORCESSLV3", TPLHTTPFORCESSLV3, "WITH_SSL"}
