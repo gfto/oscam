@@ -84,10 +84,6 @@ int log_remove_sensitive = 1;
 
 char    *prog_name = NULL;
 char    *processUsername = NULL;
-#if defined(WEBIF) || defined(MODULE_MONITOR)
-char    *loghist = NULL;     // ptr of log-history
-char    *loghistptr = NULL;
-#endif
 
 /*****************************************************************************
         Statics

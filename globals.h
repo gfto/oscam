@@ -1783,9 +1783,6 @@ extern uint16_t len4caid[256];
 extern struct s_config cfg;
 extern char cs_confdir[];
 extern int32_t exit_oscam;
-#if defined(WEBIF) || defined(MODULE_MONITOR)
-extern char *loghist, *loghistptr;
-#endif
 
 extern int log_remove_sensitive;
 

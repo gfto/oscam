@@ -11,6 +11,8 @@
 #include "oscam-work.h"
 
 extern char *entitlement_type[];
+extern char *loghist;
+extern char *loghistptr;
 
 static int8_t monitor_check_ip(void)
 {

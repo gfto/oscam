@@ -31,6 +31,8 @@ struct s_log {
 
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 static CS_MUTEX_LOCK loghistory_lock;
+char *loghist = NULL;     // ptr of log-history
+char *loghistptr = NULL;
 #endif
 
 #define LOG_BUF_SIZE 512

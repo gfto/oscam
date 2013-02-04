@@ -39,6 +39,8 @@ extern struct s_cardreader cardreaders[CS_MAX_MOD];
 extern char *CSS;
 extern char *entitlement_type[];
 extern char *RDR_CD_TXT[];
+extern char *loghist;
+extern char *loghistptr;
 
 int32_t ssl_active = 0;
 char noncekey[33];
