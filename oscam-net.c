@@ -446,8 +446,6 @@ int32_t start_listener(struct s_module *ph, int32_t port_idx)
 	struct SOCKADDR sad; // structure to hold server's address
 	socklen_t sad_len;
 
-	cs_log("Starting listener %d", port_idx);
-
 	ptxt[0][0] = ptxt[1][0] = '\0';
 	if (!ph->ptab->ports[port_idx].s_port) {
 		cs_log("%s: disabled", ph->desc);
