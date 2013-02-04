@@ -774,6 +774,11 @@ static void init_check(void){
 
 #ifdef __linux__
 #include <sys/prctl.h>
+// PR_SET_NAME is introduced in 2.6.9 (which is ancient, released 18 Oct 2004)
+// but apparantly we can't count on having at least that version :(
+#ifndef PR_SET_NAME
+#define PR_SET_NAME    15
+#endif
 // Set the thread name (comm) under linux (the limit is 16 chars)
 void set_thread_name(const char *thread_name) {
 	prctl(PR_SET_NAME, thread_name, NULL, NULL, NULL);
