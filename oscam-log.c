@@ -18,8 +18,7 @@ char *LOG_LIST = "log_list";
 static FILE *fp=(FILE *)0;
 static FILE *fps=(FILE *)0;
 static int8_t logStarted = 0;
-LLIST *log_list;
-char *vbuf;
+static LLIST *log_list;
 
 struct s_log {
 	char *txt;
@@ -31,7 +30,7 @@ struct s_log {
 };
 
 #if defined(WEBIF) || defined(MODULE_MONITOR)
-CS_MUTEX_LOCK loghistory_lock;
+static CS_MUTEX_LOCK loghistory_lock;
 #endif
 
 #define LOG_BUF_SIZE 512

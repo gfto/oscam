@@ -1542,8 +1542,7 @@ int32_t main (int32_t argc, char *argv[])
 	mca_close();
 
 	cs_cleanup();
-	while(ll_count(log_list) > 0)
-		cs_sleepms(1);
+
 	stop_garbage_collector();
 
 	return exit_oscam;

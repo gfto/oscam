@@ -1788,8 +1788,6 @@ extern int32_t exit_oscam;
 extern char *loghist, *loghistptr;
 #endif
 
-extern LLIST *log_list;				// log list
-
 extern int log_remove_sensitive;
 
 // These are used pretty much everywhere
