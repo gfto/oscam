@@ -34,14 +34,6 @@
 /*****************************************************************************
         Globals
 *****************************************************************************/
-char *RDR_CD_TXT[] = {
-	"cd", "dsr", "cts", "ring", "none",
-	"gpio1", "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7",
-	NULL
-};
-
-char *entitlement_type[] = {"", "package", "PPV-Event", "chid", "tier", "class", "PBM", "admin" };
-
 const char *syslog_ident = "oscam";
 char *oscam_pidfile = NULL;
 char default_pidfile[64];

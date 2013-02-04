@@ -14,6 +14,7 @@
 
 extern struct s_module modules[CS_MAX_MOD];
 extern struct s_cardreader cardreaders[CS_MAX_MOD];
+extern char *RDR_CD_TXT[];
 
 static void reader_label_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_reader *rdr = setting;

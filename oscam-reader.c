@@ -16,6 +16,12 @@
 extern CS_MUTEX_LOCK system_lock;
 extern struct s_cardsystem cardsystems[CS_MAX_MOD];
 
+const char *RDR_CD_TXT[] = {
+	"cd", "dsr", "cts", "ring", "none",
+	"gpio1", "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7",
+	NULL
+};
+
 struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid) {
 	int32_t i, j;
 	for (i = 0; i < CS_MAX_MOD; i++) {

@@ -15,6 +15,7 @@
 #include "csctapi/icc_async.h"
 
 extern struct s_cardsystem cardsystems[CS_MAX_MOD];
+extern char *RDR_CD_TXT[];
 
 int32_t check_sct_len(const uchar *data, int32_t off)
 {

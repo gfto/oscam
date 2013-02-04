@@ -7,6 +7,8 @@
 #include "oscam-work.h"
 #include "reader-common.h"
 
+const char *entitlement_type[] = { "", "package", "PPV-Event", "chid", "tier", "class", "PBM", "admin" };
+
 static int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int16_t len)
 {
 	int i;

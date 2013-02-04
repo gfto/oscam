@@ -1766,7 +1766,6 @@ typedef struct emm_packet_t
 /* ===========================
  *      global variables
  * =========================== */
-extern char *RDR_CD_TXT[];
 extern char cs_tmpdir[200];
 extern uint32_t cfg_sidtab_generation;
 extern uint8_t cs_http_use_utf8;
