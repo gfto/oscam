@@ -1267,15 +1267,22 @@ void newcamd_idle(void) {
 
 	if (!rdr) return;
 
-	time_t now;
-	int32_t time_diff;
-	time(&now);
-	time_diff = abs(now - rdr->last_s);
-	if (time_diff>(rdr->tcp_ito)) {
-		if (client->ncd_keepalive)
-			newcamd_reply_ka();
-		else
-			network_tcp_connection_close(client->reader, "inactivity");
+	if (rdr->tcp_ito > 0) {
+		// inactivitytimeout > 0 enables protocol keepalive packages
+		time_t now;
+		int32_t time_diff;
+		time(&now);
+		time_diff = abs(now - rdr->last_s);
+		if (time_diff>(rdr->tcp_ito)) {
+			if (client->ncd_keepalive)
+				newcamd_reply_ka();
+			else
+				network_tcp_connection_close(client->reader, "inactivity");
+		}
+	}
+	else if (rdr->tcp_ito == -1) {
+		// idle reconnect
+		newcamd_connect();
 	}
 }
 
@@ -1295,7 +1302,8 @@ int32_t newcamd_client_init(struct s_client *client)
           (client->reader->ncd_proto==NCD_525)?5:4, client->udp_fd, ptxt);
 
   // try to connect. ignore possible failures
-  if (client->reader->ncd_connect_on_init)
+  // idle reconnect (tcp_ito = -1) will trigger an additional connect anyway
+  if (client->reader->ncd_connect_on_init && client->reader->tcp_ito != -1)
     newcamd_connect();
 
   return(0);

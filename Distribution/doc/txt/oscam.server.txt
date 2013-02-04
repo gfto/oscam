@@ -232,6 +232,8 @@ DESCRIPTIONS
        inactivitytimeout = seconds
 	  inactivity timeout for all TCP based remote readers, default:0
 
+	  newcamd only: -1 = reconnect on network failure, even in idle.
+
        reconnecttimeout = seconds
 	  reconnect if missing answers from a remote reader, default:30
 
