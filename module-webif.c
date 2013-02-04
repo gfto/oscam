@@ -282,6 +282,9 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	if(cfg.disablelog == 1) tpl_addVar(vars, TPLADD, "DISABLELOGCHECKED", "selected");
 	tpl_printf(vars, TPLADD, "MAXLOGSIZE", "%d", cfg.max_log_size);
 
+	if (cfg.logduplicatelines)
+		tpl_addVar(vars, TPLADD, "LOGDUPSCHECKED", "selected");
+
 	if (cfg.cwlogdir != NULL) tpl_addVar(vars, TPLADD, "CWLOGDIR", cfg.cwlogdir);
 	if (cfg.emmlogdir != NULL) tpl_addVar(vars, TPLADD, "EMMLOGDIR", cfg.emmlogdir);
 	tpl_addVar(vars, TPLADD, "ECMFMT", cfg.ecmfmt);

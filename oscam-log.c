@@ -336,25 +336,30 @@ void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar 
 			len = get_log_header(1, log_txt);
 			vsnprintf(log_txt + len, sizeof(log_txt) - len, fmt, params);
 			va_end(params);
-			repeated_line = strcmp(last_log_txt, log_txt + len) == 0;
-			if (last_log_duplicates > 0) {
-				if (!last_log_ts) // Must be initialized once
-					last_log_ts = log_ts;
-				// Report duplicated lines when the new log line is different
-				// than the old or 60 seconds have passed.
-				if (!repeated_line || log_ts - last_log_ts >= 60) {
-					dupl_header_len = get_log_header(2, dupl);
-					snprintf(dupl + dupl_header_len - 1, sizeof(dupl) - dupl_header_len, "--- Skipped %u duplicated log lines ---", last_log_duplicates);
-					write_to_log_int(dupl, 0);
-					last_log_duplicates = 0;
-					last_log_ts = log_ts;
-				}
-			}
-			if (!repeated_line) {
+			if (cfg.logduplicatelines) {
 				memcpy(last_log_txt, log_txt + len, LOG_BUF_SIZE);
 				write_to_log_int(log_txt, len);
 			} else {
-				last_log_duplicates++;
+				repeated_line = strcmp(last_log_txt, log_txt + len) == 0;
+				if (last_log_duplicates > 0) {
+					if (!last_log_ts) // Must be initialized once
+						last_log_ts = log_ts;
+					// Report duplicated lines when the new log line is different
+					// than the old or 60 seconds have passed.
+					if (!repeated_line || log_ts - last_log_ts >= 60) {
+						dupl_header_len = get_log_header(2, dupl);
+						snprintf(dupl + dupl_header_len - 1, sizeof(dupl) - dupl_header_len, "--- Skipped %u duplicated log lines ---", last_log_duplicates);
+						write_to_log_int(dupl, 0);
+						last_log_duplicates = 0;
+						last_log_ts = log_ts;
+					}
+				}
+				if (!repeated_line) {
+					memcpy(last_log_txt, log_txt + len, LOG_BUF_SIZE);
+					write_to_log_int(log_txt, len);
+				} else {
+					last_log_duplicates++;
+				}
 			}
 		}
 		if (buf)

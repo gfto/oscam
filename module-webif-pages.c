@@ -1753,6 +1753,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 					<input name=\"maxlogsize\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MAXLOGSIZE##\"> kB\n\
 				</TD>\n\
 			</TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#logduplicatelines##TPLHELPSUFFIX##Log duplicated lines:</A></TD><TD><SELECT NAME=\"logduplicatelines\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##LOGDUPSCHECKED##>YES</OPTION></SELECT></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#pidfile##TPLHELPSUFFIX##Pidfile:</A></TD><TD><input name=\"pidfile\" type=\"text\" size=\"55\" maxlength=\"128\" value=\"##PIDFILE##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#cwlogdir##TPLHELPSUFFIX##CW log dir:</A></TD><TD><input name=\"cwlogdir\" type=\"text\" size=\"55\" maxlength=\"128\" value=\"##CWLOGDIR##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#emmlogdir##TPLHELPSUFFIX##EMM log dir:</A></TD><TD><input name=\"emmlogdir\" type=\"text\" size=\"55\" maxlength=\"128\" value=\"##EMMLOGDIR##\"></TD></TR>\n\

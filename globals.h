@@ -1514,6 +1514,7 @@ struct s_config
 	char			*mailfile;
 	uint8_t			logtostdout;
 	uint8_t 		logtosyslog;
+	int8_t			logduplicatelines;
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 	uint32_t		loghistorysize;
 #endif
