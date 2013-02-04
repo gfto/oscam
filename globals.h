@@ -1788,7 +1788,6 @@ extern int32_t exit_oscam;
 extern char *loghist, *loghistptr;
 #endif
 
-extern pid_t server_pid;							// PID of server - set while startup
 extern LLIST *log_list;				// log list
 
 extern int log_remove_sensitive;

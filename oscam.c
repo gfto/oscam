@@ -66,7 +66,6 @@ int8_t cs_capture_SEGV=0;
 int8_t cs_dump_stack=0;
 uint16_t cs_waittime = 60;
 char  cs_tmpdir[200]={0x00};
-pid_t server_pid=0;
 CS_MUTEX_LOCK system_lock;
 CS_MUTEX_LOCK config_lock;
 CS_MUTEX_LOCK gethostbyname_lock;
@@ -1492,7 +1491,6 @@ int32_t main (int32_t argc, char *argv[])
   init_irdeto_guess_tab();
 
   write_versionfile(false);
-  server_pid = getpid();
 
   led_init();
   led_status_default();
