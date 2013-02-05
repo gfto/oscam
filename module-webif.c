@@ -3728,10 +3728,114 @@ static char *send_oscam_scanusb(struct templatevars *vars) {
 	return tpl_getTpl(vars, "SCANUSB");
 }
 
-static char *send_oscam_files(struct templatevars *vars, struct uriparams *params, int8_t apicall) {
+static void webif_process_logfile(struct templatevars *vars, struct uriparams *params, int8_t apicall,
+                                  char *targetfile, size_t targetfile_len, char *UNUSED(filename))
+{
+	if (apicall) return;
+	snprintf(targetfile, targetfile_len, "%s", cfg.logfile);
+	if (strcmp(getParam(params, "clear"), "logfile") == 0) {
+		if (strlen(targetfile) > 0) {
+			FILE *file = fopen(targetfile, "w");
+			fclose(file);
+		}
+	}
+#ifdef WITH_DEBUG
+	// Debuglevel Selector
+	int32_t i, lvl;
+	for (i = 0; i < MAX_DEBUG_LEVELS; i++) {
+		lvl = 1 << i;
+		tpl_printf(vars, TPLADD, "TMPC", "DCLASS%d", lvl);
+		tpl_printf(vars, TPLADD, "TMPV", "DEBUGVAL%d", lvl);
+		if (cs_dblevel & lvl) {
+			tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMPC"), "debugls");
+			tpl_printf(vars, TPLADD, tpl_getVar(vars, "TMPV"), "%d", cs_dblevel - lvl);
+		} else {
+			tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMPC"), "debugl");
+			tpl_printf(vars, TPLADD, tpl_getVar(vars, "TMPV"), "%d", cs_dblevel + lvl);
+		}
+	}
+	if (cs_dblevel == D_ALL_DUMP)
+		tpl_addVar(vars, TPLADD, "DCLASS65535", "debugls");
+	else
+		tpl_addVar(vars, TPLADD, "DCLASS65535", "debugl");
+	tpl_addVar(vars, TPLADD, "CUSTOMPARAM", "&file=logfile");
+	tpl_printf(vars, TPLADD, "ACTDEBUG", "%d", cs_dblevel);
+	tpl_addVar(vars, TPLADD, "SDEBUG", tpl_getTpl(vars, "DEBUGSELECT"));
+	tpl_addVar(vars, TPLADD, "NEXTPAGE", "files.html");
+#endif
+	if(!cfg.disablelog)
+		tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?file=logfile&amp;stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 1, "Stop Log");
+	else
+		tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?file=logfile&amp;stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 0, "Start Log");
+	tpl_addVar(vars, TPLAPPEND, "LOGMENU", "<A HREF=\"files.html?file=logfile&amp;clear=logfile\">Clear Log</A>");
+	return;
+}
 
-	int32_t writable=0;
-	//int8_t apicall = 0; //remove before flight
+static void webif_process_userfile(struct templatevars *vars, struct uriparams *params, int8_t apicall,
+                                   char *targetfile, size_t targetfile_len, char *UNUSED(filename))
+{
+	if (apicall) return;
+	snprintf(targetfile, targetfile_len, "%s", cfg.usrfile);
+	if (strcmp(getParam(params, "clear"), "usrfile") == 0) {
+		if (strlen(targetfile) > 0) {
+			FILE *file = fopen(targetfile,"w");
+			fclose(file);
+		}
+	}
+
+	if (!cfg.disableuserfile)
+		tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?file=userfile&amp;stopusrlog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 1, "Stop Log");
+	else
+		tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?file=userfile&amp;stopusrlog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 0, "Start Log");
+
+	tpl_addVar(vars, TPLAPPEND, "LOGMENU", "<A HREF=\"files.html?file=userfile&amp;clear=usrfile\">Clear Log</A>");
+
+	tpl_printf(vars, TPLADD, "FILTERFORMOPTIONS", "<OPTION value=\"%s\">%s</OPTION>\n", "all", "all");
+	struct s_auth *account;
+	for (account = cfg.account; account; account = account->next) {
+		tpl_printf(vars, TPLAPPEND, "FILTERFORMOPTIONS", "<OPTION value=\"%s\" %s>%s</OPTION>\n",
+			xml_encode(vars, account->usr),
+			strcmp(getParam(params, "filter"), account->usr) ? "" : "selected",
+			xml_encode(vars, account->usr)
+		);
+	}
+	tpl_addVar(vars, TPLADD, "FILTERFORM", tpl_getTpl(vars, "FILTERFORM"));
+	return;
+}
+
+enum file_types { FTYPE_CONFIG, FTYPE_VERSION, FTYPE_ANTICASC, FTYPE_EXTENDED };
+struct files {
+	char *file;
+	int menu_id;
+	bool writable;
+	enum file_types type;
+	void (*process_fn)(struct templatevars *vars, struct uriparams *params, int8_t apicall,
+	                   char *targetfile, size_t targetfile_len, char *filename);
+};
+
+static char *send_oscam_files(struct templatevars *vars, struct uriparams *params, int8_t apicall) {
+	bool writable = false;
+	const struct files *entry;
+	static const struct files config_files[] = {
+		{ "oscam.version",   MNU_CFG_FVERSION,  0, FTYPE_VERSION, NULL },
+		{ "oscam.conf",      MNU_CFG_FCONF,     1, FTYPE_CONFIG, NULL },
+		{ "oscam.user",      MNU_CFG_FUSER,     1, FTYPE_CONFIG, NULL },
+		{ "oscam.server",    MNU_CFG_FSERVER,   1, FTYPE_CONFIG, NULL },
+		{ "oscam.services",  MNU_CFG_FSERVICES, 1, FTYPE_CONFIG, NULL },
+		{ "oscam.whitelist", MNU_CFG_WHITELIST, 1, FTYPE_CONFIG, NULL },
+		{ "oscam.srvid",     MNU_CFG_FSRVID,    1, FTYPE_CONFIG, NULL },
+		{ "oscam.provid",    MNU_CFG_FPROVID,   1, FTYPE_CONFIG, NULL },
+		{ "oscam.tiers",     MNU_CFG_FTIERS,    1, FTYPE_CONFIG, NULL },
+#ifdef HAVE_DVBAPI
+		{ "oscam.dvbapi",    MNU_CFG_FDVBAPI,   1, FTYPE_CONFIG, NULL },
+#endif
+#ifdef CS_ANTICASC
+		{ "anticasc",        MNU_CFG_FACLOG,    0, FTYPE_ANTICASC, NULL },
+#endif
+		{ "logfile",         MNU_CFG_FLOGFILE,  0, FTYPE_EXTENDED, webif_process_logfile },
+		{ "userfile",        MNU_CFG_FUSERFILE, 0, FTYPE_EXTENDED, webif_process_userfile },
+		{ NULL, 0, 0, FTYPE_EXTENDED, NULL },
+	};
 
 	if(!apicall) setActiveMenu(vars, MNU_FILES);
 
@@ -3756,176 +3860,42 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 		cs_log("%s debug_level=%d", "all", cs_dblevel);
 #endif
 	}
-
-	char targetfile[256];
-
-	if (strcmp(getParam(params, "file"), "conf") == 0) {
-		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FCONF);
-		get_config_filename(targetfile, sizeof(targetfile), "oscam.conf");
-		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.conf");
-		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
-		writable = 1;
-	}
-	else if (strcmp(getParam(params, "file"), "version") == 0) {
-		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FVERSION);
-		snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "/oscam.version");
-		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.version");
-		tpl_addVar(vars, TPLADD, "APIWRITABLE", "0");
-	}
-
-	else if (strcmp(getParam(params, "file"), "user") == 0) {
-		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FUSER);
-		get_config_filename(targetfile, sizeof(targetfile), "oscam.user");
-		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.user");
-		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
-		writable = 1;
-	}
-	else if (strcmp(getParam(params, "file"), "server") == 0) {
-		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FSERVER);
-		get_config_filename(targetfile, sizeof(targetfile), "oscam.server");
-		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.server");
-		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
-		writable = 1;
-	}
-	else if (strcmp(getParam(params, "file"), "services") == 0) {
-		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FSERVICES);
-		get_config_filename(targetfile, sizeof(targetfile), "oscam.services");
-		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.services");
-		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
-		writable = 1;
-	}
-	else if (strcmp(getParam(params, "file"), "whitelist") == 0) {
-		if(!apicall) setActiveSubMenu(vars, MNU_CFG_WHITELIST);
-		get_config_filename(targetfile, sizeof(targetfile), "oscam.whitelist");
-		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.whitelist");
-		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
-		writable = 1;
-	}
-	else if (strcmp(getParam(params, "file"), "srvid") == 0) {
-		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FSRVID);
-		get_config_filename(targetfile, sizeof(targetfile), "oscam.srvid");
-		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.srvid");
-		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
-		writable = 1;
-	}
-	else if (strcmp(getParam(params, "file"), "provid") == 0) {
-		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FPROVID);
-		get_config_filename(targetfile, sizeof(targetfile), "oscam.provid");
-		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.provid");
-		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
-		writable = 1;
-	}
-	else if (strcmp(getParam(params, "file"), "tiers") == 0) {
-		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FTIERS);
-		get_config_filename(targetfile, sizeof(targetfile), "oscam.tiers");
-		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.tiers");
-		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
-		writable = 1;
-	}
-	else if (!apicall && strcmp(getParam(params, "file"), "logfile") == 0) {
-		setActiveSubMenu(vars, MNU_CFG_FLOGFILE);
-		snprintf(targetfile, 255,"%s", cfg.logfile);
-
-		if (strcmp(getParam(params, "clear"), "logfile") == 0) {
-			if(strlen(targetfile) > 0) {
-				FILE *file = fopen(targetfile,"w");
-				fclose(file);
-			}
-		}
-
-#ifdef WITH_DEBUG
-		// Debuglevel Selector
-		int32_t i, lvl;
-		for (i = 0; i < MAX_DEBUG_LEVELS; i++) {
-			lvl = 1 << i;
-			tpl_printf(vars, TPLADD, "TMPC", "DCLASS%d", lvl);
-			tpl_printf(vars, TPLADD, "TMPV", "DEBUGVAL%d", lvl);
-			if (cs_dblevel & lvl) {
-				tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMPC"), "debugls");
-				tpl_printf(vars, TPLADD, tpl_getVar(vars, "TMPV"), "%d", cs_dblevel - lvl);
-			} else {
-				tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMPC"), "debugl");
-				tpl_printf(vars, TPLADD, tpl_getVar(vars, "TMPV"), "%d", cs_dblevel + lvl);
-			}
-		}
-
-		if (cs_dblevel == D_ALL_DUMP)
-			tpl_addVar(vars, TPLADD, "DCLASS65535", "debugls");
-		else
-			tpl_addVar(vars, TPLADD, "DCLASS65535", "debugl");
-
-		tpl_addVar(vars, TPLADD, "CUSTOMPARAM", "&file=logfile");
-		tpl_printf(vars, TPLADD, "ACTDEBUG", "%d", cs_dblevel);
-		tpl_addVar(vars, TPLADD, "SDEBUG", tpl_getTpl(vars, "DEBUGSELECT"));
-		tpl_addVar(vars, TPLADD, "NEXTPAGE", "files.html");
-#endif
-
-		if(!cfg.disablelog)
-			tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?file=logfile&amp;stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 1, "Stop Log");
-		else
-			tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?file=logfile&amp;stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 0, "Start Log");
-
-		tpl_addVar(vars, TPLAPPEND, "LOGMENU", "<A HREF=\"files.html?file=logfile&amp;clear=logfile\">Clear Log</A>");
-
-	}
-	else if (!apicall && strcmp(getParam(params, "file"), "userfile") == 0) {
-		setActiveSubMenu(vars, MNU_CFG_FUSERFILE);
-		snprintf(targetfile, 255,"%s", cfg.usrfile);
-		if (strcmp(getParam(params, "clear"), "usrfile") == 0) {
-			if(strlen(targetfile) > 0) {
-				FILE *file = fopen(targetfile,"w");
-				fclose(file);
-			}
-		}
-
-		if(!cfg.disableuserfile)
-			tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?file=userfile&amp;stopusrlog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 1, "Stop Log");
-		else
-			tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?file=userfile&amp;stopusrlog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 0, "Start Log");
-
-		tpl_addVar(vars, TPLAPPEND, "LOGMENU", "<A HREF=\"files.html?file=userfile&amp;clear=usrfile\">Clear Log</A>");
-
-		tpl_printf(vars, TPLADD, "FILTERFORMOPTIONS", "<OPTION value=\"%s\">%s</OPTION>\n", "all", "all");
-		struct s_auth *account;
-		for (account = cfg.account; (account); account = account->next) {
-			tpl_printf(vars, TPLAPPEND, "FILTERFORMOPTIONS", "<OPTION value=\"%s\" %s>%s</OPTION>\n",
-				xml_encode(vars, account->usr),
-				strcmp(getParam(params, "filter"), account->usr) ? "" : "selected",
-				xml_encode(vars, account->usr)
-			);
-		}
-		tpl_addVar(vars, TPLADD, "FILTERFORM", tpl_getTpl(vars, "FILTERFORM"));
-	}
+	// Process config files
+	char *file = getParam(params, "file");
+	char targetfile[256] = { 0 };
+	int menu_id = 0;
+	for (entry = config_files; entry->file; entry++) {
+		if (streq(file, entry->file)) {
+			if (!apicall) setActiveSubMenu(vars, entry->menu_id);
+			menu_id  = entry->menu_id;
+			writable = entry->writable;
+			tpl_addVar(vars, TPLADD, "APIWRITABLE", writable ? "1" : "0");
+			switch (entry->type) {
+			case FTYPE_CONFIG:
+				get_config_filename(targetfile, sizeof(targetfile), entry->file);
+				break;
+			case FTYPE_VERSION:
+				snprintf(targetfile, sizeof(targetfile), "%s%s%s", get_tmp_dir(), "/", entry->file);
+				break;
+			case FTYPE_ANTICASC:
 #ifdef CS_ANTICASC
-	else if (!apicall && strcmp(getParam(params, "file"), "anticasc") == 0){
-		setActiveSubMenu(vars, MNU_CFG_FACLOG);
-		snprintf(targetfile, 255, "%s", cfg.ac_logfile ? cfg.ac_logfile : "");
-	}
+				if (!apicall) snprintf(targetfile, sizeof(targetfile), "%s", ESTR(cfg.ac_logfile));
 #endif
-
-#ifdef HAVE_DVBAPI
-	else if (strcmp(getParam(params, "file"), "dvbapi") == 0) {
-		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FDVBAPI);
-		get_config_filename(targetfile, sizeof(targetfile), "oscam.dvbapi");
-		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.dvbapi");
-		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
-		writable = 1;
-	}
-#endif
-	else {
-		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FVERSION);
-		snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "/oscam.version");
-		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.version");
-		tpl_addVar(vars, TPLADD, "APIWRITABLE", "0");
+				break;
+			case FTYPE_EXTENDED:
+				entry->process_fn(vars, params, apicall, targetfile, sizeof(targetfile), entry->file);
+				break;
+			}
+			tpl_addVar(vars, TPLADD, "APIFILENAME", entry->file);
+			break;
+		}
 	}
 
 	if (!strstr(targetfile, "/dev/")) {
-
 		if (strcmp(getParam(params, "action"), "Save") == 0) {
 			if((strlen(targetfile) > 0) /*&& (file_exists(targetfile) == 1)*/) {
 				FILE *fpsave;
 				char *fcontent = getParam(params, "filecontent");
-
 				if((fpsave = fopen(targetfile,"w"))){
 					int32_t i, lastpos = 0, len = strlen(fcontent) + 1;
 					//write submitted file line by line to disk and remove windows linebreaks
@@ -3939,21 +3909,14 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 						}
 					}
 					fclose(fpsave);
-
-					if (strcmp(getParam(params, "file"), "srvid") == 0)
-						init_srvid();
-
-					if (strcmp(getParam(params, "file"), "user") == 0)
-						cs_accounts_chk();
-
-#ifdef HAVE_DVBAPI
-					if (strcmp(getParam(params, "file"), "dvbapi") == 0)
-						dvbapi_read_priority();
-#endif
-
-					if (strcmp(getParam(params, "file"), "whitelist") == 0)
-						global_whitelist_read();
-
+					// Reinit on save
+					switch(menu_id) {
+					case MNU_CFG_FSRVID:    init_srvid(); break;
+					case MNU_CFG_FUSER:     cs_accounts_chk(); break;
+					case MNU_CFG_FDVBAPI:   dvbapi_read_priority(); break;
+					case MNU_CFG_WHITELIST: global_whitelist_read(); break;
+					default: break;
+					}
 				}
 			}
 		}
@@ -3977,7 +3940,7 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 		tpl_addVar(vars, TPLAPPEND, "FILECONTENT", "File not valid!");
 	}
 
-	tpl_addVar(vars, TPLADD, "PART", getParam(params, "file"));
+	tpl_addVar(vars, TPLADD, "PART", file);
 
 	if (!writable) {
 		tpl_addVar(vars, TPLADD, "WRITEPROTECTION", tpl_getTpl(vars, "WRITEPROTECTION"));

@@ -379,7 +379,7 @@ AAAAAElFTkSuQmCC"
 			<TD CLASS=\"##MENUACTIVE2##\"><A HREF=\"readers.html\">READERS</A></TD>\n\
 			<TD CLASS=\"##MENUACTIVE3##\"><A HREF=\"userconfig.html\">USERS</A></TD>\n\
 			<TD CLASS=\"##MENUACTIVE4##\"><A HREF=\"services.html\">SERVICES</A></TD>\n\
-			<TD CLASS=\"##MENUACTIVE5##\"><A HREF=\"files.html\">FILES</A></TD>\n\
+			<TD CLASS=\"##MENUACTIVE5##\"><A HREF=\"files.html?file=oscam.version\">FILES</A></TD>\n\
 			<TD CLASS=\"##MENUACTIVE6##\"><A HREF=\"failban.html\">FAILBAN</A>##FAILBANNOTIFIER##</TD>\n\
 ##TPLCACHEEXMENUITEM##\
 			<TD CLASS=\"##MENUACTIVE8##\"><A HREF=\"script.html\">SCRIPT</A></TD>\n\
@@ -414,16 +414,16 @@ AAAAAElFTkSuQmCC"
 #define TPLFILEMENU "\
 	<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
-			<TD CLASS=\"##CMENUACTIVE12##\"><A HREF=\"files.html?file=version\">oscam.version</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE12##\"><A HREF=\"files.html?file=oscam.version\">oscam.version</A></TD>\n\
 ##TPLFILEMENUDVBAPI##\
-			<TD CLASS=\"##CMENUACTIVE13##\"><A HREF=\"files.html?file=conf\">oscam.conf</A></TD>\n\
-			<TD CLASS=\"##CMENUACTIVE14##\"><A HREF=\"files.html?file=user\">oscam.user</A></TD>\n\
-			<TD CLASS=\"##CMENUACTIVE15##\"><A HREF=\"files.html?file=server\">oscam.server</A></TD>\n\
-			<TD CLASS=\"##CMENUACTIVE16##\"><A HREF=\"files.html?file=services\">oscam.services</A></TD>\n\
-			<TD CLASS=\"##CMENUACTIVE17##\"><A HREF=\"files.html?file=srvid\">oscam.srvid</A></TD>\n\
-			<TD CLASS=\"##CMENUACTIVE18##\"><A HREF=\"files.html?file=provid\">oscam.provid</A></TD>\n\
-			<TD CLASS=\"##CMENUACTIVE19##\"><A HREF=\"files.html?file=tiers\">oscam.tiers</A></TD>\n\
-			<TD CLASS=\"##CMENUACTIVE25##\"><A HREF=\"files.html?file=whitelist\">oscam.whitelist</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE13##\"><A HREF=\"files.html?file=oscam.conf\">oscam.conf</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE14##\"><A HREF=\"files.html?file=oscam.user\">oscam.user</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE15##\"><A HREF=\"files.html?file=oscam.server\">oscam.server</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE16##\"><A HREF=\"files.html?file=oscam.services\">oscam.services</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE17##\"><A HREF=\"files.html?file=oscam.srvid\">oscam.srvid</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE18##\"><A HREF=\"files.html?file=oscam.provid\">oscam.provid</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE19##\"><A HREF=\"files.html?file=oscam.tiers\">oscam.tiers</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE25##\"><A HREF=\"files.html?file=oscam.whitelist\">oscam.whitelist</A></TD>\n\
 			<TD CLASS=\"##CMENUACTIVE20##\"><A HREF=\"files.html?file=logfile\">logfile</A></TD>\n\
 			<TD CLASS=\"##CMENUACTIVE21##\"><A HREF=\"files.html?file=userfile\">userfile</A></TD>\n\
 ##TPLFILEMENUANTICASC##\
@@ -516,7 +516,7 @@ AAAAAElFTkSuQmCC"
 #define TPLCONFIGMENULCD "			<TD CLASS=\"##CMENUACTIVE13##\"><A HREF=\"config.html?part=lcd\">LCD</A></TD>\n"
 
 #define TPLCONFIGMENUDVBAPI "			<TD CLASS=\"##CMENUACTIVE11##\"><A HREF=\"config.html?part=dvbapi\">DVB-Api</A></TD>\n"
-#define TPLFILEMENUDVBAPI "			<TD CLASS=\"##CMENUACTIVE23##\"><A HREF=\"files.html?file=dvbapi\">oscam.dvbapi</A></TD>\n"
+#define TPLFILEMENUDVBAPI "			<TD CLASS=\"##CMENUACTIVE23##\"><A HREF=\"files.html?file=oscam.dvbapi\">oscam.dvbapi</A></TD>\n"
 
 #define TPLCONFIGMENULB "			<TD CLASS=\"##CMENUACTIVE1##\"><A HREF=\"config.html?part=loadbalancer\">Loadbalancer</A></TD>\n"
 
