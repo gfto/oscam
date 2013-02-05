@@ -46,6 +46,32 @@ void free_joblist(struct s_client *cl) {
 	pthread_mutex_destroy(&cl->thread_lock);
 }
 
+static const char *get_action_desc(enum actions action) {
+	switch (action) {
+	// Do not return descriptions longer than 11 chars.
+	case ACTION_READER_IDLE         : return "rdr-idle";
+	case ACTION_READER_REMOTE       : return "rdr-remote";
+	case ACTION_READER_RESET        : return "rdr-reset";
+	case ACTION_READER_ECM_REQUEST  : return "rdr-ecm-req";
+	case ACTION_READER_EMM          : return "rdr-emm";
+	case ACTION_READER_CARDINFO     : return "rdr-cardinf";
+	case ACTION_READER_INIT         : return "rdr-init";
+	case ACTION_READER_RESTART      : return "rdr-restart";
+	case ACTION_READER_RESET_FAST   : return "rdr-reset";
+	case ACTION_READER_CHECK_HEALTH : return "rdr-health";
+	case ACTION_CLIENT_UDP          : return "cl-udp";
+	case ACTION_CLIENT_TCP          : return "cl-tcp";
+	case ACTION_CLIENT_ECM_ANSWER   : return "cl-ecm-answ";
+	case ACTION_CLIENT_KILL         : return "cl-kill";
+	case ACTION_CLIENT_INIT         : return "cl-init";
+	case ACTION_CLIENT_IDLE         : return "cl-idle";
+#ifdef CS_CACHEEX
+	case ACTION_CACHE_PUSH_OUT      : return "cache-push";
+#endif
+	}
+	return "unknown";
+};
+
 void * work_thread(void *ptr) {
 	struct job_data *data = (struct job_data *)ptr;
 	struct s_client *cl = data->cl;
@@ -54,7 +80,10 @@ void * work_thread(void *ptr) {
 	struct job_data tmp_data;
 	struct pollfd pfd[1];
 
-	set_thread_name(__func__);
+	char thread_name[16 + 1];
+	snprintf(thread_name, sizeof(thread_name), "work-%s",
+		get_action_desc(data->action));
+	set_thread_name(thread_name);
 
 	pthread_setspecific(getclient, cl);
 	cl->thread = pthread_self();

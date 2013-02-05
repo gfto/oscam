@@ -1,5 +1,5 @@
-#ifndef OSCAM_THREAD_H_
-#define OSCAM_THREAD_H_
+#ifndef OSCAM_WORK_H_
+#define OSCAM_WORK_H_
 
 enum actions {
 	// Reader action
