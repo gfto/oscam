@@ -47,8 +47,15 @@ DESCRIPTIONS
        maxlogsize = kbytes
 	  maximum log file size, 0 = unlimited, default:10
 
+       logduplicatelines = 0|1
+	  1 = disable detection of duplicate lines in log file, default:0
+
        disablelog = 0|1
 	  1 = disable log file, default:0
+
+
+
+
 
        cwlogdir = path
 	  directory for CW logging, default:config dir
