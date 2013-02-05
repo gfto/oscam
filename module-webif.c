@@ -3761,7 +3761,7 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 
 	if (strcmp(getParam(params, "file"), "conf") == 0) {
 		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FCONF);
-		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.conf");
+		get_config_filename(targetfile, sizeof(targetfile), "oscam.conf");
 		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.conf");
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
@@ -3775,49 +3775,49 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 
 	else if (strcmp(getParam(params, "file"), "user") == 0) {
 		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FUSER);
-		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.user");
+		get_config_filename(targetfile, sizeof(targetfile), "oscam.user");
 		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.user");
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
 	else if (strcmp(getParam(params, "file"), "server") == 0) {
 		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FSERVER);
-		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.server");
+		get_config_filename(targetfile, sizeof(targetfile), "oscam.server");
 		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.server");
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
 	else if (strcmp(getParam(params, "file"), "services") == 0) {
 		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FSERVICES);
-		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.services");
+		get_config_filename(targetfile, sizeof(targetfile), "oscam.services");
 		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.services");
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
 	else if (strcmp(getParam(params, "file"), "whitelist") == 0) {
 		if(!apicall) setActiveSubMenu(vars, MNU_CFG_WHITELIST);
-		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.whitelist");
+		get_config_filename(targetfile, sizeof(targetfile), "oscam.whitelist");
 		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.whitelist");
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
 	else if (strcmp(getParam(params, "file"), "srvid") == 0) {
 		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FSRVID);
-		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.srvid");
+		get_config_filename(targetfile, sizeof(targetfile), "oscam.srvid");
 		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.srvid");
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
 	else if (strcmp(getParam(params, "file"), "provid") == 0) {
 		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FPROVID);
-		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.provid");
+		get_config_filename(targetfile, sizeof(targetfile), "oscam.provid");
 		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.provid");
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
 	}
 	else if (strcmp(getParam(params, "file"), "tiers") == 0) {
 		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FTIERS);
-		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.tiers");
+		get_config_filename(targetfile, sizeof(targetfile), "oscam.tiers");
 		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.tiers");
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;
@@ -3906,7 +3906,7 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 #ifdef HAVE_DVBAPI
 	else if (strcmp(getParam(params, "file"), "dvbapi") == 0) {
 		if(!apicall) setActiveSubMenu(vars, MNU_CFG_FDVBAPI);
-		snprintf(targetfile, 255, "%s%s", cs_confdir, "oscam.dvbapi");
+		get_config_filename(targetfile, sizeof(targetfile), "oscam.dvbapi");
 		tpl_addVar(vars, TPLADD, "APIFILENAME", "oscam.dvbapi");
 		tpl_addVar(vars, TPLADD, "APIWRITABLE", "1");
 		writable = 1;

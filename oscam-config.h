@@ -1,6 +1,8 @@
 #ifndef OSCAM_CONFIG_H_
 #define OSCAM_CONFIG_H_
 
+char *get_config_filename(char *dest, size_t destlen, const char *filename);
+
 int32_t init_config(void);
 void    config_set(char *section, const char *token, char *value);
 void    config_free(void);

@@ -1441,7 +1441,7 @@ int32_t main (int32_t argc, char *argv[])
   memset(&cfg, 0, sizeof(struct s_config));
   cfg.max_pending = max_pending;
 
-  if (cs_confdir[strlen(cs_confdir)]!='/') strcat(cs_confdir, "/");
+  if (cs_confdir[strlen(cs_confdir) - 1] != '/') strcat(cs_confdir, "/");
   init_signal_pre(); // because log could cause SIGPIPE errors, init a signal handler first
   init_first_client();
   cs_lock_create(&system_lock, 5, "system_lock");

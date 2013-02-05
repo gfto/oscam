@@ -10,6 +10,7 @@
 #include "module-stat.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
+#include "oscam-config.h"
 #include "oscam-ecm.h"
 #include "oscam-emm.h"
 #include "oscam-files.h"
@@ -17,8 +18,6 @@
 #include "oscam-reader.h"
 #include "oscam-string.h"
 #include "oscam-time.h"
-
-extern char cs_confdir[];
 
 // These are declared in module-dvbapi-azbox.c
 extern int32_t openxcas_provid;
@@ -1114,8 +1113,7 @@ void dvbapi_read_priority(void) {
 
 	const char *cs_prio="oscam.dvbapi";
 
-	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_prio);
-	fp=fopen(token, "r");
+	fp = fopen(get_config_filename(token, sizeof(token), cs_prio), "r");
 
 	if (!fp) {
 		cs_debug_mask(D_DVBAPI, "ERROR: Can't open priority file %s", token);

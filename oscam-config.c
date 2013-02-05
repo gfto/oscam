@@ -22,6 +22,14 @@ extern uint16_t len4caid[256];
 
 uint32_t cfg_sidtab_generation = 1;
 
+extern char cs_confdir[];
+
+char *get_config_filename(char *dest, size_t destlen, const char *filename) {
+	// cs_confdir is always terminated with /
+	snprintf(dest, destlen, "%s%s", cs_confdir, filename);
+	return dest;
+}
+
 int32_t write_services(void)
 {
 	int32_t i;

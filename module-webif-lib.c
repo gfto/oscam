@@ -10,7 +10,6 @@
 #include "oscam-time.h"
 #include "oscam-net.h"
 
-extern char cs_confdir[];
 extern uint8_t cs_http_use_utf8;
 
 extern const char *templates[][3];
@@ -1268,7 +1267,7 @@ SSL_CTX *SSL_Webif_Init(void) {
 	char path[128];
 
 	if (!cfg.http_cert)
-		snprintf(path, sizeof(path), "%s%s", cs_confdir, cs_cert);
+		get_config_filename(path, sizeof(path), cs_cert);
 	else
 		cs_strncpy(path, cfg.http_cert, sizeof(path));
 

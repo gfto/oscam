@@ -1,10 +1,9 @@
 #include "globals.h"
 #ifdef READER_CRYPTOWORKS
+#include "oscam-config.h"
 #include "reader-common.h"
 
 #define CMD_LEN 5
-
-extern char cs_confdir[];
 
 static const char *cs_cert = "oscam.cert";
 
@@ -14,8 +13,7 @@ static int search_boxkey(uint16_t caid, char *key)
 	FILE *fp;
 	char c_caid[512];
 
-	snprintf(c_caid, sizeof(c_caid), "%s%s", cs_confdir, cs_cert);
-	fp = fopen(c_caid, "r");
+	fp = fopen(get_config_filename(c_caid, sizeof(c_caid), cs_cert), "r");
 	if (fp) {
 		for (; (!rc) && fgets(c_caid, sizeof(c_caid), fp);) {
 			char *c_provid, *c_key;

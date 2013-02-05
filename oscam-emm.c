@@ -1,13 +1,12 @@
 #include "globals.h"
 #include "module-led.h"
 #include "oscam-client.h"
+#include "oscam-config.h"
 #include "oscam-emm.h"
 #include "oscam-string.h"
 #include "oscam-time.h"
 #include "oscam-work.h"
 #include "reader-common.h"
-
-extern char cs_confdir[];
 
 const char *entitlement_type[] = { "", "package", "PPV-Event", "chid", "tier", "class", "PBM", "admin" };
 
@@ -191,6 +190,19 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 	return 0;
 }
 
+static char *get_emmlog_filename(char *dest, size_t destlen, const char *basename, const char *ext) {
+	char filename[64 + 16];
+	snprintf(filename, sizeof(filename), "%s_emm.%s", basename, ext);
+	if (!cfg.emmlogdir) {
+		get_config_filename(dest, destlen, filename);
+	} else {
+		const char *slash = "/";
+		if (cfg.emmlogdir[strlen(cfg.emmlogdir) - 1] == '/') slash = "";
+		snprintf(dest, destlen, "%s%s%s", cfg.emmlogdir, slash, filename);
+	}
+	return dest;
+}
+
 static void saveemm(struct s_reader *aureader, EMM_PACKET *ep)
 {
 	FILE *fp;
@@ -212,9 +224,7 @@ static void saveemm(struct s_reader *aureader, EMM_PACKET *ep)
 		localtime_r(&rawtime, &timeinfo); // to access LOCAL date/time info
 		int32_t emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
 		strftime(buf, sizeof(buf), "%Y/%m/%d %H:%M:%S", &timeinfo);
-		snprintf(token, sizeof(token), "%s/%s_emm.log",
-			cfg.emmlogdir ? cfg.emmlogdir : cs_confdir, aureader->label);
-		if (!(fp = fopen(token, "a"))) {
+		if (!(fp = fopen(get_emmlog_filename(token, sizeof(token), aureader->label, "log"), "a"))) {
 			rdr_log(aureader, "ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
 		} else if (cs_malloc(&tmp2, (emm_length + 3) * 2 + 1)) {
 			fprintf(fp, "%s   %s   ", buf, cs_hexdump(0, ep->hexserial, 8, tmp, sizeof(tmp)));
@@ -223,9 +233,7 @@ static void saveemm(struct s_reader *aureader, EMM_PACKET *ep)
 			fclose(fp);
 			rdr_log(aureader, "Successfully added EMM to %s", token);
 		}
-		snprintf(token, sizeof(token), "%s/%s_emm.bin",
-			cfg.emmlogdir ? cfg.emmlogdir : cs_confdir, aureader->label);
-		if (!(fp = fopen (token, "ab"))) {
+		if (!(fp = fopen(get_emmlog_filename(token, sizeof(token), aureader->label, "bin"), "ab"))) {
 			rdr_log(aureader, "ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
 		} else {
 			if ((int)fwrite(ep->emm, 1, emm_length + 3, fp) == emm_length + 3) {
@@ -453,7 +461,7 @@ void do_emm_from_file(struct s_reader * reader)
 	if (reader->emmfile[0] == '/')
 		snprintf(token, sizeof(token), "%s", reader->emmfile); //pathname included
 	else
-		snprintf (token, sizeof(token), "%s%s", cs_confdir, reader->emmfile); //only file specified, look in confdir for this file
+		get_config_filename(token, sizeof(token), reader->emmfile); //only file specified, look in confdir for this file
 
 	if (!(fp = fopen (token, "rb"))) {
 		rdr_log(reader, "ERROR: Cannot open EMM file '%s' (errno=%d %s)\n", token, errno, strerror(errno));

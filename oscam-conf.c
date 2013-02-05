@@ -1,10 +1,9 @@
 #include "globals.h"
 #include "oscam-conf.h"
+#include "oscam-config.h"
 #include "oscam-files.h"
 #include "oscam-garbage.h"
 #include "oscam-string.h"
-
-extern char cs_confdir[];
 
 #define CONFVARWIDTH 30
 
@@ -375,10 +374,8 @@ void config_set_value(const struct config_sections *conf, char *section, const c
 }
 
 static FILE *__open_config_file(const char *conf_filename, bool die_on_err) {
-	unsigned int len = strlen(cs_confdir) + strlen(conf_filename) + 8;
-	char filename[len];
-	snprintf(filename,  len, "%s%s", cs_confdir, conf_filename);
-	FILE *f = fopen(filename, "r");
+	char filename[256];
+	FILE *f = fopen(get_config_filename(filename, sizeof(filename), conf_filename), "r");
 	if (!f) {
 		if (die_on_err) {
 			fprintf(stderr, "ERROR: Cannot open file \"%s\" (errno=%d %s)", filename, errno, strerror(errno));
@@ -402,9 +399,9 @@ FILE *open_config_file_or_die(const char *conf_filename) {
 
 
 FILE *create_config_file(const char *conf_filename) {
-	unsigned int len = strlen(cs_confdir) + strlen(conf_filename) + 8;
-	char temp_file[len];
-	snprintf(temp_file,  len, "%s%s.tmp", cs_confdir, conf_filename);
+	char temp_file[256];
+	get_config_filename(temp_file, sizeof(temp_file), conf_filename);
+	strncat(temp_file, ".tmp", sizeof(temp_file) - 1);
 	FILE *f = fopen(temp_file, "w");
 	if (!f) {
 		cs_log("ERROR: Cannot create file \"%s\" (errno=%d %s)", temp_file, errno, strerror(errno));
@@ -419,11 +416,12 @@ FILE *create_config_file(const char *conf_filename) {
 }
 
 bool flush_config_file(FILE *f, const char *conf_filename) {
-	unsigned int len = strlen(cs_confdir) + strlen(conf_filename) + 8;
-	char temp_file[len], destfile[len], bakfile[len];
-	snprintf(destfile, len, "%s%s"    , cs_confdir, conf_filename);
-	snprintf(temp_file,  len, "%s%s.tmp", cs_confdir, conf_filename);
-	snprintf(bakfile,  len, "%s%s.bak", cs_confdir, conf_filename);
+	char dst_file[256], tmp_file[256], bak_file[256];
+	get_config_filename(dst_file, sizeof(dst_file), conf_filename);
+	memcpy(tmp_file, dst_file, sizeof(tmp_file));
+	memcpy(bak_file, dst_file, sizeof(bak_file));
+	strncat(tmp_file, ".tmp", sizeof(tmp_file) - 1);
+	strncat(bak_file, ".bak", sizeof(bak_file) - 1);
 	fclose(f);
-	return safe_overwrite_with_bak(destfile, temp_file, bakfile, 0);
+	return safe_overwrite_with_bak(dst_file, tmp_file, bak_file, 0);
 }
