@@ -3728,10 +3728,8 @@ static char *send_oscam_scanusb(struct templatevars *vars) {
 	return tpl_getTpl(vars, "SCANUSB");
 }
 
-static void webif_process_logfile(struct templatevars *vars, struct uriparams *params, int8_t apicall,
-                                  char *targetfile, size_t targetfile_len, char *UNUSED(filename))
+static void webif_process_logfile(struct templatevars *vars, struct uriparams *params, char *targetfile, size_t targetfile_len)
 {
-	if (apicall) return;
 	snprintf(targetfile, targetfile_len, "%s", cfg.logfile);
 	if (strcmp(getParam(params, "clear"), "logfile") == 0) {
 		if (strlen(targetfile) > 0) {
@@ -3771,10 +3769,8 @@ static void webif_process_logfile(struct templatevars *vars, struct uriparams *p
 	return;
 }
 
-static void webif_process_userfile(struct templatevars *vars, struct uriparams *params, int8_t apicall,
-                                   char *targetfile, size_t targetfile_len, char *UNUSED(filename))
+static void webif_process_userfile(struct templatevars *vars, struct uriparams *params, char *targetfile, size_t targetfile_len)
 {
-	if (apicall) return;
 	snprintf(targetfile, targetfile_len, "%s", cfg.usrfile);
 	if (strcmp(getParam(params, "clear"), "usrfile") == 0) {
 		if (strlen(targetfile) > 0) {
@@ -3800,41 +3796,38 @@ static void webif_process_userfile(struct templatevars *vars, struct uriparams *
 		);
 	}
 	tpl_addVar(vars, TPLADD, "FILTERFORM", tpl_getTpl(vars, "FILTERFORM"));
-	return;
 }
 
-enum file_types { FTYPE_CONFIG, FTYPE_VERSION, FTYPE_ANTICASC, FTYPE_EXTENDED };
+enum file_types { FTYPE_CONFIG, FTYPE_VERSION, FTYPE_ANTICASC, FTYPE_LOGFILE, FTYPE_USERFILE };
+
 struct files {
 	char *file;
 	int menu_id;
-	bool writable;
 	enum file_types type;
-	void (*process_fn)(struct templatevars *vars, struct uriparams *params, int8_t apicall,
-	                   char *targetfile, size_t targetfile_len, char *filename);
 };
 
 static char *send_oscam_files(struct templatevars *vars, struct uriparams *params, int8_t apicall) {
 	bool writable = false;
 	const struct files *entry;
 	static const struct files config_files[] = {
-		{ "oscam.version",   MNU_CFG_FVERSION,  0, FTYPE_VERSION, NULL },
-		{ "oscam.conf",      MNU_CFG_FCONF,     1, FTYPE_CONFIG, NULL },
-		{ "oscam.user",      MNU_CFG_FUSER,     1, FTYPE_CONFIG, NULL },
-		{ "oscam.server",    MNU_CFG_FSERVER,   1, FTYPE_CONFIG, NULL },
-		{ "oscam.services",  MNU_CFG_FSERVICES, 1, FTYPE_CONFIG, NULL },
-		{ "oscam.whitelist", MNU_CFG_WHITELIST, 1, FTYPE_CONFIG, NULL },
-		{ "oscam.srvid",     MNU_CFG_FSRVID,    1, FTYPE_CONFIG, NULL },
-		{ "oscam.provid",    MNU_CFG_FPROVID,   1, FTYPE_CONFIG, NULL },
-		{ "oscam.tiers",     MNU_CFG_FTIERS,    1, FTYPE_CONFIG, NULL },
+		{ "oscam.version",   MNU_CFG_FVERSION,  FTYPE_VERSION },
+		{ "oscam.conf",      MNU_CFG_FCONF,     FTYPE_CONFIG },
+		{ "oscam.user",      MNU_CFG_FUSER,     FTYPE_CONFIG },
+		{ "oscam.server",    MNU_CFG_FSERVER,   FTYPE_CONFIG },
+		{ "oscam.services",  MNU_CFG_FSERVICES, FTYPE_CONFIG },
+		{ "oscam.whitelist", MNU_CFG_WHITELIST, FTYPE_CONFIG },
+		{ "oscam.srvid",     MNU_CFG_FSRVID,    FTYPE_CONFIG },
+		{ "oscam.provid",    MNU_CFG_FPROVID,   FTYPE_CONFIG },
+		{ "oscam.tiers",     MNU_CFG_FTIERS,    FTYPE_CONFIG },
 #ifdef HAVE_DVBAPI
-		{ "oscam.dvbapi",    MNU_CFG_FDVBAPI,   1, FTYPE_CONFIG, NULL },
+		{ "oscam.dvbapi",    MNU_CFG_FDVBAPI,   FTYPE_CONFIG },
 #endif
 #ifdef CS_ANTICASC
-		{ "anticasc",        MNU_CFG_FACLOG,    0, FTYPE_ANTICASC, NULL },
+		{ "anticasc",        MNU_CFG_FACLOG,    FTYPE_ANTICASC },
 #endif
-		{ "logfile",         MNU_CFG_FLOGFILE,  0, FTYPE_EXTENDED, webif_process_logfile },
-		{ "userfile",        MNU_CFG_FUSERFILE, 0, FTYPE_EXTENDED, webif_process_userfile },
-		{ NULL, 0, 0, FTYPE_EXTENDED, NULL },
+		{ "logfile",         MNU_CFG_FLOGFILE,  FTYPE_LOGFILE },
+		{ "userfile",        MNU_CFG_FUSERFILE, FTYPE_USERFILE },
+		{ NULL, 0, 0 },
 	};
 
 	if(!apicall) setActiveMenu(vars, MNU_FILES);
@@ -3868,10 +3861,10 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 		if (streq(file, entry->file)) {
 			if (!apicall) setActiveSubMenu(vars, entry->menu_id);
 			menu_id  = entry->menu_id;
-			writable = entry->writable;
 			tpl_addVar(vars, TPLADD, "APIWRITABLE", writable ? "1" : "0");
 			switch (entry->type) {
 			case FTYPE_CONFIG:
+				writable = 1;
 				get_config_filename(targetfile, sizeof(targetfile), entry->file);
 				break;
 			case FTYPE_VERSION:
@@ -3882,8 +3875,11 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 				if (!apicall) snprintf(targetfile, sizeof(targetfile), "%s", ESTR(cfg.ac_logfile));
 #endif
 				break;
-			case FTYPE_EXTENDED:
-				entry->process_fn(vars, params, apicall, targetfile, sizeof(targetfile), entry->file);
+			case FTYPE_LOGFILE:
+				if (!apicall) webif_process_logfile(vars, params, targetfile, sizeof(targetfile));
+				break;
+			case FTYPE_USERFILE:
+				if (!apicall) webif_process_userfile(vars, params, targetfile, sizeof(targetfile));
 				break;
 			}
 			tpl_addVar(vars, TPLADD, "APIFILENAME", entry->file);
