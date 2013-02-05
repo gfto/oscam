@@ -4,6 +4,8 @@
 #include "oscam-log-reader.h"
 #include "oscam-reader.h"
 
+extern int log_remove_sensitive;
+
 static char *debug_mask_txt(int mask) {
 	switch (mask) {
 		case D_EMM    : return "EMM: ";

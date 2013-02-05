@@ -5,6 +5,7 @@
 #include "oscam-string.h"
 
 extern CS_MUTEX_LOCK readdir_lock;
+extern char cs_tmpdir[200];
 
 /* Gets the tmp dir */
 char *get_tmp_dir(void) {

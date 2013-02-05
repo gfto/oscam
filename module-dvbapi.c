@@ -18,6 +18,8 @@
 #include "oscam-string.h"
 #include "oscam-time.h"
 
+extern char cs_confdir[];
+
 // These are declared in module-dvbapi-azbox.c
 extern int32_t openxcas_provid;
 extern uint16_t openxcas_sid, openxcas_caid, openxcas_ecm_pid;

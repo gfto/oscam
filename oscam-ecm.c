@@ -22,6 +22,8 @@ extern CS_MUTEX_LOCK ecmcache_lock;
 extern struct ecm_request_t *ecmcwcache;
 extern struct s_module modules[CS_MAX_MOD];
 extern struct s_client *timecheck_client;
+extern uint16_t len4caid[256];
+extern uint32_t ecmcwcache_size;
 
 /**
  * get ecm from ecmcache

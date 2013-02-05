@@ -44,7 +44,6 @@ struct s_cardsystem cardsystems[CS_MAX_MOD];
 struct s_cardreader cardreaders[CS_MAX_MOD];
 
 struct s_client * first_client = NULL; //Pointer to clients list, first client is master
-struct s_client * first_client_hashed[CS_CLIENT_HASHBUCKETS];  // Alternative hashed client list
 struct s_reader * first_active_reader = NULL; //list of active readers (enable=1 deleted = 0)
 LLIST * configured_readers = NULL; //list of all (configured) readers
 

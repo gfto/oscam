@@ -4,6 +4,8 @@
 #include "oscam-garbage.h"
 #include "oscam-string.h"
 
+extern char cs_confdir[];
+
 #define CONFVARWIDTH 30
 
 /* Returns the default value if string length is zero, otherwise atoi is called*/

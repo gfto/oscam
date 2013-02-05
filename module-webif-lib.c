@@ -10,6 +10,9 @@
 #include "oscam-time.h"
 #include "oscam-net.h"
 
+extern char cs_confdir[];
+extern uint8_t cs_http_use_utf8;
+
 extern const char *templates[][3];
 extern char *JSCRIPT;
 extern char *CSS;

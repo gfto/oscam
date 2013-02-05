@@ -12,6 +12,7 @@
 
 extern struct s_module modules[CS_MAX_MOD];
 extern char *syslog_ident;
+extern int32_t exit_oscam;
 
 char *LOG_LIST = "log_list";
 

@@ -11,6 +11,8 @@
 #include "oscam-string.h"
 #include "oscam-time.h"
 
+extern uint16_t len4caid[256];
+
 #define cs_srid				"oscam.srvid"
 #define cs_trid				"oscam.tiers"
 #define cs_l4ca				"oscam.guess"

@@ -4,6 +4,8 @@
 
 #define CMD_LEN 5
 
+extern char cs_confdir[];
+
 static const char *cs_cert = "oscam.cert";
 
 static int search_boxkey(uint16_t caid, char *key)

@@ -19,6 +19,8 @@ extern char *processUsername;
 extern CS_MUTEX_LOCK fakeuser_lock;
 extern struct s_module modules[CS_MAX_MOD];
 
+static struct s_client *first_client_hashed[CS_CLIENT_HASHBUCKETS];  // Alternative hashed client list
+
 /* Gets the unique thread number from the client. Used in monitor and newcamd. */
 int32_t get_threadnum(struct s_client *client) {
 	struct s_client *cl;

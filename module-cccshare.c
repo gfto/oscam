@@ -12,6 +12,7 @@
 #include "oscam-time.h"
 
 extern struct s_module modules[CS_MAX_MOD];
+extern uint32_t cfg_sidtab_generation;
 
 static uint32_t cc_share_id = 0x64;
 static LLIST *reported_carddatas_list[CAID_KEY];

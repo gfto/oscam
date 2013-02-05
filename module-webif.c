@@ -35,6 +35,10 @@
 
 extern struct s_module modules[CS_MAX_MOD];
 extern struct s_cardreader cardreaders[CS_MAX_MOD];
+extern char cs_confdir[];
+extern uint32_t ecmcwcache_size;
+extern uint8_t cs_http_use_utf8;
+extern uint32_t cfg_sidtab_generation;
 
 extern char *CSS;
 extern char *entitlement_type[];
