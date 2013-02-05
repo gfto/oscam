@@ -1,4 +1,5 @@
 #include "globals.h"
+#ifdef READER_CRYPTOWORKS
 #include "reader-common.h"
 
 #define CMD_LEN 5
@@ -802,3 +803,4 @@ void reader_cryptoworks(struct s_cardsystem *ph)
 	ph->caids[0]=0x0D;
 	ph->desc="cryptoworks";
 }
+#endif
