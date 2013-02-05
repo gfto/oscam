@@ -190,9 +190,9 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 	return 0;
 }
 
-static char *get_emmlog_filename(char *dest, size_t destlen, const char *basename, const char *ext) {
+static char *get_emmlog_filename(char *dest, size_t destlen, const char *basefilename, const char *ext) {
 	char filename[64 + 16];
-	snprintf(filename, sizeof(filename), "%s_emm.%s", basename, ext);
+	snprintf(filename, sizeof(filename), "%s_emm.%s", basefilename, ext);
 	if (!cfg.emmlogdir) {
 		get_config_filename(dest, destlen, filename);
 	} else {
