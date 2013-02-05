@@ -288,9 +288,6 @@ DESCRIPTIONS
        cacheex_allow_request = 0|1
 	  allow incoming ECM request (mode 2), default:1
 
-       logport = 0|port
-	  camd 3.x reader logport, camd 3.x UDP must be activated, only works if there's no camd 3.x cascading, 0 = disabled, default=0
-
        ecmwhitelist = [CAID[@provid]:]length[,length]...[;[CAID[@provid]:]length[,length]...]...
 	  set valid ECM length per CAID and provid in hex, default:none,provid=000000
 
