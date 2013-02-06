@@ -223,7 +223,12 @@ static int32_t griffin_card_init(struct s_reader *rdr, ATR *newatr)
 	get_atr
 	def_resp
 
-	if (atr[0] != 0x3b && atr[1] != 0x08 && atr_size < 10)
+	if (atr_size < 10)
+		return ERROR;
+
+	//       0  1  2  3  4  5  6  7  8  9
+	// ATR: 3B 08 yy 01 xx xx xx xx 10 00
+	if (atr[0] != 0x3b || atr[1] != 0x08 || atr[3] != 0x01 || atr[9] != 0x00)
 		return ERROR;
 
 	rdr->nprov = 1;
