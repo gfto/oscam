@@ -48,7 +48,7 @@ DESCRIPTIONS
 	  maximum log file size, 0 = unlimited, default:10
 
        logduplicatelines = 0|1
-	  0 = enable detection of duplicate lines in log file, 1= disbale detection of duplicate lines in log file, default:0
+	  1 = enable logging of duplicate lines in the log, default:0
 
        disablelog = 0|1
 	  1 = disable log file, default:0
