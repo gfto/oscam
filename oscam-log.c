@@ -201,7 +201,6 @@ static int32_t get_log_header(int32_t m, char *txt)
 
 static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 {
-	char sbuf[16];
 
 #ifdef CS_ANTICASC
 	extern FILE *ac_log;
@@ -249,6 +248,8 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 	}
 #endif
 
+#if defined(MODULE_MONITOR)
+	char sbuf[16];
 	struct s_client *cl;
 	for (cl=first_client; cl ; cl=cl->next) {
 		if ((cl->typ == 'm') && (cl->monlvl>0) && cl->log) //this variable is only initialized for cl->typ = 'm'
@@ -265,6 +266,7 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 			monitor_send_idx(cl, txt);
 		}
 	}
+#endif
 }
 
 static void write_to_log_int(char *txt, int8_t header_len)
