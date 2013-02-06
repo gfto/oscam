@@ -9,6 +9,7 @@
 
 extern struct s_module modules[CS_MAX_MOD];
 extern CS_MUTEX_LOCK gethostbyname_lock;
+extern int32_t exit_oscam;
 
 #ifndef IPV6SUPPORT
 static int32_t inet_byteorder = 0;
@@ -533,7 +534,7 @@ int32_t start_listener(struct s_module *ph, int32_t port_idx)
 		setsockopt(ph->ptab->ports[port_idx].fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keep_alive, sizeof(keep_alive));
 	}
 
-	while (timeout--) {
+	while (timeout-- && !exit_oscam) {
 		if (bind(ph->ptab->ports[port_idx].fd, (struct sockaddr *)&sad, sad_len) < 0) {
 			if (timeout) {
 				cs_log("%s: Bind request failed (%s), waiting another %d seconds",
