@@ -118,6 +118,8 @@ void * work_thread(void *ptr) {
 				if (cl->joblist && ll_count(cl->joblist)>0) {
 					LL_ITER itr = ll_iter_create(cl->joblist);
 					data = ll_iter_next_remove(&itr);
+					if (data)
+						set_work_thread_name(data);
 					//cs_debug_mask(D_TRACE, "start next job from list action=%d", data->action);
 				}
 				pthread_mutex_unlock(&cl->thread_lock);
