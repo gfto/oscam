@@ -651,71 +651,46 @@ static void init_signal_pre(void)
 }
 
 /* Sets the signal handlers.*/
-static void init_signal(int8_t isDaemon)
+static void init_signal()
 {
-		set_signal_handler(SIGINT, 3, cs_exit);
+	set_signal_handler(SIGINT, 3, cs_exit);
 #if defined(__APPLE__)
-		set_signal_handler(SIGEMT, 3, cs_exit);
+	set_signal_handler(SIGEMT, 3, cs_exit);
 #endif
-		set_signal_handler(SIGTERM, 3, cs_exit);
+	set_signal_handler(SIGTERM, 3, cs_exit);
 
-		set_signal_handler(SIGWINCH, 1, SIG_IGN);
-		set_signal_handler(SIGPIPE , 0, cs_sigpipe);
-		set_signal_handler(SIGALRM , 0, cs_master_alarm);
-		set_signal_handler(SIGHUP  , 1, isDaemon?cs_dummy:cs_reload_config);
-		set_signal_handler(SIGUSR1, 1, isDaemon?cs_dummy:cs_debug_level);
-		set_signal_handler(SIGUSR2, 1, isDaemon?cs_dummy:cs_card_info);
-		set_signal_handler(OSCAM_SIGNAL_WAKEUP, 0, isDaemon?cs_dummy:cs_dummy);
+	set_signal_handler(SIGWINCH, 1, SIG_IGN);
+	set_signal_handler(SIGPIPE , 0, cs_sigpipe);
+	set_signal_handler(SIGALRM , 0, cs_master_alarm);
+	set_signal_handler(SIGHUP  , 1, cs_reload_config);
+	set_signal_handler(SIGUSR1, 1, cs_debug_level);
+	set_signal_handler(SIGUSR2, 1, cs_card_info);
+	set_signal_handler(OSCAM_SIGNAL_WAKEUP, 0, cs_dummy);
 
-		if(!isDaemon){
-			if (cs_capture_SEGV) {
-				set_signal_handler(SIGSEGV, 1, cs_exit);
-				set_signal_handler(SIGBUS, 1, cs_exit);
-			}
-			else if (cs_dump_stack) {
-				set_signal_handler(SIGSEGV, 1, cs_dumpstack);
-				set_signal_handler(SIGBUS, 1, cs_dumpstack);
-			}
+	if (cs_capture_SEGV) {
+		set_signal_handler(SIGSEGV, 1, cs_exit);
+		set_signal_handler(SIGBUS, 1, cs_exit);
+	}
+	else if (cs_dump_stack) {
+		set_signal_handler(SIGSEGV, 1, cs_dumpstack);
+		set_signal_handler(SIGBUS, 1, cs_dumpstack);
+	}
 
-			cs_log("signal handling initialized");
-		}
+	cs_log("signal handling initialized");
 	return;
 }
 
 void cs_exit(int32_t sig)
 {
-	if (cs_dump_stack && (sig == SIGSEGV || sig == SIGBUS))
+	if (cs_dump_stack && (sig == SIGSEGV || sig == SIGBUS || sig == SIGQUIT))
 		cs_dumpstack(sig);
 
-	set_signal_handler(SIGCHLD, 1, SIG_IGN);
 	set_signal_handler(SIGHUP , 1, SIG_IGN);
 	set_signal_handler(SIGPIPE, 1, SIG_IGN);
-
-	if (sig==SIGALRM) {
-		cs_debug_mask(D_TRACE, "thread %8lX: SIGALRM, skipping", (unsigned long)pthread_self());
-		return;
-	}
-
-  if (sig && (sig!=SIGQUIT))
-    cs_log("thread %8lX exit with signal %d", (unsigned long)pthread_self(), sig);
 
   struct s_client *cl = cur_client();
   if (!cl)
   	return;
-
-	if (cl->typ == 'h' || cl->typ == 's') {
-		led_status_stopping();
-		led_stop();
-		lcd_thread_stop();
-
-#if !defined(__CYGWIN__)
-	char targetfile[256];
-		snprintf(targetfile, 255, "%s%s", get_tmp_dir(), "/oscam.version");
-		if (unlink(targetfile) < 0)
-			cs_log("cannot remove oscam version file %s (errno=%d %s)", targetfile, errno, strerror(errno));
-#endif
-		coolapi_close_all();
-  }
 
 	// this is very important - do not remove
 	if (cl->typ != 's') {
@@ -731,13 +706,8 @@ void cs_exit(int32_t sig)
 		return;
 	}
 
-	cs_cleanup();
-
 	if (!exit_oscam)
 	  exit_oscam = sig?sig:1;
-
-	if (sig == SIGINT)
-		exit(sig);
 }
 
 /* Checks if the date of the system is correct and waits if necessary. */
@@ -837,8 +807,8 @@ static void cs_waitforcardinit(void)
 			if (!card_init_done)
 				cs_sleepms(300); // wait a little bit
 			//alarm(cfg.cmaxidle + cfg.ctimeout / 1000 + 1);
-		} while (!card_init_done);
-		if (cfg.waitforcards_extra_delay>0)
+		} while (!card_init_done && !exit_oscam);
+		if (cfg.waitforcards_extra_delay>0 && !exit_oscam)
 			cs_sleepms(cfg.waitforcards_extra_delay);
 		cs_log("init for all local cards done");
 	}
@@ -1237,10 +1207,20 @@ static void restart_daemon(void)
     if (pid < 0)
       exit(1);
 
-    //set signal handler for the restart daemon:
-    set_signal_handler(SIGTERM, 0, fwd_sig);
+    //set signal handler for the restart daemon:    
+    set_signal_handler(SIGINT, 3, fwd_sig);
+#if defined(__APPLE__)
+		set_signal_handler(SIGEMT, 3, fwd_sig);
+#endif
+    set_signal_handler(SIGTERM, 3, fwd_sig);
     set_signal_handler(SIGQUIT, 0, fwd_sig);
     set_signal_handler(SIGHUP , 0, fwd_sig);
+    set_signal_handler(SIGUSR1, 0, fwd_sig);
+    set_signal_handler(SIGUSR2, 0, fwd_sig);
+    set_signal_handler(SIGALRM , 0, fwd_sig);
+		set_signal_handler(SIGWINCH, 1, SIG_IGN);
+		set_signal_handler(SIGPIPE , 0, SIG_IGN);
+		set_signal_handler(OSCAM_SIGNAL_WAKEUP, 0, SIG_IGN);
                                                                                                                                                 
     //restart control process:
     int32_t res=0;
@@ -1423,7 +1403,6 @@ int32_t main (int32_t argc, char *argv[])
   };
 
   parse_cmdline_params(argc, argv);
-  init_signal(true);
 
   if (bg && do_daemon(1,0))
   {
@@ -1489,7 +1468,7 @@ int32_t main (int32_t argc, char *argv[])
   init_sidtab();
   init_readerdb();
   cfg.account = init_userdb();
-  init_signal(false);
+  init_signal();
   init_srvid();
   init_tierid();
   init_provid();
@@ -1547,13 +1526,23 @@ int32_t main (int32_t argc, char *argv[])
 
 	// main loop function
 	client_check();
-
+	
+	// Cleanup
 	azbox_close();
-
+	coolapi_close_all();
 	mca_close();
+	led_status_stopping();
+	led_stop();
+	lcd_thread_stop();
 
-	cs_cleanup();
-
+#if !defined(__CYGWIN__)
+	char targetfile[256];
+	snprintf(targetfile, 255, "%s%s", get_tmp_dir(), "/oscam.version");
+	if (unlink(targetfile) < 0)
+		cs_log("cannot remove oscam version file %s (errno=%d %s)", targetfile, errno, strerror(errno));
+#endif
+	
+	cs_cleanup();	
 	stop_garbage_collector();
 
 	return exit_oscam;
