@@ -6,7 +6,8 @@
 
 static const uint8_t dgcrypt_atr[8] = { 0x3B, 0xE9, 0x00, 0x00, 0x81, 0x31, 0xC3, 0x45 };
 static const uint8_t cmd_CWKEY[5]   = { 0x81, 0xD0, 0x00, 0x01, 0x08 };
-//static const uint8_t cmd_CAID[5]    = { 0x81, 0xC0, 0x00, 0x01, 0x0A };
+static const uint8_t cmd_CAID[5]    = { 0x81, 0xC0, 0x00, 0x01, 0x0A };
+static const uint8_t cmd_CARDVER[5] = { 0x00, 0x31, 0x05, 0x00, 0x08 };
 static const uint8_t cmd_SERIAL[5]  = { 0x81, 0xD1, 0x00, 0x01, 0x10 };
 static const uint8_t cmd_LABEL[5]   = { 0x81, 0xD2, 0x00, 0x01, 0x10 };
 static const uint8_t cmd_SUBSYS[5]  = { 0x81, 0xDD, 0x00, 0x10, 0x04 };
@@ -74,9 +75,19 @@ static int32_t dgcrypt_card_init(struct s_reader *rdr, ATR *newatr)
 	// Get CAID
 	//   Send: 81 C0 00 01 0A
 	//   Recv: 4A BF 90 00
-//	if (!dgcrypt_cmd(rdr, cmd_CAID, sizeof(cmd_CAID), cta_res, &cta_lr, 2))
-//		return ERROR;
-//	rdr->caid = (cta_res[0] << 8) | cta_res[1];
+	if (dgcrypt_cmd(rdr, cmd_CAID, sizeof(cmd_CAID), cta_res, &cta_lr, 2)) {
+		rdr->caid = (cta_res[0] << 8) | cta_res[1];
+	}
+
+	// Get card version
+	//   Send: 00 31 05 00 08
+	//   Recv: 32 2E 35 35 35 00 00 00 90 00
+	//   Text:  2  .  5  5  5
+	char card_version[9];
+	memset(card_version, 0, sizeof(card_version));
+	if (dgcrypt_cmd(rdr, cmd_CARDVER, sizeof(cmd_CARDVER), cta_res, &cta_lr, 8)) {
+		memcpy(card_version, cta_res, sizeof(card_version) - 1);
+	}
 
 	// Get serial number
 	//   Send: 81 D1 00 01 10
@@ -101,8 +112,8 @@ static int32_t dgcrypt_card_init(struct s_reader *rdr, ATR *newatr)
 	if (!dgcrypt_cmd(rdr, cmd_LABEL, sizeof(cmd_LABEL), cta_res, &cta_lr, 4))
 		return ERROR;
 
-	rdr_log_sensitive(rdr, "CAID: 0x%04X, Serial: {%llu} HexSerial: {%02X %02X %02X %02X %02X %02X %02X} Label: {%s}",
-		rdr->caid,
+	rdr_log_sensitive(rdr, "CAID: 0x%04X, CardVer: %s Serial: {%llu} HexSerial: {%02X %02X %02X %02X %02X %02X %02X} Label: {%s}",
+		rdr->caid, card_version,
 		b2ll(7, rdr->hexserial),
 		rdr->hexserial[0], rdr->hexserial[1], rdr->hexserial[2],
 		rdr->hexserial[3], rdr->hexserial[4], rdr->hexserial[5], rdr->hexserial[6],
