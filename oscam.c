@@ -496,51 +496,6 @@ static int32_t do_daemon(int32_t nochdir, int32_t noclose)
 #define do_daemon daemon
 #endif
 
-static bool config_freed;
-
-static void cs_cleanup(void)
-{
-	if (config_freed)
-		return;
-
-	stat_finish();
-
-	cccam_done_share();
-
-	kill_all_clients();
-
-	//cleanup readers:
-	struct s_client *cl;
-	struct s_reader *rdr;
-	for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
-		cl = rdr->client;
-		if(cl){
-			rdr_log(rdr, "Killing reader");
-			kill_thread(cl);
-			// Stop MCR reader display thread
-			if (cl->typ == 'r' && cl->reader && cl->reader->typ == R_SC8in1
-					&& cl->reader->sc8in1_config && cl->reader->sc8in1_config->display_running) {
-				cl->reader->sc8in1_config->display_running = 0;
-			}
-		}
-	}
-	first_active_reader = NULL;
-
-	init_free_userdb(cfg.account);
-	cfg.account = NULL;
-	init_free_sidtab();
-
-	if (oscam_pidfile)
-		unlink(oscam_pidfile);
-
-	config_free();
-	config_freed = true;
-
-	cs_log("cardserver down");
-
-	cs_close_log();
-}
-
 /*
  * flags: 1 = restart, 2 = don't modify if SIG_IGN, may be combined
  */
@@ -1534,16 +1489,35 @@ int32_t main (int32_t argc, char *argv[])
 
 	// main loop function
 	client_check();
-	
+
 	// Cleanup
 	azbox_close();
 	coolapi_close_all();
 	mca_close();
+
 	led_status_stopping();
 	led_stop();
 	lcd_thread_stop();
+
 	remove_versionfile();
-	cs_cleanup();
+
+	stat_finish();
+	cccam_done_share();
+
+	kill_all_clients();
+	kill_all_readers();
+
+	if (oscam_pidfile)
+		unlink(oscam_pidfile);
+
+	init_free_userdb(cfg.account);
+	cfg.account = NULL;
+	init_free_sidtab();
+	config_free();
+
+	cs_log("cardserver down");
+	cs_close_log();
+
 	stop_garbage_collector();
 
 	return exit_oscam;

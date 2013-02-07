@@ -785,3 +785,20 @@ void init_cardreader(void) {
 	load_stat_from_file();
 	cs_writeunlock(&system_lock);
 }
+
+void kill_all_readers(void) {
+	struct s_reader *rdr;
+	for (rdr = first_active_reader; rdr; rdr = rdr->next) {
+		struct s_client *cl = rdr->client;
+		if (!cl)
+			continue;
+		rdr_log(rdr, "Killing reader");
+		kill_thread(cl);
+		// Stop MCR reader display thread
+		if (cl->typ == 'r' && cl->reader && cl->reader->typ == R_SC8in1
+				&& cl->reader->sc8in1_config && cl->reader->sc8in1_config->display_running) {
+			cl->reader->sc8in1_config->display_running = 0;
+		}
+	}
+	first_active_reader = NULL;
+}
