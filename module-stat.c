@@ -106,7 +106,7 @@ void load_stat_from_file(void)
 	FILE *file;
 
 	if (!cfg.lb_savepath) {
-		snprintf(buf, sizeof(buf), "%s/stat", get_tmp_dir());
+		get_tmp_dir_filename(buf, sizeof(buf), "stat");
 		fname = buf;
 	}
 	else
@@ -297,7 +297,7 @@ static void save_stat_to_file_thread(void)
 
 	char *fname;
 	if (!cfg.lb_savepath) {
-		snprintf(buf, sizeof(buf), "%s/stat", get_tmp_dir());
+		get_tmp_dir_filename(buf, sizeof(buf), "stat");
 		fname = buf;
 	}
 	else

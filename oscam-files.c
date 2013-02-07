@@ -34,6 +34,14 @@ char *get_tmp_dir(void) {
 	return cs_tmpdir;
 }
 
+char *get_tmp_dir_filename(char *dest, size_t destlen, const char *filename) {
+	char *tmp_dir = get_tmp_dir();
+	const char *slash = "/";
+	if (tmp_dir[strlen(tmp_dir) - 1] == '/') slash = "";
+	snprintf(dest, destlen, "%s%s%s", tmp_dir, slash, filename);
+	return dest;
+}
+
 /* Drop-in replacement for readdir_r as some plattforms strip the function from their libc.
    Furthermore, there are some security issues, see http://womble.decadent.org.uk/readdir_r-advisory.html */
 int32_t cs_readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result) {

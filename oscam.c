@@ -342,8 +342,7 @@ static void write_versionfile(bool use_stdout) {
 	FILE *fp = stdout;
 	if (!use_stdout) {
 		char targetfile[256];
-		snprintf(targetfile, sizeof(targetfile), "%s%s", get_tmp_dir(), "/oscam.version");
-		fp = fopen(targetfile, "w");
+		fp = fopen(get_tmp_dir_filename(targetfile, sizeof(targetfile), "oscam.version"), "w");
 		if (!fp) {
 			cs_log("Cannot open %s (errno=%d %s)", targetfile, errno, strerror(errno));
 			return;
@@ -435,8 +434,7 @@ static void write_versionfile(bool use_stdout) {
 
 static void remove_versionfile(void) {
 	char targetfile[256];
-	snprintf(targetfile, sizeof(targetfile), "%s%s", get_tmp_dir(), "/oscam.version");
-	unlink(targetfile);
+	unlink(get_tmp_dir_filename(targetfile, sizeof(targetfile), "oscam.version"));
 }
 
 #define report_emm_support(CONFIG_VAR, text) \
@@ -1449,8 +1447,7 @@ int32_t main (int32_t argc, char *argv[])
   if (!oscam_pidfile && cfg.pidfile)
     oscam_pidfile = cfg.pidfile;
   if (!oscam_pidfile) {
-    snprintf(default_pidfile, sizeof(default_pidfile) - 1, "%s%s", get_tmp_dir(), "/oscam.pid");
-    oscam_pidfile = default_pidfile;
+    oscam_pidfile = get_tmp_dir_filename(default_pidfile, sizeof(default_pidfile), "oscam.pid");
   }
   if (oscam_pidfile)
     pidfile_create(oscam_pidfile);

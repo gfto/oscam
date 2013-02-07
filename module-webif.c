@@ -3868,7 +3868,7 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 				get_config_filename(targetfile, sizeof(targetfile), entry->file);
 				break;
 			case FTYPE_VERSION:
-				snprintf(targetfile, sizeof(targetfile), "%s%s%s", get_tmp_dir(), "/", entry->file);
+				get_tmp_dir_filename(targetfile, sizeof(targetfile), entry->file);
 				break;
 			case FTYPE_ANTICASC:
 #ifdef CS_ANTICASC
