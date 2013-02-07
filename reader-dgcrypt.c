@@ -116,7 +116,7 @@ static int32_t dgcrypt_do_ecm(struct s_reader * rdr, const ECM_REQUEST *er, stru
 	def_resp
 	uint8_t cmd_buffer[256];
 
-	memcpy(cmd_buffer, er->ecm, er->ecm[2]);
+	memcpy(cmd_buffer, er->ecm, er->ecm[2] + 3);
 	// Replace The first 3 bytes of the ECM with the command
 	memcpy(cmd_buffer, cmd_ECM, sizeof(cmd_ECM));
 
