@@ -319,6 +319,7 @@ SRC-$(CONFIG_WITH_CARDREADER) += reader-common.c
 SRC-$(CONFIG_READER_BULCRYPT) += reader-bulcrypt.c
 SRC-$(CONFIG_READER_CONAX) += reader-conax.c
 SRC-$(CONFIG_READER_CRYPTOWORKS) += reader-cryptoworks.c
+SRC-$(CONFIG_READER_DGCRYPT) += reader-dgcrypt.c
 SRC-$(CONFIG_READER_DRE) += reader-dre.c
 SRC-$(CONFIG_READER_GRIFFIN) += reader-griffin.c
 SRC-$(CONFIG_READER_IRDETO) += reader-irdeto.c

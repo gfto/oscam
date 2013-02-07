@@ -164,6 +164,10 @@
 #define READER_GRIFFIN
 #endif
 
+#ifndef READER_DGCRYPT
+#define READER_DGCRYPT
+#endif
+
 #ifndef CARDREADER_PHOENIX
 #define CARDREADER_PHOENIX
 #endif

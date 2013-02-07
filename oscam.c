@@ -153,6 +153,7 @@ static void show_usage(void)
 	_check(READER_TONGFANG, "tongfang");
 	_check(READER_BULCRYPT, "bulcrypt");
 	_check(READER_GRIFFIN, "griffin");
+	_check(READER_DGCRYPT, "dgcrypt");
 	printf("\n");
 
 	printf(" CardReaders:");
@@ -410,6 +411,7 @@ static void write_versionfile(bool use_stdout) {
 		write_readerconf(READER_TONGFANG, "TONGFANG");
 		write_readerconf(READER_BULCRYPT, "Bulcrypt");
 		write_readerconf(READER_GRIFFIN, "Griffin");
+		write_readerconf(READER_DGCRYPT, "DGCrypt");
 		fprintf(fp, "\n");
 		write_cardreaderconf(CARDREADER_PHOENIX, "phoenix");
 		write_cardreaderconf(CARDREADER_INTERNAL_AZBOX, "internal_azbox");
@@ -453,6 +455,7 @@ static void do_report_emm_support(void) {
 		report_emm_support(READER_TONGFANG, "TONGFANG");
 		report_emm_support(READER_BULCRYPT, "Bulcrypt");
 		report_emm_support(READER_GRIFFIN, "Griffin");
+		report_emm_support(READER_DGCRYPT, "DGCrypt");
 	}
 }
 #undef report_emm_support
@@ -1362,6 +1365,9 @@ int32_t main (int32_t argc, char *argv[])
 #endif
 #ifdef READER_GRIFFIN
 	reader_griffin,
+#endif
+#ifdef READER_DGCRYPT
+	reader_dgcrypt,
 #endif
 	0
   };
