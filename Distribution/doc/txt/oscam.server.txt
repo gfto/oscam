@@ -301,6 +301,9 @@ DESCRIPTIONS
        ratelimitecm = count
 	  number of different SIDs in ECMs allowed for an interval, default:0
 
+       ecmnotfoundlimit = count
+	  number of ECMs with "not found" answer until the reader will be restarted, 0 = no limit, default:0
+
        resetcycle = count
 	  number of ECMs until SC reset is performed, 0 = disabled, valid for physical readers only, default:0
 

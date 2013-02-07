@@ -399,6 +399,11 @@ set vaild ECM header per CAID and provid in hex, default:none,provid=000000
 number of different SIDs in ECMs allowed for an interval, default:0
 .RE
 .PP
+\fBecmnotfoundlimit\fP = \fBcount\fP
+.RS 3n
+number of ECMs with "not found" answer until the reader will be restarted, 0 = no limit, default:0
+.RE
+.PP
 \fBresetcycle\fP = \fBcount\fP
 .RS 3n
 number of ECMs until SC reset is performed, 0 = disabled, valid for physical readers only, default:0
