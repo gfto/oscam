@@ -342,8 +342,7 @@ static void write_versionfile(bool use_stdout) {
 	FILE *fp = stdout;
 	if (!use_stdout) {
 		char targetfile[256];
-		snprintf(targetfile, sizeof(targetfile) - 1, "%s%s", get_tmp_dir(), "/oscam.version");
-		targetfile[sizeof(targetfile) - 1] = 0;
+		snprintf(targetfile, sizeof(targetfile), "%s%s", get_tmp_dir(), "/oscam.version");
 		fp = fopen(targetfile, "w");
 		if (!fp) {
 			cs_log("Cannot open %s (errno=%d %s)", targetfile, errno, strerror(errno));
@@ -433,6 +432,12 @@ static void write_versionfile(bool use_stdout) {
 #undef write_conf
 #undef write_readerconf
 #undef write_cardreaderconf
+
+static void remove_versionfile(void) {
+	char targetfile[256];
+	snprintf(targetfile, sizeof(targetfile), "%s%s", get_tmp_dir(), "/oscam.version");
+	unlink(targetfile);
+}
 
 #define report_emm_support(CONFIG_VAR, text) \
 	do { \
@@ -1540,15 +1545,8 @@ int32_t main (int32_t argc, char *argv[])
 	led_status_stopping();
 	led_stop();
 	lcd_thread_stop();
-
-#if !defined(__CYGWIN__)
-	char targetfile[256];
-	snprintf(targetfile, 255, "%s%s", get_tmp_dir(), "/oscam.version");
-	if (unlink(targetfile) < 0)
-		cs_log("cannot remove oscam version file %s (errno=%d %s)", targetfile, errno, strerror(errno));
-#endif
-	
-	cs_cleanup();	
+	remove_versionfile();
+	cs_cleanup();
 	stop_garbage_collector();
 
 	return exit_oscam;
