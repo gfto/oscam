@@ -1048,8 +1048,8 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 				tpl_printf(vars, TPLADD, "EMMBLOCKEDS", "%d", rdr->emmblocked[SHARED]);
 				tpl_printf(vars, TPLADD, "EMMBLOCKEDUQ", "%d", rdr->emmblocked[UNIQUE]);
 
-				tpl_printf(vars, TPLADD, "ECMSOK", "%d (%.2f%%)", rdr->ecmsok, rdr->ecmshealthok);
-				tpl_printf(vars, TPLADD, "ECMSNOK", "%d (%.2f%%)", rdr->ecmsnok, rdr->ecmshealthnok);
+				tpl_printf(vars, TPLADD, "ECMSOK", "%u (%.2f%%)", rdr->ecmsok, rdr->ecmshealthok);
+				tpl_printf(vars, TPLADD, "ECMSNOK", "%u (%.2f%%)", rdr->ecmsnok, rdr->ecmshealthnok);
 				tpl_printf(vars, TPLADD, "ECMSFILTEREDHEAD", "%d", rdr->ecmsfilteredhead);
 				tpl_printf(vars, TPLADD, "ECMSFILTEREDLEN", "%d", rdr->ecmsfilteredlen);
 #ifdef WITH_LB
@@ -1338,6 +1338,9 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	// AUprovid
 	if(rdr->auprovid)
 		tpl_printf(vars, TPLADD, "AUPROVID", "%06X", rdr->auprovid);
+
+	if (rdr->ecmnotfoundlimit)
+		tpl_printf(vars, TPLADD, "ECMNOTFOUNDLIMIT", "%u", rdr->ecmnotfoundlimit);
 
 	// Force Irdeto
 	if(!apicall) {

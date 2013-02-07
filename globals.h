@@ -1302,8 +1302,9 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t			ratelimitecm;
 	int32_t			ratelimitseconds;
 	time_t			lastdvbapirateoverride;
-	int32_t			ecmsok;
-	int32_t			ecmsnok;
+	uint32_t		ecmsok;
+	uint32_t		ecmsnok;
+	uint32_t		ecmnotfoundlimit;					// config setting. restart reader if ecmsnok >= ecmnotfoundlimit
 	int32_t			ecmsfilteredhead;					// count filtered ECM's by ECM Headerwhitelist
 	int32_t			ecmsfilteredlen;					// count filtered ECM's by ECM Whitelist
 	float			ecmshealthok;

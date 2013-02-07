@@ -719,6 +719,13 @@ void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 #endif
 		} else if (ea->rc == E_NOTFOUND) {
 			eardr->ecmsnok++;
+			if (eardr->ecmnotfoundlimit && eardr->ecmsnok >= eardr->ecmnotfoundlimit) {
+				rdr_log(eardr,"ECM not found limit reached %u. Restarting the reader.",
+					eardr->ecmsnok);
+				eardr->ecmsnok = 0; // Reset the variable
+				eardr->ecmshealthnok = 0; // Reset the variable
+				add_job(eardr->client, ACTION_READER_RESTART, NULL, 0);
+			}
 		}
 
 		//Reader ECMs Health Try (by Pickser)

@@ -736,6 +736,7 @@ static const struct config_list reader_opts[] = {
 	DEF_OPT_FUNC_X("ins7e11"			, OFS(ins7E11),					ins7E_fn, SIZEOF(ins7E11) ),
 	DEF_OPT_INT8("fix9993"				, OFS(fix_9993),				0 ),
 	DEF_OPT_INT8("force_irdeto"			, OFS(force_irdeto),			0 ),
+	DEF_OPT_UINT32("ecmnotfoundlimit"	, OFS(ecmnotfoundlimit),		0 ),
 	DEF_OPT_FUNC("ecmwhitelist"			, 0,							ecmwhitelist_fn ),
 	DEF_OPT_FUNC("ecmheaderwhitelist"	, 0,							ecmheaderwhitelist_fn ),
 	DEF_OPT_FUNC("detect"				, 0,							detect_fn ),
