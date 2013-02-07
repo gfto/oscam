@@ -651,7 +651,7 @@ static void init_signal_pre(void)
 }
 
 /* Sets the signal handlers.*/
-static void init_signal()
+static void init_signal(void)
 {
 	set_signal_handler(SIGINT, 3, cs_exit);
 #if defined(__APPLE__)
