@@ -112,7 +112,7 @@ static int32_t dgcrypt_card_init(struct s_reader *rdr, ATR *newatr)
 	if (!dgcrypt_cmd(rdr, cmd_LABEL, sizeof(cmd_LABEL), cta_res, &cta_lr, 4))
 		return ERROR;
 
-	rdr_log_sensitive(rdr, "CAID: 0x%04X, CardVer: %s Serial: {%llu} HexSerial: {%02X %02X %02X %02X %02X %02X %02X} Label: {%s}",
+	rdr_log_sensitive(rdr, "CAID: 0x%04X, CardVer: %s Serial: {%"PRIu64"} HexSerial: {%02X %02X %02X %02X %02X %02X %02X} Label: {%s}",
 		rdr->caid, card_version,
 		b2ll(7, rdr->hexserial),
 		rdr->hexserial[0], rdr->hexserial[1], rdr->hexserial[2],
