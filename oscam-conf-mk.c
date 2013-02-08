@@ -1,16 +1,4 @@
 #include "globals.h"
-
-#if defined(__APPLE__) || defined(__FreeBSD__)
-#include <net/if_dl.h>
-#include <ifaddrs.h>
-#elif defined(__SOLARIS__)
-#include <net/if.h>
-#include <net/if_arp.h>
-#include <sys/sockio.h>
-#else
-#include <net/if.h>
-#endif
-
 #include "oscam-conf-mk.h"
 #include "oscam-net.h"
 #include "oscam-string.h"

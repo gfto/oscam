@@ -3,8 +3,6 @@
 #include "oscam-time.h"
 #include "reader-common.h"
 #include "cscrypt/idea.h"
-#include <termios.h>
-#include <unistd.h>
 
 // Card Status checks
 #define HAS_CW()      ((reader->cam_state[2]&6)==6)

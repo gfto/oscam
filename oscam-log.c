@@ -1,6 +1,5 @@
 #include "globals.h"
 #include <syslog.h>
-#include <stdlib.h>
 #include "module-monitor.h"
 #include "oscam-client.h"
 #include "oscam-garbage.h"

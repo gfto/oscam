@@ -1,7 +1,6 @@
 #include "globals.h"
 #ifdef READER_SECA
 #include "reader-common.h"
-#include <stdlib.h>
 
 static uint64_t get_pbm(struct s_reader * reader, uint8_t idx)
 {

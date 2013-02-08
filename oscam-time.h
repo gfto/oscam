@@ -1,9 +1,6 @@
 #ifndef OSCAM_TIME_H_
 #define OSCAM_TIME_H_
 
-#include <time.h>
-#include <sys/time.h>
-
 int32_t comp_timeb(struct timeb *tpa, struct timeb *tpb);
 time_t cs_timegm(struct tm *tm);
 struct tm *cs_gmtime_r(const time_t *timep, struct tm *r);

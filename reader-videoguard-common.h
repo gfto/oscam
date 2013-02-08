@@ -1,14 +1,6 @@
 #ifndef __NDS_COMMON__
 #define __NDS_COMMON__
 
-#include "globals.h"
-
-#include <termios.h>
-#include <unistd.h>
-#if defined(__linux__)
-#include <linux/serial.h>
-#endif
-
 #define write_cmd_vg(cmd, data) (card_write(reader, cmd, data, cta_res, &cta_lr) == 0)
 
 #define NDSUNKNOWN    0

@@ -3,7 +3,6 @@
 
 #ifdef HAVE_DVBAPI
 #include <sys/un.h>
-#include <dirent.h>
 
 #define TYPE_ECM 1
 #define TYPE_EMM 2

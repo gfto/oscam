@@ -1,10 +1,6 @@
 #ifndef OSCAM_CONF_H
 #define OSCAM_CONF_H
 
-#include <stdio.h>
-#include <inttypes.h>
-#include <stdbool.h>
-
 #define MAXLINESIZE 16384
 
 enum opt_types {
