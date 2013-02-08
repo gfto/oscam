@@ -37,8 +37,40 @@
 #include "cscrypt/idea.h"
 
 #include "config.h"
-#include "config-funcs.h"
 
+#if defined(WITH_SSL) && !defined(WITH_LIBCRYPTO)
+#  define WITH_LIBCRYPTO
+#endif
+
+#if defined(__CYGWIN__) || defined(__arm__) || defined(__SH4__) || defined(__MIPS__) || defined(__MIPSEL__) || defined(__powerpc__)
+#  define CS_LOGFILE "/dev/tty"
+#endif
+
+#if defined(__AIX__) || defined(__SGI__) || defined(__OSF__) || defined(__HPUX__) || defined(__SOLARIS__) || defined(__APPLE__)
+#  define NEED_DAEMON
+#endif
+
+#if defined(__AIX__) || defined(__SGI__) || defined(__OSF__) || defined(__HPUX__) || defined(__SOLARIS__) || defined(__CYGWIN__)
+#  define NO_ENDIAN_H
+#endif
+
+#if defined(__AIX__) || defined(__SGI__)
+#  define socklen_t unsigned long
+#endif
+
+#if defined(__SOLARIS__) || defined(__FreeBSD__)
+#  define BSD_COMP
+#endif
+
+#if defined(__HPUX__)
+#  define _XOPEN_SOURCE_EXTENDED
+#endif
+
+#if defined(__APPLE__) && !defined(s6_addr32)
+#define s6_addr32 __u6_addr.__u6_addr32
+#endif
+
+#include "config-funcs.h"
 #include "cscrypt/cscrypt.h"
 
 #ifndef uchar
