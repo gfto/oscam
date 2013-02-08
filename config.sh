@@ -521,8 +521,8 @@ do
 		break
 	;;
 	'-l'|'--list-config')
-		enabled_any $(get_opts readers) $(get_opts cardreaders) && enable_opt WITH_CARDREADER >/dev/null
-		disabled_all $(get_opts readers) $(get_opts cardreaders) && disable_opt WITH_CARDREADER >/dev/null
+		enabled_any $(get_opts readers) $(get_opts card_readers) && enable_opt WITH_CARDREADER >/dev/null
+		disabled_all $(get_opts readers) $(get_opts card_readers) && disable_opt WITH_CARDREADER >/dev/null
 		enabled MODULE_CCCSHARE && enable_opt MODULE_CCCAM >/dev/null
 		enabled_any CARDREADER_DB2COM CARDREADER_MP35 CARDREADER_SC8IN1 && enable_opt CARDREADER_PHOENIX >/dev/null
 		for OPT in $addons $protocols WITH_CARDREADER $readers $card_readers
