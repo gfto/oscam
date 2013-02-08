@@ -39,7 +39,7 @@
 #include "config.h"
 
 #if defined(WITH_SSL) && !defined(WITH_LIBCRYPTO)
-#  define WITH_LIBCRYPTO
+#  define WITH_LIBCRYPTO 1
 #endif
 
 #if defined(__CYGWIN__) || defined(__arm__) || defined(__SH4__) || defined(__MIPS__) || defined(__MIPSEL__) || defined(__powerpc__)

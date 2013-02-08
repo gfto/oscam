@@ -1,229 +1,81 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-//
-// ADDONS
-//
-
-#ifndef WEBIF
-#define WEBIF
-#endif
-
-#ifndef TOUCH
-#define TOUCH
-#endif
-
-#ifndef WITH_SSL
-//#define WITH_SSL
-#endif
-
-#ifndef HAVE_DVBAPI
+#define WEBIF 1
+#define TOUCH 1
+//#define WITH_SSL 1
 #if defined(__linux__)
-#define HAVE_DVBAPI
+#define HAVE_DVBAPI 1
 #endif
-#endif
+#define IRDETO_GUESSING 1
+#define CS_ANTICASC 1
+#define WITH_DEBUG 1
+#define WITH_LB 1
+#define CS_CACHEEX 1
+//#define LCDSUPPORT 1
+//#define LEDSUPPORT 1
+//#define IPV6SUPPORT 1
 
-#ifndef IRDETO_GUESSING
-#define IRDETO_GUESSING
-#endif
+#define MODULE_MONITOR 1
+//#define MODULE_CAMD33 1
+#define MODULE_CAMD35 1
+#define MODULE_CAMD35_TCP 1
+#define MODULE_NEWCAMD 1
+#define MODULE_CCCAM 1
+#define MODULE_CCCSHARE 1
+#define MODULE_GBOX 1
+#define MODULE_RADEGAST 1
+#define MODULE_SERIAL 1
+#define MODULE_CONSTCW 1
+#define MODULE_PANDORA 1
+//#define MODULE_GHTTP 1
 
-#ifndef CS_ANTICASC
-#define CS_ANTICASC
-#endif
-
-#ifndef WITH_DEBUG
-#define WITH_DEBUG
-#endif
-
-#ifndef WITH_LB
-#define WITH_LB
-#endif
-
-#ifndef LCDSUPPORT
-//#define LCDSUPPORT
-#endif
-
-#ifndef LEDSUPPORT
-//#define LEDSUPPORT
-#endif
-
-#ifndef IPV6SUPPORT
-//#define IPV6SUPPORT
-#endif
-
-//
-// MODULES
-//
-
-#ifndef MODULE_MONITOR
-#define MODULE_MONITOR
-#endif
-
-#ifndef MODULE_CAMD33
-//#define MODULE_CAMD33
-#endif
-
-#ifndef MODULE_CAMD35
-#define MODULE_CAMD35
-#endif
-
-#ifndef MODULE_CAMD35_TCP
-#define MODULE_CAMD35_TCP
-#endif
-
-#ifndef MODULE_NEWCAMD
-#define MODULE_NEWCAMD
-#endif
-
-#ifndef MODULE_CCCAM
-#define MODULE_CCCAM
-#endif
-
-#ifdef MODULE_CCCAM
-#ifndef MODULE_CCCSHARE
-#define MODULE_CCCSHARE
-#endif
-#endif
-
-
-#ifndef MODULE_GBOX
-#define MODULE_GBOX
-#endif
-
-#ifndef MODULE_RADEGAST
-#define MODULE_RADEGAST
-#endif
-
-#ifndef MODULE_SERIAL
-#define MODULE_SERIAL
-#endif
-
-#ifndef MODULE_CONSTCW
-#define MODULE_CONSTCW
-#endif
-
-#ifndef MODULE_PANDORA
-#define MODULE_PANDORA
-#endif
-
-#ifndef MODULE_GHTTP
-//#define MODULE_GHTTP
-#endif
-
-//
-// CARDREADER
-//
-
-#ifndef WITH_CARDREADER
-#define WITH_CARDREADER
-#endif
+#define WITH_CARDREADER 1
 
 #ifdef WITH_CARDREADER
 
-#ifndef READER_NAGRA
-#define READER_NAGRA
-#endif
+#define READER_NAGRA 1
+#define READER_IRDETO 1
+#define READER_CONAX 1
+#define READER_CRYPTOWORKS 1
+#define READER_SECA 1
+#define READER_VIACCESS 1
+#define READER_VIDEOGUARD 1
+#define READER_DRE 1
+#define READER_TONGFANG 1
+#define READER_BULCRYPT 1
+#define READER_GRIFFIN 1
+#define READER_DGCRYPT 1
 
-#ifndef READER_IRDETO
-#define READER_IRDETO
-#endif
-
-#ifndef READER_CONAX
-#define READER_CONAX
-#endif
-
-#ifndef READER_CRYPTOWORKS
-#define READER_CRYPTOWORKS
-#endif
-
-#ifndef READER_SECA
-#define READER_SECA
-#endif
-
-#ifndef READER_VIACCESS
-#define READER_VIACCESS
-#endif
-
-#ifndef READER_VIDEOGUARD
-#define READER_VIDEOGUARD
-#endif
-
-#ifndef READER_DRE
-#define READER_DRE
-#endif
-
-#ifndef READER_TONGFANG
-#define READER_TONGFANG
-#endif
-
-#ifndef READER_BULCRYPT
-#define READER_BULCRYPT
-#endif
-
-#ifndef READER_GRIFFIN
-#define READER_GRIFFIN
-#endif
-
-#ifndef READER_DGCRYPT
-#define READER_DGCRYPT
-#endif
-
-#ifndef CARDREADER_PHOENIX
-#define CARDREADER_PHOENIX
-#endif
-
-#ifndef CARDREADER_INTERNAL
-#define CARDREADER_INTERNAL
-#endif
-
-#ifndef CARDREADER_MP35
-#define CARDREADER_MP35
-#endif
-
-#ifndef CARDREADER_SC8IN1
-#define CARDREADER_SC8IN1
-#endif
-
-#ifndef CARDREADER_SMARGO
-#define CARDREADER_SMARGO
-#endif
-
-#ifndef CARDREADER_DB2COM
-#define CARDREADER_DB2COM
-#endif
+#define CARDREADER_PHOENIX 1
+#define CARDREADER_INTERNAL 1
+#define CARDREADER_MP35 1
+#define CARDREADER_SC8IN1 1
+#define CARDREADER_SMARGO 1
+#define CARDREADER_DB2COM 1
 
 #ifdef WITH_PCSC
-#ifndef CARDREADER_PCSC
-#define CARDREADER_PCSC
-#endif
+#define CARDREADER_PCSC 1
 #endif
 
 #ifdef WITH_LIBUSB
-#ifndef CARDREADER_SMART
-#define CARDREADER_SMART
-#endif
+#define CARDREADER_SMART 1
 #endif
 
 // CARDREADER_INTERNAL_{AZBOX,COOLAPI,SCI} are internal variables
 // do not touch them
 #if   defined(CARDREADER_INTERNAL) && defined(WITH_AZBOX)
-#define CARDREADER_INTERNAL_AZBOX
+#define CARDREADER_INTERNAL_AZBOX 1
 #elif defined(CARDREADER_INTERNAL) && defined(WITH_COOLAPI)
-#define CARDREADER_INTERNAL_COOLAPI
+#define CARDREADER_INTERNAL_COOLAPI 1
 #elif defined(CARDREADER_INTERNAL)
-#define CARDREADER_INTERNAL_SCI
+#define CARDREADER_INTERNAL_SCI 1
 #endif
 
 #ifdef WITH_STAPI
-#ifndef CARDREADER_STAPI
-#define CARDREADER_STAPI
-#endif
+#define CARDREADER_STAPI 1
 #endif
 
 #endif // WITH_CARDREADER
-
-#ifndef CS_CACHEEX
-#define CS_CACHEEX
-#endif
 
 #endif //OSCAM_CONFIG_H_

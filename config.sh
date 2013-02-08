@@ -119,12 +119,12 @@ Available options:
 }
 
 enabled() {
-	grep "^\#define $1$" config.h >/dev/null 2>/dev/null
+	grep "^\#define $1 1$" config.h >/dev/null 2>/dev/null
 	return $?
 }
 
 disabled() {
-	grep "^\#define $1$" config.h >/dev/null 2>/dev/null
+	grep "^\#define $1 1$" config.h >/dev/null 2>/dev/null
 	test $? = 0 && return 1
 	return 0
 }
@@ -179,7 +179,7 @@ valid_opt() {
 
 enable_opt() {
 	valid_opt $1 && disabled $1 && {
-		sed -i.bak -e "s|//#define $1$|#define $1|g" config.h && rm config.h.bak
+		sed -i.bak -e "s|//#define $1 1$|#define $1 1|g" config.h && rm config.h.bak
 		echo "Enable $1"
 	}
 }
@@ -193,7 +193,7 @@ enable_opts() {
 
 disable_opt() {
 	valid_opt $1 && enabled $1 && {
-		sed -i.bak -e "s|#define $1$|//#define $1|g" config.h && rm config.h.bak
+		sed -i.bak -e "s|#define $1 1$|//#define $1 1|g" config.h && rm config.h.bak
 		echo "Disable $1"
 	}
 }
@@ -218,7 +218,7 @@ get_opts() {
 }
 
 check_test() {
-	if [ "$(cat $tempfileconfig | grep "^#define $1$")" != "" ]; then
+	if [ "$(cat $tempfileconfig | grep "^#define $1 1$")" != "" ]; then
 		echo "on"
 	else
 		echo "off"
@@ -227,14 +227,14 @@ check_test() {
 
 disable_all() {
 	for i in $1; do
-		sed -i.bak -e "s/^#define ${i}$/\/\/#define ${i}/g" $tempfileconfig
+		sed -i.bak -e "s/^#define ${i} 1$/\/\/#define ${i} 1/g" $tempfileconfig
 	done
 }
 
 enable_package() {
 	for i in $(cat $tempfile); do
 		strip=$(echo $i | sed "s/\"//g")
-		sed -i.bak -e "s/\/\/#define ${strip}$/#define ${strip}/g" $tempfileconfig
+		sed -i.bak -e "s/\/\/#define ${strip} 1$/#define ${strip} 1/g" $tempfileconfig
 	done
 }
 
