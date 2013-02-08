@@ -201,6 +201,7 @@ static int32_t get_log_header(int32_t m, char *txt)
 
 static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 {
+	(void)log; // Prevent warning when WEBIF, MODULE_MONITOR and CS_ANTICASC are disabled
 
 #ifdef CS_ANTICASC
 	extern FILE *ac_log;
