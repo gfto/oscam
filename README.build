@@ -62,7 +62,7 @@ OSCam build system documentation
                     Example: 'make EXTRA_LDFLAGS=-Llibdir'
 
    EXTRA_FLAGS    - Add text to both EXTRA_CFLAGS and EXTRA_LDFLAGS.
-                    Example: 'make EXTRA_FLAGS=-DWEBIF=1'
+                    Example: 'make EXTRA_FLAGS=-DBLAH=1'
 
    EXTRA_LIBS     - Add text to LIBS (affects linking).
                     Example: 'make EXTRA_LIBS="-L./stapi -loscam_stapi"'
@@ -73,9 +73,9 @@ OSCam build system documentation
 
    USE_LIBUSB=1    - Request linking with libusb. The variables that control
                      USE_LIBUSB=1 build are:
-                         LIBUSB_FLAGS='-DWITH_LIBUSB'
-                         LIBUSB_CFLAGS='-DWITH_LIBUSB'
-                         LIBUSB_LDFLAGS='-DWITH_LIBUSB'
+                         LIBUSB_FLAGS='-DWITH_LIBUSB=1'
+                         LIBUSB_CFLAGS='-DWITH_LIBUSB=1'
+                         LIBUSB_LDFLAGS='-DWITH_LIBUSB=1'
                          LIBUSB_LIB='-lusb-1.0 -lrt'
                      Using USE_LIBUSB=1 adds to '-libusb' to PLUS_TARGET.
                      To build with static libusb, set the variable LIBUSB_LIB
@@ -84,9 +84,9 @@ OSCam build system documentation
 
    USE_PCSC=1      - Request linking with PCSC. The variables that control
                      USE_PCSC=1 build are:
-                         PCSC_FLAGS='-DWITH_PCSC -I/usr/include/PCSC'
-                         PCSC_CFLAGS='-DWITH_PCSC -I/usr/include/PCSC'
-                         PCSC_LDFLAGS='-DWITH_PCSC -I/usr/include/PCSC'
+                         PCSC_FLAGS='-DWITH_PCSC=1 -I/usr/include/PCSC'
+                         PCSC_CFLAGS='-DWITH_PCSC=1 -I/usr/include/PCSC'
+                         PCSC_LDFLAGS='-DWITH_PCSC=1 -I/usr/include/PCSC'
                          PCSC_LIB='-lpcsclite'
                      Using USE_PCSC=1 adds to '-pcsc' to PLUS_TARGET.
                      To build with static PCSC, set the variable PCSC_LIB
@@ -95,9 +95,9 @@ OSCam build system documentation
 
    USE_STAPI=1    - Request linking with STAPI. The variables that control
                      USE_STAPI=1 build are:
-                         STAPI_FLAGS='-DWITH_STAPI'
-                         STAPI_CFLAGS='-DWITH_STAPI'
-                         STAPI_LDFLAGS='-DWITH_STAPI'
+                         STAPI_FLAGS='-DWITH_STAPI=1'
+                         STAPI_CFLAGS='-DWITH_STAPI=1'
+                         STAPI_LDFLAGS='-DWITH_STAPI=1'
                          STAPI_LIB='-L./stapi -loscam_stapi'
                      Using USE_STAPI=1 adds to '-stapi' to PLUS_TARGET.
                      In order for USE_STAPI to work you have to create stapi
@@ -105,9 +105,9 @@ OSCam build system documentation
 
    USE_COOLAPI=1  - Request support for Coolstream API (libnxp) aka NeutrinoHD
                     box. The variables that control the build are:
-                         COOLAPI_FLAGS='-DWITH_COOLAPI'
-                         COOLAPI_CFLAGS='-DWITH_COOLAPI'
-                         COOLAPI_LDFLAGS='-DWITH_COOLAPI'
+                         COOLAPI_FLAGS='-DWITH_COOLAPI=1'
+                         COOLAPI_CFLAGS='-DWITH_COOLAPI=1'
+                         COOLAPI_LDFLAGS='-DWITH_COOLAPI=1'
                          COOLAPI_LIB='-lnxp -lrt'
                      Using USE_COOLAPI=1 adds to '-coolapi' to PLUS_TARGET.
                      In order for USE_COOLAPI to work you have to have libnxp.so
@@ -115,9 +115,9 @@ OSCam build system documentation
 
    USE_AZBOX=1    - Request support for AZBOX (openxcas)
                     box. The variables that control the build are:
-                         AZBOX_FLAGS='-DWITH_AZBOX'
-                         AZBOX_CFLAGS='-DWITH_AZBOX'
-                         AZBOX_LDFLAGS='-DWITH_AZBOX'
+                         AZBOX_FLAGS='-DWITH_AZBOX=1'
+                         AZBOX_CFLAGS='-DWITH_AZBOX=1'
+                         AZBOX_LDFLAGS='-DWITH_AZBOX=1'
                          AZBOX_LIB='-Lextapi/openxcas -lOpenXCASAPI'
                      Using USE_AZBOX=1 adds to '-azbox' to PLUS_TARGET.
                      extapi/openxcas/libOpenXCASAPI.a library that is shipped
@@ -125,26 +125,26 @@ OSCam build system documentation
 
    USE_MCA=1      - Request support for Matrix Cam Air (MCA).
                     The variables that control the build are:
-                         MCA_FLAGS='-DWITH_MCA'
-                         MCA_CFLAGS='-DWITH_MCA'
-                         MCA_LDFLAGS='-DWITH_MCA'
+                         MCA_FLAGS='-DWITH_MCA=1'
+                         MCA_CFLAGS='-DWITH_MCA=1'
+                         MCA_LDFLAGS='-DWITH_MCA=1'
                      Using USE_MCA=1 adds to '-mca' to PLUS_TARGET.
 
    USE_LIBCRYPTO=1 - Request linking with libcrypto instead of using OSCam
                      internal crypto functions. USE_LIBCRYPTO is automatically
                      enabled if the build is configured with SSL support. The
                      variables that control USE_LIBCRYPTO=1 build are:
-                         LIBCRYPTO_FLAGS='-DWITH_LIBCRYPTO'
-                         LIBCRYPTO_CFLAGS='-DWITH_LIBCRYPTO'
-                         LIBCRYPTO_LDFLAGS='-DWITH_LIBCRYPTO'
+                         LIBCRYPTO_FLAGS='-DWITH_LIBCRYPTO=1'
+                         LIBCRYPTO_CFLAGS='-DWITH_LIBCRYPTO=1'
+                         LIBCRYPTO_LDFLAGS='-DWITH_LIBCRYPTO=1'
                          LIBCRYPTO_LIB='-lcrypto'
 
    USE_SSL=1       - Request linking with libssl. USE_SSL is automatically
                      enabled if the build is configured with SSL support. The
                      variables that control USE_SSL=1 build are:
-                         SSL_FLAGS='-DWITH_SSL'
-                         SSL_CFLAGS='-DWITH_SSL'
-                         SSL_LDFLAGS='-DWITH_SSL'
+                         SSL_FLAGS='-DWITH_SSL=1'
+                         SSL_CFLAGS='-DWITH_SSL=1'
+                         SSL_LDFLAGS='-DWITH_SSL=1'
                          SSL_LIB='-lssl'
                      Using USE_SSL=1 adds to '-ssl' to PLUS_TARGET.
 

@@ -79,7 +79,7 @@ endif
 TARGET := $(shell $(CC) -dumpmachine 2>/dev/null)
 
 # Process USE_ variables
-DEFAULT_STAPI_FLAGS = -DWITH_STAPI
+DEFAULT_STAPI_FLAGS = -DWITH_STAPI=1
 DEFAULT_STAPI_LIB = -L./stapi -loscam_stapi
 ifdef USE_STAPI
 STAPI_FLAGS = $(DEFAULT_STAPI_FLAGS)
@@ -92,7 +92,7 @@ else
 override CONFIG_CARDREADER_STAPI:=n
 endif
 
-DEFAULT_COOLAPI_FLAGS = -DWITH_COOLAPI
+DEFAULT_COOLAPI_FLAGS = -DWITH_COOLAPI=1
 DEFAULT_COOLAPI_LIB = -lnxp -lrt
 ifdef USE_COOLAPI
 COOLAPI_FLAGS = $(DEFAULT_COOLAPI_FLAGS)
@@ -108,7 +108,7 @@ override CONFIG_CARDREADER_INTERNAL:=n
 endif
 endif
 
-DEFAULT_AZBOX_FLAGS = -DWITH_AZBOX
+DEFAULT_AZBOX_FLAGS = -DWITH_AZBOX=1
 DEFAULT_AZBOX_LIB = -Lextapi/openxcas -lOpenXCASAPI
 ifdef USE_AZBOX
 AZBOX_FLAGS = $(DEFAULT_AZBOX_FLAGS)
@@ -129,7 +129,7 @@ ifeq "$(CONFIG_CARDREADER_INTERNAL)" "y"
 override CONFIG_CARDREADER_INTERNAL_SCI:=y
 endif
 
-DEFAULT_MCA_FLAGS = -DWITH_MCA
+DEFAULT_MCA_FLAGS = -DWITH_MCA=1
 ifdef USE_MCA
 MCA_FLAGS = $(DEFAULT_MCA_FLAGS)
 MCA_CFLAGS = $(DEFAULT_MCA_FLAGS)
@@ -138,7 +138,7 @@ override PLUS_TARGET := $(PLUS_TARGET)-mca
 CONFIG_WITH_MCA=y
 endif
 
-DEFAULT_LIBCRYPTO_FLAGS = -DWITH_LIBCRYPTO
+DEFAULT_LIBCRYPTO_FLAGS = -DWITH_LIBCRYPTO=1
 DEFAULT_LIBCRYPTO_LIB = -lcrypto
 ifdef USE_LIBCRYPTO
 LIBCRYPTO_FLAGS = $(DEFAULT_LIBCRYPTO_FLAGS)
@@ -151,7 +151,7 @@ else
 CONFIG_WITHOUT_LIBCRYPTO=y
 endif
 
-DEFAULT_SSL_FLAGS = -DWITH_SSL
+DEFAULT_SSL_FLAGS = -DWITH_SSL=1
 DEFAULT_SSL_LIB = -lssl
 ifdef USE_SSL
 SSL_FLAGS = $(DEFAULT_SSL_FLAGS)
@@ -161,7 +161,7 @@ SSL_LIB = $(DEFAULT_SSL_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-ssl
 endif
 
-DEFAULT_LIBUSB_FLAGS = -DWITH_LIBUSB
+DEFAULT_LIBUSB_FLAGS = -DWITH_LIBUSB=1
 ifeq ($(uname_S),Linux)
 DEFAULT_LIBUSB_LIB = -lusb-1.0 -lrt
 else
@@ -177,10 +177,10 @@ override CONFIG_CARDREADER_SMART:=y
 endif
 
 ifeq ($(uname_S),Darwin)
-DEFAULT_PCSC_FLAGS = -isysroot $(OSX_SDK) -DWITH_PCSC -I/usr/local/include
+DEFAULT_PCSC_FLAGS = -isysroot $(OSX_SDK) -DWITH_PCSC=1 -I/usr/local/include
 DEFAULT_PCSC_LIB = -syslibroot,$(OSX_SDK) -framework IOKit -framework CoreFoundation -framework PCSC -L/usr/local/lib
 else
-DEFAULT_PCSC_FLAGS = -DWITH_PCSC -I/usr/include/PCSC
+DEFAULT_PCSC_FLAGS = -DWITH_PCSC=1 -I/usr/include/PCSC
 DEFAULT_PCSC_LIB = -lpcsclite
 endif
 ifdef USE_PCSC
@@ -523,7 +523,7 @@ OSCam build system documentation\n\
                     Example: 'make EXTRA_LDFLAGS=-Llibdir'\n\
 \n\
    EXTRA_FLAGS    - Add text to both EXTRA_CFLAGS and EXTRA_LDFLAGS.\n\
-                    Example: 'make EXTRA_FLAGS=-DWEBIF=1'\n\
+                    Example: 'make EXTRA_FLAGS=-DBLAH=1'\n\
 \n\
    EXTRA_LIBS     - Add text to LIBS (affects linking).\n\
                     Example: 'make EXTRA_LIBS=\"-L./stapi -loscam_stapi\"'\n\

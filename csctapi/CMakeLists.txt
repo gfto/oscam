@@ -44,7 +44,7 @@ endif (NOT OSCamOperatingSystem MATCHES "Mac OS X")
 
 check_include_file ("libusb-1.0/libusb.h" HAVE_LIBUSB)
 if (HAVE_LIBUSB AND HAVE_PTHREAD AND HAVE_LIBRT OR HAVE_LIBRT_STATIC)
-    add_definitions ("-DWITH_LIBUSB")
+    add_definitions ("-DWITH_LIBUSB=1")
 endif (HAVE_LIBUSB AND HAVE_PTHREAD AND HAVE_LIBRT OR HAVE_LIBRT_STATIC)
 
 set (lib_name "csctapi")

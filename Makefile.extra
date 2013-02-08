@@ -68,7 +68,7 @@ cross-powerpc-405-linux:
 	$(MAKE) --no-print-directory \
 		CROSS=powerpc-405-linux-gnu- \
 		CONF_DIR=/var/tuxbox/config \
-		EXTRA_FLAGS="-DSTB04SCI"
+		EXTRA_FLAGS="-DSTB04SCI=1"
 		$(MAKEFLAGS)
 
 cross-sh4-linux:
@@ -235,7 +235,7 @@ dockstar:
 qboxhd:
 	$(MAKE) --no-print-directory \
 		CROSS=sh4-linux- \
-		EXTRA_FLAGS=-DQBOXHD \
+		EXTRA_FLAGS="-DQBOXHD=1" \
 		PLUS_TARGET=-qboxhd \
 		CONF_DIR=/var/tuxbox/config \
 		$(MAKEFLAGS)
