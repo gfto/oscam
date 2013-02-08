@@ -973,7 +973,7 @@ static uint32_t chk_resize_cllist(struct pollfd **pfd, struct s_client ***cl_lis
 	return cur_size;
 }
 
-static void * client_check(void) {
+static void process_clients(void) {
 	int32_t i, k, j, rc, pfdcount = 0;
 	struct s_client *cl;
 	struct s_reader *rdr;
@@ -982,8 +982,6 @@ static void * client_check(void) {
 	uint32_t cl_size = 0;
 
 	char buf[10];
-
-	set_thread_name(__func__);
 
 	if (pipe(thread_pipe) == -1) {
 		printf("cannot create pipe, errno=%d\n", errno);
@@ -1120,7 +1118,7 @@ static void * client_check(void) {
 	}
 	free(pfd);
 	free(cl_list);
-	return NULL;
+	return;
 }
 
 static void * reader_check(void) {
@@ -1488,7 +1486,7 @@ int32_t main (int32_t argc, char *argv[])
 				modules[i].s_handler(NULL, NULL, i);
 
 	// main loop function
-	client_check();
+	process_clients();
 
 	// Cleanup
 	azbox_close();
