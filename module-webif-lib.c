@@ -223,7 +223,7 @@ char *tpl_getTplPath(const char *name, const char *path, char *result, uint32_t 
 }
 
 #define check_conf(CONFIG_VAR, text) \
-	if(config_##CONFIG_VAR() && strncmp(#CONFIG_VAR, text, len) == 0) {ok = 1; break;}
+	if (config_enabled(CONFIG_VAR) && strncmp(#CONFIG_VAR, text, len) == 0) {ok = 1; break;}
 
 /* Returns an unparsed template either from disk or from internal templates.
    Note: You must free() the result after using it and you may get NULL if an error occured!*/

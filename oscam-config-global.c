@@ -336,7 +336,7 @@ static void http_port_fn(const char *token, char *value, void *UNUSED(setting), 
 		cfg.http_port = 0;
 		if (value[0]) {
 			if (value[0] == '+') {
-				if (config_WITH_SSL()) {
+				if (config_enabled(WITH_SSL)) {
 					cfg.http_use_ssl = 1;
 				} else {
 					fprintf(stderr, "Warning: OSCam compiled without SSL support.\n");

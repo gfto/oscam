@@ -6,7 +6,6 @@
 #include <stddef.h>
 
 #include "../config.h"
-#include "../config-funcs.h"
 
 #if defined(WITH_SSL) || defined(WITH_LIBCRYPTO)
 #  include <openssl/aes.h>

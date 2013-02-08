@@ -89,7 +89,7 @@ char    *processUsername = NULL;
 *****************************************************************************/
 #define _check(CONFIG_VAR, text) \
 	do { \
-		if (config_##CONFIG_VAR()) \
+		if (config_enabled(CONFIG_VAR)) \
 			printf(" %s", text); \
 	} while(0)
 
@@ -113,7 +113,7 @@ static void show_usage(void)
 	_check(TOUCH, "touch");
 	_check(MODULE_MONITOR, "monitor");
 	_check(WITH_SSL, "ssl");
-	if (!config_WITH_STAPI())
+	if (!config_enabled(WITH_STAPI))
 		_check(HAVE_DVBAPI, "dvbapi");
 	else
 		_check(WITH_STAPI, "dvbapi_stapi");
@@ -184,7 +184,7 @@ static void show_usage(void)
 	printf("\n Startup:\n");
 	printf(" -b, --daemon            | Start in the background as daemon.\n");
 	printf(" -B, --pidfile <pidfile> | Create pidfile when starting.\n");
-	if (config_WEBIF()) {
+	if (config_enabled(WEBIF)) {
 	printf(" -r, --restart <level>   | Set restart level:\n");
 	printf("                         .   0 - Restart disabled (exit on restart request).\n");
 	printf("                         .   1 - WebIf restart is active (default).\n");
@@ -213,7 +213,7 @@ static void show_usage(void)
 	printf("\n Settings:\n");
 	printf(" -p, --pending-ecm <num> | Set the maximum number of pending ECM packets.\n");
 	printf("                         . Default: 32 Max: 255\n");
-	if (config_WEBIF()) {
+	if (config_enabled(WEBIF)) {
 	printf(" -u, --utf8              | Enable WebIf support for UTF-8 charset.\n");
 	}
 	printf("\n Debug parameters:\n");
@@ -291,7 +291,7 @@ static void parse_cmdline_params(int argc, char **argv) {
 			max_pending = atoi(optarg) <= 0 ? 32 : MIN(atoi(optarg), 255);
 			break;
 		case 'r': // --restart
-			if (config_WEBIF()) {
+			if (config_enabled(WEBIF)) {
 				cs_restart_mode = atoi(optarg);
 			}
 			break;
@@ -313,7 +313,7 @@ static void parse_cmdline_params(int argc, char **argv) {
 			break;
 		}
 		case 'u': // --utf8
-			if (config_WEBIF()) {
+			if (config_enabled(WEBIF)) {
 				cs_http_use_utf8 = 1;
 				printf("WARNING: Web interface UTF-8 mode enabled. Carefully read documentation as bugs may arise.\n");
 			}
@@ -330,13 +330,13 @@ static void parse_cmdline_params(int argc, char **argv) {
 }
 
 #define write_conf(CONFIG_VAR, text) \
-	fprintf(fp, "%-30s %s\n", text ":", config_##CONFIG_VAR() ? "yes" : "no")
+	fprintf(fp, "%-30s %s\n", text ":", config_enabled(CONFIG_VAR) ? "yes" : "no")
 
 #define write_readerconf(CONFIG_VAR, text) \
-	fprintf(fp, "%-30s %s\n", text ":", config_##CONFIG_VAR() ? "yes" : "no - no EMM support!")
+	fprintf(fp, "%-30s %s\n", text ":", config_enabled(CONFIG_VAR) ? "yes" : "no - no EMM support!")
 
 #define write_cardreaderconf(CONFIG_VAR, text) \
-	fprintf(fp, "%s%-19s %s\n", "cardreader_", text ":", config_##CONFIG_VAR() ? "yes" : "no")
+	fprintf(fp, "%s%-19s %s\n", "cardreader_", text ":", config_enabled(CONFIG_VAR) ? "yes" : "no")
 
 static void write_versionfile(bool use_stdout) {
 	FILE *fp = stdout;
@@ -364,7 +364,7 @@ static void write_versionfile(bool use_stdout) {
 	write_conf(TOUCH, "Touch interface support");
 	write_conf(WITH_SSL, "SSL support");
 	write_conf(HAVE_DVBAPI, "DVB API support");
-	if (config_HAVE_DVBAPI()) {
+	if (config_enabled(HAVE_DVBAPI)) {
 		write_conf(WITH_AZBOX, "DVB API with AZBOX support");
 		write_conf(WITH_MCA, "DVB API with MCA support");
 		write_conf(WITH_COOLAPI, "DVB API with COOLAPI support");
@@ -396,7 +396,7 @@ static void write_versionfile(bool use_stdout) {
 
 	fprintf(fp, "\n");
 	write_conf(WITH_CARDREADER, "Reader support");
-	if (config_WITH_CARDREADER()) {
+	if (config_enabled(WITH_CARDREADER)) {
 		fprintf(fp, "\n");
 		write_readerconf(READER_NAGRA, "Nagra");
 		write_readerconf(READER_IRDETO, "Irdeto");
@@ -439,12 +439,12 @@ static void remove_versionfile(void) {
 
 #define report_emm_support(CONFIG_VAR, text) \
 	do { \
-		if (!config_##CONFIG_VAR()) \
+		if (!config_enabled(CONFIG_VAR)) \
 			cs_log("Binary without %s module - no EMM processing for %s possible!", text, text); \
 	} while(0)
 
 static void do_report_emm_support(void) {
-	if (!config_WITH_CARDREADER()) {
+	if (!config_enabled(WITH_CARDREADER)) {
 		cs_log("Binary without Cardreader Support! No EMM processing possible!");
 	} else {
 		report_emm_support(READER_NAGRA, "Nagra");

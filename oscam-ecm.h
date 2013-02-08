@@ -25,7 +25,7 @@ void request_cw_from_readers(ECM_REQUEST *er);
 
 #define debug_ecm(mask, args...) \
 	do { \
-		if (config_WITH_DEBUG() && ((mask) & cs_dblevel)) { \
+		if (config_enabled(WITH_DEBUG) && ((mask) & cs_dblevel)) { \
 			char buf[ECM_FMT_LEN]; \
 			format_ecm(er, buf, ECM_FMT_LEN); \
 			cs_debug_mask(mask, ##args); \
