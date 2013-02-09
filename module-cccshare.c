@@ -23,6 +23,7 @@ static int32_t card_added_count = 0;
 static int32_t card_removed_count = 0;
 static int32_t card_dup_count = 0;
 static pthread_t share_updater_thread = 0;
+static bool share_updater_thread_active;
 
 int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card);
 
@@ -1265,7 +1266,7 @@ void share_updater(void)
 		uint32_t last_card_check = 0;
 		uint32_t last_sidtab_generation = 0;
 		uint32_t card_count = 0;
-		while (1) {
+		while (share_updater_thread_active) {
 				if (i > 0 && card_count < 100) { //fast refresh only if we have less cards
 						cs_debug_mask(D_TRACE, "share-updater mode=initfast t=1s i=%d", i);
 						cs_sleepms(1000);
@@ -1283,6 +1284,8 @@ void share_updater(void)
 						cs_debug_mask(D_TRACE, "share-updater mode=interval t=%ds", cfg.cc_update_interval);
 						cs_sleepms(cfg.cc_update_interval*1000);
 				}
+				if (!share_updater_thread_active)
+					break;
 
 				uint32_t cur_check = 0;
 				uint32_t cur_card_check = 0;
@@ -1345,6 +1348,8 @@ void share_updater(void)
 				}
 				last_check_rdroptions = cur_check_rdroptions;
 		}
+		for (i = 0; i < CAID_KEY; i++)
+			cc_free_reported_carddata(reported_carddatas_list[i], NULL, 0);
 }
 
 int32_t compare_cards_by_hop(struct cc_card **pcard1, struct cc_card **pcard2)
@@ -1380,6 +1385,7 @@ void cccam_init_share(void) {
 		cs_lock_create(&cc_shares_lock, 200, "cc_shares_lock");
 
 		share_updater_thread = 0;
+		share_updater_thread_active = 1;
 		pthread_t temp;
         pthread_attr_t attr;
         pthread_attr_init(&attr);
@@ -1397,12 +1403,8 @@ void cccam_init_share(void) {
 
 void cccam_done_share(void) {
 		if (share_updater_thread) {
-				pthread_cancel(share_updater_thread);
+				share_updater_thread_active = 0;
 				share_updater_thread = 0;
-
-				int8_t i;
-				for (i=0;i<CAID_KEY;i++)
-					cc_free_reported_carddata(reported_carddatas_list[i], NULL, 0);
 		}
 }
 #endif
