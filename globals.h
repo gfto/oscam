@@ -1771,6 +1771,12 @@ struct s_clientinit
 	struct s_client * client;
 };
 
+struct s_clientmsg {
+	uint8_t msg[1024];
+	int32_t len;
+	int32_t cmd;
+};
+
 typedef struct reader_stat_t
 {
 	int32_t			rc;

@@ -9,6 +9,8 @@
 #include "oscam-string.h"
 #include "oscam-work.h"
 #include "reader-common.h"
+#include "module-cccam-data.h"
+#include "module-cccshare.h"
 
 extern struct s_module modules[CS_MAX_MOD];
 extern CS_MUTEX_LOCK system_lock;
@@ -307,7 +309,16 @@ void * work_thread(void *ptr) {
 			case ACTION_CLIENT_KILL:
 				cl->kill = 1;
 				break;
-			}
+				
+#ifdef MODULE_CCCAM				
+			case ACTION_CLIENT_SEND_MSG:
+				{
+					struct s_clientmsg *clientmsg = (struct s_clientmsg *)data->ptr;
+					cc_cmd_send(cl, clientmsg->msg, clientmsg->len, clientmsg->cmd);		
+				}
+				break;
+#endif
+			}			
 
 			if (data != &tmp_data)
 				free_job_data(data);

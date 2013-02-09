@@ -23,6 +23,7 @@ enum actions {
 #ifdef CS_CACHEEX
 	ACTION_CACHE_PUSH_OUT      = 28,	// wc28
 #endif
+	ACTION_CLIENT_SEND_MSG     = 29,	// wc29
 };
 
 #define ACTION_CLIENT_FIRST 20 // This just marks where client actions start
