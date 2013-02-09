@@ -283,8 +283,8 @@ void * work_thread(void *ptr) {
 					cl->kill = 1;
 				}
 				break;
-#ifdef CS_CACHEEX
 			case ACTION_CACHE_PUSH_OUT: {
+#ifdef CS_CACHEEX
 				ECM_REQUEST *er = data->ptr;
 				int32_t res=0, stats = -1;
 				// cc-nodeid-list-check
@@ -303,22 +303,20 @@ void * work_thread(void *ptr) {
 				if (cl->account)
 					cl->account->cwcacheexpush++;
 				first_client->cwcacheexpush++;
+#endif
 				break;
 			}
-#endif
 			case ACTION_CLIENT_KILL:
 				cl->kill = 1;
 				break;
-				
-#ifdef MODULE_CCCAM				
-			case ACTION_CLIENT_SEND_MSG:
-				{
-					struct s_clientmsg *clientmsg = (struct s_clientmsg *)data->ptr;
-					cc_cmd_send(cl, clientmsg->msg, clientmsg->len, clientmsg->cmd);		
-				}
-				break;
+			case ACTION_CLIENT_SEND_MSG: {
+#ifdef MODULE_CCCAM
+				struct s_clientmsg *clientmsg = (struct s_clientmsg *)data->ptr;
+				cc_cmd_send(cl, clientmsg->msg, clientmsg->len, clientmsg->cmd);
 #endif
-			}			
+				break;
+			}
+			} // switch
 
 			if (data != &tmp_data)
 				free_job_data(data);

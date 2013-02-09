@@ -20,9 +20,7 @@ enum actions {
 	ACTION_CLIENT_KILL         = 25,	// wc25
 	ACTION_CLIENT_INIT         = 26,	// wc26
 	ACTION_CLIENT_IDLE         = 27,	// wc27
-#ifdef CS_CACHEEX
 	ACTION_CACHE_PUSH_OUT      = 28,	// wc28
-#endif
 	ACTION_CLIENT_SEND_MSG     = 29,	// wc29
 };
 
