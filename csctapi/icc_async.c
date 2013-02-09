@@ -745,8 +745,13 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 	}//switch
 	SetRightParity (reader); // some reader devices need to get set the right parity
 
-	uint32_t ETU = 0; // for Irdeto T14 cards, do not set ETU
-	if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14)) ETU = F / D;
+	uint32_t ETU = F / D;
+	
+	if (atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14){
+		ETU = 0;	// for Irdeto T14 cards, do not set ETU
+		reader->worketu *=2; // overclocked T14 needs this otherwise high ecm reponses
+	}
+		
 	if (reader->crdr.write_settings) {
 		call(reader->crdr.write_settings(reader, ETU, EGT, 5, I, (uint16_t) F, (unsigned char)D, N));
 	} else if (reader->crdr.write_settings2) {
