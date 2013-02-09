@@ -358,20 +358,20 @@ menu_card_readers() {
 
 
 config_dialog() {
-	tempfile=/tmp/test$$
-	tempfileconfig=/tmp/config.h
-	configfile=config.h
-	DIALOG=${DIALOG:-`which dialog`}
-
 	height=30
 	width=65
 	listheight=16
 
+	DIALOG=${DIALOG:-`which dialog`}
 	if [ -z "${DIALOG}" ]; then
 		echo "Please install dialog package." 1>&2
 		exit 1
 	fi
 
+	configfile=config.h
+	tempfile=$(mktemp -t oscam-config.dialog.XXXXXX) || exit 1
+	tempfileconfig=$(mktemp -t oscam-config.h.XXXXXX) || exit 1
+	trap 'rm -f $tempfile $tempfileconfig $tempfileconfig.bak 2>/dev/null' INT TERM EXIT
 	cp -f $configfile $tempfileconfig
 
 	while true; do
@@ -384,7 +384,7 @@ config_dialog() {
 			2> ${tempfile}
 
 		opt=${?}
-		if [ $opt != 0 ]; then clear; rm $tempfile; rm $tempfileconfig; exit; fi
+		if [ $opt != 0 ]; then clear; exit; fi
 
 		menuitem=`cat $tempfile`
 		case $menuitem in
@@ -394,8 +394,6 @@ config_dialog() {
 			CardReaders) menu_card_readers ;;
 			Save)
 				print_components
-				rm $tempfile
-				rm $tempfileconfig
 				$0 --make-config.mak
 				exit
 			;;
