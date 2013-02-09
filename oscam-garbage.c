@@ -149,9 +149,6 @@ void stop_garbage_collector(void)
 		for(i = 0; i < HASH_BUCKETS; ++i)
 			cs_writelock(&garbage_lock[i]);
 
-		pthread_cancel(garbage_thread);
-		cs_sleepms(100);
-
 		for(i = 0; i < HASH_BUCKETS; ++i){
 			while (garbage_first[i]) {
 				struct cs_garbage *next = garbage_first[i]->next;
