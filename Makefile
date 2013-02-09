@@ -61,7 +61,11 @@ LDFLAGS = -Wl,--gc-sections
 # Check for the linker version and if it matches disable --gc-sections
 # For more information about the bug see:
 #   http://cygwin.com/ml/binutils/2005-01/msg00103.html
-LINKER_VER := $(shell $(CC) $(LINKER_VER_OPT) 2>&1 | head -1 | cut -d' ' -f5)
+# The LD output is saved into variable and then processed, because if
+# the output is piped directly into another command LD creates 4 files
+# in your /tmp directory and doesn't delete them.
+LINKER_VER := $(shell set -e; VER="`$(CC) $(LINKER_VER_OPT) 2>&1`"; echo $$VER | head -1 | cut -d' ' -f5)
+
 # dm500 toolchain
 ifeq "$(LINKER_VER)" "20040727"
 LDFLAGS :=
@@ -386,7 +390,6 @@ all:
 |  Readers  : $(shell ./config.sh --show-enabled readers | sed -e 's|READER_||g')\n\
 |  CardRdrs : $(shell ./config.sh --show-enabled card_readers | sed -e 's|CARDREADER_||g')\n\
 |  Compiler : $(shell $(CC) --version 2>/dev/null | head -n 1)\n\
-|  Linker   : $(shell $(CC) $(LINKER_VER_OPT) 2>&1 | head -n 1)\n\
 |  Binary   : $(OSCAM_BIN)\n\
 +-------------------------------------------------------------------------------\n"
 	@$(MAKE) --no-print-directory $(OSCAM_BIN) $(LIST_SMARGO_BIN)
