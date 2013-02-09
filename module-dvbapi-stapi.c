@@ -36,7 +36,7 @@ void stapi_off(void) {
 			if (dev_list[i].SignalHandle > 0) {
 				oscam_stapi_SignalAbort(dev_list[i].SignalHandle);
 			}
-			pthread_cancel(dev_list[i].thread);
+			dev_list[i].thread_active = 0;
 		}
 	}
 
@@ -142,6 +142,8 @@ int32_t stapi_open(void) {
 			return 0;
 		para->id=i;
 		para->cli=cur_client();
+		para->dev=&dev_list[i];
+		para->dev->thread_active = 1;
 
 		int32_t ret = pthread_create(&dev_list[i].thread, NULL, stapi_read_thread, (void *)para);
 		if(ret){
@@ -307,16 +309,6 @@ int32_t stapi_do_remove_filter(int32_t UNUSED(demux_id), FILTERTYPE *filter, int
 	}
 }
 
-void stapi_cleanup_thread(void *dev){
-	int32_t dev_index = (int)dev;
-
-	int32_t ErrorCode;
-	ErrorCode = oscam_stapi_Close(dev_list[dev_index].SessionHandle);
-
-	printf("liboscam_stapi: PTI %s closed - %d\n", dev_list[dev_index].name, ErrorCode);
-	dev_list[dev_index].SessionHandle=0;
-}
-
 void *stapi_read_thread(void *sparam) {
 	int32_t dev_index, ErrorCode, i, j, CRCValid;
 	uint32_t QueryBufferHandle = 0, DataSize = 0;
@@ -326,12 +318,9 @@ void *stapi_read_thread(void *sparam) {
 	dev_index = para->id;
 
 	pthread_setspecific(getclient, para->cli);
-	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-	pthread_cleanup_push(stapi_cleanup_thread, (void*) dev_index);
-
 	int32_t error_count = 0;
 
-	while (1) {
+	while (para->dev->thread_active) {
 		QueryBufferHandle = 0;
 		ErrorCode = oscam_stapi_SignalWaitBuffer(dev_list[dev_index].SignalHandle, &QueryBufferHandle, 1000);
 
@@ -340,7 +329,7 @@ void *stapi_read_thread(void *sparam) {
 				break;
 			case 852042: // ERROR_SIGNAL_ABORTED
 				cs_log("Caught abort signal");
-				pthread_exit(NULL);
+				goto EXIT;
 				break;
 			case 11: // ERROR_TIMEOUT:
 				//cs_log("timeout %d", dev_index);
@@ -357,7 +346,7 @@ void *stapi_read_thread(void *sparam) {
 				error_count++;
 				if (error_count>10) {
 					cs_log("Too many errors in reader thread %d, quitting.", dev_index);
-					pthread_exit(NULL);
+					goto EXIT;
 				}
 				continue;
 				break;
@@ -395,7 +384,11 @@ void *stapi_read_thread(void *sparam) {
 		}
 		pthread_mutex_unlock(&filter_lock);
 	}
-	pthread_cleanup_pop(0);
+EXIT:
+	ErrorCode = oscam_stapi_Close(dev_list[dev_index].SessionHandle);
+	printf("liboscam_stapi: PTI %s closed - %d\n", dev_list[dev_index].name, ErrorCode);
+	dev_list[dev_index].SessionHandle=0;
+	return NULL;
 }
 
 #define ASSOCIATE 1

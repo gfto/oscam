@@ -9,6 +9,7 @@ struct STDEVICE
 	uint32_t SessionHandle;
 	uint32_t SignalHandle;
 	pthread_t thread;
+	bool thread_active;
 	struct filter_s demux_fd[MAX_DEMUX][MAX_FILTER];
 };
 
@@ -16,6 +17,7 @@ struct read_thread_param
 {
 	int32_t id;
 	struct s_client *cli;
+	struct STDEVICE *dev;
 };
 
 #define BUFFLEN 1024
