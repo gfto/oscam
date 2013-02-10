@@ -267,3 +267,9 @@ static-ssl:
 		LIBCRYPTO_LIB=/usr/lib/libcrypto.a \
 		EXTRA_TARGET=-static \
 		$(MAKEFLAGS)
+
+android-arm:
+	$(MAKE) --no-print-directory \
+		LIB_PTHREAD= \
+		CROSS=arm-linux-androideabi- \
+		$(MAKEFLAGS)

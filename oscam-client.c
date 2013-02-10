@@ -248,10 +248,19 @@ void init_first_client(void)
 {
 	// get username OScam is running under
 	struct passwd pwd;
-	char buf[256];
 	struct passwd *pwdbuf;
-
-	if ((getpwuid_r(getuid(), &pwd, buf, sizeof(buf), &pwdbuf)) == 0) {
+	bool ok;
+#ifdef __ANDROID__
+	pwdbuf = getpwuid(getuid());
+	if (pwdbuf) {
+		memcpy(&pwd, pwdbuf, sizeof(pwd));
+		ok = 1;
+	}
+#else
+	char buf[256];
+	ok = getpwuid_r(getuid(), &pwd, buf, sizeof(buf), &pwdbuf) == 0;
+#endif
+	if (ok) {
 		if (cs_malloc(&processUsername, strlen(pwd.pw_name) + 1))
 			cs_strncpy(processUsername, pwd.pw_name, strlen(pwd.pw_name) + 1);
 		else

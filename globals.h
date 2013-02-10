@@ -12,7 +12,6 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/shm.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <sys/mman.h>
@@ -84,6 +83,13 @@
 
 #if defined(__APPLE__) && !defined(s6_addr32)
 #define s6_addr32 __u6_addr.__u6_addr32
+#endif
+
+#ifdef __ANDROID__
+#ifndef in_port_t
+#define in_port_t uint16_t
+#endif
+#define tcdrain(fd) ioctl(fd, TCSBRK, 1)
 #endif
 
 #include "cscrypt/cscrypt.h"
@@ -164,7 +170,9 @@ typedef unsigned char uchar;
 #define getpwnam(a) UNSAFE_GETPWNAM_NOT_THREADSAFE_USE_GETPWNAM_R
 #define getpwent() UNSAFE_GETPWENT_NOT_THREADSAFE_USE_GETPWENT_R
 #define fgetpwent(a) UNSAFE_FGETPWENT_NOT_THREADSAFE_USE_FGETPWENT_R
+#ifndef __ANDROID__
 #define getpwuid(a) UNSAFE_GETPWUID_NOT_THREADSAFE_USE_GETPWUID_R
+#endif
 #define getspent() UNSAFE_GETSPENT_NOT_THREADSAFE_USE_GETSPENT_R
 #define getspnam(a) UNSAFE_GETSPNAM_NOT_THREADSAFE_USE_GETSPNAM_R
 #define fgetspent(a) UNSAFE_FGETSPENT_NOT_THREADSAFE_USE_FGETSPENT_R

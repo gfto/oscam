@@ -31,8 +31,12 @@
 
 #include <sys/poll.h>
 
-#if defined(__linux__)
+#if defined(__linux__) && !defined(__ANDROID__)
 #include <linux/serial.h>
+#endif
+
+#if defined(__ANDROID__)
+#include "../extapi/linux/serial.h"
 #endif
 
 #include "../oscam-time.h"
