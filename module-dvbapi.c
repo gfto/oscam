@@ -2087,7 +2087,7 @@ int32_t dvbapi_init_listenfd(void) {
 		return 0;
 	if ((listenfd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
 		return 0;
-	if (bind(listenfd, (struct sockaddr_un *) &servaddr, clilen) < 0)
+	if (bind(listenfd, (struct sockaddr *)&servaddr, clilen) < 0)
 		return 0;
 	if (listen(listenfd, 5) < 0)
 		return 0;
@@ -2137,7 +2137,7 @@ void event_handler(int32_t UNUSED(signal)) {
 					continue;
 				}
 
-				if (pmt_info.st_mtime != demux[i].pmt_time) {
+				if ((time_t)pmt_info.st_mtime != demux[i].pmt_time) {
 					cs_log("Stopping demux for pmt file %s", dest);
 				 	dvbapi_stop_descrambling(i);
 				}
@@ -2182,7 +2182,7 @@ void event_handler(int32_t UNUSED(signal)) {
 		int32_t found=0;
 		for (i=0;i<MAX_DEMUX;i++) {
 			if (strcmp(demux[i].pmt_file, dp->d_name)==0) {
-				if (pmt_info.st_mtime == demux[i].pmt_time) {
+				if ((time_t)pmt_info.st_mtime == demux[i].pmt_time) {
 				 	found=1;
 					continue;
 				}
@@ -2244,7 +2244,7 @@ void event_handler(int32_t UNUSED(signal)) {
 #endif
 		if (pmt_id>=0) {
 			cs_strncpy(demux[pmt_id].pmt_file, dp->d_name, sizeof(demux[pmt_id].pmt_file));
-			demux[pmt_id].pmt_time = pmt_info.st_mtime;
+			demux[pmt_id].pmt_time = (time_t)pmt_info.st_mtime;
 		}
 
 		if (cfg.dvbapi_pmtmode == 3) {
@@ -2620,7 +2620,7 @@ static void * dvbapi_main_local(void *cli) {
 				if (type[i]==1) {
 					if (pfd2[i].fd==listenfd) {
 						clilen = sizeof(servaddr);
-						connfd = accept(listenfd, (struct sockaddr_un *)&servaddr, (socklen_t *)&clilen);
+						connfd = accept(listenfd, (struct sockaddr *)&servaddr, (socklen_t *)&clilen);
 						cs_debug_mask(D_DVBAPI, "new socket connection fd: %d", connfd);
 
 						disable_pmt_files=1;

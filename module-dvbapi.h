@@ -106,7 +106,7 @@ typedef struct demux_s
 	uchar hexserial[8];
 	struct s_reader *rdr;
 	char pmt_file[30];
-	int32_t pmt_time;
+	time_t pmt_time;
 #ifdef WITH_STAPI
 	uint32_t DescramblerHandle[PTINUM];
 	int32_t desc_pidcount;

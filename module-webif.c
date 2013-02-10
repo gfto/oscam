@@ -4377,7 +4377,7 @@ static char *send_oscam_image(struct templatevars *vars, FILE *f, struct uripara
 		  		struct stat st;
 		  		disktpl = 1;
 					stat(path, &st);
-					if(st.st_mtime < modifiedheader){
+					if((time_t)st.st_mtime < modifiedheader){
 						send_header304(f, extraheader);
 						return "1";
 					}
