@@ -401,7 +401,7 @@ FILE *open_config_file_or_die(const char *conf_filename) {
 FILE *create_config_file(const char *conf_filename) {
 	char temp_file[256];
 	get_config_filename(temp_file, sizeof(temp_file), conf_filename);
-	strncat(temp_file, ".tmp", sizeof(temp_file) - 1);
+	strncat(temp_file, ".tmp", sizeof(temp_file) - strlen(temp_file) - 1);
 	FILE *f = fopen(temp_file, "w");
 	if (!f) {
 		cs_log("ERROR: Cannot create file \"%s\" (errno=%d %s)", temp_file, errno, strerror(errno));
@@ -420,8 +420,8 @@ bool flush_config_file(FILE *f, const char *conf_filename) {
 	get_config_filename(dst_file, sizeof(dst_file), conf_filename);
 	memcpy(tmp_file, dst_file, sizeof(tmp_file));
 	memcpy(bak_file, dst_file, sizeof(bak_file));
-	strncat(tmp_file, ".tmp", sizeof(tmp_file) - 1);
-	strncat(bak_file, ".bak", sizeof(bak_file) - 1);
+	strncat(tmp_file, ".tmp", sizeof(tmp_file) - strlen(tmp_file) - 1);
+	strncat(bak_file, ".bak", sizeof(bak_file) - strlen(bak_file) - 1);
 	fclose(f);
 	return safe_overwrite_with_bak(dst_file, tmp_file, bak_file, 0);
 }
