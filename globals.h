@@ -672,7 +672,6 @@ struct s_module {
 	int8_t			large_ecm_support;
 	int16_t			listenertype;
 	char 			*desc;
-	char 			*logtxt;
 	//int32_t  		s_port;
 	IN_ADDR_T		s_ip;
 	uint16_t		bufsize;

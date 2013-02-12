@@ -1206,7 +1206,6 @@ void module_gbox(struct s_module *ph)
   ph->num=R_GBOX;
   ph->type=MOD_CONN_UDP;
   ph->listenertype = LIS_GBOX;
-  ph->logtxt = ", crypted";
 
   ph->send_dcw=gbox_send_dcw;
 

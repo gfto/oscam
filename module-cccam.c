@@ -3779,7 +3779,6 @@ void module_cccam(struct s_module *ph) {
 	ph->large_ecm_support = 1;
 	ph->listenertype = LIS_CCCAM;
 	ph->num = R_CCCAM;
-	ph->logtxt = ", crypted";
 	ph->recv = cc_recv;
 	ph->cleanup = cc_cleanup;
 	ph->bufsize = 2048;

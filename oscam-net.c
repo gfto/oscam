@@ -559,10 +559,10 @@ int32_t start_listener(struct s_module *ph, int32_t port_idx)
 		}
 	}
 
-	cs_log("%s: initialized (fd=%d, port=%d%s%s%s)",
+	cs_log("%s: initialized (fd=%d, port=%d%s%s)",
 		ph->desc, ph->ptab->ports[port_idx].fd,
 		ph->ptab->ports[port_idx].s_port,
-		ptxt[0], ptxt[1], ph->logtxt ? ph->logtxt : "");
+		ptxt[0], ptxt[1]);
 
 	for (i = 0; i < ph->ptab->ports[port_idx].ftab.nfilts; i++) {
 		int32_t j, pos = 0;

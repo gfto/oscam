@@ -1453,7 +1453,6 @@ void module_newcamd(struct s_module *ph)
   ph->desc="newcamd";
   ph->type=MOD_CONN_TCP;
   ph->listenertype = LIS_NEWCAMD;
-  ph->logtxt = ", crypted";
   IP_ASSIGN(ph->s_ip, cfg.ncd_srvip);
   ph->s_handler=newcamd_server;
   ph->s_init=newcamd_server_init;
