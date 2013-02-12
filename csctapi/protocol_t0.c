@@ -269,6 +269,7 @@ static int32_t Protocol_T0_Case4E (struct s_reader * reader, unsigned char * com
 	int32_t ret;
 	unsigned char buffer[PROTOCOL_T0_MAX_SHORT_COMMAND];
 	unsigned char tpdu_rsp[CTA_RES_LEN];
+	memset(tpdu_rsp, 0, sizeof(tpdu_rsp));
 	uint16_t tpdu_lr = 0;
 	int32_t Le;
 	
@@ -288,7 +289,7 @@ static int32_t Protocol_T0_Case4E (struct s_reader * reader, unsigned char * com
 	if (ret == OK)
 	{
 		Le = ((((uint32_t)(command[command_len - 2]) << 8) | command[command_len - 1]) == 0 ? 65536 : (((uint32_t)(command[command_len - 2]) << 8) | command[command_len - 1]));
-		if (tpdu_rsp[tpdu_lr - 2] == 0x61)
+		if (tpdu_lr > 1 && tpdu_rsp[tpdu_lr - 2] == 0x61)
 		{
 			/* Lm == (Le - APDU_Rsp_RawLen (tpdu_rsp)) == 0 */
 			if (tpdu_rsp[tpdu_lr - 1] != 0x00)
@@ -307,7 +308,7 @@ static int32_t Protocol_T0_Case4E (struct s_reader * reader, unsigned char * com
 			buffer[6] = (unsigned char) (Le & 0x00FF);      /* B3 = BL */
 			ret = Protocol_T0_Case3E (reader, buffer, rsp, lr);
 		}
-		else if ((tpdu_rsp[tpdu_lr - 2] & 0xF0) == 0x60)
+		else if (tpdu_lr > 1 && (tpdu_rsp[tpdu_lr - 2] & 0xF0) == 0x60)
 		{
 			/* Map response TPDU onto APDU without change */
 			memcpy(rsp, tpdu_rsp, tpdu_lr);
