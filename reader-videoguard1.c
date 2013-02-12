@@ -119,6 +119,7 @@ static int32_t videoguard1_card_init(struct s_reader *reader, ATR *newatr)
 
   int32_t l = 0;
   unsigned char buff[256];
+  memset(buff, 0, sizeof(buff));
 
   /* Try to get the boxid from the card, even if BoxID specified in the config file
      also used to check if it is an NDS1 card as the returned information will
