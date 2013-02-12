@@ -245,13 +245,11 @@ void module_radegast(struct s_module *ph)
   ph->desc="radegast";
   ph->type=MOD_CONN_TCP;
   ph->listenertype = LIS_RADEGAST;
-  ph->multi=0;
   IP_ASSIGN(ph->s_ip, cfg.rad_srvip);
   ph->s_handler=radegast_server;
   ph->s_init=radegast_server_init;
   ph->recv=radegast_recv;
   ph->send_dcw=radegast_send_dcw;
-  ph->c_multi=0;
   ph->c_init=radegast_cli_init;
   ph->c_recv_chk=radegast_recv_chk;
   ph->c_send_ecm=radegast_send_ecm;

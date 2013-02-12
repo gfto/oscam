@@ -263,14 +263,12 @@ void module_pandora(struct s_module *ph) {
 	ph->desc = "pandora";
 	ph->type = MOD_CONN_UDP;
 	ph->large_ecm_support = 1;
-	ph->multi = 0;
 	//ph->watchdog = 1;
 	IP_ASSIGN(ph->s_ip, cfg.pand_srvip);
 	ph->s_handler = pandora_server;
 	ph->recv = pandora_recv;
 	ph->send_dcw = pandora_send_dcw;
 
-	ph->c_multi = 0;
 	ph->c_init = pandora_client_init;
 	ph->c_recv_chk = pandora_recv_chk;
 	ph->c_send_ecm = pandora_send_ecm;

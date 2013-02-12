@@ -668,7 +668,6 @@ struct s_ecm_answer ;
 
 struct s_module {
 	int8_t			active;
-	int8_t			multi;
 	int8_t			type;
 	int8_t			large_ecm_support;
 	int16_t			listenertype;
@@ -682,7 +681,6 @@ struct s_module {
 	int32_t		(*recv)(struct s_client *, uchar *, int32_t);
 	void			(*send_dcw)(struct s_client*, struct ecm_request_t *);
 	void			(*cleanup)(struct s_client*);
-	int8_t			c_multi;
 	int32_t			(*c_recv_chk)(struct s_client*, uchar *, int32_t *, uchar *, int32_t);
 	int32_t			(*c_init)(struct s_client*);
 	int32_t			(*c_send_ecm)(struct s_client *, struct ecm_request_t *, uchar *);

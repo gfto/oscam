@@ -219,7 +219,7 @@ ECM_REQUEST *get_ecmtask(void)
 	er->rc     = E_UNHANDLED;
 	er->client = cl;
 	er->grp    = cl->grp;
-	//cs_log("client %s ECMTASK %d multi %d ctyp %d", username(cl), n, (modules[cl->ctyp].multi)?cfg.max_pending:1, cl->ctyp);
+	//cs_log("client %s ECMTASK %d ctyp %d", username(cl), n, cl->ctyp);
 	return er;
 }
 

@@ -160,13 +160,11 @@ void module_csp(struct s_module *ph)
   ph->type=MOD_CONN_UDP;
   ph->large_ecm_support = 1;
   ph->listenertype = LIS_CSPUDP;
-  ph->multi=1;
   IP_ASSIGN(ph->s_ip, cfg.csp_srvip);
   ph->s_handler=csp_server;
   ph->s_init=csp_server_init;
   ph->recv=csp_recv;
 //  ph->send_dcw=csp_send_dcw;
-  ph->c_multi=1;
 //  ph->c_init=csp_client_init;
 //  ph->c_recv_chk=csp_recv_chk;
 //  ph->c_send_ecm=csp_send_ecm;

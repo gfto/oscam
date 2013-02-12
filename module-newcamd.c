@@ -1454,7 +1454,6 @@ void module_newcamd(struct s_module *ph)
   ph->type=MOD_CONN_TCP;
   ph->listenertype = LIS_NEWCAMD;
   ph->logtxt = ", crypted";
-  ph->multi=1;
   IP_ASSIGN(ph->s_ip, cfg.ncd_srvip);
   ph->s_handler=newcamd_server;
   ph->s_init=newcamd_server_init;
@@ -1463,7 +1462,6 @@ void module_newcamd(struct s_module *ph)
   ph->ptab=&cfg.ncd_ptab;
   if( ph->ptab->nports==0 )
 	  ph->ptab->nports=1; // show disabled in log
-  ph->c_multi=1;
   ph->c_init=newcamd_client_init;
   ph->c_recv_chk=newcamd_recv_chk;
   ph->c_send_ecm=newcamd_send_ecm;

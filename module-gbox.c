@@ -1208,11 +1208,9 @@ void module_gbox(struct s_module *ph)
   ph->listenertype = LIS_GBOX;
   ph->logtxt = ", crypted";
 
-  ph->multi=1;
   ph->send_dcw=gbox_send_dcw;
 
   ph->recv=gbox_recv;
-  ph->c_multi=1;
   ph->c_init=gbox_client_init;
   ph->c_recv_chk=gbox_recv_chk;
   ph->c_send_ecm=gbox_send_ecm;

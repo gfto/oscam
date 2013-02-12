@@ -2954,7 +2954,6 @@ void module_dvbapi(struct s_module *ph)
 	ph->desc="dvbapi";
 	ph->type=MOD_CONN_SERIAL;
 	ph->listenertype = LIS_DVBAPI;
-	ph->multi=1;
 	ph->s_handler=dvbapi_handler;
 	ph->send_dcw=dvbapi_send_dcw;
 }

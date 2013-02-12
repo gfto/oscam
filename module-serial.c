@@ -1227,11 +1227,9 @@ void module_serial(struct s_module *ph)
   ph->type=MOD_CONN_SERIAL;
   ph->large_ecm_support = 1;
   ph->listenertype = LIS_SERIAL;
-  ph->multi=1;
   ph->s_handler=init_oscam_ser;
   ph->recv=oscam_ser_recv;
   ph->send_dcw=oscam_ser_send_dcw;
-  ph->c_multi=0;
   ph->c_init=oscam_ser_client_init;
   ph->c_recv_chk=oscam_ser_recv_chk;
   ph->c_send_ecm=oscam_ser_send_ecm;

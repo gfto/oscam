@@ -3782,8 +3782,6 @@ void module_cccam(struct s_module *ph) {
 	ph->logtxt = ", crypted";
 	ph->recv = cc_recv;
 	ph->cleanup = cc_cleanup;
-	ph->multi = 1;
-	ph->c_multi = 1;
 	ph->bufsize = 2048;
 	ph->c_init = cc_cli_init;
 	ph->c_idle = cc_idle;

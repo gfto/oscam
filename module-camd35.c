@@ -930,13 +930,11 @@ void module_camd35(struct s_module *ph)
   ph->type=MOD_CONN_UDP;
   ph->large_ecm_support = 1;
   ph->listenertype = LIS_CAMD35UDP;
-  ph->multi=1;
   IP_ASSIGN(ph->s_ip, cfg.c35_srvip);
   ph->s_handler=camd35_server;
   ph->s_init=camd35_server_init;
   ph->recv=camd35_recv;
   ph->send_dcw=camd35_send_dcw;
-  ph->c_multi=1;
   ph->c_init=camd35_client_init;
   ph->c_recv_chk=camd35_recv_chk;
   ph->c_send_ecm=camd35_send_ecm;
@@ -956,7 +954,6 @@ void module_camd35_tcp(struct s_module *ph)
   ph->type=MOD_CONN_TCP;
   ph->large_ecm_support = 1;
   ph->listenertype = LIS_CAMD35TCP;
-  ph->multi=1;
   ph->ptab=&cfg.c35_tcp_ptab;
   if (ph->ptab->nports==0)
     ph->ptab->nports=1; // show disabled in log
@@ -965,7 +962,6 @@ void module_camd35_tcp(struct s_module *ph)
   ph->s_init=camd35_server_init;
   ph->recv=camd35_recv;
   ph->send_dcw=camd35_send_dcw;
-  ph->c_multi=1;
   ph->c_init=camd35_client_init;
   ph->c_recv_chk=camd35_recv_chk;
   ph->c_send_ecm=camd35_send_ecm;
