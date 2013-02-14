@@ -1052,7 +1052,7 @@ struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidi
 }
 
 #ifdef READER_VIACCESS
-extern int32_t viaccess_reassemble_emm(uchar *buffer, uint32_t *len, int32_t demux_index, uint16_t caid, uint32_t provid, uint16_t pid);
+extern int32_t viaccess_reassemble_emm(uchar *buffer, uint32_t *len);
 #endif
 #ifdef READER_CRYPTOWORKS
 extern int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len);
@@ -1072,7 +1072,7 @@ void dvbapi_process_emm (int32_t demux_index, int32_t filter_num, unsigned char 
 	switch (caid >> 8) {
 		case 0x05:
 #ifdef READER_VIACCESS
-			if (!viaccess_reassemble_emm(buffer, &len, demux_index, filter->caid, filter->provid, filter->pid))
+			if (!viaccess_reassemble_emm(buffer, &len))
 #endif
 				return;
 			break;
