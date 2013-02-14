@@ -70,7 +70,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 	#ifdef HAVE_DVBAPI
 	/* Overide ratelimit priority for dvbapi request */
 	foundspace = -1;
-	if ((cfg.dvbapi_enabled == 1) && (strcmp(er->client->account->usr,cfg.dvbapi_usr) == 0)) {
+	if ((cfg.dvbapi_enabled == 1) && streq(er->client->account->usr, cfg.dvbapi_usr)) {
 		if (reader->lastdvbapirateoverride < actualtime - reader->ratelimitseconds) {
 			time_t minecmtime = actualtime;
 			for (h = 0; h < maxloop; h++) {
