@@ -75,8 +75,8 @@ int32_t cs_check_violation(IN_ADDR_T ip, int32_t port) {
 	return cs_check_v(ip, port, 0, NULL);
 }
 
-void cs_add_violation_by_ip(IN_ADDR_T ip, int32_t port, char *info) {
-	cs_check_v(ip, port, 1, info);
+int32_t cs_add_violation_by_ip(IN_ADDR_T ip, int32_t port, char *info) {
+	return cs_check_v(ip, port, 1, info);
 }
 
 void cs_add_violation(struct s_client *cl, char *info) {

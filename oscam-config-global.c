@@ -587,14 +587,38 @@ static const struct config_list serial_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef MODULE_GBOX
-static bool gbox_should_save_fn(void *UNUSED(var)) { return cfg.gbox_port; }
+static bool gbox_should_save_fn(void *UNUSED(var)) { return cfg.gbox_hostname; }
+
+static void gbox_localcard_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
+	if (value) {
+		char *ptr1, *saveptr1 = NULL;
+		memset(cfg.gbox_card, 0, sizeof(cfg.gbox_card));
+		int n = 0, i;
+		for (i = 0, ptr1 = strtok_r(value, ",", &saveptr1); (i < CS_GBOX_MAX_LOCAL_CARDS) && (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1)) {
+			cfg.gbox_card[n++] = a2i(ptr1, 8);
+		}
+		cfg.gbox_local_cards_num = n;
+		return;
+	}
+
+	if (cfg.gbox_local_cards_num > 0) {
+		int i;
+		char *dot = "";
+		fprintf_conf(f, token, " ");
+		for (i = 0; i < cfg.gbox_local_cards_num; i++) {
+			fprintf(f, "%s%08lX", dot, cfg.gbox_card[i]);
+			dot = ",";
+		}
+		fprintf(f, "\n");
+	}
+}
+
 
 static const struct config_list gbox_opts[] = {
 	DEF_OPT_SAVE_FUNC(gbox_should_save_fn),
-	DEF_OPT_INT32("port"					, OFS(gbox_port),			0 ),
-	DEF_OPT_STR("gsmsfile"					, OFS(gbox_gsms_path),		NULL ),
-	DEF_OPT_STR("hostname"					, OFS(gbox_hostname),		NULL ),
-	DEF_OPT_STR("password"					, OFS(gbox_key),			NULL ),
+	DEF_OPT_STR("gbox_hostname"				, OFS(gbox_hostname),	NULL ),
+	DEF_OPT_INT32("gbox_reconnect"			, OFS(gbox_reconnect),	DEFAULT_GBOX_RECONNECT ),
+	DEF_OPT_FUNC("gbox_local_cards"			, OFS(gbox_card),		gbox_localcard_fn ),
 	DEF_LAST_OPT
 };
 #else

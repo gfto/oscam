@@ -431,6 +431,11 @@ extern const char *boxdesc[];
 #define DEFAULT_LB_AUTO_TIMEOUT_P 30
 #define DEFAULT_LB_AUTO_TIMEOUT_T 300
 
+#define DEFAULT_GBOX_MAX_DIST      2
+#define DEFAULT_GBOX_MAX_ECM_SEND  3
+#define DEFAULT_GBOX_RECONNECT     300
+#define CS_GBOX_MAX_LOCAL_CARDS    16
+
 enum {E1_GLOBAL=0, E1_USER, E1_READER, E1_SERVER, E1_LSERVER};
 
 //LB blocking events:
@@ -823,6 +828,8 @@ typedef struct ecm_request_t {
 
 #if defined MODULE_GBOX
 	uint32_t		gbox_crc;		// rcrc for gbox, used to identify ECM task in peer responses
+	uint16_t		gbox_ecm_id;
+	uint8_t 		gbox_ecm_ok;
 #endif
 
 	void			*src_data;
@@ -971,6 +978,10 @@ struct s_client {
 
 #ifdef MODULE_GBOX
 	void			*gbox;
+	uint8_t			gbox_cw_id[2];
+	uint8_t			gbox_peer_id[2];
+	uint8_t			gbox_ver;
+	int8_t			gbox_ctyp;
 #endif
 
 #ifdef MODULE_GHTTP
@@ -1371,6 +1382,14 @@ struct s_reader  									//contains device info, reader info and card info
 	int8_t			ins7e11_fast_reset;
 	struct s_sc8in1_config *sc8in1_config;
 	uint8_t			sc8in1_dtrrts_patch; // fix for kernel commit 6a1a82df91fa0eb1cc76069a9efe5714d087eccd
+#ifdef MODULE_GBOX
+	char			gbox_my_password[9];
+	int8_t			gbox_maxdist;
+	int8_t			gbox_maxecmsend;
+	int8_t			gbox_reshare;
+	uint16_t		gbox_peer_id;
+	uint64_t		gbox_grp;
+#endif
 
 #ifdef MODULE_PANDORA
 	uint8_t			pand_send_ecm;
@@ -1649,10 +1668,12 @@ struct s_config
 	uint8_t			cc_fixed_nodeid[8];
 	uint32_t		cc_recv_timeout;				// The poll() timeout parameter in ms. Default: DEFAULT_CC_RECV_TIMEOUT (2000 ms).
 #endif
+#ifdef MODULE_GBOX
 	char			*gbox_hostname;
-	char			*gbox_key;
-	char			*gbox_gsms_path;
-	int32_t			gbox_port;
+	unsigned long	gbox_card[CS_GBOX_MAX_LOCAL_CARDS]; // gbox list of local cards
+	int32_t			gbox_local_cards_num;               // number of local card gbox cards
+	int32_t			gbox_reconnect;
+#endif
 	struct s_ip 	*rad_allowed;
 	char			*rad_usr;
 	char			*ser_device;
