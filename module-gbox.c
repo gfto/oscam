@@ -1846,7 +1846,6 @@ void module_gbox(struct s_module *ph)
   ph->type=MOD_CONN_UDP;
   ph->listenertype = LIS_GBOX;
 
-  ph->s_ip=cfg.cc_srvip;
   ph->s_handler=gbox_server;
   ph->s_init=gbox_server_init;
 
