@@ -1241,12 +1241,12 @@ struct s_reader  									//contains device info, reader info and card info
 	int8_t			ncd_connect_on_init;
 	int8_t			ncd_disable_server_filt;
 	int8_t			ncd_proto;
+	int8_t			currenthops;					// number of hops (cccam & gbox)
 #ifdef MODULE_CCCAM
 	char			cc_version[7];					// cccam version
 	char			cc_build[7];					// cccam build number
 	int8_t			cc_maxhops;						// cccam max distance
 	int8_t			cc_mindown;						// cccam min downhops
-	int8_t			cc_currenthops;					// number of hops for CCCam
 	int8_t			cc_want_emu;					// Schlocke: Client want to have EMUs, 0 - NO; 1 - YES
 	uint32_t		cc_id;
 	int8_t			cc_keepalive;

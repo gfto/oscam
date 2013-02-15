@@ -2889,9 +2889,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 							else
 								fprintf(ecmtxt, "from: local\n");
 						fprintf(ecmtxt, "protocol: %s\n", reader_get_type_desc(er->selected_reader, 1));
-#ifdef MODULE_CCCAM
-						fprintf(ecmtxt, "hops: %d\n", er->selected_reader->cc_currenthops);
-#endif
+						fprintf(ecmtxt, "hops: %d\n", er->selected_reader->currenthops);
 						}
 						break;
 

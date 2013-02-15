@@ -1370,7 +1370,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			}
 			eei->tps = cur_er->tps;
 
-			rdr->cc_currenthops = card->hop;
+			rdr->currenthops = card->hop;
 			rdr->card_status = CARD_INSERTED;
 
 			cs_debug_mask(

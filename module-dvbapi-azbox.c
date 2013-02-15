@@ -254,9 +254,7 @@ void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 			else
 				fprintf(ecmtxt, "from: local\n");
 			fprintf(ecmtxt, "protocol: %s\n", reader_get_type_desc(er->selected_reader, 1));
-#ifdef MODULE_CCCAM
-			fprintf(ecmtxt, "hops: %d\n", er->selected_reader->cc_currenthops);
-#endif
+			fprintf(ecmtxt, "hops: %d\n", er->selected_reader->currenthops);
 			fprintf(ecmtxt, "ecm time: %.3f\n", (float) client->cwlastresptime/1000);
 			fprintf(ecmtxt, "cw0: %s\n", cs_hexdump(1,demux[0].lastcw[0],8, tmp, sizeof(tmp)));
 			fprintf(ecmtxt, "cw1: %s\n", cs_hexdump(1,demux[0].lastcw[1],8, tmp, sizeof(tmp)));

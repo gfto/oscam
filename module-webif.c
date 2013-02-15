@@ -3288,7 +3288,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 											rcc->num_hop1,
 											rcc->num_hop2,
 											rcc->num_hopx,
-											cl->reader->cc_currenthops,
+											cl->reader->currenthops,
 											rcc->num_reshare0,
 											rcc->num_reshare1,
 											rcc->num_reshare2,

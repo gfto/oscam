@@ -199,8 +199,7 @@ void gbox_add_good_card(struct s_client *cl, uint16_t id_card, uint32_t prov,uin
 	LL_ITER it = ll_iter_create(gbox->peer.cards);
 	while ((card = ll_iter_next(&it))) {
 		if (card->peer_id==id_card && card->provid == prov) {
-
-			cl->reader->cc_currenthops=card->dist;
+			cl->reader->currenthops = card->dist;
 			LL_ITER it2 = ll_iter_create(card->goodsids);
 			while ((srvid = ll_iter_next(&it2))) {
 				if (srvid->sid == sid_ok) {
