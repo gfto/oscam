@@ -376,7 +376,6 @@ all:
 | Tools:\n\
 |  CROSS    = $(CROSS_DIR)$(CROSS)\n\
 |  CC       = $(CC)\n\
-|  STRIP    = $(STRIP)\n\
 | Settings:\n\
 |  CONF_DIR = $(CONF_DIR)\n\
 |  CC_OPTS  = $(strip $(CC_OPTS))\n\
