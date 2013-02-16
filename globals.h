@@ -1287,7 +1287,7 @@ struct s_reader  									//contains device info, reader info and card info
 	SCARDHANDLE		hCard;
 	DWORD			dwActiveProtocol;
 #endif
-#ifdef WITH_LIBUSB
+#ifdef CARDREADER_SMART
 	struct s_sr_config *sr_config;
 #endif
 #ifdef WITH_AZBOX
