@@ -1958,12 +1958,12 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 #define TPLCONFIGCACHEEXCSP "\
 			<TR><TH COLSPAN=\"2\">CacheEx / CSP</TH></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#wait_time##TPLHELPSUFFIX##Wait time:</A></TD><TD><input name=\"wait_time\" type=\"text\" size=\"63\" maxlength=\"320\" value=\"##WAIT_TIME##\"> ms max waittime</TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#cacheexenablestats##TPLHELPSUFFIX##Write statistic:</A></TD><TD><SELECT NAME=\"cacheexenablestats\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##CACHEEXSTATSSELECTED##>ON</OPTION></SELECT></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#cacheexenablestats_2##TPLHELPSUFFIX##Write statistic:</A></TD><TD><SELECT NAME=\"cacheexenablestats\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##CACHEEXSTATSSELECTED##>ON</OPTION></SELECT></TD></TR>\n\
 			<TR><TH COLSPAN=\"2\">CSP</TH></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#csp_port##TPLHELPSUFFIX##Port:</A></TD><TD><input name=\"csp_port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##PORT##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#csp_serverip_9##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"csp_serverip\" type=\"text\" size=\"15\" maxlength=\"15\" value=\"##SERVERIP##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#csp_serverip##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"csp_serverip\" type=\"text\" size=\"15\" maxlength=\"15\" value=\"##SERVERIP##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#csp_ecm_filter##TPLHELPSUFFIX##ECM filter:</A></TD><TD><input name=\"csp_ecm_filter\" type=\"text\" size=\"63\" maxlength=\"320\" value=\"##CSP_ECM_FILTER##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#csp_filter_adv##TPLHELPSUFFIX##ECM filter adv.:</A></TD><TD><TABLE class=\"invisible\"><TR><TD><input name=\"csp_allow_request\" value=\"0\" type=\"hidden\"><input name=\"csp_allow_request\" value=\"1\" type=\"checkbox\" ##ARCHECKED##>allow request</TD></TR></TABLE></TD></TR>\n"
+			<TR><TD>##TPLHELPPREFIX##conf#csp_allow_request##TPLHELPSUFFIX##ECM filter adv.:</A></TD><TD><TABLE class=\"invisible\"><TR><TD><input name=\"csp_allow_request\" value=\"0\" type=\"hidden\"><input name=\"csp_allow_request\" value=\"1\" type=\"checkbox\" ##ARCHECKED##>allow request</TD></TR></TABLE></TD></TR>\n"
 
 #define TPLCONFIGSERIAL "\
 ##TPLHEADER##\
