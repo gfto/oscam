@@ -5,7 +5,6 @@
 #include "atr.h"
 #include "../oscam-string.h"
 
-#ifdef WITH_PCSC
   #if defined(__CYGWIN__)
     #define __reserved
     #define __nullnullterminated
@@ -20,7 +19,6 @@
        #include <PCSC/reader.h>
     #endif
   #endif
-#endif
 
 #ifndef ERR_INVALID
 #define ERR_INVALID -1

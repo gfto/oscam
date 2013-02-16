@@ -123,7 +123,7 @@ typedef unsigned char uchar;
  #endif
 #endif
 
-#ifdef WITH_PCSC
+#ifdef CARDREADER_PCSC
   #if defined(__CYGWIN__)
     #define __reserved
     #define __nullnullterminated
@@ -1282,7 +1282,7 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t			emmblocked[4];					// count blocked EMM
 	int32_t			lbvalue;						// loadbalance Value
 #endif
-#ifdef WITH_PCSC
+#ifdef CARDREADER_PCSC
 	SCARDCONTEXT	hContext;
 	SCARDHANDLE		hCard;
 	DWORD			dwActiveProtocol;

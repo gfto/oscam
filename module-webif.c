@@ -1593,9 +1593,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		case R_SMART :
 		case R_INTERNAL:
 		case R_SERIAL :
-#ifdef WITH_PCSC
 		case R_PCSC :
-#endif			
 			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
 			break;
 		case R_CAMD35 :

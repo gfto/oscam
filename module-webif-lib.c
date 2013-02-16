@@ -312,7 +312,6 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
 										check_conf(WITH_LB, ptr2);
 										check_conf(WITH_LIBCRYPTO, ptr2);
 										check_conf(WITH_LIBUSB, ptr2);
-										check_conf(WITH_PCSC, ptr2);
 										check_conf(WITH_SSL, ptr2);
 										check_conf(WITH_STAPI, ptr2);
 									}
