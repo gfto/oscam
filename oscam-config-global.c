@@ -128,33 +128,33 @@ static void caidvaluetab_fn(const char *token, char *value, void *setting, FILE 
 #endif
 
 #ifdef CS_CACHEEX
-void cspvaluetab_fn(const char *token, char *value, void *setting, FILE *f) {
-	CECSPVALUETAB *csp_value_table = setting;
+void cacheex_valuetab_fn(const char *token, char *value, void *setting, FILE *f) {
+	CECSPVALUETAB *cacheex_value_table = setting;
 	if (value) {
 		if (strlen(value) == 0)
-			clear_csptab(csp_value_table);
+			clear_cacheextab(cacheex_value_table);
 		else
-			chk_cspvaluetab(value, csp_value_table);
+			chk_cacheex_valuetab(value, cacheex_value_table);
 		return;
 	}
-	if (csp_value_table->n || cfg.http_full_cfg) {
-		value = mk_t_cspvaluetab(csp_value_table);
+	if (cacheex_value_table->n || cfg.http_full_cfg) {
+		value = mk_t_cacheex_valuetab(cacheex_value_table);
 		fprintf_conf(f, token, "%s\n", value);
 		free_mk_t(value);
 	}
 }
 
-void hitvaluetab_fn(const char *token, char *value, void *setting, FILE *f) {
-	CECSPVALUETAB *csp_value_table = setting;
+void cacheex_hitvaluetab_fn(const char *token, char *value, void *setting, FILE *f) {
+	CECSPVALUETAB *cacheex_value_table = setting;
 	if (value) {
 		if (strlen(value) == 0)
-			clear_csptab(csp_value_table);
+			clear_cacheextab(cacheex_value_table);
 		else
-			chk_hitvaluetab(value, csp_value_table);
+			chk_cacheex_hitvaluetab(value, cacheex_value_table);
 		return;
 	}
-	if (csp_value_table->n || cfg.http_full_cfg) {
-		value = mk_t_hitvaluetab(csp_value_table);
+	if (cacheex_value_table->n || cfg.http_full_cfg) {
+		value = mk_t_cacheex_hitvaluetab(cacheex_value_table);
 		fprintf_conf(f, token, "%s\n", value);
 		free_mk_t(value);
 	}
@@ -195,7 +195,6 @@ void global_fixups_fn(void *UNUSED(var)) {
 	if (cfg.ftimeout >= cfg.ctimeout) cfg.ftimeout = cfg.ctimeout - 100;
 	if (cfg.ftimeout < cfg.srtimeout) cfg.ftimeout = cfg.srtimeout + 100;
 	if (cfg.ctimeout < cfg.srtimeout) cfg.ctimeout = cfg.srtimeout + 100;
-	if (cfg.max_cache_time < (cfg.ctimeout / 1000 + 1)) cfg.max_cache_time = cfg.ctimeout / 1000 + 2;
 #ifdef WITH_LB
 	if (cfg.lb_save > 0 && cfg.lb_save < 100) cfg.lb_save = 100;
 	if (cfg.lb_nbest_readers < 2) cfg.lb_nbest_readers = DEFAULT_NBEST;
@@ -224,7 +223,6 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_UINT32("clienttimeout"			, OFS(ctimeout),			CS_CLIENT_TIMEOUT ),
 	DEF_OPT_UINT32("fallbacktimeout"		, OFS(ftimeout),			CS_CLIENT_TIMEOUT / 2 ),
 	DEF_OPT_UINT32("clientmaxidle"			, OFS(cmaxidle),			CS_CLIENT_MAXIDLE ),
-	DEF_OPT_UINT32("cachedelay"				, OFS(delay),				CS_DELAY ),
 	DEF_OPT_INT32("bindwait"				, OFS(bindwait),			CS_BIND_TIMEOUT ),
 	DEF_OPT_UINT32("netprio"				, OFS(netprio),				0 ),
 	DEF_OPT_INT32("sleep"					, OFS(tosleep),				0 ),
@@ -237,10 +235,6 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_INT8("preferlocalcards"			, OFS(preferlocalcards),	0 ),
 	DEF_OPT_INT32("readerrestartseconds"	, OFS(reader_restart_seconds), 5 ),
 	DEF_OPT_INT8("dropdups"					, OFS(dropdups),			0 ),
-#ifdef CS_CACHEEX
-	DEF_OPT_UINT32("cacheexwaittime"		, OFS(cacheex_wait_time),	DEFAULT_CACHEEX_WAIT_TIME ),
-	DEF_OPT_UINT8("cacheexenablestats"		, OFS(cacheex_enable_stats), 0 ),
-#endif
 	DEF_OPT_INT8("block_same_ip"			, OFS(block_same_ip),		1 ),
 	DEF_OPT_INT8("block_same_name"			, OFS(block_same_name),		1 ),
 	DEF_OPT_STR("usrfile"					, OFS(usrfile),				NULL ),
@@ -277,8 +271,6 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_INT32("failbancount"			, OFS(failbancount),		0 ),
 	DEF_OPT_INT8("suppresscmd08"			, OFS(c35_suppresscmd08),	0 ),
 	DEF_OPT_INT8("double_check"				, OFS(double_check),		0 ),
-	DEF_OPT_UINT32("max_cache_time"			, OFS(max_cache_time),		DEFAULT_MAX_CACHE_TIME ),
-	DEF_OPT_UINT32("max_cache_count"		, OFS(max_cache_count),		DEFAULT_MAX_CACHE_COUNT ),
 	DEF_LAST_OPT
 };
 
@@ -421,21 +413,35 @@ static const struct config_list camd33_opts[] = {
 static const struct config_list camd33_opts[] = { DEF_LAST_OPT };
 #endif
 
-#ifdef CS_CACHEEX
-static bool csp_should_save_fn(void *UNUSED(var)) { return cfg.csp_port || cfg.csp_wait_timetab.n || cfg.csp.filter_caidtab.n || cfg.csp.allow_request==0; }
 
-static const struct config_list csp_opts[] = {
-	DEF_OPT_SAVE_FUNC(csp_should_save_fn),
-	DEF_OPT_INT32("port"					, OFS(csp_port),				0 ),
-	DEF_OPT_FUNC("serverip"					, OFS(csp_srvip),				serverip_fn ),
-	DEF_OPT_FUNC("wait_time"				, OFS(csp_wait_timetab),		cspvaluetab_fn ),
-	DEF_OPT_FUNC("csp_ecm_filter"			, OFS(csp.filter_caidtab),		hitvaluetab_fn ),
+void cache_fixups_fn(void *UNUSED(var)) {
+	if (cfg.max_cache_time < (cfg.ctimeout / 1000 + 1)) cfg.max_cache_time = cfg.ctimeout / 1000 + 2;
+}
+
+static bool cache_should_save_fn(void *UNUSED(var)) {
+	return cfg.delay > 0 || cfg.max_cache_time != 15 || cfg.max_cache_count != 1000
+#ifdef CS_CACHEEX
+	|| cfg.cacheex_wait_timetab.n || cfg.cacheex_enable_stats > 0 || cfg.csp_port || cfg.csp.filter_caidtab.n || cfg.csp.allow_request==0
+#endif
+	;
+}
+
+static const struct config_list cache_opts[] = {
+	DEF_OPT_SAVE_FUNC(cache_should_save_fn),
+	DEF_OPT_FIXUP_FUNC(cache_fixups_fn),
+	DEF_OPT_UINT32("delay"				, OFS(delay),				CS_DELAY ),
+	DEF_OPT_UINT32("max_time"			, OFS(max_cache_time),		DEFAULT_MAX_CACHE_TIME ),
+	DEF_OPT_UINT32("max_count"		, OFS(max_cache_count),		DEFAULT_MAX_CACHE_COUNT ),
+#ifdef CS_CACHEEX
+	DEF_OPT_FUNC("wait_time"				, OFS(cacheex_wait_timetab),		cacheex_valuetab_fn ),
+	DEF_OPT_UINT8("cacheexenablestats"		, OFS(cacheex_enable_stats), 0 ),
+	DEF_OPT_INT32("csp_port"					, OFS(csp_port),				0 ),
+	DEF_OPT_FUNC("csp_serverip"					, OFS(csp_srvip),				serverip_fn ),
+	DEF_OPT_FUNC("csp_ecm_filter"			, OFS(csp.filter_caidtab),		cacheex_hitvaluetab_fn ),
 	DEF_OPT_UINT8("csp_allow_request"		, OFS(csp.allow_request),		1 ),
+#endif
 	DEF_LAST_OPT
 };
-#else
-static const struct config_list csp_opts[] = { DEF_LAST_OPT };
-#endif
 
 #ifdef MODULE_CAMD35
 static bool camd35_should_save_fn(void *UNUSED(var)) { return cfg.c35_port; }
@@ -736,7 +742,7 @@ static const struct config_list lcd_opts[] = { DEF_LAST_OPT };
 static const struct config_sections oscam_conf[] = {
 	{ "global",   global_opts }, // *** MUST BE FIRST ***
 	{ "anticasc", anticasc_opts },
-	{ "csp",      csp_opts },
+	{ "cache",    cache_opts },
 	{ "lcd",      lcd_opts },
 	{ "camd33",   camd33_opts },
 	{ "cs357x",   camd35_opts },

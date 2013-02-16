@@ -229,43 +229,6 @@ seconds beetween restarts, 0 = disable reader restart, default:5
 
 <P>
 
-<B>cachedelay</B> = <B>milli-seconds</B>
-<DL COMPACT><DT><DD>
-value to delay cached requests, default:0
-</DL>
-
-<P>
-
-<B>max_cache_time</B> = <B>seconds</B>
-<DL COMPACT><DT><DD>
-maximum time CWs resist in cache after 1st client request, the time must be 2 seconds highter than the parameter <B>clienttimeout</B>, default:15
-</DL>
-
-<P>
-
-<B>max_cache_count</B> = <B>count</B>
-<DL COMPACT><DT><DD>
-maximum CWs in cache, default:1000
-</DL>
-
-<P>
-
-<B>cacheexwaittime</B> = <B>delay</B>
-<DL COMPACT><DT><DD>
-wait time for a cache exchange entry in milli-seconds, default:50
-</DL>
-
-<P>
-
-<B>cacheexenablestats</B> = <B>0|1</B>
-<DL COMPACT><DT><DD>
-1 = enable statistics for cache exchange mode, default:0
-<P>
-<I>Please consider memory consumption.</I>
-</DL>
-
-<P>
-
 <B>clienttimeout</B> = <B>milli-seconds</B>|<B>seconds</B>
 <DL COMPACT><DT><DD>
 value (clienttimeout in seconds &lt; 100, else milli-seconds) for client process to wait for key, default:5
@@ -809,27 +772,57 @@ LCD refresh interval (minimum 5), default:10
 
 
 <A NAME="lbAI">&nbsp;</A>
-<H3>The [csp] section</H3>
+<H3>The [cache] section</H3>
 
-<B>port</B> = <B>port</B>
+<B>delay</B> = <B>milli-seconds</B>
 <DL COMPACT><DT><DD>
-TCP port of Cardservproxy for cache exchange, default:none
+value to delay cached requests, default:0
 </DL>
 
 <P>
 
-<B>serverip</B> = <B>IP</B>
+<B>max_time</B> = <B>seconds</B>
 <DL COMPACT><DT><DD>
-IP address of Cardservproxy for cache exchange, default:none
+maximum time CWs resist in cache after 1st client request, the time must be 2 seconds highter than the parameter <B>clienttimeout</B>, default:15
+</DL>
+
+<P>
+
+<B>max_count</B> = <B>count</B>
+<DL COMPACT><DT><DD>
+maximum CWs in cache, default:1000
 </DL>
 
 <P>
 
 <B>wait_time</B> = <B>[caid][&amp;mask][@provid][$servid][:awtime][:]dwtime,n</B>
 <DL COMPACT><DT><DD>
-wait time in milli-seconds for cache exchange (mode 2 and 3 only) and Cardservproxy before sending ECMs to reader or proxy, default:none
+wait time in milli-seconds for cache exchange and Cardservproxy before sending ECMs to reader or proxy, default:none
 <P>
 <BR>&nbsp;example:&nbsp;wait_time&nbsp;=&nbsp;0:50:250,<A HREF="mailto:0200@00009X">0200@00009X</A>:50:150,15:950,<A HREF="mailto:0500@000001">0500@000001</A>:150,1602&amp;ffdf:1200
+</DL>
+
+<P>
+
+<B>cacheexenablestats</B> = <B>0|1</B>
+<DL COMPACT><DT><DD>
+1 = enable statistics for cache exchange mode, default:0
+<P>
+<I>Please consider memory consumption.</I>
+</DL>
+
+<P>
+
+<B>csp_port</B> = <B>port</B>
+<DL COMPACT><DT><DD>
+TCP port of Cardservproxy for cache exchange, default:none
+</DL>
+
+<P>
+
+<B>csp_serverip</B> = <B>IP</B>
+<DL COMPACT><DT><DD>
+IP address of Cardservproxy for cache exchange, default:none
 </DL>
 
 <P>

@@ -422,7 +422,6 @@ extern const char *boxdesc[];
 #define DEFAULT_LB_AUTO_BETATUNNEL 1
 #define DEFAULT_LB_AUTO_BETATUNNEL_MODE 0
 #define DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA 50
-#define DEFAULT_CACHEEX_WAIT_TIME 50
 
 #define DEFAULT_MAX_CACHE_TIME 15
 #define DEFAULT_MAX_CACHE_COUNT 1000
@@ -840,6 +839,8 @@ typedef struct ecm_request_t {
 	int8_t          cacheex_pushed;             // to avoid duplicate pushs
 	int32_t			csp_hash; 					// csp has its own hash
 	LLIST			*csp_lastnodes;				// last 10 Cacheex nodes atm cc-proto-only
+	uint32_t		cacheex_wait_time;			// cacheex wait time in ms
+	struct timeb	cacheex_wait;				// incoming time stamp (tps) + cacheex wait time
 #endif
 	char			msglog[MSGLOGSIZE];
 	struct ecm_request_t	*parent;
@@ -1773,9 +1774,8 @@ struct s_config
 #ifdef CS_CACHEEX
 	IN_ADDR_T	csp_srvip;
 	int32_t		csp_port;
-	CECSPVALUETAB	csp_wait_timetab;
+	CECSPVALUETAB	cacheex_wait_timetab;
 	CECSP		csp; //CSP Settings
-	uint32_t	cacheex_wait_time; 		//cache wait time in ms
 	uint8_t		cacheex_enable_stats;	//enable stats
 	struct s_cacheex_matcher *cacheex_matcher;
 #endif

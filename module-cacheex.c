@@ -621,9 +621,10 @@ void cacheex_update_hash(ECM_REQUEST *er) {
 
 void add_hitcache(struct s_client *cl, ECM_REQUEST *er, ECM_REQUEST *ecm) {
 	bool upd_hit = true;
-	if (!cfg.csp_wait_timetab.n)
+	if (!cfg.cacheex_wait_timetab.n)
 		return;
-	if (!get_csp_wait_time(er,NULL))
+	uint32_t cacheex_wait_time = get_cacheex_wait_time(er,NULL);
+	if (!cacheex_wait_time)
 		return;
 	if (er->rc < E_NOTFOUND) {
 
@@ -641,7 +642,7 @@ void add_hitcache(struct s_client *cl, ECM_REQUEST *er, ECM_REQUEST *ecm) {
 				}
 			}
 
-			if (er->rc >= ecm->rc && er->rc < E_NOTFOUND && (ecm->tps.millitm - er->tps.millitm) > 0 && get_csp_wait_time(er, NULL)) {
+			if (er->rc >= ecm->rc && er->rc < E_NOTFOUND && (ecm->tps.millitm - er->tps.millitm) > 0 && cacheex_wait_time) {
 				cs_debug_mask(D_CACHEEX|D_CSPCWC,"[ADD_HITCACHE] skip add too old");
 				return; //check ignored duplicate time, is over wait time don't add hit cache
 			}
@@ -766,22 +767,22 @@ void cleanup_hitcache(void) {
 	}
 }
 
-uint32_t get_csp_wait_time(ECM_REQUEST *er, struct s_client *cl) {
+uint32_t get_cacheex_wait_time(ECM_REQUEST *er, struct s_client *cl) {
 	int32_t i,dwtime= -1,awtime=-1;
 	CSPCEHIT *ch;
 
-	for (i = 0; i < cfg.csp_wait_timetab.n; i++) {
-		if (i == 0 && cfg.csp_wait_timetab.caid[i] <= 0) {
-			dwtime = cfg.csp_wait_timetab.dwtime[i];
-			awtime = cfg.csp_wait_timetab.awtime[i];
+	for (i = 0; i < cfg.cacheex_wait_timetab.n; i++) {
+		if (i == 0 && cfg.cacheex_wait_timetab.caid[i] <= 0) {
+			dwtime = cfg.cacheex_wait_timetab.dwtime[i];
+			awtime = cfg.cacheex_wait_timetab.awtime[i];
 			continue; //check other, only valid for unset
 		}
 
-		if (cfg.csp_wait_timetab.caid[i] == er->caid || cfg.csp_wait_timetab.caid[i] == er->caid>>8 || ((cfg.csp_wait_timetab.cmask[i]>=0 && (er->caid & cfg.csp_wait_timetab.cmask[i]) == cfg.csp_wait_timetab.caid[i]) || cfg.csp_wait_timetab.caid[i] == -1)) {
-			if ((cfg.csp_wait_timetab.prid[i]>=0 && cfg.csp_wait_timetab.prid[i] == (int32_t)er->prid) || cfg.csp_wait_timetab.prid[i] == -1) {
-				if ((cfg.csp_wait_timetab.srvid[i]>=0 && cfg.csp_wait_timetab.srvid[i] == er->srvid) || cfg.csp_wait_timetab.srvid[i] == -1) {
-					dwtime = cfg.csp_wait_timetab.dwtime[i];
-					awtime = cfg.csp_wait_timetab.awtime[i];
+		if (cfg.cacheex_wait_timetab.caid[i] == er->caid || cfg.cacheex_wait_timetab.caid[i] == er->caid>>8 || ((cfg.cacheex_wait_timetab.cmask[i]>=0 && (er->caid & cfg.cacheex_wait_timetab.cmask[i]) == cfg.cacheex_wait_timetab.caid[i]) || cfg.cacheex_wait_timetab.caid[i] == -1)) {
+			if ((cfg.cacheex_wait_timetab.prid[i]>=0 && cfg.cacheex_wait_timetab.prid[i] == (int32_t)er->prid) || cfg.cacheex_wait_timetab.prid[i] == -1) {
+				if ((cfg.cacheex_wait_timetab.srvid[i]>=0 && cfg.cacheex_wait_timetab.srvid[i] == er->srvid) || cfg.cacheex_wait_timetab.srvid[i] == -1) {
+					dwtime = cfg.cacheex_wait_timetab.dwtime[i];
+					awtime = cfg.cacheex_wait_timetab.awtime[i];
 					break;
 				}
 			}

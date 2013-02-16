@@ -579,7 +579,7 @@ char *mk_t_caidvaluetab(CAIDVALUETAB *tab)
 }
 
 #ifdef CS_CACHEEX
-char *mk_t_cspvaluetab(CECSPVALUETAB *tab){
+char *mk_t_cacheex_valuetab(CECSPVALUETAB *tab){
 	if (!tab->n) return "";
 	int32_t i, size = 2 + tab->n * (4 + 1 + 4 + 1 + 6 + 1 + 4 + 1 + 5 + 1 + 5 + 1); //caid&mask@provid$servid:awtime:dwtime","
 	char *buf;
@@ -619,7 +619,7 @@ char *mk_t_cspvaluetab(CECSPVALUETAB *tab){
 	return buf;
 }
 
-char *mk_t_hitvaluetab(CECSPVALUETAB *tab){
+char *mk_t_cacheex_hitvaluetab(CECSPVALUETAB *tab){
 	if (!tab->n) return "";
 	int32_t i, size = 2 + tab->n * (4 + 1 + 4 + 1 + 6 + 1 + 4 + 1); //caid&mask@provid$servid","
 	char *buf;

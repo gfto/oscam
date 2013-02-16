@@ -93,7 +93,7 @@ void chk_caidvaluetab(char *lbrlt, CAIDVALUETAB *tab, int32_t minvalue)
 }
 
 #ifdef CS_CACHEEX
-void chk_cspvaluetab(char *lbrlt, CECSPVALUETAB *tab) {
+void chk_cacheex_valuetab(char *lbrlt, CECSPVALUETAB *tab) {
 	//[caid][&mask][@provid][$servid][:awtime][:]dwtime
  	int32_t i;
  	char *ptr = NULL, *saveptr1 = NULL;
@@ -149,7 +149,7 @@ void chk_cspvaluetab(char *lbrlt, CECSPVALUETAB *tab) {
  	memcpy(tab, &newtab, sizeof(CECSPVALUETAB));
  }
 
-void chk_hitvaluetab(char *lbrlt, CECSPVALUETAB *tab) {
+void chk_cacheex_hitvaluetab(char *lbrlt, CECSPVALUETAB *tab) {
 	//[caid][&mask][@provid][$servid]
  	int32_t i;
  	char *ptr = NULL, *saveptr1 = NULL;
@@ -384,7 +384,7 @@ void clear_caidtab(struct s_caidtab *ctab) {
 
 #ifdef CS_CACHEEX
 /* Clears given csptab */
-void clear_csptab(CECSPVALUETAB *ctab) {
+void clear_cacheextab(CECSPVALUETAB *ctab) {
 	memset(ctab, -1, sizeof(CECSPVALUETAB));
 	ctab->n = 0;
 }

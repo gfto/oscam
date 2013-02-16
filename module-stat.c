@@ -1679,7 +1679,11 @@ void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, struct s_ecm_answer
 
 	struct timeb tpe;
 	cs_ftime(&tpe);
-	int32_t ntime = 1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm;
+#ifndef CS_CACHEEX
+	int32_t ntime = comp_timeb(&tpe,&er->tps);
+#else
+	int32_t ntime = comp_timeb(&tpe, &er->cacheex_wait);
+#endif
 	if (ntime < 1)
 		ntime = 1;
 

@@ -837,11 +837,7 @@ static void * check_thread(void) {
 				continue;
 
 			tbc = er->tps;
-#ifdef CS_CACHEEX
-			time_to_check = add_ms_to_timeb(&tbc, (er->stage < 2) ? cfg.cacheex_wait_time:((er->stage < 4) ? auto_timeout(er, cfg.ftimeout) : auto_timeout(er, cfg.ctimeout)));
-#else
 			time_to_check = add_ms_to_timeb(&tbc, ((er->stage < 4) ? auto_timeout(er, cfg.ftimeout) : auto_timeout(er, cfg.ctimeout)));
-#endif
 
 			if (comp_timeb(&t_now, &tbc) >= 0) {
 				if (er->stage < 4) {

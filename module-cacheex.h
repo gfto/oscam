@@ -52,7 +52,7 @@ static inline uint8_t checkECMD5(ECM_REQUEST *er)
 void add_hitcache(struct s_client *cl, ECM_REQUEST *er, ECM_REQUEST *ecm);
 struct csp_ce_hit_t *check_hitcache(ECM_REQUEST *er, struct s_client *cl, uint8_t lock);
 void cleanup_hitcache(void);
-uint32_t get_csp_wait_time(ECM_REQUEST *er, struct s_client *cl);
+uint32_t get_cacheex_wait_time(ECM_REQUEST *er, struct s_client *cl);
 int32_t chk_csp_ctab(ECM_REQUEST *er, CECSPVALUETAB *tab);
 uint8_t check_cacheex_filter(struct s_client *cl, ECM_REQUEST *er);
 #else

@@ -91,7 +91,7 @@ static pthread_t httpthread;
 #define MNU_CFG_FUSERFILE 21
 #define MNU_CFG_FACLOG 22
 #define MNU_CFG_FDVBAPI 23
-#define MNU_CFG_CSP 24
+#define MNU_CFG_CACHE 24
 #define MNU_CFG_WHITELIST 25
 #define MNU_CFG_TOTAL_ITEMS 26 // sum of items above. Use it for "All inactive" in function calls too.
 
@@ -293,7 +293,6 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	tpl_printf(vars, TPLADD, "CLIENTTIMEOUT", "%u", cfg.ctimeout);
 	tpl_printf(vars, TPLADD, "FALLBACKTIMEOUT", "%u", cfg.ftimeout);
 	tpl_printf(vars, TPLADD, "CLIENTMAXIDLE", "%u", cfg.cmaxidle);
-	tpl_printf(vars, TPLADD, "CACHEDELAY", "%u", cfg.delay);
 
 	tpl_printf(vars, TPLADD, "SLEEP", "%d", cfg.tosleep);
 	if (cfg.ulparent) tpl_addVar(vars, TPLADD, "UNLOCKPARENTALCHECKED", "selected");
@@ -313,10 +312,6 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 
 	if (cfg.reader_restart_seconds)
 		tpl_printf(vars, TPLADD, "READERRESTARTSECONDS", "%d", cfg.reader_restart_seconds);
-
-	tpl_printf(vars, TPLADD, "MAXCACHETIME", "%d", cfg.max_cache_time);
-
-	tpl_printf(vars, TPLADD, "MAXCACHECOUNT", "%d", cfg.max_cache_count);
 
 	if (cfg.dropdups)
 		tpl_addVar(vars, TPLADD, "DROPDUPSCHECKED", "selected");
@@ -340,14 +335,6 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "ENABLELEDSELECTED1", "selected");
 	else if(cfg.enableled == 2)
 		tpl_addVar(vars, TPLADD, "ENABLELEDSELECTED2", "selected");
-#endif
-
-#ifdef CS_CACHEEX
-	tpl_printf(vars, TPLADD, "CACHEEXWAITTIME", "%d", cfg.cacheex_wait_time);
-
-	if (cfg.cacheex_enable_stats == 1)
-		tpl_addVar(vars, TPLADD, "CACHEEXSTATSSELECTED", "selected");
-
 #endif
 
 	return tpl_getTpl(vars, "CONFIGGLOBAL");
@@ -507,32 +494,40 @@ static char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uripa
 }
 #endif
 
+static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams *params) {
+	setActiveSubMenu(vars, MNU_CFG_CACHE);
+
+	webif_save_config("cache", vars, params);
+
+	tpl_printf(vars, TPLADD, "CACHEDELAY", "%u", cfg.delay);
+
+	tpl_printf(vars, TPLADD, "MAXCACHETIME", "%d", cfg.max_cache_time);
+
+	tpl_printf(vars, TPLADD, "MAXCACHECOUNT", "%d", cfg.max_cache_count);
+
 #ifdef CS_CACHEEX
-static char *send_oscam_config_csp(struct templatevars *vars, struct uriparams *params) {
 	char *value = NULL;
-	setActiveSubMenu(vars, MNU_CFG_CSP);
+	value = mk_t_cacheex_valuetab(&cfg.cacheex_wait_timetab);
+	tpl_addVar(vars, TPLADD, "WAIT_TIME", value);
+	free_mk_t(value);
 
-	webif_save_config("csp", vars, params);
-
-	if (IP_ISSET(cfg.csp_srvip))
-		tpl_addVar(vars, TPLAPPEND, "SERVERIP", cs_inet_ntoa(cfg.csp_srvip));
+	if (cfg.cacheex_enable_stats == 1)
+		tpl_addVar(vars, TPLADD, "CACHEEXSTATSSELECTED", "selected");
 
 	if (cfg.csp_port)
 		tpl_printf(vars, TPLADD, "PORT", "%d", cfg.csp_port);
 
-	value = mk_t_cspvaluetab(&cfg.csp_wait_timetab);
-	tpl_addVar(vars, TPLADD, "WAIT_TIME", value);
-	free_mk_t(value);
+	if (IP_ISSET(cfg.csp_srvip))
+		tpl_addVar(vars, TPLAPPEND, "SERVERIP", cs_inet_ntoa(cfg.csp_srvip));
 
-	value = mk_t_hitvaluetab(&cfg.csp.filter_caidtab);
+	value = mk_t_cacheex_hitvaluetab(&cfg.csp.filter_caidtab);
 	tpl_addVar(vars, TPLADD, "CSP_ECM_FILTER", value);
 	free_mk_t(value);
 
 	tpl_addVar(vars, TPLADD, "ARCHECKED", (cfg.csp.allow_request == 1) ? "checked" : "");
-
-	return tpl_getTpl(vars, "CONFIGCSP");
-}
 #endif
+	return tpl_getTpl(vars, "CONFIGCACHE");
+}
 
 #ifdef MODULE_NEWCAMD
 static char *send_oscam_config_newcamd(struct templatevars *vars, struct uriparams *params) {
@@ -903,9 +898,7 @@ static char *send_oscam_config(struct templatevars *vars, struct uriparams *para
 #ifdef MODULE_CAMD35_TCP
 	else if (!strcmp(part,"camd35tcp")) return send_oscam_config_camd35tcp(vars, params);
 #endif
-#ifdef CS_CACHEEX
-	else if (!strcmp(part,"csp")) return send_oscam_config_csp(vars, params);
-#endif
+	else if (!strcmp(part,"cache")) return send_oscam_config_cache(vars, params);
 #ifdef MODULE_NEWCAMD
 	else if (!strcmp(part,"newcamd")) return send_oscam_config_newcamd(vars, params);
 #endif
@@ -1276,7 +1269,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_printf(vars, TPLADD, "CACHEEX", "%d", rdr->cacheex.mode);
 	}
 	tpl_printf(vars, TPLADD, "CACHEEX_MAXHOP", "%d", rdr->cacheex.maxhop);
-	value = mk_t_hitvaluetab(&rdr->cacheex.filter_caidtab);
+	value = mk_t_cacheex_hitvaluetab(&rdr->cacheex.filter_caidtab);
 	//if (strlen(value) > 0)
 	tpl_printf(vars, TPLADD, "CACHEEX_ECM_FILTER", "%s", value);
 	free_mk_t(value);
@@ -2105,7 +2098,7 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	}
 	tpl_printf(vars, TPLADD, "CACHEEX_MAXHOP", "%d", account->cacheex.maxhop);
 
-	value = mk_t_hitvaluetab(&account->cacheex.filter_caidtab);
+	value = mk_t_cacheex_hitvaluetab(&account->cacheex.filter_caidtab);
 	//if (strlen(value) > 0)
 	tpl_printf(vars, TPLADD, "CACHEEX_ECM_FILTER", "%s", value);
 	free_mk_t(value);

@@ -122,24 +122,6 @@ DESCRIPTIONS
        block_same_name = 0|1
 	  1 = reject looping ECMs from clients to readers with the same name, default:1
 
-       cachedelay = milli-seconds
-	  value to delay cached requests, default:0
-
-       max_cache_time = seconds
-	  maximum  time  CWs resist in cache after 1st client request, the time must be 2 seconds highter than the parameter clienttime‐
-	  out, default:15
-
-       max_cache_count = count
-	  maximum CWs in cache, default:1000
-
-       cacheexwaittime = delay
-	  wait time for a cache exchange entry in milli-seconds, default:50
-
-       cacheexenablestats = 0|1
-	  1 = enable statistics for cache exchange mode, default:0
-
-	  Please consider memory consumption.
-
        clienttimeout = milli-seconds|seconds
 	  value (clienttimeout in seconds < 100, else milli-seconds) for client process to wait for key, default:5
 
@@ -420,18 +402,33 @@ DESCRIPTIONS
        lcd_writeintervall = seconds
 	  LCD refresh interval (minimum 5), default:10
 
-   The [csp] section
-       port = port
-	  TCP port of Cardservproxy for cache exchange, default:none
+   The [cache] section
+       delay = milli-seconds
+	  value to delay cached requests, default:0
 
-       serverip = IP
-	  IP address of Cardservproxy for cache exchange, default:none
+       max_time = seconds
+	  maximum  time  CWs resist in cache after 1st client request, the time must be 2 seconds highter than the parameter clienttime‐
+	  out, default:15
+
+       max_count = count
+	  maximum CWs in cache, default:1000
 
        wait_time = [caid][&mask][@provid][$servid][:awtime][:]dwtime,n
-	  wait time in milli-seconds for cache exchange (mode 2 and 3 only) and Cardservproxy before sending ECMs to  reader  or  proxy,
+	  wait time in milli-seconds for cache exchange and Cardservproxy before sending ECMs to  reader  or  proxy,
 	  default:none
 
 	   example: wait_time = 0:50:250,0200@00009X:50:150,15:950,0500@000001:150,1602&ffdf:1200
+
+       cacheexenablestats = 0|1
+	  1 = enable statistics for cache exchange mode, default:0
+
+	  Please consider memory consumption.
+
+       csp_port = port
+	  TCP port of Cardservproxy for cache exchange, default:none
+
+       csp_serverip = IP
+	  IP address of Cardservproxy for cache exchange, default:none
 
        csp_ecm_filter = [caid][&mask][@provid][$servid],n
 	  Cardservproxy incoming ECM filter setting, default:none

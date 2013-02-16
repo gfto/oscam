@@ -394,6 +394,7 @@ AAAAAElFTkSuQmCC"
 		<TR>\n\
 			<TD CLASS=\"##CMENUACTIVE0##\"><A HREF=\"config.html?part=global\">Global</A></TD>\n\
 ##TPLCONFIGMENULB##\
+			<TD CLASS=\"##CMENUACTIVE24##\"><A HREF=\"config.html?part=cache\">Cache</A></TD>\n\
 ##TPLCONFIGMENUCAMD33##\
 ##TPLCONFIGMENUCAMD35##\
 ##TPLCONFIGMENUCAMD35TCP##\
@@ -401,7 +402,6 @@ AAAAAElFTkSuQmCC"
 ##TPLCONFIGMENURADEGAST##\
 ##TPLCONFIGMENUCCCAM##\
 ##TPLCONFIGMENUGBOX##\
-##TPLCONFIGMENUCSP##\
 ##TPLCONFIGMENUANTICASC##\
 ##TPLCONFIGMENULCD##\
 ##TPLCONFIGMENUMONITOR##\
@@ -525,8 +525,6 @@ AAAAAElFTkSuQmCC"
 #define TPLCONFIGMENUCAMD35 "			<TD CLASS=\"##CMENUACTIVE3##\"><A HREF=\"config.html?part=camd35\">Camd3.5</A></TD>\n"
 
 #define TPLCONFIGMENUCAMD35TCP "			<TD CLASS=\"##CMENUACTIVE4##\"><A HREF=\"config.html?part=camd35tcp\">Camd3.5 TCP</A></TD>\n"
-
-#define TPLCONFIGMENUCSP "			<TD CLASS=\"##CMENUACTIVE24##\"><A HREF=\"config.html?part=csp\">CSP</A></TD>\n"
 
 #define TPLCONFIGMENUCCCAM "			<TD CLASS=\"##CMENUACTIVE7##\"><A HREF=\"config.html?part=cccam\">CCcam</A></TD>\n"
 
@@ -1791,16 +1789,11 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#sleep##TPLHELPSUFFIX##Global sleep:</A></TD><TD><input name=\"sleep\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SLEEP##\"> min to switch a client in sleepmode</TD></TR>\n\
 ##TPLSERIALREADERTIMEOUT##\
 			<TR><TD>##TPLHELPPREFIX##conf#readerrestartseconds##TPLHELPSUFFIX##Reader restart seconds:</A></TD><TD><input name=\"readerrestartseconds\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##READERRESTARTSECONDS##\"> s waittime to restart a reader</TD></TR>\n\
-			<TR><TH COLSPAN=\"2\">Cache</TH></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#cachedelay##TPLHELPSUFFIX##Cache delay:</A></TD><TD><input name=\"cachedelay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CACHEDELAY##\"> ms delaying answers from cache</TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#max_cache_time##TPLHELPSUFFIX##Max cache time:</A></TD><TD><input name=\"max_cache_time\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MAXCACHETIME##\"> s keep ECMs in cache time</TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#max_cache_count##TPLHELPSUFFIX##Max cache count:</A></TD><TD><input name=\"max_cache_count\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MAXCACHECOUNT##\"> nr of ECMS to keep in cache</TD></TR>\n\
 			<TR><TH COLSPAN=\"2\">Doublecheck</TH></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#double_check##TPLHELPSUFFIX##ECM Doublecheck:</A></TD><TD><SELECT NAME=\"double_check\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##DCHECKCSELECTED##>YES</OPTION></SELECT></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#double_check_caid##TPLHELPSUFFIX##Doublecheck caids:</A></TD><TD><input name=\"double_check_caid\" type=\"text\" size=\"55\" maxlength=\"160\" value=\"##DOUBLECHECKCAID##\"></TD></TR>\n\
 ##TPLSUPPRESSCMD08##\
 ##TPLENABLELEDBIT##\
-##TPLCACHEEXWAITTIME##\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
@@ -1816,11 +1809,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 
 #define TPLSERIALREADERTIMEOUT "\
 			<TR><TD>##TPLHELPPREFIX##conf#serialreadertimeout##TPLHELPSUFFIX##Serial reader timeout:</A></TD><TD><input name=\"serialreadertimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SERIALTIMEOUT##\"> ms</TD></TR>\n"
-
-#define TPLCACHEEXWAITTIME "\
-			<TR><TH COLSPAN=\"2\">CacheEX</TH></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#cacheexwaittime##TPLHELPSUFFIX##Cacheex wait time:</A></TD><TD><input name=\"cacheexwaittime\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CACHEEXWAITTIME##\"> ms max waittime for a cache entry</TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#cacheexenablestats##TPLHELPSUFFIX##Cacheex write statistic:</A></TD><TD><SELECT NAME=\"cacheexenablestats\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##CACHEEXSTATSSELECTED##>ON</OPTION></SELECT></TD></TR>\n"
 
 #define TPLENABLELEDBIT "\
 			<TR><TH COLSPAN=\"2\">LED</TH></TR>\n\
@@ -1948,33 +1936,34 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	</form>\n\
 ##TPLFOOTER##"
 
-#define TPLCONFIGCSP "\
+#define TPLCONFIGCACHE "\
 ##TPLHEADER##\
 ##TPLMENU##\
 ##TPLCONFIGMENU##\
 ##TPLMESSAGE##\
 	<form action=\"config.html\" method=\"get\">\n\
-		<input name=\"part\" type=\"hidden\" value=\"csp\">\n\
+		<input name=\"part\" type=\"hidden\" value=\"cache\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
 		<TABLE class=\"config\">\n\
-			<TR><TH COLSPAN=\"2\">Edit CSP CacheEX Config</TH></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#port_2##TPLHELPSUFFIX##Port:</A></TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##PORT##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#serverip_9##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"serverip\" type=\"text\" size=\"15\" maxlength=\"15\" value=\"##SERVERIP##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#wait_time##TPLHELPSUFFIX##Wait time:</A></TD><TD><input name=\"wait_time\" type=\"text\" size=\"63\" maxlength=\"320\" value=\"##WAIT_TIME##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#csp_ecm_filter##TPLHELPSUFFIX##ECM filter:</A></TD><TD><input name=\"csp_ecm_filter\" type=\"text\" size=\"63\" maxlength=\"320\" value=\"##CSP_ECM_FILTER##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#csp_filter_adv##TPLHELPSUFFIX##filter adv.:</A></TD>\n\
-				<TD>\n\
-					<TABLE class=\"invisible\">\n\
-						<TR>\n\
-							<TD><input name=\"csp_allow_request\" value=\"0\" type=\"hidden\"><input name=\"csp_allow_request\" value=\"1\" type=\"checkbox\" ##ARCHECKED##>allow request</TD>\n\
-						</TR>\n\
-					</TABLE>\n\
-				</TD>\n\
-			</TR>\n\
+			<TR><TH COLSPAN=\"2\">Global Cache Settings</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#delay##TPLHELPSUFFIX##Delay:</A></TD><TD><input name=\"delay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CACHEDELAY##\"> ms delaying answers from cache</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#max_time##TPLHELPSUFFIX##Max time:</A></TD><TD><input name=\"max_time\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MAXCACHETIME##\"> s keep ECMs in cache</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#max_count##TPLHELPSUFFIX##Max count:</A></TD><TD><input name=\"max_count\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MAXCACHECOUNT##\"> nr of ECMS to keep in cache</TD></TR>\n\
+##TPLCONFIGCACHEEXCSP##\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
+
+#define TPLCONFIGCACHEEXCSP "\
+			<TR><TH COLSPAN=\"2\">CacheEx / CSP</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#wait_time##TPLHELPSUFFIX##Wait time:</A></TD><TD><input name=\"wait_time\" type=\"text\" size=\"63\" maxlength=\"320\" value=\"##WAIT_TIME##\"> ms max waittime</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#cacheexenablestats##TPLHELPSUFFIX##Write statistic:</A></TD><TD><SELECT NAME=\"cacheexenablestats\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##CACHEEXSTATSSELECTED##>ON</OPTION></SELECT></TD></TR>\n\
+			<TR><TH COLSPAN=\"2\">CSP</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#csp_port##TPLHELPSUFFIX##Port:</A></TD><TD><input name=\"csp_port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##PORT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#csp_serverip_9##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"csp_serverip\" type=\"text\" size=\"15\" maxlength=\"15\" value=\"##SERVERIP##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#csp_ecm_filter##TPLHELPSUFFIX##ECM filter:</A></TD><TD><input name=\"csp_ecm_filter\" type=\"text\" size=\"63\" maxlength=\"320\" value=\"##CSP_ECM_FILTER##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#csp_filter_adv##TPLHELPSUFFIX##ECM filter adv.:</A></TD><TD><TABLE class=\"invisible\"><TR><TD><input name=\"csp_allow_request\" value=\"0\" type=\"hidden\"><input name=\"csp_allow_request\" value=\"1\" type=\"checkbox\" ##ARCHECKED##>allow request</TD></TR></TABLE></TD></TR>\n"
 
 #define TPLCONFIGSERIAL "\
 ##TPLHEADER##\
@@ -2527,6 +2516,7 @@ const char *templates[][3] = {
 	,{"CONFIGWEBIF", TPLCONFIGWEBIF, ""}
 	,{"CONFIGLCD", TPLCONFIGLCD, ""}
 	,{"CONFIGGLOBAL", TPLCONFIGGLOBAL, ""}
+	,{"CONFIGCACHE", TPLCONFIGCACHE, ""}
 	,{"CONFIGSERIALDEVICEBIT", TPLCONFIGSERIALDEVICEBIT, ""}
 	,{"SERVICECONFIGLIST", TPLSERVICECONFIGLIST, ""}
 	,{"SERVICECONFIGLISTBIT", TPLSERVICECONFIGLISTBIT, ""}
@@ -2621,12 +2611,10 @@ const char *templates[][3] = {
 #ifdef CS_CACHEEX
 	,{"USEREDITCACHEEXBIT", TPLUSEREDITCACHEEXBIT, "CS_CACHEEX"}
 	,{"READEREDITCACHEEXBIT", TPLREADEREDITCACHEEXBIT, "CS_CACHEEX"}
-	,{"CACHEEXWAITTIME", TPLCACHEEXWAITTIME, "CS_CACHEEX"}
+	,{"CONFIGCACHEEXCSP", TPLCONFIGCACHEEXCSP, "CS_CACHEEX"}
 	,{"CACHEEXPAGE", TPLCACHEEXPAGE, "CS_CACHEEX"}
 	,{"CACHEEXTABLEROW", TPLCACHEEXTABLEROW, "CS_CACHEEX"}
 	,{"CACHEEXMENUITEM", TPLCACHEEXMENUITEM, "CS_CACHEEX"}
-	,{"CONFIGMENUCSP", TPLCONFIGMENUCSP, "CS_CACHEEX"}
-	,{"CONFIGCSP", TPLCONFIGCSP, "CS_CACHEEX"}
 	,{"ICARRR", ICARRR, "CS_CACHEEX"}
 	,{"ICARRL", ICARRL, "CS_CACHEEX"}
 #endif

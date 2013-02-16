@@ -274,7 +274,7 @@ static const struct config_list account_opts[] = {
 #ifdef CS_CACHEEX
 	DEF_OPT_INT8("cacheex"				, OFS(cacheex.mode),			0 ),
 	DEF_OPT_INT8("cacheex_maxhop"		, OFS(cacheex.maxhop),			0 ),
-	DEF_OPT_FUNC("cacheex_ecm_filter"	, OFS(cacheex.filter_caidtab),	hitvaluetab_fn ),
+	DEF_OPT_FUNC("cacheex_ecm_filter"	, OFS(cacheex.filter_caidtab),	cacheex_hitvaluetab_fn ),
 	DEF_OPT_UINT8("cacheex_drop_csp"	, OFS(cacheex.drop_csp),		0 ),
 	DEF_OPT_UINT8("cacheex_allow_request"	, OFS(cacheex.allow_request),	1 ),
 #endif

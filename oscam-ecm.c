@@ -216,6 +216,11 @@ ECM_REQUEST *get_ecmtask(void)
 	if (!cs_malloc(&er, sizeof(ECM_REQUEST)))
 		return NULL;
 	cs_ftime(&er->tps);
+#ifdef CS_CACHEEX
+	er->cacheex_wait.time = er->tps.time;
+	er->cacheex_wait.millitm = er->tps.millitm;
+	er->cacheex_wait_time = 0;
+#endif
 	er->rc     = E_UNHANDLED;
 	er->client = cl;
 	er->grp    = cl->grp;
@@ -442,6 +447,12 @@ static int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		snprintf(sreason, sizeof(sreason)-1, " (%s)", er->msglog);
 
 	cs_ftime(&tpe);
+
+#ifdef CS_CACHEEX
+	if (er->rc == E_FOUND && er->cacheex_wait_time)
+		snprintf(sreason, sizeof(sreason)-1, " (real %d ms)", comp_timeb(&tpe, &er->cacheex_wait));
+#endif
+
 	client->cwlastresptime = 1000 * (tpe.time-er->tps.time) + tpe.millitm-er->tps.millitm;
 
 	time_t now = time(NULL);
@@ -623,7 +634,7 @@ void request_cw_from_readers(ECM_REQUEST *er)
 			switch(er->stage) {
 #ifdef CS_CACHEEX
 			case 1: {
-				// Cache-Echange
+				// Cache-Exchange
 				if ((ea->status & REQUEST_SENT) ||
 						(ea->status & (READER_CACHEEX|READER_ACTIVE)) != (READER_CACHEEX|READER_ACTIVE))
 					continue;
@@ -646,7 +657,7 @@ void request_cw_from_readers(ECM_REQUEST *er)
 			}
 			default: {
 				// only fallbacks
-				if (!(ea->status & (READER_ACTIVE|READER_FALLBACK)))
+				if ((ea->status & (READER_ACTIVE|READER_FALLBACK)) != (READER_ACTIVE|READER_FALLBACK))
 					continue;
 				if (ea->status & REQUEST_SENT) {
 					if (ea->reader && ea->reader->client && ea->reader->client->is_udp) //Always resend on udp
@@ -1403,10 +1414,12 @@ OUT:
 
 #ifdef CS_CACHEEX
 	int8_t cacheex = client->account ? client->account->cacheex.mode : 0;
-	uint32_t c_csp_wait_time = get_csp_wait_time(er,client);
-	cs_debug_mask(D_CACHEEX | D_CSPCWC, "[GET_CW] c_csp_wait_time %d caid %04X prov %06X srvid %04X rc %d cacheex %d", c_csp_wait_time, er->caid, er->prid, er->srvid, er->rc, cacheex);
-	if ((cacheex == 1 || c_csp_wait_time) && er->rc == E_UNHANDLED) { //not found in cache, so wait!
-		int32_t max_wait = (cacheex == 1)?cfg.cacheex_wait_time:c_csp_wait_time; // uint32_t can't value <> n/50
+	uint32_t cacheex_wait_time = get_cacheex_wait_time(er,client);
+	cs_debug_mask(D_CACHEEX | D_CSPCWC, "[GET_CW] c_csp_wait_time %d caid %04X prov %06X srvid %04X rc %d cacheex %d", cacheex_wait_time, er->caid, er->prid, er->srvid, er->rc, cacheex);
+	if ((cacheex_wait_time) && er->rc == E_UNHANDLED) { //not found in cache, so wait!
+		add_ms_to_timeb(&er->cacheex_wait, cacheex_wait_time);
+		er->cacheex_wait_time = cacheex_wait_time;
+		int32_t max_wait = cacheex_wait_time; // uint32_t can't value <> n/50
 		while (max_wait > 0 && !client->kill) {
 			cs_sleepms(50);
 			max_wait -= 50;
@@ -1424,8 +1437,10 @@ OUT:
 				break;
 			}
 		}
-		if (max_wait <= 0 )
+		if (max_wait <= 0 ) {
 			cs_debug_mask(D_CACHEEX|D_CSPCWC, "[GET_CW] wait_time over");
+			snprintf(er->msglog, MSGLOGSIZE, "wait_time over");
+		}
 	}
 #endif
 
@@ -1455,7 +1470,7 @@ OUT:
 
 	if (er->rc < E_99) {
 #ifdef CS_CACHEEX
-		if (cfg.delay && cacheex != 1) //No delay on cacheexchange!
+		if (cfg.delay && cacheex != 1) //No delay on cacheexchange mode 1 client!
 			cs_sleepms(cfg.delay);
 
 		if (cacheex == 1 && er->rc < E_NOTFOUND) {

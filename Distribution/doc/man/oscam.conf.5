@@ -168,33 +168,6 @@ seconds beetween restarts, 0 = disable reader restart, default:5
 1 = reject looping ECMs from clients to readers with the same name, default:1
 .RE
 .PP
-\fBcachedelay\fP = \fBmilli-seconds\fP
-.RS 3n
-value to delay cached requests, default:0
-.RE
-.PP
-\fBmax_cache_time\fP = \fBseconds\fP
-.RS 3n
-maximum time CWs resist in cache after 1st client request, the time must be 2 seconds highter than the parameter \fBclienttimeout\fP, default:15
-.RE
-.PP
-\fBmax_cache_count\fP = \fBcount\fP
-.RS 3n
-maximum CWs in cache, default:1000
-.RE
-.PP
-\fBcacheexwaittime\fP = \fBdelay\fP
-.RS 3n
-wait time for a cache exchange entry in milli-seconds, default:50
-.RE
-.PP
-\fBcacheexenablestats\fP = \fB0|1\fP
-.RS 3n
-1 = enable statistics for cache exchange mode, default:0
-
-\fIPlease consider memory consumption.\fR
-.RE
-.PP
 \fBclienttimeout\fP = \fBmilli-seconds\fP|\fBseconds\fP
 .RS 3n
 value (clienttimeout in seconds < 100, else milli-seconds) for client process to wait for key, default:5
@@ -604,22 +577,44 @@ path for LCD output, default:/tmp
 LCD refresh interval (minimum 5), default:10
 .RE
 .RE
-.SS "The [csp] section"
-\fBport\fP = \fBport\fP
+.SS "The [cache] section"
+\fBdelay\fP = \fBmilli-seconds\fP
 .RS 3n
-TCP port of Cardservproxy for cache exchange, default:none
+value to delay cached requests, default:0
 .RE
 .PP
-\fBserverip\fP = \fBIP\fP
+\fBmax_time\fP = \fBseconds\fP
 .RS 3n
-IP address of Cardservproxy for cache exchange, default:none
+maximum time CWs resist in cache after 1st client request, the time must be 2 seconds highter than the parameter \fBclienttimeout\fP, default:15
+.RE
+.PP
+\fBmax_count\fP = \fBcount\fP
+.RS 3n
+maximum CWs in cache, default:1000
 .RE
 .PP
 \fBwait_time\fP = \fB[caid][&mask][@provid][$servid][:awtime][:]dwtime,n\fP
 .RS 3n
-wait time in milli-seconds for cache exchange (mode 2 and 3 only) and Cardservproxy before sending ECMs to reader or proxy, default:none
+wait time in milli-seconds for cache exchange and Cardservproxy before sending ECMs to reader or proxy, default:none
 
  example: wait_time = 0:50:250,0200@00009X:50:150,15:950,0500@000001:150,1602&ffdf:1200
+.RE
+.PP
+\fBcacheexenablestats\fP = \fB0|1\fP
+.RS 3n
+1 = enable statistics for cache exchange mode, default:0
+
+\fIPlease consider memory consumption.\fR
+.RE
+.PP
+\fBcsp_port\fP = \fBport\fP
+.RS 3n
+TCP port of Cardservproxy for cache exchange, default:none
+.RE
+.PP
+\fBcsp_serverip\fP = \fBIP\fP
+.RS 3n
+IP address of Cardservproxy for cache exchange, default:none
 .RE
 .PP
 \fBcsp_ecm_filter\fP = \fB[caid][&mask][@provid][$servid],n\fP
