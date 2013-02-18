@@ -164,7 +164,7 @@ void gbox_write_shared_cards_info(void)
 
 	struct s_client *cl;
 	for (i = 0, cl = first_client; cl; cl = cl->next, i++) {
-		if (cl->ctyp==6) {
+		if (get_module(cl)->num == R_GBOX) {
 			struct s_reader *rdr = cl->reader;
 			struct gbox_data *gbox = cl->gbox;
 			struct gbox_card *card;
@@ -178,7 +178,7 @@ void gbox_write_shared_cards_info(void)
 					card_count++;
 				} // end of while ll_iter_next
 			} // end of if INSERTED && 'p'
-		} // end of if ctyp=6
+		}
 	} // end of for cl->next
 	fclose(fhandle);
 	return;
@@ -267,7 +267,7 @@ void gbox_reconnect_client(void)
 {
 	struct s_client *cl;
 	for (cl = first_client; cl; cl = cl->next) {
-		if (cl->ctyp == 6) {
+		if (get_module(cl)->num == R_GBOX) {
 			hostname2ip(cl->reader->device, &SIN_GET_ADDR(cl->udp_sa));
 			SIN_GET_FAMILY(cl->udp_sa) = AF_INET;
 			SIN_GET_PORT(cl->udp_sa) = htons((uint16_t)cl->reader->r_port);
@@ -444,7 +444,6 @@ int32_t gbox_cmd_hello(struct s_client *cli, int32_t n)
 	if (data[0x0B]&0x80) {
 		gbox->hello_expired++;
 		gbox->peer.hello_cont=1;
-		cli->ctyp = 6;
 		gbox->peer.online = 1;
 
 		cli->grp = cli->reader->gbox_grp;// cli->grp=0xFF;
@@ -528,7 +527,6 @@ int32_t gbox_cmd_switch(struct s_client *cli, int32_t n)
 
 		gbox->peer.t_ecm = time((time_t*)0);
 
-		cli->ctyp = 6;
 		ECM_REQUEST *er;
 		if (!(er=get_ecmtask())) break;
 
@@ -577,7 +575,6 @@ int32_t gbox_cmd_switch(struct s_client *cli, int32_t n)
 		ei->slot = ecm[er->ecmlen + 12];
 		memcpy(ei->checksums, ecm + er->ecmlen + 14, 14);
 		er->gbox_crc = gbox_get_ecmchecksum(er);
-		cli->gbox_ctyp=6;
 
 		gbox->peer.t_ecm = time((time_t*)0);
 		cli->typ = 'p';
@@ -653,7 +650,7 @@ static int32_t gbox_recv2(IN_ADDR_T recv_ip, in_port_t recv_port, uchar *b, int3
 	for (cli=first_client; cli; cli=cli->next) {
 
 		if (IP_EQUAL(recv_ip, cli->ip)
-			&& cli->ctyp == 6 && recv_port == cli->reader->l_port) {
+			&& get_module(cli)->num == R_GBOX && recv_port == cli->reader->l_port) {
 
 			verify_peer_ip = 1;
 
@@ -1155,7 +1152,7 @@ static void gbox_send_hello(struct s_client *cli)
           ll_append(gbox->local_cards, c);
         }
         // if rdr = gbox, reshare card
-        if (cl->ctyp == 6) {
+        if (get_module(cl)->num == R_GBOX) {
           struct gbox_data *gbox_1 = cl->gbox;
           struct gbox_card *card_g;
           if (strcmp(cli->reader->label, cl->reader->label)) {
@@ -1469,7 +1466,6 @@ static int32_t gbox_client_init(struct s_client *cli)
 
   cli->reader->card_status = CARD_NEED_INIT;
   gbox_send_hello(cli);
-  cli->ctyp = 6;
 
   if (!cli->reader->gbox_maxecmsend)
     cli->reader->gbox_maxecmsend = DEFAULT_GBOX_MAX_ECM_SEND;

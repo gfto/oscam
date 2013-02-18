@@ -982,7 +982,6 @@ struct s_client {
 	uint8_t			gbox_cw_id[2];
 	uint8_t			gbox_peer_id[2];
 	uint8_t			gbox_ver;
-	int8_t			gbox_ctyp;
 #endif
 
 #ifdef MODULE_GHTTP
