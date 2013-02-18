@@ -2,20 +2,17 @@
 #ifdef CW_CYCLE_CHECK
 
 #include "module-cw-cycle-check.h"
-//#include "module-cacheex.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
 #include "oscam-ecm.h"
 #include "oscam-lock.h"
-//#include "oscam-reader.h"
 #include "oscam-string.h"
-//#include "oscam-time.h"
 
 extern CS_MUTEX_LOCK cwcycle_lock;
-struct s_cw_cycle_check *cw_cc_list = NULL;
-int32_t cw_cc_list_size = 0;
-static time_t last_cwcyclecleaning = 0;
 
+static struct s_cw_cycle_check *cw_cc_list;
+static int32_t cw_cc_list_size;
+static time_t last_cwcyclecleaning;
 
 /*
  * Check for CW CYCLE
@@ -28,7 +25,7 @@ static inline uint8_t checkECMD5CW(uchar *ecmd5_cw)
 	return 0;
 }
 
-uint8_t checkCWpart(ECM_REQUEST *er, int8_t nextcyclecw){
+static uint8_t checkCWpart(ECM_REQUEST *er, int8_t nextcyclecw) {
 	uint8_t eo = nextcyclecw?8:0;
 	int8_t i;
 	for (i=0;i<8;i++)
@@ -36,7 +33,7 @@ uint8_t checkCWpart(ECM_REQUEST *er, int8_t nextcyclecw){
 	return 0;
 }
 
-uint8_t checkvalidCW (ECM_REQUEST *er) {
+static uint8_t checkvalidCW (ECM_REQUEST *er) {
 	checkCW(er); //check zero
 	if (er->rc == E_NOTFOUND) {
 		//wrong
@@ -95,7 +92,7 @@ void cleanupcwcycle(void)
 		cs_debug_mask(D_CSPCWCFUL, "cyclecheck [Cleanup] list new size: %d (realsize: %d)", cw_cc_list_size, count);
 }
 
-int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uchar *cw , char *reader)
+static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uchar *cw , char *reader)
 {
 
 	int8_t i,ret = 6; // ret = 6 no checked
