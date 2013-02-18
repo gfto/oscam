@@ -223,7 +223,7 @@ ECM_REQUEST *get_ecmtask(void)
 	er->rc     = E_UNHANDLED;
 	er->client = cl;
 	er->grp    = cl->grp;
-	//cs_log("client %s ECMTASK %d ctyp %d", username(cl), n, cl->ctyp);
+	//cs_log("client %s ECMTASK %d module %s", username(cl), n, get_module(cl)->desc);
 	return er;
 }
 

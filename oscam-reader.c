@@ -752,7 +752,6 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 		rdr->client = cl;
 
 		cl->typ='r';
-		//client[i].ctyp=99;
 
 		add_job(cl, ACTION_READER_INIT, NULL, 0);
 		add_reader_to_active(rdr);

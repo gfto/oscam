@@ -85,7 +85,7 @@ int32_t bcopy_end = -1;
 
 struct s_thread_param
 {
-	int32_t ctyp;
+	uint8_t module_idx;
 	struct s_serial_client serialdata;
 };
 
@@ -1016,7 +1016,7 @@ static void * oscam_ser_fork(void *pthreadparam)
   pthread_setspecific(getclient, cl);
   cl->thread=pthread_self();
   cl->typ='c';
-  cl->ctyp = pparam->ctyp;
+  cl->module_idx = pparam->module_idx;
   cl->account=first_client->account;
 
   if (!cl->serialdata && !cs_malloc(&cl->serialdata, sizeof(struct s_serial_client)))
@@ -1047,7 +1047,7 @@ static void * oscam_ser_fork(void *pthreadparam)
   return NULL;
 }
 
-void * init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int32_t len)
+void * init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int32_t module_idx)
 {
 	char sdevice[512];
 	int32_t ret;
@@ -1060,7 +1060,7 @@ void * init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int32_t 
 		cs_strncpy(sdevice, cfg.ser_device, sizeof(sdevice));
 	else
 		memset(sdevice, 0, sizeof(sdevice));
-	param.ctyp=len;
+	param.module_idx = module_idx;
 	char *p;
 	pthread_t temp;
 	char cltype = 'c'; //now auto should work

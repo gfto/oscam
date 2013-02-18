@@ -393,7 +393,7 @@ int32_t accept_connection(struct s_module *module, int8_t module_idx, int8_t por
 				cl = create_client(SIN_GET_ADDR(cad));
 				if (!cl) return 0;
 
-				cl->ctyp=module_idx;
+				cl->module_idx=module_idx;
 				cl->port_idx=port_idx;
 				cl->udp_fd=port->fd;
 				cl->udp_sa=cad;
@@ -426,7 +426,7 @@ int32_t accept_connection(struct s_module *module, int8_t module_idx, int8_t por
 			setsockopt(pfd3, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
 			setTCPTimeouts(pfd3);
 
-			cl->ctyp=module_idx;
+			cl->module_idx=module_idx;
 			cl->udp_fd=pfd3;
 			cl->port_idx=port_idx;
 

@@ -749,7 +749,7 @@ void kill_thread(struct s_client *cl) {
 }
 
 struct s_module *get_module(struct s_client *cl) {
-	return &modules[cl->ctyp];
+	return &modules[cl->module_idx];
 }
 
 void module_reader_set(struct s_reader *rdr) {

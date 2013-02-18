@@ -923,7 +923,7 @@ struct s_client {
 	TUNTAB			ttab;
 	SIDTABS			sidtabs;
 	int8_t			typ;        		// first s_client is type s=starting (master) thread; type r = physical reader, type p = proxy reader both always have 1 s_reader struct allocated; type c = client (user logging in into oscam) type m = monitor type h = http server a = anticascader
-	int8_t			ctyp;
+	uint8_t			module_idx;
 	uint16_t		last_srvid;
 	uint16_t		last_caid;
 	struct s_srvid 	*last_srvidptr;
