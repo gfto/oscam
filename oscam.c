@@ -752,6 +752,20 @@ struct s_module *get_module(struct s_client *cl) {
 	return &modules[cl->ctyp];
 }
 
+void module_reader_set(struct s_reader *rdr) {
+	int i;
+	if (!is_cascading_reader(rdr))
+		return;
+	for (i = 0; i < CS_MAX_MOD; i++) {
+		struct s_module *module = &modules[i];
+		if (module->num && module->num == rdr->typ) {
+			rdr->ph = *module;
+			if (rdr->device[0])
+				rdr->ph.active = 1;
+		}
+	}
+}
+
 static void cs_waitforcardinit(void)
 {
 	if (cfg.waitforcards)
@@ -1026,15 +1040,15 @@ static void process_clients(void) {
 		}
 
 		//server (new tcp connections or udp messages)
-		for (k=0; k < CS_MAX_MOD; k++) {
-			if ( (modules[k].type & MOD_CONN_NET) && modules[k].ptab ) {
-				for (j=0; j<modules[k].ptab->nports; j++) {
-					if (modules[k].ptab->ports[j].fd) {
+		for (k = 0; k < CS_MAX_MOD; k++) {
+			struct s_module *module = &modules[k];
+			if ((module->type & MOD_CONN_NET) && module->ptab) {
+				for (j = 0; j < module->ptab->nports; j++) {
+					if (module->ptab->ports[j].fd) {
 						cl_size = chk_resize_cllist(&pfd, &cl_list, cl_size, pfdcount);
 						cl_list[pfdcount] = NULL;
-						pfd[pfdcount].fd = modules[k].ptab->ports[j].fd;
+						pfd[pfdcount].fd = module->ptab->ports[j].fd;
 						pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
-
 					}
 				}
 			}
@@ -1103,15 +1117,16 @@ static void process_clients(void) {
 			//server sockets
 			// new connection on a tcp listen socket or new message on udp listen socket
 			if (!cl && (pfd[i].revents & (POLLIN | POLLPRI))) {
-				for (k=0; k<CS_MAX_MOD; k++) {
-					if( (modules[k].type & MOD_CONN_NET) && modules[k].ptab ) {
-						for ( j=0; j<modules[k].ptab->nports; j++ ) {
-							if ( modules[k].ptab->ports[j].fd && pfd[i].fd == modules[k].ptab->ports[j].fd ) {
+				for (k = 0; k < CS_MAX_MOD; k++) {
+					struct s_module *module = &modules[k];
+					if ((module->type & MOD_CONN_NET) && module->ptab) {
+						for (j = 0; j < module->ptab->nports; j++) {
+							if (module->ptab->ports[j].fd && module->ptab->ports[j].fd == pfd[i].fd) {
 								accept_connection(k,j);
 							}
 						}
 					}
-				} // if (modules[i].type & MOD_CONN_NET)
+				}
 			}
 		}
 		first_client->last=time((time_t *)0);
@@ -1412,8 +1427,9 @@ int32_t main (int32_t argc, char *argv[])
   // because modules depend on config values.
   for (i=0; mod_def[i]; i++)
   {
-	memset(&modules[i], 0, sizeof(struct s_module));
-	mod_def[i](&modules[i]);
+	struct s_module *module = &modules[i];
+	memset(module, 0, sizeof(struct s_module));
+	mod_def[i](module);
   }
   for (i=0; cardsystem_def[i]; i++)
   {
@@ -1453,12 +1469,14 @@ int32_t main (int32_t argc, char *argv[])
   global_whitelist_read();
   cacheex_load_config_file();
 
-  for (i=0; i<CS_MAX_MOD; i++)
-    if( (modules[i].type & MOD_CONN_NET) && modules[i].ptab )
-      for(j=0; j<modules[i].ptab->nports; j++)
-      {
-        start_listener(&modules[i], j);
-      }
+	for (i = 0; i < CS_MAX_MOD; i++) {
+		struct s_module *module = &modules[i];
+		if ((module->type & MOD_CONN_NET) && module->ptab) {
+			for (j = 0; j < module->ptab->nports; j++) {
+				start_listener(module, j);
+			}
+		}
+	}
 
 	//set time for server to now to avoid 0 in monitor/webif
 	first_client->last=time((time_t *)0);
@@ -1480,10 +1498,11 @@ int32_t main (int32_t argc, char *argv[])
 
 	ac_init();
 
-	for (i=0; i<CS_MAX_MOD; i++)
-		if (modules[i].type & MOD_CONN_SERIAL)   // for now: oscam_ser only
-			if (modules[i].s_handler)
-				modules[i].s_handler(NULL, NULL, i);
+	for (i = 0; i < CS_MAX_MOD; i++) {
+		struct s_module *module = &modules[i];
+		if ((module->type & MOD_CONN_SERIAL) && module->s_handler)
+			module->s_handler(NULL, NULL, i);
+	}
 
 	// main loop function
 	process_clients();

@@ -12,7 +12,6 @@
 
 #define cs_srvr "oscam.server"
 
-extern struct s_module modules[CS_MAX_MOD];
 extern struct s_cardreader cardreaders[CS_MAX_MOD];
 extern char *RDR_CD_TXT[];
 
@@ -939,15 +938,7 @@ int32_t init_readerdb(void)
 	free(token);
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr))) { //build active readers list
-		int32_t i;
-		if (is_cascading_reader(rdr)) {
-			for (i=0; i<CS_MAX_MOD; i++) {
-				if (modules[i].num && rdr->typ==modules[i].num) {
-					rdr->ph=modules[i];
-					if(rdr->device[0]) rdr->ph.active=1;
-				}
-			}
-		}
+		module_reader_set(rdr);
 	}
 	fclose(fp);
 	return(0);

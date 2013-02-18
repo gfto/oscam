@@ -27,7 +27,6 @@
 #include "oscam-time.h"
 #include "oscam-work.h"
 
-extern struct s_module modules[CS_MAX_MOD];
 extern struct s_cardreader cardreaders[CS_MAX_MOD];
 extern char cs_confdir[];
 extern uint32_t ecmcwcache_size;
@@ -1145,14 +1144,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 			if (strcmp((*params).params[i], "action"))
 				chk_reader((*params).params[i], (*params).values[i], newrdr);
 		}
-		if (is_cascading_reader(newrdr)) {
-			for (i=0; i<CS_MAX_MOD; i++) {
-				if (modules[i].num && newrdr->typ == modules[i].num) {
-					newrdr->ph = modules[i];
-					if(newrdr->device[0]) newrdr->ph.active=1;
-				}
-			}
-		}
+		module_reader_set(newrdr);
 		reader_ = newrdr->label;
 		reader_set_defaults(newrdr);
 		newrdr->enable = 0; // do not start the reader because must configured before
@@ -2226,6 +2218,19 @@ static bool picon_exists(uint16_t caid, uint16_t srvid) {
 	return strlen(tpl_getTplPath(picon_name, cfg.http_tpl, path, sizeof(path) - 1)) && file_exists(path);
 }
 
+static void kill_account_thread(struct s_auth *account) {
+	struct s_client *cl;
+	for (cl=first_client->next; cl ; cl=cl->next){
+		if (cl->account == account){
+			if (get_module(cl)->type & MOD_CONN_NET) {
+				kill_thread(cl);
+			} else {
+				cl->account = first_client->account;
+			}
+		}
+	}
+}
+
 static char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
 	struct s_auth *account;
 	struct s_client *cl;
@@ -2252,15 +2257,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 					else
 						account_prev->next = account->next;
 					ll_clear(account->aureader_list);
-					for (cl=first_client->next; cl ; cl=cl->next){
-						if(cl->account == account){
-							if (modules[cl->ctyp].type & MOD_CONN_NET) {
-								kill_thread(cl);
-							} else {
-								cl->account = first_client->account;
-							}
-						}
-					}
+					kill_account_thread(account);
 					add_garbage(account);
 					found = 1;
 					break;
@@ -2278,15 +2275,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		if (account) {
 			if(strcmp(getParam(params, "action"), "disable") == 0){
 				account->disabled = 1;
-				for (cl=first_client->next; cl ; cl=cl->next){
-					if(cl->account == account){
-						if (modules[cl->ctyp].type & MOD_CONN_NET) {
-							kill_thread(cl);
-						} else {
-							cl->account = first_client->account;
-						}
-					}
-				}
+				kill_account_thread(account);
 			} else
 				account->disabled = 0;
 			if (write_userdb() != 0) tpl_addMsg(vars, "Write Config failed!");
