@@ -39,7 +39,7 @@ char *oscam_pidfile = NULL;
 char default_pidfile[64];
 
 int32_t exit_oscam=0;
-struct s_module modules[CS_MAX_MOD];
+static struct s_module modules[CS_MAX_MOD];
 struct s_cardsystem cardsystems[CS_MAX_MOD];
 struct s_cardreader cardreaders[CS_MAX_MOD];
 
@@ -1122,7 +1122,7 @@ static void process_clients(void) {
 					if ((module->type & MOD_CONN_NET) && module->ptab) {
 						for (j = 0; j < module->ptab->nports; j++) {
 							if (module->ptab->ports[j].fd && module->ptab->ports[j].fd == pfd[i].fd) {
-								accept_connection(k,j);
+								accept_connection(module, k, j);
 							}
 						}
 					}
@@ -1428,7 +1428,6 @@ int32_t main (int32_t argc, char *argv[])
   for (i=0; mod_def[i]; i++)
   {
 	struct s_module *module = &modules[i];
-	memset(module, 0, sizeof(struct s_module));
 	mod_def[i](module);
   }
   for (i=0; cardsystem_def[i]; i++)
@@ -1473,7 +1472,7 @@ int32_t main (int32_t argc, char *argv[])
 		struct s_module *module = &modules[i];
 		if ((module->type & MOD_CONN_NET) && module->ptab) {
 			for (j = 0; j < module->ptab->nports; j++) {
-				start_listener(module, j);
+				start_listener(module, &module->ptab->ports[j]);
 			}
 		}
 	}
