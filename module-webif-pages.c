@@ -73,6 +73,7 @@ char *CSS =
 "TD.usercol19 {text-align:center;}\n"
 "TD.usercol20 {text-align:center;}\n"
 "TD.usercol21 {text-align:center;}\n"
+"TD.usercol22 {text-align:center;}\n"
 "TD.menu {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;white-space: normal;}\n"
 "TD.menu_selected {color:black; background-color:#E6FEBF; font-family: Arial; font-size:14px; font-weight:bold;font-style:italic;}\n"
 "TD.configmenu {color:black; background-color:white; font-family: Arial; font-size:11px; font-weight:bold;}\n"
@@ -394,7 +395,7 @@ AAAAAElFTkSuQmCC"
 		<TR>\n\
 			<TD CLASS=\"##CMENUACTIVE0##\"><A HREF=\"config.html?part=global\">Global</A></TD>\n\
 ##TPLCONFIGMENULB##\
-			<TD CLASS=\"##CMENUACTIVE24##\"><A HREF=\"config.html?part=cache\">Cache</A></TD>\n\
+			<TD CLASS=\"##CMENUACTIVE24##\"><A HREF=\"config.html?part=cache\">Cache##TPLCMCAPTIONCWC##</A></TD>\n\
 ##TPLCONFIGMENUCAMD33##\
 ##TPLCONFIGMENUCAMD35##\
 ##TPLCONFIGMENUCAMD35TCP##\
@@ -533,6 +534,8 @@ AAAAAElFTkSuQmCC"
 #define TPLCONFIGMENURADEGAST "			<TD CLASS=\"##CMENUACTIVE6##\"><A HREF=\"config.html?part=radegast\">Radegast</A></TD>\n"
 
 #define TPLCONFIGMENUSERIAL "			<TD CLASS=\"##CMENUACTIVE10##\"><A HREF=\"config.html?part=serial\">Serial</A></TD>\n"
+
+#define TPLCMCAPTIONCWC " / CW Cycle"
 
 #define TPLSTATUS "\
 ##TPLHEADER##\
@@ -716,6 +719,7 @@ AAAAAElFTkSuQmCC"
 			<TH TITLE=\"Delivered ECM with status not OK\">NOK</TH>\n\
 			<TH TITLE=\"Ignored ECM by filters, part of NOK\">IGN</TH>\n\
 			<TH TITLE=\"Timeout ECM, part of NOK\">TOUT</TH>\n\
+##TPLCWCYCLETHV##\
 			<TH TITLE=\"Delivered ECM from cache, part of OK\">CACHE</TH>\n\
 			<TH TITLE=\"Delivered ECM from tunneled, part of OK\">TUN</TH>\n\
 			<TH TITLE=\"Last ECM Time\">LTIME</TH>\n\
@@ -763,6 +767,9 @@ AAAAAElFTkSuQmCC"
 	</TABLE><BR>\n\
 ##TPLFOOTER##"
 
+#define TPLCWCYCLETHV "\
+			<TH TITLE=\"CW Cycle Check\">CW CYCLE<br><span TITLE=\"CWs checked\">Checked</span> / <span TITLE=\"Cycle ok\">OK</span> / <span TITLE=\"Cycle nok\">NOK</span> / <span TITLE=\"Cycle IGN\">IGN</span></TH>\n"
+
 #define TPLADDNEWUSER "\
 		<TR>\n\
 		<FORM action=\"user_edit.html\" method=\"get\">\n\
@@ -786,17 +793,21 @@ AAAAAElFTkSuQmCC"
 			<TD class=\"usercol9\">##CWNOK##</TD>\n\
 			<TD class=\"usercol10\">##CWIGN##</TD>\n\
 			<TD class=\"usercol11\">##CWTOUT##</TD>\n\
-			<TD class=\"usercol12\">##CWCACHE##</TD>\n\
-			<TD class=\"usercol13\">##CWTUN##</TD>\n\
-			<TD class=\"usercol14\">##CWLASTRESPONSET##</TD>\n\
-			<TD class=\"usercol15\">##EMMOK##</TD>\n\
-			<TD class=\"usercol16\">##EMMNOK##</TD>\n\
-			<TD class=\"usercol17\">##CWRATE####CWRATE2##</TD>\n\
-			<TD class=\"usercol18\">##CASCUSERSCOMB##</TD>\n\
-			<TD class=\"usercol19\"><A HREF=\"user_edit.html?user=##USERENC##\" TITLE=\"edit this user\"><IMG CLASS=\"icon\" SRC=\"image?i=ICEDI\" ALT=\"Edit User\"></A></TD>\n\
-			<TD class=\"usercol20\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=resetstats\" TITLE=\"reset statistics for this user\"><IMG CLASS=\"icon\" SRC=\"image?i=ICRES\" ALT=\"Reset Stats\"></A></TD>\n\
-			<TD class=\"usercol21\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=delete\" TITLE=\"delete this user\"><IMG CLASS=\"icon\" SRC=\"image?i=ICDEL\" ALT=\"Delete User\"></A></TD>\n\
+##TPLCWCYCLETBV##\
+			<TD class=\"usercol13\">##CWCACHE##</TD>\n\
+			<TD class=\"usercol14\">##CWTUN##</TD>\n\
+			<TD class=\"usercol15\">##CWLASTRESPONSET##</TD>\n\
+			<TD class=\"usercol16\">##EMMOK##</TD>\n\
+			<TD class=\"usercol17\">##EMMNOK##</TD>\n\
+			<TD class=\"usercol18\">##CWRATE####CWRATE2##</TD>\n\
+			<TD class=\"usercol19\">##CASCUSERSCOMB##</TD>\n\
+			<TD class=\"usercol10\"><A HREF=\"user_edit.html?user=##USERENC##\" TITLE=\"edit this user\"><IMG CLASS=\"icon\" SRC=\"image?i=ICEDI\" ALT=\"Edit User\"></A></TD>\n\
+			<TD class=\"usercol21\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=resetstats\" TITLE=\"reset statistics for this user\"><IMG CLASS=\"icon\" SRC=\"image?i=ICRES\" ALT=\"Reset Stats\"></A></TD>\n\
+			<TD class=\"usercol22\"><A HREF=\"userconfig.html?user=##USERENC##&amp;action=delete\" TITLE=\"delete this user\"><IMG CLASS=\"icon\" SRC=\"image?i=ICDEL\" ALT=\"Delete User\"></A></TD>\n\
 		</TR>\n"
+
+#define TPLCWCYCLETBV "\
+			<TD class=\"usercol12\"><SPAN>##CWCYCLECHECKED##</SPAN> / <SPAN>##CWCYCLEOK##</SPAN> / <SPAN>##CWCYCLENOK##</SPAN> / <SPAN>##CWCYCLEIGN##</SPAN></TD>\n"
 
 #define TPLAPIUSEREDIT "##TPLAPIHEADER##\n\
 	<account>\n\
@@ -1950,6 +1961,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#max_time##TPLHELPSUFFIX##Max time:</A></TD><TD><input name=\"max_time\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MAXCACHETIME##\"> s keep ECMs in cache</TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#max_count##TPLHELPSUFFIX##Max count:</A></TD><TD><input name=\"max_count\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MAXCACHECOUNT##\"> nr of ECMS to keep in cache</TD></TR>\n\
 ##TPLCONFIGCACHEEXCSP##\
+##TPLCONFIGCWCYCLE##\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
@@ -1964,6 +1976,15 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#csp_serverip##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"csp_serverip\" type=\"text\" size=\"15\" maxlength=\"15\" value=\"##SERVERIP##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#csp_ecm_filter##TPLHELPSUFFIX##ECM filter:</A></TD><TD><input name=\"csp_ecm_filter\" type=\"text\" size=\"63\" maxlength=\"320\" value=\"##CSP_ECM_FILTER##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#csp_allow_request##TPLHELPSUFFIX##ECM filter adv.:</A></TD><TD><TABLE class=\"invisible\"><TR><TD><input name=\"csp_allow_request\" value=\"0\" type=\"hidden\"><input name=\"csp_allow_request\" value=\"1\" type=\"checkbox\" ##ARCHECKED##>allow request</TD></TR></TABLE></TD></TR>\n"
+
+#define TPLCONFIGCWCYCLE "\
+			<TR><TH COLSPAN=\"2\">CW Cycle Check</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#cwcycle_check_enable##TPLHELPSUFFIX##Cycle Check:</A></TD><TD><SELECT NAME=\"cwcycle_check_enable\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##CWCYCLECHECK##>YES</OPTION></SELECT></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#cwcycle_check_caid##TPLHELPSUFFIX##Cycle Check Caids:</A></TD><TD><input name=\"cwcycle_check_caid\" type=\"text\" size=\"63\" maxlength=\"160\" value=\"##CWCYCLECHECKCAID##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#maxcyclelist##TPLHELPSUFFIX##Max Cycle List Entrys:</A></TD><TD><input name=\"cwcycle_maxlist\" type=\"text\" size=\"5\" maxlength=\"6\" value=\"##MAXCYCLELIST##\"> max Count of Cyclelist Entrys *Default 500 ** max 4000 Entrys*</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#keepcycletime##TPLHELPSUFFIX##Keep Cycletime:</A></TD><TD><input name=\"cwcycle_keeptime\" type=\"text\" size=\"5\" maxlength=\"6\" value=\"##KEEPCYCLETIME##\"> min Keep Learned Cycletime in Memory *Default 0 ** max 15 Min*</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#onbadcycle##TPLHELPSUFFIX##On Bad Cycle:</A></TD><TD><SELECT name=\"cwcycle_onbad\"><option value=\"0\">0 - only Log Bad CW</option><option value=\"1\" ##ONBADCYCLE1##>1 - Drop CW</option></select></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#onbadcycle##TPLHELPSUFFIX##Drop Old CW:</A></TD><TD><SELECT name=\"cwcycle_dropold\"><option value=\"0\">0 - NO</option><option value=\"1\" ##DROPOLD##>1 - YES</option></select></TD></TR>\n"
 
 #define TPLCONFIGSERIAL "\
 ##TPLHEADER##\
@@ -2617,6 +2638,12 @@ const char *templates[][3] = {
 	,{"CACHEEXMENUITEM", TPLCACHEEXMENUITEM, "CS_CACHEEX"}
 	,{"ICARRR", ICARRR, "CS_CACHEEX"}
 	,{"ICARRL", ICARRL, "CS_CACHEEX"}
+#endif
+#ifdef CW_CYCLE_CHECK
+	,{"CONFIGCWCYCLE", TPLCONFIGCWCYCLE, "CW_CYCLE_CHECK"}
+	,{"CWCYCLETHV", TPLCWCYCLETHV, "CW_CYCLE_CHECK"}
+	,{"CWCYCLETBV", TPLCWCYCLETBV, "CW_CYCLE_CHECK"}
+	,{"CMCAPTIONCWC", TPLCMCAPTIONCWC, "CW_CYCLE_CHECK"}
 #endif
 #ifdef WITH_CARDREADER
 	,{"LOCALCARDS", TPLLOCALCARDS, "WITH_CARDREADER"}

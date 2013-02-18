@@ -416,12 +416,19 @@ static const struct config_list camd33_opts[] = { DEF_LAST_OPT };
 
 void cache_fixups_fn(void *UNUSED(var)) {
 	if (cfg.max_cache_time < (cfg.ctimeout / 1000 + 1)) cfg.max_cache_time = cfg.ctimeout / 1000 + 2;
+#ifdef CW_CYCLE_CHECK
+	if (cfg.maxcyclelist > 4000) cfg.maxcyclelist = 4000;
+	if (cfg.keepcycletime > 15) cfg.keepcycletime = 15;
+#endif
 }
 
 static bool cache_should_save_fn(void *UNUSED(var)) {
 	return cfg.delay > 0 || cfg.max_cache_time != 15 || cfg.max_cache_count != 1000
 #ifdef CS_CACHEEX
 	|| cfg.cacheex_wait_timetab.n || cfg.cacheex_enable_stats > 0 || cfg.csp_port || cfg.csp.filter_caidtab.n || cfg.csp.allow_request==0
+#endif
+#ifdef CW_CYLCE_CHECK
+	|| !cfg.cwcycle_check_enable || cfg.cwcycle_check_caidtab.n || cfg.maxcyclelist != 500 || cfg.keepcycletime || cfg.onbadcycle || cfg.cwcycle_dropold
 #endif
 	;
 }
@@ -439,6 +446,14 @@ static const struct config_list cache_opts[] = {
 	DEF_OPT_FUNC("csp_serverip"					, OFS(csp_srvip),				serverip_fn ),
 	DEF_OPT_FUNC("csp_ecm_filter"			, OFS(csp.filter_caidtab),		cacheex_hitvaluetab_fn ),
 	DEF_OPT_UINT8("csp_allow_request"		, OFS(csp.allow_request),		1 ),
+#endif
+#ifdef CW_CYCLE_CHECK
+	DEF_OPT_INT8("cwcycle_check_enable"		, OFS(cwcycle_check_enable),		1 ),
+	DEF_OPT_FUNC("cwcycle_check_caid"		, OFS(cwcycle_check_caidtab),		check_caidtab_fn ),
+	DEF_OPT_INT32("cwcycle_maxlist"			, OFS(maxcyclelist),				500 ),
+	DEF_OPT_INT32("cwcycle_keeptime"		, OFS(keepcycletime),				0 ),
+	DEF_OPT_INT8("cwcycle_onbad"			, OFS(onbadcycle),					0 ),
+	DEF_OPT_INT8("cwcycle_dropold"			, OFS(cwcycle_dropold),				0 ),
 #endif
 	DEF_LAST_OPT
 };

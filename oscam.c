@@ -16,6 +16,7 @@
 #include "module-led.h"
 #include "module-stat.h"
 #include "module-webif.h"
+#include "module-cw-cycle-check.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
 #include "oscam-config.h"
@@ -65,6 +66,7 @@ CS_MUTEX_LOCK readerlist_lock;
 CS_MUTEX_LOCK fakeuser_lock;
 CS_MUTEX_LOCK ecmcache_lock;
 CS_MUTEX_LOCK readdir_lock;
+CS_MUTEX_LOCK cwcycle_lock;
 CS_MUTEX_LOCK hitcache_lock;
 pthread_key_t getclient;
 static int32_t bg;
@@ -121,6 +123,7 @@ static void show_usage(void)
 	_check(CS_ANTICASC, "anticascading");
 	_check(WITH_DEBUG, "debug");
 	_check(WITH_LB, "loadbalancing");
+	_check(CW_CYCLE_CHECK, "cw-cycle-check");
 	_check(LCDSUPPORT, "lcd");
 	_check(LEDSUPPORT, "led");
 	printf("\n");
@@ -375,6 +378,7 @@ static void write_versionfile(bool use_stdout) {
 	write_conf(WITH_DEBUG, "Debug mode");
 	write_conf(MODULE_MONITOR, "Monitor");
 	write_conf(WITH_LB, "Loadbalancing support");
+	write_conf(CW_CYCLE_CHECK, "CW Cycle Check support");
 	write_conf(LCDSUPPORT, "LCD support");
 	write_conf(LEDSUPPORT, "LED support");
 	write_conf(IPV6SUPPORT, "IPv6 support");
@@ -855,10 +859,18 @@ static void * check_thread(void) {
 				continue;
 
 			tbc = er->tps;
+#if defined CS_CACHEEX && defined CW_CYCLE_CHECK
+			time_to_check = add_ms_to_timeb(&tbc, (er->stage < 2) ? er->cacheex_wait_time:((er->stage < 4) ? auto_timeout(er, cfg.ftimeout) : auto_timeout(er, cfg.ctimeout)));
+#else
 			time_to_check = add_ms_to_timeb(&tbc, ((er->stage < 4) ? auto_timeout(er, cfg.ftimeout) : auto_timeout(er, cfg.ctimeout)));
-
+#endif
 			if (comp_timeb(&t_now, &tbc) >= 0) {
 				if (er->stage < 4) {
+#if defined CS_CACHEEX && defined CW_CYCLE_CHECK
+					if (er->stage < 2 && er->cacheex_wait_time)
+						debug_ecm(D_TRACE, "request for %s %s", username(er->client), buf);
+					else
+#endif
 					debug_ecm(D_TRACE, "fallback for %s %s", username(er->client), buf);
 
 					if (er->rc >= E_UNHANDLED) //do not request rc=99
@@ -947,7 +959,7 @@ static void * check_thread(void) {
 
 		if (!msec_wait)
 			msec_wait = 3000;
-
+		cleanupcwcycle();
 		cleanup_hitcache();
 	}
 	add_garbage(cl);
@@ -1408,6 +1420,7 @@ int32_t main (int32_t argc, char *argv[])
   cs_lock_create(&fakeuser_lock, 5, "fakeuser_lock");
   cs_lock_create(&ecmcache_lock, 5, "ecmcache_lock");
   cs_lock_create(&readdir_lock, 5, "readdir_lock");
+  cs_lock_create(&cwcycle_lock, 5, "cwcycle_lock");
   cs_lock_create(&hitcache_lock, 5, "hitcache_lock");
   coolapi_open_all();
   init_config();

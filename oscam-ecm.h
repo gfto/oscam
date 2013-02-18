@@ -23,6 +23,8 @@ void remove_reader_from_ecm(struct s_reader *rdr);
 void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea);
 void request_cw_from_readers(ECM_REQUEST *er);
 
+void checkCW(ECM_REQUEST *er);
+
 #define debug_ecm(mask, args...) \
 	do { \
 		if (config_enabled(WITH_DEBUG) && ((mask) & cs_dblevel)) { \

@@ -877,6 +877,12 @@ struct s_client {
 	int32_t			cwignored;   		// count ignored  ECMs per client
 	int32_t			cwtout;      		// count timeouted ECMs per client
 	int32_t			cwlastresptime; 	//last Responsetime (ms)
+#ifdef CW_CYCLE_CHECK
+	int32_t			cwcycledchecked;	// count checked cwcycles per client
+	int32_t			cwcycledok;		// count pos checked cwcycles per client
+	int32_t			cwcyclednok;		// count neg checked cwcycles per client
+	int32_t			cwcycledign;		// count ign cwcycles per client
+#endif
 	int32_t			emmok;       		// count EMM ok
 	int32_t			emmnok;	     		// count EMM nok
 	int8_t			pending;     		// number of ECMs pending
@@ -1396,6 +1402,12 @@ struct s_auth
 	int32_t			cwtun;
 	int32_t			cwignored;
 	int32_t			cwtout;
+#ifdef CW_CYCLE_CHECK
+	int32_t			cwcycledchecked;	// count checked cwcycles per client
+	int32_t			cwcycledok;		// count pos checked cwcycles per client
+	int32_t			cwcyclednok;		// count neg checked cwcycles per client
+	int32_t			cwcycledign;		// count ign cwcycles per client
+#endif
 	int32_t			emmok;
 	int32_t			emmnok;
 #ifdef CS_CACHEEX
@@ -1709,6 +1721,15 @@ struct s_config
 	CECSP		csp; //CSP Settings
 	uint8_t		cacheex_enable_stats;	//enable stats
 	struct s_cacheex_matcher *cacheex_matcher;
+#endif
+
+#ifdef CW_CYCLE_CHECK
+	int8_t			cwcycle_check_enable;		// on or off
+	CAIDTAB			cwcycle_check_caidtab;		// Caid for CW Cycle Check
+	int32_t			keepcycletime;			// how long stay the learned Cycletime in Memory
+	int32_t			maxcyclelist;			// max size of cwcyclelist
+	int8_t			onbadcycle;			// what to do on bad cwcycle
+	int8_t			cwcycle_dropold;		// what to do on old ecmd5/cw
 #endif
 
 	//Global whitelist:

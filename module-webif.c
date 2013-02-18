@@ -525,6 +525,29 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 
 	tpl_addVar(vars, TPLADD, "ARCHECKED", (cfg.csp.allow_request == 1) ? "checked" : "");
 #endif
+
+#ifdef CW_CYCLE_CHECK
+#ifndef CS_CACHEEX
+	char *value = NULL;
+#endif
+	if (cfg.cwcycle_check_enable == 1) {
+		tpl_addVar(vars, TPLADD, "CWCYCLECHECK", "selected");
+	}
+	value = mk_t_caidtab(&cfg.cwcycle_check_caidtab);
+	tpl_addVar(vars, TPLADD, "CWCYCLECHECKCAID", value);
+	free_mk_t(value);
+
+	tpl_printf(vars, TPLADD, "MAXCYCLELIST", "%d", cfg.maxcyclelist);
+	tpl_printf(vars, TPLADD, "KEEPCYCLETIME", "%d", cfg.keepcycletime);
+
+	if (cfg.onbadcycle == 1) {
+		tpl_addVar(vars, TPLADD, "ONBADCYCLE1", "selected");
+	}
+	if (cfg.cwcycle_dropold == 1) {
+		tpl_addVar(vars, TPLADD, "DROPOLD", "selected");
+	}
+#endif
+
 	return tpl_getTpl(vars, "CONFIGCACHE");
 }
 
@@ -2189,6 +2212,12 @@ static void clear_account_stats(struct s_auth *account) {
 	account->cwtout = 0;
 	account->emmok = 0;
 	account->emmnok = 0;
+#ifdef CW_CYCLE_CHECK
+	account->cwcycledchecked = 0;
+	account->cwcycledok = 0;
+	account->cwcyclednok = 0;
+	account->cwcycledign = 0;
+#endif
 	cacheex_clear_account_stats(account);
 }
 
@@ -2448,6 +2477,12 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_printf(vars, TPLADD, "CWNOK", "%d", account->cwnot);
 		tpl_printf(vars, TPLADD, "CWIGN", "%d", account->cwignored);
 		tpl_printf(vars, TPLADD, "CWTOUT", "%d", account->cwtout);
+#ifdef CW_CYCLE_CHECK
+		tpl_printf(vars, TPLADD, "CWCYCLECHECKED", "%d", account->cwcycledchecked);
+		tpl_printf(vars, TPLADD, "CWCYCLEOK", "%d", account->cwcycledok);
+		tpl_printf(vars, TPLADD, "CWCYCLENOK", "%d", account->cwcyclednok);
+		tpl_printf(vars, TPLADD, "CWCYCLEIGN", "%d", account->cwcycledign);
+#endif
 		tpl_printf(vars, TPLADD, "CWCACHE", "%d", account->cwcache);
 		tpl_printf(vars, TPLADD, "CWTUN", "%d", account->cwtun);
 		tpl_printf(vars, TPLADD, "EMMOK", "%d", account->emmok);

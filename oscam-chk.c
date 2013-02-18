@@ -674,6 +674,22 @@ int32_t chk_ctab(uint16_t caid, CAIDTAB *ctab) {
   return 0;
 }
 
+int32_t chk_ctab_ex(uint16_t caid, CAIDTAB *ctab) {
+  if (!caid || !ctab->caid[0])
+    return 0;
+
+  int32_t i;
+  for (i=0;i<CS_MAXCAIDTAB;i++)
+  {
+    if (!ctab->caid[i]) {
+      return 0;
+    }
+    if ((caid & ctab->mask[i]) == ctab->caid[i])
+      return 1;
+  }
+  return 0;
+}
+
 int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
   (void)slot; // Prevent warning about unused param slot, when WITH_CARDREADER is disabled
   //simple checks first:

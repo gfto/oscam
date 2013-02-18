@@ -3,6 +3,7 @@
 #ifdef CS_CACHEEX
 
 #include "module-cacheex.h"
+#include "module-cw-cycle-check.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
 #include "oscam-conf.h"
@@ -370,12 +371,14 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 //	}
 
 	if (!ecm) {
+		uint8_t cwcycle_act = cwcycle_check_act(er->caid);
 		if (er->rc < E_NOTFOUND) { // Do NOT add cacheex - not founds!
-			cs_writelock(&ecmcache_lock);
-			er->next = ecmcwcache;
-			ecmcwcache = er;
-			cs_writeunlock(&ecmcache_lock);
-
+			if (!cwcycle_act) {
+				cs_writelock(&ecmcache_lock);
+				er->next = ecmcwcache;
+				ecmcwcache = er;
+				cs_writeunlock(&ecmcache_lock);
+			}
 			er->selected_reader = cl->reader;
 
 			cacheex_cache_push(er);  //cascade push!
@@ -387,9 +390,10 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 			if (cl->account)
 				cl->account->cwcacheexgot++;
 			first_client->cwcacheexgot++;
+			if (cwcycle_act)
+				er->rc = E_NOTFOUND; //need to free
 		}
-
-		debug_ecm(D_CACHEEX | D_CSPCWC, "got pushed %sECM %s from %s", (er->rc == E_UNHANDLED)?"request ":"", buf, csp ? "csp" : username(cl));
+		debug_ecm(D_CACHEEX, "got pushed %sECM %s from %s (%s)", (er->rc == E_UNHANDLED)?"request ":"", buf, csp ? "csp" : username(cl),(cwcycle_act)?"on":"off");
 
 		return er->rc < E_NOTFOUND ? 1 : 0;
 	} else {

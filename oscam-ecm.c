@@ -5,6 +5,7 @@
 #include "module-stat.h"
 #include "module-webif.h"
 #include "module-ird-guess.h"
+#include "module-cw-cycle-check.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
 #include "oscam-config.h"
@@ -317,7 +318,7 @@ void remove_reader_from_ecm(struct s_reader *rdr)
  * Check for NULL CWs
  * Return them as "NOT FOUND"
  **/
-static void checkCW(ECM_REQUEST *er)
+void checkCW(ECM_REQUEST *er)
 {
 	int8_t i;
 	for (i = 0; i < 16; i++) {
@@ -952,6 +953,13 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 		}
 	}
 
+#ifdef CW_CYCLE_CHECK
+	if (!checkcwcycle(er, reader, cw, rc )) {
+		rc = E_NOTFOUND;
+		rcEx = E2_WRONG_CHKSUM;
+	}
+#endif
+
 	for (ea_list = er->matching_rdr; reader && ea_list && !ea_org; ea_list = ea_list->next) {
 		if (ea_list->reader == reader)
 			ea_org = ea_list;
@@ -1414,8 +1422,10 @@ OUT:
 #ifdef CS_CACHEEX
 	int8_t cacheex = client->account ? client->account->cacheex.mode : 0;
 	uint32_t cacheex_wait_time = get_cacheex_wait_time(er,client);
-	cs_debug_mask(D_CACHEEX | D_CSPCWC, "[GET_CW] c_csp_wait_time %d caid %04X prov %06X srvid %04X rc %d cacheex %d", cacheex_wait_time, er->caid, er->prid, er->srvid, er->rc, cacheex);
-	if ((cacheex_wait_time) && er->rc == E_UNHANDLED) { //not found in cache, so wait!
+	uint8_t cwcycle_act = cwcycle_check_act(er->caid);
+	if (!cwcycle_act)
+		cs_debug_mask(D_CACHEEX | D_CSPCWC, "[GET_CW] wait_time %d caid %04X prov %06X srvid %04X rc %d cacheex %d", cacheex_wait_time, er->caid, er->prid, er->srvid, er->rc, cacheex);
+	if ((cacheex_wait_time && !cwcycle_act) && er->rc == E_UNHANDLED) { //not found in cache, so wait!
 		add_ms_to_timeb(&er->cacheex_wait, cacheex_wait_time);
 		er->cacheex_wait_time = cacheex_wait_time;
 		int32_t max_wait = cacheex_wait_time; // uint32_t can't value <> n/50
@@ -1514,6 +1524,14 @@ OUT:
 	lb_mark_last_reader(er);
 
 	er->rcEx = 0;
+#if defined CS_CACHEEX && defined CW_CYCLE_CHECK
+	if (cwcycle_act)
+		cs_debug_mask(D_CACHEEX | D_CSPCWC, "[GET_CW] wait_time (cwc) %d caid %04X prov %06X srvid %04X rc %d cacheex %d %ld", cacheex_wait_time, er->caid, er->prid, er->srvid, er->rc, cacheex, er->tps.time);
+	if ((cacheex_wait_time && cwcycle_act) && er->rc == E_UNHANDLED) { //wait for cache answer!
+		add_ms_to_timeb(&er->cacheex_wait, cacheex_wait_time);
+		er->cacheex_wait_time = cacheex_wait_time;
+	} else
+#endif
 	request_cw_from_readers(er);
 
 #ifdef WITH_DEBUG
