@@ -44,7 +44,6 @@ char *get_tiername(uint16_t tierid, uint16_t caid, char *buf){
 				if (this->caid[i] == caid)
 					cs_strncpy(buf, this->name, 32);
 
-	//if (!name[0]) sprintf(name, "%04X:%04X unknown", caid, tierid);
 	if (!tierid) buf[0] = '\0';
 	return(buf);
 }

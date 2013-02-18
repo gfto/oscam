@@ -325,7 +325,7 @@ char * __md5_crypt( const char *pw, const char *salt, char *passwd )
 	}
 
 	/* Now make the output string */
-	strcpy(passwd,__md5__magic);
+	strcpy(passwd,__md5__magic); // This is safe
 	strncat(passwd,sp,sl);
 	strcat(passwd,"$");
 

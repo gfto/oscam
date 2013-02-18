@@ -250,7 +250,7 @@ void init_first_client(void)
 	struct passwd *pwdbuf;
 	bool ok;
 #ifdef __ANDROID__
-	pwdbuf = getpwuid(getuid());
+	pwdbuf = getpwuid(getuid()); // This is safe
 	if (pwdbuf) {
 		memcpy(&pwd, pwdbuf, sizeof(pwd));
 		ok = 1;

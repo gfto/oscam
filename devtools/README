@@ -9,5 +9,7 @@ Currently available tools are:
                                         against variable defintions
                                         in order to find wrong types.
 
+  check_code.sh                         Check for deprecated or unsafe funcs.
+
   check_cmdline_opts.sh                 This script checks if all command
                                         line parameters are properly set.
