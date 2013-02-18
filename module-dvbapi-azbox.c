@@ -59,24 +59,6 @@ void azbox_openxcas_ecm_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_
 	struct timeb tp;
 	cs_ftime(&tp);
 	tp.time+=500;
-
-/*
-	while(1) {
-		chk_pending(tp);
-
-		if (poll(&pfd, 1, 10) < 0)
-			continue;
-
-		if (pfd.revents & (POLLHUP | POLLNVAL)) {
-			cs_debug_mask(D_DVBAPI, LOG_PREFIX "ecm/cw error");
-			break;
-		}
-
-		if (pfd.revents & (POLLIN | POLLPRI)) {
-			chk_dcw(cur_client()->fd_m2c_c);
-			break;
-		}
-	}*/
 }
 
 

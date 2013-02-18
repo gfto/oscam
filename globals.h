@@ -930,10 +930,6 @@ struct s_client {
 	int32_t			tosleep;
 	struct s_auth 	*account;
 	int32_t			udp_fd;
-	int32_t			fd_m2c;				// master writes to this fd
-	int32_t			fd_m2c_c;			// client reads from this fd
-	uint16_t		pipecnt;
-	CS_MUTEX_LOCK 	pipelock;
 	struct SOCKADDR	udp_sa;
 	socklen_t		udp_sa_len;
 	int8_t			log;
