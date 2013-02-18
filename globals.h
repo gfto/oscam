@@ -1871,6 +1871,8 @@ void set_thread_name(const char *thread_name);
 void start_thread(void *startroutine, char *nameroutine);
 void kill_thread(struct s_client *cl);
 
+struct s_module *get_module(struct s_client *cl);
+
 // Until we find a better place for these (they are implemented in oscam-simples.h)
 char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf);
 char *get_tiername(uint16_t tierid, uint16_t caid, char *buf);

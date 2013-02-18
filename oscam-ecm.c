@@ -20,7 +20,6 @@
 
 extern CS_MUTEX_LOCK ecmcache_lock;
 extern struct ecm_request_t *ecmcwcache;
-extern struct s_module modules[CS_MAX_MOD];
 extern struct s_client *timecheck_client;
 extern uint16_t len4caid[256];
 extern uint32_t ecmcwcache_size;
@@ -549,7 +548,7 @@ static int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		}
 	}
 
-	modules[client->ctyp].send_dcw(client, er);
+	get_module(client)->send_dcw(client, er);
 
 	add_cascade_data(client, er);
 
@@ -1080,8 +1079,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	if (client == first_client || !client ->account || client->account == first_client->account) {
 		//DVBApi+serial is allowed to request anonymous accounts:
-		int16_t lt = modules[client->ctyp].listenertype;
-		if (lt != LIS_DVBAPI && lt != LIS_SERIAL) {
+		int16_t listenertype = get_module(client)->listenertype;
+		if (listenertype != LIS_DVBAPI && listenertype != LIS_SERIAL) {
 			er->rc = E_INVALID;
 			er->rcEx = E2_GLOBAL;
 			snprintf(er->msglog, sizeof(er->msglog), "invalid user account %s", username(client));
@@ -1266,7 +1265,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				break;
 			case 4:
 				// invalid (sfilter)
-				if (!chk_sfilter(er, modules[client->ctyp].ptab))
+				if (!chk_sfilter(er, get_module(client)->ptab))
 					er->rc = E_INVALID;
 				break;
 			case 5:

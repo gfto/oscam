@@ -343,7 +343,7 @@ int32_t process_input(uint8_t *buf, int32_t buflen, int32_t timeout)
 				continue;
 
 			if (pfd[i].fd == cl->pfd)
-				return modules[cl->ctyp].recv(cl, buf, buflen);
+				return get_module(cl)->recv(cl, buf, buflen);
 		}
 	}
 	return rc;

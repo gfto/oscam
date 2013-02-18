@@ -17,7 +17,6 @@
 
 extern char *processUsername;
 extern CS_MUTEX_LOCK fakeuser_lock;
-extern struct s_module modules[CS_MAX_MOD];
 
 static struct s_client *first_client_hashed[CS_CLIENT_HASHBUCKETS];  // Alternative hashed client list
 
@@ -89,7 +88,7 @@ const char *client_get_proto(struct s_client *cl)
 			ctyp = "cccam ext";
 			break;
 		}
-	default: ctyp = modules[cl->ctyp].desc;
+	default: ctyp = get_module(cl)->desc;
 	}
 	return ctyp;
 }
@@ -141,7 +140,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_
 				cs_log("client(%8lX) duplicate user '%s' from %s (current %s) set to fake (uniq=%d)",
 					(unsigned long)pthread_self(), usr, cs_inet_ntoa(cl->ip), buf, uniq);
 				if (client->failban & BAN_DUPLICATE) {
-					cs_add_violation_by_ip(ip, modules[client->ctyp].ptab->ports[client->port_idx].s_port, usr);
+					cs_add_violation_by_ip(ip, get_module(client)->ptab->ports[client->port_idx].s_port, usr);
 				}
 				if (cfg.dropdups){
 					cs_writeunlock(&fakeuser_lock);		// we need to unlock here as cs_disconnect_client kills the current thread!
@@ -306,6 +305,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 	char *t_grant = " granted";
 	char *t_reject = " rejected";
 	char *t_msg[] = { buf, "invalid access", "invalid ip", "unknown reason", "protocol not allowed" };
+	struct s_module *module = get_module(client);
 
 	memset(&client->grp, 0xff, sizeof(uint64_t));
 	//client->grp=0xffffffffffffff;
@@ -313,7 +313,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 		cs_add_violation(client, account->usr);
 		cs_log("%s %s-client %s%s (%s%sdisabled account)",
 				client->crypted ? t_crypt : t_plain,
-				modules[client->ctyp].desc,
+				module->desc,
 				IP_ISSET(client->ip) ? cs_inet_ntoa(client->ip) : "",
 				IP_ISSET(client->ip) ? t_reject : t_reject+1,
 				e_txt ? e_txt : "",
@@ -323,11 +323,12 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 
 	// check whether client comes in over allowed protocol
 	if ((intptr_t)account != 0 && (intptr_t)account != -1 && (intptr_t)account->allowedprotocols &&
-			(((intptr_t)account->allowedprotocols & modules[client->ctyp].listenertype) != modules[client->ctyp].listenertype )) {
+			(((intptr_t)account->allowedprotocols & module->listenertype) != module->listenertype))
+	{
 		cs_add_violation(client, account->usr);
 		cs_log("%s %s-client %s%s (%s%sprotocol not allowed)",
 						client->crypted ? t_crypt : t_plain,
-						modules[client->ctyp].desc,
+						module->desc,
 						IP_ISSET(client->ip) ? cs_inet_ntoa(client->ip) : "",
 						IP_ISSET(client->ip) ? t_reject : t_reject+1,
 						e_txt ? e_txt : "",
@@ -343,7 +344,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 		cs_add_violation(client, NULL);
 		cs_log("%s %s-client %s%s (%s)",
 				client->crypted ? t_crypt : t_plain,
-				modules[client->ctyp].desc,
+				module->desc,
 				IP_ISSET(client->ip) ? cs_inet_ntoa(client->ip) : "",
 				IP_ISSET(client->ip) ? t_reject : t_reject+1,
 				e_txt ? e_txt : t_msg[rc]);
@@ -418,7 +419,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 		}
 		cs_log("%s %s-client %s%s (%s, %s)",
 			client->crypted ? t_crypt : t_plain,
-			e_txt ? e_txt : modules[client->ctyp].desc,
+			e_txt ? e_txt : module->desc,
 			IP_ISSET(client->ip) ? cs_inet_ntoa(client->ip) : "",
 			IP_ISSET(client->ip) ? t_grant : t_grant + 1,
 			username(client), t_msg[rc]);
@@ -498,7 +499,7 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 					ac_init_client(cl, account);
 				}
 			} else {
-				if (modules[cl->ctyp].type & MOD_CONN_NET) {
+				if (get_module(cl)->type & MOD_CONN_NET) {
 					cs_debug_mask(D_TRACE, "client '%s', thread=%8lX not found in db (or password changed)", cl->account->usr, (unsigned long)cl->thread);
 					kill_thread(cl);
 				} else {
@@ -518,7 +519,7 @@ void client_check_status(struct s_client *cl) {
 	case 'm':
 	case 'c':
 		// Check clients for exceeding cmaxidle by checking cl->last
-		if (!(cl->ncd_keepalive && (modules[cl->ctyp].listenertype & LIS_NEWCAMD)) &&
+		if (!(cl->ncd_keepalive && (get_module(cl)->listenertype & LIS_NEWCAMD)) &&
 		    cl->last && cfg.cmaxidle && (time(NULL) - cl->last) > (time_t)cfg.cmaxidle)
 		{
 			add_job(cl, ACTION_CLIENT_IDLE, NULL, 0);
@@ -601,8 +602,9 @@ void free_client(struct s_client *cl)
 		cl->last_srvid = 0xFFFF;
 		cs_statistics(cl);
 		cs_sleepms(500); //just wait a bit that really really nobody is accessing client data
-		if (modules[cl->ctyp].cleanup)
-			modules[cl->ctyp].cleanup(cl);
+		struct s_module *module = get_module(cl);
+		if (module->cleanup)
+			module->cleanup(cl);
 	}
 
 	// Close network socket if not already cleaned by previous cleanup functions

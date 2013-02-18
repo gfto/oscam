@@ -10,8 +10,6 @@
 #include "oscam-string.h"
 #include "oscam-time.h"
 
-extern struct s_module modules[CS_MAX_MOD];
-
 #define CWS_NETMSGSIZE 362
 #define NCD_CLIENT_ID 0x8888
 
@@ -778,7 +776,7 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
         {
           cl->crypted=1;
           char e_txt[20];
-          snprintf(e_txt, 20, "%s:%d", modules[cl->ctyp].desc, cfg.ncd_ptab.ports[cl->port_idx].s_port);
+          snprintf(e_txt, 20, "%s:%d", "newcamd", cfg.ncd_ptab.ports[cl->port_idx].s_port);
           if((rc = cs_auth_client(cl, account, e_txt)) == 2) {
             cs_log("hostname or ip mismatch for user %s (%s)", usr, client_name);
             break;

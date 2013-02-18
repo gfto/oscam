@@ -12,7 +12,6 @@
 #include "module-cccam-data.h"
 #include "module-cccshare.h"
 
-extern struct s_module modules[CS_MAX_MOD];
 extern CS_MUTEX_LOCK system_lock;
 extern int32_t thread_pipe[2];
 
@@ -81,7 +80,8 @@ void * work_thread(void *ptr) {
 
 	set_work_thread_name(data);
 
-	uint16_t bufsize = modules[cl->ctyp].bufsize; //CCCam needs more than 1024bytes!
+	struct s_module *module = get_module(cl);
+	uint16_t bufsize = module->bufsize; //CCCam needs more than 1024bytes!
 	if (!bufsize)
 		bufsize = 1024;
 
@@ -130,7 +130,7 @@ void * work_thread(void *ptr) {
 			if (!data) {
 				/* for serial client cl->pfd is file descriptor for serial port not socket
 				   for example: pfd=open("/dev/ttyUSB0"); */
-				if (!cl->pfd || modules[cl->ctyp].listenertype == LIS_SERIAL)
+				if (!cl->pfd || module->listenertype == LIS_SERIAL)
 					break;
 				pfd[0].fd = cl->pfd;
 				pfd[0].events = POLLIN | POLLPRI | POLLHUP;
@@ -248,9 +248,9 @@ void * work_thread(void *ptr) {
 				cardreader_do_checkhealth(reader);
 				break;
 			case ACTION_CLIENT_UDP:
-				n = modules[cl->ctyp].recv(cl, data->ptr, data->len);
+				n = module->recv(cl, data->ptr, data->len);
 				if (n < 0) break;
-				modules[cl->ctyp].s_handler(cl, data->ptr, n);
+				module->s_handler(cl, data->ptr, n);
 				break;
 			case ACTION_CLIENT_TCP:
 				s = check_fd_for_data(cl->pfd);
@@ -260,24 +260,24 @@ void * work_thread(void *ptr) {
 					cl->kill=1; // kill client on next run
 					continue;
 				}
-				n = modules[cl->ctyp].recv(cl, mbuf, bufsize);
+				n = module->recv(cl, mbuf, bufsize);
 				if (n < 0) {
 					cl->kill=1; // kill client on next run
 					continue;
 				}
-				modules[cl->ctyp].s_handler(cl, mbuf, n);
+				module->s_handler(cl, mbuf, n);
 				break;
 			case ACTION_CLIENT_ECM_ANSWER:
 				chk_dcw(cl, data->ptr);
 				break;
 			case ACTION_CLIENT_INIT:
-				if (modules[cl->ctyp].s_init)
-					modules[cl->ctyp].s_init(cl);
+				if (module->s_init)
+					module->s_init(cl);
 				cl->init_done=1;
 				break;
 			case ACTION_CLIENT_IDLE:
-				if (modules[cl->ctyp].s_idle)
-					modules[cl->ctyp].s_idle(cl);
+				if (module->s_idle)
+					module->s_idle(cl);
 				else {
 					cs_log("user %s reached %d sec idle limit.", username(cl), cfg.cmaxidle);
 					cl->kill = 1;
@@ -294,9 +294,9 @@ void * work_thread(void *ptr) {
 					res = reader->ph.c_cache_push(cl, er);
 					stats = cacheex_add_stats(cl, er->caid, er->srvid, er->prid, 0);
 				} else  {
-					if (modules[cl->ctyp].c_cache_push_chk && !modules[cl->ctyp].c_cache_push_chk(cl, er))
+					if (module->c_cache_push_chk && !module->c_cache_push_chk(cl, er))
 						break;
-					res = modules[cl->ctyp].c_cache_push(cl, er);
+					res = module->c_cache_push(cl, er);
 				}
 				debug_ecm(D_CACHEEX, "pushed ECM %s to %s res %d stats %d", buf, username(cl), res, stats);
 				cl->cwcacheexpush++;

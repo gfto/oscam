@@ -12,7 +12,6 @@
 #include "oscam-time.h"
 #include "oscam-work.h"
 
-extern struct s_module modules[CS_MAX_MOD];
 extern uint32_t cfg_sidtab_generation;
 
 static uint32_t cc_share_id = 0x64;
@@ -252,7 +251,7 @@ int32_t send_card_to_clients(struct cc_card *card, struct s_client *one_client) 
     	if(!one_client) cs_readlock(&clientlist_lock);
         for (cl = one_client?one_client:first_client; cl; cl=one_client?NULL:cl->next) {
                 struct cc_data *cc = cl->cc;
-                if (!cl->kill && cl->typ=='c' && cc && (one_client || modules[cl->ctyp].num == R_CCCAM)) { //CCCam-Client!
+                if (cc && cl->typ=='c' && !cl->kill && (one_client || get_module(cl)->num == R_CCCAM)) { //CCCam-Client!
                         if (card_valid_for_client(cl, card)) {
 								int8_t usr_reshare = cl->account->cccreshare;
 								if (usr_reshare == -1) usr_reshare = cfg.cc_reshare;
@@ -314,7 +313,7 @@ void send_remove_card_to_clients(struct cc_card *card) {
 		cs_readlock(&clientlist_lock);
 		for (cl = first_client; cl; cl=cl->next) {
 				struct cc_data *cc = cl->cc;
-				if (cl->typ=='c' && cc && modules[cl->ctyp].num == R_CCCAM && !cl->kill) { //CCCam-Client!
+				if (cc && cl->typ=='c' && !cl->kill && get_module(cl)->num == R_CCCAM) { //CCCam-Client!
 						if (card_valid_for_client(cl, card)) {
 							if(cs_malloc(&clientmsg, sizeof(struct s_clientmsg))){
 								memcpy(clientmsg->msg, buf, sizeof(buf));

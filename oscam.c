@@ -748,6 +748,10 @@ void kill_thread(struct s_client *cl) {
 	cl->kill=1;                               //then set kill flag!
 }
 
+struct s_module *get_module(struct s_client *cl) {
+	return &modules[cl->ctyp];
+}
+
 static void cs_waitforcardinit(void)
 {
 	if (cfg.waitforcards)

@@ -2971,7 +2971,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 	for (i=0, cl=first_client; cl ; cl=cl->next, i++) {
 		if (cl->kill) continue;
 #ifdef CS_CACHEEX
-		if (modules[cl->ctyp].listenertype != LIS_CSPUDP) {
+		if (get_module(cl)->listenertype != LIS_CSPUDP) {
 #endif
 
 		// Reset template variables
@@ -4421,24 +4421,22 @@ static char *send_oscam_graph(struct templatevars *vars) {
 #ifdef CS_CACHEEX
 static uint64_t get_cacheex_node(struct s_client *cl) {
 	uint64_t node = 0x00;
-	struct s_module *p;
-	if (cl->reader) p = &cl->reader->ph;
-	else p = &modules[cl->ctyp];
+	struct s_module *module = (cl->reader ? &cl->reader->ph : get_module(cl));
 #ifdef MODULE_CCCAM
-	if (p->num == R_CCCAM && cl->cc) {
+	if (module->num == R_CCCAM && cl->cc) {
 		struct cc_data *cc = cl->cc;
 		memcpy(&node, cc->peer_node_id, 8);
 	}
 	else
 #endif
 #ifdef MODULE_CAMD35
-	if (p->num == R_CAMD35) {
+	if (module->num == R_CAMD35) {
 		memcpy(&node, cl->ncd_skey, 8);
 	}
 	else
 #endif
 #ifdef MODULE_CAMD35_TCP
-	if (p->num == R_CS378X) {
+	if (module->num == R_CS378X) {
 		memcpy(&node, cl->ncd_skey, 8);
 	} else
 #endif
@@ -4499,7 +4497,7 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 			rowvariable = "TABLEREADERROWS";
 			written = 1;
 		}
-		else if (modules[cl->ctyp].listenertype == LIS_CSPUDP) {
+		else if (get_module(cl)->listenertype == LIS_CSPUDP) {
 			tpl_addVar(vars, TPLADD, "TYPE", "csp");
 			tpl_addVar(vars, TPLADD, "NAME", "csp");
 			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));

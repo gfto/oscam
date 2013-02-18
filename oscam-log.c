@@ -9,7 +9,6 @@
 #include "oscam-string.h"
 #include "oscam-time.h"
 
-extern struct s_module modules[CS_MAX_MOD];
 extern char *syslog_ident;
 extern int32_t exit_oscam;
 
@@ -533,7 +532,7 @@ void cs_statistics(struct s_client * client)
 				client->login,
 				client->last,
 				fullhours, mins, secs,
-				modules[client->ctyp].desc,
+				get_module(client)->desc,
 				client->last_caid,
 				client->last_srvid,
 				channame);
