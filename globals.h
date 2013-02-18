@@ -348,21 +348,6 @@ typedef unsigned char uchar;
 #define MOD_CARDSYSTEM  16
 #define MOD_ADDON       32
 
-// Box types
-#define BOXTYPE_DREAMBOX	1
-#define BOXTYPE_DUCKBOX	2
-#define BOXTYPE_UFS910	3
-#define BOXTYPE_DBOX2	4
-#define BOXTYPE_IPBOX	5
-#define BOXTYPE_IPBOX_PMT	6
-#define BOXTYPE_DM7000	7
-#define BOXTYPE_QBOXHD	8
-#define BOXTYPE_COOLSTREAM	9
-#define BOXTYPE_NEUMO	10
-#define BOXTYPE_PC		11
-#define BOXTYPES		11
-extern const char *boxdesc[];
-
 #define EMM_UNIQUE 1
 #define EMM_SHARED 2
 #define EMM_GLOBAL 4

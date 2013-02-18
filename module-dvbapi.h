@@ -26,6 +26,19 @@
 
 #define BOX_COUNT 6
 
+#define BOXTYPE_DREAMBOX	1
+#define BOXTYPE_DUCKBOX	2
+#define BOXTYPE_UFS910	3
+#define BOXTYPE_DBOX2	4
+#define BOXTYPE_IPBOX	5
+#define BOXTYPE_IPBOX_PMT	6
+#define BOXTYPE_DM7000	7
+#define BOXTYPE_QBOXHD	8
+#define BOXTYPE_COOLSTREAM	9
+#define BOXTYPE_NEUMO	10
+#define BOXTYPE_PC		11
+#define BOXTYPES		11
+
 struct box_devices
 {
 	char *path;

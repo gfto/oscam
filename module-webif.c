@@ -813,6 +813,8 @@ static char *send_oscam_config_serial(struct templatevars *vars, struct uriparam
 #endif
 
 #ifdef HAVE_DVBAPI
+extern const char *boxdesc[];
+
 static char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparams *params) {
 	int32_t i;
 

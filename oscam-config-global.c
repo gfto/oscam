@@ -632,6 +632,8 @@ static const struct config_list gbox_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef HAVE_DVBAPI
+extern const char *boxdesc[];
+
 static void dvbapi_boxtype_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
 	if (value) {
 		int i;
