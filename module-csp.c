@@ -24,10 +24,6 @@ static void * csp_server(struct s_client *client __attribute__((unused)), uchar 
 	return NULL;
 }
 
-static void csp_server_init(struct s_client * client) {
-	client->is_udp = 1;
-}
-
 static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 {
 	int32_t rs = 0;
@@ -162,7 +158,6 @@ void module_csp(struct s_module *ph)
   ph->listenertype = LIS_CSPUDP;
   IP_ASSIGN(ph->s_ip, cfg.csp_srvip);
   ph->s_handler=csp_server;
-  ph->s_init=csp_server_init;
   ph->recv=csp_recv;
 //  ph->send_dcw=csp_send_dcw;
 //  ph->c_init=csp_client_init;

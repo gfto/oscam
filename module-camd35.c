@@ -11,8 +11,6 @@
 #include "oscam-string.h"
 #include "oscam-reader.h"
 
-extern struct s_module modules[CS_MAX_MOD];
-
 //CMD00 - ECM (request)
 //CMD01 - ECM (response)
 //CMD02 - EMM (in clientmode - set EMM, in server mode - EMM data) - obsolete
@@ -385,10 +383,6 @@ static void camd35_process_emm(uchar *buf)
 	memcpy(epg.provid, buf + 12 , 4);
 	memcpy(epg.emm, buf + 20, epg.emmlen);
 	do_emm(cur_client(), &epg);
-}
-
-static void camd35_server_init(struct s_client * client) {
-	client->is_udp = (modules[client->ctyp].type == MOD_CONN_UDP);
 }
 
 static int32_t tcp_connect(struct s_client *cl)
@@ -932,7 +926,6 @@ void module_camd35(struct s_module *ph)
   ph->listenertype = LIS_CAMD35UDP;
   IP_ASSIGN(ph->s_ip, cfg.c35_srvip);
   ph->s_handler=camd35_server;
-  ph->s_init=camd35_server_init;
   ph->recv=camd35_recv;
   ph->send_dcw=camd35_send_dcw;
   ph->c_init=camd35_client_init;
@@ -959,7 +952,6 @@ void module_camd35_tcp(struct s_module *ph)
     ph->ptab->nports=1; // show disabled in log
   IP_ASSIGN(ph->s_ip, cfg.c35_tcp_srvip);
   ph->s_handler=camd35_server;
-  ph->s_init=camd35_server_init;
   ph->recv=camd35_recv;
   ph->send_dcw=camd35_send_dcw;
   ph->c_init=camd35_client_init;

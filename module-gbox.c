@@ -24,8 +24,6 @@
 #include "oscam-reader.h"
 #include "oscam-garbage.h"
 
-extern struct s_module modules[CS_MAX_MOD];
-
 #define FILE_GBOX_VERSION       "/tmp/gbx.ver"
 #define FILE_SHARED_CARDS_INFO  "/tmp/gbx_card.info"
 #define FILE_ATTACK_INFO        "/tmp/gbx_attack.txt"
@@ -300,7 +298,6 @@ static void * gbox_server(struct s_client *cli, uchar *b, int32_t l)
 static void gbox_server_init(struct s_client * client)
 {
 	cs_log("gbox: gbox_server_init %s/%d",client->reader->label, client->port);
-	client->is_udp = (modules[client->ctyp].type == MOD_CONN_UDP);
 }
 
 static void gbox_decompress2(uchar *buf, int32_t *unpacked_len)

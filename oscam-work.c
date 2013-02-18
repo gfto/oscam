@@ -273,6 +273,7 @@ void * work_thread(void *ptr) {
 			case ACTION_CLIENT_INIT:
 				if (module->s_init)
 					module->s_init(cl);
+				cl->is_udp = module->type == MOD_CONN_UDP;
 				cl->init_done=1;
 				break;
 			case ACTION_CLIENT_IDLE:
