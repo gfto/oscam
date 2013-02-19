@@ -204,6 +204,8 @@ void free_ecm(ECM_REQUEST *ecm)
 		add_garbage(ea);
 		ea = nxt;
 	}
+	if (ecm->src_data)
+		add_garbage(ecm->src_data);
 	add_garbage(ecm);
 }
 
