@@ -36,6 +36,8 @@ static void reader_nullcard(struct s_reader * reader)
   memset(reader->availkeys, 0   , sizeof(reader->availkeys));
   reader->acs=0;
   reader->nprov=0;
+  reader->reassemble_emm_len=0;
+  memset(reader->reassemble_emm, 0, sizeof(reader->reassemble_emm));
 }
 
 int32_t reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int32_t l, uchar * cta_res, uint16_t * p_cta_lr)

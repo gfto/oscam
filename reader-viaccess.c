@@ -2,6 +2,7 @@
 #ifdef READER_VIACCESS
 #include "oscam-aes.h"
 #include "oscam-time.h"
+#include "oscam-emm.h"
 #include "reader-common.h"
 
 struct via_date {
@@ -610,7 +611,9 @@ case 0x8C:
 case 0x8D:
 	ep->type=SHARED;
 	rdr_debug_mask(rdr, D_EMM, "SHARED (part)");
-	return 0;
+	// We need those packets to pass otherwise we would never
+	// be able to complete EMM reassembly
+	return 1;
 
 case 0x8E:
 	ep->type=SHARED;
@@ -640,12 +643,17 @@ static void viaccess_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[0]=0xFF;
 	filter[1]=0;
 
-	filter[idx++]=EMM_GLOBAL;
+	filter[idx++]=EMM_SHARED;
+	filter[idx++]=0;
+	filter[idx+0]     = 0x8C;
+	filter[idx+0+16]  = 0xFF;
+	filter[1]++;
+	idx += 32;
+
+	filter[idx++]=EMM_SHARED;
 	filter[idx++]=0;
 	filter[idx+0]     = 0x8D;
-	filter[idx+0+16]  = 0xFE;
-	//filter[idx+6]     = 0xA0; // FIXME: dummy, flood client with EMM's
-	//filter[idx+6+16]  = 0xF0;
+	filter[idx+0+16]  = 0xFF;
 	filter[1]++;
 	idx += 32;
 
@@ -984,15 +992,12 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 	return OK;
 }
 
-#ifdef HAVE_DVBAPI
-void dvbapi_sort_nanos(unsigned char *dest, const unsigned char *src, int32_t len);
-
-int32_t viaccess_reassemble_emm(uchar *buffer, uint32_t *len) {
-	static uchar emm_global[512];
-	static int32_t emm_global_len = 0;
-
+static bool viaccess_reassemble_emm(struct s_reader *reader, EMM_PACKET *ep)
+{
+	uint8_t *buffer = ep->emm;
+	int16_t *len = &ep->emmlen;
 	int32_t pos=0, i;
-	uint32_t k;
+	int16_t k;
 
 	// Viaccess
 	if (*len>500) return 0;
@@ -1001,28 +1006,28 @@ int32_t viaccess_reassemble_emm(uchar *buffer, uint32_t *len) {
 		case 0x8c:
 		case 0x8d:
 			// emm-s part 1
-			if (!memcmp(emm_global, buffer, *len))
+			if (!memcmp(reader->reassemble_emm, buffer, *len))
 				return 0;
 
 			// copy first part of the emm-s
-			memcpy(emm_global, buffer, *len);
-			emm_global_len=*len;
+			memcpy(reader->reassemble_emm, buffer, *len);
+			reader->reassemble_emm_len=*len;
 			//cs_ddump_mask(D_READER, buffer, len, "viaccess global emm:");
 			return 0;
 
 		case 0x8e:
 			// emm-s part 2
-			if (!emm_global_len) return 0;
+			if (!reader->reassemble_emm_len) return 0;
 
 			//extract nanos from emm-gh and emm-s
 			uchar emmbuf[512];
 
 			cs_debug_mask(D_DVBAPI, "[viaccess] %s: start extracting nanos", __func__);
 			//extract from emm-gh
-			for (i=3; i<emm_global_len; i+=emm_global[i+1]+2) {
+			for (i=3; i<reader->reassemble_emm_len; i+=reader->reassemble_emm[i+1]+2) {
 				//copy nano (length determined by i+1)
-				memcpy(emmbuf+pos, emm_global+i, emm_global[i+1]+2);
-				pos+=emm_global[i+1]+2;
+				memcpy(emmbuf+pos, reader->reassemble_emm+i, reader->reassemble_emm[i+1]+2);
+				pos+=reader->reassemble_emm[i+1]+2;
 			}
 
 			if (buffer[2]==0x2c) {
@@ -1046,13 +1051,13 @@ int32_t viaccess_reassemble_emm(uchar *buffer, uint32_t *len) {
 
 			cs_ddump_mask(D_DVBAPI, buffer, *len, "[viaccess] %s: %s emm-s", __func__, (buffer[2]==0x2c) ? "fixed" : "variable");
 
-			dvbapi_sort_nanos(buffer+7, emmbuf, pos);
+			emm_sort_nanos(buffer+7, emmbuf, pos);
 			pos+=7;
 
 			//calculate emm length and set it on position 2
 			buffer[2]=pos-3;
 
-			cs_ddump_mask(D_DVBAPI, emm_global, emm_global_len, "[viaccess] %s: emm-gh", __func__);
+			cs_ddump_mask(D_DVBAPI, reader->reassemble_emm, reader->reassemble_emm_len, "[viaccess] %s: emm-gh", __func__);
 			cs_ddump_mask(D_DVBAPI, buffer, pos, "[viaccess] %s: assembled emm", __func__);
 
 			*len=pos;
@@ -1060,10 +1065,10 @@ int32_t viaccess_reassemble_emm(uchar *buffer, uint32_t *len) {
 	}
 	return 1;
 }
-#endif
 
 void reader_viaccess(struct s_cardsystem *ph)
 {
+	ph->do_emm_reassembly=viaccess_reassemble_emm;
 	ph->do_emm=viaccess_do_emm;
 	ph->do_ecm=viaccess_do_ecm;
 	ph->card_info=viaccess_card_info;

@@ -318,6 +318,9 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			}
 		}
 
+		if (aureader->csystem.do_emm_reassembly && !aureader->csystem.do_emm_reassembly(aureader, ep))
+			return;
+
 		rdr_debug_mask_sensitive(aureader, D_EMM, "emmtype %s. Reader serial {%s}.", typtext[ep->type],
 			cs_hexdump(0, aureader->hexserial, 8, tmp, sizeof(tmp)));
 		rdr_debug_mask_sensitive(aureader, D_EMM, "emm UA/SA: {%s}.",
@@ -517,4 +520,30 @@ void do_emm_from_file(struct s_reader * reader)
 	reader->saveemm = save_saveemm;
 
 	free(eptmp);
+}
+
+void emm_sort_nanos(unsigned char *dest, const unsigned char *src, int32_t len)
+{
+	int32_t w = 0, c = -1, j = 0;
+	while(1) {
+		int32_t n = 256;
+		for (j = 0; j < len; ) {
+			int32_t l = src[j + 1] + 2;
+			if (src[j] == c) {
+				if (w + l > len) {
+					cs_debug_mask(D_EMM, "sortnanos: sanity check failed. Exceeding memory area. Probably corrupted nanos!");
+					memset(dest, 0, len); // zero out everything
+					return;
+				}
+				memcpy(&dest[w],&src[j],l);
+				w += l;
+			} else if (src[j] > c && src[j] < n) {
+				n = src[j];
+			}
+			j += l;
+		}
+		if (n >= 256)
+			break;
+		c = n;
+	}
 }

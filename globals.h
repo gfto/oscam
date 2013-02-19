@@ -707,6 +707,7 @@ struct s_cardsystem {
 	int32_t		(*card_init)(struct s_reader *reader, struct s_ATR *);
 	int32_t		(*card_info)(struct s_reader *);
 	int32_t		(*do_ecm)(struct s_reader *, const struct ecm_request_t *, struct s_ecm_answer *);
+	bool		(*do_emm_reassembly)(struct s_reader *, struct emm_packet_t *); // Returns 1/true if the EMM is ready to be written in the card
 	int32_t		(*do_emm)(struct s_reader *, struct emm_packet_t *);
 	void			(*post_process)(struct s_reader *);
 	int32_t		(*get_emm_type)(struct emm_packet_t *, struct s_reader *);
@@ -1171,6 +1172,8 @@ struct s_reader  									//contains device info, reader info and card info
 	int16_t			rewritemm;
 	int8_t			card_status;
 	int8_t			deprecated;						//if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
+	int32_t			reassemble_emm_len;
+	uint8_t			reassemble_emm[512];
 	struct s_module ph;
 	struct s_cardreader crdr;
 	struct s_cardsystem csystem;
