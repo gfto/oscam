@@ -347,6 +347,7 @@ static int32_t dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 			ep->type = UNIQUE;
 			return 1; //FIXME: no filling of ep->hexserial
 
+		case 0x83:
 		case 0x89:
 			ep->type = SHARED;
 			// FIXME: Seems to be that SA is only used with caid 0x4ae1
@@ -357,6 +358,16 @@ static int32_t dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 			}
 			else
 				return 1;
+
+		case 0x80:
+		case 0x82:
+		case 0x86:
+		case 0x8c:
+			ep->type = SHARED;
+			memset(ep->hexserial, 0, 8);
+			ep->hexserial[0] = ep->emm[3];
+			return ep->hexserial[0] == rdr->sa[0][0];
+
 		default:
 			ep->type = UNKNOWN;
 			return 1;
@@ -370,11 +381,52 @@ void dre_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[0]=0xFF;
 	filter[1]=0;
 
-	filter[idx++]=EMM_GLOBAL;
-	filter[idx++]=1; //not active
-	//FIXME: Dont now how to filter GLOBAL EMM's
-	filter[idx+0]    = 0xFF; //dummy
+	filter[idx++]=EMM_SHARED;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x80;
+	filter[idx+1]    = rdr->sa[0][0];
+	filter[idx+0+16] = 0xF2;
+	filter[idx+1+16] = 0xFF;
+	filter[1]++;
+	idx += 32;
+
+	filter[idx++]=EMM_SHARED;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x82;
+	filter[idx+1]    = rdr->sa[0][0];
+	filter[idx+0+16] = 0xF3;
+	filter[idx+1+16] = 0xFF;
+	filter[1]++;
+	idx += 32;
+
+	filter[idx++]=EMM_SHARED;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x83;
+	filter[idx+1]    = rdr->sa[0][0];
+	filter[idx+0+16] = 0xF3;
+	if (rdr->caid == 0x4ae1) {
+		memcpy(filter+idx+1, &rdr->sa[0][0], 4);
+		memset(filter+idx+1+16, 0xFF, 4);
+	}
+	filter[idx+1+16] = 0xFF;
+	filter[1]++;
+	idx += 32;
+
+	filter[idx++]=EMM_SHARED;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x86;
+	filter[idx+1]    = rdr->sa[0][0];
 	filter[idx+0+16] = 0xFF;
+	filter[idx+1+16] = 0xFF;
+	filter[1]++;
+	idx += 32;
+
+	filter[idx++]=EMM_SHARED;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x8c;
+	filter[idx+1]    = rdr->sa[0][0];
+	filter[idx+0+16] = 0xFF;
+	filter[idx+1+16] = 0xFF;
 	filter[1]++;
 	idx += 32;
 
