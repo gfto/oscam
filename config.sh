@@ -274,21 +274,44 @@ update_deps() {
 
 list_config() {
 	update_deps
+	# Handle use flags
+	have_flag USE_STAPI && echo "CONFIG_WITH_STAPI=y" || echo "# CONFIG_WITH_STAPI=n"
+	have_flag USE_COOLAPI && echo "CONFIG_WITH_COOLAPI=y" || echo "# CONFIG_WITH_COOLAPI=n"
+	have_flag USE_AZBOX && echo "CONFIG_WITH_AZBOX=y" || echo "# CONFIG_WITH_AZBOX=n"
+	have_flag USE_MCA && echo "CONFIG_WITH_MCA=y" || echo "# CONFIG_WITH_MCA=n"
+	have_flag USE_LIBCRYPTO && echo "CONFIG_WITH_LIBCRYPTO=y" || echo "# CONFIG_WITH_LIBCRYPTO=n"
 	for OPT in $addons $protocols WITH_CARDREADER $readers
 	do
 		enabled $OPT && echo "CONFIG_$OPT=y" || echo "# CONFIG_$OPT=n"
 	done
 	for OPT in $card_readers
 	do
+		if [ $OPT = CARDREADER_INTERNAL ]
+		then
+			# Internal card reader is actually three different readers depending on USE flags
+			enabled $OPT && have_flag USE_AZBOX && echo "CONFIG_${OPT}_AZBOX=y" || echo "# CONFIG_${OPT}_AZBOX=n"
+			enabled $OPT && have_flag USE_COOLAPI && echo "CONFIG_${OPT}_COOLAPI=y" || echo "# CONFIG_${OPT}_COOLAPI=n"
+			enabled $OPT && not_have_all_flags USE_AZBOX USE_COOLAPI && echo "CONFIG_${OPT}_SCI=y" || echo "# CONFIG_${OPT}_SCI=n"
+			continue
+		fi
+		if [ $OPT = CARDREADER_STAPI ]
+		then
+			# Enable CARDREADER_STAPI only if USE_STAPI is set
+			enabled $OPT && have_flag USE_STAPI && echo "CONFIG_$OPT=y" || echo "# CONFIG_$OPT=n"
+			continue
+		fi
 		enabled $OPT && echo "CONFIG_$OPT=y" || echo "# CONFIG_$OPT=n"
 	done
+	have_flag USE_LIBUSB && echo "CONFIG_CARDREADER_SMART=y" || echo "# CONFIG_CARDREADER_SMART=n"
+	have_flag USE_PCSC && echo "CONFIG_CARDREADER_PCSC=y" || echo "# CONFIG_CARDREADER_PCSC=n"
 	# Extra modules/libraries
 	enabled MODULE_GBOX && echo "CONFIG_LIB_MINILZO=y" || echo "# CONFIG_LIB_MINILZO=n"
+	not_have_flag USE_LIBCRYPTO && echo "CONFIG_LIB_AES=y" || echo "# CONFIG_LIB_AES=n"
 	enabled MODULE_CCCAM && echo "CONFIG_LIB_RC6=y" || echo "# CONFIG_LIB_RC6=n"
-	enabled MODULE_CCCAM && echo "CONFIG_LIB_SHA1=y" || echo "# CONFIG_LIB_SHA1=n"
+	not_have_flag USE_LIBCRYPTO && enabled MODULE_CCCAM && echo "CONFIG_LIB_SHA1=y" || echo "# CONFIG_LIB_SHA1=n"
 	enabled_any MODULE_NEWCAMD READER_DRE && echo "CONFIG_LIB_DES=y" || echo "# CONFIG_LIB_DES=n"
 	enabled_any MODULE_CCCAM READER_NAGRA && echo "CONFIG_LIB_IDEA=y" || echo "# CONFIG_LIB_IDEA=n"
-	enabled_any READER_CONAX READER_CRYPTOWORKS READER_NAGRA && echo "CONFIG_LIB_BIGNUM=y" || echo "# CONFIG_LIB_BIGNUM=n"
+	not_have_flag USE_LIBCRYPTO && enabled_any READER_CONAX READER_CRYPTOWORKS READER_NAGRA && echo "CONFIG_LIB_BIGNUM=y" || echo "# CONFIG_LIB_BIGNUM=n"
 }
 
 make_config_mak() {

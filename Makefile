@@ -91,9 +91,6 @@ STAPI_CFLAGS = $(DEFAULT_STAPI_FLAGS)
 STAPI_LDFLAGS = $(DEFAULT_STAPI_FLAGS)
 STAPI_LIB = $(DEFAULT_STAPI_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-stapi
-CONFIG_WITH_STAPI=y
-else
-override CONFIG_CARDREADER_STAPI:=n
 endif
 
 DEFAULT_COOLAPI_FLAGS = -DWITH_COOLAPI=1
@@ -104,12 +101,6 @@ COOLAPI_CFLAGS = $(DEFAULT_COOLAPI_FLAGS)
 COOLAPI_LDFLAGS = $(DEFAULT_COOLAPI_FLAGS)
 COOLAPI_LIB = $(DEFAULT_COOLAPI_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-coolapi
-CONFIG_WITH_COOLAPI=y
-# If COOLAPI is enabled the internal card reader is the COOLAPI reader
-ifeq "$(CONFIG_CARDREADER_INTERNAL)" "y"
-override CONFIG_CARDREADER_INTERNAL_COOLAPI:=y
-override CONFIG_CARDREADER_INTERNAL:=n
-endif
 endif
 
 DEFAULT_AZBOX_FLAGS = -DWITH_AZBOX=1
@@ -120,17 +111,6 @@ AZBOX_CFLAGS = $(DEFAULT_AZBOX_FLAGS)
 AZBOX_LDFLAGS = $(DEFAULT_AZBOX_FLAGS)
 AZBOX_LIB = $(DEFAULT_AZBOX_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-azbox
-CONFIG_WITH_AZBOX=y
-# If AZBOX is enabled the internal card reader is the AZBOXreader
-ifeq "$(CONFIG_CARDREADER_INTERNAL)" "y"
-override CONFIG_CARDREADER_INTERNAL_AZBOX:=y
-override CONFIG_CARDREADER_INTERNAL:=n
-endif
-endif
-
-# The default internal reader is SCI reader
-ifeq "$(CONFIG_CARDREADER_INTERNAL)" "y"
-override CONFIG_CARDREADER_INTERNAL_SCI:=y
 endif
 
 DEFAULT_MCA_FLAGS = -DWITH_MCA=1
@@ -139,7 +119,6 @@ MCA_FLAGS = $(DEFAULT_MCA_FLAGS)
 MCA_CFLAGS = $(DEFAULT_MCA_FLAGS)
 MCA_LDFLAGS = $(DEFAULT_MCA_FLAGS)
 override PLUS_TARGET := $(PLUS_TARGET)-mca
-CONFIG_WITH_MCA=y
 endif
 
 DEFAULT_LIBCRYPTO_FLAGS = -DWITH_LIBCRYPTO=1
@@ -149,10 +128,6 @@ LIBCRYPTO_FLAGS = $(DEFAULT_LIBCRYPTO_FLAGS)
 LIBCRYPTO_CFLAGS = $(DEFAULT_LIBCRYPTO_FLAGS)
 LIBCRYPTO_LDFLAGS = $(DEFAULT_LIBCRYPTO_FLAGS)
 LIBCRYPTO_LIB = $(DEFAULT_LIBCRYPTO_LIB)
-override CONFIG_LIB_BIGNUM:=n
-override CONFIG_LIB_SHA1:=n
-else
-CONFIG_WITHOUT_LIBCRYPTO=y
 endif
 
 DEFAULT_SSL_FLAGS = -DWITH_SSL=1
@@ -177,7 +152,6 @@ LIBUSB_CFLAGS = $(DEFAULT_LIBUSB_FLAGS)
 LIBUSB_LDFLAGS = $(DEFAULT_LIBUSB_FLAGS)
 LIBUSB_LIB = $(DEFAULT_LIBUSB_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-libusb
-override CONFIG_CARDREADER_SMART:=y
 endif
 
 ifeq ($(uname_S),Darwin)
@@ -193,7 +167,6 @@ PCSC_CFLAGS = $(DEFAULT_PCSC_FLAGS)
 PCSC_LDFLAGS = $(DEFAULT_PCSC_FLAGS)
 PCSC_LIB = $(DEFAULT_PCSC_LIB)
 override PLUS_TARGET := $(PLUS_TARGET)-pcsc
-override CONFIG_CARDREADER_PCSC:=y
 endif
 
 # Add PLUS_TARGET and EXTRA_TARGET to TARGET
@@ -221,16 +194,6 @@ override LIBS    += $(USE_LIBS) $(EXTRA_LIBS) $(STD_LIBS)
 
 override STD_DEFS += -D'CS_TARGET="$(TARGET)"'
 
-# This is a *HACK* to enable config variables based on defines
-# given in EXTRA_CFLAGS/EXTRA_LDFLAGS/EXTRA_FLAGS variables.
-#
-# -DXXXXXX is parsed and CONFIG_XXXXXX=y variable is set.
-#
-# *NOTE*: This is not the proper way to enable features.
-#         Use `make config` or `./config --enable CONFIG_VAR`
-conf_enabled := $(subst -D,CONFIG_,$(subst =,,$(subst =1,,$(filter -D%,$(sort $(CFLAGS) $(LDFLAGS))))))
-$(foreach conf,$(conf_enabled),$(eval override $(conf)=y))
-
 # Setup quiet build
 Q =
 SAY = @true
@@ -254,7 +217,7 @@ endif
 
 SRC-$(CONFIG_LIB_MINILZO) += algo/minilzo.c
 
-SRC-$(CONFIG_WITHOUT_LIBCRYPTO) += cscrypt/aes.c
+SRC-$(CONFIG_LIB_AES) += cscrypt/aes.c
 SRC-$(CONFIG_LIB_BIGNUM) += cscrypt/bn_add.c
 SRC-$(CONFIG_LIB_BIGNUM) += cscrypt/bn_asm.c
 SRC-$(CONFIG_LIB_BIGNUM) += cscrypt/bn_ctx.c
@@ -370,7 +333,7 @@ OBJ := $(addprefix $(OBJDIR)/,$(subst .c,.o,$(SRC)))
 # The default build target rebuilds the config.mak if needed and then
 # starts the compilation.
 all:
-	$(shell ./config.sh --make-config.mak)
+	@./config.sh --use-flags "$(USE_FLAGS)" --make-config.mak
 	@-mkdir -p $(OBJDIR)/algo $(OBJDIR)/cscrypt $(OBJDIR)/csctapi
 	@-printf "\
 +-------------------------------------------------------------------------------\n\
