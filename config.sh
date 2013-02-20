@@ -216,6 +216,41 @@ get_opts() {
 	echo $OPTS
 }
 
+update_deps() {
+	# Calculate dependencies
+	enabled_any $(get_opts readers) $(get_opts card_readers) && enable_opt WITH_CARDREADER >/dev/null
+	disabled_all $(get_opts readers) $(get_opts card_readers) && disable_opt WITH_CARDREADER >/dev/null
+	enabled MODULE_CCCSHARE && enable_opt MODULE_CCCAM >/dev/null
+	enabled_any CARDREADER_DB2COM CARDREADER_MP35 CARDREADER_SC8IN1 && enable_opt CARDREADER_PHOENIX >/dev/null
+}
+
+list_config() {
+	update_deps
+	for OPT in $addons $protocols WITH_CARDREADER $readers
+	do
+		enabled $OPT && echo "CONFIG_$OPT=y" || echo "# CONFIG_$OPT=n"
+	done
+	for OPT in $card_readers
+	do
+		enabled $OPT && echo "CONFIG_$OPT=y" || echo "# CONFIG_$OPT=n"
+	done
+	# Extra modules/libraries
+	enabled MODULE_GBOX && echo "CONFIG_LIB_MINILZO=y" || echo "# CONFIG_LIB_MINILZO=n"
+	enabled MODULE_CCCAM && echo "CONFIG_LIB_RC6=y" || echo "# CONFIG_LIB_RC6=n"
+	enabled MODULE_CCCAM && echo "CONFIG_LIB_SHA1=y" || echo "# CONFIG_LIB_SHA1=n"
+	enabled_any MODULE_NEWCAMD READER_DRE && echo "CONFIG_LIB_DES=y" || echo "# CONFIG_LIB_DES=n"
+	enabled_any MODULE_CCCAM READER_NAGRA && echo "CONFIG_LIB_IDEA=y" || echo "# CONFIG_LIB_IDEA=n"
+	enabled_any READER_CONAX READER_CRYPTOWORKS READER_NAGRA && echo "CONFIG_LIB_BIGNUM=y" || echo "# CONFIG_LIB_BIGNUM=n"
+}
+
+make_config_mak() {
+	TMPFILE=$(mktemp -t config.mak.XXXXXX) || exit 1
+	list_config > $TMPFILE
+	cmp $TMPFILE config.mak >/dev/null 2>/dev/null
+	test $? = 0 && rm $TMPFILE || cat $TMPFILE > config.mak
+	rm -rf $TMPFILE
+}
+
 check_test() {
 	if [ "$(cat $tempfileconfig | grep "^#define $1 1$")" != "" ]; then
 		echo "on"
@@ -394,7 +429,7 @@ config_dialog() {
 			CardReaders) menu_card_readers ;;
 			Save)
 				print_components
-				$0 --make-config.mak
+				update_deps
 				exit
 			;;
 		esac
@@ -441,7 +476,7 @@ do
 		do
 			case "$1" in
 			-*)
-				$0 --make-config.mak
+				update_deps
 				continue 2
 				;;
 			all|addons|protocols|readers|card_readers)
@@ -453,7 +488,7 @@ do
 			esac
 			shift
 		done
-		$0 --make-config.mak
+		update_deps
 		;;
 	'-D'|'--disable')
 		shift
@@ -461,7 +496,7 @@ do
 		do
 			case "$1" in
 			-*)
-				$0 --make-config.mak
+				update_deps
 				continue 2
 				;;
 			all|addons|protocols|readers|card_readers)
@@ -473,7 +508,7 @@ do
 			esac
 			shift
 		done
-		$0 --make-config.mak
+		update_deps
 		;;
 	'-R'|'--restore')
 		echo $defconfig | sed -e 's|# ||g' | xargs printf "%s\n" | grep "=y$" | sed -e 's|^CONFIG_||g;s|=.*||g' |
@@ -486,7 +521,7 @@ do
 		do
 			disable_opt "$OPT"
 		done
-		$0 --make-config.mak
+		update_deps
 		;;
 	'-e'|'--enabled')
 		enabled $2 && echo "Y" && exit 0 || echo "N" && exit 1
@@ -519,29 +554,11 @@ do
 		break
 	;;
 	'-l'|'--list-config')
-		enabled_any $(get_opts readers) $(get_opts card_readers) && enable_opt WITH_CARDREADER >/dev/null
-		disabled_all $(get_opts readers) $(get_opts card_readers) && disable_opt WITH_CARDREADER >/dev/null
-		enabled MODULE_CCCSHARE && enable_opt MODULE_CCCAM >/dev/null
-		enabled_any CARDREADER_DB2COM CARDREADER_MP35 CARDREADER_SC8IN1 && enable_opt CARDREADER_PHOENIX >/dev/null
-		for OPT in $addons $protocols WITH_CARDREADER $readers $card_readers
-		do
-			enabled $OPT && echo "CONFIG_$OPT=y" || echo "# CONFIG_$OPT=n"
-		done
-		# Calculate dependencies
-		enabled MODULE_GBOX && echo "CONFIG_LIB_MINILZO=y" || echo "# CONFIG_LIB_MINILZO=n"
-		enabled MODULE_CCCAM && echo "CONFIG_LIB_RC6=y" || echo "# CONFIG_LIB_RC6=n"
-		enabled MODULE_CCCAM && echo "CONFIG_LIB_SHA1=y" || echo "# CONFIG_LIB_SHA1=n"
-		enabled_any MODULE_NEWCAMD READER_DRE && echo "CONFIG_LIB_DES=y" || echo "# CONFIG_LIB_DES=n"
-		enabled_any MODULE_CCCAM READER_NAGRA && echo "CONFIG_LIB_IDEA=y" || echo "# CONFIG_LIB_IDEA=n"
-		enabled_any READER_CONAX READER_CRYPTOWORKS READER_NAGRA && echo "CONFIG_LIB_BIGNUM=y" || echo "# CONFIG_LIB_BIGNUM=n"
+		list_config
 		exit 0
 	;;
 	'-m'|'--make-config.mak')
-		TMPFILE=$(mktemp -t config.mak.XXXXXX) || exit 1
-		$0 --list-config > $TMPFILE
-		cmp $TMPFILE config.mak >/dev/null 2>/dev/null
-		test $? = 0 && rm $TMPFILE || cat $TMPFILE > config.mak
-		rm -rf $TMPFILE
+		make_config_mak
 		exit 0
 	;;
 	'-h'|'--help')
