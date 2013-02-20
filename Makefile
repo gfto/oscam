@@ -207,6 +207,7 @@ endif
 override USE_CFLAGS = $(STAPI_CFLAGS) $(COOLAPI_CFLAGS) $(AZBOX_CFLAGS) $(MCA_CFLAGS) $(SSL_CFLAGS) $(LIBCRYPTO_CFLAGS) $(LIBUSB_CFLAGS) $(PCSC_CFLAGS)
 override USE_LDFLAGS= $(STAPI_LDFLAGS) $(COOLAPI_LDFLAGS) $(AZBOX_LDFLAGS) $(MCA_LDFLAGS) $(SSL_LDFLAGS) $(LIBCRYPTO_LDFLAGS) $(LIBUSB_LDFLAGS) $(PCSC_LDFLAGS)
 override USE_LIBS   = $(STAPI_LIB) $(COOLAPI_LIB) $(AZBOX_LIB) $(SSL_LIB) $(LIBCRYPTO_LIB) $(LIBUSB_LIB) $(PCSC_LIB)
+override USE_FLAGS  = $(if $(USE_STAPI),USE_STAPI) $(if $(USE_COOLAPI),USE_COOLAPI) $(if $(USE_AZBOX),USE_AZBOX) $(if $(USE_MCA),USE_MCA) $(if $(USE_SSL),USE_SSL) $(if $(USE_LIBCRYPTO),USE_LIBCRYPTO) $(if $(USE_LIBUSB),USE_LIBUSB) $(if $(USE_PCSC),USE_PCSC)
 
 EXTRA_CFLAGS = $(EXTRA_FLAGS)
 EXTRA_LDFLAGS = $(EXTRA_FLAGS)
@@ -384,6 +385,7 @@ all:
 |  CFLAGS   = $(strip $(CFLAGS))\n\
 |  LDFLAGS  = $(strip $(LDFLAGS))\n\
 |  LIBS     = $(strip $(LIBS))\n\
+|  UseFlags = $(addsuffix =1,$(USE_FLAGS))\n\
 | Config:\n\
 |  Addons   : $(shell ./config.sh --show-enabled addons)\n\
 |  Protocols: $(shell ./config.sh --show-enabled protocols | sed -e 's|MODULE_||g')\n\
