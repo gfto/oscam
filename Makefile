@@ -79,91 +79,52 @@ endif
 TARGET := $(shell $(CC) -dumpmachine 2>/dev/null)
 
 # Process USE_ variables
-DEFAULT_STAPI_FLAGS = -DWITH_STAPI=1
 DEFAULT_STAPI_LIB = -L./stapi -loscam_stapi
-ifdef USE_STAPI
-STAPI_FLAGS = $(DEFAULT_STAPI_FLAGS)
-STAPI_CFLAGS = $(DEFAULT_STAPI_FLAGS)
-STAPI_LDFLAGS = $(DEFAULT_STAPI_FLAGS)
-STAPI_LIB = $(DEFAULT_STAPI_LIB)
-override PLUS_TARGET := $(PLUS_TARGET)-stapi
-endif
-
-DEFAULT_COOLAPI_FLAGS = -DWITH_COOLAPI=1
 DEFAULT_COOLAPI_LIB = -lnxp -lrt
-ifdef USE_COOLAPI
-COOLAPI_FLAGS = $(DEFAULT_COOLAPI_FLAGS)
-COOLAPI_CFLAGS = $(DEFAULT_COOLAPI_FLAGS)
-COOLAPI_LDFLAGS = $(DEFAULT_COOLAPI_FLAGS)
-COOLAPI_LIB = $(DEFAULT_COOLAPI_LIB)
-override PLUS_TARGET := $(PLUS_TARGET)-coolapi
-endif
-
-DEFAULT_AZBOX_FLAGS = -DWITH_AZBOX=1
 DEFAULT_AZBOX_LIB = -Lextapi/openxcas -lOpenXCASAPI
-ifdef USE_AZBOX
-AZBOX_FLAGS = $(DEFAULT_AZBOX_FLAGS)
-AZBOX_CFLAGS = $(DEFAULT_AZBOX_FLAGS)
-AZBOX_LDFLAGS = $(DEFAULT_AZBOX_FLAGS)
-AZBOX_LIB = $(DEFAULT_AZBOX_LIB)
-override PLUS_TARGET := $(PLUS_TARGET)-azbox
-endif
-
-DEFAULT_MCA_FLAGS = -DWITH_MCA=1
-ifdef USE_MCA
-MCA_FLAGS = $(DEFAULT_MCA_FLAGS)
-MCA_CFLAGS = $(DEFAULT_MCA_FLAGS)
-MCA_LDFLAGS = $(DEFAULT_MCA_FLAGS)
-override PLUS_TARGET := $(PLUS_TARGET)-mca
-endif
-
-DEFAULT_LIBCRYPTO_FLAGS = -DWITH_LIBCRYPTO=1
 DEFAULT_LIBCRYPTO_LIB = -lcrypto
-ifdef USE_LIBCRYPTO
-LIBCRYPTO_FLAGS = $(DEFAULT_LIBCRYPTO_FLAGS)
-LIBCRYPTO_CFLAGS = $(DEFAULT_LIBCRYPTO_FLAGS)
-LIBCRYPTO_LDFLAGS = $(DEFAULT_LIBCRYPTO_FLAGS)
-LIBCRYPTO_LIB = $(DEFAULT_LIBCRYPTO_LIB)
-endif
-
-DEFAULT_SSL_FLAGS = -DWITH_SSL=1
 DEFAULT_SSL_LIB = -lssl
-ifdef USE_SSL
-SSL_FLAGS = $(DEFAULT_SSL_FLAGS)
-SSL_CFLAGS = $(DEFAULT_SSL_FLAGS)
-SSL_LDFLAGS = $(DEFAULT_SSL_FLAGS)
-SSL_LIB = $(DEFAULT_SSL_LIB)
-override PLUS_TARGET := $(PLUS_TARGET)-ssl
-endif
-
-DEFAULT_LIBUSB_FLAGS = -DWITH_LIBUSB=1
 ifeq ($(uname_S),Linux)
 DEFAULT_LIBUSB_LIB = -lusb-1.0 -lrt
 else
 DEFAULT_LIBUSB_LIB = -lusb-1.0
 endif
-ifdef USE_LIBUSB
-LIBUSB_FLAGS = $(DEFAULT_LIBUSB_FLAGS)
-LIBUSB_CFLAGS = $(DEFAULT_LIBUSB_FLAGS)
-LIBUSB_LDFLAGS = $(DEFAULT_LIBUSB_FLAGS)
-LIBUSB_LIB = $(DEFAULT_LIBUSB_LIB)
-override PLUS_TARGET := $(PLUS_TARGET)-libusb
-endif
-
 ifeq ($(uname_S),Darwin)
-DEFAULT_PCSC_FLAGS = -isysroot $(OSX_SDK) -DWITH_PCSC=1 -I/usr/local/include
+DEFAULT_PCSC_FLAGS = -isysroot $(OSX_SDK) -I/usr/local/include
 DEFAULT_PCSC_LIB = -syslibroot,$(OSX_SDK) -framework IOKit -framework CoreFoundation -framework PCSC -L/usr/local/lib
 else
-DEFAULT_PCSC_FLAGS = -DWITH_PCSC=1 -I/usr/include/PCSC
+DEFAULT_PCSC_FLAGS = -I/usr/include/PCSC
 DEFAULT_PCSC_LIB = -lpcsclite
 endif
-ifdef USE_PCSC
-PCSC_FLAGS = $(DEFAULT_PCSC_FLAGS)
-PCSC_CFLAGS = $(DEFAULT_PCSC_FLAGS)
-PCSC_LDFLAGS = $(DEFAULT_PCSC_FLAGS)
-PCSC_LIB = $(DEFAULT_PCSC_LIB)
-override PLUS_TARGET := $(PLUS_TARGET)-pcsc
+
+# Function to initialize USE related variables
+#   Usage: $(eval $(call prepare_use_flags,FLAG_NAME,PLUS_TARGET_TEXT))
+define prepare_use_flags
+override DEFAULT_$(1)_FLAGS:=$$(strip -DWITH_$(1)=1 $$(DEFAULT_$(1)_FLAGS))
+ifdef USE_$(1)
+$(1)_FLAGS:=$$(DEFAULT_$(1)_FLAGS)
+$(1)_CFLAGS:=$$($(1)_FLAGS)
+$(1)_LDFLAGS:=$$($(1)_FLAGS)
+$(1)_LIB:=$$(DEFAULT_$(1)_LIB)
+ifneq "$(2)" ""
+override PLUS_TARGET:=$$(PLUS_TARGET)-$(2)
 endif
+override USE_CFLAGS+=$$($(1)_CFLAGS)
+override USE_LDFLAGS+=$$($(1)_LDFLAGS)
+override USE_LIBS+=$$($(1)_LIB)
+override USE_FLAGS+=$$(if $$(USE_$(1)),USE_$(1))
+endif
+endef
+
+# Initialize USE variables
+$(eval $(call prepare_use_flags,STAPI,stapi))
+$(eval $(call prepare_use_flags,COOLAPI,coolapi))
+$(eval $(call prepare_use_flags,AZBOX,azbox))
+$(eval $(call prepare_use_flags,MCA,mca))
+$(eval $(call prepare_use_flags,LIBCRYPTO,))
+$(eval $(call prepare_use_flags,SSL,ssl))
+$(eval $(call prepare_use_flags,LIBUSB,libusb))
+$(eval $(call prepare_use_flags,PCSC,pcsc))
 
 # Add PLUS_TARGET and EXTRA_TARGET to TARGET
 ifdef NO_PLUS_TARGET
@@ -171,12 +132,6 @@ override TARGET := $(TARGET)$(EXTRA_TARGET)
 else
 override TARGET := $(TARGET)$(PLUS_TARGET)$(EXTRA_TARGET)
 endif
-
-# Set USE_ flags
-override USE_CFLAGS = $(STAPI_CFLAGS) $(COOLAPI_CFLAGS) $(AZBOX_CFLAGS) $(MCA_CFLAGS) $(SSL_CFLAGS) $(LIBCRYPTO_CFLAGS) $(LIBUSB_CFLAGS) $(PCSC_CFLAGS)
-override USE_LDFLAGS= $(STAPI_LDFLAGS) $(COOLAPI_LDFLAGS) $(AZBOX_LDFLAGS) $(MCA_LDFLAGS) $(SSL_LDFLAGS) $(LIBCRYPTO_LDFLAGS) $(LIBUSB_LDFLAGS) $(PCSC_LDFLAGS)
-override USE_LIBS   = $(STAPI_LIB) $(COOLAPI_LIB) $(AZBOX_LIB) $(SSL_LIB) $(LIBCRYPTO_LIB) $(LIBUSB_LIB) $(PCSC_LIB)
-override USE_FLAGS  = $(if $(USE_STAPI),USE_STAPI) $(if $(USE_COOLAPI),USE_COOLAPI) $(if $(USE_AZBOX),USE_AZBOX) $(if $(USE_MCA),USE_MCA) $(if $(USE_SSL),USE_SSL) $(if $(USE_LIBCRYPTO),USE_LIBCRYPTO) $(if $(USE_LIBUSB),USE_LIBUSB) $(if $(USE_PCSC),USE_PCSC)
 
 EXTRA_CFLAGS = $(EXTRA_FLAGS)
 EXTRA_LDFLAGS = $(EXTRA_FLAGS)
