@@ -86,8 +86,6 @@ Usage: `basename $0` [parameters]
  -v, --oscam-version       Display OSCam version.
  -r, --oscam-revision      Display OSCam SVN revision.
 
- -m, --make-config.mak     Create or update config.mak
-
  -O, --detect-osx-sdk-version  Find where OS X SDK is located
 
  -h, --help                Display this help text.
