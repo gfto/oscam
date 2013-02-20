@@ -532,7 +532,7 @@ config_dialog() {
 			Save)
 				print_components
 				update_deps
-				exit
+				exit 0
 			;;
 		esac
 	done
