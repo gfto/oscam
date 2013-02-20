@@ -9,4 +9,4 @@ then
 	exit 1
 fi
 
-strings $1 | grep ^CFG~ | sed -e 's/^CFG~//' | openssl enc -d -base64 | gzip -d 2>/dev/null
+strings $1 | sed -n 's/^CFG~//p' | openssl enc -d -base64 | gzip -d 2>/dev/null
