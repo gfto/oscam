@@ -13,3 +13,6 @@ Currently available tools are:
 
   check_cmdline_opts.sh                 This script checks if all command
                                         line parameters are properly set.
+
+  extract_config.sh                     This script extracts OSCam build
+                                        config from oscam binary.

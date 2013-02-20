@@ -32,6 +32,8 @@
 #include "oscam-work.h"
 #include "reader-common.h"
 
+extern char *config_mak;
+
 /*****************************************************************************
         Globals
 *****************************************************************************/
@@ -89,12 +91,6 @@ char    *processUsername = NULL;
 /*****************************************************************************
         Statics
 *****************************************************************************/
-#define _check(CONFIG_VAR, text) \
-	do { \
-		if (config_enabled(CONFIG_VAR)) \
-			printf(" %s", text); \
-	} while(0)
-
 /* Prints usage information and information about the built-in modules. */
 static void show_usage(void)
 {
@@ -110,68 +106,6 @@ static void show_usage(void)
 	printf("OSCam is based on Streamboard mp-cardserver v0.9d written by dukat\n");
 	printf("Visit http://www.streamboard.tv/oscam/ for more details.\n\n");
 
-	printf(" Features   :");
-	_check(WEBIF, "webif");
-	_check(TOUCH, "touch");
-	_check(MODULE_MONITOR, "monitor");
-	_check(WITH_SSL, "ssl");
-	if (!config_enabled(WITH_STAPI))
-		_check(HAVE_DVBAPI, "dvbapi");
-	else
-		_check(WITH_STAPI, "dvbapi_stapi");
-	_check(IRDETO_GUESSING, "irdeto-guessing");
-	_check(CS_ANTICASC, "anticascading");
-	_check(WITH_DEBUG, "debug");
-	_check(WITH_LB, "loadbalancing");
-	_check(CW_CYCLE_CHECK, "cw-cycle-check");
-	_check(LCDSUPPORT, "lcd");
-	_check(LEDSUPPORT, "led");
-	printf("\n");
-
-	printf(" Protocols  :");
-	_check(MODULE_CAMD33, "camd33");
-	_check(MODULE_CAMD35, "camd35_udp");
-	_check(MODULE_CAMD35_TCP, "camd35_tcp");
-	_check(MODULE_NEWCAMD, "newcamd");
-	_check(MODULE_CCCAM, "cccam");
-	_check(MODULE_CCCSHARE, "cccam_share");
-	_check(MODULE_PANDORA, "pandora");
-	_check(MODULE_GHTTP, "ghttp");
-	_check(CS_CACHEEX, "cache-exchange");
-	_check(MODULE_GBOX, "gbox");
-	_check(MODULE_RADEGAST, "radegast");
-	_check(MODULE_SERIAL, "serial");
-	_check(MODULE_CONSTCW, "constcw");
-	printf("\n");
-
-	printf(" Readers    :");
-	_check(READER_NAGRA, "nagra");
-	_check(READER_IRDETO, "irdeto");
-	_check(READER_CONAX, "conax");
-	_check(READER_CRYPTOWORKS, "cryptoworks");
-	_check(READER_SECA, "seca");
-	_check(READER_VIACCESS, "viaccess");
-	_check(READER_VIDEOGUARD, "videoguard");
-	_check(READER_DRE, "dre");
-	_check(READER_TONGFANG, "tongfang");
-	_check(READER_BULCRYPT, "bulcrypt");
-	_check(READER_GRIFFIN, "griffin");
-	_check(READER_DGCRYPT, "dgcrypt");
-	printf("\n");
-
-	printf(" CardReaders:");
-	_check(CARDREADER_PHOENIX, "phoenix");
-	_check(CARDREADER_INTERNAL_AZBOX, "internal_azbox");
-	_check(CARDREADER_INTERNAL_COOLAPI, "internal_coolapi");
-	_check(CARDREADER_INTERNAL_SCI, "internal_sci");
-	_check(CARDREADER_SC8IN1, "sc8in1");
-	_check(CARDREADER_MP35, "mp35");
-	_check(CARDREADER_SMARGO, "smargo");
-	_check(CARDREADER_PCSC, "pcsc");
-	_check(CARDREADER_SMART, "smartreader");
-	_check(CARDREADER_DB2COM, "db2com");
-	_check(CARDREADER_STAPI, "stapi");
-	printf("\n");
 	printf(" ConfigDir  : %s\n", CS_CONFDIR);
 	printf("\n");
 	printf(" Usage: oscam [parameters]\n");
@@ -231,7 +165,6 @@ static void show_usage(void)
 	printf(" -h, --help              | Show command line help text.\n");
 	printf(" -V, --build-info        | Show OSCam binary configuration and version.\n");
 }
-#undef _check
 
 /* Keep the options sorted */
 static const char short_options[] = "aB:bc:d:g:hI:p:r:Sst:uVw:";
@@ -1548,6 +1481,9 @@ int32_t main (int32_t argc, char *argv[])
 	cs_close_log();
 
 	stop_garbage_collector();
+
+	// This prevents the compiler from removing config_mak from the final binary
+	config_mak[0] = 0;
 
 	return exit_oscam;
 }

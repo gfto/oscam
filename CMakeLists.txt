@@ -178,6 +178,10 @@ endif (OSCamOperatingSystem MATCHES "Linux")
 set (CS_CONFDIR ${DEFAULT_CS_CONFDIR} CACHE STRING "Default path for the config files")
 add_definitions ("-DCS_CONFDIR=\\\"${CS_CONFDIR}\\\"")
 
+# Build config.mak and related files
+# FIXME: Create USE_FLAGS and pass them to config.sh using --use-flags
+execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --objdir ${CMAKE_CURRENT_BINARY_DIR} --use-flags CMAKE --make-config.mak)
+
 # Manage config.h based on command line parameters
 # Manipulate config file based on given parameters and read unset parameters
 
@@ -403,7 +407,7 @@ file (GLOB csmodules_srcs "module-*.c")
 file (GLOB csmodules_hdrs "module-*.h")
 file (GLOB csreaders_srcs "reader-*.c")
 file (GLOB csreaders_hdrs "reader-*.h")
-file (GLOB csoscam_srcs "oscam-*.c")
+file (GLOB csoscam_srcs "oscam-*.c" "${CMAKE_CURRENT_BINARY_DIR}/config.c")
 file (GLOB csoscam_hdrs "oscam-*.h")
 file (GLOB exe_srcs "oscam.c")
 file (GLOB exe_hdrs "globals.h")
