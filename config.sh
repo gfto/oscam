@@ -117,6 +117,54 @@ Available options:
 "
 }
 
+# Use flags set by --use-flags parameter
+USE_FLAGS=
+
+have_flag() {
+	for FLAG in $USE_FLAGS
+	do
+		[ $FLAG = "$1" ] && return 0
+	done
+	return 1
+}
+
+have_all_flags() {
+	for opt ; do
+		have_flag $opt || return 1
+	done
+	return 0
+}
+
+have_any_flags() {
+	for opt ; do
+		have_flag $opt && return 0
+	done
+	return 1
+}
+
+not_have_flag() {
+	for FLAG in $USE_FLAGS
+	do
+		[ $FLAG = "$1" ] && return 1
+	done
+	return 0
+}
+
+not_have_all_flags() {
+	for opt ; do
+		not_have_flag $opt || return 1
+	done
+	return 0
+}
+
+not_have_any_flags() {
+	for opt ; do
+		not_have_flag $opt && return 0
+	done
+	return 1
+}
+
+# Config functions
 enabled() {
 	grep "^\#define $1 1$" config.h >/dev/null 2>/dev/null
 	return $?
@@ -560,6 +608,10 @@ do
 	'-m'|'--make-config.mak')
 		make_config_mak
 		exit 0
+	;;
+	'--use-flags')
+		shift
+		USE_FLAGS=$1
 	;;
 	'-h'|'--help')
 		usage
