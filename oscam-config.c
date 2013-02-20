@@ -299,9 +299,6 @@ int32_t init_provid(void) {
 	fclose(fp);
 	if (nr>0)
 		cs_log("%d provid's loaded", nr);
-	else{
-		cs_log("oscam.provid loading failed, wrong format?");
-	}
 	return(0);
 }
 
@@ -445,8 +442,6 @@ int32_t init_srvid(void)
 			cs_log("WARNING: You risk high CPU load and high ECM times with more than 2000 service-id's!");
 			cs_log("HINT: --> use optimized lists from http://www.streamboard.tv/wiki/Srvid");
 		}
-	} else {
-		cs_log("oscam.srvid loading failed, old format");
 	}
 
 	cs_writelock(&config_lock);
@@ -532,9 +527,6 @@ int32_t init_tierid(void)
 	fclose(fp);
 	if (nr>0)
 		cs_log("%d tier-id's loaded", nr);
-	else{
-		cs_log("%s loading failed", cs_trid);
-	}
 	cs_writelock(&config_lock);
 	//reload function:
 	tierid = cfg.tierid;
@@ -735,7 +727,8 @@ static struct s_global_whitelist *global_whitelist_read_int(void) {
 			}
 	}
 
-	cs_log("%d entries read from %s", count, cs_whitelist);
+	if (count)
+		cs_log("%d entries read from %s", count, cs_whitelist);
 
 	fclose(fp);
 
@@ -790,6 +783,7 @@ void init_len4caid(void)
 	}
 	free(token);
 	fclose(fp);
-	cs_log("%d lengths for caid guessing loaded", nr);
+	if (nr)
+		cs_log("%d lengths for caid guessing loaded", nr);
 	return;
 }

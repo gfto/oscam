@@ -583,7 +583,8 @@ static struct s_cacheex_matcher *cacheex_matcher_read_int(void) {
 		}
 	}
 
-	cs_log("%d entries read from %s", count, cs_cacheex_matcher);
+	if (count)
+		cs_log("%d entries read from %s", count, cs_cacheex_matcher);
 
 	fclose(fp);
 
