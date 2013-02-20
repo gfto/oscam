@@ -4,10 +4,6 @@ SHELL = /bin/sh
 .SUFFIXES: .o .c
 .PHONY: all help README.build README.config simple default debug config menuconfig allyesconfig allnoconfig defconfig clean distclean
 
-# Include config.mak which contains variables for all enabled modules
-# These variables will be used to select only needed files for compilation
--include config.mak
-
 VER     := $(shell ./config.sh --oscam-version)
 SVN_REV := $(shell ./config.sh --oscam-revision)
 
@@ -207,6 +203,10 @@ BINDIR := Distribution
 override BUILD_DIR := build
 OBJDIR := $(BUILD_DIR)/$(TARGET)
 
+# Include config.mak which contains variables for all enabled modules
+# These variables will be used to select only needed files for compilation
+-include $(OBJDIR)/config.mak
+
 OSCAM_BIN := $(BINDIR)/oscam-$(VER)$(SVN_REV)-$(subst cygwin,cygwin.exe,$(TARGET))
 LIST_SMARGO_BIN := $(BINDIR)/list_smargo-$(VER)$(SVN_REV)-$(subst cygwin,cygwin.exe,$(TARGET))
 
@@ -333,7 +333,7 @@ OBJ := $(addprefix $(OBJDIR)/,$(subst .c,.o,$(SRC)))
 # The default build target rebuilds the config.mak if needed and then
 # starts the compilation.
 all:
-	@./config.sh --use-flags "$(USE_FLAGS)" --make-config.mak
+	@./config.sh --use-flags "$(USE_FLAGS)" --objdir "$(OBJDIR)" --make-config.mak
 	@-mkdir -p $(OBJDIR)/algo $(OBJDIR)/cscrypt $(OBJDIR)/csctapi
 	@-printf "\
 +-------------------------------------------------------------------------------\n\
@@ -404,7 +404,7 @@ clean:
 	@-rm -rf $(BUILD_DIR) lib
 
 distclean: clean
-	@-for FILE in config.mak $(BINDIR)/list_smargo-* $(BINDIR)/oscam-$(VER)*; do \
+	@-for FILE in $(BINDIR)/list_smargo-* $(BINDIR)/oscam-$(VER)*; do \
 		echo "RM	$$FILE"; \
 		rm -rf $$FILE; \
 	done

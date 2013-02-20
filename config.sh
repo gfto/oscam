@@ -117,6 +117,9 @@ Available options:
 "
 }
 
+# Output directory for config.mak set by --objdir parameter
+OBJDIR=.
+
 # Use flags set by --use-flags parameter
 USE_FLAGS=
 
@@ -317,8 +320,9 @@ list_config() {
 make_config_mak() {
 	TMPFILE=$(mktemp -t config.mak.XXXXXX) || exit 1
 	list_config > $TMPFILE
-	cmp $TMPFILE config.mak >/dev/null 2>/dev/null
-	test $? = 0 && rm $TMPFILE || cat $TMPFILE > config.mak
+	[ ! -d $OBJDIR ] && mkdir -p $OBJDIR 2>/dev/null
+	cmp $TMPFILE $OBJDIR/config.mak >/dev/null 2>/dev/null
+	test $? = 0 && rm $TMPFILE || cat $TMPFILE > $OBJDIR/config.mak
 	rm -rf $TMPFILE
 }
 
@@ -635,6 +639,10 @@ do
 	'--use-flags')
 		shift
 		USE_FLAGS=$1
+	;;
+	'--objdir')
+		shift
+		OBJDIR=$1
 	;;
 	'-h'|'--help')
 		usage
