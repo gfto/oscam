@@ -328,7 +328,9 @@ int32_t gbox_cmd_hello(struct s_client *cli, int32_t n)
 	int32_t i;
 	int32_t ncards_in_msg = 0;
 	int32_t payload_len = n;
-	int32_t checkcode_len = 7;
+	int32_t checkcode_len = 0;
+	int32_t hostname_len = 0;
+	int32_t footer_len = 0;
 	uint8_t *ptr = 0;
 
 	if (!(data[0] == 0x48 && data[1]==0x49)) { // if not MSG_HELLO1
@@ -336,14 +338,14 @@ int32_t gbox_cmd_hello(struct s_client *cli, int32_t n)
 	}
 	cs_ddump_mask(D_READER, data, payload_len, "gbox: decompressed data (%d bytes):", payload_len);
 
-	int32_t hostname_len = data[payload_len - 1];
-	int32_t footer_len = hostname_len + 2;
-
 	if ((data[0x0B] == 0) | ((data[0x0A] == 1) && (data[0x0B] == 0x80))) {
 		if (gbox->peer.cards)
 			gbox_remove_cards_without_goodsids(gbox->peer.cards);
 		if (!gbox->peer.cards)
 			gbox->peer.cards = ll_create("peer.cards");
+			checkcode_len = 7;
+			hostname_len = data[payload_len - 1];
+			footer_len = hostname_len + 2;
 	}
 
 	if (data[0] == 0x48 && data[1] == 0x49) // if MSG_HELLO1
