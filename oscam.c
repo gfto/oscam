@@ -1483,7 +1483,7 @@ int32_t main (int32_t argc, char *argv[])
 	stop_garbage_collector();
 
 	// This prevents the compiler from removing config_mak from the final binary
-	config_mak[0] = 0;
+	syslog_ident = config_mak;
 
 	return exit_oscam;
 }
