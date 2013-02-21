@@ -170,8 +170,6 @@ ifndef USE_LIBUSB
 override LIST_SMARGO_BIN =
 endif
 
-SRC-$(CONFIG_LIB_MINILZO) += algo/minilzo.c
-
 SRC-$(CONFIG_LIB_AES) += cscrypt/aes.c
 SRC-$(CONFIG_LIB_BIGNUM) += cscrypt/bn_add.c
 SRC-$(CONFIG_LIB_BIGNUM) += cscrypt/bn_asm.c
@@ -210,6 +208,8 @@ SRC-$(CONFIG_CARDREADER_INTERNAL_SCI) += csctapi/ifd_sci.c
 SRC-$(CONFIG_CARDREADER_SMARGO) += csctapi/ifd_smargo.c
 SRC-$(CONFIG_CARDREADER_SMART) += csctapi/ifd_smartreader.c
 SRC-$(CONFIG_CARDREADER_STAPI) += csctapi/ifd_stapi.c
+
+SRC-$(CONFIG_LIB_MINILZO) += minilzo/minilzo.c
 
 SRC-$(CONFIG_CS_ANTICASC) += module-anticasc.c
 SRC-$(CONFIG_CS_CACHEEX) += module-cacheex.c
@@ -292,7 +292,7 @@ SRC := $(subst config.c,$(OBJDIR)/config.c,$(SRC))
 # starts the compilation.
 all:
 	@./config.sh --use-flags "$(USE_FLAGS)" --objdir "$(OBJDIR)" --make-config.mak
-	@-mkdir -p $(OBJDIR)/algo $(OBJDIR)/cscrypt $(OBJDIR)/csctapi
+	@-mkdir -p $(OBJDIR)/cscrypt $(OBJDIR)/csctapi $(OBJDIR)/minilzo
 	@-printf "\
 +-------------------------------------------------------------------------------\n\
 | OSCam ver: $(VER) rev: $(SVN_REV) target: $(TARGET)\n\

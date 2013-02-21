@@ -94,7 +94,7 @@ if (OSCamOperatingSystem MATCHES "Windows/Cygwin")
 include_directories (
     ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
     ${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
-    ${CMAKE_CURRENT_SOURCE_DIR}/algo
+    ${CMAKE_CURRENT_SOURCE_DIR}/minilzo
     ${CMAKE_CURRENT_SOURCE_DIR}/extapi/cygwin
     /usr/include/w32api
     ${OPTIONAL_INCLUDE_DIR}
@@ -103,7 +103,7 @@ else (OSCamOperatingSystem MATCHES "Windows/Cygwin")
 include_directories (
     ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
     ${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
-    ${CMAKE_CURRENT_SOURCE_DIR}/algo
+    ${CMAKE_CURRENT_SOURCE_DIR}/minilzo
     ${OPTIONAL_INCLUDE_DIR}
     )
 endif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
@@ -376,7 +376,7 @@ endif (HAVE_PCSC)
 #----------------------- subdirectories ------------------------------
 
 add_subdirectory (csctapi)
-add_subdirectory (algo)
+add_subdirectory (minilzo)
 add_subdirectory (cscrypt)
 if( HAVE_LIBRT OR HAVE_LIBRT_STATIC)
     if (HAVE_LIBUSB)
@@ -432,7 +432,7 @@ add_library (${csoscam} STATIC ${csoscam_srcs} ${csoscam_hdrs})
 
 set (exe_name "oscam")
 add_executable (${exe_name} ${exe_srcs} ${exe_hdrs})
-target_link_libraries (${exe_name} ${csoscam} ${csmodules} ${csreaders} csctapi cscrypt algo)
+target_link_libraries (${exe_name} ${csoscam} ${csmodules} ${csreaders} csctapi cscrypt minilzo)
 if(HAVE_LIBRT AND HAVE_LIBUSB)
    if (LIBUSBDIR)
 	target_link_libraries (${exe_name} imp_libusb)

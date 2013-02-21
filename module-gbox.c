@@ -13,7 +13,7 @@
 #include <net/if.h>
 #endif
 
-#include "algo/minilzo.h"
+#include "minilzo/minilzo.h"
 #include "module-gbox.h"
 #include "oscam-failban.h"
 #include "oscam-client.h"
