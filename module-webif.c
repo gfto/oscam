@@ -4746,7 +4746,7 @@ static int32_t readRequest(FILE *f, IN_ADDR_T in, char **result, int8_t forcePla
 	return bufsize;
 }
 static int32_t process_request(FILE *f, IN_ADDR_T in) {
-	int32_t ok=0,v=cv();
+	int32_t ok=0;
 	int8_t *keepalive = (int8_t *)pthread_getspecific(getkeepalive);
 	IN_ADDR_T addr = GET_IP();
 
@@ -4758,13 +4758,13 @@ static int32_t process_request(FILE *f, IN_ADDR_T in) {
 #endif
 
 		// at this point we do all checks related origin IP, ranges and dyndns stuff
-		ok = check_valid_origin(addr) ? v : 0;
+		ok = check_valid_origin(addr);
 		cs_debug_mask(D_TRACE, "WebIf: Origin checked. Result: access from %s => %s", cs_inet_ntoa(addr), (!ok)? "forbidden" : "allowed");
 
 		// based on the failed origin checks we send a 403 to calling browser
 		if (!ok) {
 			send_error(f, 403, "Forbidden", NULL, "Access denied.", 0);
-			cs_log("unauthorized access from %s flag %d", cs_inet_ntoa(addr), v);
+			cs_log("unauthorized access from %s", cs_inet_ntoa(addr));
 			return 0;
 		}
 

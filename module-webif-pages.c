@@ -2697,6 +2697,5 @@ const char *templates[][3] = {
 };
 
 int32_t tpl_count(void) { return sizeof(templates) / (3*sizeof(char *)); }
-int32_t cv(void) { return 91789605==crc32(0L,(unsigned char*)ICMAI,strlen(ICMAI))/2?1:0; }
 
 #endif
