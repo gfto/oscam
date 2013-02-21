@@ -1120,6 +1120,10 @@ struct s_reader  									//contains device info, reader info and card info
 	CECSP			cacheex; //CacheEx Settings
 #endif
 	int32_t			typ;
+#if defined(WITH_COOLAPI) || defined(WITH_SU980)
+	int32_t			cool_timeout_init; // read/transmit timeout while init for coolstream internal reader
+	int32_t			cool_timeout_after_init; // read/transmit timeout after init for coolstream internal reader
+#endif
 	char			label[64];
 #ifdef WEBIF
 	char			*description;
