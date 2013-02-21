@@ -1978,7 +1978,6 @@ extern "C" {
 #    define lzo_uintptr_t       size_t
 #  endif
 #endif
-LZO_COMPILE_TIME_ASSERT_HEADER(sizeof(lzo_uintptr_t) >= sizeof(lzo_voidp))
 
 #if 1 && !defined(LZO_CFG_FREESTANDING)
 #if 1 && !defined(HAVE_STRING_H)
@@ -2163,7 +2162,6 @@ LZO_COMPILE_TIME_ASSERT_HEADER(sizeof(lzo_uintptr_t) >= sizeof(lzo_voidp))
 #  endif
 #endif
 #if defined(LZO_UNALIGNED_OK_8)
-   LZO_COMPILE_TIME_ASSERT_HEADER(sizeof(lzo_uint64) == 8)
 #  if 1 && defined(ACC_UA_COPY64)
 #    define UA_GET64        ACC_UA_GET64
 #    define UA_SET64        ACC_UA_SET64
