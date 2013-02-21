@@ -149,9 +149,9 @@ char* TOUCH_CSS = ".ui-icon-user {background:url(data:image/png;base64,iVBORw0KG
 .ui-icon-play {background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAEZJREFUOI3dzLsVACAIQ9HgfI7rfthz+AS1MnXeBf7dVCjzG7dICjBICVQIBWQIDURIC/CQNrAEcgzYuAV4MQ1EMQVk8ZNtenETq5uwOdUAAAAASUVORK5CYII=) rgba(33,33,33,0.4) !important}\
 .ui-icon-stop {background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAACRJREFUOI1jYBgFjOgC/xkY/hOpkZGBgYGBiVIXjBowasDgAAAaJAIUw/Ru+wAAAABJRU5ErkJggg==) rgba(33,33,33,0.4) !important}";
 
-char* TOUCH_TPLSTATUS = "<!DOCTYPE html><head><meta name=viewport content='width=device-width, minimum-scale=1, maximum-scale=1'><title>OSCam</title><meta http-equiv=Content-Type content='text/html; charset=##HTTP_CHARSET##'><meta name=format-detection content='telephone=no'/><meta name=apple-mobile-web-app-capable content=yes /><link rel=stylesheet type='text/css' href='site.css'><link rel=stylesheet href='http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.css'/><script src='http://code.jquery.com/jquery-1.7.2.min.js'></script><script src='http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.js'></script><script>actDebugLevel='##ACTDEBUG##'</script><script type='text/javascript' src='oscam.js'></script></head><div data-theme=c id=home data-role=page><div data-theme=b data-role=header data-position=fixed><a data-theme=e data-icon=refresh href='javascript:reloadPage()'>Refresh</a><h1>OSCam</h1><a data-theme=e data-icon=delete data-iconpos=notext href='javascript:window.location=\"/\"'></a></div><div data-role=content><div id=rdrDiv data-role=content><ul data-role=listview id=rdrList></ul></div><div id=usrDiv data-role=content><ul data-role=listview id=usrList></ul></div><div id=logDiv data-role=content><ul data-role=listview id=logList></ul><div id=logText style='display:none'>##LOGHISTORY##</div></div><div id=sysDiv><span style='font-size:12px'><strong>Now:</strong> ##CURDATE## ##CURTIME##, <strong>Uptime:</strong> ##UPTIME##<br><strong>Access from:</strong> ##CURIP##<br><strong>Version:</strong> ##CS_VERSION## build r##CS_SVN_VERSION##<br></span><div style='text-align:center'><hr><p>Shutdown / Restart</p><div data-role=controlgroup data-type=horizontal style='width:250px;margin:auto'><a data-theme=e id=shutdown data-role=button style='color:red'>Shutdown</a><a data-theme=e id=restart data-role=button data-icon=refresh>Restart</a></div><hr><p>Load Balancer control</p><div id=lbButs style='width:260px;margin:auto'></div><span id=dbgBlk><hr><p>Debug Level: <span id=dbgLevel /></p><div data-role=controlgroup data-type=horizontal data-mini=true style='width:235px;margin:0 auto'><a data-theme=e id=dbgOff data-role=button>Debug log OFF</a><a data-theme=e id=dbgAll data-role=button style='color:green'>Debug log ALL</a></div><br><div id=dbgButs data-role=fieldcontain style='width:460px;margin:auto;'></div></span></div></div></div><div data-theme=b data-role=footer data-position=fixed id=footer></div></div>";
+char* TOUCH_TPLSTATUS = "<!DOCTYPE html><head><meta name=viewport content='width=device-width, minimum-scale=1, maximum-scale=1'><title>OSCam</title><meta http-equiv=Content-Type content='text/html; charset=##HTTP_CHARSET##'><meta name=format-detection content='telephone=no'/><meta name=apple-mobile-web-app-capable content=yes /><link rel=stylesheet type='text/css' href='site.css'><link rel=stylesheet href='http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.css'/><script src='http://code.jquery.com/jquery-1.7.2.min.js'></script><script src='http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.js'></script><script>actDebugLevel='##ACTDEBUG##'</script><script type='text/javascript' src='oscam.js'></script></head><div data-theme=c id=home data-role=page><div data-theme=b data-role=header data-position=fixed><a data-theme=e data-icon=refresh href='javascript:reloadPage()'>Refresh</a><h1>OSCam</h1><a data-theme=e data-icon=delete data-iconpos=notext href='javascript:window.location=\"/\"'></a></div><div data-role=content><div id=rdrDiv data-role=content><ul data-role=listview id=rdrList></ul></div><div id=usrDiv data-role=content><ul data-role=listview id=usrList></ul></div><div id=logDiv data-role=content><ul data-role=listview id=logList></ul><div id=logText style='display:none'>##LOGHISTORY##</div></div><div id=sysDiv><span style='font-size:12px'><strong>Now:</strong> ##CURDATE## ##CURTIME##, <strong>Uptime:</strong> ##UPTIME##<br><strong>Access from:</strong> ##CURIP##<br><strong>Version:</strong> ##CS_VERSION## build r##CS_SVN_VERSION##<br></span><div style='text-align:center'><hr><p>Shutdown / Restart</p><div data-role=controlgroup data-type=horizontal style='width:250px;margin:auto'><a data-theme=e id=shutdown data-role=button style='color:red'>Shutdown</a><a data-theme=e id=restart data-role=button data-icon=refresh>Restart</a></div><hr><p>Load Balancer control</p><div id=lbButs style='width:260px;margin:auto'></div><span id=dbgBlk><hr><p>Debug Level: <span id=dbgLevel /></p><div data-role=controlgroup data-type=horizontal data-mini=true style='width:235px;margin:0 auto'><a data-theme=e id=dbgOff data-role=button>Debug log OFF</a><a data-theme=e id=dbgAll data-role=button style='color:green'>Debug log ALL</a></div><br><div id=dbgButs data-role=fieldcontain style='width:460px;margin:auto;'></div></span></div></div></div><div data-theme=b data-role=footer data-position=fixed id=footer></div></div>\n";
 
-char* TOUCH_JSCRIPT = "function XML2jsobj(e){function s(e,t){i[e]?(i[e].constructor!=Array&&(i[e]=[i[e]]),i[e][i[e].length]=t):i[e]=t}var t='attributes',n,r,i={};if(e[t])for(n=0;r=e[t][n];n++)s(r.name,r.value);for(n=0;r=e.childNodes[n];n++)r.nodeType==3&&s('TEXT',r.nodeValue),r.nodeType==1&&s(r.nodeName,XML2jsobj(r));return i}function hms(e){e%=86400,time=[0,0,e];for(var t=2;t>0;t--)time[t-1]=Math.floor(time[t]/60),time[t]=time[t]%60,time[t]<10&&(time[t]='0'+time[t]);return time.join(':')}function fillLog(){var e='length',t=$.map($('#logText').text().split('\\n'),$.trim).reverse(),n=$('#logList');n.empty();for(i=0;i<t[e];i++){var r=t[i].split(' ');if(r[e]==1)continue;var s,o=0;for(s=0;s<r[e];s++)if(r[s]){o++;if(o==5)break}var u=r.slice(0,s).join(' '),a=r.slice(s).join(' ');n.append(\"<li style='padding-bottom:0'><p>\"+u+'</p>'+a+'</li>')}n.listview('refresh')}function appendTitle(e,t,n,r,i,s){var o=\"<li data-role='list-divider' data-theme='b' style='background:gray;\"+r+\"'>&nbsp;\"+n+(i?\"<span class='ui-li-count'>\"+i+'</span>':'')+(t?\"<a data-role='button' data-ajax='false' href='\"+t+\"'></a>\":'')+'</li>';s?e.prepend(o):e.append(o),e.listview('refresh')}function appendRecord(e,t){var n='request',r='name',i='</p>',s='',o=t[n],u='<p><strong>',a=' </strong>';return t[r]&&(s+='<h3>'+t[r]+'</h3>'),t.type&&(s+=u+'Type:'+a+(t.type=='p'?'Proxy':'Local')+i),t.protocol&&(s+=u+'Protocol:'+a+t.protocol+i),t[n]&&(s+=u+'CAID/SRVID:'+a+t[n].caid+' / '+t[n].srvid+i+(t[n].TEXT?u+'Channel:'+a+t[n].TEXT+i:'')+u+'Online/Idle:'+a+hms(t.times.online)+' / '+hms(t.times.idle)+i),e&&(e.append(\"<li data-icon='\"+(o?'stop':'play')+\"'><a id='r_\"+t[r]+\"'>\"+s+'</a></li>'),buttonUrlCallback('#r_'+t[r],'readers.html?label='+t[r]+'&action='+(o?'disable':'enable'),1)),s}function findClients(e,t,n){var r=e.oscam.status.client,i=[];for(j=0;j<r.length;j++)(t==null||r[j].name==t)&&n.indexOf(r[j].type)>=0&&(i[i.length]=r[j]);return i}function fillReaders(e){var t=null,n='length',r='getAttribute',s=$('#rdrList').empty();$.get(apiURL('readerlist'),function(o){var u=findClients(e,t,'rp');appendTitle(s,'readers.html','Online Readers','',u[n]);for(j=0;j<u[n];j++)appendRecord(s,u[j]);u=o.getElementsByTagName('reader');if(u[0]){appendTitle(s,t,'Disabled Readers','margin-top:10px',t);for(i=0;i<u[n];i++){if(u[i][r]('enabled')==1)continue;appendRecord(s,{name:u[i][r]('label'),type:u[i][r]('type'),protocol:u[i][r]('protocol')})}}s.listview('refresh')})}function fillUsers(e){var t=null,r='connection',s='substr',o=$('#usrList').empty();$.get(apiURL('userstats'),function(u){var a=0,f=[].concat(XML2jsobj(u).oscam.users.user);appendTitle(o,t,'Offline Users','margin-top:10px',t);for(i=0;i<f.length;i++){var l=f[i].name,c=findClients(e,l,'c')[0],h=f[i].status.indexOf('disabled')<0,p=\"<li data-icon='\"+(h?'stop':'play')+\"'><a id='u_\"+l+\"'><p><strong  style='font-size:16px'> \"+l+'</strong>';if(c!=t){p+=' ('+c[r].ip+', port:  '+c[r].port+')</p>',c.name=t,c.type=t,p+=appendRecord(t,c)+\"<table style='font-size:10px;font-weight:normal' cellspacing=0><tr>\";var d='<tr>';for(var v in f[i].stats){n=v;if(v=='TEXT')continue;n=='cwlastresptime'&&(n='cwltime'),n=='cwignore'&&(n='ign'),n=='cwtimeout'&&(n='tout'),n=='timeonchannel'&&(n='tOnCh'),n=='expectsleep'&&(n='eSlp'),n[s](0,2)=='cw'&&(n=n[s](2)),n[s](0,3)=='emm'&&(n='e'+n[s](3));var m=f[i].stats[v].TEXT;p+=\"<th style='border:1px solid'>\"+n,d+=\"<td style='border:1px solid'>\"+(m=='undefined'?'':m)}p+=d+'</table></a></li>',a++,o.prepend(p)}else p+='</p></a></li>',o.append(p);$('#u_'+l).live('tap',{name:l,enabled:h},function(e){$.get('userconfig.html?user='+e.data.name+'&action='+(e.data.enabled?'disable':'enable'),reloadPage)})}appendTitle(o,'userconfig.html','Online Users','',a,!0),o.listview('refresh')})}function buttonUrlCallback(e,t,n){$(e).live('tap',function(e){$.mobile.showPageLoadingMsg(),$.get(t,typeof n=='undefined'?$.mobile.hidePageLoadingMsg:function(){window.setTimeout(reloadPage,n)})})}function reloadPage(){window.location.search='?touchOpen='+touchOpen}function goTab(e){$.each(['rdr','usr','log','sys'],function(e,t){$('#'+t+'Div').hide()}),$('#'+e+'Div').toggle(),$('#'+e+'Button').toggleClass('ui-btn-active'),touchOpen=e}function setDebugLevel(){$.mobile.showPageLoadingMsg(),$.get('status.html?debug='+dbgLevel(),$.mobile.hidePageLoadingMsg)}function dbgLevel(e){var t='#dbg',n='checked';if(typeof e=='undefined'){e=0;for(i=1;i<=maxDebugLevel;i*=2)$(t+i).attr(n)&&(e+=i)}else for(i=1;i<=maxDebugLevel;i*=2)$(t+i).attr(n,e&i?n:null).checkboxradio('refresh');return $('#dbgLevel').html(e),e}function fillSys(){var e='Stats',t='Clear',n='create';buttonUrlCallback('#restart','shutdown.html?action=Restart',5e3),buttonUrlCallback('#shutdown','shutdown.html?action=Shutdown',3e4);var r='',s=[['Load',e],['Save',e],[t,e],[t,'Timeouts'],[t,'Not','Founds']];$.each(s,function(e,t){if(e==0||e==3)r+=\"<div data-role='controlgroup' data-type='horizontal'>\";r+=\"<a data-theme='e' id='lb\"+e+\"' data-role='button'>\"+t[0]+'<br>'+t[1]+(t[2]?' '+t[2]:'')+'&nbsp;</a>';if(e==2||e==4)r+='</div>'}),$('#lbButs').append(r).trigger(n),$.each(s,function(e,t){buttonUrlCallback('#lb'+e,'config.html?part=loadbalancer&button='+t[0]+'%20'+t[1]+(t[2]?'%20'+t[2]:''))});if(actDebugLevel.length==0){$('#dbgBlk').hide();return}var o=0,u=['',''],a=0,f=['Detailed error','ATR/ECM/CW','Reader traffic','Clients traffic','Reader IFD','Reader I/O','EMM','DVBAPI','Load Balancer','CACHEEX','Client ECM'];for(i=1;i<=maxDebugLevel;i*=2)u[a]+=\"<input type='checkbox' id='dbg\"+i+\"'/><label for='dbg\"+i+\"'>\"+f[o]+'</label>',o++,a=1-a;for(i=0;i<2;i++)u[i]=\"<div class='ui-block-\"+['a','b'][i]+\"' style='text-align:\"+['right','left'][i]+\"'><fieldset data-role='controlgroup' data-mini='true'>\"+u[i]+'</fieldset></div>';$('#dbgButs').append(\"<fieldset class='ui-grid-a'>\"+u[0]+u[1]+'</fieldset>').trigger(n);for(i=1;i<=maxDebugLevel;i*=2)$('#dbg'+i).bind('change',setDebugLevel);$('#dbgOff').live('tap',function(){dbgLevel(0),setDebugLevel()}),$('#dbgAll').live('tap',function(){dbgLevel(65535),setDebugLevel()}),dbgLevel(actDebugLevel)}function apiURL(e){return'oscamapi.html?part='+e}touchOpen='sys',maxDebugLevel=1024,$(document).ready(function(){var e=\"<div data-role='navbar' data-iconpos='bottom'><ul>\";$.each([['rdr','card','Readers'],['usr','user','Users'],['log','info','Log'],['sys','gear','System']],function(t,n){e+=\"<li><a data-theme='b' id='\"+n[0]+\"Button' data-icon='\"+n[1]+\"' data-role='button' onclick='goTab(\\\"\"+n[0]+'\")\\'>'+n[2]+'</a>'}),$('#footer').append(e+'</ul></div>').trigger('create'),fillSys();var t=window.location.search;fillLog(),$.get(apiURL('status'),function(e){var t=XML2jsobj(e);fillReaders(t),fillUsers(t)});if(t){var n=t.indexOf('touchOpen');n>0&&(touchOpen=t.substr(n+10))}goTab(touchOpen)});";
+char* TOUCH_JSCRIPT = "function XML2jsobj(e){function s(e,t){i[e]?(i[e].constructor!=Array&&(i[e]=[i[e]]),i[e][i[e].length]=t):i[e]=t}var t='attributes',n,r,i={};if(e[t])for(n=0;r=e[t][n];n++)s(r.name,r.value);for(n=0;r=e.childNodes[n];n++)r.nodeType==3&&s('TEXT',r.nodeValue),r.nodeType==1&&s(r.nodeName,XML2jsobj(r));return i}function hms(e){e%=86400,time=[0,0,e];for(var t=2;t>0;t--)time[t-1]=Math.floor(time[t]/60),time[t]=time[t]%60,time[t]<10&&(time[t]='0'+time[t]);return time.join(':')}function fillLog(){var e='length',t=$.map($('#logText').text().split('\\n'),$.trim).reverse(),n=$('#logList');n.empty();for(i=0;i<t[e];i++){var r=t[i].split(' ');if(r[e]==1)continue;var s,o=0;for(s=0;s<r[e];s++)if(r[s]){o++;if(o==5)break}var u=r.slice(0,s).join(' '),a=r.slice(s).join(' ');n.append(\"<li style='padding-bottom:0'><p>\"+u+'</p>'+a+'</li>')}n.listview('refresh')}function appendTitle(e,t,n,r,i,s){var o=\"<li data-role='list-divider' data-theme='b' style='background:gray;\"+r+\"'>&nbsp;\"+n+(i?\"<span class='ui-li-count'>\"+i+'</span>':'')+(t?\"<a data-role='button' data-ajax='false' href='\"+t+\"'></a>\":'')+'</li>';s?e.prepend(o):e.append(o),e.listview('refresh')}function appendRecord(e,t){var n='request',r='name',i='</p>',s='',o=t[n],u='<p><strong>',a=' </strong>';return t[r]&&(s+='<h3>'+t[r]+'</h3>'),t.type&&(s+=u+'Type:'+a+(t.type=='p'?'Proxy':'Local')+i),t.protocol&&(s+=u+'Protocol:'+a+t.protocol+i),t[n]&&(s+=u+'CAID/SRVID:'+a+t[n].caid+' / '+t[n].srvid+i+(t[n].TEXT?u+'Channel:'+a+t[n].TEXT+i:'')+u+'Online/Idle:'+a+hms(t.times.online)+' / '+hms(t.times.idle)+i),e&&(e.append(\"<li data-icon='\"+(o?'stop':'play')+\"'><a id='r_\"+t[r]+\"'>\"+s+'</a></li>'),buttonUrlCallback('#r_'+t[r],'readers.html?label='+t[r]+'&action='+(o?'disable':'enable'),1)),s}function findClients(e,t,n){var r=e.oscam.status.client,i=[];for(j=0;j<r.length;j++)(t==null||r[j].name==t)&&n.indexOf(r[j].type)>=0&&(i[i.length]=r[j]);return i}function fillReaders(e){var t=null,n='length',r='getAttribute',s=$('#rdrList').empty();$.get(apiURL('readerlist'),function(o){var u=findClients(e,t,'rp');appendTitle(s,'readers.html','Online Readers','',u[n]);for(j=0;j<u[n];j++)appendRecord(s,u[j]);u=o.getElementsByTagName('reader');if(u[0]){appendTitle(s,t,'Disabled Readers','margin-top:10px',t);for(i=0;i<u[n];i++){if(u[i][r]('enabled')==1)continue;appendRecord(s,{name:u[i][r]('label'),type:u[i][r]('type'),protocol:u[i][r]('protocol')})}}s.listview('refresh')})}function fillUsers(e){var t=null,r='connection',s='substr',o=$('#usrList').empty();$.get(apiURL('userstats'),function(u){var a=0,f=[].concat(XML2jsobj(u).oscam.users.user);appendTitle(o,t,'Offline Users','margin-top:10px',t);for(i=0;i<f.length;i++){var l=f[i].name,c=findClients(e,l,'c')[0],h=f[i].status.indexOf('disabled')<0,p=\"<li data-icon='\"+(h?'stop':'play')+\"'><a id='u_\"+l+\"'><p><strong  style='font-size:16px'> \"+l+'</strong>';if(c!=t){p+=' ('+c[r].ip+', port:  '+c[r].port+')</p>',c.name=t,c.type=t,p+=appendRecord(t,c)+\"<table style='font-size:10px;font-weight:normal' cellspacing=0><tr>\";var d='<tr>';for(var v in f[i].stats){n=v;if(v=='TEXT')continue;n=='cwlastresptime'&&(n='cwltime'),n=='cwignore'&&(n='ign'),n=='cwtimeout'&&(n='tout'),n=='timeonchannel'&&(n='tOnCh'),n=='expectsleep'&&(n='eSlp'),n[s](0,2)=='cw'&&(n=n[s](2)),n[s](0,3)=='emm'&&(n='e'+n[s](3));var m=f[i].stats[v].TEXT;p+=\"<th style='border:1px solid'>\"+n,d+=\"<td style='border:1px solid'>\"+(m=='undefined'?'':m)}p+=d+'</table></a></li>',a++,o.prepend(p)}else p+='</p></a></li>',o.append(p);$('#u_'+l).live('tap',{name:l,enabled:h},function(e){$.get('userconfig.html?user='+e.data.name+'&action='+(e.data.enabled?'disable':'enable'),reloadPage)})}appendTitle(o,'userconfig.html','Online Users','',a,!0),o.listview('refresh')})}function buttonUrlCallback(e,t,n){$(e).live('tap',function(e){$.mobile.showPageLoadingMsg(),$.get(t,typeof n=='undefined'?$.mobile.hidePageLoadingMsg:function(){window.setTimeout(reloadPage,n)})})}function reloadPage(){window.location.search='?touchOpen='+touchOpen}function goTab(e){$.each(['rdr','usr','log','sys'],function(e,t){$('#'+t+'Div').hide()}),$('#'+e+'Div').toggle(),$('#'+e+'Button').toggleClass('ui-btn-active'),touchOpen=e}function setDebugLevel(){$.mobile.showPageLoadingMsg(),$.get('status.html?debug='+dbgLevel(),$.mobile.hidePageLoadingMsg)}function dbgLevel(e){var t='#dbg',n='checked';if(typeof e=='undefined'){e=0;for(i=1;i<=maxDebugLevel;i*=2)$(t+i).attr(n)&&(e+=i)}else for(i=1;i<=maxDebugLevel;i*=2)$(t+i).attr(n,e&i?n:null).checkboxradio('refresh');return $('#dbgLevel').html(e),e}function fillSys(){var e='Stats',t='Clear',n='create';buttonUrlCallback('#restart','shutdown.html?action=Restart',5e3),buttonUrlCallback('#shutdown','shutdown.html?action=Shutdown',3e4);var r='',s=[['Load',e],['Save',e],[t,e],[t,'Timeouts'],[t,'Not','Founds']];$.each(s,function(e,t){if(e==0||e==3)r+=\"<div data-role='controlgroup' data-type='horizontal'>\";r+=\"<a data-theme='e' id='lb\"+e+\"' data-role='button'>\"+t[0]+'<br>'+t[1]+(t[2]?' '+t[2]:'')+'&nbsp;</a>';if(e==2||e==4)r+='</div>'}),$('#lbButs').append(r).trigger(n),$.each(s,function(e,t){buttonUrlCallback('#lb'+e,'config.html?part=loadbalancer&button='+t[0]+'%20'+t[1]+(t[2]?'%20'+t[2]:''))});if(actDebugLevel.length==0){$('#dbgBlk').hide();return}var o=0,u=['',''],a=0,f=['Detailed error','ATR/ECM/CW','Reader traffic','Clients traffic','Reader IFD','Reader I/O','EMM','DVBAPI','Load Balancer','CACHEEX','Client ECM'];for(i=1;i<=maxDebugLevel;i*=2)u[a]+=\"<input type='checkbox' id='dbg\"+i+\"'/><label for='dbg\"+i+\"'>\"+f[o]+'</label>',o++,a=1-a;for(i=0;i<2;i++)u[i]=\"<div class='ui-block-\"+['a','b'][i]+\"' style='text-align:\"+['right','left'][i]+\"'><fieldset data-role='controlgroup' data-mini='true'>\"+u[i]+'</fieldset></div>';$('#dbgButs').append(\"<fieldset class='ui-grid-a'>\"+u[0]+u[1]+'</fieldset>').trigger(n);for(i=1;i<=maxDebugLevel;i*=2)$('#dbg'+i).bind('change',setDebugLevel);$('#dbgOff').live('tap',function(){dbgLevel(0),setDebugLevel()}),$('#dbgAll').live('tap',function(){dbgLevel(65535),setDebugLevel()}),dbgLevel(actDebugLevel)}function apiURL(e){return'oscamapi.html?part='+e}touchOpen='sys',maxDebugLevel=1024,$(document).ready(function(){var e=\"<div data-role='navbar' data-iconpos='bottom'><ul>\";$.each([['rdr','card','Readers'],['usr','user','Users'],['log','info','Log'],['sys','gear','System']],function(t,n){e+=\"<li><a data-theme='b' id='\"+n[0]+\"Button' data-icon='\"+n[1]+\"' data-role='button' onclick='goTab(\\\"\"+n[0]+'\")\\'>'+n[2]+'</a>'}),$('#footer').append(e+'</ul></div>').trigger('create'),fillSys();var t=window.location.search;fillLog(),$.get(apiURL('status'),function(e){var t=XML2jsobj(e);fillReaders(t),fillUsers(t)});if(t){var n=t.indexOf('touchOpen');n>0&&(touchOpen=t.substr(n+10))}goTab(touchOpen)});\n";
  
 #endif
 
@@ -321,7 +321,7 @@ AAAAAElFTkSuQmCC"
 	<link rel=\"stylesheet\" type=\"text/css\" href=\"site.css\">\n\
 	<link href=\"favicon.ico\" rel=\"icon\" type=\"image/x-icon\">\n\
 	<script type=\"text/javascript\" src=\"oscam.js\"></script>\n\
-##REFRESH##\
+##REFRESH##\n\
 </HEAD>\n\
 <BODY>\n\
 	<DIV CLASS=\"header\"><H2 CLASS=\"headline1\">OSCAM ##CS_VERSION## build r##CS_SVN_VERSION##</H2></DIV>\n"
@@ -335,15 +335,15 @@ AAAAAElFTkSuQmCC"
     \"revision\": \"##CS_SVN_VERSION##\",\n\
     \"starttime\": \"##APISTARTTIME##\",\n\
     \"uptime\": \"##APIUPTIME##\",\n\
-    \"readonly\": \"##APIREADONLY##\","
+    \"readonly\": \"##APIREADONLY##\",\n"
 
 #define TPLAPIERROR "##TPLAPIHEADER##\n\
 		<error>##APIERRORMESSAGE##</error>\n\
-##TPLAPIFOOTER##"
+##TPLAPIFOOTER##\n"
 
 #define TPLAPICONFIRMATION "##TPLAPIHEADER##\n\
 		<confirm>##APICONFIRMMESSAGE##</confirm>\n\
-##TPLAPIFOOTER##"
+##TPLAPIFOOTER##\n"
 
 #define TPLFOOTER "\
 	<BR><HR><BR>\n\
@@ -353,12 +353,12 @@ AAAAAElFTkSuQmCC"
 		<H4 CLASS=\"styleauthor\">WebIf Style by </H4>\n\
 	</DIV>\n\
 </BODY>\n\
-</HTML>"
+</HTML>\n"
 
-#define TPLAPIFOOTER "</oscam>"
+#define TPLAPIFOOTER "</oscam>\n"
 
 #define TPLJSONFOOTER "    }\n\
-})"
+})\n"
 
 #define TPLREFRESH "\
 	<script type=\"text/javascript\">\n\
@@ -370,7 +370,7 @@ AAAAAElFTkSuQmCC"
 
 #define TPLHELPPREFIX "<A HREF=\"http://www.streamboard.tv/wiki/OSCam/##LANGUAGE##/Config/oscam."
 
-#define TPLHELPSUFFIX "\" TARGET=\"_blank\">"
+#define TPLHELPSUFFIX "\" TARGET=\"_blank\">\n"
 
 #define TPLMENU "\
 	<TABLE border=0 class=\"menu\">\n\
@@ -382,7 +382,7 @@ AAAAAElFTkSuQmCC"
 			<TD CLASS=\"##MENUACTIVE4##\"><A HREF=\"services.html\">SERVICES</A></TD>\n\
 			<TD CLASS=\"##MENUACTIVE5##\"><A HREF=\"files.html?file=oscam.version\">FILES</A></TD>\n\
 			<TD CLASS=\"##MENUACTIVE6##\"><A HREF=\"failban.html\">FAILBAN</A>##FAILBANNOTIFIER##</TD>\n\
-##TPLCACHEEXMENUITEM##\
+##TPLCACHEEXMENUITEM##\n\
 			<TD CLASS=\"##MENUACTIVE8##\"><A HREF=\"script.html\">SCRIPT</A></TD>\n\
 			<TD CLASS=\"##MENUACTIVE9##\"><A HREF=\"shutdown.html\">SHUTDOWN</A></TD>\n\
 		</TR>\n\
@@ -394,21 +394,21 @@ AAAAAElFTkSuQmCC"
 	<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
 			<TD CLASS=\"##CMENUACTIVE0##\"><A HREF=\"config.html?part=global\">Global</A></TD>\n\
-##TPLCONFIGMENULB##\
+##TPLCONFIGMENULB##\n\
 			<TD CLASS=\"##CMENUACTIVE24##\"><A HREF=\"config.html?part=cache\">Cache##TPLCMCAPTIONCWC##</A></TD>\n\
-##TPLCONFIGMENUCAMD33##\
-##TPLCONFIGMENUCAMD35##\
-##TPLCONFIGMENUCAMD35TCP##\
-##TPLCONFIGMENUNEWCAMD##\
-##TPLCONFIGMENURADEGAST##\
-##TPLCONFIGMENUCCCAM##\
-##TPLCONFIGMENUGBOX##\
-##TPLCONFIGMENUANTICASC##\
-##TPLCONFIGMENULCD##\
-##TPLCONFIGMENUMONITOR##\
-##TPLCONFIGMENUWEBIF##\
-##TPLCONFIGMENUSERIAL##\
-##TPLCONFIGMENUDVBAPI##\
+##TPLCONFIGMENUCAMD33##\n\
+##TPLCONFIGMENUCAMD35##\n\
+##TPLCONFIGMENUCAMD35TCP##\n\
+##TPLCONFIGMENUNEWCAMD##\n\
+##TPLCONFIGMENURADEGAST##\n\
+##TPLCONFIGMENUCCCAM##\n\
+##TPLCONFIGMENUGBOX##\n\
+##TPLCONFIGMENUANTICASC##\n\
+##TPLCONFIGMENULCD##\n\
+##TPLCONFIGMENUMONITOR##\n\
+##TPLCONFIGMENUWEBIF##\n\
+##TPLCONFIGMENUSERIAL##\n\
+##TPLCONFIGMENUDVBAPI##\n\
 		</TR>\n\
 	</TABLE>\n"
 
@@ -416,7 +416,7 @@ AAAAAElFTkSuQmCC"
 	<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
 			<TD CLASS=\"##CMENUACTIVE12##\"><A HREF=\"files.html?file=oscam.version\">oscam.version</A></TD>\n\
-##TPLFILEMENUDVBAPI##\
+##TPLFILEMENUDVBAPI##\n\
 			<TD CLASS=\"##CMENUACTIVE13##\"><A HREF=\"files.html?file=oscam.conf\">oscam.conf</A></TD>\n\
 			<TD CLASS=\"##CMENUACTIVE14##\"><A HREF=\"files.html?file=oscam.user\">oscam.user</A></TD>\n\
 			<TD CLASS=\"##CMENUACTIVE15##\"><A HREF=\"files.html?file=oscam.server\">oscam.server</A></TD>\n\
@@ -427,15 +427,15 @@ AAAAAElFTkSuQmCC"
 			<TD CLASS=\"##CMENUACTIVE25##\"><A HREF=\"files.html?file=oscam.whitelist\">oscam.whitelist</A></TD>\n\
 			<TD CLASS=\"##CMENUACTIVE20##\"><A HREF=\"files.html?file=logfile\">logfile</A></TD>\n\
 			<TD CLASS=\"##CMENUACTIVE21##\"><A HREF=\"files.html?file=userfile\">userfile</A></TD>\n\
-##TPLFILEMENUANTICASC##\
+##TPLFILEMENUANTICASC##\n\
 		</TR>\n\
-	</TABLE>"
+	</TABLE>\n"
 
 #define TPLFILE "\
-##TPLHEADER##\
-##TPLMENU##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
 ##TPLFILEMENU##\n\
-##TPLMESSAGE##\
+##TPLMESSAGE##\n\
 	<DIV CLASS=\"debugmenu\">##SDEBUG##</DIV>\
 	<DIV CLASS=\"logmenu\">##LOGMENU##</DIV>\
 	<DIV CLASS=\"filterform\">##FILTERFORM##</DIV>\
@@ -445,19 +445,19 @@ AAAAAElFTkSuQmCC"
 		<BR>##WRITEPROTECTION##<BR>\n\
 		<INPUT TYPE=\"submit\" NAME=\"action\" VALUE=\"Save\" TITLE=\"Save file\" ##BTNDISABLED##>\n\
 	</FORM>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLFILTERFORM "<FORM ACTION=\"files.html\" method=\"get\">\n\
 <INPUT name=\"file\" type=\"hidden\" value=\"userfile\">\n\
 <SELECT name=\"filter\">\n\
-##FILTERFORMOPTIONS##\
-</SELECT><input type=\"submit\" name=\"action\" value=\"Filter\" title=\"Filter for a specific user\"></FORM>"
+##FILTERFORMOPTIONS##\n\
+</SELECT><input type=\"submit\" name=\"action\" value=\"Filter\" title=\"Filter for a specific user\"></FORM>\n"
 
 #define TPLAPIFILE "##TPLAPIHEADER##\n\
 	<file filename=\"##APIFILENAME##\" writable=\"##APIWRITABLE##\">\n\
 	<![CDATA[##FILECONTENT##]]>\n\
 	</file>\n\
-##TPLAPIFOOTER##"
+##TPLAPIFOOTER##\n"
 
 #define TPLDEBUGSELECT "\
 	<SPAN CLASS=\"debugt\"> Switch Debug from&nbsp;##ACTDEBUG## to&nbsp;</SPAN>\n\
@@ -476,9 +476,9 @@ AAAAAElFTkSuQmCC"
 	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS65535##\" HREF=\"##NEXTPAGE##?debug=65535##CUSTOMPARAM##\" title=\"debug all\">&nbsp;ALL&nbsp;</A></SPAN>\n"
 
 #define TPLFAILBAN "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLMESSAGE##\n\
 		<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"failban.html?action=delete&intip=all\">Clear all</TD>\n\
@@ -487,15 +487,15 @@ AAAAAElFTkSuQmCC"
 	<TABLE CLASS=\"stats\">\n\
 		<TR><TH colspan=\"6\">List of banned IP Addresses</TH></TR>\n\
 		<TR><TH>IP Address</TH><TH>User</TH><TH>Violation date</TH><TH>Violation count</TH><TH>left ban time</TH><TH>Action</TH></TR>\n\
-##FAILBANROW##\
+##FAILBANROW##\n\
 	</TABLE><BR>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLAPIFAILBAN "##TPLAPIHEADER##\n\
 	<failbanlist>\n\
-##APIFAILBANROW##\
+##APIFAILBANROW##\n\
 	</failbanlist>\n\
-##TPLAPIFOOTER##"
+##TPLAPIFOOTER##\n"
 
 #define TPLFAILBANBIT "\
 		<TR>\n\
@@ -538,8 +538,8 @@ AAAAAElFTkSuQmCC"
 #define TPLCMCAPTIONCWC " / CW Cycle"
 
 #define TPLSTATUS "\
-##TPLHEADER##\
-##TPLMENU##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
 <DIV CLASS=\"filterform\">\n\
 	<form action=\"status.html\" method=\"get\">\n\
 		<select name=\"hideidle\">\n\
@@ -579,25 +579,25 @@ AAAAAElFTkSuQmCC"
 ##CLIENTSTATUS##\n\
 	</TABLE><BR>\n\
 	<DIV class=\"log\">\n\
-##LOGHISTORY##\
+##LOGHISTORY##\n\
 	</DIV><BR>\n\
-##SDEBUG##\
-##TPLFOOTER##"
+##SDEBUG##\n\
+##TPLFOOTER##\n"
 
 #define TPLAPISTATUS "##TPLAPIHEADER##\n\
 	<status>\n\
-##APISTATUSBITS##\
+##APISTATUSBITS##\n\
 	</status>\n\
 	<log><![CDATA[ \n\
-   ##LOGHISTORY##\
+   ##LOGHISTORY##\n\
 	]]></log>\
-##TPLAPIFOOTER##"
+##TPLAPIFOOTER##\n"
 
 #define TPLJSONSTATUS "##TPLJSONHEADER##\n\
 	\"status\": { \"client\":[\n\
-	                          ##JSONSTATUSBITS##\
-								]}\
-##TPLJSONFOOTER##"
+	                          ##JSONSTATUSBITS##\n\
+								]}\n\
+##TPLJSONFOOTER##\n"
 
 #define TPLCLIENTSTATUSBIT "\
 		<TR class=\"##CLIENTTYPE##\">\n\
@@ -653,11 +653,11 @@ AAAAAElFTkSuQmCC"
     \"port\": \"##CLIENTPORT##\",\n\
     \"$\": \"##CLIENTCON##\"\n\
 }\n\
-}##JSONARRAYDELIMITER##"
+}##JSONARRAYDELIMITER##\n"
 
 #define TPLAPIUSERCONFIGLIST "##TPLAPIHEADER##\n\
     <users>\n\
-##APIUSERCONFIGS##\
+##APIUSERCONFIGS##\n\
     </users>\n\
     <totals>\n\
         <cwok>##TOTAL_CWOK##</cwok>\n\
@@ -673,7 +673,7 @@ AAAAAElFTkSuQmCC"
         <userconnected>##TOTAL_CONNECTED##</userconnected>\n\
         <useronline>##TOTAL_ONLINE##</useronline>\n\
     </totals>\n\
-##TPLAPIFOOTER##"
+##TPLAPIFOOTER##\n"
 
 #define TPLAPIUSERCONFIGLISTBIT "        <user name=\"##USER##\" status=\"##STATUS##\" ip=\"##CLIENTIP##\" protocol=\"##CLIENTPROTO##\">\n\
             <stats>\n\
@@ -694,9 +694,9 @@ AAAAAElFTkSuQmCC"
 
 
 #define TPLUSERCONFIGLIST "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLMESSAGE##\n\
 	<TABLE CLASS=\"configmenu\">\n\
 		<TR>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?part=adduser\">Add User</A></TD>\n\
@@ -719,7 +719,7 @@ AAAAAElFTkSuQmCC"
 			<TH TITLE=\"Delivered ECM with status not OK\">NOK</TH>\n\
 			<TH TITLE=\"Ignored ECM by filters, part of NOK\">IGN</TH>\n\
 			<TH TITLE=\"Timeout ECM, part of NOK\">TOUT</TH>\n\
-##TPLCWCYCLETHV##\
+##TPLCWCYCLETHV##\n\
 			<TH TITLE=\"Delivered ECM from cache, part of OK\">CACHE</TH>\n\
 			<TH TITLE=\"Delivered ECM from tunneled, part of OK\">TUN</TH>\n\
 			<TH TITLE=\"Last ECM Time\">LTIME</TH>\n\
@@ -729,8 +729,8 @@ AAAAAElFTkSuQmCC"
 			<TH TITLE=\"Different services during last 60s\">CASC USERS</TH>\n\
 			<TH colspan=\"3\" class=\"centered\">Action</TH>\n\
 		</TR>\n\
-##USERCONFIGS##\
-##NEWUSERFORM##\
+##USERCONFIGS##\n\
+##NEWUSERFORM##\n\
 	</TABLE><BR>\n\
 	<SPAN CLASS = \"user_totals_headline\">Totals for the server:</SPAN>\n\
 	<TABLE CLASS=\"user_totals\">\n\
@@ -765,7 +765,7 @@ AAAAAElFTkSuQmCC"
 			<TD class=\"centered\"><A HREF=\"userconfig.html?action=resetserverstats\" TITLE=\"reset statistics for server\"><IMG CLASS=\"icon\" SRC=\"image?i=ICRES\" ALT=\"Reset Server Stats\"></A></TD>\n\
 		</TR>\n\
 	</TABLE><BR>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLCWCYCLETHV "\
 			<TH TITLE=\"CW Cycle Check\">CW CYCLE<br><span TITLE=\"CWs checked\">Checked</span> / <span TITLE=\"Cycle ok\">OK</span> / <span TITLE=\"Cycle nok\">NOK</span> / <span TITLE=\"Cycle IGN\">IGN</span></TH>\n"
@@ -793,7 +793,7 @@ AAAAAElFTkSuQmCC"
 			<TD class=\"usercol9\">##CWNOK##</TD>\n\
 			<TD class=\"usercol10\">##CWIGN##</TD>\n\
 			<TD class=\"usercol11\">##CWTOUT##</TD>\n\
-##TPLCWCYCLETBV##\
+##TPLCWCYCLETBV##\n\
 			<TD class=\"usercol13\">##CWCACHE##</TD>\n\
 			<TD class=\"usercol14\">##CWTUN##</TD>\n\
 			<TD class=\"usercol15\">##CWLASTRESPONSET##</TD>\n\
@@ -840,12 +840,12 @@ AAAAAElFTkSuQmCC"
 		<cccstealth>##CCCSTEALTH##</cccstealth>\n\
 		<keepalive>##KEEPALIVEVALUE##</keepalive>\n\
     </account>\n\
-##TPLAPIFOOTER##"
+##TPLAPIFOOTER##\n"
 
 #define TPLUSEREDIT "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLMESSAGE##\n\
 	<BR><BR>\n\
 	<form action=\"user_edit.html\" method=\"get\">\n\
 		<input name=\"user\" type=\"hidden\" value=\"##USERNAME##\">\n\
@@ -872,12 +872,12 @@ AAAAAElFTkSuQmCC"
 				</TD>\n\
 			</TR>\n\
 			<TR><TD>##TPLHELPPREFIX##user#sleep##TPLHELPSUFFIX##Sleep:</A></TD><TD><input name=\"sleep\" type=\"text\" size=\"4\" maxlength=\"4\" value=\"##SLEEP##\"></TD></TR>\n\
-##TPLUSEREDITMONLEVEL##\
+##TPLUSEREDITMONLEVEL##\n\
 			<TR><TD>##TPLHELPPREFIX##user#au##TPLHELPSUFFIX##AU:</A></TD><TD><input name=\"au\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##AUREADER##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##user#services##TPLHELPSUFFIX##Services:</A></TD>\n\
 				<TD>\n\
 					<TABLE class=\"invisible\">\n\
-##SIDS##\
+##SIDS##\n\
 					</TABLE>\n\
 				</TD>\n\
 			</TR>\n\
@@ -888,17 +888,17 @@ AAAAAElFTkSuQmCC"
 			<TR><TD>##TPLHELPPREFIX##user#betatunnel##TPLHELPSUFFIX##Betatunnel:</A></TD><TD><textarea name=\"betatunnel\" cols=\"58\" rows=\"3\" class=\"bt\">##BETATUNNELS##</textarea></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##user#suppresscmd08##TPLHELPSUFFIX##Suppresscmd08:</A></TD><TD><SELECT NAME=\"suppresscmd08\"><OPTION VALUE=\"0\">CMD08 active</OPTION><OPTION VALUE=\"1\" ##SUPPRESSCMD08##>CMD08 suppressed</OPTION></SELECT></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##user#sleepsend##TPLHELPSUFFIX##Sleepsend:</A></TD><TD><input name=\"sleepsend\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##SLEEPSEND##\"> 0 or 255</TD></TR>\n\
-##TPLUSEREDITANTICASC##\
-##TPLUSEREDITCCCAM##\
+##TPLUSEREDITANTICASC##\n\
+##TPLUSEREDITCCCAM##\n\
 			<TR><TD>##TPLHELPPREFIX##user#keepalive##TPLHELPSUFFIX##Keepalive:</A></TD><TD><SELECT NAME=\"keepalive\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##KEEPALIVE##>ON</OPTION></SELECT></TD></TR>\n\
-##TPLUSEREDITCACHEEXBIT##\
+##TPLUSEREDITCACHEEXBIT##\n\
 			<TR>\n\
 				<TD class=\"centered\"><input type=\"submit\" name=\"action\" value=\"Save\" title=\"Save settings and reload users\" ##BTNDISABLED##></TD>\n\
 				<TD class=\"centered\"><input name=\"newuser\" type=\"text\" size=\"20\" maxlength=\"20\" title=\"Enter new username if you want to clone this user\">&nbsp;&nbsp;&nbsp;<input type=\"submit\" name=\"action\" value=\"Save As\" title=\"Save as new user and reload users\" ##BTNDISABLED##></TD>\n\
 			</TR>\n\
 		</TABLE>\n\
 	</form>\n\
-##TPLFOOTER##"					
+##TPLFOOTER##\n"
 
 #define TPLUSEREDITMONLEVEL "\
 			<TR><TD>##TPLHELPPREFIX##user#monlevel##TPLHELPSUFFIX##Monlevel:</A></TD>\n\
@@ -913,7 +913,7 @@ AAAAAElFTkSuQmCC"
 				</TD>\n\
 			</TR>\n"
 
-#define TPLUSEREDITRDRSELECTED "						<option value=\"##READERNAME##\" ##SELECTED##>##READERNAME##</option>"
+#define TPLUSEREDITRDRSELECTED "						<option value=\"##READERNAME##\" ##SELECTED##>##READERNAME##</option>\n"
 
 #define TPLUSEREDITCACHEEXBIT "\
 			<TR><TH>&nbsp;</TH><TH>CacheEX</TH></TR>\n\
@@ -1013,12 +1013,12 @@ AAAAAElFTkSuQmCC"
 				</TD></TR>\n"
 
 #define TPLSIDTAB "\
-##TPLHEADER##\
-##TPLMENU##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
 	<BR><BR><DIV class=\"log\">\n\
-##SIDTABS##\
+##SIDTABS##\n\
 	</DIV>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLSIDTABBIT "\
 	label=##LABEL##<BR>\n\
@@ -1027,9 +1027,9 @@ AAAAAElFTkSuQmCC"
 	services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 
 #define TPLREADERS "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLMESSAGE##\n\
 	<TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD><TD CLASS=\"configmenu\"><A TARGET=\"_blank\" HREF=\"graph.svg?type=servers\">Show Graphs</A></TD></TR></TABLE>\n\
 	<form action=\"readerconfig.html\" method=\"get\">\n\
 		<TABLE CLASS=\"readers\">\n\
@@ -1062,16 +1062,16 @@ AAAAAElFTkSuQmCC"
 			</TR>\n\
 		</TABLE>\n\
 	</form>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLAPIREADERS "##TPLAPIHEADER##\n\
     <readers>\n\
-##APIREADERLIST##\
+##APIREADERLIST##\n\
     </readers>\n\
-##TPLAPIFOOTER##"
+##TPLAPIFOOTER##\n"
 
 #define TPLAPIREADERSBIT "\
-		<reader label=\"##READERNAME##\" protocol=\"##CTYP##\" type=\"##APIREADERTYPE##\" enabled=\"##APIREADERENABLED##\"></reader>"
+		<reader label=\"##READERNAME##\" protocol=\"##CTYP##\" type=\"##APIREADERTYPE##\" enabled=\"##APIREADERENABLED##\"></reader>\n"
 
 #define TPLREADERSBIT "\
 			<TR CLASS =\"##READERCLASS##\">\n\
@@ -1094,16 +1094,16 @@ AAAAAElFTkSuQmCC"
 				<TD class=\"centered\"><A HREF=\"readers.html?label=##READERNAMEENC##&amp;action=delete\" TITLE=\"Delete this Reader\"><IMG CLASS=\"icon\" SRC=\"image?i=ICDEL\" ALT=\"Delete Reader\"></A></TD>\n\
 			</TR>\n"
 
-#define TPLREADERENTITLEBIT "<A HREF=\"entitlements.html?label=##READERNAMEENC##\" TITLE=\"Show Entitlement\"><IMG CLASS=\"icon\" SRC=\"##ENTICO##\" ALT=\"Show Entitlement\"></A>"
+#define TPLREADERENTITLEBIT "<A HREF=\"entitlements.html?label=##READERNAMEENC##\" TITLE=\"Show Entitlement\"><IMG CLASS=\"icon\" SRC=\"##ENTICO##\" ALT=\"Show Entitlement\"></A>\n"
 
-#define TPLREADERREFRESHBIT "<A HREF=\"readers.html?action=reread&amp;label=##READERNAMEENC##\" TITLE=\"Refresh Entitlement\"><IMG CLASS=\"icon\" SRC=\"##REFRICO##\" ALT=\"Reset and reload Entitlement\"></A>"
+#define TPLREADERREFRESHBIT "<A HREF=\"readers.html?action=reread&amp;label=##READERNAMEENC##\" TITLE=\"Refresh Entitlement\"><IMG CLASS=\"icon\" SRC=\"##REFRICO##\" ALT=\"Reset and reload Entitlement\"></A>\n"
 
-#define TPLREADERWRITEEMMBIT "<A HREF=\"emm.html?label=##READERNAMEENC##\" TITLE=\"Write EMM to this Reader\"><IMG CLASS=\"icon\" SRC=\"##EMMICO##\" ALT=\"Write EMM\"></A>"
+#define TPLREADERWRITEEMMBIT "<A HREF=\"emm.html?label=##READERNAMEENC##\" TITLE=\"Write EMM to this Reader\"><IMG CLASS=\"icon\" SRC=\"##EMMICO##\" ALT=\"Write EMM\"></A>\n"
 
 #define TPLREADERSTATS "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLMESSAGE##\n\
 	<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##ENCODEDLABEL##&amp;hide=-1\">show all</A></TD>\n\
@@ -1115,15 +1115,15 @@ AAAAAElFTkSuQmCC"
 	<TABLE CLASS=\"stats\">\n\
 	<TR><TH colspan=\"8\"> Loadbalance statistics for reader ##LABEL##</TH></TR>\n\
 	<TR><TH>Channel</TH><TH>Channelname</TH><TH>ECM Length</TH><TH>Result</TH><TH>Avg-Time</TH><TH>Last-Time</TH><TH>Count</TH><TH>Last checked/ found</TH></TR>\n\
-##READERSTATSROW##\
-##READERSTATSROWFOUND##\
-##READERSTATSTOHEADLINE##\
-##READERSTATSROWTIMEOUT##\
-##READERSTATSNFHEADLINE##\
-##READERSTATSROWNOTFOUND##\
+##READERSTATSROW##\n\
+##READERSTATSROWFOUND##\n\
+##READERSTATSTOHEADLINE##\n\
+##READERSTATSROWTIMEOUT##\n\
+##READERSTATSNFHEADLINE##\n\
+##READERSTATSROWNOTFOUND##\n\
 	</TABLE>\n\
 	<br>Total ECM count: ##TOTALECM##<br>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLREADERSTATSBIT "\
 		<TR><TD>##CHANNEL##</TD>\
@@ -1137,25 +1137,25 @@ AAAAAElFTkSuQmCC"
 <IMG CLASS=\"icon\" SRC=\"image?i=ICDEL\" ALT=\"Delete Entry\"/></A></TD></TR>\n"
 
 #define TPLSCANUSB "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLMESSAGE##\n\
 	<BR><BR>\n\
 	<TABLE cellpadding=\"10\">\n\
 		<TR><TH>USB Devices</TH></TR>\n\
 ##USBBIT##\n\
 	</TABLE>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLSCANUSBBIT "		<TR ##USBENTRYCLASS##><TD>##USBENTRY##</TD></TR>\n"
 
 #define TPLENTITLEMENTS "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLMESSAGE##\n\
 	<BR><BR>Entitlements for ##READERNAME##<BR><BR>\n\
-##ENTITLEMENTCONTENT##\
-##TPLFOOTER##"
+##ENTITLEMENTCONTENT##\n\
+##TPLFOOTER##\n"
 
 #define TPLENTITLEMENTGENERICBIT "\
 	<DIV class=\"log\">\n\
@@ -1170,7 +1170,7 @@ AAAAAElFTkSuQmCC"
 		<TR><TH colspan=\"2\">Serial</TH><TH colspan=\"2\">Rom</TH><TH colspan=\"4\">ATR</TH></TR>\n\
 		<TR CLASS=\"e_header\"><TD colspan=\"2\">##READERSERIAL##</TD><TD colspan=\"2\">##READERROM##</TD><TD colspan=\"4\">##READERATR##</TD></TR>\n\
 		<TR><TH>Type</TH><TH>Caid</TH><TH>Provid</TH><TH>ID</TH><TH>Class</TH><TH>Start Date</TH><TH>Expire Date</TH><TH>Name</TH></TR>\n\
-##READERENTENTRY##\
+##READERENTENTRY##\n\
 	</TABLE>\n"
 
 #define TPLENTITLEMENTITEMBIT "\
@@ -1180,21 +1180,21 @@ AAAAAElFTkSuQmCC"
 #define TPLENTITLEMENTCCCAMBIT "\
 	<TABLE CLASS=\"stats\">\
 		<TR><TH>Host</TH><TH>Caid</TH><TH>System</TH><TH>Type</TH><TH>share id</TH><TH>remote id</TH><TH>Uphops</TH><TH>Reshare</TH><TH>Providers</TH><TH>Nodes</TH><TH>Good sids</TH><TH>Bad sids</TH></TR>\
-##CCCAMSTATSENTRY##\
+##CCCAMSTATSENTRY##\n\
 	</TABLE>\n\
 	<BR><DIV CLASS=\"cccamentitlementtotals\">##TOTALS##</DIV>\
-	<BR><DIV CLASS=\"cccamentitlementcontrols\">##CONTROLS##</DIV>"
+	<BR><DIV CLASS=\"cccamentitlementcontrols\">##CONTROLS##</DIV>\n"
 
 #define TPLENTITLEMENTCCCAMENTRYBIT "\
-		<TR><TD>##HOST##</TD><TD>##CAID##</TD><TD>##SYSTEM##</TD><TD>##CARDTYPE##</TD><TD>##SHAREID##</TD><TD>##REMOTEID##</TD><TD>##UPHOPS##</TD><TD>##MAXDOWN##</TD><TD>##PROVIDERS##</TD><TD>##NODES##</TD><TD>##SERVICESGOOD##</TD><TD>##SERVICESBAD##</TD></TR>"
+		<TR><TD>##HOST##</TD><TD>##CAID##</TD><TD>##SYSTEM##</TD><TD>##CARDTYPE##</TD><TD>##SHAREID##</TD><TD>##REMOTEID##</TD><TD>##UPHOPS##</TD><TD>##MAXDOWN##</TD><TD>##PROVIDERS##</TD><TD>##NODES##</TD><TD>##SERVICESGOOD##</TD><TD>##SERVICESBAD##</TD></TR>\n"
 
-#define TPLAPICCCAMCARDLIST "##TPLAPIHEADER##\
+#define TPLAPICCCAMCARDLIST "##TPLAPIHEADER##\n\
 	<reader label=\"##READERNAME##\" hostaddress=\"##APIHOST##\" hostport=\"##APIHOSTPORT##\">\n\
 		<cardlist totalcards=\"##APITOTALCARDS##\">\n\
 ##CARDLIST##\n\
 		</cardlist>\n\
 	</reader>\n\
-##TPLAPIFOOTER##"
+##TPLAPIFOOTER##\n"
 
 #define TPLAPICCCAMCARDBIT "		<card number=\"##APICARDNUMBER##\" caid=\"##APICAID##\" system=\"##SYSTEM##\" \
 reshare=\"##MAXDOWN##\" hop=\"##UPHOPS##\">\n\
@@ -1214,7 +1214,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 
 #define TPLAPICCCAMCARDNODEBIT "				<node number=\"##APINODENUMBER##\">##APINODE##</node>\n"
 
-#define TPLAPIREADERSTATS "##TPLAPIHEADER##\
+#define TPLAPIREADERSTATS "##TPLAPIHEADER##\n\
 	<reader label=\"##READERNAME##\" status=\"##READERSTATUS##\" caid=\"##READERCAID##\">\n\
 		<emmstats totalwritten=\"##TOTALWRITTEN##\" totalskipped=\"##TOTALSKIPPED##\" totalblocked=\"##TOTALBLOCKED##\" totalerror=\"##TOTALERROR##\">\n\
 ##EMMSTATS##\n\
@@ -1224,7 +1224,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		</ecmstats>\n\
 		<ecmhistory>##ECMHISTORY##</ecmhistory>\n\
 	</reader>\n\
-##TPLAPIFOOTER##"
+##TPLAPIFOOTER##\n"
 
 #define TPLAPIREADERSTATSEMMBIT "			<emm type=\"##EMMTYPE##\" result=\"##EMMRESULT##\">##EMMCOUNT##</emm>\n"
 
@@ -1232,8 +1232,8 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
  channelname=\"##ECMCHANNELNAME##\" avgtime=\"##ECMTIME##\" lasttime=\"##ECMTIMELAST##\" rc=\"##ECMRC##\" rcs=\"##ECMRCS##\" lastrequest=\"##ECMLAST##\">##ECMCOUNT##</ecm>\n"
 
 #define TPLREADERCONFIG "\
-##TPLHEADER##\
-##TPLMENU##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
 ##TPLMESSAGE##\n\
 	<form action=\"readerconfig.html?action=execute\" method=\"get\">\n\
 		<input name=\"label\" type=\"hidden\" value=\"##READERNAME##\">\n\
@@ -1246,14 +1246,14 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##server#device##TPLHELPSUFFIX##Device:</A></TD><TD><input name=\"device\" type=\"text\" size=\"63\" maxlength=\"127\" value=\"##DEVICE##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#group##TPLHELPSUFFIX##Group:</A></TD><TD><input name=\"group\" type=\"text\" size=\"20\" maxlength=\"100\" value=\"##GRP##\">Valid values 1-64</TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#fallback##TPLHELPSUFFIX##Fallback:</A></TD><TD><input name=\"fallback\" type=\"hidden\" value=\"0\"><input name=\"fallback\" type=\"checkbox\" value=\"1\" ##FALLBACKCHECKED##></TD></TR>\n\
-##TPLREADERCONFIGLBWEIGHT##\
+##TPLREADERCONFIGLBWEIGHT##\n\
 			<TR><TD>##TPLHELPPREFIX##server#caid##TPLHELPSUFFIX##Caid:</A></TD><TD><input name=\"caid\" type=\"text\" size=\"63\" maxlength=\"160\" value=\"##CAIDS##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#ident##TPLHELPSUFFIX##Ident:</A></TD><TD><textarea name=\"ident\" cols=\"58\" rows=\"3\" class=\"bt\">##IDENTS##</textarea></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#chid##TPLHELPSUFFIX##CHID:</A></TD><TD><textarea name=\"chid\" cols=\"58\" rows=\"3\" class=\"bt\">##CHIDS##</textarea></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#services##TPLHELPSUFFIX##Services:</A></TD>\n\
 				<TD>\n\
 					<TABLE class=\"invisible\">\n\
-##SIDS##\
+##SIDS##\n\
 					</TABLE>\n\
 				</TD>\n\
 			</TR>\n\
@@ -1291,17 +1291,17 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			</TD>\n\
 			<TR><TD>##TPLHELPPREFIX##server#blockemm-bylen##TPLHELPSUFFIX##Block EMM by Len:</A></TD><TD><input name=\"blockemm-bylen\" type=\"text\" size=\"20\" maxlength=\"40\" value=\"##BLOCKEMMBYLEN##\"></TD></TR>\n\
 			<TR><TH>&nbsp;</TH><TH>Reader specific settings for protocol ##PROTOCOL##</TH></TR>\n\
-##READERDEPENDINGCONFIG##\
-##TPLREADEREDITCACHEEXBIT##\
+##READERDEPENDINGCONFIG##\n\
+##TPLREADEREDITCACHEEXBIT##\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" name=\"action\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
 	<BR><BR>\n\
-##TPLFOOTER##"
-#define TPLSAVETEMPLATES "##TPLHEADER##\
-##TPLMENU##\
+##TPLFOOTER##\n"
+#define TPLSAVETEMPLATES "##TPLHEADER##\n\
+##TPLMENU##\n\
 	<br><b>Saved ##CNT## templates to ##PATH##</b><br>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLREADERCONFIGLBWEIGHT "\
 				<TR><TD>##TPLHELPPREFIX##server#lb_weight##TPLHELPSUFFIX##Loadbalance weight:</A></TD><TD><input name=\"lb_weight\" type=\"text\" size=\"5\" maxlength=\"4\" value=\"##LBWEIGHT##\"></TD></TR>\n"
@@ -1318,23 +1318,23 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 				<TR><TD>##TPLHELPPREFIX##server#detect##TPLHELPSUFFIX##Detect:</A></TD><TD><input name=\"detect\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##DETECT##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#mhz##TPLHELPSUFFIX##Mhz:</A></TD><TD><input name=\"mhz\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MHZ##\"> Dreambox Mipsel: 2700, PPC: 3150</TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#cardmhz##TPLHELPSUFFIX##Cardmhz:</A></TD><TD><input name=\"cardmhz\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CARDMHZ##\"> Dreambox Auto Mode: -1</TD></TR>\n\
-##TPLREADERCONFIGRSAKEY##\
-##TPLREADERCONFIGBOXKEY##\
-##TPLREADERPINCODE##\
-##TPLREADERCONFIGNANO##\
+##TPLREADERCONFIGRSAKEY##\n\
+##TPLREADERCONFIGBOXKEY##\n\
+##TPLREADERPINCODE##\n\
+##TPLREADERCONFIGNANO##\n\
 				<TR><TD>##TPLHELPPREFIX##server#ratelimitecm##TPLHELPSUFFIX##Ratelimit ECM:</A></TD><TD><input name=\"ratelimitecm\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RATELIMITECM##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#ratelimitseconds##TPLHELPSUFFIX##Ratelimit seconds:</A></TD><TD><input name=\"ratelimitseconds\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RATELIMITSECONDS##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#cooldowndelay##TPLHELPSUFFIX##Cooldown Delay:</A></TD><TD><input name=\"cooldowndelay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##COOLDOWNDELAY##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#cooldowntime##TPLHELPSUFFIX##Cooldown Time:</A></TD><TD><input name=\"cooldowntime\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##COOLDOWNTIME##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#resetcycle##TPLHELPSUFFIX##Reset after No. ECM:</A></TD><TD><input name=\"resetcycle\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RESETCYCLE##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#deprecated##TPLHELPSUFFIX##Deprecated:</A><input name=\"deprecated\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"deprecated\" type=\"checkbox\" value=\"1\" ##DEPRECATEDCHECKED##></TD></TR>\n\
-##TPLREADERCONFIGNAGRA##\
-##TPLREADERCONFIGIRDETO##\
-##TPLREADERCONFIGVIACCESS##\
-##TPLREADERCONFIGVIDEOGUARD##\
-##TPLREADERCONFIGSC8IN1##\
-##TPLREADERCONFIGSMARGO##\
-##TPLREADERCOOLSTREAMBIT##"
+##TPLREADERCONFIGNAGRA##\n\
+##TPLREADERCONFIGIRDETO##\n\
+##TPLREADERCONFIGVIACCESS##\n\
+##TPLREADERCONFIGVIDEOGUARD##\n\
+##TPLREADERCONFIGSC8IN1##\n\
+##TPLREADERCONFIGSMARGO##\n\
+##TPLREADERCOOLSTREAMBIT##\n"
 
 #define TPLREADERPINCODE "\
 			<TR><TD>##TPLHELPPREFIX##server#pincode##TPLHELPSUFFIX##Pincode:</A></TD><TD><input name=\"pincode\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PINCODE##\"> Only for Conax and Cryptoworks SCs</TD></TR>\n"
@@ -1458,10 +1458,10 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##server#ccckeepalive##TPLHELPSUFFIX##Keep alive:</A></TD><TD><SELECT NAME=\"ccckeepalive\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##KEEPALIVECHECKED##>YES</OPTION></SELECT></TD></TR>\n"
 
 #define TPLCONFIGGBOX "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLCONFIGMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLCONFIGMENU##\n\
+##TPLMESSAGE##\n\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"gbox\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1476,13 +1476,13 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLCONFIGANTICASC "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLCONFIGMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLCONFIGMENU##\n\
+##TPLMESSAGE##\n\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"anticasc\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1508,13 +1508,13 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLCONFIGCCCAM "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLCONFIGMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLCONFIGMENU##\n\
+##TPLMESSAGE##\n\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"cccam\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1586,13 +1586,13 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 				</form></TD>\n\
 		</TR>\n\
 	</TABLE>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLCONFIGMONITOR "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLCONFIGMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLCONFIGMENU##\n\
+##TPLMESSAGE##\n\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"monitor\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1619,13 +1619,13 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLCONFIGWEBIF "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLCONFIGMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLCONFIGMENU##\n\
+##TPLMESSAGE##\n\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"webif\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1642,7 +1642,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#httpcss##TPLHELPSUFFIX##Http css:</A></TD>\n \
 				<TD>\n\
 					<SELECT name=\"httpcss\">\n\
-##CSSOPTIONS##\
+##CSSOPTIONS##\n\
 					</SELECT>\n\
 				</TD>\n\
 			</TR>\n\
@@ -1660,21 +1660,21 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#hideclient_to##TPLHELPSUFFIX##Hide client to:</A></TD><TD><input name=\"hideclient_to\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##HIDECLIENTTO##\"> s</TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#appendchaninfo##TPLHELPSUFFIX##Append channel info:</A></TD><TD><input name=\"appendchaninfo\" type=\"checkbox\" value=\"1\" ##APPENDCHANINFO##></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#httpsavefullcfg##TPLHELPSUFFIX##Http save full config:</A></TD><TD><SELECT NAME=\"httpsavefullcfg\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##HTTPSAVEFULLSELECT##>YES</OPTION></SELECT></TD></TR>\n\
-##TPLHTTPFORCESSLV3##\
+##TPLHTTPFORCESSLV3##\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLHTTPFORCESSLV3 "\
 			<TR><TH COLSPAN=\"2\">SSL</TH></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#httpforcesslv3##TPLHELPSUFFIX##Force more secure v3 of ssl:</A></TD><TD><SELECT NAME=\"httpforcesslv3\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##HTTPFORCESSLV3SELECT##>YES</OPTION></SELECT></TD></TR>\n"
 
 #define TPLCONFIGLCD "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLCONFIGMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLCONFIGMENU##\n\
+##TPLMESSAGE##\n\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"lcd\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1687,13 +1687,13 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLCONFIGRADEGAST "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLCONFIGMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLCONFIGMENU##\n\
+##TPLMESSAGE##\n\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"radegast\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1706,13 +1706,13 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLCONFIGNEWCAMD "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLCONFIGMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLCONFIGMENU##\n\
+##TPLMESSAGE##\n\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"newcamd\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1729,13 +1729,13 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLCONFIGGLOBAL "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLCONFIGMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLCONFIGMENU##\n\
+##TPLMESSAGE##\n\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"global\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1754,8 +1754,8 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 					</select>\n\
 				</TD>\n\
 			</TR>\n\
-##TPLLOCALCARDS##\
-##TPLUNLOCKPARENTAL##\
+##TPLLOCALCARDS##\n\
+##TPLUNLOCKPARENTAL##\n\
 			<TR><TD>##TPLHELPPREFIX##conf#block_same_ip##TPLHELPSUFFIX##Simple block same:</A></TD>\n\
 				<TD>\n\
 					<SELECT NAME=\"block_same_ip\"><OPTION VALUE=\"0\">IP - No</OPTION><OPTION VALUE=\"1\" ##BLOCKSAMEIPCHECKED##>IP - Yes</OPTION></SELECT>&nbsp;\n\
@@ -1798,17 +1798,17 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#fallbacktimeout##TPLHELPSUFFIX##Fallback timeout:</A></TD><TD><input name=\"fallbacktimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##FALLBACKTIMEOUT##\"> ms to switch to fallback reader</TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#clientmaxidle##TPLHELPSUFFIX##Client max idle:</A></TD><TD><input name=\"clientmaxidle\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CLIENTMAXIDLE##\"> s to disconnect idle clients</TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#sleep##TPLHELPSUFFIX##Global sleep:</A></TD><TD><input name=\"sleep\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SLEEP##\"> min to switch a client in sleepmode</TD></TR>\n\
-##TPLSERIALREADERTIMEOUT##\
+##TPLSERIALREADERTIMEOUT##\n\
 			<TR><TD>##TPLHELPPREFIX##conf#readerrestartseconds##TPLHELPSUFFIX##Reader restart seconds:</A></TD><TD><input name=\"readerrestartseconds\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##READERRESTARTSECONDS##\"> s waittime to restart a reader</TD></TR>\n\
 			<TR><TH COLSPAN=\"2\">Doublecheck</TH></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#double_check##TPLHELPSUFFIX##ECM Doublecheck:</A></TD><TD><SELECT NAME=\"double_check\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##DCHECKCSELECTED##>YES</OPTION></SELECT></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#double_check_caid##TPLHELPSUFFIX##Doublecheck caids:</A></TD><TD><input name=\"double_check_caid\" type=\"text\" size=\"55\" maxlength=\"160\" value=\"##DOUBLECHECKCAID##\"></TD></TR>\n\
-##TPLSUPPRESSCMD08##\
-##TPLENABLELEDBIT##\
+##TPLSUPPRESSCMD08##\n\
+##TPLENABLELEDBIT##\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLLOCALCARDS "\
 			<TR><TD>##TPLHELPPREFIX##conf#waitforcards##TPLHELPSUFFIX##Wait for cards:</A></TD><TD><SELECT NAME=\"waitforcards\"><OPTION VALUE=\"0\">0 - enable clientlogins while init</OPTION><OPTION VALUE=\"1\" ##WAITFORCARDSCHECKED##>1 - disable clientlogins while init</OPTION></SELECT></TD></TR>\n\
@@ -1830,10 +1830,10 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#suppresscmd08##TPLHELPSUFFIX##Suppress cmd08:</A></TD><TD><input name=\"suppresscmd08\" type=\"checkbox\" value=\"1\" ##SUPPRESSCMD08##></TD></TR>\n"
 
 #define TPLCONFIGLOADBALANCER "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLCONFIGMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLCONFIGMENU##\n\
+##TPLMESSAGE##\n\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"loadbalancer\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1887,13 +1887,13 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		</TR>\n\
 	</TABLE>\n\
 	</form>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLCONFIGCAMD33 "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLCONFIGMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLCONFIGMENU##\n\
+##TPLMESSAGE##\n\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"camd33\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1907,13 +1907,13 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLCONFIGCAMD35 "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLCONFIGMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLCONFIGMENU##\n\
+##TPLMESSAGE##\n\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"camd35\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1926,13 +1926,13 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLCONFIGCAMD35TCP "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLCONFIGMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLCONFIGMENU##\n\
+##TPLMESSAGE##\n\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"camd35tcp\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1945,13 +1945,13 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLCONFIGCACHE "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLCONFIGMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLCONFIGMENU##\n\
+##TPLMESSAGE##\n\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"cache\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -1960,12 +1960,12 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#delay##TPLHELPSUFFIX##Delay:</A></TD><TD><input name=\"delay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CACHEDELAY##\"> ms delaying answers from cache</TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#max_time##TPLHELPSUFFIX##Max time:</A></TD><TD><input name=\"max_time\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MAXCACHETIME##\"> s keep ECMs in cache</TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#max_count##TPLHELPSUFFIX##Max count:</A></TD><TD><input name=\"max_count\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MAXCACHECOUNT##\"> nr of ECMS to keep in cache</TD></TR>\n\
-##TPLCONFIGCACHEEXCSP##\
-##TPLCONFIGCWCYCLE##\
+##TPLCONFIGCACHEEXCSP##\n\
+##TPLCONFIGCWCYCLE##\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLCONFIGCACHEEXCSP "\
 			<TR><TH COLSPAN=\"2\">CacheEx / CSP</TH></TR>\n\
@@ -1987,30 +1987,30 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#onbadcycle##TPLHELPSUFFIX##Drop Old CW:</A></TD><TD><SELECT name=\"cwcycle_dropold\"><option value=\"0\">0 - NO</option><option value=\"1\" ##DROPOLD##>1 - YES</option></select></TD></TR>\n"
 
 #define TPLCONFIGSERIAL "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLCONFIGMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLCONFIGMENU##\n\
+##TPLMESSAGE##\n\
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"serial\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
 		<TABLE class=\"config\">\n\
 			<TR><TH COLSPAN=\"2\">Edit Serial Config</TH></TR>\n\
-##DEVICES##\
+##DEVICES##\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
 	<BR><BR>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLCONFIGSERIALDEVICEBIT "\
 			<TR><TD>##TPLHELPPREFIX##conf#device##TPLHELPSUFFIX##Device:</A></TD><TD><input name=\"device\" type=\"text\" size=\"63\" maxlength=\"511\" value=\"##SERIALDEVICE##\"></TD></TR>\n"
 
 #define TPLCONFIGDVBAPI "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLCONFIGMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLCONFIGMENU##\n\
+##TPLMESSAGE##\n\
 <form action=\"config.html\" method=\"get\">\n\
 	<input name=\"part\" type=\"hidden\" value=\"dvbapi\">\n\
 	<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
@@ -2042,19 +2042,19 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
     <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 	</TABLE>\n\
 </form>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLSERVICECONFIGLIST "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLMESSAGE##\n\
 	<FORM action=\"services_edit.html\" method=\"get\"><INPUT TYPE=\"hidden\" NAME=\"action\" VALUE=\"add\">\n\
 		<TABLE CLASS=\"stats\">\n\
 			<TR>\n\
 				<TH>Label</TH>\n\
 				<TH colspan=\"3\" class=\"centered\">Action</TH>\n\
 			</TR>\n\
-##SERVICETABS##\
+##SERVICETABS##\n\
 			<TR>\n\
 				<TD>New Service:</TD>\n\
 				<TD><input name=\"service\" type=\"text\"></TD>\n\
@@ -2062,13 +2062,13 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			</TR>\n\
 		</TABLE>\n\
 	</FORM>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLSERVICECONFIGLISTBIT "\
 			<TR>\n\
 				<TD>##LABEL##</TD>\n\
 				<TD width=\"250\" class=\"centered\">\n\
-##SIDLIST##\
+##SIDLIST##\n\
 				</TD>\n\
 				<TD><A HREF=\"services_edit.html?service=##LABELENC##&amp;action=edit\" TITLE=\"Edit this Service\"><IMG CLASS=\"icon\" SRC=\"image?i=ICEDI\" ALT=\"Edit Service\"></A></TD>\n\
 				<TD><A HREF=\"services.html?service=##LABELENC##&amp;action=delete\" TITLE=\"Delete this Service\"><IMG CLASS=\"icon\" SRC=\"image?i=ICDEL\" ALT=\"Delete Service\"></A></TD>\n\
@@ -2077,9 +2077,9 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 #define TPLSERVICECONFIGSIDBIT "				<DIV class=\"##SIDCLASS##\">##SID##</DIV>\n"
 
 #define TPLSERVICEEDIT "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLMESSAGE##\n\
 	<BR><BR>\n\
 	<form action=\"services_edit.html\" method=\"get\">\n\
 		<input name=\"service\" type=\"hidden\" value=\"##LABEL##\">\n\
@@ -2091,11 +2091,11 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>&nbsp;</TD><TD align=\"right\"><input type=\"submit\" name=\"action\" value=\"Save\" title=\"Save service and reload services\" ##BTNDISABLED##></TD>\n\
 		</TABLE>\n\
 	</form>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLPRESHUTDOWN "\
-##TPLHEADER##\
-##TPLMENU##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
 	<br><br><br>\n\
 	<DIV class = \"warning\">Do you really want to shutdown&#47; restart oscam?<br>All users will become disconnected.<br>\n\
 		If you use &#39;Shutdown&#39; you will not be able to restart oscam from webinterface.<br>\n\
@@ -2106,7 +2106,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		<input type=\"submit\" name=\"action\" value=\"Shutdown\" title=\"Shutdown OSCam\" ##BTNDISABLED##>\n\
 		<input type=\"submit\" name=\"action\" value=\"Restart\" title=\"Restart OSCam\" ##BTNDISABLED##>\n\
 	</form>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLSHUTDOWN "\
 <HTML>\n\
@@ -2114,29 +2114,29 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	<TITLE>OSCAM ##CS_VERSION## build r##CS_SVN_VERSION##</TITLE>\n\
 	<link href=\"favicon.ico\" rel=\"icon\" type=\"image/x-icon\"/>\
 	<script type=\"text/javascript\" src=\"oscam.js\"></script>\n\
-##REFRESH##\
+##REFRESH##\n\
 	<style type=\"text/css\">\n\
 ##STYLESHEET##\n\
 	</style>\n\
 </HEAD>\n\
 <BODY>\n\
 	<H2>OSCAM ##CS_VERSION## build r##CS_SVN_VERSION##</H2>\
-##TPLMENU##\
+##TPLMENU##\n\
 	<br><P CLASS=\"blinking\">OSCam Shutdown - Try Reconnect in ##SECONDS## Seconds</p><br><br>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
-#define TPLWRITEPROTECTION "You cannot change the content of this file!"
+#define TPLWRITEPROTECTION "You cannot change the content of this file!\n"
 
-#define TPLMESSAGEBIT "##MESSAGE##<BR>"
+#define TPLMESSAGEBIT "##MESSAGE##<BR>\n"
 
 #define TPLMESSAGE "<DIV CLASS=\"message\">##MESSAGES##</DIV>\n"
 
 #define TPLSCRIPT "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLMESSAGE##\n\
 	<br><br><b>OSCam execute script: ##SCRIPTNAME## --> Status: ##SCRIPTRESULT## --> Returncode: ##CODE##</b><br>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLGRAPH "\
 <?xml-stylesheet type=\"text/css\" href=\"site.css\" ?>\n\
@@ -2389,20 +2389,20 @@ function handle_error() {\n\
 function isNumber(a) {\n\
 	return typeof a == 'number' && isFinite(a);\n\
 }\n\
-]]>\
-</script>\
-</svg>"
+]]>\n\
+</script>\n\
+</svg>\n"
 
 #define TPLCACHEEXPAGE "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLMESSAGE##\n\
 	<BR><BR>\n\
 	<TABLE CLASS=\"stats\">\n\
 			<TR><TH COLSPAN=\"11\">CacheEX Stats for ##OWN_CACHEEX_NODEID##</TH></TR>\n\
 			<TR><TH>Direction</TH><TH>Type</TH><TH>Name</TH><TH>IP</TH><TH>NODE</TH><TH>Cache EX Mode</TH><TH>Push</TH><TH>Got</TH><TH>Hit</TH><TH>Err</TH><TH>CW Diff</TH></TR>\n\
-##TABLECLIENTROWS##\
-##TABLEREADERROWS##\
+##TABLECLIENTROWS##\n\
+##TABLEREADERROWS##\n\
 	</TABLE>\n\
 	<BR><BR>\n\
 	<TABLE>\n\
@@ -2411,14 +2411,14 @@ function isNumber(a) {\n\
 		<TR><TD class=\"centered\">##TOTAL_CACHEXPUSH##</TD><TD class=\"centered\">##TOTAL_CACHEXGOT##</TD><TD class=\"centered\">##TOTAL_CACHEXHIT## (##REL_CACHEXHIT##%)</TD><TD class=\"centered\">##TOTAL_CACHESIZE##</TD></TR>\n\
 	</TABLE>\n\
 	<BR><BR>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLCACHEEXTABLEROW "			<TR><TD>&nbsp;&nbsp;##DIRECTIONIMG##&nbsp;&nbsp;</TD><TD>##TYPE##</TD><TD>##NAME##</TD><TD>##IP##</TD><TD>##NODE##</TD><TD>##LEVEL##</TD><TD>##PUSH##</TD><TD>##GOT##</TD><TD>##HIT##</TD><TD>##ERR##</TD><TD>##ERRCW##</TD></TR>\n"
 
 #define TPLASKEMM "\
-##TPLHEADER##\
-##TPLMENU##\
-##TPLMESSAGE##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
+##TPLMESSAGE##\n\
 	<BR><BR>\n\
 	<FORM action=\"emm_running.html\" method=\"get\"><INPUT TYPE=\"hidden\" NAME=\"label\" VALUE=\"##READER##\">\n\
 		<TABLE CLASS=\"stats\">\n\
@@ -2429,13 +2429,13 @@ function isNumber(a) {\n\
 			<TR><TD colspan=\"2\" class=\"centered\"><input name=\"action\" type=\"submit\" value=\"Launch\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</FORM>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 #define TPLEMM_RUNNING "\
-##TPLHEADER##\
-##TPLMENU##\
+##TPLHEADER##\n\
+##TPLMENU##\n\
 	<BR><BR>\n\
-##TPLMESSAGE##\
+##TPLMESSAGE##\n\
 	<BR><BR>\n\
 	<form action=\"emm_running.html\" method=\"get\">\n\
 		<input name=\"service\" type=\"hidden\" value=\"##EP##\">\n\
@@ -2454,7 +2454,7 @@ function isNumber(a) {\n\
 			<TR><TD>num of <BR>written EMMs: </TD><TD>##NUMWEMM##</TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
-##TPLFOOTER##"
+##TPLFOOTER##\n"
 
 const char *templates[][3] = {
 	{"HEADER", TPLHEADER, ""}
