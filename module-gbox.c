@@ -164,7 +164,7 @@ void gbox_write_shared_cards_info(void)
 
 	struct s_client *cl;
 	for (i = 0, cl = first_client; cl; cl = cl->next, i++) {
-		if (get_module(cl)->num == R_GBOX) {
+		if (cl->gbox) {
 			struct s_reader *rdr = cl->reader;
 			struct gbox_data *gbox = cl->gbox;
 			struct gbox_card *card;
@@ -178,7 +178,7 @@ void gbox_write_shared_cards_info(void)
 					card_count++;
 				} // end of while ll_iter_next
 			} // end of if INSERTED && 'p'
-		}
+		} // end of if cl->gbox
 	} // end of for cl->next
 	fclose(fhandle);
 	return;
@@ -267,7 +267,7 @@ void gbox_reconnect_client(void)
 {
 	struct s_client *cl;
 	for (cl = first_client; cl; cl = cl->next) {
-		if (get_module(cl)->num == R_GBOX) {
+		if (cl->gbox) {
 			hostname2ip(cl->reader->device, &SIN_GET_ADDR(cl->udp_sa));
 			SIN_GET_FAMILY(cl->udp_sa) = AF_INET;
 			SIN_GET_PORT(cl->udp_sa) = htons((uint16_t)cl->reader->r_port);
@@ -653,7 +653,7 @@ static int32_t gbox_recv2(IN_ADDR_T recv_ip, in_port_t recv_port, uchar *b, int3
 	for (cli=first_client; cli; cli=cli->next) {
 
 		if (IP_EQUAL(recv_ip, cli->ip)
-			&& get_module(cli)->num == R_GBOX && recv_port == cli->reader->l_port) {
+			&& cli->gbox && recv_port == cli->reader->l_port) {
 
 			verify_peer_ip = 1;
 
@@ -1155,7 +1155,7 @@ static void gbox_send_hello(struct s_client *cli)
           ll_append(gbox->local_cards, c);
         }
         // if rdr = gbox, reshare card
-        if (get_module(cl)->num == R_GBOX) {
+        if (cl->gbox) {
           struct gbox_data *gbox_1 = cl->gbox;
           struct gbox_card *card_g;
           if (strcmp(cli->reader->label, cl->reader->label)) {
