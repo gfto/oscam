@@ -626,6 +626,36 @@ Cardservproxy incoming ECM filter setting, default:none
 .RS 3n
 allow incoming ECM request from Cardservproxy, default:1
 .RE
+.PP
+\fBcwcycle_check_eanble\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = enable CW cycle check, default:0
+.RE
+.PP
+\fBcwcycle_check_caid\fP = \fBCAID\fP
+.RS 3n
+CAID enabled for CW cycle check, default:none
+.RE
+.PP
+\fBcwcycle_maxelist\fP = \fBcount\fP
+.RS 3n
+maximum CW cycle list entries, default:500, maximum:4000
+.RE
+.PP
+\fBcwcycle_keeptime\fP = \fBminutes\fP
+.RS 3n
+minimum time a learned cycle time resists in memory, default:0, maximum:15
+.RE
+.PP
+\fBcwcycle_onbad\fP = \fB0\fP|\fB1\fP
+.RS 3n
+0 = log bad CW cycle only, 1= drop bad CW cycle, default:0
+.RE
+.PP
+\fBcwcycle_dropold\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1= drop old CW cycle, default:0
+.RE
 .SS "The [camd33] section"
 \fBport\fP = \fB0\fP|\fBport\fP
 .RS 3n

@@ -593,13 +593,13 @@ EXAMPLES
        ·  gbox reader
 
 	   [reader]
-	   label	= mygboxreader
-	   protocol	= gbox
-	   device	= 192.168.0.4,45678,56789
-	   user 	= user4
-	   password	= password4
-	   group	= 11
-	   caid 	= 1100
+	   label    = mygboxreader
+	   protocol = gbox
+	   device   = 192.168.0.4,45678,56789
+	   user     = user4
+	   password = password4
+	   group    = 11
+	   caid     = 1100
 
 SEE ALSO
        list_smargo(1),	 oscam(1),   oscam.ac(5),   oscam.cacheex(5),  oscam.cert(5),  oscam.conf(5),  oscam.dvbapi(5),  oscam.guess(5),
