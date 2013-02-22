@@ -49,6 +49,7 @@ reader protocol, \fIrequired\fR:
 \fBdevice\fP = \fB[<readertype>;]serial:serialnum|bus:device\fP|
          \fB<device|device:slot>\fP|
          \fB<ip|hostname>,<port>[,<lport>]\fP|
+         \fB<ip|hostname>,<gboxpport>,<gboxlport>\fP|
          \fBpcsc\fP|
          \fB<0|1>\fP>|
          \fBconstantcw\fP
@@ -80,6 +81,10 @@ define local or remote reader
  \fBport\fP:        TCP/IP port
 
  \fBlport\fP:       remapping to local TCP/IP port
+
+ \fBgboxpport\fP:   TCP/IP port for remote gbox peer
+
+ \fBgboxlport\fP:   TCP/IP port for local gbox peer
 
  \fBPCSC\fP:        number of PCSC reader, starting with 0
 
@@ -230,12 +235,12 @@ key for newcamd remote reader encryption
 .PP
 \fBuser\fP = \fBname\fP
 .RS 3n
-user for remote reader, overrides user of \fBaccount\fP, first come first serve
+user for remote reader
 .RE
 .PP
 \fBpassword\fP = \fBpassword\fP
 .RS 3n
-password for remote reader, overrides password of \fBaccount\fP, first come first serve
+password for remote reader
 .RE
 .PP
 \fBmg-encrypted\fP = D: { \fB<IP|hostname>\fP { \fB<local port>\fP \fB<remote port>\fP { \fB<password>\fP { \fB<level>\fP \fB<level>\fP }}}}[,\fB<local MAC address>\fP]
@@ -567,6 +572,31 @@ reconnect again after ECM request timeout in milli-seconds, default:4000
 \fBcccmindown\fP = \fBnumber\fP
 .RS 3n
 filters all readers with hops smaller than number, default:0
+.RE
+.PP
+\fBgbox_my_password\fP = \fBpassword\fP
+.RS 3n
+password for connection to local gbox peer, default:none
+.RE
+.PP
+\fBgbox_reshare\fP = \fBlevel\fP
+.RS 3n
+gbox reshare level of local cards, default:0
+.RE
+.PP
+\fBgbox_max_distance\fP = \fBdistance\fP
+.RS 3n
+maximum distance to receive gbox peer cards, default:2
+.RE
+.PP
+\fBgbox_max_ecm_send\fP = \fBnumber\fP
+.RS 3n
+maximum of gbox peers ECMs will be send to, default:3
+.RE
+.PP
+\fBgbox_group\fP = \fB\fP
+.RS 3n
+reader assingment to gbox group, default:none
 .RE
 .SH OVERCLOCKING
 .TP 3n

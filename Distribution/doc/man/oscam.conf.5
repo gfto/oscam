@@ -870,19 +870,19 @@ set CCcam node ID in hex, default:none
 .RE
 .SS "The [gbox] section"
 .PP
-\fBport\fP = \fB0\fP|\fBport\fP
+\fBgbox_hostname\fP = \fBhostname\fP| \fBIP address\fP
 .RS 3n
-UDP port for gbox clients, 0 = disabled, default:0
+set hostname or IP address for gbox protocol, default:none
 .RE
 .PP
-\fBpassword\fP = \fBpassword\fP
+\fBgbox_reconnect\fP = \fBtime\fP
 .RS 3n
-password for gbox server
+send message to peers in seconds, default:300
 .RE
 .PP
-\fBgsmsfile\fP = \fBfile name\fP
+\fBgbox_local_cards\fP = \fB<local card 1>\fP[,\fB<local card 2>\fP]...
 .RS 3n
-gsms file for gbox server, default:none
+list of local cards presented to peers, (maximum see CS_GBOX_MAX_LOCAL_CARDS in globals.h), default:none
 .RE
 .SS "The [dvbapi] section"
 .PP
@@ -1164,43 +1164,5 @@ ECM and CW in cache already.
 \fBcache2\fP
 
 ECM and checksum in cache already.
-.SH EXAMPLES
- [global]
- logfile      = /var/log/oscam/oscam.log
- usrfile      = /var/log/oscam/oscamuser.log
-
- waitforcards = 1
-
- [monitor]
- port         = 988
- monlevel     = 1
- nocrypt      = 127.0.0.1
- 
- [webif]
- httpport     = 8888
- httpuser     = myusername
- httppwd      = mypassword
- 
- [newcamd]
- key          = 0102030405060708091011121314
- port         = 10000@0100:100000;20000{0102030405060708091011121314}@0200:200000,300000,400000
- 
- [radegast]
- port         = 30000
- user         = radegastuser
- allowed      = 127.0.0.1,192.168.0.0-192.168.255.255
-
- [camd33]
- port         = 40000
- serverip     = 192.168.0.1
- key          = 01020304050607080910111213141516
- 
- [cs378x]
- port         = 50000@0300:600000
- 
- [gbox]
- hostname     = host.example.com
- port         = 56789
- password     = password4
 .SH "SEE ALSO"
 \fBlist_smargo\fR(1), \fBoscam\fR(1), \fBoscam.ac\fR(5), \fBoscam.cacheex\fR(5), \fBoscam.cert\fR(5), \fBoscam.dvbapi\fR(5), \fBoscam.guess\fR(5), \fBoscam.ird\fR(5), \fBoscam.provid\fR(5), \fBoscam.server\fR(5), \fBoscam.services\fR(5), \fBoscam.srvid\fR(5), \fBoscam.tiers\fR(5), \fBoscam.user\fR(5), \fBoscam.whitelist\fR(5)

@@ -1167,23 +1167,23 @@ set CCcam node ID in hex, default:none
 
 <P>
 
-<B>port</B> = <B>0</B>|<B>port</B>
+<B>gbox_hostname</B> = <B>hostname</B>| <B>IP address</B>
 <DL COMPACT><DT><DD>
-UDP port for gbox clients, 0 = disabled, default:0
+set hostname or IP address for gbox protocol, default:none
 </DL>
 
 <P>
 
-<B>password</B> = <B>password</B>
+<B>gbox_reconnect</B> = <B>time</B>
 <DL COMPACT><DT><DD>
-password for gbox server
+send message to peers in seconds, default:300
 </DL>
 
 <P>
 
-<B>gsmsfile</B> = <B>file name</B>
+<B>gbox_local_cards</B> = <B>&lt;local card 1&gt;</B>[,<B>&lt;local card 2&gt;</B>]...
 <DL COMPACT><DT><DD>
-gsms file for gbox server, default:none
+list of local cards presented to peers, (maximum see CS_GBOX_MAX_LOCAL_CARDS in globals.h), default:none
 </DL>
 
 <A NAME="lbAR">&nbsp;</A>
@@ -1508,46 +1508,6 @@ ECM and CW in cache already.
 ECM and checksum in cache already.
 </DL>
 <A NAME="lbAX">&nbsp;</A>
-<H2>EXAMPLES</H2>
-
-<BR>&nbsp;[global]
-<BR>&nbsp;logfile&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;/var/log/oscam/oscam.log
-<BR>&nbsp;usrfile&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;/var/log/oscam/oscamuser.log
-<P>
-<BR>&nbsp;waitforcards&nbsp;=&nbsp;1
-<P>
-<BR>&nbsp;[monitor]
-<BR>&nbsp;port&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;988
-<BR>&nbsp;monlevel&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;1
-<BR>&nbsp;nocrypt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;127.0.0.1
-<BR>&nbsp;
-<BR>&nbsp;[webif]
-<BR>&nbsp;httpport&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;8888
-<BR>&nbsp;httpuser&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;myusername
-<BR>&nbsp;httppwd&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;mypassword
-<BR>&nbsp;
-<BR>&nbsp;[newcamd]
-<BR>&nbsp;key&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;0102030405060708091011121314
-<BR>&nbsp;port&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<A HREF="mailto:10000@0100">10000@0100</A>:100000;20000{0102030405060708091011121314}@0200:200000,300000,400000
-<BR>&nbsp;
-<BR>&nbsp;[radegast]
-<BR>&nbsp;port&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;30000
-<BR>&nbsp;user&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;radegastuser
-<BR>&nbsp;allowed&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;127.0.0.1,192.168.0.0-192.168.255.255
-<P>
-<BR>&nbsp;[camd33]
-<BR>&nbsp;port&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;40000
-<BR>&nbsp;serverip&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;192.168.0.1
-<BR>&nbsp;key&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;01020304050607080910111213141516
-<BR>&nbsp;
-<BR>&nbsp;[cs378x]
-<BR>&nbsp;port&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;<A HREF="mailto:50000@0300">50000@0300</A>:600000
-<BR>&nbsp;
-<BR>&nbsp;[gbox]
-<BR>&nbsp;hostname&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;host.example.com
-<BR>&nbsp;port&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;56789
-<BR>&nbsp;password&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;password4
-<A NAME="lbAY">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="/cgi-bin/man/man2html?1+list_smargo">list_smargo</A></B>(1), <B><A HREF="/cgi-bin/man/man2html?1+oscam">oscam</A></B>(1), <B><A HREF="/cgi-bin/man/man2html?5+oscam.ac">oscam.ac</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.cacheex">oscam.cacheex</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.cert">oscam.cert</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.dvbapi">oscam.dvbapi</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.guess">oscam.guess</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.ird">oscam.ird</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.provid">oscam.provid</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.server">oscam.server</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.services">oscam.services</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.srvid">oscam.srvid</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.tiers">oscam.tiers</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.user">oscam.user</A></B>(5), <B><A HREF="/cgi-bin/man/man2html?5+oscam.whitelist">oscam.whitelist</A></B>(5)
@@ -1564,7 +1524,7 @@ ECM and checksum in cache already.
 <DT><A HREF="#lbAF">The [monitor] section</A><DD>
 <DT><A HREF="#lbAG">The [webif] section</A><DD>
 <DT><A HREF="#lbAH">The [lcd] section</A><DD>
-<DT><A HREF="#lbAI">The [csp] section</A><DD>
+<DT><A HREF="#lbAI">The [cache] section</A><DD>
 <DT><A HREF="#lbAJ">The [camd33] section</A><DD>
 <DT><A HREF="#lbAK">The [cs357x] section</A><DD>
 <DT><A HREF="#lbAL">The [cs378x] section</A><DD>
@@ -1580,8 +1540,7 @@ ECM and checksum in cache already.
 <DT><A HREF="#lbAU">MONITOR</A><DD>
 <DT><A HREF="#lbAV">WEB INTERFACE</A><DD>
 <DT><A HREF="#lbAW">CACHING</A><DD>
-<DT><A HREF="#lbAX">EXAMPLES</A><DD>
-<DT><A HREF="#lbAY">SEE ALSO</A><DD>
+<DT><A HREF="#lbAX">SEE ALSO</A><DD>
 </DL>
 </BODY>
 </HTML>

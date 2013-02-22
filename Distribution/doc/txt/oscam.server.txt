@@ -44,6 +44,7 @@ DESCRIPTIONS
        device = [<readertype>;]serial:serialnum|bus:device|
 		<device|device:slot>|
 		<ip|hostname>,<port>[,<lport>]|
+		<ip|hostname>,<gboxpport>,<gboxlport>|
 		pcsc|
 		<0|1>>|
 		constantcw
@@ -74,6 +75,10 @@ DESCRIPTIONS
 	   port:	TCP/IP port
 
 	   lport:	remapping to local TCP/IP port
+
+	   gboxpport:	TCP/IP port for remote gbox peer
+
+	   gboxlport:	TCP/IP port for local gbox peer
 
 	   PCSC:	number of PCSC reader, starting with 0
 
@@ -180,10 +185,10 @@ DESCRIPTIONS
 	  key for newcamd remote reader encryption
 
        user = name
-	  user for remote reader, overrides user of account, first come first serve
+	  user for remote reader
 
        password = password
-	  password for remote reader, overrides password of account, first come first serve
+	  password for remote reader
 
        mg-encrypted = D: { <IP|hostname> { <local port> <remote port> { <password> { <level> <level> }}}}[,<local MAC address>]
 	  mgcamd encrypted gbox line, default MAC address = eth0
@@ -417,6 +422,21 @@ DESCRIPTIONS
 
        cccmindown = number
 	  filters all readers with hops smaller than number, default:0
+
+       gbox_my_password = password
+	  password for connection to local gbox peer, default:none
+
+       gbox_reshare = level
+	  gbox reshare level of local cards, default:0
+
+       gbox_max_distance = distance
+	  maximum distance to receive gbox peer cards, default:2
+
+       gbox_max_ecm_send = number
+	  maximum of gbox peers ECMs will be send to, default:3
+
+       gbox_group =
+	  reader assingment to gbox group, default:none
 
 OVERCLOCKING
        ·  Dreambox and other internal readers

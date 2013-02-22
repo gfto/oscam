@@ -72,6 +72,7 @@ reader protocol, <I>required</I>:
 <B>device</B> = <B>[&lt;readertype&gt;;]serial:serialnum|bus:device</B>|
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>&lt;device|device:slot&gt;</B>|
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>&lt;ip|hostname&gt;,&lt;port&gt;[,&lt;lport&gt;]</B>|
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>&lt;ip|hostname&gt;,&lt;gboxpport&gt;,&lt;gboxlport&gt;</B>|
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>pcsc</B>|
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>&lt;0|1&gt;</B>&gt;|
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>constantcw</B>
@@ -103,6 +104,10 @@ define local or remote reader
 <BR>&nbsp;<B>port</B>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TCP/IP&nbsp;port
 <P>
 <BR>&nbsp;<B>lport</B>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;remapping&nbsp;to&nbsp;local&nbsp;TCP/IP&nbsp;port
+<P>
+<BR>&nbsp;<B>gboxpport</B>:&nbsp;&nbsp;&nbsp;TCP/IP&nbsp;port&nbsp;for&nbsp;remote&nbsp;gbox&nbsp;peer
+<P>
+<BR>&nbsp;<B>gboxlport</B>:&nbsp;&nbsp;&nbsp;TCP/IP&nbsp;port&nbsp;for&nbsp;local&nbsp;gbox&nbsp;peer
 <P>
 <BR>&nbsp;<B>PCSC</B>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;number&nbsp;of&nbsp;PCSC&nbsp;reader,&nbsp;starting&nbsp;with&nbsp;0
 <P>
@@ -299,14 +304,14 @@ key for newcamd remote reader encryption
 
 <B>user</B> = <B>name</B>
 <DL COMPACT><DT><DD>
-user for remote reader, overrides user of <B>account</B>, first come first serve
+user for remote reader
 </DL>
 
 <P>
 
 <B>password</B> = <B>password</B>
 <DL COMPACT><DT><DD>
-password for remote reader, overrides password of <B>account</B>, first come first serve
+password for remote reader
 </DL>
 
 <P>
@@ -738,6 +743,41 @@ reconnect again after ECM request timeout in milli-seconds, default:4000
 <B>cccmindown</B> = <B>number</B>
 <DL COMPACT><DT><DD>
 filters all readers with hops smaller than number, default:0
+</DL>
+
+<P>
+
+<B>gbox_my_password</B> = <B>password</B>
+<DL COMPACT><DT><DD>
+password for connection to local gbox peer, default:none
+</DL>
+
+<P>
+
+<B>gbox_reshare</B> = <B>level</B>
+<DL COMPACT><DT><DD>
+gbox reshare level of local cards, default:0
+</DL>
+
+<P>
+
+<B>gbox_max_distance</B> = <B>distance</B>
+<DL COMPACT><DT><DD>
+maximum distance to receive gbox peer cards, default:2
+</DL>
+
+<P>
+
+<B>gbox_max_ecm_send</B> = <B>number</B>
+<DL COMPACT><DT><DD>
+maximum of gbox peers ECMs will be send to, default:3
+</DL>
+
+<P>
+
+<B>gbox_group</B> = <B></B>
+<DL COMPACT><DT><DD>
+reader assingment to gbox group, default:none
 </DL>
 
 <A NAME="lbAF">&nbsp;</A>
