@@ -35,6 +35,8 @@
 /* Templates: Appends a variable or adds it if doesn't exist yet. The variable will be reset to "" after being used once. See TPLADDONCE for details. */
 #define TPLAPPENDONCE 3
 
+#define TOUCH_SUBDIR "touch/"
+
 struct s_connection {
 	int32_t socket;
 	struct s_client *cl;
@@ -82,6 +84,7 @@ extern void tpl_clear(struct templatevars *vars);
 extern char *tpl_getFilePathInSubdir(const char *path, const char* subdir, const char *name, const char* ext, char *result, uint32_t resultsize);
 extern char *tpl_getTplPath(const char *name, const char *path, char *result, uint32_t resultsize);
 extern char *tpl_getTpl(struct templatevars *vars, const char* name);
+char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const char* subdir);
 extern int32_t tpl_saveIncludedTpls(const char *path);
 extern void tpl_checkOneDirDiskRevisions(const char* subdir);
 extern void tpl_checkDiskRevisions(void);

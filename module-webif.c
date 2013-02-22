@@ -33,7 +33,6 @@ extern uint32_t ecmcwcache_size;
 extern uint8_t cs_http_use_utf8;
 extern uint32_t cfg_sidtab_generation;
 
-extern char *CSS;
 extern char *entitlement_type[];
 extern char *RDR_CD_TXT[];
 extern char *loghist;
@@ -3438,7 +3437,11 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 		if(apicall == 2)
 			return tpl_getTpl(vars, "JSONSTATUS");
 	}
-	return tpl_getTpl(vars, "STATUS");
+
+	if (config_enabled(TOUCH) && streq(tpl_getVar(vars, "SUBDIR"), TOUCH_SUBDIR))
+		return tpl_getTpl(vars, "TOUCH_STATUS");
+	else
+		return tpl_getTpl(vars, "STATUS");
 }
 
 static char *send_oscam_services_edit(struct templatevars *vars, struct uriparams *params) {
@@ -3630,7 +3633,9 @@ static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct urip
 	if (strcmp(strtolower(getParam(params, "action")), "shutdown") == 0) {
 		*keepalive = 0;
 		if(!apicall){
+			char *CSS = tpl_getUnparsedTpl("CSS", 1, "");
 			tpl_addVar(vars, TPLADD, "STYLESHEET", CSS);
+			free(CSS);
 			tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", SHUTDOWNREFRESH);
 			tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
 			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
@@ -3656,7 +3661,9 @@ static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct urip
 	else if (strcmp(strtolower(getParam(params, "action")), "restart") == 0) {
 		*keepalive = 0;
 		if(!apicall){
+			char *CSS = tpl_getUnparsedTpl("CSS", 1, "");
 			tpl_addVar(vars, TPLADD, "STYLESHEET", CSS);
+			free(CSS);
 			tpl_addVar(vars, TPLADD, "REFRESHTIME", "5");
 			tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
 			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));

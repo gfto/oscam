@@ -14,15 +14,6 @@
 extern uint8_t cs_http_use_utf8;
 
 extern const char *templates[][3];
-extern char *JSCRIPT;
-extern char *CSS;
-
-#ifdef TOUCH
-#define TOUCH_SUBDIR "touch/"
-extern char *TOUCH_JSCRIPT;
-extern char *TOUCH_CSS;
-extern char *TOUCH_TPLSTATUS;
-#endif
 
 extern int32_t ssl_active;
 extern pthread_key_t getkeepalive;
@@ -227,7 +218,7 @@ char *tpl_getTplPath(const char *name, const char *path, char *result, uint32_t 
 
 /* Returns an unparsed template either from disk or from internal templates.
    Note: You must free() the result after using it and you may get NULL if an error occured!*/
-static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const char* subdir){
+char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const char* subdir){
   int32_t i;  
   int32_t tplcnt = tpl_count();
   char *result;
@@ -275,6 +266,7 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
 										check_conf(CARDREADER_SMART, ptr2);
 										check_conf(CARDREADER_DB2COM, ptr2);
 										check_conf(CARDREADER_STAPI, ptr2);
+										check_conf(TOUCH, ptr2);
 										check_conf(CS_ANTICASC, ptr2);
 										check_conf(CS_CACHEEX, ptr2);
 										check_conf(HAVE_DVBAPI, ptr2);
@@ -347,11 +339,7 @@ static char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const cha
   }
   
  	if(i >= 0 && i < tplcnt){
-#ifdef TOUCH
-		const char* tpl_res = (!strcmp(subdir, TOUCH_SUBDIR) && i == 12) ? TOUCH_TPLSTATUS : templates[i][1];
-#else
 		const char* tpl_res = templates[i][1];
-#endif
 		int32_t len = strlen(tpl_res) + 1;
 		if (!cs_malloc(&result, len)) return NULL;
  		memcpy(result, tpl_res, len);
@@ -865,6 +853,10 @@ void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uin
 	char* mimetype = "", *result = " ", *allocated = NULL;
 	time_t moddate;
   	char path[255];
+	char* CSS = NULL;
+	char* JSCRIPT = NULL;
+	char* TOUCH_CSS = NULL;
+	char* TOUCH_JSCRIPT = NULL;
 
 	if (!strcmp(filename, "CSS")){
 		filename = cfg.http_css ? cfg.http_css : "";
@@ -905,10 +897,12 @@ void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uin
 		if (filen == 1 && cfg.http_prepend_embedded_css) { // Prepend Embedded CSS
 			char* separator = "/* External CSS */";
 			char* oldallocated = allocated;
+			CSS = tpl_getUnparsedTpl("CSS", 1, "");
 			int32_t newsize = strlen(CSS) + strlen(separator) + 2;
 			if (oldallocated) newsize += strlen(oldallocated) + 1;
 			if (!cs_malloc(&allocated, newsize)) {
 				if (oldallocated) free(oldallocated);
+				free(CSS);
 				send_error500(f);
 				return;
 			}
@@ -920,7 +914,11 @@ void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uin
 		if (allocated) result = allocated;
 
 	} else {
+		CSS = tpl_getUnparsedTpl("CSS", 1, "");
+		JSCRIPT = tpl_getUnparsedTpl("JSCRIPT", 1, "");
 #ifdef TOUCH
+		TOUCH_CSS = tpl_getUnparsedTpl("TOUCH_CSS", 1, "");
+		TOUCH_JSCRIPT = tpl_getUnparsedTpl("TOUCH_JSCRIPT", 1, "");
 		char* res_tpl = !subdir || strcmp(subdir, TOUCH_SUBDIR)
 			? (filen == 1 ? CSS : JSCRIPT)
 			: (filen == 1 ? TOUCH_CSS : TOUCH_JSCRIPT);
@@ -944,6 +942,10 @@ void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uin
 		webif_write(result, f);
 	}
 	if (allocated) free(allocated);
+	free(CSS);
+	free(JSCRIPT);
+	free(TOUCH_CSS);
+	free(TOUCH_JSCRIPT);
 }
 
 /* Helper function for urldecode.*/
