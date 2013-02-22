@@ -449,7 +449,7 @@ int32_t start_listener(struct s_module *module, struct s_port *port)
 
 	ptxt[0][0] = ptxt[1][0] = '\0';
 	if (!port->s_port) {
-		cs_log("%s: disabled", module->desc);
+		cs_debug_mask(D_TRACE, "%s: disabled", module->desc);
 		return 0;
 	}
 	is_udp = (module->type == MOD_CONN_UDP);
