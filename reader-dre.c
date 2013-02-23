@@ -1,5 +1,6 @@
 #include "globals.h"
 #ifdef READER_DRE
+#include "cscrypt/des.h"
 #include "reader-common.h"
 
 #define OK_RESPONSE 0x61

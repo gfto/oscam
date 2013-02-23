@@ -1,5 +1,6 @@
 #include "globals.h"
 #ifdef MODULE_NEWCAMD
+#include "cscrypt/des.h"
 #include "module-newcamd.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"

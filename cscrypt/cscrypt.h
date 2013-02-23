@@ -17,7 +17,6 @@
 #  include "bn.h"
 #endif
 
-#include "des.h"
 #include "md5.h"
 
 #endif

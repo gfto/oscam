@@ -1,8 +1,5 @@
 #include "../globals.h"
 #include "../oscam-string.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include "des.h"
 
 #define CRYPT           0
