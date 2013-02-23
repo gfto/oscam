@@ -20,14 +20,4 @@
 #include "des.h"
 #include "md5.h"
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
-unsigned long crc32(unsigned long, const unsigned char *, unsigned int);
-
-#ifdef  __cplusplus
-}
-#endif
-
 #endif

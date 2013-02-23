@@ -183,7 +183,6 @@ SRC-$(CONFIG_LIB_BIGNUM) += cscrypt/bn_shift.c
 SRC-$(CONFIG_LIB_BIGNUM) += cscrypt/bn_sqr.c
 SRC-$(CONFIG_LIB_BIGNUM) += cscrypt/bn_word.c
 SRC-$(CONFIG_LIB_BIGNUM) += cscrypt/mem.c
-SRC-y += cscrypt/crc32.c
 SRC-$(CONFIG_LIB_DES) += cscrypt/des.c
 SRC-$(CONFIG_LIB_IDEA) += cscrypt/i_cbc.c
 SRC-$(CONFIG_LIB_IDEA) += cscrypt/i_ecb.c

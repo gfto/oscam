@@ -34,4 +34,6 @@ int32_t check_filled(uchar *value, int32_t length);
 void get_random_bytes_init(void);
 void get_random_bytes(uint8_t *dst, uint32_t dst_len);
 
+unsigned long crc32(unsigned long crc, const unsigned char *buf, unsigned int len);
+
 #endif
