@@ -9,11 +9,9 @@
 
 #if defined(WITH_SSL) || defined(WITH_LIBCRYPTO)
 #  include <openssl/aes.h>
-#  include <openssl/sha.h>
 #  include <openssl/bn.h>
 #else
 #  include "aes.h"
-#  include "sha1.h"
 #  include "bn.h"
 #endif
 

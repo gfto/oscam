@@ -1,4 +1,4 @@
-#include "cscrypt.h"
+#include "sha1.h"
 
 #ifndef WITH_LIBCRYPTO
 //FIXME Not checked on threadsafety yet; after checking please remove this line

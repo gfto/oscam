@@ -3,6 +3,7 @@
 #ifdef MODULE_CCCAM
 
 #include "cscrypt/md5.h"
+#include "cscrypt/sha1.h"
 #include "module-cacheex.h"
 #include "module-cccam.h"
 #include "module-cccam-data.h"
