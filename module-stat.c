@@ -1,6 +1,7 @@
 #include "globals.h"
 
 #ifdef WITH_LB
+#include "cscrypt/md5.h"
 #include "module-cacheex.h"
 #include "module-cccam.h"
 #include "oscam-chk.h"

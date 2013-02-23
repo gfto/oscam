@@ -17,6 +17,4 @@
 #  include "bn.h"
 #endif
 
-#include "md5.h"
-
 #endif

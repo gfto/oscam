@@ -31,6 +31,7 @@
 #include <pthread.h>
 #include <dirent.h>
 #include <termios.h>
+#include <inttypes.h>
 
 //for reader-nagra variables in s_reader:
 #include "cscrypt/idea.h"

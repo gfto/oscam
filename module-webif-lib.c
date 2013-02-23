@@ -2,6 +2,7 @@
 #include "globals.h"
 #ifdef WEBIF
 
+#include "cscrypt/md5.h"
 #include "module-webif-lib.h"
 #include "module-webif-pages.h"
 #include "oscam-config.h"

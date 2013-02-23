@@ -1,4 +1,5 @@
 #include "globals.h"
+#include "cscrypt/md5.h"
 #include "module-led.h"
 #include "oscam-client.h"
 #include "oscam-config.h"

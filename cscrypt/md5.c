@@ -20,8 +20,15 @@
  */
 
 #include <string.h>
+#include <inttypes.h>
 
 #include "md5.h"
+
+struct MD5Context {
+	uint32_t buf[4];
+	uint32_t bits[2];
+	unsigned char in[64];
+};
 
 #ifdef __i386__
 #define byteReverse(a, b)
@@ -144,7 +151,7 @@ static void __md5_Transform(uint32_t buf[4],  uint32_t in[16])
  * Start MD5 accumulation.  Set bit count to 0 and buffer to mysterious
  * initialization constants.
  */
-void __md5_Init(struct MD5Context *ctx)
+static void __md5_Init(struct MD5Context *ctx)
 {
 	ctx->buf[0] = 0x67452301;
 	ctx->buf[1] = 0xefcdab89;
@@ -159,7 +166,7 @@ void __md5_Init(struct MD5Context *ctx)
  * Update context to reflect the concatenation of another buffer full
  * of bytes.
  */
-void __md5_Update(struct MD5Context *ctx, const unsigned char *buf, unsigned int len)
+static void __md5_Update(struct MD5Context *ctx, const unsigned char *buf, unsigned int len)
 {
 	uint32_t t;
 
@@ -205,7 +212,7 @@ void __md5_Update(struct MD5Context *ctx, const unsigned char *buf, unsigned int
  * Final wrapup - pad to 64-byte boundary with the bit pattern 
  * 1 0* (64-bit count of bits processed, MSB-first)
  */
-void __md5_Final(unsigned char digest[MD5_DIGEST_LENGTH], struct MD5Context *ctx)
+static void __md5_Final(unsigned char digest[MD5_DIGEST_LENGTH], struct MD5Context *ctx)
 {
 	unsigned count;
 	unsigned char *p;

@@ -1,6 +1,7 @@
 #include "globals.h"
 #if defined MODULE_CAMD35 || defined MODULE_CAMD35_TCP
 
+#include "cscrypt/md5.h"
 #include "module-cacheex.h"
 #include "oscam-aes.h"
 #include "oscam-chk.h"
