@@ -19,16 +19,17 @@
  * by Erik Andersen <andersen@uclibc.org>
  */
 
-#include <string.h>
-#include <inttypes.h>
+#include "../globals.h"
 
 #include "md5.h"
 
-struct MD5Context {
+#if !defined(WITH_SSL) && !defined(WITH_LIBCRYPTO)
+
+typedef struct MD5Context {
 	uint32_t buf[4];
 	uint32_t bits[2];
 	unsigned char in[64];
-};
+} MD5_CTX;
 
 #ifdef __i386__
 #define byteReverse(a, b)
@@ -63,10 +64,10 @@ static void byteReverse(unsigned char *buf, unsigned int longs)
 
 /*
  * The core of the MD5 algorithm, this alters an existing MD5 hash to
- * reflect the addition of 16 longwords of new data.  __md5_Update blocks
+ * reflect the addition of 16 longwords of new data.  MD5_Update blocks
  * the data and converts bytes into longwords for this routine.
  */
-static void __md5_Transform(uint32_t buf[4],  uint32_t in[16])
+static void MD5_Transform(uint32_t buf[4],  uint32_t in[16])
 {
 	uint32_t a = buf[0];
 	uint32_t b = buf[1];
@@ -151,7 +152,7 @@ static void __md5_Transform(uint32_t buf[4],  uint32_t in[16])
  * Start MD5 accumulation.  Set bit count to 0 and buffer to mysterious
  * initialization constants.
  */
-static void __md5_Init(struct MD5Context *ctx)
+static void MD5_Init(MD5_CTX *ctx)
 {
 	ctx->buf[0] = 0x67452301;
 	ctx->buf[1] = 0xefcdab89;
@@ -166,7 +167,7 @@ static void __md5_Init(struct MD5Context *ctx)
  * Update context to reflect the concatenation of another buffer full
  * of bytes.
  */
-static void __md5_Update(struct MD5Context *ctx, const unsigned char *buf, unsigned int len)
+static void MD5_Update(MD5_CTX *ctx, const unsigned char *buf, unsigned int len)
 {
 	uint32_t t;
 
@@ -190,7 +191,7 @@ static void __md5_Update(struct MD5Context *ctx, const unsigned char *buf, unsig
 		}
 		memcpy(p, buf, t);
 		byteReverse(ctx->in, 16);
-		__md5_Transform(ctx->buf, (uint32_t *) ctx->in);
+		MD5_Transform(ctx->buf, (uint32_t *) ctx->in);
 		buf += t;
 		len -= t;
 	}
@@ -199,7 +200,7 @@ static void __md5_Update(struct MD5Context *ctx, const unsigned char *buf, unsig
 	while (len >= 64) {
 		memcpy(ctx->in, buf, 64);
 		byteReverse(ctx->in, 16);
-		__md5_Transform(ctx->buf, (uint32_t *) ctx->in);
+		MD5_Transform(ctx->buf, (uint32_t *) ctx->in);
 		buf += 64;
 		len -= 64;
 	}
@@ -212,7 +213,7 @@ static void __md5_Update(struct MD5Context *ctx, const unsigned char *buf, unsig
  * Final wrapup - pad to 64-byte boundary with the bit pattern 
  * 1 0* (64-bit count of bits processed, MSB-first)
  */
-static void __md5_Final(unsigned char digest[MD5_DIGEST_LENGTH], struct MD5Context *ctx)
+static void MD5_Final(unsigned char digest[MD5_DIGEST_LENGTH], MD5_CTX *ctx)
 {
 	unsigned count;
 	unsigned char *p;
@@ -233,7 +234,7 @@ static void __md5_Final(unsigned char digest[MD5_DIGEST_LENGTH], struct MD5Conte
 		/* Two lots of padding:  Pad the first block to 64 bytes */
 		memset(p, 0, count);
 		byteReverse(ctx->in, 16);
-		__md5_Transform(ctx->buf, (uint32_t *) ctx->in);
+		MD5_Transform(ctx->buf, (uint32_t *) ctx->in);
 
 		/* Now fill the next block with 56 bytes */
 		memset(ctx->in, 0, 56);
@@ -248,12 +249,23 @@ static void __md5_Final(unsigned char digest[MD5_DIGEST_LENGTH], struct MD5Conte
 	c[14] = ctx->bits[0];
 	c[15] = ctx->bits[1];
 
-	__md5_Transform(ctx->buf, (uint32_t *) ctx->in);
+	MD5_Transform(ctx->buf, (uint32_t *) ctx->in);
 	byteReverse((unsigned char *) ctx->buf, 4);
 
 	memcpy(digest, ctx->buf, 16);
 	memset(ctx, 0, sizeof(struct MD5Context)); /* In case it's sensitive */
 }
+
+unsigned char *MD5(const unsigned char *input, unsigned long len, unsigned char *output)
+{
+	MD5_CTX ctx;
+	MD5_Init(&ctx);
+	MD5_Update(&ctx, input, len);
+	MD5_Final(output, &ctx);
+	memset(&ctx, 0, sizeof(ctx)); /* security consideration */
+	return output;
+}
+#endif
 
 /* This string is magic for this algorithm.  Having
    it this way, we can get better later on */
@@ -284,7 +296,7 @@ char * __md5_crypt( const char *pw, const char *salt, char *passwd )
 
 	unsigned char	final[17];	/* final[16] exists only to aid in looping */
 	int sl,pl,i,__md5__magic_len,pw_len;
-	struct MD5Context ctx,ctx1;
+	MD5_CTX ctx,ctx1;
 	unsigned long l;
 
 	/* Refine the Salt first */
@@ -302,33 +314,33 @@ char * __md5_crypt( const char *pw, const char *salt, char *passwd )
 	/* get the length of the true salt */
 	sl = ep - sp;
 
-	__md5_Init(&ctx);
+	MD5_Init(&ctx);
 
 	/* The password first, since that is what is most unknown */
 	pw_len = strlen(pw);
-	__md5_Update(&ctx,(const unsigned char *)pw,pw_len);
+	MD5_Update(&ctx,(const unsigned char *)pw,pw_len);
 
 	/* Then our magic string */
-	__md5_Update(&ctx,(const unsigned char *)__md5__magic,__md5__magic_len);
+	MD5_Update(&ctx,(const unsigned char *)__md5__magic,__md5__magic_len);
 
 	/* Then the raw salt */
-	__md5_Update(&ctx,(const unsigned char *)sp,sl);
+	MD5_Update(&ctx,(const unsigned char *)sp,sl);
 
 	/* Then just as many characters of the MD5(pw,salt,pw) */
-	__md5_Init(&ctx1);
-	__md5_Update(&ctx1,(const unsigned char *)pw,pw_len);
-	__md5_Update(&ctx1,(const unsigned char *)sp,sl);
-	__md5_Update(&ctx1,(const unsigned char *)pw,pw_len);
-	__md5_Final(final,&ctx1);
+	MD5_Init(&ctx1);
+	MD5_Update(&ctx1,(const unsigned char *)pw,pw_len);
+	MD5_Update(&ctx1,(const unsigned char *)sp,sl);
+	MD5_Update(&ctx1,(const unsigned char *)pw,pw_len);
+	MD5_Final(final,&ctx1);
 	for(pl = pw_len; pl > 0; pl -= 16)
-		__md5_Update(&ctx,(const unsigned char *)final,pl>16 ? 16 : pl);
+		MD5_Update(&ctx,(const unsigned char *)final,pl>16 ? 16 : pl);
 
 	/* Don't leave anything around in vm they could use. */
 	memset(final,0,sizeof final);
 
 	/* Then something really weird... */
 	for (i = pw_len; i ; i >>= 1) {
-		__md5_Update(&ctx, ((i&1) ? final : (const unsigned char *) pw), 1);
+		MD5_Update(&ctx, ((i&1) ? final : (const unsigned char *) pw), 1);
 	}
 
 	/* Now make the output string */
@@ -336,7 +348,7 @@ char * __md5_crypt( const char *pw, const char *salt, char *passwd )
 	strncat(passwd,sp,sl);
 	strcat(passwd,"$");
 
-	__md5_Final(final,&ctx);
+	MD5_Final(final,&ctx);
 
 	/*
 	 * and now, just to make sure things don't run too fast
@@ -344,23 +356,23 @@ char * __md5_crypt( const char *pw, const char *salt, char *passwd )
 	 * need 30 seconds to build a 1000 entry dictionary...
 	 */
 	for(i=0;i<1000;i++) {
-		__md5_Init(&ctx1);
+		MD5_Init(&ctx1);
 		if(i & 1)
-			__md5_Update(&ctx1,(const unsigned char *)pw,pw_len);
+			MD5_Update(&ctx1,(const unsigned char *)pw,pw_len);
 		else
-			__md5_Update(&ctx1,(const unsigned char *)final,16);
+			MD5_Update(&ctx1,(const unsigned char *)final,16);
 
 		if(i % 3)
-			__md5_Update(&ctx1,(const unsigned char *)sp,sl);
+			MD5_Update(&ctx1,(const unsigned char *)sp,sl);
 
 		if(i % 7)
-			__md5_Update(&ctx1,(const unsigned char *)pw,pw_len);
+			MD5_Update(&ctx1,(const unsigned char *)pw,pw_len);
 
 		if(i & 1)
-			__md5_Update(&ctx1,(const unsigned char *)final,16);
+			MD5_Update(&ctx1,(const unsigned char *)final,16);
 		else
-			__md5_Update(&ctx1,(const unsigned char *)pw,pw_len);
-		__md5_Final(final,&ctx1);
+			MD5_Update(&ctx1,(const unsigned char *)pw,pw_len);
+		MD5_Final(final,&ctx1);
 	}
 
 	p = passwd + strlen(passwd);
@@ -379,14 +391,3 @@ char * __md5_crypt( const char *pw, const char *salt, char *passwd )
 
 	return passwd;
 }
-
-unsigned char *MD5(const unsigned char *input, unsigned long len, unsigned char *output)
-{
-	struct MD5Context ctx;
-	__md5_Init(&ctx);
-	__md5_Update(&ctx, input, len);
-	__md5_Final(output, &ctx);
-	memset(&ctx, 0, sizeof(ctx)); /* security consideration */
-	return output;
-}
-
