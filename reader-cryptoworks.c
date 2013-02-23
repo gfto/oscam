@@ -1,5 +1,6 @@
 #include "globals.h"
 #ifdef READER_CRYPTOWORKS
+#include "cscrypt/bn.h"
 #include "oscam-config.h"
 #include "oscam-emm.h"
 #include "reader-common.h"

@@ -1,3 +1,6 @@
+#if defined(WITH_SSL) || defined(WITH_LIBCRYPTO)
+#  include <openssl/aes.h>
+#else
 #ifndef HEADER_AES_H
 #define HEADER_AES_H
 
@@ -9,18 +12,9 @@
 #define AES_MAXNR 14
 #define AES_BLOCK_SIZE 16
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
-#if defined(_MSC_VER) && !defined(OPENSSL_SYS_WINCE)
-# define SWAP(x) (_lrotl(x, 8) & 0x00ff00ff | _lrotr(x, 8) & 0xff00ff00)
-# define GETU32(p) SWAP(*((uint32_t *)(p)))
-# define PUTU32(ct, st) { *((uint32_t *)(ct)) = SWAP((st)); }
-#else
 # define GETU32(pt) (((uint32_t)(pt)[0] << 24) ^ ((uint32_t)(pt)[1] << 16) ^ ((uint32_t)(pt)[2] <<  8) ^ ((uint32_t)(pt)[3]))
 # define PUTU32(ct, st) { (ct)[0] = (uint8_t)((st) >> 24); (ct)[1] = (uint8_t)((st) >> 16); (ct)[2] = (uint8_t)((st) >>  8); (ct)[3] = (uint8_t)(st); }
-#endif
+
 #include <stdint.h>
 
 #define MAXKC   (256/32)
@@ -47,8 +41,6 @@ void AES_encrypt(const unsigned char *in, unsigned char *out,
 void AES_decrypt(const unsigned char *in, unsigned char *out,
 	const AES_KEY *key);
 
-#ifdef  __cplusplus
-}
-#endif
-
 #endif /* !HEADER_AES_H */
+
+#endif

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <assert.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -93,7 +94,8 @@
 #define tcdrain(fd) ioctl(fd, TCSBRK, 1)
 #endif
 
-#include "cscrypt/cscrypt.h"
+#include "cscrypt/aes.h"
+#include "cscrypt/bn.h"
 
 #ifndef uchar
 typedef unsigned char uchar;

@@ -1,7 +1,7 @@
 #include "globals.h"
 #ifdef READER_CONAX
-#include "reader-common.h"
 #include "cscrypt/bn.h"
+#include "reader-common.h"
 
 static int32_t RSA_CNX(struct s_reader *reader, unsigned char *msg, unsigned char *mod, unsigned char *exp, uint32_t cta_lr, uint32_t modbytes, uint32_t expbytes)
 {

@@ -1,3 +1,9 @@
+#ifndef CSCRYPT_BN_H_
+#define CSCRYPT_BN_H_
+
+#if defined(WITH_SSL) || defined(WITH_LIBCRYPTO)
+#  include <openssl/bn.h>
+#else
 /* crypto/bn/bn.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -526,4 +532,8 @@ void ERR_load_BN_strings(void);
 #ifdef  __cplusplus
 }
 #endif
+#endif
+
+#endif
+
 #endif
