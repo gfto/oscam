@@ -3,8 +3,8 @@
 #ifdef WEBIF
 
 #include "cscrypt/md5.h"
+#include "webif/pages.h"
 #include "module-webif-lib.h"
-#include "module-webif-pages.h"
 #include "oscam-config.h"
 #include "oscam-files.h"
 #include "oscam-lock.h"

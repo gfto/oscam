@@ -237,7 +237,7 @@ SRC-$(CONFIG_MODULE_SERIAL) += module-serial.c
 SRC-$(CONFIG_WITH_LB) += module-stat.c
 SRC-$(CONFIG_WEBIF) += module-webif.c
 SRC-$(CONFIG_WEBIF) += module-webif-lib.c
-SRC-$(CONFIG_WEBIF) += module-webif-pages.c
+SRC-$(CONFIG_WEBIF) += webif/pages.c
 SRC-$(CONFIG_WITH_CARDREADER) += reader-common.c
 SRC-$(CONFIG_READER_BULCRYPT) += reader-bulcrypt.c
 SRC-$(CONFIG_READER_CONAX) += reader-conax.c
@@ -291,7 +291,7 @@ SRC := $(subst config.c,$(OBJDIR)/config.c,$(SRC))
 # starts the compilation.
 all:
 	@./config.sh --use-flags "$(USE_FLAGS)" --objdir "$(OBJDIR)" --make-config.mak
-	@-mkdir -p $(OBJDIR)/cscrypt $(OBJDIR)/csctapi $(OBJDIR)/minilzo
+	@-mkdir -p $(OBJDIR)/cscrypt $(OBJDIR)/csctapi $(OBJDIR)/minilzo $(OBJDIR)/webif
 	@-printf "\
 +-------------------------------------------------------------------------------\n\
 | OSCam ver: $(VER) rev: $(SVN_REV) target: $(TARGET)\n\
@@ -314,6 +314,7 @@ all:
 |  Compiler : $(shell $(CC) --version 2>/dev/null | head -n 1)\n\
 |  Binary   : $(OSCAM_BIN)\n\
 +-------------------------------------------------------------------------------\n"
+	@$(MAKE) --no-print-directory --quiet -C webif
 	@$(MAKE) --no-print-directory $(OSCAM_BIN) $(LIST_SMARGO_BIN)
 
 $(OSCAM_BIN).debug: $(OBJ)
@@ -369,6 +370,7 @@ distclean: clean
 		echo "RM	$$FILE"; \
 		rm -rf $$FILE; \
 	done
+	@-make --no-print-directory --quiet -C webif clean
 
 README.build:
 	@echo "Extracting 'make help' into $@ file."

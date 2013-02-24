@@ -181,6 +181,8 @@ add_definitions ("-DCS_CONFDIR=\\\"${CS_CONFDIR}\\\"")
 # Build config.mak and related files
 # FIXME: Create USE_FLAGS and pass them to config.sh using --use-flags
 execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --objdir ${CMAKE_CURRENT_BINARY_DIR} --use-flags CMAKE --make-config.mak)
+# Generate webif/pages.c
+execute_process (COMMAND make --no-print-directory --quiet -C ${CMAKE_CURRENT_SOURCE_DIR}/webif)
 
 # Manage config.h based on command line parameters
 # Manipulate config file based on given parameters and read unset parameters
@@ -391,9 +393,9 @@ set (CAMD_33 "module-camd33*")
 endif (CAMD33 MATCHES "N")
 if (OSCamOperatingSystem MATCHES "Mac OS X")
 file (GLOB csmodules_mac  "module-dvbapi*" "module-lcd*" "${CAMD_33}")
-file (GLOB csmodules_srcs "module-*.c")
+file (GLOB csmodules_srcs "module-*.c" "webif/pages.c")
 list (REMOVE_ITEM csmodules_srcs ${csmodules_mac})
-file (GLOB csmodules_hdrs "module-*.h")
+file (GLOB csmodules_hdrs "module-*.h" "webif/pages.h")
 list (REMOVE_ITEM csmodules_hdrs ${csmodules_mac})
 file (GLOB csreaders_srcs "reader-*.c")
 file (GLOB csreaders_hdrs "reader-*.h")
@@ -403,8 +405,8 @@ file (GLOB exe_srcs "oscam.c")
 file (GLOB exe_hdrs "globals.h")
 file (GLOB all_srcs ${csmodules_srcs} ${csreaders_srcs} ${csoscam_srcs} ${exe_srcs})
 else (OSCamOperatingSystem MATCHES "Mac OS X")
-file (GLOB csmodules_srcs "module-*.c")
-file (GLOB csmodules_hdrs "module-*.h")
+file (GLOB csmodules_srcs "module-*.c" "webif/pages.c")
+file (GLOB csmodules_hdrs "module-*.h" "webif/pages.h")
 file (GLOB csreaders_srcs "reader-*.c")
 file (GLOB csreaders_hdrs "reader-*.h")
 file (GLOB csoscam_srcs "oscam-*.c" "${CMAKE_CURRENT_BINARY_DIR}/config.c")

@@ -15,7 +15,6 @@
 #include "module-stat.h"
 #include "module-webif.h"
 #include "module-webif-lib.h"
-#include "module-webif-pages.h"
 #include "oscam-conf-mk.h"
 #include "oscam-config.h"
 #include "oscam-files.h"
