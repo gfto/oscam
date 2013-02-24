@@ -94,6 +94,10 @@
 #define tcdrain(fd) ioctl(fd, TCSBRK, 1)
 #endif
 
+#ifdef __uClinux__
+#define fork() 0
+#endif
+
 #include "cscrypt/aes.h"
 #include "cscrypt/bn.h"
 

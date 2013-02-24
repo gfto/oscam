@@ -273,3 +273,9 @@ android-arm:
 		LIB_PTHREAD= \
 		CROSS=arm-linux-androideabi- \
 		$(MAKEFLAGS)
+
+uclinux:
+	$(MAKE) --no-print-directory \
+		LIB_DL= STRIP=true \
+		CROSS=m68k-uclinux- \
+		$(MAKEFLAGS)

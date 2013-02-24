@@ -604,6 +604,7 @@ OSCam build system documentation\n\
     make dockstar      - Builds OSCam for Dockstar\n\
     make qboxhd        - Builds OSCam for QBoxHD STBs\n\
     make opensolaris   - Builds OSCam for OpenSolaris\n\
+    make uclinux       - Builds OSCam for m68k uClinux\n\
 \n\
  Predefined targets for static builds:\n\
     make static        - Builds OSCam statically\n\
