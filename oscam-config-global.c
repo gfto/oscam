@@ -427,8 +427,8 @@ static bool cache_should_save_fn(void *UNUSED(var)) {
 #ifdef CS_CACHEEX
 	|| cfg.cacheex_wait_timetab.n || cfg.cacheex_enable_stats > 0 || cfg.csp_port || cfg.csp.filter_caidtab.n || cfg.csp.allow_request==0
 #endif
-#ifdef CW_CYLCE_CHECK
-	|| !cfg.cwcycle_check_enable || cfg.cwcycle_check_caidtab.n || cfg.maxcyclelist != 500 || cfg.keepcycletime || cfg.onbadcycle || cfg.cwcycle_dropold
+#ifdef CW_CYCLE_CHECK
+	|| !cfg.cwcycle_check_enable || cfg.cwcycle_check_caidtab.caid[0] || cfg.maxcyclelist != 500 || cfg.keepcycletime || cfg.onbadcycle || cfg.cwcycle_dropold
 #endif
 	;
 }

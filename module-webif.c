@@ -526,10 +526,10 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 	tpl_addVar(vars, TPLADD, "ARCHECKED", (cfg.csp.allow_request == 1) ? "checked" : "");
 #endif
 
-#ifdef CW_CYCLE_CHECK
 #ifndef CS_CACHEEX
 	char *value = NULL;
 #endif
+#ifdef CW_CYCLE_CHECK
 	if (cfg.cwcycle_check_enable == 1) {
 		tpl_addVar(vars, TPLADD, "CWCYCLECHECK", "selected");
 	}
