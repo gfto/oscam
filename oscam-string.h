@@ -36,4 +36,7 @@ void get_random_bytes(uint8_t *dst, uint32_t dst_len);
 
 unsigned long crc32(unsigned long crc, const unsigned char *buf, unsigned int len);
 
+char to_hex(char code);
+void char_to_hex(const unsigned char *p_array, uint32_t p_array_len, unsigned char *result);
+
 #endif

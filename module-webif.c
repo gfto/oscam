@@ -5,7 +5,6 @@
 // OSCam HTTP server module
 //
 
-#include "cscrypt/md5.h"
 #include "module-anticasc.h"
 #include "module-cacheex.h"
 #include "module-cccam.h"
@@ -15,6 +14,7 @@
 #include "module-stat.h"
 #include "module-webif.h"
 #include "module-webif-lib.h"
+#include "module-webif-tpl.h"
 #include "oscam-conf-mk.h"
 #include "oscam-config.h"
 #include "oscam-files.h"
@@ -48,6 +48,8 @@ CS_MUTEX_LOCK *lock_cs;
 
 static int8_t running = 1;
 static pthread_t httpthread;
+
+enum refreshtypes { REFR_ACCOUNTS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REFR_SERVICES };
 
 /* constants for menuactivating */
 #define MNU_STATUS 0
