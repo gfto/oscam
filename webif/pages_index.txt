@@ -34,8 +34,6 @@ ADDNEWUSER                    userconfig/userconfig_newuserform.html
 USERCONFIGLISTBIT             userconfig/userconfig_entry.html
 APIUSERCONFIGLIST             api.xml/userconfiglist.xml
 APIUSERCONFIGLISTBIT          api.xml/userconfiglist_userconfigs.xml
-SIDTAB                        sidtab/sidtab.html
-SIDTABBIT                     sidtab/sidtab_sidtabs.html
 READERS                       readers/readers.html
 APIREADERS                    api.xml/readers.xml
 APIREADERSBIT                 api.xml/readers_readerlist.xml
@@ -73,7 +71,6 @@ READERCONFIGNCD524BIT         readerconfig/readerconfig_ncd524bit.html
 READERCONFIGCCCAMBIT          readerconfig/readerconfig_cccambit.html
 APIUSEREDIT                   api.xml/useredit.xml
 USEREDIT                      user_edit/user_edit.html
-USEREDITRDRSELECTED           user_edit/rdrselected.html
 USEREDITSIDOKBIT              user_edit/user_edit_sidokbit.html
 USEREDITSIDNOBIT              user_edit/user_edit_sidnobit.html
 SAVETEMPLATES                 savetemplates/savetemplates.html
