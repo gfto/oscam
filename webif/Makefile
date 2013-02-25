@@ -1,4 +1,4 @@
-HOSTCC ?= cc
+HOSTCC ?= gcc
 HOSTCFLAGS ?= -O2 \
  -W -Wall -Wextra -Wno-sign-compare \
  -Wshadow -Wformat-security -Wstrict-prototypes
