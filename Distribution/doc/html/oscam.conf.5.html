@@ -841,14 +841,14 @@ allow incoming ECM request from Cardservproxy, default:1
 
 <P>
 
-<B>cwcycle_check_eanble</B> = <B>0</B>|<B>1</B>
+<B>cwcycle_check_enable</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
 1 = enable CW cycle check, default:0
 </DL>
 
 <P>
 
-<B>cwcycle_check_caid</B> = <B>CAID</B>
+<B>cwcycle_check_caid</B> = <B>CAID</B>[,<B>CAID</B>]...
 <DL COMPACT><DT><DD>
 CAID enabled for CW cycle check, default:none
 </DL>
@@ -871,7 +871,7 @@ minimum time a learned cycle time resists in memory, default:0, maximum:15
 
 <B>cwcycle_onbad</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
-0 = log bad CW cycle only, 1= drop bad CW cycle, default:0
+0 = log bad CW cycle only, 1 = drop bad CW cycle, default:0
 </DL>
 
 <P>
