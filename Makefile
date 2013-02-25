@@ -562,6 +562,19 @@ OSCam build system documentation\n\
                       'Distribution/oscam-1.20-unstable_svn7404-i486-slackware-linux-static'\n\
                      For example you can run: 'make OSCAM_BIN=my-oscam'\n\
 \n\
+ Binaries compiled and run during the OSCam build:\n\
+\n\
+   OSCam builds webif/pages_gen binary that is run by the build system to\n\
+   generate file that holds web pages. To build this binary two variables\n\
+   are used:\n\
+\n\
+   HOSTCC=gcc     - The compiler used for building binaries that are run on\n\
+                    the build machine (the host). Default: gcc\n\
+                    To use clang for example run: make CC=clang HOSTCC=clang\n\
+\n\
+   HOSTCFLAGS=xxx - The CFLAGS passed to HOSTCC. See webif/Makefile for the\n\
+                    default host cflags.\n\
+\n\
  Config targets:\n\
    make config        - Start configuration utility.\n\
    make allyesconfig  - Enable all configuration options.\n\
