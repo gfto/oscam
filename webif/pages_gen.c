@@ -239,7 +239,7 @@ static void parse_deps(int tpl_idx) {
 		ifdef_open = 1;
 	}
 
-	fprintf(output_file, "\t{ \"%s\", %s%s, \"%s\" },\n",
+	fprintf(output_file, "\t{ .tpl_name=\"%s\", .tpl_data=%s%s, .tpl_deps=\"%s\" },\n",
 		ident,
 		templates.data[tpl_idx].type == TXT ? "TPL" : "", ident,
 		deps);
@@ -306,6 +306,12 @@ int main(void) {
 	fprintf(output_file, "#ifndef WEBIF_PAGES_H_\n");
 	fprintf(output_file, "#define WEBIF_PAGES_H_\n");
 	fprintf(output_file, "\n");
+	fprintf(output_file, "struct template {\n");
+	fprintf(output_file, "	char *tpl_name;\n");
+	fprintf(output_file, "	char *tpl_data;\n");
+	fprintf(output_file, "	char *tpl_deps;\n");
+	fprintf(output_file, "};\n");
+	fprintf(output_file, "\n");
 	fprintf(output_file, "int32_t tpl_count(void);\n");
 	fprintf(output_file, "\n");
 	fprintf(output_file, "#endif\n");
@@ -330,13 +336,13 @@ int main(void) {
 		free(buf);
 	}
 
-	fprintf(output_file, "const char *templates[][3] = {\n");
+	fprintf(output_file, "const struct template templates[] = {\n");
 	for (i = 0; i < templates.num; i++) {
 		parse_deps(i);
 	}
 	fprintf(output_file, "};\n");
 	fprintf(output_file, "\n");
-	fprintf(output_file, "int32_t tpl_count(void) { return sizeof(templates) / (3*sizeof(char *)); }\n");
+	fprintf(output_file, "int32_t tpl_count(void) { return sizeof(templates) / sizeof(struct template); }\n");
 	fprintf(output_file, "\n");
 	fprintf(output_file, "#endif\n");
 	fclose(output_file);
