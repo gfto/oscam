@@ -1101,6 +1101,8 @@ struct s_ecmHeaderwhitelist {
 struct ecmrl {
 	uint16_t		srvid;
 	time_t			last;
+	uchar			ecmd5[CS_ECMSTORESIZE];
+	
 };
 #define MAXECMRATELIMIT	20
 
@@ -1361,6 +1363,7 @@ struct s_reader  									//contains device info, reader info and card info
 	//ratelimit
 	int32_t			ratelimitecm;
 	int32_t			ratelimitseconds;
+	int8_t			ecmunique; // check for matching ecm hash in ratelimitslot	
 	time_t			lastdvbapirateoverride;
 	uint32_t		ecmsok;
 	uint32_t		ecmsnok;
