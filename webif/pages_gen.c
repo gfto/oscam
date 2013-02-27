@@ -240,10 +240,9 @@ static void print_template(int tpl_idx) {
 		ifdef_open = 1;
 	}
 
-	fprintf(output_file, "\t{ .tpl_name=\"%s\", .tpl_data=%s%s, .tpl_deps=\"%s\", .tpl_data_len=%u },\n",
+	fprintf(output_file, "\t{ .tpl_name=\"%s\", .tpl_data=%s%s, .tpl_data_len=%u },\n",
 		ident,
 		templates.data[tpl_idx].type == TXT ? "TPL" : "", ident,
-		deps,
 		templates.data[tpl_idx].data_len
 	);
 
@@ -316,7 +315,6 @@ int main(void) {
 	fprintf(output_file, "struct template {\n");
 	fprintf(output_file, "	char *tpl_name;\n");
 	fprintf(output_file, "	char *tpl_data;\n");
-	fprintf(output_file, "	char *tpl_deps;\n");
 	fprintf(output_file, "	uint32_t tpl_data_len;\n");
 	fprintf(output_file, "};\n");
 	fprintf(output_file, "\n");
