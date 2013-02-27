@@ -229,7 +229,7 @@ char *tpl_getTplPath(const char *name, const char *path, char *result, uint32_t 
 
 /* Returns an unparsed template either from disk or from internal templates.
    Note: You must free() the result after using it and you may get NULL if an error occured!*/
-static char *__tpl_getUnparsedTpl(const char* name, bool removeHeader) {
+char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const char* subdir) {
 	int32_t i;
 	const struct tpl *tpl = NULL;
 	char *result;
@@ -244,7 +244,12 @@ static char *__tpl_getUnparsedTpl(const char* name, bool removeHeader) {
 
 	if (tpl && cfg.http_tpl) {
 		char path[255];
-		if (strlen(tpl_getFilePathInSubdir(cfg.http_tpl, "", name, ".tpl", path, 255)) > 0 && file_exists(path))
+		if ((strlen(tpl_getFilePathInSubdir(cfg.http_tpl, subdir, name, ".tpl", path, 255)) > 0 && file_exists(path))
+		     || (strlen(subdir) > 0
+#ifdef TOUCH
+		     && strcmp(subdir, TOUCH_SUBDIR)
+#endif
+		     && strlen(tpl_getFilePathInSubdir(cfg.http_tpl, ""    , name, ".tpl", path, 255)) > 0 && file_exists(path)))
 		{
 			FILE *fp;
 			char buffer[1025];
@@ -291,15 +296,11 @@ static char *__tpl_getUnparsedTpl(const char* name, bool removeHeader) {
 	return result;
 }
 
-char *tpl_getUnparsedTpl(const char* name) {
-	return __tpl_getUnparsedTpl(name, true);
-}
-
 /* Returns the specified template with all variables/other templates replaced or an
    empty string if the template doesn't exist. Do not free the result yourself, it
    will get automatically cleaned up! */
 char *tpl_getTpl(struct templatevars *vars, const char* name) {
-	char *tplorg = tpl_getUnparsedTpl(name);
+	char *tplorg = tpl_getUnparsedTpl(name, 1, tpl_getVar(vars, "SUBDIR"));
 	if (!tplorg) return "";
 	char *tplend = tplorg + strlen(tplorg);
 	char *pch, *pch2, *tpl=tplorg;
@@ -370,16 +371,16 @@ int32_t tpl_saveIncludedTpls(const char *path) {
 }
 
 /* Checks all disk templates in a directory if they are still current or may need upgrade! */
-void tpl_checkDiskRevisions(void) {
-	if (!cfg.http_tpl)
-		return;
+void tpl_checkOneDirDiskRevisions(const char* subdir) {
+	char dirpath[255] = "\0";
+	snprintf(dirpath, 255, "%s%s", cfg.http_tpl ? cfg.http_tpl : "", subdir);
 	int32_t i;
 	char path[255];
 	for(i = 0; i < tpls_count; ++i) {
 		const struct tpl *tpl = &tpls[i];
-		if (strncmp(tpl->tpl_name, "IC", 2) != 0 && strlen(tpl_getTplPath(tpl->tpl_name, cfg.http_tpl, path, 255)) > 0 && file_exists(path)) {
+		if (strncmp(tpl->tpl_name, "IC", 2) != 0 && strlen(tpl_getTplPath(tpl->tpl_name, dirpath, path, 255)) > 0 && file_exists(path)) {
 			int8_t error = 1;
-			char *tplorg = __tpl_getUnparsedTpl(tpl->tpl_name, false); // Do not strip the header
+			char *tplorg = tpl_getUnparsedTpl(tpl->tpl_name, 0, subdir);
 			unsigned long checksum = 0, curchecksum = crc32(0L, (unsigned char*)tpl->tpl_data, tpl->tpl_data_len);
 			char *pch1 = strstr(tplorg,"<!--OSCam");
 			if (pch1 != NULL) {
@@ -401,6 +402,40 @@ void tpl_checkDiskRevisions(void) {
 			} else cs_log("WARNING: Your http disk template %s is in the old template format without revision info. Please consider upgrading it!", path);
 			if (error) cs_log("If you are sure that it is current, add the following line at the beginning of the template to suppress this warning: <!--OSCam;%lu;%s;%s-->", curchecksum, CS_VERSION, CS_SVN_VERSION);
 			free(tplorg);
+		}
+	}
+}
+
+/* Checks whether disk templates need upgrade - including sub-directories */
+void tpl_checkDiskRevisions(void) {
+	char subdir[255];
+	char dirpath[255];
+	if (cfg.http_tpl) {
+		tpl_checkOneDirDiskRevisions("");
+		DIR *hdir;
+		struct dirent entry;
+		struct dirent *result;
+		struct stat s;
+		if ((hdir = opendir(cfg.http_tpl)) != NULL) {
+			while(cs_readdir_r(hdir, &entry, &result) == 0 && result != NULL) {
+				if (strcmp(".", entry.d_name) == 0 || strcmp("..", entry.d_name) == 0) {
+					continue;
+				}
+				snprintf(dirpath, 255, "%s%s", cfg.http_tpl, entry.d_name);
+				if (stat(dirpath, &s) == 0) {
+					if (s.st_mode & S_IFDIR) {
+						snprintf(subdir, 255,
+						#ifdef WIN32
+									"%s\\"
+						#else
+									"%s/"
+						#endif
+								, entry.d_name);
+						tpl_checkOneDirDiskRevisions(subdir);
+					}
+				}
+			}
+			closedir(hdir);
 		}
 	}
 }

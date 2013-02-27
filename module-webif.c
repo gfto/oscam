@@ -3641,7 +3641,7 @@ static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct urip
 	if (strcmp(strtolower(getParam(params, "action")), "shutdown") == 0) {
 		*keepalive = 0;
 		if(!apicall){
-			char *CSS = tpl_getUnparsedTpl("CSS");
+			char *CSS = tpl_getUnparsedTpl("CSS", 1, "");
 			tpl_addVar(vars, TPLADD, "STYLESHEET", CSS);
 			free(CSS);
 			tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", SHUTDOWNREFRESH);
@@ -3669,7 +3669,7 @@ static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct urip
 	else if (strcmp(strtolower(getParam(params, "action")), "restart") == 0) {
 		*keepalive = 0;
 		if(!apicall){
-			char *CSS = tpl_getUnparsedTpl("CSS");
+			char *CSS = tpl_getUnparsedTpl("CSS", 1, "");
 			tpl_addVar(vars, TPLADD, "STYLESHEET", CSS);
 			free(CSS);
 			tpl_addVar(vars, TPLADD, "REFRESHTIME", "5");
