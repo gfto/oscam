@@ -216,12 +216,14 @@ char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const char* subd
 		     && strlen(tpl_getFilePathInSubdir(cfg.http_tpl, ""    , name, ".tpl", path, 255)) > 0 && file_exists(path)))
 		{
 			FILE *fp;
-			char buffer[1024];
+			char buffer[1025];
 			memset(buffer, 0, sizeof(buffer));
 			int32_t readen, allocated = 1025, offset, size = 0;
 			if (!cs_malloc(&result, allocated)) return NULL;
 			if ((fp = fopen(path,"r"))!=NULL) {
-			while((readen = fread(&buffer,sizeof(char),1024,fp)) > 0) {
+			// Use as read size sizeof(buffer) - 1 to ensure that buffer is
+			// zero terminated otherwise strstr can segfault!
+			while((readen = fread(buffer, 1, sizeof(buffer) - 1, fp)) > 0) {
 				offset = 0;
 				if (size == 0 && removeHeader) {
 					/* Remove version string from output and check if it is valid for output */
