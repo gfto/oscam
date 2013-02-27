@@ -231,11 +231,13 @@ void request_cw(struct s_client *dvbapi_client, ECM_REQUEST *er);
 void dvbapi_try_next_caid(int32_t demux_id);
 void dvbapi_read_priority(void);
 
+#ifdef DVBAPI_LOG_PREFIX
 #undef cs_log
 #define cs_log(txt, x...)	cs_log_int(0, 1, NULL, 0, "dvbapi: "txt, ##x)
 #ifdef WITH_DEBUG
 	#undef cs_debug_mask
 	#define cs_debug_mask(x,txt,y...)	cs_log_int(x, 1, NULL, 0, "dvbapi: "txt, ##y)
+#endif
 #endif
 
 #else

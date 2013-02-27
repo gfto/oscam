@@ -5,6 +5,7 @@
 #include "extapi/openxcas/openxcas_api.h"
 #include "extapi/openxcas/openxcas_message.h"
 
+#define DVBAPI_LOG_PREFIX 1
 #include "module-dvbapi.h"
 #include "module-dvbapi-azbox.h"
 #include "oscam-client.h"

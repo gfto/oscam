@@ -6,6 +6,7 @@
 
 #include "extapi/coolapi.h"
 
+#define DVBAPI_LOG_PREFIX 1
 #include "module-dvbapi.h"
 #include "module-dvbapi-coolapi.h"
 #include "oscam-string.h"

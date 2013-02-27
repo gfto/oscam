@@ -2,6 +2,7 @@
 
 #if defined(HAVE_DVBAPI) && defined(WITH_STAPI)
 
+#define DVBAPI_LOG_PREFIX 1
 #include "module-dvbapi.h"
 #include "module-dvbapi-stapi.h"
 #include "oscam-client.h"
