@@ -16,6 +16,7 @@
 #include "module-led.h"
 #include "module-stat.h"
 #include "module-webif.h"
+#include "module-webif-tpl.h"
 #include "module-cw-cycle-check.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
@@ -1472,6 +1473,7 @@ int32_t main (int32_t argc, char *argv[])
 	if (oscam_pidfile)
 		unlink(oscam_pidfile);
 
+	webif_tpls_free();
 	init_free_userdb(cfg.account);
 	cfg.account = NULL;
 	init_free_sidtab();

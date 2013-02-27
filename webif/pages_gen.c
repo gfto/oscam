@@ -42,6 +42,7 @@ struct templates {
 		char ident[64];
 		char file[128];
 		char deps[256];
+		uint32_t data_len;
 		enum { TXT, BIN } type;
 	} data[MAX_TEMPLATES];
 };
@@ -203,7 +204,7 @@ static void parse_index_file(char *filename) {
 	fclose(f);
 }
 
-static void parse_deps(int tpl_idx) {
+static void print_template(int tpl_idx) {
 	static bool ifdef_open = 0;
 	char *prev_deps = "";
 	char *next_deps = "";
@@ -239,10 +240,12 @@ static void parse_deps(int tpl_idx) {
 		ifdef_open = 1;
 	}
 
-	fprintf(output_file, "\t{ .tpl_name=\"%s\", .tpl_data=%s%s, .tpl_deps=\"%s\" },\n",
+	fprintf(output_file, "\t{ .tpl_name=\"%s\", .tpl_data=%s%s, .tpl_deps=\"%s\", .tpl_data_len=%u },\n",
 		ident,
 		templates.data[tpl_idx].type == TXT ? "TPL" : "", ident,
-		deps);
+		deps,
+		templates.data[tpl_idx].data_len
+	);
 
 	if (ifdef_open && strcmp(deps, next_deps) != 0) {
 		fprintf(output_file, "#endif\n");
@@ -250,7 +253,7 @@ static void parse_deps(int tpl_idx) {
 	}
 }
 
-static void dump_text(char *ident, uint8_t *buf, size_t buf_len) {
+static uint32_t dump_text(char *ident, uint8_t *buf, size_t buf_len) {
 	int i;
 	fprintf(output_file, "#define TPL%s \\\n\"", ident);
 	for (i = 0; i < buf_len; i++) {
@@ -267,6 +270,7 @@ static void dump_text(char *ident, uint8_t *buf, size_t buf_len) {
 		}
 	}
 	fprintf(output_file, "\"\n\n");
+	return buf_len;
 }
 
 static char *get_mime(char *filename) {
@@ -281,13 +285,15 @@ static char *get_mime(char *filename) {
 	return "unknown";
 }
 
-static void dump_base64(char *ident, char *mime, uint8_t *buf, size_t buf_len) {
+static uint32_t dump_base64(char *ident, char *mime, uint8_t *buf, size_t buf_len) {
+	char tpl_type[32];
 	size_t b64_buf_len = buf_len * 4 + 16;
 	uint8_t *b64_buf = malloc(b64_buf_len);
 	if (!b64_buf)
 		die("%s: can't alloc %zd bytes\n", __func__, b64_buf_len);
 	int i, b64_len = b64_encode(buf, buf_len, b64_buf, b64_buf_len);
-	fprintf(output_file, "#define %s \"data:%s;base64,\\\n", ident, mime);
+	snprintf(tpl_type, sizeof(tpl_type), "data:%s;base64,", mime);
+	fprintf(output_file, "#define %s \"%s\\\n", ident, tpl_type);
 	for (i = 0; i < b64_len; i++) {
 		if (i && i % 76 == 0)
 			fprintf(output_file, "\\\n");
@@ -295,6 +301,7 @@ static void dump_base64(char *ident, char *mime, uint8_t *buf, size_t buf_len) {
 	}
 	fprintf(output_file, "\"\n\n");
 	free(b64_buf);
+	return strlen(tpl_type) + b64_len;
 }
 
 int main(void) {
@@ -310,9 +317,10 @@ int main(void) {
 	fprintf(output_file, "	char *tpl_name;\n");
 	fprintf(output_file, "	char *tpl_data;\n");
 	fprintf(output_file, "	char *tpl_deps;\n");
+	fprintf(output_file, "	uint32_t tpl_data_len;\n");
 	fprintf(output_file, "};\n");
 	fprintf(output_file, "\n");
-	fprintf(output_file, "int32_t tpl_count(void);\n");
+	fprintf(output_file, "int32_t templates_count(void);\n");
 	fprintf(output_file, "\n");
 	fprintf(output_file, "#endif\n");
 	fclose(output_file);
@@ -327,22 +335,23 @@ int main(void) {
 
 	for (i = 0; i < templates.num; i++) {
 		uint8_t *buf;
-		size_t buf_len;
+		size_t buf_len, data_len = 0;
 		readfile(templates.data[i].file, &buf, &buf_len);
 		switch (templates.data[i].type) {
-			case TXT: dump_text(templates.data[i].ident, buf, buf_len); break;
-			case BIN: dump_base64(templates.data[i].ident, get_mime(templates.data[i].file), buf, buf_len); break;
+			case TXT: data_len = dump_text(templates.data[i].ident, buf, buf_len); break;
+			case BIN: data_len = dump_base64(templates.data[i].ident, get_mime(templates.data[i].file), buf, buf_len); break;
 		}
 		free(buf);
+		templates.data[i].data_len = data_len;
 	}
 
 	fprintf(output_file, "const struct template templates[] = {\n");
 	for (i = 0; i < templates.num; i++) {
-		parse_deps(i);
+		print_template(i);
 	}
 	fprintf(output_file, "};\n");
 	fprintf(output_file, "\n");
-	fprintf(output_file, "int32_t tpl_count(void) { return sizeof(templates) / sizeof(struct template); }\n");
+	fprintf(output_file, "int32_t templates_count(void) { return sizeof(templates) / sizeof(struct template); }\n");
 	fprintf(output_file, "\n");
 	fprintf(output_file, "#endif\n");
 	fclose(output_file);

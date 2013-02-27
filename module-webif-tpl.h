@@ -1,6 +1,8 @@
 #ifndef MODULE_WEBIF_TPL_H_
 #define MODULE_WEBIF_TPL_H_
 
+#ifdef WEBIF
+
 /* Templates: Adds a variable. The variable can be used as often as wanted. */
 #define TPLADD 0
 /* Templates: Appends a variable or adds it if doesn't exist yet. The variable can be used as often as wanted. */
@@ -25,6 +27,9 @@ struct templatevars {
 	uint8_t messages;
 };
 
+void    webif_tpls_prepare(void);
+void    webif_tpls_free(void);
+
 struct templatevars *tpl_create(void);
 void                 tpl_clear(struct templatevars *vars);
 
@@ -44,10 +49,12 @@ int32_t tpl_saveIncludedTpls(const char *path);
 void    tpl_checkOneDirDiskRevisions(const char* subdir);
 void    tpl_checkDiskRevisions(void);
 
-void    prepareTplChecksums(void);
-
 char    *urlencode(struct templatevars *vars, char *str);
 char    *xml_encode(struct templatevars *vars, char *chartoencode);
 char    *sec2timeformat(struct templatevars *vars, int32_t seconds);
+
+#else
+static inline void webif_tpls_free(void) { return; }
+#endif
 
 #endif

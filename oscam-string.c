@@ -428,6 +428,20 @@ unsigned long crc32(unsigned long crc, const unsigned char *buf, unsigned int le
 	return crc ^ 0xffffffffL;
 }
 
+// https://en.wikipedia.org/wiki/Jenkins_hash_function
+uint32_t jhash(const char *key, size_t len) {
+	uint32_t hash, i;
+	for (hash = i = 0; i < len; i++) {
+		hash += key[i];
+		hash += (hash << 10);
+		hash ^= (hash >> 6);
+	}
+	hash += (hash << 3);
+	hash ^= (hash >> 11);
+	hash += (hash << 15);
+	return hash;
+}
+
 /* Converts a char to it's hex representation. See char_to_hex on how to use it. */
 char to_hex(char code)
 {

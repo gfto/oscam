@@ -5204,7 +5204,7 @@ static void *http_srv(void) {
 
 	/* Prepare base64 decoding array */
 	b64prepare();
-	prepareTplChecksums();
+	webif_tpls_prepare();
 
 	tpl_checkDiskRevisions();
 

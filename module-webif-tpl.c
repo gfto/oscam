@@ -7,9 +7,42 @@
 #include "oscam-string.h"
 
 extern uint8_t cs_http_use_utf8;
-extern const struct template templates[];
 
-static int8_t *tplchksum;
+/* struct template templates[] that comes from webif/pages.c is recreated as
+   struct tpl tpls[] because we need to add additional fields such as tpl_name_hash
+   and possibly preprocess templates[] struct before using it. */
+
+struct tpl {
+	uint32_t tpl_name_hash;
+	const char *tpl_name;
+	const char *tpl_data;
+	const char *tpl_deps;
+	uint32_t tpl_data_len;
+};
+
+static struct tpl *tpls;
+static int tpls_count;
+
+void webif_tpls_prepare(void) {
+	int i;
+	extern const struct template templates[];
+	tpls_count = templates_count();
+	if (!cs_malloc(&tpls, tpls_count * sizeof(struct tpl))) {
+		tpls_count = 0;
+		return;
+	}
+	for(i = 0; i < tpls_count; ++i) {
+		tpls[i].tpl_name_hash = jhash(templates[i].tpl_name, strlen(templates[i].tpl_name));
+		tpls[i].tpl_name      = templates[i].tpl_name;
+		tpls[i].tpl_data      = templates[i].tpl_data;
+		tpls[i].tpl_deps      = templates[i].tpl_deps;
+		tpls[i].tpl_data_len  = templates[i].tpl_data_len;
+	}
+}
+
+void webif_tpls_free(void) {
+	free(tpls);
+}
 
 /* Adds a name->value-mapping or appends to it. You will get a reference back which you may freely
    use (but you should not call free/realloc on this!)*/
@@ -203,7 +236,6 @@ char *tpl_getTplPath(const char *name, const char *path, char *result, uint32_t 
    Note: You must free() the result after using it and you may get NULL if an error occured!*/
 char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const char* subdir) {
 	int32_t i;
-	int32_t tplcnt = tpl_count();
 	char *result;
 
 	if (cfg.http_tpl) {
@@ -315,26 +347,21 @@ char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const char* subd
 		} // if
 	} // if
 
-	int8_t chksum = 0;
-	for (i = strlen(name); i > 0; --i) {
-		chksum += name[i];
-	}
-
-	for(i = 0; i < tplcnt; ++i) {
-		const struct template *tpl = &templates[i];
-		if (tplchksum && chksum == tplchksum[i] && name[0] == tpl->tpl_name[0]) { // basic check to save strcmp calls as we are doing this hundreds of times per page in some cases
-			if (strcmp(name, tpl->tpl_name) == 0) break;
+	bool found = 0;
+	uint32_t name_hash = jhash(name, strlen(name));
+	for(i = 0; i < tpls_count; i++) {
+		if (tpls[i].tpl_name_hash == name_hash) {
+			found = 1;
+			break;
 		}
 	}
 
-	if (i >= 0 && i < tplcnt) {
-		const char *tpl_data = templates[i].tpl_data;
-		int32_t len = strlen(tpl_data) + 1;
-		if (!cs_malloc(&result, len)) return NULL;
-		memcpy(result, tpl_data, len);
+	if (found) {
+		const struct tpl *tpl = &tpls[i];
+		if (!cs_malloc(&result, tpl->tpl_data_len + 1)) return NULL; // +1 to accomodate \0 at the end
+		memcpy(result, tpl->tpl_data, tpl->tpl_data_len);
 	} else {
-		if (!cs_malloc(&result, 1)) return NULL;
-		result[0] = '\0';
+		if (!cs_malloc(&result, 1)) return NULL; // Return empty string
 	}
 	return result;
 }
@@ -396,18 +423,16 @@ char *tpl_getTpl(struct templatevars *vars, const char* name) {
 
 /* Saves all templates to the specified paths. Existing files will be overwritten! */
 int32_t tpl_saveIncludedTpls(const char *path) {
-	int32_t tplcnt = tpl_count();
 	int32_t i, cnt = 0;
 	char tmp[256];
 	FILE *fp;
-	for (i = 0; i < tplcnt; ++i) {
-		const struct template *tpl = &templates[i];
+	for (i = 0; i < tpls_count; ++i) {
+		const struct tpl *tpl = &tpls[i];
 		if (strlen(tpl_getTplPath(tpl->tpl_name, path, tmp, 256)) > 0 && (fp = fopen(tmp,"w")) != NULL) {
-			int32_t len = strlen(tpl->tpl_data);
 			if (strncmp(tpl->tpl_name, "IC", 2) != 0) {
-				fprintf(fp, "<!--OSCam;%lu;%s;%s;%s-->\n", crc32(0L, (unsigned char *)tpl->tpl_data, len), CS_VERSION, CS_SVN_VERSION, tpl->tpl_deps);
+				fprintf(fp, "<!--OSCam;%lu;%s;%s;%s-->\n", crc32(0L, (unsigned char *)tpl->tpl_data, tpl->tpl_data_len), CS_VERSION, CS_SVN_VERSION, tpl->tpl_deps);
 			}
-			fwrite(tpl->tpl_data, sizeof(char), len, fp);
+			fwrite(tpl->tpl_data, tpl->tpl_data_len, 1, fp);
 			fclose (fp);
 			++cnt;
 		}
@@ -419,14 +444,14 @@ int32_t tpl_saveIncludedTpls(const char *path) {
 void tpl_checkOneDirDiskRevisions(const char* subdir) {
 	char dirpath[255] = "\0";
 	snprintf(dirpath, 255, "%s%s", cfg.http_tpl ? cfg.http_tpl : "", subdir);
-	int32_t i, tplcnt = tpl_count();
+	int32_t i;
 	char path[255];
-	for(i = 0; i < tplcnt; ++i) {
-		const struct template *tpl = &templates[i];
+	for(i = 0; i < tpls_count; ++i) {
+		const struct tpl *tpl = &tpls[i];
 		if (strncmp(tpl->tpl_name, "IC", 2) != 0 && strlen(tpl_getTplPath(tpl->tpl_name, dirpath, path, 255)) > 0 && file_exists(path)) {
 			int8_t error = 1;
 			char *tplorg = tpl_getUnparsedTpl(tpl->tpl_name, 0, subdir);
-			unsigned long checksum = 0, curchecksum = crc32(0L, (unsigned char*)tpl->tpl_data, strlen(tpl->tpl_data));
+			unsigned long checksum = 0, curchecksum = crc32(0L, (unsigned char*)tpl->tpl_data, tpl->tpl_data_len);
 			char *ifdefs = "", *pch1 = strstr(tplorg,"<!--OSCam");
 			if (pch1 != NULL) {
 				char *version = "?", *revision = "?";
@@ -482,21 +507,6 @@ void tpl_checkDiskRevisions(void) {
 				}
 			}
 			closedir(hdir);
-		}
-	}
-}
-
-/* Create some easy checksums (but they should be sufficient for our needs) in order to speedup lookup of templates. */
-void prepareTplChecksums(void) {
-	int32_t i, j;
-	int32_t tplcnt = tpl_count();
-	if (!cs_malloc(&tplchksum, tplcnt))
-		return;
-	for(i = 0; i < tplcnt; ++i) {
-		tplchksum[i] = 0;
-		const char *tpl_name = templates[i].tpl_name;
-		for(j = strlen(tpl_name); j > 0; --j) {
-			tplchksum[i] += tpl_name[j];
 		}
 	}
 }
