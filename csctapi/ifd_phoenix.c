@@ -106,12 +106,7 @@ int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 		unsigned char buf[ATR_MAX_SIZE];
 		int32_t parity[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
 
-		if ( ! reader->ins7e11_fast_reset ) {
-			call (IO_Serial_SetBaudrate(reader, DEFAULT_BAUDRATE));
-		}
-		else {
-			rdr_log(reader, "Doing fast reset");
-		}
+		call (IO_Serial_SetBaudrate(reader, DEFAULT_BAUDRATE));
 
 		for(i=0; i<3; i++) {
 			if (reader->crdr.flush) IO_Serial_Flush(reader);
