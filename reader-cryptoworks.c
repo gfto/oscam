@@ -737,7 +737,7 @@ static bool cryptoworks_reassemble_emm(struct s_reader *reader, EMM_PACKET *ep)
 
 		case 0x86: // emm-sb
 			cs_debug_mask(D_DVBAPI, "[cryptoworks] shared emm (EMM-SB): %s" , cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
-			if (!reader->reassemble_emm_len) return 0;
+			if (!reader->reassemble_emm_len) return 1;
 
 			// we keep the first 12 bytes of the 0x84 emm (EMM-SH)
 			// now we need to append the payload of the 0x86 emm (EMM-SB)
@@ -784,7 +784,6 @@ static bool cryptoworks_reassemble_emm(struct s_reader *reader, EMM_PACKET *ep)
 			if(assembled_EMM[11]!=emm_len) { // sanity check
 				// error in emm assembly
 				cs_debug_mask(D_DVBAPI, "[cryptoworks] Error assembling Cryptoworks EMM-S");
-				return 0;
 			}
 			break;
 
