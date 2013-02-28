@@ -670,7 +670,7 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[1]++;
 	idx += 32;
 
-/*	filter[idx++]=EMM_SHARED;
+	filter[idx++]=EMM_SHARED;
 	filter[idx++]=0;
 	filter[idx+0]    = 0x82;
 	filter[idx+0+16] = 0xFF;
@@ -679,7 +679,7 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	memcpy(filter+idx+2, rdr->hexserial, 2);
 	memset(filter+idx+2+16, 0xFF, 2);
 	filter[1]++;
-	idx += 32; */
+	idx += 32;
 
 	int32_t i;
 	for(i = 0; i < rdr->nprov; i++) {
