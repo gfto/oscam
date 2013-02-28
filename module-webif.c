@@ -1424,6 +1424,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	if(rdr->ratelimitecm){
 		tpl_printf(vars, TPLADD, "RATELIMITECM", "%d", rdr->ratelimitecm);
 		tpl_printf(vars, TPLADD, "RATELIMITSECONDS", "%d", rdr->ratelimitseconds);
+		tpl_printf(vars, TPLADD, "SRVIDHOLDSECONDS", "%d", rdr->srvidholdseconds);
 		// ECMUNIQUE
 		if(!apicall) {
 			tpl_addVar(vars, TPLADD, "ECMUNIQUECHECKED", (rdr->ecmunique == 1) ? "checked" : "");

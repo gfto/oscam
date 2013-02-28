@@ -1363,7 +1363,8 @@ struct s_reader  									//contains device info, reader info and card info
 	//ratelimit
 	int32_t			ratelimitecm;
 	int32_t			ratelimitseconds;
-	int8_t			ecmunique; // check for matching ecm hash in ratelimitslot	
+	int8_t			ecmunique; // check for matching ecm hash in ratelimitslot
+	int32_t			srvidholdseconds; // seconds to keep srvid in ratelimitslot (during this time not checked for ecmunique!)
 	time_t			lastdvbapirateoverride;
 	uint32_t		ecmsok;
 	uint32_t		ecmsnok;

@@ -793,6 +793,7 @@ static const struct config_list reader_opts[] = {
 	DEF_OPT_FUNC("ratelimitecm"			, 0,							ratelimitecm_fn ),
 	DEF_OPT_FUNC("ratelimitseconds"		, 0,							ratelimitseconds_fn ),
 	DEF_OPT_INT8("ecmunique"			, OFS(ecmunique),				0 ),
+	DEF_OPT_INT8("srvidholdseconds"		, OFS(srvidholdseconds),		0 ),
 	DEF_OPT_FUNC("cooldown"				, 0,							cooldown_fn ),
 	DEF_OPT_FUNC("cooldowndelay"		, 0,							cooldowndelay_fn ),
 	DEF_OPT_FUNC("cooldowntime"			, 0,							cooldowntime_fn ),
@@ -820,7 +821,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 		"mode",
 #endif
 		"deprecated", "ndsversion", "ratelimitecm", "ratelimitseconds",
-		"cooldown", "ecmunique",
+		"cooldown", "ecmunique", "srvidholdseconds",
 		0
 	};
 	// These are written only when the reader is network reader
