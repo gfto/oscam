@@ -1477,6 +1477,7 @@ int32_t main (int32_t argc, char *argv[])
 	init_free_userdb(cfg.account);
 	cfg.account = NULL;
 	init_free_sidtab();
+	free_readerdb();
 	config_free();
 
 	cs_log("cardserver down");

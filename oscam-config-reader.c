@@ -988,6 +988,19 @@ void free_reader(struct s_reader *rdr)
 	add_garbage(rdr);
 }
 
+int32_t free_readerdb(void) {
+	int count = 0;
+	struct s_reader *rdr;
+	LL_ITER itr = ll_iter_create(configured_readers);
+	while((rdr = ll_iter_next(&itr))) {
+		free_reader(rdr);
+		count++;
+	}
+	cs_log("readerdb %d readers freed", count);
+	ll_destroy(configured_readers);
+	return count;
+}
+
 int32_t write_server(void)
 {
 	FILE *f = create_config_file(cs_srvr);
