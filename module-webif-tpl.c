@@ -5,6 +5,9 @@
 #include "module-webif-tpl.h"
 #include "oscam-files.h"
 #include "oscam-string.h"
+#ifdef COMPRESSED_TEMPLATES
+#include "minilzo/minilzo.h"
+#endif
 
 extern uint8_t cs_http_use_utf8;
 
@@ -23,6 +26,7 @@ struct tpl {
 };
 
 static struct tpl *tpls;
+static char *tpls_data;
 static int tpls_count;
 
 static void tpl_init_base64(struct tpl *tpl) {
@@ -44,12 +48,42 @@ static void tpl_init_base64(struct tpl *tpl) {
 
 void webif_tpls_prepare(void) {
 	int i;
-	extern const struct template templates[];
+	const struct template *templates = templates_get();
 	tpls_count = templates_count();
 	if (!cs_malloc(&tpls, tpls_count * sizeof(struct tpl))) {
 		tpls_count = 0;
 		return;
 	}
+#ifdef COMPRESSED_TEMPLATES
+	const char *templates_cdata;
+	size_t tpls_data_len, tpls_data_olen;
+	templates_get_data(&templates_cdata, &tpls_data_len, &tpls_data_olen);
+	if (!cs_malloc(&tpls_data, tpls_data_olen)) {
+		tpls_count = 0;
+		return;
+	}
+
+	lzo_uint new_len = tpls_data_olen;
+	int r = lzo1x_decompress_safe((uint8_t *)templates_cdata, tpls_data_len, (uint8_t *)tpls_data, &new_len, NULL);
+	if (r == LZO_E_OK && new_len == tpls_data_olen) {
+		cs_log("webif: decompressed %zu bytes back into %zu bytes", tpls_data_len, tpls_data_olen);
+	} else {
+		/* this should NEVER happen */
+		cs_log("internal error - decompression failed: %d\n", r);
+		free(tpls);
+		tpls_count = 0;
+	}
+
+	for(i = 0; i < tpls_count; ++i) {
+		tpls[i].tpl_name      = tpls_data + templates[i].tpl_name_ofs;
+		tpls[i].tpl_data      = tpls_data + templates[i].tpl_data_ofs;
+		tpls[i].tpl_deps      = tpls_data + templates[i].tpl_deps_ofs;
+		tpls[i].tpl_data_len  = templates[i].tpl_data_len;
+		tpls[i].tpl_type      = templates[i].tpl_type;
+		tpls[i].tpl_name_hash = jhash(tpls[i].tpl_name, strlen(tpls[i].tpl_name));
+		tpl_init_base64(&tpls[i]);
+	}
+#else
 	for(i = 0; i < tpls_count; ++i) {
 		tpls[i].tpl_name_hash = jhash(templates[i].tpl_name, strlen(templates[i].tpl_name));
 		tpls[i].tpl_name      = templates[i].tpl_name;
@@ -59,6 +93,7 @@ void webif_tpls_prepare(void) {
 		tpls[i].tpl_type      = templates[i].tpl_type;
 		tpl_init_base64(&tpls[i]);
 	}
+#endif
 }
 
 void webif_tpls_free(void) {
@@ -66,6 +101,7 @@ void webif_tpls_free(void) {
 	for(i = 0; i < tpls_count; ++i) {
 		free(tpls[i].extra_data);
 	}
+	free(tpls_data);
 	free(tpls);
 }
 

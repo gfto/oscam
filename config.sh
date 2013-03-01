@@ -308,7 +308,7 @@ list_config() {
 	have_flag USE_LIBUSB && echo "CONFIG_CARDREADER_SMART=y" || echo "# CONFIG_CARDREADER_SMART=n"
 	have_flag USE_PCSC && echo "CONFIG_CARDREADER_PCSC=y" || echo "# CONFIG_CARDREADER_PCSC=n"
 	# Extra modules/libraries
-	enabled MODULE_GBOX && echo "CONFIG_LIB_MINILZO=y" || echo "# CONFIG_LIB_MINILZO=n"
+	enabled_any MODULE_GBOX WEBIF && echo "CONFIG_LIB_MINILZO=y" || echo "# CONFIG_LIB_MINILZO=n"
 	not_have_flag USE_LIBCRYPTO && echo "CONFIG_LIB_AES=y" || echo "# CONFIG_LIB_AES=n"
 	enabled MODULE_CCCAM && echo "CONFIG_LIB_RC6=y" || echo "# CONFIG_LIB_RC6=n"
 	not_have_flag USE_LIBCRYPTO && enabled MODULE_CCCAM && echo "CONFIG_LIB_SHA1=y" || echo "# CONFIG_LIB_SHA1=n"
