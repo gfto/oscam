@@ -44,6 +44,7 @@ struct templates {
 		char deps[256];
 		uint32_t data_len;
 		enum { TXT, BIN } type;
+		uint8_t mime_type;
 	} data[MAX_TEMPLATES];
 };
 
@@ -83,60 +84,6 @@ static void readfile(const char *filename, uint8_t **data, size_t *data_len) {
 		die("read(%d, %zd): %s\n", fd, *data_len, strerror(errno));
 }
 
-static const char Base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-static const char Pad64 = '=';
-
-int b64_encode(const uint8_t *src, size_t srclength, uint8_t *target, size_t targsize)
-{
-	size_t datalength = 0;
-	uint8_t input[3] = {0,0,0};
-	uint8_t output[4] = {0,0,0,0};
-	unsigned int i;
-
-	while (2 < srclength) {
-		input[0] = *src++;
-		input[1] = *src++;
-		input[2] = *src++;
-		srclength -= 3;
-		output[0] = input[0] >> 2;
-		output[1] = ((input[0] & 0x03) << 4) + (input[1] >> 4);
-		output[2] = ((input[1] & 0x0f) << 2) + (input[2] >> 6);
-		output[3] = input[2] & 0x3f;
-		if (datalength + 4 > targsize)
-			return -1;
-		target[datalength++] = Base64[output[0]];
-		target[datalength++] = Base64[output[1]];
-		target[datalength++] = Base64[output[2]];
-		target[datalength++] = Base64[output[3]];
-	}
-
-	/* Now we worry about padding. */
-	if (0 != srclength) {
-		/* Get what's left. */
-		input[0] = input[1] = input[2] = '\0';
-		for (i = 0; i < srclength; i++)
-			input[i] = *src++;
-
-		output[0] = input[0] >> 2;
-		output[1] = ((input[0] & 0x03) << 4) + (input[1] >> 4);
-		output[2] = ((input[1] & 0x0f) << 2) + (input[2] >> 6);
-
-		if (datalength + 4 > targsize)
-			return (-1);
-		target[datalength++] = Base64[output[0]];
-		target[datalength++] = Base64[output[1]];
-		if (srclength == 1)
-			target[datalength++] = Pad64;
-		else
-			target[datalength++] = Base64[output[2]];
-		target[datalength++] = Pad64;
-	}
-	if (datalength >= targsize)
-		return -1;
-	target[datalength] = '\0'; /* Returned value doesn't count \0. */
-	return datalength;
-}
-
 static bool is_text(char *filename) {
 	char *ext = strchr(basename(filename), '.');
 	if (ext) {
@@ -149,6 +96,19 @@ static bool is_text(char *filename) {
 		else if (strcmp(ext, "js")   == 0) return true;
 	}
 	return false;
+}
+
+static uint8_t mime_type_from_filename(char *filename) {
+	char *ext = strchr(basename(filename), '.');
+	if (ext) {
+		ext++;
+		// See "enum template_types" bellow
+		if      (strcmp(ext, "png") == 0) return 1;
+		else if (strcmp(ext, "gif") == 0) return 2;
+		else if (strcmp(ext, "ico") == 0) return 3;
+		else if (strcmp(ext, "jpg") == 0) return 4;
+	}
+	return 0;
 }
 
 static void parse_index_file(char *filename) {
@@ -195,6 +155,7 @@ static void parse_index_file(char *filename) {
 		template_set(deps);
 
 		templates.data[templates.num].type = is_text(file) ? TXT : BIN;
+		templates.data[templates.num].mime_type = mime_type_from_filename(file);
 		templates.num++;
 		if (templates.num == MAX_TEMPLATES - 1) {
 			die("Too many templates in %s. Maximum is %d. Increase MAX_TEMPLATES!\n",
@@ -240,11 +201,8 @@ static void print_template(int tpl_idx) {
 		ifdef_open = 1;
 	}
 
-	fprintf(output_file, "\t{ .tpl_name=\"%s\", .tpl_data=%s%s, .tpl_deps=\"%s\", .tpl_data_len=%u },\n",
-		ident,
-		templates.data[tpl_idx].type == TXT ? "TPL" : "", ident,
-		deps,
-		templates.data[tpl_idx].data_len
+	fprintf(output_file, "\t{ .tpl_name=\"%s\", .tpl_data=TPL%s, .tpl_deps=\"%s\", .tpl_data_len=%u, .tpl_type=%u },\n",
+		ident, ident, deps, templates.data[tpl_idx].data_len, templates.data[tpl_idx].mime_type
 	);
 
 	if (ifdef_open && strcmp(deps, next_deps) != 0) {
@@ -253,7 +211,7 @@ static void print_template(int tpl_idx) {
 	}
 }
 
-static uint32_t dump_text(char *ident, uint8_t *buf, size_t buf_len) {
+static void dump_text(char *ident, uint8_t *buf, size_t buf_len) {
 	int i;
 	fprintf(output_file, "#define TPL%s \\\n\"", ident);
 	for (i = 0; i < buf_len; i++) {
@@ -270,38 +228,15 @@ static uint32_t dump_text(char *ident, uint8_t *buf, size_t buf_len) {
 		}
 	}
 	fprintf(output_file, "\"\n\n");
-	return buf_len;
 }
 
-static char *get_mime(char *filename) {
-	char *ext = strchr(filename, '.');
-	if (ext) {
-		ext++;
-		if      (strcmp(ext, "png") == 0) return "image/png";
-		else if (strcmp(ext, "gif") == 0) return "image/gif";
-		else if (strcmp(ext, "jpg") == 0) return "image/jpg";
-		else if (strcmp(ext, "ico") == 0) return "image/x-icon";
-	}
-	return "unknown";
-}
-
-static uint32_t dump_base64(char *ident, char *mime, uint8_t *buf, size_t buf_len) {
-	char tpl_type[32];
-	size_t b64_buf_len = buf_len * 4 + 16;
-	uint8_t *b64_buf = malloc(b64_buf_len);
-	if (!b64_buf)
-		die("%s: can't alloc %zd bytes\n", __func__, b64_buf_len);
-	int i, b64_len = b64_encode(buf, buf_len, b64_buf, b64_buf_len);
-	snprintf(tpl_type, sizeof(tpl_type), "data:%s;base64,", mime);
-	fprintf(output_file, "#define %s \"%s\\\n", ident, tpl_type);
-	for (i = 0; i < b64_len; i++) {
-		if (i && i % 76 == 0)
-			fprintf(output_file, "\\\n");
-		fprintf(output_file, "%c", b64_buf[i]);
+static void dump_binary(char *ident, uint8_t *buf, size_t buf_len) {
+	fprintf(output_file, "#define TPL%s \\\n\"", ident);
+	int i;
+	for (i = 0; i < buf_len; i++) {
+		fprintf(output_file, "\\x%02x", buf[i]);
 	}
 	fprintf(output_file, "\"\n\n");
-	free(b64_buf);
-	return strlen(tpl_type) + b64_len;
 }
 
 int main(void) {
@@ -313,14 +248,25 @@ int main(void) {
 	fprintf(output_file, "#ifndef WEBIF_PAGES_H_\n");
 	fprintf(output_file, "#define WEBIF_PAGES_H_\n");
 	fprintf(output_file, "\n");
+	fprintf(output_file, "enum template_types {\n");
+	fprintf(output_file, "	TEMPLATE_TYPE_TEXT = 0,\n");
+	fprintf(output_file, "	TEMPLATE_TYPE_PNG  = 1,\n");
+	fprintf(output_file, "	TEMPLATE_TYPE_GIF  = 2,\n");
+	fprintf(output_file, "	TEMPLATE_TYPE_ICO  = 3,\n");
+	fprintf(output_file, "	TEMPLATE_TYPE_JPG  = 4,\n");
+	fprintf(output_file, "};\n");
+	fprintf(output_file, "\n");
 	fprintf(output_file, "struct template {\n");
 	fprintf(output_file, "	char *tpl_name;\n");
 	fprintf(output_file, "	char *tpl_data;\n");
 	fprintf(output_file, "	char *tpl_deps;\n");
 	fprintf(output_file, "	uint32_t tpl_data_len;\n");
+	fprintf(output_file, "	uint8_t tpl_type;\n");
 	fprintf(output_file, "};\n");
 	fprintf(output_file, "\n");
 	fprintf(output_file, "int32_t templates_count(void);\n");
+	fprintf(output_file, "bool template_is_image(enum template_types tpl_type);\n");
+	fprintf(output_file, "const char *template_get_mimetype(enum template_types tpl_type);\n");
 	fprintf(output_file, "\n");
 	fprintf(output_file, "#endif\n");
 	fclose(output_file);
@@ -335,14 +281,14 @@ int main(void) {
 
 	for (i = 0; i < templates.num; i++) {
 		uint8_t *buf;
-		size_t buf_len, data_len = 0;
+		size_t buf_len;
 		readfile(templates.data[i].file, &buf, &buf_len);
+		templates.data[i].data_len = buf_len;
 		switch (templates.data[i].type) {
-			case TXT: data_len = dump_text(templates.data[i].ident, buf, buf_len); break;
-			case BIN: data_len = dump_base64(templates.data[i].ident, get_mime(templates.data[i].file), buf, buf_len); break;
+			case TXT: dump_text(templates.data[i].ident, buf, buf_len); break;
+			case BIN: dump_binary(templates.data[i].ident, buf, buf_len); break;
 		}
 		free(buf);
-		templates.data[i].data_len = data_len;
 	}
 
 	fprintf(output_file, "const struct template templates[] = {\n");
@@ -352,6 +298,30 @@ int main(void) {
 	fprintf(output_file, "};\n");
 	fprintf(output_file, "\n");
 	fprintf(output_file, "int32_t templates_count(void) { return sizeof(templates) / sizeof(struct template); }\n");
+	fprintf(output_file, "\n");
+	fprintf(output_file, "bool template_is_image(enum template_types tpl_type) {\n");
+	fprintf(output_file, "	switch (tpl_type) {\n");
+	fprintf(output_file, "	case TEMPLATE_TYPE_PNG:\n");
+	fprintf(output_file, "	case TEMPLATE_TYPE_GIF:\n");
+	fprintf(output_file, "	case TEMPLATE_TYPE_ICO:\n");
+	fprintf(output_file, "	case TEMPLATE_TYPE_JPG:\n");
+	fprintf(output_file, "		return true;\n");
+	fprintf(output_file, "	default:\n");
+	fprintf(output_file, "		return false;\n");
+	fprintf(output_file, "	}\n");
+	fprintf(output_file, "	return false;\n");
+	fprintf(output_file, "}\n");
+	fprintf(output_file, "\n");
+	fprintf(output_file, "const char *template_get_mimetype(enum template_types tpl_type) {\n");
+	fprintf(output_file, "	switch (tpl_type) {\n");
+	fprintf(output_file, "	case TEMPLATE_TYPE_TEXT: return \"text/plain\";\n");
+	fprintf(output_file, "	case TEMPLATE_TYPE_PNG : return \"image/png\";\n");
+	fprintf(output_file, "	case TEMPLATE_TYPE_GIF : return \"image/gif\";\n");
+	fprintf(output_file, "	case TEMPLATE_TYPE_ICO : return \"image/x-icon\";\n");
+	fprintf(output_file, "	case TEMPLATE_TYPE_JPG : return \"image/jpg\";\n");
+	fprintf(output_file, "	}\n");
+	fprintf(output_file, "	return \"\";\n");
+	fprintf(output_file, "}\n");
 	fprintf(output_file, "\n");
 	fprintf(output_file, "#endif\n");
 	fclose(output_file);

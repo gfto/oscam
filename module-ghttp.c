@@ -41,43 +41,6 @@ int32_t ghttp_client_init(struct s_client *cl)
   return 0;
 }
 
-
-static inline unsigned char to_uchar (char ch)
-{
-  return ch;
-}
-
-void base64_encode(const char *in, size_t inlen, char *out, size_t outlen)
-{
-  static const char b64str[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  while (inlen && outlen) {
-    *out++ = b64str[(to_uchar (in[0]) >> 2) & 0x3f];
-    if (!--outlen) break;
-    *out++ = b64str[((to_uchar (in[0]) << 4) + (--inlen ? to_uchar (in[1]) >> 4 : 0)) & 0x3f];
-    if (!--outlen) break;
-    *out++ = (inlen ? b64str[((to_uchar (in[1]) << 2) + (--inlen ? to_uchar (in[2]) >> 6 : 0)) & 0x3f] : '=');
-    if (!--outlen) break;
-    *out++ = inlen ? b64str[to_uchar (in[2]) & 0x3f] : '=';
-    if (!--outlen) break;
-    if (inlen) inlen--;
-    if (inlen) in += 3;
-
-    if (outlen) *out = '\0';
-  }
-}
-
-size_t b64encode(const char *in, size_t inlen, char **out)
-{
-  size_t outlen = 1 + BASE64_LENGTH (inlen);
-  if (inlen > outlen) {
-    *out = NULL;
-    return 0;
-  }
-  if(!cs_malloc(out, outlen)) return -1;
-  base64_encode (in, inlen, *out, outlen);
-  return outlen - 1;
-}
-
 uint32_t javastring_hashcode(uchar* input, int32_t len)
 {
   uint32_t h = 0;
