@@ -217,7 +217,7 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 	cs_write_log(txt + 8, do_flush);
 
 #if defined(WEBIF) || defined(MODULE_MONITOR)
-	if (loghist && exit_oscam != 1) {
+	if (loghist && !exit_oscam) {
 		char *usrtxt = log->cl_text;
 		char *target_ptr = NULL;
 		int32_t target_len = strlen(usrtxt) + (strlen(txt) - 8) + 1;
@@ -377,7 +377,7 @@ void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar 
 	}
 }
 
-void cs_close_log(void)
+static void cs_close_log(void)
 {
 	//Wait for log close:
 	int32_t i = 0;
@@ -631,3 +631,10 @@ void cs_disable_log(int8_t disabled)
 	}
 }
 
+void log_free(void) {
+	cs_close_log();
+#if defined(WEBIF) || defined(MODULE_MONITOR)
+	free(loghist);
+	loghist = loghistptr = NULL;
+#endif
+}

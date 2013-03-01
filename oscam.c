@@ -1480,7 +1480,7 @@ int32_t main (int32_t argc, char *argv[])
 	config_free();
 
 	cs_log("cardserver down");
-	cs_close_log();
+	log_free();
 
 	stop_garbage_collector();
 

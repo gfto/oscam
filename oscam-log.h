@@ -3,8 +3,6 @@
 
 int32_t cs_init_log(void);
 int32_t cs_open_logfiles(void);
-void cs_close_log(void);
-
 void cs_disable_log(int8_t disabled);
 
 void cs_reinit_loghist(uint32_t size);
@@ -23,5 +21,7 @@ void logCWtoFile(ECM_REQUEST *er, uchar *cw);
 
 int32_t cs_init_statistics(void);
 void cs_statistics(struct s_client * client);
+
+void log_free(void);
 
 #endif
