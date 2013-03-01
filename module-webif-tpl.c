@@ -17,11 +17,30 @@ struct tpl {
 	const char *tpl_name;
 	const char *tpl_data;
 	const char *tpl_deps;
+	char *extra_data;
 	uint32_t tpl_data_len;
+	uint8_t tpl_type;
 };
 
 static struct tpl *tpls;
 static int tpls_count;
+
+static void tpl_init_base64(struct tpl *tpl) {
+	// The rest of OSCam expects images to be base64 encoded and contain mime type.
+	if (!template_is_image(tpl->tpl_type))
+		return;
+	size_t b64_buf_len = 32 + BASE64_LENGTH(tpl->tpl_data_len); // Enough for base64 and 32 for header (data:XXX;base64,)
+	char *b64_buf;
+	if (!cs_malloc(&b64_buf, b64_buf_len)) {
+		tpl->tpl_data = "";
+		tpl->tpl_data_len = 0;
+		return;
+	}
+	int hdr_len = snprintf(b64_buf, b64_buf_len, "data:%s;base64,", template_get_mimetype(tpl->tpl_type));
+	base64_encode(tpl->tpl_data, tpl->tpl_data_len, b64_buf + hdr_len, b64_buf_len - hdr_len);
+	tpl->tpl_data = tpl->extra_data = b64_buf;
+	tpl->tpl_data_len = strlen(b64_buf);
+}
 
 void webif_tpls_prepare(void) {
 	int i;
@@ -37,10 +56,16 @@ void webif_tpls_prepare(void) {
 		tpls[i].tpl_data      = templates[i].tpl_data;
 		tpls[i].tpl_deps      = templates[i].tpl_deps;
 		tpls[i].tpl_data_len  = templates[i].tpl_data_len;
+		tpls[i].tpl_type      = templates[i].tpl_type;
+		tpl_init_base64(&tpls[i]);
 	}
 }
 
 void webif_tpls_free(void) {
+	int32_t i;
+	for(i = 0; i < tpls_count; ++i) {
+		free(tpls[i].extra_data);
+	}
 	free(tpls);
 }
 

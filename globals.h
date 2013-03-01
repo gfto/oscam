@@ -232,8 +232,6 @@ typedef unsigned char uchar;
 //checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything
 #define NULLFREE(X) {if (X) {void *tmpX=X; X=NULL; free(tmpX); }}
 
-#define BASE64_LENGTH(inlen) ((((inlen) + 2) / 3) * 4)	
-
 /* ===========================
  *         constants
  * =========================== */

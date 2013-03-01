@@ -40,4 +40,8 @@ uint32_t jhash(const char *key, size_t len);
 char to_hex(char code);
 void char_to_hex(const unsigned char *p_array, uint32_t p_array_len, unsigned char *result);
 
+#define BASE64_LENGTH(inlen) ((((inlen) + 2) / 3) * 4)
+void base64_encode(const char *in, size_t inlen, char *out, size_t outlen);
+size_t b64encode(const char *in, size_t inlen, char **out);
+
 #endif
