@@ -1303,6 +1303,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 				else
 					demux[demux_index].ECMpids[n].status = 1;
 			}
+			demux[demux_index].max_emm_filter = MAX_FILTER-1;
 			demux[demux_index].max_status = 1;
 			return;
 		}
