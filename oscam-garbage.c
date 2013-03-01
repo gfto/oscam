@@ -16,12 +16,12 @@ struct cs_garbage {
         struct cs_garbage *next;
 };
 
-struct cs_garbage *garbage_first[HASH_BUCKETS];
-struct cs_garbage *garbage_last[HASH_BUCKETS];
-CS_MUTEX_LOCK garbage_lock[HASH_BUCKETS];
-pthread_t garbage_thread;
-int32_t garbage_collector_active = 0;
-int32_t garbage_debug = 0;
+static struct cs_garbage *garbage_first[HASH_BUCKETS];
+static struct cs_garbage *garbage_last[HASH_BUCKETS];
+static CS_MUTEX_LOCK garbage_lock[HASH_BUCKETS];
+static pthread_t garbage_thread;
+static int32_t garbage_collector_active;
+static int32_t garbage_debug;
 
 #ifdef WITH_DEBUG
 void add_garbage_debug(void *data, char *file, uint16_t line) {
@@ -75,7 +75,7 @@ void add_garbage(void *data) {
 	cs_writeunlock(&garbage_lock[bucket]);
 }
 
-void garbage_collector(void) {
+static void garbage_collector(void) {
         int8_t i;
         struct cs_garbage *garbage, *next, *prev, *first;
         set_thread_name(__func__);
