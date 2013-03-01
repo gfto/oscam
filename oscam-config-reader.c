@@ -980,6 +980,11 @@ void free_reader(struct s_reader *rdr)
 	}
 
 #endif
+	cs_clear_entitlement(rdr);
+	if (rdr->ll_entitlements) {
+		ll_destroy(rdr->ll_entitlements);
+		rdr->ll_entitlements = NULL;
+	}
 	add_garbage(rdr);
 }
 

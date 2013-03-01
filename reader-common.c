@@ -10,6 +10,7 @@
 #include "oscam-net.h"
 #include "oscam-time.h"
 #include "oscam-work.h"
+#include "oscam-reader.h"
 #include "reader-common.h"
 #include "csctapi/atr.h"
 #include "csctapi/icc_async.h"
@@ -38,6 +39,7 @@ static void reader_nullcard(struct s_reader * reader)
   reader->nprov=0;
   reader->reassemble_emm_len=0;
   memset(reader->reassemble_emm, 0, sizeof(reader->reassemble_emm));
+  cs_clear_entitlement(reader);
 }
 
 int32_t reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int32_t l, uchar * cta_res, uint16_t * p_cta_lr)
