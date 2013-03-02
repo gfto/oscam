@@ -120,9 +120,11 @@ void load_stat_from_file(void)
 		return;
 	}
 	
-	if (!cs_malloc(&line, LINESIZE))
+	if (!cs_malloc(&line, LINESIZE)) {
+		fclose(file);
 		return;
-	
+	}
+
 	setvbuf(file, NULL, _IOFBF, 128*1024);
 
 	cs_debug_mask(D_LB, "loadbalancer: load statistics from %s", fname);

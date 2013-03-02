@@ -225,16 +225,20 @@ static void saveemm(struct s_reader *aureader, EMM_PACKET *ep)
 		localtime_r(&rawtime, &timeinfo); // to access LOCAL date/time info
 		int32_t emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
 		strftime(buf, sizeof(buf), "%Y/%m/%d %H:%M:%S", &timeinfo);
-		if (!(fp = fopen(get_emmlog_filename(token, sizeof(token), aureader->label, "log"), "a"))) {
+		fp = fopen(get_emmlog_filename(token, sizeof(token), aureader->label, "log"), "a");
+		if (!fp) {
 			rdr_log(aureader, "ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
-		} else if (cs_malloc(&tmp2, (emm_length + 3) * 2 + 1)) {
-			fprintf(fp, "%s   %s   ", buf, cs_hexdump(0, ep->hexserial, 8, tmp, sizeof(tmp)));
-			fprintf(fp, "%s\n", cs_hexdump(0, ep->emm, emm_length + 3, tmp2, (emm_length + 3) * 2 + 1));
-			free(tmp2);
+		} else {
+			if (cs_malloc(&tmp2, (emm_length + 3) * 2 + 1)) {
+				fprintf(fp, "%s   %s   ", buf, cs_hexdump(0, ep->hexserial, 8, tmp, sizeof(tmp)));
+				fprintf(fp, "%s\n", cs_hexdump(0, ep->emm, emm_length + 3, tmp2, (emm_length + 3) * 2 + 1));
+				free(tmp2);
+				rdr_log(aureader, "Successfully added EMM to %s", token);
+			}
 			fclose(fp);
-			rdr_log(aureader, "Successfully added EMM to %s", token);
 		}
-		if (!(fp = fopen(get_emmlog_filename(token, sizeof(token), aureader->label, "bin"), "ab"))) {
+		fp = fopen(get_emmlog_filename(token, sizeof(token), aureader->label, "bin"), "ab");
+		if (!fp) {
 			rdr_log(aureader, "ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
 		} else {
 			if ((int)fwrite(ep->emm, 1, emm_length + 3, fp) == emm_length + 3) {
