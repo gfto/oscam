@@ -342,14 +342,15 @@ int main(void) {
 #ifdef USE_COMPRESSION
 	// Calculate positions at which the values would be storred
 	uint32_t cur_pos = 0;
+	#define align_up(val, align) (val += (align - val % align))
 	for (i = 0; i < templates.num; i++) {
 		struct template *t = &templates.data[i];
 		readfile(t->file, &t->buf, &t->buf_len);
 		t->data_len = t->buf_len;
 		// +1 to leave space for \0
-		t->ident_ofs = cur_pos; cur_pos += strlen(t->ident) + 1;
-		t->data_ofs  = cur_pos; cur_pos += t->data_len      + 1;
-		t->deps_ofs  = cur_pos; cur_pos += strlen(t->deps)  + 1;
+		t->ident_ofs = cur_pos; cur_pos += strlen(t->ident) + 1; align_up(cur_pos, sizeof(void *));
+		t->data_ofs  = cur_pos; cur_pos += t->data_len      + 1; align_up(cur_pos, sizeof(void *));
+		t->deps_ofs  = cur_pos; cur_pos += strlen(t->deps)  + 1; align_up(cur_pos, sizeof(void *));
 	}
 
 	// Allocate template data and populate it
