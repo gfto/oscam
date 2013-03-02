@@ -3806,16 +3806,12 @@ void module_cccam(struct s_module *ph) {
 	cc_update_nodeid();
 
 #ifdef MODULE_CCCSHARE
-	static PTAB ptab; //since there is always only 1 cccam server running, this is threadsafe
-	memset(&ptab, 0, sizeof(PTAB));
 	int32_t i;
 	for (i=0;i<CS_MAXPORTS;i++) {
 		if (!cfg.cc_port[i]) break;
-		ptab.ports[i].s_port = cfg.cc_port[i];
-		ptab.nports++;
+		ph->ptab.ports[i].s_port = cfg.cc_port[i];
+		ph->ptab.nports++;
 	}
-
-	ph->ptab = &ptab;
 
 	if (cfg.cc_port[0])
 		cccam_init_share();

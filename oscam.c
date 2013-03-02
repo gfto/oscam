@@ -988,12 +988,12 @@ static void process_clients(void) {
 		//server (new tcp connections or udp messages)
 		for (k = 0; k < CS_MAX_MOD; k++) {
 			struct s_module *module = &modules[k];
-			if ((module->type & MOD_CONN_NET) && module->ptab) {
-				for (j = 0; j < module->ptab->nports; j++) {
-					if (module->ptab->ports[j].fd) {
+			if ((module->type & MOD_CONN_NET)) {
+				for (j = 0; j < module->ptab.nports; j++) {
+					if (module->ptab.ports[j].fd) {
 						cl_size = chk_resize_cllist(&pfd, &cl_list, cl_size, pfdcount);
 						cl_list[pfdcount] = NULL;
-						pfd[pfdcount].fd = module->ptab->ports[j].fd;
+						pfd[pfdcount].fd = module->ptab.ports[j].fd;
 						pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
 					}
 				}
@@ -1065,9 +1065,9 @@ static void process_clients(void) {
 			if (!cl && (pfd[i].revents & (POLLIN | POLLPRI))) {
 				for (k = 0; k < CS_MAX_MOD; k++) {
 					struct s_module *module = &modules[k];
-					if ((module->type & MOD_CONN_NET) && module->ptab) {
-						for (j = 0; j < module->ptab->nports; j++) {
-							if (module->ptab->ports[j].fd && module->ptab->ports[j].fd == pfd[i].fd) {
+					if ((module->type & MOD_CONN_NET)) {
+						for (j = 0; j < module->ptab.nports; j++) {
+							if (module->ptab.ports[j].fd && module->ptab.ports[j].fd == pfd[i].fd) {
 								accept_connection(module, k, j);
 							}
 						}
@@ -1417,9 +1417,9 @@ int32_t main (int32_t argc, char *argv[])
 
 	for (i = 0; i < CS_MAX_MOD; i++) {
 		struct s_module *module = &modules[i];
-		if ((module->type & MOD_CONN_NET) && module->ptab) {
-			for (j = 0; j < module->ptab->nports; j++) {
-				start_listener(module, &module->ptab->ports[j]);
+		if ((module->type & MOD_CONN_NET)) {
+			for (j = 0; j < module->ptab.nports; j++) {
+				start_listener(module, &module->ptab.ports[j]);
 			}
 		}
 	}

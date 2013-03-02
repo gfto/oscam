@@ -258,10 +258,8 @@ static int32_t ghttp_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *U
 
 void module_ghttp(struct s_module *ph)
 {
-  static PTAB ptab;
-  // ptab.ports[0].s_port = cfg.ghttp_port;
-  ph->ptab = &ptab;
-  ph->ptab->nports = 0;
+  ph->ptab.nports = 0;
+  // ph->ptab.ports[0].s_port = cfg.ghttp_port;
 
   ph->desc = "ghttp";
   ph->type = MOD_CONN_TCP;

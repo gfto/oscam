@@ -255,10 +255,8 @@ static int pandora_recv_chk(struct s_client *UNUSED(cl), uchar *dcw, int *rc,
 }
 
 void module_pandora(struct s_module *ph) {
-	static PTAB ptab;
-	ptab.ports[0].s_port = cfg.pand_port;
-	ph->ptab = &ptab;
-	ph->ptab->nports = 1;
+	ph->ptab.nports = 1;
+	ph->ptab.ports[0].s_port = cfg.pand_port;
 	ph->num = R_PANDORA;
 
 	ph->desc = "pandora";

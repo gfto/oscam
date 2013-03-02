@@ -79,5 +79,5 @@ int32_t cs_add_violation_by_ip(IN_ADDR_T ip, int32_t port, char *info) {
 
 void cs_add_violation(struct s_client *cl, char *info) {
 	struct s_module *module = get_module(cl);
-	cs_add_violation_by_ip(cl->ip, module->ptab ? module->ptab->ports[cl->port_idx].s_port : 0, info);
+	cs_add_violation_by_ip(cl->ip, module->ptab.ports[cl->port_idx].s_port, info);
 }

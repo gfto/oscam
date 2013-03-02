@@ -916,10 +916,8 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 #ifdef MODULE_CAMD35
 void module_camd35(struct s_module *ph)
 {
-  static PTAB ptab; //since there is always only 1 camd35 server running, this is threadsafe
-  ptab.ports[0].s_port = cfg.c35_port;
-  ph->ptab = &ptab;
-  ph->ptab->nports = 1;
+  ph->ptab.nports = 1;
+  ph->ptab.ports[0].s_port = cfg.c35_port;
 
   ph->desc="camd35";
   ph->type=MOD_CONN_UDP;
@@ -948,9 +946,7 @@ void module_camd35_tcp(struct s_module *ph)
   ph->type=MOD_CONN_TCP;
   ph->large_ecm_support = 1;
   ph->listenertype = LIS_CAMD35TCP;
-  ph->ptab=&cfg.c35_tcp_ptab;
-  if (ph->ptab->nports==0)
-    ph->ptab->nports=1; // show disabled in log
+  ph->ptab = cfg.c35_tcp_ptab;
   IP_ASSIGN(ph->s_ip, cfg.c35_tcp_srvip);
   ph->s_handler=camd35_server;
   ph->recv=camd35_recv;

@@ -866,10 +866,8 @@ static void * monitor_server(struct s_client * client, uchar *mbuf, int32_t UNUS
 }
 
 void module_monitor(struct s_module *ph){
-	static PTAB ptab; //since there is always only 1 monitor running, this is threadsafe
-	ptab.ports[0].s_port = cfg.mon_port;
-	ph->ptab = &ptab;
-	ph->ptab->nports = 1;
+	ph->ptab.nports = 1;
+	ph->ptab.ports[0].s_port = cfg.mon_port;
 	ph->desc = "monitor";
 	ph->type=MOD_CONN_UDP;
 	IP_ASSIGN(ph->s_ip, cfg.mon_srvip);

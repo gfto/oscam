@@ -147,10 +147,8 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 //
 void module_csp(struct s_module *ph)
 {
-  static PTAB ptab; //since there is always only 1 csp server running, this is threadsafe
-  ptab.ports[0].s_port = cfg.csp_port;
-  ph->ptab = &ptab;
-  ph->ptab->nports = 1;
+  ph->ptab.nports = 1;
+  ph->ptab.ports[0].s_port = cfg.csp_port;
 
   ph->desc="csp";
   ph->type=MOD_CONN_UDP;

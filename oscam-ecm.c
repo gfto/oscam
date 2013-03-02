@@ -1276,7 +1276,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				break;
 			case 4:
 				// invalid (sfilter)
-				if (!chk_sfilter(er, get_module(client)->ptab))
+				if (!chk_sfilter(er, &get_module(client)->ptab))
 					er->rc = E_INVALID;
 				break;
 			case 5:

@@ -237,10 +237,8 @@ static void radegast_server_init(struct s_client *cl) {
 
 void module_radegast(struct s_module *ph)
 {
-  static PTAB ptab; //since there is always only 1 radegast server running, this is threadsafe
-  ptab.ports[0].s_port = cfg.rad_port;
-  ph->ptab = &ptab;
-  ph->ptab->nports = 1;
+  ph->ptab.nports = 1;
+  ph->ptab.ports[0].s_port = cfg.rad_port;
 
   ph->desc="radegast";
   ph->type=MOD_CONN_TCP;

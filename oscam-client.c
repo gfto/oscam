@@ -141,7 +141,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_
 				cs_log("client(%8lX) duplicate user '%s' from %s (current %s) set to fake (uniq=%d)",
 					(unsigned long)pthread_self(), usr, cs_inet_ntoa(cl->ip), buf, uniq);
 				if (client->failban & BAN_DUPLICATE) {
-					cs_add_violation_by_ip(ip, get_module(client)->ptab->ports[client->port_idx].s_port, usr);
+					cs_add_violation_by_ip(ip, get_module(client)->ptab.ports[client->port_idx].s_port, usr);
 				}
 				if (cfg.dropdups){
 					cs_writeunlock(&fakeuser_lock);		// we need to unlock here as cs_disconnect_client kills the current thread!

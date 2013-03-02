@@ -690,7 +690,7 @@ struct s_module {
 	int32_t			(*c_cache_push_chk)(struct s_client*, struct ecm_request_t *); //Cache push Node Check, 0=no push
 #endif
 	int32_t  		c_port;
-	PTAB 			*ptab;
+	PTAB 			ptab;
 	int32_t 		num;
 };
 

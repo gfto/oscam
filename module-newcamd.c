@@ -1458,9 +1458,7 @@ void module_newcamd(struct s_module *ph)
   ph->s_init=newcamd_server_init;
   ph->recv=newcamd_recv;
   ph->send_dcw=newcamd_send_dcw;
-  ph->ptab=&cfg.ncd_ptab;
-  if( ph->ptab->nports==0 )
-	  ph->ptab->nports=1; // show disabled in log
+  ph->ptab=cfg.ncd_ptab;
   ph->c_init=newcamd_client_init;
   ph->c_recv_chk=newcamd_recv_chk;
   ph->c_send_ecm=newcamd_send_ecm;
