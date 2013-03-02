@@ -138,7 +138,7 @@ static int32_t send_sid_list(void)
 {
  struct s_client *cl = cur_client();
 
- if(1 != cl->ftab.nfilts || !cl->sidtabs.no)
+ if(1 != cl->ftab.nfilts || !cl->sidtabs.no || !cfg.ncd_ptab.ports[cl->port_idx].ncd)
  {
    cs_log("SID list will not be send to mgcamd client.");
    return 0;
@@ -590,6 +590,8 @@ static FILTER mk_user_ftab(void)
   memset(&filt.prids, 0, sizeof(filt.prids));
 
   port_idx = cl->port_idx;
+  if (!cfg.ncd_ptab.ports[port_idx].ncd)
+    return filt;
   psfilt = &cfg.ncd_ptab.ports[port_idx].ncd->ncd_ftab.filts[0];
 
   // 1. CAID
@@ -808,6 +810,8 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 
     // check for non ready reader and reject client
     for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
+      if (!cfg.ncd_ptab.ports[cl->port_idx].ncd)
+        continue;
       if(rdr->caid==cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].caid) {
         if(rdr->card_status == CARD_NEED_INIT) {
           cs_log("init for reader %s not finished -> reject client", rdr->label);
@@ -821,6 +825,8 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
     LL_ITER itr = ll_iter_create(cl->aureader_list);
     while ((rdr = ll_iter_next(&itr))) {
       int32_t n;
+      if (!cfg.ncd_ptab.ports[cl->port_idx].ncd)
+        continue;
       for (n=0;n<cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].nprids;n++) {
         if (emm_reader_match(rdr, cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].caid, cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].prids[n])) {
           aureader=rdr;
@@ -1051,7 +1057,7 @@ static void newcamd_process_ecm(struct s_client *cl, uchar *buf, int32_t len)
   er->prid = cl->ncd_header[8]<<16 | cl->ncd_header[9]<<8 | cl->ncd_header[10];
   if (!er->caid) {
 	  pi = cl->port_idx;
-	  if( cfg.ncd_ptab.nports && cfg.ncd_ptab.nports >= pi)
+	  if( cfg.ncd_ptab.nports && cfg.ncd_ptab.nports >= pi && cfg.ncd_ptab.ports[pi].ncd)
 		  er->caid=cfg.ncd_ptab.ports[pi].ncd->ncd_ftab.filts[0].caid;
   }
   memcpy(er->ecm, buf+2, er->ecmlen);
@@ -1190,7 +1196,7 @@ static void newcamd_server_init(struct s_client *client) {
 	client->ncd_server = 1;
 	cs_log("client connected to %d port", cfg.ncd_ptab.ports[client->port_idx].s_port);
 
-	if (cfg.ncd_ptab.ports[client->port_idx].ncd->ncd_key_is_set) {
+	if (cfg.ncd_ptab.ports[client->port_idx].ncd && cfg.ncd_ptab.ports[client->port_idx].ncd->ncd_key_is_set) {
 		//port has a des key specified
 		res = newcamd_auth_client(client->ip, cfg.ncd_ptab.ports[client->port_idx].ncd->ncd_key);
 	} else {
