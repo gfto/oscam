@@ -786,6 +786,7 @@ static const struct config_list reader_opts[] = {
 	DEF_OPT_INT32("cccreconnect"		, OFS(cc_reconnect),			DEFAULT_CC_RECONNECT ),
 	DEF_OPT_INT8("ccchop"				, OFS(cc_hop),					0 ),
 #endif
+	DEF_OPT_UINT8("emmreassembly"		, OFS(emm_reassembly), 			1 ),
 	DEF_OPT_INT8("deprecated"			, OFS(deprecated),				0 ),
 	DEF_OPT_INT8("audisabled"			, OFS(audisabled),				0 ),
 	DEF_OPT_FUNC("auprovid"				, 0,							auprovid_fn ),
@@ -816,7 +817,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 	static const char *hw_only_settings[] = {
 		"readnano", "resetcycle", "smargopatch", "sc8in1_dtrrts_patch", "boxid",
 		"fix9993", "rsakey", "ins7e", "ins7e11", "force_irdeto", "boxkey",
-		"atr", "detect", "nagra_read", "mhz", "cardmhz",
+		"atr", "detect", "nagra_read", "mhz", "cardmhz", "emmreassembly",
 #ifdef WITH_AZBOX
 		"mode",
 #endif

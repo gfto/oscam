@@ -1013,11 +1013,11 @@ static bool viaccess_reassemble_emm(struct s_reader *reader, EMM_PACKET *ep)
 			memcpy(reader->reassemble_emm, buffer, *len);
 			reader->reassemble_emm_len=*len;
 			//cs_ddump_mask(D_READER, buffer, len, "viaccess global emm:");
-			break;
+			return 0;
 
 		case 0x8e:
 			// emm-s part 2
-			if (!reader->reassemble_emm_len) return 1;
+			if (!reader->reassemble_emm_len) return 0;
 
 			//extract nanos from emm-gh and emm-s
 			uchar emmbuf[512];

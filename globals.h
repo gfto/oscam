@@ -1397,6 +1397,7 @@ struct s_reader  									//contains device info, reader info and card info
 
 	uint8_t			bulcrypt_version;
 	uint8_t			griffin_cmd_base; // Griffin command base, depends on the card
+	uint8_t			emm_reassembly;
 
 	struct s_reader *next;
 };

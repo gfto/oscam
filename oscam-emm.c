@@ -323,8 +323,10 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			}
 		}
 
-		if (aureader->csystem.do_emm_reassembly && !aureader->csystem.do_emm_reassembly(aureader, ep))
-			return;
+		if (aureader->emm_reassembly && aureader->csystem.do_emm_reassembly) {
+			if (!aureader->csystem.do_emm_reassembly(aureader, ep))
+				return;
+		}
 
 		rdr_debug_mask_sensitive(aureader, D_EMM, "emmtype %s. Reader serial {%s}.", typtext[ep->type],
 			cs_hexdump(0, aureader->hexserial, 8, tmp, sizeof(tmp)));
