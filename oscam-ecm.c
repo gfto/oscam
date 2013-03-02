@@ -1176,8 +1176,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	// Set providerid for newcamd clients if none is given
 	if (!er->prid && client->ncd_server) {
 		int32_t pi = client->port_idx;
-		if (pi >= 0 && cfg.ncd_ptab.nports && cfg.ncd_ptab.nports >= pi)
-			er->prid = cfg.ncd_ptab.ports[pi].ftab.filts[0].prids[0];
+		if (pi >= 0 && cfg.ncd_ptab.nports && cfg.ncd_ptab.nports >= pi && cfg.ncd_ptab.ports[pi].ncd)
+			er->prid = cfg.ncd_ptab.ports[pi].ncd->ncd_ftab.filts[0].prids[0];
 	}
 
 	// CAID not supported or found

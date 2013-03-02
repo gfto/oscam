@@ -298,18 +298,22 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 
 	for (nfilts = i = 0, ptr1 = strtok_r(portasc, ";", &saveptr1); (i < CS_MAXPORTS) && (ptr1); ptr1 = strtok_r(NULL, ";", &saveptr1), i++) {
 		ptr[i] = ptr1;
+
+		if (!newptab->ports[i].ncd && !cs_malloc(&newptab->ports[i].ncd, sizeof(struct ncd_port)))
+			break;
+
 		if( (ptr2=strchr(trim(ptr1), '@')) ) {
 			*ptr2++ ='\0';
 			newptab->ports[i].s_port = atoi(ptr1);
 
 			//checking for des key for port
-			newptab->ports[i].ncd_key_is_set = 0;   //default to 0
+			newptab->ports[i].ncd->ncd_key_is_set = false;
 			if( (ptr3=strchr(trim(ptr1), '{')) ) {
 				*ptr3++='\0';
-				if (key_atob_l(ptr3, newptab->ports[i].ncd_key, sizeof(newptab->ports[i].ncd_key) * 2))
+				if (key_atob_l(ptr3, newptab->ports[i].ncd->ncd_key, sizeof(newptab->ports[i].ncd->ncd_key) * 2))
 					fprintf(stderr, "newcamd: error in DES Key for port %s -> ignored\n", ptr1);
 				else
-					newptab->ports[i].ncd_key_is_set = 1;
+					newptab->ports[i].ncd->ncd_key_is_set = true;
 			}
 
 			ptr[i] = ptr2;
@@ -331,14 +335,14 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 		for (j = 0, ptr3 = strtok_r(ptr[i], ",", &saveptr1); (j < CS_MAXPROV) && (ptr3); ptr3 = strtok_r(NULL, ",", &saveptr1), j++) {
 			if( (ptr2=strchr(trim(ptr3), ':')) ) {
 				*ptr2++='\0';
-				newptab->ports[iport].ftab.nfilts++;
-				ifilt = newptab->ports[iport].ftab.nfilts-1;
-				newptab->ports[iport].ftab.filts[ifilt].caid = (uint16_t)a2i(ptr3, 4);
-				newptab->ports[iport].ftab.filts[ifilt].prids[j] = a2i(ptr2, 6);
+				newptab->ports[iport].ncd->ncd_ftab.nfilts++;
+				ifilt = newptab->ports[iport].ncd->ncd_ftab.nfilts-1;
+				newptab->ports[iport].ncd->ncd_ftab.filts[ifilt].caid = (uint16_t)a2i(ptr3, 4);
+				newptab->ports[iport].ncd->ncd_ftab.filts[ifilt].prids[j] = a2i(ptr2, 6);
 			} else {
-				newptab->ports[iport].ftab.filts[ifilt].prids[j] = a2i(ptr3, 6);
+				newptab->ports[iport].ncd->ncd_ftab.filts[ifilt].prids[j] = a2i(ptr3, 6);
 			}
-			newptab->ports[iport].ftab.filts[ifilt].nprids++;
+			newptab->ports[iport].ncd->ncd_ftab.filts[ifilt].nprids++;
 		}
 	}
 	memcpy(ptab, newptab, sizeof(PTAB));
@@ -370,8 +374,12 @@ void clear_ptab(struct s_ptab *ptab) {
 	int32_t i = ptab->nports;
 	ptab->nports = 0;
 	for (; i >= 0; --i) {
-		ptab->ports[i].ftab.nfilts = 0;
-		ptab->ports[i].ftab.filts[0].nprids = 0;
+		if (ptab->ports[i].ncd) {
+			ptab->ports[i].ncd->ncd_ftab.nfilts = 0;
+			ptab->ports[i].ncd->ncd_ftab.filts[0].nprids = 0;
+			free(ptab->ports[i].ncd);
+			ptab->ports[i].ncd = NULL;
+		}
 	}
 }
 

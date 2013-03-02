@@ -589,12 +589,16 @@ typedef struct s_ftab {
 	FILTER			filts[CS_MAXFILTERS];
 } FTAB;
 
+struct ncd_port {
+	bool			ncd_key_is_set;
+	uint8_t			ncd_key[14];
+	FTAB			ncd_ftab;
+};
+
 typedef struct s_port {
 	int32_t			fd;
 	int32_t			s_port;
-	int32_t			ncd_key_is_set;    //0 or 1
-	uint8_t			ncd_key[14];
-	FTAB			ftab;
+	struct ncd_port	*ncd; // newcamd specific settings
 } PORT;
 
 typedef struct s_ptab {

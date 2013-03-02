@@ -378,16 +378,16 @@ int32_t chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
   if (cfg.ncd_mgclient && ptab == &cfg.ncd_ptab)
 	  return 1;
 
-  if (ptab->nports && ptab->ports[pi].ftab.nfilts)
+  if (ptab->nports && ptab->ports[pi].ncd && ptab->ports[pi].ncd->ncd_ftab.nfilts)
   {
-    for( rc=j=0; (!rc) && (j<ptab->ports[pi].ftab.nfilts); j++ )
+    for( rc=j=0; (!rc) && (j<ptab->ports[pi].ncd->ncd_ftab.nfilts); j++ )
     {
-      scaid = ptab->ports[pi].ftab.filts[j].caid;
+      scaid = ptab->ports[pi].ncd->ncd_ftab.filts[j].caid;
       if (caid==0||(caid!=0 && caid==scaid))
       {
-        for( i=0; (!rc) && i<ptab->ports[pi].ftab.filts[j].nprids; i++ )
+        for( i=0; (!rc) && i<ptab->ports[pi].ncd->ncd_ftab.filts[j].nprids; i++ )
         {
-          sprid=ptab->ports[pi].ftab.filts[j].prids[i];
+          sprid=ptab->ports[pi].ncd->ncd_ftab.filts[j].prids[i];
           cs_debug_mask(D_CLIENT, "trying server filter %04X:%06X", scaid, sprid);
           if (prid==sprid)
           {

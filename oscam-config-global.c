@@ -782,6 +782,8 @@ void config_set(char *section, const char *token, char *value) {
 
 void config_free(void) {
 	config_sections_free(oscam_conf, &cfg);
+	clear_ptab(&cfg.ncd_ptab);
+	clear_ptab(&cfg.c35_tcp_ptab);
 }
 
 int32_t init_config(void)

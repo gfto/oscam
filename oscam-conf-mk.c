@@ -161,8 +161,8 @@ char *mk_t_camd35tcp_port(void) {
 	for(i = 0; i < cfg.c35_tcp_ptab.nports; ++i) {
 		/* Port is maximally 5 chars long, plus the @caid, plus the ";" between ports */
 		needed += 11;
-		if (cfg.c35_tcp_ptab.ports[i].ftab.filts[0].nprids > 1) {
-			needed += cfg.c35_tcp_ptab.ports[i].ftab.filts[0].nprids * 7;
+		if (cfg.c35_tcp_ptab.ports[i].ncd && cfg.c35_tcp_ptab.ports[i].ncd->ncd_ftab.filts[0].nprids > 1) {
+			needed += cfg.c35_tcp_ptab.ports[i].ncd->ncd_ftab.filts[0].nprids * 7;
 		}
 	}
 	char *value;
@@ -171,15 +171,15 @@ char *mk_t_camd35tcp_port(void) {
 	char *dot1 = "", *dot2;
 	for(i = 0; i < cfg.c35_tcp_ptab.nports; ++i) {
 
-		if (cfg.c35_tcp_ptab.ports[i].ftab.filts[0].caid) {
+		if (cfg.c35_tcp_ptab.ports[i].ncd && cfg.c35_tcp_ptab.ports[i].ncd->ncd_ftab.filts[0].caid) {
 			pos += snprintf(value + pos, needed-(value-saveptr), "%s%d@%04X", dot1,
 					cfg.c35_tcp_ptab.ports[i].s_port,
-					cfg.c35_tcp_ptab.ports[i].ftab.filts[0].caid);
+					cfg.c35_tcp_ptab.ports[i].ncd->ncd_ftab.filts[0].caid);
 
-			if (cfg.c35_tcp_ptab.ports[i].ftab.filts[0].nprids > 1) {
+			if (cfg.c35_tcp_ptab.ports[i].ncd->ncd_ftab.filts[0].nprids > 1) {
 				dot2 = ":";
-				for (j = 0; j < cfg.c35_tcp_ptab.ports[i].ftab.filts[0].nprids; ++j) {
-					pos += snprintf(value + pos, needed-(value-saveptr), "%s%X", dot2, cfg.c35_tcp_ptab.ports[i].ftab.filts[0].prids[j]);
+				for (j = 0; j < cfg.c35_tcp_ptab.ports[i].ncd->ncd_ftab.filts[0].nprids; ++j) {
+					pos += snprintf(value + pos, needed-(value-saveptr), "%s%X", dot2, cfg.c35_tcp_ptab.ports[i].ncd->ncd_ftab.filts[0].prids[j]);
 					dot2 = ",";
 				}
 			}
@@ -288,9 +288,11 @@ char *mk_t_newcamd_port(void) {
 	for(i = 0; i < cfg.ncd_ptab.nports; ++i) {
 		/* Port is maximally 5 chars long, plus the @caid, plus the ";" between ports */
 		needed += 11;
-		if(cfg.ncd_ptab.ports[i].ncd_key_is_set) needed += 30;
-		if (cfg.ncd_ptab.ports[i].ftab.filts[0].nprids > 0) {
-			needed += cfg.ncd_ptab.ports[i].ftab.filts[0].nprids * 7;
+		if (cfg.ncd_ptab.ports[i].ncd) {
+			if(cfg.ncd_ptab.ports[i].ncd->ncd_key_is_set) needed += 30;
+			if (cfg.ncd_ptab.ports[i].ncd->ncd_ftab.filts[0].nprids > 0) {
+				needed += cfg.ncd_ptab.ports[i].ncd->ncd_ftab.filts[0].nprids * 7;
+			}
 		}
 	}
 	char *value;
@@ -301,20 +303,22 @@ char *mk_t_newcamd_port(void) {
 		pos += snprintf(value + pos, needed-pos,  "%s%d", dot1, cfg.ncd_ptab.ports[i].s_port);
 
 		// separate DES Key for this port
-		if(cfg.ncd_ptab.ports[i].ncd_key_is_set) {
-			pos += snprintf(value + pos, needed-pos, "{");
-			for (k = 0; k < (int32_t)sizeof(cfg.ncd_ptab.ports[i].ncd_key[k]); k++)
-				pos += snprintf(value + pos, needed-pos, "%02X", cfg.ncd_ptab.ports[i].ncd_key[k]);
-			pos += snprintf(value + pos, needed-pos, "}");
-		}
+		if (cfg.ncd_ptab.ports[i].ncd) {
+			if(cfg.ncd_ptab.ports[i].ncd->ncd_key_is_set) {
+				pos += snprintf(value + pos, needed-pos, "{");
+				for (k = 0; k < (int32_t)sizeof(cfg.ncd_ptab.ports[i].ncd->ncd_key[k]); k++)
+					pos += snprintf(value + pos, needed-pos, "%02X", cfg.ncd_ptab.ports[i].ncd->ncd_key[k]);
+				pos += snprintf(value + pos, needed-pos, "}");
+			}
 
-		pos += snprintf(value + pos, needed-pos, "@%04X", cfg.ncd_ptab.ports[i].ftab.filts[0].caid);
+			pos += snprintf(value + pos, needed-pos, "@%04X", cfg.ncd_ptab.ports[i].ncd->ncd_ftab.filts[0].caid);
 
-		if (cfg.ncd_ptab.ports[i].ftab.filts[0].nprids > 0) {
-			dot2 = ":";
-			for (j = 0; j < cfg.ncd_ptab.ports[i].ftab.filts[0].nprids; ++j) {
-				pos += snprintf(value + pos, needed-pos, "%s%06X", dot2, (int)cfg.ncd_ptab.ports[i].ftab.filts[0].prids[j]);
-				dot2 = ",";
+			if (cfg.ncd_ptab.ports[i].ncd->ncd_ftab.filts[0].nprids > 0) {
+				dot2 = ":";
+				for (j = 0; j < cfg.ncd_ptab.ports[i].ncd->ncd_ftab.filts[0].nprids; ++j) {
+					pos += snprintf(value + pos, needed-pos, "%s%06X", dot2, (int)cfg.ncd_ptab.ports[i].ncd->ncd_ftab.filts[0].prids[j]);
+					dot2 = ",";
+				}
 			}
 		}
 		dot1=";";

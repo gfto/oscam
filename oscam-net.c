@@ -565,13 +565,13 @@ int32_t start_listener(struct s_module *module, struct s_port *port)
 		port->s_port,
 		ptxt[0], ptxt[1]);
 
-	for (i = 0; i < port->ftab.nfilts; i++) {
+	for (i = 0; port->ncd && i < port->ncd->ncd_ftab.nfilts; i++) {
 		int32_t j, pos = 0;
-		char buf[30 + (8 * port->ftab.filts[i].nprids)];
-		pos += snprintf(buf, sizeof(buf), "-> CAID: %04X PROVID: ", port->ftab.filts[i].caid );
+		char buf[30 + (8 * port->ncd->ncd_ftab.filts[i].nprids)];
+		pos += snprintf(buf, sizeof(buf), "-> CAID: %04X PROVID: ", port->ncd->ncd_ftab.filts[i].caid );
 
-		for (j = 0; j < port->ftab.filts[i].nprids; j++)
-			pos += snprintf(buf+pos, sizeof(buf)-pos, "%06X, ", port->ftab.filts[i].prids[j]);
+		for (j = 0; j < port->ncd->ncd_ftab.filts[i].nprids; j++)
+			pos += snprintf(buf+pos, sizeof(buf)-pos, "%06X, ", port->ncd->ncd_ftab.filts[i].prids[j]);
 
 		if (pos > 2 && j > 0)
 			buf[pos-2] = '\0';
