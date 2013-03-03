@@ -1695,7 +1695,9 @@ struct s_config
 	int32_t			gbox_local_cards_num;               // number of local card gbox cards
 	int32_t			gbox_reconnect;
 #endif
+#ifdef MODULE_SERIAL
 	char			*ser_device;
+#endif
 	uint32_t		srtimeout;						// SerialReaderTimeount in millisec
 	int32_t			max_log_size;
 	int8_t			waitforcards;
