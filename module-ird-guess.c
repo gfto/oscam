@@ -12,7 +12,7 @@ struct s_irdeto_quess {
 	struct s_irdeto_quess *next;
 };
 
-static struct s_irdeto_quess *itab[0xff];
+static struct s_irdeto_quess **itab;
 
 int32_t init_irdeto_guess_tab(void)
 {
@@ -27,6 +27,11 @@ int32_t init_irdeto_guess_tab(void)
   uchar b3;
   uint16_t caid, sid;
   struct s_irdeto_quess *ird_row, *head;
+
+  if (!cs_malloc(&itab, sizeof(struct s_irdeto_quess *) * 0xff)) {
+    fclose(fp);
+    return 0;
+  }
 
   while (fgets(token, sizeof(token), fp))
   {
@@ -90,6 +95,8 @@ int32_t init_irdeto_guess_tab(void)
 void free_irdeto_guess_tab(void)
 {
   uint8_t i;
+  if (!itab)
+    return;
   for (i = 0; i < 0xff; i++)
   {
     struct s_irdeto_quess *head = itab[i];
@@ -100,6 +107,7 @@ void free_irdeto_guess_tab(void)
       head = next;
     }
   }
+  free(itab);
 }
 
 void guess_irdeto(ECM_REQUEST *er)
@@ -109,6 +117,8 @@ void guess_irdeto(ECM_REQUEST *er)
   //uint16_t chid;
   struct s_irdeto_quess *ptr;
 
+  if (!itab)
+    return;
   b3  = er->ecm[3];
   ptr = itab[b3];
   if( !ptr ) {
