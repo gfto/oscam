@@ -1317,6 +1317,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	}
 
 	struct s_ecm_answer *ea, *prv = NULL;
+	uint32_t ex1rdr = 0;
 	if (er->rc >= E_99 && !cacheex_is_match_alias(client, er)) {
 		er->reader_avail = 0;
 		struct s_reader *rdr;
@@ -1373,6 +1374,8 @@ OUT:
 		int32_t fallback_reader_count = 0;
 		er->reader_count = 0;
 		for (ea = er->matching_rdr; ea; ea = ea->next) {
+			if (cacheex_reader(ea->reader))
+				ex1rdr++;
 			if (ea->status & READER_ACTIVE) {
 				if (!(ea->status & READER_FALLBACK))
 					er->reader_count++;
@@ -1424,10 +1427,10 @@ OUT:
 
 #ifdef CS_CACHEEX
 	int8_t cacheex = client->account ? client->account->cacheex.mode : 0;
-	uint32_t cacheex_wait_time = get_cacheex_wait_time(er,client);
+	uint32_t cacheex_wait_time = ex1rdr>0 ? 0 : get_cacheex_wait_time(er,client); //ex1 reader win, no wait, in time of wait for exscp we ask ex1 already
 	uint8_t cwcycle_act = cwcycle_check_act(er->caid);
 	if (!cwcycle_act)
-		cs_debug_mask(D_CACHEEX | D_CSPCWC, "[GET_CW] wait_time %d caid %04X prov %06X srvid %04X rc %d cacheex %d", cacheex_wait_time, er->caid, er->prid, er->srvid, er->rc, cacheex);
+		cs_debug_mask(D_TRACE | D_CACHEEX, "[GET_CW] wait_time %d caid %04X prov %06X srvid %04X rc %d cacheex cl mode  %d ex1rdr %d", cacheex_wait_time, er->caid, er->prid, er->srvid, er->rc, cacheex, ex1rdr);
 	if ((cacheex_wait_time && !cwcycle_act) && er->rc == E_UNHANDLED) { //not found in cache, so wait!
 		add_ms_to_timeb(&er->cacheex_wait, cacheex_wait_time);
 		er->cacheex_wait_time = cacheex_wait_time;
@@ -1450,7 +1453,7 @@ OUT:
 			}
 		}
 		if (max_wait <= 0 ) {
-			cs_debug_mask(D_CACHEEX|D_CSPCWC, "[GET_CW] wait_time over");
+			cs_debug_mask(D_TRACE | D_CACHEEX, "[GET_CW] wait_time over");
 			snprintf(er->msglog, MSGLOGSIZE, "wait_time over");
 		}
 	}
@@ -1529,7 +1532,7 @@ OUT:
 	er->rcEx = 0;
 #if defined CS_CACHEEX && defined CW_CYCLE_CHECK
 	if (cwcycle_act)
-		cs_debug_mask(D_CACHEEX | D_CSPCWC, "[GET_CW] wait_time (cwc) %d caid %04X prov %06X srvid %04X rc %d cacheex %d %ld", cacheex_wait_time, er->caid, er->prid, er->srvid, er->rc, cacheex, er->tps.time);
+		cs_debug_mask(D_TRACE | D_CACHEEX, "[GET_CW] wait_time (cwc) %d caid %04X prov %06X srvid %04X rc %d cacheex cl mode %d ex1rdr %d", cacheex_wait_time, er->caid, er->prid, er->srvid, er->rc, cacheex, ex1rdr);
 	if ((cacheex_wait_time && cwcycle_act) && er->rc == E_UNHANDLED) { //wait for cache answer!
 		add_ms_to_timeb(&er->cacheex_wait, cacheex_wait_time);
 		er->cacheex_wait_time = cacheex_wait_time;

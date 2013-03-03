@@ -793,14 +793,14 @@ static void * check_thread(void) {
 				continue;
 
 			tbc = er->tps;
-#if defined CS_CACHEEX && defined CW_CYCLE_CHECK
-			time_to_check = add_ms_to_timeb(&tbc, (er->stage < 2) ? er->cacheex_wait_time:((er->stage < 4) ? auto_timeout(er, cfg.ftimeout) : auto_timeout(er, cfg.ctimeout)));
+#ifdef CS_CACHEEX
+			time_to_check = add_ms_to_timeb(&tbc, (er->stage < 2 && er->cacheex_wait_time) ? er->cacheex_wait_time:((er->stage < 4) ? auto_timeout(er, cfg.ftimeout) : auto_timeout(er, cfg.ctimeout)));
 #else
 			time_to_check = add_ms_to_timeb(&tbc, ((er->stage < 4) ? auto_timeout(er, cfg.ftimeout) : auto_timeout(er, cfg.ctimeout)));
 #endif
 			if (comp_timeb(&t_now, &tbc) >= 0) {
 				if (er->stage < 4) {
-#if defined CS_CACHEEX && defined CW_CYCLE_CHECK
+#ifdef CS_CACHEEX
 					if (er->stage < 2 && er->cacheex_wait_time)
 						debug_ecm(D_TRACE, "request for %s %s", username(er->client), buf);
 					else
