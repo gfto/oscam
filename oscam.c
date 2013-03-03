@@ -1478,6 +1478,7 @@ int32_t main (int32_t argc, char *argv[])
 	cfg.account = NULL;
 	init_free_sidtab();
 	free_readerdb();
+	free_irdeto_guess_tab();
 	config_free();
 
 	cs_log("cardserver down");

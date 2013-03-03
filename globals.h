@@ -773,13 +773,6 @@ struct s_cardsystem {
 	uint16_t		caids[2];
 };
 
-struct s_irdeto_quess {
-	int32_t			b47;
-	uint16_t		caid;
-	uint16_t		sid;
-	struct s_irdeto_quess *next;
-};
-
 #define MAX_ECM_SIZE 512
 
 typedef struct ecm_request_t {
@@ -1734,10 +1727,6 @@ struct s_config
 	int32_t			resolve_gethostbyname;
 	int8_t			double_check;					// schlocke: Double checks each ecm+dcw from two (or more) readers
 	CAIDTAB			double_check_caid;			// do not store loadbalancer stats with providers for this caid
-
-#ifdef IRDETO_GUESSING
-	struct s_irdeto_quess *itab[0xff];
-#endif
 
 #ifdef HAVE_DVBAPI
 	int8_t		dvbapi_enabled;

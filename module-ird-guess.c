@@ -1,16 +1,22 @@
 #include "globals.h"
-#include "module-ird-guess.h"
-#include "oscam-string.h"
 
 #ifdef IRDETO_GUESSING
-
+#include "module-ird-guess.h"
+#include "oscam-string.h"
 #include "oscam-conf.h"
 
-#define cs_ird "oscam.ird"
+struct s_irdeto_quess {
+	int32_t			b47;
+	uint16_t		caid;
+	uint16_t		sid;
+	struct s_irdeto_quess *next;
+};
+
+static struct s_irdeto_quess *itab[0xff];
 
 int32_t init_irdeto_guess_tab(void)
 {
-  FILE *fp = open_config_file(cs_ird);
+  FILE *fp = open_config_file("oscam.ird");
   if (!fp)
     return 1;
 
@@ -21,8 +27,6 @@ int32_t init_irdeto_guess_tab(void)
   uchar b3;
   uint16_t caid, sid;
   struct s_irdeto_quess *ird_row, *head;
-
-  memset(cfg.itab, 0, sizeof(cfg.itab));
 
   while (fgets(token, sizeof(token), fp))
   {
@@ -56,16 +60,15 @@ int32_t init_irdeto_guess_tab(void)
       ird_row->b47  = b47;
       ird_row->caid = caid;
       ird_row->sid  = sid;
-      ird_row->next = 0;
 
-      head = cfg.itab[b3];
+      head = itab[b3];
       if( head ) {
         while( head->next )
           head=head->next;
         head->next=ird_row;
       }
       else
-        cfg.itab[b3]=ird_row;
+        itab[b3]=ird_row;
         //cs_debug_mask(D_CLIENT, "%02X:%08X:%04X:%04X", b3, b47, caid, sid);
     }
   }
@@ -73,7 +76,7 @@ int32_t init_irdeto_guess_tab(void)
 
   for( i=0; i<0xff; i++ )
   {
-    head=cfg.itab[i];
+    head=itab[i];
     while(head)
     {
       cs_debug_mask(D_CLIENT, "itab[%02X]: b47=%08X, caid=%04X, sid=%04X",
@@ -84,6 +87,21 @@ int32_t init_irdeto_guess_tab(void)
   return(0);
 }
 
+void free_irdeto_guess_tab(void)
+{
+  uint8_t i;
+  for (i = 0; i < 0xff; i++)
+  {
+    struct s_irdeto_quess *head = itab[i];
+    while(head)
+    {
+      void *next = head->next;
+      free(head);
+      head = next;
+    }
+  }
+}
+
 void guess_irdeto(ECM_REQUEST *er)
 {
   uchar  b3;
@@ -92,7 +110,7 @@ void guess_irdeto(ECM_REQUEST *er)
   struct s_irdeto_quess *ptr;
 
   b3  = er->ecm[3];
-  ptr = cfg.itab[b3];
+  ptr = itab[b3];
   if( !ptr ) {
     cs_debug_mask(D_TRACE, "unknown irdeto byte 3: %02X", b3);
     return;
