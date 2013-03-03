@@ -1664,8 +1664,12 @@ struct s_config
 	int8_t			ncd_keepalive;
 	int8_t			ncd_mgclient;
 	struct s_ip 	*ncd_allowed;
+#ifdef MODULE_RADEGAST
 	int32_t			rad_port;
 	IN_ADDR_T		rad_srvip;
+	struct s_ip 	*rad_allowed;
+	char			*rad_usr;
+#endif
 #ifdef MODULE_CCCAM
 	uint16_t		cc_port[CS_MAXPORTS];
 	int8_t			cc_reshare;
@@ -1687,8 +1691,6 @@ struct s_config
 	int32_t			gbox_local_cards_num;               // number of local card gbox cards
 	int32_t			gbox_reconnect;
 #endif
-	struct s_ip 	*rad_allowed;
-	char			*rad_usr;
 	char			*ser_device;
 	uint32_t		srtimeout;						// SerialReaderTimeount in millisec
 	int32_t			max_log_size;
