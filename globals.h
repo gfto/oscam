@@ -1651,13 +1651,15 @@ struct s_config
 	int32_t			c33_passive;
 	struct s_ip 	*c33_plain;
 #endif
+#if defined(MODULE_CAMD35) || defined(MODULE_CAMD35_TCP)
 	int32_t			c35_port;
 	IN_ADDR_T		c35_srvip;
-	int8_t			c35_suppresscmd08;
 	int8_t			c35_tcp_suppresscmd08;
 	int8_t			c35_udp_suppresscmd08;
 	PTAB			c35_tcp_ptab;
 	IN_ADDR_T		c35_tcp_srvip;
+#endif
+	int8_t			c35_suppresscmd08; // used in cccam module
 	PTAB			ncd_ptab;
 	IN_ADDR_T		ncd_srvip;
 	uint8_t			ncd_key[14];
