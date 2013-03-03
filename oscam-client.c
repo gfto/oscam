@@ -556,6 +556,13 @@ void free_client(struct s_client *cl)
 	// Remove client from client list. kill_thread also removes this client, so here just if client exits itself...
 	struct s_client *prev, *cl2;
 	cs_writelock(&clientlist_lock);
+	if (!cl->kill_started) {
+		cl->kill_started = 1;
+	} else{
+		cs_writeunlock(&clientlist_lock);
+		cs_log("[free_client] ERROR: free already started!");
+		return;
+	}
 	cl->kill = 1;
 	for (prev = first_client, cl2 = first_client->next;
 	     prev->next != NULL;

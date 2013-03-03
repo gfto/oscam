@@ -893,6 +893,7 @@ struct s_client {
 	pthread_mutex_t	thread_lock;
 	int8_t			thread_active;
 	int8_t			kill;
+	int8_t			kill_started;
 	LLIST			*joblist;
 	IN_ADDR_T		ip;
 	in_port_t		port;
