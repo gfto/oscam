@@ -670,20 +670,26 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[1]++;
 	idx += 32;
 
-	filter[idx++]=EMM_SHARED;
-	filter[idx++]=0;
-	filter[idx+0]    = 0x82;
-	filter[idx+0+16] = 0xFF;
-	filter[idx+1]    = 0x02;
-	filter[idx+1+16] = 0x03;
-	memcpy(filter+idx+2, rdr->hexserial, 2);
-	memset(filter+idx+2+16, 0xFF, 2);
-	filter[1]++;
-	idx += 32;
+	// Shared on Hex Serial only for Betacrypt
+	if ( (rdr->caid >> 8) == 0x17 )
+	{
+		filter[idx++]=EMM_SHARED;
+		filter[idx++]=0;
+		filter[idx+0]    = 0x82;
+		filter[idx+0+16] = 0xFF;
+		filter[idx+1]    = 0x02;
+		filter[idx+1+16] = 0x03;
+		memcpy(filter+idx+2, rdr->hexserial, 2);
+		memset(filter+idx+2+16, 0xFF, 2);
+		filter[1]++;
+		idx += 32;
+	}
 
 	int32_t i;
+	bool nomorefilters = 0;
 	for(i = 0; i < rdr->nprov; i++) {
-		if (rdr->prid[i][1]==0xFF)
+		// 00XX00 provider is a not initialised not used provider
+		if (rdr->prid[i][1]==0xFF || (rdr->prid[i][1]==0x00 && rdr->prid[i][3]==0x00))
 			continue;
 
 		filter[idx++]=EMM_UNIQUE;
@@ -697,6 +703,11 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 		filter[1]++;
 		idx += 32;
 
+		if (filter[1] == 10) {
+			nomorefilters = 1;
+			break;
+		}
+
 		filter[idx++]=EMM_SHARED;
 		filter[idx++]=0;
 		filter[idx+0]    = 0x82;
@@ -708,11 +719,14 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 		filter[1]++;
 		idx += 32;
 
-		if (filter[1]>=10) {
-			rdr_log(rdr, "irdeto_get_emm_filter: could not start all emm filter");
+		if (filter[1] == 10) {
+			nomorefilters = 1;
 			break;
 		}
 	}
+
+	if (nomorefilters)
+		rdr_log(rdr, "irdeto_get_emm_filter: could not start all emm filters");
 
 	return;
 }
