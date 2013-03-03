@@ -413,7 +413,7 @@ int32_t chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
 #else
   (void)er;
   (void)ptab;
-  return 0;
+  return 1;
 #endif
 }
 
