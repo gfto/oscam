@@ -364,6 +364,7 @@ int32_t chk_srvid_by_caid_prov_rdr(struct s_reader *rdr, uint16_t caid, uint32_t
 // server filter for newcamd
 int32_t chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
 {
+#ifdef MODULE_NEWCAMD
   int32_t i, j, pi, rc=1;
   uint16_t caid, scaid;
   uint32_t  prid, sprid;
@@ -409,6 +410,11 @@ int32_t chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
     }
   }
   return (rc);
+#else
+  (void)er;
+  (void)ptab;
+  return 0;
+#endif
 }
 
 static int32_t chk_chid(ECM_REQUEST *er, FTAB *fchid, char *type, char *name)

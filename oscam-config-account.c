@@ -33,11 +33,15 @@ static void account_c35_suppresscmd08_fn(const char *token, char *value, void *s
 
 static void account_ncd_keepalive_fn(const char *token, char *value, void *setting, FILE *f) {
 	int8_t *ncd_keepalive = setting;
+	int8_t def_value = 0;
+#ifdef MODULE_NEWCAMD
+	def_value = cfg.ncd_keepalive;
+#endif
 	if (value) {
-		*ncd_keepalive = (int8_t)strToIntVal(value, cfg.ncd_keepalive);
+		*ncd_keepalive = (int8_t)strToIntVal(value, def_value);
 		return;
 	}
-	if (*ncd_keepalive != cfg.ncd_keepalive || cfg.http_full_cfg)
+	if (*ncd_keepalive != def_value || cfg.http_full_cfg)
 		fprintf_conf(f, token, "%d\n", *ncd_keepalive);
 }
 

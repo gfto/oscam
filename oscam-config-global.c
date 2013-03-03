@@ -782,7 +782,9 @@ void config_set(char *section, const char *token, char *value) {
 
 void config_free(void) {
 	config_sections_free(oscam_conf, &cfg);
+#ifdef MODULE_NEWCAMD
 	clear_ptab(&cfg.ncd_ptab);
+#endif
 #ifdef MODULE_CAMD35_TCP
 	clear_ptab(&cfg.c35_tcp_ptab);
 #endif

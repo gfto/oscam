@@ -1660,12 +1660,14 @@ struct s_config
 	IN_ADDR_T		c35_tcp_srvip;
 #endif
 	int8_t			c35_suppresscmd08; // used in cccam module
+#ifdef MODULE_NEWCAMD
 	PTAB			ncd_ptab;
 	IN_ADDR_T		ncd_srvip;
 	uint8_t			ncd_key[14];
 	int8_t			ncd_keepalive;
 	int8_t			ncd_mgclient;
 	struct s_ip 	*ncd_allowed;
+#endif
 #ifdef MODULE_RADEGAST
 	int32_t			rad_port;
 	IN_ADDR_T		rad_srvip;

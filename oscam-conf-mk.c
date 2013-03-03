@@ -286,6 +286,7 @@ char *mk_t_aeskeys(struct s_reader *rdr) {
  * Creates a string ready to write as a token into config or WebIf for the Newcamd Port. You must free the returned value through free_mk_t().
  */
 char *mk_t_newcamd_port(void) {
+#ifdef MODULE_NEWCAMD
 	int32_t i, j, k, pos = 0, needed = 1;
 
 	/* Precheck to determine how long the resulting string will maximally be (might be a little bit smaller but that shouldn't hurt) */
@@ -328,6 +329,9 @@ char *mk_t_newcamd_port(void) {
 		dot1=";";
 	}
 	return value;
+#else
+	return NULL;
+#endif
 }
 
 /*
