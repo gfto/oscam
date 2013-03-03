@@ -614,10 +614,7 @@ static int32_t cacheex_ecm_hash_calc(uchar *buf, int32_t n) {
 }
 
 void cacheex_update_hash(ECM_REQUEST *er) {
-	int32_t offset = 3;
-	if ((er->caid >> 8) == 0x17)  // hash fix for betatunnel
-		offset = 13;
-	er->csp_hash = cacheex_ecm_hash_calc(er->ecm+offset, er->ecmlen-offset);
+	er->csp_hash = cacheex_ecm_hash_calc(er->ecm+3, er->ecmlen-3);
 }
 
 /**
