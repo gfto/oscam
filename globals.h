@@ -1643,12 +1643,14 @@ struct s_config
 	int32_t			failbantime;
 	int32_t			failbancount;
 	LLIST 			*v_list;						// Failban list
+#ifdef MODULE_CAMD33
 	int32_t			c33_port;
 	IN_ADDR_T		c33_srvip;
 	uint8_t			c33_key[16];
 	int32_t			c33_crypted;
 	int32_t			c33_passive;
 	struct s_ip 	*c33_plain;
+#endif
 	int32_t			c35_port;
 	IN_ADDR_T		c35_srvip;
 	int8_t			c35_suppresscmd08;
