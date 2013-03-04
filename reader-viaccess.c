@@ -5,6 +5,19 @@
 #include "oscam-emm.h"
 #include "reader-common.h"
 
+struct geo_cache {
+	uint32_t		provid;
+	uint8_t			geo[256];
+	uint8_t			geo_len;
+	int32_t			number_ecm;
+};
+
+struct viaccess_data {
+	struct geo_cache	last_geo;
+	int32_t				reassemble_emm_len;
+	uint8_t				reassemble_emm[512];
+};
+
 struct via_date {
 	uint16_t day_s   : 5;
 	uint16_t month_s : 4;
@@ -237,15 +250,18 @@ static int32_t viaccess_card_init(struct s_reader * reader, ATR *newatr)
 	if( !(cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0) )
 		return ERROR;
 
-	memset(&reader->last_geo, 0, sizeof(reader->last_geo));
+	if (!cs_malloc(&reader->csystem_data, sizeof(struct viaccess_data)))
+		return ERROR;
+	struct viaccess_data *csystem_data = reader->csystem_data;
+
 	write_cmd(insFAC, ins8702_data);
 	if ((cta_res[cta_lr-2]==0x90) && (cta_res[cta_lr-1]==0x00)) {
 		write_cmd(ins8704, NULL);
 		if ((cta_res[cta_lr-2]==0x90) && (cta_res[cta_lr-1]==0x00)) {
 			write_cmd(ins8706, NULL);
 			if ((cta_res[cta_lr-2]==0x90) && (cta_res[cta_lr-1]==0x00)) {
-				reader->last_geo.number_ecm =(cta_res[2]<<8) | (cta_res[3]);
-				rdr_log(reader,  "using ecm #%x for long viaccess ecm",reader->last_geo.number_ecm);
+				csystem_data->last_geo.number_ecm =(cta_res[2]<<8) | (cta_res[3]);
+				rdr_log(reader,  "using ecm #%x for long viaccess ecm",csystem_data->last_geo.number_ecm);
 			}
 		}
 	}
@@ -321,6 +337,7 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 	unsigned char ins88[] = { 0xca,0x88,0x00,0x00,0x00 }; // set ecm
 	unsigned char insf8[] = { 0xca,0xf8,0x00,0x00,0x00 }; // set geographic info
 	static const unsigned char insc0[] = { 0xca,0xc0,0x00,0x00,0x12 }; // read dcw
+	struct viaccess_data *csystem_data = reader->csystem_data;
 
 	// //XXX what is the 4th byte for ??
 	int32_t ecm88Len = MIN(MAX_ECM_SIZE-4, SCT_LEN(er->ecm)-4);
@@ -413,12 +430,12 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 			// 09 -> use key #9
 			if(nanoLen>5) {
 				curnumber_ecm =(ecm88Data[6]<<8) | (ecm88Data[7]);
-				rdr_debug_mask(reader, D_READER, "checking if the ecm number (%x) match the card one (%x)",curnumber_ecm,reader->last_geo.number_ecm);
+				rdr_debug_mask(reader, D_READER, "checking if the ecm number (%x) match the card one (%x)",curnumber_ecm,csystem_data->last_geo.number_ecm);
 				// if we have an ecm number we check it.
 				// we can't assume that if the nano len is 5 or more we have an ecm number
 				// as some card don't support this
-            if( reader->last_geo.number_ecm > 0 ) {
-                if (reader->last_geo.number_ecm == curnumber_ecm && !( ecm88Data[nanoLen-1] == 0x01 && (ecm88Data[2] == 0x03 && ecm88Data[3] == 0x0B && ecm88Data[4] == 0x00 ) )) {
+            if( csystem_data->last_geo.number_ecm > 0 ) {
+                if (csystem_data->last_geo.number_ecm == curnumber_ecm && !( ecm88Data[nanoLen-1] == 0x01 && (ecm88Data[2] == 0x03 && ecm88Data[3] == 0x0B && ecm88Data[4] == 0x00 ) )) {
                     keynr=ecm88Data[5];
                     rdr_debug_mask(reader, D_READER, "keyToUse = %02x, ECM ending with %02x",ecm88Data[5], ecm88Data[nanoLen-1]);
                 } else {
@@ -469,11 +486,11 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 			}
 			//
 
-			if( reader->last_geo.provid != provid )
+			if( csystem_data->last_geo.provid != provid )
 			{
-				reader->last_geo.provid = provid;
-				reader->last_geo.geo_len = 0;
-				reader->last_geo.geo[0]  = 0;
+				csystem_data->last_geo.provid = provid;
+				csystem_data->last_geo.geo_len = 0;
+				csystem_data->last_geo.geo[0]  = 0;
 				write_cmd(insa4, ident); // set provider
 			}
 
@@ -512,11 +529,11 @@ static int32_t viaccess_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 			}
 			if(ecmf8Len)
 			{
-				if( reader->last_geo.geo_len!=ecmf8Len ||
-					memcmp(reader->last_geo.geo, ecmf8Data, reader->last_geo.geo_len))
+				if( csystem_data->last_geo.geo_len!=ecmf8Len ||
+					memcmp(csystem_data->last_geo.geo, ecmf8Data, csystem_data->last_geo.geo_len))
 				{
-					memcpy(reader->last_geo.geo, ecmf8Data, ecmf8Len);
-					reader->last_geo.geo_len= ecmf8Len;
+					memcpy(csystem_data->last_geo.geo, ecmf8Data, ecmf8Len);
+					csystem_data->last_geo.geo_len= ecmf8Len;
 					insf8[3]=keynr;
 					insf8[4]=ecmf8Len;
 					write_cmd(insf8, ecmf8Data);
@@ -687,6 +704,7 @@ static int32_t viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 	unsigned char ins1c[] = { 0xca,0x1c,0x01,0x01,0x00 }; // set subscription, encrypted
 	//static const unsigned char insc8[] = { 0xca,0xc8,0x00,0x00,0x02 }; // read extended status
 	// static const unsigned char insc8Data[] = { 0x00,0x00 }; // data for read extended status
+	struct viaccess_data *csystem_data = reader->csystem_data;
 
 	int32_t emmdatastart=7;
 
@@ -733,7 +751,7 @@ static int32_t viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 			}
 
 			// check if the provider changes. If yes, set the new one. If not, don't .. card will return an error if we do.
-			if( reader->last_geo.provid != emm_provid ) {
+			if( csystem_data->last_geo.provid != emm_provid ) {
 				write_cmd(insa4, ident);
 				if( cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
 					cs_dump(insa4, 5, "set provider cmd:");
@@ -743,9 +761,9 @@ static int32_t viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 				}
 			}
 			// as we are maybe changing the used provider, clear the cache, so the next ecm will re-select the correct one
-			reader->last_geo.provid = 0;
-			reader->last_geo.geo_len = 0;
-			reader->last_geo.geo[0]  = 0;
+			csystem_data->last_geo.provid = 0;
+			csystem_data->last_geo.geo_len = 0;
+			csystem_data->last_geo.geo[0]  = 0;
 
 		}
 		else if (emmParsed[0]==0x9e && emmParsed[1]==0x20) {
@@ -917,10 +935,11 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 
 	static const uchar cls[] = { 0x00, 0x21, 0xff, 0x9f};
 	static const uchar pin[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04};
+	struct viaccess_data *csystem_data = reader->csystem_data;
 
-	reader->last_geo.provid  = 0;
-	reader->last_geo.geo_len = 0;
-	reader->last_geo.geo[0]  = 0;
+	csystem_data->last_geo.provid  = 0;
+	csystem_data->last_geo.geo_len = 0;
+	csystem_data->last_geo.geo[0]  = 0;
 
 	rdr_log(reader, "card detected");
 
@@ -994,6 +1013,7 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 
 static bool viaccess_reassemble_emm(struct s_reader *reader, EMM_PACKET *ep)
 {
+	struct viaccess_data *csystem_data = reader->csystem_data;
 	uint8_t *buffer = ep->emm;
 	int16_t *len = &ep->emmlen;
 	int32_t pos=0, i;
@@ -1006,28 +1026,28 @@ static bool viaccess_reassemble_emm(struct s_reader *reader, EMM_PACKET *ep)
 		case 0x8c:
 		case 0x8d:
 			// emm-s part 1
-			if (!memcmp(reader->reassemble_emm, buffer, *len))
+			if (!memcmp(csystem_data->reassemble_emm, buffer, *len))
 				return 0;
 
 			// copy first part of the emm-s
-			memcpy(reader->reassemble_emm, buffer, *len);
-			reader->reassemble_emm_len=*len;
+			memcpy(csystem_data->reassemble_emm, buffer, *len);
+			csystem_data->reassemble_emm_len=*len;
 			//cs_ddump_mask(D_READER, buffer, len, "viaccess global emm:");
 			return 0;
 
 		case 0x8e:
 			// emm-s part 2
-			if (!reader->reassemble_emm_len) return 0;
+			if (!csystem_data->reassemble_emm_len) return 0;
 
 			//extract nanos from emm-gh and emm-s
 			uchar emmbuf[512];
 
 			cs_debug_mask(D_DVBAPI, "[viaccess] %s: start extracting nanos", __func__);
 			//extract from emm-gh
-			for (i=3; i<reader->reassemble_emm_len; i+=reader->reassemble_emm[i+1]+2) {
+			for (i=3; i<csystem_data->reassemble_emm_len; i+=csystem_data->reassemble_emm[i+1]+2) {
 				//copy nano (length determined by i+1)
-				memcpy(emmbuf+pos, reader->reassemble_emm+i, reader->reassemble_emm[i+1]+2);
-				pos+=reader->reassemble_emm[i+1]+2;
+				memcpy(emmbuf+pos, csystem_data->reassemble_emm+i, csystem_data->reassemble_emm[i+1]+2);
+				pos+=csystem_data->reassemble_emm[i+1]+2;
 			}
 
 			if (buffer[2]==0x2c) {
@@ -1057,7 +1077,7 @@ static bool viaccess_reassemble_emm(struct s_reader *reader, EMM_PACKET *ep)
 			//calculate emm length and set it on position 2
 			buffer[2]=pos-3;
 
-			cs_ddump_mask(D_DVBAPI, reader->reassemble_emm, reader->reassemble_emm_len, "[viaccess] %s: emm-gh", __func__);
+			cs_ddump_mask(D_DVBAPI, csystem_data->reassemble_emm, csystem_data->reassemble_emm_len, "[viaccess] %s: emm-gh", __func__);
 			cs_ddump_mask(D_DVBAPI, buffer, pos, "[viaccess] %s: assembled emm", __func__);
 
 			*len=pos;
