@@ -34,9 +34,6 @@
 #include <termios.h>
 #include <inttypes.h>
 
-//for reader-nagra variables in s_reader:
-#include "cscrypt/idea.h"
-
 /*
  * The following hack is taken from Linux: include/linux/kconfig.h
  * Original comment follows:
@@ -1287,22 +1284,8 @@ struct s_reader  									//contains device info, reader info and card info
 	////variables from protocol_t1.h
 	uint16_t		ifsc;							// Information field size for the ICC
 	unsigned char	ns;								// Send sequence number
-	////variables from reader-nagra.c
-	IDEA_KEY_SCHEDULE ksSession;
-	int8_t			is_pure_nagra;
-	int8_t			is_tiger;
-	int8_t			is_n3_na;
-	int8_t			has_dt08;
-	int8_t			swapCW;
-	uint8_t			ExpiryDate[2];
-	uint8_t			ActivationDate[2];
 	unsigned char	rom[15];
-	unsigned char	plainDT08RSA[64];
-	unsigned char	IdeaCamKey[16];
 	unsigned char	irdId[4];
-	unsigned char	sessi[16];
-	unsigned char	signature[8];
-	unsigned char	cam_state[3];
 	////variables from reader-irdeto.c
 	int32_t			acs57;							// A flag for the ACS57 ITA DVB-T
 	////variables from reader-cryptoworks.c

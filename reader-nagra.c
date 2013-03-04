@@ -5,10 +5,26 @@
 #include "oscam-time.h"
 #include "reader-common.h"
 
+struct nagra_data {
+	IDEA_KEY_SCHEDULE ksSession;
+	int8_t			is_pure_nagra;
+	int8_t			is_tiger;
+	int8_t			is_n3_na;
+	int8_t			has_dt08;
+	int8_t			swapCW;
+	uint8_t			ExpiryDate[2];
+	uint8_t			ActivationDate[2];
+	uint8_t			plainDT08RSA[64];
+	uint8_t			IdeaCamKey[16];
+	uint8_t			sessi[16];
+	uint8_t			signature[8];
+	uint8_t			cam_state[3];
+};
+
 // Card Status checks
-#define HAS_CW()      ((reader->cam_state[2]&6)==6)
-#define RENEW_SESSIONKEY() ((reader->cam_state[0]&128)==128 || (reader->cam_state[0]&64)==64 || (reader->cam_state[0]&32)==32 || (reader->cam_state[2]&8)==8)
-#define SENDDATETIME() (reader->cam_state[0]&8)
+#define HAS_CW()      ((csystem_data->cam_state[2]&6)==6)
+#define RENEW_SESSIONKEY() ((csystem_data->cam_state[0]&128)==128 || (csystem_data->cam_state[0]&64)==64 || (csystem_data->cam_state[0]&32)==32 || (csystem_data->cam_state[2]&8)==8)
+#define SENDDATETIME() (csystem_data->cam_state[0]&8)
 // Datatypes
 #define DT01        0x01
 #define IRDINFO     0x00
@@ -35,11 +51,12 @@ static time_t tier_date(uint32_t date, char *buf, int32_t l)
 
 static char *nagra_datetime(struct s_reader *rdr, uint8_t *ndays, int32_t offset, char *result, time_t *t)
 {
+	struct nagra_data *csystem_data = rdr->csystem_data;
 	struct tm tms;
 	memset(&tms, 0, sizeof(tms));
 	int32_t days = (ndays[0] << 8 | ndays[1]) + offset;
 	int32_t sec = 0;
-	if (!rdr->is_tiger)
+	if (!csystem_data->is_tiger)
 		sec = (ndays[2] << 8 | ndays[3]);
 	if (days > 0x41B4 && sizeof(time_t) < 8) // to overcome 32-bit systems limitations
 		days = 0x41A2;                   // 01-01-2038
@@ -49,7 +66,7 @@ static char *nagra_datetime(struct s_reader *rdr, uint8_t *ndays, int32_t offset
 	time_t ut = mktime(&tms);
 	if (t)
 		*t = ut;
-	if (rdr->is_tiger)
+	if (csystem_data->is_tiger)
 		snprintf(result, 11, "%02d/%02d/%04d", tms.tm_mday, tms.tm_mon + 1, tms.tm_year + 1900);
 	else
 		snprintf(result, 17, "%04d/%02d/%02d %02d:%02d", tms.tm_year + 1900, tms.tm_mon + 1, tms.tm_mday, tms.tm_hour, tms.tm_min);
@@ -68,6 +85,7 @@ static int32_t do_cmd(struct s_reader * reader, unsigned char cmd, int32_t ilen,
 	int32_t msglen=ilen+6;
 	unsigned char msg[msglen];
 	static const char nagra_head[] = {0xA0, 0xCA, 0x00, 0x00};
+	struct nagra_data *csystem_data = reader->csystem_data;
 
 	memset(msg, 0, msglen);
 	memcpy(msg,nagra_head,4);
@@ -82,7 +100,7 @@ static int32_t do_cmd(struct s_reader * reader, unsigned char cmd, int32_t ilen,
 		rdr_debug_mask(reader, D_READER, "invalid data length encountered");
     		return ERROR;
     	}
-    	if (reader->is_pure_nagra==1)
+    	if (csystem_data->is_pure_nagra==1)
     	{
     		msg[4]+=1;
     	}
@@ -141,11 +159,12 @@ static void Signature(unsigned char *sig, const unsigned char *vkey,const unsign
 static int32_t CamStateRequest(struct s_reader * reader)
 {
 	def_resp;
+	struct nagra_data *csystem_data = reader->csystem_data;
 	char tmp_dbg[10];
 	if(do_cmd(reader, 0xC0,0x02,0xB0,0x06,NULL,cta_res,&cta_lr))
 	{
-		memcpy(reader->cam_state,cta_res+3,3);
-		rdr_debug_mask(reader, D_READER, "Camstate: %s", cs_hexdump(1, reader->cam_state, 3, tmp_dbg, sizeof(tmp_dbg)));
+		memcpy(csystem_data->cam_state,cta_res+3,3);
+		rdr_debug_mask(reader, D_READER, "Camstate: %s", cs_hexdump(1, csystem_data->cam_state, 3, tmp_dbg, sizeof(tmp_dbg)));
 	}
 	else
 	{
@@ -179,6 +198,7 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader * reader)
 	unsigned char idea_sig[16];
 	unsigned char rnd[88];
 	char tmp2[17];
+	struct nagra_data *csystem_data = reader->csystem_data;
 
 	if(!do_cmd(reader, 0xd1,0x02,0x51,0xd2,NULL,cta_res,&cta_lr))
 	{
@@ -243,10 +263,10 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader * reader)
 	BN_CTX_end(ctx1);
 	BN_CTX_free (ctx1);
 
-	reader->ActivationDate[0] = parte_variable[65];
-	reader->ActivationDate[1] = parte_variable[66];
-	reader->ExpiryDate[0] = parte_variable[69];
-	reader->ExpiryDate[1] = parte_variable[70];
+	csystem_data->ActivationDate[0] = parte_variable[65];
+	csystem_data->ActivationDate[1] = parte_variable[66];
+	csystem_data->ExpiryDate[0] = parte_variable[69];
+	csystem_data->ExpiryDate[1] = parte_variable[70];
 
 	reader->prid[0][0]=0x00;
 	reader->prid[0][1]=0x00;
@@ -288,10 +308,10 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader * reader)
 	}
 	if (cta_res[2] == 0x00)
 	{
-		memcpy(reader->sessi,sk,16);
+		memcpy(csystem_data->sessi,sk,16);
 		IDEA_KEY_SCHEDULE ks;
-		idea_set_encrypt_key(reader->sessi,&ks);
-		idea_set_decrypt_key(&ks,&reader->ksSession);
+		idea_set_encrypt_key(csystem_data->sessi,&ks);
+		idea_set_decrypt_key(&ks,&csystem_data->ksSession);
 		rdr_debug_mask(reader, D_READER, "Tiger session key negotiated");
 		return OK;
 	}
@@ -320,8 +340,9 @@ static int32_t NegotiateSessionKey(struct s_reader * reader)
 	unsigned char idea2[16];
 	unsigned char sign1[8];
 	unsigned char sign2[8];
+	struct nagra_data *csystem_data = reader->csystem_data;
 
-	if (reader->is_tiger)
+	if (csystem_data->is_tiger)
 	{
 		if (!NegotiateSessionKey_Tiger(reader))
 		{
@@ -331,14 +352,14 @@ static int32_t NegotiateSessionKey(struct s_reader * reader)
 		return OK;
 	}
 
-	if (!reader->has_dt08) // if we have no valid dt08 calc then we use rsa from config and hexserial for calc of sessionkey
+	if (!csystem_data->has_dt08) // if we have no valid dt08 calc then we use rsa from config and hexserial for calc of sessionkey
 	{
 		rdr_debug_mask(reader, D_READER, "No valid DT08 calc using rsa from config and serial from card");
-		memcpy(reader->plainDT08RSA, reader->rsa_mod, 64);
-		memcpy(reader->signature, reader->boxkey, sizeof(reader->boxkey));
+		memcpy(csystem_data->plainDT08RSA, reader->rsa_mod, 64);
+		memcpy(csystem_data->signature, reader->boxkey, sizeof(reader->boxkey));
 	}
 
-	if ((reader->is_n3_na) && (!do_cmd(reader, 0x29,0x02,0xA9,0x04, NULL,cta_res,&cta_lr))){
+	if ((csystem_data->is_n3_na) && (!do_cmd(reader, 0x29,0x02,0xA9,0x04, NULL,cta_res,&cta_lr))){
 		rdr_debug_mask(reader, D_READER, "Nagra3: CMD$29 failed");
 		return ERROR;
 	}
@@ -346,7 +367,7 @@ static int32_t NegotiateSessionKey(struct s_reader * reader)
 	memcpy(tmp, reader->irdId, 4);
 	tmp[4]=0; //keynr 0
 
-	if (!reader->is_n3_na) {
+	if (!csystem_data->is_n3_na) {
 		if (!do_cmd(reader, 0x2a,0x02,0xaa,0x42,NULL,cta_res,&cta_lr)) {
 			rdr_debug_mask(reader, D_READER, "CMD$2A failed");
 			return ERROR;
@@ -369,7 +390,7 @@ static int32_t NegotiateSessionKey(struct s_reader * reader)
 	BIGNUM *bnE = BN_CTX_get(ctx);
 	BIGNUM *bnCT = BN_CTX_get(ctx);
 	BIGNUM *bnPT = BN_CTX_get(ctx);
-	BN_bin2bn(reader->plainDT08RSA, 64, bnN);
+	BN_bin2bn(csystem_data->plainDT08RSA, 64, bnN);
 	BN_bin2bn(vFixed+3, 1, bnE);
 	BN_bin2bn(cta_res+2, 64, bnCT);
 	BN_mod_exp(bnPT, bnCT, bnE, bnN, ctx);
@@ -381,14 +402,14 @@ static int32_t NegotiateSessionKey(struct s_reader * reader)
 
 	// build sessionkey
 	// first halve is IDEA Hashed in chuncs of 8 bytes using the Signature1 from dt08 calc, CamID-Inv.CamID(16 bytes key) the results are the First 8 bytes of the Session key
-	memcpy(idea1, reader->signature, 8);
+	memcpy(idea1, csystem_data->signature, 8);
 	memcpy(idea1+8, reader->hexserial+2, 4);
 	idea1[12] = ~reader->hexserial[2]; idea1[13] = ~reader->hexserial[3]; idea1[14] = ~reader->hexserial[4]; idea1[15] = ~reader->hexserial[5];
 
 	Signature(sign1, idea1, tmp, 32);
 	memcpy(idea2,sign1,8); memcpy(idea2+8,sign1,8);
 	Signature(sign2, idea2, tmp, 32);
-	memcpy(reader->sessi,sign1,8); memcpy(reader->sessi+8,sign2,8);
+	memcpy(csystem_data->sessi,sign1,8); memcpy(csystem_data->sessi+8,sign2,8);
 
 	// prepare cmd$2b data
 	BN_bin2bn(negot, 64, bnCT);
@@ -400,13 +421,13 @@ static int32_t NegotiateSessionKey(struct s_reader * reader)
 	ReverseMem(cmd2b+10, 64);
 
 	IDEA_KEY_SCHEDULE ks;
-	idea_set_encrypt_key(reader->sessi,&ks);
-	idea_set_decrypt_key(&ks,&reader->ksSession);
+	idea_set_encrypt_key(csystem_data->sessi,&ks);
+	idea_set_decrypt_key(&ks,&csystem_data->ksSession);
 
 	memcpy(cmd2b+74, reader->irdId, 4);
 	cmd2b[78] = 0; //keynr
 
-	if (!reader->is_n3_na) {
+	if (!csystem_data->is_n3_na) {
 		if(!do_cmd(reader, 0x2b,0x42,0xab,0x02, cmd2b+10,cta_res,&cta_lr)) {
 			rdr_debug_mask(reader, D_READER, "CMD$2B failed");
 			return ERROR;
@@ -447,6 +468,7 @@ static void decryptDT08(struct s_reader * reader, unsigned char * cta_res)
 	int32_t i, n;
 	BN_CTX *ctx;
 	BIGNUM *bn_mod, *bn_exp, *bn_data, *bn_res;
+	struct nagra_data *csystem_data = reader->csystem_data;
 
 	memcpy(static_dt08, &cta_res[12], 73);
 	// decrypt RSA Part of dt08
@@ -472,22 +494,22 @@ static void decryptDT08(struct s_reader * reader, unsigned char * cta_res)
   	static_dt08[64] |= static_dt08[0] & 0x80;
 
   	// IdeaCamKey
-  	memcpy (&reader->IdeaCamKey[0], reader->boxkey, sizeof(reader->boxkey));
-  	memcpy (&reader->IdeaCamKey[8], reader->irdId, 4);
+  	memcpy (&csystem_data->IdeaCamKey[0], reader->boxkey, sizeof(reader->boxkey));
+  	memcpy (&csystem_data->IdeaCamKey[8], reader->irdId, 4);
   	for (i = 0; i < 4; i++)
-        	reader->IdeaCamKey[12 + i] = ~reader->irdId[i];
+        	csystem_data->IdeaCamKey[12 + i] = ~reader->irdId[i];
 
   	// now IDEA decrypt
   	IDEA_KEY_SCHEDULE ks;
-  	idea_set_encrypt_key(reader->IdeaCamKey,&ks);
-  	idea_set_decrypt_key(&ks,&reader->ksSession);
+  	idea_set_encrypt_key(csystem_data->IdeaCamKey,&ks);
+  	idea_set_decrypt_key(&ks,&csystem_data->ksSession);
   	memcpy (&buf[0], static_dt08+1, 64);
   	memcpy (&buf[64], static_dt08+65, 8);
   	memset(v,0,sizeof(v));
   	memset(static_dt08,0,sizeof(static_dt08));
-  	idea_cbc_encrypt(buf,static_dt08,72,&reader->ksSession,v,IDEA_DECRYPT);
+  	idea_cbc_encrypt(buf,static_dt08,72,&csystem_data->ksSession,v,IDEA_DECRYPT);
 
-  	if (reader->swapCW==1)
+  	if (csystem_data->swapCW==1)
   	{
   		memset(camid,0xff,4);
   	}
@@ -497,21 +519,21 @@ static void decryptDT08(struct s_reader * reader, unsigned char * cta_res)
   	}
   	rdr_debug_mask(reader, D_READER, "using camid %s for dt08 calc", cs_hexdump(1, camid, 4, tmp_dbg, sizeof(tmp_dbg)));
 
-	// Calculate reader->signature
-  	memcpy (reader->signature, static_dt08, 8);
+	// Calculate csystem_data->signature
+  	memcpy (csystem_data->signature, static_dt08, 8);
   	memset (static_dt08 + 0, 0, 4);
   	memcpy (static_dt08 + 4, camid, 4);
-  	Signature(sign2,reader->IdeaCamKey,static_dt08,72);
+  	Signature(sign2,csystem_data->IdeaCamKey,static_dt08,72);
 
-	if (memcmp (reader->signature, sign2, 8)==0)
+	if (memcmp (csystem_data->signature, sign2, 8)==0)
 	{
-		reader->has_dt08=1;
-		memcpy (reader->plainDT08RSA, static_dt08+8, 64);
+		csystem_data->has_dt08=1;
+		memcpy (csystem_data->plainDT08RSA, static_dt08+8, 64);
 		rdr_debug_mask(reader, D_READER, "DT08 signature check ok");
 	}
 	else
 	{
-		reader->has_dt08=0;
+		csystem_data->has_dt08=0;
 		rdr_debug_mask(reader, D_READER, "DT08 signature check nok");
 	}
 
@@ -545,6 +567,7 @@ static void addProvider(struct s_reader * reader, unsigned char * cta_res)
 
 static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigned char * cta_res, uint16_t cta_lr)
 {
+	struct nagra_data *csystem_data = reader->csystem_data;
 	char ds[20], de[16];
       	uint16_t chid;
 	switch(dt)
@@ -558,7 +581,7 @@ static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigne
   			if ( ((cta_res[7] == 0x34) && (cta_res[8] == 0x11)) || ((cta_res[7] == 0x04) && (cta_res[8] == 0x01))) //provider 3411, 0401 needs cw swap
   			{
   				rdr_debug_mask(reader, D_READER, "detect provider with swap cw!");
-  				reader->swapCW=1;
+  				csystem_data->swapCW=1;
   			}
 
 			reader->prid[1][0]=0x00;
@@ -630,11 +653,10 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR *newatr)
 	get_atr;
 	def_resp;
 	memset(reader->rom, 0, 15);
-	reader->is_pure_nagra = 0;
-	reader->is_tiger = 0;
-	reader->is_n3_na = 0;
- 	reader->has_dt08 = 0;
- 	reader->swapCW = 0;
+
+	int8_t is_pure_nagra = 0;
+	int8_t is_tiger = 0;
+	int8_t is_n3_na = 0;
  	memset(reader->irdId, 0xff, 4);
 	memset(reader->hexserial, 0, 8);
 
@@ -643,7 +665,7 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR *newatr)
 	if(memcmp(atr+11,"DNASP240",8)==0 || memcmp(atr+11,"DNASP241", 8)==0) {
 		rdr_log(reader, "detect nagra 3 NA card");
 		memcpy(reader->rom,atr+11,15);
-		reader->is_n3_na=1;
+		is_n3_na=1;
 	}
 	else if (memcmp(atr+11, "DNASP", 5)==0)
 	{
@@ -654,7 +676,7 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR *newatr)
 	{
 		rdr_log(reader, "detect nagra tiger card");
 		memcpy(reader->rom,atr+11,15);
-		reader->is_tiger=1;
+		is_tiger=1;
 	}
 	else if ((!memcmp(atr+4, "IRDETO", 6)) && ((atr[14]==0x03) && (atr[15]==0x84) && (atr[16]==0x55)))
 	{
@@ -670,7 +692,7 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR *newatr)
 			return ERROR;
 		}
 		rdr_log(reader, "rsa key configured -> using nagra mode");
-		reader->is_pure_nagra=1;
+		is_pure_nagra=1;
 		if(!do_cmd(reader, 0x10,0x02,0x90,0x11,0,cta_res,&cta_lr))
 		{
 			rdr_debug_mask(reader, D_READER, "get rom version failed");
@@ -680,9 +702,16 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR *newatr)
 	}
 	else return ERROR;
 
+	if (!cs_malloc(&reader->csystem_data, sizeof(struct nagra_data)))
+		return ERROR;
+	struct nagra_data *csystem_data = reader->csystem_data;
+	csystem_data->is_pure_nagra = is_pure_nagra;
+	csystem_data->is_tiger      = is_tiger;
+	csystem_data->is_n3_na      = is_n3_na;
+
 	reader->nprov = 1;
 
-	if (!reader->is_tiger)
+	if (!csystem_data->is_tiger)
 	{
 		CamStateRequest(reader);
 		if(!do_cmd(reader, 0x12,0x02,0x92,0x06,0,cta_res,&cta_lr))
@@ -768,6 +797,7 @@ static int32_t nagra2_card_info(struct s_reader * reader)
 {
 	int32_t i;
 	char currdate[11], tmp[64];
+	struct nagra_data *csystem_data = reader->csystem_data;
 	rdr_log(reader, "ROM:    %c %c %c %c %c %c %c %c", reader->rom[0], reader->rom[1], reader->rom[2],reader->rom[3], reader->rom[4], reader->rom[5], reader->rom[6], reader->rom[7]);
 	rdr_log(reader, "REV:    %c %c %c %c %c %c", reader->rom[9], reader->rom[10], reader->rom[11], reader->rom[12], reader->rom[13], reader->rom[14]);
 	rdr_log_sensitive(reader, "SER:    {%s}", cs_hexdump(1, reader->hexserial+2, 4, tmp, sizeof(tmp)));
@@ -778,12 +808,12 @@ static int32_t nagra2_card_info(struct s_reader * reader)
           rdr_log(reader, "Prv.ID: %s",cs_hexdump(1, reader->prid[i], 4, tmp, sizeof(tmp)));
 	}
 	cs_clear_entitlement(reader); //reset the entitlements
-        if(reader->is_tiger)
+        if(csystem_data->is_tiger)
         {
-	  rdr_log(reader, "Activation Date : %s", nagra_datetime(reader, reader->ActivationDate, 0, currdate, 0));
-	  rdr_log(reader, "Expiry Date : %s", nagra_datetime(reader, reader->ExpiryDate, 0, currdate, &reader->card_valid_to));
+	  rdr_log(reader, "Activation Date : %s", nagra_datetime(reader, csystem_data->ActivationDate, 0, currdate, 0));
+	  rdr_log(reader, "Expiry Date : %s", nagra_datetime(reader, csystem_data->ExpiryDate, 0, currdate, &reader->card_valid_to));
         }
-        if (reader->nagra_read && reader->is_tiger && memcmp(reader->rom, "NCMED", 5) == 0)
+        if (reader->nagra_read && csystem_data->is_tiger && memcmp(reader->rom, "NCMED", 5) == 0)
         {
            ncmed_rec records[255];
            int32_t num_records = 0;
@@ -973,7 +1003,8 @@ static int32_t nagra2_card_info(struct s_reader * reader)
 
 void nagra2_post_process(struct s_reader * reader)
 {
-	if (!reader->is_tiger)
+	struct nagra_data *csystem_data = reader->csystem_data;
+	if (!csystem_data->is_tiger)
 	{
 		CamStateRequest(reader);
 		if RENEW_SESSIONKEY() NegotiateSessionKey(reader);
@@ -984,10 +1015,11 @@ void nagra2_post_process(struct s_reader * reader)
 static int32_t nagra2_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
 	def_resp;
-	if (!reader->is_tiger)
+	struct nagra_data *csystem_data = reader->csystem_data;
+	if (!csystem_data->is_tiger)
 	{
 		int32_t retry=0;
-		if (reader->is_n3_na) {
+		if (csystem_data->is_n3_na) {
 			unsigned char ecm_pkt[256+16];
 			memset(ecm_pkt, 0, sizeof(ecm_pkt));
 			memcpy(ecm_pkt, er->ecm+3+2, er->ecm[4]);
@@ -1056,10 +1088,10 @@ static int32_t nagra2_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, st
 		{
 			unsigned char v[8];
 			memset(v,0,sizeof(v));
-			idea_cbc_encrypt(&cta_res[30],ea->cw,8,&reader->ksSession,v,IDEA_DECRYPT);
+			idea_cbc_encrypt(&cta_res[30],ea->cw,8,&csystem_data->ksSession,v,IDEA_DECRYPT);
 			memset(v,0,sizeof(v));
-			idea_cbc_encrypt(&cta_res[4],ea->cw+8,8,&reader->ksSession,v,IDEA_DECRYPT);
-			if (reader->swapCW==1)
+			idea_cbc_encrypt(&cta_res[4],ea->cw+8,8,&csystem_data->ksSession,v,IDEA_DECRYPT);
+			if (csystem_data->swapCW==1)
 		  	{
 		  		rdr_debug_mask(reader, D_READER, "swap cws");
 		    		unsigned char tt[8];
@@ -1088,9 +1120,9 @@ static int32_t nagra2_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, st
 
 				unsigned char v[8];
 				memset(v,0,sizeof(v));
-				idea_cbc_encrypt(&cta_res[14],ea->cw,8,&reader->ksSession,v,IDEA_DECRYPT);
+				idea_cbc_encrypt(&cta_res[14],ea->cw,8,&csystem_data->ksSession,v,IDEA_DECRYPT);
 				memset(v,0,sizeof(v));
-				idea_cbc_encrypt(&cta_res[6],ea->cw+8,8,&reader->ksSession,v,IDEA_DECRYPT);
+				idea_cbc_encrypt(&cta_res[6],ea->cw+8,8,&csystem_data->ksSession,v,IDEA_DECRYPT);
 				return OK;
 			}
 			rdr_debug_mask(reader, D_READER, "can't decode ecm");
@@ -1169,7 +1201,8 @@ static void nagra2_get_emm_filter(struct s_reader * rdr, uchar *filter)
 static int32_t nagra2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
 	def_resp;
-	if (!reader->is_tiger)
+	struct nagra_data *csystem_data = reader->csystem_data;
+	if (!csystem_data->is_tiger)
 	{
 		if(!do_cmd(reader, ep->emm[8],ep->emm[9]+2,0x84,0x02,ep->emm+8+2,cta_res,&cta_lr))
 		{
@@ -1177,7 +1210,7 @@ static int32_t nagra2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 			return ERROR;
 		}
 		// for slow t14 nagra cards, we must do additional timeout
-		if (reader->is_pure_nagra==1)
+		if (csystem_data->is_pure_nagra==1)
 		{
 			cs_sleepms(300);
 		}
