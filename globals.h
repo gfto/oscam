@@ -96,7 +96,6 @@
 #endif
 
 #include "cscrypt/aes.h"
-#include "cscrypt/bn.h"
 
 #ifndef uchar
 typedef unsigned char uchar;
@@ -1195,14 +1194,11 @@ struct s_reader  									//contains device info, reader info and card info
 	int16_t			blockemmbylen[CS_MAXEMMBLOCKBYLEN];
 	char			*emmfile;
 	char			pincode[5];
-	int32_t			ucpk_valid;
 	int8_t			logemm;
 	int8_t			cachemm;
 	int16_t			rewritemm;
 	int8_t			card_status;
 	int8_t			deprecated;						//if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
-	int32_t			reassemble_emm_len;
-	uint8_t			reassemble_emm[512];
 	struct s_module ph;
 	struct s_cardreader crdr;
 	struct s_cardsystem csystem;
@@ -1288,9 +1284,6 @@ struct s_reader  									//contains device info, reader info and card info
 	unsigned char	irdId[4];
 	////variables from reader-irdeto.c
 	int32_t			acs57;							// A flag for the ACS57 ITA DVB-T
-	////variables from reader-cryptoworks.c
-	BIGNUM			exp;
-	BIGNUM			ucpk;
 #ifdef WITH_LB
 	int32_t			lb_weight;						//loadbalance weight factor, if unset, weight=100. The higher the value, the higher the usage-possibility
 	int32_t			lb_usagelevel;					//usagelevel for loadbalancer

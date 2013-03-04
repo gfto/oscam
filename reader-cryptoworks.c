@@ -5,6 +5,14 @@
 #include "oscam-emm.h"
 #include "reader-common.h"
 
+struct cryptoworks_data {
+	BIGNUM			exp;
+	BIGNUM			ucpk;
+	int32_t			ucpk_valid;
+	int32_t			reassemble_emm_len;
+	uint8_t			reassemble_emm[512];
+};
+
 #define CMD_LEN 5
 
 static const char *cs_cert = "oscam.cert";
@@ -218,12 +226,15 @@ static int32_t cryptoworks_card_init(struct s_reader * reader, ATR *newatr)
 
   if ((atr[6]!=0xC4) || (atr[9]!=0x8F) || (atr[10]!=0xF1)) return ERROR;
 
+  if (!cs_malloc(&reader->csystem_data, sizeof(struct cryptoworks_data)))
+    return ERROR;
+  struct cryptoworks_data *csystem_data = reader->csystem_data;
+
   rdr_log(reader, "card detected");
   rdr_log(reader, "type: CryptoWorks");
 
   reader->caid=0xD00;
   reader->nprov=0;
-  reader->ucpk_valid = 0;
   memset(reader->prid, 0, sizeof(reader->prid));
 
   write_cmd(insA4C, NULL);		// read masterfile-ID
@@ -262,23 +273,23 @@ static int32_t cryptoworks_card_init(struct s_reader * reader, ATR *newatr)
     if (search_boxkey(reader->caid, (char *)keybuf))
     {
       ipk=BN_new();
-      BN_bin2bn(cwexp, sizeof(cwexp), &reader->exp);
+      BN_bin2bn(cwexp, sizeof(cwexp), &csystem_data->exp);
       BN_bin2bn(keybuf, 64, ipk);
-      cw_RSA(reader, cta_res+2, cta_res+2, 0x40, &reader->exp, ipk, 0);
+      cw_RSA(reader, cta_res+2, cta_res+2, 0x40, &csystem_data->exp, ipk, 0);
       BN_free(ipk);
-      reader->ucpk_valid =(cta_res[2]==((mfid & 0xFF)>>1));
-      if (reader->ucpk_valid)
+      csystem_data->ucpk_valid =(cta_res[2]==((mfid & 0xFF)>>1));
+      if (csystem_data->ucpk_valid)
       {
         cta_res[2]|=0x80;
-        BN_bin2bn(cta_res+2, 0x40, &reader->ucpk);
+        BN_bin2bn(cta_res+2, 0x40, &csystem_data->ucpk);
         rdr_ddump_mask(reader, D_READER, cta_res+2, 0x40, "IPK available -> session-key:");
       }
       else
       {
-        reader->ucpk_valid =(keybuf[0]==(((mfid & 0xFF)>>1)|0x80));
-        if (reader->ucpk_valid)
+        csystem_data->ucpk_valid =(keybuf[0]==(((mfid & 0xFF)>>1)|0x80));
+        if (csystem_data->ucpk_valid)
         {
-          BN_bin2bn(keybuf, 0x40, &reader->ucpk);
+          BN_bin2bn(keybuf, 0x40, &csystem_data->ucpk);
           rdr_ddump_mask(reader, D_READER, keybuf, 0x40, "session-key found:");
         }
         else
@@ -318,7 +329,8 @@ static int32_t cryptoworks_do_ecm(struct s_reader * reader, const ECM_REQUEST *e
   unsigned char ins4C[] = { 0xA4,0x4C,0x00,0x00,0x00 };
   unsigned char insC0[] = { 0xA4,0xC0,0x00,0x00,0x1C };
   unsigned char nanoD4[10];
-  int32_t secLen=check_sct_len(er->ecm,-5+(reader->ucpk_valid ? sizeof(nanoD4):0));
+  struct cryptoworks_data *csystem_data = reader->csystem_data;
+  int32_t secLen=check_sct_len(er->ecm,-5+(csystem_data->ucpk_valid ? sizeof(nanoD4):0));
 
   if(secLen>5)
   {
@@ -326,7 +338,7 @@ static int32_t cryptoworks_do_ecm(struct s_reader * reader, const ECM_REQUEST *e
     const uchar *ecm=er->ecm;
     uchar buff[MAX_LEN];
 
-    if(reader->ucpk_valid)
+    if(csystem_data->ucpk_valid)
     {
       memcpy(buff,er->ecm,secLen);
       nanoD4[0]=0xD4;
@@ -338,7 +350,7 @@ static int32_t cryptoworks_do_ecm(struct s_reader * reader, const ECM_REQUEST *e
       secLen+=sizeof(nanoD4);
     }
 
-    ins4C[3]=reader->ucpk_valid ? 2 : 0;
+    ins4C[3]=csystem_data->ucpk_valid ? 2 : 0;
     ins4C[4]=secLen-5;
     write_cmd(ins4C, ecm+5);
     if (cta_res[cta_lr-2]==0x9f)
@@ -376,9 +388,9 @@ static int32_t cryptoworks_do_ecm(struct s_reader * reader, const ECM_REQUEST *e
             }
             else if (n==0x40) // camcrypt
             {
-              if(reader->ucpk_valid)
+              if(csystem_data->ucpk_valid)
               {
-                cw_RSA(reader, &cta_res[i+2],&cta_res[i+2], n, &reader->exp, &reader->ucpk, 0);
+                cw_RSA(reader, &cta_res[i+2],&cta_res[i+2], n, &csystem_data->exp, &csystem_data->ucpk, 0);
                 rdr_debug_mask(reader, D_READER, "after camcrypt");
                 r=0; secLen=n-4; n=4;
               }
@@ -707,6 +719,7 @@ static uint32_t cryptoworks_get_emm_provid(unsigned char *buffer, int32_t len)
 
 static bool cryptoworks_reassemble_emm(struct s_reader *reader, EMM_PACKET *ep)
 {
+	struct cryptoworks_data *csystem_data = reader->csystem_data;
 	uchar *buffer = ep->emm;
 	int16_t *len = &ep->emmlen;
 	int16_t emm_len = 0;
@@ -727,9 +740,9 @@ static bool cryptoworks_reassemble_emm(struct s_reader *reader, EMM_PACKET *ep)
 
 		case 0x84: // emm-sh
 			cs_debug_mask(D_DVBAPI, "[cryptoworks] shared emm (EMM-SH): %s" , cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
-			if (!memcmp(reader->reassemble_emm, buffer, *len)) return 0;
-			memcpy(reader->reassemble_emm, buffer, *len);
-			reader->reassemble_emm_len=*len;
+			if (!memcmp(csystem_data->reassemble_emm, buffer, *len)) return 0;
+			memcpy(csystem_data->reassemble_emm, buffer, *len);
+			csystem_data->reassemble_emm_len=*len;
 			// If we return 0 (skip packet) and someone send us already
 			// reassembled packet we would miss it. Thats why we return 1 (ok)
 			// and "suffer" couple of wrongly written packets in the card.
@@ -737,7 +750,7 @@ static bool cryptoworks_reassemble_emm(struct s_reader *reader, EMM_PACKET *ep)
 
 		case 0x86: // emm-sb
 			cs_debug_mask(D_DVBAPI, "[cryptoworks] shared emm (EMM-SB): %s" , cs_hexdump(0, buffer, *len, dumpbuf, sizeof(dumpbuf)));
-			if (!reader->reassemble_emm_len) return 0;
+			if (!csystem_data->reassemble_emm_len) return 0;
 
 			// we keep the first 12 bytes of the 0x84 emm (EMM-SH)
 			// now we need to append the payload of the 0x86 emm (EMM-SB)
@@ -749,7 +762,7 @@ static bool cryptoworks_reassemble_emm(struct s_reader *reader, EMM_PACKET *ep)
 			// update the emm len (emmBuf[1:2])
 			//
 
-			emm_len=*len-5 + reader->reassemble_emm_len-12;
+			emm_len=*len-5 + csystem_data->reassemble_emm_len-12;
 			unsigned char *tmp, *assembled;
 			if (!cs_malloc(&tmp, emm_len))
 				return 0;
@@ -764,8 +777,8 @@ static bool cryptoworks_reassemble_emm(struct s_reader *reader, EMM_PACKET *ep)
 				return 0;
 			}
 			memcpy(tmp,&buffer[5], *len-5);
-			memcpy(tmp+*len-5,&reader->reassemble_emm[12],reader->reassemble_emm_len-12);
-			memcpy(assembled_EMM,reader->reassemble_emm,12);
+			memcpy(tmp+*len-5,&csystem_data->reassemble_emm[12],csystem_data->reassemble_emm_len-12);
+			memcpy(assembled_EMM,csystem_data->reassemble_emm,12);
 			emm_sort_nanos(assembled_EMM+12,tmp,emm_len);
 
 			assembled_EMM[1]=((emm_len+9)>>8) | 0x70;
@@ -778,7 +791,7 @@ static bool cryptoworks_reassemble_emm(struct s_reader *reader, EMM_PACKET *ep)
 			free(assembled);
 			free(assembled_EMM);
 
-			reader->reassemble_emm_len = 0;
+			csystem_data->reassemble_emm_len = 0;
 
 			cs_debug_mask(D_DVBAPI, "[cryptoworks] shared emm (assembled): %s", cs_hexdump(0, buffer, emm_len+12, dumpbuf, sizeof(dumpbuf)));
 			if(assembled_EMM[11]!=emm_len) { // sanity check
