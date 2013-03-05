@@ -710,6 +710,7 @@ static int32_t bulcrypt_card_info(struct s_reader *reader)
 		}
 	}
 
+	rdr_log(reader, "End subscription info.");
 	return OK;
 }
 
