@@ -127,6 +127,10 @@ static const uchar cmd_sub_info1[] = { 0xDE, 0x06, 0x00, 0x00, 0x00, 0x00 };
 static const uchar cmd_sub_info2[] = { 0xDE, 0x1E, 0x00, 0x00, 0x2B, 0x00 };
 // See bulcrypt_card_info() for reponse description
 
+struct bulcrypt_data {
+	uint8_t			bulcrypt_version;
+};
+
 static int32_t bulcrypt_card_init(struct s_reader *reader, ATR *newatr)
 {
 	int i;
@@ -138,8 +142,6 @@ static int32_t bulcrypt_card_init(struct s_reader *reader, ATR *newatr)
 	get_atr
 	def_resp
 
-	reader->bulcrypt_version = 0;
-
 	if (memcmp(atr, atr_carpet, MIN(sizeof(atr_carpet), atr_size)) != 0)
 	{
 		if (atr_size == 3) {
@@ -148,6 +150,10 @@ static int32_t bulcrypt_card_init(struct s_reader *reader, ATR *newatr)
 		}
 		return ERROR;
 	}
+
+	if (!cs_malloc(&reader->csystem_data, sizeof(struct bulcrypt_data)))
+		return ERROR;
+	struct bulcrypt_data *csystem_data = reader->csystem_data;
 
 	reader->nprov = 1;
 	memset(reader->prid, 0, sizeof(reader->prid));
@@ -162,11 +168,11 @@ static int32_t bulcrypt_card_init(struct s_reader *reader, ATR *newatr)
 	if (cta_lr < 18 || (cta_res[0] != 0x11 && cta_res[1] != 0x10))
 	{
 		// The card is v1
-		reader->bulcrypt_version = 1;
+		csystem_data->bulcrypt_version = 1;
 		set_key_command = cmd_set_key;
 	} else {
 		// The card is v2
-		reader->bulcrypt_version = 2;
+		csystem_data->bulcrypt_version = 2;
 		set_key_command = cmd_set_key_v2;
 	}
 
@@ -179,8 +185,8 @@ static int32_t bulcrypt_card_init(struct s_reader *reader, ATR *newatr)
 		return ERROR;
 	}
 
-	rdr_log(reader, "Bulcrypt v%d card detected.%s", reader->bulcrypt_version,
-		reader->bulcrypt_version != 1 ? " *UNSUPPORTED CARD VERSION*" : "");
+	rdr_log(reader, "Bulcrypt v%d card detected.%s", csystem_data->bulcrypt_version,
+		csystem_data->bulcrypt_version != 1 ? " *UNSUPPORTED CARD VERSION*" : "");
 
 	// Read card type
 	write_cmd(cmd_cardtype1, NULL);
@@ -289,6 +295,7 @@ static int32_t bulcrypt_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 {
 	char tmp[512];
 	uchar ecm_cmd[256];
+	struct bulcrypt_data *csystem_data = reader->csystem_data;
 
 	def_resp
 
@@ -350,7 +357,7 @@ static int32_t bulcrypt_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, 
 
 	// Remove code word obfuscation
 	uchar *cw = cta_res + 3;
-	if (reader->bulcrypt_version == 1) {
+	if (csystem_data->bulcrypt_version == 1) {
 		int i;
 		for (i = 0 ; i < 16; i++) {
 			cw[i] = cw[i] ^ sess_key[i];
