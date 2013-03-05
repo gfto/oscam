@@ -62,7 +62,7 @@ static uint8_t countCWpart(ECM_REQUEST *er, struct s_cw_cycle_check *cwc) {
 	return ret;
 }
 
-static uint8_t checkvalidCW (ECM_REQUEST *er, struct s_cw_cycle_check *cwc) {
+static uint8_t checkvalidCW (ECM_REQUEST *er) {
 	checkCW(er); //check zero
 	if (er->rc == E_NOTFOUND) {
 		//wrong
@@ -79,10 +79,6 @@ static uint8_t checkvalidCW (ECM_REQUEST *er, struct s_cw_cycle_check *cwc) {
 			return 0;
 		}
 	}
-	if (cfg.cwcycle_sensitive && countCWpart(er,cwc) >= cfg.cwcycle_sensitive) {//2,3,4, 0 = off
-		return 0;
-	}
-
 	return 1;
 };
 
@@ -189,7 +185,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 				/*for (k=0; k<15; k++) { // debug md5
                 			cs_debug_mask(D_CSPCWC, "cyclecheck [checksumlist[%i]]: ecm_md5: %s csp-hash: %d Entry: %i", k, cs_hexdump(0, cwc->ecm_md5[k].md5, 16, ecm_md5, sizeof(ecm_md5)), cwc->ecm_md5[k].csp_hash, cwc->cwc_hist_entry);
 				} */
-				if (checkvalidCW(er, cwc)){
+				if (checkvalidCW(er)){
 					// first we check if the store cw the same like the current
 					if (memcmp(cwc->cw, cw, 16) == 0) {
 						cs_debug_mask(D_CSPCWCFUL, "cyclecheck [Dump Stored CW] Client: %s EA: %s CW: %s Time: %ld", user, cwc_ecmf, cwc_cw, cwc->time);
@@ -219,8 +215,11 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 							}
 						}
 					}
+					if (cycleok >= 0 && cfg.cwcycle_sensitive && countCWpart(er,cwc) >= cfg.cwcycle_sensitive) {//2,3,4, 0 = off
+						cycleok = -2;
+					}
 				} else
-					cs_debug_mask(D_CSPCWC,"no");
+					cycleok = -2;
 				if (cycleok >= 0) {
 					ret = 0;  // return Code 0 Cycle OK
 					if (cycleok == 0) {
@@ -255,7 +254,10 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 						}
 					}
 					if (!upd_entry) break;
-					cs_debug_mask(D_CSPCWC, "cyclecheck [ATTENTION!! NON Valid CW Cycle] NO CW Cycle detected! Client: %s EA: %s Timediff: %ld Stage: %i Cycletime: %i dyncycletime: %i nextCycleCW = CW%i from Reader: %s", user, er_ecmf, now-cwc->time, cwc->stage, cwc->cycletime, cwc->dyncycletime, cwc->nextcyclecw, reader);
+					if (cycleok == -2)
+						cs_debug_mask(D_CSPCWC, "cyclecheck [ATTENTION!! NON Valid CW] Client: %s EA: %s Timediff: %ld Stage: %i Cycletime: %i dyncycletime: %i nextCycleCW = CW%i from Reader: %s", user, er_ecmf, now-cwc->time, cwc->stage, cwc->cycletime, cwc->dyncycletime, cwc->nextcyclecw, reader);
+					else
+						cs_debug_mask(D_CSPCWC, "cyclecheck [ATTENTION!! NON Valid CW Cycle] NO CW Cycle detected! Client: %s EA: %s Timediff: %ld Stage: %i Cycletime: %i dyncycletime: %i nextCycleCW = CW%i from Reader: %s", user, er_ecmf, now-cwc->time, cwc->stage, cwc->cycletime, cwc->dyncycletime, cwc->nextcyclecw, reader);
 					cs_debug_mask(D_CSPCWCFUL, "cyclecheck [Dump Stored CW] Client: %s EA: %s CW: %s Time: %ld", user, cwc_ecmf, cwc_cw, cwc->time);
 					cs_debug_mask(D_CSPCWCFUL, "cyclecheck [Dump CheckedCW] Client: %s EA: %s CW: %s Time: %ld Timediff: %ld", user, er_ecmf, cwstr, now, now - cwc->time);
 					ret = 1; // bad cycle
