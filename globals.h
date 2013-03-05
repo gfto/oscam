@@ -1231,6 +1231,7 @@ struct s_reader  									//contains device info, reader info and card info
 	struct s_module ph;
 	struct s_cardreader crdr;
 	struct s_cardsystem csystem;
+	void			*csystem_data; // Private card system data
 	uint8_t			ncd_key[14];
 	uchar			ncd_skey[16];
 	int8_t			ncd_connect_on_init;

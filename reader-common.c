@@ -131,6 +131,9 @@ static int32_t reader_get_cardsystem(struct s_reader * reader, ATR *atr)
 				reader->csystem.active=1;
 				led_status_found_cardsystem();
 				break;
+			} else {
+				// On error free allocated card system data if any
+				NULLFREE(reader->csystem_data);
 			}
 		}
 	}
@@ -211,6 +214,7 @@ int32_t cardreader_do_checkhealth(struct s_reader * reader)
 		if (reader->card_status == CARD_INSERTED || reader->card_status == CARD_NEED_INIT) {
 			rdr_log(reader, "card ejected");
 			reader_nullcard(reader);
+			NULLFREE(reader->csystem_data);
 			if (cl) {
 				cl->lastemm = 0;
 				cl->lastecm = 0;

@@ -986,6 +986,7 @@ void free_reader(struct s_reader *rdr)
 		ll_destroy(rdr->ll_entitlements);
 		rdr->ll_entitlements = NULL;
 	}
+	NULLFREE(rdr->csystem_data);
 	add_garbage(rdr);
 }
 
