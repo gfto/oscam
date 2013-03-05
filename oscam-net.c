@@ -243,15 +243,15 @@ void setTCPTimeouts(int32_t sock)
 	}
 #if defined(TCP_KEEPIDLE) && defined(TCP_KEEPCNT) && defined(TCP_KEEPINTVL)
 	flag = 10;
-	if(setsockopt(sock, SOL_TCP, TCP_KEEPIDLE, &flag, sizeof(flag)) && errno != EBADF){	//send first keepalive packet after 10 seconds of last package received (keepalive packets included)
+	if(setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &flag, sizeof(flag)) && errno != EBADF){	//send first keepalive packet after 10 seconds of last package received (keepalive packets included)
 		cs_log("Setting TCP_KEEPIDLE failed, errno=%d, %s", errno, strerror(errno));
 	}
 	flag = 3;
-	if(setsockopt(sock, SOL_TCP, TCP_KEEPCNT, &flag, sizeof(flag)) && errno != EBADF){		//send up to 3 keepalive packets out (in interval TCP_KEEPINTVL), then disconnect if no response
+	if(setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, &flag, sizeof(flag)) && errno != EBADF){		//send up to 3 keepalive packets out (in interval TCP_KEEPINTVL), then disconnect if no response
 		cs_log("Setting TCP_KEEPCNT failed, errno=%d, %s", errno, strerror(errno));
 	}
 	flag = 1;
-	if(setsockopt(sock, SOL_TCP, TCP_KEEPINTVL, &flag, sizeof(flag)) && errno != EBADF){;		//send a keepalive packet out every second (until answer has been received or TCP_KEEPCNT has been reached)
+	if(setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL, &flag, sizeof(flag)) && errno != EBADF){;		//send a keepalive packet out every second (until answer has been received or TCP_KEEPCNT has been reached)
 		cs_log("Setting TCP_KEEPINTVL failed, errno=%d, %s", errno, strerror(errno));
 	}
 #endif
