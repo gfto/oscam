@@ -419,6 +419,7 @@ void cache_fixups_fn(void *UNUSED(var)) {
 #ifdef CW_CYCLE_CHECK
 	if (cfg.maxcyclelist > 4000) cfg.maxcyclelist = 4000;
 	if (cfg.keepcycletime > 15) cfg.keepcycletime = 15;
+	if (cfg.cwcycle_sensitive > 3) cfg.cwcycle_sensitive = 3;
 #endif
 }
 
@@ -454,6 +455,7 @@ static const struct config_list cache_opts[] = {
 	DEF_OPT_INT32("cwcycle_keeptime"		, OFS(keepcycletime),				0 ),
 	DEF_OPT_INT8("cwcycle_onbad"			, OFS(onbadcycle),					0 ),
 	DEF_OPT_INT8("cwcycle_dropold"			, OFS(cwcycle_dropold),				0 ),
+	DEF_OPT_INT8("cwcycle_sensitive"		, OFS(cwcycle_sensitive),			0 ),
 #endif
 	DEF_LAST_OPT
 };

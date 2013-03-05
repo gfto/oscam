@@ -547,6 +547,17 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 	if (cfg.cwcycle_dropold == 1) {
 		tpl_addVar(vars, TPLADD, "DROPOLD", "selected");
 	}
+	switch (cfg.cwcycle_sensitive) {
+		case 1:
+			tpl_addVar(vars, TPLADD, "CWCSEN1", "selected");
+			break;
+		case 2:
+			tpl_addVar(vars, TPLADD, "CWCSEN2", "selected");
+			break;
+		case 3:
+			tpl_addVar(vars, TPLADD, "CWCSEN3", "selected");
+			break;
+	}
 #endif
 
 	return tpl_getTpl(vars, "CONFIGCACHE");

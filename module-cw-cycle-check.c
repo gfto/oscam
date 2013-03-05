@@ -33,7 +33,36 @@ static uint8_t checkCWpart(ECM_REQUEST *er, int8_t nextcyclecw) {
 	return 0;
 }
 
-static uint8_t checkvalidCW (ECM_REQUEST *er) {
+
+/*
+ * countCWpart is to prevent like this
+ * D41A1A08B01DAD7A 0F1D0A36AF9777BD found -> ok
+ * E9151917B01DAD7A 0F1D0A36AF9777BD found last -> worng (freeze), but for cwc is ok
+ * 7730F59C6653A55E D3822A7F133D3C8C cwc bad -> but cw is right, cwc out of step
+ */
+static uint8_t countCWpart(ECM_REQUEST *er, struct s_cw_cycle_check *cwc) {
+	uint8_t eo = cwc->nextcyclecw?0:8;
+	int8_t i, ret = 0;
+	char cwc_cw[9*3];
+	char er_cw[9*3];
+
+	for (i = 0; i < 8; i++) {
+		if (cwc->cw[i+eo] == er->cw[i+eo]) {
+			ret++;
+		}
+	}
+
+	cs_hexdump(0, cwc->cw+eo, 8, cwc_cw, sizeof(cwc_cw));
+	cs_hexdump(0, er->cw+eo, 8, er_cw, sizeof(er_cw));
+	cs_debug_mask(D_CSPCWC,"cyclecheck [countCWpart] er-cw %s", er_cw);
+	cs_debug_mask(D_CSPCWC,"cyclecheck [countCWpart] cw-cw %s", cwc_cw);
+	if (ret > cfg.cwcycle_sensitive) {
+		cs_log("cyclecheck [countCWpart] new cw is to like old one (unused part), sensitive %d, same bytes %d", cfg.cwcycle_sensitive, ret);
+	}
+	return ret;
+}
+
+static uint8_t checkvalidCW (ECM_REQUEST *er, struct s_cw_cycle_check *cwc) {
 	checkCW(er); //check zero
 	if (er->rc == E_NOTFOUND) {
 		//wrong
@@ -50,6 +79,10 @@ static uint8_t checkvalidCW (ECM_REQUEST *er) {
 			return 0;
 		}
 	}
+	if (cfg.cwcycle_sensitive && countCWpart(er,cwc) > cfg.cwcycle_sensitive) {//1,2,3, 0 = off
+		return 0;
+	}
+
 	return 1;
 };
 
@@ -156,7 +189,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 				/*for (k=0; k<15; k++) { // debug md5
                 			cs_debug_mask(D_CSPCWC, "cyclecheck [checksumlist[%i]]: ecm_md5: %s csp-hash: %d Entry: %i", k, cs_hexdump(0, cwc->ecm_md5[k].md5, 16, ecm_md5, sizeof(ecm_md5)), cwc->ecm_md5[k].csp_hash, cwc->cwc_hist_entry);
 				} */
-				if (checkvalidCW(er)){
+				if (checkvalidCW(er, cwc)){
 					// first we check if the store cw the same like the current
 					if (memcmp(cwc->cw, cw, 16) == 0) {
 						cs_debug_mask(D_CSPCWCFUL, "cyclecheck [Dump Stored CW] Client: %s EA: %s CW: %s Time: %ld", user, cwc_ecmf, cwc_cw, cwc->time);
@@ -506,7 +539,9 @@ uint8_t checkcwcycle(ECM_REQUEST *er, struct s_reader *reader, uchar *cw, int8_t
 }
 
 uint8_t cwcycle_check_act(uint16_t caid){
-	return chk_ctab_ex(caid,&cfg.cwcycle_check_caidtab);
+	if (cfg.cwcycle_check_enable)
+		return chk_ctab_ex(caid,&cfg.cwcycle_check_caidtab);
+	return 0;
 }
 /*
  *

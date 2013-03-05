@@ -1795,6 +1795,7 @@ struct s_config
 	int32_t			maxcyclelist;			// max size of cwcyclelist
 	int8_t			onbadcycle;			// what to do on bad cwcycle
 	int8_t			cwcycle_dropold;		// what to do on old ecmd5/cw
+	int8_t			cwcycle_sensitive;
 #endif
 
 	//Global whitelist:
