@@ -1170,7 +1170,6 @@ struct s_reader  									//contains device info, reader info and card info
 	uint32_t		boxid;
 	int8_t			nagra_read;						// read nagra ncmed records: 0 Disabled (default), 1 read all records, 2 read valid records only
 	uint8_t			boxkey[8];						// n3 boxkey 8byte
-	char			country_code[3];				// irdeto country code.
 	int8_t			force_irdeto;
 	uchar			rsa_mod[120];					// rsa modulus for nagra cards.
 	uchar			atr[64];
@@ -1183,7 +1182,6 @@ struct s_reader  									//contains device info, reader info and card info
 	uchar			prid[CS_MAXPROV][8];
 	uchar			availkeys[CS_MAXPROV][16];		// viaccess; misused in seca, if availkeys[PROV][0]=0 then expired, 1 then valid.
 	uchar			sa[CS_MAXPROV][4];				// viaccess & seca
-	uint16_t		acs;							// irdeto
 	uint16_t		caid;
 	uint16_t		b_nano;
 	uint16_t		s_nano;
@@ -1282,8 +1280,6 @@ struct s_reader  									//contains device info, reader info and card info
 	unsigned char	ns;								// Send sequence number
 	unsigned char	rom[15];
 	unsigned char	irdId[4];
-	////variables from reader-irdeto.c
-	int32_t			acs57;							// A flag for the ACS57 ITA DVB-T
 #ifdef WITH_LB
 	int32_t			lb_weight;						//loadbalance weight factor, if unset, weight=100. The higher the value, the higher the usage-possibility
 	int32_t			lb_usagelevel;					//usagelevel for loadbalancer
