@@ -157,6 +157,10 @@
 
 #define cmd_buf_len  512
 
+struct griffin_data {
+	uint8_t			cmd_base; // Command base, depends on the card
+};
+
 // Sets cmd_buf and returns buf_len
 static uint32_t griffin_init_cmd(struct s_reader *rdr, uint8_t *cmd_buf, uint8_t cmd_op, const uint8_t *data, uint8_t data_len)
 {
@@ -179,10 +183,11 @@ static uint32_t griffin_init_cmd(struct s_reader *rdr, uint8_t *cmd_buf, uint8_t
 
 static int32_t griffin_exec_cmd(struct s_reader *rdr, uint8_t cmd_op, const uint8_t *data, uint8_t data_len, uint8_t *response, uint16_t *response_length)
 {
+	struct griffin_data *csystem_data = rdr->csystem_data;
 	uint8_t buf[cmd_buf_len];
 
 	int32_t ret = reader_cmd2icc(rdr, buf,
-		griffin_init_cmd(rdr, buf, rdr->griffin_cmd_base + cmd_op, data, data_len),
+		griffin_init_cmd(rdr, buf, csystem_data->cmd_base + cmd_op, data, data_len),
 		response, response_length);
 	if (DEBUG) {
 		char tmp[1024];
@@ -194,8 +199,8 @@ static int32_t griffin_exec_cmd(struct s_reader *rdr, uint8_t cmd_op, const uint
 
 	// Retrieve response
 	uint8_t cmd_read_response = 0x02;
-	if (rdr->griffin_cmd_base > 0x10)
-		cmd_read_response += rdr->griffin_cmd_base - 0x10;
+	if (csystem_data->cmd_base > 0x10)
+		cmd_read_response += csystem_data->cmd_base - 0x10;
 
 	ret = reader_cmd2icc(rdr, buf,
 		griffin_init_cmd(rdr, buf, cmd_read_response, NULL, response[1]),
@@ -231,6 +236,10 @@ static int32_t griffin_card_init(struct s_reader *rdr, ATR *newatr)
 	if (atr[0] != 0x3b || atr[1] != 0x08 || atr[3] != 0x01 || atr[9] != 0x00)
 		return ERROR;
 
+	if (!cs_malloc(&rdr->csystem_data, sizeof(struct griffin_data)))
+		return ERROR;
+	struct griffin_data *csystem_data = rdr->csystem_data;
+
 	rdr->nprov = 1;
 	memset(rdr->sa, 0, sizeof(rdr->sa));
 	memset(rdr->prid, 0, sizeof(rdr->prid));
@@ -238,16 +247,16 @@ static int32_t griffin_card_init(struct s_reader *rdr, ATR *newatr)
 
 	rdr->caid = (0x55 << 8) | atr[2];
 	memcpy(rdr->hexserial, atr + 4, 4);
-	rdr->griffin_cmd_base = atr[8];
+	csystem_data->cmd_base = atr[8];
 
 	rdr_log_sensitive(rdr, "[griffin-reader] card detected, cmd_base: %02X caid: %04X hexserial: {%02X %02X %02X %02X}",
-		rdr->griffin_cmd_base,
+		csystem_data->cmd_base,
 		rdr->caid,
 		rdr->hexserial[0], rdr->hexserial[1], rdr->hexserial[2], rdr->hexserial[3]
 	);
 
 	griffin_cmd(GRIFFIN_CMD_INIT, NULL, 0, 2);
-	rdr->griffin_cmd_base = cta_res[2]; // already set from ATR
+	csystem_data->cmd_base = cta_res[2]; // already set from ATR
 
 	griffin_cmd(GRIFFIN_CMD_GET_HEX_SERIAL, NULL, 0, 6);
 	memcpy(rdr->hexserial, cta_res + 2, 4);
