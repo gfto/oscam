@@ -419,7 +419,8 @@ void cache_fixups_fn(void *UNUSED(var)) {
 #ifdef CW_CYCLE_CHECK
 	if (cfg.maxcyclelist > 4000) cfg.maxcyclelist = 4000;
 	if (cfg.keepcycletime > 15) cfg.keepcycletime = 15;
-	if (cfg.cwcycle_sensitive > 3) cfg.cwcycle_sensitive = 3;
+	if (cfg.cwcycle_sensitive > 4) cfg.cwcycle_sensitive = 4;
+	if (cfg.cwcycle_sensitive == 1) cfg.cwcycle_sensitive = 2;
 #endif
 }
 
@@ -429,7 +430,7 @@ static bool cache_should_save_fn(void *UNUSED(var)) {
 	|| cfg.cacheex_wait_timetab.n || cfg.cacheex_enable_stats > 0 || cfg.csp_port || cfg.csp.filter_caidtab.n || cfg.csp.allow_request==0
 #endif
 #ifdef CW_CYCLE_CHECK
-	|| !cfg.cwcycle_check_enable || cfg.cwcycle_check_caidtab.caid[0] || cfg.maxcyclelist != 500 || cfg.keepcycletime || cfg.onbadcycle || cfg.cwcycle_dropold
+	|| !cfg.cwcycle_check_enable || cfg.cwcycle_check_caidtab.caid[0] || cfg.maxcyclelist != 500 || cfg.keepcycletime || cfg.onbadcycle || cfg.cwcycle_dropold || cfg.cwcycle_sensitive
 #endif
 	;
 }

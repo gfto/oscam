@@ -79,7 +79,7 @@ static uint8_t checkvalidCW (ECM_REQUEST *er, struct s_cw_cycle_check *cwc) {
 			return 0;
 		}
 	}
-	if (cfg.cwcycle_sensitive && countCWpart(er,cwc) > cfg.cwcycle_sensitive) {//1,2,3, 0 = off
+	if (cfg.cwcycle_sensitive && countCWpart(er,cwc) >= cfg.cwcycle_sensitive) {//2,3,4, 0 = off
 		return 0;
 	}
 
