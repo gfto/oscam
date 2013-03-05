@@ -371,9 +371,9 @@ void clear_ftab(struct s_ftab *ftab) {
 
 /* Clears the s_ptab struct provided by setting nfilts and nprids to zero. */
 void clear_ptab(struct s_ptab *ptab) {
-	int32_t i = ptab->nports;
+	int32_t i;
 	ptab->nports = 0;
-	for (; i >= 0; --i) {
+	for (i = 0; i < CS_MAXPORTS; i++) {
 		if (ptab->ports[i].ncd) {
 			ptab->ports[i].ncd->ncd_ftab.nfilts = 0;
 			ptab->ports[i].ncd->ncd_ftab.filts[0].nprids = 0;
