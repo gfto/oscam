@@ -125,6 +125,7 @@ static int32_t reader_get_cardsystem(struct s_reader * reader, ATR *atr)
 	int32_t i;
 	for (i=0; i<CS_MAX_MOD; i++) {
 		if (cardsystems[i].card_init) {
+			NULLFREE(reader->csystem_data);
 			if (cardsystems[i].card_init(reader, atr)) {
 				rdr_log(reader, "found card system %s", cardsystems[i].desc);
 				reader->csystem=cardsystems[i];
