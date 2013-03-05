@@ -371,7 +371,7 @@ distclean: clean
 		echo "RM	$$FILE"; \
 		rm -rf $$FILE; \
 	done
-	@-make --no-print-directory --quiet -C webif clean
+	@-$(MAKE) --no-print-directory --quiet -C webif clean
 
 README.build:
 	@echo "Extracting 'make help' into $@ file."
@@ -379,7 +379,7 @@ README.build:
 ** This file is generated from 'make help' output, do not edit it. **\n\
 \n\
 " > $@
-	@-make --no-print-directory help >> $@
+	@-$(MAKE) --no-print-directory help >> $@
 	@echo "Done."
 
 README.config:
