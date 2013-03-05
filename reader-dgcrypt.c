@@ -12,6 +12,10 @@ static const uint8_t cmd_LABEL[5]   = { 0x81, 0xD2, 0x00, 0x01, 0x10 };
 static const uint8_t cmd_SUBSYS[5]  = { 0x81, 0xDD, 0x00, 0x10, 0x04 };
 static const uint8_t cmd_ECM[3]     = { 0x80, 0xEA, 0x80 };
 
+struct dgcrypt_data {
+	uint8_t			session_key[16];
+};
+
 static int32_t dgcrypt_cmd(struct s_reader *rdr, const uint8_t *buf, const int32_t buflen, uint8_t *response, uint16_t *response_length, uint16_t min_response_len)
 {
 	rdr->ifsc = 195;
@@ -54,6 +58,10 @@ static int32_t dgcrypt_card_init(struct s_reader *rdr, ATR *newatr)
 	if (memcmp(atr, dgcrypt_atr, sizeof(dgcrypt_atr)) != 0)
 		return ERROR;
 
+	if (!cs_malloc(&rdr->csystem_data, sizeof(struct dgcrypt_data)))
+		return ERROR;
+	struct dgcrypt_data *csystem_data = rdr->csystem_data;
+
 	rdr_log(rdr, "[dgcrypt-reader] card detected.");
 
 	memset(rdr->sa, 0, sizeof(rdr->sa));
@@ -68,8 +76,8 @@ static int32_t dgcrypt_card_init(struct s_reader *rdr, ATR *newatr)
 	//   Recv: 32 86 17 D5 2C 66 61 14 90 00
 	if (!dgcrypt_cmd(rdr, cmd_CWKEY, sizeof(cmd_CWKEY), cta_res, &cta_lr, 8))
 		return ERROR;
-	memcpy(rdr->sessi + 0, cta_res, 8);
-	memcpy(rdr->sessi + 8, cta_res, 8);
+	memcpy(csystem_data->session_key + 0, cta_res, 8);
+	memcpy(csystem_data->session_key + 8, cta_res, 8);
 
 	// Get CAID
 	//   Send: 81 C0 00 01 0A
@@ -115,6 +123,7 @@ static int32_t dgcrypt_do_ecm(struct s_reader * rdr, const ECM_REQUEST *er, stru
 {
 	def_resp
 	uint8_t cmd_buffer[256];
+	struct dgcrypt_data *csystem_data = rdr->csystem_data;
 
 	memcpy(cmd_buffer, er->ecm, er->ecm[2] + 3);
 	// Replace The first 3 bytes of the ECM with the command
@@ -130,7 +139,7 @@ static int32_t dgcrypt_do_ecm(struct s_reader * rdr, const ECM_REQUEST *er, stru
 
 	int i;
 	for (i = 0; i < 16; i++) {
-		ea->cw[i] = cta_res[1 + i] ^ rdr->sessi[i];
+		ea->cw[i] = cta_res[1 + i] ^ csystem_data->session_key[i];
 	}
 	return OK;
 }
