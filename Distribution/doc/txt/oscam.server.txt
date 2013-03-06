@@ -316,10 +316,10 @@ DESCRIPTIONS
 	  interval for rate limit, default:0
 
        ecmunique = 0|1
-	  1 = enbale check for matching ECM hash in ratelimitslot , default:0
+	  1 = enbale check for matching ECM hash in ratelimit slot , default:0
 
-
-
+       srvidholdseconds  = seconds
+	  time to keep service ID in ratelimit slot, during this time checkeding for ecmunique is disbaled, default:0
 
        cooldown = delay,duration
 	   define cooldown:

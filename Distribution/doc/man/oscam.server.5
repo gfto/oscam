@@ -421,11 +421,13 @@ interval for rate limit, default:0
 .PP
 \fBecmunique\fP = \fB0\fP|\fB1\fP
 .RS 3n
-1 = enbale check for matching ECM hash in ratelimitslot , default:0
+1 = enbale check for matching ECM hash in ratelimit slot , default:0
 .RE
-
-
-
+.PP
+\fBsrvidholdseconds \fP = \fBseconds\fP
+.RS 3n
+time to keep service ID in ratelimit slot, during this time checkeding for ecmunique is disbaled, default:0
+.RE
 .PP
 \fBcooldown\fP = \fBdelay\fP,\fBduration\fP
 .RS 3n

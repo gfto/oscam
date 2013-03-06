@@ -546,12 +546,16 @@ interval for rate limit, default:0
 
 <B>ecmunique</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
-1 = enbale check for matching ECM hash in ratelimitslot , default:0
+1 = enbale check for matching ECM hash in ratelimit slot , default:0
 </DL>
 
 <P>
-<P>
-<P>
+
+<B>srvidholdseconds </B> = <B>seconds</B>
+<DL COMPACT><DT><DD>
+time to keep service ID in ratelimit slot, during this time checkeding for ecmunique is disbaled, default:0
+</DL>
+
 <P>
 
 <B>cooldown</B> = <B>delay</B>,<B>duration</B>
