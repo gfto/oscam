@@ -35,7 +35,6 @@ static void reader_nullcard(struct s_reader * reader)
   memset(reader->prid     , 0xFF, sizeof(reader->prid     ));
   reader->caid=0;
   memset(reader->availkeys, 0   , sizeof(reader->availkeys));
-  reader->acs=0;
   reader->nprov=0;
   cs_clear_entitlement(reader);
 }
