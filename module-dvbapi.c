@@ -2441,6 +2441,7 @@ static void * dvbapi_main_local(void *cli) {
 	return azbox_main_thread(cli);
 #endif
 #ifdef WITH_MCA
+	selected_box = selected_api = 0; // Prevent compiler warning about out of bounds array access
 	return mca_main_thread(cli);
 #endif
 
