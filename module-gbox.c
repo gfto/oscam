@@ -989,8 +989,8 @@ static void gbox_expire_hello(struct s_client *cli)
 
   set_thread_name(__func__);
 
-  pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
-  pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+  pthread_mutex_t mut;
+  pthread_cond_t cond;
 
   struct timespec ts;
   struct timeval tv;
@@ -999,6 +999,8 @@ static void gbox_expire_hello(struct s_client *cli)
   ts.tv_nsec = tv.tv_usec * 1000;
   ts.tv_sec += 5;
 
+  pthread_mutex_init(&mut, NULL);
+  pthread_cond_init(&cond, NULL);
   pthread_mutex_lock (&mut);
   if (pthread_cond_timedwait(&cond, &mut, &ts) == ETIMEDOUT) {
     //printf("gbox: hello expired!\n");
