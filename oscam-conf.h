@@ -38,6 +38,7 @@ struct config_list {
 		bool			(*should_save_fn)(void *var);
 		void			(*fixup_fn)(void *var);
 	} ops;
+	void			(*free_value)(void *setting);
 };
 
 #define DEF_OPT_INT8(__name, __var_ofs, __default) \
@@ -97,21 +98,23 @@ struct config_list {
 		.def.array_size	= __array_size \
 	}
 
-#define DEF_OPT_FUNC(__name, __var_ofs, __process_fn) \
+#define DEF_OPT_FUNC(__name, __var_ofs, __process_fn, ...) \
 	{ \
 		.opt_type		= OPT_FUNC, \
 		.config_name	= __name, \
 		.var_offset		= __var_ofs, \
-		.ops.process_fn	= __process_fn \
+		.ops.process_fn	= __process_fn, \
+		##__VA_ARGS__ \
 	}
 
-#define DEF_OPT_FUNC_X(__name, __var_ofs, __process_fn_extra, __extra) \
+#define DEF_OPT_FUNC_X(__name, __var_ofs, __process_fn_extra, __extra, ...) \
 	{ \
 		.opt_type		= OPT_FUNC_EXTRA, \
 		.config_name	= __name, \
 		.var_offset		= __var_ofs, \
 		.ops.process_fn_extra	= __process_fn_extra, \
-		.def.d_extra	= __extra \
+		.def.d_extra	= __extra, \
+		##__VA_ARGS__ \
 	}
 
 #define DEF_OPT_SAVE_FUNC(__fn) \

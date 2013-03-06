@@ -294,6 +294,9 @@ void config_list_free_values(const struct config_list *clist, void *config_data)
 			char **scfg = var;
 			NULLFREE(*scfg);
 		}
+		if (c->free_value && (c->opt_type == OPT_FUNC || c->opt_type == OPT_FUNC_EXTRA)) {
+			c->free_value(var);
+		}
 	}
 	return;
 }
