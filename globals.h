@@ -1287,8 +1287,6 @@ struct s_reader  									//contains device info, reader info and card info
 	////variables from protocol_t1.h
 	uint16_t		ifsc;							// Information field size for the ICC
 	unsigned char	ns;								// Send sequence number
-	////variables from reader-dre.c
-	unsigned char	provider;
 	////variables from reader-nagra.c
 	IDEA_KEY_SCHEDULE ksSession;
 	int8_t			is_pure_nagra;
