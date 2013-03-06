@@ -18,8 +18,8 @@ extern CS_MUTEX_LOCK *lock_cs;
 extern char noncekey[33];
 
 static int8_t b64decoder[256];
-struct s_nonce *nonce_first[AUTHNONCEHASHBUCKETS];
-CS_MUTEX_LOCK nonce_lock[AUTHNONCEHASHBUCKETS];
+static struct s_nonce *nonce_first[AUTHNONCEHASHBUCKETS];
+static CS_MUTEX_LOCK nonce_lock[AUTHNONCEHASHBUCKETS];
 
 /* Parses a value in an authentication string by removing all quotes/whitespace. Note that the original array is modified. */
 static char *parse_auth_value(char *value){

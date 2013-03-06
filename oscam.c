@@ -39,8 +39,8 @@ extern char *config_mak;
         Globals
 *****************************************************************************/
 const char *syslog_ident = "oscam";
-char *oscam_pidfile = NULL;
-char default_pidfile[64];
+static char *oscam_pidfile;
+static char default_pidfile[64];
 
 int32_t exit_oscam=0;
 static struct s_module modules[CS_MAX_MOD];
@@ -55,11 +55,11 @@ uint16_t  len4caid[256];    // table for guessing caid (by len)
 char  cs_confdir[128]=CS_CONFDIR;
 uint16_t cs_dblevel=0;   // Debug Level
 int32_t thread_pipe[2] = {0, 0};
-int8_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)restart fork, restart by webif, 2=like=1, but also restart on segfaults
+static int8_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)restart fork, restart by webif, 2=like=1, but also restart on segfaults
 uint8_t cs_http_use_utf8 = 0;
-int8_t cs_capture_SEGV=0;
-int8_t cs_dump_stack=0;
-uint16_t cs_waittime = 60;
+static int8_t cs_capture_SEGV;
+static int8_t cs_dump_stack;
+static uint16_t cs_waittime = 60;
 char  cs_tmpdir[200]={0x00};
 CS_MUTEX_LOCK system_lock;
 CS_MUTEX_LOCK config_lock;
@@ -86,7 +86,7 @@ struct  s_config  cfg;
 
 int log_remove_sensitive = 1;
 
-char    *prog_name = NULL;
+static char *prog_name;
 char    *processUsername = NULL;
 
 /*****************************************************************************
@@ -1108,7 +1108,7 @@ static void * reader_check(void) {
 }
 
 #ifdef WEBIF
-pid_t pid;
+static pid_t pid;
 
 
 static void fwd_sig(int32_t sig)

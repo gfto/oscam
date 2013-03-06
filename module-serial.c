@@ -79,9 +79,9 @@ struct s_serial_client
 	int32_t sssp_fix;
 };
 
-pthread_mutex_t mutex;
-pthread_cond_t cond;
-int32_t bcopy_end = -1;
+static pthread_mutex_t mutex;
+static pthread_cond_t cond;
+static int32_t bcopy_end = -1;
 
 struct s_thread_param
 {

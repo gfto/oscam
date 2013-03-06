@@ -6,7 +6,7 @@
 #include "oscam-net.h"
 #include "oscam-string.h"
 
-int32_t pserver = 0;
+static int32_t pserver;
 
 int32_t constcw_file_available(void)
 {

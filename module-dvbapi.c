@@ -23,9 +23,14 @@
 extern int32_t openxcas_provid;
 extern uint16_t openxcas_sid, openxcas_caid, openxcas_ecm_pid;
 
+int32_t disable_pmt_files=0;
+DEMUXTYPE demux[MAX_DEMUX];
+struct s_dvbapi_priority *dvbapi_priority;
+struct s_client *dvbapi_client;
+
 const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt", "dm7000", "qboxhd", "coolstream", "neumo", "pc" };
 
-const struct box_devices devices[BOX_COUNT] = {
+static const struct box_devices devices[BOX_COUNT] = {
 	/* QboxHD (dvb-api-3)*/	{ "/tmp/virtual_adapter/", 	"ca%d",		"demux%d",			"/tmp/camd.socket", DVBAPI_3  },
 	/* dreambox (dvb-api-3)*/	{ "/dev/dvb/adapter%d/",	"ca%d", 		"demux%d",			"/tmp/camd.socket", DVBAPI_3 },
 	/* dreambox (dvb-api-1)*/	{ "/dev/dvb/card%d/",	"ca%d",		"demux%d",			"/tmp/camd.socket", DVBAPI_1 },
@@ -34,18 +39,14 @@ const struct box_devices devices[BOX_COUNT] = {
 	/* coolstream*/		{ "/dev/cnxt/", 		"null",		"null",			"/tmp/camd.socket", COOLAPI }
 };
 
-int32_t selected_box=-1;
-int32_t selected_api=-1;
-int32_t disable_pmt_files=0;
-int32_t dir_fd=-1, pausecam=0;
-DEMUXTYPE demux[MAX_DEMUX];
-int32_t ca_fd[8];
-LLIST *channel_cache;
+static int32_t selected_box=-1;
+static int32_t selected_api=-1;
+static int32_t dir_fd=-1;
+static int32_t pausecam;
+static int32_t ca_fd[8];
+static LLIST *channel_cache;
 
-struct s_dvbapi_priority *dvbapi_priority=NULL;
-struct s_client *dvbapi_client=NULL;
-
-struct s_emm_filter {	
+struct s_emm_filter {
 	int32_t 	demux_id;
 	uchar 		filter[32];
 	uint16_t 	caid;
@@ -54,10 +55,11 @@ struct s_emm_filter {
 	int32_t 	count;
 	uint32_t 	num;
 	time_t 		time_started;
-} S_EMM_FILTER;
-LLIST	*ll_emm_active_filter 	= NULL;
-LLIST	*ll_emm_inactive_filter = NULL;
-LLIST	*ll_emm_pending_filter 	= NULL;
+};
+
+static LLIST *ll_emm_active_filter;
+static LLIST *ll_emm_inactive_filter;
+static LLIST *ll_emm_pending_filter;
 
 struct s_channel_cache {
 	uint16_t	caid;
@@ -65,7 +67,7 @@ struct s_channel_cache {
 	uint16_t	srvid;
 	uint16_t	pid;
 	int8_t		chid;
-} CHANNEL_CACHE;
+};
 
 struct s_channel_cache *find_channel_cache(int32_t demux_id, int32_t pidindex, int8_t caid_and_prid_only)
 {
@@ -2054,7 +2056,7 @@ int32_t dvbapi_init_listenfd(void) {
        return listenfd;
 }
 
-pthread_mutex_t event_handler_lock;
+static pthread_mutex_t event_handler_lock;
 
 void event_handler(int32_t UNUSED(signal)) {
 	struct stat pmt_info;

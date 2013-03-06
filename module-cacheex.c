@@ -21,13 +21,13 @@ extern uint8_t cc_node_id[8];
 extern uint8_t camd35_node_id[8];
 extern CS_MUTEX_LOCK ecmcache_lock;
 extern struct ecm_request_t *ecmcwcache;
+extern CS_MUTEX_LOCK hitcache_lock;
 
 uint8_t cacheex_peer_id[8];
-static LLIST *invalid_cws;
 
-extern CS_MUTEX_LOCK hitcache_lock;
-struct csp_ce_hit_t *cspec_hitcache = NULL;
-uint32_t cspec_hitcache_size = 0;
+static LLIST *invalid_cws;
+static struct csp_ce_hit_t *cspec_hitcache;
+static uint32_t cspec_hitcache_size;
 
 void cacheex_init(void) {
 	// Init random node id

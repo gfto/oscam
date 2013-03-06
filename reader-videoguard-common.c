@@ -25,7 +25,7 @@ typedef struct mailmsg_s
    char *subject;
 } MAILMSG;
 
-LLIST *vg_msgs = 0;
+static LLIST *vg_msgs;
 
 void set_known_card_info(struct s_reader * reader, const unsigned char * atr, const uint32_t *atr_size)
 {

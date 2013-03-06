@@ -41,9 +41,9 @@ extern char *loghistptr;
 int32_t ssl_active = 0;
 char noncekey[33];
 pthread_key_t getkeepalive;
-pthread_key_t getip;
+static pthread_key_t getip;
 pthread_key_t getssl;
-CS_MUTEX_LOCK http_lock;
+static CS_MUTEX_LOCK http_lock;
 CS_MUTEX_LOCK *lock_cs;
 
 static int8_t running = 1;

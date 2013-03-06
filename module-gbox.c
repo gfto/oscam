@@ -119,7 +119,7 @@ struct gbox_ecm_info {
 struct cwcache_data {
   uint32_t ecmcrc;
   uchar cws[16];
-} cwcache[64];
+};
 
 void gbox_decrypt(uchar *buffer, int bufsize, uchar *localkey);
 static void    gbox_send_boxinfo(struct s_client *cli);
@@ -132,12 +132,12 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
 static int32_t gbox_decode_cmd(uchar *buf);
 uint32_t gbox_get_ecmchecksum(ECM_REQUEST *er);
 
-const uint8_t gbox_version_high_byte = 0x02;
-const uint8_t gbox_version_low_byte  = 0x1b;
-const uint8_t gbox_type_dvb          = 0x53;
+static const uint8_t gbox_version_high_byte = 0x02;
+static const uint8_t gbox_version_low_byte  = 0x1b;
+static const uint8_t gbox_type_dvb          = 0x53;
 
-time_t login_gbox;
-int8_t main_1 = 0;
+static time_t login_gbox;
+static int8_t main_1;
 
 void gbox_write_version(void)
 {
@@ -744,7 +744,7 @@ static int32_t gbox_recv2(IN_ADDR_T recv_ip, in_port_t recv_port, uchar *b, int3
 // GBOX BUFFER ENCRYPTION/DECRYPTION (thanks to dvbcrypt@gmail.com)
 ////////////////////////////////////////////////////////////////////////////////
 
-unsigned char Lookup_Table[0x40] = {
+static unsigned char Lookup_Table[0x40] = {
   0x25,0x38,0xD4,0xCD,0x17,0x7A,0x5E,0x6C,0x52,0x42,0xFE,0x68,0xAB,0x3F,0xF7,0xBE,
   0x47,0x57,0x71,0xB0,0x23,0xC1,0x26,0x6C,0x41,0xCE,0x94,0x37,0x45,0x04,0xA2,0xEA,
   0x07,0x58,0x35,0x55,0x08,0x2A,0x0F,0xE7,0xAC,0x76,0xF0,0xC1,0xE6,0x09,0x10,0xDD,

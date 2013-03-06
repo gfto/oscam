@@ -72,7 +72,7 @@
 #include "bn_lcl.h"
 #include "openssl_mods.h"
 
-const char *BN_version="Big Number 42";
+//const char *BN_version="Big Number 42";
 
 /* For a 32 bit machine
  * 2 -   4 ==  128

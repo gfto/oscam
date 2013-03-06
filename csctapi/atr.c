@@ -43,7 +43,7 @@ const double atr_d_table[16] = {0, 1, 2, 4, 8, 16, 32, 64, 12, 20, 0, 0, 0, 0, 0
 //old table has 0 for RFU:
 //double atr_d_table[16] = {0, 1, 2, 4, 8, 16, 0, 0, 0, 0, 0.5, 0.25, 125, 0.0625, 0.03125, 0.015625};
 
-const uint32_t atr_i_table[4] = {25, 50, 100, 0};
+static const uint32_t atr_i_table[4] = {25, 50, 100, 0};
 
 /* 
  * Exported funcions definition
