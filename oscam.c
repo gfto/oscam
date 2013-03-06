@@ -1486,6 +1486,9 @@ int32_t main (int32_t argc, char *argv[])
 
 	stop_garbage_collector();
 
+	free(first_client->account);
+	free(first_client);
+
 	// This prevents the compiler from removing config_mak from the final binary
 	syslog_ident = config_mak;
 
