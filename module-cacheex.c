@@ -259,7 +259,7 @@ inline int8_t cacheex_match_alias(struct s_client *cl, ECM_REQUEST *er, ECM_REQU
 	return 0;
 }
 
-static pthread_mutex_t invalid_cws_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t invalid_cws_mutex;
 
 static void add_invalid_cw(uint8_t *cw) {
 	pthread_mutex_lock(&invalid_cws_mutex);

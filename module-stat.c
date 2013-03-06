@@ -27,7 +27,7 @@
 #define DEFAULT_LOCK_TIMEOUT 1000
 
 static int32_t stat_load_save;
-static time_t last_housekeeping = 0;
+static time_t last_housekeeping;
 
 void init_stat(void)
 {

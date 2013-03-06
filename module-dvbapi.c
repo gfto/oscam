@@ -808,7 +808,7 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len) {
 	return;
 }
 
-static pthread_mutex_t lockindex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t lockindex;
 int32_t dvbapi_get_descindex(void) {
 	pthread_mutex_lock(&lockindex); // to avoid race when readers become responsive!
 	int32_t i,j,idx=1,fail=1;

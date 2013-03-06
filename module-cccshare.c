@@ -18,10 +18,10 @@ static uint32_t cc_share_id = 0x64;
 static LLIST *reported_carddatas_list[CAID_KEY];
 static CS_MUTEX_LOCK cc_shares_lock;
 
-static int32_t card_added_count = 0;
-static int32_t card_removed_count = 0;
-static int32_t card_dup_count = 0;
-static pthread_t share_updater_thread = 0;
+static int32_t card_added_count;
+static int32_t card_removed_count;
+static int32_t card_dup_count;
+static pthread_t share_updater_thread;
 static bool share_updater_thread_active;
 
 int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card);

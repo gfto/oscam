@@ -11,7 +11,7 @@
 #include "module-dvbapi-coolapi.h"
 #include "oscam-string.h"
 
-static int8_t dmx_opened = 0;
+static int8_t dmx_opened;
 int8_t cool_kal_opened = 0;
 
 static void * dmx_device[MAX_COOL_DMX];

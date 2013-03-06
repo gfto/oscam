@@ -14,9 +14,9 @@ extern int32_t exit_oscam;
 
 char *LOG_LIST = "log_list";
 
-static FILE *fp=(FILE *)0;
-static FILE *fps=(FILE *)0;
-static int8_t logStarted = 0;
+static FILE *fp;
+static FILE *fps;
+static int8_t logStarted;
 static LLIST *log_list;
 
 struct s_log {
@@ -174,7 +174,7 @@ void cs_reinit_loghist(uint32_t size)
 }
 #endif
 
-static time_t log_ts = 0;
+static time_t log_ts;
 
 static int32_t get_log_header(int32_t m, char *txt)
 {
@@ -319,17 +319,18 @@ static void write_to_log_int(char *txt, int8_t header_len)
 		ll_append(log_list, log);
 }
 
-static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
-static char last_log_txt[LOG_BUF_SIZE] = { 0 };
-static time_t last_log_ts = 0;
-static unsigned int last_log_duplicates = 0;
+static pthread_mutex_t log_mutex;
+static char log_txt[LOG_BUF_SIZE];
+static char dupl[LOG_BUF_SIZE/4];
+static char last_log_txt[LOG_BUF_SIZE];
+static time_t last_log_ts;
+static unsigned int last_log_duplicates;
 
 void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar *buf, int32_t n, const char *fmt, ...)
 {
 	if ((mask & cs_dblevel) || !mask ) {
 		va_list params;
 
-		static char log_txt[LOG_BUF_SIZE], dupl[LOG_BUF_SIZE/4];
 		int32_t dupl_header_len, repeated_line, i, len = 0;
 		pthread_mutex_lock(&log_mutex);
 		if (fmt)

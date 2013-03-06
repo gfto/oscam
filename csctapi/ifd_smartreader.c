@@ -72,7 +72,7 @@ struct s_sr_config {
     unsigned char modem_status;
 };
 
-static int32_t init_count = 0;
+static int32_t init_count;
 
 static int32_t smart_read(struct s_reader *reader, unsigned char* buff, uint32_t  size, int32_t timeout_sec)
 {
@@ -1447,7 +1447,7 @@ int32_t sr_write_settings(struct s_reader *reader,
     return OK;
 }
 
-static pthread_mutex_t init_lock_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t init_lock_mutex;
 
 static int32_t sr_init_locks(struct s_reader *UNUSED(reader))
 {

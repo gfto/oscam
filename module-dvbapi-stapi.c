@@ -15,7 +15,7 @@ extern int32_t disable_pmt_files;
 extern struct s_dvbapi_priority *dvbapi_priority;
 extern DEMUXTYPE demux[MAX_DEMUX];
 
-static int32_t stapi_on = 0;
+static int32_t stapi_on;
 static pthread_mutex_t filter_lock;
 static struct STDEVICE dev_list[PTINUM];
 
