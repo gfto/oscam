@@ -7,6 +7,7 @@
 
 static void dimeno_PostProcess_Decrypt(struct s_reader * reader, unsigned char *rxbuff, unsigned char *cw)
 {
+  struct videoguard_data *csystem_data = reader->csystem_data;
   unsigned char tag,len,len2;
   bool valid_0x55=0;
   unsigned char *body;
@@ -33,7 +34,7 @@ static void dimeno_PostProcess_Decrypt(struct s_reader * reader, unsigned char *
   }
   if(valid_0x55){
     memcpy(buffer,rxbuff+5,8);
-    AES_decrypt(buffer,buffer,&(reader->astrokey));
+    AES_decrypt(buffer,buffer,&(csystem_data->astrokey));
     memcpy(cw+0,buffer,8);      // copy calculated CW in right place
   }
 }
@@ -246,10 +247,11 @@ static void vg2_read_tiers(struct s_reader * reader)
 
   int32_t i;
   unsigned char ins76[5] = { 0xD0,0x76,0x00,0x00,0x00 };
+  struct videoguard_data *csystem_data = reader->csystem_data;
 
   // some cards start real tiers info in middle of tier info
   // and have blank tiers between old tiers and real tiers eg 09AC
-  int32_t starttier = reader->card_tierstart;
+  int32_t starttier = csystem_data->card_tierstart;
   bool stopemptytier = 1;
   if (!starttier)
     stopemptytier = 0;
@@ -276,7 +278,7 @@ static void vg2_read_tiers(struct s_reader * reader)
       // add entitlements to list
       struct tm timeinfo;
       memset(&timeinfo, 0, sizeof(struct tm));
-      rev_date_calc_tm(&cta_res[4],&timeinfo,reader->card_baseyear);
+      rev_date_calc_tm(&cta_res[4],&timeinfo,csystem_data->card_baseyear);
       cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), tier_id, 0, 0, mktime(&timeinfo), 4);
 
       if(!stopemptytier){
@@ -299,18 +301,22 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR *newatr)
   get_atr;
   def_resp;
 
+  if (!cs_malloc(&reader->csystem_data, sizeof(struct videoguard_data)))
+    return ERROR;
+  struct videoguard_data *csystem_data = reader->csystem_data;
+
  /* set information on the card stored in reader-videoguard-common.c */
   set_known_card_info(reader,atr,&atr_size);
 
   if((reader->ndsversion != NDS2) &&
-     (((reader->card_system_version != NDS2) && (reader->card_system_version != NDSUNKNOWN)) ||
+     (((csystem_data->card_system_version != NDS2) && (csystem_data->card_system_version != NDSUNKNOWN)) ||
       (reader->ndsversion != NDSAUTO))) {
     /* known ATR and not NDS2
        or known NDS2 ATR and forced to another NDS version */
     return ERROR;
   }
 
-  rdr_debug_mask(reader, D_READER, "type: %s, baseyear: %i", reader->card_desc, reader->card_baseyear);
+  rdr_debug_mask(reader, D_READER, "type: %s, baseyear: %i", csystem_data->card_desc, csystem_data->card_baseyear);
   if(reader->ndsversion == NDS2){
     rdr_debug_mask(reader, D_READER, "forced to NDS2");
   }
@@ -639,15 +645,15 @@ static int32_t videoguard2_card_init(struct s_reader * reader, ATR *newatr)
   int32_t a;
   for(a=0; a<4; a++)
     dimeno_magic[a]=dimeno_magic[a]^boxID[a];
-  AES_set_decrypt_key(dimeno_magic,128,&(reader->astrokey));
+  AES_set_decrypt_key(dimeno_magic,128,&(csystem_data->astrokey));
 
   rdr_log(reader, "type: %s, caid: %04X",
-         reader->card_desc,
+         csystem_data->card_desc,
          reader->caid);
   rdr_log_sensitive(reader, "serial: {%02X%02X%02X%02X}, BoxID: {%02X%02X%02X%02X}, baseyear: %i",
          reader->hexserial[2],reader->hexserial[3],reader->hexserial[4],reader->hexserial[5],
          boxID[0],boxID[1],boxID[2],boxID[3],
-         reader->card_baseyear);
+         csystem_data->card_baseyear);
   rdr_log(reader, "ready for requests");
 
   return OK;
@@ -804,8 +810,9 @@ static int32_t videoguard2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 static int32_t videoguard2_card_info(struct s_reader * reader)
 {
   /* info is displayed in init, or when processing info */
+  struct videoguard_data *csystem_data = reader->csystem_data;
   rdr_log(reader, "card detected");
-  rdr_log(reader, "type: %s", reader->card_desc);
+  rdr_log(reader, "type: %s", csystem_data->card_desc);
   if (reader->ins7e11_fast_reset != 1) {
 	  vg2_read_tiers(reader);
   }

@@ -29,11 +29,12 @@ LLIST *vg_msgs = 0;
 
 void set_known_card_info(struct s_reader * reader, const unsigned char * atr, const uint32_t *atr_size)
 {
+  struct videoguard_data *csystem_data = reader->csystem_data;
   /* Set to sensible default values */
-  reader->card_baseyear = 1997;
-  reader->card_tierstart = 0;
-  reader->card_system_version = NDSUNKNOWN;
-  reader->card_desc = "VideoGuard Unknown Card";
+  csystem_data->card_baseyear = 1997;
+  csystem_data->card_tierstart = 0;
+  csystem_data->card_system_version = NDSUNKNOWN;
+  csystem_data->card_desc = "VideoGuard Unknown Card";
 
   NDS_ATR_ENTRY nds_atr_table[]={ // {atr}, atr len, base year, tier start, nds version, description
     /* known NDS1 atrs */
@@ -197,10 +198,10 @@ void set_known_card_info(struct s_reader * reader, const unsigned char * atr, co
 
     if ((hist_size == table_hist_size)
           && (memcmp (hist, table_hist, hist_size) == 0)) {
-        reader->card_baseyear=nds_atr_table[i].base_year;
-        reader->card_tierstart=nds_atr_table[i].tier_start;
-        reader->card_system_version = nds_atr_table[i].nds_version;
-        reader->card_desc = nds_atr_table[i].desc;
+        csystem_data->card_baseyear=nds_atr_table[i].base_year;
+        csystem_data->card_tierstart=nds_atr_table[i].tier_start;
+        csystem_data->card_system_version = nds_atr_table[i].nds_version;
+        csystem_data->card_desc = nds_atr_table[i].desc;
         break;
     }
     i++;
@@ -231,14 +232,16 @@ int32_t cw_is_valid(unsigned char *cw) // returns 1 if cw_is_valid, returns 0 if
 
 void cAES_SetKey(struct s_reader * reader, const unsigned char *key)
 {
-  AES_set_encrypt_key(key,128,&(reader->ekey));
+  struct videoguard_data *csystem_data = reader->csystem_data;
+  AES_set_encrypt_key(key,128,&(csystem_data->ekey));
 }
 
 int32_t cAES_Encrypt(struct s_reader * reader, const unsigned char *data, int32_t len, unsigned char *crypted)
 {
+    struct videoguard_data *csystem_data = reader->csystem_data;
     len=(len+15)&(~15); // pad up to a multiple of 16
     int32_t i;
-    for(i=0; i<len; i+=16) AES_encrypt(data+i,crypted+i,&(reader->ekey));
+    for(i=0; i<len; i+=16) AES_encrypt(data+i,crypted+i,&(csystem_data->ekey));
     return len;
 }
 
@@ -310,17 +313,19 @@ void cCamCryptVG_SetSeed(struct s_reader * reader)
     0xcf, 0x0c, 0x2b, 0xb4, 0x2f, 0x3a, 0x09, 0xd2, 0x15, 0x92, 0x47, 0x40, 0x5c, 0x66, 0xc9, 0xda
   };
 #endif
-  memcpy(reader->cardkeys[1],key1,sizeof(reader->cardkeys[1]));
-  memcpy(reader->cardkeys[2],key2,sizeof(reader->cardkeys[2]));
+  struct videoguard_data *csystem_data = reader->csystem_data;
+  memcpy(csystem_data->cardkeys[1],key1,sizeof(csystem_data->cardkeys[1]));
+  memcpy(csystem_data->cardkeys[2],key2,sizeof(csystem_data->cardkeys[2]));
 }
 
 void cCamCryptVG_GetCamKey(struct s_reader * reader, unsigned char *buff)
 {
+  struct videoguard_data *csystem_data = reader->csystem_data;
   uint16_t *tb2=(uint16_t *)buff, c=1;
   memset(tb2,0,64);
   tb2[0]=1;
   int32_t i;
-  for(i=0; i<32; i++) cCamCryptVG_LongMult(tb2,&c,reader->cardkeys[1][i],0);
+  for(i=0; i<32; i++) cCamCryptVG_LongMult(tb2,&c,csystem_data->cardkeys[1][i],0);
   swap_lb (buff, 64);
 }
 
@@ -341,17 +346,18 @@ static void cCamCryptVG_PostProcess_Decrypt(struct s_reader * reader, unsigned c
 
 static void cCamCryptVG_Process_D0(struct s_reader * reader, const unsigned char *ins, unsigned char *data)
 {
+  struct videoguard_data *csystem_data = reader->csystem_data;
   switch(ins[1]) {
     case 0xb4:
       swap_lb (data, 64);
-      memcpy(reader->cardkeys[0],data,sizeof(reader->cardkeys[0]));
+      memcpy(csystem_data->cardkeys[0],data,sizeof(csystem_data->cardkeys[0]));
       break;
     case 0xbc:
     {
       swap_lb (data, 64);
-      const uint16_t *key1=(const uint16_t *)reader->cardkeys[1];
+      const uint16_t *key1=(const uint16_t *)csystem_data->cardkeys[1];
       uint16_t key2[32];
-      memcpy(key2,reader->cardkeys[2],sizeof(key2));
+      memcpy(key2,csystem_data->cardkeys[2],sizeof(key2));
       int32_t count2;
       uint16_t iidata[32];
       memcpy( (unsigned char*)&iidata, data, 64 );
@@ -385,11 +391,12 @@ static void cCamCryptVG_Process_D0(struct s_reader * reader, const unsigned char
 
 static void cCamCryptVG_Process_D1(struct s_reader * reader, const unsigned char *ins, unsigned char *data, const unsigned char *status)
 {
+  struct videoguard_data *csystem_data = reader->csystem_data;
   unsigned char iter[16], tmp[16];
   memset(iter,0,sizeof(iter));
   memcpy(iter,ins,5);
-  xor16(iter,reader->stateD3A,iter);
-  memcpy(reader->stateD3A,iter,sizeof(iter));
+  xor16(iter,csystem_data->stateD3A,iter);
+  memcpy(csystem_data->stateD3A,iter,sizeof(iter));
 
   int32_t datalen=status-data;
   int32_t datalen1=datalen;
@@ -414,21 +421,22 @@ static void cCamCryptVG_Process_D1(struct s_reader * reader, const unsigned char
     if(docalc) {
       xor16(iter,in,tmp);
       cCamCryptVG_ReorderAndEncrypt(reader,tmp);
-      xor16(tmp,reader->stateD3A,iter);
+      xor16(tmp,csystem_data->stateD3A,iter);
       }
     }
-  memcpy(reader->stateD3A,tmp,16);
+  memcpy(csystem_data->stateD3A,tmp,16);
 }
 
 static void cCamCryptVG_Decrypt_D3(struct s_reader * reader, unsigned char *ins, unsigned char *data, const unsigned char *status)
 {
+  struct videoguard_data *csystem_data = reader->csystem_data;
   if(ins[4]>16) ins[4]-=16;
-  if(ins[1]==0xbe) memset(reader->stateD3A,0,sizeof(reader->stateD3A));
+  if(ins[1]==0xbe) memset(csystem_data->stateD3A,0,sizeof(csystem_data->stateD3A));
 
   unsigned char tmp[16];
   memset(tmp,0,sizeof(tmp));
   memcpy(tmp,ins,5);
-  xor16(tmp,reader->stateD3A,reader->stateD3A);
+  xor16(tmp,csystem_data->stateD3A,csystem_data->stateD3A);
 
   int32_t len1=ins[4];
   int32_t blocklen=len1>>4;
@@ -439,23 +447,23 @@ static void cCamCryptVG_Decrypt_D3(struct s_reader * reader, unsigned char *ins,
   int32_t blockindex;
   for(blockindex=0; blockindex<blocklen; blockindex++) {
     iter[0]+=blockindex;
-    xor16(iter,reader->stateD3A,iter);
+    xor16(iter,csystem_data->stateD3A,iter);
     cCamCryptVG_ReorderAndEncrypt(reader,iter);
     xor16(iter,&data[blockindex*16],states[blockindex]);
     if(blockindex==(len1>>4)) {
       int32_t c=len1-(blockindex*16);
       if(c<16) memset(&states[blockindex][c],0,16-c);
       }
-    xor16(states[blockindex],reader->stateD3A,reader->stateD3A);
-    cCamCryptVG_RotateRightAndHash(reader->stateD3A);
+    xor16(states[blockindex],csystem_data->stateD3A,csystem_data->stateD3A);
+    cCamCryptVG_RotateRightAndHash(csystem_data->stateD3A);
     }
   memset(tmp,0,sizeof(tmp));
   memcpy(tmp+5,status,2);
-  xor16(tmp,reader->stateD3A,reader->stateD3A);
-  cCamCryptVG_ReorderAndEncrypt(reader,reader->stateD3A);
+  xor16(tmp,csystem_data->stateD3A,csystem_data->stateD3A);
+  cCamCryptVG_ReorderAndEncrypt(reader,csystem_data->stateD3A);
 
-  memcpy(reader->stateD3A,status-16,sizeof(reader->stateD3A));
-  cCamCryptVG_ReorderAndEncrypt(reader,reader->stateD3A);
+  memcpy(csystem_data->stateD3A,status-16,sizeof(csystem_data->stateD3A));
+  cCamCryptVG_ReorderAndEncrypt(reader,csystem_data->stateD3A);
 
   memcpy(data,states[0],len1);
   if(ins[1]==0xbe) {
@@ -553,15 +561,17 @@ int32_t status_ok(const unsigned char *status)
 }
 
 void memorize_cmd_table (struct s_reader * reader, const unsigned char *mem, int32_t size){
-  if (cs_malloc(&reader->cmd_table, size))
-    memcpy(reader->cmd_table,mem,size);
+  struct videoguard_data *csystem_data = reader->csystem_data;
+  if (cs_malloc(&csystem_data->cmd_table, size))
+    memcpy(csystem_data->cmd_table,mem,size);
 }
 
 int32_t cmd_table_get_info(struct s_reader * reader, const unsigned char *cmd, unsigned char *rlen, unsigned char *rmode)
 {
-  struct s_CmdTabEntry *pcte=reader->cmd_table->e;
+  struct videoguard_data *csystem_data = reader->csystem_data;
+  struct s_CmdTabEntry *pcte=csystem_data->cmd_table->e;
   int32_t i;
-  for(i=0; i< reader->cmd_table->Nentries; i++,pcte++)
+  for(i=0; i< csystem_data->cmd_table->Nentries; i++,pcte++)
     if(cmd[1]==pcte->cmd) {
       *rlen=pcte->len;
       *rmode=pcte->mode;
@@ -572,9 +582,10 @@ int32_t cmd_table_get_info(struct s_reader * reader, const unsigned char *cmd, u
 
 int32_t cmd_exists(struct s_reader * reader, const unsigned char *cmd)
 {
-  struct s_CmdTabEntry *pcte=reader->cmd_table->e;
+  struct videoguard_data *csystem_data = reader->csystem_data;
+  struct s_CmdTabEntry *pcte=csystem_data->cmd_table->e;
   int32_t i;
-  for(i=0; i< reader->cmd_table->Nentries; i++,pcte++)
+  for(i=0; i< csystem_data->cmd_table->Nentries; i++,pcte++)
     if(cmd[1]==pcte->cmd) {
       return 1;
     }
@@ -917,8 +928,9 @@ void videoguard_mail_msg(struct s_reader *rdr, uint8_t *data)
    if (cfg.disablemail)
       return;
 
+   struct videoguard_data *csystem_data = rdr->csystem_data;
    if (vg_msgs == 0)
-      msgs_init(rdr->card_baseyear);
+      msgs_init(csystem_data->card_baseyear);
 
    if (data[0] != 0xFF || data[1] != 0xFF)
       return;
@@ -964,6 +976,6 @@ void videoguard_mail_msg(struct s_reader *rdr, uint8_t *data)
       memcpy(&msg->message[submsg_idx], &data[15], submsg_len);
    }
    if (msg->mask == (1 << msg->nsubs) - 1)
-      write_msg(rdr, msg, rdr->card_baseyear);
+      write_msg(rdr, msg, csystem_data->card_baseyear);
 }
 #endif

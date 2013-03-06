@@ -62,6 +62,7 @@ static void read_tiers(struct s_reader *reader)
 
   cs_clear_entitlement(reader); //reset the entitlements
 
+  struct videoguard_data *csystem_data = reader->csystem_data;
   for (i = 0; i < num; i++) {
     ins76[2] = i;
     l = vg12_do_cmd(reader, ins76, NULL, NULL, cta_res);
@@ -74,7 +75,7 @@ static void read_tiers(struct s_reader *reader)
     uint16_t tier_id = (cta_res[2] << 8) | cta_res[3];
     struct tm timeinfo;
     memset(&timeinfo, 0, sizeof(struct tm));
-    rev_date_calc_tm(&cta_res[4],&timeinfo,reader->card_baseyear);
+    rev_date_calc_tm(&cta_res[4],&timeinfo,csystem_data->card_baseyear);
     cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), tier_id, 0, 0, mktime(&timeinfo), 4);
     char tiername[83];
     rdr_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s",tier_id,timeinfo.tm_year+1900,timeinfo.tm_mon+1,timeinfo.tm_mday,timeinfo.tm_hour,timeinfo.tm_min,timeinfo.tm_sec,get_tiername(tier_id, reader->caid, tiername));
@@ -95,10 +96,14 @@ static int32_t videoguard12_card_init(struct s_reader *reader, ATR *newatr)
   get_atr;
   def_resp;
 
+  if (!cs_malloc(&reader->csystem_data, sizeof(struct videoguard_data)))
+    return ERROR;
+  struct videoguard_data *csystem_data = reader->csystem_data;
+
   /* set information on the card stored in reader-videoguard-common.c */
   set_known_card_info(reader,atr,&atr_size);
 
-  if((reader->ndsversion != NDS12) && ((reader->card_system_version != NDS12) || (reader->ndsversion != NDSAUTO))) {
+  if((reader->ndsversion != NDS12) && ((csystem_data->card_system_version != NDS12) || (reader->ndsversion != NDSAUTO))) {
     /* known ATR and not NDS12
        or unknown ATR and not forced to NDS12
        or known NDS12 ATR and forced to another NDS version
@@ -106,7 +111,7 @@ static int32_t videoguard12_card_init(struct s_reader *reader, ATR *newatr)
     return ERROR;
   }
 
-  rdr_log(reader, "type: %s, baseyear: %i", reader->card_desc, reader->card_baseyear);
+  rdr_log(reader, "type: %s, baseyear: %i", csystem_data->card_desc, csystem_data->card_baseyear);
   if(reader->ndsversion == NDS12){
     rdr_log(reader, "forced to NDS12");
   }
@@ -355,8 +360,9 @@ static int32_t videoguard12_do_emm(struct s_reader *reader, EMM_PACKET * ep)
 static int32_t videoguard12_card_info(struct s_reader *reader)
 {
   /* info is displayed in init, or when processing info */
+  struct videoguard_data *csystem_data = reader->csystem_data;
   rdr_log(reader, "card detected");
-  rdr_log(reader, "type: %s", reader->card_desc);
+  rdr_log(reader, "type: %s", csystem_data->card_desc);
   read_tiers(reader);
   return OK;
 }

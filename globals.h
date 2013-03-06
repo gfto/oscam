@@ -1046,21 +1046,6 @@ struct s_client {
 	struct s_client	*nexthashed;
 };
 
-struct s_CmdTabEntry {								// for videoguard in s_reader
-	unsigned char 	cla;
-	unsigned char 	cmd;
-	unsigned char 	len;
-	unsigned char 	mode;
-};
-
-struct s_CmdTab {
-	unsigned char 	index;
-	unsigned char 	size;
-	unsigned char 	Nentries;
-	unsigned char 	dummy;
-	struct s_CmdTabEntry e[1];
-};
-
 struct s_ecmWhitelist {
 	uint16_t 					caid;
 	struct s_ecmWhitelistIdent 	*idents;
@@ -1336,18 +1321,8 @@ struct s_reader  									//contains device info, reader info and card info
 #endif
 
 	AES_ENTRY		*aes_list;						// multi AES linked list
- 	// variables from reader-videoguard*
  	int8_t			ndsversion; 					// 0 auto (default), 1 NDS1, 12 NDS1+, 2 NDS2
- 	const char 		*card_desc;
- 	int32_t			card_baseyear;
- 	int32_t			card_tierstart;
- 	int32_t			card_system_version;
  	time_t			card_valid_to;
- 	struct s_CmdTab *cmd_table;
- 	uint16_t		cardkeys[3][32];
- 	unsigned char	stateD3A[16];
- 	AES_KEY			ekey;
- 	AES_KEY			astrokey;
 	//ratelimit
 	int32_t			ratelimitecm;
 	int32_t			ratelimitseconds;
