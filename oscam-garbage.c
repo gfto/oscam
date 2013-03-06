@@ -75,10 +75,16 @@ void add_garbage(void *data) {
 	cs_writeunlock(&garbage_lock[bucket]);
 }
 
+static pthread_cond_t sleep_cond;
+
 static void garbage_collector(void) {
         int8_t i;
         struct cs_garbage *garbage, *next, *prev, *first;
         set_thread_name(__func__);
+	pthread_mutex_t sleep_cond_mutex;
+	pthread_mutex_init(&sleep_cond_mutex, NULL);
+	pthread_cond_init(&sleep_cond, NULL);
+
         while (garbage_collector_active) {
 
                 for(i = 0; i < HASH_BUCKETS; ++i){
@@ -110,7 +116,17 @@ static void garbage_collector(void) {
 	                	garbage = next;
 	                }
 	              }
-                cs_sleepms(1000);
+
+			struct timespec ts;
+			struct timeval tv;
+			gettimeofday(&tv, NULL);
+			ts.tv_sec = tv.tv_sec;
+			ts.tv_nsec = tv.tv_usec * 1000;
+			ts.tv_sec += 1;
+
+			pthread_mutex_lock(&sleep_cond_mutex);
+			pthread_cond_timedwait(&sleep_cond, &sleep_cond_mutex, &ts); // sleep on sleep_cond
+			pthread_mutex_unlock(&sleep_cond_mutex);
         }
         pthread_exit(NULL);
 }
@@ -135,8 +151,7 @@ void start_garbage_collector(int32_t debug) {
 		cs_log("ERROR: can't create garbagecollector thread (errno=%d %s)", ret, strerror(ret));
 		pthread_attr_destroy(&attr);
 		cs_exit(1);
-	} else
-		pthread_detach(garbage_thread);
+	}
 	pthread_attr_destroy(&attr);
 }
 
@@ -146,6 +161,8 @@ void stop_garbage_collector(void)
 		int8_t i;
 
 		garbage_collector_active = 0;
+		pthread_cond_signal(&sleep_cond);
+		pthread_join(garbage_thread, NULL);
 		for(i = 0; i < HASH_BUCKETS; ++i)
 			cs_writelock(&garbage_lock[i]);
 
