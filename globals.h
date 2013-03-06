@@ -1046,13 +1046,6 @@ struct s_client {
 	struct s_client	*nexthashed;
 };
 
-struct geo_cache {									//for viaccess var in s_reader:
-	uint32_t		provid;
-	uchar			geo[256];
-	uchar			geo_len;
-	int32_t			number_ecm;
-};
-
 struct s_CmdTabEntry {								// for videoguard in s_reader
 	unsigned char 	cla;
 	unsigned char 	cmd;
@@ -1332,8 +1325,6 @@ struct s_reader  									//contains device info, reader info and card info
 	////variables from reader-cryptoworks.c
 	BIGNUM			exp;
 	BIGNUM			ucpk;
-	////variables from reader-viaccess.c
-	struct geo_cache	last_geo;
 #ifdef WITH_LB
 	int32_t			lb_weight;						//loadbalance weight factor, if unset, weight=100. The higher the value, the higher the usage-possibility
 	int32_t			lb_usagelevel;					//usagelevel for loadbalancer
