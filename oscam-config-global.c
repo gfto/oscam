@@ -48,7 +48,7 @@ static void serverip_fn(const char *token, char *value, void *setting, FILE *f) 
 		fprintf_conf(f, token, "%s\n", cs_inet_ntoa(srvip));
 }
 
-void iprange_fn(const char *token, char *value, void *setting, FILE *f) {
+static void iprange_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_ip **ip = setting;
 	if (value) {
 		if(strlen(value) == 0) {
@@ -62,6 +62,10 @@ void iprange_fn(const char *token, char *value, void *setting, FILE *f) {
 	if (strlen(value) > 0 || cfg.http_full_cfg)
 		fprintf_conf(f, token, "%s\n", value);
 	free_mk_t(value);
+}
+
+static void iprange_free_fn(void *setting) {
+	clear_sip(setting);
 }
 
 static void logfile_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
@@ -311,7 +315,7 @@ static const struct config_list monitor_opts[] = {
 	DEF_OPT_SAVE_FUNC(monitor_should_save_fn),
 	DEF_OPT_INT32("port"					, OFS(mon_port),				0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(mon_srvip),				serverip_fn ),
-	DEF_OPT_FUNC("nocrypt"					, OFS(mon_allowed),				iprange_fn ),
+	DEF_OPT_FUNC("nocrypt"					, OFS(mon_allowed),				iprange_fn, .free_value=iprange_free_fn ),
 	DEF_OPT_INT32("aulow"					, OFS(aulow),					30 ),
 	DEF_OPT_UINT8("monlevel"				, OFS(mon_level),				2 ),
 	DEF_OPT_INT32("hideclient_to"			, OFS(hideclient_to),			15 ),
@@ -383,7 +387,7 @@ static const struct config_list webif_opts[] = {
 	DEF_OPT_INT8("httphideidleclients"		, OFS(http_hide_idle_clients),	0 ),
 	DEF_OPT_STR("httphidetype"				, OFS(http_hide_type),				NULL ),
 	DEF_OPT_INT8("httpshowpicons"			, OFS(http_showpicons),			0 ),
-	DEF_OPT_FUNC("httpallowed"				, OFS(http_allowed),			iprange_fn ),
+	DEF_OPT_FUNC("httpallowed"				, OFS(http_allowed),			iprange_fn, .free_value=iprange_free_fn ),
 	DEF_OPT_INT8("httpreadonly"				, OFS(http_readonly),			0 ),
 	DEF_OPT_INT8("httpsavefullcfg"			, OFS(http_full_cfg),			0 ),
 	DEF_OPT_INT8("httpforcesslv3"			, OFS(http_force_sslv3),		0 ),
@@ -404,7 +408,7 @@ static const struct config_list camd33_opts[] = {
 	DEF_OPT_SAVE_FUNC(camd33_should_save_fn),
 	DEF_OPT_INT32("port"					, OFS(c33_port),				0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(c33_srvip),				serverip_fn ),
-	DEF_OPT_FUNC("nocrypt"					, OFS(c33_plain),				iprange_fn ),
+	DEF_OPT_FUNC("nocrypt"					, OFS(c33_plain),				iprange_fn, .free_value=iprange_free_fn ),
 	DEF_OPT_INT32("passive"					, OFS(c33_passive),				0 ),
 	DEF_OPT_HEX("key"						, OFS(c33_key),					SIZEOF(c33_key) ),
 	DEF_LAST_OPT
@@ -515,7 +519,7 @@ static const struct config_list newcamd_opts[] = {
 	DEF_OPT_SAVE_FUNC(newcamd_should_save_fn),
 	DEF_OPT_FUNC_X("port"					, OFS(ncd_ptab),			porttab_fn, PORTTAB_NEWCAMD ),
 	DEF_OPT_FUNC("serverip"					, OFS(ncd_srvip),			serverip_fn ),
-	DEF_OPT_FUNC("allowed"					, OFS(ncd_allowed),			iprange_fn ),
+	DEF_OPT_FUNC("allowed"					, OFS(ncd_allowed),			iprange_fn, .free_value=iprange_free_fn ),
 	DEF_OPT_HEX("key"						, OFS(ncd_key),				SIZEOF(ncd_key) ),
 	DEF_OPT_INT8("keepalive"				, OFS(ncd_keepalive),		DEFAULT_NCD_KEEPALIVE ),
 	DEF_OPT_INT8("mgclient"					, OFS(ncd_mgclient),		0 ),
@@ -576,7 +580,7 @@ static const struct config_list pandora_opts[] = {
 	DEF_OPT_STR("pand_pass"					, OFS(pand_pass),			NULL ),
 	DEF_OPT_INT8("pand_ecm"					, OFS(pand_ecm),			0 ),
 	DEF_OPT_INT8("pand_skip_send_dw"		, OFS(pand_skip_send_dw),	0 ),
-	DEF_OPT_FUNC("pand_allowed"				, OFS(pand_allowed),		iprange_fn ),
+	DEF_OPT_FUNC("pand_allowed"				, OFS(pand_allowed),		iprange_fn, .free_value=iprange_free_fn ),
 	DEF_LAST_OPT
 };
 #else
@@ -590,7 +594,7 @@ static const struct config_list radegast_opts[] = {
 	DEF_OPT_SAVE_FUNC(radegast_should_save_fn),
 	DEF_OPT_INT32("port"					, OFS(rad_port),			0 ),
 	DEF_OPT_FUNC("serverip"					, OFS(rad_srvip),			serverip_fn ),
-	DEF_OPT_FUNC("allowed"					, OFS(rad_allowed),			iprange_fn ),
+	DEF_OPT_FUNC("allowed"					, OFS(rad_allowed),			iprange_fn, .free_value=iprange_free_fn ),
 	DEF_OPT_STR("user"						, OFS(rad_usr),				NULL ),
 	DEF_LAST_OPT
 };
