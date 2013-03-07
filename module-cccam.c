@@ -1232,7 +1232,6 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 	//No Card? Waiting for shares
 	if (!ll_has_elements(cc->cards)) {
-		rdr->fd_error++;
 		cs_debug_mask(D_READER, "%s NO CARDS!", getprefix());
 		return 0;
 	}

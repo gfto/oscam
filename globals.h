@@ -1132,7 +1132,6 @@ struct s_reader  									//contains device info, reader info and card info
 	int8_t			active;
 	int8_t			dropbadcws;						// Schlocke: 1=drops cw if checksum is wrong. 0=fix checksum (default)
     int8_t          disablecrccws;                  // 1=disable cw checksum test. 0=enable checksum check
-    int8_t			fd_error;
 	uint64_t		grp;
 	int8_t			fallback;
 #ifdef CS_CACHEEX
@@ -1164,7 +1163,6 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t			r_port;
 	char			r_usr[64];
 	char			r_pwd[64];
-	char			l_pwd[64];
 	int32_t			l_port;
 	CAIDTAB			ctab;
 	uint32_t		boxid;
