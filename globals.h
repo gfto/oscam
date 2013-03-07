@@ -1194,6 +1194,7 @@ struct s_reader  									//contains device info, reader info and card info
 	int8_t			deprecated;						//if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
 	struct s_module ph;
 	struct s_cardreader crdr;
+	void			*crdr_data; // Private card reader data
 	struct s_cardsystem csystem;
 	void			*csystem_data; // Private card system data
 	uint8_t			ncd_key[14];

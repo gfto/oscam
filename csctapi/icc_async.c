@@ -73,8 +73,10 @@ int32_t ICC_Async_Device_Init (struct s_reader *reader)
 	int32_t ret = reader->crdr.reader_init(reader);
 	if (ret == OK)
 		rdr_debug_mask(reader, D_IFD, "Device %s succesfully opened", reader->device);
-	else
+	else {
+		NULLFREE(reader->crdr_data);
 		rdr_debug_mask(reader, D_IFD, "ERROR: Can't open %s device", reader->device);
+	}
 	return ret;
 }
 
@@ -266,6 +268,7 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 {
 	rdr_debug_mask(reader, D_IFD, "Closing device %s", reader->device);
 	call(reader->crdr.close(reader));
+	NULLFREE(reader->crdr_data);
 	rdr_debug_mask(reader, D_IFD, "Device %s succesfully closed", reader->device);
 	return OK;
 }
