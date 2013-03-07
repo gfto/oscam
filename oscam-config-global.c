@@ -48,7 +48,7 @@ static void serverip_fn(const char *token, char *value, void *setting, FILE *f) 
 		fprintf_conf(f, token, "%s\n", cs_inet_ntoa(srvip));
 }
 
-static void iprange_fn(const char *token, char *value, void *setting, FILE *f) {
+void iprange_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_ip **ip = setting;
 	if (value) {
 		if(strlen(value) == 0) {
@@ -64,7 +64,7 @@ static void iprange_fn(const char *token, char *value, void *setting, FILE *f) {
 	free_mk_t(value);
 }
 
-static void iprange_free_fn(void *setting) {
+void iprange_free_fn(void *setting) {
 	clear_sip(setting);
 }
 
