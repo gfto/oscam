@@ -1154,8 +1154,6 @@ struct s_reader  									//contains device info, reader info and card info
 #ifdef WITH_STAPI
 	uint32_t		stsmart_handle;					// device handle for stsmart driver
 #endif
-	char			pcsc_name[128];
-	int8_t			pcsc_has_card;
 	int32_t			detect;
 	int32_t			mhz;							// actual clock rate of reader in 10khz steps
 	int32_t			cardmhz;						// standard clock speed your card should have in 10khz steps; normally 357 but for Irdeto cards 600
@@ -1246,6 +1244,8 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t			lbvalue;						// loadbalance Value
 #endif
 #ifdef CARDREADER_PCSC
+	char			pcsc_name[128];
+	int8_t			pcsc_has_card;
 	SCARDCONTEXT	hContext;
 	SCARDHANDLE		hCard;
 	DWORD			dwActiveProtocol;
