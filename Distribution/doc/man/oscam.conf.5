@@ -656,6 +656,16 @@ minimum time a learned cycle time resists in memory, default:0, maximum:15
 .RS 3n
 1= drop old CW cycle, default:0
 .RE
+.PP
+\fBcwcycle_sensitive\fP = \fB0\fP|\fB2\fP|\fB3\fP|\fB4\fP
+.RS 3n
+drop CW mode:
+
+ \fB0\fP = disabled (default)
+ \fB2\fP = 2 (or more) same bytes and drop new CW
+ \fB3\fP = 3 (or more) same bytes and drop new CW
+ \fB4\fP = 4 (or more) same bytes and drop new CW
+.RE
 .SS "The [camd33] section"
 \fBport\fP = \fB0\fP|\fBport\fP
 .RS 3n
