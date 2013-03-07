@@ -16,6 +16,7 @@ struct viaccess_data {
 	struct geo_cache	last_geo;
 	int32_t				reassemble_emm_len;
 	uint8_t				reassemble_emm[512];
+	uint8_t				availkeys[CS_MAXPROV][16];
 };
 
 struct via_date {
@@ -185,11 +186,12 @@ static void show_subs(struct s_reader * reader, const uchar *emm)
 
 static int32_t chk_prov(struct s_reader * reader, uchar *id, uchar keynr)
 {
+	struct viaccess_data *csystem_data = reader->csystem_data;
 	int32_t i, j, rc;
 	for (rc=i=0; (!rc) && (i<reader->nprov); i++)
 		if(!memcmp(&reader->prid[i][1], id, 3))
 			for (j=0; (!rc) && (j<16); j++)
-				if (reader->availkeys[i][j]==keynr)
+				if (csystem_data->availkeys[i][j]==keynr)
 					rc=1;
 	return(rc);
 }
@@ -293,7 +295,7 @@ static int32_t viaccess_card_init(struct s_reader * reader, ATR *newatr)
 		cta_res[2]&=0xF0;
 		reader->prid[i][0]=0;
 		memcpy(&reader->prid[i][1], cta_res, 3);
-		memcpy(&reader->availkeys[i][0], cta_res+10, 16);
+		memcpy(&csystem_data->availkeys[i][0], cta_res+10, 16);
 		snprintf((char *)buf+strlen((char *)buf), sizeof(buf)-strlen((char *)buf), ",%06X", b2i(3, &reader->prid[i][1]));
 		//rdr_log(reader, "[viaccess-reader] buf: %s", buf);
 

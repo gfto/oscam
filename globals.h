@@ -1176,7 +1176,6 @@ struct s_reader  									//contains device info, reader info and card info
 	uchar			hexserial[8];
 	int32_t			nprov;
 	uchar			prid[CS_MAXPROV][8];
-	uchar			availkeys[CS_MAXPROV][16];		// viaccess; misused in seca, if availkeys[PROV][0]=0 then expired, 1 then valid.
 	uchar			sa[CS_MAXPROV][4];				// viaccess & seca
 	uint16_t		caid;
 	uint16_t		b_nano;

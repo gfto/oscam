@@ -459,7 +459,6 @@ static int32_t connect_newcamd_server(void)
   cl->reader->nprov = buf[14+2];
   memset(cl->reader->prid, 0x00, sizeof(cl->reader->prid));
   for (i=0; i < cl->reader->nprov; i++) {
-    cl->reader->availkeys[i][0] = 1;
 	if (((cl->reader->caid >> 8) == 0x17) ||
 		((cl->reader->caid >> 8) == 0x06)) //Betacrypt or Irdeto
 	{

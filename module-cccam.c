@@ -3562,7 +3562,6 @@ int32_t cc_cli_connect(struct s_client *cl) {
 	rdr->caid = rdr->ftab.filts[0].caid;
 	rdr->nprov = rdr->ftab.filts[0].nprids;
 	for (n = 0; n < rdr->nprov; n++) {
-		rdr->availkeys[n][0] = 1;
 		rdr->prid[n][0] = rdr->ftab.filts[0].prids[n] >> 24;
 		rdr->prid[n][1] = rdr->ftab.filts[0].prids[n] >> 16;
 		rdr->prid[n][2] = rdr->ftab.filts[0].prids[n] >> 8;
