@@ -1150,9 +1150,6 @@ struct s_reader  									//contains device info, reader info and card info
 	uint16_t		slot;							// in case of multiple slots like sc8in1; first slot = 1
 	int32_t			handle;							// device handle
 	int32_t			fdmc;							// device handle for multicam
-#ifdef WITH_STAPI
-	uint32_t		stsmart_handle;					// device handle for stsmart driver
-#endif
 	int32_t			detect;
 	int32_t			mhz;							// actual clock rate of reader in 10khz steps
 	int32_t			cardmhz;						// standard clock speed your card should have in 10khz steps; normally 357 but for Irdeto cards 600

@@ -2,6 +2,7 @@
 
 #ifdef CARDREADER_STAPI
 #include "atr.h"
+#include "../oscam-string.h"
 
 /* These functions are implemented in liboscam_stapi.a */
 extern int32_t STReader_Open(char *device, uint32_t *stsmart_handle);
@@ -13,41 +14,58 @@ extern int32_t STReader_Close(uint32_t stsmart_handle);
 extern int32_t STReader_SetProtocol(uint32_t stsmart_handle, unsigned char *params, unsigned *length, uint32_t len_request);
 extern int32_t STReader_SetClockrate(uint32_t stsmart_handle);
 
+#define OK 0
+#define ERROR 1
+
+struct stapi_data {
+	uint32_t stapi_handle;
+};
+
 static int32_t stapi_init(struct s_reader *reader) {
-	return STReader_Open(reader->device, &reader->stsmart_handle);
+	if (!cs_malloc(&reader->crdr_data, sizeof(struct stapi_data)))
+		return ERROR;
+	struct stapi_data *crdr_data = reader->crdr_data;
+	return STReader_Open(reader->device, &crdr_data->stapi_handle);
 }
 
 static int32_t stapi_getstatus(struct s_reader *reader, int32_t *in) {
-	return STReader_GetStatus(reader->stsmart_handle, in);
+	struct stapi_data *crdr_data = reader->crdr_data;
+	return STReader_GetStatus(crdr_data->stapi_handle, in);
 }
 
 static int32_t stapi_reset(struct s_reader *reader, ATR *atr) {
-	return STReader_Reset(reader->stsmart_handle, atr);
+	struct stapi_data *crdr_data = reader->crdr_data;
+	return STReader_Reset(crdr_data->stapi_handle, atr);
 }
 
 static int32_t stapi_transmit(struct s_reader *reader, unsigned char *sent, uint32_t size, uint32_t delay, uint32_t timeout) { // delay + timeout not in use (yet)!
 	(void) delay; // delay not in use (yet)!
 	(void) timeout; // timeout not in use (yet)!
-	return STReader_Transmit(reader->stsmart_handle, sent, size);
+	struct stapi_data *crdr_data = reader->crdr_data;
+	return STReader_Transmit(crdr_data->stapi_handle, sent, size);
 }
 
 static int32_t stapi_receive(struct s_reader *reader, unsigned char *data, uint32_t size, uint32_t delay, uint32_t timeout) { // delay + timeout not in use (yet)!
 	(void) delay; // delay not in use (yet)!
 	(void) timeout; // timeout not in use (yet)!
-	return STReader_Receive(reader->stsmart_handle, data, size);
+	struct stapi_data *crdr_data = reader->crdr_data;
+	return STReader_Receive(crdr_data->stapi_handle, data, size);
 }
 
 static int32_t stapi_close(struct s_reader *reader) {
-	return STReader_Close(reader->stsmart_handle);
+	struct stapi_data *crdr_data = reader->crdr_data;
+	return STReader_Close(crdr_data->stapi_handle);
 }
 
 static int32_t stapi_setprotocol(struct s_reader *reader, unsigned char *params, unsigned *length, uint32_t len_request) {
-	return STReader_SetProtocol(reader->stsmart_handle, params, length, len_request);
+	struct stapi_data *crdr_data = reader->crdr_data;
+	return STReader_SetProtocol(crdr_data->stapi_handle, params, length, len_request);
 }
 
 static int32_t stapi_writesettings(struct s_reader *reader, uint32_t ETU, uint32_t EGT, unsigned char P, unsigned char I, uint16_t Fi, unsigned char Di, unsigned char Ni) {
 	(void)ETU; (void)EGT; (void)P; (void)I; (void)Fi; (void)Di; (void)Ni;
-	return STReader_SetClockrate(reader->stsmart_handle);
+	struct stapi_data *crdr_data = reader->crdr_data;
+	return STReader_SetClockrate(crdr_data->stapi_handle);
 }
 
 void cardreader_stapi(struct s_cardreader *crdr)
