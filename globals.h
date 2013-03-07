@@ -1147,7 +1147,6 @@ struct s_reader  									//contains device info, reader info and card info
 	char			*description;
 #endif
 	char			device[128];
-	void			*spec_dev;						// pointer to structure that contains specific device data
 	uint16_t		slot;							// in case of multiple slots like sc8in1; first slot = 1
 	int32_t			handle;							// device handle
 	int32_t			fdmc;							// device handle for multicam
