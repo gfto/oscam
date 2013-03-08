@@ -796,11 +796,6 @@ void kill_all_readers(void) {
 			continue;
 		rdr_log(rdr, "Killing reader");
 		kill_thread(cl);
-		// Stop MCR reader display thread
-		if (cl->typ == 'r' && cl->reader && cl->reader->typ == R_SC8in1
-				&& cl->reader->sc8in1_config && cl->reader->sc8in1_config->display_running) {
-			cl->reader->sc8in1_config->display_running = 0;
-		}
 	}
 	first_active_reader = NULL;
 }

@@ -180,9 +180,6 @@ bool IO_Serial_SetBitrate (struct s_reader * reader, uint32_t bitrate, struct te
     cfsetispeed(tio, IO_Serial_Bitrate(38400));
   }
 #endif
-  if (reader->typ == R_SC8in1) {
-	  reader->sc8in1_config->current_baudrate = bitrate;
-  }
 	return OK;
 }
 

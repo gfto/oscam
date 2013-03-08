@@ -29,6 +29,29 @@
 #define OK 0
 #define ERROR 1
 
+struct s_sc8in1_display {
+	char *text;
+	uint16_t text_length;
+	uint16_t char_change_time;
+	uint16_t last_char;
+	uint8_t blocking;
+	struct s_sc8in1_display	*next;
+};
+
+struct sc8in1_data {
+	struct termios stored_termio[8];
+	uint16_t current_slot;
+	uint32_t current_baudrate;
+	struct s_reader *current_reader;
+	unsigned char cardstatus;
+	unsigned char mcr_type;
+	CS_MUTEX_LOCK sc8in1_lock;
+	struct s_sc8in1_display *display;
+	CS_MUTEX_LOCK sc8in1_display_lock;
+	unsigned char display_running;
+	pthread_t display_thread;
+};
+
 #ifdef WITH_DEBUG
 static int32_t Sc8in1_DebugSignals(struct s_reader *reader, uint16_t slot, const char *extra) {
 	uint32_t msr;
@@ -44,8 +67,9 @@ static int32_t Sc8in1_DebugSignals(struct s_reader *reader, uint16_t slot, const
 
 static int32_t Sc8in1_NeedBaudrateChange(struct s_reader * reader, uint32_t desiredBaudrate, struct termios *current, struct termios *new, uint8_t cmdMode)
 {
+	struct sc8in1_data *crdr_data = reader->crdr_data;
 	// Returns 1 if we need to change the baudrate
-	if ((desiredBaudrate != reader->sc8in1_config->current_baudrate) ||
+	if ((desiredBaudrate != crdr_data->current_baudrate) ||
 	    (reader->mhz != reader->cardmhz) ||
 	    (cmdMode == 0 && memcmp(current, new, sizeof(struct termios))))
 	{
@@ -58,6 +82,7 @@ static int32_t Sc8in1_NeedBaudrateChange(struct s_reader * reader, uint32_t desi
 
 static int32_t Sc8in1_SetBaudrate(struct s_reader * reader, uint32_t baudrate, struct termios *termio, uint8_t cmdMode)
 {
+	struct sc8in1_data *crdr_data = reader->crdr_data;
 	/* Get current settings */
 	struct termios tio;
 	if (termio == NULL) {
@@ -73,8 +98,9 @@ static int32_t Sc8in1_SetBaudrate(struct s_reader * reader, uint32_t baudrate, s
 	}
 	rdr_debug_mask(reader, D_IFD, "Sc8in1 Setting baudrate to %u", baudrate);
 	rdr_debug_mask(reader, D_TRACE, "Sc8in1 Setting baudrate to %u, reader br=%u, currentBaudrate=%u, cmdMode=%u",
-		baudrate, reader->current_baudrate, reader->sc8in1_config->current_baudrate, cmdMode);
+		baudrate, reader->current_baudrate, crdr_data->current_baudrate, cmdMode);
 	call (IO_Serial_SetBitrate (reader, baudrate, &tio));
+	crdr_data->current_baudrate = baudrate;
 	call (IO_Serial_SetProperties(reader, tio));
 	if (cmdMode == 0) {
 		reader->current_baudrate = baudrate;
@@ -103,6 +129,7 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 		uint16_t lenwrite, uint16_t lenread, uint8_t enableEepromWrite, unsigned char UNUSED(getStatusMode),
 		uint8_t selectSlotMode)
 {
+	struct sc8in1_data *crdr_data = reader->crdr_data;
 	struct termios termio, termiobackup;
 	uint32_t currentBaudrate = 0;
 
@@ -122,8 +149,8 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 	memcpy(&termiobackup, &termio, sizeof(termio));
 
 	if (selectSlotMode) {
-		if (reader->sc8in1_config->current_slot != 0) {
-			memcpy(&reader->sc8in1_config->stored_termio[reader->sc8in1_config->current_slot - 1],
+		if (crdr_data->current_slot != 0) {
+			memcpy(&crdr_data->stored_termio[crdr_data->current_slot - 1],
 					&termiobackup, sizeof(termiobackup)); //not if current_slot is undefined
 		}
 	}
@@ -138,8 +165,8 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 	if (Sc8in1_NeedBaudrateChange(reader, 9600, &termiobackup, &termio, 1)) {
 		rdr_debug_mask(reader, D_TRACE, "Sc8in1_NeedBaudrateChange for SC8in1 command");
 		// save current baudrate for later restore
-		currentBaudrate = reader->sc8in1_config->current_baudrate;
-		reader->sc8in1_config->current_baudrate = 9600;
+		currentBaudrate = crdr_data->current_baudrate;
+		crdr_data->current_baudrate = 9600;
 		cfsetospeed(&termio, B9600);
 		cfsetispeed(&termio, B9600);
 		rdr_debug_mask(reader, D_DEVICE, "standard baudrate: cardmhz=%d mhz=%d -> effective baudrate %u", reader->cardmhz, reader->mhz, 9600);
@@ -192,7 +219,7 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 	}
 
 	// Workaround for systems where tcdrain doesnt work properly
-	if (lenread <= 0 && reader->sc8in1_config->mcr_type) {
+	if (lenread <= 0 && crdr_data->mcr_type) {
 		unsigned char buff_echo_hack[2] = { 0x65, 'A' };
 		rdr_ddump_mask(reader, D_DEVICE, &buff_echo_hack[0], 2, "Sending:");
 		if (write(reader->handle, &buff_echo_hack[0], 2) != 2) {
@@ -210,7 +237,7 @@ static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff,
 	}
 
 	if (selectSlotMode) {
-		memcpy(&termiobackup, &reader->sc8in1_config->stored_termio[selectSlotMode - 1],
+		memcpy(&termiobackup, &crdr_data->stored_termio[selectSlotMode - 1],
 				sizeof(termiobackup));
 		if (Sc8in1_NeedBaudrateChange(reader, reader->current_baudrate, &termio, &termiobackup, 1)) {
 			rdr_debug_mask(reader, D_TRACE, "Sc8in1_SetTermioForSlot for select slot");
@@ -394,6 +421,7 @@ static int32_t sc8in1SelectSlot(struct s_reader *reader, unsigned char slot) {
 }
 
 static int32_t MCR_DisplayText(struct s_reader *reader, char* text, uint16_t text_len, uint16_t ch_time, uint8_t blocking) {
+	struct sc8in1_data *crdr_data = reader->crdr_data;
 	struct s_sc8in1_display *display;
 	if (cs_malloc(&display, sizeof(struct s_sc8in1_display))) {
 		if (!cs_malloc(&display->text, text_len)) {
@@ -407,12 +435,12 @@ static int32_t MCR_DisplayText(struct s_reader *reader, char* text, uint16_t tex
 		display->last_char = 0;
 		display->blocking = blocking;
 		display->next = NULL;
-		cs_writelock(&reader->sc8in1_config->sc8in1_display_lock);
-		if (reader->sc8in1_config->display == NULL) {
-			reader->sc8in1_config->display = display;
+		cs_writelock(&crdr_data->sc8in1_display_lock);
+		if (crdr_data->display == NULL) {
+			crdr_data->display = display;
 		}
 		else {
-			struct s_sc8in1_display *d = reader->sc8in1_config->display;
+			struct s_sc8in1_display *d = crdr_data->display;
 			while (d != NULL) {
 				if (d->next == NULL) {
 					d->next = display;
@@ -423,7 +451,7 @@ static int32_t MCR_DisplayText(struct s_reader *reader, char* text, uint16_t tex
 				}
 			}
 		}
-		cs_writeunlock(&reader->sc8in1_config->sc8in1_display_lock);
+		cs_writeunlock(&crdr_data->sc8in1_display_lock);
 	} else {
 		rdr_log(reader, "MCR_DisplayText: Out of memory.");
 		return ERROR;
@@ -458,16 +486,17 @@ static void* mcr_update_display_thread(void *param) {
 	const uint16_t DEFAULT_SLEEP_TIME = 100;
 	const int32_t STATISTICS_UPDATE_SECONDS = 60;
 	struct s_reader *reader = (struct s_reader *)param;
+	struct sc8in1_data *crdr_data = reader->crdr_data;
 	time_t lastStatisticUpdateTime = time((time_t*)0);
 
-	if (reader->typ != R_SC8in1 ||  ! reader->sc8in1_config->mcr_type) {
+	if (reader->typ != R_SC8in1 ||  ! crdr_data->mcr_type) {
 		rdr_log(reader, "Error: mcr_update_display_thread reader no MCR8in1 reader");
 		pthread_exit(NULL);
 	}
 
 	set_thread_name(__func__);
 
-	while(reader->sc8in1_config->display_running) {
+	while(crdr_data->display_running) {
 		uint16_t display_sleep = DEFAULT_SLEEP_TIME;
 
 		// Update statistics
@@ -479,44 +508,44 @@ static void* mcr_update_display_thread(void *param) {
 			lastStatisticUpdateTime = currentTime;
 		}
 
-		cs_writelock(&reader->sc8in1_config->sc8in1_display_lock);
-		if (reader->sc8in1_config->display != NULL) { // is there something to display?
-			cs_writeunlock(&reader->sc8in1_config->sc8in1_display_lock);
+		cs_writelock(&crdr_data->sc8in1_display_lock);
+		if (crdr_data->display != NULL) { // is there something to display?
+			cs_writeunlock(&crdr_data->sc8in1_display_lock);
 
-			display_sleep = reader->sc8in1_config->display->char_change_time;
+			display_sleep = crdr_data->display->char_change_time;
 
 			// display the next character
-			cs_writelock(&reader->sc8in1_config->sc8in1_lock);
-			if (reader->sc8in1_config->display->blocking) {
+			cs_writelock(&crdr_data->sc8in1_lock);
+			if (crdr_data->display->blocking) {
 				uint16_t i = 0;
-				for (i = 0; i < reader->sc8in1_config->display->text_length; i++) {
-					if (mcrWriteDisplayAscii(reader->sc8in1_config->current_reader,
-							reader->sc8in1_config->display->text[++reader->sc8in1_config->display->last_char - 1], 0xFF)) {
+				for (i = 0; i < crdr_data->display->text_length; i++) {
+					if (mcrWriteDisplayAscii(crdr_data->current_reader,
+							crdr_data->display->text[++crdr_data->display->last_char - 1], 0xFF)) {
 						rdr_log(reader, "SC8in1: Error in mcr_update_display_thread write");
 					}
 					cs_sleepms(display_sleep);
 				}
 			}
 			else {
-				if (mcrWriteDisplayAscii(reader->sc8in1_config->current_reader,
-						reader->sc8in1_config->display->text[++reader->sc8in1_config->display->last_char - 1], 0xFF)) {
+				if (mcrWriteDisplayAscii(crdr_data->current_reader,
+						crdr_data->display->text[++crdr_data->display->last_char - 1], 0xFF)) {
 					rdr_log(reader, "SC8in1: Error in mcr_update_display_thread write");
 				}
 			}
-			cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+			cs_writeunlock(&crdr_data->sc8in1_lock);
 
 			// remove the display struct if the text has been shown completely
-			if (reader->sc8in1_config->display->last_char == reader->sc8in1_config->display->text_length) {
-				cs_writelock(&reader->sc8in1_config->sc8in1_display_lock);
-				struct s_sc8in1_display *next = reader->sc8in1_config->display->next;
-				free(reader->sc8in1_config->display->text);
-				free(reader->sc8in1_config->display);
-				reader->sc8in1_config->display = next;
-				cs_writeunlock(&reader->sc8in1_config->sc8in1_display_lock);
+			if (crdr_data->display->last_char == crdr_data->display->text_length) {
+				cs_writelock(&crdr_data->sc8in1_display_lock);
+				struct s_sc8in1_display *next = crdr_data->display->next;
+				free(crdr_data->display->text);
+				free(crdr_data->display);
+				crdr_data->display = next;
+				cs_writeunlock(&crdr_data->sc8in1_display_lock);
 			}
 		}
 		else {
-			cs_writeunlock(&reader->sc8in1_config->sc8in1_display_lock);
+			cs_writeunlock(&crdr_data->sc8in1_display_lock);
 		}
 		cs_sleepms(display_sleep);
 	}
@@ -526,6 +555,7 @@ static void* mcr_update_display_thread(void *param) {
 
 
 static int32_t readSc8in1Status(struct s_reader * reader) {
+	struct sc8in1_data *crdr_data = reader->crdr_data;
 	// Reads the card status
 	//
 	// the bits in the return bytes:
@@ -538,7 +568,7 @@ static int32_t readSc8in1Status(struct s_reader * reader) {
 	// bit6=1 means Slot7=Smartcard inside
 	// bit7=1 means Slot8=Smartcard inside
 	tcflush(reader->handle, TCIOFLUSH);
-	if (reader->sc8in1_config->mcr_type) {
+	if (crdr_data->mcr_type) {
 		unsigned char buff[2];
 		if (mcrReadStatus(reader, &buff[0])) {
 			return (-1);
@@ -562,7 +592,8 @@ static int32_t readSc8in1Status(struct s_reader * reader) {
 static int32_t Sc8in1_Selectslot(struct s_reader * reader, uint16_t slot) {
 	// selects the Smartcard Socket "slot"
 	//
-	if (slot == reader->sc8in1_config->current_slot)
+	struct sc8in1_data *crdr_data = reader->crdr_data;
+	if (slot == crdr_data->current_slot)
 		return OK;
 	rdr_debug_mask(reader, D_TRACE, "SC8in1: select slot %i", slot);
 
@@ -572,7 +603,7 @@ static int32_t Sc8in1_Selectslot(struct s_reader * reader, uint16_t slot) {
 #endif
 
 	int32_t status = ERROR;
-	if (reader->sc8in1_config->mcr_type) {
+	if (crdr_data->mcr_type) {
 		status = mcrSelectSlot(reader, slot);
 	}
 	else {
@@ -580,8 +611,8 @@ static int32_t Sc8in1_Selectslot(struct s_reader * reader, uint16_t slot) {
 	}
 
 	if (status == OK) {
-		reader->sc8in1_config->current_reader = reader;
-		reader->sc8in1_config->current_slot = slot;
+		crdr_data->current_reader = reader;
+		crdr_data->current_slot = slot;
 	}
 #ifdef WITH_DEBUG
 	gettimeofday(&tv_end,0);
@@ -606,20 +637,22 @@ static int32_t Sc8in1_Card_Changed(struct s_reader *reader) {
 
 static int32_t Sc8in1_GetStatus(struct s_reader *reader, int32_t *in) {
 	// Only same thread my access serial port
-	if ((reader->sc8in1_config->current_slot == reader->slot && Sc8in1_Card_Changed(reader)) || *in == -1) {
+	struct sc8in1_data *crdr_data = reader->crdr_data;
+	if ((crdr_data->current_slot == reader->slot && Sc8in1_Card_Changed(reader)) || *in == -1) {
 		int32_t i = readSc8in1Status(reader); //read cardstatus
 		if (i < 0) {
 			rdr_log(reader, "Sc8in1_GetStatus Error");
 			return ERROR;
 		}
-		reader->sc8in1_config->cardstatus = i;
-		rdr_debug_mask(reader, D_TRACE, "SC8in1: Card status changed; cardstatus=0x%X", reader->sc8in1_config->cardstatus);
+		crdr_data->cardstatus = i;
+		rdr_debug_mask(reader, D_TRACE, "SC8in1: Card status changed; cardstatus=0x%X", crdr_data->cardstatus);
 	}
-	*in = (reader->sc8in1_config->cardstatus & 1 << (reader->slot - 1));
+	*in = (crdr_data->cardstatus & 1 << (reader->slot - 1));
 	return OK;
 }
 
 static int32_t Sc8in1_Init(struct s_reader * reader) {
+	struct sc8in1_data *crdr_data = reader->crdr_data;
 	//additional init, Phoenix_Init is also called for Sc8in1 !
 	struct termios termio;
 	int32_t i, speed, retval;
@@ -634,13 +667,13 @@ static int32_t Sc8in1_Init(struct s_reader * reader) {
 	tcgetattr(reader->handle, &termio);
 	for (i = 0; i < 8; i++) {
 		//init all stored termios to default comm settings after device init, before ATR
-		memcpy(&reader->sc8in1_config->stored_termio[i], &termio,
+		memcpy(&crdr_data->stored_termio[i], &termio,
 				sizeof(termio));
 	}
 
 	// Init sc8in1 config
-	reader->sc8in1_config->mcr_type = 0;
-	reader->sc8in1_config->current_reader = reader;
+	crdr_data->mcr_type = 0;
+	crdr_data->current_reader = reader;
 
 	// check for a MCR device and how many slots it has.
 	unsigned char mcrType[1]; mcrType[0] = 0;
@@ -649,8 +682,8 @@ static int32_t Sc8in1_Init(struct s_reader * reader) {
 	mcrType[0] = 0;
 	if ( ! mcrReadType(reader, &mcrType[0]) ) {
 		if (mcrType[0] == 4 || mcrType[0] == 8) {
-			reader->sc8in1_config->mcr_type = mcrType[0];
-			rdr_log(reader, "SC8in1: MCR%u detected for device %s", reader->sc8in1_config->mcr_type, reader->device);
+			crdr_data->mcr_type = mcrType[0];
+			rdr_log(reader, "SC8in1: MCR%u detected for device %s", crdr_data->mcr_type, reader->device);
 
 			unsigned char version[1]; version[0] = 0;
 			if ( ! mcrReadVersion(reader, &version[0])) {
@@ -681,11 +714,11 @@ static int32_t Sc8in1_Init(struct s_reader * reader) {
 			}
 
 			// Start display thread
-			reader->sc8in1_config->display_running = 1;
+			crdr_data->display_running = 1;
 			pthread_attr_t attr;
 			pthread_attr_init(&attr);
 			pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
-			if (pthread_create(&reader->sc8in1_config->display_thread, &attr, mcr_update_display_thread, (void *)(reader)))
+			if (pthread_create(&crdr_data->display_thread, &attr, mcr_update_display_thread, (void *)(reader)))
 				rdr_log(reader, "ERROR: can't create MCR_DISPLAY_THREAD thread");
 			else {
 				rdr_log(reader, "MCR_DISPLAY_THREAD thread started");
@@ -694,7 +727,7 @@ static int32_t Sc8in1_Init(struct s_reader * reader) {
 		}
 	}
 
-	if ( ! reader->sc8in1_config->mcr_type ) {
+	if ( ! crdr_data->mcr_type ) {
 		tcflush(reader->handle, TCIOFLUSH); // a non MCR reader might give longer answer
 	}
 
@@ -703,9 +736,9 @@ static int32_t Sc8in1_Init(struct s_reader * reader) {
 	struct s_reader *rdr;
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while ((rdr = ll_iter_next(&itr))) //also do this for disabled readers, so we configure the clocks right for all readers
-		if (rdr->sc8in1_config == reader->sc8in1_config) { //corresponding slot
+		if (rdr->crdr_data == crdr_data) { //corresponding slot
 			//check slot boundaries
-			int32_t upper_slot = (reader->sc8in1_config->mcr_type) ? reader->sc8in1_config->mcr_type : 8; //set upper limit to 8 for non MCR readers
+			int32_t upper_slot = (crdr_data->mcr_type) ? crdr_data->mcr_type : 8; //set upper limit to 8 for non MCR readers
 			if (rdr->slot <= 0 || rdr->slot > upper_slot) {
 				rdr_log(reader, "ERROR: device %s has invalid slot number %i", rdr->device, rdr->slot);
 				return ERROR;
@@ -714,7 +747,7 @@ static int32_t Sc8in1_Init(struct s_reader * reader) {
 			// set initial current_baudrate which is needed by sc8in1_command
 			rdr->current_baudrate = reader->current_baudrate;
 
-			if (reader->sc8in1_config->mcr_type) {
+			if (crdr_data->mcr_type) {
 				//set RTS for every slot to 1 to prevent jitter/glitch detection problems
 				Sc8in1_DebugSignals(reader, rdr->slot, "I1");
 				mcrSelectSlot(reader, rdr->slot);
@@ -747,7 +780,7 @@ static int32_t Sc8in1_Init(struct s_reader * reader) {
 			}
 		}
 
-	if (reader->sc8in1_config->mcr_type) {
+	if (crdr_data->mcr_type) {
 		sc8in1_clock = ((sc8in1_clock & 0xFF) << 8) | ((sc8in1_clock & 0xFF00) >> 8);
 
 		//set clockspeeds for all slots
@@ -760,7 +793,7 @@ static int32_t Sc8in1_Init(struct s_reader * reader) {
 		// Clear RTS again
 		itr = ll_iter_create(configured_readers);
 		while ((rdr = ll_iter_next(&itr))) {
-			if (rdr->sc8in1_config == reader->sc8in1_config) {
+			if (rdr->crdr_data == crdr_data) {
 				Sc8in1_DebugSignals(reader, rdr->slot, "I4");
 				mcrSelectSlot(reader, rdr->slot);
 				Sc8in1_DebugSignals(reader, rdr->slot, "I5");
@@ -791,7 +824,7 @@ static int32_t Sc8in1_Init(struct s_reader * reader) {
 	i = -1; //Flag for GetStatus init
 	Sc8in1_GetStatus(reader, &i); //Initialize cardstatus
 	// Gimmick
-	if (reader->sc8in1_config->mcr_type) {
+	if (crdr_data->mcr_type) {
 		mcrHelloOscam(reader);
 	}
 
@@ -802,11 +835,12 @@ static int32_t Sc8in1_GetActiveHandle(struct s_reader *reader, uint8_t onlyEnabl
 	// Returns a handle to the serial port, if it exists in some other
 	// slot of the same physical reader.
 	// Or returns 0 otherwise.
+	struct sc8in1_data *crdr_data = reader->crdr_data;
 	struct s_reader *rdr;
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while ((rdr = ll_iter_next(&itr))) {
 		if (rdr->typ == R_SC8in1) {
-			if ((reader != rdr) && (reader->sc8in1_config == rdr->sc8in1_config)
+			if ((reader != rdr) && (crdr_data == rdr->crdr_data)
 					&& rdr->handle != 0 && (onlyEnabledReaders ? rdr->enable != 0 : 1)) {
 				return rdr->handle;
 			}
@@ -818,6 +852,7 @@ static int32_t Sc8in1_GetActiveHandle(struct s_reader *reader, uint8_t onlyEnabl
 static int32_t Sc8in1_Close(struct s_reader *reader) {
 	// Check if we are the last active slot for the reader,
 	// then close the serial port. Otherwise select next acive slot.
+	struct sc8in1_data *crdr_data = reader->crdr_data;
 	rdr_debug_mask(reader, D_IFD, "Closing SC8in1 device %s", reader->device);
 	bool status = ERROR;
 
@@ -826,11 +861,11 @@ static int32_t Sc8in1_Close(struct s_reader *reader) {
 		reader->written = 0;
 		status = OK;
 		// select next active reader slot, so getstatus still works
-		if (reader->sc8in1_config->current_slot == reader->slot) {
+		if (crdr_data->current_slot == reader->slot) {
 			struct s_reader *rdr;
 			for (rdr=first_active_reader; rdr; rdr=rdr->next) {
 				if (rdr->typ == R_SC8in1) {
-					if ((reader != rdr) && (reader->sc8in1_config == rdr->sc8in1_config)
+					if ((reader != rdr) && (crdr_data == rdr->crdr_data)
 							&& rdr->handle != 0) {
 						status = Sc8in1_Selectslot(rdr, rdr->slot);
 						break;
@@ -839,17 +874,17 @@ static int32_t Sc8in1_Close(struct s_reader *reader) {
 			}
 		}
 	} else {
-		if (reader->sc8in1_config->mcr_type) {
+		if (crdr_data->mcr_type) {
 			// disable reader threads
-			reader->sc8in1_config->display_running = 0;
-			pthread_join(reader->sc8in1_config->display_thread, NULL);
+			crdr_data->display_running = 0;
+			pthread_join(crdr_data->display_thread, NULL);
 		}
 		// disable other slots
 		struct s_reader *rdr;
 		LL_ITER itr = ll_iter_create(configured_readers);
 		while ((rdr = ll_iter_next(&itr))) {
 			if (rdr->typ == R_SC8in1) {
-				if ((reader != rdr) && (reader->sc8in1_config == rdr->sc8in1_config)) {
+				if ((reader != rdr) && (crdr_data == rdr->crdr_data)) {
 					rdr->handle = 0;
 				}
 			}
@@ -903,8 +938,8 @@ static int32_t Sc8in1_InitLocks(struct s_reader * reader) {
 			if (!strcmp(reader->device, rdr->device)) { //we have a match to another slot with same device name
 				rdr->device[pos] = save; //restore character
 				Sc8in1_SetSlotForReader(rdr);
-				if (rdr->sc8in1_config) {
-					reader->sc8in1_config = rdr->sc8in1_config;
+				if (rdr->crdr_data) {
+					reader->crdr_data = rdr->crdr_data;
 					reader_config_exists = 1;
 					rdr_debug_mask(reader, D_DEVICE, "Sc8in1_InitLocks: Found config for %s", reader->device);
 				}
@@ -921,16 +956,15 @@ static int32_t Sc8in1_InitLocks(struct s_reader * reader) {
 	if (!reader_config_exists) {
 		rdr_debug_mask(reader, D_DEVICE, "Sc8in1_InitLocks: Creating new config for %s", reader->device);
 		// Create SC8in1_Config for reader
-		struct s_sc8in1_config *sc8in1_config;
-		if (cs_malloc(&sc8in1_config, sizeof(struct s_sc8in1_config))) {
-			reader->sc8in1_config = sc8in1_config;
+		if (cs_malloc(&reader->crdr_data, sizeof(struct sc8in1_data))) {
+			struct sc8in1_data *crdr_data = reader->crdr_data;
 			char *buff = NULL, *buff2 = NULL;
 			if (cs_malloc(&buff, 128))
 				snprintf(buff, 128, "sc8in1_lock_%s", reader->device);
 			if (cs_malloc(&buff2, 128))
 				snprintf(buff2, 128, "display_sc8in1_lock_%s", reader->device);
-			cs_lock_create(&reader->sc8in1_config->sc8in1_lock, 40, ESTR(buff));
-			cs_lock_create(&reader->sc8in1_config->sc8in1_display_lock, 10, ESTR(buff2));
+			cs_lock_create(&crdr_data->sc8in1_lock, 40, ESTR(buff));
+			cs_lock_create(&crdr_data->sc8in1_display_lock, 10, ESTR(buff2));
 		} else {
 			reader->device[pos] = savePos;
 			rdr_log(reader, "sc8in1: Out of memory.");
@@ -944,18 +978,21 @@ static int32_t Sc8in1_InitLocks(struct s_reader * reader) {
 }
 
 static void sc8in1_lock(struct s_reader *reader) {
-	cs_writelock(&reader->sc8in1_config->sc8in1_lock);
+	struct sc8in1_data *crdr_data = reader->crdr_data;
+	cs_writelock(&crdr_data->sc8in1_lock);
 	rdr_debug_mask(reader, D_ATR, "Locked for access of slot %i", reader->slot);
 	Sc8in1_Selectslot(reader, reader->slot);
 }
 
 static void sc8in1_unlock(struct s_reader *reader) {
-	cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+	struct sc8in1_data *crdr_data = reader->crdr_data;
+	cs_writeunlock(&crdr_data->sc8in1_lock);
 	rdr_debug_mask(reader, D_ATR, "Unlocked for access of slot %i", reader->slot);
 }
 
 static void sc8in1_display(struct s_reader *reader, char *message) {
-	if (!reader->sc8in1_config->mcr_type)
+	struct sc8in1_data *crdr_data = reader->crdr_data;
+	if (!crdr_data->mcr_type)
 		return;
 	char msg[4] = "   ";
 	if (strlen(message) >= 3) {
@@ -968,10 +1005,11 @@ static void sc8in1_display(struct s_reader *reader, char *message) {
 }
 
 static int32_t sc8in1_init(struct s_reader *reader) {
-	cs_writelock(&reader->sc8in1_config->sc8in1_lock);
+	struct sc8in1_data *crdr_data = reader->crdr_data;
+	cs_writelock(&crdr_data->sc8in1_lock);
 	if (reader->handle != 0) {//this reader is already initialized
 		rdr_debug_mask(reader, D_DEVICE, "%s Sc8in1 already open", __func__);
-		cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+		cs_writeunlock(&crdr_data->sc8in1_lock);
 		return OK;
 	}
 	//get physical device name
@@ -990,23 +1028,23 @@ static int32_t sc8in1_init(struct s_reader *reader) {
 		if (reader->handle < 0) {
 			rdr_log(reader, "ERROR: Opening device %s with real device %s (errno=%d %s)", reader->device, deviceName, errno, strerror(errno));
 			reader->handle = 0;
-			cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+			cs_writeunlock(&crdr_data->sc8in1_lock);
 			return ERROR;
 		}
 	} else {
 		// serial port already initialized
 		rdr_debug_mask(reader, D_DEVICE, "%s another Sc8in1 already open", __func__);
-		cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+		cs_writeunlock(&crdr_data->sc8in1_lock);
 		return OK;
 	}
 	if (Phoenix_Init(reader)) {
 		rdr_log(reader, "ERROR: Phoenix_Init returns error");
 		Phoenix_Close (reader);
-		cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+		cs_writeunlock(&crdr_data->sc8in1_lock);
 		return ERROR;
 	}
 	int32_t ret = Sc8in1_Init(reader);
-	cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+	cs_writeunlock(&crdr_data->sc8in1_lock);
 	if (ret) {
 		rdr_log(reader, "ERROR: Sc8in1_Init returns error");
 		return ERROR;
@@ -1015,18 +1053,20 @@ static int32_t sc8in1_init(struct s_reader *reader) {
 }
 
 static int32_t sc8in1_close(struct s_reader *reader) {
-	cs_writelock(&reader->sc8in1_config->sc8in1_lock);
+	struct sc8in1_data *crdr_data = reader->crdr_data;
+	cs_writelock(&crdr_data->sc8in1_lock);
 	int32_t retval = Sc8in1_Close(reader);
-	cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+	cs_writeunlock(&crdr_data->sc8in1_lock);
 	if (retval == ERROR)
 		return ERROR;
 	return OK;
 }
 
 static int32_t sc8in1_get_status(struct s_reader *reader, int32_t *in) {
-	cs_writelock(&reader->sc8in1_config->sc8in1_lock);
+	struct sc8in1_data *crdr_data = reader->crdr_data;
+	cs_writelock(&crdr_data->sc8in1_lock);
 	int32_t ret = Sc8in1_GetStatus(reader, in);
-	cs_writeunlock(&reader->sc8in1_config->sc8in1_lock);
+	cs_writeunlock(&crdr_data->sc8in1_lock);
 	return ret;
 }
 
