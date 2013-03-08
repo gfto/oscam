@@ -693,6 +693,10 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR *newatr)
 		}
 		rdr_log(reader, "rsa key configured -> using nagra mode");
 		is_pure_nagra=1;
+		if (!cs_malloc(&reader->csystem_data, sizeof(struct nagra_data)))
+			return ERROR;
+		struct nagra_data *csystem_data = reader->csystem_data;
+		csystem_data->is_pure_nagra = is_pure_nagra;
 		if(!do_cmd(reader, 0x10,0x02,0x90,0x11,0,cta_res,&cta_lr))
 		{
 			rdr_debug_mask(reader, D_READER, "get rom version failed");
@@ -702,8 +706,11 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR *newatr)
 	}
 	else return ERROR;
 
-	if (!cs_malloc(&reader->csystem_data, sizeof(struct nagra_data)))
-		return ERROR;
+	// Private data may be already allocated, see above (the irdeto check).
+	if (!reader->csystem_data) {
+		if (!cs_malloc(&reader->csystem_data, sizeof(struct nagra_data)))
+			return ERROR;
+	}
 	struct nagra_data *csystem_data = reader->csystem_data;
 	csystem_data->is_pure_nagra = is_pure_nagra;
 	csystem_data->is_tiger      = is_tiger;
