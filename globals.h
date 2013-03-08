@@ -1223,9 +1223,6 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t			emmblocked[4];					// count blocked EMM
 	int32_t			lbvalue;						// loadbalance Value
 #endif
-#ifdef CARDREADER_SMART
-	struct s_sr_config *sr_config;
-#endif
 #ifdef WITH_AZBOX
 	int32_t			azbox_mode;
 #endif
