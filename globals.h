@@ -1571,7 +1571,6 @@ struct s_config
 #ifdef MODULE_SERIAL
 	char			*ser_device;
 #endif
-	uint32_t		srtimeout;						// SerialReaderTimeount in millisec
 	int32_t			max_log_size;
 	int8_t			waitforcards;
 	int32_t			waitforcards_extra_delay;

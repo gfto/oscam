@@ -193,12 +193,8 @@ void global_fixups_fn(void *UNUSED(var)) {
 		SetPriorityClass(WinId, wprio);
 #endif
 	}
-	if (cfg.srtimeout <= 0) cfg.srtimeout = 1500;
-	if (cfg.srtimeout < 100) cfg.srtimeout *= 1000;
 	if (cfg.max_log_size != 0 && cfg.max_log_size <= 10) cfg.max_log_size = 10;
 	if (cfg.ftimeout >= cfg.ctimeout) cfg.ftimeout = cfg.ctimeout - 100;
-	if (cfg.ftimeout < cfg.srtimeout) cfg.ftimeout = cfg.srtimeout + 100;
-	if (cfg.ctimeout < cfg.srtimeout) cfg.ctimeout = cfg.srtimeout + 100;
 #ifdef WITH_LB
 	if (cfg.lb_save > 0 && cfg.lb_save < 100) cfg.lb_save = 100;
 	if (cfg.lb_nbest_readers < 2) cfg.lb_nbest_readers = DEFAULT_NBEST;
@@ -232,7 +228,6 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_INT32("sleep"					, OFS(tosleep),				0 ),
 	DEF_OPT_INT32("unlockparental"			, OFS(ulparent),			0 ),
 	DEF_OPT_INT32("nice"					, OFS(nice),				99 ),
-	DEF_OPT_UINT32("serialreadertimeout"	, OFS(srtimeout),			1500 ),
 	DEF_OPT_INT32("maxlogsize"				, OFS(max_log_size),		10 ),
 	DEF_OPT_INT8("waitforcards"				, OFS(waitforcards),		1 ),
 	DEF_OPT_INT32("waitforcards_extra_delay"	, OFS(waitforcards_extra_delay), 500 ),

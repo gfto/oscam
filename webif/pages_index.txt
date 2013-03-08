@@ -103,7 +103,6 @@ SCRIPT                        script/script.html
 GRAPH                         graph/graph.svg
 ASKEMM                        emm/emm.html
 EMM_RUNNING                   emm_running/emm_running.html
-SERIALREADERTIMEOUT           config/global_serialreadertimeout.html                      MODULE_SERIAL
 CONFIGDVBAPI                  config/dvbapi.html                                          HAVE_DVBAPI
 CONFIGMENUDVBAPI              config/menu_dvbapi.html                                     HAVE_DVBAPI
 FILEMENUDVBAPI                files/menu_dvbapi.html                                      HAVE_DVBAPI

@@ -768,16 +768,6 @@ static void monitor_set_server(char *args){
 		snprintf(buf, sizeof(buf), "[S-0000]setserver WARNING: fallbacktimeout adjusted to %u ms\n", cfg.ftimeout);
 		monitor_send_info(buf, 1);
 	}
-	if(cfg.ftimeout < cfg.srtimeout) {
-		cfg.ftimeout = cfg.srtimeout + 100;
-		snprintf(buf, sizeof(buf), "[S-0000]setserver WARNING: fallbacktimeout adjusted to %u ms\n", cfg.ftimeout);
-		monitor_send_info(buf, 1);
-	}
-	if(cfg.ctimeout < cfg.srtimeout) {
-		cfg.ctimeout = cfg.srtimeout + 100;
-		snprintf(buf, sizeof(buf), "[S-0000]setserver WARNING: clienttimeout adjusted to %u ms\n", cfg.ctimeout);
-		monitor_send_info(buf, 1);
-	}
 	//kill(first_client->pid, SIGUSR1);
 }
 
