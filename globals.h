@@ -126,22 +126,6 @@ typedef unsigned char uchar;
  #endif
 #endif
 
-#ifdef CARDREADER_PCSC
-  #if defined(__CYGWIN__)
-    #define __reserved
-    #define __nullnullterminated
-    #include <specstrings.h>
-    #include "extapi/cygwin/WinSCard.h"
-  #else
-    #include <PCSC/pcsclite.h>
-    #if defined(__APPLE__)
-        #include <PCSC/wintypes.h>
-    #else
-        #include <PCSC/reader.h>
-    #endif
-  #endif
-#endif
-
 /* ===========================
  *         macros
  * =========================== */
@@ -1238,13 +1222,6 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t			emmerror[4];					// count error EMM
 	int32_t			emmblocked[4];					// count blocked EMM
 	int32_t			lbvalue;						// loadbalance Value
-#endif
-#ifdef CARDREADER_PCSC
-	char			pcsc_name[128];
-	int8_t			pcsc_has_card;
-	SCARDCONTEXT	hContext;
-	SCARDHANDLE		hCard;
-	DWORD			dwActiveProtocol;
 #endif
 #ifdef CARDREADER_SMART
 	struct s_sr_config *sr_config;
