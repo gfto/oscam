@@ -292,22 +292,21 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 	int32_t flag = 1;
 	setsockopt(client->udp_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&flag, sizeof(flag));
 
-	if (client->reader->l_port>0) {
-		memset((char *)&loc_sa,0,sizeof(loc_sa));
-		loc_sa.sin_family = AF_INET;
-		if (IP_ISSET(cfg.srvip))
-			IP_ASSIGN(SIN_GET_ADDR(loc_sa), cfg.srvip);
-		else
-			loc_sa.sin_addr.s_addr = INADDR_ANY;
+	memset((char *)&loc_sa,0,sizeof(loc_sa));
+	loc_sa.sin_family = AF_INET;
+	if (IP_ISSET(cfg.srvip))
+		IP_ASSIGN(SIN_GET_ADDR(loc_sa), cfg.srvip);
+	else
+		loc_sa.sin_addr.s_addr = INADDR_ANY;
 
+	if (client->reader->l_port)
 		loc_sa.sin_port = htons(client->reader->l_port);
-		if (bind(client->udp_fd, (struct sockaddr *)&loc_sa, sizeof (loc_sa))<0) {
-			rdr_log(rdr, "bind failed (errno=%d %s)", errno, strerror(errno));
-			close(client->udp_fd);
-			client->udp_fd = 0;
-			block_connect(rdr);
-			return -1;
-		}
+	if (bind(client->udp_fd, (struct sockaddr *)&loc_sa, sizeof (loc_sa))<0) {
+		rdr_log(rdr, "bind failed (errno=%d %s)", errno, strerror(errno));
+		close(client->udp_fd);
+		client->udp_fd = 0;
+		block_connect(rdr);
+		return -1;
 	}
 
 #ifdef IPV6SUPPORT

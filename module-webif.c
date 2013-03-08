@@ -5287,7 +5287,10 @@ static void *http_srv(void) {
 
 	memset(&sin, 0, sizeof sin);
 	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = INADDR_ANY;
+	if (IP_ISSET(cfg.srvip))
+		IP_ASSIGN(SIN_GET_ADDR(sin), cfg.srvip);
+	else
+		sin.sin_addr.s_addr = INADDR_ANY;
 	sin.sin_port = htons(cfg.http_port);
 	if((bind(sock, (struct sockaddr *) &sin, sizeof(sin))) < 0) {
 		cs_log("HTTP Server couldn't bind on port %d (errno=%d %s). Not starting HTTP!", cfg.http_port, errno, strerror(errno));
