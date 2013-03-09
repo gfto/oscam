@@ -286,54 +286,56 @@ static void dump_binary(char *ident, uint8_t *buf, size_t buf_len) {
 }
 #endif
 
+static void generate_pages_h(void) {
+	FILE *f = xfopen(output_pages_h, "w");
+	fprintf(f, "#ifndef WEBIF_PAGES_H_\n");
+	fprintf(f, "#define WEBIF_PAGES_H_\n");
+	fprintf(f, "\n");
+	fprintf(f, "enum template_types {\n");
+	fprintf(f, "	TEMPLATE_TYPE_TEXT = 0,\n");
+	fprintf(f, "	TEMPLATE_TYPE_PNG  = 1,\n");
+	fprintf(f, "	TEMPLATE_TYPE_GIF  = 2,\n");
+	fprintf(f, "	TEMPLATE_TYPE_ICO  = 3,\n");
+	fprintf(f, "	TEMPLATE_TYPE_JPG  = 4,\n");
+	fprintf(f, "};\n");
+	fprintf(f, "\n");
+#ifdef USE_COMPRESSION
+	fprintf(f, "#define COMPRESSED_TEMPLATES 1\n\n");
+	fprintf(f, "struct template {\n");
+	fprintf(f, "	uint32_t tpl_name_ofs;\n");
+	fprintf(f, "	uint32_t tpl_data_ofs;\n");
+	fprintf(f, "	uint32_t tpl_deps_ofs;\n");
+	fprintf(f, "	uint32_t tpl_data_len;\n");
+	fprintf(f, "	uint8_t tpl_type;\n");
+	fprintf(f, "	uint8_t tpl_id;\n");
+	fprintf(f, "};\n");
+#else
+	fprintf(f, "struct template {\n");
+	fprintf(f, "	char *tpl_name;\n");
+	fprintf(f, "	char *tpl_data;\n");
+	fprintf(f, "	char *tpl_deps;\n");
+	fprintf(f, "	uint32_t tpl_data_len;\n");
+	fprintf(f, "	uint8_t tpl_type;\n");
+	fprintf(f, "	uint8_t tpl_id;\n");
+	fprintf(f, "};\n");
+#endif
+	fprintf(f, "\n");
+	fprintf(f, "int32_t templates_count(void);\n");
+	fprintf(f, "bool template_is_image(enum template_types tpl_type);\n");
+	fprintf(f, "const char *template_get_mimetype(enum template_types tpl_type);\n");
+	fprintf(f, "const struct template *templates_get(void);\n");
+#ifdef USE_COMPRESSION
+	fprintf(f, "void templates_get_data(const char **data, size_t *data_len, size_t *odata_len);\n");
+#endif
+	fprintf(f, "\n");
+	fprintf(f, "#endif\n");
+	fclose(f);
+}
+
 int main(void) {
 	int i;
 
 	parse_index_file(index_filename);
-
-	output_file = xfopen(output_pages_h, "w");
-	fprintf(output_file, "#ifndef WEBIF_PAGES_H_\n");
-	fprintf(output_file, "#define WEBIF_PAGES_H_\n");
-	fprintf(output_file, "\n");
-	fprintf(output_file, "enum template_types {\n");
-	fprintf(output_file, "	TEMPLATE_TYPE_TEXT = 0,\n");
-	fprintf(output_file, "	TEMPLATE_TYPE_PNG  = 1,\n");
-	fprintf(output_file, "	TEMPLATE_TYPE_GIF  = 2,\n");
-	fprintf(output_file, "	TEMPLATE_TYPE_ICO  = 3,\n");
-	fprintf(output_file, "	TEMPLATE_TYPE_JPG  = 4,\n");
-	fprintf(output_file, "};\n");
-	fprintf(output_file, "\n");
-#ifdef USE_COMPRESSION
-	fprintf(output_file, "#define COMPRESSED_TEMPLATES 1\n\n");
-	fprintf(output_file, "struct template {\n");
-	fprintf(output_file, "	uint32_t tpl_name_ofs;\n");
-	fprintf(output_file, "	uint32_t tpl_data_ofs;\n");
-	fprintf(output_file, "	uint32_t tpl_deps_ofs;\n");
-	fprintf(output_file, "	uint32_t tpl_data_len;\n");
-	fprintf(output_file, "	uint8_t tpl_type;\n");
-	fprintf(output_file, "	uint8_t tpl_id;\n");
-	fprintf(output_file, "};\n");
-#else
-	fprintf(output_file, "struct template {\n");
-	fprintf(output_file, "	char *tpl_name;\n");
-	fprintf(output_file, "	char *tpl_data;\n");
-	fprintf(output_file, "	char *tpl_deps;\n");
-	fprintf(output_file, "	uint32_t tpl_data_len;\n");
-	fprintf(output_file, "	uint8_t tpl_type;\n");
-	fprintf(output_file, "	uint8_t tpl_id;\n");
-	fprintf(output_file, "};\n");
-#endif
-	fprintf(output_file, "\n");
-	fprintf(output_file, "int32_t templates_count(void);\n");
-	fprintf(output_file, "bool template_is_image(enum template_types tpl_type);\n");
-	fprintf(output_file, "const char *template_get_mimetype(enum template_types tpl_type);\n");
-	fprintf(output_file, "const struct template *templates_get(void);\n");
-#ifdef USE_COMPRESSION
-	fprintf(output_file, "void templates_get_data(const char **data, size_t *data_len, size_t *odata_len);\n");
-#endif
-	fprintf(output_file, "\n");
-	fprintf(output_file, "#endif\n");
-	fclose(output_file);
 
 	output_file = xfopen(output_pages_c, "w");
 	fprintf(output_file, "#include \"../globals.h\"\n");
@@ -421,6 +423,8 @@ int main(void) {
 		free(buf);
 	}
 #endif
+
+	generate_pages_h();
 
 	fprintf(output_file, "static const struct template templates[] = {\n");
 	for (i = 0; i < templates.num; i++) {
