@@ -285,9 +285,9 @@ static void camd35_request_emm(ECM_REQUEST *er)
 			}
 		}
 		//we think client/server protocols should deliver all information, and only readers should discard EMM
-		mbuf[128] = (aureader->blockemm & EMM_GLOBAL) ? 0: 1;
-		mbuf[129] = (aureader->blockemm & EMM_SHARED) ? 0: 1;
-		mbuf[130] = (aureader->blockemm & EMM_UNIQUE) ? 0: 1;
+		mbuf[128] = (aureader->blockemm & EMM_GLOBAL && !(aureader->saveemm & EMM_GLOBAL)) ? 0: 1;
+		mbuf[129] = (aureader->blockemm & EMM_SHARED && !(aureader->saveemm & EMM_SHARED)) ? 0: 1;
+		mbuf[130] = (aureader->blockemm & EMM_UNIQUE && !(aureader->saveemm & EMM_UNIQUE)) ? 0: 1;
 		//mbuf[131] = aureader->card_system; //Cardsystem for Oscam client
 	}
 	else		// disable emm

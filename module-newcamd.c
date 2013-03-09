@@ -981,11 +981,11 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 
         if (aureader)
         {
-          if (aureader->blockemm & EMM_GLOBAL)
+          if (aureader->blockemm & EMM_GLOBAL && !(aureader->saveemm & EMM_GLOBAL))
             cd.sid |= 4;
-          if (aureader->blockemm & EMM_SHARED)
+          if (aureader->blockemm & EMM_SHARED && !(aureader->saveemm & EMM_SHARED))
             cd.sid |= 2;
-          if (aureader->blockemm & EMM_UNIQUE)
+          if (aureader->blockemm & EMM_UNIQUE && !(aureader->saveemm & EMM_UNIQUE))
             cd.sid |= 1;
         }
 
