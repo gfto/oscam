@@ -41,8 +41,8 @@ char    *tpl_printf(struct templatevars *vars, uint8_t addmode, char *varname, c
 char    *tpl_getVar(struct templatevars *vars, char *name);
 char    *tpl_getFilePathInSubdir(const char *path, const char* subdir, const char *name, const char* ext, char *result, uint32_t resultsize);
 char    *tpl_getTplPath(const char *name, const char *path, char *result, uint32_t resultsize);
-char    *tpl_getTpl(struct templatevars *vars, const char* name);
-char    *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const char* subdir);
+char    *tpl_getTpl(struct templatevars *vars, const unsigned char* name);
+char    *tpl_getUnparsedTpl(const unsigned char* name, int8_t removeHeader, const char* subdir);
 
 int32_t tpl_saveIncludedTpls(const char *path);
 

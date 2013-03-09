@@ -1,6 +1,7 @@
 #include "globals.h"
 
 #ifdef WEBIF
+#include "webif/pages.h"
 #include "cscrypt/md5.h"
 #include "module-webif-lib.h"
 #include "module-webif-tpl.h"
@@ -386,7 +387,7 @@ void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uin
 		if (filen == 1 && cfg.http_prepend_embedded_css) { // Prepend Embedded CSS
 			char* separator = "/* External CSS */";
 			char* oldallocated = allocated;
-			CSS = tpl_getUnparsedTpl("CSS", 1, "");
+			CSS = tpl_getUnparsedTpl(TPL_CSS, 1, "");
 			int32_t newsize = strlen(CSS) + strlen(separator) + 2;
 			if (oldallocated) newsize += strlen(oldallocated) + 1;
 			if (!cs_malloc(&allocated, newsize)) {
@@ -403,11 +404,11 @@ void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uin
 		if (allocated) result = allocated;
 
 	} else {
-		CSS = tpl_getUnparsedTpl("CSS", 1, "");
-		JSCRIPT = tpl_getUnparsedTpl("JSCRIPT", 1, "");
+		CSS = tpl_getUnparsedTpl(TPL_CSS, 1, "");
+		JSCRIPT = tpl_getUnparsedTpl(TPL_JSCRIPT, 1, "");
 #ifdef TOUCH
-		TOUCH_CSS = tpl_getUnparsedTpl("TOUCH_CSS", 1, "");
-		TOUCH_JSCRIPT = tpl_getUnparsedTpl("TOUCH_JSCRIPT", 1, "");
+		TOUCH_CSS = tpl_getUnparsedTpl(TPL_TOUCH_CSS, 1, "");
+		TOUCH_JSCRIPT = tpl_getUnparsedTpl(TPL_TOUCH_JSCRIPT, 1, "");
 		char* res_tpl = !subdir || strcmp(subdir, TOUCH_SUBDIR)
 			? (filen == 1 ? CSS : JSCRIPT)
 			: (filen == 1 ? TOUCH_CSS : TOUCH_JSCRIPT);

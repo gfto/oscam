@@ -5,6 +5,7 @@
 // OSCam HTTP server module
 //
 
+#include "webif/pages.h"
 #include "module-anticasc.h"
 #include "module-cacheex.h"
 #include "module-cccam.h"
@@ -334,7 +335,7 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "ENABLELEDSELECTED2", "selected");
 #endif
 
-	return tpl_getTpl(vars, "CONFIGGLOBAL");
+	return tpl_getTpl(vars, TPL_CONFIGGLOBAL);
 }
 
 #ifdef WITH_LB
@@ -423,7 +424,7 @@ static char *send_oscam_config_loadbalancer(struct templatevars *vars, struct ur
 	tpl_printf(vars, TPLADD, "LBAUTOTIMEOUTP", "%d", cfg.lb_auto_timeout_p);
 	tpl_printf(vars, TPLADD, "LBAUTOTIMEOUTT", "%d", cfg.lb_auto_timeout_t);
 	
-	return tpl_getTpl(vars, "CONFIGLOADBALANCER");
+	return tpl_getTpl(vars, TPL_CONFIGLOADBALANCER);
 }
 #endif
 
@@ -446,7 +447,7 @@ static char *send_oscam_config_camd33(struct templatevars *vars, struct uriparam
 		free_mk_t(value);
 	}
 
-	return tpl_getTpl(vars, "CONFIGCAMD33");
+	return tpl_getTpl(vars, TPL_CONFIGCAMD33);
 }
 #endif
 
@@ -465,7 +466,7 @@ static char *send_oscam_config_camd35(struct templatevars *vars, struct uriparam
 			tpl_addVar(vars, TPLADD, "SUPPRESSCMD08UDP", "checked");
 
 	}
-	return tpl_getTpl(vars, "CONFIGCAMD35");
+	return tpl_getTpl(vars, TPL_CONFIGCAMD35);
 }
 #endif
 
@@ -487,7 +488,7 @@ static char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uripa
 		if (cfg.c35_tcp_suppresscmd08)
 			tpl_addVar(vars, TPLADD, "SUPPRESSCMD08TCP", "checked");
 	}
-	return tpl_getTpl(vars, "CONFIGCAMD35TCP");
+	return tpl_getTpl(vars, TPL_CONFIGCAMD35TCP);
 }
 #endif
 
@@ -557,7 +558,7 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 	}
 #endif
 
-	return tpl_getTpl(vars, "CONFIGCACHE");
+	return tpl_getTpl(vars, TPL_CONFIGCACHE);
 }
 
 #ifdef MODULE_NEWCAMD
@@ -589,7 +590,7 @@ static char *send_oscam_config_newcamd(struct templatevars *vars, struct uripara
 		if (cfg.ncd_mgclient)
 			tpl_addVar(vars, TPLADD, "MGCLIENTCHK", "checked");
 	}
-	return tpl_getTpl(vars, "CONFIGNEWCAMD");
+	return tpl_getTpl(vars, TPL_CONFIGNEWCAMD);
 }
 #endif
 
@@ -608,7 +609,7 @@ static char *send_oscam_config_radegast(struct templatevars *vars, struct uripar
 	tpl_addVar(vars, TPLADD, "ALLOWED", value);
 	free_mk_t(value);
 
-	return tpl_getTpl(vars, "CONFIGRADEGAST");
+	return tpl_getTpl(vars, TPL_CONFIGRADEGAST);
 }
 #endif
 
@@ -680,7 +681,7 @@ static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams
 		tpl_addVar(vars, TPLADD, "KEEPCONNECTED", "selected");
 
 
-	return tpl_getTpl(vars, "CONFIGCCCAM");
+	return tpl_getTpl(vars, TPL_CONFIGCCCAM);
 }
 #endif
 
@@ -772,7 +773,7 @@ static char *send_oscam_config_webif(struct templatevars *vars, struct uriparams
 	if (cfg.appendchaninfo)
 		tpl_addVar(vars, TPLADD, "APPENDCHANINFO", "checked");
 
-	return tpl_getTpl(vars, "CONFIGWEBIF");
+	return tpl_getTpl(vars, TPL_CONFIGWEBIF);
 }
 
 #ifdef LCDSUPPORT
@@ -789,7 +790,7 @@ static char *send_oscam_config_lcd(struct templatevars *vars, struct uriparams *
 		tpl_addVar(vars, TPLADD, "LCDHIDEIDLE", "selected");
 	tpl_printf(vars, TPLADD, "LCDREFRESHINTERVAL", "%d", cfg.lcd_write_intervall);
 
-	return tpl_getTpl(vars, "CONFIGLCD");
+	return tpl_getTpl(vars, TPL_CONFIGLCD);
 }
 #endif
 
@@ -816,7 +817,7 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 	tpl_printf(vars, TPLADD, "TMP", "MONSELECTED%d", cfg.mon_level);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
-	return tpl_getTpl(vars, "CONFIGMONITOR");
+	return tpl_getTpl(vars, TPL_CONFIGMONITOR);
 }
 #endif
 
@@ -833,14 +834,14 @@ static char *send_oscam_config_serial(struct templatevars *vars, struct uriparam
 		char delimiter[2]; delimiter[0] = 1; delimiter[1] = '\0';
 		for(ptr = strtok_r(sdevice, delimiter, &saveptr1); ptr; ptr = strtok_r(NULL, delimiter, &saveptr1)){
 			tpl_addVar(vars, TPLADD, "SERIALDEVICE", xml_encode(vars, ptr));
-			tpl_addVar(vars, TPLAPPEND, "DEVICES", tpl_getTpl(vars, "CONFIGSERIALDEVICEBIT"));
+			tpl_addVar(vars, TPLAPPEND, "DEVICES", tpl_getTpl(vars, TPL_CONFIGSERIALDEVICEBIT));
 		}
 	}
 
 	tpl_addVar(vars, TPLADD, "SERIALDEVICE", "");
-	tpl_addVar(vars, TPLAPPEND, "DEVICES", tpl_getTpl(vars, "CONFIGSERIALDEVICEBIT"));
+	tpl_addVar(vars, TPLAPPEND, "DEVICES", tpl_getTpl(vars, TPL_CONFIGSERIALDEVICEBIT));
 
-	return tpl_getTpl(vars, "CONFIGSERIAL");
+	return tpl_getTpl(vars, TPL_CONFIGSERIAL);
 }
 #endif
 
@@ -884,7 +885,7 @@ static char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparam
 	tpl_printf(vars, TPLADD, "TMP", "REQMODESELECTED%d", cfg.dvbapi_requestmode);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
-	return tpl_getTpl(vars, "CONFIGDVBAPI");
+	return tpl_getTpl(vars, TPL_CONFIGDVBAPI);
 }
 #endif
 
@@ -906,7 +907,7 @@ static char *send_oscam_config_anticasc(struct templatevars *vars, struct uripar
 		tpl_addVar(vars, TPLADD, "ACLOGFILE", cfg.ac_logfile);
 	tpl_printf(vars, TPLADD, "FAKEDELAY", "%d", cfg.ac_fakedelay);
 	tpl_printf(vars, TPLADD, "DENYSAMPLES", "%d", cfg.ac_denysamples);
-	return tpl_getTpl(vars, "CONFIGANTICASC");
+	return tpl_getTpl(vars, TPL_CONFIGANTICASC);
 }
 #endif
 
@@ -1077,14 +1078,14 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 #endif
 				if (!is_network_reader(rdr)) { //reader is physical
 					tpl_addVar(vars, TPLADD, "REFRICO", "image?i=ICREF");
-					tpl_addVar(vars, TPLADD, "READERREFRESH", tpl_getTpl(vars, "READERREFRESHBIT"));
+					tpl_addVar(vars, TPLADD, "READERREFRESH", tpl_getTpl(vars, TPL_READERREFRESHBIT));
 					tpl_addVar(vars, TPLADD, "ENTICO", "image?i=ICENT");
-					tpl_addVar(vars, TPLADD, "ENTITLEMENT", tpl_getTpl(vars, "READERENTITLEBIT"));
+					tpl_addVar(vars, TPLADD, "ENTITLEMENT", tpl_getTpl(vars, TPL_READERENTITLEBIT));
 				} else {
 					tpl_addVar(vars, TPLADD, "READERREFRESH","");
 					if (rdr->typ == R_CCCAM) {
 						tpl_addVar(vars, TPLADD, "ENTICO", "image?i=ICENT");
-						tpl_addVar(vars, TPLADD, "ENTITLEMENT", tpl_getTpl(vars, "READERENTITLEBIT"));
+						tpl_addVar(vars, TPLADD, "ENTITLEMENT", tpl_getTpl(vars, TPL_READERENTITLEBIT));
 					} else {
 						tpl_addVar(vars, TPLADD, "ENTITLEMENT","");
 					}
@@ -1101,11 +1102,11 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 					tpl_addVar(vars, TPLADD, "SWITCH", "disable");
 					
 					tpl_addVar(vars, TPLADD, "EMMICO", "image?i=ICEMM");
-					tpl_addVar(vars, TPLADD, "WRITEEMM", tpl_getTpl(vars, "READERWRITEEMMBIT"));
+					tpl_addVar(vars, TPLADD, "WRITEEMM", tpl_getTpl(vars, TPL_READERWRITEEMMBIT));
 				}
 
 				// Add to WebIf Template
-				tpl_addVar(vars, TPLAPPEND, "READERLIST", tpl_getTpl(vars, "READERSBIT"));
+				tpl_addVar(vars, TPLAPPEND, "READERLIST", tpl_getTpl(vars, TPL_READERSBIT));
 
 			} else {
 
@@ -1115,7 +1116,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 					tpl_printf(vars, TPLADD, "APIREADERTYPE", "%c", cl->typ ? cl->typ :'x');
 
 				// Add to API Template
-				tpl_addVar(vars, TPLAPPEND, "APIREADERLIST", tpl_getTpl(vars, "APIREADERSBIT"));
+				tpl_addVar(vars, TPLAPPEND, "APIREADERLIST", tpl_getTpl(vars, TPL_APIREADERSBIT));
 			}
 		}
 	}
@@ -1154,9 +1155,9 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 			if (cardreaders[i].desc)
 				tpl_printf(vars, TPLAPPEND, "ADDPROTOCOL", "<option>%s</option>\n", xml_encode(vars, cardreaders[i].desc));
 		}
-		return tpl_getTpl(vars, "READERS");
+		return tpl_getTpl(vars, TPL_READERS);
 	} else {
-		return tpl_getTpl(vars, "APIREADERS");
+		return tpl_getTpl(vars, TPL_APIREADERS);
 	}
 }
 
@@ -1484,10 +1485,10 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 			tpl_addVar(vars, TPLADD, "SIDLABEL", xml_encode(vars, sidtab->label));
 			if(rdr->sidtabs.ok&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
 			else tpl_addVar(vars, TPLADD, "CHECKED", "");
-			tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, "READERCONFIGSIDOKBIT"));
+			tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, TPL_READERCONFIGSIDOKBIT));
 			if(rdr->sidtabs.no&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
 			else tpl_addVar(vars, TPLADD, "CHECKED", "");
-			tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, "READERCONFIGSIDNOBIT"));
+			tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, TPL_READERCONFIGSIDNOBIT));
 			sidtab=sidtab->next;
 			i++;
 		}
@@ -1620,27 +1621,27 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		case R_INTERNAL:
 		case R_SERIAL :
 		case R_PCSC :
-			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
+			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, TPL_READERCONFIGSTDHWREADERBIT));
 			break;
 		case R_CAMD35 :
-			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCAMD35BIT"));
+			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, TPL_READERCONFIGCAMD35BIT));
 			break;
 		case R_CS378X :
-			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCS378XBIT"));
+			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, TPL_READERCONFIGCS378XBIT));
 			break;
 		case R_RADEGAST:
-			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGRADEGASTBIT"));
+			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, TPL_READERCONFIGRADEGASTBIT));
 			break;
 		case R_NEWCAMD :
 			if ( rdr->ncd_proto == NCD_525 ){
-				tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGNCD525BIT"));
+				tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, TPL_READERCONFIGNCD525BIT));
 			} else if ( rdr->ncd_proto == NCD_524 ) {
-				tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGNCD524BIT"));
+				tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, TPL_READERCONFIGNCD524BIT));
 			}
 			break;
 #ifdef MODULE_CCCAM
 		case R_CCCAM :
-			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCCCAMBIT"));
+			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, TPL_READERCONFIGCCCAMBIT));
 			break;
 #endif
 		default :
@@ -1653,11 +1654,11 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 #ifdef MODULE_CCCAM
 	if(rdr->typ != R_CCCAM){
 		tpl_printf(vars, TPLADD, "CCCHOP", "%d", rdr->cc_hop);
-		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGHOPBIT"));
+		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, TPL_READERCONFIGHOPBIT));
 	}
 #endif
 
-	return tpl_getTpl(vars, "READERCONFIG");
+	return tpl_getTpl(vars, TPL_READERCONFIG);
 }
 
 static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
@@ -1679,9 +1680,9 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 	if(error){
 		tpl_addVar(vars, TPLAPPEND, "READERSTATSROW","<TR><TD colspan=\"8\"> No statistics found - Reader exist and active?</TD></TR>");
 		if(!apicall)
-			return tpl_getTpl(vars, "READERSTATS");
+			return tpl_getTpl(vars, TPL_READERSTATS);
 		else
-			return tpl_getTpl(vars, "APIREADERSTATS");
+			return tpl_getTpl(vars, TPL_APIREADERSTATS);
 	}
 
 #ifdef WITH_LB
@@ -1746,7 +1747,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 			tpl_addVar(vars, TPLADD, "EMMRESULT", "error");
 			tpl_addVar(vars, TPLADD, "EMMTYPE", ttxt[i]);
 			tpl_printf(vars, TPLADD, "EMMCOUNT", "%d", rdr->emmerror[i]);
-			tpl_addVar(vars, TPLAPPEND, "EMMSTATS", tpl_getTpl(vars, "APIREADERSTATSEMMBIT"));
+			tpl_addVar(vars, TPLAPPEND, "EMMSTATS", tpl_getTpl(vars, TPL_APIREADERSTATSEMMBIT));
 			emmcount += rdr->emmerror[i];
 			tpl_printf(vars, TPLADD, "TOTALERROR", "%d", emmcount);
 		}
@@ -1755,7 +1756,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 			tpl_addVar(vars, TPLADD, "EMMRESULT", "written");
 			tpl_addVar(vars, TPLADD, "EMMTYPE", ttxt[i]);
 			tpl_printf(vars, TPLADD, "EMMCOUNT", "%d", rdr->emmwritten[i]);
-			tpl_addVar(vars, TPLAPPEND, "EMMSTATS", tpl_getTpl(vars, "APIREADERSTATSEMMBIT"));
+			tpl_addVar(vars, TPLAPPEND, "EMMSTATS", tpl_getTpl(vars, TPL_APIREADERSTATSEMMBIT));
 			emmcount += rdr->emmwritten[i];
 			tpl_printf(vars, TPLADD, "TOTALWRITTEN", "%d", emmcount);
 		}
@@ -1764,7 +1765,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 			tpl_addVar(vars, TPLADD, "EMMRESULT", "skipped");
 			tpl_addVar(vars, TPLADD, "EMMTYPE", ttxt[i]);
 			tpl_printf(vars, TPLADD, "EMMCOUNT", "%d", rdr->emmskipped[i]);
-			tpl_addVar(vars, TPLAPPEND, "EMMSTATS", tpl_getTpl(vars, "APIREADERSTATSEMMBIT"));
+			tpl_addVar(vars, TPLAPPEND, "EMMSTATS", tpl_getTpl(vars, TPL_APIREADERSTATSEMMBIT));
 			emmcount += rdr->emmskipped[i];
 			tpl_printf(vars, TPLADD, "TOTALSKIPPED", "%d", emmcount);
 		}
@@ -1773,7 +1774,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 			tpl_addVar(vars, TPLADD, "EMMRESULT", "blocked");
 			tpl_addVar(vars, TPLADD, "EMMTYPE", ttxt[i]);
 			tpl_printf(vars, TPLADD, "EMMCOUNT", "%d", rdr->emmblocked[i]);
-			tpl_addVar(vars, TPLAPPEND, "EMMSTATS", tpl_getTpl(vars, "APIREADERSTATSEMMBIT"));
+			tpl_addVar(vars, TPLAPPEND, "EMMSTATS", tpl_getTpl(vars, TPL_APIREADERSTATSEMMBIT));
 			emmcount += rdr->emmblocked[i];
 			tpl_printf(vars, TPLADD, "TOTALBLOCKED", "%d", emmcount);
 		}
@@ -1870,23 +1871,23 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 
 				if (!apicall) {
 					if (s->rc == 4) {
-						tpl_addVar(vars, TPLAPPEND, "READERSTATSROWNOTFOUND", tpl_getTpl(vars, "READERSTATSBIT"));
+						tpl_addVar(vars, TPLAPPEND, "READERSTATSROWNOTFOUND", tpl_getTpl(vars, TPL_READERSTATSBIT));
 						tpl_addVar(vars, TPLADD, "READERSTATSNFHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"6\">Not found</TD>");
 						tpl_printf(vars, TPLAPPEND, "READERSTATSNFHEADLINE", "<TD CLASS=\"subheadline\" colspan=\"2\"><A HREF=\"readerstats.html?label=%s&amp;action=resetstat&amp;rc=4\">delete all %s</A></TD></TR>\n",
 								urlencode(vars, rdr->label),
 								stxt[s->rc]);
 					} else if (s->rc == 5) {
-						tpl_addVar(vars, TPLAPPEND, "READERSTATSROWTIMEOUT", tpl_getTpl(vars, "READERSTATSBIT"));
+						tpl_addVar(vars, TPLAPPEND, "READERSTATSROWTIMEOUT", tpl_getTpl(vars, TPL_READERSTATSBIT));
 						tpl_addVar(vars, TPLADD, "READERSTATSTOHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"6\">Timeout</TD>");
 						tpl_printf(vars, TPLAPPEND, "READERSTATSTOHEADLINE", "<TD CLASS=\"subheadline\" colspan=\"2\"><A HREF=\"readerstats.html?label=%s&amp;action=resetstat&amp;rc=5\">delete all %s</A></TD></TR>\n",
 								urlencode(vars, rdr->label),
 								stxt[s->rc]);
 					}
 					else
-						tpl_addVar(vars, TPLAPPEND, "READERSTATSROWFOUND", tpl_getTpl(vars, "READERSTATSBIT"));
+						tpl_addVar(vars, TPLAPPEND, "READERSTATSROWFOUND", tpl_getTpl(vars, TPL_READERSTATSBIT));
 				} else {
 
-					tpl_addVar(vars, TPLAPPEND, "ECMSTATS", tpl_getTpl(vars, "APIREADERSTATSECMBIT"));
+					tpl_addVar(vars, TPLAPPEND, "ECMSTATS", tpl_getTpl(vars, TPL_APIREADERSTATSECMBIT));
 				}
 			}
 		}
@@ -1918,9 +1919,9 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 	tpl_printf(vars, TPLADD, "TOTALECM", "%" PRIu64, ecmcount);
 
 	if(!apicall)
-		return tpl_getTpl(vars, "READERSTATS");
+		return tpl_getTpl(vars, TPL_READERSTATS);
 	else
-		return tpl_getTpl(vars, "APIREADERSTATS");
+		return tpl_getTpl(vars, TPL_APIREADERSTATS);
 }
 
 static char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
@@ -2070,10 +2071,10 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 			tpl_addVar(vars, TPLADD, "SIDLABEL", xml_encode(vars, sidtab->label));
 			if(account->sidtabs.ok&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
 			else tpl_addVar(vars, TPLADD, "CHECKED", "");
-			tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, "USEREDITSIDOKBIT"));
+			tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, TPL_USEREDITSIDOKBIT));
 			if(account->sidtabs.no&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
 			else tpl_addVar(vars, TPLADD, "CHECKED", "");
-			tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, "USEREDITSIDNOBIT"));
+			tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, TPL_USEREDITSIDNOBIT));
 			sidtab=sidtab->next;
 			i++;
 		}
@@ -2191,9 +2192,9 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	tpl_printf(vars, TPLADD, "FAILBAN", "%d", account->failban);
 
 	if(!apicall)
-		return tpl_getTpl(vars, "USEREDIT");
+		return tpl_getTpl(vars, TPL_USEREDIT);
 	else
-		return tpl_getTpl(vars, "APIUSEREDIT");
+		return tpl_getTpl(vars, TPL_APIUSEREDIT);
 
 }
 
@@ -2345,12 +2346,12 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	}
 
 	if ((strcmp(getParam(params, "part"), "adduser") == 0) && (!cfg.http_readonly)) {
-		tpl_addVar(vars, TPLAPPEND, "NEWUSERFORM", tpl_getTpl(vars, "ADDNEWUSER"));
+		tpl_addVar(vars, TPLAPPEND, "NEWUSERFORM", tpl_getTpl(vars, TPL_ADDNEWUSER));
 	} else {
 		if(cfg.http_refresh > 0) {
 			tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg.http_refresh);
 			tpl_addVar(vars, TPLADD, "REFRESHURL", "userconfig.html");
-			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
+			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, TPL_REFRESH));
 		}
 	}
 
@@ -2543,10 +2544,10 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 
 		// append row to table template
 		if (!apicall)
-			tpl_addVar(vars, TPLAPPEND, "USERCONFIGS", tpl_getTpl(vars, "USERCONFIGLISTBIT"));
+			tpl_addVar(vars, TPLAPPEND, "USERCONFIGS", tpl_getTpl(vars, TPL_USERCONFIGLISTBIT));
 		else
 			if (!filter || strcmp(filter, account->usr) == 0 || strcmp(filter, "all") == 0 || strlen(filter) == 0) {
-				tpl_addVar(vars, TPLAPPEND, "APIUSERCONFIGS", tpl_getTpl(vars, "APIUSERCONFIGLISTBIT"));
+				tpl_addVar(vars, TPLAPPEND, "APIUSERCONFIGS", tpl_getTpl(vars, TPL_APIUSERCONFIGLISTBIT));
 				++clientcount;
 			}
 	}
@@ -2578,13 +2579,13 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 
 
 	if (!apicall)
-		return tpl_getTpl(vars, "USERCONFIGLIST");
+		return tpl_getTpl(vars, TPL_USERCONFIGLIST);
 	else {
 		if (!filter || clientcount > 0) {
-			return tpl_getTpl(vars, "APIUSERCONFIGLIST");
+			return tpl_getTpl(vars, TPL_APIUSERCONFIGLIST);
 		} else {
 			tpl_printf(vars, TPLADD, "APIERRORMESSAGE", "Invalid client %s", xml_encode(vars, filter));
-			return tpl_getTpl(vars, "APIERROR");
+			return tpl_getTpl(vars, TPL_APIERROR);
 		}
 	}
 
@@ -2691,7 +2692,7 @@ static void print_cards(struct templatevars *vars, struct uriparams *params, str
 					tpl_printf(vars, TPLADD, "APIPROVIDERPROVID", "%06X", prov->prov);
 					tpl_printf(vars, TPLADD, "APIPROVIDERNUMBER", "%d", providercount);
 					tpl_addVar(vars, TPLADD, "APIPROVIDERNAME", xml_encode(vars, provider));
-					tpl_addVar(vars, TPLAPPEND, "PROVIDERLIST", tpl_getTpl(vars, "APICCCAMCARDPROVIDERBIT"));
+					tpl_addVar(vars, TPLAPPEND, "PROVIDERLIST", tpl_getTpl(vars, TPL_APICCCAMCARDPROVIDERBIT));
 
 				}
 				providercount++;
@@ -2713,16 +2714,16 @@ static void print_cards(struct templatevars *vars, struct uriparams *params, str
 				} else {
 					tpl_printf(vars, TPLADD, "APINODE", "%02X%02X%02X%02X%02X%02X%02X%02X", node[0], node[1], node[2], node[3], node[4], node[5], node[6], node[7]);
 					tpl_printf(vars, TPLADD, "APINODENUMBER", "%d", nodecount);
-					tpl_addVar(vars, TPLAPPEND, "NODELIST", tpl_getTpl(vars, "APICCCAMCARDNODEBIT"));
+					tpl_addVar(vars, TPLAPPEND, "NODELIST", tpl_getTpl(vars, TPL_APICCCAMCARDNODEBIT));
 				}
 				nodecount++;
 				tpl_printf(vars, TPLADD, "APITOTALNODES", "%d", nodecount);
 			}
 
 			if (!apicall)
-				tpl_addVar(vars, TPLAPPEND, "CCCAMSTATSENTRY", tpl_getTpl(vars, "ENTITLEMENTCCCAMENTRYBIT"));
+				tpl_addVar(vars, TPLAPPEND, "CCCAMSTATSENTRY", tpl_getTpl(vars, TPL_ENTITLEMENTCCCAMENTRYBIT));
 			else
-				tpl_addVar(vars, TPLAPPEND, "CARDLIST", tpl_getTpl(vars, "APICCCAMCARDBIT"));
+				tpl_addVar(vars, TPLAPPEND, "CARDLIST", tpl_getTpl(vars, TPL_APICCCAMCARDBIT));
 
 			cardcount++;
 		}
@@ -2744,14 +2745,14 @@ static void print_cards(struct templatevars *vars, struct uriparams *params, str
 
 		if (!apicall) {
 			tpl_printf(vars, TPLADD, "TOTALS", "card count=%d", cardsize);
-			tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTCCCAMBIT"));
+			tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, TPL_ENTITLEMENTCCCAMBIT));
 		} else {
 			tpl_printf(vars, TPLADD, "APITOTALCARDS", "%d", cardsize);
 		}
 
 	} else {
 		if (!apicall) {
-			tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
+			tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, TPL_ENTITLEMENTGENERICBIT));
 			tpl_addVar(vars, TPLADD, "LOGHISTORY", "no cards found<BR>\n");
 		} else {
 			tpl_printf(vars, TPLADD, "APITOTALCARDS", "%d", 0);
@@ -2869,7 +2870,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 						tpl_addVar(vars, TPLADD, "ENTRESNAME", entresname);
 
 						if ((strcmp(getParam(params, "hideexpired"), "1") != 0) || (item->end > now))
-							tpl_addVar(vars, TPLAPPEND, "READERENTENTRY", tpl_getTpl(vars, "ENTITLEMENTITEMBIT"));
+							tpl_addVar(vars, TPLAPPEND, "READERENTENTRY", tpl_getTpl(vars, TPL_ENTITLEMENTITEMBIT));
 
 					}
 				}
@@ -2915,7 +2916,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 
 				tpl_addVar(vars, TPLADD, "READERCSYSTEM", rdr->csystem.desc);
 
-				tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTBIT"));
+				tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, TPL_ENTITLEMENTBIT));
 
 			} else {
 				tpl_addMsg(vars, "Reader does not exist or is not started!");
@@ -2923,13 +2924,13 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 		}
 
 	} else {
-		tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
+		tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, TPL_ENTITLEMENTGENERICBIT));
 	}
 
 	if (!apicall)
-		return tpl_getTpl(vars, "ENTITLEMENTS");
+		return tpl_getTpl(vars, TPL_ENTITLEMENTS);
 	else
-		return tpl_getTpl(vars, "APICCCAMCARDLIST");
+		return tpl_getTpl(vars, TPL_APICCCAMCARDLIST);
 }
 
 static char *send_oscam_status(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
@@ -3344,7 +3345,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 		if (!apicall) {
 			// select right suborder
 			if (cl->typ == 'c') {
-				if (shown) tpl_addVar(vars, TPLAPPEND, "CLIENTSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+				if (shown) tpl_addVar(vars, TPLAPPEND, "CLIENTSTATUS", tpl_getTpl(vars, TPL_CLIENTSTATUSBIT));
 				if (cfg.http_hide_idle_clients == 1 || cfg.hideclient_to < 1) {
 					tpl_printf(vars, TPLADD, "CLIENTHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"17\">Clients %d/%d</TD></TR>\n",
 						user_count_shown, user_count_all);
@@ -3354,24 +3355,24 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 				}
 			}
 			else if (cl->typ == 'r') {
-				if (shown) tpl_addVar(vars, TPLAPPEND, "READERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+				if (shown) tpl_addVar(vars, TPLAPPEND, "READERSTATUS", tpl_getTpl(vars, TPL_CLIENTSTATUSBIT));
 				tpl_printf(vars, TPLADD, "READERHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"17\">Readers %d/%d</TD></TR>\n",
 						reader_count_conn, reader_count_all);
 			}
 			else if (cl->typ == 'p') {
-				if (shown) tpl_addVar(vars, TPLAPPEND, "PROXYSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+				if (shown) tpl_addVar(vars, TPLAPPEND, "PROXYSTATUS", tpl_getTpl(vars, TPL_CLIENTSTATUSBIT));
 				tpl_printf(vars, TPLADD, "PROXYHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"17\">Proxies %d/%d</TD></TR>\n",
 						proxy_count_conn, proxy_count_all);
 			}
 			else
-				if (shown) tpl_addVar(vars, TPLAPPEND, "SERVERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+				if (shown) tpl_addVar(vars, TPLAPPEND, "SERVERSTATUS", tpl_getTpl(vars, TPL_CLIENTSTATUSBIT));
 
 		} else {
 			if (shown){
 				if(apicall == 1)
-					tpl_addVar(vars, TPLAPPEND, "APISTATUSBITS", tpl_getTpl(vars, "APISTATUSBIT"));
+					tpl_addVar(vars, TPLAPPEND, "APISTATUSBITS", tpl_getTpl(vars, TPL_APISTATUSBIT));
 				if(apicall == 2)
-					tpl_addVar(vars, TPLAPPEND, "JSONSTATUSBITS", tpl_getTpl(vars, "JSONSTATUSBIT"));
+					tpl_addVar(vars, TPLAPPEND, "JSONSTATUSBITS", tpl_getTpl(vars, TPL_JSONSTATUSBIT));
 			}
 		}
 
@@ -3445,20 +3446,20 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 	tpl_addVar(vars, TPLADD, "NEXTPAGE", "status.html");
 	tpl_addVar(vars, TPLADD, "DCLASS", "debugl"); //default
 	tpl_printf(vars, TPLADD, "ACTDEBUG", "%d", cs_dblevel);
-	tpl_addVar(vars, TPLADD, "SDEBUG", tpl_getTpl(vars, "DEBUGSELECT"));
+	tpl_addVar(vars, TPLADD, "SDEBUG", tpl_getTpl(vars, TPL_DEBUGSELECT));
 #endif
 
 	if(apicall) {
 		if(apicall == 1)
-			return tpl_getTpl(vars, "APISTATUS");
+			return tpl_getTpl(vars, TPL_APISTATUS);
 		if(apicall == 2)
-			return tpl_getTpl(vars, "JSONSTATUS");
+			return tpl_getTpl(vars, TPL_JSONSTATUS);
 	}
 
 	if (config_enabled(TOUCH) && streq(tpl_getVar(vars, "SUBDIR"), TOUCH_SUBDIR))
-		return tpl_getTpl(vars, "TOUCH_STATUS");
+		return tpl_getTpl(vars, TPL_TOUCH_STATUS);
 	else
-		return tpl_getTpl(vars, "STATUS");
+		return tpl_getTpl(vars, TPL_STATUS);
 }
 
 static char *send_oscam_services_edit(struct templatevars *vars, struct uriparams *params) {
@@ -3525,7 +3526,7 @@ static char *send_oscam_services_edit(struct templatevars *vars, struct uriparam
 			else tpl_printf(vars, TPLAPPEND, "SRVIDS", ",%04X", sidtab->srvid[i]);
 		}
 	}
-	return tpl_getTpl(vars, "SERVICEEDIT");
+	return tpl_getTpl(vars, TPL_SERVICEEDIT);
 }
 
 static void delete_from_SIDTABBITS(SIDTABBITS *orgsidtab, int32_t position, int32_t sidtablength){
@@ -3624,9 +3625,9 @@ static char *send_oscam_services(struct templatevars *vars, struct uriparams *pa
 		}
 		tpl_addVar(vars, TPLADD, "LABELENC", urlencode(vars, sidtab->label));
 		tpl_addVar(vars, TPLADD, "LABEL", xml_encode(vars, sidtab->label));
-		tpl_addVar(vars, TPLADD, "SIDLIST", tpl_getTpl(vars, "SERVICECONFIGSIDBIT"));
+		tpl_addVar(vars, TPLADD, "SIDLIST", tpl_getTpl(vars, TPL_SERVICECONFIGSIDBIT));
 
-		tpl_addVar(vars, TPLAPPEND, "SERVICETABS", tpl_getTpl(vars, "SERVICECONFIGLISTBIT"));
+		tpl_addVar(vars, TPLAPPEND, "SERVICETABS", tpl_getTpl(vars, TPL_SERVICECONFIGLISTBIT));
 		sidtab=sidtab->next;
 		counter++;
 	}
@@ -3634,7 +3635,7 @@ static char *send_oscam_services(struct templatevars *vars, struct uriparams *pa
 		tpl_addVar(vars, TPLADD, "BTNDISABLED", "DISABLED");
 		tpl_addMsg(vars, "Maximum Number of Services is reached");
 	}
-	return tpl_getTpl(vars, "SERVICECONFIGLIST");
+	return tpl_getTpl(vars, TPL_SERVICECONFIGLIST);
 }
 
 static char *send_oscam_savetpls(struct templatevars *vars) {
@@ -3642,7 +3643,7 @@ static char *send_oscam_savetpls(struct templatevars *vars) {
 		tpl_printf(vars, TPLADD, "CNT", "%d", tpl_saveIncludedTpls(cfg.http_tpl));
 		tpl_addVar(vars, TPLADD, "PATH", cfg.http_tpl);
 	} else tpl_addVar(vars, TPLADD, "CNT", "0");
-	return tpl_getTpl(vars, "SAVETEMPLATES");
+	return tpl_getTpl(vars, TPL_SAVETEMPLATES);
 }
 
 static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *params, int8_t apicall, int8_t *keepalive, char* extraheader) {
@@ -3650,14 +3651,14 @@ static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct urip
 	if (strcmp(strtolower(getParam(params, "action")), "shutdown") == 0) {
 		*keepalive = 0;
 		if(!apicall){
-			char *CSS = tpl_getUnparsedTpl("CSS", 1, "");
+			char *CSS = tpl_getUnparsedTpl(TPL_CSS, 1, "");
 			tpl_addVar(vars, TPLADD, "STYLESHEET", CSS);
 			free(CSS);
 			tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", SHUTDOWNREFRESH);
 			tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
-			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
+			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, TPL_REFRESH));
 			tpl_printf(vars, TPLADD, "SECONDS", "%d", SHUTDOWNREFRESH);
-			char *result = tpl_getTpl(vars, "SHUTDOWN");
+			char *result = tpl_getTpl(vars, TPL_SHUTDOWN);
 			send_headers(f, 200, "OK", extraheader, "text/html", 0, strlen(result), NULL, 0);
 			webif_write(result, f);
 			cs_log("Shutdown requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
@@ -3672,20 +3673,20 @@ static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct urip
 		if(!apicall)
 			return "1";
 		else
-			return tpl_getTpl(vars, "APICONFIRMATION");
+			return tpl_getTpl(vars, TPL_APICONFIRMATION);
 
 	}
 	else if (strcmp(strtolower(getParam(params, "action")), "restart") == 0) {
 		*keepalive = 0;
 		if(!apicall){
-			char *CSS = tpl_getUnparsedTpl("CSS", 1, "");
+			char *CSS = tpl_getUnparsedTpl(TPL_CSS, 1, "");
 			tpl_addVar(vars, TPLADD, "STYLESHEET", CSS);
 			free(CSS);
 			tpl_addVar(vars, TPLADD, "REFRESHTIME", "5");
 			tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
-			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
+			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, TPL_REFRESH));
 			tpl_addVar(vars, TPLADD, "SECONDS", "5");
-			char *result = tpl_getTpl(vars, "SHUTDOWN");
+			char *result = tpl_getTpl(vars, TPL_SHUTDOWN);
 			send_headers(f, 200, "OK", extraheader, "text/html", 0,strlen(result), NULL, 0);
 			webif_write(result, f);
 			cs_log("Restart requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
@@ -3700,10 +3701,10 @@ static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct urip
 		if(!apicall)
 			return "1";
 		else
-			return tpl_getTpl(vars, "APICONFIRMATION");
+			return tpl_getTpl(vars, TPL_APICONFIRMATION);
 
 	} else {
-		return tpl_getTpl(vars, "PRESHUTDOWN");
+		return tpl_getTpl(vars, TPL_PRESHUTDOWN);
 	}
 }
 
@@ -3728,7 +3729,7 @@ static char *send_oscam_script(struct templatevars *vars) {
 	} else {
 		tpl_addMsg(vars, "Sorry, Webif is in readonly mode. No script execution possible!");
 	}
-	return tpl_getTpl(vars, "SCRIPT");
+	return tpl_getTpl(vars, TPL_SCRIPT);
 
 }
 
@@ -3743,7 +3744,7 @@ static char *send_oscam_scanusb(struct templatevars *vars) {
 	if (fp == NULL) {
 		tpl_addVar(vars, TPLADD, "USBENTRY", "Failed to run lusb");
 		tpl_addVar(vars, TPLADD, "USBENTRY", path);
-		tpl_addVar(vars, TPLAPPEND, "USBBIT", tpl_getTpl(vars, "SCANUSBBIT"));
+		tpl_addVar(vars, TPLAPPEND, "USBBIT", tpl_getTpl(vars, TPL_SCANUSBBIT));
 		err = 1;
 	}
 
@@ -3756,14 +3757,14 @@ static char *send_oscam_scanusb(struct templatevars *vars) {
 			} else {
 				tpl_printf(vars, TPLADD, "USBENTRY", "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%s", path);
 			}
-			tpl_addVar(vars, TPLAPPEND, "USBBIT", tpl_getTpl(vars, "SCANUSBBIT"));
+			tpl_addVar(vars, TPLAPPEND, "USBBIT", tpl_getTpl(vars, TPL_SCANUSBBIT));
 		}
 	}
 	pclose(fp);
 #else
 	tpl_addMsg(vars, "Function not supported in CYGWIN environment");
 #endif
-	return tpl_getTpl(vars, "SCANUSB");
+	return tpl_getTpl(vars, TPL_SCANUSB);
 }
 
 static void webif_process_logfile(struct templatevars *vars, struct uriparams *params, char *targetfile, size_t targetfile_len)
@@ -3796,7 +3797,7 @@ static void webif_process_logfile(struct templatevars *vars, struct uriparams *p
 		tpl_addVar(vars, TPLADD, "DCLASS65535", "debugl");
 	tpl_addVar(vars, TPLADD, "CUSTOMPARAM", "&file=logfile");
 	tpl_printf(vars, TPLADD, "ACTDEBUG", "%d", cs_dblevel);
-	tpl_addVar(vars, TPLADD, "SDEBUG", tpl_getTpl(vars, "DEBUGSELECT"));
+	tpl_addVar(vars, TPLADD, "SDEBUG", tpl_getTpl(vars, TPL_DEBUGSELECT));
 	tpl_addVar(vars, TPLADD, "NEXTPAGE", "files.html");
 #endif
 	if(!cfg.disablelog)
@@ -3833,7 +3834,7 @@ static void webif_process_userfile(struct templatevars *vars, struct uriparams *
 			xml_encode(vars, account->usr)
 		);
 	}
-	tpl_addVar(vars, TPLADD, "FILTERFORM", tpl_getTpl(vars, "FILTERFORM"));
+	tpl_addVar(vars, TPLADD, "FILTERFORM", tpl_getTpl(vars, TPL_FILTERFORM));
 }
 
 enum file_types { FTYPE_CONFIG, FTYPE_VERSION, FTYPE_ANTICASC, FTYPE_LOGFILE, FTYPE_USERFILE };
@@ -3977,14 +3978,14 @@ static char *send_oscam_files(struct templatevars *vars, struct uriparams *param
 	tpl_addVar(vars, TPLADD, "PART", file);
 
 	if (!writable) {
-		tpl_addVar(vars, TPLADD, "WRITEPROTECTION", tpl_getTpl(vars, "WRITEPROTECTION"));
+		tpl_addVar(vars, TPLADD, "WRITEPROTECTION", tpl_getTpl(vars, TPL_WRITEPROTECTION));
 		tpl_addVar(vars, TPLADD, "BTNDISABLED", "DISABLED");
 	}
 
 	if (!apicall)
-		return tpl_getTpl(vars, "FILE");
+		return tpl_getTpl(vars, TPL_FILE);
 	else
-		return tpl_getTpl(vars, "APIFILE");
+		return tpl_getTpl(vars, TPL_APIFILE);
 }
 
 static char *send_oscam_failban(struct templatevars *vars, struct uriparams *params, int8_t apicall) {
@@ -4046,14 +4047,14 @@ static char *send_oscam_failban(struct templatevars *vars, struct uriparams *par
 		tpl_addVar(vars, TPLADD, "INTIP", cs_inet_ntoa(v_ban_entry->v_ip));
 
 		if (!apicall)
-			tpl_addVar(vars, TPLAPPEND, "FAILBANROW", tpl_getTpl(vars, "FAILBANBIT"));
+			tpl_addVar(vars, TPLAPPEND, "FAILBANROW", tpl_getTpl(vars, TPL_FAILBANBIT));
 		else
-			tpl_addVar(vars, TPLAPPEND, "APIFAILBANROW", tpl_getTpl(vars, "APIFAILBANBIT"));
+			tpl_addVar(vars, TPLAPPEND, "APIFAILBANROW", tpl_getTpl(vars, TPL_APIFAILBANBIT));
 	}
 	if (!apicall)
-		return tpl_getTpl(vars, "FAILBAN");
+		return tpl_getTpl(vars, TPL_FAILBAN);
 	else
-		return tpl_getTpl(vars, "APIFAILBAN");
+		return tpl_getTpl(vars, TPL_APIFAILBAN);
 }
 
 static bool send_EMM(struct s_reader *rdr, uint16_t caid, struct s_cardsystem *cs, const unsigned char *emmhex, uint32_t len) {
@@ -4204,7 +4205,7 @@ static char *send_oscam_EMM_running(struct templatevars *vars, struct uriparams 
 		if ((proxy || !rdr->csystem.active) && caid) { // network reader (R_CAMD35 R_NEWCAMD R_CS378X R_CCCAM)
 			if (proxy && !rdr->ph.c_send_emm) {
 				tpl_addMsg(vars, "The reader does not support EMMs!");
-				return tpl_getTpl(vars, "EMM_RUNNING");
+				return tpl_getTpl(vars, TPL_EMM_RUNNING);
 			}
 
 			cs = get_cardsystem_by_caid(caid);
@@ -4240,7 +4241,7 @@ static char *send_oscam_EMM_running(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "READER", "reader not found");
 	}
 
-	return tpl_getTpl(vars, "EMM_RUNNING");
+	return tpl_getTpl(vars, TPL_EMM_RUNNING);
 }
 
 static char *send_oscam_EMM(struct templatevars *vars, struct uriparams *params) {
@@ -4259,7 +4260,7 @@ static char *send_oscam_EMM(struct templatevars *vars, struct uriparams *params)
 		}
 	}
 		
-	return tpl_getTpl(vars, "ASKEMM");
+	return tpl_getTpl(vars, TPL_ASKEMM);
 }
 
 static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *params, int8_t *keepalive, int8_t apicall, char *extraheader) {
@@ -4281,20 +4282,20 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 	else if (strcmp(getParam(params, "part"), "serverconfig") == 0) {
 		//Send Errormessage
 		tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "serverconfig not yet avail");
-		return tpl_getTpl(vars, "APIERROR");
+		return tpl_getTpl(vars, TPL_APIERROR);
 	}
 	else if (strcmp(getParam(params, "part"), "userconfig") == 0) {
 		if(((strcmp(getParam(params, "action"), "Save") == 0) ||
 				(strcmp(getParam(params, "action"), "Save As") == 0)) && cfg.http_readonly == 1) {
 			//Send Errormessage
 			tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "API is in readonly mode");
-			return tpl_getTpl(vars, "APIERROR");
+			return tpl_getTpl(vars, TPL_APIERROR);
 		} else {
 			struct s_auth *account = get_account_by_name(getParam(params, "user"));
 			if (!account && strcmp(getParam(params, "action"), "Save")) {
 				//Send Errormessage
 				tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "user not exist");
-				return tpl_getTpl(vars, "APIERROR");
+				return tpl_getTpl(vars, TPL_APIERROR);
 			} else {
 				return send_oscam_user_config_edit(vars, params, apicall);
 			}
@@ -4310,17 +4311,17 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 				} else {
 					//Send Errormessage
 					tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "no cccam reader or disabled");
-					return tpl_getTpl(vars, "APIERROR");
+					return tpl_getTpl(vars, TPL_APIERROR);
 				}
 			} else {
 				//Send Errormessage
 				tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "reader not exist");
-				return tpl_getTpl(vars, "APIERROR");
+				return tpl_getTpl(vars, TPL_APIERROR);
 			}
 		} else {
 			//Send Errormessage
 			tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "no reader selected");
-			return tpl_getTpl(vars, "APIERROR");
+			return tpl_getTpl(vars, TPL_APIERROR);
 		}
 	} else if (strcmp(getParam(params, "part"), "ecmhistory") == 0) {
 		int32_t i;
@@ -4364,11 +4365,11 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 					tpl_addVar(vars, TPLADD, "CLIENTLASTRESPONSETIMEHIST", value);
 					free_mk_t(value);
 
-					tpl_addVar(vars, TPLAPPEND, "APISTATUSBITS", tpl_getTpl(vars, "APISTATUSBIT"));
+					tpl_addVar(vars, TPLAPPEND, "APISTATUSBITS", tpl_getTpl(vars, TPL_APISTATUSBIT));
 				}
 			}
 		}
-		return tpl_getTpl(vars, "APISTATUS");
+		return tpl_getTpl(vars, TPL_APISTATUS);
 	} else if (strcmp(getParam(params, "part"), "readerstats") == 0) {
 		if (strcmp(getParam(params, "label"),"")) {
 			struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
@@ -4377,12 +4378,12 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 			} else {
 				//Send Errormessage
 				tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "reader not exist");
-				return tpl_getTpl(vars, "APIERROR");
+				return tpl_getTpl(vars, TPL_APIERROR);
 			}
 		} else {
 			//Send Errormessage
 			tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "no reader selected");
-			return tpl_getTpl(vars, "APIERROR");
+			return tpl_getTpl(vars, TPL_APIERROR);
 		}
 	} else if (strcmp(getParam(params, "part"), "shutdown") == 0) {
 		if ((strcmp(strtolower(getParam(params, "action")), "restart") == 0) ||
@@ -4391,17 +4392,17 @@ static char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams
 				return send_oscam_shutdown(vars, f, params, apicall, keepalive, extraheader);
 			} else {
 				tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "webif readonly mode");
-				return tpl_getTpl(vars, "APIERROR");
+				return tpl_getTpl(vars, TPL_APIERROR);
 			}
 		} else {
 			tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "missing parameter action");
-			return tpl_getTpl(vars, "APIERROR");
+			return tpl_getTpl(vars, TPL_APIERROR);
 		}
 
 	}
 	else {
 		tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "part not found");
-		return tpl_getTpl(vars, "APIERROR");
+		return tpl_getTpl(vars, TPL_APIERROR);
 	}
 }
 
@@ -4429,7 +4430,7 @@ static char *send_oscam_image(struct templatevars *vars, FILE *f, struct uripara
 				return "1";
 			}
 		}
-		char *header = strstr(tpl_getTpl(vars, wanted), "data:");
+		char *header = strstr(tpl_getTpl(vars, (const unsigned char *)wanted), "data:");
 		if(header != NULL){
 			char *ptr = header + 5;
 			while (ptr[0] != ';' && ptr[0] != '\0') ++ptr;
@@ -4465,7 +4466,7 @@ static char *send_oscam_robots_txt(FILE *f) {
 }
 
 static char *send_oscam_graph(struct templatevars *vars) {
-	return tpl_getTpl(vars, "GRAPH");
+	return tpl_getTpl(vars, TPL_GRAPH);
 }
 
 #ifdef CS_CACHEEX
@@ -4562,7 +4563,7 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 		}
 
 		if (written) {
-			tpl_addVar(vars, TPLAPPEND, rowvariable, tpl_getTpl(vars, "CACHEEXTABLEROW"));
+			tpl_addVar(vars, TPLAPPEND, rowvariable, tpl_getTpl(vars, TPL_CACHEEXTABLEROW));
 
 			if (cl->ll_cacheex_stats) {
 				LL_ITER itr = ll_iter_create(cl->ll_cacheex_stats);
@@ -4589,7 +4590,7 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 					char channame[32];
 					char *lastchan = xml_encode(vars, get_servicename(cl, cacheex_stats_entry->cache_srvid, cacheex_stats_entry->cache_caid, channame));
 					tpl_addVar(vars, TPLADD, "LEVEL", lastchan);
-					tpl_addVar(vars, TPLAPPEND, rowvariable, tpl_getTpl(vars, "CACHEEXTABLEROW"));
+					tpl_addVar(vars, TPLAPPEND, rowvariable, tpl_getTpl(vars, TPL_CACHEEXTABLEROW));
 
 				}
 			}
@@ -4610,7 +4611,7 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 
 	tpl_printf(vars, TPLADD, "REL_CACHEXHIT", "%.2f", (first_client ? first_client->cwcacheexhit : 0) * 100 / cachesum);
 
-	return tpl_getTpl(vars, "CACHEEXPAGE");
+	return tpl_getTpl(vars, TPL_CACHEEXPAGE);
 }
 #endif
 
@@ -4995,7 +4996,7 @@ static int32_t process_request(FILE *f, IN_ADDR_T in) {
 			if(cfg.http_refresh > 0 && (pgidx == 3 || pgidx == -1)) {
 				tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg.http_refresh);
 				tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
-				tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
+				tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, TPL_REFRESH));
 			}
 
 			tpl_printf(vars, TPLADD, "CURDATE", "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year%100);

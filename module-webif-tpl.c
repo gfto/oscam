@@ -155,7 +155,7 @@ char *tpl_addVar(struct templatevars *vars, uint8_t addmode, char *name, char *v
 char *tpl_addMsg(struct templatevars *vars, char *value) {
 	tpl_addVar(vars, TPLADDONCE, "MESSAGE", value);
 	(*vars).messages++;
-	return tpl_addVar(vars, TPLAPPEND, "MESSAGES", tpl_getTpl(vars, "MESSAGEBIT"));
+	return tpl_addVar(vars, TPLAPPEND, "MESSAGES", tpl_getTpl(vars, TPL_MESSAGEBIT));
 }
 
 /* Allows to add a char array which has been allocated by malloc. It will automatically get
@@ -298,9 +298,10 @@ char *tpl_getTplPath(const char *name, const char *path, char *result, uint32_t 
 
 /* Returns an unparsed template either from disk or from internal templates.
    Note: You must free() the result after using it and you may get NULL if an error occured!*/
-char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const char* subdir) {
+char *tpl_getUnparsedTpl(const unsigned char* namee, int8_t removeHeader, const char* subdir) {
 	int32_t i;
 	char *result;
+	const char *name = (const char *)namee;
 
 	if (cfg.http_tpl) {
 		char path[255];
@@ -433,7 +434,7 @@ char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const char* subd
 /* Returns the specified template with all variables/other templates replaced or an
    empty string if the template doesn't exist. Do not free the result yourself, it
    will get automatically cleaned up! */
-char *tpl_getTpl(struct templatevars *vars, const char* name) {
+char *tpl_getTpl(struct templatevars *vars, const unsigned char* name) {
 	char *tplorg = tpl_getUnparsedTpl(name, 1, tpl_getVar(vars, "SUBDIR"));
 	if (!tplorg) return "";
 	char *tplend = tplorg + strlen(tplorg);
@@ -455,7 +456,7 @@ char *tpl_getTpl(struct templatevars *vars, const char* name) {
 				varname[pch - pch2 - 2] = '\0';
 				if (strncmp(varname, "TPL", 3) == 0) {
 					if ((*vars).messages > 0 || strncmp(varname, "TPLMESSAGE", 10) != 0)
-						pch2 = tpl_getTpl(vars, varname + 3);
+						pch2 = tpl_getTpl(vars, (const unsigned char *)varname + 3);
 					else pch2 = "";
 				} else {
 					pch2 = tpl_getVar(vars, varname);
@@ -514,7 +515,7 @@ void tpl_checkOneDirDiskRevisions(const char* subdir) {
 		const struct tpl *tpl = &tpls[i];
 		if (strncmp(tpl->tpl_name, "IC", 2) != 0 && strlen(tpl_getTplPath(tpl->tpl_name, dirpath, path, 255)) > 0 && file_exists(path)) {
 			int8_t error = 1;
-			char *tplorg = tpl_getUnparsedTpl(tpl->tpl_name, 0, subdir);
+			char *tplorg = tpl_getUnparsedTpl((const unsigned char *)tpl->tpl_name, 0, subdir);
 			unsigned long checksum = 0, curchecksum = crc32(0L, (unsigned char*)tpl->tpl_data, tpl->tpl_data_len);
 			char *ifdefs = "", *pch1 = strstr(tplorg,"<!--OSCam");
 			if (pch1 != NULL) {

@@ -328,6 +328,12 @@ static void generate_pages_h(void) {
 	fprintf(f, "void templates_get_data(const char **data, size_t *data_len, size_t *odata_len);\n");
 #endif
 	fprintf(f, "\n");
+	int i;
+	for (i = 0; i < templates.num; i++) {
+		struct template *t = &templates.data[i];
+		fprintf(f, "#define TPL_%-28s ((unsigned char *)\"%s\")\n", t->ident, t->ident);
+	}
+	fprintf(f, "\n");
 	fprintf(f, "#endif\n");
 	fclose(f);
 }
