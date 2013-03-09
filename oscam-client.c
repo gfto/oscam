@@ -35,20 +35,6 @@ int32_t get_threadnum(struct s_client *client) {
 	return 0;
 }
 
-/* Checks if the client still exists or has been cleaned. Returns 1 if it is ok, else 0. */
-int8_t check_client(struct s_client *client) {
-	struct s_client *cl;
-	int32_t bucket = (uintptr_t)client/16 % CS_CLIENT_HASHBUCKETS;
-	for (cl = first_client_hashed[bucket]; cl; cl = cl->nexthashed) {
-		if (client == cl)
-			break;
-	}
-	if (cl != client)
-		return 0;
-	else
-		return 1;
-}
-
 struct s_auth *get_account_by_name(char *name) {
 	struct s_auth *account;
 	for (account=cfg.account; (account); account=account->next) {

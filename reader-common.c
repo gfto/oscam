@@ -248,7 +248,7 @@ bool cardreader_init(struct s_reader *reader) {
 		int8_t i = 0;
 		do {
 			cs_sleepms(2000);
-			if (!ll_contains(configured_readers, reader) || !check_client(client) || reader->enable != 1)
+			if (!ll_contains(configured_readers, reader) || !is_valid_client(client) || reader->enable != 1)
 				return false;
 			i++;
 		} while (i < 30);
