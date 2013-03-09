@@ -331,7 +331,7 @@ static void generate_pages_h(void) {
 	int i;
 	for (i = 0; i < templates.num; i++) {
 		struct template *t = &templates.data[i];
-		fprintf(f, "#define TPL_%-28s ((unsigned char *)\"%s\")\n", t->ident, t->ident);
+		fprintf(f, "#define TPL_%-28s 0x%02X\n", t->ident, t->id);
 	}
 	fprintf(f, "\n");
 	fprintf(f, "#endif\n");

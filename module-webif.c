@@ -4430,7 +4430,7 @@ static char *send_oscam_image(struct templatevars *vars, FILE *f, struct uripara
 				return "1";
 			}
 		}
-		char *header = strstr(tpl_getTpl(vars, (const unsigned char *)wanted), "data:");
+		char *header = strstr(tpl_getTpl(vars, tpl_get_id_by_name(wanted)), "data:");
 		if(header != NULL){
 			char *ptr = header + 5;
 			while (ptr[0] != ';' && ptr[0] != '\0') ++ptr;

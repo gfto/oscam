@@ -108,6 +108,28 @@ void webif_tpls_free(void) {
 	free(tpls);
 }
 
+static const char *tpl_get_name_by_id(uint32_t tpl_id) {
+	int32_t i;
+	if (tpl_id == 0xffff)
+		return "";
+	for(i = 0; i < tpls_count; ++i) {
+		if (tpls[i].tpl_id == tpl_id)
+			return tpls[i].tpl_name;
+	}
+	return "";
+}
+
+uint32_t tpl_get_id_by_name(const char *name) {
+	int32_t i;
+	uint32_t name_hash = jhash(name, strlen(name));
+	for(i = 0; i < tpls_count; i++) {
+		if (tpls[i].tpl_name_hash == name_hash) {
+			return tpls[i].tpl_id;
+		}
+	}
+	return 0xffff;
+}
+
 /* Adds a name->value-mapping or appends to it. You will get a reference back which you may freely
    use (but you should not call free/realloc on this!)*/
 char *tpl_addVar(struct templatevars *vars, uint8_t addmode, char *name, char *value){
@@ -298,10 +320,10 @@ char *tpl_getTplPath(const char *name, const char *path, char *result, uint32_t 
 
 /* Returns an unparsed template either from disk or from internal templates.
    Note: You must free() the result after using it and you may get NULL if an error occured!*/
-char *tpl_getUnparsedTpl(const unsigned char* namee, int8_t removeHeader, const char* subdir) {
+char *tpl_getUnparsedTpl(uint32_t tpl_id, int8_t removeHeader, const char* subdir) {
 	int32_t i;
 	char *result;
-	const char *name = (const char *)namee;
+	const char *name = tpl_get_name_by_id(tpl_id);
 
 	if (cfg.http_tpl) {
 		char path[255];
@@ -434,8 +456,8 @@ char *tpl_getUnparsedTpl(const unsigned char* namee, int8_t removeHeader, const 
 /* Returns the specified template with all variables/other templates replaced or an
    empty string if the template doesn't exist. Do not free the result yourself, it
    will get automatically cleaned up! */
-char *tpl_getTpl(struct templatevars *vars, const unsigned char* name) {
-	char *tplorg = tpl_getUnparsedTpl(name, 1, tpl_getVar(vars, "SUBDIR"));
+char *tpl_getTpl(struct templatevars *vars, uint32_t tpl_id) {
+	char *tplorg = tpl_getUnparsedTpl(tpl_id, 1, tpl_getVar(vars, "SUBDIR"));
 	if (!tplorg) return "";
 	char *tplend = tplorg + strlen(tplorg);
 	char *pch, *pch2, *tpl=tplorg;
@@ -456,7 +478,7 @@ char *tpl_getTpl(struct templatevars *vars, const unsigned char* name) {
 				varname[pch - pch2 - 2] = '\0';
 				if (strncmp(varname, "TPL", 3) == 0) {
 					if ((*vars).messages > 0 || strncmp(varname, "TPLMESSAGE", 10) != 0)
-						pch2 = tpl_getTpl(vars, (const unsigned char *)varname + 3);
+						pch2 = tpl_getTpl(vars, tpl_get_id_by_name(varname + 3));
 					else pch2 = "";
 				} else {
 					pch2 = tpl_getVar(vars, varname);
@@ -515,7 +537,7 @@ void tpl_checkOneDirDiskRevisions(const char* subdir) {
 		const struct tpl *tpl = &tpls[i];
 		if (strncmp(tpl->tpl_name, "IC", 2) != 0 && strlen(tpl_getTplPath(tpl->tpl_name, dirpath, path, 255)) > 0 && file_exists(path)) {
 			int8_t error = 1;
-			char *tplorg = tpl_getUnparsedTpl((const unsigned char *)tpl->tpl_name, 0, subdir);
+			char *tplorg = tpl_getUnparsedTpl(tpl->tpl_id, 0, subdir);
 			unsigned long checksum = 0, curchecksum = crc32(0L, (unsigned char*)tpl->tpl_data, tpl->tpl_data_len);
 			char *ifdefs = "", *pch1 = strstr(tplorg,"<!--OSCam");
 			if (pch1 != NULL) {
