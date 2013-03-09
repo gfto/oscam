@@ -23,6 +23,7 @@ struct tpl {
 	char *extra_data;
 	uint32_t tpl_data_len;
 	uint8_t tpl_type;
+	uint8_t tpl_id;
 };
 
 static struct tpl *tpls;
@@ -80,6 +81,7 @@ void webif_tpls_prepare(void) {
 		tpls[i].tpl_deps      = tpls_data + templates[i].tpl_deps_ofs;
 		tpls[i].tpl_data_len  = templates[i].tpl_data_len;
 		tpls[i].tpl_type      = templates[i].tpl_type;
+		tpls[i].tpl_id        = templates[i].tpl_id;
 		tpls[i].tpl_name_hash = jhash(tpls[i].tpl_name, strlen(tpls[i].tpl_name));
 		tpl_init_base64(&tpls[i]);
 	}
@@ -91,6 +93,7 @@ void webif_tpls_prepare(void) {
 		tpls[i].tpl_deps      = templates[i].tpl_deps;
 		tpls[i].tpl_data_len  = templates[i].tpl_data_len;
 		tpls[i].tpl_type      = templates[i].tpl_type;
+		tpls[i].tpl_id        = templates[i].tpl_id;
 		tpl_init_base64(&tpls[i]);
 	}
 #endif

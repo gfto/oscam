@@ -47,6 +47,7 @@ struct template {
 	uint32_t data_len;
 	enum { TXT, BIN } type;
 	uint8_t mime_type;
+	uint8_t id;
 #ifdef USE_COMPRESSION
 	uint8_t *buf;
 	size_t buf_len;
@@ -215,19 +216,20 @@ static void print_template(int tpl_idx) {
 	}
 
 #ifdef USE_COMPRESSION
-	fprintf(output_file, "\t{ .tpl_name_ofs=%5u, .tpl_data_ofs=%5u, .tpl_deps_ofs=%5u, .tpl_data_len=%5u, .tpl_type=%u }, /* %s %s %s */\n",
+	fprintf(output_file, "\t{ .tpl_name_ofs=%5u, .tpl_data_ofs=%5u, .tpl_deps_ofs=%5u, .tpl_data_len=%5u, .tpl_type=%u, .tpl_id=0x%02x }, /* %s %s %s */\n",
 		templates.data[tpl_idx].ident_ofs,
 		templates.data[tpl_idx].data_ofs,
 		templates.data[tpl_idx].deps_ofs,
 		templates.data[tpl_idx].data_len,
 		templates.data[tpl_idx].mime_type,
+		templates.data[tpl_idx].id,
 		ident,
 		templates.data[tpl_idx].file,
 		deps
 	);
 #else
-	fprintf(output_file, "\t{ .tpl_name=\"%s\", .tpl_data=TPL%s, .tpl_deps=\"%s\", .tpl_data_len=%u, .tpl_type=%u },\n",
-		ident, ident, deps, templates.data[tpl_idx].data_len, templates.data[tpl_idx].mime_type
+	fprintf(output_file, "\t{ .tpl_name=\"%s\", .tpl_data=TPL%s, .tpl_deps=\"%s\", .tpl_data_len=%u, .tpl_type=%u, .tpl_id=0x%02x },\n",
+		ident, ident, deps, templates.data[tpl_idx].data_len, templates.data[tpl_idx].mime_type, templates.data[tpl_idx].id
 	);
 #endif
 
@@ -309,6 +311,7 @@ int main(void) {
 	fprintf(output_file, "	uint32_t tpl_deps_ofs;\n");
 	fprintf(output_file, "	uint32_t tpl_data_len;\n");
 	fprintf(output_file, "	uint8_t tpl_type;\n");
+	fprintf(output_file, "	uint8_t tpl_id;\n");
 	fprintf(output_file, "};\n");
 #else
 	fprintf(output_file, "struct template {\n");
@@ -317,6 +320,7 @@ int main(void) {
 	fprintf(output_file, "	char *tpl_deps;\n");
 	fprintf(output_file, "	uint32_t tpl_data_len;\n");
 	fprintf(output_file, "	uint8_t tpl_type;\n");
+	fprintf(output_file, "	uint8_t tpl_id;\n");
 	fprintf(output_file, "};\n");
 #endif
 	fprintf(output_file, "\n");
@@ -345,6 +349,7 @@ int main(void) {
 	#define align_up(val, align) (val += (align - val % align))
 	for (i = 0; i < templates.num; i++) {
 		struct template *t = &templates.data[i];
+		t->id = i;
 		readfile(t->file, &t->buf, &t->buf_len);
 		t->data_len = t->buf_len;
 		// +1 to leave space for \0
@@ -407,6 +412,7 @@ int main(void) {
 		uint8_t *buf;
 		size_t buf_len;
 		readfile(templates.data[i].file, &buf, &buf_len);
+		templates.data[i].id = i;
 		templates.data[i].data_len = buf_len;
 		switch (templates.data[i].type) {
 			case TXT: dump_text(templates.data[i].ident, buf, buf_len); break;
