@@ -999,19 +999,14 @@ struct s_client {
 	uint16_t		lastcaid;
 	uint16_t		lastsrvid;
 	int32_t			lastpid;
-	time_t			emm_last;
 	int8_t			disable_counter;
 	uchar			lastserial[8];
 
 	//monitor
 	int8_t			auth;
 
-	//oscam.c
-	struct timeval	tv;
-
 	// Failban value set bitwise - compared with BAN_
 	int32_t			failban;
-	int8_t			cleaned;
 
 	LLIST			*cascadeusers; //s_cascadeuser
 
