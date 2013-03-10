@@ -1082,11 +1082,16 @@ static void process_clients(void) {
 	return;
 }
 
+static pthread_cond_t reader_check_sleep_cond;
+
 static void * reader_check(void) {
 	struct s_client *cl;
 	struct s_reader *rdr;
+	pthread_mutex_t reader_check_sleep_cond_mutex;
+	pthread_mutex_init(&reader_check_sleep_cond_mutex, NULL);
+	pthread_cond_init(&reader_check_sleep_cond, NULL);
 	set_thread_name(__func__);
-	while (1) {
+	while (!exit_oscam) {
 		for (cl=first_client->next; cl ; cl=cl->next) {
 			if (!cl->thread_active)
 				client_check_status(cl);
@@ -1102,7 +1107,15 @@ static void * reader_check(void) {
 			}
 		}
 		cs_readunlock(&readerlist_lock);
-		cs_sleepms(1000);
+		struct timespec ts;
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+		ts.tv_sec = tv.tv_sec;
+		ts.tv_nsec = tv.tv_usec * 1000;
+		ts.tv_sec += 1;
+		pthread_mutex_lock(&reader_check_sleep_cond_mutex);
+		pthread_cond_timedwait(&reader_check_sleep_cond, &reader_check_sleep_cond_mutex, &ts); // sleep on reader_check_sleep_cond
+		pthread_mutex_unlock(&reader_check_sleep_cond_mutex);
 	}
 	return NULL;
 }
@@ -1452,6 +1465,8 @@ int32_t main (int32_t argc, char *argv[])
 
 	// main loop function
 	process_clients();
+
+	pthread_cond_signal(&reader_check_sleep_cond); // Stop reader_check thread
 
 	// Cleanup
 	azbox_close();
