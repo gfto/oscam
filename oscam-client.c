@@ -432,7 +432,7 @@ void kill_all_clients(void)
 {
 	struct s_client *cl;
 	for (cl = first_client->next; cl; cl=cl->next) {
-		if (cl->typ == 'c') {
+		if (cl->typ == 'c' || cl->typ == 'm') {
 			if (cl->account && cl->account->usr)
 				cs_log("killing client %s", cl->account->usr);
 			kill_thread(cl);
