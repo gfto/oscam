@@ -121,8 +121,8 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 {
 	int32_t n;
 	uchar nbuf[3] = { 'U', 0, 0 };
-	static int32_t bpos=0, res = 0;
-	static uchar *bbuf=NULL;
+	int32_t bpos=0, res = 0;
+	uchar *bbuf=NULL;
 	if (!bbuf)
 	{
 		if (!cs_malloc(&bbuf, l))
