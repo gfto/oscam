@@ -595,6 +595,11 @@ typedef struct aes_entry {
 	struct aes_entry	*next;
 } AES_ENTRY;
 
+struct aes_keys {
+	AES_KEY			aeskey_encrypt;		// encryption key needed by monitor and used by camd33, camd35
+	AES_KEY			aeskey_decrypt;		// decryption key needed by monitor and used by camd33, camd35
+};
+
 struct s_ecm {
 	uchar			ecmd5[CS_ECMSTORESIZE];
 	uchar			cw[16];
@@ -938,8 +943,7 @@ struct s_client {
 
 	uchar			ucrc[4];    		// needed by monitor and used by camd35
 	uint32_t		pcrc;        		// password crc
-	AES_KEY			aeskey;      		// encryption key needed by monitor and used by camd33, camd35
-	AES_KEY			aeskey_decrypt;		// decryption key needed by monitor and used by camd33, camd35
+	struct aes_keys	aes_keys;
     uint16_t        ncd_msgid;
 	uint16_t		ncd_client_id;
 	uchar			ncd_skey[16];       //Also used for camd35 Cacheex to store remote node id

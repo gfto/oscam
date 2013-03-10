@@ -79,7 +79,7 @@ static int32_t secmon_auth_client(uchar *ucrc)
 				(crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), md5tmp), MD5_DIGEST_LENGTH)))
 		{
 			memcpy(cur_cl->ucrc, ucrc, 4);
-			aes_set_key(cur_cl, (char *)MD5((unsigned char *)ESTR(account->pwd), strlen(ESTR(account->pwd)), md5tmp));
+			aes_set_key(&cur_cl->aes_keys, (char *)MD5((unsigned char *)ESTR(account->pwd), strlen(ESTR(account->pwd)), md5tmp));
 			if (cs_auth_client(cur_cl, account, NULL))
 				return -1;
 			cur_cl->auth=1;
@@ -111,7 +111,7 @@ int32_t monitor_send_idx(struct s_client *cl, char *txt)
 	cs_strncpy((char *)buf+10, txt, sizeof(buf)-10);
 	uchar tmp[10];
 	memcpy(buf+5, i2b_buf(4, crc32(0L, buf+10, l-10), tmp), 4);
-	aes_encrypt_idx(cl, buf+5, l-5);
+	aes_encrypt_idx(&cl->aes_keys, buf+5, l-5);
 	return sendto(cl->udp_fd, buf, l, 0, (struct sockaddr *)&cl->udp_sa, cl->udp_sa_len);
 }
 
@@ -149,7 +149,7 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 		}
 		if (!res)
 			return buf[0]=0;
-		aes_decrypt(client, buf+5, 16);
+		aes_decrypt(&client->aes_keys, buf+5, 16);
 		bsize=boundary(4, buf[9]+5)+5;
 		// cs_log("n=%d bsize=%d", n, bsize);
 		if (n>bsize)
@@ -168,7 +168,7 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 			cs_log("packet-size mismatch !");
 			return buf[0]=0;
 		}
-		aes_decrypt(client, buf+21, n-21);
+		aes_decrypt(&client->aes_keys, buf+21, n-21);
 		uchar tmp[10];
 		if (memcmp(buf+5, i2b_buf(4, crc32(0L, buf+10, n-10), tmp), 4))
 		{

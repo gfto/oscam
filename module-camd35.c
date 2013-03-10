@@ -51,7 +51,7 @@ static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen)
 	i2b_buf(4, crc32(0L, sbuf+20, buflen), sbuf + 4);
 	l = boundary(4, l);
 	cs_ddump_mask(cl->typ == 'c'?D_CLIENT:D_READER, sbuf, l, "send %d bytes to %s", l, username(cl));
-	aes_encrypt_idx(cl, sbuf, l);
+	aes_encrypt_idx(&cl->aes_keys, sbuf, l);
 
 	int32_t status;
 	if (cl->is_udp) {
@@ -93,7 +93,7 @@ static int32_t camd35_auth_client(struct s_client *cl, uchar *ucrc)
       if (!rc) {
       	memcpy(cl->ucrc, ucrc, 4);
       	cs_strncpy((char *)cl->upwd, account->pwd, sizeof(cl->upwd));
-      	aes_set_key(cl, (char *) MD5(cl->upwd, strlen((char *)cl->upwd), md5tmp));
+      	aes_set_key(&cl->aes_keys, (char *) MD5(cl->upwd, strlen((char *)cl->upwd), md5tmp));
       	return 0;
 	  }
     }
@@ -124,7 +124,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 				memmove(buf, buf+4, rs-=4);
 				break;
 			case 2:
-				aes_decrypt(client, buf, rs);
+				aes_decrypt(&client->aes_keys, buf, rs);
 				if (rs!=boundary(4, rs))
 					cs_debug_mask(client->typ == 'c'?D_CLIENT:D_READER,
 							"WARNING: packet size has wrong decryption boundary");
@@ -144,7 +144,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 					len = recv(client->udp_fd, buf+32, n-32, 0); // read the rest of the packet
 					if (len>0) {
 						rs+=len;
-						aes_decrypt(client, buf+32, len);
+						aes_decrypt(&client->aes_keys, buf+32, len);
 					}
 				}
 
@@ -430,7 +430,7 @@ int32_t camd35_client_init(struct s_client *cl)
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
 	cs_strncpy((char *)cl->upwd, cl->reader->r_pwd, sizeof(cl->upwd));
 	i2b_buf(4, crc32(0L, MD5((unsigned char *)cl->reader->r_usr, strlen(cl->reader->r_usr), md5tmp), 16), cl->ucrc);
-	aes_set_key(cl, (char *)MD5(cl->upwd, strlen((char *)cl->upwd), md5tmp));
+	aes_set_key(&cl->aes_keys, (char *)MD5(cl->upwd, strlen((char *)cl->upwd), md5tmp));
 	cl->crypted=1;
 
 	cs_log("camd35 proxy %s:%d", cl->reader->device, cl->reader->r_port);

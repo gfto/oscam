@@ -3,25 +3,25 @@
 #include "oscam-garbage.h"
 #include "oscam-string.h"
 
-void aes_set_key(struct s_client *cl, char *key)
+void aes_set_key(struct aes_keys *aes, char *key)
 {
-	AES_set_decrypt_key((const unsigned char *)key, 128, &cl->aeskey_decrypt);
-	AES_set_encrypt_key((const unsigned char *)key, 128, &cl->aeskey);
+	AES_set_decrypt_key((const unsigned char *)key, 128, &aes->aeskey_decrypt);
+	AES_set_encrypt_key((const unsigned char *)key, 128, &aes->aeskey_encrypt);
 }
 
-void aes_decrypt(struct s_client *cl, uchar *buf, int32_t n)
+void aes_decrypt(struct aes_keys *aes, uchar *buf, int32_t n)
 {
 	int32_t i;
 	for (i=0; i<n; i+=16) {
-		AES_decrypt(buf+i, buf+i, &cl->aeskey_decrypt);
+		AES_decrypt(buf+i, buf+i, &aes->aeskey_decrypt);
 	}
 }
 
-void aes_encrypt_idx(struct s_client *cl, uchar *buf, int32_t n)
+void aes_encrypt_idx(struct aes_keys *aes, uchar *buf, int32_t n)
 {
 	int32_t i;
 	for (i=0; i<n; i+=16) {
-		AES_encrypt(buf+i, buf+i, &cl->aeskey);
+		AES_encrypt(buf+i, buf+i, &aes->aeskey_encrypt);
 	}
 }
 

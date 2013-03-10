@@ -17,7 +17,7 @@ static int32_t camd33_send(uchar *buf, int32_t ml)
   memset(buf+ml, 0, l-ml);
   cs_ddump_mask(D_CLIENT, buf, l, "send %d bytes to client", l);
   if (cur_client()->crypted)
-    aes_encrypt_idx(cur_client(), buf, l);
+    aes_encrypt_idx(&cur_client()->aes_keys, buf, l);
   return(send(cur_client()->pfd, buf, l, 0));
 }
 
@@ -29,7 +29,7 @@ static int32_t camd33_recv(struct s_client * client, uchar *buf, int32_t l)
   {
     client->last=time((time_t *) 0);
     if (client->crypted)
-      aes_encrypt_idx(cur_client(), buf, n);
+      aes_encrypt_idx(&cur_client()->aes_keys, buf, n);
   }
   cs_ddump_mask(D_CLIENT, buf, n, "received %d bytes from client", n);
   return(n);
@@ -78,7 +78,7 @@ static void camd33_auth_client(uchar *camdbug)
     cl->crypted = !check_ip(cfg.c33_plain, cl->ip);
 
   if (cl->crypted)
-    aes_set_key(cl, (char *)cfg.c33_key);
+    aes_set_key(&cl->aes_keys, (char *)cfg.c33_key);
 
   mbuf[0]=0;
   camd33_send(mbuf, 1);	// send login-request
