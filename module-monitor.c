@@ -117,35 +117,29 @@ int32_t monitor_send_idx(struct s_client *cl, char *txt)
 
 #define monitor_send(t) monitor_send_idx(cur_client(), t)
 
-static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
+static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t UNUSED(buflen))
 {
 	int32_t n = 0;
 	uchar nbuf[3] = { 'U', 0, 0 };
 	int32_t bpos=0, res = 0;
-	uchar *bbuf;
 	n = recv_from_udpipe(buf);
 	if (!n) {
 		return buf[0]=0;
 	}
-	if (!cs_malloc(&bbuf, l))
-		return 0;
 	if (buf[0]=='&')
 	{
 		int32_t bsize;
 		if (n<21)	// 5+16 is minimum
 		{
 			cs_log("packet too small!");
-			free(bbuf);
 			return buf[0]=0;
 		}
 		res = secmon_auth_client(buf+1);
 		if (res == -1) {
 			cs_disconnect_client(client);
-			free(bbuf);
 			return 0;
 		}
 		if (!res) {
-			free(bbuf);
 			return buf[0]=0;
 		}
 		aes_decrypt(&client->aes_keys, buf+5, 16);
@@ -154,7 +148,6 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 		if (n>bsize)
 		{
 			// cs_log("DO >>>> copy-back");
-			memcpy(bbuf, buf+bsize, bpos=n-bsize);
 			n=bsize;
 			uchar *nbuf_cpy;
 			if (cs_malloc(&nbuf_cpy, sizeof(nbuf))) {
@@ -165,7 +158,6 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 		else if (n<bsize)
 		{
 			cs_log("packet-size mismatch !");
-			free(bbuf);
 			return buf[0]=0;
 		}
 		aes_decrypt(&client->aes_keys, buf+21, n-21);
@@ -173,7 +165,6 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 		if (memcmp(buf+5, i2b_buf(4, crc32(0L, buf+10, n-10), tmp), 4))
 		{
 			cs_log("CRC error ! wrong password ?");
-			free(bbuf);
 			return buf[0]=0;
 		}
 		n=buf[9];
@@ -184,13 +175,11 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 		uchar *p;
 		if (monitor_check_ip() == -1) {
 			cs_disconnect_client(client);
-			free(bbuf);
 			return 0;
 		}
 		buf[n]='\0';
 		if ((p=(uchar *)strchr((char *)buf, 10)) && (bpos=n-(p-buf)-1))
 		{
-			memcpy(bbuf, p+1, bpos);
 			n=p-buf;
 			uchar *nbuf_cpy;
 			if (cs_malloc(&nbuf_cpy, sizeof(nbuf))) {
@@ -202,7 +191,6 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 	buf[n]='\0';
 	n=strlen(trim((char *)buf));
 	if (n) client->last=time((time_t *) 0);
-	free(bbuf);
 	return n;
 }
 
