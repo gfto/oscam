@@ -1014,6 +1014,9 @@ struct s_client {
 
 	LLIST			*cascadeusers; //s_cascadeuser
 
+	void			*work_mbuf;			// Points to local data allocated in work_thread when the thread is running
+	void			*work_job_data;		// Points to current job_data when work_thread is running
+
 #ifdef MODULE_PANDORA
 	int32_t 			pand_autodelay;
 	uint8_t			pand_send_ecm;

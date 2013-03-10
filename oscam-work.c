@@ -43,6 +43,9 @@ void free_joblist(struct s_client *cl) {
 	ll_destroy(cl->joblist);
 	cl->joblist = NULL;
 	cl->account = NULL;
+	if (cl->work_job_data) // Free job_data that was not freed by work_thread
+		free_job_data(cl->work_job_data);
+	cl->work_job_data = NULL;
 	pthread_mutex_unlock(&cl->thread_lock);
 	pthread_mutex_destroy(&cl->thread_lock);
 }
@@ -66,6 +69,15 @@ static void set_work_thread_name(struct job_data *data) {
 	set_thread_name(thread_name);
 }
 
+#define __free_job_data(client, job_data) \
+	do { \
+		client->work_job_data = NULL; \
+		if (job_data && job_data != &tmp_data) { \
+			free_job_data(job_data); \
+		} \
+		job_data = NULL; \
+	} while(0)
+
 void * work_thread(void *ptr) {
 	struct job_data *data = (struct job_data *)ptr;
 	struct s_client *cl = data->cl;
@@ -88,6 +100,7 @@ void * work_thread(void *ptr) {
 	uint8_t *mbuf;
 	if (!cs_malloc(&mbuf, bufsize))
 		return NULL;
+	cl->work_mbuf = mbuf; // Track locally allocated data, because some callback may call cs_exit/cs_disconect_client/pthread_exit and then mbuf would be leaked
 	int32_t n = 0, rc = 0, i, idx, s;
 	uint8_t dcw[16];
 	time_t now;
@@ -99,9 +112,8 @@ void * work_thread(void *ptr) {
 				cl->thread_active = 0;
 				pthread_mutex_unlock(&cl->thread_lock);
 				cs_debug_mask(D_TRACE, "ending thread (kill)");
-				if (data && data != &tmp_data)
-					free_job_data(data);
-				data = NULL;
+				__free_job_data(cl, data);
+				cl->work_mbuf = NULL; // Prevent free_client from freeing mbuf (->work_mbuf)
 				free_client(cl);
 				if (restart_reader)
 					restart_cardreader(reader, 0);
@@ -170,9 +182,7 @@ void * work_thread(void *ptr) {
 				continue;
 
 			if (!reader && data->action < ACTION_CLIENT_FIRST) {
-				if (data != &tmp_data)
-					free_job_data(data);
-				data = NULL;
+				__free_job_data(cl, data);
 				break;
 			}
 
@@ -183,11 +193,12 @@ void * work_thread(void *ptr) {
 			time_t diff = (time_t)(cfg.ctimeout/1000)+1;
 			if (data != &tmp_data && data->time < now-diff) {
 				cs_debug_mask(D_TRACE, "dropping client data for %s time %ds", username(cl), (int32_t)(now-data->time));
-				free_job_data(data);
-				data = NULL;
+				__free_job_data(cl, data);
 				continue;
 			}
 
+			if (data != &tmp_data)
+				cl->work_job_data = data; // Track the current job_data
 			switch (data->action) {
 			case ACTION_READER_IDLE:
 				reader_do_idle(reader);
@@ -319,9 +330,7 @@ void * work_thread(void *ptr) {
 			}
 			} // switch
 
-			if (data != &tmp_data)
-				free_job_data(data);
-			data = NULL;
+			__free_job_data(cl, data);
 		}
 
 		if (thread_pipe[1]) {
@@ -341,9 +350,10 @@ void * work_thread(void *ptr) {
 			break;
 		}
 	}
+	cl->thread_active = 0;
+	cl->work_mbuf = NULL; // Prevent free_client from freeing mbuf (->work_mbuf)
 	free(mbuf);
 	pthread_exit(NULL);
-	cl->thread_active = 0;
 	return NULL;
 }
 

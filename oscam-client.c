@@ -607,6 +607,7 @@ void free_client(struct s_client *cl)
 
 	// Clean all remaining structures
 	free_joblist(cl);
+	NULLFREE(cl->work_mbuf);
 
 	cleanup_ecmtasks(cl);
 	add_garbage(cl->emmcache);
