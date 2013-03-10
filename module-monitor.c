@@ -119,36 +119,35 @@ int32_t monitor_send_idx(struct s_client *cl, char *txt)
 
 static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 {
-	int32_t n;
+	int32_t n = 0;
 	uchar nbuf[3] = { 'U', 0, 0 };
 	int32_t bpos=0, res = 0;
-	uchar *bbuf=NULL;
-	if (!bbuf)
-	{
-		if (!cs_malloc(&bbuf, l))
-			return 0;
+	uchar *bbuf;
+	n = recv_from_udpipe(buf);
+	if (!n) {
+		return buf[0]=0;
 	}
-	if (bpos)
-		memcpy(buf, bbuf, n=bpos);
-	else
-		n=recv_from_udpipe(buf);
-	bpos=0;
-	if (!n) return buf[0]=0;
+	if (!cs_malloc(&bbuf, l))
+		return 0;
 	if (buf[0]=='&')
 	{
 		int32_t bsize;
 		if (n<21)	// 5+16 is minimum
 		{
 			cs_log("packet too small!");
+			free(bbuf);
 			return buf[0]=0;
 		}
 		res = secmon_auth_client(buf+1);
 		if (res == -1) {
 			cs_disconnect_client(client);
+			free(bbuf);
 			return 0;
 		}
-		if (!res)
+		if (!res) {
+			free(bbuf);
 			return buf[0]=0;
+		}
 		aes_decrypt(&client->aes_keys, buf+5, 16);
 		bsize=boundary(4, buf[9]+5)+5;
 		// cs_log("n=%d bsize=%d", n, bsize);
@@ -166,6 +165,7 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 		else if (n<bsize)
 		{
 			cs_log("packet-size mismatch !");
+			free(bbuf);
 			return buf[0]=0;
 		}
 		aes_decrypt(&client->aes_keys, buf+21, n-21);
@@ -173,6 +173,7 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 		if (memcmp(buf+5, i2b_buf(4, crc32(0L, buf+10, n-10), tmp), 4))
 		{
 			cs_log("CRC error ! wrong password ?");
+			free(bbuf);
 			return buf[0]=0;
 		}
 		n=buf[9];
@@ -183,6 +184,7 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 		uchar *p;
 		if (monitor_check_ip() == -1) {
 			cs_disconnect_client(client);
+			free(bbuf);
 			return 0;
 		}
 		buf[n]='\0';
@@ -200,6 +202,7 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 	buf[n]='\0';
 	n=strlen(trim((char *)buf));
 	if (n) client->last=time((time_t *) 0);
+	free(bbuf);
 	return n;
 }
 
