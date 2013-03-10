@@ -315,7 +315,9 @@ all:
 |  Compiler : $(shell $(CC) --version 2>/dev/null | head -n 1)\n\
 |  Binary   : $(OSCAM_BIN)\n\
 +-------------------------------------------------------------------------------\n"
+ifeq "$(shell ./config.sh --enabled WEBIF)" "Y"
 	@$(MAKE) --no-print-directory --quiet -C webif
+endif
 	@$(MAKE) --no-print-directory $(OSCAM_BIN) $(LIST_SMARGO_BIN)
 
 $(OSCAM_BIN).debug: $(OBJ)
