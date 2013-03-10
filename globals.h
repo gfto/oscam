@@ -1006,9 +1006,6 @@ struct s_client {
 	int8_t			disable_counter;
 	uchar			lastserial[8];
 
-	//monitor
-	int8_t			auth;
-
 	// Failban value set bitwise - compared with BAN_
 	int32_t			failban;
 
@@ -1023,6 +1020,8 @@ struct s_client {
 	uchar 			pand_ignore_ecm;
 	uchar 			pand_md5_key[16];
 #endif
+
+	void			*module_data;		// private module data
 
 	struct s_client	*next; 							//make client a linked list
 	struct s_client	*nexthashed;

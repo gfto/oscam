@@ -596,10 +596,11 @@ void free_client(struct s_client *cl)
 		cl->last_srvid = 0xFFFF;
 		cs_statistics(cl);
 		cs_sleepms(500); //just wait a bit that really really nobody is accessing client data
-		struct s_module *module = get_module(cl);
-		if (module->cleanup)
-			module->cleanup(cl);
 	}
+
+	struct s_module *module = get_module(cl);
+	if (module->cleanup)
+		module->cleanup(cl);
 
 	// Close network socket if not already cleaned by previous cleanup functions
 	if (cl->pfd)

@@ -15,12 +15,19 @@ extern char *entitlement_type[];
 extern char *loghist;
 extern char *loghistptr;
 
+struct monitor_data {
+	bool			auth;
+	uint8_t			ucrc[4];
+	struct aes_keys	aes_keys;
+};
+
 static int8_t monitor_check_ip(void)
 {
 	int32_t ok=0;
 	struct s_client *cur_cl = cur_client();
+	struct monitor_data *module_data = cur_cl->module_data;
 
-	if (cur_cl->auth) return 0;
+	if (module_data->auth) return 0;
 	ok = check_ip(cfg.mon_allowed, cur_cl->ip);
 	if (!ok)
 	{
@@ -34,21 +41,21 @@ static int8_t monitor_auth_client(char *usr, char *pwd)
 {
 	struct s_auth *account;
 	struct s_client *cur_cl = cur_client();
+	struct monitor_data *module_data = cur_cl->module_data;
 
-	if (cur_cl->auth) return 0;
+	if (module_data->auth) return 0;
 	if ((!usr) || (!pwd))
 	{
 		cs_auth_client(cur_cl, (struct s_auth *)0, NULL);
 		return -1;
 	}
-	for (account=cfg.account, cur_cl->auth=0; (account) && (!cur_cl->auth);)
-	{
-		if (account->monlvl)
-			cur_cl->auth = streq(usr, account->usr) && streq(pwd, account->pwd);
-		if (!cur_cl->auth)
-			account=account->next;
+	for (account = cfg.account; account; account = account->next) {
+		if (account->monlvl && streq(usr, account->usr) && streq(pwd, account->pwd)) {
+			module_data->auth = 1;
+			break;
+		}
 	}
-	if (!cur_cl->auth)
+	if (!module_data->auth)
 	{
 		cs_auth_client(cur_cl, (struct s_auth *)0, "invalid account");
 		return -1;
@@ -63,37 +70,39 @@ static int32_t secmon_auth_client(uchar *ucrc)
 	uint32_t crc;
 	struct s_auth *account;
 	struct s_client *cur_cl = cur_client();
+	struct monitor_data *module_data = cur_cl->module_data;
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
 
-	if (cur_cl->auth)
+	if (module_data->auth)
 	{
-		int32_t s=memcmp(cur_cl->ucrc, ucrc, 4);
+		int32_t s=memcmp(module_data->ucrc, ucrc, 4);
 		if (s)
 			cs_log("wrong user-crc or garbage !?");
 		return !s;
 	}
 	cur_cl->crypted=1;
 	crc=(ucrc[0]<<24) | (ucrc[1]<<16) | (ucrc[2]<<8) | ucrc[3];
-	for (account=cfg.account; (account) && (!cur_cl->auth); account=account->next)
+	for (account=cfg.account; (account) && (!module_data->auth); account=account->next)
 		if ((account->monlvl) &&
 				(crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), md5tmp), MD5_DIGEST_LENGTH)))
 		{
-			memcpy(cur_cl->ucrc, ucrc, 4);
-			aes_set_key(&cur_cl->aes_keys, (char *)MD5((unsigned char *)ESTR(account->pwd), strlen(ESTR(account->pwd)), md5tmp));
+			memcpy(module_data->ucrc, ucrc, 4);
+			aes_set_key(&module_data->aes_keys, (char *)MD5((unsigned char *)ESTR(account->pwd), strlen(ESTR(account->pwd)), md5tmp));
 			if (cs_auth_client(cur_cl, account, NULL))
 				return -1;
-			cur_cl->auth=1;
+			module_data->auth=1;
 		}
-	if (!cur_cl->auth)
+	if (!module_data->auth)
 	{
 		cs_auth_client(cur_cl, (struct s_auth *)0, "invalid user");
 		return -1;
 	}
-	return cur_cl->auth;
+	return module_data->auth;
 }
 
 int32_t monitor_send_idx(struct s_client *cl, char *txt)
 {
+	struct monitor_data *module_data = cl->module_data;
 	int32_t l;
 	unsigned char buf[256+32];
 	if (!cl->udp_fd)
@@ -107,11 +116,11 @@ int32_t monitor_send_idx(struct s_client *cl, char *txt)
 	buf[0]='&';
 	buf[9]=l=strlen(txt);
 	l=boundary(4, l+5)+5;
-	memcpy(buf+1, cl->ucrc, 4);
+	memcpy(buf+1, module_data->ucrc, 4);
 	cs_strncpy((char *)buf+10, txt, sizeof(buf)-10);
 	uchar tmp[10];
 	memcpy(buf+5, i2b_buf(4, crc32(0L, buf+10, l-10), tmp), 4);
-	aes_encrypt_idx(&cl->aes_keys, buf+5, l-5);
+	aes_encrypt_idx(&module_data->aes_keys, buf+5, l-5);
 	return sendto(cl->udp_fd, buf, l, 0, (struct sockaddr *)&cl->udp_sa, cl->udp_sa_len);
 }
 
@@ -122,6 +131,8 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t UNUSED
 	int32_t n = recv_from_udpipe(buf);
 	if (!n)
 		return buf[0]=0;
+	if (!client->module_data && !cs_malloc(&client->module_data, sizeof(struct monitor_data)))
+		return 0;
 	if (buf[0]=='&')
 	{
 		int32_t bsize;
@@ -138,14 +149,15 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t UNUSED
 		if (!res) {
 			return buf[0]=0;
 		}
-		aes_decrypt(&client->aes_keys, buf+5, 16);
+		struct monitor_data *module_data = client->module_data;
+		aes_decrypt(&module_data->aes_keys, buf+5, 16);
 		bsize=boundary(4, buf[9]+5)+5;
 		if (n<bsize)
 		{
 			cs_log("packet-size mismatch !");
 			return buf[0]=0;
 		}
-		aes_decrypt(&client->aes_keys, buf+21, n-21);
+		aes_decrypt(&module_data->aes_keys, buf+21, n-21);
 		uchar tmp[10];
 		if (memcmp(buf+5, i2b_buf(4, crc32(0L, buf+10, n-10), tmp), 4))
 		{
@@ -503,7 +515,8 @@ static void monitor_process_details(char *arg){
 static void monitor_send_login(void){
 	char buf[64];
 	struct s_client *cur_cl = cur_client();
-	if (cur_cl->auth && cur_cl->account)
+	struct monitor_data *module_data = cur_cl->module_data;
+	if (module_data->auth && cur_cl->account)
 		snprintf(buf, sizeof(buf), "[A-0000]1|%s logged in\n", cur_cl->account->usr);
 	else
 		cs_strncpy(buf, "[A-0000]0|not logged in\n", sizeof(buf));
@@ -780,10 +793,13 @@ static int32_t monitor_process_request(char *req)
 	int32_t cmdcnt = sizeof(cmd)/sizeof(char *);  // Calculate the amount of items in array
 	char *arg;
 	struct s_client *cur_cl = cur_client();
+	struct monitor_data *module_data = cur_cl->module_data;
 
 	if( (arg = strchr(req, ' ')) ) { *arg++ = 0; trim(arg); }
 	//trim(req);
-	if ((!cur_cl->auth) && (strcmp(req, cmd[0])))	monitor_login(NULL);
+
+	if (!module_data->auth && strcmp(req, cmd[0]) != 0)
+		monitor_login(NULL);
 
 	for (rc=1, i = 0; i < cmdcnt; i++)
 		if (!strcmp(req, cmd[i])) {
@@ -820,6 +836,10 @@ static void * monitor_server(struct s_client * client, uchar *mbuf, int32_t UNUS
 	return NULL;
 }
 
+static void monitor_cleanup(struct s_client * client) {
+	NULLFREE(client->module_data);
+}
+
 void module_monitor(struct s_module *ph){
 	ph->ptab.nports = 1;
 	ph->ptab.ports[0].s_port = cfg.mon_port;
@@ -828,6 +848,7 @@ void module_monitor(struct s_module *ph){
 	IP_ASSIGN(ph->s_ip, cfg.mon_srvip);
 	ph->s_handler = monitor_server;
 	ph->recv = monitor_recv;
+	ph->cleanup = monitor_cleanup;
 	//  ph->send_dcw=NULL;
 }
 #endif

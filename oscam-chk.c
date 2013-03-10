@@ -642,7 +642,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
 
 #ifdef CS_CACHEEX
   //To avoid cascading, a incoming cache request should not invoke a outgoing cache request:
-  if (rdr->cacheex.mode == 1 && cur_cl->auth && cur_cl->account->cacheex.mode == 1)
+  if (rdr->cacheex.mode == 1 && cur_cl->account->cacheex.mode == 1)
 	  return (0);
 
   //Cacheex=3 defines a Cacheex-only reader. never match them.
