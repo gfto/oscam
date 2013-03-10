@@ -740,6 +740,7 @@ static uint32_t auto_timeout(ECM_REQUEST *er, uint32_t timeout) {
         return timeout;
 }
 
+static pthread_cond_t check_thread_sleep_cond;
 
 static void * check_thread(void) {
 	int32_t time_to_check, next_check, ecmc_next, msec_wait = 3000;
@@ -767,16 +768,32 @@ static void * check_thread(void) {
 	cs_ftime(&ecmc_time);
 	add_ms_to_timeb(&ecmc_time, 1000);
 
-	while(1) {
-		ts.tv_sec = msec_wait/1000;
-		ts.tv_nsec = (msec_wait % 1000) * 1000000L;
+	pthread_mutex_t check_thread_sleep_cond_mutex;
+	pthread_mutex_init(&check_thread_sleep_cond_mutex, NULL);
+	pthread_cond_init(&check_thread_sleep_cond, NULL);
+
+	while(!exit_oscam) {
 		pthread_mutex_lock(&cl->thread_lock);
 		cl->thread_active = 2;
 		pthread_mutex_unlock(&cl->thread_lock);
-		nanosleep(&ts, NULL);
+
+		if (!msec_wait || msec_wait % 1000 != 0) // Round up to near second
+			msec_wait = msec_wait - msec_wait % 1000 + 1000;
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+		ts.tv_sec = tv.tv_sec;
+		ts.tv_nsec = tv.tv_usec * 1000;
+		ts.tv_sec += msec_wait / 1000;
+		pthread_mutex_lock(&check_thread_sleep_cond_mutex);
+		pthread_cond_timedwait(&check_thread_sleep_cond, &check_thread_sleep_cond_mutex, &ts); // sleep on check_thread_sleep_cond
+		pthread_mutex_unlock(&check_thread_sleep_cond_mutex);
+
 		pthread_mutex_lock(&cl->thread_lock);
 		cl->thread_active = 1;
 		pthread_mutex_unlock(&cl->thread_lock);
+
+		if (exit_oscam)
+			break;
 
 		next_check = 0;
 #ifdef CS_ANTICASC
@@ -1466,6 +1483,7 @@ int32_t main (int32_t argc, char *argv[])
 	// main loop function
 	process_clients();
 
+	pthread_cond_signal(&check_thread_sleep_cond); // Stop check thread
 	pthread_cond_signal(&reader_check_sleep_cond); // Stop reader_check thread
 
 	// Cleanup
