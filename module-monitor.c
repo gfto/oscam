@@ -119,13 +119,9 @@ int32_t monitor_send_idx(struct s_client *cl, char *txt)
 
 static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t UNUSED(buflen))
 {
-	int32_t n = 0;
-	uchar nbuf[3] = { 'U', 0, 0 };
-	int32_t bpos=0, res = 0;
-	n = recv_from_udpipe(buf);
-	if (!n) {
+	int32_t n = recv_from_udpipe(buf);
+	if (!n)
 		return buf[0]=0;
-	}
 	if (buf[0]=='&')
 	{
 		int32_t bsize;
@@ -134,7 +130,7 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t UNUSED
 			cs_log("packet too small!");
 			return buf[0]=0;
 		}
-		res = secmon_auth_client(buf+1);
+		int32_t res = secmon_auth_client(buf+1);
 		if (res == -1) {
 			cs_disconnect_client(client);
 			return 0;
@@ -144,18 +140,7 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t UNUSED
 		}
 		aes_decrypt(&client->aes_keys, buf+5, 16);
 		bsize=boundary(4, buf[9]+5)+5;
-		// cs_log("n=%d bsize=%d", n, bsize);
-		if (n>bsize)
-		{
-			// cs_log("DO >>>> copy-back");
-			n=bsize;
-			uchar *nbuf_cpy;
-			if (cs_malloc(&nbuf_cpy, sizeof(nbuf))) {
-				memcpy(nbuf_cpy, nbuf, sizeof(nbuf));
-				add_job(client, ACTION_CLIENT_UDP, &nbuf_cpy, sizeof(nbuf));
-			}
-		}
-		else if (n<bsize)
+		if (n<bsize)
 		{
 			cs_log("packet-size mismatch !");
 			return buf[0]=0;
@@ -172,20 +157,9 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t UNUSED
 	}
 	else
 	{
-		uchar *p;
 		if (monitor_check_ip() == -1) {
 			cs_disconnect_client(client);
 			return 0;
-		}
-		buf[n]='\0';
-		if ((p=(uchar *)strchr((char *)buf, 10)) && (bpos=n-(p-buf)-1))
-		{
-			n=p-buf;
-			uchar *nbuf_cpy;
-			if (cs_malloc(&nbuf_cpy, sizeof(nbuf))) {
-				memcpy(nbuf_cpy, nbuf, sizeof(nbuf));
-				add_job(client, ACTION_CLIENT_UDP, &nbuf_cpy, sizeof(nbuf));
-			}
 		}
 	}
 	buf[n]='\0';
