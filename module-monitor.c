@@ -19,6 +19,9 @@ struct monitor_data {
 	bool			auth;
 	uint8_t			ucrc[4];
 	struct aes_keys	aes_keys;
+	int32_t			seq;
+	int32_t			counter;
+	char			btxt[256];
 };
 
 static int8_t monitor_check_ip(void)
@@ -182,21 +185,21 @@ static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t UNUSED
 
 static void monitor_send_info(char *txt, int32_t last)
 {
-	static int32_t seq=0, counter=0;
-	static char btxt[256] = {0};
+	struct s_client *cur_cl = cur_client();
+	struct monitor_data *module_data = cur_cl->module_data;
 	char buf[8];
 	if (txt)
 	{
-		if (!btxt[0])
+		if (!module_data->btxt[0])
 		{
-			counter=0;
+			module_data->counter=0;
 			txt[2]='B';
 		}
 		else
-			counter++;
-		snprintf(buf, sizeof(buf), "%03d", counter);
+			module_data->counter++;
+		snprintf(buf, sizeof(buf), "%03d", module_data->counter);
 		memcpy(txt+4, buf, 3);
-		txt[3]='0'+seq;
+		txt[3]='0'+module_data->seq;
 	}
 	else
 		if (!last)
@@ -204,30 +207,30 @@ static void monitor_send_info(char *txt, int32_t last)
 
 	if (!last)
 	{
-		if (btxt[0]) monitor_send(btxt);
-		cs_strncpy(btxt, txt, sizeof(btxt));
+		if (module_data->btxt[0]) monitor_send(module_data->btxt);
+		cs_strncpy(module_data->btxt, txt, sizeof(module_data->btxt));
 		return;
 	}
 
-	if (txt && btxt[0])
+	if (txt && module_data->btxt[0])
 	{
-		monitor_send(btxt);
+		monitor_send(module_data->btxt);
 		txt[2]='E';
-		cs_strncpy(btxt, txt, sizeof(btxt));
+		cs_strncpy(module_data->btxt, txt, sizeof(module_data->btxt));
 	}
 	else
 	{
 		if (txt)
-			cs_strncpy(btxt, txt, sizeof(btxt));
-		btxt[2]=(btxt[2]=='B') ? 'S' : 'E';
+			cs_strncpy(module_data->btxt, txt, sizeof(module_data->btxt));
+		module_data->btxt[2]=(module_data->btxt[2]=='B') ? 'S' : 'E';
 	}
 
-	if (btxt[0])
+	if (module_data->btxt[0])
 	{
-		monitor_send(btxt);
-		seq=(seq+1)%10;
+		monitor_send(module_data->btxt);
+		module_data->seq=(module_data->seq+1)%10;
 	}
-	btxt[0]=0;
+	module_data->btxt[0]=0;
 }
 
 static char *monitor_client_info(char id, struct s_client *cl, char *sbuf){
