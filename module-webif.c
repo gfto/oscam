@@ -32,6 +32,7 @@ extern char cs_confdir[];
 extern uint32_t ecmcwcache_size;
 extern uint8_t cs_http_use_utf8;
 extern uint32_t cfg_sidtab_generation;
+extern int32_t exit_oscam;
 
 extern char *entitlement_type[];
 extern char *RDR_CD_TXT[];
@@ -46,8 +47,8 @@ pthread_key_t getssl;
 static CS_MUTEX_LOCK http_lock;
 CS_MUTEX_LOCK *lock_cs;
 
-static int8_t running = 1;
 static pthread_t httpthread;
+static int32_t sock;
 
 enum refreshtypes { REFR_ACCOUNTS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REFR_SERVICES };
 
@@ -3665,8 +3666,6 @@ static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct urip
 			tpl_addVar(vars, TPLADD, "APICONFIRMMESSAGE", "shutdown");
 			cs_log("Shutdown requested by XMLApi from %s", cs_inet_ntoa(GET_IP()));
 		}
-		running = 0;
-		pthread_kill(httpthread, SIGPIPE);		// send signal to master thread to wake up from accept()
 		cs_exit_oscam();
 
 		if(!apicall)
@@ -3693,8 +3692,6 @@ static char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct urip
 			tpl_addVar(vars, TPLADD, "APICONFIRMMESSAGE", "restart");
 			cs_log("Restart requested by XMLApi from %s", cs_inet_ntoa(GET_IP()));
 		}
-		running = 0;
-		pthread_kill(httpthread, SIGPIPE);		// send signal to master thread to wake up from accept()
 		cs_restart_oscam();
 
 		if(!apicall)
@@ -5195,15 +5192,14 @@ static void create_rand_str(char *dst, int32_t size) {
 	dst[i] = '\0';
 }
 
-static void *http_srv(void) {
+static void *http_server(void *UNUSED(d)) {
 	pthread_t workthread;
 	pthread_attr_t attr;
 	struct s_client * cl = create_client(first_client->ip);
 	if (cl == NULL) return NULL;
-	httpthread = cl->thread = pthread_self();
 	pthread_setspecific(getclient, cl);
 	cl->typ = 'h';
-	int32_t sock, s, reuse = 1;
+	int32_t s, reuse = 1;
 	struct s_connection *conn;
 
 	set_thread_name(__func__);
@@ -5316,8 +5312,10 @@ static void *http_srv(void) {
 
 	memset(&remote, 0, sizeof(remote));
 
-	while (running) {
+	while (!exit_oscam) {
 		if((s = accept(sock, (struct sockaddr *) &remote, &len)) < 0) {
+			if (exit_oscam)
+				break;
 			if(errno != EAGAIN && errno != EINTR){
 				cs_log("HTTP Server: Error calling accept() (errno=%d %s)", errno, strerror(errno));
 				cs_sleepms(100);
@@ -5386,9 +5384,9 @@ static void *http_srv(void) {
 		lock_cs = NULL;
 	}
 #endif
-	cs_log("HTTP Server: Shutdown requested.");
+	cs_log("HTTP Server stopped");
+	free_client(cl);
 	close(sock);
-	//exit(SIGQUIT);
 	return NULL;
 }
 
@@ -5429,7 +5427,24 @@ void webif_init(void) {
 		cs_log("http disabled");
 		return;
 	}
-	start_thread(http_srv, "http");
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+	int32_t ret = pthread_create(&httpthread, &attr, http_server, NULL);
+	if (ret) {
+		cs_log("ERROR: Can't start http server (errno=%d %s)", ret, strerror(ret));
+		pthread_attr_destroy(&attr);
+		return;
+	}
+	pthread_attr_destroy(&attr);
+}
+
+void webif_close(void) {
+	if (!sock)
+		return;
+	shutdown(sock, 2);
+	close(sock);
+	pthread_join(httpthread, NULL);
 }
 
 #endif
