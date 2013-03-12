@@ -858,7 +858,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 	// These are written only when the reader is CCCAM
 	static const char *cccam_settings[] = {
 		"cccversion", "cccmaxhops", "cccmindown", "cccwantemu", "ccckeepalive",
-		"cccreshare", "cccreconnect",
+		"cccreconnect",
 		0
 	};
 	// Special settings for CCCAM
