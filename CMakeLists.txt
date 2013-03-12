@@ -178,34 +178,10 @@ endif (OSCamOperatingSystem MATCHES "Linux")
 set (CS_CONFDIR ${DEFAULT_CS_CONFDIR} CACHE STRING "Default path for the config files")
 add_definitions ("-DCS_CONFDIR=\\\"${CS_CONFDIR}\\\"")
 
-# Build config.mak and related files
-# FIXME: Create USE_FLAGS and pass them to config.sh using --use-flags
-execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --objdir ${CMAKE_CURRENT_BINARY_DIR} --use-flags CMAKE --make-config.mak)
-# Generate webif/pages.c
-execute_process (COMMAND make --no-print-directory --quiet -C ${CMAKE_CURRENT_SOURCE_DIR}/webif)
-
-# Manage config.h based on command line parameters
-# Manipulate config file based on given parameters and read unset parameters
-
-execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --show-valid OUTPUT_VARIABLE config_vars_string OUTPUT_STRIP_TRAILING_WHITESPACE)
-string(REGEX MATCHALL "[A-Z0-9_]+" config_vars ${config_vars_string})
-
-MACRO(GENERATE_OSCAM_CONFIG fullpath)
-	foreach(option ${config_vars})
-		if(DEFINED ${option})
-			if(${option})
-				execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --enable ${option})
-			else(${option})
-				execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --disable ${option})
-			endif(${option})
-		endif(DEFINED ${option})
-	endforeach(option)
-ENDMACRO(GENERATE_OSCAM_CONFIG fullpath)
 
 #----------------------- subdirectories ------------------------------
 
 include (CheckIncludeFile)
-GENERATE_OSCAM_CONFIG("${CMAKE_CURRENT_SOURCE_DIR}/config.h")
 
 check_include_file ("pthread.h" HAVE_PTHREAD)
 if (HAVE_PTHREAD)
@@ -221,9 +197,21 @@ if (HAVE_LIBCRYPTO)
 endif (HAVE_LIBCRYPTO)
 
 execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --enabled WITH_SSL OUTPUT_VARIABLE CONFIG_WITH_SSL OUTPUT_STRIP_TRAILING_WHITESPACE)
-if (CONFIG_WITH_SSL MATCHES "Y")
-    set (WITH_SSL TRUE)
-endif (CONFIG_WITH_SSL MATCHES "Y")
+if (CONFIG_WITH_SSL MATCHES "N" AND WITH_SSL EQUAL 1)
+	message ( status " ssl is added by You compiling with ssl included")
+elseif (CONFIG_WITH_SSL MATCHES "Y" AND WITH_SSL EQUAL 1)
+	message (status " ssl is added by You but it was already enabled by config file")
+elseif (CONFIG_WITH_SSL MATCHES "N" AND NOT WITH_SSL EQUAL 1)
+	message (status " ssl is not inclyded in this compilation")
+endif (CONFIG_WITH_SSL MATCHES "N" AND WITH_SSL EQUAL 1)
+
+if (CONFIG_WITH_SSL MATCHES "Y" AND NOT WITH_SSL EQUAL 0)
+	message(status "  SSL is added by config file ${CONFIG_WITH_SSL} compiling with ssl included")
+	add_definitions ("-DWITH_SSL")
+	set (WITH_SSL "1")
+elseif (CONFIG_WITH_SSL MATCHES "Y" AND WITH_SSL EQUAL 0)
+	message (status  " The config file has ssl enabled, but You disabled it by you cmake command compiling whitout ssl")
+endif (CONFIG_WITH_SSL MATCHES "Y" AND NOT WITH_SSL EQUAL 0)
 
 find_package(OpenSSL QUIET)
 if (OPENSSL_FOUND)
@@ -331,12 +319,8 @@ if( HAVE_LIBRT OR HAVE_LIBRT_STATIC)
 		   set (STATICLIBUSB False)
 		endif(HAVE_LIBUSB AND HAVE_PTHREAD AND PRESENT)
 	else(STATIC_LIBUSB EQUAL 0)
-        if (HAVE_LIBUSB AND HAVE_PTHREAD AND PRESENT)
-		if (WSSP EQUAL 1)               
+        if (HAVE_LIBUSB AND HAVE_PTHREAD AND PRESENT)             
                 message(STATUS "  static libusb 1.0 found (libusb-1.0.a). Adding smartreader support ")
-		else (WSSP EQUAL 1)
-		message(STATUS " libusb 1.0 found . Adding smartreader support ")
-		endif (WSSP EQUAL 1)
                 add_definitions ("-DWITH_LIBUSB=1")
 		set (STATICLIBUSB True)
         else (HAVE_LIBUSB AND HAVE_PTHREAD AND PRESENT)
@@ -374,6 +358,32 @@ if (OSCamOperatingSystem MATCHES "Windows/Cygwin")
     set (HAVE_PCSC "1")
 endif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
 endif (HAVE_PCSC)
+
+# Manage config.h based on command line parameters
+# Manipulate config file based on given parameters and read unset parameters
+
+execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --show-valid OUTPUT_VARIABLE config_vars_string OUTPUT_STRIP_TRAILING_WHITESPACE)
+string(REGEX MATCHALL "[A-Z0-9_]+" config_vars ${config_vars_string})
+
+MACRO(GENERATE_OSCAM_CONFIG fullpath)
+	foreach(option ${config_vars})
+		if(DEFINED ${option})
+			if(${option})
+				execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --enable ${option})
+			else(${option})
+				execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --disable ${option})
+			endif(${option})
+		endif(DEFINED ${option})
+	endforeach(option)
+ENDMACRO(GENERATE_OSCAM_CONFIG fullpath)
+
+GENERATE_OSCAM_CONFIG("${CMAKE_CURRENT_SOURCE_DIR}/config.h")
+
+# Build config.mak and related files
+# FIXME: Create USE_FLAGS and pass them to config.sh using --use-flags
+execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --objdir ${CMAKE_CURRENT_BINARY_DIR} --use-flags CMAKE --make-config.mak)
+# Generate webif/pages.c
+execute_process (COMMAND make --no-print-directory --quiet -C ${CMAKE_CURRENT_SOURCE_DIR}/webif)
 
 #----------------------- subdirectories ------------------------------
 
@@ -711,17 +721,10 @@ endif (HAVE_PCSC)
 if (HAVE_PTHREAD)
     message (STATUS "  use system pthread functions")
 endif (HAVE_PTHREAD)
-if(WSSP)
-# disabling ennoying Dev warning in some cases
-endif(WSSP)
-if(STATIC_LIBUSB)
-# disabling ennoying Dev warning in some cases
-endif(STATIC_LIBUSB)
 if (HAVE_LIBUSB)
 if(STATIC_LIBUSB EQUAL 0)
    message (STATUS "  You selected to disable static libusb system libusb used")
 endif(STATIC_LIBUSB EQUAL 0)
- if (WSSP EQUAL 1)
  if(STATICLIBUSB AND NOT LIBUSBDIR)
     message (STATUS "  use static libusb functions")
  else(STATICLIBUSB AND NOT LIBUSBDIR)
@@ -733,9 +736,6 @@ endif(STATIC_LIBUSB EQUAL 0)
       message(STATUS " use system libusb functions")
    endif(LIBUSBDIR AND STATIC_LIBUSB EQUAL 0)
  endif(STATICLIBUSB AND NOT LIBUSBDIR)
- else (WSSP EQUAL 1)
-      message(STATUS "  use libusb functions")
- endif(WSSP EQUAL 1)
 endif (HAVE_LIBUSB)
 
 message (STATUS "")
