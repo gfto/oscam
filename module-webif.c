@@ -264,7 +264,7 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	webif_save_config("global", vars, params);
 
 	if (IP_ISSET(cfg.srvip))
-	tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.srvip));
+		tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.srvip));
 	tpl_printf(vars, TPLADD, "NICE", "%d", cfg.nice);
 	tpl_printf(vars, TPLADD, "BINDWAIT", "%d", cfg.bindwait);
 	tpl_printf(vars, TPLADD, "NETPRIO", "%d", cfg.netprio);
@@ -602,7 +602,7 @@ static char *send_oscam_config_radegast(struct templatevars *vars, struct uripar
 
 	tpl_printf(vars, TPLADD, "PORT", "%d", cfg.rad_port);
 	if (IP_ISSET(cfg.rad_srvip))
-	tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.rad_srvip));
+		tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.rad_srvip));
 	tpl_addVar(vars, TPLADD, "USER", cfg.rad_usr);
 
 	char *value = mk_t_iprange(cfg.rad_allowed);
@@ -635,6 +635,9 @@ static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams
 	char *value = mk_t_cccam_port();
 	tpl_addVar(vars, TPLAPPEND, "PORT", value);
 	free_mk_t(value);
+
+	if (IP_ISSET(cfg.cc_srvip))
+		tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.cc_srvip));
 
 	tpl_printf(vars, TPLADD, "RESHARE", "%d", cfg.cc_reshare);
 
@@ -702,6 +705,8 @@ static char *send_oscam_config_webif(struct templatevars *vars, struct uriparams
 	webif_save_config("webif", vars, params);
 
 	tpl_printf(vars, TPLADD, "HTTPPORT", "%s%d", cfg.http_use_ssl ? "+" : "", cfg.http_port);
+	if (IP_ISSET(cfg.http_srvip))
+		tpl_addVar(vars, TPLAPPEND, "SERVERIP", cs_inet_ntoa(cfg.http_srvip));
 
 	tpl_addVar(vars, TPLADD, "HTTPUSER", cfg.http_user);
 	tpl_addVar(vars, TPLADD, "HTTPPASSWORD", cfg.http_pwd);
@@ -802,7 +807,7 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 
 	tpl_printf(vars, TPLADD, "MONPORT", "%d", cfg.mon_port);
 	if (IP_ISSET(cfg.mon_srvip))
-	tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.mon_srvip));
+		tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.mon_srvip));
 
 	tpl_printf(vars, TPLADD, "AULOW", "%d", cfg.aulow);
 	tpl_printf(vars, TPLADD, "HIDECLIENTTO", "%d", cfg.hideclient_to);
@@ -5282,7 +5287,9 @@ static void *http_server(void *UNUSED(d)) {
 
 	memset(&sin, 0, sizeof sin);
 	sin.sin_family = AF_INET;
-	if (IP_ISSET(cfg.srvip))
+	if (IP_ISSET(cfg.http_srvip))
+		IP_ASSIGN(SIN_GET_ADDR(sin), cfg.http_srvip);
+	else if (IP_ISSET(cfg.srvip))
 		IP_ASSIGN(SIN_GET_ADDR(sin), cfg.srvip);
 	else
 		sin.sin_addr.s_addr = INADDR_ANY;

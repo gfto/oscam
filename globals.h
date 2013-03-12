@@ -1493,6 +1493,7 @@ struct s_config
 	int8_t			appendchaninfo;
 #ifdef WEBIF
 	int32_t			http_port;
+	IN_ADDR_T		http_srvip;
 	char			*http_user;
 	char			*http_pwd;
 	char			*http_css;

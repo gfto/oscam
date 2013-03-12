@@ -369,6 +369,7 @@ static bool webif_should_save_fn(void *UNUSED(var)) { return cfg.http_port; }
 static const struct config_list webif_opts[] = {
 	DEF_OPT_SAVE_FUNC(webif_should_save_fn),
 	DEF_OPT_FUNC("httpport"					, OFS(http_port),				http_port_fn ),
+	DEF_OPT_FUNC("serverip"					, OFS(http_srvip),				serverip_fn ),
 	DEF_OPT_STR("httpuser"					, OFS(http_user),				NULL ),
 	DEF_OPT_STR("httppwd"					, OFS(http_pwd),				NULL ),
 	DEF_OPT_STR("httpcss"					, OFS(http_css),				NULL ),
@@ -551,6 +552,7 @@ static bool cccam_should_save_fn(void *UNUSED(var)) { return cfg.cc_port[0]; }
 static const struct config_list cccam_opts[] = {
 	DEF_OPT_SAVE_FUNC(cccam_should_save_fn),
 	DEF_OPT_FUNC("port"						, OFS(cc_port),				cccam_port_fn ),
+	DEF_OPT_FUNC("serverip"					, OFS(cc_srvip),			serverip_fn ),
 	DEF_OPT_HEX("nodeid"					, OFS(cc_fixed_nodeid),		SIZEOF(cc_fixed_nodeid) ),
 	DEF_OPT_SSTR("version"					, OFS(cc_version),			"", SIZEOF(cc_version) ),
 	DEF_OPT_INT8("reshare"					, OFS(cc_reshare),			10 ),
