@@ -1159,14 +1159,19 @@ read again
 set debug level (\fBmonlevel\fP > 3 required)
 
 debug level mask:
-   \fB0\fP = no debugging (default)
-   \fB2\fP = ATR parsing info, ECM dumps, CW dumps
-   \fB4\fP = traffic from/to the reader
-   \fB8\fP = traffic from/to the clients
-  \fB16\fP = traffic to the reader-device on IFD layer 
-  \fB32\fP = traffic to the reader-device on I/O layer
-  \fB64\fP = EMM logging 
- \fB255\fP = debug all
+     \fB0\fP = no debugging (default)
+     \fB1\fP = detailed error messages
+     \fB2\fP = ATR parsing info, ECM dumps, CW dumps
+     \fB4\fP = traffic from/to the reader
+     \fB8\fP = traffic from/to the clients
+    \fB16\fP = traffic to the reader-device on IFD layer
+    \fB32\fP = traffic to the reader-device on I/O layer
+    \fB64\fP = EMM logging
+   \fB128\fP = DVB API logging
+   \fB256\fP = load balacing logging
+   \fB512\fP = cache exchange logging
+  \fB1024\fP = client ECM logging
+ \fB65535\fP = debug all
 .TP 3n
 \(bu
 \fBversion\fP

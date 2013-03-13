@@ -823,14 +823,19 @@ MONITOR
 	  set debug level (monlevel > 3 required)
 
 	  debug level mask:
-	     0 = no debugging (default)
-	     2 = ATR parsing info, ECM dumps, CW dumps
-	     4 = traffic from/to the reader
-	     8 = traffic from/to the clients
-	    16 = traffic to the reader-device on IFD layer
-	    32 = traffic to the reader-device on I/O layer
-	    64 = EMM logging
-	   255 = debug all
+	       0 = no debugging (default)
+	       1 = detailed error messages
+	       2 = ATR parsing info, ECM dumps, CW dumps
+	       4 = traffic from/to the reader
+	       8 = traffic from/to the clients
+	      16 = traffic to the reader-device on IFD layer
+	      32 = traffic to the reader-device on I/O layer
+	      64 = EMM logging
+	     128 = DVB API logging
+	     256 = load balacing logging
+	     512 = cache exchange logging
+	    1024 = client ECM logging
+	   65535 = debug all
 
        ·  version
 

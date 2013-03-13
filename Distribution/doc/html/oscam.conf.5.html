@@ -1510,14 +1510,19 @@ read again
 set debug level (<B>monlevel</B> &gt; 3 required)
 <P>
 debug level mask:
-<BR>&nbsp;&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;no&nbsp;debugging&nbsp;(default)
-<BR>&nbsp;&nbsp;&nbsp;<B>2</B>&nbsp;=&nbsp;ATR&nbsp;parsing&nbsp;info,&nbsp;ECM&nbsp;dumps,&nbsp;CW&nbsp;dumps
-<BR>&nbsp;&nbsp;&nbsp;<B>4</B>&nbsp;=&nbsp;traffic&nbsp;from/to&nbsp;the&nbsp;reader
-<BR>&nbsp;&nbsp;&nbsp;<B>8</B>&nbsp;=&nbsp;traffic&nbsp;from/to&nbsp;the&nbsp;clients
-<BR>&nbsp;&nbsp;<B>16</B>&nbsp;=&nbsp;traffic&nbsp;to&nbsp;the&nbsp;reader-device&nbsp;on&nbsp;IFD&nbsp;layer&nbsp;
-<BR>&nbsp;&nbsp;<B>32</B>&nbsp;=&nbsp;traffic&nbsp;to&nbsp;the&nbsp;reader-device&nbsp;on&nbsp;I/O&nbsp;layer
-<BR>&nbsp;&nbsp;<B>64</B>&nbsp;=&nbsp;EMM&nbsp;logging&nbsp;
-<BR>&nbsp;<B>255</B>&nbsp;=&nbsp;debug&nbsp;all
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;no&nbsp;debugging&nbsp;(default)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>1</B>&nbsp;=&nbsp;detailed&nbsp;error&nbsp;messages
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>2</B>&nbsp;=&nbsp;ATR&nbsp;parsing&nbsp;info,&nbsp;ECM&nbsp;dumps,&nbsp;CW&nbsp;dumps
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>4</B>&nbsp;=&nbsp;traffic&nbsp;from/to&nbsp;the&nbsp;reader
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>8</B>&nbsp;=&nbsp;traffic&nbsp;from/to&nbsp;the&nbsp;clients
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;<B>16</B>&nbsp;=&nbsp;traffic&nbsp;to&nbsp;the&nbsp;reader-device&nbsp;on&nbsp;IFD&nbsp;layer
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;<B>32</B>&nbsp;=&nbsp;traffic&nbsp;to&nbsp;the&nbsp;reader-device&nbsp;on&nbsp;I/O&nbsp;layer
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;<B>64</B>&nbsp;=&nbsp;EMM&nbsp;logging
+<BR>&nbsp;&nbsp;&nbsp;<B>128</B>&nbsp;=&nbsp;DVB&nbsp;API&nbsp;logging
+<BR>&nbsp;&nbsp;&nbsp;<B>256</B>&nbsp;=&nbsp;load&nbsp;balacing&nbsp;logging
+<BR>&nbsp;&nbsp;&nbsp;<B>512</B>&nbsp;=&nbsp;cache&nbsp;exchange&nbsp;logging
+<BR>&nbsp;&nbsp;<B>1024</B>&nbsp;=&nbsp;client&nbsp;ECM&nbsp;logging
+<BR>&nbsp;<B>65535</B>&nbsp;=&nbsp;debug&nbsp;all
 <DT>&bull;<DD>
 <B>version</B>
 <P>
