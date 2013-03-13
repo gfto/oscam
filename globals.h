@@ -1490,7 +1490,6 @@ struct s_config
 #endif
 	int32_t			aulow;
 	int32_t			hideclient_to;
-	int8_t			appendchaninfo;
 #ifdef WEBIF
 	int32_t			http_port;
 	IN_ADDR_T		http_srvip;

@@ -5,7 +5,6 @@
 	<form action="config.html" method="get">
 		<input name="part" type="hidden" value="monitor">
 		<input name="action" type="hidden" value="execute">
-		<input name="appendchaninfo" type="hidden" value="0">
 		<TABLE class="config">
 			<TR><TH COLSPAN="2">Edit Monitor Config</TH></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#port##TPLHELPSUFFIX##Port:</A></TD><TD><input name="port" type="text" size="5" maxlength="5" value="##MONPORT##"></TD></TR>
@@ -13,7 +12,6 @@
 			<TR><TD>##TPLHELPPREFIX##conf#nocrypt##TPLHELPSUFFIX##No crypt:</A></TD><TD><input name="nocrypt" type="text" size="63" maxlength="200" value="##NOCRYPT##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#aulow##TPLHELPSUFFIX##Au low:</A></TD><TD><input name="aulow" type="text" size="5" maxlength="5" value="##AULOW##"> min</TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#hideclient_to##TPLHELPSUFFIX##Hide client to:</A></TD><TD><input name="hideclient_to" type="text" size="5" maxlength="5" value="##HIDECLIENTTO##"> s</TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#appendchaninfo##TPLHELPSUFFIX##Append channel info:</A></TD><TD><input name="appendchaninfo" type="checkbox" value="1" ##APPENDCHANINFO##></TD></TR>
 			<TR>
 				<TD>##TPLHELPPREFIX##conf#monlevel##TPLHELPSUFFIX##Monlevel:</A></TD>
 				<TD><select name="monlevel">

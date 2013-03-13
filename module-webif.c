@@ -775,8 +775,6 @@ static char *send_oscam_config_webif(struct templatevars *vars, struct uriparams
 
 	tpl_printf(vars, TPLADD, "AULOW", "%d", cfg.aulow);
 	tpl_printf(vars, TPLADD, "HIDECLIENTTO", "%d", cfg.hideclient_to);
-	if (cfg.appendchaninfo)
-		tpl_addVar(vars, TPLADD, "APPENDCHANINFO", "checked");
 
 	return tpl_getTpl(vars, "CONFIGWEBIF");
 }
@@ -811,8 +809,6 @@ static char *send_oscam_config_monitor(struct templatevars *vars, struct uripara
 
 	tpl_printf(vars, TPLADD, "AULOW", "%d", cfg.aulow);
 	tpl_printf(vars, TPLADD, "HIDECLIENTTO", "%d", cfg.hideclient_to);
-	if (cfg.appendchaninfo)
-		tpl_addVar(vars, TPLADD, "APPENDCHANINFO", "checked");
 
 	char *value = mk_t_iprange(cfg.mon_allowed);
 	tpl_addVar(vars, TPLADD, "NOCRYPT", value);
@@ -3193,10 +3189,8 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 						tpl_printf(vars, TPLADD, "CLIENTSRVID", "none");
 					tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime?cl->cwlastresptime:1);
 
-					if (!cfg.appendchaninfo) {
-						char channame[32];
-						get_servicename(cl, cl->last_srvid, cl->last_caid, channame);
-					}
+					char channame[32];
+					get_servicename(cl, cl->last_srvid, cl->last_caid, channame);
 
 					tpl_printf(vars, TPLADD, "CLIENTSRVPROVIDER","%s%s", cl->last_srvidptr && cl->last_srvidptr->prov ? xml_encode(vars, cl->last_srvidptr->prov) : "", cl->last_srvidptr && cl->last_srvidptr->prov ? ": " : "");
 					tpl_addVar(vars, TPLADD, "CLIENTSRVNAME", cl->last_srvidptr && cl->last_srvidptr->name ? xml_encode(vars, cl->last_srvidptr->name) : "");

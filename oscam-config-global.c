@@ -314,7 +314,6 @@ static const struct config_list monitor_opts[] = {
 	DEF_OPT_INT32("aulow"					, OFS(aulow),					30 ),
 	DEF_OPT_UINT8("monlevel"				, OFS(mon_level),				2 ),
 	DEF_OPT_INT32("hideclient_to"			, OFS(hideclient_to),			15 ),
-	DEF_OPT_INT8("appendchaninfo"			, OFS(appendchaninfo),			0 ),
 	DEF_LAST_OPT
 };
 #else
@@ -390,7 +389,6 @@ static const struct config_list webif_opts[] = {
 	DEF_OPT_FUNC("httpdyndns"				, OFS(http_dyndns),				http_dyndns_fn ),
 	DEF_OPT_INT32("aulow"					, OFS(aulow),					30 ),
 	DEF_OPT_INT32("hideclient_to"			, OFS(hideclient_to),			15 ),
-	DEF_OPT_INT8("appendchaninfo"			, OFS(appendchaninfo),			0 ),
 	DEF_LAST_OPT
 };
 #else

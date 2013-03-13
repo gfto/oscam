@@ -491,10 +491,7 @@ void cs_statistics(struct s_client * client)
 			cwps=0;
 
 		char channame[32];
-		if (cfg.appendchaninfo)
-			get_servicename(client, client->last_srvid,client->last_caid, channame);
-		else
-			channame[0] = '\0';
+		get_servicename(client, client->last_srvid,client->last_caid, channame);
 
 		int32_t lsec;
 		if ((client->last_caid == 0xFFFF) && (client->last_srvid == 0xFFFF))
