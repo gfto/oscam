@@ -438,7 +438,7 @@ DESCRIPTIONS
        cwcycle_check_caid = CAID[,CAID]...
 	  CAID enabled for CW cycle check, default:none
 
-       cwcycle_maxelist = count
+       cwcycle_maxlist = count
 	  maximum CW cycle list entries, default:500, maximum:4000
 
        cwcycle_keeptime = minutes
