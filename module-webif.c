@@ -3189,9 +3189,6 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 						tpl_printf(vars, TPLADD, "CLIENTSRVID", "none");
 					tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime?cl->cwlastresptime:1);
 
-					char channame[32];
-					get_servicename(cl, cl->last_srvid, cl->last_caid, channame);
-
 					tpl_printf(vars, TPLADD, "CLIENTSRVPROVIDER","%s%s", cl->last_srvidptr && cl->last_srvidptr->prov ? xml_encode(vars, cl->last_srvidptr->prov) : "", cl->last_srvidptr && cl->last_srvidptr->prov ? ": " : "");
 					tpl_addVar(vars, TPLADD, "CLIENTSRVNAME", cl->last_srvidptr && cl->last_srvidptr->name ? xml_encode(vars, cl->last_srvidptr->name) : "");
 					tpl_addVar(vars, TPLADD, "CLIENTSRVTYPE", cl->last_srvidptr && cl->last_srvidptr->type ? xml_encode(vars, cl->last_srvidptr->type) : "");
