@@ -777,13 +777,13 @@ static void * check_thread(void) {
 		cl->thread_active = 2;
 		pthread_mutex_unlock(&cl->thread_lock);
 
-		if (!msec_wait || msec_wait % 1000 != 0) // Round up to near second
-			msec_wait = msec_wait - msec_wait % 1000 + 1000;
 		struct timeval tv;
 		gettimeofday(&tv, NULL);
 		ts.tv_sec = tv.tv_sec;
 		ts.tv_nsec = tv.tv_usec * 1000;
-		ts.tv_sec += msec_wait / 1000;
+		// pthread_cond_timedwait() expects absolute time to sleep until
+		add_ms_to_timespec(&ts, msec_wait);
+
 		pthread_mutex_lock(&check_thread_sleep_cond_mutex);
 		pthread_cond_timedwait(&check_thread_sleep_cond, &check_thread_sleep_cond_mutex, &ts); // sleep on check_thread_sleep_cond
 		pthread_mutex_unlock(&check_thread_sleep_cond_mutex);
