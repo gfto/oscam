@@ -27,7 +27,6 @@ char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *
 				}
 
 	if (!buf[0]) {
-		snprintf(buf, 32, "%04X:%04X unknown", caid, srvid);
 		if (cl) cl->last_srvidptr = NULL;
 	}
 	return(buf);
