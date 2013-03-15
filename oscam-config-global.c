@@ -448,7 +448,7 @@ static const struct config_list cache_opts[] = {
 	DEF_OPT_UINT8("csp_allow_request"		, OFS(csp.allow_request),		1 ),
 #endif
 #ifdef CW_CYCLE_CHECK
-	DEF_OPT_INT8("cwcycle_check_enable"		, OFS(cwcycle_check_enable),		1 ),
+	DEF_OPT_INT8("cwcycle_check_enable"		, OFS(cwcycle_check_enable),		0 ),
 	DEF_OPT_FUNC("cwcycle_check_caid"		, OFS(cwcycle_check_caidtab),		check_caidtab_fn ),
 	DEF_OPT_INT32("cwcycle_maxlist"			, OFS(maxcyclelist),				500 ),
 	DEF_OPT_INT32("cwcycle_keeptime"		, OFS(keepcycletime),				0 ),
