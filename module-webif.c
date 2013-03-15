@@ -96,23 +96,6 @@ enum refreshtypes { REFR_ACCOUNTS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REF
 #define MNU_CFG_WHITELIST 25
 #define MNU_CFG_TOTAL_ITEMS 26 // sum of items above. Use it for "All inactive" in function calls too.
 
-static char *get_cardsystem_desc_by_caid(uint16_t caid) {
-	if (caid >= 0x0100 && caid <= 0x01FF) return "seca";
-	if (caid >= 0x0500 && caid <= 0x05FF) return "viaccess";
-	if (caid >= 0x0600 && caid <= 0x06FF) return "irdeto";
-	if (caid >= 0x0900 && caid <= 0x09FF) return "videoguard";
-	if (caid >= 0x0B00 && caid <= 0x0BFF) return "conax";
-	if (caid >= 0x0D00 && caid <= 0x0DFF) return "cryptoworks";
-	if (caid >= 0x1700 && caid <= 0x17FF) return "betacrypt";
-	if (caid >= 0x1800 && caid <= 0x18FF) return "nagra";
-	if (caid >= 0x4B00 && caid <= 0x4BFF) return "tongfang";
-	if (caid >= 0x4AE0 && caid <= 0x4AE1) return "drecrypt";
-	if (caid == 0x5581 || caid == 0x4AEE) return "bulcrypt";
-	if (caid == 0x5501 || caid == 0x5504 || caid == 0x5511) return "griffin";
-	if (caid == 0x4ABF) return "dgcrypt";
-	return "???";
-}
-
 static void refresh_oscam(enum refreshtypes refreshtype) {
 
 	switch (refreshtype) {
@@ -2614,6 +2597,23 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 #define ENTITLEMENT_PAGE_SIZE 500
 
 #ifdef MODULE_CCCSHARE
+static char *get_cardsystem_desc_by_caid(uint16_t caid) {
+	if (caid >= 0x0100 && caid <= 0x01FF) return "seca";
+	if (caid >= 0x0500 && caid <= 0x05FF) return "viaccess";
+	if (caid >= 0x0600 && caid <= 0x06FF) return "irdeto";
+	if (caid >= 0x0900 && caid <= 0x09FF) return "videoguard";
+	if (caid >= 0x0B00 && caid <= 0x0BFF) return "conax";
+	if (caid >= 0x0D00 && caid <= 0x0DFF) return "cryptoworks";
+	if (caid >= 0x1700 && caid <= 0x17FF) return "betacrypt";
+	if (caid >= 0x1800 && caid <= 0x18FF) return "nagra";
+	if (caid >= 0x4B00 && caid <= 0x4BFF) return "tongfang";
+	if (caid >= 0x4AE0 && caid <= 0x4AE1) return "drecrypt";
+	if (caid == 0x5581 || caid == 0x4AEE) return "bulcrypt";
+	if (caid == 0x5501 || caid == 0x5504 || caid == 0x5511) return "griffin";
+	if (caid == 0x4ABF) return "dgcrypt";
+	return "???";
+}
+
 static void print_cards(struct templatevars *vars, struct uriparams *params, struct cc_card **cardarray, int32_t cardsize,
 		int8_t show_global_list, struct s_reader *rdr, int32_t offset, int32_t apicall)
 {
