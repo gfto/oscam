@@ -307,7 +307,7 @@ DESCRIPTIONS
 	  monlevel can be overwritten per user in oscam.user
 
        hideclient_to = seconds
-	  time to hide clients in the monitor if not sending requests, 0 = disabled, default:15
+	  time to hide clients in the monitor if not sending requests, 0 = disabled, default:25
 
    The [webif] section
        httpport = [+]port
