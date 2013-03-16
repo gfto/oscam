@@ -284,6 +284,8 @@ static int32_t pcsc_check_card_inserted(struct s_reader *pcsc_reader)
     }
     else {
         SCardDisconnect(crdr_data->hCard, SCARD_RESET_CARD);
+        crdr_data->hCard = 0;
+        crdr_data->pcsc_has_card = 0;
     }
 
     return ERROR;
