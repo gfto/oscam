@@ -537,6 +537,7 @@ static void cs_reload_config(void)
 		init_srvid();
 		init_tierid();
 		ac_init_stat();
+		cs_reopen_log(); // FIXME: aclog.log, emm logs, cw logs (?)
 }
 
 /* Sets signal handlers to ignore for early startup of OSCam because for example log

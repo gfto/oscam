@@ -2,6 +2,7 @@
 #define OSCAM_LOG_H_
 
 int32_t cs_init_log(void);
+void cs_reopen_log(void);
 int32_t cs_open_logfiles(void);
 void cs_disable_log(int8_t disabled);
 

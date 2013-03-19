@@ -62,6 +62,33 @@ static void switch_log(char* file, FILE **f, int32_t (*pfinit)(void))
 	}
 }
 
+void cs_reopen_log(void)
+{
+	if (cfg.logfile) {
+		if (fp) {
+			fprintf(fp, "flush and re-open log file\n");
+			fflush(fp);
+			fclose(fp);
+			fp = NULL;
+		}
+		if (cs_open_logfiles()) {
+			fprintf(stderr, "Initialisation of log file failed, continuing without logging thread %8luX. Log will be output to stdout!", (unsigned long)pthread_self());
+			cfg.logtostdout = 1;
+		}
+	}
+	if (cfg.usrfile) {
+		if (fps) {
+			fprintf(fps, "flush and re-open user log file\n");
+			fflush(fps);
+			fclose(fps);
+			fps = NULL;
+		}
+		if (cs_init_statistics()) {
+			fprintf(stderr, "Initialisation of user log file failed, continuing without logging thread %8luX.", (unsigned long)pthread_self());
+		}
+	}
+}
+
 static void cs_write_log(char *txt, int8_t do_flush)
 {
 	// filter out entries with leading 's' and forward to statistics
