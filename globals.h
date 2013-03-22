@@ -1775,6 +1775,7 @@ void module_reader_set(struct s_reader *rdr);
 
 // Until we find a better place for these (they are implemented in oscam-simples.h)
 char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf);
+char *get_servicename_or_null(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf);
 char *get_tiername(uint16_t tierid, uint16_t caid, char *buf);
 char *get_provider(uint16_t caid, uint32_t provid, char *buf, uint32_t buflen);
 void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *sat, const char *lang);

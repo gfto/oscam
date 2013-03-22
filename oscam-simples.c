@@ -2,7 +2,8 @@
 #include "oscam-string.h"
 
 /* Gets the servicename. Make sure that buf is at least 32 bytes large. */
-char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf){
+static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf, bool return_unknown)
+{
 	int32_t i;
 	struct s_srvid *this;
 	buf[0] = '\0';
@@ -27,10 +28,21 @@ char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *
 				}
 
 	if (!buf[0]) {
+		if (return_unknown)
+			snprintf(buf, 32, "%04X:%04X unknown", caid, srvid);
 		if (cl) cl->last_srvidptr = NULL;
 	}
 	return(buf);
 }
+
+char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf) {
+	return __get_servicename(cl, srvid, caid, buf, true);
+}
+
+char *get_servicename_or_null(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf) {
+	return __get_servicename(cl, srvid, caid, buf, false);
+}
+
 
 /* Gets the tier name. Make sure that buf is at least 83 bytes long. */
 char *get_tiername(uint16_t tierid, uint16_t caid, char *buf){

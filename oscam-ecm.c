@@ -443,7 +443,11 @@ static int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	if (er->rcEx)
 		snprintf(erEx, sizeof(erEx)-1, "rejected %s%s", stxtWh[er->rcEx>>4], stxtEx[er->rcEx & 0xf]);
 
-	snprintf(schaninfo, sizeof(schaninfo)-1, " - %s", get_servicename(client, er->srvid, er->caid, channame));
+	get_servicename_or_null(client, er->srvid, er->caid, channame);
+	if (!channame[0])
+		schaninfo[0] = '\0';
+	else
+		snprintf(schaninfo, sizeof(schaninfo)-1, " - %s", channame);
 
 	if (er->msglog[0])
 		snprintf(sreason, sizeof(sreason)-1, " (%s)", er->msglog);
@@ -562,7 +566,7 @@ static int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		char buf[ECM_FMT_LEN];
 		format_ecm(er, buf, ECM_FMT_LEN);
 		if (er->reader_avail == 1) {
-			cs_log("%s (%s): %s (%d ms)%s %s%s",
+			cs_log("%s (%s): %s (%d ms)%s%s%s",
 				uname, buf,
 				er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, schaninfo, sreason);
 		} else {
