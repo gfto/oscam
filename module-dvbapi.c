@@ -19,6 +19,10 @@
 #include "oscam-string.h"
 #include "oscam-time.h"
 
+// tunemm_caid_map
+#define FROM_TO 0
+#define TO_FROM 1
+
 // These are declared in module-dvbapi-azbox.c
 extern int32_t openxcas_provid;
 extern uint16_t openxcas_sid, openxcas_caid, openxcas_ecm_pid;
@@ -483,6 +487,27 @@ int32_t dvbapi_open_netdevice(int32_t UNUSED(type), int32_t UNUSED(num), int32_t
 	return socket_fd;
 }
 
+uint16_t tunemm_caid_map(uint8_t direct, uint16_t caid)
+{
+	int32_t i;
+	struct s_client *cl = cur_client();
+	TUNTAB *ttab;
+	ttab = &cl->ttab;
+
+	if (direct == FROM_TO) {
+		for (i = 0; i<ttab->n; i++) {
+			if (caid==ttab->bt_caidfrom[i])
+				return ttab->bt_caidto[i];
+		}
+	} else {
+		for (i = 0; i<ttab->n; i++) {
+			if (caid==ttab->bt_caidto[i])
+				return ttab->bt_caidfrom[i];
+		}
+	}
+	return caid;
+}
+
 int32_t dvbapi_stop_filter(int32_t demux_index, int32_t type) {
 	int32_t g;
 
@@ -582,15 +607,26 @@ void dvbapi_start_emm_filter(int32_t demux_index) {
 		dmx_filter[0]=0xFF;
 		dmx_filter[1]=0;
 
+		uint16_t caid = rdr->caid;
+
 		struct s_cardsystem *cs;
 		if (!rdr->caid)
 			cs = get_cardsystem_by_caid(rdr->csystem.caids[0]); //Bulcrypt
 		else
 			cs = get_cardsystem_by_caid(rdr->caid);
 
-		if (cs)
-			cs->get_emm_filter(rdr, dmx_filter);
-		else {
+		if (cs) {
+			if (rdr->caid != tunemm_caid_map(TO_FROM, rdr->caid) &&
+			    dvbapi_find_emmpid(demux_index, EMM_UNIQUE|EMM_SHARED|EMM_GLOBAL, rdr->caid, 0) < 0 &&
+			    dvbapi_find_emmpid(demux_index, EMM_UNIQUE|EMM_SHARED|EMM_GLOBAL, tunemm_caid_map(TO_FROM, rdr->caid), 0) > -1)
+			{
+				cs->get_tunemm_filter(rdr, dmx_filter);
+				caid = tunemm_caid_map(TO_FROM, rdr->caid);
+				cs_debug_mask(D_DVBAPI, "[EMM Filter] tunnel emm %04X -> %04X", caid, rdr->caid);
+			} else {
+				cs->get_emm_filter(rdr, dmx_filter);
+			}
+		} else {
 			cs_debug_mask(D_DVBAPI, "[EMM Filter] cardsystem for emm filter for %s not found", rdr->label);
 			continue;
 		}
@@ -628,11 +664,11 @@ void dvbapi_start_emm_filter(int32_t demux_index) {
 						l = dvbapi_find_emmpid(demux_index, emmtype, rdr->csystem.caids[1], 0);
 				} else {
 					if (rdr->auprovid) {
-						l = dvbapi_find_emmpid(demux_index, emmtype, rdr->caid, rdr->auprovid);
+						l = dvbapi_find_emmpid(demux_index, emmtype, caid, rdr->auprovid);
 						if (l<0)
-							l = dvbapi_find_emmpid(demux_index, emmtype, rdr->caid, 0);
+							l = dvbapi_find_emmpid(demux_index, emmtype, caid, 0);
 					} else {
-						l = dvbapi_find_emmpid(demux_index, emmtype, rdr->caid, 0);
+						l = dvbapi_find_emmpid(demux_index, emmtype, caid, 0);
 					}
 				}
 			}
@@ -717,13 +753,14 @@ void dvbapi_add_ecmpid(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_
 void dvbapi_add_emmpid(struct s_reader *testrdr, int32_t demux_id, uint16_t caid, uint16_t emmpid, uint32_t provid, uint8_t type) {
 	char typetext[40];
 	cs_strncpy(typetext, ":", sizeof(typetext)); 
-	
+	uint16_t ncaid = tunemm_caid_map(FROM_TO, caid);
+
 	if (type & 0x01) strcat(typetext, "UNIQUE:");
 	if (type & 0x02) strcat(typetext, "SHARED:");
 	if (type & 0x04) strcat(typetext, "GLOBAL:");
 	if (type & 0xF8) strcat(typetext, "UNKNOWN:");
 
-	if (emm_reader_match(testrdr, caid, provid)){
+	if (emm_reader_match(testrdr, ncaid, provid)) {
 		uint16_t i;
 		for (i = 0; i < demux[demux_id].EMMpidcount; i++) {
 			if ((demux[demux_id].EMMpids[i].PID == emmpid)
@@ -733,6 +770,12 @@ void dvbapi_add_emmpid(struct s_reader *testrdr, int32_t demux_id, uint16_t caid
 					cs_debug_mask(D_DVBAPI,"[SKIP EMMPID] CAID: %04X EMM_PID: %04X PROVID: %06X TYPE %s (same as emmpid #%d)", caid, emmpid, provid,
 						typetext, i);
 					return;
+				} else {
+					if (demux[demux_id].EMMpids[i].CAID == ncaid && ncaid != caid) {
+						cs_debug_mask(D_DVBAPI,"[SKIP EMMPID] CAID: %04X EMM_PID: %04X PROVID: %06X TYPE %s (caid %04X present)",
+						       caid, emmpid, provid, typetext, ncaid);
+						return;
+					}
 				}
 		}
 		demux[demux_id].EMMpids[demux[demux_id].EMMpidcount].PID = emmpid;
@@ -1056,6 +1099,11 @@ void dvbapi_process_emm (int32_t demux_index, int32_t filter_num, unsigned char 
 
 	epg.emmlen=len;
 	memcpy(epg.emm, buffer, epg.emmlen);
+
+	if (caid != tunemm_caid_map(FROM_TO, caid)) {
+		irdeto_header_rw(&epg);
+		i2b_buf(2, tunemm_caid_map(FROM_TO, caid), epg.caid);
+	}
 
 	do_emm(dvbapi_client, &epg);
 }

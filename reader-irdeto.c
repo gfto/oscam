@@ -747,6 +747,43 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	return;
 }
 
+static void irdeto_get_tunemm_filter(struct s_reader * rdr, uchar *filter)
+{
+	int32_t idx = 2;
+	filter[0] = 0xFF;
+	filter[1] = 0;
+
+	filter[idx++]    = EMM_GLOBAL;
+	filter[idx++]    = 0;
+	filter[idx+0]    = 0x82;
+	filter[idx+0+16] = 0xFF;
+	filter[1]++;
+	idx += 32;
+
+	filter[idx++]    = EMM_SHARED;
+	filter[idx++]    = 0;
+	filter[idx+0]    = 0x83;
+	filter[idx+1]    = rdr->hexserial[1];
+	filter[idx+2]    = rdr->hexserial[0];
+	filter[idx+3]    = 0x10;
+	filter[idx+4]    = 0x00;
+	filter[idx+5]    = 0x10;
+	memset(filter+idx+0+16, 0xFF, 6);
+	filter[1]++;
+	idx += 32;
+
+	filter[idx++]    = EMM_UNIQUE;
+	filter[idx++]    = 0;
+	filter[idx+0]    = 0x83;
+	filter[idx+1]    = rdr->hexserial[1];
+	filter[idx+2]    = rdr->hexserial[0];
+	filter[idx+3]    = 0x10;
+	filter[idx+4]    = rdr->hexserial[2];
+	filter[idx+5]    = 0x00;
+	memset(filter+idx+0+16, 0xFF, 6);
+	filter[1]++;
+}
+
 #define ADDRLEN 4 // Address length in EMM commands
 
 static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
@@ -956,6 +993,7 @@ void reader_irdeto(struct s_cardsystem *ph)
 	ph->card_init=irdeto_card_init;
 	ph->get_emm_type=irdeto_get_emm_type;
 	ph->get_emm_filter=irdeto_get_emm_filter;
+	ph->get_tunemm_filter=irdeto_get_tunemm_filter;
 	ph->caids[0]=0x06;
 	ph->caids[1]=0x17;
 	ph->desc="irdeto";

@@ -755,6 +755,7 @@ struct s_cardsystem {
 	void			(*post_process)(struct s_reader *);
 	int32_t		(*get_emm_type)(struct emm_packet_t *, struct s_reader *);
 	void			(*get_emm_filter)(struct s_reader * rdr, uchar *filter);
+	void			(*get_tunemm_filter)(struct s_reader * rdr, uchar *filter);
 	uint16_t		caids[2];
 };
 
