@@ -28,7 +28,7 @@ extern int32_t exit_oscam;
 
 static pthread_mutex_t cw_process_sleep_cond_mutex;
 static pthread_cond_t cw_process_sleep_cond;
-static struct s_client *timecheck_client;
+static int cw_process_wakeups;
 
 static uint32_t auto_timeout(ECM_REQUEST *er, uint32_t timeout) {
 	(void)er; // Prevent warning about unused er, when WITH_LB is disabled
@@ -47,14 +47,6 @@ static void *cw_process(void) {
 	time_t ecm_timeout;
 	time_t ecm_mintimeout;
 	struct timespec ts;
-	struct s_client *cl = create_client(first_client->ip);
-	cl->typ = 's';
-#ifdef WEBIF
-	cl->wihidden = 1;
-#endif
-	cl->thread = pthread_self();
-
-	timecheck_client = cl;
 
 #ifdef CS_ANTICASC
 	int32_t ac_next;
@@ -67,22 +59,17 @@ static void *cw_process(void) {
 	add_ms_to_timeb(&ecmc_time, 1000);
 
 	while (!exit_oscam) {
-		pthread_mutex_lock(&cl->thread_lock);
-		cl->thread_active = 2;
-		pthread_mutex_unlock(&cl->thread_lock);
-
-		// pthread_cond_timedwait() expects absolute time to sleep until
-		add_ms_to_timespec(&ts, msec_wait);
-		pthread_mutex_lock(&cw_process_sleep_cond_mutex);
-		pthread_cond_timedwait(&cw_process_sleep_cond, &cw_process_sleep_cond_mutex, &ts); // sleep on cw_process_sleep_cond
-		pthread_mutex_unlock(&cw_process_sleep_cond_mutex);
+		if (cw_process_wakeups == 0) { // No waiting wakeups, proceed to sleep
+			// pthread_cond_timedwait() expects absolute time to sleep until
+			add_ms_to_timespec(&ts, msec_wait);
+			pthread_mutex_lock(&cw_process_sleep_cond_mutex);
+			pthread_cond_timedwait(&cw_process_sleep_cond, &cw_process_sleep_cond_mutex, &ts); // sleep on cw_process_sleep_cond
+			pthread_mutex_unlock(&cw_process_sleep_cond_mutex);
+		}
+		cw_process_wakeups = 0; // We've been woken up, reset the counter
 
 		if (exit_oscam)
 			break;
-
-		pthread_mutex_lock(&cl->thread_lock);
-		cl->thread_active = 1;
-		pthread_mutex_unlock(&cl->thread_lock);
 
 		next_check = 0;
 #ifdef CS_ANTICASC
@@ -192,8 +179,6 @@ static void *cw_process(void) {
 		cleanupcwcycle();
 		cleanup_hitcache();
 	}
-	add_garbage(cl);
-	timecheck_client = NULL;
 	return NULL;
 }
 
@@ -202,6 +187,7 @@ void cw_process_thread_start(void) {
 }
 
 void cw_process_thread_wakeup(void) {
+	cw_process_wakeups++; // Do not sleep...
 	pthread_cond_signal(&cw_process_sleep_cond);
 }
 
@@ -1690,12 +1676,7 @@ OUT:
 
 	if (er->rc == E_99) {
 		er->stage = 4;
-		if (timecheck_client) {
-			pthread_mutex_lock(&timecheck_client->thread_lock);
-			if (timecheck_client->thread_active == 2)
-				cw_process_thread_wakeup();
-			pthread_mutex_unlock(&timecheck_client->thread_lock);
-		}
+		cw_process_thread_wakeup();
 		return; //ECM already requested / found in ECM cache
 	}
 
@@ -1732,12 +1713,7 @@ OUT:
 	}
 #endif
 
-	if (timecheck_client) {
-		pthread_mutex_lock(&timecheck_client->thread_lock);
-		if (timecheck_client->thread_active == 2)
-			cw_process_thread_wakeup();
-		pthread_mutex_unlock(&timecheck_client->thread_lock);
-	}
+	cw_process_thread_wakeup();
 }
 
 int32_t ecmfmt(uint16_t caid, uint32_t prid, uint16_t chid, uint16_t pid, uint16_t srvid, uint16_t l, char *ecmd5hex, char *csphash, char *cw, char *result, size_t size)
