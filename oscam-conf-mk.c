@@ -57,8 +57,8 @@ char *mk_t_caidtab(CAIDTAB *ctab) {
 char *mk_t_tuntab(TUNTAB *ttab) {
 	int32_t i, needed = 1, pos = 0;
 	for (i=0; i<ttab->n; i++) {
-		if(ttab->bt_srvid[i]) needed += 10;
-		else needed += 5;
+		// ttab->bt_srvid[i] or 0000 for EMM-only tunnel
+		needed += 10;
 		if(ttab->bt_caidto[i]) needed += 5;
 	}
 	char *value;
@@ -74,8 +74,10 @@ char *mk_t_tuntab(TUNTAB *ttab) {
 		}
 		if(ttab->bt_srvid[i]) {
 			snprintf(value + pos, needed-(value-saveptr), ".%04X", ttab->bt_srvid[i]);
-			pos += 5;
+		} else {
+			snprintf(value + pos, needed-(value-saveptr), ".%04X", 0);
 		}
+		pos += 5;
 		if(ttab->bt_caidto[i]) {
 			snprintf(value + pos, needed-(value-saveptr), ":%04X", ttab->bt_caidto[i]);
 			pos += 5;

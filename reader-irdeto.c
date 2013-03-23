@@ -2,6 +2,7 @@
 #ifdef READER_IRDETO
 #include "oscam-time.h"
 #include "reader-common.h"
+#include "reader-irdeto.h"
 
 static const uchar CryptTable[256] =
 {
@@ -745,6 +746,58 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 		rdr_log(rdr, "irdeto_get_emm_filter: could not start all emm filters");
 
 	return;
+}
+
+void irdeto_add_emm_header(EMM_PACKET *ep)
+{
+	uint8_t bt_emm[258];
+	static const char *typtext[] = { "unknown", "unique", "shared", "global" };
+	memset(bt_emm, 0, sizeof(bt_emm));
+
+	ep->type = UNKNOWN;
+	if (ep->emm[0] == 0x83 && ep->emm[5] == 0x10) {
+		if (ep->emm[7] == 0x00)
+			ep->type = UNIQUE;
+		else
+			ep->type = SHARED;
+	} else {
+		if (ep->emm[0] == 0x82)
+			ep->type = GLOBAL;
+	}
+
+	if (ep->type != UNKNOWN && ep->emmlen == 142)
+		cs_debug_mask(D_EMM, "[TUN_EMM] Type: %s - rewriting header", typtext[ep->type]);
+	else
+		return;
+
+	// BETACRYPT/IRDETO EMM HEADER:
+	static uint8_t headerD0[6] = { 0x82, 0x70, 0x89, 0xd0, 0x01, 0x00 };  // GLOBAL
+	static uint8_t headerD2[8] = { 0x82, 0x70, 0x8b, 0xd2, 0x00, 0x00, 0x01, 0x00 };   // SHARED
+	static uint8_t headerD3[9] = { 0x82, 0x70, 0x8c, 0xd3, 0x00, 0x00, 0x00, 0x01, 0x00 };  // UNIQUE
+
+	switch (ep->type) {
+	case UNIQUE:
+		memcpy(bt_emm, headerD3, sizeof(headerD3));
+		memcpy(bt_emm + sizeof(headerD3), ep->emm + 8, ep->emmlen - 8);
+		bt_emm[4] = ep->emm[4];
+		bt_emm[5] = ep->emm[3];
+		bt_emm[6] = ep->emm[6];
+		ep->emmlen = 143;
+		break;
+	case SHARED:
+		memcpy(bt_emm, headerD2, sizeof(headerD2));
+		memcpy(bt_emm + sizeof(headerD2), ep->emm + 8, ep->emmlen - 8);
+		bt_emm[4] = ep->emm[4];
+		bt_emm[5] = ep->emm[3];
+		ep->emmlen = 142;
+		break;
+	case GLOBAL:
+		memcpy(bt_emm, headerD0, sizeof(headerD0));
+		memcpy(bt_emm + sizeof(headerD0), ep->emm + 8, ep->emmlen - 8);
+		ep->emmlen = 140;
+		break;
+	}
+	memcpy(ep->emm, bt_emm, sizeof(bt_emm));
 }
 
 static void irdeto_get_tunemm_filter(struct s_reader * rdr, uchar *filter)

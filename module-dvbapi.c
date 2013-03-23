@@ -18,6 +18,7 @@
 #include "oscam-reader.h"
 #include "oscam-string.h"
 #include "oscam-time.h"
+#include "reader-irdeto.h"
 
 // tunemm_caid_map
 #define FROM_TO 0
@@ -487,7 +488,7 @@ int32_t dvbapi_open_netdevice(int32_t UNUSED(type), int32_t UNUSED(num), int32_t
 	return socket_fd;
 }
 
-uint16_t tunemm_caid_map(uint8_t direct, uint16_t caid)
+uint16_t tunemm_caid_map(uint8_t direct, uint16_t caid, uint16_t srvid)
 {
 	int32_t i;
 	struct s_client *cl = cur_client();
@@ -496,13 +497,19 @@ uint16_t tunemm_caid_map(uint8_t direct, uint16_t caid)
 
 	if (direct == FROM_TO) {
 		for (i = 0; i<ttab->n; i++) {
-			if (caid==ttab->bt_caidfrom[i])
+			if (caid==ttab->bt_caidfrom[i] &&
+			    (srvid==ttab->bt_srvid[i] || ttab->bt_srvid[i] == 0xFFFF || !ttab->bt_srvid[i]))
+			{
 				return ttab->bt_caidto[i];
+			}
 		}
 	} else {
 		for (i = 0; i<ttab->n; i++) {
-			if (caid==ttab->bt_caidto[i])
+			if (caid==ttab->bt_caidto[i] &&
+			    (srvid==ttab->bt_srvid[i] || ttab->bt_srvid[i] == 0xFFFF || !ttab->bt_srvid[i]))
+			{
 				return ttab->bt_caidfrom[i];
+			}
 		}
 	}
 	return caid;
@@ -616,12 +623,12 @@ void dvbapi_start_emm_filter(int32_t demux_index) {
 			cs = get_cardsystem_by_caid(rdr->caid);
 
 		if (cs) {
-			if (rdr->caid != tunemm_caid_map(TO_FROM, rdr->caid) &&
+			if (rdr->caid != tunemm_caid_map(TO_FROM, rdr->caid, demux[demux_index].program_number) &&
 			    dvbapi_find_emmpid(demux_index, EMM_UNIQUE|EMM_SHARED|EMM_GLOBAL, rdr->caid, 0) < 0 &&
-			    dvbapi_find_emmpid(demux_index, EMM_UNIQUE|EMM_SHARED|EMM_GLOBAL, tunemm_caid_map(TO_FROM, rdr->caid), 0) > -1)
+			    dvbapi_find_emmpid(demux_index, EMM_UNIQUE|EMM_SHARED|EMM_GLOBAL, tunemm_caid_map(TO_FROM, rdr->caid, demux[demux_index].program_number), 0) > -1)
 			{
 				cs->get_tunemm_filter(rdr, dmx_filter);
-				caid = tunemm_caid_map(TO_FROM, rdr->caid);
+				caid = tunemm_caid_map(TO_FROM, rdr->caid, demux[demux_index].program_number);
 				cs_debug_mask(D_DVBAPI, "[EMM Filter] tunnel emm %04X -> %04X", caid, rdr->caid);
 			} else {
 				cs->get_emm_filter(rdr, dmx_filter);
@@ -753,7 +760,7 @@ void dvbapi_add_ecmpid(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_
 void dvbapi_add_emmpid(struct s_reader *testrdr, int32_t demux_id, uint16_t caid, uint16_t emmpid, uint32_t provid, uint8_t type) {
 	char typetext[40];
 	cs_strncpy(typetext, ":", sizeof(typetext)); 
-	uint16_t ncaid = tunemm_caid_map(FROM_TO, caid);
+	uint16_t ncaid = tunemm_caid_map(FROM_TO, caid, demux[demux_id].program_number);
 
 	if (type & 0x01) strcat(typetext, "UNIQUE:");
 	if (type & 0x02) strcat(typetext, "SHARED:");
@@ -1100,10 +1107,14 @@ void dvbapi_process_emm (int32_t demux_index, int32_t filter_num, unsigned char 
 	epg.emmlen=len;
 	memcpy(epg.emm, buffer, epg.emmlen);
 
-	if (caid != tunemm_caid_map(FROM_TO, caid)) {
-		irdeto_header_rw(&epg);
-		i2b_buf(2, tunemm_caid_map(FROM_TO, caid), epg.caid);
+#ifdef READER_IRDETO
+	if (caid != tunemm_caid_map(FROM_TO, caid, demux[demux_index].program_number) &&
+	    (tunemm_caid_map(FROM_TO, caid, demux[demux_index].program_number) >> 8 == 0x17))
+	{
+		irdeto_add_emm_header(&epg);
+		i2b_buf(2, tunemm_caid_map(FROM_TO, caid, demux[demux_index].program_number), epg.caid);
 	}
+#endif
 
 	do_emm(dvbapi_client, &epg);
 }
