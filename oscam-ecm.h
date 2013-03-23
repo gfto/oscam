@@ -1,6 +1,8 @@
 #ifndef OSCAM_ECM_H_
 #define OSCAM_ECM_H_
 
+void cw_process_thread_start(void);
+
 void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto);
 void convert_to_nagra(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto);
 

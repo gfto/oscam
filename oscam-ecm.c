@@ -22,9 +22,174 @@
 
 extern CS_MUTEX_LOCK ecmcache_lock;
 extern struct ecm_request_t *ecmcwcache;
-extern struct s_client *timecheck_client;
 extern uint16_t len4caid[256];
 extern uint32_t ecmcwcache_size;
+
+static struct s_client *timecheck_client;
+
+static uint32_t auto_timeout(ECM_REQUEST *er, uint32_t timeout) {
+	(void)er; // Prevent warning about unused er, when WITH_LB is disabled
+#ifdef WITH_LB
+	if (cfg.lb_auto_timeout)
+		return lb_auto_timeout(er, timeout);
+#endif
+	return timeout;
+}
+
+static void *cw_process(void) {
+	set_thread_name(__func__);
+	int32_t time_to_check, next_check, ecmc_next, msec_wait = 3000;
+	struct timeb t_now, tbc, ecmc_time;
+	ECM_REQUEST *er = NULL;
+	time_t ecm_timeout;
+	time_t ecm_mintimeout;
+	struct timespec ts;
+	struct s_client *cl = create_client(first_client->ip);
+	cl->typ = 's';
+#ifdef WEBIF
+	cl->wihidden = 1;
+#endif
+	cl->thread = pthread_self();
+
+	timecheck_client = cl;
+
+#ifdef CS_ANTICASC
+	int32_t ac_next;
+	struct timeb ac_time;
+	cs_ftime(&ac_time);
+	add_ms_to_timeb(&ac_time, cfg.ac_stime*60*1000);
+#endif
+
+	cs_ftime(&ecmc_time);
+	add_ms_to_timeb(&ecmc_time, 1000);
+
+	while(1) {
+		ts.tv_sec = msec_wait/1000;
+		ts.tv_nsec = (msec_wait % 1000) * 1000000L;
+		pthread_mutex_lock(&cl->thread_lock);
+		cl->thread_active = 2;
+		pthread_mutex_unlock(&cl->thread_lock);
+		nanosleep(&ts, NULL);
+		pthread_mutex_lock(&cl->thread_lock);
+		cl->thread_active = 1;
+		pthread_mutex_unlock(&cl->thread_lock);
+
+		next_check = 0;
+#ifdef CS_ANTICASC
+		ac_next = 0;
+#endif
+		ecmc_next = 0;
+		msec_wait = 0;
+
+		cs_ftime(&t_now);
+		cs_readlock(&ecmcache_lock);
+		for (er = ecmcwcache; er; er = er->next) {
+			if (er->rc < E_99 || !er->ecmlen || !er->matching_rdr) //ignore CACHEEX pending ECMs
+				continue;
+			tbc = er->tps;
+#ifdef CS_CACHEEX
+			time_to_check = add_ms_to_timeb(&tbc, (er->stage < 2 && er->cacheex_wait_time) ? er->cacheex_wait_time:((er->stage < 4) ? auto_timeout(er, cfg.ftimeout) : auto_timeout(er, cfg.ctimeout)));
+#else
+			time_to_check = add_ms_to_timeb(&tbc, ((er->stage < 4) ? auto_timeout(er, cfg.ftimeout) : auto_timeout(er, cfg.ctimeout)));
+#endif
+			if (comp_timeb(&t_now, &tbc) >= 0) {
+				if (er->stage < 4) {
+#ifdef CS_CACHEEX
+					if (er->stage < 2 && er->cacheex_wait_time)
+						debug_ecm(D_TRACE, "request for %s %s", username(er->client), buf);
+					else
+#endif
+					debug_ecm(D_TRACE, "fallback for %s %s", username(er->client), buf);
+
+					if (er->rc >= E_UNHANDLED) //do not request rc=99
+						request_cw_from_readers(er);
+
+					tbc = er->tps;
+					time_to_check = add_ms_to_timeb(&tbc, auto_timeout(er, cfg.ctimeout));
+				} else {
+					if (er->client) {
+						er->selected_reader = NULL;
+						debug_ecm(D_TRACE, "timeout for %s %s", username(er->client), buf);
+						write_ecm_answer(NULL, er, E_TIMEOUT, 0, NULL, NULL);
+					}
+#ifdef WITH_LB
+					if (!er->ecmcacheptr) { //do not add stat for cache entries:
+						//because of lb, send E_TIMEOUT for all readers:
+						struct s_ecm_answer *ea_list;
+						for(ea_list = er->matching_rdr; ea_list; ea_list = ea_list->next) {
+							if ((ea_list->status & (REQUEST_SENT|REQUEST_ANSWERED)) == REQUEST_SENT) //Request send, but no answer!
+								send_reader_stat(ea_list->reader, er, NULL, E_TIMEOUT);
+						}
+					}
+#endif
+					time_to_check = 0;
+				}
+			}
+			if (!next_check || (time_to_check > 0 && time_to_check < next_check))
+				next_check = time_to_check;
+		}
+		cs_readunlock(&ecmcache_lock);
+#ifdef CS_ANTICASC
+		if ((ac_next = comp_timeb(&ac_time, &t_now)) <= 10) {
+			if (cfg.ac_enabled)
+				ac_do_stat();
+			cs_ftime(&ac_time);
+			ac_next = add_ms_to_timeb(&ac_time, cfg.ac_stime*60*1000);
+		}
+#endif
+		if ((ecmc_next = comp_timeb(&ecmc_time, &t_now)) <= 10) {
+			ecm_timeout = t_now.time-cfg.max_cache_time;
+			ecm_mintimeout = t_now.time-(cfg.ctimeout/1000+2);
+			uint32_t count = 0;
+			struct ecm_request_t *ecm, *ecmt=NULL, *prv;
+			cs_readlock(&ecmcache_lock);
+			for (ecm = ecmcwcache, prv = NULL; ecm; prv = ecm, ecm = ecm->next, count++) {
+				if (ecm->tps.time < ecm_timeout || (ecm->tps.time<ecm_mintimeout && count>cfg.max_cache_count)) {
+					cs_readunlock(&ecmcache_lock);
+					cs_writelock(&ecmcache_lock);
+					ecmt = ecm;
+					if (prv)
+						prv->next = NULL;
+					else
+						ecmcwcache = NULL;
+					cs_writeunlock(&ecmcache_lock);
+					break;
+				}
+			}
+			if (!ecmt)
+				cs_readunlock(&ecmcache_lock);
+			ecmcwcache_size = count;
+
+			while (ecmt) {
+				ecm = ecmt->next;
+				free_ecm(ecmt);
+				ecmt = ecm;
+			}
+
+			cs_ftime(&ecmc_time);
+			ecmc_next = add_ms_to_timeb(&ecmc_time, 1000);
+		}
+		msec_wait = next_check;
+#ifdef CS_ANTICASC
+		if (!msec_wait || (ac_next > 0 && ac_next < msec_wait))
+			msec_wait = ac_next;
+#endif
+		if (!msec_wait || (ecmc_next > 0 && ecmc_next < msec_wait))
+			msec_wait = ecmc_next;
+
+		if (!msec_wait)
+			msec_wait = 3000;
+		cleanupcwcycle();
+		cleanup_hitcache();
+	}
+	add_garbage(cl);
+	timecheck_client = NULL;
+	return NULL;
+}
+
+void cw_process_thread_start(void) {
+	start_thread((void *) &cw_process, "cw_process");
+}
 
 /**
  * get ecm from ecmcache
