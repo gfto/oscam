@@ -24,7 +24,10 @@ extern CS_MUTEX_LOCK ecmcache_lock;
 extern struct ecm_request_t *ecmcwcache;
 extern uint16_t len4caid[256];
 extern uint32_t ecmcwcache_size;
+extern int32_t exit_oscam;
 
+static pthread_mutex_t cw_process_sleep_cond_mutex;
+static pthread_cond_t cw_process_sleep_cond;
 static struct s_client *timecheck_client;
 
 static uint32_t auto_timeout(ECM_REQUEST *er, uint32_t timeout) {
@@ -63,13 +66,20 @@ static void *cw_process(void) {
 	cs_ftime(&ecmc_time);
 	add_ms_to_timeb(&ecmc_time, 1000);
 
-	while(1) {
-		ts.tv_sec = msec_wait/1000;
-		ts.tv_nsec = (msec_wait % 1000) * 1000000L;
+	while (!exit_oscam) {
 		pthread_mutex_lock(&cl->thread_lock);
 		cl->thread_active = 2;
 		pthread_mutex_unlock(&cl->thread_lock);
-		nanosleep(&ts, NULL);
+
+		// pthread_cond_timedwait() expects absolute time to sleep until
+		add_ms_to_timespec(&ts, msec_wait);
+		pthread_mutex_lock(&cw_process_sleep_cond_mutex);
+		pthread_cond_timedwait(&cw_process_sleep_cond, &cw_process_sleep_cond_mutex, &ts); // sleep on cw_process_sleep_cond
+		pthread_mutex_unlock(&cw_process_sleep_cond_mutex);
+
+		if (exit_oscam)
+			break;
+
 		pthread_mutex_lock(&cl->thread_lock);
 		cl->thread_active = 1;
 		pthread_mutex_unlock(&cl->thread_lock);
@@ -189,6 +199,10 @@ static void *cw_process(void) {
 
 void cw_process_thread_start(void) {
 	start_thread((void *) &cw_process, "cw_process");
+}
+
+void cw_process_thread_wakeup(void) {
+	pthread_cond_signal(&cw_process_sleep_cond);
 }
 
 /**
@@ -1679,7 +1693,7 @@ OUT:
 		if (timecheck_client) {
 			pthread_mutex_lock(&timecheck_client->thread_lock);
 			if (timecheck_client->thread_active == 2)
-				pthread_kill(timecheck_client->thread, OSCAM_SIGNAL_WAKEUP);
+				cw_process_thread_wakeup();
 			pthread_mutex_unlock(&timecheck_client->thread_lock);
 		}
 		return; //ECM already requested / found in ECM cache
@@ -1721,7 +1735,7 @@ OUT:
 	if (timecheck_client) {
 		pthread_mutex_lock(&timecheck_client->thread_lock);
 		if (timecheck_client->thread_active == 2)
-			pthread_kill(timecheck_client->thread, OSCAM_SIGNAL_WAKEUP);
+			cw_process_thread_wakeup();
 		pthread_mutex_unlock(&timecheck_client->thread_lock);
 	}
 }

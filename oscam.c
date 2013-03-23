@@ -1295,6 +1295,7 @@ int32_t main (int32_t argc, char *argv[])
 	// main loop function
 	process_clients();
 
+	cw_process_thread_wakeup(); // Stop cw_process thread
 	pthread_cond_signal(&reader_check_sleep_cond); // Stop reader_check thread
 
 	// Cleanup
