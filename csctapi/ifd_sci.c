@@ -31,12 +31,13 @@ static int32_t Sci_Read_ATR(struct s_reader * reader, ATR * atr) // reads ATR on
 	uint32_t timeout = ATR_TIMEOUT;
 	unsigned char buf[SCI_MAX_ATR_SIZE];
 	int32_t n = 0, statusreturn =0;
+#if !defined(WITH_AZBOX) 
 	do {
 		ioctl(reader->handle, IOCTL_GET_ATR_STATUS, &statusreturn);
 		rdr_debug_mask(reader, D_IFD, "Waiting for card ATR Response...");
 	}
 		while (statusreturn);
-	
+#endif	
 	if (IO_Serial_Read(reader, 0, timeout, 1, buf+n)){ //read first char of atr
 		rdr_debug_mask(reader, D_IFD, "ERROR: no characters found in ATR");
 		return ERROR;
