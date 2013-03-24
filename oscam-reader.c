@@ -241,8 +241,6 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 {
 	if (!rdr) return -1;
 	struct s_client *client = rdr->client;
-	struct sockaddr_in loc_sa;
-
 	memset((char *)&client->udp_sa, 0, sizeof(client->udp_sa));
 
 	IN_ADDR_T last_ip;
@@ -292,6 +290,8 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 	int32_t flag = 1;
 	setsockopt(client->udp_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&flag, sizeof(flag));
 
+#ifndef IPV6SUPPORT
+	struct sockaddr_in loc_sa;
 	memset((char *)&loc_sa,0,sizeof(loc_sa));
 	loc_sa.sin_family = AF_INET;
 	if (IP_ISSET(cfg.srvip))
@@ -308,6 +308,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 		block_connect(rdr);
 		return -1;
 	}
+#endif
 
 #ifdef IPV6SUPPORT
 	if (IN6_IS_ADDR_V4MAPPED(&rdr->client->ip) || IN6_IS_ADDR_V4COMPAT(&rdr->client->ip)) {
