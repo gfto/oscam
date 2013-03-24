@@ -759,6 +759,14 @@ void dvbapi_add_emmpid(struct s_reader *testrdr, int32_t demux_id, uint16_t caid
 
 	uint16_t ncaid = tunemm_caid_map(FROM_TO, caid, demux[demux_id].program_number);
 
+	struct s_cardsystem *cs;
+		cs = get_cardsystem_by_caid(ncaid);
+
+	if (!cs) {
+		cs_debug_mask(D_DVBAPI,"[IGNORE EMMPID] cardsystem for caid %04X not found (ignoring)", ncaid);
+		return;
+	}
+
 	if (type & 0x01) strcat(typetext, "UNIQUE:");
 	if (type & 0x02) strcat(typetext, "SHARED:");
 	if (type & 0x04) strcat(typetext, "GLOBAL:");
