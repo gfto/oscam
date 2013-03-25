@@ -5,6 +5,7 @@
 #include "oscam-net.h"
 #include "oscam-string.h"
 #include "oscam-time.h"
+#include "oscam-reader.h"
 
 #define HSIC_CRC 0xA5
 #define SSSP_MAX_PID 8
@@ -63,6 +64,7 @@ struct s_serial_client
 	struct timeb tpe;
 	char oscam_ser_usr[32];
 	char oscam_ser_device[64];
+	int32_t oscam_ser_port;
 	speed_t oscam_ser_baud;
 	int32_t oscam_ser_delay;
 	int32_t oscam_ser_timeout;
@@ -82,6 +84,7 @@ struct s_serial_client
 static pthread_mutex_t mutex;
 static pthread_cond_t cond;
 static int32_t bcopy_end = -1;
+static struct s_module *serial_ph = NULL;
 
 struct s_thread_param
 {
@@ -276,6 +279,13 @@ static int32_t oscam_ser_parse_url(char *url, struct s_serial_client *serialdata
     else if (!strcmp(baud, "9600"))
       serialdata->oscam_ser_baud=B9600;
   }
+  if( (para=strchr(dev, ','))	)// device = ip/hostname and port
+  {
+    *para++='\0';
+    serialdata->oscam_ser_port=atoi(para);
+  }
+  else
+    serialdata->oscam_ser_port=0;
   cs_strncpy(serialdata->oscam_ser_usr, usr, sizeof(serialdata->oscam_ser_usr));
   cs_strncpy(serialdata->oscam_ser_device, dev, sizeof(serialdata->oscam_ser_device));
   return(serialdata->oscam_ser_baud);
@@ -948,26 +958,45 @@ static void oscam_ser_server(void)
         break;
     }
   }
+  if (cur_client()->serialdata->oscam_ser_port > 0)
+    network_tcp_connection_close(cur_client()->reader, "error reading from socket");
   oscam_ser_disconnect();
 }
 
-static int32_t init_oscam_ser_device(char *device, speed_t baud)
+static int32_t init_oscam_ser_device(struct s_client *cl)
 {
+  char *device = cl->serialdata->oscam_ser_device;
+  speed_t baud = cl->serialdata->oscam_ser_baud;
+  int32_t port = cl->serialdata->oscam_ser_port;
   int32_t fd;
 
-  fd=open(device, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
-  if (fd>0)
+  // network connection to a TCP-exposed serial port
+  if (port > 0)
   {
-    fcntl(fd, F_SETFL, 0);
-    if (oscam_ser_set_serial_device(fd, baud)<0) cs_log("ERROR ioctl");
-    if (tcflush(fd, TCIOFLUSH)<0) cs_log("ERROR flush");
+    cs_strncpy(cl->reader->device, device, sizeof(cl->reader->device));
+    cl->reader->r_port = cl->port = port;
+    fd = network_tcp_connection_open(cl->reader);
+    if (fd < 0)
+      return 0;
+    else
+      return fd;
   }
-  else
+  else  // standard serial port connection
   {
-    fd=0;
-    cs_log("ERROR opening %s (errno=%d %s)", device, errno, strerror(errno));
+    fd=open(device, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
+    if (fd>0)
+    {
+      fcntl(fd, F_SETFL, 0);
+      if (oscam_ser_set_serial_device(fd, baud)<0) cs_log("ERROR ioctl");
+      if (tcflush(fd, TCIOFLUSH)<0) cs_log("ERROR flush");
+    }
+    else
+    {
+      fd=0;
+      cs_log("ERROR opening %s (errno=%d %s)", device, errno, strerror(errno));
+    }
+    return(fd);
   }
-  return(fd);
 }
 
 static void oscam_copy_serialdata(struct s_serial_client *dest, struct s_serial_client *src)
@@ -979,6 +1008,7 @@ static void oscam_copy_serialdata(struct s_serial_client *dest, struct s_serial_
     memcpy(&dest->tpe, &src->tpe, sizeof(dest->tpe));
     memcpy(&dest->oscam_ser_usr, &src->oscam_ser_usr, sizeof(dest->oscam_ser_usr));
     memcpy(&dest->oscam_ser_device, &src->oscam_ser_device, sizeof(dest->oscam_ser_device));
+    dest->oscam_ser_port = src->oscam_ser_port;
     dest->oscam_ser_baud = src->oscam_ser_baud;
     dest->oscam_ser_delay = src->oscam_ser_delay;
     dest->oscam_ser_timeout = src->oscam_ser_timeout;
@@ -1022,6 +1052,18 @@ static void * oscam_ser_fork(void *pthreadparam)
   set_thread_name(__func__);
   oscam_init_serialdata(cl->serialdata);
   oscam_copy_serialdata(cl->serialdata, &pparam->serialdata);
+  if (cl->serialdata->oscam_ser_port > 0)
+  {
+    // reader struct for serial network connection
+    struct s_reader *newrdr;
+    if (!cs_malloc(&newrdr, sizeof(struct s_reader)))
+      return NULL;
+    memset(newrdr, 0, sizeof(struct s_reader));
+    newrdr->client = cl;
+    newrdr->ph = *serial_ph;
+    cl->reader = newrdr;
+    cs_strncpy(cl->reader->label, "network-socket", sizeof(cl->reader->label));
+  }
   cs_log("serial: initialized (%s@%s)", cl->serialdata->oscam_ser_proto>P_MAX ?
          "auto" : proto_txt[cl->serialdata->oscam_ser_proto], cl->serialdata->oscam_ser_device);
 
@@ -1033,7 +1075,7 @@ static void * oscam_ser_fork(void *pthreadparam)
   while(1)
   {
     cl->login=time((time_t *)0);
-    cl->pfd=init_oscam_ser_device(cl->serialdata->oscam_ser_device, cl->serialdata->oscam_ser_baud);
+    cl->pfd=init_oscam_ser_device(cl);
     if (cl->pfd)
       oscam_ser_server();
     else
@@ -1041,6 +1083,7 @@ static void * oscam_ser_fork(void *pthreadparam)
     if (cl->pfd) close(cl->pfd);
   }
   NULLFREE(cl->serialdata);
+  NULLFREE(cl->reader);
   return NULL;
 }
 
@@ -1110,7 +1153,7 @@ static int32_t oscam_ser_client_init(struct s_client *client)
 
   if ((!client->reader->device[0])) cs_disconnect_client(client);
   if (!oscam_ser_parse_url(client->reader->device, client->serialdata, NULL)) cs_disconnect_client(client);
-  client->pfd=init_oscam_ser_device(client->serialdata->oscam_ser_device, client->serialdata->oscam_ser_baud);
+  client->pfd=init_oscam_ser_device(client);
   return((client->pfd>0) ? 0 : 1);
 }
 
@@ -1231,5 +1274,6 @@ void module_serial(struct s_module *ph)
   ph->c_recv_chk=oscam_ser_recv_chk;
   ph->c_send_ecm=oscam_ser_send_ecm;
   ph->num=R_SERIAL;
+  serial_ph = ph;
 }
 #endif

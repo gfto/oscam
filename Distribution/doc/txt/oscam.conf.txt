@@ -548,17 +548,23 @@ DESCRIPTIONS
 
 	  parameters:
 	   user   = account
-	   device = serial device name
+	   device = path to a serial device or
+	            network hostname/ip address and comma-separated port
+	   baud   = serial port speed; ignored when device set as hostname/ip,port
 	   option = timeout = milli-seconds, timeout for connection,
 			      default:50
 		    delay   = milli-seconds, additional delay between two
 			      characters, default:0
 
-	  supported serial devices:
+	  supported serial devices (detected automatically):
 	   HSIC    (humax sharing interface client)
 	   SSSP    (simple serial sharing protocol)
 	   bomba   (BOMBA firmware)
 	   dsr9500 (DSR 9500)
+
+	  examples:
+	    user2@/dev/ttyS0:115200?delay=1&timeout=5000	# standard serial port
+	    user3@192.160.0.10,2006?delay=1&timeout=5000	# serial port over TCP socket
 
    The [cccam] section
        port = 0|port[,0|port]...
