@@ -1417,12 +1417,7 @@ static int32_t gbox_client_init(struct s_client *cli)
   set_null_ip(&cli->ip);
   memset((char *)&loc_sa,0,sizeof(loc_sa));
   SIN_GET_FAMILY(loc_sa) = AF_INET;
-  SIN_GET_ADDR(loc_sa) =
-#ifdef IPV6SUPPORT
-    in6addr_any;
-#else
-    INADDR_ANY;
-#endif
+  SIN_GET_ADDR(loc_sa) = ADDR_ANY;
   SIN_GET_PORT(loc_sa) = htons(rdr->l_port);
 
   if ((cli->udp_fd=socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP))<0)

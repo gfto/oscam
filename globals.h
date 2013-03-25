@@ -104,9 +104,11 @@ typedef unsigned char uchar;
 #ifdef IPV6SUPPORT
 #define IN_ADDR_T struct in6_addr
 #define SOCKADDR sockaddr_storage
+#define ADDR_ANY in6addr_any
 #else
 #define IN_ADDR_T in_addr_t
 #define SOCKADDR sockaddr_in
+#define ADDR_ANY INADDR_ANY
 #endif
 
 #ifndef NO_ENDIAN_H

@@ -241,6 +241,8 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 {
 	if (!rdr) return -1;
 	struct s_client *client = rdr->client;
+	struct SOCKADDR loc_sa;
+
 	memset((char *)&client->udp_sa, 0, sizeof(client->udp_sa));
 
 	IN_ADDR_T last_ip;
@@ -268,9 +270,12 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 		rdr_log(rdr, "WARNING: client->udp_fd was not 0");
 
 	int s_domain = PF_INET;
+	int s_family = AF_INET;
 #ifdef IPV6SUPPORT
-	if (!IN6_IS_ADDR_V4MAPPED(&rdr->client->ip) && !IN6_IS_ADDR_V4COMPAT(&rdr->client->ip))
+	if (!IN6_IS_ADDR_V4MAPPED(&rdr->client->ip) && !IN6_IS_ADDR_V4COMPAT(&rdr->client->ip)) {
 		s_domain = PF_INET6;
+		s_family = AF_INET6;
+	}
 #endif
 	int s_type   = client->is_udp ? SOCK_DGRAM : SOCK_STREAM;
 	int s_proto  = client->is_udp ? IPPROTO_UDP : IPPROTO_TCP;
@@ -290,17 +295,15 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 	int32_t flag = 1;
 	setsockopt(client->udp_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&flag, sizeof(flag));
 
-#ifndef IPV6SUPPORT
-	struct sockaddr_in loc_sa;
 	memset((char *)&loc_sa,0,sizeof(loc_sa));
-	loc_sa.sin_family = AF_INET;
+	SIN_GET_FAMILY(loc_sa) = s_family;
 	if (IP_ISSET(cfg.srvip))
 		IP_ASSIGN(SIN_GET_ADDR(loc_sa), cfg.srvip);
 	else
-		loc_sa.sin_addr.s_addr = INADDR_ANY;
+		SIN_GET_ADDR(loc_sa) = ADDR_ANY;
 
 	if (client->reader->l_port)
-		loc_sa.sin_port = htons(client->reader->l_port);
+		SIN_GET_PORT(loc_sa) = htons(client->reader->l_port);
 	if (bind(client->udp_fd, (struct sockaddr *)&loc_sa, sizeof (loc_sa))<0) {
 		rdr_log(rdr, "bind failed (errno=%d %s)", errno, strerror(errno));
 		close(client->udp_fd);
@@ -308,7 +311,6 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 		block_connect(rdr);
 		return -1;
 	}
-#endif
 
 #ifdef IPV6SUPPORT
 	if (IN6_IS_ADDR_V4MAPPED(&rdr->client->ip) || IN6_IS_ADDR_V4COMPAT(&rdr->client->ip)) {
