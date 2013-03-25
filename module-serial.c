@@ -927,28 +927,25 @@ static void oscam_ser_server(void)
   cur_client()->serialdata->connected=0;
   oscam_ser_init_client();
 
-  while ((n=process_input(mbuf, sizeof(mbuf), cfg.cmaxidle))>=0)
+  while ((n=process_input(mbuf, sizeof(mbuf), INT_MAX))>0)
   {
     if ((*pserial_errors) > 3)
     {
       cs_log("too many errors, reiniting...");
       break;
     }
-    if (n>0)
+    oscam_ser_auth_client(mbuf[0] & 0xF);
+    switch (mbuf[0]>>4)
     {
-      oscam_ser_auth_client(mbuf[0] & 0xF);
-      switch (mbuf[0]>>4)
-      {
-        case IS_ECM:
-          oscam_ser_process_ecm(mbuf+1, n-1);
-          break;
-        case IS_PMT:
-          oscam_ser_process_pmt(mbuf+1, n-1);
-          break;
-        case IS_LGO:
-          oscam_ser_client_logon(mbuf+1, n-1);
-          break;
-      }
+      case IS_ECM:
+        oscam_ser_process_ecm(mbuf+1, n-1);
+        break;
+      case IS_PMT:
+        oscam_ser_process_pmt(mbuf+1, n-1);
+        break;
+      case IS_LGO:
+        oscam_ser_client_logon(mbuf+1, n-1);
+        break;
     }
   }
   oscam_ser_disconnect();
