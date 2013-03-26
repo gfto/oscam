@@ -387,7 +387,10 @@ char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const char* subd
 										check_conf(WITH_SSL, ptr2);
 										check_conf(WITH_STAPI, ptr2);
 									} // for
-									if (ok == 0) return result;
+									if (ok == 0){
+										fclose (fp);
+										return result;
+									}
 									break;
 								} // if
 							} // for
@@ -396,7 +399,10 @@ char *tpl_getUnparsedTpl(const char* name, int8_t removeHeader, const char* subd
 				} // if
 				if (allocated < size + readen + 1) {
 					allocated += size + 1024;
-					if (!cs_realloc(&result, allocated)) return NULL;
+					if (!cs_realloc(&result, allocated)) {
+						fclose (fp);
+						return NULL;
+					}
 				}
 				memcpy(result + size, buffer + offset, readen);
 				size += readen;
