@@ -1434,7 +1434,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				break;
 			case 2:
 				// invalid (srvid)
-				if (!chk_srvid(client, er)) {
+				if (!chk_srvid(client, er) && !chk_valid_btun(client, er)) {
 					er->rc = E_INVALID;
 					snprintf( er->msglog, MSGLOGSIZE, "invalid SID" );
 				}

@@ -4,6 +4,7 @@
 #include "oscam-client.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
+#include "module-stat.h"
 
 #define CS_NANO_CLASS 0xE2
 #define OK		1
@@ -360,6 +361,28 @@ int32_t chk_srvid_by_caid_prov_rdr(struct s_reader *rdr, uint16_t caid, uint32_t
   return(rc);
 }
 
+int32_t chk_valid_btun(struct s_client *cl, ECM_REQUEST *er)
+{
+	int32_t i;
+	TUNTAB *ttab;
+	ttab = &cl->ttab;
+	uint16_t caidto = get_betatunnel_caid_to(er->caid);
+
+	if (caidto) {
+		for (i = 0; i<ttab->n; i++) {
+			if ((er->caid==ttab->bt_caidfrom[i]) &&
+					((caidto==ttab->bt_caidto[i])) &&
+					((er->srvid==ttab->bt_srvid[i]) || (ttab->bt_srvid[i])==0xFFFF)) {
+				return 1;
+			}
+		}
+#ifdef WITH_LB
+		if (cfg.lb_auto_betatunnel && lb_valid_btun(er, caidto))
+			return 1;
+#endif
+	}
+	return 0;
+}
 
 // server filter for newcamd
 int32_t chk_sfilter(ECM_REQUEST *er, PTAB *ptab)

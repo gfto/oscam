@@ -1314,31 +1314,10 @@ void dvbapi_read_priority(void) {
 	return;
 }
 
-int32_t chk_valid_btun(ECM_REQUEST *er, uint16_t caidto)
-{
-	int32_t i;
-	struct s_client *cl = cur_client();
-	TUNTAB *ttab;
-	ttab = &cl->ttab;
-
-	for (i = 0; i<ttab->n; i++) {
-		if ((er->caid==ttab->bt_caidfrom[i]) &&
-				((caidto==ttab->bt_caidto[i])) &&
-				((er->srvid==ttab->bt_srvid[i]) || (ttab->bt_srvid[i])==0xFFFF)) {
-			return 1;
-		}
-	}
-#ifdef WITH_LB
-	if (cfg.lb_auto_betatunnel && lb_valid_btun(er, caidto))
-		return 1;
-
-#endif
-	return 0;
-}
-
 void dvbapi_resort_ecmpids(int32_t demux_index) {
 	int32_t n, cache=0, prio=1, highest_prio=0, matching_done=0;
-	uint16_t btun_caid=0;
+
+	struct s_client *client = cur_client();
 
 	for (n=0; n<demux[demux_index].ECMpidcount; n++) {
 		demux[demux_index].ECMpids[n].status=0;
@@ -1429,11 +1408,8 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 				er->srvid = demux[demux_index].program_number;
 				er->client = cur_client();
 
-				btun_caid = get_betatunnel_caid_to(er->caid);
-				if (p->type == 'p' && btun_caid) {
-					if (chk_valid_btun(er, btun_caid))
-						er->caid = btun_caid;
-				}
+				if (p->type == 'p' && chk_valid_btun(client, er))
+					er->caid = get_betatunnel_caid_to(er->caid);
 
 				if (p->caid && p->caid != er->caid)
 					continue;
@@ -1524,11 +1500,8 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 			er->srvid = demux[demux_index].program_number;
 			er->client = cur_client();
 
-			btun_caid = get_betatunnel_caid_to(er->caid);
-			if (btun_caid) {
-				if (chk_valid_btun(er, btun_caid))
-					er->caid = btun_caid;
-			}
+			if (chk_valid_btun(client, er))
+				er->caid = get_betatunnel_caid_to(er->caid);
 
 			for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 				if (cfg.preferlocalcards 

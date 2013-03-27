@@ -10,6 +10,7 @@ int32_t has_srvid(struct s_client *cl, ECM_REQUEST *er);
 int32_t chk_srvid_match_by_caid_prov(uint16_t caid, uint32_t provid, SIDTAB *sidtab);
 int32_t chk_srvid_by_caid_prov(struct s_client *cl, uint16_t caid, uint32_t provid);
 int32_t chk_srvid_by_caid_prov_rdr(struct s_reader *rdr, uint16_t caid, uint32_t provid);
+int32_t chk_valid_btun(struct s_client *cl, ECM_REQUEST *er);
 int32_t chk_sfilter(ECM_REQUEST *er, PTAB *ptab);
 int32_t chk_ufilters(ECM_REQUEST *er);
 int32_t chk_rsfilter(struct s_reader * reader, ECM_REQUEST *er);
