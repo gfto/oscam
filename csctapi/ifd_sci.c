@@ -331,8 +331,12 @@ static int32_t sci_write_settings3(struct s_reader *reader, uint32_t ETU, uint32
 	if (reader->mhz > 2000){ // only for dreambox internal readers
 		// EGT = 0; // communicating guardtime is only slowing card ecm responses down. its not needed with internal readers, the drivers already take care of this!
 		// P fixed at 5V since this is default class A card, and TB is deprecated
-		call (Sci_WriteSettings (reader, 0, reader->divider, ETU, WWT, reader->CWT, reader->BWT, 0, 5, (unsigned char)I));
-	} else { // all other brand boxes than dreamboxes!
+		if (reader->protocol_type != ATR_PROTOCOL_TYPE_T14){ // fix VU+ internal reader slow responses on T0/T1
+			call (Sci_WriteSettings (reader, 0, reader->divider, ETU, WWT, reader->CWT, reader->BWT, 0, 5, (unsigned char)I));
+		} else { // no fixup for T14 protocol otherwise error
+			call (Sci_WriteSettings (reader, reader->protocol_type, reader->divider, ETU, WWT, reader->CWT, reader->BWT, 0, 5, (unsigned char)I));
+		}
+	} else { // all other brand boxes than dreamboxes or VU+!
 		// EGT = 0; // dont communicate guardtime -> slowing down card ecm responses!
 		// P fixed at 5V since this is default class A card, and TB is deprecated
 		call (Sci_WriteSettings (reader, reader->protocol_type, reader->mhz / 100, ETU, WWT, reader->CWT, reader->BWT, 0, 5, (unsigned char)I));
