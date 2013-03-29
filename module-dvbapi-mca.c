@@ -216,7 +216,7 @@ void mca_ecm_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t cipher_in
 	//char tmp[1024];
 
 	//As soon as we have received a valid CW we lock onto that CAID, otherwise we will have freezers.
-	if (openxcas_caid && openxcas_caid != caid){
+	if (openxcas_caid && caid && openxcas_caid != caid){
 		cs_log(LOG_PREFIX "ignoring caid: %04X, waiting for %04X", caid, openxcas_caid);
 		openxcas_busy = 0;
 		return;
