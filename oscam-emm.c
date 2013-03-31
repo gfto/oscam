@@ -260,7 +260,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 	struct s_reader *aureader = NULL;
 	cs_ddump_mask(D_EMM, ep->emm, ep->emmlen, "emm:");
 
-	int8_t cl_dvbapi, assemble = 0;
+	int8_t cl_dvbapi = 0, assemble = 0;
 #ifdef HAVE_DVBAPI
 	cl_dvbapi = streq(cfg.dvbapi_usr, client->account->usr);
 #endif
