@@ -336,7 +336,7 @@ make_config_c() {
 }
 
 make_config_mak() {
-	TMPFILE=$(mktemp) || exit 1
+	TMPFILE=$(mktemp -t config.mak.XXXXXX) || exit 1
 	list_config > $TMPFILE
 	[ ! -d $OBJDIR ] && mkdir -p $OBJDIR 2>/dev/null
 	cmp $TMPFILE $OBJDIR/config.mak >/dev/null 2>/dev/null
@@ -505,8 +505,8 @@ config_dialog() {
 	fi
 
 	configfile=config.h
-	tempfile=$(mktemp) || exit 1
-	tempfileconfig=$(mktemp) || exit 1
+	tempfile=$(mktemp -t oscam-config.dialog.XXXXXX) || exit 1
+	tempfileconfig=$(mktemp -t oscam-config.h.XXXXXX) || exit 1
 	trap 'rm -f $tempfile $tempfileconfig $tempfileconfig.bak 2>/dev/null' INT TERM EXIT
 	cp -f $configfile $tempfileconfig
 
