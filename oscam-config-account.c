@@ -266,6 +266,7 @@ static const struct config_list account_opts[] = {
 	DEF_OPT_FUNC("suppresscmd08"		, OFS(c35_suppresscmd08),		account_c35_suppresscmd08_fn ),
 	DEF_OPT_FUNC("keepalive"			, OFS(ncd_keepalive),			account_ncd_keepalive_fn ),
 	DEF_OPT_FUNC("au"					, 0,							account_au_fn ),
+	DEF_OPT_UINT8("emmreassembly"		, OFS(emm_reassembly), 			1 ),
 	DEF_OPT_FUNC("expdate"				, 0,							account_expdate_fn ),
 	DEF_OPT_FUNC("allowedprotocols"		, 0,							account_allowedprotocols_fn ),
 	DEF_OPT_FUNC("allowedtimeframe"		, 0,							account_allowedtimeframe_fn ),

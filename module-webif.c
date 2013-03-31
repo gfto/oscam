@@ -1410,8 +1410,6 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "DEPRECATEDVALUE", (rdr->deprecated == 1) ? "1" : "0");
 	}
 
-	if (rdr->emm_reassembly) tpl_addVar(vars, TPLADD, "EMMREASSEMBLYCHECK", "selected");
-
 	// Smargopatch
 	if(!apicall) {
 		tpl_addVar(vars, TPLADD, "SMARGOPATCHCHECKED", (rdr->smargopatch == 1) ? "checked" : "");
@@ -2123,6 +2121,14 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 
 	//Sleepsend
 	tpl_printf(vars, TPLADD, "SLEEPSEND", "%u", account->c35_sleepsend);
+
+	//EMM Reassembly selector
+	if(!apicall) {
+		tpl_printf(vars, TPLADD, "TMP", "EMMRSELECTED%d", account->emm_reassembly);
+		tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+	} else {
+		tpl_printf(vars, TPLADD, "EMMRVALUE", "%d", account->emm_reassembly);
+	}
 
 #ifdef CS_CACHEEX
 	// Cacheex

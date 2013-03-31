@@ -752,7 +752,7 @@ struct s_cardsystem {
 	int32_t		(*card_init)(struct s_reader *reader, struct s_ATR *);
 	int32_t		(*card_info)(struct s_reader *);
 	int32_t		(*do_ecm)(struct s_reader *, const struct ecm_request_t *, struct s_ecm_answer *);
-	bool		(*do_emm_reassembly)(struct s_reader *, struct emm_packet_t *); // Returns 1/true if the EMM is ready to be written in the card
+	int32_t		(*do_emm_reassembly)(struct s_client *, struct emm_packet_t *); // Returns 1/true if the EMM is ready to be written in the card
 	int32_t		(*do_emm)(struct s_reader *, struct emm_packet_t *);
 	void			(*post_process)(struct s_reader *);
 	int32_t		(*get_emm_type)(struct emm_packet_t *, struct s_reader *);
@@ -895,6 +895,14 @@ struct s_client {
 	int8_t			dup;
 	LLIST			*aureader_list;
 	int8_t			autoau;
+#ifdef READER_VIACCESS
+	int16_t			via_rass_emmlen;
+	uint8_t			via_rass_emm[512];
+#endif
+#ifdef READER_CRYPTOWORKS
+	int16_t			cw_rass_emmlen;
+	uint8_t			cw_rass_emm[512];
+#endif
 	int8_t			monlvl;
 	CAIDTAB			ctab;
 	TUNTAB			ttab;
@@ -1279,8 +1287,6 @@ struct s_reader  									//contains device info, reader info and card info
 #endif
   uint8_t cnxlastecm; // == 0 - las ecm has not been paired ecm, > 0 last ecm has been paired ecm
 
-	uint8_t			emm_reassembly;
-
 	struct s_reader *next;
 };
 
@@ -1308,6 +1314,7 @@ struct s_auth
 	int16_t			allowedprotocols;
 	LLIST			*aureader_list;
 	int8_t			autoau;
+	uint8_t			emm_reassembly; // 0 = OFF; 1 = OFF / DVBAPI = ON (default); 2 = ON
 	int8_t			monlvl;
 	uint64_t		grp;
 	int32_t			tosleep;

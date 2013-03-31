@@ -14,8 +14,6 @@ struct geo_cache {
 
 struct viaccess_data {
 	struct geo_cache	last_geo;
-	int32_t				reassemble_emm_len;
-	uint8_t				reassemble_emm[512];
 	uint8_t				availkeys[CS_MAXPROV][16];
 };
 
@@ -1013,9 +1011,8 @@ static int32_t viaccess_card_info(struct s_reader * reader)
 	return OK;
 }
 
-static bool viaccess_reassemble_emm(struct s_reader *reader, EMM_PACKET *ep)
+static int32_t viaccess_reassemble_emm(struct s_client *client, EMM_PACKET *ep)
 {
-	struct viaccess_data *csystem_data = reader->csystem_data;
 	uint8_t *buffer = ep->emm;
 	int16_t *len = &ep->emmlen;
 	int32_t pos=0, i;
@@ -1028,28 +1025,28 @@ static bool viaccess_reassemble_emm(struct s_reader *reader, EMM_PACKET *ep)
 		case 0x8c:
 		case 0x8d:
 			// emm-s part 1
-			if (!memcmp(csystem_data->reassemble_emm, buffer, *len))
+			if (!memcmp(client->via_rass_emm, buffer, *len))
 				return 0;
 
 			// copy first part of the emm-s
-			memcpy(csystem_data->reassemble_emm, buffer, *len);
-			csystem_data->reassemble_emm_len=*len;
+			memcpy(client->via_rass_emm, buffer, *len);
+			client->via_rass_emmlen=*len;
 			//cs_ddump_mask(D_READER, buffer, len, "viaccess global emm:");
 			return 0;
 
 		case 0x8e:
 			// emm-s part 2
-			if (!csystem_data->reassemble_emm_len) return 0;
+			if (!client->via_rass_emmlen) return 0;
 
 			//extract nanos from emm-gh and emm-s
 			uchar emmbuf[512];
 
-			cs_debug_mask(D_DVBAPI, "[viaccess] %s: start extracting nanos", __func__);
+			cs_debug_mask(D_EMM, "[viaccess] %s: start extracting nanos", __func__);
 			//extract from emm-gh
-			for (i=3; i<csystem_data->reassemble_emm_len; i+=csystem_data->reassemble_emm[i+1]+2) {
+			for (i=3; i<client->via_rass_emmlen; i+=client->via_rass_emm[i+1]+2) {
 				//copy nano (length determined by i+1)
-				memcpy(emmbuf+pos, csystem_data->reassemble_emm+i, csystem_data->reassemble_emm[i+1]+2);
-				pos+=csystem_data->reassemble_emm[i+1]+2;
+				memcpy(emmbuf+pos, client->via_rass_emm+i, client->via_rass_emm[i+1]+2);
+				pos+=client->via_rass_emm[i+1]+2;
 			}
 
 			if (buffer[2]==0x2c) {
@@ -1071,7 +1068,7 @@ static bool viaccess_reassemble_emm(struct s_reader *reader, EMM_PACKET *ep)
 				}
 			}
 
-			cs_ddump_mask(D_DVBAPI, buffer, *len, "[viaccess] %s: %s emm-s", __func__, (buffer[2]==0x2c) ? "fixed" : "variable");
+			cs_ddump_mask(D_EMM, buffer, *len, "[viaccess] %s: %s emm-s", __func__, (buffer[2]==0x2c) ? "fixed" : "variable");
 
 			emm_sort_nanos(buffer+7, emmbuf, pos);
 			pos+=7;
@@ -1079,8 +1076,8 @@ static bool viaccess_reassemble_emm(struct s_reader *reader, EMM_PACKET *ep)
 			//calculate emm length and set it on position 2
 			buffer[2]=pos-3;
 
-			cs_ddump_mask(D_DVBAPI, csystem_data->reassemble_emm, csystem_data->reassemble_emm_len, "[viaccess] %s: emm-gh", __func__);
-			cs_ddump_mask(D_DVBAPI, buffer, pos, "[viaccess] %s: assembled emm", __func__);
+			cs_ddump_mask(D_EMM, client->via_rass_emm, client->via_rass_emmlen, "[viaccess] %s: emm-gh", __func__);
+			cs_ddump_mask(D_EMM, buffer, pos, "[viaccess] %s: assembled emm", __func__);
 
 			*len=pos;
 			break;

@@ -260,6 +260,13 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 	struct s_reader *aureader = NULL;
 	cs_ddump_mask(D_EMM, ep->emm, ep->emmlen, "emm:");
 
+	int8_t cl_dvbapi, assemble = 0;
+#ifdef HAVE_DVBAPI
+	cl_dvbapi = streq(cfg.dvbapi_usr, client->account->usr);
+#endif
+	if (client->account->emm_reassembly > 1 || (client->account->emm_reassembly && cl_dvbapi))
+		assemble = 1;
+
 	LL_ITER itr = ll_iter_create(client->aureader_list);
 	while ((aureader = ll_iter_next(&itr))) {
 		if (!aureader->enable)
@@ -307,6 +314,15 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 				cs=&aureader->csystem;
 		}
 
+		if (cs && ((caid >> 8 == 0x0D) || (caid >> 8 == 0x05))) {
+			if (assemble) {
+				if (!cs->do_emm_reassembly(client, ep))
+					return;
+			} else {
+				rdr_debug_mask(aureader, D_EMM, "processing raw emm");
+			}
+		}
+
 		if (cs && cs->get_emm_type) {
 			if (!cs->get_emm_type(ep, aureader)) {
 				rdr_debug_mask(aureader, D_EMM, "emm skipped, get_emm_type() returns error");
@@ -321,11 +337,6 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 				emmnok++;
 				continue;
 			}
-		}
-
-		if (aureader->emm_reassembly && aureader->csystem.do_emm_reassembly) {
-			if (!aureader->csystem.do_emm_reassembly(aureader, ep))
-				return;
 		}
 
 		rdr_debug_mask_sensitive(aureader, D_EMM, "emmtype %s. Reader serial {%s}.", typtext[ep->type],
@@ -388,6 +399,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 					reader_log_emm(aureader, ep, i, 2, NULL);
 					return;
 				}
+				break;
 			}
 		}
 
