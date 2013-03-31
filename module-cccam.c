@@ -2299,8 +2299,10 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 
 		cs_writelock(&cc->cards_busy);
 		struct cc_card *card = read_card(data, buf[1]==MSG_NEW_CARD_SIDINFO);
-		if (!card)
+		if (!card) {
+			cs_writeunlock(&cc->cards_busy);
 			break;
+		}
 		card->origin_reader = rdr;
 		card->origin_id = card->id;
 		card->grp = rdr->grp;
