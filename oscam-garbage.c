@@ -76,15 +76,12 @@ void add_garbage(void *data) {
 }
 
 static pthread_cond_t sleep_cond;
+static pthread_mutex_t sleep_cond_mutex;
 
 static void garbage_collector(void) {
         int8_t i;
         struct cs_garbage *garbage, *next, *prev, *first;
         set_thread_name(__func__);
-	pthread_mutex_t sleep_cond_mutex;
-	pthread_mutex_init(&sleep_cond_mutex, NULL);
-	pthread_cond_init(&sleep_cond, NULL);
-
         while (garbage_collector_active) {
 
                 for(i = 0; i < HASH_BUCKETS; ++i){
@@ -117,16 +114,7 @@ static void garbage_collector(void) {
 	                }
 	              }
 
-			struct timespec ts;
-			struct timeval tv;
-			gettimeofday(&tv, NULL);
-			ts.tv_sec = tv.tv_sec;
-			ts.tv_nsec = tv.tv_usec * 1000;
-			ts.tv_sec += 1;
-
-			pthread_mutex_lock(&sleep_cond_mutex);
-			pthread_cond_timedwait(&sleep_cond, &sleep_cond_mutex, &ts); // sleep on sleep_cond
-			pthread_mutex_unlock(&sleep_cond_mutex);
+			sleepms_on_cond(&sleep_cond, &sleep_cond_mutex, 1000);
         }
         pthread_exit(NULL);
 }

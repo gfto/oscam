@@ -46,7 +46,6 @@ static void *cw_process(void) {
 	ECM_REQUEST *er = NULL;
 	time_t ecm_timeout;
 	time_t ecm_mintimeout;
-	struct timespec ts;
 
 #ifdef CS_ANTICASC
 	int32_t ac_next;
@@ -60,11 +59,7 @@ static void *cw_process(void) {
 
 	while (!exit_oscam) {
 		if (cw_process_wakeups == 0) { // No waiting wakeups, proceed to sleep
-			// pthread_cond_timedwait() expects absolute time to sleep until
-			add_ms_to_timespec(&ts, msec_wait);
-			pthread_mutex_lock(&cw_process_sleep_cond_mutex);
-			pthread_cond_timedwait(&cw_process_sleep_cond, &cw_process_sleep_cond_mutex, &ts); // sleep on cw_process_sleep_cond
-			pthread_mutex_unlock(&cw_process_sleep_cond_mutex);
+			sleepms_on_cond(&cw_process_sleep_cond, &cw_process_sleep_cond_mutex, msec_wait);
 		}
 		cw_process_wakeups = 0; // We've been woken up, reset the counter
 

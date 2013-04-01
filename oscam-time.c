@@ -143,3 +143,11 @@ int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms)
 	cs_ftime(&tb_now);
 	return comp_timeb(tb, &tb_now);
 }
+
+void sleepms_on_cond(pthread_cond_t *cond, pthread_mutex_t *mutex, uint32_t msec) {
+	struct timespec ts;
+	add_ms_to_timespec(&ts, msec);
+	pthread_mutex_lock(mutex);
+	pthread_cond_timedwait(cond, mutex, &ts); // sleep on sleep_cond
+	pthread_mutex_unlock(mutex);
+}
