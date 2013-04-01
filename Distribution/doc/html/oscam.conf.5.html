@@ -578,8 +578,6 @@ monlevel can be overwritten per user in <B>oscam.user</B>
 time to hide clients in the monitor if not sending requests, 0 = disabled, default:25
 </DL>
 
-<P>
-
 <A NAME="lbAG">&nbsp;</A>
 <H3>The [webif] section</H3>
 
@@ -1069,17 +1067,21 @@ user name for radegast client
 <P>
 parameters:
 <BR>&nbsp;<B>user</B>&nbsp;&nbsp;&nbsp;=&nbsp;<B>account</B>
-<BR>&nbsp;<B>device</B>&nbsp;=&nbsp;<B>serial&nbsp;device&nbsp;name</B>
+<BR>&nbsp;<B>device</B>&nbsp;=&nbsp;<B>serial&nbsp;device&nbsp;name</B>|<B>hostname|IP</B>,<B>port</B>
+<BR>&nbsp;<B>baud</B>&nbsp;&nbsp;&nbsp;=&nbsp;<B>serial&nbsp;port&nbsp;speed</B>&nbsp;(for&nbsp;serial&nbsp;devices&nbsp;only)
 <BR>&nbsp;<B>option</B>&nbsp;=&nbsp;<B>timeout</B>&nbsp;=&nbsp;milli-seconds,&nbsp;timeout&nbsp;for&nbsp;connection,&nbsp;
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default:50
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>delay</B>&nbsp;&nbsp;&nbsp;=&nbsp;milli-seconds,&nbsp;additional&nbsp;delay&nbsp;between&nbsp;two
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;characters,&nbsp;default:0
 <P>
-supported serial devices:
+supported serial devices (autodection):
 <BR>&nbsp;HSIC&nbsp;&nbsp;&nbsp;&nbsp;(humax&nbsp;sharing&nbsp;interface&nbsp;client)
 <BR>&nbsp;SSSP&nbsp;&nbsp;&nbsp;&nbsp;(simple&nbsp;serial&nbsp;sharing&nbsp;protocol)
 <BR>&nbsp;bomba&nbsp;&nbsp;&nbsp;(BOMBA&nbsp;firmware)
 <BR>&nbsp;dsr9500&nbsp;(DSR&nbsp;9500)
+<BR>&nbsp;
+<BR>&nbsp;example:&nbsp;user1@/dev/ttyS1:115200?delay=1&amp;timeout=5000
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="mailto:user2@192.160.0.1">user2@192.160.0.1</A>,12345?delay=1&amp;timeout=5000
 </DL>
 
 <A NAME="lbAP">&nbsp;</A>

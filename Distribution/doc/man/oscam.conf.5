@@ -790,17 +790,21 @@ user name for radegast client
 
 parameters:
  \fBuser\fP   = \fBaccount\fP
- \fBdevice\fP = \fBserial device name\fP
+ \fBdevice\fP = \fBserial device name\fP|\fBhostname|IP\fP,\fBport\fP
+ \fBbaud\fP   = \fBserial port speed\fP (for serial devices only)
  \fBoption\fP = \fBtimeout\fP = milli-seconds, timeout for connection, 
                     default:50
           \fBdelay\fP   = milli-seconds, additional delay between two
                     characters, default:0
 
-supported serial devices:
+supported serial devices (autodection):
  HSIC    (humax sharing interface client)
  SSSP    (simple serial sharing protocol)
  bomba   (BOMBA firmware)
  dsr9500 (DSR 9500)
+ 
+ example: user1@/dev/ttyS1:115200?delay=1&timeout=5000
+          user2@192.160.0.1,12345?delay=1&timeout=5000
 .RE
 .SS "The [cccam] section"
 .PP
