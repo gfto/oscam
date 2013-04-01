@@ -16,9 +16,9 @@
 #include "oscam-work.h"
 #include "reader-common.h"
 
-extern char *processUsername;
 extern CS_MUTEX_LOCK fakeuser_lock;
 
+static char *processUsername;
 static struct s_client *first_client_hashed[CS_CLIENT_HASHBUCKETS];  // Alternative hashed client list
 
 /* Gets the unique thread number from the client. Used in monitor and newcamd. */
@@ -235,26 +235,17 @@ void init_first_client(void)
 	// get username OScam is running under
 	struct passwd pwd;
 	struct passwd *pwdbuf;
-	bool ok;
 #ifdef __ANDROID__
 	pwdbuf = getpwuid(getuid()); // This is safe
 	if (pwdbuf) {
 		memcpy(&pwd, pwdbuf, sizeof(pwd));
-		ok = 1;
+		processUsername = cs_strdup(pwd.pw_name);
 	}
 #else
 	char buf[256];
-	ok = getpwuid_r(getuid(), &pwd, buf, sizeof(buf), &pwdbuf) == 0;
+	if (getpwuid_r(getuid(), &pwd, buf, sizeof(buf), &pwdbuf) == 0)
+		processUsername = cs_strdup(pwd.pw_name);
 #endif
-	if (ok) {
-		if (cs_malloc(&processUsername, strlen(pwd.pw_name) + 1))
-			cs_strncpy(processUsername, pwd.pw_name, strlen(pwd.pw_name) + 1);
-		else
-			processUsername = "root";
-	} else {
-		processUsername = "root";
-	}
-
 	if (!cs_malloc(&first_client, sizeof(struct s_client))) {
 		fprintf(stderr, "Could not allocate memory for master client, exiting...");
 		exit(1);
@@ -438,6 +429,7 @@ void kill_all_clients(void)
 			kill_thread(cl);
 		}
 	}
+	NULLFREE(processUsername);
 }
 
 void cs_reinit_clients(struct s_auth *new_accounts)

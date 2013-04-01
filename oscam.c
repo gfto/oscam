@@ -85,7 +85,6 @@ struct  s_config  cfg;
 int log_remove_sensitive = 1;
 
 static char *prog_name;
-char    *processUsername = NULL;
 
 /*****************************************************************************
         Statics
