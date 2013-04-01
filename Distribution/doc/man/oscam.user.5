@@ -191,6 +191,18 @@ The ServiceID can also be used for wildcarded CAIDs.
 
 \fIBe carefull using abbreviations.\fR
 .RE
+
+.PP
+\fBemmreassembly\fP = \fB0\fP|\fB1\fP||\fB2\fP
+.RS 3n
+EMM reassembly, should be set for Viaccess and Cryptoworks readers if the 
+client that you are using to send EMMs is reassembling them instead of 
+just sending them to OSCam for processing.
+
+  \fB0\fP: disabled
+  \fB1\fP: enabled for DVB API
+  \fB2\fP: enabled (default)
+.RE
 .PP
 \fBservices\fP = \fB[!]services[,[!]<services>]...\fP
 .RS 3n
