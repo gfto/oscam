@@ -1314,7 +1314,7 @@ struct s_auth
 	int16_t			allowedprotocols;
 	LLIST			*aureader_list;
 	int8_t			autoau;
-	uint8_t			emm_reassembly; // 0 = OFF; 1 = OFF / DVBAPI = ON (default); 2 = ON
+	uint8_t			emm_reassembly; // 0 = OFF; 1 = OFF / DVBAPI = ON; 2 = ON (default)
 	int8_t			monlvl;
 	uint64_t		grp;
 	int32_t			tosleep;
