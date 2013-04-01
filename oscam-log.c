@@ -18,6 +18,7 @@ static FILE *fp;
 static FILE *fps;
 static int8_t logStarted;
 static LLIST *log_list;
+static bool log_running;
 
 struct s_log {
 	char *txt;
@@ -117,6 +118,18 @@ static void cs_write_log(char *txt, int8_t do_flush)
 	}
 }
 
+static void log_list_flush(void) {
+	int32_t i = 0;
+	while(ll_count(log_list) > 0 && i < 200){
+		cs_sleepms(5);
+		++i;
+	}
+}
+
+static void log_list_add(struct s_log *log) {
+	ll_append(log_list, log);
+}
+
 static void cs_write_log_int(char *txt)
 {
 	if(exit_oscam == 1) {
@@ -133,7 +146,7 @@ static void cs_write_log_int(char *txt)
 		log->txt = newtxt;
 		log->header_len = 0;
 		log->direct_log = 1;
-		ll_append(log_list, log);
+		log_list_add(log);
 	}
 }
 
@@ -343,7 +356,7 @@ static void write_to_log_int(char *txt, int8_t header_len)
 		free(log->txt);
 		free(log);
 	} else
-		ll_append(log_list, log);
+		log_list_add(log);
 }
 
 static pthread_mutex_t log_mutex;
@@ -407,12 +420,7 @@ void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar 
 
 static void cs_close_log(void)
 {
-	//Wait for log close:
-	int32_t i = 0;
-	while (ll_count(log_list) > 0 && i < 1000) {
-		cs_sleepms(1);
-		++i;
-	}
+	log_list_flush();
 	if(fp){
 		fclose(fp);
 		fp=(FILE *)0;
@@ -569,6 +577,7 @@ void cs_statistics(struct s_client * client)
 void log_list_thread(void)
 {
 	char buf[LOG_BUF_SIZE];
+	log_running = 1;
 	set_thread_name(__func__);
 	int last_count=ll_count(log_list), count, grow_count=0, write_count;
 	do {
@@ -614,7 +623,9 @@ void log_list_thread(void)
 			}
 		}
 		cs_sleepms(250);
-	} while(1);
+	} while(log_running);
+	ll_destroy(log_list);
+	log_list = NULL;
 }
 
 int32_t cs_init_log(void)
@@ -638,11 +649,7 @@ void cs_disable_log(int8_t disabled)
 	if (cfg.disablelog != disabled) {
 		if(disabled && logStarted) {
 			cs_log("Stopping log...");
-			int32_t i = 0;
-			while(ll_count(log_list) > 0 && i < 200){
-				cs_sleepms(5);
-				++i;
-			}
+			log_list_flush();
 		}
 		cfg.disablelog = disabled;
 		if (disabled){
@@ -658,6 +665,7 @@ void cs_disable_log(int8_t disabled)
 
 void log_free(void) {
 	cs_close_log();
+	log_running = 0;
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 	free(loghist);
 	loghist = loghistptr = NULL;
