@@ -9,6 +9,9 @@
 #include "oscam-string.h"
 #include "oscam-time.h"
 
+// Do not allow log_list to grow bigger than that many entries
+#define MAX_LOG_LIST_BACKLOG 10000
+
 extern char *syslog_ident;
 extern int32_t exit_oscam;
 
@@ -132,8 +135,15 @@ static void log_list_flush(void) {
 }
 
 static void log_list_add(struct s_log *log) {
+	int32_t count = ll_count(log_list);
 	log_list_queued++;
-	ll_append(log_list, log);
+	if (count < MAX_LOG_LIST_BACKLOG) {
+		ll_append(log_list, log);
+	} else { // We have too much backlog
+		free(log->txt);
+		free(log);
+		cs_write_log("-------------> Too much data in log_list, dropping log message.\n", 1);
+	}
 	pthread_cond_signal(&log_thread_sleep_cond);
 }
 
@@ -586,12 +596,10 @@ void log_list_thread(void)
 	char buf[LOG_BUF_SIZE];
 	log_running = 1;
 	set_thread_name(__func__);
-	int last_count=ll_count(log_list), count, grow_count=0, write_count;
 	do {
 		log_list_queued = 0;
 		LL_ITER it = ll_iter_create(log_list);
 		struct s_log *log;
-		write_count = 0;
 		while ((log=ll_iter_next_remove(&it))) {
 			int8_t do_flush = ll_count(log_list) == 0; //flush on writing last element
 
@@ -602,33 +610,6 @@ void log_list_thread(void)
 				write_to_log(buf, log, do_flush);
 			free(log->txt);
 			free(log);
-
-			//If list is faster growing than we could write to file, drop list:
-			write_count++;
-			if (write_count%10000 == 0) { //check every 10000 writes:
-				count = ll_count(log_list);
-				if (count > last_count) {
-					grow_count++;
-					if (grow_count > 5) { //5 times still growing
-						cs_write_log("------------->logging temporary disabled (30s) - too much data!\n", 1);
-						cfg.disablelog = 1;
-						ll_iter_reset(&it);
-						while ((log=ll_iter_next_remove(&it))) { //clear log
-							free(log->txt);
-							free(log);
-						}
-						cs_sleepms(30*1000);
-						cfg.disablelog = 0;
-
-						grow_count = 0;
-						last_count = 0;
-						break;
-					}
-				}
-				else
-					grow_count = 0;
-				last_count = count;
-			}
 		}
 		if (!log_list_queued) // The list is empty, sleep until new data comes in and we are woken up
 			sleepms_on_cond(&log_thread_sleep_cond, &log_thread_sleep_cond_mutex, 60 * 1000);
