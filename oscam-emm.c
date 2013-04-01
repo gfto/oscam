@@ -314,15 +314,6 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 				cs=&aureader->csystem;
 		}
 
-		if (cs && ((caid >> 8 == 0x0D) || (caid >> 8 == 0x05))) {
-			if (assemble) {
-				if (!cs->do_emm_reassembly(client, ep))
-					return;
-			} else {
-				rdr_debug_mask(aureader, D_EMM, "processing raw emm");
-			}
-		}
-
 		if (cs && cs->get_emm_type) {
 			if (!cs->get_emm_type(ep, aureader)) {
 				rdr_debug_mask(aureader, D_EMM, "emm skipped, get_emm_type() returns error");
@@ -336,6 +327,15 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 				rdr_debug_mask(aureader, D_EMM, "emm skipped, emm_filter() returns invalid");
 				emmnok++;
 				continue;
+			}
+		}
+
+		if (cs && cs->do_emm_reassembly) {
+			if (assemble) {
+				if (!cs->do_emm_reassembly(client, ep))
+					return;
+			} else {
+				rdr_debug_mask(aureader, D_EMM, "processing raw emm");
 			}
 		}
 
