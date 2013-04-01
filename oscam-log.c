@@ -19,6 +19,10 @@ static FILE *fps;
 static int8_t logStarted;
 static LLIST *log_list;
 static bool log_running;
+static int log_list_queued;
+static pthread_t log_thread;
+static pthread_cond_t log_thread_sleep_cond;
+static pthread_mutex_t log_thread_sleep_cond_mutex;
 
 struct s_log {
 	char *txt;
@@ -119,6 +123,7 @@ static void cs_write_log(char *txt, int8_t do_flush)
 }
 
 static void log_list_flush(void) {
+	pthread_cond_signal(&log_thread_sleep_cond);
 	int32_t i = 0;
 	while(ll_count(log_list) > 0 && i < 200){
 		cs_sleepms(5);
@@ -127,7 +132,9 @@ static void log_list_flush(void) {
 }
 
 static void log_list_add(struct s_log *log) {
+	log_list_queued++;
 	ll_append(log_list, log);
+	pthread_cond_signal(&log_thread_sleep_cond);
 }
 
 static void cs_write_log_int(char *txt)
@@ -581,6 +588,7 @@ void log_list_thread(void)
 	set_thread_name(__func__);
 	int last_count=ll_count(log_list), count, grow_count=0, write_count;
 	do {
+		log_list_queued = 0;
 		LL_ITER it = ll_iter_create(log_list);
 		struct s_log *log;
 		write_count = 0;
@@ -622,7 +630,8 @@ void log_list_thread(void)
 				last_count = count;
 			}
 		}
-		cs_sleepms(250);
+		if (!log_list_queued) // The list is empty, sleep until new data comes in and we are woken up
+			sleepms_on_cond(&log_thread_sleep_cond, &log_thread_sleep_cond_mutex, 60 * 1000);
 	} while(log_running);
 	ll_destroy(log_list);
 	log_list = NULL;
@@ -636,7 +645,16 @@ int32_t cs_init_log(void)
 #endif
 
 		log_list = ll_create(LOG_LIST);
-		start_thread((void*)&log_list_thread, "log_list_thread");
+		pthread_attr_t attr;
+		pthread_attr_init(&attr);
+		pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+		int32_t ret = pthread_create(&log_thread, &attr, (void*)&log_list_thread, NULL);
+		if (ret) {
+			fprintf(stderr, "ERROR: Can't create logging thread (errno=%d %s)", ret, strerror(ret));
+			pthread_attr_destroy(&attr);
+			cs_exit(1);
+		}
+		pthread_attr_destroy(&attr);
 	}
 	int32_t rc = 0;
 	if(!cfg.disablelog) rc = cs_open_logfiles();
@@ -666,6 +684,8 @@ void cs_disable_log(int8_t disabled)
 void log_free(void) {
 	cs_close_log();
 	log_running = 0;
+	pthread_cond_signal(&log_thread_sleep_cond);
+	pthread_join(log_thread, NULL);
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 	free(loghist);
 	loghist = loghistptr = NULL;
