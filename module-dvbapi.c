@@ -1930,11 +1930,13 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 
 			cs_log("[pmt] Mapping %04X:%06X:%04X:%04X to xtra demuxer/ca-devices", xtraentry->caid, xtraentry->provid, xtraentry->ecmpid, xtraentry->srvid);
 
-			for (xtra_demux_id=0; xtra_demux_id<MAX_DEMUX && demux[xtra_demux_id].program_number>0; xtra_demux_id++);
-				if (xtra_demux_id>=MAX_DEMUX) {
-					cs_log("Found no free demux device for xtra streams.");
-					continue;
-				}
+			for (xtra_demux_id=0; xtra_demux_id<MAX_DEMUX && demux[xtra_demux_id].program_number>0; xtra_demux_id++)
+				;
+
+			if (xtra_demux_id>=MAX_DEMUX) {
+				cs_log("Found no free demux device for xtra streams.");
+				continue;
+			}
 
 			getDemuxOptions(xtra_demux_id, buffer, &ca_mask, &demux_index, &adapter_index);
 
