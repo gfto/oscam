@@ -370,10 +370,11 @@ int32_t chk_valid_btun(struct s_client *cl, ECM_REQUEST *er)
 
 	if (caidto) {
 		for (i = 0; i<ttab->n; i++) {
-			if ((er->caid==ttab->bt_caidfrom[i]) &&
-					((caidto==ttab->bt_caidto[i])) &&
-					((er->srvid==ttab->bt_srvid[i]) || (ttab->bt_srvid[i])==0xFFFF)) {
-				return 1;
+			if (er->caid==ttab->bt_caidfrom[i] && caidto==ttab->bt_caidto[i]) {
+				if (ttab->bt_srvid[i]==0xFFFF)
+					return 1;
+				if (er->srvid==ttab->bt_srvid[i])
+					return 2; // this is used to bypass a srvid filter
 			}
 		}
 #ifdef WITH_LB

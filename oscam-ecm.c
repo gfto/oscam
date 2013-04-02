@@ -1429,7 +1429,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				break;
 			case 2:
 				// invalid (srvid)
-				if (!chk_srvid(client, er) && !chk_valid_btun(client, er)) {
+				// srvids specified in betatunnel will bypass this filter
+				if (!chk_srvid(client, er) && chk_valid_btun(client, er) < 2) {
 					er->rc = E_INVALID;
 					snprintf( er->msglog, MSGLOGSIZE, "invalid SID" );
 				}
