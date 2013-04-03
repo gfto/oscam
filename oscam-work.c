@@ -155,10 +155,27 @@ void * work_thread(void *ptr) {
 				cl->thread_active = 1;
 				pthread_mutex_unlock(&cl->thread_lock);
 
-				if (rc == -1)
-					cs_debug_mask(D_TRACE, "poll() timeout");
+				if (rc == -1){
+					if (errno == EINTR || errno == EAGAIN) continue; // try again in case of interrupt or again error
+					else { // all other errors kill client on next run
+						cs_debug_mask(D_TRACE, "Client %s ERROR: %s (errno=%d %s) -> Killing this client!", username(cl), __func__, errno, strerror(errno));
+						cl->kill=1;
+						continue;
+					}
+				}
+				
+				if (rc == 0){
+					cs_debug_mask(D_TRACE, "Client %s reached 3 seconds timeout but no data received -> Skip, better luck next time!", username(cl));
+					continue;
+				}
 
 				if (rc > 0) {
+					if(pfd[0].revents & POLLHUP) { // check if client hang up on us...
+						cs_debug_mask(D_TRACE, "Client %s closed the connection -> Killing this client!", username(cl));
+						cl->kill=1;
+						continue;
+					}
+						
 					data = &tmp_data;
 					data->ptr = NULL;
 
