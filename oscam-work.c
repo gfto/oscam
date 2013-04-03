@@ -169,13 +169,7 @@ void * work_thread(void *ptr) {
 					continue;
 				}
 
-				if (rc > 0) {
-					if(pfd[0].revents & POLLHUP) { // check if client hang up on us...
-						cs_debug_mask(D_TRACE, "Client %s closed the connection -> Killing this client!", username(cl));
-						cl->kill=1;
-						continue;
-					}
-						
+				if (rc > 0) {						
 					data = &tmp_data;
 					data->ptr = NULL;
 
@@ -189,8 +183,11 @@ void * work_thread(void *ptr) {
 						}
 						else
 							data->action = ACTION_CLIENT_TCP;
-						if (pfd[0].revents & (POLLHUP | POLLNVAL))
+						if (pfd[0].revents & (POLLHUP | POLLNVAL)){
+							cs_debug_mask(D_TRACE, "Client %s closed the connection -> Killing this client!", username(cl));
 							cl->kill = 1;
+							continue;
+						}
 					}
 				}
 			}
