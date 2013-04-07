@@ -2970,6 +2970,7 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 			sscanf(cptr, "%p", (void**)(void*)&cl);
 
 		if (cl && is_valid_client(cl)) {
+#ifdef HAVE_DVBAPI 
 			if (streq(cl->account->usr, cfg.dvbapi_usr)){
 				cs_log("WebIF from %s requests to kill dvbapi client %s -> ignoring!",  cs_inet_ntoa(GET_IP()),cl->account->usr);
 			}
@@ -2978,6 +2979,11 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 				cs_log("Client %s killed by WebIF from %s", cl->account->usr, cs_inet_ntoa(GET_IP()));
 			}
 		}
+#else
+			kill_thread(cl);
+			cs_log("Client %s killed by WebIF from %s", cl->account->usr, cs_inet_ntoa(GET_IP()));
+		}
+#endif
 	}
 
 	if (strcmp(getParam(params, "action"), "restart") == 0) {
