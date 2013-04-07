@@ -159,14 +159,14 @@ void * work_thread(void *ptr) {
 					if (errno == EINTR || errno == EAGAIN) continue; // try again in case of interrupt or again error
 					else { // all other errors kill client on next run
 						cs_debug_mask(D_TRACE, "Client %s ERROR: %s (errno=%d %s) -> Killing this client!", username(cl), __func__, errno, strerror(errno));
-						cl->kill=1;
-						continue;
+						kill_thread(cl);
+						break;
 					}
 				}
 				
 				if (rc == 0){
-					cs_debug_mask(D_TRACE, "Client %s reached 3 seconds timeout but no data received -> Skip, better luck next time!", username(cl));
-					continue;
+					cs_debug_mask(D_TRACE, "Client %s reached 3000 ms timeout but no data received", username(cl));
+					break;
 				}
 
 				if (rc > 0) {						
@@ -185,15 +185,15 @@ void * work_thread(void *ptr) {
 							data->action = ACTION_CLIENT_TCP;
 						if (pfd[0].revents & (POLLHUP | POLLNVAL)){
 							cs_debug_mask(D_TRACE, "Client %s closed the connection -> Killing this client!", username(cl));
-							cl->kill = 1;
-							continue;
+							kill_thread(cl);
+							break;
 						}
 					}
 				}
 			}
 
 			if (!data)
-				continue;
+				break;
 
 			if (!reader && data->action < ACTION_CLIENT_FIRST) {
 				__free_job_data(cl, data);
@@ -262,7 +262,7 @@ void * work_thread(void *ptr) {
 					reader_init(reader);
 				break;
 			case ACTION_READER_RESTART:
-				cl->kill = 1;
+				kill_thread(cl);
 				restart_reader = 1;
 				break;
 			case ACTION_READER_RESET_FAST:
@@ -282,12 +282,12 @@ void * work_thread(void *ptr) {
 				if (s == 0) // no data, another thread already read from fd?
 					break;
 				if (s < 0) { // system error or fd wants to be closed
-					cl->kill=1; // kill client on next run
+					kill_thread(cl); // kill client on next run
 					continue;
 				}
 				n = module->recv(cl, mbuf, bufsize);
 				if (n < 0) {
-					cl->kill=1; // kill client on next run
+					kill_thread(cl); // kill client on next run
 					continue;
 				}
 				module->s_handler(cl, mbuf, n);
@@ -305,8 +305,8 @@ void * work_thread(void *ptr) {
 				if (module->s_idle)
 					module->s_idle(cl);
 				else {
-					cs_log("user %s reached %d sec idle limit.", username(cl), cfg.cmaxidle);
-					cl->kill = 1;
+					cs_log("Client %s reached %d sec idle limit.", username(cl), cfg.cmaxidle);
+					kill_thread(cl);
 				}
 				break;
 			case ACTION_CACHE_PUSH_OUT: {
@@ -333,7 +333,7 @@ void * work_thread(void *ptr) {
 				break;
 			}
 			case ACTION_CLIENT_KILL:
-				cl->kill = 1;
+				cl->kill=1; // This client client will be killed next run!
 				break;
 			case ACTION_CLIENT_SEND_MSG: {
 #ifdef MODULE_CCCAM
