@@ -47,6 +47,9 @@ static void *cw_process(void) {
 	time_t ecm_timeout;
 	time_t ecm_mintimeout;
 
+	pthread_mutex_init(&cw_process_sleep_cond_mutex, NULL);
+	pthread_cond_init(&cw_process_sleep_cond, NULL);
+
 #ifdef CS_ANTICASC
 	int32_t ac_next;
 	struct timeb ac_time;

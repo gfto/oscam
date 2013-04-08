@@ -621,6 +621,11 @@ void log_list_thread(void)
 int32_t cs_init_log(void)
 {
 	if(logStarted == 0){
+		pthread_mutex_init(&log_mutex, NULL);
+
+		pthread_mutex_init(&log_thread_sleep_cond_mutex, NULL);
+		pthread_cond_init(&log_thread_sleep_cond, NULL);
+
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 		cs_lock_create(&loghistory_lock, 5, "loghistory_lock");
 #endif

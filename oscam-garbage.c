@@ -128,6 +128,9 @@ void start_garbage_collector(int32_t debug) {
 
 		garbage_first[i] = NULL;
 	}
+	pthread_mutex_init(&sleep_cond_mutex, NULL);
+	pthread_cond_init(&sleep_cond, NULL);
+
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
 

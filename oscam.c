@@ -917,6 +917,8 @@ static void * reader_check(void) {
 	struct s_client *cl;
 	struct s_reader *rdr;
 	set_thread_name(__func__);
+	pthread_mutex_init(&reader_check_sleep_cond_mutex, NULL);
+	pthread_cond_init(&reader_check_sleep_cond, NULL);
 	while (!exit_oscam) {
 		for (cl=first_client->next; cl ; cl=cl->next) {
 			if (!cl->thread_active)
