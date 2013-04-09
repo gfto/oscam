@@ -219,7 +219,7 @@ elseif (CONFIG_WITH_SSL MATCHES "Y" AND WITH_SSL EQUAL 0)
 	message (status  " The config file has ssl enabled, but You disabled it by you cmake command COMPILING WHITOUT SSL")
 endif (CONFIG_WITH_SSL MATCHES "Y" AND NOT WITH_SSL EQUAL 0)
 
-find_package(OpenSSL QUIET)
+find_package(OpenSSL)
 if (OPENSSL_FOUND AND HAVE_LIBCRYPTO)
     include_directories(${OPENSSL_INCLUDE_DIR})
     message(STATUS "  openssl found.")
