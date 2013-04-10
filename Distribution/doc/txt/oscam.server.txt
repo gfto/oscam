@@ -408,7 +408,9 @@ DESCRIPTIONS
        cccreshare = hop
 	  set reader's CCcam reshare hop, default:0
 
-	   -1 = no resharing
+	   -1 = reshare value of cccam in global config
+	    0 = resharing for direct peer only
+	    1 = resharing for direct peer and next level
 	    x = resharing for direct peer and share level x
 
        cccwantemu = 0|1

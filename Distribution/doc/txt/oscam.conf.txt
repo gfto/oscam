@@ -574,9 +574,9 @@ DESCRIPTIONS
        reshare = level
 	  reshare level for CCcam clients (default:10):
 
-	   0 = no resharing
-	   1 = resharing for direct peer only
-	   2 = resharing for direct peer and next level
+	  -1 = no resharing
+	   0 = resharing for direct peer only
+	   1 = resharing for direct peer and next level
 	   x = resharing for direct peer and next x level
 
        reshare_mode = mode
