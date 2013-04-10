@@ -185,7 +185,8 @@ DESCRIPTIONS
 	  reshare level for CCcam clients
 
 	   -1 = use reshare level of oscam.conf (default)
-	    x = resharing for direct peer and share level x
+	    0 = resharing for direct peer only
+	    1 = resharing for direct peer and next level
 
        cccignorereshare = -1|0|1
 	  CCcam ignore reshare setting:
