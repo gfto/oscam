@@ -760,7 +760,7 @@ struct s_cardsystem {
 	int32_t		(*get_emm_type)(struct emm_packet_t *, struct s_reader *);
 	void			(*get_emm_filter)(struct s_reader * rdr, uchar *filter);
 	void			(*get_tunemm_filter)(struct s_reader * rdr, uchar *filter);
-	uint16_t		caids[2];
+	uint16_t		caids[5];
 };
 
 #define MAX_ECM_SIZE 512
