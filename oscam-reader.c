@@ -25,12 +25,12 @@ const char *RDR_CD_TXT[] = {
 struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid) {
 	int32_t i, j;
 	for (i = 0; i < CS_MAX_MOD; i++) {
-		if (cardsystems[i].caids) {
-			for (j = 0; j < 2; j++) {
-				uint16_t cs_caid = cardsystems[i].caids[j];
-				if (cs_caid == caid || cs_caid == caid >> 8)
-					return &cardsystems[i];
-			}
+		for (j = 0; j < (int)ARRAY_SIZE(cardsystems[i].caids); j++) {
+			uint16_t cs_caid = cardsystems[i].caids[j];
+			if (!cs_caid)
+				continue;
+			if (cs_caid == caid || cs_caid == caid >> 8)
+				return &cardsystems[i];
 		}
 	}
 	return NULL;

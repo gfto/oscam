@@ -148,7 +148,7 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 
 	if (reader->caid != caid) {
 		int caid_found = 0;
-		for (i = 0; i < 2; i++) {
+		for (i = 0; i < (int)ARRAY_SIZE(reader->csystem.caids); i++) {
 			if (reader->csystem.caids[i] == caid) {
 				caid_found = 1;
 				break;

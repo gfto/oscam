@@ -198,6 +198,8 @@ typedef unsigned char uchar;
 #undef ERROR
 #endif
 
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+
 #ifdef WITH_DEBUG
 # define call(arg) \
 	if (arg) { \
