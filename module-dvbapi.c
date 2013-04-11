@@ -409,22 +409,37 @@ static int32_t dvbapi_read_device(int32_t dmx_fd, unsigned char *buf, int32_t le
 {
 	int32_t len, rc;
 	struct pollfd pfd[1];
+	struct timeb start, end;
 
 	pfd[0].fd = dmx_fd;
 	pfd[0].events = (POLLIN | POLLPRI);
+	cs_ftime(&start); // register start time
+	while(1){
+		rc = poll(pfd, 1, 7000);
+		cs_ftime(&end); // register end time
+		if (rc == -1){
+			if (errno == EINTR || errno == EAGAIN){ // try again in case of interrupt or again error
+				cs_sleepms(1);
+				continue;
+			}
+			cs_debug_mask(D_TRACE,"[DVBAPI] dvbapi_read_device(fd=%d) failed: (errno=%d %s)", dmx_fd, errno, strerror(errno));
+			return -1;
+		}
 
-	rc = poll(pfd, 1, 7000);
-	if (rc<1) {
-		cs_log("ERROR: Read on %d timed out", dmx_fd);
-		return -1;
+		if (pfd[0].revents & (POLLHUP|POLLNVAL)) return -1; // client hung up on us!
+		
+		if (rc == 0) {
+			cs_log("[DVBAPI] dvbapi_read_device(fd=%d) no activity for %ld ms -> Skip!", dmx_fd, 1000*(end.time-start.time)+end.millitm-start.millitm);
+			return -1;
+		}
+		if (rc == 1) break;
 	}
-
-	len = read(dmx_fd, buf, length);
-
-	if (len==-1)
-		cs_log("ERROR: Read error on fd %d (errno=%d %s)", dmx_fd, errno, strerror(errno));
-
-	return len;
+	if (pfd[0].revents & (POLLIN|POLLPRI)){
+		len = read(dmx_fd, buf, length);
+		if (len==-1) cs_log("[DVBAPI] ERROR: Read error on fd %d (errno=%d %s)", dmx_fd, errno, strerror(errno));
+		return len;
+	}
+	return -1;
 }
 
 int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter) {
@@ -2285,9 +2300,6 @@ void *dvbapi_event_thread(void *cli) {
 void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, int32_t len) {
 	struct s_ecmpids *curpid = &demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex];
 	uint16_t chid = 0;
-
-	if (cfg.dvbapi_au>0) // start emm filter!
-		dvbapi_start_emm_filter(demux_id);
 	
 	if (pausecam)
 		return;
@@ -2619,24 +2631,43 @@ static void * dvbapi_main_local(void *cli) {
 				}
 
 				pfd2[pfdcount].fd=demux[i].socket_fd;
-				pfd2[pfdcount].events = (POLLIN | POLLPRI | POLLHUP);
+				pfd2[pfdcount].events = (POLLIN | POLLPRI);
 				ids[pfdcount]=i;
 				type[pfdcount++]=1;
 			}
 		}
+		
+		while(1){
+			rc = poll(pfd2, pfdcount, 0);
+			if (rc < 0) {
+				if (errno == EINTR || errno == EAGAIN){ // try again in case of interrupt or again error
+					cs_sleepms(1);
+					continue;
+				}
+				else { // all other errors display error and return
+					cs_debug_mask(D_TRACE, "[DVBAPI] ERROR: %s (errno=%d %s)", __func__, errno, strerror(errno));
+					break;
+				}
+			}
+			break;
+		}
+		
+		if (rc == 0) { // Timeout, no new event!
+			cs_sleepms(1000);
+			continue;
+		}
 
-		rc = poll(pfd2, pfdcount, 500);
-		if (rc<1) continue;
-
-		for (i = 0; i < pfdcount; i++) {
-			if (pfd2[i].revents > 3)
-				cs_debug_mask(D_DVBAPI, "event %d on fd %d", pfd2[i].revents, pfd2[i].fd);
+		for (i = 0; i < pfdcount&&rc>0; i++) {
+			if (pfd2[i].revents!=0)
+				cs_debug_mask(D_TRACE, "[DVBAPI] new event %d on fd %d", pfd2[i].revents, pfd2[i].fd);
 
 			if (pfd2[i].revents & (POLLHUP | POLLNVAL)) {
+				rc--;
 				if (type[i]==1) {
 					for (j=0;j<MAX_DEMUX;j++) {
 						if (demux[j].socket_fd==pfd2[i].fd) {
 							dvbapi_stop_descrambling(j);
+							break;
 						}
 					}
 					close(pfd2[i].fd);
@@ -2645,27 +2676,28 @@ static void * dvbapi_main_local(void *cli) {
 			}
 
 			if (pfd2[i].revents & (POLLIN | POLLPRI)) {
+				rc--;
 				if (type[i]==1) {
 					if (pfd2[i].fd==listenfd) {
 						clilen = sizeof(servaddr);
 						connfd = accept(listenfd, (struct sockaddr *)&servaddr, (socklen_t *)&clilen);
-						cs_debug_mask(D_DVBAPI, "new socket connection fd: %d", connfd);
+						cs_debug_mask(D_DVBAPI, "[DVBAPI] new socket connection fd: %d", connfd);
 
 						disable_pmt_files=1;
 
 						if (connfd <= 0) {
-							cs_debug_mask(D_DVBAPI,"accept() returns error on fd event %d (errno=%d %s)", pfd2[i].revents, errno, strerror(errno));
+							cs_debug_mask(D_DVBAPI,"[DVBAPI] accept() returns error on fd event %d (errno=%d %s)", pfd2[i].revents, errno, strerror(errno));
 							continue;
 						}
 					} else {
-						cs_debug_mask(D_DVBAPI, "PMT Update on socket %d.", pfd2[i].fd);
+						cs_debug_mask(D_DVBAPI, "[DVBAPI] PMT Update on socket %d.", pfd2[i].fd);
 						connfd = pfd2[i].fd;
 					}
 
 					len = read(connfd, mbuf, sizeof(mbuf));
 
 					if (len < 3) {
-						cs_debug_mask(D_DVBAPI, "camd.socket: too small message received");
+						cs_debug_mask(D_DVBAPI, "[DVBAPI] camd.socket: too small message received");
 						continue;
 					}
 
@@ -2673,7 +2705,6 @@ static void * dvbapi_main_local(void *cli) {
 				} else { // type==0
 					int32_t demux_index=ids[i];
 					int32_t n=fdn[i];
-
 					if ((len=dvbapi_read_device(pfd2[i].fd, mbuf, sizeof(mbuf))) <= 0) {
 						if (demux[demux_index].pidindex==-1) {
 							dvbapi_try_next_caid(demux_index);
@@ -2682,7 +2713,9 @@ static void * dvbapi_main_local(void *cli) {
 					}
 
 					if (pfd2[i].fd==(int)demux[demux_index].demux_fd[n].fd) {
-						dvbapi_process_input(demux_index,n,mbuf,len);
+						dvbapi_process_input(demux_index,n,mbuf,len); // start ecmfilter
+						if (cfg.dvbapi_au>0) dvbapi_start_emm_filter(demux_index); // start emmfilter
+						
 					}
 				}
 			}
