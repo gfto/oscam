@@ -534,12 +534,29 @@ static void emmcache_fn(const char *token, char *value, void *setting, FILE *f) 
 static void blockemm_bylen_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_reader *rdr = setting;
 	if (value) {
-		int32_t i;
 		char *ptr, *saveptr1 = NULL;
-		for (i = 0; i < CS_MAXEMMBLOCKBYLEN; i++)
-			rdr->blockemmbylen[i] = 0;
-		for (i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < CS_MAXEMMBLOCKBYLEN) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++)
-			rdr->blockemmbylen[i] = atoi(ptr);
+		int16_t *blocklen;
+
+		if (!strlen(value)) {
+			if (rdr->blockemmbylen) {
+				ll_destroy_data(rdr->blockemmbylen);
+				rdr->blockemmbylen = NULL;
+			}
+			return;
+		}
+
+		if (!rdr->blockemmbylen)
+			rdr->blockemmbylen = ll_create("blockemmbylen");
+		else
+			ll_clear_data(rdr->blockemmbylen);
+
+		for (ptr = strtok_r(value, ",", &saveptr1); ptr;
+				ptr = strtok_r(NULL, ",", &saveptr1)) {
+			if (!cs_malloc(&blocklen, sizeof(int16_t)))
+				return;
+			*blocklen = atoi(ptr);
+			ll_append(rdr->blockemmbylen, blocklen);
+		}
 		return;
 	}
 	value = mk_t_emmbylen(rdr);
@@ -986,6 +1003,12 @@ void free_reader(struct s_reader *rdr)
 		rdr->ll_entitlements = NULL;
 	}
 	NULLFREE(rdr->csystem_data);
+
+	if (rdr->blockemmbylen) {
+		ll_destroy_data(rdr->blockemmbylen);
+		rdr->blockemmbylen = NULL;
+	}
+
 	add_garbage(rdr);
 }
 

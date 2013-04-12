@@ -254,8 +254,6 @@ typedef unsigned char uchar;
 #endif
 #define PTHREAD_STACK_SIZE PTHREAD_STACK_MIN+32768
 
-#define CS_MAXEMMBLOCKBYLEN 10
-
 #define CS_EMMCACHESIZE  127 //nr of EMMs that each client will cache; cache is per client, so memory-expensive...
 #define MSGLOGSIZE 64	//size of string buffer for a ecm to return messages
 
@@ -1156,7 +1154,7 @@ struct s_reader  									//contains device info, reader info and card info
 	uchar			ecmcommandcache[4];				// cachebuff for ecm commands
 	int32_t			blockemm;
 	int32_t			saveemm;
-	int16_t			blockemmbylen[CS_MAXEMMBLOCKBYLEN];
+	LLIST			*blockemmbylen;
 	char			*emmfile;
 	char			pincode[5];
 	int8_t			logemm;

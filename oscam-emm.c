@@ -13,9 +13,12 @@ const char *entitlement_type[] = { "", "package", "PPV-Event", "chid", "tier", "
 
 static int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int16_t len)
 {
-	int i;
-	for (i = 0; i < CS_MAXEMMBLOCKBYLEN; i++) {
-		if (rdr->blockemmbylen[i] == len)
+	int16_t *blocklen;
+	if (!rdr->blockemmbylen)
+		return 0;
+	LL_ITER it = ll_iter_create(rdr->blockemmbylen);
+	while ((blocklen = ll_iter_next(&it))) {
+		if (*blocklen == len)
 			return 1;
 	}
 	return 0;

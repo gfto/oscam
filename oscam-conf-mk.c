@@ -668,17 +668,19 @@ char *mk_t_emmbylen(struct s_reader *rdr) {
 
 	char *value, *dot = "";
 	int32_t pos = 0, needed = 0;
-	int8_t i;
+	int16_t *blocklen;
 
-	needed = (CS_MAXEMMBLOCKBYLEN * 4) +1;
+	if (!rdr->blockemmbylen)
+		return "";
 
-	if (!cs_malloc(&value, needed)) return "";
+	needed = (ll_count(rdr->blockemmbylen) * 4) +1;
+	if (!cs_malloc(&value, needed))
+		return "";
 
-	for( i = 0; i < CS_MAXEMMBLOCKBYLEN; i++ ) {
-		if(rdr->blockemmbylen[i] != 0) {
-			pos += snprintf(value + pos, needed, "%s%d", dot, rdr->blockemmbylen[i]);
-			dot = ",";
-		}
+	LL_ITER it = ll_iter_create(rdr->blockemmbylen);
+	while ((blocklen = ll_iter_next(&it))) {
+		pos += snprintf(value + pos, needed - pos, "%s%d", dot, *blocklen);
+		dot = ",";
 	}
 	return value;
 }
