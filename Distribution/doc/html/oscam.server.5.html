@@ -612,9 +612,11 @@ list of EMM-nanos to block (in hex w/o 0x) or all EMM-nanos, valid for physical 
 
 <P>
 
-<B>blockemm-bylen</B> = <B>[length,length]...</B>
+<B>blockemm-bylen</B> = <B>[length range,length range]...</B>
 <DL COMPACT><DT><DD>
-block all types of EMMs by lenght, maximum 10 values, default:none
+block all types of EMMs by length, default:none
+<P>
+<BR>&nbsp;example:&nbsp;blockemm-bylen&nbsp;=&nbsp;1-10,11-
 </DL>
 
 <P>
@@ -727,8 +729,8 @@ set hop for non CCCam readers, default:0
 <DL COMPACT><DT><DD>
 set reader's CCcam reshare hop, default:0
 <P>
-<BR>&nbsp;<B>-1</B>&nbsp;=&nbsp;reshare&nbsp;value&nbsp;of&nbsp;cccam&nbsp;in&nbsp;global&nbsp;config
-<BR>&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;resharing&nbsp;for&nbsp;direct&nbsp;peer&nbsp;only
+<BR>&nbsp;<B>-1</B>&nbsp;=&nbsp;reshare&nbsp;value&nbsp;off&nbsp;cccam&nbsp;in&nbsp;global&nbsp;config
+<BR>&nbsp;&nbsp;0&nbsp;=&nbsp;resharing&nbsp;for&nbsp;direct&nbsp;peer&nbsp;only
 <BR>&nbsp;&nbsp;<B>x</B>&nbsp;=&nbsp;resharing&nbsp;for&nbsp;direct&nbsp;peer&nbsp;and&nbsp;share&nbsp;level&nbsp;x
 </DL>
 

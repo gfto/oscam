@@ -471,9 +471,11 @@ list of EMM-nanos to block (in hex w/o 0x) or all EMM-nanos, valid for physical 
 1 = block unknown types of EMMs, default:0
 .RE
 .PP
-\fBblockemm-bylen\fP = \fB[length,length]...\fP
+\fBblockemm-bylen\fP = \fB[length range,length range]...\fP
 .RS 3n
-block all types of EMMs by lenght, maximum 10 values, default:none
+block all types of EMMs by length, default:none
+
+ example: blockemm-bylen = 1-10,11-
 .RE
 .PP
 \fBsaveemm-u\fP = \fB0\fP|\fB1\fP
