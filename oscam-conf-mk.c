@@ -665,21 +665,36 @@ char *mk_t_cacheex_hitvaluetab(CECSPVALUETAB *tab){
  * returns string of comma separated values
  */
 char *mk_t_emmbylen(struct s_reader *rdr) {
-
-	char *value, *dot = "";
-	int32_t pos = 0, needed = 0;
-	int16_t *blocklen;
+	char *value, *pos, *dot = "";
+	int32_t num, needed = 0;
+	struct s_emmlen_range *blocklen;
 
 	if (!rdr->blockemmbylen)
 		return "";
 
-	needed = (ll_count(rdr->blockemmbylen) * 4) +1;
+	LL_ITER it = ll_iter_create(rdr->blockemmbylen);
+	while ((blocklen = ll_iter_next(&it))) {
+		needed += 5 + 1; // max digits of int16 + ","
+		if (blocklen->max == 0)
+			needed += 1 + 1; // "-" + ","
+		else if (blocklen->min != blocklen->max)
+			needed += 1 + 5 + 1; // "-" + max digits of int16 + ","
+	}
+	// the trailing zero is already included: it's the first ","
 	if (!cs_malloc(&value, needed))
 		return "";
 
-	LL_ITER it = ll_iter_create(rdr->blockemmbylen);
+	pos = value;
+	ll_iter_reset(&it);
 	while ((blocklen = ll_iter_next(&it))) {
-		pos += snprintf(value + pos, needed - pos, "%s%d", dot, *blocklen);
+		if (blocklen->min == blocklen->max)
+			num = snprintf(pos, needed, "%s%d", dot, blocklen->min);
+		else if (blocklen->max == 0)
+			num = snprintf(pos, needed, "%s%d-", dot, blocklen->min);
+		else
+			num = snprintf(pos, needed, "%s%d-%d", dot, blocklen->min, blocklen->max);
+		pos += num;
+		needed -= num;
 		dot = ",";
 	}
 	return value;

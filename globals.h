@@ -1092,6 +1092,12 @@ typedef struct ce_csp_t {
 } CECSP;
 #endif
 
+struct s_emmlen_range
+{
+  int16_t min;
+  int16_t max;
+};
+
 struct s_reader  									//contains device info, reader info and card info
 {
 	uint8_t		changes_since_shareupdate;

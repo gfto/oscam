@@ -534,8 +534,9 @@ static void emmcache_fn(const char *token, char *value, void *setting, FILE *f) 
 static void blockemm_bylen_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_reader *rdr = setting;
 	if (value) {
-		char *ptr, *saveptr1 = NULL;
-		int16_t *blocklen;
+		char *ptr, *saveptr1 = NULL, dash;
+		struct s_emmlen_range *blocklen;
+		uint32_t num;
 
 		if (!strlen(value)) {
 			if (rdr->blockemmbylen) {
@@ -552,9 +553,18 @@ static void blockemm_bylen_fn(const char *token, char *value, void *setting, FIL
 
 		for (ptr = strtok_r(value, ",", &saveptr1); ptr;
 				ptr = strtok_r(NULL, ",", &saveptr1)) {
-			if (!cs_malloc(&blocklen, sizeof(int16_t)))
+			if (!cs_malloc(&blocklen, sizeof(*blocklen)))
 				return;
-			*blocklen = atoi(ptr);
+			num = sscanf(ptr, "%hd%c%hd", &blocklen->min, &dash, &blocklen->max);
+			if (num <= 0) {
+				free(blocklen);
+				fprintf(stderr, "blockemm-bylen parse error: %s\n", value);
+				continue;
+			}
+			if (num == 1) // single values: x1,x2,x3,...
+				blocklen->max = blocklen->min;
+			else if (num == 2) // range values with open end: x1-
+				blocklen->max = 0;
 			ll_append(rdr->blockemmbylen, blocklen);
 		}
 		return;
