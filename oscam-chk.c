@@ -879,14 +879,17 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot) {
 		get_module(cur_cl)->listenertype != LIS_DVBAPI &&
 		is_network_reader(rdr))
 	{
-		cs_debug_mask(D_TRACE, "ECMs origin %s has the same ip as reader %s, blocked!", username(cur_cl), rdr->label);
+		rdr_log(rdr, "ERROR: User (%s) has the same ip (%s) as the reader, blocked because block_same_ip=1!",
+			username(cur_cl), cs_inet_ntoa(rdr->client->ip));
 		return 0;
 	}
-  
-  if (cfg.block_same_name && strcmp(username(cur_cl), rdr->label) == 0) {
-  	cs_debug_mask(D_TRACE, "ECMs origin %s has the same name as reader %s, blocked!", username(cur_cl), rdr->label);
-  	return 0;
-  }
+
+	if (cfg.block_same_name && strcmp(username(cur_cl), rdr->label) == 0) {
+		rdr_log(rdr, "ERROR: User (%s) has the same name as the reader, blocked because block_same_name=1!",
+			username(cur_cl));
+		return 0;
+	}
+
   #ifdef WITH_CARDREADER
   cs_debug_mask(D_TRACE, "matching_reader became slot attribute of %d", slot);
   if (!is_network_reader(rdr) && slot == 1) {
