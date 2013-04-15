@@ -2550,6 +2550,14 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "STATUS", status);
 		tpl_addVar(vars, TPLAPPEND, "STATUS", expired);
 		if(nrclients > 1) tpl_printf(vars, TPLADDONCE, "CLIENTCOUNTNOTIFIER", "<SPAN CLASS=\"span_notifier\">%d</SPAN>", nrclients);
+			
+		//Expirationdate
+		struct tm timeinfo;
+		cs_gmtime_r (&account->expirationdate, &timeinfo);
+		char buf [80];
+		strftime (buf,80,"%Y-%m-%d",&timeinfo);
+		if(strcmp(buf,"1970-01-01")) tpl_addVar(vars, TPLADD, "EXPDATE", buf);
+		else tpl_addVar(vars, TPLADD, "EXPDATE", "");
 
 		// append row to table template
 		if (!apicall)
