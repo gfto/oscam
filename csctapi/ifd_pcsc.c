@@ -38,7 +38,7 @@ struct pcsc_data {
 static int32_t pcsc_init(struct s_reader *pcsc_reader)
 {
     ULONG rv;
-    DWORD dwReaders;
+    DWORD dwReaders = 0;
     LPSTR mszReaders = NULL;
     char *ptr, **readers = NULL;
     char *device = pcsc_reader->device;
@@ -47,6 +47,7 @@ static int32_t pcsc_init(struct s_reader *pcsc_reader)
 
     rdr_debug_mask(pcsc_reader, D_DEVICE, "PCSC establish context for PCSC pcsc_reader %s", device);
     SCARDCONTEXT hContext;
+    memset(&hContext, 0, sizeof(hContext));
     rv = SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL, &hContext);
     if ( rv == SCARD_S_SUCCESS ) {
         if (!cs_malloc(&pcsc_reader->crdr_data, sizeof(struct pcsc_data)))
