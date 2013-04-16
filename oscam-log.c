@@ -268,7 +268,7 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 #endif
 	{
 		if (cfg.logtosyslog)
-			syslog(LOG_INFO, "%s", txt+24);
+			syslog(LOG_INFO, "%s", txt + 29);
 		strcat(txt, "\n");
 	}
 	cs_write_log(txt + 8, do_flush);
