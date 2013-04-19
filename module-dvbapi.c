@@ -1051,7 +1051,7 @@ struct s_dvbapi_priority *dvbapi_check_prio_match_emmpid(int32_t demux_id, uint1
 			|| (p->provid && p->provid != provid)
 			|| (p->ecmpid && p->ecmpid != ecm_pid)
 			|| (p->srvid && p->srvid != demux[demux_id].program_number)
-			|| (p->type == 'i' && p->chid))
+			|| (p->type == 'i' && (p->chid > -1)))
 			continue;
 		return p;
 	}
@@ -1069,7 +1069,7 @@ struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidi
 			|| (p->provid && p->provid != ecmpid->PROVID)
 			|| (p->ecmpid && p->ecmpid != ecmpid->ECM_PID)
 			|| (p->srvid && p->srvid != demux[demux_id].program_number)
-			|| (p->type == 'i' && p->chid))
+			|| (p->type == 'i' && (p->chid > -1)))
 			continue;
 		return p;
 	}
@@ -1217,7 +1217,8 @@ void dvbapi_read_priority(void) {
 
 		char c_srvid[34];
 		c_srvid[0]='\0';
-		uint32_t caid=0, provid=0, srvid=0, ecmpid=0, chid=0;
+		uint32_t caid=0, provid=0, srvid=0, ecmpid=0;
+		int32_t chid=-1; //chid=0 is a valid chid
 		ret = sscanf(str1, "%4x:%6x:%33[^:]:%4x:%4x", &caid, &provid, c_srvid, &ecmpid, &chid);
 		if (ret < 1) {
 			cs_debug_mask(D_DVBAPI, "Error in oscam.dvbapi: ret=%d | %c: %04X %06X %s %04X %04X",
@@ -1421,7 +1422,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 					continue;
 				
 				if (p->type == 'i') { // check if ignored by dvbapi
-					if (p->chid)
+					if (p->chid > -1)
 						continue;
 					demux[demux_index].ECMpids[n].status = -1;
 					cs_debug_mask(D_DVBAPI,"[IGNORE PID %d] %04X:%06X:%04X (file)",
@@ -2344,11 +2345,11 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 
 			chid = (buffer[6] << 8) | buffer[7];
 			if (demux[demux_id].pidindex==-1) {
-				int8_t i = 0, found = 0;
+				int8_t i = 0, pval=0, found = 0;
 
 				for (p=dvbapi_priority, i=0; p != NULL && curpid->irdeto_cycle > -1; p = p->next) {
 					if ((p->type != 'p' && p->type != 'i')
-						|| !p->chid
+						|| (p->chid == -1)
 						|| (p->caid && p->caid != curpid->CAID)
 						|| (p->provid && p->provid != curpid->PROVID)
 						|| (p->ecmpid && p->ecmpid != curpid->ECM_PID)
@@ -2362,6 +2363,8 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 					} else if (p->type == 'i')
 						continue;
 
+					pval=1;
+
 					if (i++ != curpid->irdeto_cycle)
 						continue;
 
@@ -2374,7 +2377,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 					}
 				}
 
-				if (!found && curpid->irdeto_cycle > -1) {
+				if (pval && !found && curpid->irdeto_cycle > -1) {
 					curpid->irdeto_cycle = -1;
 					curpid->irdeto_curchid = 0;
 					return;
