@@ -133,7 +133,7 @@ struct s_dvbapi_priority
 	uint16_t caid;
 	uint32_t provid;
 	uint16_t srvid;
-	uint16_t chid;
+	int16_t chid;
 	uint16_t ecmpid;
 	uint16_t mapcaid;
 	uint32_t mapprovid;
