@@ -1219,7 +1219,7 @@ void dvbapi_read_priority(void) {
 		c_srvid[0]='\0';
 		uint32_t caid=0, provid=0, srvid=0, ecmpid=0;
 		int16_t chid=-1; //chid=0 is a valid chid
-		ret = sscanf(str1, "%4x:%6x:%33[^:]:%4x:%4x", &caid, &provid, c_srvid, &ecmpid, &chid);
+		ret = sscanf(str1, "%4x:%6x:%33[^:]:%4x:%4"SCNx16, &caid, &provid, c_srvid, &ecmpid, &chid);
 		if (ret < 1) {
 			cs_debug_mask(D_DVBAPI, "Error in oscam.dvbapi: ret=%d | %c: %04X %06X %s %04X %04X",
 				ret, type, caid, provid, c_srvid, ecmpid, chid);
