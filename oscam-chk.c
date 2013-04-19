@@ -361,25 +361,34 @@ int32_t chk_srvid_by_caid_prov_rdr(struct s_reader *rdr, uint16_t caid, uint32_t
   return(rc);
 }
 
-int32_t chk_valid_btun(struct s_client *cl, ECM_REQUEST *er)
-{
-	int32_t i;
-	TUNTAB *ttab;
-	ttab = &cl->ttab;
-	uint16_t caidto = get_betatunnel_caid_to(er->caid);
+int32_t chk_is_betatunnel_caid(uint16_t caid) {
+	if (caid == 0x1702 || caid == 0x1722 || caid == 0x1801 || caid == 0x1833 || caid == 0x1834 || caid == 0x1835) return 1;
+	return 0;
+}
 
-	if (caidto) {
-		for (i = 0; i<ttab->n; i++) {
-			if (er->caid==ttab->bt_caidfrom[i] && caidto==ttab->bt_caidto[i]) {
-				if (ttab->bt_srvid[i]==0xFFFF)
-					return 1;
-				if (er->srvid==ttab->bt_srvid[i])
-					return 2; // this is used to bypass a srvid filter
+uint16_t chk_on_btun(uint8_t chk_sx, struct s_client *cl, ECM_REQUEST *er)
+{
+	if (chk_is_betatunnel_caid(er->caid)) {
+
+		int32_t i;
+		TUNTAB *ttab;
+		ttab = &cl->ttab;
+
+		if (ttab->n) {
+			for (i = 0; i<ttab->n; i++) {
+				if (er->caid==ttab->bt_caidfrom[i]) {
+					if (er->srvid==ttab->bt_srvid[i]) return ttab->bt_caidto[i];
+					if (chk_sx && ttab->bt_srvid[i]==0xFFFF) return ttab->bt_caidto[i];
+					if (!chk_sx && !ttab->bt_srvid[i]) return ttab->bt_caidto[i];
+				}
 			}
 		}
 #ifdef WITH_LB
-		if (cfg.lb_auto_betatunnel && lb_valid_btun(er, caidto))
-			return 1;
+		if (chk_sx) {
+			uint16_t caidto = lb_get_betatunnel_caid_to(er->caid);
+			if (cfg.lb_auto_betatunnel && lb_valid_btun(er, caidto))
+				return caidto;
+		}
 #endif
 	}
 	return 0;

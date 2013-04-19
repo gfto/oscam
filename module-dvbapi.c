@@ -1317,8 +1317,7 @@ void dvbapi_read_priority(void) {
 
 void dvbapi_resort_ecmpids(int32_t demux_index) {
 	int32_t n, cache=0, prio=1, highest_prio=0, matching_done=0;
-
-	struct s_client *client = cur_client();
+	uint16_t btun_caid=0;
 
 	for (n=0; n<demux[demux_index].ECMpidcount; n++) {
 		demux[demux_index].ECMpids[n].status=0;
@@ -1409,8 +1408,9 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 				er->srvid = demux[demux_index].program_number;
 				er->client = cur_client();
 
-				if (p->type == 'p' && chk_valid_btun(client, er))
-					er->caid = get_betatunnel_caid_to(er->caid);
+				btun_caid = chk_on_btun(CHK_SM, er->client, er);
+				if (p->type == 'p' && btun_caid)
+					er->caid = btun_caid;
 
 				if (p->caid && p->caid != er->caid)
 					continue;
@@ -1501,8 +1501,9 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 			er->srvid = demux[demux_index].program_number;
 			er->client = cur_client();
 
-			if (chk_valid_btun(client, er))
-				er->caid = get_betatunnel_caid_to(er->caid);
+			btun_caid = chk_on_btun(CHK_SM, er->client, er);
+			if (btun_caid)
+				er->caid = btun_caid;
 
 			for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 				if (cfg.preferlocalcards 

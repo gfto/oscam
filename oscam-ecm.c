@@ -230,7 +230,7 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl)
 			continue; // no match
 #endif
 
-		if (er->caid != ecm->caid && ecm->rc >= E_NOTFOUND && !is_betatunnel_caid(er->caid))
+		if (er->caid != ecm->caid && ecm->rc >= E_NOTFOUND && !chk_is_betatunnel_caid(er->caid))
 			continue; //CW for the cached ECM wasn't found but now the client asks on a different caid so give it another try
 
 		if (ecm->rc != E_99) {
@@ -1432,10 +1432,12 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				break;
 			case 2:
 				// invalid (srvid)
-				// srvids specified in betatunnel will bypass this filter
-				if (!chk_srvid(client, er) && chk_valid_btun(client, er) < 2) {
-					er->rc = E_INVALID;
-					snprintf( er->msglog, MSGLOGSIZE, "invalid SID" );
+				// matching srvids (or 0000) specified in betatunnel will bypass this filter
+				if (!chk_srvid(client, er)) {
+					if (!chk_on_btun(CHK_SZ, client, er)) {
+						er->rc = E_INVALID;
+						snprintf( er->msglog, MSGLOGSIZE, "invalid SID" );
+					}
 				}
 				break;
 			case 3:
@@ -1499,7 +1501,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 #ifdef WITH_LB
 			//if this reader does not match, check betatunnel for it
 			if (!match && cfg.lb_auto_betatunnel) {
-				uint16_t caid = get_betatunnel_caid_to(er->caid);
+				uint16_t caid = lb_get_betatunnel_caid_to(er->caid);
 				if (caid) {
 					uint16_t save_caid = er->caid;
 					er->caid = caid;

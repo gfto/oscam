@@ -770,7 +770,7 @@ static void convert_to_nagra_int(ECM_REQUEST *er, uint16_t caid_to)
 	er->btun = 2; //marked as auto-betatunnel converted. Also for fixing recursive lock in get_cw
 }
 
-uint16_t get_betatunnel_caid_to(uint16_t caid){
+uint16_t lb_get_betatunnel_caid_to(uint16_t caid){
 	int32_t lbbm = cfg.lb_auto_betatunnel_mode;
 	if (lbbm <=3) {
 		if (caid == 0x1801) return 0x1722;
@@ -811,11 +811,6 @@ uint16_t get_rdr_caid(struct s_reader *rdr) {
 	  }
 }
 
-uint16_t is_betatunnel_caid(uint16_t caid){
-	if (caid == 0x1702 || caid == 0x1722 || caid == 0x1801 || caid == 0x1833 || caid == 0x1834 || caid == 0x1835) return 1;
-	return 0;
-}
-
 /**
  * Gets best reader for caid/prid/srvid/ecmlen.
  * Best reader is evaluated by lowest avg time but only if ecm_count > cfg.lb_min_ecmcount (5)
@@ -842,7 +837,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 
 	//auto-betatunnel: The trick is: "let the loadbalancer decide"!
 	if (cfg.lb_auto_betatunnel && er->caid >> 8 == 0x18 && er->ecmlen) { //nagra
-		uint16_t caid_to = get_betatunnel_caid_to(er->caid);
+		uint16_t caid_to = lb_get_betatunnel_caid_to(er->caid);
 		if (caid_to) {
 			int8_t needs_stats_nagra = 1, needs_stats_beta = 1;
 
@@ -956,7 +951,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 
 
 	if (cfg.lb_auto_betatunnel && (er->caid == 0x1702 || er->caid == 0x1722) && er->ocaid == 0x0000 && er->ecmlen) { //beta
-		uint16_t caid_to = get_betatunnel_caid_to(er->caid);
+		uint16_t caid_to = lb_get_betatunnel_caid_to(er->caid);
 		if (caid_to) {
 			int8_t needs_stats_nagra = 1, needs_stats_beta = 1;
 
@@ -1070,7 +1065,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 		}
 	}
 
-	if (cfg.lb_auto_betatunnel && is_betatunnel_caid(er->caid)) {
+	if (cfg.lb_auto_betatunnel && chk_is_betatunnel_caid(er->caid)) {
 		//check again is caid valied to reader
 		//with both caid on local readers or with proxy
 		//(both caid will setup to reader for make tunnel caid in share (ccc) visible)
