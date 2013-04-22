@@ -194,24 +194,13 @@ static int32_t Cool_Receive (struct s_reader *reader, unsigned char * data, uint
 	return OK;
 }
 
-static int32_t Cool_WriteSettings (struct s_reader *reader, uint32_t UNUSED(BWT), uint32_t UNUSED(CWT), uint32_t UNUSED(EGT), uint32_t UNUSED(BGT))
-{
+static void Cool_Print_Comm_Parameters (struct s_reader *reader) {
 	struct cool_data *crdr_data = reader->crdr_data;
-	//first set freq back to reader->mhz if necessary
-	uint32_t clk;
-	int32_t ret = cnxt_smc_get_clock_freq (crdr_data->handle, &clk);
-	coolapi_check_error("cnxt_smc_get_clock_freq", ret);
-	if (clk/10000 != (uint32_t)reader->mhz) {
-		rdr_debug_mask(reader, D_DEVICE, "COOL: clock freq: %i, scheduling change to %i", clk, reader->mhz * 10000);
-		call (Cool_SetClockrate(reader, reader->mhz));
-	}
-
-	//driver sets values in ETU automatically (except read_write_transmit_timeout)
-	//... but lets see what the driver did
 	uint16_t F;
 	uint8_t D;
-	ret = cnxt_smc_get_F_D_factors(crdr_data->handle, &F, &D);
+	int32_t ret = cnxt_smc_get_F_D_factors(crdr_data->handle, &F, &D);
 	coolapi_check_error("cnxt_smc_get_F_D_factors", ret);
+
 	char *protocol;
 	CNXT_SMC_COMM comm;
 	ret = cnxt_smc_get_comm_parameters(crdr_data->handle, &comm);
@@ -230,7 +219,69 @@ static int32_t Cool_WriteSettings (struct s_reader *reader, uint32_t UNUSED(BWT)
 	CNXT_SMC_TIMEOUT timeout;
 	ret = cnxt_smc_get_config_timeout(crdr_data->handle, &timeout);
 	coolapi_check_error("cnxt_smc_get_config_timeout", ret);
-	rdr_log(reader, "Driver Settings: CardActTime=%i, CardDeactTime=%i, ATRSTime=%i, ATRDTime=%i, BLKTime=%i, CHTime=%i, CHGuardTime=%i, BKGuardTime=%i", timeout.CardActTime, timeout.CardDeactTime, timeout.ATRSTime, timeout.ATRDTime, timeout.BLKTime, timeout.CHTime, timeout.CHGuardTime, timeout.BKGuardTime);
+
+	rdr_log(reader, "Driver Timeouts: CardActTime=%i, CardDeactTime=%i, ATRSTime=%i, ATRDTime=%i, BLKTime=%i, CHTime=%i, CHGuardTime=%i, BKGuardTime=%i", timeout.CardActTime, timeout.CardDeactTime, timeout.ATRSTime, timeout.ATRDTime, timeout.BLKTime, timeout.CHTime, timeout.CHGuardTime, timeout.BKGuardTime);
+
+}
+
+static int32_t Cool_WriteSettings (struct s_reader *reader, uint16_t F, uint8_t D, uint32_t WWT, uint32_t EGT, uint32_t BGT)
+{
+	struct cool_data *crdr_data = reader->crdr_data;
+	//first set freq back to reader->mhz if necessary
+	uint32_t clk;
+	int32_t ret = cnxt_smc_get_clock_freq (crdr_data->handle, &clk);
+	coolapi_check_error("cnxt_smc_get_clock_freq", ret);
+	if (clk/10000 != (uint32_t)reader->mhz) {
+		rdr_debug_mask(reader, D_DEVICE, "COOL: clock freq: %i, scheduling change to %i", clk, reader->mhz * 10000);
+		call (Cool_SetClockrate(reader, reader->mhz));
+	}
+
+	uint32_t BLKTime=0, CHTime=0;
+	uint8_t BKGuardTime=0; 
+	switch (reader->protocol_type) {
+		case ATR_PROTOCOL_TYPE_T1:
+			if (reader->BWT > 11)
+				BLKTime = (reader->BWT-11);
+			if (reader->CWT > 11)
+				CHTime = (reader->CWT-11);
+			if (BGT > 11)
+				BKGuardTime = (BGT-11);
+			else
+				BKGuardTime = 11; //For T1, the BGT minimum time shall be 22 work etus. BGT is effectively offset by 11 etus internally.
+			ret = cnxt_smc_set_F_D_factors(crdr_data->handle, F, D);
+			coolapi_check_error("cnxt_smc_set_F_D_factors", ret);
+			break;
+		case ATR_PROTOCOL_TYPE_T0:
+		case ATR_PROTOCOL_TYPE_T14:
+		default:
+			BLKTime = 0;
+			if (WWT > 12)
+				CHTime = (WWT-12);
+			if (BGT > 12)
+				BKGuardTime = (BGT-12);
+			if (BKGuardTime < 4)
+				BKGuardTime = 4; //For T0, the BGT minimum time shall be 16 work etus. BGT is effectively offset by 12 etus internally.
+			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
+				ret = cnxt_smc_set_F_D_factors(crdr_data->handle, 620, 1);
+			else
+				ret = cnxt_smc_set_F_D_factors(crdr_data->handle, F, D);
+			coolapi_check_error("cnxt_smc_set_F_D_factors", ret);
+			break;
+	}
+	ret = cnxt_smc_set_convention(crdr_data->handle, reader->convention);
+	coolapi_check_error("cnxt_smc_set_convention", ret);
+
+	CNXT_SMC_TIMEOUT timeout;
+	ret = cnxt_smc_get_config_timeout(crdr_data->handle, &timeout);
+	coolapi_check_error("cnxt_smc_get_config_timeout", ret);
+	timeout.BLKTime = BLKTime;
+	timeout.CHTime = CHTime;
+	timeout.CHGuardTime = EGT;
+	timeout.BKGuardTime = BKGuardTime;
+	ret = cnxt_smc_set_config_timeout(crdr_data->handle, timeout);
+	coolapi_check_error("cnxt_smc_set_config_timeout", ret);
+
+	Cool_Print_Comm_Parameters(reader);
 
 	return OK;
 }
@@ -245,9 +296,9 @@ static int32_t Cool_Close (struct s_reader *reader)
 	return OK;
 }
 
-static int32_t cool_write_settings2(struct s_reader *reader, uint32_t EGT, uint32_t BGT)
+static int32_t cool_write_settings2(struct s_reader *reader, uint16_t F, uint8_t D, uint32_t WWT, uint32_t EGT, uint32_t BGT)
 {
-	call (Cool_WriteSettings (reader, reader->BWT, reader->CWT, EGT, BGT));
+	call (Cool_WriteSettings (reader, F, D, WWT, EGT, BGT));
 	return OK;
 }
 

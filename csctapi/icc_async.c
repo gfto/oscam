@@ -758,7 +758,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 	if (reader->crdr.write_settings) {
 		call(reader->crdr.write_settings(reader, ETU, EGT, 5, I, (uint16_t) F, (unsigned char)D, N));
 	} else if (reader->crdr.write_settings2) {
-		call(reader->crdr.write_settings2(reader, EGT, BGT));
+		call(reader->crdr.write_settings2(reader, (uint16_t) F, (uint8_t) D, WWT, EGT, BGT));
 	} else if (reader->crdr.write_settings3) {
 		call(reader->crdr.write_settings3(reader, ETU, WWT, (unsigned char)I));
 	}
