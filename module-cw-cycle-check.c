@@ -74,7 +74,7 @@ static uint8_t checkvalidCW (ECM_REQUEST *er) {
 			return 0;
 		}
 	} else {
-		if (((checkCWpart(er,0)|checkCWpart(er,1)) == 0)) {
+		if (((checkCWpart(er,0)&&checkCWpart(er,1)) == 0)) {
 			//wrong
 			return 0;
 		}
