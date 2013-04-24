@@ -310,12 +310,9 @@ void cs_betatunnel(ECM_REQUEST *er)
 	TUNTAB *ttab;
 	ttab = &cl->ttab;
 
-	if (er->caid>>8 == 0x18)
-		cs_ddump_mask(D_TRACE, er->ecm, 13, "betatunnel? ecmlen=%d", er->ecmlen);
-
 	for (n = 0; n<ttab->n; n++) {
 		if ((er->caid==ttab->bt_caidfrom[n]) && ((er->srvid==ttab->bt_srvid[n]) || (ttab->bt_srvid[n])==mask_all)) {
-			if ((er->caid == 0x1702 || er->caid == 0x1722) && er->ocaid == 0x0000) {
+			if (chk_is_betatunnel_caid(er->caid) == 1 && er->ocaid == 0x0000) {
 				convert_to_nagra(cl, er, ttab->bt_caidto[n]);
 			} else if (er->ocaid == 0x0000) {
 				convert_to_beta(cl, er, ttab->bt_caidto[n]);
@@ -1301,9 +1298,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		er->prid = 0x030600;
 
 	//betacrypt ecm with nagra header
-	if ((er->caid == 0x1702 || er->caid == 0x1722) && (er->ecmlen == 0x89 || er->ecmlen == 0x4A) && er->ecm[3] == 0x07 && (er->ecm[4] == 0x84 || er->ecm[4] == 0x45))
+	if (chk_is_betatunnel_caid(er->caid) == 1 && (er->ecmlen == 0x89 || er->ecmlen == 0x4A) && er->ecm[3] == 0x07 && (er->ecm[4] == 0x84 || er->ecm[4] == 0x45))
 	{
-		//cs_debug_mask(D_TRACE, "Quickfix remap beta->nagra: 0x%X, 0x%X, 0x%X, 0x%X", er->caid, er->ecmlen, er->ecm[3], er->ecm[4]);
 		if (er->caid == 0x1702) {
 			er->caid = 0x1833;
 		} else {
@@ -1313,9 +1309,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	}
 
 	//nagra ecm with betacrypt header 1801, 1833, 1834, 1835
-	if ((er->caid == 0x1801 || er->caid == 0x1833 || er->caid == 0x1834 || er->caid == 0x1835) && (er->ecmlen == 0x93 || er->ecmlen == 0x54) && er->ecm[13] == 0x07 && (er->ecm[14] == 0x84 || er->ecm[14] == 0x45))
+	if (chk_is_betatunnel_caid(er->caid) == 2 && (er->ecmlen == 0x93 || er->ecmlen == 0x54) && er->ecm[13] == 0x07 && (er->ecm[14] == 0x84 || er->ecm[14] == 0x45))
 	{
-		//cs_debug_mask(D_TRACE, "Quickfix remap nagra->beta: 0x%X, 0x%X, 0x%X, 0x%X", er->caid, er->ecmlen, er->ecm[13], er->ecm[44]);
 		if (er->caid == 0x1833) {
 			er->caid = 0x1702;
 		} else {
@@ -1434,7 +1429,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				// invalid (srvid)
 				// matching srvids (or 0000) specified in betatunnel will bypass this filter
 				if (!chk_srvid(client, er)) {
-					if (!chk_on_btun(CHK_SZ, client, er)) {
+					if (!chk_on_btun(SRVID_ZERO, client, er)) {
 						er->rc = E_INVALID;
 						snprintf( er->msglog, MSGLOGSIZE, "invalid SID" );
 					}
@@ -1472,8 +1467,10 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		 *because newcamd ECM will fail
 		 *if ECM is converted before
 		 */
-		if (client->ttab.n)
+		if (chk_is_betatunnel_caid(er->caid) && client->ttab.n) {
+			cs_ddump_mask(D_TRACE, er->ecm, 13, "betatunnel? ecmlen=%d", er->ecmlen);
 			cs_betatunnel(er);
+		}
 
 		// ignore ecm ...
 		int32_t offset = 3;

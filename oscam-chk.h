@@ -1,9 +1,9 @@
 #ifndef OSCAM_CHK_H_
 #define OSCAM_CHK_H_
 
-// betatunnel check
-#define CHK_SZ	0 // srvid + 0000
-#define CHK_SM	1 // srvid + FFFF
+// betatunnel check (chk_on_btun)
+#define SRVID_ZERO	0 // srvid + 0000 (used for service-filter bypass)
+#define SRVID_MASK	1 // srvid + FFFF
 
 int32_t ecm_ratelimit_check(struct s_reader * reader, ECM_REQUEST *er, int32_t reader_mode);
 int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot);

@@ -362,7 +362,8 @@ int32_t chk_srvid_by_caid_prov_rdr(struct s_reader *rdr, uint16_t caid, uint32_t
 }
 
 int32_t chk_is_betatunnel_caid(uint16_t caid) {
-	if (caid == 0x1702 || caid == 0x1722 || caid == 0x1801 || caid == 0x1833 || caid == 0x1834 || caid == 0x1835) return 1;
+	if (caid == 0x1702 || caid == 0x1722) return 1;
+	if (caid == 0x1801 || caid == 0x1833 || caid == 0x1834 || caid == 0x1835) return 2;
 	return 0;
 }
 
