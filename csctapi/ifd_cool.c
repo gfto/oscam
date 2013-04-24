@@ -261,10 +261,19 @@ static int32_t Cool_WriteSettings (struct s_reader *reader, uint16_t F, uint8_t 
 				BKGuardTime = (BGT-12);
 			if (BKGuardTime < 4)
 				BKGuardTime = 4; //For T0, the BGT minimum time shall be 16 work etus. BGT is effectively offset by 12 etus internally.
-			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
+			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14) {
 				ret = cnxt_smc_set_F_D_factors(crdr_data->handle, 620, 1);
-			else
-				ret = cnxt_smc_set_F_D_factors(crdr_data->handle, F, D);
+			} else {
+				CNXT_SMC_COMM comm;
+				ret = cnxt_smc_get_comm_parameters(crdr_data->handle, &comm);
+				coolapi_check_error("cnxt_smc_get_comm_parameters", ret);
+				if (F==372 && comm.DI==1 && !comm.PI1 && !comm.II) {
+					CHTime = 9588;
+					ret = cnxt_smc_set_F_D_factors(crdr_data->handle, F, 1);
+				} else {
+					ret = cnxt_smc_set_F_D_factors(crdr_data->handle, F, D);
+				}
+			}
 			coolapi_check_error("cnxt_smc_set_F_D_factors", ret);
 			break;
 	}
