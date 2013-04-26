@@ -554,7 +554,7 @@ static const struct config_list cccam_opts[] = {
 	DEF_OPT_HEX("nodeid"					, OFS(cc_fixed_nodeid),		SIZEOF(cc_fixed_nodeid) ),
 	DEF_OPT_SSTR("version"					, OFS(cc_version),			"", SIZEOF(cc_version) ),
 	DEF_OPT_INT8("reshare"					, OFS(cc_reshare),			10 ),
-	DEF_OPT_INT8("reshare_mode"				, OFS(cc_reshare_services),	0 ),
+	DEF_OPT_INT8("reshare_mode"				, OFS(cc_reshare_services),	4 ),
 	DEF_OPT_INT8("ignorereshare"			, OFS(cc_ignore_reshare),	0 ),
 	DEF_OPT_INT8("forward_origin_card"		, OFS(cc_forward_origin_card), 0 ),
 	DEF_OPT_INT8("stealth"					, OFS(cc_stealth),			0 ),

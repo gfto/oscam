@@ -583,11 +583,11 @@ DESCRIPTIONS
 	  CCcam reshare mode:
 
 	   0 = reader reshares only received SCs for CCcam readers,
-	       defined filters/CAIDs/provids on other readers (default)
+	       defined filters/CAIDs/provids on other readers
 	   1 = reader reshares received SCs (like=0) and defined services
 	   2 = reader reshares only defined reader services as virtual SCs
 	   3 = reader reshares only defined user services as virtual SCs
-	   4 = reader reshares only received SCs
+	   4 = reader reshares only received SCs (default)
 
 	  Every server is shared as hop = 0 and with defined reshare values.
 

@@ -9,7 +9,7 @@
 			<TR><TH COLSPAN="2">Edit Cccam Config</TH></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#port_8##TPLHELPSUFFIX##Port:</A></TD><TD><input name="port" type="text" size="16" maxlength="128" value="##PORT##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#serverip_10##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name="serverip" type="text" size="15" maxlength="15" value="##SERVERIP##"></TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#reshare##TPLHELPSUFFIX##Reshare:</A></TD><TD><input name="reshare" type="text" size="2" maxlength="1" value="##RESHARE##"></TD></TR>
+			<TR><TD>##TPLHELPPREFIX##conf#reshare##TPLHELPSUFFIX##Reshare:</A></TD><TD><input name="reshare" type="text" size="2" maxlength="1" value="##RESHARE##">-1 no reshare or lowest value off cccreshare reader account</TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#ignorereshare##TPLHELPSUFFIX##Ignore reshare:</A></TD><TD>			<SELECT NAME="ignorereshare">				<OPTION VALUE="0" ##IGNRSHRSELECTED0##>0 - Use reshare level of Server</OPTION>				<OPTION VALUE="1" ##IGNRSHRSELECTED1##>1 - Use reshare level of Reader or User</OPTION>			</SELECT></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#forward_origin_card##TPLHELPSUFFIX##Forward origin card:</A></TD><TD><SELECT NAME="forward_origin_card"><OPTION VALUE="0">OFF</OPTION><OPTION VALUE="1" ##FORWARDORIGINCARD##>ON</OPTION></SELECT></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#stealth##TPLHELPSUFFIX##Stealth mode:</A></TD><TD><SELECT NAME="stealth"><OPTION VALUE="0">DISABLE</OPTION><OPTION VALUE="1" ##STEALTH##>ENABLE</OPTION></SELECT></TD></TR>
@@ -43,11 +43,11 @@
 			<TR><TD>##TPLHELPPREFIX##conf#reshare_mode##TPLHELPSUFFIX##Reshare mode:</A></TD>
 				<TD>
 					<SELECT name="reshare_mode">
-						<OPTION value="0" ##RESHAREMODE0##>0 - reshare cards only (default)</OPTION>
+						<OPTION value="0" ##RESHAREMODE0##>0 - reshare cards only+def caid</OPTION>
 						<OPTION value="1" ##RESHAREMODE1##>1 - reshare cards+services</OPTION>
 						<OPTION value="2" ##RESHAREMODE2##>2 - reshare reader-services</OPTION>
 						<OPTION value="3" ##RESHAREMODE3##>3 - reshare user-services</OPTION>
-						<OPTION value="4" ##RESHAREMODE4##>4 - reshare only received cards</OPTION>
+						<OPTION value="4" ##RESHAREMODE4##>4 - reshare only cards (default)</OPTION>
 					</SELECT>
 				</TD>
 			</TR>
