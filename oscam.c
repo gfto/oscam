@@ -1306,6 +1306,19 @@ int32_t main (int32_t argc, char *argv[])
 
 	kill_all_clients();
 	kill_all_readers();
+	for (i = 0; i < CS_MAX_MOD; i++) {
+		struct s_module *module = &modules[i];
+		if ((module->type & MOD_CONN_NET)) {
+			for (j = 0; j < module->ptab.nports; j++) {
+				struct s_port *port = &module->ptab.ports[j];
+				if(port->fd){
+					shutdown(port->fd, SHUT_RDWR);
+					close(port->fd);
+					port->fd = 0;
+				}
+			}
+		}
+	}
 
 	if (oscam_pidfile)
 		unlink(oscam_pidfile);
