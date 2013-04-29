@@ -303,7 +303,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 	}
 	
 #ifdef SO_REUSEPORT
-	setsockopt(port->fd, SOL_SOCKET, SO_REUSEPORT, (void *)&flag, sizeof(flag));
+	setsockopt(client->udp_fd, SOL_SOCKET, SO_REUSEPORT, (void *)&flag, sizeof(flag));
 #endif
 
 	memset((char *)&loc_sa,0,sizeof(loc_sa));
