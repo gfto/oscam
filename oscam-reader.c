@@ -294,6 +294,17 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 
 	int32_t flag = 1;
 	setsockopt(client->udp_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&flag, sizeof(flag));
+	
+	if (setsockopt(client->udp_fd, SOL_SOCKET, SO_REUSEADDR, (void *)&flag, sizeof(flag)) < 0) {
+		rdr_log(rdr, "setsockopt failed (errno=%d: %s)", errno, strerror(errno));
+		client->udp_fd = 0;
+		block_connect(rdr);
+		return -1;
+	}
+	
+#ifdef SO_REUSEPORT
+	setsockopt(port->fd, SOL_SOCKET, SO_REUSEPORT, (void *)&flag, sizeof(flag));
+#endif
 
 	memset((char *)&loc_sa,0,sizeof(loc_sa));
 	SIN_GET_FAMILY(loc_sa) = s_family;

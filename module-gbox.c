@@ -1428,6 +1428,10 @@ static int32_t gbox_client_init(struct s_client *cli)
 
   int32_t opt = 1;
   setsockopt(cli->udp_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof (opt));
+  
+#ifdef SO_REUSEPORT
+	setsockopt(cli->udp_fd, SOL_SOCKET, SO_REUSEPORT, (void *)&opt, sizeof(opt));
+#endif
 
   set_socket_priority(cli->udp_fd, cfg.netprio);
 

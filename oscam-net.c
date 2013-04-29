@@ -266,6 +266,10 @@ void setTCPTimeouts(int32_t sock)
 	if(setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval)) && errno != EBADF){;
 		cs_log("Setting SO_RCVTIMEO failed, errno=%d, %s", errno, strerror(errno));
 	}
+#if defined(TCP_USER_TIMEOUT)
+	int timeout = 60000;  // RFC 5482 user timeout in milliseconds
+	setsockopt (sock, SOL_TCP, TCP_USER_TIMEOUT, (char*) &timeout, sizeof (timeout));
+#endif
 }
 
 int8_t check_fd_for_data(int32_t fd)
