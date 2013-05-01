@@ -767,9 +767,10 @@ static void process_clients(void) {
 	struct s_reader *rdr;
 	struct pollfd *pfd;
 	struct s_client **cl_list;
+	struct timeb start, end;  // start time poll, end time poll
 	uint32_t cl_size = 0;
 
-	char buf[10];
+	uchar buf[10];
 
 	if (pipe(thread_pipe) == -1) {
 		printf("cannot create pipe, errno=%d\n", errno);
@@ -779,7 +780,7 @@ static void process_clients(void) {
 	cl_size = chk_resize_cllist(&pfd, &cl_list, 0, 100);
 
 	pfd[pfdcount].fd = thread_pipe[0];
-	pfd[pfdcount].events = POLLIN | POLLPRI | POLLHUP;
+	pfd[pfdcount].events = POLLIN | POLLPRI;
 	cl_list[pfdcount] = NULL;
 
 	while (!exit_oscam) {
@@ -792,7 +793,7 @@ static void process_clients(void) {
 					cl_size = chk_resize_cllist(&pfd, &cl_list, cl_size, pfdcount);
 					cl_list[pfdcount] = cl;
 					pfd[pfdcount].fd = cl->pfd;
-					pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
+					pfd[pfdcount++].events = POLLIN | POLLPRI;
 				}
 			}
 			//reader:
@@ -808,7 +809,7 @@ static void process_clients(void) {
 					cl_size = chk_resize_cllist(&pfd, &cl_list, cl_size, pfdcount);
 					cl_list[pfdcount] = cl;
 					pfd[pfdcount].fd = cl->pfd;
-					pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
+					pfd[pfdcount++].events = (POLLIN | POLLPRI);
 				}
 			}
 		}
@@ -822,7 +823,7 @@ static void process_clients(void) {
 						cl_size = chk_resize_cllist(&pfd, &cl_list, cl_size, pfdcount);
 						cl_list[pfdcount] = NULL;
 						pfd[pfdcount].fd = module->ptab.ports[j].fd;
-						pfd[pfdcount++].events = POLLIN | POLLPRI | POLLHUP;
+						pfd[pfdcount++].events = (POLLIN | POLLPRI);
 					}
 				}
 			}
@@ -830,13 +831,23 @@ static void process_clients(void) {
 
 		if (pfdcount >= 1024)
 			cs_log("WARNING: too many users!");
+		cs_ftime(&start); // register start time
+		rc = 0;
+		while (!exit_oscam){
+			rc = poll(pfd, pfdcount, 0); // poll timout blocks for timeout ms -> high cpu
+			if (rc<1){
+				cs_sleepms(50); // give time, prevents high cpu
+				continue;
+			}
+			break;
+		}
+		cs_ftime(&end); // register end time
 
-		rc = poll(pfd, pfdcount, 5000);
-
-		if (rc<1)
-			continue;
-
-		for (i=0; i<pfdcount; i++) {
+		for (i=0; i<pfdcount&&rc>0; i++) {
+			if (pfd[i].revents == 0) continue; // skip sockets with no changes
+			rc--; //event handled!
+			cs_debug_mask(D_TRACE, "[OSCAM] new event %d occurred on fd %d after %ld ms inactivity", pfd[i].revents,
+			pfd[i].fd,1000*(end.time-start.time)+end.millitm-start.millitm);
 			//clients
 			cl = cl_list[i];
 			if (cl && !is_valid_client(cl))
@@ -844,16 +855,18 @@ static void process_clients(void) {
 
 			if (pfd[i].fd == thread_pipe[0] && (pfd[i].revents & (POLLIN | POLLPRI))) {
 				// a thread ended and cl->pfd should be added to pollfd list again (thread_active==0)
-				if(read(thread_pipe[0], buf, sizeof(buf)) == -1){
-					cs_debug_mask(D_TRACE, "Reading from pipe failed (errno=%d %s)", errno, strerror(errno));
+				int32_t len= read(thread_pipe[0], buf, sizeof(buf));
+				if(len == -1){
+					cs_debug_mask(D_TRACE, "[OSCAM] Reading from pipe failed (errno=%d %s)", errno, strerror(errno));
 				}
+				cs_ddump_mask(D_TRACE, buf, len, "[OSCAM] Readed:");
 				continue;
 			}
 
 			//clients
 			// message on an open tcp connection
 			if (cl && cl->init_done && cl->pfd && (cl->typ == 'c' || cl->typ == 'm')) {
-				if (pfd[i].fd == cl->pfd && (pfd[i].revents & (POLLHUP | POLLNVAL))) {
+				if (pfd[i].fd == cl->pfd && (pfd[i].revents & (POLLHUP | POLLNVAL | POLLERR))) {
 					//client disconnects
 					kill_thread(cl);
 					continue;
@@ -876,7 +889,7 @@ static void process_clients(void) {
 			}
 
 			if (rdr && cl2 && cl2->init_done) {
-				if (cl2->pfd && pfd[i].fd == cl2->pfd && (pfd[i].revents & (POLLHUP | POLLNVAL))) {
+				if (cl2->pfd && pfd[i].fd == cl2->pfd && (pfd[i].revents & (POLLHUP | POLLNVAL | POLLERR))) {
 					//connection to remote proxy was closed
 					//oscam should check for rdr->tcp_connected and reconnect on next ecm request sent to the proxy
 					network_tcp_connection_close(rdr, "closed");
@@ -903,6 +916,7 @@ static void process_clients(void) {
 				}
 			}
 		}
+		cs_ftime(&start); // register start time for new poll next run
 		first_client->last=time((time_t *)0);
 	}
 	free(pfd);

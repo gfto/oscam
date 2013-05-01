@@ -278,7 +278,7 @@ int8_t check_fd_for_data(int32_t fd)
 	struct pollfd pfd[1];
 
 	pfd[0].fd = fd;
-	pfd[0].events = POLLIN | POLLPRI | POLLHUP;
+	pfd[0].events = (POLLIN | POLLPRI);
 	rc = poll(pfd, 1, 0);
 
 	if (rc == -1)
@@ -287,7 +287,7 @@ int8_t check_fd_for_data(int32_t fd)
 	if (rc == -1 || rc == 0)
 		return rc;
 
-	if (pfd[0].revents & POLLHUP)
+	if (pfd[0].revents & (POLLHUP | POLLNVAL | POLLERR))
 		return -2;
 
 	return 1;

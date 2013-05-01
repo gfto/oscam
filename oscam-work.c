@@ -11,6 +11,7 @@
 #include "reader-common.h"
 #include "module-cccam-data.h"
 #include "module-cccshare.h"
+#include "oscam-time.h"
 
 extern CS_MUTEX_LOCK system_lock;
 extern int32_t thread_pipe[2];
@@ -82,7 +83,8 @@ void * work_thread(void *ptr) {
 	struct job_data *data = (struct job_data *)ptr;
 	struct s_client *cl = data->cl;
 	struct s_reader *reader = cl->reader;
-
+	struct timeb start, end;  // start time poll, end time poll
+	
 	struct job_data tmp_data;
 	struct pollfd pfd[1];
 
@@ -106,6 +108,7 @@ void * work_thread(void *ptr) {
 	time_t now;
 	int8_t restart_reader=0;
 	while (cl->thread_active) {
+		cs_ftime(&start); // register start time
 		while (cl->thread_active) {
 			if (!cl || cl->kill || !is_valid_client(cl)) {
 				pthread_mutex_lock(&cl->thread_lock);
@@ -145,22 +148,24 @@ void * work_thread(void *ptr) {
 				if (!cl->pfd || module->listenertype == LIS_SERIAL)
 					break;
 				pfd[0].fd = cl->pfd;
-				pfd[0].events = POLLIN | POLLPRI | POLLHUP;
+				pfd[0].events = POLLIN | POLLPRI;
 
 				pthread_mutex_lock(&cl->thread_lock);
 				cl->thread_active = 2;
 				pthread_mutex_unlock(&cl->thread_lock);
-				rc = poll(pfd, 1, 3000);
+				//rc = poll(pfd, 1, 3000);
+				rc = poll(pfd, 1, 0); // poll timout blocks for timeout ms -> high cpu
+				if (rc<1) cs_sleepms(50); // give time, prevents high cpu
 				pthread_mutex_lock(&cl->thread_lock);
 				cl->thread_active = 1;
 				pthread_mutex_unlock(&cl->thread_lock);
-
-				if (rc == -1)
-					cs_debug_mask(D_TRACE, "poll() timeout");
-
 				if (rc > 0) {
+					cs_ftime(&end); // register end time
+					cs_debug_mask(D_TRACE, "[OSCAM-WORK] new event %d occurred on fd %d after %ld ms inactivity", pfd[0].revents,
+						pfd[0].fd,1000*(end.time-start.time)+end.millitm-start.millitm);
 					data = &tmp_data;
 					data->ptr = NULL;
+					cs_ftime(&start); // register start time for new poll next run
 
 					if (reader)
 						data->action = ACTION_READER_REMOTE;
@@ -172,7 +177,7 @@ void * work_thread(void *ptr) {
 						}
 						else
 							data->action = ACTION_CLIENT_TCP;
-						if (pfd[0].revents & (POLLHUP | POLLNVAL))
+						if (pfd[0].revents & (POLLHUP | POLLNVAL | POLLERR))
 							cl->kill = 1;
 					}
 				}
@@ -333,9 +338,10 @@ void * work_thread(void *ptr) {
 			__free_job_data(cl, data);
 		}
 
-		if (thread_pipe[1]) {
+		if (thread_pipe[1] && (mbuf[0]!=0x00)) {
+			cs_ddump_mask(D_TRACE, mbuf, 1, "[OSCAM-WORK] Write to pipe:");
 			if (write(thread_pipe[1], mbuf, 1) == -1) { // wakeup client check
-				cs_debug_mask(D_TRACE, "Writing to pipe failed (errno=%d %s)", errno, strerror(errno));
+				cs_debug_mask(D_TRACE, "[OSCAM-WORK] Writing to pipe failed (errno=%d %s)", errno, strerror(errno));
 			}
 		}
 
