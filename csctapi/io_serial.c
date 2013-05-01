@@ -627,27 +627,36 @@ static int32_t IO_Serial_Bitrate(int32_t bitrate)
 bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_us, uint32_t timeout_us)
 {
 	struct pollfd ufds;
+	struct timeb start, end;
 	int32_t ret_val;
 	int32_t in_fd;
+	int32_t polltimeout = timeout_us / 1000;
 
 	if (delay_us > 0)
 		cs_sleepus (delay_us); // wait in us
 	in_fd = reader->handle;
 
 	ufds.fd = in_fd;
-	ufds.events = POLLIN;
+	ufds.events = POLLIN | POLLPRI;
 	ufds.revents = 0x0000;
-
+	cs_ftime(&start); // register start time
 	while (1){
-		ret_val = poll(&ufds, 1, timeout_us / 1000);
+		ret_val = poll(&ufds, 1, polltimeout);
+		cs_ftime(&end); // register end time
 		switch (ret_val){
 			case -1:
-				if (errno == EINTR || errno == EAGAIN) continue;
-				rdr_log(reader, "ERROR: %s: timeout=%d us (errno=%d %s)",
-				__func__, timeout_us, errno, strerror(errno));
+				if (errno == EINTR || errno == EAGAIN){
+					cs_sleepus(1);
+					if (timeout_us>0){
+						polltimeout = (timeout_us/1000) - (1000*(end.time-start.time)+end.millitm-start.millitm);
+						if (polltimeout<0) polltimeout=0;
+					}
+					continue;
+				}
+				rdr_log(reader, "ERROR: %s: timeout=%ld ms (errno=%d %s)", __func__, 1000*(end.time-start.time)+end.millitm-start.millitm,errno, strerror(errno));
 				return ERROR;
 			default:
-				if (((ufds.revents) & POLLIN) == POLLIN)
+				if (ufds.revents &(POLLIN | POLLPRI))
 					return OK;
 				else
 					return ERROR;
@@ -658,8 +667,10 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_us, uint32_t
 static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, uint32_t timeout_us)
 {
 	struct pollfd ufds;
+	struct timeb start, end;
 	int32_t ret_val;
 	int32_t out_fd;
+	int32_t polltimeout = timeout_us / 1000;
 
 #if !defined(WITH_COOLAPI) && !defined(WITH_AZBOX) 
 	if(reader->typ == R_INTERNAL) return OK; // needed for internal readers, otherwise error!
@@ -671,16 +682,24 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, uint32_t delay_us, 
 	ufds.fd = out_fd;
 	ufds.events = POLLOUT;
 	ufds.revents = 0x0000;
-
+	cs_ftime(&start); // register start time
 	while (1){
-		ret_val = poll(&ufds, 1, timeout_us / 1000);
+		ret_val = poll(&ufds, 1, polltimeout);
+		cs_ftime(&end); // register end time
 		switch (ret_val){
 			case 0:
+				rdr_log(reader, "ERROR: not ready to write, timeout=%ld ms", 1000*(end.time-start.time)+end.millitm-start.millitm);
 				return ERROR;
 			case -1:
-				if (errno == EINTR || errno == EAGAIN) continue;
-				rdr_log(reader, "ERROR: %s: timeout=%d us (errno=%d %s)",
-				__func__, timeout_us, errno, strerror(errno));
+				if (errno == EINTR || errno == EAGAIN){
+					cs_sleepus(1);
+					if (timeout_us>0){
+						polltimeout = (timeout_us/1000) - (1000*(end.time-start.time)+end.millitm-start.millitm);
+						if (polltimeout<0) polltimeout=0;
+					}
+					continue;
+				}
+				rdr_log(reader, "ERROR: %s: timeout=%ld ms (errno=%d %s)",__func__, 1000*(end.time-start.time)+end.millitm-start.millitm, errno, strerror(errno));
 				return ERROR;
 			default:
 				if (((ufds.revents) & POLLOUT) == POLLOUT)
