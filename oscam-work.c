@@ -153,9 +153,7 @@ void * work_thread(void *ptr) {
 				pthread_mutex_lock(&cl->thread_lock);
 				cl->thread_active = 2;
 				pthread_mutex_unlock(&cl->thread_lock);
-				//rc = poll(pfd, 1, 3000);
-				rc = poll(pfd, 1, 0); // poll timout blocks for timeout ms -> high cpu
-				if (rc<1) cs_sleepms(50); // give time, prevents high cpu
+				rc = poll(pfd, 1, 3000);
 				pthread_mutex_lock(&cl->thread_lock);
 				cl->thread_active = 1;
 				pthread_mutex_unlock(&cl->thread_lock);

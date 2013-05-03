@@ -832,15 +832,8 @@ static void process_clients(void) {
 		if (pfdcount >= 1024)
 			cs_log("WARNING: too many users!");
 		cs_ftime(&start); // register start time
-		rc = 0;
-		while (!exit_oscam){
-			rc = poll(pfd, pfdcount, 0); // poll timout blocks for timeout ms -> high cpu
-			if (rc<1){
-				cs_sleepms(50); // give time, prevents high cpu
-				continue;
-			}
-			break;
-		}
+		rc = poll(pfd, pfdcount, 5000);
+		if (rc<1) continue;
 		cs_ftime(&end); // register end time
 
 		for (i=0; i<pfdcount&&rc>0; i++) {
