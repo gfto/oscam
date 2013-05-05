@@ -477,20 +477,6 @@ void remove_reader_from_ecm(struct s_reader *rdr)
 }
 
 
-/**
- * Check for NULL CWs
- * Return them as "NOT FOUND"
- **/
-void checkCW(ECM_REQUEST *er)
-{
-	int8_t i;
-	for (i = 0; i < 16; i++) {
-		if (er->cw[i])
-			return;
-	}
-	er->rc = E_NOTFOUND;
-}
-
 static void add_cascade_data(struct s_client *client, ECM_REQUEST *er)
 {
 	if (!client->cascadeusers)
@@ -556,8 +542,8 @@ static int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 
 	snprintf(uname,sizeof(uname)-1, "%s", username(client));
 
-	if (er->rc < E_NOTFOUND)
-		checkCW(er);
+	if (er->rc < E_NOTFOUND && chk_is_null_CW(er->cw))
+		er->rc=E_NOTFOUND;
 
 #ifdef WITH_DEBUG
 	if (cs_dblevel & D_CLIENTECM) {
@@ -870,6 +856,7 @@ void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 	if (!ert)
 		return;
 
+
 	if (eardr) {
 		char ecmd5[17*3];
 		cs_hexdump(0, ert->ecmd5, 16, ecmd5, sizeof(ecmd5));
@@ -879,6 +866,14 @@ void chk_dcw(struct s_client *cl, struct s_ecm_answer *ea)
 		//rdr_ddump_mask(eardr, D_TRACE, ert->ecm, ert->ecmlen, "received cw for ecm caid=%04X srvid=%04X hash=%08X",
 		//		ert->caid, ert->srvid, ert->csp_hash);
 	}
+
+
+	//if cw=0 by anticascading
+	if (ea->rc < E_NOTFOUND && chk_is_null_CW(ea->cw)){
+		ea->rc=E_NOTFOUND;
+		cs_debug_mask(D_TRACE, "warning: reader %s send fake cw, set ea->rc=E_NOTFOUND!",eardr->label);
+	}
+
 
 	ea->status |= REQUEST_ANSWERED;
 

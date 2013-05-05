@@ -14,7 +14,6 @@
 						<option value="1" ##LBMODE1##>1 - Fastest reader first</option>
 						<option value="2" ##LBMODE2##>2 - Oldest reader first</option>
 						<option value="3" ##LBMODE3##>3 - Lowest usagelevel</option>
-						<option value="10" ##LBMODE10##>10 - Log statistics only</option>
 					</select>
 				</TD>
 			</TR>
@@ -30,7 +29,6 @@
 			<TR><TD>##TPLHELPPREFIX##conf#lb_retrylimits##TPLHELPSUFFIX##Special retry limit per caid:</A></TD><TD><input name="lb_retrylimits" type="text" size="63" maxlength="320" value="##LBRETRYLIMITS##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#lb_reopen_seconds##TPLHELPSUFFIX##Time to reopen:</A></TD><TD><input name="lb_reopen_seconds" type="text" size="5" maxlength="5" value="##LBREOPENSECONDS##"> s</TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#lb_stat_cleanup##TPLHELPSUFFIX##Hours to cleanup older than:</A></TD><TD><input name="lb_stat_cleanup" type="text" size="5" maxlength="5" value="##LBCLEANUP##">h</TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#lb_reopen_mode##TPLHELPSUFFIX##Reopen mode:</A></TD><TD><SELECT NAME="lb_reopen_mode"><OPTION VALUE="0">0 - reopen after time</OPTION><OPTION VALUE="1" ##REOPENMODE##>1 - reopen fast</OPTION></SELECT></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#lb_noproviderforcaid##TPLHELPSUFFIX##Ignore provider for:</A></TD><TD><input name="lb_noproviderforcaid" type="text" size="63" maxlength="160" value="##LBNOPROVIDERFORCAID##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#lb_auto_betatunnel##TPLHELPSUFFIX##Auto Betatunnel:</A></TD><TD><SELECT NAME="lb_auto_betatunnel"><OPTION VALUE="0">NO</OPTION><OPTION VALUE="1" ##LBAUTOBETATUNNEL##>YES</OPTION></SELECT></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#lb_auto_betatunnel_mode##TPLHELPSUFFIX##Auto Betatunnel Mode:</A></TD><TD><SELECT NAME="lb_auto_betatunnel_mode"><OPTION VALUE="0">0 - 18XX->17X2 (only)</OPTION><OPTION VALUE="1" ##LBAUTOBETATUNNELMODE1##>1 - 18XX->17X2 & 17X2->18XX (1833/1801)</OPTION><OPTION VALUE="2" ##LBAUTOBETATUNNELMODE2##>2 - 18XX->17X2 & 17X2->18XX (1833/1834)</OPTION><OPTION VALUE="3" ##LBAUTOBETATUNNELMODE3##>3 - 18XX->17X2 & 17X2->18XX (1833/1835)</OPTION><OPTION VALUE="4" ##LBAUTOBETATUNNELMODE4##>4 - 17X2->18XX (1833/1801 only)</OPTION><OPTION VALUE="5" ##LBAUTOBETATUNNELMODE5##>5 - 17X2->18XX (1833/1834 only)</OPTION><OPTION VALUE="6" ##LBAUTOBETATUNNELMODE6##>6 - 17X2->18XX (1833/1835 only)</OPTION></SELECT></TD></TR>

@@ -1336,6 +1336,10 @@ struct s_auth
 	int8_t			ac_penalty;						// 0 - log, >0 - fake dw
 	struct s_acasc	ac_stat;
 #endif
+#ifdef WITH_LB
+	int32_t			lb_nbest_readers;				// When this is -1, the global lb_nbest_readers is used
+	CAIDVALUETAB	lb_nbest_readers_tab;			// like nbest_readers, but for special caids
+#endif
 	IN_ADDR_T		dynip;
 	char			*dyndns;
 	time_t			expirationdate;
@@ -1611,7 +1615,6 @@ struct s_config
 	CAIDTAB			lb_noproviderforcaid;			// do not store loadbalancer stats with providers for this caid
 	char			*lb_savepath;					// path where the stat file is save. Empty=default=/tmp/.oscam/stat
 	int32_t			lb_stat_cleanup;				// duration in hours for cleaning old statistics
-	int32_t			lb_reopen_mode;					// reopen readers mode
 	int32_t			lb_max_readers;					// limit the amount of readers during learning
 	int32_t			lb_auto_betatunnel;				// automatic selection of betatunnel convertion based on learned data
 	int32_t			lb_auto_betatunnel_mode;			// automatic selection of betatunnel direction
@@ -1730,11 +1733,14 @@ typedef struct reader_stat_t
 	time_t			last_received;
 
 	int32_t			ecm_count;
+	int32_t			ecm_count_consecutively;
 	int32_t			time_avg;
 	int32_t			time_stat[LB_MAX_STAT_TIME];
 	int32_t			time_idx;
 
 	int32_t			fail_factor;
+	time_t			time_last_inc_failfactor;
+
 } READER_STAT;
 
 typedef struct cs_stat_query {

@@ -63,7 +63,8 @@ static uint8_t countCWpart(ECM_REQUEST *er, struct s_cw_cycle_check *cwc) {
 }
 
 static uint8_t checkvalidCW (ECM_REQUEST *er) {
-	checkCW(er); //check zero
+	if(chk_is_null_CW(er->cw)) er->rc = E_NOTFOUND;
+
 	if (er->rc == E_NOTFOUND) {
 		//wrong
 		return 0;

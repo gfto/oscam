@@ -15,14 +15,10 @@
 #define UNDEF_AVG_TIME 0
 #define MAX_ECM_SEND_CACHE 16
 
-#define LB_REOPEN_MODE_STANDARD 0
-#define LB_REOPEN_MODE_FAST 1
-
 #define LB_NONE 0
 #define LB_FASTEST_READER_FIRST 1
 #define LB_OLDEST_READER_FIRST 2
 #define LB_LOWEST_USAGELEVEL 3
-#define LB_LOG_ONLY 10
 
 #define DEFAULT_LOCK_TIMEOUT 1000
 
@@ -140,7 +136,7 @@ void load_stat_from_file(void)
 	int32_t count=0;
 	int32_t type=0;
 	char *ptr, *saveptr1 = NULL;
-	char *split[12];
+	char *split[13];
 
 	while (fgets(line, LINESIZE, file))
 	{
@@ -157,9 +153,9 @@ void load_stat_from_file(void)
 		}
 
 		if (type==1) { //New format - faster parsing:
-			for (i = 0, ptr = strtok_r(line, ",", &saveptr1); ptr && i<12 ; ptr = strtok_r(NULL, ",", &saveptr1), i++)
+			for (i = 0, ptr = strtok_r(line, ",", &saveptr1); ptr && i<13 ; ptr = strtok_r(NULL, ",", &saveptr1), i++)
 				split[i] = ptr;
-			valid = (i==11);
+			valid = (i==12);
 			if (valid) {
 				strncpy(buf, split[0], sizeof(buf)-1);
 				s->rc = atoi(split[1]);
@@ -171,7 +167,8 @@ void load_stat_from_file(void)
 				s->ecm_count = atoi(split[7]);
 				s->last_received = atol(split[8]);
 				s->fail_factor = atoi(split[9]);
-				s->ecmlen = a2i(split[10], 2);
+				s->time_last_inc_failfactor = atol(split[10]);
+				s->ecmlen = a2i(split[11], 2);
 			}
 		} else { //Old format - keep for compatibility:
 			i = sscanf(line, "%255s rc %04d caid %04hX prid %06X srvid %04hX time avg %dms ecms %d last %ld fail %d len %02hX\n",
@@ -181,6 +178,7 @@ void load_stat_from_file(void)
 		}
 
 		if (valid && s->ecmlen > 0) {
+
 			if (rdr == NULL || strcmp(buf, rdr->label) != 0) {
 				LL_ITER itr = ll_iter_create(configured_readers);
 				while ((rdr=ll_iter_next(&itr))) {
@@ -342,9 +340,9 @@ static void save_stat_to_file_thread(void)
 				//	s->srvid, s->time_avg, s->ecm_count, s->last_received, s->fail_factor, s->ecmlen);
 
 				//New version:
-				fprintf(file, "%s,%d,%04hX,%06X,%04hX,%04hX,%d,%d,%ld,%d,%02hX\n",
+				fprintf(file, "%s,%d,%04hX,%06X,%04hX,%04hX,%d,%d,%ld,%d,%ld,%02hX\n",
 					rdr->label, s->rc, s->caid, s->prid,
-					s->srvid, (uint16_t)s->chid, s->time_avg, s->ecm_count, s->last_received, s->fail_factor, s->ecmlen);
+					s->srvid, (uint16_t)s->chid, s->time_avg, s->ecm_count, s->last_received, s->fail_factor, s->time_last_inc_failfactor, s->ecmlen);
 
 				count++;
 //				if (count % 500 == 0) { //Saving stats is using too much cpu and causes high file load. so we need a break
@@ -404,21 +402,33 @@ static READER_STAT *get_add_stat(struct s_reader *rdr, STAT_QUERY *q)
 			s->chid = q->chid;
 			s->ecmlen = q->ecmlen;
 			s->time_avg = UNDEF_AVG_TIME; //dummy placeholder
-			s->rc = E_NOTFOUND;
+			s->rc = E_FOUND;  //set to found--> do not change!
 			s->last_received = time(NULL);
+			s->time_last_inc_failfactor=time(NULL);
+			s->fail_factor=0;
+			s->ecm_count_consecutively = 0;
+			s->ecm_count=0;
 			ll_append(rdr->lb_stat, s);
 		}
 	}
-
-	if (s->ecm_count < 0)
-		s->ecm_count=0;
-
 	cs_writeunlock(&rdr->lb_stat_lock);
 
 	return s;
 }
 
 static void housekeeping_stat(int32_t force);
+
+
+static int32_t get_reopen_seconds(READER_STAT *s)
+{
+		int32_t max = (INT_MAX / cfg.lb_reopen_seconds);
+		if (max > 9999) max = 9999;
+		if (s->fail_factor > max)
+				s->fail_factor = max;
+		if (!s->fail_factor)
+			return cfg.lb_reopen_seconds;
+		return s->fail_factor * cfg.lb_reopen_seconds;
+}
 
 /**
  * Adds caid/prid/srvid/ecmlen to stat-list for reader ridx with time/rc
@@ -439,10 +449,10 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 	// 2 = cache2      #
 	// 3 = cacheex     #
 	// 4 = not found   -
-	// 5 = timeout     -2
+	// 5 = timeout     -
 	// 6 = sleeping    #
-	// 7 = fake        #
-	// 8 = invalid     #
+	// 7 = fake        -
+	// 8 = invalid     -
 	// 9 = corrupt     #
 	// 10= no card     #
 	// 11= expdate     #
@@ -452,11 +462,7 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 	//        + = adds statistic values
 	//        # = ignored because of duplicate values, temporary failures or softblocks
 	//        - = causes loadbalancer to block this reader for this caid/prov/sid
-	//        -2 = causes loadbalancer to block if happens too often
 
-
-	if (rc == E_NOTFOUND && (uint32_t)ecm_time >= cfg.ctimeout) //Map "not found" to "timeout" if ecm_time>client time out
-		rc = E_TIMEOUT;
 
 	if ((uint32_t)ecm_time >= 3*cfg.ctimeout) //ignore too old ecms
 		return;
@@ -473,8 +479,9 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 
 		s->rc = E_FOUND;
 		s->ecm_count++;
+		s->ecm_count_consecutively++;
 
-		if(s->ecm_count >= cfg.lb_min_ecmcount) //if before !=found, we reset fail_factor only if lb_min_ecmcount consecutively!--> we set ecm_count=0 when reopen reader, so for reset it must have min_ecmcount consecutively!
+		//if(s->ecm_count_consecutively>=cfg.lb_min_ecmcount) //we reset fail_factor only when we have lb_min_ecmcount found consecutively!
 			s->fail_factor = 0;
 
 
@@ -505,9 +512,16 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 		}
 
 	}
-	else if (rc == E_NOTFOUND||rc == E_INVALID||rc == E_TIMEOUT) { //not found / invalid / timeout
+	else if (rc == E_NOTFOUND||rc == E_INVALID||rc == E_TIMEOUT||rc == E_FAKE) { //not found / invalid / timeout /fake
+
+		//due to force_reopen, a reader could be reopened a lot of times consecutively, so we inc fail_factor only when it reaches reopen_seconds, for not blocking it too much!
+		if(s->rc==E_FOUND || now>=(s->time_last_inc_failfactor+get_reopen_seconds(s))){
+			inc_fail(s);
+			s->time_last_inc_failfactor=now;
+		}
+
 		s->rc = rc;
-		inc_fail(s);
+		//s->ecm_count_consecutively=0;
 
 		//No more special handler for timeout, because in stat_get_best_reader we are sure to reopen readers if "NO MATCHING READER FOUND"
 	}
@@ -542,22 +556,6 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 	}
 
 }
-
-static void reset_stat_reader(READER_STAT *s, struct s_reader *rdr)
-{
-
-	cs_readlock(&readerlist_lock);
-	if (rdr->lb_stat && rdr->client) {
-		if (s) {
-			s->ecm_count = 0;  //before we reset fail_factor=0, ecm_count>lb_min_ecmcount
-			s->time_avg =0; //for correct re-evaluated of LB_FASTEST_READER_FIRST
-
-		 // do not touch fail factor here!
-		}
-	}
-	cs_readunlock(&readerlist_lock);
-}
-
 
 int32_t clean_stat_by_rc(struct s_reader *rdr, int8_t rc, int8_t inverse)
 {
@@ -651,23 +649,19 @@ static int32_t get_retrylimit(ECM_REQUEST *er) {
 }
 
 static int32_t get_nbest_readers(ECM_REQUEST *er) {
-		int32_t i;
-		for (i = 0; i < cfg.lb_nbest_readers_tab.n; i++) {
-				if (cfg.lb_nbest_readers_tab.caid[i] == er->caid || cfg.lb_nbest_readers_tab.caid[i] == er->caid>>8)
-						return cfg.lb_nbest_readers_tab.value[i];
-		}
-		return cfg.lb_nbest_readers;
-}
 
-static int32_t get_reopen_seconds(READER_STAT *s)
-{
-		int32_t max = (INT_MAX / cfg.lb_reopen_seconds);
-		if (max > 9999) max = 9999;
-		if (s->fail_factor > max)
-				s->fail_factor = max;
-		if (!s->fail_factor)
-			return cfg.lb_reopen_seconds;
-		return s->fail_factor * cfg.lb_reopen_seconds;
+		int32_t nbest_readers= er->client->account->lb_nbest_readers ==-1 ? cfg.lb_nbest_readers : er->client->account->lb_nbest_readers;
+		CAIDVALUETAB nbest_readers_tab = er->client->account->lb_nbest_readers_tab.n==0 ?  cfg.lb_nbest_readers_tab  :  er->client->account->lb_nbest_readers_tab;
+
+		if(nbest_readers<=0) nbest_readers=1;
+
+		int32_t i;
+		for (i = 0; i < nbest_readers_tab.n; i++) {
+				if (nbest_readers_tab.caid[i] == er->caid || nbest_readers_tab.caid[i] == er->caid>>8)
+						return nbest_readers_tab.value[i];
+		}
+
+		return nbest_readers;
 }
 
 static void convert_to_beta_int(ECM_REQUEST *er, uint16_t caid_to)
@@ -732,93 +726,86 @@ uint16_t get_rdr_caid(struct s_reader *rdr) {
 	  }
 }
 
-
-
-static void check_open_reader(READER_STAT *s, struct s_ecm_answer *ea, int32_t *reader_active, int32_t *max_reopen, int32_t *retrylimit, int32_t *force_reopen){
-	struct s_reader *rdr;
-	rdr=ea->reader;
-
-	//if force_reopen we must active the reader and reset stats
-	if((*force_reopen)){
-		cs_debug_mask(D_LB, "loadbalancer: reader %s force reopening! --> ACTIVE", rdr->label);
-		reset_stat_reader(s, rdr);
-		ea->status |= READER_ACTIVE;
-		(*reader_active)++;
-		return;
-	}
-
-
-	//reset stats and active readers reach cfg.lb_max_ecmcount. If s->time_avg <= retrylimit we do not reset stats and consider with valid lbvalue!
-	if (s->rc == E_FOUND && s->ecm_count > cfg.lb_max_ecmcount && s->time_avg > (*retrylimit)) {
-		if(*max_reopen){
-			cs_debug_mask(D_LB, "loadbalancer: reader %s reaches max ecms (%d) and time_avg>retrylimit, resetting statistics --> ACTIVE", rdr->label, cfg.lb_max_ecmcount);
-			reset_stat_reader(s, rdr);
-			ea->status |= READER_ACTIVE;
-			(*reader_active)++;
-			(*max_reopen)--;
-		}else{
-			cs_debug_mask(D_LB, "loadbalancer: reader %s reaches max ecms (%d) and time_avg>retrylimit, but lb_max_readers reached!", rdr->label, cfg.lb_max_ecmcount);
+static void reset_ecmcount_reader(READER_STAT *s, struct s_reader *rdr)
+{
+	cs_readlock(&rdr->lb_stat_lock);
+	if (rdr->lb_stat && rdr->client) {
+		if (s){
+			s->ecm_count=0;
+			s->ecm_count_consecutively=0;
 		}
-		return;
 	}
-
-
-	//reset stat and active readers reach get_reopen_seconds(s)
-	if (s->rc != E_FOUND && s->last_received+get_reopen_seconds(s) < time(NULL) ) {
-		if(*max_reopen){
-			cs_debug_mask(D_LB, "loadbalancer: reader %s reaches %d seconds for reopening (fail_factor %d) --> ACTIVE", rdr->label, get_reopen_seconds(s),s->fail_factor);
-			reset_stat_reader(s, rdr);
-			ea->status |= READER_ACTIVE; //max ecm reached, get new statistics
-			(*reader_active)++;
-			(*max_reopen)--;
-		}else{
-			cs_debug_mask(D_LB, "loadbalancer: reader %s reaches %d seconds for reopening (fail_factor %d), but lb_max_readers reached!", rdr->label, get_reopen_seconds(s),s->fail_factor);
-		}
-		return;
-	}
-
-	if(s->rc != E_FOUND){ //for debug output
-		cs_debug_mask(D_LB, "loadbalancer: reader %s blocked for %d seconds (fail_factor %d)", rdr->label, get_reopen_seconds(s), s->fail_factor);
-		return;
-	}
-
-	if (s->rc == E_FOUND)  //for debug output
-		cs_debug_mask(D_LB, "loadbalancer: reader %s \"e_found\" but not selected for lbvalue check", rdr->label);
+	cs_readunlock(&rdr->lb_stat_lock);
 }
 
+static void reset_ecmcount_consecutively_reader(READER_STAT *s, struct s_reader *rdr)
+{
+	cs_readlock(&rdr->lb_stat_lock);
+	if (rdr->lb_stat && rdr->client) {
+		if (s){
+			s->ecm_count_consecutively=0;
+		}
+	}
+	cs_readunlock(&rdr->lb_stat_lock);
+}
+
+
+static void reset_avgtime_reader(READER_STAT *s, struct s_reader *rdr)
+{
+	cs_readlock(&rdr->lb_stat_lock);
+	if (rdr->lb_stat && rdr->client) {
+		if (!s) return;
+		int32_t i;
+		for (i = 0; i < LB_MAX_STAT_TIME; i++) {
+			if (s->time_stat[i] > 0) s->time_stat[i]=0;
+		}
+		s->time_avg=UNDEF_AVG_TIME;
+	}
+	cs_readunlock(&rdr->lb_stat_lock);
+}
 
 /* force_reopen=1 -> force opening of block readers
  * force_reopen=0 -> no force opening of block readers, use reopen_seconds
  */
-static void try_open_blocked_readers(ECM_REQUEST *er, STAT_QUERY *q, int32_t *reader_active, int32_t *max_reopen, int32_t *retrylimit, int32_t *force_reopen){
+static void try_open_blocked_readers(ECM_REQUEST *er, STAT_QUERY *q, int32_t *max_reopen, int32_t *force_reopen){
 	struct s_ecm_answer *ea;
 	READER_STAT *s;
+	struct s_reader *rdr;
 
-	if(cfg.preferlocalcards){ //here we have 2 groups of priority
 
-		//1- local
-		for(ea = er->matching_rdr; ea; ea = ea->next) {
-			if ( (ea->status&READER_FALLBACK) || (ea->status&READER_ACTIVE)) continue;
-			if ( !(ea->status & READER_LOCAL) ) continue;
-			s = get_stat(ea->reader, q);
-			if (s) check_open_reader(s,ea,reader_active,max_reopen,retrylimit,force_reopen);
+	for(ea = er->matching_rdr; ea; ea = ea->next) {
+		if ( (ea->status&READER_FALLBACK) || (ea->status&READER_ACTIVE)) continue;
+		rdr=ea->reader;
+		s = get_stat(rdr, q);
+		if(!s) continue;
+
+		//if force_reopen we must active the reader
+		if(s->rc != E_FOUND && (*force_reopen)){
+			cs_debug_mask(D_LB, "loadbalancer: reader %s force reopening! --> ACTIVE", rdr->label);
+			ea->status |= READER_ACTIVE;
+			continue;
 		}
 
-		//2- no-local
-		for(ea = er->matching_rdr; ea; ea = ea->next) {
-			if ( (ea->status&READER_FALLBACK) || (ea->status&READER_ACTIVE)) continue;
-			if ( (ea->status & READER_LOCAL) ) continue;
-			s = get_stat(ea->reader, q);
-			if (s) check_open_reader(s,ea,reader_active,max_reopen,retrylimit,force_reopen);
+		//active readers reach get_reopen_seconds(s)
+		if (s->rc != E_FOUND &&  time(NULL)>=(s->time_last_inc_failfactor+get_reopen_seconds(s)) ) {
+			if(*max_reopen){
+				cs_debug_mask(D_LB, "loadbalancer: reader %s reaches %d seconds for reopening (fail_factor %d) --> ACTIVE", rdr->label, get_reopen_seconds(s),s->fail_factor);
+				ea->status |= READER_ACTIVE;
+				(*max_reopen)--;
+			}else{
+				cs_debug_mask(D_LB, "loadbalancer: reader %s reaches %d seconds for reopening (fail_factor %d), but max_reopen reached!", rdr->label, get_reopen_seconds(s),s->fail_factor);
+			}
+			continue;
 		}
 
-	}else{
-
-		for(ea = er->matching_rdr; ea; ea = ea->next) {
-			if ( (ea->status&READER_FALLBACK) || (ea->status&READER_ACTIVE)) continue;
-			s = get_stat(ea->reader, q);
-			if (s) check_open_reader(s,ea,reader_active,max_reopen,retrylimit,force_reopen);
+		if(s->rc != E_FOUND){ //for debug output
+			cs_debug_mask(D_LB, "loadbalancer: reader %s blocked for %d seconds (fail_factor %d), retryng in %ld seconds", rdr->label, get_reopen_seconds(s), s->fail_factor, (s->time_last_inc_failfactor+get_reopen_seconds(s) - time(NULL)));
+			continue;
 		}
+
+		if (s->rc == E_FOUND)  //for debug output
+			cs_debug_mask(D_LB, "loadbalancer: reader %s \"e_found\" but not selected for lbvalue check", rdr->label);
+
 	}
 }
 
@@ -1122,7 +1109,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 	if (!nreaders) // if is configured zero -> replace it by -1 (default means unlimited!)
 		nreaders = -1;
 	else if (nreaders <= nbest_readers)
-		nreaders = nbest_readers+1; //nreaders must cover nbest more 1 reader for try to ublock/add stats
+		nreaders = nbest_readers+1; //nreaders must cover nbest more 1 reader for try to unblock/add stats
 
 	int32_t reader_active=0;
 	int32_t max_reopen=nreaders-nbest_readers;  //if nreaders=-1, we try to reopen all readers
@@ -1164,8 +1151,8 @@ void stat_get_best_reader(ECM_REQUEST *er)
 
 	//Deactive all matching readers and set ea->value = 0;
 	for(ea = er->matching_rdr; ea; ea = ea->next) {
-			ea->status &= ~(READER_ACTIVE|READER_FALLBACK);
-			ea->value = 0;
+		ea->status &= ~(READER_ACTIVE|READER_FALLBACK);
+		ea->value = 0;
 	}
 	
 	cs_debug_mask(D_LB, "loadbalancer: --------------------------------------------");
@@ -1173,24 +1160,19 @@ void stat_get_best_reader(ECM_REQUEST *er)
 	else cs_debug_mask(D_LB, "loadbalancer: nbest %d, nfb %d, max_reopen %d", nbest_readers, nfb_readers, max_reopen);
 
 
-	//Here evaluate lbvalue for readers with statistics and E_FOUND
+	//Here evaluate lbvalue for readers with valid statistics
 	for(ea = er->matching_rdr; ea; ea = ea->next) {
 
 			rdr = ea->reader;
-
-#ifdef CS_CACHEEX
-	if (rdr->cacheex.mode == 1) {
-			ea->status |= READER_ACTIVE; //no statistics, this reader is a cacheex reader and so always active
-			continue;
-	}
-#endif
 			s = get_stat(rdr, &q);
+
 
 			int32_t weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
 			//struct s_client *cl = rdr->client;
 
 			if(s && s->rc == E_FOUND
 			   && s->ecm_count >= cfg.lb_min_ecmcount
+			   && s->ecm_count_consecutively>=cfg.lb_min_ecmcount
 			   && (s->ecm_count <= cfg.lb_max_ecmcount || s->time_avg <= retrylimit)
 			  ){
 
@@ -1299,35 +1281,20 @@ void stat_get_best_reader(ECM_REQUEST *er)
 	}
 
 
-	int32_t force_reopen=0;
-
-
-	//check for lbretrylimit, if best_time > retrylimit we need to reset stats all "FOUND" matching readers so we can re-evaluated avg-time
-	int32_t retrylimit_reached = best_time && best_time > retrylimit;
-	if(retrylimit_reached){
-		cs_debug_mask(D_LB, "loadbalancer: best reader %s (avg_time %dms) reaches RETRYLIMIT (%dms), resetting stats and active all matching readers!",best_rdr->label, best_time,retrylimit);
-
-		for(ea = er->matching_rdr; ea; ea = ea->next) {
-			rdr = ea->reader;
-#ifdef CS_CACHEEX
-		if (rdr->cacheex.mode == 1) continue;
-#endif
-			s = get_stat(rdr, &q);
-			if (s && s->rc == E_FOUND) {
-				reset_stat_reader(s, rdr); //reset stats of all e_found matching readers, so avg-time can be re-evaluated
-				ea->status &= ~(READER_ACTIVE|READER_FALLBACK); //we deactive all readers so we can active they below!
-			}
-		}
-		force_reopen=1; //force to reopen blocked readers
-	}
-
-
-
-	//ACTIVE readers with no stats or with no lb_min_ecmcount, so we can evaluate stats of ALL readers --> NO use max_reopen for these readers, open always!
+	//ACTIVE readers with no stats, or with no lb_min_ecmcount, or lb_max_ecmcount reached --> NO use max_reopen for these readers, always open!
 	for(ea = er->matching_rdr; ea; ea = ea->next) {
 		if ( (ea->status&READER_FALLBACK) || (ea->status&READER_ACTIVE)) continue;
 		rdr=ea->reader;
 		s = get_stat(rdr, &q);
+
+
+#ifdef CS_CACHEEX
+		//if cacheex reader, always active and no stats
+		if (rdr->cacheex.mode == 1) {
+			ea->status |= READER_ACTIVE;
+			continue;
+		}
+#endif
 
 		//active readers with no stats
 		if(!s){
@@ -1339,7 +1306,25 @@ void stat_get_best_reader(ECM_REQUEST *er)
 
 		//active readers with no lb_min_ecmcount reached
 		if (s->rc == E_FOUND && s->ecm_count < cfg.lb_min_ecmcount) {
-			cs_debug_mask(D_LB, "loadbalancer: reader %s needs more statistics --> ACTIVE", rdr->label);
+			cs_debug_mask(D_LB, "loadbalancer: reader %s needs to reach lb_min_ecmcount(%d), now %d --> ACTIVE", rdr->label, cfg.lb_min_ecmcount, s->ecm_count);
+			ea->status |= READER_ACTIVE;
+			reader_active++;
+			continue;
+		}
+
+		//active readers with no ecm_count_consecutively reached. It is usefull at reopen reader after block and at oscam restart, for re-evaluated avg time!
+		if (s->rc == E_FOUND && s->ecm_count_consecutively < cfg.lb_min_ecmcount) {
+			cs_debug_mask(D_LB, "loadbalancer: reader %s needs to reach ecm_count_consecutively(%d) for re-evaluating avg-time, now %d --> ACTIVE", rdr->label, cfg.lb_min_ecmcount, s->ecm_count_consecutively);
+			ea->status |= READER_ACTIVE;
+			reader_active++;
+			continue;
+		}
+
+		//reset stats and active readers reach cfg.lb_max_ecmcount and time_avg > retrylimit.
+		if (s->rc == E_FOUND && s->ecm_count > cfg.lb_max_ecmcount && s->time_avg > retrylimit) {
+			cs_debug_mask(D_LB, "loadbalancer: reader %s reaches max ecms (%d) and time_avg>retrylimit, resetting statistics --> ACTIVE", rdr->label, cfg.lb_max_ecmcount);
+			reset_ecmcount_reader(s, rdr); //ecm_count=0
+			reset_avgtime_reader(s, rdr); //time_avg=0
 			ea->status |= READER_ACTIVE;
 			reader_active++;
 			continue;
@@ -1347,17 +1332,61 @@ void stat_get_best_reader(ECM_REQUEST *er)
 	}
 
 
-	try_open_blocked_readers(er, &q, &reader_active, &max_reopen, &retrylimit, &force_reopen);
-
+	int32_t force_reopen=0;
 
 
 	//no reader active --> force to reopen matching readers
 	if (reader_active==0){
-		cs_debug_mask(D_LB, "loadbalancer: NO MATCHING READER FOUND, force reopening of all matching readers!");
+		cs_debug_mask(D_LB, "loadbalancer: NO VALID MATCHING READER FOUND, force reopening all blocked readers!");
 		force_reopen=1;
-		try_open_blocked_readers(er, &q, &reader_active, &max_reopen, &retrylimit, &force_reopen);
+
+
+	}else{
+
+		/*
+		 * check for lbretrylimit!
+		 *
+		 * if best_time > retrylimit we need to reset avg times of all computed above matching readers, so we can re-evaluated lbvalue!
+		 * More, we force open blocked reader!
+		*/
+		int32_t retrylimit_reached = best_time && best_time > retrylimit;
+		if(retrylimit_reached){
+			cs_debug_mask(D_LB, "loadbalancer: best reader %s (avg_time %dms) reaches RETRYLIMIT (%dms), resetting avg times and ACTIVE all (valid and blocked) matching readers!",best_rdr->label, best_time,retrylimit);
+			for(ea = er->matching_rdr; ea; ea = ea->next) {
+				rdr = ea->reader;
+	#ifdef CS_CACHEEX
+				if (rdr->cacheex.mode == 1) continue;
+	#endif
+				s = get_stat(rdr, &q);
+
+				//reset avg time and ACTIVE all valid lbvalue readers
+				if(s && s->rc == E_FOUND
+				   && s->ecm_count >= cfg.lb_min_ecmcount
+				   && s->ecm_count_consecutively>=cfg.lb_min_ecmcount
+				   && (s->ecm_count <= cfg.lb_max_ecmcount || s->time_avg <= retrylimit)
+				  ){
+					if( (ea->status&READER_FALLBACK) ) cs_debug_mask(D_LB, "loadbalancer: reader %s selected as FALLBACK --> ACTIVE", rdr->label);
+					else if( !(ea->status&READER_ACTIVE) ) cs_debug_mask(D_LB, "loadbalancer: reader %s --> ACTIVE", rdr->label);
+					ea->status &= ~(READER_ACTIVE|READER_FALLBACK); //remove active and fallback
+					ea->status |= READER_ACTIVE; //add active
+					reset_avgtime_reader(s,rdr);
+					reset_ecmcount_consecutively_reader(s,rdr); //so it can be re evaluated again for lb_min_ecmcount!
+				 }
+
+				//reset avg time all blocked readers. We active them by force_reopen=1
+				if(s && s->rc != E_FOUND){
+					reset_avgtime_reader(s,rdr);
+					reset_ecmcount_consecutively_reader(s,rdr); //so it can be re evaluated again for lb_min_ecmcount!
+				}
+
+			}
+			force_reopen=1; //force reopen blocked readers
+		}
 	}
 
+
+	//try to reopen max_reopen blocked readers (readers with last ecm not "e_found"); if force_reopen=1, force reopen ALL blocked readers!
+	try_open_blocked_readers(er, &q, &max_reopen, &force_reopen);
 
 	cs_debug_mask(D_LB, "loadbalancer: --------------------------------------------");
 
@@ -1654,12 +1683,14 @@ uint32_t lb_auto_timeout(ECM_REQUEST *er, uint32_t ctimeout) {
         return t;
 }
 
+
 void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, struct s_ecm_answer *ea, int8_t rc)
 {
 	if (!rdr || rc >= E_99 || cacheex_reader(rdr))
 		return;
 	if (er->ecmcacheptr) //ignore cache answer
 		return;
+
 
 	struct timeb tpe;
 	cs_ftime(&tpe);

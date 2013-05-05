@@ -938,3 +938,17 @@ int32_t chk_bcaid(ECM_REQUEST *er, CAIDTAB *ctab)
 	er->caid = caid;
 	return 1;
 }
+
+/**
+ * Check for NULL CWs
+ **/
+int32_t chk_is_null_CW(uchar cw[])
+{
+	int8_t i;
+	for (i = 0; i < 16; i++) {
+		if (cw[i])
+			return 0;
+	}
+	return 1;
+}
+

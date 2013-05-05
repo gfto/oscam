@@ -77,6 +77,23 @@ static void account_allowedprotocols_fn(const char *token, char *value, void *se
 	}
 }
 
+#ifdef WITH_LB
+static void caidvaluetab_fn(const char *token, char *value, void *setting, FILE *f) {
+	CAIDVALUETAB *caid_value_table = setting;
+	int limit = streq(token, "lb_retrylimits") ? 50 : 1;
+	if (value) {
+		chk_caidvaluetab(value, caid_value_table, limit);
+		return;
+	}
+	if (caid_value_table->n > 0 || cfg.http_full_cfg) {
+		value = mk_t_caidvaluetab(caid_value_table);
+		fprintf_conf(f, token, "%s\n", value);
+		free_mk_t(value);
+	}
+}
+#endif
+
+
 static void account_au_fn(const char *token, char *value, void *setting, FILE *f) {
 	struct s_auth *account = setting;
 	if (value) {
@@ -293,6 +310,10 @@ static const struct config_list account_opts[] = {
 	DEF_OPT_INT32("fakedelay"			, OFS(ac_fakedelay),			-1 ),
 	DEF_OPT_INT32("numusers"			, OFS(ac_users),				DEFAULT_AC_USERS ),
 	DEF_OPT_INT8("penalty"				, OFS(ac_penalty),				DEFAULT_AC_PENALTY ),
+#endif
+#ifdef WITH_LB
+	DEF_OPT_INT32("lb_nbest_readers"	, OFS(lb_nbest_readers),		-1),
+	DEF_OPT_FUNC("lb_nbest_percaid"		, OFS(lb_nbest_readers_tab),    caidvaluetab_fn),
 #endif
 	DEF_LAST_OPT
 };
