@@ -84,6 +84,7 @@ int32_t cnxt_smc_get_comm_parameters(void *cool_handle, CNXT_SMC_COMM *comm);
 int32_t cnxt_smc_get_config_timeout(void *cool_handle, CNXT_SMC_TIMEOUT *timeout);
 int32_t cnxt_smc_set_config_timeout(void *cool_handle, CNXT_SMC_TIMEOUT timeout);
 int32_t cnxt_smc_set_convention(void *cool_handle, CNXT_SMC_CONVENTION conv);
+int32_t cnxt_smc_start_pps(void *cool_handle, uint8_t *params, uint8_t *response, uint8_t *len, int32_t setfd);
 int32_t cnxt_smc_get_F_D_factors (void *cool_handle, uint16_t *F, uint8_t *D);
 int32_t cnxt_smc_set_F_D_factors (void *cool_handle, uint16_t F, uint8_t D);
 int32_t cnxt_smc_read_write(void *cool_handle, int8_t async, uint8_t *sent, uint32_t size, uint8_t *cardbuffer, uint32_t *cardbuflen, int32_t rw_timeout, void *tag);
