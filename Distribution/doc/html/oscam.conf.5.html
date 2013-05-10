@@ -377,16 +377,6 @@ set count of fallback readers for load balancing, default:1
 
 <P>
 
-<B>lb_reopen_mode</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-load balancing reopen readers mode:
-<P>
-<BR>&nbsp;<B>0</B>&nbsp;=&nbsp;standard&nbsp;late&nbsp;reopening&nbsp;of&nbsp;blocker&nbsp;readers&nbsp;(default)
-<BR>&nbsp;<B>1</B>&nbsp;=&nbsp;fast&nbsp;reopening&nbsp;of&nbsp;blocker&nbsp;readers
-</DL>
-
-<P>
-
 <B>lb_nbest_percaid</B> = <B>CAID1:count1[,CAID2:count2]...</B>
 <DL COMPACT><DT><DD>
 set count of best readers per CAIDs for load balancing, wildcard CAIDs with two-digit CAIDs possible, default:none
@@ -1109,10 +1099,10 @@ define CCcam version, <I>minimum CCcam version 2.0.11</I>, used with original CC
 <DL COMPACT><DT><DD>
 reshare level for CCcam clients (default:10):
 <P>
-<BR>&nbsp;<B>-1</B>&nbsp;=&nbsp;no&nbsp;resharing
-<BR>&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;resharing&nbsp;for&nbsp;direct&nbsp;peer&nbsp;only
-<BR>&nbsp;&nbsp;<B>1</B>&nbsp;=&nbsp;resharing&nbsp;for&nbsp;direct&nbsp;peer&nbsp;and&nbsp;next&nbsp;level
-<BR>&nbsp;&nbsp;<B>x</B>&nbsp;=&nbsp;resharing&nbsp;for&nbsp;direct&nbsp;peer&nbsp;and&nbsp;next&nbsp;x&nbsp;level
+<B>-1</B> = no resharing
+<BR>&nbsp;<B>0</B>&nbsp;=&nbsp;resharing&nbsp;for&nbsp;direct&nbsp;peer&nbsp;only
+<BR>&nbsp;<B>1</B>&nbsp;=&nbsp;resharing&nbsp;for&nbsp;direct&nbsp;peer&nbsp;and&nbsp;next&nbsp;level
+<BR>&nbsp;<B>x</B>&nbsp;=&nbsp;resharing&nbsp;for&nbsp;direct&nbsp;peer&nbsp;and&nbsp;next&nbsp;x&nbsp;level
 </DL>
 
 <P>

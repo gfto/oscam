@@ -138,6 +138,23 @@ mask for IP address based blocking:
 
 <P>
 
+<B>lb_nbest_readers</B> = <B>counts</B>
+<DL COMPACT><DT><DD>
+set count of best readers for load balancing, -1 = use global lb_nbest_readers, default:-1
+</DL>
+
+<P>
+
+<B>lb_nbest_percaid</B> = <B>CAID1:count1[,CAID2:count2]...</B>
+<DL COMPACT><DT><DD>
+set count of best readers per CAIDs for load balancing, wildcard CAIDs with two-digit CAIDs possible, default:none
+<P>
+<BR>&nbsp;example:&nbsp;lb_nbest_percaid&nbsp;=&nbsp;0100:4,0200:3,03:2,04:1
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(wildcard&nbsp;CAIDs&nbsp;03xx&nbsp;and&nbsp;04xx)
+</DL>
+
+<P>
+
 <B>cacheex</B> = <B>0</B>|<B>1</B>|<B>2</B>|<B>3</B>
 <DL COMPACT><DT><DD>
 set cache exchange mode

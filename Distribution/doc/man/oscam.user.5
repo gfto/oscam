@@ -97,6 +97,19 @@ mask for IP address based blocking:
  \fB8\fP = block duplicate IP address
 .RE
 .PP
+\fBlb_nbest_readers\fP = \fBcounts\fP
+.RS 3n
+set count of best readers for load balancing, -1 = use global lb_nbest_readers, default:-1
+.RE
+.PP
+\fBlb_nbest_percaid\fP = \fBCAID1:count1[,CAID2:count2]...\fP
+.RS 3n
+set count of best readers per CAIDs for load balancing, wildcard CAIDs with two-digit CAIDs possible, default:none
+
+ example: lb_nbest_percaid = 0100:4,0200:3,03:2,04:1
+          (wildcard CAIDs 03xx and 04xx)
+.RE
+.PP
 \fBcacheex\fP = \fB0\fP|\fB1\fP|\fB2\fP|\fB3\fP
 .RS 3n
 set cache exchange mode
