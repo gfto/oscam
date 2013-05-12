@@ -1067,6 +1067,7 @@ struct s_ecmHeaderwhitelist {
 struct ecmrl {
 	uint16_t		srvid;
 	time_t			last;
+	uchar			kindecm;
 	uchar			ecmd5[CS_ECMSTORESIZE];
 	
 };

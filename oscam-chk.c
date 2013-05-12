@@ -20,6 +20,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 			cs_debug_mask(D_TRACE, "ratelimiter srvid %04X released from slot #%d/%d of reader %s (%d>=%d ratelimitsec + %d sec srvidhold!)", reader->rlecmh[h].srvid, h+1, maxloop, reader->label, (int) (actualtime - reader->rlecmh[h].last), reader->ratelimitseconds, reader->srvidholdseconds);
 			reader->rlecmh[h].last = -1;
 			reader->rlecmh[h].srvid = -1;
+			reader->rlecmh[h].kindecm = 0;
 		}
 	}
 	
@@ -29,15 +30,27 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 				(int) (actualtime - reader->rlecmh[h].last), h+1, maxloop,reader->label);
 			
 			// check ecmunique if enabled and ecmunique time is done
-			if(reader_mode && reader->ecmunique && (actualtime - reader->rlecmh[h].last < reader->ratelimitseconds)) { 
-				if (memcmp(reader->rlecmh[h].ecmd5, er->ecmd5, CS_ECMSTORESIZE)){
-					char ecmd5[17*3];
-					cs_hexdump(0, reader->rlecmh[h].ecmd5, 16, ecmd5, sizeof(ecmd5));
-					cs_debug_mask(D_TRACE, "ratelimiter ecm %s in this slot for next %d seconds -> skipping this slot!", ecmd5, (int) 
-						(reader->ratelimitseconds - (actualtime - reader->rlecmh[h].last)));
+			if(reader_mode && reader->ecmunique){
+				if(actualtime - reader->rlecmh[h].last < reader->ratelimitseconds) { 
+					if (memcmp(reader->rlecmh[h].ecmd5, er->ecmd5, CS_ECMSTORESIZE)){
+						if (er->ecm[0]== reader->rlecmh[h].kindecm){
+							char ecmd5[17*3];
+							cs_hexdump(0, reader->rlecmh[h].ecmd5, 16, ecmd5, sizeof(ecmd5));
+							cs_debug_mask(D_TRACE, "ratelimiter ecm %s in this slot for next %d seconds -> returning same controlword!", ecmd5, (int) 
+								(reader->ratelimitseconds - (actualtime - reader->rlecmh[h].last)));
+							memcpy(er->ecmd5, reader->rlecmh[h].ecmd5, CS_ECMSTORESIZE); // replace md5 hash
+							return -2;
+						}
+					}
+				}
+				if (er->ecm[0]== reader->rlecmh[h].kindecm && (actualtime - reader->rlecmh[h].last <= reader->ratelimitseconds + reader->srvidholdseconds) && (reader->rlecmh[h].last !=-1)){
+					cs_debug_mask(D_TRACE, "ratelimiter srvid %04X ecm type %s, only allowing %s for next %d seconds in slot #%d/%d of reader %s -> skipping this slot!", 
+						reader->rlecmh[h].srvid, (reader->rlecmh[h].kindecm == 0x80?"even":"odd"), (reader->rlecmh[h].kindecm == 0x80?"odd":"even"),
+						(int) (reader->ratelimitseconds + reader->srvidholdseconds - (actualtime - reader->rlecmh[h].last)), h+1, maxloop, reader->label);
 					continue;
 				}
 			}
+			
 			if (h > 0){
 				for (foundspace = 0; foundspace < h; foundspace++) { // check for free lower slot
 					if (reader->rlecmh[foundspace].last ==- 1) {								
@@ -111,7 +124,11 @@ int32_t ecm_ratelimit_check(struct s_reader * reader, ECM_REQUEST *er, int32_t r
 		cs_debug_mask(D_TRACE, "ratelimiter find a slot for srvid %04X on reader %s", er->srvid, reader->label);
 	}
 	foundspace = ecm_ratelimit_findspace(reader, er, maxslots, reader_mode);
-	if (foundspace < 0 || foundspace >= reader->ratelimitecm) { /* No space due to ratelimit */
+	if (foundspace == -2){ // trick to trigger cache (I hope)
+		if (!reader_mode) return OK;
+		else return ERROR;		
+	}
+	if (foundspace == -1 || foundspace >= reader->ratelimitecm) { /* No space due to ratelimit */
 		if (!reader_mode) return OK; // who's calling us? reader or some stat prober?  If reader then register otherwise just report!
 		if (reader->cooldown[0] && reader->cooldownstate == 0){ // we are in setup phase of cooldown
 			cs_log("Reader: %s ratelimiter detected overrun ecmratelimit of %d during setup phase!",reader->label, reader->ratelimitecm);
@@ -155,6 +172,7 @@ int32_t ecm_ratelimit_check(struct s_reader * reader, ECM_REQUEST *er, int32_t r
 		reader->rlecmh[foundspace].last=time(NULL); //we are within ecmratelimits
 		reader->rlecmh[foundspace].srvid=er->srvid;
 		memcpy(reader->rlecmh[foundspace].ecmd5, er->ecmd5, CS_ECMSTORESIZE);// register ecmhash
+		reader->rlecmh[foundspace].kindecm = er->ecm[0]; // register kind of ecm
 		}
 	if (reader->cooldown[0] && reader->cooldownstate == 2) { // check if cooldowndelay is elapsed
 			if (time(NULL) - reader->cooldowntime > reader->cooldown[0]) {
