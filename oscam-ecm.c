@@ -1243,6 +1243,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	uint32_t line = 0;
 
 	er->client = client;
+	er->rc = E_UNHANDLED; // set default rc status to unhandled
 	if (now - client->lastecm > cfg.hideclient_to) client->lastswitch = 0;		// user was on freetv or didn't request for some time so we reset lastswitch to get correct stats/webif display
 	client->lastecm = now;
 
