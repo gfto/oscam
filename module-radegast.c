@@ -114,7 +114,8 @@ static void radegast_process_ecm(uchar *buf, int32_t l)
         er->caid=b2i(2, buf+i+2);
         break;
       case  3:		// ECM DATA
-        er->ecmlen = sl;
+        //er->ecmlen = sl;
+        er->ecmlen = (((buf[i+1+2] & 0x0F) << 8) | buf[i+2+2]) + 3;
         memcpy(er->ecm, buf+i+2, er->ecmlen);
         break;
       case  6:		// PROVID (ASCII)
@@ -242,6 +243,7 @@ void module_radegast(struct s_module *ph)
 
   ph->desc="radegast";
   ph->type=MOD_CONN_TCP;
+  ph->large_ecm_support = 1;
   ph->listenertype = LIS_RADEGAST;
   IP_ASSIGN(ph->s_ip, cfg.rad_srvip);
   ph->s_handler=radegast_server;
