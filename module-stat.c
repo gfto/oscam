@@ -464,8 +464,22 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 	//        - = causes loadbalancer to block this reader for this caid/prov/sid
 
 
-	if ((uint32_t)ecm_time >= 3*cfg.ctimeout) //ignore too old ecms
+	//ignore too old ecms
+	if ((uint32_t)ecm_time >= 3*cfg.ctimeout) 
 		return;
+
+	//IGNORE fails when reader has positive services defined! See ticket #3310,#3311
+	if(rc>=E_NOTFOUND && has_srvid(cl, er)){
+#ifdef WITH_DEBUG
+		if (rc >= E_FOUND && (D_LB & cs_dblevel)) {
+			char buf[ECM_FMT_LEN];
+			format_ecm(er, buf, ECM_FMT_LEN);
+			cs_debug_mask(D_LB, "loadbalancer: NOT adding stat (blocking reader) because positive srvid for reader %s: rc %d %s time %dms",
+				rdr->label, rc, buf, ecm_time);
+		}
+#endif
+		return;
+	}
 
 	STAT_QUERY q;
 	get_stat_query(er, &q);
