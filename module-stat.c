@@ -1217,17 +1217,17 @@ void stat_get_best_reader(ECM_REQUEST *er)
 						break;
 				}
 
-				/*if (cfg.lb_mode != LB_OLDEST_READER_FIRST) { //Adjust selection to reader load:
-					if (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_LOADBALANCE, er)) {
+				if (cfg.lb_mode != LB_OLDEST_READER_FIRST) { //Adjust selection to reader load:
+				  /*	if (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_LOADBALANCE, er)) {
 						current=current*2;
 					}
 
 					if (cl && cl->pending)
 						current=current*cl->pending;
-
+					*/
        				if (current < 1)
         				current=1;
-				}*/
+				}
 
 
 				cs_debug_mask(D_LB, "loadbalancer: reader %s lbvalue = %d", rdr->label, abs(current));
