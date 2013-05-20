@@ -1292,7 +1292,7 @@ static int32_t SR_GetStatus (struct s_reader *reader, int32_t * in)
   return OK;
 }
 
-static int32_t SR_Transmit (struct s_reader *reader, unsigned char * buffer, uint32_t size, uint32_t delay, uint32_t timeout) // delay and timeout not used (yet)!
+static int32_t SR_Transmit (struct s_reader *reader, unsigned char * buffer, uint32_t size, uint32_t UNUSED(expectedlen), uint32_t delay, uint32_t timeout) // delay and timeout not used (yet)!
 {
     (void) delay; // delay not used (yet)!
 	(void) timeout; // timeout not used (yet)!

@@ -754,10 +754,6 @@ static const struct config_list reader_opts[] = {
 	DEF_OPT_UINT8("cacheex_allow_request"	, OFS(cacheex.allow_request),	1 ),
 	DEF_OPT_UINT8("cacheex_drop_csp"		, OFS(cacheex.drop_csp),		0 ),
 #endif
-#ifdef WITH_COOLAPI
-	DEF_OPT_INT32("cool_timeout_init"			, OFS(cool_timeout_init),			0 ), //0 = use value from atr
-	DEF_OPT_INT32("cool_timeout_after_init"		, OFS(cool_timeout_after_init),		0 ), //0 = use value from atr
-#endif
 	DEF_OPT_FUNC("caid"					, OFS(ctab),					reader_caid_fn ),
 	DEF_OPT_FUNC("atr"					, 0,							atr_fn ),
 	DEF_OPT_FUNC("boxid"				, 0,							boxid_fn ),

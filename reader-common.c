@@ -180,7 +180,6 @@ void cardreader_do_reset(struct s_reader *reader)
         reader->card_status = CARD_INSERTED;
         do_emm_from_file(reader);
 		ICC_Async_DisplayMsg(reader, "AOK");
-		ICC_Set_Transmit_Timeout(reader);
       }
 
 	return;

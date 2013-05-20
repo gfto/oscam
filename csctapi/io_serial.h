@@ -81,7 +81,7 @@ void IO_Serial_Sendbreak (struct s_reader * reader, int32_t duration);
 bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_us, uint32_t timeout_us);
 
 int32_t IO_Serial_Receive(struct s_reader * reader, unsigned char * buffer, uint32_t size, uint32_t delay, uint32_t timeout);
-int32_t IO_Serial_Transmit(struct s_reader * reader, unsigned char * buffer, uint32_t size, uint32_t delay, uint32_t timeout);
+int32_t IO_Serial_Transmit(struct s_reader * reader, unsigned char * buffer, uint32_t size, uint32_t expectedlen, uint32_t delay, uint32_t timeout);
 int32_t IO_Serial_GetStatus(struct s_reader *reader, int32_t *status);
 int32_t IO_Serial_SetBaudrate(struct s_reader * reader, uint32_t baudrate);
 

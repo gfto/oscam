@@ -693,7 +693,7 @@ struct s_cardreader
 	int32_t			(*reader_init)(struct s_reader*);
 	int32_t			(*get_status)(struct s_reader*, int*);
 	int32_t			(*activate)(struct s_reader*, struct s_ATR *);
-	int32_t			(*transmit)(struct s_reader*, unsigned char *sent, uint32_t size, uint32_t delay, uint32_t timeout);
+	int32_t			(*transmit)(struct s_reader*, unsigned char *sent, uint32_t size, uint32_t expectedlen, uint32_t delay, uint32_t timeout);
 	int32_t			(*receive)(struct s_reader*, unsigned char *data, uint32_t size, uint32_t delay, uint32_t timeout);
 	int32_t			(*lock_init)(struct s_reader *);
 	void			(*lock)(struct s_reader *);
@@ -725,7 +725,6 @@ struct s_cardreader
 										uint16_t *cta_lr,
 										int32_t l);
 	void			(*display_msg)(struct s_reader *, char *msg);
-	void			(*set_transmit_timeout)(struct s_reader *);
 
 	int32_t			(*do_reset)(struct s_reader *, struct s_ATR *,
 										int32_t (*rdr_activate_card)(struct s_reader *, struct s_ATR *, uint16_t deprecated),
@@ -740,7 +739,6 @@ struct s_cardreader
 	//io_serial config
 	int8_t			flush;
 	int8_t			read_written; 		// 1 = written bytes has to read from device
-	int8_t			timings_in_etu;		// timings in ETU instead of us
 	bool			skip_extra_atr_parsing;
 	bool			skip_t1_command_retries;
 	bool			skip_setting_ifsc;
@@ -1119,10 +1117,6 @@ struct s_reader  									//contains device info, reader info and card info
 	CECSP			cacheex; //CacheEx Settings
 #endif
 	int32_t			typ;
-#ifdef WITH_COOLAPI
-	int32_t			cool_timeout_init; // read/transmit timeout while init for coolstream internal reader
-	int32_t			cool_timeout_after_init; // read/transmit timeout after init for coolstream internal reader
-#endif
 	char			label[64];
 #ifdef WEBIF
 	char			*description;

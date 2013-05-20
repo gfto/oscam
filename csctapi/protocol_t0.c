@@ -338,7 +338,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 {
 	unsigned char buffer[PROTOCOL_T0_MAX_SHORT_RESPONSE];
 	unsigned char *data;
-	int32_t Lc, Le, sent, recved;
+	int32_t Lc, Le, sent, recved, expectedlen;
 	int32_t nulls, cmd_case;
 	int32_t timeout;
 	*lr = 0; //in case of error this will be returned
@@ -348,11 +348,16 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 		case APDU_CASE_2S:
 			Lc = command[4];
 			Le = 0;
+			expectedlen = 1;
 			data = command + 5;	
 			break;
 		case APDU_CASE_3S:
 			Lc = 0;
 			Le = command[4];
+			if (!Le)
+				expectedlen = 2;
+			else
+				expectedlen = 1+Le+2;
 			data = NULL;	
 			break;
 		default:
@@ -360,7 +365,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 			return ERROR;
 	}
 	timeout = ICC_Async_GetTimings (reader, reader->char_delay); // we are going to send: char delay timeout
-	if (ICC_Async_Transmit (reader, 5, command, 0, timeout)!=OK) return ERROR;		//Send header bytes
+	if (ICC_Async_Transmit (reader, 5, expectedlen, command, 0, timeout)!=OK) return ERROR;		//Send header bytes
 	
 	/* Initialise counters */
 	nulls = 0;
@@ -412,7 +417,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 					return ERROR;
 				}
 				timeout = ICC_Async_GetTimings (reader, reader->char_delay); // we are going to send: char delay timeout
-				if(ICC_Async_Transmit(reader, MAX (Lc - sent, 0), data + sent, 0, timeout)!=OK) return ERROR; /* Send remaining data bytes */
+				if(ICC_Async_Transmit(reader, MAX (Lc - sent, 0), 2, data + sent, 0, timeout)!=OK) return ERROR; /* Send remaining data bytes */
 				sent = Lc;
 				continue;
 			}
@@ -445,7 +450,7 @@ static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char 
 					return ERROR;
 				}
 				timeout = ICC_Async_GetTimings (reader, reader->char_delay); // we are going to send: char delay timeout
-				if(ICC_Async_Transmit (reader, 1, data + sent, 0, timeout)!=OK) return ERROR;	//Send next data byte
+				if(ICC_Async_Transmit (reader, 1, 1, data + sent, 0, timeout)!=OK) return ERROR;	//Send next data byte
 				sent++;
 				continue;
 			}
@@ -500,7 +505,7 @@ int32_t Protocol_T14_ExchangeTPDU (struct s_reader *reader, unsigned char * cmd_
 		
 	/* Send apdu */
 	timeout = ICC_Async_GetTimings (reader, reader->char_delay); // we are going to send: char delay timeout
-	if(ICC_Async_Transmit (reader, cmd_len+2, buffer, 0, timeout)!=OK) return ERROR;//send apdu
+	if(ICC_Async_Transmit (reader, cmd_len+2, 0, buffer, 0, timeout)!=OK) return ERROR;//send apdu
 	if(cmd_raw[0] == 0x02 && cmd_raw[1] == 0x09) cs_sleepms(2500); //FIXME why wait? -> needed for init on overclocked T14 cards
 	
 	timeout = ICC_Async_GetTimings (reader, reader->read_timeout); // we are going to receive: WWT timeout

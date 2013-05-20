@@ -38,7 +38,7 @@ static int32_t stapi_reset(struct s_reader *reader, ATR *atr) {
 	return STReader_Reset(crdr_data->stapi_handle, atr);
 }
 
-static int32_t stapi_transmit(struct s_reader *reader, unsigned char *sent, uint32_t size, uint32_t delay, uint32_t timeout) { // delay + timeout not in use (yet)!
+static int32_t stapi_transmit(struct s_reader *reader, unsigned char *sent, uint32_t size, uint32_t UNUSED(expectedlen), uint32_t delay, uint32_t timeout) { // delay + timeout not in use (yet)!
 	(void) delay; // delay not in use (yet)!
 	(void) timeout; // timeout not in use (yet)!
 	struct stapi_data *crdr_data = reader->crdr_data;

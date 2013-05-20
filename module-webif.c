@@ -1305,11 +1305,6 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	tpl_addVar(vars, TPLADD, "ARCHECKED", (rdr->cacheex.allow_request == 1) ? "checked" : "");
 #endif
 
-#ifdef WITH_COOLAPI
-	tpl_printf(vars, TPLADD, "COOLTIMEOUTINIT", "%d", rdr->cool_timeout_init);
-	tpl_printf(vars, TPLADD, "COOLTIMEOUTAFTERINIT", "%d", rdr->cool_timeout_after_init);
-#endif
-
 	// BoxID
 	if(rdr->boxid)
 		tpl_printf(vars, TPLADD, "BOXID", "%08X", rdr->boxid);

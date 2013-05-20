@@ -513,7 +513,7 @@ bool IO_Serial_Write (struct s_reader * reader, uint32_t delay, uint32_t timeout
 
 #define MAX_TRANSMIT 255
 
-int32_t IO_Serial_Transmit(struct s_reader * reader, unsigned char * buffer, uint32_t size, uint32_t delay, uint32_t timeout)
+int32_t IO_Serial_Transmit(struct s_reader * reader, unsigned char * buffer, uint32_t size, uint32_t UNUSED(expectedlen), uint32_t delay, uint32_t timeout)
 {
 	uint32_t sent, to_send;
 	for (sent = 0; sent < size; sent = sent + to_send) {

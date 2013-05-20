@@ -115,7 +115,6 @@ CONFIGMENUMONITOR             config/menu_monitor.html                          
 CONFIGMENUWEBIF               config/menu_webif.html
 CONFIGMENULCD                 config/menu_lcd.html                                        LCDSUPPORT
 ENABLELEDBIT                  config/global_enableledbit.html                             LEDSUPPORT
-READERCOOLSTREAMBIT           readerconfig/readerconfig_hwreader_coolstreambit.html       WITH_COOLAPI
 DEBUGSELECT                   status/status_sdebug.html                                   WITH_DEBUG
 CONFIGMENULB                  config/menu_loadbalancer.html                               WITH_LB
 CONFIGLOADBALANCER            config/loadbalancer.html                                    WITH_LB

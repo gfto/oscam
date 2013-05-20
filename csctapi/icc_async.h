@@ -44,11 +44,10 @@ int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * has_card);
 
 /* Operations */
 int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *cmd, uint16_t lc, unsigned char *rsp, uint16_t *lr);
-int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, unsigned char * buffer, uint32_t delay, uint32_t timeout);
+int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, uint32_t expectedlen, unsigned char * buffer, uint32_t delay, uint32_t timeout);
 int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, unsigned char * buffer, uint32_t delay, uint32_t timeout);
 
 void ICC_Async_DisplayMsg(struct s_reader *, char *msg);
-void ICC_Set_Transmit_Timeout(struct s_reader *);
 int32_t ICC_Async_Reset(struct s_reader *, struct s_ATR *,
 	int32_t (*rdr_activate_card)(struct s_reader *, struct s_ATR *, uint16_t deprecated),
 	int32_t (*rdr_get_cardsystem)(struct s_reader *, struct s_ATR *)

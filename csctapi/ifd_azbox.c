@@ -92,7 +92,7 @@ static int32_t Azbox_Reset(struct s_reader *reader, ATR *atr)
    return OK;
 }
 
-static int32_t Azbox_Transmit(struct s_reader *reader, unsigned char *buffer, uint32_t size, uint32_t UNUSED(delay), uint32_t UNUSED(timeout))
+static int32_t Azbox_Transmit(struct s_reader *reader, unsigned char *buffer, uint32_t size, uint32_t UNUSED(expectedlen), uint32_t UNUSED(delay), uint32_t UNUSED(timeout))
 {
   if (write(reader->handle, buffer, size) != (ssize_t)size)
     return 0;

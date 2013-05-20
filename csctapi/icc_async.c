@@ -227,16 +227,15 @@ int32_t ICC_Async_GetTimings (struct s_reader * reader, uint32_t wait_etu)
 {
 	int32_t timeout = ETU_to_us(reader, wait_etu);
 	rdr_debug_mask(reader, D_IFD, "Setting timeout to %i ETU (%d us)", wait_etu, timeout );
-	if (reader->crdr.timings_in_etu){
-		return wait_etu;
-		
-	}
-	else return timeout;
+	return timeout;
 }
 
-int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, unsigned char * data, uint32_t delay, uint32_t timeout)
+int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, uint32_t expectedlen, unsigned char * data, uint32_t delay, uint32_t timeout)
 {
-	rdr_debug_mask(reader, D_IFD, "Transmit size %d bytes, delay %d us, timeout=%d us",size, delay, timeout);
+	if (expectedlen) //expectedlen = 0 means expected len is unknown
+		rdr_debug_mask(reader, D_IFD, "Transmit size %d bytes, expected len %d bytes, delay %d us, timeout=%d us", size, expectedlen, delay, timeout);
+	else
+		rdr_debug_mask(reader, D_IFD, "Transmit size %d bytes, delay %d us, timeout=%d us", size, expectedlen, delay, timeout);
 	rdr_ddump_mask(reader, D_IFD, data, size, "Transmit:");
 	unsigned char *sent = data;
 
@@ -244,7 +243,7 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, unsigned cha
 		ICC_Async_InvertBuffer (size, sent);
 	}
 
-	call(reader->crdr.transmit(reader, sent, size, delay, timeout));
+	call(reader->crdr.transmit(reader, sent, size, expectedlen, delay, timeout));
 	rdr_debug_mask(reader, D_IFD, "Transmit succesful");
 	if (reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.need_inverse) {
 		// revert inversion cause the code in protocol_t0 is accessing buffer after transmit
@@ -276,12 +275,6 @@ int32_t ICC_Async_Close (struct s_reader *reader)
 void ICC_Async_DisplayMsg(struct s_reader *reader, char *msg) {
 	if (reader->crdr.display_msg)
 		reader->crdr.display_msg(reader, msg);
-}
-
-void ICC_Set_Transmit_Timeout(struct s_reader *reader)
-{
-	if (reader->crdr.set_transmit_timeout)
-		reader->crdr.set_transmit_timeout(reader);
 }
 
 int32_t ICC_Async_Reset(struct s_reader *reader, struct s_ATR *atr,
@@ -517,7 +510,7 @@ static int32_t PPS_Exchange (struct s_reader * reader, unsigned char * params, u
 	}
 
 	/* Send PPS request */
-	call (ICC_Async_Transmit (reader, len_request, params, 0, 1000000));
+	call (ICC_Async_Transmit (reader, len_request, len_request, params, 0, 1000000));
 
 	/* Get PPS confirm */
 	call (ICC_Async_Receive (reader, 2, confirm, 0, 1000000));
