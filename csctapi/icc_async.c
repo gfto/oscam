@@ -235,7 +235,7 @@ int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, uint32_t exp
 	if (expectedlen) //expectedlen = 0 means expected len is unknown
 		rdr_debug_mask(reader, D_IFD, "Transmit size %d bytes, expected len %d bytes, delay %d us, timeout=%d us", size, expectedlen, delay, timeout);
 	else
-		rdr_debug_mask(reader, D_IFD, "Transmit size %d bytes, delay %d us, timeout=%d us", size, expectedlen, delay, timeout);
+		rdr_debug_mask(reader, D_IFD, "Transmit size %d bytes, delay %d us, timeout=%d us", size, delay, timeout);
 	rdr_ddump_mask(reader, D_IFD, data, size, "Transmit:");
 	unsigned char *sent = data;
 

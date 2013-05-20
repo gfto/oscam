@@ -286,7 +286,7 @@ static int32_t Cool_SetProtocol (struct s_reader *reader, unsigned char *params,
 	pps[0] = params[1]; //PPS0
 	pps[1] = params[2]; //PPS1
 
-	int32_t ret = cnxt_smc_start_pps(crdr_data->handle, pps, &response, &len, 1); 
+	int32_t ret = cnxt_smc_start_pps(crdr_data->handle, pps, response, &len, 1); 
 	coolapi_check_error("cnxt_smc_start_pps", ret);
 	if (ret)
 		return ERROR;
