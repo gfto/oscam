@@ -408,6 +408,7 @@ static READER_STAT *get_add_stat(struct s_reader *rdr, STAT_QUERY *q)
 			s->fail_factor=0;
 			s->ecm_count_consecutively = 0;
 			s->ecm_count=0;
+			s->knocked=0;
 			ll_append(rdr->lb_stat, s);
 		}
 	}
@@ -494,10 +495,8 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 		s->rc = E_FOUND;
 		s->ecm_count++;
 		s->ecm_count_consecutively++;
-
-		//if(s->ecm_count_consecutively>=cfg.lb_min_ecmcount) //we reset fail_factor only when we have lb_min_ecmcount found consecutively!
-			s->fail_factor = 0;
-
+		s->knocked=0;
+		s->fail_factor = 0;
 
 		//FASTEST READER:
 		s->time_idx++;
@@ -535,7 +534,6 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 		}
 
 		s->rc = rc;
-		//s->ecm_count_consecutively=0;
 
 		//No more special handler for timeout, because in stat_get_best_reader we are sure to reopen readers if "NO MATCHING READER FOUND"
 	}
@@ -793,10 +791,12 @@ static void try_open_blocked_readers(ECM_REQUEST *er, STAT_QUERY *q, int32_t *ma
 		s = get_stat(rdr, q);
 		if(!s) continue;
 
-		//if force_reopen we must active the reader
-		if(s->rc != E_FOUND && (*force_reopen)){
-			cs_debug_mask(D_LB, "loadbalancer: reader %s force reopening! --> ACTIVE", rdr->label);
+		//if force_reopen we must active the "valid" reader
+		if(s->rc != E_FOUND && (*force_reopen) && s->ecm_count>=cfg.lb_min_ecmcount && !s->knocked){
+			cs_debug_mask(D_LB, "loadbalancer: knock reader %s and reset fail_factor! --> ACTIVE", rdr->label);
 			ea->status |= READER_ACTIVE;
+			s->knocked=1;
+			s->fail_factor=0;
 			continue;
 		}
 
@@ -1387,8 +1387,8 @@ void stat_get_best_reader(ECM_REQUEST *er)
 					reset_ecmcount_consecutively_reader(s,rdr); //so it can be re evaluated again for lb_min_ecmcount!
 				 }
 
-				//reset avg time all blocked readers. We active them by force_reopen=1
-				if(s && s->rc != E_FOUND){
+				//reset avg time all blocked "valid" readers. We active them after by force_reopen=1
+				if(s && s->rc != E_FOUND && s->ecm_count>=cfg.lb_min_ecmcount && !s->knocked){
 					reset_avgtime_reader(s,rdr);
 					reset_ecmcount_consecutively_reader(s,rdr); //so it can be re evaluated again for lb_min_ecmcount!
 				}

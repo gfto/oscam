@@ -381,7 +381,7 @@ typedef unsigned char uchar;
 #define NO_CARD        4
 
 // moved from stats
-#define DEFAULT_REOPEN_SECONDS 900
+#define DEFAULT_REOPEN_SECONDS 30
 #define DEFAULT_MIN_ECM_COUNT 5
 #define DEFAULT_MAX_ECM_COUNT 500
 #define DEFAULT_NBEST 1
@@ -1732,6 +1732,8 @@ typedef struct reader_stat_t
 	int32_t			time_avg;
 	int32_t			time_stat[LB_MAX_STAT_TIME];
 	int32_t			time_idx;
+
+	int8_t			knocked;
 
 	int32_t			fail_factor;
 	time_t			time_last_inc_failfactor;
