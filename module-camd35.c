@@ -34,7 +34,7 @@
 
 #define REQ_SIZE	584		// 512 + 20 + 0x34
 
-static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen)
+static int32_t __camd35_send(struct s_client *cl, uchar *buf, int32_t buflen, int answer_awaited )
 {
 	int32_t l;
 	unsigned char rbuf[REQ_SIZE+15+4], *sbuf = rbuf + 4;
@@ -67,12 +67,24 @@ static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen)
 		}
 	}
 	if (status != -1){
-		if(cl->reader){
+		if(cl->reader && answer_awaited ){
 			cl->reader->last_s = time((time_t *) 0);
 		}
 		cl->last = time((time_t *) 0);
 	}
 	return status;
+}
+
+static int32_t camd35_send(struct s_client *cl, uchar *buf, int32_t buflen )
+{
+	// send command and set sending time because we await response
+	return __camd35_send( cl, buf, buflen, 1 );
+}
+
+static int32_t camd35_send_without_timeout(struct s_client *cl, uchar *buf, int32_t buflen )
+{
+	// send command and do NOT set sending time because we DON'T await response
+	return __camd35_send( cl, buf, buflen, 0 );
 }
 
 static int32_t camd35_auth_client(struct s_client *cl, uchar *ucrc)
@@ -411,7 +423,7 @@ static int32_t tcp_connect(struct s_client *cl)
 		cl->pfd = cl->udp_fd = handle;
 	}
 	if (!cl->udp_fd) return(0); // Check if client has no handle -> error
-	if (cl->reader->last_s-cl->reader->last_g > cl->reader->tcp_rto) { // check if client reached timeout, if so disconnect client
+	if (cl->reader->tcp_rto && (cl->reader->last_s-cl->reader->last_g > cl->reader->tcp_rto)) { // check if client reached timeout, if so disconnect client
 		//cs_log("last_s:%d, last_g:%d, tcp_rto:%d, diff:%d",(int)cl->reader->last_s,(int)cl->reader->last_g,(int)cl->reader->tcp_rto,
 		//	(int)(cl->reader->last_s - cl->reader->last_g));
 		network_tcp_connection_close(cl->reader, "rto");
@@ -810,7 +822,7 @@ static int32_t camd35_send_emm(EMM_PACKET *ep)
 	memcpy(buf+12, ep->provid, 4);
 	memcpy(buf+20, ep->emm, ep->emmlen);
 
-	return((camd35_send(cl, buf, 0)<1) ? 0 : 1);
+	return((camd35_send_without_timeout(cl, buf, 0)<1) ? 0 : 1);
 }
 
 static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t rc2 __attribute__((unused)))
