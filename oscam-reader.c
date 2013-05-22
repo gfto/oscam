@@ -760,6 +760,8 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 
 		cl->sidtabs.ok = rdr->sidtabs.ok;
 		cl->sidtabs.no = rdr->sidtabs.no;
+		cl->lb_sidtabs.ok = rdr->lb_sidtabs.ok;
+		cl->lb_sidtabs.no = rdr->lb_sidtabs.no;
 		cl->grp = rdr->grp;
 
 		rdr->client = cl;

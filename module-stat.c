@@ -436,13 +436,6 @@ static int32_t get_reopen_seconds(READER_STAT *s)
  */
 static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t rc)
 {
-	if (!rdr || !er || !cfg.lb_mode ||!er->ecmlen || !er->client)
-		return;
-
-	struct s_client *cl = rdr->client;
-	if (!cl)
-		return;
-
 	//inc ecm_count if found, drop to 0 if not found:
 	// rc codes:
 	// 0 = found       +
@@ -465,12 +458,15 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 	//        - = causes loadbalancer to block this reader for this caid/prov/sid
 
 
-	//ignore too old ecms
-	if ((uint32_t)ecm_time >= 3*cfg.ctimeout) 
+	if (!rdr || !er || !cfg.lb_mode ||!er->ecmlen || !er->client)
 		return;
 
-	//IGNORE fails when reader has positive services defined! See ticket #3310,#3311
-	if(rc>=E_NOTFOUND && has_srvid(cl, er)){
+	struct s_client *cl = rdr->client;
+	if (!cl)
+		return;
+
+	//IGNORE fails when reader has positive services defined in new lb_whitelist_services parameter! See ticket #3310,#3311
+	if(rc>=E_NOTFOUND && has_lb_srvid(cl, er)){
 #ifdef WITH_DEBUG
 		if (rc >= E_FOUND && (D_LB & cs_dblevel)) {
 			char buf[ECM_FMT_LEN];
@@ -481,6 +477,10 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 #endif
 		return;
 	}
+
+	//ignore too old ecms
+	if ((uint32_t)ecm_time >= 3*cfg.ctimeout) 
+		return;
 
 	STAT_QUERY q;
 	get_stat_query(er, &q);
@@ -528,14 +528,15 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 	else if (rc == E_NOTFOUND||rc == E_INVALID||rc == E_TIMEOUT||rc == E_FAKE) { //not found / invalid / timeout /fake
 
 		//due to force_reopen, a reader could be reopened a lot of times consecutively, so we inc fail_factor only when it reaches reopen_seconds, for not blocking it too much!
-		if(s->rc==E_FOUND || now>=(s->time_last_inc_failfactor+get_reopen_seconds(s))){
+		//if(s->rc==E_FOUND || now>=(s->time_last_inc_failfactor+get_reopen_seconds(s))){
+
 			inc_fail(s);
 			s->time_last_inc_failfactor=now;
-		}
+		//}
 
 		s->rc = rc;
 
-		//No more special handler for timeout, because in stat_get_best_reader we are sure to reopen readers if "NO MATCHING READER FOUND"
+		//No more special handler for timeout, because in stat_get_best_reader we are sure to reopen readers at least on more time if "NO MATCHING READER FOUND"
 	}
 	else
 	{
@@ -1326,7 +1327,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 			continue;
 		}
 
-		//active readers with no ecm_count_consecutively reached. It is usefull at reopen reader after block and at oscam restart, for re-evaluated avg time!
+		//active readers with no ecm_count_consecutively reached. It is usefull at reopen reader after retry_limiti reached and at oscam restart, for re-evaluated avg time!
 		if (s->rc == E_FOUND && s->ecm_count_consecutively < cfg.lb_min_ecmcount) {
 			cs_debug_mask(D_LB, "loadbalancer: reader %s needs to reach ecm_count_consecutively(%d) for re-evaluating avg-time, now %d --> ACTIVE", rdr->label, cfg.lb_min_ecmcount, s->ecm_count_consecutively);
 			ea->status |= READER_ACTIVE;
@@ -1351,7 +1352,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 
 	//no reader active --> force to reopen matching readers
 	if (reader_active==0){
-		cs_debug_mask(D_LB, "loadbalancer: NO VALID MATCHING READER FOUND, force reopening all blocked readers!");
+		cs_debug_mask(D_LB, "loadbalancer: NO VALID MATCHING READER FOUND, force reopening (knock) all valid blocked readers!");
 		force_reopen=1;
 
 
@@ -1399,7 +1400,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 	}
 
 
-	//try to reopen max_reopen blocked readers (readers with last ecm not "e_found"); if force_reopen=1, force reopen ALL blocked readers!
+	//try to reopen max_reopen blocked readers (readers with last ecm not "e_found"); if force_reopen=1, force reopen valid blocked readers!
 	try_open_blocked_readers(er, &q, &max_reopen, &force_reopen);
 
 	cs_debug_mask(D_LB, "loadbalancer: --------------------------------------------");

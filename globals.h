@@ -905,6 +905,7 @@ struct s_client {
 	CAIDTAB			ctab;
 	TUNTAB			ttab;
 	SIDTABS			sidtabs;
+	SIDTABS			lb_sidtabs;
 	int8_t			typ;        		// first s_client is type s=starting (master) thread; type r = physical reader, type p = proxy reader both always have 1 s_reader struct allocated; type c = client (user logging in into oscam) type m = monitor type h = http server a = anticascader
 	uint8_t			module_idx;
 	uint16_t		last_srvid;
@@ -1144,6 +1145,7 @@ struct s_reader  									//contains device info, reader info and card info
 	int8_t			card_atr_length;				// length of ATR
 	int32_t			atrlen;
 	SIDTABS			sidtabs;
+	SIDTABS			lb_sidtabs;
 	uchar			hexserial[8];
 	int32_t			nprov;
 	uchar			prid[CS_MAXPROV][8];

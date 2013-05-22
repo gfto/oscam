@@ -331,6 +331,14 @@ static void reader_services_fn(const char *token, char *value, void *setting, FI
 	}
 }
 
+static void reader_lb_services_fn(const char *token, char *value, void *setting, FILE *f) {
+	services_fn(token, value, setting, f);
+	if (value) {
+		struct s_reader *rdr = container_of(setting, struct s_reader, lb_sidtabs);
+		rdr->changes_since_shareupdate = 1;
+	}
+}
+
 static void reader_caid_fn(const char *token, char *value, void *setting, FILE *f) {
 	check_caidtab_fn(token, value, setting, f);
 	if (value) {
@@ -739,6 +747,7 @@ static const struct config_list reader_opts[] = {
 #endif
 	DEF_OPT_STR("readnano"				, OFS(emmfile),					NULL ),
 	DEF_OPT_FUNC("services"				, OFS(sidtabs),					reader_services_fn ),
+	DEF_OPT_FUNC("lb_whitelist_services", OFS(lb_sidtabs),				reader_lb_services_fn ),
 	DEF_OPT_INT32("inactivitytimeout"	, OFS(tcp_ito),					DEFAULT_INACTIVITYTIMEOUT ),
 	DEF_OPT_INT32("reconnecttimeout"	, OFS(tcp_rto),					DEFAULT_TCP_RECONNECT_TIMEOUT ),
 	DEF_OPT_INT32("resetcycle"			, OFS(resetcycle),				0 ),

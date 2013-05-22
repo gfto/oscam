@@ -316,6 +316,24 @@ int32_t has_srvid(struct s_client *cl, ECM_REQUEST *er) {
 }
 
 
+int32_t has_lb_srvid(struct s_client *cl, ECM_REQUEST *er) {
+  if (!cl->lb_sidtabs.ok)
+    return 0;
+
+  int32_t nr;
+  SIDTAB *sidtab;
+
+  for (nr=0, sidtab=cfg.sidtab; sidtab; sidtab=sidtab->next, nr++)
+    if (sidtab->num_srvid)
+    {
+      if ((cl->lb_sidtabs.ok&((SIDTABBITS)1<<nr)) &&
+          (chk_srvid_match(er, sidtab)))
+        return 1;
+    }
+  return 0;
+}
+
+
 int32_t chk_srvid_match_by_caid_prov(uint16_t caid, uint32_t provid, SIDTAB *sidtab)
 {
   int32_t i, rc=0;

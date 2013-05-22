@@ -11,6 +11,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot);
 int32_t chk_srvid_match(ECM_REQUEST *er, SIDTAB *sidtab);
 int32_t chk_srvid(struct s_client *cl, ECM_REQUEST *er);
 int32_t has_srvid(struct s_client *cl, ECM_REQUEST *er);
+int32_t has_lb_srvid(struct s_client *cl, ECM_REQUEST *er);
 int32_t chk_srvid_match_by_caid_prov(uint16_t caid, uint32_t provid, SIDTAB *sidtab);
 int32_t chk_srvid_by_caid_prov(struct s_client *cl, uint16_t caid, uint32_t provid);
 int32_t chk_srvid_by_caid_prov_rdr(struct s_reader *rdr, uint16_t caid, uint32_t provid);
