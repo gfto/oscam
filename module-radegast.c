@@ -23,13 +23,10 @@ static int32_t radegast_recv(struct s_client *client, uchar *buf, int32_t l)
     if ((n=recv(client->pfd, buf, l, 0))>0) {
       cs_ddump_mask(D_CLIENT, buf, n, "radegast: received %d bytes from %s", n, remote_txt());
       client->last = time((time_t *) 0);
-
-      if (buf[0] == 2) {  // dcw received
-        if (buf[3] != 0x10) {  // dcw ok
-          cs_log("radegast: no dcw");
-          n = -1;
-        }
-      }
+      if ((buf[0] == 0x02)&&(buf[1] == 0x12) && (buf[2] == 0x05)&&(buf[3] == 0x10)) return(n);  // dcw received
+      else if ((buf[0] == 0x02)&&(buf[1] == 0x02) && (buf[2] == 0x04)&&(buf[3] == 0x00)) return(n);  // dcw no found
+      else if ((buf[0] == 0x81)&&(buf[1] == 0x00)) return(n);  // cmd unknown
+      else n = -1;// no cmd radegast disconnect
     }
   }
   return(n);
@@ -209,11 +206,11 @@ int32_t radegast_cli_init(struct s_client *cl)
 {
   int32_t handle;
 
-  cs_log("radegast: proxy %s:%d (fd=%d)",
-  cl->reader->device, cl->reader->r_port, cl->udp_fd);
-
   handle = network_tcp_connection_open(cl->reader);
   if(handle < 0) return -1;
+
+  cs_log("radegast: proxy %s:%d (fd=%d)",
+  cl->reader->device, cl->reader->r_port, cl->udp_fd);
 
   cl->reader->tcp_connected = 2;
   cl->reader->card_status = CARD_INSERTED;
@@ -236,6 +233,41 @@ static void radegast_server_init(struct s_client *cl) {
 	return;
 }
 
+static int32_t radegast_connect(void)
+{
+  struct s_client *cl = cur_client();
+
+  if (cl->reader->tcp_connected < 2 && radegast_cli_init(cl) < 0)
+    return 0;
+
+  if (!cl->udp_fd)
+    return 0;
+
+  return 1;
+}
+
+void radegast_idle(void) {
+	struct s_client *client = cur_client();
+	struct s_reader *rdr = client->reader;
+
+	if (!rdr) return;
+
+	if (rdr->tcp_ito > 0) {
+		// inactivitytimeout > 0 enables protocol
+		time_t now;
+		int32_t time_diff;
+		time(&now);
+		time_diff = abs(now - rdr->last_s);
+		if (time_diff>(rdr->tcp_ito)) {
+				network_tcp_connection_close(client->reader, "inactivity");
+		}
+	}
+	else if (rdr->tcp_ito == -1) {
+		// idle reconnect
+		radegast_connect();
+	}
+}
+
 void module_radegast(struct s_module *ph)
 {
   ph->ptab.nports = 1;
@@ -248,6 +280,7 @@ void module_radegast(struct s_module *ph)
   IP_ASSIGN(ph->s_ip, cfg.rad_srvip);
   ph->s_handler=radegast_server;
   ph->s_init=radegast_server_init;
+  ph->c_idle = radegast_idle;
   ph->recv=radegast_recv;
   ph->send_dcw=radegast_send_dcw;
   ph->c_init=radegast_cli_init;
