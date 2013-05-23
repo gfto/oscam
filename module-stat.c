@@ -406,7 +406,6 @@ static READER_STAT *get_add_stat(struct s_reader *rdr, STAT_QUERY *q)
 			s->last_received = time(NULL);
 			s->time_last_inc_failfactor=time(NULL);
 			s->fail_factor=0;
-			s->ecm_count_consecutively = 0;
 			s->ecm_count=0;
 			s->knocked=0;
 			ll_append(rdr->lb_stat, s);
@@ -468,7 +467,7 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 	//IGNORE fails when reader has positive services defined in new lb_whitelist_services parameter! See ticket #3310,#3311
 	if(rc>=E_NOTFOUND && has_lb_srvid(cl, er)){
 #ifdef WITH_DEBUG
-		if (rc >= E_FOUND && (D_LB & cs_dblevel)) {
+		if ((D_LB & cs_dblevel)) {
 			char buf[ECM_FMT_LEN];
 			format_ecm(er, buf, ECM_FMT_LEN);
 			cs_debug_mask(D_LB, "loadbalancer: NOT adding stat (blocking reader) because positive srvid for reader %s: rc %d %s time %dms",
@@ -494,7 +493,6 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 
 		s->rc = E_FOUND;
 		s->ecm_count++;
-		s->ecm_count_consecutively++;
 		s->knocked=0;
 		s->fail_factor = 0;
 
@@ -527,13 +525,8 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 	}
 	else if (rc == E_NOTFOUND||rc == E_INVALID||rc == E_TIMEOUT||rc == E_FAKE) { //not found / invalid / timeout /fake
 
-		//due to force_reopen, a reader could be reopened a lot of times consecutively, so we inc fail_factor only when it reaches reopen_seconds, for not blocking it too much!
-		//if(s->rc==E_FOUND || now>=(s->time_last_inc_failfactor+get_reopen_seconds(s))){
-
-			inc_fail(s);
-			s->time_last_inc_failfactor=now;
-		//}
-
+		inc_fail(s);
+		s->time_last_inc_failfactor=now;
 		s->rc = rc;
 
 		//No more special handler for timeout, because in stat_get_best_reader we are sure to reopen readers at least on more time if "NO MATCHING READER FOUND"
@@ -745,23 +738,10 @@ static void reset_ecmcount_reader(READER_STAT *s, struct s_reader *rdr)
 	if (rdr->lb_stat && rdr->client) {
 		if (s){
 			s->ecm_count=0;
-			s->ecm_count_consecutively=0;
 		}
 	}
 	cs_readunlock(&rdr->lb_stat_lock);
 }
-
-static void reset_ecmcount_consecutively_reader(READER_STAT *s, struct s_reader *rdr)
-{
-	cs_readlock(&rdr->lb_stat_lock);
-	if (rdr->lb_stat && rdr->client) {
-		if (s){
-			s->ecm_count_consecutively=0;
-		}
-	}
-	cs_readunlock(&rdr->lb_stat_lock);
-}
-
 
 static void reset_avgtime_reader(READER_STAT *s, struct s_reader *rdr)
 {
@@ -1187,7 +1167,6 @@ void stat_get_best_reader(ECM_REQUEST *er)
 
 			if(s && s->rc == E_FOUND
 			   && s->ecm_count >= cfg.lb_min_ecmcount
-			   && s->ecm_count_consecutively>=cfg.lb_min_ecmcount
 			   && (s->ecm_count <= cfg.lb_max_ecmcount || s->time_avg <= retrylimit)
 			  ){
 
@@ -1209,12 +1188,25 @@ void stat_get_best_reader(ECM_REQUEST *er)
 
 						current = current * weight / 100;
 
-						if (!current)
-						        current = -1;
+						if (!current) current = -1;
+
+						//handle retrylimit
+						if(s->time_avg>retrylimit)
+							current=-1;  //set lowest value for reader with time-avg>retrylimit
+						else
+							current=current-1;  //so when all have same current, it prioritizes the one with s->time_avg<=retrylimit! This avoid a loop!
+
 						break;
 
 					case LB_LOWEST_USAGELEVEL:
 						current = rdr->lb_usagelevel * 100 / weight;
+
+						//handle retrylimit
+						if(s->time_avg>retrylimit)
+							current=1000;  //set lowest value for reader with time-avg>retrylimit
+						else
+							current=current-1; //so when all reaches retrylimit (all have lb_value=1000) or all have same current, it prioritizes the one with s->time_avg<=retrylimit! This avoid a loop!
+
 						break;
 				}
 
@@ -1231,7 +1223,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 				}
 
 
-				cs_debug_mask(D_LB, "loadbalancer: reader %s lbvalue = %d", rdr->label, abs(current));
+				cs_debug_mask(D_LB, "loadbalancer: reader %s lbvalue = %d (time-avg %d)", rdr->label, abs(current), s->time_avg);
 
 #if defined(WEBIF) || defined(LCDSUPPORT)
 				rdr->lbvalue = abs(current);
@@ -1327,14 +1319,6 @@ void stat_get_best_reader(ECM_REQUEST *er)
 			continue;
 		}
 
-		//active readers with no ecm_count_consecutively reached. It is usefull at reopen reader after retry_limiti reached and at oscam restart, for re-evaluated avg time!
-		if (s->rc == E_FOUND && s->ecm_count_consecutively < cfg.lb_min_ecmcount) {
-			cs_debug_mask(D_LB, "loadbalancer: reader %s needs to reach ecm_count_consecutively(%d) for re-evaluating avg-time, now %d --> ACTIVE", rdr->label, cfg.lb_min_ecmcount, s->ecm_count_consecutively);
-			ea->status |= READER_ACTIVE;
-			reader_active++;
-			continue;
-		}
-
 		//reset stats and active readers reach cfg.lb_max_ecmcount and time_avg > retrylimit.
 		if (s->rc == E_FOUND && s->ecm_count > cfg.lb_max_ecmcount && s->time_avg > retrylimit) {
 			cs_debug_mask(D_LB, "loadbalancer: reader %s reaches max ecms (%d) and time_avg>retrylimit, resetting statistics --> ACTIVE", rdr->label, cfg.lb_max_ecmcount);
@@ -1377,7 +1361,6 @@ void stat_get_best_reader(ECM_REQUEST *er)
 				//reset avg time and ACTIVE all valid lbvalue readers
 				if(s && s->rc == E_FOUND
 				   && s->ecm_count >= cfg.lb_min_ecmcount
-				   && s->ecm_count_consecutively>=cfg.lb_min_ecmcount
 				   && (s->ecm_count <= cfg.lb_max_ecmcount || s->time_avg <= retrylimit)
 				  ){
 					if( (ea->status&READER_FALLBACK) ) cs_debug_mask(D_LB, "loadbalancer: reader %s selected as FALLBACK --> ACTIVE", rdr->label);
@@ -1385,13 +1368,11 @@ void stat_get_best_reader(ECM_REQUEST *er)
 					ea->status &= ~(READER_ACTIVE|READER_FALLBACK); //remove active and fallback
 					ea->status |= READER_ACTIVE; //add active
 					reset_avgtime_reader(s,rdr);
-					reset_ecmcount_consecutively_reader(s,rdr); //so it can be re evaluated again for lb_min_ecmcount!
 				 }
 
-				//reset avg time all blocked "valid" readers. We active them after by force_reopen=1
+				//reset avg time all blocked "valid" readers. We active them by force_reopen=1
 				if(s && s->rc != E_FOUND && s->ecm_count>=cfg.lb_min_ecmcount && !s->knocked){
 					reset_avgtime_reader(s,rdr);
-					reset_ecmcount_consecutively_reader(s,rdr); //so it can be re evaluated again for lb_min_ecmcount!
 				}
 
 			}

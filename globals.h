@@ -1730,7 +1730,6 @@ typedef struct reader_stat_t
 	time_t			last_received;
 
 	int32_t			ecm_count;
-	int32_t			ecm_count_consecutively;
 	int32_t			time_avg;
 	int32_t			time_stat[LB_MAX_STAT_TIME];
 	int32_t			time_idx;
