@@ -71,9 +71,10 @@ static uint32_t get_subid(ECM_REQUEST *er)
 	uint32_t id = 0;
 	switch (er->caid>>8)
 	{
-		case 0x01: id = b2i(2, er->ecm+7); break;
-		case 0x06: id = b2i(2, er->ecm+6); break;
-		case 0x09: id = b2i(2, er->ecm+11); break;
+		case 0x01: id = b2i(2, er->ecm+7); break; // seca
+		case 0x05: id = b2i(2, er->ecm+8); break; // viaccess
+		case 0x06: id = b2i(2, er->ecm+6); break; // irdeto
+		case 0x09: id = b2i(2, er->ecm+11); break; // videoguard
 		case 0x4A: // DRE-Crypt, Bulcrypt, others?
 			if (er->caid != 0x4AEE) // Bulcrypt
 				id = er->ecm[7];
