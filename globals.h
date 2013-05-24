@@ -1582,9 +1582,8 @@ struct s_config
 #endif
 #ifdef MODULE_GBOX
 	char			*gbox_hostname;
-	unsigned long	gbox_card[CS_GBOX_MAX_LOCAL_CARDS]; // gbox list of local cards
-	int32_t			gbox_local_cards_num;               // number of local card gbox cards
 	int32_t			gbox_reconnect;
+	int32_t			gbox_port;
 #endif
 #ifdef MODULE_SERIAL
 	char			*ser_device;
