@@ -313,6 +313,7 @@ static const struct config_list account_opts[] = {
 #endif
 #ifdef WITH_LB
 	DEF_OPT_INT32("lb_nbest_readers"	, OFS(lb_nbest_readers),		-1),
+	DEF_OPT_INT32("lb_nfb_readers"	    , OFS(lb_nfb_readers),		    -1),
 	DEF_OPT_FUNC("lb_nbest_percaid"		, OFS(lb_nbest_readers_tab),    caidvaluetab_fn),
 #endif
 	DEF_LAST_OPT

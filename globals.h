@@ -386,10 +386,9 @@ typedef unsigned char uchar;
 #define DEFAULT_MAX_ECM_COUNT 500
 #define DEFAULT_NBEST 1
 #define DEFAULT_NFB 1
-#define DEFAULT_RETRYLIMIT 800
+#define DEFAULT_RETRYLIMIT 0
 #define DEFAULT_LB_MODE 0
 #define DEFAULT_LB_STAT_CLEANUP 336
-#define DEFAULT_LB_REOPEN_MODE 0
 #define DEFAULT_UPDATEINTERVAL 240
 #define DEFAULT_LB_AUTO_BETATUNNEL 1
 #define DEFAULT_LB_AUTO_BETATUNNEL_MODE 0
@@ -1335,6 +1334,7 @@ struct s_auth
 #endif
 #ifdef WITH_LB
 	int32_t			lb_nbest_readers;				// When this is -1, the global lb_nbest_readers is used
+	int32_t			lb_nfb_readers; 				// When this is -1, the global lb_nfb_readers is used
 	CAIDVALUETAB	lb_nbest_readers_tab;			// like nbest_readers, but for special caids
 #endif
 	IN_ADDR_T		dynip;
@@ -1736,8 +1736,6 @@ typedef struct reader_stat_t
 	int8_t			knocked;
 
 	int32_t			fail_factor;
-	time_t			time_last_inc_failfactor;
-
 } READER_STAT;
 
 typedef struct cs_stat_query {
