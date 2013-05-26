@@ -115,7 +115,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 				pingrpl[0] = TYPE_PINGRPL;
 				memcpy(pingrpl + 1, buf + 1, 8);
 				int32_t status = sendto(client->udp_fd, pingrpl, sizeof(pingrpl), 0, (struct sockaddr *) &client->udp_sa, client->udp_sa_len);
-				cs_debug_mask(D_TRACE, "received ping from cache peer: %s:%d (replied: %d)", cs_inet_ntoa(client->udp_sa.sin_addr.s_addr), port, status);
+				cs_debug_mask(D_TRACE, "received ping from cache peer: %s:%d (replied: %d)", cs_inet_ntoa(SIN_GET_ADDR(client->udp_sa)), port, status);
 			}
 			break;
 
