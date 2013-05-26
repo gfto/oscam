@@ -1226,15 +1226,18 @@ static void gbox_send_hello_packet(struct s_client *cli, int8_t number, uchar *o
     switch (gbox->peer.hello_stat) {
       case GBOX_STAT_HELLOL:
         cs_log("gbox: send HELLOL to %s",cli->reader->label);
-        gbox->peer.hello_stat = GBOX_STAT_HELLOS;      
+        if ((number & 0x80) == 0x80)
+          gbox->peer.hello_stat = GBOX_STAT_HELLOS;      
         break;
       case GBOX_STAT_HELLOS:
         cs_log("gbox: send HELLOS total cards  %d to %s",nbcards,cli->reader->label);
-        gbox->peer.hello_stat = GBOX_STAT_HELLO3;
+        if ((number & 0x80) == 0x80)
+          gbox->peer.hello_stat = GBOX_STAT_HELLO3;
         break;
       case GBOX_STAT_HELLOR:
         cs_log("gbox: send HELLOR total cards  %d to %s",nbcards,cli->reader->label);
-        gbox->peer.hello_stat = GBOX_STAT_HELLO3;
+        if ((number & 0x80) == 0x80)
+          gbox->peer.hello_stat = GBOX_STAT_HELLO3;
         break;
       default:
         cs_log("gbox: send hello total cards  %d to %s",nbcards,cli->reader->label);
@@ -1251,7 +1254,7 @@ static void gbox_send_hello(struct s_client *cli)
 {
   struct gbox_data *gbox = cli->gbox;
 
-  int32_t nbcards=0;
+  int32_t nbcards = 0;
   int32_t packet;
   uchar buf[2048];
 /*
@@ -1285,7 +1288,9 @@ static void gbox_send_hello(struct s_client *cli)
         if (nbcards == 100) { //check if 100 is good or we need more sophisticated algorithm
           gbox_send_hello_packet(cli,packet,buf,ptr,nbcards);
           packet++;
+          nbcards = 0;
           ptr = buf + 11;
+          memset(buf, 0, sizeof(buf));
         }
       }  
     }
