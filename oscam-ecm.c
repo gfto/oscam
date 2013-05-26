@@ -1710,7 +1710,7 @@ OUT:
 	cw_process_thread_wakeup();
 }
 
-int32_t ecmfmt(uint16_t caid, uint32_t prid, uint16_t chid, uint16_t pid, uint16_t srvid, uint16_t l, char *ecmd5hex, char *csphash, char *cw, char *result, size_t size)
+int32_t ecmfmt(uint16_t caid, uint16_t onid, uint32_t prid, uint16_t chid, uint16_t pid, uint16_t srvid, uint16_t l, char *ecmd5hex, char *csphash, char *cw, char *result, size_t size)
 {
 	if (!cfg.ecmfmt)
 		return snprintf(result, size, "%04X&%06X/%04X/%04X/%02X:%s", caid, prid, chid, srvid, l, ecmd5hex);
@@ -1721,6 +1721,7 @@ int32_t ecmfmt(uint16_t caid, uint32_t prid, uint16_t chid, uint16_t pid, uint16
 		switch(*c) {
 		case '0': zero = 1; value = 0; break;
 		case 'c': flen = 4; value = caid; break;
+		case 'o': flen = 4; value = onid; break;
 		case 'p': flen = 6; value = prid; break;
 		case 'i': flen = 4; value = chid; break;
 		case 'd': flen = 4; value = pid; break;
@@ -1771,5 +1772,5 @@ int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 	cs_hexdump(0, (void *)&ecm->csp_hash, 4, csphash, sizeof(csphash));
 #endif
 	cs_hexdump(0, ecm->cw, 16, cwhex, sizeof(cwhex));
-	return ecmfmt(ecm->caid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, result, size);
+	return ecmfmt(ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, result, size);
 }

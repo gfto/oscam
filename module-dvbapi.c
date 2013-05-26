@@ -97,7 +97,7 @@ struct s_channel_cache *find_channel_cache(int32_t demux_id, int32_t pidindex, i
 				&& p->irdeto_curchid == c->chid) {
 #ifdef WITH_DEBUG
 				char buf[ECM_FMT_LEN];
-				ecmfmt(c->caid, c->prid, c->chid, c->pid, c->srvid, 0, 0, 0, 0, buf, ECM_FMT_LEN);
+				ecmfmt(c->caid, 0, c->prid, c->chid, c->pid, c->srvid, 0, 0, 0, 0, buf, ECM_FMT_LEN);
 				cs_debug_mask(D_DVBAPI, "found in channel cache: %s", buf);
 #endif
 				return c;
@@ -142,7 +142,7 @@ int32_t edit_channel_cache(int32_t demux_id, int32_t pidindex, uint8_t add)
 		ll_append(channel_cache, c);
 #ifdef WITH_DEBUG
 		char buf[ECM_FMT_LEN];
-		ecmfmt(c->caid, c->prid, c->chid, c->pid, c->srvid, 0, 0, 0, 0, buf, ECM_FMT_LEN);
+		ecmfmt(c->caid, 0, c->prid, c->chid, c->pid, c->srvid, 0, 0, 0, 0, buf, ECM_FMT_LEN);
 		cs_debug_mask(D_DVBAPI, "added to channel cache: %s", buf);
 #endif
 		count++;

@@ -179,7 +179,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 			cs_hexdump(0, cwc->ecm_md5[cwc->cwc_hist_entry].md5, 16, cwc_md5, sizeof(cwc_md5));
 		    cs_hexdump(0, (void*)&cwc->ecm_md5[cwc->cwc_hist_entry].csp_hash, 4, cwc_csp, sizeof(cwc_csp));
 			cs_hexdump(0, cwc->cw, 16, cwc_cw, sizeof(cwc_cw));
-			ecmfmt(cwc->caid, cwc->provid, cwc->chid, 0, cwc->sid, cwc->ecmlen, cwc_md5, cwc_csp, cwc_cw, cwc_ecmf, ECM_FMT_LEN);
+			ecmfmt(cwc->caid, 0, cwc->provid, cwc->chid, 0, cwc->sid, cwc->ecmlen, cwc_md5, cwc_csp, cwc_cw, cwc_ecmf, ECM_FMT_LEN);
 
 
 			if ( cwc->stage == 3 && cwc->nextcyclecw < 2 && now - cwc->time < cwc->cycletime *2 - cwc->dyncycletime - 1) { // Check for Cycle no need to check Entrys others like stage 3
