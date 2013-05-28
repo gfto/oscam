@@ -13,6 +13,7 @@
 #include "oscam-ecm.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
+#include "oscam-time.h"
 
 #define TYPE_REQUEST   1
 #define TYPE_REPLY     2
@@ -22,6 +23,8 @@
 
 #define FAKE_ONID      0xFFFF
 #define FAKE_TAG       0x80
+
+#define PING_INTVL	   4
 
 static void * csp_server(struct s_client *client __attribute__((unused)), uchar *mbuf __attribute__((unused)), int32_t n __attribute__((unused)))
 {
@@ -76,7 +79,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 			}
 			break;
 
-		case TYPE_REQUEST: // pending request hash received
+		case TYPE_REQUEST: // pending request notification hash received
 			if (rs == 12) { // ignore requests for arbitration (csp "pre-requests", size 20)
 				uint16_t srvid = (buf[2] << 8) | buf[3];
 				uint16_t onid = (buf[4] << 8) | buf[5];
@@ -102,6 +105,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 
 		case TYPE_PINGREQ:
 			if (rs == 13) {
+				client->last = time((time_t*)0);
 				uint32_t port = b2i(4, buf + 9);
 				/* 
 				struct SOCKADDR peer_sa;
@@ -120,9 +124,22 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 			break;
 
 		case TYPE_PINGRPL:
+			if (rs == 9) {
+				struct timeb tpe;
+				cs_ftime(&tpe);
+				uint32_t ping = b2i(4, buf + 1);
+				uint32_t now = tpe.time * 1000 + tpe.millitm;
+				cs_debug_mask(D_TRACE, "received ping reply from cache peer: %s:%d (%d ms)", cs_inet_ntoa(SIN_GET_ADDR(client->udp_sa)), ntohs(SIN_GET_PORT(client->udp_sa)), now - ping);
+			}
 			break;
 
-		case TYPE_RESENDREQ:
+		case TYPE_RESENDREQ: // sent as a result of delay alert in a remote cache
+			if (rs == 16) {
+				uint32_t port = b2i(4, buf + 1);
+				// uint16_t caid = b2i(2, buf + 6);
+				// uint32_t hash = b2i(4, buf + 8);
+			    cs_debug_mask(D_TRACE, "received resend request from cache peer: %s:%d", cs_inet_ntoa(SIN_GET_ADDR(client->udp_sa)), ntohs(port));
+			}
 			break;
 
 		default:
@@ -130,6 +147,20 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 	}
 
 	return rs;
+}
+
+int32_t csp_send_ping(struct s_client *cl, uint32_t now)
+{
+	uchar buf[13] = {0};
+	
+	buf[0] = TYPE_PINGREQ;
+	i2b_buf(4, now, buf + 1);
+	i2b_buf(4, cfg.csp_port, buf + 9);
+	
+	int32_t status = sendto(cl->udp_fd, buf, sizeof(buf), 0, (struct sockaddr *)&cl->udp_sa, cl->udp_sa_len);
+	
+	cl->lastecm = time((time_t*)0);; // use this to indicate last ping sent for now
+	return status;
 }
 
 int32_t csp_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
@@ -142,7 +173,7 @@ int32_t csp_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 			size = 29;
 			type = TYPE_REPLY;
 			break;
-		case E_UNHANDLED: // request pending
+		case E_UNHANDLED: // request pending - not yet used?
 			size = 12;
 			type = TYPE_REQUEST;
 			break;
@@ -170,6 +201,11 @@ int32_t csp_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 		buf[12] = er->ecm[0];
 		memcpy(buf + 13, er->cw, sizeof(er->cw));
 	}
+	
+	struct timeb tpe;
+	cs_ftime(&tpe);	
+	
+	if(tpe.time - cl->lastecm > PING_INTVL) csp_send_ping(cl, 1000 * tpe.time + tpe.millitm);
 
 	cs_ddump_mask(D_TRACE, buf, size, "pushing cache update to csp onid=%04X caid=%04X srvid=%04X hash=%08X (tag: %02X)", onid, er->caid, er->srvid, er->csp_hash, tag);
 	/*
