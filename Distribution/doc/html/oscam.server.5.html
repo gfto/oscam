@@ -72,7 +72,7 @@ reader protocol, <I>required</I>:
 <B>device</B> = <B>[&lt;readertype&gt;;]serial:serialnum|bus:device</B>|
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>&lt;device|device:slot&gt;</B>|
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>&lt;ip|hostname&gt;,&lt;port&gt;[,&lt;lport&gt;]</B>|
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>&lt;ip|hostname&gt;,&lt;gboxpport&gt;,&lt;gboxlport&gt;</B>|
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>&lt;ip|hostname&gt;,&lt;gboxpport&gt;</B>|
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>pcsc</B>|
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>&lt;0|1&gt;</B>&gt;|
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>constantcw</B>
@@ -106,8 +106,6 @@ define local or remote reader
 <BR>&nbsp;<B>lport</B>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;remapping&nbsp;to&nbsp;local&nbsp;TCP/IP&nbsp;port
 <P>
 <BR>&nbsp;<B>gboxpport</B>:&nbsp;&nbsp;&nbsp;TCP/IP&nbsp;port&nbsp;for&nbsp;remote&nbsp;gbox&nbsp;peer
-<P>
-<BR>&nbsp;<B>gboxlport</B>:&nbsp;&nbsp;&nbsp;TCP/IP&nbsp;port&nbsp;for&nbsp;local&nbsp;gbox&nbsp;peer
 <P>
 <BR>&nbsp;<B>PCSC</B>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;number&nbsp;of&nbsp;PCSC&nbsp;reader,&nbsp;starting&nbsp;with&nbsp;0
 <P>

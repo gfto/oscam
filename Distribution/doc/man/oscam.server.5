@@ -49,7 +49,7 @@ reader protocol, \fIrequired\fR:
 \fBdevice\fP = \fB[<readertype>;]serial:serialnum|bus:device\fP|
          \fB<device|device:slot>\fP|
          \fB<ip|hostname>,<port>[,<lport>]\fP|
-         \fB<ip|hostname>,<gboxpport>,<gboxlport>\fP|
+         \fB<ip|hostname>,<gboxpport>\fP|
          \fBpcsc\fP|
          \fB<0|1>\fP>|
          \fBconstantcw\fP
@@ -83,8 +83,6 @@ define local or remote reader
  \fBlport\fP:       remapping to local TCP/IP port
 
  \fBgboxpport\fP:   TCP/IP port for remote gbox peer
-
- \fBgboxlport\fP:   TCP/IP port for local gbox peer
 
  \fBPCSC\fP:        number of PCSC reader, starting with 0
 
