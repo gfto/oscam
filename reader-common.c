@@ -253,7 +253,7 @@ bool cardreader_init(struct s_reader *reader) {
 		} while (i < 30);
 	}
 	if (reader->mhz > 2000) {
-		rdr_log(reader, "Reader initialized (device=%s, detect=%s%s, pll max=%.2f Mhz, wanted cardmhz=%.2f Mhz",
+		rdr_log(reader, "Reader initialized (device=%s, detect=%s%s, pll max=%.2f MHz, wanted cardmhz=%.2f MHz",
 			reader->device,
 			reader->detect & 0x80 ? "!" : "",
 			RDR_CD_TXT[reader->detect & 0x7f],

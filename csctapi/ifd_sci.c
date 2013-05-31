@@ -204,7 +204,7 @@ static int32_t Sci_Reset(struct s_reader * reader, ATR * atr)
 		params.ETU = 372;
 		params.EGT = 0;
 		params.fs = 16; /* read from table setting for 1 MHz:
-		params.fs = 6 for cardmhz = 5.188 Mhz
+		params.fs = 6 for cardmhz = 5.188 MHz
 		params.fs = 7 for cardmhz = 4.611 MHz
 		params.fs = 8 for cardmhz = 3.953 MHz
 		params.fs = 9 for cardmhz = 3.609 MHz
