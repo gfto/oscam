@@ -136,7 +136,7 @@ DESCRIPTIONS
 	  time waiting for inactive users, default:none, can be overwritten per user in oscam.user
 
        serverip = IP address
-	  bind service to specified IP address, default:all
+	  bind service to specified IP address, default:none
 
        bindwait = seconds
 	  value to wait for bind request to complete, default:120
@@ -215,7 +215,7 @@ DESCRIPTIONS
 	  time between retrying failed load balanced readers/CAIDs/providers/services, default:900
 
        lb_retrylimit = milli-seconds
-	  retry next load balanced reader only if response time is higher then lb_retrylimit, default:800
+	  retry next load balanced reader only if response time is higher then lb_retrylimit, default:0
 
        lb_savepath = filename
 	  filenanme for saving load balancing statistics, default:/tmp/.oscam/stat
@@ -410,10 +410,10 @@ DESCRIPTIONS
 	  Please consider memory consumption.
 
        csp_port = port
-	  TCP port of Cardservproxy for cache exchange, default:none
+	  UDP port of Cardservproxy for cache exchange, default:none
 
        csp_serverip = IP
-	  IP address of Cardservproxy for cache exchange, default:none
+	  bind Cardservproxy for cache exchange to specified IP address, default:none
 
        csp_ecm_filter = [caid][&mask][@provid][$servid],n
 	  Cardservproxy incoming ECM filter setting, default:none

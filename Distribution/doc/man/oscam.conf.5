@@ -192,7 +192,7 @@ time waiting for inactive users, default:none, can be overwritten per user in \f
 .PP
 \fBserverip\fP = \fBIP address\fP
 .RS 3n
-bind service to specified IP address, default:all
+bind service to specified IP address, default:none
 .RE
 .PP
 \fBbindwait\fP = \fBseconds\fP
@@ -591,12 +591,12 @@ wait time in milli-seconds for cache exchange and Cardservproxy before sending E
 .PP
 \fBcsp_port\fP = \fBport\fP
 .RS 3n
-TCP port of Cardservproxy for cache exchange, default:none
+UDP port of Cardservproxy for cache exchange, default:none
 .RE
 .PP
 \fBcsp_serverip\fP = \fBIP\fP
 .RS 3n
-IP address of Cardservproxy for cache exchange, default:none
+bind Cardservproxy for cache exchange to specified IP address, default:none
 .RE
 .PP
 \fBcsp_ecm_filter\fP = \fB[caid][&mask][@provid][$servid],n\fP

@@ -261,7 +261,7 @@ time waiting for inactive users, default:none, can be overwritten per user in <B
 
 <B>serverip</B> = <B>IP address</B>
 <DL COMPACT><DT><DD>
-bind service to specified IP address, default:all
+bind service to specified IP address, default:none
 </DL>
 
 <P>
@@ -410,7 +410,7 @@ time between retrying failed load balanced readers/CAIDs/providers/services, def
 
 <B>lb_retrylimit</B> = <B>milli-seconds</B>
 <DL COMPACT><DT><DD>
-retry next load balanced reader only if response time is higher then lb_retrylimit, default:800
+retry next load balanced reader only if response time is higher then lb_retrylimit, default:0
 </DL>
 
 <P>
@@ -791,14 +791,14 @@ wait time in milli-seconds for cache exchange and Cardservproxy before sending E
 
 <B>csp_port</B> = <B>port</B>
 <DL COMPACT><DT><DD>
-TCP port of Cardservproxy for cache exchange, default:none
+UDP port of Cardservproxy for cache exchange, default:none
 </DL>
 
 <P>
 
 <B>csp_serverip</B> = <B>IP</B>
 <DL COMPACT><DT><DD>
-IP address of Cardservproxy for cache exchange, default:none
+bind Cardservproxy for cache exchange to specified IP address, default:none
 </DL>
 
 <P>
