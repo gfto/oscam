@@ -102,6 +102,11 @@ mask for IP address based blocking:
 set count of best readers for load balancing, -1 = use global lb_nbest_readers, default:-1
 .RE
 .PP
+\fBlb_nfb_readers\fP = \fBcounts\fP
+.RS 3n
+set count of fallback readers for load balancing, -1 = use global lb_nfb_readers, default:1
+.RE
+.PP
 \fBlb_nbest_percaid\fP = \fBCAID1:count1[,CAID2:count2]...\fP
 .RS 3n
 set count of best readers per CAIDs for load balancing, wildcard CAIDs with two-digit CAIDs possible, default:none
