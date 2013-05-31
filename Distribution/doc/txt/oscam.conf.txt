@@ -27,6 +27,7 @@ DESCRIPTIONS
 	  possible variables:
 
 	    c = CAID
+	    o = ONID
 	    p = provider ID
 	    i = Channel ID
 	    d = PID
