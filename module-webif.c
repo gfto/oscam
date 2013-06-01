@@ -1093,12 +1093,12 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 				
 				if(rdr->enable == 0) {
 					tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICENA");
-					tpl_addVar(vars, TPLADD, "SWITCHTITLE", "enable this reader");
+					tpl_addVar(vars, TPLADD, "SWITCHTITLE", "Enable this reader");
 					tpl_addVar(vars, TPLADD, "SWITCH", "enable");
 					tpl_addVar(vars, TPLADD, "WRITEEMM", "");
 				} else {
 					tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICDIS");
-					tpl_addVar(vars, TPLADD, "SWITCHTITLE", "disable this reader");
+					tpl_addVar(vars, TPLADD, "SWITCHTITLE", "Disable this reader");
 					tpl_addVar(vars, TPLADD, "SWITCH", "disable");
 					
 					tpl_addVar(vars, TPLADD, "EMMICO", "image?i=ICEMM");
@@ -2408,13 +2408,13 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		if(account->disabled != 0) {
 			expired = " (disabled)"; classname = "disabled";
 			tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICENA");
-			tpl_addVar(vars, TPLADD, "SWITCHTITLE", "enable this account");
+			tpl_addVar(vars, TPLADD, "SWITCHTITLE", "Enable this account");
 			tpl_addVar(vars, TPLADD, "SWITCH", "enable");
 			disabled_users++;
 			isactive=0;
 		} else {
 			tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICDIS");
-			tpl_addVar(vars, TPLADD, "SWITCHTITLE", "disable this account");
+			tpl_addVar(vars, TPLADD, "SWITCHTITLE", "Disable this account");
 			tpl_addVar(vars, TPLADD, "SWITCH", "disable");
 		}
 
