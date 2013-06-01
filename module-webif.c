@@ -4578,10 +4578,16 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 			tpl_addVar(vars, TPLADD, "NAME", "csp");
 			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));
 			tpl_addVar(vars, TPLADD, "NODE", "csp");
-			tpl_addVar(vars, TPLADD, "LEVEL", "csp");
+			if(cl->cwcacheexping) {
+				tpl_printf(vars, TPLADD, "LEVEL", "csp (%d ms)", cl->cwcacheexping);
+			} else {
+				tpl_addVar(vars, TPLADD, "LEVEL", "csp");
+			}
 			tpl_printf(vars, TPLADD, "PUSH", "%d", cl->cwcacheexpush);
 			tpl_printf(vars, TPLADD, "GOT", "%d", cl->cwcacheexgot);
 			tpl_printf(vars, TPLADD, "HIT", "%d", cl->cwcacheexhit);
+			tpl_printf(vars, TPLADD, "ERR", "%d", cl->cwcacheexerr);
+			tpl_printf(vars, TPLADD, "ERRCW", "%d", cl->cwcacheexerrcw);			
 			tpl_addVar(vars, TPLADD, "DIRECTIONIMG", getting);
 			rowvariable = "TABLECLIENTROWS";
 			written = 1;

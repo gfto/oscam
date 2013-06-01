@@ -24,7 +24,7 @@
 #define FAKE_ONID      0xFFFF
 #define FAKE_TAG       0x80
 
-#define PING_INTVL	   4
+#define PING_INTVL     4
 
 static void * csp_server(struct s_client *client __attribute__((unused)), uchar *mbuf __attribute__((unused)), int32_t n __attribute__((unused)))
 {
@@ -93,8 +93,8 @@ static int32_t csp_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 
 	/*
 	struct SOCKADDR peer_sa = {0};
-	SIN_GET_FAMILY(peer_sa) = cl->udp_sa.sin_family;
-	cs_inet_addr("127.0.0.1", &peer_sa.sin_addr.s_addr);
+	SIN_GET_FAMILY(peer_sa) = SIN_GET_FAMILY(cl->udp_sa);
+	cs_inet_addr("127.0.0.1", &SIN_GET_ADDR(peer_sa));
 	SIN_GET_PORT(peer_sa) = htons(12346);
 	int32_t status = sendto(cl->udp_fd, buf, size, 0, (struct sockaddr *)&peer_sa, sizeof(peer_sa));
 	 */
@@ -198,6 +198,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 				uint32_t ping = b2i(4, buf + 1);
 				uint32_t now = tpe.time * 1000 + tpe.millitm;
 				cs_debug_mask(D_TRACE, "received ping reply from cache peer: %s:%d (%d ms)", cs_inet_ntoa(SIN_GET_ADDR(client->udp_sa)), ntohs(SIN_GET_PORT(client->udp_sa)), now - ping);
+				client->cwcacheexping = now - ping;
 			}
 			break;
 

@@ -923,7 +923,7 @@ struct s_client {
 	int32_t			cwtun;       		// count betatunneled ECMs per client
 	int32_t			cwignored;   		// count ignored  ECMs per client
 	int32_t			cwtout;      		// count timeouted ECMs per client
-	int32_t			cwlastresptime; 	//last Responsetime (ms)
+	int32_t			cwlastresptime; 	// last Responsetime (ms)
 #ifdef CW_CYCLE_CHECK
 	int32_t			cwcycledchecked;	// count checked cwcycles per client
 	int32_t			cwcycledok;		// count pos checked cwcycles per client
@@ -937,10 +937,11 @@ struct s_client {
 	int32_t			cwcacheexpush;		// count pushed ecms/cws
 	int32_t         cwcacheexgot;		// count got ecms/cws
 	int32_t         cwcacheexhit;		// count hit ecms/cws
-	LLIST			*ll_cacheex_stats;	// List for Cacheex statistics
+	LLIST           *ll_cacheex_stats;	// list for Cacheex statistics
 	int8_t          cacheex_maxhop;
-	int32_t		cwcacheexerr;   //cw=00 or chksum wrong
-	int32_t		cwcacheexerrcw; //Same Hex, different CW
+	int32_t         cwcacheexerr;		// cw=00 or chksum wrong
+	int32_t         cwcacheexerrcw;		// same Hex, different CW
+	int16_t         cwcacheexping;		// peer ping in ms, only used by csp
 #endif
 
 #ifdef WEBIF
