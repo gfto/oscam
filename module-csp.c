@@ -178,7 +178,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 			break;
 
 		case TYPE_PINGREQ:
-			if (rs == 13) {
+			if (rs >= 13) {
 				client->last = time((time_t*) 0);
 				uint32_t port = b2i(4, buf + 9);
 				SIN_GET_PORT(client->udp_sa) = htons(port);
@@ -192,7 +192,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 			break;
 
 		case TYPE_PINGRPL:
-			if (rs == 9) {
+			if (rs >= 9) {
 				struct timeb tpe;
 				cs_ftime(&tpe);
 				uint32_t ping = b2i(4, buf + 1);
@@ -203,7 +203,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 			break;
 
 		case TYPE_RESENDREQ: // sent as a result of delay alert in a remote cache
-			if (rs == 16) {
+			if (rs >= 16) {
 				uint32_t port = b2i(4, buf + 1);
 				ECM_REQUEST *er = get_ecmtask();
 				if (!er) return -1;
