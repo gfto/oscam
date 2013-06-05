@@ -74,6 +74,7 @@ typedef struct filter_s
 	uint32_t provid;
 	uint16_t type;
 	int32_t count;
+	uchar	ecmd5[CS_ECMSTORESIZE]; // last requested ecm md5
 #ifdef WITH_STAPI
 	int32_t NumSlots;
 	uint32_t	SlotHandle[10];
@@ -100,6 +101,7 @@ typedef struct demux_s
 	int8_t adapter_index;
 	int32_t socket_fd;
 	int8_t ECMpidcount;
+	time_t emmstart; // last time emmfilters were started
 	struct s_ecmpids ECMpids[ECM_PIDS];
 	int8_t EMMpidcount;
 	struct s_emmpids EMMpids[ECM_PIDS];
@@ -120,6 +122,7 @@ typedef struct demux_s
 	struct s_reader *rdr;
 	char pmt_file[30];
 	time_t pmt_time;
+	uint8_t stopdescramble;
 #ifdef WITH_STAPI
 	uint32_t DescramblerHandle[PTINUM];
 	int32_t desc_pidcount;
@@ -227,9 +230,14 @@ struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidi
 void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er);
 void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t idx);
 int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connfd, char *pmtfile);
-void request_cw(struct s_client *dvbapi_client, ECM_REQUEST *er);
+void request_cw(struct s_client *client, ECM_REQUEST *er, int32_t demux_id, uint8_t delayed_ecm_check);
 void dvbapi_try_next_caid(int32_t demux_id);
 void dvbapi_read_priority(void);
+int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er);
+void dvbapi_activate_section_filter (int32_t fd, int32_t pid, uchar *filter, uchar *mask);
+int32_t dvbapi_check_ecm_delayed_delivery(int32_t demux_index, ECM_REQUEST *er);
+int32_t dvbapi_get_filternum(int32_t demux_index, ECM_REQUEST *er);
+int32_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid);
 
 #ifdef DVBAPI_LOG_PREFIX
 #undef cs_log

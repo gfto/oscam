@@ -864,9 +864,6 @@ static char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparam
 	if (cfg.dvbapi_reopenonzap > 0)
 		tpl_addVar(vars, TPLADD, "REOPENONZAPCHECKED", "checked");
 		
-	if (cfg.dvbapi_decodeforever > 0)
-		tpl_addVar(vars, TPLADD, "DECODEFOREVERCHECKED", "checked");
-
 	if (cfg.dvbapi_delayer > 0)
 		tpl_printf(vars, TPLADD, "DELAYER", "%d", cfg.dvbapi_delayer);
 
