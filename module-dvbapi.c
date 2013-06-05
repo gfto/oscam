@@ -3,7 +3,7 @@
 #ifdef HAVE_DVBAPI
 
 #include "module-dvbapi.h"
-#include "cscrypt/md5.h"
+#include "module-dvbapi-azbox.h"
 #include "module-dvbapi-mca.h"
 #include "module-dvbapi-coolapi.h"
 #include "module-dvbapi-stapi.h"
@@ -284,7 +284,7 @@ void remove_emmfilter_from_list(int32_t demux_id, uint16_t caid, uint32_t provid
 }
 
 int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t caid, uint32_t provid, uchar *filt, uchar *mask, int32_t timeout, int32_t pidindex, int32_t count, int32_t type, int8_t add_to_emm_list) {
-#ifdef WITH_MCA
+#if defined WITH_AZBOX || defined WITH_MCA
 		openxcas_caid = demux[demux_id].ECMpids[pidindex].CAID;
 		openxcas_ecm_pid = pid;
 
@@ -1529,8 +1529,6 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 			if (demux[demux_index].ECMpids[n].status == -1)	//skip ignores
 				continue;
 
-			matching_done=1;
-
 			er->caid = er->ocaid = demux[demux_index].ECMpids[n].CAID;
 			er->prid = demux[demux_index].ECMpids[n].PROVID;
 			er->pid = demux[demux_index].ECMpids[n].ECM_PID;
@@ -1693,7 +1691,7 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 void request_cw(struct s_client *client, ECM_REQUEST *er, int32_t demux_id, uint8_t delayed_ecm_check)
 {
 	int32_t filternum = dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd -> even and visaversa
-#ifdef WITH_MCA
+#if defined WITH_AZBOX || defined WITH_MCA
 	if (filternum) {}
 #else
 	if (filternum<0) {
@@ -1702,7 +1700,7 @@ void request_cw(struct s_client *client, ECM_REQUEST *er, int32_t demux_id, uint
 	}
 #endif
 	get_cw(client, er);
-#ifdef WITH_MCA
+#if defined WITH_AZBOX || defined WITH_MCA
 	if (delayed_ecm_check) {}
 #else
 	if (delayed_ecm_check) memcpy(demux[demux_id].demux_fd[filternum].ecmd5, er->ecmd5, CS_ECMSTORESIZE); // register this ecm as latest request for this filter
@@ -1728,7 +1726,7 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 				demux[demux_id].ECMpids[n].checked, demux[demux_id].ECMpids[n].status, j);
 			if (demux[demux_id].ECMpids[n].checked == 0 && demux[demux_id].ECMpids[n].status == j) {
 				found = n;
-#ifdef WITH_MCA
+#if defined WITH_AZBOX || defined WITH_MCA
 				openxcas_provid = demux[demux_id].ECMpids[found].PROVID;
 				openxcas_caid = demux[demux_id].ECMpids[found].CAID;
 				openxcas_ecm_pid = demux[demux_id].ECMpids[found].ECM_PID;
@@ -1849,7 +1847,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 				demux[demux_id].ca_mask=ca_mask;
 				demux[demux_id].demux_index=demux_index;
 				cs_log("[DVBAPI] Demuxer #%d continue decoding of SRVID %04X", i, demux[i].program_number);
-#ifdef WITH_MCA
+#if defined WITH_AZBOX || defined WITH_MCA
 				openxcas_sid = program_number;
 #endif
 				return demux_id; // since we are continueing decoding here it ends!
@@ -2025,7 +2023,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 
 			if(demux[demux_id].STREAMpidcount < 1){
 				cs_log("[pmt] Found no streams for normal demuxer. Not starting additional decoding on it.");
-#ifdef WITH_MCA
+#if defined WITH_AZBOX || defined WITH_MCA
 				openxcas_sid = program_number;
 #endif
 				return xtra_demux_id;
@@ -2045,7 +2043,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	// reset idle-Time
 	dvbapi_client->last=time((time_t*)0);
 
-#ifdef WITH_MCA
+#if defined WITH_AZBOX || defined WITH_MCA
 	openxcas_sid = program_number;
 #endif
 
@@ -2581,6 +2579,10 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 }
 
 static void * dvbapi_main_local(void *cli) {
+
+#ifdef WITH_AZBOX
+	return azbox_main_thread(cli);
+#endif
 #ifdef WITH_MCA
 	selected_box = selected_api = 0; // Prevent compiler warning about out of bounds array access
 	return mca_main_thread(cli);
@@ -2952,6 +2954,11 @@ void delayer(ECM_REQUEST *er)
 
 void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
+#ifdef WITH_AZBOX
+	azbox_send_dcw(client, er);
+	return;
+#endif
+
 #ifdef WITH_MCA
 	mca_send_dcw(client, er);
 	return;

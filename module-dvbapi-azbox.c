@@ -26,7 +26,7 @@ int32_t openxcas_provid;
 uint16_t openxcas_sid, openxcas_caid, openxcas_ecm_pid;
 
 static unsigned char openxcas_cw[16];
-static int32_t openxcas_seq, openxcas_filter_idx, openxcas_stream_id, openxcas_cipher_idx, openxcas_busy;
+static int32_t openxcas_seq, openxcas_filter_idx, openxcas_stream_id, openxcas_cipher_idx, openxcas_busy = 0;
 static uint16_t openxcas_video_pid, openxcas_audio_pid, openxcas_data_pid;
 
 void azbox_openxcas_ecm_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t cipher_index, uint32_t UNUSED(caid), unsigned char *ecm_data, int32_t l, uint16_t pid) {
@@ -50,7 +50,7 @@ void azbox_openxcas_ecm_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_
 	er->ecmlen = l;
 	memcpy(er->ecm, ecm_data, er->ecmlen);
 
-	request_cw(dvbapi_client, er);
+	request_cw(dvbapi_client, er, 0, 0);
 
 	//openxcas_stop_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
 	//openxcas_remove_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
@@ -82,7 +82,7 @@ void azbox_openxcas_ex_callback(int32_t stream_id, uint32_t seq, int32_t idx, ui
 	er->ecmlen = l;
 	memcpy(er->ecm, ecm_data, er->ecmlen);
 
-	request_cw(dvbapi_client, er);
+	request_cw(dvbapi_client, er, 0, 0);
 
 	if (openxcas_stop_filter_ex(stream_id, seq, openxcas_filter_idx) < 0)
 		cs_log(LOG_PREFIX "unable to stop ex filter");
