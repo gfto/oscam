@@ -634,8 +634,18 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 
 			// WWT = 960 * d * WI  work etu
 
-			
+			unsigned char tmpatr[7]; // this is card atr of conax with pairingecmrotation, they need some additional WWT time but this isnt in those ATRs
+			tmpatr[0] = 0x3B;
+			tmpatr[1] = 0x24;
+			tmpatr[2] = 0x00;
+			tmpatr[3] = 0x30;
+			tmpatr[4] = 0x42;
+			tmpatr[5] = 0x30;
+			tmpatr[6] = 0x30;
 			WWT = (uint32_t) 960 * D * wi; //in work ETU
+			if (!memcmp(reader->card_atr, tmpatr, sizeof(tmpatr))){ // check for conax pairingecmrotation card atr.
+				WWT = WWT * 600; // if found add some additional WWT time
+			}
 			GT = 2; // standard guardtime
 			GT += 1; // start bit
 			GT += 8; // databits
