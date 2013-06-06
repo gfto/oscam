@@ -1088,6 +1088,7 @@ typedef struct ce_csp_t {
 	int8_t			maxhop;
 	CECSPVALUETAB	filter_caidtab;
 	uint8_t			allow_request;
+	uint8_t			allow_reforward;
 	uint8_t			drop_csp;
 } CECSP;
 #endif

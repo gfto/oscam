@@ -159,7 +159,7 @@ void cacheex_cache_push(ECM_REQUEST *er)
 	for (cl=first_client->next; cl; cl=cl->next) {
 		if (er->cacheex_src != cl) {
 			if (get_module(cl)->num == R_CSP) { // always send to csp cl
-				if (!er->cacheex_src) cacheex_cache_push_to_client(cl, er); // but not if the origin was cacheex (might loop)
+				if (!er->cacheex_src || cfg.csp.allow_reforward) cacheex_cache_push_to_client(cl, er); // but not if the origin was cacheex (might loop)
 			} else if (cl->typ == 'c' && !cl->dup && cl->account && cl->account->cacheex.mode == 2) { //send cache over user
 				if (get_module(cl)->c_cache_push // cache-push able
 						&& (!grp || (cl->grp & grp)) //Group-check

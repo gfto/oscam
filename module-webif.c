@@ -522,6 +522,7 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 	free_mk_t(value);
 
 	tpl_addVar(vars, TPLADD, "ARCHECKED", (cfg.csp.allow_request == 1) ? "checked" : "");
+	tpl_addVar(vars, TPLADD, "ARCHECKED", (cfg.csp.allow_reforward == 1) ? "checked" : "");
 #endif
 
 #ifdef CW_CYCLE_CHECK
