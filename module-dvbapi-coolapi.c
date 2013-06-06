@@ -6,7 +6,6 @@
 
 #include "extapi/coolapi.h"
 
-#define DVBAPI_LOG_PREFIX 1
 #include "module-dvbapi.h"
 #include "module-dvbapi-coolapi.h"
 #include "oscam-string.h"
@@ -201,8 +200,12 @@ int32_t coolapi_set_filter (int32_t fd, int32_t num, int32_t pid, uchar * flt, u
 	result = cnxt_dmx_set_filter(dmx->filter, &filter, NULL);
 	coolapi_check_error("cnxt_dmx_set_filter", result);
 
+	result = cnxt_dmx_channel_suspend(dmx->channel, 1);
+	coolapi_check_error("cnxt_dmx_channel_suspend", result);
 	result = cnxt_dmx_channel_attach_filter(dmx->channel, dmx->filter);
 	coolapi_check_error("cnxt_dmx_channel_attach_filter", result);
+	result = cnxt_dmx_channel_suspend(dmx->channel, 0);
+	coolapi_check_error("cnxt_dmx_channel_suspend", result);
 
 	if (channel_found) {
 		result = cnxt_dmx_channel_ctrl(dmx->channel, 0, 0);
@@ -247,8 +250,12 @@ int32_t coolapi_remove_filter (int32_t fd, int32_t num)
 	pthread_mutex_lock(&dmx->mutex);
 
 	if(dmx->filter) {
+		result = cnxt_dmx_channel_suspend(dmx->channel, 1);
+		coolapi_check_error("cnxt_dmx_channel_suspend", result);
 		result = cnxt_dmx_channel_detach_filter(dmx->channel, dmx->filter);
 		coolapi_check_error("cnxt_dmx_channel_detach_filter", result);
+		result = cnxt_dmx_channel_suspend(dmx->channel, 0);
+		coolapi_check_error("cnxt_dmx_channel_suspend", result);
 		result = cnxt_dmx_close_filter(dmx->filter);
 		coolapi_check_error("cnxt_dmx_close_filter", result);
 		dmx->filter = NULL;

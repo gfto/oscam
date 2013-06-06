@@ -121,6 +121,7 @@ int32_t cnxt_cbuf_open(void **handle, buffer_open_arg_t * arg, void *, void *);
 int32_t cnxt_dmx_open(void **device, device_open_arg_t *arg, void *, void *);
 int32_t cnxt_dmx_channel_open(void * device, void **channel, channel_open_arg_t * arg, void * callback, void *);
 int32_t cnxt_dmx_set_filter(void * handle, filter_set_t * arg, void *);
+int32_t cnxt_dmx_channel_suspend(void * handle, int32_t enable);
 
 /* Local coolapi functions */
 void coolapi_open(void);
