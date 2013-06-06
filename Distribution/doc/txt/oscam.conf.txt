@@ -696,9 +696,6 @@ DESCRIPTIONS
        reopenonzap =  0|1
 	  1 = reopen demux devices on each channel switching, default:0
 
-       decodeforever =	0|1
-	  1 = trying to decode on all CAIDs infinitely, default:0
-
    The [anticasc] section
        enabled = 0|1
 	  1 = enabled anti-cascading, default:0
