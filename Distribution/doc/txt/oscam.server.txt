@@ -76,7 +76,7 @@ DESCRIPTIONS
 
 	   lport:	remapping to local TCP/IP port
 
-	   gboxpport:	TCP/IP port for remote gbox peer
+	   gboxpport:	UDP port for remote gbox peer
 
 	   PCSC:	number of PCSC reader, starting with 0
 

@@ -632,7 +632,7 @@ DESCRIPTIONS
 	  set hostname or IP address for gbox protocol, default:none
 
        port = port
-	  TCP/IP port for gbox server, default:0
+	  UDP port for gbox server, default:0
 
        gbox_reconnect = time
 	  send message to peers in seconds, default:300
