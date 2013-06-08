@@ -424,7 +424,7 @@ void cache_fixups_fn(void *UNUSED(var)) {
 static bool cache_should_save_fn(void *UNUSED(var)) {
 	return cfg.delay > 0 || cfg.max_cache_time != 15 || cfg.max_cache_count != 1000
 #ifdef CS_CACHEEX
-	|| cfg.cacheex_wait_timetab.n || cfg.cacheex_enable_stats > 0 || cfg.csp_port || cfg.csp.filter_caidtab.n || cfg.csp.allow_request == 0 || cfg.csp.allow_reforward > 1
+	|| cfg.cacheex_wait_timetab.n || cfg.cacheex_enable_stats > 0 || cfg.csp_port || cfg.csp.filter_caidtab.n || cfg.csp.allow_request == 0 || cfg.csp.allow_reforward > 0
 #endif
 #ifdef CW_CYCLE_CHECK
 	|| cfg.cwcycle_check_enable || cfg.cwcycle_check_caidtab.caid[0] || cfg.maxcyclelist != 500 || cfg.keepcycletime || cfg.onbadcycle || cfg.cwcycle_dropold || cfg.cwcycle_sensitive
