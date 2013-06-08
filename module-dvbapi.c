@@ -1031,7 +1031,7 @@ void dvbapi_start_descrambling(int32_t demux_id, int32_t pid) {
 	for (rdr=first_active_reader; rdr ; rdr=rdr->next){
 		if (matching_reader(er, rdr, 0)){ // check for matching reader and on irdeto cas if local irdeto card received emms in last 60 seconds
 			
-			if (er->caid >> 8 == 0x06 && !is_network_reader(rdr) && rdr->card_status==CARD_INSERTED && ((time(NULL) - rdr->emm_last) > 360)){
+			if (er->caid >> 8 == 0x06 && !is_network_reader(rdr) && rdr->card_status==CARD_INSERTED && ((time(NULL) - rdr->emm_last) > 3600)){
 				cs_log("[DVBAPI] Skipping reader %s (no emm received last %d seconds)", rdr->label, (int) (time(NULL) - rdr->emm_last) );
 				demux[demux_id].ECMpids[pid].status = 0; // set it as low rank ecmpid, so it will be tried again later on!
 				irdeto=1; // we found irdeto set flag so pid wont be disabled
@@ -2671,7 +2671,7 @@ static void * dvbapi_main_local(void *cli) {
 		demux[i].curindex=-1;
 	}
 
-	if (cfg.dvbapi_pmtmode != 4 && cfg.dvbapi_pmtmode != 5) {
+	if (cfg.dvbapi_pmtmode != 4 && cfg.dvbapi_pmtmode != 5 && cfg.dvbapi_pmtmode != 6) {
 		struct sigaction signal_action;
 		signal_action.sa_handler = event_handler;
 		sigemptyset(&signal_action.sa_mask);
