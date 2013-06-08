@@ -236,7 +236,7 @@ void dvbapi_read_priority(void);
 int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er);
 void dvbapi_activate_section_filter (int32_t fd, int32_t pid, uchar *filter, uchar *mask);
 int32_t dvbapi_check_ecm_delayed_delivery(int32_t demux_index, ECM_REQUEST *er);
-int32_t dvbapi_get_filternum(int32_t demux_index, ECM_REQUEST *er);
+int32_t dvbapi_get_filternum(int32_t demux_index, ECM_REQUEST *er, int32_t type);
 int32_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid);
 
 #ifdef DVBAPI_LOG_PREFIX

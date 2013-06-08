@@ -319,6 +319,7 @@ int32_t cardreader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	else
 		rc=0;
   }
+  if (rc >0) reader->emm_last = time(NULL); // last time emm written is now!
   return(rc);
 }
 
