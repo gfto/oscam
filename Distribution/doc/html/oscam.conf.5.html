@@ -818,6 +818,13 @@ allow incoming ECM request from Cardservproxy, default:1
 
 <P>
 
+<B>csp_allow_reforward</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = reforward other cacheex updates to Cardservproxy peers, <I>option could cause loops</I>, default:0
+</DL>
+
+<P>
+
 <B>cwcycle_check_enable</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
 1 = enable CW cycle check, default:0

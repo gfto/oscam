@@ -422,6 +422,9 @@ DESCRIPTIONS
        csp_allow_request = 0|1
 	  allow incoming ECM request from Cardservproxy, default:1
 
+       csp_allow_reforward = 0|1
+	  1 = reforward other cacheex updates to Cardservproxy peers, option could cause loops, default:0
+
        cwcycle_check_enable = 0|1
 	  1 = enable CW cycle check, default:0
 

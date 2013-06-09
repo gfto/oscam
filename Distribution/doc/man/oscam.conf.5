@@ -610,6 +610,11 @@ Cardservproxy incoming ECM filter setting, default:none
 allow incoming ECM request from Cardservproxy, default:1
 .RE
 .PP
+\fBcsp_allow_reforward\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = reforward other cacheex updates to Cardservproxy peers, \fIoption could cause loops\fR, default:0
+.RE
+.PP
 \fBcwcycle_check_enable\fP = \fB0\fP|\fB1\fP
 .RS 3n
 1 = enable CW cycle check, default:0
