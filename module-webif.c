@@ -5258,74 +5258,53 @@ static void *http_server(void *UNUSED(d)) {
 		return NULL;
 	}
 
+	struct SOCKADDR sin;
+	socklen_t len;
+	memset(&sin, 0, sizeof(sin));
+
+	bool do_ipv6 = config_enabled(IPV6SUPPORT);
+
+	if (do_ipv6) {
 #ifdef IPV6SUPPORT
-	static uint8_t ipv4fallback = 0;
-	struct sockaddr sin;
-	struct sockaddr_in6 *ia;
-	struct sockaddr remote;
-	struct sockaddr_in6 *ra;
+		len = sizeof(struct sockaddr_in6);
+		if ((sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+			cs_log("HTTP Server: ERROR: Creating IPv6 socket failed! (errno=%d %s)", errno, strerror(errno));
+			cs_log("HTTP Server: Falling back to IPv4.");
+			do_ipv6 = false;
+		} else {
+			struct sockaddr_in6 *ia = (struct sockaddr_in6 *)&sin;
+			ia->sin6_family = AF_INET6;
+			ia->sin6_addr = in6addr_any;
+			ia->sin6_port = htons(cfg.http_port);
+		}
+#endif
+	}
 
-	socklen_t len = sizeof(remote);
-
-	ia = (struct sockaddr_in6 *)&sin;
-	ra = (struct sockaddr_in6 *)&remote;
-
-	/* Startup server */
-	if((sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-		cs_log("HTTP Server: Creating IPv6 socket failed! (errno=%d %s)", errno, strerror(errno));
-		cs_log("HTTP Server: Trying fallback to IPv4.");
-		if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-			cs_log("HTTP Server: Creating socket failed! (errno=%d %s)", errno, strerror(errno));
+	if (!do_ipv6) {
+		len = sizeof(struct sockaddr_in);
+		if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+			cs_log("HTTP Server: ERROR: Creating socket failed! (errno=%d %s)", errno, strerror(errno));
 			return NULL;
 		}
-		ipv4fallback = 1;
+		SIN_GET_FAMILY(sin) = AF_INET;
+		if (IP_ISSET(cfg.http_srvip))
+			IP_ASSIGN(SIN_GET_ADDR(sin), cfg.http_srvip);
+		else if (IP_ISSET(cfg.srvip))
+			IP_ASSIGN(SIN_GET_ADDR(sin), cfg.srvip);
+		// The default is INADDR_ANY (0)
+		SIN_GET_PORT(sin) = htons(cfg.http_port);
 	}
+
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
 		cs_log("HTTP Server: Setting SO_REUSEADDR via setsockopt failed! (errno=%d %s)", errno, strerror(errno));
 	}
 
-	memset(&sin, 0, sizeof sin);
-
-	ia->sin6_family = AF_INET6;
-	ia->sin6_addr = in6addr_any;
-	ia->sin6_port = htons(cfg.http_port);
-
-	if((bind(sock, &sin, sizeof(struct sockaddr_in6))) < 0) {
+	if (bind(sock, (struct sockaddr *)&sin, len) < 0) {
 		cs_log("HTTP Server couldn't bind on port %d (errno=%d %s). Not starting HTTP!", cfg.http_port, errno, strerror(errno));
 		close(sock);
 		return NULL;
 	}
-#else
-	struct sockaddr_in sin;
-	struct sockaddr_in remote;
 
-
-	socklen_t len = sizeof(remote);
-
-	/* Startup server */
-	if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-		cs_log("HTTP Server: Creating socket failed! (errno=%d %s)", errno, strerror(errno));
-		return NULL;
-	}
-	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
-		cs_log("HTTP Server: Setting SO_REUSEADDR via setsockopt failed! (errno=%d %s)", errno, strerror(errno));
-	}
-
-	memset(&sin, 0, sizeof sin);
-	sin.sin_family = AF_INET;
-	if (IP_ISSET(cfg.http_srvip))
-		IP_ASSIGN(SIN_GET_ADDR(sin), cfg.http_srvip);
-	else if (IP_ISSET(cfg.srvip))
-		IP_ASSIGN(SIN_GET_ADDR(sin), cfg.srvip);
-	else
-		sin.sin_addr.s_addr = INADDR_ANY;
-	sin.sin_port = htons(cfg.http_port);
-	if((bind(sock, (struct sockaddr *) &sin, sizeof(sin))) < 0) {
-		cs_log("HTTP Server couldn't bind on port %d (errno=%d %s). Not starting HTTP!", cfg.http_port, errno, strerror(errno));
-		close(sock);
-		return NULL;
-	}
-#endif
 	if (listen(sock, SOMAXCONN) < 0) {
 		cs_log("HTTP Server: Call to listen() failed! (errno=%d %s)", errno, strerror(errno));
 		close(sock);
@@ -5340,11 +5319,12 @@ static void *http_server(void *UNUSED(d)) {
 			cs_log("SSL could not be initialized. Starting WebIf in plain mode.");
 		else ssl_active = 1;
 	} else ssl_active = 0;
-	cs_log("HTTP Server listening on port %d%s", cfg.http_port, ssl_active ? " (SSL)" : "");
+	cs_log("HTTP Server running. ip=%s port=%d%s", cs_inet_ntoa(SIN_GET_ADDR(sin)), cfg.http_port, ssl_active ? " (SSL)" : "");
 #else
-	cs_log("HTTP Server listening on port %d", cfg.http_port);
+	cs_log("HTTP Server running. ip=%s port=%d", cs_inet_ntoa(SIN_GET_ADDR(sin)), cfg.http_port);
 #endif
 
+	struct SOCKADDR remote;
 	memset(&remote, 0, sizeof(remote));
 
 	while (!exit_oscam) {
@@ -5366,17 +5346,15 @@ static void *http_server(void *UNUSED(d)) {
 			cur_client()->last = time((time_t*)0); //reset last busy time
 			conn->cl = cur_client();
 #ifdef IPV6SUPPORT
-			if (ipv4fallback)
-			{
+			if (do_ipv6) {
+				struct sockaddr_in6 *ra = (struct sockaddr_in6 *)&remote;
+				memcpy(&conn->remote, &ra->sin6_addr, sizeof(struct in6_addr));
+			} else {
 				struct sockaddr_in *fba = (struct sockaddr_in *)&remote;
 				struct in6_addr taddr;
 				memset(&taddr, 0, sizeof(taddr));
 				taddr.s6_addr32[3] = fba->sin_addr.s_addr;
 				memcpy(&conn->remote, &taddr, sizeof(struct in6_addr));
-			}
-			else
-			{
-				memcpy(&conn->remote, &ra->sin6_addr, sizeof(struct in6_addr));
 			}
 #else
 			memcpy(&conn->remote, &remote.sin_addr, sizeof(struct in_addr));
