@@ -533,11 +533,11 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 		ioctl(demux[demux_index].demux_fd[num].fd,DMX_STOP); // for old boxes dvbapi1 complaint like dm500 ppcold, no action feedback.
 #else
 		ret=ioctl(demux[demux_index].demux_fd[num].fd,DMX_STOP); // for modern dvbapi boxes, they do give filter status back to us
-		if (ret < 0)
+		if (ret< 0)
 			cs_log("ERROR: Demuxer could not stop filter %d (errno=%d %s)", demux[demux_index].demux_fd[num].fd, errno, strerror(errno));
 #endif
-		ret = close(demux[demux_index].demux_fd[num].fd);
-		if (ret < 0)
+		int32_t retstatus = close(demux[demux_index].demux_fd[num].fd);
+		if (retstatus < 0)
 			cs_log("ERROR: Could not close demuxer fd %d (errno=%d %s)", demux[demux_index].demux_fd[num].fd, errno, strerror(errno));
 #endif
 #endif
@@ -1003,8 +1003,8 @@ void dvbapi_stop_descrambling(int32_t demux_id) {
 					
 					if(!found){
 						cs_debug_mask(D_DVBAPI, "[DVBAPI] Closing unused demux device ca%d (fd=%d).", i, ca_fd[i]);
-						int32_t ret = close(ca_fd[i]);
-						if (ret < 0) cs_log("ERROR: Could not close demuxer fd (errno=%d %s)", errno, strerror(errno));
+						int32_t retstatus = close(ca_fd[i]);
+						if (retstatus < 0) cs_log("ERROR: Could not close demuxer fd (errno=%d %s)", errno, strerror(errno));
 						ca_fd[i] = 0;
 					}
 				}
@@ -1029,7 +1029,7 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid) {
 	er->caid  = demux[demux_id].ECMpids[pid].CAID;
 	er->pid   = demux[demux_id].ECMpids[pid].ECM_PID;
 	er->prid  = demux[demux_id].ECMpids[pid].PROVID;
-	int32_t irdeto = 0;
+	
 	for (rdr=first_active_reader; rdr ; rdr=rdr->next){
 		int8_t match = matching_reader(er, rdr, 1); // check for matching reader, include ratelimitercheck!
 #ifdef WITH_LB
@@ -1055,8 +1055,8 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid) {
 			
 			if (er->caid >> 8 == 0x06 && !is_network_reader(rdr) && rdr->card_status==CARD_INSERTED && ((time(NULL) - rdr->emm_last) > 3600)){
 				cs_log("[DVBAPI] Skipping reader %s (no emm received last %d seconds)", rdr->label, (int) (time(NULL) - rdr->emm_last) );
-				demux[demux_id].ECMpids[pid].status = 0; // set it as low rank ecmpid, so it will be tried again later on!
-				irdeto=1; // we found irdeto set flag so pid wont be disabled
+				demux[demux_id].ECMpids[pid].checked = 2; // flag this pid as checked
+				demux[demux_id].ECMpids[pid].status = -1; // flag this pid as unusable, leave ecm channel cache as it is once emms started it will descramble
 				continue;
 			}
 				
@@ -1089,7 +1089,7 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid) {
 			break; // we started an ecmfilter so stop looking for next matching reader!
 		}
 	}
-	if (demux[demux_id].curindex!=pid && !irdeto){
+	if (demux[demux_id].curindex!=pid){
 		cs_log("[DVBAPI] Demuxer #%d impossible to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X (NO MATCHING READER)", demux_id, pid,
 				demux[demux_id].ECMpids[pid].CAID, demux[demux_id].ECMpids[pid].PROVID, demux[demux_id].ECMpids[pid].ECM_PID);
 				demux[demux_id].ECMpids[pid].checked = 2; // flag this pid as checked
@@ -1256,8 +1256,8 @@ void dvbapi_read_priority(void) {
 
 		struct s_dvbapi_priority *entry;
 		if (!cs_malloc(&entry, sizeof(struct s_dvbapi_priority))) {
-			ret = fclose(fp);
-			if (ret < 0) cs_log("ERROR: Could not close oscam.dvbapi fd (errno=%d %s)", errno, strerror(errno));
+			int32_t retstatus = fclose(fp);
+			if (retstatus < 0) cs_log("ERROR: Could not close oscam.dvbapi fd (errno=%d %s)", errno, strerror(errno));
 			return;
 		}
 
@@ -1383,8 +1383,8 @@ void dvbapi_read_priority(void) {
 
 	cs_debug_mask(D_DVBAPI, "[DVBAPI] Read %d entries from %s", count, cs_prio);
 
-	ret = fclose(fp);
-	if (ret < 0) cs_log("ERROR: Could not close oscam.dvbapi fd (errno=%d %s)", errno, strerror(errno));
+	int32_t retstatus = fclose(fp);
+	if (retstatus < 0) cs_log("ERROR: Could not close oscam.dvbapi fd (errno=%d %s)", errno, strerror(errno));
 	return;
 }
 
@@ -2111,6 +2111,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 
 void dvbapi_handlesockmsg (unsigned char *buffer, uint32_t len, int32_t connfd) {
 	uint32_t val=0, size=0, i, k;
+	int32_t retstatus;
 	pmthandling = 1; // pmthandling is in progress
 	if (cfg.dvbapi_pmtmode == 6) pmt_stopmarking = 0; // to enable stop_descrambling marking in PMT 6 mode
 	// cs_dump(buffer, len, "handlesockmsg:");
@@ -2162,13 +2163,13 @@ void dvbapi_handlesockmsg (unsigned char *buffer, uint32_t len, int32_t connfd) 
 						}
 					}
 					if (execlose){
-						int32_t ret = close(connfd);
-						if (ret < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
+						retstatus = close(connfd);
+						if (retstatus < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
 					}
 				} else {
 					if (cfg.dvbapi_pmtmode != 6){
-						int32_t ret = close(connfd);
-						if (ret < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
+						retstatus = close(connfd);
+						if (retstatus < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
 					}
 				}
 				break;
@@ -2214,7 +2215,7 @@ void event_handler(int32_t UNUSED(signal)) {
 	char dest[1024];
 	DIR *dirp;
 	struct dirent entry, *dp = NULL;
-	int32_t i, pmt_fd;
+	int32_t i, pmt_fd, retstatus;
 	uchar mbuf[1024];
 	if(disable_pmt_files) return;
 	if (dvbapi_client != cur_client()) return;
@@ -2227,8 +2228,8 @@ void event_handler(int32_t UNUSED(signal)) {
 		int32_t standby_fd = open(STANDBY_FILE, O_RDONLY);
 		pausecam = (standby_fd > 0) ? 1 : 0;
 		if (standby_fd> 0) {
-			int32_t ret = close(standby_fd);
-			if (ret < 0) cs_log("ERROR: Could not close standby fd (errno=%d %s)", errno, strerror(errno));
+			retstatus = close(standby_fd);
+			if (retstatus < 0) cs_log("ERROR: Could not close standby fd (errno=%d %s)", errno, strerror(errno));
 		}
 	}
 
@@ -2243,8 +2244,8 @@ void event_handler(int32_t UNUSED(signal)) {
 			pmt_fd = open(dest, O_RDONLY);
 			if(pmt_fd>0) {
 				if (fstat(pmt_fd, &pmt_info) != 0) {
-					int32_t ret = close(pmt_fd);
-					if (ret < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
+					retstatus = close(pmt_fd);
+					if (retstatus < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
 					continue;
 				}
 
@@ -2253,8 +2254,8 @@ void event_handler(int32_t UNUSED(signal)) {
 				 	dvbapi_stop_descrambling(i);
 				}
 
-				int32_t ret = close(pmt_fd);
-				if (ret < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
+				retstatus = close(pmt_fd);
+				if (retstatus < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
 				continue;
 			} else {
 				cs_log("Stopping demux for pmt file %s", dest);
@@ -2289,8 +2290,8 @@ void event_handler(int32_t UNUSED(signal)) {
 			continue;
 
 		if (fstat(pmt_fd, &pmt_info) != 0){
-			int32_t ret = close(pmt_fd);
-			if (ret < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
+			retstatus = close(pmt_fd);
+			if (retstatus < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
 			continue;
 		}
 
@@ -2305,8 +2306,8 @@ void event_handler(int32_t UNUSED(signal)) {
 			}
 		}
 		if (found){
-			int32_t ret = close(pmt_fd);
-			if (ret < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
+			retstatus = close(pmt_fd);
+			if (retstatus < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
 			continue;
 		}
 
@@ -2314,8 +2315,8 @@ void event_handler(int32_t UNUSED(signal)) {
 		cs_sleepms(100);
 
 		uint32_t len = read(pmt_fd,mbuf,sizeof(mbuf));
-		int32_t ret = close(pmt_fd);
-		if (ret < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
+		retstatus = close(pmt_fd);
+		if (retstatus < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
 
 		if (len < 1) {
 			cs_debug_mask(D_DVBAPI,"pmt file %s have invalid len!", dest);
@@ -2658,7 +2659,7 @@ static void * dvbapi_main_local(void *cli) {
 	uchar mbuf[1024];
 
 	struct s_auth *account;
-	int32_t ok=0;
+	int32_t ok=0, retstatus;
 	for (account = cfg.account; account; account=account->next) {
 		if ((ok = streq(cfg.dvbapi_usr, account->usr)))
 			break;
@@ -2676,7 +2677,7 @@ static void * dvbapi_main_local(void *cli) {
 		return NULL;
 	}
 
-	if (cfg.dvbapi_pmtmode == 1)
+	if (cfg.dvbapi_pmtmode == 1 || cfg.dvbapi_pmtmode == 6 )
 		disable_pmt_files=1;
 
 	int32_t listenfd = -1;
@@ -2710,9 +2711,9 @@ static void * dvbapi_main_local(void *cli) {
 		}
 	} else {
 		pthread_t event_thread;
-		int32_t ret = pthread_create(&event_thread, NULL, dvbapi_event_thread, (void*) dvbapi_client);
-		if(ret){
-			cs_log("ERROR: Can't create dvbapi event thread (errno=%d %s)", ret, strerror(ret));
+		retstatus = pthread_create(&event_thread, NULL, dvbapi_event_thread, (void*) dvbapi_client);
+		if(retstatus){
+			cs_log("ERROR: Can't create dvbapi event thread (errno=%d %s)", retstatus, strerror(retstatus));
 			return NULL;
 		} else
 			pthread_detach(event_thread);
@@ -2845,8 +2846,8 @@ static void * dvbapi_main_local(void *cli) {
 							dvbapi_stop_descrambling(j);
 						}
 					}
-					int32_t ret = close(pfd2[i].fd);
-					if (ret < 0) cs_log("ERROR: Could not close demuxer socket fd (errno=%d %s)", errno, strerror(errno));
+					retstatus = close(pfd2[i].fd);
+					if (retstatus < 0) cs_log("ERROR: Could not close demuxer socket fd (errno=%d %s)", errno, strerror(errno));
 					if (pfd2[i].fd==listenfd && cfg.dvbapi_pmtmode ==6){
 						listenfd=-1;
 					}
@@ -2869,7 +2870,6 @@ static void * dvbapi_main_local(void *cli) {
 						int32_t pmtlen = recv(listenfd, mbuf, sizeof(mbuf), 0);
 						if (pmtlen>0) {
 							cs_ddump_mask(D_DVBAPI, mbuf, pmtlen, "New PMT info from server:");
-							disable_pmt_files=1;
 							dvbapi_handlesockmsg(mbuf, pmtlen, -1);
 							break; // start all over!
 						}
@@ -2883,7 +2883,7 @@ static void * dvbapi_main_local(void *cli) {
 							connfd = accept(listenfd, (struct sockaddr *)&servaddr, (socklen_t *)&clilen);
 							cs_debug_mask(D_DVBAPI, "new socket connection fd: %d", connfd);
 
-							if (cfg.dvbapi_pmtmode == 3) disable_pmt_files=1;
+							if (cfg.dvbapi_pmtmode == 3 || cfg.dvbapi_pmtmode == 0 ) disable_pmt_files=1;
 
 							if (connfd <= 0) {
 								cs_debug_mask(D_DVBAPI,"accept() returns error on fd event %d (errno=%d %s)", pfd2[i].revents, errno, strerror(errno));
@@ -3178,6 +3178,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			client->last=time((time_t*)0);
 
 			FILE *ecmtxt;
+			int32_t retstatus;
 			ecmtxt = fopen(ECMINFO_FILE, "w");
 			if(ecmtxt != NULL && er->rc < E_NOTFOUND) {
 				char tmp[25];
@@ -3216,13 +3217,13 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				fprintf(ecmtxt, "ecm time: %.3f\n", (float) client->cwlastresptime/1000);
 				fprintf(ecmtxt, "cw0: %s\n", cs_hexdump(1,demux[i].lastcw[0],8, tmp, sizeof(tmp)));
 				fprintf(ecmtxt, "cw1: %s\n", cs_hexdump(1,demux[i].lastcw[1],8, tmp, sizeof(tmp)));
-				int32_t ret = fclose(ecmtxt);
-				if (ret < 0) cs_log("ERROR: Could not close ecmtxt fd (errno=%d %s)", errno, strerror(errno));
+				retstatus = fclose(ecmtxt);
+				if (retstatus < 0) cs_log("ERROR: Could not close ecmtxt fd (errno=%d %s)", errno, strerror(errno));
 				ecmtxt = NULL;
 			}
 			if (ecmtxt) {
-				int32_t ret = fclose(ecmtxt);
-				if (ret < 0) cs_log("ERROR: Could not close ecmtxt fd (errno=%d %s)", errno, strerror(errno));
+				retstatus = fclose(ecmtxt);
+				if (retstatus < 0) cs_log("ERROR: Could not close ecmtxt fd (errno=%d %s)", errno, strerror(errno));
 				ecmtxt = NULL;
 			}
 
