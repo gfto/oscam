@@ -1366,7 +1366,7 @@ static void gbox_send_dcw(struct s_client *cl, ECM_REQUEST *er)
   }
 
   uchar buf[50];
-  uint32_t crc = gbox_get_ecmchecksum(er);
+ 
   struct gbox_ecm_info *ei =  er->src_data;
 
   memset(buf, 0, sizeof(buf));
@@ -1385,10 +1385,10 @@ static void gbox_send_dcw(struct s_client *cl, ECM_REQUEST *er)
   buf[12] = ((ei->ecm[ei->ecm[20] + 33]) << 4) | (ei->ecm[18] & 0xF); //slot << 4 | even/odd
   buf[13] = ei->ecm[ei->ecm[20] + 26];	//CAID first byte
   memcpy(buf + 14, er->cw, 16);		//CW
-  buf[30] = crc >> 24;			//CRC
-  buf[31] = crc >> 16;			//CRC
-  buf[32] = crc >> 8;			//CRC
-  buf[33] = crc & 0xff;			//CRC
+  buf[30] = er->gbox_crc >> 24;		//CRC
+  buf[31] = er->gbox_crc >> 16;		//CRC
+  buf[32] = er->gbox_crc >> 8;		//CRC
+  buf[33] = er->gbox_crc & 0xff;	//CRC
   buf[34] = ei->ecm[ei->ecm[20] + 26];	//CAID
   buf[35] = ei->ecm[ei->ecm[20] + 27];	//CAID
 //  buf[36] = ei->ecm[16];		//nbcards???
