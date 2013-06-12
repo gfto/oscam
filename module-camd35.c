@@ -598,7 +598,7 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	ofs += sizeof(er->ecmd5);
 
 	//write csp hashcode:
-	i2b_buf(4, er->csp_hash, ofs);
+	i2b_buf(4, htonl(er->csp_hash), ofs);
 	ofs += 4;
 
 	//write cw:
@@ -662,7 +662,7 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 		return;
 
 	//Read csp_hash:
-	er->csp_hash = b2i(4, ofs);
+	er->csp_hash = ntohl(b2i(4, ofs));
 	ofs += 4;	
 
 	//Read cw:
