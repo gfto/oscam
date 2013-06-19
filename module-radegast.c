@@ -169,7 +169,7 @@ static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar
     return -1;
 
   ecmbuf[0] = 1;
-  ecmbuf[1] = er->ecmlen + 30 - 2;
+  ecmbuf[1] = (er->ecmlen + 30 - 2 ) & 0xff;
   memcpy(ecmbuf + 2, header, sizeof(header));
   for(n = 0; n < 4; n++) {
     snprintf((char*)provid_buf+(n*2), sizeof(provid_buf)-(n*2), "%02X", ((uchar *)(&er->prid))[4 - 1 - n]);
@@ -187,7 +187,7 @@ static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar
   ecmbuf[4 + sizeof(header)] = er->caid >> 8;
   ecmbuf[5 + sizeof(header)] = er->caid & 0xff;
   ecmbuf[6 + sizeof(header)] = 3;
-  ecmbuf[7 + sizeof(header)] = er->ecmlen;
+  ecmbuf[7 + sizeof(header)] = er->ecmlen & 0xff;
   memcpy(ecmbuf + 8 + sizeof(header), er->ecm, er->ecmlen);
   ecmbuf[4] = er->caid >> 8;
 

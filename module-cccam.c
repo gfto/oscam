@@ -614,7 +614,7 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 	n = send(cl->udp_fd, netbuf, len, 0);
 	if(rdr) rdr->last_s = time(NULL);
 	if(cl) cl->last = time(NULL);
-	
+
 	cs_writeunlock(&cc->lockcmd);
 
 	free(netbuf);
@@ -1200,7 +1200,7 @@ static int8_t cc_request_timeout(struct s_client *cl)
  */
 int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	struct s_reader *rdr = cl->reader;
-	
+
 	//cs_debug_mask(D_TRACE, "%s cc_send_ecm", getprefix());
 	if (!rdr->tcp_connected)
 		cc_cli_connect(cl);
@@ -1963,7 +1963,7 @@ int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 		cs_debug_mask(D_CACHEEX, "cacheex: nodelist reached %d nodes, no push", cacheex_maxhop(cl));
 		return 0;
 	}
-	
+
 	//search existing peer nodes:
 	LL_LOCKITER *li = ll_li_create(er->csp_lastnodes, 0);
 	uint8_t *node;
@@ -1981,15 +1981,15 @@ int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 				"cacheex: node %" PRIu64 "X found in list => skip push!", cacheex_node_id(node));
 		return 0;
 	}
-	
+
 	if (!cl->cc) {
 		if (cl->reader && !cl->reader->tcp_connected) {
 			cc_cli_connect(cl);
 		}
 	}
-	
+
 	if (!cc || !cl->udp_fd){
-		cs_debug_mask(D_CACHEEX, "cacheex: not connected %s -> no push", username(cl)); 
+		cs_debug_mask(D_CACHEEX, "cacheex: not connected %s -> no push", username(cl));
 		return 0;
 	}
 	return 1;
@@ -2010,7 +2010,7 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 		cs_debug_mask(D_CACHEEX, "cacheex: not connected %s -> no push", username(cl));
 		return(-1);
 	}
-	
+
 	int32_t size = 20 + sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw) + sizeof(uint8_t) +
 			(ll_count(er->csp_lastnodes)+1)*8; //lastnodes+ownnode
 
@@ -2033,7 +2033,7 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	//ecmbuf[13] = 0;
 	ecmbuf[14] = rc;
 
-	i2b_buf(2, er->caid, ecmbuf + 0);	
+	i2b_buf(2, er->caid, ecmbuf + 0);
 	i2b_buf(4, er->prid, ecmbuf + 2);
 	i2b_buf(2, er->srvid, ecmbuf + 10);
 
@@ -2073,7 +2073,7 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 		if (cl->reader)
 			cl->reader->last_s = cl->reader->last_g = time((time_t *)0); // correct
 		if (cl) cl->last = time(NULL);
-	}	
+	}
 	free(ecmbuf);
 	return res;
 }
@@ -3659,8 +3659,8 @@ int32_t cc_available(struct s_reader *rdr, int32_t checktype, ECM_REQUEST *er) {
 			return 0;
 	}
 
-	if (er && er->ecmlen > 255 && cc && !cc->extended_mode && (cc->remote_build_nr < 3367))
-		return 0; // remote does not support large ecms!
+	//if (er && er->ecmlen > 255 && cc && !cc->extended_mode && (cc->remote_build_nr < 3367))
+	//	return 0; // remote does not support large ecms!
 
 
 	if (checktype == AVAIL_CHECK_LOADBALANCE && cc && cc->ecm_busy) {
