@@ -1276,8 +1276,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	/* Quickfix Area */
 	update_chid(er);
 
-	// quickfix for 0100:000065
-	if (er->caid == 0x100 && er->prid == 0x00006a) { // cds nl add fix so mismatch between ecm and secatype reader wont set channel on sid blacklist 
+	// quickfix for 0100:00006a,00006c,00006d  6c and 6d added so fake ecm can be blocked trough oscam.whitelist now also for TVV be and Telesat be
+	if (er->caid == 0x100 && (er->prid == 0x00006a || er->prid == 0x00006c || er->prid == 0x00006d)) { //cds nl add fix so mismatch between ecm and secatype reader wont set channel on sid blacklist 
 		er->chid = b2i(2, er->ecm+7); // not quite right but good enough to function, its also registered this way in module-stat 
 	}
 
