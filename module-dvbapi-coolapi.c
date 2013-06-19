@@ -523,8 +523,8 @@ void coolapi_open_all()
 void coolapi_close_all()
 {
 	printf("coolapi_close_all start\n");
-	cnxt_smc_term();
-	cnxt_css_drv_term();
+	//cnxt_smc_term();
+	//cnxt_css_drv_term();
 	cnxt_kal_terminate();
 	cool_kal_opened = 0;
 }
