@@ -182,11 +182,12 @@ void mca_demux_convert(DEMUXTYPE * demux_orig, DEMUXMATRIX * demux_matrix){
 		demux_matrix->ECMpids[i].PROVID = (uint32_t)demux_orig->ECMpids[i].PROVID;
 		demux_matrix->ECMpids[i].ECM_PID = (uint16_t)demux_orig->ECMpids[i].ECM_PID;
 		demux_matrix->ECMpids[i].EMM_PID = (uint16_t)demux_orig->ECMpids[i].EMM_PID;
-		demux_matrix->ECMpids[i].irdeto_numchids = (int32_t)demux_orig->ECMpids[i].irdeto_chids;
-		demux_matrix->ECMpids[i].irdeto_curchid = (int32_t)demux_orig->ECMpids[i].irdeto_chids;
-		demux_matrix->ECMpids[i].irdeto_chid = (int32_t)demux_orig->ECMpids[i].irdeto_chids;
+		demux_matrix->ECMpids[i].irdeto_maxindex = (int32_t)demux_orig->ECMpids[i].irdeto_maxindex;
+		demux_matrix->ECMpids[i].irdeto_curindex = (int32_t)demux_orig->ECMpids[i].irdeto_curindex;
+		demux_matrix->ECMpids[i].irdeto_cycle = (int32_t)demux_orig->ECMpids[i].irdeto_cycle;
 		demux_matrix->ECMpids[i].checked = (int32_t)demux_orig->ECMpids[i].checked;
 		demux_matrix->ECMpids[i].status = (int32_t)demux_orig->ECMpids[i].status;
+		demux_matrix->ECMpids[i].tries = (uint8_t)demux_orig->ECMpids[i].tries;
 		demux_matrix->ECMpids[i].table = (unsigned char)demux_orig->ECMpids[i].table;
 		demux_matrix->ECMpids[i].streams = (uint32_t)demux_orig->ECMpids[i].streams;
 	}
@@ -194,7 +195,6 @@ void mca_demux_convert(DEMUXTYPE * demux_orig, DEMUXMATRIX * demux_matrix){
 	memcpy(&demux_matrix->STREAMpids, &demux_orig->STREAMpids, demux_matrix->STREAMpidcount * sizeof(uint16_t));
 	demux_matrix->pidindex = (int32_t)demux_orig->pidindex;
 	demux_matrix->curindex = (int32_t)demux_orig->curindex;
-	demux_matrix->tries = (int32_t)demux_orig->tries;
 	demux_matrix->max_status = (int32_t)demux_orig->max_status;
 	demux_matrix->program_number = (uint16_t)demux_orig->program_number;
 	memcpy(&demux_matrix->lastcw, &demux_orig->lastcw, 2 * 8 * sizeof(unsigned char));
@@ -450,7 +450,7 @@ void mca_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 			cs_debug_mask(D_DVBAPI, "cw not found");
 
 			if (demux[i].pidindex==-1)
-			  dvbapi_try_next_caid(i);
+			  dvbapi_try_next_caid(i,0);
 
 			openxcas_stop_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
 			openxcas_remove_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);

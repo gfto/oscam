@@ -257,7 +257,7 @@ void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 			cs_debug_mask(D_DVBAPI, "cw not found");
 
 			if (demux[i].pidindex==-1)
-			  dvbapi_try_next_caid(i);
+			  dvbapi_try_next_caid(i,0);
 
 			openxcas_stop_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
 			openxcas_remove_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);

@@ -48,7 +48,7 @@ static const struct box_devices devices[BOX_COUNT] = {
 static int32_t selected_box=-1;
 static int32_t selected_api=-1;
 static int32_t dir_fd=-1;
-static int32_t pausecam;
+static int32_t pausecam; // for dbox2 or PC in standby mode dont parse any ecm or emm
 static int32_t ca_fd[8];
 static LLIST *channel_cache;
 
@@ -72,7 +72,7 @@ struct s_channel_cache {
 	uint32_t 	prid;
 	uint16_t	srvid;
 	uint16_t	pid;
-	int8_t		chid;
+	uint32_t	chid;
 };
 
 struct s_channel_cache *find_channel_cache(int32_t demux_id, int32_t pidindex, int8_t caid_and_prid_only)
@@ -86,7 +86,7 @@ struct s_channel_cache *find_channel_cache(int32_t demux_id, int32_t pidindex, i
 
 	it = ll_iter_create(channel_cache);
 	while ((c=ll_iter_next(&it))) {
-
+	
 		if (caid_and_prid_only) {
 			if (p->CAID == c->caid && (p->PROVID == c->prid || p->PROVID ==0)) // PROVID ==0 some provider no provid in PMT table
 				return c;
@@ -94,8 +94,7 @@ struct s_channel_cache *find_channel_cache(int32_t demux_id, int32_t pidindex, i
 			if (demux[demux_id].program_number == c->srvid
 				&& p->CAID == c->caid
 				&& p->ECM_PID == c->pid
-				&&(p->PROVID == c->prid || p->PROVID ==0) // PROVID ==0 some provider no provid in PMT table
-				&& p->irdeto_curchid == c->chid) {
+				&&(p->PROVID == c->prid || p->PROVID ==0)){ // PROVID ==0 some provider no provid in PMT table
 #ifdef WITH_DEBUG
 				char buf[ECM_FMT_LEN];
 				ecmfmt(c->caid, 0, c->prid, c->chid, c->pid, c->srvid, 0, 0, 0, 0, buf, ECM_FMT_LEN);
@@ -123,8 +122,7 @@ int32_t edit_channel_cache(int32_t demux_id, int32_t pidindex, uint8_t add)
 		if (demux[demux_id].program_number == c->srvid
 			&& p->CAID == c->caid
 			&& p->ECM_PID == c->pid
-			&& (p->PROVID == c->prid || p->PROVID ==0) 
-			&& p->irdeto_curchid == c->chid) {
+			&& (p->PROVID == c->prid || p->PROVID ==0)){
 			if (add)
 				return 0; //already added
 			ll_iter_remove_data(&it);
@@ -139,7 +137,6 @@ int32_t edit_channel_cache(int32_t demux_id, int32_t pidindex, uint8_t add)
 		c->caid = p->CAID;
 		c->pid = p->ECM_PID;
 		c->prid = p->PROVID;
-		c->chid = p->irdeto_curchid;
 		ll_append(channel_cache, c);
 #ifdef WITH_DEBUG
 		char buf[ECM_FMT_LEN];
@@ -533,11 +530,11 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 		ioctl(demux[demux_index].demux_fd[num].fd,DMX_STOP); // for old boxes dvbapi1 complaint like dm500 ppcold, no action feedback.
 #else
 		ret=ioctl(demux[demux_index].demux_fd[num].fd,DMX_STOP); // for modern dvbapi boxes, they do give filter status back to us
-		if (ret< 0)
+		if (ret < 0)
 			cs_log("ERROR: Demuxer could not stop filter %d (errno=%d %s)", demux[demux_index].demux_fd[num].fd, errno, strerror(errno));
 #endif
-		int32_t retstatus = close(demux[demux_index].demux_fd[num].fd);
-		if (retstatus < 0)
+		ret = close(demux[demux_index].demux_fd[num].fd);
+		if (ret < 0)
 			cs_log("ERROR: Could not close demuxer fd %d (errno=%d %s)", demux[demux_index].demux_fd[num].fd, errno, strerror(errno));
 #endif
 #endif
@@ -737,15 +734,24 @@ void dvbapi_add_ecmpid_int(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uin
 	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].ECM_PID = ecmpid;
 	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].CAID = caid;
 	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].PROVID = provid;
+	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].CHID = 0x10000; // reset CHID
 	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].checked = 0;
 	//demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].index = 0;
 	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].status = 0;
+	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].tries = 0xFE;
 	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].streams = 0; // reset streams!
+	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].irdeto_curindex = 0xFE; // reset
+	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].irdeto_curindex=0xFE; // reset
+	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].irdeto_maxindex=0; // reset 
+	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].irdeto_cycle=0xFE; // reset
+	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].table=0;
+	
 	if (stream>-1)
 		demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].streams |= (1 << stream);
 
 	cs_log("[ADD PID %d] CAID: %04X ECM_PID: %04X PROVID: %06X", demux[demux_id].ECMpidcount, caid, ecmpid, provid);
 	if (caid>>8 == 0x06) demux[demux_id].emmstart = 1; // marker to fetch emms early irdeto needs them!
+	
 	demux[demux_id].ECMpidcount++;
 }
 
@@ -1003,8 +1009,8 @@ void dvbapi_stop_descrambling(int32_t demux_id) {
 					
 					if(!found){
 						cs_debug_mask(D_DVBAPI, "[DVBAPI] Closing unused demux device ca%d (fd=%d).", i, ca_fd[i]);
-						int32_t retstatus = close(ca_fd[i]);
-						if (retstatus < 0) cs_log("ERROR: Could not close demuxer fd (errno=%d %s)", errno, strerror(errno));
+						int32_t ret = close(ca_fd[i]);
+						if (ret < 0) cs_log("ERROR: Could not close demuxer fd (errno=%d %s)", errno, strerror(errno));
 						ca_fd[i] = 0;
 					}
 				}
@@ -1020,71 +1026,112 @@ void dvbapi_stop_descrambling(int32_t demux_id) {
 	return;
 }
 
-int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid) {
+int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked) {
 	int32_t started = 0; // in case ecmfilter started = 1
 	ECM_REQUEST *er;
 	struct s_reader *rdr;
 	if (!(er=get_ecmtask())) return started;
+	demux[demux_id].ECMpids[pid].checked = checked+1; // mark this pid as checked!
+	
+	struct s_dvbapi_priority *p;
+	for (p=dvbapi_priority; p != NULL ; p = p->next) {
+		if ((p->type != 'p')
+			|| (p->caid && p->caid != demux[demux_id].ECMpids[pid].CAID)
+			|| (p->provid && p->provid != demux[demux_id].ECMpids[pid].PROVID)
+			|| (p->ecmpid && p->ecmpid != demux[demux_id].ECMpids[pid].ECM_PID)
+			|| (p->srvid && p->srvid != demux[demux_id].program_number))
+			continue;
+		// if found chid and first run apply chid filter, on forced pids always apply!
+		if (p->type == 'p' && p->chid <0x10000 && (demux[demux_id].ECMpids[pid].checked == 0 || (p && p->force))){ 
+			er->chid = p->chid;
+			demux[demux_id].ECMpids[pid].CHID = p->chid;
+			//cs_log("********* CHID %04X **************", demux[demux_id].ECMpids[pid].CHID);
+			break; // we only accept one!
+		}
+		else{
+			er->chid = 0;
+			demux[demux_id].ECMpids[pid].CHID = 0x10000;
+		}
+	}
 	er->srvid = demux[demux_id].program_number;
 	er->caid  = demux[demux_id].ECMpids[pid].CAID;
 	er->pid   = demux[demux_id].ECMpids[pid].ECM_PID;
 	er->prid  = demux[demux_id].ECMpids[pid].PROVID;
 	
 	for (rdr=first_active_reader; rdr ; rdr=rdr->next){
-		int8_t match = matching_reader(er, rdr, 1); // check for matching reader, include ratelimitercheck!
-#ifdef WITH_LB
+		int8_t match = matching_reader(er, rdr, 0); // check for matching reader, exclude ratelimitercheck!
 		
+#ifdef WITH_LB
+		if (p && p->force) match = 1; // forced pid always started!
 		if (!match && cfg.lb_auto_betatunnel) { //if this reader does not match, check betatunnel for it
 			uint16_t caid = lb_get_betatunnel_caid_to(er->caid);
 			if (caid) {
 				uint16_t save_caid = er->caid;
 				er->caid = caid;
-				match = matching_reader(er, rdr, 1); //matching (including ratelimitercheck)
+				match = matching_reader(er, rdr, 0); //matching (excluding ratelimitercheck)
 				er->caid = save_caid;
 			}
 		}
 #endif
-		if (!match && is_network_reader(rdr) && (er->caid >> 8 == 0x17 || er->caid >> 8 == 0x18)) // these caids might be tunneled invisible by peers
+		if (!match && chk_is_betatunnel_caid(er->caid)) // these caids might be tunneled invisible by peers
 			match = 1; // so make it a match to try it!
 #ifdef CS_CACHEEX			
 		if (!match && (cacheex_is_match_alias(dvbapi_client, er))){ // check if cache-ex is matching
 			match = 1; // so make it a match to try it!
 		}
 #endif
-		if (match){ // if matching reader found check for irdeto cas if local irdeto card check if it received emms in last 60 minutes
-			
-			if (er->caid >> 8 == 0x06 && !is_network_reader(rdr) && rdr->card_status==CARD_INSERTED && ((time(NULL) - rdr->emm_last) > 3600)){
-				cs_log("[DVBAPI] Skipping reader %s (no emm received last %d seconds)", rdr->label, (int) (time(NULL) - rdr->emm_last) );
-				demux[demux_id].ECMpids[pid].checked = 2; // flag this pid as checked
-				demux[demux_id].ECMpids[pid].status = -1; // flag this pid as unusable, leave ecm channel cache as it is once emms started it will descramble
-				continue;
+		// BISS or FAKE CAID
+		// ecm stream pid is fake, so send out one fake ecm request
+		// special treatment: if we asked the cw first without starting a filter the cw request will be killed due to no ecmfilter started
+		if (demux[demux_id].ECMpids[pid].CAID == 0xFFFF || (demux[demux_id].ECMpids[pid].CAID >> 8) == 0x26) {
+			int32_t j,n;
+			er->ecmlen=5;
+			er->ecm[1] = 0x00;
+			er->ecm[2] = 0x02;
+			i2b_buf(2, er->srvid, er->ecm+3);
+
+			for (j=0, n=5; j<demux[demux_id].STREAMpidcount; j++, n+=2) {
+				i2b_buf(2, demux[demux_id].STREAMpids[j], er->ecm+n);
+				er->ecm[2] += 2;
+				er->ecmlen += 2;
 			}
-				
-			cs_log("[DVBAPI] Demuxer #%d trying to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X", demux_id, pid,
+			
+			cs_log("[DVBAPI] Demuxer #%d trying to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X ANY CHID", demux_id, pid,
 				demux[demux_id].ECMpids[pid].CAID, demux[demux_id].ECMpids[pid].PROVID, demux[demux_id].ECMpids[pid].ECM_PID);
 				
-				demux[demux_id].curindex=pid; // set current pid to the fresh started one
-				
-			// BISS or FAKE CAID
-			// ecm stream pid is fake, so send out one fake ecm request
-			if (demux[demux_id].ECMpids[pid].CAID == 0xFFFF || (demux[demux_id].ECMpids[pid].CAID >> 8) == 0x26) {
-				int32_t j,n;
-				er->ecmlen=5;
-				er->ecm[1] = 0x00;
-				er->ecm[2] = 0x02;
-				i2b_buf(2, er->srvid, er->ecm+3);
-
-				for (j=0, n=5; j<demux[demux_id].STREAMpidcount; j++, n+=2) {
-					i2b_buf(2, demux[demux_id].STREAMpids[j], er->ecm+n);
-					er->ecm[2] += 2;
-					er->ecmlen += 2;
-				}
-
-				request_cw(dvbapi_client, er, demux_id, 0); // do not register ecm since this try!
-			}
+			demux[demux_id].curindex=pid; // set current pid to the fresh started one
+			
 			dvbapi_start_filter(demux_id, pid, demux[demux_id].ECMpids[pid].ECM_PID, demux[demux_id].ECMpids[pid].CAID,
 				demux[demux_id].ECMpids[pid].PROVID, 0x80, 0xF0, 3000, TYPE_ECM, 0);
-			demux[demux_id].ECMpids[pid].checked=1; // mark this pid as checked!
+			started = 1;
+			
+			request_cw(dvbapi_client, er, demux_id, 0); // do not register ecm since this try!
+			break; // we started an ecmfilter so stop looking for next matching reader!
+		}
+		if (match){ // if matching reader found check for irdeto cas if local irdeto card check if it received emms in last 60 minutes
+			
+			if (er->caid >> 8 == 0x06){ // irdeto cas init irdeto_curindex to wait for first index (00)
+				if (demux[demux_id].ECMpids[pid].irdeto_curindex==0xFE) demux[demux_id].ECMpids[pid].irdeto_curindex = 0x00;
+				
+				if (!is_network_reader(rdr) && rdr->card_status==CARD_INSERTED && ((time(NULL) - rdr->emm_last) > 3600)){
+					cs_log("[DVBAPI] Warning reader %s received no emms for the last %d seconds", rdr->label, (int) (time(NULL) - rdr->emm_last) );
+				}
+			}
+			
+			if (p && p->chid<0x10000){ // do we prio a certain chid?
+				cs_log("[DVBAPI] Demuxer #%d trying to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X CHID %04X", demux_id, pid,
+					demux[demux_id].ECMpids[pid].CAID, demux[demux_id].ECMpids[pid].PROVID, demux[demux_id].ECMpids[pid].ECM_PID,
+					demux[demux_id].ECMpids[pid].CHID);
+			}
+			else{
+				cs_log("[DVBAPI] Demuxer #%d trying to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X ANY CHID", demux_id, pid,
+					demux[demux_id].ECMpids[pid].CAID, demux[demux_id].ECMpids[pid].PROVID, demux[demux_id].ECMpids[pid].ECM_PID);
+			}
+				
+			demux[demux_id].curindex=pid; // set current pid to the fresh started one
+			
+			dvbapi_start_filter(demux_id, pid, demux[demux_id].ECMpids[pid].ECM_PID, demux[demux_id].ECMpids[pid].CAID,
+				demux[demux_id].ECMpids[pid].PROVID, 0x80, 0xF0, 3000, TYPE_ECM, 0);
 			started = 1;
 			break; // we started an ecmfilter so stop looking for next matching reader!
 		}
@@ -1092,7 +1139,7 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid) {
 	if (demux[demux_id].curindex!=pid){
 		cs_log("[DVBAPI] Demuxer #%d impossible to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X (NO MATCHING READER)", demux_id, pid,
 				demux[demux_id].ECMpids[pid].CAID, demux[demux_id].ECMpids[pid].PROVID, demux[demux_id].ECMpids[pid].ECM_PID);
-				demux[demux_id].ECMpids[pid].checked = 2; // flag this pid as checked
+				demux[demux_id].ECMpids[pid].checked = 3; // flag this pid as checked
 				demux[demux_id].ECMpids[pid].status = -1; // flag this pid as unusable
 				edit_channel_cache(demux_id, pid, 0); // remove this pid from channelcache
 	}
@@ -1120,7 +1167,7 @@ struct s_dvbapi_priority *dvbapi_check_prio_match_emmpid(int32_t demux_id, uint1
 			|| (p->provid && p->provid != provid)
 			|| (p->ecmpid && p->ecmpid != ecm_pid)
 			|| (p->srvid && p->srvid != demux[demux_id].program_number)
-			|| (p->type == 'i' && (p->chid > -1)))
+			|| (p->type == 'i' && (p->chid < 0x10000)))
 			continue;
 		return p;
 	}
@@ -1138,7 +1185,8 @@ struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidi
 			|| (p->provid && p->provid != ecmpid->PROVID)
 			|| (p->ecmpid && p->ecmpid != ecmpid->ECM_PID)
 			|| (p->srvid && p->srvid != demux[demux_id].program_number)
-			|| (p->type == 'i' && (p->chid > -1)))
+			//|| (p->type == 'i' && (p->chid > -1)))  ///????
+			|| (p->chid<0x10000 && p->chid != ecmpid->CHID))
 			continue;
 		return p;
 	}
@@ -1256,8 +1304,8 @@ void dvbapi_read_priority(void) {
 
 		struct s_dvbapi_priority *entry;
 		if (!cs_malloc(&entry, sizeof(struct s_dvbapi_priority))) {
-			int32_t retstatus = fclose(fp);
-			if (retstatus < 0) cs_log("ERROR: Could not close oscam.dvbapi fd (errno=%d %s)", errno, strerror(errno));
+			ret = fclose(fp);
+			if (ret < 0) cs_log("ERROR: Could not close oscam.dvbapi fd (errno=%d %s)", errno, strerror(errno));
 			return;
 		}
 
@@ -1290,8 +1338,8 @@ void dvbapi_read_priority(void) {
 		char c_srvid[34];
 		c_srvid[0]='\0';
 		uint32_t caid=0, provid=0, srvid=0, ecmpid=0;
-		int16_t chid=-1; //chid=0 is a valid chid
-		ret = sscanf(str1, "%4x:%6x:%33[^:]:%4x:%4"SCNx16, &caid, &provid, c_srvid, &ecmpid, &chid);
+		uint32_t chid=0x10000; //chid=0 is a valid chid
+		ret = sscanf(str1, "%4x:%6x:%33[^:]:%4x:%4x"SCNx16, &caid, &provid, c_srvid, &ecmpid, &chid);
 		if (ret < 1) {
 			cs_log("[DVBAPI] Error in oscam.dvbapi: ret=%d | %c: %04X %06X %s %04X %04X",
 				ret, type, caid, provid, c_srvid, ecmpid, chid);
@@ -1383,8 +1431,8 @@ void dvbapi_read_priority(void) {
 
 	cs_debug_mask(D_DVBAPI, "[DVBAPI] Read %d entries from %s", count, cs_prio);
 
-	int32_t retstatus = fclose(fp);
-	if (retstatus < 0) cs_log("ERROR: Could not close oscam.dvbapi fd (errno=%d %s)", errno, strerror(errno));
+	ret = fclose(fp);
+	if (ret < 0) cs_log("ERROR: Could not close oscam.dvbapi fd (errno=%d %s)", errno, strerror(errno));
 	return;
 }
 
@@ -1497,11 +1545,11 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 					continue;
 				
 				if (p->type == 'i') { // check if ignored by dvbapi
-					if (p->chid > -1)
-						continue;
-					demux[demux_index].ECMpids[n].status = -1;
-					cs_debug_mask(D_DVBAPI,"[IGNORE PID %d] %04X:%06X:%04X (file)",
-						n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,demux[demux_index].ECMpids[n].ECM_PID);
+					if (p->chid == 0x10000){ // ignore all? disable pid
+						demux[demux_index].ECMpids[n].status = -1;
+					}
+					cs_debug_mask(D_DVBAPI,"[IGNORE PID %d] %04X:%06X:%04X:%04X (file)", n, demux[demux_index].ECMpids[n].CAID,
+						demux[demux_index].ECMpids[n].PROVID,demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) p->chid);
 					continue;
 				}
 
@@ -1522,9 +1570,10 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 									demux[demux_index].ECMpids[n].status += add_prio;
 								//priority*ECMpidcount should overrule network reader
 								demux[demux_index].ECMpids[n].status += (prio * demux[demux_index].ECMpidcount) + (p_order--);
-								cs_debug_mask(D_DVBAPI,"[PRIORITIZE PID %d] %04X:%06X:%04X (localrdr: %s weight: %d)",
+								cs_debug_mask(D_DVBAPI,"[PRIORITIZE PID %d] %04X:%06X:%04X:%04X (localrdr: %s weight: %d)",
 									n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,
-									demux[demux_index].ECMpids[n].ECM_PID, rdr->label, demux[demux_index].ECMpids[n].status);
+									demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) p->chid, rdr->label,
+									demux[demux_index].ECMpids[n].status);
 								break;
 							} else {
 								if (!rdr->next) // no match so ignore it!
@@ -1537,9 +1586,10 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 								else if (cache && !demux[demux_index].ECMpids[n].status)
 									demux[demux_index].ECMpids[n].status += add_prio;
 								demux[demux_index].ECMpids[n].status += prio + (p_order--);
-								cs_debug_mask(D_DVBAPI,"[PRIORITIZE PID %d] %04X:%06X:%04X (rdr: %s weight: %d)",
+								cs_debug_mask(D_DVBAPI,"[PRIORITIZE PID %d] %04X:%06X:%04X:%04X (rdr: %s weight: %d)",
 									n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,
-									demux[demux_index].ECMpids[n].ECM_PID, rdr->label, demux[demux_index].ECMpids[n].status);
+									demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) p->chid, rdr->label,
+									demux[demux_index].ECMpids[n].status);
 								break;
 							} else {
 								if (!rdr->next) // no match so ignore it!
@@ -1548,8 +1598,8 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 						}
 					}
 					if (demux[demux_index].ECMpids[n].status == -1)
-						cs_debug_mask(D_DVBAPI,"[IGNORE PID %d] %04X:%06X:%04X (no matching reader)", n, demux[demux_index].ECMpids[n].CAID, 
-							demux[demux_index].ECMpids[n].PROVID,demux[demux_index].ECMpids[n].ECM_PID);
+						cs_debug_mask(D_DVBAPI,"[IGNORE PID %d] %04X:%06X:%04X:%04X (no matching reader)", n, demux[demux_index].ECMpids[n].CAID, 
+							demux[demux_index].ECMpids[n].PROVID,demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) p->chid);
 				}
 			}
 		}
@@ -1589,7 +1639,8 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 						demux[demux_index].ECMpids[n].status += prio*2;
 						cs_debug_mask(D_DVBAPI,"[PRIORITIZE PID %d] %04X:%06X:%04X (localrdr: %s weight: %d)",
 							n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,
-							demux[demux_index].ECMpids[n].ECM_PID, rdr->label, demux[demux_index].ECMpids[n].status);
+							demux[demux_index].ECMpids[n].ECM_PID, rdr->label,
+							demux[demux_index].ECMpids[n].status);
 						break;
 					} else {
 						if (!rdr->next)	// no match so ignore it!
@@ -1642,7 +1693,8 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 					demux[demux_index].ECMpids[n].status = highest_prio++; //priority
 					cs_debug_mask(D_DVBAPI,"[PRIORITIZE PID %d] %04X:%06X:%04X (service: %s position: %d)",
 						n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,
-						demux[demux_index].ECMpids[n].ECM_PID, sidtab->label, demux[demux_index].ECMpids[n].status);
+						demux[demux_index].ECMpids[n].ECM_PID, sidtab->label,
+						demux[demux_index].ECMpids[n].status);
 				}
 			}
 		}
@@ -1659,9 +1711,8 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 		match=dvbapi_check_prio_match(demux_index, n, 'p');
 		if (match && match->force) {
 			demux[demux_index].ECMpids[n].status = ++highest_prio;
-			cs_debug_mask(D_DVBAPI,"[FORCED PID %d] %04X:%06X:%04X", n, demux[demux_index].ECMpids[n].CAID, 
-				demux[demux_index].ECMpids[n].PROVID,demux[demux_index].ECMpids[n].ECM_PID);
-			break; // there can be only 1 forced entry on a demuxer!
+			cs_debug_mask(D_DVBAPI,"[FORCED PID %d] %04X:%06X:%04X:%04X", n, demux[demux_index].ECMpids[n].CAID, 
+				demux[demux_index].ECMpids[n].PROVID,demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) match->chid);
 		}
 	}
 	demux[demux_index].max_status = highest_prio; // register maxstatus
@@ -1755,7 +1806,7 @@ void request_cw(struct s_client *client, ECM_REQUEST *er, int32_t demux_id, uint
 #endif
 }
 
-void dvbapi_try_next_caid(int32_t demux_id) {
+void dvbapi_try_next_caid(int32_t demux_id, int8_t checked) {
 	
 	int32_t n, j, found = -1, started = 0;
 	
@@ -1764,9 +1815,9 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 	for (j = status; j >= 0; j--) {	// largest status first!
 		
 		for (n=0; n<demux[demux_id].ECMpidcount; n++) {
-			cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d PID #%d checked = %d status = %d (searching for pid with status = %d)", demux_id, n,
-				demux[demux_id].ECMpids[n].checked, demux[demux_id].ECMpids[n].status, j);
-			if (demux[demux_id].ECMpids[n].checked == 0 && demux[demux_id].ECMpids[n].status == j) {
+			//cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d PID #%d checked = %d status = %d (searching for pid with status = %d)", demux_id, n,
+			//	demux[demux_id].ECMpids[n].checked, demux[demux_id].ECMpids[n].status, j);
+			if (demux[demux_id].ECMpids[n].checked == checked && demux[demux_id].ECMpids[n].status == j) {
 				found = n;
 #if defined WITH_AZBOX || defined WITH_MCA
 				openxcas_provid = demux[demux_id].ECMpids[found].PROVID;
@@ -1774,13 +1825,16 @@ void dvbapi_try_next_caid(int32_t demux_id) {
 				openxcas_ecm_pid = demux[demux_id].ECMpids[found].ECM_PID;
 #endif
 				if((demux[demux_id].ECMpids[found].CAID >> 8) == 0x06) demux[demux_id].emmstart = 0; // fixup for cas that need emm first!
-				started = dvbapi_start_descrambling(demux_id, found);
+				started = dvbapi_start_descrambling(demux_id, found, checked);
 				if (cfg.dvbapi_requestmode == 0 && started == 1) return; // in requestmode 0 we only start 1 ecm request at the time
 			}
 		}
 	}
-	if (found == -1 && demux[demux_id].pidindex == -1) cs_log("[DVBAPI] Demuxer #%d no suitable readers found for ecmpids in PMT that can be used for decoding!", demux_id);
-	return;
+
+	if (found == -1 && demux[demux_id].pidindex == -1) {
+		cs_log("[DVBAPI] Demuxer #%d no suitable readers found that can be used for decoding!", demux_id);
+		return;
+	}
 }
 
 static void getDemuxOptions(int32_t demux_id, unsigned char *buffer, uint16_t *ca_mask, uint16_t *demux_index, uint16_t *adapter_index){
@@ -1833,8 +1887,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	uint32_t program_info_length = ((buffer[4] & 0x0F) << 8) | buffer[5];
 
 	cs_ddump_mask(D_DVBAPI, buffer, length, "capmt:");
-	cs_debug_mask(D_DVBAPI,"PMT Management Command = %d", ca_pmt_list_management);
-
+	//cs_debug_mask(D_DVBAPI,"PMT Management Command = %d", ca_pmt_list_management);
+	cs_log("[DVBAPI] Tuner sends PMT command %d for channel %04X", ca_pmt_list_management, program_number);
 	if ((ca_pmt_list_management == LIST_FIRST || ca_pmt_list_management == LIST_ONLY) && pmt_stopmarking == 0 && cfg.dvbapi_pmtmode == 6){
 		for (i = 0; i < MAX_DEMUX; i++) {
 			if (demux[i].program_number == 0) continue; // skip empty demuxers
@@ -1857,14 +1911,15 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			}
 			if (ca_pmt_list_management == LIST_UPDATE) {//PMT Update */
 				demux_id = i;
-				demux[demux_id].curindex = -1;
-				demux[demux_id].pidindex = -1;
-				demux[demux_id].STREAMpidcount=0;
-				demux[demux_id].ECMpidcount=0;
-				demux[demux_id].ECMpids[0].streams = 0; // reset first ecmpid streams!
-				demux[demux_id].EMMpidcount=0;
-				dvbapi_stop_filter(demux_id, TYPE_ECM); // stop all ecm filters
-				dvbapi_stop_filter(demux_id, TYPE_EMM); // stop all emm filters
+				dvbapi_stop_descrambling(i);
+				//demux[demux_id].curindex = -1;
+				//demux[demux_id].pidindex = -1;
+				//demux[demux_id].STREAMpidcount=0;
+				//demux[demux_id].ECMpidcount=0;
+				//demux[demux_id].ECMpids[0].streams = 0; // reset first ecmpid streams!
+				//demux[demux_id].EMMpidcount=0;
+				//dvbapi_stop_filter(demux_id, TYPE_ECM); // stop all ecm filters
+				//dvbapi_stop_filter(demux_id, TYPE_EMM); // stop all emm filters
 				
 				cs_log("[DVBAPI] Demuxer #%d PMT update for decoding of SRVID %04X", i, demux[i].program_number);
 			}
@@ -1895,9 +1950,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 				return demux_id; // since we are continueing decoding here it ends!
 			}
 			
-			if (ca_pmt_list_management == LIST_UPDATE && cfg.dvbapi_pmtmode == 6){
-				cs_log("[DVBAPI] Demuxer #%d PMT update for decoding of SRVID %04X", i, demux[i].program_number);
-			}
 			if (ca_pmt_list_management == LIST_LAST && cfg.dvbapi_pmtmode != 6){ // fix LIST_LAST for PMT !=6
 				demux_id = i;
 			}
@@ -1921,6 +1973,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		cs_log("ERROR: No free id (MAX_DEMUX)");
 		return -1;
 	}
+	
+	demux[demux_id].program_number=program_number; // do this early since some prio items use them!
 	
 	if (buffer[7]==0x81 && buffer[8]==0x08) {
 		// parse private descriptor as used by enigma (4 bytes namespace, 2 tsid, 2 onid)
@@ -1974,7 +2028,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	demux[demux_id].adapter_index=adapter_index;
 	demux[demux_id].ca_mask=ca_mask;
 	demux[demux_id].rdr=NULL;
-	demux[demux_id].program_number=program_number;
 	demux[demux_id].demux_index=demux_index;
 	demux[demux_id].socket_fd=connfd;
 	demux[demux_id].stopdescramble = 0; // remove deletion mark!
@@ -2058,7 +2111,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 
 			if(demux[xtra_demux_id].STREAMpidcount > 0){
 				dvbapi_resort_ecmpids(xtra_demux_id);
-				dvbapi_try_next_caid(xtra_demux_id);
+				dvbapi_try_next_caid(xtra_demux_id,0);
 			} else {
 				cs_log("[pmt] Found no streams for xtra demuxer. Not starting additional decoding on it.");
 			}
@@ -2095,11 +2148,11 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	}
 	if (ca_pmt_list_management != LIST_FIRST && cfg.dvbapi_pmtmode !=6){
 		dvbapi_resort_ecmpids(demux_id);
-		dvbapi_try_next_caid(demux_id);
+		dvbapi_try_next_caid(demux_id,0);
 	}
 	if (cfg.dvbapi_pmtmode ==6){
 		dvbapi_resort_ecmpids(demux_id);
-		dvbapi_try_next_caid(demux_id);
+		dvbapi_try_next_caid(demux_id,0);
 		if (ca_pmt_list_management == LIST_MORE){
 			cs_debug_mask(D_DVBAPI,"[DVBAPI] CA PMT Server LIST_MORE not implemented yet!");
 		}
@@ -2111,7 +2164,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 
 void dvbapi_handlesockmsg (unsigned char *buffer, uint32_t len, int32_t connfd) {
 	uint32_t val=0, size=0, i, k;
-	int32_t retstatus;
 	pmthandling = 1; // pmthandling is in progress
 	if (cfg.dvbapi_pmtmode == 6) pmt_stopmarking = 0; // to enable stop_descrambling marking in PMT 6 mode
 	// cs_dump(buffer, len, "handlesockmsg:");
@@ -2163,13 +2215,13 @@ void dvbapi_handlesockmsg (unsigned char *buffer, uint32_t len, int32_t connfd) 
 						}
 					}
 					if (execlose){
-						retstatus = close(connfd);
-						if (retstatus < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
+						int32_t ret = close(connfd);
+						if (ret < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
 					}
 				} else {
 					if (cfg.dvbapi_pmtmode != 6){
-						retstatus = close(connfd);
-						if (retstatus < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
+						int32_t ret = close(connfd);
+						if (ret < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
 					}
 				}
 				break;
@@ -2215,9 +2267,8 @@ void event_handler(int32_t UNUSED(signal)) {
 	char dest[1024];
 	DIR *dirp;
 	struct dirent entry, *dp = NULL;
-	int32_t i, pmt_fd, retstatus;
+	int32_t i, pmt_fd;
 	uchar mbuf[1024];
-	if(disable_pmt_files) return;
 	if (dvbapi_client != cur_client()) return;
 
 	pthread_mutex_lock(&event_handler_lock);
@@ -2228,8 +2279,8 @@ void event_handler(int32_t UNUSED(signal)) {
 		int32_t standby_fd = open(STANDBY_FILE, O_RDONLY);
 		pausecam = (standby_fd > 0) ? 1 : 0;
 		if (standby_fd> 0) {
-			retstatus = close(standby_fd);
-			if (retstatus < 0) cs_log("ERROR: Could not close standby fd (errno=%d %s)", errno, strerror(errno));
+			int32_t ret = close(standby_fd);
+			if (ret < 0) cs_log("ERROR: Could not close standby fd (errno=%d %s)", errno, strerror(errno));
 		}
 	}
 
@@ -2244,8 +2295,8 @@ void event_handler(int32_t UNUSED(signal)) {
 			pmt_fd = open(dest, O_RDONLY);
 			if(pmt_fd>0) {
 				if (fstat(pmt_fd, &pmt_info) != 0) {
-					retstatus = close(pmt_fd);
-					if (retstatus < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
+					int32_t ret = close(pmt_fd);
+					if (ret < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
 					continue;
 				}
 
@@ -2254,8 +2305,8 @@ void event_handler(int32_t UNUSED(signal)) {
 				 	dvbapi_stop_descrambling(i);
 				}
 
-				retstatus = close(pmt_fd);
-				if (retstatus < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
+				int32_t ret = close(pmt_fd);
+				if (ret < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
 				continue;
 			} else {
 				cs_log("Stopping demux for pmt file %s", dest);
@@ -2290,8 +2341,8 @@ void event_handler(int32_t UNUSED(signal)) {
 			continue;
 
 		if (fstat(pmt_fd, &pmt_info) != 0){
-			retstatus = close(pmt_fd);
-			if (retstatus < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
+			int32_t ret = close(pmt_fd);
+			if (ret < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
 			continue;
 		}
 
@@ -2306,8 +2357,8 @@ void event_handler(int32_t UNUSED(signal)) {
 			}
 		}
 		if (found){
-			retstatus = close(pmt_fd);
-			if (retstatus < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
+			int32_t ret = close(pmt_fd);
+			if (ret < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
 			continue;
 		}
 
@@ -2315,8 +2366,8 @@ void event_handler(int32_t UNUSED(signal)) {
 		cs_sleepms(100);
 
 		uint32_t len = read(pmt_fd,mbuf,sizeof(mbuf));
-		retstatus = close(pmt_fd);
-		if (retstatus < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
+		int32_t ret = close(pmt_fd);
+		if (ret < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
 
 		if (len < 1) {
 			cs_debug_mask(D_DVBAPI,"pmt file %s have invalid len!", dest);
@@ -2391,7 +2442,11 @@ void *dvbapi_event_thread(void *cli) {
 
 void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, int32_t len) {
 	struct s_ecmpids *curpid = &demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex];
-	uint16_t chid = 0;
+	uint32_t pid = demux[demux_id].demux_fd[filter_num].pidindex;
+	uint32_t chid = 0x10000;
+	if (pausecam) // for dbox2 or PC in standby mode dont parse any ecm or emm
+		return;
+
 	if (demux[demux_id].demux_fd[filter_num].type==TYPE_ECM) {
 		if (len != (((buffer[1] & 0xf) << 8) | buffer[2]) + 3){ // invalid CAT length
 			cs_debug_mask(D_DVBAPI, "[DVBAPI] Received an ECM with invalid CAT length!");
@@ -2399,132 +2454,33 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		}
 
 		if (!(buffer[0] == 0x80 || buffer[0] == 0x81)){
-			cs_debug_mask(D_DVBAPI, "[DVBAPI] Received an ECM with invalid ODD/EVEN!");
+			cs_debug_mask(D_DVBAPI, "[DVBAPI] Received an ECM with invalid ecmtable ID %02X -> ignoring!", buffer[0]);
 			return;
 		}
-	}
-	
-	if (pausecam)
-		return;
-
-	struct s_dvbapi_priority *p;
-	for (p = dvbapi_priority; p != NULL; p = p->next) {
-		if (p->type != 'l'
-			|| (p->caid && p->caid != curpid->CAID)
-			|| (p->provid && p->provid != curpid->PROVID)
-			|| (p->ecmpid && p->ecmpid != curpid->ECM_PID)
-			|| (p->srvid && p->srvid != demux[demux_id].program_number))
-			continue;
-
-		if (p->delay == len && p->force < 6) {
-			p->force++;
-			return;
-		}
-		if (p->force >= 6)
-			p->force=0;
-	}
-
-	if (demux[demux_id].demux_fd[filter_num].type==TYPE_ECM) {
-	
-		uint16_t caid = curpid->CAID;
-		uint32_t provid = curpid->PROVID;
-
-		if ((caid >> 8) == 0x06) {
-			// 80 70 39 53 04 05 00 88
-			// 81 70 41 41 01 06 00 13 00 06 80 38 1F 52 93 D2
-			if (buffer[5]>20) return;
-			if (curpid->irdeto_numchids != buffer[5]+1) { //7
-				cs_debug_mask(D_DVBAPI,"Found %d IRDETO ECM CHIDs", buffer[5]+1);
-				curpid->irdeto_numchids = buffer[5]+1; // numchids = 7
-				curpid->irdeto_curchid = 0;
-				curpid->irdeto_cycle = 0;
-				curpid->irdeto_chids = 0;
-			}
-
-			if (curpid->irdeto_curchid+1 > curpid->irdeto_numchids) {
-				curpid->irdeto_cycle++;
-				curpid->irdeto_curchid = 0;
-			}
-
-			if (buffer[4] != curpid->irdeto_curchid) {
-				// wait for the correct chid
-				return;
-			}
-
-			chid = (buffer[6] << 8) | buffer[7];
-			
-			if (demux[demux_id].pidindex==-1) {
-				int8_t i = 0, pval=0, found = 0;
-
-				for (p=dvbapi_priority, i=0; p != NULL && curpid->irdeto_cycle > -1; p = p->next) {
-					if ((p->type != 'p' && p->type != 'i')
-						|| (p->chid == -1)
-						|| (p->caid && p->caid != curpid->CAID)
-						|| (p->provid && p->provid != curpid->PROVID)
-						|| (p->ecmpid && p->ecmpid != curpid->ECM_PID)
-						|| (p->srvid && p->srvid != demux[demux_id].program_number))
-						continue;
-
-					if (p->type == 'i' && p->chid == chid) {
-						curpid->irdeto_chids |= (1<<curpid->irdeto_curchid);
-						curpid->irdeto_curchid++;
-						if (curpid->irdeto_curchid+1 > curpid->irdeto_numchids){
-							curpid->irdeto_cycle++;
-						}
-						return;
-					} else if (p->type == 'i')
-						continue;
-
-					pval=1;
-
-					if (i++ != curpid->irdeto_cycle)
-						continue;
-
-					if (p->chid == chid) {
-						found=1;
-						break;
-					} else {
-						curpid->irdeto_curchid++;
-						if (curpid->irdeto_curchid+1 > curpid->irdeto_numchids){
-							curpid->irdeto_cycle++;
-							curpid->irdeto_curchid = 0;
-						}
-						return;
-					}
-				}
-
-				if (pval && !found && curpid->irdeto_cycle > -1) {
-					curpid->irdeto_cycle = -1;
-					curpid->irdeto_curchid = 0;
-					return;
-				}
-
-				if (curpid->irdeto_curchid+1 > curpid->irdeto_numchids){
-					curpid->irdeto_cycle++;
-					curpid->irdeto_curchid = 0;
-					return;
-				}
-			}
-			curpid->irdeto_chids |= (1<<curpid->irdeto_curchid);
-		}
-
+		
 		if (selected_api != DVBAPI_3 && selected_api != DVBAPI_1){ // only valid for dvbapi3 && dvbapi1
 			if (curpid->table == buffer[0]) // wait for odd / even ecm change old style
-			return;
+				return;
+				
 		}
+
 #if defined(__powerpc__)
 		if (curpid->table == buffer[0]){ // wait for odd / even ecm change old style since dm500 ppcold cant handle sectionfiltering but its dvbapi1
 			return;
 		}
 #endif
 		curpid->table = buffer[0];
-
-		if (!provid)
-			provid = chk_provid(buffer, caid);
-
-		if (provid != curpid->PROVID)
-			curpid->PROVID = provid;
-			
+		
+		if (curpid->CAID>>8 == 0x06){ //irdeto cas
+			// 80 70 39 53 04 05 00 88
+			// 81 70 41 41 01 06 00 13 00 06 80 38 1F 52 93 D2
+			//if (buffer[5]>20) return;
+			if (curpid->irdeto_maxindex != buffer[5]) { //6, register max irdeto index
+				cs_debug_mask(D_DVBAPI,"Found %d IRDETO ECM CHIDs", buffer[5]+1);
+				curpid->irdeto_maxindex = buffer[5]; // numchids = 7 (0..6)
+			}
+		}	
+		
 		ECM_REQUEST *er;
 		if (!cs_malloc(&er, sizeof(ECM_REQUEST)))
 			return;
@@ -2536,12 +2492,124 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		er->onid = demux[demux_id].onid;
 		er->ens = demux[demux_id].enigma_namespace;
 
-		er->caid  = caid;
+		er->caid  = curpid->CAID;
 		er->pid   = curpid->ECM_PID;
-		er->prid  = provid;
-		er->chid  = chid;
+		er->prid  = curpid->PROVID;
 		er->ecmlen= len;
 		memcpy(er->ecm, buffer, er->ecmlen);
+		
+		switch (er->caid>>8){  
+			case 0x01:	chid = b2i(2, er->ecm+7); break; // seca  
+			case 0x05:	chid = b2i(2, er->ecm+8); break; // viaccess  
+			case 0x06:	chid = b2i(2, er->ecm+6); break; // irdeto  
+			case 0x09:	chid = b2i(2, er->ecm+11); break; // videoguard 
+			case 0x4A:	// DRE-Crypt, Bulcrypt, others? 
+						if (er->caid != 0x4AEE) // Bulcrypt 
+						chid = er->ecm[7]; 
+						break; 
+		}
+		
+		er->chid = chid;
+		
+		if (curpid->CAID>>8 == 0x06){ //irdeto cas
+			cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d ECMTYPE %02X CAID %04X PROVID %06X ECMPID %04X IRDETO INDEX %02X MAX INDEX %02X CHID %04X CYCLE %02X",	demux_id, er->ecm[0], er->caid, er->prid, er->pid, er->ecm[4], er->ecm[5], er->chid, curpid->irdeto_cycle);
+		
+			if (curpid->irdeto_curindex != buffer[4]){ // old style wrong irdeto index 
+				if(curpid->irdeto_curindex == 0xFE){ // check if this ecmfilter just started up
+					curpid->irdeto_curindex = buffer[4]; // on startup set the current index to the irdeto index of the ecm
+				}
+				else { // we are already running and not interested in this ecm
+					curpid->table=0;
+					dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this ecm doesnt match with current irdeto index
+					return;
+				}
+			}
+		}
+		else{
+			cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d ECMTYPE %02X CAID %04X PROVID %06X ECMPID %04X FAKECHID %04X (unique part in ecm)",
+				demux_id, er->ecm[0], er->caid, er->prid, er->pid, er->chid);
+		}
+		
+		if ((curpid->CHID <0x10000) && chid != curpid->CHID){ // check for matching chid (unique ecm part in case of non-irdeto cas)
+			if (curpid->CAID>>8 == 0x06){
+				
+				if ((curpid->irdeto_cycle < 0xFE) && curpid->irdeto_cycle == buffer[4]){ // if same: we cycled all indexes but no luck!
+					struct s_dvbapi_priority *forceentry=dvbapi_check_prio_match(demux_id, pid, 'p');
+					if (!forceentry && !forceentry->force){ // forced pid? keep trying the forced ecmpid, no force kill ecm filter
+						dvbapi_stop_filternum(demux_id, filter_num); // stop this ecm filter!
+						//if(cfg.dvbapi_requestmode==0) dvbapi_try_next_caid(demux_id,0);
+						return;
+					}
+				}
+				if(curpid->irdeto_cycle == 0xFE) curpid->irdeto_cycle = buffer[4]; // register irdeto index of current ecm
+				
+				curpid->irdeto_curindex++; // set check on next index
+				if(curpid->irdeto_curindex>curpid->irdeto_maxindex) curpid->irdeto_curindex=0; // check if we reached max irdeto index, if so reset to 0
+				
+				curpid->table=0;
+				dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this ecm doesnt match with current irdeto index
+				return;	
+			}
+			else{ // all nonirdeto cas systems
+				struct s_dvbapi_priority *forceentry=dvbapi_check_prio_match(demux_id, pid, 'p');
+				curpid->table=0;
+				dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this ecm doesnt match with current irdeto index
+				if (forceentry && forceentry->force) return; // forced pid? keep trying the forced ecmpid!
+				
+				dvbapi_stop_filternum(demux_id, filter_num); // stop this ecm filter!
+				//if(cfg.dvbapi_requestmode==0) dvbapi_try_next_caid(demux_id,0);
+				return;
+			}
+		}
+		
+		struct s_dvbapi_priority *p;
+		
+		for (p = dvbapi_priority; p != NULL; p = p->next) {
+			if (p->type != 'l'
+				|| (p->caid && p->caid != curpid->CAID)
+				|| (p->provid && p->provid != curpid->PROVID)
+				|| (p->ecmpid && p->ecmpid != curpid->ECM_PID)
+				|| (p->srvid && p->srvid != demux[demux_id].program_number))
+				continue;
+
+			if (p->delay == len && p->force < 6) {
+				p->force++;
+				return;
+			}
+			if (p->force >= 6)
+				p->force=0;
+		}
+		
+		if (!curpid->PROVID)
+			curpid->PROVID = chk_provid(buffer, curpid->CAID);
+			
+		if ((curpid->CAID >> 8) == 0x06) {// irdeto: wait for the correct index 
+			if (buffer[4] != curpid->irdeto_curindex) { 
+				curpid->table=0;
+				dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this ecm doesnt match with current irdeto index
+				return;
+			}
+			// we have an ecm with the correct irdeto index 
+			for (p=dvbapi_priority; p != NULL ; p = p->next) { // check for ignore!
+				if ((p->type != 'i')
+					|| (p->caid && p->caid != curpid->CAID)
+					|| (p->provid && p->provid != curpid->PROVID)
+					|| (p->ecmpid && p->ecmpid != curpid->ECM_PID)
+					|| (p->srvid && p->srvid != demux[demux_id].program_number))
+					continue;
+
+				if (p->type == 'i' && (p->chid < 0x10000 && p->chid == chid)){  // found a ignore chid match with current ecm -> ignoring this irdeto index
+					curpid->irdeto_curindex++;
+					if (curpid->irdeto_curindex > curpid->irdeto_maxindex) { // check if curindex is over the max 
+						curpid->irdeto_curindex = 0;
+					}
+					curpid->table=0;
+					dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this chid has to be ignored!
+					return;
+				}
+			}
+		}
+		curpid->table = er->ecm[0];
 		request_cw(dvbapi_client, er, demux_id, 1); // register this ecm for delayed ecm response check
 	}
 
@@ -2659,7 +2727,7 @@ static void * dvbapi_main_local(void *cli) {
 	uchar mbuf[1024];
 
 	struct s_auth *account;
-	int32_t ok=0, retstatus;
+	int32_t ok=0;
 	for (account = cfg.account; account; account=account->next) {
 		if ((ok = streq(cfg.dvbapi_usr, account->usr)))
 			break;
@@ -2677,7 +2745,7 @@ static void * dvbapi_main_local(void *cli) {
 		return NULL;
 	}
 
-	if (cfg.dvbapi_pmtmode == 1 || cfg.dvbapi_pmtmode == 6 )
+	if (cfg.dvbapi_pmtmode == 1)
 		disable_pmt_files=1;
 
 	int32_t listenfd = -1;
@@ -2711,9 +2779,9 @@ static void * dvbapi_main_local(void *cli) {
 		}
 	} else {
 		pthread_t event_thread;
-		retstatus = pthread_create(&event_thread, NULL, dvbapi_event_thread, (void*) dvbapi_client);
-		if(retstatus){
-			cs_log("ERROR: Can't create dvbapi event thread (errno=%d %s)", retstatus, strerror(retstatus));
+		int32_t ret = pthread_create(&event_thread, NULL, dvbapi_event_thread, (void*) dvbapi_client);
+		if(ret){
+			cs_log("ERROR: Can't create dvbapi event thread (errno=%d %s)", ret, strerror(ret));
 			return NULL;
 		} else
 			pthread_detach(event_thread);
@@ -2777,22 +2845,48 @@ static void * dvbapi_main_local(void *cli) {
 			}
 			
 			if (ecmcounter == 0 && demux[i].ECMpidcount > 0){ // Restart decoding all caids we have ecmpids but no ecm filters!
+				
+				int32_t started = 0;
+				
 				for (g=0; g<demux[i].ECMpidcount; g++){ // avoid race: not all pids are asked and checked out yet!
-					if(demux[i].ECMpids[g].checked != 2 && demux[i].ECMpids[g].status >=0) break; 
+					if(demux[i].ECMpids[g].checked == 0 && demux[i].ECMpids[g].status >=0){ // check if prio run is done
+						dvbapi_try_next_caid(i, 0); // not done, so start next prio pid
+						started = 1;
+						break;
+					}
 				}
+				if (started) continue; // if started a filter proceed with next demuxer
+				
+				if (g == demux[i].ECMpidcount){ // all usable pids (with prio) are tried, lets start over again without prio!
+					for (g=0; g<demux[i].ECMpidcount; g++){ // avoid race: not all pids are asked and checked out yet!
+						if(demux[i].ECMpids[g].checked == 2 && demux[i].ECMpids[g].status >=0){ // check if noprio run is done
+							demux[i].ECMpids[g].irdeto_curindex=0xFE;
+							demux[i].ECMpids[g].irdeto_maxindex=0;
+							demux[i].ECMpids[g].irdeto_cycle=0xFE;
+							demux[i].ECMpids[g].tries=0xFE;
+							demux[i].ECMpids[g].table=0;
+							dvbapi_try_next_caid(i, 1); // not done, so start next no prio pid
+							started = 1;
+							break;
+						}
+					}
+				}
+				if (started) continue; // if started a filter proceed with next demuxer
+				
 				if (g == demux[i].ECMpidcount){ // all usable pids are tried, lets start over again!
 					cs_log("[DVBAPI] Demuxer #%d (re)starting decodingrequests on all %d ecmpids!", i, demux[i].ECMpidcount);
 					cs_sleepms(300); // add a little timeout
-					for (g=0; g<demux[i].ECMpidcount; g++) {
+					for (g=0; g<demux[i].ECMpidcount; g++) { // reinit some used things from second run (without prio)
 						demux[i].ECMpids[g].checked=0;
-						demux[i].ECMpids[g].irdeto_curchid=0;
-						demux[i].ECMpids[g].irdeto_chids=0;
-						demux[i].ECMpids[g].irdeto_cycle=0;
+						demux[i].ECMpids[g].irdeto_curindex=0xFE;
+						demux[i].ECMpids[g].irdeto_maxindex=0;
+						demux[i].ECMpids[g].irdeto_cycle=0xFE;
 						demux[i].ECMpids[g].table=0;
 						edit_channel_cache(i, g, 0); // remove this pid from channelcache since we had no founds on any ecmpid!
 					}
 					dvbapi_resort_ecmpids(i);
-					dvbapi_try_next_caid(i);
+					dvbapi_try_next_caid(i,0);
+					continue;
 				}
 			}
 			// delayed emm start for non irdeto caids (
@@ -2846,8 +2940,8 @@ static void * dvbapi_main_local(void *cli) {
 							dvbapi_stop_descrambling(j);
 						}
 					}
-					retstatus = close(pfd2[i].fd);
-					if (retstatus < 0) cs_log("ERROR: Could not close demuxer socket fd (errno=%d %s)", errno, strerror(errno));
+					int32_t ret = close(pfd2[i].fd);
+					if (ret < 0) cs_log("ERROR: Could not close demuxer socket fd (errno=%d %s)", errno, strerror(errno));
 					if (pfd2[i].fd==listenfd && cfg.dvbapi_pmtmode ==6){
 						listenfd=-1;
 					}
@@ -2866,10 +2960,10 @@ static void * dvbapi_main_local(void *cli) {
 						while (pmthandling){
 							cs_log("[DVBAPI] Waiting till previous PMT handling is done!");
 						}
-						cs_log("PMT event: %d", pfd2[0].revents);
 						int32_t pmtlen = recv(listenfd, mbuf, sizeof(mbuf), 0);
 						if (pmtlen>0) {
 							cs_ddump_mask(D_DVBAPI, mbuf, pmtlen, "New PMT info from server:");
+							disable_pmt_files=1;
 							dvbapi_handlesockmsg(mbuf, pmtlen, -1);
 							break; // start all over!
 						}
@@ -3024,6 +3118,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	int32_t i,j;
 
 	for (i=0;i<MAX_DEMUX;i++) {
+		if (demux[i].program_number == 0) continue; // ignore empty demuxers
 		if (demux[i].program_number==er->srvid) {
 			demux[i].rdr=er->selected_reader;
 
@@ -3035,36 +3130,68 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			
 			if (j==demux[i].ECMpidcount) continue;
 			
-			if (er->rc == E_TIMEOUT){ // in case of timeout give this pid another try
-				demux[i].ECMpids[j].table=0;
-				dvbapi_set_section_filter(i, er);
-				return;
-			}
-			cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d %scontrolword received for PID #%d CAID %04X PROVID %06X ECMPID %04X CHID %02X", i, 
+			cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d %scontrolword received for PID #%d CAID %04X PROVID %06X ECMPID %04X CHID %04X", i, 
 				(er->rc >= E_NOTFOUND?"no ":""), j, er->caid, er->prid, er->pid, er->chid);
 				
-			if (cfg.dvbapi_requestmode == 0 && er->rc >= E_NOTFOUND && (er->caid >> 8) != 0x06){ // wait polltimeout to start next ecm is taking too long
+			/*if (cfg.dvbapi_requestmode == 0 && er->rc >= E_NOTFOUND && (er->caid >> 8) != 0x06){ 
+				// wait polltimeout to start next ecm is taking too long
 				struct s_dvbapi_priority *forceentry=dvbapi_check_prio_match(i, j, 'p');
 				if (!forceentry || (forceentry && !forceentry->force)){ // no ignore on forced pid!
-					demux[i].ECMpids[j].status = -1; // flag this ecm as unusable
-					demux[i].ECMpids[j].checked = 2; // flag this ecmpid as checked
-					edit_channel_cache(i, j, 0); // remove this pid from channelcache
+					// in case of timeout or fatal LB event give this pid another try but no more than 1 try
+					if ((er->rc == E_TIMEOUT || (er->rcEx && er->rcEx <=E2_CCCAM_NOCARD)) && demux[i].ECMpids[j].tries == 0){ 
+						demux[i].ECMpids[j].tries = 1;
+						demux[i].ECMpids[j].table = 0;
+						dvbapi_set_section_filter(i, er);
+					}
+					else{ // all not found responses except timeout response
+						demux[i].ECMpids[j].status = -1; // flag this ecm as unusable
+						demux[i].ECMpids[j].checked = 2; // flag this ecmpid as checked
+						edit_channel_cache(i, j, 0); // remove this pid from channelcache
+						demux[i].ECMpids[j].CHID = 0x10000; // get rid of this prio chid since it failed!
+					}
 					dvbapi_try_next_caid(i); // dont start next pid in case of force entry!
 				}
-			}
+			}*/
 				
-			if (dvbapi_check_ecm_delayed_delivery(i, er) && er->rc < E_NOTFOUND){ // check for delayed response on already expired ecmrequest
-				if(!er) return;
+			if (er->rc < E_NOTFOUND){ // check for delayed response on already expired ecmrequest
+				uint32_t status= dvbapi_check_ecm_delayed_delivery(i, er);
+				
+				//uint32_t found = 0;
 				char ecmd5[17*3];
 				cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5)); 
-				cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d not interested in cw response on ecm hash %s", i, ecmd5);
-				return;
+				
+				if (status == 2){ // no filter
+					cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d not interested in response ecmhash %s (filter already killed)", i, ecmd5);
+					continue;
+				}
+				
+				/*if (status == 1 || status == 3 || status == 4){ // 1=matching ecm hash, 2=no filter, 3=table reset, 4=cache-ex response
+					if ( memcmp(er->cw,demux[i].lastcw[0],8) && memcmp(er->cw+8,demux[i].lastcw[1],8) ){ // check for matching controlword
+						found = 1;
+					}
+					else if ( memcmp(er->cw,demux[i].lastcw[1],8) && memcmp(er->cw+8,demux[i].lastcw[0],8) ){ // check for matching controlword
+						found = 1;
+					}
+					if (found){
+						cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d duplicate controlword ecm response hash %s (duplicate controlword!)", i, ecmd5);
+						continue;
+					}
+				}*/ // disabled for now, must be something wrong 
+				
+				if (status == 3){ // table reset
+					cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d luckyshot new controlword ecm response hash %s (ecm table reset)", i, ecmd5);
+				}
+				
+				if (status == 4){ // no check on cache-ex responses!
+					cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d new controlword from cache-ex reader (no ecmhash check possible)", i);
+				}
 			}
 			
 			if (er->rc < E_NOTFOUND && cfg.dvbapi_requestmode==0 && (demux[i].pidindex==-1) && er->caid!=0) {
-				edit_channel_cache(i, j, 1);
+				demux[i].ECMpids[j].tries = 0xFE; // reset timeout retry flag
+				demux[i].ECMpids[j].irdeto_cycle = 0xFE; // reset irdetocycle
 				demux[i].curindex = j;
-				demux[i].ECMpids[j].checked = 2;
+				demux[i].ECMpids[j].checked = 3;
 				cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d descrambling PID #%d CAID %04X PROVID %06X ECMPID %04X CHID %02X",
 					i, demux[i].curindex, er->caid, er->prid, er->pid, er->chid);
 			}
@@ -3075,7 +3202,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				
 				for (t=0;t<demux[i].ECMpidcount;t++) { //check this pid with controlword FOUND for higher status:
 					if (t!=j && demux[i].ECMpids[j].status >= demux[i].ECMpids[t].status) { 
-						demux[i].ECMpids[t].checked = 2; // mark index t as low status
+						demux[i].ECMpids[t].checked = 3; // mark index t as low status
 						
 						for (o = 0; o < MAX_FILTER; o++) { // check if ecmfilter is in use & stop all ecmfilters of lower status pids
 							if (demux[i].demux_fd[o].fd > 0 && demux[i].demux_fd[o].type == TYPE_ECM && demux[i].demux_fd[o].pidindex == t){
@@ -3098,33 +3225,50 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 					i, demux[i].curindex, er->caid, er->prid, er->pid, er->chid);
 			}
 			
-			if (er->rc >= E_NOTFOUND) { 
-				edit_channel_cache(i, j, 0); // remove this pid from channelcache
-				if ((er->caid >> 8) == 0x06) {
-					demux[i].ECMpids[j].irdeto_curchid++; 
+			if (er->rc >= E_NOTFOUND) { // not found on requestmode 0 + 1
+				struct s_dvbapi_priority *forceentry=dvbapi_check_prio_match(i, j, 'p');
+				
+				if (forceentry && forceentry->force){ // forced pid? keep trying the forced ecmpid!
 					demux[i].ECMpids[j].table=0;
-					if (!(demux[i].ECMpids[j].irdeto_curchid+1 > demux[i].ECMpids[j].irdeto_numchids)) { // check for last / max chid				
+					dvbapi_set_section_filter(i, er);
+					continue;
+				}
+				
+				// in case of timeout or fatal LB event give this pid another try but no more than 1 try
+				if ((er->rc == E_TIMEOUT || (er->rcEx && er->rcEx <=E2_CCCAM_NOCARD)) && demux[i].ECMpids[j].tries == 0xFE){ 
+					demux[i].ECMpids[j].tries = 1;
+					demux[i].ECMpids[j].table = 0;
+					dvbapi_set_section_filter(i, er);
+				}
+				else{ // all not found responses exception: first timeout response and first fatal loadbalancer response
+					demux[i].ECMpids[j].status = -1; // flag this ecm as unusable
+					demux[i].ECMpids[j].checked = 3; // flag this ecmpid as checked
+					edit_channel_cache(i, j, 0); // remove this pid from channelcache
+					demux[i].ECMpids[j].CHID = 0x10000; // get rid of this prio chid since it failed!
+				}
+				
+				if ((er->caid >> 8) == 0x06) {
+					if (demux[i].ECMpids[j].irdeto_curindex==0xFE) demux[i].ECMpids[j].irdeto_curindex = 0x00; // init irdeto current index to first one
+					if (!(demux[i].ECMpids[j].irdeto_curindex+1 > demux[i].ECMpids[j].irdeto_maxindex)) { // check for last / max chid				
 						cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d trying next irdeto chid of PID #%d CAID %04X PROVID %06X ECMPID %04X", i,
-						demux[i].curindex, er->caid, er->prid, er->pid);
+						j, er->caid, er->prid, er->pid);
+						demux[i].ECMpids[j].irdeto_curindex++; // irdeto index one up
+						demux[i].ECMpids[j].table=0;
 						dvbapi_set_section_filter(i, er);
-						return;
+						continue;
 					}
 				}
 				
-				struct s_dvbapi_priority *forceentry=dvbapi_check_prio_match(i, j, 'p');
-				if (cfg.dvbapi_requestmode == 0 && (forceentry && forceentry->force)){ // forced pid? keep trying the forced ecmpid!
-					dvbapi_set_section_filter(i, er);
-					return;
-				}
-					
-				demux[i].ECMpids[j].irdeto_chids = 0;
-				demux[i].ECMpids[j].irdeto_curchid = 0;
-				demux[i].ECMpids[j].irdeto_cycle = 0;
+				edit_channel_cache(i, j, 0); // remove this pid from channelcache	
+				demux[i].ECMpids[j].irdeto_maxindex = 0;
+				demux[i].ECMpids[j].irdeto_curindex = 0xFE;
+				demux[i].ECMpids[j].irdeto_cycle = 0xFE;
 				demux[i].ECMpids[j].table = 0;
-				demux[i].ECMpids[j].checked = 2; // flag ecmpid as checked
+				demux[i].ECMpids[j].checked = 3; // flag ecmpid as checked
 				demux[i].ECMpids[j].status = -1; // flag ecmpid as unusable
 				int32_t found = 1; // setup for first run
 				int32_t filternum = -1;
+				
 				while (found >0){ // disable all ecm + emm filters for this notfound
 					found = 0;
 					filternum = dvbapi_get_filternum(i,er, TYPE_ECM); // get ecm filternumber
@@ -3146,11 +3290,30 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 						}
 					}
 				}
-				if(er->caid >> 8 == 0x06) dvbapi_try_next_caid(i); // in case of irdeto request descramblingstart of next ecmpid
-				return;
+				//demux[i].ECMpids[j].CHID = 0x10000; // get rid of this prio chid since it obvious failed!
+				//if (cfg.dvbapi_requestmode == 0) dvbapi_try_next_caid(i); // in case of requestmode 0 start descrambling of next ecmpid
+				continue;
 			}
-			dvbapi_set_section_filter(i, er);
 			
+			
+			// below this should be only run in case of ecm answer is found
+			
+			demux[i].pidindex = demux[i].curindex; // set current index as *the* pid to descramble 
+
+			switch (er->caid>>8){ // derive current chid in case of irdeto, or a unique part of ecm on other cas systems  
+				case 0x01:	demux[i].ECMpids[j].CHID = b2i(2, er->ecm+7); break; // seca  
+				case 0x05:	demux[i].ECMpids[j].CHID = b2i(2, er->ecm+8); break; // viaccess  
+				case 0x06:	demux[i].ECMpids[j].CHID = b2i(2, er->ecm+6); break; // irdeto  
+				case 0x09:	demux[i].ECMpids[j].CHID = b2i(2, er->ecm+11); break; // videoguard 
+				case 0x4A:	// DRE-Crypt, Bulcrypt, others? 
+							if (er->caid != 0x4AEE) // Bulcrypt 
+							demux[i].ECMpids[j].CHID = er->ecm[7]; 
+							break; 
+			}
+			edit_channel_cache(i, j, 1); // do it here to here after the right CHID is registered
+			
+			dvbapi_set_section_filter(i, er);
+			demux[i].ECMpids[j].irdeto_cycle = 0xFE; // reset irdeto cycle
 			struct s_dvbapi_priority *delayentry=dvbapi_check_prio_match(i, demux[i].pidindex, 'd');
 			if (delayentry) {
 				if (delayentry->delay<1000) {
@@ -3158,8 +3321,6 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 					cs_sleepms(delayentry->delay);
 				}
 			}
-			
-			demux[i].pidindex = demux[i].curindex; // set current index as *the* pid to descramble 
 
 			delayer(er);
 
@@ -3178,7 +3339,6 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			client->last=time((time_t*)0);
 
 			FILE *ecmtxt;
-			int32_t retstatus;
 			ecmtxt = fopen(ECMINFO_FILE, "w");
 			if(ecmtxt != NULL && er->rc < E_NOTFOUND) {
 				char tmp[25];
@@ -3217,16 +3377,20 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				fprintf(ecmtxt, "ecm time: %.3f\n", (float) client->cwlastresptime/1000);
 				fprintf(ecmtxt, "cw0: %s\n", cs_hexdump(1,demux[i].lastcw[0],8, tmp, sizeof(tmp)));
 				fprintf(ecmtxt, "cw1: %s\n", cs_hexdump(1,demux[i].lastcw[1],8, tmp, sizeof(tmp)));
-				retstatus = fclose(ecmtxt);
-				if (retstatus < 0) cs_log("ERROR: Could not close ecmtxt fd (errno=%d %s)", errno, strerror(errno));
+				int32_t ret = fclose(ecmtxt);
+				if (ret < 0) cs_log("ERROR: Could not close ecmtxt fd (errno=%d %s)", errno, strerror(errno));
 				ecmtxt = NULL;
 			}
 			if (ecmtxt) {
-				retstatus = fclose(ecmtxt);
-				if (retstatus < 0) cs_log("ERROR: Could not close ecmtxt fd (errno=%d %s)", errno, strerror(errno));
+				int32_t ret = fclose(ecmtxt);
+				if (ret < 0) cs_log("ERROR: Could not close ecmtxt fd (errno=%d %s)", errno, strerror(errno));
 				ecmtxt = NULL;
 			}
 
+		}
+		else {
+			cs_debug_mask(D_DVBAPI,"[DVBAPI] Ignoring delayed ecm response for old channel");
+			continue;
 		}
 	}
 }
@@ -3273,30 +3437,59 @@ int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er) {
 	if (er->ecm[0]==0x80) ecmfilter = 0x81; // current processed ecm is even, next will be filtered for odd
 	else ecmfilter = 0x80; // current processed ecm is odd, next will be filtered for even
 	
-	if(curpid->CAID >> 8 == 0x06){ // check for irdeto cas
-		
-		filter[2]= curpid->irdeto_curchid;// set filter to wait for current chid index
-		mask[2]= 0xFF;
-		
-		if (curpid->table != 0){ // we already found right chid so lets filter it!
-			filter[0]= ecmfilter; // set filter to wait for odd ecms for this chid
-			mask[0]=0xFF;
-			cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d set ecm filter to %s for CAID %04X CHID %04X (=INDEX %02X) on fd %d", demux_index,
-				(ecmfilter == 0x80?"EVEN":"ODD"), curpid->CAID, er->chid, filter[2], fd);		
-		}
-		else { // not found right chid or irdeto cycle so reset filter!
-			filter[0]=0x80; // set filter to wait for any ecms
-			mask[0]=0xF0;
-			cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d set ecm filter to ODD+EVEN for CAID %04X INDEX %02X on fd %d", demux_index, 
-				curpid->CAID, filter[2], fd);
-		}
-			
-	}
-	else {
-		filter[0]=ecmfilter; // only accept new ecms (if previous odd, filter for even and visaversa)
+	if (curpid->table != 0){ // cycle ecmtype from odd to even or even to odd
+		filter[0]= ecmfilter; // only accept new ecms (if previous odd, filter for even and visaversa)
 		mask[0]=0xFF;
-		cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d set ecm filter to %s for CAID %04X on fd %d", demux_index, (ecmfilter == 0x80?"EVEN":"ODD"),
-		curpid->CAID, fd);
+			cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d set ecmtable filter to %s for CAID %04X PROVID %06X on fd %d", demux_index,
+				(ecmfilter == 0x80?"EVEN":"ODD"), curpid->CAID, curpid->PROVID, fd);		
+	}
+	else{ // not decoding right now so we are interessted in all ecmtypes!
+		filter[0]=0x80; // set filter to wait for any ecms
+		mask[0]=0xF0;
+		cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d set ecmtable filter to ODD+EVEN for CAID %04X PROVID %06X on fd %d", demux_index, 
+			curpid->CAID, curpid->PROVID, fd);
+	}
+	uint32_t offset = 0;
+	uint32_t pid = demux[demux_index].demux_fd[n].pidindex;
+	
+	struct s_dvbapi_priority *forceentry=dvbapi_check_prio_match(demux_index, pid, 'p');
+	//cs_log("**** curpid->CHID %04X, checked = %d, er->chid = %04X *****", curpid->CHID, curpid->checked, er->chid);
+	// checked 3 to make sure we dont set chid filter and no such ecm in dvbstream except for forced pids!
+	if(curpid->CHID < 0x10000 && (curpid->checked==3 || (forceentry && forceentry->force))){ 
+
+		switch (er->caid>>8){  
+			case 0x01:	offset = 7; break; // seca  
+			case 0x05:	offset = 8; break; // viaccess  
+			case 0x06:	offset = 6; break; // irdeto  
+			case 0x09:	offset = 11; break; // videoguard 
+			case 0x4A:	// DRE-Crypt, Bulcrypt, others? 
+						if (er->caid != 0x4AEE) // Bulcrypt 
+						offset = 7; 
+						break; 
+		}
+	}
+	
+	int32_t irdetomatch = 1; // check if wanted irdeto index is the one the delivers current chid! 
+	if (curpid->CAID >>8 == 0x06){
+		if(curpid->irdeto_curindex == er->ecm[4]) irdetomatch = 1; // ok apply chid filtering
+		else irdetomatch = 0; // skip chid filtering but apply irdeto index filtering
+	}
+
+	if(offset && irdetomatch){ // we have a cas with chid or unique part in checked ecm
+		i2b_buf(2, curpid->CHID, filter+(offset-2));
+		mask[(offset-2)]=0xFF;
+		mask[(offset-1)]=0xFF;
+		cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d set chid filter to CHID %04X on fd %d", demux_index, curpid->CHID, fd);
+	}
+	else{
+		if(curpid->CAID >> 8 == 0x06 && (curpid->irdeto_curindex < 0xFE)){ // on irdeto we can always apply irdeto index filtering!
+			filter[2]=curpid->irdeto_curindex;
+			mask[2]=0xFF;
+			cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d set irdeto index filter to %d on fd %d", demux_index, curpid->irdeto_curindex, fd);
+		}
+		else{ // all other cas systems also cas systems without chid or unique ecm part
+			cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d set chid filter to ANY CHID on fd %d", demux_index, fd);
+		}
 	}
 
 	dvbapi_activate_section_filter(fd, curpid->ECM_PID, filter, mask);
@@ -3330,18 +3523,14 @@ void dvbapi_activate_section_filter (int32_t fd, int32_t pid, uchar *filter, uch
 
 
 int32_t dvbapi_check_ecm_delayed_delivery(int32_t demux_index, ECM_REQUEST *er) {
-	if (!er) return 0;
 	int32_t filternum = dvbapi_get_filternum(demux_index, er, TYPE_ECM);
-	if (filternum < 0) return 1; // if no matching filter act like ecm response is delayed
+	if (filternum < 0) return 2; // if no matching filter act like ecm response is delayed
 	struct s_ecmpids *curpid = &demux[demux_index].ECMpids[demux[demux_index].demux_fd[filternum].pidindex];
-	if (curpid->table ==0) return 0; // on change table act like ecm response is found
-	if (er->rc == E_CACHEEX){ // no check on cache-ex responses!
-		cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d we received a controlword from cache-ex reader on fd %d", demux_index,
-			demux[demux_index].demux_fd[filternum].fd);
-		return 0; // act like we found
-	}
+	if (curpid->table ==0) return 3; // on change table act like ecm response is found
+	if (er->rc == E_CACHEEX) return 4; // on cache-ex response act like ecm response is found
 	char nullcw[CS_ECMSTORESIZE];
 	memset(nullcw, 0, CS_ECMSTORESIZE);
+	
 	if(memcmp(demux[demux_index].demux_fd[filternum].ecmd5, nullcw, CS_ECMSTORESIZE)){
 		char ecmd5[17*3];
 		cs_hexdump(0, demux[demux_index].demux_fd[filternum].ecmd5, 16, ecmd5, sizeof(ecmd5));

@@ -21,12 +21,14 @@ struct s_ecmpids_matrix
 	uint16_t CAID;
 	uint32_t PROVID;
 	uint16_t ECM_PID;
+	uint32_t CHID;
 	uint16_t EMM_PID;
-	int32_t irdeto_numchids;
-	int32_t irdeto_curchid;
-	int32_t irdeto_chid;
+	int32_t irdeto_maxindex;
+	int32_t irdeto_curindex;
+	int32_t irdeto_cycle;
 	int32_t checked;
 	int32_t status;
+	uint8_t tries;
 	unsigned char table;
 	int32_t index;
 	uint32_t streams;
@@ -64,7 +66,6 @@ typedef struct demux_s_matrix
 	uint16_t STREAMpids[ECM_PIDS_MATRIX];
 	int32_t pidindex;
 	int32_t curindex;
-	int32_t tries;
 	int32_t max_status;
 	uint16_t program_number;
 	unsigned char lastcw[2][8];

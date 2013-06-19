@@ -53,13 +53,14 @@ struct s_ecmpids
 	uint16_t CAID;
 	uint32_t PROVID;
 	uint16_t ECM_PID;
+	uint32_t CHID;
 	uint16_t EMM_PID;
-	int8_t irdeto_numchids;
-	int8_t irdeto_curchid;
-	int32_t irdeto_chids;
-	int32_t irdeto_cycle;
+	uint8_t irdeto_maxindex; // max irdeto indexes always fresh fetched from current ecm
+	uint8_t irdeto_curindex; // current irdeto index we want to handle 
+	uint8_t irdeto_cycle; // temp var that holds the irdeto index we started with to detect if we cycled trough all indexes
 	int8_t checked;
 	int8_t status;
+	uint8_t tries;
 	unsigned char table;
 	int8_t index;
 	uint32_t streams;
@@ -110,7 +111,6 @@ typedef struct demux_s
 	uint16_t STREAMpids[ECM_PIDS];
 	int16_t pidindex;
 	int16_t curindex;
-	int8_t tries;
 	int8_t max_status;
 	uint16_t program_number;
 	uint16_t onid;
@@ -136,7 +136,7 @@ struct s_dvbapi_priority
 	uint16_t caid;
 	uint32_t provid;
 	uint16_t srvid;
-	int16_t chid;
+	uint32_t chid;
 	uint16_t ecmpid;
 	uint16_t mapcaid;
 	uint32_t mapprovid;
@@ -231,7 +231,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er);
 void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t idx);
 int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connfd, char *pmtfile);
 void request_cw(struct s_client *client, ECM_REQUEST *er, int32_t demux_id, uint8_t delayed_ecm_check);
-void dvbapi_try_next_caid(int32_t demux_id);
+void dvbapi_try_next_caid(int32_t demux_id, int8_t checked);
 void dvbapi_read_priority(void);
 int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er);
 void dvbapi_activate_section_filter (int32_t fd, int32_t pid, uchar *filter, uchar *mask);
