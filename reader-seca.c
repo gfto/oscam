@@ -218,10 +218,10 @@ static int32_t get_prov_index(struct s_reader * rdr, const uint8_t *provid)	//re
   return(-1);
 }
 
-
+// For TVV and Telesat in despit the fact that there are no seca2 cards more wrong ecm's do show up same rules do apply
 static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, struct s_ecm_answer *ea)
 {
-	if (er->ecm[3] == 0x00 && er->ecm[4] == 0x6a) { //provid 006A = CDS NL uses seca2 and nagra/mediaguard3 crypt on same caid/provid only ecmpid is different
+	if (er->ecm[3] == 0x00 && (er->ecm[4] == 0x6a || er->ecm[4] == 0x6c || er->ecm[4] == 0x6d)) { //provid006A=CDS NL uses seca2 and nagra/mediaguard3 crypt on same caid/provid only ecmpid is different
 		int seca_version = reader->card_atr[9]&0X0F; //Get seca cardversion from cardatr
 		if ((seca_version == 7) || (seca_version == 10)) { // we only proces V7 or V10 cards from CDS NL
 			if (seca_version == 7) reader->secatype = 2; // set the type of this reader to seca2
