@@ -1276,13 +1276,18 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	/* Quickfix Area */
 	update_chid(er);
 
-	// quickfix for 0100:00006a,00006c,00006d  6c and 6d added so fake ecm can be blocked trough oscam.whitelist now also for TVV be and Telesat be
-	if (er->caid == 0x100 && (er->prid == 0x00006a || er->prid == 0x00006c || er->prid == 0x00006d)) { //cds nl add fix so mismatch between ecm and secatype reader wont set channel on sid blacklist 
+	// quickfix for caid 0100 now a lot fake ecm can be blocked trough oscam.whitelist for all caid 0100 channels
+	if (er->caid == 0x100) { //cds nl add fix so mismatch between ecm and secatype reader wont set channel on sid blacklist 
 		er->chid = b2i(2, er->ecm+7); // not quite right but good enough to function, its also registered this way in module-stat 
 	}
-
+	// quickfix for 0100:000065
 	if (er->caid == 0x100 && er->prid == 0x65 && er->srvid == 0)
 		er->srvid = 0x0642;
+
+	// Quicfix caid 0500 adding chid info on icoming ecm request,thank's to this user will be able to block a lot fake ecm's by chid with oscam.whitelist
+	if (er->caid == 0x500) {
+		er->chid = b2i(2, er->ecm+8); // also here not quit right but good enough to function, its also registred this way in module-stat
+	}
 
 	// Quickfixes for Opticum/Globo HD9500
 	// Quickfix for 0500:030300
