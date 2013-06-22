@@ -587,7 +587,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 		I = 0;
 
 	//set clock speed to max if internal reader
-	if (reader->crdr.max_clock_speed==1)
+	if (reader->crdr.max_clock_speed==1) {
 		if (reader->mhz == 357 || reader->mhz == 358) //no overclocking
 			reader->mhz = atr_fs_table[FI] / 10000; //we are going to clock the card to this nominal frequency
 
@@ -598,6 +598,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 			reader->divider = 0; //reset pll divider so divider will be set calculated again.
 			ICC_Async_GetPLL_Divider(reader); // calculate pll divider for target cardmhz.
 		}
+	}
 
 	F =	atr_f_table[FI];  //get the frequency divider also called clock rate conversion factor
 	if (reader->crdr.set_baudrate) {
