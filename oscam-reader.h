@@ -19,6 +19,7 @@ void    block_connect(struct s_reader *rdr);
 int32_t is_connect_blocked(struct s_reader *rdr);
 
 void reader_do_idle(struct s_reader * reader);
+void cs_capmt_notify(struct demux_s *demux);
 void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw);
 void reader_do_card_info(struct s_reader * reader);
 

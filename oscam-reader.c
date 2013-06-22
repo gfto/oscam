@@ -2,6 +2,7 @@
 #include "module-cccam.h"
 #include "module-led.h"
 #include "module-stat.h"
+#include "module-dvbapi.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
 #include "oscam-ecm.h"
@@ -570,6 +571,28 @@ void reader_do_idle(struct s_reader * reader)
 		}
 	}
 }
+#ifdef HAVE_DVBAPI
+static void reader_capmt_notify(struct s_client *client, struct demux_s *demux)
+{
+	if(client->reader->ph.c_capmt) {
+		struct demux_s *curdemux;
+		if(cs_malloc(&curdemux, sizeof(struct demux_s))) {
+			memcpy(curdemux, demux, sizeof(struct demux_s));
+			add_job(client, ACTION_READER_CAPMT_NOTIFY, curdemux, sizeof(struct demux_s));
+		}		
+	}
+}
+
+void cs_capmt_notify(struct demux_s *demux)
+{
+	struct s_client *cl;
+	for (cl = first_client->next; cl ; cl = cl->next) {
+		if ((cl->typ == 'p' || cl->typ == 'r') && cl->reader && cl->reader->ph.c_capmt) {
+			reader_capmt_notify(cl, demux);
+		}
+	}	
+}
+#endif
 
 int32_t reader_init(struct s_reader *reader) {
 	struct s_client *client = reader->client;

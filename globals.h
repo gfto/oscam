@@ -649,6 +649,7 @@ struct s_client ;
 struct ecm_request_t ;
 struct emm_packet_t ;
 struct s_ecm_answer ;
+struct demux_s ;
 
 struct s_module {
 	int8_t			active;
@@ -675,6 +676,9 @@ struct s_module {
 	void 			(*c_idle)(void);	// Schlocke: called when reader is idle
 	void			(*s_idle)(struct s_client*);
 	void 			(*c_card_info)(void);	// Schlocke: request card infos
+	
+	void			(*c_capmt)(struct s_client *, struct demux_s *);
+	
 #ifdef CS_CACHEEX
 	int32_t			(*c_cache_push)(struct s_client*, struct ecm_request_t *); //Cache push
 	int32_t			(*c_cache_push_chk)(struct s_client*, struct ecm_request_t *); //Cache push Node Check, 0=no push
@@ -1290,6 +1294,9 @@ struct s_reader  									//contains device info, reader info and card info
 #ifdef MODULE_PANDORA
 	uint8_t			pand_send_ecm;
 #endif
+#ifdef MODULE_GHTTP
+	uint8_t			ghttp_use_ssl;
+#endif	
   uint8_t cnxlastecm; // == 0 - las ecm has not been paired ecm, > 0 last ecm has been paired ecm
 
 	struct s_reader *next;

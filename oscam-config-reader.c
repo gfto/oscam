@@ -818,6 +818,9 @@ static const struct config_list reader_opts[] = {
 	DEF_OPT_INT32("cccreconnect"		, OFS(cc_reconnect),			DEFAULT_CC_RECONNECT ),
 	DEF_OPT_INT8("ccchop"				, OFS(cc_hop),					0 ),
 #endif
+#ifdef MODULE_GHTTP
+	DEF_OPT_UINT8("use_ssl"				, OFS(ghttp_use_ssl),			0 ),
+#endif	
 	DEF_OPT_INT8("deprecated"			, OFS(deprecated),				0 ),
 	DEF_OPT_INT8("audisabled"			, OFS(audisabled),				0 ),
 	DEF_OPT_FUNC("auprovid"				, 0,							auprovid_fn ),

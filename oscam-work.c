@@ -261,6 +261,9 @@ void * work_thread(void *ptr) {
 			case ACTION_READER_CHECK_HEALTH:
 				cardreader_do_checkhealth(reader);
 				break;
+			case ACTION_READER_CAPMT_NOTIFY:
+				if(reader->ph.c_capmt) reader->ph.c_capmt(cl, data->ptr);
+				break;					
 			case ACTION_CLIENT_UDP:
 				n = module->recv(cl, data->ptr, data->len);
 				if (n < 0) break;
