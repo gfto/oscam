@@ -17,11 +17,9 @@
 #define LOBYTE(w) ((unsigned char)((w) & 0xff))
 #define HIBYTE(w) ((unsigned char)((w) >> 8))
 
-#define DELAY 150
+#define SMARGO_DELAY 150
 
-static int32_t smargo_set_settings(struct s_reader *reader, int32_t freq, unsigned char T, unsigned char inv, uint16_t Fi, unsigned char Di, unsigned char Ni) {
-	uint16_t  freqk = (freq * 10);
-	uchar data[4];
+static void smargo_set_config_mode_on(struct s_reader *reader) {
 	struct termios term;
 
 	tcgetattr(reader->handle, &term);
@@ -29,7 +27,25 @@ static int32_t smargo_set_settings(struct s_reader *reader, int32_t freq, unsign
 	term.c_cflag |= CS5;
 	tcsetattr(reader->handle, TCSANOW, &term);
 
-	cs_sleepms(DELAY);
+	cs_sleepms(SMARGO_DELAY);
+}
+
+static void smargo_set_config_mode_off(struct s_reader *reader) {
+	struct termios term;
+
+	cs_sleepms(SMARGO_DELAY);
+
+	tcgetattr(reader->handle, &term);
+	term.c_cflag &= ~CSIZE;
+	term.c_cflag |= CS8;
+	tcsetattr(reader->handle, TCSANOW, &term);
+}
+
+static int32_t smargo_set_settings(struct s_reader *reader, int32_t freq, unsigned char T, unsigned char inv, uint16_t Fi, unsigned char Di, unsigned char Ni) {
+	uint16_t  freqk = (freq * 10);
+	uchar data[4];
+
+	smargo_set_config_mode_on(reader);
 
 	rdr_debug_mask(reader, D_DEVICE, "Smargo: sending F=%04X (%d), D=%02X (%d), Freq=%04X (%d), N=%02X (%d), T=%02X (%d), inv=%02X (%d)",
 		Fi, Fi, Di, Di, freqk, freqk, Ni, Ni, T, T, inv, inv);
@@ -59,19 +75,13 @@ static int32_t smargo_set_settings(struct s_reader *reader, int32_t freq, unsign
 	data[1]=inv;
 	IO_Serial_Write(reader, 0, 1000, 2, data);
 
-	cs_sleepms(DELAY);
-
-	tcgetattr(reader->handle, &term);
-	term.c_cflag &= ~CSIZE;
-	term.c_cflag |= CS8;
-	tcsetattr(reader->handle, TCSANOW, &term);
+	smargo_set_config_mode_off(reader);
 
 	return OK;
 }
 
 static int32_t smargo_writesettings(struct s_reader *reader, uint32_t UNUSED(ETU), uint32_t UNUSED(EGT), unsigned char UNUSED(P), unsigned char UNUSED(I), uint16_t Fi, unsigned char Di, unsigned char Ni) {
-	smargo_set_settings(reader, reader->mhz, reader->protocol_type == 1 ? 0 : reader->protocol_type , reader->convention, Fi, Di, Ni);
-	return OK;
+	return smargo_set_settings(reader, reader->mhz, reader->protocol_type == 1 ? 0 : reader->protocol_type , reader->convention, Fi, Di, Ni);
 }
 
 
@@ -179,26 +189,15 @@ static int32_t smargo_reset(struct s_reader *reader, ATR *atr) {
 	ATR_GetConvention (atr, &convention);
 	// If inverse convention, switch here due to if not PTS will fail
 	if (convention == ATR_CONVENTION_INVERSE) {
-		struct termios term;
 		uchar data[4];
 
-		tcgetattr(reader->handle, &term);
-		term.c_cflag &= ~CSIZE;
-		term.c_cflag |= CS5;
-		tcsetattr(reader->handle, TCSANOW, &term);
-
-		cs_sleepms(DELAY);
+		smargo_set_config_mode_on(reader);
 
 		data[0]=0x05;
 		data[1]=0x01;
 		IO_Serial_Write(reader, 0, 1000, 2, data);
 
-		cs_sleepms(DELAY);
-
-		tcgetattr(reader->handle, &term);
-		term.c_cflag &= ~CSIZE;
-		term.c_cflag |= CS8;
-		tcsetattr(reader->handle, TCSANOW, &term);
+		smargo_set_config_mode_off(reader);
 	}
 
 	return ret;
