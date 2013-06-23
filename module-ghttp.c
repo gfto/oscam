@@ -4,6 +4,7 @@
 #include "oscam-net.h"
 #include "oscam-string.h"
 #include "oscam-reader.h"
+#include "oscam-work.h"
 #include "module-dvbapi.h"
 #ifdef WITH_SSL
 #include <openssl/crypto.h>
@@ -12,14 +13,13 @@
 #endif
 
 typedef struct {
-	uint16_t prev_sid;
-	ECM_REQUEST last_ecm;
-	int do_post_next;
 	uchar* session_id;
 	pthread_mutex_t conn_mutex;
+	LLIST* post_contexts;
+	LLIST* ecm_q;
 #ifdef WITH_SSL
-	SSL *ssl_handle;
-	SSL_CTX *ssl_context;
+	SSL* ssl_handle;
+	SSL_CTX* ssl_context;
 #endif
 } s_ghttp;
 
@@ -30,11 +30,11 @@ typedef struct {
 	uint16_t pid;
 } s_ca_context;
 
-static LLIST *ignored_ca_contexts;
+static LLIST* ignored_contexts;
 
 static int32_t _ghttp_post_ecmdata(struct s_client *client, ECM_REQUEST* er);
 
-static void _ssl_connect(struct s_client *client, int32_t socket)
+static bool _ssl_connect(struct s_client *client, int32_t socket)
 {
 #ifdef WITH_SSL	
 	s_ghttp* context = (s_ghttp*)client->ghttp;
@@ -47,18 +47,30 @@ static void _ssl_connect(struct s_client *client, int32_t socket)
 		SSL_CTX_free(context->ssl_context);
 
 	cs_debug_mask(D_CLIENT, "%s: trying ssl...", client->reader->label);
+	
 	SSL_load_error_strings();
 	SSL_library_init();
+	
 	context->ssl_context = SSL_CTX_new(SSLv23_client_method());
-	if (context->ssl_context == NULL)
+	if (context->ssl_context == NULL) {
 		ERR_print_errors_fp(stderr);
+		return false;
+	}
+	
 	context->ssl_handle = SSL_new(context->ssl_context);
-	if (context->ssl_handle == NULL)
+	if (context->ssl_handle == NULL) {
 		ERR_print_errors_fp(stderr);
-	if (!SSL_set_fd(context->ssl_handle, socket))
+		return false;
+	}
+	if (!SSL_set_fd(context->ssl_handle, socket)) {
 		ERR_print_errors_fp(stderr);
+		return false;
+	}
 	if (SSL_connect(context->ssl_handle) != 1)
 		ERR_print_errors_fp(stderr);
+	
+	if(!context->ssl_handle) return true;
+	else return false;
 #endif
 }
 
@@ -78,17 +90,20 @@ int32_t ghttp_client_init(struct s_client *cl)
 	cl->pfd = cl->udp_fd;
 
 	if (!cl->ghttp) {
-		if (!cs_malloc(&(cl->ghttp), sizeof(s_ghttp)))
-			return -1;
+		if (!cs_malloc(&(cl->ghttp), sizeof(s_ghttp))) return -1;
+		memset(cl->ghttp, 0, sizeof(s_ghttp));
+		((s_ghttp*)cl->ghttp)->post_contexts = ll_create("post contexts");			
+		((s_ghttp*)cl->ghttp)->ecm_q = ll_create("ecm queue");
+	} else {
+		ll_clear(((s_ghttp*)cl->ghttp)->ecm_q);
 	}
-	memset(cl->ghttp, 0, sizeof(s_ghttp));
 
 	if (cl->reader->ghttp_use_ssl) {
 #ifndef WITH_SSL		
 		cs_log("%s: use_ssl set but no ssl support available, aborting...", cl->reader->label);
 		return -1;
 #endif		
-		_ssl_connect(cl, handle);
+		if(!_ssl_connect(cl, handle)) return -1;	
 	}
 
 	return 0;
@@ -103,18 +118,16 @@ static uint32_t javastring_hashcode(uchar* input, int32_t len)
 	return h;
 }
 
-static int32_t ghttp_send(struct s_client *client, uchar *buf, int32_t l)
+static int32_t ghttp_send_int(struct s_client *client, uchar *buf, int32_t l)
 {		
+	s_ghttp* context = (s_ghttp*)client->ghttp;
 	cs_debug_mask(D_CLIENT, "%s: sending %d bytes", client->reader->label, l);
 	if (!client->pfd) {
 		// disconnected? try reinit.
 		cs_debug_mask(D_CLIENT, "%s: disconnected?", client->reader->label);
 		ghttp_client_init(client);
-	}
-	
-	s_ghttp* context = (s_ghttp*)client->ghttp;
-	pthread_mutex_lock(&context->conn_mutex);
-	
+	}	
+
 	if (client->reader->ghttp_use_ssl) {
 #ifdef WITH_SSL		
 		return SSL_write(context->ssl_handle, buf, l);
@@ -122,23 +135,30 @@ static int32_t ghttp_send(struct s_client *client, uchar *buf, int32_t l)
 	} else return send(client->pfd, buf, l, 0);
 }
 
-static int32_t ghttp_recv(struct s_client *client, uchar *buf, int32_t l)
+static int32_t ghttp_send(struct s_client *client, uchar *buf, int32_t l)
+{		
+	s_ghttp* context = (s_ghttp*)client->ghttp;
+	pthread_mutex_lock(&context->conn_mutex);
+	int32_t ret = ghttp_send_int(client, buf, l);
+	pthread_mutex_unlock(&context->conn_mutex);
+	return ret;
+}
+
+static int32_t ghttp_recv_int(struct s_client *client, uchar *buf, int32_t l)
 {
 	int32_t n = -1;
 	s_ghttp* context = (s_ghttp*)client->ghttp;
 	
 	if (!client->pfd) {
-		pthread_mutex_unlock(&context->conn_mutex);
+		ll_clear(context->ecm_q);
 		return -1;
 	}
-
+	
 	if (client->reader->ghttp_use_ssl) {
 #ifdef WITH_SSL		
 		n = SSL_read(context->ssl_handle, buf, l);
 #endif		
 	} else n = recv(client->pfd, buf, l, 0);
-	
-	pthread_mutex_unlock(&context->conn_mutex);
 
 	if (n > 0) {
 		cs_debug_mask(D_CLIENT, "%s: received %d bytes from %s", client->reader->label, n, remote_txt());
@@ -157,28 +177,60 @@ static int32_t ghttp_recv(struct s_client *client, uchar *buf, int32_t l)
 	return n;
 }
 
-static void _add_ignored_pids(uint16_t onid, uint16_t tsid, uint16_t sid, uchar *buf, int len)
+static int32_t ghttp_recv(struct s_client *client, uchar *buf, int32_t l) {
+	s_ghttp* context = (s_ghttp*)client->ghttp;
+	pthread_mutex_lock(&context->conn_mutex);
+	int32_t ret = ghttp_recv_int(client, buf, l);
+	pthread_mutex_unlock(&context->conn_mutex);
+	return ret;
+}
+
+static bool _is_post_context(LLIST *ca_contexts, ECM_REQUEST *er, bool remove) {
+	s_ca_context* ctx;
+	s_ca_context* existing;
+	if(cs_malloc(&ctx, sizeof(s_ca_context))) {
+		ctx->onid = er->onid;
+		ctx->tsid = er->tsid;
+		ctx->sid = er->srvid;
+		ctx->pid = 0;	
+		
+		existing = (s_ca_context*)ll_contains_data(ca_contexts, ctx, sizeof(s_ca_context));
+		if (remove) ll_remove_data(ca_contexts, existing);
+		NULLFREE(ctx);
+	}
+	return existing != NULL;
+}
+
+static void _add_context(LLIST *ca_contexts, s_ca_context *context) {
+	if(!ll_contains_data(ca_contexts, context, sizeof(s_ca_context)))
+		ll_append(ca_contexts, context);
+	
+	while (ll_count(ca_contexts) > 64)
+		ll_remove_first_data(ca_contexts);
+		
+	cs_debug_mask(D_CLIENT, "ca contexts size %d", ll_count(ca_contexts));	
+}
+
+static void _set_pid_status(LLIST *ca_contexts, uint16_t onid, uint16_t tsid, uint16_t sid, uint16_t pid) {
+	s_ca_context* ctx;
+	if (cs_malloc(&ctx, sizeof(s_ca_context))) {
+		ctx->onid = onid;
+		ctx->tsid = tsid;
+		ctx->sid = sid;
+		ctx->pid = pid;
+		_add_context(ca_contexts, ctx);
+	}	
+}
+
+static void _set_pids_status(LLIST *ca_contexts, uint16_t onid, uint16_t tsid, uint16_t sid, uchar *buf, int len)
 {
 	int8_t offs = 0;
 	uint16_t pid = 0;
-	s_ca_context* ignore;
 
 	while (offs < len) {
 		pid = b2i(2, buf + offs);
 		offs += 2;
-		if (cs_malloc(&ignore, sizeof(s_ca_context))) {
-			ignore->onid = onid;
-			ignore->tsid = tsid;
-			ignore->sid = sid;
-			ignore->pid = pid;
-		}
-		if (!ll_contains_data(ignored_ca_contexts, ignore, sizeof(s_ca_context)))
-			ll_append(ignored_ca_contexts, ignore);
-
-		while (ll_count(ignored_ca_contexts) > 32)
-			ll_remove_first_data(ignored_ca_contexts);
-
-		cs_debug_mask(D_CLIENT, "ignored ca contexts size %d", ll_count(ignored_ca_contexts));
+		_set_pid_status(ca_contexts, onid, tsid, sid, pid);
 	}
 }
 
@@ -189,7 +241,7 @@ static int32_t ghttp_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, 
 	uchar* content;
 	int rcode, clen = 0;
 	s_ghttp* context = (s_ghttp*)client->ghttp;
-	ECM_REQUEST *er = &context->last_ecm;
+	ECM_REQUEST *er = NULL;	
 
 	if (n < 5) return -1;
 
@@ -198,8 +250,13 @@ static int32_t ghttp_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, 
 		cs_debug_mask(D_CLIENT, "%s: non http or otherwise corrupt response: %s", client->reader->label, buf);
 		cs_ddump_mask(D_CLIENT, buf, n, "%s: ", client->reader->label);
 		network_tcp_connection_close(client->reader, "receive error or idle timeout");
+		ll_clear(context->ecm_q);
 		return -1;
 	}
+	
+	LL_ITER itr = ll_iter_create(context->ecm_q);
+	er = (ECM_REQUEST*)ll_iter_next(&itr);
+	
 	data = data + strlen("HTTP/1.1 ");
 	rcode = atoi(data);
 
@@ -210,8 +267,8 @@ static int32_t ghttp_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, 
 	}
 	content = (uchar*)(strstr(data, "\r\n\r\n") + 4);
 	
-	buf[n] = '\0';
-	cs_ddump_mask(D_TRACE, content, clen, "%s: reply\n%s", client->reader->label, buf);
+	// buf[n] = '\0';
+	// cs_ddump_mask(D_TRACE, content, clen, "%s: reply\n%s", client->reader->label, buf);
 
 	if (rcode < 200 || rcode > 204) {
 		cs_debug_mask(D_CLIENT, "%s: http error code %d", client->reader->label, rcode);
@@ -224,33 +281,31 @@ static int32_t ghttp_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, 
 			}
 		}
 		if (rcode == 503) {
-			context->prev_sid = 0;
-			if (context->do_post_next) {
+			if (er && _is_post_context(context->post_contexts, er, false)) {
 				cs_debug_mask(D_CLIENT, "%s: recv_chk got 503 despite post, trying reconnect", client->reader->label);
 				network_tcp_connection_close(client->reader, "timeout");
+				ll_clear(context->ecm_q);
 				return -1;
 			} else {
-				// on 503 timeout, switch to POST
-				context->do_post_next = 1;
+				// on 503 cache timeout, retry with POST immediately (and switch to POST for subsequent)			
 				if (er) {
+					_set_pid_status(context->post_contexts, er->onid, er->tsid, er->srvid, 0); 
 					cs_debug_mask(D_CLIENT, "%s: recv_chk got 503, trying direct post", client->reader->label);
-					_ghttp_post_ecmdata(client, er);
+					// add_job(client, ACTION_READER_ECM_REQUEST, (void*)er, 0);
+					_ghttp_post_ecmdata(client, er);					
+					*rc = 0;
+					memset(dcw, 0, 16);
 				}
-
-				*rc = 0;
-				memset(dcw, 0, 16);
 				return -1;
 			}
 		} else if (rcode == 401) {
-			context->do_post_next = 1;
 			NULLFREE(context->session_id);
 			if (er) {
 				cs_debug_mask(D_CLIENT, "%s: session expired, trying direct post", client->reader->label);
 				_ghttp_post_ecmdata(client, er);
+				*rc = 0;
+				memset(dcw, 0, 16);				
 			}
-
-			*rc = 0;
-			memset(dcw, 0, 16);
 			return -1;
 		}
 		return -1;
@@ -277,24 +332,26 @@ static int32_t ghttp_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, 
 		cs_ddump_mask(D_CLIENT, content, clen, "%s: pmt ignore reply - %s (%d pids)", client->reader->label, data, clen / 2);
 		uint32_t onid = 0, tsid = 0, sid = 0;
 		if (sscanf(data, "%4x-%4x-%4x", &onid, &tsid, &sid) == 3)
-			_add_ignored_pids(onid, tsid, sid, content, clen);
+			_set_pids_status(ignored_contexts, onid, tsid, sid, content, clen);
 		return -1;
 	}
 
 	// switch back to cache get after rapid ecm response (arbitrary atm), only effect is a slight bw save for client
-	if (context->do_post_next) {
+	if (!er || _is_post_context(context->post_contexts, er, false)) {
 		data = strstr((char*)buf, "Pragma: cached");
 		if (data || (client->cwlastresptime > 0 && client->cwlastresptime < 750)) {
 			cs_debug_mask(D_CLIENT, "%s: probably cached cw (%d ms), switching back to cache get for next req", client->reader->label, client->cwlastresptime);
-			context->do_post_next = 0;
+			if (er) _is_post_context(context->post_contexts, er, true);
 		}
 	}
 
 	if (clen == 16) { // cw in content
 		memcpy(dcw, content, 16);
 		*rc = 1;
-		cs_ddump_mask(D_TRACE, dcw, 16, "%s: cw recv chk", client->reader->label);
-		return client->reader->msg_idx;
+		er = ll_remove_first(context->ecm_q);
+		if (!er) return -1;
+		cs_ddump_mask(D_TRACE, dcw, 16, "%s: cw recv chk for idx %d", client->reader->label, er->idx);
+		return er->idx;
 	} else {
 		if (clen != 0) cs_ddump_mask(D_CLIENT, content, clen, "%s: recv_chk fail, clen = %d", client->reader->label, clen);
 	}
@@ -369,15 +426,18 @@ static int32_t _ghttp_post_ecmdata(struct s_client *client, ECM_REQUEST* er)
 	return ret;
 }
 
-static bool _is_pid_ignored(uint16_t onid, uint16_t tsid, uint16_t sid, uint16_t pid)
+static bool _is_pid_ignored(ECM_REQUEST *er)
 {
 	s_ca_context* ignore;
 	if (cs_malloc(&ignore, sizeof(s_ca_context))) {
-		ignore->onid = onid;
-		ignore->tsid = tsid;
-		ignore->sid = sid;
-		ignore->pid = pid;
-		if (ll_contains_data(ignored_ca_contexts, ignore, sizeof(s_ca_context))) return true;
+		ignore->onid = er->onid;
+		ignore->tsid = er->tsid;
+		ignore->sid = er->srvid;
+		ignore->pid = er->pid;
+		if (ll_contains_data(ignored_contexts, ignore, sizeof(s_ca_context))) {
+			NULLFREE(ignore);
+			return true;
+		}
 	}
 	return false;
 }
@@ -387,21 +447,19 @@ static int32_t ghttp_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *U
 	uint32_t hash;
 	s_ghttp* context = (s_ghttp*)client->ghttp;
 
-	if (_is_pid_ignored(er->onid, er->tsid, er->srvid, er->pid)) {
+	if (_is_pid_ignored(er)) {
 		cs_debug_mask(D_CLIENT, "ca context found in ignore list, ecm blocked: %x-%x-%x pid %x", er->onid, er->tsid, er->srvid, er->pid);
 		return -1;
 	}
-	context->prev_sid = context->last_ecm.srvid;
 
-	client->reader->msg_idx = er->idx;
-	if (context->do_post_next) {
+	ll_append(context->ecm_q, er);	
+
+	if (_is_post_context(context->post_contexts, er, false)) {
 		_ghttp_post_ecmdata(client, er);
 	} else {
 		hash = javastring_hashcode(er->ecm + 3, er->ecmlen - 3);
 		_ghttp_http_get(client, hash, er->ecm[0] == 0x81);
 	}
-
-	context->last_ecm = *er; //struct copy
 
 	return 0;
 }
@@ -447,17 +505,16 @@ static int32_t ghttp_capmt_notify(struct s_client *client, struct demux_s *demux
 		}
 	}
 	end = req + ret;
-	if (pids_len > 0) memcpy(end, pids, pids_len);
-
+	if (pids_len > 0) {
+		memcpy(end, pids, pids_len);
+		cs_debug_mask(D_CLIENT, "%s: new unscrambling detected, switching to post", client->reader->label);
+		_set_pid_status(context->post_contexts, demux->onid, demux->tsid, demux->program_number, 0);
+	}
 	cs_ddump_mask(D_CLIENT, pids, pids_len, "%s: sending capmt ecm pids - %s /api/p/%x/%x/%x/%x/%x", client->reader->label, (pids_len > 0) ? "POST" : "GET", demux->onid, demux->tsid, demux->program_number, demux->ECMpidcount, demux->enigma_namespace);
 
 	ret = ghttp_send(client, req, ret + pids_len);
 
-	if (pids_len > 0) {
-		cs_debug_mask(D_CLIENT, "%s: new unscrambling detected, switching to post", client->reader->label);
-		context->do_post_next = 1;
-		NULLFREE(pids);
-	}
+	if (pids_len > 0) NULLFREE(pids);
 
 	return 0;
 }
@@ -478,6 +535,7 @@ void module_ghttp(struct s_module *ph)
 	ph->c_capmt = ghttp_capmt_notify;
 #endif
 	ph->num = R_GHTTP;
-	if (!ignored_ca_contexts) ignored_ca_contexts = ll_create("ignored ca contexts");
+	if (!ignored_contexts) 
+		ignored_contexts = ll_create("ignored contexts");
 }
 #endif
