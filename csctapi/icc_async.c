@@ -593,11 +593,11 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 
 		if (reader->mhz > 2000 && reader->cardmhz == -1) // -1 is magic number pll internal reader set cardmhz according to optimal atr speed
 			reader->cardmhz = atr_fs_table[FI] / 10000 ;
+	}
 
-		if (reader->mhz > 2000) {
-			reader->divider = 0; //reset pll divider so divider will be set calculated again.
-			ICC_Async_GetPLL_Divider(reader); // calculate pll divider for target cardmhz.
-		}
+	if (reader->mhz > 2000) {
+		reader->divider = 0; //reset pll divider so divider will be set calculated again.
+		ICC_Async_GetPLL_Divider(reader); // calculate pll divider for target cardmhz.
 	}
 
 	F =	atr_f_table[FI];  //get the frequency divider also called clock rate conversion factor
