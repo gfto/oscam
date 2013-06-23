@@ -1278,6 +1278,15 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "DISABLESERVERFILTERVALUE", (rdr->ncd_disable_server_filt == 1) ? "1" : "0");
 	}
 
+#ifdef MODULE_GHTTP	
+	// Use SSL
+	if(!apicall) {
+		tpl_addVar(vars, TPLADD, "USESSLCHECKED", (rdr->ghttp_use_ssl == 1) ? "checked" : "");
+	} else {
+		tpl_addVar(vars, TPLADD, "USESSLVALUE", (rdr->ghttp_use_ssl == 1) ? "1" : "0");
+	}
+#endif
+	
 	// Fallback
 	if(!apicall) {
 		tpl_addVar(vars, TPLADD, "FALLBACKCHECKED", (rdr->fallback == 1) ? "checked" : "");
@@ -1625,13 +1634,16 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		case R_RADEGAST:
 			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGRADEGASTBIT"));
 			break;
-		case R_NEWCAMD :
+		case R_GHTTP:
+			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGGHTTPBIT"));
+			break;
+		case R_NEWCAMD:
 			if ( rdr->ncd_proto == NCD_525 ){
 				tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGNCD525BIT"));
 			} else if ( rdr->ncd_proto == NCD_524 ) {
 				tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGNCD524BIT"));
 			}
-			break;
+			break;			
 #ifdef MODULE_CCCAM
 		case R_CCCAM :
 			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCCCAMBIT"));

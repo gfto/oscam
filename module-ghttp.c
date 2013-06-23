@@ -69,8 +69,10 @@ static bool _ssl_connect(struct s_client *client, int32_t socket)
 	if (SSL_connect(context->ssl_handle) != 1)
 		ERR_print_errors_fp(stderr);
 	
-	if(!context->ssl_handle) return true;
-	else return false;
+	if(context->ssl_handle) {
+		cs_debug_mask(D_CLIENT, "%s: ssl established", client->reader->label);
+		return true;
+	} else return false;
 #endif
 }
 

@@ -66,6 +66,7 @@ READERCONFIGHOPBIT            readerconfig/readerconfig_hopbit.html
 READERCONFIGCAMD35BIT         readerconfig/readerconfig_camd35bit.html
 READERCONFIGCS378XBIT         readerconfig/readerconfig_cs378xbit.html
 READERCONFIGRADEGASTBIT       readerconfig/readerconfig_radegastbit.html
+READERCONFIGGHTTPBIT       readerconfig/readerconfig_ghttpbit.html
 READERCONFIGNCD525BIT         readerconfig/readerconfig_ncd525bit.html
 READERCONFIGNCD524BIT         readerconfig/readerconfig_ncd524bit.html
 READERCONFIGCCCAMBIT          readerconfig/readerconfig_cccambit.html
