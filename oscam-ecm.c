@@ -1236,7 +1236,7 @@ static void guess_cardsystem(ECM_REQUEST *er)
 		er->caid = last_hope;
 }
 
-//chid calculation as in module stat 
+//chid calculation from module stat to here 
 //to improve the quickfix concerning ecm chid info and extend it to all client requests wereby the chid is known in module stat
 
 static uint32_t get_subid(ECM_REQUEST *er)

@@ -63,27 +63,6 @@ static uint32_t get_prid(uint16_t caid, uint32_t prid)
 	return prid;
 }
 
-static uint32_t get_subid(ECM_REQUEST *er)
-{
-	if (!er->ecmlen)
-		return 0;
-
-	uint32_t id = 0;
-	switch (er->caid>>8)
-	{
-		case 0x01: id = b2i(2, er->ecm+7); break; // seca 
-		case 0x05: id = b2i(2, er->ecm+8); break; // viaccess 
-		case 0x06: id = b2i(2, er->ecm+6); break; // irdeto 
-		case 0x09: id = b2i(2, er->ecm+11); break; // videoguard
-		case 0x4A: // DRE-Crypt, Bulcrypt, others?
-			if (er->caid != 0x4AEE) // Bulcrypt
-				id = er->ecm[7];
-			break;
-	}
-	return id;
-}
-
-
 static void get_stat_query(ECM_REQUEST *er, STAT_QUERY *q)
 {
 	memset(q, 0, sizeof(STAT_QUERY));
@@ -91,7 +70,7 @@ static void get_stat_query(ECM_REQUEST *er, STAT_QUERY *q)
 	q->caid = er->caid;
 	q->prid = get_prid(er->caid, er->prid);
 	q->srvid = er->srvid;
-	q->chid = get_subid(er);
+	q->chid = er->chid;
 	q->ecmlen = er->ecmlen;
 }
 
