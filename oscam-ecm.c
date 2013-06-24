@@ -1236,6 +1236,29 @@ static void guess_cardsystem(ECM_REQUEST *er)
 		er->caid = last_hope;
 }
 
+//chid calculation as in module stat 
+//to improve the quickfix concerning ecm chid info and extend it to all client requests wereby the chid is known in module stat
+
+static uint32_t get_subid(ECM_REQUEST *er)
+{
+	if (!er->ecmlen)
+		return 0;
+
+	uint32_t id = 0;
+	switch (er->caid>>8)
+	{
+		case 0x01: id = b2i(2, er->ecm+7); break; // seca 
+		case 0x05: id = b2i(2, er->ecm+8); break; // viaccess 
+		case 0x06: id = b2i(2, er->ecm+6); break; // irdeto 
+		case 0x09: id = b2i(2, er->ecm+11); break; // videoguard
+		case 0x4A: // DRE-Crypt, Bulcrypt, others?
+			if (er->caid != 0x4AEE) // Bulcrypt
+				id = er->ecm[7];
+			break;
+	}
+	return id;
+}
+
 void get_cw(struct s_client * client, ECM_REQUEST *er)
 {
 	int32_t i, j, m;
@@ -1276,18 +1299,12 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	/* Quickfix Area */
 	update_chid(er);
 
-	// quickfix for caid 0100 now a lot fake ecm can be blocked trough oscam.whitelist for all caid 0100 channels
-	if (er->caid == 0x100) { //cds nl add fix so mismatch between ecm and secatype reader wont set channel on sid blacklist 
-		er->chid = b2i(2, er->ecm+7); // not quite right but good enough to function, its also registered this way in module-stat 
-	}
+	// add chid for all client requests as in module stat
+	er->chid = get_subid(er);
+
 	// quickfix for 0100:000065
 	if (er->caid == 0x100 && er->prid == 0x65 && er->srvid == 0)
 		er->srvid = 0x0642;
-
-	// Quicfix caid 0500 adding chid info on icoming ecm request,thank's to this user will be able to block a lot fake ecm's by chid with oscam.whitelist
-	if (er->caid == 0x500) {
-		er->chid = b2i(2, er->ecm+8); // also here not quit right but good enough to function, its also registred this way in module-stat
-	}
 
 	// Quickfixes for Opticum/Globo HD9500
 	// Quickfix for 0500:030300
