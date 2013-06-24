@@ -96,7 +96,7 @@ static int32_t smargo_init(struct s_reader *reader) {
 
 	if(IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, NULL, NULL))
 		return ERROR;
-	
+
 	IO_Serial_RTS_Set(reader);
 	IO_Serial_DTR_Set(reader);
 	IO_Serial_Flush(reader);
@@ -164,8 +164,6 @@ static int32_t smargo_reset(struct s_reader *reader, ATR *atr) {
 		IO_Serial_RTS_Clr(reader);
 
 		int32_t n=0;
-		//while(n<ATR_MAX_SIZE && !IO_Serial_Read(reader, ATR_TIMEOUT, 1, buf+n))
-		//	n++;
 
 		smargo_Serial_Read(reader, ATR_TIMEOUT, ATR_MAX_SIZE, buf, &n);
 		
@@ -177,11 +175,10 @@ static int32_t smargo_reset(struct s_reader *reader, ATR *atr) {
 		if((buf[0]!=0x3B && buf[0]!=0x03 && buf[0]!=0x3F) || (buf[1]==0xFF && buf[2]==0x00))
 			continue; // this is not a valid ATR
 
-		if (ATR_InitFromArray (atr, buf, n) != ERROR)
+		if (ATR_InitFromArray (atr, buf, n) != ERROR) {
 			ret = OK;
-
-		if (ret == OK)
 			break;
+		}
 	}
 
 	int32_t convention;
