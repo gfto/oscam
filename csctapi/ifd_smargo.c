@@ -166,7 +166,7 @@ static int32_t smargo_reset(struct s_reader *reader, ATR *atr) {
 		int32_t n=0;
 
 		smargo_Serial_Read(reader, ATR_TIMEOUT, ATR_MAX_SIZE, buf, &n);
-		
+
 		if(n==0 || buf[0]==0)
 			continue;
 
@@ -210,6 +210,7 @@ void cardreader_smargo(struct s_cardreader *crdr)
 	crdr->receive		= IO_Serial_Receive;
 	crdr->close		= IO_Serial_Close;
 	crdr->write_settings = smargo_writesettings;
+	crdr->set_parity	= IO_Serial_SetParity;
 	crdr->typ		= R_MOUSE;
 
 	crdr->max_clock_speed	= 1;
