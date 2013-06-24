@@ -126,6 +126,7 @@ static int32_t pcsc_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar
      LONG rv;
      DWORD dwSendLength, dwRecvLength;
 
+    *cta_lr = 0;
     if(!l) {
         rdr_log(pcsc_reader, "ERROR: Data length to be send to the pcsc_reader is %d", l);
         return ERROR;
@@ -133,7 +134,6 @@ static int32_t pcsc_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar
 
     char tmp[520];
     dwRecvLength = CTA_RES_LEN;
-    *cta_lr = 0;
 
     struct pcsc_data *crdr_data = pcsc_reader->crdr_data;
     if(crdr_data->dwActiveProtocol == SCARD_PROTOCOL_T0) {
