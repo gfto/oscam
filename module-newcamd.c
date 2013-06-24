@@ -12,7 +12,7 @@
 #include "oscam-string.h"
 #include "oscam-time.h"
 
-#define CWS_NETMSGSIZE 362
+#define CWS_NETMSGSIZE MAX_ECM_SIZE+12  //size ecm max + header max newcamd 12
 #define NCD_CLIENT_ID 0x8888
 
 #define CWS_FIRSTCMDNO 0xe0
