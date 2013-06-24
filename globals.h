@@ -1210,7 +1210,6 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t			brk_pos;
 	int32_t			msg_idx;
 	int32_t			secatype;						// 0=not determined, 2=seca2, 3=nagra(~seca3) this is only valid for localreaders!
-	double			worketu;						// in us for internal and external readers calculated (1/D)*(F/cardclock)*1000000
 	uint32_t		maxreadtimeout;					// in us
 	uint32_t		minreadtimeout;					// in us
 	uint32_t		maxwritetimeout;				// in us
@@ -1235,16 +1234,17 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t 		convention;						// Convention of this ICC
 	unsigned char 	protocol_type;					// Type of protocol
 	uint32_t		current_baudrate;				// (for overclocking uncorrected) baudrate to prevent unnecessary conversions from/to termios structure
-	uint32_t		read_timeout;					// Max timeout (ms) to receive characters
-	uint32_t		block_delay;					// Delay (ms) after starting to transmit
-	uint32_t		char_delay;						// Delay (ms) after transmiting each sucesive char
+  double      worketu;            // in us for internal and external readers calculated (1/D)*(F/cardclock)*1000000
+	uint32_t		read_timeout;					// Max timeout (ETU) to receive characters
+	uint32_t		char_delay;						// Delay (ETU) after transmiting each successive char
+  uint32_t    block_delay;          // Delay (ms) after starting to transmit
+  uint32_t    BWT,CWT;            // (for overclocking uncorrected) block waiting time, character waiting time, in ETU
 	////variables from io_serial.h
 	int32_t			written;						// keep score of how much bytes are written to serial port, since they are echoed back they have to be read
+  ////variables from protocol_t1.h
+  uint16_t    ifsc;             // Information field size for the ICC
+  unsigned char ns;               // Send sequence number
 #endif
-	uint32_t		BWT,CWT;						// (for overclocking uncorrected) block waiting time, character waiting time, in ETU
-	////variables from protocol_t1.h
-	uint16_t		ifsc;							// Information field size for the ICC
-	unsigned char	ns;								// Send sequence number
 	unsigned char	rom[15];
 	unsigned char	irdId[4];
 #ifdef WITH_LB
