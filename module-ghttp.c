@@ -34,9 +34,9 @@ static LLIST* ignored_contexts;
 
 static int32_t _ghttp_post_ecmdata(struct s_client *client, ECM_REQUEST* er);
 
+#ifdef WITH_SSL	
 static bool _ssl_connect(struct s_client *client, int32_t socket)
 {
-#ifdef WITH_SSL	
 	s_ghttp* context = (s_ghttp*)client->ghttp;
 
 	if (context->ssl_handle) { // cleanup previous
@@ -72,13 +72,26 @@ static bool _ssl_connect(struct s_client *client, int32_t socket)
 	if(context->ssl_handle) {
 		cs_debug_mask(D_CLIENT, "%s: ssl established", client->reader->label);
 		return true;
-	} else return false;
-#endif
+	} 
+
+	return false;
 }
+#endif
 
 int32_t ghttp_client_init(struct s_client *cl)
 {
 	int32_t handle;
+	char* str = NULL;
+	
+	if (cl->reader->r_port == 0) 
+		cl->reader->r_port = cl->reader->ghttp_use_ssl ? 443 : 80;
+	
+	str = strstr(cl->reader->device, ".");
+	if (!str) {
+		char host[128];
+		cs_strncpy(host, cl->reader->device, sizeof(cl->reader->device));
+		snprintf(cl->reader->device, sizeof(cl->reader->device), "%s.appspot.com", host);
+	}
 
 	cs_log("%s: init google cache client %s:%d (fd=%d)", cl->reader->label, cl->reader->device, cl->reader->r_port, cl->udp_fd);
 
@@ -104,8 +117,10 @@ int32_t ghttp_client_init(struct s_client *cl)
 #ifndef WITH_SSL		
 		cs_log("%s: use_ssl set but no ssl support available, aborting...", cl->reader->label);
 		return -1;
-#endif		
-		if(!_ssl_connect(cl, handle)) return -1;	
+#endif
+#ifdef WITH_SSL		
+		if(!_ssl_connect(cl, handle)) return -1;
+#endif
 	}
 
 	return 0;
@@ -122,7 +137,6 @@ static uint32_t javastring_hashcode(uchar* input, int32_t len)
 
 static int32_t ghttp_send_int(struct s_client *client, uchar *buf, int32_t l)
 {		
-	s_ghttp* context = (s_ghttp*)client->ghttp;
 	cs_debug_mask(D_CLIENT, "%s: sending %d bytes", client->reader->label, l);
 	if (!client->pfd) {
 		// disconnected? try reinit.
@@ -130,11 +144,12 @@ static int32_t ghttp_send_int(struct s_client *client, uchar *buf, int32_t l)
 		ghttp_client_init(client);
 	}	
 
-	if (client->reader->ghttp_use_ssl) {
 #ifdef WITH_SSL		
+	s_ghttp* context = (s_ghttp*)client->ghttp;
+	if (client->reader->ghttp_use_ssl) 
 		return SSL_write(context->ssl_handle, buf, l);
 #endif		
-	} else return send(client->pfd, buf, l, 0);
+	return send(client->pfd, buf, l, 0);
 }
 
 static int32_t ghttp_send(struct s_client *client, uchar *buf, int32_t l)
@@ -198,7 +213,7 @@ static bool _is_post_context(LLIST *ca_contexts, ECM_REQUEST *er, bool remove) {
 		
 		existing = (s_ca_context*)ll_contains_data(ca_contexts, ctx, sizeof(s_ca_context));
 		if (remove) ll_remove_data(ca_contexts, existing);
-		NULLFREE(ctx);
+		free(ctx);
 	}
 	return existing != NULL;
 }
@@ -437,9 +452,9 @@ static bool _is_pid_ignored(ECM_REQUEST *er)
 		ignore->sid = er->srvid;
 		ignore->pid = er->pid;
 		if (ll_contains_data(ignored_contexts, ignore, sizeof(s_ca_context))) {
-			NULLFREE(ignore);
+			free(ignore);
 			return true;
-		}
+		} else free(ignore);
 	}
 	return false;
 }
@@ -467,7 +482,6 @@ static int32_t ghttp_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *U
 }
 
 #ifdef HAVE_DVBAPI
-
 static int32_t ghttp_capmt_notify(struct s_client *client, struct demux_s *demux)
 {
 	uchar req[640], lenhdr[64] = "";
@@ -492,7 +506,7 @@ static int32_t ghttp_capmt_notify(struct s_client *client, struct demux_s *demux
 				offs += 4;
 			}
 			snprintf((char*)lenhdr, sizeof(lenhdr), "\r\nContent-Length: %d", pids_len);
-		}
+		} else return -1;
 	}
 
 	encauth = _ghttp_basic_auth(client);
@@ -516,7 +530,7 @@ static int32_t ghttp_capmt_notify(struct s_client *client, struct demux_s *demux
 
 	ret = ghttp_send(client, req, ret + pids_len);
 
-	if (pids_len > 0) NULLFREE(pids);
+	if (pids_len > 0) free(pids);
 
 	return 0;
 }
@@ -528,7 +542,8 @@ void module_ghttp(struct s_module *ph)
 	// ph->ptab.ports[0].s_port = cfg.ghttp_port;
 	ph->desc = "ghttp";
 	ph->type = MOD_CONN_TCP;
-	// ph->listenertype = LIS_GHTTP;    
+	// ph->listenertype = LIS_GHTTP;
+	ph->large_ecm_support = 1;
 	ph->recv = ghttp_recv;
 	ph->c_init = ghttp_client_init;
 	ph->c_recv_chk = ghttp_recv_chk;
