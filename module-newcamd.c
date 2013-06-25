@@ -1049,7 +1049,7 @@ static void newcamd_process_ecm(struct s_client *cl, uchar *buf, int32_t len)
   }
   // save client ncd_msgid
   er->msgid = cl->ncd_msgid;
-  er->ecmlen = buf[4]+3;
+  er->ecmlen = (((buf[3] & 0x0F) << 8) | buf[4]) + 3;
   cs_debug_mask(D_CLIENT, "ncd_process_ecm: er->msgid=%d len=%d ecmlen=%d", er->msgid, len, er->ecmlen);
   er->srvid = cl->ncd_header[4]<<8 | cl->ncd_header[5];
   er->caid = cl->ncd_header[6]<<8 | cl->ncd_header[7];
