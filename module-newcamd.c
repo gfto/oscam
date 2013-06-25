@@ -1457,6 +1457,7 @@ void module_newcamd(struct s_module *ph)
 {
   ph->desc="newcamd";
   ph->type=MOD_CONN_TCP;
+  ph->large_ecm_support = 1;
   ph->listenertype = LIS_NEWCAMD;
   IP_ASSIGN(ph->s_ip, cfg.ncd_srvip);
   ph->s_handler=newcamd_server;
