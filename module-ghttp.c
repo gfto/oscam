@@ -35,7 +35,7 @@ static LLIST* ignored_contexts;
 static int32_t _ghttp_post_ecmdata(struct s_client *client, ECM_REQUEST* er);
 
 #ifdef WITH_SSL	
-static bool _ssl_connect(struct s_client *client, int32_t socket)
+static bool _ssl_connect(struct s_client *client, int32_t fd)
 {
 	s_ghttp* context = (s_ghttp*)client->ghttp;
 
@@ -62,7 +62,7 @@ static bool _ssl_connect(struct s_client *client, int32_t socket)
 		ERR_print_errors_fp(stderr);
 		return false;
 	}
-	if (!SSL_set_fd(context->ssl_handle, socket)) {
+	if (!SSL_set_fd(context->ssl_handle, fd)) {
 		ERR_print_errors_fp(stderr);
 		return false;
 	}
@@ -202,7 +202,7 @@ static int32_t ghttp_recv(struct s_client *client, uchar *buf, int32_t l) {
 	return ret;
 }
 
-static bool _is_post_context(LLIST *ca_contexts, ECM_REQUEST *er, bool remove) {
+static bool _is_post_context(LLIST *ca_contexts, ECM_REQUEST *er, bool remove_data) {
 	s_ca_context* ctx;
 	s_ca_context* existing = NULL;
 	if(cs_malloc(&ctx, sizeof(s_ca_context))) {
@@ -212,7 +212,8 @@ static bool _is_post_context(LLIST *ca_contexts, ECM_REQUEST *er, bool remove) {
 		ctx->pid = 0;	
 		
 		existing = (s_ca_context*)ll_contains_data(ca_contexts, ctx, sizeof(s_ca_context));
-		if (remove) ll_remove_data(ca_contexts, existing);
+		if (remove_data)
+			ll_remove_data(ca_contexts, existing);
 		free(ctx);
 	}
 	return existing != NULL;
