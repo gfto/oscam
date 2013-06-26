@@ -677,7 +677,7 @@ struct s_module {
 	void			(*s_idle)(struct s_client*);
 	void 			(*c_card_info)(void);	// Schlocke: request card infos
 	
-	void			(*c_capmt)(struct s_client *, struct demux_s *);
+	int32_t			(*c_capmt)(struct s_client *, struct demux_s *);
 	
 #ifdef CS_CACHEEX
 	int32_t			(*c_cache_push)(struct s_client*, struct ecm_request_t *); //Cache push
