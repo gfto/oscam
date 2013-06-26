@@ -120,6 +120,7 @@ int32_t ghttp_client_init(struct s_client *cl)
 #endif
 #ifdef WITH_SSL		
 		if(!_ssl_connect(cl, handle)) return -1;
+		else cl->crypted = 1;
 #endif
 	}
 
@@ -220,8 +221,9 @@ static bool _is_post_context(LLIST *ca_contexts, ECM_REQUEST *er, bool remove_da
 }
 
 static void _add_context(LLIST *ca_contexts, s_ca_context *context) {
-	if(!ll_contains_data(ca_contexts, context, sizeof(s_ca_context)))
+	if(!ll_contains_data(ca_contexts, context, sizeof(s_ca_context))) {
 		ll_append(ca_contexts, context);
+	} else free(context);
 	
 	while (ll_count(ca_contexts) > 64)
 		ll_remove_first_data(ca_contexts);
@@ -482,6 +484,25 @@ static int32_t ghttp_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *U
 	return 0;
 }
 
+static void ghttp_cleanup(struct s_client *client) {
+	s_ghttp* context = (s_ghttp*)client->ghttp;
+	cs_log("%s: cleanup called", client->reader->label);
+	
+	if (context) {
+		if (context->ecm_q) ll_destroy(context->ecm_q);
+		if (context->post_contexts) ll_destroy_data(context->post_contexts);
+#ifdef WITH_SSL
+		if (context->ssl_handle) { 
+			SSL_shutdown(context->ssl_handle);
+			SSL_free(context->ssl_handle);
+		}
+		if (context->ssl_context)
+			SSL_CTX_free(context->ssl_context);		
+#endif		
+		NULLFREE(context);
+	}
+}
+
 #ifdef HAVE_DVBAPI
 static int32_t ghttp_capmt_notify(struct s_client *client, struct demux_s *demux)
 {
@@ -549,6 +570,7 @@ void module_ghttp(struct s_module *ph)
 	ph->c_init = ghttp_client_init;
 	ph->c_recv_chk = ghttp_recv_chk;
 	ph->c_send_ecm = ghttp_send_ecm;
+	ph->cleanup = ghttp_cleanup;
 #ifdef HAVE_DVBAPI	
 	ph->c_capmt = ghttp_capmt_notify;
 #endif
