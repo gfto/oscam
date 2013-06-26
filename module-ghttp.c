@@ -204,7 +204,7 @@ static int32_t ghttp_recv(struct s_client *client, uchar *buf, int32_t l) {
 
 static bool _is_post_context(LLIST *ca_contexts, ECM_REQUEST *er, bool remove) {
 	s_ca_context* ctx;
-	s_ca_context* existing;
+	s_ca_context* existing = NULL;
 	if(cs_malloc(&ctx, sizeof(s_ca_context))) {
 		ctx->onid = er->onid;
 		ctx->tsid = er->tsid;
