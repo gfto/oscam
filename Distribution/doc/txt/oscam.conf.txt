@@ -353,7 +353,7 @@ DESCRIPTIONS
 
        httpallowed = IP address|IP address range[,IP address|IP address range]...
 	  http web interface connections allowed, default:none
-	   example: httpallowed = 127.0.0.1,192.168.0.0-192.168.255.255
+	   example: httpallowed = 127.0.0.1,192.168.0.0-192.168.255.255,::1
 
        httpdyndns = hostname[,hostname][,hostname]
 	  http web interface connections allowed, default:none
