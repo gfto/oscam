@@ -1350,7 +1350,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	} else {
 		tpl_addVar(vars, TPLADD, "AUDISABLEDVALUE", (rdr->audisabled == 1) ? "1" : "0");
 	}
-
+	
 	// AUprovid
 	if(rdr->auprovid)
 		tpl_printf(vars, TPLADD, "AUPROVID", "%06X", rdr->auprovid);
@@ -1363,6 +1363,14 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "FORCEIRDETOCHECKED", (rdr->force_irdeto == 1) ? "checked" : "");
 	} else {
 		tpl_addVar(vars, TPLADD, "FORCEIRDETOVALUE", (rdr->force_irdeto == 1) ? "1" : "0");
+	}
+	
+	// needsemmfirst
+	
+	if(!apicall) {
+		tpl_addVar(vars, TPLADD, "NEEDSEMMFIRST", (rdr->needsemmfirst == 1) ? "checked" : "");
+	} else {
+		tpl_addVar(vars, TPLADD, "NEEDSEMMFIRST", (rdr->needsemmfirst == 1) ? "1" : "0");
 	}
 
 	// RSA Key

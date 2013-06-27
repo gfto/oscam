@@ -579,7 +579,7 @@ static int32_t dvbapi_find_emmpid(int32_t demux_id, uint8_t type, uint16_t caid,
 	return bck;
 }
 
-void dvbapi_start_emm_filter(int32_t demux_index) {
+int32_t dvbapi_start_emm_filter(int32_t demux_index) {
 	int32_t j, fcount=0, fcount_added=0;
 	const char *typtext[] = { "UNIQUE", "SHARED", "GLOBAL", "UNKNOWN" };
 
@@ -587,10 +587,10 @@ void dvbapi_start_emm_filter(int32_t demux_index) {
 	//	return;
 
 	if (!demux[demux_index].EMMpidcount)
-		return;
+		return 0;
 
 	if (demux[demux_index].emm_filter)
-		return;
+		return 0;
 
 
 	uchar dmx_filter[342]; // 10 filter + 2 byte header
@@ -599,7 +599,7 @@ void dvbapi_start_emm_filter(int32_t demux_index) {
 	struct s_reader *rdr = NULL;
 	struct s_client *cl = cur_client();
 	if (!cl || !cl->aureader_list)
-		return;
+		return 0;
 
 	LL_ITER itr = ll_iter_create(cl->aureader_list);
 	while ((rdr = ll_iter_next(&itr))) {
@@ -706,6 +706,7 @@ void dvbapi_start_emm_filter(int32_t demux_index) {
 		demux[demux_index].emm_filter=1;
 		cs_debug_mask(D_DVBAPI,"[EMM Filter] %i matching emm filter skipped because they are already active on same emmpid:provid", fcount_added);
 	}
+	return (fcount - fcount_added);
 }
 
 void dvbapi_add_ecmpid_int(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_t provid) {
@@ -1060,7 +1061,11 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 	
 	for (rdr=first_active_reader; rdr ; rdr=rdr->next){
 		int8_t match = matching_reader(er, rdr, 0); // check for matching reader, exclude ratelimitercheck!
-		
+		if ((time(NULL) - rdr->emm_last) > 3600 && rdr->needsemmfirst && er->caid >> 8 == 0x06){ 
+			cs_log("[DVBAPI] Warning reader %s received no emms for the last %d seconds -> skip, this reader needs emms first!", rdr->label,
+				(int) (time(NULL) - rdr->emm_last) );
+			continue; // skip this card needs to process emms first before it can be used for descramble
+		}
 #ifdef WITH_LB
 		if (p && p->force) match = 1; // forced pid always started!
 		if (!match && cfg.lb_auto_betatunnel) { //if this reader does not match, check betatunnel for it
@@ -1112,10 +1117,6 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 			
 			if (er->caid >> 8 == 0x06){ // irdeto cas init irdeto_curindex to wait for first index (00)
 				if (demux[demux_id].ECMpids[pid].irdeto_curindex==0xFE) demux[demux_id].ECMpids[pid].irdeto_curindex = 0x00;
-				
-				if (!is_network_reader(rdr) && rdr->card_status==CARD_INSERTED && ((time(NULL) - rdr->emm_last) > 3600)){
-					cs_log("[DVBAPI] Warning reader %s received no emms for the last %d seconds", rdr->label, (int) (time(NULL) - rdr->emm_last) );
-				}
 			}
 			
 			if (p && p->chid<0x10000){ // do we prio a certain chid?
@@ -2158,8 +2159,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		if (ca_pmt_list_management == LIST_MORE){
 			cs_debug_mask(D_DVBAPI,"[DVBAPI] CA PMT Server LIST_MORE not implemented yet!");
 		}
-	}
-		
+	}	
 	return demux_id;
 }
 
@@ -2840,10 +2840,19 @@ static void * dvbapi_main_local(void *cli) {
 			}
 			cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d has %d ecmpids, %d streampids, %d ecmfilters and %d emmfilters", i, demux[i].ECMpidcount,
 				demux[i].STREAMpidcount, ecmcounter, emmcounter);
-			 //early start for irdeto since they need emm before ecm (pmt emmstart = 1 if detected caid 0x06)
+			// delayed emm start for non irdeto caids (
+			
+			if (cfg.dvbapi_au>0 && demux[i].EMMpidcount == 0 && ((time(NULL)-demux[i].emmstart)>30)){ //start emm cat
+				demux[i].emmstart = time(NULL); // trick to let emm fetching start after 30 seconds to speed up zapping
+				dvbapi_start_filter(i, demux[i].pidindex, 0x001, 0x001, 0x01, 0x01, 0xFF, 0, TYPE_EMM, 1); //CAT
+				continue; // proceed with next demuxer
+			}
+			
+			//early start for irdeto since they need emm before ecm (pmt emmstart = 1 if detected caid 0x06)
+			int32_t emmstarted = 0;
 			if (cfg.dvbapi_au && demux[i].EMMpidcount > 0 && emmcounter == 0){
-				dvbapi_start_emm_filter(i); // start emmfiltering if emmpids are found
-				//break; // restart adding filter fds to poll() since its likely we got new filters!
+				emmstarted = dvbapi_start_emm_filter(i); // start emmfiltering if emmpids are found (emmstarted = number of emm filters started)
+				if (emmstarted) continue; // proceed with next demuxer
 			}
 			
 			if (ecmcounter == 0 && demux[i].ECMpidcount > 0){ // Restart decoding all caids we have ecmpids but no ecm filters!
@@ -2890,11 +2899,6 @@ static void * dvbapi_main_local(void *cli) {
 					dvbapi_try_next_caid(i,0);
 					continue;
 				}
-			}
-			// delayed emm start for non irdeto caids (
-			if (cfg.dvbapi_au>0 && demux[i].EMMpidcount == 0 && ((time(NULL)-demux[i].emmstart)>30)){ //start emm cat
-				demux[i].emmstart = time(NULL); // trick to let emm fetching start after 30 seconds to speed up zapping
-				dvbapi_start_filter(i, demux[i].pidindex, 0x001, 0x001, 0x01, 0x01, 0xFF, 0, TYPE_EMM, 1); //CAT
 			}
 			
 			if (demux[i].socket_fd>0 && cfg.dvbapi_pmtmode != 6) {
@@ -3231,9 +3235,22 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				struct s_dvbapi_priority *forceentry=dvbapi_check_prio_match(i, j, 'p');
 				
 				if (forceentry && forceentry->force){ // forced pid? keep trying the forced ecmpid!
-					demux[i].ECMpids[j].table=0;
-					dvbapi_set_section_filter(i, er);
-					continue;
+					if ((er->caid >> 8) != 0x06 || forceentry->chid <0x10000) { //all cas or irdeto cas with forced prio chid
+						demux[i].ECMpids[j].table=0;
+						dvbapi_set_section_filter(i, er);
+						continue;
+					}
+					else { // irdeto cas without chid prio forced
+						if (demux[i].ECMpids[j].irdeto_curindex==0xFE) demux[i].ECMpids[j].irdeto_curindex = 0x00; // init irdeto current index to first one
+						if (!(demux[i].ECMpids[j].irdeto_curindex+1 > demux[i].ECMpids[j].irdeto_maxindex)) { // check for last / max chid				
+							cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d trying next irdeto chid of FORCED PID #%d CAID %04X PROVID %06X ECMPID %04X", i,
+							j, er->caid, er->prid, er->pid);
+							demux[i].ECMpids[j].irdeto_curindex++; // irdeto index one up
+							demux[i].ECMpids[j].table=0;
+							dvbapi_set_section_filter(i, er);
+							continue;
+						}
+					}
 				}
 				
 				// in case of timeout or fatal LB event give this pid another try but no more than 1 try
@@ -3241,12 +3258,11 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 					demux[i].ECMpids[j].tries = 1;
 					demux[i].ECMpids[j].table = 0;
 					dvbapi_set_section_filter(i, er);
+					continue;
 				}
 				else{ // all not found responses exception: first timeout response and first fatal loadbalancer response
-					demux[i].ECMpids[j].status = -1; // flag this ecm as unusable
-					demux[i].ECMpids[j].checked = 3; // flag this ecmpid as checked
-					edit_channel_cache(i, j, 0); // remove this pid from channelcache
 					demux[i].ECMpids[j].CHID = 0x10000; // get rid of this prio chid since it failed!
+					demux[i].ECMpids[j].tries = 0xFE; // reset timeout retry
 				}
 				
 				if ((er->caid >> 8) == 0x06) {

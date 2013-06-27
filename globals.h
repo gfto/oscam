@@ -1110,6 +1110,7 @@ struct s_reader  									//contains device info, reader info and card info
 	int32_t			resetcounter;					// actual count
 	uint32_t		auprovid;						// AU only for this provid
 	int8_t			audisabled;						// exclude reader from auto AU
+	int8_t			needsemmfirst;					// 0: reader descrambles without emm first, 1: reader needs emms before it can descramble
 	time_t			emm_last;						// time of last succesfull written emm
 	int8_t			smargopatch;
 	struct s_client *client;						// pointer to 'r'client this reader is running in
