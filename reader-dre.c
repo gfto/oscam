@@ -562,7 +562,10 @@ void reader_dre(struct s_cardsystem *ph)
 	ph->card_init=dre_card_init;
 	ph->get_emm_type=dre_get_emm_type;
 	ph->get_emm_filter=dre_get_emm_filter;
-	ph->caids[0]=0x4A;
+	ph->caids[0]=0x4AE0;
+	ph->caids[1]=0x4AE1;
+	ph->caids[2]=0x7BE0;
+	ph->caids[3]=0x7BE1;
 	ph->desc="dre";
 }
 #endif
