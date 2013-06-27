@@ -12,7 +12,7 @@
 #include "oscam-string.h"
 #include "oscam-time.h"
 
-#define CWS_NETMSGSIZE MAX_ECM_SIZE+12  //size ecm max + header max newcamd 12
+#define CWS_NETMSGSIZE 400  //csp 0.8.9 (default: 400). This is CWS_NETMSGSIZE. The old default was 240
 #define NCD_CLIENT_ID 0x8888
 
 #define CWS_FIRSTCMDNO 0xe0

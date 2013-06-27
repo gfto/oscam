@@ -32,7 +32,7 @@ static unsigned char E[8][6] =
     { 16, 17, 18, 19, 20, 21 },
     { 20, 21, 22, 23, 24, 25 },
     { 24, 25, 26, 27, 28, 29 },
-    { 28, 29, 30, 31, 32,  1 } 
+    { 28, 29, 30, 31, 32,  1 }
 };
 
 
@@ -42,7 +42,7 @@ static unsigned char P[32] =
     16,  7, 20, 21, 29, 12, 28, 17,  1, 15, 23, 26,  5, 18, 31, 10,
      2,  8, 24, 14, 32, 27,  3,  9, 19, 13, 30,  6, 22, 11,  4, 25
 };
-                               
+
 
 static unsigned char SBOXES[4][64] =
 {
@@ -211,7 +211,7 @@ static void makeK(unsigned char *left, unsigned char *right, unsigned char *K)
 }
 
 static void rightRot(unsigned char key[])
-{         
+{
   unsigned char *p     = key;
   unsigned char  i     = 3;
   unsigned char  carry = 0;
@@ -345,8 +345,8 @@ static void desRound(unsigned char left[], unsigned char right[], unsigned char 
 }
 
 void des(unsigned char key[], unsigned char mode, unsigned char data[])
-{    
-  unsigned char i; 
+{
+  unsigned char i;
   unsigned char left[8];
   unsigned char right[8];
   unsigned char *p = left;
@@ -387,7 +387,7 @@ void des(unsigned char key[], unsigned char mode, unsigned char data[])
 
 }
 
-static unsigned char getmask(unsigned char *OutData, unsigned char *Mask, unsigned char I, unsigned char J) 
+static unsigned char getmask(unsigned char *OutData, unsigned char *Mask, unsigned char I, unsigned char J)
 {
   unsigned char K, B, M, M1 , D, DI, MI;
 
@@ -412,7 +412,7 @@ static unsigned char getmask(unsigned char *OutData, unsigned char *Mask, unsign
   MI ^= 4;
   M = Mask[MI];
   B = 0;
-  for(K = 0; K <=7; K++) 
+  for(K = 0; K <=7; K++)
   {
     if ((D & 1) == 1) B += M;
     D = (D >> 1) + ((B & 1) << 7);
@@ -421,7 +421,7 @@ static unsigned char getmask(unsigned char *OutData, unsigned char *Mask, unsign
   return D ^ M1;
 }
 
-static void v2mask(unsigned char *cw, unsigned char *mask) 
+static void v2mask(unsigned char *cw, unsigned char *mask)
 {
 	int i, j;
 
@@ -431,11 +431,11 @@ static void v2mask(unsigned char *cw, unsigned char *mask)
 	for(i = 0; i <= 7; i++)
 		for(j = 0; j <=3; j++)
 			cw[i] ^= getmask(cw, mask, i, j);
-}                                                                                
+}
 
 
 static void EuroDes(unsigned char key1[], unsigned char key2[], unsigned char desMode, unsigned char operatingMode, unsigned char data[])
-{                   
+{
   unsigned char mode;
 
  if(key1[7]) { /* Viaccess */
@@ -446,7 +446,7 @@ static void EuroDes(unsigned char key1[], unsigned char key2[], unsigned char de
    des(key1, mode, data);
    if(key2 != NULL)
      	v2mask(data, key2);
- } 
+ }
  else if(TestBit(desMode, F_TRIPLE_DES))
  {
    /* Eurocrypt 3-DES */
@@ -467,10 +467,10 @@ static void EuroDes(unsigned char key1[], unsigned char key2[], unsigned char de
      mode = (operatingMode == HASH) ? DES_ECS2_CRYPT : DES_ECS2_DECRYPT;
    }
    else
-   {                           
+   {
      /* Eurocrypt M */
      mode = (operatingMode == HASH) ? DES_ECM_HASH : DES_ECM_CRYPT;
-   }                          
+   }
    des(key1, mode, data);
  }
 }
@@ -523,7 +523,7 @@ static void des_random_get(unsigned char *buffer, unsigned char len)
   }
 }
 
-#define CWS_NETMSGSIZE 272
+#define MSGSIZE 400 //csp 0.8.9 (default: 400). This is CWS_NETMSGSIZE. The old default was 240
 
 int des_encrypt(unsigned char *buffer, int len, unsigned char *deskey)
 {
@@ -535,7 +535,7 @@ int des_encrypt(unsigned char *buffer, int len, unsigned char *deskey)
 
   if (!deskey) return len;
   noPadBytes = (8 - ((len - 1) % 8)) % 8;
-  if (len + noPadBytes + 1 >= CWS_NETMSGSIZE-8) return -1;
+  if (len + noPadBytes + 1 >= MSGSIZE-8) return -1;
   des_random_get(padBytes, noPadBytes);
   for (i = 0; i < noPadBytes; i++) buffer[len++] = padBytes[i];
   for (i = 2; i < len; i++) checksum ^= buffer[i];
@@ -575,7 +575,7 @@ int des_decrypt(unsigned char *buffer, int len, unsigned char *deskey)
     EuroDes(deskey, deskey+8, flags, CRYPT, buffer+i);
     for(j=0; j<8; j++)
       buffer[i+j] ^= ivec[j];
-  } 
+  }
   for (i = 2; i < len; i++) checksum ^= buffer[i];
   if (checksum) return -1;
   return len;
