@@ -1196,7 +1196,6 @@ int32_t main (int32_t argc, char *argv[])
   cs_lock_create(&readdir_lock, 5, "readdir_lock");
   cs_lock_create(&cwcycle_lock, 5, "cwcycle_lock");
   cs_lock_create(&hitcache_lock, 5, "hitcache_lock");
-  coolapi_open_all();
   init_config();
   cs_init_log();
   if (!oscam_pidfile && cfg.pidfile)
@@ -1208,6 +1207,7 @@ int32_t main (int32_t argc, char *argv[])
     pidfile_create(oscam_pidfile);
   cs_init_statistics();
   init_check();
+  coolapi_open_all();
   init_stat();
 
   // These initializations *MUST* be called after init_config()

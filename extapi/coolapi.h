@@ -219,7 +219,7 @@ do { \
 	} \
 } while(0)
 
-#if defined(HAVE_DVBAPI) && defined(WITH_COOLAPI)
+#if defined(HAVE_DVBAPI) && (defined(WITH_COOLAPI) || defined(WITH_SU980))
 extern void coolapi_open_all(void);
 extern void coolapi_close_all(void);
 #else
