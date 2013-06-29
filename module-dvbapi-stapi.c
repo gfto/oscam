@@ -160,6 +160,7 @@ int32_t stapi_open(void) {
 
 int32_t stapi_set_filter(int32_t demux_id, uint16_t pid, uchar *filter, uchar *mask, int32_t num, char *pmtfile) {
 	int32_t i;
+	uint32_t ret = 0;
 	uint16_t pids[1] = { pid };
 	struct s_dvbapi_priority *p;
 
@@ -175,13 +176,13 @@ int32_t stapi_set_filter(int32_t demux_id, uint16_t pid, uchar *filter, uchar *m
 		for (i=0;i<PTINUM;i++) {
 			if(strcmp(dev_list[i].name, p->devname)==0 && p->disablefilter==0) {
 				cs_debug_mask(D_DVBAPI, "set stapi filter on %s for pid %04X", dev_list[i].name, pids[0]);
-				stapi_do_set_filter(demux_id, &dev_list[i].demux_fd[demux_id][num], pids, 1, filter, mask, i);
+				ret = stapi_do_set_filter(demux_id, &dev_list[i].demux_fd[demux_id][num], pids, 1, filter, mask, i);
 			}
 		}
 	}
 
 	cs_debug_mask(D_DVBAPI, "filter #%d set (pid %04X)", num, pid);
-	return 1;
+	return ret;
 }
 
 int32_t stapi_remove_filter(int32_t demux_id, int32_t num, char *pmtfile) {
@@ -275,7 +276,7 @@ int32_t stapi_do_set_filter(int32_t demux_id, FILTERTYPE *filter, uint16_t *pids
 		stapi_do_remove_filter(demux_id, filter, dev_id);
 		return 0;
 	} else {
-		return 1;
+		return filter->fd; // return fd of filter
 	}
 }
 

@@ -338,9 +338,11 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 			break;
 #ifdef WITH_STAPI
 		case STAPI:
-			demux[demux_id].demux_fd[n].fd = 1;
 			ret=stapi_set_filter(demux_id, pid, filt, mask, n, demux[demux_id].pmt_file);
-
+			if (ret !=0)
+				demux[demux_id].demux_fd[n].fd = ret;
+			else
+				ret = -1; // error setting filter!
 			break;
 #endif
 #ifdef WITH_COOLAPI
@@ -582,9 +584,6 @@ static int32_t dvbapi_find_emmpid(int32_t demux_id, uint8_t type, uint16_t caid,
 int32_t dvbapi_start_emm_filter(int32_t demux_index) {
 	int32_t j, fcount=0, fcount_added=0;
 	const char *typtext[] = { "UNIQUE", "SHARED", "GLOBAL", "UNKNOWN" };
-
-	//if (demux[demux_index].pidindex==-1 && demux[demux_index].ECMpidcount > 0) // On FTA do start emm filters!
-	//	return;
 
 	if (!demux[demux_index].EMMpidcount)
 		return 0;
@@ -1066,8 +1065,8 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 				(int) (time(NULL) - rdr->emm_last) );
 			continue; // skip this card needs to process emms first before it can be used for descramble
 		}
-#ifdef WITH_LB
 		if (p && p->force) match = 1; // forced pid always started!
+#ifdef WITH_LB
 		if (!match && cfg.lb_auto_betatunnel) { //if this reader does not match, check betatunnel for it
 			uint16_t caid = lb_get_betatunnel_caid_to(er->caid);
 			if (caid) {
@@ -1707,13 +1706,18 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 		//if (demux[demux_index].ECMpids[n].status == 0) demux[demux_index].ECMpids[n].status++; // set pids with no status to 1 
 	}
 	
-	for (n=0; n<demux[demux_index].ECMpidcount; n++){
-		struct s_dvbapi_priority *match;
-		match=dvbapi_check_prio_match(demux_index, n, 'p');
-		if (match && match->force) {
+	struct s_dvbapi_priority *match;
+	for (match = dvbapi_priority; match != NULL; match = match->next) {
+		if (match->type != 'p')
+			continue;
+		if (!match || !match->force) // only evaluate forced prio's
+			continue;
+		for (n=0; n<demux[demux_index].ECMpidcount; n++){
 			demux[demux_index].ECMpids[n].status = ++highest_prio;
 			cs_debug_mask(D_DVBAPI,"[FORCED PID %d] %04X:%06X:%04X:%04X", n, demux[demux_index].ECMpids[n].CAID, 
 				demux[demux_index].ECMpids[n].PROVID,demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) match->chid);
+			demux[demux_index].max_status = highest_prio; // register maxstatus
+			return; // we only accept one forced pid!
 		}
 	}
 	demux[demux_index].max_status = highest_prio; // register maxstatus
@@ -2460,7 +2464,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 			return;
 		}
 		
-		if (selected_api != DVBAPI_3 && selected_api != DVBAPI_1){ // only valid for dvbapi3 && dvbapi1
+		if (selected_api != DVBAPI_3 && selected_api != DVBAPI_1 && selected_api != STAPI){ // only valid for dvbapi3 && dvbapi1 && stapi
 			if (curpid->table == buffer[0]) // wait for odd / even ecm change old style
 				return;
 				
@@ -2897,7 +2901,6 @@ static void * dvbapi_main_local(void *cli) {
 					}
 					dvbapi_resort_ecmpids(i);
 					dvbapi_try_next_caid(i,0);
-					continue;
 				}
 			}
 			
@@ -2919,11 +2922,12 @@ static void * dvbapi_main_local(void *cli) {
 				type[pfdcount++]=1;
 			}
 		}
-		
+
 		while (1){
 			rc = poll(pfd2, pfdcount, 300);
 			if (listenfd == -1 && cfg.dvbapi_pmtmode == 6) break;
-			if (rc<0) continue;
+			if (rc<0)
+				continue;
 			break;
 		}
 		
@@ -3000,7 +3004,6 @@ static void * dvbapi_main_local(void *cli) {
 							cs_debug_mask(D_DVBAPI, "camd.socket: too small message received");
 							continue; // no msg received continue with other events!
 						}
-
 						dvbapi_handlesockmsg(mbuf, len, connfd);
 						continue; // continue with other events!
 					}
@@ -3433,8 +3436,8 @@ static void * dvbapi_handler(struct s_client * cl, uchar* UNUSED(mbuf), int32_t 
 int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er) {
 
 	if (!er) return -1;
-	//if (cfg.dvbapi_requestmode == 1) return; // no support for requestmode 1
-	if (selected_api != DVBAPI_3 && selected_api != DVBAPI_1){ // only valid for dvbapi3 && dvbapi1
+	
+	if (selected_api != DVBAPI_3 && selected_api != DVBAPI_1 && selected_api != STAPI){ // only valid for dvbapi3, dvbapi1 and STAPI
 		return 0;
 	}
 	int32_t n = dvbapi_get_filternum(demux_index, er, TYPE_ECM);
@@ -3516,26 +3519,45 @@ int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er) {
 
 void dvbapi_activate_section_filter (int32_t fd, int32_t pid, uchar *filter, uchar *mask){ 
 
-	if (selected_api == DVBAPI_3){
-		struct dmx_sct_filter_params sFP2;
-		memset(&sFP2,0,sizeof(sFP2));
-		sFP2.pid			= pid;
-		sFP2.timeout		= 0;
-		sFP2.flags			= DMX_IMMEDIATE_START;
-		memcpy(sFP2.filter.filter,filter,16);
-		memcpy(sFP2.filter.mask,mask,16);
-		ioctl(fd, DMX_SET_FILTER, &sFP2);
+	switch(selected_api) {
+		case DVBAPI_3: {
+			struct dmx_sct_filter_params sFP2;
+			memset(&sFP2,0,sizeof(sFP2));
+			sFP2.pid			= pid;
+			sFP2.timeout		= 0;
+			sFP2.flags			= DMX_IMMEDIATE_START;
+			memcpy(sFP2.filter.filter,filter,16);
+			memcpy(sFP2.filter.mask,mask,16);
+			ioctl(fd, DMX_SET_FILTER, &sFP2);
+			break;
+		}
 
-	} 
-	else {
-		struct dmxSctFilterParams sFP1;
-		memset(&sFP1,0,sizeof(sFP1));
-		sFP1.pid = pid;
-		sFP1.timeout = 0;
-		sFP1.flags = DMX_IMMEDIATE_START;
-		memcpy(sFP1.filter.filter,filter,16);
-		memcpy(sFP1.filter.mask,mask,16);
-		ioctl(fd, DMX_SET_FILTER1, &sFP1);
+		case DVBAPI_1: {
+			struct dmxSctFilterParams sFP1;
+			memset(&sFP1,0,sizeof(sFP1));
+			sFP1.pid = pid;
+			sFP1.timeout = 0;
+			sFP1.flags = DMX_IMMEDIATE_START;
+			memcpy(sFP1.filter.filter,filter,16);
+			memcpy(sFP1.filter.mask,mask,16);
+			ioctl(fd, DMX_SET_FILTER1, &sFP1);
+			break;
+		}
+#ifdef WITH_STAPI
+		case STAPI: {
+			oscam_stapi_FilterSet(fd, filter, mask);
+			break;
+		}
+#endif
+/*#ifdef WITH_COOLAPI    ******* NOT IMPLEMENTED YET ********
+		case COOLAPI: {
+			coolapi_set_filter(demux[demux_id].demux_fd[n].fd, n, pid, filter, mask, TYPE_ECM);
+			break;
+		}
+#endif
+*/
+		default:
+			break;
 	}
 }
 
