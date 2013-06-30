@@ -19,7 +19,6 @@ typedef struct {
 	LLIST* ecm_q;
 #ifdef WITH_SSL
 	SSL* ssl_handle;
-	SSL_CTX* ssl_context;
 #endif
 } s_ghttp;
 
@@ -30,7 +29,10 @@ typedef struct {
 	uint16_t pid;
 } s_ca_context;
 
-static LLIST* ignored_contexts;
+static LLIST* ghttp_ignored_contexts;
+#ifdef WITH_SSL
+static SSL_CTX* ghttp_ssl_context;
+#endif
 
 static int32_t _ghttp_post_ecmdata(struct s_client *client, ECM_REQUEST* er);
 
@@ -43,21 +45,10 @@ static bool _ssl_connect(struct s_client *client, int32_t fd)
 		SSL_shutdown(context->ssl_handle);
 		SSL_free(context->ssl_handle);
 	}
-	if (context->ssl_context)
-		SSL_CTX_free(context->ssl_context);
 
 	cs_debug_mask(D_CLIENT, "%s: trying ssl...", client->reader->label);
 	
-	SSL_load_error_strings();
-	SSL_library_init();
-	
-	context->ssl_context = SSL_CTX_new(SSLv23_client_method());
-	if (context->ssl_context == NULL) {
-		ERR_print_errors_fp(stderr);
-		return false;
-	}
-	
-	context->ssl_handle = SSL_new(context->ssl_context);
+	context->ssl_handle = SSL_new(ghttp_ssl_context);
 	if (context->ssl_handle == NULL) {
 		ERR_print_errors_fp(stderr);
 		return false;
@@ -95,6 +86,8 @@ int32_t ghttp_client_init(struct s_client *cl)
 
 	cs_log("%s: init google cache client %s:%d (fd=%d)", cl->reader->label, cl->reader->device, cl->reader->r_port, cl->udp_fd);
 
+	if(cl->udp_fd) network_tcp_connection_close(cl->reader, "re-init");
+	
 	handle = network_tcp_connection_open(cl->reader);
 	if (handle < 0) return -1;
 
@@ -118,9 +111,15 @@ int32_t ghttp_client_init(struct s_client *cl)
 		cs_log("%s: use_ssl set but no ssl support available, aborting...", cl->reader->label);
 		return -1;
 #endif
-#ifdef WITH_SSL		
-		if(!_ssl_connect(cl, handle)) return -1;
-		else cl->crypted = 1;
+#ifdef WITH_SSL
+		if (ghttp_ssl_context == NULL) return -1;
+
+		if (_ssl_connect(cl, handle)) {
+			cl->crypted = 1;
+		} else {
+			network_tcp_connection_close(cl->reader, "ssl failed");
+			return -1;
+		}
 #endif
 	}
 
@@ -311,7 +310,6 @@ static int32_t ghttp_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, 
 				if (er) {
 					_set_pid_status(context->post_contexts, er->onid, er->tsid, er->srvid, 0); 
 					cs_debug_mask(D_CLIENT, "%s: recv_chk got 503, trying direct post", client->reader->label);
-					// add_job(client, ACTION_READER_ECM_REQUEST, (void*)er, 0);
 					_ghttp_post_ecmdata(client, er);					
 					*rc = 0;
 					memset(dcw, 0, 16);
@@ -352,7 +350,7 @@ static int32_t ghttp_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, 
 		cs_ddump_mask(D_CLIENT, content, clen, "%s: pmt ignore reply - %s (%d pids)", client->reader->label, data, clen / 2);
 		uint32_t onid = 0, tsid = 0, sid = 0;
 		if (sscanf(data, "%4x-%4x-%4x", &onid, &tsid, &sid) == 3)
-			_set_pids_status(ignored_contexts, onid, tsid, sid, content, clen);
+			_set_pids_status(ghttp_ignored_contexts, onid, tsid, sid, content, clen);
 		return -1;
 	}
 
@@ -404,6 +402,7 @@ static int32_t _ghttp_http_get(struct s_client *client, uint32_t hash, int odd)
 
 	if (encauth) { // basic auth login
 		ret = snprintf((char*)req, sizeof(req), "GET /api/c/%d/%x HTTP/1.1\r\nHost: %s\r\nAuthorization: Basic %s\r\n\r\n", odd ? 81 : 80, hash, client->reader->device, encauth);
+		free(encauth);
 	} else {
 		if (context->session_id) { // session exists
 			ret = snprintf((char*)req, sizeof(req), "GET /api/c/%s/%d/%x HTTP/1.1\r\nHost: %s\r\n\r\n", context->session_id, odd ? 81 : 80, hash, client->reader->device);
@@ -429,6 +428,7 @@ static int32_t _ghttp_post_ecmdata(struct s_client *client, ECM_REQUEST* er)
 
 	if (encauth) { // basic auth login
 		ret = snprintf((char*)req, sizeof(req), "POST /api/e/%x/%x/%x/%x/%x/%x HTTP/1.1\r\nHost: %s\r\nAuthorization: Basic %s\r\nContent-Length: %d\r\n\r\n", er->onid, er->tsid, er->pid, er->srvid, er->caid, er->prid, client->reader->device, encauth, er->ecmlen);
+		free(encauth);
 	} else {
 		if (context->session_id) { // session exists
 			ret = snprintf((char*)req, sizeof(req), "POST /api/e/%s/%x/%x/%x/%x/%x/%x HTTP/1.1\r\nHost: %s\r\nContent-Length: %d\r\n\r\n", context->session_id, er->onid, er->tsid, er->pid, er->srvid, er->caid, er->prid, client->reader->device, er->ecmlen);
@@ -454,7 +454,7 @@ static bool _is_pid_ignored(ECM_REQUEST *er)
 		ignore->tsid = er->tsid;
 		ignore->sid = er->srvid;
 		ignore->pid = er->pid;
-		if (ll_contains_data(ignored_contexts, ignore, sizeof(s_ca_context))) {
+		if (ll_contains_data(ghttp_ignored_contexts, ignore, sizeof(s_ca_context))) {
 			free(ignore);
 			return true;
 		} else free(ignore);
@@ -468,11 +468,13 @@ static int32_t ghttp_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *U
 	s_ghttp* context = (s_ghttp*)client->ghttp;
 
 	if (_is_pid_ignored(er)) {
-		cs_debug_mask(D_CLIENT, "ca context found in ignore list, ecm blocked: %x-%x-%x pid %x", er->onid, er->tsid, er->srvid, er->pid);
+		cs_debug_mask(D_CLIENT, "%s: ca context found in ignore list, ecm blocked: %x-%x-%x pid %x", client->reader->label, er->onid, er->tsid, er->srvid, er->pid);
 		return -1;
 	}
 
-	ll_append(context->ecm_q, er);	
+	ll_append(context->ecm_q, er);
+	if (ll_count(context->ecm_q) > 1)
+		cs_debug_mask(D_CLIENT, "%s: %d simultaneous ecms...", client->reader->label, ll_count(context->ecm_q));
 
 	if (_is_post_context(context->post_contexts, er, false)) {
 		_ghttp_post_ecmdata(client, er);
@@ -486,7 +488,6 @@ static int32_t ghttp_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *U
 
 static void ghttp_cleanup(struct s_client *client) {
 	s_ghttp* context = (s_ghttp*)client->ghttp;
-	cs_log("%s: cleanup called", client->reader->label);
 	
 	if (context) {
 		if (context->ecm_q) ll_destroy(context->ecm_q);
@@ -495,9 +496,7 @@ static void ghttp_cleanup(struct s_client *client) {
 		if (context->ssl_handle) { 
 			SSL_shutdown(context->ssl_handle);
 			SSL_free(context->ssl_handle);
-		}
-		if (context->ssl_context)
-			SSL_CTX_free(context->ssl_context);		
+		}	
 #endif		
 		NULLFREE(context);
 	}
@@ -535,6 +534,7 @@ static int32_t ghttp_capmt_notify(struct s_client *client, struct demux_s *demux
 
 	if (encauth) { // basic auth login
 		ret = snprintf((char*)req, sizeof(req), "%s /api/p/%x/%x/%x/%x/%x HTTP/1.1\r\nHost: %s\r\nAuthorization: Basic %s%s\r\n\r\n", ((pids_len > 0) ? "POST" : "GET"), demux->onid, demux->tsid, demux->program_number, demux->ECMpidcount, demux->enigma_namespace, client->reader->device, encauth, lenhdr);
+		free(encauth);
 	} else {
 		if (context->session_id) { // session exists
 			ret = snprintf((char*)req, sizeof(req), "%s /api/p/%s/%x/%x/%x/%x/%x HTTP/1.1\r\nHost: %s%s\r\n\r\n", ((pids_len > 0) ? "POST" : "GET"), context->session_id, demux->onid, demux->tsid, demux->program_number, demux->ECMpidcount, demux->enigma_namespace, client->reader->device, lenhdr);
@@ -575,7 +575,12 @@ void module_ghttp(struct s_module *ph)
 	ph->c_capmt = ghttp_capmt_notify;
 #endif
 	ph->num = R_GHTTP;
-	if (!ignored_contexts) 
-		ignored_contexts = ll_create("ignored contexts");
+	ghttp_ignored_contexts = ll_create("ignored contexts");
+#ifdef WITH_SSL
+	SSL_load_error_strings();
+	SSL_library_init();
+	ghttp_ssl_context = SSL_CTX_new(SSLv23_client_method());
+	if (ghttp_ssl_context == NULL) ERR_print_errors_fp(stderr);	
+#endif
 }
 #endif
