@@ -81,6 +81,7 @@ TARGET := $(shell $(CC) -dumpmachine 2>/dev/null)
 # Process USE_ variables
 DEFAULT_STAPI_LIB = -L./stapi -loscam_stapi
 DEFAULT_COOLAPI_LIB = -lnxp -lrt
+DEFAULT_SU980_LIB = -lentropic -lrt
 DEFAULT_AZBOX_LIB = -Lextapi/openxcas -lOpenXCASAPI
 DEFAULT_LIBCRYPTO_LIB = -lcrypto
 DEFAULT_SSL_LIB = -lssl
@@ -119,6 +120,7 @@ endef
 # Initialize USE variables
 $(eval $(call prepare_use_flags,STAPI,stapi))
 $(eval $(call prepare_use_flags,COOLAPI,coolapi))
+$(eval $(call prepare_use_flags,SU980,su980))
 $(eval $(call prepare_use_flags,AZBOX,azbox))
 $(eval $(call prepare_use_flags,MCA,mca))
 $(eval $(call prepare_use_flags,SSL,ssl))
@@ -222,6 +224,7 @@ SRC-$(CONFIG_CW_CYCLE_CHECK) += module-cw-cycle-check.c
 SRC-$(CONFIG_WITH_AZBOX) += module-dvbapi-azbox.c
 SRC-$(CONFIG_WITH_MCA) += module-dvbapi-mca.c
 SRC-$(CONFIG_WITH_COOLAPI) += module-dvbapi-coolapi.c
+SRC-$(CONFIG_WITH_SU980) += module-dvbapi-coolapi.c
 SRC-$(CONFIG_WITH_STAPI) += module-dvbapi-stapi.c
 SRC-$(CONFIG_HAVE_DVBAPI) += module-dvbapi.c
 SRC-$(CONFIG_MODULE_GBOX) += module-gbox.c
@@ -506,6 +509,16 @@ OSCam build system documentation\n\
                          COOLAPI_LIB='$(DEFAULT_COOLAPI_LIB)'\n\
                      Using USE_COOLAPI=1 adds to '-coolapi' to PLUS_TARGET.\n\
                      In order for USE_COOLAPI to work you have to have libnxp.so\n\
+                     library in your cross compilation toolchain.\n\
+\n\
+   USE_SU980=1  - Request support for SU980 API (libentropic) aka Enimga2 arm\n\
+                    box. The variables that control the build are:\n\
+                         COOLAPI_FLAGS='$(DEFAULT_SU980_FLAGS)'\n\
+                         COOLAPI_CFLAGS='$(DEFAULT_SU980_FLAGS)'\n\
+                         COOLAPI_LDFLAGS='$(DEFAULT_SU980_FLAGS)'\n\
+                         COOLAPI_LIB='$(DEFAULT_SU980_LIB)'\n\
+                     Using USE_SU980=1 adds to '-su980' to PLUS_TARGET.\n\
+                     In order for USE_SU980 to work you have to have libentropic.a\n\
                      library in your cross compilation toolchain.\n\
 \n\
    USE_AZBOX=1    - Request support for AZBOX (openxcas)\n\

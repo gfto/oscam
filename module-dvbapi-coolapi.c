@@ -504,4 +504,24 @@ void coolapi_close_all(void)
 	cnxt_kal_terminate();
 	cnxt_drv_term();
 }
+#elif defined(HAVE_DVBAPI) && defined(WITH_SU980)
+#include "extapi/coolapi.h"
+void cnxt_css_drv_init(void);
+void cnxt_css_drv_term(void);
+void cnxt_smc_term ( void );
+
+int32_t  cool_kal_opened = 0;
+void coolapi_open_all(void)
+{
+	cnxt_kal_initialize();
+	cnxt_css_drv_init();
+	cnxt_smc_init (0);
+	cool_kal_opened = 1;
+}
+
+void coolapi_close_all(void)
+{
+	cnxt_kal_terminate();
+	cool_kal_opened = 0;
+}
 #endif

@@ -226,6 +226,15 @@ cool:
 neutrinohd: cool
 coolstream: cool
 
+su980:
+	$(MAKE) --no-print-directory \
+		CROSS=arm-cortex-linux-gnueabi- \
+		CONF_DIR=/var/tuxbox/config \
+		USE_SU980=1 \
+		$(MAKEFLAGS)
+
+hypercube: su980
+
 dockstar:
 	$(MAKE) --no-print-directory \
 		CROSS=arm-openwrt-linux-uclibcgnueabi- \

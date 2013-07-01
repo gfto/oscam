@@ -67,7 +67,7 @@
 // do not touch them
 #if   defined(CARDREADER_INTERNAL) && defined(WITH_AZBOX)
 #define CARDREADER_INTERNAL_AZBOX 1
-#elif defined(CARDREADER_INTERNAL) && defined(WITH_COOLAPI)
+#elif defined(CARDREADER_INTERNAL) && (defined(WITH_COOLAPI) || defined(WITH_SU980))
 #define CARDREADER_INTERNAL_COOLAPI 1
 #elif defined(CARDREADER_INTERNAL)
 #define CARDREADER_INTERNAL_SCI 1

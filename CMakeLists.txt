@@ -35,6 +35,8 @@ if (CMAKE_CROSSCOMPILING)
         set (OSCamOperatingSystem "DIR-825")
     elseif (OSCAM_SYSTEM_NAME MATCHES "AZBox")
         set (OSCamOperatingSystem "AZBox")
+    elseif (OSCAM_SYSTEM_NAME MATCHES "SU980")
+        set (OSCamOperatingSystem "SU980")
     elseif (OSCAM_SYSTEM_NAME MATCHES "MCA")
         set (OSCamOperatingSystem "MCA")
     elseif (OSCAM_SYSTEM_NAME MATCHES "agv2+w")
@@ -155,6 +157,10 @@ elseif (OSCamOperatingSystem MATCHES "AZBox")
     add_definitions ("-DWITH_AZBOX=1")
     set (USE_AZBOX "USE_AZBOX")
     set (DEFAULT_CS_CONFDIR "/PLUGINS/OpenXCAS/oscamCAS")
+elseif (OSCamOperatingSystem MATCHES "SU980")
+    set (USE_SU980 "USE_SU980")
+    add_definitions ("-DWITH_SU980=1")
+    set (DEFAULT_CS_CONFDIR "/var/tuxbox/config")
 elseif (OSCamOperatingSystem MATCHES "MCA")
     add_definitions ("-DWITH_MCA=1")
     set (USE_MCA "USE_MCA")
@@ -410,7 +416,7 @@ GENERATE_OSCAM_CONFIG("${CMAKE_CURRENT_SOURCE_DIR}/config.h")
 # Build config.mak and related files
 # FIXME: Create USE_FLAGS and pass them to config.sh using --use-flags
 execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --objdir ${CMAKE_CURRENT_BINARY_DIR} --use-flags  "${USE_STAPI} ${USE_COOLAPI} /
-${USE_AZBOX} ${USE_MCA} ${USE_SSL} ${USE_LIBCRYPTO} ${USE_LIBUSB} ${USE_PCSC}" --make-config.mak)
+${USE_SU980} ${USE_AZBOX} ${USE_MCA} ${USE_SSL} ${USE_LIBCRYPTO} ${USE_LIBUSB} ${USE_PCSC}" --make-config.mak)
 # Generate webif/pages.c
 execute_process (COMMAND make --no-print-directory --quiet -C ${CMAKE_CURRENT_SOURCE_DIR}/webif)
 
@@ -581,6 +587,8 @@ elseif (OSCamOperatingSystem MATCHES "AZBox")
     add_library(xcas STATIC IMPORTED)
     set_property(TARGET xcas PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/extapi/openxcas/libOpenXCASAPI.a)
     target_link_libraries(${exe_name} xcas)
+elseif (OSCamOperatingSystem MATCHES "SU980")
+    target_link_libraries(${exe_name} rt entropic)
 endif (OSCamOperatingSystem MATCHES "Linux")
 
 #----------------------- put svnversion in the build ------------------------------
