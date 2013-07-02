@@ -1740,15 +1740,23 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 
 	for (j = 0; j < info_length; j += descriptor_length + 2) {
 		descriptor_length = buffer[j+1];
-		int32_t descriptor_ca_system_id = (buffer[j+2] << 8) | buffer[j+3];
-		int32_t descriptor_ca_pid = ((buffer[j+4] & 0x1F) << 8) | buffer[j+5];
-		int32_t descriptor_ca_provider = 0;
-		if (demux[demux_id].ECMpidcount>=ECM_PIDS)
-			break;
-
-		cs_debug_mask(D_DVBAPI, "[pmt] type: %02x length: %d", buffer[j], descriptor_length);
+		
+		if (buffer[j] == 0x81 && descriptor_length == 8) { // private descriptor of length 8, assume enigma/tvh
+			demux[demux_id].enigma_namespace = (buffer[j+2] << 24 | buffer[j+3] << 16 | buffer[j+4] << 8 | buffer[j+5]);
+			demux[demux_id].tsid = (buffer[j+6] << 8 | buffer[j+7]);
+			demux[demux_id].onid = (buffer[j+8] << 8 | buffer[j+9]);			
+			cs_debug_mask(D_DVBAPI, "[pmt] type: %02x length: %d (assuming enigma private descriptor: namespace %04x tsid %02x onid %02x)", 
+					buffer[j], descriptor_length, demux[demux_id].enigma_namespace, demux[demux_id].tsid, demux[demux_id].onid);		
+		} else {
+			cs_debug_mask(D_DVBAPI, "[pmt] type: %02x length: %d", buffer[j], descriptor_length);
+		}		
 
 		if (buffer[j] != 0x09) continue;
+		if (demux[demux_id].ECMpidcount>=ECM_PIDS) break;
+		
+		int32_t descriptor_ca_system_id = (buffer[j+2] << 8) | buffer[j+3];
+		int32_t descriptor_ca_pid = ((buffer[j+4] & 0x1F) << 8) | buffer[j+5];
+		int32_t descriptor_ca_provider = 0;		
 
 		if (descriptor_ca_system_id >> 8 == 0x01) {
 			for (u=2; u<descriptor_length; u+=15) {
@@ -1981,16 +1989,9 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	
 	demux[demux_id].program_number=program_number; // do this early since some prio items use them!
 	
-	if (buffer[7]==0x81 && buffer[8]==0x08) {
-		// parse private descriptor as used by enigma (4 bytes namespace, 2 tsid, 2 onid)
-		demux[demux_id].enigma_namespace=(buffer[9] << 24 | buffer[10] << 16 | buffer[11] << 8 | buffer[12]);
-		demux[demux_id].tsid=(buffer[13] << 8 | buffer[14]);
-		demux[demux_id].onid=(buffer[15] << 8 | buffer[16]);
-	} else {
-		demux[demux_id].enigma_namespace=0;
-		demux[demux_id].tsid=0;
-		demux[demux_id].onid=0;
-	}
+	demux[demux_id].enigma_namespace=0;
+	demux[demux_id].tsid=0;
+	demux[demux_id].onid=0;
 
 	if (pmtfile)
 		cs_strncpy(demux[demux_id].pmt_file, pmtfile, sizeof(demux[demux_id].pmt_file));
