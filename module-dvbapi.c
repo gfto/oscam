@@ -1713,6 +1713,11 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 		if (!match || !match->force) // only evaluate forced prio's
 			continue;
 		for (n=0; n<demux[demux_index].ECMpidcount; n++){
+			if(match->caid &&  match->caid != demux[demux_index].ECMpids[n].CAID) continue;
+			if(match->provid && match->provid != demux[demux_index].ECMpids[n].PROVID) continue;
+			if(match->srvid && match->srvid != demux[demux_index].program_number) continue;
+			if(match->ecmpid && match->ecmpid != demux[demux_index].ECMpids[n].ECM_PID) continue;
+			if(match->chid && match->chid <0x10000) demux[demux_index].ECMpids[n].CHID = match->chid;
 			demux[demux_index].ECMpids[n].status = ++highest_prio;
 			cs_debug_mask(D_DVBAPI,"[FORCED PID %d] %04X:%06X:%04X:%04X", n, demux[demux_index].ECMpids[n].CAID, 
 				demux[demux_index].ECMpids[n].PROVID,demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) match->chid);
