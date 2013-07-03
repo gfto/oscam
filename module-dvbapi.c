@@ -2494,8 +2494,6 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		}	
 		
 		ECM_REQUEST *er;
-		if (!cs_malloc(&er, sizeof(ECM_REQUEST)))
-			return;
 		if (!(er=get_ecmtask())) return;
 
 		er->srvid = demux[demux_id].program_number;
