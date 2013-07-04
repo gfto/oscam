@@ -483,16 +483,15 @@ void mca_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 
 	int32_t n;
 	for (n=0;n<2;n++) {
-		if (memcmp(er->cw + (n * 8), demux[0].lastcw[n], 8) && memcmp(er->cw + (n * 8), nullcw, 8)) {
+		if ((memcmp(er->cw+(n*8), demux[0].lastcw[0], 8) && memcmp(er->cw+(n*8),demux[0].lastcw[1],8)) && memcmp(er->cw+(n*8), nullcw, 8)) {
 			memcpy(demux[0].lastcw[n], er->cw + (n * 8), 8);
 			memcpy(openxcas_cw + (n * 8), er->cw + (n * 8), 8);
+			if (mca_set_key(openxcas_cw) < 0)
+				cs_log(LOG_PREFIX "set cw failed");
+			else
+				cs_ddump_mask(D_DVBAPI, openxcas_cw, 16, LOG_PREFIX "write cws to descrambler");
 		}
 	}
-
-	if (mca_set_key(openxcas_cw) < 0)
-		cs_log(LOG_PREFIX "set cw failed");
-	else
-		cs_ddump_mask(D_DVBAPI, openxcas_cw, 16, LOG_PREFIX "write cws to descrambler");
 }
 
 #endif
