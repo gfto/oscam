@@ -187,7 +187,6 @@ void mca_demux_convert(DEMUXTYPE * demux_orig, DEMUXMATRIX * demux_matrix){
 		demux_matrix->ECMpids[i].irdeto_cycle = (int32_t)demux_orig->ECMpids[i].irdeto_cycle;
 		demux_matrix->ECMpids[i].checked = (int32_t)demux_orig->ECMpids[i].checked;
 		demux_matrix->ECMpids[i].status = (int32_t)demux_orig->ECMpids[i].status;
-		demux_matrix->ECMpids[i].tries = (uint8_t)demux_orig->ECMpids[i].tries;
 		demux_matrix->ECMpids[i].table = (unsigned char)demux_orig->ECMpids[i].table;
 		demux_matrix->ECMpids[i].streams = (uint32_t)demux_orig->ECMpids[i].streams;
 	}
