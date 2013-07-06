@@ -66,7 +66,7 @@ READERCONFIGHOPBIT            readerconfig/readerconfig_hopbit.html
 READERCONFIGCAMD35BIT         readerconfig/readerconfig_camd35bit.html
 READERCONFIGCS378XBIT         readerconfig/readerconfig_cs378xbit.html
 READERCONFIGRADEGASTBIT       readerconfig/readerconfig_radegastbit.html
-READERCONFIGGHTTPBIT       readerconfig/readerconfig_ghttpbit.html
+READERCONFIGGHTTPBIT          readerconfig/readerconfig_ghttpbit.html
 READERCONFIGNCD525BIT         readerconfig/readerconfig_ncd525bit.html
 READERCONFIGNCD524BIT         readerconfig/readerconfig_ncd524bit.html
 READERCONFIGCCCAMBIT          readerconfig/readerconfig_cccambit.html
@@ -97,6 +97,7 @@ SERVICECONFIGSIDBIT           services/services_servicetabs_sidlist.html
 SERVICEEDIT                   services_edit/services_edit.html
 PRESHUTDOWN                   shutdown/pre_shutdown.html
 SHUTDOWN                      shutdown/shutdown.html
+
 WRITEPROTECTION               files/file_writeprotection.html
 MESSAGE                       include/message.html
 MESSAGEBIT                    include/message_bit.html
@@ -145,6 +146,8 @@ CACHEEXTABLEROW               cacheex/cacheex_tablerow.html                     
 CACHEEXMENUITEM               include/menu_cacheexmenuitem.html                           CS_CACHEEX
 ICARRR                        images/ICARRR.gif                                           CS_CACHEEX
 ICARRL                        images/ICARRL.gif                                           CS_CACHEEX
+PREAUTOCONF                   ghttp/pre_autoconf.html                                     MODULE_GHTTP
+AUTOCONF                      ghttp/autoconf.html                                         MODULE_GHTTP
 CONFIGCWCYCLE                 config/cache_cwcycle.html                                   CW_CYCLE_CHECK
 CWCYCLETHV                    userconfig/userconfig_cwcyclethv.html                       CW_CYCLE_CHECK
 CWCYCLETBV                    userconfig/userconfig_entry_cwcycletbv.html                 CW_CYCLE_CHECK

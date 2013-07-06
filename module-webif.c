@@ -4664,6 +4664,129 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 }
 #endif
 
+#ifdef MODULE_GHTTP
+static bool ghttp_autoconf(struct templatevars *vars, struct uriparams *params) {
+	int8_t i = 0;
+	struct s_reader *rdr;
+	LL_ITER itr = ll_iter_create(configured_readers);
+	while ((rdr = ll_iter_next(&itr))) 
+		if (rdr->ph.num == R_GHTTP) i++; // count existing ghttp readers
+	
+	while (i < 3) { // if less than 3, add more
+		char lbl[128];
+		snprintf(lbl, sizeof(lbl), "%s%d", "ghttp", i + 1);
+		cs_log("GHttp autoconf: adding reader %s", lbl);
+		struct s_reader *newrdr;
+		if (!cs_malloc(&newrdr, sizeof(struct s_reader))) {
+			tpl_addMsg(vars, "Create reader failed!");
+			return false;
+		};
+		newrdr->typ = R_GHTTP;
+		cs_strncpy(newrdr->label, lbl, sizeof(newrdr->label));
+		module_reader_set(newrdr);
+		reader_set_defaults(newrdr);
+		newrdr->enable = 0;		
+		ll_append(configured_readers, newrdr);	
+		i++;
+	}
+	
+	i = 0;
+	itr = ll_iter_create(configured_readers);
+	while ((rdr = ll_iter_next(&itr))) {
+		if (rdr->ph.num == R_GHTTP) {
+			if(i > 2) { // remove superflous
+				cs_log("GHttp autoconf: removing reader %s", rdr->label);
+				inactivate_reader(rdr);
+				ll_iter_remove(&itr);
+				free_reader(rdr);				
+			} else { // reconfigure the 3 first ghttp readers
+				cs_log("GHttp autoconf: reconfiguring reader %s", rdr->label);
+				snprintf(rdr->label, sizeof(rdr->label), "%s%d", "ghttp", i + 1);
+				rdr->r_port = 0;
+				rdr->enable = 1;
+				rdr->ghttp_use_ssl = 0;
+#ifdef WITH_SSL				
+				rdr->ghttp_use_ssl = 1;
+#endif				
+				cs_strncpy(rdr->r_usr, getParam(params, "gacuser"), sizeof(rdr->r_usr));
+				cs_strncpy(rdr->r_pwd, getParam(params, "gacpasswd"), sizeof(rdr->r_pwd));
+				if(i == 0) cs_strncpy(rdr->device, getParam(params, "gacname"), sizeof(rdr->device));
+				else snprintf(rdr->device, sizeof(rdr->device), "%s%d", getParam(params, "gacname"), i);
+				if(i == 2) rdr->fallback = 1;
+				else rdr -> fallback = 0;
+				i++;			
+			}
+		}
+	}
+	cs_log("GHttp autoconf: Saving %d readers", i);
+	if(write_server() != 0) tpl_addMsg(vars, "Write Config failed!");
+	itr = ll_iter_create(configured_readers);
+	while ((rdr = ll_iter_next(&itr))) {
+		if (rdr->ph.num == R_GHTTP) 
+			restart_cardreader(rdr, 1);		
+	}
+	return true;
+}
+
+static char *send_oscam_ghttp(struct templatevars *vars, struct uriparams *params, int8_t apicall) {
+	if (strcmp(strtolower(getParam(params, "action")), "autoconf") == 0) {
+		if(!apicall) {
+			bool missing = false;
+			if(strlen(getParam(params, "gacuser")) == 0) {
+				tpl_addVar(vars, TPLADD, "USERREQ", "<font color='red'>(Required)</font>");
+				missing = true;
+			} else tpl_addVar(vars, TPLADD, "GACUSER", getParam(params, "gacuser"));
+			if(strlen(getParam(params, "gacpasswd")) == 0) {
+				tpl_addVar(vars, TPLADD, "PWDREQ", "<font color='red'>(Required)</font>");
+				missing = true;
+			} else tpl_addVar(vars, TPLADD, "GACPASSWD", getParam(params, "gacpasswd"));
+			if(strlen(getParam(params, "gacname")) == 0) {
+				tpl_addVar(vars, TPLADD, "NAMEREQ", "<font color='red'>(Required)</font>");
+				missing = true;
+			} else tpl_addVar(vars, TPLADD, "GACNAME", getParam(params, "gacname"));			
+			if(missing) return tpl_getTpl(vars, "PREAUTOCONF");
+			cs_log("Ghttp autoconf requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
+		} else {
+			tpl_addVar(vars, TPLADD, "APICONFIRMMESSAGE", "autoconf");
+			cs_log("Ghttp autoconf requested by XMLApi from %s", cs_inet_ntoa(GET_IP()));
+		}
+	
+		if(ghttp_autoconf(vars, params)) {
+			tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", 3);
+			tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
+			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));		
+			tpl_printf(vars, TPLADD, "SECONDS", "%d", 3);
+			if(apicall) return tpl_getTpl(vars, "APICONFIRMATION"); 
+			else return tpl_getTpl(vars, "AUTOCONF");
+		} else return tpl_getTpl(vars, "PREAUTOCONF"); // something failed
+
+	} else {
+		if(strlen(getParam(params, "token")) > 0) { // parse autoconf token
+			char* token = getParam(params, "token");
+			int32_t len = b64decode((uchar*)token);
+			if(len > 0) {
+				struct uriparams tokenprms;
+				tokenprms.paramcount = 0;
+				parseParams(&tokenprms, token);
+				if(strlen(getParam(&tokenprms, "u")) > 0) {
+					tpl_addVar(vars, TPLADD, "GACUSER", getParam(&tokenprms, "u"));
+					tpl_addVar(vars, TPLADD, "USERRDONLY", "readonly");
+				}
+				if(strlen(getParam(&tokenprms, "p")) > 0) {
+					tpl_addVar(vars, TPLADD, "GACPASSWD", getParam(&tokenprms, "p"));
+					tpl_addVar(vars, TPLADD, "PWDRDONLY", "readonly");
+				}
+				if(strlen(getParam(&tokenprms, "n")) > 0) {
+					tpl_addVar(vars, TPLADD, "GACNAME", getParam(&tokenprms, "n"));
+					tpl_addVar(vars, TPLADD, "NAMERDONLY", "readonly");
+				}
+			}
+		}		
+		return tpl_getTpl(vars, "PREAUTOCONF");
+	}
+}
+#endif
+
 static int8_t check_httpip(IN_ADDR_T addr) {
 	int8_t i = 0;
 	// check all previously dyndns resolved addresses
@@ -4878,6 +5001,7 @@ static int32_t process_request(FILE *f, IN_ADDR_T in) {
 			"/emm.html",
 			"/emm_running.html",
 			"/robots.txt",
+			"/ghttp.html",
 		};
 
 		int32_t pagescnt = sizeof(pages)/sizeof(char *); // Calculate the amount of items in array
@@ -5114,6 +5238,9 @@ static int32_t process_request(FILE *f, IN_ADDR_T in) {
 				case 25: result = send_oscam_EMM(vars, &params); break; //emm.html
 				case 26: result = send_oscam_EMM_running(vars, &params); break; //emm_running.html
 				case 27: result = send_oscam_robots_txt(f); break; //robots.txt
+#ifdef MODULE_GHTTP
+				case 28: result = send_oscam_ghttp(vars, &params, 0); break;
+#endif
 				default: result = send_oscam_status(vars, &params, 0); break;
 			}
 			if(pgidx != 19 && pgidx != 20) cs_writeunlock(&http_lock);
