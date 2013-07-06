@@ -12,6 +12,7 @@
 
 // These variables are declared in module-dvbapi.c
 extern int32_t disable_pmt_files;
+extern int32_t pausecam;
 extern struct s_dvbapi_priority *dvbapi_priority;
 extern DEMUXTYPE demux[MAX_DEMUX];
 
@@ -28,6 +29,7 @@ void stapi_off(void) {
 
 	disable_pmt_files=1;
 	stapi_on=0;
+	pausecam = 1; // disable parsing of ecm/emm or attempts to start any new filters
 
 	for (i=0;i<MAX_DEMUX;i++)
 		dvbapi_stop_descrambling(i);
@@ -120,6 +122,7 @@ int32_t stapi_open(void) {
 
 		cs_strncpy(dev_list[i].name,dp->d_name, sizeof(dev_list[i].name));
 		cs_log("PTI: %s open %d", dp->d_name, i);
+		pausecam = 0 ; // allow parsing of ecm/emm or attempts to start new filters
 
 		ErrorCode = oscam_stapi_SignalAllocate(dev_list[i].SessionHandle, &dev_list[i].SignalHandle);
 		if (ErrorCode != 0)
