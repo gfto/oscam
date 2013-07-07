@@ -4668,6 +4668,12 @@ static char *send_oscam_cacheex(struct templatevars *vars, struct uriparams *par
 static bool ghttp_autoconf(struct templatevars *vars, struct uriparams *params) {
 	int8_t i = 0;
 	struct s_reader *rdr;
+	char *name = getParam(params, "gacname");
+	if(strlen(name) < 3) {
+		tpl_addMsg(vars, "Invalid host name!");
+		return false;
+	}	
+	
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while ((rdr = ll_iter_next(&itr))) 
 		if (rdr->ph.num == R_GHTTP) i++; // count existing ghttp readers
@@ -4690,6 +4696,13 @@ static bool ghttp_autoconf(struct templatevars *vars, struct uriparams *params) 
 		i++;
 	}
 	
+	uint16_t port = 0;
+	char *str = strstr(name, ":");
+	if (str) {
+		port = atoi(str + 1);
+		str[0] = '\0';
+	}
+	
 	i = 0;
 	itr = ll_iter_create(configured_readers);
 	while ((rdr = ll_iter_next(&itr))) {
@@ -4701,8 +4714,8 @@ static bool ghttp_autoconf(struct templatevars *vars, struct uriparams *params) 
 				free_reader(rdr);				
 			} else { // reconfigure the 3 first ghttp readers
 				cs_log("GHttp autoconf: reconfiguring reader %s", rdr->label);
-				snprintf(rdr->label, sizeof(rdr->label), "%s%d", "ghttp", i + 1);
-				rdr->r_port = 0;
+				snprintf(rdr->label, sizeof(rdr->label), "%s%d", "ghttp", i + 1);				
+				rdr->r_port = port;
 				rdr->enable = 1;
 				rdr->ghttp_use_ssl = 0;
 #ifdef WITH_SSL				
@@ -4710,8 +4723,13 @@ static bool ghttp_autoconf(struct templatevars *vars, struct uriparams *params) 
 #endif				
 				cs_strncpy(rdr->r_usr, getParam(params, "gacuser"), sizeof(rdr->r_usr));
 				cs_strncpy(rdr->r_pwd, getParam(params, "gacpasswd"), sizeof(rdr->r_pwd));
-				if(i == 0) cs_strncpy(rdr->device, getParam(params, "gacname"), sizeof(rdr->device));
-				else snprintf(rdr->device, sizeof(rdr->device), "%s%d", getParam(params, "gacname"), i);
+				if(i == 0) cs_strncpy(rdr->device, name, sizeof(rdr->device));
+				else {
+					if(!strstr(name, "."))
+						snprintf(rdr->device, sizeof(rdr->device), "%s%d", name, i); // name, name1, name2
+					else cs_strncpy(rdr->device, name, sizeof(rdr->device));
+					// . in the name = assume full hostname = use same for all 3 readers
+				}
 				if(i == 2) rdr->fallback = 1;
 				else rdr -> fallback = 0;
 				i++;			
@@ -4745,10 +4763,10 @@ static char *send_oscam_ghttp(struct templatevars *vars, struct uriparams *param
 				missing = true;
 			} else tpl_addVar(vars, TPLADD, "GACNAME", getParam(params, "gacname"));			
 			if(missing) return tpl_getTpl(vars, "PREAUTOCONF");
-			cs_log("Ghttp autoconf requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
+			cs_log("GHttp autoconf requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
 		} else {
 			tpl_addVar(vars, TPLADD, "APICONFIRMMESSAGE", "autoconf");
-			cs_log("Ghttp autoconf requested by XMLApi from %s", cs_inet_ntoa(GET_IP()));
+			cs_log("GHttp autoconf requested by XMLApi from %s", cs_inet_ntoa(GET_IP()));
 		}
 	
 		if(ghttp_autoconf(vars, params)) {
