@@ -277,6 +277,11 @@ static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, stru
       snprintf( ea->msglog, MSGLOGSIZE, "%s unsubscribed", reader->label);
       break;
     }
+// temporary patch to avoid double sending to card on 96 00 fake ecm error
+    if ((cta_res[0] == 0x96)  && (cta_res[1] == 0x00)) {
+      snprintf( ea->msglog, MSGLOGSIZE, "%s fake 96 00 ecm", reader->label);
+      break;
+    }
     if (ret)
       snprintf( ea->msglog, MSGLOGSIZE, "%s ins3c card res: %02x %02x", reader->label, cta_res[0] , cta_res[1] );
     try++;
