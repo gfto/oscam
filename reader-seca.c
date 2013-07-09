@@ -272,16 +272,19 @@ static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, stru
       write_cmd(ins30, ins30data);
       write_cmd(ins3c, er->ecm+8); //ecm request
     }
-    ret = ((cta_res[0] != 0x90) || (cta_res[1] != 0x00));
+    ret = (((cta_res[0] != 0x90) && (cta_res[0] != 0x93) && (cta_res[0] != 0x96)) || ((cta_res[1] != 0x00) && (cta_res[1] != 0x02)));
+// Handle the 96 00 and 93 02 after decoding cw ins3a seems to be better as a lot off them whitout it do block card completely
+// and reset off card is needed .
     if ((cta_res[0] == 0x93) && (cta_res[1] == 0x02)) {
-      snprintf( ea->msglog, MSGLOGSIZE, "%s unsubscribed", reader->label);
-      break;
-    }
-// temporary patch to avoid double sending to card on 96 00 fake ecm error
+      write_cmd(ins3a, NULL); //get cw
+      snprintf( ea->msglog, MSGLOGSIZE, "unsubscribed 93 02");
+      return ERROR;
+    }; // exit if unsubscribed
     if ((cta_res[0] == 0x96)  && (cta_res[1] == 0x00)) {
-      snprintf( ea->msglog, MSGLOGSIZE, "%s fake 96 00 ecm", reader->label);
-      break;
-    }
+     write_cmd(ins3a, NULL); //get cw
+     snprintf( ea->msglog, MSGLOGSIZE, "fake 96 00 ecm");
+     return ERROR;
+    }; //exit if fake 96 00 ecm
     if (ret)
       snprintf( ea->msglog, MSGLOGSIZE, "%s ins3c card res: %02x %02x", reader->label, cta_res[0] , cta_res[1] );
     try++;
@@ -290,7 +293,11 @@ static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, stru
     return ERROR;
 
   write_cmd(ins3a, NULL); //get cw's
-  if ((cta_res[16] != 0x90) || (cta_res[17] != 0x00)) { snprintf( ea->msglog, MSGLOGSIZE, "ins3a card response: %02x %02x", cta_res[16] , cta_res[17] ); return ERROR; };//exit if response is not 90 00 //TODO: if response is 9027 ppv mode is possible!
+  if ((cta_res[16] != 0x90) || (cta_res[17] != 0x00)) { 
+    snprintf( ea->msglog, MSGLOGSIZE, "ins3a card response: %02x %02x", cta_res[16] , cta_res[17] ); 
+    return ERROR; 
+    };    //exit if response intial 96 00 fake ecm
+  //TODO: if response is 9027 ppv mode is possible!
   memcpy(ea->cw,cta_res,16);
   return OK;
 }
