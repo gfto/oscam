@@ -4691,7 +4691,8 @@ static bool ghttp_autoconf(struct templatevars *vars, struct uriparams *params) 
 		cs_strncpy(newrdr->label, lbl, sizeof(newrdr->label));
 		module_reader_set(newrdr);
 		reader_set_defaults(newrdr);
-		newrdr->enable = 0;		
+		newrdr->enable = 0;	
+		newrdr->grp = 1;
 		ll_append(configured_readers, newrdr);	
 		i++;
 	}
@@ -4715,12 +4716,13 @@ static bool ghttp_autoconf(struct templatevars *vars, struct uriparams *params) 
 			} else { // reconfigure the 3 first ghttp readers
 				cs_log("GHttp autoconf: reconfiguring reader %s", rdr->label);
 				snprintf(rdr->label, sizeof(rdr->label), "%s%d", "ghttp", i + 1);				
-				rdr->r_port = port;
+				rdr->r_port = port;				
 				rdr->enable = 1;
 				rdr->ghttp_use_ssl = 0;
 #ifdef WITH_SSL				
 				rdr->ghttp_use_ssl = 1;
 #endif				
+				if (rdr->grp < 1) rdr->grp = 1;
 				cs_strncpy(rdr->r_usr, getParam(params, "gacuser"), sizeof(rdr->r_usr));
 				cs_strncpy(rdr->r_pwd, getParam(params, "gacpasswd"), sizeof(rdr->r_pwd));
 				if(i == 0) cs_strncpy(rdr->device, name, sizeof(rdr->device));
@@ -4731,7 +4733,7 @@ static bool ghttp_autoconf(struct templatevars *vars, struct uriparams *params) 
 					// . in the name = assume full hostname = use same for all 3 readers
 				}
 				if(i == 2) rdr->fallback = 1;
-				else rdr -> fallback = 0;
+				else rdr->fallback = 0;
 				i++;			
 			}
 		}
