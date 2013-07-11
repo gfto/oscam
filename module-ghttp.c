@@ -304,28 +304,31 @@ static int32_t ghttp_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, 
 				cs_debug_mask(D_CLIENT, "%s: recv_chk got 503 despite post, trying reconnect", client->reader->label);
 				network_tcp_connection_close(client->reader, "timeout");
 				ll_clear(context->ecm_q);
-				return -1;
 			} else {
 				// on 503 cache timeout, retry with POST immediately (and switch to POST for subsequent)			
 				if (er) {
 					_set_pid_status(context->post_contexts, er->onid, er->tsid, er->srvid, 0); 
 					cs_debug_mask(D_CLIENT, "%s: recv_chk got 503, trying direct post", client->reader->label);
 					_ghttp_post_ecmdata(client, er);					
-					*rc = 0;
-					memset(dcw, 0, 16);
 				}
-				return -1;
 			}
 		} else if (rcode == 401) {
 			NULLFREE(context->session_id);
 			if (er) {
 				cs_debug_mask(D_CLIENT, "%s: session expired, trying direct post", client->reader->label);
-				_ghttp_post_ecmdata(client, er);
-				*rc = 0;
-				memset(dcw, 0, 16);				
+				_ghttp_post_ecmdata(client, er);			
 			}
-			return -1;
+		} else if (rcode == 403) {
+			client->reader->enable = 0;
+			network_tcp_connection_close(client->reader, "login failure");
+			ll_clear(context->ecm_q);
+			cs_log("%s: invalid username/password, disabling reader.", client->reader->label);
 		}
+		
+		// not sure if this is needed on failure, copied from newcamd
+		*rc = 0;
+		memset(dcw, 0, 16);	
+		
 		return -1;
 	}
 
@@ -357,7 +360,7 @@ static int32_t ghttp_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, 
 	// switch back to cache get after rapid ecm response (arbitrary atm), only effect is a slight bw save for client
 	if (!er || _is_post_context(context->post_contexts, er, false)) {
 		data = strstr((char*)buf, "Pragma: cached");
-		if (data || (client->cwlastresptime > 0 && client->cwlastresptime < 750)) {
+		if (data || (client->cwlastresptime > 0 && client->cwlastresptime < 640)) {
 			cs_debug_mask(D_CLIENT, "%s: probably cached cw (%d ms), switching back to cache get for next req", client->reader->label, client->cwlastresptime);
 			if (er) _is_post_context(context->post_contexts, er, true);
 		}
