@@ -263,7 +263,7 @@ static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, stru
  	int32_t ret;
   do {
     if (try > 1)
-      snprintf( ea->msglog, MSGLOGSIZE, "ins3c try nr %i", try);
+     snprintf( ea->msglog, MSGLOGSIZE, "ins3c try nr %i", try);
     write_cmd(ins3c, er->ecm+8); //ecm request
     unsigned char ins30[] = { 0xC1, 0x30, 0x00, 0x02, 0x09 };
     unsigned char ins30data[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF };
@@ -273,8 +273,8 @@ static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, stru
       write_cmd(ins3c, er->ecm+8); //ecm request
     }
     ret = (((cta_res[0] != 0x90) && (cta_res[0] != 0x93) && (cta_res[0] != 0x96)) || ((cta_res[1] != 0x00) && (cta_res[1] != 0x02)));
-// Handle the 96 00 and 93 02 after decoding cw ins3a seems to be better as a lot off them whitout it do block card completely
-// and reset off card is needed .
+// Handle all not initial 90 00 ecm of with a get decoding cw does avoid the need off card reset after a lot off them
+// the try ++ has been removed as it triggers the anti share mode off seca cards due to not recorded extra ecm's by rate limiter
     if ((cta_res[0] == 0x93) && (cta_res[1] == 0x02)) {
       write_cmd(ins3a, NULL); //get cw
       snprintf( ea->msglog, MSGLOGSIZE, "unsubscribed 93 02");
@@ -285,10 +285,12 @@ static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, stru
      snprintf( ea->msglog, MSGLOGSIZE, "fake 96 00 ecm");
      return ERROR;
     }; //exit if fake 96 00 ecm
-    if (ret)
+    if (ret) {
       snprintf( ea->msglog, MSGLOGSIZE, "%s ins3c card res: %02x %02x", reader->label, cta_res[0] , cta_res[1] );
-    try++;
-  } while ((try < 3) && (ret));
+      write_cmd(ins3a, NULL); //get cw
+      return ERROR;
+    }; //exit on other's then 96 00 or 93 02
+  } while ((try < 2) && (ret));
   if (ret)
     return ERROR;
 
@@ -296,7 +298,7 @@ static int32_t seca_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, stru
   if ((cta_res[16] != 0x90) || (cta_res[17] != 0x00)) { 
     snprintf( ea->msglog, MSGLOGSIZE, "ins3a card response: %02x %02x", cta_res[16] , cta_res[17] ); 
     return ERROR; 
-    };    //exit if response intial 96 00 fake ecm
+    };// exit if response not 90 00
   //TODO: if response is 9027 ppv mode is possible!
   memcpy(ea->cw,cta_res,16);
   return OK;
