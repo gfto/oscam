@@ -671,7 +671,7 @@ path to an executable script which you wish to start from web interface, default
 <B>httpallowed</B> = <B>IP address</B>|<B>IP address range</B>[,<B>IP address</B>|<B>IP address range]</B>...
 <DL COMPACT><DT><DD>
 http web interface connections allowed, default:none
-<BR>&nbsp;example:&nbsp;httpallowed&nbsp;=&nbsp;127.0.0.1,192.168.0.0-192.168.255.255,::1
+<BR>&nbsp;example:&nbsp;httpallowed&nbsp;=&nbsp;127.0.0.1,192.168.0.0-192.168.255.255
 </DL>
 
 <P>
@@ -1004,7 +1004,7 @@ bind newcamd service to specified IP address, default:all
 <DL COMPACT><DT><DD>
 newcamd client connections allowed from, default:none
 <P>
-<BR>&nbsp;example:&nbsp;allowed&nbsp;=&nbsp;127.0.0.1,192.168.0.0-192.168.255.255
+<BR>&nbsp;example:&nbsp;allowed&nbsp;=&nbsp;127.0.0.1,192.168.0.0-192.168.255.255,::1
 </DL>
 
 <P>
@@ -1378,7 +1378,7 @@ level of penalty:
 <P>
 <BR>&nbsp;<B>0</B>&nbsp;=&nbsp;only&nbsp;logging&nbsp;(default)
 <BR>&nbsp;<B>1</B>&nbsp;=&nbsp;send&nbsp;fake&nbsp;CWs
-<BR>&nbsp;<B>2</B>&nbsp;=&nbsp;disbable&nbsp;user&nbsp;temporary
+<BR>&nbsp;<B>2</B>&nbsp;=&nbsp;temporary&nbsp;user&nbsp;ban
 <BR>&nbsp;<B>3</B>&nbsp;=&nbsp;send&nbsp;delayed&nbsp;CWs
 <P>
 penalty can be overwritten per user in <B>oscam.user</B>
