@@ -521,7 +521,7 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 			return 0; // skip emm
 	}
 
-	rdr_debug_mask(rdr, D_EMM, "invaild");
+	rdr_debug_mask(rdr, D_EMM, "invalid");
 	return 0;
 }
 
