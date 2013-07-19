@@ -479,7 +479,7 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 			break;
 		case 0x86:
 			if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[5]==0x83
-				&& ep->emm[6]==0x01 && (ep->emm[8]==0x85 || ep->emm[8]==0x84)) {
+				&& ep->emm[6]==0x01 && (ep->emm[8]==0x85 || ep->emm[8]==0x84 || ep->emm[8]==0x8C )) {
 				rdr_debug_mask(rdr, D_EMM, "SHARED (Header)");
 				ep->type = SHARED;
 				i2b_buf(4, cryptoworks_get_emm_provid(ep->emm+8, ep->emmlen-8), ep->provid);
