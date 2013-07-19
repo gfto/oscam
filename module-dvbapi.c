@@ -2532,7 +2532,6 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 			case 0x05:	chid = b2i(2, er->ecm+8); break; // viaccess  
 			case 0x06:	chid = b2i(2, er->ecm+6); break; // irdeto  
 			case 0x09:	chid = b2i(2, er->ecm+11); break; // videoguard
-			case 0x18:	chid = b2i(2, er->ecm+7); break; // Nagravision
 			case 0x4A:	// DRE-Crypt, Bulcrypt, others? 
 						if (er->caid != 0x4AEE) // Bulcrypt 
 						chid = er->ecm[7]; 
@@ -3362,7 +3361,6 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				case 0x05:	demux[i].ECMpids[j].CHID = b2i(2, er->ecm+8); break; // viaccess  
 				case 0x06:	demux[i].ECMpids[j].CHID = b2i(2, er->ecm+6); break; // irdeto  
 				case 0x09:	demux[i].ECMpids[j].CHID = b2i(2, er->ecm+11); break; // videoguard
-				case 0x18:	demux[i].ECMpids[j].CHID = b2i(2, er->ecm+7); break; // Nagravision
 				case 0x4A:	// DRE-Crypt, Bulcrypt, others? 
 							if (er->caid != 0x4AEE) // Bulcrypt 
 							demux[i].ECMpids[j].CHID = er->ecm[7]; 
@@ -3520,7 +3518,6 @@ int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er) {
 			case 0x05:	offset = 8; break; // viaccess  
 			case 0x06:	offset = 6; break; // irdeto  
 			case 0x09:	offset = 11; break; // videoguard
-			case 0x18:	offset = 7; break; // Nagravision
 			case 0x4A:	// DRE-Crypt, Bulcrypt, others? 
 						if (er->caid != 0x4AEE) // Bulcrypt 
 						offset = 7; 
