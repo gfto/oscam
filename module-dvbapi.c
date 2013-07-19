@@ -2531,7 +2531,8 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 			case 0x01:	chid = b2i(2, er->ecm+7); break; // seca  
 			case 0x05:	chid = b2i(2, er->ecm+8); break; // viaccess  
 			case 0x06:	chid = b2i(2, er->ecm+6); break; // irdeto  
-			case 0x09:	chid = b2i(2, er->ecm+11); break; // videoguard 
+			case 0x09:	chid = b2i(2, er->ecm+11); break; // videoguard
+			case 0x18:	chid = b2i(2, er->ecm+7); break; // Nagravision
 			case 0x4A:	// DRE-Crypt, Bulcrypt, others? 
 						if (er->caid != 0x4AEE) // Bulcrypt 
 						chid = er->ecm[7]; 
