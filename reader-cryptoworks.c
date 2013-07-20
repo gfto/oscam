@@ -670,7 +670,7 @@ static int32_t cryptoworks_card_info(struct s_reader * reader)
 					char ds[16], de[16];
 
 					// todo: add entitlements to list but produces a warning related to date variable
-					cs_add_entitlement(reader, reader->caid, reader->prid[i][3], b2i(2, cta_res + 7), 0,
+					cs_add_entitlement(reader, reader->caid, reader->prid[i][3], b2i(2, cta_res + 6), 0,
 							chid_date(cta_res+28, ds, sizeof(ds)-1),
 							chid_date(cta_res+30, de, sizeof(de)-1), 3);
 
@@ -733,7 +733,7 @@ static int32_t cryptoworks_reassemble_emm(struct s_client *client, EMM_PACKET *e
 				return 0;
 
 			if (ep->emm[11]==ep->emm[2]-9) {
-				cs_debug_mask(D_EMM, "[cryptoworks] received assambled EMM-S");
+				cs_debug_mask(D_EMM, "[cryptoworks] received assembled EMM-S");
 				return 1;
 			}
 
