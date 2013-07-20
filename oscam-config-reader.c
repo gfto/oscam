@@ -747,7 +747,7 @@ static const struct config_list reader_opts[] = {
 #endif
 	DEF_OPT_STR("readnano"				, OFS(emmfile),					NULL ),
 	DEF_OPT_FUNC("services"				, OFS(sidtabs),					reader_services_fn ),
-	DEF_OPT_FUNC("lb_whitelist_services", OFS(lb_sidtabs),				reader_lb_services_fn ),
+	DEF_OPT_FUNC("lb_whitelist_services"	, OFS(lb_sidtabs),				reader_lb_services_fn ),
 	DEF_OPT_INT32("inactivitytimeout"	, OFS(tcp_ito),					DEFAULT_INACTIVITYTIMEOUT ),
 	DEF_OPT_INT32("reconnecttimeout"	, OFS(tcp_rto),					DEFAULT_TCP_RECONNECT_TIMEOUT ),
 	DEF_OPT_INT32("resetcycle"			, OFS(resetcycle),				0 ),
@@ -852,7 +852,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 	static const char *hw_only_settings[] = {
 		"readnano", "resetcycle", "smargopatch", "sc8in1_dtrrts_patch", "boxid",
 		"fix9993", "rsakey", "ins7e", "ins7e11", "force_irdeto", "needsemmfirst", "boxkey",
-		"atr", "detect", "nagra_read", "mhz", "cardmhz",
+		"atr", "detect", "nagra_read", "mhz", "cardmhz", "lb_whitelist_services",
 #ifdef WITH_AZBOX
 		"mode",
 #endif
