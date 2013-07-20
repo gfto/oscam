@@ -852,7 +852,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 	static const char *hw_only_settings[] = {
 		"readnano", "resetcycle", "smargopatch", "sc8in1_dtrrts_patch", "boxid",
 		"fix9993", "rsakey", "ins7e", "ins7e11", "force_irdeto", "needsemmfirst", "boxkey",
-		"atr", "detect", "nagra_read", "mhz", "cardmhz", "lb_whitelist_services",
+		"atr", "detect", "nagra_read", "mhz", "cardmhz",
 #ifdef WITH_AZBOX
 		"mode",
 #endif
