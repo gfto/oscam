@@ -1950,17 +1950,21 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			}
 			if (ca_pmt_list_management == LIST_UPDATE) {//PMT Update */
 				demux_id = i;
-				dvbapi_stop_descrambling(i);
-				//demux[demux_id].curindex = -1;
-				//demux[demux_id].pidindex = -1;
-				//demux[demux_id].STREAMpidcount=0;
-				//demux[demux_id].ECMpidcount=0;
-				//demux[demux_id].ECMpids[0].streams = 0; // reset first ecmpid streams!
-				//demux[demux_id].EMMpidcount=0;
-				//dvbapi_stop_filter(demux_id, TYPE_ECM); // stop all ecm filters
-				//dvbapi_stop_filter(demux_id, TYPE_EMM); // stop all emm filters
-				
-				cs_log("[DVBAPI] Demuxer #%d PMT update for decoding of SRVID %04X", i, demux[i].program_number);
+				getDemuxOptions(demux_id, buffer, &ca_mask, &demux_index, &adapter_index);
+				if (demux[demux_id].adapter_index != adapter_index || demux[demux_id].ca_mask != ca_mask || demux[demux_id].ca_mask!=ca_mask){
+					dvbapi_stop_descrambling(i);
+				}
+				else{
+					demux[demux_id].curindex = -1;
+					demux[demux_id].pidindex = -1;
+					demux[demux_id].STREAMpidcount=0;
+					demux[demux_id].ECMpidcount=0;
+					demux[demux_id].ECMpids[0].streams = 0; // reset first ecmpid streams!
+					demux[demux_id].EMMpidcount=0;
+					dvbapi_stop_filter(demux_id, TYPE_ECM); // stop all ecm filters
+					dvbapi_stop_filter(demux_id, TYPE_EMM); // stop all emm filters
+				}
+				cs_log("[DVBAPI] Demuxer #%d PMT update for decoding of SRVID %04X", i, program_number);
 			}
 			// PMT6: stop descramble some other demuxers from active demuxer 
 			if ((ca_pmt_list_management == LIST_LAST) || (ca_pmt_list_management == LIST_ONLY && cfg.dvbapi_pmtmode == 6)){
