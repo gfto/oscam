@@ -241,6 +241,11 @@ mgcamd encrypted gbox line, default MAC address = eth0
 reader [de]assignment to service group, default=none
 .RE
 .PP
+\fBlb_whitelist_services\fP = \fB<services>,<services>...\fP
+.RS 3n
+reader assignement to service group for channels which may never be blocked by lb to the reader , default=none
+.RE
+.PP
 \fBcaid\fP = \fB<CAID>[&<mask>][:<target CAID>][,<CAID>[&<mask>][:target <CAID>]]...\fP
 .RS 3n
 define and mapping of CAIDs for reader, default:all CAIDs with mask FFFF
