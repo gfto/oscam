@@ -70,7 +70,11 @@ static int32_t __camd35_send(struct s_client *cl, uchar *buf, int32_t buflen, in
 		if(cl->reader && answer_awaited ){
 			cl->reader->last_s = time((time_t *) 0);
 		}
+		if(cl->reader && !answer_awaited){
+			cl->reader->last_s = cl->reader->last_g = time(NULL);
+		}
 		cl->last = time((time_t *) 0);
+		
 	}
 	return status;
 }
