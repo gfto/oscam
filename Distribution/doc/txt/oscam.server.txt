@@ -192,7 +192,7 @@ DESCRIPTIONS
 	  reader [de]assignment to service group, default=none
 
        lb_whitelist_services = <services>,<services>....
-	  reader assignement to service group for channels which may never be blocked by lb to the reader , default=none
+	  reader assignement to service group for channels which may never be blocked by the loadbalancer to the reader , default=none
 
        caid = <CAID>[&<mask>][:<target CAID>][,<CAID>[&<mask>][:target <CAID>]]...
 	  define and mapping of CAIDs for reader, default:all CAIDs with mask FFFF
