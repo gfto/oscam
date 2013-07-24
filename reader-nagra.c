@@ -32,7 +32,6 @@ struct nagra_data {
 #define DT06        0x06
 #define CAMDATA     0x08
 
-#define MAX_REC     20
 #define SYSTEM_NAGRA 0x1800
 #define SYSTEM_MASK 0xFF00
 
@@ -629,23 +628,34 @@ static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigne
   	return ERROR;
 }
 
-static int32_t GetDataType(struct s_reader * reader, unsigned char dt, int32_t len, int32_t shots)
+static int32_t GetDataType(struct s_reader * reader, unsigned char dt, int32_t len)
 {
 	def_resp;
-	int32_t i;
-  	for(i=0; i<shots; i++)
-  	{
-  		if(!do_cmd(reader, 0x22,0x03,0xA2,len,&dt,cta_res,&cta_lr))
-  		{
-  			rdr_debug_mask(reader, D_READER, "failed to get datatype %02X",dt);
-  			return ERROR;
-  		}
-    		if(((cta_res[2] ==0) && (dt != 0x08)) || ((cta_res[2] ==0) && (dt != 0x88))) return OK;
-			if(!ParseDataType(reader, dt&0x0F, cta_res, cta_lr)) return ERROR;
-			if(((cta_res[11] == 0x49) && (dt != 0x08)) || ((cta_res[11] ==0x49) && (dt != 0x88))) return OK;
-    		dt|=0x80; // get next item
-    	}
-  	return OK;
+	int32_t result = OK;
+	while(result == OK){
+		if(!do_cmd(reader, 0x22,0x03,0xA2,len,&dt,cta_res,&cta_lr)){
+			rdr_debug_mask(reader, D_READER, "failed to get datatype %02X",dt);
+			result = ERROR;
+			break;
+		}
+
+		if(((cta_res[2] ==0) && (dt != 0x08)) || ((cta_res[2] ==0) && (dt != 0x88))){
+			result = OK;
+			break;
+		}
+
+		if(!ParseDataType(reader, dt&0x0F, cta_res, cta_lr)){
+			result = ERROR;
+			break;
+		}
+		
+		if(((cta_res[11] == 0x49) && (dt != 0x08)) || ((cta_res[11] ==0x49) && (dt != 0x88))){
+			result = OK;
+			break;
+		}
+		dt|=0x80; // get next item
+	}
+	return result;
 }
 
 static int32_t nagra2_card_init(struct s_reader * reader, ATR *newatr)
@@ -729,18 +739,18 @@ static int32_t nagra2_card_init(struct s_reader * reader, ATR *newatr)
 		memcpy(reader->hexserial+2, cta_res+2, 4);
 		memcpy(reader->sa[0], cta_res+2, 2);
 
-		if(!GetDataType(reader, DT01,0x0E,MAX_REC)) return ERROR;
+		if(!GetDataType(reader, DT01,0x0E)) return ERROR;
 		rdr_debug_mask(reader, D_READER, "DT01 DONE");
 		CamStateRequest(reader);
-		if(!GetDataType(reader, IRDINFO,0x39,MAX_REC)) return ERROR;
+		if(!GetDataType(reader, IRDINFO,0x39)) return ERROR;
 		rdr_debug_mask(reader, D_READER, "IRDINFO DONE");
 		CamStateRequest(reader);
-		if(!GetDataType(reader, CAMDATA,0x55,10)) return ERROR;
+		if(!GetDataType(reader, CAMDATA,0x55)) return ERROR;
 		rdr_debug_mask(reader, D_READER, "CAMDATA Done");
-		if(!GetDataType(reader, 0x04,0x44,MAX_REC)) return ERROR;
+		if(!GetDataType(reader, 0x04,0x44)) return ERROR;
 		rdr_debug_mask(reader, D_READER, "DT04 DONE");
 		CamStateRequest(reader);
-		if(!GetDataType(reader, DT06,0x16,MAX_REC)) return ERROR;
+		if(!GetDataType(reader, DT06,0x16)) return ERROR;
 		rdr_debug_mask(reader, D_READER, "DT06 DONE");
 		CamStateRequest(reader);
 	}
@@ -990,7 +1000,7 @@ static int32_t nagra2_card_info(struct s_reader * reader)
 					rdr_debug_mask_sensitive(reader, D_READER, "SER:  {%s}", cs_hexdump(1, reader->hexserial+2, 4, tmp_dbg, sizeof(tmp_dbg)));
 					memcpy(reader->sa[0], cta_res+2, 2);
 					reader->nprov = 1;
-					if(!GetDataType(reader, IRDINFO,0x39,MAX_REC)) return ERROR;
+					if(!GetDataType(reader, IRDINFO,0x39)) return ERROR;
 					rdr_debug_mask(reader, D_READER, "IRDINFO DONE");
 					CamStateRequest(reader);
 			
@@ -999,7 +1009,7 @@ static int32_t nagra2_card_info(struct s_reader * reader)
 						rdr_log(reader, "-----------------------------------------");
 						rdr_log(reader, "|id  |tier    |valid from  |valid to    |");
 					  	rdr_log(reader, "+----+--------+------------+------------+");
-						if(!GetDataType(reader, TIERS,0x57,MAX_REC)) return ERROR;
+						if(!GetDataType(reader, TIERS,0x57)) return ERROR;
 						rdr_log(reader, "-----------------------------------------");
 						CamStateRequest(reader);
 					}
