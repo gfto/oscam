@@ -67,8 +67,6 @@ extern void send_error500(FILE *f);
 extern void send_header304(FILE *f, char *extraheader);
 extern void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uint32_t etagheader, char *extraheader);
 extern void urldecode(char *s);
-extern void b64prepare(void);
-extern int32_t b64decode(unsigned char *result);
 extern void parseParams(struct uriparams *params, char *pch);
 extern char *getParam(struct uriparams *params, char *name);
 

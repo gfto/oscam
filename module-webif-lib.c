@@ -17,7 +17,6 @@ extern pthread_key_t getssl;
 extern CS_MUTEX_LOCK *lock_cs;
 extern char noncekey[33];
 
-static int8_t b64decoder[256];
 static struct s_nonce *nonce_first[AUTHNONCEHASHBUCKETS];
 static CS_MUTEX_LOCK nonce_lock[AUTHNONCEHASHBUCKETS];
 
@@ -435,63 +434,6 @@ void send_file(FILE *f, char *filename, char* subdir, time_t modifiedheader, uin
 	free(JSCRIPT);
 	free(TOUCH_CSS);
 	free(TOUCH_JSCRIPT);
-}
-
-/* Prepares the base64 decoding array */
-void b64prepare(void) {
-	const unsigned char alphabet[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	int32_t i;
-	for (i = sizeof(b64decoder) - 1; i >= 0; --i) {
-		b64decoder[i] = -1;
-	}
-
-	for (i = sizeof(alphabet) - 1; i >= 0; --i) {
-		b64decoder[alphabet[i]] = i;
-	}
-}
-
-/* Decodes a base64-encoded string. The given array will be used directly for output and is thus modified! */
-int32_t b64decode(unsigned char *result){
-	int32_t i, len = strlen((char *)result), j = 0, bits = 0, char_count = 0;
-
-	for(i = 0; i < len; ++i){
-		if (result[i] == '=') break;
-		int8_t tmp = b64decoder[result[i]];
-		if(tmp == -1) continue;
-		bits += tmp;
-		++char_count;
-		if (char_count == 4) {
-			result[j++] = bits >> 16;
-			result[j++] = (bits >> 8) & 0xff;
-			result[j++] = bits & 0xff;
-			bits = 0;
-			char_count = 0;
-		} else {
-			bits <<= 6;
-		}
-	}
-	if (i == len) {
-		if (char_count) {
-			result[j] = '\0';
-			return 0;
-		}
-	} else {
-		switch (char_count) {
-			case 1:
-				result[j] = '\0';
-				return 0;
-			case 2:
-				result[j++] = bits >> 10;
-				result[j] = '\0';
-				break;
-			case 3:
-				result[j++] = bits >> 16;
-				result[j++] = (bits >> 8) & 0xff;
-				result[j] = '\0';
-			break;
-		}
-	}
-	return j;
 }
 
 /* Parse url parameters and save them to params array. The pch pointer is increased to the position where parsing stopped. */
