@@ -788,7 +788,9 @@ int32_t init_config(void)
 		chk_iprange(cs_strdup(DEFAULT_HTTP_ALLOW), &cfg.http_allowed);
 		NULLFREE(cfg.logfile);
 		cfg.logtostdout = 1;
-		if (config_enabled(HAVE_DVBAPI)) cfg.dvbapi_enabled = 1;
+#ifdef HAVE_DVBAPI		
+		cfg.dvbapi_enabled = 1;
+#endif
 		return 0;
 	}
 	
