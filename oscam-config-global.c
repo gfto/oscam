@@ -784,8 +784,10 @@ int32_t init_config(void)
 	
 	if (!fp) { 
 		// no oscam.conf but webif is included in build, set it up for lan access and tweak defaults
+#ifdef WEBIF
 		cfg.http_port = DEFAULT_HTTP_PORT;
 		chk_iprange(cs_strdup(DEFAULT_HTTP_ALLOW), &cfg.http_allowed);
+#endif
 		NULLFREE(cfg.logfile);
 		cfg.logtostdout = 1;
 #ifdef HAVE_DVBAPI		
