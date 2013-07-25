@@ -9,6 +9,9 @@
 
 #define cs_conf "oscam.conf"
 
+#define DEFAULT_HTTP_PORT	8888
+#define DEFAULT_HTTP_ALLOW	"127.0.0.1,192.168.0.0-192.168.255.255,::1"
+
 static void disablelog_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
 	if (value) {
 		cs_disable_log(strToIntVal(value, 0));
@@ -766,15 +769,31 @@ void config_free(void) {
 
 int32_t init_config(void)
 {
-	FILE *fp = open_config_file_or_die(cs_conf);
+	FILE *fp;
+	
+	if(config_enabled(WEBIF)) {			
+		fp = open_config_file(cs_conf);
+	} else {
+		fp = open_config_file_or_die(cs_conf);
+	}
 
 	const struct config_sections *cur_section = oscam_conf; // Global
 	char *token;
 
+	config_sections_set_defaults(oscam_conf, &cfg);
+	
+	if (!fp) { 
+		// no oscam.conf but webif is included in build, set it up for lan access and tweak defaults
+		cfg.http_port = DEFAULT_HTTP_PORT;
+		chk_iprange(cs_strdup(DEFAULT_HTTP_ALLOW), &cfg.http_allowed);
+		NULLFREE(cfg.logfile);
+		cfg.logtostdout = 1;
+		if (config_enabled(HAVE_DVBAPI)) cfg.dvbapi_enabled = 1;
+		return 0;
+	}
+	
 	if (!cs_malloc(&token, MAXLINESIZE))
 		return 1;
-
-	config_sections_set_defaults(oscam_conf, &cfg);
 
 	int line = 0;
 	int valid_section = 1;
