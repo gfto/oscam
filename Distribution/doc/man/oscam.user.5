@@ -66,17 +66,18 @@ unique level:
 .PP
 \fBnumusers\fP = \fBquantity\fP
 .RS 3n
-anti-cascading: user per account, 0 = anti-cascading disabled, default:0
+anti-cascading: user per account, 0 = anti-cascading disabled, -1 = global value from oscam.conf, default:-1
 .RE
 .PP
 \fBpenalty\fP = \fB0\fP|\fB1\fP|\fB2\fP
 .RS 3n
-level of penalty, default: level of oscam.conf:
+level of penalty:
 
- \fB0\fP = only logging
- \fB1\fP = send fake CWs
- \fB2\fP = temporary user ban
- \fB3\fP = send delayed CWs
+ \fB-1\fP = level of oscam.conf (default)
+ \fB 0\fP = only logging
+ \fB 1\fP = send fake CWs
+ \fB 2\fP = temporary user ban
+ \fB 3\fP = send delayed CWs
 .RE
 .PP
 \fBfakedelay\fP = \fB0\fP|\fB1\fP|\fBmilli-seconds\fP

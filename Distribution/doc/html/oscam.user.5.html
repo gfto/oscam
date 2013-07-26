@@ -99,19 +99,20 @@ unique level:
 
 <B>numusers</B> = <B>quantity</B>
 <DL COMPACT><DT><DD>
-anti-cascading: user per account, 0 = anti-cascading disabled, default:0
+anti-cascading: user per account, 0 = anti-cascading disabled, -1 = global value from oscam.conf, default:-1
 </DL>
 
 <P>
 
 <B>penalty</B> = <B>0</B>|<B>1</B>|<B>2</B>
 <DL COMPACT><DT><DD>
-level of penalty, default: level of oscam.conf:
+level of penalty:
 <P>
-<BR>&nbsp;<B>0</B>&nbsp;=&nbsp;only&nbsp;logging
-<BR>&nbsp;<B>1</B>&nbsp;=&nbsp;send&nbsp;fake&nbsp;CWs
-<BR>&nbsp;<B>2</B>&nbsp;=&nbsp;temporary&nbsp;user&nbsp;ban
-<BR>&nbsp;<B>3</B>&nbsp;=&nbsp;send&nbsp;delayed&nbsp;CWs
+<BR>&nbsp;<B>-1</B>&nbsp;=&nbsp;level&nbsp;of&nbsp;oscam.conf&nbsp;(default)
+<BR>&nbsp;<B>&nbsp;0</B>&nbsp;=&nbsp;only&nbsp;logging
+<BR>&nbsp;<B>&nbsp;1</B>&nbsp;=&nbsp;send&nbsp;fake&nbsp;CWs
+<BR>&nbsp;<B>&nbsp;2</B>&nbsp;=&nbsp;temporary&nbsp;user&nbsp;ban
+<BR>&nbsp;<B>&nbsp;3</B>&nbsp;=&nbsp;send&nbsp;delayed&nbsp;CWs
 </DL>
 
 <P>
