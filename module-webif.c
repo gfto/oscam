@@ -1190,11 +1190,14 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		//if (is_network_reader(rdr))
 		//	inactivate_reader(rdr); //Stop reader before reinitialization
 		char servicelabels[1024]="";
+		char servicelabelslb[1024]="";
 
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "reader")) && (strcmp((*params).params[i], "action"))) {
 				if (!strcmp((*params).params[i], "services"))
 					snprintf(servicelabels + strlen(servicelabels), sizeof(servicelabels) - strlen(servicelabels), "%s,", (*params).values[i]);
+				else if (!strcmp((*params).params[i], "lb_whitelist_services"))
+					snprintf(servicelabelslb + strlen(servicelabelslb), sizeof(servicelabelslb) - strlen(servicelabelslb), "%s,", (*params).values[i]);
 				else
 					/*if(strlen((*params).values[i]) > 0)*/
 						chk_reader((*params).params[i], (*params).values[i], rdr);
@@ -1202,6 +1205,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 			//printf("param %s value %s\n",(*params).params[i], (*params).values[i]);
 		}
 		chk_reader("services", servicelabels, rdr);
+		chk_reader("lb_whitelist_services", servicelabelslb, rdr);
 
 		if (is_network_reader(rdr)) { //physical readers make trouble if re-started
 			restart_cardreader(rdr, 1);
@@ -1507,6 +1511,21 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		if (strlen(value) > 0)
 			tpl_addVar(vars, TPLADD, "SERVICES", value);
 		free_mk_t(value);
+	}
+
+	//lb_whitelist_services
+	if(!apicall) {
+		struct s_sidtab *sidtab = cfg.sidtab;
+		//build matrix
+		i = 0;
+		while(sidtab != NULL) {
+			tpl_addVar(vars, TPLADD, "SIDLABEL", xml_encode(vars, sidtab->label));
+			if(rdr->lb_sidtabs.ok&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
+			else tpl_addVar(vars, TPLADD, "CHECKED", "");
+			tpl_addVar(vars, TPLAPPEND, "SIDSLB", tpl_getTpl(vars, "READERCONFIGSIDLBOKBIT"));
+			sidtab=sidtab->next;
+			i++;
+		}
 	}
 
 	// CAID
