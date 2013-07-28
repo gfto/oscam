@@ -1251,9 +1251,9 @@ static uint32_t get_subid(ECM_REQUEST *er)
 		case 0x05: id = b2i(2, er->ecm+8); break; // viaccess
 		case 0x06: id = b2i(2, er->ecm+6); break; // irdeto
 		case 0x09: id = b2i(2, er->ecm+11); break; // videoguard
-		case 0x4A: // DRE-Crypt, Bulcrypt, others? is not right chid att all disable this one fot the moment
-			if (!(er->caid == 0x4AEE || er->caid == 0x4A02)) // Bulcrypt and TongFang
-				id = er->ecm[7];
+		case 0x4A: // DRE-Crypt, Bulcrypt, Tongfang and others? 
+			if (!(er->caid == 0x4AEE)) // Bulcrypt excluded for now
+				id = b2i(2, er->ecm+6);
 			break;
 	}
 	return id;
