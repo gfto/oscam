@@ -1503,6 +1503,9 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 			if(rdr->sidtabs.no&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
 			else tpl_addVar(vars, TPLADD, "CHECKED", "");
 			tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, "READERCONFIGSIDNOBIT"));
+			if(rdr->lb_sidtabs.ok&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
+			else tpl_addVar(vars, TPLADD, "CHECKED", "");
+			tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, "READERCONFIGSIDLBOKBIT"));
 			sidtab=sidtab->next;
 			i++;
 		}
@@ -1511,21 +1514,6 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		if (strlen(value) > 0)
 			tpl_addVar(vars, TPLADD, "SERVICES", value);
 		free_mk_t(value);
-	}
-
-	//lb_whitelist_services
-	if(!apicall) {
-		struct s_sidtab *sidtab = cfg.sidtab;
-		//build matrix
-		i = 0;
-		while(sidtab != NULL) {
-			tpl_addVar(vars, TPLADD, "SIDLABEL", xml_encode(vars, sidtab->label));
-			if(rdr->lb_sidtabs.ok&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
-			else tpl_addVar(vars, TPLADD, "CHECKED", "");
-			tpl_addVar(vars, TPLAPPEND, "SIDSLB", tpl_getTpl(vars, "READERCONFIGSIDLBOKBIT"));
-			sidtab=sidtab->next;
-			i++;
-		}
 	}
 
 	// CAID

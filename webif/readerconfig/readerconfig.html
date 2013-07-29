@@ -16,20 +16,12 @@
 			<TR><TD>##TPLHELPPREFIX##server#caid##TPLHELPSUFFIX##Caid:</A></TD><TD><input name="caid" type="text" size="63" maxlength="160" value="##CAIDS##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##server#ident##TPLHELPSUFFIX##Ident:</A></TD><TD><textarea name="ident" cols="58" rows="3" class="bt">##IDENTS##</textarea></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##server#chid##TPLHELPSUFFIX##CHID:</A></TD><TD><textarea name="chid" cols="58" rows="3" class="bt">##CHIDS##</textarea></TD></TR>
-			<TR><TD>##TPLHELPPREFIX##server#services##TPLHELPSUFFIX##Services:</A></TD>
-				<TD>
-					<TABLE class="invisible">
+			<TR><TD COLSPAN="2"><TABLE CLASS="config">
+			<TR><TD class="services">##TPLHELPPREFIX##server#services##TPLHELPSUFFIX##Services:</A></TD><TD class="lbservices">##TPLHELPPREFIX##server#lb_whitelist_servicesservices##TPLHELPSUFFIX##LB_Whitelist_Services:</A></TD></TABLE></TD></TR>
+			<TR><TD COLSPAN="2"><TABLE class="invisible2">
 ##SIDS##
-					</TABLE>
-				</TD>
-			</TR>
-			<TR><TD>##TPLHELPPREFIX##server#lb_whitelist_services##TPLHELPSUFFIX##Lb_Whitelist_Services:</A></TD>
-				<TD>
-					<TABLE class="invisible">
-##SIDSLB##
-					</TABLE>
-				</TD>
-			</TR>
+					   </TABLE>
+			</TD></TR>
 			<TR><TD>##TPLHELPPREFIX##server#audisabled##TPLHELPSUFFIX##AU disabled:</A></TD><TD><input name="audisabled" type="hidden" value="0"><input name="audisabled" type="checkbox" value="1" ##AUDISABLED##></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##server#auprovid##TPLHELPSUFFIX##AU Provid:</A></TD><TD><input name="auprovid" type="text" size="10" maxlength="6" value="##AUPROVID##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##server#ecmnotfoundlimit##TPLHELPSUFFIX##ECM not found limit:</A></TD><TD><input name="ecmnotfoundlimit" type="text" size="10" maxlength="6" value="##ECMNOTFOUNDLIMIT##"></TD></TR>
