@@ -5452,9 +5452,7 @@ static void *http_server(void *UNUSED(d)) {
 			ia->sin6_port = htons(cfg.http_port);
 		}
 #endif
-	}
-
-	if (!do_ipv6) {
+	} else {
 		len = sizeof(struct sockaddr_in);
 		if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
 			cs_log("HTTP Server: ERROR: Creating socket failed! (errno=%d %s)", errno, strerror(errno));
