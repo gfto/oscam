@@ -68,11 +68,12 @@ TD.usercol20 {text-align:center;}
 TD.usercol21 {text-align:center;}
 TD.usercol22 {text-align:center;}
 TD.usercol23 {text-align:center;}
-TD.services {text-align:left;width:650px;}
-TD.servicescol1 {text-align:left;width:200px}
-TD.servicescol2 {text-align:left;width:400px}
-TD.servicescol3 {text-align:left;width:200px}
-TD.serviceslb {text-align:center;width:100px}
+TH.withservices {width:200px; text-align:left; padding:5px;}
+TH.notservices {width:400px; text-align:left; padding:5px;}
+TH.lbservices {width:250px; text-align:left; padding:5px;}
+TD.servicescol1 {width:200px; font-family:Arial; font-size: 12px; padding:3px; background-color:#EEEEEE; text-align:left;}
+TD.servicescol2 {width:400px; font-family:Arial; font-size: 12px; padding:3px; background-color:#EEEEEE; text-align:left;}
+TD.servicescol3 {width:250px; font-family:Arial; font-size: 12px; padding:3px; background-color:#EEEEEE; text-align:left;}
 TD.menu {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;white-space: normal;}
 TD.menu_selected {color:black; background-color:#E6FEBF; font-family: Arial; font-size:14px; font-weight:bold;font-style:italic;}
 TD.configmenu {color:black; background-color:white; font-family: Arial; font-size:11px; font-weight:bold;}
@@ -108,8 +109,9 @@ DIV.filterform {margin: 10px;}
 TABLE.menu {border-spacing:0px; border:0px; padding:0px; margin-left:auto; margin-right:auto;}
 TABLE.status {border-spacing:1px; border:0px; padding:0px; background-color:white; empty-cells:show;}
 TABLE.config {width:750px;}
+TABLE.configreader {width:850px;}
 TABLE.invisible TD {border:0px; font-family:Arial; font-size: 12px; padding:5px; background-color:#EEEEEE;}
-TABLE.invisiblelb {width:750px;} TD {max-width:750xp; font-family:Arial; font-size: 12px; padding:3px; background-color:#EEEEEE; text-align:left;}
+TABLE.invisiblelb {border-spacing:0px; width:850px;}
 TABLE.configmenu {line-height: 16px;}
 TEXTAREA.bt {font-family: Arial; font-size: 12px;}
 TEXTAREA.editor {width:99%; height:508px; border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:8px 10px; font-family:"Courier New", monospace; color:black; font-size: 11px; word-wrap:break-word; text-align:left;}
