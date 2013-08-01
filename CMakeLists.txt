@@ -491,7 +491,7 @@ if(HAVE_LIBRT AND HAVE_LIBUSB)
     if (OSCamOperatingSystem MATCHES "Windows/Cygwin")
 	set (setupapi_link "setupapi")
 	set (ole32_link "ole32")
-	set (shell32_link "shell 32")
+	set (shell32_link "shell32")
     endif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
 endif(HAVE_LIBRT AND HAVE_LIBUSB)
 
@@ -577,7 +577,8 @@ elseif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
     target_link_libraries (${exe_name} ole32)
     target_link_libraries (${exe_name} shell32)
 elseif (OSCamOperatingSystem MATCHES "NeutrinoHD")
-    target_link_libraries ( ${exe_name} rt nxp )
+    set (rtnxp_link "rt nxp")
+#    target_link_libraries ( ${exe_name} rt nxp )
 elseif (OSCamOperatingSystem MATCHES "AZBox")
     add_library(xcas STATIC IMPORTED)
     set_property(TARGET xcas PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/extapi/openxcas/libOpenXCASAPI.a)
@@ -586,7 +587,7 @@ elseif (OSCamOperatingSystem MATCHES "SU980")
     target_link_libraries(${exe_name} rt entropic)
 endif (OSCamOperatingSystem MATCHES "Linux")
 
-target_link_libraries (${exe_name} ${libusb_link} ${rt_link} ${setupapi_link} ${ole32_link} ${shell32_link} ${pthread_link} ${dl_link})
+target_link_libraries (${exe_name} ${libusb_link} ${rt_link} ${setupapi_link} ${ole32_link} ${shell32_link} ${pthread_link} ${dl_link} ${rtnxp_link})
 
 #----------------------- put svnversion in the build ------------------------------
 # at every target rebuild, we re-build the oscam.c compilation...
