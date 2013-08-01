@@ -68,12 +68,12 @@ TD.usercol20 {text-align:center;}
 TD.usercol21 {text-align:center;}
 TD.usercol22 {text-align:center;}
 TD.usercol23 {text-align:center;}
-TH.withservices {width:200px; text-align:left; padding:5px;}
-TH.notservices {width:400px; text-align:left; padding:5px;}
-TH.lbservices {width:250px; text-align:left; padding:5px;}
-TD.servicescol1 {width:200px; font-family:Arial; font-size: 12px; padding:3px; background-color:#EEEEEE; text-align:left;}
-TD.servicescol2 {width:400px; font-family:Arial; font-size: 12px; padding:3px; background-color:#EEEEEE; text-align:left;}
-TD.servicescol3 {width:250px; font-family:Arial; font-size: 12px; padding:3px; background-color:#EEEEEE; text-align:left;}
+TH.withservices {}
+TH.notservices {}
+TH.lbservices {}
+TD.servicescol1 {}
+TD.servicescol2 {}
+TD.servicescol3 {}
 TD.menu {color:black; background-color:white; font-family: Arial; font-size:14px; font-weight:bold;white-space: normal;}
 TD.menu_selected {color:black; background-color:#E6FEBF; font-family: Arial; font-size:14px; font-weight:bold;font-style:italic;}
 TD.configmenu {color:black; background-color:white; font-family: Arial; font-size:11px; font-weight:bold;}
@@ -112,8 +112,10 @@ TABLE.config {width:750px;}
 TABLE.configreader {width:850px;}
 TABLE.statsbalance TD:last-child{line-height:20px;width:125px}
 TABLE.statsbalance TD:last-child IMG.icon{float:right;margin-left:10px}
+TABLE.invisiblelb {border-spacing:0px; width:100%}
+TABLE.invisiblelb TH {width:33%; text-align:left}
+TABLE.invisiblelb TD {width:33%;font-size:12px;white-space: nowrap}
 TABLE.invisible TD {border:0px; font-family:Arial; font-size: 12px; padding:5px; background-color:#EEEEEE;}
-TABLE.invisiblelb {border-spacing:0px; width:850px;}
 TABLE.configmenu {line-height: 16px;}
 TEXTAREA.bt {font-family: Arial; font-size: 12px;}
 TEXTAREA.editor {width:99%; height:508px; border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:8px 10px; font-family:"Courier New", monospace; color:black; font-size: 11px; word-wrap:break-word; text-align:left;}
