@@ -110,8 +110,8 @@ TABLE.menu {border-spacing:0px; border:0px; padding:0px; margin-left:auto; margi
 TABLE.status {border-spacing:1px; border:0px; padding:0px; background-color:white; empty-cells:show;}
 TABLE.config {width:750px;}
 TABLE.configreader {width:850px;}
-TABLE.stats TD:last-child{line-height:20px;width:125px}
-TABLE.stats TD:last-child IMG.icon{float:right;margin-left:10px}
+TABLE.statsbalance TD:last-child{line-height:20px;width:125px}
+TABLE.statsbalance TD:last-child IMG.icon{float:right;margin-left:10px}
 TABLE.invisible TD {border:0px; font-family:Arial; font-size: 12px; padding:5px; background-color:#EEEEEE;}
 TABLE.invisiblelb {border-spacing:0px; width:850px;}
 TABLE.configmenu {line-height: 16px;}
