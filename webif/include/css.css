@@ -1,4 +1,4 @@
-html, body, div, table, tbody, tfoot, thead, tr, th, td, ul, li {margin:0;padding:0;border:0}
+html,div,table,tbody,tfoot,thead,tr,th,td {margin:0;padding:0;border:0}
 BODY {background-color:white;font-family:Arial;font-size:11px;text-align:center}
 P {color:white}
 P.blinking {text-decoration:blink;font-weight:bold;font-size:large;color:red}
