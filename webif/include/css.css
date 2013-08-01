@@ -13,10 +13,11 @@ TABLE.config {width:750px}
 TABLE.configreader {width:850px}
 TABLE.statsbalance TD:last-child{line-height:20px;width:125px}
 TABLE.statsbalance TD:last-child IMG.icon{float:right;margin-left:10px}
-TABLE.invisiblelb {border-spacing:0px; width:100%}
-TABLE.invisiblelb TH {width:33%; text-align:left}
+TABLE.invisiblelb {border-spacing:0px;width:100%}
+TABLE.invisiblelb TH {width:33%;text-align:left}
 TABLE.invisiblelb TD {width:33%;font-size:12px;white-space: nowrap}
-TABLE.invisible TD {border:0px; font-family:Arial; font-size: 12px; padding:5px;background-color:#EEEEEE}
+TABLE.invisible {margin-left:0}
+TABLE.invisible TD {font-size:12px}
 TABLE.configmenu {line-height:16px}
 TH {height:10px;padding:5px;background-color:#CCCCCC;color:black}
 TH.statuscol0 {text-align:center;width:10px}
