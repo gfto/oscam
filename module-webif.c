@@ -3223,13 +3223,37 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 
 				tpl_printf(vars, TPLADD, "CLIENTTYPE", "%c", cl->typ);
 				tpl_printf(vars, TPLADD, "CLIENTCNR", "%d", get_threadnum(cl));
-				tpl_addVar(vars, TPLADD, "CLIENTUSER", xml_encode(vars, usr));
-
+				tpl_printf(vars, TPLADD, "CLIENTUSER", xml_encode(vars, usr));
+				tpl_printf(vars, TPLADD, "STATUSUSERICON", xml_encode(vars, usr));
+	
 				if(cl->typ == 'c') {
 					tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", xml_encode(vars, (cl->account && cl->account->description)?cl->account->description:""));
 				}
 				else if(cl->typ == 'p' || cl->typ == 'r') {
 					tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", xml_encode(vars, cl->reader->description?cl->reader->description:""));
+				}
+
+				if (cfg.http_showpicons && picon_exists(xml_encode(vars, usr))) {
+					if (cl->typ == 'c') {
+						tpl_printf(vars, TPLADD, "STATUSUSERICON",
+						"<A HREF=\"user_edit.html?user=%s\" TITLE=\"Edit this user\"><img class=\"clientpicon\" src=\"image?i=IC_%s\" TITLE=\"%s\"></A>",
+						xml_encode(vars, usr), xml_encode(vars, usr), xml_encode(vars, usr));
+					}
+					if (cl->typ == 'p' || cl->typ == 'r') {
+						tpl_printf(vars, TPLADD, "STATUSUSERICON",
+						"<A HREF=\"readerconfig.html?label=%s\" TITLE=\"Edit this Reader\"><img class=\"clientpicon\" src=\"image?i=IC_%s\" TITLE=\"%s\"></A>",
+						xml_encode(vars, usr), xml_encode(vars, usr), xml_encode(vars, usr));
+					}
+				} else {
+					if (cl->typ == 'c') {
+						tpl_printf(vars, TPLADD, "STATUSUSERICON",
+						"<A HREF=\"user_edit.html?user=%s\" TITLE=\"Edit this user\">%s</A>",
+						xml_encode(vars, usr), xml_encode(vars, usr));
+					} else {
+						tpl_printf(vars, TPLADD, "STATUSUSERICON",
+						"<A HREF=\"readerconfig.html?label=%s\" TITLE=\"Edit this Reader\">%s</A>",
+						xml_encode(vars, usr), xml_encode(vars, usr));
+					}
 				}
 
 				tpl_printf(vars, TPLADD, "CLIENTCAU", "%d", cau);
