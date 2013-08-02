@@ -3020,7 +3020,13 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 	struct tm lt;
 
 	if(!apicall) setActiveMenu(vars, MNU_STATUS);
-
+	char picon_name[32];
+	snprintf(picon_name, sizeof(picon_name)/sizeof(char) - 1, "oscamlogo");
+	if (picon_exists(picon_name)) {
+		tpl_printf(vars, TPLADD, "OSCAMLOGO", "<A HREF=\"http://www.streamboard.tv/oscam/timeline\"><img class=\"oscamlogo\" src=\"image?i=IC_oscamlogo\" alt=\"Oscam %s\" title=\"Oscam %s\"></A>", CS_SVN_VERSION, CS_SVN_VERSION);
+	} else {
+		tpl_printf(vars, TPLADD, "OSCAMLOGO", "<A HREF=\"http://www.streamboard.tv/oscam/timeline\">Oscam r%s</A>", CS_SVN_VERSION);
+	}
 	if (strcmp(getParam(params, "action"), "kill") == 0) {
 		char *cptr = getParam(params, "threadid");
 		struct s_client *cl = NULL;
