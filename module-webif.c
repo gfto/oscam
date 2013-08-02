@@ -49,6 +49,7 @@ CS_MUTEX_LOCK *lock_cs;
 
 static pthread_t httpthread;
 static int32_t sock;
+static bool picon_exists(char *picon_name);
 
 enum refreshtypes { REFR_ACCOUNTS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REFR_SERVICES };
 
@@ -2286,11 +2287,11 @@ static void clear_system_stats(void) {
 	cacheex_clear_client_stats(first_client);
 }
 
-static bool picon_exists(uint16_t caid, uint16_t srvid) {
-	char picon_name[16], path[255];
+static bool picon_exists(char *name) {
+	char picon_name[64], path[255];
 	if (!cfg.http_tpl)
 		return false;
-	snprintf(picon_name, sizeof(picon_name) - 1, "IC_%04X_%04X", caid, srvid);
+	snprintf(picon_name, sizeof(picon_name) - 1, "IC_%s", name);
 	return strlen(tpl_getTplPath(picon_name, cfg.http_tpl, path, sizeof(path) - 1)) && file_exists(path);
 }
 
@@ -2483,10 +2484,12 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				lastchan = "";
 			tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", latestclient->last_caid);
 			tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", latestclient->last_srvid);
-			if (cfg.http_showpicons && picon_exists(latestclient->last_caid, latestclient->last_srvid)) {
+			char picon_name[32];
+			snprintf(picon_name, sizeof(picon_name)/sizeof(char) - 1, "%04X_%04X", latestclient->last_caid, latestclient->last_srvid);
+			if (cfg.http_showpicons && picon_exists(picon_name)) {
 				tpl_printf(vars, TPLADD, "LASTCHANNEL",
-					"<img class=\"clientpicon\" src=\"image?i=IC_%04X_%04X\" alt=\"%s\" title=\"%s\">",
-					latestclient->last_caid, latestclient->last_srvid, lastchan, lastchan);
+					"<img class=\"userpicon\" src=\"image?i=IC_%s\" alt=\"%s\" title=\"%s\">",
+					picon_name, lastchan, lastchan);
 			} else {
 				tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
 			}

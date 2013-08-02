@@ -135,7 +135,7 @@ A.tooltip1 SPAN {display:none;z-index:99}
 A:hover SPAN {display:block;position:absolute;top:2em;right:1em;padding:10px;color:#335500;font-weight:normal;background:#ffffdd;text-align: left;border: 1px solid #666}
 IMG {border:0px solid}
 IMG.icon {border:0px solid;width:22px;height:22px;background-color:#AA0000;border-radius:3px;-webkit-border-radius:3px}
-IMG.clientpicon {height:40px;width:80px}
+IMG.userpicon {height:40px;width:80px}
 rect.graph_bg {fill:white}
 text.graph_error {text-anchor:middle;fill:red}
 text.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}
