@@ -3236,18 +3236,18 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 				if (cfg.http_showpicons && picon_exists(xml_encode(vars, usr))) {
 					if (cl->typ == 'c') {
 						tpl_printf(vars, TPLADD, "STATUSUSERICON",
-						"<A HREF=\"user_edit.html?user=%s\" TITLE=\"Edit this user\"><img class=\"clientpicon\" src=\"image?i=IC_%s\" TITLE=\"%s\"></A>",
+						"<A HREF=\"user_edit.html?user=%s\" TITLE=\"Edit this User\"><img class=\"statususericon\" src=\"image?i=IC_%s\" TITLE=\"%s\"></A>",
 						xml_encode(vars, usr), xml_encode(vars, usr), xml_encode(vars, usr));
 					}
 					if (cl->typ == 'p' || cl->typ == 'r') {
 						tpl_printf(vars, TPLADD, "STATUSUSERICON",
-						"<A HREF=\"readerconfig.html?label=%s\" TITLE=\"Edit this Reader\"><img class=\"clientpicon\" src=\"image?i=IC_%s\" TITLE=\"%s\"></A>",
+						"<A HREF=\"readerconfig.html?label=%s\" TITLE=\"Edit this Reader\"><img class=\"statususericon\" src=\"image?i=IC_%s\" TITLE=\"%s\"></A>",
 						xml_encode(vars, usr), xml_encode(vars, usr), xml_encode(vars, usr));
 					}
 				} else {
 					if (cl->typ == 'c') {
 						tpl_printf(vars, TPLADD, "STATUSUSERICON",
-						"<A HREF=\"user_edit.html?user=%s\" TITLE=\"Edit this user\">%s</A>",
+						"<A HREF=\"user_edit.html?user=%s\" TITLE=\"Edit this User\">%s</A>",
 						xml_encode(vars, usr), xml_encode(vars, usr));
 					} else {
 						tpl_printf(vars, TPLADD, "STATUSUSERICON",
