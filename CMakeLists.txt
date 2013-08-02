@@ -586,8 +586,7 @@ elseif (OSCamOperatingSystem MATCHES "SU980")
     set (rtentropic_link "rt entropic")
 endif (OSCamOperatingSystem MATCHES "Linux")
 
-target_link_libraries (${exe_name} ${libusb_link} ${rt_link} ${setupapi_link} ${ole32_link} ${shell32_link} ${pthread_link} /
-${dl_link} ${rtnxp_link} ${rtentropic_link} ${xcas_link})
+target_link_libraries (${exe_name} ${libusb_link} ${rt_link} ${setupapi_link} ${ole32_link} ${shell32_link} ${pthread_link} ${dl_link} ${rtnxp_link} ${rtentropic_link} ${xcas_link})
 
 #----------------------- put svnversion in the build ------------------------------
 # at every target rebuild, we re-build the oscam.c compilation...

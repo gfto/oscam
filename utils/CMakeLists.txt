@@ -12,9 +12,7 @@ file (GLOB all_srcs ${exe_srcs})
 
 set (util_name "list_smargo")
 add_executable (${util_name} ${exe_srcs} ${exe_hdrs})
-target_link_libraries (${exe_name} ${libusb_link} ${rt_link} ${setupapi_link} ${ole32_link} ${shell32_link} ${pthread_link} /
-${dl_link} ${rtnxp_link} ${rtentropic_link})
-
+target_link_libraries (${util_name} ${libusb_link} ${rt_link} ${setupapi_link} ${ole32_link} ${shell32_link} ${pthread_link} ${dl_link} ${rtnxp_link} ${rtentropic_link} ${xcas_link})
 #----------------------- printout resume -----------------------------
 
 message (STATUS "Utils: operating system: ${OSCamOperatingSystem}")
