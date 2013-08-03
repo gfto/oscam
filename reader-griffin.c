@@ -414,7 +414,8 @@ void reader_griffin(struct s_cardsystem *ph)
 	ph->caids[1]       = 0x5504;
 	ph->caids[2]       = 0x5506;
 	ph->caids[3]       = 0x5508;
-	ph->caids[4]       = 0x550E;
-	ph->caids[5]       = 0x5511;
+	ph->caids[4]       = 0x5509;
+	ph->caids[5]       = 0x550E;
+	ph->caids[6]       = 0x5511;
 }
 #endif
