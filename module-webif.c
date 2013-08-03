@@ -3223,8 +3223,8 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 
 				tpl_printf(vars, TPLADD, "CLIENTTYPE", "%c", cl->typ);
 				tpl_printf(vars, TPLADD, "CLIENTCNR", "%d", get_threadnum(cl));
-				tpl_printf(vars, TPLADD, "CLIENTUSER", xml_encode(vars, usr));
-				tpl_printf(vars, TPLADD, "STATUSUSERICON", xml_encode(vars, usr));
+				tpl_addVar(vars, TPLADD, "CLIENTUSER", xml_encode(vars, usr));
+				tpl_addVar(vars, TPLADD, "STATUSUSERICON", xml_encode(vars, usr));
 	
 				if(cl->typ == 'c') {
 					tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", xml_encode(vars, (cl->account && cl->account->description)?cl->account->description:""));
