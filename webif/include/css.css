@@ -87,7 +87,7 @@ TD.usercol22 {text-align:center}
 TD.usercol23 {text-align:center}
 TD.servicescol1 {}
 TD.servicescol2 {}
-TD.servicescol3 {}
+TD.servicescol3 {border-left:2px solid #CCC}
 TD.menu {color:black;background-color:white;font-size:14px;font-weight:bold}
 TD.menu_selected {color:black;background-color:#E6FEBF;font-size:14px;font-weight:bold;font-style:italic}
 TD.configmenu {color:black;background-color:white;font-weight:bold}
@@ -120,7 +120,7 @@ DIV.debugmenu {line-height:20px}
 DIV.logmenu {line-height:20px}
 DIV.filterform {margin:10px}
 TEXTAREA.bt {font-size: 12px}
-TEXTAREA.editor {font-size:10px;width:99%;height:508px;border:1px dotted #AAAAAA;background-color: #FAFAFA;padding:8px 10px;font-family:"Courier New", monospace; color:black;word-wrap:break-word;text-align:left}
+TEXTAREA.editor {font-size:11px;width:98%;height:508px;border:1px dotted #AAAAAA;background-color: #FAFAFA;padding:8px 10px;font-family:"Courier New", monospace; color:black;word-wrap:break-word;text-align:left}
 A.debugls:link {background-color:red}
 A.debugls:visited {background-color:red}
 A:link {color:#050840}
