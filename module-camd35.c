@@ -129,7 +129,10 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 					//read minimum packet size (4 byte ucrc + 32 byte data) to detect packet size (tcp only)
 					rs = recv(client->udp_fd, buf, client->is_udp ? l : 36, 0);
 				}
-				if (rs < 24) rc = -1;
+				if (rs < 36) {
+					rc = -1;
+					goto out;
+				}
 				break;
 			case 1:
 				switch (camd35_auth_client(client, buf)) {
@@ -158,9 +161,13 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 				n = boundary(4, n+20+buflen);
 				if (!(client->is_udp && client->typ == 'c') && (rs < n) && ((n-32) > 0)) {
 					len = recv(client->udp_fd, buf+32, n-32, 0); // read the rest of the packet
-					if (len>0) {
-						rs+=len;
+					if (len > 0) {
+						rs += len;
 						aes_decrypt(&client->aes_keys, buf+32, len);
+					}
+					if (len < 0) {
+						rc = -1;
+						goto out;
 					}
 				}
 
@@ -180,6 +187,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 		}
 	}
 
+out:
 	if ((rs>0) && ((rc==-1)||(rc==-2))) {
 		cs_ddump_mask(client->typ == 'c'?D_CLIENT:D_READER, buf, rs,
 				"received %d bytes from %s (native)", rs, remote_txt());
@@ -372,14 +380,19 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	}
 }
 
-static void camd35_process_ecm(uchar *buf)
+static void camd35_process_ecm(uchar *buf, int buflen)
 {
 	ECM_REQUEST *er;
+	if (!buf || buflen < 23)
+		return;
+	uint16_t ecmlen = (((buf[21] & 0x0f)<< 8) | buf[22])+3;
+	if (ecmlen + 20 > buflen)
+		return;
 	if (!(er = get_ecmtask()))
 		return;
 //	er->l = buf[1];
 	//fix ECM LEN issue
-	er->ecmlen =(((buf[21]&0x0f)<< 8) | buf[22])+3;
+	er->ecmlen = ecmlen;
 	if (!cs_malloc(&er->src_data, 0x34 + 20 + er->ecmlen))
 		return;
 	memcpy(er->src_data, buf, 0x34 + 20 + er->ecmlen);	// save request
@@ -391,11 +404,13 @@ static void camd35_process_ecm(uchar *buf)
 	get_cw(cur_client(), er);
 }
 
-static void camd35_process_emm(uchar *buf)
+static void camd35_process_emm(uchar *buf, int buflen, int emmlen)
 {
 	EMM_PACKET epg;
+	if (!buf || buflen < 20 || emmlen + 20 > buflen)
+		return;
 	memset(&epg, 0, sizeof(epg));
-	epg.emmlen = buf[1];
+	epg.emmlen = emmlen;
 	memcpy(epg.caid, buf + 10, 2);
 	memcpy(epg.provid, buf + 12 , 4);
 	memcpy(epg.emm, buf + 20, epg.emmlen);
@@ -736,8 +751,11 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 
 #endif
 
-static void * camd35_server(struct s_client *client __attribute__((unused)), uchar *mbuf, int32_t n)
+static void * camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
 {
+	if (!client || !mbuf)
+		return NULL;
+
 	if (client->reader){
 		client->reader->last_g = time((time_t *) 0);  // last receive is now
 		cs_log("CAMD35_SERVER last = %d, last_s = %d, last_g = %d", (int) client->last, (int) client->reader->last_s, (int) client->reader->last_g);
@@ -747,7 +765,7 @@ static void * camd35_server(struct s_client *client __attribute__((unused)), uch
 	switch(mbuf[0]) {
 		case  0:	// ECM
 		case  3:	// ECM (cascading)
-			camd35_process_ecm(mbuf);
+			camd35_process_ecm(mbuf, n);
 			break;
 #ifdef CS_CACHEEX
 		case 0x3d:  // Cache-push id request
@@ -762,7 +780,8 @@ static void * camd35_server(struct s_client *client __attribute__((unused)), uch
 #endif
 		case  6:	// EMM
 		case 19:  // EMM
-			camd35_process_emm(mbuf);
+			if (n > 2)
+				camd35_process_emm(mbuf, n, mbuf[1]);
 			break;
 		default:
 			cs_log("unknown camd35 command from %s! (%d) n=%d", username(client), mbuf[0], n);
