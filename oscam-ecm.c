@@ -384,6 +384,10 @@ ECM_REQUEST *get_ecmtask(void)
 	er->cacheex_wait.millitm = er->tps.millitm;
 	er->cacheex_wait_time = 0;
 #endif
+#ifdef MODULE_GBOX
+        er->gbox_ecm_id = 0;
+        er->gbox_hops = 0;
+#endif
 	er->rc     = E_UNHANDLED;
 	er->client = cl;
 	er->grp    = cl->grp;
@@ -1732,7 +1736,7 @@ OUT:
 	cw_process_thread_wakeup();
 }
 
-int32_t ecmfmt(uint16_t caid, uint16_t onid, uint32_t prid, uint16_t chid, uint16_t pid, uint16_t srvid, uint16_t l, char *ecmd5hex, char *csphash, char *cw, char *result, size_t size)
+int32_t ecmfmt(uint16_t caid, uint16_t onid, uint32_t prid, uint16_t chid, uint16_t pid, uint16_t srvid, uint16_t l, char *ecmd5hex, char *csphash, char *cw, char *result, size_t size, uint16_t origin_peer, uint8_t distance)
 {
 	if (!cfg.ecmfmt)
 		return snprintf(result, size, "%04X&%06X/%04X/%04X/%02X:%s", caid, prid, chid, srvid, l, ecmd5hex);
@@ -1752,6 +1756,8 @@ int32_t ecmfmt(uint16_t caid, uint16_t onid, uint32_t prid, uint16_t chid, uint1
 		case 'h': flen = CS_ECMSTORESIZE; break;
 		case 'e': flen = 5; break;
 		case 'w': flen = 17; break;
+		case 'j': flen = 2; value = distance; break;
+		case 'g': flen = 4; value = origin_peer; break;
 		case '\\':
 			c++;
 			flen = 0;
@@ -1794,5 +1800,10 @@ int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 	cs_hexdump(0, (void *)&ecm->csp_hash, 4, csphash, sizeof(csphash));
 #endif
 	cs_hexdump(0, ecm->cw, 16, cwhex, sizeof(cwhex));
-	return ecmfmt(ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, result, size);
+#ifdef MODULE_GBOX
+	if (ecm->gbox_hops)
+		return ecmfmt(ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, result, size, ecm->gbox_peer, ecm->gbox_hops);
+	else
+#endif
+	return ecmfmt(ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, result, size, 0, 0);
 }

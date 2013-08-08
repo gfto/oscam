@@ -806,6 +806,8 @@ typedef struct ecm_request_t {
 	uint32_t		gbox_crc;		// rcrc for gbox, used to identify ECM task in peer responses
 	uint16_t		gbox_ecm_id;
 	uint8_t 		gbox_ecm_ok;
+	uint8_t			gbox_hops;
+	uint16_t		gbox_peer;
 #endif
 
 	void			*src_data;

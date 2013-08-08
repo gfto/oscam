@@ -664,9 +664,11 @@ int32_t gbox_cmd_switch(struct s_client *cli, int32_t n)
 		//TODO: What do we do with our own checkcode @-7?
 		memcpy(ei->checksums, data + n - 14, 14);
 		er->gbox_crc = gbox_get_ecmchecksum(er);
+		er->gbox_hops = data[-15 + n] + 1;
+		er->gbox_peer = ei->peer;
 
 		er->prid = chk_provid(er->ecm, er->caid);
-		cs_debug_mask(D_READER, "<- ECM (%d<-) from server (%s:%d) to cardserver (%04X) SID %02X%02X", data[-15 + n] + 1, gbox->peer.hostname,cli->port,ei->peer,data[0x0C],data[0x0D]);
+		cs_debug_mask(D_READER, "<- ECM (%d<-) from server (%s:%d) to cardserver (%04X) SID %02X%02X", er->gbox_hops, gbox->peer.hostname,cli->port,ei->peer,data[0x0C],data[0x0D]);
 		get_cw(cl, er);
 		//TODO:gbox_cw_cache(cli,er);
 
