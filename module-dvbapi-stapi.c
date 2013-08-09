@@ -12,7 +12,6 @@
 
 // These variables are declared in module-dvbapi.c
 extern int32_t disable_pmt_files;
-extern int32_t pausecam;
 extern struct s_dvbapi_priority *dvbapi_priority;
 extern DEMUXTYPE demux[MAX_DEMUX];
 
@@ -29,10 +28,12 @@ void stapi_off(void) {
 
 	disable_pmt_files=1;
 	stapi_on=0;
-	pausecam = 1; // disable parsing of ecm/emm or attempts to start any new filters
-
-	for (i=0;i<MAX_DEMUX;i++)
+	char dest[1024];
+	for (i=0;i<MAX_DEMUX;i++){
+		snprintf(dest, sizeof(dest), "%s%s", TMPDIR, demux[i].pmt_file);
+		unlink(dest); // remove obsolete pmt file
 		dvbapi_stop_descrambling(i);
+	}
 
 	for (i=0;i<PTINUM;i++) {
 		if (dev_list[i].SessionHandle>0) {
@@ -122,8 +123,7 @@ int32_t stapi_open(void) {
 
 		cs_strncpy(dev_list[i].name,dp->d_name, sizeof(dev_list[i].name));
 		cs_log("PTI: %s open %d", dp->d_name, i);
-		pausecam = 0 ; // allow parsing of ecm/emm or attempts to start new filters
-
+		
 		ErrorCode = oscam_stapi_SignalAllocate(dev_list[i].SessionHandle, &dev_list[i].SignalHandle);
 		if (ErrorCode != 0)
 			cs_log("SignalAllocate: ErrorCode: %d SignalHandle: %x", ErrorCode, dev_list[i].SignalHandle);
@@ -163,28 +163,44 @@ int32_t stapi_open(void) {
 
 int32_t stapi_set_filter(int32_t demux_id, uint16_t pid, uchar *filter, uchar *mask, int32_t num, char *pmtfile) {
 	int32_t i;
-	uint32_t ret = 0;
+	int32_t ret = -1;
+	char dest[1024];
 	uint16_t pids[1] = { pid };
 	struct s_dvbapi_priority *p;
 
-	if (!pmtfile) return 0;
+	if (!pmtfile){
+		cs_debug_mask(D_DVBAPI, "No valid pmtfile!");
+		return -1;
+	}
 
 	cs_debug_mask(D_DVBAPI, "pmt file %s demux_id %d", pmtfile, demux_id);
 
 	for (p=dvbapi_priority; p != NULL; p=p->next) {
-		if (p->type!='s') continue;
-		if (strcmp(pmtfile, p->pmtfile)!=0)
-			continue;
+		if (p->type!='s') continue; // stapi rule?
+		if (strcmp(pmtfile, p->pmtfile)!=0) continue; // same file?
 
 		for (i=0;i<PTINUM;i++) {
-			if(strcmp(dev_list[i].name, p->devname)==0 && p->disablefilter==0) {
+			if(strcmp(dev_list[i].name, p->devname)==0 && p->disablefilter==0) { // check device name and if filtering is enabled!
 				cs_debug_mask(D_DVBAPI, "set stapi filter on %s for pid %04X", dev_list[i].name, pids[0]);
 				ret = stapi_do_set_filter(demux_id, &dev_list[i].demux_fd[demux_id][num], pids, 1, filter, mask, i);
+				if (ret > 0) { // success
+					cs_debug_mask(D_DVBAPI, "%s filter #%d set (pid %04X)", dev_list[i].name, num, pid);
+					return ret; // return filternumber
+				}
+				else { // failure
+					cs_debug_mask(D_DVBAPI, "Error setting new filter for pid %04X on %s!", pid, dev_list[i].name);
+					return -1; // set return to error
+				}
 			}
 		}
 	}
 
-	cs_debug_mask(D_DVBAPI, "filter #%d set (pid %04X)", num, pid);
+	if (p == NULL){
+		cs_debug_mask(D_DVBAPI, "No matching S: line in oscam.dvbapi for pmtfile %s -> stop descrambling!", pmtfile);
+		snprintf(dest, sizeof(dest), "%s%s", TMPDIR, demux[demux_id].pmt_file);
+		unlink(dest); // remove obsolete pmt file
+		dvbapi_stop_descrambling(demux_id);
+	}
 	return ret;
 }
 

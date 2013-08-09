@@ -2338,7 +2338,7 @@ void event_handler(int32_t UNUSED(signal)) {
 				}
 
 				if ((time_t)pmt_info.st_mtime != demux[i].pmt_time) {
-					cs_log("Stopping demux for pmt file %s", dest);
+					cs_log("PMT file %s is updated -> stop descrambling demuxer #%d", dest, i);
 				 	dvbapi_stop_descrambling(i);
 				}
 
@@ -2346,7 +2346,7 @@ void event_handler(int32_t UNUSED(signal)) {
 				if (ret < 0) cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno));
 				continue;
 			} else {
-				cs_log("Stopping demux for pmt file %s", dest);
+				cs_log("Could not open PMT file %s -> stop descrambling demuxer #%d", dest, i);
 				dvbapi_stop_descrambling(i);
 			}
 		}
@@ -2371,7 +2371,18 @@ void event_handler(int32_t UNUSED(signal)) {
 			continue;
 		if (strncmp(dp->d_name, "pmt", 3)!=0 || strncmp(dp->d_name+strlen(dp->d_name)-4, ".tmp", 4)!=0)
 			continue;
-
+#ifdef WITH_STAPI
+		struct s_dvbapi_priority *p;
+		for (p=dvbapi_priority; p != NULL; p=p->next) { // stapi: check if there is a device connected to this pmt file!
+			if (p->type!='s') continue; // stapi rule?
+			if (strcmp(dp->d_name, p->pmtfile)!=0) continue; // same file?
+			break; // found match!
+		}
+		if (p == NULL){
+			cs_debug_mask(D_DVBAPI, "No matching S: line in oscam.dvbapi for pmtfile %s -> skip!", dp->d_name);
+			continue;
+		}
+#endif
 		snprintf(dest, sizeof(dest), "%s%s", TMPDIR, dp->d_name);
 		pmt_fd = open(dest, O_RDONLY);
 		if (pmt_fd < 0)
@@ -2435,6 +2446,10 @@ void event_handler(int32_t UNUSED(signal)) {
 #else
 		if (len>sizeof(dest)) {
 			cs_debug_mask(D_DVBAPI,"event_handler() dest buffer is to small for pmt data!");
+			continue;
+		}
+		if (len<16){
+			cs_debug_mask(D_DVBAPI,"event_handler() received pmt is too small! (%d < 16 bytes!)", len);
 			continue;
 		}
 		cs_ddump_mask(D_DVBAPI, mbuf,len,"pmt:");
@@ -2880,11 +2895,15 @@ static void * dvbapi_main_local(void *cli) {
 				if (demux[i].demux_fd[g].type == TYPE_ECM) ecmcounter++; // count ecm filters to see if demuxing is possible anyway
 				if (demux[i].demux_fd[g].type == TYPE_EMM) emmcounter++; // count emm filters also
 			}
-			cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d has %d ecmpids, %d streampids, %d ecmfilters and %d emmfilters", i, demux[i].ECMpidcount,
-				demux[i].STREAMpidcount, ecmcounter, emmcounter);
-			// delayed emm start for non irdeto caids (
+			if (ecmcounter != demux[i].old_ecmfiltercount || emmcounter != demux[i].old_emmfiltercount){ // only produce log if something changed
+				cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d has %d ecmpids, %d streampids, %d ecmfilters and %d emmfilters", i, demux[i].ECMpidcount,
+					demux[i].STREAMpidcount, ecmcounter, emmcounter);
+				demux[i].old_ecmfiltercount = ecmcounter; // save new amount of ecmfilters
+				demux[i].old_emmfiltercount = emmcounter; // save new amount of emmfilters
+			}
 			
-			if (cfg.dvbapi_au>0 && demux[i].EMMpidcount == 0 && ((time(NULL)-demux[i].emmstart)>30)){ //start emm cat
+			// delayed emm start for non irdeto caids
+			if (cfg.dvbapi_au>0 && demux[i].EMMpidcount == 0 && ((time(NULL)-demux[i].emmstart)>30) && emmcounter == 0){ //start emm cat
 				demux[i].emmstart = time(NULL); // trick to let emm fetching start after 30 seconds to speed up zapping
 				dvbapi_start_filter(i, demux[i].pidindex, 0x001, 0x001, 0x01, 0x01, 0xFF, 0, TYPE_EMM, 1); //CAT
 				continue; // proceed with next demuxer
@@ -3372,7 +3391,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			}
 			edit_channel_cache(i, j, 1); // do it here to here after the right CHID is registered
 			
-			dvbapi_set_section_filter(i, er);
+			//dvbapi_set_section_filter(i, er);  is not needed anymore (unsure)
 			demux[i].ECMpids[j].irdeto_cycle = 0xFE; // reset irdeto cycle
 			struct s_dvbapi_priority *delayentry=dvbapi_check_prio_match(i, demux[i].pidindex, 'd');
 			if (delayentry) {

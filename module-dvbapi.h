@@ -123,6 +123,8 @@ typedef struct demux_s
 	char pmt_file[30];
 	time_t pmt_time;
 	uint8_t stopdescramble;
+	uint8_t old_ecmfiltercount; // previous ecm filtercount
+	uint8_t old_emmfiltercount; // previous emm filtercount
 #ifdef WITH_STAPI
 	uint32_t DescramblerHandle[PTINUM];
 	int32_t desc_pidcount;
