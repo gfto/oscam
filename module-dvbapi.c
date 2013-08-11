@@ -3571,12 +3571,18 @@ int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er) {
 		}
 	}
 
-	dvbapi_activate_section_filter(fd, curpid->ECM_PID, filter, mask);
+	int32_t ret = dvbapi_activate_section_filter(fd, curpid->ECM_PID, filter, mask);
+	if (ret < 0){ // something went wrong setting filter!
+		cs_log("[DVBAPI] Error setting section filtering on fd %d -> stop filter!", fd);
+		dvbapi_stop_filternum(demux_index, n);
+		return -1;
+	}
 	return n;
 }
 
-void dvbapi_activate_section_filter (int32_t fd, int32_t pid, uchar *filter, uchar *mask){ 
+int32_t dvbapi_activate_section_filter (int32_t fd, int32_t pid, uchar *filter, uchar *mask){ 
 
+	int32_t ret = -1;
 	switch(selected_api) {
 		case DVBAPI_3: {
 			struct dmx_sct_filter_params sFP2;
@@ -3586,7 +3592,7 @@ void dvbapi_activate_section_filter (int32_t fd, int32_t pid, uchar *filter, uch
 			sFP2.flags			= DMX_IMMEDIATE_START;
 			memcpy(sFP2.filter.filter,filter,16);
 			memcpy(sFP2.filter.mask,mask,16);
-			ioctl(fd, DMX_SET_FILTER, &sFP2);
+			ret = ioctl(fd, DMX_SET_FILTER, &sFP2);
 			break;
 		}
 
@@ -3598,12 +3604,13 @@ void dvbapi_activate_section_filter (int32_t fd, int32_t pid, uchar *filter, uch
 			sFP1.flags = DMX_IMMEDIATE_START;
 			memcpy(sFP1.filter.filter,filter,16);
 			memcpy(sFP1.filter.mask,mask,16);
-			ioctl(fd, DMX_SET_FILTER1, &sFP1);
+			ret = ioctl(fd, DMX_SET_FILTER1, &sFP1);
 			break;
 		}
 #ifdef WITH_STAPI
 		case STAPI: {
-			oscam_stapi_FilterSet(fd, filter, mask);
+			ret = oscam_stapi_FilterSet(fd, filter, mask);
+			if (ret) ret = -1;
 			break;
 		}
 #endif
@@ -3617,6 +3624,7 @@ void dvbapi_activate_section_filter (int32_t fd, int32_t pid, uchar *filter, uch
 		default:
 			break;
 	}
+	return ret;
 }
 
 

@@ -236,7 +236,7 @@ void request_cw(struct s_client *client, ECM_REQUEST *er, int32_t demux_id, uint
 void dvbapi_try_next_caid(int32_t demux_id, int8_t checked);
 void dvbapi_read_priority(void);
 int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er);
-void dvbapi_activate_section_filter (int32_t fd, int32_t pid, uchar *filter, uchar *mask);
+int32_t dvbapi_activate_section_filter (int32_t fd, int32_t pid, uchar *filter, uchar *mask);
 int32_t dvbapi_check_ecm_delayed_delivery(int32_t demux_index, ECM_REQUEST *er);
 int32_t dvbapi_get_filternum(int32_t demux_index, ECM_REQUEST *er, int32_t type);
 int32_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid);
