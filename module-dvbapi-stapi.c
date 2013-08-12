@@ -28,10 +28,7 @@ void stapi_off(void) {
 
 	disable_pmt_files=1;
 	stapi_on=0;
-	char dest[1024];
 	for (i=0;i<MAX_DEMUX;i++){
-		snprintf(dest, sizeof(dest), "%s%s", TMPDIR, demux[i].pmt_file);
-		unlink(dest); // remove obsolete pmt file
 		dvbapi_stop_descrambling(i);
 	}
 

@@ -40,7 +40,7 @@ static const struct box_devices devices[BOX_COUNT] = {
 	/* QboxHD (dvb-api-3)*/	{ "/tmp/virtual_adapter/", 	"ca%d",		"demux%d",			"/tmp/camd.socket", DVBAPI_3  },
 	/* dreambox (dvb-api-3)*/	{ "/dev/dvb/adapter%d/",	"ca%d", 		"demux%d",			"/tmp/camd.socket", DVBAPI_3 },
 	/* dreambox (dvb-api-1)*/	{ "/dev/dvb/card%d/",	"ca%d",		"demux%d",			"/tmp/camd.socket", DVBAPI_1 },
-	/* neumo (dvb-api-1)*/	{ "/dev/",			"demuxapi",		"demuxapi",			"/tmp/camd.socket", DVBAPI_1 },
+	/* neumo (dvb-api-1)*/	{ "/dev/",			"demuxapi",		"demuxapi",			"/tmp/camd.socket", DVBAPI_3 },
 	/* sh4      (stapi)*/	{ "/dev/stapi/", 		"stpti4_ioctl",	"stpti4_ioctl",		"/tmp/camd.socket", STAPI },
 	/* coolstream*/		{ "/dev/cnxt/", 		"null",		"null",			"/tmp/camd.socket", COOLAPI }
 };
@@ -319,11 +319,34 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 			sFP2.pid			= pid;
 			sFP2.timeout		= timeout;
 			sFP2.flags			= DMX_IMMEDIATE_START;
-			memcpy(sFP2.filter.filter,filt,16);
-			memcpy(sFP2.filter.mask,mask,16);
-			ret=ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER, &sFP2);
-
+			if(cfg.dvbapi_boxtype == BOXTYPE_NEUMO) {
+				//DeepThought: on dgs/cubestation and neumo images, perhaps others
+				//the following code is needed to descramble
+				sFP2.filter.filter[0]=filt[0];
+				sFP2.filter.mask[0]=mask[0];
+				sFP2.filter.filter[1]=0;
+				sFP2.filter.mask[1]=0;
+				sFP2.filter.filter[2]=0;
+				sFP2.filter.mask[2]=0;
+				memcpy(sFP2.filter.filter+3,filt+1,16-3);
+				memcpy(sFP2.filter.mask+3,mask+1,16-3);
+				//DeepThought: in the drivers of the dgs/cubestation and neumo images, 
+				//dvbapi 1 and 3 are somehow mixed. In the kernel drivers, the DMX_SET_FILTER
+				//ioctl expects to receive a dmx_sct_filter_params structure (DVBAPI 3) but
+				//due to a bug its sets the "positive mask" wrongly (they should be all 0).
+				//On the other hand, the DMX_SET_FILTER1 ioctl also uses the dmx_sct_filter_params
+				//structure, which is incorrect (it should be  dmxSctFilterParams).
+				//The only way to get it right is to call DMX_SET_FILTER1 with the argument
+				//expected by DMX_SET_FILTER. Otherwise, the timeout parameter is not passed correctly.
+				ret=ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER1, &sFP2);
+			} 
+			else {
+				memcpy(sFP2.filter.filter,filt,16);
+				memcpy(sFP2.filter.mask,mask,16);
+				ret=ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER, &sFP2);
+			}
 			break;
+			
 		case DVBAPI_1:
 			demux[demux_id].demux_fd[n].fd = dvbapi_open_device(0, demux[demux_id].demux_index, demux[demux_id].adapter_index);
 			struct dmxSctFilterParams sFP1;
@@ -382,7 +405,7 @@ static int32_t dvbapi_detect_api(void) {
 		snprintf(device_path2, sizeof(device_path2), devices[i].demux_device, 0);
 		snprintf(device_path, sizeof(device_path), devices[i].path, 0);
 		strncat(device_path, device_path2, sizeof(device_path)-strlen(device_path)-1);
-		if ((dmx_fd = open(device_path, O_RDWR)) > 0) {
+		if ((dmx_fd = open(device_path, O_RDWR | O_NONBLOCK)) > 0) {
 			devnum=i;
 			int32_t ret = close(dmx_fd);
 			if (ret < 0) cs_log("ERROR: Could not close demuxer fd (errno=%d %s)", errno, strerror(errno));
@@ -401,10 +424,6 @@ static int32_t dvbapi_detect_api(void) {
 		return 0;
 	}
 #endif
-	if (cfg.dvbapi_boxtype == BOXTYPE_NEUMO) {
-		selected_api=DVBAPI_1;
-	}
-
 	cs_log("Detected %s Api: %d", device_path, selected_api);
 #endif
 	return 1;
@@ -446,7 +465,7 @@ int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter) {
 		strncat(device_path, device_path2, sizeof(device_path)-strlen(device_path)-1);
 	}
 
-	if ((dmx_fd = open(device_path, O_RDWR | O_NOCTTY)) < 0) {
+	if ((dmx_fd = open(device_path, O_RDWR | O_NONBLOCK)) < 0) {
 		cs_log("ERROR: Can't open device %s (errno=%d %s)", device_path, errno, strerror(errno));
 		return -1;
 	}
@@ -1070,7 +1089,7 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 	er->pid   = demux[demux_id].ECMpids[pid].ECM_PID;
 	er->prid  = demux[demux_id].ECMpids[pid].PROVID;
 	
-	for (rdr=first_active_reader; rdr ; rdr=rdr->next){
+	for (rdr=first_active_reader; rdr != NULL ; rdr=rdr->next){
 		int8_t match = matching_reader(er, rdr, 0); // check for matching reader, exclude ratelimitercheck!
 		if ((time(NULL) - rdr->emm_last) > 3600 && rdr->needsemmfirst && er->caid >> 8 == 0x06){ 
 			cs_log("[DVBAPI] Warning reader %s received no emms for the last %d seconds -> skip, this reader needs emms first!", rdr->label,
@@ -1399,7 +1418,7 @@ void dvbapi_read_priority(void) {
 			struct s_srvid *this;
 
 			for (i=0;i<16;i++)
-			for (this = cfg.srvid[i]; this; this = this->next) {
+			for (this = cfg.srvid[i]; this != NULL; this = this->next) {
 				if (strcmp(this->prov, c_srvid+1)==0) {
 					struct s_dvbapi_priority *entry2;
 					if (!cs_malloc(&entry2,sizeof(struct s_dvbapi_priority)))
@@ -2783,7 +2802,7 @@ static void * dvbapi_main_local(void *cli) {
 
 	struct s_auth *account;
 	int32_t ok=0;
-	for (account = cfg.account; account; account=account->next) {
+	for (account = cfg.account; account != NULL; account=account->next) {
 		if ((ok = streq(cfg.dvbapi_usr, account->usr)))
 			break;
 	}
@@ -3341,7 +3360,8 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				edit_channel_cache(i, j, 0); // remove this pid from channelcache	
 				demux[i].ECMpids[j].irdeto_maxindex = 0;
 				demux[i].ECMpids[j].irdeto_curindex = 0xFE;
-				demux[i].ECMpids[j].irdeto_cycle = 0xFE;
+				demux[i].ECMpids[j].tries = 0xFE; // reset timeout retry flag
+				demux[i].ECMpids[j].irdeto_cycle = 0xFE; // reset irdetocycle
 				demux[i].ECMpids[j].table = 0;
 				demux[i].ECMpids[j].checked = 3; // flag ecmpid as checked
 				demux[i].ECMpids[j].status = -1; // flag ecmpid as unusable
@@ -3392,6 +3412,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			edit_channel_cache(i, j, 1); // do it here to here after the right CHID is registered
 			
 			//dvbapi_set_section_filter(i, er);  is not needed anymore (unsure)
+			demux[i].ECMpids[j].tries = 0xFE; // reset timeout retry flag
 			demux[i].ECMpids[j].irdeto_cycle = 0xFE; // reset irdeto cycle
 			struct s_dvbapi_priority *delayentry=dvbapi_check_prio_match(i, demux[i].pidindex, 'd');
 			if (delayentry) {
@@ -3590,9 +3611,32 @@ int32_t dvbapi_activate_section_filter (int32_t fd, int32_t pid, uchar *filter, 
 			sFP2.pid			= pid;
 			sFP2.timeout		= 0;
 			sFP2.flags			= DMX_IMMEDIATE_START;
-			memcpy(sFP2.filter.filter,filter,16);
-			memcpy(sFP2.filter.mask,mask,16);
-			ret = ioctl(fd, DMX_SET_FILTER, &sFP2);
+			if(cfg.dvbapi_boxtype == BOXTYPE_NEUMO) {
+				//DeepThought: on dgs/cubestation and neumo images, perhaps others
+				//the following code is needed to descramble
+				sFP2.filter.filter[0]=filter[0];
+				sFP2.filter.mask[0]=mask[0];
+				sFP2.filter.filter[1]=0;
+				sFP2.filter.mask[1]=0;
+				sFP2.filter.filter[2]=0;
+				sFP2.filter.mask[2]=0;
+				memcpy(sFP2.filter.filter+3,filter+1,16-3);
+				memcpy(sFP2.filter.mask+3,mask+1,16-3);
+				//DeepThought: in the drivers of the dgs/cubestation and neumo images, 
+				//dvbapi 1 and 3 are somehow mixed. In the kernel drivers, the DMX_SET_FILTER
+				//ioctl expects to receive a dmx_sct_filter_params structure (DVBAPI 3) but
+				//due to a bug its sets the "positive mask" wrongly (they should be all 0).
+				//On the other hand, the DMX_SET_FILTER1 ioctl also uses the dmx_sct_filter_params
+				//structure, which is incorrect (it should be  dmxSctFilterParams).
+				//The only way to get it right is to call DMX_SET_FILTER1 with the argument
+				//expected by DMX_SET_FILTER. Otherwise, the timeout parameter is not passed correctly.
+				ret=ioctl(fd, DMX_SET_FILTER1, &sFP2);
+			} 
+			else {
+				memcpy(sFP2.filter.filter,filter,16);
+				memcpy(sFP2.filter.mask,mask,16);
+				ret=ioctl(fd, DMX_SET_FILTER, &sFP2);
+			}
 			break;
 		}
 
