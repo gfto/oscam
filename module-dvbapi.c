@@ -2863,7 +2863,7 @@ static void * dvbapi_main_local(void *cli) {
 
 	if (listenfd !=-1){
 		pfd2[0].fd = listenfd;
-		pfd2[0].events = (POLLIN);
+		pfd2[0].events = (POLLIN|POLLPRI);
 		type[0]=1;
 	}
 	
