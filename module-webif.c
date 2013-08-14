@@ -5494,7 +5494,7 @@ static void *http_server(void *UNUSED(d)) {
 	}
 
 	struct SOCKADDR sin;
-	socklen_t len;
+	socklen_t len = 0;
 	memset(&sin, 0, sizeof(sin));	
 	
 	bool do_ipv6 = config_enabled(IPV6SUPPORT);
