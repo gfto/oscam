@@ -5497,9 +5497,8 @@ static void *http_server(void *UNUSED(d)) {
 	socklen_t len;
 	memset(&sin, 0, sizeof(sin));	
 	
-#ifdef IPV6SUPPORT
 	bool do_ipv6 = config_enabled(IPV6SUPPORT);
-	
+#ifdef IPV6SUPPORT
 	if (do_ipv6) {
 		len = sizeof(struct sockaddr_in6);
 		if ((sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP)) < 0) {
@@ -5512,10 +5511,9 @@ static void *http_server(void *UNUSED(d)) {
 			ia->sin6_addr = in6addr_any;
 			ia->sin6_port = htons(cfg.http_port);
 		}
-
-	} else 
+	}
 #endif
-	{
+	if (!do_ipv6) {
 		len = sizeof(struct sockaddr_in);
 		if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
 			cs_log("HTTP Server: ERROR: Creating socket failed! (errno=%d %s)", errno, strerror(errno));
