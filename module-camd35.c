@@ -68,12 +68,12 @@ static int32_t __camd35_send(struct s_client *cl, uchar *buf, int32_t buflen, in
 	}
 	if (status != -1){
 		if(cl->reader && answer_awaited ){
-			cl->reader->last_s = time((time_t *) 0);
+			cl->reader->last_s = time(NULL);
 		}
 		if(cl->reader && !answer_awaited){
 			cl->reader->last_s = cl->reader->last_g = time(NULL);
 		}
-		cl->last = time((time_t *) 0);
+		cl->last = time(NULL);
 		
 	}
 	return status;
@@ -192,7 +192,7 @@ out:
 		cs_ddump_mask(client->typ == 'c'?D_CLIENT:D_READER, buf, rs,
 				"received %d bytes from %s (native)", rs, remote_txt());
 	}
-	if(rc>=0) client->last = time((time_t *) 0); // last client action is now
+	if(rc>=0) client->last = time(NULL); // last client action is now
 	switch(rc) {
 		//case 0: 	break;
 		case -1: cs_log("packet is too small (received %d bytes, expected %d bytes)", rs, l); break;
@@ -420,8 +420,12 @@ static void camd35_process_emm(uchar *buf, int buflen, int emmlen)
 static int32_t tcp_connect(struct s_client *cl)
 {
 	if (cl->is_udp) { // check for udp client
-	   if (!IP_ISSET(SIN_GET_ADDR(cl->udp_sa)) || cl->reader->last_s-cl->reader->last_g > cl->reader->tcp_rto) // check ip or if client reached timeout
-	      if (!hostResolve(cl->reader)) return 0; // could not resolve client
+	   if (!IP_ISSET(SIN_GET_ADDR(cl->udp_sa))){ // check ip is set
+			if (!(hostResolve(cl->reader))){ // no ip -> try to resolve ip of client
+				network_tcp_connection_close(cl->reader, "no ip");
+				return 0;
+			}
+	   }
 	}
 
 	if (!cl->reader->tcp_connected) { // client not connected
@@ -757,10 +761,13 @@ static void * camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
 		return NULL;
 
 	if (client->reader){
-		client->reader->last_g = time((time_t *) 0);  // last receive is now
+		client->reader->last_g = time(NULL);  // last receive is now
+		if(mbuf[0] == 6 || mbuf[0] == 19){ // check for emm command
+			client->reader->last_s = time(NULL); // fixup: last send is now (if client is only sending emms connection would be dropped!)
+		}
 		cs_log("CAMD35_SERVER last = %d, last_s = %d, last_g = %d", (int) client->last, (int) client->reader->last_s, (int) client->reader->last_g);
 	}
-	client->last= time((time_t *) 0); // last client action is now
+	client->last= time(NULL); // last client action is now
 	
 	switch(mbuf[0]) {
 		case  0:	// ECM
@@ -851,7 +858,7 @@ static int32_t camd35_send_emm(EMM_PACKET *ep)
 static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t rc2 __attribute__((unused)))
 {
 	if (client->reader){
-		client->reader->last_g = time((time_t *) 0);  // last receive is now
+		client->reader->last_g = time(NULL);  // last receive is now
 	}
 	
 	uint16_t idx;
