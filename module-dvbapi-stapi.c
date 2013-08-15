@@ -202,7 +202,7 @@ int32_t stapi_set_filter(int32_t demux_id, uint16_t pid, uchar *filter, uchar *m
 }
 
 int32_t stapi_remove_filter(int32_t demux_id, int32_t num, char *pmtfile) {
-	int32_t i;
+	int32_t i, ret = 0;
 	struct s_dvbapi_priority *p;
 
 	if (!pmtfile) return 0;
@@ -214,13 +214,17 @@ int32_t stapi_remove_filter(int32_t demux_id, int32_t num, char *pmtfile) {
 
 		for (i=0;i<PTINUM;i++) {
 			if(strcmp(dev_list[i].name, p->devname)==0 && p->disablefilter==0) {
-				stapi_do_remove_filter(demux_id, &dev_list[i].demux_fd[demux_id][num], i);
+				ret = stapi_do_remove_filter(demux_id, &dev_list[i].demux_fd[demux_id][num], i);
 			}
 		}
 	}
-
-	cs_debug_mask(D_DVBAPI, "filter #%d removed", num);
-	return 1;
+	if (ret == 1){
+		cs_debug_mask(D_DVBAPI, "filter #%d removed", num);
+	}
+	else {
+		cs_debug_mask(D_DVBAPI, "Error: filter #%d was not removed!", num);
+	}
+	return ret;
 }
 
 uint32_t check_slot(int32_t dev_id, uint32_t checkslot, FILTERTYPE *skipfilter) {
