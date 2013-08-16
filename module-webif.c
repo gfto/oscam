@@ -49,8 +49,6 @@ CS_MUTEX_LOCK *lock_cs;
 
 static pthread_t httpthread;
 static int32_t sock;
-static bool picon_exists(char *picon_name);
-
 enum refreshtypes { REFR_ACCOUNTS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REFR_SERVICES };
 
 /* constants for menuactivating */
@@ -2227,6 +2225,14 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 
 }
 
+static bool picon_exists(char *name) {
+	char picon_name[64], path[255];
+	if (!cfg.http_tpl)
+		return false;
+	snprintf(picon_name, sizeof(picon_name) - 1, "IC_%s", name);
+	return strlen(tpl_getTplPath(picon_name, cfg.http_tpl, path, sizeof(path) - 1)) && file_exists(path);
+}
+
 static void webif_add_client_proto(struct templatevars *vars, struct s_client *cl, const char *proto) {
 	tpl_addVar(vars, TPLADDONCE, "PROTOICON", "");
 	if(!cl) return;
@@ -2313,14 +2319,6 @@ static void clear_system_stats(void) {
 	first_client->emmok = 0;
 	first_client->emmnok = 0;
 	cacheex_clear_client_stats(first_client);
-}
-
-static bool picon_exists(char *name) {
-	char picon_name[64], path[255];
-	if (!cfg.http_tpl)
-		return false;
-	snprintf(picon_name, sizeof(picon_name) - 1, "IC_%s", name);
-	return strlen(tpl_getTplPath(picon_name, cfg.http_tpl, path, sizeof(path) - 1)) && file_exists(path);
 }
 
 static void kill_account_thread(struct s_auth *account) {
