@@ -424,11 +424,11 @@ static int32_t dvbapi_detect_api(void) {
 		return 0;
 	}
 #endif
-#endif
 	if (cfg.dvbapi_boxtype == BOXTYPE_NEUMO){
 		selected_api=DVBAPI_3; //DeepThought
 	}
 	cs_log("[DVBAPI] Detected %s Api: %d, userconfig boxtype: %d", device_path, selected_api, cfg.dvbapi_boxtype);
+#endif
 	return 1;
 }
 
