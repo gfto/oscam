@@ -961,6 +961,14 @@ static void inactivate_reader(struct s_reader *rdr)
 		kill_thread(cl);
 }
 
+static bool picon_exists(char *name) {
+	char picon_name[64], path[255];
+	if (!cfg.http_tpl)
+		return false;
+	snprintf(picon_name, sizeof(picon_name) - 1, "IC_%s", name);
+	return strlen(tpl_getTplPath(picon_name, cfg.http_tpl, path, sizeof(path) - 1)) && file_exists(path);
+}
+
 static char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, int32_t apicall) {
 	struct s_reader *rdr;
 	int32_t i;
@@ -1045,6 +1053,26 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 					tpl_addVar(vars, TPLADD, "READERCLASS", "enabledreader");
 				else
 					tpl_addVar(vars, TPLADD, "READERCLASS", "disabledreader");
+
+				if (cfg.http_showpicons) {
+					if (picon_exists(xml_encode(vars, rdr->label))) {
+						tpl_printf(vars, TPLADD, "READERICON",
+						"<img class=\"readericon\" src=\"image?i=IC_%s\" TITLE=\"%s\">",
+						xml_encode(vars, rdr->label), xml_encode(vars, rdr->label));
+					} else {
+						tpl_addVar(vars, TPLADD, "READERICON", xml_encode(vars, rdr->label));
+					}
+					if (picon_exists(xml_encode(vars, reader_get_type_desc(rdr, 0)))) {
+						tpl_printf(vars, TPLADD, "READERTYPEICON",
+						"<img class=\"readertypeicon\" src=\"image?i=IC_%s\" TITLE=\"%s\">",
+						reader_get_type_desc(rdr, 0), reader_get_type_desc(rdr, 0));
+					} else {
+						tpl_addVar(vars, TPLADD, "READERTYPEICON", reader_get_type_desc(rdr, 0));
+					}
+				} else {
+					tpl_addVar(vars, TPLADD, "READERICON", xml_encode(vars, rdr->label));
+					tpl_addVar(vars, TPLADD, "READERTYPEICON", reader_get_type_desc(rdr, 0));
+				}
 
 				tpl_printf(vars, TPLADD, "EMMERRORUK", "%d", rdr->emmerror[UNKNOWN]);
 				tpl_printf(vars, TPLADD, "EMMERRORG", "%d", rdr->emmerror[GLOBAL]);
@@ -2225,16 +2253,7 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 
 }
 
-static bool picon_exists(char *name) {
-	char picon_name[64], path[255];
-	if (!cfg.http_tpl)
-		return false;
-	snprintf(picon_name, sizeof(picon_name) - 1, "IC_%s", name);
-	return strlen(tpl_getTplPath(picon_name, cfg.http_tpl, path, sizeof(path) - 1)) && file_exists(path);
-}
-
 static void webif_add_client_proto(struct templatevars *vars, struct s_client *cl, const char *proto) {
-	tpl_addVar(vars, TPLADDONCE, "PROTOICON", "");
 	if(!cl) return;
 #ifdef MODULE_NEWCAMD
 	if (streq(proto, "newcamd") && cl->typ == 'c') {
