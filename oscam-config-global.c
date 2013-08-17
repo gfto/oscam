@@ -10,7 +10,7 @@
 #define cs_conf "oscam.conf"
 
 #define DEFAULT_HTTP_PORT	8888
-#define DEFAULT_HTTP_ALLOW	"127.0.0.1,192.168.0.0-192.168.255.255,10.0.0.0-10.255.255.255::1"
+#define DEFAULT_HTTP_ALLOW	"127.0.0.1,192.168.0.0-192.168.255.255,10.0.0.0-10.255.255.255,::1"
 
 static void disablelog_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) {
 	if (value) {
