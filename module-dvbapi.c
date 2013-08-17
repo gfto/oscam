@@ -1972,18 +1972,23 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 #ifdef WITH_COOLAPI
 		if (connfd>0 && demux[i].program_number==program_number) {
 #else
-		if (((connfd>0 && demux[i].socket_fd == connfd) && cfg.dvbapi_pmtmode !=6) || ( cfg.dvbapi_pmtmode ==6 && demux[i].program_number==program_number)) {
+		if (((connfd>0 && demux[i].socket_fd == connfd) && demux[i].program_number == program_number && cfg.dvbapi_pmtmode !=6)
+			|| ( cfg.dvbapi_pmtmode == 6 && demux[i].program_number == program_number)) {
 #endif
 			if (cfg.dvbapi_pmtmode == 6){ // PMT6: continue descrambling all matching channels on demuxers!
 				demux[i].stopdescramble = 0;
 			}
 			if (ca_pmt_list_management == LIST_UPDATE) {//PMT Update */
-				demux_id = i;
 				getDemuxOptions(demux_id, buffer, &ca_mask, &demux_index, &adapter_index);
-				if (demux[demux_id].adapter_index != adapter_index || demux[demux_id].ca_mask != ca_mask || demux[demux_id].ca_mask!=ca_mask){
+				cs_log("**** adapter_index = %04X | %04X", demux[i].adapter_index, adapter_index);
+				cs_log("**** ca_mask = %04X | %04X", demux[i].ca_mask, ca_mask);
+				cs_log("**** indexer = %04X | %04X", demux[i].demux_index, demux_index);
+				
+				if (demux[i].adapter_index != adapter_index || demux[i].ca_mask != ca_mask || demux[i].demux_index!=demux_index){
 					dvbapi_stop_descrambling(i);
 				}
 				else{
+					demux_id = i;
 					demux[demux_id].curindex = -1;
 					demux[demux_id].pidindex = -1;
 					demux[demux_id].STREAMpidcount=0;
