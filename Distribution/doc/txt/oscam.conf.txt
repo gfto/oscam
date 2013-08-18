@@ -355,7 +355,7 @@ DESCRIPTIONS
 	  path to an executable script which you wish to start from web interface, default:none
 
        httpallowed = IP address|IP address range[,IP address|IP address range]...
-	  http web interface connections allowed, default:127.0.0.1,192.168.0.0-192.168.255.255,10.0.0.0-10.255.255.255::1
+	  http web interface connections allowed, default:127.0.0.1,192.168.0.0-192.168.255.255,10.0.0.0-10.255.255.255,::1
 
 	   example: httpallowed = 127.0.0.1,192.168.0.0-192.168.255.255
 
