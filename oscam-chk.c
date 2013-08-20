@@ -38,8 +38,30 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 							cs_hexdump(0, reader->rlecmh[h].ecmd5, 16, ecmd5, sizeof(ecmd5));
 							cs_debug_mask(D_TRACE, "ratelimiter ecm %s in this slot for next %d seconds -> returning same controlword!", ecmd5, (int) 
 								(reader->ratelimitseconds - (actualtime - reader->rlecmh[h].last)));
-							memcpy(er->ecmd5, reader->rlecmh[h].ecmd5, CS_ECMSTORESIZE); // replace md5 hash
-							return -2;
+							
+							// below disabled needs ecmhandler patch
+							
+							/*struct ecm_request_t *erold=NULL;
+							if (!cs_malloc(&erold, sizeof(struct ecm_request_t)))
+										return -2;
+							memcpy(erold, er, sizeof(struct ecm_request_t)); // copy ecm all
+							memcpy(erold->ecmd5, reader->rlecmh[h].ecmd5, CS_ECMSTORESIZE); // replace md5 hash
+							
+								struct ecm_request_t *ecm=NULL;
+								ecm = check_cwcache(erold, erold->client); //CHECK IF FOUND ECM IN CACHE
+								free (erold);
+								if (ecm) {  //found in cache
+									struct s_write_from_cache *wfc=NULL;
+									if (!cs_malloc(&wfc, sizeof(struct s_write_from_cache)))
+										return -2;
+									memcpy(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE); // replace md5 hash
+									wfc->er_new=er;
+									wfc->er_cache=ecm;
+									wfc->type=1;
+									add_job(er->client, ACTION_ECM_ANSWER_CACHE, wfc, sizeof(struct s_write_from_cache));  //write_ecm_answer_fromcache
+								}*/
+								
+								return -2; // To be fixed: LB SHOULD BE INFORMED NOT TO BLACKLIST!!!
 						}
 					}
 				}
