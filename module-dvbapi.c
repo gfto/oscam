@@ -381,7 +381,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 			break;
 	}
 	if (ret < 0)
-		cs_log("ERROR: Could not start demux filter (errno=%d %s)", errno, strerror(errno));
+		cs_log("ERROR: Could not start demux filter (api: %d errno=%d %s)", selected_api, errno, strerror(errno));
 
 	if (type==TYPE_EMM && add_to_emm_list)
 		add_emmfilter_to_list(demux_id, filt, caid, provid, pid, count, n, time((time_t *) 0));
@@ -538,50 +538,70 @@ int32_t dvbapi_stop_filter(int32_t demux_index, int32_t type) {
 	else return 1;
 }
 
-int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
-{
-	int32_t ret=-1;
-	if (demux[demux_index].demux_fd[num].fd>0) {
-		cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d stop filter #%d (fd: %d), caid: %04X, provid: %06X, %spid: %04X", demux_index, num,
-			demux[demux_index].demux_fd[num].fd, demux[demux_index].demux_fd[num].caid, demux[demux_index].demux_fd[num].provid,
+int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num) {
+	int32_t retfilter=-1, retfd=-1, fd = demux[demux_index].demux_fd[num].fd;
+	if (fd>0) {
+		cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d stop filter #%d (fd: %d api: %d), caid: %04X, provid: %06X, %spid: %04X", 
+			demux_index, num, fd, selected_api, demux[demux_index].demux_fd[num].caid, demux[demux_index].demux_fd[num].provid,
 			(demux[demux_index].demux_fd[num].type==TYPE_ECM ?"ecm":"emm"), demux[demux_index].demux_fd[num].pid);
-#ifdef WITH_COOLAPI
-		ret=coolapi_remove_filter(demux[demux_index].demux_fd[num].fd, num);
-		coolapi_close_device(demux[demux_index].demux_fd[num].fd);
-#else
-#ifdef WITH_STAPI
-		if(selected_api == STAPI){ // ipbox fix
-			ret=stapi_remove_filter(demux_index, num, demux[demux_index].pmt_file);
-			if (ret != 1) ret = -1;
-		}
-#endif
-#if defined(__powerpc__)
-		ioctl(demux[demux_index].demux_fd[num].fd,DMX_STOP); // for old boxes dvbapi1 complaint like dm500 ppcold, no action feedback.
-#else
-		if(selected_api != STAPI){ // ipbox fix
-			ret=ioctl(demux[demux_index].demux_fd[num].fd,DMX_STOP); // for modern dvbapi boxes, they do give filter status back to us
-			if (ret < 0)
-				cs_log("ERROR: Demuxer #%d could not stop filter #%d (fd:%d) (errno=%d %s)", demux_index, num, demux[demux_index].demux_fd[num].fd,
-					errno, strerror(errno));
-		}
-#endif
-		if(selected_api != STAPI){ // ipbox fix
-			ret = close(demux[demux_index].demux_fd[num].fd);
-			if (ret < 0)
-				cs_log("ERROR: Demuxer #%d could not close fd of filter #%d (fd=%d, errno=%d %s)", demux_index, num, demux[demux_index].demux_fd[num].fd,
-					errno, strerror(errno));
-		}
-#endif
-		if (demux[demux_index].demux_fd[num].type == TYPE_ECM)
-			demux[demux_index].ECMpids[demux[demux_index].demux_fd[num].pidindex].index=0; //filter stopped, reset index
 
-		if (demux[demux_index].demux_fd[num].type == TYPE_EMM && demux[demux_index].demux_fd[num].pid != 0x001)
-			remove_emmfilter_from_list(demux_index, demux[demux_index].demux_fd[num].caid, demux[demux_index].demux_fd[num].provid, demux[demux_index].demux_fd[num].pid, num);
+		switch(selected_api) {
+			case DVBAPI_3:
+				retfilter=ioctl(fd,DMX_STOP); // for modern dvbapi boxes, they do give filter status back to us
+				break;
+			
+			case DVBAPI_1:
+#if defined(__powerpc__)
+				ioctl(fd,DMX_STOP); // for old boxes dvbapi1 complaint like dm500 ppcold, no action feedback.
+				retfilter = 1; // set always succesfull, but we will never know for sure
+#else
+				retfilter=ioctl(fd,DMX_STOP); // for modern dvbapi boxes, they do give filter status back to us
+#endif
+				break;
+			
+#ifdef WITH_STAPI
+			case STAPI:
+				retfilter=stapi_remove_filter(demux_index, num, demux[demux_index].pmt_file);
+				if (retfilter != 1){ // stapi returns 0 for error, 1 for all ok
+					retfilter = -1;
+				}
+				break;
+#endif
+#ifdef WITH_COOLAPI
+			case COOLAPI:
+				retfilter=coolapi_remove_filter(fd, num);
+				retfd=coolapi_close_device(fd);
+				break;
+#endif
+			default:
+				break;
+		}
+		if (retfilter < 0){
+			cs_log("ERROR: Demuxer #%d could not stop filter #%d (fd:%d api:%d errno=%d %s)", demux_index, num, fd, selected_api, errno, strerror(errno));
+		}
+#ifndef WITH_COOLAPI // no fd close for coolapi and stapi, all others do close fd!
+		retfd = close(fd);
+		if (errno == 9) retfd = 0; // no error on bad file descriptor
+		if (selected_api == STAPI) retfd = 0; // stapi closes its own filter fd!
+#endif
+		if (retfd){ 
+			cs_log("ERROR: Demuxer #%d could not close fd of filter #%d (fd=%d api:%d errno=%d %s)", demux_index, num, fd,
+				selected_api, errno, strerror(errno));
+		}
 		
+		if (demux[demux_index].demux_fd[num].type == TYPE_ECM){ //ecm filter stopped: reset index!
+			demux[demux_index].ECMpids[demux[demux_index].demux_fd[num].pidindex].index=0; 
+		}
+		
+		if (demux[demux_index].demux_fd[num].type == TYPE_EMM && demux[demux_index].demux_fd[num].pid != 0x001){ // If emm type remove from emm filterlist
+			remove_emmfilter_from_list(demux_index, demux[demux_index].demux_fd[num].caid, demux[demux_index].demux_fd[num].provid, demux[demux_index].demux_fd[num].pid, num);
+		}
 		demux[demux_index].demux_fd[num].fd=0;
 		demux[demux_index].demux_fd[num].type=0;
 	}
-	return ret;
+	if (retfilter <0) return retfilter; // error on remove filter
+	if (retfd <0) return retfd; // error on close filter fd
+	return 1; // all ok!
 }
 
 void dvbapi_start_filter(int32_t demux_id, int32_t pidindex, uint16_t pid, uint16_t caid, uint32_t provid, uchar table, uchar mask, int32_t timeout, int32_t type, int32_t count)
@@ -3037,7 +3057,7 @@ static void * dvbapi_main_local(void *cli) {
 						}
 					}
 					int32_t ret = close(pfd2[i].fd);
-					if (ret < 0) cs_log("ERROR: Could not close demuxer socket fd (errno=%d %s)", errno, strerror(errno));
+					if (ret < 0 && errno != 9) cs_log("ERROR: Could not close demuxer socket fd (errno=%d %s)", errno, strerror(errno));
 					if (pfd2[i].fd==listenfd && cfg.dvbapi_pmtmode ==6){
 						listenfd=-1;
 					}
@@ -3226,6 +3246,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 	
 	for (i=0;i<MAX_DEMUX;i++) {
+		uint32_t nocw_write = 0; // 0 = write cw, 1 = dont write cw to hardware demuxer
 		if (demux[i].program_number == 0) continue; // ignore empty demuxers
 		if (demux[i].program_number != er->srvid) continue; // skip ecm response for other srvid
 		demux[i].rdr=er->selected_reader;
@@ -3266,7 +3287,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				}
 				if (comparecw0 == 1 || comparecw1 == 1){
 					cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d duplicate controlword ecm response hash %s (duplicate controlword!)", i, ecmd5);
-					continue;
+					nocw_write = 1;
 				}
 			}
 				
@@ -3419,6 +3440,9 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		//dvbapi_set_section_filter(i, er);  is not needed anymore (unsure)
 		demux[i].ECMpids[j].tries = 0xFE; // reset timeout retry flag
 		demux[i].ECMpids[j].irdeto_cycle = 0xFE; // reset irdeto cycle
+		
+		if (nocw_write) continue; // cw was already written by another filter so it ends here!
+		
 		struct s_dvbapi_priority *delayentry=dvbapi_check_prio_match(i, demux[i].pidindex, 'd');
 		if (delayentry) {
 			if (delayentry->delay<1000) {
