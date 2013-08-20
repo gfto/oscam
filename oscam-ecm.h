@@ -14,6 +14,7 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 void get_cw(struct s_client *, ECM_REQUEST *);
 
 void update_chid(ECM_REQUEST *ecm);
+uint32_t get_subid(ECM_REQUEST *er);
 uint32_t chk_provid(uint8_t *ecm, uint16_t caid);
 
 void free_ecm(ECM_REQUEST *ecm);

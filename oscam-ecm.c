@@ -1088,8 +1088,7 @@ uint32_t chk_provid(uint8_t *ecm, uint16_t caid)
 
 void update_chid(ECM_REQUEST *er)
 {
-	if ((er->caid >> 8) == 0x06 && !er->chid && er->ecmlen > 7)
-		er->chid = (er->ecm[6] << 8) | er->ecm[7];
+	er->chid = get_subid(er);
 }
 
 int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, uint8_t rcEx, uint8_t *cw, char *msglog)
@@ -1243,7 +1242,7 @@ static void guess_cardsystem(ECM_REQUEST *er)
 //chid calculation from module stat to here 
 //to improve the quickfix concerning ecm chid info and extend it to all client requests wereby the chid is known in module stat
 
-static uint32_t get_subid(ECM_REQUEST *er)
+uint32_t get_subid(ECM_REQUEST *er)
 {
 	if (!er->ecmlen)
 		return 0;
@@ -1301,10 +1300,9 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		guess_cardsystem(er);
 
 	/* Quickfix Area */
-	update_chid(er);
-
+	
 	// add chid for all client requests as in module stat
-	er->chid = get_subid(er);
+	update_chid(er);
 
 	// quickfix for 0100:000065
 	if (er->caid == 0x100 && er->prid == 0x65 && er->srvid == 0)

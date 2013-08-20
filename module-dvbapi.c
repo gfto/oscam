@@ -2594,18 +2594,8 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		er->ecmlen= len;
 		memcpy(er->ecm, buffer, er->ecmlen);
 		
-		switch (er->caid>>8){  
-			case 0x01:	chid = b2i(2, er->ecm+7); break; // seca  
-			case 0x05:	chid = b2i(2, er->ecm+8); break; // viaccess  
-			case 0x06:	chid = b2i(2, er->ecm+6); break; // irdeto  
-			case 0x09:	chid = b2i(2, er->ecm+11); break; // videoguard
-			case 0x4A:	// DRE-Crypt, Bulcrypt,Tongfanf and  others? 
-						if (!(er->caid == 0x4AEE)) // Bulcrypt excluded for for now
-						chid = b2i(2, er->ecm+6); 
-						break; 
-		}
-		
-		er->chid = chid;
+		chid = get_subid(er); // fetch chid or fake chid
+		er->chid = (chid != 0?chid:0x10000); // if not zero apply, otherwise use no chid value 0x10000 
 		
 		if (curpid->CAID>>8 == 0x06){ //irdeto cas
 			cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d ECMTYPE %02X CAID %04X PROVID %06X ECMPID %04X IRDETO INDEX %02X MAX INDEX %02X CHID %04X CYCLE %02X",	demux_id, er->ecm[0], er->caid, er->prid, er->pid, er->ecm[4], er->ecm[5], er->chid, curpid->irdeto_cycle);
@@ -3424,17 +3414,8 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		// below this should be only run in case of ecm answer is found
 			
 		demux[i].pidindex = demux[i].curindex; // set current index as *the* pid to descramble 
-
-		switch (er->caid>>8){ // derive current chid in case of irdeto, or a unique part of ecm on other cas systems  
-			case 0x01:	demux[i].ECMpids[j].CHID = b2i(2, er->ecm+7); break; // seca  
-			case 0x05:	demux[i].ECMpids[j].CHID = b2i(2, er->ecm+8); break; // viaccess  
-			case 0x06:	demux[i].ECMpids[j].CHID = b2i(2, er->ecm+6); break; // irdeto  
-			case 0x09:	demux[i].ECMpids[j].CHID = b2i(2, er->ecm+11); break; // videoguard
-			case 0x4A:	// DRE-Crypt, Bulcrypt,Tongfang and others? 
-						if (!(er->caid == 0x4AEE)) // Bulcrypt excluded for now
-						demux[i].ECMpids[j].CHID = b2i(2, er->ecm+6); 
-						break; 
-		}
+		uint32_t chid = get_subid(er); // derive current chid in case of irdeto, or a unique part of ecm on other cas systems  
+		demux[i].ECMpids[j].CHID = (chid != 0?chid:0x10000); // if not zero apply, otherwise use no chid value 0x10000 
 		edit_channel_cache(i, j, 1); // do it here to here after the right CHID is registered
 			
 		//dvbapi_set_section_filter(i, er);  is not needed anymore (unsure)
