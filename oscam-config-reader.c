@@ -856,8 +856,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 #ifdef WITH_AZBOX
 		"mode",
 #endif
-		"deprecated", "ndsversion", "ratelimitecm", "ratelimitseconds",
-		"cooldown", "ecmunique", "srvidholdseconds",
+		"deprecated", "ndsversion",
 		0
 	};
 	// These are written only when the reader is network reader
