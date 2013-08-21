@@ -22,6 +22,7 @@ void reader_do_idle(struct s_reader * reader);
 void cs_capmt_notify(struct demux_s *demux);
 void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw);
 void reader_do_card_info(struct s_reader * reader);
+int32_t reader_slots_available(struct s_reader * reader, ECM_REQUEST *er);
 
 void cs_card_info(void);
 int32_t reader_init(struct s_reader *reader);

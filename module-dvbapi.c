@@ -1126,7 +1126,7 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 	er->prid  = demux[demux_id].ECMpids[pid].PROVID;
 	
 	for (rdr=first_active_reader; rdr != NULL ; rdr=rdr->next){
-		int8_t match = matching_reader(er, rdr, 0); // check for matching reader, exclude ratelimitercheck!
+		int8_t match = matching_reader(er, rdr); // check for matching reader
 		if ((time(NULL) - rdr->emm_last) > 3600 && rdr->needsemmfirst && er->caid >> 8 == 0x06){ 
 			cs_log("[DVBAPI] Warning reader %s received no emms for the last %d seconds -> skip, this reader needs emms first!", rdr->label,
 				(int) (time(NULL) - rdr->emm_last) );
@@ -1139,7 +1139,7 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 			if (caid) {
 				uint16_t save_caid = er->caid;
 				er->caid = caid;
-				match = matching_reader(er, rdr, 0); //matching (excluding ratelimitercheck)
+				match = matching_reader(er, rdr); // check for matching reader
 				er->caid = save_caid;
 			}
 		}
@@ -1638,7 +1638,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 						if (cfg.preferlocalcards && !is_network_reader(rdr)
 							&& rdr->card_status == CARD_INSERTED) {	// cfg.preferlocalcards = 1 local reader
 
-							if (matching_reader(er, rdr, 0)) {
+							if (matching_reader(er, rdr)) {
 								if (cache==2 && demux[demux_index].ECMpids[n].status==1)
 									demux[demux_index].ECMpids[n].status++;
 								else if (cache && !demux[demux_index].ECMpids[n].status)
@@ -1655,7 +1655,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 									demux[demux_index].ECMpids[n].status = -1;
 							}
 						} else {	// cfg.preferlocalcards = 0 or cfg.preferlocalcards = 1 and no local reader
-							if (matching_reader(er, rdr, 0)) {
+							if (matching_reader(er, rdr)) {
 								if (cache==2 && demux[demux_index].ECMpids[n].status==1)
 									demux[demux_index].ECMpids[n].status++;
 								else if (cache && !demux[demux_index].ECMpids[n].status)
@@ -1710,7 +1710,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 				if (cfg.preferlocalcards 
 						&& !is_network_reader(rdr) 
 						&& rdr->card_status==CARD_INSERTED) {	// cfg.preferlocalcards = 1 local reader
-					if (matching_reader(er, rdr, 0)) {
+					if (matching_reader(er, rdr)) {
 						demux[demux_index].ECMpids[n].status += prio*2;
 						cs_debug_mask(D_DVBAPI,"[PRIORITIZE PID %d] %04X:%06X:%04X (localrdr: %s weight: %d)",
 							n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,
@@ -1722,7 +1722,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index) {
 							demux[demux_index].ECMpids[n].status = -1;
 					}
 				} else {	// cfg.preferlocalcards = 0 or cfg.preferlocalcards = 1 and no local reader
-					if (matching_reader(er, rdr, 0)) {
+					if (matching_reader(er, rdr)) {
 						demux[demux_index].ECMpids[n].status += prio;
 						cs_debug_mask(D_DVBAPI,"[PRIORITIZE PID %d] %04X:%06X:%04X (rdr: %s weight: %d)",
 							n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,

@@ -5,8 +5,7 @@
 #define SRVID_ZERO	0 // srvid + 0000 (used for service-filter bypass)
 #define SRVID_MASK	1 // srvid + FFFF
 
-int32_t ecm_ratelimit_check(struct s_reader * reader, ECM_REQUEST *er, int32_t reader_mode);
-int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t slot);
+int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr);
 
 int32_t chk_srvid_match(ECM_REQUEST *er, SIDTAB *sidtab);
 int32_t chk_srvid(struct s_client *cl, ECM_REQUEST *er);
