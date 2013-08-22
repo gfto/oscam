@@ -412,10 +412,10 @@ All EMMs are with section length 183 (0xb7)
 Stats for EMMs collected for a period of 1 hours and 24 minutes
 
   2279742 - 82 70 b4 - unique_82
-   595309 - 85 70 b4 - unique_85
-   199949 - 84 70 b4 - shared_84
     19051 - 8a 70 b4 - unique_8a (polaris equivallent of 0x82)
-     6417 - 8b 70 b4 - unique_8b (polaris equivallent of 0x85)
+   199949 - 84 70 b4 - shared_84
+   595309 - 85 70 b4 - shared_85
+     6417 - 8b 70 b4 - shared_8b (polaris equivallent of 0x85)
     74850 - 8f 70 b4 - filler
 
 Total EMMs for the period: 3175317
@@ -423,9 +423,9 @@ Total EMMs for the period: 3175317
 
 #define BULCRYPT_EMM_UNIQUE_82  0x82 // Addressed at single card (updates subscription info)
 #define BULCRYPT_EMM_UNIQUE_8a  0x8a // Addressed at single card (like 0x82) used for Polaris
-#define BULCRYPT_EMM_UNIQUE_85  0x85 // Addressed at 4 cards (updates packages)
-#define BULCRYPT_EMM_UNIQUE_8b  0x8b // Addressed at 4 cards (like 0x85) used for Polaris
-#define BULCRYPT_EMM_SHARED_84  0x84 // Addressed to 1024 cards (update keys)
+#define BULCRYPT_EMM_SHARED_84  0x84 // Addressed to 4096 cards (updates keys)
+#define BULCRYPT_EMM_SHARED_85  0x85 // Addressed at 4096 cards (updates packages)
+#define BULCRYPT_EMM_SHARED_8b  0x8b // Addressed at 4096 cards (like 0x85) used for Polaris
 #define BULCRYPT_EMM_FILLER     0x8f // Filler to pad the EMM stream
 
 static int32_t bulcrypt_get_emm_type(EMM_PACKET *ep, struct s_reader *reader)
@@ -443,31 +443,26 @@ static int32_t bulcrypt_get_emm_type(EMM_PACKET *ep, struct s_reader *reader)
 		return 0;
 	}
 
-	uint8_t mask_last = 0x00;
 	ep->type = UNKNOWN;
 	switch (ep->emm[0]) {
-	case BULCRYPT_EMM_UNIQUE_82: ep->type = UNIQUE; mask_last = 0xF0; break; // Bulsatcom
-	case BULCRYPT_EMM_UNIQUE_8a: ep->type = UNIQUE; mask_last = 0xF0; break; // Polaris
-	case BULCRYPT_EMM_UNIQUE_85: ep->type = UNIQUE; mask_last = 0x00; break; // Bulsatcom
-	case BULCRYPT_EMM_UNIQUE_8b: ep->type = UNIQUE; mask_last = 0x00; break; // Polaris
+	case BULCRYPT_EMM_UNIQUE_82: ep->type = UNIQUE; break; // Bulsatcom
+	case BULCRYPT_EMM_UNIQUE_8a: ep->type = UNIQUE; break; // Polaris
 	case BULCRYPT_EMM_SHARED_84: ep->type = SHARED; break;
+	case BULCRYPT_EMM_SHARED_85: ep->type = SHARED; break; // Bulsatcom
+	case BULCRYPT_EMM_SHARED_8b: ep->type = SHARED; break; // Polaris
 	}
 
 	bool ret = false;
 	if (ep->type == UNIQUE) {
 		// The serial numbers looks like this:
 		//   aa bb cc dd
-		// To match EMM_82 and EMM_8a serial we compare (mask_last == 0xf0):
-		//   aa bb cc d-
-		// To match EMM_85 and EMM_8b serial we compare (mask_last == 0x00):
-		//   aa bb cc --
 		memcpy(ep->hexserial, ep->emm + 3, 4);
 		ret = reader->hexserial[0] == ep->hexserial[0] &&
 			  reader->hexserial[1] == ep->hexserial[1] &&
 			  reader->hexserial[2] == ep->hexserial[2] &&
-			  ((reader->hexserial[3] & mask_last) == (ep->hexserial[3] & mask_last));
+			  ((reader->hexserial[3] & 0xF0) == (ep->hexserial[3] & 0xF0));
 	} else if (ep->type == SHARED) {
-		// To match EMM_84
+		// To match EMM_84, EMM_85, EMM_8b
 		//   aa bb -- --
 		memcpy(ep->hexserial, ep->emm + 3, 2);
 		ret = reader->hexserial[0] == ep->hexserial[0] &&
@@ -527,29 +522,25 @@ static void bulcrypt_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	idx += 32;
 
 	filter[1]++;
-	filter[idx++]			= EMM_UNIQUE;
+	filter[idx++]			= EMM_SHARED;
 	filter[idx++]			= 0;
 	filter[idx + 0]			= 0x85;
 	filter[idx + 1]			= rdr->hexserial[0];
 	filter[idx + 2]			= rdr->hexserial[1];
-	filter[idx + 3]			= rdr->hexserial[2];
 	filter[idx + 0 + 16]	= 0xFF;
 	filter[idx + 1 + 16]	= 0xFF;
 	filter[idx + 2 + 16]	= 0xFF;
-	filter[idx + 3 + 16]	= 0xFF;
 	idx += 32;
 
 	filter[1]++;
-	filter[idx++]			= EMM_UNIQUE;
+	filter[idx++]			= EMM_SHARED;
 	filter[idx++]			= 0;
 	filter[idx + 0]			= 0x8b;
 	filter[idx + 1]			= rdr->hexserial[0];
 	filter[idx + 2]			= rdr->hexserial[1];
-	filter[idx + 3]			= rdr->hexserial[2];
 	filter[idx + 0 + 16]	= 0xFF;
 	filter[idx + 1 + 16]	= 0xFF;
 	filter[idx + 2 + 16]	= 0xFF;
-	filter[idx + 3 + 16]	= 0xFF;
 	idx += 32;
 
 	filter[1]++;
@@ -591,8 +582,8 @@ static int32_t bulcrypt_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 		emm_cmd[2] = ep->emm[0]; // 0x84
 		emm_cmd[3] = ep->emm[5]; // 0x0b
 		break;
-	case BULCRYPT_EMM_UNIQUE_85:
-	case BULCRYPT_EMM_UNIQUE_8b: // Polaris 0x85 equivallent of 0x85
+	case BULCRYPT_EMM_SHARED_85:
+	case BULCRYPT_EMM_SHARED_8b: // Polaris 0x85 equivallent of 0x85
 		memcpy(emm_cmd, cmd_emm2, sizeof(cmd_emm2));
 		emm_cmd[2] = ep->emm[5]; // 0xXX (Last bytes of the serial)
 		emm_cmd[3] = ep->emm[6]; // 0x0b
