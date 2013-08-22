@@ -28,8 +28,11 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 	int32_t h, foundspace = -1;
 	time_t actualtime = time(NULL);
 	for (h = 0; h < maxloop; h++) { // always release slots with srvid that are overtime, even if not called from reader module to maximize available slots!
-		if ((actualtime - reader->rlecmh[h].last >= reader->ratelimitseconds + reader->srvidholdseconds) && (reader->rlecmh[h].last !=-1)){
-			cs_debug_mask(D_TRACE, "ratelimiter srvid %04X released from slot #%d/%d of reader %s (%d>=%d ratelimitsec + %d sec srvidhold!)", reader->rlecmh[h].srvid, h+1, maxloop, reader->label, (int) (actualtime - reader->rlecmh[h].last), reader->ratelimitseconds, reader->srvidholdseconds);
+		if (reader->rlecmh[h].last == -1) continue;
+		if ((actualtime - reader->rlecmh[h].last) >= (reader->ratelimitseconds + reader->srvidholdseconds)){
+			cs_debug_mask(D_TRACE, "ratelimiter srvid %04X released from slot #%d/%d of reader %s (%d>=%d ratelimitsec + %d sec srvidhold!)",
+			reader->rlecmh[h].srvid, h+1, maxloop, reader->label, (int) (actualtime - reader->rlecmh[h].last),
+			reader->ratelimitseconds, reader->srvidholdseconds);
 			reader->rlecmh[h].last = -1;
 			reader->rlecmh[h].srvid = -1;
 			reader->rlecmh[h].kindecm = 0;
@@ -37,6 +40,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 	}
 	
 	for (h = 0; h < maxloop; h++) { // check if srvid is already in a slot
+		if(reader->rlecmh[h].last == -1) continue;
 		if (reader->rlecmh[h].srvid == er->srvid) {
 			cs_debug_mask(D_TRACE, "ratelimiter found srvid %04X for %d sec in slot #%d/%d of reader %s",er->srvid,
 				(int) (actualtime - reader->rlecmh[h].last), h+1, maxloop,reader->label);
@@ -48,8 +52,8 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 						if (er->ecm[0]== reader->rlecmh[h].kindecm){
 							char ecmd5[17*3];
 							cs_hexdump(0, reader->rlecmh[h].ecmd5, 16, ecmd5, sizeof(ecmd5));
-							cs_debug_mask(D_TRACE, "ratelimiter ecm %s in this slot for next %d seconds -> returning same controlword!", ecmd5, (int) 
-								(reader->ratelimitseconds - (actualtime - reader->rlecmh[h].last)));
+							cs_debug_mask(D_TRACE, "ratelimiter ecm %s in this slot for next %d seconds!", ecmd5,
+								(int) (reader->ratelimitseconds - (actualtime - reader->rlecmh[h].last)));
 							
 							struct ecm_request_t *erold=NULL;
 							if (!cs_malloc(&erold, sizeof(struct ecm_request_t)))
@@ -67,9 +71,10 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 						}
 					}
 				}
-				if (er->ecm[0]== reader->rlecmh[h].kindecm && (actualtime - reader->rlecmh[h].last <= reader->ratelimitseconds + reader->srvidholdseconds) && (reader->rlecmh[h].last !=-1)){
-					cs_debug_mask(D_TRACE, "ratelimiter srvid %04X ecm type %s, only allowing %s for next %d seconds in slot #%d/%d of reader %s -> skipping this slot!", 
-						reader->rlecmh[h].srvid, (reader->rlecmh[h].kindecm == 0x80?"even":"odd"), (reader->rlecmh[h].kindecm == 0x80?"odd":"even"),
+				if ((er->ecm[0] == reader->rlecmh[h].kindecm)
+					&& ((actualtime - reader->rlecmh[h].last) <= (reader->ratelimitseconds + reader->srvidholdseconds))){
+					
+					cs_debug_mask(D_TRACE, "ratelimiter srvid %04X ecm type %s, only allowing %s for next %d seconds in slot #%d/%d of reader %s -> skipping this slot!", reader->rlecmh[h].srvid, (reader->rlecmh[h].kindecm == 0x80?"even":"odd"), (reader->rlecmh[h].kindecm == 0x80?"odd":"even"),
 						(int) (reader->ratelimitseconds + reader->srvidholdseconds - (actualtime - reader->rlecmh[h].last)), h+1, maxloop, reader->label);
 					continue;
 				}
@@ -77,7 +82,11 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 			
 			if (h > 0){
 				for (foundspace = 0; foundspace < h; foundspace++) { // check for free lower slot
-					if (reader->rlecmh[foundspace].last ==- 1) {								
+					if (reader->rlecmh[foundspace].last == -1) {								
+						reader->rlecmh[foundspace].srvid = reader->rlecmh[h].srvid;
+						reader->rlecmh[foundspace].last = reader->rlecmh[h].last;
+						reader->rlecmh[foundspace].kindecm = reader->rlecmh[h].kindecm;
+						memcpy(reader->rlecmh[foundspace].ecmd5, reader->rlecmh[h].ecmd5, CS_ECMSTORESIZE); // replace md5 hash
 						reader->rlecmh[h].srvid = -1;
 						reader->rlecmh[h].last = -1;
 						cs_debug_mask(D_TRACE, "ratelimiter moving srvid %04X to slot #%d/%d of reader %s",er->srvid, foundspace+1, maxloop, reader->label);
@@ -86,11 +95,13 @@ static int32_t ecm_ratelimit_findspace(struct s_reader * reader, ECM_REQUEST *er
 				}
 			}
 			return h; // Found but cant move to lower slot!
-		} 
+		}
 	} // srvid not found in slots!
+	
 	if (!reader_mode) return -1; // who's calling us? reader or some stat prober?  If reader then register otherwise just report!
+	
 	for (h = 0; h < maxloop; h++) { // check for free slot
-		if (reader->rlecmh[h].last ==- 1) {
+		if (reader->rlecmh[h].last == -1) {
 			cs_debug_mask(D_TRACE, "ratelimiter added srvid %04X to slot #%d/%d of reader %s", er->srvid, h+1, maxloop, reader->label);
 			return h; // free slot found -> assign it!
 		}
@@ -148,6 +159,7 @@ int32_t ecm_ratelimit_check(struct s_reader * reader, ECM_REQUEST *er, int32_t r
 		cs_debug_mask(D_TRACE, "ratelimiter find a slot for srvid %04X on reader %s", er->srvid, reader->label);
 	}
 	foundspace = ecm_ratelimit_findspace(reader, er, maxslots, reader_mode);
+	
 	if (foundspace == -2){ // ecm unique was triggered
 		if (!reader_mode) return OK;
 		else {
@@ -195,12 +207,13 @@ int32_t ecm_ratelimit_check(struct s_reader * reader, ECM_REQUEST *er, int32_t r
 		write_ecm_answer(reader, er, E_NOTFOUND, E2_RATELIMIT, NULL, "Ratelimiter: no slots free!");
 		return ERROR;
 	}
+	
 	if (reader_mode) { //who's calling us? reader or some stat prober?  If reader then register otherwise just report!
 		reader->rlecmh[foundspace].last=time(NULL); //we are within ecmratelimits
 		reader->rlecmh[foundspace].srvid=er->srvid;
 		memcpy(reader->rlecmh[foundspace].ecmd5, er->ecmd5, CS_ECMSTORESIZE);// register ecmhash
 		reader->rlecmh[foundspace].kindecm = er->ecm[0]; // register kind of ecm
-		}
+	}
 	if (reader->cooldown[0] && reader->cooldownstate == 2) { // check if cooldowndelay is elapsed
 			if (time(NULL) - reader->cooldowntime > reader->cooldown[0]) {
 				reader->cooldownstate = 0; // return to cooldown setup phase
