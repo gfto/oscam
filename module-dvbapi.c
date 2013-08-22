@@ -433,9 +433,21 @@ static int32_t dvbapi_detect_api(void) {
 
 static int32_t dvbapi_read_device(int32_t dmx_fd, unsigned char *buf, int32_t length)
 {
-	int32_t len = read(dmx_fd, buf, length);
+	int32_t len, rc;
+	struct pollfd pfd[1];
 
-	if (len==-1)
+	pfd[0].fd = dmx_fd;
+	pfd[0].events = (POLLIN | POLLPRI);
+
+	rc = poll(pfd, 1, 7000);
+	if (rc<1) {
+		cs_log("ERROR: Read on %d timed out (errno=%d %s)", dmx_fd, errno, strerror(errno));
+		return -1;
+	}
+
+	len = read(dmx_fd, buf, length);
+
+	if (len<1)
 		cs_log("ERROR: Read error on fd %d (errno=%d %s)", dmx_fd, errno, strerror(errno));
 	else cs_ddump_mask(D_TRACE, buf, len, "[DVBAPI] Readed:");
 	return len;
@@ -2004,13 +2016,14 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			
 			if (ca_pmt_list_management == LIST_UPDATE || ca_pmt_list_management == LIST_LAST) {//PMT Update */
 				
-				if (demux[i].adapter_index != adapter_index || demux[i].ca_mask != ca_mask || demux[i].demux_index!=demux_index){
+				if (demux[i].adapter_index != adapter_index || demux[i].demux_index!=demux_index){
 					cs_log("[DVBAPI] Demuxer #%d PMT update for decoding of SRVID %04X on additional demuxer! ", i, program_number);
 					demux[i].stopdescramble = 0;
 				}
 				else{
 					demux_id = i;
 					demux[demux_id].curindex = -1;
+					demux[demux_id].ca_mask = ca_mask; 
 					demux[demux_id].pidindex = -1;
 					demux[demux_id].STREAMpidcount=0;
 					demux[demux_id].ECMpidcount=0;
@@ -2024,7 +2037,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 				
 			if (ca_pmt_list_management != LIST_UPDATE && ca_pmt_list_management != LIST_LAST){ 
 				demux_id=i;
-				if(demux[demux_id].adapter_index==adapter_index && demux[demux_id].ca_mask==ca_mask && demux[demux_id].demux_index==demux_index){
+				if(demux[demux_id].adapter_index==adapter_index && demux[demux_id].demux_index==demux_index){
 					cs_log("[DVBAPI] Demuxer #%d continue decoding of SRVID %04X", i, demux[i].program_number);
 #if defined WITH_AZBOX || defined WITH_MCA
 					openxcas_sid = program_number;
@@ -2038,6 +2051,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 						}
 						pmt_stopdescrambling_done = 1; // mark stopdescrambling as done!
 					}
+					demux[demux_id].ca_mask = ca_mask; // set ca_mask, it might have been changed!
 					return demux_id; // since we are continueing decoding here it ends!
 				}
 			}
@@ -2607,6 +2621,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 				else { // we are already running and not interested in this ecm
 					curpid->table=0;
 					dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this ecm doesnt match with current irdeto index
+					free(er);
 					return;
 				}
 			}
@@ -2628,6 +2643,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 							curpid->CHID = 0x10000;
 						}
 						dvbapi_stop_filternum(demux_id, filter_num); // stop this ecm filter!
+						free(er);
 						return;
 					}
 				}
@@ -2638,19 +2654,24 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 				
 				curpid->table=0;
 				dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this ecm doesnt match with current irdeto index
+				free(er);
 				return;	
 			}
 			else{ // all nonirdeto cas systems
 				struct s_dvbapi_priority *forceentry=dvbapi_check_prio_match(demux_id, pid, 'p');
 				curpid->table=0;
 				dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this ecm doesnt match with current irdeto index
-				if (forceentry && forceentry->force) return; // forced pid? keep trying the forced ecmpid!
+				if (forceentry && forceentry->force) {
+					free(er);
+					return; // forced pid? keep trying the forced ecmpid!
+				}
 				if (curpid->checked == 2) curpid->checked = 3;
 				if (curpid->checked == 1){
 					curpid->checked = 2;
 					curpid->CHID = 0x10000;
 				}
 				dvbapi_stop_filternum(demux_id, filter_num); // stop this ecm filter!
+				free(er);
 				return;
 			}
 		}
@@ -2667,6 +2688,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 
 			if (p->delay == len && p->force < 6) {
 				p->force++;
+				free(er);
 				return;
 			}
 			if (p->force >= 6)
@@ -2680,6 +2702,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 			if (buffer[4] != curpid->irdeto_curindex) { 
 				curpid->table=0;
 				dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this ecm doesnt match with current irdeto index
+				free(er);
 				return;
 			}
 			// we have an ecm with the correct irdeto index 
@@ -2698,6 +2721,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 					}
 					curpid->table=0;
 					dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this chid has to be ignored!
+					free(er);
 					return;
 				}
 			}
@@ -3120,9 +3144,7 @@ static void * dvbapi_main_local(void *cli) {
 					int32_t n=fdn[i];
 
 					if ((len=dvbapi_read_device(pfd2[i].fd, mbuf, sizeof(mbuf))) <= 0) {
-						/*if (demux[demux_index].pidindex==-1) {
-							dvbapi_try_next_caid(demux_index);
-						}*/
+						dvbapi_stop_filternum(demux_index,n); // stop filter since its giving errors and wont return anything good.
 						continue;
 					}
 					
