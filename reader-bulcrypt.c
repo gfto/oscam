@@ -394,9 +394,9 @@ All EMMs are with section length 183 (0xb7)
   xx xx xx xy - Card HEX SN (the last 4 bits (y) must be masked)
   payload
 
-  85 70       - UNUQUE_EMM_85|8b
+  85 70       - GLOBAL_EMM_85|8b
   b4          - Payload length (0xb4 == 180)
-  xx xx xx yy - Card HEX SN (the last 8 bits (y) must be masked)
+  xx xx yy yy - Card HEX SN (the last 16 bits (y) must be masked)
   payload
 
   84 70       - SHARED_EMM_84
@@ -414,8 +414,8 @@ Stats for EMMs collected for a period of 1 hours and 24 minutes
   2279742 - 82 70 b4 - unique_82
     19051 - 8a 70 b4 - unique_8a (polaris equivallent of 0x82)
    199949 - 84 70 b4 - shared_84
-   595309 - 85 70 b4 - shared_85
-     6417 - 8b 70 b4 - shared_8b (polaris equivallent of 0x85)
+   595309 - 85 70 b4 - global_85
+     6417 - 8b 70 b4 - global_8b (polaris equivallent of 0x85)
     74850 - 8f 70 b4 - filler
 
 Total EMMs for the period: 3175317
@@ -424,8 +424,8 @@ Total EMMs for the period: 3175317
 #define BULCRYPT_EMM_UNIQUE_82  0x82 // Addressed at single card (updates subscription info)
 #define BULCRYPT_EMM_UNIQUE_8a  0x8a // Addressed at single card (like 0x82) used for Polaris
 #define BULCRYPT_EMM_SHARED_84  0x84 // Addressed to 4096 cards (updates keys)
-#define BULCRYPT_EMM_SHARED_85  0x85 // Addressed at 4096 cards (updates packages)
-#define BULCRYPT_EMM_SHARED_8b  0x8b // Addressed at 4096 cards (like 0x85) used for Polaris
+#define BULCRYPT_EMM_GLOBAL_85  0x85 // Addressed at 4096 cards (updates packages)
+#define BULCRYPT_EMM_GLOBAL_8b  0x8b // Addressed at 4096 cards (like 0x85) used for Polaris
 #define BULCRYPT_EMM_FILLER     0x8f // Filler to pad the EMM stream
 
 static int32_t bulcrypt_get_emm_type(EMM_PACKET *ep, struct s_reader *reader)
@@ -448,8 +448,8 @@ static int32_t bulcrypt_get_emm_type(EMM_PACKET *ep, struct s_reader *reader)
 	case BULCRYPT_EMM_UNIQUE_82: ep->type = UNIQUE; break; // Bulsatcom
 	case BULCRYPT_EMM_UNIQUE_8a: ep->type = UNIQUE; break; // Polaris
 	case BULCRYPT_EMM_SHARED_84: ep->type = SHARED; break;
-	case BULCRYPT_EMM_SHARED_85: ep->type = SHARED; break; // Bulsatcom
-	case BULCRYPT_EMM_SHARED_8b: ep->type = SHARED; break; // Polaris
+	case BULCRYPT_EMM_GLOBAL_85: ep->type = GLOBAL; break; // Bulsatcom
+	case BULCRYPT_EMM_GLOBAL_8b: ep->type = GLOBAL; break; // Polaris
 	}
 
 	bool ret = false;
@@ -461,7 +461,7 @@ static int32_t bulcrypt_get_emm_type(EMM_PACKET *ep, struct s_reader *reader)
 			  reader->hexserial[1] == ep->hexserial[1] &&
 			  reader->hexserial[2] == ep->hexserial[2] &&
 			  ((reader->hexserial[3] & 0xF0) == (ep->hexserial[3] & 0xF0));
-	} else if (ep->type == SHARED) {
+	} else {
 		// To match EMM_84, EMM_85, EMM_8b
 		//   aa bb -- --
 		memcpy(ep->hexserial, ep->emm + 3, 2);
@@ -475,7 +475,8 @@ static int32_t bulcrypt_get_emm_type(EMM_PACKET *ep, struct s_reader *reader)
 		cs_hexdump(1, ep->hexserial, 4, dump_emm_sn, sizeof(dump_emm_sn));
 		rdr_log_sensitive(reader, "EMM_%s-%02x, emm_sn = {%s}, card_sn = {%s}",
 			ep->type == UNIQUE ? "UNIQUE" :
-			ep->type == SHARED ? "SHARED" : "??????",
+			ep->type == SHARED ? "SHARED" :
+			ep->type == GLOBAL ? "GLOBAL" : "??????",
 			ep->emm[0],
 			dump_emm_sn,
 			dump_card_sn);
@@ -522,7 +523,7 @@ static void bulcrypt_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	idx += 32;
 
 	filter[1]++;
-	filter[idx++]			= EMM_SHARED;
+	filter[idx++]			= EMM_GLOBAL;
 	filter[idx++]			= 0;
 	filter[idx + 0]			= 0x85;
 	filter[idx + 1]			= rdr->hexserial[0];
@@ -533,7 +534,7 @@ static void bulcrypt_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	idx += 32;
 
 	filter[1]++;
-	filter[idx++]			= EMM_SHARED;
+	filter[idx++]			= EMM_GLOBAL;
 	filter[idx++]			= 0;
 	filter[idx + 0]			= 0x8b;
 	filter[idx + 1]			= rdr->hexserial[0];
@@ -582,8 +583,8 @@ static int32_t bulcrypt_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 		emm_cmd[2] = ep->emm[0]; // 0x84
 		emm_cmd[3] = ep->emm[5]; // 0x0b
 		break;
-	case BULCRYPT_EMM_SHARED_85:
-	case BULCRYPT_EMM_SHARED_8b: // Polaris 0x85 equivallent of 0x85
+	case BULCRYPT_EMM_GLOBAL_85:
+	case BULCRYPT_EMM_GLOBAL_8b: // Polaris 0x85 equivallent of 0x85
 		memcpy(emm_cmd, cmd_emm2, sizeof(cmd_emm2));
 		emm_cmd[2] = ep->emm[5]; // 0xXX (Last bytes of the serial)
 		emm_cmd[3] = ep->emm[6]; // 0x0b
