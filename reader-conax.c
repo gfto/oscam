@@ -161,6 +161,8 @@ static int32_t conax_card_init(struct s_reader * reader, ATR *newatr)
 
   if ((n=read_record(reader, ins82, ins82+5, cta_res))<=0) return ERROR; // read serial
 
+  reader->nprov = 0;
+
   for (j=0, i=2; i<n; i+=cta_res[i+1]+2)
     switch(cta_res[i])
     {
@@ -171,12 +173,11 @@ static int32_t conax_card_init(struct s_reader * reader, ATR *newatr)
         else {
           memcpy(reader->sa[j], &cta_res[i+5], 4);
           j++;
+          reader->nprov++;
         }
         break;
     }
 
-  // we have one provider, 0x0000
-  reader->nprov = 1;
   memset(reader->prid, 0x00, sizeof(reader->prid));
 
   rdr_log_sensitive(reader, "type: Conax, caid: %04X, serial: {%llu}, hex serial: {%02x%02x%02x%02x}, card: v%d",
