@@ -188,7 +188,7 @@ static int32_t conax_card_init(struct s_reader * reader, ATR *newatr)
   for (j=0; j<reader->nprov; j++)
   {
     rdr_log(reader, "Provider: %d  Provider-Id: %06X", j+1, b2i(4, reader->prid[j]));
-    rdr_log(reader, "Provider: %d  SharedAddress: %08X", j+1, b2i(4, reader->sa[j]));
+    rdr_log_sensitive(reader, "Provider: %d  SharedAddress: {%08X}", j+1, b2i(4, reader->sa[j]));
   }
 
   return OK;
