@@ -473,7 +473,6 @@ static struct s_rlimit *ratelimit_read_int(void) {
 	FILE *fp = open_config_file(cs_ratelimit);
 	if (!fp)
 		return NULL;
-	cs_log("*********** RUNNING **********");
 	char token[1024], str1[1024];
 	int32_t i, ret, count=0;
 	struct s_rlimit *new_rlimit = NULL, *entry, *last=NULL;

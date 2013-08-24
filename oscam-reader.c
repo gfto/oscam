@@ -214,7 +214,7 @@ int32_t ecm_ratelimit_check(struct s_reader *reader, ECM_REQUEST *er, int32_t re
 	rl = get_ratelimit (er);
 	
 	if(rl.ratelimitecm > 0){
-		cs_log("Ratelimit found for CAID: %04X PROVID: %06X SRVID: %04X CHID: %04X maxecms: %d cycle: %ds srvidhold: %ds",
+		cs_debug_mask(D_TRACE,"Ratelimit found for CAID: %04X PROVID: %06X SRVID: %04X CHID: %04X maxecms: %d cycle: %ds srvidhold: %ds",
 		rl.caid, rl.provid, rl.srvid, rl.chid, rl.ratelimitecm, rl.ratelimitseconds, rl.srvidholdseconds);
 	}
 	else { // nothing found: apply general reader limits
@@ -225,7 +225,7 @@ int32_t ecm_ratelimit_check(struct s_reader *reader, ECM_REQUEST *er, int32_t re
 		rl.provid = er->prid;
 		rl.chid = er->chid;
 		rl.srvid = er->srvid;
-		cs_log("Ratelimit not found, apply readerdefault for CAID: %04X PROVID: %06X SRVID: %04X CHID: %04X maxecms: %d cycle: %ds srvidhold: %ds",
+		cs_debug_mask(D_TRACE,"Ratelimit apply readerdefault for CAID: %04X PROVID: %06X SRVID: %04X CHID: %04X maxecms: %d cycle: %ds srvidhold: %ds",
 			rl.caid, rl.provid, rl.srvid, rl.chid, rl.ratelimitecm, rl.ratelimitseconds, rl.srvidholdseconds);
 	}
 	// Below this line: rate limit functionality.
