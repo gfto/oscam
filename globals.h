@@ -1070,11 +1070,16 @@ struct s_ecmHeaderwhitelist {
 
 //ratelimit
 struct ecmrl {
-	uint16_t		srvid;
 	time_t			last;
 	uchar			kindecm;
 	uchar			ecmd5[CS_ECMSTORESIZE];
-	
+	uint16_t  		caid;
+	uint32_t   		provid;
+	uint16_t   		srvid;
+	uint16_t		chid;
+	int32_t			ratelimitecm;
+	int32_t			ratelimitseconds;
+	int32_t			srvidholdseconds;
 };
 #define MAXECMRATELIMIT	20
 
@@ -1404,6 +1409,12 @@ struct s_srvid
 	struct s_srvid	*next;
 };
 
+struct s_rlimit
+{
+	struct ecmrl	rl;
+	struct s_rlimit *next;
+};
+
 struct s_tierid
 {
 	uint16_t    	tierid;
@@ -1716,6 +1727,9 @@ struct s_config
 	char		*pidfile;
 
 	int32_t		max_pending;
+	
+	//Ratelimit list
+	struct s_rlimit *ratelimit_list;
 };
 
 struct s_clientinit

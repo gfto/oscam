@@ -30,7 +30,8 @@ int32_t write_services(void);
 
 int32_t chk_global_whitelist(ECM_REQUEST *er, uint32_t *line);
 void    global_whitelist_read(void);
-
+struct ecmrl get_ratelimit(ECM_REQUEST *er); // get ratelimits for ecm request (if available)
+void ratelimit_read(void);
 int32_t init_provid(void);
 int32_t init_srvid(void);
 int32_t init_tierid(void);

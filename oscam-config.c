@@ -14,6 +14,7 @@
 extern uint16_t len4caid[256];
 
 #define cs_srid				"oscam.srvid"
+#define cs_ratelimit		"oscam.ratelimit"
 #define cs_trid				"oscam.tiers"
 #define cs_l4ca				"oscam.guess"
 #define cs_sidt				"oscam.services"
@@ -466,6 +467,105 @@ int32_t init_srvid(void)
 	}
 
 	return(0);
+}
+
+static struct s_rlimit *ratelimit_read_int(void) {
+	FILE *fp = open_config_file(cs_ratelimit);
+	if (!fp)
+		return NULL;
+	cs_log("*********** RUNNING **********");
+	char token[1024], str1[1024];
+	int32_t i, ret, count=0;
+	struct s_rlimit *new_rlimit = NULL, *entry, *last=NULL;
+	uint32_t line = 0;
+
+	while (fgets(token, sizeof(token), fp)) {
+		line++;
+		if (strlen(token) <= 1) continue;
+		if (token[0]=='#' || token[0]=='/') continue;
+		if (strlen(token)>1024) continue;
+
+		for (i=0;i<(int)strlen(token);i++) {
+			if ((token[i]==':' || token[i]==' ') && token[i+1]==':') {
+				memmove(token+i+2, token+i+1, strlen(token)-i+1);
+				token[i+1]='0';
+			}
+			if (token[i]=='#' || token[i]=='/') {
+				token[i]='\0';
+				break;
+			}
+		}
+	
+		uint32_t caid=0, provid=0, srvid=0, chid=0, ratelimitecm=0, ratelimitseconds=0, srvidholdseconds=0;
+		memset(str1, 0, sizeof(str1));
+
+		ret = sscanf(token, "%4x:%6x:%4x:%4x:%d:%d:%d:%1023s", &caid, &provid, &srvid, &chid, &ratelimitecm, &ratelimitseconds, &srvidholdseconds, str1);
+		if (ret < 1) continue;
+		strncat(str1, ",", sizeof(str1) - strlen(str1) - 1);
+		if (!cs_malloc(&entry, sizeof(struct s_rlimit))) {
+			fclose(fp);
+			return new_rlimit;
+		}
+
+		count++;
+		entry->rl.caid = caid;
+		entry->rl.provid = provid;
+		entry->rl.srvid = srvid;
+		entry->rl.chid = chid;
+		entry->rl.ratelimitecm = ratelimitecm;
+		entry->rl.ratelimitseconds = ratelimitseconds;
+		entry->rl.srvidholdseconds = srvidholdseconds;
+
+		cs_debug_mask(D_TRACE, "ratelimit: %04X:%06X:%04X:%04X:%d:%d:%d", entry->rl.caid, entry->rl.provid, entry->rl.srvid, entry->rl.chid,
+			entry->rl.ratelimitecm, entry->rl.ratelimitseconds, entry->rl.srvidholdseconds);
+
+		if (!new_rlimit) {
+			new_rlimit = entry;
+			last = new_rlimit;
+		} else {
+			last->next = entry;
+			last = entry;
+		}
+	}
+
+	if (count)
+	cs_log("%d entries read from %s", count, cs_ratelimit);
+
+	fclose(fp);
+
+	return new_rlimit;
+}
+
+void ratelimit_read(void) {
+
+	struct s_rlimit *entry, *old_list;
+
+	old_list = cfg.ratelimit_list;
+	cfg.ratelimit_list = ratelimit_read_int();
+
+	while (old_list) {
+		entry = old_list->next;
+		free(old_list);
+		old_list = entry;
+	}
+}
+
+struct ecmrl get_ratelimit(ECM_REQUEST *er) {
+	
+	struct ecmrl tmp;
+	memset(&tmp,0,sizeof(tmp));
+	if (!cfg.ratelimit_list) return tmp;
+	struct s_rlimit *entry = cfg.ratelimit_list;
+	while (entry){
+		if (entry->rl.caid == er->caid && entry->rl.provid == er->prid && entry->rl.srvid == er->srvid && (!entry->rl.chid || entry->rl.chid == er->chid)){
+			break;
+		}
+		entry = entry->next;
+	}
+	
+	if (entry) tmp = entry->rl;
+	
+	return (tmp);
 }
 
 int32_t init_tierid(void)

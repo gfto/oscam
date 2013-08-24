@@ -1253,6 +1253,7 @@ int32_t main (int32_t argc, char *argv[])
   mca_init();
 
   global_whitelist_read();
+  ratelimit_read();
   cacheex_load_config_file();
 
 	for (i = 0; i < CS_MAX_MOD; i++) {
