@@ -346,7 +346,7 @@ static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 		return 1;
 	}
 	else {
-		if (!memcmp(&ep->emm[6], rdr->hexserial+2, 4)) {
+		if (!memcmp(&ep->emm[6], rdr->hexserial + 2, 4)) {
 			ep->type = UNIQUE;
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial+2, &ep->emm[6], 4);
@@ -367,7 +367,7 @@ static struct s_csystem_emm_filter* conax_get_emm_filter(struct s_reader *rdr)
   struct s_csystem_emm_filter *filters = rdr->csystem.emm_filters;
 
   if (filters == NULL) {
-    const unsigned int max_filter_count = 3;
+    const unsigned int max_filter_count = 2 + rdr->nprov;
     if (!cs_malloc(&rdr->csystem.emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
       return NULL;
 
@@ -375,7 +375,7 @@ static struct s_csystem_emm_filter* conax_get_emm_filter(struct s_reader *rdr)
     rdr->csystem.emm_filter_count = 0;
     memset(filters, 0x00, max_filter_count * sizeof(struct s_csystem_emm_filter));
 
-    int32_t idx = 0;
+    int idx = 0, prov;
 
     filters[idx].type = EMM_GLOBAL;
     filters[idx].enabled   = 0; // FIXME: dont see any conax global EMM yet
@@ -385,14 +385,15 @@ static struct s_csystem_emm_filter* conax_get_emm_filter(struct s_reader *rdr)
     filters[idx].mask[8]   = 0xFF;
     idx++;
 
-    filters[idx].type = EMM_SHARED;
-    filters[idx].enabled  = 1;
-    filters[idx].filter[0] = 0x82;
-    filters[idx].mask[0]   = 0xFF;
-    memcpy(&filters[idx].filter[4], rdr->sa[0], 4);
-    memset(&filters[idx].mask[4], 0xFF, 4);
-
-    idx++;
+    for (prov = 0; prov < rdr->nprov; prov++) {
+      filters[idx].type = EMM_SHARED;
+      filters[idx].enabled  = 1;
+      filters[idx].filter[0] = 0x82;
+      filters[idx].mask[0]   = 0xFF;
+      memcpy(&filters[idx].filter[4], rdr->sa[prov], 4);
+      memset(&filters[idx].mask[4], 0xFF, 4);
+      idx++;
+    }
 
     filters[idx].type = EMM_UNIQUE;
     filters[idx].enabled  = 1;
