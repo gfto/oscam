@@ -61,12 +61,14 @@ static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs
 			continue;
 
 		match = 1;
-		for (i = 0, k = 0; i < 10 && k < ep->emmlen && match; i++, k++) {
+		for (i = 0, k = 0; i < 16 && k < ep->emmlen && match; i++, k++) {
 			flt = dmx_filter[j].filter[i];
 			mask = dmx_filter[j].mask[i];
 			if (!mask)
-				break;
+				continue;
 			match = (flt == (ep->emm[k] & mask));
+			if (!match)
+				break;
 			if (k == 0)
 				k += 2; //skip len
 		}
