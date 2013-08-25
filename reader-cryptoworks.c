@@ -525,61 +525,69 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 	return 0;
 }
 
-static void cryptoworks_get_emm_filter(struct s_reader * rdr, uchar *filter)
+static struct s_csystem_emm_filter* cryptoworks_get_emm_filter(struct s_reader *rdr)
 {
-	int32_t idx = 2;
+  struct s_csystem_emm_filter *filters = rdr->csystem.emm_filters;
 
-	filter[0]=0xFF;
-	filter[1]=0;
+  if (filters == NULL) {
+    const unsigned int max_filter_count = 4;
+    if (!cs_malloc(&rdr->csystem.emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
+      return NULL;
 
-	filter[idx++]=EMM_GLOBAL;
-	filter[idx++]=0;
-	filter[idx+0]    = 0x88;
-	filter[idx+0+16] = 0xFE;
-	filter[idx+1]    = 0xA9;
-	filter[idx+1+16] = 0xFF;
-	filter[idx+2]    = 0xFF;
-	filter[idx+2+16] = 0xFF;
-	filter[1]++;
-	idx += 32;
+    filters = rdr->csystem.emm_filters;
+    rdr->csystem.emm_filter_count = 0;
+    memset(filters, 0x00, max_filter_count * sizeof(struct s_csystem_emm_filter));
 
-	filter[idx++]=EMM_SHARED;
-	filter[idx++]=0;
-	filter[idx+0]    = 0x86;
-	filter[idx+16]   = 0xFF;
-	filter[idx+1]    = 0xA9;
-	filter[idx+1+16] = 0xFF;
-	filter[idx+2]    = 0xFF;
-	filter[idx+2+16] = 0xFF;
-	filter[1]++;
-	idx += 32;
+    int32_t idx = 0;
 
-	filter[idx++]=EMM_SHARED;
-	filter[idx++]=0;
-	filter[idx+0]    = 0x84;
-	filter[idx+0+16] = 0xFF;
-	filter[idx+1]    = 0xA9;
-	filter[idx+1+16] = 0xFF;
-	filter[idx+2]    = 0xFF;
-	filter[idx+2+16] = 0xFF;
-	memcpy(filter+idx+3, rdr->hexserial, 4);
-	memset(filter+idx+3+16, 0xFF, 4);
-	filter[1]++;
-	idx += 32;
+    filters[idx].type = EMM_GLOBAL;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x88;
+    filters[idx].mask[0]   = 0xFE;
+    filters[idx].filter[1] = 0xA9;
+    filters[idx].mask[1]   = 0xFF;
+    filters[idx].filter[2] = 0xFF;
+    filters[idx].mask[2]   = 0xFF;
+    idx++;
 
-	filter[idx++]=EMM_UNIQUE;
-	filter[idx++]=0;
-	filter[idx+0]    = 0x82;
-	filter[idx+0+16] = 0xFF;
-	filter[idx+1]    = 0xA9;
-	filter[idx+1+16] = 0xFF;
-	filter[idx+2]    = 0xFF;
-	filter[idx+2+16] = 0xFF;
-	memcpy(filter+idx+3, rdr->hexserial, 5);
-	memset(filter+idx+3+16, 0xFF, 5);
-	filter[1]++;
+    filters[idx].type = EMM_SHARED;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x86;
+    filters[idx].mask[0]   = 0xFF;
+    filters[idx].filter[1] = 0xA9;
+    filters[idx].mask[1]   = 0xFF;
+    filters[idx].filter[2] = 0xFF;
+    filters[idx].mask[2]   = 0xFF;
+    idx++;
 
-	return;
+    filters[idx].type = EMM_SHARED;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x84;
+    filters[idx].mask[0]   = 0xFF;
+    filters[idx].filter[1] = 0xA9;
+    filters[idx].mask[1]   = 0xFF;
+    filters[idx].filter[2] = 0xFF;
+    filters[idx].mask[2]   = 0xFF;
+    memcpy(&filters[idx].filter[3], rdr->hexserial, 4);
+    memset(&filters[idx].mask[3], 0xFF, 4);
+    idx++;
+
+    filters[idx].type = EMM_UNIQUE;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x82;
+    filters[idx].mask[0]   = 0xFF;
+    filters[idx].filter[1] = 0xA9;
+    filters[idx].mask[1]   = 0xFF;
+    filters[idx].filter[2] = 0xFF;
+    filters[idx].mask[2]   = 0xFF;
+    memcpy(&filters[idx].filter[3], rdr->hexserial, 5);
+    memset(&filters[idx].mask[3], 0xFF, 5);
+    idx++;
+
+    rdr->csystem.emm_filter_count = idx;
+  }
+
+  return filters;
 }
 
 static int32_t cryptoworks_do_emm(struct s_reader * reader, EMM_PACKET *ep)

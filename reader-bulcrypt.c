@@ -485,76 +485,83 @@ static int32_t bulcrypt_get_emm_type(EMM_PACKET *ep, struct s_reader *reader)
 	return ret;
 }
 
-static void bulcrypt_get_emm_filter(struct s_reader * rdr, uchar *filter)
+static struct s_csystem_emm_filter* bulcrypt_get_emm_filter(struct s_reader *rdr)
 {
-	int32_t idx = 2;
+  struct s_csystem_emm_filter *filters = rdr->csystem.emm_filters;
 
-	filter[0] = 0xFF;
-	filter[1] = 0;
+  if (filters == NULL) {
+    const unsigned int max_filter_count = 5;
+    if (!cs_malloc(&rdr->csystem.emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
+      return NULL;
 
-	filter[1]++;
-	filter[idx++]			= EMM_UNIQUE;
-	filter[idx++]			= 0;
-	filter[idx + 0]			= 0x82;
-	filter[idx + 1]			= rdr->hexserial[0];
-	filter[idx + 2]			= rdr->hexserial[1];
-	filter[idx + 3]			= rdr->hexserial[2];
-	filter[idx + 4]			= rdr->hexserial[3];
-	filter[idx + 0 + 16]	= 0xFF;
-	filter[idx + 1 + 16]	= 0xFF;
-	filter[idx + 2 + 16]	= 0xFF;
-	filter[idx + 3 + 16]	= 0xFF;
-	filter[idx + 4 + 16]	= 0xF0;
-	idx += 32;
+    filters = rdr->csystem.emm_filters;
+    rdr->csystem.emm_filter_count = 0;
+    memset(filters, 0x00, max_filter_count * sizeof(struct s_csystem_emm_filter));
 
-	filter[1]++;
-	filter[idx++]			= EMM_UNIQUE;
-	filter[idx++]			= 0;
-	filter[idx + 0]			= 0x8a;
-	filter[idx + 1]			= rdr->hexserial[0];
-	filter[idx + 2]			= rdr->hexserial[1];
-	filter[idx + 3]			= rdr->hexserial[2];
-	filter[idx + 4]			= rdr->hexserial[3];
-	filter[idx + 0 + 16]	= 0xFF;
-	filter[idx + 1 + 16]	= 0xFF;
-	filter[idx + 2 + 16]	= 0xFF;
-	filter[idx + 3 + 16]	= 0xFF;
-	filter[idx + 4 + 16]	= 0xF0;
-	idx += 32;
+    int32_t idx = 0;
 
-	filter[1]++;
-	filter[idx++]			= EMM_GLOBAL;
-	filter[idx++]			= 0;
-	filter[idx + 0]			= 0x85;
-	filter[idx + 1]			= rdr->hexserial[0];
-	filter[idx + 2]			= rdr->hexserial[1];
-	filter[idx + 0 + 16]	= 0xFF;
-	filter[idx + 1 + 16]	= 0xFF;
-	filter[idx + 2 + 16]	= 0xFF;
-	idx += 32;
+    filters[idx].type = EMM_UNIQUE;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x82;
+    filters[idx].filter[1] = rdr->hexserial[0];
+    filters[idx].filter[2] = rdr->hexserial[1];
+    filters[idx].filter[3] = rdr->hexserial[2];
+    filters[idx].filter[4] = rdr->hexserial[3];
+    filters[idx].mask[0]   = 0xFF;
+    filters[idx].mask[1]   = 0xFF;
+    filters[idx].mask[2]   = 0xFF;
+    filters[idx].mask[3]   = 0xFF;
+    filters[idx].mask[4]   = 0xF0;
+    idx++;
 
-	filter[1]++;
-	filter[idx++]			= EMM_GLOBAL;
-	filter[idx++]			= 0;
-	filter[idx + 0]			= 0x8b;
-	filter[idx + 1]			= rdr->hexserial[0];
-	filter[idx + 2]			= rdr->hexserial[1];
-	filter[idx + 0 + 16]	= 0xFF;
-	filter[idx + 1 + 16]	= 0xFF;
-	filter[idx + 2 + 16]	= 0xFF;
-	idx += 32;
+    filters[idx].type = EMM_UNIQUE;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x8a;
+    filters[idx].filter[1] = rdr->hexserial[0];
+    filters[idx].filter[2] = rdr->hexserial[1];
+    filters[idx].filter[3] = rdr->hexserial[2];
+    filters[idx].filter[4] = rdr->hexserial[3];
+    filters[idx].mask[0]   = 0xFF;
+    filters[idx].mask[1]   = 0xFF;
+    filters[idx].mask[2]   = 0xFF;
+    filters[idx].mask[3]   = 0xFF;
+    filters[idx].mask[4]   = 0xF0;
+    idx++;
 
-	filter[1]++;
-	filter[idx++]			= EMM_SHARED;
-	filter[idx++]			= 0;
-	filter[idx + 0]			= 0x84;
-	filter[idx + 1]			= rdr->hexserial[0];
-	filter[idx + 2]			= rdr->hexserial[1];
-	filter[idx + 0 + 16]	= 0xFF;
-	filter[idx + 1 + 16]	= 0xFF;
-	filter[idx + 2 + 16]	= 0xFF;
+    filters[idx].type = EMM_SHARED;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x84;
+    filters[idx].filter[1] = rdr->hexserial[0];
+    filters[idx].filter[2] = rdr->hexserial[1];
+    filters[idx].mask[0]   = 0xFF;
+    filters[idx].mask[1]   = 0xFF;
+    filters[idx].mask[2]   = 0xFF;
+    idx++;
 
-	return;
+    filters[idx].type = EMM_GLOBAL;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x85;
+    filters[idx].filter[1] = rdr->hexserial[0];
+    filters[idx].filter[2] = rdr->hexserial[1];
+    filters[idx].mask[0]   = 0xFF;
+    filters[idx].mask[1]   = 0xFF;
+    filters[idx].mask[2]   = 0xFF;
+    idx++;
+
+    filters[idx].type = EMM_GLOBAL;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x8b;
+    filters[idx].filter[1] = rdr->hexserial[0];
+    filters[idx].filter[2] = rdr->hexserial[1];
+    filters[idx].mask[0]   = 0xFF;
+    filters[idx].mask[1]   = 0xFF;
+    filters[idx].mask[2]   = 0xFF;
+    idx++;
+
+    rdr->csystem.emm_filter_count = idx;
+  }
+
+  return filters;
 }
 
 static int32_t bulcrypt_do_emm(struct s_reader *reader, EMM_PACKET *ep)

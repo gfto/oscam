@@ -338,43 +338,53 @@ static int32_t griffin_do_emm(struct s_reader *rdr, EMM_PACKET *ep)
 	return OK;
 }
 
-static void griffin_get_emm_filter(struct s_reader *rdr, uint8_t *filter)
+static struct s_csystem_emm_filter* griffin_get_emm_filter(struct s_reader *rdr)
 {
-	int32_t idx = 2;
+  struct s_csystem_emm_filter *filters = rdr->csystem.emm_filters;
 
-	filter[0] = 0xFF;
-	filter[1] = 0;
+  if (filters == NULL) {
+    const unsigned int max_filter_count = 2;
+    if (!cs_malloc(&rdr->csystem.emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
+      return NULL;
 
-	filter[1]++;
-	filter[idx++]			= EMM_SHARED;
-	filter[idx++]			= 0;
-	filter[idx + 0]			= 0x82;
-	filter[idx + 1]			= rdr->sa[0][0];
-	filter[idx + 2]			= rdr->sa[0][1];
-	filter[idx + 3]			= rdr->sa[0][2];
-	filter[idx + 4]			= rdr->sa[0][3];
-	filter[idx + 0 + 16]	= 0xFF;
-	filter[idx + 1 + 16]	= 0xFF;
-	filter[idx + 2 + 16]	= 0xFF;
-	filter[idx + 3 + 16]	= 0xFF;
-	filter[idx + 4 + 16]	= 0xFF;
-	idx += 32;
+    filters = rdr->csystem.emm_filters;
+    rdr->csystem.emm_filter_count = 0;
+    memset(filters, 0x00, max_filter_count * sizeof(struct s_csystem_emm_filter));
 
-	filter[1]++;
-	filter[idx++]			= EMM_UNIQUE;
-	filter[idx++]			= 0;
-	filter[idx + 0]			= 0x83;
-	filter[idx + 1]			= rdr->sa[1][0];
-	filter[idx + 2]			= rdr->sa[1][1];
-	filter[idx + 3]			= rdr->sa[1][2];
-	filter[idx + 4]			= rdr->sa[1][3];
-	filter[idx + 0 + 16]	= 0xF0;
-	filter[idx + 1 + 16]	= 0xFF;
-	filter[idx + 2 + 16]	= 0xFF;
-	filter[idx + 3 + 16]	= 0xFF;
-	filter[idx + 4 + 16]	= 0xFF;
+    int32_t idx = 0;
 
-	return;
+    filters[idx].type = EMM_SHARED;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x82;
+    filters[idx].filter[1] = rdr->sa[0][0];
+    filters[idx].filter[2] = rdr->sa[0][1];
+    filters[idx].filter[3] = rdr->sa[0][2];
+    filters[idx].filter[4] = rdr->sa[0][3];
+    filters[idx].mask[0]   = 0xFF;
+    filters[idx].mask[1]   = 0xFF;
+    filters[idx].mask[2]   = 0xFF;
+    filters[idx].mask[3]   = 0xFF;
+    filters[idx].mask[4]   = 0xFF;
+    idx++;
+
+    filters[idx].type = EMM_UNIQUE;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x83;
+    filters[idx].filter[1] = rdr->sa[1][0];
+    filters[idx].filter[2] = rdr->sa[1][1];
+    filters[idx].filter[3] = rdr->sa[1][2];
+    filters[idx].filter[4] = rdr->sa[1][3];
+    filters[idx].mask[0]   = 0xF0;
+    filters[idx].mask[1]   = 0xFF;
+    filters[idx].mask[2]   = 0xFF;
+    filters[idx].mask[3]   = 0xFF;
+    filters[idx].mask[4]   = 0xFF;
+    idx++;
+
+    rdr->csystem.emm_filter_count = idx;
+  }
+
+  return filters;
 }
 
 static int32_t griffin_card_info(struct s_reader *rdr)

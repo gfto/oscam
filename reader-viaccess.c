@@ -928,45 +928,53 @@ default:
 	}
 }
 
-static void viaccess_get_emm_filter(struct s_reader * rdr, uchar *filter)
+static struct s_csystem_emm_filter* viaccess_get_emm_filter(struct s_reader *rdr)
 {
-	int32_t idx = 2;
+  struct s_csystem_emm_filter *filters = rdr->csystem.emm_filters;
 
-	filter[0]=0xFF;
-	filter[1]=0;
+  if (filters == NULL) {
+    const unsigned int max_filter_count = 4;
+    if (!cs_malloc(&rdr->csystem.emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
+      return NULL;
 
-	filter[idx++]=EMM_SHARED;
-	filter[idx++]=0;
-	filter[idx+0]     = 0x8C;
-	filter[idx+0+16]  = 0xFF;
-	filter[1]++;
-	idx += 32;
+    filters = rdr->csystem.emm_filters;
+    rdr->csystem.emm_filter_count = 0;
+    memset(filters, 0x00, max_filter_count * sizeof(struct s_csystem_emm_filter));
 
-	filter[idx++]=EMM_SHARED;
-	filter[idx++]=0;
-	filter[idx+0]     = 0x8D;
-	filter[idx+0+16]  = 0xFF;
-	filter[1]++;
-	idx += 32;
+    int32_t idx = 0;
 
-	filter[idx++]=EMM_SHARED;
-	filter[idx++]=0;
-	filter[idx+0]    = 0x8E;
-	filter[idx+0+16] = 0xFF;
-	memcpy(filter+idx+1, &rdr->sa[0][0], 3);
-	memset(filter+idx+1+16, 0xFF, 3);
-	filter[1]++;
-	idx += 32;
+    filters[idx].type = EMM_SHARED;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x8C;
+    filters[idx].mask[0]   = 0xFF;
+    idx++;
 
-	filter[idx++]=EMM_UNIQUE;
-	filter[idx++]=0;
-	filter[idx+0]    = 0x88;
-	filter[idx+0+16] = 0xFF;
-	memcpy(filter+idx+1, rdr->hexserial + 1, 4);
-	memset(filter+idx+1+16, 0xFF, 4);
-	filter[1]++;
+    filters[idx].type = EMM_SHARED;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x8D;
+    filters[idx].mask[0]   = 0xFF;
+    idx++;
 
-	return;
+    filters[idx].type = EMM_SHARED;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x8E;
+    filters[idx].mask[0]   = 0xFF;
+    memcpy(&filters[idx].filter[1], &rdr->sa[0][0], 3);
+    memset(&filters[idx].mask[1], 0xFF, 3);
+    idx++;
+
+    filters[idx].type = EMM_UNIQUE;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x88;
+    filters[idx].mask[0]   = 0xFF;
+    memcpy(&filters[idx].filter[1], rdr->hexserial + 1, 4);
+    memset(&filters[idx].mask[1], 0xFF, 4);
+    idx++;
+
+    rdr->csystem.emm_filter_count = idx;
+  }
+
+  return filters;
 }
 
 static int32_t viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)

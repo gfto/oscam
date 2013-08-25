@@ -66,7 +66,7 @@ extern void rev_date_calc_tm(const unsigned char *Date, struct tm *timeinfo , in
 extern void set_known_card_info(struct s_reader * reader, const unsigned char *atr, const uint32_t *atr_size);
 
 int32_t videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr);
-void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter);
+struct s_csystem_emm_filter* videoguard_get_emm_filter(struct s_reader *);
 int32_t videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned char CLA,
 	void (*read_tiers)(struct s_reader *),
 	int32_t (*docmd)(struct s_reader *, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff, unsigned char *cta_res)

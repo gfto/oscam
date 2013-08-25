@@ -617,6 +617,13 @@ struct s_emm {
 	int32_t			count;
 };
 
+struct s_csystem_emm_filter {
+	uint8_t   type;
+	uint8_t   enabled;
+	uint8_t   filter[16];
+	uint8_t   mask[16];
+};
+
 typedef struct v_ban {					// Failban listmember
 	int32_t 		v_count;
 	IN_ADDR_T		v_ip;
@@ -757,9 +764,11 @@ struct s_cardsystem {
 	int32_t		(*do_emm)(struct s_reader *, struct emm_packet_t *);
 	void			(*post_process)(struct s_reader *);
 	int32_t		(*get_emm_type)(struct emm_packet_t *, struct s_reader *);
-	void			(*get_emm_filter)(struct s_reader * rdr, uchar *filter);
-	void			(*get_tunemm_filter)(struct s_reader * rdr, uchar *filter);
+	struct s_csystem_emm_filter*	(*get_emm_filter)(struct s_reader *);
+	struct s_csystem_emm_filter*	(*get_tunemm_filter)(struct s_reader *);
 	uint16_t		caids[7];
+	uint8_t     emm_filter_count;
+	struct      s_csystem_emm_filter *emm_filters;
 };
 
 #define MAX_ECM_SIZE 512

@@ -642,111 +642,149 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 
 }
 
-static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
+static struct s_csystem_emm_filter* irdeto_get_emm_filter(struct s_reader *rdr)
 {
-	int32_t idx = 2;
+  struct s_csystem_emm_filter *filters = rdr->csystem.emm_filters;
+  unsigned int idx = 0;
 
-	filter[0]=0xFF;
-	filter[1]=0;		//filter count
+  if (filters == NULL) {
+    const unsigned int max_filter_count = 3 + rdr->nprov + 3; // Add space for both betatunneling and normal filters
+    if (!cs_malloc(&rdr->csystem.emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
+      return NULL;
 
-	//int32_t base = rdr->hexserial[3];
-	//int32_t emm_g = base * 8;
-	//int32_t emm_s = emm_g + 2;
-	//int32_t emm_u = emm_g + 3;
+    filters = rdr->csystem.emm_filters;
+    rdr->csystem.emm_filter_count = 0;
+    memset(filters, 0x00, max_filter_count * sizeof(struct s_csystem_emm_filter));
 
+    // skip the betatunnel filters
+    filters[idx++].enabled = 0;
+    filters[idx++].enabled = 0;
+    filters[idx++].enabled = 0;
 
-	filter[idx++]=EMM_GLOBAL;
-	filter[idx++]=0;
-	filter[idx+0]    = 0x82;
-	filter[idx+0+16] = 0xFF;
-	filter[idx+1]    = 0x00;
-	filter[idx+1+16] = 0x03;
-	filter[1]++;
-	idx += 32;
+    filters[idx].type = EMM_GLOBAL;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x82;
+    filters[idx].mask[0]   = 0xFF;
+    filters[idx].filter[1] = 0x00;
+    filters[idx].mask[1]   = 0x03;
+    idx++;
 
-/*
-	filter[idx++]=EMM_GLOBAL;
-	filter[idx++]=0;
-	filter[idx+0]    = 0x82;
-	filter[idx+16]   = 0xFF;
-	filter[idx+1]    = 0x81;
-	filter[idx+1+16] = 0xFF;
-	memcpy(filter+idx+2, rdr->hexserial, 1);
-	memset(filter+idx+2+16, 0xFF, 1);
-	filter[1]++;
-	idx += 32;
-*/
+    filters[idx].type = EMM_UNIQUE;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x82;
+    filters[idx].mask[0]   = 0xFF;
+    filters[idx].filter[1] = 0x03;
+    filters[idx].mask[1]   = 0x03;
+    memcpy(&filters[idx].filter[2], rdr->hexserial, 3);
+    memset(&filters[idx].mask[2], 0xFF, 3);
+    idx++;
 
-	filter[idx++]=EMM_UNIQUE;
-	filter[idx++]=0;
-	filter[idx+0]    = 0x82;
-	filter[idx+0+16] = 0xFF;
-	filter[idx+1]    = 0x03;
-	filter[idx+1+16] = 0x03;
-	memcpy(filter+idx+2, rdr->hexserial, 3);
-	memset(filter+idx+2+16, 0xFF, 3);
-	filter[1]++;
-	idx += 32;
+    // Shared on Hex Serial only for Betacrypt
+    if ( (rdr->caid >> 8) == 0x17 )
+    {
+      filters[idx].type = EMM_SHARED;
+      filters[idx].enabled   = 1;
+      filters[idx].filter[0] = 0x82;
+      filters[idx].mask[0]   = 0xFF;
+      filters[idx].filter[1] = 0x02;
+      filters[idx].mask[1]   = 0x03;
+      memcpy(&filters[idx].filter[2], rdr->hexserial, 2);
+      memset(&filters[idx].mask[2], 0xFF, 2);
+      idx++;
+    }
 
-	// Shared on Hex Serial only for Betacrypt
-	if ( (rdr->caid >> 8) == 0x17 )
-	{
-		filter[idx++]=EMM_SHARED;
-		filter[idx++]=0;
-		filter[idx+0]    = 0x82;
-		filter[idx+0+16] = 0xFF;
-		filter[idx+1]    = 0x02;
-		filter[idx+1+16] = 0x03;
-		memcpy(filter+idx+2, rdr->hexserial, 2);
-		memset(filter+idx+2+16, 0xFF, 2);
-		filter[1]++;
-		idx += 32;
-	}
+    int32_t i;
+    for(i = 0; i < rdr->nprov; i++) {
+      // 00XX00 provider is a not initialised not used provider
+      if (rdr->prid[i][1]==0xFF || (rdr->prid[i][1]==0x00 && rdr->prid[i][3]==0x00))
+        continue;
 
-	int32_t i;
-	bool nomorefilters = 0;
-	for(i = 0; i < rdr->nprov; i++) {
-		// 00XX00 provider is a not initialised not used provider
-		if (rdr->prid[i][1]==0xFF || (rdr->prid[i][1]==0x00 && rdr->prid[i][3]==0x00))
-			continue;
+      filters[idx].type = EMM_UNIQUE;
+      filters[idx].enabled   = 1;
+      filters[idx].filter[0] = 0x82;
+      filters[idx].mask[0]   = 0xFF;
+      filters[idx].filter[1] = 0x03;
+      filters[idx].mask[1]   = 0x03;
+      memcpy(&filters[idx].filter[2], &rdr->prid[i][1], 3);
+      memset(&filters[idx].mask[2], 0xFF, 3);
+      idx++;
 
-		filter[idx++]=EMM_UNIQUE;
-		filter[idx++]=0;
-		filter[idx+0]    = 0x82;
-		filter[idx+0+16] = 0xFF;
-		filter[idx+1]    = 0x03;
-		filter[idx+1+16] = 0x03;
-		memcpy(filter+idx+2, &rdr->prid[i][1], 3);
-		memset(filter+idx+2+16, 0xFF, 3);
-		filter[1]++;
-		idx += 32;
+      filters[idx].type = EMM_SHARED;
+      filters[idx].enabled   = 1;
+      filters[idx].filter[0] = 0x82;
+      filters[idx].mask[0]   = 0xFF;
+      filters[idx].filter[1] = 0x02;
+      filters[idx].mask[1]   = 0x03;
+      memcpy(&filters[idx].filter[2], &rdr->prid[i][1], 2);
+      memset(&filters[idx].mask[2], 0xFF, 2);
+      idx++;
+    }
 
-		if (filter[1] == 10) {
-			nomorefilters = 1;
-			break;
-		}
+    rdr->csystem.emm_filter_count = idx;
+  } else {
+    // skip the betatunnel filters
+    filters[idx++].enabled = 0;
+    filters[idx++].enabled = 0;
+    filters[idx++].enabled = 0;
 
-		filter[idx++]=EMM_SHARED;
-		filter[idx++]=0;
-		filter[idx+0]    = 0x82;
-		filter[idx+0+16] = 0xFF;
-		filter[idx+1]    = 0x02;
-		filter[idx+1+16] = 0x03;
-		memcpy(filter+idx+2, &rdr->prid[i][1], 2);
-		memset(filter+idx+2+16, 0xFF, 2);
-		filter[1]++;
-		idx += 32;
+    // Enable the non betatunnel filters
+    for(; idx < rdr->csystem.emm_filter_count; idx++) {
+      filters[idx++].enabled = 1;
+    }
+  }
 
-		if (filter[1] == 10) {
-			nomorefilters = 1;
-			break;
-		}
-	}
+  return filters;
+}
 
-	if (nomorefilters)
-		rdr_log(rdr, "irdeto_get_emm_filter: could not start all emm filters");
+static struct s_csystem_emm_filter* irdeto_get_tunemm_filter(struct s_reader * rdr)
+{
+  struct s_csystem_emm_filter *filters = rdr->csystem.emm_filters;
+  unsigned int idx = 0;
 
-	return;
+  if (filters == NULL) {
+    // Call normal filter to allocate the memory needed
+    filters = irdeto_get_emm_filter(rdr);
+
+    filters[idx].type = EMM_GLOBAL;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x82;
+    filters[idx].mask[0]   = 0xFF;
+    idx++;
+
+    filters[idx].type = EMM_SHARED;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x83;
+    filters[idx].filter[1] = rdr->hexserial[1];
+    filters[idx].filter[2] = rdr->hexserial[0];
+    filters[idx].filter[3] = 0x10;
+    filters[idx].filter[4] = 0x00;
+    filters[idx].filter[5] = 0x10;
+    memset(&filters[idx].mask[0], 0xFF, 6);
+    idx++;
+
+    filters[idx].type = EMM_UNIQUE;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x83;
+    filters[idx].filter[1] = rdr->hexserial[1];
+    filters[idx].filter[2] = rdr->hexserial[0];
+    filters[idx].filter[3] = 0x10;
+    filters[idx].filter[2] = rdr->hexserial[2];
+    filters[idx].filter[5] = 0x00;
+    memset(&filters[idx].mask[0], 0xFF, 6);
+    idx++;
+  } else {
+    // Enable the betatunnel filters
+    filters[idx++].enabled = 1;
+    filters[idx++].enabled = 1;
+    filters[idx++].enabled = 1;
+  }
+
+  // Disable the non betatunnel filters
+  for(; idx < rdr->csystem.emm_filter_count; idx++) {
+    filters[idx++].enabled = 0;
+  }
+
+  return filters;
 }
 
 void irdeto_add_emm_header(EMM_PACKET *ep)
@@ -799,43 +837,6 @@ void irdeto_add_emm_header(EMM_PACKET *ep)
 		break;
 	}
 	memcpy(ep->emm, bt_emm, sizeof(bt_emm));
-}
-
-static void irdeto_get_tunemm_filter(struct s_reader * rdr, uchar *filter)
-{
-	int32_t idx = 2;
-	filter[0] = 0xFF;
-	filter[1] = 0;
-
-	filter[idx++]    = EMM_GLOBAL;
-	filter[idx++]    = 0;
-	filter[idx+0]    = 0x82;
-	filter[idx+0+16] = 0xFF;
-	filter[1]++;
-	idx += 32;
-
-	filter[idx++]    = EMM_SHARED;
-	filter[idx++]    = 0;
-	filter[idx+0]    = 0x83;
-	filter[idx+1]    = rdr->hexserial[1];
-	filter[idx+2]    = rdr->hexserial[0];
-	filter[idx+3]    = 0x10;
-	filter[idx+4]    = 0x00;
-	filter[idx+5]    = 0x10;
-	memset(filter+idx+0+16, 0xFF, 6);
-	filter[1]++;
-	idx += 32;
-
-	filter[idx++]    = EMM_UNIQUE;
-	filter[idx++]    = 0;
-	filter[idx+0]    = 0x83;
-	filter[idx+1]    = rdr->hexserial[1];
-	filter[idx+2]    = rdr->hexserial[0];
-	filter[idx+3]    = 0x10;
-	filter[idx+4]    = rdr->hexserial[2];
-	filter[idx+5]    = 0x00;
-	memset(filter+idx+0+16, 0xFF, 6);
-	filter[1]++;
 }
 
 #define ADDRLEN 4 // Address length in EMM commands

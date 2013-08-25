@@ -29,7 +29,7 @@ static int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int16_t len)
  * Function to filter emm by cardsystem.
  * Every cardsystem can export a function "get_emm_filter"
  *
- * the emm is checked against it an returns 1 for a valid emm or 0 if not
+ * the emm is checked against it and returns 1 for a valid emm or 0 if not
  */
 static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs, EMM_PACKET *ep)
 {
@@ -37,14 +37,10 @@ static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs
 	//dvbapi_start_emm_filter()
 	int32_t i, j, k, match;
 	uint8_t flt, mask;
-	uint8_t dmx_filter[342]; // 10 filter + 2 byte header
-
-	memset(dmx_filter, 0, sizeof(dmx_filter));
-	dmx_filter[0] = 0xFF;
-	dmx_filter[1] = 0;
+	struct s_csystem_emm_filter *dmx_filter = NULL;
 
 	// Call cardsystems emm filter
-	cs->get_emm_filter(rdr, dmx_filter);
+	dmx_filter = cs->get_emm_filter(rdr);
 
 	// Only check matching emmtypes:
 	uint8_t org_emmtype;
@@ -54,30 +50,20 @@ static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs
 		org_emmtype = 1 << (ep->type-1);
 
 	// Now check all filter values
-	//  dmx_filter has 2 bytes header:
-	//  first byte is always 0xFF
-	//  second byte is filter count
-	//  all the other datas are the filter count * 34 bytes filter
 
-	//  every filter is 34 bytes
-	//  2 bytes emmtype+count
-	//  16 bytes filter data
-	//  16 bytes filter mask
-
-	int32_t filter_count = dmx_filter[1];
-	for (j = 1; j <= filter_count && j <= 10; j++) {
-		int32_t startpos = 2 + (34 * (j - 1));
-		if (dmx_filter[startpos+1] != 0x00)
+	int32_t filter_count = rdr->csystem.emm_filter_count;
+	for (j = 0; j < filter_count; j++) {
+		if (dmx_filter[j].enabled == 0)
 			continue;
 
-		uint8_t emmtype = dmx_filter[startpos];
+		uint8_t emmtype = dmx_filter[j].type;
 		if (emmtype != org_emmtype)
 			continue;
 
 		match = 1;
 		for (i = 0, k = 0; i < 10 && k < ep->emmlen && match; i++, k++) {
-			flt = dmx_filter[startpos + 2 + i];
-			mask = dmx_filter[startpos + 2 + 16 + i];
+			flt = dmx_filter[j].filter[i];
+			mask = dmx_filter[j].mask[i];
 			if (!mask)
 				break;
 			match = (flt == (ep->emm[k] & mask));

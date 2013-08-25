@@ -812,53 +812,62 @@ int32_t videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned cha
    return rc;
 }
 
-void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter)
+struct s_csystem_emm_filter* videoguard_get_emm_filter(struct s_reader *rdr)
 {
-	int32_t idx = 2;
-	int32_t n;
+  struct s_csystem_emm_filter *filters = rdr->csystem.emm_filters;
 
-	filter[0]=0xFF;
-	filter[1]=0;
+  if (filters == NULL) {
+    const unsigned int max_filter_count = 7;
+    if (!cs_malloc(&rdr->csystem.emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
+      return NULL;
 
-	for (n = 0; n < 3; ++n)
-	{
-		filter[idx++]=EMM_UNIQUE;
-		filter[idx++]=0;
-		filter[idx+0]    = 0x82;
-		filter[idx+0+16] = 0xFF;
-		filter[idx+1]    = 0x40;
-		filter[idx+1+16] = 0xC0;
-		memcpy(filter+idx+2+4*n, rdr->hexserial+2, 4);
-		memset(filter+idx+2+4*n+16, 0xFF, 4);
-		idx +=32;
-		filter[1]++;
-	}
-	// fourth serial position does not fit within the 16bytes demux filter
+    filters = rdr->csystem.emm_filters;
+    rdr->csystem.emm_filter_count = 0;
+    memset(filters, 0x00, max_filter_count * sizeof(struct s_csystem_emm_filter));
 
-	for (n = 0; n < 3; ++n)
-	{
-		filter[idx++]=EMM_SHARED;
-		filter[idx++]=0;
-		filter[idx+0]    = 0x82;
-		filter[idx+0+16] = 0xFF;
-		filter[idx+1]    = 0x80;
-		filter[idx+1+16] = 0xC0;
-		memcpy(filter+idx+2+4*n, rdr->hexserial+2, 3);
-		memset(filter+idx+2+4*n+16, 0xFF, 3);
-		idx +=32;
-		filter[1]++;
-	}
-	// fourth serial position does not fit within the 16bytes demux filter
+    int32_t idx = 0;
+    unsigned int n;
 
-	filter[idx++]=EMM_GLOBAL;
-	filter[idx++]=0;
-	filter[idx+0]    = 0x82;
-	filter[idx+0+16] = 0xFF;
-	filter[idx+1]    = 0x00;
-	filter[idx+1+16] = 0xC0;
-	filter[1]++;
+    for (n = 0; n < 3; ++n)
+    {
+      filters[idx].type = EMM_UNIQUE;
+      filters[idx].enabled  = 1;
+      filters[idx].filter[0] = 0x82;
+      filters[idx].mask[0]   = 0xFF;
+      filters[idx].filter[1] = 0x40;
+      filters[idx].mask[1]   = 0xC0;
+      memcpy(&filters[idx].filter[2 + 4 * n], rdr->hexserial + 2, 4);
+      memset(&filters[idx].mask[2 + 4 * n], 0xFF, 4);
+      idx++;
+    }
+    // fourth serial position does not fit within the 16bytes demux filter
 
-	return;
+    for (n = 0; n < 3; ++n)
+    {
+      filters[idx].type = EMM_SHARED;
+      filters[idx].enabled  = 1;
+      filters[idx].filter[0] = 0x82;
+      filters[idx].mask[0]   = 0xFF;
+      filters[idx].filter[1] = 0x80;
+      filters[idx].mask[1]   = 0xC0;
+      memcpy(&filters[idx].filter[2 + 4 * n], rdr->hexserial + 2, 3);
+      memset(&filters[idx].mask[2 + 4 * n], 0xFF, 3);
+      idx++;
+    }
+    // fourth serial position does not fit within the 16bytes demux filter
+
+    filters[idx].type = EMM_GLOBAL;
+    filters[idx].enabled  = 1;
+    filters[idx].filter[0] = 0x82;
+    filters[idx].mask[0]   = 0xFF;
+    filters[idx].filter[8] = 0x00;
+    filters[idx].mask[8]   = 0xC0;
+    idx++;
+
+    rdr->csystem.emm_filter_count = idx;
+  }
+
+  return filters;
 }
 
 static MAILMSG *find_msg(uint16_t caid, uint32_t serial, uint16_t date, uint16_t msg_id)

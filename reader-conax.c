@@ -362,44 +362,54 @@ static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 	}
 }
 
-static void conax_get_emm_filter(struct s_reader * rdr, uchar *filter)
+static struct s_csystem_emm_filter* conax_get_emm_filter(struct s_reader *rdr)
 {
-	int32_t idx = 2;
+  struct s_csystem_emm_filter *filters = rdr->csystem.emm_filters;
 
-	filter[0]=0xFF;	//header
-	filter[1]=0;		//filter count
+  if (filters == NULL) {
+    const unsigned int max_filter_count = 3;
+    if (!cs_malloc(&rdr->csystem.emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
+      return NULL;
 
-	filter[idx++]=EMM_GLOBAL;
-	filter[idx++]=1; // FIXME: dont see any conax global EMM yet
-	filter[idx+0]    = 0x82;
-	filter[idx+0+16] = 0xFF;
-	filter[idx+8]    = 0x70;
-	filter[idx+8+16] = 0xFF;
-	filter[1]++;
-	idx += 32;
+    filters = rdr->csystem.emm_filters;
+    rdr->csystem.emm_filter_count = 0;
+    memset(filters, 0x00, max_filter_count * sizeof(struct s_csystem_emm_filter));
 
-	filter[idx++]=EMM_SHARED;
-	filter[idx++]=0;
-	filter[idx+0]    = 0x82;
-	filter[idx+0+16] = 0xFF;
-	filter[idx+8]    = 0x70;
-	filter[idx+8+16] = 0xFF;
-	memcpy(filter+idx+4, rdr->sa[0], 4);
-	memset(filter+idx+4+16, 0xFF, 4);
-	filter[1]++;
-	idx += 32;
+    int32_t idx = 0;
 
-	filter[idx++]=EMM_UNIQUE;
-	filter[idx++]=0;
-	filter[idx+0]    = 0x82;
-	filter[idx+0+16] = 0xFF;
-	filter[idx+8]    = 0x70;
-	filter[idx+8+16] = 0xFF;
-	memcpy(filter+idx+4, rdr->hexserial + 2, 4);
-	memset(filter+idx+4+16, 0xFF, 4);
-	filter[1]++;
+    filters[idx].type = EMM_GLOBAL;
+    filters[idx].enabled   = 0; // FIXME: dont see any conax global EMM yet
+    filters[idx].filter[0] = 0x82;
+    filters[idx].mask[0]   = 0xFF;
+    filters[idx].filter[8] = 0x70;
+    filters[idx].mask[8]   = 0xFF;
+    idx++;
 
-	return;
+    filters[idx].type = EMM_SHARED;
+    filters[idx].enabled  = 1;
+    filters[idx].filter[0] = 0x82;
+    filters[idx].mask[0]   = 0xFF;
+    filters[idx].filter[8] = 0x70;
+    filters[idx].mask[8]   = 0xFF;
+    memcpy(&filters[idx].filter[4], rdr->sa[0], 4);
+    memset(&filters[idx].mask[4], 0xFF, 4);
+
+    idx++;
+
+    filters[idx].type = EMM_UNIQUE;
+    filters[idx].enabled  = 1;
+    filters[idx].filter[0] = 0x82;
+    filters[idx].mask[0]   = 0xFF;
+    filters[idx].filter[8] = 0x70;
+    filters[idx].mask[8]   = 0xFF;
+    memcpy(&filters[idx].filter[4], rdr->hexserial + 2, 4);
+    memset(&filters[idx].mask[4], 0xFF, 4);
+    idx++;
+
+    rdr->csystem.emm_filter_count = idx;
+  }
+
+  return filters;
 }
 
 static int32_t conax_do_emm(struct s_reader * reader, EMM_PACKET *ep)

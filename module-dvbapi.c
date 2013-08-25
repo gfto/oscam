@@ -645,7 +645,7 @@ static int32_t dvbapi_find_emmpid(int32_t demux_id, uint8_t type, uint16_t caid,
 }
 
 int32_t dvbapi_start_emm_filter(int32_t demux_index) {
-	int32_t j, fcount=0, fcount_added=0;
+	unsigned int j, fcount=0, fcount_added=0;
 	const char *typtext[] = { "UNIQUE", "SHARED", "GLOBAL", "UNKNOWN" };
 
 	if (!demux[demux_index].EMMpidcount)
@@ -655,7 +655,7 @@ int32_t dvbapi_start_emm_filter(int32_t demux_index) {
 		return 0;
 
 
-	uchar dmx_filter[342]; // 10 filter + 2 byte header
+	struct s_csystem_emm_filter *dmx_filter = NULL;
 	uint16_t caid, ncaid;
 
 	struct s_reader *rdr = NULL;
@@ -668,10 +668,6 @@ int32_t dvbapi_start_emm_filter(int32_t demux_index) {
 
 		if (!rdr->client || rdr->audisabled !=0 || !rdr->enable || (!is_network_reader(rdr) && rdr->card_status != CARD_INSERTED))
 			continue; 
-
-		memset(dmx_filter, 0, sizeof(dmx_filter));
-		dmx_filter[0]=0xFF;
-		dmx_filter[1]=0;
 
 		caid = ncaid = rdr->caid;
 
@@ -686,29 +682,27 @@ int32_t dvbapi_start_emm_filter(int32_t demux_index) {
 				ncaid = tunemm_caid_map(TO_FROM, rdr->caid, demux[demux_index].program_number);
 			if (rdr->caid != ncaid && dvbapi_find_emmpid(demux_index, EMM_UNIQUE|EMM_SHARED|EMM_GLOBAL, ncaid, 0) > -1)
 			{
-				cs->get_tunemm_filter(rdr, dmx_filter);
+				dmx_filter = cs->get_tunemm_filter(rdr);
 				caid = ncaid;
 				cs_debug_mask(D_DVBAPI, "[EMM Filter] setting emm filter for betatunnel: %04X -> %04X", caid, rdr->caid);
 			} else {
-				cs->get_emm_filter(rdr, dmx_filter);
+				dmx_filter = cs->get_emm_filter(rdr);
 			}
 		} else {
 			cs_debug_mask(D_DVBAPI, "[EMM Filter] cardsystem for emm filter for %s not found", rdr->label);
 			continue;
 		}
 
-		int32_t filter_count=dmx_filter[1];
+		unsigned int filter_count = rdr->csystem.emm_filter_count;
 
-		for (j=1;j<=filter_count && j <= 10;j++) {
-			int32_t startpos=2+(34*(j-1));
-
-			if (dmx_filter[startpos+1] != 0x00)
+		for (j = 0; j < filter_count; j++) {
+			if (dmx_filter[j].enabled == 0)
 				continue;
 
 			uchar filter[32];
-			memcpy(filter, dmx_filter+startpos+2, 32);
-			int32_t emmtype=dmx_filter[startpos];
-			// int32_t count=dmx_filter[startpos+1];
+			memcpy(filter, dmx_filter[j].filter, 16);
+			memcpy(filter + 16, dmx_filter[j].mask, 16);
+			int32_t emmtype = dmx_filter[j].type;
 			int32_t l=-1;
 
 			if ( (filter[0] && (((1<<(filter[0] % 0x80)) & rdr->b_nano) && !((1<<(filter[0] % 0x80)) & rdr->s_nano))) )
@@ -754,7 +748,8 @@ int32_t dvbapi_start_emm_filter(int32_t demux_index) {
 				if (fcount>=demux[demux_index].max_emm_filter) {
 					add_emmfilter_to_list(demux_index, filter, demux[demux_index].EMMpids[l].CAID, demux[demux_index].EMMpids[l].PROVID, demux[demux_index].EMMpids[l].PID, fcount+1, 0, 0);
 				} else {
-					dvbapi_set_filter(demux_index, selected_api, demux[demux_index].EMMpids[l].PID, demux[demux_index].EMMpids[l].CAID, demux[demux_index].EMMpids[l].PROVID, filter, filter+16, 0, demux[demux_index].pidindex, fcount+1, TYPE_EMM, 1);
+					dvbapi_set_filter(demux_index, selected_api, demux[demux_index].EMMpids[l].PID, demux[demux_index].EMMpids[l].CAID,
+						              demux[demux_index].EMMpids[l].PROVID, filter, filter+16, 0, demux[demux_index].pidindex, fcount+1, TYPE_EMM, 1);
 				}
 				fcount++;
 				demux[demux_index].emm_filter=1;
