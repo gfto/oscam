@@ -12,11 +12,11 @@ static int32_t RSA_CNX(struct s_reader *reader, unsigned char *msg, unsigned cha
   unsigned char data[64];
 
     /*prefix size*/
-    pre_size = 2 + 4 + msg[5]; 
+    pre_size = 2 + 4 + msg[5];
     /*size of data to decryption*/
     if(msg[1] > (pre_size-2))
-      size = msg[1] - pre_size + 2; 
-    
+      size = msg[1] - pre_size + 2;
+
     if(cta_lr > (pre_size + size) &&
        size >= modbytes && size < 128)
     {
@@ -28,7 +28,7 @@ static int32_t RSA_CNX(struct s_reader *reader, unsigned char *msg, unsigned cha
         if (ctx == NULL) {
           rdr_debug_mask(reader, D_READER, "RSA Error in RSA_CNX");
         }
-        
+
         /*RSA first round*/
         BN_bin2bn (mod, modbytes, bn_mod); // rsa modulus
         BN_bin2bn (exp, expbytes, bn_exp); // exponent
@@ -36,21 +36,21 @@ static int32_t RSA_CNX(struct s_reader *reader, unsigned char *msg, unsigned cha
         BN_mod_exp (bn_res, bn_data, bn_exp, bn_mod, ctx);
 
         n = BN_bn2bin (bn_res, data);
-        
+
         size -= modbytes; //3
         pre_size += modbytes;
         /*Check if second round is needed*/
         if(0 < size)
         {
           /*check if length of data from first RSA round will be enough to padding rest of data*/
-          if((n+size) >= modbytes) 
+          if((n+size) >= modbytes)
           {
             /*RSA second round*/
             /*move the remaining data at the beginning of the buffer*/
-            memcpy(msg, msg+pre_size, size); 
+            memcpy(msg, msg+pre_size, size);
             /*padding buffer with data from first round*/
-            memcpy(msg+size, data+(n - (modbytes-size)), modbytes-size); 
-            
+            memcpy(msg+size, data+(n - (modbytes-size)), modbytes-size);
+
             BN_bin2bn (msg, modbytes, bn_data);
             BN_mod_exp (bn_res, bn_data, bn_exp, bn_mod, ctx);
             n = BN_bn2bin (bn_res, data);
@@ -67,7 +67,7 @@ static int32_t RSA_CNX(struct s_reader *reader, unsigned char *msg, unsigned cha
     }
     else
       ret = -2; /*wrong size of data*/
-     
+
     return ret;
 }
 
@@ -248,7 +248,7 @@ static int32_t conax_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, str
         else
           rc = -4; /*card has no right to decode this channel*/
       }
-      
+
       if(0 == rc)
       for(i = 0;  i < cta_lr-2 && num_dw < 2; i+=cta_res[i+1]+2)
       {
@@ -296,7 +296,7 @@ static int32_t conax_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, str
       }
     }
   }
-  
+
   switch(rc)
   {
     case -1:
@@ -311,7 +311,7 @@ static int32_t conax_do_ecm(struct s_reader * reader, const ECM_REQUEST *er, str
       rdr_log(reader, "card has no right to decode this channel");
     break;
   }
-  
+
   /* answer 9011 - conax smart card need reset */
   if(2<=cta_lr && 0x90==cta_res[cta_lr-2] &&
      0x11==cta_res[cta_lr-1])
@@ -389,8 +389,6 @@ static struct s_csystem_emm_filter* conax_get_emm_filter(struct s_reader *rdr)
     filters[idx].enabled  = 1;
     filters[idx].filter[0] = 0x82;
     filters[idx].mask[0]   = 0xFF;
-    filters[idx].filter[8] = 0x70;
-    filters[idx].mask[8]   = 0xFF;
     memcpy(&filters[idx].filter[4], rdr->sa[0], 4);
     memset(&filters[idx].mask[4], 0xFF, 4);
 
@@ -400,8 +398,6 @@ static struct s_csystem_emm_filter* conax_get_emm_filter(struct s_reader *rdr)
     filters[idx].enabled  = 1;
     filters[idx].filter[0] = 0x82;
     filters[idx].mask[0]   = 0xFF;
-    filters[idx].filter[8] = 0x70;
-    filters[idx].mask[8]   = 0xFF;
     memcpy(&filters[idx].filter[4], rdr->hexserial + 2, 4);
     memset(&filters[idx].mask[4], 0xFF, 4);
     idx++;
