@@ -403,6 +403,7 @@ static struct s_csystem_emm_filter* seca_get_emm_filter(struct s_reader *rdr)
       memset(&filters[idx].mask[1], 0xFF, 2);
       memcpy(&filters[idx].filter[3], &rdr->sa[prov], 3);
       memset(&filters[idx].mask[3], 0xFF, 3);
+      idx++;
     }
 
     rdr->csystem.emm_filter_count = idx;
