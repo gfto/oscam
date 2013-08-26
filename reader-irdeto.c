@@ -648,7 +648,7 @@ static struct s_csystem_emm_filter* irdeto_get_emm_filter(struct s_reader *rdr)
   unsigned int idx = 0;
 
   if (filters == NULL) {
-    const unsigned int max_filter_count = 3 + rdr->nprov + 3; // Add space for both betatunneling and normal filters
+    const unsigned int max_filter_count = 3 + (rdr->nprov * 2) + 3; // Add space for both betatunneling and normal filters
     if (!cs_malloc(&rdr->csystem.emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
       return NULL;
 
