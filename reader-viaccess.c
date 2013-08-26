@@ -947,28 +947,29 @@ static struct s_csystem_emm_filter* viaccess_get_emm_filter(struct s_reader *rdr
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x8C;
     filters[idx].mask[0]   = 0xFF;
-    
-	idx++;
+    idx++;
+
     filters[idx].type = EMM_SHARED;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x8D;
     filters[idx].mask[0]   = 0xFF;
-    
-	idx++;
+    idx++;
+
     filters[idx].type = EMM_SHARED;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x8E;
     filters[idx].mask[0]   = 0xFF;
     memcpy(&filters[idx].filter[1], &rdr->sa[0][0], 3);
     memset(&filters[idx].mask[1], 0xFF, 3);
-    
-	idx++;
+    idx++;
+
     filters[idx].type = EMM_UNIQUE;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x88;
     filters[idx].mask[0]   = 0xFF;
     memcpy(&filters[idx].filter[1], rdr->hexserial + 1, 4);
     memset(&filters[idx].mask[1], 0xFF, 4);
+    idx++;
 
     rdr->csystem.emm_filter_count = idx;
   }

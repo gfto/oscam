@@ -406,16 +406,16 @@ static struct s_csystem_emm_filter* dre_get_emm_filter(struct s_reader *rdr)
     filters[idx].filter[1] = rdr->sa[0][0];
     filters[idx].mask[0]   = 0xF2;
     filters[idx].mask[1]   = 0xFF;
-
     idx++;
+
     filters[idx].type = EMM_SHARED;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x82;
     filters[idx].filter[1] = rdr->sa[0][0];
     filters[idx].mask[0]   = 0xF3;
     filters[idx].mask[1]   = 0xFF;
-
     idx++;
+
     filters[idx].type = EMM_SHARED;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x83;
@@ -426,24 +426,24 @@ static struct s_csystem_emm_filter* dre_get_emm_filter(struct s_reader *rdr)
       memset(&filters[idx].mask[1], 0xFF, 4);
     }
     filters[idx].mask[1]   = 0xFF;
-
     idx++;
+
     filters[idx].type = EMM_SHARED;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x86;
     filters[idx].filter[1] = rdr->sa[0][0];
     filters[idx].mask[0]   = 0xFF;
     filters[idx].mask[1]   = 0xFF;
-
     idx++;
+
     filters[idx].type = EMM_SHARED;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x8c;
     filters[idx].filter[1] = rdr->sa[0][0];
     filters[idx].mask[0]   = 0xFF;
     filters[idx].mask[1]   = 0xFF;
-
     idx++;
+
     filters[idx].type = EMM_SHARED;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x89;
@@ -453,14 +453,15 @@ static struct s_csystem_emm_filter* dre_get_emm_filter(struct s_reader *rdr)
       memcpy(&filters[idx].filter[1], &rdr->sa[0][0], 4);
       memset(&filters[idx].mask[1], 0xFF, 4);
     }
-
     idx++;
+
     filters[idx].type = EMM_UNIQUE;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x87;
     filters[idx].mask[0]   = 0xFF;
     //FIXME: No filter for hexserial
-	
+    idx++;
+
     rdr->csystem.emm_filter_count = idx;
   }
 
