@@ -381,14 +381,12 @@ static struct s_csystem_emm_filter* seca_get_emm_filter(struct s_reader *rdr)
     filters[idx].mask[0]   = 0xFF;
     memcpy(&filters[idx].filter[1], rdr->hexserial, 6);
     memset(&filters[idx].mask[1], 0xFF, 6);
-	idx++; // increase filter counter
 	
     int32_t prov;
     for (prov = 0; prov < rdr->nprov; prov++) {
       if(!memcmp (rdr->sa[prov], "\x00\x00\x00", 3)) continue;// if sa == null skip update by shared & global (provid inactive)
       
-	  if(prov != 0) // increase filter counter after skipping first provider 
-		idx++; 
+	  idx++; // increase filter counter 
 	  filters[idx].type = EMM_GLOBAL; //global by provider
       filters[idx].enabled   = 1;
       filters[idx].filter[0] = 0x83;
@@ -405,9 +403,7 @@ static struct s_csystem_emm_filter* seca_get_emm_filter(struct s_reader *rdr)
       memset(&filters[idx].mask[1], 0xFF, 2);
       memcpy(&filters[idx].filter[3], &rdr->sa[prov], 3);
       memset(&filters[idx].mask[3], 0xFF, 3);
-    }
-	
-	idx++; // increase filter counter since total filters in use = emm_filter_counter -1 
+    } 
     rdr->csystem.emm_filter_count = idx; 
   }
 

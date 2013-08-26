@@ -695,7 +695,7 @@ int32_t dvbapi_start_emm_filter(int32_t demux_index) {
 
 		unsigned int filter_count = rdr->csystem.emm_filter_count;
 
-		for (j = 0; j < filter_count; j++) {
+		for (j = 0; j <= filter_count; j++) {
 			if (dmx_filter[j].enabled == 0)
 				continue;
 

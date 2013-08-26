@@ -1194,8 +1194,8 @@ static struct s_csystem_emm_filter* nagra2_get_emm_filter(struct s_reader *rdr)
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x82;
     filters[idx].mask[0]   = 0xFF;
-    idx++;
-
+    
+	idx++;
     filters[idx].type = EMM_SHARED;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x83;
@@ -1205,8 +1205,8 @@ static struct s_csystem_emm_filter* nagra2_get_emm_filter(struct s_reader *rdr)
     filters[idx].filter[4] = 0x00;
     filters[idx].filter[5] = 0x10;
     memset(&filters[idx].mask[0], 0xFF, 6);
-    idx++;
-
+    
+	idx++;
     filters[idx].type = EMM_UNIQUE;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x83;
@@ -1216,7 +1216,6 @@ static struct s_csystem_emm_filter* nagra2_get_emm_filter(struct s_reader *rdr)
     filters[idx].filter[4] = rdr->hexserial[5];
     filters[idx].filter[5] = 0x00;
     memset(&filters[idx].mask[0], 0xFF, 6);
-    idx++;
 
     rdr->csystem.emm_filter_count = idx;
   }

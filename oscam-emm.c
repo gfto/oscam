@@ -52,7 +52,7 @@ static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs
 	// Now check all filter values
 
 	int32_t filter_count = rdr->csystem.emm_filter_count;
-	for (j = 0; j < filter_count; j++) {
+	for (j = 0; j <= filter_count; j++) {
 		if (dmx_filter[j].enabled == 0)
 			continue;
 

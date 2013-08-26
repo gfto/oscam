@@ -657,7 +657,7 @@ static struct s_csystem_emm_filter* irdeto_get_emm_filter(struct s_reader *rdr)
     memset(filters, 0x00, max_filter_count * sizeof(struct s_csystem_emm_filter));
 
     // skip the betatunnel filters
-    filters[idx++].enabled = 0;
+    filters[idx].enabled = 0;
     filters[idx++].enabled = 0;
     filters[idx++].enabled = 0;
 
@@ -667,8 +667,8 @@ static struct s_csystem_emm_filter* irdeto_get_emm_filter(struct s_reader *rdr)
     filters[idx].mask[0]   = 0xFF;
     filters[idx].filter[1] = 0x00;
     filters[idx].mask[1]   = 0x03;
-    idx++;
-
+    
+	idx++;
     filters[idx].type = EMM_UNIQUE;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x82;
@@ -677,12 +677,12 @@ static struct s_csystem_emm_filter* irdeto_get_emm_filter(struct s_reader *rdr)
     filters[idx].mask[1]   = 0x03;
     memcpy(&filters[idx].filter[2], rdr->hexserial, 3);
     memset(&filters[idx].mask[2], 0xFF, 3);
-    idx++;
 
     // Shared on Hex Serial only for Betacrypt
     if ( (rdr->caid >> 8) == 0x17 )
     {
-      filters[idx].type = EMM_SHARED;
+      idx++;
+	  filters[idx].type = EMM_SHARED;
       filters[idx].enabled   = 1;
       filters[idx].filter[0] = 0x82;
       filters[idx].mask[0]   = 0xFF;
@@ -690,7 +690,6 @@ static struct s_csystem_emm_filter* irdeto_get_emm_filter(struct s_reader *rdr)
       filters[idx].mask[1]   = 0x03;
       memcpy(&filters[idx].filter[2], rdr->hexserial, 2);
       memset(&filters[idx].mask[2], 0xFF, 2);
-      idx++;
     }
 
     int32_t i;
@@ -698,7 +697,7 @@ static struct s_csystem_emm_filter* irdeto_get_emm_filter(struct s_reader *rdr)
       // 00XX00 provider is a not initialised not used provider
       if (rdr->prid[i][1]==0xFF || (rdr->prid[i][1]==0x00 && rdr->prid[i][3]==0x00))
         continue;
-
+	  idx++;
       filters[idx].type = EMM_UNIQUE;
       filters[idx].enabled   = 1;
       filters[idx].filter[0] = 0x82;
@@ -707,8 +706,8 @@ static struct s_csystem_emm_filter* irdeto_get_emm_filter(struct s_reader *rdr)
       filters[idx].mask[1]   = 0x03;
       memcpy(&filters[idx].filter[2], &rdr->prid[i][1], 3);
       memset(&filters[idx].mask[2], 0xFF, 3);
-      idx++;
-
+      
+	  idx++;
       filters[idx].type = EMM_SHARED;
       filters[idx].enabled   = 1;
       filters[idx].filter[0] = 0x82;
@@ -717,19 +716,18 @@ static struct s_csystem_emm_filter* irdeto_get_emm_filter(struct s_reader *rdr)
       filters[idx].mask[1]   = 0x03;
       memcpy(&filters[idx].filter[2], &rdr->prid[i][1], 2);
       memset(&filters[idx].mask[2], 0xFF, 2);
-      idx++;
     }
 
     rdr->csystem.emm_filter_count = idx;
   } else {
     // skip the betatunnel filters
-    filters[idx++].enabled = 0;
+    filters[idx].enabled = 0;
     filters[idx++].enabled = 0;
     filters[idx++].enabled = 0;
 
     // Enable the non betatunnel filters
-    for(; idx < rdr->csystem.emm_filter_count; idx++) {
-      filters[idx++].enabled = 1;
+    for(; idx <= rdr->csystem.emm_filter_count; idx++) {
+      filters[idx].enabled = 1;
     }
   }
 
@@ -749,8 +747,8 @@ static struct s_csystem_emm_filter* irdeto_get_tunemm_filter(struct s_reader * r
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x82;
     filters[idx].mask[0]   = 0xFF;
-    idx++;
-
+    
+	idx++;
     filters[idx].type = EMM_SHARED;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x83;
@@ -760,8 +758,8 @@ static struct s_csystem_emm_filter* irdeto_get_tunemm_filter(struct s_reader * r
     filters[idx].filter[4] = 0x00;
     filters[idx].filter[5] = 0x10;
     memset(&filters[idx].mask[0], 0xFF, 6);
-    idx++;
-
+    
+	idx++;
     filters[idx].type = EMM_UNIQUE;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x83;
@@ -771,17 +769,17 @@ static struct s_csystem_emm_filter* irdeto_get_tunemm_filter(struct s_reader * r
     filters[idx].filter[2] = rdr->hexserial[2];
     filters[idx].filter[5] = 0x00;
     memset(&filters[idx].mask[0], 0xFF, 6);
-    idx++;
+	
   } else {
     // Enable the betatunnel filters
-    filters[idx++].enabled = 1;
+    filters[idx].enabled = 1;
     filters[idx++].enabled = 1;
     filters[idx++].enabled = 1;
   }
 
   // Disable the non betatunnel filters
   for(; idx < rdr->csystem.emm_filter_count; idx++) {
-    filters[idx++].enabled = 0;
+    filters[idx].enabled = 0;
   }
 
   return filters;

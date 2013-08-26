@@ -383,25 +383,24 @@ static struct s_csystem_emm_filter* conax_get_emm_filter(struct s_reader *rdr)
     filters[idx].mask[0]   = 0xFF;
     filters[idx].filter[8] = 0x70;
     filters[idx].mask[8]   = 0xFF;
-    idx++;
 
     for (prov = 0; prov < rdr->nprov; prov++) {
-      filters[idx].type = EMM_SHARED;
+      idx++;
+	  filters[idx].type = EMM_SHARED;
       filters[idx].enabled  = 1;
       filters[idx].filter[0] = 0x82;
       filters[idx].mask[0]   = 0xFF;
       memcpy(&filters[idx].filter[4], rdr->sa[prov], 4);
       memset(&filters[idx].mask[4], 0xFF, 4);
-      idx++;
     }
 
-    filters[idx].type = EMM_UNIQUE;
+    idx++;
+	filters[idx].type = EMM_UNIQUE;
     filters[idx].enabled  = 1;
     filters[idx].filter[0] = 0x82;
     filters[idx].mask[0]   = 0xFF;
     memcpy(&filters[idx].filter[4], rdr->hexserial + 2, 4);
     memset(&filters[idx].mask[4], 0xFF, 4);
-    idx++;
 
     rdr->csystem.emm_filter_count = idx;
   }

@@ -512,8 +512,8 @@ static struct s_csystem_emm_filter* bulcrypt_get_emm_filter(struct s_reader *rdr
     filters[idx].mask[2]   = 0xFF;
     filters[idx].mask[3]   = 0xFF;
     filters[idx].mask[4]   = 0xF0;
-    idx++;
 
+    idx++;
     filters[idx].type = EMM_UNIQUE;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x8a;
@@ -526,8 +526,8 @@ static struct s_csystem_emm_filter* bulcrypt_get_emm_filter(struct s_reader *rdr
     filters[idx].mask[2]   = 0xFF;
     filters[idx].mask[3]   = 0xFF;
     filters[idx].mask[4]   = 0xF0;
-    idx++;
-
+    
+	idx++;
     filters[idx].type = EMM_SHARED;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x84;
@@ -536,8 +536,8 @@ static struct s_csystem_emm_filter* bulcrypt_get_emm_filter(struct s_reader *rdr
     filters[idx].mask[0]   = 0xFF;
     filters[idx].mask[1]   = 0xFF;
     filters[idx].mask[2]   = 0xFF;
-    idx++;
-
+    
+	idx++;
     filters[idx].type = EMM_GLOBAL;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x85;
@@ -546,8 +546,8 @@ static struct s_csystem_emm_filter* bulcrypt_get_emm_filter(struct s_reader *rdr
     filters[idx].mask[0]   = 0xFF;
     filters[idx].mask[1]   = 0xFF;
     filters[idx].mask[2]   = 0xFF;
-    idx++;
-
+    
+	idx++;
     filters[idx].type = EMM_GLOBAL;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x8b;
@@ -556,7 +556,6 @@ static struct s_csystem_emm_filter* bulcrypt_get_emm_filter(struct s_reader *rdr
     filters[idx].mask[0]   = 0xFF;
     filters[idx].mask[1]   = 0xFF;
     filters[idx].mask[2]   = 0xFF;
-    idx++;
 
     rdr->csystem.emm_filter_count = idx;
   }
