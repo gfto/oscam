@@ -365,7 +365,7 @@ static struct s_csystem_emm_filter* seca_get_emm_filter(struct s_reader *rdr)
   struct s_csystem_emm_filter *filters = rdr->csystem.emm_filters;
 
   if (filters == NULL) {
-    const unsigned int max_filter_count = 1 + rdr->nprov;
+    const unsigned int max_filter_count = 1 + (2 * rdr->nprov);
     if (!cs_malloc(&rdr->csystem.emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
       return NULL;
 
