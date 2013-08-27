@@ -781,7 +781,7 @@ static struct s_csystem_emm_filter* irdeto_get_tunemm_filter(struct s_reader * r
 
   // Disable the non betatunnel filters
   for(; idx < rdr->csystem.emm_filter_count; idx++) {
-    filters[idx++].enabled = 0;
+    filters[idx].enabled = 0;
   }
 
   return filters;
