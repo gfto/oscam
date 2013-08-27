@@ -768,7 +768,7 @@ static struct s_csystem_emm_filter* irdeto_get_tunemm_filter(struct s_reader * r
     filters[idx].filter[1] = rdr->hexserial[1];
     filters[idx].filter[2] = rdr->hexserial[0];
     filters[idx].filter[3] = 0x10;
-    filters[idx].filter[2] = rdr->hexserial[2];
+    filters[idx].filter[4] = rdr->hexserial[2];
     filters[idx].filter[5] = 0x00;
     memset(&filters[idx].mask[0], 0xFF, 6);
     idx++;
