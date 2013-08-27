@@ -860,8 +860,8 @@ struct s_csystem_emm_filter* videoguard_get_emm_filter(struct s_reader *rdr)
     filters[idx].enabled  = 1;
     filters[idx].filter[0] = 0x82;
     filters[idx].mask[0]   = 0xFF;
-    filters[idx].filter[8] = 0x00;
-    filters[idx].mask[8]   = 0xC0;
+    filters[idx].filter[1] = 0x00;
+    filters[idx].mask[1]   = 0xC0;
     idx++;
 
     rdr->csystem.emm_filter_count = idx;
