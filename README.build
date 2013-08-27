@@ -80,7 +80,7 @@ OSCam build system documentation
                      Using USE_LIBUSB=1 adds to '-libusb' to PLUS_TARGET.
                      To build with static libusb, set the variable LIBUSB_LIB
                      to contain full path of libusb library. For example:
-                      make USR_LIBUSB=1 LIBUSB_LIB=/usr/lib/libusb-1.0.a
+                      make USE_LIBUSB=1 LIBUSB_LIB=/usr/lib/libusb-1.0.a
 
    USE_PCSC=1      - Request linking with PCSC. The variables that control
                      USE_PCSC=1 build are:
