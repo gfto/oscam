@@ -389,7 +389,12 @@ bool IO_Serial_Read (struct s_reader * reader, uint32_t delay, uint32_t timeout,
 		{		
 	 		readed = read(reader->handle, &data[count], size-count>=chunksize?chunksize:size-count);
 	 		gettimeofday(&tv_spent,0);
-			if(readed > 0) count +=readed;
+			if(readed > 0){
+				count +=readed;
+				gettimeofday(&tv,0);  // reset timeout again since card is responsive!
+				memcpy(&tv_spent,&tv,sizeof(struct timeval));
+			}
+				
 			if(count < size){
 				if(readed < (int32_t)chunksize) cs_sleepus(1);
 				continue;
