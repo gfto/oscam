@@ -644,11 +644,14 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 
 static struct s_csystem_emm_filter* irdeto_get_emm_filter(struct s_reader *rdr)
 {
+  // It's not effecient to re-create filters every time but it reduces the complexity
+  // of trying to figure out when they need to be re-populated
+  NULLFREE(rdr->csystem.emm_filters);
+
   struct s_csystem_emm_filter *filters = rdr->csystem.emm_filters;
-  unsigned int idx = 0;
 
   if (filters == NULL) {
-    const unsigned int max_filter_count = 3 + (rdr->nprov * 2) + 3; // Add space for both betatunneling and normal filters
+    const unsigned int max_filter_count = 3 + (rdr->nprov * 2);
     if (!cs_malloc(&rdr->csystem.emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
       return NULL;
 
@@ -656,10 +659,7 @@ static struct s_csystem_emm_filter* irdeto_get_emm_filter(struct s_reader *rdr)
     rdr->csystem.emm_filter_count = 0;
     memset(filters, 0x00, max_filter_count * sizeof(struct s_csystem_emm_filter));
 
-    // skip the betatunnel filters
-    filters[idx++].enabled = 0;
-    filters[idx++].enabled = 0;
-    filters[idx++].enabled = 0;
+    unsigned int idx = 0;
 
     filters[idx].type = EMM_GLOBAL;
     filters[idx].enabled   = 1;
@@ -721,16 +721,6 @@ static struct s_csystem_emm_filter* irdeto_get_emm_filter(struct s_reader *rdr)
     }
 
     rdr->csystem.emm_filter_count = idx;
-  } else {
-    // skip the betatunnel filters
-    filters[idx++].enabled = 0;
-    filters[idx++].enabled = 0;
-    filters[idx++].enabled = 0;
-
-    // Enable the non betatunnel filters
-    for(; idx < rdr->csystem.emm_filter_count; idx++) {
-      filters[idx].enabled = 1;
-    }
   }
 
   return filters;
@@ -738,12 +728,22 @@ static struct s_csystem_emm_filter* irdeto_get_emm_filter(struct s_reader *rdr)
 
 static struct s_csystem_emm_filter* irdeto_get_tunemm_filter(struct s_reader * rdr)
 {
+  // It's not effecient to re-create filters every time but it reduces the complexity
+  // of trying to figure out when they need to be re-populated
+  NULLFREE(rdr->csystem.emm_filters);
+
   struct s_csystem_emm_filter *filters = rdr->csystem.emm_filters;
-  unsigned int idx = 0;
 
   if (filters == NULL) {
-    // Call normal filter to allocate the memory needed
-    filters = irdeto_get_emm_filter(rdr);
+    const unsigned int max_filter_count = 3;
+    if (!cs_malloc(&rdr->csystem.emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
+      return NULL;
+
+    filters = rdr->csystem.emm_filters;
+    rdr->csystem.emm_filter_count = 0;
+    memset(filters, 0x00, max_filter_count * sizeof(struct s_csystem_emm_filter));
+
+    unsigned int idx = 0;
 
     filters[idx].type = EMM_GLOBAL;
     filters[idx].enabled   = 1;
@@ -772,16 +772,8 @@ static struct s_csystem_emm_filter* irdeto_get_tunemm_filter(struct s_reader * r
     filters[idx].filter[5] = 0x00;
     memset(&filters[idx].mask[0], 0xFF, 6);
     idx++;
-  } else {
-    // Enable the betatunnel filters
-    filters[idx++].enabled = 1;
-    filters[idx++].enabled = 1;
-    filters[idx++].enabled = 1;
-  }
 
-  // Disable the non betatunnel filters
-  for(; idx < rdr->csystem.emm_filter_count; idx++) {
-    filters[idx].enabled = 0;
+    rdr->csystem.emm_filter_count = idx;
   }
 
   return filters;

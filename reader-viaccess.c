@@ -930,6 +930,10 @@ default:
 
 static struct s_csystem_emm_filter* viaccess_get_emm_filter(struct s_reader *rdr)
 {
+  // It's not effecient to re-create filters every time but it reduces the complexity
+  // of trying to figure out when they need to be re-populated
+  NULLFREE(rdr->csystem.emm_filters);
+
   struct s_csystem_emm_filter *filters = rdr->csystem.emm_filters;
 
   if (filters == NULL) {

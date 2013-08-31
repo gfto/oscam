@@ -814,6 +814,10 @@ int32_t videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned cha
 
 struct s_csystem_emm_filter* videoguard_get_emm_filter(struct s_reader *rdr)
 {
+  // It's not effecient to re-create filters every time but it reduces the complexity
+  // of trying to figure out when they need to be re-populated
+  NULLFREE(rdr->csystem.emm_filters);
+
   struct s_csystem_emm_filter *filters = rdr->csystem.emm_filters;
 
   if (filters == NULL) {
