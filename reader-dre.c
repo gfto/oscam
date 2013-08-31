@@ -400,7 +400,6 @@ static struct s_csystem_emm_filter* dre_get_emm_filter(struct s_reader *rdr)
 
     filters = rdr->csystem.emm_filters;
     rdr->csystem.emm_filter_count = 0;
-    memset(filters, 0x00, max_filter_count * sizeof(struct s_csystem_emm_filter));
 
     int32_t idx = 0;
 
