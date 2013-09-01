@@ -383,23 +383,31 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		MD5(ep->emm, ep->emm[2], md5tmp);
 		ep->client = client;
 		
-		for (i=0; i<CS_EMMCACHESIZE; i++) {
+		int32_t writeemm=1; // 0= dont write emm, 1=write emm, default = write
+		
+		for (i=0; i<CS_EMMCACHESIZE; i++) { //check emm cache hits
 			if (!memcmp(au_cl->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE)) {
 				rdr_debug_mask(aureader, D_EMM, "emm found in cache: count %d rewrite %d",
 					au_cl->emmcache[i].count, aureader->rewritemm);
 				if (aureader->cachemm && (au_cl->emmcache[i].count > aureader->rewritemm)) {
 					reader_log_emm(aureader, ep, i, 2, NULL);
+					writeemm = 0; // dont write emm!
 					break; // found emm match needs no further handling, stop searching and proceed with next reader!
 				}
-				EMM_PACKET *emm_pack;
-				if (cs_malloc(&emm_pack, sizeof(EMM_PACKET))) {
-					rdr_debug_mask(aureader, D_EMM, "emm is being sent to reader");
-					memcpy(emm_pack, ep, sizeof(EMM_PACKET));
-					add_job(aureader->client, ACTION_READER_EMM, emm_pack, sizeof(EMM_PACKET));
-				} 
-				break; // found emm match, handled it, now stop searching and proceed with next reader!
+				writeemm = 1; // found emm match but rewrite counter not reached: write emm! 
+				break; 
 			}
 		}
+		
+		if (writeemm){ // only write on no cache hit or cache hit that needs further rewrite
+			EMM_PACKET *emm_pack;
+			if (cs_malloc(&emm_pack, sizeof(EMM_PACKET))) {
+				rdr_debug_mask(aureader, D_EMM, "emm is being sent to reader");
+				memcpy(emm_pack, ep, sizeof(EMM_PACKET));
+				add_job(aureader->client, ACTION_READER_EMM, emm_pack, sizeof(EMM_PACKET));
+			}
+		}
+		
 	} // done with this reader, process next reader!
 	
 	if (emmnok > 0 && emmnok == ll_count(client->aureader_list)) {
