@@ -3772,12 +3772,13 @@ int32_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid) {
 		demux[demux_index].ECMpids[pid].index= idx;
 		cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d PID: #%d CAID: %04X ECMPID: %04X is using index %d", demux_index, pid,
 			demux[demux_index].ECMpids[pid].CAID, demux[demux_index].ECMpids[pid].ECM_PID, idx-1);
-	}
-	for (n=0;n<demux[demux_index].STREAMpidcount;n++) {
-		if (!demux[demux_index].ECMpids[pid].streams || (demux[demux_index].ECMpids[pid].streams & (1 << n)))
-			dvbapi_set_pid(demux_index, n, idx-1); // enable streampid
-		else
-			dvbapi_set_pid(demux_index, n, -1); // disable streampid
+	
+		for (n=0;n<demux[demux_index].STREAMpidcount;n++) {
+			if (!demux[demux_index].ECMpids[pid].streams || (demux[demux_index].ECMpids[pid].streams & (1 << n)))
+				dvbapi_set_pid(demux_index, n, idx-1); // enable streampid
+			else
+				dvbapi_set_pid(demux_index, n, -1); // disable streampid
+		}
 	}
 	
 	return idx-1; // return caindexer
