@@ -319,8 +319,8 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 
 	switch(api) {
 		case DVBAPI_3:
-			demux[demux_id].demux_fd[n].fd = dvbapi_open_device(0, demux[demux_id].demux_index, demux[demux_id].adapter_index);
-			
+			ret = demux[demux_id].demux_fd[n].fd = dvbapi_open_device(0, demux[demux_id].demux_index, demux[demux_id].adapter_index);
+			if (ret < 0) return ret; // return if device cant be opened!
 			struct dmx_sct_filter_params sFP2;
 
 			memset(&sFP2,0,sizeof(sFP2));
@@ -357,7 +357,8 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 			break;
 			
 		case DVBAPI_1:
-			demux[demux_id].demux_fd[n].fd = dvbapi_open_device(0, demux[demux_id].demux_index, demux[demux_id].adapter_index);
+			ret = demux[demux_id].demux_fd[n].fd = dvbapi_open_device(0, demux[demux_id].demux_index, demux[demux_id].adapter_index);
+			if (ret < 0) return ret; // return if device cant be opened!
 			struct dmxSctFilterParams sFP1;
 
 			memset(&sFP1,0,sizeof(sFP1));
@@ -1046,9 +1047,11 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx) {
 						} else {
 							// This ioctl fails on dm500 but that is OK.
 							if (ioctl(ca_fd[i], CA_SET_PID, &ca_pid2)==-1)
-								cs_debug_mask(D_TRACE|D_DVBAPI,"ERROR: ioctl(CA_SET_PID) pid=0x%04x index=%d (errno=%d %s)", ca_pid2.pid, ca_pid2.index, errno, strerror(errno));
+								cs_debug_mask(D_TRACE|D_DVBAPI,"[DVBAPI] Demuxer #%d stream #%d ERROR: ioctl(CA_SET_PID) pid=0x%04x index=%d (errno=%d %s)",
+									demux_id, num+1, ca_pid2.pid, ca_pid2.index, errno, strerror(errno));
 							else
-								cs_debug_mask(D_DVBAPI, "CA_SET_PID pid=0x%04x index=%d", ca_pid2.pid, ca_pid2.index);
+								cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d stream #%d CA_SET_PID pid=0x%04x index=%d", demux_id, num+1,
+									ca_pid2.pid, ca_pid2.index);
 						}
 					}
 				}
@@ -2587,18 +2590,8 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 			return;
 		}
 		
-		if (selected_api != DVBAPI_3 && selected_api != DVBAPI_1 && selected_api != STAPI){ // only valid for dvbapi3 && dvbapi1 && stapi
-			if (curpid->table == buffer[0]) // wait for odd / even ecm change old style
-				return;
-				
-		}
-
-#if defined(__powerpc__)
-		if (curpid->table == buffer[0]){ // wait for odd / even ecm change old style since dm500 ppcold cant handle sectionfiltering but its dvbapi1
+		if (curpid->table == buffer[0] && curpid->CAID>>8 != 0x06) // wait for odd / even ecm change (only not for irdeto!)
 			return;
-		}
-#endif
-		curpid->table = buffer[0];
 		
 		if (curpid->CAID>>8 == 0x06){ //irdeto cas
 			// 80 70 39 53 04 05 00 88
@@ -3222,7 +3215,7 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid) {
 						else
 							ca_fd[i]=dvbapi_open_device(1, i, demux[demux_id].adapter_index);
 						if (ca_fd[i]<=0)
-							return;
+							continue; // proceed next stream
 					}
 
 					if (cfg.dvbapi_boxtype == BOXTYPE_PC) {
@@ -3779,12 +3772,12 @@ int32_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid) {
 		demux[demux_index].ECMpids[pid].index= idx;
 		cs_debug_mask(D_DVBAPI,"[DVBAPI] Demuxer #%d PID: #%d CAID: %04X ECMPID: %04X is using index %d", demux_index, pid,
 			demux[demux_index].ECMpids[pid].CAID, demux[demux_index].ECMpids[pid].ECM_PID, idx-1);
-		for (n=0;n<demux[demux_index].STREAMpidcount;n++) {
-			if (!demux[demux_index].ECMpids[pid].streams || (demux[demux_index].ECMpids[pid].streams & (1 << n)))
-				dvbapi_set_pid(demux_index, n, idx-1); // enable streampid
-			else
-				dvbapi_set_pid(demux_index, n, -1); // disable streampid
-		}
+	}
+	for (n=0;n<demux[demux_index].STREAMpidcount;n++) {
+		if (!demux[demux_index].ECMpids[pid].streams || (demux[demux_index].ECMpids[pid].streams & (1 << n)))
+			dvbapi_set_pid(demux_index, n, idx-1); // enable streampid
+		else
+			dvbapi_set_pid(demux_index, n, -1); // disable streampid
 	}
 	
 	return idx-1; // return caindexer
