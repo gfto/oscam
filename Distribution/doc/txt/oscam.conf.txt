@@ -135,6 +135,9 @@ DESCRIPTIONS
        fallbacktimeout = milli-seconds
 	  time falling back to fallback reader, default:2500
 
+       fallbacktimeout_percaid = milli-seconds
+	  time falling back to CAID restricted fallback reader, default:2500
+
        sleep = minutes
 	  time waiting for inactive users, default:none, can be overwritten per user in oscam.user
 

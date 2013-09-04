@@ -419,6 +419,15 @@ reconnect if missing answers from a remote reader, default:30
 
 <P>
 
+<B>fallback_percaid</B> = <B>&lt;CAID&gt;[:&lt;ident&gt;[,ident]]...[;&lt;CAID&gt;[:&lt;ident&gt;[,ident]]...]....</B>
+<DL COMPACT><DT><DD>
+use reader as fallback for defined CAIDs only, two-digit wildcard CAIDs are possible, <B>fallback_percaid</B> overrules <B>fallback</B>, default:none
+<P>
+<BR>&nbsp;example:&nbsp;fallback_percaid&nbsp;=&nbsp;1234:234567;89;10:345678
+</DL>
+
+<P>
+
 <B>emmcache</B> = <B>usecache,rewrite,logging</B>
 <DL COMPACT><DT><DD>
 set EMM cache of local reader:

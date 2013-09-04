@@ -320,6 +320,13 @@ reconnect if missing answers from a remote reader, default:30
 1 = define reader as fallback, standard and fallback reader must have the same group, default:0
 .RE
 .PP
+\fBfallback_percaid\fP = \fB<CAID>[:<ident>[,ident]]...[;<CAID>[:<ident>[,ident]]...]....\fP
+.RS 3n
+use reader as fallback for defined CAIDs only, two-digit wildcard CAIDs are possible, \fBfallback_percaid\fP overrules \fBfallback\fP, default:none
+
+ example: fallback_percaid = 1234:234567;89;10:345678
+.RE
+.PP
 \fBemmcache\fP = \fBusecache,rewrite,logging\fP
 .RS 3n
 set EMM cache of local reader:
