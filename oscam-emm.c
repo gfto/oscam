@@ -31,7 +31,7 @@ static int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int16_t len)
  *
  * the emm is checked against it and returns 1 for a valid emm or 0 if not
  */
-static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs, EMM_PACKET *ep)
+static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs, EMM_PACKET *ep, int8_t cl_dvbapi)
 {
 	//copied and enhanced from module-dvbapi.c
 	//dvbapi_start_emm_filter()
@@ -52,6 +52,7 @@ static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs
 	// Now check all filter values
 
 	int32_t filter_count = rdr->csystem.emm_filter_count;
+	
 	for (j = 0; j < filter_count; j++) {
 		if (dmx_filter[j].enabled == 0)
 			continue;
@@ -62,18 +63,22 @@ static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs
 
 		match = 1;
 		for (i = 0, k = 0; i < 16 && k < ep->emmlen && match; i++, k++) {
-			flt = dmx_filter[j].filter[i];
 			mask = dmx_filter[j].mask[i];
 			if (!mask)
 				continue;
+			if (k == 1 && cl_dvbapi) // fixup for emms send by dvbapi
+				k +=2; //skip emm len bytes
+			flt = (dmx_filter[j].filter[i]);
+			//cs_log("**** filter #%d [%d] = %02X, filter mask[%d] = %02X, flt&mask = %02X , ep->emm[%d] = %02X, ep->emm[%d] & mask = %02X ****", j, i,
+			//	dmx_filter[j].filter[i], i, dmx_filter[j].mask[i], flt&mask, k, ep->emm[k], k, ep->emm[k] & mask);
+			flt = (dmx_filter[j].filter[i] & mask);
 			match = (flt == (ep->emm[k] & mask));
 			if (!match)
 				break;
-			if (k == 0)
-				k += 2; //skip len
 		}
-		if (match)
+		if (match){
 			return 1; //valid emm
+		}
 	}
 	return 0; //emm filter does not match, illegal emm, return
 }
@@ -315,8 +320,8 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		}
 
 		if (cs && cs->get_emm_filter) {
-			if (!do_simple_emm_filter(aureader, cs, ep)) {
-				rdr_debug_mask(aureader, D_EMM, "emm skipped, emm_filter() returns invalid");
+			if(!do_simple_emm_filter(aureader, cs, ep, cl_dvbapi)) {
+				rdr_debug_mask(aureader, D_EMM, "emm skipped, do_simple_emm_filter() returns invalid");
 				emmnok++;
 				continue;
 			}
