@@ -49,7 +49,7 @@ static inline uint8_t checkECMD5(ECM_REQUEST *er)
 		if (er->ecmd5[i]) return 1;
 	return 0;
 }
-void add_hitcache(struct s_client *cl, ECM_REQUEST *er, ECM_REQUEST *ecm);
+void add_hitcache(struct s_client *cl, ECM_REQUEST *er);
 struct csp_ce_hit_t *check_hitcache(ECM_REQUEST *er, struct s_client *cl, uint8_t lock);
 void cleanup_hitcache(void);
 uint32_t get_cacheex_wait_time(ECM_REQUEST *er, struct s_client *cl);

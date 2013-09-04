@@ -21,6 +21,7 @@ extern uint8_t cc_node_id[8];
 extern uint8_t camd35_node_id[8];
 extern CS_MUTEX_LOCK ecmcache_lock;
 extern struct ecm_request_t *ecmcwcache;
+extern uint32_t ecmcwcache_size;
 extern CS_MUTEX_LOCK hitcache_lock;
 
 uint8_t cacheex_peer_id[8];
@@ -28,6 +29,9 @@ uint8_t cacheex_peer_id[8];
 static LLIST *invalid_cws;
 static struct csp_ce_hit_t *cspec_hitcache;
 static uint32_t cspec_hitcache_size;
+extern struct ecm_request_t *ecm_pushed;
+extern CS_MUTEX_LOCK ecm_pushed_lock;
+
 
 void cacheex_init(void) {
 	// Init random node id
@@ -144,7 +148,7 @@ void cacheex_cache_push(ECM_REQUEST *er)
 	if (er->rc >= E_NOTFOUND && er->rc != E_UNHANDLED) //Maybe later we could support other rcs
 		return; //NOT FOUND/Invalid
 
-	if (er->cacheex_pushed || (er->ecmcacheptr && er->ecmcacheptr->cacheex_pushed))
+	if (er->cacheex_pushed)
 		return;
 
 	int64_t grp;
@@ -181,7 +185,7 @@ void cacheex_cache_push(ECM_REQUEST *er)
 	struct s_reader *rdr;
 	for (rdr = first_active_reader; rdr; rdr = rdr->next) {
 		cl = rdr->client;
-		if (cl && er->cacheex_src != cl && rdr->cacheex.mode == 3) { //send cache over reader
+		if (check_client(cl) && er->cacheex_src != cl && rdr->cacheex.mode == 3) { //send cache over reader
 			if (rdr->ph.c_cache_push
 				&& (!grp || (rdr->grp & grp)) //Group-check
 				&& chk_srvid(cl, er) //Service-check
@@ -196,7 +200,6 @@ void cacheex_cache_push(ECM_REQUEST *er)
 	cs_readunlock(&readerlist_lock);
 
 	er->cacheex_pushed = 1;
-	if (er->ecmcacheptr) er->ecmcacheptr->cacheex_pushed = 1;
 }
 
 static inline struct s_cacheex_matcher *is_cacheex_matcher_matching(ECM_REQUEST *from_er, ECM_REQUEST *to_er)
@@ -233,12 +236,12 @@ static inline struct s_cacheex_matcher *is_cacheex_matcher_matching(ECM_REQUEST 
 }
 
 bool cacheex_is_match_alias(struct s_client *cl, ECM_REQUEST *er) {
-	return cl && cl->account && cl->account->cacheex.mode == 1 && is_cacheex_matcher_matching(NULL, er);
+	return check_client(cl) && cl->account && cl->account->cacheex.mode == 1 && is_cacheex_matcher_matching(NULL, er);
 }
 
 inline int8_t cacheex_match_alias(struct s_client *cl, ECM_REQUEST *er, ECM_REQUEST *ecm)
 {
-	if (cl && cl->account && cl->account->cacheex.mode == 1) {
+	if (check_client(cl) && cl->account && cl->account->cacheex.mode == 1) {
 		struct s_cacheex_matcher *entry = is_cacheex_matcher_matching(ecm, er);
 		if (entry) {
 			int32_t diff = comp_timeb(&er->tps, &ecm->tps);
@@ -293,6 +296,7 @@ static int32_t is_invalid_cw(uint8_t *cw) {
 	return invalid;
 }
 
+
 static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 {
 	if (!cl)
@@ -325,7 +329,7 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 			}
 		}
 
-		if (null==0) {
+		if (null==0 || chk_is_null_CW(er->cw)) {
 			cs_ddump_mask(D_CACHEEX, er->cw, 16, "push received null cw from %s", csp ? "csp" : username(cl));
 			cl->cwcacheexerr++;
 			if (cl->account)
@@ -340,6 +344,7 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 				cl->account->cwcacheexerrcw++;
 			return 0;
 		}
+
 	}
 
 	er->grp |= cl->grp; //extend group instead overwriting, this fixes some funny not founds and timeouts when using more cacheex readers with different groups
@@ -361,144 +366,219 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 		update_chid(er);
 	}
 
-	struct ecm_request_t *ecm = check_cwcache(er, cl);
 
-	add_hitcache(cl, er, ecm);
-	
-//	{
-//		char h1[20];
-//		char h2[10];
-//		cs_hexdump(0, er->ecmd5, sizeof(er->ecmd5), h1, sizeof(h1));
-//		cs_hexdump(0, (const uchar*)&er->csp_hash, sizeof(er->csp_hash), h2, sizeof(h2));
-//		debug_ecm(D_TRACE, "cache push check %s: %s %s %s rc=%d found cache: %s", username(cl), buf, h1, h2, er->rc, ecm==NULL?"no":"yes");
-//	}
+	bool ecm_found=false;
+	bool add_to_cache=true;
+	bool addhitcache_done=false;
 
-	if (!ecm) {
-		uint8_t cwcycle_act = cwcycle_check_act(er->caid);
-		if (er->rc < E_NOTFOUND) { // Do NOT add cacheex - not founds!
-			if (!cwcycle_act) {
-				cs_writelock(&ecmcache_lock);
-				er->next = ecmcwcache;
-				ecmcwcache = er;
-				cs_writeunlock(&ecmcache_lock);
-			}
-			er->selected_reader = cl->reader;
+	if(er->rc < E_NOTFOUND){
 
-			cacheex_cache_push(er);  //cascade push!
-
-			if (er->rc < E_NOTFOUND)
-				cacheex_add_stats(cl, er->caid, er->srvid, er->prid, 1);
-
+		if(check_client(cl)){
 			cl->cwcacheexgot++;
 			if (cl->account)
 				cl->account->cwcacheexgot++;
 			first_client->cwcacheexgot++;
+		}
+
+		/*
+		 * Here we need cycling cache to found one or more matching ecm
+		 *
+		 */
+
+		time_t timeout = time(NULL)-cfg.max_cache_time;
+		struct ecm_request_t *ecm;
+
+		cs_readlock(&ecmcache_lock);
+		for (ecm = ecmcwcache; ecm; ecm = ecm->next) {
+			if (ecm->tps.time <= timeout)
+				break;
+
+			//check for match ecm
+			if(cmp_ecm(ecm, er) ){
+
+				//*********************************************************************************
+
+				if(	ecm->from_csp || ecm->from_cacheex   //skip ecm came from cacheex or csp
+					||
+					(er->from_csp && ecm->csp_answered)  //skip csp cache for ecm already answered by csp cache
+					||
+					(er->from_cacheex && (er->grp & ecm->grp))	//skip cacheex for ecm already answered by same cacheex client
+				){
+
+					add_to_cache=false;  //ecm (cw) already in cache, not add new one for same ecm hash!
+					if (ecm->rc<E_NOTFOUND) {
+						if (memcmp(er->cw, ecm->cw, sizeof(er->cw)) != 0) {
+							add_invalid_cw(ecm->cw);
+							add_invalid_cw(er->cw);
+
+							if(check_client(cl)){
+								cl->cwcacheexerrcw++;
+								if (cl->account)
+									cl->account->cwcacheexerrcw++;
+							}
+
+							char cw1[16*3+2], cw2[16*3+2];
+							cs_hexdump(0, er->cw, 16, cw1, sizeof(cw1));
+							cs_hexdump(0, ecm->cw, 16, cw2, sizeof(cw2));
+
+							char ip1[20]="", ip2[20]="";
+							if (check_client(cl))
+								cs_strncpy(ip1, cs_inet_ntoa(cl->ip), sizeof(ip1));
+							if (check_client(ecm->cacheex_src))
+								cs_strncpy(ip2, cs_inet_ntoa(ecm->cacheex_src->ip), sizeof(ip2));
+							else if (ecm->selected_reader && check_client(ecm->selected_reader->client))
+								cs_strncpy(ip2, cs_inet_ntoa(ecm->selected_reader->client->ip), sizeof(ip2));
+
+							void *el = ll_has_elements(er->csp_lastnodes);
+							uint64_t node1 = el?(*(uint64_t*)el):0;
+
+							el = ll_has_elements(ecm->csp_lastnodes);
+							uint64_t node2 = el?(*(uint64_t*)el):0;
+
+							el = ll_last_element(er->csp_lastnodes);
+							uint64_t node3 = el?(*(uint64_t*)el):0;
+
+							el = ll_last_element(ecm->csp_lastnodes);
+							uint64_t node4 = el?(*(uint64_t*)el):0;
+
+							debug_ecm(D_TRACE| D_CSPCWC, "WARNING: Different CWs %s from %s(%s)<>%s(%s): %s<>%s nodes %llX %llX %llX %llX", buf,
+								csp ? "csp" : username(cl), ip1,
+								ecm->cacheex_src?username(ecm->cacheex_src):(ecm->selected_reader?ecm->selected_reader->label:"unknown/csp"), ip2,
+								cw1, cw2,
+								(long long unsigned int)node1,
+								(long long unsigned int)node2,
+								(long long unsigned int)node3,
+								(long long unsigned int)node4);
+						} else {
+							debug_ecm(D_CACHEEX| D_CSPCWC, "ignored duplicate pushed ECM %s from %s", buf, csp ? "csp" : username(cl));
+						}
+					}
+
+				}else{
+
+					//send cache to client
+					if(check_client(ecm->client)){
+							#ifdef CW_CYCLE_CHECK
+								if (!checkcwcycle(ecm, cl->reader, er->cw, er->rc )) {   //if not valid, we don't add it to hit_cache and does not cascade push!!!
+									continue;
+								}
+							#endif
+
+							struct s_write_from_cache *wfc=NULL;
+							if (!cs_malloc(&wfc, sizeof(struct s_write_from_cache)))
+								continue;
+
+							wfc->er_new=ecm;
+							wfc->er_cache=er;
+							wfc->type=3;
+
+							int8_t rc_orig=ecm->rc;
+
+							if(!add_job(ecm->client, ACTION_ECM_ANSWER_CACHE, wfc, sizeof(struct s_write_from_cache)))  //write_ecm_answer_fromcache
+								continue;
+
+							if(!ecm_found){
+								if(rc_orig>=E_NOTFOUND) //if not already pushed
+									cacheex_cache_push(er); //cascade push
+								cacheex_add_stats(cl, er->caid, er->srvid, er->prid, 1);  //add stat only for first ecm found
+							}
+
+							ecm_found=true;
+					}
+
+					//check for add_hitcache
+					if(!addhitcache_done && ((ecm->cacheex_wait_time && !ecm->cacheex_wait_time_expired) || !ecm->cacheex_wait_time) ){  //only for first ecm found when no wait_time expires (or not wait_time), add hitcache
+
+						uint8_t add_hitcache_er=1;
+						struct s_reader *cl_rdr = cl->reader;
+						if (cl_rdr && cl_rdr->cacheex.mode == 2) {
+							struct s_reader *rdr;
+							struct s_ecm_answer *ea;
+							for(ea = ecm->matching_rdr; ea; ea = ea->next) {
+								rdr = ea->reader;
+								if (cl_rdr == rdr && ((ea->status & REQUEST_ANSWERED) == REQUEST_ANSWERED)){
+									cs_debug_mask(D_CACHEEX|D_CSPCWC|D_LB,"{client %s, caid %04X, prid %06X, srvid %04X} [CACHEEX] skip ADD self request!", (check_client(ecm->client)?ecm->client->account->usr:"-"),ecm->caid, ecm->prid, ecm->srvid );
+									add_hitcache_er=0; //don't add hit cache, reader requested self
+								}
+							}
+						}
+
+						if(add_hitcache_er){
+							addhitcache_done=true;
+							add_hitcache(cl, ecm);  //USE cacheex client (to get correct group) and ecm from requesting client (to get correct caid|prid|srvid)!!!
+							if(ecm->prid!=er->prid || ecm->srvid!=er->srvid)
+								add_hitcache(cl, er);  //we add_hitcache also original caid|prid|srvid
+						}
+					}
+					//END check for add_hitcache
+				}
+
+				//*************************************************************************************
+			}
+		}
+		cs_readunlock(&ecmcache_lock);
+	}
+
+
+	if(!ecm_found && add_to_cache){  //if not ecm (cw) already in cache
+		uint8_t cwcycle_act = cwcycle_check_act(er->caid);
+		if (er->rc < E_NOTFOUND) { // Do NOT add cacheex - not founds!
+			add_hitcache(cl, er);
+
+			er->selected_reader = cl->reader;
+
+			if (!cwcycle_act) {
+				cs_writelock(&ecmcache_lock);
+				er->next = ecmcwcache;
+				ecmcwcache = er;
+				ecmcwcache_size++;
+				cs_writeunlock(&ecmcache_lock);
+			}
+
+			cacheex_cache_push(er);  //cascade push!
+			cacheex_add_stats(cl, er->caid, er->srvid, er->prid, 1);
+
 			if (cwcycle_act)
 				er->rc = E_NOTFOUND; //need to free
 		}
 		debug_ecm(D_CACHEEX, "got pushed %sECM %s from %s (%s)", (er->rc == E_UNHANDLED)?"request ":"", buf, csp ? "csp" : username(cl),(cwcycle_act)?"on":"off");
 
 		return er->rc < E_NOTFOUND ? 1 : 0;
-	} else {
-		if (er->rc < ecm->rc) {
-			if (ecm->csp_lastnodes == NULL) {
-				ecm->csp_lastnodes = er->csp_lastnodes;
-				er->csp_lastnodes = NULL;
-			}
-			ecm->cacheex_src = cl;
-			ecm->cacheex_pushed = 0;
-
-			write_ecm_answer(cl->reader, ecm, er->rc, er->rcEx, er->cw, ecm->msglog);
-
-			if (er->rc < E_NOTFOUND)
-				ecm->selected_reader = cl->reader;
-
-			cacheex_cache_push(ecm);  //cascade push!
-
-			if (er->rc < E_NOTFOUND)
-				cacheex_add_stats(cl, er->caid, er->srvid, er->prid, 1);
-
-			cl->cwcacheexgot++;
-			if (cl->account)
-				cl->account->cwcacheexgot++;
-			first_client->cwcacheexgot++;
-
-			debug_ecm(D_CACHEEX| D_CSPCWC, "replaced pushed ECM %s from %s", buf, csp ? "csp" : username(cl));
-		} else {
-			if (er->rc < E_NOTFOUND && memcmp(er->cw, ecm->cw, sizeof(er->cw)) != 0) {
-				add_invalid_cw(ecm->cw);
-				add_invalid_cw(er->cw);
-
-				cl->cwcacheexerrcw++;
-				if (cl->account)
-					cl->account->cwcacheexerrcw++;
-
-				char cw1[16*3+2], cw2[16*3+2];
-				cs_hexdump(0, er->cw, 16, cw1, sizeof(cw1));
-				cs_hexdump(0, ecm->cw, 16, cw2, sizeof(cw2));
-
-				char ip1[20]="", ip2[20]="";
-				if (cl)
-					cs_strncpy(ip1, cs_inet_ntoa(cl->ip), sizeof(ip1));
-				if (ecm->cacheex_src)
-					cs_strncpy(ip2, cs_inet_ntoa(ecm->cacheex_src->ip), sizeof(ip2));
-				else if (ecm->selected_reader)
-					cs_strncpy(ip2, cs_inet_ntoa(ecm->selected_reader->client->ip), sizeof(ip2));
-
-				void *el = ll_has_elements(er->csp_lastnodes);
-				uint64_t node1 = el?(*(uint64_t*)el):0;
-
-				el = ll_has_elements(ecm->csp_lastnodes);
-				uint64_t node2 = el?(*(uint64_t*)el):0;
-
-				el = ll_last_element(er->csp_lastnodes);
-				uint64_t node3 = el?(*(uint64_t*)el):0;
-
-				el = ll_last_element(ecm->csp_lastnodes);
-				uint64_t node4 = el?(*(uint64_t*)el):0;
-
-				debug_ecm(D_TRACE| D_CSPCWC, "WARNING: Different CWs %s from %s(%s)<>%s(%s): %s<>%s nodes %llX %llX %llX %llX", buf,
-					csp ? "csp" : username(cl), ip1,
-					ecm->cacheex_src?username(ecm->cacheex_src):(ecm->selected_reader?ecm->selected_reader->label:"unknown/csp"), ip2,
-					cw1, cw2,
-					(long long unsigned int)node1,
-					(long long unsigned int)node2,
-					(long long unsigned int)node3,
-					(long long unsigned int)node4);
-
-				//char ecmd51[17*3];
-				//cs_hexdump(0, er->ecmd5, 16, ecmd51, sizeof(ecmd51));
-				//char csphash1[5*3];
-				//cs_hexdump(0, (void*)&er->csp_hash, 4, csphash1, sizeof(csphash1));
-				//char ecmd52[17*3];
-				//cs_hexdump(0, ecm->ecmd5, 16, ecmd52, sizeof(ecmd52));
-				//char csphash2[5*3];
-				//cs_hexdump(0, (void*)&ecm->csp_hash, 4, csphash2, sizeof(csphash2));
-				//debug_ecm(D_TRACE, "WARNING: Different CWs %s from %s<>%s: %s<>%s %s<>%s %s<>%s", buf,
-				//    csp ? "csp" : username(cl),
-				//    ecm->cacheex_src?username(ecm->cacheex_src):"unknown/csp",
-				//    cw1, cw2,
-				//    ecmd51, ecmd52,
-				//    csphash1, csphash2
-				//    );
-			} else {
-				debug_ecm(D_CACHEEX| D_CSPCWC, "ignored duplicate pushed ECM %s from %s", buf, csp ? "csp" : username(cl));
-			}
-		}
-		return 0;
 	}
+
+	if(ecm_found) return -1;  //no free immediately er, because it is used by ACTION_ECM_ANSWER_CACHE and ACTION_CACHE_PUSH_OUT job threads
+
+	return 0;
 }
 
 void cacheex_add_to_cache(struct s_client *cl, ECM_REQUEST *er)
 {
-	if (!cacheex_add_to_cache_int(cl, er, 0))
+	er->from_cacheex=1;
+
+	int32_t add_cache_rc = cacheex_add_to_cache_int(cl, er, 0);
+	if(!add_cache_rc)
 		free_ecm(er);
+	else if (add_cache_rc==-1){  //wait max_cache before free
+		//insert it in ecm_pushed!
+		cs_writelock(&ecm_pushed_lock);
+		er->next = ecm_pushed;
+		ecm_pushed = er;
+		cs_writeunlock(&ecm_pushed_lock);
+	}
 }
 
 void cacheex_add_to_cache_from_csp(struct s_client *cl, ECM_REQUEST *er)
 {
-	if (!cacheex_add_to_cache_int(cl, er, 1))
+	int32_t add_cache_rc = cacheex_add_to_cache_int(cl, er, 1);
+	if(!add_cache_rc)
 		free_ecm(er);
+	else if (add_cache_rc==-1){  //wait max_cache before free
+		//insert it in ecm_pushed!
+		cs_writelock(&ecm_pushed_lock);
+		er->next = ecm_pushed;
+		ecm_pushed = er;
+		cs_writeunlock(&ecm_pushed_lock);
+	}
 }
 
 //Format:
@@ -623,73 +703,52 @@ void cacheex_update_hash(ECM_REQUEST *er) {
  * csp cacheex hit cache
  **/
 
-void add_hitcache(struct s_client *cl, ECM_REQUEST *er, ECM_REQUEST *ecm) {
+void add_hitcache(struct s_client *cl, ECM_REQUEST *er) {
 	bool upd_hit = true;
 	if (!cfg.cacheex_wait_timetab.n)
 		return;
 	uint32_t cacheex_wait_time = get_cacheex_wait_time(er,NULL);
 	if (!cacheex_wait_time)
 		return;
-	if (er->rc < E_NOTFOUND) {
 
-		if (ecm){
-			struct s_reader *cl_rdr = cl->reader;
-			if (cl_rdr) {
-				struct s_reader *rdr;
-				struct s_ecm_answer *ea;
-				for(ea = ecm->matching_rdr; ea; ea = ea->next) {
-					rdr = ea->reader;
-					if (cl_rdr == rdr && cl_rdr->cacheex.mode == 2 && ((ea->status & REQUEST_ANSWERED) == REQUEST_ANSWERED)){
-						cs_debug_mask(D_CACHEEX|D_CSPCWC,"[ADD_HITCACHE] skip add self request");
-						return; //don't add hit cache, reader requested self
-					}
-				}
-			}
-
-			if (er->rc >= ecm->rc && er->rc < E_NOTFOUND && (ecm->tps.millitm - er->tps.millitm) > 0 && cacheex_wait_time) {
-				cs_debug_mask(D_CACHEEX|D_CSPCWC,"[ADD_HITCACHE] skip add too old");
-				return; //check ignored duplicate time, is over wait time don't add hit cache
-			}
+	cs_writelock(&hitcache_lock);
+	CSPCEHIT *ch = check_hitcache(er,cl,0);//, *ch_t = NULL;
+	if (!ch && cs_malloc(&ch, sizeof(CSPCEHIT))) {
+		upd_hit = false;
+		ch->ecmlen = er->ecmlen;
+		ch->caid = er->caid;
+		ch->prid = er->prid;
+		ch->srvid = er->srvid;
+		ch->grp = 0;
+		ch->prev = ch->next = NULL;
+		if (cspec_hitcache) {
+			cspec_hitcache->prev = ch;
+			ch->next = cspec_hitcache;
 		}
-
-		cs_writelock(&hitcache_lock);
-		CSPCEHIT *ch = check_hitcache(er,cl,0);//, *ch_t = NULL;
-		if (!ch && cs_malloc(&ch, sizeof(CSPCEHIT))) {
-			upd_hit = false;
-			ch->ecmlen = er->ecmlen;
-			ch->caid = er->caid;
-			ch->prid = er->prid;
-			ch->srvid = er->srvid;
-			ch->grp = 0;
-			ch->prev = ch->next = NULL;
-			if (cspec_hitcache) {
-				cspec_hitcache->prev = ch;
-				ch->next = cspec_hitcache;
-			}
-			cspec_hitcache = ch;
-			cspec_hitcache_size++;
-		}
-		if (ch){
-			cs_debug_mask(D_CACHEEX|D_CSPCWC,"[CSPCEHIT] add_hitcache %s entry ecmlen %d caid %04X provid %06X srvid %04X grp %"PRIu64" next %s size %d", upd_hit?"upd":"add", ch->ecmlen, ch->caid, ch->prid, ch->srvid, ch->grp, (ch->next)?"Yes":"No", cspec_hitcache_size);
-			ch->grp |= er->grp;
-			ch->time = time(NULL); //always update time;
-
-			if (upd_hit && ch->prev){ //is ch->prev NULL we are top in list, no move
-				if (ch->next) {
-					ch->prev->next = ch->next;
-					ch->next->prev = ch->prev;
-				} else {
-					ch->prev->next = NULL;
-				}
-				ch->prev = NULL;
-				cspec_hitcache->prev = ch;
-				ch->next = cspec_hitcache;
-				cspec_hitcache = ch;
-			}
-
-		}
-		cs_writeunlock(&hitcache_lock);
+		cspec_hitcache = ch;
+		cspec_hitcache_size++;
 	}
+	if (ch){
+
+		cs_debug_mask(D_CACHEEX|D_CSPCWC,"[CSPCEHIT] add_hitcache %s entry ecmlen %d caid %04X provid %06X srvid %04X grp %"PRIu64" next %s size %d", upd_hit?"upd":"add", ch->ecmlen, ch->caid, ch->prid, ch->srvid, ch->grp, (ch->next)?"Yes":"No", cspec_hitcache_size);
+		if(cl) ch->grp |= cl->grp;
+		ch->time = time(NULL); //always update time;
+
+		if (upd_hit && ch->prev){ //is ch->prev NULL we are top in list, no move
+			if (ch->next) {
+				ch->prev->next = ch->next;
+				ch->next->prev = ch->prev;
+			} else {
+				ch->prev->next = NULL;
+			}
+			ch->prev = NULL;
+			cspec_hitcache->prev = ch;
+			ch->next = cspec_hitcache;
+			cspec_hitcache = ch;
+		}
+
+	}
+	cs_writeunlock(&hitcache_lock);
 }
 
 struct csp_ce_hit_t *check_hitcache(ECM_REQUEST *er, struct s_client *cl, uint8_t lock) {
@@ -701,7 +760,7 @@ struct csp_ce_hit_t *check_hitcache(ECM_REQUEST *er, struct s_client *cl, uint8_
 
 	if (lock) cs_readlock(&hitcache_lock);
 	for (ch = cspec_hitcache; ch; ch = ch->next) {
-		if (ch->time < timeout) {
+		if (ch->time <= timeout) {
 			ch = NULL;
 			break;
 		}
@@ -723,17 +782,19 @@ struct csp_ce_hit_t *check_hitcache(ECM_REQUEST *er, struct s_client *cl, uint8_
 		break;
 	}
 	if (lock) cs_readunlock(&hitcache_lock);
+
 	if ((fs != 15) && ch) {
 		cs_log("[CSPCEHIT] check_hitcache error on check hitcache");
 		ch = NULL;
 	}
 	cs_debug_mask(D_CACHEEX| D_CSPCWC,"[CSPCEHIT] check_hitcache %s hit found max stage %d caid %04X prov %06X serv %04X grp %"PRIu64" lock %s", (fs == 15)?"yes":"no", fs, er->caid, er->prid, er->srvid, grp, lock?"yes":"no");
+
 	return ch;
 }
 
 void cleanup_hitcache(void) {
 	CSPCEHIT *current = NULL, *prv, *temp;
-	int32_t count = 0, mcc = cfg.max_cache_count;
+	int32_t count = 0;
 	int32_t mct = cfg.max_cache_time + (cfg.max_cache_time / 2); // 1,5
 	time_t now = time(NULL);
 
@@ -745,7 +806,7 @@ void cleanup_hitcache(void) {
 	}*/
 
 	for(current = cspec_hitcache, prv = NULL; current; prv=current, current = current->next, count++) {
-		if ((now - current->time) < mct && count < mcc) { // delete old Entry to hold list small
+		if ((now - current->time) < mct) { // delete old Entry to hold list small
 			continue;
 		}
 		if (prv) {

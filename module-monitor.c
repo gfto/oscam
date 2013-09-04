@@ -744,11 +744,13 @@ static void monitor_set_server(char *args){
 		return;
 	}
 
-	if (cfg.ftimeout>=cfg.ctimeout) {
+	/*Hide by blueven. Introduce new fallbacktimeout_percaid.
+	 *
+	 * if (cfg.ftimeout>=cfg.ctimeout) {
 		cfg.ftimeout = cfg.ctimeout - 100;
 		snprintf(buf, sizeof(buf), "[S-0000]setserver WARNING: fallbacktimeout adjusted to %u ms\n", cfg.ftimeout);
 		monitor_send_info(buf, 1);
-	}
+	}*/
 	//kill(first_client->pid, SIGUSR1);
 }
 

@@ -265,7 +265,7 @@ typedef unsigned char uchar;
 #define D_DEVICE    0x0020  // Debug Reader I/O
 #define D_EMM		0x0040  // Dumps EMM
 #define D_DVBAPI    0x0080  // Debug DVBAPI
-#define D_LB        0x0100  // Debug Loadbalancer
+#define D_LB        0x0100  // Debug Loadbalancer/ECM handler
 #define D_CACHEEX   0x0200  // Debug CACHEEX
 #define D_CLIENTECM 0x0400  // Debug Client ECMs
 #define D_CSPCWC    0x0800  // Debug CSP/CWC
@@ -798,13 +798,17 @@ typedef struct ecm_request_t {
 	int8_t			rc;
 	uint8_t			rcEx;
 	struct timeb	tps;				// incoming time stamp
-	uchar			locals_done;
 	int8_t			btun; 				// mark er as betatunneled
-	uint16_t			reader_avail; 		// count of available readers
-	uint16_t			reader_count; 		// count of contacted readers
-	uint16_t        	reader_requested;   // count of real requested readers
+	uint16_t			reader_avail; 				// count of available readers for ecm
+	uint16_t			readers; 					// count of available used readers
+	uint16_t			reader_nocacheex_avail; 	// count of "normal" readers
+	uint16_t			reader_count; 				// count of contacted readers
+	uint16_t			fallback_reader_count; 		// count of contacted fb readers
+	uint16_t			cacheex_reader_count; 		// count of contacted cacheex mode-1 readers
+	uint16_t        	reader_requested;   		// count of real requested readers
 	int8_t			checked;				//for doublecheck
 	uchar			cw_checked[16];		//for doublecheck
+	int8_t			readers_timeout_check; 	// set to 1 after ctimeout occurs and readers not answered are checked
 	struct s_reader 	*origin_reader;
 
 #if defined MODULE_CCCAM
@@ -820,16 +824,20 @@ typedef struct ecm_request_t {
 #endif
 
 	void			*src_data;
-	struct ecm_request_t	*ecmcacheptr;		// Pointer to ecm-cw-rc-cache!
 #ifdef CS_CACHEEX
-	uchar			cacheex_done;
 	struct s_client *cacheex_src;               // Cacheex origin
 	int8_t          cacheex_pushed;             // to avoid duplicate pushs
+	uint8_t			csp_answered;				// =1 if er get answer by csp
 	int32_t			csp_hash; 					// csp has its own hash
 	LLIST			*csp_lastnodes;				// last 10 Cacheex nodes atm cc-proto-only
 	uint32_t		cacheex_wait_time;			// cacheex wait time in ms
 	struct timeb	cacheex_wait;				// incoming time stamp (tps) + cacheex wait time
+	uint8_t			cacheex_wait_time_expired;  // =1 if cacheex wait_time expires
+	uint8_t			cacheex_hitcache;  			// =1 if wait_time due hitcache
 #endif
+	uint8_t			from_csp;					// =1 if er from csp cache
+	uint8_t			from_cacheex;				// =1 if er from cacheex client pushing cache
+	uint8_t			from_cacheex1_client;  		// =1 if er from cacheex-1 client
 	char			msglog[MSGLOGSIZE];
 	struct ecm_request_t	*parent;
 	struct ecm_request_t	*next;
@@ -844,11 +852,17 @@ struct s_ecm_answer {
 	uint8_t		rcEx;
 	uchar			cw[16];
 	char			msglog[MSGLOGSIZE];
+	struct timeb	time_request_sent;  //using for evaluate ecm_time
+	int32_t			ecm_time;
 #ifdef WITH_LB
 	int32_t		value;
 	int32_t		time;
 #endif
 	struct s_ecm_answer	*next;
+	CS_MUTEX_LOCK   ecmanswer_lock;
+	struct s_ecm_answer	*pending;
+	struct s_ecm_answer	*pending_next;
+	bool is_pending;
 };
 
 struct s_acasc_shm {
@@ -1137,6 +1151,7 @@ struct s_reader  									//contains device info, reader info and card info
     int8_t          disablecrccws;                  // 1=disable cw checksum test. 0=enable checksum check
 	uint64_t		grp;
 	int8_t			fallback;
+	FTAB			fallback_percaid;
 #ifdef CS_CACHEEX
 	CECSP			cacheex; //CacheEx Settings
 #endif
@@ -1505,6 +1520,7 @@ struct s_config
 	uint32_t		netprio;
 	uint32_t		ctimeout;
 	uint32_t		ftimeout;
+	CAIDVALUETAB	ftimeouttab;
 	uint32_t		cmaxidle;
 	int32_t			ulparent;
 	uint32_t		delay;
@@ -1703,7 +1719,6 @@ struct s_config
 #endif
 
 	uint32_t	max_cache_time;  //seconds
-	uint32_t	max_cache_count; //count ecms
 
 	int8_t		block_same_ip;   //0=allow all, 1=block client requests to reader with same ip   (default=1)
 	int8_t		block_same_name; //0=allow all, 1=block client requests to reader with same name (default=1)
@@ -1793,6 +1808,13 @@ typedef struct emm_packet_t
 	uchar			type;
 	struct s_client *client;
 } EMM_PACKET;
+
+
+struct s_write_from_cache {
+	ECM_REQUEST *er_new;
+	ECM_REQUEST *er_cache;
+	uint8_t type;    //=1 from INT. cache (cache1), =2 from distribute cacheex1 (cache2), =3 from cacheex clients
+};
 
 
 /* ===========================

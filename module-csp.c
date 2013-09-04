@@ -117,6 +117,7 @@ static uint8_t parse_request(struct ecm_request_t *er, uchar *buf)
 	er->srvid = srvid;
 	er->csp_hash = hash;
 	er->ecm[0] = commandTag;
+	er->from_csp=1;
 
 	return commandTag;
 }

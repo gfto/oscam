@@ -118,7 +118,7 @@ void check_caidtab_fn(const char *token, char *value, void *setting, FILE *f) {
 	}
 }
 
-#ifdef WITH_LB
+
 static void caidvaluetab_fn(const char *token, char *value, void *setting, FILE *f) {
 	CAIDVALUETAB *caid_value_table = setting;
 	int limit = streq(token, "lb_retrylimits") ? 50 : 1;
@@ -132,7 +132,6 @@ static void caidvaluetab_fn(const char *token, char *value, void *setting, FILE 
 		free_mk_t(value);
 	}
 }
-#endif
 
 #ifdef CS_CACHEEX
 void cacheex_valuetab_fn(const char *token, char *value, void *setting, FILE *f) {
@@ -177,8 +176,8 @@ void cacheex_hitvaluetab_fn(const char *token, char *value, void *setting, FILE 
 void global_fixups_fn(void *UNUSED(var)) {
 	if (!cfg.usrfile) cfg.disableuserfile = 1;
 	if (!cfg.mailfile) cfg.disablemail = 1;
-	if (cfg.ctimeout < 100) cfg.ctimeout *= 1000;
-	if (cfg.ftimeout < 100) cfg.ftimeout *= 1000;
+	if (cfg.ctimeout < 999) cfg.ctimeout = CS_CLIENT_TIMEOUT;
+
 	if (cfg.nice < -20 || cfg.nice > 20) cfg.nice = 99;
 	if (cfg.nice != 99) {
 #ifndef __CYGWIN__
@@ -197,7 +196,6 @@ void global_fixups_fn(void *UNUSED(var)) {
 #endif
 	}
 	if (cfg.max_log_size != 0 && cfg.max_log_size <= 10) cfg.max_log_size = 10;
-	if (cfg.ftimeout >= cfg.ctimeout) cfg.ftimeout = cfg.ctimeout - 100;
 #ifdef WITH_LB
 	if (cfg.lb_save > 0 && cfg.lb_save < 100) cfg.lb_save = 100;
 	if (cfg.lb_nbest_readers < 2) cfg.lb_nbest_readers = DEFAULT_NBEST;
@@ -225,6 +223,7 @@ static const struct config_list global_opts[] = {
 	DEF_OPT_INT8("usrfileflag"				, OFS(usrfileflag),			0 ),
 	DEF_OPT_UINT32("clienttimeout"			, OFS(ctimeout),			CS_CLIENT_TIMEOUT ),
 	DEF_OPT_UINT32("fallbacktimeout"		, OFS(ftimeout),			CS_CLIENT_TIMEOUT / 2 ),
+	DEF_OPT_FUNC("fallbacktimeout_percaid"	, OFS(ftimeouttab),			caidvaluetab_fn ),
 	DEF_OPT_UINT32("clientmaxidle"			, OFS(cmaxidle),			CS_CLIENT_MAXIDLE ),
 	DEF_OPT_INT32("bindwait"				, OFS(bindwait),			CS_BIND_TIMEOUT ),
 	DEF_OPT_UINT32("netprio"				, OFS(netprio),				0 ),
@@ -415,7 +414,7 @@ static const struct config_list camd33_opts[] = { DEF_LAST_OPT };
 
 
 void cache_fixups_fn(void *UNUSED(var)) {
-	if (cfg.max_cache_time < (cfg.ctimeout / 1000 + 1)) cfg.max_cache_time = cfg.ctimeout / 1000 + 2;
+	if (cfg.max_cache_time < ((cfg.ctimeout+500)/1000+3) ) cfg.max_cache_time = ((cfg.ctimeout+500)/1000+3);
 #ifdef CW_CYCLE_CHECK
 	if (cfg.maxcyclelist > 4000) cfg.maxcyclelist = 4000;
 	if (cfg.keepcycletime > 15) cfg.keepcycletime = 15;
@@ -425,7 +424,7 @@ void cache_fixups_fn(void *UNUSED(var)) {
 }
 
 static bool cache_should_save_fn(void *UNUSED(var)) {
-	return cfg.delay > 0 || cfg.max_cache_time != 15 || cfg.max_cache_count != 1000
+	return cfg.delay > 0 || cfg.max_cache_time != 15
 #ifdef CS_CACHEEX
 	|| cfg.cacheex_wait_timetab.n || cfg.cacheex_enable_stats > 0 || cfg.csp_port || cfg.csp.filter_caidtab.n || cfg.csp.allow_request == 0 || cfg.csp.allow_reforward > 0
 #endif
@@ -440,7 +439,6 @@ static const struct config_list cache_opts[] = {
 	DEF_OPT_FIXUP_FUNC(cache_fixups_fn),
 	DEF_OPT_UINT32("delay"				, OFS(delay),				CS_DELAY ),
 	DEF_OPT_UINT32("max_time"			, OFS(max_cache_time),		DEFAULT_MAX_CACHE_TIME ),
-	DEF_OPT_UINT32("max_count"		, OFS(max_cache_count),		DEFAULT_MAX_CACHE_COUNT ),
 #ifdef CS_CACHEEX
 	DEF_OPT_FUNC("wait_time"				, OFS(cacheex_wait_timetab),		cacheex_valuetab_fn ),
 	DEF_OPT_UINT8("cacheexenablestats"		, OFS(cacheex_enable_stats), 0 ),
@@ -448,7 +446,7 @@ static const struct config_list cache_opts[] = {
 	DEF_OPT_FUNC("csp_serverip"					, OFS(csp_srvip),				serverip_fn ),
 	DEF_OPT_FUNC("csp_ecm_filter"			, OFS(csp.filter_caidtab),		cacheex_hitvaluetab_fn ),
 	DEF_OPT_UINT8("csp_allow_request"		, OFS(csp.allow_request),		1 ),
-	DEF_OPT_UINT8("csp_allow_reforward"		, OFS(csp.allow_reforward),		0 ),
+	DEF_OPT_UINT8("csp_allow_reforward"     , OFS(csp.allow_reforward),     0 ),
 #endif
 #ifdef CW_CYCLE_CHECK
 	DEF_OPT_INT8("cwcycle_check_enable"		, OFS(cwcycle_check_enable),		0 ),

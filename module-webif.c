@@ -499,8 +499,6 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 
 	tpl_printf(vars, TPLADD, "MAXCACHETIME", "%d", cfg.max_cache_time);
 
-	tpl_printf(vars, TPLADD, "MAXCACHECOUNT", "%d", cfg.max_cache_count);
-
 #ifdef CS_CACHEEX
 	char *value = NULL;
 	value = mk_t_cacheex_valuetab(&cfg.cacheex_wait_timetab);

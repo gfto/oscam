@@ -16,6 +16,8 @@
 #include "oscam-config.h"
 
 extern CS_MUTEX_LOCK system_lock;
+extern CS_MUTEX_LOCK ecmcache_lock;
+extern struct ecm_request_t *ecmcwcache;
 extern struct s_cardsystem cardsystems[CS_MAX_MOD];
 
 const char *RDR_CD_TXT[] = {
@@ -505,13 +507,13 @@ void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw
 	ECM_REQUEST *ecm;
 	struct s_client *cl = reader->client;
 
-	if(!cl) return;
+	if(!check_client(cl)) return;
 
 	for (i = 0; i < cfg.max_pending; i++) {
 		ecm = &cl->ecmtask[i];
 		if ((ecm->rc>=10) && ecm->caid == cl->ecmtask[idx].caid && (!memcmp(ecm->ecmd5, cl->ecmtask[idx].ecmd5, CS_ECMSTORESIZE))) {
 			if (rc) {
-				write_ecm_answer(reader, ecm, (i==idx) ? E_FOUND : E_CACHE2, 0, cw, NULL); 
+				write_ecm_answer(reader, ecm, E_FOUND, 0, cw, NULL);
 			} else {
 				write_ecm_answer(reader, ecm, E_NOTFOUND, 0 , NULL, NULL);
 			}
@@ -521,7 +523,6 @@ void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw
 
 		if (ecm->rc>=10 && (t-(uint32_t)ecm->tps.time > ((cfg.ctimeout + 500) / 1000) + 1)) { // drop timeouts
 			ecm->rc=0;
-			send_reader_stat(reader, ecm, NULL, E_TIMEOUT);
 		}
 
 		if (ecm->rc >= 10)
@@ -782,7 +783,6 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		ecm = &cl->ecmtask[i];
 		if ((ecm->rc>=10) && (t-(uint32_t)ecm->tps.time > ((cfg.ctimeout + 500) / 1000) + 1)) { // drop timeouts
 			ecm->rc=0;
-			send_reader_stat(reader, ecm, NULL, E_TIMEOUT);
 		}
 	}
 
@@ -841,8 +841,10 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
+	if(!reader) return;
 	struct s_client *cl = reader->client;
-	if(!cl) return;
+	if(!check_client(cl)) return;
+
 	if (er->rc<=E_STOPPED) {
 		//TODO: not sure what this is for, but it was in mpcs too.
 		// ecm request was already answered when the request was started (this ECM_REQUEST is a copy of client->ecmtask[] ECM_REQUEST).
@@ -862,30 +864,70 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		return;
 	}
 
-	// cache2
-	struct ecm_request_t *ecm = check_cwcache(er, cl);
-	if (ecm && ecm->rc <= E_NOTFOUND) {
-		char ecmd5[17*3];                
-        cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5));
-		rdr_debug_mask(reader, D_TRACE, "ecmhash %s answer from cache", ecmd5);
-		write_ecm_answer(reader, er, E_CACHE2, 0, ecm->cw, NULL);
+	//CHECK if ecm already sent to reader
+	struct s_ecm_answer *ea_er=get_ecm_answer(reader,er);
+	if(!ea_er){
+		cs_log("WARNING: client %s, caid %04X, prid %06X, srvid %04X -> REQUEST for READER %s --> *** ERROR in reader_get_ecm! Not ea found! ***", (check_client(er->client)?er->client->account->usr:"-"),er->caid, er->prid, er->srvid, reader?reader->label:"-");
 		return;
 	}
+
+	struct s_ecm_answer *ea = NULL, *ea_prev=NULL;
+	struct ecm_request_t *ecm;
+	time_t timeout = time(NULL)-cfg.max_cache_time;
+
+	cs_readlock(&ecmcache_lock);
+	for (ecm = ecmcwcache; ecm; ecm = ecm->next) {
+		if (ecm->tps.time <= timeout)
+			break;
+
+		if(!ecm->matching_rdr || ecm == er || ecm->rc == E_99) continue;
+
+		//match same ecm
+		if(er->caid == ecm->caid && (!memcmp(er->ecmd5, ecm->ecmd5, CS_ECMSTORESIZE)) ){
+			//check if ask this reader
+			ea = get_ecm_answer(reader,ecm);
+			if(ea && !ea->is_pending && (ea->status & REQUEST_SENT)) break;
+			ea=NULL;
+		}
+	}
+	cs_readunlock(&ecmcache_lock);
+	if(ea){  //found ea in cached ecm, asking for this reader
+		ea_er->is_pending=true;
+
+		cs_readlock(&ea->ecmanswer_lock);
+		if(ea->rc<E_99){
+			cs_readunlock(&ea->ecmanswer_lock);
+			cs_debug_mask(D_LB,"{client %s, caid %04X, prid %06X, srvid %04X} [reader_get_ecm] ecm already sent to reader %s (rc %d)", (check_client(er->client)?er->client->account->usr:"-"),er->caid, er->prid, er->srvid, reader?reader->label:"-", ea->rc);
+			write_ecm_answer(reader, er, ea->rc, ea->rcEx, ea->cw, NULL);
+			return;
+		}else{
+			ea_prev=ea->pending;
+			ea->pending=ea_er;
+			ea->pending->pending_next=ea_prev;
+			cs_debug_mask(D_LB,"{client %s, caid %04X, prid %06X, srvid %04X} [reader_get_ecm] ecm already sent to reader %s... set as pending", (check_client(er->client)?er->client->account->usr:"-"),er->caid, er->prid, er->srvid, reader?reader->label:"-");
+		}
+		cs_readunlock(&ea->ecmanswer_lock);
+		return;
+	}
+	
+#ifdef WITH_LB
+	if(!(ea_er->status & READER_FALLBACK)) cs_ftime(&reader->lb_last); //for lb oldest reader mode - not use for fallback readers
+#endif
 
 	if (ecm_ratelimit_check(reader, er, 1) != OK){
 		rdr_debug_mask(reader, D_READER, "ratelimiter has no space left -> skip!");
 		return;
-	}
-	
-	if (is_cascading_reader(reader)) { // forward request to proxy reader
+	}	
+
+	if (is_cascading_reader(reader)) {  // forward request to proxy reader
 		cl->last_srvid=er->srvid;
 		cl->last_caid=er->caid;
 		casc_process_ecm(reader, er);
 		cl->lastecm=time((time_t*)0);
 		return;
 	}
-	
-	cardreader_process_ecm(reader, cl, er); // forward request to physical reader
+
+	cardreader_process_ecm(reader, cl, er);  // forward request to physical reader
 }
 
 void reader_do_card_info(struct s_reader * reader)
@@ -906,7 +948,7 @@ void reader_do_idle(struct s_reader * reader)
 		time_diff = abs(now - reader->last_s);
 		if (time_diff>(reader->tcp_ito*60)) {
 			struct s_client *cl = reader->client;
-			if (cl && reader->tcp_connected && reader->ph.type==MOD_CONN_TCP) {
+			if (check_client(cl) && reader->tcp_connected && reader->ph.type==MOD_CONN_TCP) {
 				cs_debug_mask(D_READER, "%s inactive_timeout, close connection (fd=%d)", reader->ph.desc, cl->pfd);
 				network_tcp_connection_close(reader, "inactivity");
 			} else

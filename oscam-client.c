@@ -15,6 +15,7 @@
 #include "oscam-time.h"
 #include "oscam-work.h"
 #include "reader-common.h"
+#include "oscam-chk.h"
 
 extern CS_MUTEX_LOCK fakeuser_lock;
 
@@ -162,7 +163,7 @@ static void cs_user_resolve(struct s_auth *account)
    which you should never modify and not free()! */
 char *username(struct s_client * client)
 {
-	if (!client)
+	if (!check_client(client))
 		return "NULL";
 
 	if (client->typ == 's' || client->typ == 'h' || client->typ == 'a') {
@@ -568,10 +569,13 @@ void free_client(struct s_client *cl)
 	}
 	cs_writeunlock(&clientlist_lock);
 
+
 	// Clean reader. The cleaned structures should be only used by the reader thread, so we should be save without waiting
 	if (rdr) {
-		remove_reader_from_ecm(rdr);
 		remove_reader_from_active(rdr);
+
+		cs_sleepms(1000); //just wait a bit that really really nobody is accessing client data
+
 		if(rdr->ph.cleanup)
 			rdr->ph.cleanup(cl);
 		if (cl->typ == 'r')
@@ -587,7 +591,8 @@ void free_client(struct s_client *cl)
 		cl->last_caid = 0xFFFF;
 		cl->last_srvid = 0xFFFF;
 		cs_statistics(cl);
-		cs_sleepms(500); //just wait a bit that really really nobody is accessing client data
+
+		cs_sleepms(1000); //just wait a bit that really really nobody is accessing client data
 	}
 
 	struct s_module *module = get_module(cl);

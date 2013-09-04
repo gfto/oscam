@@ -17,12 +17,16 @@ enum actions {
 	// Client actions
 	ACTION_CLIENT_UDP          = 22,	// wc22
 	ACTION_CLIENT_TCP          = 23,	// wc23
-	ACTION_CLIENT_ECM_ANSWER   = 24,	// wc24
-	ACTION_CLIENT_KILL         = 25,	// wc25
-	ACTION_CLIENT_INIT         = 26,	// wc26
-	ACTION_CLIENT_IDLE         = 27,	// wc27
-	ACTION_CACHE_PUSH_OUT      = 28,	// wc28
-	ACTION_CLIENT_SEND_MSG     = 29,	// wc29
+	ACTION_CLIENT_KILL         = 24,	// wc24
+	ACTION_CLIENT_INIT         = 25,	// wc25
+	ACTION_CLIENT_IDLE         = 26,	// wc26
+	ACTION_CACHE_PUSH_OUT      = 27,	// wc27
+	ACTION_CLIENT_SEND_MSG     = 28,	// wc28
+	ACTION_CACHEEX_TIMEOUT     = 29,    // wc29
+	ACTION_FALLBACK_TIMEOUT    = 30,    // wc30
+	ACTION_CLIENT_TIMEOUT      = 31,    // wc31
+	ACTION_ECM_ANSWER_READER   = 32,    // wc32
+	ACTION_ECM_ANSWER_CACHE    = 33     // wc33
 };
 
 #define ACTION_CLIENT_FIRST 20 // This just marks where client actions start

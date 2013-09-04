@@ -5,8 +5,12 @@
 #define SRVID_ZERO	0 // srvid + 0000 (used for service-filter bypass)
 #define SRVID_MASK	1 // srvid + FFFF
 
+uint32_t get_fallbacktimeout(uint16_t caid);
+int32_t ecm_ratelimit_check(struct s_reader * reader, ECM_REQUEST *er, int32_t reader_mode);
 int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr);
 
+uint8_t chk_is_fixed_fallback(struct s_reader *rdr, ECM_REQUEST *er);
+uint8_t chk_has_fixed_fallback(ECM_REQUEST *er);
 int32_t chk_srvid_match(ECM_REQUEST *er, SIDTAB *sidtab);
 int32_t chk_srvid(struct s_client *cl, ECM_REQUEST *er);
 int32_t has_srvid(struct s_client *cl, ECM_REQUEST *er);
@@ -26,5 +30,6 @@ int32_t chk_caid(uint16_t caid, CAIDTAB *ctab);
 int32_t chk_caid_rdr(struct s_reader *rdr,uint16_t caid);
 int32_t chk_bcaid(ECM_REQUEST *er, CAIDTAB *ctab);
 int32_t chk_is_null_CW(uchar cw[]);
+bool check_client(struct s_client *cl);
 
 #endif

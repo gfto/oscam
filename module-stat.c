@@ -411,7 +411,7 @@ static int32_t get_reopen_seconds(READER_STAT *s)
 /**
  * Adds caid/prid/srvid/ecmlen to stat-list for reader ridx with time/rc
  */
-static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t rc)
+static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t rc, uint8_t rcEx)
 {
 	//inc ecm_count if found, drop to 0 if not found:
 	// rc codes:
@@ -435,12 +435,26 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 	//        - = causes loadbalancer to block this reader for this caid/prov/sid
 
 
-	if (!rdr || !er || !cfg.lb_mode ||!er->ecmlen || !er->client)
+	if (!rdr || !er || !cfg.lb_mode || !er->ecmlen || !er->client)
 		return;
 
 	struct s_client *cl = rdr->client;
-	if (!cl)
+	if (!check_client(cl))
 		return;
+
+
+	//IGNORE fails for ratelimit check
+	if(rc==E_NOTFOUND && rcEx==E2_RATELIMIT){
+#ifdef WITH_DEBUG
+		if ((D_LB & cs_dblevel)) {
+			char buf[ECM_FMT_LEN];
+			format_ecm(er, buf, ECM_FMT_LEN);
+			cs_debug_mask(D_LB, "loadbalancer: NOT adding stat (blocking) for reader %s because fails ratelimit checks!",rdr->label);
+		}
+#endif
+		return;
+	}
+
 
 	//IGNORE fails when reader has positive services defined in new lb_whitelist_services parameter! See ticket #3310,#3311
 	if(rc>=E_NOTFOUND && has_lb_srvid(cl, er)){
@@ -448,7 +462,7 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 		if ((D_LB & cs_dblevel)) {
 			char buf[ECM_FMT_LEN];
 			format_ecm(er, buf, ECM_FMT_LEN);
-			cs_debug_mask(D_LB, "loadbalancer: NOT adding stat (blocking reader) because positive srvid for reader %s: rc %d %s time %dms",
+			cs_debug_mask(D_LB, "loadbalancer: NOT adding stat (blocking) for reader %s because has positive srvid: rc %d %s time %dms",
 				rdr->label, rc, buf, ecm_time);
 		}
 #endif
@@ -1065,7 +1079,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 			if ( !get_rdr_caid(ea->reader) || chk_caid_rdr(ea->reader,er->caid)) {
 				prv = ea;
 			} else {
-				if (!rdr->fallback) er->reader_avail--;
+				if (!chk_is_fixed_fallback(rdr,er)) er->reader_avail--;
 				cs_debug_mask(D_LB, "caid %04X not found in caidlist, reader %s removed from request reader list", er->caid, rdr->label);
 				if (prv){
 					prv->next = ea->next;
@@ -1337,7 +1351,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 
 	//no reader active --> force to reopen matching readers
 	if (reader_active==0){
-		cs_debug_mask(D_LB, "loadbalancer: NO VALID MATCHING READER FOUND, force reopening (knock) all valid blocked readers!");
+		cs_debug_mask(D_LB, "loadbalancer: NO VALID MATCHING READER FOUND!");
 		force_reopen=1;
 
 
@@ -1371,7 +1385,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 					reset_avgtime_reader(s,rdr);
 				 }
 
-				//reset avg time all blocked "valid" readers. We active them by force_reopen=1
+				//reset avg time all blocked "valid" readers, if they are not already "knocked". We active them by force_reopen=1
 				if(s && s->rc != E_FOUND && s->ecm_count>=cfg.lb_min_ecmcount && !s->knocked){
 					reset_avgtime_reader(s,rdr);
 				}
@@ -1384,6 +1398,32 @@ void stat_get_best_reader(ECM_REQUEST *er)
 
 	//try to reopen max_reopen blocked readers (readers with last ecm not "e_found"); if force_reopen=1, force reopen valid blocked readers!
 	try_open_blocked_readers(er, &q, &max_reopen, &force_reopen);
+
+
+	//add fixed fallback readers
+	int32_t n_fixed_fb = chk_has_fixed_fallback(er);
+	if(n_fixed_fb){
+		for(ea = er->matching_rdr; ea; ea = ea->next) {
+			rdr=ea->reader;
+			s = get_stat(rdr, &q);
+
+			//if it is a valid reader!
+			if(s && s->rc == E_FOUND
+			   && s->ecm_count >= cfg.lb_min_ecmcount
+			   && (s->ecm_count <= cfg.lb_max_ecmcount || (retrylimit && s->time_avg <= retrylimit))
+			){
+				//if it is not activated (for lb_value), set it as fallback
+				if(!(ea->status&READER_ACTIVE)){
+					if( chk_is_fixed_fallback(rdr,er) ){
+						ea->status |= (READER_ACTIVE|READER_FALLBACK);
+						cs_debug_mask(D_LB, "loadbalancer: reader %s --> FALLBACK (FIXED)", rdr->label);
+					}
+				}
+			}
+		}
+	}
+	//end add fixed fallback readers
+
 
 	cs_debug_mask(D_LB, "loadbalancer: --------------------------------------------");
 
@@ -1640,6 +1680,7 @@ void lb_mark_last_reader(ECM_REQUEST *er)
 	}
 }
 
+
 /**
  * Automatic timeout feature depending on statistik values
  **/
@@ -1685,23 +1726,12 @@ void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, struct s_ecm_answer
 {
 	if (!rdr || rc >= E_99 || cacheex_reader(rdr))
 		return;
-	if (er->ecmcacheptr) //ignore cache answer
-		return;
 
+	int32_t ecm_time=cfg.ctimeout;
+	if(ea && ea->ecm_time && ea->rc<=E_NOTFOUND)
+		ecm_time=ea->ecm_time;
 
-	struct timeb tpe;
-	cs_ftime(&tpe);
-#ifndef CS_CACHEEX
-	int32_t ntime = comp_timeb(&tpe,&er->tps);
-#else
-	int32_t ntime = comp_timeb(&tpe, &er->cacheex_wait);
-#endif
-	if (ntime < 1)
-		ntime = 1;
-
-	if (ea && (ea->status & READER_FALLBACK) && ntime > (int32_t)cfg.ftimeout)
-		ntime = ntime - cfg.ftimeout;
-	add_stat(rdr, er, ntime, rc);
+	add_stat(rdr, er, ecm_time, rc, ea->rcEx);
 }
 
 void stat_finish(void) {

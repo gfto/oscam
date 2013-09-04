@@ -103,15 +103,14 @@ static void garbage_collector(void) {
 	                	garbage_last[i] = NULL;
 	                } else if(prev) garbage = first;		// set back to beginning to cleanup all
 	                else garbage = NULL;		// garbage not old enough yet => nothing to clean
-	                cs_writeunlock(&garbage_lock[i]);
 
-									// list has been taken out before so we don't need a lock here anymore! 
 	                while(garbage){
 	                	next = garbage->next;
-	                	free(garbage->data);
+	                	if(garbage->data) free(garbage->data);
 	                	free(garbage);
 	                	garbage = next;
 	                }
+	                cs_writeunlock(&garbage_lock[i]);
 	              }
 
 			sleepms_on_cond(&sleep_cond, &sleep_cond_mutex, 1000);

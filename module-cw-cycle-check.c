@@ -335,7 +335,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 						cwc->badrepeat = 0;
 					} else {
 						if (cwc->stage < 3 && !cw_stageswitch) cwc->cycletime = now - cwc->time;
-						cwc->locktime = now + (cfg.ftimeout / 1000);
+						cwc->locktime = now + (get_fallbacktimeout(cwc->caid) / 1000);
 					}
 				} else if (cwc->stage != 3) {
 					cs_debug_mask(D_CSPCWC, "cyclecheck [Ignore this EA] for LearningStages because of locktime EA: %s Lockdiff: %ld", cwc_ecmf, now - cwc->locktime);
@@ -378,7 +378,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 				new->sid = er->srvid;
 				new->chid = er->chid;
 				new->time = now;
-				new->locktime = now + (cfg.ftimeout / 1000);
+				new->locktime = now + (get_fallbacktimeout(er->caid) / 1000);
 				new->stage = 0;
 				new->cycletime = 99;
 				new->dyncycletime = 0; // to react of share timings

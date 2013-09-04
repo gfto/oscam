@@ -284,8 +284,22 @@ void * work_thread(void *ptr) {
 				}
 				module->s_handler(cl, mbuf, n);
 				break;
-			case ACTION_CLIENT_ECM_ANSWER:
-				chk_dcw(cl, data->ptr);
+			case ACTION_CACHEEX_TIMEOUT:
+#ifdef CS_CACHEEX
+				cacheex_timeout(data->ptr);
+#endif
+				break;
+			case ACTION_FALLBACK_TIMEOUT:
+				fallback_timeout(data->ptr);
+				break;
+			case ACTION_CLIENT_TIMEOUT:
+				ecm_timeout(data->ptr);
+				break;
+			case ACTION_ECM_ANSWER_READER:
+				chk_dcw(data->ptr);
+				break;
+			case ACTION_ECM_ANSWER_CACHE:
+				write_ecm_answer_fromcache(data->ptr);
 				break;
 			case ACTION_CLIENT_INIT:
 				if (module->s_init)
@@ -373,7 +387,7 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 {
 	if (!cl || cl->kill) {
 		if (!cl)
-			cs_log("WARNING: add_job failed."); // Ignore jobs for killed clients
+			cs_log("WARNING: add_job failed. Client killed!"); // Ignore jobs for killed clients
 		if (len && ptr)
 			free(ptr);
 		return 0;

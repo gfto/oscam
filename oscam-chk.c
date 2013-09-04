@@ -11,6 +11,25 @@
 #define OK		1
 #define ERROR 	0
 
+uint32_t get_fallbacktimeout(uint16_t	caid) {
+		uint32_t ftimeout=0;
+		int32_t i;
+		for (i = 0; i < cfg.ftimeouttab.n; i++) {
+				if (cfg.ftimeouttab.caid[i] == caid || cfg.ftimeouttab.caid[i] == caid>>8){
+					ftimeout=cfg.ftimeouttab.value[i];
+					break;
+				}
+		}
+
+		if(ftimeout==0) ftimeout = cfg.ftimeout;
+
+		if (ftimeout < 100) ftimeout = CS_CLIENT_TIMEOUT/2;
+		if (ftimeout >= cfg.ctimeout) ftimeout = cfg.ctimeout - 100;
+
+		return ftimeout;
+}
+
+
 static int32_t find_nano(uchar *ecm, int32_t l, uchar nano, int32_t s)
 {
   uchar *snano;
@@ -149,12 +168,9 @@ int32_t has_lb_srvid(struct s_client *cl, ECM_REQUEST *er) {
   SIDTAB *sidtab;
 
   for (nr=0, sidtab=cfg.sidtab; sidtab; sidtab=sidtab->next, nr++)
-    if (sidtab->num_srvid)
-    {
-      if ((cl->lb_sidtabs.ok&((SIDTABBITS)1<<nr)) &&
+     if ((cl->lb_sidtabs.ok&((SIDTABBITS)1<<nr)) &&
           (chk_srvid_match(er, sidtab)))
         return 1;
-    }
   return 0;
 }
 
@@ -517,6 +533,47 @@ int32_t chk_ctab_ex(uint16_t caid, CAIDTAB *ctab) {
   return 0;
 }
 
+uint8_t chk_is_fixed_fallback(struct s_reader *rdr, ECM_REQUEST *er){
+
+	if(!rdr->fallback && !rdr->fallback_percaid.nfilts) return 0;
+
+	if(!rdr->fallback_percaid.nfilts)
+		if(rdr->fallback)
+			return 1;
+
+	int32_t i,k;
+	for (i = 0; i < rdr->fallback_percaid.nfilts; i++) {
+		uint16_t tcaid = rdr->fallback_percaid.filts[i].caid;
+		if (tcaid && (tcaid == er->caid || (tcaid < 0x0100 && (er->caid >> 8) == tcaid))) { //caid match
+
+			int32_t nprids = rdr->fallback_percaid.filts[i].nprids;
+			if (!nprids) // No Provider ->Ok
+				return 1;
+
+			for (k = 0; k < nprids; k++) {
+				uint32_t prid = rdr->fallback_percaid.filts[i].prids[k];
+				if (prid == er->prid) { //Provider matches
+					return 1;
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+uint8_t chk_has_fixed_fallback(ECM_REQUEST *er){
+	struct s_ecm_answer *ea;
+	struct s_reader *rdr;
+	int32_t n_falb=0;
+	for(ea = er->matching_rdr; ea; ea = ea->next) {
+		rdr=ea->reader;
+		if(chk_is_fixed_fallback(rdr,er))
+			n_falb++;
+	}
+	return n_falb;
+}
+
 int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
 
   //simple checks first:
@@ -536,10 +593,6 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   struct s_client *cur_cl = er->client; //cur_client();
 
 #ifdef CS_CACHEEX
-  //To avoid cascading, a incoming cache request should not invoke a outgoing cache request:
-  if (rdr->cacheex.mode == 1 && cur_cl->account->cacheex.mode == 1)
-	  return (0);
-
   //Cacheex=3 defines a Cacheex-only reader. never match them.
   if (rdr->cacheex.mode == 3)
 	  return (0);
@@ -583,7 +636,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   }
 
   //Checking ident:
-  if (er->prid && !chk_rfilter(er, rdr)) {
+  if (!chk_rfilter(er, rdr)) {
     cs_debug_mask(D_TRACE, "r-filter reader %s", rdr->label);
     return(0);
   }
@@ -810,3 +863,9 @@ int32_t chk_is_null_CW(uchar cw[])
 	return 1;
 }
 
+//check if client structure is accessible
+bool check_client(struct s_client *cl){
+	if (cl && !cl->kill)
+		return true;
+	return false;
+}

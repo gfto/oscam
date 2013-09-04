@@ -772,7 +772,6 @@ int32_t cc_get_nxt_ecm(struct s_client *cl) {
 		er = &cl->ecmtask[i];
 		if ((comp_timeb(&t, &er->tps) >= diff) && (er->rc >= 10)) // drop timeouts
 		{
-			er->rc = E_TIMEOUT;
 			write_ecm_answer(cl->reader, er, E_TIMEOUT, 0, NULL, NULL);
 		}
 
@@ -781,8 +780,6 @@ int32_t cc_get_nxt_ecm(struct s_client *cl) {
 			if (loop_check(cc->peer_node_id, er->client)) {
 				cs_debug_mask(D_READER, "%s ecm loop detected! client %s (%8lX)",
 						getprefix(), er->client->account->usr, (unsigned long)er->client->thread);
-				er->rc = E_NOTFOUND;
-				er->rcEx = E2_CCCAM_LOOP;
 				write_ecm_answer(cl->reader, er, E_NOTFOUND, E2_CCCAM_LOOP, NULL, NULL);
 			}
 			else
@@ -1051,8 +1048,8 @@ void set_au_data(struct s_client *cl, struct s_reader *rdr, struct cc_card *card
 	}
 
 	rdr->caid = card->caid;
-//	if (cur_er)  stefansat disabled for now as it seems to stop updating management providers
-//		rdr->auprovid = cur_er->prid;
+	//if (cur_er) stefansat disabled for now as it seems to stop updating management providers
+	//	rdr->auprovid = cur_er->prid;
 }
 
 int32_t same_first_node(struct cc_card *card1, struct cc_card *card2) {
@@ -1217,8 +1214,6 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		if (er) {
 			cs_debug_mask(D_READER, "%s server not init! ccinit=%d pfd=%d",
 					rdr->label, cc ? 1 : 0, cl->pfd);
-			er->rc = E_NOTFOUND;
-			er->rcEx = E2_CCCAM_NOCARD;
 			write_ecm_answer(rdr, er, E_NOTFOUND, E2_CCCAM_NOCARD, NULL, NULL);
 		}
 		//cc_cli_close(cl);
@@ -1282,7 +1277,6 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 				if (!cc->extended_mode) {
 					cc->ecm_busy = 0;
 				}
-				cur_er->rc = E_STOPPED;
 				write_ecm_answer(rdr, cur_er, E_STOPPED, 0, NULL, NULL);
 				return 0;
 			} else {
@@ -1401,9 +1395,8 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 				cs_debug_mask(D_READER,
 						"%s no suitable card on server", getprefix());
 
-				cur_er->rc = E_NOTFOUND;
-				cur_er->rcEx = E2_CCCAM_NOCARD;
 				write_ecm_answer(rdr, cur_er, E_NOTFOUND, E2_CCCAM_NOCARD, NULL, NULL);
+
 				//cur_er->rc = 1;
 				//cur_er->rcEx = 0;
 				//cs_sleepms(300);
@@ -2547,7 +2540,6 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 								"%s ext NOK %s", getprefix(), (buf[1]==MSG_CW_NOK1)?"NOK1":"NOK2");
 						ECM_REQUEST *er = &cl->ecmtask[i];
 						cl->pending--;
-						er->rc = E_NOTFOUND;
 						write_ecm_answer(rdr, er, E_NOTFOUND, 0, NULL, NULL);
 						break;
 					}
@@ -2710,7 +2702,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 						struct timeb tpe;
 						cs_ftime(&tpe);
 						uint32_t cwlastresptime = 1000*(tpe.time-cc->ecm_time.time)+tpe.millitm-cc->ecm_time.millitm;
-						if (cwlastresptime > cfg.ftimeout && !cc->extended_mode) {
+						if (cwlastresptime > get_fallbacktimeout(card->caid) && !cc->extended_mode) {
 							cs_debug_mask(D_READER, "%s card %04X is too slow, moving to the end...", getprefix(), card->id);
 							move_card_to_end(cl, card);
 							card->rating--;
