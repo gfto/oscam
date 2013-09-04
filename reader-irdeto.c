@@ -581,7 +581,15 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			// global emm, 0 bytes addressed
 			ep->type = GLOBAL;
 			rdr_debug_mask(rdr, D_EMM, "GLOBAL base = %02x", base);
-			return 1;
+			if (base & 0x10){ // hex serial based?
+				if (base == rdr->hexserial[3]){ // does base match?
+					return 1;
+				}
+				else {
+					return 0; // base doesnt match!
+				}
+			}
+			else return 1; // provider based, match all!
 
 		case 2:
 			// shared emm, 2 bytes addressed
@@ -664,16 +672,16 @@ static struct s_csystem_emm_filter* irdeto_get_emm_filter(struct s_reader *rdr)
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x82;
     filters[idx].mask[0]   = 0xFF;
-    filters[idx].filter[1] = 0x00;
-    filters[idx].mask[1]   = 0x03;
+    filters[idx].filter[1] = 0xF8;
+    filters[idx].mask[1]   = 0x07;
     idx++;
 
     filters[idx].type = EMM_UNIQUE;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x82;
     filters[idx].mask[0]   = 0xFF;
-    filters[idx].filter[1] = 0x03;
-    filters[idx].mask[1]   = 0x03;
+    filters[idx].filter[1] = 0xFB;
+    filters[idx].mask[1]   = 0x07;
     memcpy(&filters[idx].filter[2], rdr->hexserial, 3);
     memset(&filters[idx].mask[2], 0xFF, 3);
     idx++;
@@ -685,8 +693,8 @@ static struct s_csystem_emm_filter* irdeto_get_emm_filter(struct s_reader *rdr)
       filters[idx].enabled   = 1;
       filters[idx].filter[0] = 0x82;
       filters[idx].mask[0]   = 0xFF;
-      filters[idx].filter[1] = 0x02;
-      filters[idx].mask[1]   = 0x03;
+      filters[idx].filter[1] = 0xFA;
+      filters[idx].mask[1]   = 0x07;
       memcpy(&filters[idx].filter[2], rdr->hexserial, 2);
       memset(&filters[idx].mask[2], 0xFF, 2);
       idx++;
@@ -702,8 +710,8 @@ static struct s_csystem_emm_filter* irdeto_get_emm_filter(struct s_reader *rdr)
       filters[idx].enabled   = 1;
       filters[idx].filter[0] = 0x82;
       filters[idx].mask[0]   = 0xFF;
-      filters[idx].filter[1] = 0x03;
-      filters[idx].mask[1]   = 0x03;
+      filters[idx].filter[1] = 0xFB;
+      filters[idx].mask[1]   = 0x07;
       memcpy(&filters[idx].filter[2], &rdr->prid[i][1], 3);
       memset(&filters[idx].mask[2], 0xFF, 3);
       idx++;
@@ -712,8 +720,8 @@ static struct s_csystem_emm_filter* irdeto_get_emm_filter(struct s_reader *rdr)
       filters[idx].enabled   = 1;
       filters[idx].filter[0] = 0x82;
       filters[idx].mask[0]   = 0xFF;
-      filters[idx].filter[1] = 0x02;
-      filters[idx].mask[1]   = 0x03;
+      filters[idx].filter[1] = 0xFA;
+      filters[idx].mask[1]   = 0x07;
       memcpy(&filters[idx].filter[2], &rdr->prid[i][1], 2);
       memset(&filters[idx].mask[2], 0xFF, 2);
       idx++;
