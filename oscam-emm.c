@@ -320,10 +320,12 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		}
 
 		if (cs && cs->get_emm_filter) {
-			if(!do_simple_emm_filter(aureader, cs, ep, cl_dvbapi)) {
-				rdr_debug_mask(aureader, D_EMM, "emm skipped, do_simple_emm_filter() returns invalid");
-				emmnok++;
-				continue;
+			if(!do_simple_emm_filter(aureader, cs, ep, 1)) { // do check with dvbapi fixup enabled
+				if(!do_simple_emm_filter(aureader, cs, ep, 0)) { // do check with dvbapi fixup disabled
+					rdr_debug_mask(aureader, D_EMM, "emm skipped, do_simple_emm_filter() returns invalid");
+					emmnok++;
+					continue;
+				}
 			}
 		}
 
