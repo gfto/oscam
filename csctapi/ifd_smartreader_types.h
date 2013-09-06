@@ -74,7 +74,8 @@ struct s_reader_types {
 };
 
 const struct s_reader_types reader_types[] = { 
-    {"SR", 0x01, 0x82, INTERFACE_A, 0}, 
+    {"SR", 0x01, 0x82, INTERFACE_A, 0},
+	{"SRv2", 0x02, 0x81, INTERFACE_A, 0},
     {"Infinity", 0x01, 0x81, INTERFACE_A, 0},
     {"TripleP1", 0x02, 0x81, INTERFACE_A, 0}, 
     {"TripleP2", 0x04, 0x83, INTERFACE_B, 1},
