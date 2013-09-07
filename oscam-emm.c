@@ -66,11 +66,10 @@ static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs
 		match = 1;
 		for (i = 0, k = 0; i < 16 && k < ep->emmlen && match; i++, k++) {
 			mask = dmx_filter[j].mask[i];
-			if (!mask)
-				continue;
 			if (k == 1 && cl_dvbapi) // fixup for emms send by dvbapi
 				k +=2; //skip emm len bytes
-			flt = (dmx_filter[j].filter[i]);
+			if (!mask)
+				continue;
 			//cs_log("**** filter #%d [%d] = %02X, filter mask[%d] = %02X, flt&mask = %02X , ep->emm[%d] = %02X, ep->emm[%d] & mask = %02X ****", j, i,
 			//	dmx_filter[j].filter[i], i, dmx_filter[j].mask[i], flt&mask, k, ep->emm[k], k, ep->emm[k] & mask);
 			flt = (dmx_filter[j].filter[i] & mask);
