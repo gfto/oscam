@@ -33,6 +33,8 @@ static int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int16_t len)
  */
 static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs, EMM_PACKET *ep, int8_t cl_dvbapi)
 {
+	if (is_network_reader(rdr)) return 1; // dont evaluate on network readers, server with local reader will check it
+	
 	//copied and enhanced from module-dvbapi.c
 	//dvbapi_start_emm_filter()
 	int32_t i, j, k, match;
@@ -156,7 +158,7 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 			return 0;
 		}
 	}
-
+	
 	//if (!hexserialset(reader)) { There are cards without serial, they should get emm of type global and shared!
 	//	rdr_debug_mask(reader, D_EMM, "no hexserial is set");
 	//	return 0;

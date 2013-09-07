@@ -662,9 +662,10 @@ int32_t dvbapi_start_emm_filter(int32_t demux_index) {
 
 	if (!demux[demux_index].EMMpidcount)
 		return 0;
-
-	if (demux[demux_index].emm_filter)
-		return 0;
+	fcount = demux[demux_index].emm_filter;
+	
+	//if (demux[demux_index].emm_filter)
+	//	return 0;
 
 
 	struct s_csystem_emm_filter *dmx_filter = NULL;
@@ -712,8 +713,10 @@ int32_t dvbapi_start_emm_filter(int32_t demux_index) {
 				continue;
 
 			uchar filter[32];
-			memcpy(filter, dmx_filter[j].filter, 16);
-			memcpy(filter + 16, dmx_filter[j].mask, 16);
+			memset (filter, 0, sizeof(filter)); // reset filter
+			uint32_t usefilterbytes = 16; // default use all filters
+			memcpy(filter, dmx_filter[j].filter, usefilterbytes);
+			memcpy(filter + 16, dmx_filter[j].mask, usefilterbytes);
 			int32_t emmtype = dmx_filter[j].type;
 			int32_t l=-1;
 
@@ -766,7 +769,7 @@ int32_t dvbapi_start_emm_filter(int32_t demux_index) {
 						demux[demux_index].EMMpids[l].PROVID, filter, filter+16, 0, demux[demux_index].pidindex, fcount, TYPE_EMM, 1);
 				}
 				if (ret !=-1){
-					demux[demux_index].emm_filter=1; // flag that an emm filter is set
+					demux[demux_index].emm_filter++; // increase total active filters
 				}
 				else { // not set succesfull so add it to the list for try again later on!
 					add_emmfilter_to_list(demux_index, filter, demux[demux_index].EMMpids[l].CAID, demux[demux_index].EMMpids[l].PROVID, demux[demux_index].EMMpids[l].PID, fcount, 0, 0);
@@ -778,10 +781,11 @@ int32_t dvbapi_start_emm_filter(int32_t demux_index) {
 	if (fcount)
 		cs_debug_mask(D_DVBAPI,"[EMM Filter] %i matching emm filter found", fcount);
 	if (fcount_added) {
-		demux[demux_index].emm_filter=1;
+		//demux[demux_index].emm_filter=1;
 		cs_debug_mask(D_DVBAPI,"[EMM Filter] %i matching emm filter skipped because they are already active on same emmpid:provid", fcount_added);
 	}
-	return (fcount - fcount_added);
+	if (fcount == abs(demux[demux_index].emm_filter)) return 0;
+	else return 1;
 }
 
 void dvbapi_add_ecmpid_int(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_t provid) {
@@ -2986,9 +2990,18 @@ static void * dvbapi_main_local(void *cli) {
 			
 			//early start for irdeto since they need emm before ecm (pmt emmstart = 1 if detected caid 0x06)
 			int32_t emmstarted = 0;
-			if (cfg.dvbapi_au && demux[i].EMMpidcount > 0 && emmcounter == 0){
-				emmstarted = dvbapi_start_emm_filter(i); // start emmfiltering if emmpids are found (emmstarted = number of emm filters started)
-				if (emmstarted) continue; // proceed with next demuxer
+			if (cfg.dvbapi_au && demux[i].EMMpidcount > 0){ // check every time since share readers might give us new filters due to hexserial change
+				if(!emmcounter){
+					demux[i].emmstart = time(NULL);
+					emmstarted = dvbapi_start_emm_filter(i); // start emmfiltering if emmpids are found
+				}
+				else {
+					if((time(NULL)-demux[i].emmstart)>30){
+						demux[i].emmstart = time(NULL);
+						emmstarted = dvbapi_start_emm_filter(i); // start emmfiltering delayed if filters already were running
+					}
+				}
+				if (emmstarted && !emmcounter) continue; // proceed with next demuxer if no emms where running before
 			}
 			
 			if (ecmcounter == 0 && demux[i].ECMpidcount > 0){ // Restart decoding all caids we have ecmpids but no ecm filters!
