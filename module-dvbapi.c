@@ -2050,6 +2050,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 					demux[demux_id].ca_mask = ca_mask; 
 					demux[demux_id].pidindex = -1;
 					demux[demux_id].STREAMpidcount=0;
+					if(demux[demux_id].ECMpidcount != 0) running = 1; // fix for channel changes from fta to scrambled
 					demux[demux_id].ECMpidcount=0;
 					demux[demux_id].ECMpids[0].streams = 0; // reset first ecmpid streams!
 					demux[demux_id].EMMpidcount=0;
@@ -2076,7 +2077,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 						pmt_stopdescrambling_done = 1; // mark stopdescrambling as done!
 					}
 					demux[demux_id].ca_mask = ca_mask; // set ca_mask, it might have been changed!
-					return demux_id; // since we are continueing decoding here it ends!
+					if(demux[demux_id].ECMpidcount == 0) running = 0; // fix for channel changes from fta to scrambled
+					else return demux_id; // since we are continueing decoding here it ends!
 				}
 			}
 			
