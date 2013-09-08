@@ -9,7 +9,7 @@ SYNOPSIS
        limit rate of ECMs allowed for an interval
 
 DESCRIPTIONS
-       CAID:provider ID:service ID:ChID::ratelimitecm:ratelimitseconds:srvidholdseconds
+       CAID:provider ID:service ID:ChID:ratelimitecm:ratelimitseconds:srvidholdseconds
 
 	  ratelimitecm
 	     number of different SIDs in ECMs allowed for an interval
