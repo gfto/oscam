@@ -624,7 +624,7 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			memcpy(ep->hexserial, ep->emm + 4, l);
 			cs_hexdump(1, rdr->hexserial, l, dumprdrserial, sizeof(dumprdrserial));
 			cs_hexdump(1, ep->hexserial, l, dumpemmserial, sizeof(dumpemmserial));
-			rdr_debug_mask(rdr, D_EMM, "UNIQUE l = %d ep = {%s} rdr = {%s} base = %02x", l,
+			rdr_debug_mask_sensitive(rdr, D_EMM, "UNIQUE l = %d ep = {%s} rdr = {%s} base = %02x", l,
 					dumpemmserial, dumprdrserial, base);
 
 			if (base & 0x10)
@@ -650,21 +650,15 @@ static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 
 }
 
-static struct s_csystem_emm_filter* irdeto_get_emm_filter(struct s_reader *rdr)
+static int32_t irdeto_get_emm_filter(struct s_reader *rdr, struct s_csystem_emm_filter** emm_filters, unsigned int* filter_count)
 {
-  // It's not effecient to re-create filters every time but it reduces the complexity
-  // of trying to figure out when they need to be re-populated
-  NULLFREE(rdr->csystem.emm_filters);
-
-  struct s_csystem_emm_filter *filters = rdr->csystem.emm_filters;
-
-  if (filters == NULL) {
+  if (*emm_filters == NULL) {
     const unsigned int max_filter_count = 3 + (rdr->nprov * 2);
-    if (!cs_malloc(&rdr->csystem.emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
-      return NULL;
+    if (!cs_malloc(emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
+      return ERROR;
 
-    filters = rdr->csystem.emm_filters;
-    rdr->csystem.emm_filter_count = 0;
+    struct s_csystem_emm_filter* filters = *emm_filters;
+    *filter_count = 0;
 
     unsigned int idx = 0;
 
@@ -727,27 +721,21 @@ static struct s_csystem_emm_filter* irdeto_get_emm_filter(struct s_reader *rdr)
       idx++;
     }
 
-    rdr->csystem.emm_filter_count = idx;
+    *filter_count = idx;
   }
 
-  return filters;
+  return OK;
 }
 
-static struct s_csystem_emm_filter* irdeto_get_tunemm_filter(struct s_reader * rdr)
+static int32_t irdeto_get_tunemm_filter(struct s_reader *rdr, struct s_csystem_emm_filter** emm_filters, unsigned int* filter_count)
 {
-  // It's not effecient to re-create filters every time but it reduces the complexity
-  // of trying to figure out when they need to be re-populated
-  NULLFREE(rdr->csystem.emm_filters);
-
-  struct s_csystem_emm_filter *filters = rdr->csystem.emm_filters;
-
-  if (filters == NULL) {
+  if (*emm_filters == NULL) {
     const unsigned int max_filter_count = 3;
-    if (!cs_malloc(&rdr->csystem.emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
-      return NULL;
+    if (!cs_malloc(emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
+      return ERROR;
 
-    filters = rdr->csystem.emm_filters;
-    rdr->csystem.emm_filter_count = 0;
+    struct s_csystem_emm_filter* filters = *emm_filters;
+    *filter_count = 0;
     memset(filters, 0x00, max_filter_count * sizeof(struct s_csystem_emm_filter));
 
     unsigned int idx = 0;
@@ -780,10 +768,10 @@ static struct s_csystem_emm_filter* irdeto_get_tunemm_filter(struct s_reader * r
     memset(&filters[idx].mask[0], 0xFF, 6);
     idx++;
 
-    rdr->csystem.emm_filter_count = idx;
+    *filter_count = idx;
   }
 
-  return filters;
+  return OK;
 }
 
 void irdeto_add_emm_header(EMM_PACKET *ep)

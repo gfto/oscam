@@ -1175,21 +1175,15 @@ int32_t nagra2_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns 1 i
 	}
 }
 
-static struct s_csystem_emm_filter* nagra2_get_emm_filter(struct s_reader *rdr)
+static int32_t nagra2_get_emm_filter(struct s_reader *rdr, struct s_csystem_emm_filter** emm_filters, unsigned int* filter_count)
 {
-  // It's not effecient to re-create filters every time but it reduces the complexity
-  // of trying to figure out when they need to be re-populated
-  NULLFREE(rdr->csystem.emm_filters);
-
-  struct s_csystem_emm_filter *filters = rdr->csystem.emm_filters;
-
-  if (filters == NULL) {
+  if (*emm_filters == NULL) {
     const unsigned int max_filter_count = 3;
-    if (!cs_malloc(&rdr->csystem.emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
-      return NULL;
+    if (!cs_malloc(emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
+      return ERROR;
 
-    filters = rdr->csystem.emm_filters;
-    rdr->csystem.emm_filter_count = 0;
+    struct s_csystem_emm_filter* filters = *emm_filters;
+    *filter_count = 0;
 
     int32_t idx = 0;
 
@@ -1221,10 +1215,10 @@ static struct s_csystem_emm_filter* nagra2_get_emm_filter(struct s_reader *rdr)
     memset(&filters[idx].mask[0], 0xFF, 6);
     idx++;
 
-    rdr->csystem.emm_filter_count = idx;
+    *filter_count = idx;
   }
 
-  return filters;
+  return OK;
 }
 
 static int32_t nagra2_do_emm(struct s_reader * reader, EMM_PACKET *ep)

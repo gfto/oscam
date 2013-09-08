@@ -669,6 +669,7 @@ int32_t dvbapi_start_emm_filter(int32_t demux_index) {
 
 
 	struct s_csystem_emm_filter *dmx_filter = NULL;
+	unsigned int filter_count = 0;
 	uint16_t caid, ncaid;
 
 	struct s_reader *rdr = NULL;
@@ -695,18 +696,16 @@ int32_t dvbapi_start_emm_filter(int32_t demux_index) {
 				ncaid = tunemm_caid_map(TO_FROM, rdr->caid, demux[demux_index].program_number);
 			if (rdr->caid != ncaid && dvbapi_find_emmpid(demux_index, EMM_UNIQUE|EMM_SHARED|EMM_GLOBAL, ncaid, 0) > -1)
 			{
-				dmx_filter = cs->get_tunemm_filter(rdr);
+				cs->get_tunemm_filter(rdr, &dmx_filter, &filter_count);
 				caid = ncaid;
 				cs_debug_mask(D_DVBAPI, "[EMM Filter] setting emm filter for betatunnel: %04X -> %04X", caid, rdr->caid);
 			} else {
-				dmx_filter = cs->get_emm_filter(rdr);
+				cs->get_emm_filter(rdr, &dmx_filter, &filter_count);
 			}
 		} else {
 			cs_debug_mask(D_DVBAPI, "[EMM Filter] cardsystem for emm filter for %s not found", rdr->label);
 			continue;
 		}
-
-		unsigned int filter_count = rdr->csystem.emm_filter_count;
 
 		for (j = 0; j < filter_count ; j++) {
 			if (dmx_filter[j].enabled == 0)
@@ -776,6 +775,8 @@ int32_t dvbapi_start_emm_filter(int32_t demux_index) {
 				}
 			}
 		}
+		// dmx_filter not use below this point
+		NULLFREE(dmx_filter);
 	}
 
 	if (fcount)

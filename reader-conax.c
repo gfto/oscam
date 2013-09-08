@@ -362,21 +362,15 @@ static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 	}
 }
 
-static struct s_csystem_emm_filter* conax_get_emm_filter(struct s_reader *rdr)
+static int32_t conax_get_emm_filter(struct s_reader *rdr, struct s_csystem_emm_filter** emm_filters, unsigned int* filter_count)
 {
-  // It's not effecient to re-create filters every time but it reduces the complexity
-  // of trying to figure out when they need to be re-populated
-  NULLFREE(rdr->csystem.emm_filters);
-
-  struct s_csystem_emm_filter *filters = rdr->csystem.emm_filters;
-
-  if (filters == NULL) {
+  if (*emm_filters == NULL) {
     const unsigned int max_filter_count = 2 + rdr->nprov;
-    if (!cs_malloc(&rdr->csystem.emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
-      return NULL;
+    if (!cs_malloc(emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
+      return ERROR;
 
-    filters = rdr->csystem.emm_filters;
-    rdr->csystem.emm_filter_count = 0;
+    struct s_csystem_emm_filter* filters = *emm_filters;
+    *filter_count = 0;
 
     int idx = 0, prov;
 
@@ -406,10 +400,10 @@ static struct s_csystem_emm_filter* conax_get_emm_filter(struct s_reader *rdr)
     memset(&filters[idx].mask[4], 0xFF, 4);
     idx++;
 
-    rdr->csystem.emm_filter_count = idx;
+    *filter_count = idx;
   }
 
-  return filters;
+  return OK;
 }
 
 static int32_t conax_do_emm(struct s_reader * reader, EMM_PACKET *ep)

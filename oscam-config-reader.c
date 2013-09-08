@@ -1024,7 +1024,6 @@ void free_reader(struct s_reader *rdr)
 		rdr->ll_entitlements = NULL;
 	}
 	NULLFREE(rdr->csystem_data);
-	NULLFREE(rdr->csystem.emm_filters);
 
 	if (rdr->blockemmbylen) {
 		ll_destroy_data(rdr->blockemmbylen);

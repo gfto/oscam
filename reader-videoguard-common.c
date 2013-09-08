@@ -812,21 +812,15 @@ int32_t videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned cha
    return rc;
 }
 
-struct s_csystem_emm_filter* videoguard_get_emm_filter(struct s_reader *rdr)
+int32_t videoguard_get_emm_filter(struct s_reader *rdr, struct s_csystem_emm_filter** emm_filters, unsigned int* filter_count)
 {
-  // It's not effecient to re-create filters every time but it reduces the complexity
-  // of trying to figure out when they need to be re-populated
-  NULLFREE(rdr->csystem.emm_filters);
-
-  struct s_csystem_emm_filter *filters = rdr->csystem.emm_filters;
-
-  if (filters == NULL) {
+  if (*emm_filters == NULL) {
     const unsigned int max_filter_count = 7;
-    if (!cs_malloc(&rdr->csystem.emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
-      return NULL;
+    if (!cs_malloc(emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
+      return ERROR;
 
-    filters = rdr->csystem.emm_filters;
-    rdr->csystem.emm_filter_count = 0;
+    struct s_csystem_emm_filter* filters = *emm_filters;
+    *filter_count = 0;
 
     int32_t idx = 0;
     unsigned int n;
@@ -867,10 +861,10 @@ struct s_csystem_emm_filter* videoguard_get_emm_filter(struct s_reader *rdr)
     filters[idx].mask[1]   = 0xC0;
     idx++;
 
-    rdr->csystem.emm_filter_count = idx;
+    *filter_count = idx;
   }
 
-  return filters;
+  return OK;
 }
 
 static MAILMSG *find_msg(uint16_t caid, uint32_t serial, uint16_t date, uint16_t msg_id)

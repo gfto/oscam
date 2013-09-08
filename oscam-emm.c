@@ -37,12 +37,13 @@ static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs
 	
 	//copied and enhanced from module-dvbapi.c
 	//dvbapi_start_emm_filter()
-	int32_t i, j, k, match;
+	int32_t i, k, match;
 	uint8_t flt, mask;
 	struct s_csystem_emm_filter *dmx_filter = NULL;
+	unsigned int j, filter_count = 0;
 
 	// Call cardsystems emm filter
-	dmx_filter = cs->get_emm_filter(rdr);
+	cs->get_emm_filter(rdr, &dmx_filter, &filter_count);
 
 	// Only check matching emmtypes:
 	uint8_t org_emmtype;
@@ -53,7 +54,6 @@ static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs
 
 	// Now check all filter values
 
-	int32_t filter_count = rdr->csystem.emm_filter_count;
 	
 	for (j = 0; j < filter_count; j++) {
 		if (dmx_filter[j].enabled == 0)
@@ -81,6 +81,9 @@ static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs
 			return 1; //valid emm
 		}
 	}
+
+	NULLFREE(dmx_filter);
+
 	return 0; //emm filter does not match, illegal emm, return
 }
 
