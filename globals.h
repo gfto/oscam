@@ -395,6 +395,7 @@ typedef unsigned char uchar;
 #define DEFAULT_LB_AUTO_BETATUNNEL_PREFER_BETA 50
 
 #define DEFAULT_MAX_CACHE_TIME 15
+#define DEFAULT_MAX_HITCACHE_TIME 15
 
 #define DEFAULT_LB_AUTO_TIMEOUT 0
 #define DEFAULT_LB_AUTO_TIMEOUT_P 30
@@ -763,8 +764,8 @@ struct s_cardsystem {
 	int32_t		(*do_emm)(struct s_reader *, struct emm_packet_t *);
 	void			(*post_process)(struct s_reader *);
 	int32_t		(*get_emm_type)(struct emm_packet_t *, struct s_reader *);
-	int32_t		(*get_emm_filter)(struct s_reader *, struct s_csystem_emm_filter**, unsigned int*);
-	int32_t		(*get_tunemm_filter)(struct s_reader *, struct s_csystem_emm_filter**, unsigned int*);
+	int32_t         (*get_emm_filter)(struct s_reader *, struct s_csystem_emm_filter**, unsigned int*);
+	int32_t         (*get_tunemm_filter)(struct s_reader *, struct s_csystem_emm_filter**, unsigned int*);
 	uint16_t		caids[7];
 };
 
@@ -1715,7 +1716,8 @@ struct s_config
 	IN_ADDR_T	pand_srvip;
 #endif
 
-	uint32_t	max_cache_time;  //seconds
+	uint32_t	max_cache_time;  //seconds ecms are stored in ecmcwcache
+	uint32_t	max_hitcache_time;  //seconds hits are stored in cspec_hitcache (to detect dyn wait_time)
 
 	int8_t		block_same_ip;   //0=allow all, 1=block client requests to reader with same ip   (default=1)
 	int8_t		block_same_name; //0=allow all, 1=block client requests to reader with same name (default=1)

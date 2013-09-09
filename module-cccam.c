@@ -2535,11 +2535,12 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			else {
 				int32_t i = 0;
 				for (i = 0; i < cfg.max_pending; i++) {
-					if (cl->ecmtask[i].idx == ecm_idx) {
+					if (cl->ecmtask[i].idx == ecm_idx && cl->ecmtask[i].rc==101) {
 						cs_debug_mask(D_TRACE,
 								"%s ext NOK %s", getprefix(), (buf[1]==MSG_CW_NOK1)?"NOK1":"NOK2");
 						ECM_REQUEST *er = &cl->ecmtask[i];
 						cl->pending--;
+
 						write_ecm_answer(rdr, er, E_NOTFOUND, 0, NULL, NULL);
 						break;
 					}

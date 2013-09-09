@@ -569,6 +569,7 @@ void free_client(struct s_client *cl)
 	}
 	cs_writeunlock(&clientlist_lock);
 
+	cleanup_ecmtasks(cl);
 
 	// Clean reader. The cleaned structures should be only used by the reader thread, so we should be save without waiting
 	if (rdr) {
@@ -607,7 +608,16 @@ void free_client(struct s_client *cl)
 	free_joblist(cl);
 	NULLFREE(cl->work_mbuf);
 
-	cleanup_ecmtasks(cl);
+	if (cl->ecmtask) {
+		add_garbage(cl->ecmtask);
+		cl->ecmtask = NULL;
+	}
+
+	if (cl->cascadeusers) {
+		ll_destroy_data(cl->cascadeusers);
+		cl->cascadeusers = NULL;
+	}
+
 	add_garbage(cl->emmcache);
 #ifdef MODULE_CCCAM
 	add_garbage(cl->cc);

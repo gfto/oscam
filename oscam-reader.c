@@ -866,10 +866,7 @@ void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 	//CHECK if ecm already sent to reader
 	struct s_ecm_answer *ea_er=get_ecm_answer(reader,er);
-	if(!ea_er){
-		cs_log("WARNING: client %s, caid %04X, prid %06X, srvid %04X -> REQUEST for READER %s --> *** ERROR in reader_get_ecm! Not ea found! ***", (check_client(er->client)?er->client->account->usr:"-"),er->caid, er->prid, er->srvid, reader?reader->label:"-");
-		return;
-	}
+	if(!ea_er) return;
 
 	struct s_ecm_answer *ea = NULL, *ea_prev=NULL;
 	struct ecm_request_t *ecm;

@@ -753,14 +753,14 @@ void add_hitcache(struct s_client *cl, ECM_REQUEST *er) {
 
 struct csp_ce_hit_t *check_hitcache(ECM_REQUEST *er, struct s_client *cl, uint8_t lock) {
 	time_t now = time(NULL);
-	time_t timeout = now-cfg.max_cache_time;
+	time_t timeout = now-cfg.max_hitcache_time;
 	CSPCEHIT *ch;
 	uint64_t grp = cl?cl->grp:0;
 	uint8_t  fs=0;
 
 	if (lock) cs_readlock(&hitcache_lock);
 	for (ch = cspec_hitcache; ch; ch = ch->next) {
-		if (ch->time <= timeout) {
+		if (ch->time < timeout) {
 			ch = NULL;
 			break;
 		}
@@ -795,7 +795,7 @@ struct csp_ce_hit_t *check_hitcache(ECM_REQUEST *er, struct s_client *cl, uint8_
 void cleanup_hitcache(void) {
 	CSPCEHIT *current = NULL, *prv, *temp;
 	int32_t count = 0;
-	int32_t mct = cfg.max_cache_time + (cfg.max_cache_time / 2); // 1,5
+	int32_t mct = cfg.max_hitcache_time + (cfg.max_hitcache_time / 2); // 1,5
 	time_t now = time(NULL);
 
 	cs_writelock(&hitcache_lock);
@@ -814,7 +814,7 @@ void cleanup_hitcache(void) {
 		} else {
 			cspec_hitcache = NULL;
 		}
-		break; //we need only once, all follow to old or cache max size
+		break; //we need only once, all follow to old
 	}
 	cs_writeunlock(&hitcache_lock);
 	cspec_hitcache_size = count;

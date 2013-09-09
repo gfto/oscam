@@ -294,6 +294,10 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	tpl_printf(vars, TPLADD, "FALLBACKTIMEOUT", "%u", cfg.ftimeout);
 	tpl_printf(vars, TPLADD, "CLIENTMAXIDLE", "%u", cfg.cmaxidle);
 
+	value = mk_t_caidvaluetab(&cfg.ftimeouttab);
+	tpl_addVar(vars, TPLADD, "FALLBACKTIMEOUT_PERCAID", value);
+	free_mk_t(value);
+
 	tpl_printf(vars, TPLADD, "SLEEP", "%d", cfg.tosleep);
 	if (cfg.ulparent) tpl_addVar(vars, TPLADD, "UNLOCKPARENTALCHECKED", "selected");
 
@@ -504,6 +508,8 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 	value = mk_t_cacheex_valuetab(&cfg.cacheex_wait_timetab);
 	tpl_addVar(vars, TPLADD, "WAIT_TIME", value);
 	free_mk_t(value);
+
+	tpl_printf(vars, TPLADD, "MAX_HIT_TIME", "%d", cfg.max_hitcache_time);
 
 	if (cfg.cacheex_enable_stats == 1)
 		tpl_addVar(vars, TPLADD, "CACHEEXSTATSSELECTED", "selected");
@@ -1323,6 +1329,11 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	} else {
 		tpl_addVar(vars, TPLADD, "FALLBACKVALUE", (rdr->fallback == 1) ? "1" : "0");
 	}
+
+	// Fallback per caid
+	value = mk_t_ftab(&rdr->fallback_percaid);
+	tpl_addVar(vars, TPLADD, "FALLBACK_PERCAID", value);
+	free_mk_t(value);
 
 #ifdef CS_CACHEEX
 	// Cacheex

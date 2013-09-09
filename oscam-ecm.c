@@ -632,23 +632,9 @@ ECM_REQUEST *get_ecmtask(void)
 
 void cleanup_ecmtasks(struct s_client *cl)
 {
+	if(cl && !cl->account->usr) return;  //not for anonymous users!
+
 	ECM_REQUEST *ecm;
-	//struct s_ecm_answer *ea_list, *ea_prev;
-
-	if (cl->ecmtask) {
-		int32_t i;
-		for (i = 0; i < cfg.max_pending; i++) {
-			ecm = &cl->ecmtask[i];
-			ecm->client = NULL;
-		}
-		add_garbage(cl->ecmtask);
-		cl->ecmtask = NULL;
-	}
-
-	if (cl->cascadeusers) {
-		ll_destroy_data(cl->cascadeusers);
-		cl->cascadeusers = NULL;
-	}
 
 	//remove this clients ecm from queue. because of cache, just null the client:
 	cs_readlock(&ecmcache_lock);
@@ -1336,7 +1322,12 @@ void update_chid(ECM_REQUEST *er)
 
 int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, uint8_t rcEx, uint8_t *cw, char *msglog)
 {
-	if(!reader) return 0;
+	if(!reader || !er || !er->tps.time) return 0;
+
+	// drop too late answers, to avoid seg fault --> only answer until tps.time+((cfg.ctimeout+500)/1000+1) is accepted
+	uint32_t timeout = time(NULL)-er->tps.time;
+	if((timeout > ((cfg.ctimeout+500)/1000+1)) )
+		return 0;
 
 	int32_t i;
 	uint8_t c;
@@ -1349,19 +1340,14 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 		er = er->parent; 		//Now er is "original" ecm, before it was the reader-copy
 		er_reader_cp->rc = rc;
 		er_reader_cp->idx = 0;
-	}
 
-	//check if er is being freed
-	time_t timeout = time(NULL)-((cfg.ctimeout+500)/1000+1);
-	if(!er || (er->tps.time < timeout) ) { // drop too late answers, to avoid seg fault --> only answer inside ((cfg.ctimeout+500)/1000+1) is accepted
-		return 0;
+		timeout = time(NULL)-er->tps.time;
+		if((timeout > ((cfg.ctimeout+500)/1000+1)) )
+			return 0;
 	}
 
 	struct s_ecm_answer *ea=get_ecm_answer(reader,er);
-	if(!ea){
-		cs_log("WARNING: client %s, caid %04X, prid %06X, srvid %04X -> ANSWER from READER %s, rc %d --> *** ERROR in write_ecm_answer! Not ea found! ***", (check_client(er->client)?er->client->account->usr:"-"),er->caid, er->prid, er->srvid, reader?reader->label:"-", rc );
-		return 0;
-	}
+	if(!ea) return 0;
 
 	cs_writelock(&ea->ecmanswer_lock);
 
