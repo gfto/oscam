@@ -406,9 +406,6 @@ DESCRIPTIONS
 	  maximum  time  CWs resist in cache after 1st client request, the time must be 2 seconds highter than the parameter clienttime‐
 	  out, default:15
 
-       max_count = count
-	  maximum CWs in cache, default:1000
-
        wait_time = [caid][&mask][@provid][$servid][:awtime][:]dwtime,n
 	  wait time in milli-seconds for cache exchange and Cardservproxy before sending ECMs to reader or proxy, default:none
 
