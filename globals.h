@@ -781,7 +781,8 @@ typedef struct ecm_request_t {
 	uint16_t		srvid;
 	uint16_t		onid;
 	uint16_t		tsid;
-	uint32_t		ens;
+	uint32_t		ens;				// enigma namespace
+	uint32_t		vpid;				// videopid
 	uint16_t		chid;
 	uint16_t		pid;
 	uint16_t		idx;

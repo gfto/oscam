@@ -55,6 +55,7 @@ struct s_ecmpids
 	uint16_t ECM_PID;
 	uint32_t CHID;
 	uint16_t EMM_PID;
+	uint32_t VPID; // videopid
 	uint8_t irdeto_maxindex; // max irdeto indexes always fresh fetched from current ecm
 	uint8_t irdeto_curindex; // current irdeto index we want to handle 
 	uint8_t irdeto_cycle; // temp var that holds the irdeto index we started with to detect if we cycled trough all indexes
