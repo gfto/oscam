@@ -364,6 +364,34 @@ static int32_t griffin_get_emm_filter(struct s_reader *rdr, struct s_csystem_emm
     filters[idx].mask[4]   = 0xFF;
     idx++;
 
+    filters[idx].type = EMM_SHARED;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x82;
+    filters[idx].filter[1] = rdr->sa[1][0];
+    filters[idx].filter[2] = rdr->sa[1][1];
+    filters[idx].filter[3] = rdr->sa[1][2];
+    filters[idx].filter[4] = rdr->sa[1][3];
+    filters[idx].mask[0]   = 0xFF;
+    filters[idx].mask[1]   = 0xFF;
+    filters[idx].mask[2]   = 0xFF;
+    filters[idx].mask[3]   = 0xFF;
+    filters[idx].mask[4]   = 0xFF;
+    idx++;
+
+    filters[idx].type = EMM_UNIQUE;
+    filters[idx].enabled   = 1;
+    filters[idx].filter[0] = 0x83;
+    filters[idx].filter[1] = rdr->sa[0][0];
+    filters[idx].filter[2] = rdr->sa[0][1];
+    filters[idx].filter[3] = rdr->sa[0][2];
+    filters[idx].filter[4] = rdr->sa[0][3];
+    filters[idx].mask[0]   = 0xF0;
+    filters[idx].mask[1]   = 0xFF;
+    filters[idx].mask[2]   = 0xFF;
+    filters[idx].mask[3]   = 0xFF;
+    filters[idx].mask[4]   = 0xFF;
+    idx++;
+
     filters[idx].type = EMM_UNIQUE;
     filters[idx].enabled   = 1;
     filters[idx].filter[0] = 0x83;
