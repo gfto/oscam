@@ -341,7 +341,7 @@ static int32_t griffin_do_emm(struct s_reader *rdr, EMM_PACKET *ep)
 static int32_t griffin_get_emm_filter(struct s_reader *rdr, struct s_csystem_emm_filter** emm_filters, unsigned int* filter_count)
 {
   if (*emm_filters == NULL) {
-    const unsigned int max_filter_count = 2;
+    const unsigned int max_filter_count = 4;
     if (!cs_malloc(emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
       return ERROR;
 
