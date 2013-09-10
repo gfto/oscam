@@ -29,7 +29,9 @@ int32_t constcw_analyse_file(uint16_t c_caid, uint32_t c_prid, uint16_t c_sid, u
 
 	fp=fopen(cur_client()->reader->device, "r");
 	if (!fp) return (0);
-
+	
+	cs_log("[CONSTCW] find controlword for CAID %04X PROVID %06X SRVID %04X VPID %04X ECMPID %04X", c_caid, c_prid, c_sid, c_vpid, c_ecmpid);
+	
 	while (fgets(token, sizeof(token), fp)){
 		if (token[0]=='#') continue;
 
@@ -38,12 +40,13 @@ int32_t constcw_analyse_file(uint16_t c_caid, uint32_t c_prid, uint16_t c_sid, u
 			&cw[8], &cw[9], &cw[10], &cw[11], &cw[12], &cw[13], &cw[14], &cw[15]);
 
 		//cs_log("Line found: %s", token);
-		if (c_caid == caid && c_sid == sid && (!provid || provid == c_prid) && (!vpid || vpid == c_vpid ) && (!ecmpid || ecmpid == c_ecmpid )){
+		if (c_caid == caid && c_sid == sid && (!provid || provid == c_prid) && (!vpid || !c_vpid || vpid == c_vpid )
+			&& (!ecmpid || !c_ecmpid || ecmpid == c_ecmpid )){
 			fclose(fp);
 			int8_t i;
 			for(i = 0; i < 16; ++i)
 				dcw[i] = (uchar) cw[i];
-			cs_log("Entry found: %04X:%06X:%04X:%04X:%04X::%s", caid, provid, sid, vpid, ecmpid, cs_hexdump(1, dcw, 16, token, sizeof(token)));
+			cs_log("[CONSTCW] Entry found: %04X:%06X:%04X:%04X:%04X::%s", caid, provid, sid, vpid, ecmpid, cs_hexdump(1, dcw, 16, token, sizeof(token)));
 			return 1;
 		}
 	}
@@ -75,7 +78,7 @@ int32_t constcw_client_init(struct s_client *client)
     client->pfd = 0;
     if (socketpair(PF_LOCAL, SOCK_STREAM, 0, fdp))
     {
-        cs_log("constcw: Socket creation failed (%s)", strerror(errno));
+        cs_log("[CONSTCW] Socket creation failed (%s)", strerror(errno));
         return 1;
     }
     client->udp_fd =fdp[0];
@@ -87,7 +90,7 @@ int32_t constcw_client_init(struct s_client *client)
     // Oscam has no reader.au in s_reader like ki's mpcs ;)
     // reader[ridx].au = 0;
     // cs_log("local reader: %s (file: %s) constant cw au=0", reader[ridx].label, reader[ridx].device);
-    cs_log("local reader: %s (file: %s) constant cw", client->reader->label, client->reader->device);
+    cs_log("[CONSTCW] local reader: %s (file: %s)", client->reader->label, client->reader->device);
 
     client->pfd = client->udp_fd;
 
@@ -109,7 +112,7 @@ static int32_t constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar 
     // Check if DCW exist in the files
     //cs_log("Searching ConstCW for ECM: %04X:%06X:%04X (%d)", er->caid, er->prid, er->srvid, er->l);
 
-    if (constcw_analyse_file(er->caid, er->prid, er->srvid, er->vpid, er->pid, cw)==0) {
+	if (constcw_analyse_file(er->caid, er->prid, er->srvid, er->vpid, er->pid, cw)==0) {
         write_ecm_answer(rdr, er, E_NOTFOUND, (E1_READER<<4 | E2_SID), NULL, NULL);
     } else {
         write_ecm_answer(rdr, er, E_FOUND, 0, cw, NULL);
