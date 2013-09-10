@@ -2136,7 +2136,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			break;
 
 		demux[demux_id].STREAMpids[demux[demux_id].STREAMpidcount++]=elementary_pid;
-		if (!vpid && (stream_type == 01 || stream_type == 02 || stream_type == 0x10)) vpid = elementary_pid; // find and register videopid
+		// find and register videopid
+		if (!vpid && (stream_type == 01 || stream_type == 02 || stream_type == 0x10 || stream_type == 0x1B)) vpid = elementary_pid; 
 		
 		if (es_info_length != 0 && es_info_length < length) {
 			dvbapi_parse_descriptor(demux_id, es_info_length, buffer+i+5);
