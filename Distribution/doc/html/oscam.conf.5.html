@@ -771,7 +771,14 @@ value to delay cached requests, default:0
 
 <B>max_time</B> = <B>seconds</B>
 <DL COMPACT><DT><DD>
-maximum time CWs resist in cache after 1st client request, the time must be 2 seconds highter than the parameter <B>clienttimeout</B>, default:15
+maximum time CWs resist in cache, the time must be 2 seconds highter than the parameter <B>clienttimeout</B>, default:15
+</DL>
+
+<P>
+
+<B>max_hit_time</B> = <B>seconds</B>
+<DL COMPACT><DT><DD>
+maximum time for cache exchange hits resist in cache for evaluating <B>wait_time</B>, default:15
 </DL>
 
 <P>

@@ -577,7 +577,12 @@ value to delay cached requests, default:0
 .PP
 \fBmax_time\fP = \fBseconds\fP
 .RS 3n
-maximum time CWs resist in cache after 1st client request, the time must be 2 seconds highter than the parameter \fBclienttimeout\fP, default:15
+maximum time CWs resist in cache, the time must be 2 seconds highter than the parameter \fBclienttimeout\fP, default:15
+.RE
+.PP
+\fBmax_hit_time\fP = \fBseconds\fP
+.RS 3n
+maximum time for cache exchange hits resist in cache for evaluating \fBwait_time\fP, default:15
 .RE
 .PP
 \fBwait_time\fP = \fB[caid][&mask][@provid][$servid][:awtime][:]dwtime,n\fP
