@@ -734,7 +734,7 @@ bool IO_Serial_InitPnP (struct s_reader * reader)
 int32_t IO_Serial_GetStatus(struct s_reader *reader, int32_t *status)
 {
 	uint32_t modembits = 0;
-	if (ioctl(reader->handle, TIOCMGET, &modembits) < 0) {
+	if (ioctl(reader->handle, TIOCMGET, &modembits) < -1) {
 		rdr_log(reader, "ERROR: %s: ioctl(TIOCMGET): %s", __func__, strerror(errno));
 		return ERROR;
 	}
