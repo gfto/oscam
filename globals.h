@@ -838,6 +838,9 @@ typedef struct ecm_request_t {
 	uint8_t			from_cacheex;				// =1 if er from cacheex client pushing cache
 	uint8_t			from_cacheex1_client;  		// =1 if er from cacheex-1 client
 	char			msglog[MSGLOGSIZE];
+#ifdef CW_CYCLE_CHECK
+	char			cwc_msg_log[MSGLOGSIZE];
+#endif
 	struct ecm_request_t	*parent;
 	struct ecm_request_t	*next;
 } ECM_REQUEST;
@@ -1742,6 +1745,7 @@ struct s_config
 	int8_t			onbadcycle;			// what to do on bad cwcycle
 	int8_t			cwcycle_dropold;		// what to do on old ecmd5/cw
 	int8_t			cwcycle_sensitive;
+	int8_t			cwcycle_allowbadfromffb;		//allow Bad cycles from Fixed Fallbackreader
 #endif
 
 	//Global whitelist:

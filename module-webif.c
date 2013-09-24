@@ -561,6 +561,9 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 			tpl_addVar(vars, TPLADD, "CWCSEN4", "selected");
 			break;
 	}
+	if (cfg.cwcycle_allowbadfromffb == 1) {
+		tpl_addVar(vars, TPLADD, "ALLOWBADFROMFFB", "selected");
+	}
 #endif
 
 	return tpl_getTpl(vars, "CONFIGCACHE");

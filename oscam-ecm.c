@@ -720,7 +720,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 			"fake", "invalid", "corrupt", "no card", "expdate", "disabled", "stopped"};
 	static const char *stxtEx[16]={"", "group", "caid", "ident", "class", "chid", "queue", "peer", "sid", "", "", "", "", "", "", ""};
 	static const char *stxtWh[16]={"", "user ", "reader ", "server ", "lserver ", "", "", "", "", "", "", "", "" ,"" ,"", ""};
-	char sby[100]="", sreason[32]="", schaninfo[32]="";
+	char sby[100]="", sreason[32]="", scwcinfo[32]="", schaninfo[32]="";
 	char erEx[32]="";
 	char uname[38]="";
 	char channame[32];
@@ -799,6 +799,11 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 
 	if (er->msglog[0])
 		snprintf(sreason, sizeof(sreason)-1, " (%s)", er->msglog);
+
+#ifdef CW_CYCLE_CHECK
+	if (er->cwc_msg_log[0])
+		snprintf(scwcinfo, sizeof(scwcinfo)-1, " (%s)", er->cwc_msg_log);
+#endif
 
 	cs_ftime(&tpe);
 
@@ -923,16 +928,16 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		char buf[ECM_FMT_LEN];
 		format_ecm(er, buf, ECM_FMT_LEN);
 		if (er->reader_avail == 1 || er->stage==0) {
-			cs_log("%s (%s): %s (%d ms)%s%s%s",
+			cs_log("%s (%s): %s (%d ms)%s%s%s%s",
 				uname, buf,
-				er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, schaninfo, sreason);
+				er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, schaninfo, sreason, scwcinfo);
 		} else {
-			cs_log("%s (%s): %s (%d ms)%s (%c/%d/%d/%d)%s%s",
+			cs_log("%s (%s): %s (%d ms)%s (%c/%d/%d/%d)%s%s%s",
 				uname, buf,
 				er->rcEx ? erEx : stxt[er->rc],
 				client->cwlastresptime, sby,
 				stageTxt[er->stage], er->reader_requested, (er->reader_count+er->fallback_reader_count), er->reader_avail,
-				schaninfo, sreason);
+				schaninfo, sreason, scwcinfo);
 		}
 	}
 
@@ -1359,7 +1364,8 @@ int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er, int8_t rc, u
 	if (!checkcwcycle(er, reader, cw, rc )) {
 		rc = E_NOTFOUND;
 		rcEx = E2_WRONG_CHKSUM;
-	}
+		cs_debug_mask(D_CACHEEX|D_CSPCWC|D_LB,"{client %s, caid %04X, srvid %04X} [write_ecm_answer] cyclecheck failed! Reader: %s set rc: %i", (er->client?er->client->account->usr:"-"),er->caid, er->srvid, reader?reader->label:"-", rc);
+	} else cs_debug_mask(D_CACHEEX|D_CSPCWC|D_LB,"{client %s, caid %04X, srvid %04X} [write_ecm_answer] cyclecheck passed! Reader: %s rc: %i", (er->client?er->client->account->usr:"-"),er->caid, er->srvid, reader?reader->label:"-", rc); 
 #endif
 	//END -- SPECIAL CHECKs for rc
 
@@ -1971,6 +1977,12 @@ OUT:
 	struct ecm_request_t *ecm=NULL;
 	ecm = check_cwcache(er, client);
 	if (ecm) {  //found in cache
+
+	#ifdef CW_CYCLE_CHECK 
+		if (checkcwcycle(er, NULL, ecm->cw, ecm->rc) != 0) { // check answer from int cache too, necessary for cycle learning
+			cs_debug_mask(D_CSPCWC|D_LB,"{client %s, caid %04X, srvid %04X} [get_cw] cyclecheck passed ecm in INT. cache, ecm->rc %d", (er->client?er->client->account->usr:"-"),er->caid, er->srvid, ecm?ecm->rc:-1 );			
+	#endif		
+
 		er->readers_timeout_check=1;  //no readers asked to be checked at ctimeout
 
 	  #ifdef CS_CACHEEX
@@ -1990,6 +2002,9 @@ OUT:
 
 		add_job(er->client, ACTION_ECM_ANSWER_CACHE, wfc, sizeof(struct s_write_from_cache));  //write_ecm_answer_fromcache
 		return;
+	#ifdef CW_CYCLE_CHECK
+		} else cs_log("cyclecheck [BAD CW Cycle] from Int. Cache detected.. {client %s, caid %04X, srvid %04X} [get_cw] -> skip cache answer", (er->client?er->client->account->usr:"-"),er->caid, er->srvid);
+	#endif
 	}
 
 

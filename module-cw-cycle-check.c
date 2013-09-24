@@ -140,6 +140,9 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 	int32_t mcl = cfg.maxcyclelist;
 	struct s_cw_cycle_check *currentnode = NULL, *cwc = NULL;
 
+	struct s_ecm_answer *ea;
+	struct s_reader *fbrdr;
+	char fb_reader[64];
 
 	/*for(list = cw_cc_list; list; list = list->next) { // List all Entrys in Log for DEBUG
 		cs_debug_mask(D_CSPCWCFUL, "cyclecheck: [LIST] %04X:%06X:%04X OLD: %i Time: %ld DifftoNow: %ld Stage: %i cw: %s", list->caid, list->provid, list->sid, list->old, list->time, now - list->time, list->stage, cs_hexdump(0, list->cw, 16, cwstr, sizeof(cwstr)));
@@ -263,6 +266,24 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 					cs_debug_mask(D_CSPCWCFUL, "cyclecheck [Dump CheckedCW] Client: %s EA: %s CW: %s Time: %ld Timediff: %ld", user, er_ecmf, cwstr, now, now - cwc->time);
 					ret = 1; // bad cycle
 					upd_entry = 0;
+					if (cfg.cwcycle_allowbadfromffb) {
+                                        	for (ea = er->matching_rdr; ea; ea = ea->next) {
+                                                	if (ea->reader) {                                               
+                                                	        fbrdr = ea->reader;
+                                                	        snprintf(fb_reader, sizeof(fb_reader), "%s", ea->reader->label);
+								if (!strcmp(reader, fb_reader) && chk_is_fixed_fallback(fbrdr, er)) {                                                
+									cs_log("cyclecheck [check Fixed FB] %s is set as fixed fallback", reader);
+									//memset(cwc->cw, 0, sizeof(cwc->cw));
+                                                	        	ret = 5;
+									cwc->stage = 4;
+                                                	        	upd_entry = 1;
+                                                	       		cwc->nextcyclecw = 2;
+									cw_stageswitch = true;
+									break;
+								}                                    
+							}
+						}
+					}
 					break;
 				}
 			} else {
@@ -402,7 +423,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 				//new = NULL; // maybe this helps against double free or corruption (!prev)
 			}
 		} else {
-			cs_debug_mask(D_CSPCWC, "cyclecheck [Store New Entry] Max List arrived -> dont store new Entry list_size: %i, mcl: %i", cw_cc_list_size, mcl);
+			cs_log("cyclecheck [Store New Entry] Max List arrived -> dont store new Entry list_size: %i, mcl: %i", cw_cc_list_size, mcl);
 		}
 	} else
 	if (upd_entry && cwc) {
@@ -446,7 +467,8 @@ uint8_t checkcwcycle(ECM_REQUEST *er, struct s_reader *reader, uchar *cw, int8_t
 
 	if (!cfg.cwcycle_check_enable)
 		return 3;
-	if (!(rc == E_FOUND) && !(rc == E_CACHEEX))
+//	if (!(rc == E_FOUND) && !(rc == E_CACHEEX))
+	if (rc >= E_NOTFOUND)
 		return 2;
 	if (!cw || !er)
 		return 2;
@@ -482,6 +504,7 @@ uint8_t checkcwcycle(ECM_REQUEST *er, struct s_reader *reader, uchar *cw, int8_t
 				client->account->cwcycledchecked++;
 				client->account->cwcycledok++;
 			}
+			snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc OK");
 			break;
 
 		case 1: // CWCYCLE NOK
@@ -495,6 +518,7 @@ uint8_t checkcwcycle(ECM_REQUEST *er, struct s_reader *reader, uchar *cw, int8_t
 				client->account->cwcycledchecked++;
 				client->account->cwcyclednok++;
 			}
+			snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NOK");
 			if (cfg.onbadcycle > 0) { // ignore ECM Request
 				cs_log("cyclecheck [Bad CW Cycle] for: %s %s from: %s -> drop cw (ECM Answer)", user, er_ecmf, c_reader); //D_CSPCWC| D_TRACE
 				return 0;
@@ -514,6 +538,7 @@ uint8_t checkcwcycle(ECM_REQUEST *er, struct s_reader *reader, uchar *cw, int8_t
 				client->account->cwcycledchecked++;
 				client->account->cwcyclednok++;
 			}
+			snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NOK(old)");
 			cs_log("cyclecheck [Bad CW Cycle] for: %s %s from: %s -> ECM Answer is too OLD -> drop cw (ECM Answer)", user, er_ecmf, c_reader);//D_CSPCWC| D_TRACE
 			return 0;
 
@@ -528,24 +553,37 @@ uint8_t checkcwcycle(ECM_REQUEST *er, struct s_reader *reader, uchar *cw, int8_t
 				client->account->cwcycledchecked++;
 				client->account->cwcycledign++;
 			}
+			snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc IGN");
 			break;
 
 		case 4: // same CW
 			cs_debug_mask(D_CSPCWC, "cyclecheck [Same CW] for: %s %s -> same CW detected from: %s -> do nothing ", user, er_ecmf, c_reader);
 			break;
 
+		case 5: //answer from fixed Fallbackreader with Bad Cycle
+			if (client){
+				client->cwcycledchecked++;
+				client->cwcyclednok++;
+			}
+			first_client->cwcycledchecked++;
+			first_client->cwcyclednok++;
+			if (client && client->account) {
+				client->account->cwcycledchecked++;
+				client->account->cwcyclednok++;
+			}
+			snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NOK but IGN (fixed FB)");
+			cs_log("cyclecheck [Bad CW Cycle] for: %s %s from: %s -> But Ignored because of answer from Fixed Fallback Reader", user, er_ecmf, c_reader);
+			break;
+
 		case 6: // not checked ( learning Stages or Caid not in cyclelist )
+			snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc LEARN");
 			break;
 
 	}
 	return 1;
 }
 
-uint8_t cwcycle_check_act(uint16_t caid){
-	if (cfg.cwcycle_check_enable)
-		return chk_ctab_ex(caid,&cfg.cwcycle_check_caidtab);
-	return 0;
-}
+
 /*
  *
  */

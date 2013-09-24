@@ -459,7 +459,7 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 							#ifdef CW_CYCLE_CHECK
 								if (!checkcwcycle(ecm, cl->reader, er->cw, er->rc )) {   //if not valid, we don't add it to hit_cache and does not cascade push!!!
 									continue;
-								}
+								} else cs_debug_mask(D_CACHEEX|D_CSPCWC|D_LB,"{client %s, caid %04X, srvid %04X} [ADD_HITCACHE] cyclecheck passed!", (ecm->client?ecm->client->account->usr:"-"),er->caid, er->srvid );
 							#endif
 
 							struct s_write_from_cache *wfc=NULL;
@@ -519,28 +519,23 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 
 
 	if(!ecm_found && add_to_cache){  //if not ecm (cw) already in cache
-		uint8_t cwcycle_act = cwcycle_check_act(er->caid);
 		if (er->rc < E_NOTFOUND) { // Do NOT add cacheex - not founds!
 			add_hitcache(cl, er);
 
 			er->selected_reader = cl->reader;
 
-			if (!cwcycle_act) {
-				cs_writelock(&ecmcache_lock);
-				er->next = ecmcwcache;
-				ecmcwcache = er;
-				ecmcwcache_size++;
-				cs_writeunlock(&ecmcache_lock);
+			cs_writelock(&ecmcache_lock);
+			er->next = ecmcwcache;
+			ecmcwcache = er;
+			ecmcwcache_size++;
+			cs_writeunlock(&ecmcache_lock);
 
-				cacheex_cache_push(er);  //cascade push!
-			}
+			cacheex_cache_push(er);  //cascade push!
 
 			cacheex_add_stats(cl, er->caid, er->srvid, er->prid, 1);
 
-			if (cwcycle_act)
-				er->rc = E_NOTFOUND; //need to free
 		}
-		debug_ecm(D_CACHEEX, "got pushed %sECM %s from %s (%s)", (er->rc == E_UNHANDLED)?"request ":"", buf, csp ? "csp" : username(cl),(cwcycle_act)?"on":"off");
+		debug_ecm(D_CACHEEX, "got pushed %sECM %s from %s", (er->rc == E_UNHANDLED)?"request ":"", buf, csp ? "csp" : username(cl));
 
 		return er->rc < E_NOTFOUND ? 1 : 0;
 	}
