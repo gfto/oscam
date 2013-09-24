@@ -268,11 +268,11 @@ typedef unsigned char uchar;
 #define D_LB        0x0100  // Debug Loadbalancer/ECM handler
 #define D_CACHEEX   0x0200  // Debug CACHEEX
 #define D_CLIENTECM 0x0400  // Debug Client ECMs
-#define D_CSPCWC    0x0800  // Debug CSP/CWC
-#define D_CSPCWCFUL 0x1000  // Debug CSP/CWC FULL
+#define D_CSP       0x0800  // Debug CSP
+#define D_CWC       0x1000  // Debug CWC
 #define D_ALL_DUMP  0xFFFF  // dumps all
 
-#define MAX_DEBUG_LEVELS 11
+#define MAX_DEBUG_LEVELS 13
 
 #define R_DB2COM1   0x1 // Reader Dbox2 @ com1
 #define R_DB2COM2   0x2 // Reader Dbox2 @ com1
