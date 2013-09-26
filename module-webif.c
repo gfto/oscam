@@ -2285,10 +2285,12 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 			char picon_name[32];
 			snprintf(picon_name, sizeof(picon_name)/sizeof(char) - 1, "%s_%s", (char *)proto, newcamd_get_client_name(cl->ncd_client_id));
 			if (picon_exists(picon_name)) {
+				tpl_printf(vars, TPLADDONCE, "CLIENTPROTO","%s (%s)", proto, newcamd_get_client_name(cl->ncd_client_id));
 				tpl_printf(vars, TPLADD, "PROTOICON",
 				"<img class=\"protoicon\" src=\"image?i=IC_%s_%s\" alt=\"IC_%s_%s\" title=\"Protocol %s %s\">",
 				proto, newcamd_get_client_name(cl->ncd_client_id), proto, newcamd_get_client_name(cl->ncd_client_id), proto, newcamd_get_client_name(cl->ncd_client_id));
 			} else {
+				tpl_printf(vars, TPLADDONCE, "CLIENTPROTO","%s (%s)", proto, newcamd_get_client_name(cl->ncd_client_id));
 				tpl_printf(vars, TPLADD, "PROTOICON", "<SPAN TITLE=\"IC_%s_%s\">%s (%s)</SPAN>",
 				proto, newcamd_get_client_name(cl->ncd_client_id), proto, newcamd_get_client_name(cl->ncd_client_id));
 			}
@@ -2307,16 +2309,15 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 				char picon_name[32];
 				snprintf(picon_name, sizeof(picon_name)/sizeof(char) - 1, "%s_%s_%s", proto, cc->remote_version, cc->remote_build);
 				if (picon_exists(picon_name)) {
+					tpl_printf(vars, TPLADDONCE, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
+					tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE","cccam extinfo: %s missing icon: IC_%s_%s_%s", cc->extended_mode ? cc->remote_oscam : "", proto, cc->remote_version, cc->remote_build);
 					tpl_printf(vars, TPLADD, "PROTOICON",
 					"<img class=\"protoicon\" src=\"image?i=IC_%s_%s_%s\" alt=\"IC_%s (%s-%s)\" title=\"Protocol %s (%s-%s) %s\">",
-					proto, cc->remote_version, cc->remote_build,
-					proto, cc->remote_version, cc->remote_build,
-					proto, cc->remote_version, cc->remote_build,
-					cc->extended_mode ? cc->remote_oscam : "");
+					proto, cc->remote_version, cc->remote_build, proto, cc->remote_version, cc->remote_build, proto, cc->remote_version, cc->remote_build, cc->extended_mode ? cc->remote_oscam : "");
 				} else {
 					tpl_printf(vars, TPLADD, "PROTOICON","%s (%s-%s)",proto, cc->remote_version, cc->remote_build);
-					tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE","cccam extinfo: %s missing icon: IC_%s_%s_%s",
-					cc->extended_mode ? cc->remote_oscam : "", proto, cc->remote_version, cc->remote_build);
+					tpl_printf(vars, TPLADDONCE, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
+					tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", cc->extended_mode ? cc->remote_oscam : "");
 				}
 			} else {
 				tpl_printf(vars, TPLADDONCE, "PROTOICON", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
@@ -2332,8 +2333,12 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 		snprintf(picon_name, sizeof(picon_name)/sizeof(char) - 1, "%s", proto);
 		if (picon_exists(picon_name)) {
 			tpl_printf(vars, TPLADD, "PROTOICON", "<img class=\"protoicon\" src=\"image?i=IC_%s\" alt=\"IC_%s\" title=\"Protocol %s\">", proto, proto, proto);
+			tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", (char *)proto);
+			tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
 		} else {
 			tpl_printf(vars, TPLADD, "PROTOICON", "<SPAN TITLE=\"IC_%s\">%s</SPAN>", proto, proto);
+			tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", (char *)proto);
+			tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
 		}
 	} else {
 		tpl_addVar(vars, TPLADDONCE, "PROTOICON", (char *)proto);
@@ -3298,25 +3303,28 @@ static char *send_oscam_status(struct templatevars *vars, struct uriparams *para
 
 				localtime_r(&cl->login, &lt);
 
+
+				tpl_printf(vars, TPLADD, "HIDEIDX", "%p", cl);
+
 				if(!apicall) {
 					if(cl->typ == 'c' && !cfg.http_readonly) {
-						tpl_printf(vars, TPLADD, "HIDEIDX", "<A HREF =\"status.html?hide=%p\" TITLE=\"Hide this User\"><IMG CLASS=\"icon\" SRC=\"image?i=ICHID\" ALT=\"Hide\"></A>", cl);
+						tpl_printf(vars, TPLADD, "HIDEIDXFULL", "<A HREF =\"status.html?hide=%p\" TITLE=\"Hide this User\"><IMG CLASS=\"icon\" SRC=\"image?i=ICHID\" ALT=\"Hide\"></A>", cl);
 						tpl_printf(vars, TPLADD, "CSIDX", "<A HREF=\"status.html?action=kill&threadid=%p\" TITLE=\"Kill this User\"><IMG CLASS=\"icon\" SRC=\"image?i=ICKIL\" ALT=\"Kill\"></A>", cl);
 					}
 					else if(cl->typ == 'p' && !cfg.http_readonly) {
-						tpl_printf(vars, TPLADD, "HIDEIDX", "<A HREF =\"status.html?hide=%p\" TITLE=\"Hide this Proxy\"><IMG CLASS=\"icon\" SRC=\"image?i=ICHID\" ALT=\"Hide\"></A>", cl);
+						tpl_printf(vars, TPLADD, "HIDEIDXFULL", "<A HREF =\"status.html?hide=%p\" TITLE=\"Hide this Proxy\"><IMG CLASS=\"icon\" SRC=\"image?i=ICHID\" ALT=\"Hide\"></A>", cl);
 						tpl_printf(vars, TPLADD, "CSIDX", "<A HREF=\"status.html?action=restart&amp;label=%s\" TITLE=\"Restart this Proxy\"><IMG CLASS=\"icon\" SRC=\"image?i=ICRES\" ALT=\"Restart\"></A>", urlencode(vars, cl->reader->label));
 					}
 					else if(cl->typ == 'r' && !cfg.http_readonly) {
-						tpl_printf(vars, TPLADD, "HIDEIDX", "<A HREF =\"status.html?hide=%p\" TITLE=\"Hide this Reader\"><IMG CLASS=\"icon\" SRC=\"image?i=ICHID\" ALT=\"Hide\"></A>", cl);
+						tpl_printf(vars, TPLADD, "HIDEIDXFULL", "<A HREF =\"status.html?hide=%p\" TITLE=\"Hide this Reader\"><IMG CLASS=\"icon\" SRC=\"image?i=ICHID\" ALT=\"Hide\"></A>", cl);
 						tpl_printf(vars, TPLADD, "CSIDX", "<A HREF=\"status.html?action=restart&amp;label=%s\" TITLE=\"Restart this Reader\"><IMG CLASS=\"icon\" SRC=\"image?i=ICRES\" ALT=\"Restart\"></A>", urlencode(vars, cl->reader->label));
 					}
 					else {
-						tpl_printf(vars, TPLADD, "HIDEIDX", "%p", cl);
+						tpl_printf(vars, TPLADD, "HIDEIDXFULL", "%p", cl);
 						tpl_printf(vars, TPLADD, "CSIDX", "%p&nbsp;", cl);
 					}
 				} else {
-					tpl_printf(vars, TPLADD, "HIDEIDX", "%p", cl);
+					tpl_printf(vars, TPLADD, "HIDEIDXFULL", "%p", cl);
 					tpl_printf(vars, TPLADD, "CSIDX", "%p", cl);
 				}
 
