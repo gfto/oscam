@@ -775,7 +775,7 @@ static int32_t InitCard (struct s_reader * reader, ATR * atr, unsigned char FI, 
 	if (reader->typ == R_INTERNAL){
 		if (reader->mhz > 2000) {
 			rdr_log(reader, "PLL Reader: ATR Fsmax is %i MHz, clocking card to %.2f Mhz (nearest possible mhz specified reader->cardmhz)",
-				atr_fs_table[FI] / 1000000,	(float) reader->mhz / reader->divider / 100);
+				atr_fs_table[FI] / 1000000,	(float) reader->cardmhz / 100);
 		} else {
 			rdr_log(reader, "ATR Fsmax is %i MHz, clocking card to %.2f (specified in reader->mhz)",
 				atr_fs_table[FI] / 1000000,	(float) reader->mhz / 100);
