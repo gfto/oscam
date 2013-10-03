@@ -400,7 +400,8 @@ static void reader_services_fn(const char *token, char *value, void *setting, FI
     if (value)
     {
         struct s_reader *rdr = container_of(setting, struct s_reader, sidtabs);
-        rdr->changes_since_shareupdate = 1;
+        if (rdr)
+            rdr->changes_since_shareupdate = 1;
     }
 }
 
@@ -410,7 +411,8 @@ static void reader_lb_services_fn(const char *token, char *value, void *setting,
     if (value)
     {
         struct s_reader *rdr = container_of(setting, struct s_reader, lb_sidtabs);
-        rdr->changes_since_shareupdate = 1;
+        if (rdr)
+            rdr->changes_since_shareupdate = 1;
     }
 }
 
@@ -420,7 +422,8 @@ static void reader_caid_fn(const char *token, char *value, void *setting, FILE *
     if (value)
     {
         struct s_reader *rdr = container_of(setting, struct s_reader, ctab);
-        rdr->changes_since_shareupdate = 1;
+        if (rdr)
+            rdr->changes_since_shareupdate = 1;
     }
 }
 
