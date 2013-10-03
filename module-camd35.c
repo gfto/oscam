@@ -919,14 +919,10 @@ static int32_t camd35_send_emm(EMM_PACKET *ep)
 
 static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t rc2 __attribute__((unused)))
 {
-    if (client->reader)
-    {
-        client->reader->last_g = time(NULL);  // last receive is now
-    }
-
     uint16_t idx;
     static const char *typtext[] = {"ok", "invalid", "sleeping"};
     struct s_reader *rdr = client->reader;
+    rdr->last_g = time(NULL);  // last receive is now
 
     // reading CMD05 Emm request and set serial
     if (buf[0] == 0x05 && buf[1] == 111)
