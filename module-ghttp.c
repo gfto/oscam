@@ -671,7 +671,7 @@ static void ghttp_cleanup(struct s_client *client)
 static int32_t ghttp_capmt_notify(struct s_client *client, struct demux_s *demux)
 {
     uchar req[640], lenhdr[64] = "";
-    uchar *pids;
+    uchar *pids = NULL;
     uchar *end;
     char *encauth = NULL;
     int32_t ret;
