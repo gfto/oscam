@@ -9,6 +9,6 @@
 unsigned char *MD5(const unsigned char *input, unsigned long len, unsigned char *output_hash);
 #endif
 
-char * __md5_crypt(const char *text_pass, const char *salt, char *crypted_passwd);
+char *__md5_crypt(const char *text_pass, const char *salt, char *crypted_passwd);
 
 #endif
