@@ -818,7 +818,6 @@ static int32_t cryptoworks_reassemble_emm(struct s_client *client, EMM_PACKET *e
 
         free(tmp);
         free(assembled);
-        free(assembled_EMM);
 
         client->cw_rass_emmlen = 0;
 
@@ -827,8 +826,10 @@ static int32_t cryptoworks_reassemble_emm(struct s_client *client, EMM_PACKET *e
         {
             // error in emm assembly
             cs_debug_mask(D_EMM, "[cryptoworks] Error assembling Cryptoworks EMM-S");
+            free(assembled_EMM);
             return 0;
         }
+        free(assembled_EMM);
         break;
 
     case 0x88: // emm-g
