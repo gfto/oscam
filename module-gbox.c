@@ -1983,7 +1983,6 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
                     cont_1 = cont_1 + 3;
                     cont_card_1++;
                     cont_send++;
-                    sid_verified = 0;
 
                     if (!cs_malloc(&srvid1, sizeof(struct gbox_srvid)))
                         return 0;
