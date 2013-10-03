@@ -1915,7 +1915,7 @@ uint32_t lb_auto_timeout(ECM_REQUEST *er, uint32_t ctimeout)
 
 void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, struct s_ecm_answer *ea, int8_t rc)
 {
-    if (!rdr || rc >= E_99 || cacheex_reader(rdr))
+    if (rc >= E_99 || cacheex_reader(rdr))
         return;
 
     int32_t ecm_time = cfg.ctimeout;
