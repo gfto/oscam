@@ -885,7 +885,11 @@ int32_t videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 		rdr_debug_mask(rdr, D_EMM, "%s", (emmtype == VG_EMMTYPE_U) ? "UNIQUE" : "SHARED");
 		ep->type = emmtype;
 		if(ep->emm[1] == 0)  // detected UNIQUE EMM from cccam (there is no serial)
-			{ return 1; }
+		{
+			rdr_debug_mask(rdr, D_EMM, "CCCam unique EMM detected, no serial available, skipping filter check");
+			ep->skip_filter_check = 1;
+			return 1;
+		}
 
 		for(i = 0; i < serial_count; i++)
 		{

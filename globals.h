@@ -1853,6 +1853,7 @@ typedef struct emm_packet_t
 	uchar           provid[4];
 	uchar           hexserial[8];                   //contains hexserial or SA of EMM
 	uchar           type;
+	uint8_t         skip_filter_check;
 	struct s_client *client;
 } EMM_PACKET;
 
