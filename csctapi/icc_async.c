@@ -820,11 +820,11 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 	}
 	else if(reader->crdr.write_settings2)
 	{
-		call(reader->crdr.write_settings2(reader, (uint16_t) F, (uint8_t) D, WWT, EGT, BGT));
+		call(reader->crdr.write_settings2(reader, (uint16_t) Fi, (uint8_t) D, WWT, EGT, BGT));
 	}
 	else if(reader->crdr.write_settings3)
 	{
-		call(reader->crdr.write_settings3(reader, ETU, F, WWT, reader->CWT, reader->BWT, EGT, (unsigned char)I));
+		call(reader->crdr.write_settings3(reader, ETU, Fi, WWT, reader->CWT, reader->BWT, EGT, (unsigned char)I));
 	}
 
 	if(reader->typ == R_INTERNAL)
