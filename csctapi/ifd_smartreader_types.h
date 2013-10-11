@@ -45,7 +45,7 @@
 
 #define SIO_RTS_CTS_HS (0x1 << 8)
 /** FTDI chip type */
-enum smartreader_chip_type { TYPE_AM = 0, TYPE_BM = 1, TYPE_2232C = 2, TYPE_R = 3, TYPE_2232H = 4, TYPE_4232H = 5 };
+enum smartreader_chip_type { TYPE_AM = 0, TYPE_BM = 1, TYPE_2232C = 2, TYPE_R = 3, TYPE_2232H = 4, TYPE_4232H = 5, TYPE_232H = 6 };
 /** Parity mode for smartreader_set_line_property() */
 enum smartreader_parity_type { NONE = 0, ODD = 1, EVEN = 2, MARK = 3, SPACE = 4 };
 /** Number of stop bits for smartreader_set_line_property() */

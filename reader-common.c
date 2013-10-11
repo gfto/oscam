@@ -169,8 +169,11 @@ void cardreader_do_reset(struct s_reader *reader)
 
 	if(ret == 0)
 	{
+		uint16_t y;
 		uint16_t deprecated;
-		for(deprecated = reader->deprecated; deprecated < 2; deprecated++)
+		if (reader->typ == R_SMART ) y = 4; else y= 2;
+//		rdr_log(reader, "the restart atempts in deprecated is %u", y);
+		for(deprecated = reader->deprecated; deprecated < y; deprecated++)
 		{
 			if(!reader_activate_card(reader, &atr, deprecated)) { break; }
 			ret = reader_get_cardsystem(reader, &atr);
@@ -290,6 +293,23 @@ bool cardreader_init(struct s_reader *reader)
 	}
 	else
 	{
+		if (reader->typ == R_SMART ){
+			rdr_log(reader, "clocking for smartreader with smartreader protocol");
+			if (reader->cardmhz == 357) reader->cardmhz = 369; // 357 is not a default or supported by smartreader
+			if (reader->mhz >= 1600) reader->mhz = 1600; else
+			if (reader->mhz >= 1200) reader->mhz = 1200; else
+			if (reader->mhz >= 961)  reader->mhz =  961; else
+			if (reader->mhz >= 800)  reader->mhz =  800; else
+			if (reader->mhz >= 686)  reader->mhz =  686; else
+			if (reader->mhz >= 600)  reader->mhz =  600; else
+			if (reader->mhz >= 534)  reader->mhz =  534; else
+			if (reader->mhz >= 480)  reader->mhz =  480; else
+			if (reader->mhz >= 436)  reader->mhz =  436; else
+			if (reader->mhz >= 400)  reader->mhz =  400; else
+			if (reader->mhz >= 357)  reader->mhz =  369; else
+			if (reader->mhz >= 343)  reader->mhz =  343; else 
+			reader->mhz =  320;
+	    }
 		rdr_log(reader, "Reader initialized (device=%s, detect=%s%s, mhz=%d, cardmhz=%d)",
 				reader->device,
 				reader->detect & 0x80 ? "!" : "",

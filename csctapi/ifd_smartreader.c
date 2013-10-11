@@ -31,7 +31,7 @@
 #define HIBYTE(w) ((unsigned char)((w) >> 8))
 
 //The number of concurrent bulk reads to queue onto the smartreader
-#define NUM_TXFERS 2
+//#define interface 0
 
 static CS_MUTEX_LOCK sr_lock;
 
@@ -58,8 +58,8 @@ struct sr_data
 	int32_t usb_write_timeout;
 	uint32_t  writebuffer_chunksize;
 	unsigned char bitbang_enabled;
-	int32_t baudrate;
-	int32_t interface;   // 0 or 1
+	int baudrate;
+	int32_t interface;   // 0 ,1 or 2
 	/** maximum packet size. Needed for filtering modem status bytes every n packets. */
 	uint32_t  max_packet_size;
 	unsigned char g_read_buffer[4096];
@@ -126,6 +126,7 @@ static int32_t smart_write(struct s_reader *reader, unsigned char *buff, uint32_
 	int32_t total_written = 0;
 	int32_t written;
 
+	cs_writelock(&sr_lock);
 	if(size < crdr_data->writebuffer_chunksize)
 		{ write_size = size; }
 	else
@@ -145,13 +146,14 @@ static int32_t smart_write(struct s_reader *reader, unsigned char *buff, uint32_
 		if(ret < 0)
 		{
 			rdr_log(reader, "usb bulk write failed : ret = %d", ret);
+			cs_writeunlock(&sr_lock);
 			return (ret);
 		}
 		rdr_ddump_mask(reader, D_DEVICE, buff + offset, written, "SR: Transmit:");
 		total_written += written;
 		offset += write_size;
 	}
-
+	cs_writeunlock(&sr_lock);
 	return total_written;
 }
 
@@ -290,14 +292,14 @@ void smartreader_init(struct s_reader *reader, char *rdrtype)
 
 	crdr_data->usb_dev = NULL;
 	crdr_data->usb_dev_handle = NULL;
-	crdr_data->usb_read_timeout = 10000;
-	crdr_data->usb_write_timeout = 10000;
+	crdr_data->usb_read_timeout = 5000;
+	crdr_data->usb_write_timeout = 5000;
 
 	crdr_data->type = TYPE_BM;    /* chip type */
 	crdr_data->baudrate = -1;
 	crdr_data->bitbang_enabled = 0;  /* 0: normal mode 1: any of the bitbang modes enabled */
 
-	crdr_data->writebuffer_chunksize = 64;
+	crdr_data->writebuffer_chunksize = 4096;
 	crdr_data->max_packet_size = 0;
 	if(rdrtype)
 	{
@@ -462,170 +464,260 @@ static int32_t smartreader_usb_purge_buffers(struct s_reader *reader)
 	return 0;
 }
 
-static int32_t smartreader_convert_baudrate(int32_t baudrate, struct s_reader *reader, uint16_t  *value, uint16_t  *idx)
+static int smartreader_to_clkbits_AM(int baudrate, struct s_reader *reader, unsigned long *encoded_divisor)
+
 {
-	static const char am_adjust_up[8] = {0, 0, 0, 1, 0, 3, 2, 1};
-	static const char am_adjust_dn[8] = {0, 0, 0, 1, 0, 1, 2, 3};
-	static const char frac_code[8] = {0, 3, 2, 4, 1, 5, 6, 7};
-	int32_t divisor, best_divisor, best_baud, best_baud_diff;
-	uint32_t encoded_divisor;
-	int32_t i;
+    static const char frac_code[8] = {0, 3, 2, 4, 1, 5, 6, 7};
+    static const char am_adjust_up[8] = {0, 0, 0, 1, 0, 3, 2, 1};
+    static const char am_adjust_dn[8] = {0, 0, 0, 1, 0, 1, 2, 3};
+    int divisor, best_divisor, best_baud, best_baud_diff;
+    divisor = 24000000 / baudrate;
+    int i;
 
-	if(baudrate <= 0)
-	{
-		// Return error
-		return -1;
-	}
+    // Round down to supported fraction (AM only)
+    divisor -= am_adjust_dn[divisor & 7];
 
-	divisor = 24000000 / baudrate;
+    // Try this divisor and the one above it (because division rounds down)
+    best_divisor = 0;
+    best_baud = 0;
+    best_baud_diff = 0;
+    for (i = 0; i < 2; i++)
+    {
+        int try_divisor = divisor + i;
+        int baud_estimate;
+        int baud_diff;
 
-	struct sr_data *crdr_data = reader->crdr_data;
-	if(crdr_data->type == TYPE_AM)
-	{
-		// Round down to supported fraction (AM only)
-		divisor -= am_adjust_dn[divisor & 7];
-	}
-
-	// Try this divisor and the one above it (because division rounds down)
-	best_divisor = 0;
-	best_baud = 0;
-	best_baud_diff = 0;
-	for(i = 0; i < 2; i++)
-	{
-		int32_t try_divisor = divisor + i;
-		int32_t baud_estimate;
-		int32_t baud_diff;
-
-		// Round up to supported divisor value
-		if(try_divisor <= 8)
-		{
-			// Round up to minimum supported divisor
-			try_divisor = 8;
-		}
-		else if(crdr_data->type != TYPE_AM && try_divisor < 12)
-		{
-			// BM doesn't support divisors 9 through 11 inclusive
-			try_divisor = 12;
-		}
-		else if(divisor < 16)
-		{
-			// AM doesn't support divisors 9 through 15 inclusive
-			try_divisor = 16;
-		}
-		else
-		{
-			if(crdr_data->type == TYPE_AM)
-			{
-				// Round up to supported fraction (AM only)
-				try_divisor += am_adjust_up[try_divisor & 7];
-				if(try_divisor > 0x1FFF8)
-				{
-					// Round down to maximum supported divisor value (for AM)
-					try_divisor = 0x1FFF8;
-				}
-			}
-			else
-			{
-				if(try_divisor > 0x1FFFF)
-				{
-					// Round down to maximum supported divisor value (for BM)
-					try_divisor = 0x1FFFF;
-				}
-			}
-		}
-		// Get estimated baud rate (to nearest integer)
-		baud_estimate = (24000000 + (try_divisor / 2)) / try_divisor;
-		// Get absolute difference from requested baud rate
-		if(baud_estimate < baudrate)
-		{
-			baud_diff = baudrate - baud_estimate;
-		}
-		else
-		{
-			baud_diff = baud_estimate - baudrate;
-		}
-		if(i == 0 || baud_diff < best_baud_diff)
-		{
-			// Closest to requested baud rate so far
-			best_divisor = try_divisor;
-			best_baud = baud_estimate;
-			best_baud_diff = baud_diff;
-			if(baud_diff == 0)
-			{
-				// Spot on! No point trying
-				break;
-			}
-		}
-	}
-	// Encode the best divisor value
-	encoded_divisor = (best_divisor >> 3) | (frac_code[best_divisor & 7] << 14);
-	// Deal with special cases for encoded value
-	if(encoded_divisor == 1)
-	{
-		encoded_divisor = 0;    // 3000000 baud
-	}
-	else if(encoded_divisor == 0x4001)
-	{
-		encoded_divisor = 1;    // 2000000 baud (BM only)
-	}
-	// Split into "value" and "index" values
-	*value = (uint16_t)(encoded_divisor & 0xFFFF);
-	if(crdr_data->type == TYPE_2232C || crdr_data->type == TYPE_2232H || crdr_data->type == TYPE_4232H)
-	{
-		*idx = (uint16_t)(encoded_divisor >> 8);
-		*idx &= 0xFF00;
-		*idx |= crdr_data->index;
-	}
-	else
-		{ *idx = (uint16_t)(encoded_divisor >> 16); }
-
-	// Return the nearest baud rate
-	return best_baud;
+        // Round up to supported divisor value
+        if (try_divisor <= 8)
+        {
+            // Round up to minimum supported divisor
+            try_divisor = 8;
+        }
+        else if (divisor < 16)
+        {
+            // AM doesn't support divisors 9 through 15 inclusive
+            try_divisor = 16;
+        }
+        else
+        {
+            // Round up to supported fraction (AM only)
+            try_divisor += am_adjust_up[try_divisor & 7];
+            if (try_divisor > 0x1FFF8)
+            {
+                // Round down to maximum supported divisor value (for AM)
+                try_divisor = 0x1FFF8;
+            }
+        }
+        // Get estimated baud rate (to nearest integer)
+        baud_estimate = (24000000 + (try_divisor / 2)) / try_divisor;
+        // Get absolute difference from requested baud rate
+        if (baud_estimate < baudrate)
+        {
+            baud_diff = baudrate - baud_estimate;
+        }
+        else
+        {
+            baud_diff = baud_estimate - baudrate;
+        }
+        if (i == 0 || baud_diff < best_baud_diff)
+        {
+            // Closest to requested baud rate so far
+            best_divisor = try_divisor;
+            best_baud = baud_estimate;
+            best_baud_diff = baud_diff;
+            if (baud_diff == 0)
+            {
+                // Spot on! No point trying
+                break;
+            }
+        }
+    }
+    // Encode the best divisor value
+    *encoded_divisor = (best_divisor >> 3) | (frac_code[best_divisor & 7] << 14);
+    // Deal with special cases for encoded value
+    if (*encoded_divisor == 1)
+    {
+        *encoded_divisor = 0;    // 3000000 baud
+    }
+    else if (*encoded_divisor == 0x4001)
+    {
+        *encoded_divisor = 1;    // 2000000 baud (BM only)
+    }
+    return best_baud;
 }
 
-static int32_t smartreader_set_baudrate(struct s_reader *reader, int32_t baudrate)
+/*  ftdi_to_clkbits Convert a requested baudrate for a given system clock  and predivisor
+                    to encoded divisor and the achievable baudrate
+    Function is only used internally
+    \internal
+
+    See AN120
+   clk/1   -> 0
+   clk/1.5 -> 1
+   clk/2   -> 2
+   From /2, 0.125 steps may be taken.
+   The fractional part has frac_code encoding
+
+   value[13:0] of value is the divisor
+   index[9] mean 12 MHz Base(120 MHz/10) rate versus 3 MHz (48 MHz/16) else
+
+   H Type have all features above with
+   {index[8],value[15:14]} is the encoded subdivisor
+
+   FT232R, FT2232 and FT232BM have no option for 12 MHz and with 
+   {index[0],value[15:14]} is the encoded subdivisor
+
+   AM Type chips have only four fractional subdivisors at value[15:14]
+   for subdivisors 0, 0.5, 0.25, 0.125
+*/
+static int smartreader_to_clkbits(int baudrate, struct s_reader *reader, unsigned int clk, int clk_div, unsigned long *encoded_divisor)
+{
+    static const char frac_code[8] = {0, 3, 2, 4, 1, 5, 6, 7};
+    int best_baud = 0;
+    int divisor, best_divisor;
+    if (baudrate >=  clk/clk_div)
+    {
+        *encoded_divisor = 0;
+        best_baud = clk/clk_div;
+    }
+    else if (baudrate >=  clk/(clk_div + clk_div/2))
+    {
+        *encoded_divisor = 1;
+        best_baud = clk/(clk_div + clk_div/2);
+    }
+    else if (baudrate >=  clk/(2*clk_div))
+    {
+        *encoded_divisor = 2;
+        best_baud = clk/(2*clk_div);
+    }
+    else
+    {
+        /* We divide by 16 to have 3 fractional bits and one bit for rounding */
+        divisor = clk*16/clk_div / baudrate;
+        if (divisor & 1) /* Decide if to round up or down*/
+            best_divisor = divisor /2 +1;
+        else
+            best_divisor = divisor/2;
+        if(best_divisor > 0x20000)
+            best_divisor = 0x1ffff;
+        best_baud = clk*16/clk_div/best_divisor;
+        if (best_baud & 1) /* Decide if to round up or down*/
+            best_baud = best_baud /2 +1;
+        else
+            best_baud = best_baud /2;
+        *encoded_divisor = (best_divisor >> 3) | (frac_code[best_divisor & 0x7] << 14);
+    }
+    return best_baud;
+} 
+/**
+    ftdi_convert_baudrate returns nearest supported baud rate to that requested.
+    Function is only used internally
+    \internal
+*/
+static int smartreader_convert_baudrate(int baudrate, struct s_reader *reader, unsigned short  *value, unsigned short  *index)
+{
+    int best_baud;
+	unsigned long encoded_divisor;
+	struct sr_data *crdr_data = reader->crdr_data;
+
+    if (baudrate <= 0)
+    {
+        // Return error
+        return -1;
+    }
+
+#define H_CLK 120000000
+#define C_CLK  48000000
+    if ((crdr_data->type == TYPE_2232H) || (crdr_data->type == TYPE_4232H) || (crdr_data->type == TYPE_232H))
+    {
+		if(baudrate*10 > H_CLK /0x3fff)
+        {
+            /* On H Devices, use 12 000 000 Baudrate when possible
+               We have a 14 bit divisor, a 1 bit divisor switch (10 or 16) 
+               three fractional bits and a 120 MHz clock
+               Assume AN_120 "Sub-integer divisors between 0 and 2 are not allowed" holds for
+               DIV/10 CLK too, so /1, /1.5 and /2 can be handled the same*/
+            best_baud = smartreader_to_clkbits(baudrate, reader, H_CLK, 10, &encoded_divisor);
+            encoded_divisor |= 0x20000; /* switch on CLK/10*/
+        }
+        else
+            best_baud = smartreader_to_clkbits(baudrate, reader, C_CLK, 16, &encoded_divisor);
+    }
+    else if ((crdr_data->type == TYPE_BM) || (crdr_data->type == TYPE_2232C) || (crdr_data->type == TYPE_R ))
+    {
+        best_baud = smartreader_to_clkbits(baudrate, reader, C_CLK, 16, &encoded_divisor);
+    }
+    else
+    {
+        best_baud = smartreader_to_clkbits_AM(baudrate, reader, &encoded_divisor);
+    }
+    // Split into "value" and "index" values
+    *value = (unsigned short)(encoded_divisor & 0xFFFF);
+    if (crdr_data->type == TYPE_2232H || 
+        crdr_data->type == TYPE_4232H || crdr_data->type == TYPE_232H)
+    {
+ 		*index = (unsigned short)(encoded_divisor >> 8);
+		*index &= 0xFF00;
+		*index |= crdr_data->index;
+    }
+    else
+        *index = (unsigned short)(encoded_divisor >> 16);
+
+    // Return the nearest baud rate
+    return best_baud;
+}
+
+/**
+    Sets the chip baud rate
+
+    \param ftdi pointer to ftdi_context
+    \param baudrate baud rate to set
+
+    \retval  0: all fine
+    \retval -1: invalid baudrate
+    \retval -2: setting baudrate failed
+    \retval -3: USB device unavailable
+*/
+int smartreader_set_baudrate(struct s_reader *reader, int baudrate)
 {
 	struct sr_data *crdr_data = reader->crdr_data;
-	uint16_t  value, idx;
-	int32_t actual_baudrate;
+	unsigned short  value, index;
+	int actual_baudrate;
 
-	if(crdr_data->bitbang_enabled)
-	{
-		baudrate = baudrate * 4;
+    if (crdr_data->usb_dev == NULL){
+        rdr_log(reader, "USB device unavailable");
+		return ERROR;
 	}
 
-	actual_baudrate = smartreader_convert_baudrate(baudrate, reader, &value, &idx);
-	if(actual_baudrate <= 0)
-	{
-		rdr_log(reader, "Silly baudrate <= 0.");
-		return (-1);
+    if (crdr_data->bitbang_enabled)
+    {
+        baudrate = baudrate*4;
+    }
+
+    actual_baudrate = smartreader_convert_baudrate(baudrate, reader, &value, &index);
+    if (actual_baudrate <= 0) {
+        rdr_log(reader, "Silly baudrate <= 0.");
+		return ERROR;
 	}
 
-	// Check within tolerance (about 5%)
-	if((actual_baudrate * 2 < baudrate /* Catch overflows */)
-			|| ((actual_baudrate < baudrate)
-				? (actual_baudrate * 21 < baudrate * 20)
-				: (baudrate * 21 < actual_baudrate * 20)))
-	{
-		rdr_log(reader, "Unsupported baudrate. Note: bitbang baudrates are automatically multiplied by 4");
-		return (-1);
+    // Check within tolerance (about 5%)
+    if ((actual_baudrate * 2 < baudrate /* Catch overflows */ )
+            || ((actual_baudrate < baudrate)
+                ? (actual_baudrate * 21 < baudrate * 20)
+                : (baudrate * 21 < actual_baudrate * 20))) {
+        rdr_log(reader, "Unsupported baudrate. Note: bitbang baudrates are automatically multiplied by 4");
+		return ERROR;
 	}
 
-	if(libusb_control_transfer(crdr_data->usb_dev_handle,
-							   FTDI_DEVICE_OUT_REQTYPE,
-							   SIO_SET_BAUDRATE_REQUEST,
-							   value,
-							   idx,
-							   NULL,
-							   0,
-							   crdr_data->usb_write_timeout) != 0)
-	{
-		rdr_log(reader, "Setting new baudrate failed");
-		return (-2);
+    if (libusb_control_transfer(crdr_data->usb_dev_handle, FTDI_DEVICE_OUT_REQTYPE,
+                                SIO_SET_BAUDRATE_REQUEST, value,
+                                index, NULL, 0, crdr_data->usb_write_timeout) < 0) {
+        rdr_log(reader, "Setting new baudrate failed");
+		return ERROR;
 	}
 
-	crdr_data->baudrate = baudrate;
-	return 0;
+    crdr_data->baudrate = baudrate;
+    return 0;
 }
 
 static int32_t smartreader_setdtr_rts(struct s_reader *reader, int32_t dtr, int32_t rts)
@@ -969,7 +1061,9 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 		{ crdr_data->type = TYPE_BM; }
 	else if(usbdesc.bcdDevice == 0x200)
 		{ crdr_data->type = TYPE_AM; }
-	else if(usbdesc.bcdDevice == 0x500)
+	else if((usbdesc.bcdDevice == 0x500) && (usbdesc.idProduct == 0x6011))
+		{ crdr_data->type = TYPE_4232H; }
+	else if((usbdesc.bcdDevice == 0x500) && (usbdesc.idProduct != 0x6011))
 		{ crdr_data->type = TYPE_2232C; }
 	else if(usbdesc.bcdDevice == 0x600)
 		{ crdr_data->type = TYPE_R; }
@@ -1078,19 +1172,21 @@ static void EnableSmartReader(struct s_reader *reader, int32_t clock_val, uint16
 
 static void *ReaderThread(void *p)
 {
-	struct libusb_transfer *usbt[NUM_TXFERS];
-	unsigned char usb_buffers[NUM_TXFERS][64];
 	struct s_reader *reader;
 	int32_t ret, idx;
 
 	reader = (struct s_reader *)p;
 	struct sr_data *crdr_data = reader->crdr_data;
+	struct libusb_transfer *usbt[idx];
+	unsigned char usb_buffers[idx][64];
+	idx = crdr_data->interface;
 	crdr_data->running = 1;
 
 	set_thread_name(__func__);
 
-	for(idx = 0; idx < NUM_TXFERS; idx++)
-	{
+//	for(idx = 0; idx < NUM_TXFERS; idx++)
+//	{
+		rdr_log(reader,"the smartreader is intiated for chiptype %u (type 1= BM (v1), type 5 = 4232H (Triple), type 2 = 2232C (V2)  ", crdr_data->type);
 		usbt[idx] = libusb_alloc_transfer(0);
 		libusb_fill_bulk_transfer(usbt[idx],
 								  crdr_data->usb_dev_handle,
@@ -1102,7 +1198,7 @@ static void *ReaderThread(void *p)
 								  0);
 
 		ret = libusb_submit_transfer(usbt[idx]);
-	}
+//	}
 
 	while(crdr_data->running)
 	{
@@ -1124,6 +1220,7 @@ static void *ReaderThread(void *p)
 			pthread_cond_timedwait(&crdr_data->g_usb_cond, &crdr_data->g_usb_mutex, &timeout);
 		}
 		pthread_mutex_unlock(&crdr_data->g_usb_mutex);
+		cs_writeunlock(&sr_lock);
 	}
 
 	pthread_exit(NULL);
@@ -1207,10 +1304,10 @@ static int32_t SR_Init(struct s_reader *reader)
 		return ERROR;
 	}
 
-	rdr_debug_mask(reader, D_DEVICE, "SR: Setting smartreader latency timer to 1ms");
+	rdr_debug_mask(reader, D_DEVICE, "SR: Setting smartreader latency timer to 16ms");
 
 	//Set the FTDI latency timer to 1ms
-	ret = smartreader_set_latency_timer(reader, 1);
+	ret = smartreader_set_latency_timer(reader, 16);
 
 	//Set databits to 8o2
 	ret = smartreader_set_line_property(reader, BITS_8, STOP_BIT_2, ODD);
@@ -1339,24 +1436,48 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 	return atr_ok;
 }
 
-static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
+static int32_t SR_GetStatus (struct s_reader *reader, int32_t *in)
+
 {
-	struct sr_data *crdr_data = reader->crdr_data;
-	int32_t state;
+    struct sr_data *crdr_data = reader->crdr_data;
+    char usb_val[2];
+    int32_t state;
 
-	smart_fastpoll(reader, 1);
-	pthread_mutex_lock(&crdr_data->g_read_mutex);
-	state = (crdr_data->modem_status & 0x80) == 0x80 ? 0 : 2;
-	pthread_mutex_unlock(&crdr_data->g_read_mutex);
-	smart_fastpoll(reader, 0);
+    if (crdr_data->usb_dev == NULL) {
+	rdr_log(reader,"usb device unavailable");
+	return ERROR;
+	}
 
-	//state = 0 no card, 1 = not ready, 2 = ready
-	if(state)
-		{ *in = 1; } //CARD, even if not ready report card is in, or it will never get activated
-	else
-		{ *in = 0; } //NOCARD
+/*	if (reader->card_status == CARD_FAILURE) {
+    rdr_log(reader, "Card failure will retry reactivation");
+	cs_sleepus(10);
+	struct s_ATR *atr;
+	call(SR_Activate(reader, atr));
+	}*/
+	cs_writelock(&sr_lock);
+    if (libusb_control_transfer(crdr_data->usb_dev_handle, 
+								FTDI_DEVICE_IN_REQTYPE, 
+								SIO_POLL_MODEM_STATUS_REQUEST, 
+								0, crdr_data->index, 
+								(unsigned char *)usb_val, 
+								2, crdr_data->usb_read_timeout) != 1){
+	rdr_log(reader, "getting modem status failed");
+	return ERROR;
+	}
 
-	return OK;
+    state = (usb_val[2] << 8) | (usb_val[0] & 0xFF);
+	cs_writeunlock(&sr_lock);
+//    rdr_log(reader, "De modem Status is %u (0 for v1 card = card in, 64 for tripple = card in)" , state);
+//    rdr_log(reader, " in_ep = 0x%02X out_ep = 0x%02X index = %u  interface = %u ", crdr_data->in_ep, crdr_data->out_ep, crdr_data->index, crdr_data->interface );
+
+    if (state == 0 || state == 64) {
+        *in = 2; //CARD is in activiation should be OK
+//        rdr_log(reader, " Er is een kaart in in = %u", *in);
+	}
+    else
+        *in = 0; //NOCARD reader will be set to off
+
+    return OK;
 }
 
 static int32_t SR_Transmit(struct s_reader *reader, unsigned char *buffer, uint32_t size, uint32_t UNUSED(expectedlen), uint32_t delay, uint32_t timeout)   // delay and timeout not used (yet)!
@@ -1405,12 +1526,12 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 	else if(reader->mhz >= 480)  { reader->mhz =  480; }
 	else if(reader->mhz >= 436)  { reader->mhz =  436; }
 	else if(reader->mhz >= 400)  { reader->mhz =  400; }
-	else if(reader->mhz >= 369)  { reader->mhz =  369; }
-	else if(reader->mhz == 368)  { reader->mhz =  369; }
+	else if(reader->mhz >= 357)  { reader->mhz =  369; }
 	else if(reader->mhz >= 343)  { reader->mhz =  343; }
 	else
 		{ reader->mhz =  320; }
 
+	cs_writelock(&sr_lock);
 	smart_fastpoll(reader, 1);
 	EnableSmartReader(reader, reader->mhz, F, D, N, T, crdr_data->inv, crdr_data->parity);
 
@@ -1418,6 +1539,7 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 	//it's handled by the card, so just set to maximum 3Mb/s
 	smartreader_set_baudrate(reader, 3000000);
 	smart_fastpoll(reader, 0);
+	cs_writeunlock(&sr_lock);
 
 	return OK;
 }
