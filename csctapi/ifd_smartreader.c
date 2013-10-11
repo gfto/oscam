@@ -1220,7 +1220,6 @@ static void *ReaderThread(void *p)
 			pthread_cond_timedwait(&crdr_data->g_usb_cond, &crdr_data->g_usb_mutex, &timeout);
 		}
 		pthread_mutex_unlock(&crdr_data->g_usb_mutex);
-		cs_writeunlock(&sr_lock);
 	}
 
 	pthread_exit(NULL);
@@ -1455,6 +1454,7 @@ static int32_t SR_GetStatus (struct s_reader *reader, int32_t *in)
 	call(SR_Activate(reader, atr));
 	}*/
 	cs_writelock(&sr_lock);
+	pthread_mutex_lock(&crdr_data->g_usb_mutex);
     if (libusb_control_transfer(crdr_data->usb_dev_handle, 
 								FTDI_DEVICE_IN_REQTYPE, 
 								SIO_POLL_MODEM_STATUS_REQUEST, 
@@ -1466,6 +1466,7 @@ static int32_t SR_GetStatus (struct s_reader *reader, int32_t *in)
 	}
 
     state = (usb_val[2] << 8) | (usb_val[0] & 0xFF);
+	pthread_mutex_unlock(&crdr_data->g_usb_mutex);
 	cs_writeunlock(&sr_lock);
 //    rdr_log(reader, "De modem Status is %u (0 for v1 card = card in, 64 for tripple = card in)" , state);
 //    rdr_log(reader, " in_ep = 0x%02X out_ep = 0x%02X index = %u  interface = %u ", crdr_data->in_ep, crdr_data->out_ep, crdr_data->index, crdr_data->interface );
