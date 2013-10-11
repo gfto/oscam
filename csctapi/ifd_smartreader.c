@@ -34,6 +34,7 @@
 //#define interface 0
 
 static CS_MUTEX_LOCK sr_lock;
+int rdrtypenr;
 
 struct sr_data
 {
@@ -292,8 +293,8 @@ void smartreader_init(struct s_reader *reader, char *rdrtype)
 
 	crdr_data->usb_dev = NULL;
 	crdr_data->usb_dev_handle = NULL;
-	crdr_data->usb_read_timeout = 5000;
-	crdr_data->usb_write_timeout = 5000;
+	crdr_data->usb_read_timeout = 10000;
+	crdr_data->usb_write_timeout = 10000;
 
 	crdr_data->type = TYPE_BM;    /* chip type */
 	crdr_data->baudrate = -1;
@@ -303,6 +304,7 @@ void smartreader_init(struct s_reader *reader, char *rdrtype)
 	crdr_data->max_packet_size = 0;
 	if(rdrtype)
 	{
+		rdrtypenr = 1;
 		for(i = 0; i < sizeof(reader_types) / sizeof(struct s_reader_types); ++i)
 		{
 			if(!strcasecmp(reader_types[i].name, rdrtype))
@@ -1435,9 +1437,24 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 	return atr_ok;
 }
 
-static int32_t SR_GetStatus (struct s_reader *reader, int32_t *in)
-
+static int32_t SR_Transmit(struct s_reader *reader, unsigned char *buffer, uint32_t size, uint32_t UNUSED(expectedlen), uint32_t delay, uint32_t timeout)   // delay and timeout not used (yet)!
 {
+	(void) delay; // delay not used (yet)!
+	(void) timeout; // timeout not used (yet)!
+	uint32_t  ret;
+
+	smart_fastpoll(reader, 1);
+	ret = smart_write(reader, buffer, size);
+	smart_fastpoll(reader, 0);
+	if(ret != size)
+		{ return ERROR; }
+
+	return OK;
+}
+
+static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
+{
+	if (rdrtypenr == 1) {
     struct sr_data *crdr_data = reader->crdr_data;
     char usb_val[2];
     int32_t state;
@@ -1447,12 +1464,7 @@ static int32_t SR_GetStatus (struct s_reader *reader, int32_t *in)
 	return ERROR;
 	}
 
-/*	if (reader->card_status == CARD_FAILURE) {
-    rdr_log(reader, "Card failure will retry reactivation");
-	cs_sleepus(10);
-	struct s_ATR *atr;
-	call(SR_Activate(reader, atr));
-	}*/
+
 	cs_writelock(&sr_lock);
 	pthread_mutex_lock(&crdr_data->g_usb_mutex);
     if (libusb_control_transfer(crdr_data->usb_dev_handle, 
@@ -1477,22 +1489,25 @@ static int32_t SR_GetStatus (struct s_reader *reader, int32_t *in)
 	}
     else
         *in = 0; //NOCARD reader will be set to off
+	} else {
 
-    return OK;
-}
 
-static int32_t SR_Transmit(struct s_reader *reader, unsigned char *buffer, uint32_t size, uint32_t UNUSED(expectedlen), uint32_t delay, uint32_t timeout)   // delay and timeout not used (yet)!
-{
-	(void) delay; // delay not used (yet)!
-	(void) timeout; // timeout not used (yet)!
-	uint32_t  ret;
+
+	struct sr_data *crdr_data = reader->crdr_data;
+	int32_t state;
 
 	smart_fastpoll(reader, 1);
-	ret = smart_write(reader, buffer, size);
+	pthread_mutex_lock(&crdr_data->g_read_mutex);
+	state = (crdr_data->modem_status & 0x80) == 0x80 ? 0 : 2;
+	pthread_mutex_unlock(&crdr_data->g_read_mutex);
 	smart_fastpoll(reader, 0);
-	if(ret != size)
-		{ return ERROR; }
 
+	//state = 0 no card, 1 = not ready, 2 = ready
+	if(state)
+		{ *in = 1; } //CARD, even if not ready report card is in, or it will never get activated
+	else
+		{ *in = 0; } //NOCARD
+	}
 	return OK;
 }
 
