@@ -127,7 +127,6 @@ static int32_t smart_write(struct s_reader *reader, unsigned char *buff, uint32_
 	int32_t total_written = 0;
 	int32_t written;
 
-	cs_writelock(&sr_lock);
 	if(size < crdr_data->writebuffer_chunksize)
 		{ write_size = size; }
 	else
@@ -154,7 +153,6 @@ static int32_t smart_write(struct s_reader *reader, unsigned char *buff, uint32_
 		total_written += written;
 		offset += write_size;
 	}
-	cs_writeunlock(&sr_lock);
 	return total_written;
 }
 
@@ -339,7 +337,7 @@ static uint32_t  smartreader_determine_max_packet_size(struct s_reader *reader)
 	// New hi-speed devices from FTDI use a packet size of 512 bytes
 	// but could be connected to a normal speed USB hub -> 64 bytes packet size.
 	if(crdr_data->type == TYPE_2232H || crdr_data->type == TYPE_4232H)
-		{ packet_size = 512; }
+		{ packet_size = 64; } // de firmware sets max packets at 64 in despit the fact it should be 512.
 	else
 		{ packet_size = 64; }
 
@@ -710,14 +708,12 @@ int smartreader_set_baudrate(struct s_reader *reader, int baudrate)
         rdr_log(reader, "Unsupported baudrate. Note: bitbang baudrates are automatically multiplied by 4");
 		return ERROR;
 	}
-
     if (libusb_control_transfer(crdr_data->usb_dev_handle, FTDI_DEVICE_OUT_REQTYPE,
                                 SIO_SET_BAUDRATE_REQUEST, value,
                                 index, NULL, 0, crdr_data->usb_write_timeout) < 0) {
         rdr_log(reader, "Setting new baudrate failed");
 		return ERROR;
 	}
-
     crdr_data->baudrate = baudrate;
     return 0;
 }
@@ -726,6 +722,7 @@ static int32_t smartreader_setdtr_rts(struct s_reader *reader, int32_t dtr, int3
 {
 	struct sr_data *crdr_data = reader->crdr_data;
 	uint16_t  usb_val;
+
 
 	if(dtr)
 		{ usb_val = SIO_SET_DTR_HIGH; }
@@ -736,7 +733,6 @@ static int32_t smartreader_setdtr_rts(struct s_reader *reader, int32_t dtr, int3
 		{ usb_val |= SIO_SET_RTS_HIGH; }
 	else
 		{ usb_val |= SIO_SET_RTS_LOW; }
-
 	if(libusb_control_transfer(crdr_data->usb_dev_handle,
 							   FTDI_DEVICE_OUT_REQTYPE,
 							   SIO_SET_MODEM_CTRL_REQUEST,
@@ -749,7 +745,6 @@ static int32_t smartreader_setdtr_rts(struct s_reader *reader, int32_t dtr, int3
 		rdr_log(reader, "set of rts/dtr failed");
 		return (-1);
 	}
-
 	return 0;
 }
 
@@ -768,7 +763,6 @@ static int32_t smartreader_setflowctrl(struct s_reader *reader, int32_t flowctrl
 		rdr_log(reader, "set flow control failed");
 		return (-1);
 	}
-
 	return 0;
 }
 
@@ -820,7 +814,7 @@ static int32_t smartreader_set_line_property2(struct s_reader *reader, enum smar
 		value |= (0x01 << 14);
 		break;
 	}
-
+//	cs_writelock(&sr_lock);
 	if(libusb_control_transfer(crdr_data->usb_dev_handle,
 							   FTDI_DEVICE_OUT_REQTYPE,
 							   SIO_SET_DATA_REQUEST,
@@ -831,9 +825,11 @@ static int32_t smartreader_set_line_property2(struct s_reader *reader, enum smar
 							   crdr_data->usb_write_timeout) != 0)
 	{
 		rdr_log(reader, "Setting new line property failed");
+		cs_writeunlock(&sr_lock);
 		return (-1);
 	}
-
+//	cs_writeunlock(&sr_lock);
+//	cs_sleepms(3000);
 	return 0;
 }
 
@@ -1160,13 +1156,15 @@ static void EnableSmartReader(struct s_reader *reader, int32_t clock_val, uint16
 	Invert[1] = inv;
 	smart_write(reader, Invert, sizeof(Invert));
 
+	cs_writelock(&sr_lock);
 	smartreader_set_line_property2(reader, BITS_8, STOP_BIT_2, parity, BREAK_ON);
 	//  send break for 350ms, also comes from JoePub debugging.
-	cs_sleepms(350);
+	cs_sleepms(100);
 	if(temp_T == 1)
 		{ smartreader_set_line_property2(reader, BITS_8, STOP_BIT_1, parity, BREAK_OFF); }
 	else
 		{ smartreader_set_line_property2(reader, BITS_8, STOP_BIT_2, parity, BREAK_OFF); }
+	cs_writeunlock(&sr_lock);
 
 	smart_flush(reader);
 }
@@ -1305,10 +1303,10 @@ static int32_t SR_Init(struct s_reader *reader)
 		return ERROR;
 	}
 
-	rdr_debug_mask(reader, D_DEVICE, "SR: Setting smartreader latency timer to 16ms");
+	rdr_debug_mask(reader, D_DEVICE, "SR: Setting smartreader latency timer to 2ms");
 
 	//Set the FTDI latency timer to 1ms
-	ret = smartreader_set_latency_timer(reader, 16);
+	ret = smartreader_set_latency_timer(reader, 2);
 
 	//Set databits to 8o2
 	ret = smartreader_set_line_property(reader, BITS_8, STOP_BIT_2, ODD);
@@ -1353,7 +1351,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 		{ crdr_data->fs = reader->cardmhz * 10000; }
 	else
 		{ crdr_data->fs = 3690000; }
-
+	cs_writelock(&sr_lock);
 	smart_fastpoll(reader, 1);
 	smart_flush(reader);
 	// set smartreader+ default values
@@ -1391,7 +1389,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 		// A card with an active low reset is reset by maintaining RST in state L for at least 40 000 clock cycles
 		// so if we have a base freq of 3.5712MHz : 40000/3690000 = .0112007168458781 seconds, aka 11ms
 		// so if we have a base freq of 6.00MHz : 40000/6000000 = .0066666666666666 seconds, aka 6ms
-		cs_sleepms(20);
+		cs_sleepms(16);
 
 		//Set the DTR HIGH and RTS LOW
 		smartreader_setdtr_rts(reader, 1, 0);
@@ -1433,6 +1431,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 	}
 
 	smart_fastpoll(reader, 0);
+	cs_writeunlock(&sr_lock);
 
 	return atr_ok;
 }
@@ -1547,7 +1546,7 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 	else
 		{ reader->mhz =  320; }
 
-	cs_writelock(&sr_lock);
+//	cs_writelock(&sr_lock);
 	smart_fastpoll(reader, 1);
 	EnableSmartReader(reader, reader->mhz, F, D, N, T, crdr_data->inv, crdr_data->parity);
 
@@ -1555,7 +1554,7 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 	//it's handled by the card, so just set to maximum 3Mb/s
 	smartreader_set_baudrate(reader, 3000000);
 	smart_fastpoll(reader, 0);
-	cs_writeunlock(&sr_lock);
+//	cs_writeunlock(&sr_lock);
 
 	return OK;
 }

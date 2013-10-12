@@ -363,9 +363,13 @@ int32_t cardreader_do_ecm(struct s_reader *reader, ECM_REQUEST *er, struct s_ecm
 
 int32_t cardreader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 {
-	int32_t rc = -1;
-
+	int32_t rc;
+	if (reader->typ == R_SMART ) {  // check health does not work with new card status check but is actually not needed for emm.
+	rc = 1;
+	} else {
+	rc = -1;
 	rc = cardreader_do_checkhealth(reader);
+	}
 	if(rc)
 	{
 		if((1 << (ep->emm[0] % 0x80)) & reader->b_nano)
