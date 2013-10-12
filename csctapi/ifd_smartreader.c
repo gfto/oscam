@@ -32,7 +32,6 @@
 
 
 static CS_MUTEX_LOCK sr_lock;
-int rdrtypenr;
 
 struct sr_data
 {
@@ -300,7 +299,6 @@ void smartreader_init(struct s_reader *reader, char *rdrtype)
 	crdr_data->max_packet_size = 0;
 	if(rdrtype)
 	{
-		rdrtypenr = 1;
 		for(i = 0; i < sizeof(reader_types) / sizeof(struct s_reader_types); ++i)
 		{
 			if(!strcasecmp(reader_types[i].name, rdrtype))
@@ -402,9 +400,7 @@ static int32_t smartreader_usb_reset(struct s_reader *reader)
 		rdr_log(reader, "Smartreader reset failed");
 		return (-1);
 	}
-	crdr_data->g_read_buffer[4096] = 0;
 	crdr_data->g_read_buffer_size = 0;
-
 	return 0;
 }
 
@@ -613,7 +609,7 @@ static int smartreader_to_clkbits(int baudrate, int clk, int clk_div, unsigned l
     Function is only used internally
     \internal
 */
-static int smartreader_convert_baudrate(int baudrate, struct s_reader *reader, unsigned short  *value, unsigned short  *index)
+static int smartreader_convert_baudrate(int baudrate, struct s_reader *reader, unsigned short  *value, unsigned short  *idx)
 {
     int best_baud;
 	unsigned long encoded_divisor;
@@ -655,12 +651,12 @@ static int smartreader_convert_baudrate(int baudrate, struct s_reader *reader, u
     if (crdr_data->type == TYPE_2232H || 
         crdr_data->type == TYPE_4232H || crdr_data->type == TYPE_232H)
     {
- 		*index = (unsigned short)(encoded_divisor >> 8);
-		*index &= 0xFF00;
-		*index |= crdr_data->index;
+ 		*idx = (unsigned short)(encoded_divisor >> 8);
+		*idx &= 0xFF00;
+		*idx |= crdr_data->index;
     }
     else
-        *index = (unsigned short)(encoded_divisor >> 16);
+        *idx = (unsigned short)(encoded_divisor >> 16);
 
     // Return the nearest baud rate
     return best_baud;
@@ -680,7 +676,7 @@ static int smartreader_convert_baudrate(int baudrate, struct s_reader *reader, u
 int smartreader_set_baudrate(struct s_reader *reader, int baudrate)
 {
 	struct sr_data *crdr_data = reader->crdr_data;
-	unsigned short  value, index;
+	unsigned short  value, idx;
 	int actual_baudrate;
 
     if (crdr_data->usb_dev == NULL){
@@ -693,7 +689,7 @@ int smartreader_set_baudrate(struct s_reader *reader, int baudrate)
         baudrate = baudrate*4;
     }
 
-    actual_baudrate = smartreader_convert_baudrate(baudrate, reader, &value, &index);
+    actual_baudrate = smartreader_convert_baudrate(baudrate, reader, &value, &idx);
     if (actual_baudrate <= 0) {
         rdr_log(reader, "Silly baudrate <= 0.");
 		return ERROR;
@@ -709,7 +705,7 @@ int smartreader_set_baudrate(struct s_reader *reader, int baudrate)
 	}
     if (libusb_control_transfer(crdr_data->usb_dev_handle, FTDI_DEVICE_OUT_REQTYPE,
                                 SIO_SET_BAUDRATE_REQUEST, value,
-                                index, NULL, 0, crdr_data->usb_write_timeout) < 0) {
+                                idx, NULL, 0, crdr_data->usb_write_timeout) < 0) {
         rdr_log(reader, "Setting new baudrate failed");
 		return ERROR;
 	}
@@ -1154,7 +1150,7 @@ static void EnableSmartReader(struct s_reader *reader, int32_t clock_val, uint16
 //	cs_writelock(&sr_lock);
 	smartreader_set_line_property2(reader, BITS_8, STOP_BIT_2, parity, BREAK_ON);
 	//  send break for 350ms, also comes from JoePub debugging.
-	cs_sleepms(100);
+	cs_sleepms(350);
 	if(temp_T == 1)
 		{ smartreader_set_line_property2(reader, BITS_8, STOP_BIT_1, parity, BREAK_OFF); }
 	else
@@ -1448,7 +1444,6 @@ static int32_t SR_Transmit(struct s_reader *reader, unsigned char *buffer, uint3
 
 static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 {
-	if (rdrtypenr == 1) {
     struct sr_data *crdr_data = reader->crdr_data;
     char usb_val[2];
     int32_t state;
@@ -1460,7 +1455,6 @@ static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 
 
 	cs_writelock(&sr_lock);
-	pthread_mutex_lock(&crdr_data->g_usb_mutex);
     if (libusb_control_transfer(crdr_data->usb_dev_handle, 
 								FTDI_DEVICE_IN_REQTYPE, 
 								SIO_POLL_MODEM_STATUS_REQUEST, 
@@ -1471,37 +1465,16 @@ static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 	return ERROR;
 	}
 
-    state = (usb_val[2] << 8) | (usb_val[0] & 0xFF);
-	pthread_mutex_unlock(&crdr_data->g_usb_mutex);
+	state = (usb_val[1] << 8) | (usb_val[0] & 0xFF);
 	cs_writeunlock(&sr_lock);
-//    rdr_log(reader, "De modem Status is %u (0 for v1 card = card in, 64 for tripple = card in)" , state);
-//    rdr_log(reader, " in_ep = 0x%02X out_ep = 0x%02X index = %u  interface = %u ", crdr_data->in_ep, crdr_data->out_ep, crdr_data->index, crdr_data->interface );
+	rdr_debug_mask(reader, D_IFD, "the status of card in or out %u  (for v1 1152 is card out, for triple 1216 is card out)", state); 
 
-    if (state == 0 || state == 64) {
-        *in = 2; //CARD is in activiation should be OK
-//        rdr_log(reader, " Er is een kaart in in = %u", *in);
+    if ((state == 1216) || (state == 1152)) {
+        *in = 0; //NOCARD reader will be set to off
 	}
     else
-        *in = 0; //NOCARD reader will be set to off
-	} else {
+        *in = 2; //Card is in Aktivation should be ok
 
-
-
-	struct sr_data *crdr_data = reader->crdr_data;
-	int32_t state;
-
-	smart_fastpoll(reader, 1);
-	pthread_mutex_lock(&crdr_data->g_read_mutex);
-	state = (crdr_data->modem_status & 0x80) == 0x80 ? 0 : 2;
-	pthread_mutex_unlock(&crdr_data->g_read_mutex);
-	smart_fastpoll(reader, 0);
-
-	//state = 0 no card, 1 = not ready, 2 = ready
-	if(state)
-		{ *in = 1; } //CARD, even if not ready report card is in, or it will never get activated
-	else
-		{ *in = 0; } //NOCARD
-	}
 	return OK;
 }
 
