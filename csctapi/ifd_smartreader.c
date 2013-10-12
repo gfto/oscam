@@ -30,8 +30,6 @@
 #define LOBYTE(w) ((unsigned char)((w) & 0xff))
 #define HIBYTE(w) ((unsigned char)((w) >> 8))
 
-//The number of concurrent bulk reads to queue onto the smartreader
-//#define interface 0
 
 static CS_MUTEX_LOCK sr_lock;
 int rdrtypenr;
@@ -465,7 +463,7 @@ static int32_t smartreader_usb_purge_buffers(struct s_reader *reader)
 	return 0;
 }
 
-static int smartreader_to_clkbits_AM(int baudrate, struct s_reader *reader, unsigned long *encoded_divisor)
+static int smartreader_to_clkbits_AM(int baudrate, unsigned long *encoded_divisor)
 
 {
     static const char frac_code[8] = {0, 3, 2, 4, 1, 5, 6, 7};
@@ -571,7 +569,7 @@ static int smartreader_to_clkbits_AM(int baudrate, struct s_reader *reader, unsi
    AM Type chips have only four fractional subdivisors at value[15:14]
    for subdivisors 0, 0.5, 0.25, 0.125
 */
-static int smartreader_to_clkbits(int baudrate, struct s_reader *reader, unsigned int clk, int clk_div, unsigned long *encoded_divisor)
+static int smartreader_to_clkbits(int baudrate, int clk, int clk_div, unsigned long *encoded_divisor)
 {
     static const char frac_code[8] = {0, 3, 2, 4, 1, 5, 6, 7};
     int best_baud = 0;
@@ -638,19 +636,19 @@ static int smartreader_convert_baudrate(int baudrate, struct s_reader *reader, u
                three fractional bits and a 120 MHz clock
                Assume AN_120 "Sub-integer divisors between 0 and 2 are not allowed" holds for
                DIV/10 CLK too, so /1, /1.5 and /2 can be handled the same*/
-            best_baud = smartreader_to_clkbits(baudrate, reader, H_CLK, 10, &encoded_divisor);
+            best_baud = smartreader_to_clkbits(baudrate, H_CLK, 10, &encoded_divisor);
             encoded_divisor |= 0x20000; /* switch on CLK/10*/
         }
         else
-            best_baud = smartreader_to_clkbits(baudrate, reader, C_CLK, 16, &encoded_divisor);
+            best_baud = smartreader_to_clkbits(baudrate, C_CLK, 16, &encoded_divisor);
     }
     else if ((crdr_data->type == TYPE_BM) || (crdr_data->type == TYPE_2232C) || (crdr_data->type == TYPE_R ))
     {
-        best_baud = smartreader_to_clkbits(baudrate, reader, C_CLK, 16, &encoded_divisor);
+        best_baud = smartreader_to_clkbits(baudrate, C_CLK, 16, &encoded_divisor);
     }
     else
     {
-        best_baud = smartreader_to_clkbits_AM(baudrate, reader, &encoded_divisor);
+        best_baud = smartreader_to_clkbits_AM(baudrate, &encoded_divisor);
     }
     // Split into "value" and "index" values
     *value = (unsigned short)(encoded_divisor & 0xFFFF);
@@ -1174,9 +1172,9 @@ static void *ReaderThread(void *p)
 
 	reader = (struct s_reader *)p;
 	struct sr_data *crdr_data = reader->crdr_data;
+	idx = crdr_data->interface;
 	struct libusb_transfer *usbt[idx];
 	unsigned char usb_buffers[idx][64];
-	idx = crdr_data->interface;
 	crdr_data->running = 1;
 
 	set_thread_name(__func__);

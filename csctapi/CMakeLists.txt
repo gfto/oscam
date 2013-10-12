@@ -1,4 +1,7 @@
 project (csctapi)
+   add_definitions ("-W -Wall ")
+    set (CMAKE_C_FLAGS "-Wall")
+	set (CMAKE_CXX_FLAGS "-Wall")
 # Mac extra removes to avoid ranlib warnings in some situations
 if (OSCamOperatingSystem MATCHES "Mac OS X" AND NOT HAVE_LIBUSB AND HAVE_PCSC)
 set (mac_usbpcsc "ifd_smartreader*")
