@@ -337,7 +337,7 @@ static uint32_t  smartreader_determine_max_packet_size(struct s_reader *reader)
 	// New hi-speed devices from FTDI use a packet size of 512 bytes
 	// but could be connected to a normal speed USB hub -> 64 bytes packet size.
 	if(crdr_data->type == TYPE_2232H || crdr_data->type == TYPE_4232H)
-		{ packet_size = 64; } // de firmware sets max packets at 64 in despit the fact it should be 512.
+		{ packet_size = 512; }
 	else
 		{ packet_size = 64; }
 
@@ -404,7 +404,8 @@ static int32_t smartreader_usb_reset(struct s_reader *reader)
 		rdr_log(reader, "Smartreader reset failed");
 		return (-1);
 	}
-
+	crdr_data->g_read_buffer[4096] = 0;
+	crdr_data->g_read_buffer_size = 0;
 
 	return 0;
 }
@@ -814,7 +815,6 @@ static int32_t smartreader_set_line_property2(struct s_reader *reader, enum smar
 		value |= (0x01 << 14);
 		break;
 	}
-//	cs_writelock(&sr_lock);
 	if(libusb_control_transfer(crdr_data->usb_dev_handle,
 							   FTDI_DEVICE_OUT_REQTYPE,
 							   SIO_SET_DATA_REQUEST,
@@ -825,11 +825,8 @@ static int32_t smartreader_set_line_property2(struct s_reader *reader, enum smar
 							   crdr_data->usb_write_timeout) != 0)
 	{
 		rdr_log(reader, "Setting new line property failed");
-		cs_writeunlock(&sr_lock);
 		return (-1);
 	}
-//	cs_writeunlock(&sr_lock);
-//	cs_sleepms(3000);
 	return 0;
 }
 
@@ -1156,7 +1153,7 @@ static void EnableSmartReader(struct s_reader *reader, int32_t clock_val, uint16
 	Invert[1] = inv;
 	smart_write(reader, Invert, sizeof(Invert));
 
-	cs_writelock(&sr_lock);
+//	cs_writelock(&sr_lock);
 	smartreader_set_line_property2(reader, BITS_8, STOP_BIT_2, parity, BREAK_ON);
 	//  send break for 350ms, also comes from JoePub debugging.
 	cs_sleepms(100);
@@ -1164,7 +1161,7 @@ static void EnableSmartReader(struct s_reader *reader, int32_t clock_val, uint16
 		{ smartreader_set_line_property2(reader, BITS_8, STOP_BIT_1, parity, BREAK_OFF); }
 	else
 		{ smartreader_set_line_property2(reader, BITS_8, STOP_BIT_2, parity, BREAK_OFF); }
-	cs_writeunlock(&sr_lock);
+//	cs_writeunlock(&sr_lock);
 
 	smart_flush(reader);
 }

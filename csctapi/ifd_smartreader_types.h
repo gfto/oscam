@@ -26,6 +26,14 @@
 #define SIO_READ_EEPROM_REQUEST       0x90
 #define SIO_WRITE_EEPROM_REQUEST      0x91
 #define SIO_ERASE_EEPROM_REQUEST      0x92
+#define CLK_BITS        0x8e
+#define CLK_BYTES       0x8f
+#define CLK_WAIT_HIGH   0x94
+#define CLK_WAIT_LOW    0x95
+#define EN_ADAPTIVE     0x96
+#define DIS_ADAPTIVE    0x97
+#define CLK_BYTES_OR_HIGH 0x9c
+#define CLK_BYTES_OR_LOW  0x0d
 
 #define SIO_RESET_SIO 0
 #define SIO_RESET_PURGE_RX 1
