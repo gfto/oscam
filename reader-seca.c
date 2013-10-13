@@ -348,7 +348,7 @@ static int32_t seca_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, struc
 		return ERROR;
 	};// exit if response not 90 00
 	//TODO: if response is 9027 ppv mode is possible!
-	if (er->ecm[5]==0x01 && reader->secatype == 3){ // seca3: nano 01 in effect?
+	if (er->ecm[5]==0x01 && ((reader->card_atr[9] & 0X0F) == 10)){ // seca3: nano 01 in effect?
 		rdr_log(reader, "Received an encrypted controlword from the card that needs postprocessing by the receiver!");
 		if(reader->disablecrccws == 0){
 			reader->disablecrccws = 1;
