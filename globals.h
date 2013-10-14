@@ -1876,6 +1876,7 @@ extern CS_MUTEX_LOCK clientlist_lock;
 extern CS_MUTEX_LOCK readerlist_lock;
 extern struct s_reader *first_active_reader;        //points to list of _active_ readers (enable = 1, deleted = 0)
 extern LLIST *configured_readers;
+int32_t dev_found; // to help work and trace off type  smartreader
 
 // These are used pretty much everywhere
 extern struct s_config cfg;

@@ -171,7 +171,7 @@ void cardreader_do_reset(struct s_reader *reader)
 	{
 		uint16_t y;
 		uint16_t deprecated;
-		if (reader->typ == R_SMART ) y = 4; else y= 2;
+		if (reader->typ == R_SMART ) y = 3; else y= 2;
 //		rdr_log(reader, "the restart atempts in deprecated is %u", y);
 		for(deprecated = reader->deprecated; deprecated < y; deprecated++)
 		{
@@ -293,7 +293,7 @@ bool cardreader_init(struct s_reader *reader)
 	}
 	else
 	{
-		if (reader->typ == R_SMART ){
+/*		if (reader->typ == R_SMART ){
 			rdr_log(reader, "clocking for smartreader with smartreader protocol");
 			if (reader->cardmhz == 357) reader->cardmhz = 369; // 357 is not a default or supported by smartreader
 			if (reader->mhz >= 1600) reader->mhz = 1600; else
@@ -309,7 +309,7 @@ bool cardreader_init(struct s_reader *reader)
 			if (reader->mhz >= 357)  reader->mhz =  369; else
 			if (reader->mhz >= 343)  reader->mhz =  343; else 
 			reader->mhz =  320;
-	    }
+	    } this seems to do nothing for v2 or triple and for v1 not needed */
 		rdr_log(reader, "Reader initialized (device=%s, detect=%s%s, mhz=%d, cardmhz=%d)",
 				reader->device,
 				reader->detect & 0x80 ? "!" : "",
