@@ -33,7 +33,7 @@
 #define NUM_TXFERS 1
 static CS_MUTEX_LOCK sr_lock;
 
-//int32_t dev_found; is set in globals.h
+int32_t dev_found;
 
 
 struct sr_data
