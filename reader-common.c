@@ -161,29 +161,41 @@ void cardreader_do_reset(struct s_reader *reader)
 	reader_nullcard(reader);
 	ATR atr;
 	int32_t ret = 0;
+	int16_t i = 0;
+	int16_t j = 0;
+	if ((reader->typ == R_SMART) && (smartdev_found >= 2)) j = 5; else j = 1; // we will do two full start attempts for triple
 
-	ret = ICC_Async_Reset(reader, &atr, reader_activate_card, reader_get_cardsystem);
+	for (i= 0; i < j; i++) {
 
-	if(ret == -1)
-		{ return; }
+		ret = ICC_Async_Reset(reader, &atr, reader_activate_card, reader_get_cardsystem);
 
-	if(ret == 0)
-	{
-		uint16_t y;
-		uint16_t deprecated;
-		if (reader->typ == R_SMART ) y = 3; else y= 2;
-//		rdr_log(reader, "the restart atempts in deprecated is %u", y);
-		for(deprecated = reader->deprecated; deprecated < y; deprecated++)
+		if(ret == -1)
+			{ return; }
+
+		if(ret == 0)
 		{
-			if(!reader_activate_card(reader, &atr, deprecated)) { break; }
-			ret = reader_get_cardsystem(reader, &atr);
-			if(ret)
-				{ break; }
-			if(!deprecated)
-				{ rdr_log(reader, "Normal mode failed, reverting to Deprecated Mode"); }
+			uint16_t y;
+			uint16_t deprecated;
+			if (reader->typ == R_SMART ) y = 3; else y= 2;
+//			rdr_log(reader, "the restart atempts in deprecated is %u", y);
+			for(deprecated = reader->deprecated; deprecated < y; deprecated++)
+			{
+				if(!reader_activate_card(reader, &atr, deprecated)) { break; }
+				ret = reader_get_cardsystem(reader, &atr);
+				if(ret)
+					{ break; }
+				if(!deprecated)
+					{ rdr_log(reader, "Normal mode failed, reverting to Deprecated Mode"); }
+			}
 		}
+			if (ret){
+				rdr_log(reader,"THIS WAS A SUCCESFULL START ATTEMPT No  %u out of max alloted of %u", (i+1), j);
+				break;
+			}
+			else {
+				rdr_log(reader, "THIS WAS A FAILED START ATTEMPT No %u out of max alloted of %u", (i+1), j);
+			}
 	}
-
 	if(!ret)
 	{
 		reader->card_status = CARD_FAILURE;

@@ -308,11 +308,14 @@ static uint32_t ICC_Async_GetClockRate(int32_t cardmhz)
 {
 	switch(cardmhz)
 	{
+	case 343:
+	case 347:
 	case 357:
 	case 358:
+	case 369:
 		return (372L * 9600L);
 	case 368:
-		return (372L * 9600L);
+		return (384L * 9600L);
 	default:
 		return cardmhz * 10000L;
 	}
