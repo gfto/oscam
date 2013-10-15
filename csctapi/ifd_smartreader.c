@@ -18,6 +18,7 @@
 //#include "atr.h"
 #include "icc_async.h"
 #include "ifd_smartreader_types.h"
+#include "ifd_smartreader.h"
 
 #if defined(__CYGWIN__)
 #undef OK

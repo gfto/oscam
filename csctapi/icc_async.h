@@ -31,8 +31,6 @@
  * Exported types definition
  */
 
-int smartdev_found;
-
 /* Initialization and Deactivation */
 int32_t ICC_Async_Activate(struct s_reader *reader, ATR *newatr, uint16_t deprecated);
 int32_t ICC_Async_Close(struct s_reader *reader);

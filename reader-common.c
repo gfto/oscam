@@ -14,6 +14,7 @@
 #include "reader-common.h"
 //#include "csctapi/atr.h"
 #include "csctapi/icc_async.h"
+#include "csctapi/ifd_smartreader.h"
 
 extern struct s_cardsystem cardsystems[CS_MAX_MOD];
 extern char *RDR_CD_TXT[];
