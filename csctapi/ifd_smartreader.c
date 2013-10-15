@@ -1366,7 +1366,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 	crdr_data->T = 1;
 	crdr_data->inv = 0;
 
-	for(i = 0 ; i < 10 ; i++)
+	for(i = 0 ; i < 4 ; i++)
 	{
 		crdr_data->irdeto = 0;
 		atr_ok = ERROR;
@@ -1375,7 +1375,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 
 
 		// special irdeto case
-		if(i == 9)
+		if(i == 3)
 		{
 			rdr_debug_mask(reader, D_DEVICE, "SR: Trying irdeto");
 			crdr_data->F = 618; /// magic smartreader value
