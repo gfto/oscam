@@ -12,7 +12,7 @@
 #include "oscam-work.h"
 #include "oscam-reader.h"
 #include "reader-common.h"
-#include "csctapi/atr.h"
+//#include "csctapi/atr.h"
 #include "csctapi/icc_async.h"
 
 extern struct s_cardsystem cardsystems[CS_MAX_MOD];
