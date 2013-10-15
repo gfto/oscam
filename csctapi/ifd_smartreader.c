@@ -1488,7 +1488,7 @@ static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
         *in = 0; //NOCARD reader will be set to off
 	}
     else
-        *in = 2; //Card is in Aktivation should be ok
+        *in = 1; //Card is in Aktivation should be ok if card is activated
 
 	return OK;
 	
