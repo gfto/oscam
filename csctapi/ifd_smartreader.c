@@ -18,7 +18,6 @@
 //#include "atr.h"
 #include "icc_async.h"
 #include "ifd_smartreader_types.h"
-#include "ifd_smartreader.h"
 
 #if defined(__CYGWIN__)
 #undef OK
@@ -197,9 +196,9 @@ static bool smartreader_check_endpoint(libusb_device *usb_dev, uint8_t in_endpoi
 	return 1;
 }
 
-static struct libusb_device *find_smartreader(const char *busname, const char *dev_name, uint8_t in_endpoint, uint8_t out_endpoint)
+static struct libusb_device *find_smartreader(struct s_reader *rdr, const char *busname, const char *dev_name, uint8_t in_endpoint, uint8_t out_endpoint)
 {
-	smartdev_found = 0;
+	rdr->smartdev_found = 0;
 	libusb_device *dev;
 	libusb_device_handle *usb_dev_handle;
 	libusb_device **devs;
@@ -214,7 +213,7 @@ static struct libusb_device *find_smartreader(const char *busname, const char *d
 
 	while((dev = devs[i++]) != NULL)
 	{
-		smartdev_found = 0;
+		rdr->smartdev_found = 0;
 		ret = libusb_get_device_descriptor(dev, &usbdesc);
 		if(ret < 0)
 		{
@@ -256,11 +255,11 @@ static struct libusb_device *find_smartreader(const char *busname, const char *d
 					{
 						cs_log("Found reader with serial %s at %03d:%03d", dev_name, libusb_get_bus_number(dev), libusb_get_device_address(dev));
 						if(smartreader_check_endpoint(dev, in_endpoint, out_endpoint)) {
-							if(out_endpoint == 0x82) smartdev_found = 1 ; else
-							if(out_endpoint == 0x81) smartdev_found = 2 ; else
-							if(out_endpoint == 0x83) smartdev_found = 3 ; else
-							if(out_endpoint == 0x85) smartdev_found = 4 ; else
-								smartdev_found = 0;
+							if(out_endpoint == 0x82) rdr->smartdev_found = 1 ; else
+							if(out_endpoint == 0x81) rdr->smartdev_found = 2 ; else
+							if(out_endpoint == 0x83) rdr->smartdev_found = 3 ; else
+							if(out_endpoint == 0x85) rdr->smartdev_found = 4 ; else
+								rdr->smartdev_found = 0;
 						} 
 					}
 				}
@@ -271,21 +270,21 @@ static struct libusb_device *find_smartreader(const char *busname, const char *d
 				// check for smargo endpoints.
 				if(smartreader_check_endpoint(dev, in_endpoint, out_endpoint))
 						if(smartreader_check_endpoint(dev, in_endpoint, out_endpoint)) {
-							if(out_endpoint == 0x82) smartdev_found = 1 ; else
-							if(out_endpoint == 0x81) smartdev_found = 2 ; else
-							if(out_endpoint == 0x83) smartdev_found = 3 ; else
-							if(out_endpoint == 0x85) smartdev_found = 4 ; else
-								smartdev_found = 0;
+							if(out_endpoint == 0x82) rdr->smartdev_found = 1 ; else
+							if(out_endpoint == 0x81) rdr->smartdev_found = 2 ; else
+							if(out_endpoint == 0x83) rdr->smartdev_found = 3 ; else
+							if(out_endpoint == 0x85) rdr->smartdev_found = 4 ; else
+								rdr->smartdev_found = 0;
 						} 
 			}
 			libusb_close(usb_dev_handle);
 		}
 
-		if(smartdev_found >= 1)
+		if(rdr->smartdev_found >= 1)
 			{ break; }
 	}
 
-	if(!smartdev_found)
+	if(!rdr->smartdev_found)
 	{
 		cs_log("Smartreader device %s:%s not found", busname, dev_name);
 		return NULL;
@@ -1270,7 +1269,8 @@ static int32_t SR_Init(struct s_reader *reader)
 	struct sr_data *crdr_data = reader->crdr_data;
 
 	rdr_debug_mask(reader, D_DEVICE, "SR: Looking for device %s on bus %s", dev, busname);
-	cs_sleepms(smartdev_found);
+	if (reader->smartdev_found)
+		cs_sleepms(reader->smartdev_found);
 	smartreader_init(reader, rdrtype);
 
 	if(!init_count)
@@ -1287,7 +1287,7 @@ static int32_t SR_Init(struct s_reader *reader)
 
 	rdr_log(reader, "Using 0x%02X/0x%02X as endpoint for smartreader hardware detection", crdr_data->in_ep, crdr_data->out_ep);
 
-	crdr_data->usb_dev = find_smartreader(busname, dev, crdr_data->in_ep, crdr_data->out_ep);
+	crdr_data->usb_dev = find_smartreader(reader, busname, dev, crdr_data->in_ep, crdr_data->out_ep);
 	if(!crdr_data->usb_dev)
 	{
 		--init_count;
