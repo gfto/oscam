@@ -163,7 +163,7 @@ void cardreader_do_reset(struct s_reader *reader)
 	int32_t ret = 0;
 	int16_t i = 0;
 	int16_t j = 0;
-	if (reader->typ == R_SMART && reader->smartdev_found >= 2) j = 5; else j = 1; // we will do two full start attempts for triple
+	if (reader->typ == R_SMART && reader->smartdev_found >= 2) j = 2; else j = 1; // we will do two full start attempts for triple
 
 	for (i= 0; i < j; i++) {
 
@@ -176,7 +176,7 @@ void cardreader_do_reset(struct s_reader *reader)
 		{
 			uint16_t y;
 			uint16_t deprecated;
-			if (reader->typ == R_SMART ) y = 3; else y= 2;
+			if (reader->typ == R_SMART ) y = 2; else y= 2;
 //			rdr_log(reader, "the restart atempts in deprecated is %u", y);
 			for(deprecated = reader->deprecated; deprecated < y; deprecated++)
 			{

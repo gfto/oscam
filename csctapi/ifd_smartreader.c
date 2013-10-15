@@ -31,10 +31,8 @@
 #define LOBYTE(w) ((unsigned char)((w) & 0xff))
 #define HIBYTE(w) ((unsigned char)((w) >> 8))
 
-#define NUM_TXFERS 2
+#define NUM_TXFERS 1
 static CS_MUTEX_LOCK sr_lock;
-
-
 
 struct sr_data
 {
@@ -255,7 +253,7 @@ static struct libusb_device *find_smartreader(struct s_reader *rdr, const char *
 					{
 						cs_log("Found reader with serial %s at %03d:%03d", dev_name, libusb_get_bus_number(dev), libusb_get_device_address(dev));
 						if(smartreader_check_endpoint(dev, in_endpoint, out_endpoint)) {
-							if(out_endpoint == 0x82) rdr->smartdev_found = 1 ; else
+							if(out_endpoint == 0x82) rdr->smartdev_found = 1 ;  else
 							if(out_endpoint == 0x81) rdr->smartdev_found = 2 ; else
 							if(out_endpoint == 0x83) rdr->smartdev_found = 3 ; else
 							if(out_endpoint == 0x85) rdr->smartdev_found = 4 ; else
@@ -1358,8 +1356,9 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 	else
 		{ crdr_data->fs = 3690000; }
 
-	cs_writelock(&sr_lock);
+//	cs_writelock(&sr_lock);
 	smart_fastpoll(reader, 1);
+	smart_flush(reader);
 	// set smartreader+ default values
 	crdr_data->F = 372;
 	crdr_data->D = 1;
@@ -1436,7 +1435,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 	}
 
 	smart_fastpoll(reader, 0);
-	cs_writeunlock(&sr_lock);
+//	cs_writeunlock(&sr_lock);
 	return atr_ok;
 }
 
@@ -1457,16 +1456,16 @@ static int32_t SR_Transmit(struct s_reader *reader, unsigned char *buffer, uint3
 
 static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 {
-    struct sr_data *crdr_data = reader->crdr_data;
+	struct sr_data *crdr_data = reader->crdr_data; 
+	if (reader->smartdev_found >= 2 ) {
+//	rdr_log(reader, " de smart dev found = %u" , reader->smartdev_found); // needs to be removed after test
     char usb_val[2];
-    int32_t state;
+    int32_t state2;
 
     if (crdr_data->usb_dev == NULL) {
 	rdr_log(reader,"usb device unavailable");
 	return ERROR;
 	}
-//	smart_fastpoll(reader, 1);
-//	pthread_mutex_lock(&crdr_data->g_read_mutex);
 	cs_writelock(&sr_lock);
     if (libusb_control_transfer(crdr_data->usb_dev_handle, 
 								FTDI_DEVICE_IN_REQTYPE, 
@@ -1477,21 +1476,36 @@ static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 	rdr_log(reader, "getting modem status failed ");
 	return ERROR;
 	}
-//	pthread_mutex_unlock(&crdr_data->g_read_mutex);
-//	smart_fastpoll(reader, 0);
 	cs_writeunlock(&sr_lock);
-	state = (usb_val[1] << 8) | (usb_val[0] & 0xFF);
+	state2 = (usb_val[1] << 8) | (usb_val[0] & 0xFF);
+	rdr_debug_mask(reader, D_IFD, "the status of card in or out %u  (for v1 1152 is card out, for triple 1216 is card out or sometimes 192 is out for both)", state2); 
 
-	rdr_debug_mask(reader, D_IFD, "the status of card in or out %u  (for v1 1152 is card out, for triple 1216 is card out)", state); 
-
-    if ((state == 1216) || (state == 1152)) {
+    if ((state2 == 1216) || (state2 == 1152) || (state2 == 192)) {
         *in = 0; //NOCARD reader will be set to off
 	}
-    else
+    else {
         *in = 1; //Card is in Aktivation should be ok if card is activated
-
+	}
 	return OK;
-	
+
+	} else {
+	int32_t state;
+
+	smart_fastpoll(reader, 1);
+	pthread_mutex_lock(&crdr_data->g_read_mutex);
+	state = (crdr_data->modem_status & 0x80) == 0x80 ? 0 : 2;
+	pthread_mutex_unlock(&crdr_data->g_read_mutex);
+	smart_fastpoll(reader, 0);
+	rdr_debug_mask(reader, D_IFD, "the status of card in or out old procedure for v1 %u ", state);
+	//state = 0 no card, 1 = not ready, 2 = ready
+	if(state)
+		{ *in = 1; } //CARD, even if not ready report card is in, or it will never get activated
+	else
+		{ *in = 0; } //NOCARD
+
+//	return OK;
+	}
+ return OK;	
 }
 
 static int32_t SR_Receive(struct s_reader *reader, unsigned char *buffer, uint32_t size, uint32_t delay, uint32_t timeout)   // delay and timeout not used (yet)!
