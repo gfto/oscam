@@ -31,7 +31,7 @@
 #define LOBYTE(w) ((unsigned char)((w) & 0xff))
 #define HIBYTE(w) ((unsigned char)((w) >> 8))
 
-#define NUM_TXFERS 1
+#define NUM_TXFERS 2
 static CS_MUTEX_LOCK sr_lock;
 
 struct sr_data
@@ -57,7 +57,7 @@ struct sr_data
 	int32_t usb_write_timeout;
 	uint32_t  writebuffer_chunksize;
 	unsigned char bitbang_enabled;
-	int baudrate2;
+	int baudrate;
 	int32_t interface;   // 0 ,1 or 2
 	/** maximum packet size. Needed for filtering modem status bytes every n packets. */
 	uint32_t  max_packet_size;
@@ -304,7 +304,7 @@ void smartreader_init(struct s_reader *reader, char *rdrtype)
 	crdr_data->usb_write_timeout = 10000;
 
 	crdr_data->type = TYPE_BM;    /* chip type */
-	crdr_data->baudrate2 = -1;
+	crdr_data->baudrate = -1;
 	crdr_data->bitbang_enabled = 0;  /* 0: normal mode 1: any of the bitbang modes enabled */
 
 	crdr_data->writebuffer_chunksize = 4096;
@@ -721,7 +721,7 @@ int smartreader_set_baudrate(struct s_reader *reader, int baudrate)
         rdr_log(reader, "Setting new baudrate failed");
 		return ERROR;
 	}
-    crdr_data->baudrate2 = actual_baudrate;
+    crdr_data->baudrate = baudrate;
     return 0;
 }
 
@@ -1100,7 +1100,7 @@ static void EnableSmartReader(struct s_reader *reader, int32_t clock_val, uint16
 	unsigned char Invert[2];
 	unsigned char temp_T;
 
-	smartreader_set_baudrate(reader, 9600);
+	smartreader_set_baudrate(reader, crdr_data->baudrate);
 	smartreader_setflowctrl(reader, 0);
 	smartreader_set_line_property(reader, (enum smartreader_bits_type) 5, STOP_BIT_2, NONE);
 
@@ -1161,13 +1161,13 @@ static void EnableSmartReader(struct s_reader *reader, int32_t clock_val, uint16
 //	cs_writelock(&sr_lock);
 	smartreader_set_line_property2(reader, BITS_8, STOP_BIT_2, parity, BREAK_ON);
 	//  send break for 350ms, also comes from JoePub debugging.
-	cs_sleepms(350);
+	cs_sleepms(550);
 	if(temp_T == 1)
 		{ smartreader_set_line_property2(reader, BITS_8, STOP_BIT_1, parity, BREAK_OFF); }
 	else
 		{ smartreader_set_line_property2(reader, BITS_8, STOP_BIT_2, parity, BREAK_OFF); }
 
-	cs_writeunlock(&sr_lock);
+//	cs_writeunlock(&sr_lock);
     
 	smart_flush(reader);
 }
@@ -1307,10 +1307,10 @@ static int32_t SR_Init(struct s_reader *reader)
 		return ERROR;
 	}
 
-	rdr_debug_mask(reader, D_DEVICE, "SR: Setting smartreader latency timer to 2ms");
+	rdr_debug_mask(reader, D_DEVICE, "SR: Setting smartreader latency timer to 1ms");
 
-	//Set the FTDI latency timer to 16ms
-	ret = smartreader_set_latency_timer(reader, 16);
+	//Set the FTDI latency timer to 1ms
+	ret = smartreader_set_latency_timer(reader, 2);
 
 	//Set databits to 8o2
 	ret = smartreader_set_line_property(reader, BITS_8, STOP_BIT_2, ODD);
@@ -1352,7 +1352,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 	rdr_log(reader," SR_reset wordt gerund");
 
 	if(reader->mhz == reader->cardmhz && reader->cardmhz * 10000 > 3690000)
-		{ crdr_data->fs = reader->cardmhz * 10000; }
+		{ crdr_data->fs = reader->mhz * 10000; }
 	else
 		{ crdr_data->fs = 3690000; }
 
@@ -1478,8 +1478,8 @@ static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 	}
 	cs_writeunlock(&sr_lock);
 	state2 = (usb_val[1] << 8) | (usb_val[0] & 0xFF);
-	rdr_debug_mask(reader, D_IFD, "the status of card in or out %u  (for v1 1152 is card out, for triple 1216 is card out or sometimes 192 is out for both)", state2); 
-
+	rdr_debug_mask(reader, D_IFD, "the status of card in or out %u  (for v1 1152 is card out, for triple 1216 is card out or sometimes 192 is out for both)", state2);
+//	rdr_log(reader,"the status of card in or out %u  (for v1 1152 is card out, for triple 1216 is card out or sometimes 192 is out for both)", state2);
     if ((state2 == 1216) || (state2 == 1152) || (state2 == 192)) {
         *in = 0; //NOCARD reader will be set to off
 	}
@@ -1547,6 +1547,7 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 //	cs_writelock(&sr_lock);
 	smart_fastpoll(reader, 1);
 	rdr_log(reader," The EnableSmarReader is called out off Sr_writesettings");
+//	smart_flush(reader);
 	EnableSmartReader(reader, reader->mhz, F, D, N, T, crdr_data->inv, crdr_data->parity);
 	smartreader_set_baudrate(reader, 3000000);
 	smart_fastpoll(reader, 0);

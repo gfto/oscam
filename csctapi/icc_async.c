@@ -304,20 +304,26 @@ int32_t ICC_Async_Reset(struct s_reader *reader, struct s_ATR *atr,
 	return reader->crdr.do_reset(reader, atr, rdr_activate_card, rdr_get_cardsystem);
 }
 
-static uint32_t ICC_Async_GetClockRate(int32_t cardmhz)
+uint32_t ICC_Async_GetClockRate_NewSmart(int32_t cardmhz)
+{
+
+	if (cardmhz <= 480) 
+		return (372L * 9600L); else
+		return (cardmhz * 10000L);	
+}
+
+uint32_t ICC_Async_GetClockRate(int32_t cardmhz)
 {
 	switch(cardmhz)
 	{
-	case 343:
-	case 347:
 	case 357:
 	case 358:
 	case 369:
 		return (372L * 9600L);
-	case 368:
+	case 368: 
 		return (384L * 9600L);
 	default:
-		return cardmhz * 10000L;
+		return (cardmhz * 10000L);
 	}
 }
 
@@ -658,10 +664,17 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 
 			if(reader->protocol_type != ATR_PROTOCOL_TYPE_T14)    //dont switch for T14
 			{
-				uint32_t baud_temp = (double)D * ICC_Async_GetClockRate(reader->cardmhz) / (double)Fi;
-				rdr_log(reader, "Setting baudrate to %d bps", baud_temp);
-				call(reader->crdr.set_baudrate(reader, baud_temp));
-				reader->current_baudrate = baud_temp;
+				if ((reader->typ == R_SMART) && (reader->smartdev_found >= 2) ){
+					uint32_t baud_temp = (double)D * ICC_Async_GetClockRate_NewSmart(reader->cardmhz) / (double)Fi; // just a test
+					rdr_log(reader, "Setting baudrate to %d bps new", baud_temp);
+					call(reader->crdr.set_baudrate(reader, baud_temp));
+					reader->current_baudrate = baud_temp;
+				} else {
+					uint32_t baud_temp = (double)D * ICC_Async_GetClockRate(reader->cardmhz) / (double)Fi; // just a test
+					rdr_log(reader, "Setting baudrate to %d bps", baud_temp);
+					call(reader->crdr.set_baudrate(reader, baud_temp));
+					reader->current_baudrate = baud_temp;
+				}				
 			}
 		}
 	}
