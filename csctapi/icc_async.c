@@ -304,7 +304,7 @@ int32_t ICC_Async_Reset(struct s_reader *reader, struct s_ATR *atr,
 	return reader->crdr.do_reset(reader, atr, rdr_activate_card, rdr_get_cardsystem);
 }
 
-uint32_t ICC_Async_GetClockRate_NewSmart(int32_t cardmhz)
+static uint32_t ICC_Async_GetClockRate_NewSmart(int32_t cardmhz)
 {
 
 	if (cardmhz <= 480) 
@@ -312,7 +312,7 @@ uint32_t ICC_Async_GetClockRate_NewSmart(int32_t cardmhz)
 		return (cardmhz * 10000L);	
 }
 
-uint32_t ICC_Async_GetClockRate(int32_t cardmhz)
+static uint32_t ICC_Async_GetClockRate(int32_t cardmhz)
 {
 	switch(cardmhz)
 	{
