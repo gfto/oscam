@@ -2587,8 +2587,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 // set channel srvid+caid
 	dvbapi_client->last_srvid = demux[demux_id].program_number;
 	dvbapi_client->last_caid = 0;
-// reset idle-Time
-	dvbapi_client->last = time((time_t *)0);
+// reset idle-Time & last switch
+	dvbapi_client->lastswitch = dvbapi_client->last = time((time_t *)0);
 
 #if defined WITH_AZBOX || defined WITH_MCA
 	openxcas_sid = program_number;
