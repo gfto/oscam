@@ -679,7 +679,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 			}
 		}
 	}
-	if(reader->mhz > 2000 && reader->typ == R_INTERNAL) { F = reader->mhz / reader->divider; }  // for PLL based internal readers
+	if(reader->mhz > 2000 && reader->typ == R_INTERNAL) { F = reader->cardmhz; }  // for PLL based internal readers
 	else { F = reader->mhz; } // all other readers
 	if ((reader->typ == R_SMART) && (reader->smartdev_found >= 3))
 		reader->worketu = (double)((1 / (double)D) * ((double)Fi / (double)F * 100));  // expressed in us
@@ -849,7 +849,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 		if(reader->mhz > 2000)
 		{
 			rdr_log(reader, "PLL Reader: ATR Fsmax is %i MHz, clocking card to %.2f Mhz (nearest possible mhz specified reader->cardmhz)",
-					atr_fs_table[FI] / 1000000, (float) reader->mhz / reader->divider / 100);
+					atr_fs_table[FI] / 1000000, (float) reader->cardmhz / 100);
 		}
 		else
 		{
