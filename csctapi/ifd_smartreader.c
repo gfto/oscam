@@ -1605,10 +1605,13 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 		{ reader->mhz =  320; }
 	pthread_mutex_lock(&crdr_data->g_usb_mutex);
 	crdr_data->poll = 1;
+	pthread_cond_signal(&crdr_data->g_usb_cond);
+	pthread_mutex_unlock(&crdr_data->g_usb_mutex);
 	cs_writelock(&sr_lock);
 	uint32_t baud_temp = (double)(D * (reader->mhz * 10000) / (double)F);
 	EnableSmartReader(reader, baud_temp, reader->mhz, F, D, N, T, crdr_data->inv, crdr_data->parity);
 	smartreader_set_baudrate(reader, baud_temp);
+	pthread_mutex_lock(&crdr_data->g_usb_mutex);
 	crdr_data->poll = 0;
 	pthread_cond_signal(&crdr_data->g_usb_cond);
 	pthread_mutex_unlock(&crdr_data->g_usb_mutex);
