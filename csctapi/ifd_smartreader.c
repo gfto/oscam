@@ -1751,7 +1751,7 @@ static int32_t sr_init_locks(struct s_reader *reader)
 	// Prevent double initalization of sr_lock
 	if(pthread_mutex_trylock(&reader->init_lock_mutex))
 	{
-		cs_lock_create(&reader->sr_lock, 1, "sr_lock");
+		cs_lock_create(&reader->sr_lock, 0, "sr_lock");
 	}
 	return 0;
 }
