@@ -1656,7 +1656,7 @@ static int32_t SR_Close(struct s_reader *reader)
 		smart_fastpoll(reader, 0);
 		libusb_release_interface(crdr_data->usb_dev_handle, crdr_data->interface);
 #if defined(__linux__)
-		libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface);
+//		libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); // attaching ftdio kernel driver may cause segfault on web if reader restart
 #endif
 		libusb_close(crdr_data->usb_dev_handle);
 		init_count--;
