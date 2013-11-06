@@ -4281,8 +4281,7 @@ int32_t dvbapi_activate_section_filter(int32_t fd, int32_t pid, uchar *filter, u
 #ifdef WITH_STAPI
 	case STAPI:
 	{
-		ret = oscam_stapi_FilterSet(fd, filter, mask);
-		if(ret) { ret = -1; }
+		ret = stapi_activate_section_filter(fd, filter, mask);
 		break;
 	}
 #endif
