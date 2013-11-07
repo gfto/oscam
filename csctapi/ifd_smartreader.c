@@ -151,7 +151,6 @@ static int32_t smart_write(struct s_reader *reader, unsigned char *buff, uint32_
 		if(ret < 0)
 		{
 			rdr_log(reader, "usb bulk write failed : ret = %d", ret);
-//			cs_writeunlock(&sr_lock);
 			return (ret);
 		}
 		rdr_ddump_mask(reader, D_DEVICE, buff + offset, written, "SR: Transmit:");
@@ -1108,7 +1107,7 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 	return (0);
 }
 
-static void EnableSmartReader(struct s_reader *reader, int32_t clock_val, uint16_t  Fi, unsigned char Di, unsigned char Ni, unsigned char T, unsigned char inv, int32_t parity)
+static void EnableSmartReader(struct s_reader *reader, uint32_t baud_temp, int32_t clock_val, uint16_t  Fi, unsigned char Di, unsigned char Ni, unsigned char T, unsigned char inv, int32_t parity)
 {
 	struct sr_data *crdr_data = reader->crdr_data;
 	unsigned char FiDi[4];
@@ -1119,12 +1118,9 @@ static void EnableSmartReader(struct s_reader *reader, int32_t clock_val, uint16
 	unsigned char Invert[2];
 	unsigned char temp_T;
 	
-	smartreader_set_baudrate(reader, 9600);
+	smartreader_set_baudrate(reader, baud_temp);
 	smartreader_setflowctrl(reader, 0);
-	cs_sleepms(150);
-	cs_writelock(&sr_lock);
 	smartreader_set_line_property(reader, (enum smartreader_bits_type) 5, STOP_BIT_2, NONE);
-	cs_writeunlock(&sr_lock);
 
 	// command 1, set F and D parameter
 	if(!crdr_data->irdeto)
@@ -1179,24 +1175,20 @@ static void EnableSmartReader(struct s_reader *reader, int32_t clock_val, uint16
 	Invert[0] = 0x05;
 	Invert[1] = inv;
 	smart_write(reader, Invert, sizeof(Invert));
-
 	cs_sleepus(600);
 
 	smart_flush(reader);
 
 	cs_sleepus(600);
-
-	cs_writelock(&sr_lock);
+	
 	smartreader_set_line_property2(reader, BITS_8, STOP_BIT_2, parity, BREAK_ON);
-	cs_writeunlock(&sr_lock);
 	//  send break for 350ms, also comes from JoePub debugging.
 	cs_sleepms(350);
-	cs_writelock(&sr_lock);
+
 	if(temp_T == 1)
 		{ smartreader_set_line_property(reader, BITS_8, STOP_BIT_1, parity); }
 	else
 		{ smartreader_set_line_property(reader, BITS_8, STOP_BIT_2, parity); }
-	cs_writeunlock(&sr_lock);
 
 }
 
@@ -1288,6 +1280,9 @@ static int32_t SR_Init(struct s_reader *reader)
 		rdr_log(reader, "Wrong device format (%s), it should be Device=bus:dev", reader->device);
 		return ERROR;
 	}
+
+
+	cs_writelock(&sr_lock);
 	if(!reader->crdr_data && !cs_malloc(&reader->crdr_data, sizeof(struct sr_data)))
 		{ return ERROR; }
 	struct sr_data *crdr_data = reader->crdr_data;
@@ -1316,7 +1311,6 @@ static int32_t SR_Init(struct s_reader *reader)
 			crdr_data->rdrtype = TripleP3;
 	}
 	
-
 	rdr_debug_mask(reader, D_DEVICE, "SR: Looking for device %s on bus %s", dev, busname);
 	smartreader_init(reader);
 
@@ -1325,6 +1319,7 @@ static int32_t SR_Init(struct s_reader *reader)
 		ret = libusb_init(NULL);
 		if(ret < 0)
 		{
+			cs_writeunlock(&sr_lock);
 			rdr_log(reader, "Libusb init error : %d", ret);
 			return ret;
 		}
@@ -1332,13 +1327,16 @@ static int32_t SR_Init(struct s_reader *reader)
 	init_count++;
 
 	rdr_log(reader, "Using 0x%02X/0x%02X as endpoint for smartreader hardware detection", crdr_data->in_ep, crdr_data->out_ep);
+	cs_writeunlock(&sr_lock);
 	cs_sleepms(crdr_data->tripledelay);
+	cs_writelock(&sr_lock);
 	crdr_data->usb_dev = find_smartreader(reader, busname, dev, crdr_data->in_ep, crdr_data->out_ep);
 	if(!crdr_data->usb_dev)
 	{
 		--init_count;
 		if(!init_count)
 			{ libusb_exit(NULL); }
+		cs_writeunlock(&sr_lock);
 		return ERROR;
 	}
 
@@ -1349,6 +1347,7 @@ static int32_t SR_Init(struct s_reader *reader)
 		--init_count;
 		if(!init_count)
 			{ libusb_exit(NULL); }
+		cs_writeunlock(&sr_lock);
 		rdr_log(reader, "unable to open smartreader device %s in bus %s endpoint in 0x%02X out 0x%02X (ret=%d)\n", dev, busname, crdr_data->in_ep, crdr_data->out_ep, ret);
 		return ERROR;
 	}
@@ -1363,15 +1362,12 @@ static int32_t SR_Init(struct s_reader *reader)
 		//Set the FTDI latency timer to 1 ms is ftdi default latency.
 		ret = smartreader_set_latency_timer(reader, 1);
 	}
-	cs_writelock(&sr_lock);
-	//Set databits to 8o2
+		//Set databits to 8o2
 	ret = smartreader_set_line_property(reader, BITS_8, STOP_BIT_2, ODD);
-	cs_writeunlock(&sr_lock);
 
-	cs_writelock(&sr_lock);
 	//Set the DTR HIGH and RTS LOW
 	ret = smartreader_setdtr_rts(reader, 0, 0);
-	cs_writeunlock(&sr_lock);
+	
 
 	//Disable flow control  enabled by stefansp
 	ret = smartreader_setflowctrl(reader, 0);
@@ -1384,6 +1380,7 @@ static int32_t SR_Init(struct s_reader *reader)
 	pthread_mutex_init(&crdr_data->g_usb_mutex, NULL);
 	pthread_cond_init(&crdr_data->g_usb_cond, NULL);
 
+	cs_writeunlock(&sr_lock);
 	rdr_log(reader," Pthread Wordt gecreeerd");
 	ret = pthread_create(&crdr_data->rt, NULL, ReaderThread, (void *)(reader));
 	if(ret)
@@ -1400,6 +1397,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 	unsigned char data[ATR_MAX_SIZE];
 	int32_t ret;
 	int32_t atr_ok;
+	uint32_t baud_temp;
 //	int16_t reset_time; // reset time in ms
 	int32_t  i;
 	int32_t parity[4] = {EVEN, ODD, NONE, EVEN};    // the last EVEN is to try with different F, D values for irdeto card.
@@ -1421,6 +1419,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 	crdr_data->N = 1;
 	crdr_data->T = 1;
 	crdr_data->inv = 0;
+	baud_temp = (double)(crdr_data->D * crdr_data->fs / (double)crdr_data->F);
 
 	for(i = 0 ; i < 4 ; i++)
 	{
@@ -1437,25 +1436,25 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 			crdr_data->D = 1;
 			crdr_data->T = 2; // will be set to T=1 in EnableSmartReader
 			crdr_data->fs = 6000000;
+			baud_temp = (double)(crdr_data->D * crdr_data->fs / (double)crdr_data->F);
 		}
-		crdr_data->parity = parity[i];
+
 		smart_flush(reader);
-		EnableSmartReader(reader, crdr_data->fs / 10000, crdr_data->F, (unsigned char)crdr_data->D, crdr_data->N, crdr_data->T, crdr_data->inv, parity[i]);
+		EnableSmartReader(reader, baud_temp, crdr_data->fs / 10000, crdr_data->F, (unsigned char)crdr_data->D, crdr_data->N, crdr_data->T, crdr_data->inv, parity[i]);
 
 		//Reset smartcard
-		cs_writelock(&sr_lock);
+
 		//Set the DTR HIGH and RTS HIGH
 		smartreader_setdtr_rts(reader, 1, 1);
-		cs_writeunlock(&sr_lock);
+
 		// A card with an active low reset is reset by maintaining RST in state L for at least 40 000 clock cycles
 		// so if we have a base freq of 3.5712MHz : 40000/3690000 = .0112007168458781 seconds, aka 11ms
 		// so if we have a base freq of 6.00MHz : 40000/6000000 = .0066666666666666 seconds, aka 6ms
-		cs_sleepms(25);
+		cs_sleepms(20);
 
 		//Set the DTR HIGH and RTS LOW
-		cs_writelock(&sr_lock);
+
 		smartreader_setdtr_rts(reader, 1, 0);
-		cs_writeunlock(&sr_lock);
 
 
 		//Read the ATR
@@ -1476,9 +1475,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 			rdr_debug_mask(reader, D_DEVICE, "SR: Inverse convention detected, setting smartreader inv to 1");
 
 			crdr_data->inv = 1;
-			crdr_data->parity = parity[i];
-			smart_flush(reader);
-			EnableSmartReader(reader, crdr_data->fs / 10000, crdr_data->F, (unsigned char)crdr_data->D, crdr_data->N, crdr_data->T, crdr_data->inv, parity[i]);
+			EnableSmartReader(reader, baud_temp, crdr_data->fs / 10000, crdr_data->F, (unsigned char)crdr_data->D, crdr_data->N, crdr_data->T, crdr_data->inv, parity[i]);
 		}
 		// parse atr
 		if(ATR_InitFromArray(atr, data, ret) != ERROR)
@@ -1608,13 +1605,12 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 		{ reader->mhz =  320; }
 
 	smart_fastpoll(reader, 1);
+	uint32_t baud_temp = (double)(D * (reader->mhz * 10000) / (double)F);
 	smart_flush(reader);
-	EnableSmartReader(reader, reader->mhz, F, D, N, T, crdr_data->inv, crdr_data->parity);
-	smartreader_set_baudrate(reader, 9600);
-	rdr_log(reader,"de baudrate set = %u", 9600);
+	EnableSmartReader(reader, baud_temp, reader->mhz, F, D, N, T, crdr_data->inv, crdr_data->parity);
+	smartreader_set_baudrate(reader, baud_temp);
+	rdr_log(reader,"de baudrate set = %u", baud_temp);
 	smart_fastpoll(reader, 0);
-	cs_sleepms(150);
-	cs_writeunlock(&sr_lock);
 	crdr_data->detectstart = 1;
 
 	return OK;
@@ -1660,6 +1656,7 @@ static int32_t SR_Close(struct s_reader *reader)
 		if(!init_count)
 			{ libusb_exit(NULL); }
 	}
+	cs_writeunlock(&sr_lock);
 	return OK;
 }
 
