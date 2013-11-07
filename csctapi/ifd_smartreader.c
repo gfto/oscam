@@ -1176,9 +1176,9 @@ static void EnableSmartReader(struct s_reader *reader, uint32_t baud_temp, int32
 	Invert[1] = inv;
 	smart_write(reader, Invert, sizeof(Invert));
 
-	if (crdr_data->rdrtype >= 3) {
+	if (crdr_data->rdrtype >= 2) {
 		cs_sleepus(800);
-		rdr_log(reader, "FLUSHING FOR Triple");
+		rdr_log(reader, "FLUSHING FOR Triple or V2");
 		smart_flush(reader);
 		cs_sleepus(800);
 	}
@@ -1192,8 +1192,8 @@ static void EnableSmartReader(struct s_reader *reader, uint32_t baud_temp, int32
 	else
 		{ smartreader_set_line_property2(reader, BITS_8, STOP_BIT_2, parity, BREAK_OFF); }
 
-	if (crdr_data->rdrtype <= 2) {
-		rdr_log(reader, "FLUSHING FOR V1 V2");
+	if (crdr_data->rdrtype <= 1) {
+		rdr_log(reader, "FLUSHING FOR V1");
 		smart_flush(reader);
 	}
 }
