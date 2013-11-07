@@ -1175,21 +1175,27 @@ static void EnableSmartReader(struct s_reader *reader, uint32_t baud_temp, int32
 	Invert[0] = 0x05;
 	Invert[1] = inv;
 	smart_write(reader, Invert, sizeof(Invert));
-	cs_sleepus(600);
 
-	smart_flush(reader);
-
-	cs_sleepus(600);
+	if (crdr_data->rdrtype >= 3) {
+		cs_sleepus(800);
+		rdr_log(reader, "FLUSHING FOR Triple");
+		smart_flush(reader);
+		cs_sleepus(800);
+	}
 	
 	smartreader_set_line_property2(reader, BITS_8, STOP_BIT_2, parity, BREAK_ON);
 	//  send break for 350ms, also comes from JoePub debugging.
-	cs_sleepms(350);
+	cs_sleepms(400);
 
 	if(temp_T == 1)
-		{ smartreader_set_line_property(reader, BITS_8, STOP_BIT_1, parity); }
+		{ smartreader_set_line_property2(reader, BITS_8, STOP_BIT_1, parity, BREAK_OFF); }
 	else
-		{ smartreader_set_line_property(reader, BITS_8, STOP_BIT_2, parity); }
+		{ smartreader_set_line_property2(reader, BITS_8, STOP_BIT_2, parity, BREAK_OFF); }
 
+	if (crdr_data->rdrtype <= 2) {
+		rdr_log(reader, "FLUSHING FOR V1 V2");
+		smart_flush(reader);
+	}
 }
 
 
@@ -1426,7 +1432,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 		crdr_data->irdeto = 0;
 		atr_ok = ERROR;
 		memset(data, 0, sizeof(data));
-		rdr_debug_mask(reader, D_DEVICE, "SR: Trying with parity %s", parity_str[parity[i]]);
+		rdr_debug_mask(reader, D_IFD, "SR: Trying with parity %s", parity_str[parity[i]]);
 		
 		// special irdeto case
 		if(i == 3)
