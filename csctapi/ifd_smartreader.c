@@ -1408,7 +1408,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 		{ crdr_data->fs = reader->cardmhz * 10000; }
 	else {
 		if (crdr_data->rdrtype >= 2) crdr_data->fs = reader->cardmhz * 10000; 
-		else crdr_data->fs = 3690000;
+		else crdr_data->fs = reader->cardmhz * 10000;
 		}
 //	reset_time = (((float) (4000000/(crdr_data->fs/10000))) + 15000);
 //	rdr_log(reader, "RESET TIME is %u ", reset_time);
