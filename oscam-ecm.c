@@ -339,7 +339,11 @@ bool cmp_ecm(ECM_REQUEST *er_new, ECM_REQUEST *er_cache)
 	if(er_new->caid != er_cache->caid && er_cache->rc >= E_NOTFOUND && !chk_is_betatunnel_caid(er_new->caid))
 		{ return false; } //CW for the cached er_cache wasn't found but now the client asks on a different caid so give it another try
 
-	if(er_new->caid != er_cache->caid || er_new->prid != er_cache->prid || er_new->srvid != er_cache->srvid) // for CSP Source ecmd5 check not possible
+	if(!(
+		(er_new->caid == er_cache->caid || er_new->caid == er_cache->ocaid || er_new->ocaid == er_cache->caid || er_new->ocaid == er_cache->ocaid) 
+		&& er_new->prid == er_cache->prid 
+		&& er_new->srvid == er_cache->srvid
+		)) // for CSP Source ecmd5 check not possible
 		{ return false; }
 
 	//group check --> NOT check for rc!
@@ -402,7 +406,11 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl)
 		if(er->caid != ecm->caid && ecm->rc >= E_NOTFOUND && !chk_is_betatunnel_caid(er->caid))
 			{ continue; } //CW for the cached ecm wasn't found but now the client asks on a different caid so give it another try
 
-		if(er->caid != ecm->caid || er->prid != ecm->prid || er->srvid != ecm->srvid) // for CSP Source ecmd5 check not possible
+		if(!(
+			(er->caid == ecm->caid || er->caid == ecm->ocaid || er->ocaid == ecm->caid || er->ocaid == ecm->ocaid) 
+			&& er->prid == ecm->prid 
+			&& er->srvid == ecm->srvid
+			)) // for CSP Source ecmd5 check not possible
 			{ continue; }
 
 		//group and rc check
