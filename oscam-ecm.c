@@ -341,7 +341,6 @@ bool cmp_ecm(ECM_REQUEST *er_new, ECM_REQUEST *er_cache)
 
 	if(!(
 		(er_new->caid == er_cache->caid || er_new->caid == er_cache->ocaid || er_new->ocaid == er_cache->caid || er_new->ocaid == er_cache->ocaid) 
-		&& er_new->prid == er_cache->prid 
 		&& er_new->srvid == er_cache->srvid
 		)) // for CSP Source ecmd5 check not possible
 		{ return false; }
@@ -408,7 +407,6 @@ struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl)
 
 		if(!(
 			(er->caid == ecm->caid || er->caid == ecm->ocaid || er->ocaid == ecm->caid || er->ocaid == ecm->ocaid) 
-			&& er->prid == ecm->prid 
 			&& er->srvid == ecm->srvid
 			)) // for CSP Source ecmd5 check not possible
 			{ continue; }
