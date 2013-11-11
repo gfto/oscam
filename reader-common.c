@@ -104,7 +104,7 @@ static int32_t reader_activate_card(struct s_reader *reader, ATR *atr, uint16_t 
 	if(ret) { return (0); }
 
 	//  rdr_log("ATR: %s", cs_hexdump(1, atr, atr_size, tmp, sizeof(tmp)));//FIXME
-	cs_sleepms(500);
+	cs_sleepms(1000);
 	return (1);
 }
 
@@ -163,7 +163,7 @@ void cardreader_do_reset(struct s_reader *reader)
 	int32_t ret = 0;
 	int16_t i = 0;
 	int16_t j = 0;
-	if (reader->typ == R_SMART && reader->smartdev_found >= 3) j = 3; else j = 1; // we will do Three full start attempts for triple an v2
+	if (reader->typ == R_SMART && reader->smartdev_found >= 3) j = 2; else j = 1; // we will do Two full start attempts for triple an v2
 
 	for (i= 0; i < j; i++) {
 
@@ -307,20 +307,19 @@ bool cardreader_init(struct s_reader *reader)
 	{
 		if (reader->typ == R_SMART ){
 			rdr_log(reader, "clocking for smartreader with smartreader protocol");
-/*			if (reader->cardmhz <= 357) reader->cardmhz = 369; // 357 is not a default or supported by smartreader
-			if (reader->mhz >= 1600) reader->mhz = 1600; else
-			if (reader->mhz >= 1200) reader->mhz = 1200; else
-			if (reader->mhz >= 961)  reader->mhz =  961; else
-			if (reader->mhz >= 800)  reader->mhz =  800; else
-			if (reader->mhz >= 686)  reader->mhz =  686; else
-			if (reader->mhz >= 600)  reader->mhz =  600; else
-			if (reader->mhz >= 534)  reader->mhz =  534; else
-			if (reader->mhz >= 480)  reader->mhz =  480; else
-			if (reader->mhz >= 436)  reader->mhz =  436; else
-			if (reader->mhz >= 400)  reader->mhz =  400; else
-			if (reader->mhz >= 357)  reader->mhz =  369; else
-			if (reader->mhz >= 343)  reader->mhz =  343; else 
-			reader->mhz =  320;*/
+			if (reader->cardmhz >= 1600) reader->cardmhz = 1600; else
+			if (reader->cardmhz >= 1200) reader->cardmhz = 1200; else
+			if (reader->cardmhz >= 961)  reader->cardmhz =  961; else
+			if (reader->cardmhz >= 800)  reader->cardmhz =  800; else
+			if (reader->cardmhz >= 686)  reader->cardmhz =  686; else
+			if (reader->cardmhz >= 600)  reader->cardmhz =  600; else
+			if (reader->cardmhz >= 534)  reader->cardmhz =  534; else
+			if (reader->cardmhz >= 480)  reader->cardmhz =  480; else
+			if (reader->cardmhz >= 436)  reader->cardmhz =  436; else
+			if (reader->cardmhz >= 400)  reader->cardmhz =  400; else
+			if (reader->cardmhz >= 357)  reader->cardmhz =  369; else // 357 not a default smartreader setting
+			if (reader->cardmhz >= 343)  reader->cardmhz =  343; else 
+			reader->cardmhz =  320;
 	    } 
 		rdr_log(reader, "Reader initialized (device=%s, detect=%s%s, mhz=%d, cardmhz=%d)",
 				reader->device,

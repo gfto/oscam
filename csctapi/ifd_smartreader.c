@@ -1171,33 +1171,26 @@ static void EnableSmartReader(struct s_reader *reader, uint32_t baud_temp, int32
 	smart_write(reader, Prot, sizeof(Prot));
 
 	// command 5, set invert y/n
-	rdr_log(reader, "SR: sending inv=%02X to smartreader", inv);
-//	rdr_debug_mask(reader, D_DEVICE, "SR: sending inv=%02X to smartreader", inv);
+	rdr_debug_mask(reader, D_DEVICE, "SR: sending inv=%02X to smartreader", inv);
 	Invert[0] = 0x05;
 	Invert[1] = inv;
 	smart_write(reader, Invert, sizeof(Invert));
 
-/*	if (crdr_data->rdrtype >= 2) {
-		cs_sleepus(800);
-		rdr_log(reader, "FLUSHING FOR Triple or V2");
-		smart_flush(reader);
-		cs_sleepus(800);
-	}*/
-
 	if (crdr_data->rdrtype <= 1)	
 	smartreader_set_line_property2(reader, BITS_8, STOP_BIT_2, parity, BREAK_ON);
-	//  send break for 350ms, also comes from JoePub debugging.
-	cs_sleepms(400);
+	//  send break for 350ms, also comes from JoePub debugging.break only for v1 V2 and triple do not use line break only the delay
+	cs_sleepms(380);
 
 	if(temp_T == 1)
 		{ smartreader_set_line_property2(reader, BITS_8, STOP_BIT_1, parity, BREAK_OFF); }
 	else
 		{ smartreader_set_line_property2(reader, BITS_8, STOP_BIT_2, parity, BREAK_OFF); }
+	
+	cs_sleepus(800);
+	smart_flush(reader);
+	cs_sleepus(800);
+	crdr_data->detectstart = 1;
 
-//	if (crdr_data->rdrtype <= 1) {
-		rdr_log(reader, "FLUSHING FOR ALL");
-		smart_flush(reader);
-//	}
 }
 
 
@@ -1280,7 +1273,6 @@ static int32_t SR_Init(struct s_reader *reader)
 		memcpy(device, reader->device, strlen(reader->device) + 1);
 		busname = strtok_r(device, ":", &saveptr1);
 		dev = strtok_r(NULL, search, &saveptr1);
-		rdr_log(reader, "TYPE IS SET ON %s", rdrtype);
 	}
 
 	if(!busname || !dev)
@@ -1311,11 +1303,11 @@ static int32_t SR_Init(struct s_reader *reader)
 			crdr_data->rdrtype = TripleP1;
 	}
 	if (!strcasecmp(rdrtype, "TripleP2")) {
-			crdr_data->tripledelay = 15000;
+			crdr_data->tripledelay = 7000;
 			crdr_data->rdrtype = TripleP2;
 	}
 	if (!strcasecmp(rdrtype, "TripleP3")) {
-			crdr_data->tripledelay = 30000;
+			crdr_data->tripledelay = 14000;
 			crdr_data->rdrtype = TripleP3;
 	}
 	
@@ -1374,7 +1366,7 @@ static int32_t SR_Init(struct s_reader *reader)
 	ret = smartreader_set_line_property(reader, BITS_8, STOP_BIT_2, ODD);
 
 	//Set the DTR HIGH and RTS LOW
-	ret = smartreader_setdtr_rts(reader, 0, 0);
+	ret = smartreader_setdtr_rts(reader, 1, 0);
 	
 
 	//Disable flow control  enabled by stefansp
@@ -1406,20 +1398,13 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 	int32_t ret;
 	int32_t atr_ok;
 	uint32_t baud_temp;
-//	int16_t reset_time; // reset time in ms
 	int32_t  i;
 	int32_t parity[4] = {EVEN, ODD, NONE, EVEN};    // the last EVEN is to try with different F, D values for irdeto card.
 	static const char *const parity_str[5] = {"NONE", "ODD", "EVEN", "MARK", "SPACE"};
 	rdr_log(reader," SR_reset wordt gerund");
 
-	if(reader->mhz == reader->cardmhz && reader->cardmhz * 10000 > 3690000)
-		{ crdr_data->fs = reader->cardmhz * 10000; }
-	else {
-		if (crdr_data->rdrtype >= 2) crdr_data->fs = reader->cardmhz * 10000; 
-		else crdr_data->fs = reader->cardmhz * 10000;
-		}
-//	reset_time = (((float) (4000000/(crdr_data->fs/10000))) + 15000);
-//	rdr_log(reader, "RESET TIME is %u ", reset_time);
+	crdr_data->fs = reader->cardmhz * 10000;
+
 	smart_fastpoll(reader, 1);
 	// set smartreader+ default values
 	crdr_data->F = 372;
@@ -1448,7 +1433,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 //			baud_temp = (double)(crdr_data->D * crdr_data->fs / (double)crdr_data->F);
 			baud_temp = 9600;
 		}
-		rdr_log(reader, "enabling smartreader with invert is %u for irdeto card = %u", crdr_data->inv, crdr_data->irdeto);
+
 		smart_flush(reader);
 		EnableSmartReader(reader, baud_temp, crdr_data->fs / 10000, crdr_data->F, (unsigned char)crdr_data->D, crdr_data->N, crdr_data->T, crdr_data->inv, parity[i]);
 
@@ -1460,7 +1445,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 		// A card with an active low reset is reset by maintaining RST in state L for at least 40 000 clock cycles
 		// so if we have a base freq of 3.5712MHz : 40000/3690000 = .0112007168458781 seconds, aka 11ms
 		// so if we have a base freq of 6.00MHz : 40000/6000000 = .0066666666666666 seconds, aka 6ms
-		cs_sleepms(20);
+		cs_sleepms(25);
 
 		//Set the DTR HIGH and RTS LOW
 
@@ -1485,19 +1470,16 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 			rdr_debug_mask(reader, D_DEVICE, "SR: Inverse convention detected, setting smartreader inv to 1");
 
 			crdr_data->inv = 1;
-			rdr_log(reader, "enabling smartreader with invert is %u for irdeto card = %u", crdr_data->inv, crdr_data->irdeto);
 			EnableSmartReader(reader, baud_temp, crdr_data->fs / 10000, crdr_data->F, (unsigned char)crdr_data->D, crdr_data->N, crdr_data->T, crdr_data->inv, parity[i]);
 		}
 		// parse atr
 		if(ATR_InitFromArray(atr, data, ret) != ERROR)
 		{
-			rdr_log(reader, "SR: ATR parsing OK");
-//			rdr_debug_mask(reader, D_DEVICE, "SR: ATR parsing OK");
+			rdr_debug_mask(reader, D_DEVICE, "SR: ATR parsing OK");
 			atr_ok = OK;
 			if(i == 3)
 			{
-				rdr_log(reader, "SR: Locking F and D for Irdeto mode");
-//				rdr_debug_mask(reader, D_DEVICE, "SR: Locking F and D for Irdeto mode");
+				rdr_debug_mask(reader, D_DEVICE, "SR: Locking F and D for Irdeto mode");
 				crdr_data->irdeto = 1;
 			}
 		}
@@ -1612,7 +1594,7 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 	else if(reader->mhz >= 436)  { reader->mhz =  436; }
 	else if(reader->mhz >= 400)  { reader->mhz =  400; }
 	else if(reader->mhz >= 369)  { reader->mhz =  369; }
-	else if(reader->mhz == 368)  { reader->mhz =  369; }
+	else if(reader->mhz >= 357)  { reader->mhz =  369; } // 357 not suported by smartreader
 	else if(reader->mhz >= 343)  { reader->mhz =  343; }
 	else
 		{ reader->mhz =  320; }
@@ -1625,7 +1607,6 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 	smartreader_set_baudrate(reader, 3000000); // set to max as the mhz does determine the used baudrate and we are working async
 	rdr_log(reader,"de baudrate set = 3000000");
 	smart_fastpoll(reader, 0);
-	crdr_data->detectstart = 1;
 
 	return OK;
 }
