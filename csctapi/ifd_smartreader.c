@@ -354,7 +354,7 @@ static uint32_t  smartreader_determine_max_packet_size(struct s_reader *reader)
 	// Determine maximum packet size. Init with default value.
 	// New hi-speed devices from FTDI use a packet size of 512 bytes
 	// but could be connected to a normal speed USB hub -> 64 bytes packet size.
-	rdr_log(reader,"DE PACKET SIZE DETERMINATION USES READER TYPE %u", crdr_data->type);
+//	rdr_log(reader,"DE PACKET SIZE DETERMINATION USES READER TYPE %u", crdr_data->type);
 	if(crdr_data->type == TYPE_2232H || crdr_data->type == TYPE_4232H)
 		{ packet_size = 512; }
 	else
@@ -1091,7 +1091,7 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 	// Determine maximum packet size
 	crdr_data->max_packet_size = smartreader_determine_max_packet_size(reader);
 	rdr_log(reader,"reader type is %u", crdr_data->type);
-	rdr_log(reader,"maw packet size is %u", crdr_data->max_packet_size);
+//	rdr_log(reader,"maw packet size is %u", crdr_data->max_packet_size);
 
 	if(smartreader_set_baudrate(reader, 9600) != 0)
 	{
@@ -1303,11 +1303,11 @@ static int32_t SR_Init(struct s_reader *reader)
 			crdr_data->rdrtype = TripleP1;
 	}
 	if (!strcasecmp(rdrtype, "TripleP2")) {
-			crdr_data->tripledelay = 7000;
+			crdr_data->tripledelay = 2500;
 			crdr_data->rdrtype = TripleP2;
 	}
 	if (!strcasecmp(rdrtype, "TripleP3")) {
-			crdr_data->tripledelay = 14000;
+			crdr_data->tripledelay = 5000;
 			crdr_data->rdrtype = TripleP3;
 	}
 	
@@ -1401,7 +1401,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 	int32_t  i;
 	int32_t parity[4] = {EVEN, ODD, NONE, EVEN};    // the last EVEN is to try with different F, D values for irdeto card.
 	static const char *const parity_str[5] = {"NONE", "ODD", "EVEN", "MARK", "SPACE"};
-	rdr_log(reader," SR_reset wordt gerund");
+//	rdr_log(reader," SR_reset wordt gerund");
 
 	crdr_data->fs = reader->cardmhz * 10000;
 
@@ -1582,8 +1582,8 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 	// smartreader supports 3.20, 3.43, 3.69, 4.00, 4.36, 4.80, 5.34, 6.00, 6.86, 8.00, 9.61, 12.0, 16.0 MHz
 	struct sr_data *crdr_data = reader->crdr_data;
 	crdr_data->inv = convention;//FIXME this one is set by icc_async and local smartreader reset routine
-	rdr_log(reader, "the SR_WriteSettings is called");
-
+//	rdr_log(reader, "the SR_WriteSettings is called");
+	if (crdr_data->rdrtype <= 1) {
 	if(reader->mhz >= 1600) { reader->mhz = 1600; }
 	else if(reader->mhz >= 1200) { reader->mhz = 1200; }
 	else if(reader->mhz >= 961)  { reader->mhz =  961; }
@@ -1599,14 +1599,14 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 	else if(reader->mhz >= 343)  { reader->mhz =  343; }
 	else
 		{ reader->mhz =  320; }
-
+	}
 	smart_fastpoll(reader, 1);
 //	uint32_t baud_temp = (double)(D * (reader->mhz * 10000) / (double)F);
 	uint32_t baud_temp2 = 9600; // this baudrate is used for reader setup and card init
 	smart_flush(reader);
 	EnableSmartReader(reader, baud_temp2, reader->mhz, F, D, N, T, crdr_data->inv, crdr_data->parity);
 	smartreader_set_baudrate(reader, 3000000); // set to max as the mhz does determine the used baudrate and we are working async
-	rdr_log(reader,"de baudrate set = 3000000");
+//	rdr_log(reader,"de baudrate set = 3000000");
 	smart_fastpoll(reader, 0);
 
 	return OK;
@@ -1740,7 +1740,7 @@ static pthread_mutex_t init_lock_mutex;
 static int32_t sr_init_locks(struct s_reader *UNUSED(reader))
 {
 	if (pthread_mutex_trylock(&init_lock_mutex)) {
-		cs_lock_create(&sr_lock, 10 , "sr_lock");
+		cs_lock_create(&sr_lock, 20 , "sr_lock");
 	}
 
 	return 0;

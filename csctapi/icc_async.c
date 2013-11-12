@@ -847,8 +847,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 	}
 	else
 	{
-		cs_sleepms(1000);
-		rdr_log(reader, "ATR Fsmax is %i MHz, clocking card to wanted user cardspeed of %.2f MHz (specified in reader->mhz)",
+			rdr_log(reader, "ATR Fsmax is %i MHz, clocking card to wanted user cardspeed of %.2f MHz (specified in reader->mhz)",
 				atr_fs_table[FI] / 1000000, (float) reader->mhz / 100);
 	}
 
