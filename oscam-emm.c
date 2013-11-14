@@ -82,6 +82,7 @@ static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs
 		}
 		if(match)
 		{
+			NULLFREE(dmx_filter);
 			return 1; //valid emm
 		}
 	}
