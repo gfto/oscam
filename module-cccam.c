@@ -1528,6 +1528,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf)
 				eei = add_extended_ecm_idx(cl, send_idx, cur_er->idx, card, cur_srvid, 0);
 				if(!eei)
 				{
+					free(ecmbuf);
 					cs_readunlock(&cc->cards_busy);
 					break;
 				}
