@@ -262,9 +262,9 @@ static struct libusb_device *find_smartreader(struct s_reader *rdr, const char *
 							if(out_endpoint == 0x82 && in_endpoint == 0x01 && usbdesc.idProduct == 0x6001) { rdr->smart_type = 0; rdr->smartdev_found = 1;} else
 							if(out_endpoint == 0x81 && in_endpoint == 0x01) { rdr->smart_type = 1; rdr->smartdev_found = 2;} else
 							if(out_endpoint == 0x81 && in_endpoint == 0x02 && usbdesc.idProduct == 0x6001) { rdr->smart_type = 2; rdr->smartdev_found = 3;} else
-							if(out_endpoint == 0x81 && in_endpoint == 0x02 && usbdesc.idProduct == 0x6011) { rdr->smart_type = 3; rdr->smartdev_found = 4;} else
-							if(out_endpoint == 0x83 && in_endpoint == 0x04 && usbdesc.idProduct == 0x6011) { rdr->smart_type = 4; rdr->smartdev_found = 5;} else
-							if(out_endpoint == 0x85 && in_endpoint == 0x06 && usbdesc.idProduct == 0x6011) { rdr->smart_type = 5; rdr->smartdev_found = 6;} else
+							if(out_endpoint == 0x81 && in_endpoint == 0x02 && usbdesc.idProduct == 0x6011) { rdr->smart_type = 3; rdr->smartdev_found = 4; rdr->modemstat = 1;} else
+							if(out_endpoint == 0x83 && in_endpoint == 0x04 && usbdesc.idProduct == 0x6011) { rdr->smart_type = 4; rdr->smartdev_found = 5; rdr->modemstat = 1;} else
+							if(out_endpoint == 0x85 && in_endpoint == 0x06 && usbdesc.idProduct == 0x6011) { rdr->smart_type = 5; rdr->smartdev_found = 6; rdr->modemstat = 1;} else
 								rdr->smartdev_found = 0;
 						} 
 					}
@@ -278,9 +278,9 @@ static struct libusb_device *find_smartreader(struct s_reader *rdr, const char *
 							if(out_endpoint == 0x82 && in_endpoint == 0x01 && usbdesc.idProduct == 0x6001) { rdr->smart_type = 0; rdr->smartdev_found = 1;} else
 							if(out_endpoint == 0x81 && in_endpoint == 0x01) { rdr->smart_type = 1; rdr->smartdev_found = 2;} else
 							if(out_endpoint == 0x81 && in_endpoint == 0x02 && usbdesc.idProduct == 0x6001) { rdr->smart_type = 2; rdr->smartdev_found = 3;} else
-							if(out_endpoint == 0x81 && in_endpoint == 0x02 && usbdesc.idProduct == 0x6011) { rdr->smart_type = 3; rdr->smartdev_found = 4;} else
-							if(out_endpoint == 0x83 && in_endpoint == 0x04 && usbdesc.idProduct == 0x6011) { rdr->smart_type = 4; rdr->smartdev_found = 5;} else
-							if(out_endpoint == 0x85 && in_endpoint == 0x06 && usbdesc.idProduct == 0x6011) { rdr->smart_type = 5; rdr->smartdev_found = 6;} else
+							if(out_endpoint == 0x81 && in_endpoint == 0x02 && usbdesc.idProduct == 0x6011) { rdr->smart_type = 3; rdr->smartdev_found = 4; rdr->modemstat = 1;} else
+							if(out_endpoint == 0x83 && in_endpoint == 0x04 && usbdesc.idProduct == 0x6011) { rdr->smart_type = 4; rdr->smartdev_found = 5; rdr->modemstat = 1;} else
+							if(out_endpoint == 0x85 && in_endpoint == 0x06 && usbdesc.idProduct == 0x6011) { rdr->smart_type = 5; rdr->smartdev_found = 6; rdr->modemstat = 1;} else
 								rdr->smartdev_found = 0;
 						} 
 			}
@@ -309,7 +309,7 @@ void smartreader_init(struct s_reader *reader)
 
 	crdr_data->usb_dev = NULL;
 	crdr_data->usb_dev_handle = NULL;
-	crdr_data->usb_read_timeout = 10000;
+	crdr_data->usb_read_timeout = 15000;
 	crdr_data->usb_write_timeout = 10000;
 
 	crdr_data->type = TYPE_BM;    /* chip type */
@@ -319,25 +319,14 @@ void smartreader_init(struct s_reader *reader)
 	crdr_data->writebuffer_chunksize = 4096;
 	crdr_data->max_packet_size = 0;
 	rdr_log(reader,"initing smargo type %s", rdrtype_str[crdr_data->rdrtype]);
-	if(crdr_data->rdrtype)
-	{
-		for(i = 0; i < sizeof(reader_types) / sizeof(struct s_reader_types); ++i)
-		{
-			if(reader_types[i].rdrtypename == crdr_data->rdrtype)
-			{
-				crdr_data->in_ep = reader_types[i].in_ep;
-				crdr_data->out_ep = reader_types[i].out_ep;
-				crdr_data->index = reader_types[i].index;
-				crdr_data->interface = reader_types[i].interface;
-				return;
-			}
+	for(i = 0; i < sizeof(reader_types) / sizeof(struct s_reader_types); ++i) {
+		if(reader_types[i].rdrtypename == crdr_data->rdrtype) {
+			crdr_data->in_ep = reader_types[i].in_ep;
+			crdr_data->out_ep = reader_types[i].out_ep;
+			crdr_data->index = reader_types[i].index;
+			crdr_data->interface = reader_types[i].interface;				
 		}
-		rdr_log(reader, "Smartreader: The defined reader type %u is unknown. Using default Smartreader values.", crdr_data->rdrtype);
 	}
-	crdr_data->in_ep = 0x01;
-	crdr_data->out_ep = 0x82;
-	crdr_data->index = INTERFACE_A;
-	crdr_data->interface = 0;
 }
 
 
@@ -1516,7 +1505,7 @@ static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 	struct sr_data *crdr_data = reader->crdr_data;
 	if (crdr_data->rdrtype >= 3) {
 	char usb_val[2];
-	int32_t state2;
+	unsigned long state2;
 
     if (crdr_data->usb_dev == NULL) {
 	rdr_log(reader,"usb device unavailable");
@@ -1526,7 +1515,7 @@ static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 	if (crdr_data->detectstart == 0) { *in = 1; return OK;} else
 	if (((crdr_data->detectstart == 1) && (reader->card_status != 1)) && ((crdr_data->detectstart == 1) && (reader->card_status != 0))) {
 	cs_writelock(&sr_lock);
-    if (libusb_control_transfer(crdr_data->usb_dev_handle, 
+	if (libusb_control_transfer(crdr_data->usb_dev_handle, 
 								FTDI_DEVICE_IN_REQTYPE, 
 								SIO_POLL_MODEM_STATUS_REQUEST, 
 								2, crdr_data->index, 
@@ -1536,14 +1525,14 @@ static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 	cs_writeunlock(&sr_lock);
 	return ERROR;
 	}
+	state2 = usb_val[0];
 	cs_writeunlock(&sr_lock);
-	state2 = (usb_val[1] << 8) | (usb_val[0] & 0xFF);
-	rdr_debug_mask(reader, D_IFD, "the status of card in or out %u  ( 192 means card OUT)", state2);
-    if (state2 == 192) {
-        *in = 0; //NOCARD reader will be set to off
+	rdr_debug_mask(reader, D_IFD, "the status of card in or out %lu  ( 64 means card IN)", state2);
+    if (state2 == 64) {
+        *in = 1; //NOCARD reader will be set to off
 	}
     else {
-        *in = 1; //Card is in Aktivation should be ok if card is activated
+        *in = 0; //Card is in Aktivation should be ok if card is activated
 	}
 	return OK;
 	} else {*in = 1;rdr_log(reader,"CARD STILL IN AKTIVATION PROCESS NO DETECTION"); return OK;}
@@ -1744,7 +1733,7 @@ static pthread_mutex_t init_lock_mutex;
 static int32_t sr_init_locks(struct s_reader *UNUSED(reader))
 {
 	if (pthread_mutex_trylock(&init_lock_mutex)) {
-		cs_lock_create(&sr_lock, 15 , "sr_lock");
+		cs_lock_create(&sr_lock, 1 , "sr_lock");
 	}
 
 	return 0;

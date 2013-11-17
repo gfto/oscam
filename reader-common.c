@@ -163,7 +163,7 @@ void cardreader_do_reset(struct s_reader *reader)
 	int32_t ret = 0;
 	int16_t i = 0;
 	int16_t j = 0;
-	if (reader->typ == R_SMART && reader->smartdev_found >= 4) j = 2; else j = 1; // we will do Two full start attempts for triple
+	if (reader->typ == R_SMART && reader->smartdev_found >= 4) j = 1; else j = 1; // back to a single start
 
 	for (i= 0; i < j; i++) {
 

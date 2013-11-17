@@ -98,13 +98,31 @@ int32_t ICC_Async_Init_Locks(void)
 
 int32_t ICC_Async_GetStatus(struct s_reader *reader, int32_t *card)
 {
-	int32_t in = 0;
-	call(reader->crdr.get_status(reader, &in));
-	if(in)
-		{ *card = 1; }
-	else
-		{ *card = 0; }
-	return OK;
+	if (reader->typ == R_SMART && reader->smartdev_found >= 4) {
+		reader->statuscnt = reader->statuscnt + 1;
+		if (reader->statuscnt == 12) {
+		int32_t in = 0;
+		call(reader->crdr.get_status(reader, &in));
+		if(in)
+			{reader->modemstat = 1; *card = 1; reader->statuscnt = 0;}
+		else
+			{reader->modemstat = 0; *card = 0; reader->statuscnt = 0;}
+		return OK;
+		} else {
+		*card = reader->modemstat;
+		return OK;
+		}
+	}
+	else {
+		int32_t in = 0;
+		call(reader->crdr.get_status(reader, &in));
+		if(in)
+			{ *card = 1;}
+		else
+			{ *card = 0;}
+		return OK;
+	}
+
 }
 
 int32_t ICC_Async_Activate(struct s_reader *reader, ATR *atr, uint16_t deprecated)
