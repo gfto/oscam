@@ -1536,6 +1536,20 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 			cs_debug_mask(D_TRACE, "notice: CW checksum check disabled");
 		}
 	}
+	
+	if (er->caid >> 8 == 0x09 && cw && rc < E_NOTFOUND){
+		if (er->ecm[0] == 0x80 && checkCWpart(cw, 1) && !checkCWpart(cw, 0)){ // wrong: even ecm should only have even part of cw used
+			cs_debug_mask(D_TRACE,"NDS videoguard controlword swapped");
+			memcpy(cw, cw + 8, 8);  // move card cw answer to right part!
+			memset(cw+8,0,8); // blanc old position
+		}
+		
+		if (er->ecm[0] == 0x81 && checkCWpart(cw, 0) && !checkCWpart(cw, 1)){ // wrong: odd ecm should only have odd part of cw used
+			cs_debug_mask(D_TRACE,"NDS videoguard controlword swapped");
+			memcpy(cw+8, cw, 8);  // move card cw answer to right part!
+			memset(cw,0,8); // blanc old position
+		}
+	}		
 
 #ifdef CW_CYCLE_CHECK
 	if(!checkcwcycle(er, reader, cw, rc))
@@ -2402,6 +2416,15 @@ int32_t ecmfmt(uint16_t caid, uint16_t onid, uint32_t prid, uint16_t chid, uint1
 		c++;
 	}
 	return s;
+}
+
+uint8_t checkCWpart(uchar *cw, int8_t part)
+{
+	uint8_t eo = part ? 8 : 0;
+	int8_t i;
+	for(i = 0; i < 8; i++)
+		if(cw[i + eo]) { return 1; }
+	return 0;
 }
 
 int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)

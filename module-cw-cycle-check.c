@@ -25,16 +25,6 @@ static inline uint8_t checkECMD5CW(uchar *ecmd5_cw)
 	return 0;
 }
 
-static uint8_t checkCWpart(ECM_REQUEST *er, int8_t nextcyclecw)
-{
-	uint8_t eo = nextcyclecw ? 8 : 0;
-	int8_t i;
-	for(i = 0; i < 8; i++)
-		if(er->cw[i + eo]) { return 1; }
-	return 0;
-}
-
-
 /*
  * countCWpart is to prevent like this
  * D41A1A08B01DAD7A 0F1D0A36AF9777BD found -> ok
@@ -78,7 +68,10 @@ static uint8_t checkvalidCW(ECM_REQUEST *er)
 	}
 	if(er->caid == 0x09C4 || er->caid ==  0x098C || er->caid == 0x09CD || er->caid == 0x0963)    //make dyn
 	{
-		if(((checkCWpart(er, 0)^checkCWpart(er, 1)) == 0))
+		if (er->ecm[0] == 0x80 && checkCWpart(er->cw, 1)) return 0; // wrong: even ecm should only have even part of cw used
+		if (er->ecm[0] == 0x81 && checkCWpart(er->cw, 0)) return 0; // wrong: odd ecm should only have odd part of cw used
+		
+		if(((checkCWpart(er->cw, 0)^checkCWpart(er->cw, 1)) == 0))
 		{
 			//wrong
 			return 0;
@@ -86,7 +79,7 @@ static uint8_t checkvalidCW(ECM_REQUEST *er)
 	}
 	else
 	{
-		if(((checkCWpart(er, 0) && checkCWpart(er, 1)) == 0))
+		if(((checkCWpart(er->cw, 0) && checkCWpart(er->cw, 1)) == 0))
 		{
 			//wrong
 			return 0;
