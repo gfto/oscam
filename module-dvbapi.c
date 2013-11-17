@@ -20,6 +20,7 @@
 #include "oscam-string.h"
 #include "oscam-time.h"
 #include "reader-irdeto.h"
+#include "cscrypt/md5.h"
 
 // tunemm_caid_map
 #define FROM_TO 0
@@ -2284,6 +2285,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	int32_t j;
 	int32_t demux_id = -1;
 	uint16_t ca_mask, demux_index, adapter_index;
+	
 #define LIST_MORE 0x00    //*CA application should append a 'MORE' CAPMT object to the list and start receiving the next object
 #define LIST_FIRST 0x01   //*CA application should clear the list when a 'FIRST' CAPMT object is received, and start receiving the next object
 #define LIST_LAST 0x02   //*CA application should append a 'LAST' CAPMT object to the list and start working with the list
@@ -2298,7 +2300,11 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 #endif
 	uint32_t program_number = (buffer[1] << 8) | buffer[2];
 	uint32_t program_info_length = ((buffer[4] & 0x0F) << 8) | buffer[5];
-
+	
+	unsigned char md5tmp[MD5_DIGEST_LENGTH];
+	int32_t offset = program_info_length + 6;
+	MD5(buffer + offset, length - offset, md5tmp); // calculate md5 checksum
+	
 	cs_ddump_mask(D_DVBAPI, buffer, length, "capmt:");
 	cs_log("[DVBAPI] Receiver sends PMT command %d for channel %04X", ca_pmt_list_management, program_number);
 	if((ca_pmt_list_management == LIST_FIRST || ca_pmt_list_management == LIST_ONLY) && pmt_stopmarking == 0)
@@ -2329,41 +2335,24 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 
 			if(ca_pmt_list_management == LIST_UPDATE || ca_pmt_list_management == LIST_LAST)   //PMT Update */
 			{
-
-				if(demux[i].adapter_index != adapter_index || demux[i].demux_index != demux_index)
-				{
-					cs_log("[DVBAPI] Demuxer #%d PMT update for decoding of SRVID %04X on additional demuxer! ", i, program_number);
-					demux[i].stopdescramble = 0;
+				if(memcmp(demux[i].md5hash, md5tmp, DMXMD5HASHSIZE)){
+					if(demux[i].adapter_index != adapter_index || demux[i].demux_index != demux_index){
+						cs_log("[DVBAPI] Demuxer #%d PMT update for decoding of SRVID %04X on additional demuxer! ", i, program_number);
+						demux[i].stopdescramble = 0;
+					}
+					else {
+						demux_id = i;
+						demux[i].stopdescramble = 0;
+						cs_log("[DVBAPI] Demuxer #%d PMT update for decoding of SRVID %04X", i, program_number);
+						if(demux[demux_id].ECMpidcount != 0) { running = 1; }  // fix for channel changes from fta to scrambled
+					}
 				}
-				else
-				{
-					demux_id = i;
-					demux[demux_id].curindex = -1;
-					demux[demux_id].ca_mask = ca_mask;
-					demux[demux_id].pidindex = -1;
-					demux[demux_id].STREAMpidcount = 0;
-					if(demux[demux_id].ECMpidcount != 0) { running = 1; }  // fix for channel changes from fta to scrambled
-					demux[demux_id].ECMpidcount = 0;
-					demux[demux_id].ECMpids[0].streams = 0; // reset first ecmpid streams!
-					demux[demux_id].EMMpidcount = 0;
-					demux[i].stopdescramble = 0;
-					running = 1;
-					cs_log("[DVBAPI] Demuxer #%d PMT update for decoding of SRVID %04X", i, program_number);
-				}
-			}
-
-			if(ca_pmt_list_management != LIST_UPDATE && ca_pmt_list_management != LIST_LAST)
-			{
-				demux_id = i;
-				if(demux[demux_id].adapter_index == adapter_index && demux[demux_id].demux_index == demux_index)
-				{
-					cs_log("[DVBAPI] Demuxer #%d continue decoding of SRVID %04X", i, demux[i].program_number);
-#if defined WITH_AZBOX || defined WITH_MCA
-					openxcas_sid = program_number;
-#endif
-					demux[i].stopdescramble = 0;
+				else {
+					cs_log("[DVBAPI] Demuxer #%d PMT update for decoding of SRVID %04X is duplicate -> ignoring!", i, program_number);
+					
 					// stop descramble old demuxers from this ca pmt connection that arent used anymore
-					if((ca_pmt_list_management == LIST_LAST) || (ca_pmt_list_management == LIST_ONLY))
+					demux[i].stopdescramble = 0; // dont stop current demuxer!
+					if(ca_pmt_list_management == LIST_LAST && pmt_stopdescrambling_done == 0)
 					{
 						for(j = 0; j < MAX_DEMUX; j++)
 						{
@@ -2372,9 +2361,37 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 						}
 						pmt_stopdescrambling_done = 1; // mark stopdescrambling as done!
 					}
-					demux[demux_id].ca_mask = ca_mask; // set ca_mask, it might have been changed!
-					if(demux[demux_id].ECMpidcount == 0) { running = 0; }  // fix for channel changes from fta to scrambled
-					else { return demux_id; } // since we are continueing decoding here it ends!
+					return i;
+				}
+			}
+
+			if(ca_pmt_list_management != LIST_UPDATE && ca_pmt_list_management != LIST_LAST)
+			{
+				demux_id = i;
+				if(!memcmp(demux[i].md5hash, md5tmp, DMXMD5HASHSIZE)){
+					cs_log("[DVBAPI] Demuxer #%d continue decoding of SRVID %04X", i, demux[i].program_number);
+#if defined WITH_AZBOX || defined WITH_MCA
+					openxcas_sid = program_number;
+#endif			
+		
+					// stop descramble old demuxers from this ca pmt connection that arent used anymore
+					demux[i].stopdescramble = 0; // dont stop current demuxer!
+					if(ca_pmt_list_management == LIST_ONLY && pmt_stopdescrambling_done == 0)
+					{
+						for(j = 0; j < MAX_DEMUX; j++)
+						{
+							if(demux[j].program_number == 0) { continue; }
+							if(demux[j].stopdescramble == 1) { dvbapi_stop_descrambling(j); }  // Stop descrambling and remove all demuxer entries not in new PMT.
+						}
+						pmt_stopdescrambling_done = 1; // mark stopdescrambling as done!
+					}
+					
+					return demux_id; // since we are continuing decoding here it ends!
+				}
+				else {
+					demux[i].stopdescramble = 0;
+					cs_log("[DVBAPI] Demuxer #%d PMT update for decoding of SRVID %04X", i, program_number);
+					if(demux[demux_id].ECMpidcount != 0) { running = 1; }  // fix for channel changes from fta to scrambled
 				}
 			}
 
@@ -2408,6 +2425,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	demux[demux_id].enigma_namespace = 0;
 	demux[demux_id].tsid = 0;
 	demux[demux_id].onid = 0;
+	memcpy(demux[demux_id].md5hash, md5tmp, DMXMD5HASHSIZE); // store pmt object md5hash
 
 	if(pmtfile)
 		{ cs_strncpy(demux[demux_id].pmt_file, pmtfile, sizeof(demux[demux_id].pmt_file)); }
@@ -2417,7 +2435,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 
 	uint32_t es_info_length = 0, vpid = 0;
 	struct s_dvbapi_priority *addentry;
-
+	
+	demux[demux_id].STREAMpidcount = 0; // reset numer of streams
 	for(i = program_info_length + 6; i < length; i += es_info_length + 5)
 	{
 		int32_t stream_type = buffer[i];
@@ -2643,18 +2662,6 @@ void dvbapi_handlesockmsg(unsigned char *buffer, uint32_t len, int32_t connfd)
 		switch(buffer[2 + k])
 		{
 		case 0x32:
-			/*if (buffer[size+3+k] == 0x00 && cfg.dvbapi_pmtmode == 6){ // LIST_MORE only for pmtmode 6, read more input from ca pmt server!
-			    int32_t pmtlen = recv(connfd, (buffer+len), (sizeof(buffer)-len), MSG_DONTWAIT);
-			    if (pmtlen<1){
-			        cs_debug_mask(D_DVBAPI,"[DVBAPI] Error: received PMT LIST_MORE command but no additional PMT object received!");
-			    }
-			    else{
-			        len += pmtlen;
-			        cs_debug_mask(D_DVBAPI,"[DVBAPI] Received PMT LIST_MORE command and additional PMT object(s) received!");
-			        dvbapi_parse_capmt(buffer + size + 3 + k, val, connfd, NULL);
-			        break;
-			    }
-			}*/
 			dvbapi_parse_capmt(buffer + size + 3 + k, val, connfd, NULL);
 			break;
 		case 0x3f:
@@ -3539,8 +3546,7 @@ static void *dvbapi_main_local(void *cli)
 		if(rc > 0)
 		{
 			cs_ftime(&end); // register end time
-			cs_debug_mask(D_TRACE, "[DVBAPI] new events occurred on %d of %d handlers after %ld ms inactivity", rc, pfdcount,
-						  1000 * (end.time - start.time) + end.millitm - start.millitm);
+			cs_debug_mask(D_TRACE, "[DVBAPI] new events occurred on %d of %d handlers after %d ms inactivity", rc, pfdcount, comp_timeb(&start, &end));
 			cs_ftime(&start); // register new start time for next poll
 		}
 
@@ -3754,11 +3760,11 @@ void delayer(ECM_REQUEST *er)
 
 	struct timeb tpe;
 	cs_ftime(&tpe);
-	int32_t t = 1000 * (tpe.time - er->tps.time) + tpe.millitm - er->tps.millitm;
-	if(t < cfg.dvbapi_delayer)
+	int32_t gone = comp_timeb(&tpe, &er->tps);
+	if( gone < cfg.dvbapi_delayer)
 	{
-		cs_debug_mask(D_DVBAPI, "delayer: t=%dms, cfg=%dms -> delay=%dms", t, cfg.dvbapi_delayer, cfg.dvbapi_delayer - t);
-		cs_sleepms(cfg.dvbapi_delayer - t);
+		cs_debug_mask(D_DVBAPI, "delayer: gone=%dms, cfg=%dms -> delay=%dms", gone, cfg.dvbapi_delayer, cfg.dvbapi_delayer - gone);
+		cs_sleepms(cfg.dvbapi_delayer - gone);
 	}
 }
 
@@ -4360,14 +4366,14 @@ int32_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid)
 		demux[demux_index].ECMpids[pid].index = idx;
 		cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d PID: #%d CAID: %04X ECMPID: %04X is using index %d", demux_index, pid,
 					  demux[demux_index].ECMpids[pid].CAID, demux[demux_index].ECMpids[pid].ECM_PID, idx - 1);
+	}
 
-		for(n = 0; n < demux[demux_index].STREAMpidcount; n++)
-		{
-			if(!demux[demux_index].ECMpids[pid].streams || (demux[demux_index].ECMpids[pid].streams & (1 << n)))
-				{ dvbapi_set_pid(demux_index, n, idx - 1); } // enable streampid
-			else
-				{ dvbapi_set_pid(demux_index, n, -1); } // disable streampid
-		}
+	for(n = 0; n < demux[demux_index].STREAMpidcount; n++)
+	{
+		if(!demux[demux_index].ECMpids[pid].streams || (demux[demux_index].ECMpids[pid].streams & (1 << n)))
+			{ dvbapi_set_pid(demux_index, n, idx - 1); } // enable streampid
+		else
+			{ dvbapi_set_pid(demux_index, n, -1); } // disable streampid
 	}
 
 	return idx - 1; // return caindexer

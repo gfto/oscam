@@ -38,6 +38,7 @@
 #define BOXTYPE_NEUMO   10
 #define BOXTYPE_PC      11
 #define BOXTYPES        11
+#define DMXMD5HASHSIZE  16  // use MD5() 
 
 struct box_devices
 {
@@ -126,6 +127,7 @@ typedef struct demux_s
 	uint8_t stopdescramble;
 	uint8_t old_ecmfiltercount; // previous ecm filtercount
 	uint8_t old_emmfiltercount; // previous emm filtercount
+	uchar md5hash[DMXMD5HASHSIZE]; 
 #ifdef WITH_STAPI
 	uint32_t DescramblerHandle[PTINUM];
 	int32_t desc_pidcount;
