@@ -66,7 +66,7 @@ static uint8_t checkvalidCW(ECM_REQUEST *er)
 		//wrong
 		return 0;
 	}
-	if(er->caid >> 8 == 0x09) //make dyn videoguard
+	if(er->caid == 0x09C4 || er->caid ==  0x098C || er->caid == 0x09CD || er->caid == 0x0963)    //make dyn
 	{
 		if (er->ecm[0] == 0x80 && checkCWpart(er->cw, 1) && !checkCWpart(er->cw, 0)) return 0; // wrong: even ecm should only have even part of cw used
 		if (er->ecm[0] == 0x81 && checkCWpart(er->cw, 0) && !checkCWpart(er->cw, 1)) return 0; // wrong: odd ecm should only have odd part of cw used
