@@ -1021,6 +1021,20 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 		is_fake = 1;
 		er->rc = E_FOUND;
 	}
+	
+	if (er->caid >> 8 == 0x09 && er->cw && er->rc < E_NOTFOUND){
+		if (er->ecm[0] == 0x80 && checkCWpart(er->cw, 1) && !checkCWpart(er->cw, 0)){ // wrong: even ecm should only have even part of cw used
+			cs_debug_mask(D_TRACE,"NDS videoguard controlword swapped");
+			memcpy(er->cw, er->cw + 8, 8);  // move card cw answer to right part!
+			memset(er->cw+8,0,8); // blanc old position
+		}
+		
+		if (er->ecm[0] == 0x81 && checkCWpart(er->cw, 0) && !checkCWpart(er->cw, 1)){ // wrong: odd ecm should only have odd part of cw used
+			cs_debug_mask(D_TRACE,"NDS videoguard controlword swapped");
+			memcpy(er->cw+8, er->cw, 8);  // move card cw answer to right part!
+			memset(er->cw,0,8); // blanc old position
+		}
+	}
 
 	if(cfg.double_check &&  er->rc == E_FOUND && er->selected_reader && is_double_check_caid(er))
 	{
@@ -1534,20 +1548,6 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 		else
 		{
 			cs_debug_mask(D_TRACE, "notice: CW checksum check disabled");
-		}
-	}
-	
-	if (er->caid >> 8 == 0x09 && cw && rc < E_NOTFOUND){
-		if (er->ecm[0] == 0x80 && checkCWpart(cw, 1) && !checkCWpart(cw, 0)){ // wrong: even ecm should only have even part of cw used
-			cs_debug_mask(D_TRACE,"NDS videoguard controlword swapped");
-			memcpy(cw, cw + 8, 8);  // move card cw answer to right part!
-			memset(cw+8,0,8); // blanc old position
-		}
-		
-		if (er->ecm[0] == 0x81 && checkCWpart(cw, 0) && !checkCWpart(cw, 1)){ // wrong: odd ecm should only have odd part of cw used
-			cs_debug_mask(D_TRACE,"NDS videoguard controlword swapped");
-			memcpy(cw+8, cw, 8);  // move card cw answer to right part!
-			memset(cw,0,8); // blanc old position
 		}
 	}		
 
