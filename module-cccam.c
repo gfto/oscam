@@ -2267,6 +2267,20 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	i2b_buf(4, er->prid, ecmbuf + 2);
 	i2b_buf(2, er->srvid, ecmbuf + 10);
 
+	ecmbuf[18] = er->cwc_cycletime; // contains cwc stage3 cycletime
+	ecmbuf[19] = er->cwc_next_cw_cycle; // which cw must next cycle
+
+#ifdef CS_CACHEEX
+	if (er->cwc_cycletime)
+	{
+		if(cl->typ == 'c' && cl->account && cl->account->cacheex.mode)
+			{ cl->account->cwc_info++; }
+		else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
+			{ cl->cwc_info++; }
+		cs_debug_mask(D_CWC, "CWC (CE) push to %s (cccam) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
+	}
+#endif
+
 	uint8_t *ofs = ecmbuf + 20;
 
 	//Write oscam ecmd5 hash:
@@ -2338,6 +2352,20 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 	er->rc = rc;
 
 	er->ecmlen = 0;
+
+	er->cwc_cycletime = buf[18];
+	er->cwc_next_cw_cycle = buf[19];
+
+#ifdef CS_CACHEEX
+	if (er->cwc_cycletime)
+	{
+		if(cl->typ == 'c' && cl->account && cl->account->cacheex.mode)
+			{ cl->account->cwc_info++; }
+		else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
+			{ cl->cwc_info++; }
+		cs_debug_mask(D_CWC, "CWC (CE) received from %s (cccam) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
+	}
+#endif
 
 	uint8_t *ofs = buf + 20;
 

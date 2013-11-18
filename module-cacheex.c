@@ -504,11 +504,15 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 					if(check_client(ecm->client))
 					{
 #ifdef CW_CYCLE_CHECK
-						if(!checkcwcycle(ecm, cl->reader, er->cw, er->rc))       //if not valid, we don't add it to hit_cache and does not cascade push!!!
+						if(!checkcwcycle(ecm->client, er, cl->reader, er->cw, er->rc))       //if not valid, we don't add it to hit_cache and does not cascade push!!!
 						{
 							continue;
 						}
-						else { cs_debug_mask(D_CACHEEX | D_CSP | D_LB, "{client %s, caid %04X, srvid %04X} [ADD_HITCACHE] cyclecheck passed!", (ecm->client ? ecm->client->account->usr : "-"), er->caid, er->srvid); }
+						else 
+						{ 
+							cs_debug_mask(D_CWC | D_LB, "{client %s, caid %04X, srvid %04X} [ADD_HITCACHE] cyclecheck passed!", (ecm->client ? ecm->client->account->usr : "-"), er->caid, er->srvid);
+							snprintf(ecm->cwc_msg_log, sizeof(ecm->cwc_msg_log), "%s", er->cwc_msg_log);
+						}
 #endif
 
 						struct s_write_from_cache *wfc = NULL;

@@ -1552,7 +1552,7 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 	}		
 
 #ifdef CW_CYCLE_CHECK
-	if(!checkcwcycle(er, reader, cw, rc))
+	if(!checkcwcycle(er->client, er, reader, cw, rc))
 	{
 		rc = E_NOTFOUND;
 		rcEx = E2_WRONG_CHKSUM;
@@ -1770,6 +1770,8 @@ void write_ecm_answer_fromcache(struct s_write_from_cache *wfc)
 
 #ifdef CS_CACHEEX
 		er->cacheex_src = ecm->cacheex_src;
+		er->cwc_cycletime = ecm->cwc_cycletime;
+		er->cwc_next_cw_cycle = ecm->cwc_next_cw_cycle;
 
 		int8_t cacheex = check_client(er->client) && er->client->account ? er->client->account->cacheex.mode : 0;
 		if(cacheex == 1 && check_client(er->client))
@@ -2241,9 +2243,10 @@ OUT:
 	{
 
 #ifdef CW_CYCLE_CHECK
-		if(checkcwcycle(er, NULL, ecm->cw, ecm->rc) != 0)    // check answer from int cache too, necessary for cycle learning
+		if(checkcwcycle(client, ecm, NULL, ecm->cw, ecm->rc) != 0)    // check answer from int cache too, necessary for cycle learning
 		{
 			cs_debug_mask(D_CWC | D_LB, "{client %s, caid %04X, srvid %04X} [get_cw] cyclecheck passed ecm in INT. cache, ecm->rc %d", (er->client ? er->client->account->usr : "-"), er->caid, er->srvid, ecm ? ecm->rc : -1);
+			snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "%s", ecm->cwc_msg_log);
 #endif
 
 			er->readers_timeout_check = 1; //no readers asked to be checked at ctimeout

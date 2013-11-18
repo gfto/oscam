@@ -143,7 +143,6 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 	char cwc_md5[17 * 3];
 	char cwc_cw[17 * 3];
 	char cwc_csp[5 * 3];
-	bool cw_stageswitch = false;
 	int8_t n = 1, m = 1, k;
 	int32_t mcl = cfg.maxcyclelist;
 	struct s_cw_cycle_check *currentnode = NULL, *cwc = NULL;
@@ -198,6 +197,27 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 			cs_hexdump(0, cwc->cw, 16, cwc_cw, sizeof(cwc_cw));
 			ecmfmt(cwc->caid, 0, cwc->provid, cwc->chid, 0, cwc->sid, cwc->ecmlen, cwc_md5, cwc_csp, cwc_cw, cwc_ecmf, ECM_FMT_LEN, 0, 0);
 
+// Cycletime over Cacheex
+			if (cfg.cwcycle_usecwcfromce)
+			{
+				if(er->cwc_cycletime > 0 && er->cwc_next_cw_cycle < 2)
+				{
+					cs_debug_mask(D_CWC, "cyclecheck [Use Info in Request] Client: %s cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", user, er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
+					cwc->stage = 3;
+					cwc->cycletime = er->cwc_cycletime;
+					cwc->nextcyclecw = er->cwc_next_cw_cycle;
+					ret = 8;
+					if(memcmp(cwc->cw, cw, 16) == 0) //check if the store cw the same like the current
+					{
+						cs_debug_mask(D_CWC, "cyclecheck [Dump Stored CW] Client: %s EA: %s CW: %s Time: %ld", user, cwc_ecmf, cwc_cw, cwc->time);
+						cs_debug_mask(D_CWC, "cyclecheck [Dump CheckedCW] Client: %s EA: %s CW: %s Time: %ld Timediff: %ld", user, er_ecmf, cwstr, now, now - cwc->time);
+						ret = 4; // Return 4 same CW
+						upd_entry = 0;
+					}		
+					break;
+				}
+			}
+//
 
 			if(cwc->stage == 3 && cwc->nextcyclecw < 2 && now - cwc->time < cwc->cycletime * 2 - cwc->dyncycletime - 1)    // Check for Cycle no need to check Entrys others like stage 3
 			{
@@ -259,11 +279,17 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 					if(cycleok == 0)
 					{
 						cwc->nextcyclecw = 1;
+						er->cwc_next_cw_cycle = 1;
+						if(cwc->cycletime <= 255 && (!(cwc->caid == 0x0100 && cwc->provid == 0x00006A))) // make sure because er->cwc_cycletime buf[18] is only 1Byte
+						{ er->cwc_cycletime = cwc->cycletime; }
 						cs_debug_mask(D_CWC, "cyclecheck [Valid CW 0 Cycle] Client: %s EA: %s Timediff: %ld Stage: %i Cycletime: %i dyncycletime: %i nextCycleCW = CW%i from Reader: %s", user, er_ecmf, now - cwc->time, cwc->stage, cwc->cycletime, cwc->dyncycletime, cwc->nextcyclecw, reader);
 					}
 					else if(cycleok == 1)
 					{
 						cwc->nextcyclecw = 0;
+						er->cwc_next_cw_cycle = 0;
+						if(cwc->cycletime <= 255 && (!(cwc->caid == 0x0100 && cwc->provid == 0x00006A))) // make sure because er->cwc_cycletime buf[18] is only 1Byte
+						{ er->cwc_cycletime = cwc->cycletime; }
 						cs_debug_mask(D_CWC, "cyclecheck [Valid CW 1 Cycle] Client: %s EA: %s Timediff: %ld Stage: %i Cycletime: %i dyncycletime: %i nextCycleCW = CW%i from Reader: %s", user, er_ecmf, now - cwc->time, cwc->stage, cwc->cycletime, cwc->dyncycletime, cwc->nextcyclecw, reader);
 					}
 					cs_debug_mask(D_CWC, "cyclecheck [Dump Stored CW] Client: %s EA: %s CW: %s Time: %ld", user, cwc_ecmf, cwc_cw, cwc->time);
@@ -317,7 +343,6 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 									cwc->stage = 4;
 									upd_entry = 1;
 									cwc->nextcyclecw = 2;
-									cw_stageswitch = true;
 									break;
 								}
 							}
@@ -343,7 +368,6 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 					memset(cwc->cw, 0, sizeof(cwc->cw)); //fake cw for stage 2/4
 					ret = 3;
 					cwc->nextcyclecw = 2;
-					cw_stageswitch = true;
 				}
 			}
 			if(upd_entry)    //  learning stages
@@ -376,9 +400,9 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 							cwc->stage--;
 						}
 					}
-					else if((cwc->stage == 2 || cwc->stage == 4) && !cw_stageswitch)     // stage 2 is passed; we update the cw's and compare cycletime
+					else if(cwc->stage == 2)     // stage 2 is passed; we update the cw's and compare cycletime
 					{
-						if((cwc->cycletime == now - cwc->time && cwc->cycletime > 0) || cwc->cw_stageswitch)    // if we got a stable cycletime we go to stage 3
+						if(cwc->cycletime == now - cwc->time && cwc->cycletime > 0)    // if we got a stable cycletime we go to stage 3
 						{
 							n = memcmp(cwc->cw, cw, 8);
 							m = memcmp(cwc->cw + 8, cw + 8, 8);
@@ -397,11 +421,6 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 								cs_debug_mask(D_CWC, "cyclecheck [Set Cycletime %i] for Entry: %s -> now we can check CW's", cwc->cycletime, cwc_ecmf);
 								cwc->stage = 3; // increase stage
 							}
-							else if(cwc->badrepeat < 2)
-							{
-								cwc->badrepeat++;
-								cs_debug_mask(D_CWC, "cyclecheck [Stay on Stage %d] for Entry %s Cycletime: %i no cycle detect!", cwc->stage, cwc_ecmf, cwc->cycletime);
-							}
 							else
 							{
 								cs_debug_mask(D_CWC, "cyclecheck [Back to Stage 1] for Entry %s Cycletime: %i -> no CW-Cycle in Learning Stage", cwc_ecmf, cwc->cycletime);  // if a server asked only every twice ECM we got a stable cycletime*2 ->but thats wrong
@@ -411,19 +430,49 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 						}
 						else
 						{
-
 							cs_debug_mask(D_CWC, "cyclecheck [Back to Stage 1] for Entry %s Cycletime: %i -> no constant CW-Change-Time", cwc_ecmf, cwc->cycletime);
 							cwc->stage = 1;
 						}
 					}
+					else if(cwc->stage == 4)	// we got a early learned cycletime.. use this cycletime and check only which cw cycle 
+					{
+						n = memcmp(cwc->cw, cw, 8);
+						m = memcmp(cwc->cw + 8, cw + 8, 8);
+						if(n == 0)
+						{
+							cwc->nextcyclecw = 1;
+						}
+						if(m == 0)
+						{
+							cwc->nextcyclecw = 0;
+						}
+						if(n == m || !checkECMD5CW(cw)) { cwc->nextcyclecw = 2; }  //be sure only one cw part cycle and is valid
+						if(cwc->nextcyclecw < 2)
+						{
+							cs_debug_mask(D_CWC, "cyclecheck [Back to Stage 3] %s Cycletime: %i Lockdiff: %ld nextCycleCW = CW%i", cwc_ecmf, cwc->cycletime, now - cwc->locktime, cwc->nextcyclecw);
+							cs_debug_mask(D_CWC, "cyclecheck [Set old Cycletime %i] for Entry: %s -> now we can check CW's", cwc->cycletime, cwc_ecmf);
+							cwc->stage = 3; // go back to stage 3
+						}
+						else
+						{
+							cs_debug_mask(D_CWC, "cyclecheck [Stay on Stage %d] for Entry %s Cycletime: %i no cycle detect!", cwc->stage, cwc_ecmf, cwc->cycletime);
+							if (cwc->stage4_repeat > 12) 
+							{ 
+								cwc->stage = 1;
+								cs_debug_mask(D_CWC, "cyclecheck [Back to Stage 1] too much cyclefailure, maybe cycletime not correct %s Cycletime: %i Lockdiff: %ld nextCycleCW = CW%i", cwc_ecmf, cwc->cycletime, now - cwc->locktime, cwc->nextcyclecw);							
+							} 
+						}
+						cwc->stage4_repeat++;
+						ret = ret == 3 ? 3 : 7; // IGN for first stage4 otherwise LEARN
+					}
 					if(cwc->stage == 3)
 					{
 						cwc->locktime = 0;
-						cwc->badrepeat = 0;
+						cwc->stage4_repeat = 0;
 					}
 					else
 					{
-						if(cwc->stage < 3 && !cw_stageswitch) { cwc->cycletime = now - cwc->time; }
+						if(cwc->stage < 3) { cwc->cycletime = now - cwc->time; }
 						cwc->locktime = now + (get_fallbacktimeout(cwc->caid) / 1000);
 					}
 				}
@@ -479,14 +528,16 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 				new->chid = er->chid;
 				new->time = now;
 				new->locktime = now + (get_fallbacktimeout(er->caid) / 1000);
-				new->stage = 0;
-				new->cycletime = 99;
 				new->dyncycletime = 0; // to react of share timings
-				new->nextcyclecw = 2; //2=we dont know which next cw Cycle;  0= next cw Cycle CW0; 1= next cw Cycle CW1;
-				new->badrepeat = 0; // on stage 4 counting to prevent too much check again
-				new->cw_stageswitch = false;
+// cycletime over Cacheex
+				new->stage = (er->cwc_cycletime > 0 && er->cwc_next_cw_cycle < 2) ? 3 : 0;
+				new->cycletime = (er->cwc_cycletime > 0 && er->cwc_next_cw_cycle < 2) ? er->cwc_cycletime : 99;
+				new->nextcyclecw = (er->cwc_cycletime > 0 && er->cwc_next_cw_cycle < 2) ? er->cwc_next_cw_cycle : 2; //2=we dont know which next cw Cycle;  0= next cw Cycle CW0; 1= next cw Cycle CW1;
+				ret = (er->cwc_cycletime > 0 && er->cwc_next_cw_cycle < 2) ? 8 : 6;
+//				
 				new->prev = new->next = NULL;
 				new->old = 0;
+				new->stage4_repeat = 0;
 				//write lock
 				cs_writelock(&cwcycle_lock);
 				if(cw_cc_list)    // the new entry on top
@@ -529,7 +580,6 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 #endif
 		memcpy(cwc->ecm_md5[cwc->cwc_hist_entry].cw, cw, sizeof(cwc->cw));
 		cwc->ecmlen = er->ecmlen;
-		cwc->cw_stageswitch = cw_stageswitch; //need for zapping
 		//write lock /
 		cs_writelock(&cwcycle_lock);
 		if(cw_cc_list)    // the clone entry on top
@@ -550,7 +600,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 	return ret;
 }
 
-uint8_t checkcwcycle(ECM_REQUEST *er, struct s_reader *reader, uchar *cw, int8_t rc)
+uint8_t checkcwcycle(struct s_client *client, ECM_REQUEST *er, struct s_reader *reader, uchar *cw, int8_t rc)
 {
 
 	if(!cfg.cwcycle_check_enable)
@@ -568,7 +618,6 @@ uint8_t checkcwcycle(ECM_REQUEST *er, struct s_reader *reader, uchar *cw, int8_t
 	format_ecm(er, er_ecmf, ECM_FMT_LEN);
 
 	char c_reader[64];
-	struct s_client *client = er->client;
 	char *user = username(client);
 
 	if(reader)
@@ -640,7 +689,7 @@ uint8_t checkcwcycle(ECM_REQUEST *er, struct s_reader *reader, uchar *cw, int8_t
 		cs_log("cyclecheck [Bad CW Cycle] for: %s %s from: %s -> ECM Answer is too OLD -> drop cw (ECM Answer)", user, er_ecmf, c_reader);//D_CWC| D_TRACE
 		return 0;
 
-	case 3: // CycleCheck ignored (stage 4 or Entry to Old)
+	case 3: // CycleCheck ignored (stage 3 to stage 4)
 		if(client)
 		{
 			client->cwcycledchecked++;
@@ -677,8 +726,25 @@ uint8_t checkcwcycle(ECM_REQUEST *er, struct s_reader *reader, uchar *cw, int8_t
 		cs_log("cyclecheck [Bad CW Cycle] for: %s %s from: %s -> But Ignored because of answer from Fixed Fallback Reader", user, er_ecmf, c_reader);
 		break;
 
-	case 6: // not checked ( learning Stages or Caid not in cyclelist )
+	case 6: // not checked ( learning Stages Cycletime and CWCycle Stage < 3)
+	case 7: // not checked ( learning Stages only CWCycle Stage 4)
 		snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc LEARN");
+		break;
+
+	case 8: // use Cyclecheck from CE Source
+		if(client)
+		{
+			client->cwcycledchecked++;
+			client->cwcycledok++;
+		}
+		first_client->cwcycledchecked++;
+		first_client->cwcycledok++;
+		if(client && client->account)
+		{
+			client->account->cwcycledchecked++;
+			client->account->cwcycledok++;
+		}
+		snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc OK(CE)");
 		break;
 
 	}

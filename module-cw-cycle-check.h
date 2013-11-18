@@ -24,17 +24,16 @@ struct s_cw_cycle_check
 	int32_t         cycletime;
 	int32_t         dyncycletime;
 	int8_t          nextcyclecw;
-	int8_t          badrepeat;
-	bool            cw_stageswitch;
 	struct s_cwc_md5    ecm_md5[15]; // max 15 old ecm md5 /csp-hashs
 	int8_t          cwc_hist_entry;
 	uint8_t         old;
+	int8_t			stage4_repeat;
 	struct s_cw_cycle_check *prev;
 	struct s_cw_cycle_check *next;
 };
 
 void cleanupcwcycle(void);
-uint8_t checkcwcycle(ECM_REQUEST *er, struct s_reader *reader, uchar *cw, int8_t rc);
+uint8_t checkcwcycle(struct s_client *client, ECM_REQUEST *er, struct s_reader *reader, uchar *cw, int8_t rc);
 #else
 static inline void cleanupcwcycle(void) { };
 #endif
