@@ -504,6 +504,9 @@ DESCRIPTIONS
        cwcycle_allowbadfromffb = 0|1
 	  1 = allow bad cycles from a fixed fallback reader, default:0
 
+       cwcycle_usecwcfromce = 0|1
+	  1 = use CW info from cache exchange, default:0
+
    The [camd33] section
        port = 0|port
 	  TCP port for camd 3.3x clients, 0 = disabled, default:0
