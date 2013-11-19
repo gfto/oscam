@@ -1505,7 +1505,7 @@ static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 	struct sr_data *crdr_data = reader->crdr_data;
 	if (crdr_data->rdrtype >= 3) {
 	char usb_val[2];
-	unsigned long state2;
+	uint32_t state2;
 
     if (crdr_data->usb_dev == NULL) {
 	rdr_log(reader,"usb device unavailable");
@@ -1525,14 +1525,15 @@ static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 	cs_writeunlock(&sr_lock);
 	return ERROR;
 	}
-	state2 = usb_val[0];
+	state2 = (usb_val[0] & 0xFF);
 	cs_writeunlock(&sr_lock);
-	rdr_debug_mask(reader, D_IFD, "the status of card in or out %lu  ( 64 means card IN)", state2);
+	rdr_debug_mask(reader, D_IFD, "the status of card in or out %u  ( 64 means card IN)", state2);
+	
     if (state2 == 64) {
-        *in = 1; //NOCARD reader will be set to off
+        *in = 1; //Card is in Aktivation should be ok if card is activated
 	}
     else {
-        *in = 0; //Card is in Aktivation should be ok if card is activated
+        *in = 0; //NOCARD reader will be set to off
 	}
 	return OK;
 	} else {*in = 1;rdr_log(reader,"CARD STILL IN AKTIVATION PROCESS NO DETECTION"); return OK;}

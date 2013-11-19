@@ -100,7 +100,7 @@ int32_t ICC_Async_GetStatus(struct s_reader *reader, int32_t *card)
 {
 	if (reader->typ == R_SMART && reader->smartdev_found >= 4) {
 		reader->statuscnt = reader->statuscnt + 1;
-		if (reader->statuscnt == 12) {
+		if (reader->statuscnt == 6) {
 		int32_t in = 0;
 		call(reader->crdr.get_status(reader, &in));
 		if(in)
