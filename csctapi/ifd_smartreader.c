@@ -1296,11 +1296,11 @@ static int32_t SR_Init(struct s_reader *reader)
 			crdr_data->rdrtype = TripleP1;
 	}
 	if (!strcasecmp(rdrtype, "TripleP2")) {
-			crdr_data->tripledelay = 2500;
+			crdr_data->tripledelay = 0;
 			crdr_data->rdrtype = TripleP2;
 	}
 	if (!strcasecmp(rdrtype, "TripleP3")) {
-			crdr_data->tripledelay = 5000;
+			crdr_data->tripledelay = 0;
 			crdr_data->rdrtype = TripleP3;
 	}
 	
