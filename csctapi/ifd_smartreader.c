@@ -1511,7 +1511,6 @@ static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 	rdr_log(reader,"usb device unavailable");
 	return ERROR;
 	}
-	rdr_debug_mask(reader, D_IFD, "THE DETECT START = %u card status is %u", crdr_data->detectstart, reader->card_status);
 	if (crdr_data->detectstart == 0) { *in = 1; return OK;} else
 	if (((crdr_data->detectstart == 1) && (reader->card_status != 1)) && ((crdr_data->detectstart == 1) && (reader->card_status != 0))) {
 	cs_writelock(&sr_lock);
@@ -1525,8 +1524,8 @@ static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 	cs_writeunlock(&sr_lock);
 	return ERROR;
 	}
-	state2 = (usb_val[0] & 0xFF);
 	cs_writeunlock(&sr_lock);
+	state2 = (usb_val[0] & 0xFF);
 	rdr_debug_mask(reader, D_IFD, "the status of card in or out %u  ( 64 means card IN)", state2);
 	
     if (state2 == 64) {
@@ -1576,8 +1575,9 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 	// smartreader supports 3.20, 3.43, 3.69, 4.00, 4.36, 4.80, 5.34, 6.00, 6.86, 8.00, 9.61, 12.0, 16.0 MHz
 	struct sr_data *crdr_data = reader->crdr_data;
 	crdr_data->inv = convention;//FIXME this one is set by icc_async and local smartreader reset routine
+	static const char *const parity_str[5] = {"NONE", "ODD", "EVEN", "MARK", "SPACE"};
 //	rdr_log(reader, "the SR_WriteSettings is called");
-//	if (crdr_data->rdrtype <= 1) {
+	if (crdr_data->rdrtype <= 1) {
 	if(reader->mhz >= 1600) { reader->mhz = 1600; }
 	else if(reader->mhz >= 1200) { reader->mhz = 1200; }
 	else if(reader->mhz >= 961)  { reader->mhz =  961; }
@@ -1593,7 +1593,8 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 	else if(reader->mhz >= 343)  { reader->mhz =  343; }
 	else
 		{ reader->mhz =  320; }
-//	}
+	}
+	rdr_log(reader, "Effectif reader settings mhz =%u F= %u D= %u N=%u T=%u inv=%u parity=%s", reader->mhz, F, D, N, T, crdr_data->inv, parity_str[crdr_data->parity]);
 	smart_fastpoll(reader, 1);
 	uint32_t baud_temp2 = (double)(D * (reader->mhz * 10000) / (double)F);
 //	uint32_t baud_temp2 = 9600; // this baudrate is used for reader setup and card init
@@ -1734,7 +1735,7 @@ static pthread_mutex_t init_lock_mutex;
 static int32_t sr_init_locks(struct s_reader *UNUSED(reader))
 {
 	if (pthread_mutex_trylock(&init_lock_mutex)) {
-		cs_lock_create(&sr_lock, 1 , "sr_lock");
+		cs_lock_create(&sr_lock, 5 , "sr_lock");
 	}
 
 	return 0;
