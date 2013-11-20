@@ -690,7 +690,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 	}
 	if(reader->mhz > 2000 && reader->typ == R_INTERNAL) { F = reader->cardmhz; }  // for PLL based internal readers
 	else { F = reader->mhz; } // all other readers
-	reader->worketu = (double)((1 / (double)D) * ((double)Fi / (double)F * 100));  // expressed in us
+	reader->worketu = (double)((double)(1 / (double)D) * ((double)Fi / (double)((double)F / 100)));  // expressed in us
 	rdr_log(reader, "Calculated work ETU is %.2f us", reader->worketu);
 
 	//set timings according to ATR
@@ -781,10 +781,10 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 
 		// Set CWT = 11+(2^CWI) work etu
 		reader->CWT = (uint16_t) 11 + (1 << cwi); // in work ETU
-		// Set BWT = (2^BWI * 960 * Fi / clockspeed) seconds + 11 work etu
-		// Fi / clockspeed == D * worketu (in nano seconds!)
+		// Set BWT = (2^BWI * 960 * 372 / clockspeed in mhz) us + 11*work etu
+		// Set BWT = (2^BWI * 960 * 372 / clockspeed in mhz) / worketu + 11
 
-		reader->BWT = (uint32_t)((1 << bwi) * 960 * D) + 11;  // BWT in work ETU
+		reader->BWT = (uint32_t) ((1<<bwi) * 960 * 372 / (double)((double)F / 100) / (double) reader->worketu) + 11;  // BWT in work ETU
 
 		// Set BGT = 22 * work etu
 		BGT = 22L; // Block Guard Time in ETU used to interspace between block responses
