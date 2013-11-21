@@ -314,7 +314,7 @@ void smartreader_init(struct s_reader *reader)
 
 	crdr_data->type = TYPE_BM;    /* chip type */
 	crdr_data->baudrate = -1;
-	crdr_data->bitbang_enabled = 0;  /* 0: normal mode 1: any of the bitbang modes enabled */
+	crdr_data->bitbang_enabled = 1;  /* 0: normal mode 1: any of the bitbang modes enabled */
 
 	crdr_data->writebuffer_chunksize = 4096;
 	crdr_data->max_packet_size = 0;
@@ -728,6 +728,7 @@ int smartreader_set_baudrate(struct s_reader *reader, int baudrate)
 	}
 //	rdr_log(reader,"De baudrate is set on %u baud de value = %u  de idx = %u", baudrate, value, idx);
     crdr_data->baudrate = baudrate;
+	rdr_log(reader,"BAUDRATE IS NOW SET ON %u", crdr_data->baudrate);
     return 0;
 }
 
@@ -1740,6 +1741,17 @@ static int32_t sr_init_locks(struct s_reader *UNUSED(reader))
 
 	return 0;
 }
+
+static int32_t async_call_baudrate(struct s_reader *reader, uint32_t baud)
+{
+	struct sr_data *crdr_data = reader->crdr_data;
+	int baudrate;
+	baudrate = baud;
+	smartreader_set_baudrate(reader, baudrate);
+	crdr_data->baudrate = baud;
+	return OK;
+}
+	
 	
 
 void cardreader_smartreader(struct s_cardreader *crdr)
@@ -1755,6 +1767,7 @@ void cardreader_smartreader(struct s_cardreader *crdr)
 	crdr->close          = SR_Close;
 	crdr->write_settings = sr_write_settings;
 	crdr->lock_init      = sr_init_locks;
+	crdr->set_baudrate   = async_call_baudrate;
 }
 
 #endif

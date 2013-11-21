@@ -305,7 +305,7 @@ bool cardreader_init(struct s_reader *reader)
 	}
 	else
 	{
-		if (reader->typ == R_SMART ){
+		if ((reader->typ == R_SMART) && (reader->smartdev_found <= 2) ){
 			rdr_log(reader, "clocking for smartreader with smartreader protocol");
 			if (reader->cardmhz >= 1600) reader->cardmhz = 1600; else
 			if (reader->cardmhz >= 1200) reader->cardmhz = 1200; else

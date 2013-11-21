@@ -691,7 +691,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 	if(reader->mhz > 2000 && reader->typ == R_INTERNAL) { F = reader->cardmhz; }  // for PLL based internal readers
 	else { F = reader->mhz; } // all other readers
 	reader->worketu = (double)((double)(1 / (double)D) * ((double)Fi / (double)((double)F / 100)));  // expressed in us
-	rdr_log(reader, "Calculated work ETU is %.2f us", reader->worketu);
+	rdr_log(reader, "Calculated work ETU is %.2f us reader mhz = %u", reader->worketu, reader->mhz);
 
 	//set timings according to ATR
 	reader->read_timeout = 0;
