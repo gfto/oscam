@@ -1577,7 +1577,7 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 	struct sr_data *crdr_data = reader->crdr_data;
 	crdr_data->inv = convention;//FIXME this one is set by icc_async and local smartreader reset routine
 	static const char *const parity_str[5] = {"NONE", "ODD", "EVEN", "MARK", "SPACE"};
-	if (crdr_data->rdrtype <= 1) {
+/*	if (crdr_data->rdrtype <= 5) {
 	if(reader->mhz >= 1600) { reader->mhz = 1600; }
 	else if(reader->mhz >= 1200) { reader->mhz = 1200; }
 	else if(reader->mhz >= 961)  { reader->mhz =  961; }
@@ -1593,7 +1593,7 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 	else if(reader->mhz >= 343)  { reader->mhz =  343; }
 	else
 		{ reader->mhz =  320; }
-	}
+	}*/
 	rdr_log(reader, "Effectif reader settings mhz =%u F= %u D= %u N=%u T=%u inv=%u parity=%s", reader->mhz, F, D, N, T, crdr_data->inv, parity_str[crdr_data->parity]);
 	smart_fastpoll(reader, 1);
 	uint32_t baud_temp2 = (double)(D * (reader->mhz * 10000) / (double)F);
