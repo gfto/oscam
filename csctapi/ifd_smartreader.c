@@ -314,7 +314,7 @@ void smartreader_init(struct s_reader *reader)
 
 	crdr_data->type = TYPE_BM;    /* chip type */
 	crdr_data->baudrate = -1;
-	crdr_data->bitbang_enabled = 1;  /* 0: normal mode 1: any of the bitbang modes enabled */
+	crdr_data->bitbang_enabled = 0;  /* 0: normal mode 1: any of the bitbang modes enabled */
 
 	crdr_data->writebuffer_chunksize = 4096;
 	crdr_data->max_packet_size = 0;
@@ -726,9 +726,9 @@ int smartreader_set_baudrate(struct s_reader *reader, int baudrate)
         rdr_log(reader, "Setting new baudrate failed");
 		return (-2);
 	}
-//	rdr_log(reader,"De baudrate is set on %u baud de value = %u  de idx = %u", baudrate, value, idx);
     crdr_data->baudrate = baudrate;
-	rdr_log(reader,"BAUDRATE IS NOW SET ON %u", crdr_data->baudrate);
+//	rdr_log(reader,"BAUDRATE IS NOW SET ON %u", crdr_data->baudrate);
+//	rdr_log(reader,"ACTUAL BAUDRATE = %u", actual_baudrate);
     return 0;
 }
 
@@ -1069,7 +1069,7 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 	else if(usbdesc.bcdDevice == 0x200)
 		{ crdr_data->type = TYPE_AM; }
 	else if((usbdesc.bcdDevice == 0x500) && (usbdesc.idProduct == 0x6011))
-		{ crdr_data->type = TYPE_2232C; }
+		{ crdr_data->type = TYPE_4232H; }
 	else if((usbdesc.bcdDevice == 0x500) && (usbdesc.idProduct != 0x6011))
 		{ crdr_data->type = TYPE_2232C; }
 	else if(usbdesc.bcdDevice == 0x600)
@@ -1577,7 +1577,6 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 	struct sr_data *crdr_data = reader->crdr_data;
 	crdr_data->inv = convention;//FIXME this one is set by icc_async and local smartreader reset routine
 	static const char *const parity_str[5] = {"NONE", "ODD", "EVEN", "MARK", "SPACE"};
-//	rdr_log(reader, "the SR_WriteSettings is called");
 	if (crdr_data->rdrtype <= 1) {
 	if(reader->mhz >= 1600) { reader->mhz = 1600; }
 	else if(reader->mhz >= 1200) { reader->mhz = 1200; }
@@ -1598,11 +1597,8 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 	rdr_log(reader, "Effectif reader settings mhz =%u F= %u D= %u N=%u T=%u inv=%u parity=%s", reader->mhz, F, D, N, T, crdr_data->inv, parity_str[crdr_data->parity]);
 	smart_fastpoll(reader, 1);
 	uint32_t baud_temp2 = (double)(D * (reader->mhz * 10000) / (double)F);
-//	uint32_t baud_temp2 = 9600; // this baudrate is used for reader setup and card init
 	smart_flush(reader);
 	EnableSmartReader(reader, baud_temp2, reader->mhz, F, D, N, T, crdr_data->inv, crdr_data->parity);
-//	smartreader_set_baudrate(reader, 3000000); // set to max as the mhz does determine the used baudrate and we are working async
-//	rdr_log(reader,"de baudrate set = 3000000");
 	smart_fastpoll(reader, 0);
 
 	return OK;
@@ -1742,7 +1738,7 @@ static int32_t sr_init_locks(struct s_reader *UNUSED(reader))
 	return 0;
 }
 
-static int32_t async_call_baudrate(struct s_reader *reader, uint32_t baud)
+/*static int32_t async_call_baudrate(struct s_reader *reader, uint32_t baud) // will be used later on for auto setup
 {
 	struct sr_data *crdr_data = reader->crdr_data;
 	int baudrate;
@@ -1750,7 +1746,7 @@ static int32_t async_call_baudrate(struct s_reader *reader, uint32_t baud)
 	smartreader_set_baudrate(reader, baudrate);
 	crdr_data->baudrate = baud;
 	return OK;
-}
+}*/
 	
 	
 
@@ -1767,7 +1763,7 @@ void cardreader_smartreader(struct s_cardreader *crdr)
 	crdr->close          = SR_Close;
 	crdr->write_settings = sr_write_settings;
 	crdr->lock_init      = sr_init_locks;
-	crdr->set_baudrate   = async_call_baudrate;
+//	crdr->set_baudrate   = async_call_baudrate; at this time its only uses cardmhz will be used later on with some modifications
 }
 
 #endif
