@@ -1188,6 +1188,7 @@ struct s_reader                                     //contains device info, read
 	int8_t          needsemmfirst;                  // 0: reader descrambles without emm first, 1: reader needs emms before it can descramble
 	time_t          emm_last;                       // time of last succesfull written emm
 	int8_t          smargopatch;
+	int8_t			smargoautospeed;				// 1 clockspeed set according to atr f max
 	struct s_client *client;                        // pointer to 'r'client this reader is running in
 	LLIST           *ll_entitlements;               // entitlements
 	int8_t          enable;

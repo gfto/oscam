@@ -335,13 +335,21 @@ bool cardreader_init(struct s_reader *reader)
 			if (reader->mhz == 357)  reader->mhz =  400; else // 357 not a default smartreader setting
 			if (reader->mhz >= 343)  reader->mhz =  343; else 
 			reader->mhz =  320;
-	    } 
-		rdr_log(reader, "Reader initialized (device=%s, detect=%s%s, mhz=%d, cardmhz=%d)",
-				reader->device,
-				reader->detect & 0x80 ? "!" : "",
-				RDR_CD_TXT[reader->detect & 0x7f],
-				reader->mhz,
-				reader->cardmhz);
+	    }
+		if ((reader->typ == R_SMART) && (reader->smargoautospeed == 1)) { 
+			rdr_log(reader, "Reader initialized (device=%s, detect=%s%s, mhz= AUTO, cardmhz=%d)",
+					reader->device,
+					reader->detect & 0x80 ? "!" : "",
+					RDR_CD_TXT[reader->detect & 0x7f],
+					reader->cardmhz);
+		} else {
+			rdr_log(reader, "Reader initialized (device=%s, detect=%s%s, mhz=%d, cardmhz=%d)",
+					reader->device,
+					reader->detect & 0x80 ? "!" : "",
+					RDR_CD_TXT[reader->detect & 0x7f],
+					reader->mhz,
+					reader->cardmhz);
+		}
 	}
 	return true;
 }

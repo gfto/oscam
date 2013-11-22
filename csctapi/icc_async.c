@@ -689,7 +689,29 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 		}
 	}
 	if(reader->mhz > 2000 && reader->typ == R_INTERNAL) { F = reader->cardmhz; }  // for PLL based internal readers
-	else { F = reader->mhz; } // all other readers
+	else { 
+	if (reader->typ == R_SMART) { 
+		if (reader->smargoautospeed == 1) {
+		uint32_t Fsmart = atr_fs_table[FI];
+		reader->mhz = Fsmart/10000;
+		}
+		if(reader->mhz >= 1600) { reader->mhz = 1600; }
+		else if(reader->mhz >= 1200) { reader->mhz = 1200; }
+		else if(reader->mhz >= 961)  { reader->mhz =  961; }
+		else if(reader->mhz >= 800)  { reader->mhz =  800; }
+		else if(reader->mhz >= 686)  { reader->mhz =  686; }
+		else if(reader->mhz >= 600)  { reader->mhz =  600; }
+		else if(reader->mhz >= 534)  { reader->mhz =  534; }
+		else if(reader->mhz >= 480)  { reader->mhz =  480; }
+		else if(reader->mhz >= 436)  { reader->mhz =  436; }
+		else if(reader->mhz >= 400)  { reader->mhz =  400; }
+		else if(reader->mhz >= 369)  { reader->mhz =  369; }
+		else if(reader->mhz >= 357)  { reader->mhz =  369; } // 357 not suported by smartreader
+		else if(reader->mhz >= 343)  { reader->mhz =  343; }
+		else
+		{ reader->mhz =  320; }
+		}	
+	F = reader->mhz; } // all other readers
 	reader->worketu = (double)((double)(1 / (double)D) * ((double)Fi / (double)((double)F / 100)));  // expressed in us
 	rdr_log(reader, "Calculated work ETU is %.2f us reader mhz = %u", reader->worketu, reader->mhz);
 
@@ -865,8 +887,12 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 	}
 	else
 	{
-			rdr_log(reader, "ATR Fsmax is %i MHz, clocking card to wanted user cardspeed of %.2f MHz (specified in reader->mhz)",
+		if ((reader->typ == R_SMART) && (reader->smargoautospeed == 1))
+			rdr_log(reader, "ATR Fsmax is %i MHz, clocking card to atr Fsmax for smartreader cardspeed off %.2f MHz (specified in reader->mhz)",
 				atr_fs_table[FI] / 1000000, (float) reader->mhz / 100);
+		else 
+			rdr_log(reader, "ATR Fsmax is %i MHz, clocking card to wanted user cardspeed off %.2f MHz (specified in reader->mhz)",
+				atr_fs_table[FI] / 1000000, (float) reader->mhz / 100); 
 	}
 
 	//Communicate to T1 card IFSD -> we use same as IFSC

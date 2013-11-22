@@ -932,6 +932,7 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_INT8("disableserverfilter"  , OFS(ncd_disable_server_filt), 0),
 	DEF_OPT_INT8("connectoninit"        , OFS(ncd_connect_on_init),     0),
 	DEF_OPT_INT8("smargopatch"          , OFS(smargopatch),             0),
+	DEF_OPT_INT8("smargoautospeed"      , OFS(smargoautospeed),         1),
 	DEF_OPT_UINT8("sc8in1_dtrrts_patch" , OFS(sc8in1_dtrrts_patch),     0),
 	DEF_OPT_INT8("fallback"             , OFS(fallback),                0),
 	DEF_OPT_FUNC_X("fallback_percaid"   , OFS(fallback_percaid),        ftab_fn, FTAB_READER | FTAB_FBPCAID),
@@ -1032,7 +1033,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 	// These are written only when the reader is physical reader
 	static const char *hw_only_settings[] =
 	{
-		"readnano", "resetcycle", "smargopatch", "sc8in1_dtrrts_patch", "boxid",
+		"readnano", "resetcycle", "smargopatch", "smargoautospeed", "sc8in1_dtrrts_patch", "boxid",
 		"fix9993", "rsakey", "ins7e", "ins7e11", "force_irdeto", "needsemmfirst", "boxkey",
 		"atr", "detect", "nagra_read", "mhz", "cardmhz",
 #ifdef WITH_AZBOX
