@@ -299,6 +299,18 @@ void setTCPTimeouts(int32_t sock)
 #endif
 }
 
+int set_nonblock(int32_t fd, bool nonblock)
+{
+	int32_t flags = fcntl(fd, F_GETFL);
+	if (flags == -1)
+		return -1;
+	if (nonblock)
+		flags |= O_NONBLOCK;
+	else
+		flags &= (~O_NONBLOCK);
+	return fcntl(fd, F_SETFL, flags);
+}
+
 int8_t check_fd_for_data(int32_t fd)
 {
 	int32_t rc;

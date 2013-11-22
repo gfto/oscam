@@ -784,8 +784,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 		return client->udp_fd;
 	}
 
-	int32_t fl = fcntl(client->udp_fd, F_GETFL);
-	fcntl(client->udp_fd, F_SETFL, O_NONBLOCK);
+	set_nonblock(client->udp_fd, true);
 
 	int32_t res = connect(client->udp_fd, (struct sockaddr *)&client->udp_sa, client->udp_sa_len);
 	if(res == -1)
@@ -820,7 +819,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 		}
 	}
 
-	fcntl(client->udp_fd, F_SETFL, fl); //restore blocking mode
+	set_nonblock(client->udp_fd, false); //restore blocking mode
 
 	setTCPTimeouts(client->udp_fd);
 	clear_block_delay(rdr);

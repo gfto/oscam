@@ -245,7 +245,7 @@ int pandora_client_init(struct s_client *cl)
 	cs_log("proxy %s:%d pandora %s (%s)", rdr->device, rdr->r_port, rdr->pand_send_ecm ? "with ECM support" : "", ptxt);
 
 	cl->pfd = cl->udp_fd;
-	//fcntl(cl->udp_fd, F_SETFL, fcntl(cl->udp_fd, F_GETFL, 0) | O_NONBLOCK); //!!!!!
+	//set_nonblock(cl->udp_fd, true); //!!!!!
 	return (0);
 }
 

@@ -555,7 +555,7 @@ int32_t dvbapi_open_netdevice(int32_t UNUSED(type), int32_t UNUSED(num), int32_t
 	else
 	{
 		struct sockaddr_in saddr;
-		fcntl(socket_fd, F_SETFL, O_NONBLOCK);
+		set_nonblock(socket_fd, true);
 		bzero(&saddr, sizeof(saddr));
 		saddr.sin_family = AF_INET;
 		saddr.sin_port = htons(PORT + adapter); // port = PORT + adapter number
