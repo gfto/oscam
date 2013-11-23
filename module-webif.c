@@ -1692,14 +1692,14 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "SMARGOPATCHVALUE", (rdr->smargopatch == 1) ? "1" : "0");
 	}
 
-	// Smargoautospeed
+	// Autospeed
 	if(!apicall)
 	{
-		tpl_addVar(vars, TPLADD, "SMARGOAUTOSPEEDCHECKED", (rdr->smargoautospeed == 1) ? "checked" : "");
+		tpl_addVar(vars, TPLADD, "AUTOSPEEDCHECKED", (rdr->autospeed == 1) ? "checked" : "");
 	}
 	else
 	{
-		tpl_addVar(vars, TPLADD, "SMARGOAUTOSPEEDVALUE", (rdr->smargoautospeed == 1) ? "1" : "0");
+		tpl_addVar(vars, TPLADD, "AUTOSPEEDVALUE", (rdr->autospeed == 1) ? "1" : "0");
 	}
 
 	// sc8in1 dtrrts patch

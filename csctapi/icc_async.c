@@ -691,7 +691,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 	if(reader->mhz > 2000 && reader->typ == R_INTERNAL) { F = reader->cardmhz; }  // for PLL based internal readers
 	else { 
 	if (reader->typ == R_SMART) { 
-		if (reader->smargoautospeed == 1) {
+		if (reader->autospeed == 1) {
 		uint32_t Fsmart = atr_fs_table[FI];
 		reader->mhz = Fsmart/10000;
 		}
@@ -887,7 +887,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 	}
 	else
 	{
-		if ((reader->typ == R_SMART) && (reader->smargoautospeed == 1))
+		if ((reader->typ == R_SMART) && (reader->autospeed == 1))
 			rdr_log(reader, "ATR Fsmax is %i MHz, clocking card to atr Fsmax for smartreader cardspeed off %.2f MHz (specified in reader->mhz)",
 				atr_fs_table[FI] / 1000000, (float) reader->mhz / 100);
 		else 

@@ -336,7 +336,7 @@ bool cardreader_init(struct s_reader *reader)
 			if (reader->mhz >= 343)  reader->mhz =  343; else 
 			reader->mhz =  320;
 	    }
-		if ((reader->typ == R_SMART) && (reader->smargoautospeed == 1)) { 
+		if ((reader->typ == R_SMART) && (reader->autospeed == 1)) { 
 			rdr_log(reader, "Reader initialized (device=%s, detect=%s%s, mhz= AUTO, cardmhz=%d)",
 					reader->device,
 					reader->detect & 0x80 ? "!" : "",

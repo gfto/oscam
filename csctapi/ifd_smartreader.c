@@ -314,7 +314,7 @@ void smartreader_init(struct s_reader *reader)
 
 	crdr_data->type = TYPE_BM;    /* chip type */
 	crdr_data->baudrate = -1;
-	crdr_data->bitbang_enabled = 0;  /* 0: normal mode 1: any of the bitbang modes enabled */
+	crdr_data->bitbang_enabled = 1;  /* 0: normal mode 1: any of the bitbang modes enabled */
 
 	crdr_data->writebuffer_chunksize = 4096;
 	crdr_data->max_packet_size = 0;
@@ -1015,7 +1015,7 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 				errno != EBUSY)
 		{
 #if defined(__linux__)
-			if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
+//			if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
 #endif
 			smartreader_usb_close_internal(reader);
 			if(detach_errno == EPERM)
@@ -1036,7 +1036,7 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 	if(ret != 0)
 	{
 #if defined(__linux__)
-		if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
+//		if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
 #endif
 		smartreader_usb_close_internal(reader);
 		if(detach_errno == EPERM)
@@ -1054,7 +1054,7 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 	{
 		libusb_release_interface(crdr_data->usb_dev_handle, crdr_data->interface);
 #if defined(__linux__)
-		if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
+//		if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
 #endif
 		smartreader_usb_close_internal(reader);
 		rdr_log(reader, "smartreader_usb_reset failed");
@@ -1088,7 +1088,7 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 	{
 		libusb_release_interface(crdr_data->usb_dev_handle, crdr_data->interface);
 #if defined(__linux__)
-		if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
+//		if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
 #endif
 		smartreader_usb_close_internal(reader);
 		rdr_log(reader, "set baudrate failed");
@@ -1406,7 +1406,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 	crdr_data->T = 1;
 	crdr_data->inv = 0;
 	baud_temp2 = (double)(crdr_data->D * crdr_data->fs / (double)crdr_data->F);
-	rdr_log(reader,"CARD INIT BAUDRATE = %u", baud_temp2);
+//	rdr_log(reader,"CARD INIT BAUDRATE = %u", baud_temp2);
 
 	for(i = 0 ; i < 4 ; i++)
 	{
@@ -1575,7 +1575,7 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 	struct sr_data *crdr_data = reader->crdr_data;
 	crdr_data->inv = convention;//FIXME this one is set by icc_async and local smartreader reset routine
 	static const char *const parity_str[5] = {"NONE", "ODD", "EVEN", "MARK", "SPACE"};
-	rdr_log(reader,"smargoautospeed = %u", reader->smargoautospeed);
+	rdr_log(reader,"autospeed = %u", reader->autospeed);
 	rdr_log(reader, "Effectif reader settings mhz =%u F= %u D= %u N=%u T=%u inv=%u parity=%s", reader->mhz, F, D, N, T, crdr_data->inv, parity_str[crdr_data->parity]);
 	smart_fastpoll(reader, 1);
 	uint32_t baud_temp2 = (double)(D * (reader->mhz * 10000) / (double)F);
