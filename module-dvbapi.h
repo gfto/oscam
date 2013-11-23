@@ -135,6 +135,13 @@ typedef struct demux_s
 #endif
 } DEMUXTYPE;
 
+typedef struct s_cadevice
+{
+	int32_t     fd; // holds fd handle
+	uint16_t 	STREAMpids[ECM_PIDS]; // holds pids
+	uint32_t	enabled[ECM_PIDS]; // bitmask indexers if streampid enabled for index bit is set
+}CADEVICETYPE;
+
 struct s_dvbapi_priority
 {
 	char type; // p or i
