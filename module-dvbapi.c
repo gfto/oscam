@@ -2638,13 +2638,8 @@ void dvbapi_handlesockmsg(unsigned char *buffer, uint32_t len, int32_t connfd)
 			break;
 		}
 
-		if(k > 0 && cfg.dvbapi_pmtmode != 6)
-		{
-			cs_log("Unsupported capmt. Please report");
-			cs_dump(buffer, len, "capmt: (k=%d)", k);
-		}
-		if(k > 0 && cfg.dvbapi_pmtmode == 6)
-			{ cs_ddump_mask(D_DVBAPI, buffer + k, len - k, "[DVBAPI] Parsing next PMT object(s):"); }
+		if(k > 0)
+			cs_ddump_mask(D_DVBAPI, buffer + k, len - k, "[DVBAPI] Parsing next PMT object(s):");
 
 		if(buffer[3 + k] & 0x80)
 		{
@@ -3588,38 +3583,14 @@ static void *dvbapi_main_local(void *cli)
 				if(type[i] == 1 && pmthandling == 0)
 				{
 					pmthandling = 1; // pmthandling in progress!
-					if(pfd2[i].fd == listenfd && cfg.dvbapi_pmtmode == 6)
-					{
-						int32_t size = 0;
-						uint32_t pmtlen = 0;
-						do
-						{
-							size = recv(listenfd, (mbuf + pmtlen), (sizeof(mbuf) - pmtlen), MSG_DONTWAIT);
-							if(size > 0) { pmtlen += size; }
-						}
-						while(size > 0 && pmtlen < sizeof(mbuf));
-						if(pmtlen < 3)
-						{
-							cs_debug_mask(D_DVBAPI, "[DVBAPI] CA PMT server message too short!");
-							pmthandling = 0; // pmthandling done!
-							continue;
-						}
-						if(!(pmtlen < sizeof(mbuf)))
-						{
-							cs_log("[DVBAPI] ***** WARNING: PMT BUFFER OVERFLOW, PLEASE REPORT! ****** ");
-						}
-						cs_ddump_mask(D_DVBAPI, mbuf, pmtlen, "New PMT info from server (total size: %d)", pmtlen);
-						disable_pmt_files = 1;
-						dvbapi_handlesockmsg(mbuf, pmtlen, listenfd);
-						pmthandling = 0; // pmthandling done!
-						continue; // continue with other events!
-					}
+					connfd = -1;     // initially no socket to read from
 
-					if(cfg.dvbapi_pmtmode != 6)
+					if (pfd2[i].fd == listenfd)
 					{
-
-						if(pfd2[i].fd == listenfd)
-						{
+						if (cfg.dvbapi_pmtmode == 6) {
+							connfd = listenfd;
+							disable_pmt_files = 1;
+						} else {
 							clilen = sizeof(servaddr);
 							connfd = accept(listenfd, (struct sockaddr *)&servaddr, (socklen_t *)&clilen);
 							cs_debug_mask(D_DVBAPI, "new socket connection fd: %d", connfd);
@@ -3627,30 +3598,47 @@ static void *dvbapi_main_local(void *cli)
 							if(cfg.dvbapi_pmtmode == 3 || cfg.dvbapi_pmtmode == 0) { disable_pmt_files = 1; }
 
 							if(connfd <= 0)
-							{
 								cs_debug_mask(D_DVBAPI, "accept() returns error on fd event %d (errno=%d %s)", pfd2[i].revents, errno, strerror(errno));
-								pmthandling = 0; // pmthandling done!
-								continue;
+						}
+					}
+					else
+					{
+						cs_debug_mask(D_DVBAPI, "PMT Update on socket %d.", pfd2[i].fd);
+						connfd = pfd2[i].fd;
+					}
+
+					//reading and completing data from socket
+					if (connfd > 0) {
+						uint32_t pmtlen = 0;
+
+						int tries = 100;
+						do {
+							len = recv(connfd, mbuf + pmtlen, sizeof(mbuf) - pmtlen, MSG_DONTWAIT);
+							if (len > 0)
+								pmtlen += len;
+							else {
+								if (pmtlen > 0) //all data read
+									break;
+								else {          //wait for data become available and try again
+									cs_sleepms(20);
+									continue;
+								}
+							}
+						} while (pmtlen < sizeof(mbuf) && tries--);
+
+						if (pmtlen > 0) {
+							if (pmtlen < 3)
+								cs_debug_mask(D_DVBAPI, "[DVBAPI] CA PMT server message too short!");
+							else {
+								if (pmtlen >= sizeof(mbuf))
+									cs_log("[DVBAPI] ***** WARNING: PMT BUFFER OVERFLOW, PLEASE REPORT! ****** ");
+								cs_ddump_mask(D_DVBAPI, mbuf, pmtlen, "New PMT info from socket (total size: %d)", pmtlen);
+								dvbapi_handlesockmsg(mbuf, pmtlen, connfd);
 							}
 						}
-						else
-						{
-							cs_debug_mask(D_DVBAPI, "PMT Update on socket %d.", pfd2[i].fd);
-							connfd = pfd2[i].fd;
-						}
-
-						len = read(connfd, mbuf, sizeof(mbuf));
-
-						if(len < 3)
-						{
-							cs_debug_mask(D_DVBAPI, "camd.socket: too small message received");
-							pmthandling = 0; // pmthandling done!
-							continue; // no msg received continue with other events!
-						}
-						dvbapi_handlesockmsg(mbuf, len, connfd);
-						pmthandling = 0; // pmthandling done!
-						continue; // continue with other events!
 					}
+					pmthandling = 0; // pmthandling done!
+					continue; // continue with other events!
 				}
 				else     // type==0
 				{
