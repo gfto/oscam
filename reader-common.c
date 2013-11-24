@@ -321,20 +321,20 @@ bool cardreader_init(struct s_reader *reader)
 			if (reader->cardmhz == 357)  reader->cardmhz =  369; else // 357 not a default smartreader setting
 			if (reader->cardmhz >= 343)  reader->cardmhz =  343; else 
 			reader->cardmhz =  320;
-			if (reader->cardmhz >= 1600) reader->cardmhz = 1600; else
-			if (reader->cardmhz >= 1200) reader->cardmhz = 1200; else
-			if (reader->cardmhz >= 961)  reader->cardmhz =  961; else
-			if (reader->cardmhz >= 800)  reader->cardmhz =  800; else
-			if (reader->cardmhz >= 686)  reader->cardmhz =  686; else
-			if (reader->cardmhz >= 600)  reader->cardmhz =  600; else
-			if (reader->cardmhz >= 534)  reader->cardmhz =  534; else
-			if (reader->cardmhz >= 480)  reader->cardmhz =  534; else
-			if (reader->cardmhz >= 436)  reader->cardmhz =  436; else
-			if (reader->cardmhz >= 400)  reader->cardmhz =  369; else
-			if (reader->cardmhz >= 369)  reader->cardmhz =  369; else
-			if (reader->cardmhz == 357)  reader->cardmhz =  369; else // 357 not a default smartreader setting
-			if (reader->cardmhz >= 343)  reader->cardmhz =  343; else 
-			reader->cardmhz =  320;
+			if (reader->mhz >= 1600) reader->mhz = 1600; else
+			if (reader->mhz >= 1200) reader->mhz = 1200; else
+			if (reader->mhz >= 961)  reader->mhz =  961; else
+			if (reader->mhz >= 800)  reader->mhz =  800; else
+			if (reader->mhz >= 686)  reader->mhz =  686; else
+			if (reader->mhz >= 600)  reader->mhz =  600; else
+			if (reader->mhz >= 534)  reader->mhz =  534; else
+			if (reader->mhz >= 480)  reader->mhz =  480; else
+			if (reader->mhz >= 436)  reader->mhz =  436; else
+			if (reader->mhz >= 400)  reader->mhz =  369; else
+			if (reader->mhz >= 369)  reader->mhz =  369; else
+			if (reader->mhz == 357)  reader->mhz =  369; else // 357 not a default smartreader setting
+			if (reader->mhz >= 343)  reader->mhz =  343; else 
+			reader->mhz =  320;
 	    }
 		if (((reader->typ == R_SMART) && (reader->autospeed == 1)) || ((!strcasecmp(reader->crdr.desc, "smargo")) && (reader->autospeed == 1))) { 
 			rdr_log(reader, "Reader initialized (device=%s, detect=%s%s, mhz= AUTO, cardmhz=%d)",
