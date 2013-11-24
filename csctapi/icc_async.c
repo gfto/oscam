@@ -690,7 +690,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 	}
 	if(reader->mhz > 2000 && reader->typ == R_INTERNAL) { F = reader->cardmhz; }  // for PLL based internal readers
 	else { 
-	if (reader->typ == R_SMART) { 
+	if ((reader->typ == R_SMART) || (!strcasecmp(reader->crdr.desc, "smargo"))) { 
 		if (reader->autospeed == 1) {
 		uint32_t Fsmart = atr_fs_table[FI];
 		reader->mhz = Fsmart/10000;

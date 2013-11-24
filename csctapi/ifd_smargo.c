@@ -92,7 +92,7 @@ static int32_t smargo_writesettings(struct s_reader *reader, uint32_t UNUSED(ETU
 
 static int32_t smargo_init(struct s_reader *reader)
 {
-	rdr_log(reader, "smargo init");
+	rdr_log(reader, "smargo init type is %s", reader->crdr.desc);
 	reader->handle = open(reader->device,  O_RDWR);
 
 	if(reader->handle < 0)
