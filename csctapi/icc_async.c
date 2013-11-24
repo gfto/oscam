@@ -702,7 +702,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 		else if(reader->mhz >= 686)  { reader->mhz =  686; }
 		else if(reader->mhz >= 600)  { reader->mhz =  600; }
 		else if(reader->mhz >= 534)  { reader->mhz =  534; }
-		else if(reader->mhz >= 480)  { reader->mhz =  480; }
+		else if(reader->mhz >= 480)  { reader->mhz =  534; }
 		else if(reader->mhz >= 436)  { reader->mhz =  436; }
 		else if(reader->mhz >= 400)  { reader->mhz =  400; }
 		else if(reader->mhz >= 369)  { reader->mhz =  369; }
