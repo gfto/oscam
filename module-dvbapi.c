@@ -3541,7 +3541,7 @@ static void *dvbapi_main_local(void *cli)
 		if(rc > 0)
 		{
 			cs_ftime(&end); // register end time
-			cs_debug_mask(D_TRACE, "[DVBAPI] new events occurred on %d of %d handlers after %d ms inactivity", rc, pfdcount, comp_timeb(&start, &end));
+			cs_debug_mask(D_TRACE, "[DVBAPI] new events occurred on %d of %d handlers after %d ms inactivity", rc, pfdcount, comp_timeb(&end, &start));
 			cs_ftime(&start); // register new start time for next poll
 		}
 
