@@ -504,7 +504,9 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 					if(check_client(ecm->client))
 					{
 #ifdef CW_CYCLE_CHECK
-						if(!checkcwcycle(ecm->client, er, cl->reader, er->cw, er->rc))       //if not valid, we don't add it to hit_cache and does not cascade push!!!
+						ecm->cwc_cycletime = er->cwc_cycletime;
+						ecm->cwc_next_cw_cycle = er->cwc_next_cw_cycle;
+						if(!checkcwcycle(ecm->client, ecm, cl->reader, er->cw, er->rc))       //if not valid, we don't add it to hit_cache and does not cascade push!!!
 						{
 							continue;
 						}

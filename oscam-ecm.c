@@ -2243,7 +2243,9 @@ OUT:
 	{
 
 #ifdef CW_CYCLE_CHECK
-		if(checkcwcycle(client, ecm, NULL, ecm->cw, ecm->rc) != 0)    // check answer from int cache too, necessary for cycle learning
+		er->cwc_cycletime = ecm->cwc_cycletime;
+		er->cwc_next_cw_cycle = ecm->cwc_next_cw_cycle;
+		if(checkcwcycle(client, er, NULL, ecm->cw, ecm->rc) != 0)    // check answer from int cache too, necessary for cycle learning
 		{
 			cs_debug_mask(D_CWC | D_LB, "{client %s, caid %04X, srvid %04X} [get_cw] cyclecheck passed ecm in INT. cache, ecm->rc %d", (er->client ? er->client->account->usr : "-"), er->caid, er->srvid, ecm ? ecm->rc : -1);
 			snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "%s", ecm->cwc_msg_log);
