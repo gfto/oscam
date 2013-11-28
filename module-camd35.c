@@ -414,11 +414,6 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 					{ client->cwc_info++; }
 				cs_debug_mask(D_CWC, "CWC (CE1) push to %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(client), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
 			} 
-			else
-			{
-			buf[18] = 0x00;
-			buf[19] = 0x00;
-			}
 #endif
 			memcpy(buf + 20, er->cw, buf[1]);
 		}
