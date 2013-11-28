@@ -1182,8 +1182,11 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx)
 						memcpy(&packet, &request, sizeof(request));
 						memcpy(&packet[sizeof(request)], &ca_pid2, sizeof(ca_pid2));
 
-						// sending data
+						// sending data to UDP (deprecated, will be removed in the future)
 						send(ca_fd[i], &packet, sizeof(packet), 0);
+						// sending data back to socket
+						if (demux[demux_id].socket_fd > 0)
+							send(demux[demux_id].socket_fd, &packet, sizeof(packet), MSG_DONTWAIT);
 					}
 					else
 					{
@@ -3719,8 +3722,12 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid)
 						unsigned char packet[sizeof(request) + sizeof(ca_descr)];
 						memcpy(&packet, &request, sizeof(request));
 						memcpy(&packet[sizeof(request)], &ca_descr, sizeof(ca_descr));
-						// sending data
+
+						// sending data to UDP (deprecated, will be removed in the future)
 						send(ca_fd[i], &packet, sizeof(packet), 0);
+						// sending data back to socket
+						if (demux[demux_id].socket_fd > 0)
+							send(demux[demux_id].socket_fd, &packet, sizeof(packet), MSG_DONTWAIT);
 					}
 					else
 					{
