@@ -51,6 +51,7 @@ static int32_t selected_box = -1;
 static int32_t selected_api = -1;
 static int32_t dir_fd = -1;
 static int32_t ca_fd[8];
+static int32_t unassoc_fd[MAX_DEMUX];
 static LLIST *channel_cache;
 
 struct s_emm_filter
@@ -2489,6 +2490,11 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	demux[demux_id].socket_fd = connfd;
 	demux[demux_id].stopdescramble = 0; // remove deletion mark!
 
+	// remove from unassoc_fd when necessary
+	for (j = 0; j < MAX_DEMUX; j++)
+		if (unassoc_fd[j] == connfd)
+			unassoc_fd[j] = 0;
+
 	char channame[32];
 	get_servicename(dvbapi_client, demux[demux_id].program_number, demux[demux_id].ECMpidcount > 0 ? demux[demux_id].ECMpids[0].CAID : 0, channame);
 	cs_log("New program number: %04X (%s) [pmt_list_management %d]", program_number, channame, ca_pmt_list_management);
@@ -3295,6 +3301,7 @@ static void *dvbapi_main_local(void *cli)
 
 	memset(demux, 0, sizeof(struct demux_s) * MAX_DEMUX);
 	memset(ca_fd, 0, sizeof(ca_fd));
+	memset(unassoc_fd, 0, sizeof(unassoc_fd));
 
 	dvbapi_read_priority();
 	dvbapi_detect_api();
@@ -3403,6 +3410,13 @@ static void *dvbapi_main_local(void *cli)
 
 		for(i = 0; i < MAX_DEMUX; i++)
 		{
+			// add client fd's which are not yet associated with the demux but needs to be polled for data
+			if (unassoc_fd[i]) {
+				pfd2[pfdcount].fd = unassoc_fd[i];
+				pfd2[pfdcount].events = (POLLIN | POLLPRI);
+				type[pfdcount++] = 1;
+			}
+
 			if(demux[i].program_number == 0) { continue; }  // only evalutate demuxers that have channels assigned
 
 			uint32_t ecmcounter = 0, emmcounter = 0;
@@ -3584,6 +3598,7 @@ static void *dvbapi_main_local(void *cli)
 				{
 					pmthandling = 1; // pmthandling in progress!
 					connfd = -1;     // initially no socket to read from
+					int new = 0;
 
 					if (pfd2[i].fd == listenfd)
 					{
@@ -3594,6 +3609,7 @@ static void *dvbapi_main_local(void *cli)
 							clilen = sizeof(servaddr);
 							connfd = accept(listenfd, (struct sockaddr *)&servaddr, (socklen_t *)&clilen);
 							cs_debug_mask(D_DVBAPI, "new socket connection fd: %d", connfd);
+							new = 1;
 
 							if(cfg.dvbapi_pmtmode == 3 || cfg.dvbapi_pmtmode == 0) { disable_pmt_files = 1; }
 
@@ -3620,11 +3636,29 @@ static void *dvbapi_main_local(void *cli)
 								if (pmtlen > 0) //all data read
 									break;
 								else {          //wait for data become available and try again
+
+									// remove from unassoc_fd if the socket fd is invalid
+									if (errno == EBADF)
+										for (j = 0; j < MAX_DEMUX; j++)
+											if (unassoc_fd[j] == connfd)
+												unassoc_fd[j] = 0;
 									cs_sleepms(20);
 									continue;
 								}
 							}
 						} while (pmtlen < sizeof(mbuf) && tries--);
+
+						// if the connection is new and we read no data, then add it to the poll,
+						// otherwise this socket will not be checked with poll when data arives
+						// because fd it is not yet assigned with the demux
+						if (new && !pmtlen) {
+							for (j = 0; j < MAX_DEMUX; j++) {
+								if (!unassoc_fd[j]) {
+									unassoc_fd[j] = connfd;
+									break;
+								}
+							}
+						}
 
 						if (pmtlen > 0) {
 							if (pmtlen < 3)
