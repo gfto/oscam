@@ -118,6 +118,11 @@ DESCRIPTIONS
 	  functioning. Dont expect magic here, only overclocking the cardspeed can reduce the ecm response time. Bad timings can only delay it or make the card
 	  responses instable!
 
+       autospeed = 0|1
+
+      1 = Sets mhz according to atr. Currently only used for smartreader and smargo protocol other readers will be adapted to use this parameter as well.
+       In webif checked means 1. If You wan't to overclock You're card set autospeed = 0, default:1
+
        deprecated = 0|1
 	  First  the  SC  will	be  initialized in normal mode. If it fails, the SC will be automatically reverted to deprecated
 	  mode, so that the SC speed will not be changed and the communication will remain on normal ATR speed of 9600 baud.
