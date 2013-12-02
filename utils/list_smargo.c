@@ -78,6 +78,7 @@ static void smartreader_check_endpoint(libusb_device *usb_dev, libusb_device_han
 				}
 			}
 			if ((usbdesc.idProduct = 0x6011) && (m == 2)) nb_endpoint_ok = 0;
+			if ((!strcasecmp(productptr,"Smartreader2 plus")) && (m == 3)) m = 2;
 			if(nb_endpoint_ok == 2)
 			{
 				busid = libusb_get_bus_number(usb_dev);
