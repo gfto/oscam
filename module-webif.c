@@ -334,7 +334,14 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 
 	if(cfg.waitforcards == 1)  { tpl_addVar(vars, TPLADD, "WAITFORCARDSCHECKED", "selected"); }
 	tpl_printf(vars, TPLADD, "EXTRADELAY", "%d", cfg.waitforcards_extra_delay);
-	if(cfg.preferlocalcards == 1)  { tpl_addVar(vars, TPLADD, "PREFERLOCALCARDSCHECKED", "selected"); }
+	if(cfg.preferlocalcards == 1)
+	{
+		tpl_addVar(vars, TPLADD, "PREFERLOCALCARDS", "selected");
+	}
+	else if(cfg.preferlocalcards == 2)
+	{
+		tpl_addVar(vars, TPLADD, "PREFERCACHEEX", "selected");
+	}
 
 	if(cfg.c35_suppresscmd08)
 		{ tpl_addVar(vars, TPLADD, "SUPPRESSCMD08", "checked"); }
