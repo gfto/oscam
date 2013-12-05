@@ -336,11 +336,11 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	tpl_printf(vars, TPLADD, "EXTRADELAY", "%d", cfg.waitforcards_extra_delay);
 	if(cfg.preferlocalcards == 1)
 	{
-		tpl_addVar(vars, TPLADD, "PREFERLOCALCARDS", "selected");
+		tpl_addVar(vars, TPLADD, "PREFERCACHEEX", "selected");
 	}
 	else if(cfg.preferlocalcards == 2)
 	{
-		tpl_addVar(vars, TPLADD, "PREFERCACHEEX", "selected");
+		tpl_addVar(vars, TPLADD, "PREFERLOCALCARDS", "selected");
 	}
 
 	if(cfg.c35_suppresscmd08)
