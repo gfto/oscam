@@ -1734,8 +1734,6 @@ struct s_config
 	int8_t      dvbapi_pmtmode;
 	int8_t      dvbapi_requestmode;
 	SIDTABS     dvbapi_sidtabs;
-	int8_t      dvbapi_reopenonzap;
-	int8_t      dvbapi_decodeforever;               // do not stop after 3 tries
 	int32_t     dvbapi_delayer;                     // delayer ms, minimum time to write cw
 #endif
 

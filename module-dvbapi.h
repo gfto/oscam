@@ -126,14 +126,20 @@ typedef struct demux_s
 	time_t pmt_time;
 	uint8_t stopdescramble;
 	uint8_t old_ecmfiltercount; // previous ecm filtercount
-	uint8_t old_emmfiltercount; // previous emm filtercount
-	uchar md5hash[DMXMD5HASHSIZE]; 
+	uint8_t old_emmfiltercount; // previous emm filtercount 
 #ifdef WITH_STAPI
 	uint32_t DescramblerHandle[PTINUM];
 	int32_t desc_pidcount;
 	uint32_t slot_assc[PTINUM][SLOTNUM];
 #endif
 } DEMUXTYPE;
+
+typedef struct s_streampid
+{
+	uint8_t		cadevice; // holds ca device
+	uint16_t 	streampid; // holds pids
+	uint32_t	activeindexers; // bitmask indexers if streampid enabled for index bit is set
+}STREAMPIDTYPE;
 
 struct s_dvbapi_priority
 {
@@ -245,6 +251,11 @@ int32_t dvbapi_activate_section_filter(int32_t fd, int32_t pid, uchar *filter, u
 int32_t dvbapi_check_ecm_delayed_delivery(int32_t demux_index, ECM_REQUEST *er);
 int32_t dvbapi_get_filternum(int32_t demux_index, ECM_REQUEST *er, int32_t type);
 int32_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid);
+void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable);
+bool update_streampid_list(uint8_t cadevice, uint16_t pid, int32_t idx);
+bool remove_streampid_from_list(uint8_t cadevice, uint16_t pid, int32_t idx);
+void disable_unused_streampids(int16_t demux_id);
+bool is_ca_used(uint8_t cadevice);
 
 #ifdef DVBAPI_LOG_PREFIX
 #undef cs_log
