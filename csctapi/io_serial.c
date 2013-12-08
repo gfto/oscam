@@ -693,7 +693,7 @@ bool IO_Serial_WaitToRead(struct s_reader *reader, uint32_t delay_us, uint32_t t
 				cs_sleepus(1);
 				if(timeout_us > 0)
 				{
-					polltimeout = (timeout_us / 1000) - (1000 * (end.time - start.time) + end.millitm - start.millitm);
+					polltimeout = (timeout_us / 1000) - comp_timeb(&end, &start);
 					if(polltimeout < 0) { polltimeout = 0; }
 				}
 				continue;
@@ -743,7 +743,7 @@ static bool IO_Serial_WaitToWrite(struct s_reader *reader, uint32_t delay_us, ui
 				cs_sleepus(1);
 				if(timeout_us > 0)
 				{
-					polltimeout = (timeout_us / 1000) - (1000 * (end.time - start.time) + end.millitm - start.millitm);
+					polltimeout = (timeout_us / 1000) - comp_timeb(&end, &start);
 					if(polltimeout < 0) { polltimeout = 0; }
 				}
 				continue;
