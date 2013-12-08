@@ -2303,8 +2303,8 @@ static void getDemuxOptions(int32_t demux_id, unsigned char *buffer, uint16_t *c
 
 int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connfd, char *pmtfile)
 {
-	uint32_t i, running = 0;
-	int32_t j;
+	uint32_t i = 0, running = 0;
+	int32_t j = 0;
 	int32_t demux_id = -1;
 	uint16_t ca_mask, demux_index, adapter_index;
 	
