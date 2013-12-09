@@ -491,7 +491,7 @@ int32_t init_srvid(void)
 	free(token);
 
 	cs_ftime(&te);
-	int32_t load_time = 1000 * (te.time - ts.time) + te.millitm - ts.millitm;
+	int32_t load_time = comp_timeb(&te, &ts);
 
 	fclose(fp);
 	if(nr > 0)
