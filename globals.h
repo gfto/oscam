@@ -1136,7 +1136,7 @@ struct s_ecmHeaderwhitelist
 //ratelimit
 struct ecmrl
 {
-	time_t          last;
+	struct timeb    last;
 	uchar           kindecm;
 	uchar           ecmd5[CS_ECMSTORESIZE];
 	uint16_t        caid;
@@ -1144,8 +1144,8 @@ struct ecmrl
 	uint16_t        srvid;
 	uint16_t        chid;
 	int32_t         ratelimitecm;
-	int32_t         ratelimitseconds;
-	int32_t         srvidholdseconds;
+	int32_t         ratelimittime;
+	int32_t         srvidholdtime;
 };
 #define MAXECMRATELIMIT 20
 
@@ -1344,10 +1344,11 @@ struct s_reader                                     //contains device info, read
 	time_t          card_valid_to;
 	//ratelimit
 	int32_t         ratelimitecm;
-	int32_t         ratelimitseconds;
+	int32_t         ratelimittime; // ratelimit time in ms (everything below 60 ms is converted to ms by applying *1000)
 	int8_t          ecmunique; // check for matching ecm hash in ratelimitslot
-	int32_t         srvidholdseconds; // seconds to keep srvid in ratelimitslot (during this time not checked for ecmunique!)
-	time_t          lastdvbapirateoverride;
+	int32_t         srvidholdtime; // time in ms to keep srvid in ratelimitslot (during this time not checked for ecmunique!)
+								   // (everything below 60 ms is converted to ms by applying *1000)
+	struct timeb    lastdvbapirateoverride;
 	uint32_t        ecmsok;
 	uint32_t        ecmsnok;
 	uint32_t        ecmnotfoundlimit;                   // config setting. restart reader if ecmsnok >= ecmnotfoundlimit
@@ -1357,7 +1358,7 @@ struct s_reader                                     //contains device info, read
 	float           ecmshealthnok;
 	int32_t         cooldown[2];
 	int8_t          cooldownstate;
-	time_t          cooldowntime;
+	struct timeb    cooldowntime;
 	struct ecmrl    rlecmh[MAXECMRATELIMIT];
 	int8_t          fix_9993;
 	uint8_t         ins7E[0x1A + 1];

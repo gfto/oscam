@@ -784,7 +784,7 @@ static void ratelimitecm_fn(const char *token, char *value, void *setting, FILE 
 			for(i = 0; i < MAXECMRATELIMIT; i++)    // reset all slots
 			{
 				rdr->rlecmh[i].srvid = -1;
-				rdr->rlecmh[i].last = -1;
+				rdr->rlecmh[i].last.time = -1;
 			}
 		}
 		return;
@@ -793,7 +793,7 @@ static void ratelimitecm_fn(const char *token, char *value, void *setting, FILE 
 		{ fprintf_conf(f, token, "%d\n", rdr->ratelimitecm); }
 }
 
-static void ratelimitseconds_fn(const char *token, char *value, void *setting, FILE *f)
+static void ratelimittime_fn(const char *token, char *value, void *setting, FILE *f)
 {
 	struct s_reader *rdr = setting;
 	if(value)
@@ -802,22 +802,53 @@ static void ratelimitseconds_fn(const char *token, char *value, void *setting, F
 		{
 			if(rdr->ratelimitecm > 0)
 			{
-				rdr->ratelimitseconds = 10;
+				rdr->ratelimittime = 9000; // default 9 seconds
+				rdr->srvidholdtime = 2000; // default 2 seconds hold
 			}
 			else
 			{
 				rdr->ratelimitecm = 0; // in case someone set a negative value
-				rdr->ratelimitseconds = 0;
+				rdr->ratelimittime = 0;
+				rdr->srvidholdtime = 0;
 			}
 		}
 		else
 		{
-			rdr->ratelimitseconds = atoi(value);
+			rdr->ratelimittime = atoi(value);
+			if (rdr->ratelimittime < 60) rdr->ratelimittime *=1000;
 		}
 		return;
 	}
 	if(rdr->ratelimitecm || cfg.http_full_cfg)
-		{ fprintf_conf(f, token, "%d\n", rdr->ratelimitseconds); }
+		{ fprintf_conf(f, token, "%d\n", rdr->ratelimittime); }
+}
+
+static void srvidholdtime_fn(const char *token, char *value, void *setting, FILE *f)
+{
+	struct s_reader *rdr = setting;
+	if(value)
+	{
+		if(strlen(value) == 0)
+		{
+			if(rdr->ratelimitecm > 0)
+			{
+				rdr->srvidholdtime = 2000; // default 2 seconds hold
+			}
+			else
+			{
+				rdr->ratelimitecm = 0; // in case someone set a negative value
+				rdr->srvidholdtime = 0;
+			}
+		}
+		else
+		{
+			rdr->srvidholdtime = atoi(value);
+			if (rdr->srvidholdtime < 60) rdr->srvidholdtime *=1000;
+		}
+		return;
+	}
+	if(rdr->ratelimitecm || cfg.http_full_cfg)
+		{ fprintf_conf(f, token, "%d\n", rdr->srvidholdtime); }
 }
 
 static void cooldown_fn(const char *token, char *value, void *setting, FILE *f)
@@ -1007,9 +1038,9 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_FUNC("auprovid"             , 0,                            auprovid_fn),
 	DEF_OPT_INT8("ndsversion"           , OFS(ndsversion),              0),
 	DEF_OPT_FUNC("ratelimitecm"         , 0,                            ratelimitecm_fn),
-	DEF_OPT_FUNC("ratelimitseconds"     , 0,                            ratelimitseconds_fn),
+	DEF_OPT_FUNC("ratelimittime"        , 0,                            ratelimittime_fn),
 	DEF_OPT_INT8("ecmunique"            , OFS(ecmunique),               0),
-	DEF_OPT_INT8("srvidholdseconds"     , OFS(srvidholdseconds),        0),
+	DEF_OPT_FUNC("srvidholdtime"        , 0,                            srvidholdtime_fn),
 	DEF_OPT_FUNC("cooldown"             , 0,                            cooldown_fn),
 	DEF_OPT_FUNC("cooldowndelay"        , 0,                            cooldowndelay_fn),
 	DEF_OPT_FUNC("cooldowntime"         , 0,                            cooldowntime_fn),

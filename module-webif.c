@@ -1726,8 +1726,8 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	if(rdr->ratelimitecm)
 	{
 		tpl_printf(vars, TPLADD, "RATELIMITECM", "%d", rdr->ratelimitecm);
-		tpl_printf(vars, TPLADD, "RATELIMITSECONDS", "%d", rdr->ratelimitseconds);
-		tpl_printf(vars, TPLADD, "SRVIDHOLDSECONDS", "%d", rdr->srvidholdseconds);
+		tpl_printf(vars, TPLADD, "RATELIMITTIME", "%d", rdr->ratelimittime);
+		tpl_printf(vars, TPLADD, "SRVIDHOLDTIME", "%d", rdr->srvidholdtime);
 		// ECMUNIQUE
 		if(!apicall)
 		{

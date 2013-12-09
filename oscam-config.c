@@ -561,10 +561,10 @@ static struct s_rlimit *ratelimit_read_int(void)
 			}
 		}
 
-		uint32_t caid = 0, provid = 0, srvid = 0, chid = 0, ratelimitecm = 0, ratelimitseconds = 0, srvidholdseconds = 0;
+		uint32_t caid = 0, provid = 0, srvid = 0, chid = 0, ratelimitecm = 0, ratelimittime = 0, srvidholdtime = 0;
 		memset(str1, 0, sizeof(str1));
 
-		ret = sscanf(token, "%4x:%6x:%4x:%4x:%d:%d:%d:%1023s", &caid, &provid, &srvid, &chid, &ratelimitecm, &ratelimitseconds, &srvidholdseconds, str1);
+		ret = sscanf(token, "%4x:%6x:%4x:%4x:%d:%d:%d:%1023s", &caid, &provid, &srvid, &chid, &ratelimitecm, &ratelimittime, &srvidholdtime, str1);
 		if(ret < 1) { continue; }
 		strncat(str1, ",", sizeof(str1) - strlen(str1) - 1);
 		if(!cs_malloc(&entry, sizeof(struct s_rlimit)))
@@ -574,16 +574,18 @@ static struct s_rlimit *ratelimit_read_int(void)
 		}
 
 		count++;
+		if (ratelimittime < 60) ratelimittime *=1000;
+		if (srvidholdtime < 60) srvidholdtime *=1000;
 		entry->rl.caid = caid;
 		entry->rl.provid = provid;
 		entry->rl.srvid = srvid;
 		entry->rl.chid = chid;
 		entry->rl.ratelimitecm = ratelimitecm;
-		entry->rl.ratelimitseconds = ratelimitseconds;
-		entry->rl.srvidholdseconds = srvidholdseconds;
+		entry->rl.ratelimittime = ratelimittime;
+		entry->rl.srvidholdtime = srvidholdtime;
 
 		cs_debug_mask(D_TRACE, "ratelimit: %04X:%06X:%04X:%04X:%d:%d:%d", entry->rl.caid, entry->rl.provid, entry->rl.srvid, entry->rl.chid,
-					  entry->rl.ratelimitecm, entry->rl.ratelimitseconds, entry->rl.srvidholdseconds);
+					  entry->rl.ratelimitecm, entry->rl.ratelimittime, entry->rl.srvidholdtime);
 
 		if(!new_rlimit)
 		{
