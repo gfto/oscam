@@ -268,7 +268,7 @@ int32_t ecm_ratelimit_check(struct s_reader *reader, ECM_REQUEST *er, int32_t re
 
 	if(rl.ratelimitecm > 0)
 	{
-		cs_debug_mask(D_CLIENT, "Ratelimit found for CAID: %04X PROVID: %06X SRVID: %04X CHID: %04X maxecms: %d cycle: %ds srvidhold: %ds",
+		cs_debug_mask(D_CLIENT, "ratelimit found for CAID: %04X PROVID: %06X SRVID: %04X CHID: %04X maxecms: %d cycle: %dms srvidhold: %dms",
 					  rl.caid, rl.provid, rl.srvid, rl.chid, rl.ratelimitecm, rl.ratelimittime, rl.srvidholdtime);
 	}
 	else   // nothing found: apply general reader limits
