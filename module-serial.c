@@ -327,7 +327,7 @@ static int32_t oscam_ser_poll(int32_t event, struct s_client *client)
 	struct pollfd pfds;
 	struct timeb tpc;
 	cs_ftime(&tpc);
-	msec = 1000 * (client->serialdata->tpe.time - tpc.time) + client->serialdata->tpe.millitm - tpc.millitm;
+	msec = comp_timeb(&tpc, &client->serialdata->tpe);
 	if(msec < 0)
 		{ return (0); }
 	pfds.fd = cur_client()->pfd;
@@ -359,13 +359,12 @@ static int32_t oscam_ser_send(struct s_client *client, const uchar *const buf, i
 	if(!client->pfd) { return (0); }
 	cs_ftime(&serialdata->tps);
 	serialdata->tpe = client->serialdata->tps;
-	serialdata->tpe.millitm += serialdata->oscam_ser_timeout + (l * (serialdata->oscam_ser_delay + 1));
-	serialdata->tpe.time += (serialdata->tpe.millitm / 1000);
-	serialdata->tpe.millitm %= 1000;
+	add_ms_to_timeb(&serialdata->tpe, serialdata->oscam_ser_timeout);
+	add_ms_to_timeb(&serialdata->tpe, (l * (serialdata->oscam_ser_delay + 1)));
 	n = oscam_ser_write(client, buf, l);
 	cs_ftime(&serialdata->tpe);
-	cs_ddump_mask(D_CLIENT, buf, l, "send %d of %d bytes to %s in %ld msec", n, l, remote_txt(),
-				  1000 * (serialdata->tpe.time - serialdata->tps.time) + serialdata->tpe.millitm - serialdata->tps.millitm);
+	cs_ddump_mask(D_CLIENT, buf, l, "send %d of %d bytes to %s in %d ms", n, l, remote_txt(), 
+		comp_timeb(&serialdata->tpe, &serialdata->tps));
 	if(n != l)
 		{ cs_log("transmit error. send %d of %d bytes only !", n, l); }
 	return (n);
@@ -397,9 +396,7 @@ static int32_t oscam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
 	if(!client->pfd) { return (-1); }
 	cs_ftime(&serialdata->tps);
 	serialdata->tpe = serialdata->tps;
-	serialdata->tpe.millitm += serialdata->oscam_ser_timeout;
-	serialdata->tpe.time += (serialdata->tpe.millitm / 1000);
-	serialdata->tpe.millitm %= 1000;
+	add_ms_to_timeb(&serialdata->tpe, serialdata->oscam_ser_timeout);
 	buf[0] = lb;
 	for(s = p = r = 0, n = have_lb; (s < 4) && (p >= 0); s++)
 	{
@@ -587,14 +584,14 @@ static int32_t oscam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
 				if(!oscam_ser_selrec(buf, r, l, &n))
 				{
 					cs_debug_mask(D_CLIENT, "not all data received, waiting another 50 ms");
-					serialdata->tpe.millitm += 50;
+					add_ms_to_timeb(&serialdata->tpe, 50);
 					if(!oscam_ser_selrec(buf, all - n, l, &n))
 						{ p = (-1); }
 				}
 				// auto detect DSR9500 protocol
 				if(client->typ == 'c' && p == P_DSR95 && serialdata->dsr9500type == P_DSR_AUTO)
 				{
-					serialdata->tpe.millitm += 20;
+					add_ms_to_timeb(&serialdata->tpe, 20);
 					if(oscam_ser_selrec(buf, 2, l, &n))
 					{
 						if(cs_atoi((char *)buf + n - 2, 1, 1) == 0xFFFFFFFF)
@@ -672,8 +669,7 @@ static int32_t oscam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
 		serialdata->serial_errors++;
 	}
 	cs_ftime(&serialdata->tpe);
-	cs_ddump_mask(D_CLIENT, buf, n, "received %d bytes from %s in %ld msec", n, remote_txt(),
-				  1000 * (serialdata->tpe.time - serialdata->tps.time) + serialdata->tpe.millitm - serialdata->tps.millitm);
+	cs_ddump_mask(D_CLIENT, buf, n, "received %d bytes from %s in %d ms", n, remote_txt(), comp_timeb(&serialdata->tpe, &serialdata->tps));
 	client->last = serialdata->tpe.time;
 	switch(p)
 	{
