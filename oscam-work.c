@@ -22,7 +22,7 @@ struct job_data
 	struct s_reader *rdr;
 	struct s_client *cl;
 	void *ptr;
-	time_t time;
+	struct timeb time;
 	uint16_t len;
 };
 
@@ -110,7 +110,6 @@ void *work_thread(void *ptr)
 	cl->work_mbuf = mbuf; // Track locally allocated data, because some callback may call cs_exit/cs_disconect_client/pthread_exit and then mbuf would be leaked
 	int32_t n = 0, rc = 0, i, idx, s;
 	uint8_t dcw[16];
-	time_t now;
 	int8_t restart_reader = 0;
 	while(cl->thread_active)
 	{
@@ -171,8 +170,8 @@ void *work_thread(void *ptr)
 				if(rc > 0)
 				{
 					cs_ftime(&end); // register end time
-					cs_debug_mask(D_TRACE, "[OSCAM-WORK] new event %d occurred on fd %d after %ld ms inactivity", pfd[0].revents,
-								  pfd[0].fd, 1000 * (end.time - start.time) + end.millitm - start.millitm);
+					cs_debug_mask(D_TRACE, "[OSCAM-WORK] new event %d occurred on fd %d after %d ms inactivity", pfd[0].revents,
+								  pfd[0].fd, comp_timeb(&end, &start));
 					data = &tmp_data;
 					data->ptr = NULL;
 					cs_ftime(&start); // register start time for new poll next run
@@ -207,11 +206,12 @@ void *work_thread(void *ptr)
 			if(!data->action)
 				{ break; }
 
-			now = time(NULL);
-			time_t diff = (time_t)(cfg.ctimeout / 1000) + 1;
-			if(data != &tmp_data && data->time < now - diff)
+			struct timeb actualtime;
+			cs_ftime(&actualtime);
+			int32_t gone = comp_timeb(&actualtime, &data->time);
+			if(data != &tmp_data && gone > (int) cfg.ctimeout)
 			{
-				cs_debug_mask(D_TRACE, "dropping client data for %s time %ds", username(cl), (int32_t)(now - data->time));
+				cs_debug_mask(D_TRACE, "dropping client data for %s time %dms", username(cl), gone);
 				__free_job_data(cl, data);
 				continue;
 			}
@@ -240,11 +240,11 @@ void *work_thread(void *ptr)
 						{ network_tcp_connection_close(reader, "disconnect on receive"); }
 					break;
 				}
-				cl->last = now;
+				cl->last = time(NULL); // *********************************** TO BE REPLACE BY CS_FTIME() LATER ****************
 				idx = reader->ph.c_recv_chk(cl, dcw, &rc, mbuf, rc);
 				if(idx < 0) { break; }  // no dcw received
 				if(!idx) { idx = cl->last_idx; }
-				reader->last_g = now; // for reconnect timeout
+				reader->last_g = time(NULL); // *********************************** TO BE REPLACE BY CS_FTIME() LATER **************** // for reconnect timeout
 				for(i = 0, n = 0; i < cfg.max_pending && n == 0; i++)
 				{
 					if(cl->ecmtask[i].idx == idx)
@@ -466,8 +466,8 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 	data->ptr    = ptr;
 	data->cl     = cl;
 	data->len    = len;
-	data->time   = time(NULL);
-
+	cs_ftime(&data->time);
+	
 	pthread_mutex_lock(&cl->thread_lock);
 	if(cl->thread_active)
 	{

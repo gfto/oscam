@@ -351,7 +351,10 @@ int32_t process_input(uint8_t *buf, int32_t buflen, int32_t timeout)
 	struct pollfd pfd[2];
 	struct s_client *cl = cur_client();
 
-	time_t starttime = time(NULL);
+	struct timeb starttime;
+	struct timeb endtime;
+	cs_ftime(&starttime);
+	polltime = timeout; // initial polltime = timeout
 	while(1)
 	{
 		pfdcount = 0;
@@ -360,15 +363,15 @@ int32_t process_input(uint8_t *buf, int32_t buflen, int32_t timeout)
 			pfd[pfdcount].fd = cl->pfd;
 			pfd[pfdcount++].events = POLLIN | POLLPRI;
 		}
+		int32_t p_rc = poll(pfd, pfdcount, polltime);
 
-		polltime  = timeout - (time(NULL) - starttime);
+		cs_ftime(&endtime);
+		int32_t gone = comp_timeb(&endtime, &starttime);
+		polltime  = timeout - gone; // calculate polltime left
 		if(polltime < 0)
 		{
 			polltime = 0;
 		}
-
-		int32_t p_rc = poll(pfd, pfdcount, polltime);
-
 		if(p_rc < 0)
 		{
 			if(errno == EINTR)
@@ -376,8 +379,8 @@ int32_t process_input(uint8_t *buf, int32_t buflen, int32_t timeout)
 			else
 				{ return 0; }
 		}
-
-		if(p_rc == 0 && (starttime + timeout) < time(NULL))  // client maxidle reached
+		
+		if(p_rc == 0 && gone >= timeout)  // client maxidle reached?
 		{
 			rc = -9;
 			break;
