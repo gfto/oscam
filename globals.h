@@ -1333,7 +1333,7 @@ struct s_reader                                     //contains device info, read
 	int32_t         lb_weight;                      //loadbalance weight factor, if unset, weight=100. The higher the value, the higher the usage-possibility
 	int32_t         lb_usagelevel;                  //usagelevel for loadbalancer
 	int32_t         lb_usagelevel_ecmcount;
-	time_t          lb_usagelevel_time;             //time for counting ecms, this creates usagelevel
+	struct timeb    lb_usagelevel_time;             //time for counting ecms, this creates usagelevel
 	struct timeb    lb_last;                        //time for oldest reader
 	LLIST           *lb_stat;                       //loadbalancer reader statistics
 	CS_MUTEX_LOCK   lb_stat_lock;
@@ -1834,7 +1834,7 @@ typedef struct reader_stat_t
 	uint32_t        chid;
 	int16_t         ecmlen;
 
-	time_t          last_received;
+	struct timeb    last_received;
 
 	int32_t         ecm_count;
 	int32_t         time_avg;

@@ -2188,7 +2188,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 			if(!(s->rc == rc2hide))
 			{
 				struct tm lt;
-				localtime_r(&s->last_received, &lt);
+				localtime_r(&s->last_received.time, &lt);
 				ecmcount += s->ecm_count;
 				if(!apicall)
 				{
@@ -2203,7 +2203,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 						{ tpl_addVar(vars, TPLADD, "TIMELAST", ""); }
 					tpl_printf(vars, TPLADD, "COUNT", "%d", s->ecm_count);
 
-					if(s->last_received)
+					if(s->last_received.time)
 					{
 						tpl_printf(vars, TPLADD, "LAST", "%02d.%02d.%02d %02d:%02d:%02d", lt.tm_mday, lt.tm_mon + 1, lt.tm_year % 100, lt.tm_hour, lt.tm_min, lt.tm_sec);
 
@@ -2224,7 +2224,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 					tpl_printf(vars, TPLADD, "ECMTIMELAST", "%d", s->time_stat[s->time_idx]);
 					tpl_printf(vars, TPLADD, "ECMRC", "%d", s->rc);
 					tpl_addVar(vars, TPLADD, "ECMRCS", stxt[s->rc]);
-					if(s->last_received)
+					if(s->last_received.time)
 					{
 						char tbuffer [30];
 						strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &lt);
@@ -2236,8 +2236,8 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 					}
 					tpl_printf(vars, TPLADD, "ECMCOUNT", "%d", s->ecm_count);
 
-					if(s->last_received > lastaccess)
-						{ lastaccess = s->last_received; }
+					if(s->last_received.time > lastaccess)
+						{ lastaccess = s->last_received.time; }
 				}
 
 				if(!apicall)

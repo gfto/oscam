@@ -23,7 +23,7 @@
 #define DEFAULT_LOCK_TIMEOUT 1000
 
 static int32_t stat_load_save;
-static time_t last_housekeeping;
+static struct timeb last_housekeeping;
 
 void init_stat(void)
 {
@@ -153,7 +153,7 @@ void load_stat_from_file(void)
 				s->chid = a2i(split[5], 4);
 				s->time_avg = atoi(split[6]);
 				s->ecm_count = atoi(split[7]);
-				s->last_received = atol(split[8]);
+				s->last_received.time = atol(split[8]);
 				s->fail_factor = atoi(split[9]);
 				s->ecmlen = a2i(split[10], 2);
 			}
@@ -162,7 +162,7 @@ void load_stat_from_file(void)
 		{
 			i = sscanf(line, "%255s rc %04d caid %04hX prid %06X srvid %04hX time avg %dms ecms %d last %ld fail %d len %02hX\n",
 					   buf, &s->rc, &s->caid, &s->prid, &s->srvid,
-					   &s->time_avg, &s->ecm_count, &s->last_received, &s->fail_factor, &s->ecmlen);
+					   &s->time_avg, &s->ecm_count, &s->last_received.time, &s->fail_factor, &s->ecmlen);
 			valid = i > 5;
 		}
 
@@ -209,7 +209,7 @@ void load_stat_from_file(void)
 
 	cs_ftime(&te);
 #ifdef WITH_DEBUG
-	int32_t load_time = 1000 * (te.time - ts.time) + te.millitm - ts.millitm;
+	int32_t load_time = comp_timeb(&te, &ts);
 
 	cs_debug_mask(D_LB, "loadbalancer: statistics loaded %d records in %dms", count, load_time);
 #endif
@@ -319,7 +319,7 @@ static void save_stat_to_file_thread(void)
 	struct timeb ts, te;
 	cs_ftime(&ts);
 
-	time_t cleanup_time = time(NULL) - (cfg.lb_stat_cleanup * 60 * 60);
+	int32_t cleanup_timeout = (cfg.lb_stat_cleanup * 60 * 60 * 1000);
 
 	int32_t count = 0;
 	struct s_reader *rdr;
@@ -334,8 +334,8 @@ static void save_stat_to_file_thread(void)
 			READER_STAT *s;
 			while((s = ll_iter_next(&it)))
 			{
-
-				if(s->last_received < cleanup_time || !s->ecmlen)    //cleanup old stats
+				int32_t gone = comp_timeb(&ts, &s->last_received);
+				if(gone > cleanup_timeout || !s->ecmlen)    //cleanup old stats
 				{
 					ll_iter_remove_data(&it);
 					continue;
@@ -349,7 +349,7 @@ static void save_stat_to_file_thread(void)
 				//New version:
 				fprintf(file, "%s,%d,%04hX,%06X,%04hX,%04hX,%d,%d,%ld,%d,%02hX\n",
 						rdr->label, s->rc, s->caid, s->prid,
-						s->srvid, (uint16_t)s->chid, s->time_avg, s->ecm_count, s->last_received, s->fail_factor, s->ecmlen);
+						s->srvid, (uint16_t)s->chid, s->time_avg, s->ecm_count, s->last_received.time, s->fail_factor, s->ecmlen);
 
 				count++;
 				//              if (count % 500 == 0) { //Saving stats is using too much cpu and causes high file load. so we need a break
@@ -365,7 +365,7 @@ static void save_stat_to_file_thread(void)
 	fclose(file);
 
 	cs_ftime(&te);
-	int32_t load_time = 1000 * (te.time - ts.time) + te.millitm - ts.millitm;
+	int32_t load_time = comp_timeb(&te, &ts);
 
 
 	cs_log("loadbalancer: statistic saved %d records to %s in %dms", count, fname, load_time);
@@ -413,7 +413,7 @@ static READER_STAT *get_add_stat(struct s_reader *rdr, STAT_QUERY *q)
 			s->ecmlen = q->ecmlen;
 			s->time_avg = UNDEF_AVG_TIME; //dummy placeholder
 			s->rc = E_FOUND;  //set to found--> do not change!
-			s->last_received = time(NULL);
+			cs_ftime(&s->last_received);
 			s->fail_factor = 0;
 			s->ecm_count = 0;
 			s->knocked = 0;
@@ -515,8 +515,8 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 	READER_STAT *s;
 	s = get_add_stat(rdr, &q);
 
-	time_t now = time(NULL);
-	s->last_received = now;
+	struct timeb now;
+	cs_ftime(&s->last_received);
 
 	if(rc == E_FOUND)    //found
 	{
@@ -545,7 +545,7 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 		rdr->lb_usagelevel_ecmcount++; /* ecm is found so counter should increase */
 		if((rdr->lb_usagelevel_ecmcount % cfg.lb_min_ecmcount) == 0)  //update every MIN_ECM_COUNT usagelevel:
 		{
-			time_t t = (now - rdr->lb_usagelevel_time);
+			int32_t t = comp_timeb(&now, &rdr->lb_usagelevel_time) / 1000;
 			rdr->lb_usagelevel = 1000 / (t < 1 ? 1 : t);
 			/* Reset of usagelevel time and counter */
 			rdr->lb_usagelevel_time = now;
@@ -863,24 +863,29 @@ static void try_open_blocked_readers(ECM_REQUEST *er, STAT_QUERY *q, int32_t *ma
 		}
 
 		//active readers reach get_reopen_seconds(s)
-		if(s->rc != E_FOUND &&  time(NULL) >= (s->last_received + get_reopen_seconds(s)))
+		struct timeb now;
+		cs_ftime(&now);
+		int32_t gone = comp_timeb(&now, &s->last_received);
+		int32_t reopenseconds = get_reopen_seconds(s);
+		if(s->rc != E_FOUND && gone > reopenseconds*1000 )
 		{
 			if(*max_reopen)
 			{
-				cs_debug_mask(D_LB, "loadbalancer: reader %s reaches %d seconds for reopening (fail_factor %d) --> ACTIVE", rdr->label, get_reopen_seconds(s), s->fail_factor);
+				cs_debug_mask(D_LB, "loadbalancer: reader %s reaches %d seconds for reopening (fail_factor %d) --> ACTIVE", rdr->label, reopenseconds, s->fail_factor);
 				ea->status |= READER_ACTIVE;
 				(*max_reopen)--;
 			}
 			else
 			{
-				cs_debug_mask(D_LB, "loadbalancer: reader %s reaches %d seconds for reopening (fail_factor %d), but max_reopen reached!", rdr->label, get_reopen_seconds(s), s->fail_factor);
+				cs_debug_mask(D_LB, "loadbalancer: reader %s reaches %d seconds for reopening (fail_factor %d), but max_reopen reached!", rdr->label, reopenseconds, s->fail_factor);
 			}
 			continue;
 		}
 
 		if(s->rc != E_FOUND)  //for debug output
 		{
-			cs_debug_mask(D_LB, "loadbalancer: reader %s blocked for %d seconds (fail_factor %d), retryng in %ld seconds", rdr->label, get_reopen_seconds(s), s->fail_factor, (s->last_received + get_reopen_seconds(s) - time(NULL)));
+			
+			cs_debug_mask(D_LB, "loadbalancer: reader %s blocked for %d seconds (fail_factor %d), retrying in %d seconds", rdr->label, get_reopen_seconds(s), s->fail_factor, (uint) (reopenseconds - (gone/1000)));
 			continue;
 		}
 
@@ -1475,9 +1480,12 @@ void stat_get_best_reader(ECM_REQUEST *er)
 			reader_active++;
 			continue;
 		}
-
+		
+		struct timeb now;
+		cs_ftime(&now);
+		int32_t gone = comp_timeb(&now, &s->last_received);
 		//reset avg-time and active reader with s->last_received older than 5 min and avg-time>retrylimit
-		if(retrylimit && s->rc == E_FOUND && time(NULL) >= (s->last_received + 300) && s->time_avg > retrylimit)
+		if(retrylimit && s->rc == E_FOUND && (gone >= 300*1000) && s->time_avg > retrylimit)
 		{
 			cs_debug_mask(D_LB, "loadbalancer: reader %s has time-avg>retrylimit and last received older than 5 minutes, resetting avg-time --> ACTIVE", rdr->label);
 			reset_avgtime_reader(s, rdr); //time_avg=0
@@ -1650,7 +1658,9 @@ void clear_all_stat(void)
 
 static void housekeeping_stat_thread(void)
 {
-	time_t cleanup_time = time(NULL) - (cfg.lb_stat_cleanup * 60 * 60);
+	struct timeb now;
+	cs_ftime(&now);
+	int32_t cleanup_timeout = cfg.lb_stat_cleanup * 60 * 60 * 1000;
 	int32_t cleaned = 0;
 	struct s_reader *rdr;
 	set_thread_name(__func__);
@@ -1665,8 +1675,8 @@ static void housekeeping_stat_thread(void)
 			READER_STAT *s;
 			while((s = ll_iter_next(&it)))
 			{
-
-				if(s->last_received < cleanup_time)
+				int32_t gone = comp_timeb(&now, &s->last_received);
+				if(gone > cleanup_timeout)
 				{
 					ll_iter_remove_data(&it);
 					cleaned++;
@@ -1681,8 +1691,10 @@ static void housekeeping_stat_thread(void)
 
 static void housekeeping_stat(int32_t force)
 {
-	time_t now = time(NULL);
-	if(!force && (now - 60 * 60) < last_housekeeping)  //only clean once in an hour
+	struct timeb now;
+	cs_ftime(&now);
+	int32_t gone = comp_timeb(&now, &last_housekeeping);
+	if(!force && (gone < 60*60*1000))  //only clean once in an hour
 		{ return; }
 
 	last_housekeeping = now;
@@ -1704,7 +1716,7 @@ static int compare_stat(READER_STAT **ps1, READER_STAT **ps2)
 	if(res) { return res; }
 	res = s1->ecmlen - s2->ecmlen;
 	if(res) { return res; }
-	res = s1->last_received - s2->last_received;
+	res = comp_timeb(&s1->last_received, &s2->last_received);
 	return res;
 }
 
