@@ -58,14 +58,14 @@ static LLIST *channel_cache;
 
 struct s_emm_filter
 {
-	int32_t     demux_id;
-	uchar       filter[32];
-	uint16_t    caid;
-	uint32_t    provid;
-	uint16_t    pid;
-	int32_t     count;
-	uint32_t    num;
-	time_t      time_started;
+	int32_t      demux_id;
+	uchar        filter[32];
+	uint16_t     caid;
+	uint32_t     provid;
+	uint16_t     pid;
+	int32_t      count;
+	uint32_t     num;
+	struct timeb time_started;
 };
 
 static LLIST *ll_emm_active_filter;
@@ -166,7 +166,7 @@ int32_t edit_channel_cache(int32_t demux_id, int32_t pidindex, uint8_t add)
 	return count;
 }
 
-int32_t add_emmfilter_to_list(int32_t demux_id, uchar *filter, uint16_t caid, uint32_t provid, uint16_t emmpid, int32_t count, int32_t num, time_t now)
+int32_t add_emmfilter_to_list(int32_t demux_id, uchar *filter, uint16_t caid, uint32_t provid, uint16_t emmpid, int32_t count, int32_t num, bool enable)
 {
 	if(!ll_emm_active_filter)
 		{ ll_emm_active_filter = ll_create("ll_emm_active_filter"); }
@@ -188,7 +188,14 @@ int32_t add_emmfilter_to_list(int32_t demux_id, uchar *filter, uint16_t caid, ui
 	filter_item->pid            = emmpid;
 	filter_item->count          = count;
 	filter_item->num            = num;
-	filter_item->time_started   = now;
+	if (enable){
+		cs_ftime(&filter_item->time_started);
+	}
+	else {
+		filter_item->time_started.time = 0;
+		filter_item->time_started.millitm = 0;
+	}
+		
 	if(num > 0)
 	{
 		ll_append(ll_emm_active_filter, filter_item);
@@ -423,8 +430,9 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 	if(ret != -1)  // filter set succesfull
 	{
 		cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d Filter #%d started succesfully (caid %04X provid %06X pid %04X)", demux_id, n + 1, caid, provid, pid);
-		if(type == TYPE_EMM && add_to_emm_list)
-			{ add_emmfilter_to_list(demux_id, filt, caid, provid, pid, count, n + 1, time((time_t *) 0)); }
+		if(type == TYPE_EMM && add_to_emm_list){ 
+			add_emmfilter_to_list(demux_id, filt, caid, provid, pid, count, n + 1, true);
+		}
 	}
 	else
 	{
@@ -856,7 +864,7 @@ int32_t dvbapi_start_emm_filter(int32_t demux_index)
 				fcount++; // increase total number of emmfilters
 				if(fcount > demux[demux_index].max_emm_filter)
 				{
-					add_emmfilter_to_list(demux_index, filter, demux[demux_index].EMMpids[l].CAID, demux[demux_index].EMMpids[l].PROVID, demux[demux_index].EMMpids[l].PID, fcount, 0, 0);
+					add_emmfilter_to_list(demux_index, filter, demux[demux_index].EMMpids[l].CAID, demux[demux_index].EMMpids[l].PROVID, demux[demux_index].EMMpids[l].PID, fcount, 0, false);
 				}
 				else
 				{
@@ -869,7 +877,7 @@ int32_t dvbapi_start_emm_filter(int32_t demux_index)
 				}
 				else   // not set succesfull so add it to the list for try again later on!
 				{
-					add_emmfilter_to_list(demux_index, filter, demux[demux_index].EMMpids[l].CAID, demux[demux_index].EMMpids[l].PROVID, demux[demux_index].EMMpids[l].PID, fcount, 0, 0);
+					add_emmfilter_to_list(demux_index, filter, demux[demux_index].EMMpids[l].CAID, demux[demux_index].EMMpids[l].PROVID, demux[demux_index].EMMpids[l].PID, fcount, 0, false);
 				}
 			}
 		}
@@ -953,7 +961,7 @@ void dvbapi_add_ecmpid_int(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uin
 		{ demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].streams |= (1 << stream); }
 
 	cs_log("[ADD PID %d] CAID: %04X ECM_PID: %04X PROVID: %06X", demux[demux_id].ECMpidcount, caid, ecmpid, provid);
-	if(caid >> 8 == 0x06) { demux[demux_id].emmstart = 1; }  // marker to fetch emms early irdeto needs them!
+	if(caid >> 8 == 0x06) { demux[demux_id].emmstart.time = 1; }  // marker to fetch emms early irdeto needs them!
 
 	demux[demux_id].ECMpidcount++;
 }
@@ -1333,13 +1341,16 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 	er->prid  = demux[demux_id].ECMpids[pid].PROVID;
 	er->vpid  = demux[demux_id].ECMpids[pid].VPID;
 
+	struct timeb now;
+	cs_ftime(&now);
 	for(rdr = first_active_reader; rdr != NULL ; rdr = rdr->next)
 	{
 		int8_t match = matching_reader(er, rdr); // check for matching reader
-		if((time(NULL) - rdr->emm_last) > 3600 && rdr->needsemmfirst && er->caid >> 8 == 0x06)
+		int32_t gone = comp_timeb(&now, &rdr->emm_last);
+		if(gone > 3600*1000 && rdr->needsemmfirst && er->caid >> 8 == 0x06)
 		{
 			cs_log("[DVBAPI] Warning reader %s received no emms for the last %d seconds -> skip, this reader needs emms first!", rdr->label,
-				   (int)(time(NULL) - rdr->emm_last));
+				   (int)(gone/1000));
 			continue; // skip this card needs to process emms first before it can be used for descramble
 		}
 		if(p && p->force) { match = 1; }  // forced pid always started!
@@ -2252,7 +2263,8 @@ void dvbapi_try_next_caid(int32_t demux_id, int8_t checked)
 				openxcas_caid = demux[demux_id].ECMpids[found].CAID;
 				openxcas_ecm_pid = demux[demux_id].ECMpids[found].ECM_PID;
 #endif
-				if((demux[demux_id].ECMpids[found].CAID >> 8) == 0x06) { demux[demux_id].emmstart = 0; }  // fixup for cas that need emm first!
+				// fixup for cas that need emm first!
+				if((demux[demux_id].ECMpids[found].CAID >> 8) == 0x06) { demux[demux_id].emmstart.time = 0; }
 				started = dvbapi_start_descrambling(demux_id, found, checked);
 				if(cfg.dvbapi_requestmode == 0 && started == 1) { return; }  // in requestmode 0 we only start 1 ecm request at the time
 			}
@@ -2582,18 +2594,18 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		}
 	}
 
-	if(cfg.dvbapi_au > 0 && demux[demux_id].emmstart == 1)   // irdeto fetch emm cat direct!
+	if(cfg.dvbapi_au > 0 && demux[demux_id].emmstart.time == 1)   // irdeto fetch emm cat direct!
 	{
-		demux[demux_id].emmstart = time(NULL); // trick to let emm fetching start after 30 seconds to speed up zapping
+		cs_ftime(&demux[demux_id].emmstart); // trick to let emm fetching start after 30 seconds to speed up zapping
 		dvbapi_start_filter(demux_id, demux[demux_id].pidindex, 0x001, 0x001, 0x01, 0x01, 0xFF, 0, TYPE_EMM, 1); //CAT
 	}
-	else { demux[demux_id].emmstart = time(NULL); } // for all other caids delayed start!
+	else { cs_ftime(&demux[demux_id].emmstart); } // for all other caids delayed start!
 
 // set channel srvid+caid
 	dvbapi_client->last_srvid = demux[demux_id].program_number;
 	dvbapi_client->last_caid = 0;
 // reset idle-Time & last switch
-	dvbapi_client->lastswitch = dvbapi_client->last = time((time_t *)0);
+	dvbapi_client->lastswitch = dvbapi_client->last = time((time_t *)0); // ********** TO BE CHANGED LATER ON ***********
 
 #if defined WITH_AZBOX || defined WITH_MCA
 	openxcas_sid = program_number;
@@ -3174,7 +3186,8 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 
 		int32_t filter_queue = ll_count(ll_emm_inactive_filter);
 		int32_t stopped = 0, started = 0;
-		time_t now = time((time_t *) 0);
+		struct timeb now;
+		cs_ftime(&now);
 
 		struct s_emm_filter *filter_item;
 		LL_ITER itr;
@@ -3185,7 +3198,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 			if(!ll_count(ll_emm_inactive_filter) || started == filter_queue)
 				{ break; }
 
-			if(abs(now - filter_item->time_started) > 45)
+			if(comp_timeb(&now, &filter_item->time_started) > 45*1000)
 			{
 				struct s_dvbapi_priority *forceentry = dvbapi_check_prio_match_emmpid(filter_item->demux_id, filter_item->caid,
 													   filter_item->provid, 'p');
@@ -3197,7 +3210,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 					dvbapi_stop_filternum(filter_item->demux_id, filter_item->num - 1);
 					ll_iter_remove_data(&itr);
 					add_emmfilter_to_list(filter_item->demux_id, filter_item->filter, filter_item->caid,
-										  filter_item->provid, filter_item->pid, filter_item->count, -1, 0);
+										  filter_item->provid, filter_item->pid, filter_item->count, -1, false);
 					stopped++;
 				}
 			}
@@ -3230,7 +3243,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		while((filter_item = ll_iter_next(&itr)))
 		{
 			add_emmfilter_to_list(filter_item->demux_id, filter_item->filter, filter_item->caid,
-								  filter_item->provid, filter_item->pid, filter_item->count, 0, 0);
+								  filter_item->provid, filter_item->pid, filter_item->count, 0, false);
 			ll_iter_remove_data(&itr);
 		}
 	}
@@ -3421,10 +3434,17 @@ static void *dvbapi_main_local(void *cli)
 			}
 
 			// delayed emm start for non irdeto caids, start emm cat if not already done for this demuxer!
-			if(cfg.dvbapi_au > 0 && demux[i].emm_filter == 0 && demux[i].EMMpidcount == 0 && ((time(NULL) - demux[i].emmstart) > 30) && emmcounter == 0)
+			
+			struct timeb now;
+			cs_ftime(&now);
+			
+			if(cfg.dvbapi_au > 0 && demux[i].emm_filter == 0 && demux[i].EMMpidcount == 0 && emmcounter == 0)
 			{
-				demux[i].emmstart = time(NULL); // trick to let emm fetching start after 30 seconds to speed up zapping
-				dvbapi_start_filter(i, demux[i].pidindex, 0x001, 0x001, 0x01, 0x01, 0xFF, 0, TYPE_EMM, 1); //CAT
+				int32_t gone = comp_timeb(&now, &demux[i].emmstart);
+				if(gone > 30*1000){
+					cs_ftime(&demux[i].emmstart); // trick to let emm fetching start after 30 seconds to speed up zapping
+					dvbapi_start_filter(i, demux[i].pidindex, 0x001, 0x001, 0x01, 0x01, 0xFF, 0, TYPE_EMM, 1); //CAT
+				}
 				//continue; // proceed with next demuxer
 			}
 
@@ -3434,14 +3454,15 @@ static void *dvbapi_main_local(void *cli)
 			{
 				if(!emmcounter)
 				{
-					demux[i].emmstart = time(NULL);
+					demux[i].emmstart = now;
 					emmstarted = dvbapi_start_emm_filter(i); // start emmfiltering if emmpids are found
 				}
 				else
 				{
-					if((time(NULL) - demux[i].emmstart) > 30)
+					int32_t gone = comp_timeb(&now, &demux[i].emmstart);
+					if(gone > 30*1000)
 					{
-						demux[i].emmstart = time(NULL);
+						demux[i].emmstart = now;
 						emmstarted = dvbapi_start_emm_filter(i); // start emmfiltering delayed if filters already were running
 					}
 				}
@@ -4038,7 +4059,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		}
 
 		// reset idle-Time
-		client->last = time((time_t *)0);
+		client->last = time((time_t *)0); // ********* TO BE FIXED LATER ON ******
 
 		FILE *ecmtxt;
 		ecmtxt = fopen(ECMINFO_FILE, "w");

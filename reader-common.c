@@ -414,7 +414,7 @@ int32_t cardreader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 		else
 			{ rc = 0; }
 	}
-	if(rc > 0) { reader->emm_last = time(NULL); }  // last time emm written is now!
+	if(rc > 0) { cs_ftime(&reader->emm_last); }  // last time emm written is now!
 	return (rc);
 }
 
@@ -424,12 +424,13 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 	cs_ddump_mask(D_ATR, er->ecm, er->ecmlen, "ecm:");
 
 	struct timeb tps, tpe;
-	cs_ftime(&tps);
-
 	struct s_ecm_answer ea;
 	memset(&ea, 0, sizeof(struct s_ecm_answer));
-
+	
+	cs_ftime(&tps);
 	int32_t rc = cardreader_do_ecm(reader, er, &ea);
+	cs_ftime(&tpe);
+	
 	rdr_debug_mask(reader, D_READER, "%s: cardreader_do_ecm returned rc=%d (ERROR=%d)", __func__, rc, ERROR);
 
 	ea.rc = E_FOUND; //default assume found
@@ -454,16 +455,15 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 		ea.rcEx = E2_WRONG_CHKSUM; //flag it as wrong checksum
 		memcpy(ea.msglog, "Invalid ecm type for card", 25);
 	}
-	cs_ftime(&tpe);
+
+	write_ecm_answer(reader, er, ea.rc, ea.rcEx, ea.cw, ea.msglog);
+	
 	cl->lastecm = time((time_t *)0);
 	char ecmd5[17 * 3];
 	cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5));
 
-	rdr_debug_mask(reader, D_READER, "ecm hash: %s real time: %ld ms",
-				   ecmd5, 1000 * (tpe.time - tps.time) + tpe.millitm - tps.millitm);
-
-	write_ecm_answer(reader, er, ea.rc, ea.rcEx, ea.cw, ea.msglog);
-
+	rdr_debug_mask(reader, D_READER, "ecm hash: %s real time: %d ms", ecmd5, comp_timeb(&tpe, &tps));
+	
 	reader_post_process(reader);
 }
 

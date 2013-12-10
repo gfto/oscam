@@ -104,7 +104,7 @@ typedef struct demux_s
 	int8_t adapter_index;
 	int32_t socket_fd;
 	int8_t ECMpidcount;
-	time_t emmstart; // last time emmfilters were started
+	struct timeb emmstart; // last time emm cat was started
 	struct s_ecmpids ECMpids[ECM_PIDS];
 	int8_t EMMpidcount;
 	struct s_emmpids EMMpids[ECM_PIDS];
