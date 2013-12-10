@@ -649,7 +649,7 @@ typedef struct v_ban                    // Failban listmember
 	int32_t         v_count;
 	IN_ADDR_T       v_ip;
 	int32_t         v_port;
-	time_t          v_time;
+	struct timeb    v_time;
 	char            *info;
 } V_BAN;
 

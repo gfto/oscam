@@ -2188,7 +2188,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 			if(!(s->rc == rc2hide))
 			{
 				struct tm lt;
-				localtime_r(&s->last_received.time, &lt);
+				localtime_r(&s->last_received.time, &lt); // fixme we need walltime!
 				ecmcount += s->ecm_count;
 				if(!apicall)
 				{
@@ -5049,7 +5049,8 @@ static char *send_oscam_failban(struct templatevars * vars, struct uriparams * p
 	}
 	ll_iter_reset(&itr);
 
-	time_t now = time((time_t *)0);
+	struct timeb now;
+	cs_ftime(&now);
 
 	while((v_ban_entry = ll_iter_next(&itr)))
 	{
@@ -5057,7 +5058,7 @@ static char *send_oscam_failban(struct templatevars * vars, struct uriparams * p
 		tpl_printf(vars, TPLADD, "IPADDRESS", "%s : %d", cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port);
 		tpl_addVar(vars, TPLADD, "VIOLATIONUSER", v_ban_entry->info ? v_ban_entry->info : "unknown");
 		struct tm st ;
-		localtime_r(&v_ban_entry->v_time, &st);
+		localtime_r(&v_ban_entry->v_time.time, &st); // fix me, we need walltime!
 		if(!apicall)
 		{
 			tpl_printf(vars, TPLADD, "VIOLATIONDATE", "%02d.%02d.%02d %02d:%02d:%02d",
@@ -5074,10 +5075,11 @@ static char *send_oscam_failban(struct templatevars * vars, struct uriparams * p
 
 		tpl_printf(vars, TPLADD, "VIOLATIONCOUNT", "%d", v_ban_entry->v_count);
 
+		int32_t gone = comp_timeb(&now, &v_ban_entry->v_time);
 		if(!apicall)
-			{ tpl_addVar(vars, TPLADD, "LEFTTIME", sec2timeformat(vars, (cfg.failbantime * 60) - (now - v_ban_entry->v_time))); }
+			{ tpl_addVar(vars, TPLADD, "LEFTTIME", sec2timeformat(vars, (cfg.failbantime * 60) - (gone / 1000))); }
 		else
-			{ tpl_printf(vars, TPLADD, "LEFTTIME", "%ld", (cfg.failbantime * 60) - (now - v_ban_entry->v_time)); }
+			{ tpl_printf(vars, TPLADD, "LEFTTIME", "%d", (cfg.failbantime * 60) - (gone / 1000)); }
 
 		tpl_addVar(vars, TPLADD, "INTIP", cs_inet_ntoa(v_ban_entry->v_ip));
 
