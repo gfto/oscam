@@ -698,7 +698,7 @@ bool IO_Serial_WaitToRead(struct s_reader *reader, uint32_t delay_us, uint32_t t
 				}
 				continue;
 			}
-			rdr_log(reader, "ERROR: %s: timeout=%ld ms (errno=%d %s)", __func__, 1000 * (end.time - start.time) + end.millitm - start.millitm, errno, strerror(errno));
+			rdr_log(reader, "ERROR: %s: timeout=%d ms (errno=%d %s)", __func__, comp_timeb(&end, &start), errno, strerror(errno));
 			return ERROR;
 		default:
 			if(ufds.revents & (POLLIN | POLLPRI))
@@ -735,7 +735,7 @@ static bool IO_Serial_WaitToWrite(struct s_reader *reader, uint32_t delay_us, ui
 		switch(ret_val)
 		{
 		case 0:
-			rdr_log(reader, "ERROR: not ready to write, timeout=%ld ms", 1000 * (end.time - start.time) + end.millitm - start.millitm);
+			rdr_log(reader, "ERROR: not ready to write, timeout=%d ms", comp_timeb(&end, &start));
 			return ERROR;
 		case -1:
 			if(errno == EINTR || errno == EAGAIN)
@@ -748,7 +748,7 @@ static bool IO_Serial_WaitToWrite(struct s_reader *reader, uint32_t delay_us, ui
 				}
 				continue;
 			}
-			rdr_log(reader, "ERROR: %s: timeout=%ld ms (errno=%d %s)", __func__, 1000 * (end.time - start.time) + end.millitm - start.millitm, errno, strerror(errno));
+			rdr_log(reader, "ERROR: %s: timeout=%d ms (errno=%d %s)", __func__, comp_timeb(&end, &start), errno, strerror(errno));
 			return ERROR;
 		default:
 			if(((ufds.revents) & POLLOUT) == POLLOUT)
