@@ -347,14 +347,15 @@ int32_t recv_from_udpipe(uint8_t *buf)
 
 int32_t process_input(uint8_t *buf, int32_t buflen, int32_t timeout)
 {
-	int32_t rc, i, pfdcount, polltime;
+	int32_t rc, i, pfdcount, polltime, timeoutms;
 	struct pollfd pfd[2];
 	struct s_client *cl = cur_client();
 
 	struct timeb starttime;
 	struct timeb currenttime;
+	timeoutms = 1000 * timeout;
 	cs_ftime(&starttime);
-	polltime = 1000 * timeout; // initial polltime = timeout
+	polltime = timeoutms; // initial polltime = timeoutms
 	while(1)
 	{
 		pfdcount = 0;
@@ -366,8 +367,8 @@ int32_t process_input(uint8_t *buf, int32_t buflen, int32_t timeout)
 		int32_t p_rc = poll(pfd, pfdcount, polltime);
 
 		cs_ftime(&currenttime);
-		int32_t gone = 1000 * comp_timeb(&currenttime, &starttime);
-		polltime  = timeout - gone; // calculate polltime left
+		int32_t gone = comp_timeb(&currenttime, &starttime);
+		polltime  = timeoutms - gone; // calculate polltime left
 		if(polltime < 0)
 		{
 			polltime = 0;
@@ -380,7 +381,7 @@ int32_t process_input(uint8_t *buf, int32_t buflen, int32_t timeout)
 				{ return 0; }
 		}
 		
-		if(p_rc == 0 && gone >= timeout)  // client maxidle reached?
+		if(p_rc == 0 && gone >= timeoutms)  // client maxidle reached?
 		{
 			rc = -9;
 			break;
