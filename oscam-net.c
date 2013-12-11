@@ -352,9 +352,9 @@ int32_t process_input(uint8_t *buf, int32_t buflen, int32_t timeout)
 	struct s_client *cl = cur_client();
 
 	struct timeb starttime;
-	struct timeb endtime;
+	struct timeb currenttime;
 	cs_ftime(&starttime);
-	polltime = timeout; // initial polltime = timeout
+	polltime = 1000 * timeout; // initial polltime = timeout
 	while(1)
 	{
 		pfdcount = 0;
@@ -365,8 +365,8 @@ int32_t process_input(uint8_t *buf, int32_t buflen, int32_t timeout)
 		}
 		int32_t p_rc = poll(pfd, pfdcount, polltime);
 
-		cs_ftime(&endtime);
-		int32_t gone = comp_timeb(&endtime, &starttime);
+		cs_ftime(&currenttime);
+		int32_t gone = 1000 * comp_timeb(&currenttime, &starttime);
 		polltime  = timeout - gone; // calculate polltime left
 		if(polltime < 0)
 		{
