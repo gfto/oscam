@@ -554,7 +554,7 @@ void cleanup_hitcache(void) {
 	struct timeb now;
 	int32_t gone;
 
-	int32_t timeout = cfg.max_hitcache_time + (cfg.max_hitcache_time / 2);  //1,5
+	int32_t timeout = (cfg.max_hitcache_time + (cfg.max_hitcache_time / 2))*1000;  //1,5
 
 	pthread_rwlock_wrlock(&hitcache_lock);
 
