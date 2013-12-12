@@ -80,7 +80,7 @@
 #  define _XOPEN_SOURCE_EXTENDED
 #endif
 
-#if defined(__APPLE__) && !defined(s6_addr32)
+#if (defined(__APPLE__) || defined(__FreeBSD__)) && !defined(s6_addr32)
 #define s6_addr32 __u6_addr.__u6_addr32
 #endif
 
